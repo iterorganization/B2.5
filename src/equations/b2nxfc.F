@@ -1,0 +1,152 @@
+*-----------------------------------------------------------------------
+*.specification
+
+      subroutine b2nxfc (nx, ny, isb, vol, pbs, rob, ub, flub, cvsb,
+     &  flcb, cvcb, wrk0)
+      use b2mod_types
+      use b2mod_indirect
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer nx, ny, isb
+      real (kind=R8) ::
+     *   pbs(-1:nx,-1:ny,0:1), rob(-1:nx,-1:ny), ub(-1:nx,-1:ny),
+     &  flub(-1:nx,-1:ny,0:1), cvsb(-1:nx,-1:ny,0:1), vol(-1:nx,-1:ny)
+*   ..output arguments (unspecified on entry)
+      real (kind=R8) ::
+     *   flcb(-1:nx,-1:ny,0:1), cvcb(-1:nx,-1:ny,0:1)
+*   ..workspace arguments (unspecified on entry and on exit)
+      real (kind=R8) ::
+     *   wrk0(-1:nx,-1:ny)                                          !srv 02.07.08
+
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2NXFC computes the transport terms in the momentum correction
+*     equation.
+*
+*-----------------------------------------------------------------------
+*.declarations
+
+*   ..local variables
+      integer ncall, style, n2, ix, iy, ncallout
+	integer, save :: iout = 0                                     !srv 17.06.02
+	character charns*2                                            !srv 17.06.02
+      save ncall, style, ncallout
+*   ..procedures
+      external subini, subend, xertst, ipgeti, ipgetr, scopy
+      external b2xvff, b2xvsg, hbout
+*   ..initialisation
+      data ncall/0/, style/0/, ncallout/-1/
+*!!   (style is a numerical switch; needs experiments)
+
+*-----------------------------------------------------------------------
+*.documentation-internal
+*
+*     Description of some local variables:
+*
+*     style - integer.
+*     style specifies the precise form of interpolation used in the
+*     computation of flcb and cvcb.
+*
+*-----------------------------------------------------------------------
+*.computation
+
+* ..preliminaries
+*   ..subprogram start-up calls
+      call subini ('b2nxfc')
+*   ..set internal parameters on first call
+      if (ncall.eq.0) then
+       call ipgeti ('b2nxfc_style', style)
+       call xertst (0.le.style.and.style.lt.2,
+     &   'faulty internal parameter style')
+       call ipgeti ('b2news_ncallout', ncallout)
+       call ipgeti ('b2nxfc_iout', iout)                             !srv 17.06.02
+      endif
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
+*   ..test nx, ny
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..extensive tests on first few calls
+      if (ncall.lt.3) then
+*   ..test edge values of flub
+       call b2xvff (nx, ny, flub, 'flub')
+       if (ncall.eq.ncallout) then
+        write(*,*) 'ncall',ncall
+        call hbout('../b2nxfc_xvsg',nx,ny,2,rob,'rob',ub,'ub',cvsb,
+     &  'cvsb',cvsb,'ua',cvsb,'na',cvsb,'ua')
+       endif
+*    ..test sign of rob
+       call b2xvsg (n2, rob, 1, 'rob', '.gt.')
+      endif
+
+* ..compute convection factors
+*   ..compute wrk0                                                       !sv 01.07.05 {
+      do iy = -1, ny
+       do ix = -1, nx
+        if(leftix(ix,iy).eq.-2) then
+          wrk0(ix,iy) = 0.0e0_R8
+        else
+          wrk0(ix,iy) = 
+     &     (vol(ix,iy)*ub(leftix(ix,iy),leftiy(ix,iy))+
+     &      vol(leftix(ix,iy),leftiy(ix,iy))*ub(ix,iy))/
+     &     (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
+        endif
+       enddo
+      enddo                                                               !sv 01.07.05 }
+*   ..compute flcbx, cvcbx
+      do iy = -1, ny
+       if (style.eq.0) then
+        do ix = -1, nx
+         if(leftix(ix,iy).eq.-2) then
+          flcb(ix,iy,0) = 0.0_R8
+          cvcb(ix,iy,0) = 0.0_R8
+         else
+          flcb(ix,iy,0) = flub(ix,iy,0)+pbs(ix,iy,0)*(vol(ix,iy)*
+     &      rob(leftix(ix,iy),leftiy(ix,iy))*
+     &      ub(leftix(ix,iy),leftiy(ix,iy))+
+     &      vol(leftix(ix,iy),leftiy(ix,iy))*rob(ix,iy)*ub(ix,iy))/
+     &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+          cvcb(ix,iy,0) = cvsb(ix,iy,0)
+         endif
+        enddo
+       elseif(style.eq.1) then
+        do ix = -1, nx                                                 !srv 26.11.02
+	   if(leftix(ix,iy).eq.-2) then
+           flcb(ix,iy,0) = 0.0e0_R8
+           cvcb(ix,iy,0) = 0.0e0_R8
+	   else                                                          !srv 26.11.02 {
+           flcb(ix,iy,0) = flub(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)*
+     &      (rob(ix,iy)+rob(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8      !srv 01.07.05 } 
+           cvcb(ix,iy,0) = cvsb(ix,iy,0)
+	   endif                                                         !srv 26.11.02 }
+        enddo
+       else
+        write(*,*) 'style 0 or 1 in b2nxfc are included only'
+	  stop
+       endif
+      enddo
+*   ..compute flcby, cvcby
+      call scopy (n2, flub(-1,-1,1), 1, flcb(-1,-1,1), 1)
+      call scopy (n2, cvsb(-1,-1,1), 1, cvcb(-1,-1,1), 1)
+
+	if (iout.ne.0) then                                              !sv 17.06.02 {
+	  write (charns,'(i2.2)') isb    
+	  call my_out(70,nx,ny,flub(-1,-1,0),'b2nxfc_flubx'//charns)
+	  call my_out(70,nx,ny,flub(-1,-1,1),'b2nxfc_fluby'//charns)
+	  call my_out(70,nx,ny,flcb(-1,-1,0),'b2nxfc_flcbx'//charns)
+	  call my_out(70,nx,ny,flcb(-1,-1,1),'b2nxfc_flcby'//charns)
+	  call my_out(70,nx,ny,cvcb(-1,-1,0),'b2nxfc_cvcbx'//charns)
+	  call my_out(70,nx,ny,cvcb(-1,-1,1),'b2nxfc_cvcby'//charns)
+	  call my_out(70,nx,ny,rob,'b2nxfc_rob'//charns)
+	endif                                                            !sv 17.06.02 }
+* ..return
+      ncall = ncall+1
+      call subend ()
+      return
+
+*-----------------------------------------------------------------------
+*.end b2nxfc
+
+      end

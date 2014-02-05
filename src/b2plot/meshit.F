@@ -1,0 +1,58 @@
+c
+      subroutine meshit(physical)
+      use b2mod_types
+      use b2mod_geo
+      use b2mod_b2plot
+      use b2mod_indirect
+      implicit none
+      logical physical
+      real (kind=R8) ::
+     *   x1,x2,y1,y2
+      integer ix,iy
+
+      if(mcol .gt. 1) then
+#ifndef PLPLOT
+        call lastd
+        call gsplci(mcol)
+#endif
+      endif
+      if(.not.physical) then ! mesh computational domain
+        do ix=-1,nx+1
+          x1=ix-0.5_R8
+          x2=ix-0.5_R8
+          y1=-1-0.5_R8
+          y2=ny+1-0.5_R8
+          call lined_d(x1,y1,x2,y2)
+        enddo
+        do iy=-1,ny+1
+          x1=-1-0.5_R8
+          x2=nx+1-0.5_R8
+          y1=iy-0.5_R8
+          y2=iy-0.5_R8
+          call lined_d(x1,y1,x2,y2)
+        enddo
+      endif
+      if(physical) then ! mesh physical domain
+        do iy=-1,ny
+          do ix=-1,nx
+            if(region(ix,iy,0).ne.0) then
+              call lined_d(crx(ix,iy,2),cry(ix,iy,2),
+     1	       crx(ix,iy,3),cry(ix,iy,3))
+              call lined_d(crx(ix,iy,1),cry(ix,iy,1),
+     1	       crx(ix,iy,3),cry(ix,iy,3))
+              call lined_d(crx(ix,iy,0),cry(ix,iy,0),
+     1         crx(ix,iy,2),cry(ix,iy,2))
+              call lined_d(crx(ix,iy,0),cry(ix,iy,0),
+     1         crx(ix,iy,1),cry(ix,iy,1))
+            endif
+          enddo
+        enddo
+      endif
+      if(mcol .gt. 1) then
+#ifndef PLPLOT
+        call lastd
+        call gsplci(1)
+#endif
+      endif
+      return
+      end

@@ -1,0 +1,503 @@
+      subroutine b2wrsep(nx,ny,ns,BoRiS)
+      use b2mod_types
+      use b2mod_geo
+      use b2mod_diag
+      use b2mod_time
+      use b2mod_rates
+      use b2mod_plasma
+      use b2mod_sources
+     . , only : sna
+      use b2mod_tallies
+      use b2mod_indirect
+      use b2mod_constants
+      use b2mod_user_namelist
+      use b2mod_neutrals_namelist
+      use b2mod_b2cmpa
+csw 07feb2011
+      use eirmod_extrab25
+      use eirmod_eirbra
+csw
+c
+c  version : 10.12.2000 23:36
+c
+c======================================================================
+c*** Puts some separatrix data on the output file "tracing/sepdata.trc"
+c***  - primarily, to provide boundary conditions for core models
+c----------------------------------------------------------------------
+      implicit none
+
+#     include <DIMENSIONS.F>
+csw 07feb2011
+csw#     include <COUPLE/EIRDIAG.F>
+csw#     include <COUPLE/EIRBRA.F>
+
+      integer nx, ny, ns
+      real (kind=R8) :: BoRiS
+c----------------------------------------------------------------------
+c*** lv    :  version number to appear in the file
+
+      integer lv
+      parameter (lv=20000828)
+
+c----------------------------------------------------------------------
+c*** Separatrix data:
+c***
+c***      header     var       Legend
+c***...........................................................(global)
+c***     ne_sep     hlp_nesp    average ne
+c***     Te_sep     hlp_tesp    density-weighted average Te
+c***     Ti_sep     hlp_tisp    density-weighted average Ti
+c***     Zef_sep    hlp_zesp    density-weighted average Zeff
+c***     Qt_sep     hlp_qtsp    total heat flow from the core
+c***     Qe_sep     hlp_qesp    electron heat flow from the core
+c***     Qi_sep     hlp_qisp    ion heat flow from the core
+c***     Qrad_SOL   hlp_qrsl    radiation from SOL and divertors
+c***     Spmp_nom   hlp_spmn    nominal pumping speed
+c***
+c***..........................................................(species)
+c***     ni_sep_    nisp_tmp    average ni for each species
+c***     Zi_sep_    zisp_tmp    average Z for each ion species
+c***     Ze_sep_    zesp_tmp    average Zeff for each ion species
+c***     Gi_sep_    gisp_tmp    outward ion flux for each species
+c***     na_sep_    nasp_tmp    average natm for each species
+c***     Ta_sep_    tasp_tmp    average Tatm for each species
+c***     Ga_sep_    gasp_tmp    inward neutral flux for each species
+c***     Gp_sep_    gpuf_tmp    gas puffing rate for each species
+c***     pr_sep_    prsr_tmp    relative total pressure for each species
+c***     nr_sep_    nrsr_tmp    relative ion density for each species
+c***
+c***.............................................................(ions)
+c***     nii_sep_   nisi_tmp    average ni for each ion
+c***     Gii_sep_   gisi_tmp    outward ion flux for each ion
+c----------------------------------------------------------------------
+c
+c*** Global values
+      integer nglb_tmp, ng_tmp
+      parameter (nglb_tmp=9)
+      real (kind=R8) ::
+     *     equg_tmp(nglb_tmp)
+      real (kind=R8) ::
+     *     hlp_nesp, hlp_tesp, hlp_tisp, hlp_zesp, hlp_qtsp, hlp_qesp,
+     ,     hlp_qisp, hlp_qrsl, hlp_spmn, kintmp
+      equivalence
+     ,     (equg_tmp(1),  hlp_nesp), (equg_tmp(2),  hlp_tesp),
+     ,     (equg_tmp(3),  hlp_tisp), (equg_tmp(4),  hlp_zesp),
+     ,     (equg_tmp(5),  hlp_qtsp), (equg_tmp(6),  hlp_qesp),
+     ,     (equg_tmp(7),  hlp_qisp), (equg_tmp(8),  hlp_qrsl),
+     ,     (equg_tmp(9),  hlp_spmn)
+      character hlp_hg(nglb_tmp)*8
+
+c*** Values by species
+      integer nspc_tmp, nsp_tmp, ns_tmp
+      parameter (nspc_tmp=10)
+      real  (kind=R8) ::
+     *      equs_tmp(DEF_NATM,nspc_tmp)
+      real  (kind=R8) ::
+     *      nisp_tmp(DEF_NATM),zisp_tmp(DEF_NATM),zesp_tmp(DEF_NATM),
+     ,      gisp_tmp(DEF_NATM),nasp_tmp(DEF_NATM),tasp_tmp(DEF_NATM),
+     ,      gasp_tmp(DEF_NATM),gpuf_tmp(DEF_NATM),
+     ,      prsr_tmp(DEF_NATM), nrsr_tmp(DEF_NATM)
+      equivalence 
+     ,  (equs_tmp(1,1), nisp_tmp), (equs_tmp(1,2), zisp_tmp),
+     ,  (equs_tmp(1,3), zesp_tmp), (equs_tmp(1,4), gisp_tmp),
+     ,  (equs_tmp(1,5), nasp_tmp), (equs_tmp(1,6), tasp_tmp),
+     ,  (equs_tmp(1,7), gasp_tmp), (equs_tmp(1,8), gpuf_tmp),
+     ,  (equs_tmp(1,9), prsr_tmp), (equs_tmp(1,10),nrsr_tmp)
+      character hlp_hs(nspc_tmp)*7
+
+c*** Values by ion charge states
+      integer nion_tmp, ni_tmp, nii_tmp, nis_tmp
+      parameter (nion_tmp=2)
+      real (kind=R8) ::
+     *     equi_tmp(DEF_NPLS,nion_tmp)
+      real (kind=R8) ::
+     *     nisi_tmp(DEF_NPLS), gisi_tmp(DEF_NPLS)
+      equivalence (equi_tmp(1,1), nisi_tmp), (equi_tmp(1,2), gisi_tmp)
+      character hlp_hi(nion_tmp)*8
+
+c*** Local variables of general use
+      integer lun, ltrc
+      parameter (ltrc=ntrc_sep)
+      real (kind=R8) ::
+     *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff
+      real (kind=R8) ::
+     *  hlp_ni(DEF_NATM),hlp_zi(DEF_NATM),hlp_ze(DEF_NATM),
+     ,  hlp_gi(DEF_NATM),hlp_na(DEF_NATM),
+     ,  hlp_ga(DEF_NATM),hlp_nii(DEF_NATM),hlp_gii(DEF_NATM)
+      integer i,j,k,l,is,ix,iy,jxi,jxa,jsep,nv,ii(DEF_NPLS)
+      logical ex, warn_tmp
+      character tab, hlp_c, f*40, hlp_frm*256, hlp_frf*400, 
+     ,  hlp_a(DEF_NPLS)*2
+c*** Procedures
+      real (kind=R8) :: hy1
+      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
+c----------------------------------------------------------------------
+c*** Column headers:
+      data hlp_hg /
+     1          'ne_sep','Te_sep','Ti_sep'  ,'Zef_sep'  ,'Qt_sep',
+     2          'Qe_sep','Qi_sep','Qrad_SOL', 'Spmp_nom'/
+      data hlp_hs / 
+     1  'ni_sep_','Zi_sep_','Ze_sep_','Gi_sep_','na_sep_',
+     2  'Ta_sep_','Ga_sep_','Gp_sep_','pr_sep_','nr_sep_' /
+      data hlp_hi / 'nii_sep_','Gii_sep_' /
+c----------------------------------------------------------------------
+
+      save
+     i lun, nsp_tmp, ns_tmp, jsep,
+     . ng_tmp, ni_tmp, nii_tmp, nis_tmp,
+     c hlp_frm
+c======================================================================
+
+c*** Initialise the arrays
+c
+      equg_tmp=0.0_R8
+      equs_tmp=0.0_R8
+      equi_tmp=0.0_R8
+      do i=1,nspecies !{
+        hlp_ni(i)=0.0_R8
+        hlp_zi(i)=0.0_R8
+        hlp_ze(i)=0.0_R8
+        hlp_gi(i)=0.0_R8
+        hlp_na(i)=0.0_R8
+        hlp_ga(i)=0.0_R8
+      end do !}
+      hlp_nii=0.0_R8
+      hlp_gii=0.0_R8
+      hlp_n=0.0_R8
+      hlp_p=0.0_R8
+      hlp_v=0.0_R8
+c
+c*** Compute the data
+c
+      iy=jsep+1
+      do ix=0,nx-1 !{
+        if(mod(region(ix,jsep,0),4).eq.1) then !{
+c          v=vol(ix,iy)
+          v=gs(ix,iy,1)
+          hlp_i=0.0_R8
+          zeff=0.0_R8
+          do is=0,ns-1 !{
+            if (.not.is_neutral(is)) hlp_i=hlp_i+na(ix,iy,is)
+            zeff=zeff+rz2(ix,iy,is)*na(ix,iy,is)            
+          end do !}
+          zeff=zeff/ne(ix,iy)
+          hlp_v=hlp_v+v
+          hlp_n=hlp_n+hlp_i*v
+          hlp_nesp=hlp_nesp+v*ne(ix,iy)
+          hlp_tesp=hlp_tesp+v*ne(ix,iy)*te(ix,iy)
+          hlp_p=hlp_p+v*(ne(ix,iy)*te(ix,iy)+hlp_i*ti(ix,iy))
+          hlp_tisp=hlp_tisp+v*hlp_i*ti(ix,iy)
+          hlp_zesp=hlp_zesp+v*ne(ix,iy)*zeff
+          hlp_qesp=hlp_qesp+fhe(ix,iy,1)
+          hlp_qisp=hlp_qisp+fhi(ix,iy,1)
+          do is=0,ns-1
+            kintmp = 
+     .       (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
+     .        kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
+     .       (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
+            hlp_qisp=hlp_qisp+kintmp*(1.0_R8-BoRiS)*fna(ix,ny,1,is)
+          enddo
+          is=0
+          do j=1,nspecies !{
+            do k=1,nfluids(j) !{
+              is=is+1
+              nisi_tmp(is)=nisi_tmp(is)+v*na(ix,iy,ions_list(is))
+              gisi_tmp(is)=gisi_tmp(is)+fna(ix,iy,1,ions_list(is))
+              nisp_tmp(j)=nisp_tmp(j)+v*na(ix,iy,ions_list(is))
+              prsr_tmp(j)=prsr_tmp(j)+v*na(ix,iy,ions_list(is))*
+     *            (ti(ix,iy)+rza(ix,iy,ions_list(is))*te(ix,iy))
+              zisp_tmp(j)=zisp_tmp(j)+
+     *             v*na(ix,iy,ions_list(is))*rza(ix,iy,ions_list(is))
+              zesp_tmp(j)=zesp_tmp(j)+
+     *             v*na(ix,iy,ions_list(is))*rz2(ix,iy,ions_list(is))
+              gisp_tmp(j)=gisp_tmp(j)+fna(ix,iy,1,ions_list(is))
+              do i=0,jsep !{
+                gasp_tmp(j)=gasp_tmp(j)+
+     1               sna(ix,i,0,ions_list(is))+
+     2               sna(ix,i,1,ions_list(is))*na(ix,i,ions_list(is))
+              end do !}
+            end do !}
+            nasp_tmp(j)=nasp_tmp(j)+v*dab2(ix+1,iy+1,j,1)
+            tasp_tmp(j)=tasp_tmp(j)+v*dab2(ix+1,iy+1,j,1)*
+     .                                tab2(ix+1,iy+1,j,1)
+          end do !}
+        end if !}
+      end do !}
+
+ 10   continue
+
+      do i=2,nnreg(0) !{
+        hlp_qrsl=hlp_qrsl-(b2radreg(i)+rdneureg(i)+b2bremreg(i))
+      end do !}
+
+      is=0
+      do j=1,nspecies !{
+        if(hlp_nesp.gt.0.0_R8) then !{
+          zesp_tmp(j)=zesp_tmp(j)/hlp_nesp
+        else !}{
+          zesp_tmp(j)=0.0_R8
+        end if !}
+        if(nisp_tmp(j).gt.0.0_R8) then !{
+          zisp_tmp(j)=zisp_tmp(j)/nisp_tmp(j)
+        else !}{
+          zisp_tmp(j)=0.0_R8
+        end if !}
+        if(nasp_tmp(j).gt.0.0_R8) then !{
+          tasp_tmp(j)=tasp_tmp(j)/nasp_tmp(j)/qe
+        else !}{
+          tasp_tmp(j)=0.0_R8
+        end if !}
+        if(hlp_v.gt.0.0_R8) then !{
+          nisp_tmp(j)=nisp_tmp(j)/hlp_v
+          nasp_tmp(j)=nasp_tmp(j)/hlp_v
+        else !}{
+          nisp_tmp(j)=0.0_R8
+          nasp_tmp(j)=0.0_R8
+        end if !}
+        if(hlp_p.gt.0.0_R8) then !{
+          prsr_tmp(j)=prsr_tmp(j)/hlp_p
+        else !}{
+          prsr_tmp(j)=0.0_R8
+        end if !}
+        if(hlp_v.gt.0.0_R8) then !{
+          do i=1,nfluids(j) !{
+            is=is+1
+            nisi_tmp(is)=nisi_tmp(is)/hlp_v
+          end do !}
+        else !}{
+          do i=1,nfluids(j) !{
+            is=is+1
+            nisi_tmp(is)=0.0_R8
+          end do !}
+        end if !}
+      end do !}
+
+      if(hlp_nesp.gt.0.0_R8) then !{
+        hlp_tesp=hlp_tesp/hlp_nesp/qe
+        hlp_zesp=hlp_zesp/hlp_nesp
+      else !}{
+        hlp_tesp=0.0_R8
+        hlp_zesp=0.0_R8
+      end if !}
+      if(hlp_n.gt.0.0_R8) then !{
+        hlp_tisp=hlp_tisp/hlp_n/qe
+      else !}{
+        hlp_tisp=0.0_R8
+      end if !}
+      if(hlp_v.gt.0.0_R8) then !{
+        hlp_nesp=hlp_nesp/hlp_v
+      else !}{
+        hlp_nesp=0.0_R8
+      end if !}
+      hlp_qtsp=hlp_qisp+hlp_qesp
+      hlp_spmn=Spmp_nom
+      
+      do is=1,nstrai !{
+        if(crcstra(is).eq.'C') then !{
+          v=0.0_R8
+          do i=1,nspecies !{
+            v=v+gpfc(i,is)
+          end do !}
+          do i=1,nspecies !{
+            if(v.gt.0.0_R8) 
+     -          gpuf_tmp(i)=gpuf_tmp(i)+userfluxparm(is,1)*gpfc(i,is)/v
+          end do !}
+        end if !}
+      end do !}
+
+c      print *,'@@gasp= ',(gasp_tmp(i),i=1,nspecies)               !###
+      do k=1,ncns !{
+        l=nnlimi+lcns(k)
+        do is=1,nspecies !{
+c          print *,'@@gasp: k,l,is,wldna=',k,l,is,wldna(l,is,0)    !### 
+          gasp_tmp(is)=gasp_tmp(is)+wldna(l,is,0)
+          do i=1,nnmoli !{
+c            if(mlcmp(is,i).gt.0) print *,'@@i,wldnm,mlcmp=',      !###
+c     ,                                i,wldnm(l,i,0),mlcmp(is,i)  !###
+            gasp_tmp(is)=gasp_tmp(is)+wldnm(l,i,0)*mlcmp(is,i)
+          end do !}
+        end do !}
+      end do !}
+
+      if(hlp_nesp.gt.0.0_R8) then
+        do k=1,nspecies !{
+          nrsr_tmp(k)=nisp_tmp(k)/hlp_nesp
+        end do !}
+      else !}{
+        do k=1,nspecies !{
+          nrsr_tmp(k)=0.0_R8
+        end do !}
+      end if !}
+      
+      if(ank_tracing.eq.0) return
+      if(filedata(ltrc)) then !{
+
+c*** Write the data in a separate file for plotting...
+
+        write(lun,hlp_frm,err=94) tim,
+     ,          (equg_tmp(j),j=1,ng_tmp),
+     ,         ((equs_tmp(i,j),i=1,nsp_tmp),j=1,ns_tmp),
+     ,         ((equi_tmp(i,j),i=1,nii_tmp),j=1,ni_tmp)
+      end if !}
+      return
+c======================================================================
+
+      entry b2wrsepi(nx,ny,ns,BoRiS)
+c----------------------------------------------------------------------
+c*** Initialise the file for tracing data
+c----------------------------------------------------------------------
+
+      tab=char(9)
+      call get_jsep(nx,ny,jxi,jxa,jsep)
+
+      if(nspecies.le.0) then !{
+        write(*,*) '!!! b2wrsep: nspecies.lt.0 - no tracing data'
+        filedata(ltrc)=.false.
+      else !}{
+        nis_tmp=0
+        do i=1,nspecies !{
+          nis_tmp=nis_tmp+nfluids(i)
+          if(nfluids(i).le.0) then !{
+            write(*,*) '!!! b2wrsep: nfluids(',i,' ) = ',nfluids(i),
+     ,                                            '  - no tracing data'
+            filedata(ltrc)=.false.
+          end if !}
+        end do !}
+      end if !}
+      if(nncut.ne.1 .and. nncut.ne.2) then !{
+        write(*,*) '!!! b2wrsep: nncut = ',nncut,' - no tracing data'
+        filedata(ltrc)=.false.
+      end if !}
+
+c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
+c*** f     :  the associated file name
+      lun=ntrc(ltrc)
+      f=fn_ntrc(ltrc)
+
+      inquire(file=f,exist=ex)
+      open(lun,file=f,err=90)
+      rewind(lun)
+      if(ex) then
+        read(lun,700,err=92) nv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
+        lv_trc(ltrc)=nv
+        warn_tmp=.false.
+        if(nv.ne.lv) then
+          warn_tmp=.true.
+          write(*,*) '!!! b2wrsep: current version ',lv,
+     ,                         '  differs from that in the file ',f
+c          if(nv .lt. 970212) then
+c*** It was a major change of the file format - impossible to continue
+            write(*,*) 'No tracing file - ',
+     ,                                'remove the existing file first!'
+            filedata(ltrc)=.false.
+            return
+c          end if
+        end if
+        if(ng_tmp.ne.nglb_tmp) then
+          warn_tmp=.true.
+          write(*,*) '!!! b2wrsep: current number of global values ',
+     ,                nglb_tmp,'  differs from that in the file ',f
+          if(ng_tmp.gt.nglb_tmp) filedata(ltrc)=.false.
+        end if
+        if(ns_tmp.ne.nspc_tmp) then
+          warn_tmp=.true.
+          write(*,*) '!!! b2wrsep: current number of values by species',
+     ,                nspc_tmp,'  differs from that in the file ',f
+          if(ns_tmp.gt.nspc_tmp) filedata(ltrc)=.false.
+        end if
+        if(nsp_tmp.ne.nspecies) then
+          warn_tmp=.true.
+          write(*,*) '!!! b2wrsep: current number of species ',
+     ,                nspecies,'  differs from that in the file ',f
+          filedata(ltrc)=.false.
+        end if
+        if(ni_tmp.ne.nion_tmp) then
+          warn_tmp=.true.
+          write(*,*) '!!! b2wrsep: current number of values ',
+     ,               'by ion charge state ',
+     ,               nion_tmp,'  differs from that in the file ',f
+          if(ni_tmp.gt.nion_tmp) filedata(ltrc)=.false.
+        end if
+        if(nii_tmp.ne.nis_tmp) then
+          warn_tmp=.true.
+          write(*,*) '!!! b2wrsep: current number of ion charge states',
+     ,     ' ',ns-nspecies,'  differs from that in the file ',f
+          filedata(ltrc)=.false.
+        end if
+
+        if(.not.filedata(ltrc)) then
+          write(*,*) 'No tracing file - ',
+     ,                                'remove the existing file first!'
+          return
+        end if
+        if(warn_tmp) write(*,*) '  You should remove the file!'
+c*** Read to the end of the file
+ 50     read(lun,'(a1)',end=55) hlp_c
+        go to 50
+ 55     backspace lun
+      else
+c*** New file
+        ng_tmp=nglb_tmp
+        ns_tmp=nspc_tmp
+        nsp_tmp=nspecies
+        ni_tmp=nion_tmp
+        nii_tmp=nis_tmp
+        write(lun,700) lv,ng_tmp,ns_tmp,ni_tmp,nsp_tmp,nii_tmp
+        write(lun,'(2a)') '## ',label
+
+        hlp_frf='(9h(5h#time,,i3,9h(1h'//tab//',a8),,'     //
+     /          'i3,12h(1h'//tab//',a7,a2),,'              //
+     /          'i3,21h(1h'//tab//',a8,a2,i2.2,1h+)))'
+
+        write(hlp_frm,hlp_frf) ng_tmp, ns_tmp*nsp_tmp, ni_tmp*nii_tmp
+
+c<<<
+c        print *,'%%%b2wrsep: nb_tmp,nsp_tmp,nfl_tmp= ',
+c     ,                                           nb_tmp,nsp_tmp,nfl_tmp
+c        print *,'hlp_frm:'
+c        print *,hlp_frm
+c>>>
+
+        k=0
+        do i=1,nspecies !{
+          do j=1,nfluids(i) !{
+            k=k+1
+            ii(k)=j
+            hlp_a(k)=atoms_list(i)
+            if(hlp_a(k)(2:2).eq.' ') hlp_a(k)(2:2)='_'
+          end do !}
+        end do !}
+        write(lun,hlp_frm) (hlp_hg(i),i=1,ng_tmp),
+     ,              ((hlp_hs(j),atoms_list(i),i=1,nsp_tmp),j=1,ns_tmp),
+     ,              ((hlp_hi(k),hlp_a(i),ii(i),i=1,nii_tmp),k=1,ni_tmp)
+
+      end if
+      write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.4)))')
+     -                       ng_tmp + ns_tmp*nsp_tmp + ni_tmp*nii_tmp
+
+c<<<
+c      print *,'hlp_frm:'
+c      print *,hlp_frm
+c>>>
+      return
+c======================================================================
+ 90   write(*,*) 'b2wrsep: cannot open a file ',f
+      filedata(ltrc)=.false.
+      return
+c
+ 92   write(*,*) 'b2wrsept: wrong format of the file ',f
+      filedata(ltrc)=.false.
+      return
+c
+ 94   write(*,*) 'b2wrsep: cannot write in the file ',f
+      filedata(ltrc)=.false.
+      return
+c======================================================================
+      entry b2wrseps(nx,ny,ns,BoRiS)
+c----------------------------------------------------------------------
+c
+      return
+c======================================================================
+  700 format('#   ',10i8/'##  ',a)
+c======================================================================
+      end subroutine b2wrsep

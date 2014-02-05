@@ -1,0 +1,369 @@
+*-----------------------------------------------------------------------
+*.specification
+
+      subroutine b2oblm(number_exp, npar_opt, par_opt, dif, iflag)
+      use b2mod_optim
+	use b2mod_exp
+	use b2mod_exp_file_names
+	use b2mod_par_opt, only : par_opt_phys
+#ifdef WINDOWS
+	USE DFLIB 
+#endif
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer number_exp, npar_opt, iflag
+	real (kind=R8) :: par_opt(1:npar_opt)
+*   ..output arguments (unspecified on entry)
+	real (kind=R8) :: dif(1:number_exp)
+
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2OBLM calculates difference betwenn eperimental and model data.
+*
+*
+*  2. specification
+*
+*     
+*
+*
+*  3. description (see also routine b2cdca)
+*
+*
+*     The input units are:
+*     ninp(0): formatted; provides physics and numerics parameters.
+*     ninp(1): un*formatted; provides the geometry.
+*     ninp(2): un*formatted; provides default physics parameters.
+*     ninp(3): un*formatted; provides the initial state.
+*     ninp(4): un*formatted; provides atomic rate data.
+*     ninp(5): un*formatted; provides source term data.
+*
+*     The output units are:
+*     nout(0): formatted; provides summary print output.
+*     nout(1): un*formatted; provides actual physics parameters.
+*     nout(2): un*formatted; provides the final state.
+*     nout(3): un*formatted; may provide data for movie.
+*     nout(4): un*formatted; provides data on the numerical evolution.
+*     nout(5): un*formatted; may provide detailed convergence data.
+*     nout(6): un*formatted;
+*     nout(7): un*formatted;
+*     nout(8): formatted; post-processor output. [JET]
+*
+*     (See routine b2cdca for the meaning of 'un*formatted'.)
+*
+*
+*  4. references
+*
+*
+*
+*  5. parameters (see also routine b2cdcv)
+*
+*     None.
+*
+*
+*  6. error indicators
+*
+*     In case an error condition is detected, a call is made to the
+*     routine xerrab. This causes an error message to be printed,
+*     after which the program halts.
+*
+*
+*  7. accuracy
+*
+*     As a measure of convergence we employ the scaled L1-norms of the
+*     residuals of the individual equations (continuity for each
+*     species, momentum balance for each species, electron heat
+*     balance, atom heat balance, and charge balance). The scaling
+*     provides numbers that have the dimension of (1/time). A reliable
+*     estimate of the accuracy of a calculation can be obtained only
+*     by continuing the calculation to better convergence.
+*
+*
+*  8. further comments
+*
+*-----------------------------------------------------------------------
+*.declarations
+
+*   ..common blocks
+
+*   ..local variables
+#ifdef WINDOWS
+      integer(2) ::  iresult
+      logical(4) ::  lresult
+#endif
+      logical(4) ::  b2fstate_exist, b2fstate_add_exist,
+     &               b2fstati_add_exist
+      integer ninp(0:5), nout(0:7), iy, npoint
+      real (kind=R8) :: cpu_s, cpu_f, x05baf, dseval,                 !srv 26.04.09
+     & nemod, temod, timod, func, fcain, fab, shift
+*   ..procedures
+!      external xerset, xertst
+*   ..initialise input/output unit numbers
+      data ninp/50,51,52,53,54,55/
+      data nout/60,61,62,63,64,65,66,67/
+*-----------------------------------------------------------------------
+*.computation
+crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+crfs put here the other main programs b2ag (prepares geometry and
+crfs  magnetic field), b2ah (prepares tables of default physics
+crfs  parameters), b2ai (prepares an initial plasma state),
+crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+*   ..program start-up calls
+
+*   ..calculate physical values of the optimization parameters
+!      par_opt_phys(1) = 0.3_R8 + par_opt(1)**2     ! hce
+!      par_opt_phys(2) = 0.3_R8 + par_opt(2)**2     ! hci
+!      par_opt_phys(3) = 0.3_R8 + par_opt(3)**2     ! Di
+      par_opt_phys(1) = fcain(0.3_R8,par_opt(1),istyle)   ! hce
+      par_opt_phys(2) = fcain(0.3_R8,par_opt(2),istyle)   ! hci
+      par_opt_phys(3) = fcain(0.3_R8,par_opt(3),istyle)   ! Di
+!    parameters for boundary conditions
+      par_opt_phys(4) = fab(-0.10_R8, -0.001_R8, par_opt(4), istyle)  ! conpar(0,ib,1) [ -0.10,  -0.001]
+      par_opt_phys(5) = fab(-0.01_R8, -0.001_R8, par_opt(5), istyle)  ! conpar(1,ib,1) [ -0.01,  -0.001]
+      par_opt_phys(6) = fab(-1.e-2_R8, -1.e-5_R8, par_opt(6), istyle) ! enepar(ib,1) [ -0.01,  -0.0001]
+      par_opt_phys(7) = fab(-1.e-1_R8, -1.e-3_R8, par_opt(7), istyle) ! enipar(ib,1) [ -0.10,  -0.001]
+!     par_opt_phys(8) for separatrix shift
+      par_opt_phys(8) = fab(-1.e-2_R8,  1.e-2_R8, par_opt(8), istyle)  ! shift [-0.01, 0.01]  [m]
+      shift = par_opt_phys(8)
+
+*   .. additional parameters for H-regime
+      if(npar_opt.eq.16) then
+       par_opt_phys(9)  =  fab(0.010_R8, 0.030_R8, par_opt(9), istyle)  !   delta1 [ 0.01,  0.03] [m]
+       par_opt_phys(10) =  fab(0.001_R8, 0.005_R8, par_opt(10), istyle) !   delta2 [0.001, 0.005] [m]
+       par_opt_phys(11) =  fab(0.050_R8, 0.300_R8, par_opt(11), istyle) !    alfa1  [0.05, 0.3] [m]
+       par_opt_phys(12) =  fab(0.050_R8, 0.300_R8, par_opt(12), istyle) !    alfa2  [0.05, 0.3] [m]
+       par_opt_phys(13) =  fab(1.000_R8, 3.000_R8, par_opt(13), istyle) !    alfa3  [1.00, 3.0] [m]
+       par_opt_phys(14) =  fab(0.200_R8, 1.000_R8, par_opt(14), istyle) ! te_alfa1  [0.20, 1.0] [m]
+       par_opt_phys(15) =  fab(0.200_R8, 1.000_R8, par_opt(15), istyle) ! te_alfa2  [0.20, 1.0] [m]
+       par_opt_phys(16) =  fab(1.000_R8, 3.000_R8, par_opt(16), istyle) ! te_alfa3  [1.00, 3.0] [m]
+      endif
+      write(71,11) ' b2oblm: par_opt             ', par_opt
+      write(71,11) ' b2oblm: par_opt_phys        ', par_opt_phys
+   11 format((a,<npar_opt>es14.6))
+*   .. write binary file of physical parameters
+      open(70,file='b2fparop.dat',form='unformatted')
+      write(70) par_opt_phys
+      close(70)
+      
+	cpu_s = x05baf()
+
+#ifdef WINDOWS
+      iresult = RUNQQ ('B2mnOpt','')
+	inquire(file='b2fstate',exist=b2fstate_exist)
+	inquire(file='b2fstate_add',exist=b2fstate_add_exist)
+	inquire(file='b2fstati_add',exist=b2fstati_add_exist)
+	if(b2fstate_exist.and.b2fstate_add_exist) then
+	 if(b2fstati_add_exist) lresult = SYSTEMQQ('del b2fstati_add')
+       lresult = SYSTEMQQ('del b2fstati')
+       lresult = SYSTEMQQ('ren b2fstate b2fstati')
+       lresult = SYSTEMQQ('ren b2fstate_add b2fstati_add')
+	endif
+#else
+      call system('./B2mnOpt.exe')
+	inquire(file='b2fstate',exist=b2fstate_exist)
+	inquire(file='b2fstate_add',exist=b2fstate_add_exist)
+	inquire(file='b2fstati_add',exist=b2fstati_add_exist)
+	if(b2fstate_exist.and.b2fstate_add_exist) then
+	 if(b2fstati_add_exist) call system('rm b2fstati_add')
+       call system('rm b2fstati')
+       call system('cp b2fstate b2fstati')
+       call system('cp b2fstate_add b2fstati_add')
+       call system('rm b2fstate b2fstate_add')
+	endif
+#endif	 
+	cpu_f= x05baf()
+	write(71,"(' b2oblm takes ',es10.2,' sec')") cpu_f-cpu_s
+* read the results of modelling
+      call read_results
+	npoint=0
+	func = 0.0_R8
+*   .. compute objective function and write the results of modelling
+*   .. for inner lower
+      call treat_exp_res_eq(l_ne_inner_lower, fnm_ne_inner_lower,   
+     & ny, cy_ne_inner_lower, ne_inner_lower_mod, b_ne_inner_lower_mod,
+     & c_ne_inner_lower_mod, d_ne_inner_lower_mod,
+     & ndat_ne_inner_lower_exp, cy_ne_inner_lower_exp+shift,
+     & ne_inner_lower_exp, npoint, func, number_exp, dif)
+
+      call treat_exp_res_eq(l_te_inner_lower, fnm_te_inner_lower,   
+     & ny, cy_te_inner_lower, te_inner_lower_mod,
+     & b_te_inner_lower_mod, c_te_inner_lower_mod, d_te_inner_lower_mod,
+     & ndat_te_inner_lower_exp, cy_te_inner_lower_exp+shift, 
+     & te_inner_lower_exp, npoint, func, number_exp, dif)
+      
+      call treat_exp_res_eq(l_ti_inner_lower, fnm_ti_inner_lower,   
+     & ny, cy_ti_inner_lower, ti_inner_lower_mod,
+     & b_ti_inner_lower_mod, c_ti_inner_lower_mod, d_ti_inner_lower_mod,
+     & ndat_ti_inner_lower_exp, cy_ti_inner_lower_exp+shift,
+     & ti_inner_lower_exp, npoint, func, number_exp, dif)
+      
+      call treat_exp_res_eq(l_js_inner_lower, fnm_js_inner_lower,   
+     & ny, cy_js_inner_lower, js_inner_lower_mod,
+     & b_js_inner_lower_mod, c_js_inner_lower_mod, d_js_inner_lower_mod,
+     & ndat_js_inner_lower_exp, cy_js_inner_lower_exp+shift,
+     & js_inner_lower_exp, npoint, func, number_exp, dif)
+
+*   .. for inner upper
+      call treat_exp_res_eq(l_ne_inner_upper, fnm_ne_inner_upper,   
+     & ny, cy_ne_inner_upper, ne_inner_upper_mod, b_ne_inner_upper_mod,
+     & c_ne_inner_upper_mod, d_ne_inner_upper_mod,
+     & ndat_ne_inner_upper_exp, cy_ne_inner_upper_exp+shift,
+     & ne_inner_upper_exp, npoint, func, number_exp, dif)
+
+      call treat_exp_res_eq(l_te_inner_upper, fnm_te_inner_upper,   
+     & ny, cy_te_inner_upper, te_inner_upper_mod,
+     & b_te_inner_upper_mod, c_te_inner_upper_mod, d_te_inner_upper_mod,
+     & ndat_te_inner_upper_exp, cy_te_inner_upper_exp+shift, 
+     & te_inner_upper_exp, npoint, func, number_exp, dif)
+      
+      call treat_exp_res_eq(l_ti_inner_upper, fnm_ti_inner_upper,   
+     & ny, cy_ti_inner_upper, ti_inner_upper_mod,
+     & b_ti_inner_upper_mod, c_ti_inner_upper_mod, d_ti_inner_upper_mod,
+     & ndat_ti_inner_upper_exp, cy_ti_inner_upper_exp+shift,
+     & ti_inner_upper_exp, npoint, func, number_exp, dif)
+      
+      call treat_exp_res_eq(l_js_inner_upper, fnm_js_inner_upper,   
+     & ny, cy_js_inner_upper, js_inner_upper_mod,
+     & b_js_inner_upper_mod, c_js_inner_upper_mod, d_js_inner_upper_mod,
+     & ndat_js_inner_upper_exp, cy_js_inner_upper_exp+shift,
+     & js_inner_upper_exp, npoint, func, number_exp, dif)
+
+*   .. for outer midplane
+      call treat_exp_res_eq(l_ne_outer_mdpl, fnm_ne_outer_mdpl,   
+     & ny, cy_ne_outer_mdpl, ne_outer_mdpl_mod,
+     & b_ne_outer_mdpl_mod, c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod,
+     & ndat_ne_outer_mdpl_exp, cy_ne_outer_mdpl_exp-shift, 
+     & ne_outer_mdpl_exp, npoint, func, number_exp, dif)
+
+      call treat_exp_res_eq(l_te_outer_mdpl, fnm_te_outer_mdpl,   
+     & ny, cy_te_outer_mdpl, te_outer_mdpl_mod,
+     & b_te_outer_mdpl_mod, c_te_outer_mdpl_mod, d_te_outer_mdpl_mod,
+     & ndat_te_outer_mdpl_exp, cy_te_outer_mdpl_exp-shift, 
+     & te_outer_mdpl_exp, npoint, func, number_exp, dif)
+      
+      call treat_exp_res_eq(l_ti_outer_mdpl, fnm_ti_outer_mdpl,   
+     & ny, cy_ti_outer_mdpl, ti_outer_mdpl_mod,
+     & b_ti_outer_mdpl_mod, c_ti_outer_mdpl_mod, d_ti_outer_mdpl_mod,
+     & ndat_ti_outer_mdpl_exp, cy_ti_outer_mdpl_exp-shift, 
+     & ti_outer_mdpl_exp, npoint, func, number_exp, dif)
+
+*   .. for outer lower
+      call treat_exp_res_eq(l_ne_outer_lower, fnm_ne_outer_lower,   
+     & ny, cy_ne_outer_lower, ne_outer_lower_mod, b_ne_outer_lower_mod,
+     & c_ne_outer_lower_mod, d_ne_outer_lower_mod,
+     & ndat_ne_outer_lower_exp, cy_ne_outer_lower_exp-shift,
+     & ne_outer_lower_exp, npoint, func, number_exp, dif)
+
+      call treat_exp_res_eq(l_te_outer_lower, fnm_te_outer_lower,   
+     & ny, cy_te_outer_lower, te_outer_lower_mod,
+     & b_te_outer_lower_mod, c_te_outer_lower_mod, d_te_outer_lower_mod,
+     & ndat_te_outer_lower_exp, cy_te_outer_lower_exp-shift, 
+     & te_outer_lower_exp, npoint, func, number_exp, dif)
+      
+      call treat_exp_res_eq(l_ti_outer_lower, fnm_ti_outer_lower,   
+     & ny, cy_ti_outer_lower, ti_outer_lower_mod,
+     & b_ti_outer_lower_mod, c_ti_outer_lower_mod, d_ti_outer_lower_mod,
+     & ndat_ti_outer_lower_exp, cy_ti_outer_lower_exp-shift,
+     & ti_outer_lower_exp, npoint, func, number_exp, dif)
+      
+      call treat_exp_res_eq(l_js_outer_lower, fnm_js_outer_lower,   
+     & ny, cy_js_outer_lower, js_outer_lower_mod,
+     & b_js_outer_lower_mod, c_js_outer_lower_mod, d_js_outer_lower_mod,
+     & ndat_js_outer_lower_exp, cy_js_outer_lower_exp-shift,
+     & js_outer_lower_exp, npoint, func, number_exp, dif)
+
+*   .. for outer upper
+      call treat_exp_res_eq(l_ne_outer_upper, fnm_ne_outer_upper,   
+     & ny, cy_ne_outer_upper, ne_outer_upper_mod, b_ne_outer_upper_mod,
+     & c_ne_outer_upper_mod, d_ne_outer_upper_mod,
+     & ndat_ne_outer_upper_exp, cy_ne_outer_upper_exp-shift,
+     & ne_outer_upper_exp, npoint, func, number_exp, dif)
+
+      call treat_exp_res_eq(l_te_outer_upper, fnm_te_outer_upper,   
+     & ny, cy_te_outer_upper, te_outer_upper_mod,
+     & b_te_outer_upper_mod, c_te_outer_upper_mod, d_te_outer_upper_mod,
+     & ndat_te_outer_upper_exp, cy_te_outer_upper_exp-shift, 
+     & te_outer_upper_exp, npoint, func, number_exp, dif)
+      
+      call treat_exp_res_eq(l_ti_outer_upper, fnm_ti_outer_upper,   
+     & ny, cy_ti_outer_upper, ti_outer_upper_mod,
+     & b_ti_outer_upper_mod, c_ti_outer_upper_mod, d_ti_outer_upper_mod,
+     & ndat_ti_outer_upper_exp, cy_ti_outer_upper_exp-shift,
+     & ti_outer_upper_exp, npoint, func, number_exp, dif)
+      
+      call treat_exp_res_eq(l_js_outer_upper, fnm_js_outer_upper,   
+     & ny, cy_js_outer_upper, js_outer_upper_mod,
+     & b_js_outer_upper_mod, c_js_outer_upper_mod, d_js_outer_upper_mod,
+     & ndat_js_outer_upper_exp, cy_js_outer_upper_exp-shift,
+     & js_outer_upper_exp, npoint, func, number_exp, dif)
+
+      if(l_power) then
+	 npoint=npoint+1
+	 dif(npoint) = (power_mod-power_exp)/power_exp
+	 func = func + dif(npoint)**2
+	 write(71,"(5x,'pw_mod',5x,'pw_exp',5x,'dif')") 
+	 write(71,"(1x,3(es14.6))") power_mod, power_exp, dif(npoint)
+	endif
+
+	nfunc = nfunc + 1
+
+	func = sqrt(func/npoint)
+	write(71,*) ' b2oblm: nfunc, func, npoint ', nfunc, func, npoint
+
+* ..end of computation
+      return
+
+*-----------------------------------------------------------------------
+*.end b2oblm
+
+      end subroutine b2oblm
+
+      subroutine treat_exp_res_eq(l_ne_outer_mdpl, fnm_ne_outer_mdpl,   
+     &  ny, cy_ne_outer_mdpl, ne_outer_mdpl_mod, 
+     &  b_ne_outer_mdpl_mod, c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod,  
+     &  ndat_ne, cy_ne_outer_mdpl_exp, ne_outer_mdpl_exp, npoint, func,
+     &  number_exp, dif)
+	use b2mod_types
+	implicit none
+	logical(1) :: l_ne_outer_mdpl
+	character(*) :: fnm_ne_outer_mdpl
+	integer :: ny, npoint, ndat_ne, number_exp
+	real (kind=R8) ::  func, dif(1:number_exp),
+     &   cy_ne_outer_mdpl(-1:ny), 
+     &   ne_outer_mdpl_mod(-1:ny), b_ne_outer_mdpl_mod(-1:ny),
+     & c_ne_outer_mdpl_mod(-1:ny), d_ne_outer_mdpl_mod(-1:ny),
+     & cy_ne_outer_mdpl_exp(1:ndat_ne), ne_outer_mdpl_exp(1:ndat_ne)  
+      
+	integer ::  iy
+	real (kind=R8) :: nemod, dseval
+	character(128) :: fmt 
+
+      fmt="(8x,'y',7x,1x,'"//trim(fnm_ne_outer_mdpl)//"_exp'"//
+     &  ",4x,'"//trim(fnm_ne_outer_mdpl)//"_mod',8x,'dif')"
+	if(l_ne_outer_mdpl) then
+	 call approx_profile_mod(ny+2,   
+     &                 cy_ne_outer_mdpl, ne_outer_mdpl_mod,
+     &   b_ne_outer_mdpl_mod, c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod)
+!	 write(71,"(7x,'y',7x,5x,'ne_outer_mdpl_exp',8x,
+!     &   'ne_outer_mdpl_mod',8x,'dif')") 
+	 write(71,trim(fmt)) 
+	 do iy=1,ndat_ne
+	  if(cy_ne_outer_mdpl(-1)*1.0001.le.cy_ne_outer_mdpl_exp(iy) .and. 
+     &     cy_ne_outer_mdpl_exp(iy).le.cy_ne_outer_mdpl(ny)*1.0001) then
+	   nemod = dseval(ny+2, cy_ne_outer_mdpl_exp(iy), 
+     &         cy_ne_outer_mdpl, ne_outer_mdpl_mod, b_ne_outer_mdpl_mod,
+     *         c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod)
+         npoint=npoint+1
+	   dif(npoint) = (nemod-ne_outer_mdpl_exp(iy))/ne_outer_mdpl_exp(iy)
+	   func = func + dif(npoint)**2
+	   write(71,"(1x,4(es14.6))") cy_ne_outer_mdpl_exp(iy),
+     &              ne_outer_mdpl_exp(iy), nemod, dif(npoint)
+	  endif
+	 enddo
+	endif
+      end subroutine treat_exp_res_eq
+
+

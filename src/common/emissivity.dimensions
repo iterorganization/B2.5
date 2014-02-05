@@ -1,0 +1,24 @@
+c     -------------------------------------------------------------------------
+c     include file emissivity.dimensions
+c     -------------------------------------------------------------------------
+c     Contains dimensions used in emissivity.f
+c     -------------------------------------------------------------------------
+c     03/21/97 bhs
+c     -------------------------------------------------------------------------
+
+c     NSTORE:   maximum number of data blocks which can be read from the
+c               adf15 data set
+c     NTDIM:    maximum number of electron temperatures that can be read
+c               from an adf15 data set data block
+c               adf15 data set
+c     NDDIM:    maximum number of electron densities that can be read
+c               from an adf15 data set data block
+c               adf15 data set
+
+      integer NSTORE,NTDIM,NDDIM
+      parameter (NSTORE=500,NTDIM=35,NDDIM=26)
+
+c     maxdim:   maximum dimension of NE,TE,NI,NI1,NH,E in GetEmissivity
+
+      integer maxdim
+      parameter (maxdim=500)

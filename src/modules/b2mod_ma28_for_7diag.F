@@ -1,0 +1,61 @@
+      module b2mod_ma28_for_7diag                                     !sv 11.01.00
+
+      use b2mod_types
+      real (kind=R8), allocatable, save ::
+     * r1(:),
+     * s1(:),
+     * a1h(:),
+     * w(:),
+     * res(:),
+     * a1h_save(:)
+
+      integer, allocatable, save ::
+     * irn(:),
+     * icn(:),
+     * ish(:),
+     * jsh(:),
+     * ijsh(:),
+     * irnh(:),
+     * icnh(:),
+     * icnhkeep(:),
+     * ikeep(:),
+     * iw28(:),
+     * irnh_save(:),
+     * icnh_save(:)
+
+      integer nc0,nltrsol,nnd,n_nonzeros,solvdim,solvdim1
+
+      contains
+
+      subroutine alloc_b2mod_ma28_for_7diag                           !sv 11.01.00
+
+      write(*,*) 'Allocating space for b2mod_ma28_for_7diag'          !sv 11.01.00
+      write(*,*) 'nnd        = ',nnd
+      write(*,*) 'n_nonzeros = ',n_nonzeros
+      write(*,*) 'solvdim    = ',solvdim
+      write(*,*) 'solvdim1   = ',solvdim1
+
+      allocate(r1(1:nnd))
+      allocate(s1(1:nnd))
+      allocate(a1h(1:solvdim))
+      allocate(w(1:nnd))
+      allocate(res(1:nnd))
+      allocate(a1h_save(1:n_nonzeros))
+      allocate(irn(1:n_nonzeros))
+      allocate(icn(1:n_nonzeros))
+      allocate(ish(1:n_nonzeros))
+      allocate(jsh(1:n_nonzeros))
+      allocate(ijsh(1:n_nonzeros))
+      allocate(irnh(1:solvdim1))
+      allocate(icnh(1:solvdim))
+      allocate(icnhkeep(1:solvdim))
+      allocate(ikeep(1:5*nnd))
+      allocate(iw28(1:8*nnd))
+      allocate(irnh_save(1:n_nonzeros))
+      allocate(icnh_save(1:n_nonzeros))
+
+      write(*,*) 'Allocated space for b2mod_ma28_for_7diag'           !sv 11.01.00
+
+      end subroutine alloc_b2mod_ma28_for_7diag                       !sv 11.01.00
+
+      end module b2mod_ma28_for_7diag                                 !sv 11.01.00

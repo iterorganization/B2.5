@@ -1,0 +1,196 @@
+      subroutine b2pldr (ninp, nout, nx, ny, ns)
+      use b2mod_types
+      use b2mod_version
+      use b2mod_geo
+      use b2mod_plasma
+      use b2mod_rates
+      use b2mod_residuals
+      use b2mod_sources
+      use b2mod_transport
+      use b2mod_work
+      use b2mod_indirect
+      use b2mod_constants
+      use b2mod_geo_corner
+      use b2mod_b2cmfs
+      use b2mod_b2cmgs
+      use b2mod_b2cmpa
+      use b2mod_b2cmpb
+      use b2mod_b2cmpt
+      use b2mod_b2cmrc
+      use b2mod_b2cmwg
+      use b2mod_ppout
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer ninp(0:5), nout(0:2), nx, ny, ns
+*   ..output arguments (unspecified on entry)
+*     (none)
+*   ..common blocks
+*   ..local variables
+      integer ix, iy, is, idum(0:9), k, nscx, iscx(0:nscxmax-1)
+      character lblgm*120, lblcp*120, lblmn*120, lblrc*120
+      character cnamip*80, cvalip*80
+      real (kind=R8) :: t0, t1
+      real (kind=R8) ::
+     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
+     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
+     &  rbr(-1:nx,-1:ny,0:ns-1), rcx(-1:nx,-1:ny,0:ns-1)
+*   ..procedures
+      logical ltst
+      intrinsic sqrt
+      external subini, subend, xertst, xerrab
+      external cfruch, cfruin, cfverr, b2rfcp
+      external b2rups, b2rugm, b2rucp, b2plot, b2xxid, b2rflb, b2rurc
+      external b2ruzd, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps, b2xvcp
+      external intfaceh1, intfacer1, intfacev1
+      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
+
+*   ..subprogram start-up calls
+      call subini ('b2pldr')
+*   ..test ninp, nout
+      call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.
+     &  1.le.ninp(3).and.1.le.ninp(4).and.1.le.ninp(5).and.
+     &  1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2),
+     &  'faulty argument ninp, nout')
+*   ..test dimensions
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (1.le.ns, 'faulty argument ns')
+      call xertst (ns.le.nsdecl, 'faulty parameter nsdecl')
+
+* ..computation
+*   ..obtain lblmn
+      call b2xxid ('b2mn', lblmn(1:60))
+      call b2rflb (ninp(0), lblmn(61:120))
+*   ..read geometry
+      call cfruch (ninp(1), 120, lblgm, 'label')
+      call cfruin (ninp(1), 1, idum, 'isymm')
+      isymm = idum(0)
+      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi,
+     &  ffbz, bb, vol, hx, hy, qz, qc, gs)
+*   ..read physics common
+      call cfruch (ninp(2), 120, lblcp, 'label')
+      call b2rucp (ninp(2), b2fparam_version, nx, ns)
+*   ..read revised parameters in physics common
+*     (ninp(0) need supply only parameters that are to be changed from
+*     the values read in as default physics common.)
+      call b2rfcp (ninp(0), ns)
+*   ..test parameters
+      call b2xvcp (nx, ns)
+*   ..read and echo code internal parameters
+    1 continue
+       read (ninp(0),*,end=2,err=91) cnamip, cvalip
+       call ipsetc (cnamip, cvalip)
+       goto 1
+    2 continue
+*   ..read plasma state file
+      call cfruch (ninp(3), 120, lblmn, 'label')
+*   ..read species data
+      call b2ruzd (ninp(3), b2fstate_version, ns, zamin, zamax, zn, am)
+*   ..read plasma state
+      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,		 !xpb
+     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &	b2fstate_version)
+*   ..test plasma state and fluxes
+      call b2xvps (nx, ny, ns, 
+     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+*   ..read atomic rate data
+      call cfverr (ninp(5), b2frates_version)
+      call cfruch (ninp(5), 120, lblrc, 'label')
+      call read_b2mod_ppout('rates', ninp(5), lblrc)
+      call b2rurc (ninp(5), b2frates_version)
+*   ..test rtns, rtzmin, rtzmax, rtzn
+      call xertst (ns.eq.rtns, 'faulty input rtns--wrong rate table?')
+      do is = 0, ns-1
+       call xertst (ltst(zamin(is),rtzmin(is)),
+     &   'faulty input rtzmin--wrong rate table?')
+       call xertst (ltst(zamax(is),rtzmax(is)),
+     &   'faulty input rtzmax--wrong rate table?')
+       call xertst (ltst(zn(is),rtzn(is)),
+     &   'faulty input rtzn--wrong rate table?')
+      enddo
+*    ..compute log-log electron rate coefficients
+      call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
+     &     rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
+*   ..compute electron rate coefficients
+      call b2sqel (nx, ny, ns, ev, te, 
+     &     rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
+     &     rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
+*   ..find nscx, iscx
+*     (indices for neutral hydrogen species)
+      nscx = 0
+      do is = 0, ns-1
+        if (is_neutral(is).and.zn(is).eq.1.0_R8) then
+          call xertst (nscx.lt.nscxmax, 
+     1     'too many neutral hydrogen species')
+          iscx(nscx) = is
+          nscx = nscx+1
+        endif
+      enddo
+      do k = nscx, nscxmax-1
+        iscx(k) = -1
+      enddo
+*    ..compute log-log charge-exchange rate coefficients
+      do k = 0, nscx-1
+        call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne,
+     &   rlcx(-1,-1,0,0,k))
+      enddo
+*   ..compute charge-exchange rate coefficients
+      do k = 0, nscx-1
+        call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti, rlcx(-1,-1,0,0,k),
+     &   rcx, wrk0)
+      enddo
+*  .. interpolate magnetic field to cell faces                           !xpb
+      call intfaceh1(nx,ny,2,vol,bb,wbbl)                                !xpb
+      call intfacer1(nx,ny,2,vol,bb,wbbr)                                !xpb
+      call intfacev1(nx,ny,2,vol,bb,wbbv)                                !xpb
+*   ..extrapolate magnetic field to edges
+      do iy = -1, ny
+        do ix = -1, nx
+          if (leftix(ix,iy).eq.-2) wbbl(ix,iy,0:2) = bb(ix,iy,0:2)-
+     &      (wbbr(ix,iy,0:2)-bb(ix,iy,0:2))
+          if (rightix(ix,iy).eq.nx+1) wbbr(ix,iy,0:2) = bb(ix,iy,0:2) -
+     &      (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
+          if (bottomiy(ix,iy).eq.-2) wbbv(ix,iy,0:2) = bb(ix,iy,0:2) -
+     &     (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
+        enddo
+      enddo
+*   .. correct interpolation of magnetic field for diverted island case  !xpb
+*      as B is not a periodic quantity                                   !xpb
+      if(periodic_bc.eq.1 .and. nncut.ge.1) then                         !xpb
+         do iy = -1, ny                                                  !xpb
+           do ix = -1, nx                                                !xpb
+             if(leftix(ix,iy).ne.ix-1) then                              !xpb
+               if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.4) then   !xpb
+                 wbbl(ix,iy,0)=bb(ix,iy,0)-(wbbr(ix,iy,0)-bb(ix,iy,0))   !xpb
+                 wbbl(ix,iy,1)=bb(ix,iy,1)-(wbbr(ix,iy,1)-bb(ix,iy,1))   !xpb
+                 wbbl(ix,iy,2)=bb(ix,iy,2)-(wbbr(ix,iy,2)-bb(ix,iy,2))   !xpb
+               endif                                                     !xpb
+             else if(rightix(ix,iy).ne.ix+1) then                        !xpb
+               if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.3) then   !xpb
+                 wbbr(ix,iy,0)=bb(ix,iy,0)-(wbbl(ix,iy,0)-bb(ix,iy,0))   !xpb
+                 wbbr(ix,iy,1)=bb(ix,iy,1)-(wbbl(ix,iy,1)-bb(ix,iy,1))   !xpb
+                 wbbr(ix,iy,2)=bb(ix,iy,2)-(wbbl(ix,iy,2)-bb(ix,iy,2))   !xpb
+               endif                                                     !xpb
+             endif                                                       !xpb
+           enddo                                                         !xpb
+         enddo                                                           !xpb
+      endif                                                              !xpb
+*   ..compute extrapolated wbb.(:,:,3) components
+      wbbl(:,:,3)=sqrt(wbbl(:,:,0)**2+wbbl(:,:,1)**2+wbbl(:,:,2)**2)
+      wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
+      wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
+*   ..process
+      call b2plot(nx,ny,ns)
+
+* ..return
+      call subend ()
+      return
+
+*-----------------------------------------------------------------------
+*.error conditions
+
+   91 call xerrab ('error trying to read internal parameters')
+
+*-----------------------------------------------------------------------
+*.end b2pldr
+
+      end subroutine b2pldr

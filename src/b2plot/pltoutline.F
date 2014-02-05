@@ -1,0 +1,124 @@
+c
+      subroutine pltoutline
+      use b2mod_types
+      use b2mod_geo
+      use b2mod_b2plot
+      use b2mod_indirect
+      implicit none
+      integer ix,iy
+
+c       call gslwsc_d(1.0_R8)
+#ifndef PLPLOT
+      call lastd
+      if(ocol .gt. 1) call gsplci(ocol)
+      call gslwsc_d(owidth)
+#endif
+      if(mod(typeofplot,2) .eq. 1) then ! mesh physical domain
+        do ix=-1,nx
+          do iy=-1,ny
+            if(leftix(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0)
+     >       call lined_d(crx(ix,iy,0),cry(ix,iy,0),
+     1                    crx(ix,iy,2),cry(ix,iy,2))
+            if(topiy(ix,iy).eq.ny+1 .and. region(ix,iy,0).ne.0)
+     >       call lined_d(crx(ix,iy,2),cry(ix,iy,2),
+     1                    crx(ix,iy,3),cry(ix,iy,3))
+            if(rightix(ix,iy).eq.nx+1 .and. region(ix,iy,0).ne.0) 
+     >       call lined_d(crx(ix,iy,3),cry(ix,iy,3),
+     1                    crx(ix,iy,1),cry(ix,iy,1))
+            if(bottomiy(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0)
+     >       call lined_d(crx(ix,iy,1),cry(ix,iy,1),
+     1                    crx(ix,iy,0),cry(ix,iy,0))
+          enddo
+        enddo
+      endif
+#ifndef PLPLOT
+      call lastd
+      if(ocol .gt. 1) call gsplci(1)
+      call gslwsc_d(lwidth)
+#endif
+      return
+      end
+c
+      subroutine plot_arrows(is)
+      use b2mod_types
+      use b2mod_geo
+      use b2mod_b2plot
+      use b2mod_indirect
+      implicit none
+      integer is,ix,iy
+      real (kind=R8) ::
+     * fmax,fmay,fmmax,rmagst,rmaguv,r,s,t,u,v,sb,cb,rl,rd,
+     1 uu1,vv1,uu2,vv2,brx,bzy,dfx,dfy,uuu,vvv
+      intrinsic max, sqrt
+
+      fmax=arrowx(0,0,is)/gs(0,0,0)/qc(0,0)
+      fmay=arrowy(0,0,is)/gs(0,0,1)
+      fmmax=sqrt(fmax**2+fmay**2)
+      do iy=-1,ny
+        do ix=-1,nx
+          if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
+     &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2) then
+            fmax=arrowx(ix,iy,is)/gs(ix,iy,0)/qc(ix,iy)
+            fmay=arrowy(ix,iy,is)/gs(ix,iy,1)
+            fmmax=max(fmmax,sqrt(fmax*fmax+fmay*fmay))
+          endif
+        enddo
+      enddo
+      if(fmmax.eq.0.0_R8) then
+        write(*,*) 'Cannot plot arrows for a zero field'
+        return
+      endif
+      write (*,*) 'drawing arrows'
+#ifndef PLPLOT
+      call lastd
+      call gslwsc_d(arroww) ! increase arrow line width
+      if (acol .gt. 1) call gsplci(acol) ! change arrow colour
+#endif
+      do iy=-1,ny
+        do ix=-1,nx
+          if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
+     &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2) then
+            brx=cr(ix,iy)
+            bzy=cz(ix,iy)
+            s=cr(rightix(ix,iy),rightiy(ix,iy))-
+     .        cr(leftix(ix,iy),leftiy(ix,iy))
+            t=cz(rightix(ix,iy),rightiy(ix,iy))-
+     .        cz(leftix(ix,iy),leftiy(ix,iy))
+            u=cr(topix(ix,iy),topiy(ix,iy))-
+     .        cr(bottomix(ix,iy),bottomiy(ix,iy))
+            v=cz(topix(ix,iy),topiy(ix,iy))-
+     .        cz(bottomix(ix,iy),bottomiy(ix,iy))
+            rmagst=sqrt(s**2+t**2)
+            rmaguv=sqrt(u**2+v**2)
+
+            dfx=arrowx(ix,iy,is)/gs(ix,iy,0)/qc(ix,iy)/fmmax
+            dfy=arrowy(ix,iy,is)/gs(ix,iy,1)/fmmax
+
+            uuu=arrowl*(dfx*s/rmagst+dfy*u/rmaguv)
+            vvv=arrowl*(dfx*t/rmagst+dfy*v/rmaguv)
+            r=sqrt(uuu**2+vvv**2)
+            sb=vvv/r
+            cb=uuu/r
+            rl=0.2_R8*r
+            rd=0.1_R8*r
+            uu1=uuu-rl*cb+rd*sb
+            vv1=vvv-rl*sb-rd*cb
+            uu2=uuu-rl*cb-rd*sb
+            vv2=vvv-rl*sb+rd*cb
+            call lined_d(brx,bzy,brx+uuu,bzy+vvv)
+            call lined_d(brx+uuu,bzy+vvv,brx+uu1,bzy+vv1)
+            call lined_d(brx+uuu,bzy+vvv,brx+uu2,bzy+vv2)
+c           call lined_d(brx+uu1,bzy+vv1,brx+uu2,bzy+vv2)
+          endif
+        enddo
+      enddo
+#ifndef PLPLOT
+      call gslwsc_d(1.0_R8)
+      if (acol .gt. 1) then
+        call lastd
+        call gsplci(1)
+      endif
+#endif
+      write (*,*) 'finished drawing arrows'
+      return
+      end

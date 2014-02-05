@@ -1,0 +1,2197 @@
+      subroutine eirene_mc(nx, ny, ns, ismain, dtim, BoRiS, 
+     1 sna0, smo0, she0, shi0, main_call)
+
+c  version : 26.07.2002 23:39
+
+      use b2mod_types
+      use b2mod_plasma
+      use b2mod_indirect
+      use b2mod_geo
+      use b2mod_neutrals_namelist
+      use b2mod_constants
+      use b2mod_eirene_globals
+      use b2mod_tallies
+      use b2mod_neutr_src_scaling
+      use b2mod_feedback
+      use b2mod_diag
+      use b2mod_rates
+      use b2mod_b2cmpa
+      use b2mod_b2cmpb
+      use eirmod_braeir
+      use eirmod_eirbra
+      use eirmod_extraB25
+      implicit none
+      integer nx,ny,ns,ismain
+      real (kind=R8) ::
+     * dtim, BoRiS,
+     * sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
+     & she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3)
+      logical main_call                                                  !dpc
+csw 19oct2012, added save attribute!!!
+      logical, save :: my_ltime
+
+      integer, save :: background_new=0                              !srv 14.07.10
+      integer ix,iy,is,ifl,istrai,ncall
+      integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
+     1 nesepm_istra, use_recyceir
+      real (kind=R8) ::
+     * recyc_hlp,vthe,t0,t1,rf0,uatmp,volsumnold(nstra),t2,t3,
+     * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
+     * recyctmp, nesepm_pfr, volrec_sol, ndes_sol
+      real (kind=R8) ::
+     * tfl(nstra,0:ns-1),
+     1 SSNI(NSTRA,0:NS-1), SSMO(NSTRA,0:NS-1),
+     . SSEE(NSTRA), SSEI(NSTRA), SSEICORR(NSTRA)
+
+cank-20020724 {
+c*** The type of source scaling is determined by the lstrascl parameter
+c*** for each stratum, each species:
+c***  < 0   - prehistoric treatment (left for compatibility)
+c***  = 0   - no source scaling at all
+c***  =< nspecies - full treatment, on each sub-iteration
+c***  > nspecies  - partial treatment, after Eirene call only
+c***
+c*** In the Eirene particle balance, we distinguish the following
+c*** components for each stratum, each species:
+c***
+c***  hlp_pi  plasma onto the surfaces
+c***  hlp_po  resulting neutrals from the surfaces (recycling)
+c***  hlp_ni  neutrals onto the surfaces
+c***  hlp_no  reflected neutrals
+c***  hlp_g   neutrals from the gas puffing sources
+c***  hlp_s   neutrals ionising in the plasma (<0 for recombination)
+c***  hlp_t   neutrals absorbed in the "time layer"
+c***  tfl     plasma onto the surfaces in B2
+c***
+c*** For a recycling stratum, first scale all the sources and fluxes by
+c*** the ratio of tfl/hlp_pi to have exact match between B2 & Eirene.
+c*** Then scale hlp_s, hlp_t, hlp_ni, hlp_no by x ~ 1:
+c***
+c***    (hlp_s + hlp_t + hlp_ni - hlp_no) * x = hlp_po
+c***
+c*** (this should only be done for the species scaled with themselves)
+c***
+c*** For a non-recycling stratum, scale hlp_s & hlp_t by x, and
+c*** hlp_ni & hlp_no by 1/x:
+c***
+c***    (hlp_s + hlp_t) * x + (hlp_ni - hlp_no) / x = hlp_g
+c***
+c*** selecting the x value positive, closest to 1.
+c***
+c*** No scaling for the "time layer"
+
+      real (kind=R8) :: s,x1,x2,t00,hlp_st,rec_tol
+      real (kind=R8), save :: hlp_pi(natm),hlp_po(natm),hlp_ni(natm),
+     , hlp_no(natm),hlp_g(natm),hlp_s(natm),hlp_t(natm)
+      real (kind=R8), save :: hlp_scl(natm),hlp_scp(natm,nstra),
+     1 hlp_stra(natm), core_flux(natm), core_surface
+      logical hlp_bad_isp, hlp_log, hlp_pr, hlp_tt, hlp_pff(natm,nstra)
+      logical hlp_cor
+      integer i,j,k,l,js,ls,kks,n,itmp
+      integer, save :: ispc_ref(natm), l_ddt, ishigh(natm)
+      character*5, save :: ion_name(natm)
+      real (kind=R8) :: sum_wld(2,2+natm)
+cank }
+      integer lns_hlp
+      parameter (lns_hlp=4)
+      integer lis_hlp(lns_hlp) 
+      data lis_hlp / 122, 121, 123, 49 /
+      logical last, saved_volrec_used
+
+      integer output_style, linearisation, ank_mods, save_f31,
+     1 repeat_first_call, ionising_core, dpc_fix, eircount,
+     2 save_f30
+      save ncall, output_style, volsumnold, saved_volrec_used,
+     * pfrregno1, pfrregno2, solregno, isfeedback,
+     * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
+     * neutral_sources_rescale, ncallfeedback, ank_mods, save_f31,
+     1 repeat_first_call, use_recyceir, ionising_core, dpc_fix,
+     2 volrec_sol, ndes_sol, save_f30
+csw 07mar2012
+      integer ion_energy_src_corr,nsmax
+      save ion_energy_src_corr
+      data ion_energy_src_corr/-1/
+csw 13dec2012
+      integer ion_energy_src_corr_core
+      save ion_energy_src_corr_core
+      data ion_energy_src_corr_core/1/
+csw 14dec2012
+      real (kind=R8), save :: qee
+      integer, save :: qe_corr=0
+csw 26mar2013
+      integer, save :: iscltst=0
+csw
+*   ..procedures
+      intrinsic min, max, mod, abs, sqrt, log
+      external subini, subend, xertst, ipgeti, ipgetr
+      logical lnext
+      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
+     &  abs(am(is)-am(js)).lt.1.0e-3_R8
+*   ..initialisation
+      data ncall/0/, output_style/1/, saved_volrec_used/.false./,
+     .  linearisation/1/, volsumnold/nstra*-1.0_R8/, solregno/3/,
+     1  pfrregno1/0/, pfrregno2/2/, isfeedback/0/, ncallfeedback/0/,
+     2  neutral_sources_rescale/1.0_R8/, rec_tol/1.e-4_R8/,
+     3  nesepm_sol/0.0_R8/, nesepm_pfr/0.0_R8/, nesepm_istra/-1/,
+     4  private_flux_puff/0.0_R8/, ionising_core/0/, dpc_fix/-1/,
+     5  ndes/0.0_R8/, ank_mods/0/, save_f31/0/, repeat_first_call/0/,
+     6  use_recyceir/1/, volrec_sol/0.0_R8/, ndes_sol/0.0_R8/,
+     7  save_f30/0/
+
+      namelist /neutrals_save/ saved_volrec
+
+*-----------------------------------------------------------------------
+*.computation
+
+* ..preliminaries
+*   ..subprogram start-up calls
+      call subini('eirene_mc')
+*   ..set internal parameters on first call
+      if(ncall.eq.0) then !{
+csw 24jan2011 delay call to test_couple after successfully callin eirene_input
+csw        write(*,*) 'Calling test_couple'
+csw        call test_couple(nxdd,nydd,nstra,nfl,natm,nmol,nion,nlmpgs)
+csw        write(*,*) 'Called test_couple'
+        call ipgeti ('eirene_mc_output_style', output_style)
+        call ipgeti ('eirene_repeat_first_call', repeat_first_call)
+        call ipgeti ('eirene_mc_linearisation', linearisation)
+        if (linearisation.eq.1)   ! for backward compatibility
+     >   call ipgeti ('eirene_mc_linearization', linearisation)
+        call xertst (linearisation.eq.1 .or. linearisation.eq.0,
+     .   'faulty input parameter linearisation')
+        call ipgetr ('b2stbc_ndes', ndes)
+        call xertst (0.0_R8.le.ndes, 'faulty internal parameter ndes')
+        call ipgetr ('b2stbc_nesepm_sol', nesepm_sol)
+        call xertst (0.0_R8.le.nesepm_sol,
+     1   'faulty internal parameter nesepm_sol')
+        call ipgetr ('b2stbc_nesepm_pfr', nesepm_pfr)
+        call xertst (0.0_R8.le.nesepm_pfr,
+     1   'faulty internal parameter nesepm_pfr')
+        call ipgetr ('b2stbc_volrec_sol', volrec_sol)
+        call xertst (0.0_R8.le.volrec_sol,
+     1   'faulty internal parameter volrec_sol')
+        call ipgetr ('b2stbc_ndes_sol', ndes_sol)
+        call xertst (0.0_R8.le.ndes_sol,
+     1   'faulty internal parameter ndes_sol')
+        call ipgeti ('eirene_nesepm_istra', nesepm_istra)
+        if(nesepm_istra.gt.0)
+     >     call xertst (crcstra(nesepm_istra).eq.'C',
+     1     'faulty internal parameter nesepm_istra')
+        do istrai = 1, nstrai
+          if(nesepm_istra.lt.0.and.CRCSTRA(istrai).EQ.'C') then
+            nesepm_istra=istrai
+          endif
+        enddo
+        call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
+        call xertst (0.0_R8.le.private_flux_puff,
+     1   'faulty internal parameter private_flux_puff')
+        call ipgeti ('b2stbc_pfrregno1', pfrregno1)
+        call ipgeti ('b2stbc_pfrregno2', pfrregno2)
+        call ipgeti ('b2stbc_solregno', solregno)
+        call ipgeti ('b2stbc_isfeedback', isfeedback)
+        call xertst (0.le.isfeedback.and.isfeedback.lt.ns,
+     1   'faulty internal parameter isfeedback')
+        if (ndes.gt.0.0_R8.or.private_flux_puff.gt.0.0_R8
+     1     .or.nesepm_pfr.gt.0.0_R8) then !{
+          call xertst (cbirso.le.pfrregno1.and.
+     1     pfrregno1.le.cbirso+cbnrso-1,
+     2     'faulty internal parameter pfrregno1')
+          call xertst (cbirso.le.pfrregno2.and.
+     1     pfrregno2.le.cbirso+cbnrso-1,
+     2     'faulty internal parameter pfrregno2')
+        endif !}
+        if (nesepm_sol.gt.0.0_R8.or.volrec_sol.gt.0.0_R8.or.
+     1      ndes_sol.gt.0.0_R8) then
+         call xertst (cbirno.le.solregno.and.
+     1    solregno.le.cbirno+cbnrno-1,
+     2    'faulty internal parameter solregno')
+        endif
+        call ipgetr ('b2mndr_rescale_neutrals_sources',
+     *       neutral_sources_rescale)
+        call xertst (0.0_R8.le.neutral_sources_rescale,
+     1   'faulty input neutral_sources_rescale')
+        call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
+        call ipgeti ('eirene_ionising_core', ionising_core)
+        if (ionising_core.eq.0)     ! for backward compatibility
+     >   call ipgeti ('eirene_ionizing_core', ionising_core)
+        call ipgeti ('eirene_ank_mods', ank_mods)
+        call ipgeti ('eirene_dpc_fix', dpc_fix)
+        call ipgeti ('eirene_savef30', save_f30)
+        call ipgeti ('eirene_savef31', save_f31)
+        call ipgeti ('eirene_use_recyceir', use_recyceir)
+csw 28jan2011, call to eirene_mc_init not used anymore, use new modules
+csw        call eirene_mc_init
+        call eirene_extrab25_alloc_mods(nx+2,ny)
+        call eirene_extrab25_eirpbls_init(1,
+     .                       natm,nmol,nion,npls,nstra,0)
+        call eirene_extrab25_eirpbls_init(2,0,0,0,0,nstra,npls)
+csw 22jul2011
+        call eirene_extrab25_iniusr_init(n_spcsrf,l_spcsrf,i_spcsrf,
+     .           j_spcsrf,sps_sgrp,sps_absr,sps_trno,sps_trni,
+     .           sps_mtri,sps_tmpr,sps_spph,sps_spch,
+     .           sps_mtrl,sps_id)
+csw 07mar2012
+        call ipgeti ('eirene_ion_energy_src_corr', ion_energy_src_corr)
+csw 13dec2012
+        call ipgeti ('eirene_ion_energy_src_corr_core',
+     .                ion_energy_src_corr_core)
+csw 14dec2012
+        call ipgeti ('eirene_qe_corr',qe_corr)
+csw 26mar2013
+        call ipgeti ('eirene_iscltst',iscltst)
+csw
+        if(qe_corr .eq. 0) then
+         qee=qe
+        else
+         qee=1.6022e-19
+        endif
+csw
+        if(lhalpha) then
+           itmp=1
+        else
+           itmp=0
+        endif
+        call ipgeti('eirene_lhalpha',itmp)
+        lhalpha=itmp.ne.0
+        write(*,*) 'lhalpha = ',lhalpha
+        if(lvib) then
+           itmp=1
+        else
+           itmp=0
+        endif
+        call ipgeti('eirene_lvib',itmp)
+        lvib=itmp.ne.0
+        write(*,*) 'lvib = ',lvib
+        call xertst(.not.(ank_mods.ne.0 .and. ionising_core.eq.1),
+     1   'contradictory inputs ank_mods and ionising_core!')
+        if(eirene_mod.le.0) eirene_mod=1
+        call ipgeti ('eirene_background_new', background_new)        !srv 14.07.10
+      end if !}
+
+csw 03sep2013 added check for save_f30
+      if(ncall.eq.0.and.save_f30.ne.0) then
+        call write_f30(nx, ny)
+      endif
+      if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
+        if(background_new.eq.0) call copy_background(nx,ny,ns,BoRiS)  !srv 14.07.10
+        if(background_new.ne.0) call copy_background_(nx,ny,ns,BoRiS) !srv 14.07.10
+csw 03sep2013 changed from OR to AND in check for save_f31
+        if(ncall.eq.0.and.save_f31.ne.0) then
+          call write_f31(nx, ny)
+        endif
+      endif
+
+      if(ncall.eq.0) then !{
+        call alloc_b2mod_neutrals_save(nstraid)
+        call read_b2mod_neutrals_save
+        call xertst(nstrai.le.nstraid,
+     &   'Increase DEF_NSTRA in DIMENSIONS.F')
+        if(maxval(saved_volrec).gt.0.0_R8) then !{
+          volsumnold(1:nstrai) = saved_volrec(1:nstrai)
+        else !}{
+          do istrai = 1, nstrai !{
+            if (CRCSTRA(istrai).EQ.'V') then !{
+              if(volsumnold(istrai).lt.0.0_R8)
+     >           volsumnold(istrai)=volrecstart(istrai)
+            else !}{
+              volsumnold(istrai)=0.0_R8
+            end if !}
+          end do !}
+        end if !}
+        saved_volrec_used = .true.
+        call write_b2mod_neutrals_save
+
+        if(ank_mods.ne.0 .or. ionising_core.eq.1) then
+c*** Check the b2espcr array
+          hlp_bad_isp=.false.
+          ispc_ref=-1
+          do i=0,ns-1 !{
+            j=b2espcr(i)
+            if(ispc_ref(j).lt.0) then !{
+              ispc_ref(j)=i
+              do k=1,nstrai !{
+                if(use_recyceir.gt.0) then
+                  recyctmp=recyceir(k)
+                else
+                  recyctmp=recyc(i,k)
+                endif
+                hlp_scp(j,k)=recyctmp
+              end do !}
+            else !}{
+              hlp_tt=.false.
+              do k=1,nstrai !{
+                if(use_recyceir.gt.0) then
+                  recyctmp=recyceir(k)
+                else
+                  recyctmp=recyc(i,k)
+                endif
+                hlp_tt=hlp_tt.or.
+     1           abs(hlp_scp(j,k)-recyctmp).gt.rec_tol
+              end do !}
+              if(hlp_tt) then !{
+                write (0,*)
+     1           'eirene_mc: different values of recyceir ',
+     ,                                  'species,is= ',j,i
+                hlp_bad_isp=.true.
+              end if !}
+            end if !}
+          end do !}
+          if(hlp_bad_isp)
+     1     stop 'eirene_mc: error in recyceir specification'
+
+csw 08feb2011 l_ddt definition moved down after eirene call
+cswc*** "time layer"
+csw          l_ddt=0
+csw          if(crcstra(nstrai).eq.'T') l_ddt=nnlimi+nnstsi
+        end if !}
+
+        hlp_tt=.false.
+      endif
+
+      if (ncall.eq.0 .and. ionising_core.eq.1) then
+cxpb compute core boundary surface area
+        core_surface = 0.0_R8
+        do iy = -1, ny
+          do ix = -1, nx
+            if (bottomiy(ix,iy).eq.-2 .and. mod(region(ix,iy,0),4).eq.1)
+     >       core_surface = core_surface + 
+     .        gs(topix(ix,iy),topiy(ix,iy),1)
+          enddo
+        enddo
+cxpb compute ishigh and ion_name arrays
+        ishigh = -1
+        ion_name = ' '
+        do is = 0, ns-1
+          j = b2espcr(is)
+          if (ishigh(j).eq.-1) then
+            do js = is+1, ns-1
+              if (lnext(is,js)) ishigh(j) = js
+            enddo
+            if (ishigh(j).eq.-1) ishigh(j) = is
+            call species (ishigh(j), ion_name(j))
+          endif
+        enddo
+      endif
+
+*  -- COMPUTE TOTAL FLUXES TO RECYCLING BOUNDARIES --
+
+c*** tflux(i)  : source strength for stratum i as given to Eirene
+c*** tfl(i,j)  : the same for species j only
+c*** flux_scale: conversion factor Eirene-B2
+c*** recyc     : fudge-factors for the sources in B2
+
+      tfl=0.0_R8
+      tflux=0.0_R8
+      flux_scale=0.0_R8
+      do istrai = 1, nstrai !{
+        flux_scale(istrai)=1.0_R8
+        IF(crcstra(istrai).eq.'W') then !{
+          do is = species_start(istrai),species_end(istrai) !{
+            if(.not.is_neutral(is)) then !{
+              do iy=rcstart(istrai),rcend(istrai) !{
+                tflux(istrai)=tflux(istrai)-
+     1           fna(rightix(rcpos(istrai),iy),
+     2               rightiy(rcpos(istrai),iy),0,is)
+                tfl(istrai,b2espcr(is))=tfl(istrai,b2espcr(is))-
+     1           fna(rightix(rcpos(istrai),iy),
+     2               rightiy(rcpos(istrai),iy),0,is)
+              end do !}
+            end if !}
+          end do !}
+        else if(crcstra(istrai).eq.'E') then !}{
+          do is = species_start(istrai),species_end(istrai) !{
+            if(.not.is_neutral(is)) then !{
+              do iy=rcstart(istrai),rcend(istrai) !{
+                tflux(istrai)=tflux(istrai)+fna(rcpos(istrai),iy,0,is)
+                tfl(istrai,b2espcr(is))=tfl(istrai,b2espcr(is))+
+     1                                        fna(rcpos(istrai),iy,0,is)
+              end do !}
+            end if !}
+          end do !}
+        else if(crcstra(istrai).eq.'S') then !}{
+          do is = species_start(istrai),species_end(istrai) !{
+            if(.not.is_neutral(is)) then !{
+              do ix=rcstart(istrai),rcend(istrai) !{
+                tflux(istrai)=tflux(istrai)-
+     1           fna(topix(ix,rcpos(istrai)),
+     2               topiy(ix,rcpos(istrai)),1,is)
+                tfl(istrai,b2espcr(is))=tfl(istrai,b2espcr(is))-
+     1           fna(topix(ix,rcpos(istrai)),
+     2               topiy(ix,rcpos(istrai)),1,is)
+              end do !}
+            end if !}
+          end do !}
+        else if(crcstra(istrai).eq.'N') then !}{
+          do is = species_start(istrai),species_end(istrai) !{
+            if(.not.is_neutral(is)) then !{
+              do ix=rcstart(istrai),rcend(istrai) !{
+                tflux(istrai)=tflux(istrai)+fna(ix,rcpos(istrai),1,is)
+                tfl(istrai,b2espcr(is))=tfl(istrai,b2espcr(is))+
+     1                                        fna(ix,rcpos(istrai),1,is)
+              end do !}
+            end if !}
+          end do !}
+        else if(crcstra(istrai).eq.'C') then !}{
+          if (ncall.ge.ncallfeedback.and.istrai.eq.nesepm_istra.and.
+     &     (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
+     &      private_flux_puff.gt.0.0_R8)) then !{
+            if (pfrregno1.ne.pfrregno2) then !{
+              tflux(istrai)=(cbsna(0,isfeedback,pfrregno1)+
+     1         cbsna(0,isfeedback,pfrregno2))/neutral_sources_rescale
+            else !}{
+              tflux(istrai)=
+     1         cbsna(0,isfeedback,pfrregno1)/neutral_sources_rescale
+            end if !}
+            if(ncall.eq.0) then
+              if(nesepm_pfr.gt.0.0_R8) then
+                write(*,*) '"nesepm_pfr" feedback on stratum ',istrai
+              else if(ndes.gt.0.0_R8) then
+                write(*,*) '"ndes" feedback on stratum ',istrai
+              else if(private_flux_puff.gt.0.0_R8) then
+                write(*,*) '"private_flux_puff" feedback on stratum ',
+     1           istrai
+              endif
+            endif
+          else if (ncall.ge.ncallfeedback.and.nesepm_sol.gt.0.0_R8.and.
+     1     istrai.eq.nesepm_istra) then !}{
+            TFLUX(istrai)=
+     1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
+            if(ncall.eq.0)
+     1       write(*,*) '"nesepm_sol" feedback on stratum ',istrai
+          else if (ncall.ge.ncallfeedback.and.volrec_sol.gt.0.0_R8.and.
+     1     istrai.eq.nesepm_istra) then !}{
+            TFLUX(istrai)=
+     1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
+            if(ncall.eq.0)
+     1       write(*,*) '"volrec_sol" feedback on stratum ',istrai
+          else if (ncall.ge.ncallfeedback.and.ndes_sol.gt.0.0_R8.and.
+     1     istrai.eq.nesepm_istra) then !}{
+            TFLUX(istrai)=
+     1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
+            if(ncall.eq.0)
+     1       write(*,*) '"ndes_sol" feedback on stratum ',istrai
+          else !}{
+            tflux(istrai)=userfluxparm(istrai,1)
+          end if !}
+          do is = species_start(istrai),species_end(istrai) !{
+            tfl(istrai,is)=1.0_R8
+          end do !}
+          if(tflux(istrai).gt.0.0_R8) then !{
+            flux_scale(istrai)=1.0_R8/(tflux(istrai)*qee)
+          else !}{
+            flux_scale(istrai)=0.0_R8
+          end if !}
+        else if(crcstra(istrai).eq.'V') then !}{
+          tflux(istrai)=1.0_R8/qee
+          do is = species_start(istrai),species_end(istrai) !{
+            tfl(istrai,is)=1.0_R8
+          end do !}
+        else if(crcstra(istrai).eq.'T') then !}{
+          tflux(istrai)=1.0_R8/qee
+          do is = species_start(istrai),species_end(istrai) !{
+            tfl(istrai,is)=1.0_R8
+          end do !}
+c        else if(crcstra(istrai).eq.'U') then !}{
+cc         tflux(istrai)=userfluxparm(istrai,1)
+c          write(*,*) 'Option "U" not yet implemented'
+c          tflux(istrai)=0.0_R8
+c          do is = species_start(istrai),species_end(istrai) !{
+c            tfl(istrai,is)=1.0_R8
+c          end do !}
+c          if(tflux(istrai).gt.0.0_R8) then !{
+cc warning: the following looks strange but is apparently correct
+c             flux_scale(istrai)=1.0_R8/(tflux(istrai)*qee)
+c          else !}{
+c             flux_scale(istrai)=0.0_R8
+c          end if !}
+        else !}{
+          WRITE(*,*) 'OPTION ',CRCSTRA(istrai),' NOT AVAILABLE'
+        end if !}
+      end do !}
+
+      if(main_call.or.ncall.eq.0.or.output_style.gt.1) then !{
+        write(*,*) 'tflux: ',tflux
+        write(*,*) 'flux_scale: ',flux_scale
+      end if !}
+
+      last=.false.
+
+cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      eircount=0
+      if((main_call .and. mod(ncall,eirene_mod).eq.0) .or.
+     . ncall.eq.0) then !{
+
+csw 13oct2011
+csw 08mar2013 not used anymore
+csw        call eirene_extrab25_wneuclean
+
+csw 25jan2011 LTIME=.false. in eirsrt call
+        my_ltime=.false.
+        call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
+     *   b2brem,b2rad,b2qie(0),b2vdp,
+     1   eirene_step_cpu)
+        eircount=1
+        if(ncall.eq.0) then 
+csw 25jan2011
+csw          write(*,*) 'Calling post_couple'
+csw          call post_couple(nx,ny,ns,nstrai)
+csw          write(*,*) 'Called post_couple'
+        endif
+        if(ncall.eq.0.and.repeat_first_call.gt.0) then
+          do while (eircount.le.repeat_first_call)
+           if(background_new.eq.0) call copy_background(nx,ny,ns,BoRiS)  !srv 14.07.10
+           if(background_new.ne.0) call copy_background_(nx,ny,ns,BoRiS) !srv 14.07.10
+
+csw 13oct2011
+csw 08mar2013 not used anymore
+csw           call eirene_extrab25_wneuclean
+
+csw 25jan2011 LTIME=.false. in eirsrt call
+           my_ltime=.false.
+           call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
+     *       b2brem,b2rad,b2qie(0),b2vdp,
+     1       eirene_step_cpu)
+           eircount=eircount+1
+          enddo
+        endif
+      elseif(.not.main_call) then !}{
+        if (ncall.lt.3)
+     1   write(*,*) 'Skipping call to EIRENE because not main_call'
+      elseif(mod(ncall,eirene_mod).ne.0) then !}{
+        write(*,*) 'Skipping call to EIRENE because of mod condition'
+      end if !}
+cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+csw 08feb2011 put l_ddt definition here since nnlimi(nlim) is known only after eirene call
+      if(ank_mods.ne.0 .or. ionising_core.eq.1) then
+c*** "time layer"
+        l_ddt=0
+        if(crcstra(nstrai).eq.'T') then
+          l_ddt=nnlimi+nnstsi
+csw in case of no time layer in eirene
+          if(.not.my_ltime) then
+csw            l_ddt=l_ddt+1
+            l_ddt=0
+          endif
+        endif
+      end if !}
+csw
+
+      if(main_call.or.ncall.eq.0.or.output_style.gt.1) then !{
+        write(*,*) 'tflux: ',tflux
+        write(*,*) 'flux_scale: ',flux_scale
+      end if !}
+
+cxpb  Additional diagnostic for comparison with SOLPS4.0
+      if (ncall.eq.0) call b2trci(nx,ny,ns,ismain,dtim,BoRiS)
+      if (main_call.and.mod(ncall,eirene_mod).eq.0
+     & .and.ank_tracing.ne.0.and.output_style.ge.2) then
+        write(*,*) 'Eirene output in eirene_mc :'
+        sum_wld(1:2,1:2+nspecies)=0.0_R8
+        do istrai = 1, nstrai
+          sum_wld(1,1)=sum_wld(1,1)+wldnek(nnlimi+2,istrai)
+          sum_wld(2,1)=sum_wld(2,1)+wldnek(nnlimi+3,istrai)
+          sum_wld(1,2)=sum_wld(1,2)+wldnep(nnlimi+2,istrai)
+          sum_wld(2,2)=sum_wld(2,2)+wldnep(nnlimi+3,istrai)
+          do is = 1, nspecies
+            sum_wld(1,2+is)=sum_wld(1,2+is)+wldna(nnlimi+2,is,istrai)
+            sum_wld(2,2+is)=sum_wld(2,2+is)+wldna(nnlimi+3,is,istrai)
+          end do
+        end do
+        write(*,*) 'Summed inner target data : '
+        write(*,*) 
+     .   'wldnek, wldnep, wldna = ', sum_wld(1,1:2+nspecies)
+        write(*,*) 'Summed outer target data : '
+        write(*,*) 
+     .   'wldnek, wldnep, wldna = ', sum_wld(2,1:2+nspecies)
+      endif
+cxpb
+
+cxpb  Compute recombination sources rescaling factor if necessary
+      do istrai = 1, nstrai !{
+        if(volsumnold(istrai).gt.0.0_R8) then !{
+          if(output_style.gt.1.or.main_call) 
+     .      write(*,'(a,i6,2(1x,e13.6))')
+     .      'stratum, volsumnold, abs(volsumn) ',
+     .      istrai, volsumnold(istrai), abs(volsumn(istrai))/qee
+        end if !}
+        if(volsumnold(istrai).gt.0.0_R8.and.volrecinc.gt.0.0_R8) then !{
+          if(abs(volsumn(istrai)/qee).gt.
+     &           volsumnold(istrai)*volrecinc) then !{
+            if(main_call) then !{
+              flux_scale(istrai)=volsumnold(istrai)*volrecinc/
+     1         abs(volsumn(istrai)/qee)
+              if(output_style.ge.1) write(*,*)
+     .         'Rescaling volume recombination stratum ',
+     1         istrai,' by ',flux_scale(istrai)
+            else !}{
+              flux_scale(istrai)=volsumnold(istrai)/
+     .         abs(volsumn(istrai)/qee)
+            end if !}
+          end if !}
+          volsumnold(istrai)=(1.0_R8-volrecwt)*volsumnold(istrai)+
+     1     volrecwt*abs(volsumn(istrai)/qee)*flux_scale(istrai)
+          saved_volrec(istrai) = volsumnold(istrai)
+        end if !}
+      end do !}
+cxpb
+
+      if(main_call.and.mod(ncall,eirene_mod).eq.0.and.ank_mods.ne.0)
+     > then
+        if(ncall.eq.0) then !{
+          hlp_tt=.false.
+          hlp_bad_isp=.false.
+          do i=0,ns-1 !{
+            hlp_tt=b2espcr(i).lt.0 .or. b2espcr(i).gt.nnatmi
+            hlp_bad_isp= hlp_bad_isp .or. hlp_tt
+            if(hlp_tt) write (0,*) 'is,b2espcr,nnatmi: ',
+     ,         i,b2espcr(i),nnatmi
+          end do !}
+          if(hlp_bad_isp)
+     1       stop 'eirene_mc: wrong value found in b2espcr'
+        end if !}
+
+        if(dbg_eir_mc.gt.9 .and. 
+     &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
+          print *
+          print *,'%%% Eirene data in B2 %%%',nlmpgs
+          print *,'nnatmi,nnmoli,nnstsi,nnlimi = ',
+     ,       nnatmi,nnmoli,nnstsi,nnlimi
+          do k=0,nstrai !{
+            print *
+            print *,'wldna, wldnm, wldra, wldrm:',k
+            print '(1x,20(6x,a2,i3.2))',
+     ,         ('na',i,i=1,nnatmi),('nm',i,i=1,nnmoli),
+     ,         ('ra',i,i=1,nnatmi),('rm',i,i=1,nnmoli)
+            do j=1,nnlimi+nnstsi !{
+              if(j.le.nnlimi .or. j.gt.nnlimi) then !{
+                hlp_pr=.false.
+                do i=1,nnatmi !{
+                  hlp_pr= hlp_pr .or. wldna(j,i,k).ne.0.0_R8
+     .               .or. wldra(j,i,k).ne.0.0_R8
+                end do !}
+                do i=1,nnmoli !{
+                  hlp_pr= hlp_pr .or. wldnm(j,i,k).ne.0.0_R8
+     .               .or. wldrm(j,i,k).ne.0.0_R8
+                end do !}
+                if(hlp_pr) then !{
+                  print '(1p,i4,20e11.4)',j,
+     ,               (wldna(j,i,k),i=1,nnatmi),
+     ,               (wldnm(j,i,k),i=1,nnmoli),
+     ,               (wldra(j,i,k),i=1,nnatmi),
+     ,               (wldrm(j,i,k),i=1,nnmoli)
+                end if !}
+              end if !}
+            end do !}
+
+            print *,'wldpp:',k
+            do j=nnlimi+1,nnlimi+nnstsi !{
+              print '(1p,i4,20e9.2)',j,(wldpp(j,i,k),i=1,ns-nnatmi)
+            end do !}
+            print *
+            print *,'wldpeb, wldpa, wldpm:',k
+            do j=nnlimi+1,nnlimi+nnstsi !{
+              print '(1p,i4,20e9.2)',j,wldpeb(j,k),
+     ,           (wldpa(j,i,k),i=1,nnatmi),
+     ,           (wldpm(j,i,k),i=1,nnmoli)
+            end do !}
+          end do !}
+          print *,'%%%'
+        end if !}
+        if(dbg_eir_mc.gt.0 .and.
+     &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
+c*** Print the particle fluxes for each stratum and species
+          print *,'%%%=============== total fluxes by stratum and ',
+     ,       'species before correction ===============%%%'
+          print '(a25,20(4x,a5,4x))',' Stratum Species lstrascl',
+     ,       ' tfl ','wldpi','wldpo','wldni','wldno',
+     ,       'Srcpl','puff ','d/dt ','crsrc','error'
+          do istrai=1,nstrai !{
+            do ls=1,nnatmi !{
+              hlp_pi(ls)=0.0_R8
+              hlp_po(ls)=0.0_R8
+              hlp_ni(ls)=0.0_R8
+              hlp_no(ls)=0.0_R8
+              hlp_g(ls) =0.0_R8
+              hlp_s(ls) =0.0_R8
+              hlp_t(ls) =0.0_R8
+            end do !}
+            do j=1,nnlimi+nnstsi !{
+              if(j.gt.nnlimi .and. j.ne.l_ddt) then !{
+                ifl=0
+                do is=0,ns-1 !{
+                  if(.not.is_neutral(is)) then !{
+                    ifl=ifl+1
+                    hlp_pi(b2espcr(is))=hlp_pi(b2espcr(is))+
+     +                 wldpp(j,ifl,istrai)
+                  end if !}
+                end do !}
+                do i=1,nnatmi !{
+                  hlp_po(i)=hlp_po(i)+wldpa(j,i,istrai)
+                  do is=1,nnmoli !{
+                    s=mlcmp(i,is)
+                    if(s.gt.0.0_R8)
+     -                 hlp_po(i)=hlp_po(i)+wldpm(j,is,istrai)*s
+                  end do !}
+                end do !}
+              end if !}
+              hlp_log=j.le.nnlimi
+              if(hlp_log .or. (j.gt.nnlimi .and. j.ne.l_ddt)) then !{
+                if(.not.hlp_log) then !{
+                  do i=1,ncns !{
+                    hlp_log=hlp_log .or. j.eq.lcns(i)+nnlimi
+                  end do !}
+                  do i=1,ntns !{
+                    hlp_log=hlp_log .or. j.eq.ltns(i)+nnlimi
+                  end do !}
+                end if !}
+
+                if(hlp_log) then !{
+                  do i=1,nnatmi !{
+                    hlp_ni(i)=hlp_ni(i)+wldna(j,i,istrai)
+                    hlp_no(i)=hlp_no(i)+wldra(j,i,istrai)
+                    do is=1,nnmoli !{
+                      s=mlcmp(i,is)
+                      hlp_ni(i)=hlp_ni(i)+wldnm(j,is,istrai)*s
+                      hlp_no(i)=hlp_no(i)+wldrm(j,is,istrai)*s
+                    end do !}
+                  end do !}
+                end if !}
+              else if(j.eq.l_ddt) then !}{
+                do i=1,nnatmi !{
+                  hlp_t(i)=hlp_t(i)+wldna(j,i,istrai)
+                  do is=1,nnmoli !{
+                    s=mlcmp(i,is)
+                    hlp_t(i)=hlp_t(i)+wldnm(j,is,istrai)*s
+                  end do !}
+                end do !}
+              end if !}
+            end do !}
+
+            do ix=1,nx !{
+              do iy=1,ny !{
+                if(resignore(ix-1,iy-1,1).ne.0) then !{
+                  ifl=0
+                  do is=0,ns-1 !{
+                    if(.not.is_neutral(is)) then !{
+                      ifl=ifl+1
+                      hlp_s(b2espcr(is))=hlp_s(b2espcr(is))+
+     +                   sni(ix,iy,ifl,istrai)
+                    end if !}
+                  end do !}
+                end if !}
+              end do !}
+            end do !}
+
+            do ls=1,nnatmi !{
+              kks=ispc_ref(ls)
+              hlp_s(ls)=hlp_s(ls)*tflux(istrai)*flux_scale(istrai)
+              if(hlp_pi(ls).gt.0.0_R8) then !{
+                t0=tfl(istrai,ls)/hlp_pi(ls)
+              else !}{
+                t0=1.0_R8
+              end if !}
+              if(use_recyceir.gt.0) then
+                recyctmp=recyceir(istrai)
+              else
+                recyctmp=recyc(kks,istrai)
+              endif
+              if(crcstra(istrai).eq.'C')
+     -           hlp_g(ls)=tflux(istrai)*
+     *           gpfc(ls,istrai)*recyctmp
+              s=hlp_po(ls)+hlp_g(ls)+hlp_no(ls)-
+     -           (hlp_ni(ls)+hlp_s(ls)+hlp_t(ls))
+              print '(i6,2i8,3x,1p,10e13.5)',istrai,ls,
+     ,           lstrascl(istrai,ls),tfl(istrai,ls),
+     ,           hlp_pi(ls),hlp_po(ls),hlp_ni(ls),hlp_no(ls),
+     ,           hlp_s(ls),hlp_g(ls),hlp_t(ls),t0,s
+            end do !}
+          end do !}
+          print *,'%%%============================================',
+     ,       '=========================================%%%'
+        end if !}
+      endif
+
+c*** Re-normalisation of the sources and fluxes in order to enforce
+c*** the particle balance for recycling and recombining species
+
+csw 23nov2012
+      hlp_tt=.false.
+csw
+
+csw 06dec2012 added check for main_call 
+csw otherwise rescaling procedure does not work with internal iterations nstg2>1
+csw
+c      if(ank_mods.ne.0) then
+      if(main_call.and.mod(ncall,eirene_mod).eq.0.and.ank_mods.ne.0) 
+     .  then
+csw
+        do istrai=1,nstrai !{
+
+csw 23nov2012 DO NOT CHECK FOR main_call!!!
+csw otherwise re-normalisation will not work in case with 
+csw internal iterations switched on (nstg2 > 1) --> CHECK!!
+c          if((crcstra(istrai).eq.'W' .or.
+c     .        crcstra(istrai).eq.'E' .or.
+c     .        crcstra(istrai).eq.'N' .or.
+c     .        crcstra(istrai).eq.'S').and.
+c     &       (main_call.and.mod(ncall,eirene_mod).eq.0)) then !{
+          if((crcstra(istrai).eq.'W' .or.
+     .        crcstra(istrai).eq.'E' .or.
+     .        crcstra(istrai).eq.'N' .or.
+     .        crcstra(istrai).eq.'S')) then
+csw
+
+c*** Recycling stratum
+c*** First, correct the balance between B2 and Eirene sources for the
+c*** species to be scaled with themselves (recycling species)
+
+            do ls=1,nnatmi !{
+              hlp_pi(ls)=0.0_R8
+              hlp_po(ls)=0.0_R8
+              hlp_ni(ls)=0.0_R8
+              hlp_no(ls)=0.0_R8
+              hlp_g(ls) =0.0_R8
+              hlp_s(ls) =0.0_R8
+              hlp_t(ls) =0.0_R8
+            end do !}
+            n=nnstsi
+            if(l_ddt.gt.0) n=n-1
+            do i=1,n !{
+              j=nnlimi+i
+              ifl=0
+              do is=0,ns-1 !{
+                if(.not.is_neutral(is)) then !{
+                  ifl=ifl+1
+                  ls=b2espcr(is)
+                  if(lstrascl(istrai,ls).eq.ls) then !{
+                    hlp_pi(ls)=hlp_pi(ls)+wldpp(j,ifl,istrai)
+                  end if !}
+                end if !}
+              end do !}
+            end do !}
+            do ls=1,nnatmi !{
+              if(hlp_pi(ls).gt.0.0_R8) then !{
+                hlp_scl(ls)=tfl(istrai,ls)/hlp_pi(ls)
+              else !}{
+                hlp_scl(ls)=1.0_R8
+              end if !}
+            end do !}
+c!###{
+              print '(a,1p,i3,20e13.5)',' @@@ istrai,pi: ',
+     ,                            istrai,(hlp_pi(ls),ls=1,nnatmi)
+              print '(a,1p,i3,20e13.5)',' @@@       tfl: ',
+     ,                        istrai,(tfl(istrai,ls),ls=1,nnatmi)
+              print '(a,1p,i3,20e13.5)',' @@@       scl: ',
+     ,                           istrai,(hlp_scl(ls),ls=1,nnatmi)
+c!###}
+
+            do ix=1,nx !{
+              do iy=1,ny !{
+                ifl=0
+                do is=0,ns-1 !{
+                  if(.not.is_neutral(is)) then !{
+                    ifl=ifl+1
+                    ls=b2espcr(is)
+                    if(lstrascl(istrai,ls).gt.0) then !{
+                      sni(ix,iy,ifl,istrai)=sni(ix,iy,ifl,istrai)*
+     *                   hlp_scl(ls)
+                      smo(ix,iy,ifl,istrai)=smo(ix,iy,ifl,istrai)*
+     *                   hlp_scl(ls)
+                    end if !}
+                    if(resignore(ix-1,iy-1,1).ne.0) then !{
+                      hlp_s(ls)=hlp_s(ls)+sni(ix,iy,ifl,istrai)
+                    end if !}
+                  end if !}
+                end do !}
+              end do !}
+            end do !}
+            do ls=1,nnatmi !{
+              hlp_s(ls)=hlp_s(ls)*tflux(istrai)*flux_scale(istrai)
+            end do !}
+
+            do j=1,nnlimi+nnstsi !{
+              if(j.gt.nnlimi .and. j.ne.l_ddt) then !{
+                ifl=0
+                do is=0,ns-1 !{
+                  if(.not.is_neutral(is)) then !{
+                    ifl=ifl+1
+                    ls=b2espcr(is)
+                    if(lstrascl(istrai,ls).gt.0) then !{
+                      wldpp(j,ifl,istrai)=
+     =                   wldpp(j,ifl,istrai)*hlp_scl(ls)
+                    end if !}
+                  end if !}
+                end do !}
+                do ls=1,nnatmi !{
+                  wldpa(j,ls,istrai)=wldpa(j,ls,istrai)*hlp_scl(ls)
+                  hlp_po(ls)=hlp_po(ls)+wldpa(j,ls,istrai)
+                end do !}
+                do i=1,nnmoli !{
+                  ls=lmolscl(i)
+                  if(ls.gt.0 .and. ls.le.nnatmi) then !{
+                    wldpm(j,i,istrai)=wldpm(j,i,istrai)*hlp_scl(ls)
+                    do ls=1,nnatmi !{
+                      hlp_po(ls)=hlp_po(ls)+
+     +                 wldpm(j,i,istrai)*mlcmp(ls,i)
+                    end do !}
+                  end if !}
+                end do !}
+              end if !}
+
+              hlp_log=j.le.nnlimi
+              if(.not.hlp_log) then !{
+                do i=1,ncns !{
+                  hlp_log=hlp_log .or. j.eq.lcns(i)+nnlimi
+                end do !}
+                if(.not.hlp_log) then !{
+                  do i=1,ntns !{
+                    hlp_log=hlp_log .or. j.eq.ltns(i)+nnlimi
+                  end do !}
+                end if !}
+              end if !}
+
+              do ls=1,nnatmi !{
+                if(lstrascl(istrai,ls).gt.0) then !{
+                  wldna(j,ls,istrai)=wldna(j,ls,istrai)*hlp_scl(ls)
+                  wldra(j,ls,istrai)=wldra(j,ls,istrai)*hlp_scl(ls)
+                end if !}
+c!###{
+              if(hlp_tt) print '(a,1p,3i4,l3,20e13.5)',
+     ,          ' @@@ istrai,j,ls,log,scl,wldpa,wldna,wldra',
+     ,          istrai,j,ls,hlp_log,hlp_scl(ls),wldpa(j,ls,istrai),
+     ,                        wldna(j,ls,istrai),wldra(j,ls,istrai)
+c!###}
+                if(hlp_log) then !{
+                  hlp_ni(ls)=hlp_ni(ls)+wldna(j,ls,istrai)
+                  hlp_no(ls)=hlp_no(ls)+wldra(j,ls,istrai)
+                else if(j.eq.l_ddt) then !}{
+                  hlp_t(ls)=hlp_t(ls)+wldna(j,ls,istrai)
+                end if !}
+              end do !}
+              do i=1,nnmoli !{
+                ls=lmolscl(i)
+                if(ls.gt.0 .and. ls.le.nnatmi) then !{
+                  wldnm(j,i,istrai)=wldnm(j,i,istrai)*hlp_scl(ls)
+                  wldrm(j,i,istrai)=wldrm(j,i,istrai)*hlp_scl(ls)
+                  do ls=1,nnatmi !{
+                    if(hlp_log) then !{
+                      hlp_ni(ls)=hlp_ni(ls)+
+     +                   wldnm(j,i,istrai)*mlcmp(ls,i)
+                      hlp_no(ls)=hlp_no(ls)+
+     +                   wldrm(j,i,istrai)*mlcmp(ls,i)
+                    else if(j.eq.l_ddt) then !}{
+                      hlp_t(ls)=hlp_t(ls)+
+     +                   wldnm(j,i,istrai)*mlcmp(ls,i)
+                    end if !}
+                  end do !}
+                end if !}
+              end do !}
+            end do !}
+c!###{
+            do ls=1,nnatmi !{
+              s=hlp_po(ls)+hlp_no(ls)-hlp_s(ls)-hlp_ni(ls)
+              print '(i6,2i8,3x,1p,20e13.5)',istrai,ls,
+     ,                    lstrascl(istrai,ls),tfl(istrai,ls),
+     ,                    hlp_pi(ls),hlp_po(ls),hlp_ni(ls),
+     ,                    hlp_no(ls),hlp_s(ls),hlp_scl(ls),s
+            end do !}
+c!###}
+
+c*** Now rectify the Eirene particle balance for each species -
+c*** simply correcting the neutral sources and sinks
+
+            do ls=1,nnatmi !{
+              hlp_scl(ls)=1.0_R8
+              if(lstrascl(istrai,ls).gt.0) then !{
+                s=hlp_s(ls)+hlp_t(ls)+hlp_ni(ls)-hlp_no(ls)
+                if(s.gt.0.0_R8) hlp_scl(ls)=hlp_po(ls)/s
+              end if !}
+              hlp_scp(ls,istrai)=hlp_scl(ls)
+            end do !}
+
+            do ix=1,nx !{
+              do iy=1,ny !{
+                ifl=0
+                do is=0,ns-1 !{
+                  if(.not.is_neutral(is)) then !{
+                    ifl=ifl+1
+                    ls=b2espcr(is)
+                    if(lstrascl(istrai,ls).gt.0) then !{
+                      sni(ix,iy,ifl,istrai)=sni(ix,iy,ifl,istrai)*
+     *                 hlp_scl(ls)
+                      smo(ix,iy,ifl,istrai)=smo(ix,iy,ifl,istrai)*
+     *                 hlp_scl(ls)
+                    end if !}
+                  end if !}
+                end do !}
+              end do !}
+            end do !}
+
+            do j=1,nnlimi+nnstsi !{
+              do ls=1,nnatmi !{
+                wldna(j,ls,istrai)=wldna(j,ls,istrai)*hlp_scl(ls)
+                wldra(j,ls,istrai)=wldra(j,ls,istrai)*hlp_scl(ls)
+              end do !}
+              do i=1,nnmoli !{
+                ls=lmolscl(i)
+                if(ls.gt.0 .and. ls.le.nnatmi) then !{
+                  wldnm(j,i,istrai)=wldnm(j,i,istrai)*hlp_scl(ls)
+                  wldrm(j,i,istrai)=wldrm(j,i,istrai)*hlp_scl(ls)
+                end if !}
+              end do !}
+            end do !}
+          else if(crcstra(istrai).eq.'V' .or.
+     .            crcstra(istrai).eq.'C') then !}{
+
+c*** Recombination or gas puffing stratum.
+c*** Here only the second pass of correction
+
+            do ls=1,nnatmi !{
+              hlp_pi(ls)=0.0_R8
+              hlp_po(ls)=0.0_R8
+              hlp_ni(ls)=0.0_R8
+              hlp_no(ls)=0.0_R8
+              hlp_g(ls) =0.0_R8
+              hlp_s(ls) =0.0_R8
+              hlp_t(ls) =0.0_R8
+            end do !}
+
+            do ix=1,nx !{
+              do iy=1,ny !{
+                if(resignore(ix-1,iy-1,1).ne.0) then !{
+                  ifl=0
+                  do is=0,ns-1 !{
+                    if(.not.is_neutral(is)) then !{
+                      ifl=ifl+1
+                      ls=b2espcr(is)
+                      hlp_s(ls)=hlp_s(ls)+sni(ix,iy,ifl,istrai)
+                    end if !}
+                  end do !}
+                end if !}
+              end do !}
+            end do !}
+            do ls=1,nnatmi !{
+              hlp_s(ls)=hlp_s(ls)*tflux(istrai)*flux_scale(istrai)
+            end do !}
+
+            do j=1,nnlimi+nnstsi !{
+
+              hlp_log=j.le.nnlimi
+              if(.not.hlp_log) then !{
+                do i=1,ncns !{
+                  hlp_log=hlp_log .or. j.eq.lcns(i)+nnlimi
+                end do !}
+                do i=1,ntns !{
+                  hlp_log=hlp_log .or. j.eq.ltns(i)+nnlimi
+                end do !}
+              end if !}
+
+              do ls=1,nnatmi !{
+                if(hlp_log) then !{
+                  hlp_ni(ls)=hlp_ni(ls)+wldna(j,ls,istrai)
+                  hlp_no(ls)=hlp_no(ls)+wldra(j,ls,istrai)
+                else if(j.eq.l_ddt) then !}{
+                  hlp_t(ls)=hlp_t(ls)+wldna(j,ls,istrai)
+                end if !}
+              end do !}
+              do i=1,nnmoli !{
+                ls=lmolscl(i)
+                if(ls.gt.0 .and. ls.le.nnatmi) then !{
+                  if(hlp_log) then !{
+                    hlp_ni(ls)=hlp_ni(ls)+
+     +               wldnm(j,i,istrai)*mlcmp(ls,i)
+                    hlp_no(ls)=hlp_no(ls)+
+     +               wldrm(j,i,istrai)*mlcmp(ls,i)
+                  else if(j.eq.l_ddt) then !}{
+                    hlp_t(ls)=hlp_t(ls)+
+     +               wldnm(j,i,istrai)*mlcmp(ls,i)
+                  end if !}
+                end if !}
+              end do !}
+            end do !}
+
+            if(crcstra(istrai).eq.'C') then !{
+              do ls=1,nnatmi !{
+                kks=ispc_ref(ls)
+                if(use_recyceir.gt.0) then
+                  recyctmp=recyceir(istrai)
+                else
+                  recyctmp=recyc(kks,istrai)
+                endif
+                hlp_g(ls)=tflux(istrai)*gpfc(ls,istrai)*
+     *             recyctmp
+              end do !}
+            end if !}
+
+            do ls=1,nnatmi !{
+              hlp_scl(ls)=1.0_R8
+              if(lstrascl(istrai,ls).gt.0) then !{
+                s=hlp_s(ls)+hlp_t(ls)
+                if(s.eq.0.0_R8) then !{
+                  if(hlp_g(ls).gt.0.0_R8) then !{
+                    hlp_scl(ls)=(hlp_ni(ls)-hlp_no(ls))/hlp_g(ls)
+                  else !}{
+                    if(hlp_ni(ls)-hlp_no(ls).ne.0.0_R8)
+     -               write(*,*) 'eirene_mc: error in scaling - no ',
+     ,               'sources and non-zero wall flux. ',
+     ,               'stratum, species =',istrai,ls
+                  end if !}
+                else !}{
+                  s=hlp_g(ls)**2-4.0_R8*(hlp_ni(ls)-hlp_no(ls))*s
+                  if(s.gt.0.0_R8) then !{
+                    s=sqrt(s)
+                    x1=0.5_R8*(hlp_g(ls)+s)/(hlp_s(ls)+hlp_t(ls))
+                    x2=0.5_R8*(hlp_g(ls)-s)/(hlp_s(ls)+hlp_t(ls))
+                    if(x2.le.0.0_R8) then !{
+                      hlp_scl(ls)=x1
+                    else if(x1.le.0.0_R8) then !}{
+                      hlp_scl(ls)=x2
+                    else !}{
+                      if(abs(log(x1)).le.abs(log(x2))) then !{
+                        hlp_scl(ls)=x1
+                      else !}{
+                        hlp_scl(ls)=x2
+                      end if !}
+                    end if !}
+                    print*,'ank+xpb: ls,s,g,t,ni,no,x1,x2,scl',ls,
+     1                 hlp_s(ls),hlp_g(ls),hlp_t(ls),
+     .                 hlp_ni(ls),hlp_no(ls),
+     2                 x1,x2,hlp_scl(ls)
+                  else !}{
+                    write(*,*) 'eirene_mc: error in scaling - zero ',
+     ,               'discriminant.  stratum, species =',istrai,ls
+                  end if !}
+                end if !}
+              end if !}
+              if(hlp_scl(ls).le.0.0_R8) then !{
+                write(*,*) 'eirene_mc: error in scaling - non-',
+     ,           'positive scaling factor. stratum, species, ',
+     ,           'factor =',istrai,ls,hlp_scl(ls)
+                hlp_scl(ls)=1.0_R8
+              else if(abs(log(hlp_scl(ls))).gt.
+     1         abs(log(neut_scl_lim))) then !}{
+                write(*,*) 'eirene_mc: error in scaling - too ',
+     ,           'strong variation. stratum, species, ',
+     ,           'factor =',istrai,ls,hlp_scl(ls)
+                hlp_scl(ls)=1.0_R8
+              end if !}
+              hlp_scp(ls,istrai)=hlp_scl(ls)
+            end do !}
+
+            do j=1,nnlimi+nnstsi !{
+              do ls=1,nnatmi !{
+                if(j.ne.l_ddt) then !{
+                  wldna(j,ls,istrai)=wldna(j,ls,istrai)/hlp_scl(ls)
+                  wldra(j,ls,istrai)=wldra(j,ls,istrai)/hlp_scl(ls)
+                else !}{
+                  wldna(j,ls,istrai)=wldna(j,ls,istrai)*hlp_scl(ls)
+                  wldra(j,ls,istrai)=wldra(j,ls,istrai)*hlp_scl(ls)
+                end if !}
+              end do !}
+              do i=1,nnmoli !{
+                ls=lmolscl(i)
+                if(ls.gt.0 .and. ls.le.nnatmi) then !{
+                  if(j.ne.l_ddt) then !{
+                    wldnm(j,i,istrai)=wldnm(j,i,istrai)/hlp_scl(ls)
+                    wldrm(j,i,istrai)=wldrm(j,i,istrai)/hlp_scl(ls)
+                  else !}{
+                    wldnm(j,i,istrai)=wldnm(j,i,istrai)*hlp_scl(ls)
+                    wldrm(j,i,istrai)=wldrm(j,i,istrai)*hlp_scl(ls)
+                  end if !}
+                end if !}
+              end do !}
+            end do !}
+
+            do ix=1,nx !{
+              do iy=1,ny !{
+                ifl=0
+                do is=0,ns-1 !{
+                  if(.not.is_neutral(is)) then !{
+                    ifl=ifl+1
+                    ls=b2espcr(is)
+                    if(lstrascl(istrai,ls).gt.0) then !{
+                      sni(ix,iy,ifl,istrai)=sni(ix,iy,ifl,istrai)*
+     *                 hlp_scl(ls)
+                      smo(ix,iy,ifl,istrai)=smo(ix,iy,ifl,istrai)*
+     *                 hlp_scl(ls)
+                    end if !}
+                  end if !}
+                end do !}
+              end do !}
+            end do !}
+c!###{
+            print '(i6,2i8,3x,1p,20e13.5)',istrai,ls,
+     ,                  lstrascl(istrai,ls),tfl(istrai,ls),
+     ,                  hlp_pi(ls),hlp_po(ls),
+     ,                  hlp_ni(ls),hlp_no(ls),hlp_s(ls),hlp_scl(ls)
+c!###}
+          end if !}
+        end do !}
+
+        if(dbg_eir_mc.gt.0 .and. 
+     &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
+c*** Print the particle fluxes for each stratum and species
+          print *,'%%%=============== total fluxes by stratum and ',
+     ,       'species after correction ================%%%'
+          print '(a25,20(4x,a5,4x))',' Stratum Species lstrascl',
+     ,       ' tfl ','wldpi','wldpo','wldni','wldno',
+     ,       'Srcpl','puff ',' d/dt','crsrc','error'
+          do istrai=1,nstrai !{
+            do ls=1,nnatmi !{
+              hlp_pi(ls)=0.0_R8
+              hlp_po(ls)=0.0_R8
+              hlp_ni(ls)=0.0_R8
+              hlp_no(ls)=0.0_R8
+              hlp_g(ls) =0.0_R8
+              hlp_s(ls) =0.0_R8
+              hlp_t(ls) =0.0_R8
+            end do !}
+            do j=1,nnlimi+nnstsi !{
+              if(j.gt.nnlimi .and. j.ne.l_ddt) then !{
+                ifl=0
+                do is=0,ns-1 !{
+                  if(.not.is_neutral(is)) then !{
+                    ifl=ifl+1
+                    hlp_pi(b2espcr(is))=hlp_pi(b2espcr(is))+
+     +               wldpp(j,ifl,istrai)
+                  end if !}
+                end do !}
+                do i=1,nnatmi !{
+                  hlp_po(i)=hlp_po(i)+wldpa(j,i,istrai)
+                  do is=1,nnmoli !{
+                    s=mlcmp(i,is)
+                    if(s.gt.0.0_R8)
+     -               hlp_po(i)=hlp_po(i)+wldpm(j,is,istrai)*s
+                  end do !}
+                end do !}
+              end if !}
+
+              hlp_log=j.le.nnlimi
+              if(hlp_log .or. (j.gt.nnlimi .and. j.ne.l_ddt)) then !{
+                if(.not.hlp_log) then !{
+                  do i=1,ncns !{
+                    hlp_log=hlp_log .or. j.eq.lcns(i)+nnlimi
+                  end do !}
+                  do i=1,ntns !{
+                    hlp_log=hlp_log .or. j.eq.ltns(i)+nnlimi
+                  end do !}
+                end if !}
+
+                if(hlp_log) then !{
+                  do i=1,nnatmi !{
+                    hlp_ni(i)=hlp_ni(i)+wldna(j,i,istrai)
+                    hlp_no(i)=hlp_no(i)+wldra(j,i,istrai)
+                    do is=1,nnmoli !{
+                      s=mlcmp(i,is)
+                      hlp_ni(i)=hlp_ni(i)+wldnm(j,is,istrai)*s
+                      hlp_no(i)=hlp_no(i)+wldrm(j,is,istrai)*s
+                    end do !}
+                  end do !}
+                end if !}
+              else if(j.eq.l_ddt) then !}{
+                do i=1,nnatmi !{
+                  hlp_t(i)=hlp_t(i)+wldna(j,i,istrai)
+                  do is=1,nnmoli !{
+                    s=mlcmp(i,is)
+                    hlp_t(i)=hlp_t(i)+wldnm(j,is,istrai)*s
+                  end do !}
+                end do !}
+              end if !}
+            end do !}
+
+            do ix=1,nx !{
+              do iy=1,ny !{
+                if(resignore(ix-1,iy-1,1).ne.0) then !{
+                  ifl=0
+                  do is=0,ns-1 !{
+                    if(.not.is_neutral(is)) then !{
+                      ifl=ifl+1
+                      hlp_s(b2espcr(is))=hlp_s(b2espcr(is))+
+     +                 sni(ix,iy,ifl,istrai)
+                    end if !}
+                  end do !}
+                end if !}
+              end do !}
+            end do !}
+
+            do ls=1,nnatmi !{
+              kks=ispc_ref(ls)
+              hlp_s(ls)=hlp_s(ls)*tflux(istrai)*flux_scale(istrai)
+              t0=hlp_scp(ls,istrai)
+              if(use_recyceir.gt.0) then
+                recyctmp=recyceir(istrai)
+              else
+                recyctmp=recyc(kks,istrai)
+              endif
+              if(crcstra(istrai).eq.'C')
+     -           hlp_g(ls)=tflux(istrai)*
+     *           gpfc(ls,istrai)*recyctmp
+              s=hlp_po(ls)+hlp_g(ls)+hlp_no(ls)-
+     -         (hlp_ni(ls)+hlp_s(ls)+hlp_t(ls))
+              print '(i6,2i8,3x,1p,10e13.5)',istrai,ls,
+     ,         lstrascl(istrai,ls),tfl(istrai,ls),
+     ,         hlp_pi(ls),hlp_po(ls),hlp_ni(ls),hlp_no(ls),
+     ,         hlp_s(ls),hlp_g(ls),hlp_t(ls),t0,s
+              end do !}
+          end do !}
+          print *,'%%%============================================',
+     ,       '=========================================%%%'
+        end if !}
+
+c!###{
+c        do j=1,lns_hlp !{
+c          l=lis_hlp(j)
+c          print *,'%%%=============== surface ',l
+c          print '(3x,20i12)',(i,i=1,nstrai)
+c          print '(1x,a5,2x,1p,20e12.4)','wldnm',
+c     ,                                    (wldnm(l,1,i),i=1,nstrai)
+c          print '(1x,a5,2x,1p,20e12.4)','wldrm',
+c     ,                                    (wldrm(l,1,i),i=1,nstrai)
+c          print '(1x,a5,2x,1p,20e12.4)','wldna',
+c     ,                                    (wldna(l,1,i),i=1,nstrai)
+c          print '(1x,a5,2x,1p,20e12.4)','wldra',
+c     ,                                    (wldra(l,1,i),i=1,nstrai)
+c          print *
+c        end do !}
+c!###}
+      endif !ank_mods
+
+csw 06dec2012 added check for main_call 
+csw otherwise rescaling procedure does not work with internal iterations nstg2>1
+csw (sclrtio/sclalph will be reinitialised which should not happen at istg2 > 1)
+csw
+c      if(ank_mods.ne.0) then
+      if(main_call.and.mod(ncall,eirene_mod).eq.0.and.ank_mods.ne.0)
+     .   then
+csw
+c*** Calculate the basic quantities - i.e. the neutral source strengths
+c*** and total plasma sources for each stratum for subsequent rescaling
+
+        do istrai=1, nstrai !{
+
+c*** Accumulators:
+c***  sclsrcn : the neutral sources (source strengths)
+c***  sclbase : the plasma sources
+
+          do j=0,nnatmi !{
+            sclsrcn(j,istrai)=0.0_R8
+            sclbase(j,istrai)=0.0_R8
+          end do !}
+          ifl=0
+          do is=0,ns-1 !{
+            if(.not.is_neutral(is)) then !{
+              ifl=ifl+1
+              j=b2espcr(is)
+              if(use_recyceir.gt.0) then
+                recyctmp=recyceir(istrai)
+              else
+                recyctmp=recyc(is,istrai)
+              endif
+              do iy=1,ny !{
+                do ix=1,nx !{
+                  if(resignore(ix-1,iy-1,1).ne.0) then !{
+                    s=sni(ix,iy,ifl,istrai)*tflux(istrai)*
+     *               recyctmp*flux_scale(istrai)
+                    if(crcstra(istrai).eq.'V' .and. s.lt.0.0_R8) then !{
+                      sclsrcn(j,istrai)=sclsrcn(j,istrai)-s
+                      sclsrcn(0,istrai)=sclsrcn(0,istrai)-s
+                    else !}{
+                      sclbase(j,istrai)=sclbase(j,istrai)+s
+                      sclbase(0,istrai)=sclbase(0,istrai)+s
+                    end if !}
+                  end if !}
+                end do !}
+              end do !}
+            end if !}
+          end do !}
+
+          do j=1,nnatmi !{
+            is=ispc_ref(j)
+            if(use_recyceir.gt.0) then
+              recyctmp=recyceir(istrai)
+            else
+              recyctmp=recyc(is,istrai)
+            endif
+            if(crcstra(istrai).eq.'E' .or.
+     .         crcstra(istrai).eq.'W' .or.
+     .         crcstra(istrai).eq.'N' .or.
+     .         crcstra(istrai).eq.'S' ) then !{
+              sclsrcn(j,istrai)=sclsrcn(j,istrai)+
+     +         tfl(istrai,j)*recyctmp
+              sclsrcn(0,istrai)=sclsrcn(0,istrai)+
+     +         tfl(istrai,j)*recyctmp
+            else if(crcstra(istrai).eq.'C'
+c     .                          .or. crcstra(istrai).eq.'U'
+     .       ) then !}{
+              sclsrcn(j,istrai)=sclsrcn(j,istrai)+
+     +         tflux(istrai)*gpfc(j,istrai)*recyctmp
+            end if !}
+
+            l=lstrascl(istrai,j)
+            if(l.gt.nnatmi .or. l.le.0) l=j
+            if(sclsrcn(l,istrai).gt.0.0_R8) then !{
+              sclbase(j,istrai)=sclbase(j,istrai)/sclsrcn(l,istrai)
+            else !}{
+              if(sclsrcn(l,istrai).lt.0.0_R8) write(*,*)
+     -         '@ neutral source < 0. species,stratum =',l,istrai
+              sclbase(j,istrai)=0.0_R8
+            end if !}
+
+            sclalph(j,istrai)=1.0_R8
+            sclstra(j,istrai)=1.0_R8
+          end do !}
+
+          sclsrcn(0,istrai)=0.0_R8
+          do j=1,nnatmi !{
+            hlp_log=.false.
+            do k=1,nnatmi !{
+              hlp_log = hlp_log .or. lstrascl(istrai,k).eq.j
+            end do !}
+            if(hlp_log) sclsrcn(0,istrai)=sclsrcn(0,istrai)+
+     +       sclsrcn(j,istrai)
+          end do !}
+          if(sclsrcn(0,istrai).gt.0.0_R8) then !{
+            sclbase(0,istrai)=sclbase(0,istrai)/sclsrcn(0,istrai)
+          else !}{
+            if(sclsrcn(0,istrai).lt.0.0_R8) write(*,*)
+     -       '@ neutral source < 0. species,stratum =',0,istrai
+            sclbase(0,istrai)=0.0_R8
+          end if !}
+
+          sclalph(0,istrai)=1.0_R8
+          sclstra(0,istrai)=1.0_R8
+        end do !}
+      endif ! ank_mods
+
+      core_flux = 0.0_R8
+      if (ionising_core.eq.1) then
+        do j = 1, nnlimi+nnstsi
+          hlp_cor = .false.
+          do i=1,ncns !{
+            hlp_cor = hlp_cor .or. j.eq.lcns(i)+nnlimi
+          end do !}
+          if(hlp_cor) then !{
+            do ls=1,nnatmi !{
+              core_flux(ls)=core_flux(ls)+(wldna(j,ls,0)-wldra(j,ls,0))
+              do is=1,nnmoli !{
+                s=mlcmp(ls,is)
+                core_flux(ls)=core_flux(ls)+
+     .           (wldnm(j,is,0)-wldrm(j,is,0))*s
+                if (dbg_eir_mc.ge.12 .and. main_call) then 
+                  write(*,*) 'J, ISTRAI, IATM, IMOL, S', 
+     .             j, istrai, ls, is, mlcmp(ls,is)
+                  write(*,*) 'wldna, wldra, wldnm, wldrm, core_flux',
+     .             wldna(j,ls,0), wldra(j,ls,0),
+     .             wldnm(j,is,0), wldrm(j,is,0), core_flux(ls)
+                endif
+              end do !}
+            end do !}
+          end if !}
+        end do !}
+      endif
+
+      ssni=0.0_R8
+      ssmo=0.0_R8
+      ssee=0.0_R8
+      ssei=0.0_R8
+      radarr=0.0_R8
+      rad_neutr=0.0_R8
+      rdneureg=0.0_R8
+      recycireg=0.0_R8
+      recycereg=0.0_R8
+      sseereg=0.0_R8
+      sseireg=0.0_R8
+      ssnireg=0.0_R8
+      sseicorr=0.0_R8
+      src_ni(:,3,:)=0.0_R8
+      src_mo(:,3,:)=0.0_R8
+      src_ms(:,3)=0.0_R8
+      src_ee(:,3)=0.0_R8
+      src_ei(:,3)=0.0_R8
+      src_es(:,3)=0.0_R8
+      do istrai=1,nstrai !{
+* by ns
+        recyc_hlp=0.0_R8
+        ifl=0
+        do is=0,ns-1 !{
+          if(.not.is_neutral(is)) then !{
+            ifl=ifl+1
+            j=b2espcr(is)
+            if(use_recyceir.gt.0) then
+              recyctmp=recyceir(istrai)
+            else
+              recyctmp=recyc(is,istrai)
+            endif
+            recyc_hlp=max(recyc_hlp,recyctmp)
+            do iy=-1,ny !{
+              do ix=-1,nx !{
+                if(leftix(ix,iy).ne.-2 .and.
+     &             rightix(ix,iy).ne.nx+1.and.
+     &             bottomiy(ix,iy).ne.-2 .and.
+     &             topiy(ix,iy).ne.ny+1 .and.
+     &             region(ix,iy,0).ne.0) then !{
+* continuity
+                  rf0=RF_NEUT(1)
+                  t00=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+     *             recyctmp*flux_scale(istrai)
+                  if(dpc_fix.lt.0) then
+                    write(*,*) 'You are running the code with ' //
+     1               'a default option that has been determined ' //
+     2               'to be wrong!'
+                    write(*,*) 'If you really want to do this, ' //
+     1               'you will need to set "eirene_dpc_fix" ' //
+     2               'in "b2mn.dat" to "0"'
+                    call xertst(dpc_fix.ge.0,
+     1               'Invalid setting of "eirene_dpc_fix"')
+                    stop 'Error in value of eirene_dpc_fix!'
+                  else if(dpc_fix.eq.0) then
+                                                  ! original wrong code
+                  else if(dpc_fix.eq.1) then
+                    t0=t00                        ! dpc fix!
+                  else if(dpc_fix.eq.2) then
+                    t0=0.0_R8                     ! at least get the wrong code to go wrong safely!
+                  endif
+                  if(crcstra(istrai).ne.'V' .or. t00.gt.0.0_R8)
+     -                                         t0=t00*sclalph(j,istrai)
+
+c                  if (t0.lt.0.0_R8.and.main_call.and.
+c     &                crcstra(istrai).ne.'V'.and.output_style.ge.1) then !{
+c                    write(6,*) 'neutral particle source < 0! ',t0
+c                    write(6,*) 'istrai,is,ix,iy ',istrai,is,ix,iy
+c                  else if (t0.gt.0.0_R8.and.main_call.and.
+c     &                crcstra(istrai).eq.'V'.and.output_style.ge.1) then !{
+c                    write(6,*) 'recombination particle source > 0! ',t0
+c                    write(6,*) 'istrai,is,ix,iy ',istrai,is,ix,iy
+c                  end if !}
+
+                  if(linearisation.eq.1) then !{
+                    if(t0.ge.0.0_R8) then !{
+                      sna0(ix,iy,0,is)=sna0(ix,iy,0,is)+t0
+                    else !}{
+                      sna0(ix,iy,1,is)=sna0(ix,iy,1,is)+t0/na(ix,iy,is)
+                    end if !}
+                    sna0(ix,iy,0,is)=sna0(ix,iy,0,is)+rf0*abs(t0)
+                    sna0(ix,iy,1,is)=sna0(ix,iy,1,is)-
+     1               rf0*abs(t0)/na(ix,iy,is)
+                  elseif(linearisation.eq.0) then !}{
+                    sna0(ix,iy,0,is)=sna0(ix,iy,0,is)+t0
+                  end if !}
+                  if(crcstra(istrai).ne.'V' .or. t00.gt.0.0_R8)
+     >             t0=t00*sclstra(j,istrai)
+                  ssni(istrai,is)=ssni(istrai,is)+t0
+c*** calculate the integral sources for nregion regions, 3 instants:
+c*** before correction (r), after correction (c), after iteration (i)
+                  if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                    src_ni(region(ix,iy,0),1,b2espcr(is))=
+     .               src_ni(region(ix,iy,0),1,b2espcr(is))+t0
+                    src_ni(region(ix,iy,0),2,b2espcr(is))=
+     .               src_ni(region(ix,iy,0),2,b2espcr(is))+t0
+                    cor_ni(ix,iy,b2espcr(is))=
+     .               cor_ni(ix,iy,b2espcr(is))+t0
+                    src_ni(0,1,b2espcr(is))=src_ni(0,1,b2espcr(is))+t0
+                    src_ni(0,2,b2espcr(is))=src_ni(0,2,b2espcr(is))+t0
+                  else
+                    src_ni(region(ix,iy,0),3,b2espcr(is))=
+     .               src_ni(region(ix,iy,0),3,b2espcr(is))+t0
+                    src_ni(0,3,b2espcr(is))=src_ni(0,3,b2espcr(is))+t0
+                  endif
+csw 21feb2012, add test l_neutrad (SOLPS4.3)
+                  if(l_neutrad.le.0) then
+                    radarr(ix,iy)=radarr(ix,iy)+t0*rpt(ix,iy,is)*ev
+                    rad_neutr=rad_neutr+t0*rpt(ix,iy,is)*ev
+                    rdneureg(region(ix,iy,0))=
+     .               rdneureg(region(ix,iy,0))+t0*rpt(ix,iy,is)*ev
+                  endif
+csw
+                  recycereg(region(ix,iy,0))=
+     .             recycereg(region(ix,iy,0))+t0*rpt(ix,iy,is)*ev
+                  ssnireg(b2espcr(is),region(ix,iy,0))=
+     .             ssnireg(b2espcr(is),region(ix,iy,0))+t0
+* momentum
+                  rf0=RF_NEUT(2)
+                  t0=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
+csw 07mar2012 TEST
+csw                  if(is .ge.5) t0=0
+csw                  t0=0.0
+csw
+                  VTHE=SQRT(TE(IX,IY)/me)
+c SCALE VTHE TO GET A VELOCITY CLOSER TO THE ION VELOCITIES
+                  VTHE=VTHE/sqrt(am(is)*mp/me)
+c
+                  if (linearisation.eq.1) then !{
+cxpb 2002.01.28 moved to cell-centered velocities
+                    smo0(IX,IY,0,IS)=smo0(IX,IY,0,IS)+
+     .               t0+RF0*ABS(t0)*UA(IX,IY,IS)/VTHE
+                    smo0(IX,IY,1,IS)=smo0(IX,IY,1,IS)-
+     .               RF0*ABS(t0)/VTHE
+cxpb was                    smo0(IX,IY,0,IS)=smo0(IX,IY,0,IS)+
+cxpb was     .               (t0/2.0_R8)+RF0*ABS(t0/2.0_R8)*UA(IX,IY,IS)/VTHE
+cxpb was                    smo0(IX,IY,1,IS)=smo0(IX,IY,1,IS)-
+cxpb was     .               RF0*ABS((t0/2.0_R8))/VTHE
+
+cxpb was                    smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),0,IS)=
+cxpb was     1               smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),0,IS)+
+cxpb was     .               (t0/2.0_R8)+RF0*ABS(t0/2.0_R8)*
+cxpb was     1               UA(RIGHTIX(IX,IY),RIGHTIY(IX,IY),IS)/VTHE
+cxpb was                    smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),1,IS)=
+cxpb was     1               smo0(RIGHTIX(IX,IY),RIGHTIY(IX,IY),1,IS)-
+cxpb was     .               RF0*ABS((t0/2.0_R8))/VTHE
+                  elseif (linearisation.eq.0) then !}{
+                    smo0(IX,IY,0,IS)=smo0(IX,IY,0,IS)+t0
+                  end if !}
+                  SSMO(istrai,IS)=SSMO(istrai,IS)+t0
+c*** calculate the integral sources for nregion regions, 3 instants:
+c*** before correction (r), after correction (c), after iteration (i)
+                  if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                    src_mo(region(ix,iy,0),1,b2espcr(is))=
+     .               src_mo(region(ix,iy,0),1,b2espcr(is))+t0
+                    src_mo(region(ix,iy,0),2,b2espcr(is))=
+     .               src_mo(region(ix,iy,0),2,b2espcr(is))+t0
+                    cor_mo(ix,iy,b2espcr(is))=
+     .               cor_mo(ix,iy,b2espcr(is))+t0
+                    src_mo(0,1,b2espcr(is))=src_mo(0,1,b2espcr(is))+t0
+                    src_mo(0,2,b2espcr(is))=src_mo(0,2,b2espcr(is))+t0
+                    src_ms(region(ix,iy,0),1)=
+     .               src_ms(region(ix,iy,0),1)+t0
+                    src_ms(region(ix,iy,0),2)=
+     .               src_ms(region(ix,iy,0),2)+t0
+                    src_ms(0,1)=src_ms(0,1)+t0
+                    src_ms(0,2)=src_ms(0,2)+t0
+                  else
+                    src_mo(region(ix,iy,0),3,b2espcr(is))=
+     .               src_mo(region(ix,iy,0),3,b2espcr(is))+t0
+                    src_ms(region(ix,iy,0),3)=
+     .               src_ms(region(ix,iy,0),3)+t0
+                    src_mo(0,3,b2espcr(is))=src_mo(0,3,b2espcr(is))+t0
+                    src_ms(0,3)=src_ms(0,3)+t0
+                  endif
+                end if !}
+              end do !}  ! ix
+            end do !}  !iy
+          end if !}
+        end do !}  ! is
+        do iy=-1,ny !{
+          do ix=-1,nx !{
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
+     &         region(ix,iy,0).ne.0) then !{
+* electron energy
+              rf0=RF_NEUT(3)
+              t0=see(ix+1,iy+1,istrai)*tflux(istrai)*
+     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
+              if (linearisation.eq.1) then !{
+                she0(ix,iy,0)=she0(ix,iy,0)+max(0.0_R8,t0)+abs(t0)*rf0
+                she0(ix,iy,1)=she0(ix,iy,1)+
+     1           (min(0.0_R8,t0)-abs(t0)*rf0)/te(ix,iy)
+              elseif (linearisation.eq.0) then !}{
+                she0(ix,iy,0)=she0(ix,iy,0)+t0
+              end if !}
+              ssee(istrai)=ssee(istrai)+t0
+c*** calculate the integral sources for nregion regions, 3 instants:
+c*** before correction (r), after correction (c), after iteration (i)
+              if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                src_ee(region(ix,iy,0),1)=
+     .           src_ee(region(ix,iy,0),1)+t0
+                src_ee(region(ix,iy,0),2)=
+     .           src_ee(region(ix,iy,0),2)+t0
+                cor_ee(ix,iy)=cor_ee(ix,iy)+t0
+                src_es(region(ix,iy,0),1)=
+     .           src_es(region(ix,iy,0),1)+t0
+                src_es(region(ix,iy,0),2)=
+     .           src_es(region(ix,iy,0),2)+t0
+                src_ee(0,1)=src_ee(0,1)+t0
+                src_ee(0,2)=src_ee(0,2)+t0
+                src_es(0,1)=src_es(0,1)+t0
+                src_es(0,2)=src_es(0,2)+t0
+              else
+                src_ee(region(ix,iy,0),3)=
+     .           src_ee(region(ix,iy,0),3)+t0
+                src_es(region(ix,iy,0),3)=
+     .           src_es(region(ix,iy,0),3)+t0
+                src_ee(0,3)=src_ee(0,3)+t0
+                src_es(0,3)=src_es(0,3)+t0
+              endif
+csw 21feb2012, add test l_neutrad (SOLPS4.3)
+              if(l_neutrad.le.0) then
+                radarr(ix,iy)=radarr(ix,iy)+t0
+                rad_neutr=rad_neutr+t0
+                rdneureg(region(ix,iy,0))=rdneureg(region(ix,iy,0))+t0
+                recycereg(region(ix,iy,0))=recycereg(region(ix,iy,0))
+     .                                     +t0
+              endif
+csw
+              sseereg(region(ix,iy,0))=sseereg(region(ix,iy,0))+t0
+* ion energy
+              rf0=RF_NEUT(4)
+              t0=sei(ix+1,iy+1,istrai)*tflux(istrai)*
+     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
+              ssei(istrai)=ssei(istrai)+t0
+c ? RADARR ?
+csw 06mar2012
+              if(l_neutrad.le.0) then
+                recycireg(region(ix,iy,0))=recycireg(region(ix,iy,0))
+     .                                     +t0
+              endif
+              sseireg(region(ix,iy,0))=sseireg(region(ix,iy,0))+t0
+c*** calculate the integral sources for nregion regions, 3 instants:
+c*** before correction (r), after correction (c), after iteration (i)
+              if (main_call.and.mod(ncall,eirene_mod).eq.0) then
+                src_ei(region(ix,iy,0),1)=
+     .           src_ei(region(ix,iy,0),1)+t0
+                src_ei(region(ix,iy,0),2)=
+     .           src_ei(region(ix,iy,0),2)+t0
+                cor_ei(ix,iy)=cor_ei(ix,iy)+t0
+                src_es(region(ix,iy,0),1)=
+     .           src_es(region(ix,iy,0),1)+t0
+                src_es(region(ix,iy,0),2)=
+     .           src_es(region(ix,iy,0),2)+t0
+                src_ei(0,1)=src_ei(0,1)+t0
+                src_es(0,1)=src_es(0,1)+t0
+                src_ei(0,2)=src_ei(0,2)+t0
+                src_es(0,2)=src_es(0,2)+t0
+              else
+                src_ei(region(ix,iy,0),3)=
+     .           src_ei(region(ix,iy,0),3)+t0
+                src_es(region(ix,iy,0),3)=
+     .           src_es(region(ix,iy,0),3)+t0
+                src_ei(0,3)=src_ei(0,3)+t0
+                src_es(0,3)=src_es(0,3)+t0
+              endif
+              ifl=0
+              t1=0.0_R8
+cxpb Correction of Eirene energy sources to B2 heat sources
+cxpb Only necessary for SOLPS5.0 equation formulation
+              if (BoRiS.eq.0.0_R8) then !{ 
+csw 07mar2012
+csw                do is=0,ns-1 !{
+                if(ion_energy_src_corr .lt. 0) then
+                  nsmax=ns
+                else
+                  nsmax=ion_energy_src_corr+1
+                endif
+                do is=0,nsmax-1
+csw
+                  if(use_recyceir.gt.0) then
+                    recyctmp=recyceir(istrai)
+                  else
+                    recyctmp=recyc(is,istrai)
+                  endif
+                  if(.not.is_neutral(is)) then !{
+                    ifl=ifl+1
+cxpb  Moved to cell-center velocities 2002.01.28
+                    uatmp = ua(ix,iy,is)
+cxpb was                 uatmp=0.5_R8*(ua(ix,iy,is)+
+cxpb was    1             ua(rightix(ix,iy),rightiy(ix,iy),is))
+
+csw 06mar2012
+csw include ank_mods scaling into correction
+c                    t1=t1-uatmp*smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+c     *               recyctmp*flux_scale(istrai)+
+c     1               kinrgy(ix,iy,is)*
+c     2               sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+c     *               recyctmp*flux_scale(istrai)
+csw
+csw momentum source
+                    j=b2espcr(is)
+                    t2=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+     *               recyctmp*flux_scale(istrai)
+                    t2=t2*sclstra(j,istrai)
+csw particle source
+                    t3=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+     *               recyctmp*flux_scale(istrai)
+csw 26mar2013
+                    if(iscltst .eq. 0) then
+                      if(crcstra(istrai).ne.'V' .or. t3.gt.0.0_R8)
+     -                 t3=t3*sclalph(j,istrai)
+                    else
+                      if(crcstra(istrai).ne.'V' .or. t3.gt.0.0_R8)
+     -                 t3=t3*sclstra(j,istrai)
+                    endif
+
+
+csw total correction
+                    t1=t1-uatmp*t2+kinrgy(ix,iy,is)*t3
+
+                  end if !}
+                end do !} !is
+              end if !}
+csw 13dec2012
+              if(ion_energy_src_corr_core .eq. 0) then
+                if(mod(region(ix,iy,0),4).eq.1) then
+                  t1=0.d0
+                endif
+              endif
+csw
+              sseicorr(istrai)=sseicorr(istrai)+t1
+              t0=t0+t1
+              if (linearisation.eq.1) then !{
+                shi0(ix,iy,0)=shi0(ix,iy,0)+max(0.0_R8,t0)+abs(t0)*rf0
+                shi0(ix,iy,1)=shi0(ix,iy,1)+
+     1           (min(0.0_R8,t0)-abs(t0)*rf0)/ti(ix,iy)
+              elseif (linearisation.eq.0) then !}{
+                shi0(ix,iy,0)=shi0(ix,iy,0)+t0
+              end if !}
+            end if !}
+          end do !} ix
+        end do !} iy
+      end do !} istrai
+c
+c*** correct radiation losses for the molecule dissociation
+c
+      do iy=-1,ny
+        do ix=-1,nx
+          if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &        topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
+     &        region(ix,iy,0).ne.0) then
+            k=region(ix,iy,0)
+csw 21feb2012 add test l_neutrad (SOLPS4.3)
+            if(l_neutrad.le.0) then
+              radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,1,1)
+              rad_neutr=rad_neutr-edissml(ix+1,iy+1,1,1)
+              rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,1,1)
+              recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,1,1)
+            endif
+csw
+          end if
+        end do
+      end do
+
+csw
+csw 21feb2012, calculate neutral radiation directly from EIRENE (SOLPS4.3)
+csw
+      if(l_neutrad.gt.0) then
+c
+c*** calculate radiation losses directly (at the moment only atoms)
+c
+        rad_neutr=0.
+        rdneureg=0.
+        recycereg=0.
+        do iy=-1,ny
+          do ix=-1,nx
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
+     &         region(ix,iy,0).ne.0) then
+              k=region(ix,iy,0)
+              radarr(ix,iy)=eneutrad(ix+1,iy+1,1,1)
+              rad_neutr=rad_neutr+eneutrad(ix+1,iy+1,1,1)
+              rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,1,1)
+              recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,1,1)
+            endif
+          enddo
+        enddo
+        WRITE(6,*) "NEUTRALS. RADARR ",
+     &              SUM(radarr(1:nx,1:ny))
+      endif
+      WRITE(6,*) "NEUTRALS.  rad_neutr ",  rad_neutr 
+csw
+
+      if(.not.filedata(ntrc_int)) then
+        write(*,'(a,1p,1000g12.4)')
+     -      'recycecore,recycesol,recycedivin,recycedivout= ',recycereg
+        write(*,'(a,1p,1000g12.4)')
+     -      'recycicore,recycisol,recycidivin,recycidivout= ',recycireg
+      end if
+
+cxpb  core recycling into ions of the highest ionisation stage
+      if (ionising_core.eq.1) then
+        rf0=RF_NEUT(1)
+        do iy = -1, ny
+          do ix = -1, nx
+            do j = 1, nnatmi
+              if (bottomiy(ix,iy).eq.-2 .and. 
+     &            mod(region(ix,iy,0),4).eq.1) then  
+                t0=core_flux(j)*
+     *           (gs(topix(ix,iy),topiy(ix,iy),1)/core_surface)
+                if(linearisation.eq.1) then !{
+                  if(t0.gt.0.0_R8) then !{
+                    sna0(ix,iy,0,ishigh(j))=sna0(ix,iy,0,ishigh(j))+t0
+                  else !}{
+                    sna0(ix,iy,1,ishigh(j))=sna0(ix,iy,1,ishigh(j))+
+     1               t0/na(ix,iy,ishigh(j))
+                  end if !}
+                  sna0(ix,iy,0,ishigh(j))=sna0(ix,iy,0,ishigh(j))+
+     1             rf0*abs(t0)
+                  sna0(ix,iy,1,ishigh(j))=sna0(ix,iy,1,ishigh(j))-
+     1             rf0*abs(t0)/na(ix,iy,ishigh(j))
+                elseif(linearisation.eq.0) then !}{
+                  sna0(ix,iy,0,ishigh(j))=sna0(ix,iy,0,ishigh(j))+t0
+                end if !}
+              endif
+            enddo
+          enddo
+        enddo
+      endif
+
+      cum_volrec=0.0_R8
+      do istrai=1, nstrai
+        cum_volrec=cum_volrec+VOLSUMN(istrai)
+      enddo
+      cum_volrec=-cum_volrec/qee
+
+      if((main_call.and.output_style.eq.1).or.output_style.gt.1) then !{
+        do istrai=1, nstrai !{
+          write (*,*) 'ISTRATUM = ',istrai
+          do is=0,ns-1 !{
+            write (*,*) 'IS,SSNI,SSMO = ',
+     1       is,ssni(istrai,is)*qee,ssmo(istrai,is)
+          end do !}
+          write (*,*) 'SSEE,SSEI = ',
+     1     ssee(istrai),ssei(istrai)+sseicorr(istrai),
+     2     ssei(istrai),sseicorr(istrai)
+        end do !}
+        write(*,*) 'CUM:SSEE,SSEI[123],SSNI,SSMO = ',
+     1   sum(ssee(1:nstrai)),
+     2   sum(ssei(1:nstrai))+sum(sseicorr(1:nstrai)),
+     3   sum(ssei(1:nstrai)),sum(sseicorr(1:nstrai)),
+     2   sum(ssni(1:nstrai,0:ns-1)),sum(ssmo(1:nstrai,0:ns-1))
+        if (ionising_core.eq.1) then
+          do j = 1, nnatmi 
+            write(*,*) 'Recycled',trim(ion_name(j)),
+     1       ' ion flux through core boundary', core_flux(j)
+          enddo
+        endif
+        write(*,*) 'Cumulative_volume_recombination ',cum_volrec
+      end if !}
+
+      if (main_call.or.ncall.eq.0) ncall=ncall+1
+
+* ..return
+      call subend ()
+      return
+
+* ..finalise save
+      entry eirene_mc_final(nx,ny,ns,BoRiS)
+      if(saved_volrec_used) then !{
+        open(99,file='../b2.neutrals_save.parameters')
+        write(99,neutrals_save)
+        close(99)
+      end if !}
+      if(background_new.eq.0) call copy_background(nx, ny, ns, BoRiS)  !srv 14.07.10
+      if(background_new.ne.0) call copy_background_(nx, ny, ns, BoRiS) !srv 14.07.10
+      call write_f30(nx, ny)
+      call write_f31(nx, ny)
+!csw 26jan2011
+      call eirene_extrab25_cleanup
+!csw
+      return
+
+c======================================================================
+      entry neutr_scl(nx, ny, ns)
+c======================================================================
+      if(dbg_eir_mc.gt.0) write(*,*) 'entry neutr_scl'
+      if(ank_mods.ne.0) then
+c*** Calculate the basic quantities - i.e. the neutral source strengths
+c*** and total plasma sources for each stratum for subsequent rescaling
+
+c!###{
+        hlp_tt=.false.
+c!###}
+
+c*** First, initialise the accumulators.
+c***  sclstra: neutral sources
+c***  sclrtio: plasma sources
+
+        do istrai=1, nstrai !{
+          do j=0,nnatmi !{
+            sclstra(j,istrai)=0.0_R8
+            sclrtio(j,istrai)=0.0_R8
+          end do !}
+        end do !}
+
+c*** Evaluate the new volumetric sources cell by cell
+c*** Here, the calculation of t0 and s must be consistent with
+c*** SNIC and SNIV evaluation above
+
+        do iy=0,ny-1 !{
+          do ix=0,nx-1 !{
+            if(resignore(ix,iy,1).ne.0) then !{
+              do istrai=1, nstrai !{
+                ifl=0
+                do is=0,ns-1 !{
+                  if(use_recyceir.gt.0) then
+                    recyctmp=recyceir(istrai)
+                  else
+                    recyctmp=recyc(is,istrai)
+                  endif
+                  if(.not.is_neutral(is)) then !{
+                    ifl=ifl+1
+                    j=b2espcr(is)
+                    t0=sni(ix+1,iy+1,ifl,istrai)*recyctmp*
+     *               tflux(istrai)*flux_scale(istrai)
+c                s=t0+rf0*abs(t0)*(1.0_R8-na(ix,iy,is)/na0(ix,iy,is))
+                    if(t0.ge.0.0_R8) then !{
+                      s=t0
+                    else !}{
+                      s=t0*na(ix,iy,is)/na0(ix,iy,is)
+                    end if !}
+                    if(crcstra(istrai).eq.'V' .and. t0.lt.0.0_R8) then !{
+                      sclstra(j,istrai)=sclstra(j,istrai)-s
+c                  sclstra(0,istrai)=sclstra(0,istrai)-s
+                    else !}{
+                      sclrtio(j,istrai)=sclrtio(j,istrai)+
+     +                 s*sclalph(j,istrai)
+                      sclrtio(0,istrai)=sclrtio(0,istrai)+
+     +                 s*sclalph(j,istrai)
+                    end if !}
+                  end if !}
+                end do !}
+              end do !}
+            end if !}
+          end do !}
+        end do !}
+
+c*** Calculate the new neutral sources for each stratum. Only the
+c*** surface sources should be counted here - the volumetric
+c*** recombination is already evaluated above.
+
+        hlp_pff=.true.
+        do istrai=1, nstrai !{
+          do is=0,ns-1 !{
+            if(.not.is_neutral(is)) then !{
+              j=b2espcr(is)
+              hlp_st=0.0_R8
+              if(crcstra(istrai).eq.'W') then !{
+                do iy=rcstart(istrai),rcend(istrai) !{
+                  hlp_st=hlp_st-fna(rightix(rcpos(istrai),iy),
+     .                              rightiy(rcpos(istrai),iy),0,is)
+                end do !}
+              else if(crcstra(istrai).eq.'E') then !}{
+                do iy=rcstart(istrai),rcend(istrai) !{
+                  hlp_st=hlp_st+fna(rcpos(istrai),iy,0,is)
+                end do !}
+              else if(crcstra(istrai).eq.'N') then !}{
+                do ix=rcstart(istrai),rcend(istrai) !{
+                  hlp_st=hlp_st+fna(ix,rcpos(istrai),1,is)
+                end do !}
+              else if(crcstra(istrai).eq.'S') then !}{
+                do ix=rcstart(istrai),rcend(istrai) !{
+                  hlp_st=hlp_st-fna(topix(ix,rcpos(istrai)),
+     .             topiy(ix,rcpos(istrai)),1,is)
+                end do !}
+              else if(crcstra(istrai).eq.'C') then !}{
+                if(hlp_pff(j,istrai)) then !{
+c                if(gpfc(j,istrai).gt.0.0_R8)                       !###
+c                  write(*,*) 'istrai,j,is,tflux,gpfc= ',           !###
+c                  istrai,j,is,tflux(istrai),gpfc(j,istrai)         !###
+                  hlp_st=tflux(istrai)*gpfc(j,istrai)
+                  hlp_pff(j,istrai)=.false.
+                end if !}
+c            else if(crcstra(istrai).eq.'U') then !}{
+c              hlp_st=userfluxparm(istrai,1)   ! this is possibly wrong!
+              end if !}
+              if(use_recyceir.gt.0) then
+                recyctmp=recyceir(istrai)
+              else
+                recyctmp=recyc(is,istrai)
+              endif
+              sclstra(j,istrai)=sclstra(j,istrai)+
+     1         hlp_st*recyctmp
+c            sclstra(0,istrai)=sclstra(0,istrai)+hlp_st*recyctmp
+            end if !}
+          end do !}
+        end do !}
+c!###{
+      print *,'@@=============== before correction factors =========='
+      print '(a16,20(4x,a7,2x))',' Stratum Species','sclbase','sclstra',
+     ,                                    'sclrtio','sclalph','sclsrcn'
+      do istrai=1, nstrai !{
+        do j=0,nnatmi !{
+          print '(i6,i8,2x,1p,20e13.5)',istrai,j,sclbase(j,istrai),
+     ,           sclstra(j,istrai),sclrtio(j,istrai),sclalph(j,istrai),
+     ,                                                sclsrcn(j,istrai)
+        end do !}
+      end do !}
+      print *,'@@===================================================='
+c!###}
+
+c*** Finally, calculate the scaling factors for the plasma sources and
+c*** neutral fluxes.
+c*** Indeed, and equation F(sclalph)=0 should be solved for each
+c*** species and stratum, where F = sclrtio - 1.
+
+        do istrai=1, nstrai !{
+          sclstra(0,istrai)=0.0_R8
+          do j=1,nnatmi !{
+            hlp_stra(j)=sclstra(j,istrai)
+            hlp_log=.false.
+            do k=1,nnatmi !{
+              hlp_log = hlp_log .or. lstrascl(istrai,k).eq.j
+            end do !}
+            if(hlp_log) sclstra(0,istrai)=sclstra(0,istrai)+
+     +       sclstra(j,istrai)
+          end do !}
+          do j=0,nnatmi !{
+            if(j.gt.0) then !{
+              l=lstrascl(istrai,j)
+              if(l.le.0 .or. l.gt.nnatmi) l=j
+            else !}{
+              l=0
+            end if !}
+            if(sclrtio(j,istrai).gt.0.0_R8 .and. 
+     &         sclbase(j,istrai).gt.0.0_R8) then !{
+              sclrtio(j,istrai)=sclbase(j,istrai)*
+     *         sclstra(l,istrai)/sclrtio(j,istrai)
+            else !}{
+              if(sclrtio(j,istrai).lt.0.0_R8)
+     -         write(0,*) '@eirene_mc: negative plasma source. ',
+     ,         'istrai,ispecies,source = ',istrai,j,sclrtio(j,istrai)
+              sclrtio(j,istrai)=1.0_R8
+            end if !}
+          end do !}
+
+          do j=0,nnatmi !{
+            if(j.gt.0 .and. lstrascl(istrai,j).gt.0 .and.
+     .       lstrascl(istrai,j).le.nnatmi) then !{
+
+c*** A primitive iteration scheme - to be modified later if necessary
+
+              l=lstrascl(istrai,j)
+              if(l.le.0 .or. l.gt.nnatmi) l=j
+              if(sclsrcn(l,istrai).gt.0.0_R8) then !{
+                sclstra(j,istrai)=hlp_stra(l)/sclsrcn(l,istrai)
+              else !}{
+                sclstra(j,istrai)=1.0_R8
+              end if !}
+              sclstra(j,istrai)=max(1.0_R8/neut_scl_lim,
+     1         min(neut_scl_lim,sclstra(j,istrai)))
+              if(sclbase(j,istrai).gt.0.0_R8) then !{
+                sclalph(j,istrai)=sclalph(j,istrai)*sclrtio(j,istrai)
+                sclalph(j,istrai)=max(1.0_R8/neut_scl_lim,
+     1           min(neut_scl_lim,sclalph(j,istrai)))
+              else !}{
+                sclalph(j,istrai)=sclstra(j,istrai)
+              end if !}
+            else if(j.eq.0 .or. lstrascl(istrai,j).lt.0) then !}{
+              if(sclsrcn(j,istrai).gt.0.0_R8) then !{
+                sclstra(j,istrai)=sclstra(j,istrai)/sclsrcn(j,istrai)
+              else !}{
+                sclstra(j,istrai)=1.0_R8
+              end if !}
+              sclalph(j,istrai)=sclstra(j,istrai)
+            else !}{
+              sclstra(j,istrai)=1.0_R8
+              sclalph(j,istrai)=1.0_R8
+            end if !}
+          end do !}
+        end do !}
+
+c!###{
+      print *,'@@=============== after correction factors ==========='
+      print '(a16,20(4x,a7,2x))',' Stratum Species','sclbase','sclstra',
+     ,                                    'sclrtio','sclalph','sclsrcn'
+      do istrai=1, nstrai !{
+        do j=0,nnatmi !{
+          print '(i6,i8,2x,1p,20e13.5)',istrai,j,sclbase(j,istrai),
+     ,           sclstra(j,istrai),sclrtio(j,istrai),sclalph(j,istrai),
+     ,                                                sclsrcn(j,istrai)
+        end do !}
+      end do !}
+      print *,'@@===================================================='
+c!###}
+
+      endif ! ank_mods
+      return
+
+      end subroutine eirene_mc

@@ -1,0 +1,5 @@
+      real (kind=R8) ::
+     *  wla(NSTORE), LOT(NSTORE)
+      INTEGER IZIN, IZ0IN
+      CHARACTER EXTIN*3,UIDIN*80,GRPIN*8,TYPIN*80
+      COMMON /adas_common/ wla,LOT,IZIN,IZ0IN,EXTIN,UIDIN,GRPIN,TYPIN

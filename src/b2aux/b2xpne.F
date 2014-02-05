@@ -1,0 +1,24 @@
+      subroutine b2xpne (nx, ny, ns, rza, na, ne)
+      use b2mod_types
+      implicit none
+      integer nx, ny, ns
+      real (kind=R8) ::
+     *  rza(-1:nx,-1:ny,0:ns-1), na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny)
+*     ------------------------------------------------------------------
+*     B2XPNE computes the electron density, ne:
+*       ne(,) = (sum is :: rza(,,is)*na(,,is)) .
+*     ------------------------------------------------------------------
+      integer n2, is
+      external sfill
+*     ------------------------------------------------------------------
+*$$$  call subini ('b2xpne')
+      n2 = (nx+2)*(ny+2)
+      call sfill (n2, 0.0_R8, ne, 1)
+      do is = 0, ns-1
+       ne(-1:nx,-1:ny) = ne(-1:nx,-1:ny) +
+     .  rza(-1:nx,-1:ny,is)*na(-1:nx,-1:ny,is)
+      enddo
+*$$$  call subend ()
+      return
+*     ------------------------------------------------------------------
+      end subroutine b2xpne

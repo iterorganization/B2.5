@@ -1,0 +1,205 @@
+*-----------------------------------------------------------------------
+*.specification
+
+      subroutine b2npco (nx, ny, guard_flows,                        !srv 05.07.08
+     &  nregionv, solvcreg, ua_solve, solvmreg, itcnt, isb, rxf,
+     &  vol, pbs, flob, conb, snb,
+     &  pccb, pb, nb, ub, fnb, rescb, corpb, ierr)
+      use b2mod_types
+      use b2mod_indirect
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer nx, ny, guard_flows, nregionv, itcnt, isb               !srv 05.07.08
+      real (kind=R8) ::
+     *  rxf, pbs(-1:nx,-1:ny,0:1), flob(-1:nx,-1:ny,0:1),
+     &  conb(-1:nx,-1:ny,0:1,0:4), snb(-1:nx,-1:ny,0:1),              !srv 13.10.06
+     &  pccb(-1:nx,-1:ny,0:1),vol(-1:nx,-1:ny)
+      logical solvcreg(0:nregionv), ua_solve, solvmreg(0:nregionv)
+*   ..input/output arguments
+      real (kind=R8) ::
+     *  pb(-1:nx,-1:ny), nb(-1:nx,-1:ny), ub(-1:nx,-1:ny),
+     &  fnb(-1:nx,-1:ny,0:1)
+*   ..output arguments (unspecified on entry)
+      integer ierr
+      real (kind=R8) ::
+     *  rescb(-1:nx,-1:ny), corpb(-1:nx,-1:ny)
+*   ..common blocks
+
+
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     B2NPCO performs one iteration of a relaxation process for the
+*     solution of the continuity equation for one atomic species.
+*
+*
+*  3. description (see also routine b2cdca)
+*
+*     For a detailed description of the equations and the method of
+*     solution, see the references cited in the main program unit.
+*
+*     This routine performs one inner iteration for the equation that
+*     governs the particle density, nb, for a single atomic species.
+*     An outline of the procedure follows.
+*     ..compute residual
+*     ..compute correction
+*     ..apply correction
+*
+*-----------------------------------------------------------------------
+*.declarations
+
+*   ..local variables
+      integer ncall, n2, ix, iy, ireg
+      integer, save :: iout = 0                                      !srv 04.07.08
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
+	character chns*2, chark*1                                    !srv 04.07.08
+      real (kind=R8) ::
+     *  rxg, pcm0, pcm1
+      real (kind=R8) ::
+     *  aa5(-1:nx,-1:ny,-2:2)
+      save ncall, rxg, pcm0, pcm1
+*   ..procedures
+      external subini, subend, xertst, ipgetr
+      external b2xvsg, b2xvff, b2ursc, b2usco, b2upco
+*   ..initialisation
+      data ncall/0/, rxg/1.0_R8/, pcm0/1.0_R8/, pcm1/1.0_R8/
+
+*-----------------------------------------------------------------------
+*.documentation-internal
+*
+*     Description of some local variables:
+*
+*     rxg - real.
+*     rxg specifies a special under-relaxation parameter. A term of the
+*     form "abs(residual)/rxg" is added to the diagonal of the matrix
+*     of the correction equation, with the effect of limiting the
+*     computed correction. rxg is dimensionless and of order unity;
+*     smaller values of rxg imply stronger damping.
+*
+*     pcm0, pcm1 - real.
+*     pcm0 specifies an additional under-relaxation factor that is
+*     applied to the velocity correction.
+*     It is required that 0.le.pcm0.and.0.le.pcm1.
+*
+*-----------------------------------------------------------------------
+*.computation
+
+* ..preliminaries
+*   ..subprogram start-up calls
+      call subini ('b2npco')
+*   ..set internal parameters on first call
+      if (ncall.eq.0) then
+       call ipgetr ('b2npco_rxg', rxg)
+       call ipgetr ('b2npco_pcm0', pcm0)
+       call ipgetr ('b2npco_pcm1', pcm1)
+       call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
+       call xertst (0.0_R8.le.pcm0, 'faulty internal parameter pcm0')
+       call xertst (0.0_R8.le.pcm1, 'faulty internal parameter pcm1')
+       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
+       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
+       call ipgeti ('b2npco_iout', iout)                              !srv 04.07.08
+      endif
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
+*   ..test nx, ny
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..test rxf
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8, 
+     . 'faulty argument rxf')
+*   ..extensive tests on first few calls
+      if (ncall.lt.3) then
+
+*    ..test sign of conb
+       if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then           !srv 06.07.06 {
+        call b2xvsg (n2*2*3, conb, 1, 'conb', '.ge.')                 !srv 18.11.05 13.10.06
+       endif                                                          !srv 06.07.06 }
+*    ..test edge values of flob, conb
+       call b2xvff (nx, ny, flob, 'flob')
+       call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')                 !srv 13.10.06 {
+       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb1')
+       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb2')                 !srv 13.10.06 }
+*    ..test sign of snbc, snbv
+       call b2xvsg (n2, snb(-1,-1,0), 1, 'snbc', '.ge.')
+       call b2xvsg (n2, snb(-1,-1,1), 1, 'snbv', '.le.')
+
+*    ..test sign of pb, nb
+       call b2xvsg (n2, pb, 1, 'pb', '.gt.')
+       call b2xvsg (n2, nb, 1, 'nb', '.gt.')
+
+*    ..test edge values of fnb
+       call b2xvff (nx, ny, fnb, 'fnb')
+      endif
+
+* ..particle balance
+*   ..compute residual
+      call b2ursc (nx, ny, nb, snb, fnb, rescb)
+      if(guard_flows.eq.2) then
+       do iy = -1, ny, ny+1                                             !srv 27.06.08 {
+        do ix = -1, nx
+         if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
+          rescb(ix,iy) = 0.0_R8
+         endif
+        enddo 
+       enddo                                                            !srv 27.06.08 }
+      endif
+csw 11dec2012, check for solv flags
+      if(all(solvcreg(0:nnreg(0)))) then
+*   ..compute correction
+       write (chns,'(i2.2)') isb
+       call b2usco (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1, 
+     &  vol, pbs, nb, pb, snb(-1,-1,1),flob,
+     &  conb, pccb(-1,-1,1), rescb, corpb, aa5, 'b2usco_')              !srv 18.05.02 26.09.12
+*   ..apply correction
+       call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0, 
+     &  vol, corpb, pccb(-1,-1,0), pb, nb, ub)
+       if(guard_flows.eq.2) then                                         !srv 06.07.08 {
+*   ..replace the incorrect corner values by the interpolated values
+        iy=-1                                                           !srv 27.06.08 {
+        do ix = -1, nx
+          if(leftix(ix,iy).eq.-2 ) 
+     &     nb(ix,iy) = nb(rightix(ix,iy),iy) + nb(ix,topiy(ix,iy)) - 
+     &                 nb(rightix(ix,iy),topiy(ix,iy))
+          if(rightix(ix,iy).eq.nx+1 )
+     &     nb(ix,iy) = nb(leftix(ix,iy),iy) + nb(ix,topiy(ix,iy)) - 
+     &                 nb(leftix(ix,iy),topiy(ix,iy))
+        enddo
+        iy=ny
+        do ix = -1, nx
+          if(leftix(ix,iy).eq.-2 ) 
+     &     nb(ix,iy) = nb(rightix(ix,iy),iy) + nb(ix,bottomiy(ix,iy)) - 
+     &                 nb(rightix(ix,iy),bottomiy(ix,iy))
+          if(rightix(ix,iy).eq.nx+1 )
+     &     nb(ix,iy) = nb(leftix(ix,iy),iy) + nb(ix,bottomiy(ix,iy)) - 
+     &                 nb(leftix(ix,iy),bottomiy(ix,iy))
+        enddo                                                          !srv 27.06.08 }
+       endif                                                            !srv 06.07.08 }
+      endif
+csw
+      if (iout.ne.0) then                                            !srv 12.07.02 {
+        write (chns,'(i2.2)') isb
+        call my_out(70,nx,ny,pb,'b2npco_pa'//chns)
+        call my_out(70,nx,ny,nb,'b2npco_na'//chns)
+        call my_out(70,nx,ny,ub,'b2npco_ua'//chns)
+        call my_out(70,nx,ny,rescb,'b2npco_resco'//chns)
+        call my_out(70,nx,ny,snb(-1,-1,0),'b2npco_sna0'//chns)
+        call my_out(70,nx,ny,snb(-1,-1,1),'b2npco_sna1'//chns)
+        call my_out(70,nx,ny,snb(:,:,0)+nb*snb(:,:,1),
+     &              'b2npco_sna'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,0),'b2npco_fnax'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,1),'b2npco_fnay'//chns)
+      endif                                                          !srv 12.07.02 }
+
+*   ..set error parameter
+*     (at present all errors cause an abort through xerrab)
+      ierr = 0
+* ..return
+      ncall = ncall+1
+      call subend ()
+      return
+
+*-----------------------------------------------------------------------
+*.end b2npco
+
+      end subroutine b2npco
