@@ -8,10 +8,10 @@ CC=gcc
 DBG=1
 
 ifeq ("$(DBG)","")
-     FFLAGS= -c -O2
+     FFLAGS= -c -O2 -r8
      CFLAGS= -c -O2
 else
-     FFLAGS= -c -g -traceback 
+     FFLAGS= -c -g -r8 -traceback 
      CFLAGS= -c -g
 endif
 
@@ -19,7 +19,7 @@ FOPTS=
 COPTS=
 LIBS=
 
-VPATH=./src/modules:./src/documentation:./src/equations:./src/input:./src/output:./src/sources:./src/transport:./src/solvers:./src/utility:./Add_Mod/Utility:./src/user:./src/b2aux:./src/driver:./src/b2plot
+VPATH=./src/modules:./src/documentation:./src/equations:./src/input:./src/output:./src/sources:./src/transport:./src/solvers:./src/utility:./Add_Mod/Utility:./src/user:./src/b2aux:./src/driver:./src/b2plot_min
 
 MODULES= b2mod_types.o  b2mod_layer.o b2mod_tallies.o b2mod_wall.o b2mod_constants.o b2mod_b2cmpa.o b2mod_user_namelist.o b2mod_elements.o b2mod_indirect.o \
 	b2mod_boundary_namelist.o b2mod_version.o b2mod_b2cmpt.o b2mod_sources.o b2mod_time.o b2mod_geo.o b2mod_residuals.o b2mod_eirene_globals.o \
@@ -40,7 +40,6 @@ MODULES= b2mod_types.o  b2mod_layer.o b2mod_tallies.o b2mod_wall.o b2mod_constan
 
 OBJECTS= documentation.o equations.o input.o output.o sources.o transport.o solvers.o utility.o add_utility.o user.o b2aux.o driver.o b2plot.o
 
-#INCDIR= -I ./src/include -I ./src/common -I ./src/common/COUPLE -I ../Eirene -I /home/ipp1/boerner/libs/intel_64/mpich2-1.3.2/include
 INCDIR= -I ./src/include -I ./src/common -I ./src/common/COUPLE -I ../Eirene
 
 #default deps
@@ -134,12 +133,16 @@ b2aux.o: $(MODULES) \
 
 driver.o: $(MODULES) \
 	b2mndr.o  b2mndt.o  b2mwmv.o  b2mwqt.o  b2mxac.o  b2mxnp.o  b2mxzr.o  \
-	 b2mnds.o  b2mwit.o  b2mwq0.o  b2mwti.o  b2mxar.o  b2mxnu.o  
+	b2mnds.o  b2mwit.o  b2mwq0.o  b2mwti.o  b2mxar.o  b2mxnu.o  
 
 b2plot.o: $(MODULES) \
 	chord.o lower_case.o init_wall.o mapx.o mapy.o species.o
 
 #specific deps
+b2mod_neutrals_namelist.o: src/modules/b2mod_neutrals_namelist.F
+	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DUSE_EIRENE src/modules/b2mod_neutrals_namelist.F
+b2mod_diag.o: src/modules/b2mod_diag.F
+	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DUSE_EIRENE src/modules/b2mod_diag.F
 b2mod_work.o: src/modules/b2mod_work.F
 	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DUSE_EIRENE src/modules/b2mod_work.F
 b2mod_geo.o: src/modules/b2mod_wall.F src/modules/b2mod_geo_corner.o
@@ -148,6 +151,8 @@ b2mod_wall.o: src/modules/b2mod_wall.F
 	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DNO_CDF src/modules/b2mod_wall.F
 b2mod_tallies.o: src/modules/b2mod_tallies.F
 	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DNO_CDF src/modules/b2mod_tallies.F
+b2mod_movies.o: src/modules/b2mod_movies.F
+	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DNO_CDF src/modules/b2mod_movies.F
 b2mod_neutrals_namelist.o: src/modules/b2mod_neutrals_namelist.F
 	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DNO_SAVE src/modules/b2mod_neutrals_namelist.F 
 b2stbr.o: src/sources/b2stbr.F

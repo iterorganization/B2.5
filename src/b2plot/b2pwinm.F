@@ -15,9 +15,9 @@ csw
 #include "b2pwcom.h"
       integer jedge(4)
       equivalence (jedgi1,jedge)
-      integer nns
-      parameter (nns=14)
-      character*8 unm,unms(nns),u
+      integer nnns
+      parameter (nnns=14)
+      character*8 unm,unms(nnns),u
       integer ll, luswch
       integer i
       data unms /
@@ -29,7 +29,7 @@ c======================================================================
 c
 c      print *,'b2pwinm >> ',unm
       call locase(unm,u,8)
-      do i=1,nns
+      do i=1,nnns
         if(u.eq.unms(i)) go to (10,20,30,40,50,60,70,80,90,100,
      ,                                               110,120,130,140),i
       end do

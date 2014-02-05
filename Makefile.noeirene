@@ -18,7 +18,7 @@ FOPTS=
 COPTS=
 LIBS=
 
-VPATH=./src/modules:./src/documentation:./src/equations:./src/input:./src/output:./src/sources:./src/transport:./src/solvers:./src/utility:./Add_Mod/Utility:./src/user:./src/b2aux:./src/driver:./src/b2plot
+VPATH=./src/modules:./src/documentation:./src/equations:./src/input:./src/output:./src/sources:./src/transport:./src/solvers:./src/utility:./Add_Mod/Utility:./src/user:./src/b2aux:./src/driver:./src/b2plot_min
 
 MODULES= b2mod_types.o  b2mod_layer.o b2mod_tallies.o b2mod_wall.o b2mod_constants.o b2mod_b2cmpa.o b2mod_user_namelist.o b2mod_elements.o b2mod_indirect.o \
 	b2mod_boundary_namelist.o b2mod_version.o b2mod_b2cmpt.o b2mod_sources.o b2mod_time.o b2mod_geo.o b2mod_residuals.o b2mod_eirene_globals.o \
@@ -34,7 +34,8 @@ MODULES= b2mod_types.o  b2mod_layer.o b2mod_tallies.o b2mod_wall.o b2mod_constan
 	b2mod_ma28_for_9diag.o     b2mod_solpstop.o           b2mod_work.o\
 	b2mod_ysmp_sdrv.o\
 	b2mod_b2plot.o               b2mod_feedback.o           b2mod_sputter.o\
-	b2mod_first_flight.o      
+	b2mod_first_flight.o      \
+	b2mod_astra_to_b2.o b2mod_b2_to_astra.o b2mod_nclass.o b2mod_neoclassical.o b2mod_ranges.o b2mod_b2plot_debug.o
 
 OBJECTS= documentation.o equations.o input.o output.o sources.o transport.o solvers.o utility.o add_utility.o user.o b2aux.o driver.o b2plot.o
 
@@ -91,7 +92,9 @@ transport.o: $(MODULES) \
 	b2tfcc.o   b2tfhi.o   b2tiner.o  b2tlhe.o  b2tqca.o  b2tr21.o  b2trno.o   b2tvspa.o  b2txfx.o\
 	b2tfch.o   b2tfhi_.o  b2tinnt.o  b2tlhi.o  b2tqce.o  b2tral.o  b2trql.o   b2txfy.o\
 	b2tanml.o  b2tfhe.o   b2tfnb.o   b2tlc0.o   b2tlmv.o  b2tqin.o  b2trcl.o  b2tstch.o  b2txcx.o   b2txsx.o\
-	b2tcpa.o   b2tfhe_.o  b2tfrn.o   b2tlh0.o   b2tlnl.o  b2tqna.o  b2treq.o  b2ttia.o   b2txcy.o   b2txsy.o
+	b2tcpa.o   b2tfhe_.o  b2tfrn.o   b2tlh0.o   b2tlnl.o  b2t	bp.o class.o colxi.o fluxav.o menn.o neo_diagnostics.o neo_validity.o neoart.o neochi.o \
+	bp.o class.o colxi.o fluxav.o menn.o neo_diagnostics.o neo_validity.o neoart.o neochi.o \
+	neodv.o penq.o perr.o ps.o viscol.o viscos.o
 
 solvers.o: $(MODULES) \
 	b2upco.o  b2upht_.o  b2urmo.o  b2ursd.o  b2usco.o  b2usht.o  b2usp7.o   b2uspo.o  b2ux7p.o  b2uxm9.o\
@@ -111,7 +114,8 @@ utility.o: $(MODULES) \
 	cfrure.o          ilutern_7_solps.o  mstep.o          prvrt.o      sfill.o     sysend.o\
 	cfvers.o          ilutern_9_solps.o  my_intcor.o      prvrti.o     sysini.o\
 	cfwuch.o          ilutern_solps.o    jobnam.o        my_out.o         ratadas.o    sip5g.o     usrnam.o \
-        intfacev.o
+        intfacev.o\
+	dfmin.o interp2d.o lubksb.o ludcmp.o sfluxav.o tfluxav.o
 
 add_utility.o: $(MODULES) utility.o \
 	dgbtf2.o  dgemm.o  dgetf2.o  dscal.o  dtrmm.o  dtrti2.o     idamax.o  xerbla.o\
@@ -131,9 +135,13 @@ driver.o: $(MODULES) \
 	 b2mnds.o  b2mwit.o  b2mwq0.o  b2mwti.o  b2mxar.o  b2mxnu.o  
 
 b2plot.o: $(MODULES) \
-	chord.o lowercase.o init_wall.o mapx.o mapy.o species.o
+	chord.o lower_case.o init_wall.o mapx.o mapy.o species.o
 
 #specific deps
+b2mod_work.o: src/modules/b2mod_work.F
+	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DUSE_EIRENE src/modules/b2mod_work.F
+b2mod_geo.o: src/modules/b2mod_wall.F src/modules/b2mod_geo_corner.o
+	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) src/modules/b2mod_geo.F
 b2mod_wall.o: src/modules/b2mod_wall.F
 	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DNO_CDF src/modules/b2mod_wall.F
 b2mod_tallies.o: src/modules/b2mod_tallies.F

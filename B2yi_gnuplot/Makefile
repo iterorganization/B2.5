@@ -1,6 +1,6 @@
 FC = gfortran -g
 NCARG=~/usr/local/ncarg
-MSCL=~/usr/local/mscl/linux.gfortran
+MSCL=~/usr/local/mscl/linux.intel
 
 .SUFFIXES: .o .f .f90 .F
 
@@ -25,7 +25,8 @@ INCLUDE = ../src/common
 
 
 b2yi.exe: $(OBJ1) $(OBJ2) $(OBJ3) $(OBJ4) $(OBJ5) $(OBJ6) $(OBJ7) $(OBJ8) $(OBJ9)
-	$(FC) *.o -o b2yi.exe  $(MSCL)/libmscl.a $(NCARG)/lib/libncarg.a $(NCARG)/lib/libncarg_gks.a $(NCARG)/lib/libncarg_c.a $(NCARG)/lib/libngmath.a $(NCARG)/lib/libcgm.a $(NCARG)/lib/libncarg_ras.a -lX11 -lm 
+#	$(FC) *.o -o Release/b2yi.exe  $(MSCL)/libmscl.a $(NCARG)/lib/libncarg.a $(NCARG)/lib/libncarg_gks.a $(NCARG)/lib/libncarg_c.a $(NCARG)/lib/libngmath.a $(NCARG)/lib/libcgm.a $(NCARG)/lib/libncarg_ras.a -lX11 -lm 
+	$(FC) *.o -o Release/b2yi.exe  
 
 
 

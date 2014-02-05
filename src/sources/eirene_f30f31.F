@@ -47,7 +47,7 @@ c
 csw 17feb2011 extrab25
       use eirmod_extrab25
       use eirmod_braeir
-      use eirmod_eirbra
+!      use eirmod_eirbra                                               !srv 14.10.13
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
 csw#     include <COUPLE/BRAEIR.F>
@@ -327,7 +327,7 @@ c
 csw 17feb2011 extrab25
       use eirmod_extrab25
       use eirmod_braeir
-      use eirmod_eirbra
+!      use eirmod_eirbra                                            !srv 14.10.13
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
 csw#     include <COUPLE/BRAEIR.F>
@@ -752,7 +752,7 @@ c
 csw 17feb2011 extra b25
       use eirmod_extrab25
       use eirmod_braeir
-      use eirmod_eirbra
+!      use eirmod_eirbra                                   !srv 14.10.13
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
 csw#     include <COUPLE/BRAEIR.F>

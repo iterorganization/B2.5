@@ -11,6 +11,7 @@ c
      *   x1,x2,y1,y2
       integer lnblnk,ix,iy
       character*500 plotlabel
+      external lnblnk
 
       if(b2plot_debug.ge.7) write(*,*) 'typeofplot = ',typeofplot
 

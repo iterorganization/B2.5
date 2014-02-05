@@ -1,6 +1,6 @@
 
 C ========== Parse extralabel for customisation =====================
-      subroutine set_extralabel(locallabel)
+      subroutine customise_label(locallabel,customlabel)
 C ===================================================================
       use b2mod_types
       use b2mod_b2plot_debug
@@ -11,7 +11,7 @@ C ===================================================================
 #include <graphics_vars.h>
 #include <COMLAB_local.F>
       character*(*) locallabel
-      character*256 tmp
+      character*256 tmp,customlabel
       integer elength,count,i,j,ijpos,icpos,jcpos,istart,iend
       integer lnblnk
       external lnblnk
@@ -104,7 +104,7 @@ C ===================================================================
         ijpos=icpos
         do j=ijpos,elength
           if(locallabel(j:j).eq.'}') then
-            tmp(jcpos:jcpos+2)='@E@'
+            tmp(jcpos:jcpos+2)='@N@'
             icpos=icpos+1
             jcpos=jcpos+3
             goto 10
@@ -126,7 +126,7 @@ C ===================================================================
         ijpos=icpos
         do j=ijpos,elength
           if(locallabel(j:j).eq.'}') then
-            tmp(jcpos:jcpos+2)='@E@'
+            tmp(jcpos:jcpos+2)='@N@'
             icpos=icpos+1
             jcpos=jcpos+3
             goto 10
@@ -174,7 +174,7 @@ C ===================================================================
       icpos=iend+1
       goto 10
   110 continue ! `
-        icpos=icpos+1
+      icpos=icpos+1
       iend=icpos
       do while (iend.lt.elength.and.locallabel(iend:iend).ne.'`')
         iend=iend+1
@@ -218,9 +218,9 @@ C ===================================================================
       enddo
       if(b2plot_debug.ge.4)
      1 write (*,*) 'parsed extralabel to:   ',trim(tmp)
-      extralabel=tmp
+      customlabel=tmp
       return
-      end subroutine set_extralabel
+      end subroutine customise_label
 c
       subroutine get_extralabel(return_extralabel)
 C ===================================================================

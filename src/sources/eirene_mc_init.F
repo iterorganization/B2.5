@@ -6,9 +6,11 @@ csw 17feb2011 extrab25
 #     include <COUPLE/KOPPLDIM.F>
 csw#     include <COUPLE/EIRDIAG.F>
 
-c      call eirene_extrab25_dummyalloc(nxdd,nydd,
-c     .                     natm,nmol,nion,nlmpgs,nstra)
-c      call eirene_extrab25_dummyeirpbls_init(1,natm,nmol,nion,npls,
-c     &                                       nstra,nfl)               !srv 03.04.13
+#ifndef USE_EIRENE
+      call eirene_extrab25_eirdiag_alloc(nxdd,nydd,
+     .                     natm,nmol,nion,nlmpgs,nstra,npls)          !srv 14.10.13
+      call eirene_extrab25_eirpbls_alloc(1,natm,nmol,nion,npls,       !srv 14.10.13
+     &                                       nstra,nfl)               !srv 03.04.13
+#endif
       return
       end

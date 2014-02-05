@@ -64,12 +64,15 @@ c     the line format common
         if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
         if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
         if(mod(typeofplot,2) .eq. 1) then
-          if(values(11) .ne. values(12)) then
+          if(values(11).ne.init_value) then
             xmin=values(11)
+          else
+            xmin=min(wrk(ixstart),wrk(ixend))
+          endif
+          if(values(12).ne.init_value) then
             xmax=values(12)
           else
-            xmin=wrk(ixstart)
-            xmax=wrk(ixend)
+            xmax=max(wrk(ixstart),wrk(ixend))
           endif
           if(xmin.eq.xmax) then
             xmin=min(xmin*0.9_R8,xmin*1.1_R8)
@@ -88,12 +91,12 @@ c     the line format common
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(96,'(''# '',a)')                          !srv  12.05.08
+            write(nwtf,'(''# '',a)')                                  !srv 21.09.11
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2       tmpstring2(1:lnblnk(tmpstring2)) //
      2       tmpstring1(1:lnblnk(tmpstring1))
             do ix=ixstart,ixend
-              write(96,*) wrk(ix),work(ix,iy,is,iwrk)        !srv  12.05.08
+              write(nwtf,*) wrk(ix),work(ix,iy,is,iwrk)                   !srv 21.09.11
             enddo
           endif
 #ifndef PLPLOT
@@ -121,7 +124,7 @@ c     the line format common
               call lastd
               if (scol.gt.1 .or. dcol.gt.1) call gsplci(dcol)
               call gslwsc_d(lwidth)
-              call dashdc(linefmt,8,0)
+              call dashdc(linefmt,8,lfsz)
 #endif
             endif
           enddo
@@ -175,12 +178,12 @@ c     the line format common
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(96,'(''# '',a)')                           !srv  12.05.08
+            write(nwtf,'(''# '',a)')                   !srv 21.09.11
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2       tmpstring2(1:lnblnk(tmpstring2)) //
      2       tmpstring1(1:lnblnk(tmpstring1))
             do ix=-1,nx
-              write(96,*) wrk(ix),work(ix,iy,is,iwrk)        !srv  12.05.08
+              write(nwtf,*) wrk(ix),work(ix,iy,is,iwrk)             !srv 21.09.11
             enddo
           endif
 #ifndef PLPLOT
@@ -208,7 +211,7 @@ c     the line format common
               call lastd
               if (scol.gt.1 .or. dcol.gt.1) call gsplci(dcol)
               call gslwsc_d(lwidth)
-              call dashdc(linefmt,8,0)
+              call dashdc(linefmt,8,lfsz)
 #endif
             endif
           enddo

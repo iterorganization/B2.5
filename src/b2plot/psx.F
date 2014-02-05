@@ -6,6 +6,7 @@ c
       use b2mod_b2plot_values
       implicit none
       integer ix,iy,is,lnblnk
+      character*256 stmp
       intrinsic min,max
       external lnblnk
 
@@ -20,8 +21,8 @@ c
           enddo
         enddo
       enddo
-      graphlabel(iwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     1 '/(m^2)'
+      stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
+      call customise_label(stmp,graphlabel(iwrk))
       return
       end
 c
@@ -32,6 +33,7 @@ c
       use b2mod_b2plot_values
       implicit none
       integer ix,iy,is,lnblnk
+      character*256 stmp
       intrinsic min,max
       external lnblnk
 
@@ -47,7 +49,7 @@ c
           enddo
         enddo
       enddo
-      graphlabel(iwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     1 '/(m^2)'
+      stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{2})'
+      call customise_label(stmp,graphlabel(iwrk))
       return
       end

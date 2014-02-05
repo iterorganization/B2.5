@@ -100,17 +100,21 @@ c*** Global values
 c
 c*** Values by regions
       integer nrgn_tmp, nrg_tmp, nr_tmp
-      parameter (nrgn_tmp=6)
+      parameter (nrgn_tmp=10)
       real (kind=R8) ::
      *     radim_tmp(NNREGMAX), radnu_tmp(NNREGMAX),
      1 radtt_tmp(NNREGMAX), ssee_tmp(NNREGMAX),
-     2 ssei_tmp(NNREGMAX),  brms_tmp(NNREGMAX)
+     2 ssei_tmp(NNREGMAX),  brms_tmp(NNREGMAX),
+     3 eesum(NNREGMAX),eisum(NNREGMAX),nesum(NNREGMAX),volsum(NNREGMAX)
+
       real (kind=R8) ::
      *     equr_tmp(NNREGMAX,nrgn_tmp)
       equivalence
      , (equr_tmp(1,1), brms_tmp),  (equr_tmp(1,2), radim_tmp),
      , (equr_tmp(1,3), radnu_tmp), (equr_tmp(1,4), radtt_tmp),
-     , (equr_tmp(1,5), ssee_tmp),  (equr_tmp(1,6), ssei_tmp)
+     , (equr_tmp(1,5), ssee_tmp),  (equr_tmp(1,6), ssei_tmp),
+     , (equr_tmp(1,7), eesum),     (equr_tmp(1,8), eisum),
+     , (equr_tmp(1,9), nesum),     (equr_tmp(1,10), volsum)
       character*2 hlp_hr(nrgn_tmp)*8
 c
 c*** Values by species
@@ -137,12 +141,13 @@ c#endif
 c
 c*** Values by species and regions
       integer nsar_tmp, na_tmp
-      parameter (nsar_tmp=1)
+      parameter (nsar_tmp=2)
       real (kind=R8) ::
      *     equa_tmp(DEF_NATM,NNREGMAX,nsar_tmp)
       real (kind=R8) ::
-     *     ssna_tmp(DEF_NATM,NNREGMAX)
-      equivalence (equa_tmp(1,1,1), ssna_tmp)
+     *     ssna_tmp(DEF_NATM,NNREGMAX),nisum(DEF_NATM,NNREGMAX)
+      equivalence 
+     -  (equa_tmp(1,1,1), ssna_tmp), (equa_tmp(1,1,2), nisum)
       character*2 hlp_ha(nsar_tmp)*8
 c
 c*** Values by strata
@@ -171,7 +176,7 @@ c*** Local variables of general use
       parameter (ltrc=ntrc_int)
       real (kind=R8) ::
      *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
-      integer i, j, k, is, ix, nv
+      integer i, j, k, ir,is,ix,iy, nv
       logical ex, warn_tmp
       character tab, hlp_c, f*40, hlp_frm*256, hlp_frf*400
 c#ifdef SCL_IMP_RCI
@@ -185,12 +190,12 @@ c*** Column headers:
      2          'neu_rad ','tot_rad '/
       data hlp_hr /
      1          'Brmsreg_','imp_rad_','neu_rad_','tot_rad_','SSEEreg_',
-     2          'SSEIreg_'/
+     2          'SSEIreg_','th_enre_','th_enri_','N_e_reg_','vol_reg_'/
       data hlp_hs / 'SSNItot_' /
 c#ifdef SCL_IMP_RCI
 c      data hlp_hs1 / 'res_rci_' /
 c#endif
-      data hlp_ha / 'SSNIreg_' /
+      data hlp_ha / 'SSNIreg_', 'N_i_reg_' /
       data hlp_hf / 'Stratum_' /
       data hlp_hb / 'sclfact_','sclrtio_' /
 c-----------------------------------------------------------------------
@@ -246,9 +251,13 @@ c#endif
 c
 c*** Compute the data
 c
-      hlp_sumn=sum(volsumn)
-      hlp_sume=sum(volsumee)
-      hlp_sumi=sum(volsumei)
+csw 18nov2013 check alloc
+      if(allocated(volsumn)) then
+        hlp_sumn=sum(volsumn(1:nstrai))
+        hlp_sume=sum(volsumee(1:nstrai))
+        hlp_sumi=sum(volsumei(1:nstrai))
+      endif
+csw
       hlp_brms=0.0_R8
       hlp_rdim=0.0_R8
       hlp_rdnu=0.0_R8
@@ -273,8 +282,25 @@ c
           ssna_tmp(is,k)=ssna_tmp(is,k)+ssnireg(is,k)      
         end do
       end do
+csw 20sep2013 added
+      do iy=0,ny-1
+	do ix=0,nx-1
+	  ir=region(ix,iy,0)
+	  eesum(ir)=eesum(ir)+1.5*te(ix,iy)*ne(ix,iy)*vol(ix,iy)
+	  eisum(ir)=eisum(ir)+1.5*ti(ix,iy)*ne(ix,iy)*vol(ix,iy)
+	  nesum(ir)=nesum(ir)+ne(ix,iy)*vol(ix,iy)
+	  volsum(ir)=volsum(ir)+vol(ix,iy)
+	  do is=1,nspecies
+	    nisum(is,ir)=nisum(is,ir)+
+     +                                           ni(ix,iy,is)*vol(ix,iy)
+	  end do
+	enddo
+      enddo
+csw
       do j=1,nstrai
-        fluxt_tmp(j)=srcstrn(j)
+csw 18nov2013 check alloc
+        if(allocated(srcstrn))
+     .   fluxt_tmp(j)=srcstrn(j)
       end do
       hlp_s=0.0_R8
       hlp_v=0.0_R8

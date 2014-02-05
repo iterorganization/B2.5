@@ -23,7 +23,6 @@ c*** The data dimensions must be nx, ny, and 1, respectively.
 
       implicit none
       integer npplvp,npplvm
-      integer ndim_hlp
       integer i,j,k,l,m,n,kk,ll,mm,nn,ixx,iyy,npoplv
       real (kind=R8) :: tot_hlp,neg_hlp,vol_hlp,d,d_hlp,f,t,v,w_hlp
 c=======================================================================
@@ -31,8 +30,6 @@ c=======================================================================
       iyy(i)=(i-1)/nx+1-1
 c=======================================================================
 c      print *,'=== clvp: ',npplvp,npplvm !###
-c*** Check the data dimensions and input parameter     
-      ndim_hlp=nx*ny
 
 c      print *,'=== clvp: iwrk=',iwrk     !###
       npoplv=iabs(npplvp)
@@ -374,7 +371,6 @@ c*** The data dimensions must be nbnd and ndepth_nml, respectively.
 
       implicit none
       integer npplvp,npplvm
-      integer ndim_hlp
       integer i,j,k,l,m,n,kk,ll,mm,nn,ixx,iyy,npoplv
       real (kind=R8) :: tot_hlp,neg_hlp,vol_hlp,d,d_hlp,f,t,v,w_hlp
 c=======================================================================
@@ -382,8 +378,6 @@ c=======================================================================
       iyy(i)=(i-1)/nbnd+1
 c=======================================================================
 c      print *,'=== tclvp: ',npplvp,npplvm !###
-c*** Check the data dimensions and input parameter     
-      ndim_hlp=nbnd*ndepth_nml
 
 c      print *,'=== tclvp: iwrk=',iwrk     !###
       npoplv=iabs(npplvp)

@@ -437,7 +437,9 @@ c
 c*** Flux across the core boundary
         do is=1,ncns
           js=lcns(is)+nnlimi
-          hlpnc=hlpnc-wldna(js,ls,0)+wldra(js,ls,0)
+csw 18nov2013 check for nnatmi
+          if(nnatmi > 0)
+     .      hlpnc=hlpnc-wldna(js,ls,0)+wldra(js,ls,0)
           do j=1,nnmoli
             if(mlcmp(ls,j).gt.0) hlpnc=hlpnc-
      -                        mlcmp(ls,j)*(wldnm(js,j,0)-wldrm(js,j,0))
@@ -446,7 +448,9 @@ c*** Flux across the core boundary
 c*** Flux across the targets
         do is=1,ntns
           js=ltns(is)+nnlimi
-          hlpnt=hlpnt-wldna(js,ls,0)+wldra(js,ls,0)
+csw 18nov2013 check for nnatmi
+          if(nnatmi > 0)
+     .      hlpnt=hlpnt-wldna(js,ls,0)+wldra(js,ls,0)
           do j=1,nnmoli
             if(mlcmp(ls,j).gt.0) hlpnt=hlpnt-
      -                        mlcmp(ls,j)*(wldnm(js,j,0)-wldrm(js,j,0))
@@ -454,7 +458,9 @@ c*** Flux across the targets
         end do
 c*** Flux across the side walls
         do js=1,nnlimi
-          hlpnw=hlpnw-wldna(js,ls,0)+wldra(js,ls,0)
+csw 18nov2013 check for nnatmi
+          if(nnatmi > 0)
+     .      hlpnw=hlpnw-wldna(js,ls,0)+wldra(js,ls,0)
           do j=1,nnmoli
             if(mlcmp(ls,j).gt.0) hlpnw=hlpnw-
      -                        mlcmp(ls,j)*(wldnm(js,j,0)-wldrm(js,j,0))

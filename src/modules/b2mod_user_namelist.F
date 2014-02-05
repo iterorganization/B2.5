@@ -99,14 +99,15 @@ c***  Standard setup:
      . 'faulty input Spmp_nom')
       call xertst(0.le.Spmp_He_to_D,
      . 'faulty input Spmp_He_to_D')
-      if (lpfrb_i.ne.-2) call xertst (0.le.lpfrb_i.and.lpfrb_i.lt.nx,
-     . 'faulty input lpfrb_i')
-      if (lpfrb_o.ne.-2) call xertst (0.le.lpfrb_o.and.lpfrb_o.lt.nx,
-     . 'faulty input lpfrb_o')
-      if (lpfrt_i.ne.-2) call xertst (0.le.lpfrt_i.and.lpfrt_i.lt.nx,
-     . 'faulty input lpfrt_i')
-      if (lpfrt_o.ne.-2) call xertst (0.le.lpfrt_o.and.lpfrt_o.lt.nx,
-     . 'faulty input lpfrt_o')
+!csw 14jan2014 remove the following checks to allow negative values
+c      if (lpfrb_i.ne.-2) call xertst (0.le.lpfrb_i.and.lpfrb_i.lt.nx,
+c     . 'faulty input lpfrb_i')
+c      if (lpfrb_o.ne.-2) call xertst (0.le.lpfrb_o.and.lpfrb_o.lt.nx,
+c     . 'faulty input lpfrb_o')
+c      if (lpfrt_i.ne.-2) call xertst (0.le.lpfrt_i.and.lpfrt_i.lt.nx,
+c     . 'faulty input lpfrt_i')
+c      if (lpfrt_o.ne.-2) call xertst (0.le.lpfrt_o.and.lpfrt_o.lt.nx,
+c     . 'faulty input lpfrt_o')
       call xertst (0.le.npfrgrp,
      . 'faulty input npfrgrp')
       do i = 1, npfrgrp

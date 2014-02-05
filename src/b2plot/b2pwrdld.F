@@ -13,7 +13,7 @@ c======================================================================
 #     include "DIMENSIONS.F"
 #     include "b2pwcom.h"
 #     include "rdload.inc"
-      integer i,k,l,m,is,ix,iy,luwrki(nsgmx)
+      integer i,k,l,m,is,ix,iy
       real (kind=R8) ::
      *   u
 c<<<
@@ -31,9 +31,6 @@ c*** to the "shadowing structure" and "plot zones" into the format used
 c*** in rlcomp. That is, we make a "structure" polygon, which is closed,
 c*** and the target list referring to the segments of this polygon.
 c
-      do i=1,nsgmx
-        luwrki(i)=0
-      end do
       nplg=nwldlis(1)
       nbndry=nplg
       do i=1,nplg

@@ -1,18 +1,18 @@
 C BREIUP.DHDATA     KOPIE VON RHW:BREIASPL.DHDATA, ANGEPASST AN "DISPEK"
 C
-       SUBROUTINE DHDATA( YEAR   , TITLF  , IFAIL
-     &                  , IZ0    , IZ1    , ICLASS , ITMAX  , IEVCUT
-     &                  , ITDIMD , ITMAXD , IDMAXD , IZMAXD
-     &                  , DTEV   , DDENS
-     &                  , DTEVD  , DDENSD , DRCOFD , ZDATA
-     &                  , DRCOFI
-     &                  )
-       use b2mod_types
-       use b2mod_elements
+      SUBROUTINE DHDATA( YEAR   , TITLF  , IFAIL
+     &                 , IZ0    , IZ1    , ICLASS , ITMAX  , IEVCUT
+     &                 , ITDIMD , ITMAXD , IDMAXD , IZMAXD
+     &                 , DTEV   , DDENS
+     &                 , DTEVD  , DDENSD , DRCOFD , ZDATA
+     &                 , DRCOFI
+     &                 )
+      use b2mod_types
+      use b2mod_elements
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
-       IMPLICIT NONE
+      IMPLICIT NONE
 C
 C-----------------------------------------------------------------------
 C
@@ -129,53 +129,54 @@ C DATE   : 25/06/91 HP SUMMERS - REVISION: RENAMED FROM D2DATA TO DHDATA
 C                                          SET IOPT=4 FOR IONBAL
 C-----------------------------------------------------------------------
 C
-       INTEGER   L1, IREAD, LCK, IDMAXD_LOC
+      INTEGER   L1, IREAD, LCK, IDMAXD_LOC
 C
-       PARAMETER ( L1    =  1 )
-       PARAMETER ( IREAD = 12 , LCK = 5000 , IDMAXD_LOC = 40 )
+      PARAMETER ( L1    =  1 )
+      PARAMETER ( IREAD = 12 , LCK = 5000 , IDMAXD_LOC = 40 )
 C
-       INTEGER   IOPT
+      INTEGER   IOPT
 C
-       integer IZMAXD, IDMAXD, ITMAXD, IEVCUT, ICLASS, IZ1, IZ0, IFAIL
-       integer ITMAX, ITDIMD, IZ1MIN, IZ0SV, ICLSV, IEVSV, LEN
-       integer lnblnk, LEVMIN, IZ1MAX, IZMAX, I, ID, IT, IZ, INDXZ1
+      integer IZMAXD, IDMAXD, ITMAXD, IEVCUT, ICLASS, IZ1, IZ0, IFAIL
+      integer ITMAX, ITDIMD, IZ1MIN, IZ0SV, ICLSV, IEVSV, LEN
+      integer lnblnk, LEVMIN, IZ1MAX, IZMAX, I, ID, IT, IZ, INDXZ1
 c
-       real (kind=R8) :: DTEV(ITMAX)   , DDENS(ITMAX)
-       real (kind=R8) :: DTEVD(ITDIMD) , DDENSD(ITDIMD) , ZDATA(ITDIMD)
-       real (kind=R8) :: DRCOFD(ITDIMD,ITDIMD,ITDIMD)
-       real (kind=R8) :: DRCOFI(ITMAX)
+      real (kind=R8) :: DTEV(ITMAX)   , DDENS(ITMAX)
+      real (kind=R8) :: DTEVD(ITDIMD) , DDENSD(ITDIMD) , ZDATA(ITDIMD)
+      real (kind=R8) :: DRCOFD(ITDIMD,ITDIMD,ITDIMD)
+      real (kind=R8) :: DRCOFI(ITMAX)
 C
-       real (kind=R8) :: A(IDMAXD_LOC)
-       real (kind=R8) :: DY(IDMAXD_LOC)
-       real (kind=R8) :: DRCOF0(LCK,IDMAXD_LOC)
+      real (kind=R8) :: A(IDMAXD_LOC)
+      real (kind=R8) :: DY(IDMAXD_LOC)
+      real (kind=R8) :: DRCOF0(LCK,IDMAXD_LOC)
 C
-       CHARACTER YEAR*2  , YEARSV*2  , TITLF*80  , EVCUT*6
-       CHARACTER SEQUA*2 , DSNAME*256, STRING*80 , BLANKS*40
+      CHARACTER YEAR*2  , YEARSV*2  , TITLF*80  , EVCUT*6
+      CHARACTER SEQUA*2 , DSNAME*256, STRING*80 , BLANKS*40
 C
-       LOGICAL   LEXIST  , LSETX
+      LOGICAL   LEXIST  , LSETX
 C
-       character*256 solpstop
-       real (kind=R8) :: R8FUN1
-       EXTERNAL  R8FUN1
+      character*256 solpstop
+      real (kind=R8) :: R8FUN1
+      EXTERNAL  R8FUN1
+      external lnblnk
 #ifdef USE_PXFGETENV
-       integer lenval, ierror
+      integer lenval, ierror
 #endif
 C
-       SAVE      IZ1MIN
+      SAVE      IZ1MIN
 C
 C-----------------------------------------------------------------------
 C
-       DATA BLANKS/'                                        '/
+      DATA BLANKS/'                                        '/
 C
-       DATA YEARSV/'  '/
-       DATA IZ0SV /0   /
-       DATA ICLSV /0   /
-       DATA IEVSV /0   /
+      DATA YEARSV/'  '/
+      DATA IZ0SV /0   /
+      DATA ICLSV /0   /
+      DATA IEVSV /0   /
 C
 C-----------------------------------------------------------------------
 C
-         IFAIL = 0
-         if(iz0.le.0) return
+      IFAIL = 0
+      if(iz0.le.0) return
 C
 C-----PARAMETRIC DIMENSIONS CHECKED-------------------------------------
 C
@@ -183,109 +184,109 @@ C
 C
 c-dpc-1997.09.29      IF(YEAR.EQ.YEARSV.AND.IZ0.EQ.IZ0SV.AND.ICLASS.EQ.ICLSV.AND.
 c-dpc-1997.09.29     &    IEVCUT.EQ.IEVSV) GOTO 20
-       YEARSV = YEAR
-       IZ0SV  = IZ0
-       ICLSV  = ICLASS
-       IEVSV  = IEVCUT
+      YEARSV = YEAR
+      IZ0SV  = IZ0
+      ICLSV  = ICLASS
+      IEVSV  = IEVCUT
 C
 C------ENERGY CUTOFF----------------------------------------------------
 C
-       IF( IEVCUT.GT.0 ) THEN
-         WRITE(EVCUT,1050) IEVCUT
-         DO 50 I = 1 , 6
-           IF( EVCUT(I:I).EQ.' ' ) LEVMIN = I
-  50     CONTINUE
-         LEVMIN = LEVMIN + 1
-       END IF
+      IF( IEVCUT.GT.0 ) THEN
+        WRITE(EVCUT,1050) IEVCUT
+        DO 50 I = 1 , 6
+          IF( EVCUT(I:I).EQ.' ' ) LEVMIN = I
+  50    CONTINUE
+        LEVMIN = LEVMIN + 1
+      END IF
 C
 C------FILE NAME--------------------------------------------------------
 C
-       SEQUA = elements(IZ0)
-       call lower_case(SEQUA)
-   10  IF (SEQUA(2:2).EQ.' ') THEN
-         LEN=1
-       ELSE
-         LEN=2
-       ENDIF
+      SEQUA = elements(IZ0)
+      call lower_case(SEQUA)                                 !srv 14.10.13
+   10 IF (SEQUA(2:2).EQ.' ') THEN
+        LEN=1
+      ELSE
+        LEN=2
+      ENDIF
 C
 #ifdef NO_GETENV
-       solpstop=' '
+      solpstop=' '
 #else
 #ifdef USE_PXFGETENV
-       CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
+      CALL PXFGETENV ('SOLPSTOP', 0, solpstop, lenval, ierror)
 #else
-       call getenv ('SOLPSTOP', solpstop)
+      call getenv ('SOLPSTOP', solpstop)
 #endif
 #endif
-       if(solpstop.eq.' ') then
-         solpstop='/afs/ipp-garching.mpg.de/u/dpc/solps4.0'
-         write(*,*) 'DHDATA: no SOLPSTOP set, using: ',
-     1    solpstop(1:lnblnk(solpstop))
-       endif
-       IF     (ICLASS.EQ.1) THEN
-           DSNAME='/JETSHP.ACD'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
-       ELSEIF (ICLASS.EQ.2) THEN
-           DSNAME='/JETSHP.SCD'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
-       ELSEIF (ICLASS.EQ.3) THEN
-           DSNAME='/JETSHP.CCD'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
-       ELSEIF (ICLASS.EQ.4) THEN
-         IF( IEVCUT.EQ.0 ) THEN
-           DSNAME='/JETSHP.PRB'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
-         ELSE
-           DSNAME='/JETSHP.PRB'//YEAR//'#'//SEQUA(1:LEN)//
+      if(solpstop.eq.' ') then
+        solpstop='/afs/ipp-garching.mpg.de/u/dpc/solps4.0'
+        write(*,*) 'DHDATA: no SOLPSTOP set, using: ',
+     1   solpstop(1:lnblnk(solpstop))
+      endif
+      IF     (ICLASS.EQ.1) THEN
+        DSNAME='/JETSHP.ACD'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
+      ELSEIF (ICLASS.EQ.2) THEN
+        DSNAME='/JETSHP.SCD'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
+      ELSEIF (ICLASS.EQ.3) THEN
+        DSNAME='/JETSHP.CCD'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
+      ELSEIF (ICLASS.EQ.4) THEN
+        IF( IEVCUT.EQ.0 ) THEN
+          DSNAME='/JETSHP.PRB'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
+        ELSE
+          DSNAME='/JETSHP.PRB'//YEAR//'#'//SEQUA(1:LEN)//
      &             '.EV'//EVCUT(LEVMIN:6)//'.DATA'
-         END IF
-       ELSEIF (ICLASS.EQ.5) THEN
-         IF( IEVCUT.EQ.0 ) THEN
-           DSNAME='/JETSHP.PLT'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
-         ELSE
-           DSNAME='/JETSHP.PLT'//YEAR//'#'//SEQUA(1:LEN)//
+        END IF
+      ELSEIF (ICLASS.EQ.5) THEN
+        IF( IEVCUT.EQ.0 ) THEN
+          DSNAME='/JETSHP.PLT'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
+        ELSE
+          DSNAME='/JETSHP.PLT'//YEAR//'#'//SEQUA(1:LEN)//
      &             '.EV'//EVCUT(LEVMIN:6)//'.DATA'
-         END IF
-       ELSEIF (ICLASS.EQ.6) THEN
-         IF( IEVCUT.EQ.0 ) THEN
-           DSNAME='/JETSHP.PRC'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
-         ELSE
-           DSNAME='/JETSHP.PRC'//YEAR//'#'//SEQUA(1:LEN)//
+        END IF
+      ELSEIF (ICLASS.EQ.6) THEN
+        IF( IEVCUT.EQ.0 ) THEN
+          DSNAME='/JETSHP.PRC'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
+        ELSE
+          DSNAME='/JETSHP.PRC'//YEAR//'#'//SEQUA(1:LEN)//
      &             '.EV'//EVCUT(LEVMIN:6)//'.DATA'
-         END IF
-       ELSEIF (ICLASS.EQ.7) THEN
-C.....     DSNAME='/JETSHP.PLS'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
-           DSNAME='pls'//YEAR//SEQUA(1:LEN)//'.data'
-       ENDIF
+        END IF
+      ELSEIF (ICLASS.EQ.7) THEN
+C.....  DSNAME='/JETSHP.PLS'//YEAR//'#'//SEQUA(1:LEN)//'.DATA'
+        DSNAME='pls'//YEAR//SEQUA(1:LEN)//'.data'
+      ENDIF
 C
-       dsname=solpstop(1:lnblnk(solpstop)) // '/data/summers/' // dsname
+      dsname=solpstop(1:lnblnk(solpstop)) // '/data/summers/' // dsname
 
-       TITLF=BLANKS//BLANKS
-CCC    WRITE(TITLF,1000) DSNAME
+      TITLF=BLANKS//BLANKS
+CCC   WRITE(TITLF,1000) DSNAME
 C
 C------DOES FILE TO BE OPEN EXIST OR NOT--------------------------------
 C
-       INQUIRE(FILE=DSNAME,EXIST=LEXIST)
-       IF( .NOT.LEXIST ) THEN
-         IFAIL  = 1
-         YEARSV = '   '
-         IZ0SV  = 0
-         ICLSV  = 0
-         GOTO 9999
-       END IF
+      INQUIRE(FILE=DSNAME,EXIST=LEXIST)
+      IF( .NOT.LEXIST ) THEN
+        IFAIL  = 1
+        YEARSV = '   '
+        IZ0SV  = 0
+        ICLSV  = 0
+        GOTO 9999
+      END IF
 C
 C------READ FILE # IREAD------------------------------------------------
 C
-c       OPEN(UNIT=IREAD,FILE=DSNAME,ACTION='READ')
-       OPEN(UNIT=IREAD,FILE=DSNAME)
+c     OPEN(UNIT=IREAD,FILE=DSNAME,ACTION='READ')
+      OPEN(UNIT=IREAD,FILE=DSNAME)
 C
-       READ(IREAD,1010) IZMAX , IDMAXD , ITMAXD , IZ1MIN , IZ1MAX
+      READ(IREAD,1010) IZMAX , IDMAXD , ITMAXD , IZ1MIN , IZ1MAX
 C
-       IF (IDMAXD_LOC.LT.MAX(IDMAXD,ITMAXD)) THEN
-         WRITE(6,1020) 'LOCALS ARRAYS TOO SMALL'
-         WRITE(6,1020)
-     .    'IDMAXD_LOC MUST BE LARGER THAN ITMAXD AND IDMAXD'
-         WRITE(6,1100) IDMAXD_LOC,IDMAXD,ITMAXD
- 1100    FORMAT('IDMAXD_LOC = ',I4,' ITMAXD = ',I4,' IDMAXD = ',I4)
-         IFAIL=2
-         GOTO 9999
-       ENDIF
+      IF (IDMAXD_LOC.LT.MAX(IDMAXD,ITMAXD)) THEN
+        WRITE(6,1020) 'LOCALS ARRAYS TOO SMALL'
+        WRITE(6,1020)
+     .   'IDMAXD_LOC MUST BE LARGER THAN ITMAXD AND IDMAXD'
+        WRITE(6,1100) IDMAXD_LOC,IDMAXD,ITMAXD
+ 1100   FORMAT('IDMAXD_LOC = ',I4,' ITMAXD = ',I4,' IDMAXD = ',I4)
+        IFAIL=2
+        GOTO 9999
+      ENDIF
       IF (LCK.LT.MAX(IDMAXD,ITMAXD,ITMAX)) THEN
         WRITE(6,1020) 'LOCALS ARRAYS TOO SMALL'
         WRITE(6,1020)
@@ -301,52 +302,52 @@ C
      1   write(*,*) 'IDMAXD,ITDIMD ',IDMAXD,ITDIMD
         if(ITMAXD.GT.ITDIMD)
      1   write(*,*) 'ITMAXD,ITDIMD ',ITMAXD,ITDIMD
-         IFAIL = 2
+        IFAIL = 2
         GO TO 9999
       ENDIF
       IF (ITDIMD.LT.(IZ1MAX-IZ1MIN+1)) THEN
-         WRITE(6,1020) 'LOCALS ARRAYS TOO SMALL'
-         WRITE(6,1020)
+        WRITE(6,1020) 'LOCALS ARRAYS TOO SMALL'
+        WRITE(6,1020)
      .      'ITDIMD MUST BE LARGER THAN IZ1MAX-IZ1MIN+1'
-         WRITE(6,1120) ITDIMD,IZ1MAX,IZ1MIN
-1120     FORMAT('ITDIMD = ',I4,' IZ1MAX = ',I4,' IZ1MIN = ',I4)
-         IFAIL=2
-         GOTO 9999
+        WRITE(6,1120) ITDIMD,IZ1MAX,IZ1MIN
+1120    FORMAT('ITDIMD = ',I4,' IZ1MAX = ',I4,' IZ1MIN = ',I4)
+        IFAIL=2
+        GOTO 9999
       ENDIF
 C
-       READ(IREAD,1020) STRING
-       READ(IREAD,1040) ( DDENSD(ID) , ID = 1 , IDMAXD )
-       READ(IREAD,1040) ( DTEVD(IT)  , IT = 1 , ITMAXD )
+      READ(IREAD,1020) STRING
+      READ(IREAD,1040) ( DDENSD(ID) , ID = 1 , IDMAXD )
+      READ(IREAD,1040) ( DTEVD(IT)  , IT = 1 , ITMAXD )
 C
-       IZMAXD = 0
-       DO 150 IZ = IZ1MIN , IZ1MAX
-          IZMAXD = IZMAXD + 1
-          ZDATA(IZMAXD) = IZ
+      IZMAXD = 0
+      DO 150 IZ = IZ1MIN , IZ1MAX
+        IZMAXD = IZMAXD + 1
+        ZDATA(IZMAXD) = IZ
 CCCCCCC   IF( IZ .EQ. IZ1 ) INDXZ1 = IZ
-          READ(IREAD,1020)STRING
-          DO 100 IT = 1 , ITMAXD
-             READ(IREAD,1040) ( DRCOFD(IZMAXD,IT,ID) , ID = 1 , IDMAXD )
-  100     CONTINUE
-  150  CONTINUE
+        READ(IREAD,1020)STRING
+        DO 100 IT = 1 , ITMAXD
+          READ(IREAD,1040) ( DRCOFD(IZMAXD,IT,ID) , ID = 1 , IDMAXD )
+  100   CONTINUE
+  150 CONTINUE
 C
-       CLOSE(IREAD)
+      CLOSE(IREAD)
 C
 C------INTERPOLATE USING SPLINES (NAG ALGORITHM)------------------------
 C
-   20  CONTINUE
+   20 CONTINUE
 C
 C------PE BRIDEN - CORRECTION 12/11/90 - SET INDXZ1 AFTER '20 CONTINUE'-
 C
-       INDXZ1 = IZ1 - IZ1MIN + 1
-       if(indxz1.le.0.0) then
-         write(*,*) 'DHDATA: indxz1 = ',indxz1,' <= 0'
-         ifail=1
-         return
-       elseif(indxz1.gt.IZMAXD) then
-         write(*,*) 'DHDATA: indxz1 = ',indxz1,' > izmaxd = ',izmaxd
-         ifail=1
-         return
-       endif
+      INDXZ1 = IZ1 - IZ1MIN + 1
+      if(indxz1.le.0.0) then
+        write(*,*) 'DHDATA: indxz1 = ',indxz1,' <= 0'
+        ifail=1
+        return
+      elseif(indxz1.gt.IZMAXD) then
+        write(*,*) 'DHDATA: indxz1 = ',indxz1,' > izmaxd = ',izmaxd
+        ifail=1
+        return
+      endif
 C
 C-----------------------------------------------------------------------
 C
@@ -362,10 +363,10 @@ C
           A(IT) = DRCOFD(INDXZ1,IT,ID)
         END DO
 C
-       CALL XXSPLN( LSETX  , IOPT  , R8FUN1       ,
-     &              ITMAXD , DTEVD , A            ,
-     &              ITMAX  , DTEV  , DRCOF0(1,ID) ,
-     &              DY )
+        CALL XXSPLN( LSETX  , IOPT  , R8FUN1       ,
+     &               ITMAXD , DTEVD , A            ,
+     &               ITMAX  , DTEV  , DRCOF0(1,ID) ,
+     &               DY )
 C
       END DO
 C
@@ -389,16 +390,16 @@ C
 C
 C-----------------------------------------------------------------------
 C
- 1000  FORMAT('FILE = ',1A30)
- 1010  FORMAT(5I5)
- 1020  FORMAT(1A80)
- 1040  FORMAT(8F10.5)
- 1050  FORMAT(I6)
+ 1000 FORMAT('FILE = ',1A30)
+ 1010 FORMAT(5I5)
+ 1020 FORMAT(1A80)
+ 1040 FORMAT(8F10.5)
+ 1050 FORMAT(I6)
 C
 C-----------------------------------------------------------------------
 C
- 9999  RETURN
-       END SUBROUTINE DHDATA
+ 9999 RETURN
+      END SUBROUTINE DHDATA
 *COPY R8FUN1
       FUNCTION R8FUN1 ( Z )
       use b2mod_types

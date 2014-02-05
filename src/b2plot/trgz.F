@@ -10,6 +10,7 @@ c
       real (kind=R8) ::
      *   lmin,lmax,x1,x2,y1,y2,dist,xmin,xmax
       integer i,lnblnk
+      external lnblnk
 
 c     the line format common
       character*10 linefmt
@@ -39,29 +40,32 @@ c      if(nidim .ne. 1) call line(1)
         lmax=values(33)
       endif
       if(lmin.eq.lmax) then
-        lmin=min(lmin*0.9,lmin*1.1)
-        lmax=max(lmax*0.9,lmax*1.1)
+        lmin=min(lmin*0.9_R8,lmin*1.1_R8)
+        lmax=max(lmax*0.9_R8,lmax*1.1_R8)
         if(lmin.eq.lmax) then
-          lmin=-1.0
-          lmax=+1.0
+          lmin=-1.0_R8
+          lmax=+1.0_R8
         end if
       end if
       if(mod(trglinlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
       if(mod(trglinlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
       if(mod(typeofplot,2) .eq. 1) then
-        if(values(34) .ne. values(35)) then
+        if(values(34).ne.init_value) then
           xmin=values(34)
-          xmax=values(35)
         else
           xmin=wwrk(1)
+        endif
+        if(values(35).ne.init_value) then
+          xmax=values(35)
+        else
           xmax=wwrk(ndepth_nml)
         endif
         if(xmin.eq.xmax) then
-          xmin=min(xmin*0.9,xmin*1.1)
-          xmax=max(xmax*0.9,xmax*1.1)
+          xmin=min(xmin*0.9_R8,xmin*1.1_R8)
+          xmax=max(xmax*0.9_R8,xmax*1.1_R8)
           if(xmin.eq.xmax) then
-            xmin=-1.0
-            xmax=+1.0
+            xmin=-1.0_R8
+            xmax=+1.0_R8
           end if
         end if
         if(trglinlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
@@ -69,14 +73,14 @@ c      if(nidim .ne. 1) call line(1)
         call init_page(
      1     target_label(itwrk)(1:lnblnk(target_label(itwrk)))//
      2     tmpstring(1:lnblnk(tmpstring)),
-     1     values(34),values(35),values(32),values(33),
+     1     xmin,xmax,lmin,lmax,
      2     trglinlog,.false.,.false.,.true.)
         if(writing_to_file) then
-          write(96,'(''# '',a)')                                 !srv  12.05.08
+          write(nwtf,'(''# '',a)')                                   !srv 21.09.11
      1     target_label(itwrk)(1:lnblnk(target_label(itwrk)))//
      2     tmpstring(1:lnblnk(tmpstring))
           do i=1,ndepth_nml
-            write(96,*) wwrk(i),target_stack(ibnd,i,itwrk)       !srv  12.05.08
+            write(nwtf,*) wwrk(i),target_stack(ibnd,i,itwrk)         !srv 21.09.11
           enddo
         endif
 #ifndef PLPLOT
@@ -109,21 +113,21 @@ c      if(nidim .ne. 1) call line(1)
           lmax=values(33)
         endif
         if(lmin.eq.lmax) then
-          lmin=min(lmin*0.9,lmin*1.1)
-          lmax=max(lmax*0.9,lmax*1.1)
+          lmin=min(lmin*0.9_R8,lmin*1.1_R8)
+          lmax=max(lmax*0.9_R8,lmax*1.1_R8)
           if(lmin.eq.lmax) then
-            lmin=-1.0
-            lmax=+1.0
+            lmin=-1.0_R8
+            lmax=+1.0_R8
           end if
         end if
         if(mod(trglinlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
         if(mod(trglinlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
         if(values(26).eq.values(27)) then
-          values(26)=min(values(26)*0.9,values(26)*1.1)
-          values(27)=max(values(27)*0.9,values(27)*1.1)
+          values(26)=min(values(26)*0.9_R8,values(26)*1.1_R8)
+          values(27)=max(values(27)*0.9_R8,values(27)*1.1_R8)
           if(values(26).eq.values(27)) then
-            values(26)=-1.0
-            values(27)=+1.0
+            values(26)=-1.0_R8
+            values(27)=+1.0_R8
           end if
         end if
         if(mod(trglinlog,2).eq.0.and.values(26).le.0.0_R8) 
@@ -133,14 +137,14 @@ c      if(nidim .ne. 1) call line(1)
         call init_page(
      1     target_label(itwrk)(1:lnblnk(target_label(itwrk)))//
      2     tmpstring(1:lnblnk(tmpstring)),
-     1     values(26),values(27),values(32),values(33),
+     1     values(26),values(27),lmin,lmax,
      3     trglinlog,.false.,.false.,.false.)
         if(writing_to_file) then
-          write(96,'(''# '',a)')                                 !srv  12.05.08
+          write(nwtf,'(''# '',a)')                                   !srv 21.09.11
      1       target_label(itwrk)(1:lnblnk(target_label(itwrk)))//
      2       tmpstring(1:lnblnk(tmpstring))
           do i=1,ndepth_nml
-            write(96,*) wwrk(i),target_stack(ibnd,i,itwrk)       !srv  12.05.08
+            write(nwtf,*) wwrk(i),target_stack(ibnd,i,itwrk)         !srv 21.09.11
           enddo
         endif
 #ifndef PLPLOT

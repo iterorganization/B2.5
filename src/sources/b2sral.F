@@ -71,9 +71,11 @@
 *     (transport coefficients)						 !xpb
       real (kind=R8) ::							 !xpb
      1  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),			 !xpb
-     2	chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),			 !xpb
-     3	calf(-1:nx,-1:ny,0:1), cdna(-1:nx,-1:ny,0:1,0:ns-1),         !xpb
-     4      cvsa(-1:nx,-1:ny,0:1,0:ns-1), cvla(-1:nx,-1:ny,0:1,0:ns-1)			 
+     2  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),			 !xpb
+     3  calf(-1:nx,-1:ny,0:1), cdna(-1:nx,-1:ny,0:1,0:ns-1),         !xpb
+     4  cvsa(-1:nx,-1:ny,0:1,0:ns-1), cvla(-1:nx,-1:ny,0:1,0:ns-1),
+csw 30sep2013
+     5  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *     (log-log rate coefficients)
       real (kind=R8) ::
      *  rlsa(-1:nx,-1:ny,0:1,0:ns-1), rlra(-1:nx,-1:ny,0:1,0:ns-1),
@@ -344,11 +346,13 @@ cxpb turn off poloidal flows in core boundary
         fchinert  = 0.0_R8
         fchanml   = 0.0_R8
        endif
+csw 30sep2013, added cdpa in call, uadia
       call b2tfrn (nx, ny, ns, guard_flows,
      &  facdrift, fac_ExB, rza,
      &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,   
      &  fch_p, fchvispar, fchinert, fchanml,
-     &  fne, cvla, cdna, chce, chci, vaecrb, wadia, ve, wedia,
+     &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
+     &  uadia,
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
       endif                                                         !srv 14.07.10 }
 

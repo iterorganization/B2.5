@@ -55,14 +55,14 @@ c
      .     wall_stack(1,is,iwwrk)+wall_stack(i,is,iwwrk)
         enddo
       enddo
-      values(9)=wall_stack(1,0,iwwrk)
-      values(10)=wall_stack(1,0,iwwrk)
+      values(14)=wall_stack(1,0,iwwrk)
+      values(15)=wall_stack(1,0,iwwrk)
       do is=0,nwdim(2,iwwrk)-1
         do i=2,nwdim(1,iwwrk)
           wall_stack(i,is,iwwrk)=wall_stack(1,is,iwwrk)
         enddo
-        values(9)=min(values(9),wall_stack(1,is,iwwrk))
-        values(10)=max(values(10),wall_stack(1,is,iwwrk))
+        values(14)=min(values(14),wall_stack(1,is,iwwrk))
+        values(15)=max(values(15),wall_stack(1,is,iwwrk))
       enddo
 
       return
@@ -191,12 +191,12 @@ c
           enddo
         enddo
       enddo
-      values(9)=wall_stack(1,0,iwwrk)
-      values(10)=wall_stack(1,0,iwwrk)
+      values(14)=wall_stack(1,0,iwwrk)
+      values(15)=wall_stack(1,0,iwwrk)
       do is=0,nwdim(2,iwwrk)-1
         do iw=1,nbnd
-          values(9)=min(values(9),wall_stack(iw,is,iwwrk))
-          values(10)=max(values(10),wall_stack(iw,is,iwwrk))
+          values(14)=min(values(14),wall_stack(iw,is,iwwrk))
+          values(15)=max(values(15),wall_stack(iw,is,iwwrk))
         enddo
       enddo
 
@@ -226,12 +226,12 @@ c
      1     wall_stack(iw-1,is,iwwrk)+wall_stack(iw,is,iwwrk)
         enddo
       enddo
-      values(9)=wall_stack(1,0,iwwrk)
-      values(10)=wall_stack(1,0,iwwrk)
+      values(14)=wall_stack(1,0,iwwrk)
+      values(15)=wall_stack(1,0,iwwrk)
       do is=0,nwdim(2,iwwrk)-1
         do iw=1,nbnd
-          values(9)=min(values(9),wall_stack(iw,is,iwwrk))
-          values(10)=max(values(10),wall_stack(iw,is,iwwrk))
+          values(14)=min(values(14),wall_stack(iw,is,iwwrk))
+          values(15)=max(values(15),wall_stack(iw,is,iwwrk))
         enddo
       enddo
 

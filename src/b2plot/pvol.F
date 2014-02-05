@@ -6,6 +6,9 @@ c
       use b2mod_b2plot_values
       implicit none
       integer ix,iy,is,lnblnk
+      character*256 stmp
+      external lnblnk
+
       values(9)=work(-1,-1,0,iwrk)/vol(-1,-1)
       values(10)=work(-1,-1,0,iwrk)/vol(-1,-1)
       do is=0,ndim(3,iwrk)-1
@@ -17,7 +20,7 @@ c
           enddo
         enddo
       enddo
-      graphlabel(iwrk)=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     1 '/(m^3)'
+      stmp=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m^{3})'
+      call customise_label(stmp,graphlabel(iwrk))
       return
       end

@@ -376,7 +376,7 @@ C Initialise Areas
             do iiso = 1, nniso
               iniso = iniso .or.
      &               (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &	        iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
+     &	              iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
             end do
             iniso = iniso .or.
      &       (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
@@ -403,7 +403,7 @@ C Initialise Areas
               do iiso = 1, nniso
                 iniso = iniso .or.
      &                 (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &	          iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
+     &	                iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
               end do
               iniso = iniso .or.
      &         (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
@@ -591,10 +591,10 @@ cxpb     1	     'nycut1(4) =',NYCUT1(4),
 cxpb     2	     'nycut2(3) =',NYCUT2(3),
 cxpb     3	     'nycut2(4) =',NYCUT2(4)
           do iiso = 1, nniso
-            WRITE (*,*) 'nxiso1(',iiso,') =',Nxiso1(iiso),
-     1             ' nxiso2(',iiso,') =',Nxiso2(iiso)
-            WRITE (*,*) 'nyiso1(',iiso,') =',NYiso1(iiso),
-     1	     ' nyiso2(',iiso,') =',NYiso2(iiso)
+            WRITE (*,*) 'nxiso1(',iiso,') =',nxiso1(iiso),
+     1                 ' nxiso2(',iiso,') =',nxiso2(iiso)
+            WRITE (*,*) 'nyiso1(',iiso,') =',nyiso1(iiso),
+     1	               ' nyiso2(',iiso,') =',nyiso2(iiso)
           end do
 cxpb	  ENDIF
         ENDIF
@@ -796,10 +796,10 @@ cxpb region to the west of the isolating wall in double nulls.
             iniso = iniso .or.
      &             (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
      &	            iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
-            iniso = iniso .or.
-     &       (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
-     &       (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
           end do                                        
+          iniso = iniso .or.
+     &     (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
+     &     (leftix(ix,iy).eq.-2 .and. ix.ne.-1)
         end do
         if(iniso) ix=ix-1
         nxend(kreg)=ix
@@ -828,7 +828,7 @@ cxpb the westernmost plate.
           do iiso=1, nniso
             iniso = iniso .or.
      &             (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &	      iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
+     &	            iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
           end do 
           iniso = iniso .or.
      &     (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.
@@ -926,7 +926,7 @@ cxpb Region 8 is the SOL section above region 5
           do iiso = 1, nniso
             iniso = iniso .or.
      &             (ix.ge.nxiso1(iiso).and.ix.le.nxiso2(iiso).and.
-     &	      iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
+     &	            iy.ge.nyiso1(iiso).and.iy.le.nyiso2(iiso))
           end do
           iniso = iniso .or.
      &     (rightix(ix,iy).eq.nx+1 .and. ix.lt.nx) .or.

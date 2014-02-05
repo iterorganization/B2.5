@@ -36,8 +36,7 @@ csw
 *  -- OUTPUT ARGUMENTS --
       INTEGER NFEND
 
-csw 07feb2011
-csw#     include <COUPLE/EIRDIAG.F>
+!#     include <COUPLE/EIRDIAG.F>                                !srv 14.10.13
 
 *  -- LOCAL SCALARS --
       INTEGER NNX, NNY, IS, IX, IY, jvft44, istra, nplsi
@@ -100,6 +99,9 @@ C
       do 14 IS = 1, NATMI
         call gfsub2(44,nxdd,nydd,nnx,nny,dab2(:,:,is,1))
    14 CONTINUE
+      do is = 1,natmi                                                      !srv 04.06.09 16.02.12{
+       call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,is,1),'dab2')
+      enddo
 
       do 24 IS = 1, NATMI
         call gfsub2(44,nxdd,nydd,nnx,nny,tab2(:,:,is,1))
@@ -110,6 +112,9 @@ C
       do 15 IS = 1, NMOLI
         call gfsub2(44,nxdd,nydd,nnx,nny,dmb2(:,:,is,1))
    15 CONTINUE
+      do is = 1,nmoli                                                      !srv 16.02.12
+       call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,is,1),'dmb2')          !srv 29.04.10
+      enddo                                                                 !srv 04.06.09 }
 
       do 25 IS = 1, NMOLI
         call gfsub2(44,nxdd,nydd,nnx,nny,tmb2(:,:,is,1))
@@ -186,7 +191,7 @@ cank 960511
         end do
       end do
       do istra=0,nstra
-        do ix=1,nlimps
+        do ix=1,nlmpgs
           wldnek(ix,istra)=0.0_R8
           wldnep(ix,istra)=0.0_R8
           do is=1,natmi
@@ -238,7 +243,7 @@ cank-960727
             call rdneutrs(44,wldrm(:,:,istra),nmoli)
           end do
         else
-          do ix=1,nstsi+nlimi
+          do ix=1,nlmpgs
             wldnek(ix,1)=wldnek(ix,0)
             wldnep(ix,1)=wldnep(ix,0)
             do is=1,natmi
@@ -254,7 +259,7 @@ cank-960727
           end do
         end if
         if(nspecies .eq. natmi) then
-          do ix=1,nstsi+nlimi
+          do ix=1,nlmpgs
             wldnek(ix,0)=0.0_R8
             wldnep(ix,0)=0.0_R8
             do is=1,natmi
@@ -267,7 +272,7 @@ cank-960727
               wldrm(ix,is,0)=0.0_R8
               ewldm(ix,is,0)=0.0_R8
             end do
-            do istra=1,nstra
+            do istra=1,nstrai
               wldnek(ix,0)=wldnek(ix,0)+
      +         wldnek(ix,istra)*recyc(ismain,istra)
               wldnep(ix,0)=wldnep(ix,0)+
@@ -280,16 +285,28 @@ cank-960727
      +                             wldra(ix,is,istra)*recyc(iy,istra)
                 ewlda(ix,is,0)=ewlda(ix,is,0)+
      +                             ewlda(ix,is,istra)*recyc(iy,istra)
-                iy=iy+nfluids(is)
+                iy=iy+nfluids(is)+1
               end do
               do is=1,nmoli
-                iy=eb2spcr(lmolscl(is))+1
-                wldnm(ix,is,0)=wldnm(ix,is,0)+
-     +           wldnm(ix,is,istra)*recyc(iy,istra)
-                wldrm(ix,is,0)=wldrm(ix,is,0)+
-     +           wldrm(ix,is,istra)*recyc(iy,istra)
-                ewldm(ix,is,0)=ewldm(ix,is,0)+
-     +           ewldm(ix,is,istra)*recyc(iy,istra)
+                if (lmolscl(is).gt.0 .and. lmolscl(is).le.natmi) then
+                  iy=eb2spcr(lmolscl(is))+1
+                  wldnm(ix,is,0)=wldnm(ix,is,0)+
+     +             wldnm(ix,is,istra)*recyc(iy,istra)
+                  wldrm(ix,is,0)=wldrm(ix,is,0)+
+     +             wldrm(ix,is,istra)*recyc(iy,istra)
+                  ewldm(ix,is,0)=ewldm(ix,is,0)+
+     +             ewldm(ix,is,istra)*recyc(iy,istra)
+                else
+                  write(*,*) 'Faulty of missing LMOLSCL assignment:'
+                  write(*,*) 'LMOLSCL(',is,')=',lmolscl(is)
+                  write(*,*) 'Should be valued between 1 and NATM'
+                  write(*,*) 'Modify in b2.neutrals.parameters'
+                  write(*,*) 'See manual or b2cdcn.f file for usage'
+                  write(*,*) 'Skipping scaling of molecular arrays'
+                  wldnm(ix,is,0)=wldnm(ix,is,0)+wldnm(ix,is,istra)
+                  wldrm(ix,is,0)=wldrm(ix,is,0)+wldrm(ix,is,istra)
+                  ewldm(ix,is,0)=ewldm(ix,is,0)+ewldm(ix,is,istra)
+                endif
               end do
             end do
           end do

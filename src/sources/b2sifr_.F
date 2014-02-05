@@ -59,6 +59,7 @@
      *   phm0, phm1, phm2, ctaup, coef, t0, t1                        !srv 18.10.02
       real (kind=R8) ::
      1 delti, delte, zlamii, zlamee, dtiapr, dteapr, limthii, limthee
+      integer :: zlitest
 *   ..procedures
       intrinsic sqrt
       real (kind=R8) ::
@@ -67,10 +68,12 @@
       external b2xvff, b2xvfx, b2xvsg
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                          !srv 01.07.05
 *   ..initialization
-      save ncall, styl0, styl1, phm0, phm1, phm2, limthii, limthee
+      save ncall, styl0, styl1, phm0, phm1, phm2, limthii, limthee,
+     1     zlitest
       data ncall/0/, styl0/0/, styl1/0/, phm0/1.0e0_R8/,
      &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, limthii/0.3e0_R8/,
-     &  limthee/0.3e0_R8/
+     &  limthee/0.3e0_R8/,
+     &  zlitest/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -87,6 +90,9 @@
        call ipgetr ('b2sifr_phm2', phm2)
        call ipgetr ('b2sifr_limthii', limthii)
        call ipgetr ('b2sifr_limthee', limthee)
+csw 24sep2013
+       call ipgeti ('b2sifr_zlamii_test', zlitest)
+csw
        call xertst (0.le.styl0.and.styl0.lt.9.and.0.le.styl1.and.
      &  styl1.lt.2, 'faulty internal parameter styl0, styl1')
        call xertst (0.0_R8.le.phm0.and.0.0_R8.le.phm1.and.
@@ -177,8 +183,8 @@
      &                       roxa(ix,iy,isb)
              smbch(ix,iy,3) = smbch(ix,iy,3)-coef*t0/
      &                       roxa(ix,iy,isb)
-	      endif
-	     endif
+            endif
+           endif
           enddo
         enddo
        else
@@ -190,48 +196,53 @@
       enddo
 *   ..compute thermal force
       do iy = 0, ny-1
-	 if (styl1.eq.0) then
-	  do ix = 0, nx-1
+       if (styl1.eq.0) then
+        do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then      !srv 26.11.02
-	    t0 = na(ix,iy,isb)*(rza(ix,iy,isb)/ne(ix,iy)-rz2(ix,iy,isb)
+          t0 = na(ix,iy,isb)*(rza(ix,iy,isb)/ne(ix,iy)-rz2(ix,iy,isb)
      &         /ne2(ix,iy))
-	    delte=(gte(ix,iy)+gte(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8 !srv 12.04.10
-	    if(limthee.gt.0) then
-	      zlamee=1.5e16_R8*(te(ix,iy)/ev)**2/ne(ix,iy)
+          delte=(gte(ix,iy)+gte(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8 !srv 12.04.10
+          if(limthee.gt.0) then
+            zlamee=1.5e16_R8*(te(ix,iy)/ev)**2/ne(ix,iy)
             dteapr=limthee/zlamee*te(ix,iy)/abs(bb(ix,iy,0)/bb(ix,iy,3)) !srv 12.04.10 11.01.13
-	      delte=sign(min(abs(delte),dteapr),delte)
-	    endif
-	    delti=(gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8 !srv 12.04.10
-	    if(limthii.gt.0) then
-	      zlamii=1.5e16_R8*(ti(ix,iy)/ev)**2/ne2(ix,iy)
+            delte=sign(min(abs(delte),dteapr),delte)
+          endif
+          delti=(gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8 !srv 12.04.10
+          if(limthii.gt.0) then
+csw 24sep2013 check for zlitest
+            if(zlitest .ne. 0) then
+             zlamii=1.5e16_R8*(ti(ix,iy)/ev)**2/na(ix,iy,1)
+            else 
+             zlamii=1.5e16_R8*(ti(ix,iy)/ev)**2/ne2(ix,iy)
+            endif
             dtiapr=limthii/zlamii*ti(ix,iy)/abs(bb(ix,iy,0)/bb(ix,iy,3)) !srv 12.04.10 11.01.13
-	      delti=sign(min(abs(delti),dtiapr),delti)
-	    endif
-c	    if(cthi(ix,iy,isb).ne.2.65e0_R8)
-c     1	     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
-	    smbtf(ix,iy,0) = smbtf(ix,iy,0)+t0*
-     &	    (phm1*ehxp(ix,iy)-
-     &	    (cthe(ix,iy,isb)*delte+cthi(ix,iy,isb)*delti)*ne(ix,iy)*
-     &	    vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3))*hz(ix,iy)            !srv 01.07.05
-	   else if (styl1.eq.1) then
-	    stop 'b2sifr: option removed'
-	   endif                                                         !srv 26.11.02
-	  enddo
-	 endif
+            delti=sign(min(abs(delti),dtiapr),delti)
+          endif
+c         if(cthi(ix,iy,isb).ne.2.65e0_R8)
+c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
+          smbtf(ix,iy,0) = smbtf(ix,iy,0)+t0*
+     &     (phm1*ehxp(ix,iy)-
+     &     (cthe(ix,iy,isb)*delte+cthi(ix,iy,isb)*delti)*ne(ix,iy)*
+     &     vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3))*hz(ix,iy)            !srv 01.07.05
+         else if (styl1.eq.1) then
+          stop 'b2sifr: option removed'
+         endif                                                         !srv 26.11.02
+        enddo
+       endif
       enddo
-	if (iout.ne.0) then                                            !srv 17.06.02 {
-	   write (chns,'(i2.2)') isb    
-	   call my_out(70,nx,ny,ehxp,'b2sifr_ehxp'//chns)
-	   call my_out(70,nx,ny,cthe(-1,-1,isb),'b2sifr_cthe'//chns)
-	   call my_out(70,nx,ny,cthi(-1,-1,isb),'b2sifr_cthi'//chns)
-	   do k=0,3
-	    write (chk,'(i1)') k  
-	    call my_out(70,nx,ny,smbtf(-1,-1,k),
+      if (iout.ne.0) then                                            !srv 17.06.02 {
+         write (chns,'(i2.2)') isb    
+         call my_out(70,nx,ny,ehxp,'b2sifr_ehxp'//chns)
+         call my_out(70,nx,ny,cthe(-1,-1,isb),'b2sifr_cthe'//chns)
+         call my_out(70,nx,ny,cthi(-1,-1,isb),'b2sifr_cthi'//chns)
+         do k=0,3
+          write (chk,'(i1)') k  
+          call my_out(70,nx,ny,smbtf(-1,-1,k),
      *                'b2sifr_smotf'//chk//chns)                       !srv 07.02.12
-	    call my_out(70,nx,ny,smbch(-1,-1,k),
+          call my_out(70,nx,ny,smbch(-1,-1,k),
      *                'b2sifr_smoch'//chk//chns)                       !srv 07.02.12
-	   enddo
-	endif                                                            !srv 17.06.02 }
+         enddo
+      endif                                                            !srv 17.06.02 }
 * ..return
       ncall = ncall+1
       call subend ()

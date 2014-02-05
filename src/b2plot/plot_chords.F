@@ -10,6 +10,7 @@ c
       real (kind=R8) ::
      1	 rcol,x,y,x1,y1,z1,x2,y2,z2,r,z,ro,zo
       integer icol,npoints,npointsl,i,lnblnk
+      external lnblnk
 
       real (kind=R8) ::
      *   rshift, zshift, r0, z0, a0, b0, tt0

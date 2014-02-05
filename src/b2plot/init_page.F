@@ -27,6 +27,7 @@ c     the line format common
       integer ix,iy,n_page,itxtwdth,lnblnk,
      1 nox,noxm,nfmtx,nnox,
      2 noy,noym,nfmty,nnoy
+      external lnblnk
 
       if(b2plot_debug.ge.8) write(*,*) xwidth,yheight
 
@@ -46,7 +47,7 @@ c     the line format common
         if(b2plot_debug.ge.8) write(*,*) 'ngraph = ',ngraph
         write(linefmt,'(a,i2,a)') '$$$''',ngraph,'''$$$'
 #ifndef PLPLOT
-        if(label_same_lines) call dashdc(linefmt,8,0)
+        if(label_same_lines) call dashdc(linefmt,8,lfsz)
 #endif
       endif
       if(same_page.eq.1) then
@@ -230,12 +231,14 @@ c     the line format common
         call reset
         new_page=.false.
         if(globalheader.ne.' ') then
+          if(hcol.gt.1) call gsplci(hcol)
           CALL SET(0.0*XWIDTH,1.0*XWIDTH,
      1     0.0*YHEIGHT,1.0*YHEIGHT,
      2     0.0,1.0,0.0,1.0,1)
           if(noax.gt.0)
      1     CALL PLCHHQ(0.5,0.99,GLOBALHEADER(1:LNBLNK(GLOBALHEADER)),
      1     1.0/real(max(50,lnblnk(globalheader)))*xwidth/1.25,0.0,0.0)
+          call gsplci(1)
         endif
       endif
       dirty_page=.true.
@@ -247,9 +250,12 @@ c     the line format common
 
       if(b2plot_debug.ge.6) write(*,*) 'title ',title(1:lnblnk(title))
       if(noax.gt.0) then
+        if(gcol.gt.1) call gsplci(gcol)
         CALL PLCHHQ(0.5,(1.0-txtwdth*2*n_page),
      1   TITLE(1:LNBLNK(TITLE)),
      1   1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        call gsplci(1)
+        if(bcol.gt.1) call gsplci(bcol)
         if(wall)
      &   CALL PLCHHQ(wallbar_right,(1.0-txtwdth*2*n_page),
      1   WALLBARLABEL(1:LNBLNK(WALLBARLABEL)),
@@ -258,12 +264,15 @@ c     the line format common
      &   CALL PLCHHQ(targetbar_right,(1.0-txtwdth*2*n_page),
      1   TARGETBARLABEL(1:LNBLNK(TARGETBARLABEL)),
      1   1.0/100.0/N_PAGE*lbsz,0.0,1.0)
+        call gsplci(1)
       endif
       IF(EXTRALABEL.NE.' ') THEN
+        if(xcol.gt.1) call gsplci(xcol)
         if(noax.gt.0)
      1   CALL PLCHHQ(0.5,(1.0-txtwdth*4*n_page),
      1   EXTRALABEL(1:LNBLNK(EXTRALABEL)),
      1   1.0/100.0/N_PAGE*lbsz,0.0,0.0)
+        call gsplci(1)
       ENDIF
 
         if(b2plot_debug.ge.6) write(*,*) 'SET: ',
@@ -291,22 +300,25 @@ c     the line format common
         if(lzero) then
           call lastd
           if (zcol.gt.1) call gsplci(zcol)
+          if (zwidth.ne.1.0) call gslwsc(zwidth)
           call gsln(3)
           call dashdc('$$$$''''''''',8,0)
+          if(b2plot_debug.ge.9) write(*,*) 'zwidth = ',zwidth
           if(xlo.lt.0.0.and.xhi.gt.0.0) then
             call lined(0.0,ylo,0.0,yhi)
           endif
           if(ylo.lt.0.0.and.yhi.gt.0.0) then
             call lined(xlo,0.0,xhi,0.0)
           endif
-          if(label_same_lines.and.same_page.ne.0) then
-            call dashdc(linefmt,8,0)
+          if (label_same_lines.and.same_page.ne.0) then
+            call dashdc(linefmt,8,lfsz)
           else
             call dashdc('$',1,0)
           endif
           call gsln(1)
           call lastd
           if (zcol.gt.1) call gsplci(1)
+          if (zwidth.ne.1.0) call gslwsc(1.0)
         endif
         CALL CPSETI('MAP - MAPPING FLAG',3)
 #endif

@@ -15,7 +15,7 @@ c
       integer ixref
       logical iniso
       intrinsic min,max,sqrt
-      external xertst
+      external xertst, lnblnk
       dist(x1,y1,x2,y2)=sqrt((x1-x2)**2+(y1-y2)**2)
 c     the line format common
       character*10 linefmt
@@ -151,11 +151,14 @@ c      if(nidim .ne. 2) call line(2)
         if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
         if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
         if(mod(typeofplot,2) .eq. 1) then
-          if(values(11) .ne. values(12)) then
+          if(values(11).ne.init_value) then
             xmin=values(11)
-            xmax=values(12)
           else
             xmin=min(wrk(iystart),wrk(iyend))
+          endif
+          if(values(12).ne.init_value) then
+            xmax=values(12)
+          else
             xmax=max(wrk(iystart),wrk(iyend))
           endif
           if(xmin.eq.xmax) then
@@ -174,12 +177,12 @@ c      if(nidim .ne. 2) call line(2)
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(96,'(''# '',a)')                           !srv  12.05.08
+            write(nwtf,'(''# '',a)')                                 !srv 21.09.11
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2       tmpstring2(1:lnblnk(tmpstring2)) //
      2       tmpstring1(1:lnblnk(tmpstring1))
             do iy=iystart,iyend
-              write(96,*) wrk(iy),work(ix,iy,is,iwrk)        !srv  12.05.08
+              write(nwtf,*) wrk(iy),work(ix,iy,is,iwrk)                   !srv 21.09.11
             enddo
           endif
 #ifndef PLPLOT
@@ -207,7 +210,7 @@ c      if(nidim .ne. 2) call line(2)
               call lastd
               if (scol.gt.1 .or. dcol.gt.1) call gsplci(dcol)
               call gslwsc_d(lwidth)
-              call dashdc(linefmt,8,0)
+              call dashdc(linefmt,8,lfsz)
 #endif
             endif
           enddo
@@ -238,11 +241,14 @@ c      if(nidim .ne. 2) call line(2)
           end if
           if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
           if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
-          if(values(11) .ne. values(12)) then
+          if(values(11).ne.init_value) then
             xmin=values(11)
-            xmax=values(12)
           else
             xmin=min(wrk(-1),wrk(ny))
+          endif
+          if(values(12).ne.init_value) then
+            xmax=values(12)
+          else
             xmax=max(wrk(-1),wrk(ny))
           endif
           if(xmin.eq.xmax) then
@@ -262,12 +268,12 @@ c      if(nidim .ne. 2) call line(2)
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(96,'(''# '',a)')                          !srv  12.05.08
+            write(nwtf,'(''# '',a)')                   !srv 21.09.11
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2       tmpstring2(1:lnblnk(tmpstring2)) //
      2       tmpstring1(1:lnblnk(tmpstring1))
             do iy=-1,ny
-              write(96,*) wrk(iy),work(ix,iy,is,iwrk)       !srv  12.05.08
+              write(nwtf,*) wrk(iy),work(ix,iy,is,iwrk)                   !srv 21.09.11
             enddo
           endif
 #ifndef PLPLOT
@@ -295,7 +301,7 @@ c      if(nidim .ne. 2) call line(2)
               call lastd
               if (scol.gt.1 .or. dcol.gt.1) call gsplci(dcol)
               call gslwsc_d(lwidth)
-              call dashdc(linefmt,8,0)
+              call dashdc(linefmt,8,lfsz)
 #endif
             endif
           enddo
@@ -436,10 +442,16 @@ c
           ymin=min(ymin,yvalues(i))
           ymax=max(ymax,yvalues(i))
         enddo
-        if(values(11) .ne. values(12)) then
-          xmin=values(11)
-          xmax=values(12)
-        endif
+        if(values(11).ne.init_value) xmin=values(11)
+        if(values(12).ne.init_value) xmax=values(12)
+        if(xmin.eq.xmax) then
+          xmin=min(xmin*0.9_R8,xmin*1.1_R8)
+          xmax=max(xmax*0.9_R8,xmax*1.1_R8)
+          if(xmin.eq.xmax) then
+            xmin=-1.0_R8
+            xmax=+1.0_R8
+          end if
+        end if
         if(values(14) .ne. values(15)) then
           ymin=values(14)
           ymax=values(15)
@@ -459,10 +471,10 @@ c
      1   xmin,xmax,ymin,ymax,linlog,.false.,.false.,.true.)
         write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(96,'(''# '',a)')                      !srv  12.05.08
+          write(nwtf,'(''# '',a)')                   !srv 21.09.11
      1     title(1:lnblnk(title))
           do i=1,inc
-            write(96,*) xvalues(i),yvalues(i)         !srv  12.05.08
+            write(nwtf,*) xvalues(i),yvalues(i)                   !srv 21.09.11
           enddo
         endif
 #ifndef PLPLOT
@@ -542,10 +554,16 @@ c
           ymin=min(ymin,yvalues(i))
           ymax=max(ymax,yvalues(i))
         enddo
-        if(values(11) .ne. values(12)) then
-          xmin=values(11)
-          xmax=values(12)
-        endif
+        if(values(11).ne.init_value) xmin=values(11)
+        if(values(12).ne.init_value) xmax=values(12)
+        if(xmin.eq.xmax) then
+          xmin=min(xmin*0.9_R8,xmin*1.1_R8)
+          xmax=max(xmax*0.9_R8,xmax*1.1_R8)
+          if(xmin.eq.xmax) then
+            xmin=-1.0_R8
+            xmax=+1.0_R8
+          end if
+        end if
         if(values(14) .ne. values(15)) then
           ymin=values(14)
           ymax=values(15)
@@ -558,17 +576,17 @@ c
             ymax=+1.0_R8
           end if
         end if
-        if(mod(linlog,2).eq.0.and.ymin.le.0.0_R8) ymin=1.0e-30_R8
-        if(mod(linlog,2).eq.0.and.ymax.le.0.0_R8) ymax=1.0_R8
+        if(mod(wlinlog,2).eq.0.and.ymin.le.0.0_R8) ymin=1.0e-30_R8
+        if(mod(wlinlog,2).eq.0.and.ymax.le.0.0_R8) ymax=1.0_R8
         call init_page(
      1   title(1:lnblnk(title)),
      1   xmin,xmax,ymin,ymax,wlinlog,.false.,.false.,.true.)
         write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(96,'(''# '',a)')                      !srv  12.05.08
+          write(nwtf,'(''# '',a)')                   !srv 21.09.11
      1     title(1:lnblnk(title))
           do i=1,inc
-            write(96,*) xvalues(i),yvalues(i)         !srv  12.05.08
+            write(nwtf,*) xvalues(i),yvalues(i)                   !srv 21.09.11
           enddo
         endif
 #ifndef PLPLOT

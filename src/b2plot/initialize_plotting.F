@@ -216,8 +216,28 @@ c
       device=devnam
       return
 
+      entry set_line_font_size(iopt)
+      lfsz=iopt
+      return
+
       entry set_axes_color(iopt)
       zcol=iopt
+      return
+
+      entry set_header_color(iopt)
+      hcol=iopt
+      return
+
+      entry set_title_color(iopt)
+      gcol=iopt
+      return
+
+      entry set_barlabel_color(iopt)
+      bcol=iopt
+      return
+
+      entry set_extralabel_color(iopt)
+      xcol=iopt
       return
 
       end subroutine initialise_plotting

@@ -379,6 +379,9 @@ c
 c
 c*** Neutral fluxes
 c
+csw 18nov2013 check for nnatmi
+      if(nnatmi > 0) then
+
 c*** flux across the core boundary
       do is=1,ncns !{
         js=lcns(is)+nnlimi
@@ -409,6 +412,7 @@ c*** flux across the specified zones
           end if !}
         end do !}
       end do !}
+      endif !nnatmi
 c
 c*** Energy content
 c

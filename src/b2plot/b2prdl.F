@@ -10,7 +10,7 @@ c***   (a) distribution of the radiation source for calculation of the
 c***       wall loading (a sum of radiation from neutrals, impurities,
 c***       and Bremsstrahlung)
 c***   (b) distribution of the power coming to the targets with
-c***       the plasma particles (kinetic + potential energy)
+c***       the plasma particles (parallel kinetic + potential energy)
 c***
 c*** Is to be called from b2plot!
 c***

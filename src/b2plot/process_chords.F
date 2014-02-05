@@ -62,14 +62,28 @@ c
           ymin=min(ymin,yvalues(i))
           ymax=max(ymax,yvalues(i))
         enddo
-        if(values(11) .ne. values(12)) then
-          xmin=values(11)
-          xmax=values(12)
-        endif
+        if(values(11).ne.init_value) xmin=values(11)
+        if(values(12).ne.init_value) xmax=values(12)
+        if(xmin.eq.xmax) then
+          xmin=min(xmin*0.9_R8,xmin*1.1_R8)
+          xmax=max(xmax*0.9_R8,xmax*1.1_R8)
+          if(xmin.eq.xmax) then
+            xmin=-1.0_R8
+            xmax=+1.0_R8
+          end if
+        end if
         if(values(14) .ne. values(15)) then
           ymin=values(14)
           ymax=values(15)
         endif
+        if(ymin.eq.ymax) then
+          ymin=min(ymin*0.9_R8,ymin*1.1_R8)
+          ymax=max(ymax*0.9_R8,ymax*1.1_R8)
+          if(ymin.eq.ymax) then
+            ymin=-1.0_R8
+            ymax=+1.0_R8
+          end if
+        end if
         tmpstring=textwk(is,iwrk)
         call init_page(
      1   graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) // '.m' //
@@ -78,16 +92,16 @@ c
      1   xmin,xmax,ymin,ymax,linlog,.false.,.false.,.false.)
         write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(96,'(''# '',a)')                           !srv  12.05.08
+          write(nwtf,'(''# '',a)')                                      !srv 21.09.11
      1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) // '.m' //
      2     tmpstring(1:lnblnk(tmpstring)) // ' '//
      2     dataname(1:lnblnk(dataname))
           call get_extralabel(extralabel)
           if(len_trim(extralabel).ne.0) then
-            write(96,'(''# '',a)') trim(extralabel)        !srv  12.05.08
+            write(nwtf,'(''# '',a)') trim(extralabel)                   !srv 21.09.11
           endif
           do i=1,inpts
-            write(96,*) xvalues(i),yvalues(i)              !srv  12.05.08
+            write(nwtf,*) xvalues(i),yvalues(i)                         !srv 21.09.11
           enddo
         endif
         do i=1,inpts-1
@@ -136,6 +150,7 @@ c
       integer itstep,ntstep,dtstep
 #endif
       integer inpts,is,i,lnblnk,nxcam,nycam
+      external lnblnk
       real (kind=R8) ::
      *   xmin,xmax,ymin,ymax
 
@@ -162,12 +177,12 @@ c
      1     xmin,xmax,ymin,ymax,1,.true.,.true.,.true.)
           write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
           if(writing_to_file) then
-            write(96,'(''# '',a)')                           !srv  12.05.08
+            write(nwtf,'(''# '',a)')                   !srv 21.09.11
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2       tmpstring(1:lnblnk(tmpstring)) // ' '//
      2       dataname(1:lnblnk(dataname))
             do i=1,inpts
-              write(96,*) zvalues(i)                         !srv  12.05.08
+              write(nwtf,*) zvalues(i)                   !srv 21.09.11
             enddo
           endif
           call plot_gca(zvalues,izvalues,nxcam,nycam,
@@ -200,12 +215,12 @@ c
      1     xmin,xmax,ymin,ymax,1,.true.,.true.,.true.)
           write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
           if(writing_to_file) then
-            write(96,'(''# '',a)')                   !srv  12.05.08
+            write(nwtf,'(''# '',a)')                   !srv 21.09.11
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2       tmpstring(1:lnblnk(tmpstring)) // ' '//
      2       dataname(1:lnblnk(dataname))
             do i=1,inpts
-              write(96,*) zvalues(i)                 !srv  12.05.08
+              write(nwtf,*) zvalues(i)                   !srv 21.09.11
             enddo
           endif
           call plot_gca(zvalues,izvalues,nxcam,nycam,
@@ -241,6 +256,7 @@ c
 
       logical open_file,vector
       integer ind,indold,npoints,lnblnk
+      external lnblnk
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2
 

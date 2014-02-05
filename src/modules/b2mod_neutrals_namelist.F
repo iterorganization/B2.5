@@ -271,8 +271,10 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       use b2mod_boundary_namelist
       use b2mod_b2cmpa
 csw 17feb2011 extra b25
+#ifdef USE_EIRENE
       use eirmod_extrab25
       use eirmod_braeir
+#endif
       implicit none
       integer nx, ny, ns
       logical dotest
@@ -289,8 +291,10 @@ csw#     include <COUPLE/BRAEIR.F>
      4  recyc,erecyc,rcion,recyceir,userfluxparm,crcstra,rf_neut,
      .  phys_sput, chem_sput,
 #ifndef NO_B2_CHEM_SPUT
+#ifdef USE_EIRENE
      .  chemical_sputter_yield,fchar_chemical,igass_chemical,
      .  itsput_chemical,issput_chemical,
+#endif
 #endif
      .  eirene_step_cpu,eirene_step_dt,eirene_mod,
      .  volrecstart, volrecinc, volrecwt,
@@ -363,8 +367,10 @@ c
      .             0.0_R8.lt.rf_neut(3).and.0.0_R8.lt.rf_neut(4), 
      .  'faulty input rf_neut')
 #ifndef NO_B2_CHEM_SPUT
+#ifdef USE_EIRENE
       call xertst (0.le.issput_chemical,
      .  'faulty input issput_chemical')
+#endif
 #endif
       call xertst (0.0_R8.le.eirene_step_cpu, 
      . 'faulty input eirene_step_cpu')

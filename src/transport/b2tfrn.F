@@ -5,7 +5,8 @@
      &  facdrift, fac_ExB, rza,
      &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,   
      &  fch_p, fchvispar, fchinert, fchanml,                                   !srv 20.09.06
-     &  fne, cvla, cdna, chce, chci, vaecrb, wadia, ve, wedia,
+     &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
+     &  uadia,
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
       use b2mod_types
       use b2mod_boundary_namelist
@@ -23,9 +24,11 @@
      &  ua(-1:nx,-1:ny,0:ns-1), na(-1:nx,-1:ny,0:ns-1), 
      &  fne(-1:nx,-1:ny,0:1), 
      &  cvla(-1:nx,-1:ny,0:1, 0:ns-1), cdna(-1:nx,-1:ny,0:1, 0:ns-1),
+     &  cdpa(-1:nx,-1:ny,0:1, 0:ns-1),
      &  chce(-1:nx,-1:ny,0:1), chci(-1:nx,-1:ny,0:1),
      &  ne(-1:nx,-1:ny), vaecrb(-1:nx,-1:ny,0:1, 0:ns-1),
      &  wadia(-1:nx,-1:ny,0:1, 0:ns-1), 
+     &  uadia(-1:nx,-1:ny,0:1, 0:ns-1), 
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
      2  hz(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), 
      &  qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), ve(-1:nx,-1:ny), 
@@ -57,6 +60,8 @@
         integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
         integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
         integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
+csw 30sep2013
+        integer, save :: no_hybr = 0
         integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
         real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
@@ -71,6 +76,9 @@
       parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny) 
+csw 30sep2013
+      real (kind=R8) :: t0,t1,t2,cvmgp
+csw
       save ncall, area_fix
 *   ..procedures
       real (kind=R8) ::
@@ -109,6 +117,8 @@
         call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)                  !srv 06.07.06
         call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)                  !srv 06.07.06
         call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                  !srv 06.07.06
+csw 30sep2013
+        call ipgeti ('b2tfnb_no_hybr', no_hybr)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -165,8 +175,34 @@
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
-         fna_eir(ix,iy,0,is)     = 0.0_R8                              !srv 14.07.10 
+          fna_eir(ix,iy,0,is)     = 0.0_R8                              !srv 14.07.10 
          else
+csw 30sep2013, added check for no_hybr
+          if(no_hybr .ne. 0) then
+           term(ix,iy) = xfrhie*wrk2(ix,iy)*0.5_R8*abs(pbs(ix,iy,0))*
+     &     sqrt((pb(leftix(ix,iy),leftiy(ix,iy))+pb(ix,iy))/
+     &     (am(is)*mp*
+     &     (na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))))*
+     &     min(vol(leftix(ix,iy),leftiy(ix,iy)),vol(ix,iy))/
+     &     (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
+           con_eir = cdna(ix,iy,0,is)
+           flo_eir = cvla(ix,iy,0,is)+pbs(ix,iy,0)*wrk0(ix,iy)+               !srv 01.07.05
+     &      term(ix,iy) +                                                    !iyv 19.04.07
+     4      uadia(ix,iy,0,is)*
+     5      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/            !srv 01.03.00
+     6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))    
+           t0 = (na(ix,iy,is) 
+     .        + na(leftix(ix,iy),leftiy(ix,iy),is)) / 2.0_R8
+           t1 = (2.0_R8 * na(ix,iy,is) 
+     .                  * na(leftix(ix,iy),leftiy(ix,iy),is)) /
+     .      (cutlo + na(ix,iy,is) + na(leftix(ix,iy),leftiy(ix,iy),is))
+           t2 = cvmgp(t0, t1, flo_eir*
+     1      (na(ix,iy,is)-na(leftix(ix,iy),leftiy(ix,iy),is)))
+           fna_eir(ix,iy,0,is) = flo_eir * t2-
+     &      con_eir*(na(ix,iy,is)-na(leftix(ix,iy),leftiy(ix,iy),is))-
+     &      cdpa(ix,iy,0,is)*(pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))
+csw
+          else
           term(ix,iy) = xfrhie*wrk2(ix,iy)*0.5_R8*abs(pbs(ix,iy,0))*        !iyv 19.04.07 11.01.13
      &     sqrt((pb(leftix(ix,iy),leftiy(ix,iy))+pb(ix,iy))/(am(is)*mp*
      &      (na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))))*
@@ -177,14 +213,15 @@
      4    (vaecrb(ix,iy,0,is)*xvecrb+wadia(ix,iy,0,is)*xwdia)*
      5    (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 14.07.10 }
-           if(no_Ptncr_x_co.eq.0) then                                   !sv 13.10.06 {
-             con_eir = hybr(flo_eir,cdna(ix,iy,0,is))
-           else
-             con_eir = cdna(ix,iy,0,is)
-           endif
-           fna_eir(ix,iy,0,is) = flo_eir*                                            !srv 14.07.10 
-     1      (na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8-
-     &      con_eir*(na(ix,iy,is)-na(leftix(ix,iy),leftiy(ix,iy),is))     
+          if(no_Ptncr_x_co.eq.0) then                                   !sv 13.10.06 {
+            con_eir = hybr(flo_eir,cdna(ix,iy,0,is))
+          else
+            con_eir = cdna(ix,iy,0,is)
+          endif
+          fna_eir(ix,iy,0,is) = flo_eir*                                            !srv 14.07.10 
+     1     (na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8-
+     &     con_eir*(na(ix,iy,is)-na(leftix(ix,iy),leftiy(ix,iy),is))     
+          endif ! no_hybr = 0
          endif
         enddo
        enddo
@@ -194,6 +231,30 @@
          if(bottomiy(ix,iy).eq.-2) then
            fna_eir(ix,iy,1,is)     = 0.0_R8                                   !srv 14.07.10
          else
+csw 30sep2013, added check for no_hybr
+          if(no_hybr .ne. 0) then
+           con_eir = cdna(ix,iy,1,is)
+           flo_eir = cvla(ix,iy,1,is)+
+     &      0.5_R8*(uadia(ix,iy,1,is)*vol(ix,iy)/hy1(ix,iy)
+     &      +uadia(bottomix(ix,iy),bottomiy(ix,iy),1,is)*
+     &       vol(bottomix(ix,iy),bottomiy(ix,iy))
+     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+           t0 = (na(ix,iy,is) +na(bottomix(ix,iy),bottomiy(ix,iy),is))/
+     1      2.0_R8
+           t1 = 
+     .      (2.0_R8 * na(ix,iy,is) 
+     .              * na(bottomix(ix,iy),bottomiy(ix,iy),is)) /
+     .      (cutlo + na(ix,iy,is) 
+     .             + na(bottomix(ix,iy),bottomiy(ix,iy),is))
+           t2 = cvmgp(t0, t1, 
+     .      flo_eir*(na(ix,iy,is)
+     .              -na(bottomix(ix,iy),bottomiy(ix,iy),is)))
+           fna_eir(ix,iy,1,is) = flo_eir * t2-
+     &      con_eir*(na(ix,iy,is)
+     &              -na(bottomix(ix,iy),bottomiy(ix,iy),is))-
+     &      cdpa(ix,iy,1,is)*(pb(ix,iy)
+     &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
+          else
            if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then          !srv 20.09.06
              flo_eir = cvla(ix,iy,1,is)+
      &        (wadia(ix,iy,1,is)*xwdia+vaecrb(ix,iy,1,is)*xvecrb)*  !srv 14.07.10
@@ -218,7 +279,7 @@
      &      (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))
      &      /2.0_R8-con_eir*
      &      (na(ix,iy,is)-na(bottomix(ix,iy),bottomiy(ix,iy),is))
-
+          endif !no_hybr =0
          endif
         enddo
        enddo

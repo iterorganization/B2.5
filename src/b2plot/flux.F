@@ -15,6 +15,8 @@ c
       parameter(mdim=256,lpfxdim=4,lin=1)
 
       integer m,n,ierr,nshot,nedit,lpfx
+      integer lnblnk
+      external lnblnk
       real tshot
       character*4 expnam
       character*3 dianam

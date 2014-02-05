@@ -7,6 +7,7 @@ c
       use b2mod_b2plot_values
       implicit none
       integer lnblnk,igraphs
+      external lnblnk
 
       if(b2plot_debug.ge.10) 
      > write(*,*) 'Plotting target array: nbnd, ndepth_nml = ',

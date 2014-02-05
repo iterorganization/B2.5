@@ -43,9 +43,9 @@ c*** Reads the data from dg output file
 c----------------------------------------------------------------------
 #include "COUPLE/KOPPLDIM.F"
 #include "b2pinpc.h"
-      integer nns
-      parameter (nns=6)
-      character*8 unm,unms(nns),u
+      integer nnns
+      parameter (nnns=6)
+      character*8 unm,unms(nnns),u
       data unms /
      1        'starting','partlist','wlldpart','duct    ','p1      ',
      2        'p2      '/
@@ -56,7 +56,7 @@ c-----------------------------------------------------
 c
 c      print *,'b2prdn >> ',unm
       call locase(unm,u,8)
-      do 1000 i=1,nns
+      do 1000 i=1,nnns
           if(u.eq.unms(i)) go to (10,20,30,40,50,60),i
  1000 continue
       call scipit

@@ -7,7 +7,6 @@
       use b2mod_residuals
       use b2mod_sources
       use b2mod_transport
-      use b2mod_work
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
@@ -19,6 +18,7 @@
       use b2mod_b2cmrc
       use b2mod_b2cmwg
       use b2mod_ppout
+      use b2mod_work
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:5), nout(0:2), nx, ny, ns
@@ -26,7 +26,7 @@
 *     (none)
 *   ..common blocks
 *   ..local variables
-      integer ix, iy, is, idum(0:9), k, nscx, iscx(0:nscxmax-1)
+      integer ix, iy, is, idum(0:9), k, nscx, iscx(0:nscxmax-1), ismain
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80
       real (kind=R8) :: t0, t1
@@ -34,14 +34,16 @@
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1), rcx(-1:nx,-1:ny,0:ns-1)
+*   ..initialisation
+      save ismain
+      data ismain/1/
 *   ..procedures
       logical ltst
       intrinsic sqrt
       external subini, subend, xertst, xerrab
-      external cfruch, cfruin, cfverr, b2rfcp
+      external cfruch, cfruin, cfverr, b2rfcp, ipgeti
       external b2rups, b2rugm, b2rucp, b2plot, b2xxid, b2rflb, b2rurc
       external b2ruzd, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps, b2xvcp
-      external intfaceh1, intfacer1, intfacev1
       ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *   ..subprogram start-up calls
@@ -65,7 +67,7 @@
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm = idum(0)
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi,
-     &  ffbz, bb, vol, hx, hy, qz, qc, gs)
+     &  ffbz, bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
       call b2rucp (ninp(2), b2fparam_version, nx, ns)
@@ -111,7 +113,12 @@
       call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
      &     rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
 *   ..compute electron rate coefficients
-      call b2sqel (nx, ny, ns, ev, te, 
+      call ipgeti ('b2mndr_ismain', ismain)
+      call xertst (0.le.ismain.and.ismain.lt.ns,
+     &         'faulty b2mndr_ismain')
+      call xertst (.not.is_neutral(ismain),
+     &         'ismain cannot refer to a neutral species')
+      call b2sqel (nx, ny, ns, ismain, ev, te, 
      &     rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
 *   ..find nscx, iscx
@@ -138,46 +145,11 @@
         call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti, rlcx(-1,-1,0,0,k),
      &   rcx, wrk0)
       enddo
-*  .. interpolate magnetic field to cell faces                           !xpb
-      call intfaceh1(nx,ny,2,vol,bb,wbbl)                                !xpb
-      call intfacer1(nx,ny,2,vol,bb,wbbr)                                !xpb
-      call intfacev1(nx,ny,2,vol,bb,wbbv)                                !xpb
-*   ..extrapolate magnetic field to edges
-      do iy = -1, ny
-        do ix = -1, nx
-          if (leftix(ix,iy).eq.-2) wbbl(ix,iy,0:2) = bb(ix,iy,0:2)-
-     &      (wbbr(ix,iy,0:2)-bb(ix,iy,0:2))
-          if (rightix(ix,iy).eq.nx+1) wbbr(ix,iy,0:2) = bb(ix,iy,0:2) -
-     &      (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
-          if (bottomiy(ix,iy).eq.-2) wbbv(ix,iy,0:2) = bb(ix,iy,0:2) -
-     &     (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
-        enddo
-      enddo
-*   .. correct interpolation of magnetic field for diverted island case  !xpb
-*      as B is not a periodic quantity                                   !xpb
-      if(periodic_bc.eq.1 .and. nncut.ge.1) then                         !xpb
-         do iy = -1, ny                                                  !xpb
-           do ix = -1, nx                                                !xpb
-             if(leftix(ix,iy).ne.ix-1) then                              !xpb
-               if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.4) then   !xpb
-                 wbbl(ix,iy,0)=bb(ix,iy,0)-(wbbr(ix,iy,0)-bb(ix,iy,0))   !xpb
-                 wbbl(ix,iy,1)=bb(ix,iy,1)-(wbbr(ix,iy,1)-bb(ix,iy,1))   !xpb
-                 wbbl(ix,iy,2)=bb(ix,iy,2)-(wbbr(ix,iy,2)-bb(ix,iy,2))   !xpb
-               endif                                                     !xpb
-             else if(rightix(ix,iy).ne.ix+1) then                        !xpb
-               if(region(ix,iy,0).eq.1 .or. region(ix,iy,0).eq.3) then   !xpb
-                 wbbr(ix,iy,0)=bb(ix,iy,0)-(wbbl(ix,iy,0)-bb(ix,iy,0))   !xpb
-                 wbbr(ix,iy,1)=bb(ix,iy,1)-(wbbl(ix,iy,1)-bb(ix,iy,1))   !xpb
-                 wbbr(ix,iy,2)=bb(ix,iy,2)-(wbbl(ix,iy,2)-bb(ix,iy,2))   !xpb
-               endif                                                     !xpb
-             endif                                                       !xpb
-           enddo                                                         !xpb
-         enddo                                                           !xpb
-      endif                                                              !xpb
-*   ..compute extrapolated wbb.(:,:,3) components
-      wbbl(:,:,3)=sqrt(wbbl(:,:,0)**2+wbbl(:,:,1)**2+wbbl(:,:,2)**2)
-      wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
-      wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
+*  .. interpolate magnetic field to cell corners                         !xpb
+c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
+      call my_intcor1(nx,ny,2,vol,bb,wbbc)                               !xpb
+*   ..compute extrapolated wbbc(:,:,3) component
+      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
 *   ..process
       call b2plot(nx,ny,ns)
 

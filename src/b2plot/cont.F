@@ -8,6 +8,7 @@ c
       implicit none
       character*32 tmpstring
       integer is,lnblnk
+      external lnblnk
       if(b2plot_debug.ge.10) write(*,*) 'Plotting array: nx, ny, nz = ',
      1 ndim(1,iwrk),ndim(2,iwrk),ndim(3,iwrk)
       if(ndim(1,iwrk) .lt. 0 .or. ndim(2,iwrk) .lt. 0) then

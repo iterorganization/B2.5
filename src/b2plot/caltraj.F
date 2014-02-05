@@ -114,6 +114,7 @@ c     parameter (destmode=2)               !hardwired to 2
      *   zrold,rrold
 
       integer icol,oocol,lnblnk
+      external lnblnk
       character argstring*256
       real (kind=R8) ::
      *   currtime
@@ -1185,7 +1186,7 @@ c
 
       function ranf (dummy)                       !srv 17.12.07
 c      implicit double precision (a-h,o-z)
-      ra=h1rn(dummy)
+      ra=local_h1rn(dummy)
       ranf=ra
       return
       end function ranf
@@ -1194,11 +1195,11 @@ c      implicit double precision (a-h,o-z)
 c      implicit double precision (a-h,o-z)
       iseed1=iseed
       iseed2=iseed+1
-      call h1rnin(iseed1,iseed2)
+      call local_h1rnin(iseed1,iseed2)
       return
       end subroutine ranset
 
-      FUNCTION H1RN(DUMMY)
+      FUNCTION LOCAL_H1RN(DUMMY)
       use b2mod_types
       use b2mod_b2plot_debug
 *
@@ -1238,7 +1239,7 @@ c-dpc split logical and data
      .       WRITE(6,*) ' H1RN (RANMAR): INITIALISED WITH DEFAULT SEED'
             ISEED1      = 12345
             ISEED2      = 98765
-            CALL H1RNIN(ISEED1,ISEED2)
+            CALL LOCAL_H1RNIN(ISEED1,ISEED2)
             FIRST = .FALSE.
          ELSE
             FIRST = .FALSE.
@@ -1246,22 +1247,22 @@ c-dpc split logical and data
       ENDIF
 *
   100 CONTINUE
-      H1RN = U(I)-U(J)
-      IF(H1RN  .LT.  0.0_R8) H1RN = H1RN + 1.0_R8
-      U(I) = H1RN
+      LOCAL_H1RN = U(I)-U(J)
+      IF(LOCAL_H1RN  .LT.  0.0_R8) LOCAL_H1RN = LOCAL_H1RN + 1.0_R8
+      U(I) = LOCAL_H1RN
       I = I - 1
       IF( I  .EQ.  0) I=97
       J = J - 1
       IF( J  .EQ.  0) J=97
       C = C - CD
       IF( C  .LT.  0) C = C + CM
-      H1RN = H1RN-C
-      IF(H1RN  .LE.  0.0_R8) H1RN = H1RN + 1.0_R8
-      IF(H1RN  .GE.  1.0_R8) GOTO 100
+      LOCAL_H1RN = LOCAL_H1RN-C
+      IF(LOCAL_H1RN  .LE.  0.0_R8) LOCAL_H1RN = LOCAL_H1RN + 1.0_R8
+      IF(LOCAL_H1RN  .GE.  1.0_R8) GOTO 100
       RETURN
-      END FUNCTION H1RN
+      END FUNCTION LOCAL_H1RN
 
-      SUBROUTINE H1RNIN(IJ,KL)
+      SUBROUTINE LOCAL_H1RNIN(IJ,KL)
       use b2mod_types
       use b2mod_b2plot_debug
 *
@@ -1303,5 +1304,5 @@ c      IMPLICIT REAL*8 (A-H,O-Z)
      >       2I7,4I4)
 *
       RETURN
-      END SUBROUTINE H1RNIN
+      END SUBROUTINE LOCAL_H1RNIN
 #endif

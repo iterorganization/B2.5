@@ -6,7 +6,9 @@
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
 csw 07feb2011
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
 csw
 c*** Must be preceded by KOPPLDIM.F of EIRDIAG.F - nstra is used here
 c

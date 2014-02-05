@@ -6449,7 +6449,7 @@ c              fchi=0.0_R8
             s1 = abs(pbs(rightix(bcpos(ib),iy),rightiy(bcpos(ib),iy),0))
 !            vte = sqrt(bcint(te,nx,ny,iy,ib)/me)
             vte = sqrt(te(bcpos(ib),iy)/me)
-            wrong_flow=0
+            wrong_flow=.false.
 *    ..set boundary condition in explicit form (the same form as fna)
             CS=SQRT(PR(BCPOS(IB),IY)/RO(BCPOS(IB),IY))
             t0 = 0.0e0_R8
@@ -6538,7 +6538,7 @@ c              fchi=0.0_R8
 !     &       expu2(-qe*(bcint(po,nx,ny,iy,ib)-potpar(ib,2))/
 !     .       bcint(te,nx,ny,iy,ib))
             vte = sqrt(te(bcpos(ib),iy)/me)
-            wrong_flow=0
+            wrong_flow=.false.
             CS=SQRT(PR(BCPOS(IB),IY)/RO(BCPOS(IB),IY))
             t0 = 0.0e0_R8
             do is = 0, ns-1

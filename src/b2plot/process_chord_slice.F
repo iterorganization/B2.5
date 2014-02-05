@@ -68,16 +68,16 @@ c
      1   xmin,xmax,ymin,ymax,linlog,.false.,.false.,.false.)
         write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(96,'(''# '',a)')                           !srv  12.05.08
+          write(nwtf,'(''# '',a)')                   !srv 21.09.11
      1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2     tmpstring(1:lnblnk(tmpstring)) // ' '//
      2     dataname(1:lnblnk(dataname))
           call get_extralabel(extralabel)
           if(len_trim(extralabel).ne.0) then
-            write(96,'(''# '',a)') trim(extralabel)        !srv  12.05.08
+            write(nwtf,'(''# '',a)') trim(extralabel)                   !srv 21.09.11
           endif
           do i=1,inpts
-            write(96,*) xvalues(i),yvalues(i)              !srv  12.05.08
+            write(nwtf,*) xvalues(i),yvalues(i)                   !srv 21.09.11
           enddo
         endif
         do i=1,inpts-1

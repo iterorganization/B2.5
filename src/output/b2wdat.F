@@ -21,7 +21,9 @@
       use b2mod_b2cmpt
       use b2mod_b2cmrc
 csw 07feb2011
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
 csw
       implicit none
 #ifdef USE_EIRENE

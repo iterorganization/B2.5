@@ -75,8 +75,8 @@ C
 
       enddo
       call copy(dspec,1.0_R8,ns,textpl)
-      graphlabel(iwrk)=
-     1 'Diagnostic line emission from ADAS (photons.m^-3.sr^-1.s^-1)'
+      call customise_label('Diagnostic line emission from ADAS'//
+     1 ' (photons.m^{-3}.sr^{-1}.s^{-1})',graphlabel(iwrk))
       return
       end subroutine spect
 
@@ -1566,17 +1566,17 @@ C
       END SUBROUTINE E3CHKB
 CX UNIX PORT - SCCS info: Module @(#)e3data.for 1.2 Date  1/23/96
 CX
-       SUBROUTINE E3DATA( IUNIT  , DSNAME ,
-     &                    NSTORE , NTDIM  , NDDIM  ,
-     &                    IZ0    , IZ     , IZ1    , ESYM  ,
-     &                    NBSEL  , ISELA  ,
-     &                    CWAVEL , CFILE  , CTYPE  , CINDM ,
-     &                    ITA    , IDA    ,
-     &                    TETA   , TEDA   ,
-     &                    PEC
-     &                  )
-       use b2mod_types
-       IMPLICIT NONE
+      SUBROUTINE E3DATA( IUNIT  , DSNAME ,
+     &                   NSTORE , NTDIM  , NDDIM  ,
+     &                   IZ0    , IZ     , IZ1    , ESYM  ,
+     &                   NBSEL  , ISELA  ,
+     &                   CWAVEL , CFILE  , CTYPE  , CINDM ,
+     &                   ITA    , IDA    ,
+     &                   TETA   , TEDA   ,
+     &                   PEC
+     &                 )
+      use b2mod_types
+      IMPLICIT NONE
 C-----------------------------------------------------------------------
 C
 C  ****************** FORTRAN77 SUBROUTINE: E3DATA *********************
@@ -2747,7 +2747,7 @@ C-----------------------------------------------------------------------
          ELSE
             XFESYM = elements(IZ0)
          ENDIF
-         call lower_case(XFESYM)
+         call lower_case(XFESYM)                  !srv 14.10.13
 C-----------------------------------------------------------------------
       RETURN
       END FUNCTION XFESYM
@@ -3307,10 +3307,10 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
       I4EIZ0 = 0
       SYMBOL = ESYM
-      call lower_case(SYMBOL)
+      call lower_case(SYMBOL)                  !srv 14.10.13
       DO I=1, size(elements)
         SYMBLL = elements(i)
-        call lower_case(SYMBLL)
+        call lower_case(SYMBLL)                  !srv 14.10.13
         IF ( SYMBOL .EQ. SYMBLL ) I4EIZ0 = I
       END DO
 C-----------------------------------------------------------------------
@@ -3336,7 +3336,7 @@ C-----------------------------------------------------------------------
       real (kind=R8) ::
      *   ea(-1:nx,-1:ny)
       integer err
-      character extension*3,filename*256,MIE*2,MIR*2,MIC*2
+      character extension*3,filename*256,MIE*2,MIR*2,MIC*2,stmp*256
 c      logical open_file
 
 c     initialising
@@ -3372,11 +3372,11 @@ c     calculating the emissivity
       endif
       call copy(ea,1.0_R8,1,textbl)
       if(is.lt.ns) then
-        graphlabel(iwrk)='Emissivity in photons/(m3 sr s)'//
-     &                 textpl(is)
+        stmp='Emissivity in photons/(m^{3} sr s)'//textpl(is)
       else
-        graphlabel(iwrk)='Emissivity in photons/(m3 sr s)'//'  '
+        stmp='Emissivity in photons/(m^{3} sr s)'//'  '
       endif
+      call customise_label(stmp,graphlabel(iwrk))
       deallocate(iae,iar,iac)
       return
 

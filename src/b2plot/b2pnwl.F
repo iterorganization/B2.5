@@ -31,7 +31,7 @@ c*** and for the power flux.
       parameter (flxctff=0.1e0_R8, enrctff=1.e-8_R8, pwrctff=1.e-8_R8)
       integer il,is,i,ii,ia,k,ic
       real (kind=R8) ::
-     *   x,d,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
+     *   x,dist,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
      ,     wwj(natm+nmol),wwe(natm+nmol)
       character*8 text_an(natm),text_mn(natm)
       intrinsic max
@@ -118,21 +118,21 @@ c*** calculate the length of the target segment
           do i=1,nwldlis(il)
             ia=lwldlis(i,il)
             is=iabs(ia)
-            d=sqrt((p1(1,is)-p2(1,is))**2+(p1(2,is)-p2(2,is))**2)
-            hlpx=hlpx+d
+            dist=sqrt((p1(1,is)-p2(1,is))**2+(p1(2,is)-p2(2,is))**2)
+            hlpx=hlpx+dist
           end do
 c
           x=0.e0_R8
-          d=0.e0_R8
+          dist=0.e0_R8
           hlpw=0.e0_R8
           do i=1,nwldlis(il)
             ia=lwldlis(i,il)
             is=iabs(ia)
-            h=d
-            d=sqrt((pp1(1,is)-pp2(1,is))**2+(pp1(2,is)-pp2(2,is))**2)
-            a=pi*(pp1(1,is)+pp2(1,is))*d
-            d=0.5e0_R8*d
-            x=x+h+d
+            h=dist
+            dist=sqrt((pp1(1,is)-pp2(1,is))**2+(pp1(2,is)-pp2(2,is))**2)
+            a=pi*(pp1(1,is)+pp2(1,is))*dist
+            dist=0.5e0_R8*dist
+            x=x+h+dist
             if(ia .gt. 0) then
               aa=1.e-6_R8/a
               hlpw=hlpw+wldnek(is,0)+wldnep(is,0)

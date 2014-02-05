@@ -40,51 +40,49 @@ c     the line format common
           enddo
           lmin=ymin
           lmax=ymax
+          if(values(14) .ne. values(15)) then
+            lmin=values(14)
+            lmax=values(15)
+          endif
           if(lmin.eq.lmax) then
-            lmin=min(lmin*0.9,lmin*1.1)
-            lmax=max(lmax*0.9,lmax*1.1)
+            lmin=min(lmin*0.9_R8,lmin*1.1_R8)
+            lmax=max(lmax*0.9_R8,lmax*1.1_R8)
             if(lmin.eq.lmax) then
-              lmin=-1.0
-              lmax=+1.0
+              lmin=-1.0_R8
+              lmax=+1.0_R8
             end if
           end if
           if(wlinlog.eq.2.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
           if(wlinlog.eq.2.and.lmax.le.0.0_R8) lmax=1.0_R8
-          if(values(11) .ne. values(12)) then
-            xmin=values(11)
-            xmax=values(12)
-          endif
+          if(values(11).ne.init_value) xmin=values(11)
+          if(values(12).ne.init_value) xmax=values(12)
           if(xmin.eq.xmax) then
-            xmin=min(xmin*0.9,xmin*1.1)
-            xmax=max(xmax*0.9,xmax*1.1)
+            xmin=min(xmin*0.9_R8,xmin*1.1_R8)
+            xmax=max(xmax*0.9_R8,xmax*1.1_R8)
             if(xmin.eq.xmax) then
-              xmin=-1.0
-              xmax=+1.0
+              xmin=-1.0_R8
+              xmax=+1.0_R8
             end if
           end if
           if(wlinlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
           if(wlinlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
-          if(values(14) .ne. values(15)) then
-            ymin=values(14)
-            ymax=values(15)
-          endif
           call init_page(
      2     wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))
      .      //' '//textwwk(is,iwwrk),
-     1     xmin,xmax,ymin,ymax,
+     1     xmin,xmax,lmin,lmax,
      2     wlinlog,.false.,.false.,.false.)
           if (b2plot_debug.ge.6) 
-     >     write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
+     >     write(*,*) 'xmin,xmax,lmin,lmax ',xmin,xmax,lmin,lmax
           if(writing_to_file) then
-            write(96,'(''# '',a)')           !srv  12.05.08
+            write(nwtf,'(''# '',a)')                   !srv 21.09.11
      2       wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))
      .        //' '//textwwk(is,iwwrk)
             call get_extralabel(extralabel)
             if(len_trim(extralabel).ne.0) then
-              write(96,'(''# '',a)') trim(extralabel)        !srv  12.05.08
+              write(nwtf,'(''# '',a)') trim(extralabel)                   !srv 21.09.11
             endif
             do i=1,ndata
-              write(96,*) xvalues(i),wall_stack(i,is,iwwrk)        !srv  12.05.08
+              write(nwtf,*) xvalues(i),wall_stack(i,is,iwwrk)             !srv 21.09.11
             enddo
           endif
 #ifndef PLPLOT
@@ -96,9 +94,9 @@ c     the line format common
             do i = wall_begin(iseg), wall_end(iseg)-1
               call lined_d(
      .         min(xmax,max(xmin,xvalues(i))),
-     .         min(ymax,max(ymin,wall_stack(i,is,iwwrk))),
+     .         min(lmax,max(lmin,wall_stack(i,is,iwwrk))),
      .         min(xmax,max(xmin,xvalues(i+1))),
-     .         min(ymax,max(ymin,wall_stack(i+1,is,iwwrk))))
+     .         min(lmax,max(lmin,wall_stack(i+1,is,iwwrk))))
             enddo
             if (iseg.lt.nsegments) then
 #ifndef PLPLOT
@@ -118,7 +116,7 @@ c     the line format common
               call lastd
               if (scol.gt.1 .or. wcol.gt.1) call gsplci(wcol)
               call gslwsc_d(lwidth)
-              call dashdc(linefmt,8,0)
+              call dashdc(linefmt,8,lfsz)
 #endif
             endif
           enddo
@@ -154,51 +152,49 @@ c     the line format common
           enddo
           lmin=ymin
           lmax=ymax
+          if(values(14) .ne. values(15)) then
+            lmin=values(14)
+            lmax=values(15)
+          endif
           if(lmin.eq.lmax) then
-            lmin=min(lmin*0.9,lmin*1.1)
-            lmax=max(lmax*0.9,lmax*1.1)
+            lmin=min(lmin*0.9_R8,lmin*1.1_R8)
+            lmax=max(lmax*0.9_R8,lmax*1.1_R8)
             if(lmin.eq.lmax) then
-              lmin=-1.0
-              lmax=+1.0
+              lmin=-1.0_R8
+              lmax=+1.0_R8
             end if
           end if
           if(wlinlog.eq.2.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
           if(wlinlog.eq.2.and.lmax.le.0.0_R8) lmax=1.0_R8
-          if(values(11) .ne. values(12)) then
-            xmin=values(11)
-            xmax=values(12)
-          endif
+          if(values(36).ne.init_value) xmin=values(36)
+          if(values(37).ne.init_value) xmax=values(37)
           if(xmin.eq.xmax) then
-            xmin=min(xmin*0.9,xmin*1.1)
-            xmax=max(xmax*0.9,xmax*1.1)
+            xmin=min(xmin*0.9_R8,xmin*1.1_R8)
+            xmax=max(xmax*0.9_R8,xmax*1.1_R8)
             if(xmin.eq.xmax) then
-              xmin=-1.0
-              xmax=+1.0
+              xmin=-1.0_R8
+              xmax=+1.0_R8
             end if
           end if
           if(wlinlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
           if(wlinlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
-          if(values(14) .ne. values(15)) then
-            ymin=values(14)
-            ymax=values(15)
-          endif
           call init_page(
      2     wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))
      .      //' '//textwwk(is,iwwrk),
-     1     xmin,xmax,ymin,ymax,
+     1     xmin,xmax,lmin,lmax,
      2     wlinlog,.false.,.false.,.true.)
           if (b2plot_debug.ge.6) 
-     >     write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
+     >     write(*,*) 'xmin,xmax,lmin,lmax ',xmin,xmax,lmin,lmax
           if(writing_to_file) then
-            write(96,'(''# '',a)')                           !srv  12.05.08
+            write(nwtf,'(''# '',a)')                   !srv 21.09.11
      2       wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))
      .        //' '//textwwk(is,iwwrk)
             call get_extralabel(extralabel)
             if(len_trim(extralabel).ne.0) then
-              write(96,'(''# '',a)') trim(extralabel)        !srv  12.05.08
+              write(nwtf,'(''# '',a)') trim(extralabel)                   !srv 21.09.11
             endif
             do i=1,ndata
-              write(96,*) xvalues(i),wall_stack(i,is,iwwrk)  !srv  12.05.08
+              write(nwtf,*) xvalues(i),wall_stack(i,is,iwwrk)             !srv 21.09.11
             enddo
           endif
 #ifndef PLPLOT
@@ -210,9 +206,9 @@ c     the line format common
             do i = wall_begin(iseg), wall_end(iseg)-1
               call lined_d(
      .         min(xmax,max(xmin,xvalues(i))),
-     .         min(ymax,max(ymin,wall_stack(i,is,iwwrk))),
+     .         min(lmax,max(lmin,wall_stack(i,is,iwwrk))),
      .         min(xmax,max(xmin,xvalues(i+1))),
-     .         min(ymax,max(ymin,wall_stack(i+1,is,iwwrk))))
+     .         min(lmax,max(lmin,wall_stack(i+1,is,iwwrk))))
             enddo
             if (iseg.lt.nsegments) then
 #ifndef PLPLOT
@@ -232,7 +228,7 @@ c     the line format common
               call lastd
               if (scol.gt.1 .or. wcol.gt.1) call gsplci(wcol)
               call gslwsc_d(lwidth)
-              call dashdc(linefmt,8,0)
+              call dashdc(linefmt,8,lfsz)
 #endif
             endif
           enddo
@@ -244,6 +240,6 @@ c     the line format common
           call end_page
         endif
       enddo
-      close(96)                                     !srv 12.05.08
+      close(nwtf)                                                !srv 21.09.11
       return
       end subroutine plot_wall_elements

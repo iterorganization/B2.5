@@ -31,7 +31,6 @@ c     -------------------------------------------------------------------------
       integer is,ite,ine
       logical ltst0
       external subini, subend
-      external b2sqel
       intrinsic log, dim, exp, max, min
       expu(t0) = dim(exp(max(t0,cutll)),cutlo)
       trimg(t0,t1,tt) = max(t0,min(t1,tt))
@@ -212,18 +211,20 @@ c     on top of the stack
 c     b2plot command: cora
 c     -------------------------------------------------------------------------
 
-      subroutine setcorora
+      subroutine setcorora(ismain)
       use b2mod_types
       use b2mod_geo
+      use b2mod_diag
       use b2mod_b2plot
       use b2mod_plasma
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmrc
       implicit none
+      integer ismain
 *   ..common blocks
 
-      integer ix,iy,is
+      integer ix,iy,is,iss
 
       real (kind=R8) ::
      *   ssum,gsum
@@ -249,7 +250,7 @@ c     -------------------------------------------------------------------------
       call b2spel (nx, ny, ns, ev, te, neco, rclsa, rclra,
      &     rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi)
 *   ..compute electron rate coefficients
-      call b2sqel (nx, ny, ns, ev, te, 
+      call b2sqel (nx, ny, ns, ismain, ev, te, 
      &    rclsa, rclra, rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi,
      &    rcsa, rcra, rcqa, rcrd, rcbr, rcza, rcz2, rcpt, rcpi, logT)
 
@@ -258,30 +259,33 @@ c     initialise array on stack for coronal radiation
       iwrk=iwrk+1
       ndim(1,iwrk)=nx
       ndim(2,iwrk)=ny
-      ndim(3,iwrk)=ns
+      ndim(3,iwrk)=nspecies
       graphlabel(iwrk)='Coronal radiation (W)'
-      do is=0,ns-1
-         textwk(is,iwrk)=textpl(is)
+      do iss=0,nspecies-1
+        textwk(iss,iwrk)=textsp(iss)
       enddo
+      work(:,:,:,iwrk)=0.0_R8
       do is=0,ns-1
-         do ix=-1,nx
-            do iy=-1,ny
-               work(ix,iy,is,iwrk)=(rcrd(ix,iy,is)+rcbr(ix,iy,is))
-     .          *vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
-            enddo
-         enddo
+        iss = b2espcr(is)-1
+        do ix=-1,nx
+          do iy=-1,ny
+            work(ix,iy,iss,iwrk)=work(ix,iy,iss,iwrk)+
+     .       (rcrd(ix,iy,is)+rcbr(ix,iy,is))
+     .       *vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
+          enddo
+        enddo
       enddo
 
       gsum=0.0_R8
-      do is=0,ns-1
-         ssum=0.0_R8
-         do iy=-1,ny
-            do ix=-1,nx
-               ssum=ssum+work(ix,iy,is,iwrk)
-            enddo
-         enddo
-         write(*,*) 'Coronal radiation rate for is = ',is,' = ',ssum
-         gsum=gsum+ssum
+      do iss=0,nspecies-1
+        ssum=0.0_R8
+        do iy=-1,ny
+          do ix=-1,nx
+            ssum=ssum+work(ix,iy,iss,iwrk)
+          enddo
+        enddo
+        write(*,*) 'Coronal radiation rate for iss = ',iss,' = ',ssum
+        gsum=gsum+ssum
       enddo
       write(*,*) 'Coronal radiation rate for all species = ',gsum
       call subend()
@@ -295,7 +299,7 @@ c     on top of the stack
 c     b2plot command: coni
 c     -------------------------------------------------------------------------
 
-      subroutine setcoroni
+      subroutine setcoroni(ismain)
       use b2mod_types
       use b2mod_b2plot
       use b2mod_plasma
@@ -303,6 +307,7 @@ c     -------------------------------------------------------------------------
       use b2mod_b2cmpa
       use b2mod_b2cmrc
       implicit none
+      integer ismain
 *   ..common blocks
 
       integer ix,iy,is,is0,isstart,isend
@@ -339,7 +344,7 @@ c     -------------------------------------------------------------------------
       call b2spel (nx, ny, ns, ev, te, neco, 
      &    rclsa, rclra, rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi)
 *   ..compute electron rate coefficients
-      call b2sqel (nx, ny, ns, ev, te, 
+      call b2sqel (nx, ny, ns, ismain, ev, te, 
      &    rclsa, rclra, rclqa, rclrd, rclbr, rclza, rclz2, rclpt, rclpi,
      &    rcsa, rcra, rcqa, rcrd, rcbr, rcza, rcz2, rcpt, rcpi, wrk0)
 
@@ -349,7 +354,8 @@ c     initialise array on stack for coronal radiation
       ndim(1,iwrk)=nx
       ndim(2,iwrk)=ny
       ndim(3,iwrk)=ns
-      graphlabel(iwrk)='Coronal equilibrium ion density (m^-3)'
+      call customise_label('Coronal equilibrium ion density (m^{-3})',
+     . graphlabel(iwrk))
       do is=0,ns-1
          textwk(is,iwrk)=textpl(is)
       enddo
