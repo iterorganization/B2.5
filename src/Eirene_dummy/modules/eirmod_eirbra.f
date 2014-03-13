@@ -1,0 +1,43 @@
+      MODULE EIRMOD_EIRBRA
+ 
+C  NEUTRAL SOURCE TERMS: SNI,SMO,SEE,SEI (EIRENE ---> BRAAMS)
+ 
+      USE EIRMOD_PRECISION
+ 
+      IMPLICIT NONE
+      PRIVATE
+ 
+      PUBLIC :: EIRENE_ALLOC_EIRBRA, EIRENE_DEALLOC_EIRBRA, 
+     P          EIRENE_INIT_EIRBRA
+      public :: eirene_broadcast_eirbra
+      REAL(DP), PUBLIC, ALLOCATABLE, SAVE ::
+     R SNI(:,:,:,:), SMO(:,:,:,:),
+     R SEE(:,:,:),   SEI(:,:,:)
+ 
+      REAL(DP), PUBLIC, ALLOCATABLE, SAVE ::
+     R VOLSUMN(:), VOLSUMM(:), VOLSUMEI(:), VOLSUMEE(:)
+ 
+
+      CONTAINS
+ 
+ 
+      SUBROUTINE EIRENE_ALLOC_EIRBRA(NDXP, NDYP, NFL, NSTRA, IFOFF)
+      INTEGER, INTENT(IN) :: NDXP, NDYP, NFL, NSTRA, IFOFF
+      RETURN
+      END SUBROUTINE EIRENE_ALLOC_EIRBRA
+ 
+ 
+      SUBROUTINE EIRENE_DEALLOC_EIRBRA
+      RETURN
+      END SUBROUTINE EIRENE_DEALLOC_EIRBRA
+ 
+ 
+      SUBROUTINE EIRENE_INIT_EIRBRA
+      RETURN
+      END SUBROUTINE EIRENE_INIT_EIRBRA
+
+      subroutine eirene_broadcast_eirbra
+      end subroutine eirene_broadcast_eirbra
+      END MODULE EIRMOD_EIRBRA
+ 
+ 

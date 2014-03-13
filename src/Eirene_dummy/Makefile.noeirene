@@ -1,0 +1,54 @@
+# program name
+PROG=libeirene.a
+
+.SUFFIXES: .o .f .f90
+
+FF=ifort
+CC=/usr/bin/gcc
+DBG=1
+
+ifeq ("$(DBG)","")
+     FFLAGS= -c -O2
+     FFLAGSTEST= -c -g -traceback -recursive -check
+     CFLAGS= -c -O2
+else
+     FFLAGS= -c -g -traceback -recursive -check
+     FFLAGSTEST= -c -g -traceback -recursive -check
+     CFLAGS= -c -g -check
+endif
+
+OPTS= -extend-source 132
+COPTS=
+LIBS =
+
+VPATH=./modules:./extraB25:./couple_dummy
+
+MODULES = eirmod_precision.o eirmod_parmmod.o eirmod_extraB25.o eirmod_eirbra.o eirmod_braeir.o
+
+OBJECTS=couple_dummy.o
+ 
+.c.o:
+	$(CC) $(CFLAGS) $(COPTS) $?
+.f.o:
+	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) $?
+.F.o:
+	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) $?
+.f90.o:
+	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) $?
+.F90.o:
+	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) $?
+
+all: $(PROG)
+
+$(PROG): $(MODULES) $(OBJECTS)
+	ar vr $(PROG) *.o
+
+clean:
+	rm -f *.o *.mod *.a
+
+eirmod_extraB25.o: extraB25/eirmod_extraB25.F90
+	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) $?
+
+couple_dummy.o: $(MODULES) \
+        eirsrt.o
+
