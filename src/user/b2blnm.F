@@ -89,8 +89,8 @@ c
 c----------------------------------------------------------------------
       real (kind=R8) ::
      *     sx, pit      
-      sx(ix,iy)=0.5_R8*(gs(ix,iy,0)/qc(ix,iy)+
-     .  gs(rightix(ix,iy),rightiy(ix,iy),0)/
+      sx(ix,iy)=0.5_R8*(gs(ix,iy,0)*qc(ix,iy)+
+     .  gs(rightix(ix,iy),rightiy(ix,iy),0)*
      .  qc(rightix(ix,iy),rightiy(ix,iy)))
       pit(ix,iy)=abs(bb(ix,iy,0)/bb(ix,iy,3))
 c*** to be moved to init.F:
