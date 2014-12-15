@@ -715,7 +715,7 @@ c            rfluxm = rfluxm / min(dble(nhist),dble(ncall+1))
 
       do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {
        if(is.eq.ismain) then
-        call b2_to_astra_sna(nx, ny, vol, sna0_eir(:,:,0,is)+
+        call b2_to_astra_src(nx, ny, vol, sna0_eir(:,:,0,is)+
      &   sna0_eir(:,:,1,is)*na(:,:,is), svol, se)
        endif
       enddo                                                           !srv 28.07.11 20.02.12 }

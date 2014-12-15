@@ -284,6 +284,7 @@ csw 09jan2014 add extra allocates
               do ism = 1,nnmoli
                sfna(iy,is) = sfna(iy,is) + !  mlcmp(isa,ism)*
      &                      rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
+              enddo
              endif
             endif
            enddo

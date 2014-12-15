@@ -284,7 +284,8 @@
 
 *   ..plot state
       call b2wgpi_gnuplot (nout(0), nx, ny, ns, ne, na, ua, te,
-     &  ti, po, fna, fhe, fhi, fch, kinrgy)
+     &  ti, po, fna, fhe, fhi, fch, kinrgy,
+     &  gs, qc, ni)
 
 * ..return
       call subend ()
