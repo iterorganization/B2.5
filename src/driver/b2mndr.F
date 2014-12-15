@@ -28,6 +28,7 @@
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
+      use b2mod_boundary_namelist
 #ifdef ASTRA
       use b2mod_b2_to_astra                                           !srv 28.07.11
 #endif	                       
@@ -119,9 +120,9 @@
 
 *   ..common blocks
 *   ..local variables
-      integer ncall, ntim, mvinc, mvnum, ix, iy, is, js, jsep, jxi, jxa
-	integer, save :: save_f30 = 0, save_f31 = 0, background_new=0  !srv 01.03.10 14.07.10
-	integer, save :: inverse_ua = 0                                !srv 11.01.13
+      integer ncall, ntim, mvinc, mvnum, ix, iy, is, ib,js,jsep,jxi,jxa
+      integer, save :: save_f30 = 0, save_f31 = 0, background_new=0  !srv 01.03.10 14.07.10
+      integer, save :: inverse_ua = 0                                !srv 11.01.13
       integer, save :: pot_eq=1
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
@@ -165,6 +166,8 @@
      *  rza0(-1:nx,-1:ny,0:ns-1), rz20(-1:nx,-1:ny,0:ns-1),
      *  rpt0(-1:nx,-1:ny,0:ns-1), rpi0(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) :: hzconst                                      !srv 30.01.10 
+csw 18feb2014 added for correct implementation of boundary conditions
+      integer, save :: l_fbound=0, l_enebound=0, l_timbound=0
 *   ..procedures
       logical lnext
       real (kind=R8) ::
@@ -837,8 +840,10 @@
        call xertst (0.le.b2time,
      &   'faulty internal parameter b2time')
        call ipgetr ('b2mndr_density_rescale', density_rescale)
-       call xertst (0.0_R8.lt.density_rescale,
-     &   'faulty internal parameter density_rescale')
+csw dec2013 allow for negative values; this is tweak to scale a specific density, e.g. Helium,
+c   see below --> we need a better solution for this
+c       call xertst (0.0_R8.lt.density_rescale,
+c     &   'faulty internal parameter density_rescale')
        call ipgeti ('b2mndr_tally', tally)
        call xertst (0.le.tally,
      &   'faulty internal parameter tally')
@@ -926,7 +931,10 @@ c-dpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      &  'faulty parameter b2mndr_hz')					               !srv 09.01.01 09.06.08 }
 csw 09oct2012
        call ipgeti ('b2news_poteq', pot_eq) 
-csw
+csw 21feb2014
+       call ipgeti ('b2news_l_fbound',l_fbound)
+       call ipgeti ('b2news_l_enebound',l_enebound)
+       call ipgeti ('b2news_l_timbound',l_timbound)
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
@@ -1078,11 +1086,22 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
       endif
 *   ..rescale densities
       if (density_rescale.ne.1.0_R8) then
-        na = na * density_rescale
-        ne = ne * density_rescale
-        fna = fna * density_rescale
-        kinrgy = kinrgy * density_rescale
-        write(*,*) 'All densities rescaled by ',density_rescale
+csw 03oct2013 (this just quick and dirty for rescaling Helium, species 3 and 4
+c   --> better way doing this is necessary)
+        if(density_rescale < 0.d0) then
+          do is=3,4
+           na(:,:,is)=na(:,:,is)*(-density_rescale)
+           fna(:,:,0:1,is) = fna(:,:,0:1,is)*(-density_rescale)
+           kinrgy(:,:,is)=kinrgy(:,:,is)*(-density_rescale)
+           write(*,*) 'Density ',is,' rescaled by ',-density_rescale
+          enddo
+        else
+         na = na * density_rescale
+         ne = ne * density_rescale
+         fna = fna * density_rescale
+         kinrgy = kinrgy * density_rescale
+         write(*,*) 'All densities rescaled by ',density_rescale
+        endif
       endif
 *   ..rescale neutrals
       if(ncall.eq.0.and.neutral_rescale.ne.1.0_R8) then
@@ -1167,6 +1186,70 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
       call b2wfpi (nout(0), idout0, nx, ny, ns, ne, na, ua,
      &  te, ti, po, fna, fhe, fhi, fch)
 
+csw 21feb2014, setup some additional work variables for boundary conds
+      iffboundx=0
+      iffboundy=0
+      if(l_fbound .ne. 0) then
+       do ix=-1,nx
+        do iy=-1,ny
+          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+            iffboundy(ix,iy)=1
+          endif
+        enddo
+       enddo
+       do iy=-1,ny,ny+1
+         iffboundx(:,iy)=1
+       enddo 
+       ! core boundary special treatment
+       do ib=1,nbc
+         if(bcchar(ib).eq.'S') then
+           do ix=bcstart(ib), bcend(ib)
+             if(mod(region(ix,bcpos(ib),0),4).eq.1) then
+               iy=bcpos(ib)
+               iffboundx(ix,iy)=1
+             endif
+           enddo
+         endif
+       enddo
+      endif
+
+      ifenebound=0
+      if(l_enebound .ne. 0) then
+       do ix=-1,nx
+        do iy=-1,ny
+          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+            ifenebound(ix,iy)=1
+          endif
+        enddo
+       enddo
+       do iy=-1,ny,ny+1
+         ifenebound(:,iy)=1
+       enddo 
+       ! core boundary special treatment
+       do ib=1,nbc
+         if(bcchar(ib).eq.'S') then
+           if(mod(region(bcstart(ib),bcpos(ib),0),4).eq.1) then
+             iy=bcpos(ib)
+             do ix = bcstart(ib), bcend(ib)
+               ifenebound(ix,iy)=1
+             enddo
+           endif
+         endif
+       enddo
+      endif
+
+      iftimbound=0
+      if(l_timbound .ne. 0) then
+       do ix=-1,nx
+        do iy=-1,ny
+          iftimbound(ix,iy)=ifenebound(ix,iy)
+        enddo
+       enddo
+      endif
+
+
+
+
 * ..main loop
 *   ..initialise counters
       itim = 0
@@ -1223,17 +1306,17 @@ c new CDF movie option (1st frame at t=0)
        call b2mxnu (n2*2, fhip, fhi0, fhi)
        call b2mxnu (n2*2, fchp, fch0, fch)
        call b2trcs (nx, ny, ns, ismain, dtim, BoRiS)
-csw 09oct2012
+csw 09oct2012 set default potential already at this point (BCs)
        if (pot_eq.eq.0) then                                           !srv 13.07.05 {
          po   =0.0e0_R8
        else if (pot_eq.eq.2) then
          po(:,:)=3.1_R8*te(:,:)/qe
        endif
-csw
+
 *    ..perform one time step
        ok=.false.
        do while(.not.ok)
-	  write(*,"(1x,a,i9,e10.2,i9,i3)")
+         write(*,"(1x,a,i9,e10.2,i9,i3)")
      &  'b2mndr_ok:itim,dtim,ntim,stack_ptr', itim,dtim,ntim,stack_ptr
           call b2mndt (nout, nx, ny, ns, ismain, 
      &     itim, dtim, ierr)

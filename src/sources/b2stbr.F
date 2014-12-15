@@ -21,7 +21,8 @@
 #ifdef USE_EIRENE
       use b2mod_work, only : sna0_eir_h, smo0_eir_h, she0_eir_h,       !IYS 28.03.12 {
      &    shi0_eir_h, rfluxa_h, rfluxm_h, max_eir_hist_slc,
-     &    alloc_hist_arrays                                            !IYS 28.03.12 }
+csw 25feb2014 fix IVS's version of source term avergaing
+     &    alloc_hist_arrays, clear_hist_arrays                         !IYS 28.03.12 } 
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -34,14 +35,8 @@
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
-csw 07feb2011
       use eirmod_extrab25
-csw
       implicit none
-#ifdef USE_EIRENE
-csw 07feb2011
-csw#     include <COUPLE/EIRDIAG.F>
-#endif
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
       real (kind=R8) :: dtim, BoRiS,
@@ -80,17 +75,17 @@ csw#     include <COUPLE/EIRDIAG.F>
 
 *   ..local variables
       integer n2, ix, iy, is, ib, ic, ibnd, itrack, elm_count, k, ia, im
-      integer ihist                                                  !IYS 29.03.2012
+      integer ihist,iih                                                  !IYS 29.03.2012
       integer, save :: nx_sp, ny_sp, ns_sp
       integer, save :: no_b2stbr_phys_call=0
-	integer, save :: out_tfiles = 0                                !srv 07.04.09
-	integer, save :: iout = 0,        iout_b2npmo = 0,             !srv 11.09.09 {
+      integer, save :: out_tfiles = 0                                !srv 07.04.09
+      integer, save :: iout = 0,        iout_b2npmo = 0,             !srv 11.09.09 {
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
      &                 ncall_iout = -1,                              !srv 23.03.12
      &                 nhist = 1                                     !IYS 28.03.12
- 	character chns*2, chk*1, ch3*3                                 !srv 11.09.09 } 23.03.12
+      character chns*2, chk*1, ch3*3                                 !srv 11.09.09 } 23.03.12
       integer nx_tmp, ny_tmp, ns_tmp
       real (kind=R8) ::
      *  amtol, lnorm, tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1),
@@ -198,7 +193,8 @@ csw#     include <COUPLE/EIRDIAG.F>
         call ipgeti ('b2mndr_eirene', use_eirene)
         call ipgeti ('b2stbr_eir_src_nhist', nhist)                  !IYS 28.03.12
 #ifdef USE_EIRENE
-        if (nhist .gt. 1) nhist = max(max_eir_hist_slc,nhist)        !IYS 28.03.12
+csw 25feb2014   fix IVS's version of source term avergaing
+        if (nhist .gt. 1) nhist = min(max_eir_hist_slc,nhist)        !IYS 28.03.12 
 #endif
         call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
         call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
@@ -481,8 +477,8 @@ c-xpb Reading of neutrals namelist moved here as it is needed by init_wall
       call sfill (n2*4*ns, 0.0_R8, smo0_eir, 1)
       call sfill (n2*4, 0.0_R8, she0_eir, 1)
       call sfill (n2*4, 0.0_R8, shi0_eir, 1)
-	fatm_eir = 0.0_R8
-	datm_eir = 0.0_R8 	                                           !srv 29.04.10 }
+      fatm_eir = 0.0_R8
+      datm_eir = 0.0_R8                                            !srv 29.04.10 }
 
       tchem=0.0_R8
       tchee=0.0_R8
@@ -500,7 +496,8 @@ c-xpb Reading of neutrals namelist moved here as it is needed by init_wall
         old_deposition(1:nbnd,1:ntargsp)=deposition(1:nbnd,1:ntargsp)
       endif
 
-csw 09oct2012 
+csw 09oct2012 SOLPS4: explicity avoid b2stbr call here
+c   --> better solution wanted here..
       if(no_b2stbr_phys_call.eq.0 ) then
        if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
         if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
@@ -534,7 +531,7 @@ csw 09oct2012
      &   sput_chem_cutoff_alpha, sput_chem_cutoff_beta)
        endif
       endif
-csw
+
       if(first_flight.ne.0) then
         start_time=x05baf()
         if (output.ge.1) then
@@ -636,72 +633,92 @@ csw
 #ifdef USE_EIRENE
         call eirene_mc(nx, ny, ns, ismain, dtim, BoRiS, sna0_eir,     !srv 29.04.10 {
      &                 smo0_eir, she0_eir, shi0_eir, main_call)
-        if (nhist .gt. 1 .and. ncall .eq. 0)                          !IYS 28.03.12 { 
-     &     call alloc_hist_arrays(nx,ny,ns)
-        if(nhist .gt. 1) then                         
-! SMOOTH SOURCES FROM EIRENE 
+        if (nhist .gt. 1 .and. ncall .eq. 0)                          !IYS 28.03.12 {
+csw 25feb2014  fix IVS's version of source term avergaing
+     &     call alloc_hist_arrays(nx,ny,ns,nhist) 
+
+csw 25feb2014  fix IVS's version of source term avergaing
+c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
+c (25feb2014 different from SOLPS4.3 avergaing procedure as implemented in
+c eirene_mc)
+        if(nhist .gt. 1 .and. main_call) then                         
           ihist = mod(ncall, nhist)+1
+          write(*,*) 'b2stbr: EIRENE source averaging ', nhist, ihist
+csw 25feb2014  fix IVS's version of source term avergaing
+          if(ihist .eq. 1) call clear_hist_arrays
+
           sna0_eir_h(:,:,:,:,ihist) = sna0_eir
           smo0_eir_h(:,:,:,:,ihist) = smo0_eir
           she0_eir_h(:,:,:,ihist) = she0_eir
           shi0_eir_h(:,:,:,ihist) = shi0_eir
           do ia = 1,nnatmi
             rfluxa_h(:,:,ia,1,ihist) = rfluxa(:,:,ia,1)
-            rfluxm_h(:,:,ia,1,ihist) = rfluxm(:,:,ia,1)
+          enddo
+          do im = 1,nnmoli
+            rfluxm_h(:,:,im,1,ihist) = rfluxm(:,:,im,1)
           enddo                  
           
-          if (ncall.gt.0) then
-!----  simple average  ----------------------------
-! if a more sophisticated smoothing procedure is needed,
-! may be it is reasonable to write this code fragment as
-! a separate subroutine
+          if (ihist.gt.1) then
             sna0_eir = 0.0_R8
             smo0_eir = 0.0_R8
             she0_eir = 0.0_R8
             shi0_eir = 0.0_R8
             rfluxa = 0.0_R8      
             rfluxm = 0.0_R8      
-            do ihist=1,nhist
-              sna0_eir = sna0_eir + sna0_eir_h(:,:,:,:,ihist)
-              smo0_eir = smo0_eir + smo0_eir_h(:,:,:,:,ihist)
-              she0_eir = she0_eir + she0_eir_h(:,:,:,ihist)
-              shi0_eir = shi0_eir + shi0_eir_h(:,:,:,ihist) 
+csw 25feb2014  fix IVS's version of source term avergaing
+            do iih=1,ihist 
+              sna0_eir = sna0_eir + sna0_eir_h(:,:,:,:,iih)
+              smo0_eir = smo0_eir + smo0_eir_h(:,:,:,:,iih)
+              she0_eir = she0_eir + she0_eir_h(:,:,:,iih)
+              shi0_eir = shi0_eir + shi0_eir_h(:,:,:,iih) 
               do ia = 1,nnatmi
-      rfluxa(:,:,ia,1) = rfluxa(:,:,ia,1) + rfluxa_h(:,:,ia,1,ihist)
-      rfluxm(:,:,ia,1) = rfluxm(:,:,ia,1) + rfluxm_h(:,:,ia,1,ihist)
+                rfluxa(:,:,ia,1) = rfluxa(:,:,ia,1) 
+     .                           + rfluxa_h(:,:,ia,1,iih)
+              enddo
+              do im = 1,nnmoli
+                rfluxm(:,:,im,1) = rfluxm(:,:,im,1)
+     .                           + rfluxm_h(:,:,im,1,iih)
               enddo                  
             enddo
-            sna0_eir = sna0_eir / min(dble(nhist),dble(ncall+1))
-            smo0_eir = smo0_eir / min(dble(nhist),dble(ncall+1))
-            she0_eir = she0_eir / min(dble(nhist),dble(ncall+1))
-            shi0_eir = shi0_eir / min(dble(nhist),dble(ncall+1))
-            rfluxa = rfluxa / min(dble(nhist),dble(ncall+1))                    
-            rfluxm = rfluxm / min(dble(nhist),dble(ncall+1))                    
+csw 25feb2014  fix IVS's version of source term avergaing
+c            sna0_eir = sna0_eir / min(dble(nhist),dble(ncall+1))
+c            smo0_eir = smo0_eir / min(dble(nhist),dble(ncall+1))
+c            she0_eir = she0_eir / min(dble(nhist),dble(ncall+1))
+c            shi0_eir = shi0_eir / min(dble(nhist),dble(ncall+1))
+c            rfluxa = rfluxa / min(dble(nhist),dble(ncall+1))                    
+c            rfluxm = rfluxm / min(dble(nhist),dble(ncall+1))                    
+            sna0_eir = sna0_eir / dble(ihist)
+            smo0_eir = smo0_eir / dble(ihist)
+            she0_eir = she0_eir / dble(ihist)
+            shi0_eir = shi0_eir / dble(ihist)
+            rfluxa = rfluxa / dble(ihist)                    
+            rfluxm = rfluxm / dble(ihist)                    
+
 !----  end of averaging procedure -----------------
           endif
         endif                                                            !IYS 28.03.12}
         if(ncall.le.999. and. ncall.le.ncall_iout) then
          do is = 0, ns-1
-	    write (chns,'(i2.2)') is
-	    write (ch3 ,'(i3.3)') ncall
+          write (chns,'(i2.2)') is
+          write (ch3 ,'(i3.3)') ncall
           if(.not.is_neutral(is)) then
-	     call my_out(70,nx,ny,sna0_eir(:,:,0,is)+sna0_eir(:,:,1,is)* 
+           call my_out(70,nx,ny,sna0_eir(:,:,0,is)+sna0_eir(:,:,1,is)* 
      &                    na(:,:,is),'b2stbr_sna_eir'//chns//'_'//ch3)
-	    endif
-	   enddo
+          endif
+         enddo
         endif
-	  sna0 = sna0 + sna0_eir
-	  smo0 = smo0 + smo0_eir
-	  she0 = she0 + she0_eir
-	  shi0 = shi0 + shi0_eir
+        sna0 = sna0 + sna0_eir
+        smo0 = smo0 + smo0_eir
+        she0 = she0 + she0_eir
+        shi0 = shi0 + shi0_eir
 #ifdef ASTRA
 
       do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {
-	 if(is.eq.ismain) then
+       if(is.eq.ismain) then
         call b2_to_astra_sna(nx, ny, vol, sna0_eir(:,:,0,is)+
      &   sna0_eir(:,:,1,is)*na(:,:,is), svol, se)
-	 endif
-	enddo                                                           !srv 28.07.11 20.02.12 }
+       endif
+      enddo                                                           !srv 28.07.11 20.02.12 }
       call b2_to_astra_src(nx, ny, vol, she0_eir(:,:,0)+
      &   she0_eir(:,:,1)*te(:,:)+she0_eir(:,:,2)*ne+
      &   she0_eir(:,:,3)*ne*te, svol, seh)                            !srv 11.06.13
@@ -710,14 +727,14 @@ csw
      &   shi0_eir(:,:,3)*ni(:,:,0)*ti, svol, sih)                     !srv 11.06.13
 
 #endif	                       
-	  ia = 1    ! only base atoms
-	  do iy = -1,ny
-	   do ix = -1,nx
-	    fatm_eir(ix,iy,0,ia-1) = pfluxa(ix+1,iy+1,ia,1)
-	    fatm_eir(ix,iy,1,ia-1) = rfluxa(ix+1,iy+1,ia,1)
-	    datm_eir(ix,iy,ia-1)    = dab2(ix+1,iy+1,ia,1)
-	   enddo
-	  enddo
+        ia = 1    ! only base atoms
+        do iy = -1,ny
+         do ix = -1,nx
+          fatm_eir(ix,iy,0,ia-1) = pfluxa(ix+1,iy+1,ia,1)
+          fatm_eir(ix,iy,1,ia-1) = rfluxa(ix+1,iy+1,ia,1)
+          datm_eir(ix,iy,ia-1)   = dab2(ix+1,iy+1,ia,1)
+         enddo
+        enddo
 #else
         call xerrab ('b2stbr not compiled with the USE_EIRENE option')
 #endif
@@ -886,86 +903,86 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
 #endif
       endif
 
-	if (iout.eq.1 .or. iout_b2npmo.eq.1) then                       !srv 11.09.09 {
+      if (iout.eq.1 .or. iout_b2npmo.eq.1) then                       !srv 11.09.09 {
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is
+        write (chns,'(i2.2)') is
 #ifdef USE_EIRENE
-       if(.not.is_neutral(is)) then
-	  do k=0,1 ! 3                                                  !srv 29.04.10 {
-         write (chk,'(i1)') k
-	   call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
+        if(.not.is_neutral(is)) then
+         do k=0,1 ! 3                                                  !srv 29.04.10 {
+          write (chk,'(i1)') k
+           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
      *              'b2stbr_smo_eir'//chk//chns)
-	  enddo
-	  call my_out(70,nx,ny,smo0_eir(:,:,0,is)+
+         enddo
+         call my_out(70,nx,ny,smo0_eir(:,:,0,is)+
      &        smo0_eir(:,:,1,is)*ua(:,:,is)+
      &        smo0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
      &        smo0_eir(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
      &        'b2stbr_smo_eir'//chns)
-	 endif
+        endif
 #else
 !	  do k=0,3
 !	   write (chk,'(i1)') k
 !	   call my_out(70,nx,ny,smo0(-1,-1,k,is),'b2stbr_smo'//chk//chns)
 !	  enddo
-	   call my_out(70,nx,ny,b2stbr_smo(-1,-1,is),'b2stbr_smo'//chns)
+        call my_out(70,nx,ny,b2stbr_smo(-1,-1,is),'b2stbr_smo'//chns)
 #endif
 !	   call my_out(70,nx,ny,ua(-1,-1,is),'b2stbr_ua'//chns)
 !	   call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
-	 enddo                                                          !srv 29.04.10 }
-	endif
-	if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
+       enddo                                                          !srv 29.04.10 }
+      endif
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is
+        write (chns,'(i2.2)') is
 !	  call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
 #ifdef USE_EIRENE
-       if(.not.is_neutral(is)) then
-	  do k=0,1                                                      !srv 29.04.10
-	   write (chk,'(i1)') k
-	   call my_out(70,nx,ny,sna0_eir(-1,-1,k,is),
+        if(.not.is_neutral(is)) then
+         do k=0,1                                                      !srv 29.04.10
+           write (chk,'(i1)') k
+           call my_out(70,nx,ny,sna0_eir(-1,-1,k,is),
      *               'b2stbr_sna_eir'//chk//chns)
-	  enddo
-	  call my_out(70,nx,ny,sna0_eir(:,:,0,is)+ 
+         enddo
+         call my_out(70,nx,ny,sna0_eir(:,:,0,is)+ 
      &             sna0_eir(:,:,1,is)*na(:,:,is),'b2stbr_sna_eir'//chns)
-	 endif
+        endif
 #else
 !	  do k=0,1
 !	   write (chk,'(i1)') k
 !	   call my_out(70,nx,ny,sna0(-1,-1,k,is),'b2stbr_sna'//chk//chns)
 !	  enddo
-	  call my_out(70,nx,ny,b2stbr_sna(-1,-1,is),'b2stbr_sna'//chns)
+        call my_out(70,nx,ny,b2stbr_sna(-1,-1,is),'b2stbr_sna'//chns)
 #endif
-	 enddo                                                          !srv 29.04.10
+       enddo                                                          !srv 29.04.10
 #ifdef USE_EIRENE
        do ia = 1,nnatmi
-	  write (chns,'(i2.2)') ia
+        write (chns,'(i2.2)') ia
         call my_out(70,nx,ny,rfluxa(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_rfluxa_eir'//chns)
         call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_pfluxa_eir'//chns)
         call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_dab2_eir'//chns)
-	 enddo
+       enddo
        do im = 1,nmol
-	  write (chns,'(i2.2)') im
+        write (chns,'(i2.2)') im
         call my_out(70,nx,ny,rfluxm(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_rfluxm_eir'//chns)
         call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_pfluxm_eir'//chns)
         call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_dmb2_eir'//chns)
-	 enddo
+       enddo
 #endif
-	endif
-	if (iout.eq.1 .or. (iout_b2npht.eq.1 .or. iout_b2nph9.eq.1)) then
+      endif
+      if (iout.eq.1 .or. (iout_b2npht.eq.1 .or. iout_b2nph9.eq.1)) then
 #ifdef USE_EIRENE
-	  do k=0,1  ! 3
-	   write (chk,'(i1)') k
-	   call my_out(70,nx,ny,she0_eir(-1,-1,k),'b2stbr_she_eir'//chk)
-	   call my_out(70,nx,ny,shi0_eir(-1,-1,k),'b2stbr_shi_eir'//chk)
-	  enddo
-	  call my_out(70,nx,ny,she0_eir(:,:,0)+she0_eir(:,:,1)*ti+
+       do k=0,1  ! 3
+        write (chk,'(i1)') k
+        call my_out(70,nx,ny,she0_eir(-1,-1,k),'b2stbr_she_eir'//chk)
+        call my_out(70,nx,ny,shi0_eir(-1,-1,k),'b2stbr_shi_eir'//chk)
+       enddo
+       call my_out(70,nx,ny,she0_eir(:,:,0)+she0_eir(:,:,1)*ti+
      &     she0_eir(:,:,2)*ne+she0_eir(:,:,3)*ti*ne,'b2stbr_she_eir')
-	  call my_out(70,nx,ny,shi0_eir(:,:,0)+shi0_eir(:,:,1)*ti+
+       call my_out(70,nx,ny,shi0_eir(:,:,0)+shi0_eir(:,:,1)*ti+
      &     shi0_eir(:,:,2)*ni(:,:,0)+shi0_eir(:,:,3)*ti*ni(:,:,0),
      &     'b2stbr_shi_eir')
 #else
@@ -975,19 +992,19 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
 !	  call my_out(70,nx,ny,she0(-1,-1,k),'b2stbr_she'//chk)
 !	  call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbr_shi'//chk)
 !	 enddo
-	   call my_out(70,nx,ny,b2stbr_she,'b2stbr_she')
-	   call my_out(70,nx,ny,b2stbr_shi,'b2stbr_shi')               !srv 29.04.10
-	endif
-	if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)) then
+       call my_out(70,nx,ny,b2stbr_she,'b2stbr_she')
+       call my_out(70,nx,ny,b2stbr_shi,'b2stbr_shi')               !srv 29.04.10
+      endif
+      if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)) then
 #ifdef USE_EIRENE
 #else
 !	 do k=0,3
 !	  write (chk,'(i1)') k
 !	  call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbr_sch'//chk)
 !	 enddo
-	 call my_out(70,nx,ny,b2stbr_sch,'b2stbr_sch')
+       call my_out(70,nx,ny,b2stbr_sch,'b2stbr_sch')
 #endif
-	endif                                                           !srv 11.09.09 }
+      endif                                                           !srv 11.09.09 }
 
 * ..return
       if(ncall.eq.0 .or. main_call) ncall = ncall+1

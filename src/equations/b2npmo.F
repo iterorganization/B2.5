@@ -73,10 +73,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, diagno, ireg, k
+      integer ncall, n2, ix, iy, is, diagno, ireg, k,ii
       integer, save :: modvis = 0                                    !srv 19.01.05
       integer, save :: iout = 0, b2sifr_ver=0                        !srv 04.07.08 26.10.08
-	character chns*2, chk*1                                        !srv 04.07.08
+      character chns*2, chk*1                                        !srv 04.07.08
       real (kind=R8) ::
      *  rxg, t0, t1, t2, vis_par
       real (kind=R8) ::
@@ -94,7 +94,7 @@
      8  ehxp(-1:nx,-1:ny), smt(-1:nx,-1:ny,0:3),
      9  flct(-1:nx,-1:ny,0:1), wrk1(-1:nx,-1:ny),
      1  smqdu(-1:nx,-1:ny), wrk0(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
-	2  ctcfb(-1:nx,-1:ny), ctcft(-1:nx,-1:ny)                         !srv 06.04.07
+     2  ctcfb(-1:nx,-1:ny), ctcft(-1:nx,-1:ny)                         !srv 06.04.07
       logical solvedum(0:NNREGMAX)
       save ncall, rxg, vis_par, diagno, solvedum
 *   ..procedures
@@ -174,9 +174,9 @@
      &  ehxp, wrk0, wrk1)
 *   ..compute smqdu
       call b2nxdu (nx, ny, ns, na, ua, smq, smqdu, wrk0, wrk1)
-	if (iout.ne.0) then
-	 call my_out(70,nx,ny,smqdu,'b2npmo_smqdu')
-	endif
+      if (iout.ne.0) then
+       call my_out(70,nx,ny,smqdu,'b2npmo_smqdu')
+      endif
 *   ..initialise
       call sfill (n2*4, 0.0_R8, smt, 1)
       call sfill (n2*2, 0.0_R8, flct, 1)
@@ -196,11 +196,11 @@
         call b2sifr (nx, ny, ns, is, vol, hx, hz, bb, na, ua, te, ti, !srv 09.01.01
      &   ni, ne, ne2, ehxp, lnlam, cthe, cthi, smbch, smbtf,       !srv 11.09.09
      &   wrk0, wrk1, wrk2)                                             !srv 02.07.08 01.07.09
-	 else
+       else
         call b2sifr_ (nx, ny, ns, is, hx, hz, vol, bb, na, ua, te, ti, !srv 09.01.01 18.10.02
      &   ni, ne, ne2, ehxp, lnlam, cthe, cthi, smbch, smbtf,       !srv 11.09.09
      &   wrk0, wrk1, wrk2)                                             !srv 01.07.09
-     	 endif                                                          !srv 26.10.08 }
+       endif                                                          !srv 26.10.08 }
 *    ..compute pressure gradient term
        call b2sigp (nx, ny, is, rza(-1,-1,is), vol, hx, hz, bb,  
      &   na(-1,-1,is), ti, ne, te, po, smbgp, wrk0, wrk1)              !srv 02.07.08
@@ -208,11 +208,11 @@
        call scopy (n2*2, fna_fcor(-1,-1,0,is), 1, flub, 1)
        call sscal (n2*2, am(is)*mp, flub, 1)
 !       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,is), flub)
-	 if (modvis.eq.1) then                                           !srv 19.01.05 11.09.09 {
+       if (modvis.eq.1) then                                           !srv 19.01.05 11.09.09 {
 *    ..add convective term due to new form of ion viscosity term only
-	  call b2nxfv (nx, ny, is, hz, cvsahz(-1,-1,0,is), flubv)        !srv 01.07.05 11.09.09
-	  call saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                   !srv 11.09.09
-	 endif                                                           !srv 19.01.05 }
+        call b2nxfv (nx, ny, is, hz, cvsahz(-1,-1,0,is), flubv)        !srv 01.07.05 11.09.09
+        call saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                   !srv 11.09.09
+       endif                                                           !srv 19.01.05 }
 *    ..compute flcb, cvcb
        call b2nxfc (nx, ny, is, vol, pbshz, rob, ua(-1,-1,is), flub,
      &   cvsahz(-1,-1,0,is), flcb, cvcb, wrk0)                         !srv 09.01.01
@@ -239,94 +239,107 @@
        call saxpy (n2*4, 1.0_R8, smbcf,  1, smb, 1)                    !srv 03.07.08 }
        call b2nxdv (nx, ny, rob, smq(-1,-1,0,is), smqdu, smb)         !srv ???
 *    ..save final source for species (is)                             !srv 10.11.02
-	 smof(:,:,:,is) = smb                                           !srv 10.11.02
+       smof(:,:,:,is) = smb                                           !srv 10.11.02
 *    ..compute residual
        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)           !srv 04.07.08
        fmo(:,:,:,is)=wrkf
-	 write (chns,'(i2.2)') is                                     !srv 18.03.10
-	 if (iout.ne.0) then                                          !srv 12.07.02 {
-	   call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua_input'//chns)
-	   call my_out(70,nx,ny,resmo(-1,-1,is),'b2npmo_resmo'//chns)
-	   call my_out(70,nx,ny,fmo(-1,-1,0,is),'b2npmo_fmox'//chns)
-	   call my_out(70,nx,ny,fmo(-1,-1,1,is),'b2npmo_fmoy'//chns)
-	   if(.not. is_neutral(is))
+       write (chns,'(i2.2)') is                                     !srv 18.03.10
+       if (iout.ne.0) then                                          !srv 12.07.02 {
+        call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua_input'//chns)
+        call my_out(70,nx,ny,resmo(-1,-1,is),'b2npmo_resmo'//chns)
+        call my_out(70,nx,ny,fmo(-1,-1,0,is),'b2npmo_fmox'//chns)
+        call my_out(70,nx,ny,fmo(-1,-1,1,is),'b2npmo_fmoy'//chns)
+        if(.not. is_neutral(is))
      &   call my_out(70,nx,ny,flubv(-1,-1,0),'b2npmo_flubvx'//chns)
 !	   call my_out(70,nx,ny,flubv(-1,-1,1),'b2npmo_flubvy'//chns)
 !	   do k=0,3
 !	    write (chk,'(i1)') k  
 !	    call my_out(70,nx,ny,smb(-1,-1,k),'b2npmo_smo'//chk//chns)
 !	   enddo
-	   call my_out(70,nx,ny,smb(:,:,0)+smb(:,:,1)*ua(:,:,is)+
+        call my_out(70,nx,ny,smb(:,:,0)+smb(:,:,1)*ua(:,:,is)+
      &        smb(:,:,2)*na(:,:,is)*mp*am(is)+
      &        smb(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
      &        'b2npmo_smo'//chns)
-	   call my_out(70,nx,ny,smo(:,:,0,is)+smo(:,:,1,is)*ua(:,:,is)+
+        call my_out(70,nx,ny,smo(:,:,0,is)+smo(:,:,1,is)*ua(:,:,is)+
      &        smo(:,:,2,is)*na(:,:,is)*mp*am(is)+
      &        smo(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
      &        'b2npmo_smb'//chns)
-	   call my_out(70,nx,ny,smbch(:,:,0)+smbch(:,:,1)*ua(:,:,is)+
+        call my_out(70,nx,ny,smbch(:,:,0)+smbch(:,:,1)*ua(:,:,is)+
      &        smbch(:,:,2)*na(:,:,is)*mp*am(is)+
      &        smbch(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
      &        'b2npmo_smoch'//chns)
-	   call my_out(70,nx,ny,smbtf(:,:,0)+smbtf(:,:,1)*ua(:,:,is)+
+        call my_out(70,nx,ny,smbtf(:,:,0)+smbtf(:,:,1)*ua(:,:,is)+
      &        smbtf(:,:,2)*na(:,:,is)*mp*am(is)+
      &        smbtf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
      &        'b2npmo_smotf'//chns)
-	   call my_out(70,nx,ny,smbgp(:,:,0)+smbgp(:,:,1)*ua(:,:,is)+
+        call my_out(70,nx,ny,smbgp(:,:,0)+smbgp(:,:,1)*ua(:,:,is)+
      &        smbgp(:,:,2)*na(:,:,is)*mp*am(is)+
      &        smbgp(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
      &        'b2npmo_smogp'//chns)
-	   call my_out(70,nx,ny,smbvv(:,:,0)+smbvv(:,:,1)*ua(:,:,is)+
+        call my_out(70,nx,ny,smbvv(:,:,0)+smbvv(:,:,1)*ua(:,:,is)+
      &        smbvv(:,:,2)*na(:,:,is)*mp*am(is)+
      &        smbvv(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
      &        'b2npmo_smovv'//chns)
-	   call my_out(70,nx,ny,smbvh(:,:,0)+smbvh(:,:,1)*ua(:,:,is)+
+        call my_out(70,nx,ny,smbvh(:,:,0)+smbvh(:,:,1)*ua(:,:,is)+
      &        smbvh(:,:,2)*na(:,:,is)*mp*am(is)+
      &        smbvh(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
      &        'b2npmo_smovh'//chns)
-	   call my_out(70,nx,ny,smbcf(:,:,0)+smbcf(:,:,1)*ua(:,:,is)+
+        call my_out(70,nx,ny,smbcf(:,:,0)+smbcf(:,:,1)*ua(:,:,is)+
      &        smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
      &        smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
      &        'b2npmo_smocf'//chns)
-	 endif                                                           !srv 12.07.02 }
+       endif                                                           !srv 12.07.02 }
        if (solving.and.all(solvemo(is,0:nnreg(0)))) then                !srv 06.07.10
-        solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
+         solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
 *    ..compute correction
-        call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,        !srv 04.07.08
+         call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,        !srv 04.07.08
      &   vol, hx, hz, bb, rob, pb, ua(-1,-1,is),                        !srv 09.01.01
      &   smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),      !srv 06.04.07
      &   pcca(-1,-1,0,is), aa5, wrk1, 'b2usmo_'//chns)
+csw 21feb2014 added this else branch
+       else
+        pcca(:,:,:,is)  = 0.0_R8
+        resmo(:,:,is) = 0.0_R8
+        corua(:,:,is) = 0.0_R8
        endif
 *    ..compute contribution to total residual
 *      (now the friction cancels out)
-       call scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
-       call saxpy (n2*4, 1.0_R8, smbgp, 1, smb, 1)
-       call saxpy (n2*4, 1.0_R8, smbvh, 1, smb, 1)
-       call saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)                     !srv 03.07.08
-       call saxpy (n2*4, 1.0_R8, smbcf, 1, smb, 1)                     !srv 09.07.01
-       call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,                !srv 09.01.01
+
+csw 21feb2014 and do this only for the solved species, i.e. added next branch
+       if (solving.and.all(solvemo(is,0:nnreg(0)))) then 
+        call scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
+        call saxpy (n2*4, 1.0_R8, smbgp, 1, smb, 1)
+        call saxpy (n2*4, 1.0_R8, smbvh, 1, smb, 1)
+        call saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)                     !srv 03.07.08
+        call saxpy (n2*4, 1.0_R8, smbcf, 1, smb, 1)                     !srv 09.07.01
+        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,                !srv 09.01.01
      &   flub, cvsahz(-1,-1,0,is), wrk0, wrkf)
 *    ..accumulate residual
-       call saxpy (n2, 1.0_R8, wrk0, 1, resmt, 1)
+        call saxpy (n2, 1.0_R8, wrk0, 1, resmt, 1)
 *    ..accumulate smb
-       call b2nxst (nx, ny, rob, smb, ro, smt)
+        call b2nxst (nx, ny, rob, smb, ro, smt)
 *    ..accumulate transport coefficients
-       call saxpy (n2*2, 1.0_R8, flcb, 1, flct, 1)
-       call saxpy (n2*2, 1.0_R8, cvcb, 1, cvct, 1)
-       call saxpy (n2, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
+        call saxpy (n2*2, 1.0_R8, flcb, 1, flct, 1)
+        call saxpy (n2*2, 1.0_R8, cvcb, 1, cvct, 1)
+        call saxpy (n2, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
+       endif
+
       enddo
-      if (solving.and.all(solvemo(0:ns-1,0:nnreg(0)))) then           !srv 06.07.10
+csw 21feb2014, execute simultaneous corrections always
+c      if (solving.and.all(solvemo(0:ns-1,0:nnreg(0)))) then           !srv 06.07.10
+      if (solving) then    
 *   ..compute simultaneous correction
        call sfill (n2, 0.0_R8, wrk0, 1)
        solvedum(0:nnreg(0))=.true.
+csw 14feb2014 warning: variable 'is' unspecified here, (but no use of 'is' in b2usmo)
        call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
      &  vol, hx, hz, bb, ro, pr, wrk0, smt, flct, cvct,               !srv 09.01.01
      &  resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')         !srv 06.04.07
-	else
+      else
        pccm  = 0.0_R8
        resmt = 0.0_R8
-	 corut = 0.0_R8
+       corut = 0.0_R8
       endif                                                           !srv 06.07.10
 *   ..apply correction
        do is = 0, ns-1
@@ -334,15 +347,15 @@
          do ix = -1, nx
           ireg = region(ix,iy,0)
           if (solvemo(is,ireg)) then
-    	     if((leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) .or.
-     &        (bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) ) then !srv 27.01.11
-	      ua(ix,iy,is) = ua(ix,iy,is) + corua(ix,iy,is)
-     	     else
-	      ua(ix,iy,is) = ua(ix,iy,is)+
-     &      rxf*med(corua(ix,iy,is),corut(ix,iy),
-     &       corua(ix,iy,is)+corut(ix,iy))
-	     endif
-	    endif
+            if((leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) .or.
+     &       (bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) ) then !srv 27.01.11
+               ua(ix,iy,is) = ua(ix,iy,is) + corua(ix,iy,is)
+            else
+               ua(ix,iy,is) = ua(ix,iy,is)+
+     &         rxf*med(corua(ix,iy,is),corut(ix,iy),
+     &         corua(ix,iy,is)+corut(ix,iy))
+            endif
+          endif
          enddo
         enddo
        enddo
@@ -351,18 +364,18 @@
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
       ierr = 0
-	if (iout.ne.0) then                                          !srv 12.07.02 {
+      if (iout.ne.0) then                                          !srv 12.07.02 {
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is                                    !srv 18.05.02
-	   call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua'//chns)
+        write (chns,'(i2.2)') is                                    !srv 18.05.02
+         call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua'//chns)
 !	   call my_out(70,nx,ny,pcca(-1,-1,0,is),'b2npmo_pccax'//chns)
 !	   call my_out(70,nx,ny,pcca(-1,-1,1,is),'b2npmo_pccay'//chns)
 !	   call my_out(70,nx,ny,fna_fcor(-1,-1,0,is),'b2npmo_fna_fcorx'//chns)
 !	   call my_out(70,nx,ny,fna_fcor(-1,-1,1,is),'b2npmo_fna_fcory'//chns)
        enddo
-	 call my_out(70,nx,ny,pccm(-1,-1,0),'b2npmo_pccmx')          !srv 11.01.13
-	 call my_out(70,nx,ny,pccm(-1,-1,1),'b2npmo_pccmy')          !srv 11.01.13
-	endif                                                   !srv 12.07.02 }
+       call my_out(70,nx,ny,pccm(-1,-1,0),'b2npmo_pccmx')          !srv 11.01.13
+       call my_out(70,nx,ny,pccm(-1,-1,1),'b2npmo_pccmy')          !srv 11.01.13
+      endif                                                   !srv 12.07.02 }
 * ..return
       ncall = ncall+1
       call subend ()

@@ -10,7 +10,7 @@
       integer nx, ny, nregionv
       real (kind=R8) ::
      *  rxf, pcm0, vol(-1:nx,-1:ny), corpb(-1:nx,-1:ny),
-     *	pccb0(-1:nx,-1:ny)
+     *  pccb0(-1:nx,-1:ny)
       logical ua_solve, solvereg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::

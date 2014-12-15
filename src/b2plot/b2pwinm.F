@@ -7,11 +7,9 @@ c======================================================================
 c*** Reads the data from dg output file (called from imprt)
 c*** MUST be compiled in single precision!!!
 c======================================================================
-csw 17feb2011 extra b25
       use eirmod_extrab25
       implicit none
 #include "COUPLE/KOPPLDIM.F"
-csw
 #include "b2pwcom.h"
       integer jedge(4)
       equivalence (jedgi1,jedge)

@@ -97,7 +97,7 @@ cank }
 csw 21feb2012
       integer, save ::
      . l_neutrad=0
-csw
+
       contains
 
       subroutine alloc_b2mod_neutrals(nsd,NSTRAID_in,sput_dst)
@@ -270,7 +270,6 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
      & ,only : is_codes
       use b2mod_boundary_namelist
       use b2mod_b2cmpa
-csw 17feb2011 extra b25
 #ifdef USE_EIRENE
       use eirmod_extrab25
       use eirmod_braeir
@@ -280,7 +279,6 @@ csw 17feb2011 extra b25
       logical dotest
 #     include <DIMENSIONS.F>
 #     include "COUPLE/KOPPLDIM.F"
-csw#     include <COUPLE/BRAEIR.F>
       external xertst
       integer is, ic, istra, i, j, k, n, ii(1), itrack
       logical hydrogen, helium, found
@@ -315,7 +313,6 @@ csw 21feb2012
      .  l_neutrad,
 csw 04sep2013
      .  msns
-csw
       logical :: file_ok
       character*260 filename
 

@@ -133,9 +133,9 @@ c        IF (A1HN.EQ.0.0_R8) THEN
         enddo
       enddo
 
-csw 12oct2012 
+csw 12oct2012 in case of b2swtest=T --> reinit solver
+c             (maybe necessary in case of multi-fluid?)
       if(b2swtest.eq.1) lfirst=.true.
-csw
 
       if(kwrite_bnr.eq.ncall) then                                   !srv 18.03.10 {
        write(*,*) 'Opening 76'

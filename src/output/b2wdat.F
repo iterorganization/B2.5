@@ -13,23 +13,17 @@
       use b2mod_indirect 
       use b2mod_neutrals_namelist                                  !srv 04.06.09
       use b2mod_boundary_namelist                                  !srv 02.02.11
-	use b2mod_elements                                           !srv 12.04.12
+      use b2mod_elements                                           !srv 12.04.12
 !      use b2mod_sign_of_magnetic_field                            !srv 21.04.00
       use b2mod_b2cmgs
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmrc
-csw 07feb2011
 #ifdef USE_EIRENE
       use eirmod_extrab25
 #endif
-csw
       implicit none
-#ifdef USE_EIRENE
-csw 07feb2011
-csw#     include <COUPLE/EIRDIAG.F>
-#endif
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain
       real (kind=R8) :: BoRiS
@@ -52,7 +46,7 @@ csw#     include <COUPLE/EIRDIAG.F>
       integer ncall, iout, is, ix, iy, ic, ib, iw, iout_iout_ASTRA   !srv 05.10.01 03.04.13 19.04.13
       integer n2, jsep, jxi, jxa, ndat, k, mintopcut, ixx,         !srv 12.07.10
      *        js, nxtl, nxtr, ix1, ix2                             !iyv 04.02.11
-	integer, save :: ishift=0                                    !srv 05.11.09
+      integer, save :: ishift=0                                    !srv 05.11.09
       real (kind=R8) ::                                            !srv
      *  Total_current(-1:ny), B0out, Total_flux(-1:ny),            !srv 31.08.00 19.02.02
      *  Total_abscurrent(-1:ny), Total_absflux(-1:ny),

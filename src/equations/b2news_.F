@@ -106,6 +106,7 @@
       integer, save :: no_neutr_scl = 0, no_b2sral_call = 0
       integer, save :: do_2nd_b2npco_call=0
       integer, save :: re_eval_prtls_fluxes = 1                      !srv 28.06.13
+      integer, save :: nhist=0, neutr_avg=0, nstg2=0
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -178,6 +179,23 @@
        call ipgeti ('b2news_no_b2sral_call', no_b2sral_call)
        call ipgeti ('b2news_do_2nd_b2npco_call', do_2nd_b2npco_call)
        call ipgeti ('b2news_re_eval_prtls_fluxes', re_eval_prtls_fluxes) !srv 28.06.13
+
+csw 26feb2014 some extra variables
+       call ipgeti ('eirene_neutr_avg', neutr_avg)
+       call ipgeti ('b2stbr_eir_src_nhist', nhist)
+       call ipgeti ('b2mndt_nstg2', nstg2)
+       if(nstg2 > 1) then
+        if(no_neutr_scl .ne. 0) then
+          write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
+        endif
+        if(nhist.ne.0 .or. neutr_avg.ne.0) then
+          call xerrab('nstg2>1 + EIRENE source evaraging not possible')
+        endif
+       endif
+       if(nhist .ne. 0 .and. neutr_avg .ne. 0) then
+          call xerrab('dont use of both EIRENE source averaging procs')
+       endif
+
       endif                                                          !srv 02.07.08 
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -207,13 +225,13 @@
       rxf1 = rxf*xfm1
       rxf2 = 1.0e0_R8 ! (rxf*xfm2)**0.2e0_R8 !srv 15.01.03
       rxf3 = rxf*xfm3
-csw 01oct2012
+
+csw 01oct2012 initialize potential if necessary
       if (pot_eq.eq.0) then                                           !srv 13.07.05 {
         po   =0.0e0_R8
       else if (pot_eq.eq.2) then
         po(:,:)=3.1_R8*te(:,:)/qe
       endif
-csw 
 
 !      facdrift=min(facdrift*facdrift_inc,facdrift_target)     !srv 09.07.99
 !      write(*,*) 'facdrift',facdrift                          !srv 09.07.99
@@ -289,12 +307,10 @@ csw
         enddo                                                           !srv 01.10.99
 !      end if                                                           !srv 01.10.99
 
-csw 09jan2013
+csw 10dec2012: added extra call if wanted/not-wanted (SOLPS4 has an
+c   extra call at this place within internal iteration)
       if(no_b2sral_call .eq. 0) then
-csw
         write(*,*) ' re-compute source '
-csw 10dec2012: added extra call
-csw
 *     ..re-compute source linearisation                                  !xpb
         call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain,        !xpb
      &    dtim, BoRiS, facdrift, fac_ExB,                                  !xpb
@@ -324,18 +340,11 @@ csw
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,    !xpb !srv 01.07.08
      &    ni, sna, smo, she, shi, sch)                                   !xpb
-csw
-csw
-
-csw 09jan2013 no_b2sral_call
       endif
-csw
 
-
-csw 16oct2012
-        ier0=0
 
 csw 11oct2012 added check on coriolis force (taken from b2news())
+        ier0=0
         if(coriolis.eq.0) then
          call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, hx, hy, hz, 
      &   vol, bb, pbs, pbshz, lnlam,                                    !srv 01.07.09
@@ -349,7 +358,6 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
      &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,     !srv 23.07.99 01.10.99 04.10.99 09.01.01
      &   resmt, corua, corut, pcca, pccm, ier0)                          !srv 23.07.99 10.11.02 23.12.03
         endif
-csw
 
       call xertst (ier0.eq.0, 'error return from b2npmo') 
 #ifdef BLOCK
@@ -411,7 +419,7 @@ csw
 !     &      cdpa(-1,-1,0,is), flob, conb)
 *    ..perform iteration
 
-csw 16oct2012
+csw 16oct2012 init ier0
         ier0=0
 
         if(mdf_fnb.eq.0) then                                           !srv 13.10.06
@@ -448,12 +456,12 @@ csw 16oct2012
 
         do iy=-1,ny
           do ix=-1,nx
-            na(ix,iy,is)= max(na(ix,iy,is),1.0e4_R8) !abs(na(ix,iy,is))   !srv 24.04.09
+            na(ix,iy,is)= max(na(ix,iy,is),1.0e5_R8) !abs(na(ix,iy,is))   !srv 24.04.09
           enddo
         enddo
 !        if(re_compute_pb.eq.1) then                                     !srv 15.02.10
 !*    ..re-compute partial pressure                                     !srv 01.10.99
-!          call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)  !srv 01.10.99
+!        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)  !srv 01.10.99
 !        endif                                                           !srv 15.02.10
 *    ..re-compute particle flux
         call b2tfnb (nx, ny, is, ismain, 
@@ -658,8 +666,9 @@ c      with diamagnetic drift part                                      !srv 13.
      &  fch, fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,    !srv 05.07.00 11.07.99 13.10.06
      &  floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,         !srv 30.09.02
      &  fchvisq, fchinert, fchanml)                                     !srv 07.07.99 11.07.99 22.11.99 24.03.07
+csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ti, ni, 
-     1  na, fni, chci, cddi, chvi, chvimx, vadia,                       !srv 17.05.99 27.12.01 25.01.02 13.10.06
+     1  na, fni, fna_he, ua, chci, cddi, chvi, chvimx,cvsa,vadia,       !srv 17.05.99 27.12.01 25.01.02 13.10.06
      &  fchvispar, fchvisq, fchinert, fchanml,              
      &  fhi, fhi_mdf, fhiPSch, floi, coni)                              !srv 13.10.06
        floi_noc = floi                                                  !srv 24.10.02
@@ -744,17 +753,15 @@ c      with diamagnetic drift part                                      !srv 13.
 
 
 
+csw 16aug2011 init potential 
       if(pot_eq.eq.0) po=0.0_R8                                     !srv 13.07.05
-csw 16aug2011
       if(pot_eq.eq.2) po(:,:)=3.1_R8*te(:,:)/qe 
       call xertst (ier0.eq.0, 'error return from b2npht')
 
-csw 12oct2012, extra call to relax particle balance
-csw
-csw
+csw 12oct2012, extra call to relax particle balance if wanted (as in SOLPS4)
       if(do_2nd_b2npco_call.ne.0) then
 
-csw recompute particle fluxes
+c   recompute particle fluxes
        do is=0,ns-1                                                    !srv 01.10.99
 *    ..DPC
         do iy=-1,ny
@@ -779,7 +786,6 @@ csw recompute particle fluxes
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
-csw
 
 *    ..perform iteration
         if(mdf_fnb.eq.0) then                                           !srv 13.10.06
@@ -815,15 +821,13 @@ csw
        enddo
       endif ! do_2nd_b2npco
 
-      if(re_eval_prtls_fluxes.eq.1) then                                !srv 28.06.13 {
 csw 06dec2012 finally re-evaluate particle fluxes
-csw (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
-csw
+c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
+      if(re_eval_prtls_fluxes.eq.1) then                                !srv 28.06.13 {
       do is=0,ns-1
-csw 10dec2012
         do iy=-1,ny
           do ix=-1,nx
-            na(ix,iy,is)= max(na(ix,iy,is),1.0_R8) !abs(na(ix,iy,is))   !srv 24.04.09
+            na(ix,iy,is)= max(na(ix,iy,is),1.0e5_R8) !abs(na(ix,iy,is))   !srv 24.04.09
           enddo
         enddo
 *    ..compute partial pressure
@@ -844,19 +848,14 @@ csw 10dec2012
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
       enddo                                                           !srv 01.10.99
-csw
       endif                                                             !srv 28.06.13 }
 
-csw 26oct2011 (missing from original b2news() routine --> fort nstg2>1)
-csw recalculate rescaling factors sclrtio/sclalph
-csw
-csw 03jan2013 added check for no_neutr_scl
+csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
       if(no_neutr_scl .eq. 0) then
         write(*,*) 'Calling b2stbr_neutr_scl'
         call b2stbr_neutr_scl(nx, ny, ns)                               !srv 25.10.08
         write(*,*) 'Called b2stbr_neutr_scl'
       endif
-csw
 
 
 * ..return

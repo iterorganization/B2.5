@@ -103,7 +103,7 @@
          else
            t0 = (vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,1)+
      +           vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),1)) /
-     .	        (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+     .          (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
            conx(ix,iy) = gs(ix,iy,0)*t0*2.0_R8*
      &        (hx(leftix(ix,iy),leftiy(ix,iy))*
      &         kapx(leftix(ix,iy),leftiy(ix,iy))

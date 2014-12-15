@@ -96,7 +96,6 @@
      3  wrk(-1:nx,-1:ny)                                              !srv 01.07.99 09.01.01
 csw 13mar2012
       integer, save :: core_cond_limit=0
-csw
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax
@@ -149,7 +148,6 @@ csw
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
 csw 13mar2012
         call ipgeti ('b2trcl_core_cond_limit', core_cond_limit)
-csw
         call ipgeti ('b2trcl_integral_modeling', integral_modeling)            !srv 01.11.11
       endif
 *   ..extensive tests on first few calls
@@ -337,7 +335,7 @@ csw
         enddo
        enddo
 
-       do iy = 0,mintopcut                                                                                    
+       do iy = 0,mintopcut                                                       
         eps1(iy) = tt0(iy)**2/tt1(iy)
        enddo
 
@@ -348,7 +346,7 @@ csw
        t1 = (4.0_R8*pi*eps0/qe)/qe
        t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
      
-       do iy = 0,mintopcut                                                                                            
+       do iy = 0,mintopcut                                                        
         do ix=0,nx
          if(mod(region(ix,iy,0),4).eq.1) then                       
           tau(ix,iy) = t2/lnlam(ix,iy)*te(ix,iy)/ev
@@ -373,7 +371,7 @@ csw
      &     /(1.0e0_R8+0.74e0_R8*sqrt(eps1(iy)**3)*nu2(ix,iy))      
          endif    
         enddo
-       enddo                                                                                                          !lk 19.09.07 } 
+       enddo                                                             !lk 19.09.07 } 
        do iy= 0,mintopcut
         do ix=0,nx
          if(mod(region(ix,iy,0),4).eq.1) then                       !srv 26.11.02
@@ -488,9 +486,8 @@ csw
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
 csw 19oct2011, also in core for SOLPS4.3 comaprison!!!
-csw            if(mod(region(ix,iy,0),4).ne.1) then                      !lk 06.05.07
+c            if(mod(region(ix,iy,0),4).ne.1) then                      !lk 06.05.07
            if(core_cond_limit.ne.0.or.mod(region(ix,iy,0),4).ne.1) then
-csw
             dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
             flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
      &       ne(ix,iy))/2
@@ -509,9 +506,8 @@ csw
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
 csw 19oct2011, also in core for SOLPS4.3 comaprison!!!
-csw          if(mod(region(ix,iy,0),4).ne.1) then                      !lk 06.05.07
+c          if(mod(region(ix,iy,0),4).ne.1) then                      !lk 06.05.07
            if(core_cond_limit.ne.0.or.mod(region(ix,iy,0),4).ne.1) then
-csw
             dti = ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
             flomx = chvimx(ix,iy)*(ni(leftix(ix,iy),leftiy(ix,iy),0)
      &                          +ni(ix,iy,0))/2

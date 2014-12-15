@@ -19,7 +19,6 @@ c*** reads the surface data
 c
       use b2mod_types
       use b2mod_b2plot
-csw 17feb2011 extrab25
       use eirmod_extrab25
       implicit none
 #     include <COUPLE/KOPPLDIM.F>

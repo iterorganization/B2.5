@@ -1,5 +1,7 @@
       subroutine b2xpfi (nx, ny, ns, fna, fni)
       use b2mod_types
+      use b2mod_constants
+      use b2mod_b2cmpa
       implicit none
       integer nx, ny, ns
       real (kind=R8) ::
@@ -15,7 +17,9 @@
       n2 = (nx+2)*(ny+2)
       call sfill (n2*2, 0.0_R8, fni, 1)
       do is = 0, ns-1
-       call saxpy (n2*2, 1.0_R8, fna(-1,-1,0,is), 1, fni, 1)
+       if(.not.is_neutral(is)) then
+        call saxpy (n2*2, 1.0_R8, fna(-1,-1,0,is), 1, fni, 1)
+       endif
       enddo
 *$$$  call subend ()
       return

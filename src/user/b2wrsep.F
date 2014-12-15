@@ -13,10 +13,8 @@
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
       use b2mod_b2cmpa
-csw 07feb2011
       use eirmod_extrab25
       use eirmod_eirbra
-csw
 c
 c  version : 10.12.2000 23:36
 c
@@ -27,9 +25,6 @@ c----------------------------------------------------------------------
       implicit none
 
 #     include <DIMENSIONS.F>
-csw 07feb2011
-csw#     include <COUPLE/EIRDIAG.F>
-csw#     include <COUPLE/EIRBRA.F>
 
       integer nx, ny, ns
       real (kind=R8) :: BoRiS

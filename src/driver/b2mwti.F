@@ -19,13 +19,9 @@
       use b2mod_tallies
       use b2mod_wall
       use b2mod_b2cmpa
-csw 07feb2011
       use eirmod_extrab25
-csw
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
-csw 07feb2011
-csw#     include <COUPLE/EIRDIAG.F>
 *   ..input arguments (unchanged on exit)
       integer itim, nx, ny, ns, ismain, ismain0
       real (kind=R8) ::

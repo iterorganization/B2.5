@@ -3,13 +3,8 @@
       use b2mod_b2plot
       use b2mod_movies
       use b2mod_plasma
-csw 02feb2011
       use eirmod_extrab25
-csw
       implicit none
-csw#     include <COUPLE/KOPPLDIM.F>
-csw 07feb2011
-csw#     include <COUPLE/EIRDIAG.F>
       integer ncidcdf,istep
 #ifndef NO_CDF
       integer :: iret, start(4), count(4), varid

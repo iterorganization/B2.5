@@ -8,10 +8,8 @@
       use b2mod_tallies
       use b2mod_indirect
       use b2mod_numerics_namelist
-csw 07feb2011
       use eirmod_extrab25
       use eirmod_eirbra
-csw
 c
 c  version : 15.03.2002 16:33
 c
@@ -22,9 +20,6 @@ c-----------------------------------------------------------------------
       implicit none
 c
 #     include <DIMENSIONS.F>
-csw 07feb2011
-csw#     include <COUPLE/EIRDIAG.F>
-csw#     include <COUPLE/EIRBRA.F>
 c-----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 c
@@ -257,7 +252,7 @@ csw 18nov2013 check alloc
         hlp_sume=sum(volsumee(1:nstrai))
         hlp_sumi=sum(volsumei(1:nstrai))
       endif
-csw
+
       hlp_brms=0.0_R8
       hlp_rdim=0.0_R8
       hlp_rdnu=0.0_R8
@@ -282,21 +277,23 @@ csw
           ssna_tmp(is,k)=ssna_tmp(is,k)+ssnireg(is,k)      
         end do
       end do
+
 csw 20sep2013 added
       do iy=0,ny-1
-	do ix=0,nx-1
-	  ir=region(ix,iy,0)
-	  eesum(ir)=eesum(ir)+1.5*te(ix,iy)*ne(ix,iy)*vol(ix,iy)
-	  eisum(ir)=eisum(ir)+1.5*ti(ix,iy)*ne(ix,iy)*vol(ix,iy)
-	  nesum(ir)=nesum(ir)+ne(ix,iy)*vol(ix,iy)
-	  volsum(ir)=volsum(ir)+vol(ix,iy)
-	  do is=1,nspecies
-	    nisum(is,ir)=nisum(is,ir)+
-     +                                           ni(ix,iy,is)*vol(ix,iy)
-	  end do
-	enddo
+       do ix=0,nx-1
+        ir=region(ix,iy,0)
+        eesum(ir)=eesum(ir)+1.5*te(ix,iy)*ne(ix,iy)*vol(ix,iy)
+        eisum(ir)=eisum(ir)+1.5*ti(ix,iy)*ne(ix,iy)*vol(ix,iy)
+        nesum(ir)=nesum(ir)+ne(ix,iy)*vol(ix,iy)
+        volsum(ir)=volsum(ir)+vol(ix,iy)
+        do is=1,nspecies
+          nisum(is,ir)=nisum(is,ir)+
+     +                 ni(ix,iy,is)*vol(ix,iy)
+        end do
+       enddo
       enddo
-csw
+
+
       do j=1,nstrai
 csw 18nov2013 check alloc
         if(allocated(srcstrn))

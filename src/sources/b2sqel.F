@@ -59,7 +59,7 @@
       real (kind=R8) ::
      *   phm0, phm1, phm2, cutlo, cutll, t0, art_rad, tnorm
       save ncall, phm0, phm1, phm2, art_rad
-      integer , save :: with_eirene=0, override_test=0
+      integer , save :: with_eirene=0
 *   ..procedures
       intrinsic log, exp, min, max, dim
       real (kind=R8) ::
@@ -86,7 +86,6 @@
      &  'faulty internal parameter phm0, phm1, phm2')
        call ipgetr ('b2sqel_artificial_radiation', art_rad)
        call ipgeti ('b2sqel_with_eirene', with_eirene)
-       call ipgeti ('b2sqel_override_test', override_test)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -114,7 +113,7 @@
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
-csw 10oct2012
+csw 10oct2012 check if EIRENE was called -> avoid double counting
          if(with_eirene.eq.0) then
 *      ..compute ionisation rate coefficient
           rsa(ix,iy,is) = phm0*
@@ -138,17 +137,18 @@ csw 10oct2012
           else
            rra(ix,iy,is) = 0.0_R8
           endif
-csw 27jun2013 override test
-          if(override_test .ne. 0
-     .               .and. is.gt.1 
-     .               .and. .not.is_neutral(is)
-     .               .and. is_neutral(is-1)) then
+
+csw 25apr2014 make sure that recombination ONLY for non-bulk, i.e,
+c             is(plasma) >1 --> erase rra for is==1
+c             (not ideal, e.g. what if 2 bulk species? D & T ? ) --> fix
+c             later
+          if(.not.is_neutral(is)) then
            rra(ix,iy,is) = phm1*
      &     expu(rlra(ix,iy,0,is)+rlra(ix,iy,1,is)*wrk0(ix,iy))
+           if(is .eq. 1) rra(ix,iy,is) = 0.0_R8
           endif
-csw
          endif
-csw
+
 *      ..compute heat loss rate coefficient
          rqa(ix,iy,is) = phm2*
      &     ev*expu(rlqa(ix,iy,0,is)+rlqa(ix,iy,1,is)*wrk0(ix,iy))

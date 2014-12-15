@@ -6,6 +6,7 @@
      &  snbv, flob, conb, pccb1, rescb, corpb, aa5, name)             !srv 18.05.02
       use b2mod_types
       use b2mod_indirect
+      use b2mod_work, only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt
@@ -36,9 +37,9 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ireg, ileft, ibot, itop, k
-	integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
-	integer, save :: iout = 0                                       !srv 17.06.02
-	character chns*2, chk*1                                     !srv 17.06.02
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
+      integer, save :: iout = 0                                       !srv 17.06.02
+      character chns*2, chk*1                                     !srv 17.06.02
       real (kind=R8) ::
      *  t0, t1
       save ncall
@@ -84,7 +85,7 @@
        call b2xvsg (n2, snbv, 1, 'snbv', '.le.')
        if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then         !srv 06.07.06 {
         call b2xvsg (n2*2*3, conb, 1, 'conb', '.ge.')               !srv 18.11.05 13.10.06
-	 endif                                                        !srv 06.07.06 }
+       endif                                                        !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
        call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')                !srv 13.10.06 {
@@ -123,6 +124,14 @@
       enddo
       do iy = -1, ny
        do ix = -1, nx
+
+csw 18feb2014 corrected BCs (SOLPS4)
+        if(iffboundx(ix,iy).ne.0) then
+          aa5(ix,iy,-1) = 0.0_R8
+          aa5(ix,iy,1) = 0.0_R8
+          cycle
+        endif
+
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
           aa5(ix,iy,-1) = 0.0_R8
@@ -149,6 +158,13 @@
       enddo
       do iy = -1, ny
        do ix = -1, nx
+csw 18feb2014 corrected BCs (SOLPS4)
+        if(iffboundy(ix,iy).ne.0) then
+          aa5(ix,iy,-2) = 0.0_R8
+          aa5(ix,iy,2) = 0.0_R8
+          cycle
+        endif
+
         ireg = region(ix,iy,0)
         if(bottomiy(ix,iy).eq.-2) then
           aa5(ix,iy,-2) = 0.0_R8
@@ -169,7 +185,7 @@
 cxpb
           if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
      &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
-     &	     iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
+     &       iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
             if(ncall.lt.3) write(*,*) 'Executing xpb:b2usco for ',ix,iy
             t0 = flob(topix(ix,iy),topiy(ix,iy),1)/2-
      &           conb(topix(ix,iy),topiy(ix,iy),1,0)-                !srv 13.10.06
@@ -212,20 +228,20 @@ cxpb
         corpb(ix,iy) = corpb(ix,iy)*rscal(pb(ix,iy))
        enddo
       enddo
-	if (iout.ne.0) then                                              !srv 17.06.02 {
-	 write (chns,'(i2.2)') isb    
-	 do k=0,1
-	  write (chk,'(i1)') k  
-	 enddo
-	  call my_out(70,nx,ny,aa5(-1,-1,-2),name//'_aa5m2'//chns)
-	  call my_out(70,nx,ny,aa5(-1,-1,-1),name//'_aa5m1'//chns)
-	  call my_out(70,nx,ny,aa5(-1,-1, 0),name//'_aa5m0'//chns)
-	  call my_out(70,nx,ny,aa5(-1,-1, 1),name//'_aa5p1'//chns)
-	  call my_out(70,nx,ny,aa5(-1,-1, 2),name//'_aa5p2'//chns)
-	  call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
-	  call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
-	  call my_out(70,nx,ny,nb,name//'_nb'//chns)
-	endif                                                            !srv 17.06.02 }
+      if (iout.ne.0) then                                              !srv 17.06.02 {
+       write (chns,'(i2.2)') isb    
+       do k=0,1
+        write (chk,'(i1)') k  
+       enddo
+       call my_out(70,nx,ny,aa5(-1,-1,-2),name//'_aa5m2'//chns)
+       call my_out(70,nx,ny,aa5(-1,-1,-1),name//'_aa5m1'//chns)
+       call my_out(70,nx,ny,aa5(-1,-1, 0),name//'_aa5m0'//chns)
+       call my_out(70,nx,ny,aa5(-1,-1, 1),name//'_aa5p1'//chns)
+       call my_out(70,nx,ny,aa5(-1,-1, 2),name//'_aa5p2'//chns)
+       call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
+       call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
+       call my_out(70,nx,ny,nb,name//'_nb'//chns)
+      endif                                                            !srv 17.06.02 }
 
 * ..return
       ncall = ncall+1

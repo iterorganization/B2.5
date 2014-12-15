@@ -14,7 +14,7 @@
 *   ..local variables
       integer ncall, ix, iy, area_fix
       real (kind=R8) ::
-     *   t0
+     *   t0,t1
       save ncall, area_fix
 *   ..procedures
       intrinsic max, sqrt
@@ -44,6 +44,17 @@
      &    (nirm(leftix(ix,iy),leftiy(ix,iy))
      &     +nirm(ix,iy))/(ni(leftix(ix,iy),leftiy(ix,iy),0)
      &                                 +ni(ix,iy,0))
+
+csw sep2014 TESTING only (SOLPS4 flux discr.)
+c         t0 = ti(ix,iy)
+c         t1 = ti(leftix(ix,iy),leftiy(ix,iy))
+c         chvimx(ix,iy) = cflmi*0.5d0*(
+c     &     pbsx(ix,iy)*sqrt(t0/mp)*nirm(ix,iy)
+c     &    +pbsx(leftix(ix,iy), leftiy(ix,iy))*sqrt(t1/mp)
+c     .                 *nirm(leftix(ix,iy),leftiy(ix,iy)) )
+c     &                   /(ni(leftix(ix,iy),leftiy(ix,iy),0)
+c     &                                 +ni(ix,iy,0))
+
          if (area_fix.eq.2) chvimx(ix,iy) = chvimx(ix,iy)*qc(ix,iy)
         endif
        enddo

@@ -7,6 +7,7 @@
      &  resht, reshe, reshi, cortt, corte, corti, flo0, con0, aa5, name)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_work, only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, itcnt
@@ -156,6 +157,13 @@
       enddo
       do iy = -1, ny
        do ix = -1, nx
+csw 18feb2014 corrected BCs (SOLPS4)
+        if(iffboundx(ix,iy).ne.0) then
+          aa5(ix,iy,-1) = 0.0_R8
+          aa5(ix,iy,1) = 0.0_R8
+          cycle
+        endif
+
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
          aa5(ix,iy,-1) = 0.0_R8
@@ -179,6 +187,13 @@
       enddo
       do iy = -1, ny
        do ix = -1, nx
+csw 18feb2014 corrected BCs (SOLPS4)
+        if(iffboundy(ix,iy).ne.0) then
+          aa5(ix,iy,-2) = 0.0_R8
+          aa5(ix,iy,2) = 0.0_R8
+          cycle
+        endif
+
         ireg = region(ix,iy,0)
         if(bottomiy(ix,iy).eq.-2) then
          aa5(ix,iy,-2) = 0.0_R8
@@ -198,7 +213,7 @@
 cxpb
          if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
      &      topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
-     &	    iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
+     &      iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
            if(ncall.lt.3) 
      >      write(*,*) 'Executing xpb:b2usht(1) for ',ix,iy
            itop = region(topix(ix,iy),topiy(ix,iy),0)
@@ -280,6 +295,13 @@ cxpb
       enddo
       do iy = -1, ny
        do ix = -1, nx
+csw 18feb2014 corrected BCs (SOLPS4)
+        if(iffboundx(ix,iy).ne.0) then
+          aa5(ix,iy,-1) = 0.0_R8
+          aa5(ix,iy,1) = 0.0_R8
+          cycle
+        endif
+
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
          aa5(ix,iy,-1) = 0.0_R8
@@ -303,6 +325,13 @@ cxpb
       enddo
       do iy = -1, ny
        do ix = -1, nx
+csw 18feb2014 corrected BCs (SOLPS4)
+        if(iffboundy(ix,iy).ne.0) then
+          aa5(ix,iy,-2) = 0.0_R8
+          aa5(ix,iy,2) = 0.0_R8
+          cycle
+        endif
+
         ireg = region(ix,iy,0)
         if(bottomiy(ix,iy).eq.-2) then
          aa5(ix,iy,-2) = 0.0_R8
@@ -322,7 +351,7 @@ cxpb
 cxpb
          if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
      &      topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
-     &	    iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
+     &      iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
            if(ncall.lt.3) 
      >      write(*,*) 'Executing xpb:b2usht(2) for ',ix,iy
            itop = region(topix(ix,iy),topiy(ix,iy),0)
@@ -403,6 +432,13 @@ cxpb
       enddo
       do iy = -1, ny
        do ix = -1, nx
+csw 18feb2014 corrected BCs (SOLPS4)
+        if(iffboundx(ix,iy).ne.0) then
+          aa5(ix,iy,-1) = 0.0_R8
+          aa5(ix,iy,1) = 0.0_R8
+          cycle
+        endif
+
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
          aa5(ix,iy,-1) = 0.0_R8
@@ -427,6 +463,13 @@ cxpb
       enddo
       do iy = -1, ny
        do ix = -1, nx
+csw 18feb2014 corrected BCs (SOLPS4)
+        if(iffboundy(ix,iy).ne.0) then
+          aa5(ix,iy,-2) = 0.0_R8
+          aa5(ix,iy,2) = 0.0_R8
+          cycle
+        endif
+
         ireg = region(ix,iy,0)
         if(bottomiy(ix,iy).eq.-2) then
          aa5(ix,iy,-2) = 0.0_R8
@@ -447,7 +490,7 @@ cxpb
 cxpb
          if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
      &      topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
-     &	    iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
+     &      iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
            if(ncall.lt.3) 
      >      write(*,*) 'Executing xpb:b2usht(3) for ',ix,iy
            itop = region(topix(ix,iy),topiy(ix,iy),0)
@@ -460,7 +503,7 @@ cxpb
            if (solvireg(itop))
      >      aa5(topix(ix,iy),topiy(ix,iy),0) = 
      &      aa5(topix(ix,iy),topiy(ix,iy),0)-
-     &	    t0*scalr(ti(topix(ix,iy),topiy(ix,iy)))
+     &      t0*scalr(ti(topix(ix,iy),topiy(ix,iy)))
            if (solvireg(ireg))
      >      aa5(ix,iy,0) = aa5(ix,iy,0)-t1*scalr(ti(ix,iy))
            if (solvireg(itop))

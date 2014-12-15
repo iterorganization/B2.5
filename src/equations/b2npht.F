@@ -13,6 +13,7 @@
       use b2mod_indirect
       use b2mod_tallies
       use b2mod_b2cmpa
+      use b2mod_work, only : ifenebound
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt
@@ -75,9 +76,9 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is
       integer, save :: iout = 0                                        !srv 17.07.05
-	integer, save :: style = 0                                       !srv 09.07.08
-	integer, save :: style_shei = 0                                  !srv 18.09.09 30.01.10
-	character chns*2                                                 !srv 17.07.05
+      integer, save :: style = 0                                       !srv 09.07.08
+      integer, save :: style_shei = 0                                  !srv 18.09.09 30.01.10
+      character chns*2                                                 !srv 17.07.05
       real (kind=R8) ::
      *  rxg, pcm0, pcm1, t0
       real (kind=R8) ::
@@ -195,11 +196,21 @@
        call b2sihs (nx, ny, ns, BoRiS, fac_ExB, hx, hy, qz, vol,        !xpb
      &  bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni, fch,            !srv 01.07.09
      &  cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0, wrk0)           !xpb
-	else
+      else
        call b2sihs_ (nx, ny, ns, fac_ExB, hx, hy, qz, vol, bb, pbs,     !srv 07.06.00 02.06.99 28.06.03
      *  lnlam, na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, fchdia,  !srv 28.06.03 01.07.09 05.03.11
      *  uadia, vadia, vaecrb, she0, shi0, wrk0)                         !srv 07.06.00 02.06.99 07.07.09
       endif
+csw 21feb2014 remove sources in ghostcells (SOLPS4)
+       do ix=-1,nx
+        do iy=-1,ny
+         if(ifenebound(ix,iy) .ne. 0) then
+          she0(ix,iy,:) = 0.0_R8
+          shi0(ix,iy,:) = 0.0_R8
+         endif
+        enddo
+       enddo
+
 * ..diagnostic of sources (b2sihs)
       b2she0=0.0_R8
       b2shi0=0.0_R8
@@ -232,19 +243,29 @@
      &                (te(ix,iy)*sqrt(te(ix,iy)))*(te(ix,iy)-ti(ix,iy))
         enddo
        enddo
-	else
+      else
        do iy = -1, ny
         do ix = -1, nx
-	   if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
+         if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
      &               bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
-	     shei(ix,iy) = 0.0_R8
-	   else
+           shei(ix,iy) = 0.0_R8
+         else
            shei(ix,iy) = ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
      &                 (te(ix,iy)*sqrt(te(ix,iy)))*(te(ix,iy)-ti(ix,iy))
-	   endif
+         endif
         enddo
        enddo
-	endif
+      endif
+
+csw 21feb2014 remove source in ghostcells (SOLPS4)
+       do ix=-1,nx
+        do iy=-1,ny
+         if(ifenebound(ix,iy) .ne. 0) then
+          shei(ix,iy) = 0.0_R8
+         endif
+        enddo
+       enddo
+
 *   ..compute final resht, reshe, reshi
       b2qie=0.0_R8
       do iy = -1, ny
@@ -255,29 +276,29 @@
         reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
        enddo
       enddo                                                           !srv 18.09.09 30.01.10 }
-	if(iout .eq. 1) then                                            !srv 17.07.05 {
-	 call my_out(70,nx,ny,shei,'b2npht_shei')
-	 call my_out(70,nx,ny,te,'b2npht_te')
-	 call my_out(70,nx,ny,ti,'b2npht_ti')
-	  call my_out(70,nx,ny,reshe,'b2npht_reshe')
-	 call my_out(70,nx,ny,fhe(-1,-1,0),'b2npht_fhex')               !srv 10.03.10
-	 call my_out(70,nx,ny,fhe(-1,-1,1),'b2npht_fhey')               !srv 10.03.10
+      if(iout .eq. 1) then                                            !srv 17.07.05 {
+       call my_out(70,nx,ny,shei,'b2npht_shei')
+       call my_out(70,nx,ny,te,'b2npht_te')
+       call my_out(70,nx,ny,ti,'b2npht_ti')
+       call my_out(70,nx,ny,reshe,'b2npht_reshe')
+       call my_out(70,nx,ny,fhe(-1,-1,0),'b2npht_fhex')               !srv 10.03.10
+       call my_out(70,nx,ny,fhe(-1,-1,1),'b2npht_fhey')               !srv 10.03.10
 !	  call my_out(70,nx,ny,she0(-1,-1,0),'b2npht_she0')
 !	  call my_out(70,nx,ny,she0(-1,-1,1),'b2npht_she1')
 !	  call my_out(70,nx,ny,she0(-1,-1,2),'b2npht_she2')
 !	  call my_out(70,nx,ny,she0(-1,-1,3),'b2npht_she3')
-	 call my_out(70,nx,ny,she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
+       call my_out(70,nx,ny,she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
      &                      she0(:,:,3)*te*ne,'b2npht_she')
-	  call my_out(70,nx,ny,reshi,'b2npht_reshi')
-	 call my_out(70,nx,ny,fhi(-1,-1,0),'b2npht_fhix')               !srv 10.03.10
-	 call my_out(70,nx,ny,fhi(-1,-1,1),'b2npht_fhiy')               !srv 10.03.10
+       call my_out(70,nx,ny,reshi,'b2npht_reshi')
+       call my_out(70,nx,ny,fhi(-1,-1,0),'b2npht_fhix')               !srv 10.03.10
+       call my_out(70,nx,ny,fhi(-1,-1,1),'b2npht_fhiy')               !srv 10.03.10
 !	  call my_out(70,nx,ny,shi0(-1,-1,0),'b2npht_shi0')
 !	  call my_out(70,nx,ny,shi0(-1,-1,1),'b2npht_shi1')
 !	  call my_out(70,nx,ny,shi0(-1,-1,2),'b2npht_shi2')
 !	  call my_out(70,nx,ny,shi0(-1,-1,3),'b2npht_shi3')
-	 call my_out(70,nx,ny,shi0(:,:,0)+shi0(:,:,1)*ti+
+       call my_out(70,nx,ny,shi0(:,:,0)+shi0(:,:,1)*ti+
      &     shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0),'b2npht_shi')
-	endif                                                            !srv 17.07.05 }
+      endif                                                            !srv 17.07.05 }
       if (solving) then
 *   ..compute correction
         call b2usht (nx, ny, nregionv, itcnt, solvereg, solvireg, 
@@ -292,20 +313,27 @@
      &   rxf, pcm0, cortt, corte, corti,
      &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0, vol)
        else
-        call b2upht_ (nx, ny, ns, rxf, pcm0, vol, cortt, corte, corti,   !srv 01.07.05
-     &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0)
+csw 21feb2014, added nregionv,...solvmreg to argument list
+c            and some rearrangements in b2upht_
+c            (probably we can remove now b2upht_ and use b2upht
+c            instead ???)
+        call b2upht_ (nx, ny, ns, 
+     &   nregionv, po_solve, ua_solve,
+     &   solvereg, solvireg, solvpreg, solvmreg,
+     &   rxf, pcm0, cortt, corte, corti,   !srv 01.07.05
+     &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0, vol)
        endif
       endif
-	if(iout .eq. 1) then                                          !srv 17.07.05 {
-	 do is = 0,ns-1
-	  write (chns,'(i2.2)') is
-	  call my_out(70,nx,ny,na(-1,-1,is),'b2npht_na'//chns)
-	  call my_out(70,nx,ny,ua(-1,-1,is),'b2npht_ua'//chns)
-	 enddo
-	 call my_out(70,nx,ny,te,'b2npht_te')
-	 call my_out(70,nx,ny,ti,'b2npht_ti')
-	 call my_out(70,nx,ny,po,'b2npht_po')
-	endif                                                            !srv 17.07.05 }
+      if(iout .eq. 1) then                                          !srv 17.07.05 {
+       do is = 0,ns-1
+        write (chns,'(i2.2)') is
+        call my_out(70,nx,ny,na(-1,-1,is),'b2npht_na'//chns)
+        call my_out(70,nx,ny,ua(-1,-1,is),'b2npht_ua'//chns)
+       enddo
+       call my_out(70,nx,ny,te,'b2npht_te')
+       call my_out(70,nx,ny,ti,'b2npht_ti')
+       call my_out(70,nx,ny,po,'b2npht_po')
+      endif                                                            !srv 17.07.05 }
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)
       ierr = 0

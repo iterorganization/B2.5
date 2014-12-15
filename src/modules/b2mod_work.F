@@ -25,6 +25,9 @@
 ! _h is an abbreviation from 'history'
       integer, save :: max_eir_hist_slc = 100                          !IYS 28.03.12 }
 #endif
+      integer, allocatable, save ::
+     .  iffboundx(:,:), iffboundy(:,:),
+     .  ifenebound(:,:), iftimbound(:,:)
 
       contains
 
@@ -58,6 +61,10 @@
       allocate(cvisper(-1:nxd,-1:nyd,0:1))                            !srv 05.07.00
       allocate(wrk0(-1:nxd,-1:nyd))
       allocate(wrk1(-1:nxd,-1:nyd))
+      allocate(iffboundx(-1:nxd,-1:nyd))
+      allocate(iffboundy(-1:nxd,-1:nyd))
+      allocate(ifenebound(-1:nxd,-1:nyd))
+      allocate(iftimbound(-1:nxd,-1:nyd))
 
       avisper=0                                                       !srv 05.07.00
       bvisper=0                                                       !srv 05.07.00
@@ -86,32 +93,40 @@
       pccm=0
       wrk0=0
       wrk1=0
+      iffboundx=0
+      iffboundy=0
+      ifenebound=0
+      iftimbound=0
 
       end subroutine alloc_b2mod_work
 
 #ifdef USE_EIRENE  
-      subroutine alloc_hist_arrays(nxd,nyd,nsd)                     !IYS 28.03.12 {
+      subroutine alloc_hist_arrays(nxd,nyd,nsd,nhistd)                     !IYS 28.03.12 {
 
       implicit none
-      integer nxd,nyd,nsd
+      integer nxd,nyd,nsd,nhistd
 #     include "DIMENSIONS.F"
 #     include <COUPLE/KOPPLDIM.F>
 
 ! to store the time history of sources from EIRENE
-      allocate(sna0_eir_h(-1:nxd,-1:nyd,0:1,0:nsd-1,max_eir_hist_slc))
-      allocate(smo0_eir_h(-1:nxd,-1:nyd,0:3,0:nsd-1,max_eir_hist_slc))
-      allocate(she0_eir_h(-1:nxd,-1:nyd,0:3,max_eir_hist_slc))
-      allocate(shi0_eir_h(-1:nxd,-1:nyd,0:3,max_eir_hist_slc))
-      allocate(rfluxa_h(0:ndxp,0:ndyp,natm,1,max_eir_hist_slc))
-      allocate(rfluxm_h(0:ndxp,0:ndyp,natm,1,max_eir_hist_slc))
+      allocate(sna0_eir_h(-1:nxd,-1:nyd,0:1,0:nsd-1,nhistd))
+      allocate(smo0_eir_h(-1:nxd,-1:nyd,0:3,0:nsd-1,nhistd))
+      allocate(she0_eir_h(-1:nxd,-1:nyd,0:3,nhistd))
+      allocate(shi0_eir_h(-1:nxd,-1:nyd,0:3,nhistd))
+      allocate(rfluxa_h(0:ndxp,0:ndyp,natm,1,nhistd))
+      allocate(rfluxm_h(0:ndxp,0:ndyp,natm,1,nhistd))
+      call clear_hist_arrays
+      end subroutine alloc_hist_arrays
+
+      subroutine clear_hist_arrays                                 !csw 24feb2014
+      implicit none
       sna0_eir_h = 0.0_R8
       smo0_eir_h = 0.0_R8
       she0_eir_h = 0.0_R8
       shi0_eir_h = 0.0_R8 
       rfluxa_h = 0.0_R8  
       rfluxm_h = 0.0_R8    
-
-      end subroutine alloc_hist_arrays                             !IYS 28.03.12 }      
+      end subroutine clear_hist_arrays                             !IYS 28.03.12 }      
 #endif            
 
       end module b2mod_work

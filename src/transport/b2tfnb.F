@@ -17,6 +17,7 @@
       use b2mod_geo_corner                                               !xpb
       use b2mod_b2cmpa
       use b2mod_b2cmfs
+      use b2mod_work, only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, guard_flows, ismain                           !xpb !srv 08.09.01 !lk 02.06.11
@@ -77,10 +78,6 @@
       character chns*2                                                 !srv 16.09.02
       integer, save :: fnb_nodrift_style = 0                             !srv 20.06.08
       integer, save :: drift_style = 0                                   !srv 21.06.08
-csw 03jul2013
-      integer, save :: no_53_cvla = 0
-      real (kind=R8), save :: cvla_fac=5.0_R8/3.0_R8
-csw
       real (kind=R8), save ::  cfvma = 0.0_R8                            !srv 15.12.05
       real (kind=R8), save ::  alpha_ = 0.0_R8                           !srv 09.07.03
       real (kind=R8), save ::  ycur = 0.0_R8                             !srv 07.07.08
@@ -185,9 +182,6 @@ csw
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgetr ('b2tfrn_xvecrb', xvecrb)                             !srv 27.01.12
         call ipgetr ('b2tfrn_xwdia', xwdia)                               !srv 27.01.12
-csw 03jul2013
-        call ipgeti ('b2tfnb_no_53_cvla', no_53_cvla)
-csw
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -202,14 +196,6 @@ csw
        call b2xvff (nx, ny, cdnb, 'cdnb')
        call b2xvff (nx, ny, cdpb, 'cdpb')
       endif
-
-csw 03jul2013
-      if(no_53_cvla .ne. 0) then
-        cvla_fac=1.0_R8
-      else
-        cvla_fac=5.0_R8/3.0_R8
-      endif
-csw
 
       if(mdf_fnb.eq.0) then                                     !srv 21.10.10 {
        kmprti  = 0.0_R8
@@ -853,7 +839,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
      7     hx(leftix(ix,iy),leftiy(ix,iy)))                           !srv 17.07.08 }
-          flo_he = cvla_fac*cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+   !srv 13.09.02 { 01.07.05 20.01.11
+          flo_he = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+   !srv 13.09.02 { 01.07.05 20.01.11
      &     term(ix,iy) +                                                     !iyv 30.05.08 !srv 03.10.08 
      1     (bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 11.01.13
      2     bb(leftix(ix,iy),leftiy(ix,iy),2)/
@@ -885,7 +871,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &      vbecrb(ix,iy,0)*
      &      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      &      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
-          flo_he = cvla_fac*cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+ !srv 13.09.02 { 01.07.05 20.01.11
+          flo_he = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+ !srv 13.09.02 { 01.07.05 20.01.11
      &     term(ix,iy) +                                                     !iyv 30.05.08 !srv 03.10.08 
      4     vbecrb(ix,iy,0)*
      5     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/               
@@ -937,8 +923,10 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &      fnbPSch(ix,iy,0)                                            !srv 13.10.06 }
 *      fnb_he will be used only for heat equations                      !srv 21.01.00 {      
            fnb_he(ix,iy,0) = flo_he*(nb(leftix(ix,iy),leftiy(ix,iy))     !srv 13.09.02
-     &      +nb(ix,iy))/2.0_R8-(5.0e0_R8/3.0e0_R8)*(
-     &      con_he(ix,iy)*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))+         !srv 13.09.02
+     &      +nb(ix,iy))/2.0_R8-
+csw 30sep2014 (is this 5/3 factor correct here? I think not...)
+     &      (5.0e0_R8/3.0e0_R8)*
+     &      (con_he(ix,iy)*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))+         !srv 13.09.02
      &      cdpb(ix,iy,0)*(pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy))) ) !srv 21.01.00 }
            fnb_32(ix,iy,0) =
      1      flo*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8-
@@ -980,9 +968,8 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          else  !  SOLPS4.0 basic treatment
            con(ix,iy) = cdnb(ix,iy,0)
            con_nodrift = cdnb(ix,iy,0)
-csw 14mar2013 missing --> b2tfhi_ / b2tfhe_ !!!
+csw 14mar2013 missing con_he added --> needed in b2tfhi_ / b2tfhe_ !!!
            con_he(ix,iy)   = cdnb(ix,iy,0) 
-csw
 !         T0 = (NI(IX,IY) + NI(IX+1,IY)) / 2
 !         T1 = (2 * NI(IX,IY) * NI(IX+1,IY)) /
 !     .    (CUTLO + NI(IX,IY) + NI(IX+1,IY))
@@ -1009,13 +996,12 @@ csw
            flob(ix,iy,0) = 
      .      min(kap(ix,iy), kap(leftix(ix,iy),leftiy(ix,iy))) *
      .      flo * t2 / (t0 + cutlo)
-csw 14mar2013 missing --> b2tfhi_ / b2tfhe_ !!!
-*      fnb_he will be used only for heat equations                      !srv 21.01.00 {      
+csw 14mar2013 missing fnb_he added --> needed in b2tfhi_ / b2tfhe_ !!!
            fnb_he(ix,iy,0) = flo_he * t2 -
-     &      (5.0e0_R8/3.0e0_R8)*(
-     &      con_he(ix,iy)*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))+         !srv 13.09.02
+csw 30sep2014 (is this 5/3 factor correct here? I think not...)
+     &      (5.0e0_R8/3.0e0_R8)*
+     &      (con_he(ix,iy)*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))+         !srv 13.09.02
      &      cdpb(ix,iy,0)*(pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy))) ) !srv 21.01.00 }
-csw
 !         conb(ix,iy,0,0) = (CCX(IX,IY)+CCX1(IX,IY)) * SX(IX,IY)
            fnb_32(ix,iy,0) = flo * t2
            fnb_52(ix,iy,0) = -
@@ -1232,7 +1218,7 @@ csw
      &        hy1(bottomix(ix,iy),bottomiy(ix,iy)))    !srv 01.03.00 09.01.01
            endif
           endif
-          flo_he = cvla_fac*cvlb(ix,iy,1)+                      !srv 13.09.02 ( 20.01.11
+          flo_he = cvlb(ix,iy,1)+                      !srv 13.09.02 ( 20.01.11
      &      0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
      &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
@@ -1285,7 +1271,7 @@ csw
      6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))            !srv 01.03.00
            endif
           endif
-          flo_he = cvla_fac*cvlb(ix,iy,1)+vbecrb(ix,iy,1)*         !srv 13.09.02 ( 20.01.11
+          flo_he = cvlb(ix,iy,1)+vbecrb(ix,iy,1)*         !srv 13.09.02 ( 20.01.11
      5     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
 
@@ -1312,9 +1298,11 @@ csw
      &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
 *      fnb_he will be used only for heat equations                       !srv 21.01.00 {     
           fnb_he(ix,iy,1) = flo_he*(nb(bottomix(ix,iy),bottomiy(ix,iy)) !srv 13.09.02 {
-     &          +nb(ix,iy))/2.0_R8-(5.0_R8/3.0_R8)*(
-     &    con_he(ix,iy)*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))+        !srv 13.09.02 }
-     &    cdpb(ix,iy,1)*(pb(ix,iy)
+     &          +nb(ix,iy))/2.0_R8-
+csw 30sep2014 (is this 5/3 factor correct here? I think not...)
+     &    (5.0_R8/3.0_R8)*
+     &    (con_he(ix,iy)*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))        !srv 13.09.02 }
+     &    +cdpb(ix,iy,1)*(pb(ix,iy)
      &                   -pb(bottomix(ix,iy),bottomiy(ix,iy))) )         !srv 21.01.00 }
           if(cfvma .eq. 0.0_R8) then                                    !srv 15.12.05
             fnb_fcor(ix,iy,1) = flo2dia*                                 !srv 01.10.99
@@ -1389,12 +1377,11 @@ csw
            conb(ix,iy,1,1) = cdpb(ix,iy,1)*kmprti(ix,iy,1)
            conb(ix,iy,1,2) = conb(ix,iy,1,1)
           endif                                                      !srv 23.06.08 }
-         else
+         else ! SOLPS4.0 basic treatment
            con(ix,iy) = cdnb(ix,iy,1)
            con_nodrift = cdnb(ix,iy,1)
-csw 14mar2013 missing --> b2tfhi_ / b2tfhe_ !!!
+csw 14mar2013 missing con_he added --> needed in b2tfhi_ / b2tfhe_ !!!
            con_he(ix,iy)   = cdnb(ix,iy,1)     
-csw
 *  -- COMPUTE FNIY, FLOY, CONY --
            t0 = (nb(ix,iy) + nb(bottomix(ix,iy),bottomiy(ix,iy))) /
      1      2.0_R8
@@ -1416,15 +1403,14 @@ csw
            flob(ix,iy,1) = min(kap(ix,iy), 
      .                         kap(bottomix(ix,iy),bottomiy(ix,iy))) *
      .      flo * t2 / (t0 + cutlo)
-csw 14mar2013 missing --> b2tfhi_ / b2tfhe_ !!!
-*      fnb_he will be used only for heat equations                       !srv 21.01.00 {     
+csw 14mar2013 missing fnb_he added --> needed in b2tfhi_ / b2tfhe_ !!!
            fnb_he(ix,iy,1) = flo_he * t2 -
-     &      (5.0_R8/3.0_R8)*(
-     &      con_he(ix,iy)*(nb(ix,iy)-
+csw 30sep2014 (is this 5/3 factor correct here? I think not...)
+     &      (5.0_R8/3.0_R8)*
+     &      (con_he(ix,iy)*(nb(ix,iy)-
      &      nb(bottomix(ix,iy),bottomiy(ix,iy)))+        !srv 13.09.02 }
      &      cdpb(ix,iy,1)*(pb(ix,iy)
      &      -pb(bottomix(ix,iy),bottomiy(ix,iy))) )         !srv 21.01.00 }
-csw
 !          CONY(IX,IY) = CCY(IX,IY) * SY(IX,IY)
            fnb_32(ix,iy,1) = flo * t2
            fnb_52(ix,iy,1) = -
@@ -1628,6 +1614,46 @@ cxpb turn off poloidal flows in core boundary
           conb(:,iy,0,0:2)    = 0.0_R8
          enddo                                                        !srv 20.06.08 }
       endif                                                           !xpb
+
+csw 18feb2014 remove fluxes between guard cells 
+        do ix=-1,nx
+         do iy=-1,ny
+          if(iffboundx(ix,iy).ne.0) then
+            fnb(ix,iy,0)=0.0_R8
+            fnb_32(ix,iy,0)=0.0_R8
+            fnb_52(ix,iy,0)=0.0_R8
+            fnb_nodrift(ix,iy,0)=0.0_R8
+            fnb_32nd(ix,iy,0)=0.0_R8
+            fnb_52nd(ix,iy,0)=0.0_R8
+            fnb_fcor(ix,iy,0)=0.0_R8
+            fnb_he(ix,iy,0)=0.0_R8
+            fnb_mdf(ix,iy,0)=0.0_R8
+            flob(ix,iy,0)=0.0_R8
+            vbecrb(ix,iy,0)=0.0_R8
+            vbdia(ix,iy,0)=0.0_R8
+            wbdia(ix,iy,0)=0.0_R8
+            ubdia(ix,iy,0)=0.0_R8
+            conb(ix,iy,0,:)=0.0_R8
+          endif
+          if(iffboundy(ix,iy).ne.0) then
+            fnb(ix,iy,1)=0.0_R8
+            fnb_32(ix,iy,1)=0.0_R8
+            fnb_52(ix,iy,1)=0.0_R8
+            fnb_nodrift(ix,iy,1)=0.0_R8
+            fnb_32nd(ix,iy,1)=0.0_R8
+            fnb_52nd(ix,iy,1)=0.0_R8
+            fnb_fcor(ix,iy,1)=0.0_R8
+            fnb_he(ix,iy,1)=0.0_R8
+            fnb_mdf(ix,iy,1)=0.0_R8
+            flob(ix,iy,1)=0.0_R8
+            vbecrb(ix,iy,1)=0.0_R8
+            vbdia(ix,iy,1)=0.0_R8
+            wbdia(ix,iy,1)=0.0_R8
+            ubdia(ix,iy,1)=0.0_R8
+            conb(ix,iy,1,:)=0.0_R8
+          endif
+         enddo
+        enddo
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO

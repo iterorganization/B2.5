@@ -16,6 +16,7 @@
       use b2mod_rates                                                 !srv 22.06.08
       use b2mod_b2cmfs                                                !srv 22.06.08
       use b2mod_b2cmpa                                                !srv 22.06.08
+      use b2mod_work, only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain
@@ -34,6 +35,8 @@
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny),
      2 facdrift(-1:nx,-1:ny)
+      real (kind=R8) :: cutlo
+      parameter (cutlo = 1.0e-60_R8)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   fch(-1:nx,-1:ny,0:1), fhe(-1:nx,-1:ny,0:1),
@@ -82,8 +85,10 @@
       integer, save :: conductive limit = 0                           !srv 16.06.08 17.01.12
       integer mintopcut                                               !lk  
       integer, save :: no_current=0                          !srv 27.02.13
-      integer, save :: b2_upwind =0       !csw 10oct2012
-      integer, save :: b2tfhe_hybr2=0
+csw 10oct2012
+      integer, save :: b2_upwind =0     
+      integer, save :: b2tfhe_hybr2=0, flo53=0
+
       character(2) :: charns, charns0
       real (kind=R8), save :: alfTeEh = 1.0_R8                     !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 0.0_R8                        !srv 30.12.09
@@ -135,9 +140,11 @@
      *   harm, hybr, hy1, upwind
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx, b2ttia                         !srv 11.07.99
-      hy1(ix,iy) = hy(ix,iy)/qz(ix,iy,1)                              !srv 07.05.08
+csw aug2014 fix hy1 as suggested by xpb (multiply qz instead divide)
+      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                              !srv 07.05.08
       harm(t0,t1) = 2*t0*t1/(t0+t1)
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
+csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
 *   ..initialization
       data ncall/0/, fch_ion_neutral/1.0e0_R8/, fch_inert/1.0e0_R8/      !srv 07.07.99 22.03.02    
@@ -189,7 +196,8 @@
        call ipgeti ('b2tqce_model', model)
        call ipgeti ('b2tfhe_upwind',b2_upwind)
        call ipgeti ('b2tfhe_hybr2',b2tfhe_hybr2)
-      endif                                                              !srv
+       call ipgeti ('b2tfhe_flo53',flo53)
+       endif                                                              !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -901,23 +909,16 @@ c  ..set null flux in guard cells  ?
      &    chve(ix,iy,0)*
      &    (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8         !srv 13.06.06 }
      &    -0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe                        !srv 30.12.09
-csw
+
+
          if(lim_flux.eq.1 .and. conductive limit.eq.0) then           !srv 04.02.03 17.01.12
 
           if(no_Ptncr_x_he.eq.0) then
            cone0 = hybr(floe0,chce(ix,iy,0))-abs(floe0/2.0)
-csw 13mar2013
-           if(b2tfhe_hybr2 .ne. 0) then
-             cone0=dim(chce(ix,iy,0), floe0*
-     .        max(0.0,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
-     .        max(1.e-30,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
-     .        -abs(floe0/2.0)
-           endif
-csw
           else
            cone0 = chce(ix,iy,0)-abs(floe0/2.0)
           endif
-csw
+
           if (chce(ix,iy,0).eq.0) then
            alfe0 = 0
           else
@@ -935,50 +936,70 @@ csw 05oct2012 check for solps4 model
              t0=0.0_R8
            endif
           else
+csw 2014 changed flux limiting expression (no t0 cutoff for neg. flomx)
+c        i.e.for  model .eq. 2 (SOLPS4)
            flomx = chvemx(ix,iy)
-           if(flomx.gt.0.0_R8) then
-             t0 = cone0*abs(tex)/flomx
-           else
-             t0=0.0_R8
-           endif
+           t0 = cone0*abs(tex/(flomx+1.d-60))
           endif 
-csw
-          tex0 = tex/(1+t0)
-csw 27nov2012 add check for upwind
+
+          tex0 = tex/(1.d0+t0)
+
+csw 13mar2013 SOLPS4 modified f. flux limited hybrid style (overwrite cone0)
+          if(b2tfhe_hybr2 .ne. 0) then
+
+csw 30apr2014 flo53 ONLY FOR TESTING (SOLPS4)
+           if(flo53 .ne. 0) then
+            floe0=floe0*5.d0/3.d0
+           endif
+
+           cone0=dim(chce(ix,iy,0)/(1.d0+t0), abs(floe0)*
+     .      max(0.0d0,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
+     .      max(cutlo,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
+          endif
+
+
+csw 27nov2012 add check for upwind (SOLPS4 style)
           if(b2_upwind .ne. 0) then
              fhe(ix,iy,0) =
-     &         upwind(floe0,te(leftix(ix,iy),leftiy(ix,iy)), te(ix,iy))
-     &         -abs(floe0/2.0)*tex
-     &         -cone0*tex0 + alfTeEh*
+     &        upwind(floe0,te(leftix(ix,iy),leftiy(ix,iy)), te(ix,iy))
+     &         -cone0*(te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))) 
+     &         + alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
           else
              fhe(ix,iy,0) =
      &         floe0*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.d0
-     &         -abs(floe0/2.0)*tex
      &         -cone0*tex0 + alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
           endif
-csw
+
           if(mdf_fhe.eq.0) then                                         !srv 17.06.09 {
-           floe(ix,iy,0) = floe0
-           cone(ix,iy,0,0) = abs(floe0/2.0)+cone0/(1+t0)                  !srv 02.01.07
-csw
+
+csw 30apr2014
+           if(b2tfhe_hybr2 .ne.0) then
+            floe(ix,iy,0) = floe0
+            cone(ix,iy,0,0) = cone0
+           else
+            floe(ix,iy,0) = floe0
+            cone(ix,iy,0,0) = abs(floe0/2.0)+cone0/(1+t0)                  !srv 02.01.07
+           endif
+
+
           else
+
 csw 17feb2012
            if(no_Ptncr_x_he.eq.0) then
             cone0_mdf=hybr(floe0_mdf,chce(ix,iy,0))-abs(floe0_mdf/2.0)
-csw 13mar2013
-            if(b2tfhe_hybr2 .ne. 0) then
-             cone0_mdf=dim(chce(ix,iy,0), floe0_mdf*
-     .        max(0.0,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
-     .        max(1.e-30,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
-     .        -abs(floe0_mdf/2.0)
-            endif
-csw
            else
             cone0_mdf = chce(ix,iy,0)-abs(floe0_mdf/2.0)
            endif
-csw
+
+csw 13mar2013 SOLPS4 modified f. flux limited hybrid style (overwrite cone0_mdf)
+           if(b2tfhe_hybr2 .ne. 0) then
+            cone0_mdf=dim(chce(ix,iy,0), abs(floe0_mdf)*
+     .        max(0.0,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
+     .        max(1.e-30,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
+           endif
+
            if (chce(ix,iy,0).eq.0) then
             alfe0_mdf = 0
            else
@@ -989,11 +1010,10 @@ csw
      &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
            tex0_mdf = tex/(1.0_R8+t0_mdf)
 
-csw 27nov2012 added check for upwind
+csw 27nov2012 added check for upwind (SOLPS4 style)
            if(b2_upwind .ne. 0) then
              fhe_mdf(ix,iy,0) =
      &       upwind(floe0_mdf,te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))
-     &       -abs(floe0_mdf/2.0)*tex
      &       -cone0_mdf*tex0_mdf + alfTeEh*alfe0_mdf*
      &       harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
            else
@@ -1005,7 +1025,6 @@ csw 27nov2012 added check for upwind
            endif
             floe(ix,iy,0) = floe0_mdf
             cone(ix,iy,0,0) = cone0_mdf/(1.0_R8+t0_mdf) !srv 02.01.07
-csw
           endif                                                          !srv 17.06.09 }
  
           if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                !srv 16.09.02 {
@@ -1033,16 +1052,17 @@ csw
           if(no_Ptncr_x_he.eq.0) then                                 !srv 06.07.06 {
             cone0     = hybr(floe0,chce(ix,iy,0))
             cone0_mdf = hybr(floe0_mdf,chce(ix,iy,0))
-csw 13mar2013
+
+csw 13mar2013 overwrite cone0/cone0_mdf (SOLPS4 style)
             if(b2tfhe_hybr2 .ne. 0) then
-             cone0=dim(chce(ix,iy,0), floe0*
+             cone0=dim(chce(ix,iy,0), abs(floe0)*
      .        max(0.0,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
      .        max(1.e-30,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
-             cone0_mdf=dim(chce(ix,iy,0), floe0_mdf*
+             cone0_mdf=dim(chce(ix,iy,0), abs(floe0_mdf)*
      .        max(0.0,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
      .        max(1.e-30,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
             endif
-csw
+
           else
              cone0     = chce(ix,iy,0)
              cone0_mdf = chce(ix,iy,0)
@@ -1053,11 +1073,12 @@ csw
 !          else
 !           alfe0 = calf(ix,iy,0)*cone0_mdf/chce(ix,iy,0)
 !          endif
-
 !          alfe0 = 0.0e0_R8 ! calf(ix,iy,0)               !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08  }
+
           alfe0 = calf(ix,iy,0)                          !srv 16.06.07
           tex0  = tex
-csw 13mar2013 added check upwind
+
+csw 13mar2013 added check upwind (SOLPS4 style)
           if(b2_upwind .eq. 0) then
             fhe(ix,iy,0) =
      &         floe0*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
@@ -1080,7 +1101,7 @@ csw 13mar2013 added check upwind
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
      &        -fhePSch(ix,iy,0)                                         !srv 13.06.06 }
           endif
-csw
+
 
           if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then !srv 16.09.02 {
            if(mdf_fhe.eq.0) then                                        !srv 13.10.06 {
@@ -1186,7 +1207,7 @@ csw
         else
          ehy=0.0_R8
         endif                                                        !srv 27.02.13
-csw
+
         floe0 = 1.5e0_R8*fne(ix,iy,1)+                                 !srv 11.05.99
 !* in the next line there is the coeffisient +4 because                 !srv 13.08.02
 !* we need this term with +5/2=-3/2+4                                   !srv 13.08.02 19.08.02
@@ -1200,98 +1221,69 @@ csw
         if(no_Ptncr_y_he.eq.0) then                                  !srv 06.07.06 {
          if(mdf_fhe.eq.0) then                                       !srv 13.10.06 {
           cone0     = hybr(floe0,chce(ix,iy,1))
-csw 13mar2013
-          if(b2tfhe_hybr2 .ne. 0) then
-           cone0=dim(chce(ix,iy,1), floe0*
-     .      max(0.0,min(te(ix,iy),te(bottomix(ix,iy),bottomiy(ix,iy))))/
-     .      max(1.e-30,te(ix,iy)+te(bottomix(ix,iy), bottomiy(ix,iy))))
-          endif
-csw
          else
           if(facdriftm.eq.0.0e0_R8) then
            cone0    = hybr(floe0,chce(ix,iy,1))
-csw 13mar2013
-           if(b2tfhe_hybr2 .ne. 0) then
-            cone0=dim(chce(ix,iy,1), floe0*
-     .      max(0.0,min(te(ix,iy),te(bottomix(ix,iy),bottomiy(ix,iy))))/
-     .      max(1.e-30,te(ix,iy)+te(bottomix(ix,iy), bottomiy(ix,iy))))
-           endif
-csw
           else
            cone0    = chce(ix,iy,1)
           endif
          endif
-          cone0_mdf = hybr(floe0_mdf,chce(ix,iy,1))
-csw 13mar2013
-          if(b2tfhe_hybr2 .ne. 0) then
-           cone0_mdf=dim(chce(ix,iy,1), floe0_mdf*
-     .      max(0.0,min(te(ix,iy),te(bottomix(ix,iy),bottomiy(ix,iy))))/
-     .      max(1.e-30,te(ix,iy)+te(bottomix(ix,iy), bottomiy(ix,iy))))
-          endif
-csw
+         cone0_mdf = hybr(floe0_mdf,chce(ix,iy,1))
         else
           cone0     = chce(ix,iy,1)
           cone0_mdf = chce(ix,iy,1)
         endif 
 
-        if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then  !srv 16.09.02 {
-         if(mdf_fhe.eq.0) then                                         !srv 13.10.06 {
-          w1(ix,iy)=1.5e0_R8*fne(ix,iy,1)*
-     1   (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
-          w2(ix,iy)=2.5e0_R8*fledia(ix,iy,1)*
-     &      (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8
-     1   *(te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
-          w3(ix,iy)=-cone0*
-     1    (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-          w4(ix,iy)=calf(ix,iy,1)*
-     &     harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
-          w6(ix,iy) = cone0
-         else
-          w1(ix,iy)=1.5e0_R8*fne(ix,iy,1)*
-     1   (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
-          w2(ix,iy)=0.0e0_R8
-          w3(ix,iy)=-cone0_mdf*
-     1    (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-          w4(ix,iy)=calf(ix,iy,1)*
-     &     harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
-          w6(ix,iy) = cone0_mdf
-         endif
-        endif                                                !srv 16.09.02 }
+csw 13mar2013 overwrite cone0 (SOLPS4 style)
+        if(b2tfhe_hybr2 .ne. 0) then
 
-csw 13mar2013 added check upwind
+csw 30apr2014 flo53 ONLY FOR TESTING (SOLPS4)
+         if(flo53 .ne. 0) then
+          floe0=floe0*5.d0/3.d0
+         endif
+
+         cone0=dim(chce(ix,iy,1), abs(floe0)*
+     .   max(0.0,min(te(ix,iy),te(bottomix(ix,iy),bottomiy(ix,iy))))/
+     .   max(cutlo,te(ix,iy)+te(bottomix(ix,iy), bottomiy(ix,iy))))
+         cone0_mdf=dim(chce(ix,iy,1), abs(floe0_mdf)*
+     .   max(0.0,min(te(ix,iy),te(bottomix(ix,iy),bottomiy(ix,iy))))/
+     .   max(cutlo,te(ix,iy)+te(bottomix(ix,iy), bottomiy(ix,iy))))
+        endif
+
+csw 13mar2013 added check upwind (SOLPS4 style)
         if(b2_upwind .ne. 0) then
          fhe(ix,iy,1) = upwind(floe0,
-     &         te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))-
-     &         cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
+     &         te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))
+     &        -cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &        +alfTeEh*calf(ix,iy,1)*                                !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy  !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
          fhe_mdf(ix,iy,1) = upwind(floe0_mdf,                                 !srv 13.10.06 {
-     &         te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))-
-     &         cone0_mdf*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
+     &         te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))
+     &       -cone0_mdf*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &      -fhePSch(ix,iy,1)                                         !srv 13.10.06 }
      &        +alfTeEh*calf(ix,iy,1)*                                !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy  !iyv 12.05.08 !srv 03.10.08
         else
          fhe(ix,iy,1) = floe0*
-     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2-
-     &         cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
+     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+     &         -cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &        +alfTeEh*calf(ix,iy,1)*                                !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy  !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
          fhe_mdf(ix,iy,1) = floe0_mdf*                                 !srv 13.10.06 {
-     &        (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2-
-     &        cone0_mdf*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
+     &        (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+     &      -cone0_mdf*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &      -fhePSch(ix,iy,1)                                         !srv 13.10.06 }
      &        +alfTeEh*calf(ix,iy,1)*                                !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy  !iyv 12.05.08 !srv 03.10.08
         endif
-csw
+
 
         if(mdf_fhe.eq.0) then                                         !srv 13.10.06 {
          floe(ix,iy,1) = floe0
-         cone(ix,iy,1,0) = cone0                           !srv 02.01.07                                        !srv 23.06.99
+         cone(ix,iy,1,0) = cone0                           !srv 02.01.07            !srv 23.06.99
         else
          floe(ix,iy,1) = floe0_mdf
-         cone(ix,iy,1,0) = cone0_mdf                           !srv 02.01.07                                    !srv 23.06.99
+         cone(ix,iy,1,0) = cone0_mdf                           !srv 02.01.07          !srv 23.06.99
         endif                                                          !srv 13.10.06 }
         fch(ix,iy,1) =                                           !srv                             
      1      +fchin(ix,iy,1)                                      !srv
@@ -1320,6 +1312,53 @@ csw
          
        enddo
       enddo
+
+csw 18feb2014 remove fluxes between guard cells 
+      do ix=-1,nx
+       do iy=-1,ny
+         if(iffboundx(ix,iy).ne.0) then
+           fhe(ix,iy,0)=0.0_R8
+           fhe_mdf(ix,iy,0)=0.0_R8
+           fhePSch(ix,iy,0)=0.0_R8
+           floe(ix,iy,0)=0.0_R8
+           cone(ix,iy,0,:)=0.0_R8
+         endif
+          if(iffboundy(ix,iy).ne.0) then
+           fhe(ix,iy,1)=0.0_R8
+           fhe_mdf(ix,iy,1)=0.0_R8
+           fhePSch(ix,iy,1)=0.0_R8
+           floe(ix,iy,1)=0.0_R8
+           cone(ix,iy,1,:)=0.0_R8
+         endif
+       enddo
+      enddo
+
+
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then  !srv 16.09.02 {
+       if(mdf_fhe.eq.0) then                                         !srv 13.10.06 {
+        w1(ix,iy)=1.5e0_R8*fne(ix,iy,1)*
+     1   (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+        w2(ix,iy)=2.5e0_R8*fledia(ix,iy,1)*
+     &    (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8
+     1   *(te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+        w3(ix,iy)=-cone0*
+     1    (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
+        w4(ix,iy)=calf(ix,iy,1)*
+     &     harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
+        w6(ix,iy) = cone0
+       else
+        w1(ix,iy)=1.5e0_R8*fne(ix,iy,1)*
+     1   (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+        w2(ix,iy)=0.0e0_R8
+        w3(ix,iy)=-cone0_mdf*
+     1    (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
+        w4(ix,iy)=calf(ix,iy,1)*
+     &     harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
+        w6(ix,iy) = cone0_mdf
+       endif
+      endif                                                !srv 16.09.02 }
+
+
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then  !srv 16.09.02 {
        call my_out(70,nx,ny,w1,'b2tfhe__qe_32y')        !srv 16.09.02 {

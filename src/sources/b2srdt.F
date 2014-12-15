@@ -10,6 +10,7 @@
       use b2mod_numerics_namelist
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_work, only : iftimbound
       implicit none
 *   ..input arguments (unchanged on exit)
       logical(1) :: lout                                             !srv 16.07.10
@@ -42,13 +43,13 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, k
-	integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
+      integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0                                
- 	character chns*2, chk*1                                        !srv 11.09.09 }
+      character chns*2, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *   phm0, phm1, phm3, phm4, t0, ttim,				           !xpb
-     *	 ttf
+     *   ttf
       save ncall, phm0, phm1, phm3, phm4                             !xpb
 *   ..procedures
       external subini, subend, xertst, ipgetr
@@ -71,24 +72,24 @@
         call ipgetr ('b2srdt_phm4', phm4)				                 !xpb
         call xertst (0.0_R8.le.phm0.and.0.0_R8.le.phm1		         !xpb
      &   .and.0.0_R8.le.phm3.and.0.0_R8.le.phm4,			             !xpb
-     &	 'faulty internal parameter phm0, phm1, phm3, phm4')		 !xpb
+     &   'faulty internal parameter phm0, phm1, phm3, phm4')		 !xpb
 c additional time-modification factor
-	  allocate(time_factor(-1:nx,-1:ny))
-	  ttf=core_dt_suppression
+        allocate(time_factor(-1:nx,-1:ny))
+        ttf=core_dt_suppression
         call xertst (0.0_R8.lt.core_dt_suppression,
      &   'faulty parameter core_dt_suppression')
         call xertst (0.0_R8.lt.core_dt_factor,
      &   'faulty parameter core_dt_factor')
         do iy=-1,ny
-	    if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)
-	    do ix=-1,nx
-	      if(mod(region(ix,iy,0),4).eq.1) then
-	        time_factor(ix,iy)=ttf
-	      else
-	        time_factor(ix,iy)=1.0_R8
-	      endif
-	    enddo
-	  enddo
+         if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)
+          do ix=-1,nx
+            if(mod(region(ix,iy,0),4).eq.1) then
+              time_factor(ix,iy)=ttf
+            else
+              time_factor(ix,iy)=1.0_R8
+            endif
+          enddo
+        enddo
         call ipgeti('b2srdt_iout', iout)                             !srv 30.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
         call ipgeti ('b2npco_iout', iout_b2npco)
@@ -121,22 +122,25 @@ c additional time-modification factor
       do is = 0, ns-1
         do iy = -1, ny
           do ix = -1, nx
-		 if(guard_flows.eq.2) then                                    !srv 01.07.08 {
-	      if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+csw 24feb2014 check for guard cell (SOLPS4)
+           if(iftimbound(ix,iy) .ne. 0) cycle
+
+           if(guard_flows.eq.2) then                                    !srv 01.07.08 {
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 ) then  !srv 30.04.08
              ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
              snadt(ix,iy,0,is) = snadt(ix,iy,0,is)+
-     &	     (phm0/ttim)*vol(ix,iy)*na0(ix,iy,is)
+     &       (phm0/ttim)*vol(ix,iy)*na0(ix,iy,is)
              snadt(ix,iy,1,is) = snadt(ix,iy,1,is)-
-     &	     (phm0/ttim)*vol(ix,iy)
-	      endif
-	     else                                                         !srv 01.07.08 }
+     &       (phm0/ttim)*vol(ix,iy)
+            endif
+           else                                                         !srv 01.07.08 }
             ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
             snadt(ix,iy,0,is) = snadt(ix,iy,0,is)+
-     &	     (phm0/ttim)*vol(ix,iy)*na0(ix,iy,is)
+     &      (phm0/ttim)*vol(ix,iy)*na0(ix,iy,is)
             snadt(ix,iy,1,is) = snadt(ix,iy,1,is)-
-     &	     (phm0/ttim)*vol(ix,iy)
-	     endif                                                        !srv 01.07.08
+     &       (phm0/ttim)*vol(ix,iy)
+           endif                                                        !srv 01.07.08
           enddo
         enddo
       enddo
@@ -145,11 +149,14 @@ c additional time-modification factor
         do iy = -1, ny
 *       smodt(-1,iy,0:3,is) = (unchanged at 0.0)
           do ix = -1, nx
+csw 24feb2014 check for guard cell (SOLPS4)
+            if(iftimbound(ix,iy) .ne. 0) cycle
+
             ttim=dtim*dtmo(is,region(ix,iy,0))*time_factor(ix,iy)
             t0 = (phm1/ttim)*vol(ix,iy)*hz(ix,iy)                    !srv 09.01.01
             smodt(ix,iy,0,is) = smodt(ix,iy,0,is)+
-     1	     t0*am(is)*mp*ua0(ix,iy,is)*
-     &	     na0(ix,iy,is)
+     1       t0*am(is)*mp*ua0(ix,iy,is)*
+     &       na0(ix,iy,is)
 *        smodt(ix,iy,1,is) = (unchanged)
 *        smodt(ix,iy,2,is) = (unchanged)
             smodt(ix,iy,3,is) = smodt(ix,iy,3,is)-t0
@@ -159,10 +166,13 @@ c additional time-modification factor
 *   ..modify shedt, shidt, schdt
       do iy = -1, ny
         do ix = -1, nx
+csw 24feb2014 check for guard cell (SOLPS4)
+          if(iftimbound(ix,iy) .ne. 0) cycle
+
           ttim=dtim*dtee(region(ix,iy,0))*time_factor(ix,iy)
           t0 = (phm3/ttim)*vol(ix,iy)
           shedt(ix,iy,0) = shedt(ix,iy,0)+
-     &	   1.5_R8*t0*ne0(ix,iy)*te0(ix,iy)
+     &     1.5_R8*t0*ne0(ix,iy)*te0(ix,iy)
 *         shedt(ix,iy,1) = (unchanged)
 *         shedt(ix,iy,2) = (unchanged)
           shedt(ix,iy,3) = shedt(ix,iy,3)-1.5_R8*t0
@@ -170,10 +180,13 @@ c additional time-modification factor
       enddo
       do iy = -1, ny
         do ix = -1, nx
+csw 24feb2014 check for guard cell (SOLPS4)
+          if(iftimbound(ix,iy) .ne. 0) cycle
+
           ttim=dtim*dtei(region(ix,iy,0))*time_factor(ix,iy)
           t0 = (phm3/ttim)*vol(ix,iy)
-	  shidt(ix,iy,0) = shidt(ix,iy,0)+
-     &	   1.5_R8*t0*ni0(ix,iy,0)*ti0(ix,iy)
+          shidt(ix,iy,0) = shidt(ix,iy,0)+
+     &     1.5_R8*t0*ni0(ix,iy,0)*ti0(ix,iy)
           if (BoRiS.eq.1.0_R8) then
             do is = 0, ns-1
               shidt(ix,iy,0) = shidt(ix,iy,0)+t0*
@@ -184,68 +197,73 @@ c additional time-modification factor
             enddo
           endif
 *         shidt(ix,iy,1) = (unchanged)
-*	  shidt(ix,iy,2) = (otherwise unchanged)
+*         shidt(ix,iy,2) = (otherwise unchanged)
           shidt(ix,iy,3) = shidt(ix,iy,3)-1.5_R8*t0
        enddo
       enddo
       do iy = -1, ny
         do ix = -1, nx
+csw 24feb2014 check for guard cell (SOLPS4)
+          if(iftimbound(ix,iy) .ne. 0) cycle
+
+
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
 cxpb  This treatment added as a fix to get the ExB runs going
           t0 = (phm4/dtim)*vol(ix,iy)*qe				 !xpb
-	  schdt(ix,iy,0) = schdt(ix,iy,0)+t0*(ni0(ix,iy,0)-ne0(ix,iy))	 !xpb
+          schdt(ix,iy,0) = schdt(ix,iy,0)+t0*(ni0(ix,iy,0)-ne0(ix,iy))	 !xpb
 *         schdt(ix,iy,1) = (unchanged)
 *         schdt(ix,iy,2) = (unchanged)
           schdt(ix,iy,3) = schdt(ix,iy,3)-t0				 !xpb
        enddo
       enddo
 
-	if (iout_b2npmo.eq.1 .and. lout) then                                     !srv 11.09.09 {
+
+      if (iout_b2npmo.eq.1 .and. lout) then                                     !srv 11.09.09 {
        do is = 0, ns-1 
-	  write (chns,'(i2.2)') is
-	  call my_out(70,nx,ny,smodt(:,:,0,is)+
+         write (chns,'(i2.2)') is
+         call my_out(70,nx,ny,smodt(:,:,0,is)+
      &        smodt(:,:,1,is)*ua(:,:,is)+
      &        smodt(:,:,2,is)*na(:,:,is)*mp*am(is)+
      &        smodt(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
      &        'b2srdt_smodt'//chns)
-	 enddo
-	endif
-	if ((iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) .and. lout) then
+       enddo
+      endif
+      if ((iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) .and. lout) then
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is
-	  call my_out(70,nx,ny,snadt(:,:,0,is)+
+          write (chns,'(i2.2)') is
+          call my_out(70,nx,ny,snadt(:,:,0,is)+
      &             snadt(:,:,1,is)*na(:,:,is),'b2srdt_snadt'//chns)
-	 enddo
-	endif
-	if ((iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) .and. lout) then
-	 call my_out(70,nx,ny,shedt(:,:,0)+shedt(:,:,1)*te+
+       enddo
+      endif
+      if ((iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) .and. lout) then
+        call my_out(70,nx,ny,shedt(:,:,0)+shedt(:,:,1)*te+
      &   shedt(:,:,2)*ne + shedt(:,:,3)*te*ne,'b2srdt_shedt')
-	 call my_out(70,nx,ny,shidt(:,:,0)+shidt(:,:,1)*ti+
+        call my_out(70,nx,ny,shidt(:,:,0)+shidt(:,:,1)*ti+
      &   shidt(:,:,2)*ni(:,:,0) + 
      &   shidt(:,:,3)*ti*ni(:,:,0),'b2srdt_shidt')
-	endif
+      endif
 
-	if (iout.eq.1 .and. lout) then
+      if (iout.eq.1 .and. lout) then
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is
-	  do k=0,3
-	   write (chk,'(i1)') k
-	   call my_out(70,nx,ny,smodt(-1,-1,k,is),
+        write (chns,'(i2.2)') is
+        do k=0,3
+         write (chk,'(i1)') k
+         call my_out(70,nx,ny,smodt(-1,-1,k,is),
      &                       'b2srdt_smodt'//chk//chns)
-	  enddo
-	  do k=0,1
-	   write (chk,'(i1)') k
-	   call my_out(70,nx,ny,snadt(-1,-1,k,is),
+        enddo
+        do k=0,1
+         write (chk,'(i1)') k
+         call my_out(70,nx,ny,snadt(-1,-1,k,is),
      &                       'b2srdt_snadt'//chk//chns)
-	  enddo
-	 enddo
-	 do k=0,3
-	   write (chk,'(i1)') k
-	   call my_out(70,nx,ny,shedt(-1,-1,k),'b2srdt_shedt'//chk)
-	   call my_out(70,nx,ny,shidt(-1,-1,k),'b2srdt_shidt'//chk)
-	   call my_out(70,nx,ny,schdt(-1,-1,k),'b2srdt_schdt'//chk)
-	 enddo
-	endif                                                           !srv 11.09.09 }
+        enddo
+       enddo
+       do k=0,3
+        write (chk,'(i1)') k
+        call my_out(70,nx,ny,shedt(-1,-1,k),'b2srdt_shedt'//chk)
+        call my_out(70,nx,ny,shidt(-1,-1,k),'b2srdt_shidt'//chk)
+        call my_out(70,nx,ny,schdt(-1,-1,k),'b2srdt_schdt'//chk)
+       enddo
+      endif                                                           !srv 11.09.09 }
 
 * ..return
       ncall = ncall+1

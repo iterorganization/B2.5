@@ -230,10 +230,18 @@
       cvsa_an = cvsa                                                !srv 04.10.99
       call b2txcx (nx, ny, mode, vol, gs, hx, qz, hce0, chce(-1,-1,0))
       call b2txcy (nx, ny, mode, vol, gs, hy, qz, hce0, chce(-1,-1,1))
-      call b2txfx (nx, ny, ns, mode, vol, gs, hx, qz, hcimx, 
+
+csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
+      if(hcimx_flag .eq. 0) then
+       call b2txcx (nx, ny, mode, vol, gs, hx, qz, hci0,chci(-1,-1,0))
+       call b2txcy (nx, ny, mode, vol, gs, hy, qz, hci0,chci(-1,-1,1))
+      else
+       call b2txfx (nx, ny, ns, mode, vol, gs, hx, qz, hcimx, 
      & chci(-1,-1,0))
-      call b2txfy (nx, ny, ns, mode, vol, gs, hy, qz, hcimx, 
+       call b2txfy (nx, ny, ns, mode, vol, gs, hy, qz, hcimx, 
      & chci(-1,-1,1))
+      endif
+
       call b2txcx (nx, ny, -1, vol, gs, hx, qz, alf0, calf(-1,-1,0))
       call b2txcy (nx, ny, -1, vol, gs, hy, qz, alf0, calf(-1,-1,1))
 	if(csig_an_style. eq.0) then                                !srv 15.06.08

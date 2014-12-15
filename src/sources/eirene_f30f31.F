@@ -44,14 +44,10 @@ c
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa
-csw 17feb2011 extrab25
       use eirmod_extrab25
       use eirmod_braeir
-!      use eirmod_eirbra                                               !srv 14.10.13
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
-csw#     include <COUPLE/BRAEIR.F>
-csw#     include <COUPLE/EIRBRA.F>
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
       integer ix,iy,is,ncall,eirene_extrap,in,eirene_fixmap,
@@ -98,9 +94,7 @@ csw#     include <COUPLE/EIRBRA.F>
           rrb(ix+1,iy+1)=abs(bb(ix,iy,0)/bb(ix,iy,3))
           volb(ix+1,iy+1)=vol(ix,iy)
           bfeldb(ix+1,iy+1)=bb(ix,iy,3)
-csw
           qqc(ix+1,iy+1)=qc(ix,iy)
-csw
         enddo
       enddo
 * cell face x
@@ -324,14 +318,10 @@ c
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa
-csw 17feb2011 extrab25
       use eirmod_extrab25
       use eirmod_braeir
-!      use eirmod_eirbra                                            !srv 14.10.13
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
-csw#     include <COUPLE/BRAEIR.F>
-csw#     include <COUPLE/EIRBRA.F>
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
       character chns*2                                                 !srv 16.09.02
@@ -749,20 +739,17 @@ c
       use b2mod_types
       use b2mod_eirene_globals
       use b2mod_b2cmpa
-csw 17feb2011 extra b25
       use eirmod_extrab25
       use eirmod_braeir
-!      use eirmod_eirbra                                   !srv 14.10.13
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
-csw#     include <COUPLE/BRAEIR.F>
-csw#     include <COUPLE/EIRBRA.F>
       integer nx,ny
       integer nxx,nyy
       real*8, allocatable :: dummy(:,:,:)
 
-csw      nxx=nxdd
-csw      nyy=nydd
+csw 2013 corrected
+c      nxx=nxdd
+c      nyy=nydd
       nxx=nx+2
       nyy=ny
 
@@ -823,7 +810,7 @@ csw 13apr2011 dummies for vparx,...,deltae_...
       call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
       call gfsub3(31,nx,ny,nxx,nyy,1,dummy)
       deallocate(dummy)
-csw
+
 c electric potential
 c      CALL GFSUB3(31,NX,NY,NXx,NYy,1,POB(0,0))
       write(*,*) 'Background plasma written'

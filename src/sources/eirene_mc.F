@@ -107,20 +107,14 @@ cank }
      * neutral_sources_rescale, ncallfeedback, ank_mods, save_f31,
      1 repeat_first_call, use_recyceir, ionising_core, dpc_fix,
      2 volrec_sol, ndes_sol, save_f30
-csw 07mar2012
-      integer ion_energy_src_corr,nsmax
-      save ion_energy_src_corr
-      data ion_energy_src_corr/-1/
-csw 13dec2012
-      integer ion_energy_src_corr_core
-      save ion_energy_src_corr_core
-      data ion_energy_src_corr_core/1/
-csw 14dec2012
-      real (kind=R8), save :: qee
-      integer, save :: qe_corr=0
 csw 26mar2013
       integer, save :: iscltst=0
-csw
+csw 26feb2014
+      integer, save :: ihist=0, neutr_avg=0
+
+      real (kind=R8), save, allocatable :: 
+     .   sni_av(:,:,:,:),smo_av(:,:,:,:),sei_av(:,:,:),see_av(:,:,:)
+
 *   ..procedures
       intrinsic min, max, mod, abs, sqrt, log
       external subini, subend, xertst, ipgeti, ipgetr
@@ -148,10 +142,10 @@ csw
       call subini('eirene_mc')
 *   ..set internal parameters on first call
       if(ncall.eq.0) then !{
-csw 24jan2011 delay call to test_couple after successfully callin eirene_input
-csw        write(*,*) 'Calling test_couple'
-csw        call test_couple(nxdd,nydd,nstra,nfl,natm,nmol,nion,nlmpgs)
-csw        write(*,*) 'Called test_couple'
+csw 24jan2011 calling test_couple not necessary anymore
+c        write(*,*) 'Calling test_couple'
+c        call test_couple(nxdd,nydd,nstra,nfl,natm,nmol,nion,nlmpgs)
+c        write(*,*) 'Called test_couple'
         call ipgeti ('eirene_mc_output_style', output_style)
         call ipgeti ('eirene_repeat_first_call', repeat_first_call)
         call ipgeti ('eirene_mc_linearisation', linearisation)
@@ -220,7 +214,7 @@ csw        write(*,*) 'Called test_couple'
         call ipgeti ('eirene_savef31', save_f31)
         call ipgeti ('eirene_use_recyceir', use_recyceir)
 csw 28jan2011, call to eirene_mc_init not used anymore, use new modules
-csw        call eirene_mc_init
+c        call eirene_mc_init
         call eirene_extrab25_alloc_mods(nx+2,ny)
         call eirene_extrab25_eirpbls_init(1,
      .                       natm,nmol,nion,npls,nstra,0)
@@ -230,22 +224,12 @@ csw 22jul2011
      .           j_spcsrf,sps_sgrp,sps_absr,sps_trno,sps_trni,
      .           sps_mtri,sps_tmpr,sps_spph,sps_spch,
      .           sps_mtrl,sps_id)
-csw 07mar2012
-        call ipgeti ('eirene_ion_energy_src_corr', ion_energy_src_corr)
-csw 13dec2012
-        call ipgeti ('eirene_ion_energy_src_corr_core',
-     .                ion_energy_src_corr_core)
-csw 14dec2012
-        call ipgeti ('eirene_qe_corr',qe_corr)
+
 csw 26mar2013
         call ipgeti ('eirene_iscltst',iscltst)
-csw
-        if(qe_corr .eq. 0) then
-         qee=qe
-        else
-         qee=1.6022e-19
-        endif
-csw
+
+csw 26feb2013
+        call ipgeti ('eirene_neutr_avg',neutr_avg)
         if(lhalpha) then
            itmp=1
         else
@@ -272,9 +256,11 @@ csw 03sep2013 added check for save_f30
       if(ncall.eq.0.and.save_f30.ne.0) then
         call write_f30(nx, ny)
       endif
+
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
         if(background_new.eq.0) call copy_background(nx,ny,ns,BoRiS)  !srv 14.07.10
         if(background_new.ne.0) call copy_background_(nx,ny,ns,BoRiS) !srv 14.07.10
+
 csw 03sep2013 changed from OR to AND in check for save_f31
         if(ncall.eq.0.and.save_f31.ne.0) then
           call write_f31(nx, ny)
@@ -339,10 +325,12 @@ c*** Check the b2espcr array
           if(hlp_bad_isp)
      1     stop 'eirene_mc: error in recyceir specification'
 
-csw 08feb2011 l_ddt definition moved down after eirene call
-cswc*** "time layer"
-csw          l_ddt=0
-csw          if(crcstra(nstrai).eq.'T') l_ddt=nnlimi+nnstsi
+csw 08feb2011 l_ddt definition moved down after eirene call when it's
+c             defined
+c c*** "time layer"
+c          l_ddt=0
+c          if(crcstra(nstrai).eq.'T') l_ddt=nnlimi+nnstsi
+
         end if !}
 
         hlp_tt=.false.
@@ -477,17 +465,17 @@ c*** recyc     : fudge-factors for the sources in B2
             tfl(istrai,is)=1.0_R8
           end do !}
           if(tflux(istrai).gt.0.0_R8) then !{
-            flux_scale(istrai)=1.0_R8/(tflux(istrai)*qee)
+            flux_scale(istrai)=1.0_R8/(tflux(istrai)*qe)
           else !}{
             flux_scale(istrai)=0.0_R8
           end if !}
         else if(crcstra(istrai).eq.'V') then !}{
-          tflux(istrai)=1.0_R8/qee
+          tflux(istrai)=1.0_R8/qe
           do is = species_start(istrai),species_end(istrai) !{
             tfl(istrai,is)=1.0_R8
           end do !}
         else if(crcstra(istrai).eq.'T') then !}{
-          tflux(istrai)=1.0_R8/qee
+          tflux(istrai)=1.0_R8/qe
           do is = species_start(istrai),species_end(istrai) !{
             tfl(istrai,is)=1.0_R8
           end do !}
@@ -500,7 +488,7 @@ c            tfl(istrai,is)=1.0_R8
 c          end do !}
 c          if(tflux(istrai).gt.0.0_R8) then !{
 cc warning: the following looks strange but is apparently correct
-c             flux_scale(istrai)=1.0_R8/(tflux(istrai)*qee)
+c             flux_scale(istrai)=1.0_R8/(tflux(istrai)*qe)
 c          else !}{
 c             flux_scale(istrai)=0.0_R8
 c          end if !}
@@ -521,30 +509,23 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if((main_call .and. mod(ncall,eirene_mod).eq.0) .or.
      . ncall.eq.0) then !{
 
-csw 13oct2011
-csw 08mar2013 not used anymore
-csw        call eirene_extrab25_wneuclean
-
 csw 25jan2011 LTIME=.false. in eirsrt call
         my_ltime=.false.
+
         call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
      *   b2brem,b2rad,b2qie(0),b2vdp,
      1   eirene_step_cpu)
         eircount=1
         if(ncall.eq.0) then 
 csw 25jan2011
-csw          write(*,*) 'Calling post_couple'
-csw          call post_couple(nx,ny,ns,nstrai)
-csw          write(*,*) 'Called post_couple'
+c          write(*,*) 'Calling post_couple'
+c          call post_couple(nx,ny,ns,nstrai)
+c          write(*,*) 'Called post_couple'
         endif
         if(ncall.eq.0.and.repeat_first_call.gt.0) then
           do while (eircount.le.repeat_first_call)
            if(background_new.eq.0) call copy_background(nx,ny,ns,BoRiS)  !srv 14.07.10
            if(background_new.ne.0) call copy_background_(nx,ny,ns,BoRiS) !srv 14.07.10
-
-csw 13oct2011
-csw 08mar2013 not used anymore
-csw           call eirene_extrab25_wneuclean
 
 csw 25jan2011 LTIME=.false. in eirsrt call
            my_ltime=.false.
@@ -568,14 +549,14 @@ c*** "time layer"
         l_ddt=0
         if(crcstra(nstrai).eq.'T') then
           l_ddt=nnlimi+nnstsi
-csw in case of no time layer in eirene
+csw 2011 in case of no time layer in eirene
           if(.not.my_ltime) then
-csw            l_ddt=l_ddt+1
+csw 2011
+c           l_ddt=l_ddt+1
             l_ddt=0
           endif
         endif
       end if !}
-csw
 
       if(main_call.or.ncall.eq.0.or.output_style.gt.1) then !{
         write(*,*) 'tflux: ',tflux
@@ -613,24 +594,24 @@ cxpb  Compute recombination sources rescaling factor if necessary
           if(output_style.gt.1.or.main_call) 
      .      write(*,'(a,i6,2(1x,e13.6))')
      .      'stratum, volsumnold, abs(volsumn) ',
-     .      istrai, volsumnold(istrai), abs(volsumn(istrai))/qee
+     .      istrai, volsumnold(istrai), abs(volsumn(istrai))/qe
         end if !}
         if(volsumnold(istrai).gt.0.0_R8.and.volrecinc.gt.0.0_R8) then !{
-          if(abs(volsumn(istrai)/qee).gt.
+          if(abs(volsumn(istrai)/qe).gt.
      &           volsumnold(istrai)*volrecinc) then !{
             if(main_call) then !{
               flux_scale(istrai)=volsumnold(istrai)*volrecinc/
-     1         abs(volsumn(istrai)/qee)
+     1         abs(volsumn(istrai)/qe)
               if(output_style.ge.1) write(*,*)
      .         'Rescaling volume recombination stratum ',
      1         istrai,' by ',flux_scale(istrai)
             else !}{
               flux_scale(istrai)=volsumnold(istrai)/
-     .         abs(volsumn(istrai)/qee)
+     .         abs(volsumn(istrai)/qe)
             end if !}
           end if !}
           volsumnold(istrai)=(1.0_R8-volrecwt)*volsumnold(istrai)+
-     1     volrecwt*abs(volsumn(istrai)/qee)*flux_scale(istrai)
+     1     volrecwt*abs(volsumn(istrai)/qe)*flux_scale(istrai)
           saved_volrec(istrai) = volsumnold(istrai)
         end if !}
       end do !}
@@ -817,30 +798,18 @@ c*** the particle balance for recycling and recombining species
 
 csw 23nov2012
       hlp_tt=.false.
-csw
 
-csw 06dec2012 added check for main_call 
-csw otherwise rescaling procedure does not work with internal iterations nstg2>1
-csw
-c      if(ank_mods.ne.0) then
-      if(main_call.and.mod(ncall,eirene_mod).eq.0.and.ank_mods.ne.0) 
-     .  then
-csw
+csw 2012 fixed rescaling procedure
+c        (otherwise rescaling procedure does not correctly work with internal iterations nstg2>1)
+c        this is phase 1 of rescaling process
+c
+      if(main_call.and.mod(ncall,eirene_mod).eq.0
+     .            .and.ank_mods.ne.0) then
         do istrai=1,nstrai !{
-
-csw 23nov2012 DO NOT CHECK FOR main_call!!!
-csw otherwise re-normalisation will not work in case with 
-csw internal iterations switched on (nstg2 > 1) --> CHECK!!
-c          if((crcstra(istrai).eq.'W' .or.
-c     .        crcstra(istrai).eq.'E' .or.
-c     .        crcstra(istrai).eq.'N' .or.
-c     .        crcstra(istrai).eq.'S').and.
-c     &       (main_call.and.mod(ncall,eirene_mod).eq.0)) then !{
           if((crcstra(istrai).eq.'W' .or.
      .        crcstra(istrai).eq.'E' .or.
      .        crcstra(istrai).eq.'N' .or.
      .        crcstra(istrai).eq.'S')) then
-csw
 
 c*** Recycling stratum
 c*** First, correct the balance between B2 and Eirene sources for the
@@ -1357,14 +1326,54 @@ c        end do !}
 c!###}
       endif !ank_mods
 
-csw 06dec2012 added check for main_call 
-csw otherwise rescaling procedure does not work with internal iterations nstg2>1
-csw (sclrtio/sclalph will be reinitialised which should not happen at istg2 > 1)
-csw
-c      if(ank_mods.ne.0) then
+
+csw 26feb2014 accumulate source terms for SOLPS4.3-like averaging procedure
+c             (this is new and similar to Kotov's SOLPS4 style, it is NOT IVYs
+c              style)
+      if(ncall .eq. 0 .and. .not.allocated(sni_av)) then
+        allocate(sni_av(0:(size(sni,1)-1), 0:(size(sni,2)-1),
+     .                    size(sni,3), size(sni,4)))
+        allocate(smo_av(0:(size(smo,1)-1), 0:(size(smo,2)-1),
+     .                    size(smo,3), size(smo,4)))
+        allocate(sei_av(0:(size(sei,1)-1), 0:(size(sei,2)-1),
+     .                    size(sei,3)))
+        allocate(see_av(0:(size(see,1)-1), 0:(size(see,2)-1),
+     .                    size(see,3)))
+      endif
+
+      if(neutr_avg .gt. 0) then
+
+       if(main_call.and.mod(ncall,eirene_mod).eq.0) then
+        ihist=mod(ncall, neutr_avg)+1
+        if(ihist.eq.1) then
+         sni_av=0.0_R8
+         smo_av=0.0_R8
+         see_av=0.0_R8
+         sei_av=0.0_R8
+        endif
+        sni_av = sni_av + sni
+        smo_av = smo_av + smo
+        sei_av = sei_av + sei
+        see_av = see_av + see
+       endif
+
+      else
+       ihist=1
+       sni_av = sni
+       smo_av = smo
+       sei_av = sei
+       see_av = see
+      endif
+
+
+csw 2012 fixed rescaling procedure
+c  otherwise rescaling procedure does not work with internal iterations nstg2>1
+c  (sclrtio/sclalph will be reinitialised which should not happen at istg2 > 1)
+c  this is part of phase 2 of rescaling process
+c 
       if(main_call.and.mod(ncall,eirene_mod).eq.0.and.ank_mods.ne.0)
      .   then
-csw
+
 c*** Calculate the basic quantities - i.e. the neutral source strengths
 c*** and total plasma sources for each stratum for subsequent rescaling
 
@@ -1491,6 +1500,9 @@ c     .                          .or. crcstra(istrai).eq.'U'
         end do !}
       endif
 
+csw 2012 now transfer (rescaled) sources into sna0, smo0, she0, shi0,
+c   and apply linearisation
+
       ssni=0.0_R8
       ssmo=0.0_R8
       ssee=0.0_R8
@@ -1533,8 +1545,14 @@ c     .                          .or. crcstra(istrai).eq.'U'
      &             region(ix,iy,0).ne.0) then !{
 * continuity
                   rf0=RF_NEUT(1)
-                  t00=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *             recyctmp*flux_scale(istrai)
+
+csw 26feb2014 averaging
+c                  t00=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+c     *             recyctmp*flux_scale(istrai)
+                  t00=sni_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+     *             recyctmp*flux_scale(istrai)/
+     *             dble(ihist)
+
                   if(dpc_fix.lt.0) then
                     write(*,*) 'You are running the code with ' //
      1               'a default option that has been determined ' //
@@ -1596,26 +1614,28 @@ c*** before correction (r), after correction (c), after iteration (i)
      .               src_ni(region(ix,iy,0),3,b2espcr(is))+t0
                     src_ni(0,3,b2espcr(is))=src_ni(0,3,b2espcr(is))+t0
                   endif
-csw 21feb2012, add test l_neutrad (SOLPS4.3)
+
+csw 21feb2012, add l_neutrad (SOLPS4.3)
                   if(l_neutrad.le.0) then
                     radarr(ix,iy)=radarr(ix,iy)+t0*rpt(ix,iy,is)*ev
                     rad_neutr=rad_neutr+t0*rpt(ix,iy,is)*ev
                     rdneureg(region(ix,iy,0))=
      .               rdneureg(region(ix,iy,0))+t0*rpt(ix,iy,is)*ev
                   endif
-csw
+
                   recycereg(region(ix,iy,0))=
      .             recycereg(region(ix,iy,0))+t0*rpt(ix,iy,is)*ev
                   ssnireg(b2espcr(is),region(ix,iy,0))=
      .             ssnireg(b2espcr(is),region(ix,iy,0))+t0
 * momentum
                   rf0=RF_NEUT(2)
-                  t0=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
-csw 07mar2012 TEST
-csw                  if(is .ge.5) t0=0
-csw                  t0=0.0
-csw
+csw 26feb2014 averaging
+c                  t0=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+c     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
+                  t0=smo_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
+     *             dble(ihist)
+
                   VTHE=SQRT(TE(IX,IY)/me)
 c SCALE VTHE TO GET A VELOCITY CLOSER TO THE ION VELOCITIES
                   VTHE=VTHE/sqrt(am(is)*mp/me)
@@ -1679,8 +1699,13 @@ c*** before correction (r), after correction (c), after iteration (i)
      &         region(ix,iy,0).ne.0) then !{
 * electron energy
               rf0=RF_NEUT(3)
-              t0=see(ix+1,iy+1,istrai)*tflux(istrai)*
-     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
+csw 26feb2014 averaging
+c              t0=see(ix+1,iy+1,istrai)*tflux(istrai)*
+c     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
+              t0=see_av(ix+1,iy+1,istrai)*tflux(istrai)*
+     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
+     *         dble(ihist)
+
               if (linearisation.eq.1) then !{
                 she0(ix,iy,0)=she0(ix,iy,0)+max(0.0_R8,t0)+abs(t0)*rf0
                 she0(ix,iy,1)=she0(ix,iy,1)+
@@ -1713,7 +1738,7 @@ c*** before correction (r), after correction (c), after iteration (i)
                 src_ee(0,3)=src_ee(0,3)+t0
                 src_es(0,3)=src_es(0,3)+t0
               endif
-csw 21feb2012, add test l_neutrad (SOLPS4.3)
+csw 21feb2012, add l_neutrad (SOLPS4.3)
               if(l_neutrad.le.0) then
                 radarr(ix,iy)=radarr(ix,iy)+t0
                 rad_neutr=rad_neutr+t0
@@ -1721,15 +1746,20 @@ csw 21feb2012, add test l_neutrad (SOLPS4.3)
                 recycereg(region(ix,iy,0))=recycereg(region(ix,iy,0))
      .                                     +t0
               endif
-csw
+
               sseereg(region(ix,iy,0))=sseereg(region(ix,iy,0))+t0
 * ion energy
               rf0=RF_NEUT(4)
-              t0=sei(ix+1,iy+1,istrai)*tflux(istrai)*
-     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
+csw 26feb2014 averaging
+c              t0=sei(ix+1,iy+1,istrai)*tflux(istrai)*
+c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
+              t0=sei_av(ix+1,iy+1,istrai)*tflux(istrai)*
+     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
+     1         dble(ihist)
+
               ssei(istrai)=ssei(istrai)+t0
 c ? RADARR ?
-csw 06mar2012
+csw 06mar2012 add l_neutrad
               if(l_neutrad.le.0) then
                 recycireg(region(ix,iy,0))=recycireg(region(ix,iy,0))
      .                                     +t0
@@ -1764,15 +1794,7 @@ c*** before correction (r), after correction (c), after iteration (i)
 cxpb Correction of Eirene energy sources to B2 heat sources
 cxpb Only necessary for SOLPS5.0 equation formulation
               if (BoRiS.eq.0.0_R8) then !{ 
-csw 07mar2012
-csw                do is=0,ns-1 !{
-                if(ion_energy_src_corr .lt. 0) then
-                  nsmax=ns
-                else
-                  nsmax=ion_energy_src_corr+1
-                endif
-                do is=0,nsmax-1
-csw
+                do is=0,ns-1
                   if(use_recyceir.gt.0) then
                     recyctmp=recyceir(istrai)
                   else
@@ -1785,23 +1807,36 @@ cxpb  Moved to cell-center velocities 2002.01.28
 cxpb was                 uatmp=0.5_R8*(ua(ix,iy,is)+
 cxpb was    1             ua(rightix(ix,iy),rightiy(ix,iy),is))
 
-csw 06mar2012
-csw include ank_mods scaling into correction
+csw 06mar2012 include ank_mods scaling into correction
 c                    t1=t1-uatmp*smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)+
 c     1               kinrgy(ix,iy,is)*
 c     2               sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
-csw
-csw momentum source
+
                     j=b2espcr(is)
-                    t2=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *               recyctmp*flux_scale(istrai)
+
+csw 06mar2012 momentum source
+csw 26feb2014 averaging
+c                    t2=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+c     *               recyctmp*flux_scale(istrai)
+                    t2=smo_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+     *               recyctmp*flux_scale(istrai)/
+     *               dble(ihist)
+
                     t2=t2*sclstra(j,istrai)
-csw particle source
-                    t3=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-     *               recyctmp*flux_scale(istrai)
-csw 26mar2013
+
+
+csw 06mar2012 particle source
+csw 26feb2014 averaging
+c                    t3=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+c     *               recyctmp*flux_scale(istrai)
+                    t3=sni_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+     *               recyctmp*flux_scale(istrai)/
+     *               dble(ihist)
+
+
+csw 26mar2013 (for TESTING)
                     if(iscltst .eq. 0) then
                       if(crcstra(istrai).ne.'V' .or. t3.gt.0.0_R8)
      -                 t3=t3*sclalph(j,istrai)
@@ -1811,19 +1846,12 @@ csw 26mar2013
                     endif
 
 
-csw total correction
+csw 06mar2012 total correction
                     t1=t1-uatmp*t2+kinrgy(ix,iy,is)*t3
 
                   end if !}
                 end do !} !is
               end if !}
-csw 13dec2012
-              if(ion_energy_src_corr_core .eq. 0) then
-                if(mod(region(ix,iy,0),4).eq.1) then
-                  t1=0.d0
-                endif
-              endif
-csw
               sseicorr(istrai)=sseicorr(istrai)+t1
               t0=t0+t1
               if (linearisation.eq.1) then !{
@@ -1853,14 +1881,12 @@ csw 21feb2012 add test l_neutrad (SOLPS4.3)
               rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,1,1)
               recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,1,1)
             endif
-csw
+
           end if
         end do
       end do
 
-csw
 csw 21feb2012, calculate neutral radiation directly from EIRENE (SOLPS4.3)
-csw
       if(l_neutrad.gt.0) then
 c
 c*** calculate radiation losses directly (at the moment only atoms)
@@ -1885,7 +1911,8 @@ c
      &              SUM(radarr(1:nx,1:ny))
       endif
       WRITE(6,*) "NEUTRALS.  rad_neutr ",  rad_neutr 
-csw
+
+
 
       if(.not.filedata(ntrc_int)) then
         write(*,'(a,1p,1000g12.4)')
@@ -1928,14 +1955,14 @@ cxpb  core recycling into ions of the highest ionisation stage
       do istrai=1, nstrai
         cum_volrec=cum_volrec+VOLSUMN(istrai)
       enddo
-      cum_volrec=-cum_volrec/qee
+      cum_volrec=-cum_volrec/qe
 
       if((main_call.and.output_style.eq.1).or.output_style.gt.1) then !{
         do istrai=1, nstrai !{
           write (*,*) 'ISTRATUM = ',istrai
           do is=0,ns-1 !{
             write (*,*) 'IS,SSNI,SSMO = ',
-     1       is,ssni(istrai,is)*qee,ssmo(istrai,is)
+     1       is,ssni(istrai,is)*qe,ssmo(istrai,is)
           end do !}
           write (*,*) 'SSEE,SSEI = ',
      1     ssee(istrai),ssei(istrai)+sseicorr(istrai),
@@ -1970,11 +1997,18 @@ cxpb  core recycling into ions of the highest ionisation stage
       end if !}
       if(background_new.eq.0) call copy_background(nx, ny, ns, BoRiS)  !srv 14.07.10
       if(background_new.ne.0) call copy_background_(nx, ny, ns, BoRiS) !srv 14.07.10
-      call write_f30(nx, ny)
-      call write_f31(nx, ny)
-!csw 26jan2011
+      if(save_f30 .ne. 0) call write_f30(nx, ny)
+      if(save_f31 .ne. 0) call write_f31(nx, ny)
+csw 26jan2011
       call eirene_extrab25_cleanup
-!csw
+csw 26feb2014
+      if(allocated(sni_av)) then
+       deallocate(sni_av)
+       deallocate(smo_av)
+       deallocate(see_av)
+       deallocate(sei_av)
+      endif
+
       return
 
 c======================================================================

@@ -51,10 +51,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ireg
+      integer ncall, n2, ix, iy, ireg, ii
       integer, save :: iout = 0                                      !srv 04.07.08
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
-	character chns*2, chark*1                                    !srv 04.07.08
+      character chns*2, chark*1                                    !srv 04.07.08
       real (kind=R8) ::
      *  rxg, pcm0, pcm1
       real (kind=R8) ::
@@ -176,7 +176,7 @@ csw 11dec2012, check for solv flags
         enddo                                                          !srv 27.06.08 }
        endif                                                            !srv 06.07.08 }
       endif
-csw
+
       if (iout.ne.0) then                                            !srv 12.07.02 {
         write (chns,'(i2.2)') isb
         call my_out(70,nx,ny,pb,'b2npco_pa'//chns)

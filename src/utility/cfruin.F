@@ -3,6 +3,14 @@
       implicit none
       integer nget, n, infun(0:n-1)
       character id*(*)
+csw 04dec2014 added fmt data (as in cfwure) to acvoid problems with
+c             pgf90 compiler , see below
+      integer ifmt
+      parameter (ifmt=2)
+      character fmt(0:6)*32
+      save fmt
+      data fmt /'(8(1x,i15))', '(10(1x,i12))', '(12(1x,i10))',
+     &  '(14(1x,i8))', '(16(1x,i7))', '(18(1x,i6))', '(22(1x,i5))'/
 *     ------------------------------------------------------------------
 *     CFRUIN reads an integer array from an un*formatted file.
 *     ------------------------------------------------------------------
@@ -24,7 +32,8 @@
      &   'cfruin--wrong type: expected int, found '//idtyp)
        call xertst (n.eq.n0, 'cfruin--dimension mismatch at '//id0)
        if (0.lt.n) then
-        read (nget,*,err=93) (infun(i),i=0,n-1)
+csw 04dec2014 changed * --> fmt(ifmt)
+        read (nget,fmt(ifmt),err=93) (infun(i),i=0,n-1)
        endif
       else if (streql(chf,'unformatted')) then
 *    ..unformatted read

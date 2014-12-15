@@ -74,7 +74,6 @@
      2  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),			 !xpb
      3  calf(-1:nx,-1:ny,0:1), cdna(-1:nx,-1:ny,0:1,0:ns-1),         !xpb
      4  cvsa(-1:nx,-1:ny,0:1,0:ns-1), cvla(-1:nx,-1:ny,0:1,0:ns-1),
-csw 30sep2013
      5  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *     (log-log rate coefficients)
       real (kind=R8) ::
@@ -114,7 +113,7 @@ csw 30sep2013
 	integer, save :: iout = 0                                  !srv 30.06.08
 	integer, save :: use_eirene =0, save_f30 = 0, save_f31 = 0 !srv 14.07.10
       integer, save :: anomalous_core_only = 0                   !srv 19.04.07
-      integer, save :: b2swtest = 0
+      integer, save :: no_fluid_neutral_sources = 0
  	character chns*2, chk*1                                    !srv 30.06.08
       real (kind=R8) ::
 !     *  snatot(0:ns-1),                                         !srv 18.05.09
@@ -174,7 +173,8 @@ csw 30sep2013
        call ipgeti ('b2mndr_eirene',use_eirene)                         !srv 14.07.10 {
        call ipgeti ('eirene_savef30', save_f30)
        call ipgeti ('eirene_savef31', save_f31)                         !srv 14.07.10 }
-       call ipgeti ('b2swtest', b2swtest)
+       call ipgeti ('b2sral_no_fluid_neutral_sources', 
+     .                                       no_fluid_neutral_sources)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -346,6 +346,7 @@ cxpb turn off poloidal flows in core boundary
         fchinert  = 0.0_R8
         fchanml   = 0.0_R8
        endif
+
 csw 30sep2013, added cdpa in call, uadia
       call b2tfrn (nx, ny, ns, guard_flows,
      &  facdrift, fac_ExB, rza,
@@ -564,7 +565,7 @@ csw 30sep2013, added cdpa in call, uadia
 	endif                                                         !srv 30.06.08 }
 
 csw 17oct2012, erase sna, smo, smq, (she, shi, sch) for fluid neutrals
-      if(b2swtest .eq. 1) then
+      if(no_fluid_neutral_sources .eq. 1) then
        do is=0,ns-1
         if(is_neutral(is)) then
           sna(:,:,:,is) =0.d0
@@ -573,7 +574,6 @@ csw 17oct2012, erase sna, smo, smq, (she, shi, sch) for fluid neutrals
         endif
        enddo
       endif
-csw
 
 * ..return
       if(ncall.eq.0 .or. main_call) ncall = ncall+1

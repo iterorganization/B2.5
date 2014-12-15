@@ -956,8 +956,8 @@ c     ------------------------------------------------------------------
 
       if (ix.lt.lbound(leftix,1).or.
      &    ix.gt.ubound(leftix,1).or.
-     &    iy.lt.lbound(leftiy,2).or.
-     &    iy.gt.ubound(leftiy,2)) then
+     &    iy.lt.lbound(leftix,2).or.
+     &    iy.gt.ubound(leftix,2)) then
           write(*,*) 'Trying to access the left neighbour of ',ix,iy
         ixm1 = ix - 1
       else
@@ -983,8 +983,8 @@ c     ------------------------------------------------------------------
 
       if (ix.lt.lbound(rightix,1).or.
      &    ix.gt.ubound(rightix,1).or.
-     &    iy.lt.lbound(rightiy,2).or.
-     &    iy.gt.ubound(rightiy,2)) then
+     &    iy.lt.lbound(rightix,2).or.
+     &    iy.gt.ubound(rightix,2)) then
           write(*,*) 'Trying to access the right neighbour of ',ix,iy
         ixp1 = ix + 1
       else

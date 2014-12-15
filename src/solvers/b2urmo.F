@@ -48,9 +48,9 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-	integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !sv 06.07.06
-	integer, save :: iout_b2npmo = 0                            !srv 11.09.09
-	character chns*2                                            !srv 02.06.11
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !sv 06.07.06
+      integer, save :: iout_b2npmo = 0                            !srv 11.09.09
+      character chns*2                                            !srv 02.06.11
       save ncall
       real (kind=R8) ::
      *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo, dif     !srv 11.09.09
@@ -79,7 +79,7 @@
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
         call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
-	endif
+      endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of rob, smb1, smb3
@@ -105,10 +105,10 @@
          flo = flub(ix,iy,0)
          if(no_Ptncr_x_co.eq.0) then                                  !sv 06.07.06 {
           con(ix,iy,0) = hybr(flo,cvsb(ix,iy,0))
-	   else
+         else
           con(ix,iy,0) = cvsb(ix,iy,0)
-	   endif                                                        !sv 06.07.06 }
-	   flv(ix,iy,0) = - con(ix,iy,0)*
+         endif                                                        !sv 06.07.06 }
+         flv(ix,iy,0) = - con(ix,iy,0)*
      &         (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))
          fmb(ix,iy,0) = flo*(ub(ix,iy)
      &         +ub(leftix(ix,iy),leftiy(ix,iy)))/2 + flv(ix,iy,0)
@@ -126,10 +126,10 @@
          flo = flub(ix,iy,1)
          if(no_Ptncr_y_co.eq.0) then                                  !sv 06.07.06 {
           con(ix,iy,1) = hybr(flo,cvsb(ix,iy,1))
-	   else
+         else
           con(ix,iy,1) = cvsb(ix,iy,1)
-	   endif                                                        !sv 06.07.06 }
-	   flv(ix,iy,1) = - con(ix,iy,1)*
+         endif                                                        !sv 06.07.06 }
+         flv(ix,iy,1) = - con(ix,iy,1)*
      &            (ub(ix,iy)-ub(bottomix(ix,iy),bottomiy(ix,iy)))
          fmb(ix,iy,1) = flo*(ub(bottomix(ix,iy),bottomiy(ix,iy))
      &         +ub(ix,iy))/2 + flv(ix,iy,1)
@@ -137,12 +137,12 @@
        enddo
       enddo
       if(iout_b2npmo.eq.1) then
-	 write (chns,'(i2.2)') isb
+       write (chns,'(i2.2)') isb
        call my_out(70,nx,ny,flv(-1,-1,0),'b2urmo_etaPat_graduax'//chns)
        call my_out(70,nx,ny,flv(-1,-1,1),'b2urmo_etaPat_graduay'//chns)
 !       call my_out(70,nx,ny,con(-1,-1,0),'b2urmo_etaPatx')
  !      call my_out(70,nx,ny,con(-1,-1,1),'b2urmo_etaPaty')
-	endif      
+      endif      
 * ..compute residual
 *   ..contribution from right hand side
       do iy = -1, ny

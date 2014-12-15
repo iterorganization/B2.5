@@ -9,9 +9,7 @@
       use b2mod_constants
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
-csw 02feb2011
       use eirmod_extrab25
-csw
 
 c
 c  version : 29.07.2000 23:52
@@ -23,8 +21,6 @@ c-----------------------------------------------------------------------
       implicit none
 c
 #     include <DIMENSIONS.F>
-csw 07feb2011
-csw#     include <COUPLE/EIRDIAG.F>
 c
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
@@ -274,18 +270,18 @@ c
             hlp_h=fhe(l,i,0)+fhi(l,i,0)
             hlp_p=0.0_R8
             do is=0,ns-1 !{
+csw 26oct2011, bug fix:, was .../(hx(l-1,i)+hx(l-1,i))
               hlp_p=hlp_p+fna(l,i,0,is)*ev*
      .         (rpt(l,i,is)*hx(l-1,i)+rpt(l-1,i,is)*hx(l,i))/
-     .         (hx(l-1,i)+hx(l,i)) !csw 26oct2011, bug fix:, was .../(hx(l-1,i)+hx(l-1,i))
+     .         (hx(l-1,i)+hx(l,i)) 
+csw 26oct2011, bug fix:, was .../(hx(l-1,i)+hx(l-1,i))
               hlp_h=hlp_h+fna(l,i,0,is)*(1.0_R8-BoRiS)*
      .         (kinrgy(l,i,is)*hx(l-1,i)+kinrgy(l-1,i,is)*hx(l,i))/
-     .         (hx(l-1,i)+hx(l,i)) !csw 26oct2011, bug fix:, was .../(hx(l-1,i)+hx(l-1,i))
-csw 04mar2013 3/2 Gamma T --> 5/2 Gamma T
+     .         (hx(l-1,i)+hx(l,i)) 
               hlp_h=hlp_h+fna(l,i,0,is)*
      .        (ti(l,i)*hx(l-1,i)+ti(l-1,i)*hx(l,i))/(hx(l-1,i)+hx(l,i)) 
               hlp_h=hlp_h+fna(l,i,0,is)*
      .        (te(l,i)*hx(l-1,i)+te(l-1,i)*hx(l,i))/(hx(l-1,i)+hx(l,i))
-csw
             end do !}
           end if !}
           if (lminus_hlp) then !{
@@ -379,7 +375,7 @@ c
 c
 c*** Neutral fluxes
 c
-csw 18nov2013 check for nnatmi
+csw 18nov2013 check for nnatmi (known after 1st EIRENE call)
       if(nnatmi > 0) then
 
 c*** flux across the core boundary

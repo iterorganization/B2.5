@@ -17,14 +17,9 @@ c======================================================================
       use b2mod_indirect
       use b2mod_b2cmpa
       use b2mod_constants
-csw 02feb2011
       use eirmod_extrab25
-csw
       implicit none
-csw 07feb2011
-csw#     include "COUPLE/EIRDIAG.F"
       real (kind=R8) :: BoRiS
-c#     include "b2pwcom.h"
       integer lun
       parameter (lun=96)
 c

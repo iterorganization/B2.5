@@ -11,9 +11,9 @@ OBJ2 =  cfendf.o cfopen.o cfruch.o cfruin.o cfrure.o chcase.o  ifill.o  myblas.o
 OBJ3 =  ipmain.o lwimai.o lwmain.o machsfr.o nagsubst.o  ipgetr.o ipgeti.o smax.o smin.o samax.o ssum.o
 OBJ4 =  prvrt.o prvrti.o 
 OBJ5 =  scal10.o sfill.o streql.o subsys.o sysend.o sysini.o  xerrab.o xerset.o xertst.o open_file.o cfwure.o cfvers.o
-OBJ6 =  b2rugm.o b2ruzd.o b2rups.o b2xvsg.o b2xvgm.o b2xpne.o b2rurc.o b2spel.o b2sqel.o b2xvfx.o b2xvfy.o b2xvps.o b2xvff.o b2xpfe.o
+OBJ6 =  b2rugm.o b2ruzd.o b2rups.o b2xvsg.o b2xvgm.o b2xpne.o b2xpni.o b2rurc.o b2spel.o b2sqel.o b2xvfx.o b2xvfy.o b2xvps.o b2xvff.o b2xpfe.o
 OBJ7 =  b2yi_gnuplot.o b2wgpi_gnuplot.o b2wgpj_gnuplot.o
-OBJ8 =  b2yidr_gnuplot.o
+OBJ8 =  b2yidr_gnuplot_2.o
 OBJ9 =  intfaceh.o intfacev.o b2xgbs.o b2xxid.o b2xxgs.o b2rfcp.o b2rflb.o jobnam.o prgini.o prgend.o daytim.o usrnam.o
 INCLUDE = ../src/common
 
@@ -188,6 +188,8 @@ b2xvgm.o: ../src/b2aux/b2xvgm.F
 	$(FC) -c ../src/b2aux/b2xvgm.F
 b2xpne.o: ../src/b2aux/b2xpne.F
 	$(FC) -c ../src/b2aux/b2xpne.F
+b2xpni.o: ../src/b2aux/b2xpni.F
+	$(FC) -c ../src/b2aux/b2xpni.F
 b2xpfe.o: ../src/b2aux/b2xpfe.F
 	$(FC) -c ../src/b2aux/b2xpfe.F
 b2xvfx.o: ../src/b2aux/b2xvfx.F
@@ -214,8 +216,8 @@ b2wgpj_gnuplot.o: ../src/output/b2wgpj_gnuplot.F
 
 b2yi_gnuplot.o: ../src/postprocessing/b2yi_gnuplot.F
 	$(FC) -c ../src/postprocessing/b2yi_gnuplot.F
-b2yidr_gnuplot.o: ../src/postprocessing/b2yidr_gnuplot.F
-	$(FC) -c ../src/postprocessing/b2yidr_gnuplot.F
+b2yidr_gnuplot_2.o: ../src/postprocessing/b2yidr_gnuplot_2.F
+	$(FC) -c ../src/postprocessing/b2yidr_gnuplot_2.F
 
 intfaceh.o: ../src/utility/intfaceh.F
 	$(FC) -c ../src/utility/intfaceh.F

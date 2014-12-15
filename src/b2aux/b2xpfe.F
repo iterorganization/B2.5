@@ -25,7 +25,7 @@
      .         (rza(ix,iy,is)*vol(leftix(ix,iy),leftiy(ix,iy))+
      .          rza(leftix(ix,iy),leftiy(ix,iy),is)*vol(ix,iy))/
      .         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-            if (bottomiy(ix,iy).ne.-2) 
+            if (bottomiy(ix,iy).ne.-2)
      >        fne(ix,iy,1) = fne(ix,iy,1) + fna(ix,iy,1,is)*
      .         (rza(ix,iy,is)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
      .          rza(bottomix(ix,iy),bottomiy(ix,iy),is)*vol(ix,iy))/

@@ -4,9 +4,7 @@
       use b2mod_indirect
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
-csw 07feb2011
       use eirmod_extrab25
-csw
 c
 c  version : 29.08.2000 00:26
 c
@@ -15,8 +13,6 @@ c*** Output of tracing information at the end of each outer iteration
 c----------------------------------------------------------------------
       implicit none
 c
-csw 07feb2011
-csw#     include <COUPLE/EIRDIAG.F>
 c
       integer nx, ny, ns, ismain
       real (kind=R8) :: dtim, BoRiS
@@ -30,8 +26,8 @@ c
       write(*,"(a,5i4)") ' nspecies,nnatmi,nnstsi,nnlimi,nnmoli=',   !srv 18.05.09
      1 nspecies,nnatmi,nnstsi,nnlimi,nnmoli
       if(nspecies.eq.nnatmi) then
+csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
         do ix=1,nnstsi+nnlimi
-csw        do ix=1,nlmpgs
           wldnek(ix,0)=0.0_R8
           wldnep(ix,0)=0.0_R8
           do is=1,nnatmi

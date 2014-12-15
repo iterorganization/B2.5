@@ -346,8 +346,10 @@ ctmp.dpc
      &         fchvisq, fchinert, fchanml)                          !srv 24.03.07
               floe_noc = floe                                
               call b2xpfi (nx, ny, ns, fna_he, fni)                      !srv 28.10.02 {
+csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
               call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb,   
-     &         ti, ni, na, fni, chci, cddi, chvi, chvimx, vadia,         !srv 13.10.06
+     &         ti, ni, na, fni, fna_he,ua,chci,cddi,chvi,chvimx,cvsa,
+     &         vadia,                                               !srv 13.10.06
      &         fchvispar, fchvisq, fchinert, fchanml,
      &         fhi, fhi_mdf, fhiPSch, floi, coni)
               floi_noc = floi                                       !srv 24.10.02
@@ -400,9 +402,9 @@ ctmp.dpc
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch,
      &    wrong_flow, .true.)						 !xpb, dpc
-!      STOP
+
 *     ..smooth out sources
-csw 17oct2012 incorrect
+csw 17oct2012 incorrect call to b2srsm !
 c          call b2srsm (nx, ny, ns, dtim, vol, na, ua, te, ti, ne, ni,
 c     &     snasm, smosm, shesm, shism, .true.)                       !srv 11.09.09 {
 c*   ..add to previous contributions
@@ -410,10 +412,10 @@ c          call saxpy (n2*2*ns, 1.0_R8, snasm, 1, sna, 1)
 c          call saxpy (n2*4*ns, 1.0_R8, smosm, 1, smo, 1)
 c          call saxpy (n2*4, 1.0_R8, shesm, 1, she, 1)
 c          call saxpy (n2*4, 1.0_R8, shism, 1, shi, 1)                   !srv 11.09.09 }
-csw 17oct2012 correct
+csw 17oct2012 this is the corrected call
           call b2srsm (nx, ny, ns, dtim, vol, na, ua, te, ti, ne, ni,
      &     sna, smo, she, shi, .true.)                       !srv 11.09.09 {
-csw
+
 *     ..include contributions due to timestep
           call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !srv 09.01.01 01.07.08
      &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,

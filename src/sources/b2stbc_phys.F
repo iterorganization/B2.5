@@ -3535,13 +3535,13 @@ cghgh
      .         rza(ix,bcpos(ib),is)*2.5_R8*
      .         SNA0_NO_MDF(IX,BCPOS(IB),1,IS)*na(IX,BCPOS(IB),IS)      !srv 23.09.08
             ENDDO
-	      if(mdf_fhe.ne.0) then                                !srv 12.09.08 {
+            if(mdf_fhe.ne.0) then                                !srv 12.09.08 {
               she0(ix,bcpos(ib),0) = she0(ix,bcpos(ib),0) -
      &                              fhePSch(ix,topiy(ix,bcpos(ib)),1)
               she0(ix,bcpos(ib),1) = she0(ix,bcpos(ib),1) +
      &            1.5_R8*vol(ix,bcpos(ib))/hy1(ix,bcpos(ib))*
      &           veecrb(ix,topiy(ix,bcpos(ib)),1)*ne(ix,bcpos(ib))
-	      endif                                                !srv 12.09.08 }
+            endif                                                !srv 12.09.08 }
           ENDDO
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX=BCSTART(IB), BCEND(IB)
@@ -3556,13 +3556,13 @@ cghgh
      .         rza(ix,bcpos(ib),is)*2.5_R8*
      .         SNA0_NO_MDF(IX,BCPOS(IB),1,IS)*na(IX,BCPOS(IB),IS)       !srv 23.09.08
             ENDDO
-	      if(mdf_fhe.ne.0) then                                !srv 12.09.08 {
+            if(mdf_fhe.ne.0) then                                !srv 12.09.08 {
               she0(ix,bcpos(ib),0) = she0(ix,bcpos(ib),0) +
      &                              fhePSch(ix,bcpos(ib),1)
               she0(ix,bcpos(ib),1) = she0(ix,bcpos(ib),1) -
      &           1.5_R8*vol(ix,bcpos(ib))/hy1(ix,bcpos(ib))*
      &           veecrb(ix,bcpos(ib),1)*ne(ix,bcpos(ib))
-	      endif                                                !srv 12.09.08 }
+            endif                                                !srv 12.09.08 }
           ENDDO
         ELSE
           CALL XERRAB ('B2STBC -- BCENE=9, NOT AVAILABLE FOR W,E')
@@ -4309,9 +4309,10 @@ cghgh
 
 30000   continue
         if(BCENI(IB).eq.0) goto 40000
-	GOTO(30100,30200,30300,30400,30500,30600,30700,30800,30900,31000,
-     1     31100,31200,31300,31400,31500,31600,31700,31800,31900,32000,
-     2     32100,32200,32300,32400), BCENI(IB)                         !srv 01.02.09 19.04.13
+        GOTO(30100,30200,30300,30400,30500,30600,30700,30800,30900,
+     .     31000,
+     .     31100,31200,31300,31400,31500,31600,31700,31800,31900,32000,
+     .     32100,32200,32300,32400), BCENI(IB)                         !srv 01.02.09 19.04.13
         write(*,*) BCENI(IB)
         call xerrab ('BCENI out of bounds')
 
@@ -4321,7 +4322,7 @@ cghgh
         if(ncall.eq.0) then
 #ifdef ASTRA
           IF(BCCHAR(IB).EQ.'S') THEN
-	      ENIPAR(IB,1) = tib_astra*1.0e3_R8                           !srv 14.06.12
+           ENIPAR(IB,1) = tib_astra*1.0e3_R8                           !srv 14.06.12
           ENDIF
 #endif
           write(*,*) 'specified ion temperature',ENIPAR(IB,1),' on ',
@@ -5079,7 +5080,7 @@ cxpb          if (.not.is_neutral(is)) then   ! dpc --- need to check
      &                           na(IX,BCPOS(IB),IS)
 cxpb          endif
             ENDDO
- 	      if(mdf_fhi.ne.0) then                                !srv 12.09.08 {
+            if(mdf_fhi.ne.0) then                                !srv 12.09.08 {
              shi0(ix,bcpos(ib),0) = shi0(ix,bcpos(ib),0) -
      &                              fhiPSch(ix,topiy(ix,bcpos(ib)),1)
              do is=0,ns-1
@@ -5087,7 +5088,7 @@ cxpb          endif
      &          1.5_R8*vol(ix,bcpos(ib))/hy1(ix,bcpos(ib))*
      &          vaecrb(ix,topiy(ix,bcpos(ib)),1,is)*na(ix,bcpos(ib),is)
              end do
-	      endif                                                !srv 12.09.08 }
+            endif                                                !srv 12.09.08 }
           ENDDO
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX=BCSTART(IB), BCEND(IB)
@@ -5109,7 +5110,7 @@ cxpb          endif
      .           2.5_R8*SNA0_NO_MDF(IX,BCPOS(IB),1,IS)*                 !srv 23.09.08
      &                           na(IX,BCPOS(IB),IS)
             ENDDO
-	      if(mdf_fhi.ne.0) then                                !srv 12.09.08 {
+            if(mdf_fhi.ne.0) then                                !srv 12.09.08 {
               shi0(ix,bcpos(ib),0) = shi0(ix,bcpos(ib),0) +
      &                              fhiPSch(ix,bcpos(ib),1)
              do is=0,ns-1
@@ -5117,7 +5118,7 @@ cxpb          endif
      &          1.5_R8*vol(ix,bcpos(ib))/hy1(ix,bcpos(ib))*
      &          vaecrb(ix,bcpos(ib),1,is)*na(ix,bcpos(ib),is)
              end do
-	      endif                                                !srv 12.09.08 }
+            endif                                                !srv 12.09.08 }
           ENDDO
         ELSE
           CALL XERRAB ('B2STBC -- BCENI=9, NOT AVAILABLE FOR W,E')

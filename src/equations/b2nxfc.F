@@ -4,7 +4,9 @@
       subroutine b2nxfc (nx, ny, isb, vol, pbs, rob, ub, flub, cvsb,
      &  flcb, cvcb, wrk0)
       use b2mod_types
+      use b2mod_boundary_namelist
       use b2mod_indirect
+      use b2mod_work, only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -30,9 +32,9 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, n2, ix, iy, ncallout
-	integer, save :: iout = 0                                     !srv 17.06.02
-	character charns*2                                            !srv 17.06.02
+      integer ncall, style, n2, ix, iy, ncallout, ib
+      integer, save :: iout = 0                                     !srv 17.06.02
+      character charns*2                                            !srv 17.06.02
       save ncall, style, ncallout
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr, scopy
@@ -113,34 +115,53 @@
         enddo
        elseif(style.eq.1) then
         do ix = -1, nx                                                 !srv 26.11.02
-	   if(leftix(ix,iy).eq.-2) then
+          if(leftix(ix,iy).eq.-2) then
            flcb(ix,iy,0) = 0.0e0_R8
            cvcb(ix,iy,0) = 0.0e0_R8
-	   else                                                          !srv 26.11.02 {
+          else                                                          !srv 26.11.02 {
            flcb(ix,iy,0) = flub(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)*
      &      (rob(ix,iy)+rob(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8      !srv 01.07.05 } 
            cvcb(ix,iy,0) = cvsb(ix,iy,0)
-	   endif                                                         !srv 26.11.02 }
+          endif                                                         !srv 26.11.02 }
         enddo
        else
         write(*,*) 'style 0 or 1 in b2nxfc are included only'
-	  stop
+        stop
        endif
       enddo
 *   ..compute flcby, cvcby
       call scopy (n2, flub(-1,-1,1), 1, flcb(-1,-1,1), 1)
       call scopy (n2, cvsb(-1,-1,1), 1, cvcb(-1,-1,1), 1)
 
-	if (iout.ne.0) then                                              !sv 17.06.02 {
-	  write (charns,'(i2.2)') isb    
-	  call my_out(70,nx,ny,flub(-1,-1,0),'b2nxfc_flubx'//charns)
-	  call my_out(70,nx,ny,flub(-1,-1,1),'b2nxfc_fluby'//charns)
-	  call my_out(70,nx,ny,flcb(-1,-1,0),'b2nxfc_flcbx'//charns)
-	  call my_out(70,nx,ny,flcb(-1,-1,1),'b2nxfc_flcby'//charns)
-	  call my_out(70,nx,ny,cvcb(-1,-1,0),'b2nxfc_cvcbx'//charns)
-	  call my_out(70,nx,ny,cvcb(-1,-1,1),'b2nxfc_cvcby'//charns)
-	  call my_out(70,nx,ny,rob,'b2nxfc_rob'//charns)
-	endif                                                            !sv 17.06.02 }
+csw 18feb2014 remove fluxes between guard cells 
+        do ix=-1,nx
+         do iy=-1,ny
+           if(iffboundx(ix,iy).ne.0) then
+             flub(ix,iy,0)=0.0_R8
+             cvsb(ix,iy,0)=0.0_R8
+             flcb(ix,iy,0)=0.0_R8
+             cvcb(ix,iy,0)=0.0_R8
+           endif
+           if(iffboundy(ix,iy).ne.0) then
+             flub(ix,iy,1)=0.0_R8
+             cvsb(ix,iy,1)=0.0_R8
+             flcb(ix,iy,1)=0.0_R8
+             cvcb(ix,iy,1)=0.0_R8
+           endif
+         enddo
+        enddo
+
+
+      if (iout.ne.0) then                                              !sv 17.06.02 {
+        write (charns,'(i2.2)') isb    
+        call my_out(70,nx,ny,flub(-1,-1,0),'b2nxfc_flubx'//charns)
+        call my_out(70,nx,ny,flub(-1,-1,1),'b2nxfc_fluby'//charns)
+        call my_out(70,nx,ny,flcb(-1,-1,0),'b2nxfc_flcbx'//charns)
+        call my_out(70,nx,ny,flcb(-1,-1,1),'b2nxfc_flcby'//charns)
+        call my_out(70,nx,ny,cvcb(-1,-1,0),'b2nxfc_cvcbx'//charns)
+        call my_out(70,nx,ny,cvcb(-1,-1,1),'b2nxfc_cvcby'//charns)
+        call my_out(70,nx,ny,rob,'b2nxfc_rob'//charns)
+      endif                                                            !sv 17.06.02 }
 * ..return
       ncall = ncall+1
       call subend ()

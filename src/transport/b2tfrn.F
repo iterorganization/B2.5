@@ -14,6 +14,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmfs
+      use b2mod_work, only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows
@@ -60,7 +61,6 @@
         integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
         integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
         integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
-csw 30sep2013
         integer, save :: no_hybr = 0
         integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
@@ -76,9 +76,7 @@ csw 30sep2013
       parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny) 
-csw 30sep2013
       real (kind=R8) :: t0,t1,t2,cvmgp
-csw
       save ncall, area_fix
 *   ..procedures
       real (kind=R8) ::
@@ -117,7 +115,6 @@ csw
         call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)                  !srv 06.07.06
         call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)                  !srv 06.07.06
         call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                  !srv 06.07.06
-csw 30sep2013
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
       endif
 *   ..extensive tests on first few calls
@@ -177,6 +174,7 @@ csw 30sep2013
          if(leftix(ix,iy).eq.-2) then
           fna_eir(ix,iy,0,is)     = 0.0_R8                              !srv 14.07.10 
          else
+
 csw 30sep2013, added check for no_hybr
           if(no_hybr .ne. 0) then
            term(ix,iy) = xfrhie*wrk2(ix,iy)*0.5_R8*abs(pbs(ix,iy,0))*
@@ -201,7 +199,7 @@ csw 30sep2013, added check for no_hybr
            fna_eir(ix,iy,0,is) = flo_eir * t2-
      &      con_eir*(na(ix,iy,is)-na(leftix(ix,iy),leftiy(ix,iy),is))-
      &      cdpa(ix,iy,0,is)*(pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))
-csw
+
           else
           term(ix,iy) = xfrhie*wrk2(ix,iy)*0.5_R8*abs(pbs(ix,iy,0))*        !iyv 19.04.07 11.01.13
      &     sqrt((pb(leftix(ix,iy),leftiy(ix,iy))+pb(ix,iy))/(am(is)*mp*
@@ -231,6 +229,7 @@ csw
          if(bottomiy(ix,iy).eq.-2) then
            fna_eir(ix,iy,1,is)     = 0.0_R8                                   !srv 14.07.10
          else
+
 csw 30sep2013, added check for no_hybr
           if(no_hybr .ne. 0) then
            con_eir = cdna(ix,iy,1,is)
@@ -536,6 +535,25 @@ cxpb turn off poloidal flows in core boundary
           enddo
         enddo
       enddo
+
+csw 18feb2014 remove fluxes between guard cells 
+        do ix=-1,nx
+         do iy=-1,ny
+           if(iffboundx(ix,iy).ne.0) then
+            fna_eir(ix,iy,0,:)=0.0_R8
+            fne_eir(ix,iy,0)=0.0_R8
+            fhe_eir(ix,iy,0)=0.0_R8
+            fhi_eir(ix,iy,0)=0.0_R8
+           endif
+           if(iffboundy(ix,iy).ne.0) then
+            fna_eir(ix,iy,1,:)=0.0_R8
+            fne_eir(ix,iy,1)=0.0_R8
+            fhe_eir(ix,iy,1)=0.0_R8
+            fhi_eir(ix,iy,1)=0.0_R8
+           endif
+         enddo
+        enddo
+
 
 
       if(iout.ne.0) then                                             !srv 18.06.08 {

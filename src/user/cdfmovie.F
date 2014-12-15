@@ -8,13 +8,9 @@
       use b2mod_movies
 #endif
       use b2mod_constants
-csw 07feb2011
       use eirmod_extrab25
-csw
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
-csw 07feb2011
-csw#     include <COUPLE/EIRDIAG.F>
       integer nx, ny, ns
 #ifndef NO_CDF
       real (kind=R8) :: time(1), dummy(-1:nx, -1:ny), 

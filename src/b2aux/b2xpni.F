@@ -22,7 +22,7 @@
       do is = 0, ns-1
        call saxpy (n2, 1.0_R8, na(-1,-1,is), 1, ni, 1)
        if(.not.is_neutral(is))
-     1	call saxpy (n2, 1.0_R8, na(-1,-1,is), 1, ni(-1,-1,1), 1)
+     1 call saxpy (n2, 1.0_R8, na(-1,-1,is), 1, ni(-1,-1,1), 1)
       enddo
 *$$$  call subend ()
       return

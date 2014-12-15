@@ -9,9 +9,7 @@
       use b2mod_numerics_namelist
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
-csw 02feb2011
       use eirmod_extrab25
-csw
 c
 c  version : 19.07.2001 18:46
 c
@@ -22,8 +20,6 @@ c----------------------------------------------------------------------
       implicit none
 c
 #     include <DIMENSIONS.F>
-csw 07feb2011
-csw#     include <COUPLE/EIRDIAG.F>
 c
       integer nx, ny, ns
       real (kind=R8) :: dtim
@@ -201,7 +197,8 @@ c
 
 c*** Re-scale the neutral fluxes
 
-csw      do i=1,nlimps
+csw 2012 correct nlimps --> nnstsi+nnlimi (known after 1st eirene call)
+c      do i=1,nlimps
         do i=1,nnstsi+nnlimi
         do j=1,nnatmi
           wldna(i,j,0)=0.0_R8
@@ -437,7 +434,7 @@ c
 c*** Flux across the core boundary
         do is=1,ncns
           js=lcns(is)+nnlimi
-csw 18nov2013 check for nnatmi
+csw 18nov2013 check for nnatmi (known after 1st EIRENE call)
           if(nnatmi > 0)
      .      hlpnc=hlpnc-wldna(js,ls,0)+wldra(js,ls,0)
           do j=1,nnmoli
@@ -448,7 +445,7 @@ csw 18nov2013 check for nnatmi
 c*** Flux across the targets
         do is=1,ntns
           js=ltns(is)+nnlimi
-csw 18nov2013 check for nnatmi
+csw 18nov2013 check for nnatmi (known after 1st EIRENE call)
           if(nnatmi > 0)
      .      hlpnt=hlpnt-wldna(js,ls,0)+wldra(js,ls,0)
           do j=1,nnmoli
@@ -458,7 +455,7 @@ csw 18nov2013 check for nnatmi
         end do
 c*** Flux across the side walls
         do js=1,nnlimi
-csw 18nov2013 check for nnatmi
+csw 18nov2013 check for nnatmi  (known after 1st EIRENE call)
           if(nnatmi > 0)
      .      hlpnw=hlpnw-wldna(js,ls,0)+wldra(js,ls,0)
           do j=1,nnmoli

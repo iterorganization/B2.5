@@ -25,9 +25,7 @@ c
       use b2mod_indirect
       use b2mod_neutrals_namelist
       use b2mod_b2cmpa
-csw 02feb2011
       use eirmod_extrab25
-csw
       implicit none
 
 *  -- INPUT ARGUMENTS --

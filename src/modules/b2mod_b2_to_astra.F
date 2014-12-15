@@ -1,6 +1,5 @@
-!csw 09jan2014 modifications as suggested by J.Terry/MIT
-
-!csw 09jan2014 extra module to define some arrays
+csw 09jan2014 modifications as suggested by J.Terry/MIT
+csw 09jan2014 extra module to define some arrays
       module b2mod_b2_to_astra_com
         use b2mod_types
         integer :: np
@@ -18,7 +17,7 @@
 #     include "COUPLE/EIRDIAG.F"
 #endif
 
-!csw 09jan2014 declare fun to be private
+csw 09jan2014 declare fun to be private
        private fun
 
        real (kind=R8), save :: neb                        ! boundary electron density      [1/m**3]
@@ -88,29 +87,29 @@
         use b2mod_plasma
         use b2mod_constants
         use b2mod_b2cmpa
-!csw 09jan2014 use extra little module
+csw 09jan2014 use extra little module
         use b2mod_b2_to_astra_com
 
         implicit none
         integer :: nxd, nyd, nsd, ismain, nwrite, isa, ism
 
         character chns*2
-!csw 09jan2014 remove np from declaration here
-!        integer :: mintopcut, ix, iy, is, ixx, intrl, iout, np
+csw 09jan2014 remove np from declaration here
+c        integer :: mintopcut, ix, iy, is, ixx, intrl, iout, np
         integer :: mintopcut, ix, iy, is, ixx, intrl, iout
         integer :: maxtopcut
         integer, save :: ncall = 0
 
         real (kind=R8) :: wrk0(-1:nxd,-1:nyd)
-!csw 09jan2014 remove declaration p,x,cb,cc,cd from here
-!        real (kind=R8) :: p(0:nxd-1), x(0:nxd-1), cb(0:nxd-1),
-!     &  cc(0:nxd-1), cd(0:nxd-1), DSEVAL, DFMIN, arg, y(0:nxd-1)
+csw 09jan2014 remove declaration p,x,cb,cc,cd from here
+c        real (kind=R8) :: p(0:nxd-1), x(0:nxd-1), cb(0:nxd-1),
+c     &  cc(0:nxd-1), cd(0:nxd-1), DSEVAL, DFMIN, arg, y(0:nxd-1)
         real (kind=R8) :: DSEVAL, DFMIN, arg, y(0:nxd-1)
 
         real (kind=R8) :: sy
         sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
 
-!csw 09jan2014 add extra allocates
+csw 09jan2014 add extra allocates
         allocate(p(0:nxd-1), x(0:nxd-1), cb(0:nxd-1),
      &           cc(0:nxd-1),cd(0:nxd-1))
 
@@ -595,19 +594,19 @@
 #endif         
         ncall = ncall +1
 
-!csw 09jan2014 remove contains: fun
-!        contains
-!
-!         function fun(arg)
-!          real (kind=R8) :: fun, arg
-!          fun = -DSEVAL(np+1,arg,p,x,CB,CC,CD)
-!         end function fun
+csw 09jan2014 remove contains: fun
+c        contains
+c
+c         function fun(arg)
+c          real (kind=R8) :: fun, arg
+c          fun = -DSEVAL(np+1,arg,p,x,CB,CC,CD)
+c         end function fun
 
-!csw 09jan2014 add dealloc
+csw 09jan2014 add dealloc
          deallocate(p,x,cb,cc,cd)
        end subroutine write_b2_to_astra
 
-!csw 09jan2014 add 'fun' function
+csw 09jan2014 add 'fun' function
        function fun(arg)
          use b2mod_b2_to_astra_com
          real(kind=R8) :: fun,arg,DSEVAL

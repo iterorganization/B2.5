@@ -92,7 +92,6 @@
        call ipgetr ('b2sifr_limthee', limthee)
 csw 24sep2013
        call ipgeti ('b2sifr_zlamii_test', zlitest)
-csw
        call xertst (0.le.styl0.and.styl0.lt.9.and.0.le.styl1.and.
      &  styl1.lt.2, 'faulty internal parameter styl0, styl1')
        call xertst (0.0_R8.le.phm0.and.0.0_R8.le.phm1.and.
@@ -209,7 +208,7 @@ csw
           endif
           delti=(gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8 !srv 12.04.10
           if(limthii.gt.0) then
-csw 24sep2013 check for zlitest
+csw 24sep2013 check for zlitest (potentially can be removed)
             if(zlitest .ne. 0) then
              zlamii=1.5e16_R8*(ti(ix,iy)/ev)**2/na(ix,iy,1)
             else 

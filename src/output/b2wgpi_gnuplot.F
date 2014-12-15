@@ -3,7 +3,8 @@
 
       subroutine b2wgpi_gnuplot (nprt, nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch,
-     &  kinrgy)
+     &  kinrgy,
+     &  gs,qc,ni)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
@@ -16,8 +17,9 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     &  ne(-1:nx,-1:ny),
-     &  kinrgy(-1:nx,-1:ny,0:ns-1)
+     &  ne(-1:nx,-1:ny),ni(-1:nx,-1:ny,0:1),
+     &  kinrgy(-1:nx,-1:ny,0:ns-1),
+     &  gs(-1:nx, -1:ny, 0:2), qc(-1:nx, -1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -64,7 +66,8 @@
       call b2xpfe (nx, ny, ns, qe, rza, fna, fch, fne)
 *   ..plot state
       call b2wgpj_gnuplot (nprt, nx, ny, ns, na, ua, te, ti, po,
-     &  fna, fhe, fhi, fch, ne, fne, kinrgy)
+     &  fna, fhe, fhi, fch, ne, fne, kinrgy,
+     &  gs,qc,ni)
 
 * ..return
       call subend ()

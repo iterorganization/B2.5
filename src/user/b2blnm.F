@@ -9,9 +9,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
-csw 02feb2011
       use eirmod_extrab25
-csw
 c
 c  version : 03.03.2001 00:37
 c
@@ -21,8 +19,6 @@ c*** and outer divertors (only lower divertors for double-null case)
 c----------------------------------------------------------------------
       implicit none
 c
-csw 07feb2011
-csw#     include <COUPLE/EIRDIAG.F>
 c
       integer nx, ny, ns
 c
@@ -89,6 +85,7 @@ c
 c----------------------------------------------------------------------
       real (kind=R8) ::
      *     sx, pit      
+csw 29sep2014: xpb fix on sx calculation
       sx(ix,iy)=0.5_R8*(gs(ix,iy,0)*qc(ix,iy)+
      .  gs(rightix(ix,iy),rightiy(ix,iy),0)*
      .  qc(rightix(ix,iy),rightiy(ix,iy)))

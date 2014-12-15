@@ -34,9 +34,7 @@ c
 c======================================================================
       subroutine b2prdn(unm)
       use b2mod_types
-csw 17feb2011 extra b25
       use eirmod_extrab25
-csw
       implicit none
 c
 c*** Reads the data from dg output file

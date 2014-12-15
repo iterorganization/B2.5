@@ -9,13 +9,9 @@ c======================================================================
       use b2mod_types
       use b2mod_b2plot
       use b2mod_constants
-csw 02feb2011
       use eirmod_extrab25
-csw
       implicit none
-csw 07feb2011
 #     include "COUPLE/KOPPLDIM.F"
-csw#     include "COUPLE/EIRDIAG.F"
 #     include "b2pinpc.h"
 c*** Local variables
 c

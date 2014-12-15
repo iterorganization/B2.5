@@ -5,10 +5,19 @@
       real (kind=R8) ::
      *   refun(0:n-1)
       character id*(*)
+csw 04dec2014 added fmt data (as in cfwure) to acvoid problems with
+c             pgf90 compiler , see below
+      integer ifmt
+      parameter (ifmt=1)
+      character fmt(0:5)*32
+      save fmt
+      data fmt /'(1p,5(1x,e25.17e3))', '(1p,6(1x,e21.13e3))',
+     &  '(1p,7(1x,e17.9e3))', '(1p,8(1x,e15.7e3))',
+     &  '(1p,9(1x,e13.5e3))', '(1p,10(1x,e12.4e3))'/
 *     ------------------------------------------------------------------
 *     CFRURE reads a real*8 array from an un*formatted file.
 *     ------------------------------------------------------------------
-      integer n0, i
+      integer n0, i, ios
       character chf*12, idcod*8, idtyp*8, id0*32, id1*32
       logical streql
       external xertst, xerrab, streql
@@ -26,7 +35,9 @@
      &   'cfrure--wrong type: expected real, found '//idtyp)
        call xertst (n.eq.n0, 'cfrure--dimension mismatch at '//id0)
        if (0.lt.n) then
-        read (nget,*,err=93) (refun(i),i=0,n-1)
+csw 04dec2014 changed * --> fmt(ifmt)
+        read (nget,fmt(ifmt),err=93, iostat=ios) 
+     . (refun(i),i=0,n-1)
        endif
       else if (streql(chf,'unformatted')) then
 *    ..unformatted read

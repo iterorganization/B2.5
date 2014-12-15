@@ -3,7 +3,8 @@
 
       subroutine b2wgpj_gnuplot (nprt, nx, ny, ns, 
      &  na, ua, te, ti, po, fna, fhe, fhi, fch, 
-     &  ne, fne, kinrgy)
+     &  ne, fne, kinrgy,
+     &  gs,qc,ni)
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -19,7 +20,8 @@
      &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  ne(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1),
-     &  kinrgy(-1:nx,-1:ny,0:ns-1)
+     &  kinrgy(-1:nx,-1:ny,0:ns-1),ni(-1:nx,-1:ny,0:1),
+     &  gs(-1:nx, -1:ny, 0:2), qc(-1:nx, -1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -194,7 +196,7 @@
       elseif(want.eq.'fnax') then
          do iy=-1,ny
             do ix=-1,nx
-csw 17feb2012              write(*,*) ix,iy,fna(ix,iy,islice,0)
+csw 17feb2012 fixed             write(*,*) ix,iy,fna(ix,iy,islice,0)
                write(*,*) ix,iy,fna(ix,iy,0,islice)
             enddo
             write(*,'()')
@@ -202,7 +204,7 @@ csw 17feb2012              write(*,*) ix,iy,fna(ix,iy,islice,0)
       elseif(want.eq.'fnay') then
          do iy=-1,ny
             do ix=-1,nx
-csw 17feb2012               write(*,*) ix,iy,fna(ix,iy,islice,1)
+csw 17feb2012 fixed              write(*,*) ix,iy,fna(ix,iy,islice,1)
                write(*,*) ix,iy,fna(ix,iy,1,islice)
             enddo
             write(*,'()')
@@ -218,6 +220,37 @@ csw 17feb2012               write(*,*) ix,iy,fna(ix,iy,islice,1)
          do iy=-1,ny
             do ix=-1,nx
                write(*,*) ix,iy,kinrgy(ix,iy,islice)
+            enddo
+            write(*,'()')
+         enddo
+csw 30apr2014 added
+      elseif(want.eq.'sx') then
+         do iy=-1,ny
+            do ix=-1,nx
+               write(*,*) ix,iy,gs(ix,iy,0)
+            enddo
+            write(*,'()')
+         enddo
+      elseif(want.eq.'sxpe') then
+         do iy=-1,ny
+            do ix=-1,nx
+               write(*,*) ix,iy,gs(ix,iy,0)*qc(ix,iy)
+            enddo
+            write(*,'()')
+         enddo
+csw 17sep2014 added
+      elseif(want.eq.'ni  ') then
+         do iy=-1,ny
+            do ix=-1,nx
+               write(*,*) ix,iy,ni(ix,iy,0)
+            enddo
+            write(*,'()')
+         enddo
+csw 30sep2014 added
+      elseif(want.eq.'sy') then
+         do iy=-1,ny
+            do ix=-1,nx
+               write(*,*) ix,iy,gs(ix,iy,1)
             enddo
             write(*,'()')
          enddo
