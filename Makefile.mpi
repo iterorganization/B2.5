@@ -1,5 +1,10 @@
 PROG=libb25.a
 
+#BINDIR    = bin/${OBJECTCODE}
+#BINDIREIR = ../Eirene/bin/${OBJECTCODE}
+BINDIR    = .
+BINDIREIR = ../Eirene
+
 .SUFFIXES: .o .f .f90 .F
 
 FF=mpif90
@@ -40,7 +45,7 @@ MODULES= b2mod_types.o  b2mod_layer.o b2mod_tallies.o b2mod_wall.o b2mod_constan
 
 OBJECTS= documentation.o equations.o input.o output.o sources.o transport.o solvers.o utility.o add_utility.o user.o b2aux.o driver.o b2plot.o
 
-INCDIR= -I ./src/include -I ./src/common -I ./src/common/COUPLE -I ../Eirene
+INCDIR= -I ./src/include -I ./src/common -I ./src/common/COUPLE -I ${BINDIREIR}
 
 #default deps
 .c.o:
@@ -55,6 +60,8 @@ INCDIR= -I ./src/include -I ./src/common -I ./src/common/COUPLE -I ../Eirene
 	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) $?
 
 all: $(PROG)
+#	mkdir -p ${BINDIR}
+#	mv *.o *.mod *.a ${BINDIR}
 
 $(PROG): $(MODULES) $(OBJECTS)
 	ar vr $(PROG) *.o
@@ -140,7 +147,7 @@ b2plot.o: $(MODULES) \
 
 #specific deps
 b2mod_neutrals_namelist.o: src/modules/b2mod_neutrals_namelist.F
-	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DUSE_EIRENE src/modules/b2mod_neutrals_namelist.F
+	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DUSE_EIRENE -DNO_SAVE src/modules/b2mod_neutrals_namelist.F
 b2mod_diag.o: src/modules/b2mod_diag.F
 	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DUSE_EIRENE src/modules/b2mod_diag.F
 b2mod_work.o: src/modules/b2mod_work.F
@@ -153,8 +160,6 @@ b2mod_tallies.o: src/modules/b2mod_tallies.F
 	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DNO_CDF src/modules/b2mod_tallies.F
 b2mod_movies.o: src/modules/b2mod_movies.F
 	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DNO_CDF src/modules/b2mod_movies.F
-b2mod_neutrals_namelist.o: src/modules/b2mod_neutrals_namelist.F
-	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DNO_SAVE src/modules/b2mod_neutrals_namelist.F 
 b2stbr.o: src/sources/b2stbr.F
 	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -DUSE_EIRENE -DNO_CDF src/sources/b2stbr.F 
 eirene_f30f31.o: src/sources/eirene_f30f31.F

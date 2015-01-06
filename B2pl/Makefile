@@ -24,10 +24,10 @@ OBJ19 =  skipblanks.o species.o spect.o spop.o spush.o sumx.o sumy.o strswap.o s
 OBJ20 =  b2pinp.o b2paux.o b2pldr.o b2plot.o b2pnwl.o b2prdl.o b2psh.o b2ptrdl.o b2ptrg.o b2ptrgl.o b2pwinm.o b2pwinp.o b2pwld.o b2pwlprp.o b2pwrdld.o b2pwsort.o b2mwti.o mesh.o meshit.o plot_chords.o plot_wall_elements.o plottarget.o plotcontour.o plotpatch.o pltoutline.o pltsptrix.o pne.o plttarget.o pltvessel.o pltwall.o
 OBJ21 =  b2pl.o
 
-NCARG=~/usr/local/ncarg
+NCARG=/b2-ext/ncarg/lib
 #NCARG=../../libs/ncarg
 
-MSCL=~/usr/local/mscl/linux.intel
+MSCL=lib/mscl/linux.ifort64
 #MSCL=../../libs/mscl/linux.intel
 
 b2pl.exe: $(OBJ0) $(OBJ1) $(OBJ2) $(OBJ3) $(OBJ4) $(OBJ5) $(OBJ6) $(OBJ7) $(OBJ8) $(OBJ9) $(OBJ10) $(OBJ11) $(OBJ12) $(OBJ13) $(OBJ14) $(OBJ15) $(OBJ16) $(OBJ17) $(OBJ18) $(OBJ19) $(OBJ20) $(OBJ21)

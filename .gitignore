@@ -1,3 +1,7 @@
 *~
 *.[oa]
 *.mod
+
+# ignore anything in directories with executables
+Release/
+bin/
