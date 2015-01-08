@@ -739,9 +739,10 @@ c            rfluxm = rfluxm / min(dble(nhist),dble(ncall+1))
         call xerrab ('b2stbr not compiled with the USE_EIRENE option')
 #endif
       else
-#ifndef USE_EIRENE
+cwdk remove this if-test, to allow runs without Eirene if code is compiled with Eirene
+c#ifndef USE_EIRENE
         if(ncall.eq.0) call eirene_mc_init             ! EIRDIAG = 0   !srv 03.04.13
-#endif
+c#endif
       endif
 
 * ..sources

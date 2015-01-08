@@ -288,11 +288,10 @@ csw 20sep2013 added
         volsum(ir)=volsum(ir)+vol(ix,iy)
         do is=1,nspecies
           nisum(is,ir)=nisum(is,ir)+
-     +                 ni(ix,iy,is)*vol(ix,iy)
+     +                 na(ix,iy,is)*vol(ix,iy)     !wdk na(ix,iy,is) instead of ni(ix,iy,is)
         end do
        enddo
       enddo
-
 
       do j=1,nstrai
 csw 18nov2013 check alloc

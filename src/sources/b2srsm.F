@@ -149,14 +149,14 @@ c check particles
      1           abs(snasm(ix,iy,0,is)+snasm(ix,iy,1,is)*na(ix,iy,is))
      2           /(na(ix,iy,is)*vol(ix,iy))  
                 hlp = invtimescale*
-     1           time_factor_required*dtim*dtco(region(ix,iy,0),is)
+     1           time_factor_required*dtim*dtco(is,region(ix,iy,0))     !srv 07.01.15
                 if (hlp.gt.1.0_R8) then
                   timescale  = 1.0_R8/invtimescale
                   timefactor = min(timefactor,1.0_R8/hlp)
                   if ((main_call.and.diagno.ge.1).or.diagno.ge.2) then
                     write(*,*) 'WARNING: particle sources very strong @'
                     write(*,'(a,2e10.3)') 'timescale,dt = ',
-     ,               timescale,dtim*dtco(region(ix,iy,0),is)
+     ,               timescale,dtim*dtco(is,region(ix,iy,0))                      !srv 07.01.15
                     write(*,'(a,3i4)') 'ix,iy,is = ', ix,iy,is
                     write(*,'(a,3e10.3)') 'te,ti,ne = ',
      1               te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)
@@ -186,14 +186,14 @@ c check momentum
      2           /(sqrt(ti(ix,iy)/
      3           (am(is)*mp))*roxa(ix,iy,is)*vol(ix,iy))  
                 hlp = invtimescale*
-     1           time_factor_required*dtim*dtmo(region(ix,iy,0),is)
+     1           time_factor_required*dtim*dtmo(is,region(ix,iy,0))     !srv 07.01.15
                 if (hlp.gt.1.0_R8) then
                   timescale  = 1.0_R8/invtimescale
                   timefactor = min(timefactor,1.0_R8/hlp)
                   if ((main_call.and.diagno.ge.1).or.diagno.ge.2) then
                     write(*,*) 'WARNING: momentum sources very strong @'
                     write(*,'(a,2e10.3)') 'timescale,dt = ',
-     ,               timescale,dtim*dtmo(region(ix,iy,0),is)
+     ,               timescale,dtim*dtmo(is,region(ix,iy,0))                     !srv 07.01.15
                     write(*,'(a,6i4)') 'ix,iy,is = ', ix,iy,is
                     write(*,'(a,3e10.3)') 'te,ti,ne = ',
      1               te(ix,iy)/ev,ti(ix,iy)/ev,ne(ix,iy)
