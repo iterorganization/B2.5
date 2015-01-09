@@ -14,8 +14,8 @@ ifeq ("$(DBG)","")
      FFLAGS= -c -O2 -r8
      CFLAGS= -c -O2
 else
-     FFLAGS= -c -g -r8 -traceback 
-     CFLAGS= -c -g
+     FFLAGS= -c -g -r8 -traceback -check
+     CFLAGS= -c -g -check
 endif
 
 FOPTS=
