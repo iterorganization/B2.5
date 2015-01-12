@@ -1,8 +1,7 @@
-PROG=b2eirene
+PROG=libb25.a
 
 OBJDIR    = bin/${OBJECTCODE}
 OBJDIREIR = ../Eirene/bin/${OBJECTCODE}
-SRCDIRIO  = ../ioflush
 
 .SUFFIXES: .o .f .f90 .F
 
@@ -45,8 +44,6 @@ MODULES= b2mod_types.o  b2mod_layer.o b2mod_tallies.o b2mod_wall.o b2mod_constan
 OBJECTS= documentation.o equations.o input.o output.o sources.o transport.o solvers.o utility.o add_utility.o user.o b2aux.o driver.o b2plot.o
 
 INCDIR= -I ./src/include -I ./src/common -I ./src/common/COUPLE -I ${OBJDIREIR}
-LIBMOD= -L${OBJDIR} -lb25 -L${OBJDIREIR} -leirene
-LIBGR=-L/usr/lib64 -L/b2-ext/ncarg/lib -Llib/grgli/grsoft -lgr -L../../lib/${OBJECTCODE} -Llib/grgli/gligks -lgks -lX11 -lXt
 
 #default deps
 $(OBJDIR)/%.o: %.c
@@ -60,40 +57,23 @@ $(OBJDIR)/%.o: %.f90
 $(OBJDIR)/%.F90.o: %.F90
 	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -module $(OBJDIR) -c -o $@ $<
 
-
 all: dirs $(OBJDIR)/$(PROG)
 
-$(OBJDIR)/$(PROG): ${OBJDIREIR}/libeirene.a ${OBJDIR}/libb25.a $(OBJDIR)/b2mn_mpi.o $(OBJDIR)/ioflush.o
-	rm -f $(OBJDIR)/$(PROG)
-	$(FF) -o $(OBJDIR)/$(PROG) $(INCDIR) $(OBJDIR)/b2mn_mpi.o $(OBJDIR)/ioflush.o $(LIBMOD) $(LIBGR) $(LIBMPI) 
-
+$(OBJDIR)/$(PROG): $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/,$(OBJECTS))
+	ar vr $(OBJDIR)/$(PROG) $(OBJDIR)/*.o
 
 clean:
 	rm -f $(OBJDIR)/*.o $(OBJDIR)/*.mod $(OBJDIR)/*.a
+
+partclean:
+	rm -f *.a b2plot_.o b2pnwl.o b2ptrgl.o get_from_movie_cdf.o ngread.o b2mds.o process.o b2mwti.o b2mod_diag.o b2mod_diag.mod b2wdat.o b2stbr.o\
+	eirene_mc.o b2blnc.o b2blne.o b2blnm.o b2trace.o b2usrtrc.o b2wrint.o b2wrsep.o cdfmovie.o b2mod_neutrals_namelist.o b2mod_neutrals_namelist.mod
+
 
 dirs: $(OBJDIR)
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
-
-#deps
-$(OBJDIR)/b2mn_mpi.o:
-	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -module $(OBJDIR) -c -o $@ src/driver/b2mn_mpi.F
-
-# NOTE: is this ioflush needed?
-$(OBJDIR)/ioflush.o:
-	$(CC) $(CFLAGS) $(COPTS) -c -o $@ ${SRCDIRIO}/ioflush.c
-
-#libinterface:
-
-${OBJDIREIR}/libeirene.a:
-
-###############################################################################
-
-# NOTE: not all *.o -files needed for libb25 !?
-$(OBJDIR)/libb25.a: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/,$(OBJECTS))
-	ar vr $(OBJDIR)/libb25.a $(OBJDIR)/*.o
-
 
 #deps
 $(OBJDIR)/documentation.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, \
