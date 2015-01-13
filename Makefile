@@ -69,7 +69,7 @@ $(OBJDIR)/$(PROG): ${OBJDIREIR}/libeirene.a ${OBJDIR}/libb25.a $(OBJDIR)/b2mn_mp
 
 
 clean:
-	rm -f $(OBJDIR)/*.o $(OBJDIR)/*.mod $(OBJDIR)/*.a
+	rm -f $(OBJDIR)/*.o $(OBJDIR)/*.mod $(OBJDIR)/*.a $(OBJDIR)/$(PROG)
 
 dirs: $(OBJDIR)
 
