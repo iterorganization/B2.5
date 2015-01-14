@@ -1,4 +1,4 @@
-PROG=b2eirene
+
 
 OBJDIR    = bin/${OBJECTCODE}
 OBJDIREIR = ../Eirene/bin/${OBJECTCODE}
@@ -44,6 +44,9 @@ MODULES= b2mod_types.o  b2mod_layer.o b2mod_tallies.o b2mod_wall.o b2mod_constan
 
 OBJECTS= documentation.o equations.o input.o output.o sources.o transport.o solvers.o utility.o add_utility.o user.o b2aux.o driver.o b2plot.o
 
+DESTM = $(MODULES:%.o=$(OBJDIR)/%.o)
+DESTO = $(OBJECTS:%.o=$(OBJDIR)/%.o)
+
 INCDIR= -I ./src/include -I ./src/common -I ./src/common/COUPLE -I ${OBJDIREIR}
 LIBMOD= -L${OBJDIR} -lb25 -L${OBJDIREIR} -leirene
 LIBGR=-L/usr/lib64 -L/b2-ext/ncarg/lib -Llib/grgli/grsoft -lgr -L../../lib/${OBJECTCODE} -Llib/grgli/gligks -lgks -lX11 -lXt
@@ -61,15 +64,14 @@ $(OBJDIR)/%.F90.o: %.F90
 	$(FF) $(FFLAGS) $(INCDIR) $(OPTS) -module $(OBJDIR) -c -o $@ $<
 
 
-all: dirs $(OBJDIR)/$(PROG)
+b2eirene: dirs $(OBJDIR)/b2eirene
 
-$(OBJDIR)/$(PROG): ${OBJDIREIR}/libeirene.a ${OBJDIR}/libb25.a $(OBJDIR)/b2mn_mpi.o $(OBJDIR)/ioflush.o
-	rm -f $(OBJDIR)/$(PROG)
-	$(FF) -o $(OBJDIR)/$(PROG) $(INCDIR) $(OBJDIR)/b2mn_mpi.o $(OBJDIR)/ioflush.o $(LIBMOD) $(LIBGR) $(LIBMPI) 
-
+$(OBJDIR)/b2eirene: ${OBJDIREIR}/libeirene.a ${OBJDIR}/libb25.a $(OBJDIR)/b2mn_mpi.o $(OBJDIR)/ioflush.o
+	rm -f $(OBJDIR)/b2eirene
+	$(FF) -o $(OBJDIR)/b2eirene $(INCDIR) $(OBJDIR)/b2mn_mpi.o $(OBJDIR)/ioflush.o $(LIBMOD) $(LIBGR) $(LIBMPI) 
 
 clean:
-	rm -f $(OBJDIR)/*.o $(OBJDIR)/*.mod $(OBJDIR)/*.a $(OBJDIR)/$(PROG)
+	rm -f $(OBJDIR)/*.o $(OBJDIR)/*.mod $(OBJDIR)/*.a $(OBJDIR)/b2eirene
 
 dirs: $(OBJDIR)
 
@@ -91,35 +93,35 @@ ${OBJDIREIR}/libeirene.a:
 ###############################################################################
 
 # NOTE: not all *.o -files needed for libb25 !?
-$(OBJDIR)/libb25.a: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/,$(OBJECTS))
+$(OBJDIR)/libb25.a: $(DESTM) $(DESTO)
 	ar vr $(OBJDIR)/libb25.a $(OBJDIR)/*.o
 
 
 #deps
-$(OBJDIR)/documentation.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, \
+$(OBJDIR)/documentation.o: $(DESTM) $(addprefix $(OBJDIR)/, \
 	b2cdca.o  b2cdci.o  b2cdcr.o  b2cdcv.o)
 
-$(OBJDIR)/equations.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, \
+$(OBJDIR)/equations.o: $(DESTM) $(addprefix $(OBJDIR)/, \
 	b2news.o   b2npc9.o  b2nph9.o  b2npmo.o  b2nppo.o  b2nxdp.o  b2nxdv.o  b2nxfm.o  b2nxfx.o  b2nxst.o \
 	b2news_.o  b2npco.o  b2npht.o  b2npp7.o  b2nxcm.o  b2nxdu.o  b2nxfc.o  b2nxfv.o  )
 
-$(OBJDIR)/input.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, \
+$(OBJDIR)/input.o: $(DESTM) $(addprefix $(OBJDIR)/, \
 	b2rfcp.o  b2rflb.o  b2rucp.o  b2rugm.o  b2rups.o  b2rurc.o  b2rusr.o  b2ruzd.o)
 
-$(OBJDIR)/output.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, \
+$(OBJDIR)/output.o: $(DESTM) $(addprefix $(OBJDIR)/, \
 	b2wdat.o  b2wfpj.o  \
 	b2wfcp.o  b2wucp.o  b2wuzd.o \
 	b2wfgm.o  \
 	b2wfpi.o  b2wups.o  tallies.o)
 
-$(OBJDIR)/sources.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, \
+$(OBJDIR)/sources.o: $(DESTM) $(addprefix $(OBJDIR)/, \
 	b2sifr.o   b2sihs_.o  b2sqel.o  b2srst.o   b2stbr_bas.o   eirene_f30f31.o   ggfill.o      setwrk0.o \
 	average.o  b2sifr_.o  b2spcx.o   b2sral.o  b2stbc.o       b2stbc_spb.o     b2stbr_phys.o  eirene_mc.o       heatdiff1D.o\
 	b2siav.o   b2sigp.o   b2spel.o   b2srdt.o  b2stbc_bas.o   b2stbm.o         b2stcx.o       heatdiff2D.o\
 	b2sicf.o   b2sihs.o   b2sqcx.o   b2srsm.o  b2stbc_phys.o  b2stbr.o         b2stel.o       eseec0.o          integrate.o \
 	eirene_mc_init.o)
 
-$(OBJDIR)/transport.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, \
+$(OBJDIR)/transport.o: $(DESTM) $(addprefix $(OBJDIR)/, \
 	b2tfcc.o   b2tfhi.o   b2tiner.o  b2tlhe.o  b2tqca.o  b2tr21.o  b2trno.o   b2tvspa.o  b2txfx.o\
 	b2tfch.o   b2tfhi_.o  b2tinnt.o  b2tlhi.o  b2tqce.o  b2tral.o  b2trql.o   b2txfy.o\
 	b2tanml.o  b2tfhe.o   b2tfnb.o   b2tlc0.o   b2tlmv.o  b2tqin.o  b2trcl.o  b2tstch.o  b2txcx.o   b2txsx.o\
@@ -127,11 +129,11 @@ $(OBJDIR)/transport.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/
 	bp.o class.o colxi.o fluxav.o menn.o neo_diagnostics.o neo_validity.o neoart.o neochi.o \
 	neodv.o penq.o perr.o ps.o viscol.o viscos.o)
 
-$(OBJDIR)/solvers.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, \
+$(OBJDIR)/solvers.o: $(DESTM) $(addprefix $(OBJDIR)/, \
 	b2upco.o  b2upht_.o  b2urmo.o  b2ursd.o  b2usco.o  b2usht.o  b2usp7.o   b2uspo.o  b2ux7p.o  b2uxm9.o\
 	b2upht.o  b2uppo.o   b2ursc.o  b2usc9.o  b2ush9.o  b2usmo.o  b2usp7_.o  b2ux5p.o  b2ux9p.o)
 
-$(OBJDIR)/utility.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, \
+$(OBJDIR)/utility.o: $(DESTM) $(addprefix $(OBJDIR)/, \
 	cfwuin.o    ini1_7_solps.o     my_outi.o    slv5pt.o        xerrab.o\
 	cfwure.o    ini1_solps.o    lefta.o          myblas.o     ratio.o     smax.o          xerset.o\
 	chcase.o    int2d.o         len_of_digits.o  nagsubst.o   smin.o          xertst.o\
@@ -148,24 +150,24 @@ $(OBJDIR)/utility.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, 
         intfacev.o\
 	dfmin.o interp2d.o lubksb.o ludcmp.o sfluxav.o tfluxav.o)
 
-$(OBJDIR)/add_utility.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, utility.o \
+$(OBJDIR)/add_utility.o: $(DESTM) $(addprefix $(OBJDIR)/, utility.o \
 	dgbtf2.o  dgemm.o  dgetf2.o  dscal.o  dtrmm.o  dtrti2.o     idamax.o  xerbla.o\
 	dgemv.o  dgetrf.o  dlamch.o  dswap.o  dtrmv.o  dtrtri.o     f01aaf_my.o  ilaenv.o  sdot_my.o\
 	dcopy.o   dgbtrf.o   dgbtrs.o  dger.o   dgetri.o  dlaswp.o  dtbsv.o  dtrsm.o  lsame.o   )
 
-$(OBJDIR)/user.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, \
+$(OBJDIR)/user.o: $(DESTM) $(addprefix $(OBJDIR)/, \
 	b2blnc.o  b2blne.o  b2blnm.o  b2file.o  b2trace.o  b2usrtrc.o  b2wrint.o  b2wrsep.o  )
 
-$(OBJDIR)/b2aux.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, \
+$(OBJDIR)/b2aux.o: $(DESTM) $(addprefix $(OBJDIR)/, \
 	b2xbzb.o  b2xpfe.o  b2xpne.o  b2xpnr.o  b2xppr.o  b2xvcp.o  b2xvfx.o  b2xvps.o  b2xxid.o\
 	b2xgbs.o  b2xpfi.o  b2xpni.o  b2xppb.o  b2xppz.o  b2xvff.o  b2xvfy.o  b2xvsg.o  b2xxmm.o\
 	b2xpnm.o  b2xppe.o  b2xpro.o  b2xvfv.o  b2xvgm.o  b2xxgs.o  b2xzdd.o)
 
-$(OBJDIR)/driver.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, \
+$(OBJDIR)/driver.o: $(DESTM) $(addprefix $(OBJDIR)/, \
 	b2mndr.o  b2mndt.o  b2mwmv.o  b2mwqt.o  b2mxac.o  b2mxnp.o  b2mxzr.o  \
 	b2mnds.o  b2mwit.o  b2mwq0.o  b2mwti.o  b2mxar.o  b2mxnu.o  )
 
-$(OBJDIR)/b2plot.o: $(addprefix $(OBJDIR)/,$(MODULES)) $(addprefix $(OBJDIR)/, \
+$(OBJDIR)/b2plot.o: $(DESTM) $(addprefix $(OBJDIR)/, \
 	chord.o lower_case.o init_wall.o mapx.o mapy.o species.o)
 
 #specific deps
