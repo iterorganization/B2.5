@@ -1,6 +1,7 @@
 *~
 *.[oa]
 *.mod
+TAGS
 
 # ignore anything in directories with executables
 Release/
