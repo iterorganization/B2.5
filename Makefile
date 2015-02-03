@@ -49,7 +49,7 @@ DESTO = $(OBJECTS:%.o=$(OBJDIR)/%.o)
 
 INCDIR= -I ./src/include -I ./src/common -I ./src/common/COUPLE -I ${OBJDIREIR}
 LIBMOD= -L${OBJDIR} -lb25 -L${OBJDIREIR} -leirene
-LIBGR=-L/usr/lib64 -L/b2-ext/ncarg/lib -Llib/grgli/grsoft -lgr -L../../lib/${OBJECTCODE} -Llib/grgli/gligks -lgks -lX11 -lXt
+LIBGR= -L/usr/lib64 -L/b2-ext/ncarg/lib -Llib/grgli/grsoft -L../../lib/${OBJECTCODE} -Llib/grgli/gligks -lgr -lgks -lX11 -lXt
 
 #default deps
 $(OBJDIR)/%.o: %.c

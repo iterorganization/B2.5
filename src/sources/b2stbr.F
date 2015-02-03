@@ -330,7 +330,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
 
 c-xpb Reading of neutrals namelist moved here as it is needed by init_wall
         new_sputter_namelist=neutrals_namelist.eq.1.or.use_eirene.ne.0
-        call read_b2mod_neutrals_namelist
+        call read_neutrals_namelist
      1   (nx, ny, ns, new_sputter_namelist)
         call xertst (nstrai.le.nstraid, 
      &   'Increase DEF_NSTRA in DIMENSIONS.F')
@@ -346,7 +346,7 @@ c-xpb Reading of neutrals namelist moved here as it is needed by init_wall
           if(mod(tim,neutrals_time_mod).gt.neutrals_time_switch)
      1     then
             write(*,*) 'b2stbr: catching up ...'
-            call read_b2mod_neutrals_namelist(nx, ny, ns, .true.)
+            call read_neutrals_namelist(nx, ny, ns, .true.)
             new_sputter_namelist=.true.
             call xertst (nstrai.le.nstraid, 
      &       'Increase DEF_NSTRA in DIMENSIONS.F')
@@ -420,7 +420,7 @@ c-xpb Reading of neutrals namelist moved here as it is needed by init_wall
           if(mod(tim,neutrals_time_mod).gt.neutrals_time_switch.or.
      1     int(tim/neutrals_time_mod).gt.elm_count) then
             elm_count=tim/neutrals_time_mod
-            call read_b2mod_neutrals_namelist(nx, ny, ns, .true.)
+            call read_neutrals_namelist(nx, ny, ns, .true.)
             new_sputter_namelist=.true.
             call xertst (nstrai.le.nstraid, 
      &       'Increase DEF_NSTRA in DIMENSIONS.F')

@@ -507,7 +507,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       call ipgeti ('b2mndr_eirene', use_eirene)
       call alloc_b2mod_neutrals(ns, nstraid, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
-     > call read_b2mod_neutrals_namelist(nx, ny, ns, .false.)
+     > call read_neutrals_namelist(nx, ny, ns, .false.)
       if(nstrai.gt.nstraid) stop 'Increase DEF_NSTRA in DIMENSIONS.F'
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'

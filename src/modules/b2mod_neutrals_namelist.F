@@ -262,7 +262,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       return
       end subroutine alloc_b2mod_neutrals_save
 
-      subroutine read_b2mod_neutrals_namelist(nx, ny, ns, dotest)
+      subroutine read_neutrals_namelist(nx, ny, ns, dotest)
       use b2mod_wall
      & ,only : track_index, ntrack, track_species, track_chem_sput
       use b2mod_indirect
@@ -635,7 +635,7 @@ c.. Test consistency with region boundaries
       write(*,neutrals)
       return
 
-      end subroutine read_b2mod_neutrals_namelist
+      end subroutine read_neutrals_namelist
 
       subroutine read_b2mod_neutrals_save
       integer istra

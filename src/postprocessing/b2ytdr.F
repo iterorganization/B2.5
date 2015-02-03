@@ -829,7 +829,7 @@ c 2002-09-11: logic revised
      1 exist=todo)
       if (neutrals_namelist.eq.1.or.use_eirene.ne.0.or.todo) then
         call alloc_b2mod_neutrals(ns, nstraid, sput_dst)
-        call read_b2mod_neutrals_namelist(nx, ny, ns, .false.)
+        call read_neutrals_namelist(nx, ny, ns, .false.)
         if (nstrai.gt.nstraid) stop 'Increase DEF_NSTRA in DIMENSIONS.F'
         call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrai,natm)
       endif
