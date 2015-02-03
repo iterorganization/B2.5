@@ -1,7 +1,7 @@
 
       subroutine iniilu_7(n1,n2)                                   !sv 11.01.00
       use b2mod_types
-      use b2mod_ma28_for_7diag                                     !sv 11.01.00
+      use b2mod_ma28_for_7diag
       use b2mod_indirect
       implicit none
       integer n1,n2

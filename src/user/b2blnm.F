@@ -9,7 +9,9 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
 c
 c  version : 03.03.2001 00:37
 c

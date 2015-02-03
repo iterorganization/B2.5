@@ -12,11 +12,11 @@
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-      use b2mod_b2cmpb                                               !srv 02.12.04
+      use b2mod_b2cmpb
       use b2mod_geo_corner
      &                    , only : lengthy, nmdpl                    !srv 26.11.04
 #ifdef PAR_OPT
-	use b2mod_par_opt
+      use b2mod_par_opt
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -675,11 +675,11 @@ c-xpb     hcib(ix,iy,is)=d_new*na(in,is)
       use b2mod_constants
       use b2mod_geo
      &             , only: cry, vol
-      use b2mod_geo_corner                                                 !srv 24.04.02
+      use b2mod_geo_corner
       use b2mod_b2cmpa
       use b2mod_b2cmpt
 #ifdef PAR_OPT
-	use b2mod_par_opt
+      use b2mod_par_opt
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -2208,39 +2208,39 @@ c MW working end 3
       end subroutine set_transport_mw
 
       subroutine set_profile(fnm, n, coord, fun)                        !srv 01.03.07 {
-	 use b2mod_types
-	 implicit none
-	 character*(*) fnm
-	 integer :: n, iy
-	 real (kind=R8) :: coord(-1:n), fun(-1:n)
+      use b2mod_types
+      implicit none
+      character*(*) fnm
+      integer :: n, iy
+      real (kind=R8) :: coord(-1:n), fun(-1:n)
 
-	 real (kind=R8), allocatable, save :: r(:), f(:), b(:), c(:), d(:)
-	 integer :: ndat, i
-       real (kind=R8) :: t0, t1
-	 real (kind=R8), external :: dseval
+      real (kind=R8), allocatable, save :: r(:), f(:), b(:), c(:), d(:)
+      integer :: ndat, i
+      real (kind=R8) :: t0, t1
+      real (kind=R8), external :: dseval
 
 *   ..read data in order to determine ndat
-       open(70,file=trim(fnm))
-	  ndat = 0
-	  do
-	   read(70,*,end=10) t0, t1
-         ndat = ndat + 1
-	  enddo
-   10	 close(70)
+      open(70,file=trim(fnm))
+      ndat = 0
+      do
+        read(70,*,end=10) t0, t1
+        ndat = ndat + 1
+      enddo
+   10 close(70)
 
-	 write(*,"(/' The length of file ',a,' is ',i4/)") trim(fnm), ndat
+      write(*,"(/' The length of file ',a,' is ',i4/)") trim(fnm), ndat
 
-       allocate (r(1:ndat), f(1:ndat), b(1:ndat), c(1:ndat), d(1:ndat))
+      allocate (r(1:ndat), f(1:ndat), b(1:ndat), c(1:ndat), d(1:ndat))
 
-       open(70,file=trim(fnm))
- 	  do iy = 1, ndat
-	   read(70,*) r(iy), f(iy)
- 	  enddo
-	 close(70)
- 	 do iy = 1, ndat-1
-	  call xertst (r(iy).lt. r(iy+1),
+      open(70,file=trim(fnm))
+      do iy = 1, ndat
+        read(70,*) r(iy), f(iy)
+      enddo
+      close(70)
+      do iy = 1, ndat-1
+        call xertst (r(iy).lt. r(iy+1),
      1  'Sequence of coordinates in file '//fnm//' is not monotonic')
- 	 enddo
+      enddo
 
 !            call dcscon (ndat, r, f, ibreak, break, cscoef)
 !	      write(*,*) ' ibreak = ', ibreak
@@ -2254,19 +2254,19 @@ c MW working end 3
 
 !        CALL DSPLINE(NDAT, R, F, B, C, D)
 *   ..the simplest linear interpolation   
-       do i = 1, ndat-1
-	    b(i) = (f(i+1)-f(i))/(r(i+1)-r(i))
-	 enddo
-	 b(ndat) = b(ndat-1)
-	 c = 0.0e0_R8
-	 d = 0.0e0_R8
-	 do i = -1, n 
-	  fun(i) = dseval(ndat, coord(i), r, f, b, c, d)
-	  write(*,*) coord(i), fun(i)
-	 enddo
+      do i = 1, ndat-1
+	b(i) = (f(i+1)-f(i))/(r(i+1)-r(i))
+      enddo
+      b(ndat) = b(ndat-1)
+      c = 0.0e0_R8
+      d = 0.0e0_R8
+      do i = -1, n 
+        fun(i) = dseval(ndat, coord(i), r, f, b, c, d)
+        write(*,*) coord(i), fun(i)
+      enddo
 
-	 deallocate(r, f, b, c, d)
+      deallocate(r, f, b, c, d)
 
-	end subroutine set_profile                                      !srv 01.03.07 }
+      end subroutine set_profile                                      !srv 01.03.07 }
 
 

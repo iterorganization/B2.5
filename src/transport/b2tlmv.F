@@ -2,7 +2,7 @@
      &   cvsbx, cvsbxhz, fl)                                         !srv 09.01.01
       use b2mod_types
       use b2mod_indirect
-      use b2mod_b2cmpa                                               !srv 12.04.08
+      use b2mod_b2cmpa
       implicit none
       integer nx, ny, isb
       real (kind=R8) ::

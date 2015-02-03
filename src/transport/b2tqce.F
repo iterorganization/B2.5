@@ -6,7 +6,7 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
-      use b2mod_indirect                                       ! IYS and lk 21.11.2012
+      use b2mod_indirect
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny

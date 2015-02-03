@@ -1,0 +1,18 @@
+EQUIVS = 		# name changes for single precision version
+
+CPP = 			# where to find CPP
+CPPOPTS = 		# options for CPP
+
+FC = 			# fortran compiler
+FCOPTS = 		# options for fortan compiler for single precision version
+INCMOD =		# option for including modules
+MOD =			# module suffix
+
+BLD = 			# program an options for building a library
+
+GRLIBES = 		# libraries for single precision version
+LDLIBES = 		# libraries for double precision version
+
+LD = 			# loader
+LDOPTS = 		# options for loader
+

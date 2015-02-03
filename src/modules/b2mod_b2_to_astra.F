@@ -88,7 +88,7 @@ csw 09jan2014 declare fun to be private
         use b2mod_constants
         use b2mod_b2cmpa
 csw 09jan2014 use extra little module
-        use b2mod_b2_to_astra_com
+        use b2mod_b2_to_astra_com ! IGNORE
 
         implicit none
         integer :: nxd, nyd, nsd, ismain, nwrite, isa, ism
@@ -609,7 +609,7 @@ csw 09jan2014 add dealloc
 
 csw 09jan2014 add 'fun' function
        function fun(arg)
-         use b2mod_b2_to_astra_com
+         use b2mod_b2_to_astra_com  ! IGNORE
          real(kind=R8) :: fun,arg,DSEVAL
          fun=-DSEVAL(np+1,arg,p,x,cb,cc,cd)
        end function fun

@@ -14,7 +14,7 @@
       use b2mod_work
       use b2mod_ma28
       use b2mod_indirect
-      use b2mod_geo_corner						 !xpb
+      use b2mod_geo_corner
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_ppout

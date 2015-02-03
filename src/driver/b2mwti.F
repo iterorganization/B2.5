@@ -19,7 +19,9 @@
       use b2mod_tallies
       use b2mod_wall
       use b2mod_b2cmpa
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
 *   ..input arguments (unchanged on exit)
@@ -115,11 +117,7 @@
       data ncall/0/,target_offset/1/
 
       real (kind=R8) ::
-     *   cr,cz,hy1
-      cr(ix,iy)=0.25_R8*
-     1 (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-      cz(ix,iy)=0.25_R8*
-     1 (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
+     *   hy1
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 
 *-----------------------------------------------------------------------

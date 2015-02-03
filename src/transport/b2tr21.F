@@ -541,7 +541,7 @@ c
       subroutine viscalc(n, z, z2, mm, ti, nz, ns, nsz, w, pi_pp,        !xpb
      1 eta, lnlam, ifail, cond)                                          !srv 01.07.09
       use b2mod_types
-      use b2mod_constants                                        	 !xpb
+      use b2mod_constants
 
       implicit none
 
@@ -785,7 +785,7 @@ c
      *                  nz, ns, nfl, ce, ci, he, hi, r, ifail, cond)
 
       use b2mod_types
-      use b2mod_constants	                                         !xpb
+      use b2mod_constants
       implicit none
 
         integer     ns, nfl, nz(ns)

@@ -4,7 +4,7 @@ C  ODRV -- DRIVER FOR SPARSE MATRIX REORDERING ROUTINES
 C***********************************************************************
         SUBROUTINE  ODRV
      *     (N, IA,JA,A, P,IP, NSP,ISP, PATH, FLAG)
-        use b2mod_types                                                  !sv 11.01.07 
+        use b2mod_types
         IMPLICIT NONE                                                    !sv 11.01.07                   
 C                                                                       
 C  DESCRIPTION                                                          
@@ -177,8 +177,8 @@ C  MD -- MINIMUM DEGREE ALGORITHM (BASED ON ELEMENT MODEL)
 C***********************************************************************
         SUBROUTINE  MD
      *     (N, IA,JA, MAX, V,L, HEAD,LAST,NEXT, MARK, FLAG)             
-        use b2mod_types                                                  !sv 11.01.07 
-	  IMPLICIT NONE                                                    !sv 11.01.07
+        use b2mod_types 
+	IMPLICIT NONE                                                    !sv 11.01.07
 C                                                                       
 C  DESCRIPTION                                                          
 C                                                                       
@@ -318,7 +318,7 @@ C  MDI -- INITIALIZATION
 C***********************************************************************
         SUBROUTINE  MDI
      *     (N, IA,JA, MAX,V,L, HEAD,LAST,NEXT, MARK,TAG, FLAG) 
-        use b2mod_types                                                  !sv 11.01.07 
+        use b2mod_types
         IMPLICIT NONE                                                    !sv 11.01.07         
         INTEGER  N, IA(1), JA(1), MAX, V(1), L(1),  HEAD(1), LAST(1),    !sv 11.01.07
      *     NEXT(1), MARK(1), TAG,  FLAG,  SFS, VI,DVI, VJ                        
@@ -379,7 +379,7 @@ C  MDM -- FORM ELEMENT FROM UNELIMINATED NEIGHBORS OF VK
 C***********************************************************************
         SUBROUTINE  MDM
      *     (VK,TAIL, V,L, LAST,NEXT, MARK)                              
-        use b2mod_types                                                  !sv 11.01.07 
+        use b2mod_types
         IMPLICIT NONE                                                    !sv 11.01.07         
         INTEGER  VK, TAIL,  V(1), L(1),   LAST(1), NEXT(1),   MARK(1),  
      *     TAG, S,LS,VS,ES, B,LB,VB, BLP,BLPMAX                         
@@ -437,7 +437,7 @@ C  MDP -- PURGE INACTIVE ELEMENTS AND DO MASS ELIMINATION
 C***********************************************************************
         SUBROUTINE  MDP
      *     (K,EK,TAIL, V,L, HEAD,LAST,NEXT, MARK)                       
-        use b2mod_types                                                  !sv 11.01.07 
+        use b2mod_types 
         IMPLICIT NONE                                                    !sv 11.01.07         
         INTEGER  EK, TAIL,  V(1), L(1),  HEAD(1), LAST(1), NEXT(1),     
      *     MARK(1),  TAG, FREE, LI,VI,LVI,EVI, S,LS,ES, ILP,ILPMAX      
@@ -530,7 +530,7 @@ C  MDU -- UPDATE DEGREES OF UNELIMINATED VERTICES IN EK
 C***********************************************************************
         SUBROUTINE  MDU
      *     (EK,DMIN, V,L, HEAD,LAST,NEXT, MARK)                         
-        use b2mod_types                                                  !sv 11.01.07 
+        use b2mod_types
         IMPLICIT NONE                                                    !sv 11.01.07
         INTEGER  EK, DMIN,  V(1), L(1),  HEAD(1), LAST(1), NEXT(1),     
      *     MARK(1),  TAG, VI,EVI,DVI, S,VS,ES, B,VB, ILP,ILPMAX,        
@@ -619,7 +619,7 @@ C  SDRV -- DRIVER FOR SPARSE SYMMETRIC POSITIVE DEFINITE MATRIX ROUTINES
 C***********************************************************************
         SUBROUTINE SDRV
      *     (N, P,IP, IA,JA,A, B, Z, NSP,ISP,RSP,ESP, PATH, FLAG)        
-        use b2mod_types                                                  !sv 11.01.07 
+        use b2mod_types
         IMPLICIT NONE                                                    !sv 11.01.07
 C                                                                       
 C  DESCRIPTION                                                          
@@ -854,7 +854,7 @@ C         DEFINITE MATRIX
 C***********************************************************************
         SUBROUTINE  SNF
      *     (N, P,IP, IA,JA,A, D, IJU,JU,IU,U,UMAX, IL, JL, FLAG)        
-        use b2mod_types                                                  !sv 11.01.07 
+        use b2mod_types 
         IMPLICIT NONE                                                    !sv 11.01.07
 C                                                                       
 C  ADDITIONAL PARAMETERS                                                
@@ -972,7 +972,7 @@ C         LINEAR EQUATIONS  MX = B  GIVEN UT-D-U FACTORIZATION OF M
 C***********************************************************************
         SUBROUTINE  SNS
      *     (N, P, D, IJU,JU,IU,U, Z, B, TMP)                            
-        use b2mod_types                                                  !sv 11.01.07 
+        use b2mod_types
         IMPLICIT NONE                                                    !sv 11.01.07
         INTEGER  N, P(1),  IJU(1), JU(1), IU(1)                            
 C        REAL  D(1), U(1),  Z(1), B(1),  TMP(1),  TMPK, SUM              
@@ -1022,7 +1022,7 @@ C  SRO -- SYMMETRIC REORDERING OF SPARSE SYMMETRIC MATRIX
 C***********************************************************************
         SUBROUTINE  SRO
      *     (N, IP, IA,JA,A, Q, R, DFLAG)                                
-        use b2mod_types                                                  !sv 11.01.07 
+        use b2mod_types 
         IMPLICIT NONE                                                    !sv 11.01.07
 C                                                                       
 C  DESCRIPTION                                                          
@@ -1210,7 +1210,7 @@ C  SSF --  SYMBOLIC UT-D-U FACTORIZATION OF SPARSE SYMMETRIC MATRIX
 C***********************************************************************
         SUBROUTINE  SSF
      *     (N, P,IP, IA,JA, IJU,JU,IU,JUMAX, Q, MARK, JL, FLAG)         
-        use b2mod_types                                                  !sv 11.01.07 
+        use b2mod_types
         IMPLICIT NONE                                                    !sv 11.01.07
 C                                                                       
 C  ADDITIONAL PARAMETERS                                                

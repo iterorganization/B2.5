@@ -2,26 +2,26 @@
       use b2mod_types 
       use b2mod_constants 
       use b2mod_geo 
-      use b2mod_geo_corner                                         !srv
+      use b2mod_geo_corner 
       use b2mod_plasma 
       use b2mod_rates 
       use b2mod_residuals 
       use b2mod_sources 
-      use b2mod_anomalous_transport                                !srv
+      use b2mod_anomalous_transport 
       use b2mod_transport 
       use b2mod_work 
       use b2mod_indirect 
-      use b2mod_neutrals_namelist                                  !srv 04.06.09
-      use b2mod_boundary_namelist                                  !srv 02.02.11
-      use b2mod_elements                                           !srv 12.04.12
-!      use b2mod_sign_of_magnetic_field                            !srv 21.04.00
-      use b2mod_b2cmgs
-      use b2mod_b2cmpa
-      use b2mod_b2cmpb
-      use b2mod_b2cmpt
-      use b2mod_b2cmrc
+      use b2mod_neutrals_namelist 
+      use b2mod_boundary_namelist 
+      use b2mod_elements 
+!      use b2mod_sign_of_magnetic_field
+      use b2mod_b2cmgs 
+      use b2mod_b2cmpa 
+      use b2mod_b2cmpb 
+      use b2mod_b2cmpt 
+      use b2mod_b2cmrc 
 #ifdef USE_EIRENE
-      use eirmod_extrab25
+      use eirmod_extrab25 
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -78,8 +78,7 @@
 *   ..procedures                                                   !srv
       intrinsic max, abs                                           !srv
       real (kind=R8) ::                                            !srv
-     *   hybr, hy1, expu2, machsfr                                 !srv
-      hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!!srv
+     *   hy1, expu2, machsfr                                       !srv
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
 *   ..initialisation

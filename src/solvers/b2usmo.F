@@ -6,7 +6,8 @@
      &  smb, flcb, cvsb, resmb, ctcfb, corub, pccb, aa5, aad0, name) !srv 06.04.07
       use b2mod_indirect
       use b2mod_types
-      use b2mod_work, only : iffboundx, iffboundy
+      use b2mod_work
+     , , only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt

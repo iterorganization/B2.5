@@ -9,10 +9,11 @@ csw 2013 added fna_he, cvsa, vadia into argument list
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_rates                                                 !srv 22.06.08
-      use b2mod_b2cmfs                                                !srv 22.06.08
-      use b2mod_b2cmpa                                                !srv 22.06.08
-      use b2mod_work, only : iffboundx, iffboundy
+      use b2mod_rates
+      use b2mod_b2cmfs
+      use b2mod_b2cmpa
+      use b2mod_work
+     1 , only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -82,14 +83,12 @@ cpax
       intrinsic max, abs
 cpax      
       real (kind=R8) ::
-     *   hybr,taf, hy1, upwind
+     *   hybr, hy1, upwind
       external subini, subend, xertst
       external b2xvsg, b2xvff
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                               !srv 07.05.08
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
-      taf(ix,iy,is)=1.77e11_R8*sqrt(am(is))*(ti(ix,iy)/ev)**1.5e0_R8/
-     .               (na(ix,iy,is)*rza(ix,iy,is)**4)
 *   ..initialization
       data ncall/0/, vdia_par/1.0e0_R8/                                    !srv 17.05.99
       data iner_par/0.0e0_R8/                                              !srv 27.12.01

@@ -44,10 +44,15 @@ c
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa
+#ifdef USE_EIRENE
       use eirmod_extrab25
       use eirmod_braeir
+#endif
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
+#ifndef USE_EIRENE
+#     include <COUPLE/BRAEIR.F>
+#endif
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
       integer ix,iy,is,ncall,eirene_extrap,in,eirene_fixmap,
@@ -318,10 +323,15 @@ c
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa
+#ifdef USE_EIRENE
       use eirmod_extrab25
       use eirmod_braeir
+#endif
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
+#ifndef USE_EIRENE
+#     include <COUPLE/BRAEIR.F>
+#endif
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
       character chns*2                                                 !srv 16.09.02
@@ -739,10 +749,15 @@ c
       use b2mod_types
       use b2mod_eirene_globals
       use b2mod_b2cmpa
+#ifdef USE_EIRENE
       use eirmod_extrab25
       use eirmod_braeir
+#endif
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
+#ifndef USE_EIRENE
+#     include <COUPLE/BRAEIR.F>
+#endif
       integer nx,ny
       integer nxx,nyy
       real*8, allocatable :: dummy(:,:,:)

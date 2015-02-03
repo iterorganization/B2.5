@@ -11,11 +11,11 @@
       use b2mod_anomalous_transport
       use b2mod_boundary_namelist
       use b2mod_constants
-      use b2mod_geo_corner                                             !sv
-      use b2mod_rates                                                  !srv 29.07.08 {
+      use b2mod_geo_corner
+      use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_b2cmpb
-      use b2mod_b2cmfs                                                 !srv 29.07.08 }
+      use b2mod_b2cmfs
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns

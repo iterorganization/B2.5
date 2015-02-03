@@ -17,7 +17,9 @@ c======================================================================
       use b2mod_indirect
       use b2mod_b2cmpa
       use b2mod_constants
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
       implicit none
       real (kind=R8) :: BoRiS
       integer lun

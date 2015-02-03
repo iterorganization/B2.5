@@ -1,0 +1,18 @@
+EQUIVS = -DNO_CDF
+
+CPP = /usr/lib/gpp -F
+CPPOPTS = -C -P -N -I$(srcdir) $(EQUIVS)
+
+FC = f90
+FCOPTS = -Oscalar2,vector3,task1 -ei -r2 -Wr"-v 200" -ef
+INCMOD = -p
+MOD = o
+
+BLD = bld rcv
+
+GRLIBES = $(NCARG)
+LDLIBES = $(NAG) -lperf
+
+LD = f90
+LDOPTS = -Wl"-M,s"
+

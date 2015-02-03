@@ -14,11 +14,11 @@
       use b2mod_ma28
       use b2mod_indirect
       use b2mod_b2cmpa
-      use b2mod_elements                                     !srv 06.04.12
+      use b2mod_elements
 ! AVDef is the AViz module file
-      use AVDef    
-      use AVVIEWER    
-	use DFLIB
+      use AVDef    ! IGNORE
+      use AVVIEWER ! IGNORE
+      use DFLIB    ! IGNORE
 
       implicit none
 
@@ -37,11 +37,11 @@
 
 *   ..local variables
       integer :: icase, ix, iy, isymm, is
-	integer :: lbc, ubc, lbr, ubr   
-	integer :: hv, lbnd(2) = 0
-	integer status
-	real(4), allocatable :: M(:,:)
-	character(1) :: key
+      integer :: lbc, ubc, lbr, ubr   
+      integer :: hv, lbnd(2) = 0
+      integer status
+      real(4), allocatable :: M(:,:)
+      character(1) :: key
       character lblgm*120
       character(AV_MAX_LABEL_LEN) :: axis1 = 'X', axis2 = 'Y', axis3
 
@@ -95,10 +95,10 @@
       call cfruch (ninp(3), 120, lblmn, 'label')
 *   ..read species data
       call b2ruzd (ninp(3), b2fstati_version, ns, zamin, zamax, zn, am)
-	lbc = -1
-	lbr = -1
-	ubc = ny
-	ubr = nx
+      lbc = -1
+      lbr = -1
+      ubc = ny
+      ubr = nx
       allocate (M(lbc:ubc, lbr:ubr))
 *   ..call principal driver routine
       call alloc_b2mod_geo(nx,ny)

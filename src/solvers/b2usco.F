@@ -6,7 +6,8 @@
      &  snbv, flob, conb, pccb1, rescb, corpb, aa5, name)             !srv 18.05.02
       use b2mod_types
       use b2mod_indirect
-      use b2mod_work, only : iffboundx, iffboundy
+      use b2mod_work
+     , , only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, nregionv, itcnt

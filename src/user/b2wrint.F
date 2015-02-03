@@ -8,8 +8,10 @@
       use b2mod_tallies
       use b2mod_indirect
       use b2mod_numerics_namelist
+#ifdef USE_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
+#endif
 c
 c  version : 15.03.2002 16:33
 c
@@ -20,6 +22,9 @@ c-----------------------------------------------------------------------
       implicit none
 c
 #     include <DIMENSIONS.F>
+#ifndef USE_EIRENE
+#     include <COUPLE/EIRBRA.F>
+#endif
 c-----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 c

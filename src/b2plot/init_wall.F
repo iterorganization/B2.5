@@ -1,9 +1,9 @@
       subroutine init_wall(nx,ny,ns,BoRiS,
      .   plate_model, plate_option, plate_temp, plate_thick)
-      use b2mod_types
+      use b2mod_types 
       use b2mod_geo
       use b2mod_rates
-      use b2mod_plasma
+      use b2mod_plasma 
       use b2mod_sputter
       use b2mod_indirect
       use b2mod_wall

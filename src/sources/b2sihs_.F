@@ -7,11 +7,11 @@
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
-      use b2mod_geo_corner                                            !srv 02.06.99
-      use b2mod_anomalous_transport                                   !srv 28.08.02
+      use b2mod_geo_corner
+      use b2mod_anomalous_transport
       use b2mod_constants
-      use b2mod_b2cmfs                                                !srv 21.04.00
-	use b2mod_b2cmpa
+      use b2mod_b2cmfs
+      use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns

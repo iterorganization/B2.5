@@ -15,7 +15,9 @@ c***  lwlddir : the orientation of the chain (true = CCW)
 c
       use b2mod_types
       use b2mod_b2plot
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
       implicit none
 #     include "COUPLE/KOPPLDIM.F"
 #     include "b2pwcom.h"

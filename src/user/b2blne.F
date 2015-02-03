@@ -9,7 +9,9 @@
       use b2mod_constants
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
 
 c
 c  version : 29.07.2000 23:52

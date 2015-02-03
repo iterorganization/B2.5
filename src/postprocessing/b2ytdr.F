@@ -38,9 +38,14 @@ c 2002-09-11: logic revised
       use b2mod_b2cmrc
       use b2mod_b2cmfs
       use b2mod_ppout
+#ifdef USE_EIRENE
+      use eirmod_braeir
+#endif
       implicit none
 #     include "DIMENSIONS.F"
+#ifndef USE_EIRENE
 #     include "COUPLE/BRAEIR.F"
+#endif
 *   ..input arguments (unchanged on exit)
       integer ninp(0:5), nout(0:3), nx, ny, ns, nx1, ny1
 *   ..output arguments (unspecified on entry)

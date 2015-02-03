@@ -17,10 +17,15 @@ c  version : 26.07.2002 23:39
       use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_b2cmpb
+#ifdef USE_EIRENE
       use eirmod_braeir
       use eirmod_eirbra
-      use eirmod_extraB25
+      use eirmod_extrab25
+#endif
       implicit none
+#ifndef USE_EIRENE
+#     include <COUPLE/BRAEIR.F>
+#endif
       integer nx,ny,ns,ismain
       real (kind=R8) ::
      * dtim, BoRiS,

@@ -14,10 +14,11 @@
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_geo_corner                                               !xpb
+      use b2mod_geo_corner
       use b2mod_b2cmpa
       use b2mod_b2cmfs
-      use b2mod_work, only : iffboundx, iffboundy
+      use b2mod_work
+     , , only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, guard_flows, ismain                           !xpb !srv 08.09.01 !lk 02.06.11

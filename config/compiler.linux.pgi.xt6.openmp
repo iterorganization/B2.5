@@ -1,0 +1,42 @@
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -D_OPENMP -DPERF_TIMER
+
+CPP = cpp -C -traditional
+CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
+SED = sed s:\#PREC\#:d:g
+SED =
+LINK_MOD = 
+
+FC = ftn
+
+
+ifdef SOLPS_DEBUG
+FCOPTS = -mp=nonuma  -g -C 
+else
+FCOPTS = -mp=nonuma -O3
+endif
+
+DBLFC=${FC}
+DDBLOPTION=-Ad # ???
+DBLSED = sed -e s:\#PREC\#:d:g
+DBLSED = 
+
+# -I is used to specify search path for modules
+INCMOD = -I
+MOD = mod
+OBJDEST = -o ${OBJDIR}/$*.o
+
+BLD = ar rcv
+
+GRLIBES = ${NCARG} -lcgm -lngmath 
+LDLIBES = ${NAG} -lnetcdf
+
+ifdef USE_EIRENE
+LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o
+endif
+
+LD = $(FC)
+# Use this line for debug version
+#LDOPTS = -g -C
+LDOPTS = -mp=nonuma -O3
+
+LCPP=-L/afs/ipp-garching.mpg.de/u/dpc/solps/solps4.0_test/src/lib/${OBJECTCODE} -lsonnet /usr/lib/libstdc++.so.2.9 -lblas

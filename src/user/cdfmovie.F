@@ -8,7 +8,9 @@
       use b2mod_movies
 #endif
       use b2mod_constants
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
       integer nx, ny, ns

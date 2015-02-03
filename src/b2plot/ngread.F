@@ -25,7 +25,9 @@ c
       use b2mod_indirect
       use b2mod_neutrals_namelist
       use b2mod_b2cmpa
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
       implicit none
 
 *  -- INPUT ARGUMENTS --

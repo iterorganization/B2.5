@@ -12,7 +12,8 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_anomalous_transport
-      use b2mod_rates, only : rza                                    !srv 16.06.08
+      use b2mod_rates
+     , , only : rza
       use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)

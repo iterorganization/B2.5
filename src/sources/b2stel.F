@@ -16,7 +16,8 @@
       use b2mod_b2cmpa
       use b2mod_b2cmrc
 #ifdef ASTRA
-      use b2mod_b2_to_astra, only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 11.06.13
+      use b2mod_b2_to_astra
+     , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 11.06.13
 #endif	                       
       implicit none
 *   ..input arguments (unchanged on exit)

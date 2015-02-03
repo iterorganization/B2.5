@@ -10,7 +10,7 @@
       use b2mod_sources
       use b2mod_b2cmpa
 #ifdef ASTRA
-      use b2mod_b2_to_astra                                           !srv 28.07.11
+      use b2mod_b2_to_astra
 #endif	                       
       implicit none
 *   ..input arguments (unchanged on exit)

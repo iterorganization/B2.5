@@ -19,10 +19,11 @@
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch
 #ifdef USE_EIRENE
-      use b2mod_work, only : sna0_eir_h, smo0_eir_h, she0_eir_h,       !IYS 28.03.12 {
-     &    shi0_eir_h, rfluxa_h, rfluxm_h, max_eir_hist_slc,
+      use b2mod_work
+     1 , only : sna0_eir_h, smo0_eir_h, she0_eir_h,       !IYS 28.03.12 {
+     &          shi0_eir_h, rfluxa_h, rfluxm_h, max_eir_hist_slc,
 csw 25feb2014 fix IVS's version of source term avergaing
-     &    alloc_hist_arrays, clear_hist_arrays                         !IYS 28.03.12 } 
+     &          alloc_hist_arrays, clear_hist_arrays      !IYS 28.03.12 } 
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -30,12 +31,15 @@ csw 25feb2014 fix IVS's version of source term avergaing
       use b2mod_tallies
 #endif
 #ifdef ASTRA
-      use b2mod_b2_to_astra, only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 20.02.12 11.06.13
+      use b2mod_b2_to_astra
+     , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 20.02.12 11.06.13
 #endif	                       
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
 #endif
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain

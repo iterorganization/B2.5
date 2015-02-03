@@ -3,7 +3,9 @@
       use b2mod_b2plot
       use b2mod_movies
       use b2mod_plasma
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
       implicit none
       integer ncidcdf,istep
 #ifndef NO_CDF

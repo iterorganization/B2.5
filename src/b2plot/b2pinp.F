@@ -34,7 +34,9 @@ c
 c======================================================================
       subroutine b2prdn(unm)
       use b2mod_types
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
       implicit none
 c
 c*** Reads the data from dg output file

@@ -9,8 +9,8 @@
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_anomalous_transport                                      !xpb
-      use b2mod_geo_corner                                               !xpb
+      use b2mod_anomalous_transport
+      use b2mod_geo_corner
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       implicit none

@@ -14,8 +14,8 @@
       use b2mod_tallies
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_geo_corner      !xpb
-      use b2mod_time            !dpc 2001.07.30
+      use b2mod_geo_corner
+      use b2mod_time
       use b2mod_diag
      * , only : ank_tracing
       use b2mod_elements
@@ -30,7 +30,7 @@
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
 #ifdef ASTRA
-      use b2mod_b2_to_astra                                           !srv 28.07.11
+      use b2mod_b2_to_astra
 #endif	                       
 #ifdef JET
       use b2mod_ppout
@@ -171,7 +171,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
 *   ..procedures
       logical lnext
       real (kind=R8) ::
-     *  x05baf, hy1
+     *  x05baf
       external x05baf
       intrinsic mod, abs, sqrt
       external subini, subend, xertst, xerrab, ipgeti, ipgetr, 
@@ -181,7 +181,6 @@ csw 18feb2014 added for correct implementation of boundary conditions
      &  my_intcor, b2stbc_fb_final, b2spel, b2sqel, b2xvps, b2xvsg
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                             !srv 24.04.02  09.06.08
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
      1  na0eps, b2mndr_cpu, edition, cputarget, cpuincrement, ismain,

@@ -9,8 +9,10 @@
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_boundary_namelist
+#ifdef USE_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
+#endif
 
 c  version : 03.04.2001 15:55
 
@@ -21,6 +23,9 @@ c-----------------------------------------------------------------------
       implicit none
 
 #     include <DIMENSIONS.F>
+#ifndef USE_EIRENE
+#     include <COUPLE/EIRBRA.F>
+#endif
 
       integer nx, ny, ns
       real (kind=R8) :: BoRiS

@@ -4,7 +4,7 @@
       subroutine b2mndt (nout, nx, ny, ns, ismain, itim, dtim, ierr)
       use b2mod_types
       use b2mod_geo
-      use b2mod_anomalous_transport                                  !srv 22.06.08
+      use b2mod_anomalous_transport
       use b2mod_plasma
       use b2mod_rates
       use b2mod_residuals

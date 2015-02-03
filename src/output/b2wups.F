@@ -6,7 +6,7 @@
      &  fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
       use b2mod_types
       use b2mod_time
-      use b2mod_version							 !xpb
+      use b2mod_version
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nx, ny, ns

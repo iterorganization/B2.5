@@ -22,7 +22,9 @@ c======================================================================
       use b2mod_geo
       use b2mod_b2plot
       use b2mod_constants
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
       implicit none
 #     include "COUPLE/KOPPLDIM.F"
 #     include "b2pwcom.h"

@@ -1,0 +1,32 @@
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DNO_PROCESS # -DNO_CDF
+
+CPP = /usr/ccs/lib/cpp
+CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
+SED = sed s:\#PREC\#:d:g
+SED = 
+
+FC = /afs/ipp/@sys/soft/fuji_f90/FSUNf90/bin/f90
+ifdef SOLPS_DEBUG
+FCOPTS = -g -Am -X9 -Hasu
+else
+FCOPTS = -O3 -Am -X9 -Kfast,gs,V8PLUS,GREG,eval -x-
+FCOPTS = -O3 -Am -X9 -Kfast,gs,V8PLUS,GREG,eval
+endif
+DBLFC = ${FC}
+DBLOPTION = -Ad # ???
+DBLSED = sed -e s:\#PREC\#:d:g
+DBLSED = 
+INCMOD = -M
+MOD = mod
+
+BLD = ar rcv
+
+GRLIBES = ${NCARG} -lmscl
+LDLIBES = -L${SOLPS_LIB} ${NAG} -lnetcdf
+
+ifdef USE_EIRENE
+LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+endif
+
+LD = /afs/ipp/@sys/soft/fuji_f90/FSUNf90/bin/f90
+LDOPTS = -Bstatic

@@ -39,11 +39,16 @@ c 2002-09-11: logic revised
 #ifdef NAGF95
       use f90_unix  	 ! IGNORE
 #endif
-      use eirmod_extrab25                                         !srv 14.10.13
-      use eirmod_braeir                                           !srv 14.10.13
+#ifdef USE_EIRENE
+      use eirmod_extrab25
+      use eirmod_braeir
+#endif
 	implicit none
 #     include <DIMENSIONS.F>
-!#     include <COUPLE/EIRDIAG.F>                                 !srv 14.10.13
+#ifndef USE_EIRENE
+#     include <COUPLE/EIRDIAG.F>
+#     include <COUPLE/BRAEIR.F>
+#endif
       integer nxd,nyd,nsd
 c
 c  version : 27.07.96 20:37

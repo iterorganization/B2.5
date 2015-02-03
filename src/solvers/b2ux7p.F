@@ -3,8 +3,8 @@
 
       subroutine b2ux7p (nx, ny, aa7, itcnt, resfun, corfun)     !sv 11.01.00
       use b2mod_types
-      use b2mod_ma28_for_7diag                                   !sv 11.01.00
-	use b2mod_ysmp_sdrv                                        !srv 29.05.02
+      use b2mod_ma28_for_7diag
+      use b2mod_ysmp_sdrv
 !      use b2mod_ma28
       use b2mod_indirect
       implicit none

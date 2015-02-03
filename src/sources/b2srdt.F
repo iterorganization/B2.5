@@ -5,12 +5,13 @@
      &  vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &  na, ua, te, ti, ne, ni, kinrgy,                         !srv 16.07.10
      &  snadt, smodt, shedt, shidt, schdt,lout)                      !srv 11.09.09
-      use b2mod_types
-      use b2mod_indirect
-      use b2mod_numerics_namelist
-      use b2mod_constants
-      use b2mod_b2cmpa
-      use b2mod_work, only : iftimbound
+      use b2mod_types 
+      use b2mod_indirect 
+      use b2mod_numerics_namelist 
+      use b2mod_constants 
+      use b2mod_b2cmpa 
+      use b2mod_work 
+     , , only : iftimbound
       implicit none
 *   ..input arguments (unchanged on exit)
       logical(1) :: lout                                             !srv 16.07.10

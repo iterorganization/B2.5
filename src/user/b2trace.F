@@ -4,7 +4,9 @@
       use b2mod_indirect
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
+#ifdef USE_EIRENE
       use eirmod_extrab25
+#endif
 c
 c  version : 29.08.2000 00:26
 c

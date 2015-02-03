@@ -20,7 +20,7 @@
       use b2mod_anomalous_transport
       use b2mod_boundary_namelist
       use b2mod_constants
-      use b2mod_geo_corner                                               !xpb
+      use b2mod_geo_corner
       use b2mod_time
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -179,7 +179,7 @@
 #ifdef WANT_THIS
       real (kind=R8) ::
      .  Tguess, fy, ehy, fylimt, prefactor,
-     .  fyt, gam0, gam1, t2, tlimit, cone0, coni0, flo, a,               !srv 15.02.08
+     .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,                !srv 15.02.08
      .  cum_flo_vadia, cum_flo_vaecrb, flo_vedia, flo_veecrb
       real (kind=R8) :: hybr, harm, pit, upwind
       integer ibnd, no_current, conduction_only, no_hybr_e, no_hybr_i

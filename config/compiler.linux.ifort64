@@ -1,0 +1,41 @@
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
+
+CPP = /lib/cpp -C -traditional
+CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
+SED = sed s:\#PREC\#:d:g
+SED =
+LINK_MOD = 
+
+FC = ifort
+
+ifdef SOLPS_DEBUG
+FCOPTS = -g -C -debug all -traceback
+else
+FCOPTS = -O2 -xavx -vec_report0
+endif
+
+DBLFC=${FC}
+DDBLOPTION=-Ad # ???
+DBLSED = sed -e s:\#PREC\#:d:g
+DBLSED = 
+
+INCMOD = -I
+MOD = mod
+OBJDEST = -o ${OBJDIR}/$*.o
+
+BLD = ar rcv
+
+GRLIBES = ${NCARG} -lmscl
+LDLIBES = ${NAG} -L${SOLPS_LIB} -lnetcdf # -lblas
+
+ifdef USE_EIRENE
+LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
+endif
+ifdef PERFMON
+LDLIBES += -L${SOLPS_LIB} -lperf
+endif
+
+LD = ${FC}
+# LDOPTS = -Bstatic
+
+LCPP = -L${SOLPS_LIB} -lsonnet -lstdc++ -lblas

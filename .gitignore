@@ -2,10 +2,12 @@
 *.[oa]
 *.mod
 TAGS
+LISTOBJ
 
 # ignore anything in directories with executables
 Release/
 bin/
 
-TAGS
+#ignore local files
+*.local/
 

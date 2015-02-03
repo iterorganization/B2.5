@@ -1,6 +1,6 @@
       subroutine eirene_mc_init
       use b2mod_types
-      use eirmod_extrab25
+      use eirmod_extrab25 
       implicit none
 #     include <COUPLE/KOPPLDIM.F>
 cwdk

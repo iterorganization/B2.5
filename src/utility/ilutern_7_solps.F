@@ -1,7 +1,7 @@
       SUBROUTINE ILUTERN_7(N1, N2, N1D,                            !sv 11.01.00
      . ASO1, ASO, AWE, ACP, AEA, ANO, ANO1, RHS, SOL)              !sv 11.01.00
       use b2mod_types
-      use b2mod_ma28_for_7diag                                     !sv 11.01.00
+      use b2mod_ma28_for_7diag
       use b2mod_indirect
       IMPLICIT NONE
       external bd1copy

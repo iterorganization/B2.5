@@ -10,11 +10,11 @@
       use b2mod_residuals
       use b2mod_sources
       use b2mod_transport
-      use b2mod_anomalous_transport                                   !srv 20.09.06                
+      use b2mod_anomalous_transport               
       use b2mod_work
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_geo_corner                                               !xpb
+      use b2mod_geo_corner
       use b2mod_numerics_namelist
       use b2mod_b2cmpa
       implicit none

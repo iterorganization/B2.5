@@ -8,7 +8,7 @@
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_geo_corner                                               !xpb
+      use b2mod_geo_corner
       use b2mod_tallies
       use b2mod_sources
       use b2mod_b2cmpa
@@ -538,7 +538,7 @@ c
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_geo_corner                                               !xpb
+      use b2mod_geo_corner
       use b2mod_tallies
       use b2mod_b2cmpa
       implicit none
