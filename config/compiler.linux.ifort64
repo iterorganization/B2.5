@@ -6,12 +6,28 @@ SED = sed s:\#PREC\#:d:g
 SED =
 LINK_MOD = 
 
+ifdef USE_MPI
+ifdef IFERC
+FC = mpif90 -fc=ifort
+else
+FC = mpif90
+endif
+else
 FC = ifort
+endif
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g -C -debug all -traceback
+ifdef USE_MPI
+FCOPTS = -g -C -traceback -r8
 else
-FCOPTS = -O2 -xavx -vec_report0
+FCOPTS = -g -C -debug all -traceback
+endif
+else
+ifdef USE_MPI
+FCOPTS = -O2 -vec_report0 -r8
+else
+FCOPTS = -O2 -vec_report0
+endif
 endif
 
 DBLFC=${FC}

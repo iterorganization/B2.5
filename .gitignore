@@ -1,6 +1,7 @@
 *~
 *.[oa]
 *.mod
+\#*\#
 TAGS
 LISTOBJ
 

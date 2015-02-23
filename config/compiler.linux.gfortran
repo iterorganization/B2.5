@@ -10,9 +10,9 @@ FC = gfortran
 
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g -fbounds-check -fsecond-underscore
+FCOPTS = -g -fbounds-check -fsecond-underscore -fbacktrace -freal-4-real-8
 else
-FCOPTS = -g -O -fsecond-underscore
+FCOPTS = -O2 -fsecond-underscore -freal-4-real-8
 endif
 
 DBLFC = ${FC}
