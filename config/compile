@@ -1,7 +1,7 @@
 include ${SRCB2}/config/compiler.${OBJECTCODE}
 INCMODS = ${INCMOD}${OBJDIR}
 ifdef USE_EIRENE
-INCMODS += ${INCMOD}${EIRDIR}/${OBJECTCODE}
+INCMODS += ${INCMOD}${EIRDIR}
 endif
 
 ${OBJDIR}/%.o : %.F

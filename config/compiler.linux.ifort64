@@ -37,7 +37,7 @@ DBLSED =
 
 INCMOD = -I
 MOD = mod
-OBJDEST = -o ${OBJDIR}/$*.o
+OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
 BLD = ar rcv
 
@@ -48,7 +48,7 @@ ifdef USE_EIRENE
 LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
 endif
 ifdef PERFMON
-LDLIBES += -L${SOLPS_LIB} -lperf
+LDLIBES += -lperf
 endif
 
 LD = ${FC}

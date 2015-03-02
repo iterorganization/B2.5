@@ -1,19 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr_bas (nx, ny, ns, dtim, BoRiS,
-     &  vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
+      subroutine b2stbr_bas (nx, ny, ns, nscx, iscx, 
+     &  dtim, BoRiS, vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,             !srv 12.04.12
-     &  sna0, smo0, she0, shi0, sch0, tchem, tchee, tphys, tphye,
+     &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
      &  coreregno, coreregn2, output,
      &  neutral_sources_rescale, core_sources_rescale,  
-     &  sput_src, sput_dst, sput_frc, sput_phys, 
+     &  sput_src, sput_frc, sput_phys, 
      &  sput_chem_alpha, sput_phys_alpha, alpha,
-     &  sput_chem_model, therm_evap, sput_res, plate_model, 
+     &  sput_chem_model, therm_evap, sput_res, 
      &  sputter_namelist_used, reflection_on, 
      &  sputter_energy_on, main_call,
-     &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta)
+     &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta, 
+     &  shi0_ff, f_redep, potential_at_guard_cell)
 
       use b2mod_types
       use b2mod_rates
@@ -26,12 +27,14 @@
       use b2mod_wall
       use b2mod_b2cmpa
       use b2mod_b2cmpb
+      use b2mod_b2cmfs
+      use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
-      integer coreregno, coreregn2, sput_src, sput_dst,
+      integer nx, ny, ns, nscx, iscx(0:nscxmax-1)
+      integer coreregno, coreregn2, sput_src,
      *   sput_chem_model, boundary_namelist, reflection_on, 
-     *   sputter_energy_on, plate_model, output
+     *   sputter_energy_on, output, potential_at_guard_cell
       real (kind=R8) :: dtim, BoRiS,
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
@@ -43,7 +46,8 @@
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
+     &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
+     *  f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
      *  neutral_sources_rescale, core_sources_rescale, 
      &  sput_frc, sput_phys, sput_chem_alpha, sput_phys_alpha,
@@ -55,7 +59,8 @@
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     &  sch0(-1:nx,-1:ny,0:3),
+     &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1),
+     &  shi0_ff(-1:nx,-1:ny,0:nscx-1),
      &  tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1), tphye(0:ns-1),
      &  thevp(0:ns-1), thvpe(0:ns-1), trese(0:ns-1), tresn(0:ns-1),
      &  trfln(0:ns-1), trfle(0:ns-1)
@@ -75,16 +80,15 @@
 
 *   ..local variables
       integer n2, ix, iy, is, ib, ireg, ncall, ibegin, iend, k
-	integer, save :: imodel = 0, iout = 0                          !srv 09.07.04
-      integer :: ixx(-1:nx,-1:ny), iyy(-1:nx,-1:ny)
-	character charns*2, chark*1, ch*2                              !srv 11.07.05
+      integer, allocatable :: list_x(:), list_y(:), rix(:), riy(:)
+      integer, save :: imodel = 0, iout = 0                          !srv 09.07.04
+      character charns*3, chark*1, ch*2                              !srv 11.07.05
       character(15) :: hlp_frm                                       !srv 11.03.13
       real (kind=R8) ::
      *   amtol, t0, t1, t2, qin, qel, surface_temp,
-     *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app
-      real (kind=R8) ::
-     *   s0, s1, tpr, tro, cst, csb                                  !srv 21.02.05
-	real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8       !srv 12.04.08
+     *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
+     *   redep_max, yself_max
+      real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8       !srv 12.04.08
       parameter (amtol=1.0e-2_R8)
       logical lcore
 *   ..procedures
@@ -133,7 +137,7 @@
       call subini ('b2stbr_bas')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-	 write(*,*) ' The first calling of b2stbr_bas' 
+       write(*,*) 'First call of b2stbr_bas' 
        call ipgeti ('b2stbr_bas_imodel', imodel)                     !srv 09.07.04
        call ipgeti ('b2stbr_bas_iout', iout)                         !srv 11.07.05
        call ipgetr ('b2stbr_bas_recycled_neutrals_contr',            !srv 12.04.08 
@@ -180,14 +184,8 @@
       call b2xvff (nx, ny, fne, 'fne')
       call b2xvff (nx, ny, fni, 'fni')
  
-      if(plate_model.eq.2 .and. main_call) then
-        do ix = -1, nx
-          do iy = -1, ny
-            ixx(ix,iy) = ix
-            iyy(ix,iy) = iy
-          enddo
-        enddo
-      endif
+      redep_max=0.0_R8
+      yself_max=0.0_R8
 
 * ..recycling model at south boundary
 *   ..initialize ireg
@@ -209,22 +207,23 @@
             ibegin = max(0, nint(cbrbrk(ireg-1)*nx))
           endif
           iend = min(nx, nint(cbrbrk(ireg)*nx))-1
-          Phi_app = 0.0_R8
-          if (boundary_namelist.eq.1) then
-            do ib = 1, nbc
-              if (bcchar(ib).eq.'S' .and. bcpos(ib).eq.-1 .and.
-     &            bcstart(ib).le.ix .and. bcend(ib).ge.ix) then
-                Phi_app = POTPAR(ib,2)
-              endif
-            enddo
-          endif
-          lcore=(ireg.eq.coreregno .or.
-     &         (ireg.eq.coreregn2 .and. nncut.ge.2))   ! xpb: no sputtering in core!
+          Phi_app = get_phi_applied(boundary_namelist,ix,-1)
+          lcore=((ireg.eq.coreregno .and. isymm.ne.0) .or.
+     &           (ireg.eq.coreregn2 .and. nncut.ge.2))   ! xpb: no sputtering in core!
           if(plate_model.eq.2 .and. .not.lcore .and. main_call 
-     &     .and. ix.eq.ibegin) 
-     >      call prehd2D(ns,ibegin,iend,-1,-1,dtim,-1,
-     &       topix(ibegin:iend,-1),topiy(ibegin:iend,-1),1,
-     &       gs(topix(ibegin:iend,-1),topiy(ibegin:iend,-1),1),BoRiS)
+     &     .and. ix.eq.ibegin) then
+            isize = iend - ibegin + 1
+            allocate(list_x(isize),list_y(isize),area(isize))
+            do iy = 1, isize
+              list_x(iy) = ibegin + iy - 1
+              area(iy) = 
+     .         gs(topix(ibegin+iy-1,-1),topiy(ibegin+iy-1,-1),1)
+            end do
+            list_y(1:isize) = -1
+            call prehd2D(ns,isize,list_x,list_y,dtim,-1,
+     &       topix(ibegin:iend,-1),topiy(ibegin:iend,-1),1,area,BoRiS)
+            deallocate(list_x,list_y,area)
+          endif
 
           call recycle(ix,-1,topix(ix,-1),topiy(ix,-1),
      &         -1,topix(ix,-1),topiy(ix,-1),1,
@@ -253,21 +252,21 @@
             ibegin = max(0, nint(cbrbrk(ireg-1)*nx))
           endif
           iend = min(nx, nint(cbrbrk(ireg)*nx))-1
-          Phi_app = 0.0_R8
-          if (boundary_namelist.eq.1) then
-            do ib = 1, nbc
-              if (bcchar(ib).eq.'N' .and. bcpos(ib).eq.ny .and.
-     &            bcstart(ib).le.ix .and. bcend(ib).ge.ix) then
-                Phi_app = POTPAR(ib,2)
-              endif
-            enddo
-          endif
+          Phi_app = get_phi_applied(boundary_namelist,ix,ny)
           lcore=region(ix,ny,0).eq.5 .and. periodic_bc.eq.1
           if(plate_model.eq.2 .and. .not.lcore .and. main_call
-     &     .and. ix.eq.ibegin)
-     >      call prehd2D(ns,ibegin,iend,ny,ny,dtim,+1,
-     &        ixx(ibegin:iend,ny),iyy(ibegin:iend,ny),1,
+     &     .and. ix.eq.ibegin) then
+            isize = iend - ibegin + 1
+            allocate(list_x(isize),list_y(isize))
+            do iy = 1, isize
+              list_x(iy) = ibegin + iy - 1
+            end do
+            list_y(1:isize) = ny
+            call prehd2D(ns,isize,list_x,list_y,dtim,+1,
+     &        list_x,list_y,1,
      &        gs(ibegin:iend,ny,1),BoRiS)
+            deallocate(list_x,list_y)
+          endif
           call recycle(ix,ny,bottomix(ix,ny),bottomiy(ix,ny),
      &         +1,ix,ny,1,
      &         hy1(ix,ny),hy1(bottomix(ix,ny),bottomiy(ix,ny)),
@@ -277,7 +276,7 @@
 
 * ..recycling model at west boundary
       do ix = -1,nx                 !for double null case             !srv 20.07.04
-	 if(leftix(ix,-1).eq.-2) then                                   !srv 20.07.04
+       if(leftix(ix,-1).eq.-2) then                                   !srv 20.07.04
 *   ..  initialize ireg
         ireg = cbirwe
 *   ..  loop over boundary cells
@@ -298,33 +297,35 @@
             endif
             iend = min(ny, nint(cbrbrk(ireg)*ny))-1
             lcore=.false.
-            Phi_app = 0.0_R8
-            if (boundary_namelist.eq.1) then
-              do ib = 1, nbc
-                if (bcchar(ib).eq.'W' .and. bcpos(ib).eq.ix .and.     !srv 20.07.04
-     &              bcstart(ib).le.iy .and. bcend(ib).ge.iy) then
-                  Phi_app = POTPAR(ib,2)
-                endif
-              enddo
-            endif
+            Phi_app = get_phi_applied(boundary_namelist,-1,iy)
             if(plate_model.eq.2 .and. .not.lcore .and. main_call
-     &       .and. iy.eq.ibegin)
-     >        call prehd2D(ns,ix,ix,ibegin,iend,dtim,-1,              !srv 20.07.04 {
-     &          rightix(ix,ibegin:iend),rightiy(ix,ibegin:iend),0,
-     &          gs(rightix(ix,ibegin:iend),rightiy(ix,ibegin:iend),0),!srv 20.07.04 }
-     &          BoRiS)
+     &       .and. iy.eq.ibegin) then
+              isize = iend - ibegin + 1
+              allocate(list_x(isize),list_y(isize),rix(isize),riy(isize))
+              allocate(area(isize))
+              list_x(1:isize) = -1
+              do ix = 1, isize
+                list_y(ix) = ibegin + ix - 1
+                rix(ix) = rightix(-1,ibegin + ix - 1)
+                riy(ix) = rightiy(-1,ibegin + ix - 1)
+                area(ix) = gs(rix(ix),riy(ix),0)
+              end do
+              call prehd2D(ns,isize,list_x,list_y,dtim,-1,
+     &          rix,riy,0,area,BoRiS)
+              deallocate(list_x,list_y,rix,riy,area)
+            endif
             call recycle(ix,iy,rightix(ix,iy),rightiy(ix,iy),         !srv 20.07.04 {
      &           -1,rightix(ix,iy),rightiy(ix,iy),0,
      &           hx(ix,iy),hx(rightix(ix,iy),rightiy(ix,iy)),
      &           Phi_app,gs(rightix(ix,iy),rightiy(ix,iy),0),lcore)   !srv 20.07.04 }
           endif   ! region.ne.0 and corners
         enddo
-	 endif
-	enddo
+       endif
+      enddo
 
 * ..recycling model at east boundary
       do ix = -1,nx                 !for double null case             !srv 20.07.04
-	 if(rightix(ix,-1).eq.nx+1) then                                !srv 20.07.04
+       if(rightix(ix,-1).eq.nx+1) then                                !srv 20.07.04
 *   ..  initialize ireg
         ireg = cbirea
 *   ..  loop over boundary cells
@@ -344,32 +345,32 @@
               ibegin = max(0, nint(cbrbrk(ireg-1)*ny))
             endif
             iend = min(ny, nint(cbrbrk(ireg)*ny))-1
-            Phi_app = 0.0_R8
-            if (boundary_namelist.eq.1) then
-              do ib = 1, nbc
-                if (bcchar(ib).eq.'E' .and. bcpos(ib).eq.ix .and.     !srv 20.07.04
-     &              bcstart(ib).le.iy .and. bcend(ib).ge.iy) then
-                  Phi_app = POTPAR(ib,2)
-                endif
-              enddo
-            endif
+            Phi_app = get_phi_applied(boundary_namelist,nx,iy)
             lcore=.false.
             if(plate_model.eq.2 .and. .not.lcore .and. main_call
-     &       .and. iy.eq.ibegin)
-     >        call prehd2D(ns,ix,ix,ibegin,iend,dtim,+1,              !srv 20.07.04 {
-     &          ixx(ix,ibegin:iend),iyy(ix,ibegin:iend),0,
-     &          gs(ix,ibegin:iend,0),BoRiS)
+     &       .and. iy.eq.ibegin) then
+              isize = iend - ibegin + 1
+              allocate(list_x(isize),list_y(isize),area(isize))
+              list_x(1:isize) = nx
+              do ix = 1, isize
+                list_y(ix) = ibegin + ix - 1
+                area(ix) = gs(nx,ibegin + ix - 1,0)
+              end do
+              call prehd2D(ns,isize,list_x,list_y,dtim,+1,
+     &          list_x,list_y,0,area,BoRiS)
+              deallocate(list_x,list_y,area)
+            endif
             call recycle(ix,iy,leftix(ix,iy),leftiy(ix,iy),
      &           +1,ix,iy,0,
      &           hx(ix,iy),hx(leftix(ix,iy),leftiy(ix,iy)),
      &           Phi_app,gs(ix,iy,0),lcore)                           !srv 20.07.04 }
-         endif   ! region.ne.0 and corners
+          endif   ! region.ne.0 and corners
         enddo
-	 endif
-	enddo
-	if (iout.eq.1) then                                          !srv 11.07.05 {
+       endif
+      enddo
+      if (iout.eq.1) then                                          !srv 11.07.05 {
        do is = 0, ns-1
-	  write (charns,'(i2.2)') is
+	  write (charns,'(i3.3)') is
 	  do k=0,3
 	   write (chark,'(i1)') k
 	   call my_out(70,nx,ny,smo0(-1,-1,k,is),
@@ -398,10 +399,17 @@
 	  write(70,hlp_frm) ' trese=',trese
 	  write(70,hlp_frm) ' tresn=',tresn
 	  write(70,hlp_frm) ' trfln=',trfln
-	  write(70,hlp_frm) ' trfle=',trfle                             !srv 11.03.13 }  
+	  write(70,hlp_frm) ' trfle=',trfle                             !srv 11.03.13 }
 	 close(70)
 	endif                                                           !srv 11.07.05 }
 
+      if (redep_max.gt.0.0_R8 .and. (main_call.or.output.gt.1))
+     .  write(*,*) 'Maximum redeposition coefficient ', redep_max
+      if(redep_max.gt.0.0_R8 .and. (yself_max.gt.1.0_R8 .or. 
+     .  ((main_call.and.output.ge.1).or.output.gt.1)))
+     .   write(*,*) 'Maximum self-sputtering coefficient ', yself_max
+      write(*,*) 'Maximum redeposition coefficient ', redep_max
+      write(*,*) 'Maximum self-sputtering coefficient ', yself_max
 * ..return
       ncall = ncall + 1
       call subend ()

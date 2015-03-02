@@ -81,9 +81,9 @@
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
       integer :: ixx(-1:nx,-1:ny), iyy(-1:nx,-1:ny)
-	character chns*2, chk*1, ch*2                               !srv 11.07.05
-	character(15) :: hlp_frm                                    !srv 11.03.13
-	real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8       !srv 12.04.08
+      character chns*3, chk*1, ch*2                               !srv 11.07.05
+      character(15) :: hlp_frm                                    !srv 11.03.13
+      real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8       !srv 12.04.08
       real (kind=R8) ::
      *   amtol, t0, t1, t2, b2stbr_phys_sna(0:ns-1), 
      *   qin, qel, surface_temp,
@@ -505,7 +505,7 @@
       endif
 	if (iout.eq.1 .or. iout_b2npmo.eq.1) then                   !srv 11.07.05 11.09.09 {
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is
+	  write (chns,'(i3.3)') is
 !	  do k=0,3
 !	   write (chk,'(i1)') k
 !	   call my_out(70,nx,ny,smo0(-1,-1,k,is),
@@ -520,7 +520,7 @@
 	endif
 	if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is
+	  write (chns,'(i3.3)') is
 !	  do k=0,1
 !	   write (chk,'(i1)') k
 !	   call my_out(70,nx,ny,sna0(-1,-1,k,is),

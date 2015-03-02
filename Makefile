@@ -38,8 +38,8 @@ VPATH+=${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentati
 endif
 FPATH:=${VPATH}
 
-ifeq ($(shell [ -e ${SRCB2}/LISTOBJ ] && echo yes || echo no ),yes)
-include ${SRCB2}/LISTOBJ
+ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
+include ${OBJDIR}/LISTOBJ
 endif
 include ${SRCB2}/config/compile
 MAKES = ${SRCB2}/Makefile ${SRCB2}/config/compile ${SRCB2}/config/compiler.${OBJECTCODE}
@@ -75,34 +75,48 @@ endif
 EXCL_MN = b2mn.exe b2mn_mpi.exe b2mn_nompi.exe
 PROG_XD = b2xd.exe
 PROG_OT = b2ag.exe b2ah.exe b2ai.exe b2ar.exe b2yh.exe b2yt.exe b2co.exe b2uf.exe b2fu.exe b2yi_gnuplot.exe b2ts.exe
+PROG_OP = b2op.exe b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
 
-EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${EXCL_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} }
-EXELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} }
+EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${EXCL_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} ${PROG_OP} }
+EXELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} ${PROG_OP} }
 
 GREXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_GR}}
 XDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_XD}}
 MNEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MN}}
 OTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OT}}
+OPEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OP}}
 MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
 
 .PHONY: DEFAULT NOPLOT ALL clean realclean depend listobj tags
 
 ifdef MDSPLUS_DIR
+ifdef PAR_OPT
+DEFAULT: ${MNEXE} ${OTEXE} ${GREXE} ${MDEXE} ${OPEXE}
+ALL: ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE} ${MDEXE} ${OPEXE}
+NOPLOT: ${MNEXE} ${OTEXE} ${MDEXE} ${OPEXE}
+else
 DEFAULT: ${MNEXE} ${OTEXE} ${GREXE} ${MDEXE}
 ALL: ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE} ${MDEXE}
 NOPLOT: ${MNEXE} ${OTEXE} ${MDEXE}
+endif
+else
+ifdef PAR_OPT
+DEFAULT: ${MNEXE} ${OTEXE} ${GREXE} ${OPEXE}
+ALL: ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE} ${OPEXE}
+NOPLOT: ${MNEXE} ${OTEXE} ${OPEXE}
 else
 DEFAULT: ${MNEXE} ${OTEXE} ${GREXE}
 ALL: ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE}
 NOPLOT: ${MNEXE} ${OTEXE}
+endif
 endif
 MAIN: ${MNEXE}
 
 ifdef USE_EIRENE
 VPATH=${FPATH}:${SRCEIR}/modules:${SRCEIR}/extraB25
 MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/extraB25/eirmod_*.F90
-MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a $(OBJDIR)/b2mn_mpi.o
+MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a
 else
 # MNEXTRA=${EIRDIR}/eirmod_precision.o ${EIRDIR}/eirmod_braeir.o ${EIRDIR}/eirmod_ccoupl.o ${EIRDIR}/eirmod_parmmod.o ${EIRDIR}/eirmod_comprt.o ${EIRDIR}/eirmod_comusr.o
 # EXCLUDELIST += ${patsubst ${OBJDIR}/%.o, %.o, ${MNEXTRA} }
@@ -209,7 +223,7 @@ ifneq (${MOD},o)
 endif
 	-rm -rf ${OBJDIR}/.delete &
 
-depend: ${SRCB2}/LISTOBJ ${B2OBJS:.o=.F} ${EXELIST:.o=.F}
+depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${EXELIST:.o=.F}
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} $^ | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' > ${OBJDIR}/dependencies 
 ifneq (${MOD},o)
@@ -251,36 +265,36 @@ endif
 
 listobj:
 ifdef USE_EIRENE
-	@rm -f ${SRCB2}/LISTOBJ; touch ${SRCB2}/LISTOBJ; l="OBJS ="; \
+	@rm -f ${OBJDIR}/LISTOBJ; touch ${OBJDIR}/LISTOBJ; l="OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
 		l="$$l `(cd $$d > /dev/null; echo *.F)`"; \
 	done; \
 	l="$$l `(cd ${SRCEIR}/modules > /dev/null; echo *.f)`"; \
 	l="$$l `(cd ${SRCEIR}/extraB25 > /dev/null; echo *.F90)`"; \
-	E="-e 's/\.F90/\.o/g' -e 's/\.F/\.o/g' -e 's/\.f/\.o/g'" ; for f in ${EXELIST}; do \
+	E="-e 's/\.F90/\.o/g' -e 's/\.F/\.o/g' -e 's/\.f/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
-	echo "$$l" | eval sed "$$E" > ${SRCB2}/LISTOBJ
+	echo "$$l" | eval sed "$$E" > ${OBJDIR}/LISTOBJ
 else
-	@rm -f ${SRCB2}/LISTOBJ; touch ${SRCB2}/LISTOBJ; l="OBJS ="; \
+	@rm -f ${OBJDIR}/LISTOBJ; touch ${OBJDIR}/LISTOBJ; l="OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
 		l="$$l `(cd $$d > /dev/null; echo *.F)`"; \
 	done; \
-	E="-e 's/\.F/\.o/g'" ; for f in ${EXELIST}; do \
+	E="-e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
-	echo "$$l" | eval sed "$$E" > ${SRCB2}/LISTOBJ
+	echo "$$l" | eval sed "$$E" > ${OBJDIR}/LISTOBJ
 endif
 	@l="B2OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
 		l="$$l `(cd $$d > /dev/null; echo *.F)`"; \
 	done; \
-	E="-e 's/\.F/\.o/g'" ; for f in ${EXELIST}; do \
+	E="-e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
-	echo "$$l" | eval sed "$$E" >> ${SRCB2}/LISTOBJ
+	echo "$$l" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
 
-${SRCB2}/LISTOBJ: listobj
+${OBJDIR}/LISTOBJ: listobj
 
 ${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
 ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
