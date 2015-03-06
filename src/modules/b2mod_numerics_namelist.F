@@ -35,14 +35,17 @@
       character*256, save :: numerics_filename
       real (kind=R8), save :: numerics_time_mod
       real (kind=R8), save :: numerics_time_switch
+      logical :: first_time_step
 
       contains
 
-      subroutine alloc_b2mod_numerics(nsd)
+      subroutine alloc_b2mod_numerics(nxd,nyd,nsd)
       implicit none
-      integer nsd
+      integer nxd,nyd,nsd
+
       write(*,*) 'Allocating space for b2mod_numerics'                !srv 25.02.06 11.06.08
 
+      allocate(time_factor(-1:nxd,-1:nyd))
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(dtco(0:nsd-1,0:nnreg(0)))
       allocate(dtmo(0:nsd-1,0:nnreg(0)))
@@ -74,19 +77,23 @@
       numerics_filename='b2.numerics.parameters'
       numerics_time_mod=0.0_R8
       numerics_time_switch=0.0_R8
+      time_factor=1.0_R8
       write(*,*) 'Allocated space for b2mod_numerics'                !srv 11.11.09
 
       return
       end subroutine alloc_b2mod_numerics
 
-      subroutine read_b2mod_numerics_namelist
+      subroutine read_b2mod_numerics_namelist(nx,ny)
       implicit none
 
+      integer nx,ny
       namelist /numerics/ dtco,dtmo,dtee,dtei,time_factor_required,
      1 core_dt_suppression,core_dt_factor,
      2 solveco,solvemo,solvepo,solveee,solveei,
      3 numerics_filename,numerics_time_mod,numerics_time_switch
       logical :: file_ok
+      integer ix,iy
+      real (kind=R8) :: ttf
       character*260 filename
 
       filename='../' // numerics_filename
@@ -97,7 +104,7 @@
         read(99,numerics)
         write(*,*) 'Read namelist numerics from ',trim(filename)
       else
-        write(*,*) 'No ',trim(filename)
+        call xerrab ('No '//trim(filename))
       endif
 
       call xertst (0.0_R8.le.numerics_time_mod, 
@@ -118,6 +125,19 @@
      & 'faulty parameter dtee')
       call xertst (0.0_R8.lt.minval(dtei),
      & 'faulty parameter dtei')
+
+c additional time-modification factor
+      ttf=core_dt_suppression
+      do iy=-1,ny
+	if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)
+	do ix=-1,nx
+	  if(mod(region(ix,iy,0),4).eq.1) then
+	    time_factor(ix,iy)=ttf
+	  else
+	    time_factor(ix,iy)=1.0_R8
+	  endif
+	enddo
+      enddo
 
       return
       end subroutine read_b2mod_numerics_namelist

@@ -1,23 +1,29 @@
       module b2mod_layer
       use b2mod_types
-#     include "DIMENSIONS.F"
       implicit none
 
       integer nwall, ntrack, nalloys
-      parameter(
-     *  nwall=2*DEF_NCUT*(DEF_NXD+2)+2*(DEF_NYD+2)+DEF_NLIM+DEF_NSTS,
-     *  ntrack=4,
-     *  nalloys=6)
+      parameter(ntrack=4,nalloys=6)
 
+#ifdef ALLOCATE_AND_NAMELIST
+      integer, allocatable :: layer_nconstituents(:)
+      integer, allocatable :: layer_nzconstituents(:,:)
+      real (kind=R8), allocatable :: layer_nrelconstituents(:,:)
+#else
+#     include "DIMENSIONS.F"
+      parameter(
+     . nwall = 2*(DEF_NXD+2)+(DEF_NCUT+2)*(DEF_NYD+2)+DEF_NLIM+DEF_NSTS)
       integer layer_nconstituents(nwall)
       integer layer_nzconstituents(nwall,6+ntrack)
       real (kind=R8) :: layer_nrelconstituents(nwall,6+ntrack)
-      real (kind=R8) :: layer_thickness(nwall)
-      real (kind=R8) :: layer_mass_density(nwall)
-      real (kind=R8) :: layer_depth(nwall)
-      real (kind=R8) :: layer_composition(nwall,6+ntrack+nalloys)
-      real (kind=R8) :: particle_inventory(nwall,ntrack)
-      real (kind=R8) :: layer_thermal_contact
+#endif
+      real (kind=R8), allocatable :: layer_thickness(:)
+      real (kind=R8), allocatable :: layer_mass_density(:)
+      real (kind=R8), allocatable :: layer_depth(:)
+      real (kind=R8), allocatable :: layer_composition(:,:)
+      real (kind=R8), allocatable :: particle_inventory(:,:)
+      real (kind=R8), save :: layer_thermal_contact
+      data layer_thermal_contact/1.0_R8/
 
       character*6 layer_alloys(nalloys)
       integer alloy_composition(nalloys,ntrack)
@@ -64,5 +70,45 @@
      *  species_stick_coef(ntrack),
      *  species_vapor_temp(ntrack),
      *  species_heat_sublim(ntrack)
+
+      contains
+
+      subroutine alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
+      implicit none
+      integer nx,ny,nncut,nlim,nsts
+
+#ifdef ALLOCATE_AND_NAMELIST
+      nwall = 2*(nx+2)+max(nncut,2)*(ny+2)+nlim+nsts
+      allocate(layer_nconstituents(nwall))
+      allocate(layer_nzconstituents(nwall,6+ntrack))
+      allocate(layer_nrelconstituents(nwall,6+ntrack))
+#endif
+      allocate(layer_thickness(nwall))
+      allocate(layer_mass_density(nwall))
+      allocate(layer_depth(nwall))
+      allocate(layer_composition(nwall,6+ntrack+nalloys))
+      allocate(particle_inventory(nwall,ntrack))
+
+      layer_alloys = ' '
+      layer_nconstituents = 0
+      layer_nzconstituents = 0
+      layer_nrelconstituents = 0.0_R8
+
+      return
+
+      end subroutine alloc_b2mod_layer
+
+      subroutine dealloc_b2mod_layer
+#ifdef ALLOCATE_AND_NAMELIST
+      deallocate(layer_nconstituents)
+      deallocate(layer_nzconstituents)
+      deallocate(layer_nrelconstituents)
+#endif
+      deallocate(layer_thickness)
+      deallocate(layer_mass_density)
+      deallocate(layer_depth)
+      deallocate(layer_composition)
+      deallocate(particle_inventory)
+      end subroutine dealloc_b2mod_layer
 
       end module b2mod_layer

@@ -5,8 +5,11 @@
       use b2mod_types
       use b2mod_version
       use b2mod_plasma
+      use b2mod_geo
+      use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_b2cmgs
       implicit none
 
 *-----------------------------------------------------------------------
@@ -15,8 +18,8 @@
 *  1. purpose
 *
 *     B2RD (main program) is a post-processor for b2. It imports an 
-*     archived plasma state from the MDSPlus tree. This program calls 
-*     the driver routine b2rddr for the actual computation.
+*     archived plasma state from the MDSPlus tree and outputs the
+*     equivalent b2fstate and b2 geometry files. 
 *
 *
 *  2. specification
@@ -38,6 +41,7 @@
 *     The output units are:
 *     nout(0): formatted; provides printed output.
 *     nout(1): un*formatted; provides the plasma state.
+*     nout(2): un*formatted; provides the geometry.
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -59,20 +63,35 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:0), nout(0:1), ishot, idum(0:9), nx, ny, ns, n2, io
+      integer ninp(0:0), nout(0:2), ishot, idum(0:9), nx, ny, ns, n2, io
       real (kind=R8), allocatable :: za(:)
-      character*120 lblmn
+      character*120 lblmn, lblgm
 #ifdef MDSPLUS
 #     include "mdslib.inc"
       integer status, retlen, dbversion
-      integer is
-#endif
+      integer ix, iy, i, j, is
+      integer, allocatable :: idummy(:,:)
+      real (kind=R8) ::
+     *   p0x, p0y, p1x, p1y
 *   ..procedures
-      external prgini, prgend, xerset, cfopen, cfverw, cfwuin, cfwuch
-      external b2wups, b2wuzd, xertst, xerrab
+      intrinsic min, max, sqrt
+      real (kind=R8) ::
+     *   trim1, norm, cosang, dist
+      norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
+      trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
+      dist(ix,iy,i,j) = norm (
+     &  crx(ix,iy,j)-crx(ix,iy,i), cry(ix,iy,j)-cry(ix,iy,i))
+      cosang(p0x,p0y,p1x,p1y) = trim1(
+     &  (p0x*p1y-p0y*p1x)/(norm(p0x,p0y)*norm(p1x,p1y)))
+      external b2wups, b2wugm, b2wuzd, b2xgbs, xertst, xerrab
+      external b2xvgm, b2xvps, b2xvsg
+      external cfverw, cfwuin, cfwuch
+      external intfaceh1, intfacer1, intfacev1
+#endif
+      external prgini, prgend, xerset, cfopen
 *   ..initialise input/output units
       data ninp/50/
-      data nout/60,61/
+      data nout/60,61,62/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -85,7 +104,7 @@
 *     ninp - (0:0) integer array.
 *     ninp specifies the input unit numbers.
 *
-*     nout - (0:1) integer array.
+*     nout - (0:2) integer array.
 *     nout specifies the output unit numbers.
 *
 *     nx, ny - integer.
@@ -107,6 +126,7 @@
 *   ..open files
       call cfopen (nout(0),'b2rd.prt','new','formatted')
       call cfopen (nout(1),'b2fstate','new','un*formatted')
+      call cfopen (nout(2),'b2fgmtrt','new','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain run number
@@ -148,14 +168,18 @@
       status=mdsvalue2('_s=\TOP.IDENT.VERSION:b2fstate'//char(0),
      1 descr2(idtype_cstring,0,10),plasmastate_version,0,retlen)
       call mds_err_msg(status)
-      write(*,*) 'Reading version number = ',plasmastate_version
+      write(*,*) 'Reading plasma state version number = ',
+     1 plasmastate_version
       status=mdsvalue2('_s=\TOP.IDENT:VERSION'//char(0),
      1 descr2(idtype_long,0),dbversion,0,retlen)
       call mds_err_msg(status)
       write(*,*) 'MDSplus database version = ',dbversion
 
 *   ..allocate arrays
+      call alloc_b2mod_geo(nx,ny)
       call alloc_b2mod_plasma(nx,ny,ns)
+      call alloc_b2mod_indirect(nx,ny,nncutmax)
+      allocate(idummy(-1:nx,-1:ny))
 
 *   ..read species data
       if (dbversion.ge.9) then
@@ -214,7 +238,7 @@
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEX'//char(0),
      1 descr2(idtype_double,NX+1,NY+2,0),
      2 fhe(0:nx,-1:ny,0),0,retlen)
-      fne(-1,:,0)=0.0_R8
+      fhe(-1,:,0)=0.0_R8
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEY'//char(0),
      1 descr2(idtype_double,NX+2,NY+1,0),
@@ -287,8 +311,147 @@
         call mds_err_msg(status)
       endif
 
-*   ..test plasma state
+*   ..read geometry data
+      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:R'//char(0),
+     1 descr2(idtype_double,NX+2,NY+2,4,0),crx,0,retlen)
+      call mds_err_msg(status)
+      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:Z'//char(0),
+     1 descr2(idtype_double,NX+2,NY+2,4,0),cry,0,retlen)
+      call mds_err_msg(status)
+      fpsi = 0.0_R8
+      ffbz = 0.0_R8
+      status=mdsvalue2('_s=\TOP.SNAPSHOT:B'//char(0),
+     1 descr2(idtype_double,NX+2,NY+2,4,0),bb,0,retlen)
+      call mds_err_msg(status)
+      status=mdsvalue2('_s=\TOP.SNAPSHOT:VOL'//char(0),
+     1 descr2(idtype_double,NX+2,NY+2,0),vol,0,retlen)
+      call mds_err_msg(status)
+      status=mdsvalue2('_s=\TOP.SNAPSHOT:HX'//char(0),
+     1 descr2(idtype_double,NX+2,NY+2,0),hx,0,retlen)
+      call mds_err_msg(status)
+      status=mdsvalue2('_s=\TOP.SNAPSHOT:HY'//char(0),
+     1 descr2(idtype_double,NX+2,NY+2,0),hy,0,retlen)
+      call mds_err_msg(status)
+      status=mdsvalue2('_s=\TOP.SNAPSHOT:QZ'//char(0),
+     1 descr2(idtype_double,NX+2,NY+2,2,0),qz,0,retlen)
+      call mds_err_msg(status)
+      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGVOL'//char(0),
+     1 descr2(idtype_long,NX+2,NY+2,0),region(:,:,0),0,retlen)
+      call mds_err_msg(status)
+      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGFLX'//char(0),
+     1 descr2(idtype_long,NX+2,NY+2,0),region(:,:,1),0,retlen)
+      call mds_err_msg(status)
+      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:REGFLY'//char(0),
+     1 descr2(idtype_long,NX+2,NY+2,0),region(:,:,2),0,retlen)
+      call mds_err_msg(status)
+      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:LEFTIX'//char(0),
+     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+      call mds_err_msg(status)
+      leftix = idummy - 1
+      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:LEFTIY'//char(0),
+     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+      call mds_err_msg(status)
+      leftiy = idummy - 1
+      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:RIGHTIX'//char(0),
+     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+      call mds_err_msg(status)
+      rightix = idummy - 1
+      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:RIGHTIY'//char(0),
+     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+      call mds_err_msg(status)
+      rightiy = idummy - 1
+      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:BOTTOMIX'//char(0),
+     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+      call mds_err_msg(status)
+      bottomix = idummy - 1
+      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:BOTTOMIY'//char(0),
+     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+      call mds_err_msg(status)
+      bottomiy = idummy - 1
+      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:TOPIX'//char(0),
+     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+      call mds_err_msg(status)
+      topix = idummy - 1
+      status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:TOPIY'//char(0),
+     1 descr2(idtype_long,NX+2,NY+2,0),idummy,0,retlen)
+      call mds_err_msg(status)
+      topiy = idummy - 1
+      nncut = maxval(region(:,:,0)/4)
+      do is = 0, 2
+        nnreg(is) = maxval(region(:,:,is))
+      enddo
+      is = 0
+      iy = -1
+      do ix = -1, nx
+        if (rightix(ix,iy).ne.ix+1 .and. rightix(ix,iy).ne.nx+2) then
+          is = is + 1
+          write(*,*) 
+     .     'Found cut number ',is,' at ix location ',ix, rightix(ix,iy)
+          leftcut(is) = ix+1
+          rightcut(is) = rightix(ix,iy)
+          bottomcut(is) = -1
+        endif
+      enddo
+      call xertst (is.eq.2*nncut, 'Did not find all the cuts!')
+      do is = 1, nncut
+        iy = bottomcut(is)
+        ix = leftcut(is)-1
+        do while(iy.le.ny .and. rightix(ix,iy).ne.ix+1)
+          topcut(is) = iy+1
+          iy = iy+1
+        enddo
+      enddo
+      resignore = 0
+      periodic_bc = 0
+      do iy = -1, ny
+        do ix = -1, nx
+          qc(ix,iy) = cosang (
+     &     (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
+     &     (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
+     &      crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+        enddo
+      enddo
+      do iy = -1, ny
+        do ix = -1, nx
+          gs(ix,iy,2) = 0.5_R8*
+     &     ((crx(ix,iy,3)-crx(ix,iy,0))*(cry(ix,iy,2)-cry(ix,iy,1))-
+     &      (crx(ix,iy,2)-crx(ix,iy,1))*(cry(ix,iy,3)-cry(ix,iy,0)))
+          if(leftix(ix,iy).eq.-2) then
+            gs(ix,iy,0) = 0.0_R8
+          else
+            gs(ix,iy,0) = pi*dist(ix,iy,0,2)*(crx(ix,iy,0)+crx(ix,iy,2))
+          endif
+          if(bottomiy(ix,iy).eq.-2) then
+            gs(ix,iy,1) = 0.0_R8
+          else
+            gs(ix,iy,1) = pi*dist(ix,iy,0,1)*(crx(ix,iy,0)+crx(ix,iy,1))
+          endif
+        enddo
+      enddo
+      nlreg = 0
+      call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)
+      call intfacer1(nx,ny,2,rightix,rightiy,vol,bb,wbbr)
+      call intfacev1(nx,ny,2,bottomix,bottomiy,vol,bb,wbbv)
+      do iy = -1, ny
+        do ix = -1, nx
+          if (leftix(ix,iy).eq.-2) wbbl(ix,iy,0:2) = 
+     &     bb(ix,iy,0:2) - (wbbr(ix,iy,0:2)-bb(ix,iy,0:2))
+          if (rightix(ix,iy).eq.nx+1) wbbr(ix,iy,0:2) = 
+     &     bb(ix,iy,0:2) - (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
+          if (bottomiy(ix,iy).eq.-2) wbbv(ix,iy,0:2) = bb(ix,iy,0:2) -
+     &     (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
+        enddo
+      enddo
+      wbbl(:,:,3)=sqrt(wbbl(:,:,0)**2+wbbl(:,:,1)**2+wbbl(:,:,2)**2)
+      wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
+      wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
+      call b2xgbs (nx, ny, region,
+     & leftix, leftiy, rightix, rightiy, topix, topiy,
+     & wbbl, wbbv, gs, qc, crx, cry, pbs)      
+      
+*   ..test geometry and plasma state
       n2 = (nx+2)*(ny+2)
+      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, gs, pbs)
       call b2xvps (nx, ny, ns, 
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
@@ -306,13 +469,50 @@
       call b2wups (nout(1), nx, ny, ns, ne, na, ua, uadia, te,		 !xpb
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
       write(nout(0),*) 'Converted run number ',ishot,' to b2fstate'
+*   ..save geometry
+      write(lblgm,*) 'Recovered geometry from run number ',ishot
+      idum(0) = nx
+      idum(1) = ny
+      call cfverw (nout(2), newversion)
+      call cfwuin (nout(2), 2, idum, 'nx,ny')
+      call cfwuch (nout(2), 120, lblgm, 'label')
+      idum(0) = 1
+      call cfwuin (nout(2), 1, idum, 'isymm') 
+      call b2wugm (nout(2), nx, ny, crx, cry, fpsi, ffbz,
+     &  bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)
+
+      open(91,file='../core_boundary.txt')
+      iy=-1
+      do ix=-1,nx
+         if(mod(region(ix,iy,0),4).eq.1) then
+            write(91,*) crx(ix,iy,2),cry(ix,iy,2)
+         endif
+      enddo
+      close(91)
+      open(91,file='../separatrix_boundary.txt')
+      iy=minval(topcut(1:nncut))-1
+      write(*,*) 'sep = ',iy
+      do ix=-1,nx
+         if(mod(region(ix,iy,0),4).eq.1) then
+            write(91,*) crx(ix,iy,2),cry(ix,iy,2)
+         endif
+      enddo
+      close(91)
+
+*   ..wrapping up
+      write(nout(0),*) 'Recovered geometry from run number ',ishot
+      write(*,*) 'Recovered plasma state from run number ',ishot
+      status=mdsvalue2('_s=\TOP.IDENT:VERSION'//char(0),
+     1 descr2(idtype_long,0),dbversion,0,retlen)
+      call mds_err_msg(status)
+      write(*,*) 'MDSplus database version = ',dbversion
+
 *   ..close files	
       status=mdsclose('solps'//char(0),ishot)
       write(*,*) 'mdsclose'
       call mds_err_msg(status)
       status=mdsdisconnect()
       write(*,*) 'mdsdisconnect'
-      write(*,*) 'Recovered plasma state from run number ',ishot
 
       do io=0,size(ninp)-1
          close(ninp(io))

@@ -2,10 +2,6 @@
       use b2mod_types
       use b2mod_version
 
-      integer nzdecl
-c     max. number of ionization stages
-      parameter (nzdecl=92)
-
       logical, save :: newneo
       integer, save :: nsl
       integer, allocatable, save ::
@@ -25,6 +21,8 @@ c     max. number of ionization stages
 
       subroutine alloc_b2mod_neoclassical(nxd,nyd,nsd,nzd,mmxd)
       integer nxd,nyd,nsd,nzd,mmxd
+*  nzd is the maximum number of ionization stages included in any one
+*  isonuclear sequence
 
       allocate(ncl(0:nsd))
       allocate(isort(0:nsd,0:nzd-1))

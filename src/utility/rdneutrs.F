@@ -20,10 +20,13 @@ c
       use b2mod_types
       use b2mod_b2plot
 #ifdef USE_EIRENE
+      use eirmod_parmmod
       use eirmod_extrab25
 #endif
       implicit none
+#ifndef USE_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
+#endif
       integer kard,ldmf,is,ifl
       real  (kind=R8) ::
      * dummy(nlimps,*)

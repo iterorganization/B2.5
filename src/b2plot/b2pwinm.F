@@ -1,5 +1,6 @@
       subroutine b2pwinm(unm)
       use b2mod_types
+      use b2mod_b2plot_wall_loading
 c
 c  version : 11.11.97 21:36
 c
@@ -8,13 +9,13 @@ c*** Reads the data from dg output file (called from imprt)
 c*** MUST be compiled in single precision!!!
 c======================================================================
 #ifdef USE_EIRENE
+      use eirmod_parmmod
       use eirmod_extrab25
 #endif
       implicit none
+#ifndef USE_EIRENE
 #include "COUPLE/KOPPLDIM.F"
-#include "b2pwcom.h"
-      integer jedge(4)
-      equivalence (jedgi1,jedge)
+#endif
       integer nnns
       parameter (nnns=14)
       character*8 unm,unms(nnns),u
@@ -42,8 +43,9 @@ c*** Starting segment
         call scipit
       else if(ll.lt.0 .or. ll.gt.nwldprtx) then
         write(*,'(1x,a,i4,a,i4)') 'Wrong wall segment number:',ll,
-     ,                               '.  Must be positive =< ',nwldprtx
-        if(ll.gt.nwldprtx) write (*,*) 'Check nwldprtx in b2pinpc.h'
+     ,                            '.  Must be positive and =< ',nwldprtx
+        if(ll.gt.nwldprtx) 
+     >   write (*,*) 'Check nwldprtx in b2mod_b2plot_wall_loading.F'
       else
         call resimi(lwldstrt(ll))
       end if
@@ -54,8 +56,9 @@ c*** Target list
         call scipit
       else if(ll.le.0 .or. ll.gt.nwldprtx) then
         write(*,'(1x,a,i4,a,i4)') 'Wrong wall segment number:',ll,
-     ,                              '.  Must be positive =< ',nwldprtx
-        if(ll.gt.nwldprtx) write (*,*) 'Check nwldprtx in b2pinpc.h'
+     ,                            '.  Must be positive and =< ',nwldprtx
+        if(ll.gt.nwldprtx) 
+     >   write (*,*) 'Check nwldprtx in b2mod_b2plot_wall_loading.F'
       else
         call rearri(lwldlis(1,ll),nlim,nwldlis(ll))
       end if
@@ -91,7 +94,7 @@ c*** Power radiated from the group of additional sources (single group)
  80   call resime(add_rad)
       return
 c----------------------------------------------------------------------
-c*** Co-ordinates of the additional source points
+c*** Coordinates of the additional source points
  90   call rearre(addsrc_xy,2*nadsrcm,nadsrc)
       nadsrc=nadsrc/2
       do i=1,nadsrc

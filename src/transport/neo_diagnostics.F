@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine neo_diagnostics(nx, ny, ns,                       ! cjk
+      subroutine neo_diagnostics(nx, ny, ns, nstages,            ! cjk
      &  dn_neo, chi_neo, vn_neo, vw_neo)
       use b2mod_types
       use b2mod_geo
@@ -16,7 +16,7 @@
       use b2mod_b2plot_debug
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns
+      integer nx, ny, ns, nstages
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   dn_neo(-1:nx,-1:ny,0:ns), chi_neo(-1:nx,-1:ny,0:ns),
@@ -58,19 +58,19 @@
 *   ..local variables for neoclassical transport
       integer ic
       integer :: istate,ispecies,ishift
-      integer :: isorth(0:nsdecl,0:nzdecl-1), nclh(0:nsdecl), nslh
+      integer :: isorth(0:ns,0:nstages-1), nclh(0:ns), nslh
       real (kind=R8) ::
-     *   zah(0:nsdecl-1), amh(0:nsdecl-1), t(0:nsdecl),
-     &   den(0:nsdecl,0:nzdecl-1), ds(0:nsdecl,0:nzdecl-1,2),
-     &   denl(0:nsdecl,0:nzdecl-1), tl(0:nsdecl),
-     &   denr(0:nsdecl,0:nzdecl-1), tr(0:nsdecl),
-     &   vtn(0:nsdecl,0:nzdecl-1,-1:ny), 
-     &   kappa(0:nsdecl,0:nzdecl-1,-1:ny),
-     &   chi(0:nsdecl,0:nzdecl-1,-1:ny), vw(0:nsdecl,0:nzdecl-1,-1:ny),
-     &   xi(0:nsdecl,0:nzdecl-1), ntau(0:nsdecl,0:nsdecl), 
+     *   zah(0:ns-1), amh(0:ns-1), t(0:ns),
+     &   den(0:ns,0:nstages-1), ds(0:ns,0:nstages-1,2),
+     &   denl(0:ns,0:nstages-1), tl(0:ns),
+     &   denr(0:ns,0:nstages-1), tr(0:ns),
+     &   vtn(0:ns,0:nstages-1,-1:ny), 
+     &   kappa(0:ns,0:nstages-1,-1:ny),
+     &   chi(0:ns,0:nstages-1,-1:ny), vw(0:ns,0:nstages-1,-1:ny),
+     &   xi(0:ns,0:nstages-1), ntau(0:ns,0:ns), 
      &   dfhcb, dfhce, hthet(-1:nx,-1:ny),
-     &   cellface(0:nsdecl,0:nzdecl-1,-1:ny,1:5),
-     &   hy1(-1:nx,-1:ny), vwt(0:nsdecl,0:nzdecl-1,-1:ny)
+     &   cellface(0:ns,0:nstages-1,-1:ny,1:5),
+     &   hy1(-1:nx,-1:ny), vwt(0:ns,0:nstages-1,-1:ny)
       real (kind=R8) ::
      *   zacomp, amcomp, epsn
 *   ..set the accuracy
@@ -93,9 +93,9 @@
       logical closedf
 *   ..for consistency check
       real (kind=R8) ::
-     *   densav(0:nsdecl,0:nzdecl-1,-1:ny),
-     &   gradnsav(0:nsdecl,0:nzdecl-1,-1:ny),
-     &   tforce(0:nsdecl,0:nzdecl-1,1:2,-1:ny)
+     *   densav(0:ns,0:nstages-1,-1:ny),
+     &   gradnsav(0:ns,0:nstages-1,-1:ny),
+     &   tforce(0:ns,0:nstages-1,1:2,-1:ny)
 
 *   ..procedures
       external ipgeti, ipgetr, xertst, b2xvsg, fluxav, sfluxav, 
@@ -105,13 +105,13 @@
       call subini ('neo_diagnostics')
 *   ..neoclassical transport only valid for single charge states
 *     bundled charge states yet to be implemented
-      do ispecies=0,nsdecl-1
-        if (zamax(ispecies).ne.zamin(ispecies)) then
+      do is=0,ns-1
+        if (zamax(is).ne.zamin(is)) then
           stop 'ERROR: neoclassical transport cannot be calculated'
 c     1     // ' with bundled charge states'
         end if
       enddo
-      call alloc_b2mod_neoclassical(nx,ny,nsdecl,nzdecl,mmx)
+      call alloc_b2mod_neoclassical(nx,ny,ns,nstages,mmx)
       if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
         ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
         iyref=2*topcut(1)/3
@@ -146,10 +146,10 @@ c     1     // ' with bundled charge states'
 *   ..main
 
 *   ..initialize densities and temperatures
-      do ispecies=0,nsdecl
-        t(ispecies)=0._R8
-        do istate=0,nzdecl-1
-          den(ispecies,istate)=0._R8
+      do is=0,ns
+        t(is)=0.0_R8
+        do istate=0,nstages-1
+          den(is,istate)=0.0_R8
         enddo
       enddo
 
@@ -164,7 +164,7 @@ c     1     // ' with bundled charge states'
 
 *    ..loop voltage eparr (to be included in a separate routine!)
 *       default value:
-        eparr=0._R8                                  
+        eparr=0.0_R8                                  
 *       read scalar from b2mn.dat
         call ipgetr ('b2tqna_eparr', eparr)
         if (eparr.ne.0.0_R8 .or. b2plot_debug.ge.3) 
@@ -172,29 +172,29 @@ c     1     // ' with bundled charge states'
 
 *   ..initialize geometric parameters
         do iy=-1,ny
-          bav_(iy)=0._R8
-          b2av_(iy)=0._R8
-          bi2a_(iy)=0._R8
-          rbt_(iy)=0._R8
-          bgradp_(iy)=0._R8
-          dpsidr_(iy)=0._R8
-          rnq_(iy)=0._R8
-          fc_(iy)=0._R8
-          gclass_(iy)=0._R8
+          bav_(iy)=0.0_R8
+          b2av_(iy)=0.0_R8
+          bi2a_(iy)=0.0_R8
+          rbt_(iy)=0.0_R8
+          bgradp_(iy)=0.0_R8
+          dpsidr_(iy)=0.0_R8
+          rnq_(iy)=0.0_R8
+          fc_(iy)=0.0_R8
+          gclass_(iy)=0.0_R8
           do is=1,mmx
-            fm_(is,iy)=0._R8
+            fm_(is,iy)=0.0_R8
           enddo
-          r2i_(iy)=0._R8
-          rho_(iy)=0._R8
+          r2i_(iy)=0.0_R8
+          rho_(iy)=0.0_R8
         enddo 
 
 *   ..split species into species and charge states
-        nar=nsdecl
-        nzm=nzdecl-1
-        do ispecies=0,nsdecl
-          ncl(ispecies)=0
-          do istate=0,nzdecl-1
-            isort(ispecies,istate)=0
+        nar=ns
+        nzm=nstages-1
+        do is=0,ns
+          ncl(is)=0
+          do istate=0,nstages-1
+            isort(is,istate)=0
           enddo
         enddo
         do is=0,ns-1
@@ -568,11 +568,11 @@ c     1     // ' with bundled charge states'
           rho=rho_(iy)
 
 *    ..calculate the diffusion coefficients
-          call neodv(nsdecl,nzdecl,nsl,ncl,zsp,ic,m,t,den,ds,rho,eparr,
+          call neodv(ns,nstages,nsl,ncl,zsp,ic,m,t,den,ds,rho,eparr,
      &               epsn,dd(:,:,iy),vvn(:,:,iy),vtn(:,:,iy))
 
 *    ..calculate the heat conduction coefficients
-          call neochi(nsdecl,nzdecl,nsl,ncl,zsp,ic,m,t,den,ds,rho,eparr,
+          call neochi(ns,nstages,nsl,ncl,zsp,ic,m,t,den,ds,rho,eparr,
      &                epsn,kappa(:,:,iy),chi(:,:,iy),vw(:,:,iy))
 
 *    ..calculate thermal conductivity and heat pinch from

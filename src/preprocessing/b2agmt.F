@@ -148,8 +148,14 @@
 *   ..compute hx, hy, qz, qc
       do iy = -1, ny
        do ix = -1, nx
-        hx(ix,iy) = (dist(ix,iy,0,1)+dist(ix,iy,2,3))/2.0_R8
-        hy(ix,iy) = (dist(ix,iy,0,2)+dist(ix,iy,1,3))/2.0_R8
+        hx(ix,iy) = norm((crx(ix,iy,1)+crx(ix,iy,3))/2.0_R8-
+     &                   (crx(ix,iy,0)+crx(ix,iy,2))/2.0_R8,
+     &                   (cry(ix,iy,1)+cry(ix,iy,3))/2.0_R8-
+     &                   (cry(ix,iy,0)+cry(ix,iy,2))/2.0_R8)
+        hy(ix,iy) = norm((crx(ix,iy,2)+crx(ix,iy,3))/2.0_R8-
+     &                   (crx(ix,iy,0)+crx(ix,iy,1))/2.0_R8,
+     &                   (cry(ix,iy,2)+cry(ix,iy,3))/2.0_R8-
+     &                   (cry(ix,iy,0)+cry(ix,iy,1))/2.0_R8) 
         qz(ix,iy,0) = sinang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
@@ -165,14 +171,14 @@
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
      &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
         if(qz(ix,iy,1).le.0.0_R8) then
-          write(*,*) 'Problem in b2agmt: qz(ix,iy,1) <= 0',
-     1     qz(ix,iy,1),ix,iy
+          write(*,'(a,1f12.6,2i4)') 
+     1     'Problem in b2agmt: qz(ix,iy,1) <= 0',qz(ix,iy,1),ix,iy
           write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
           write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
         endif
         if(qc(ix,iy).le.0.0_R8) then
-          write(*,*) 'Problem in b2agmt: qc(ix,iy) <= 0',
-     1     qc(ix,iy),ix,iy
+          write(*,'(a,1f12.6,2i4)') 
+     1     'Problem in b2agmt: qc(ix,iy) <= 0',qc(ix,iy),ix,iy
           write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
           write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
         endif

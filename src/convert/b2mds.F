@@ -1,4 +1,4 @@
-      subroutine b2mds(nxd,nyd,nsd,in_jxi,in_jxa,in_jsep,BoRiS)
+      subroutine b2mds(nxd,nyd,nsd_local,in_jxi,in_jxa,in_jsep,BoRiS)
       use b2mod_types
       use b2mod_geo
       use b2mod_plasma
@@ -15,12 +15,14 @@
      * cr, cz, natmi, nmoli, nioni, wklng,
      * solpstop, alloc_b2mod_b2plot
       use b2mod_wall
+      use b2mod_eirene_globals
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
 !      use b2mod_b2plot_debug
       use b2mod_elements
       use b2mod_sputter
 !      use b2mod_movies
+      use b2mod_external
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
@@ -28,48 +30,55 @@
       use b2mod_mdsplus
 #endif
       use b2mod_version
+#ifdef USE_EIRENE
+      use eirmod_extrab25
+#endif
       use b2mod_b2cmpa
       use b2mod_b2cmfs
+      use b2mod_external
       implicit none
 #     include <DIMENSIONS.F>
+#ifndef USE_EIRENE
 #     include <COUPLE/EIRDIAG.F>
+#endif
 #ifdef MDSPLUS
 #     include "mdslib.inc"
 #endif
-      integer nxd,nyd,nsd,in_jxi,in_jxa,in_jsep
+      integer nxd,nyd,nsd_local,in_jxi,in_jxa,in_jsep
       real (kind=R8) :: BoRiS
       character*12 :: textdrift(0:1)
+      character*72 zeile
 c
 c  version : 27.07.96 20:37
 c
       real (kind=R8) ::
-     1   fhm(-1:nxd,-1:nyd,0:1,0:nsd-1), fhp(-1:nxd,-1:nyd,0:1,0:nsd-1),
-     2   fhj(-1:nxd,-1:nyd,0:1), fht(-1:nxd,-1:nyd,0:1),
      3   hy1(-1:nxd,-1:nyd), energy_balance(-1:nxd,-1:nyd),
-     3   energy_balance2(-1:nxd,-1:nyd),
+     3   pr(-1:nxd,-1:nyd), energy_balance2(-1:nxd,-1:nyd),
      4   energy_balance_old(-1:nxd,-1:nyd),
-     3   particle_balance(-1:nxd,-1:nyd,0:nsd-1), pb0,
-     4   bas_vis_piece(-1:nxd,-1:nyd,0:nsd-1),
+     3   particle_balance(-1:nxd,-1:nyd,0:nsd_local-1), pb0,
+     4   bas_vis_piece(-1:nxd,-1:nyd,0:nsd_local-1),
      5   cr_x(0:nxd,-1:nyd), cz_x(0:nxd,-1:nyd),
      6   cr_y(-1:nxd,0:nyd), cz_y(-1:nxd,0:nyd), 
-     7   za(0:nsd-1), pot(0:nsd-1), poti(0:nsd-1)
+     7   za(0:nsd_local-1), pot(0:nsd_local-1), poti(0:nsd_local-1)
       real (kind=R8) ::
-     3   div_fna(-1:nxd,-1:nyd,0:nsd-1), div_fmo(-1:nxd,-1:nyd,0:nsd-1),
-     3   div_fhm(-1:nxd,-1:nyd,0:nsd-1), div_fhp(-1:nxd,-1:nyd,0:nsd-1),
+     3   div_fna(-1:nxd,-1:nyd,0:nsd_local-1), 
+     3   div_fmo(-1:nxd,-1:nyd,0:nsd_local-1),
+     3   div_fhm(-1:nxd,-1:nyd,0:nsd_local-1), 
+     3   div_fhp(-1:nxd,-1:nyd,0:nsd_local-1),
      3   div_fhe(-1:nxd,-1:nyd), div_fhi(-1:nxd,-1:nyd),
      3   div_fhet(-1:nxd,-1:nyd), div_fhit(-1:nxd,-1:nyd),
      4   div_fch(-1:nxd,-1:nyd), div_fhj(-1:nxd,-1:nyd)
 
 	integer, save :: background_new=0                              !srv 14.07.10
-      integer ispecies(0:nsd-1)
+      integer ispecies(0:nsd_local-1)
 
-      integer is,iss,isp,nflai
+      integer is,iss,isp,nfla
 c
       logical ex
 c
       integer iflag,il,imi,ix,iy
 #ifdef MDSPLUS
-      character*256 textpl_cat, textwl_cat
+      character*512 textpl_cat, textwl_cat
       integer :: status
       character :: mds_signal_name*(64), tdi*(128)
       real (kind=R8), allocatable ::
@@ -77,23 +86,19 @@ c
       integer i, icnt
        real (kind=R8) ::
      *   rdummy, rtmp,
-     5   pr(-1:nxd,-1:nyd), tmp(-1:nxd,-1:nyd,0:nsd-1),
-     7   flux_x(0:nxd,-1:nyd,0:nsd-1),flux_y(-1:nxd,0:nyd,0:nsd-1),
+     5   tmp(-1:nxd,-1:nyd,0:nsd_local-1),
+     7   flux_x(0:nxd,-1:nyd,0:nsd_local-1),
+     7   flux_y(-1:nxd,0:nyd,0:nsd_local-1),
      8   dsrad(-1:nxd,-1:nyd),dspol(-1:nxd,-1:nyd),dspar(-1:nxd,-1:nyd),
      9   fhesep,fhisep,fnesep,fnisep
 #endif
 c
-      integer plate_model, plate_option, nsw, ismain, sput_dst,
-     * sput_dst2, sput_dst3, refl_model, sput_phys_model, use_eirene,
+      integer nsw, ismain, refl_model, sput_phys_model, use_eirene,
      . sput_phys_col, boundary_namelist, neutrals_namelist
-      real (kind=R8) :: plate_temp, plate_thick
-      data plate_temp/300.0_R8/, plate_thick/0.00_R8/, plate_model/0/, 
-     1     plate_option/3/, sput_dst/-1/, sput_dst2/-1/, sput_dst3/-1/, 
-     2     ismain/1/, refl_model/1/, sput_phys_col/3/, use_eirene/0/,
+      data ismain/1/, refl_model/1/, sput_phys_col/3/, use_eirene/0/,
      3     sput_phys_model/1/, boundary_namelist/0/, 
      4     neutrals_namelist/0/
-      save plate_temp, plate_thick, plate_model, plate_option, ismain,
-     1     sput_dst, sput_dst2, sput_dst3, refl_model, sput_phys_model,
+      save ismain, refl_model, sput_phys_model,
      2     sput_phys_col, boundary_namelist, neutrals_namelist,
      3     use_eirene
 
@@ -111,8 +116,52 @@ c
 c Function to check the correct parameters!
 c
       call subini('b2mds')
-      call alloc_b2mod_b2plot(nxd,nyd,nsd,wklng,
-     1 natm,nmol,nion,nlmpgs,nwall,ndepth)
+#ifdef USE_EIRENE
+      inquire(file='input.dat',exist=ex)
+      if (ex) then
+        open(unit=45,file='input.dat')
+        read(45,'(A72)',END=6999) ZEILE
+        rewind(45)         
+        CALL EIRENE_FIND_PARAM(45)
+        close(45)
+        CALL SET_PARMMOD(1)
+        write(*,*) 'Called FIND_PARAM'
+        write(*,*) '   NDX = ',NDX
+        write(*,*) '   NDY = ',NDY
+        write(*,*) ' NSTRA = ',NSTRA
+        write(*,*) '   NFL = ',NFL
+        write(*,*) '  NATM = ',NATM
+        write(*,*) '  NMOL = ',NMOL
+        write(*,*) '  NION = ',NION
+        write(*,*) 'NLMPGS = ',NLMPGS
+      endif
+      goto 7000
+ 6999 continue
+      ex = .false.
+ 7000 continue
+      if (.not.ex) then
+        ndx=DEF_NXD
+        ndy=DEF_NYD
+        nfl=DEF_NFL
+        natm=DEF_NATM
+        nmol=DEF_NMOL
+        nion=DEF_NION
+        npls=DEF_NPLS
+        nlim=DEF_NLIM
+        nsts=DEF_NSTS
+        nstra=DEF_NSTRA
+        nsrfs=DEF_NSRFS
+        nlmpgs=DEF_NLIM+DEF_NSTS      
+      endif
+#endif
+      NFLAI = NFL
+#ifdef USE_EIRENE
+      CALL ALLOC_BRAEIR(NDX,NDY,NFL)
+      CALL ALLOC_CCOUPL(1)
+      CALL ALLOC_EIRDIAG
+#endif
+      call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
+     1 natm,nmol,nion,nlmpgs)
 #ifdef NO_GETENV
       solpstop=' '
 #else
@@ -141,11 +190,11 @@ c
         enddo
       enddo
 c
-      ns=max(nsd,1)
+      ns=max(nsd_local,1)
       write(*,*) 'zn: ',(nint(zn(is)),is=0,ns-1)
       do is=0,ns-1
-        call species(is,textpl(is))
-        call species(is,textwl(is))
+        call species(is,textpl(is),.false.)
+        call species(is,textwl(is),.false.)
       end do
       iss=0
       il=0
@@ -184,13 +233,14 @@ c
 cxpb  This call is moved up from 'f31' so that we use the original cell-faced 
 cxpb  quantities before their mapping to cell centers
       call b2xpni (nx, ny, ns, na, ni)
-      nflai=0
+      call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
+      nfla=0
       do is=0,ns-1
-        if(.not.is_neutral(is)) nflai=nflai+1
+        if(.not.is_neutral(is)) nfla=nfla+1
       enddo
-      if(nflai.gt.NFL) then
-        write(*,*) 'copy_background not called because nflai.gt.NFL',
-     1   nflai,NFL
+      if(nfla.gt.NFL) then
+        write(*,*) 'copy_background not called because nfla.gt.NFL',
+     1   nfla,NFL
       elseif(nx.ge.NDXP.or.ny.ge.NDYP) then
         write(*,*)
      1   'copy_background not called because NX>=NDXP or NY>=NDYP',
@@ -215,50 +265,34 @@ c
      2   potimin(is),potimax(is),potmin(is),potmax(is)
       end do
       call alloc_b2mod_elements(ns, zn, am)
-c calculate additional fluxes (fhj, fhm, fhp)
-      do iy=-1,ny
-        do ix=-1,nx
-          if(leftix(ix,iy).ge.-1) then
-            fhj(ix,iy,0)=fch(ix,iy,0)*
-     1       (po(ix,iy)+po(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
-          else
-            fhj(ix,iy,0)=0.0_R8
-          endif
-          if(bottomiy(ix,iy).ge.-1) then
-            fhj(ix,iy,1)=fch(ix,iy,1)*
-     1       (po(ix,iy)+po(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
-          else
-            fhj(ix,iy,1)=0.0_R8
-          endif
-        enddo
-      enddo
-      fht=fhe+fhi+fhj
-      do is=0,ns-1
+c calculate additional fluxes (fhj, fhm, fhp, fht)
+      call b2xpen (nx, ny, ns,
+     1 fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
+     2 fhm, fhp, fhj, fht)
+      fht=fht+fhi_ext
+      do is=0,ns_ext-1
         do iy=-1,ny
           do ix=-1,nx
             if(leftix(ix,iy).ge.-1) then
-              fhm(ix,iy,0,is)=0.5_R8*fna(ix,iy,0,is)*
-     .         (kinrgy(leftix(ix,iy),leftiy(ix,iy),is)+kinrgy(ix,iy,is))
-              fhp(ix,iy,0,is)=0.5_R8*fna(ix,iy,0,is)*
-     .         (rpt(leftix(ix,iy),leftiy(ix,iy),is)+rpt(ix,iy,is))*ev
-            else
-              fhm(ix,iy,0,is)=0.0_R8
-              fhp(ix,iy,0,is)=0.0_R8
+              fht(ix,iy,0)=fht(ix,iy,0)+0.5_R8*fa_ext(ix,iy,0,is)*
+     .         0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(leftix(ix,iy),leftiy(ix,iy),is)**2+
+     .          ua_ext(ix,iy,is)**2)
+              fht(ix,iy,0)=fht(ix,iy,0)+0.5_R8*fa_ext(ix,iy,0,is)*
+     .         (pt_ext(leftix(ix,iy),leftiy(ix,iy),is)+
+     .          pt_ext(ix,iy,is))*ev
             endif
             if(bottomiy(ix,iy).ge.-1) then
-              fhm(ix,iy,1,is)=0.5_R8*fna(ix,iy,1,is)*
-     .         (kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     .          kinrgy(ix,iy,is))
-              fhp(ix,iy,1,is)=0.5_R8*fna(ix,iy,1,is)*
-     .         (rpt(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     .          rpt(ix,iy,is))*ev
-            else
-              fhm(ix,iy,1,is)=0.0_R8
-              fhp(ix,iy,1,is)=0.0_R8
+              fht(ix,iy,1)=fht(ix,iy,1)+0.5_R8*fa_ext(ix,iy,1,is)*
+     .         0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(bottomix(ix,iy),bottomiy(ix,iy),is)**2+
+     .          ua_ext(ix,iy,is)**2)
+              fht(ix,iy,1)=fht(ix,iy,1)+0.5_R8*fa_ext(ix,iy,1,is)*
+     .         (pt_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     .          pt_ext(ix,iy,is))*ev
             endif
           enddo
         enddo
-        fht(:,:,:)=fht(:,:,:)+fhm(:,:,:,is)+fhp(:,:,:,is)
       enddo
 c calculate divergences of the various fluxes
       do is=0,ns-1
@@ -342,16 +376,34 @@ c additional sources
           if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
      *     bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
             energy_balance2(ix,iy)=
+c boundary conditions (species independent)
+     1         +b2stbc_she(ix,iy)+b2stbc_shi(ix,iy)
+     2         +b2stbc_sch(ix,iy)*po(ix,iy)
 c recycling (species independent)
      1         +b2stbr_she(ix,iy)+b2stbr_shi(ix,iy)
      2         +b2stbr_sch(ix,iy)*po(ix,iy)
+c other sources (species independent)
+     1         +b2stbm_she(ix,iy)+b2stbm_shi(ix,iy)
+     2         +b2stbm_sch(ix,iy)*po(ix,iy)
+c external sources (species independent)
+     1         +ext_she(ix,iy)+ext_shi(ix,iy)
+     2         +ext_sch(ix,iy)*po(ix,iy)
             do is=0,ns-1
               energy_balance2(ix,iy)=energy_balance2(ix,iy)
 c radiation (electron cooling rate)
      1         -rqahe(ix,iy,is)
+c boundary conditions (species dependent)
+     3         +b2stbc_smo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
+     4         -b2stbc_sna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
 c recycling (species dependent)
      3         +b2stbr_smo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
      4         -b2stbr_sna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
+c other sources (species dependent)
+     3         +b2stbm_smo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
+     4         -b2stbm_sna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
+c external sources (species dependent)
+     3         +ext_smo(ix,iy,is)*ua(ix,iy,is)*(1.0_R8-BoRiS)
+     4         -ext_sna(ix,iy,is)*kinrgy(ix,iy,is)*(1.0_R8-BoRiS)
               if(is_neutral(is)) then
                 energy_balance2(ix,iy)=energy_balance2(ix,iy)
 c charge exchange (neutral H/D/T)
@@ -408,7 +460,8 @@ c particle balance
             if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
      *       bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
               pb0=-div_fna(ix,iy,is)-rsana(ix,iy,is)-rrana(ix,iy,is)+
-     1         b2stbr_sna(ix,iy,is)
+     1         b2stbc_sna(ix,iy,is)+b2stbr_sna(ix,iy,is)+
+     2         b2stbm_sna(ix,iy,is)+ext_sna(ix,iy,is)
               if (is_neutral(is)) then
                 pb0=pb0+rcxna(ix,iy,is)
               else
@@ -481,6 +534,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call ipgeti ('b2stbr_plate_option', plate_option)
       call xertst (1.le.plate_option .and.
      &             3.ge.plate_option, 'faulty b2stbr_plate_option')
+      if (plate_option.eq.2) plate_option=3 ! we do not want to recompute the values!
       call ipgetr ('b2stbr_plate_temp', plate_temp)
       call xertst (0.0_R8.lt.plate_temp, 'faulty b2stbr_plate_temp')
       call ipgetr ('b2stbr_plate_thick', plate_thick)
@@ -497,7 +551,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       call xertst (0.le.sput_phys_col.and.sput_phys_col.le.9,
      1 'faulty b2stbr_sput_phys_col')
       call ipgeti ('b2stbr_sput_phys_model', sput_phys_model)
-      call alloc_b2mod_boundary(ns, nbcd, nnisod)
+      call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       if (boundary_namelist.eq.1)
      > call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
@@ -505,23 +559,24 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       if(nniso.gt.nnisod) stop 'increase size in b2mds for nnisod'
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call ipgeti ('b2mndr_eirene', use_eirene)
-      call alloc_b2mod_neutrals(ns, nstraid, sput_dst)
+      call alloc_b2mod_neutrals
+     > (nx, ny, ns, natm, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
      > call read_neutrals_namelist(nx, ny, ns, .false.)
-      if(nstrai.gt.nstraid) stop 'Increase DEF_NSTRA in DIMENSIONS.F'
+      if(nstrat.gt.nstraid) stop 'Increase DEF_NSTRA in DIMENSIONS.F'
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
-      call alloc_b2mod_sputter(nx,ny,ns,
-     1   sput_dst,sput_dst2,sput_dst3)
-      call init_wall(nx,ny,ns,BoRiS,
-     *   plate_model,plate_option,plate_temp,plate_thick)
+      call alloc_b2mod_sputter(nx,ny,ns)
+      call alloc_b2mod_layer(nx,ny,nncut,nlim,nsts)
+      call alloc_b2mod_wall_init(nx,ny,nncut)
+      call alloc_b2mod_wall(ns,natm,nmol,nion)
+      call init_wall(nx,ny)
+      call read_b2mod_wall_namelist(99,ns,'    ',ex)
       call xertst (ndepth_nml.gt.1.or.plate_model.eq.0, 
      .  'Inconsistent values of ndepth_nml and plate_model')
-      call read_sputter_data(ns,
-     2   sput_phys_col,sput_phys_model,refl_model)
-      call wall_data(nx,ny,ns,BoRiS,
-     *   plate_model,plate_option,plate_temp,plate_thick)
+      call get_wall_data(nx,ny,ns,BoRiS,ex)
 
+#ifdef USE_EIRENE
 #ifndef HPUX
       inquire(file='fort.44',exist=ex)
 #else
@@ -532,13 +587,17 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         textwl(ns:ns+natmi-1)=textan(0:natmi-1)
         textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
         textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
-      else
+      endif
+#else
+      ex = .false.
+#endif
+      if (.not.ex) then
         natmi=0
-        textan(0)='ZERO'
+        textan(0)=' ZERO'
         nmoli=0
-        textmn(0)='ZERO'
+        textmn(0)=' ZERO'
         nioni=0
-        textin(0)='ZERO'
+        textin(0)=' ZERO'
         call eirene_mc_init
       endif
       nsw=ns+natmi+nmoli+nioni
@@ -705,7 +764,15 @@ c 10: added uadia, fch{xy}_{35}2, fch_p and kinrgy for recovery purposes
 c 11: added fllimi & fllime
 c 12: added ceqp
 c 13: correctly save tmhacore, tmhasol & tmhadiv
-      dbversion=13
+c 14: includes contributions from external species in ne, pr, fht
+c 15: correction of sign of electric energy flux
+c 16: add \TOP.TIMEDEP.INPUT:DS \TOP.SNAPSHOT:FHJX \TOP.SNAPSHOT:FHJY
+c     \TOP.TALLIES:fhjxreg \TOP.TALLIES:fhjyreg
+c 17: corrected cr and cz locations for inner and outer separatrix midplanes
+c 18: introduced new quantities from SOLPS_ITER
+c     ENEUTRAD now with third dimension for atomic species
+
+      dbversion=18
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -847,6 +914,14 @@ c
      1 nx+2,ny+2,4,bb,'TEXTCOMP','')
       call mds_put_double_rzns('\TOP.SNAPSHOT:QZ','',
      1 nx+2,ny+2,2,qz,'TEXTCOMP','')
+      call mds_put_double_rz('\TOP.SNAPSHOT:BRHE','W',nx+2,ny+2,
+     1 b2stbr_she,'')
+      call mds_put_double_rz('\TOP.SNAPSHOT:BRHI','W',nx+2,ny+2,
+     1 b2stbr_shi,'')
+      call mds_put_double_rzns('\TOP.SNAPSHOT:BRNA','particles/s',
+     1 nx+2,ny+2,ns,b2stbr_sna,'TEXTPL','')
+      call mds_put_double_rzns('\TOP.SNAPSHOT:BRMO','N',
+     1 nx+2,ny+2,ns,b2stbr_smo,'TEXTPL','')
 
       call mds_put_double_rzns('\TOP.SNAPSHOT:RQAHE','W',
      1 nx+2,ny+2,ns,rqahe,'TEXTPL','')
@@ -975,17 +1050,23 @@ c
       flux_y(-1:nx,0:ny,0)=fht(-1:nx,0:ny,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHTY','W',
      1 nx+2,ny+1,flux_y,'_Y')
+      flux_x(0:nx,-1:ny,0)=fhj(0:nx,-1:ny,0)
+      call mds_put_double_rz('\TOP.SNAPSHOT:FHJX','W',
+     1 nx+1,ny+2,flux_x,'_X')
+      flux_y(-1:nx,0:ny,0)=fhj(-1:nx,0:ny,1)
+      call mds_put_double_rz('\TOP.SNAPSHOT:FHJY','W',
+     1 nx+2,ny+1,flux_y,'_Y')
 
       flux_x(0:nx,-1:ny,0)=gs(0:nx,-1:ny,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:SX','m^2',
      1 nx+1,ny+2,flux_x,'_X')
       do iy=-1,ny
-	do ix=0,nx
-	  flux_x(ix,iy,0)=gs(ix,iy,0)*
+        do ix=0,nx
+          flux_x(ix,iy,0)=gs(ix,iy,0)*
      1	   (vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),1)+
      2	   vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,1))/
      3	   (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-	enddo
+        enddo
       enddo
       call mds_put_double_rz('\TOP.SNAPSHOT:SXPERP','m^2',
      1 nx+1,ny+2,flux_x,'_X')
@@ -1001,6 +1082,7 @@ c
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
       call mds_err_msg(status)
 
+#ifdef USE_EIRENE
       if(natmi.gt.0) then
         call mds_put_double_rzns('\TOP.SNAPSHOT:DAB2','/m^3',nx+2,
      1   ny+2,natmi,dab2(0:nx+1,0:ny+1,1:natmi,1),'TEXTAN','')
@@ -1014,7 +1096,13 @@ c
      1   ny+2,natmi,pfluxa(0:nx+1,0:ny+1,1:natmi,1),'TEXTAN','')
         call mds_put_double_rzns('\TOP.SNAPSHOT:PEFA','W.m^-2',nx+2,
      1   ny+2,natmi,pefluxa(0:nx+1,0:ny+1,1:natmi,1),'TEXTAN','')
+        call mds_put_double_rz('\TOP.SNAPSHOT:EMISS','ph.m^-3.s^-1',
+     1   nx+2,ny+2,emiss(0:nx+1,0:ny+1,1,1),'')
+        call mds_put_double_rzns('\TOP.SNAPSHOT:ENEUTRAD','W',nx+2,
+     1   ny+2,natmi,eneutrad(0:nx+1,0:ny+1,1:natmi,1),'')
       endif
+#endif
+#ifdef USE_EIRENE
       if(nmoli.gt.0) then
         call mds_put_double_rzns('\TOP.SNAPSHOT:DMB2','/m^3',nx+2,
      1   ny+2,nmoli,dmb2(0:nx+1,0:ny+1,1:nmoli,1),'TEXTMN','')
@@ -1028,13 +1116,22 @@ c
      1   ny+2,nmoli,pfluxm(0:nx+1,0:ny+1,1:nmoli,1),'TEXTMN','')
         call mds_put_double_rzns('\TOP.SNAPSHOT:PEFM','W.m^-2',nx+2,
      1   ny+2,nmoli,pefluxm(0:nx+1,0:ny+1,1:nmoli,1),'TEXTMN','')
+        call mds_put_double_rz('\TOP.SNAPSHOT:EMISSMOL','ph.m^-3.s^-1',
+     1   nx+2,ny+2,emissmol(0:nx+1,0:ny+1,1,1),'')
+        call mds_put_double_rzns('\TOP.SNAPSHOT:SRCML','/s',nx+2,
+     1   ny+2,nmoli,srcml(0:nx+1,0:ny+1,1:nmoli,1),'TEXTMN','')
+        call mds_put_double_rzns('\TOP.SNAPSHOT:EDISSML','W',nx+2,
+     1   ny+2,nmoli,edissml(0:nx+1,0:ny+1,1:nmoli,1),'TEXTMN','')
       endif
+#endif
+#ifdef USE_EIRENE
       if(nioni.gt.0) then
         call mds_put_double_rzns('\TOP.SNAPSHOT:DIB2','/m^3',nx+2,
      1   ny+2,nioni,dib2(0:nx+1,0:ny+1,1:nioni,1),'TEXTMN','')
         call mds_put_double_rzns('\TOP.SNAPSHOT:TIB2','eV',nx+2,
      1   ny+2,nioni,tib2(0:nx+1,0:ny+1,1:nioni,1)/ev,'TEXTMN','')
       endif
+#endif
 
       rtmp=(te(jxi,jsep)/qe*vol(jxi,jsep+1)+
      2 te(jxi,jsep+1)/qe*vol(jxi,jsep))/
@@ -1071,14 +1168,10 @@ c
      3 (vol(jxi,jsep)+vol(jxi,jsep+1))
       call mds_put_double('\top.ident.impsep:kyi0',rtmp)
       dbimpsep_kyi0=rtmp
-      rtmp=(cr(jxi,jsep)*vol(jxi,jsep+1)+
-     2 cr(jxi,jsep+1)*vol(jxi,jsep))/
-     3 (vol(jxi,jsep)+vol(jxi,jsep+1))
+      rtmp=cr_y(jxi,jsep+1)
       call mds_put_double('\top.ident.impsep:cr',rtmp)
       dbimpsep_cr=rtmp
-      rtmp=(cz(jxi,jsep)*vol(jxi,jsep+1)+
-     2 cz(jxi,jsep+1)*vol(jxi,jsep))/
-     3 (vol(jxi,jsep)+vol(jxi,jsep+1))
+      rtmp=cz_y(jxi,jsep+1)
       call mds_put_double('\top.ident.impsep:cz',rtmp)
       dbimpsep_cz=rtmp
 
@@ -1117,14 +1210,10 @@ c
      3 (vol(jxa,jsep)+vol(jxa,jsep+1))
       call mds_put_double('\top.ident.ompsep:kyi0',rtmp)
       dbompsep_kyi0=rtmp
-      rtmp=(cr(jxa,jsep)*vol(jxa,jsep+1)+
-     2 cr(jxa,jsep+1)*vol(jxa,jsep))/
-     3 (vol(jxa,jsep)+vol(jxa,jsep+1))
+      rtmp=cr_y(jxa,jsep+1)
       call mds_put_double('\top.ident.ompsep:cr',rtmp)
       dbompsep_cr=rtmp
-      rtmp=(cz(jxa,jsep)*vol(jxa,jsep+1)+
-     2 cz(jxa,jsep+1)*vol(jxa,jsep))/
-     3 (vol(jxa,jsep)+vol(jxa,jsep+1))
+      rtmp=cz_y(jxa,jsep+1)
       call mds_put_double('\top.ident.ompsep:cz',rtmp)
       dbompsep_cz=rtmp
       

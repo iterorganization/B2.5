@@ -9,13 +9,13 @@
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_anomalous_transport
-      use b2mod_geo_corner
+      use b2mod_anomalous_transport                             	 !xpb
+      use b2mod_geo_corner                                      	 !xpb
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, guard_flows                                        !xpb
+      integer nx, ny, ns, guard_flows                                    !xpb
       real (kind=R8) ::
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      & vol(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
@@ -56,13 +56,13 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ib, is, ixl, iyl, ixb, iyb,
-     *   no_current, conduction_only, no_hybr, model
+     *   no_current, conduction_only, no_hybr, model, pot_eq
 	integer, save :: iout = 0                                         !srv 18.06.08
 	integer, save :: lim_flux = 1, mdf_fhe = 0                        !srv 04.02.03 13.10.06
 	real (kind=R8), save :: no_alfTeEh = 1.0_R8                       !srv 28.04.08 30.05.08
       real (kind=R8) ::
-     *   ehx, ehy, flo, dif, floe0, flomx, cone0, t0, t1, alfe0,
-     &   tex, tex0, cutlo,
+     *   ehx, ehy, flo, dif, floe0, flomx, cone0, alfe0, t0, t1, 
+     &   tex, tex0, cutlo, fch_anomalous,
      1   flo_vedia, flo_veecrb, prefactor,
      &   floe0_mdf, cone0_mdf, alfe0_mdf, t0_mdf, tex0_mdf              !srv 22.11.99 13.10.06
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
@@ -72,7 +72,8 @@
      *   gampvd(-1:nx,-1:ny), gamrvd(-1:nx,-1:ny),
      *   gampvdc(-1:nx,-1:ny)
 #endif
-      save ncall, no_current, conduction_only, no_hybr, model
+      save ncall, no_current, conduction_only, no_hybr, model, pot_eq,
+     *   fch_anomalous
 *   ..procedures
       intrinsic dim, min, max, abs, sqrt, log, mod
       real (kind=R8) ::
@@ -82,10 +83,10 @@
       harm(t0,t1) = 2*t0*t1/(t0+t1)
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
-      hy1(ix,iy) = hy(ix,iy)/qz(ix,iy,1)
+      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, no_current/0/, conduction_only/0/, no_hybr/0/, 
-     *  model/1/
+     *  model/1/, pot_eq/1/, fch_anomalous/1.0_R8/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -95,8 +96,12 @@
       call subini ('b2tfhe')
       if (ncall.eq.0) then                                               !xpb
        call ipgeti ('b2tfhe_no_current', no_current)                     !xpb
+       call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
+       call xertst (pot_eq.eq.1.or.no_current.eq.1,
+     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2tfhe_conduction_only', conduction_only)           !xpb
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                           !xpb
+       call ipgetr ('b2tfhe_anomalous', fch_anomalous)
        call ipgeti ('b2tqce_model', model)
        call ipgeti ('b2tfhe_mdf', mdf_fhe)                               !srv 13.10.06
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
@@ -117,12 +122,13 @@
        call b2xvsg (n2, te, 1, 'te', '.gt.')
        call b2xvsg (n2*2, csig, 1, 'csig', '.ge.')
        call b2xvsg (n2*2, chce, 1, 'chce', '.ge.')
-*    ..test edge values of csig, chce, chve, chvemx, calf
+*    ..test edge values of csig, chce, chve, chvemx, calf, calf_an
        call b2xvff (nx, ny, csig, 'csig')
        call b2xvff (nx, ny, chce, 'chce')
        call b2xvff (nx, ny, chve, 'chve')
        call b2xvfx (nx, ny, chvemx, 'chvemx')
        call b2xvff (nx, ny, calf, 'calf')
+       call b2xvff (nx, ny, calf_an, 'calf_an')
       endif
 
       fhePSch = 0.0e0_R8                                              !sv 13.10.06
@@ -266,7 +272,7 @@
 	  enddo
        enddo                                                           !srv 02.01.07 }
 
-c  ..s.et null flux in guard cells  ?
+c  ...set null flux in guard cells  ?
 !       fhePSch(-1, :,:)=0.0e0_R8    ! MODIFY for Double Case 
 !       fhePSch(nx, :,1)=0.0e0_R8
 !       fhePSch( :,-1,:)=0.0e0_R8
@@ -296,17 +302,17 @@ c  ..s.et null flux in guard cells  ?
             if (no_current.eq.1) then
               ehx = 0.0_R8
             else
-              ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+        !xpb
-     &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+               !xpb
-     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5_R8*       !xpb
-     &         (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy))))     !xpb 
-     &         )/qe                                                      !xpb 
+              ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+ 	 !xpb
+     &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+      	 !xpb
+     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5_R8* 	 !xpb
+     &         (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy)))) 	 !xpb 
+     &         )/qe                                             	 !xpb 
             endif
             tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
 cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
             if (conduction_only.eq.1) then
               floe0 = 0.0_R8
-	        floe0_mdf = 0.0_R8                                         !srv 18.08.08
+	      floe0_mdf = 0.0_R8                                         !srv 18.08.08
               flo_vedia=0.0_R8
               flo_veecrb=0.0_R8
             else
@@ -315,9 +321,9 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &         chve(ix,iy,0)*
      1           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8
               prefactor=
-     1         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))             !xpb
-     &         /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))              !xpb
-     &         *(ne(leftix(ix,iy),leftiy(ix,iy))                         !xpb
+     1         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))    	 !xpb
+     &         /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))     	 !xpb
+     &         *(ne(leftix(ix,iy),leftiy(ix,iy))                	 !xpb
      &          +ne(ix,iy))/2.0_R8
               flo_vedia=prefactor*vedia(ix,iy,0)
               flo_veecrb=prefactor*veecrb(ix,iy,0)
@@ -335,8 +341,11 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
                alfe0 = 0.0_R8
                alfe0_mdf = 0.0_R8                                      !srv 18.08.08
             else
-               alfe0 = calf(ix,iy,0)*cone0/chce(ix,iy,0)
-               alfe0_mdf = calf(ix,iy,0)*cone0_mdf/chce(ix,iy,0)       !srv 18.08.08
+              alfe0 = (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*
+     &         cone0/chce(ix,iy,0)
+              alfe0_mdf = 
+     &        (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*
+     &         cone0_mdf/chce(ix,iy,0)
             endif
             if (model.eq.1.or.model.eq.3) then   ! SOLPS5.0 treatments
               flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
@@ -360,18 +369,18 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
             endif
             tex0 = tex/(1.0_R8+t0)
             tex0_mdf = tex/(1.0_R8+t0_mdf)                           !srv 18.08.08
-	      if(mdf_fhe.eq.0) then
-             fllime(ix,iy) = 1.0_R8 + t0
+	    if(mdf_fhe.eq.0) then
+              fllime(ix,iy) = 1.0_R8 + t0
             else
-             fllime(ix,iy) = 1.0_R8 + t0_mdf
-	      endif
+              fllime(ix,iy) = 1.0_R8 + t0_mdf
+	    endif
             if (no_hybr.eq.0) then
-             fhe(ix,iy,0) =
-     &          floe0*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
+              fhe(ix,iy,0) =
+     &         floe0*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
      &         -abs(floe0/2.0_R8)*tex-
      &          cone0*tex0 + no_alfTeEh*alfe0*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-             fhe_mdf(ix,iy,0) =floe0_mdf*                              !srv 18.08.08
+              fhe_mdf(ix,iy,0) =floe0_mdf*                              !srv 18.08.08
      &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
      &         abs(floe0_mdf/2.0_R8)*tex-cone0_mdf*tex0_mdf+
      &         no_alfTeEh*alfe0_mdf*
@@ -394,13 +403,14 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &       (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
 ! modify fhet for mdf case
             if (no_hybr.eq.0) then
-	       if(mdf_fhe.eq.0) then                                        !sv 13.10.06 {
-              floe(ix,iy,0) = floe0
-              cone(ix,iy,0,0) = abs(floe0/2)+cone0/(1.0_R8+t0)       !srv 02.01.07
-	       else
-              floe(ix,iy,0) = floe0_mdf
-              cone(ix,iy,0,0)=abs(floe0_mdf/2)+cone0_mdf/(1.0_R8+t0_mdf)  !srv 02.01.07
-	       endif
+	      if(mdf_fhe.eq.0) then                                  !srv 13.10.06 {
+                floe(ix,iy,0) = floe0
+                cone(ix,iy,0,0) = abs(floe0/2)+cone0/(1.0_R8+t0)     !srv 02.01.07
+	      else
+                floe(ix,iy,0) = floe0_mdf
+                cone(ix,iy,0,0)=abs(floe0_mdf/2)+
+     .           cone0_mdf/(1.0_R8+t0_mdf)                           !srv 02.01.07
+	      endif
             else
               cone(ix,iy,0,0) = t1                                   !srv 02.01.07
             endif
@@ -436,29 +446,31 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &         chve(ix,iy,1)*
      1         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))/2.0_R8
               prefactor=
-     &         (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))         !xpb
-     &         /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))        !xpb
-     &         *(ne(bottomix(ix,iy),bottomiy(ix,iy))                     !xpb
-     &          +ne(ix,iy))/2.0_R8                                       !xpb
+     &         (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))	 !xpb
+     &         /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy)) 	 !xpb
+     &         *(ne(bottomix(ix,iy),bottomiy(ix,iy))            	 !xpb
+     &          +ne(ix,iy))/2.0_R8                              	 !xpb
               flo_vedia=prefactor*vedia(ix,iy,1)
               flo_veecrb=prefactor*veecrb(ix,iy,1)
             endif
-	      if(mdf_fhe.eq.0) then                                         !sv 13.10.06 {
-             floe(ix,iy,1) = floe0+2.5_R8*flo_vedia+1.5_R8*flo_veecrb
-	      else
-             floe(ix,iy,1) = floe0+1.5_R8*flo_veecrb
-	      endif                                                        !srv 18.08.08 }
+	    if(mdf_fhe.eq.0) then                                        !srv 13.10.06 {
+              floe(ix,iy,1) = floe0+2.5_R8*flo_vedia+1.5_R8*flo_veecrb
+	    else
+              floe(ix,iy,1) = floe0+1.5_R8*flo_veecrb
+	    endif                                                        !srv 18.08.08 }
             if (no_hybr.eq.0) then
               cone0 = hybr(floe(ix,iy,1),chce(ix,iy,1))
               fhe(ix,iy,1) = floe(ix,iy,1)*
      &          (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8-
      &           cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &          +no_alfTeEh*calf(ix,iy,1)*
+     &          +no_alfTeEh*
+     &           (calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
               fhe_mdf(ix,iy,1) = floe(ix,iy,1)*
      &          (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8-
      &           cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &          +no_alfTeEh*calf(ix,iy,1)*
+     &          +no_alfTeEh*
+     &           (calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
      &            -fhePSch(ix,iy,1)                                     !srv 13.10.06
             else
@@ -469,10 +481,12 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      .             min(te(ix,iy),te(bottomix(ix,iy),bottomiy(ix,iy))))/
      .         max(cutlo, 
      .                 te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy))))
-                fhe(ix,iy,1) = upwind(floe(ix,iy,1), 
+              fhe(ix,iy,1) = 
+     .         upwind(floe(ix,iy,1), 
      .                te(bottomix(ix,iy),bottomiy(ix,iy)), te(ix,iy))
      .          - t1 * (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &          +no_alfTeEh*calf(ix,iy,1)*
+     &          +no_alfTeEh*
+     &           (calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
             endif
             fhet(ix,iy,1) = fhe(ix,iy,1)+
@@ -481,17 +495,20 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
             cone(ix,iy,1,0) = cone0                                      !xpb !srv 02.01.07
 !xpb     &         2.5_R8*((te(bottomix(ix,iy),bottomiy(ix,iy))+
 !xpb     &     te(ix,iy))/(2*qe))*csig(ix,iy,1)/qe
-          endif                                                          !xpb
+          endif                                                 	 !xpb
         enddo
       enddo
 
-      if(guard_flows.eq.0) then                                          !xpb
+      if(guard_flows.eq.0) then                                 	 !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
               fhe(ix,iy,1)=0.0_R8
+              fhe_mdf(ix,iy,1)=0.0_R8
+              fhet(ix,iy,1)=0.0_R8
               floe(ix,iy,1)=0.0_R8
+              cone(ix,iy,1,0)=0.0_R8
             endif
           enddo        
         enddo
@@ -500,42 +517,53 @@ cxpb turn off poloidal flows in core boundary
         do ix = -1, nx
           if(mod(region(ix,-1,0),4).eq.1) then
             fhe(ix,-1,0) = 0.0_R8
+            fhe_mdf(ix,-1,0) = 0.0_R8
+            fhet(ix,-1,0)=0.0_R8
             floe(ix,-1,0) = 0.0_R8
+            cone(ix,-1,0,0) = 0.0_R8
+            fllime(ix,iy) = 1.0_R8
           endif
         enddo
-      endif                                                              !xpb
+      endif                                                     	 !xpb
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
             fhe(ix,iy,0)=0.0_R8
+            fhe_mdf(ix,iy,0)=0.0_R8
+            fhet(ix,iy,0)=0.0_R8
             floe(ix,iy,0)=0.0_R8
+            cone(ix,iy,0,0)=0.0_R8
+            fllime(ix,iy)=1.0_R8
             fhe(ix,iy,1)=0.0_R8
+            fhe_mdf(ix,iy,1)=0.0_R8
+            fhet(ix,iy,1)=0.0_R8
             floe(ix,iy,1)=0.0_R8
+            cone(ix,iy,1,0)=0.0_R8
           end do
         end do
       end do
 
-	if(iout.ne.0) then                                             !srv 18.06.08 {
-       call my_out(70,nx,ny,fhe(-1,-1,0),'b2tfhe_fhex')
-       call my_out(70,nx,ny,fhe(-1,-1,1),'b2tfhe_fhey')
-       call my_out(70,nx,ny,fhePSch(-1,-1,0),'b2tfhe_fhePSchx')
-       call my_out(70,nx,ny,fhePSch(-1,-1,1),'b2tfhe_fhePSchy')
-       call my_out(70,nx,ny,fhe_mdf(-1,-1,0),'b2tfhe_fhe_mdfx')
-       call my_out(70,nx,ny,fhe_mdf(-1,-1,1),'b2tfhe_fhe_mdfy')
-       call my_out(70,nx,ny,fhet(-1,-1,0),'b2tfhe_fhetx')
-       call my_out(70,nx,ny,fhet(-1,-1,1),'b2tfhe_fhety')
-	 call my_out(70,nx,ny,cone(-1,-1,0,0),'b2tfhe_conex0')
-	 call my_out(70,nx,ny,cone(-1,-1,0,1),'b2tfhe_conex1')
-	 call my_out(70,nx,ny,cone(-1,-1,0,2),'b2tfhe_conex2')
-	 call my_out(70,nx,ny,cone(-1,-1,1,0),'b2tfhe_coney0')
-	 call my_out(70,nx,ny,cone(-1,-1,1,1),'b2tfhe_coney1')
-	 call my_out(70,nx,ny,cone(-1,-1,1,2),'b2tfhe_coney2')
-	 call my_out(70,nx,ny,floe(-1,-1,0),'b2tfhe_floex')
-	 call my_out(70,nx,ny,floe(-1,-1,1),'b2tfhe_floey')
-	 call my_out(70,nx,ny,fllime,'b2tfhe_fllime')
-	endif                                                          !srv 18.06.08 }
+      if(iout.ne.0) then                                             !srv 18.06.08 {
+        call my_out(70,nx,ny,fhe(-1,-1,0),'b2tfhe_fhex')
+        call my_out(70,nx,ny,fhe(-1,-1,1),'b2tfhe_fhey')
+        call my_out(70,nx,ny,fhePSch(-1,-1,0),'b2tfhe_fhePSchx')
+        call my_out(70,nx,ny,fhePSch(-1,-1,1),'b2tfhe_fhePSchy')
+        call my_out(70,nx,ny,fhe_mdf(-1,-1,0),'b2tfhe_fhe_mdfx')
+        call my_out(70,nx,ny,fhe_mdf(-1,-1,1),'b2tfhe_fhe_mdfy')
+        call my_out(70,nx,ny,fhet(-1,-1,0),'b2tfhe_fhetx')
+        call my_out(70,nx,ny,fhet(-1,-1,1),'b2tfhe_fhety')
+	call my_out(70,nx,ny,cone(-1,-1,0,0),'b2tfhe_conex0')
+	call my_out(70,nx,ny,cone(-1,-1,0,1),'b2tfhe_conex1')
+	call my_out(70,nx,ny,cone(-1,-1,0,2),'b2tfhe_conex2')
+	call my_out(70,nx,ny,cone(-1,-1,1,0),'b2tfhe_coney0')
+	call my_out(70,nx,ny,cone(-1,-1,1,1),'b2tfhe_coney1')
+	call my_out(70,nx,ny,cone(-1,-1,1,2),'b2tfhe_coney2')
+	call my_out(70,nx,ny,floe(-1,-1,0),'b2tfhe_floex')
+	call my_out(70,nx,ny,floe(-1,-1,1),'b2tfhe_floey')
+	call my_out(70,nx,ny,fllime,'b2tfhe_fllime')
+      endif                                                          !srv 18.06.08 }
 
 * ..return
       ncall = ncall+1

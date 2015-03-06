@@ -39,7 +39,7 @@
 
 *   ..local variables
       integer ncall, n2, stylec, ix, iy, is, ireg
-      integer, save :: pot_eq = 1                             !srv 13.07.05
+      integer, save :: pot_eq = 1, no_current = 0                     !srv 13.07.05
       real (kind=R8) ::
      *  ctt, dte, dti, t0, t1, t2
       save ncall, stylec
@@ -65,6 +65,9 @@
       if (ncall.eq.0) then
        call ipgeti ('b2upht_stylec', stylec)
        call ipgeti ('b2news_poteq', pot_eq)                           !srv 13.07.05
+       call ipgeti ('b2tfhe_no_current', no_current)
+       call xertst (pot_eq.eq.1.or.no_current.eq.1,
+     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call xertst (0.le.stylec, 'faulty internal parameter stylec')
       endif
 *   ..test nx, ny, ns

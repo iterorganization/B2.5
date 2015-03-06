@@ -2,12 +2,13 @@
 *.specification
       subroutine b2stbc_bas (nx, ny, ns, ismain,                         !xpb
      1  facdrift, vol, hx, hy, qz, qc, gs,                               !xpb
-     1  pbs, bb, na, ua, uadia, te, ti, po, ne, ni,
+     1  pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1  fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
-     &  sna0, smo0, she0, shi0, sch0, wrong_flow, main_call, diagno,     !xpb
+     &  sna0, smo0, she0, shi0, sch0, sne0,
+     &  wrong_flow, main_call, diagno,     !xpb
      &  b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
-     &  b2stbc_fchy_dia_coreonly, secmodel, lbndusr, sound_model, 
-     &  area_fix)
+     &  b2stbc_fchy_dia_coreonly, secmodel, lbndusr, 
+     &  area_fix, sheath_drift_fix)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
@@ -16,6 +17,7 @@
       use b2mod_geo_corner
       use b2mod_b2cmpa
       use b2mod_b2cmpb
+      use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, diagno
@@ -26,7 +28,7 @@
      &  qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     1  uadia(-1:nx,-1:ny,0:1,0:ns-1),
+     1  uadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1), 
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
@@ -40,12 +42,13 @@
       real (kind=R8) ::
      &  b2stbc_fchy_dia, b2stbc_neoclassical, praverage(2)
       logical main_call, lbndusr                                         !xpb
-      integer b2stbc_fchy_dia_coreonly, secmodel, sound_model, area_fix
+      integer b2stbc_fchy_dia_coreonly, secmodel, area_fix,
+     &  sheath_drift_fix
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     &  sch0(-1:nx,-1:ny,0:3)
+     &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
       logical wrong_flow                                                 !xpb
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -54,8 +57,8 @@
 *  1. purpose
 *
 *     B2STBC_BAS provides linearised expressions for the sources of
-*     density, momentum, electron heat, atom heat, and charge, due to
-*     the boundary conditions.
+*     density, parallel momentum, electron heat, atom heat, and charge,
+*     due to the boundary conditions.
 *     Here the boundary conditions are expressed by use of the B2.5
 *     format.
 *
@@ -67,8 +70,9 @@
       real (kind=R8) ::
      *  cutll, cutlo, tpr, tro, csb, cst, vte, s0, s1, fche, fchi, t0,
      1  csbm, cstm, fchy_dia, seec,
-     2  naf(0:ns-1), uadiaf(0:ns-1), nef, nif, tef, tif, pof, wdiaf,
-     3  she_test, shi_test, zaf(0:ns-1)
+     2  naf(0:ns-1), udf(0:ns-1), nef, nif, tef, tif, pof, wdiaf,
+     3  she_test, shi_test, zaf(0:ns-1), zxf, nxf, taf,
+     4  prt(-1:nx,-1:ny)
       save ncall
 *   ..procedures
       intrinsic min, max, abs, sqrt, exp, log, dim
@@ -132,6 +136,11 @@
         resignore(-1:nx,-1,1:2)=0
         resignore(-1:nx,ny,1:2)=0
       endif
+*  ..compute total pressure
+      prt(:,:) = ne(:,:)*te(:,:) + ni(:,:,0)*ti(:,:)
+      do is = 0, ns_ext-1
+        prt(:,:) = prt(:,:) + na_ext(:,:,is)*ta_ext(:,:,is) 
+      end do
 
       if(ncall.eq.0) write(*,*) 'Doing B2.5-style bc'
 
@@ -175,35 +184,43 @@
        pof = (po(ix,-1)*hy1(topix(ix,-1),topiy(ix,-1))+
      &        po(topix(ix,-1),topiy(ix,-1))*hy1(ix,-1))/
      &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-       wdiaf=((ne(ix,-1)*te(ix,-1)+ni(ix,-1,1)*ti(ix,-1))*bb(ix,-1,2)*
-     &         hy1(topix(ix,-1),topiy(ix,-1))+
-     &        (ne(topix(ix,-1),topiy(ix,-1))*
-     &         te(topix(ix,-1),topiy(ix,-1))+
-     &         ni(topix(ix,-1),topiy(ix,-1),1)*
-     &         ti(topix(ix,-1),topiy(ix,-1)))*
-     &         bb(topix(ix,-1),topiy(ix,-1),2)*hy1(ix,-1))/
+       wdiaf=(prt(ix,-1)*bb(ix,-1,2)*
+     &        hy1(topix(ix,-1),topiy(ix,-1))+
+     &        prt(topix(ix,-1),topiy(ix,-1))*
+     &        bb(topix(ix,-1),topiy(ix,-1),2)*hy1(ix,-1))/
      &       (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
 *    ..compute cst, vte
-       if(sound_model.eq.0) then
-          tpr = 0.0_R8
-          tro = 0.0_R8
-          do is = 0, ns-1
-             tpr = tpr+naf(is)*(zaf(is)*tef+tif)
-             tro = tro+am(is)*mp*naf(is)
-          enddo
-          cst = sqrt(tpr/tro)
-       else
-          cst = 0.0_R8
-          do is = 0, ns-1
-             cst = cst + naf(is)*(zaf(is)*tef+tif)/(am(is)*nif*mp)
-          enddo
-          cst = sqrt(cst)
-       endif
+       tpr = 0.0_R8
+       tro = 0.0_R8
+       do is = 0, ns-1
+         tpr = tpr+naf(is)*(zaf(is)*tef+tif)
+         tro = tro+am(is)*mp*naf(is)
+       enddo
+       do is = 0, ns_ext-1
+         nxf = (na_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
+     &          na_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
+     &         (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
+         taf = (ta_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
+     &          ta_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
+     &         (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
+         zxf = (za_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
+     &          za_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
+     &         (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
+         tpr = tpr+nxf*(zxf*tef+taf)
+         tro = tro+am_ext(is)*mp*nxf
+       enddo
+       cst = sqrt(tpr/tro)
        vte = sqrt(tef/me)
 *    ..compute Bohm fchi, fche
        t0 = 0.0_R8
        do is = 0, ns-1
         t0 = t0-zaf(is)*fna(topix(ix,-1),topiy(ix,-1),1,is)
+       enddo
+       do is = 0, ns_ext-1
+        zxf = (za_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
+     &         za_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
+     &        (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
+        t0 = t0-zxf*fa_ext(topix(ix,-1),topiy(ix,-1),1,is)
        enddo
        fchi = qe*t0
 !       if(po(ix,-1).ge.0.0_R8) then                                     !xpb
@@ -231,19 +248,19 @@
      &         -OnedBsqc(topix(ix,-1),topiy(ix,-1)))                     !xpb
      &        *facdrift(ix,-1)*b2stbc_fchy_dia                           !xpb
            endif                                                         !xpb
-         elseif (mod(region(ix,-1,0),4).eq.1) then                       !xpb
+         elseif (mod(region(ix,-1,0),4).eq.1 .and. nnreg(0).gt.1) then   !xpb
            if(periodic_bc.ne.1 .or. rightix(ix,iy).eq.ix+1) then         !xpb
  !              fchy_dia = -praverage(1)*wbbv(topix(ix,-1),topiy(ix,-1),2)       !xpb
  !      &        *(vol(topix(ix,-1),topiy(ix,-1))+vol(ix,-1))
  !      &        /(gs(topix(ix,-1),topiy(ix,-1),2)+gs(ix,-1,2))          !sv 01.07.99
  !      &        *(OnedBsqc(rightix(topix(ix,-1),topiy(ix,-1)),
  !      &                   rightiy(topix(ix,-1),topiy(ix,-1)))
- !      &         -OnedBsqc(topix(ix,-1),topiy(ix,-1)))                     !sv
- !      &        *facdrift(ix,-1)*b2stbc_fchy_dia                           !xpb
-              fchy_dia = -praverage(1)*facdrift(ix,-1)*b2stbc_fchy_dia  !sv 01.07.99
+ !      &         -OnedBsqc(topix(ix,-1),topiy(ix,-1)))                  !sv
+ !      &        *facdrift(ix,-1)*b2stbc_fchy_dia                        !xpb
+              fchy_dia = -praverage(1)*facdrift(ix,-1)*b2stbc_fchy_dia   !sv 01.07.99
      &         *(OnedBsqc(rightix(topix(ix,-1),topiy(ix,-1)),
      &                    rightiy(topix(ix,-1),topiy(ix,-1)))
-     &          -OnedBsqc(topix(ix,-1),topiy(ix,-1)))            !sv
+     &          -OnedBsqc(topix(ix,-1),topiy(ix,-1)))                    !sv
            else                                                          !xpb
  !              fchy_dia = -praverage(1)*wbbv(topix(ix,-1),topiy(ix,-1),2)       !xpb
  !      &        *(vol(topix(ix,-1),topiy(ix,-1))+vol(ix,-1))
@@ -251,13 +268,13 @@
  !      &        *(1.0_R8/wbbv(topix(ix,-1),topiy(ix,-1),3)**2
  !      &         -OnedBsqc(topix(ix,-1),topiy(ix,-1)))                  !xpb
  !      &        *facdrift(ix,-1)*b2stbc_fchy_dia                        !xpb
-              fchy_dia = -praverage(1)*facdrift(ix,-1)*b2stbc_fchy_dia  !sv 01.07.99
+              fchy_dia = -praverage(1)*facdrift(ix,-1)*b2stbc_fchy_dia   !sv 01.07.99
      &        *(1.0_R8/wbbv(topix(ix,-1),topiy(ix,-1),3)**2
      &         -OnedBsqc(topix(ix,-1),topiy(ix,-1)))                     !xpb
           endif                                                          !xpb
          endif                                                           !sv
        elseif (b2stbc_neoclassical .ne. 0.0_R8 .and.                     !xpb
-     &         mod(region(ix,-1,0),4).eq.1) then                         !xpb
+     &         mod(region(ix,-1,0),4).eq.1 .and. nnreg(0).gt.1) then     !xpb
          if(periodic_bc.ne.1 .or. rightix(ix,iy).eq.ix+1) then           !xpb
            fchy_dia = -praverage(1)                                      !xpb
      &      *(OnedBsqc(rightix(topix(ix,-1),topiy(ix,-1)),
@@ -290,7 +307,7 @@
      &    cbsna(3,is,ireg)*csb*s1+
      &    cbsna(4,is,ireg)*cst*s0+
      &    cbsna(5,is,ireg)*cst*s1
-*     ..compute momentum source
+*     ..compute parallel momentum source
         smo0(ix,-1,0,is) = smo0(ix,-1,0,is)+cbsmo(0,is,ireg)*s0
         smo0(ix,-1,1,is) = smo0(ix,-1,1,is)+cbsmo(7,is,ireg)*s0          !rfs
         smo0(ix,-1,2,is) = smo0(ix,-1,2,is)+
@@ -396,35 +413,43 @@
        pof = (po(ix,ny)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
      &        po(bottomix(ix,ny),bottomiy(ix,ny))*hy1(ix,ny))/
      &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-       wdiaf=((ne(ix,ny)*te(ix,ny)+ni(ix,ny,1)*ti(ix,ny))*bb(ix,ny,2)*
-     &         hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     &        (ne(bottomix(ix,ny),bottomiy(ix,ny))*
-     &         te(bottomix(ix,ny),bottomiy(ix,ny))+
-     &         ni(bottomix(ix,ny),bottomiy(ix,ny),1)*
-     &         ti(bottomix(ix,ny),bottomiy(ix,ny)))*
-     &         bb(bottomix(ix,ny),bottomiy(ix,ny),2)*hy1(ix,ny))/
-     &        (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
+       wdiaf=(prt(ix,ny)*bb(ix,ny,2)*
+     &        hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     &        prt(bottomix(ix,ny),bottomiy(ix,ny))*
+     &        bb(bottomix(ix,ny),bottomiy(ix,ny),2)*hy1(ix,ny))/
+     &       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
 *    ..compute cst, vte
-       if(sound_model.eq.0) then
-          tpr = 0.0_R8
-          tro = 0.0_R8
-          do is = 0, ns-1
-             tpr = tpr+naf(is)*(zaf(is)*tef+tif)
-             tro = tro+am(is)*mp*naf(is)
-          enddo
-          cst = sqrt(tpr/tro)
-       else
-          cst = 0.0_R8
-          do is = 0, ns-1
-             cst = cst + naf(is)*(zaf(is)*tef+tif)/(am(is)*nif*mp)
-          enddo
-          cst = sqrt(cst)
-       endif
+       tpr = 0.0_R8
+       tro = 0.0_R8
+       do is = 0, ns-1
+         tpr = tpr+naf(is)*(zaf(is)*tef+tif)
+         tro = tro+am(is)*mp*naf(is)
+       enddo
+       do is = 0, ns_ext-1
+         nxf = (na_ext(ix,-1,is)*hy1(bottomix(ix,-1),bottomiy(ix,-1))+
+     &          na_ext(bottomix(ix,-1),bottomiy(ix,-1),is)*hy1(ix,-1))/
+     &         (hy1(bottomix(ix,-1),bottomiy(ix,-1))+hy1(ix,-1))
+         taf = (ta_ext(ix,-1,is)*hy1(bottomix(ix,-1),bottomiy(ix,-1))+
+     &          ta_ext(bottomix(ix,-1),bottomiy(ix,-1),is)*hy1(ix,-1))/
+     &         (hy1(bottomix(ix,-1),bottomiy(ix,-1))+hy1(ix,-1))
+         zxf = (za_ext(ix,-1,is)*hy1(bottomix(ix,-1),bottomiy(ix,-1))+
+     &          za_ext(bottomix(ix,-1),bottomiy(ix,-1),is)*hy1(ix,-1))/
+     &         (hy1(bottomix(ix,-1),bottomiy(ix,-1))+hy1(ix,-1))
+         tpr = tpr+nxf*(zxf*tef+taf)
+         tro = tro+am_ext(is)*mp*nxf
+       enddo
+       cst = sqrt(tpr/tro)
        vte = sqrt(tef/me)
 *    ..compute Bohm fchi, fche
        t0 = 0.0_R8
        do is = 0, ns-1
         t0 = t0+zaf(is)*fna(ix,ny,1,is)
+       enddo
+       do is = 0, ns_ext-1
+        zxf = (za_ext(ix,-1,is)*hy1(bottomix(ix,-1),bottomiy(ix,-1))+
+     &         za_ext(bottomix(ix,-1),bottomiy(ix,-1),is)*hy1(ix,-1))/
+     &        (hy1(bottomix(ix,-1),bottomiy(ix,-1))+hy1(ix,-1))
+        t0 = t0+zxf*fa_ext(ix,ny,1,is)
        enddo
        fchi = qe*t0
 !       if(po(ix,ny).ge.0.0_R8) then                                     !xpb
@@ -446,9 +471,9 @@
  !      .      *(vol(bottomix(ix,ny),bottomiy(ix,ny))+vol(ix,ny))
  !      .      /(gs(bottomix(ix,ny),bottomiy(ix,ny),2)+gs(ix,ny,2))      !xpb
  !      .      *(OnedBsqc(rightix(bottomix(ix,ny),bottomiy(ix,ny)),
- !      .                 rightiy(bottomix(ix,ny),bottomiy(ix,ny)))              !xpb
+ !      .                 rightiy(bottomix(ix,ny),bottomiy(ix,ny)))      !xpb
  !      .       -OnedBsqc(bottomix(ix,ny),bottomiy(ix,ny)))
- !      .      *facdrift(ix,ny)*b2stbc_fchy_dia                                 !xpb
+ !      .      *facdrift(ix,ny)*b2stbc_fchy_dia                          !xpb
             fchy_dia = -praverage(2)*facdrift(ix,ny)*b2stbc_fchy_dia     !sv 01.07.99
      &       *(OnedBsqc(rightix(ix,ny),rightiy(ix,ny))-OnedBsqc(ix,ny))  !sv
          endif                                                           !xpb
@@ -475,7 +500,7 @@
      &    cbsna(3,is,ireg)*csb*s1+
      &    cbsna(4,is,ireg)*cst*s0+
      &    cbsna(5,is,ireg)*cst*s1
-*     ..compute momentum source
+*     ..compute parallel momentum source
         smo0(ix,ny,0,is) = smo0(ix,ny,0,is)+cbsmo(0,is,ireg)*s0
         smo0(ix,ny,1,is) = smo0(ix,ny,1,is)+cbsmo(7,is,ireg)*s0          !rfs
         smo0(ix,ny,2,is) = smo0(ix,ny,2,is)+
@@ -551,7 +576,7 @@
        endif
 *    ..compute s0, s1: hb
        s0 = gs(rightix(-1,iy),rightiy(-1,iy),0)
-       if (area_fix.ge.3) s0 = s0*qc(rightix(-1,iy),rightiy(-1,iy))        !srv 09.03.09
+       if (area_fix.ge.3) s0 = s0*qc(rightix(-1,iy),rightiy(-1,iy))       !srv 09.03.09
        s1 = abs(pbs(rightix(-1,iy),rightiy(-1,iy),0))
 *    ..compute cell-faced quantities
        do is = 0, ns-1
@@ -561,10 +586,19 @@
          zaf(is) = (rza(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &              rza(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
      &             (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
-         uadiaf(is) =
-     &           (uadia(-1,iy,0,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
-     &            uadia(rightix(-1,iy),rightiy(-1,iy),0,is)*hx(-1,iy))/
-     &           (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
+cxpb  Following suggestion from Russians, the drift velocity should
+cxpb  only include ExB terms and not diamagnetic contributions
+         if (sheath_drift_fix.eq.0) then
+           udf(is) =
+     &      (uadia(-1,iy,0,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
+     &       uadia(rightix(-1,iy),rightiy(-1,iy),0,is)*hx(-1,iy))/
+     &      (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
+         else
+           udf(is) =
+     &      (vaecrb(-1,iy,0,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
+     &       vaecrb(rightix(-1,iy),rightiy(-1,iy),0,is)*hx(-1,iy))/
+     &      (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
+         endif
        enddo
        tef = (te(-1,iy)*hx(rightix(-1,iy),rightiy(-1,iy))+
      &        te(rightix(-1,iy),rightiy(-1,iy))*hx(-1,iy))/
@@ -582,26 +616,37 @@
      &        po(rightix(-1,iy),rightiy(-1,iy))*hx(-1,iy))/
      &       (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
 *    ..compute cst, vte
-       if(sound_model.eq.0) then
-          tpr = 0.0_R8
-          tro = 0.0_R8
-          do is = 0, ns-1
-             tpr = tpr+naf(is)*(zaf(is)*tef+tif)
-             tro = tro+am(is)*mp*naf(is)
-          enddo
-          cst = sqrt(tpr/tro)
-       else
-          cst = 0.0_R8
-          do is = 0, ns-1
-             cst = cst + naf(is)*(zaf(is)*tef+tif)/(am(is)*nif*mp)
-          enddo
-          cst = sqrt(cst)
-       endif
+       tpr = 0.0_R8
+       tro = 0.0_R8
+       do is = 0, ns-1
+         tpr = tpr+naf(is)*(zaf(is)*tef+tif)
+         tro = tro+am(is)*mp*naf(is)
+       enddo
+       do is = 0, ns_ext-1
+         nxf = (na_ext(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
+     &          na_ext(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
+     &         (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
+         zxf = (za_ext(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
+     &          za_ext(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
+     &         (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
+         taf = (ta_ext(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
+     &          ta_ext(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
+     &         (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
+         tpr = tpr+nxf*(zxf*tef+taf)
+         tro = tro+am_ext(is)*mp*nxf
+       enddo
+       cst = sqrt(tpr/tro)
        vte = sqrt(tef/me)
 *    ..compute Bohm fchi, fche
        t0 = 0.0_R8
        do is = 0, ns-1
         t0 = t0-zaf(is)*fna(rightix(-1,iy),rightiy(-1,iy),0,is)
+       enddo
+       do is = 0, ns_ext-1
+        zxf = (za_ext(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
+     &         za_ext(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
+     &        (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
+        t0 = t0-zxf*fa_ext(rightix(-1,iy),rightiy(-1,iy),0,is)
        enddo
        fchi = qe*t0
        if(t0.lt.0.0_R8 .and. region(-1,iy,0).ne.0 .and. 
@@ -611,8 +656,8 @@
            write(*,*) 'b2stbc_west:iy,fchi',iy,fchi
            write(*,*) zaf(ismain),
      &      fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)
-           write(*,*) 'Bx,Bz,Uadia,-Ua =',
-     &      wbbr(-1,iy,0),wbbr(-1,iy,2),uadiaf(ismain),-ua(-1,iy,ismain)
+           write(*,*) 'Bx,Bz,Ud,-Ua =',
+     &      wbbr(-1,iy,0),wbbr(-1,iy,2),udf(ismain),-ua(-1,iy,ismain)
          endif
 c         fchi=0.0_R8
        endif
@@ -627,8 +672,8 @@ c         fchi=0.0_R8
 *     ..compute csb
         csb = sqrt((zaf(is)*tef+tif)/(am(is)*mp))
 *     .. account for diamagnetic drifts
-        csbm = csb+uadiaf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))            !xpb
-        cstm = cst+uadiaf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))            !xpb
+        csbm = csb+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))      !xpb
+        cstm = cst+udf(is)*abs(wbbr(-1,iy,2)/wbbr(-1,iy,0))      !xpb
         if(.not.is_neutral(is)) then                                      !xpb
           csbm = max(0.0_R8,csbm)                                         !xpb
           cstm = max(0.0_R8,cstm)                                         !xpb
@@ -650,7 +695,7 @@ c         fchi=0.0_R8
      &    cbsna(5,is,ireg)*cstm*s1+
      &    cbsna(7,is,ireg)*
      &    max(0.0_R8,-ua(-1,iy,is)*pbs(rightix(-1,iy),rightiy(-1,iy),0))
-*     ..compute momentum source
+*     ..compute parallel momentum source
         smo0(-1,iy,0,is) = smo0(-1,iy,0,is)+cbsmo(0,is,ireg)*s0
         smo0(-1,iy,1,is) = smo0(-1,iy,1,is)+cbsmo(7,is,ireg)*s0           !rfs
         smo0(-1,iy,2,is) = smo0(-1,iy,2,is)+
@@ -769,10 +814,19 @@ c         fchi=0.0_R8
          zaf(is) = (rza(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &              rza(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
      &             (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
-         uadiaf(is) =
-     &             (uadia(nx,iy,0,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
-     &              uadia(leftix(nx,iy),leftiy(nx,iy),0,is)*hx(nx,iy))/
-     &             (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
+cxpb  Following suggestion from Russians, the drift velocity should
+cxpb  only include ExB terms and not diamagnetic contributions
+         if (sheath_drift_fix.eq.0) then
+           udf(is) =
+     &      (uadia(nx,iy,0,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
+     &       uadia(leftix(nx,iy),leftiy(nx,iy),0,is)*hx(nx,iy))/
+     &      (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
+         else
+           udf(is) =
+     &      (vaecrb(nx,iy,0,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
+     &       vaecrb(leftix(nx,iy),leftiy(nx,iy),0,is)*hx(nx,iy))/
+     &      (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
+         endif
        enddo
        tef = (te(nx,iy)*hx(leftix(nx,iy),leftiy(nx,iy))+
      &        te(leftix(nx,iy),leftiy(nx,iy))*hx(nx,iy))/
@@ -790,36 +844,47 @@ c         fchi=0.0_R8
      &        po(leftix(nx,iy),leftiy(nx,iy))*hx(nx,iy))/
      &       (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
 *    ..compute cst, vte
-       if(sound_model.eq.0) then
-          tpr = 0.0_R8
-          tro = 0.0_R8
-          do is = 0, ns-1
-             tpr = tpr+naf(is)*(zaf(is)*tef+tif)
-             tro = tro+am(is)*mp*naf(is)
-          enddo
-          cst = sqrt(tpr/tro)
-       else
-          cst = 0.0_R8
-          do is = 0, ns-1
-             cst = cst + naf(is)*(zaf(is)*tef+tif)/(am(is)*nif*mp)
-          enddo
-          cst = sqrt(cst)
-       endif
+       tpr = 0.0_R8
+       tro = 0.0_R8
+       do is = 0, ns-1
+         tpr = tpr+naf(is)*(zaf(is)*tef+tif)
+         tro = tro+am(is)*mp*naf(is)
+       enddo
+       do is = 0, ns_ext-1
+         nxf = (na_ext(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
+     &          na_ext(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
+     &         (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
+         zxf = (za_ext(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
+     &          za_ext(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
+     &         (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
+         taf = (ta_ext(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
+     &          ta_ext(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
+     &         (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
+         tpr = tpr+nxf*(zxf*tef+taf)
+         tro = tro+am_ext(is)*mp*nxf
+       enddo
+       cst = sqrt(tpr/tro)
        vte = sqrt(tef/me)
 *    ..compute Bohm fchi, fche
        t0 = 0.0_R8
        do is = 0, ns-1
         t0 = t0+zaf(is)*fna(nx,iy,0,is)
        enddo
+       do is = 0, ns_ext-1
+        zxf = (za_ext(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
+     &         za_ext(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
+     &        (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
+        t0 = t0-zxf*fa_ext(nx,iy,0,is)
+       enddo
        fchi = qe*t0
        if(t0.lt.0.0_R8 .and. region(nx,iy,0).ne.0 .and.
-     &  bottomiy(nx,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
+     &  bottomiy(nx,iy).ne.-2 .and. topiy(nx,iy).ne.ny+1) then
          wrong_flow = .true.                                             !xpb
          if(diagno.ge.0) then
            write(*,*) 'b2stbc_east:iy,fchi',iy,fchi
            write(*,*) zaf(ismain),fna(nx,iy,0,ismain)
-           write(*,*) 'Bx,Bz,Uadia,Ua =',
-     &      wbbl(nx,iy,0),wbbl(nx,iy,2),-uadiaf(ismain),ua(nx,iy,ismain)
+           write(*,'(a,4g14.7)') 'Bx,Bz,Ud,Ua =',
+     &      wbbl(nx,iy,0),wbbl(nx,iy,2),-udf(ismain),ua(nx,iy,ismain)
          endif
 c         fchi=0.0_R8
        endif
@@ -834,8 +899,8 @@ c         fchi=0.0_R8
 *     ..compute csb
         csb = sqrt((zaf(is)*tef+tif)/(am(is)*mp))
 *     .. account for diamagnetic drifts
-        csbm = csb-uadiaf(is)*abs(wbbl(nx,iy,2)/wbbl(nx,iy,0))           !xpb
-        cstm = cst-uadiaf(is)*abs(wbbl(nx,iy,2)/wbbl(nx,iy,0))           !xpb
+        csbm = csb-udf(is)*abs(wbbl(nx,iy,2)/wbbl(nx,iy,0))      !xpb
+        cstm = cst-udf(is)*abs(wbbl(nx,iy,2)/wbbl(nx,iy,0))      !xpb
         if(.not.is_neutral(is)) then                                     !xpb
           csbm = max(0.0_R8,csbm)                                        !xpb
           cstm = max(0.0_R8,cstm)                                        !xpb
@@ -855,7 +920,7 @@ c         fchi=0.0_R8
      &    cbsna(4,is,ireg)*cstm*s0+
      &    cbsna(5,is,ireg)*cstm*s1+
      &    cbsna(7,is,ireg)*max(0.0_R8,ua(nx,iy,is)*pbs(nx,iy,0))
-*     ..compute momentum source
+*     ..compute parallel momentum source
         smo0(nx,iy,0,is) = smo0(nx,iy,0,is)+cbsmo(0,is,ireg)*s0
         smo0(nx,iy,1,is) = smo0(nx,iy,1,is)+cbsmo(7,is,ireg)*s0          !rfs
         smo0(nx,iy,2,is) = smo0(nx,iy,2,is)+
@@ -951,3 +1016,4 @@ c         fchi=0.0_R8
 *.end b2stbc_bas
 
       end subroutine b2stbc_bas
+

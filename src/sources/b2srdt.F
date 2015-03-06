@@ -4,7 +4,7 @@
       subroutine b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,   !srv 09.01.01 01.07.08
      &  vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &  na, ua, te, ti, ne, ni, kinrgy,                         !srv 16.07.10
-     &  snadt, smodt, shedt, shidt, schdt,lout)                      !srv 11.09.09
+     &  snadt, smodt, shedt, shidt, schdt, snedt, lout)              !srv 11.09.09
       use b2mod_types 
       use b2mod_indirect 
       use b2mod_numerics_namelist 
@@ -28,7 +28,7 @@
       real (kind=R8) ::
      *  snadt(-1:nx,-1:ny,0:1,0:ns-1), smodt(-1:nx,-1:ny,0:3,0:ns-1),
      &  shedt(-1:nx,-1:ny,0:3), shidt(-1:nx,-1:ny,0:3),
-     &  schdt(-1:nx,-1:ny,0:3)
+     &  schdt(-1:nx,-1:ny,0:3), snedt(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -46,18 +46,17 @@
       integer ncall, n2, ix, iy, is, k
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0                                
-      character chns*2, chk*1                                        !srv 11.09.09 }
+     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
+      character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
-     *   phm0, phm1, phm3, phm4, t0, ttim,				           !xpb
-     *   ttf
-      save ncall, phm0, phm1, phm3, phm4                             !xpb
+     *   phm0, phm1, phm3, phm4, phm5, t0, ttim, ttf
+      save ncall, phm0, phm1, phm3, phm4, phm5                       !xpb
 *   ..procedures
       external subini, subend, xertst, ipgetr
       external b2xvsg
 *   ..initialisation
       data ncall/0/, phm0/1.0_R8/, phm1/1.0_R8/, phm3/1.0_R8/,
-     1  phm4/0.0_R8/                     			                   !xpb
+     1  phm4/0.0_R8/, phm5/1.0_R8/                     			 !xpb
 
 *-----------------------------------------------------------------------
 *.computation
@@ -70,28 +69,12 @@
         call ipgetr ('b2srdt_phm0', phm0)
         call ipgetr ('b2srdt_phm1', phm1)
         call ipgetr ('b2srdt_phm3', phm3)
-        call ipgetr ('b2srdt_phm4', phm4)				                 !xpb
+        call ipgetr ('b2srdt_phm4', phm4)				 !xpb
+        call ipgetr ('b2srdt_phm5', phm5)				 !xpb
         call xertst (0.0_R8.le.phm0.and.0.0_R8.le.phm1		         !xpb
-     &   .and.0.0_R8.le.phm3.and.0.0_R8.le.phm4,			             !xpb
-     &   'faulty internal parameter phm0, phm1, phm3, phm4')		 !xpb
-c additional time-modification factor
-        allocate(time_factor(-1:nx,-1:ny))
-        ttf=core_dt_suppression
-        call xertst (0.0_R8.lt.core_dt_suppression,
-     &   'faulty parameter core_dt_suppression')
-        call xertst (0.0_R8.lt.core_dt_factor,
-     &   'faulty parameter core_dt_factor')
-        do iy=-1,ny
-         if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)
-          do ix=-1,nx
-            if(mod(region(ix,iy,0),4).eq.1) then
-              time_factor(ix,iy)=ttf
-            else
-              time_factor(ix,iy)=1.0_R8
-            endif
-          enddo
-        enddo
-        call ipgeti('b2srdt_iout', iout)                             !srv 30.06.08
+     &   .and.0.0_R8.le.phm3.and.0.0_R8.le.phm4.and.0.0_R8.le.phm5,	 !xpb
+     &	 'faulty internal parameter phm0, phm1, phm3, phm4, phm5')	 !xpb
+        call ipgeti ('b2srdt_iout', iout)                            !srv 30.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npmo_iout', iout_b2npmo)
@@ -125,23 +108,14 @@ c additional time-modification factor
           do ix = -1, nx
 csw 24feb2014 check for guard cell (SOLPS4)
            if(iftimbound(ix,iy) .ne. 0) cycle
-
-           if(guard_flows.eq.2) then                                    !srv 01.07.08 {
-            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 ) then  !srv 30.04.08
-             ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
-             snadt(ix,iy,0,is) = snadt(ix,iy,0,is)+
-     &       (phm0/ttim)*vol(ix,iy)*na0(ix,iy,is)
-             snadt(ix,iy,1,is) = snadt(ix,iy,1,is)-
-     &       (phm0/ttim)*vol(ix,iy)
-            endif
-           else                                                         !srv 01.07.08 }
-            ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
-            snadt(ix,iy,0,is) = snadt(ix,iy,0,is)+
+           if(guard_flows.eq.2 .and. 
+     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
+     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
+           ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)
+           snadt(ix,iy,0,is) = snadt(ix,iy,0,is)+
      &      (phm0/ttim)*vol(ix,iy)*na0(ix,iy,is)
-            snadt(ix,iy,1,is) = snadt(ix,iy,1,is)-
-     &       (phm0/ttim)*vol(ix,iy)
-           endif                                                        !srv 01.07.08
+           snadt(ix,iy,1,is) = snadt(ix,iy,1,is)-
+     &      (phm0/ttim)*vol(ix,iy)
           enddo
         enddo
       enddo
@@ -164,7 +138,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
         enddo
        enddo
       enddo
-*   ..modify shedt, shidt, schdt
+*   ..modify shedt, shidt, schdt, snedt
       do iy = -1, ny
         do ix = -1, nx
 csw 24feb2014 check for guard cell (SOLPS4)
@@ -210,18 +184,26 @@ csw 24feb2014 check for guard cell (SOLPS4)
 
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
 cxpb  This treatment added as a fix to get the ExB runs going
-          t0 = (phm4/dtim)*vol(ix,iy)*qe				 !xpb
+          t0 = (phm4/dtim)*vol(ix,iy)*qe*time_factor(ix,iy)		 !xpb
           schdt(ix,iy,0) = schdt(ix,iy,0)+t0*(ni0(ix,iy,0)-ne0(ix,iy))	 !xpb
 *         schdt(ix,iy,1) = (unchanged)
 *         schdt(ix,iy,2) = (unchanged)
           schdt(ix,iy,3) = schdt(ix,iy,3)-t0				 !xpb
        enddo
       enddo
+      do iy = -1, ny
+        do ix = -1, nx
+          if(iftimbound(ix,iy) .ne. 0) cycle
+          t0 = (phm5/dtim)*vol(ix,iy)*time_factor(ix,iy)		 !xpb
+          snedt(ix,iy,0) = snedt(ix,iy,0)+t0*ne0(ix,iy)
+          snedt(ix,iy,1) = snedt(ix,iy,1)-t0
+       enddo
+      enddo
 
 
       if (iout_b2npmo.eq.1 .and. lout) then                                     !srv 11.09.09 {
        do is = 0, ns-1 
-         write (chns,'(i2.2)') is
+         write (chns,'(i3.3)') is
          call my_out(70,nx,ny,smodt(:,:,0,is)+
      &        smodt(:,:,1,is)*ua(:,:,is)+
      &        smodt(:,:,2,is)*na(:,:,is)*mp*am(is)+
@@ -231,7 +213,7 @@ cxpb  This treatment added as a fix to get the ExB runs going
       endif
       if ((iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) .and. lout) then
        do is = 0, ns-1
-          write (chns,'(i2.2)') is
+          write (chns,'(i3.3)') is
           call my_out(70,nx,ny,snadt(:,:,0,is)+
      &             snadt(:,:,1,is)*na(:,:,is),'b2srdt_snadt'//chns)
        enddo
@@ -246,7 +228,7 @@ cxpb  This treatment added as a fix to get the ExB runs going
 
       if (iout.eq.1 .and. lout) then
        do is = 0, ns-1
-        write (chns,'(i2.2)') is
+        write (chns,'(i3.3)') is
         do k=0,3
          write (chk,'(i1)') k
          call my_out(70,nx,ny,smodt(-1,-1,k,is),
@@ -274,4 +256,4 @@ cxpb  This treatment added as a fix to get the ExB runs going
 *-----------------------------------------------------------------------
 *.end b2srdt
 
-      end
+      end subroutine b2srdt

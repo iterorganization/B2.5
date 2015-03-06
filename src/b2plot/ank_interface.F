@@ -1,11 +1,10 @@
       subroutine ank_interface(inum)
       use b2mod_types
       use b2mod_b2plot
+      use b2mod_b2plot_ank
       use b2mod_wall
       implicit none
       integer inum
-
-#include "ank.h"
 
       integer i,in
       real (kind=R8) :: dr, dz

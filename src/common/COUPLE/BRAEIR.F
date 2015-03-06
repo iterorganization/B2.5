@@ -14,6 +14,6 @@ c
 c*** Data for chemical sputtering input from B2 - for compatibility!
 c
       real  (kind=R8) ::
-     * chemical_sputter_yield,fchar_chemical
+     * chemical_sputter_yield(0:NLIM+NSTS),fchar_chemical
       integer igass_chemical,itsput_chemical,issput_chemical
 #endif

@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfhe_ (nx, ny, ns, ismain, facdrift,                  !srv 23.11.10
-     1 vol, gs, hx, hy, qz, bb, te, po, ne, ne2, lnlam, pz,              !srv 11.07.99 18.01.02 01.07.09
+      subroutine b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,         !srv 23.11.10
+     1 vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,          !srv 11.07.99 18.01.02 01.07.09
      1 ti, ni, na, fna, vadia, ua, fne, csig, csigin, chce, chve, chci,  !srv 17.05.99 11.07.99
      & calf, chvemx, cvsa, cdna, cdpa, cddi, fch, fhe, fhe_mdf, fhePSch, !srv 27.01.00 13.10.06
      & conc, avisper, bvisper, cvisper, floe, cone, fchdia, fchin,       !srv 27.01.00 30.09.02
@@ -20,7 +20,7 @@
      , , only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain
+      integer nx, ny, ns, ismain, ismain0
       real (kind=R8) ::
      *   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      & vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:ns-1), 
@@ -35,7 +35,7 @@
      & cddi(-1:nx,-1:ny,0:1,0:ns-1), lnlam(-1:nx,-1:ny),           !srv 13.10.06 01.07.09
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny),
-     2 facdrift(-1:nx,-1:ny)
+     2 facdrift(-1:nx,-1:ny), qc(-1:nx,-1:ny)
       real (kind=R8) :: cutlo
       parameter (cutlo = 1.0e-60_R8)
 *   ..output arguments (unspecified on entry)
@@ -194,6 +194,8 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        call ipgeti ('b2tfhe_mode_ehx',mode_ehx)                          !srv 21.10.09
        call ipgeti ('b2trcl_conductive limit', conductive limit)         !srv 16.06.08 17.01.12
        call ipgeti ('b2tfhe_no_current',no_current)
+       call xertst (pot_eq.eq.1.or.no_current.eq.1,
+     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2tqce_model', model)
        call ipgeti ('b2tfhe_upwind',b2_upwind)
        call ipgeti ('b2tfhe_hybr2',b2tfhe_hybr2)
@@ -212,12 +214,13 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        call b2xvsg (n2, te, 1, 'te', '.gt.')
        call b2xvsg (n2*2, csig, 1, 'csig', '.ge.')
        call b2xvsg (n2*2, chce, 1, 'chce', '.ge.')
-*    ..test edge values of csig, chce, chve, chvemx, calf
+*    ..test edge values of csig, chce, chve, chvemx, calf, calf_an
        call b2xvff (nx, ny, csig, 'csig')
        call b2xvff (nx, ny, chce, 'chce')
        call b2xvff (nx, ny, chve, 'chve')
        call b2xvfx (nx, ny, chvemx, 'chvemx')
        call b2xvff (nx, ny, calf, 'calf')
+       call b2xvff (nx, ny, calf_an, 'calf_an')
       endif
 
       facdriftm = maxval(facdrift)
@@ -225,8 +228,9 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
       fchin     = 0.0e0_R8                                             !srv 09.07.99
       if(pot_eq.ne.0) then                                             !srv 26.07.06
        if (fch_ion_neutral .ne. 0.0e0_R8) then                             !srv 01.07.99
-        call b2tinnt (nx, ny, ns, ismain, vol, gs, hx, hy, qz, bb,  
-     1                   te, po, ti, na, fna, csigin, fchin)            !srv 11.05.09
+        call b2tinnt (nx, ny, ns, ismain, ismain0, 
+     .                vol, gs, hx, hy, qz, qc, bb,  
+     1                te, po, ti, na, fna, csigin, fchin)            !srv 11.05.09
        endif                                                            !srv 11.02.04 }
       endif                                                              !srv 26.07.06
 c Drift terms
@@ -897,7 +901,8 @@ c  ..set null flux in guard cells  ?
      &    )/qe                                                          !srv .98 
          endif
          tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-         fch_p(ix,iy,0) = (csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex)        !srv 30.12.09 }
+         fch_p(ix,iy,0) = (csig(ix,iy,0)*ehx-
+     &    (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*tex)          !srv 30.12.09 }
          if(pot_eq.ne.1 .and. no_current.ne.0) then                    !srv 27.02.13
           fch_p = 0.0e0_R8
           ehx = 0.0_R8                                                 !srv 27.02.13
@@ -921,9 +926,10 @@ c  ..set null flux in guard cells  ?
           endif
 
           if (chce(ix,iy,0).eq.0) then
-           alfe0 = 0
+           alfe0 = 0.0_R8
           else
-           alfe0 = calf(ix,iy,0)*cone0/chce(ix,iy,0)
+           alfe0 = (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*
+     .      cone0/chce(ix,iy,0)
           endif
 
 csw 05oct2012 check for solps4 model
@@ -989,7 +995,7 @@ csw 30apr2014
 
 csw 17feb2012
            if(no_Ptncr_x_he.eq.0) then
-            cone0_mdf=hybr(floe0_mdf,chce(ix,iy,0))-abs(floe0_mdf/2.0)
+            cone0_mdf = hybr(floe0_mdf,chce(ix,iy,0))-abs(floe0_mdf/2.0)
            else
             cone0_mdf = chce(ix,iy,0)-abs(floe0_mdf/2.0)
            endif
@@ -1002,9 +1008,10 @@ csw 13mar2013 SOLPS4 modified f. flux limited hybrid style (overwrite cone0_mdf)
            endif
 
            if (chce(ix,iy,0).eq.0) then
-            alfe0_mdf = 0
+            alfe0_mdf = 0.0_R8
            else
-            alfe0_mdf = calf(ix,iy,0)*cone0_mdf/chce(ix,iy,0)
+            alfe0_mdf = (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*
+     &       cone0_mdf/chce(ix,iy,0)
            endif
 
            t0_mdf = cone0_mdf*abs(tex)/(flomx*max(
@@ -1042,7 +1049,8 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
      &      w4(ix,iy)=-0.71e0_R8*fch_p(ix,iy,0)/qe*
      *       (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
            endif                                                         !srv 16.09.02 }
-           fch_p(ix,iy,0) = (csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex0)       !srv 30.12.09 }
+           fch_p(ix,iy,0) = (csig(ix,iy,0)*ehx-
+     &      (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*tex0)         !srv 30.12.09 }
            if(pot_eq.ne.1 .and. no_current.ne.0) then                    !srv 27.02.13
             fch_p = 0.0e0_R8
             ehx = 0.0_R8                                                 !srv 27.02.13
@@ -1072,11 +1080,12 @@ csw 13mar2013 overwrite cone0/cone0_mdf (SOLPS4 style)
 !          if (chce(ix,iy,0).eq.0) then                   !iyv 12.05.08 !srv 03.10.08 {
 !           alfe0 = 0.0_R8
 !          else
-!           alfe0 = calf(ix,iy,0)*cone0_mdf/chce(ix,iy,0)
+!           alfe0 = (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*
+!     &      cone0_mdf/chce(ix,iy,0)
 !          endif
-!          alfe0 = 0.0e0_R8 ! calf(ix,iy,0)               !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08  }
+!          alfe0 = 0.0e0_R8 ! calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0) !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08  }
 
-          alfe0 = calf(ix,iy,0)                          !srv 16.06.07
+          alfe0 = calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0)             !srv 16.06.07
           tex0  = tex
 
 csw 13mar2013 added check upwind (SOLPS4 style)
@@ -1256,25 +1265,25 @@ csw 13mar2013 added check upwind (SOLPS4 style)
          fhe(ix,iy,1) = upwind(floe0,
      &         te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))
      &        -cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &        +alfTeEh*calf(ix,iy,1)*                                !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
+     &        +alfTeEh*(calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*  !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy  !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
          fhe_mdf(ix,iy,1) = upwind(floe0_mdf,                                 !srv 13.10.06 {
      &         te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))
      &       -cone0_mdf*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &      -fhePSch(ix,iy,1)                                         !srv 13.10.06 }
-     &        +alfTeEh*calf(ix,iy,1)*                                !iyv 12.05.08 !srv 03.10.08
+     &        +alfTeEh*(calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*  !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy  !iyv 12.05.08 !srv 03.10.08
         else
          fhe(ix,iy,1) = floe0*
      &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
      &         -cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &        +alfTeEh*calf(ix,iy,1)*                                !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
+     &        +alfTeEh*(calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*  !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy  !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
          fhe_mdf(ix,iy,1) = floe0_mdf*                                 !srv 13.10.06 {
      &        (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
      &      -cone0_mdf*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &      -fhePSch(ix,iy,1)                                         !srv 13.10.06 }
-     &        +alfTeEh*calf(ix,iy,1)*                                !iyv 12.05.08 !srv 03.10.08
+     &        +alfTeEh*(calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*  !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy  !iyv 12.05.08 !srv 03.10.08
         endif
 
@@ -1344,7 +1353,7 @@ csw 18feb2014 remove fluxes between guard cells
      1   *(te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
         w3(ix,iy)=-cone0*
      1    (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-        w4(ix,iy)=calf(ix,iy,1)*
+        w4(ix,iy)=(calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
      &     harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
         w6(ix,iy) = cone0
        else
@@ -1353,7 +1362,7 @@ csw 18feb2014 remove fluxes between guard cells
         w2(ix,iy)=0.0e0_R8
         w3(ix,iy)=-cone0_mdf*
      1    (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-        w4(ix,iy)=calf(ix,iy,1)*
+        w4(ix,iy)=(calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
      &     harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
         w6(ix,iy) = cone0_mdf
        endif
@@ -1439,10 +1448,10 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,csig_an(-1,-1,0),'csig_anx')
        call my_out(70,nx,ny,csig_an(-1,-1,1),'csig_any')
        do is = 0, ns-1
-        write (charns,'(i2.2)') is 
+        write (charns,'(i3.3)') is 
         call my_out(70,nx,ny,na(-1,-1,is),'na'//charns)
         do is0=0,ns-1
-         write (charns0,'(i2.2)') is0 
+         write (charns0,'(i3.3)') is0 
          call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),'csiginx'//charns//
      &        '_'//charns0)
          call my_out(70,nx,ny,csigin(-1,-1,1,is,is0),'csiginy'//charns//

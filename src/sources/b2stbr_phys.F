@@ -81,8 +81,13 @@
 *.declarations
 
 *   ..local variables
-      integer n2, i, ix, iy, is, ib, istra, ncall, 
+      integer n2, i, ix, iy, is, ib, istra, ncall, k,
      * iwall, itargsp, zbulk
+      integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
+     &                 iout_b2nph9 = 0, iout_b2npht = 0,
+     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
+      character chns*3, chk*1, ch*2                               !srv 11.07.05
+      character*15 hlp_frm
       integer, allocatable :: flux_x(:), flux_y(:)
       real (kind=R8), allocatable :: area(:)
       real (kind=R8) ::
@@ -133,6 +138,18 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2stbr_phys')
+*   ..set internal parameters on first call
+      if (ncall.eq.0) then                                           !srv 22.08.08 {
+       write(*,*) ' First call of b2stbr_phys' 
+       call ipgeti ('b2stbr_phys_iout', iout)                         !srv 11.07.05
+       call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
+       call ipgeti ('b2npco_iout', iout_b2npco)
+       call ipgeti ('b2npmo_iout', iout_b2npmo)
+       call ipgeti ('b2npp7_iout', iout_b2npp7)
+       call ipgeti ('b2nppo_iout', iout_b2nppo)
+       call ipgeti ('b2nph9_iout', iout_b2nph9)
+       call ipgeti ('b2nphe_iout', iout_b2npht)                     !srv 11.09.09 }
+      endif                                                          !srv 22.08.08 }
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny, ns
@@ -152,7 +169,7 @@
      &   smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
      &   'faulty argument range qz(,,1)')
 *    ..test sign of pbs
-       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')
+!       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                  !srv 11.01.13
 *    ..test edge values of pbs
        call b2xvff (nx, ny, pbs, 'pbs')
 *    ..test sign of na, ni, ne, te, ti
@@ -520,6 +537,66 @@
           endif
         enddo
       endif
+
+	if (iout.eq.1 .or. iout_b2npmo.eq.1) then                   !srv 11.07.05 11.09.09 {
+       do is = 0, ns-1
+	  write (chns,'(i3.3)') is
+!	  do k=0,3
+!	   write (chk,'(i1)') k
+!	   call my_out(70,nx,ny,smo0(-1,-1,k,is),
+!     &                       'b2stbr_phys_smo'//chk//chns)
+!	  enddo
+	 call my_out(70,nx,ny,smo0(:,:,0,is)+
+     &        smo0(:,:,1,is)*ua(:,:,is)+
+     &        smo0(:,:,2,is)*na(:,:,is)*mp*am(is)+
+     &        smo0(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
+     &        'b2stbr_phys_smo'//chns)
+	 enddo
+	endif
+	if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
+       do is = 0, ns-1
+	  write (chns,'(i3.3)') is
+!	  do k=0,1
+!	   write (chk,'(i1)') k
+!	   call my_out(70,nx,ny,sna0(-1,-1,k,is),
+!     &                       'b2stbr_phys_sna'//chk//chns)
+!	  enddo
+	 call my_out(70,nx,ny,sna0(:,:,0,is)+
+     &             sna0(:,:,1,is)*na(:,:,is),'b2stbr_phys_sna'//chns)
+	 enddo
+	endif
+	if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
+!	 do k=0,3
+!	  write (chk,'(i1)') k
+!	  call my_out(70,nx,ny,she0(-1,-1,k),'b2stbr_phys_she'//chk)
+!	  call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbr_phys_shi'//chk)
+!	  call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbr_phys_sch'//chk)
+!	 enddo
+	 call my_out(70,nx,ny,she0(:,:,0)+she0(:,:,1)*te+
+     &   she0(:,:,2)*ne + she0(:,:,3)*te*ne,'b2stbr_phys_she')
+	 call my_out(70,nx,ny,shi0(:,:,0)+shi0(:,:,1)*ti+
+     &   shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0),
+     &   'b2stbr_phys_shi')
+	endif
+	if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)) then
+	 call my_out(70,nx,ny,sch0(:,:,0)+sch0(:,:,1)*po+
+     &   sch0(:,:,2)*ne+sch0(:,:,3)*po*ne(:,:),'b2stbr_phys_sch')
+	endif
+	if(iout.eq.1) then
+	 open(70,file='t_files.dat')
+        write (hlp_frm,'(a4,i4,a7)') '(a7,',ns,'es13.5)'              !srv 11.03.13 {  
+	  write(70,hlp_frm) ' tchem=',tchem
+	  write(70,hlp_frm) ' tchee=',tchee
+	  write(70,hlp_frm) ' tphys=',tphys
+	  write(70,hlp_frm) ' tphye=',tphye
+	  write(70,hlp_frm) ' thevp=',thevp
+	  write(70,hlp_frm) ' thvpe=',thvpe
+	  write(70,hlp_frm) ' trese=',trese
+	  write(70,hlp_frm) ' tresn=',tresn
+	  write(70,hlp_frm) ' trfln=',trfln
+	  write(70,hlp_frm) ' trfle=',trfle                             !srv 11.03.13 }  
+	 close(70)
+	endif                                                           !srv 11.07.05 }
 
       if(reflection_max.gt.1.0_R8 .or. 
      .  ((main_call.and.output.ge.1).or.output.gt.1))
@@ -1343,6 +1420,7 @@ c-xpb
      &          recyc(is,istra)*t0
                shi0(ix,iy,0) = shi0(ix,iy,0)+erecyc(is,istra)*
      .          (1.5_R8+BoRiS)*(zaf(is)*tef+tif)*t0
+     &          *recycled_neutrals_contr  !srv          
             endif
          enddo      ! do is = ns-1, 0, -1
       endif

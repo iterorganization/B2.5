@@ -32,7 +32,7 @@
       
 *   ..local variables
       integer ncall, n2, ix, iy
- 	integer, save :: pot_eq = 1                                     !srv 26.07.06
+      integer, save :: pot_eq = 1                                     !srv 26.07.06
       integer, save :: no_current=0                                   !srv 27.02.13
       real (kind=R8) ::
      *   ehx, tex
@@ -52,6 +52,8 @@
       if (ncall.eq.0) then                                               !srv
        call ipgeti ('b2news_poteq', pot_eq)                              !srv 26.07.06
        call ipgeti ('b2tfhe_no_current',no_current)                      !srv 27.02.13
+       call xertst (pot_eq.eq.1.or.no_current.eq.1,
+     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
       endif                                                              !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -72,12 +74,12 @@
 * ..compute parallel current
       if(pot_eq.eq.1 .and. no_current.eq.0) then                       !srv 26.07.06 27.02.13
 *   ..compute fch_p
-       do iy = -1, ny
+        do iy = -1, ny
 	  do ix = -1, nx                                                  !srv 26.11.02 {
-	   if(leftix(ix,iy).eq.-2)then                                    !srv 26.11.02
-	    fch_p(ix,iy,0)  = 0.0e0_R8
-	   else                                                           !srv 26.11.02 }
-	    ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
+	    if(leftix(ix,iy).eq.-2)then                                    !srv 26.11.02
+	      fch_p(ix,iy,0)  = 0.0e0_R8
+	    else                                                           !srv 26.11.02 }
+	      ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
      &	   (ne(ix,iy)*te(ix,iy)                                      !srv .98
      &	   -ne(leftix(ix,iy),leftiy(ix,iy))*                         !srv
      &	   te(leftix(ix,iy),leftiy(ix,iy)))*                         !srv
@@ -87,15 +89,15 @@
 !     &    (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5e0_R8*      !srv
 !     &    (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy))))        !srv 
 !     &   )/qe                                                          !srv .98 
-	    tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-	    fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex           !srv 03.02.03
-	   endif                                                         !srv 26.11.02
+	      tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
+	      fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex           !srv 03.02.03
+	    endif                                                         !srv 26.11.02
 	  enddo
-       enddo
-       fch_p(:,:,1) = 0.0e0_R8
-	else                                                            !srv 26.07.06 {
-	 fch_p = 0.0e0_R8
-	endif                                                           !srv 26.07.06 }
+        enddo
+        fch_p(:,:,1) = 0.0e0_R8
+      else                                                            !srv 26.07.06 {
+	fch_p = 0.0e0_R8
+      endif                                                           !srv 26.07.06 }
 
 * ..return
       ncall = ncall+1

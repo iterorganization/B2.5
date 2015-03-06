@@ -19,7 +19,7 @@ MOD = mod
 BLD = ar rcv
 
 GRLIBES = ${NCARG} -lmscl
-LDLIBES = -L${SOLPSMASTER}/@sys/lib -L${SOLPS_LIB} ${NAG} -lnetcdf
+LDLIBES = -L${SOLPSMASTER}/@sys/lib -L${SOLPS_LIB} ${NAG} ${NETCDF}
 
 LD = f95n
 LDOPTS = 

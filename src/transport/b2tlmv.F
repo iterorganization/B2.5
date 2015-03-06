@@ -15,7 +15,7 @@
 *     ------------------------------------------------------------------
       integer ncall, n2, ix, iy, area_fix
       integer, save :: style = 0, iout = 0                           !srv 30.05.08
-      character charns*2                                             !srv 12.04.04
+      character charns*3                                             !srv 12.04.04
       save ncall, area_fix
       real (kind=R8) ::
      *   qcl, qfl, tfl
@@ -103,7 +103,7 @@ c       fl(ix,iy)=1.0d0
       endif                                                          !srv 30.05.08
 
       if(iout.ne.0) then                                    !srv 12.04.04 {
-       write (charns,'(i2.2)') isb  
+       write (charns,'(i3.3)') isb  
        call my_out(70,nx,ny,fl,'cflmv-1'//charns)
       endif                                                 !srv 12.04.04 }
 

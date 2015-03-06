@@ -79,7 +79,7 @@
 *   ..common blocks
 *   ..local variables
       integer is, idum(0:9), ismain
-      real (kind=R8) :: t0, t1, 
+      real (kind=R8) :: 
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
@@ -90,11 +90,9 @@
       data ismain/1/
 *   ..procedures
       intrinsic abs
-      logical ltst
       external subini, subend, xertst, cfruch, b2rugm, cfruin, b2xvps
       external b2rups, b2ruzd, b2wgpi_gnuplot, b2rurc, b2spel, b2sqel
       external ipsetc, ipgeti, b2rfcp, b2rflb, b2xxid
-      ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *-----------------------------------------------------------------------
 *.documentation-internal

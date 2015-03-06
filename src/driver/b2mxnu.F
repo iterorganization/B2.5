@@ -24,7 +24,7 @@
       intrinsic min, max, abs
       real (kind=R8) ::
      *   med
-      external subini, subend, scopy
+      external subini, subend, b2scopy
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *     ------------------------------------------------------------------
 *     Must set eps to a small non-negative value. eps.eq.0 is safest,
@@ -43,8 +43,8 @@
        enddo
       else
 *      (faster code for common special case)
-       call scopy (n, fun0, 1, funp, 1)
-       call scopy (n, funq, 1, fun0, 1)
+       call b2scopy (n, fun0, 1, funp, 1)
+       call b2scopy (n, funq, 1, fun0, 1)
 *      (leave funq unchanged)
       endif
       call subend ()

@@ -63,3 +63,33 @@
       call subend ()
       return
       end subroutine b2yt_jsep
+
+      subroutine b2yt_nxt(nx1, nxtl, nxtr)
+      use b2mod_geo2
+      use b2mod_indirect
+      implicit none
+      integer nx1, nxtl, nxtr
+      external subini, subend
+
+      call subini ('b2yt_nxt')
+
+cxpb  Compute position of additional targets in DN configuration
+      nxtl = -2
+      nxtr = nx1+1
+      if (nnreg(0).eq.8) then
+        nxtl = 0
+        do while (rightix1(nxtl,max(topcut1(1),topcut1(2))).ne.nx1+1
+     &   .and.nxtl.lt.nx1)
+          nxtl=nxtl+1
+        enddo
+        nxtr = nxtl
+        do while (leftix1(nxtr,max(topcut1(1),topcut1(2))).ne.-2 .and.
+     &            nxtr.lt.nx1)
+          nxtr=nxtr+1
+        enddo
+      endif
+
+      call subend ()
+      return
+      end subroutine b2yt_nxt
+

@@ -48,8 +48,8 @@ c
 
 *  -- PROCEDURES --
       real (kind=R8) ::
-     *   sasum
-      EXTERNAL XERRAB, sasum
+     *   b2sasum
+      EXTERNAL XERRAB, b2sasum
 
       logical lfirst
       integer ncall, nwrite

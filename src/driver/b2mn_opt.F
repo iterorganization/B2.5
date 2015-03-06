@@ -18,8 +18,8 @@
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_ppout
-	use b2mod_par_opt
-	use b2mod_exp_file_names
+      use b2mod_par_opt
+      use b2mod_exp_file_names
       implicit none
 
 *-----------------------------------------------------------------------
@@ -171,10 +171,10 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 *   ..obtain the optimization parameters
       open(70,file='b2op.dat')
-	 read(70,'(i3)') npar_opt
-	 allocate(par_opt0(1:npar_opt), par_opt(1:npar_opt),
-     &          par_opt_phys(1:npar_opt))
-	close(70)
+      read(70,'(i3)') npar_opt
+      allocate(par_opt0(1:npar_opt), par_opt(1:npar_opt),
+     &         par_opt_phys(1:npar_opt))
+      close(70)
       read(ninp(6)) par_opt_phys                               !srv 02.05.09
 
 *   ..obtain version numbers						 !xpb
@@ -237,9 +237,9 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          close(nout(io))
       enddo
 
-	cpu_f= x05baf()
-	write(*,"(/' b2mn_opt takes ',f12.1,' sec'/)") cpu_f - cpu_s
-	deallocate(par_opt0, par_opt, par_opt_phys)
+      cpu_f= x05baf()
+      write(*,"(/' b2mn_opt takes ',f12.1,' sec'/)") cpu_f - cpu_s
+      deallocate(par_opt0, par_opt, par_opt_phys)
 
 * ..end of computation
       call prgend ()

@@ -7,6 +7,7 @@ c
       use b2mod_b2plot_values
       implicit none
       character*32 tmpstring1,tmpstring2
+      character*256 tmpstring, titlestring
       real (kind=R8) ::
      *   lmin,lmax,dsep,xmin,xmax,xmult
       integer ix,iy,is,lnblnk,ixstart,ixend
@@ -44,11 +45,23 @@ c     the line format common
           lmin=min(lmin,work(ix,iy,is,iwrk))
           lmax=max(lmax,work(ix,iy,is,iwrk))
         enddo
-        dsep=(1.0_R8-values(13))*wrk(ixstart)+(values(13))*wrk(ixend)
+        if (values(13).ne.init_value) then
+          dsep=(1.0_R8-values(13))*wrk(ixstart)+(values(13))*wrk(ixend)
+        else if (ixref.ge.ixstart .and. ixref.le.ixend) then 
+cxpb : new default behaviour : zero of distance set at ixref
+          dsep=wrk(ixref)
+        else ! old default behaviour : values(13)=0.5
+          dsep=0.5_R8*(wrk(ixstart)+wrk(ixend)) 
+        endif
         do ix=ixstart,ixend
           wrk(ix)=wrk(ix)-dsep
         enddo
         write(tmpstring2,'('' <iy = '',i4,''>'')') iy
+        tmpstring = 
+     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
+     2     tmpstring2(1:lnblnk(tmpstring2))//
+     3     tmpstring1(1:lnblnk(tmpstring1))
+        call customise_label(tmpstring,titlestring)
         if(values(9) .ne. values(10)) then
           lmin=values(9)
           lmax=values(10)
@@ -64,12 +77,14 @@ c     the line format common
         if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
         if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
         if(mod(typeofplot,2) .eq. 1) then
-          if(values(11).ne.init_value) then
+          if(values(11).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
             xmin=values(11)
           else
             xmin=min(wrk(ixstart),wrk(ixend))
           endif
-          if(values(12).ne.init_value) then
+          if(values(12).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
             xmax=values(12)
           else
             xmax=max(wrk(ixstart),wrk(ixend))
@@ -84,25 +99,27 @@ c     the line format common
           end if
           if(linlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
           if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
-          call init_page(
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1)),
+          call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)')                                  !srv 21.09.11
+            write(nwtf,'(''# '',a)')
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2       tmpstring2(1:lnblnk(tmpstring2)) //
      2       tmpstring1(1:lnblnk(tmpstring1))
             do ix=ixstart,ixend
-              write(nwtf,*) wrk(ix),work(ix,iy,is,iwrk)                   !srv 21.09.11
+              write(nwtf,*) wrk(ix),work(ix,iy,is,iwrk)
             enddo
           endif
 #ifndef PLPLOT
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
-          if (dcol.gt.1) call gsplci(dcol)
+          if (dcol.gt.1) then
+             call gsplci(dcol)
+          elseif(dcol.lt.0) then
+             call gsplci(-dcol)
+             dcol=dcol-1
+          endif
 #endif
           do ix=ixstart,ixend-1
             call lined_d(
@@ -113,7 +130,7 @@ c     the line format common
             if(rightix(ix,iy).ne.ix+1) then
 #ifndef PLPLOT
               call lastd
-              if (scol.gt.1 .or. dcol.gt.1) call gsplci(scol)
+              if (scol.gt.1 .or. dcol.ne.1) call gsplci(scol)
               call gslwsc_d(sepwidth)
               call dashdc('$',1,0)
 #endif
@@ -122,7 +139,7 @@ c     the line format common
      1                       (wrk(ix)+wrk(ix+1))/2.0_R8,lmax)
 #ifndef PLPLOT
               call lastd
-              if (scol.gt.1 .or. dcol.gt.1) call gsplci(dcol)
+              if (scol.gt.1 .or. dcol.ne.1) call gsplci(abs(dcol))
               call gslwsc_d(lwidth)
               call dashdc(linefmt,8,lfsz)
 #endif
@@ -131,12 +148,12 @@ c     the line format common
 #ifndef PLPLOT
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)
-          if (dcol.gt.1) call gsplci(1)
+          if (dcol.ne.1) call gsplci(1)
 #endif
           call end_page
         endif
         if(typeofplot/2 .eq. 1) then
-          do ix=-1,nx
+          do ix=ixstart,ixend
             wrk(ix)=xx(ix,2)
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
@@ -172,26 +189,30 @@ c     the line format common
           end if
           if(linlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
           if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
-          call init_page(graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1)),
+          call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)')                   !srv 21.09.11
+            write(nwtf,'(''# '',a)')
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2       tmpstring2(1:lnblnk(tmpstring2)) //
      2       tmpstring1(1:lnblnk(tmpstring1))
-            do ix=-1,nx
-              write(nwtf,*) wrk(ix),work(ix,iy,is,iwrk)             !srv 21.09.11
+            do ix=ixstart,ixend
+              write(nwtf,*) wrk(ix),work(ix,iy,is,iwrk)
             enddo
           endif
 #ifndef PLPLOT
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
-          if (dcol.gt.1) call gsplci(dcol)
+          if (dcol.gt.1) then
+             call gsplci(dcol)
+          elseif(dcol.lt.0) then
+             if(typeofplot.eq.3) dcol=dcol+1
+             call gsplci(-dcol)
+             dcol=dcol-1
+          endif
 #endif
-          do ix=-1,nx-1
+          do ix=ixstart,ixend-1
             call lined_d(
      1       min(values(2),max(values(1),wrk(ix))),
      2       min(lmax,max(lmin,work(ix,iy,is,iwrk))),
@@ -200,7 +221,7 @@ c     the line format common
             if(rightix(ix,iy).ne.ix+1) then
 #ifndef PLPLOT
               call lastd
-              if (scol.gt.1 .or. dcol.gt.1) call gsplci(scol)
+              if (scol.gt.1 .or. dcol.ne.1) call gsplci(scol)
               call gslwsc_d(sepwidth)
               call dashdc('$',1,0)
 #endif
@@ -209,7 +230,7 @@ c     the line format common
      1                       (wrk(ix)+wrk(ix+1))/2.0_R8,lmax)
 #ifndef PLPLOT
               call lastd
-              if (scol.gt.1 .or. dcol.gt.1) call gsplci(dcol)
+              if (scol.gt.1 .or. dcol.ne.1) call gsplci(abs(dcol))
               call gslwsc_d(lwidth)
               call dashdc(linefmt,8,lfsz)
 #endif
@@ -218,10 +239,10 @@ c     the line format common
 #ifndef PLPLOT
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)
-          if (dcol.gt.1) call gsplci(1)
+          if (dcol.ne.1) call gsplci(1)
 #endif
           call end_page
         endif
       enddo
       return
-      end
+      end subroutine fx

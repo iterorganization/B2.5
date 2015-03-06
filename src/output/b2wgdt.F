@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wgdt (nprt, idout, nx, ny, ns, delna, delua, delte,
-     &  delti, delpo)
+      subroutine b2wgdt (nprt, idout, nx, ny, ns, delne, delni, delna, 
+     &  delua, delte, delti, delpo)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
@@ -12,7 +12,8 @@
       integer nprt, nx, ny, ns
       character idout*(*)
       real (kind=R8) ::
-     *   delna(-1:nx,-1:ny,0:ns-1), delua(-1:nx,-1:ny,0:ns-1),
+     *  delne(-1:nx,-1:ny), delni(-1:nx,-1:ny,0:1), 
+     &  delna(-1:nx,-1:ny,0:ns-1), delua(-1:nx,-1:ny,0:ns-1),
      &  delte(-1:nx,-1:ny), delti(-1:nx,-1:ny), delpo(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -45,7 +46,7 @@
 *     nx, ny, ns - integer, input.
 *     See the calling routine for description.
 *
-*     delna, delua, delte, delti, delpo - real*8 array, input.
+*     delne, delni, delna, delua, delte, delti, delpo - real*8 array, input.
 *     These arrays specify the changes in (respectively) density,
 *     parallel velocity, electron temperature, atom temperature, and
 *     electric potential.
@@ -67,18 +68,17 @@
       character fmth*(*), fmth2*(*), fmtp*(*), header*60
       parameter (
      &  fmth='(a,t44,''inc=(5*)'',1pe9.2)',
-     &  fmth2='(a,t36,''is ='',i2,t44,''inc=(5*)'',1pe9.2)',
+     &  fmth2='(a,t35,''is ='',i3,t44,''inc=(5*)'',1pe9.2)',
      &  fmtp='(2x,a6,4x,a)')
       real (kind=R8) ::
-     *   xf(-1:nx),xc(-1:nx),yf(-1:ny),yc(-1:ny),
-     1 wrk0(-1:nx,-1:ny)
+     *   xf(-1:nx),xc(-1:nx),yf(-1:ny),yc(-1:ny)
 *   ..procedures
       intrinsic max
       real (kind=R8) ::
      *   scal10, samax
       logical strmas
       external subini, subend, xertst, scal10, samax, strmas
-      external b2xpne, b2xpni, b2wgxp
+      external b2wgxp
 
 *-----------------------------------------------------------------------
 *.computation
@@ -109,24 +109,22 @@
 * ..make plots
 *   ..make contour plots of (ne) change
       if (strmas(idout,'cpne')) then
-       call b2xpne (nx, ny, ns, rza, delna, wrk0)
-       t0 = scal10(0.8_R8*samax(n2,wrk0,1))
+       t0 = scal10(0.8_R8*samax(n2,delne,1))
        write (header,fmth) 'ELECTRON DENSITY CHANGE (/m**3).', 
      &  t0/50.0_R8
        write (nprt,fmtp) '+cpne', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
-     &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
+     &   delne, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
      1	 24, -t0/10, t0/10, 10)
       endif
 *   ..make contour plots of (ni) change
       if (strmas(idout,'cpni')) then
-       call b2xpni (nx, ny, ns, delna, wrk0)
-       t0 = scal10(0.8_R8*samax(n2,wrk0,1))
+        t0 = scal10(0.8_R8*samax(n2,delni(-1,-1,0),1))
        write (header,fmth) 'ALL ATOM DENSITY CHANGE (/m**3).', 
      &  t0/50.0_R8
        write (nprt,fmtp) '+cpni', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
-     &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
+     &   delni(-1,-1,0), 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
      1	 24, -t0/10, t0/10, 10)
       endif
 *   ..make contour plots of (te) change

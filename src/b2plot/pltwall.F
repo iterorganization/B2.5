@@ -4,6 +4,7 @@ C =====================================================================
 C =====================================================================
       use b2mod_types
       use b2mod_indirect
+      use b2mod_b2plot_ank
       use b2mod_b2plot_debug
       use b2mod_wall
       implicit none
@@ -21,8 +22,6 @@ C =====================================================================
       real (kind=R4) :: ceil
       integer  no_available_colors
       external no_available_colors, ceil
-
-#include "ank.h"
 
       if(b2plot_debug.ge.10) write(*,*) 'pltwall: ndata = ',ndata
       zlod=wmin

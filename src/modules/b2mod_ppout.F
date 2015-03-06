@@ -1462,7 +1462,7 @@ c   ..impurity charged states
 c   ..formats
       return
  1000 format( '-TIME  :' , E11.5 , ' STEP  :' , I8 )
- 1010 format( a , i2.2 )
+ 1010 format( a , i3.3 )
 
       end subroutine write_pproc_timestep
 c

@@ -13,6 +13,7 @@
      *   vsa0(:,:,:),
      *   vla0(:,:,:,:),
      *   csig_an(:,:,:),                                                 !xpb 
+     *   calf_an(:,:,:),                                                  !xpb 
      *   cvsa_an(:,:,:,:),                                               !srv 04.10.99 11.06.08
      *   vma0(:,:,:,:)                                                   !srv 15.12.05 11.06.08
 
@@ -31,6 +32,7 @@
       deallocate(vsa0)
       deallocate(vla0)
       deallocate(csig_an)
+      deallocate(calf_an)
       deallocate(cvsa_an)                                                !srv 15.12.05 11.06.08
       deallocate(vma0)                                                   !srv 15.12.05 11.06.08
 
@@ -51,6 +53,7 @@
       allocate(vsa0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(vla0(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(csig_an(-1:nxd,-1:nyd,0:1))                               !xpb
+      allocate(calf_an(-1:nxd,-1:nyd,0:1))                               !xpb
       allocate(cvsa_an(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 04.10.99 11.06.08
       allocate(vma0(-1:nxd,-1:nyd,0:1,0:nsd-1))                          !srv 15.12.05 11.06.08
 
@@ -73,6 +76,9 @@
         call cfrure (nread, size(vla0), vla0, 'vla0')
         call cfrure (nread, size(csig_an), csig_an, 'csig_an')
       endif
+      if(b2fplasma_version.ge.'01.001.029') then
+        call cfrure_opt (nread, size(calf_an), calf_an, 'calf_an')
+      endif
 
       return
       end subroutine read_b2mod_anomalous_transport
@@ -92,6 +98,9 @@
         call cfwure (nwrite, size(vsa0), vsa0, 'vsa0')
         call cfwure (nwrite, size(vla0), vla0, 'vla0')
         call cfwure (nwrite, size(csig_an), csig_an, 'csig_an')
+      endif
+      if(newversion.ge.'01.001.029') then
+        call cfwure (nwrite, size(calf_an), calf_an, 'calf_an')
       endif
 
       return

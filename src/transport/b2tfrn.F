@@ -59,15 +59,15 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, isb, ib, area_fix
-        integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
-        integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
-        integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
-        integer, save :: no_hybr = 0
-        integer, save :: iout = 0,
+      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
+      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0           !srv 06.07.06
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
+      integer, save :: no_hybr = 0
+      integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
-        real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
-      character chns*2                                                   !srv 16.09.02
-        real (kind=R8), save :: fch_pTe = 0.0_R8                           !srv 30.12.09
+      real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
+      character chns*3                                                   !srv 16.09.02
+      real (kind=R8), save :: fch_pTe = 0.0_R8                           !srv 30.12.09
       real (kind=R8), save :: xfrhie = 1.0_R8                            !srv 05.11.09 30.01.10
       real (kind=R8) ::
      *   dif, flo, cutlo, fle_eir, cone_eir, floe_eir, chce_eir,          !srv 14.07.10
@@ -559,7 +559,7 @@ csw 18feb2014 remove fluxes between guard cells
 
       if(iout.ne.0) then                                             !srv 18.06.08 {
         do is = 0,ns-1
-          write (chns,'(i2.2)') is
+          write (chns,'(i3.3)') is
           call my_out(70,nx,ny,fna_eir(-1,-1,0,is),
      .     'b2tfrn_fna_eirx'//chns)
           call my_out(70,nx,ny,fna_eir(-1,-1,1,is),

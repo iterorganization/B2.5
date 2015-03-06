@@ -96,6 +96,7 @@
 *    'b2ardr_no_weisheit'       '0'                    Atomic Physics
 *    'b2ardr_rtnt'              '40'                   Atomic Physics
 *    'b2ardr_rtnn'              '16'                   Atomic Physics
+*    'b2mndr_astra'             '0'                    Run
 *    'b2mndr_b2time'            '1'                    Output
 *    'b2mndr_cdfmovietim'       '0.0'                  Output
 *    'b2mndr_coronal_model'     '0'                    Physics
@@ -111,11 +112,15 @@
 *    'b2mndr_dt_min'            '1.0e-30'              Run
 *    'b2mndr_dtim'              '1.0'                  Run
 *    'b2mndr_eirene'            '0'                    Run
+*    'b2mndr_elapsed'           '0'                    Run
 *    'b2mndr_etim'              '0.0'                  Run
 *    'b2mndr_hz'                '0.0'                  Physics     !srv 09.06.08
 *    'b2mndr_idout0'            'pgnl;pgmm;pzmm'       Output
 *    'b2mndr_idout1'            'pzmm'                 Output
+*    'b2mndr_isfb'              ismain                 Numerics
 *    'b2mndr_ismain'            '1'                    Run
+*    'b2mndr_ixfb'              5*nx/8                 Numerics
+*    'b2mndr_iyfb'              ny/2                   Numerics
 *    'b2mndr_min_areshe'        '0.0'                  Numerics
 *    'b2mndr_min_areshi'        '0.0'                  Numerics
 *    'b2mndr_min_aresco'        '0.0'                  Numerics
@@ -123,6 +128,8 @@
 *    'b2mndr_mvnum'             '0'                    Output
 *    'b2mndr_na0eps'            '1.0e-30'              Numerics
 *    'b2mndr_na_eps'            '1.0e19'               Output
+*    'b2mndr_ne_wanted'         '0.0'                  Numerics
+*    'b2mndr_ne_wanted_time'    '0.0'                  Numerics
 *    'b2mndr_ntim'              '1'                    Run
 *    'b2mndr_plasmatim'         '0.0'                  Output
 *    'b2mndr_po_eps'            '1.0e+1'               Output
@@ -176,6 +183,8 @@
 *    'b2news_iy_nocoreExB'      '-2'                   Numerics
 *    'b2news_ncallout'          '-1'                   Output
 *    'b2news_no_solve'          '0'                    Run
+*    'b2news_nsmin'             '0'                    Numerics
+*    'b2news_nsmax'             ns                     Numerics
 *    'b2news_poteq'             '1'                    Numerics
 *    'b2news_potit'             '50'                   Numerics
 *    'b2news_potitmin'          '0'                    Numerics
@@ -252,18 +261,24 @@
 *    'b2stbc_fhiycore'          '0.0'                  Physics
 *    'b2stbc_fhiycore_alpha'    '0.1'                  Numerics
 *    'b2stbc_fhiycore_kinetic_energy' '0'              Physics
-*    'b2stbc_fix_fch_in_fhe_sheath' '1'                Numerics
+*    'b2stbc_fix_fch_in_fhe_sheath' '2'                Numerics
 *    'b2stbc_fnaycore'          '-1.0e30'              Physics
 *    'b2stbc_fnaycore_alpha'    '0.1'                  Numerics
 *    'b2stbc_integral_current'  '0.0'                  Numerics
 *    'b2stbc_isfeedback'        '0'                    Physics
+*    'b2stbc_iyped'             jsep/2                 Physics
 *    'b2stbc_ncallfeedback'     '0'                    Run
 *    'b2stbc_ndes'              '0.0'                  Physics
 *    'b2stbc_ndes_sol'          '0.0'                  Physics
 *    'b2stbc_neoclassical'      '0.0'                  Numerics
+*    'b2stbc_nepedm_sol'        '0.0'                  Physics
 *    'b2stbc_nesepm'            '0.0'                  Physics
 *    'b2stbc_nesepm_alpha'      '1.0e-3'               Numerics
+*    'b2stbc_nesepm_beta'       '0.0'                  Numerics
+*    'b2stbc_nesepm_gamma'      '0.99'                 Numerics
 *    'b2stbc_nesepm_overshoot'  '0.0'                  Physics
+*    'b2stbc_nesepm_minpuff'    '0.0'                  Physics
+*    'b2stbc_nesepm_maxpuff'    '0.0'                  Physics
 *    'b2stbc_nesepm_pfr'        '0.0'                  Physics
 *    'b2stbc_nesepm_sol'        '0.0'                  Physics
 *    'b2stbc_pfrregno1'         '0'                    Geometry
@@ -275,23 +290,24 @@
 *    'b2stbc_shi0ep'            '1.0e-36'              Numerics
 *    'b2stbc_sna0ep'            '1.0e-36'              Numerics
 *    'b2stbc_solregno'          '3'                    Geometry
-*    'b2stbc_sound_model'       '0'                    Physics
 *    'b2stbc_type13_fac'        '1.0'                  Numerics
 *    'b2stbc_type13_norm'       '1.0e15'               Numerics
 *    'b2stbc_type13_ref'        '1'                    Physics
 *    'b2stbc_type16_kinetic_energy' '0'                Physics
 *    'b2stbc_type16_ref'        '1'                    Physics
 *    'b2stbc_type20_ref'        '1'                    Physics
+*    'b2stbc_type21_ref'        '1'                    Physics
 *    'b2stbc_volrec'            '0.0'                  Physics
 *    'b2stbc_volrec_alpha'      '1.0e-3'               Numerics
 *    'b2stbc_volrec_beta'       '1.0'                  Numerics
 *    'b2stbc_volrec_overshoot'  '0.0'                  Physics
+*    'b2stbm_impgyro_mod'       '1'                    Numerics
+*    'b2stbm_linearisation'     '1.0'                  Numerics
 *    'b2stbr_alpha'             '0.25'                 Physics
 *    'b2stbr_b2wall_netcdf'     '0'                    Output
 *    'b2stbr_core_sources_rescale'  '1.0'              Run
 *    'b2stbr_first_flight'      '0'                    Run
 *    'b2stbr_first_flight_dl'   '0.001'                Numerics
-*    'b2stbr_first_flight_eion' '1.0'                  Physics
 *    'b2stbr_first_flight_no_of_flights'  '9'          Numerics
 *    'b2stbr_first_flight_no_of_start_points' 2*(nx+2)+2*max(nncut,1)*(ny+2) Geometry
 *    'b2stbr_first_flight_table_size'  '200000'        Numerics
@@ -301,6 +317,8 @@
 *    'b2stbr_plate_option'      '3'                    Physics
 *    'b2stbr_plate_temp'        '300.0'                Physics
 *    'b2stbr_plate_thick'       '0.00'                 Physics
+*    'b2stbr_potential_at_guard_cell'  '1'             Numerics
+*    'b2stbr_redep_alpha'       '0.00'                 Physics
 *    'b2stbr_refl_model'        '1'                    Physics
 *    'b2stbr_reflection_on'     '1'                    Physics
 *    'b2stbr_sput_chem_alpha'   '1.0e-2'               Numerics
@@ -335,14 +353,14 @@
 *    'b2stel_rxm4'              '0.0'                  Numerics
 *    'b2stel_styl0'             '0'                    Numerics
 *    'b2tfcc_xfac'              '1.0'                  Numerics
-*    'b2tfhe_anomalous'		  '1.0'                  Physics
+*    'b2tfhe_anomalous'		'1.0'                  Physics
 *    'b2tfhe_conduction_only'   '0'                    Physics
-*    'b2tfhe_neutral'	          '0.0'                  Physics
+*    'b2tfhe_neutral'		'0.0'                  Physics
 *    'b2tfhe_no_current'        '0'                    Numerics
 *    'b2tfhe_no_hybr'           '0'                    Numerics
-*    'b2tfhe_vis_par'	          '0.0'                  Physics
-*    'b2tfhe_vis_per'	          '0.0'                  Physics      !srv 20.11.08
-*    'b2tfhe_vis_q'	          '1.0'                  Physics      !srv 20.11.08
+*    'b2tfhe_vis_par'	        '0.0'                  Physics
+*    'b2tfhe_vis_per'	        '0.0'                  Physics      !srv 20.11.08
+*    'b2tfhe_vis_q'	        '1.0'                  Physics      !srv 20.11.08
 *    'b2tfhi_no_hybr'           '0'                    Numerics
 *    'b2tfnb_alpha'             '0.0'                  Physics
 *    'b2tfnb_gamma'             '2.0'                  Physics
@@ -386,7 +404,7 @@
 *    'b2ux5p_mult_nonzero'      '10'                   Numerics
 *    'b2ux5p_mult_solvdim'      '15'                   Numerics
 *    'b2ux5p_mult_solvdim1'     '10'                   Numerics
-*    'b2ux5p_nltrsol'           '0'                    Output
+*    'b2ux5p_nltrsol'           '2'                    Output
 *    'b2ux5p_style'             '2'                    Numerics
 *    'b2xzdd_zero_dead_and_core''1'                    Numerics
 *    'b2yrdr_ns'                ns                     Output
@@ -419,6 +437,7 @@
 *    'heatdiff1D_linlog'        '1'                    Numerics
 *    'heatdiff1D_ratio'         '100.0'                Numerics
 *    'ma28_nwrite'              '0'                    Output
+*    'neoclassical_ic'          '3'                    Physics
 *    'set_transport_eta'        '2.0'                  Physics
 *    'set_transport_eta_alpha'  '0.5'                  Physics
 *    'set_transport_eta_floor'  '0.1'                  Physics
@@ -469,7 +488,7 @@
 *    the working mesh.
 *    In both cases, mind the value of 'b2news_area_fix', which should be 
 *    also declared in b2ag.dat if the non-default behaviour is wanted. 
-*
+* 
 *    'b2agfs_periodic_bc'       '0'                    Geometry
 *    periodic_bc - integer.
 *    periodic_bc specifies if this is either an island or limiter geometry. 
@@ -717,6 +736,11 @@
 *    CPU limit. Is cpu.eq.0.0, no CPU limit is enforced. Otherwise, the code
 *    stops smoothly after is has been running for at least 'cpu' CPU seconds.
 *
+*    'b2mndr_elapsed'           '0.0'                  Run
+*    Elapsed time limit. Is elapsed.eq.0.0, no time limit is enforced. 
+*    Otherwise, the code stops smoothly after is has been running for 
+*    at least 'elapsed' wall clock seconds.
+*
 *    'b2mndr_savecpu'           '3600.0'               Run
 *    CPU time interval after with save files plasmastate.xxxx are written.
 *    These can be used, in conjunction with the b2co.exe instruction, to
@@ -763,15 +787,25 @@
 *    Profiles file indicator. If b2sral_inputfile.eq.1, then the code looks
 *    for the file b2.sources.profile in which it expects to find the 
 *    'profile' namelist.
+*    This namelist will contain profiles of sources measured from the
+*    location (ixref,iyref) (default is outer midplane separatrix), which
+*    is set with the 'set_transport_i[xy]ref' switches.
 *
 *    'b2tqna_inputfile'         '0'                    Run
 *    Profiles file indicator. If b2tqna_inputfile.eq.1, then the code looks
 *    for the file b2.transport.inputfile, in which it expects to find the 
 *    transport namelist.
+*    This namelist will contain profiles of sources transport parameters 
+*    measured from the location (ixref,iyref) (default is outer midplane 
+*    separatrix), which is set with the 'set_transport_i[xy]ref' switches.
 *
 *    'b2mndr_eirene'            '0'                    Run
 *    Turns on coupling with the Eirene Monte-Carlo neutral code if non-zero. 
 *    To be used, the code must be compiled with the -DUSE_EIRENE option.
+*
+*    'b2mndr_astra'             '0'                    Run
+*    Turns on coupling with the ASTRA core transport code if non-zero. 
+*    To be used, the code must be compiled with the -DASTRA option.
 *
 *    'b2mndr_rescale_neutrals_sources' '1.0'           Run
 *    Multiplier to the neutral sources (either computed by Eirene or the
@@ -825,7 +859,10 @@
 *    'b2tfhe_anomalous'		'1.0'                  Physics
 *    real parameter which determines anomalous current.
 *    If b2tfhe_anomalous is 0 then anomalous current is
-*    switched off otherwise anomalous current is switched on.
+*    switched off otherwise anomalous current is switched on,
+*    and the numerical value of b2tfhe_anomalous acts as a multiplier
+*    to the anomalous electrical conductivity and thermo-electric
+*    coefficients provided.
 *
 *    'b2news_ExB'               '0.0'                  Physics
 *    real parameter which multiplies ExB flows.
@@ -862,7 +899,7 @@
 *    'b2trcl_lvis21'            '0'                    Physics
 *    If lvis21.ne.0, then the viscosities are modified according to the
 *    21-moment approach. This should only be used for multi-fluid
-*    runs. This switch should not be used along with 'b2news_vis_par'
+*    runs. This switch should not be used along with 'b2tfhe_vis_par'
 *    to avoid double-counting of classical viscosity effects.
 *
 *    'b2sqel_artificial_radiation'  '0.0'              Physics
@@ -876,8 +913,10 @@
 *    'b2stbc_fchycore'          '-1.0e30'              Physics
 *    'b2stbc_fnaycore'          '-1.0e30'              Physics
 *    'b2stbc_isfeedback'        '0'                    Physics
+*    'b2stbc_iyped'             jsep/2                 Physics
 *    'b2stbc_ndes'              '0.0'                  Physics
 *    'b2stbc_ndes_sol'          '0.0'                  Physics
+*    'b2stbc_nepedm_sol'        '0.0'                  Physics
 *    'b2stbc_nesepm'            '0.0'                  Physics
 *    'b2stbc_nesepm_overshoot'  '0.0'                  Physics
 *    'b2stbc_nesepm_pfr'        '0.0'                  Physics
@@ -885,8 +924,10 @@
 *    'b2stbc_private_flux_puff' '0.0'                  Physics
 *    'b2stbc_volrec'            '0.0'                  Physics
 *    'b2stbc_volrec_overshoot'  '0.0'                  Physics
+*    'b2stbc_nesepm_minpuff'    '0.0'                  Physics
+*    'b2stbc_nesepm_maxpuff'    '0.0'                  Physics
 *    'eirene_nesepm_istra'      '-1'                   Physics
-*    The 11 switches above are all feedback switches and require that
+*    The 20 switches above are all feedback switches and require that
 *    b2stbc_feedback.ne.0 (See Run section for details) or that
 *    lfeedback=.true. in b2.boundary.parameters. The feedback
 *    is done as a boundary condition and is under-relaxed using the
@@ -902,7 +943,7 @@
 *    flow through both core boundaries taken together. The core boundaries
 *    are identified by the coreregno and coreregn2 switches (see Geometry
 *    section).
-*    The other six switches are density feedback switches:
+*    The other seven switches are density feedback switches:
 *    nesepm is the outer midplane separatrix electron density. (See 
 *    b2mwti_jxa switch in Geometry section for setting of midplane
 *    position). This is controlled through particle input of main plasma
@@ -916,10 +957,15 @@
 *    isfeedback through the SOL North boundary (See Geometry section for 
 *    the SOL North boundary index solregno). If nesepm_overshoot.gt.1.0,
 *    the gas puff is turned off when the midplane separatrix density 
-*    reaches nesepm*nesepm_overshoot.
+*    reaches nesepm*nesepm_overshoot.  Minimum and maximum values of the
+*    feedback gas puff can be set using b2stbc_nesepm_minpuff and
+*    b2stbc_nesepm_maxpuff
+*    nepedm_sol is similar to nesepm_sol but the feedback is exerted
+*    on the electron density at the top of the pedestal, along the
+*    outer midplane, at radial position b2stbc_iyped.
 *    ndes_sol is the total particle content from the homonuclear
 *    sequence of species 'isfeedback' over the entire simulation domain.
-*    It is governed, like nesepm_sol, by nesepm_ovreshoot and nesepm_alpha
+*    It is governed, like nesepm_sol, by nesepm_overshoot and nesepm_alpha
 *    and corresponds to a SOL boundary feedback.
 *    volrec_sol is the total particle source due to volume recombination
 *    coming from Eirene. Its feedback is governed by volrec_overshoot 
@@ -954,13 +1000,17 @@
 *    'b2stbc_type13_ref'        '1'                    Physics
 *    'b2stbc_type16_ref'        '1'                    Physics
 *    'b2stbc_type20_ref'        '1'                    Physics
+*    'b2stbc_type21_ref'        '1'                    Physics
 *    'b2stbc_type16_kinetic_energy' '0'                Physics
 *    These switches are associated with the boundary condition of type 13, 16, 
-*    17 or 20 for particle flux, or electron and ion energy fluxes, i.e. 
+*    17, 20 or 21 for particle flux, or electron and ion energy fluxes, i.e. 
 *    constant density or temperature giving a prescribed flux through 
 *    a radial surface, located type13_ref or type16_ref radial steps away 
 *    from the boundary of the computational domain, respectively, and applied 
 *    type20_ref steps away. See code and description in b2cdcn for details.
+*    Type 21 also applies to the electric potential boundary condition.
+*    It scales the feedback strength according to the value of the variable
+*    on the ring type21_ref steps inside.
 *    When type16_ref.gt.1, then the position where the core flux tallies are
 *    computed moves along with the boundary condition.
 *    If type16_kinetic_energy.eq.1, then the parallel kinetic energy flux is 
@@ -971,12 +1021,6 @@
 *    If secmodel.eq.1, then the secondary electron emission coefficient at
 *    the plates is computed locally according to a kinetic model, otherwise 
 *    the default values of cbsch(7,ireg) and/or gammae are used.
-*
-*    'b2stbc_sound_model'       '0'                    Physics
-*    If sound_model.eq.0, then the plasma sound speed is computed as:
-*    cst = sqrt(pr/ro) where ro is the plasma mass density and pr the
-*    plasma pressure. If sound_model.eq.1, we use:
-*    cst = sqrt(sum(na*(rza*te+ti)/(ma*ni)))
 *
 *    'b2stbr_plate_model'       '0'                    Physics
 *    'b2stbr_plate_option'      '3'                    Physics
@@ -1000,14 +1044,14 @@
 *    'b2stbr_alpha'             '0.25'                 Physics
 *    'b2stbr_plate_temp'        '300.0'                Physics
 *    'b2stbr_plate_thick'       '0.00'                 Physics
+*    'b2stbr_redep_alpha'       '0.00'                 Physics
 *    Sputtering model switches. See the code in b2stbr and the
 *    b2mod_sputter module for specific implementation details and references.
 *    The default values represent the case of Graphite plates.
 *    Sput_src is the atomic number of the plasma species which causes chemical
 *    sputtering.
 *    Sput_dst (when .ge.0) is the species index of the destination species 
-*    produced by chemical sputtering, RES and thermal evaporation. This 
-*    should be a Carbon species.
+*    produced by chemical sputtering or RES. This should be a Carbon species.
 *    Sput_dst2 and sput_dst3 (when .ge.0) represent other species produced by
 *    wall interactions for mixed materials scenarios.
 *    Sput_frac_flag is the switch to turn on mixed materials scenarios (when
@@ -1022,24 +1066,27 @@
 *    to be the 0-D equilibrium profile. If plate_option.eq.3, the profile
 *    is read from results of the previous run.
 *    Sput_phys_model is a switch for choosing between the TRIM tables 
-*    (model 1, default) or an empirical formula (model 0). When TRIM data is not
-*    available, the empirical formula is automatically used. Extrapolations
-*    of low and high energy ranges beyond the TRIM table data is done using
-*    the same physical dependencies as the empirical formula.
+*    (model 1, default) or an empirical formula (model 0). When TRIM data is
+*    not available, the empirical formula is automatically used. 
+*    Extrapolations of low and high energy ranges beyond the TRIM table data
+*    is done using the same physical dependencies as the empirical formula.
 *    Sput_chem_model is a switch for the chemical sputtering model used.
 *    If sput_chem_model.eq.0 (default), the empirical formula is used.
 *    If sput_chem_model.eq.1, a constant with a low energy cut-off is used.
 *    The cutoff occurs at approximately sput_chem_cutoff_alpha and the width
 *    is determined by sput_chem_cutoff_beta (the larger the value, the 
-*    narrower the width over which the transition from 0 to 1 occurs.
+*    narrower the width over which the transition from 0 to 1 occurs).
 *    For model 0, sput_frc is a multiplier to the empirical formula, while
 *    for model 1, sput_frc is the constant chemical sputtering yield.
+*    Sput_frc is superseded by the chem_sput array from b2.neutrals.namelist
+*    if the latter is used.
 *    For neutrals species, we add a factor of alpha*na*vbar to the particle 
 *    flux to the plate (used to compute chemical and RES sputtering), 
 *    where vbar is the average neutral particle speed.
 *    Sput_phys turns on physical sputtering when sput_phys.gt.0.0 and
 *    contains a (real) multiplier for the physical sputtering rate looked
-*    up in the TRIM tables.
+*    up in the TRIM tables. It is superseded by the phys_sput array in
+*    b2.neutrals.parameters if the latter is used.
 *    sput_phys_col indicates which column to use in the TRIM table; the
 *    default (3) corresponds to 30 degrees incidence.  The columns are for
 *      0  15  30  45  55  65  75  80  85
@@ -1063,6 +1110,9 @@
 *    yield (if the TRIM model is used). 
 *    Therm_evap turns on thermal evaporation when .gt.0.0 and is a
 *    multiplier to the thermal evaporation rate.
+*    Redep_alpha is the multiplier to the reduction of the sputtering yield 
+*    due to prompt redeposition. The promptly redeposited species is
+*    counted as eroded-then-deposited species. 
 *
 *    'b2stbr_refl_model'        '1'                    Physics
 *    'b2stbr_reflection_on'     '1'                    Physics
@@ -1072,9 +1122,9 @@
 *    reflection coefficients, when refl_model.eq.1. If refl_model.eq.0, an
 *    empirical formula is used instead. The model switch is subservient to
 *    reflection_on.ne.0. If reflection_on.eq.0, then no reflection is used.
-*
-*    'b2stbr_first_flight_eion' '1.0'                  Physics
-*    Incoming energy (in eV) of the neutrals in the first flight model.
+*    If reflection_on.eq.1 (default), then the incident species is reflected
+*    unchanged. Otherwise, the reflected flux is of the associated
+*    neutral species to the incident particles.
 *
 *    'b2mndr_coronal_model'     '0'                    Physics
 *    Turns on the coronal model if coronal.ne.0. I.e., the reaction rates of
@@ -1110,8 +1160,8 @@
 *    'set_transport_ixref'      See description (integer)  Physics
 *    'set_transport_iyref'      See description (integer)  Physics
 *    'set_transport_required_te_gradient' '5.0e4'          Physics
-*    The last three switches are subservient to b2tqna_user_transport, and
-*    are only used is user_transport.ne.0. When this is the case, the electron
+*    The last switch is subservient to b2tqna_user_transport, and
+*    only used if user_transport.ne.0. When this is the case, the electron
 *    perpendicular heat diffusivity and anomalous perpendicular particle
 *    transport coefficient are scaled so as to maintain the
 *    required_te_gradient (in units of eV/m), at the location (ixref,iyref)
@@ -1138,6 +1188,9 @@
 *    computation of the transport coefficients in the core. See routine
 *    set_transport_neo and subroutines called for details. Implemented
 *    from the NEOART package.
+*    The location given by ixref and iyref can also serve as the anchor
+*    point for the transport and/or sources profiles provided by the
+*    user in the b2.transport.inputfile and b2.sources.profile files.
 *
 *    'b2tqna_max_df0'           '1e30'                 Physics
 *    'b2tqna_min_df0'           '0.0'                  Physics
@@ -1168,6 +1221,15 @@
 *
 *    'b2sifr_phm0'              '1.0'                  Physics
 *    Multiplier of the friction term between charged species.
+*
+*    'b2sifr_phm1'              '1.0'                  Physics
+*    Multiplier of the ehxp term in the thermal force term
+*
+*    'b2sifr_phm2'              '1.0'                  Physics
+*    Multiplier of the electron thermal gradient term in the thermal force term
+*
+*    'b2sifr_phm3'              '1.0'                  Physics
+*    Multiplier of the ion thermal gradient term in the thermal force term
 *
 *    'b2sifr_limthee'           '0.3'                  Physics
 *    'b2sifr_limthii'           '0.3'                  Physics
@@ -1300,15 +1362,13 @@
 *    classical parallel electron heat diffusivity.
 *    If model.eq.2, use the older Braginskii SOLPS4.0 model.
 *    If model.eq.3, use the 21-moment Balescu results.
+*    If model.eq.4, use the Zhdanov fit to the Braginskii table.
 *
 *    'b2trno_pol_anom_scale'    '1.0'                  Physics
 *    If pol_anom_scale.ne.1, the poloidal anomalous transport coefficients
 *    are scaled by the number.  To get the same treatment as setting the old
-*    switch (radial_only) to 1, set the new switch to 0.0
+*    switch (radial_only) to 1, set the new switch to 0.0.
 *    This multiplication is to only take place for charged species.
-*
-*    'b2sifr_phm2'              '1.0'                  Unused
-*    Must be positive.
 *
 *    'eirene_lhalpha'           '1'                    Physics
 *    If 0 then no calculation of halpha in wneutral, otherwise halpha
@@ -1325,10 +1385,9 @@
 *    passed to Eirene on its first call is ignored (instead the value in the 
 *    Eirene input file is used).
 *
-*    'eirene_use_recyceir'      '1'                    Physics
+*    'eirene_use_recyceir'      '0'                    Physics
 *    If > 0 use recyceir (non species dependent) to specify the recycling
-*    coefficients, else if 0 use recyc (species dependent).  recyceir has to
-*    be used if the Kukushkin rescaling option is used.
+*    coefficients, else if 0 use recyc (species dependent).
 *
 *    'eirene_ionising_core'     '0'                    Physics
 *    If <> 0 then recycles the neutral flux having crossed the core
@@ -1350,13 +1409,22 @@
 *    in b2ar.dat to a non-zero value and recalculating b2frates). 
 *    See 'Atomic Physics' section.
 *    *** Use with caution! *** 
-
+*
 *    'b2mndr_atomic_physics_rescale' '0'               Physics
 *    If atomic_physics_rescale is not 0, then the code will rescale
 *    the rates stored in b2frates according to the multipliers given
 *    in the b2.atomic_physics_rescale.parameters inputfile before
 *    making use of them.
 * 
+*    'neoclassical_ic'          '3'                    Physics
+*   ..set the contribution ic in NEOART
+*     0 --- classical particle flux
+*     1 --- banana plateau contribution
+*     2 --- Pfirsch Schlueter contribution
+*     3 --- both banana and PS
+*     4 --- all contributions
+*     mind that B2 already calculates the classical transport ! 
+*     avoid double transport, 0+4 for cross checks only !
 * 
 *   1.4. Output switches
 *
@@ -1435,9 +1503,9 @@
 *    wall tallies in CDF format [written every b2wall_netcdf "main calls"].
 *
 *    'ank_tracing'              '0'                    Output
-*    If ank_tracing.eq.1, additional tracing output from Andrei Kukushkin is
+*    If ank_tracing.ge.1, additional tracing output from Andrei Kukushkin is
 *    produced, in files to be found in the tracing/ directory inside the run
-*    directory.
+*    directory. The traces will be written every ank_tracing iteration.
 *
 *    'b2stbc_diagno'            '0'                    Output
 *    Controls level of output in b2stbc and subservient routines. 
@@ -1463,7 +1531,8 @@
 *    by Eirene. This happens irrespective of the setting of the two switches 
 *    above. If however, the user wishes to obtain these files for a non-coupled
 *    run, then these two switches can be set to 1 and the files will then be
-*    produced at the end of the run. Additionally, if savef31.ne.0, the 
+*    produced at the end of the run. If savef31.lt.0, then a fort.31.###### file 
+*    is produced after every B2.5 time step. Additionally, if savef31.ne.0, the 
 *    fort.31 file will be updated before every Eirene call for coupled runs.
 *
 *    'b2yrdr_ns'                ns                     Output
@@ -1482,7 +1551,7 @@
 *    'b2ux5p_cpu'               '0'                    Output
 *    If cpu.gt.0, prints out the time spent in the matrix solver.
 *    
-*    'b2ux5p_nltrsol'           '0'                    Output
+*    'b2ux5p_nltrsol'           '2'                    Output
 *    Output flag for the iluter matrix solver. Larger numbers mean increasing
 *    output level.
 *
@@ -1553,6 +1622,10 @@
 *    equation residual applies to the "ismain" species (See
 *    "Run" section).
 *
+*    'b2news_nsmin'             '0'                    Numerics
+*    'b2news_nsmax'             ns                     Numerics
+*    Allows for solving only for the species range [nsmin:nsmax-1].
+*
 *    'eirene_na_max'            '1e30'                 Numerics
 *    'eirene_na_min'            '0.0'                  Numerics
 *    'eirene_te_max'            '1e30'                 Numerics
@@ -1604,13 +1677,20 @@
 *    If sheath_drift_fix.eq.1, then the drift velocity used in the
 *    sheath boundary conditions is the ExB velocity only (recommended).
 *
-*    'b2stbc_fix_fch_in_fhe_sheath'  '1'                    Numerics
+*    'b2stbc_fix_fch_in_fhe_sheath'  '2'                    Numerics
 *    If fix_fch_in_fhe_sheath.eq.0, then the wrong (old) 
 *    implementation of the FCH contribution to FHE used; 
 *    If fix_fch_in_fhe_sheath.eq.1, then the wrong (second) 
 *    implementation of the FCH contribution to FHE used; 
 *    If fix_fch_in_fhe_sheath.eq.2, then the correct 
 *    implementation of the FCH contribution to FHE used; 
+*
+*    'b2stbr_potential_at_guard_cell'  '1'             Numerics
+*    If potential_at_guard_cell.eq.1, the electric potential used for
+*    the computation of the incident energy for sputtering yields is
+*    taken as the value in the guard cell.
+*    If potential_at_guard_cell.eq.0, the value from the neighbouring
+*    real cell is used instead. 
 *
 *    'b2tral_mode'              '1'                    Numerics
 *    Switch to choose between various interpolation schemes for transport
@@ -1715,6 +1795,11 @@
 *    for its computation). The maximum value of facdrift and fac_ExB
 *    is controlled by their respective _start and _target switches,
 *    see Run section for details.
+*    For consistency with the naming convention of related variables:
+*    b2news_facExB_tanh_a is an alias for b2news_fac_ExB_tanh_a,
+*    b2news_facExB_tanh_b is an alias for b2news_fac_ExB_tanh_b,
+*    b2news_facvis_tanh_a is an alias for b2news_fac_vis_tanh_a, and
+*    b2news_facvis_tanh_b is an alias for b2news_fac_vis_tanh_b.
 *    Additionally, for all core cell rows where iy.le.iy_nocoreExB, 
 *    fac_ExB(ix,iy) is set to zero. This means that ExB contributions 
 *    and flows will be zeroed out in those cells.
@@ -1731,6 +1816,8 @@
 *    'b2stbc_fhiycore_alpha'    '0.1'                  Numerics
 *    'b2stbc_fnaycore_alpha'    '0.1'                  Numerics
 *    'b2stbc_nesepm_alpha'      '1.0e-3'               Numerics
+*    'b2stbc_nesepm_beta'       '0.0'                  Numerics
+*    'b2stbc_nesepm_gamma'      '0.99'                 Numerics
 *    'b2stbc_volrec_alpha'      '1.0e-3'               Numerics
 *    'b2stbc_volrec_beta'       '1.0'                  Numerics
 *    'b2stbr_sput_chem_alpha'   '1.0e-2'               Numerics
@@ -1770,6 +1857,15 @@
 *    When set to 0, only the gradient to the left/bottom is 
 *    used to compute the conductive neutral flux limits, except
 *    when these do not exist (the other face value is used).
+*
+*    'b2mndr_isfb'              ismain                 Numerics
+*    'b2mndr_ixfb'              5*nx/8                 Numerics
+*    'b2mndr_iyfb'              ny/2                   Numerics
+*    'b2mndr_ne_wanted'         '0.0'                  Numerics
+*    'b2mndr_ne_wanted_time'    '0.0'                  Numerics
+*    Experimental: allows for density feedback of the number of
+*    electrons accompanying species 'isfb' at location (ixfb,iyfb).
+*    Note that ixfb and iyfb are real numbers! 
 *
 *    'b2mndt_rxf'               '0.5'                  Numerics
 *    Main under-relaxation parameter.
@@ -1815,6 +1911,7 @@
 *    If poteq.eq.2, the potential is set to 3.1*Te/qe as per SOLPS4.0.
 *    If poteq.eq.1, the potential equation is solved according to the
 *    no_solve switch settings. 
+*    If poteq.ne.1, then 'b2tfhe_no_current'must be set to '1'.
 *
 *    'b2nxfc_style'             '0'                    Numerics
 *    style specifies the precise form of interpolation used in the
@@ -1875,6 +1972,18 @@
 *    constant term, and negative terms in the proportional term.
 *    'eirene_mc_linearization' is an alias for this switch.
 *
+*    'b2stbm_linearisation'     '1.0'                  Numerics
+*    Same as above, but applied to the sources coming for an externally
+*    coupled code providing plasma sources, for instance a kinetic
+*    treatment of trace impurity ions. 
+*    'b2stbm_linearization' is an alias for this switch.
+*
+*    'b2stbm_impgyro_mod'       '1'                    Numerics
+*    Specifies the frequency (in units of full b2 timesteps) at which an
+*    externally coupled code providing additional source (for instance a
+*    kinetic treatment of trace impurity ions such as IMPGYRO) should be
+*    called.
+*
 *    'b2stel_rg0'               '1.0'                  Numerics
 *    'b2stel_rg1'               '1.0'                  Numerics
 *    'b2stel_rxm0'              '0.0'                  Numerics
@@ -1893,6 +2002,8 @@
 *
 *    'b2tfhe_no_current'        '0'                    Numerics
 *    If no_current.eq.1, all currents are set to zero.
+*    The setting no_current.eq.1 must be used if the potential equation
+*    is not explicitly solved for, i.e. for b2news_poteq.ne.1.
 *
 *    'b2tfnb_xfrhie'            '1.0'                  Numerics
 *    Multiplier to the Rhie and Chow upwind correction.
@@ -1932,7 +2043,7 @@
 *
 *    'b2ardr_fix_recomb'        '0'                    Atomic Physics 
 *    When changed from 0, and if the ADAS option is in use, then uses the 
-*    PRB file to add the contribution arusing from is-->is-1 processes. 
+*    PRB file to add the contribution arising from is-->is-1 processes. 
 *    This term includes the Bremsstrahlung. 
 *    The default option ('0') only contains the Bremsstrahlung for the 
 *    is-->is-1 process. 

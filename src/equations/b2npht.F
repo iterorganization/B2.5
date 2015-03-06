@@ -79,7 +79,7 @@
       integer, save :: iout = 0                                        !srv 17.07.05
       integer, save :: style = 0                                       !srv 09.07.08
       integer, save :: style_shei = 0                                  !srv 18.09.09 30.01.10
-      character chns*2                                                 !srv 17.07.05
+      character chns*3                                                 !srv 17.07.05
       real (kind=R8) ::
      *  rxg, pcm0, pcm1, t0
       real (kind=R8) ::
@@ -90,7 +90,7 @@
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, ipgetr, saxpy
+      external subini, subend, xertst, ipgetr, b2saxpy
       external b2xvsg, b2xvff, b2xvfx, b2sihs, b2ursd, b2usht, b2upht
 *   ..initialisation
       data ncall/0/, rxg/1.0_R8/, pcm0/1.0_R8/, pcm1/1.0_R8/
@@ -230,8 +230,8 @@ csw 21feb2014 remove sources in ghostcells (SOLPS4)
           endif
         enddo
       enddo
-      call saxpy (n2*4, 1.0_R8, she, 1, she0, 1)
-      call saxpy (n2*4, 1.0_R8, shi, 1, shi0, 1)
+      call b2saxpy (n2*4, 1.0_R8, she, 1, she0, 1)
+      call b2saxpy (n2*4, 1.0_R8, shi, 1, shi0, 1)
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
       call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
@@ -327,7 +327,7 @@ c            instead ???)
       endif
       if(iout .eq. 1) then                                          !srv 17.07.05 {
        do is = 0,ns-1
-        write (chns,'(i2.2)') is
+        write (chns,'(i3.3)') is
         call my_out(70,nx,ny,na(-1,-1,is),'b2npht_na'//chns)
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npht_ua'//chns)
        enddo

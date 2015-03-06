@@ -3,11 +3,12 @@
 
       subroutine b2sifr_ (nx, ny, ns, isb, hx, hz, vol, bb, na, ua,   !srv 09.01.01 18.10.02
      &   te, ti, ni, ne, ne2, ehxp, lnlam, cthe, cthi, smbch, smbtf,  !srv 01.07.09 11.09.09
-     &   vti32, gti, gte)                                             !srv 01.07.05 {
+     &   smprb, smptb, smfrb, vti32, gti, gte)                        !srv 01.07.05 {
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_external
       use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -22,7 +23,8 @@
      &  te(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3)               !srv 11.09.09
+     *   smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),             !srv 11.09.09
+     &   smprb(-1:nx,-1:ny), smptb(-1:nx,-1:ny), smfrb(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *   vti32(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny)
@@ -32,7 +34,7 @@
 *
 *  1. purpose
 *
-*     B2SIFR computes a linearized representation of the friction
+*     B2SIFR computes a linearised representation of the friction
 *     force between one species and all others.
 *
 *
@@ -52,11 +54,11 @@
       
 *   ..local variables
       integer ncall, styl0, styl1, n2, ix, iy, is, k                  !srv 17.06.02
-	integer, save :: iout = 0                                       !srv 17.06.02
-	integer, save :: icase = 0
-	character chns*2, chk*1                                         !srv 17.06.02
+      integer, save :: iout = 0                                       !srv 17.06.02
+      integer, save :: icase = 0
+      character chns*3, chk*1                                         !srv 17.06.02
       real (kind=R8) ::
-     *   phm0, phm1, phm2, ctaup, coef, t0, t1                        !srv 18.10.02
+     *   phm0, phm1, phm2, phm3, ctaup, coef, t0, t1
       real (kind=R8) ::
      1 delti, delte, zlamii, zlamee, dtiapr, dteapr, limthii, limthee
       integer :: zlitest
@@ -67,12 +69,12 @@
       external subini, subend, xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                          !srv 01.07.05
-*   ..initialization
-      save ncall, styl0, styl1, phm0, phm1, phm2, limthii, limthee,
-     1     zlitest
-      data ncall/0/, styl0/0/, styl1/0/, phm0/1.0e0_R8/,
-     &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, limthii/0.3e0_R8/,
-     &  limthee/0.3e0_R8/,
+*   ..initialisation
+      save ncall, styl0, styl1, 
+     1     phm0, phm1, phm2, phm3, limthii, limthee, zlitest
+      data ncall/0/, styl0/0/, styl1/0/, 
+     &  phm0/1.0e0_R8/, phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0_R8/,
+     &  limthii/0.3e0_R8/, limthee/0.3e0_R8/,
      &  zlitest/0/
 
 *-----------------------------------------------------------------------
@@ -88,6 +90,7 @@
        call ipgetr ('b2sifr_phm0', phm0)
        call ipgetr ('b2sifr_phm1', phm1)
        call ipgetr ('b2sifr_phm2', phm2)
+       call ipgetr ('b2sifr_phm3', phm3)
        call ipgetr ('b2sifr_limthii', limthii)
        call ipgetr ('b2sifr_limthee', limthee)
 csw 24sep2013
@@ -95,8 +98,9 @@ csw 24sep2013
        call xertst (0.le.styl0.and.styl0.lt.9.and.0.le.styl1.and.
      &  styl1.lt.2, 'faulty internal parameter styl0, styl1')
        call xertst (0.0_R8.le.phm0.and.0.0_R8.le.phm1.and.
-     &  0.0_R8.le.phm2,'faulty internal parameter phm0, phm1, phm2')
-       call xertst (0.le.limthii.and.0.le.limthee,
+     &  0.0_R8.le.phm2.and.0.0_R8.le.phm3,
+     &  'faulty internal parameter phm0, phm1, phm2, phm3')
+       call xertst (0.0_R8.le.limthii.and.0.0_R8.le.limthee,
      &  'faulty internal parameter limthii, limthee')
        call ipgeti ('b2sifr_iout', iout)                             !srv 17.06.02
        call ipgeti ('b2tlnl_ii', icase)
@@ -142,8 +146,8 @@ csw 24sep2013
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
-         gti(ix,iy) = 0
-         gte(ix,iy) = 0
+         gti(ix,iy) = 0.0_R8
+         gte(ix,iy) = 0.0_R8
         else
          gti(ix,iy) = (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))/
      &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
@@ -156,9 +160,12 @@ csw 24sep2013
       call b2xxgs (nx, ny, 0.0_R8, gte, 1)
 
 * ..compute friction
-*   ..initialize to 0
-      call sfill (n2*4, 0.0e0_R8, smbch, 1)                         !srv 11.09.09
-      call sfill (n2*4, 0.0e0_R8, smbtf, 1)                         !srv 11.09.09
+*   ..initialise to 0
+      call sfill (n2*4, 0.0_R8, smbch, 1)
+      call sfill (n2*4, 0.0_R8, smbtf, 1)
+      smprb = 0.0_R8
+      smptb = 0.0_R8
+      smfrb = 0.0_R8
 *   ..loop over all other species
       do is = 0, ns-1
 *    ..consider distinct cases
@@ -183,6 +190,8 @@ csw 24sep2013
              smbch(ix,iy,3) = smbch(ix,iy,3)-coef*t0/
      &                       roxa(ix,iy,isb)
             endif
+            smfrb(ix,iy) = smfrb(ix,iy) + 
+     &       coef*t0*(ua(ix,iy,is)-ua(ix,iy,isb))
            endif
           enddo
         enddo
@@ -198,16 +207,17 @@ csw 24sep2013
        if (styl1.eq.0) then
         do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then      !srv 26.11.02
-          t0 = na(ix,iy,isb)*(rza(ix,iy,isb)/ne(ix,iy)-rz2(ix,iy,isb)
-     &         /ne2(ix,iy))
+          t0 = na(ix,iy,isb)*
+     &       (rza(ix,iy,isb)/(ne(ix,iy)-ne_ext(ix,iy))-
+     &        rz2(ix,iy,isb)/(ne2(ix,iy)-ne2_ext(ix,iy)))
           delte=(gte(ix,iy)+gte(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8 !srv 12.04.10
-          if(limthee.gt.0) then
+          if(limthee.gt.0.0_R8) then
             zlamee=1.5e16_R8*(te(ix,iy)/ev)**2/ne(ix,iy)
             dteapr=limthee/zlamee*te(ix,iy)/abs(bb(ix,iy,0)/bb(ix,iy,3)) !srv 12.04.10 11.01.13
             delte=sign(min(abs(delte),dteapr),delte)
           endif
           delti=(gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8 !srv 12.04.10
-          if(limthii.gt.0) then
+          if(limthii.gt.0.0_R8) then
 csw 24sep2013 check for zlitest (potentially can be removed)
             if(zlitest .ne. 0) then
              zlamii=1.5e16_R8*(ti(ix,iy)/ev)**2/na(ix,iy,1)
@@ -221,8 +231,14 @@ c         if(cthi(ix,iy,isb).ne.2.65e0_R8)
 c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
           smbtf(ix,iy,0) = smbtf(ix,iy,0)+t0*
      &     (phm1*ehxp(ix,iy)-
-     &     (cthe(ix,iy,isb)*delte+cthi(ix,iy,isb)*delti)*ne(ix,iy)*
+     &     (phm2*cthe(ix,iy,isb)*delte*ne(ix,iy)
+     &     +phm3*cthi(ix,iy,isb)*delti*(ne(ix,iy)-ne_ext(ix,iy)))*
      &     vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3))*hz(ix,iy)            !srv 01.07.05
+          smprb(ix,iy) = smprb(ix,iy) + t0*phm1*ehxp(ix,iy)*hz(ix,iy) 
+          smptb(ix,iy) = smptb(ix,iy) - t0*hz(ix,iy)*
+     &         (phm2*cthe(ix,iy,isb)*delte*ne(ix,iy)
+     &         +phm3*cthi(ix,iy,isb)*delti*(ne(ix,iy)-ne_ext(ix,iy)))*
+     1         (vol(ix,iy)/hx(ix,iy))*bb(ix,iy,0)/bb(ix,iy,3)
          else if (styl1.eq.1) then
           stop 'b2sifr: option removed'
          endif                                                         !srv 26.11.02
@@ -230,7 +246,7 @@ c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
        endif
       enddo
       if (iout.ne.0) then                                            !srv 17.06.02 {
-         write (chns,'(i2.2)') isb    
+         write (chns,'(i3.3)') isb    
          call my_out(70,nx,ny,ehxp,'b2sifr_ehxp'//chns)
          call my_out(70,nx,ny,cthe(-1,-1,isb),'b2sifr_cthe'//chns)
          call my_out(70,nx,ny,cthi(-1,-1,isb),'b2sifr_cthi'//chns)

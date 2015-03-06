@@ -1,8 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2news (nx, ny, ns, nscx, iscx, ismain,                 !xpb
-     & dtim, rxf, ierr, wrong_flow, ramp_call)                           !xpb
+      subroutine b2news (nx, ny, ns, nscx, iscx, ismain, ismain0,
+     &  natm, nmol, nion, nlim, nsts, itim, dtim, rxf, ierr, 
+     &  wrong_flow, ramp_call)
       use b2mod_types
       use b2mod_geo
       use b2mod_plasma
@@ -11,15 +12,18 @@
       use b2mod_sources
       use b2mod_transport
       use b2mod_anomalous_transport               
-      use b2mod_work
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
       use b2mod_numerics_namelist
+      use b2mod_work
       use b2mod_b2cmpa
+      use b2mod_external
+      use b2mod_neoclassical
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nscx, iscx(0:nscxmax-1), ismain                !xpb
+      integer nx, ny, ns, nscx, iscx(0:nscxmax-1), ismain, ismain0,
+     *   natm, nmol, nion, nlim, nsts, itim
       real (kind=R8) ::
      *   dtim, rxf
 *   ..output arguments                                                   !xpb
@@ -46,7 +50,7 @@
 *     ..test input data
 *     ..compute auxiliary quantities
 *     ..compute transport coefficients
-*     ..iterate on momentum balance
+*     ..iterate on parallel momentum balance
 *     ..iterate on particle balance
 *     ..iterate on charge balance
 *     ..iterate on heat balance
@@ -58,7 +62,7 @@
 
 *   ..local variables
       integer potit, ipass, recalculate_contributions, pot_eq,       !xpb,dpc
-     *  potitmin, area_fix
+     *  potitmin, area_fix, nsmin, nsmax, no_current
       integer, save :: style = 2                                     !srv 29.05.02
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0         !srv 13.10.06
       integer, save :: anomalous_core_only = 0                        !srv 19.04.07
@@ -71,33 +75,36 @@
      *  xfm0, xfm1, xfm2, xfm3, rxf0, rxf1, rxf2, rxf3, t0, tmax
       real (kind=R8) ::                                                  !xpb
      1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                    !xpb
+     1  sne0(-1:nx,-1:ny,0:1),                                           !xpb
      2  shi0(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),                    !xpb
      3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
      4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
      5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
-     3  ue(-1:nx,-1:ny), vsal(-1:nx,-1:ny,0:1,0:ns-1),lnlam(-1:nx,-1:ny)
+     6  ue(-1:nx,-1:ny), vsal(-1:nx,-1:ny,0:1,0:ns-1),
+     7  lnlam(-1:nx,-1:ny), zero(-1:nx,-1:ny)
       character charnc*6, hlp_frm*4
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok, pot_eq,
-     1  recalculate_contributions, ramp_slow, guard_flows,         !xpb,dpc
-     3  potitmin, BoRiS, vis_per, area_fix, no_solve, solving
+     1  recalculate_contributions, ramp_slow, guard_flows,       !xpb,dpc
+     3  potitmin, BoRiS, vis_per, area_fix, no_solve, solving,
+     *  nsmin, nsmax, no_current
 *   ..procedures
       intrinsic abs, min, mod
       real (kind=R8) ::
-     *  smin, smax, sasum
+     *  smin, smax, b2sasum
       integer len_of_digits
       external len_of_digits
       external subini, subend, xertst, ipgetr, smin, smax,
-     &  scopy, saxpy, sasum, ipgeti
+     &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
      &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb, b2tfhe, b2tfhi,
      &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2srsm,
-     &  b2tfch
+     &  b2tfch, b2xpen
 *   ..initialisation
       data ncall/0/, xfm0/1.0_R8/, xfm1/1.0_R8/, xfm2/1.0_R8/, 
      1  xfm3/1.0_R8/, potit/50/, potok/1.0e-2_R8/, pot_eq/1/,
      2  ncallout/-1/, guard_flows/1/, area_fix/3/, no_solve/0/,          !xpb
-     5  recalculate_contributions/1/, ramp_slow/0/,                      !dpc
+     5  recalculate_contributions/1/, ramp_slow/0/, no_current/0/,       !dpc
      6  potitmin/0/, BoRiS/0.0_R8/, vis_per/0.0_R8/
 *
 *-----------------------------------------------------------------------
@@ -108,6 +115,8 @@
       call subini ('b2news')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+       nsmin=0
+       nsmax=ns
        call ipgetr ('b2news_xfm0', xfm0)
        call ipgetr ('b2news_xfm1', xfm1)
        call ipgetr ('b2news_xfm2', xfm2)
@@ -139,6 +148,9 @@
        call xertst (0.0_R8.lt.potok,
      &   'faulty internal parameter potok')
        call ipgeti ('b2news_poteq', pot_eq)
+       call ipgeti ('b2tfhe_no_current', no_current)
+       call xertst (pot_eq.eq.1.or.no_current.eq.1,
+     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2news_area_fix', area_fix)
        call ipgeti ('b2news_no_solve', no_solve)
        call xertst (-15.le.no_solve.and.no_solve.le.1,
@@ -149,7 +161,7 @@
      &    (no_solve.lt.0.and.mod(abs(no_solve),2**i).ge.2**(i-1))
        enddo
        if(.not.solving(1)) 
-     >   write(*,*) 'Not solving momentum equations!'
+     >   write(*,*) 'Not solving parallel momentum equations!'
        if(.not.solving(2)) 
      >   write(*,*) 'Not solving continuity equations!'
        if(.not.solving(3)) 
@@ -169,9 +181,23 @@
        call ipgeti ('b2news_use_b2npc9', use_b2npc9)                  !srv 06.11.08
        call ipgeti ('b2news_use_b2nph9', use_b2nph9)                  !srv 06.11.08
        call ipgeti ('b2news_coriolis', coriolis)                      !srv 11.11.08
+       call ipgeti ('b2news_nsmin', nsmin)
+       if(nsmin.gt.ns) then
+          nsmin=ns
+       elseif(nsmin.lt.0) then
+          nsmin=0
+       endif
+       call ipgeti ('b2news_nsmax', nsmax)
+       if(nsmax.gt.ns) then
+          nsmax=ns
+       elseif(nsmax.lt.0) then
+          nsmax=0
+       endif
+       write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
       endif
-*   ..set n2
+*   ..set n2, zero
       n2 = (nx+2)*(ny+2)
+      zero(-1:nx,-1:ny) = 0.0_R8
 *   ..test nx, ny, ns, ismain
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
@@ -179,6 +205,10 @@
      . 'invalid main plasma species index ismain')
       call xertst (.not.is_neutral(ismain),
      . 'invalid main plasma species ismain; must not be neutral')
+      call xertst (0.le.ismain0.and.ismain0.lt.ns,
+     . 'invalid main neutral species index ismain0')
+      call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
+     . 'invalid main neutral species ismain0; must be neutral')
 *   ..test facdrift
       call xertst (0.0_R8.le.minval(facdrift) .and.
      &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
@@ -217,7 +247,7 @@
       rxf3 = rxf*xfm3 
 
       if (ramp_call .or. ncall.eq.0) then
-         call b2news_facdrift_fac_ExB_inc(nx,ny)
+         call b2news_facdrift_fac_ExB_inc(nx,ny,ramp_slow)
       endif
 *   ..test facdrift, fac_ExB, fac_vis
       call xertst (0.0_R8.le.minval(facdrift) .and.
@@ -232,8 +262,8 @@
       do while(ipass.eq.0 .or. wrong_flow)                               !xpb
 *   ..compute ni, ne, ne2
         call b2xpni (nx, ny, ns, na, ni)
-        call b2xpne (nx, ny, ns, rza, na, ne)
-        call b2xpne (nx, ny, ns, rz2, na, ne2)
+        call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
+        call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
 *   ..compute ceqp
         call b2xpnm (nx, ny, ns, rz2, am, na, wrk0)
         call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp)   !xpb !srv 01.07.09 20.09.11
@@ -242,7 +272,8 @@
      &   na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)              !srv 16.06.08
 *   ..compute transport coefficients
         call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,          !srv 23.11.10
-     1   bb, conn, vol, gs, hx, hy, hz, qz, qc, pbs, bzb, lnlam,       !srv 13.10.06 01.07.09
+     1   bb, conn, vol, gs, hx, hy, hz, qz, qc, pbs, crx, cry, 
+     .   bzb, lnlam,                                                   !srv 13.10.06 01.07.09
      1   fch_p, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,       !srv 03.06.03
      2   cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,               !srv 13.10.06
      3   chvi, csig, csigin, calf, cthe, cthi, 
@@ -256,31 +287,32 @@
 *   ..re-compute source terms if necessary                               !xpb
         if((wrong_flow .and. ipass.ne.0) .or. ncall.eq.0) then           !xpb
 *     ..re-compute source linearisation                                  !xpb
-        call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain,        !xpb
-     &    dtim, BoRiS, facdrift, fac_ExB,                                  !xpb
-     &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !srv 09.01.01
+        call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain, ismain0,   !xpb
+     &    dtim, BoRiS, facdrift, fac_ExB,                                !xpb
+     &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,              !srv 09.01.01
      &    na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
-     &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
+     &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                !srv 28.10.02
      &    fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
-     &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,        !srv 13.10.06 25.12.06 23.10.09
+     &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,      !srv 13.10.06 25.12.06 23.10.09
      &    fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch, 
-     &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
+     &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir, 
      &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch,
+     &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &    wrong_flow, .false.)						 !xpb, dpc
 *     ..smooth out sources
-          call b2srsm (nx, ny, ns, dtim, vol, na, ua, te, ti, ne, ni,
-     &     sna, smo, she, shi, .false.)
+          call b2srsm (nx, ny, ns, dtim, 
+     &     vol, na, ua, te, ti, ne, ni,
+     &     sna, smo, she, shi, sne, .false.)
 *     ..include contributions due to timestep                            !xpb
           call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !xpb !srv 09.01.01 01.07.08
      &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
-     &     sna, smo, she, shi, sch, .false.)                                      !xpb
+     &     sna, smo, she, shi, sch, sne, .false.)                        !xpb
 *     ..stabilise the source coefficients                                !xpb
           call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,  !xpb !srv 01.07.08
-     &     ni, sna, smo, she, shi, sch)                                  !xpb
+     &     ni, sna, smo, she, shi, sch, sne)                             !xpb
         endif                                                            !xpb
         if((maxval(facdrift).ne.0.0_R8 .or. 
      &    maxval(fac_ExB).ne.0.0_R8)) then                           !srv 25.11.08 {
@@ -305,9 +337,10 @@
          fchinert  = 0.0_R8
          fchanml   = 0.0_R8
         endif                                                         !srv 25.11.08 }
-        do is = 0, ns-1
+!        do is = 0, ns-1
+        do is = nsmin, nsmax-1
 *    ..compute partial pressure
-         call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
+          call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute particle flux
          call b2tfnb (nx, ny, is, ismain,                               !srv 08.09.01
      1    guard_flows, facdrift, fac_ExB, am(is)*mp, vol, 
@@ -326,42 +359,43 @@
      2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
         enddo
 *     ..re-compute source linearisation                                  !xpb
-        call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain,        !xpb
-     &    dtim, BoRiS, facdrift, fac_ExB,                                  !xpb
-     &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !srv 09.01.01
+        call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain, ismain0,   !xpb
+     &    dtim, BoRiS, facdrift, fac_ExB,                                !xpb
+     &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,              !srv 09.01.01
      &    na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
-     &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
+     &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                !srv 28.10.02
      &    fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
-     &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,        !srv 13.10.06 25.12.06 23.10.09
+     &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,      !srv 13.10.06 25.12.06 23.10.09
      &    fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch, 
-     &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
+     &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir, 
      &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch,
+     &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &    wrong_flow, .false.)						 !xpb, dpc
 *     ..smooth out sources
-        call b2srsm (nx, ny, ns, dtim, vol, na, ua, te, ti, ne, ni,
-     &    sna, smo, she, shi, .false.)
+        call b2srsm (nx, ny, ns, dtim, 
+     &    vol, na, ua, te, ti, ne, ni,
+     &    sna, smo, she, shi, sne, .false.)
 *     ..include contributions due to timestep                            !xpb
         call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,           !xpb !srv 09.01.01 01.07.08
      &    vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &    na, ua, te, ti, ne, ni, kinrgy,                         !srv 16.07.10
-     &    sna, smo, she, shi, sch, .false.)                                       !xpb
+     &    sna, smo, she, shi, sch, sne, .false.)                         !xpb
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,    !xpb !srv 01.07.08
-     &    ni, sna, smo, she, shi, sch)                                   !xpb
+     &    ni, sna, smo, she, shi, sch, sne)                                   !xpb
 cxpb
-*   ..iterate on momentum balance
+*   ..iterate on parallel momentum balance
         if(coriolis.eq.0) then                                           !srv 19.10.08 {
-         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, hx, hy, hz, 
-     &    vol, bb, pbs, pbshz, lnlam,                                    !srv 01.07.09
+         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, guard_flows, 
+     &    vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                        !srv 01.07.09
      &    na, te, ti, po, fna, cvsahz, cvsa, cvsa_cl, cvsahz_cl,         !srv 02.07.08
      &    smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
      &    resmt, corua, corut, pcca, pccm, ier0)
         else
-         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, hx, hy, hz, 
-     &    vol, bb, pbs, pbshz, lnlam,                                    !srv 01.07.09
+         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, guard_flows, 
+     &    vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                        !srv 01.07.09
      &    na, te, ti, po, fna_fcor, cvsahz, cvsa, cvsa_cl, cvsahz_cl,    !srv 02.07.08
      &    smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
      &    resmt, corua, corut, pcca, pccm, ier0)
@@ -372,7 +406,7 @@ cxpb
 !#endif
 *   ..set nep
 *     (= ne before continuity update)
-        call scopy (n2, ne, 1, nep, 1)
+        call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
         if((maxval(facdrift).ne.0.0_R8 .or.                            !srv 25.11.08 {
      &    maxval(fac_ExB).ne.0.0_R8)) then
@@ -397,7 +431,8 @@ cxpb
           fchanml   = 0.0_R8
         endif                                                          !srv 25.11.08 }
 *     ..iterate on particle balance
-        do is = 0, ns-1
+!        do is = 0, ns-1
+       do is = nsmin, nsmax-1
 *    ..DPC
          do iy=-1,ny
            do ix=-1,nx
@@ -408,24 +443,36 @@ cxpb
               mach10=10.0_R8*
      &         sqrt((rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))/(am(is)*mp))
               if(ua(ix,iy,is).gt.mach10.and.(.not.is_neutral(is))) then
-                if(na(ix,iy,is)/ne(ix,iy).gt.1.0e-6_R8) then
+                if(na(ix,iy,is)/ne(ix,iy).gt.1.0e-6_R8 .or.
+     &             abs(b2stbr_sna(ix,iy,is)).gt.1.0e8_R8 .or.
+     &             abs(b2stbm_sna(ix,iy,is)).gt.1.0e8_R8 .or.
+     &             abs(ext_sna(ix,iy,is)).gt.1.0e8_R8) then
                   write(*,*)
      1             'Velocity limit active for ix,iy,is = ',ix,iy,is
                   write(*,*) 'ua,uadia(x&y),te,ti,mach10,na/ne',
-     1             ua(ix,iy,is),uadia(ix,iy,:,is),
+     1             ua(ix,iy,is),(uadia(ix,iy,i,is),i=0,1),
      2             te(ix,iy)/ev,ti(ix,iy)/ev,mach10,
      3             na(ix,iy,is)/ne(ix,iy)
+                  write(*,*) 'sources(r,m,ext):',
+     1             b2stbr_sna(ix,iy,is),b2stbm_sna(ix,iy,is),
+     2             ext_sna(ix,iy,is)
                 endif
                 ua(ix,iy,is)=mach10
               elseif(ua(ix,iy,is).lt.-mach10.and.(.not.is_neutral(is))) 
      >         then
-                if(na(ix,iy,is)/ne(ix,iy).gt.1.0e-6_R8) then
+                if(na(ix,iy,is)/ne(ix,iy).gt.1.0e-6_R8 .or.
+     &             abs(b2stbr_sna(ix,iy,is)).gt.1.0e8_R8 .or.
+     &             abs(b2stbm_sna(ix,iy,is)).gt.1.0e8_R8 .or.
+     &             abs(ext_sna(ix,iy,is)).gt.1.0e8_R8) then
                   write(*,*)
      1             'Velocity limit active for ix,iy,is = ',ix,iy,is
                   write(*,*) 'ua,uadia(x&y),te,ti,mach10,na/ne',
-     1             ua(ix,iy,is),uadia(ix,iy,:,is),
+     1             ua(ix,iy,is),(uadia(ix,iy,i,is),i=0,1),
      2             te(ix,iy)/ev,ti(ix,iy)/ev,mach10,
      3             na(ix,iy,is)/ne(ix,iy)
+                  write(*,*) 'sources(r,m,ext):',
+     1             b2stbr_sna(ix,iy,is),b2stbm_sna(ix,iy,is),
+     2             ext_sna(ix,iy,is)
                 endif
                 ua(ix,iy,is)=-mach10
               endif
@@ -510,19 +557,12 @@ cxpb
          endif
         enddo
         if(wrong_flow .or. ipass.ne.0) then                              !xpb
-          write(*,*) 'Before potential loop: fna(ions) at plates'        !xpb
-          do iy = -1,ny                                                  !xpb
-            if(mod(region(-1,iy,0),4).eq.3)
-     >       write(*,*) iy,'west =',
-     >        fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)                !xpb
-          enddo                                                          !xpb
-          do iy = -1,ny                                                  !xpb
-            if(mod(region(nx,iy,0),4).eq.0 .and. region(nx,iy,0).ne.0)
-     >       write(*,*) iy,'east =',fna(nx,iy,0,ismain)                  !xpb
-          enddo                                                          !xpb
-        endif                                                            !xpb
+           call print_wrong_flows(
+     &          'Before potential loop: fna(ions) at plates')
+        endif
 *   ..re-compute ne, ni
-        call b2xpne (nx, ny, ns, rza, na, ne)
+        call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
+        call nancheck(nx, ny, ne, 'b2news(ne): after call to b2xpne')
         call b2xpni (nx, ny, ns, na, ni)
 *   ..check if we are solving for the potential
         if (pot_eq.eq.0) then
@@ -534,7 +574,7 @@ cxpb
           if (solving(3)) then
             call b2nxdp (nx, ny, nnreg(0), solvepo, 
      .       qe, te, nep, ne, wrk0)
-            call saxpy (n2, 1.0_R8, wrk0, 1, po, 1)
+            call b2saxpy (n2, 1.0_R8, wrk0, 1, po, 1)
           endif
           if(.not.wrong_flow.and.solving(3)) then                        !xpb 
 *   ..iterate several times on the potential equation                    !xpb
@@ -548,14 +588,15 @@ cxpb
 	         if (style.eq.3) call restart_sdrv_for_7                     !srv 29.05.02
               endif
             endif
-            do while(i.le.potit.and.(t0.gt.potok.or.i.le.potitmin).and.
+            do while(i.lt.potit.and.(t0.gt.potok.or.i.le.potitmin).and.
      1       .not.wrong_flow)                                            !xpb
 *    ..compute current
-              call b2xpfe (nx, ny, ns, qe, rza, fna, fch, fne)
-              call b2xpfe (nx, ny, ns, qe, rza, fna_32nd, fch_32, 
-     1         fne_32)
-              call b2xpfe (nx, ny, ns, qe, rza, fna_52nd, fch_52, 
-     1         fne_52)
+              call b2xpfe (nx, ny, ns, ns_ext, qe, 
+     &         rza, za_ext, fna, fa_ext, fch, fne)
+              call b2xpfe (nx, ny, ns, ns_ext, qe, 
+     1         rza, za_ext, fna_32nd, fa_ext, fch_32, fne_32)
+              call b2xpfe (nx, ny, ns, 0, qe,  
+     1         rza, zero, fna_52nd, zero, fch_52, fne_52)
               call b2xpfi (nx, ny, ns, fna, fni)                         !xpb
               call b2xpfi (nx, ny, ns, fna_32nd, fni_32)                 !xpb
               call b2xpfi (nx, ny, ns, fna_52nd, fni_52)                 !xpb
@@ -579,35 +620,42 @@ cxpb
      2         fna, fni_32, fni_52, kinrgy,
      &         chci, cddi, chvi, chvimx, vsal, vadia, vaecrb, 
      3         fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi)          !srv 13.10.06
+              call b2xpen (nx, ny, ns,
+     1         fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
+     2         fhm, fhp, fhj, fht)
               if(recalculate_contributions.ne.0) then
 *     ..update sources                                                   !xpb
-        call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain,        !xpb
-     &    dtim, BoRiS, facdrift, fac_ExB,                                  !xpb
-     &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !srv 09.01.01
-     &    na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
-     &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
-     &    fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
-     &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,        !srv 13.10.06 25.12.06 23.10.09
-     &    fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch, 
-     &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
-     &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir, 
-     &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
-     &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch,
-     &    wrong_flow, .false.)						 !xpb, dpc
+                call b2sral (nx, ny, ns, nscx, nscxmax, 
+     &           iscx, ismain, ismain0, dtim, BoRiS, facdrift, fac_ExB,  !xpb
+     &           vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb, 
+     &           na, ua,               !srv 09.01.01
+     &           uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
+     &           te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
+     &           fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
+     &           fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift,         !srv 13.10.06 25.12.06 23.10.09
+     &           fna_he, fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch, 
+     &           fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,    !srv 21.10.02
+     &           fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir, 
+     &           cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
+     &           rlsa, rlra, rlqa, rlcx, rlrd, 
+     &           rlbr, rlza, rlz2, rlpt, rlpi,
+     &           rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
+     &           wrong_flow, .false.)						 !xpb, dpc
 *     ..smooth out sources
-                call b2srsm (nx, ny, ns, dtim, vol, na, ua, te, ti, 
-     &           ne, ni, sna0, smo0, she0, shi0, .false.)
+                call b2srsm (nx, ny, ns, dtim, 
+     &           vol, na, ua, te, ti, ne, ni, 
+     &           sna0, smo0, she0, shi0, sne0, .false.)
 *     ..include contributions due to timestep                            !xpb
                 call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,   !xpb !srv 09.01.01 01.07.08
      &           vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &           na, ua, te, ti, ne, ni, kinrgy,                         !srv 16.07.10
-     &           sna0, smo0, she0, shi0, sch0, .false.)                  !xpb
+     &           sna0, smo0, she0, shi0, sch0, sne0, .false.)            !xpb
 *     ..stabilise the source coefficients                                !xpb
                 call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti,    !xpb !srv 01.07.08
-     &           po, ne, ni, sna0, smo0, she0, shi0, sch0)               !xpb
+     &           po, ne, ni, sna0, smo0, she0, shi0, sch0, sne0)         !xpb
                 if(wrong_flow) then                                      !xpb
                   sna=sna0                                               !xpb
+                  sne=sne0                                               !xpb
                   smo=smo0                                               !xpb
                   smq=smq0                                               !xpb
                   she=she0                                               !xpb
@@ -631,7 +679,7 @@ cxpb
                 ixmax = -2                                               !xpb
                 iymax = -2                                               !xpb
                 do iy = -1, ny
-cxpb       t0 = t0+sasum(nx+2,wrk0(-1,iy),1)
+cxpb       t0 = t0+b2sasum(nx+2,wrk0(-1,iy),1)
 cxpb  Do not count residuals from dead or unsolved cells
                   do ix = -1, nx
                     ireg = region(ix,iy,0)
@@ -645,6 +693,8 @@ cxpb  Do not count residuals from dead or unsolved cells
                     endif                                                !xpb
                   enddo
                 enddo
+                write(*,*) 't0, tmax, ixmax, iymax = ', 
+     &               t0, tmax, ixmax, iymax
                 if (i.eq.0) then
                   respo = wrk0
                   corpo = wrk1
@@ -658,7 +708,8 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                   call hbout('../b2ne+nppo',nx,ny,ns,te,'te',ti,'ti',
      &             na,'na',ua,'ua',resmo,'resmo',corua,'corua')
                 endif
-                do is = 0, ns-1
+!                do is = 0, ns-1
+                do is = nsmin, nsmax-1
 *    ..compute partial pressure
                   call b2xppb (nx, ny, 
      1             rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
@@ -684,20 +735,12 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
 cxpb          call b2nxpo (nx, ny, ns, hx, pbs,                          !xpb
 cxpb &         te, ne, fna, fch, wrk0, po)                               !xpb
                 if(wrong_flow .or. ipass.ne.0) then                      !xpb
-                  write(*,*) 'In potential loop: fna(ions) at plates'    !xpb
-                  do iy = -1,ny                                          !xpb
-                    if(mod(region(-1,iy,0),4).eq.3)
-     >               write(*,*) iy,'west =',
-     >                fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)        !xpb
-                  enddo                                                  !xpb
-                  do iy = -1,ny                                          !xpb
-                    if(mod(region(nx,iy,0),4).eq.0 .and. 
-     &                     region(nx,iy,0).ne.0) write(*,*) iy,
-     &                             'east =',fna(nx,iy,0,ismain)          !xpb
-                  enddo                                                  !xpb
-                endif                                                    !xpb
+                   call print_wrong_flows(
+     &                  'In potential loop: fna(ions) at plates')
+                endif
                 if (tmax.gt.0.0_R8) then
-                  write(*,*) 'i,respo',i,t0,tmax,ixmax,iymax
+                  write(*,'(a,i6,1p,2g14.7,2i4)') 
+     &             'i,respo',i,t0,tmax,ixmax,iymax
                 else
                   write(*,*) 'No potential residuals, respo = ', t0
                 endif
@@ -716,34 +759,28 @@ cxpb &         te, ne, fna, fch, wrk0, po)                               !xpb
 *   ..end of potential equation loop                                     !xpb
             enddo
             if(wrong_flow .or. ipass.ne.0) then                          !xpb
-              write(*,*) 'After potential loop: fna(ions) at plates'     !xpb
-              do iy = -1,ny                                              !xpb
-                if(mod(region(-1,iy,0),4).eq.3)
-     >           write(*,*) iy,'west =',
-     >            fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)            !xpb
-              enddo                                                      !xpb
-              do iy = -1,ny                                              !xpb
-                if(mod(region(nx,iy,0),4).eq.0 .and. 
-     &                 region(nx,iy,0).ne.0) write(*,*) iy,
-     &                         'east =',fna(nx,iy,0,ismain)              !xpb
-              enddo                                                      !xpb
-            endif                                                        !xpb
+               call print_wrong_flows(
+     &              'After potential loop: fna(ions) at plates')
+            endif
             if(i.gt.potit) then
               ierr=10
 cxpb
 cxpb          ierr=0     !testing forcing potit iterations
 cxpb
               write(*,*) 'Potential equation not converging'
-              call b2news_facdrift_fac_ExB_dec(nx,ny)
+              call b2news_facdrift_fac_ExB_dec(nx,ny,ramp_slow)
               goto 99999
             endif
           endif                         !xpb - wrong_flow .or. solving(3)
         endif                           ! if pot_eq 
 *   ..compute fne, fni
 c     with diamagnetic drift part                                        !xpb
-        call b2xpfe (nx, ny, ns, qe, rza, fna, fch, fne)                 !xpb
-        call b2xpfe (nx, ny, ns, qe, rza, fna_32nd, fch_32, fne_32)
-        call b2xpfe (nx, ny, ns, qe, rza, fna_52nd, fch_52, fne_52)
+        call b2xpfe (nx, ny, ns, ns_ext, qe, 
+     .   rza, za_ext, fna, fa_ext, fch, fne)                 !xpb
+        call b2xpfe (nx, ny, ns, ns_ext, qe, 
+     .   rza, za_ext, fna_32nd, fa_ext, fch_32, fne_32)
+        call b2xpfe (nx, ny, ns, 0, qe, 
+     .   rza, zero, fna_52nd, zero, fch_52, fne_52)
         call b2xpfi (nx, ny, ns, fna, fni)                               !xpb
         call b2xpfi (nx, ny, ns, fna_32nd, fni_32)
         call b2xpfi (nx, ny, ns, fna_52nd, fni_52)
@@ -768,6 +805,9 @@ c     with diamagnetic drift part                                        !xpb
      2   fna, fni_32, fni_52, kinrgy,
      &   chci, cddi, chvi, chvimx, vsal, vadia, vaecrb, 
      3   fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi)                !srv 13.10.06
+        call b2xpen (nx, ny, ns,
+     1   fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
+     2   fhm, fhp, fhj, fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni
         call b2tfcc (nx, ny, ns, na, te, ti, cdpa, floe, cone,
      &   floi, coni)
@@ -826,6 +866,7 @@ c     with diamagnetic drift part                                        !xpb
         do is=0,ns-1
           ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
         enddo
+        ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
         ue(:,:)=ue(:,:)/ne(:,:)
 *   ..iterate on heat balance
       if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                          !srv 13.10.06
@@ -865,7 +906,7 @@ c     with diamagnetic drift part                                        !xpb
         if(ipass.gt.min(20,potit)) then                                  !xpb
           ierr=10                                                        !xpb
           write(*,*) 'Wrong flow correction inoperative'                 !xpb
-          call b2news_facdrift_fac_ExB_dec(nx,ny)
+          call b2news_facdrift_fac_ExB_dec(nx,ny,ramp_slow)
           goto 99999                                                     !xpb
         endif                                                            !xpb
 *  ..end of wrong_flow loop                                              !xpb
@@ -884,6 +925,35 @@ c        write(*,*) 'Called b2stbr_neutr_scl'
 *-----------------------------------------------------------------------
 *.end b2news
 
+      contains
+
+      subroutine print_wrong_flows(label)
+      implicit none
+      character (len=*) :: label
+
+      write(*,*) label
+      do iy = -1,ny
+         if(mod(region(-1,iy,0),4).eq.3)
+     >        write(*,*) iy,'west =',
+     >        fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)
+      enddo
+      do iy = -1,ny
+         if(mod(region(nx,iy,0),4).eq.0 .and. region(nx,iy,0).ne.0)
+     >        write(*,*) iy,'east =',fna(nx,iy,0,ismain)
+      enddo
+      if(nnreg(0).eq.1.and.ny.le.1.and.nx.gt.1) then
+! 1d linear device
+         do iy = -1,ny
+            write(*,*) iy,'west =',
+     >           fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)
+         enddo
+         do iy = -1,ny
+            write(*,*) iy,'east =',fna(nx,iy,0,ismain)
+         enddo
+      endif
+      end subroutine print_wrong_flows
+
+
       end subroutine b2news
 c
       subroutine b2news_facdrift_fac_ExB_init(nx, ny, ramp_slow)
@@ -891,11 +961,9 @@ c
       use b2mod_plasma
       use b2mod_indirect
       use b2mod_geo
+      use b2mod_work
       implicit none
       integer nx, ny, ramp_slow
-      real (kind=R8), allocatable, save :: 
-     &     facdrift_profile(:,:), fac_ExB_profile(:,:), ds(:),
-     1	   fac_vis_profile(:,:)
       real (kind=R8) :: 
      1 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec,
      3 facExB_target, facExB_start, facExB_inc, facExB_dec, 
@@ -933,13 +1001,6 @@ c
      1 (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
 
       if(ncall.eq.0) then
-       allocate(facdrift_profile(-1:nx,-1:ny))
-       facdrift_profile=1.0_R8
-       allocate(fac_ExB_profile(-1:nx,-1:ny))
-       fac_ExB_profile=1.0_R8
-       allocate(fac_vis_profile(-1:nx,-1:ny))
-       fac_vis_profile=1.0_R8
-       allocate(ds(-1:ny))
        call get_jsep(nx,ny,jxi,jxa,jsep)
        fac_ref=jxa
        call ipgeti ('b2news_fac_ref',fac_ref)
@@ -957,17 +1018,19 @@ c
      &   'faulty argument facdrift_target')                              !xpb
        call xertst (1.0_R8.le.facdrift_inc,                              !xpb
      &   'faulty argument facdrift_inc')                                 !xpb
-       call xertst (0.0_R8.le.facdrift_dec .and. 1.0_R8.ge.facdrift_dec, !xpb
+       call xertst (0.0_R8.le.facdrift_dec .and. 1.0_R8.ge.facdrift_dec,
      &   'faulty argument facdrift_dec')                                 !xpb
        facdrift_scalar=facdrift_start
        if(facdrift_start.eq.facdrift_target .and. 
      &  facdrift_start.ne.0.0_R8) then
          write(*,*) 'facdrift set to a fixed value :', facdrift_start
        elseif(facdrift_start.ne.facdrift_target.and.ramp_slow.eq.0) then
-         write(*,*) 'facdrift ramped normally from ',facdrift_start,
+         write(*,'(a,1p,1g9.2,a,1g9.2)') 
+     &    'facdrift ramped normally from ',facdrift_start,
      &    ' towards ',facdrift_target
        elseif(facdrift_start.ne.facdrift_target.and.ramp_slow.ne.0) then
-         write(*,*) 'facdrift ramped slowly from ',facdrift_start,
+         write(*,'(a,1p,1g9.2,a,1g9.2)') 
+     &    'facdrift ramped slowly from ',facdrift_start,
      &    ' towards ',facdrift_target
        else
          write(*,*) 'No diamagnetic drifts'
@@ -1007,10 +1070,12 @@ c old style
      >  then
          fac_ExB_scalar=facExB_start
          if (ramp_slow.eq.0) then
-           write(*,*) 'fac_ExB ramped normally from ',facExB_start,
+           write(*,'(a,1p,1g9.2,a,1g9.2)') 
+     &      'fac_ExB ramped normally from ',facExB_start,
      &      ' towards ',facExB_target
          else
-           write(*,*) 'fac_ExB ramped slowly from ',facExB_start,
+           write(*,'(a,1p,1g9.2,a,1g9.2)') 
+     &      'fac_ExB ramped slowly from ',facExB_start,
      &      ' towards ',facExB_target
          endif
        else
@@ -1061,10 +1126,12 @@ c old style
      >  then
          fac_vis_scalar=facvis_start
          if (ramp_slow.eq.0) then
-           write(*,*) 'fac_vis ramped normally from ',facvis_start,
+           write(*,'(a,1p,1g9.2,a,1g9.2)') 
+     &      'fac_vis ramped normally from ',facvis_start,
      &      ' towards ',facvis_target
          else
-           write(*,*) 'fac_vis ramped slowly from ',facvis_start,
+           write(*,'(a,1p,1g9.2,a,1g9.2)') 
+     &      'fac_vis ramped slowly from ',facvis_start,
      &      ' towards ',facvis_target
          endif
        else
@@ -1100,7 +1167,11 @@ c old style
           enddo
        endif
        call ipgetr ('b2news_fac_ExB_tanh_a', facExB_tanh_a)
+       if (facExB_tanh_a.eq.0.0_R8) 
+     >  call ipgetr ('b2news_facExB_tanh_a', facExB_tanh_a)
        call ipgetr ('b2news_fac_ExB_tanh_b', facExB_tanh_b)
+       if (facExB_tanh_b.eq.0.0_R8) 
+     >  call ipgetr ('b2news_facExB_tanh_b', facExB_tanh_b)
        if(facExB_tanh_b.ne.0.0_R8) then
           do iy=-1, ny
              do ix=-1, nx
@@ -1114,7 +1185,11 @@ c old style
           enddo
        endif
        call ipgetr ('b2news_fac_vis_tanh_a', facvis_tanh_a)
+       if (facvis_tanh_a.eq.0.0_R8) 
+     >  call ipgetr ('b2news_facvis_tanh_a', facvis_tanh_a)
        call ipgetr ('b2news_fac_vis_tanh_b', facvis_tanh_b)
+       if (facvis_tanh_b.eq.0.0_R8) 
+     >  call ipgetr ('b2news_facvis_tanh_b', facvis_tanh_b)
        if(facvis_tanh_b.ne.0.0_R8) then
           do iy=-1, ny
              do ix=-1, nx
@@ -1130,7 +1205,7 @@ c old style
       endif
       goto 1000
 
-      entry b2news_facdrift_fac_ExB_inc(nx,ny)
+      entry b2news_facdrift_fac_ExB_inc(nx,ny,ramp_slow)
       call xertst (0.lt.ncall,
      &     'b2news_facdrift_fac_ExB_inc called before initialisation')
       facdrift_scalar=min(facdrift_scalar*facdrift_inc,facdrift_target)
@@ -1138,7 +1213,7 @@ c old style
       fac_vis_scalar=min(fac_vis_scalar*facvis_inc,facvis_target)
       goto 1000
 
-      entry b2news_facdrift_fac_ExB_dec(nx,ny)
+      entry b2news_facdrift_fac_ExB_dec(nx,ny,ramp_slow)
       call xertst (0.lt.ncall,
      &     'b2news_facdrift_fac_ExB_dec called before initialisation')
       facdrift_scalar=max(facdrift_scalar*facdrift_dec,facdrift_start)
@@ -1150,7 +1225,7 @@ c old style
       facdrift=facdrift_scalar*facdrift_profile
       fac_ExB=fac_ExB_scalar*fac_ExB_profile
       fac_vis=fac_vis_scalar*fac_vis_profile
-      write(*,'(1x,a,1p,6g15.5)') 'facdrift, fac_ExB, fac_vis',
+      write(*,'(1x,a,1p,6g12.5)') 'facdrift, fac_ExB, fac_vis',
      &   minval(facdrift),maxval(facdrift),
      &   minval(fac_ExB),maxval(fac_ExB),
      &   minval(fac_vis),maxval(fac_vis)

@@ -9,10 +9,14 @@
 #endif
       use b2mod_constants
 #ifdef USE_EIRENE
+      use eirmod_parmmod
       use eirmod_extrab25
 #endif
       implicit none
+#ifndef USE_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
+#     include <COUPLE/EIRDIAG.F>
+#endif
       integer nx, ny, ns
 #ifndef NO_CDF
       real (kind=R8) :: time(1), dummy(-1:nx, -1:ny), 

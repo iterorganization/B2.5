@@ -54,7 +54,7 @@
       integer ncall, n2, ix, iy, ireg, ii
       integer, save :: iout = 0                                      !srv 04.07.08
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
-      character chns*2, chark*1                                    !srv 04.07.08
+      character chns*3, chark*1                                    !srv 04.07.08
       real (kind=R8) ::
      *  rxg, pcm0, pcm1
       real (kind=R8) ::
@@ -147,7 +147,7 @@
 csw 11dec2012, check for solv flags
       if(all(solvcreg(0:nnreg(0)))) then
 *   ..compute correction
-       write (chns,'(i2.2)') isb
+       write (chns,'(i3.3)') isb
        call b2usco (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1, 
      &  vol, pbs, nb, pb, snb(-1,-1,1),flob,
      &  conb, pccb(-1,-1,1), rescb, corpb, aa5, 'b2usco_')              !srv 18.05.02 26.09.12
@@ -178,7 +178,7 @@ csw 11dec2012, check for solv flags
       endif
 
       if (iout.ne.0) then                                            !srv 12.07.02 {
-        write (chns,'(i2.2)') isb
+        write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,pb,'b2npco_pa'//chns)
         call my_out(70,nx,ny,nb,'b2npco_na'//chns)
         call my_out(70,nx,ny,ub,'b2npco_ua'//chns)

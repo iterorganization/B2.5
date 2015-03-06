@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_external
       use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -44,7 +45,7 @@
 
 *   ..local variables
       real (kind=R8) ::
-     *   fni(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),
+     * fni(-1:nx,-1:ny,0:1), fne(-1:nx,-1:ny,0:1),
      1 wrk0(-1:nx,-1:ny),
      2 ni(-1:nx,-1:ny,0:1), 
      3 ro(-1:nx,-1:ny), pr(-1:nx,-1:ny)
@@ -68,7 +69,8 @@
       call b2xpni (nx, ny, ns, na, ni)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       call b2xpro (nx, ny, ns, mp, am, na, ro)
-      call b2xpfe (nx, ny, ns, qe, rza, fna, fch, fne)
+      call b2xpfe (nx, ny, ns, ns_ext, qe, 
+     &  rza, za_ext, fna, fa_ext, fch, fne)
       call b2xpfi (nx, ny, ns, fna, fni)
 *   ..write state
       call b2wfpj (nprt, idout, nx, ny, ns, na, ua, te, ti, po,

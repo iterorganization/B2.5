@@ -24,72 +24,91 @@
 *  Found in b2.neutrals.parameters.
 *    This namelist is used to either set parameters for the B2 neutral fluid 
 *    model or for the Eirene Monte-Carlo neutrals run.
-*    In the latter case, some of the parameters will become active only on the 
+*    When coupling to Eirene, it is essential that the neutral boundaries
+*    conditions declared here be in the same exact order than they are in
+*    the Eirene input file.
+*    For coupled cases, some of the parameters will become active only on the 
 *    second call to Eirene, while values inherited from the Eirene input file 
 *    will be used for the first call. In such cases, use of the switch 
 *    'eirene_repeat_first_call' is recommended.
 *    This namelist is read if either 'b2stbr_neutrals_namelist' or 
 *    'b2mndr_eirene' are set to 1.
+*    Some of the arrays are dimensioned by NTRACK, which is the maximum
+*    number of tracked species in the mixed materials model. This parameter
+*    is set in b2mod_layer and currently holds the value 4.
 *  NSTRAI - integer. Number of neutral sources, or 'strata'. Must not be larger
-*     than DEF_NSTRA from $(SOLPSTOP)/src/include(.local)/DIMENSIONS.F file.
+*     than DEF_NSTRA from $(SOLPSTOP)/include(.local)/DIMENSIONS.F file.
 *     Defaults to 0.
-*  RCPOS - integer array of length (NSTRAI). Position in the B2 grid of the 
+*     Need not include the time-dependent stratum. If a time-dependent stratum
+*     is used, is incremented internally as needed. The incremented value is 
+*     referred to as NSTRAT below.
+*  RCPOS - integer array of length (NSTRAT). Position in the B2 grid of the 
 *     of strata. Similar use as BCPOS from /BOUNDARY/ namelist. Defaults to -2.
-*  RCSTART - integer array of length (NSTRAI). Start coordinate on the B2 grid 
+*  RCSTART - integer array of length (NSTRAT). Start coordinate on the B2 grid 
 *     the strata. Similar use as BCSTART from /BOUNDARY/ namelist. Defaults to -2.
-*  RCEND - integer array of length (NSTRAI). End coordinate on the B2 grid of
+*  RCEND - integer array of length (NSTRAT). End coordinate on the B2 grid of
 *     the strata. Similar use as BCEND from /BOUNDARY/ namelist. Defaults to -2.
-*  TARGSP - integer array of size (NSTRAI,NTRACK). Identifies the base 
+*  RC_LIST_SIZE - integer array of length (NSTRAT). Contains the size of the 
+*     recycling boundary lists. Similar use as BC_LIST_SIZE from /BOUNDARY/ 
+*     namelist. Defaults to 0.
+*  RC_LIST_X - integer array of length (2*(NXD+NYD),NSTRAT). Contains the 
+*     X-coordinate of the cells where recycling boundaries are applied. 
+*     Similar use as BC_LIST_X from /BOUNDARY/ namelist. Defaults to -2.
+*  RC_LIST_Y - integer array of length (2*(NXD+NYD),NSTRAT). Contains the 
+*     Y-coordinate of the cells where recycling boundaries are applied. 
+*     Similar use as BC_LIST_Y from /BOUNDARY/ namelist. Defaults to -2.
+*  TARGSP - integer array of size (NSTRAT,NTRACK). Identifies the base 
 *     material(s) of this stratum wall. The number corresponds to the B2 
 *     species index produced by sputtering. Defaults to 'b2stbr_sput_dst'. 
-*     Check b2cdci for details.
-*  CHEMSP - logical array of length NSTRAI. Indicates whether chemical 
+*     Check b2cdci for details. If the bulk species is not sputtered,
+*     should contain -1.
+*  CHEMSP - logical array of length NSTRAT. Indicates whether chemical 
 *     sputtering is allowed from this wall stratum. Defaults to .false..
-*  RECYC - real*8 array of size (0:NS-1,NSTRAI). Stores the particle recycling 
+*  RECYC - real*8 array of size (0:NS-1,NSTRAT). Stores the particle recycling 
 *     coefficients of species (is) on stratum (istra). Defaults to 1.0 for 
 *     non-carbon species and 0.0 for carbon species. Particles recycle into
 *     the neutral species associated to their homonuclear sequence.
 *     Applies to B2 neutral fluid species.
 *     Also multiplies Eirene recycling fluxes if 'eirene_use_recyceir' is set 
-*     to 0 (default value is 1, see b2cdci for details).
-*  ERECYC - real*8 array of size (0:NS-1,NSTRAI). Stores the energy recycling 
+*     to 0 (default, see b2cdci for details).
+*  ERECYC - real*8 array of size (0:NS-1,NSTRAT). Stores the energy recycling 
 *     coefficients of species (is) on stratum (istra). Defaults to 0.3 for 
 *     non-carbon species and 0.0 for carbon species. The energy is carried back
 *     by the recycled neutrals.
 *     Applies only to B2 neutral fluid species.
-*  RCION - real*8 array of size (0:NS-1,NSTRAI). Stores the particle-into-ion 
+*  RCION - real*8 array of size (0:NS-1,NSTRAT). Stores the particle-into-ion 
 *     recycling coefficients of species (is) on stratum (istra). Defaults to 
 *     0.0. Particles recycle into the next ionised species associated to their 
 *     homonuclear sequence. Applies only to B2 neutral fluid species.
-*  RECYCEIR - real*8 array of size (NSTRAI). Multiplier to the Eirene recycling
+*  RECYCEIR - real*8 array of size (NSTRAT). Multiplier to the Eirene recycling
 *     fluxes from stratum (istra). Only used if 'eirene_use_recyceir' is set 
 *     to 1. Defaults to 1.0.
-*  USERFLUXPARM - real*8 array of size (NSTRAI,2). The element (istra,1) 
+*  USERFLUXPARM - real*8 array of size (NSTRAT,2). The element (istra,1) 
 *     contains the strength of constant gas puff strata (type 'C') for Eirene 
 *     in particles/second. Defaults to 0.
-*  CRCSTRA - character*1 array of length (NSTRAI). Contains the type of stratum
+*  CRCSTRA - character*1 array of length (NSTRAT). Contains the type of stratum
 *     for Eirene. Defaults to ' '. Possible options include:
 *     'N','S','W','E' - topological mesh boundaries (same use as BCCHAR in 
 *           /BOUNDARY/ namelist)
-*     'V' - volume recombination source (related RCPOS, RCSTART and RCEND are 
-*           ignored).
-*     'C' - constant or feedback gas puff source (related RCPOS, RCSTART and 
-*           RCEND are ignored). Gas puffs for B2 fluid neutrals are handled via 
-*           b2.boundary.parameters.
+*     'V' - volume recombination source (related RCPOS, RCSTART, RCEND and
+*           RC_LIST variables are ignored).
+*     'C' - constant or feedback gas puff source (related RCPOS, RCSTART,
+*           RCEND and RC_LIST variables are ignored). Gas puffs for B2 fluid 
+*           neutrals are handled via b2.boundary.parameters.
 *           Unless specified otherwise by use of 'eirene_nesepm_istra', it is
 *           the first 'C' stratum that is used for feedback puff schemes.
 *           See b2cdci for details.
-*     'T' - time-dependent source for Eirene (related RCPOS, RCSTART and RCEND 
-*           are ignored). Long-lived Eirene neutrals are stored in this 
-*           stratum. See EIRENE_STEP_DT below.
+*     'T' - time-dependent source for Eirene (related RCPOS, RCSTART, RCEND 
+*           and RC_LIST variables are ignored). Long-lived Eirene neutrals  
+*           are stored in this stratum. See EIRENE_STEP_DT below.
 *  RF_NEUT - real*8 array of size (4). Relaxation parameters multiplying the 
 *           Eirene particle, parallel momentum, electron energy and ion energy
 *           sources respectively before use in B2. Defaults to 1.0.
-*  PHYS_SPUT - real*8 array of size (0:NS-1,NSTRAI). Stores the physical 
+*  PHYS_SPUT - real*8 array of size (0:NS-1,NSTRAT). Stores the physical 
 *     sputtering multiplier for B2 species (is) sputtering on the wall of 
 *     stratum (istra). Must be non-zero for physical sputtering to occur.
 *     Only applies if using B2 fluid neutral model. Defaults to 0.0.
-*  CHEM_SPUT - real*8 array of size (0:NS-1,NSTRAI). Stores the chemical 
+*  CHEM_SPUT - real*8 array of size (0:NS-1,NSTRAT). Stores the chemical 
 *     sputtering multiplier for B2 species (is) sputtering on the wall of 
 *     stratum (istra). Must be non-zero for chemical sputtering to occur.
 *     Only applies if using B2 fluid neutral model. Defaults to 0.0.
@@ -100,7 +119,7 @@
 *     Defaults to 1.0e-3 seconds.
 *  EIRENE_MOD - integer. Frequency of Eirene calls. Eirene is called every 
 *     EIRENE_MOD full B2 iterations. Defaults to 1.
-*  VOLRECSTART - real*8 array of size (NSTRAI). Initial volume recombination 
+*  VOLRECSTART - real*8 array of size (NSTRAT). Initial volume recombination 
 *     rate from stratum (istra) to be used for the volume recombination 
 *     scaling regulation algorithm. Rendered obsolete by 'eirene_dpc_fix'. 
 *     Defaults to 1.e21 particles/second. 
@@ -112,9 +131,9 @@
 *     that of previous iteration in the volume recombination regulation 
 *     scaling scheme. Defaults to 0.1.
 *     Rendered obsolete by 'eirene_dpc_fix'.
-*  SPECIES_START - integer array of size (NSTRAI). Specifies the index of the 
+*  SPECIES_START - integer array of size (NSTRAT). Specifies the index of the 
 *     first B2 species involved in stratum (istra). Defaults to 0.
-*  SPECIES_END - integer array of size (NSTRAI). Specifies the index of the 
+*  SPECIES_END - integer array of size (NSTRAT). Specifies the index of the 
 *     last B2 species involved in stratum (istra). Defaults to ns-1.
 *  NEUTRALS_FILENAME - character*256. Name of the next file to use for reading 
 *     a new /NEUTRALS/ namelist. Defaults to 'b2.neutrals.parameters'.
@@ -125,10 +144,12 @@
 *     Only active if NEUTRALS_TIME_MOD is greater than 0.
 *  NEUTRALS_TIME_SWITCH - real*8. Time (in seconds) within an ELM cycle after 
 *     which a new NEUTRALS namelist is read. Defaults to 0.0.
-*  LSTRASCL - integer array of size (NSTRAI,0:natm). Indicates with which 
-*    Eirene atomic species to scale the Eirene atomic species (iatm) from 
-*    stratum (istra) (0 means no scaling, default). Atomic species 0 stands
-*    for electrons.
+*  L_NEUTRAD - integer. If l_neutrad >= 0, then the radiated power due to the
+*     neutrals atoms is taken directly from the Eirene calculation, instead
+*     of being recomputed by B2. Defaults to -1.
+*  LSTRASCL - integer array of size (NSTRAT,0:natm). Indicates with which 
+*    Eirene atomic species to scale the Eirene stratum (istra) 
+*    (0 means no scaling, default). Atomic species 0 stands for electrons.
 *  B2ESPCR - integer array of size (0:NS-1). Contains the index of the Eirene 
 *    atomic species corresponding to the B2 species (is). Defaults to the
 *    ordering of the B2 isonuclear sequences.
@@ -149,10 +170,10 @@
 *    boundaries. Defaults to 0.
 *  LSNS - integer array of size (NLMPGS). Contains the indices of Eirene 
 *    surfaces. Only override the default setting if you know what you're doing!
-*  KSNS - integer array of size (NSTRAI). Contains the indices of Eirene 
+*  KSNS - integer array of size (NSTRAT). Contains the indices of Eirene 
 *    targets. (?) Only override the default setting if you know what you're 
 *    doing!
-*  GPFC - real*8 array of size (NATM,NSTRAI). Specifies the fraction of Eirene 
+*  GPFC - real*8 array of size (NATM,NSTRAT). Specifies the fraction of Eirene 
 *    atomic species (iatm) in one particle puffed from stratum (istra).
 *    Defaults to 0.0.
 *  DBG_EIR_MC - integer. Debug output control for eirene_mc routine. See code 
@@ -184,34 +205,52 @@
 *    where frac is the fractional content of Be in the surface layer material.
 *  CHEMICAL_EROSION_BE_FAC_B - real*8. Defaults to 0.05. see above.
 *  CHEMICAL_EROSION_BE_FAC_C - real*8. Defaults to 0.9. See above.
-*  N_SPCSRF - integer. Number of special surfaces for diagnostics. Defaults to 0.
-*  L_SPCSRF - integer array of length (N_SPCSRF).
-*  SPS_ID - character*8 array of length (N_SPCSRF). Labels of special surfaces.
-*  I_SPCSRF - integer array of length (N_SPCSRF).
-*  J_SPCSRF - integer array of length (N_SPCSRF).
-*  SPS_ABSR - real*8 array of length (N_SPCSRF).
-*  SPS_TRNO - real*8 array of length (N_SPCSRF).
-*  SPS_TRNI - real*8 array of length (N_SPCSRF).
-*  SPS_MTRI - real*8 array of length (N_SPCSRF).
-*  SPS_TMPR - real*8 array of length (N_SPCSRF).
-*  SPS_SPPH - real*8 array of length (N_SPCSRF).
-*  SPS_SPCH - real*8 array of length (N_SPCSRF).
-*  SPS_SGRP - integer array of length (N_SPCSRF).
+*  BN_SPCSRF - integer. Number of special surfaces groups for diagnostics. 
+*    Defaults to 0.
+*  BL_SPCSRF - integer array of length (NLIM+NSTS). List of surface segments 
+*    (non-default standard surfaces [NDSS] or additional surfaces in Eirene 
+*    notation) included in the groups. Negative numbers correspond to NDSS.
+*  BSPS_ID - character*8 array of length (BN_SPCSRF). Labels of groups of 
+*    special surfaces.
+*  BI_SPCSRF - integer array of length (BN_SPCSRF). Index of the first Eirene 
+*    surface belonging to a special surface group in the L_SPCSRF list. 
+*  BJ_SPCSRF - integer array of length (BN_SPCSRF). Index of the last Eirene 
+*    surface belonging to a special surface group in the L_SPCSRF list. 
+*  BSPS_ABSR - real*8 array of length (BN_SPCSRF). Particle absorption on the 
+*    surface.
+*  BSPS_TRNO - real*8 array of length (BN_SPCSRF). Surface transparency in 
+*    positive direction.
+*  BSPS_TRNI - real*8 array of length (BN_SPCSRF). Surface transparency in 
+*    negative direction. If not declared, SPS_TRNO is used.
+*  BSPS_MTRI - real*8 array of length (BN_SPCSRF). Surface material in Eirene 
+*    notation (e.g., 1206 for C).
+*  BSPS_MTRL - character*8 array of length (BN_SPCSRF). Surface material in 
+*    human notation (e.g., 'C').
+*  BSPS_TMPR - real*8 array of length (BN_SPCSRF). Surface temperature (in eV).
+*  BSPS_SPPH - real*8 array of length (BN_SPCSRF). Fudge factor for physical 
+*    sputtering.
+*  BSPS_SPCH - real*8 array of length (BN_SPCSRF). Fudge factor for chemical 
+*    sputtering.
+*  BSPS_SGRP - integer array of length (BN_SPCSRF). Surface group for chemical 
+*    sputtering.
 *
+!! FIXME: TO be checked !!
 * The following are active only if NO_B2_CHEM_SPUT is not defined among the 
-* compiler options and are typically used only for "old" Eirene runs:
+* compiler options and are used to override the Eirene chemical sputtering
+* settings:
 *
 *  CHEMICAL_SPUTTER_YIELD - real*8 array of size (0:NLIM+NSTS). 
 *    Passed to Eirene. Chemical sputter yield of wall surface (ilim).
 *    Defaults to 0.0.
-*  FCHAR_CHEMICAL - real*8. Passed to Eirene. Eirene atomic species index of 
-*    the particle causing the sputtering. Defaults to 0.
+*  FCHAR_CHEMICAL - real*8. Passed to Eirene. Nuclear charge of atomic species 
+*    causing the sputtering. Defaults to 0.
 *  IGASS_CHEMICAL - integer. Passed to Eirene. Eirene atomic species index of 
 *    the sputtered particle. Defaults to 0.
 *  ITSPUT_CHEMICAL - integer. Passed to Eirene. Eirene type index of the 
-*    sputtered particle. If 0, 1 eV atoms are assumed. Defaults to 0.
-*  ISSPUT_CHEMICAL - integer. Passed to Eirene. Eirene species index of the 
-*    sputtered. If 0, carbon chemical sputtering is assumed. Defaults to 0.
+*    sputtered particle. Atoms = 1, Ions = 4. Defaults to 0, meaning
+*    1 eV atom chemical sputtering.
+*  ISSPUT_CHEMICAL - integer. Passed to Eirene. Mass*100 + nuclear charge of
+*    the sputtered particle. Defaults to 0, internally changed to 1206 = carbon.
 *
 *  NAMELIST /WALL_SAVE/ 
 *   Found in b2.wall_save.parameters.
@@ -240,9 +279,9 @@
 *    from which to extract the surface material properties for wall element 
 *    (iwall). The files are to be found in 
 *    $(SOLPSTOP)/data(.local)/Surface_properties/. Defaults to 'C'.
-*  COATING_MATERIAL_NAME - character*6 of size (NWALL). Contains the filename from
-*     which to extract the bulk material properties of the eventual coating for 
-*     wall element (iwall). Defaults to ' '.
+*  COATING_MATERIAL_NAME - character*6 of size (NWALL). Contains the filename 
+*     from which to extract the bulk material properties of the eventual 
+*     coating for wall element (iwall). Defaults to ' '.
 *  BULK_MATERIAL_NAME - character*6 of size (NWALL). Contains the filename from
 *     which to extract the bulk material properties for wall element (iwall). 
 *     The files are to be found in 
@@ -266,8 +305,9 @@
 *     (iwall). Defaults to 'b2stbr_plate_temp'.
 *  PLATE_THICKNESS - real*8 array of size (NWALL). Contains the thickness (in 
 *     meters) of wall element (iwall). Defaults to 'b2stbr_plate_thick'.
-*  COATING_THICKNESS - real*8 array of size (NWALL). Contains the thickness (in 
-*     meters) of the eventual coating on wall element (iwall). Defaults to 0.
+*  COATING_THICKNESS - real*8 array of size (NWALL). Contains the thickness
+*      (in meters) of the eventual coating on wall element (iwall). 
+*      Defaults to 0.
 *  PLATE_TIME_FACTOR - real*8 array of size (NWALL). Multiplier to the time 
 *     for the equations for temperature and composition evolution of wall 
 *     element (iwall). Defaults to 1.0.
@@ -346,6 +386,9 @@
 *   Contains data used to specify the boundary conditions.
 *   This namelist is read if 'b2stbc_boundary_namelist' is set to 1.
 *   Necessary for double-null geometries or impinging limiting structures.
+*   It is recommended but not strictly necessary that the boundary conditions
+*   declared here match in number and order any neutral boundary conditions
+*   declared in the b2.neutrals.parameters file.
 *   This description is copied from the SOLPS manual.
 *  NBC - integer. Number of boundary segments. Defaults to 0.
 *  BCCHAR - character*1 array of length (NBC). Specifies the nature of
@@ -382,6 +425,14 @@
 *  BCEND - integer array, length (NBC), for North, South
 *     or X boundary conditions, it specifies the end column index; for
 *     West, East and Y boundary conditions, it specifies the end row index.
+*     Defaults to -2.
+*  BC_LIST_SIZE - integer array of length (NBC). Contains the size of the 
+*     list of cells where a boundary condition is applied. Defaults to 0.
+*  BC_LIST_X - integer array of length (2*(NXD+NYD),NBC). Contains the 
+*     X-coordinate of the cells where boundaries conditions are applied. 
+*     Defaults to -2.
+*  BC_LIST_Y - integer array of length (2*(NXD+NYD),NSTRAI). Contains the 
+*     Y-coordinate of the cells where boundaries conditions are applied. 
 *     Defaults to -2.
 *  BCCON - integer array, length (0:NS-1,NBC), specifying
 *     the type of density boundary condition for each segment and species
@@ -432,6 +483,9 @@
 *     CONPAR(,,1) is a multiplier to the outgoing sound speed $C_s$.
 *     20 : constant density feedback condition.
 *     CONPAR(,,1) specifies the desired density in $m^{-3}$.
+*     21 : constant density feedback scaled by density on the ring bc_type21_ref away
+*     CONPAR(,,1) specifies the desired density in $m^{-3}$.
+*     CONPAR(,,2) is the strength of the feedback
 *  BCMOM - integer array, length NS * NBC, specifying
 *     the type of parallel momentum or velocity boundary condition for each
 *     segment and species (fastest varying index is species); makes use of
@@ -526,6 +580,9 @@
 *     20 : Feedback boundary condition with constant temperature,
 *          as per type [16] but with type20_ switches and a different
 *          feedback scheme.      
+*     21 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away
+*          ENEPAR(,,1) specifies the desired electron temperature in $eV$.
+*          ENEPAR(,,2) is the strength of the feedback
 *  BCENI - integer array, length NBC, specifying the
 *     type of ion energy or temperature boundary condition for each
 *     segment; makes use of ENIPAR to specify additional
@@ -582,6 +639,9 @@
 *     20 : Feedback boundary condition with constant temperature,
 *          as per type [16] but with type20_ switches and a different
 *          feedback scheme.      
+*     21 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away
+*          ENIPAR(,,1) specifies the desired ion temperature in $eV$.
+*          ENIPAR(,,2) is the strength of the feedback
 *  BCPOT - integer array, length NBC, specifying the
 *     type of electric potential or current boundary condition for each
 *     segment; makes use of POTPAR to specify additional
@@ -610,6 +670,9 @@
 *     POTPAR(,1) specifies the decay length in $m$
 *     10 : feedback option for core [not yet tested!!!!!!!!!] (based
 *     on using CBSCH(0,coreregno))
+*     21 : constant potential feedback scaled by potential on the ring bc_type21_ref away
+*          POTPAR(,,1) specifies the desired potential in $V$.
+*          POTPAR(,,2) is the strength of the feedback
 *  GAMMAI - real*8. Ratio of specific heats (adiabatic coefficient).
 *     Defaults to 5/3.
 *  GAMMAE - real*8. Secondary electron emission coefficient. Defaults to 0.5.
@@ -680,8 +743,10 @@
 *  NSDATA - integer array of size (NKIND_DATA,NKIND_SOURCE,0:NS). Number of 
 *     points over which the source profile of (kind_data,kind_source,is) is 
 *     defined. Should not exceed NY+2. Defaults to 0.
-*     If KIND_DATA=1, the data is expressed as a profiles in physical distance 
-*     from the separatrix (in metres).
+*     If KIND_DATA=1, the data is expressed as a profile in physical distance 
+*     from the separatrix (in metres) along the outer midplane.
+*     The user can change this default reference location by use of the 
+*     'set_transport_i[xy]ref' switches. 
 *     If KIND_DATA=2, the data is expressed as a profile in flux distance from 
 *     the separatrix (not yet available).
 *  SDATA - real*8 data of size (2,NY+2,NKIND_SOURCE,0:NS). 
@@ -695,8 +760,31 @@
 *     KIND_SOURCE=5 means electric charge source (in Coulombs/m3)
 *     KIND_SOURCE=6 means non-ambipolar electron particle source (in e/m3)
 *     Defaults to 0.0.
+*  NXDATA - integer array of size (NKIND_DATA,NKIND_SOURCE,0:NS). Number of 
+*     points over which the axial profile of (kind_data,kind_source,is) is 
+*     defined. Should not exceed NX+2. Defaults to 0.
+*     If KIND_DATA=1, the data is expressed as a profile in physical distance,
+*     here connection length, rescaled from 0.0 to 1.0.
+*     For closed field lines, the reference location for the zero of distance 
+*     is set by use of the 'set_transport_i[xy]ref' switches. 
+*     If KIND_DATA=2, the data is expressed as a profile in (ix) cell index,
+*     again normalized from 0.0 to 1.0 to match the [0:nx-1] interval.
+*  XDATA - real*8 data of size (2,NY+2,NKIND_SOURCE,0:NS). 
+*     Multiplier to the poloidal source profile in the axial direction.
+*     Same convention for KIND_SOURCE as above.
+*     Defaults to 1.0.
 *  DIVHEAT - real*8. Additional divertor ion heat source (in Watts/m3)
 *     Defaults to 0.0.
+*  SOURCES_FILENAME - character*256. Name of the next file to use for reading
+*     a new /PROFILE/ namelist. Defaults to 'b2.sources.profile'.
+*     Quantities not present in the new file will be inherited from the old one.
+*  SOURCES_TIME_MOD - real*8. When the B2 run simulation time, in seconds,
+*     modulo(SOURCES_TIME_MOD),exceeds SOURCES_TIME_SWITCH, reads the new 
+*     namelist from SOURCES_FILENAME. Also switches to the new namelist if 
+*     the ELM count (here time/SOURCES_TIME_MOD) changes. Defaults to 0.0.
+*     Only active if SOURCES_TIME_MOD is greater than 0.
+*  SOURCES_TIME_SWITCH - real*8. Time (in seconds) within an ELM cycle after 
+*     which a new /PROFILE/ namelist is read. Defaults to 0.0.
 *
 *  NAMELIST /TRANSPORT/
 *   Found in b2.transport.inputfile.
@@ -714,8 +802,9 @@
 *  TDATA - real*8 data of size (3,NY+2,NKIND_COEFF,0:NS).  Defaults to 0.0.
 *     For (i,ir,ik,is) in (1:3,1:NY+2,1:NKIND_COEFF,0:NS), 
 *     TDATA(1,ir,:,:) contains the radial location of the profile point (ir).
-*     These are measured at the outer midplane, as distance to the separatrix
-*     in metres.
+*     By default, these are measured at the outer midplane, as distance to the separatrix
+*     in metres. The user can change this by setting the 'set_transport_i[xy]ref'
+*     switches to choose a different location for the distance reference. 
 *     TDATA(2,ir,:,:) contains the transport profile value at point (ir).
 *     TDATA(3,ir,:,:) contains the ELM transport profile value at point (ir). 
 *     KIND_COEFF=1 means density-driven particle diffusivity for species (is)
@@ -778,7 +867,7 @@
 *    recombination sources and restarts. Superceded by use of
 *    'eirene_dpc_fix' switch. See code in eirene_mc and
 *    description in b2cdci for details. 
-*  SAVED_VOLREC - real*8 array of size (NSTRAI). Contains the last value of the
+*  SAVED_VOLREC - real*8 array of size (NSTRAT). Contains the last value of the
 *     strength of volume recombination sources from stratum (istra). 
 *     Defaults to 0.0.
 *
@@ -819,8 +908,8 @@
 *  TIME_FACTOR_REQUIRED - real*8. Minimum time scale of evolution allowed for 
 *     all equations. Only active is 'b2srsm_enable' is set to 1. 
 *     Defaults to 0.1.
-*  CORE_DT_SUPPRESION - real*8. De-multiplier to the timestep in the core. 
-*     Only active is less than 1. Should be larger than 0.
+*  CORE_DT_SUPPRESSION - real*8. De-multiplier to the timestep in the core. 
+*     Only active if less than 1. Should be larger than 0.
 *     Applies fully to the innermost core ring of cells (IY .eq. -1).
 *     See CORE_DT_FACTOR for further use. Defaults to 1.0.
 *  CORE_DT_FACTOR - real*8. Multiplier to the timestep in the core. 
@@ -985,7 +1074,7 @@
 *
 *  NAMELIST /ATOMIC_PHYSICS_RESCALE/
 *    Found in b2.atomic_physics_rescale.parameters.
-*    Read if 'b2rurc_atomic_physics_rescale' is set to 1.
+*    Read if 'b2mndr_atomic_physics_rescale' is set to 1.
 *    Contains rescaling multipliers for atomic physics rates.
 *  RESCALE_SA - real*8 array of size(0:NS-1). Scaling factors for rtlsa:
 *    ionisation rates of species (is). Defaults to 1.0.

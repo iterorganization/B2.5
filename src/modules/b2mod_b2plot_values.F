@@ -1,6 +1,13 @@
       module b2mod_b2plot_values
       use b2mod_types
 
+      integer nwtf
+#ifdef WINDOWS
+cxpb  Done to avoid a clash with a reserved file for Windows NCAR
+      parameter (nwtf=87)
+#else
+      parameter (nwtf=97)
+#endif
       integer nparameters
       parameter (nparameters=37)
       real (kind=R8) init_value

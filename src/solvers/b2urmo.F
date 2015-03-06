@@ -19,14 +19,14 @@
 *
 *  1. purpose
 *
-*     B2URMO computes the residual of the momentum balance equation for
-*     one atomic species.
+*     B2URMO computes the residual of the parallel momentum balance
+*     equation for one atomic species.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine computes the residual of the momentum balance
-*     equation for one species, integrated over the cells of
+*     This routine computes the residual of the parallel momentum
+*     balance equation for one species, integrated over the cells of
 *     the b2 mesh. The equation has the form
 *       div(flux) = rhs ,
 *     and the residual is defined as
@@ -50,7 +50,7 @@
       integer ncall, n2, ix, iy
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !sv 06.07.06
       integer, save :: iout_b2npmo = 0                            !srv 11.09.09
-      character chns*2                                            !srv 02.06.11
+      character chns*3                                            !srv 02.06.11
       save ncall
       real (kind=R8) ::
      *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo, dif     !srv 11.09.09
@@ -94,13 +94,13 @@
       endif
 
 * ..compute flux
-*   ..compute momentum transport fmbx
+*   ..compute parallel momentum transport fmbx
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
-         fmb(ix,iy,0) = 0
-         con(ix,iy,0) = 0
-         flv(ix,iy,0) = 0
+         fmb(ix,iy,0) = 0.0_R8
+         con(ix,iy,0) = 0.0_R8
+         flv(ix,iy,0) = 0.0_R8
         else
          flo = flub(ix,iy,0)
          if(no_Ptncr_x_co.eq.0) then                                  !sv 06.07.06 {
@@ -111,17 +111,18 @@
          flv(ix,iy,0) = - con(ix,iy,0)*
      &         (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))
          fmb(ix,iy,0) = flo*(ub(ix,iy)
-     &         +ub(leftix(ix,iy),leftiy(ix,iy)))/2 + flv(ix,iy,0)
+     &         +ub(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8 
+     &         +flv(ix,iy,0)
         endif
        enddo
       enddo
-*   ..compute momentum transport fmby
+*   ..compute parallel momentum transport fmby
       do iy = -1, ny
        do ix = -1, nx
         if(bottomiy(ix,iy).eq.-2) then
-         fmb(ix,iy,1) = 0
-         con(ix,iy,1) = 0
-         flv(ix,iy,1) = 0
+         fmb(ix,iy,1) = 0.0_R8
+         con(ix,iy,1) = 0.0_R8
+         flv(ix,iy,1) = 0.0_R8
         else
          flo = flub(ix,iy,1)
          if(no_Ptncr_y_co.eq.0) then                                  !sv 06.07.06 {
@@ -132,12 +133,12 @@
          flv(ix,iy,1) = - con(ix,iy,1)*
      &            (ub(ix,iy)-ub(bottomix(ix,iy),bottomiy(ix,iy)))
          fmb(ix,iy,1) = flo*(ub(bottomix(ix,iy),bottomiy(ix,iy))
-     &         +ub(ix,iy))/2 + flv(ix,iy,1)
+     &         +ub(ix,iy))/2.0_R8 + flv(ix,iy,1)
         endif
        enddo
       enddo
       if(iout_b2npmo.eq.1) then
-       write (chns,'(i2.2)') isb
+       write (chns,'(i3.3)') isb
        call my_out(70,nx,ny,flv(-1,-1,0),'b2urmo_etaPat_graduax'//chns)
        call my_out(70,nx,ny,flv(-1,-1,1),'b2urmo_etaPat_graduay'//chns)
 !       call my_out(70,nx,ny,con(-1,-1,0),'b2urmo_etaPatx')

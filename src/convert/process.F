@@ -47,7 +47,7 @@ c
      . in_respo(0:in_nx+1,0:in_ny+1)
 
 #ifdef WANT_PROCESS
-#     include <EIRDIAG.F>
+#     include <COUPLE/EIRDIAG.F>
 #     include <COMDIM.F>
 #     include <COMLAB.F>
 #     include <COMGEO.F>
@@ -69,8 +69,8 @@ c
       integer ix,iy,is,in
 
       real*8
-     *   ssum,sdot,s2sum
-      external ssum,sdot,s2sum
+     *   ssum,sdot,b2s2sum
+      external ssum,sdot,b2s2sum
 
       real*8
      *   pitmin,pitmax
@@ -253,7 +253,7 @@ c y-direction cell face quantities
 
 *  -- compute 0d reductions --
 *     -- total volume --
-         ff(1) = s2sum (nx+2, ny+2, vol, 1, nxd+2)
+         ff(1) = b2s2sum (nx+2, ny+2, vol, 1, nxd+2)
 *     -- global dx --
 c         ff(2) = ssum (nx+2, xx(0,4), 1)
 *     -- global dy --

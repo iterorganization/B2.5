@@ -2,10 +2,10 @@
 *.specification
 
       subroutine b2sigp (nx, ny, isb, rzb, vol, hx, hz, bb, nb, ti,   
-     &  ne, te, po, smbgp, wrk0, wrk1)
+     &  ne, te, po, smbgp, wrk0, wrk1, wrk2)
       use b2mod_types
       use b2mod_indirect
-	use b2mod_constants                                            !srv 23.03.10
+      use b2mod_constants                                         !srv 23.03.10
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -19,7 +19,7 @@
      *   smbgp(-1:nx,-1:ny,0:3)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     * wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny)
+     * wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -27,7 +27,7 @@
 *  1. purpose
 *
 *     B2SIGP computes the pressure gradient term on the right hand
-*     of the momentum balance equation for one species.
+*     of the parallel momentum balance equation for one species.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -35,8 +35,9 @@
 *   ..local variables
       integer ncall, n2, ix, iy, k
       integer, save :: style = 0
-	integer, save :: iout = 0, iout_b2npmo = 0, pot_eq = 1          !srv 17.06.02 11.09.09 23.03.10
-	character chns*2, chk*1, ch*2                                  !srv 17.06.02
+      integer, save :: iout = 0, iout_b2npmo = 0
+      integer, save :: pot_eq = 1, no_current = 0  !srv 17.06.02 11.09.09 23.03.10
+      character chns*3, chk*1, ch*2                                  !srv 17.06.02
       real (kind=R8) ::
      *   t0
       save ncall
@@ -59,6 +60,9 @@
        call ipgeti ('b2sigp_style', style)                           !srv 02.07.08
        call ipgeti ('b2npmo_iout', iout_b2npmo)                      !srv 11.09.09
        call ipgeti ('b2news_poteq', pot_eq)                          !srv 23.03.10
+       call ipgeti ('b2tfhe_no_current', no_current)
+       call xertst (pot_eq.eq.1.or.no_current.eq.1,
+     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -80,13 +84,20 @@
         do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
-           wrk0(ix,iy) = 0
-           wrk1(ix,iy) = 0
+           wrk0(ix,iy) = 0.0_R8
+           wrk1(ix,iy) = 0.0_R8
+           wrk2(ix,iy) = 0.0_R8
           else
            wrk0(ix,iy) = nb(ix,iy)*ti(ix,iy)-
      &   nb(leftix(ix,iy),leftiy(ix,iy))*ti(leftix(ix,iy),leftiy(ix,iy))
            wrk1(ix,iy) = ne(ix,iy)*te(ix,iy)-
      &   ne(leftix(ix,iy),leftiy(ix,iy))*te(leftix(ix,iy),leftiy(ix,iy))
+           wrk2(ix,iy) = ((rzb(ix,iy)*nb(ix,iy)/ne(ix,iy))*
+     &                  vol(leftix(ix,iy),leftiy(ix,iy))+
+     &                  (rzb(leftix(ix,iy),leftiy(ix,iy))*
+     &                   nb(leftix(ix,iy),leftiy(ix,iy))/
+     &                   ne(leftix(ix,iy),leftiy(ix,iy)))*vol(ix,iy))/
+     &                 (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
           endif
          enddo
         enddo
@@ -96,35 +107,37 @@
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
-              smbgp(ix,iy,0) = -hz(ix,iy)*(vol(ix,iy)/hx(ix,iy))*     !srv 16.06.09
+              smbgp(ix,iy,0) = -hz(ix,iy)*
+     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*     !srv 16.06.09
      &          bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                   !srv 11.01.13
      &         (wrk0(rightix(ix,iy),rightiy(ix,iy))+
      &          wrk1(rightix(ix,iy),rightiy(ix,iy))*
-     &          rzb(ix,iy)*nb(ix,iy)/ne(ix,iy))/
+     &          wrk2(rightix(ix,iy),rightiy(ix,iy)))/
      &         (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
-              smbgp(ix,iy,1) = 0
-              smbgp(ix,iy,2) = 0
-              smbgp(ix,iy,3) = 0
+              smbgp(ix,iy,1) = 0.0_R8
+              smbgp(ix,iy,2) = 0.0_R8
+              smbgp(ix,iy,3) = 0.0_R8
             elseif(rightix(ix,iy).eq.nx+1) then
-              smbgp(ix,iy,0) = -hz(ix,iy)*(vol(ix,iy)/hx(ix,iy))*     !srv 16.06.09
+              smbgp(ix,iy,0) = -hz(ix,iy)*
+     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*     !srv 16.06.09
      &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
-     &         (wrk0(ix,iy)+wrk1(ix,iy)*rzb(ix,iy)*nb(ix,iy)/ne(ix,iy))/
+     &         (wrk0(ix,iy)+wrk1(ix,iy)*wrk2(ix,iy))/
      &         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-              smbgp(ix,iy,1) = 0
-              smbgp(ix,iy,2) = 0
-              smbgp(ix,iy,3) = 0
+              smbgp(ix,iy,1) = 0.0_R8
+              smbgp(ix,iy,2) = 0.0_R8
+              smbgp(ix,iy,3) = 0.0_R8
             else
               smbgp(ix,iy,0) = -hz(ix,iy)*(vol(ix,iy)/hx(ix,iy))*     !srv 16.06.09
      &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
-     &        ((wrk0(ix,iy)+wrk1(ix,iy)*rzb(ix,iy)*nb(ix,iy)/ne(ix,iy))/
+     &        ((wrk0(ix,iy)+wrk1(ix,iy)*wrk2(ix,iy))/
      &         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
      &         (wrk0(rightix(ix,iy),rightiy(ix,iy))+
      &          wrk1(rightix(ix,iy),rightiy(ix,iy))*
-     &          rzb(ix,iy)*nb(ix,iy)/ne(ix,iy))/
+     &          wrk2(rightix(ix,iy),rightiy(ix,iy)))/
      &         (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy))))
-              smbgp(ix,iy,1) = 0
-              smbgp(ix,iy,2) = 0
-              smbgp(ix,iy,3) = 0
+              smbgp(ix,iy,1) = 0.0_R8
+              smbgp(ix,iy,2) = 0.0_R8
+              smbgp(ix,iy,3) = 0.0_R8
             endif
           enddo
         enddo
@@ -218,7 +231,7 @@
         enddo                                                          !srv 23.03.10 }
 	endif                                                            !srv 02.07.08 }
 	if (iout.ne.0 .or. iout_b2npmo.eq.1) then                        !srv 17.06.02 {
-!	   write (chns,'(i2.2)') isb    
+!	   write (chns,'(i3.3)') isb    
 !	   do k=0,3
 !	    write (chk,'(i1)') k  
 !	    call my_out(70,nx,ny,smbgp(-1,-1,k),'b2sigp_smbgp'//chk//chns)

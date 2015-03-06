@@ -9,6 +9,7 @@
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
@@ -63,7 +64,8 @@
 
 * ..make plots
 *   ..compute auxiliaries
-      call b2xpfe (nx, ny, ns, qe, rza, fna, fch, fne)
+      call b2xpfe (nx, ny, ns, ns_ext, qe, 
+     &  rza, za_ext, fna, fa_ext, fch, fne)
 *   ..plot state
       call b2wgpj_gnuplot (nprt, nx, ny, ns, na, ua, te, ti, po,
      &  fna, fhe, fhi, fch, ne, fne, kinrgy,

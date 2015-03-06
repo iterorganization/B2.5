@@ -7,10 +7,9 @@ c*** Data input from dg files.
 c*** MUST be compiled in single precision!!!
 c======================================================================
       use b2mod_types
+      use b2mod_b2plot_wall_loading
       implicit none
 #     include "impcon.inc"
-#     include "DIMENSIONS.F"
-#     include "b2pwcom.h"
       integer lun
       parameter (lun=96)
       integer i
@@ -32,10 +31,7 @@ c
         lwldstrt(i)=0
       end do
       lppp=0
-      jedgi1=0
-      jedgi2=0
-      jedgo1=0
-      jedgo2=0
+      jedge(1:4)=0
       add_rad=0.0_R8
       nadsrc=0
 c

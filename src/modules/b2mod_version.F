@@ -1,58 +1,5 @@
       module b2mod_version
-!     character*10 :: newversion='01.001.025'                  !srv 10.06.08
-!     character*10 :: newversion='01.001.026'                  !srv 28.02.09
-!     character*10 :: newversion='01.001.027'                  !srv 11.03.09
-!     character*10 :: newversion='01.001.028'                  !srv 05.05.09
-!     character*10 :: newversion='01.001.029'                  !srv 07.05.09
-!     character*10 :: newversion='01.001.030'                  !srv 08.05.09
-!     character*10 :: newversion='01.001.031'                  !srv 11.05.09
-!     character*10 :: newversion='01.001.032'                  !srv 15.05.09
-!     character*10 :: newversion='01.001.033'                  !srv 22.05.09
-!     character*10 :: newversion='01.001.034'                  !srv 10.06.09
-!     character*10 :: newversion='01.001.035'                  !srv 16.06.09
-!     character*10 :: newversion='01.001.036'                  !srv 01.07.09
-!     character*10 :: newversion='01.001.037'                  !srv 07.07.09
-!     character*10 :: newversion='01.001.038'                  !srv 08.07.09
-!     character*10 :: newversion='01.001.039'                  !srv 15.07.09
-!     character*10 :: newversion='01.001.040'                  !srv 11.09.09
-!     character*10 :: newversion='01.001.041'                  !srv 22.09.09
-!     character*10 :: newversion='01.001.042'                  !srv 25.09.09
-!     character*10 :: newversion='01.001.043'                  !srv 07.10.09
-!     character*10 :: newversion='01.001.044'                  !srv 14.10.09
-!     character*10 :: newversion='01.001.045'                  !srv 20.10.09
-!     character*10 :: newversion='01.001.046'                  !srv 29.10.09
-!     character*10 :: newversion='01.001.047'                  !srv 05.11.09
-!     character*10 :: newversion='01.001.048'                  !srv 23.11.09
-!     character*10 :: newversion='01.001.049'                  !srv 22.12.09
-!     character*10 :: newversion='01.001.050'                  !srv 30.12.09
-!     character*10 :: newversion='01.001.051'                  !srv 30.01.10
-!     character*10 :: newversion='01.001.052'                  !srv 15.02.10
-!     character*10 :: newversion='01.001.053'                  !srv 01.03.10
-!     character*10 :: newversion='01.001.054'                  !srv 12.04.10
-!     character*10 :: newversion='01.001.055'                  !srv 19.04.10
-!     character*10 :: newversion='01.001.056'                  !srv 06.07.10
-!     character*10 :: newversion='01.001.057'                  !srv 28.07.10
-!     character*10 :: newversion='01.001.058'                  !srv 21.10.10
-!     character*10 :: newversion='01.001.059'                  !srv 18.11.10
-!     character*10 :: newversion='01.001.060'                  !srv 20.01.11
-!     character*10 :: newversion='01.001.061'                  !srv 20.01.27
-!     character*10 :: newversion='01.001.062'                  !srv 02.02.11
-!     character*10 :: newversion='01.001.063'                  !srv 15.02.11
-!     character*10 :: newversion='01.001.064'                  !srv 05.03.11
-!     character*10 :: newversion='01.001.065'                  !srv 24.05.11
-!     character*10 :: newversion='01.001.066'                  !srv 30.05.11
-!     character*10 :: newversion='01.001.067'                  !srv 22.07.11
-!     character*10 :: newversion='01.001.068'                  !srv 28.07.11
-!     character*10 :: newversion='01.001.069'                  !srv 09.09.11
-!     character*10 :: newversion='01.001.070'                  !srv 17.10.11
-!     character*10 :: newversion='01.001.071'                  !srv 11.01.12
-!     character*10 :: newversion='01.001.072'                  !srv 16.02.12
-!     character*10 :: newversion='01.001.073'                  !srv 12.04.12
-!     character*10 :: newversion='01.001.074'                  !srv 01.11.12
-!     character*10 :: newversion='01.001.075'                  !srv 22.11.12
-!     character*10 :: newversion='01.001.076'                  !srv 11.01.13
-!     character*10 :: newversion='01.001.077'                  !srv 11.01.13
-      character*10 :: newversion='01.001.078'                  !srv 11.04.13
+      character*10 :: newversion='03.000.000'
 
       character*10, save ::
      1 b2fstati_version = '00.000.000',
@@ -63,7 +10,9 @@
      4 plasmastate_version = '00.000.000',
      4 b2fplasma_version = '00.000.000',
      5 b2fgmtry_version = '00.000.000',
-     6 b2fparam_version = '00.000.000'
+     6 b2fparam_version = '00.000.000',
+     7 boundary_version = '00.000.000',
+     8 neutrals_version = '00.000.000'
       
       end module b2mod_version 
 cxpb Version 1.1 corresponds to adding a version number and the UADIA array
@@ -76,7 +25,7 @@ cdpc Version 01.001.002 corresponds to adding the anomalous transport
 cdpc (D,chi...) quantities to b2fplasma [2001.07.18]
 cdpc Version 01.001.003 corresponds to adding the heat sources  
 cdpc from b2sihs to b2fplasma [2002.08.07]
-cxpb Version 01.001.004 corresponds to adding the momentum sources
+cxpb Version 01.001.004 corresponds to adding the parallel momentum sources
 cxpb from atomic processes and the total energy flows to b2fplasma [2002.08.13]
 cdpc Version 01.001.005: added saving of fch_32 and fch_52 to b2fstat[ie]
 cdpc Version 01.001.006: added saving of b2npmo_sma[fgv] to b2fplasma
@@ -104,6 +53,17 @@ cxpb                     new species data format: zamin, zamax, zn, am
 cxpb                     added version number to b2fparam and b2fpardf
 cxpb                     added nstra to b2fparam
 cxpb                     made ppout a permanent fixture of b2frates
+cxpb Version 01.001.025: added pbs computed from basis mesh contributions to b2fgmtry
+cxpb Version 01.001.026: added sne, b2stbr_sne, b2stbc_sne and ext_sne to b2fplasma
+cxpb Version 01.001.027: added saving of b2stbm_s?? to b2fplasma
+cxpb Version 01.001.028: new style for boundary and neutrals namelist to allow for
+cxpb                     full vacuum vessel grid coverage
+cxpb Version 01.001.029: split the thermo-electric coefficient into a classical and
+cxpb                     and an anomalous piece
+cdpc Version 01.001.030: added saving vsal to b2fplasma
+cdpc Version 01.001.031: added saving smpr, smth, smfr to b2fplasma
+cxpb
+
 csrv                     B2solps5.2 starts 2008
 csrv Version 01.001.025  fch_p(:,:) replaced by fch_p(:,:,0:1) and many otheres
 c                        changes have been made. Sorry for absence of details. 
@@ -150,19 +110,19 @@ c                        12.11.09 corrected b2mod_input_profile
 c                        17.11.09 corrected b2gxdr_dummy in b2agfs.F
 c    Version 01.001.048  23.11.09 updated module b2mod_constants and subroutines rat*.F
 c                        03.12.09 inserted internal key 'b2trcl_lluciani'
-c    Version 01.001.049  22.12.09 in order to copy the data of first n=min(ns0,ns1) spicies
-c                                 from the plasma state file b2fstate for ns0 spices
-c                                 into the initial plasma state file b2fstati for ns1 spices 
+c    Version 01.001.049  22.12.09 in order to copy the data of first n=min(ns0,ns1) species
+c                                 from the plasma state file b2fstate for ns0 species
+c                                 into the initial plasma state file b2fstati for ns1 species 
 c                                 the special internal key 'b2aidr_read_b2fstate' 
 c                                 has been added in b2aidr.F 
 c                                 Grid size, nuclear and atom charge must be the same 
 c                                 in both files.
 c    Version 01.001.050  30.12.09 modified term in the electron heat equation b2tfhe_.F
 c                                 deleted statement use b2mod_ma28 in b2co.F and b2fu.F
-c    Version 01.001.051  30.01.10 chanched value of internal key b2tfnb_xfrhiehz, 
+c    Version 01.001.051  30.01.10 changed value of internal key b2tfnb_xfrhiehz, 
 c                                 b2nph9_style_shei by default. The name of key b2tfhe_no_alfTeEh
 c                                 replaced by the name b2tfhe_alfTeEh
-c                                 corrected the long line in b2tfnb which produced smoll errors
+c                                 corrected the long line in b2tfnb which produced small errors
 c                                 for working in B2solps5.0 style
 c    Version 01.001.052  15.02.10 corrected the name of key in ipgetiin b2npht.F 
 c                                 uncommented the lines in b2npc9.F for guard_flows.eq.2
@@ -273,13 +233,19 @@ c                        27.02.13 eliminated influence of Ehx, Ehy and currents 
 c                        11.03.13 changes in subroutines have been done in order to have compatibility with gfortran
 c                        13.04.13 changes in subroutine b2wdat.F have been done in order to have compatibility with gfortran
 c    Version 01.001.078  11.04.13 modified bcene=16 and bceni=16 for B2-ASTRA case
-c                        18.04.13 corrected bcene=15 and made two variants of emplimentation.
-c                        19.04.13 changed the applying of alfa3 to anamalous transport coefficients in H-regime and introduced alfa4 
+c                        18.04.13 corrected bcene=15 and made two variants of implementation.
+c                        19.04.13 changed the applying of alfa3 to anomalous transport coefficients in H-regime and introduced alfa4 
 c                                 corrected calculation of qe at the plates and modified output for B2-ASTRA case
-c                                 emplemented option in b2tqce.F in order to set sigx=0 and alfx=0 in guard cells at north and south except of core region 
-c                                 emplemented option in b2tiner.F in order to calculate inerthia current using different approximation
+c                                 implemented option in b2tqce.F in order to set sigx=0 and alfx=0 in guard cells at north and south except of core region 
+c                                 implemented option in b2tiner.F in order to calculate inerthia current using different approximation
 c                                 inserted boundary conditions BCCON = 21, 22, 23 suggested by L.Kaveeva and I.Senichenkov
 c                                 inserted boundary conditions BCMOM = 16 suggested by L.Kaveeva and I.Senichenkov
 c                                 inserted boundary conditions BCENI = 23 and 24 (with modified flux) suggested by L.Kaveeva and I.Senichenkov
-c                                 changed subroutine intcor.F Complicated operator IF was splitted by two in order to debugger doesn't complane about index
+c                                 changed subroutine intcor.F Complicated operator IF was splitted by two in order that debugger not complain about index
 c                        11.06.13 added calculation of integrated electron and ion heat sources due to atomic processes for B2-ASTRA coupling
+c
+c    Versions 02.00x.0xx  Reserved for SOLPS6.0
+c
+c    Version 03.000.000  09.02.15 Inaugural SOLPS-ITER version
+c                                 Added smcf centrifugal force array to b2fplasma
+c  

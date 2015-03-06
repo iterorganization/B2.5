@@ -31,7 +31,7 @@ OBJDEST = -o ${OBJDIR}/$*.o
 BLD = ar rcv
 
 GRLIBES = ${NCARG} -lmscl
-LDLIBES = -L${SOLPSMASTER}/@sys/lib -L${SOLPS_LIB} ${NAG} -lnetcdf
+LDLIBES = -L${SOLPSMASTER}/@sys/lib -L${SOLPS_LIB} ${NAG} ${NETCDF}
 # LDLIBES = -lblas ${NAG} -lmass
 
 LD = xlf90

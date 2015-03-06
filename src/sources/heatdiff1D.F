@@ -38,7 +38,7 @@ c  Tp = Target surface temperature (K).
       implicit none
       external lines2c
 
-      integer iflg, iopt, neq, nmax, i
+      integer i
       integer ibnd, ns0, iwall, output, ns
 
       logical active
@@ -46,9 +46,10 @@ c  Tp = Target surface temperature (K).
       real (kind=R8) :: Tp(ndepth_nml)
       real (kind=R8) :: u(7*ndepth_nml), u1(7*ndepth_nml)
       real (kind=R8) :: x(ndepth)
-      real (kind=R8) :: hstep, rerr, x0, xn, t0, tn, dx(ndepth-1)
+      real (kind=R8) :: x0, xn, t0, tn, dx(ndepth-1)
 #ifdef NO_NAG
-      integer ier, nstep
+      integer ier, iflg, iopt, neq, nmax, nstep
+      real (kind=R8) :: hstep, rerr
       real (kind=R8) :: du(7*ndepth_nml), yf(ndepth_nml), ut(ndepth_nml)
       real (kind=R8) :: wk(3*ndepth_nml + ndepth_nml*2*ndepth_nml)
       integer iwk(ndepth_nml) 
@@ -99,9 +100,6 @@ c  Tp = Target surface temperature (K).
       Qtot = Q
       Tcbc = backplate_temp(ibnd)
       active = .not.inertial_cooling(ibnd)
-      iopt = 1
-      hstep = dt
-      rerr = 1.0e-8_R8
       t0 = 0.0_R8
       tn = dt
       iwall = ibnd
@@ -134,18 +132,20 @@ c       function of the position "x" at ndepth_nml grid points.
       endif
 
 c No. of equations to be solved.
-      neq = ndepth_nml - 1   ! since we specify T at one end and grad(T) at the other
-      iflg=0 
-      nmax=100000000 
-
 #ifdef NO_NAG
+      neq = ndepth_nml - 1   ! since we specify T at one end and grad(T) at the other
+      iflg = 0 
+      iopt = 1
+      hstep = dt
+      nmax = 100000000 
+      rerr = 1.0e-8_R8
       call mstep(ibnd,ns,neq,u1,ut,du,lines2c,hstep,t0,tn,yf,
      &  rerr,nstep,nmax,ier,iflg,iopt,wk,iwk)
       call xertst(ier.eq.0,'ier.ne.0 in heatdiff1D')
-      if (output.ge.10) write(6,*) 'No. of succesful steps = ',nstep
+      if (output.ge.10) write(6,*) 'No. of successful steps = ',nstep
       Tp(ndepth_nml) = Tcbc
       do i=1,ndepth_nml-1
-        Tp(i) = yf(i)
+        Tp(i) = min( yf(i), matsurf_vapor_temp(ibnd))
       enddo
 #else
 cxpb   New NAG solution to replace MSTEP calls
@@ -164,7 +164,7 @@ cxpb   New NAG solution to replace MSTEP calls
       call xertst (ifail.eq.0.or.ifail.eq.10,
      & 'Abnormal exit from D03PCF')
       do i=1,ndepth_nml
-        Tp(i) = U_nag(1,i)
+        Tp(i) = min( U_nag(1,i), matsurf_vapor_temp(ibnd))
       enddo
 #endif
 
@@ -193,7 +193,7 @@ c The above dependence follows the reference
       logical active
       real (kind=R8) :: Qtot, Tcbc, KAb, KBb, Tc, KAc, KBc, Tl, KAl, KBl
       real (kind=R8) :: dx(ndepth-1), x0, xn
-      real (kind=R8) :: x(ndepth), xx(ndepth), uu(ndepth_nml)
+      real (kind=R8) :: x(ndepth), xx(ndepth_nml), uu(ndepth_nml)
 
       common /zzline/ dx,x0,xn,x
       common /phyparams/ Qtot,Tcbc,active
@@ -494,7 +494,7 @@ c Units are in "W/m/K"
       else if (target_depth(ibnd,i).ge.layer_depth(ibnd)) then
         Kappa_perp = coating_value
       else
-c-xpb  The layer is expected to be amorphous and there not to support
+c-xpb  The layer is expected to be amorphous and therefore not to support
 c-xpb  the distinction between perp and parallel directions
         Kappa_perp = layer_Kappa(ibnd,T)*
      .   (layer_depth(ibnd)-target_depth(ibnd,i))/
@@ -546,7 +546,7 @@ c  expression resulting from the first derivative of Kappa_perp above.
       else if (target_depth(ibnd,i).ge.layer_depth(ibnd)) then
         dKappa_perpbydT = coating_value
       else
-c-xpb  The layer is expected to be amorphous and there not to support
+c-xpb  The layer is expected to be amorphous and therefore not to support
 c-xpb  the distinction between perp and parallel directions
         dKappa_perpbydT = dlayer_Kappabydt(ibnd,T)*
      .   (layer_depth(ibnd)-target_depth(ibnd,i))/

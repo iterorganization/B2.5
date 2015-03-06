@@ -51,11 +51,11 @@
 
 *   ..local variables
       integer ncall, ix, iy
-	integer, save :: style = 0, iout = 0                            !srv 26.10.08
-	integer, save :: pot_eq = 1                                     !srv 16.07.12
+      integer, save :: style = 0, iout = 0                            !srv 26.10.08
+      integer, save :: pot_eq = 1, no_current=0                       !srv 16.07.12
       save ncall
 *   ..procedures
-      external subini, subend, xertst
+      external subini, subend, xertst, ipgeti
 *   ..initialisation
       data ncall/0/
 
@@ -70,6 +70,9 @@
        call ipgeti('b2nxfx_iout', iout)
        call ipgeti('b2news_poteq', pot_eq)                               !srv 16.07.12
        call xertst(0.le.pot_eq.and.pot_eq.le.2,'faulty argument pot_eq') !srv 16.07.12 27.02.13
+       call ipgeti ('b2tfhe_no_current', no_current)
+       call xertst (pot_eq.eq.1.or.no_current.eq.1,
+     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
       endif
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')

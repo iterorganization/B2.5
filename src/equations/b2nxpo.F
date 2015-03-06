@@ -56,54 +56,63 @@
       DO IB=1,NBC
         IF(BCCHAR(IB).EQ.'W') THEN
           t1 = 0.0_R8
-          DO IY=BCSTART(IB), BCEND(IB)
-            t1 = max(t1,abs(respo(bcpos(ib),iy)))
+          DO IY = 1, BC_LIST_SIZE(IB)
+            t1 = max(t1,abs(respo(bc_list_x(iy,ib),bc_list_y(iy,ib))))
           ENDDO
           if(t1.gt.1.0_R8) then
-          DO IY=BCSTART(IB), BCEND(IB)
+          DO IY = 1, BC_LIST_SIZE(IB)
               write(*,*) ' Old potential, residual (W) : ',
-     .	       bcpos(ib),iy,po(bcpos(ib),iy),respo(bcpos(ib),iy)
+     .	       bc_list_x(iy,ib),bc_list_y(iy,ib),
+     .         po(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .         respo(bc_list_x(iy,ib),bc_list_y(iy,ib))
               vte = sqrt(bcint(te,nx,ny,iy,ib)/me)*
-     .         abs(pbs(rightix(bcpos(ib),iy),rightiy(bcpos(ib),iy),0))
+     .         abs(pbs(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .                 rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0))
               t0 = 0.0_R8
               do is = 0, ns-1
                 t0 = t0-bcint(rza(-1,-1,is),nx,ny,iy,ib)*
-     .           fna(rightix(bcpos(ib),iy),rightiy(bcpos(ib),iy),0,is)
+     .           fna(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .               rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,is)
               enddo
               fchi = qe*t0
               zarg = sqrt(2.0_R8*pi)/(1.0_R8-gammae)*(fchi+
-     &          fch(rightix(bcpos(ib),iy),rightiy(bcpos(ib),iy),0))/
+     &          fch(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     &              rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0))/
      &          (qe*bcint(ne,nx,ny,iy,ib)*vte)
               if(zarg.gt.1.0e-5_R8)
-     >         po(bcpos(ib),iy) = potpar(ib,2) - 
+     >         po(bc_list_x(iy,ib),bc_list_y(iy,ib)) = potpar(ib,2) - 
      &          (bcint(te,nx,ny,iy,ib)/qe)*log(zarg)
-              write(*,*) ' New potential : ', po(bcpos(ib),iy)
+              write(*,*) ' New potential : ', 
+     .         po(bc_list_x(iy,ib),bc_list_y(iy,ib))
             enddo
           endif
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
           t1 = 0.0_R8
-          DO IY=BCSTART(IB), BCEND(IB)
-            t1 = max(t1,abs(respo(bcpos(ib),iy)))
+          DO IY = 1, BC_LIST_SIZE(IB)
+            t1 = max(t1,abs(respo(bc_list_x(iy,ib),bc_list_y(iy,ib))))
           ENDDO
           if(t1.gt.1.0_R8) then
-            DO IY=BCSTART(IB), BCEND(IB)
+            DO IY = 1, BC_LIST_SIZE(IB)
               write(*,*) ' Old potential, residual (E) : ',
-     .	       bcpos(ib),iy,po(bcpos(ib),iy),respo(bcpos(ib),iy)
+     .	       bc_list_x(iy,ib),bc_list_y(iy,ib),
+     .         po(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .         respo(bc_list_x(iy,ib),bc_list_y(iy,ib))
               vte = sqrt(bcint(te,nx,ny,iy,ib)/me)*
-     &         abs(pbs(bcpos(ib),iy,0))
+     &         abs(pbs(bc_list_x(iy,ib),bc_list_y(iy,ib),0))
               t0 = 0.0_R8
               do is = 0, ns-1
                 t0 = t0+bcint(rza(-1,-1,is),nx,ny,iy,ib)*
-     &           fna(bcpos(ib),iy,0,is)
+     &           fna(bc_list_x(iy,ib),bc_list_y(iy,ib),0,is)
               enddo
               fchi = qe*t0
               zarg = sqrt(2.0_R8*pi)/(1.0_R8-gammae)*
-     &          (fchi-fch(bcpos(ib),iy,0))/
+     &          (fchi-fch(bc_list_x(iy,ib),bc_list_y(iy,ib),0))/
      &          (qe*bcint(ne,nx,ny,iy,ib)*vte)
               if(zarg.gt.1.0e-5_R8)
-     >         po(bcpos(ib),iy) = potpar(ib,2) - 
+     >         po(bc_list_x(iy,ib),bc_list_y(iy,ib)) = potpar(ib,2) -
      &          (bcint(te,nx,ny,iy,ib)/qe)*log(zarg)
-              write(*,*) ' New potential : ', po(bcpos(ib),iy)
+              write(*,*) ' New potential : ', 
+     .         po(bc_list_x(iy,ib),bc_list_y(iy,ib))
             enddo
           endif
         ENDIF

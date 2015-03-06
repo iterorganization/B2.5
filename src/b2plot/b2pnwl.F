@@ -9,12 +9,15 @@ c======================================================================
       use b2mod_types
       use b2mod_b2plot
       use b2mod_constants
+      use b2mod_neutrals_namelist
+      use b2mod_b2plot_wall_loading
 #ifdef USE_EIRENE
       use eirmod_extrab25
 #endif
       implicit none
-#     include "COUPLE/KOPPLDIM.F"
-#     include "b2pinpc.h"
+#ifndef USE_EIRENE
+#     include <COUPLE/EIRDIAG.F>
+#endif
 c*** Local variables
 c
       integer lun
@@ -171,7 +174,7 @@ c*** (temporary solution, no molecules involved)
                 wwe(ii)=enrctff
               end do
             end if
-            write (lun,'(1x,a5,i2.2,i5,5f10.4,1p,24e12.4)') 'zone#',
+            write (lun,'(1x,a5,i3.3,i5,5f10.4,1p,24e12.4)') 'zone#',
      ,                il,is,pp1(1,is),pp1(2,is),pp2(1,is),pp2(2,is),
      ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k),
      ,                wwyn,wwyg
@@ -255,10 +258,16 @@ c***  lwldlis : the list themselvs
 c
       use b2mod_types
       use b2mod_b2plot
+      use b2mod_b2plot_wall_loading
+#ifdef USE_EIRENE
+      use eirmod_parmmod
+      use eirmod_extrab25
+#endif
       implicit none
+#ifndef USE_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
 #     include "COUPLE/EIRDIAG.F"
-#     include "b2pinpc.h"
+#endif
 c
 c*** Local variables
 c***

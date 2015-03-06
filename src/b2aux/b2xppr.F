@@ -1,5 +1,6 @@
       subroutine b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       use b2mod_types
+      use b2mod_external
       implicit none
       integer nx, ny, ns
       real (kind=R8) ::
@@ -20,6 +21,13 @@
        do iy = -1, ny
         do ix = -1, nx
          pr(ix,iy) = pr(ix,iy)+na(ix,iy,is)*ti(ix,iy)
+        enddo
+       enddo
+      enddo
+      do is = 0, ns_ext-1
+       do iy = -1, ny
+        do ix = -1, nx
+         pr(ix,iy) = pr(ix,iy)+na_ext(ix,iy,is)*ta_ext(ix,iy,is)
         enddo
        enddo
       enddo

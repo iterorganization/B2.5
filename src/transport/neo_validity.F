@@ -101,7 +101,7 @@ c     conversion of constants to CGS units
 
 *   ..subprogram start-up calls
       call subini ('neo_validity')
-c      call alloc_b2mod_neoclassical(nx,ny,nsdecl,nzdecl,mmx)
+c      call alloc_b2mod_neoclassical(nx,ny,ns,nstages,mmx)
       if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
         ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
         iyref=2*topcut(1)/3

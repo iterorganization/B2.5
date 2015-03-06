@@ -51,7 +51,7 @@
       
 *   ..local variables
       integer ncall, style, n2, ix, iy, is, isb, k
-	integer, save :: iout = 0, iout_b2nph9 = 0, iout_b2npht = 0     !srv 11.09.09
+      integer, save :: iout = 0, iout_b2nph9 = 0, iout_b2npht = 0     !srv 11.09.09
       integer, save :: icase = 0
       real (kind=R8) ::
      *  rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2, phm3,
@@ -64,7 +64,7 @@
      *  shiva(-1:nx,-1:ny,0:3), shivc(-1:nx,-1:ny,0:3),
      *  shifr(-1:nx,-1:ny,0:3), shedu(-1:nx,-1:ny,0:3),
      *  shedd(-1:nx,-1:ny,0:3), shefr(-1:nx,-1:ny,0:3)
-	character chns*2, chk*1                                            !srv 11.09.09 }
+      character chns*3, chk*1                                            !srv 11.09.09 }
       save ncall, style, rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2,
      &  phm3, phm4, phm5, phm6, phm7, phm8                            !srv 02.06.99 27.12.01 28.08.02
       real (kind=R8) ::
@@ -255,7 +255,7 @@
 	  endif                                                         !srv 26.11.02
        enddo
       enddo
-      call saxpy (n2*4, 1.0e0_R8, shedu, 1, she0, 1)                 !srv 11.09.09
+      call b2saxpy (n2*4, 1.0e0_R8, shedu, 1, she0, 1)                 !srv 11.09.09
 *   ..contribution from divergence ua
       do is = 0, ns-1
        do iy = 0, ny-1                                                !srv 21.07.05 {
@@ -299,7 +299,7 @@
         enddo
        enddo
       enddo
-      call saxpy (n2*4, 1.0e0_R8, shidu, 1, shi0, 1)                 !srv 11.09.09
+      call b2saxpy (n2*4, 1.0e0_R8, shidu, 1, shi0, 1)                 !srv 11.09.09
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
       dpo = 0.0e0_R8;   dOnedBsq = 0.0e0_R8                           !srv 03.04.07 {
       do iy = 0, ny-1
@@ -353,7 +353,7 @@
 	  endif                                                         !srv 26.11.02
        enddo
       enddo
-      call saxpy (n2*4, 1.0e0_R8, shedd, 1, she0, 1)                 !srv 11.09.09
+      call b2saxpy (n2*4, 1.0e0_R8, shedd, 1, she0, 1)                 !srv 11.09.09
 
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99                                               !srv 02.06.99
       do is = 0, ns-1
@@ -373,7 +373,7 @@
        enddo
        endif
       enddo
-      call saxpy (n2*4, 1.0e0_R8, shidd, 1, shi0, 1)                  !srv 11.09.09
+      call b2saxpy (n2*4, 1.0e0_R8, shidd, 1, shi0, 1)                  !srv 11.09.09
 *   ..contribution from viscous heating
       do is = 0, ns-1
 	 if(.not.is_neutral(is)) then                          !srv 29.08.02
@@ -421,8 +421,8 @@
         enddo
 	 endif                                   !srv 29.08.02
       enddo
-      call saxpy (n2*4, 1.0e0_R8, shivc, 1, shi0, 1)                  !srv 11.09.09
-      call saxpy (n2*4, 1.0e0_R8, shiva, 1, shi0, 1)                  !srv 11.09.09
+      call b2saxpy (n2*4, 1.0e0_R8, shivc, 1, shi0, 1)                  !srv 11.09.09
+      call b2saxpy (n2*4, 1.0e0_R8, shiva, 1, shi0, 1)                  !srv 11.09.09
 *   ..contribution from electron-atom friction
 *     (a.k.a. Joule heating)
       do iy = 0, ny-1
@@ -445,7 +445,7 @@
 	  endif                                                         !srv 26.11.02
        enddo
       enddo
-      call saxpy (n2*4, 1.0e0_R8, shefr, 1, she0, 1)                 !srv 11.09.09
+      call b2saxpy (n2*4, 1.0e0_R8, shefr, 1, she0, 1)                 !srv 11.09.09
 *   ..contribution from atom-atom friction
       do isb = 0, ns-1
        do is = isb+1, ns-1
@@ -473,7 +473,7 @@
         endif
        enddo
       enddo
-      call saxpy (n2*4, 1.0e0_R8, shifr, 1, shi0, 1)                 !srv 11.09.09
+      call b2saxpy (n2*4, 1.0e0_R8, shifr, 1, shi0, 1)                 !srv 11.09.09
 !      if (style.eq.-1) then                                             !srv 28.06.03 {
 !*    ..strange term, version -1
 !       do is = 0, ns-1

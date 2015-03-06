@@ -4,11 +4,12 @@ c
       use b2mod_types
       use b2mod_geo
       use b2mod_b2plot
+      use b2mod_b2plot_debug
       use b2mod_b2plot_values
       implicit none
       character*(*) filename
-      character*80 dataname,tmpstring
-      character*256 extralabel
+      character*80 dataname
+      character*256 extralabel,tmpstring,titlestring
       logical open_file,vector
 #ifndef DEF_MAXCHORDS
 #define DEF_MAXCHORDS 10000
@@ -62,8 +63,12 @@ c
           ymin=min(ymin,yvalues(i))
           ymax=max(ymax,yvalues(i))
         enddo
-        if(values(11).ne.init_value) xmin=values(11)
-        if(values(12).ne.init_value) xmax=values(12)
+        if(values(11).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) 
+     >   xmin=values(11)
+        if(values(12).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) 
+     >   xmax=values(12)
         if(xmin.eq.xmax) then
           xmin=min(xmin*0.9_R8,xmin*1.1_R8)
           xmax=max(xmax*0.9_R8,xmax*1.1_R8)
@@ -84,24 +89,26 @@ c
             ymax=+1.0_R8
           end if
         end if
-        tmpstring=textwk(is,iwrk)
-        call init_page(
+        tmpstring=
      1   graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) // '.m' //
      2   tmpstring(1:lnblnk(tmpstring)) // ' '//
-     2   dataname(1:lnblnk(dataname)),
+     2   dataname(1:lnblnk(dataname))
+        call customise_label(tmpstring,titlestring)
+        call init_page(titlestring,
      1   xmin,xmax,ymin,ymax,linlog,.false.,.false.,.false.)
-        write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
+        if(b2plot_debug.ge.4)
+     >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)')                                      !srv 21.09.11
+          write(nwtf,'(''# '',a)')
      1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) // '.m' //
      2     tmpstring(1:lnblnk(tmpstring)) // ' '//
      2     dataname(1:lnblnk(dataname))
           call get_extralabel(extralabel)
           if(len_trim(extralabel).ne.0) then
-            write(nwtf,'(''# '',a)') trim(extralabel)                   !srv 21.09.11
+            write(nwtf,'(''# '',a)') trim(extralabel)
           endif
           do i=1,inpts
-            write(nwtf,*) xvalues(i),yvalues(i)                         !srv 21.09.11
+            write(nwtf,*) xvalues(i),yvalues(i)
           enddo
         endif
         do i=1,inpts-1
@@ -118,6 +125,7 @@ c
       use b2mod_types
       use b2mod_geo
       use b2mod_b2plot
+      use b2mod_b2plot_debug
       use b2mod_b2plot_values
       implicit none
 #ifdef CDF_MOVIE
@@ -125,7 +133,8 @@ c
 #endif
 
       character*(*) filename
-      character*80 dataname,tmpstring
+      character*80 dataname
+      character*256 tmpstring,titlestring
 #ifndef DEF_MAXCHORDS
 #define DEF_MAXCHORDS 10000
 #endif
@@ -169,20 +178,21 @@ c
      1     inpts,indchd,indix,indiy,indscl,
      1     work(-1,-1,is,iwrk),
      1     zvalues,filename,dataname,nxcam,xmin,xmax,nycam,ymin,ymax)
-          tmpstring=textwk(is,iwrk)
-          call init_page(
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
-     2     tmpstring(1:lnblnk(tmpstring)) // ' '//
-     2     dataname(1:lnblnk(dataname)),
+          tmpstring=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
+     2     textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))) // ' ' //
+     3     dataname(1:lnblnk(dataname))
+          call customise_label(tmpstring,titlestring)
+          call init_page(titlestring,
      1     xmin,xmax,ymin,ymax,1,.true.,.true.,.true.)
-          write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
+          if(b2plot_debug.ge.4)
+     >     write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)')                   !srv 21.09.11
+            write(nwtf,'(''# '',a)')
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2       tmpstring(1:lnblnk(tmpstring)) // ' '//
      2       dataname(1:lnblnk(dataname))
             do i=1,inpts
-              write(nwtf,*) zvalues(i)                   !srv 21.09.11
+              write(nwtf,*) zvalues(i)
             enddo
           endif
           call plot_gca(zvalues,izvalues,nxcam,nycam,
@@ -213,14 +223,15 @@ c
      1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2     tmpstring(1:lnblnk(tmpstring)),
      1     xmin,xmax,ymin,ymax,1,.true.,.true.,.true.)
-          write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
+          if(b2plot_debug.ge.4)
+     >     write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)')                   !srv 21.09.11
+            write(nwtf,'(''# '',a)')
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2       tmpstring(1:lnblnk(tmpstring)) // ' '//
      2       dataname(1:lnblnk(dataname))
             do i=1,inpts
-              write(nwtf,*) zvalues(i)                   !srv 21.09.11
+              write(nwtf,*) zvalues(i)
             enddo
           endif
           call plot_gca(zvalues,izvalues,nxcam,nycam,

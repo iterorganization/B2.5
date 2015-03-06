@@ -1,19 +1,20 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2t21t(nx, ny, ns, lnlam, bb, vol, hx, pbs, qc,       !srv 01.07.09
+      subroutine b2t21t(nx, ny, ns, lnlam, bb, vol, hx, gs, qc,       !srv 01.07.09
      1 ne, na, ne2, te, ti, ua, fch_p, chce, chci, cthe, cthi)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
      *  lnlam(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny),     !srv 01.07.09
-     &  hx(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1), fch_p(-1:nx,-1:ny), 
+     &  hx(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), fch_p(-1:nx,-1:ny,0:1), 
      &  qc(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1), 
      &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny), 
      &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny)
@@ -93,7 +94,7 @@ c     local variables:
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
        call b2xvsg (n2, ne2, 1, 'ne2', '.gt.')
 *    ..test edge values of fch_p
-       call b2xvfx (nx, ny, fch_p, 'fch_p')
+       call b2xvff (nx, ny, fch_p, 'fch_p')
       endif
 
 *   ..compute the Coulomb logarithm
@@ -104,7 +105,7 @@ c     local variables:
       nz(1) = 1
       nspecies=2
       nz(nspecies)=0
-      mm(nspecies)=am(0)*mp          ! xpb <------- new line
+      mm(nspecies)=am(0)*mp 	 ! xpb <------- new line
       do i=1,ns-1
         if(.not.is_neutral(i-1)) then
           nz(nspecies)=nz(nspecies)+1
@@ -169,7 +170,10 @@ c         --------------------------------------
             do i=0,ns-1
               if(.not.is_neutral(i)) then
                 ncharged=ncharged+1
-                u(ncharged) = ua(ix,iy,i)
+                u(ncharged) = 
+     1           (ua(leftix(ix,iy),leftiy(ix,iy),i)*hx(ix,iy)+
+     1            ua(ix,iy,i)*hx(leftix(ix,iy),leftiy(ix,iy)))/
+     *           (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
                 n(ncharged) =
      1           (na(leftix(ix,iy),leftiy(ix,iy),i)*hx(ix,iy)+
      1            na(ix,iy,i)*hx(leftix(ix,iy),leftiy(ix,iy)))/
@@ -177,10 +181,16 @@ c         --------------------------------------
                 u(1) = u(1) + u(ncharged)*z(ix,iy,ncharged)*n(ncharged)
               endif
             end do
-            if(area_fix.ge.1.and.area_fix.le.2) then
-              u(1) = u(1) - fch_p(ix,iy)/pbs(ix,iy,0)/qc(ix,iy)/qe  ! parallel current
+            u(1) = u(1) + 
+     .       (ue_ext(leftix(ix,iy),leftiy(ix,iy))*
+     .        ne_ext(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy)+
+     .        ue_ext(ix,iy)*ne_ext(ix,iy)*
+     .        hx(leftix(ix,iy),leftiy(ix,iy)))/
+     .       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
+            if(area_fix.ge.1) then  ! parallel current
+              u(1) = u(1) - fch_p(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)/qe
             else
-              u(1) = u(1) - fch_p(ix,iy)/pbs(ix,iy,0)/qe  ! parallel current
+              u(1) = u(1) - fch_p(ix,iy,0)/gs(ix,iy,0)/qe  ! parallel current
             endif
 c !? do we need to apply a 21-moment ansatz for 
 c    the electrical conductivities
@@ -394,7 +404,7 @@ c       ( ix )
       failcount0=failcount
       nspecies=1
       nz(nspecies)=0
-      mm(nspecies)=am(0)*mp          ! xpb <------- new line
+      mm(nspecies)=am(0)*mp 	 ! xpb <------- new line
       do i=1,ns-1
         if(.not.is_neutral(i-1)) then
           nz(nspecies)=nz(nspecies)+1
@@ -436,7 +446,7 @@ c        coef=4/3, if div u = grad_|| up)
 C                       parallel strain (velocity gradient)
                 wwpp(ncharged) = coef*
      1           (ua(rightix(ix,iy),rightiy(ix,iy),i)-ua(ix,iy,i))/
-     2           hx(ix,iy)
+     2           (0.5_R8*(hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy)))
               endif
             end do
 
@@ -541,14 +551,14 @@ c
       subroutine viscalc(n, z, z2, mm, ti, nz, ns, nsz, w, pi_pp,        !xpb
      1 eta, lnlam, ifail, cond)                                          !srv 01.07.09
       use b2mod_types
-      use b2mod_constants
+      use b2mod_constants                                        	 !xpb
 
       implicit none
 
       integer           ns, nsz, nz(ns), ifail
       real (kind=R8) ::
      *                  n(nsz), z(nsz), z2(nsz), mm(ns),
-     1 eta(nsz), pi_pp(nsz), w(nsz), ti	                         !xpb
+     1 eta(nsz), pi_pp(nsz), w(nsz), ti	                                 !xpb
 
 C       internal variables:
 C       ww:     Sum  w*n    over Z
@@ -571,12 +581,13 @@ C       z2n:	Sum  n*Z**2 over Z
      *             a(2*ns,2*ns), x(2*ns)
       real (kind=R8) ::
      *             inva(2*ns,2*ns), wk1(2*ns)
-#ifdef NO_F01AAF
-      integer           IPIV(2*ns)
+#ifndef NO_NAG
+#ifndef NO_F01AAF
 #else
-#ifdef NO_NAG
+      integer   IPIV(2*ns)
 #endif
-      integer           IPIV(2*ns)
+#else
+      integer   IPIV(2*ns)
 #endif
 
       integer          n1(ns)
@@ -617,7 +628,7 @@ c       calculating  d(), z2n(), p(), ww()
 
 c         const = sqrt(2)*e**4 / (12*pi**1.5_R8*eps0**2)
 !xpb      const = 1.79e-55_R8
-        const = sqrt(2.0_R8)*qe**4 / (12*pi**1.5_R8*eps0**2)	         !xpb
+        const = sqrt(2.0_R8)*qe**4 / (12*pi**1.5_R8*eps0**2)		 !xpb
 !xpb      lnlam = 12.e0_R8
 
       do j=1,ns
@@ -785,7 +796,7 @@ c
      *                  nz, ns, nfl, ce, ci, he, hi, r, ifail, cond)
 
       use b2mod_types
-      use b2mod_constants
+      use b2mod_constants	                                	 !xpb
       implicit none
 
         integer     ns, nfl, nz(ns)
@@ -822,12 +833,13 @@ C       gt:	                                temperature gradient
      *          a(2*ns,2*ns), x(2*ns), b(2*ns)
       real (kind=R8) ::
      *          inva(2*ns,2*ns), wk1(2*ns)
-#ifdef NO_F01AAF
-      integer   IPIV(2*ns)
+#ifndef NO_NAG
+#ifndef NO_F01AAF
 #else
-#ifdef NO_NAG
       integer   IPIV(2*ns)
 #endif
+#else
+      integer   IPIV(2*ns)
 #endif
 
       integer   n1(ns)
@@ -872,7 +884,7 @@ C               of species j in vectors n, z, up, r
 
 C     ----  const = sqrt(2)*e**4 / (12*pi**1.5_R8*eps0**2)
 !xpb      const = 1.79e-55_R8
-        const = sqrt(2.0_R8)*qe**4 / (12*pi**1.5_R8*eps0**2)	         !xpb
+        const = sqrt(2.0_R8)*qe**4 / (12*pi**1.5_R8*eps0**2)		 !xpb
 !xpb      lnlam = 12.e0_R8
 
       do j=1,ns

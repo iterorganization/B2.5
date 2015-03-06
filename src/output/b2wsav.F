@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nsav, nx, ny, ns
@@ -64,8 +65,8 @@
 
 * ..produce output
 *   ..compute auxiliaries
-      call b2xpne (nx, ny, ns, rza, na, ne)
-      call b2xpne (nx, ny, ns, rz2, na, ne2)
+      call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
+      call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       do is = 0, ns-1
        call b2xpxc (nx, ny, ua(-1,-1,is), uac(-1,-1,is))

@@ -71,13 +71,14 @@
 *   ..local variables
       integer ncall, n2, ix, iy, ib, area_fix, no_hybr,
      &        ixl, iyl, ixb, iyb                                         !srv 13.10.06
-      integer, save :: iout = 0,                                          !srv 16.09.02
+      integer, save :: iout = 0,                                         !srv 16.09.02
      &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
       integer, save :: mdf_fnb = 0                                       !srv 13.10.06
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !sv 06.07.06
       integer, save :: PSch_style = 1                                    !srv 12.11.08
-      character chns*2                                                 !srv 16.09.02
+      character chns*3                                                   !srv 16.09.02
       integer, save :: fnb_nodrift_style = 0                             !srv 20.06.08
+!! FIXME: Maybe change default value of drift_style ???
       integer, save :: drift_style = 0                                   !srv 21.06.08
       real (kind=R8), save ::  cfvma = 0.0_R8                            !srv 15.12.05
       real (kind=R8), save ::  alpha_ = 0.0_R8                           !srv 09.07.03
@@ -1086,7 +1087,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          endif
         enddo
        enddo
-       write(chns,'(i2.2)') isb
+       write(chns,'(i3.3)') isb
        if(.not. is_neutral(isb)) then
         call my_out(70,nx,ny,wrk3,'b2tfnb_vaecrbnax'//chns)
         call my_out(70,nx,ny,fnbPSch(-1,-1,0),'b2tfnb_fnbPSchx'//chns)
@@ -1102,7 +1103,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfx'//chns)
       endif
       if(iout_b2npmo.ne.0) then
-       write(chns,'(i2.2)') isb
+       write(chns,'(i3.3)') isb
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
@@ -1485,7 +1486,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          endif
         enddo
        enddo
-       write(chns,'(i2.2)') isb
+       write(chns,'(i3.3)') isb
        if(.not. is_neutral(isb)) then
         call my_out(70,nx,ny,fnbPSch(-1,-1,1),'b2tfnb_fnbPSchy'//chns)
         call my_out(70,nx,ny,wrk3,'b2tfnb_vaecrbnay'//chns)
@@ -1498,7 +1499,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
 !         call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfy'//chns)
       endif
       if(iout_b2npmo.ne.0) then
-       write(chns,'(i2.2)') isb
+       write(chns,'(i3.3)') isb
        do iy = -1, ny
         do ix = -1, nx
          if(bottomiy(ix,iy).eq.-2) then
@@ -1809,7 +1810,7 @@ csw 18feb2014 remove fluxes between guard cells
       endif                                                          !srv 14.07.10 }
 
       if(iout.ne.0) then                                             !srv 18.06.08 {
-       write (chns,'(i2.2)') isb
+       write (chns,'(i3.3)') isb
        call my_out(70,nx,ny,fnb(-1,-1,0),'b2tfnb_fnbx'//chns)
        call my_out(70,nx,ny,fnb(-1,-1,1),'b2tfnb_fnby'//chns)
        call my_out(70,nx,ny,fnb_nodrift(-1,-1,0),

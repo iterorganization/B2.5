@@ -6,8 +6,8 @@
      *  corpa(:,:,:),  corpo(:,:),
      *  corte(:,:),  corti(:,:),
      *  corua(:,:,:),  corut(:,:),
-     *  delna(:,:,:),  delpo(:,:),  delte(:,:),  delti(:,:),
-     *  delua(:,:,:),
+     *  delne(:,:), delni(:,:,:), delna(:,:,:),  delpo(:,:),  
+     *  delte(:,:),  delti(:,:),  delua(:,:,:),
      *  flob(:,:,:),  floe(:,:,:),  floi(:,:,:),
      *  floe_noc(:,:,:),                                              !srv 28.10.02
      *  floi_noc(:,:,:),                                              !srv 28.10.02
@@ -16,6 +16,9 @@
      *  bvisper(:,:,:),                                               !srv 05.07.00
      *  cvisper(:,:,:),                                               !srv 05.07.00
      *  wrk0(:,:),  wrk1(:,:)
+      real (kind=R8), allocatable, save :: 
+     &  facdrift_profile(:,:), fac_ExB_profile(:,:), ds(:),
+     1	fac_vis_profile(:,:)
 #ifdef USE_EIRENE
       real (kind=R8), allocatable, save ::                            !IYS 28.03.12 {
      &  sna0_eir_h(:,:,:,:,:),
@@ -44,6 +47,8 @@
       allocate(corti(-1:nxd,-1:nyd))
       allocate(corua(-1:nxd,-1:nyd,0:nsd-1))
       allocate(corut(-1:nxd,-1:nyd))
+      allocate(delne(-1:nxd,-1:nyd))
+      allocate(delni(-1:nxd,-1:nyd,0:1))
       allocate(delna(-1:nxd,-1:nyd,0:nsd-1))
       allocate(delpo(-1:nxd,-1:nyd))
       allocate(delte(-1:nxd,-1:nyd))
@@ -66,33 +71,35 @@
       allocate(ifenebound(-1:nxd,-1:nyd))
       allocate(iftimbound(-1:nxd,-1:nyd))
 
-      avisper=0                                                       !srv 05.07.00
-      bvisper=0                                                       !srv 05.07.00
-      cvisper=0                                                       !srv 05.07.00
-      conb=0
-      conc=0
-      cone=0
-      coni=0
-      corpa=0
-      corpo=0
-      corte=0
-      corti=0
-      corua=0
-      corut=0
-      delna=0
-      delpo=0
-      delte=0
-      delti=0
-      delua=0
-      flob=0
-      floe=0
-      floi=0
-      floe_noc=0                                                     !srv 28.10.02
-      floi_noc=0                                                     !srv 28.10.02
-      pcca=0
-      pccm=0
-      wrk0=0
-      wrk1=0
+      avisper=0.0_R8                                                       !srv 05.07.00
+      bvisper=0.0_R8                                                       !srv 05.07.00
+      cvisper=0.0_R8                                                       !srv 05.07.00
+      conb=0.0_R8
+      conc=0.0_R8
+      cone=0.0_R8
+      coni=0.0_R8
+      corpa=0.0_R8
+      corpo=0.0_R8
+      corte=0.0_R8
+      corti=0.0_R8
+      corua=0.0_R8
+      corut=0.0_R8
+      delne=0.0_R8
+      delni=0.0_R8
+      delna=0.0_R8
+      delpo=0.0_R8
+      delte=0.0_R8
+      delti=0.0_R8
+      delua=0.0_R8
+      flob=0.0_R8
+      floe=0.0_R8
+      floi=0.0_R8
+      floe_noc=0.0_R8                                                     !srv 28.10.02
+      floi_noc=0.0_R8                                                     !srv 28.10.02
+      pcca=0.0_R8
+      pccm=0.0_R8
+      wrk0=0.0_R8
+      wrk1=0.0_R8
       iffboundx=0
       iffboundy=0
       ifenebound=0
@@ -101,16 +108,17 @@
       end subroutine alloc_b2mod_work
 
 #ifdef USE_EIRENE  
-      subroutine alloc_hist_arrays(nxd,nyd,nsd,nhistd)                     !IYS 28.03.12 {
+      subroutine alloc_hist_arrays(nxd,nyd,nsd_local,nhistd)      !IYS 28.03.12 {
 
+      use eirmod_parmmod
+      use eirmod_braeir
       implicit none
-      integer nxd,nyd,nsd,nhistd
+      integer nxd,nyd,nsd_local,nhistd
 #     include "DIMENSIONS.F"
-#     include <COUPLE/KOPPLDIM.F>
 
 ! to store the time history of sources from EIRENE
-      allocate(sna0_eir_h(-1:nxd,-1:nyd,0:1,0:nsd-1,nhistd))
-      allocate(smo0_eir_h(-1:nxd,-1:nyd,0:3,0:nsd-1,nhistd))
+      allocate(sna0_eir_h(-1:nxd,-1:nyd,0:1,0:nsd_local-1,nhistd))
+      allocate(smo0_eir_h(-1:nxd,-1:nyd,0:3,0:nsd_local-1,nhistd))
       allocate(she0_eir_h(-1:nxd,-1:nyd,0:3,nhistd))
       allocate(shi0_eir_h(-1:nxd,-1:nyd,0:3,nhistd))
       allocate(rfluxa_h(0:ndxp,0:ndyp,natm,1,nhistd))

@@ -25,8 +25,8 @@ c
 *  -- PROCEDURES --
       INTRINSIC MOD
       real (kind=R8) ::
-     *   sasum
-      EXTERNAL XERRAB, sasum, x05baf
+     *   b2sasum
+      EXTERNAL XERRAB, b2sasum, x05baf
 
       logical lfirst
       integer ncall, nwrite_fmt, nwrite_bnr                           !sv 29.05.02

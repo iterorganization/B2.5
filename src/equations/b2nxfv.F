@@ -28,7 +28,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy
       save ncall
-      external subini, subend, xertst, ipgeti, ipgetr, scopy
+      external subini, subend, xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
 *   ..initialization
       data ncall/0/

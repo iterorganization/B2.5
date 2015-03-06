@@ -3,10 +3,12 @@ c
       use b2mod_types
       use b2mod_geo
       use b2mod_b2plot
+      use b2mod_b2plot_debug
+      use b2mod_b2plot_values
       implicit none
       character*(*) filename
-      character*80 dataname,tmpstring
-      character*256 extralabel
+      character*80 dataname
+      character*256 extralabel,titlestring,tmpstring
       logical open_file,vector
       integer lngarr
       parameter (lngarr=500 000)
@@ -59,25 +61,26 @@ c
           ymax=max(ymax,yvalues(i))
         enddo
 
-        tmpstring=textwk(is,iwrk)
+        tmpstring=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
+     2   textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))) // ' ' //
+     3   dataname(1:lnblnk(dataname))
+        call customise_label(tmpstring,titlestring)
 
-        call init_page(
-     1   graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
-     2   tmpstring(1:lnblnk(tmpstring)) // ' '//
-     2   dataname(1:lnblnk(dataname)),
+        call init_page(titlestring,
      1   xmin,xmax,ymin,ymax,linlog,.false.,.false.,.false.)
-        write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
+        if(b2plot_debug.ge.4)
+     >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)')                   !srv 21.09.11
+          write(nwtf,'(''# '',a)')
      1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2     tmpstring(1:lnblnk(tmpstring)) // ' '//
      2     dataname(1:lnblnk(dataname))
           call get_extralabel(extralabel)
           if(len_trim(extralabel).ne.0) then
-            write(nwtf,'(''# '',a)') trim(extralabel)                   !srv 21.09.11
+            write(nwtf,'(''# '',a)') trim(extralabel)
           endif
           do i=1,inpts
-            write(nwtf,*) xvalues(i),yvalues(i)                   !srv 21.09.11
+            write(nwtf,*) xvalues(i),yvalues(i)
           enddo
         endif
         do i=1,inpts-1

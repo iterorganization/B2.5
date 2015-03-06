@@ -53,11 +53,11 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-	integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
-	integer, save :: iadd_9 = 1, iout = 0                           !srv 13.10.06
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
+      integer, save :: iadd_9 = 1, iout = 0                           !srv 13.10.06
       real (kind=R8) ::
      *   t0, t1
-	character chns*2
+      character chns*3
       save ncall
 *   ..procedures
       intrinsic abs
@@ -186,7 +186,7 @@
        enddo
       enddo
 	if (iout.ne.0) then                                              !srv 17.06.02 {
-	 write (chns,'(i2.2)') isb    
+	 write (chns,'(i3.3)') isb    
 	  call my_out(70,nx,ny,aa9(-1,-1,-3),name//'_aa9m3'//chns)
 	  call my_out(70,nx,ny,aa9(-1,-1,-2),name//'_aa9m2'//chns)
 	  call my_out(70,nx,ny,aa9(-1,-1,-1),name//'_aa9m1'//chns)

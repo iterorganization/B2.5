@@ -3,9 +3,9 @@
 
       subroutine b2tfch (nx, ny, ns, guard_flows, 
      1  facdrift, fac_ExB, fac_vis, BoRiS,
-     1  vol, gs, hx, hy, qz, bb, te, po, ne,                             !xpb
+     1  vol, gs, hx, hy, qz, bb, te, po, ne,                    	 !xpb
      1  ti, na, fna, uadia, vedia, wadia, vaecrb, veecrb, ua,
-     2  fne_32, fne_52, csig, csigin, chce, chve,                        !xpb
+     2  fne_32, fne_52, csig, csigin, chce, chve,               	 !xpb
      &  calf, chvemx, cvsa, fch, conc, fchdia,
      &  fch_p, fchvispar, fchvisq, fchin, fch_32, fch_52,                !srv 25.11.08
      1  avisper, bvisper, cvisper, fchvisper)
@@ -14,23 +14,23 @@
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_anomalous_transport
-      use b2mod_geo_corner
+      use b2mod_anomalous_transport                             	 !xpb
+      use b2mod_geo_corner                                      	 !xpb
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, guard_flows                                    !xpb
+      integer nx, ny, ns, guard_flows                           	 !xpb
       real (kind=R8) ::
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      & vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:ns-1),
-     & gs(-1:nx,-1:ny,0:2), qz(-1:nx,-1:ny,0:1),                         !xpb
+     & gs(-1:nx,-1:ny,0:2), qz(-1:nx,-1:ny,0:1),                	 !xpb
      & uadia(-1:nx,-1:ny,0:1,0:ns-1), 
      & ua(-1:nx,-1:ny,0:ns-1),
-     & wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),    !xpb
+     & wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1), 	 !xpb
      & fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
      1 csig(-1:nx,-1:ny,0:1), 
-     & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),                            !xpb
+     & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),                   	 !xpb
      & chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
      & cvsa(-1:nx,-1:ny,0:1,0:ns-1),na(-1:nx,-1:ny,0:ns-1),
@@ -64,27 +64,27 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ib, is, is0, 
-     *   no_current, conduction_only, no_hybr, model
+     *   no_current, conduction_only, no_hybr, model, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
       real (kind=R8) ::
-     *   ehx, flo, dif, floe0, flomx, cone0, t0, 
+     *   ehx, ehy, flo, dif, floe0, flomx, cone0, t0, 
      &   tex, tex0, ehx_po, ehy_po,
      1   flo_vedia, prefactor, floe0_nd, cone0_nd, t0_nd, tex0_nd
       real (kind=R8) ::                                                  !xpb
      * fch_ion_neutral, fch_anomalous, vis_par,                          !xpb
-     * dvpar(-1:nx,-1:ny),                                               !xpb
-     * fnadspl(-1:nx,-1:ny,0:1,0:ns-1), vis_per,                         !xpb
-     * va(-1:nx,-1:ny), dva(-1:nx,-1:ny), wpo(-1:nx,-1:ny)
+     * dvpar(-1:nx,-1:ny), vis_per,                                      !xpb
+     * va(-1:nx,-1:ny), dva(-1:nx,-1:ny), wpo(-1:nx,-1:ny),  
+     * fnadspl(-1:nx,-1:ny,0:1,0:ns-1)                     
       character*1 charnc
 #ifdef CLASSICAL_CURRENT
       real (kind=R8) ::
      *   gampvd(-1:nx,-1:ny),gamrvd(-1:nx,-1:ny),
      *   gampvdc(-1:nx,-1:ny)
 #endif
-      save ncall, fch_ion_neutral, fch_anomalous, vis_par, 
+      save ncall, fch_ion_neutral, fch_anomalous, vis_par, pot_eq,
      *   no_current, conduction_only, no_hybr, vis_per, model
 *   ..procedures
-      intrinsic max, abs, sqrt, log, mod                                 !xpb
+      intrinsic max, abs, sqrt, log, mod                        	 !xpb
       real (kind=R8) ::
      *   hybr, hy1
       external subini, subend, xertst, ipgetr, ipgeti
@@ -92,9 +92,9 @@
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
 *   ..initialisation
-      data ncall/0/, fch_ion_neutral/0.0_R8/, fch_anomalous/1.0_R8/,     !xpb
+      data ncall/0/, fch_ion_neutral/0.0_R8/, fch_anomalous/1.0_R8/,  	 !xpb
      * vis_par/0.0_R8/, no_current/0/, conduction_only/0/, model/1/,
-     1 vis_per/0.0_R8/, no_hybr/0/
+     1 vis_per/0.0_R8/, no_hybr/0/, pot_eq/1/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -102,12 +102,12 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tfch')
-      if (ncall.eq.0) then                                               !xpb
-       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)                   !xpb
-       call ipgetr ('b2tfhe_anomalous', fch_anomalous)                   !xpb
-       call ipgetr ('b2tfhe_vis_par', vis_par)                           !xpb
-       call ipgetr ('b2tfhe_vis_per', vis_per)                           !xpb
-       call xertst (fch_ion_neutral.ne.0.0_R8 .or.  vis_par.ne.0.0_R8    !xpb
+      if (ncall.eq.0) then                                      	 !xpb
+       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)          	 !xpb
+       call ipgetr ('b2tfhe_anomalous', fch_anomalous)          	 !xpb
+       call ipgetr ('b2tfhe_vis_par', vis_par)                  	 !xpb
+       call ipgetr ('b2tfhe_vis_per', vis_per)                  	 !xpb
+       call xertst (fch_ion_neutral.ne.0.0_R8 .or.  vis_par.ne.0.0_R8 	 !xpb
      &           .or. fch_anomalous.ne.0.0_R8 
      &           .or. maxval(facdrift).ne.0.0_R8
      &           .or. vis_per.ne.0.0_R8,
@@ -119,6 +119,9 @@
        call xertst (0.0_R8.le.fch_ion_neutral .and.                      !xpb
      &  1.0_R8.ge.fch_ion_neutral, 'faulty argument fch_ion_neutral')    !xpb
        call ipgeti ('b2tfhe_no_current', no_current)                     !xpb
+       call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
+       call xertst (pot_eq.eq.1.or.no_current.eq.1,
+     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2tfhe_conduction_only', conduction_only)           !xpb
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                           !xpb
        call ipgeti ('b2tqce_model', model)
@@ -136,16 +139,19 @@
 *    ..test edge values of fne
        call b2xvff (nx, ny, fne_32, 'fne_32')
        call b2xvff (nx, ny, fne_52, 'fne_52')
-*    ..test sign of ne, te, csig, csig_an, csigin, chce
+*    ..test sign of ne, te, csig, csig_an, calf_an, csigin, chce
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
        call b2xvsg (n2*2, csig, 1, 'csig', '.ge.')
        call b2xvsg (n2*2, csig_an, 1, 'csig_an', '.ge.')
+       call b2xvsg (n2*2, calf_an, 1, 'calf_an', '.ge.')
        call b2xvsg (n2*2*ns*ns, csigin, 1, 'csigin', '.ge.')
        call b2xvsg (n2*2, chce, 1, 'chce', '.ge.')
-*    ..test edge values of csig, csig_an, csigin, chce, chve, chvemx, calf
+*    ..test edge values of csig, calf, csig_an, calf_an, csigin, chce, chve, chvemx
        call b2xvff (nx, ny, csig, 'csig')
+       call b2xvff (nx, ny, calf, 'calf')
        call b2xvff (nx, ny, csig_an, 'csig_an')
+       call b2xvff (nx, ny, calf_an, 'calf_an')
        do is = 0, ns-1
          do is0 = 0, ns-1
            call b2xvff (nx, ny, csigin(-1,-1,0,is,is0), 'csigin')
@@ -154,51 +160,50 @@
        call b2xvff (nx, ny, chce, 'chce')
        call b2xvff (nx, ny, chve, 'chve')
        call b2xvfx (nx, ny, chvemx, 'chvemx')
-       call b2xvff (nx, ny, calf, 'calf')
       endif
 
 c Drift terms
-      vedia=0.0_R8                                                       !xpb
-      veecrb=0.0_R8                                                      !xpb
+      vedia=0.0_R8                                              	 !xpb
+      veecrb=0.0_R8                                             	 !xpb
       if(maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8) then !xpb
         call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpo)
         do iy = -1, ny
-          do ix = -1, nx                                                 !xpb
+          do ix = -1, nx                                        	 !xpb
 cxpb  Must check that we are not at the island X-point or at the mesh edge !xpb
             if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).ne.iy .and.
      &         topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
      &         rightix(ix,iy).ne.nx+1 .and. leftiy(ix,iy).ne.-2 .and.
-     &         region(ix,iy,0).ne.0) then                                !xpb
+     &         region(ix,iy,0).ne.0) then                       	 !xpb
 cxpb  Standard case
               veecrb(ix,iy,0) = - 1.0_R8/hy1(ix,iy)*     ! signmf        !xpb   !srv 11.01.13
      1          bb(ix,iy,2)/bb(ix,iy,3)**2*                              !xpb
      2         (wpo(topix(ix,iy),topiy(ix,iy))-wpo(ix,iy))*
-     &        fac_ExB(ix,iy)                                             !xpb
-              vedia(ix,iy,0) = + bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)*     !xpb
-     1         1.0_R8/bb(ix,iy,3)*                                       !xpb
-     2         2.0_R8*te(ix,iy)/bb(ix,iy,3)/qe*                          !xpb
+     &        fac_ExB(ix,iy)                                    	 !xpb
+              vedia(ix,iy,0) = + bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)*  	 !xpb
+     1         1.0_R8/bb(ix,iy,3)*                              	 !xpb
+     2         2.0_R8*te(ix,iy)/bb(ix,iy,3)/qe*                 	 !xpb
      3        (wbbv(topix(ix,iy),topiy(ix,iy),3)-wbbv(ix,iy,3))*
-     &        facdrift(ix,iy)                                            !xpb
-            else                                                         !xpb
-              veecrb(ix,iy,0) = 0.0_R8                                   !xpb
-              vedia(ix,iy,0) = 0.0_R8                                    !xpb
-            endif                                                        !xpb
+     &        facdrift(ix,iy)                                   	 !xpb
+            else                                                	 !xpb
+              veecrb(ix,iy,0) = 0.0_R8                          	 !xpb
+              vedia(ix,iy,0) = 0.0_R8                           	 !xpb
+            endif                                               	 !xpb
           enddo
         enddo
         
         call intfaceh(nx,ny,leftix,leftiy,vol,po,wpo)
-        do iy = -1, ny                                                   !xpb
+        do iy = -1, ny                                          	 !xpb
           do ix = -1, nx
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
-              veecrb(ix,iy,1) = 1.0_R8/hx(ix,iy)*                       !xpb
-     1          bb(ix,iy,2)/bb(ix,iy,3)**2*                              !xpb
+              veecrb(ix,iy,1) = 1.0_R8/hx(ix,iy)*              	         !xpb
+     1          bb(ix,iy,2)/bb(ix,iy,3)**2*                     	 !xpb
      2         (wpo(rightix(ix,iy),rightiy(ix,iy))-wpo(ix,iy))*
      &         fac_ExB(ix,iy)   !xpb
-              vedia(ix,iy,1) = - te(ix,iy)*bb(ix,iy,2)/(qe*hx(ix,iy))    !xpb
-     &         *(2.0_R8/bb(ix,iy,3)**3)                                  !xpb
-     &         *(wbbr(ix,iy,3)-wbbl(ix,iy,3))*facdrift(ix,iy)            !xpb
+              vedia(ix,iy,1) = - te(ix,iy)*bb(ix,iy,2)/(qe*hx(ix,iy)) 	 !xpb
+     &         *(2.0_R8/bb(ix,iy,3)**3)                         	 !xpb
+     &         *(wbbr(ix,iy,3)-wbbl(ix,iy,3))*facdrift(ix,iy)   	 !xpb
             endif
           enddo
         enddo
@@ -210,35 +215,35 @@ cxpb  Standard case
           do iy = -1, ny                                                 !xpb
             if(leftix(ix,iy).eq.-2) then
               veecrb(ix,iy,:) = veecrb(rightix(ix,iy),rightiy(ix,iy),:)  !xpb
-              vedia(ix,iy,:) = vedia(rightix(ix,iy),rightiy(ix,iy),:)    !xpb
-            elseif(rightix(ix,iy).eq.nx+1) then                          !xpb
-              veecrb(ix,iy,:) = veecrb(leftix(ix,iy),leftiy(ix,iy),:)    !xpb
-              vedia(ix,iy,:) = vedia(leftix(ix,iy),leftiy(ix,iy),:)      !xpb
+              vedia(ix,iy,:) = vedia(rightix(ix,iy),rightiy(ix,iy),:) 	 !xpb
+            elseif(rightix(ix,iy).eq.nx+1) then                 	 !xpb
+              veecrb(ix,iy,:) = veecrb(leftix(ix,iy),leftiy(ix,iy),:) 	 !xpb
+              vedia(ix,iy,:) = vedia(leftix(ix,iy),leftiy(ix,iy),:)   	 !xpb
             endif
-            if(topiy(ix,iy).eq.ny+1) then                                !xpb
+            if(topiy(ix,iy).eq.ny+1) then                       	 !xpb
               veecrb(ix,iy,:) = 
-     .         veecrb(bottomix(ix,iy),bottomiy(ix,iy),:)                 !xpb
+     .         veecrb(bottomix(ix,iy),bottomiy(ix,iy),:)        	 !xpb
               vedia(ix,iy,:) = vedia(bottomix(ix,iy),bottomiy(ix,iy),:)  !xpb
             elseif(bottomiy(ix,iy).eq.-2) then
-              veecrb(ix,iy,:) = veecrb(topix(ix,iy),topiy(ix,iy),:)      !xpb
-              vedia(ix,iy,:) = vedia(topix(ix,iy),topiy(ix,iy),:)        !xpb
+              veecrb(ix,iy,:) = veecrb(topix(ix,iy),topiy(ix,iy),:)   	 !xpb
+              vedia(ix,iy,:) = vedia(topix(ix,iy),topiy(ix,iy),:)     	 !xpb
             endif
           enddo
         enddo
 
-* turn off side drift flows in guard cells                               !xpb
-        do iy = -1, ny                                                   !xpb
+* turn off side drift flows in guard cells                      	 !xpb
+        do iy = -1, ny                                          	 !xpb
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-           veecrb(ix,iy,1) = 0.0_R8                                      !xpb
-           vedia(ix,iy,1) = 0.0_R8                                       !xpb
+           veecrb(ix,iy,1) = 0.0_R8                             	 !xpb
+           vedia(ix,iy,1) = 0.0_R8                              	 !xpb
           endif
           if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
-           veecrb(ix,iy,0) = 0.0_R8                                      !xpb
-           vedia(ix,iy,0) = 0.0_R8                                       !xpb
+           veecrb(ix,iy,0) = 0.0_R8                             	 !xpb
+           vedia(ix,iy,0) = 0.0_R8                              	 !xpb
           endif
          enddo
-        enddo                                                            !xpb
+        enddo                                                   	 !xpb
       endif
 
 c Drift terms
@@ -251,7 +256,7 @@ c Drift terms
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
 cxpb  Must check for the case of the island X-point
-              if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then            !xpb
+              if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then   	 !xpb
 cxpb  Standard case
                 fchdia(ix,iy,0)=fchdia(ix,iy,0)                          !srv
      &           +(ne(ix,iy)*(te(ix,iy)+ti(ix,iy))*bb(ix,iy,2)+
@@ -294,8 +299,8 @@ cxpb  standard case
      &           -(ne(ix,iy)*(te(ix,iy)+ti(ix,iy))*bb(ix,iy,2)+
      &             ne(bottomix(ix,iy),bottomiy(ix,iy))                   !srv
      &           *(te(bottomix(ix,iy),bottomiy(ix,iy))                   !srv
-     &            +ti(bottomix(ix,iy),bottomiy(ix,iy))                   !srv
-     &            *bb(bottomix(ix,iy),bottomiy(ix,iy),2)))/2.0_R8        !srv
+     &            +ti(bottomix(ix,iy),bottomiy(ix,iy)))                  !srv
+     &            *bb(bottomix(ix,iy),bottomiy(ix,iy),2))/2.0_R8         !srv
      &           *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))      !srv
      &           /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))    !srv
      &     *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))    !srv
@@ -307,8 +312,8 @@ cxpb  geometrical cut to the right with jump in B
      &           -(ne(ix,iy)*(te(ix,iy)+ti(ix,iy))*bb(ix,iy,2)+
      &             ne(bottomix(ix,iy),bottomiy(ix,iy))                   !srv
      &           *(te(bottomix(ix,iy),bottomiy(ix,iy))                   !srv
-     &            +ti(bottomix(ix,iy),bottomiy(ix,iy))                   !srv
-     &            *bb(bottomix(ix,iy),bottomiy(ix,iy),2)))/2.0_R8        !srv
+     &            +ti(bottomix(ix,iy),bottomiy(ix,iy)))                  !srv
+     &            *bb(bottomix(ix,iy),bottomiy(ix,iy),2))/2.0_R8         !srv
      &           *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))      !srv
      &           /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))    !srv
      &           *(1.0_R8/wbbv(ix,iy,3)**2-OnedBsqc(ix,iy))              !srv
@@ -340,7 +345,7 @@ crfs inertia terms
      &       .and. leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2
      &       .and. region(ix,iy,0).ne.0) then
 cxpb  Must check for case of the island X-point
-                  if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then        !xpb
+                  if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then     	 !xpb
 cxpb  Standard case
                     gamrvd(ix,iy)=gamrvd(ix,iy)+am(is)*mp*
      1               0.5_R8*(fna(ix,iy,1,is)+
@@ -354,7 +359,7 @@ cxpb  Island X-point cells
      2               0.5_R8*(uadia(ix,iy,0,is)+
      2               uadia(rightix(ix,iy),rightiy(ix,iy),0,is))
                   endif
-                endif                                                    !xpb
+                endif                                           	 !xpb
               enddo
             enddo
           endif
@@ -366,8 +371,7 @@ cxpb  Island X-point cells
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
               fchdia(ix,iy,1) = fchdia(ix,iy,1)+
-     1         (1.0_R8/bb(ix,iy,3)+
-     2         (1.0_R8/bb(bottomix(ix,iy),bottomiy(ix,iy),3)))*
+     1         0.5_R8/wbbv(ix,iy,3)*
      2         ((gampvdc(rightix(ix,iy),rightiy(ix,iy))
      3          -gampvdc(ix,iy))/
      6         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
@@ -377,7 +381,7 @@ cxpb  Island X-point cells
             endif
           enddo
         enddo
-                ! /* CLASSICAL_CURRENT */
+       	! /* CLASSICAL_CURRENT */
 #endif
 
         fchdia(:,:,0)=fchdia(:,:,0)*facdrift(:,:)                        !xpb
@@ -435,7 +439,7 @@ cxpb  Island X-point cells
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
 cxpb  Must check for the island X-point
-              if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then            !xpb
+              if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then   	 !xpb
 cxpb  Standard case
                 fchvispar(ix,iy,0)= -vis_par*fac_vis(ix,iy)*             !srv 25.04.00
      &           (dvpar(ix,iy)+dvpar(leftix(ix,iy),leftiy(ix,iy)))       !srv
@@ -453,7 +457,7 @@ cxpb  Island X-point
      &           -OnedBsqc(ix,iy))                                       !xpb
      &           /3.0_R8                                          !srv 18.02.00
               endif
-            endif                                                        !xpb
+            endif                                               	 !xpb
           enddo         
         enddo 
 
@@ -489,7 +493,7 @@ cxpb  geometrical cut to the right with jump in B
 
 c perpendicular viscosity driven current
 
-      fchvisper=0.0_R8                                                   !xpb
+      fchvisper=0.0_R8                                          	 !xpb
       avisper=0.0_R8
       cvisper=0.0_R8
       if (vis_per.ne.0.0_R8) then                                        !srv
@@ -523,7 +527,9 @@ c perpendicular viscosity driven current
      &               (na(ix,iy,is)*ti(ix,iy)-
      1                na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      2                  ti(bottomix(ix,iy),bottomiy(ix,iy)))*
-     3                2.0_R8/(rza(ix,iy,is)*qe)/
+     3                  4.0_R8/
+     .                  ((rza(ix,iy,is)+
+     +                    rza(bottomix(ix,iy),bottomiy(ix,iy),is))*qe)/
      4                  (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      5                   na(ix,iy,is))
                 endif
@@ -561,6 +567,7 @@ c       call my_out(70,nx,ny,cvisper(:,:,1),'cvispery'//charnc)
 c       call my_out(70,nx,ny,fchvisper(:,:,1),'fchvispery'//charnc)
 c       stop
       endif
+
 * ..calculate the parallel viscosity current connected with the heat flux 
       fchvisq = 0.0_R8             ! Temporary                   !srv 25.11.08
 
@@ -654,12 +661,12 @@ c       stop
               ehx = 0.0_R8
               ehx_po = 0.0_R8
             else
-              ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+        !xpb
-     &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+               !xpb
-     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5_R8*       !xpb
-     &         (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy))))     !xpb
-     &         )/qe                                                      !xpb
-              ehx_po = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))      !xpb
+              ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+     	 !xpb
+     &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+      	 !xpb
+     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5_R8*    	 !xpb
+     &         (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy))))  	 !xpb
+     &         )/qe                                             	 !xpb
+              ehx_po = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))   	 !xpb
             endif
             tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
 cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
@@ -669,10 +676,11 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
             else
               floe0_nd = (1.5_R8+BoRiS)*fne_32(ix,iy,0)+
      1         2.5_R8*fne_52(ix,iy,0)+
-     &       chve(ix,iy,0)*(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2
+     &         chve(ix,iy,0)*
+     1         (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8
               prefactor=
-     1         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))             !xpb
-     &         /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))              !xpb
+     1         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))    	 !xpb
+     &         /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))     	 !xpb
      &         *(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8
               flo_vedia=prefactor*vedia(ix,iy,0)
             endif
@@ -708,34 +716,42 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
             endif
             tex0 = tex/(1.0_R8+t0)
             tex0_nd = tex/(1.0_R8+t0_nd)
-            fch(ix,iy,0) = csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex0          !xpb
-     &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0)          !xpb
+            fch(ix,iy,0) = csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex0 	 !xpb
+     &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0) 	 !xpb
      &       +fchvisper(ix,iy,0)
-            fch_32(ix,iy,0) = csig(ix,iy,0)*ehx+
-     1       fchin(ix,iy,0)+fchvispar(ix,iy,0)
+            fch_32(ix,iy,0) = csig(ix,iy,0)*ehx
+     1       +fchin(ix,iy,0)+fchvispar(ix,iy,0)
      &       +fchvisper(ix,iy,0)
             fch_52(ix,iy,0) = -calf(ix,iy,0)*tex0_nd
-            if(isymm.ne.2 .and. no_current.ne.1) then
-              fch_p(ix,iy,0) = (csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex0)    !xpb !srv 10.06.08
+            if(isymm.ne.2 .and. isymm.ne.4 .and. no_current.ne.1) then
+              fch_p(ix,iy,0) = (csig(ix,iy,0)*ehx-
+     &         (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*tex0)    !xpb !srv 10.06.08
      &         /abs(wbbl(ix,iy,0)/wbbl(ix,iy,2))
             else if (no_current.ne.1) then
-              fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex0      !srv 10.06.08
+              fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-
+     &         (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*tex0      !srv 10.06.08
             endif
-            if(fch_anomalous.ne.0.0_R8) then                             !xpb
-              fch(ix,iy,0) = fch(ix,iy,0) + csig_an(ix,iy,0)*ehx_po      !xpb
-              fch_52(ix,iy,0) = fch_52(ix,iy,0)+csig_an(ix,iy,0)*ehx_po  !xpb
-            endif                                                        !xpb
+            if(fch_anomalous.ne.0.0_R8) then                    	 !xpb
+              fch(ix,iy,0) = fch(ix,iy,0) + (csig_an(ix,iy,0)*ehx_po     !xpb
+     &         - calf_an(ix,iy,0)*tex0) * fch_anomalous
+              fch_52(ix,iy,0) = fch_52(ix,iy,0) + fch_anomalous *
+     &         (csig_an(ix,iy,0)*ehx_po  - calf_an(ix,iy,0)*tex0_nd) 
+            endif                                               	 !xpb
             conc(ix,iy,0) = csig(ix,iy,0)
-            if(fch_anomalous.ne.0.0_R8) then                             !xpb
-              conc(ix,iy,0) = conc(ix,iy,0) + csig_an(ix,iy,0)           !xpb
-            endif                                                        !xpb
-            if(fch_ion_neutral.ne.0.0_R8) then                           !xpb
+            if(fch_anomalous.ne.0.0_R8) then                    	 !xpb
+              conc(ix,iy,0) = conc(ix,iy,0) + 
+     &         fch_anomalous * csig_an(ix,iy,0)
+            endif                                               	 !xpb
+            if(fch_ion_neutral.ne.0.0_R8) then                  	 !xpb
               do is = 0, ns-1
-                do is0 = 0, ns-1
-                  conc(ix,iy,0) = conc(ix,iy,0) + csigin(ix,iy,0,is,is0) !xpb
-                enddo
+                if (.not.is_neutral(is)) then
+                  do is0 = 0, ns-1
+                    if (is_neutral(is0)) conc(ix,iy,0) = conc(ix,iy,0) + 
+     &               csigin(ix,iy,0,is,is0)
+                  enddo
+                endif
               enddo
-            endif                                                        !xpb
+            endif                                               	 !xpb
           endif
         enddo
       enddo
@@ -750,43 +766,58 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
             fch_52(ix,iy,1) = 0.0_R8
           else
             if (no_current.eq.1) then
+              ehy = 0.0_R8
               ehy_po = 0.0_R8
             else
+              ehy = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))+
+     &         (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy))+
+     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))*0.5_R8*
+     &         (log(ne(ix,iy))-log(ne(bottomix(ix,iy),bottomiy(ix,iy))))
+     &         )/qe    
               ehy_po = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))  !xpb
             endif
-            fch(ix,iy,1)=                                                !xpb
-     .       fchdia(ix,iy,1)+fchin(ix,iy,1)+fchvispar(ix,iy,1)           !xpb
+            fch(ix,iy,1)= csig(ix,iy,1)*ehy-calf(ix,iy,1)*
+     .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))             !xpb
+     .       +fchdia(ix,iy,1)+fchin(ix,iy,1)+fchvispar(ix,iy,1)          !xpb
      &       +fchvisper(ix,iy,1)
             fch_p(ix,iy,1)= 0.0_R8                                   !srv 10.06.08
-            fch_32(ix,iy,1)= fchin(ix,iy,1)+fchvispar(ix,iy,1)           !xpb
+            fch_32(ix,iy,1)= csig(ix,iy,1)*ehy
+     .       +fchin(ix,iy,1)+fchvispar(ix,iy,1)           !xpb
      &       +fchvisper(ix,iy,1)
-            fch_52(ix,iy,1)=  0.0_R8
-            if(fch_anomalous .ne. 0.0_R8) then                           !xpb
-              fch(ix,iy,1) = fch(ix,iy,1) + csig_an(ix,iy,1)*ehy_po      !xpb
-     .         -calf(ix,iy,1)*                                           !xpb
-     .          (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))          !xpb
-              fch_52(ix,iy,1) = fch_52(ix,iy,1)+ csig_an(ix,iy,1)*ehy_po !xpb
-     .         -calf(ix,iy,1)*                                           !xpb
-     .          (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))          !xpb
-              conc(ix,iy,1) = csig_an(ix,iy,1)                           !xpb
-            endif                                                        !xpb
-            if(fch_ion_neutral .ne. 0.0_R8) then                         !xpb
+            fch_52(ix,iy,1)= -calf(ix,iy,1)*
+     .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy))) 
+            conc(ix,iy,1) = csig(ix,iy,1)
+            if(fch_anomalous .ne. 0.0_R8) then                  	 !xpb
+              fch(ix,iy,1) = fch(ix,iy,1) + (csig_an(ix,iy,1)*ehy_po   	 !xpb
+     .         -calf_an(ix,iy,1)*                                  	 !xpb
+     .          (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))) *	 !xpb
+     .         fch_anomalous 
+              fch_52(ix,iy,1) = fch_52(ix,iy,1)+ fch_anomalous * 
+     .         (csig_an(ix,iy,1)*ehy_po - calf_an(ix,iy,1)*
+     .          (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))) 	 !xpb
+              conc(ix,iy,1) = conc(ix,iy,1) + csig_an(ix,iy,1) *         !xpb
+     .         fch_anomalous
+            endif                                               	 !xpb
+            if(fch_ion_neutral .ne. 0.0_R8) then                	 !xpb
               do is = 0, ns-1
-                do is0 = 0, ns-1
-                  conc(ix,iy,1) = conc(ix,iy,1) 
-     .             + csigin(ix,iy,1,is,is0)                              !xpb
-                enddo
+                if (.not.is_neutral(is)) then
+                  do is0 = 0, ns-1
+                    if (is_neutral(is0)) conc(ix,iy,1) = conc(ix,iy,1) 
+     .               + csigin(ix,iy,1,is,is0)                     	 !xpb
+                  enddo
+                endif
               enddo
             endif
-          endif                                                          !xpb
+          endif                                                 	 !xpb
         enddo
       enddo
 
-      if(guard_flows.eq.0) then                                          !xpb
+      if(guard_flows.eq.0) then                                 	 !xpb
 cxpb turn off flows between boundary cells
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+              conc(ix,iy,1)=0.0_R8
               fch(ix,iy,1)=0.0_R8
               fch_32(ix,iy,1)=0.0_R8
               fch_52(ix,iy,1)=0.0_R8
@@ -798,9 +829,10 @@ cxpb turn off flows between boundary cells
           enddo        
         enddo
 
-cxpb turn off poloidal flows in core bundary
+cxpb turn off poloidal flows in core boundary
         do ix = -1, nx
           if(mod(region(ix,-1,0),4).eq.1) then
+            conc(ix,-1,0) = 0.0_R8
             fch(ix,-1,0) = 0.0_R8
             fch_32(ix,-1,0) = 0.0_R8
             fch_52(ix,-1,0) = 0.0_R8
@@ -811,10 +843,11 @@ cxpb turn off poloidal flows in core bundary
             fchvisper(ix,-1,0) = 0.0_R8
           endif
         enddo
-      endif                                                              !xpb
+      endif                                                     	 !xpb
 
 cxpb turn off current terms if requested
       if (no_current.eq.1) then
+        conc=0.0_R8
         fch=0.0_R8
         fch_p=0.0_R8
         fch_32=0.0_R8
@@ -829,6 +862,7 @@ cxpb turn off current terms if requested
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
+            conc(ix,iy,0)=0.0_R8
             fch(ix,iy,0)=0.0_R8
             fch_32(ix,iy,0)=0.0_R8
             fch_52(ix,iy,0)=0.0_R8
@@ -837,6 +871,7 @@ cxpb turn off current terms if requested
             fchvispar(ix,iy,0)=0.0_R8
             fchvisper(ix,iy,0)=0.0_R8
             fchin(ix,iy,0)=0.0_R8
+            conc(ix,iy,1)=0.0_R8
             fch(ix,iy,1)=0.0_R8
             fch_32(ix,iy,1)=0.0_R8
             fch_52(ix,iy,1)=0.0_R8

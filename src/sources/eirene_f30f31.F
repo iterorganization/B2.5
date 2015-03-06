@@ -45,12 +45,13 @@ c
       use b2mod_eirene_globals
       use b2mod_b2cmpa
 #ifdef USE_EIRENE
-      use eirmod_extrab25
+      use eirmod_parmmod
       use eirmod_braeir
+      use eirmod_extrab25
 #endif
       implicit none
-#     include <COUPLE/KOPPLDIM.F>
 #ifndef USE_EIRENE
+#     include <COUPLE/KOPPLDIM.F>
 #     include <COUPLE/BRAEIR.F>
 #endif
       integer nx,ny,ns
@@ -88,7 +89,7 @@ c
 
       if(nx.ge.NDXP) call xerrab('eirene_mc: increase size of ndxp')
       if(ny.ge.NDYP) call xerrab('eirene_mc: increase size of ndyp')
-* cell centred
+* cell-centred
       do iy=-1,ny
         do ix=-1,nx
           teb(ix+1,iy+1)=max(min(te(ix,iy),te_max*ev),te_min*ev)
@@ -99,7 +100,6 @@ c
           rrb(ix+1,iy+1)=abs(bb(ix,iy,0)/bb(ix,iy,3))
           volb(ix+1,iy+1)=vol(ix,iy)
           bfeldb(ix+1,iy+1)=bb(ix,iy,3)
-          qqc(ix+1,iy+1)=qc(ix,iy)
         enddo
       enddo
 * cell face x
@@ -324,17 +324,18 @@ c
       use b2mod_eirene_globals
       use b2mod_b2cmpa
 #ifdef USE_EIRENE
-      use eirmod_extrab25
+      use eirmod_parmmod
       use eirmod_braeir
+      use eirmod_extrab25
 #endif
       implicit none
-#     include <COUPLE/KOPPLDIM.F>
 #ifndef USE_EIRENE
+#     include <COUPLE/KOPPLDIM.F>
 #     include <COUPLE/BRAEIR.F>
 #endif
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
-      character chns*2                                                 !srv 16.09.02
+      character chns*3                                                 !srv 16.09.02
       integer, save :: drift_style = 0, iout = 0                        !srv 21.06.08
       integer ix,iy,is,ncall,eirene_extrap,in,eirene_fixmap,
      1 eirene_fixuub
@@ -370,7 +371,7 @@ c
       endif
 	if(iout.ne.0) then                                             !srv 18.06.08 {
 	 do is = 0,ns-1
-	 write (chns,'(i2.2)') is
+	 write (chns,'(i3.3)') is
        call my_out(70,nx,ny,fna_eir(-1,-1,0,is),'copy_fna_eirx'//chns)
        call my_out(70,nx,ny,fna_eir(-1,-1,1,is),'copy_fna_eiry'//chns)
 	 call my_out(70,nx,ny,vaecrb(-1,-1,0,is),'copy_vecrbx'//chns)
@@ -750,12 +751,13 @@ c
       use b2mod_eirene_globals
       use b2mod_b2cmpa
 #ifdef USE_EIRENE
+      use eirmod_parmmod
       use eirmod_extrab25
       use eirmod_braeir
 #endif
       implicit none
-#     include <COUPLE/KOPPLDIM.F>
 #ifndef USE_EIRENE
+#     include <COUPLE/KOPPLDIM.F>
 #     include <COUPLE/BRAEIR.F>
 #endif
       integer nx,ny

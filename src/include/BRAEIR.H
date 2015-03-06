@@ -18,7 +18,7 @@ c
 c
 c*** Data for chemical sputtering input from B2 - for compatibility!
 c
-      common /chemical_sputter_data/ chemical_sputter_yield(0:NLIMPS),
+      common /chemical_sputter_data/ chemical_sputter_yield,
      1 fchar_chemical,igass_chemical,itsput_chemical,issput_chemical
 #endif
 #ifndef NO_SAVE

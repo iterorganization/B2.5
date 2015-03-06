@@ -39,6 +39,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, ib, is
       integer, save :: no_current=0                          !srv 27.02.13
+      integer, save :: pot_eq
       real (kind=R8) ::
      &  fch_anomalous
       save ncall, fch_anomalous
@@ -47,7 +48,7 @@
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx
 *   ..initialization
-      data ncall/0/, fch_anomalous/1.0e0_R8/
+      data ncall/0/, fch_anomalous/1.0e0_R8/, pot_eq/1/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -56,8 +57,13 @@
       call subini ('b2tanml')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgetr ('b2tanml_anomalous', fch_anomalous)
-       call ipgeti ('b2tfhe_no_current',no_current)           !srv 27.02.13
+       call ipgetr ('b2tfche_anomalous', fch_anomalous)
+       if (fch_anomalous.eq.1.0_R8) 
+     >  call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
+       call ipgeti ('b2tfhe_no_current',no_current)                 !srv 27.02.13
+       call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
+       call xertst (pot_eq.eq.1.or.no_current.eq.1,
+     &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -68,33 +74,31 @@
       endif
 
       if(no_current.ne.0) then                                !srv 27.02.13
-       fchanml = 0.0e0_R8
+        fchanml = 0.0e0_R8
       else                                                    !srv 27.02.13
-	 if(fch_anomalous.ne.0.0e0_R8) then    
-        do iy = -1, ny
-	   do ix = -1, nx
-	    if(leftix(ix,iy).eq.-2)then
-	     fchanml(ix,iy,0)   = 0.0e0_R8
-	    else
-           fchanml(ix,iy,0) = - csig_an(ix,iy,0)*
+	if(fch_anomalous.ne.0.0e0_R8) then    
+          do iy = -1, ny
+	    do ix = -1, nx
+	      if(leftix(ix,iy).eq.-2)then
+	        fchanml(ix,iy,0)   = 0.0e0_R8
+	      else
+                fchanml(ix,iy,0) = - csig_an(ix,iy,0)*fch_anomalous*
      &           (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))
-          endif
-	   enddo
+              endif
+	    enddo
 	  enddo
 
-        do ix = -1, nx
-	   fchanml(ix,-1,1) = 0
-        enddo
-        do iy = 0, ny
-	   do ix = -1, nx
-
-         fchanml(ix,iy,1) = - csig_an(ix,iy,1)*
+          do ix = -1, nx
+	    fchanml(ix,-1,1) = 0
+          enddo
+          do iy = 0, ny
+	    do ix = -1, nx
+              fchanml(ix,iy,1) = - csig_an(ix,iy,1)*fch_anomalous*
      &           (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))
-
-	   enddo
+	    enddo
 	  enddo
-       endif
-	endif                                                   !srv 27.02.13
+        endif
+      endif                                                   !srv 27.02.13
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO
@@ -109,6 +113,7 @@
 	  end do
 	end do
       end do
+
 * ..return
       ncall = ncall+1
       call subend ()

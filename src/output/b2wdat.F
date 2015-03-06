@@ -1,4 +1,4 @@
-      subroutine b2wdat (nx, ny, ns, ismain, BoRiS)                !srv 05.10.01
+      subroutine b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)     !srv 05.10.01
       use b2mod_types 
       use b2mod_constants 
       use b2mod_geo 
@@ -11,6 +11,7 @@
       use b2mod_transport 
       use b2mod_work 
       use b2mod_indirect 
+      use b2mod_external
       use b2mod_neutrals_namelist 
       use b2mod_boundary_namelist 
       use b2mod_elements 
@@ -25,7 +26,7 @@
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain
+      integer nx, ny, ns, ismain, ismain0
       real (kind=R8) :: BoRiS
 *   ..output arguments (unspecified on entry)
 *     (none)
@@ -46,6 +47,7 @@
       integer ncall, iout, is, ix, iy, ic, ib, iw, iout_iout_ASTRA   !srv 05.10.01 03.04.13 19.04.13
       integer n2, jsep, jxi, jxa, ndat, k, mintopcut, ixx,         !srv 12.07.10
      *        js, nxtl, nxtr, ix1, ix2                             !iyv 04.02.11
+      integer use_astra
       integer, save :: ishift=0                                    !srv 05.11.09
       real (kind=R8) ::                                            !srv
      *  Total_current(-1:ny), B0out, Total_flux(-1:ny),            !srv 31.08.00 19.02.02
@@ -69,8 +71,9 @@
      *   qe_inn_sum, qi_inn_sum, q_inn_sum, 
      *   qe_oup_sum, qi_oup_sum, q_oup_sum, 
      *   qe_iup_sum, qi_iup_sum, q_iup_sum 
-      character chns*2                                             !srv 27.04.01
+      character chns*3                                             !srv 27.04.01
       character(23) hlp_frm                                        !srv 03.04.13
+      character*26 boundary_location(nbcd)
 *   ..procedures
       external subini, subend, ipgeti, machsfr
       real (kind=R8)  ::                                           !srv
@@ -82,8 +85,8 @@
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
 *   ..initialisation
-      save ncall, iout, hlp_neu_peak
-      data ncall/0/, iout/0/
+      save ncall, iout, use_astra, hlp_neu_peak
+      data ncall/0/, iout/0/, use_astra/0/
       data hlp_neu_peak / 5.0_R8 /                                 !iyv 15.10.09
 
 *-----------------------------------------------------------------------
@@ -101,21 +104,21 @@
       if (ncall.eq.0) then
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01
        call ipgeti('b2wdat_ishift', ishift)                       !srv 05.10.01
+       call ipgeti('b2mndr_astra', use_astra)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 
 * ..initialisation
-#ifdef ASTRA
-      iout_iout_ASTRA = 1
-#else
-      iout_iout_ASTRA = 0
-#endif
+      if (use_astra.ne.0) then
+        iout_iout_ASTRA = 1
+      else
+        iout_iout_ASTRA = 0
+      endif
 
       if (iout.eq.1) then                                          !srv begin if for iout
 
 #ifdef USE_EIRENE
-
        open(70,file='eirdiag.dat')
 	  write(70,"(a/6i5)") 'nlmpgs natm nmol npls nstra nstsid',
      &                     nlmpgs, natm, nmol, npls, nstra, nstsid
@@ -139,7 +142,7 @@
        call my_out(70,nx,ny,refluxm(0:nx+1,0:ny+1,is,1),'refluxm'//chns)
        call my_out(70,nx,ny,pfluxm(0:nx+1,0:ny+1,is,1),'pfluxm'//chns)
        call my_out(70,nx,ny,pefluxm(0:nx+1,0:ny+1,is,1),'pefluxm'//chns)
-      enddo                                                                 !srv 04.06.09 }
+      enddo                                                                !srv 04.06.09 }
 #endif
       call get_jsep(nx,ny,jxi,jxa,jsep)
       Total_current=0.0_R8
@@ -213,7 +216,7 @@
       call my_out(70,nx,ny,wrk0,'Wsh')                              !iyv 15.10.09 }
 
       do is = 0,ns-1
-	 write (chns,'(i2.2)') is
+	 write (chns,'(i3.3)') is
        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, wrk0)
        call my_out(70,nx,ny,wrk0,'pb'//chns)
        call my_out(70,nx,ny,na(-1,-1,is),'na'//chns)             !srv
@@ -394,12 +397,14 @@
       call my_out(70,nx,ny,csig(-1,-1,1),'csig_y')                 !srv
       call my_out(70,nx,ny,csig_an(-1,-1,0),'csig_anx')            !srv
       call my_out(70,nx,ny,csig_an(-1,-1,1),'csig_any')            !srv
-      call my_out(70,nx,ny,csigin(-1,-1,0,1,0),'csig_inx')         !srv
-      call my_out(70,nx,ny,csigin(-1,-1,1,1,0),'csig_iny')         !srv
+      if (ismain0.ne.ismain) then
+        call my_out(70,nx,ny,csigin(-1,-1,0,ismain,ismain0),'csig_inx') !srv
+        call my_out(70,nx,ny,csigin(-1,-1,1,ismain,ismain0),'csig_iny') !srv
+      endif
       call my_out(70,nx,ny,vsa0(-1,-1,0),'vsa0')                   !srv
       call my_out(70,nx,ny,vsa0(-1,-1,1),'vsa1')                   !srv
-      call my_out(70,nx,ny,cvsa(-1,-1,0,1),'cvsa')                 !srv
-      call my_out(70,nx,ny,cvsa_cl(-1,-1,0,1),'cvsa_cl')           !srv
+      call my_out(70,nx,ny,cvsa(-1,-1,0,ismain),'cvsa')            !srv
+      call my_out(70,nx,ny,cvsa_cl(-1,-1,0,ismain),'cvsa_cl')      !srv
       call my_out(70,nx,ny,calf(-1,-1,0),'calfx')                 !srv
       call my_out(70,nx,ny,calf(-1,-1,1),'calfy')                 !srv
       call my_out(70,nx,ny,chce(-1,-1,0),'chcex')                 !srv
@@ -673,61 +678,70 @@
 	 sum_ssna= 0.0_R8
 
        do is=0, ns-1
-	   write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
+	write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
      &               adjustr(is_codes(is)),nint(zamin(is))
 
-	  sdiv(is) = 0.0_R8
-	  ssna(is) = 0.0_R8
+	sdiv(is) = 0.0_R8
+	ssna(is) = 0.0_R8
 
         do ib=1, nbc
-	   boundary_flux(ib,is)=0.0e0_R8
+	 boundary_flux(ib,is)=0.0e0_R8
          IF(BCCHAR(IB).EQ.'S') THEN
-           DO IX=BCSTART(IB), BCEND(IB)
-            boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna(TOPIX(IX,BCPOS(IB)),TOPIY(IX,BCPOS(IB)),1,is)
+           DO IX = 1, BC_LIST_SIZE(IB)
+             boundary_flux(ib,is) = boundary_flux(ib,is) +
+     &        fna(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &            TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
            end do
-	     sdiv(is) = sdiv(is) - boundary_flux(ib,is)
+	   sdiv(is) = sdiv(is) - boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'N') THEN
-           DO IX=BCSTART(IB), BCEND(IB)
+           DO IX = 1, BC_LIST_SIZE(IB)
             boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna(IX,BCPOS(IB),1,is)
+     &        fna(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
            end do
-	     sdiv(is) = sdiv(is) + boundary_flux(ib,is)
+	   sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'W') THEN
-           DO IY=BCSTART(IB), BCEND(IB)
+           DO IY = 1, BC_LIST_SIZE(IB)
             boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna(rightix(BCPOS(IB),IY),rightiy(BCPOS(IB),IY),0,is)
-            end do
-	     sdiv(is) = sdiv(is) - boundary_flux(ib,is)
+     &        fna(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)
+           end do
+	   sdiv(is) = sdiv(is) - boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'E') THEN
-           DO IY=BCSTART(IB), BCEND(IB)
-            boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna(BCPOS(IB),IY,0,is)
-            end do
-	    sdiv(is) = sdiv(is) + boundary_flux(ib,is)
-         ELSE
-              CALL XERRAB
+           DO IY = 1, BC_LIST_SIZE(IB)
+             boundary_flux(ib,is) = boundary_flux(ib,is) +
+     &        fna(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
+           end do
+	   sdiv(is) = sdiv(is) + boundary_flux(ib,is)
+         ELSEIF(BCCHAR(IB).NE.'X' .AND. BCCHAR(IB).NE.'Y') THEN
+           CALL XERRAB
      1         ('B2WDAT: INVALID OPTION')
          ENDIF
-         WRITE(70,"(a,3(a,i4),a,es15.7)") BCCHAR(IB),' at ',BCPOS(IB),
-     2         ' from ',BCSTART(IB),' to ',BCEND(IB),
+         if (bcpos(ib).eq.-2) then
+           write(boundary_location(ib),'(a23,i2)')
+     .      ' on boundary cell list ',IB
+         else
+           write(boundary_location(ib),'(a4,i4,a6,i4,a4,i4)')
+     .      ' at ',BCPOS(IB),' from ',BCSTART(IB),' to ',BCEND(IB)
+         endif
+         WRITE(70,"(a,a,a,es15.7)") BCCHAR(IB),
+     2         boundary_location(ib),
      &         ' flux =',boundary_flux(ib,is)
         enddo
 
-	  do iy = -1,ny
-	   do ix = -1,nx
-           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+	do iy = -1,ny
+	  do ix = -1,nx
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &        bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
               ssna(is)=ssna(is)+sna(ix,iy,0,is)+
      &                        sna(ix,iy,1,is)*na(ix,iy,is)
 	    endif
-	   enddo
 	  enddo
+	enddo
 
-	  sum_ssna = sum_ssna + ssna(is)
+	sum_ssna = sum_ssna + ssna(is)
 
-	  sum_sdiv = sum_sdiv +sdiv(is)
-	  write (70,"(a,9x,a2,i1,3(4x,a,es15.7))")'Balance for equation ',
+	sum_sdiv = sum_sdiv +sdiv(is)
+	write (70,"(a,9x,a2,i1,3(4x,a,es15.7))")'Balance for equation ',
      &     adjustr(is_codes(is)),nint(zamin(is)),
      &  ' Sdiv =',sdiv(is), ' Ssna =', ssna(is),
      &  '     Ssna-Sdiv =', ssna(is) - sdiv(is)
@@ -738,66 +752,68 @@
      &      ' sum_Ssna-sum_Sdiv =', sum_ssna - sum_sdiv 
 	close(70)
 
-       open(70,file='Total_boundary_particle_fluxes_modified.dat')
-	 sum_sdiv = 0.0_R8
-	 sum_ssna= 0.0_R8
+        open(70,file='Total_boundary_particle_fluxes_modified.dat')
+	sum_sdiv = 0.0_R8
+	sum_ssna= 0.0_R8
 
-       do is=0, ns-1
-	   write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
+        do is=0, ns-1
+	 write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
      &               adjustr(is_codes(is)),nint(zamin(is))
 
-	  sdiv(is) = 0.0_R8
-	  ssna(is) = 0.0_R8
+	 sdiv(is) = 0.0_R8
+	 ssna(is) = 0.0_R8
 
-        do ib=1, nbc
-	   boundary_flux(ib,is)=0.0e0_R8
-         IF(BCCHAR(IB).EQ.'S') THEN
-           DO IX=BCSTART(IB), BCEND(IB)
-            boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna_mdf(TOPIX(IX,BCPOS(IB)),TOPIY(IX,BCPOS(IB)),1,is)
-           end do
-	     sdiv(is) = sdiv(is) - boundary_flux(ib,is)
-         ELSEIF(BCCHAR(IB).EQ.'N') THEN
-           DO IX=BCSTART(IB), BCEND(IB)
-            boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna_mdf(IX,BCPOS(IB),1,is)
-           end do
-	     sdiv(is) = sdiv(is) + boundary_flux(ib,is)
+         do ib=1, nbc
+	  boundary_flux(ib,is)=0.0e0_R8
+          IF(BCCHAR(IB).EQ.'S') THEN
+            DO IX = 1, BC_LIST_SIZE(IB)
+              boundary_flux(ib,is) = boundary_flux(ib,is) +
+     &         fna_mdf(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &                 TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
+            end do
+	    sdiv(is) = sdiv(is) - boundary_flux(ib,is)
+          ELSEIF(BCCHAR(IB).EQ.'N') THEN
+            DO IX = 1, BC_LIST_SIZE(IB)
+              boundary_flux(ib,is) = boundary_flux(ib,is) +
+     &        fna_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
+            end do
+	    sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'W') THEN
-           DO IY=BCSTART(IB), BCEND(IB)
+           DO IY = 1, BC_LIST_SIZE(IB)
             boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna_mdf(rightix(BCPOS(IB),IY),rightiy(BCPOS(IB),IY),0,is)
-            end do
-	     sdiv(is) = sdiv(is) - boundary_flux(ib,is)
+     &        fna_mdf(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)
+           end do
+	   sdiv(is) = sdiv(is) - boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'E') THEN
-           DO IY=BCSTART(IB), BCEND(IB)
-            boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna_mdf(BCPOS(IB),IY,0,is)
-            end do
-	     sdiv(is) = sdiv(is) + boundary_flux(ib,is)
-         ELSE
-              CALL XERRAB
+           DO IY = 1, BC_LIST_SIZE(IB)
+             boundary_flux(ib,is) = boundary_flux(ib,is) +
+     &        fna_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
+           end do
+	   sdiv(is) = sdiv(is) + boundary_flux(ib,is)
+         ELSEIF(BCCHAR(IB).NE.'X' .AND. BCCHAR(IB).NE.'Y') THEN
+           CALL XERRAB
      1         ('B2WDAT: INVALID OPTION')
          ENDIF
-         WRITE(70,"(a,3(a,i4),a,es15.7)") BCCHAR(IB),' at ',BCPOS(IB),
-     2         ' from ',BCSTART(IB),' to ',BCEND(IB),
+         WRITE(70,"(a,a,a,es15.7)") BCCHAR(IB),
+     2         boundary_location(ib),
      &         ' flux =',boundary_flux(ib,is)
         enddo
 
-	  do iy = -1,ny
-	   do ix = -1,nx
-           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+	do iy = -1,ny
+	  do ix = -1,nx
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &        bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
               ssna(is)=ssna(is)+sna(ix,iy,0,is)+
      &                        sna(ix,iy,1,is)*na(ix,iy,is)
 	    endif
-	   enddo
 	  enddo
+	enddo
 
-	  sum_ssna = sum_ssna + ssna(is)
+	sum_ssna = sum_ssna + ssna(is)
 
-	  sum_sdiv = sum_sdiv +sdiv(is)
-	  write (70,"(a,9x,a2,i1,3(4x,a,es15.7))")'Balance for equation ',
+	sum_sdiv = sum_sdiv +sdiv(is)
+	write (70,"(a,9x,a2,i1,3(4x,a,es15.7))")'Balance for equation ',
      &     adjustr(is_codes(is)),nint(zamin(is)),
      &  ' Sdiv =',sdiv(is), ' Ssna =', ssna(is),
      &  '     Ssna-Sdiv =', ssna(is) - sdiv(is)

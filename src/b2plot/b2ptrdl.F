@@ -9,9 +9,8 @@ c*** Power is in W/m**2 (previously, MW/m**2)
 c======================================================================
       use b2mod_types
       use b2mod_b2plot
+      use b2mod_b2plot_wall_loading
       implicit none
-#     include "DIMENSIONS.F"
-#     include "b2pwcom.h"
       real (kind=R8) ::
      *   rdl(0:ny-1,2)
       integer i

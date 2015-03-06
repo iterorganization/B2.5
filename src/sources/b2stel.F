@@ -53,21 +53,22 @@
 *  1. purpose
 *
 *     B2STEL provides linearised expressions for the sources of
-*     density, momentum, electron heat and atom heat, due to the
-*     electron-atom collision processes of ionisation, recombination,
-*     and radiation.
+*     density, parallel momentum, electron heat and atom heat, due to
+*     the electron-atom collision processes of ionisation,
+*     recombination, and radiation.
 *
 *-----------------------------------------------------------------------
 *.declarations
 
+#     include <DIMENSIONS.F>
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is, js, fix_recomb_energy, k
-      integer, save :: nimp_tmp, jimp_tmp(natm)
-	integer, save :: iout = 0,
+      integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
+      integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
-	character chns*2, chk*1                                           !srv 30.06.08
+      character chns*3, chk*1                                           !srv 30.06.08
       real (kind=R8) ::
      *  rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0
       save ncall, styl0, rg0, rg1, rxm0, rxm1, rxm2, rxm3, rxm4, phm0,
@@ -123,7 +124,7 @@
        if(fix_recomb_energy.ne.0) then 
          write(*,*) 
      &    'WARNING: fix_recomb_energy <> 0 not fully tested yet!' 
-      endif 
+       endif 
 *   ..identify impurity homonuclear sequences
        nimp_tmp=0
        jimp_tmp=0
@@ -237,7 +238,7 @@
 *       ..compute rate for is->is+1
               t0 = rsa(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
      &            *hz(ix,iy)                                         !srv 09.01.01
-*       ..compute momentum source
+*       ..compute parallel momentum source
               t1 = ((am(is)+am(is+1))/2.0_R8)*mp*t0
               if (styl0.eq.0) then
                 smq0_ion(ix,iy,0,is+1) = smq0_ion(ix,iy,0,is+1)+
@@ -249,7 +250,7 @@
                 smq0_ion(ix,iy,1,is) = smq0_ion(ix,iy,1,is)-
      &           (1.0_R8+rf0)*t1
               else if (styl0.eq.1) then
-*       ..compute momentum source
+*       ..compute parallel momentum source
                smq0_ion(ix,iy,2,is+1) = smq0_ion(ix,iy,2,is+1)+
      &          t1*(ua(ix,iy,is)+rf0*ua(ix,iy,is+1))/roxa(ix,iy,is+1)
                smq0_ion(ix,iy,3,is+1) = smq0_ion(ix,iy,3,is+1)-
@@ -340,7 +341,7 @@ c losses should be included (in ADAS terms, the PRB file should be
 c accounted for) 
              she0(ix,iy,0)=she0(ix,iy,0)+(1.0_R8+rf0)*
      &        t0*rpi(ix,iy,is)*ev*na(ix,iy,is) 
-             she0(ix,iy,3)=she0(ix,iy,0)-rf0*
+             she0(ix,iy,3)=she0(ix,iy,3)-rf0*
      &        t0*rpi(ix,iy,is)*ev*na(ix,iy,is)/(ne(ix,iy)*te(ix,iy))
              rqahe(ix,iy,is) = rqahe(ix,iy,is) - 
      &        t0*rpi(ix,iy,is)*ev*na(ix,iy,is)
@@ -362,7 +363,7 @@ c accounted for)
 *       ..compute rate for is->is-1
            t0 =rra(ix,iy,is)*vol(ix,iy)*ne(ix,iy)*na(ix,iy,is)
      &         *hz(ix,iy)                                            !srv 09.01.01
-*       ..compute momentum source
+*       ..compute parallel momentum source
            t1 = ((am(is)+am(is-1))/2.0_R8)*mp*t0
            smq0_rec(ix,iy,0,is) = smq0_rec(ix,iy,0,is)+
      &      rf0*t1*ua(ix,iy,is)
@@ -432,7 +433,6 @@ c accounted for)
       enddo
 
 #ifdef ASTRA
-
       do is = 0, ns-1                                                 !srv 28.07.11 {
 	 if(is.eq.ismain) then
         call b2_to_astra_src(nx, ny, vol, sna0_ion(:,:,0,is)+
@@ -457,7 +457,7 @@ c accounted for)
 
 	if (iout.eq.1 .or. iout_b2npmo.eq.1) then                       !srv 30.06.08 11.09.09 {
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is
+	  write (chns,'(i3.3)') is
 !	  do k=0,3
 !	   write (chk,'(i1)') k
 !	   call my_out(70,nx,ny,smq0_ion(-1,-1,k,is),
@@ -479,7 +479,7 @@ c accounted for)
 	endif
 	if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is
+	  write (chns,'(i3.3)') is
 !	  do k=0,1
 !	   write (chk,'(i1)') k
 !	   call my_out(70,nx,ny,sna0_ion(-1,-1,k,is),
@@ -511,7 +511,7 @@ c accounted for)
      &   'b2stel_shi_rec')                                            !srv 01.11.10
 
        do is=0,ns-1                                                !srv 03.02.12 {
-        write(chns,'(i2.2)') is
+        write(chns,'(i3.3)') is
 	  call my_out(70,nx,ny,rqrad(-1,-1,is),'b2stel_rqrad'//chns)
 	  call my_out(70,nx,ny,rqbrm(-1,-1,is),'b2stel_rqbrm'//chns)
        enddo                                                       !srv 03.02.12 }

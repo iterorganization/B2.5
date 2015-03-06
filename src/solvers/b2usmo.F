@@ -32,7 +32,7 @@
 *  1. purpose
 *
 *     B2USMO computes a correction towards the solution of the
-*     momentum balance equation for one atomic species.
+*     parallel momentum balance equation for one atomic species.
 *
 *
 *  3. description (see also routine b2cdca)
@@ -47,7 +47,7 @@
       integer ncall, n2, ix, iy, ireg, ileft, ibot, itop, k
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !sv 06.07.06
       integer, save :: iout = 0                                   !srv 17.06.02
-      character chns*2, chk*1                                   !srv 17.06.02
+      character chns*3, chk*1                                   !srv 17.06.02
       real (kind=R8) ::
      *  cfc0, t0, t1, flo, dif, csb, csb1
       save ncall, cfc0
@@ -182,11 +182,11 @@ csw 18feb2014 corrected BCs (SOLPS4)
 cxpb
           if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
      &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
-     &       iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
+     &	     iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
            if(ncall.lt.3) write(*,*) 'Executing xpb:b2usmo for ',ix,iy
             t0 = flcb(topix(ix,iy),topiy(ix,iy),1)/2-
      &           hybr(flcb(topix(ix,iy),topiy(ix,iy),1),
-     &                cvsb(topix(ix,iy),topiy(ix,iy),1))
+     &	              cvsb(topix(ix,iy),topiy(ix,iy),1))
             t1 = -flcb(topix(ix,iy),topiy(ix,iy),1)/2-
      &            hybr(flcb(topix(ix,iy),topiy(ix,iy),1),
      &                 cvsb(topix(ix,iy),topiy(ix,iy),1))
@@ -195,7 +195,7 @@ cxpb
      >       aa5(ix,iy,2) = t0
             if (solvereg(itop))
      >       aa5(topix(ix,iy),topiy(ix,iy),0) = 
-     &       aa5(topix(ix,iy),topiy(ix,iy),0)-t0
+     &	     aa5(topix(ix,iy),topiy(ix,iy),0)-t0
             if (solvereg(ireg))
      >       aa5(ix,iy,0) = aa5(ix,iy,0)-t1
             if (solvereg(itop))
@@ -223,13 +223,14 @@ cxpb
         endif
        enddo
       enddo
-*   ..contribution from linearization centifucial force
+*   ..contribution from linearization of centifugal force
       aa5(:,:,0) = aa5(:,:,0) - min(0.0e0_R8,ctcfb)                    !srv 06.04.07
 *   ..solve the correction equation
+      write(*,*) 'Calling b2ux5p from b2usmo'
       call b2ux5p (nx, ny, aa5, itcnt, resmb, corub, name)      !srv 18.03.10
 
       if (iout.ne.0) then                                              !srv 17.06.02 {
-       write (chns,'(i2.2)') isb    
+       write (chns,'(i3.3)') isb    
        do k=0,3
         write (chk,'(i1)') k  
        enddo

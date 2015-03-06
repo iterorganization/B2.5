@@ -13,6 +13,7 @@
       use b2mod_sources
       use b2mod_transport
       use b2mod_anomalous_transport
+      use b2mod_neutrals_namelist
       use b2mod_work
       use b2mod_indirect
       use b2mod_constants
@@ -23,7 +24,9 @@
       use eirmod_extrab25
 #endif
       implicit none
-#     include <COUPLE/KOPPLDIM.F>
+#ifndef USE_EIRENE
+#     include <COUPLE/EIRDIAG.F>
+#endif
 *   ..input arguments (unchanged on exit)
       integer itim, nx, ny, ns, ismain, ismain0
       real (kind=R8) ::

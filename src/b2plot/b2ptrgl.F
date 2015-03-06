@@ -1,4 +1,4 @@
-      subroutine b2ptrgl(BoRiS)
+      subroutine b2ptrgl(ismain,ismain0,BoRiS)
 c
 c  version : 07.04.98 13:12
 c
@@ -14,20 +14,24 @@ c======================================================================
       use b2mod_rates
       use b2mod_plasma
       use b2mod_b2plot
+      use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_b2cmpa
       use b2mod_constants
+      use b2mod_external
+      use b2mod_b2plot_wall_loading
 #ifdef USE_EIRENE
       use eirmod_extrab25
 #endif
       implicit none
+      integer ismain, ismain0
       real (kind=R8) :: BoRiS
       integer lun
       parameter (lun=96)
 c
-      integer i,j,is,iy,js,jcf,jci,nclm_ld,nclm_er,nx_hlp
+      integer i,j,is,iss,iy,js,jcf,jci,nclm_ld,nclm_er,nx_hlp
       real (kind=R8) ::
-     *  h,t,u,wo,zwest,zeast,s(0:ny-1,2),wi(2),
+     *  h,t,u,wo,zwest,zeast,s(0:ny-1,2),wi(2),mion,mmol,
      ,  xtrg(0:ny-1,2),netrg(0:ny-1,2),tetrg(0:ny-1,2),wpttrg(0:ny-1,2),
      ,  wpltrg(0:ny-1,2),wnutrg(0:ny-1,2),
      ,  wrdtrg(0:ny-1,2),wtttrg(0:ny-1,2),
@@ -51,9 +55,9 @@ c***  sgro  is the mass density of the target material [g/cm**3]
 c***  ba    is the atomic mass of the target material (carbon)
 c
       real (kind=R8) ::
-     *   sjca(ny,2), sjcb(ny,2), sjcg(ny,2), sjcn(ny,2),
-     ,   sjcp(ny,2), sjcs(ny,2), sjct(ny,2),
-     ,   sjha(ny,2), sjhp(ny,2), sjht(ny,2)
+     *   sjca(0:ny-1,2), sjcb(0:ny-1,2), sjcg(0:ny-1,2), sjcn(0:ny-1,2),
+     ,   sjcp(0:ny-1,2), sjcs(0:ny-1,2), sjct(0:ny-1,2),
+     ,   sjha(0:ny-1,2), sjhp(0:ny-1,2), sjht(0:ny-1,2)
       real (kind=R8) ::
      *   sjca_t(2), sjha_t(2), sjcs_t(2), sjcp_t(2), sjhp_t(2),
      ,   sjca_w(2), sjha_w(2), sjcs_w(2), sjcp_w(2),
@@ -94,7 +98,7 @@ c*** Target geometry
 c
       zwest=0.0_R8
       zeast=0.0_R8
-      do iy=0,topcut(1)
+      do iy=0,topcut(1)-1
         zwest=zwest - sqrt((crx(0,iy,2)-crx(0,iy,0))**2+
      +                     (cry(0,iy,2)-cry(0,iy,0))**2)
         zeast=zeast - sqrt((crx(nx-1,iy,3)-crx(nx-1,iy,1))**2+
@@ -125,7 +129,7 @@ c
 c*** Plasma and neutrals
 c
       do iy=0,ny-1
-        wo=fhe(0,iy,0)+fhi(0,iy,0)
+        wo=fhe(0,iy,0)+fhi(0,iy,0)+fhi_ext(0,iy,0)
         do is=0,ns-1 !{
           wo=wo+fna(0,iy,0,is)*(
      .     (rpt(0,iy,is)*hx(-1,iy)+rpt(-1,iy,is)*hx(0,iy))/
@@ -133,16 +137,49 @@ c
      .     (kinrgy(0,iy,is)*hx(-1,iy)+kinrgy(-1,iy,is)*hx(0,iy))/
      .     (hx(-1,iy)+hx(0,iy)))
         end do !}
+        do is=0,ns_ext-1 !{
+          wo=wo+fa_ext(0,iy,0,is)*(
+     .     (pt_ext(0,iy,is)*hx(-1,iy)+pt_ext(-1,iy,is)*hx(0,iy))/
+     .     (hx(-1,iy)+hx(0,iy))*ev+(1.0_R8-BoRiS)*
+     .     (0.5_R8*am_ext(is)*mp)*
+     .     (ua_ext(0,iy,is)**2*hx(-1,iy)+ua_ext(-1,iy,is)**2*hx(0,iy))/
+     .     (hx(-1,iy)+hx(0,iy)))
+        end do !}
 c        wo=-1.0e-6_R8*wo/s(iy,1)
         wo=-wo/s(iy,1)
         wpltrg(iy,1)=wo
         netrg(iy,1)=ne(0,iy)
         tetrg(iy,1)=te(0,iy)/ev
-        t=tab2(1,iy+1,1,1)/ev
-        wnutrg(iy,1)=s(iy,1)*dab2(1,iy+1,1,1)*tab2(1,iy+1,1,1)*
-     *   sqrt(max(t/am(1),0.0_R8))*0.25_R8*2.0e4_R8
+        wnutrg(iy,1)=0.0_R8
+        do is=1,natmi
+          t=tab2(1,iy+1,is,1)/ev
+          wnutrg(iy,1)=wnutrg(iy,1)+
+     .     s(iy,1)*dab2(1,iy+1,is,1)*tab2(1,iy+1,is,1)*
+     *     sqrt(max(t/am(eb2spcr(is)),0.0_R8))*0.25_R8*2.0e4_R8
+        enddo
+        do is=1,nmoli
+          mmol=0.0_R8
+          do iss = 1,natmi
+            mmol=mmol+mlcmp(iss,is)*am(eb2spcr(iss))
+          enddo
+          t=tmb2(1,iy+1,is,1)/ev
+          wnutrg(iy,1)=wnutrg(iy,1)+
+     .     s(iy,1)*dmb2(1,iy+1,is,1)*tmb2(1,iy+1,is,1)*
+     *     sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
+        enddo
+        do is=1,nioni
+          mion=0.0_R8
+          do iss = 1,natmi
+            mion=mion+mlcmp(iss,is)*am(eb2spcr(iss))
+          enddo
+          t=tib2(1,iy+1,is,1)/ev
+cxpb  The expression below needs to be corrected and to include recombination energy
+          wnutrg(iy,1)=wnutrg(iy,1)+
+     .     s(iy,1)*dib2(1,iy+1,is,1)*tib2(1,iy+1,is,1)*
+     *     sqrt(max(t/mion,0.0_R8))*0.25_R8*2.0e4_R8
+        enddo
 c
-        wo= fhe(nx,iy,0)+fhi(nx,iy,0)
+        wo=fhe(nx,iy,0)+fhi(nx,iy,0)+fhi_ext(nx,iy,0)
         do is=0,ns-1 !{
           wo=wo+fna(nx,iy,0,is)*(
      .     (rpt(nx,iy,is)*hx(nx-1,iy)+rpt(nx-1,iy,is)*hx(nx,iy))/
@@ -150,14 +187,48 @@ c
      .     (kinrgy(nx,iy,is)*hx(nx-1,iy)+kinrgy(nx-1,iy,is)*hx(nx,iy))/
      .     (hx(nx-1,iy)+hx(nx,iy)))
         end do !}
+        do is=0,ns_ext-1 !{
+          wo=wo+fa_ext(nx,iy,0,is)*(
+     .     (pt_ext(nx,iy,is)*hx(nx-1,iy)+pt_ext(nx-1,iy,is)*hx(nx,iy))/
+     .     (hx(nx-1,iy)+hx(nx,iy))*ev+(1.0_R8-BoRiS)*
+     .     (0.5_R8*am_ext(is)*mp)*
+     .     (ua_ext(nx,iy,is)**2*hx(nx-1,iy)+
+     .      ua_ext(nx-1,iy,is)**2*hx(nx,iy))/
+     .     (hx(nx-1,iy)+hx(nx,iy)))
+        end do !}
 c        wo= 1.0e-6_R8*wo/s(iy,2)
         wo= wo/s(iy,2)
         wpltrg(iy,2)=wo
         netrg(iy,2)=ne(nx-1,iy)
         tetrg(iy,2)=te(nx-1,iy)/ev
-        t=tab2(nx,iy+1,1,1)/ev
-        wnutrg(iy,2)=s(iy,2)*dab2(nx,iy+1,1,1)*tab2(nx,iy+1,1,1)*
-     *   sqrt(max(t/am(1),0.0_R8))*0.25_R8*2.0e4_R8
+        wnutrg(iy,2)=0.0_R8
+        do is=1,natmi
+          t=tab2(nx,iy+1,is,1)/ev
+          wnutrg(iy,2)=wnutrg(iy,2)+
+     .     s(iy,2)*dab2(nx,iy+1,is,1)*tab2(nx,iy+1,is,1)*
+     *     sqrt(max(t/am(eb2spcr(is)),0.0_R8))*0.25_R8*2.0e4_R8
+        enddo
+        do is=1,nmoli
+          mmol=0.0_R8
+          do iss = 1,natmi
+            mmol=mmol+mlcmp(iss,is)*am(eb2spcr(iss))
+          enddo
+          t=tmb2(nx,iy+1,is,1)/ev
+          wnutrg(iy,2)=wnutrg(iy,2)+
+     .     s(iy,2)*dmb2(nx,iy+1,is,1)*tmb2(nx,iy+1,is,1)*
+     *     sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
+        enddo
+        do is=1,nioni
+          mion=0.0_R8
+          do iss = 1,natmi
+            mion=mion+mlcmp(iss,is)*am(eb2spcr(iss))
+          enddo
+          t=tib2(nx,iy+1,is,1)/ev
+cxpb  The expression below needs to be corrected and to include recombination energy
+          wnutrg(iy,2)=wnutrg(iy,2)+
+     .     s(iy,2)*dib2(nx,iy+1,is,1)*tib2(nx,iy+1,is,1)*
+     *     sqrt(max(t/mion,0.0_R8))*0.25_R8*2.0e4_R8
+        enddo
       end do
 c
 c*** Re-scale the neutral target loading and calculate the sums
@@ -266,18 +337,20 @@ c*** Calculate the particle fluxes and erosion - if present
 c*** At present, only for carbon - so determine where it is
 c
       jcf=0
+      jci=-1
       if(nspecies .gt. 1) then
-        do is=0,nspecies-1
-          if(nfluids(is) .eq. 6) jcf=is
+        do is=1,nspecies
+          if (is_neutral(jci+1)) jci=jci+1
+          if (nint(zn(jci+1)) .eq. 6) then
+            jcf=is
+          else
+            jci=jci+nfluids(is)
+          end if
         end do
       end if
-      jci=0
-      do j=2,jcf
-        jci=jci+nfluids(j-1)
-      end do
 c      print *,'jcf,jci = ',jcf,jci
 c
-c*** Now jcf > 0 shows the particle index for C
+c*** Now jcf > 0 shows the isonuclear sequence index for C
 c*** - assuming the same particle order in B2 and Eirene -
 c*** and jci is the offset for the carbon ions in the whole ion set
 c
@@ -293,20 +366,22 @@ c*** Calculate the particle fluxes
 c
 c      print *,'Particle fluxes...'
       do iy=0,ny-1
-        sjhp(iy,1)=-fna(0,iy,1,0)
-        sjhp(iy,2)= fna(nx,iy,1,0)
-        sjcp(iy,1)=0
-        sjcp(iy,2)=0
-        do is=1,6
-          sjcp(iy,1)=sjcp(iy,1)-fna(0,iy,jci+is,0)
-          sjcp(iy,2)=sjcp(iy,2)+fna(nx,iy,jci+is,0)
-        end do
-        t=tab2(1,iy+1,1,1)/ev
-        sjha(iy,1)=s(iy,1)*dab2(1,iy+1,1,1)*
-     *   sqrt(max(t/am(1),0.0_R8))*0.25_R8*1.0e4_R8
-        t=tab2(nx,iy+1,1,1)/ev
-        sjha(iy,2)=s(iy,2)*dab2(nx,iy+1,1,1)*
-     *   sqrt(max(t/am(1),0.0_R8))*0.25_R8*1.0e4_R8
+        sjhp(iy,1)=-fna(0,iy,0,ismain)
+        sjhp(iy,2)= fna(nx,iy,0,ismain)
+        sjcp(iy,1)=0.0_R8
+        sjcp(iy,2)=0.0_R8
+        if(jcf .gt. 0) then
+          do is=1,nfluids(jcf)
+            sjcp(iy,1)=sjcp(iy,1)-fna(0,iy,0,jci+is)
+            sjcp(iy,2)=sjcp(iy,2)+fna(nx,iy,0,jci+is)
+          end do
+        endif
+        t=tab2(1,iy+1,b2espcr(ismain0),1)/ev
+        sjha(iy,1)=s(iy,1)*dab2(1,iy+1,b2espcr(ismain0),1)*
+     *   sqrt(max(t/am(ismain0),0.0_R8))*0.25_R8*1.0e4_R8
+        t=tab2(nx,iy+1,b2espcr(ismain0),1)/ev
+        sjha(iy,2)=s(iy,2)*dab2(nx,iy+1,b2espcr(ismain0),1)*
+     *   sqrt(max(t/am(ismain0),0.0_R8))*0.25_R8*1.0e4_R8
         if(jcf .gt. 0) then
           t=tab2(1,iy+1,jcf,1)/ev
           sjca(iy,1)=s(iy,1)*dab2(1,iy+1,jcf,1)*
@@ -317,7 +392,7 @@ c      print *,'Particle fluxes...'
         end if
       end do
       do j=1,2
-        do i=1,ny
+        do i=0,ny-1
           sjca_t(j)=sjca_t(j)+sjca(i,j)
           sjha_t(j)=sjha_t(j)+sjha(i,j)
           sjhp_t(j)=sjhp_t(j)+sjhp(i,j)
@@ -329,14 +404,14 @@ c     ,                  (sjha_t(i),sjca_t(i),sjhp_t(i),sjcp_t(i),i=1,2)
       do j=1,2
         if(ntns .eq. 2) then
           js=ltns(j)+nlim
-          sjha_w(j)=wldna(js,1,0)
-          sjhp_w(j)=wldpp(js,1,0)
+          sjha_w(j)=wldna(js,b2espcr(ismain0),0)
+          sjhp_w(j)=wldpp(js,fluids_list(ismain),0)
           sjht_w(j)=sjha_w(j)+sjhp_w(j)
           if(jcf .gt. 0) then
             sjca_w(j)=wldna(js,jcf,0)
             sjcp_w(j)=0
-            do is=1,6
-              sjcp_w(j)=sjcp_w(j)+wldpp(js,jci+is,0)
+            do is=1,nfluids(jcf)
+              sjcp_w(j)=sjcp_w(j)+wldpp(js,fluids_list(jci+is),0)
             end do
           sjct_w(j)=sjca_w(j)+sjcp_w(j)
           end if
@@ -436,7 +511,8 @@ c          print *,'j,js,sjcs_w,sjcb_w = ',j,js,sjcs_w(j),sjcb_w(j)
         do i=0,ny-1
           write(lun,fmt_peak) xtrg(i,j),sjcb(i,j),sjcs(i,j),
      ,              sjcn(i,j),sjcg(i,j),sjha(i,j),sjhp(i,j),
-     ,              sjca(i,j),sjcp(i,j),tab2(nx_hlp,i,1,1)/ev
+     ,              sjca(i,j),sjcp(i,j),
+     ,              tab2(nx_hlp,i,b2espcr(ismain0),1)/ev
         end do
         close (lun)
         nx_hlp=nx

@@ -1,51 +1,51 @@
 C.....................................................................
 c Program to solve the heat diffusion equation in 2 dimensions
 
-      subroutine prehd2D(ns,ixb,ixe,iyb,iye,dt,isign,
+      subroutine prehd2D(ns,isize,list_x,list_y,dt,isign,
      1  ixf,iyf,idir,area,BoRiS)
       use b2mod_types
       use b2mod_wall
       use b2mod_rates
       use b2mod_plasma
       use b2mod_constants
+      use b2mod_external
       implicit none
 
-      integer ns,ixb,ixe,iyb,iye,isign,idir
+      integer ns,isize,isign,idir
+      integer list_x(isize),list_y(isize)
       real (kind=R8) :: dt,BoRiS
-      integer ixf(ixe-ixb+iye-iyb+1),
-     .        iyf(ixe-ixb+iye-iyb+1)
-      real (kind=R8) :: area(ixe-ixb+iye-iyb+1)
+      integer ixf(isize),iyf(isize)
+      real (kind=R8) :: area(isize)
 
-      integer nw, iwall, ixw, iyw, is
-      integer bndx(ixe-ixb+iye-iyb+1)
+      integer iwall, is
+      integer bndx(isize)
       real (kind=R8) :: qin, qel
-      real (kind=R8) :: 
-     *  Q(ixe-ixb+iye-iyb+1), Tp(ixe-ixb+iye-iyb+1,ndepth_nml)
+      real (kind=R8) :: Q(isize), Tp(isize,ndepth_nml)
 
       external subini, subend, xertst
       intrinsic max
 
       call subini ('prehd2D')
-      call xertst(ixb.lt.ixe .or. iyb.lt.iye,
-     1  'faulty inputs ixb,ixe,iyb,iye')
+      call xertst (isize.ge.1, 'faulty input isize')
 
-      nw = ixe-ixb+iye-iyb+1
-      do iwall = 1, nw
-        if(ixe.eq.ixb) then   ! vertical boundary
-          ixw = ixb
-          iyw = iyb + iwall -1
-        else                  ! horizontal boundary
-          ixw = ixb + iwall - 1
-          iyw = iyb
-        endif
-        bndx(iwall) = xymap(ixw,iyw)
+      do iwall = 1, isize
+        bndx(iwall) = xymap(list_x(iwall),list_y(iwall))
         qin = 
-     .   max(0.0_R8,isign*fhi(ixf(iwall),iyf(iwall),idir))/area(iwall)
+     .   max(0.0_R8,isign*(fhi(ixf(iwall),iyf(iwall),idir)+
+     .                     fhi_ext(ixf(iwall),iyf(iwall),idir)))/
+     .   area(iwall)
         do is=0,ns-1
          qin=qin+max(0.0_R8,isign*fna(ixf(iwall),iyf(iwall),idir,is))
-     &        *(kinrgy(ixw,iyw,is)*(1.0_R8-BoRiS) + 
+     &        *(kinrgy(list_x(iwall),list_y(iwall),is)*(1.0_R8-BoRiS) + 
      &          rpt(ixf(iwall),iyf(iwall),is)*ev)
      &        /area(iwall)
+        enddo
+        do is=0,ns_ext-1
+         qin=qin+max(0.0_R8,isign*fa_ext(ixf(iwall),iyf(iwall),idir,is))
+     &    *(0.5_R8*am_ext(is)*mp*
+     &      ua_ext(list_x(iwall),list_y(iwall),is)**2*(1.0_R8-BoRiS) + 
+     &      pt_ext(ixf(iwall),iyf(iwall),is)*ev)
+     &    /area(iwall)
         enddo
         qel =
      .   max(0.0_R8,isign*fhe(ixf(iwall),iyf(iwall),idir))/area(iwall)
@@ -53,9 +53,9 @@ c Program to solve the heat diffusion equation in 2 dimensions
         Tp(iwall,1:ndepth_nml) = target_temp(bndx(iwall),1:ndepth_nml)    
       enddo
 
-      call heatdiff2D(nw,ns,bndx,Q,dt,Tp)
+      call heatdiff2D(isize,ns,bndx,Q,dt,Tp)
 
-      do iwall = 1, nw
+      do iwall = 1, isize
         target_temp(bndx(iwall),1:ndepth_nml) = Tp(iwall,1:ndepth_nml)
       enddo
 
@@ -120,7 +120,7 @@ c  Tp = Target surface temperature (K).
       external subini, subend
       external slv5pt, fic
 
-      call subini('heatdiff2D')
+      call subini('heatdf2D')
 
 c Checking if it is the first call and if it is, call fic(x,u), else
 c use previous Tp profile as initial guess.
@@ -186,11 +186,12 @@ c       function of the position "x" at ndepth_nml grid points.
 *    ..treat backplate cooling b.c.
         i = ndepth_nml
         if (inertial_cooling(iwall)) then
-          aa5(iwall,i,-2) = 0.0_R8
-          aa5(iwall,i, 0) = 1.0_R8
+          t0 = Kappa(bndx(iwall),i,Tp(iwall,i)) / (x(i)-x(i-1))
+          aa5(iwall,i,-2) = aa5(iwall,i,-2) - t0
+          aa5(iwall,i, 0) = aa5(iwall,i, 0) + t0
           aa5(iwall,i, 2) = 0.0_R8
-          rhs(iwall,i) = -100.0_R8*(Tp(iwall,i)- ! we assume the contact heat conductivity of 100 W.m-2.K-1
-     .                              backplate_temp(bndx(iwall)))
+          rhs(iwall,i) = rhs(iwall,i) - 
+     .     100.0_R8*(Tp(iwall,i)-backplate_temp(bndx(iwall))) ! we assume the contact heat conductivity of 100 W.m-2.K-1
         else
           aa5(iwall,i,-2) = 0.0_R8
           aa5(iwall,i, 0) = 1.0_R8
@@ -274,7 +275,8 @@ c       function of the position "x" at ndepth_nml grid points.
 *   ..copy over new solution
       do iwall = 1, nw
         do i = 1, ndepth_nml
-          Tp(iwall,i) = U(iwall,i)
+          Tp(iwall,i) = min( U(iwall,i), 
+     .                       matsurf_vapor_temp(bndx(iwall)))
         enddo
       enddo
 

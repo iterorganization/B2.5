@@ -9,6 +9,8 @@
       use b2mod_constants
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
+      use b2mod_external
 #ifdef USE_EIRENE
       use eirmod_extrab25
 #endif
@@ -21,9 +23,6 @@ c*** Computes the global energy flows across the boundaries and the
 c*** sources in B2-Eirene, and the global energy balance in B2
 c-----------------------------------------------------------------------
       implicit none
-c
-#     include <DIMENSIONS.F>
-c
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
 c
@@ -90,12 +89,12 @@ c*** Global values
       character hlp_hg(nglb_tmp)*8
 c-----------------------------------------------------------------------
 c*** Values by species
-      integer nspc_tmp, nimp_tmp, ni_tmp, ns_tmp, limp_tmp(DEF_NATM)
+      integer nspc_tmp, nimp_tmp, ni_tmp, ns_tmp
+      integer, allocatable :: limp_tmp(:)
       parameter (nspc_tmp=1)
-      real (kind=R8) :: equs_tmp(DEF_NATM,nspc_tmp)
-      real (kind=R8) :: radim_tmp(DEF_NATM)
-      equivalence (equs_tmp(1,1), radim_tmp)
-      character*2 hlp_spc(DEF_NATM), hlp_hs(nspc_tmp)*8
+      real (kind=R8), allocatable :: radim_tmp(:)
+      character*2, allocatable :: hlp_spc(:)
+      character*2 hlp_hs(nspc_tmp)*8
 c-----------------------------------------------------------------------
 c*** Values by surface. Here ntrg_tmp is the number of values,
 c*** and ntrgs_tmp is the maximum number of different surfaces.
@@ -119,7 +118,8 @@ c*** nt_tmp is the number of values read and to be written
      ,     (equt_tmp(1,5), pwtds_tmp)
       character hlp_trg(ntrgs_tmp)*2, hlp_ht(ntrg_tmp)*8,
      ,          hlp_trgs(ntrgs_tmp,2)*2
-      integer ltgs(nlim,ntrgs_tmp), ntgs(ntrgs_tmp)
+      integer ntgs(ntrgs_tmp)
+      integer, allocatable :: ltgs(:,:)
       data ntgs / ntrgs_tmp*1 /
       integer indt_hlp(nbcd,ntrgs_tmp), nsrf_hlp(ntrgs_tmp)
       logical ltarg_hlp(ntrgs_tmp)
@@ -127,7 +127,8 @@ c-----------------------------------------------------------------------
 
       integer lun, ltrc
       parameter (ltrc=ntrc_ble)
-      integer i, j, k, l, m, n, ic, is, ix, iy, js, nv
+      integer i, j, k, l, m, n, ic, is, ix, iy, 
+     .        ixr, iyr, ixf, iyf, js, nv
       real (kind=R8) :: hlp_h, hlp_p, hlp
       logical lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp
       logical ex, warn_tmp
@@ -170,8 +171,7 @@ c
      ,     pwtgn_tmp, pwwlp_tmp, pwwln_tmp, radbr_tmp, radnu_tmp,
      ,     rdtim_tmp, enrtt_tmp, enrti_tmp, enrte_tmp,
      +  hlp_hg,
-     +  nimp_tmp, ni_tmp, ns_tmp, limp_tmp,
-     +  equs_tmp,
+     +  nimp_tmp, ni_tmp, ns_tmp, limp_tmp, ntrgf_tmp,
      +  radim_tmp,
      +  hlp_spc, hlp_hs,
      +  nt_tmp, nz_tmp,
@@ -190,14 +190,14 @@ c
      +  f, hlp_c, hlp_frm, tab, hlp_frf
 c=======================================================================
 
+      if(first_time_step) return
+
 c*** Initialisation
       do i=1,nglb_tmp !{
         equg_tmp(i)=0.0_R8
       end do !}
       do i=1,nspecies !{
-        do j=1,nspc_tmp !{
-          equs_tmp(i,j)=0.0_R8
-        end do !}
+        radim_tmp(i)=0.0_R8
       end do !}
       do i=1,ntrgs_tmp !{
         do j=1,ntrg_tmp !{
@@ -211,7 +211,7 @@ c*** Correct the neutral fluxes
         wldpeb(j,0)=0.0_R8
         wldnek(j,0)=0.0_R8
         wldnep(j,0)=0.0_R8
-        do k=1,nstrai !{
+        do k=1,nstrat !{
           wldpeb(j,0)=wldpeb(j,0)+wldpeb(j,k)*sclstra(0,k)
           wldnek(j,0)=wldnek(j,0)+wldnek(j,k)*sclstra(0,k)
           wldnep(j,0)=wldnep(j,0)+wldnep(j,k)*sclstra(0,k)
@@ -233,7 +233,7 @@ c*** Does it belong to the core boundary?
           end if !}
         end do !}
 c
- 10     do 100 j = 1,ntrgs_tmp !{
+ 10     do 100 j = 1,ntrgf_tmp !{
 c*** Belongs to the target j?
           ltarg_hlp(j)=.false.
           do k = 1,nsrf_hlp(j) !{
@@ -250,40 +250,74 @@ c*** Across or along the field?
         lbound_hlp = bcchar(ic).eq.'S' .or. bcchar(ic).eq.'N' .or.
      .               bcchar(ic).eq.'E' .or. bcchar(ic).eq.'W'
 c
-        l=bcpos(ic)
-        do i = bcstart(ic), bcend(ic) !{
+        do i = 1, bc_list_size(ic)
+          ix = bc_list_x(i,ic)
+          iy = bc_list_y(i,ic)
           if (bcchar(ic).eq.'W') then
-            l=rightix(bcpos(ic),i)
+            ixr=rightix(bc_list_x(i,ic),bc_list_y(i,ic))
+            iyr=rightiy(bc_list_x(i,ic),bc_list_y(i,ic))
+          else if (bcchar(ic).eq.'E') then
+            ixr=leftix(bc_list_x(i,ic),bc_list_y(i,ic))
+            iyr=leftiy(bc_list_x(i,ic),bc_list_y(i,ic))
           else if (bcchar(ic).eq.'S') then
-            l=topiy(i,bcpos(ic))
+            ixr=topix(bc_list_x(i,ic),bc_list_y(i,ic))
+            iyr=topiy(bc_list_x(i,ic),bc_list_y(i,ic))
+          else if (bcchar(ic).eq.'N') then
+            ixr=bottomix(bc_list_x(i,ic),bc_list_y(i,ic))
+            iyr=bottomiy(bc_list_x(i,ic),bc_list_y(i,ic))
+          endif
+          if (lminus_hlp) then
+            ixf=ix
+            iyf=iy
+          else
+            ixf=ixr
+            iyf= iyr
           endif
           if (lcross_hlp) then !{
-            hlp_h=fhe(i,l,1)+fhi(i,l,1)
+            hlp_h=fhe(ixf,iyf,1)+fhi(ixf,iyf,1)+fhi_ext(ixf,iyf,1)
             hlp_p=0.0_R8
             do is=0,ns-1 !{
-              hlp_p=hlp_p+fna(i,l,1,is)*ev*
-     .         (rpt(i,l,is)*hy1(i,l-1)+rpt(i,l-1,is)*hy1(i,l))/
-     .         (hy1(i,l-1)+hy1(i,l))
-              hlp_h=hlp_h+fna(i,l,1,is)*(1.0_R8-BoRiS)*
-     .         (kinrgy(i,l,is)*hy1(i,l-1)+kinrgy(i,l-1,is)*hy1(i,l))/
-     .         (hy1(i,l-1)+hy1(i,l))
+              hlp_p=hlp_p+fna(ixf,iyf,1,is)*ev*
+     .         (rpt(ix,iy,is)*hy1(ixr,iyr)+rpt(ixr,iyr,is)*hy1(ix,iy))/
+     .         (hy1(ixr,iyr)+hy1(ix,iy))
+              hlp_h=hlp_h+fna(ixf,iyf,1,is)*(1.0_R8-BoRiS)*
+     .         (kinrgy(ix,iy,is)*hy1(ixr,iyr)+
+     .          kinrgy(ixr,iyr,is)*hy1(ix,iy))/
+     .         (hy1(ixr,iyr)+hy1(ix,iy))
+            end do !}
+            do is=0,ns_ext-1 !{
+              hlp_p=hlp_p+fa_ext(ixf,iyf,1,is)*ev*
+     .         (pt_ext(ix,iy,is)*hy1(ixr,iyr)+
+     .          pt_ext(ixr,iyr,is)*hy1(ix,iy))/
+     .         (hy1(ixr,iyr)+hy1(ix,iy))
+              hlp_h=hlp_h+fa_ext(ixf,iyf,1,is)*(1.0_R8-BoRiS)*
+     .          0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(ix,iy,is)**2*hy1(ixr,iyr)+
+     .          ua_ext(ixr,iyr,is)**2*hy1(ix,iy))/
+     .         (hy1(ixr,iyr)+hy1(ix,iy))
             end do !}
           else if (lbound_hlp) then !}{
-            hlp_h=fhe(l,i,0)+fhi(l,i,0)
+            hlp_h=fhe(ixf,iyf,0)+fhi(ixf,iyf,0)+fhi_ext(ixf,iyf,0)
             hlp_p=0.0_R8
             do is=0,ns-1 !{
-csw 26oct2011, bug fix:, was .../(hx(l-1,i)+hx(l-1,i))
-              hlp_p=hlp_p+fna(l,i,0,is)*ev*
-     .         (rpt(l,i,is)*hx(l-1,i)+rpt(l-1,i,is)*hx(l,i))/
-     .         (hx(l-1,i)+hx(l,i)) 
-csw 26oct2011, bug fix:, was .../(hx(l-1,i)+hx(l-1,i))
-              hlp_h=hlp_h+fna(l,i,0,is)*(1.0_R8-BoRiS)*
-     .         (kinrgy(l,i,is)*hx(l-1,i)+kinrgy(l-1,i,is)*hx(l,i))/
-     .         (hx(l-1,i)+hx(l,i)) 
-              hlp_h=hlp_h+fna(l,i,0,is)*
-     .        (ti(l,i)*hx(l-1,i)+ti(l-1,i)*hx(l,i))/(hx(l-1,i)+hx(l,i)) 
-              hlp_h=hlp_h+fna(l,i,0,is)*
-     .        (te(l,i)*hx(l-1,i)+te(l-1,i)*hx(l,i))/(hx(l-1,i)+hx(l,i))
+              hlp_p=hlp_p+fna(ixf,iyf,0,is)*ev*
+     .         (rpt(ix,iy,is)*hx(ixr,iyr)+rpt(ixr,iyr,is)*hx(ix,iy))/
+     .         (hx(ix,iy)+hx(ixr,iyr))
+              hlp_h=hlp_h+fna(ixf,iyf,0,is)*(1.0_R8-BoRiS)*
+     .         (kinrgy(ix,iy,is)*hx(ixr,iyr)+
+     .          kinrgy(ixr,iyr,is)*hx(ix,iy))/
+     .         (hx(ix,iy)+hx(ixr,iyr))
+            end do !}
+            do is=0,ns_ext-1 !{
+              hlp_p=hlp_p+fa_ext(ixf,iyf,0,is)*ev*
+     .         (pt_ext(ix,iy,is)*hx(ixr,iyr)+
+     .          pt_ext(ixr,iyr,is)*hx(ix,iy))/
+     .         (hx(ix,iy)+hx(ixr,iyr))
+              hlp_h=hlp_h+fa_ext(ixf,iyf,0,is)*(1.0_R8-BoRiS)*
+     .          0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(ix,iy,is)**2*hx(ixr,iyr)+
+     .          ua_ext(ixr,iyr,is)**2*hx(ix,iy))/
+     .         (hx(ix,iy)+hx(ixr,iyr))
             end do !}
           end if !}
           if (lminus_hlp) then !{
@@ -306,7 +340,7 @@ c*** Now add the data to the proper accumulators
               pwtgp_tmp=pwtgp_tmp+hlp_h+hlp_p
             end if !}
           end if !}
-          do j = 1,ntrgs_tmp !{
+          do j = 1,ntrgf_tmp !{
             if (ltarg_hlp(j)) then !{
               pwtpl_tmp(j)=pwtpl_tmp(j)+hlp_h
               pwtio_tmp(j)=pwtio_tmp(j)+hlp_p
@@ -318,14 +352,14 @@ c
 c*** Correction for reflected neutrals
 c
 c<<<
-c      print *,'b2blne: ntrgs_tmp = ',ntrgs_tmp
-c      print *,'indt =',(indt_hlp(1,i),i=1,ntrgs_tmp)
+c      print *,'b2blne: ntrgf_tmp = ',ntrgf_tmp
+c      print *,'indt =',(indt_hlp(1,i),i=1,ntrgf_tmp)
 c      print '(a,99a4)',' crcstra : ',crcstra
 c      print '(a,99a4)',' bcchar  : ',bcchar
 c      print '(a,99i4)',' rcpos   : ',rcpos
 c      print '(a,99i4)',' bcpos   : ',bcpos
 c>>>
-      do ic=1,nstrai !{
+      do ic=1,nstrat !{
         if(crcstra(ic).eq.'E' .or. crcstra(ic).eq.'W' .or.
      .               crcstra(ic).eq.'N' .or. crcstra(ic).eq.'S') then !{
           l=msns(1,ic)
@@ -338,8 +372,8 @@ c>>>
           k=0
           if(crcstra(ic).eq.'E' .or. crcstra(ic).eq.'W') then !{
             do i=1,nbc !{
-              if(bcchar(i).eq.crcstra(ic) .and. bcpos(i).eq.rcpos(ic))
-     -                                                              k=i
+              if(bcchar(i).eq.crcstra(ic) .and. 
+     &           bc_list_x(1,i).eq.rc_list_x(1,ic)) k=i
             end do !}
           end if !}
 c<<<
@@ -347,7 +381,7 @@ c          print *,'b2blne: ic,k= ',ic,k
 c>>>
           if(k.gt.0) then !{
             j=0
-            do i=1,ntrgs_tmp-1 !{
+            do i=1,ntrgf_tmp-1 !{
               if(indt_hlp(1,i).eq.k) j=i
             end do !}
             if(j.gt.0) then !{
@@ -359,7 +393,7 @@ c>>>
      ,                                              ' to a B2 surface.'
             end if !}
           else !}{
-            k=ntrgs_tmp
+            k=ntrgf_tmp
             pwwlp_tmp=pwwlp_tmp+hlp
           end if !}
           if(k.gt.0) pwtpl_tmp(k)=pwtpl_tmp(k)+hlp
@@ -395,7 +429,7 @@ c*** flux across the side walls
         pwwln_tmp=pwwln_tmp+wldnek(js,0)+wldnep(js,0)
       end do !}
 c*** flux across the specified zones
-      do j=1,ntrgs_tmp !{
+      do j=1,ntrgf_tmp !{
         do l=1,ntgs(j) !{
           js=ltgs(l,j)
           if(js.lt.0) js=nnlimi-js
@@ -419,6 +453,10 @@ c
           if(region(ix,iy,0).ne.0) then !{
             enrte_tmp=enrte_tmp+ne(ix,iy)*te(ix,iy)*vol(ix,iy)
             enrti_tmp=enrti_tmp+ni(ix,iy,1)*ti(ix,iy)*vol(ix,iy)
+            do is =0,ns_ext-1 !{
+              enrti_tmp = enrti_tmp + 
+     .         na_ext(ix,iy,is)*ta_ext(ix,iy,is)*vol(ix,iy)
+            end do !}
           end if !}
         end do !}
       end do !}
@@ -443,7 +481,7 @@ c
       enrtt_tmp=enrti_tmp+enrte_tmp
       pwttr_tmp=pwtot_tmp/enrtt_tmp
 c
-      do k=1,ntrgs_tmp !{
+      do k=1,ntrgf_tmp !{
         pwtpl_tmp(k)=-pwtpl_tmp(k)
         pwtio_tmp(k)=-pwtio_tmp(k)
         pwttt_tmp(k)=pwtpl_tmp(k)+pwtnu_tmp(k)+pwtio_tmp(k)+pwtds_tmp(k)
@@ -456,7 +494,7 @@ c
 c*** Write the data in a separate file for plotting...
 c
         write(lun,hlp_frm) tim,equg_tmp,
-     ,                    ((equs_tmp(i,j),j=1,ns_tmp),i=1,n),
+     ,                     (radim_tmp(i),i=1,n),
      ,                    ((equt_tmp(i,j),j=1,nt_tmp),i=1,nz_tmp)
       else !}{
 c
@@ -480,8 +518,12 @@ c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_ble)=.true.
 c-----------------------------------------------------------------------
 c
-      tab=char(9)
+      allocate(ltgs(nlim,ntrgs_tmp))
+      allocate(limp_tmp(natm))
+      allocate(radim_tmp(natm))
+      allocate(hlp_spc(natm))
 c
+      tab=char(9)
       nimp_tmp=0
       do is = 1, nspecies !{
         if(nfluids(is).gt.1) then !{
@@ -500,7 +542,8 @@ c*** First, targets in B2
       k=0
       do j=1,nbc !{
         if(bcchar(j).eq.'W' .or. bcchar(j).eq.'E') then !{
-          if(bcstart(j).le.0 .and. bcend(j).ge.ny-1) then !{
+          if(minval(bc_list_y(1:bc_list_size(j),j)).le.0 .and. 
+     &       maxval(bc_list_y(1:bc_list_size(j),j)).ge.ny-1) then !{
             k=k+1
             if(k.le.ntrgs_tmp) then !{
               nsrf_hlp(k)=1
@@ -518,7 +561,8 @@ c*** First, targets in B2
 c*** Sort the targets
       do l=1,k !{
         do i=l+1,k !{
-          if(bcpos(indt_hlp(1,l)).gt.bcpos(indt_hlp(1,i))) then !{
+          if(bc_list_x(1,indt_hlp(1,l)).gt.bc_list_x(1,indt_hlp(1,i))) 
+     >     then !{
             j=indt_hlp(1,l)
             indt_hlp(1,l)=indt_hlp(1,i)
             indt_hlp(1,i)=j

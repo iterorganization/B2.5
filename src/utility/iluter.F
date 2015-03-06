@@ -117,7 +117,7 @@
       intrinsic max, mod
       real (kind=R8) ::
      *   smin, samax
-      external xerrab, smin, samax, sfill, scopy, saxpy, sip5g
+      external xerrab, smin, samax, sfill, b2scopy, b2saxpy, sip5g
       data alp/0.0_R8,0.625_R8,0.250_R8,
      1 0.875_R8,0.500_R8,0.125_R8,0.750_R8,
      1 0.375_R8,1.0_R8/
@@ -155,7 +155,7 @@
 *   ..iterate
       do iter = 0, iters-1
 *    ..compute the residual
-       call scopy (m*n, rhs, 1, wrk0, 1)
+       call b2scopy (m*n, rhs, 1, wrk0, 1)
        if (0.lt.iter) then
         do j = 0, n-1
          wrk0(0,j) = wrk0(0,j)-aa5(0,j,0)*sol(0,j)
@@ -174,16 +174,16 @@
        endif
 *    ..compute iteration matrix and rhs
        if (mod(itpar+iter,2).eq.0) then
-        call scopy (m*n, wrk0, 1, wrk1, 1)
-        call scopy (5*m*n, aa5, 1, bb5, 1)
+        call b2scopy (m*n, wrk0, 1, wrk1, 1)
+        call b2scopy (5*m*n, aa5, 1, bb5, 1)
        else
         do j = 0, n-1
-         call scopy (m, wrk0(0,j), 1, wrk1(0,n-1-j), 1)
-         call scopy (m, aa5(0,j,-2), 1, bb5(0,n-1-j,2), 1)
-         call scopy (m, aa5(0,j,-1), 1, bb5(0,n-1-j,-1), 1)
-         call scopy (m, aa5(0,j,0), 1, bb5(0,n-1-j,0), 1)
-         call scopy (m, aa5(0,j,1), 1, bb5(0,n-1-j,1), 1)
-         call scopy (m, aa5(0,j,2), 1, bb5(0,n-1-j,-2), 1)
+         call b2scopy (m, wrk0(0,j), 1, wrk1(0,n-1-j), 1)
+         call b2scopy (m, aa5(0,j,-2), 1, bb5(0,n-1-j,2), 1)
+         call b2scopy (m, aa5(0,j,-1), 1, bb5(0,n-1-j,-1), 1)
+         call b2scopy (m, aa5(0,j,0), 1, bb5(0,n-1-j,0), 1)
+         call b2scopy (m, aa5(0,j,1), 1, bb5(0,n-1-j,1), 1)
+         call b2scopy (m, aa5(0,j,2), 1, bb5(0,n-1-j,-2), 1)
         enddo
        endif
        call stabeq (m, n, 1.0_R8, bb5)
@@ -196,10 +196,10 @@
        nrmc(iter) = samax(m*n,wrk2,1)
 *    ..update sol
        if (mod(itpar+iter,2).eq.0) then
-        call saxpy (m*n, rxf, wrk2, 1, sol, 1)
+        call b2saxpy (m*n, rxf, wrk2, 1, sol, 1)
        else
         do j = 0, n-1
-         call saxpy (m, rxf, wrk2(0,j), 1, sol(0,n-1-j), 1)
+         call b2saxpy (m, rxf, wrk2(0,j), 1, sol(0,n-1-j), 1)
         enddo
        endif
 *   ..end 'do iter'

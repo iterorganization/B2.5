@@ -1,5 +1,5 @@
 c
-      subroutine species(is,string)
+      subroutine species(is,string,decorate)
       use b2mod_types
       use b2mod_b2plot
       use b2mod_elements
@@ -7,6 +7,7 @@ c
       implicit none
       character*(*) string
       integer is,izn,izmax,izmin,imi,len,lnblnk
+      logical decorate
       external lnblnk
 
       izn=nint(zn(is))
@@ -22,6 +23,10 @@ c
         string=' ' // elements(izn)
       endif
       len=lnblnk(string)
+      if(decorate) string(len+1:len+2)='^{'
+      len=lnblnk(string)
+      if(izmin .gt. 0) string(len+1:len+1)='+'
+      len=lnblnk(string)
       if(izmin .lt. 10) then
         write(string(len+1:len+1),'(i1)')
      1   izmin
@@ -30,19 +35,20 @@ c
      1   izmin
       endif
       len=lnblnk(string)
-      if(izmin .gt. 0) string(len+1:len+1)='+'
-      if(izmax .eq. izmin) return
-      len=lnblnk(string)
-      string(len+1:len+1)='_'
-      len=lnblnk(string)
-      if(izmax .lt. 10) then
-        write(string(len+1:len+1),'(i1)')
-     1   izmax
-      else
-        write(string(len+1:len+2),'(i2)')
-     1   izmax
+      if(izmax .gt. izmin) then
+        len=lnblnk(string)
+        string(len+1:len+1)='_'
+        if(izmax .gt. 0) string(len+2:len+2)='+'
+        len=lnblnk(string)
+        if(izmax .lt. 10) then
+          write(string(len+1:len+1),'(i1)')
+     1     izmax
+        else
+          write(string(len+1:len+2),'(i2)')
+     1     izmax
+        endif
       endif
       len=lnblnk(string)
-      if(izmax .gt. 0) string(len+1:len+1)='+'      
+      if(decorate) string(len+1:len+1)='}'      
       return
       end subroutine species

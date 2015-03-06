@@ -22,19 +22,21 @@ c======================================================================
       use b2mod_geo
       use b2mod_b2plot
       use b2mod_constants
+      use b2mod_b2plot_wall_loading
 #ifdef USE_EIRENE
+      use eirmod_parmmod
       use eirmod_extrab25
 #endif
       implicit none
+#ifndef USE_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#     include "b2pwcom.h"
+#endif
       real (kind=R8) ::
      *   d,x
       integer i,j,k,l,n,i1,i2,ii,il,is,kb,ke,kk,ks,kkb,kke,kks,
      ,        n_atg,n_targ,
-     ,        ib(2),ie(2),ibb(2),iee(2),iit(2),jedge(4),l_atg(2)
+     ,        ib(2),ie(2),ibb(2),iee(2),iit(2),l_atg(2)
       logical add_trg
-      equivalence (jedge,jedgi1)
 c
 c*** wsrttol : a tolerance parameter for defining coinciding segments
       real (kind=R8) ::
@@ -51,8 +53,7 @@ c<<<
 c      tab=char(9)
 c
 c      print *,'Starting b2pwlprp...',nlimi,nnlimi
-c      print *,'jedgi1, jedgi2, jedgo1, jedgo2 =',
-c     ,                                   jedgi1, jedgi2, jedgo1, jedgo2
+c      print *,'jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
 c>>>
 c
 c*** Check the presence of the shadowing structure
@@ -65,7 +66,7 @@ c
         return
       end if
 c
-c*** Convert the input wall co-ordinates into double precision
+c*** Convert the input wall coordinates into double precision
 c*** and scale them to meters.
 c*** We have now two sets of the wall segments, one saved by Eirene
 c*** and (another) one read from DG file. Only the segments which are
@@ -188,14 +189,14 @@ c>>>
 c
 c*** Modify the target edges for continuity with B2 grid edges
 c
-      pp2(1,jedgi1)=crx(0,0,0)
-      pp2(2,jedgi1)=cry(0,0,0)
-      pp2(1,jedgi2)=crx(nx-1,0,1)
-      pp2(2,jedgi2)=cry(nx-1,0,1)
-      pp1(1,jedgo1)=crx(0,ny-1,2)
-      pp1(2,jedgo1)=cry(0,ny-1,2)
-      pp1(1,jedgo2)=crx(nx-1,ny-1,3)
-      pp1(2,jedgo2)=cry(nx-1,ny-1,3)
+      pp2(1,jedge(1))=crx(0,0,0)
+      pp2(2,jedge(1))=cry(0,0,0)
+      pp2(1,jedge(2))=crx(nx-1,0,1)
+      pp2(2,jedge(2))=cry(nx-1,0,1)
+      pp1(1,jedge(3))=crx(0,ny-1,2)
+      pp1(2,jedge(3))=cry(0,ny-1,2)
+      pp1(1,jedge(4))=crx(nx-1,ny-1,3)
+      pp1(2,jedge(4))=cry(nx-1,ny-1,3)
 
 c<<<
 c      open(lun_w,file='layout-h.dat')
@@ -229,12 +230,12 @@ c          print *,'== OK'
       end do
 c
 c<<<
-c      print *,jedgi1,jedgi2,jedgo1,jedgo2
+c      print *,jedge(1:4)
 c      print '((2(1x,a3,1p,4e12.4)))',
-c     ,          'i1',(pp1(j,jedgi1),pp2(j,jedgi1),j=1,2),
-c     ,          'o1',(pp1(j,jedgo1),pp2(j,jedgo1),j=1,2),
-c     ,          'i2',(pp1(j,jedgi2),pp2(j,jedgi2),j=1,2),
-c     ,          'o2',(pp1(j,jedgo2),pp2(j,jedgo2),j=1,2)
+c     ,          'i1',(pp1(j,jedge(1)),pp2(j,jedge(1)),j=1,2),
+c     ,          'o1',(pp1(j,jedge(3)),pp2(j,jedge(3)),j=1,2),
+c     ,          'i2',(pp1(j,jedge(2)),pp2(j,jedge(2)),j=1,2),
+c     ,          'o2',(pp1(j,jedge(4)),pp2(j,jedge(4)),j=1,2)
 c>>>
 c
 c*** Correct the segment lists for the refined targets
@@ -262,34 +263,34 @@ c
           end if
           do i=1,n
             k=iabs(lwldlis(is,il))
-            if(k .eq. jedgi1  .or.  k .eq. jedgi2) then
+            if(k .eq. jedge(1)  .or.  k .eq. jedge(2)) then
               if(kb .ne. 0) then
                 write(*,*) 'b2pwlprp: unexpected error. ',
      ,           'Outer edge not found ',il,i,kb
                 write(*,*) 'k,jedgi1,jedgi2,jedgo1,jedgo2 = ',
-     ,           k,jedgi1,jedgi2,jedgo1,jedgo2
+     ,           k,jedge(1:4)
                 stop
               end if
-              if(k .eq. jedgi1) then
+              if(k .eq. jedge(1)) then
                 kb=1
               else
                 kb=2
               end if
               ib(kb)=is
-            else if(k .eq. jedgo1  .or.  k .eq. jedgo2) then
+            else if(k .eq. jedge(3)  .or.  k .eq. jedge(4)) then
               if(kb .eq. 0) then
-                if(k .eq. jedgo1) then
+                if(k .eq. jedge(3)) then
                   kb=1
                 else
                   kb=2
                 end if
               else
-                if((k .eq. jedgo1  .and.  kb .ne. 1)  .or. 
-     ,           (k .eq. jedgo2  .and.  kb .ne. 2)) then
+                if((k .eq. jedge(3)  .and.  kb .ne. 1)  .or. 
+     ,           (k .eq. jedge(4)  .and.  kb .ne. 2)) then
                   write(*,*) 'b2pwlprp: unexpected error. ',
      ,             'Inner edge not found ',il,i,kb
                   write(*,*) 'k,jedgi1,jedgi2,jedgo1,jedgo2 = ',
-     ,             k,jedgi1,jedgi2,jedgo1,jedgo2
+     ,             k,jedge(1:4)
                   stop
                 end if
               end if

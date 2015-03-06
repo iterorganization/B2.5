@@ -40,7 +40,7 @@
       integer ncall, n2, ix, iy, ireg, ileft, ibot, itop, k
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iout = 0                                       !srv 17.06.02
-      character chns*2, chk*1                                     !srv 17.06.02
+      character chns*3, chk*1                                     !srv 17.06.02
       real (kind=R8) ::
      *  t0, t1
       save ncall
@@ -230,7 +230,7 @@ cxpb
        enddo
       enddo
       if (iout.ne.0) then                                              !srv 17.06.02 {
-       write (chns,'(i2.2)') isb    
+       write (chns,'(i3.3)') isb    
        do k=0,1
         write (chk,'(i1)') k  
        enddo

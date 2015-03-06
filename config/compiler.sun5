@@ -21,10 +21,10 @@ MOD = mod
 BLD = ar rcv
 
 GRLIBES = ${NCARG} -lmscl
-LDLIBES = -L${SOLPSMASTER}/@sys/lib -L${SOLPS_LIB} ${NAG} -lnetcdf
+LDLIBES = -L${SOLPSMASTER}/@sys/lib -L${SOLPS_LIB} ${NAG} ${NETCDF}
 
 LD = f90
 LDOPTS = ${FCOPTS} -lf77compat
 
-LCPP = -z muldefs -L${SOLPSTOP}/../solps4.0/src/lib/${OBJECTCODE} -lsonnet -lblas -lC -lw -lnsl
-LCPP = -z muldefs -L${SOLPSTOP}/../solps4.0/src/lib/${OBJECTCODE} -lsonnet -lblas -lw -lnsl -f77compat /usr/lib/libC.so.5
+LCPP = -z muldefs -L${SOLPS_LIB} -lsonnet -lblas -lC -lw -lnsl
+LCPP = -z muldefs -L${SOLPS_LIB} -lsonnet -lblas -lw -lnsl -f77compat /usr/lib/libC.so.5

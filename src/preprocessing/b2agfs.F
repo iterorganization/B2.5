@@ -252,12 +252,12 @@
                   write(*,*) 'ic',ic
                   i = ic
                 endif
-                write(*,*) 'iy,ix,ixl',iy,ix,ixl
+                write(*,'(a,3i4)') 'iy,ix,ixl',iy,ix,ixl
                 bottomcut1(i)=min(iy,bottomcut1(i))
                 topcut1(i)=max(iy+1,topcut1(i))
                 rightcut1(i)=max(ix,rightcut1(i))
               else
-                write(*,*) 'iy,ix,ixl',iy,ix,ixl
+                write(*,'(a,3i4)') 'iy,ix,ixl',iy,ix,ixl
                 if(ic.eq.0) then
                   found=.false.
                 else
@@ -367,18 +367,18 @@ cxpb interact with the rest of the plasma domain.
               inselbot=min(inselbot,iy)
               inseltop=max(inseltop,iy)
               leftix1(i,iy)=nx1-1-i
-              write(*,*) 'iy,ix,ixl',iy,i,nx1-1-i
+              write(*,'(a,3i4)') 'iy,ix,ixl',iy,i,nx1-1-i
               ixl=i
               rightix1(nx1-1-i,iy)=i
-              write(*,*) 'iy,ix,ixr',iy,nx1-1-i,i
+              write(*,'(a,3i4)') 'iy,ix,ixr',iy,nx1-1-i,i
               exit
             end if
           end do
           do i=-1,ixl-1
             rightix1(i,iy)=nx1-1-i
-            write(*,*) 'Dummy cell ix,iy',i,iy
+            write(*,'(a,2i4)') 'Dummy cell ix,iy',i,iy
             leftix1(nx1-1-i,iy)=i
-            write(*,*) 'Dummy cell ix,iy',nx1-1-i,iy
+            write(*,'(a,2i4)') 'Dummy cell ix,iy',nx1-1-i,iy
           end do
         end if
 
@@ -417,7 +417,7 @@ cxpb  reconnect the guard cells on both sides of the island.
             topiy1(nx1-1-i,inselbot-1)=inselbot-1 ! of the island
             write(*,*) 'ix,iy,ixt,iyt',nx1-1-i,inselbot-1,i,inselbot-1
           end if
-          if(inseltop.lt.ny) then   	 ! connected region on South side
+          if(inseltop.lt.ny1) then   	 ! connected region on South side
             bottomix1(i,inseltop+1)=nx1-1-i       ! connect to the other side
             bottomiy1(i,inseltop+1)=inseltop+1    ! of the limited SOL
             write(*,*) 'ix,iy,ixb,iyb',i,inseltop+1,nx1-1-i,inseltop+1
@@ -460,10 +460,10 @@ cxpb tranverse physics
 
       write(*,*) 'istyle',istyle,'nncut',nncut
       if(nncut.eq.0) write(*,*) 'No cuts found'
-      if(nncut.ge.1) write(*,*)
+      if(nncut.ge.1) write(*,'(a,4i4)')
      1 'Calculated leftcut1, rightcut1, topcut1, bottomcut1 = ',
      1 leftcut1(1), rightcut1(1), topcut1(1), bottomcut1(1)
-      if(nncut.ge.2) write(*,*)
+      if(nncut.ge.2) write(*,'(a,4i4)')
      1 'Calculated leftcut2, rightcut2, topcut2, bottomcut2 = ',
      1 leftcut1(2), rightcut1(2), topcut1(2), bottomcut1(2)
 
@@ -561,9 +561,9 @@ cxpb  if just below the top corner, make the corner cell follow
                     cry1(ix,ny1,3) = z1 + (z1-z2)/1000.0_R8
                     crx1(ix,ny1,2) = r1 + (r1-r3)/1000.0_R8
                     cry1(ix,ny1,2) = z1 + (z1-z3)/1000.0_R8
-                    crx1(rightix1(ix,ny1),rightiy1(iy,ny1),2) = 
+                    crx1(rightix1(ix,ny1),rightiy1(ix,ny1),2) = 
      .               r1 + (r1-r2)/1000.0_R8
-                    cry1(rightix1(ix,ny1),rightiy1(iy,ny1),2) = 
+                    cry1(rightix1(ix,ny1),rightiy1(ix,ny1),2) = 
      .               z1 + (z1-z2)/1000.0_R8
                   end if
                   nhatr = (z1-z2)/sqrt((z1-z2)**2+(r2-r1)**2)
@@ -672,9 +672,9 @@ cxpb  if just below the top corner, make the corner cell follow
                     cry1(ix,ny1,2) = z1 + (z1-z2)/1000.0_R8
                     crx1(ix,ny1,3) = r1 + (r1-r3)/1000.0_R8
                     cry1(ix,ny1,3) = z1 + (z1-z3)/1000.0_R8
-                    crx1(leftix1(ix,ny1),leftiy1(iy,ny1),3) = 
+                    crx1(leftix1(ix,ny1),leftiy1(ix,ny1),3) = 
      .               r1 + (r1-r2)/1000.0_R8
-                    cry1(leftix1(ix,ny1),leftiy1(iy,ny1),3) = 
+                    cry1(leftix1(ix,ny1),leftiy1(ix,ny1),3) = 
      .               z1 + (z1-z2)/1000.0_R8
                   end if
                   nhatr = (z1-z2)/sqrt((z1-z2)**2+(r2-r1)**2)
@@ -991,6 +991,8 @@ c
       if(open_file(lun,local_sonnet,
      *     'data.local/meshes|data/meshes')) then
         if(istyle.eq.-1) then      	 !xpb  DG-format geometry input
+	  write(*,*)
+     1	   "Reading the geometry file assuming the 'new' format"
           read(lun,*) nnx,nny
           if(nnx.ne.nx.or.nny.ne.ny) then
             write(*,*) 'b2gxdr_dummy: nx,ny code and data disagree',
@@ -1005,8 +1007,10 @@ c
             enddo
           enddo
         elseif(istyle.eq.-2) then  	 !xpb  SONNET-format geometry input
-          write(*,*) '==== b2gxdr_dummy: read unit',lun,
-     1     '  file  ',local_sonnet
+	  write(*,*)
+     1	   "Reading the geometry file assuming the 'old' format"
+          write(*,'(a,i3,2a)') '==== b2gxdr_dummy: read unit',lun,
+     1     '  file  ',trim(local_sonnet)
    20     read (lun,'(a)', end=990) uline
           if(index(uline,'R*Btor').ne.0) then
             read(uline(index(uline,('R*Btor'))+8:line_length),
@@ -1165,6 +1169,37 @@ c
      4 periodic_bc
       real (kind=R8) ::
      1 crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
+c
+c            Core case
+c    ++-----------------------------++
+c    ||                             ||
+c    ||                             ||
+c    ||              1              ||
+c    ||                             ||
+c    ||                             ||
+c    ++-----------------------------++
+c                                
+c    ++-----------------------------++
+c    ||                             ||
+c    ||                             ||
+c    ||1                            ||
+c    ||                             ||
+c    ||                             ||
+c    ++-----------------------------++
+c                                
+c    ++--------------2--------------++
+c    ||                             ||
+c    ||                             ||
+c    ||                             ||
+c    ||                             ||
+c    ||                             ||
+c    ++--------------1--------------++
+c                                                                  
+c
+c Cases with no X-point:
+c region 1 === core
+c
+c                           +++++++++++++++++++++++++
 c
 c            Limiter case
 c    +-------------------------------+
@@ -1453,7 +1488,11 @@ c volume component
             region(ix,iy,0) = 2
           enddo
         enddo
-        nnreg(0) = 2
+        if(inseliy.eq.ny) then
+           nnreg(0) = 1
+        else
+           nnreg(0) = 2
+        endif
       else if (nncut.eq.0 .and. periodic_bc.eq.0) then   ! 2-D slab case
         do iy = -1, ny
           do ix = -1, nx
@@ -1564,20 +1603,32 @@ c volume component
       enddo
 c x-flux component
       if(nncut.eq.0 .and. periodic_bc.eq.1) then   ! limiter case
-        do iy = inseliy+1, ny
-          region(rightix(-1,iy),rightiy(-1,iy),1)=1
-          region(nx,iy,1)=2
-        enddo
-        do iy = -1, inseliy
-          region(inselix+1,iy,1)=3
-        enddo
-        nnreg(1)=3
-        do ix = inselix, nx-1-inselix
-          region(topix(ix,-1),topiy(ix,-1),2)=1
-          region(topix(ix,inseliy),topiy(ix,inseliy),2)=2
-        enddo
-        region(:,ny,2)=3
-        nnreg(2)=3        
+        if(inseliy.eq.ny) then
+           do iy = -1, inseliy
+              region(inselix+1,iy,1)=1
+           enddo
+           nnreg(1)=1
+           do ix = inselix, nx-1-inselix
+              region(topix(ix,-1),topiy(ix,-1),2)=1
+              region(ix,ny,2)=2
+           enddo
+           nnreg(2)=2
+        else
+           do iy = inseliy+1, ny
+              region(rightix(-1,iy),rightiy(-1,iy),1)=1
+              region(nx,iy,1)=2
+           enddo
+           do iy = -1, inseliy
+              region(inselix+1,iy,1)=3
+           enddo
+           nnreg(1)=3
+           do ix = inselix, nx-1-inselix
+              region(topix(ix,-1),topiy(ix,-1),2)=1
+              region(topix(ix,inseliy),topiy(ix,inseliy),2)=2
+           enddo
+           region(:,ny,2)=3
+           nnreg(2)=3        
+        endif
       elseif(topcut(1).ge.-1) then
         if(periodic_bc.eq.1) then
           iyt=inseliy-1
@@ -1614,20 +1665,18 @@ c x-flux component
           elseif(nncut.eq.2) then
             if(iy.ge.bottomcut(2).and.iy.lt.topcut(2)) then
               region(leftcut(1),iy,1)=9
-              region(rightcut(1),iy,1)=12
             else
-              region(leftcut(1),iy,1)=9
-              region(rightcut(1),iy,1)=13
+              region(leftcut(1),iy,1)=13
             endif
+            region(rightcut(1),iy,1)=12
           endif
         enddo
         if(nncut.eq.2) then
           do iy=bottomcut(2),topcut(2)-1
+            region(leftcut(2),iy,1)=10
             if(iy.ge.bottomcut(1).and.iy.lt.topcut(1)) then
-              region(leftcut(2),iy,1)=10
               region(rightcut(2),iy,1)=11
             else
-              region(leftcut(2),iy,1)=10
               region(rightcut(2),iy,1)=13
             endif
           enddo

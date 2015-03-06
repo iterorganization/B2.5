@@ -27,7 +27,7 @@ MOD = mod
 BLD = ar rcv
 
 GRLIBES = ${NCARG} -lmscl
-LDLIBES = -L${SOLPS_LIB} ${NAG} -lnetcdf
+LDLIBES = -L${SOLPS_LIB} ${NAG} ${NETCDF}
 LDLIBES = -L${SOLPS_LIB} ${NAG} -L/afs/efda-itm.eu/project/switm/netcdf/amd64_pgi/lib -lnetcdff -lnetcdf \
 	-L${AMNS} -lamns -L/usr/lib64/mysql -lmysqlclient \
 	-L${UAL}/fortraninterface -lUALFORTRANInterface_pgi \

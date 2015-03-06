@@ -12,7 +12,7 @@ MOD = mod
 BLD = ar rcv
 
 GRLIBES = ${NCARG} -lmscl
-LDLIBES = -L${SOLPS_LIB} ${NAG}
+LDLIBES = -L${SOLPS_LIB} ${NAG} ${NETCDF}
 
 LD = f90
 LDOPTS = 

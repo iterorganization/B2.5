@@ -42,7 +42,7 @@ OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 BLD = ar rcv
 
 GRLIBES = ${NCARG} -lmscl
-LDLIBES = ${NAG} -L${SOLPS_LIB} -lnetcdf # -lblas
+LDLIBES = -L${SOLPS_LIB} ${NETCDF} ${NAG} # -lblas
 
 ifdef USE_EIRENE
 LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
@@ -52,6 +52,6 @@ LDLIBES += -lperf
 endif
 
 LD = ${FC}
-# LDOPTS = -Bstatic
+LDOPTS = -i_dynamic
 
 LCPP = -L${SOLPS_LIB} -lsonnet -lstdc++ -lblas

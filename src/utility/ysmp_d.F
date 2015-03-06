@@ -237,7 +237,7 @@ C    ---------+-----------------------------+---------------------------
 C    LAST(VI) \ (NOT SET UNTIL MDP)         \ -D => VI HEAD OF D-LIST D 
 C             \-VK => COMPUTE DEGREE        \ VJ => VJ LAST IN D-LIST   
 C             \ EJ => VI PROTOTYPE OF EJ    \  0 => VI NOT IN ANY D-LIST
-C             \  0 => DO NOT COMPUTE DEGREE \                           
+C             \  0 => DO NOT COMPUTE DEGREE \
 C    ---------+-----------------------------+---------------------------
 C    MARK(VI) \ MARK(VK)                    \ NONNEGATIVE TAG < MARK(VK)
 C                                                                       
@@ -251,9 +251,9 @@ C    ---------+-----------------------------+---------------------------
 C    LAST(VI) \  M => SIZE OF EI = M        \ UNDEFINED                 
 C    ---------+-----------------------------+---------------------------
 C    MARK(VI) \ -M => OVERLAP COUNT OF EI   \ UNDEFINED                 
-C             \       WITH EK = M           \                           
-C             \ OTHERWISE NONNEGATIVE TAG   \                           
-C             \       < MARK(VK)            \                           
+C             \       WITH EK = M           \
+C             \ OTHERWISE NONNEGATIVE TAG   \
+C             \       < MARK(VK)            \
 C                                                                       
 C-----------------------------------------------------------------------
 C                                                                       

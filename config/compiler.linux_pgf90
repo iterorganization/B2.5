@@ -23,7 +23,7 @@ MOD = mod
 BLD = ar rcv
 
 GRLIBES = ${NCARG} -lmscl
-LDLIBES = -L${SOLPS_LIB} ${NAG} -lnetcdf
+LDLIBES = -L${SOLPS_LIB} ${NAG} ${NETCDF}
 
 LD = pgf90
 ifdef SOLPS_DEBUG

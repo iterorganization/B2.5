@@ -27,7 +27,9 @@
      *  fchxreg(:),
      *  fchyreg(:),
      *  fhtxreg(:),                                               !cjk
-     *  fhtyreg(:)
+     *  fhtyreg(:),
+     *  fhjxreg(:),
+     *  fhjyreg(:)
       real (kind=R8), allocatable, save ::
      *  nareg(:,:),
      *  tereg(:),
@@ -45,14 +47,28 @@
       real (kind=R8), allocatable, save ::
      *  b2stbr_sna_reg(:,:),
      *  b2stbr_smo_reg(:,:),
+     *  b2stbr_sne_reg(:),
      *  b2stbr_she_reg(:),
      *  b2stbr_shi_reg(:),
      *  b2stbr_sch_reg(:),
      *  b2stbc_sna_reg(:,:),
      *  b2stbc_smo_reg(:,:),
+     *  b2stbc_sne_reg(:),
      *  b2stbc_she_reg(:),
      *  b2stbc_shi_reg(:),
-     *  b2stbc_sch_reg(:)
+     *  b2stbc_sch_reg(:),
+     *  b2stbm_sna_reg(:,:),
+     *  b2stbm_smo_reg(:,:),
+     *  b2stbm_sne_reg(:),
+     *  b2stbm_she_reg(:),
+     *  b2stbm_shi_reg(:),
+     *  b2stbm_sch_reg(:),
+     *  b2sext_sna_reg(:,:),
+     *  b2sext_smo_reg(:,:),
+     *  b2sext_sne_reg(:),
+     *  b2sext_she_reg(:),
+     *  b2sext_shi_reg(:),
+     *  b2sext_sch_reg(:)
       real (kind=R8), allocatable, save ::
      *  b2qie(:),
      *  b2divue(:),
@@ -125,6 +141,8 @@
       allocate(fchyreg(0:nnreg(2)))
       allocate(fhtxreg(0:nnreg(1)))                                 !cjk
       allocate(fhtyreg(0:nnreg(2)))
+      allocate(fhjxreg(0:nnreg(1)))
+      allocate(fhjyreg(0:nnreg(2)))
       allocate(nareg(0:nnreg(0),0:nsd-1))
       allocate(tereg(0:nnreg(0)))
       allocate(nereg(0:nnreg(0)))
@@ -139,14 +157,28 @@
       allocate(qconveyreg(0:nnreg(2)))
       allocate(b2stbr_sna_reg(0:nnreg(0),0:nsd-1))
       allocate(b2stbr_smo_reg(0:nnreg(0),0:nsd-1))
+      allocate(b2stbr_sne_reg(0:nnreg(0)))
       allocate(b2stbr_she_reg(0:nnreg(0)))
       allocate(b2stbr_shi_reg(0:nnreg(0)))
       allocate(b2stbr_sch_reg(0:nnreg(0)))
       allocate(b2stbc_sna_reg(0:nnreg(0),0:nsd-1))
       allocate(b2stbc_smo_reg(0:nnreg(0),0:nsd-1))
+      allocate(b2stbc_sne_reg(0:nnreg(0)))
       allocate(b2stbc_she_reg(0:nnreg(0)))
       allocate(b2stbc_shi_reg(0:nnreg(0)))
       allocate(b2stbc_sch_reg(0:nnreg(0)))
+      allocate(b2stbm_sna_reg(0:nnreg(0),0:nsd-1))
+      allocate(b2stbm_smo_reg(0:nnreg(0),0:nsd-1))
+      allocate(b2stbm_sne_reg(0:nnreg(0)))
+      allocate(b2stbm_she_reg(0:nnreg(0)))
+      allocate(b2stbm_shi_reg(0:nnreg(0)))
+      allocate(b2stbm_sch_reg(0:nnreg(0)))
+      allocate(b2sext_sna_reg(0:nnreg(0),0:nsd-1))
+      allocate(b2sext_smo_reg(0:nnreg(0),0:nsd-1))
+      allocate(b2sext_sne_reg(0:nnreg(0)))
+      allocate(b2sext_she_reg(0:nnreg(0)))
+      allocate(b2sext_shi_reg(0:nnreg(0)))
+      allocate(b2sext_sch_reg(0:nnreg(0)))
       allocate(b2qie(0:nnreg(0)))
       b2qie=0.0_R8
       allocate(b2divue(0:nnreg(0)))
@@ -289,8 +321,9 @@
       subroutine define_cdf_b2mod_tallies(nnreg,nsd)
       integer nnreg(0:2), nsd
 #include <netcdf.inc>
-      integer :: status, ncid, vregid, xregid, yregid, nsid, tid, varid
-      integer :: nvdims, vdims(3)
+      integer :: status, 
+     1 ncid, vregid, xregid, yregid, nsid, tid, varid, specid
+      integer :: vdims(3)
 
       status=nf_create('b2tallies.nc',NF_CLOBBER,ncid)
       call check_cdf_status(status)
@@ -303,12 +336,20 @@
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'ns',nsd,nsid)
       call check_cdf_status(status)
+      status=nf_def_dim(ncid,'speclng',10,specid)
+      call check_cdf_status(status)
       status=nf_def_dim(ncid,'time',NF_UNLIMITED,tid)
       call check_cdf_status(status)
 
       vdims(1)=tid
       status=nf_def_var(ncid,'times',NF_DOUBLE,1,vdims,varid)
       call check_cdf_status(status)
+
+      vdims(1)=specid
+      vdims(2)=nsid
+      call create_cdf_var_with_attrs(
+     *  ncid,'species',NF_CHAR,
+     *  2,vdims,'','Species')
 
       vdims(1)=vregid
       vdims(2)=tid
@@ -334,6 +375,9 @@
      *  ncid,'volreg',NF_DOUBLE,
      *  2,vdims,'m^3','Volume')                     !!! change ???
       call create_cdf_var_with_attrs(
+     *  ncid,'b2stbr_sne_reg',NF_DOUBLE,
+     *  2,vdims,'e','Recycling electron particle source')
+      call create_cdf_var_with_attrs(
      *  ncid,'b2stbr_she_reg',NF_DOUBLE,
      *  2,vdims,'W','Recycling electron energy source')
       call create_cdf_var_with_attrs(
@@ -343,6 +387,9 @@
      *  ncid,'b2stbr_sch_reg',NF_DOUBLE,
      *  2,vdims,'A','Recycling charge source')
       call create_cdf_var_with_attrs(
+     *  ncid,'b2stbc_sne_reg',NF_DOUBLE,
+     *  2,vdims,'e','Boundary electron particle source')
+      call create_cdf_var_with_attrs(
      *  ncid,'b2stbc_she_reg',NF_DOUBLE,
      *  2,vdims,'W','Boundary electron energy source')
       call create_cdf_var_with_attrs(
@@ -351,6 +398,30 @@
       call create_cdf_var_with_attrs(
      *  ncid,'b2stbc_sch_reg',NF_DOUBLE,
      *  2,vdims,'A','Boundary charge source')
+      call create_cdf_var_with_attrs(
+     *  ncid,'b2stbm_sne_reg',NF_DOUBLE,
+     *  2,vdims,'e','Additional electron particle source')
+      call create_cdf_var_with_attrs(
+     *  ncid,'b2stbm_she_reg',NF_DOUBLE,
+     *  2,vdims,'W','Additional electron energy source')
+      call create_cdf_var_with_attrs(
+     *  ncid,'b2stbm_shi_reg',NF_DOUBLE,
+     *  2,vdims,'W','Additional ion energy source')
+      call create_cdf_var_with_attrs(
+     *  ncid,'b2stbm_sch_reg',NF_DOUBLE,
+     *  2,vdims,'A','Additional charge source')
+      call create_cdf_var_with_attrs(
+     *  ncid,'b2sext_sne_reg',NF_DOUBLE,
+     *  2,vdims,'e','External electron particle source')
+      call create_cdf_var_with_attrs(
+     *  ncid,'b2sext_she_reg',NF_DOUBLE,
+     *  2,vdims,'W','External electron energy source')
+      call create_cdf_var_with_attrs(
+     *  ncid,'b2sext_shi_reg',NF_DOUBLE,
+     *  2,vdims,'W','External ion energy source')
+      call create_cdf_var_with_attrs(
+     *  ncid,'b2sext_sch_reg',NF_DOUBLE,
+     *  2,vdims,'A','External charge source')
       call create_cdf_var_with_attrs(
      *  ncid,'b2qie',NF_DOUBLE,
      *  2,vdims,'W','Electron/ion exchange term')
@@ -462,16 +533,28 @@
      *  3,vdims,'m^-3','Average ion density')
       call create_cdf_var_with_attrs(
      *  ncid,'b2stbr_sna_reg',NF_DOUBLE,
-     *  3,vdims,'s^-1','b2stbr_sna_reg')
+     *  3,vdims,'s^-1','Recycling particle source')
       call create_cdf_var_with_attrs(
      *  ncid,'b2stbr_smo_reg',NF_DOUBLE,
-     *  3,vdims,'kg.m.s^-1','b2stbr_smo_reg')
+     *  3,vdims,'kg.m.s^-1','Recycling parallel momentum source')
       call create_cdf_var_with_attrs(
      *  ncid,'b2stbc_sna_reg',NF_DOUBLE,
-     *  3,vdims,'s^-1','b2stbc_sna_reg')
+     *  3,vdims,'s^-1','Boundary particle source')
       call create_cdf_var_with_attrs(
      *  ncid,'b2stbc_smo_reg',NF_DOUBLE,
-     *  3,vdims,'kg.m.s^-1','b2stbc_smo_reg')
+     *  3,vdims,'kg.m.s^-1','Boundary parallel momentum source')
+      call create_cdf_var_with_attrs(
+     *  ncid,'b2stbm_sna_reg',NF_DOUBLE,
+     *  3,vdims,'s^-1','Additional particle source')
+      call create_cdf_var_with_attrs(
+     *  ncid,'b2stbm_smo_reg',NF_DOUBLE,
+     *  3,vdims,'kg.m.s^-1','Additional parallel momentum source')
+      call create_cdf_var_with_attrs(
+     *  ncid,'b2sext_sna_reg',NF_DOUBLE,
+     *  3,vdims,'s^-1','External particle source')
+      call create_cdf_var_with_attrs(
+     *  ncid,'b2sext_smo_reg',NF_DOUBLE,
+     *  3,vdims,'kg.m.s^-1','External parallel momentum source')
       call create_cdf_var_with_attrs(
      *  ncid,'resco_reg',NF_DOUBLE,
      *  3,vdims,'#','resco_reg')
@@ -493,6 +576,9 @@
       call create_cdf_var_with_attrs(                              !cjk
      *  ncid,'fhtxreg',NF_DOUBLE,
      *  2,vdims,'W','fhtxreg')
+      call create_cdf_var_with_attrs(
+     *  ncid,'fhjxreg',NF_DOUBLE,
+     *  2,vdims,'W','fhjxreg')
 
       vdims(1)=xregid                                              !cjk
       vdims(2)=tid
@@ -530,6 +616,9 @@
       call create_cdf_var_with_attrs(                              !cjk
      *  ncid,'fhtyreg',NF_DOUBLE,
      *  2,vdims,'W','fhtyreg')
+      call create_cdf_var_with_attrs(
+     *  ncid,'fhjyreg',NF_DOUBLE,
+     *  2,vdims,'W','fhjyreg')
 
       vdims(1)=yregid                                              !cjk
       vdims(2)=tid

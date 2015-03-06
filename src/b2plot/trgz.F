@@ -50,12 +50,14 @@ c      if(nidim .ne. 1) call line(1)
       if(mod(trglinlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
       if(mod(trglinlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
       if(mod(typeofplot,2) .eq. 1) then
-        if(values(34).ne.init_value) then
+        if(values(34).ne.init_value .and.
+     &     .not.(values(34).eq.0.0_R8 .and. values(35).eq.0.0_R8)) then
           xmin=values(34)
         else
           xmin=wwrk(1)
         endif
-        if(values(35).ne.init_value) then
+        if(values(35).ne.init_value .and.
+     &     .not.(values(34).eq.0.0_R8 .and. values(35).eq.0.0_R8)) then
           xmax=values(35)
         else
           xmax=wwrk(ndepth_nml)
@@ -76,17 +78,22 @@ c      if(nidim .ne. 1) call line(1)
      1     xmin,xmax,lmin,lmax,
      2     trglinlog,.false.,.false.,.true.)
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)')                                   !srv 21.09.11
+          write(nwtf,'(''# '',a)')
      1     target_label(itwrk)(1:lnblnk(target_label(itwrk)))//
      2     tmpstring(1:lnblnk(tmpstring))
           do i=1,ndepth_nml
-            write(nwtf,*) wwrk(i),target_stack(ibnd,i,itwrk)         !srv 21.09.11
+            write(nwtf,*) wwrk(i),target_stack(ibnd,i,itwrk)
           enddo
         endif
 #ifndef PLPLOT
         call lastd
         if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
-        if (tcol.gt.1) call gsplci(tcol)
+        if (tcol.gt.1) then
+          call gsplci(tcol)
+        elseif (tcol.lt.0) then
+          call gsplci(-tcol)
+          tcol=tcol-1
+        endif
 #endif
         do i=1,ndepth_nml-1
           call lined_d(
@@ -98,7 +105,7 @@ c      if(nidim .ne. 1) call line(1)
 #ifndef PLPLOT
         call lastd
         if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)
-        if (tcol.gt.1) call gsplci(1)
+        if (tcol.ne.1) call gsplci(1)
 #endif
         call end_page
       endif
@@ -140,17 +147,23 @@ c      if(nidim .ne. 1) call line(1)
      1     values(26),values(27),lmin,lmax,
      3     trglinlog,.false.,.false.,.false.)
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)')                                   !srv 21.09.11
+          write(nwtf,'(''# '',a)')
      1       target_label(itwrk)(1:lnblnk(target_label(itwrk)))//
      2       tmpstring(1:lnblnk(tmpstring))
           do i=1,ndepth_nml
-            write(nwtf,*) wwrk(i),target_stack(ibnd,i,itwrk)         !srv 21.09.11
+            write(nwtf,*) wwrk(i),target_stack(ibnd,i,itwrk)
           enddo
         endif
 #ifndef PLPLOT
         call lastd
         if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
-        if (tcol.gt.1) call gsplci(tcol)
+        if (tcol.gt.1) then
+          call gsplci(tcol)
+        elseif (tcol.lt.0) then
+          if(typeofplot.eq.3) tcol=tcol+1
+          call gsplci(-tcol)
+          tcol=tcol-1
+        endif
 #endif
         do i=1,ndepth_nml-1
           call lined_d(
@@ -162,7 +175,7 @@ c      if(nidim .ne. 1) call line(1)
 #ifndef PLPLOT
         call lastd
         if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)
-        if (tcol.gt.1) call gsplci(1)
+        if (tcol.ne.1) call gsplci(1)
 #endif
         call end_page
       endif

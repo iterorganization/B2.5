@@ -25,7 +25,7 @@ COMPILE  	= ${FC} -c ${FCOPTS}
 BLD 		= ar rcv
 
 GRLIBES 	= ${NCARG} -lmscl
-LDLIBES 	= -L${SOLPS_LIB} ${NAG} -lnetcdf
+LDLIBES 	= -L${SOLPS_LIB} ${NAG} ${NETCDF}
 
 ifdef USE_EIRENE
 LDLIBESEXTRA 	= ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o

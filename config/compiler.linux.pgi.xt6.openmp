@@ -8,7 +8,6 @@ LINK_MOD =
 
 FC = ftn
 
-
 ifdef SOLPS_DEBUG
 FCOPTS = -mp=nonuma  -g -C 
 else
@@ -28,15 +27,18 @@ OBJDEST = -o ${OBJDIR}/$*.o
 BLD = ar rcv
 
 GRLIBES = ${NCARG} -lcgm -lngmath 
-LDLIBES = ${NAG} -lnetcdf
+LDLIBES = ${NAG} ${NETCDF}
 
 ifdef USE_EIRENE
 LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o
 endif
 
 LD = $(FC)
-# Use this line for debug version
-#LDOPTS = -g -C
+ifdef SOLPS_DEBUg
+LDOPTS = -g -C
+else
 LDOPTS = -mp=nonuma -O3
+endif
 
-LCPP=-L/afs/ipp-garching.mpg.de/u/dpc/solps/solps4.0_test/src/lib/${OBJECTCODE} -lsonnet /usr/lib/libstdc++.so.2.9 -lblas
+LCPP=-L${SOLPS_LIB} -lsonnet /usr/lib/libstdc++.so.2.9 -lblas
+

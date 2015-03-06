@@ -22,9 +22,9 @@ OBJDEST = -o ${OBJDIR}/$*.o
 BLD = ar rcv
 
 GRLIBES = ${NCARG} -lmscl
-LDLIBES = -L${SOLPSMASTER}/@sys/lib -L${SOLPS_LIBS} ${NAG} -lnetcdf
+LDLIBES = -L${SOLPSMASTER}/@sys/lib -L${SOLPS_LIB} ${NAG} ${NETCDF}
 # LDLIBES = ${NAG} -lmass
 
 LD = f90
 
-LCPP = -L${SOLPSTOP}/../solps4.0/src/lib/${OBJECTCODE} -lsonnet -L/usr/lpp/xlC/lib -lCns
+LCPP = -L${SOLPS_LIB} -lsonnet -L/usr/lpp/xlC/lib -lCns

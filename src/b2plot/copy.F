@@ -77,9 +77,9 @@ c  Copy the top of the wall stack to the data array
       use b2mod_types
       use b2mod_wall
       use b2mod_b2plot
+      use b2mod_b2plot_ank
       implicit none
       integer is
-#include "ank.h"
       external subini, subend, xertst
 
       call subini('data_copy')

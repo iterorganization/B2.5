@@ -61,10 +61,10 @@
 
 *   ..local variables
       integer ncall, model, n2, ix, iy, is, js
-	integer, save :: icase = 0                                      !srv 20.09.11
-	integer, save :: iout = 0,                                      !srv 16.06.08
+      integer, save :: icase = 0                                      !srv 20.09.11
+      integer, save :: iout = 0,                                      !srv 16.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0, iout_b2npmo = 0
-	character chns*2                                                !srv 16.06.08
+      character chns*3                                                !srv 16.06.08
       real (kind=R8) :: 
      *  fki, fxi, eta, ctaup, ctaui, ci, 
      *  t, t0, t1, tau(-1:nx,-1:ny), tnp, phm0, w                     !srv 11.09.09
@@ -189,8 +189,8 @@ cxpb            ctaui = ctaup*sqrt(2.0_R8)/lnlam/rz2(ix,iy,is)  ! lower precisio
          enddo
         enddo
 	  if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
-	   write (chns,'(i2.2)') is 
-         call my_out(70,nx,ny,tau,'b2tqca_taua'//chns)
+	   write (chns,'(i3.3)') is 
+           call my_out(70,nx,ny,tau,'b2tqca_taua'//chns)
 	  endif
        endif
       enddo
@@ -203,7 +203,7 @@ cxpb            ctaui = ctaup*sqrt(2.0_R8)/lnlam/rz2(ix,iy,is)  ! lower precisio
 
       if(iout_b2npmo.ne.0) then                                     !srv 16.06.08 30.01.10 {
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is 
+	  write (chns,'(i3.3)') is 
         call my_out(70,nx,ny,vsa(-1,-1,0,is),'b2tqca_vsax'//chns)
         call my_out(70,nx,ny,vsa(-1,-1,1,is),'b2tqca_vsay'//chns)
 !        call my_out(70,nx,ny,na(-1,-1,is),'b2tqca_na'//chns)

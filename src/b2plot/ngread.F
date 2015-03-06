@@ -23,7 +23,6 @@ c
       use b2mod_diag
       use b2mod_b2plot
       use b2mod_indirect
-      use b2mod_neutrals_namelist
       use b2mod_b2cmpa
 #ifdef USE_EIRENE
       use eirmod_extrab25
@@ -36,19 +35,22 @@ c
 *  -- OUTPUT ARGUMENTS --
       INTEGER NFEND
 
-!#     include <COUPLE/EIRDIAG.F>                                !srv 14.10.13
-
 *  -- LOCAL SCALARS --
       INTEGER NNX, NNY, IS, IX, IY, jvft44, istra, nplsi
+      integer i, j, k, ncl
+      integer, save :: use_recyceir
+      real (kind=R8) :: recyctmp
+      data use_recyceir /0/
 
 *  -- PROCEDURES --
       EXTERNAL GFSUB2
-      external subini, subend
+      external subini, subend, ipgeti
 
 *=======================================================================
 *//COMPUTATION//
 C
       call subini ('ngread')
+      call ipgeti ('eirene_use_recyceir', use_recyceir)
       NFEND = 0
 
       nplsi = 0
@@ -65,8 +67,9 @@ C
 C
       READ(44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
       READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
-      write(*,*) ' Dimensions in fort.44 = ',nnx,nny,natmi,nmoli,nioni
-      write(*,*) ' Outer dimensions = ', ndxp, ndyp
+      write(*,'(a,5i4)') 
+     . ' Dimensions in fort.44 = ',nnx,nny,natmi,nmoli,nioni
+      write(*,'(a,2i4)') ' Outer dimensions = ', ndxp, ndyp
       if(natmi .gt. natm) stop 'NGREAD: NATMI > NATM'
       if(nmoli .gt. nmol) stop 'NGREAD: NMOLI > NMOL'
       if(nioni .gt. nion) stop 'NGREAD: NIONI > NION'
@@ -208,8 +211,8 @@ cank 960511
       end do
       if(jvft44 .ge. 960511) then
         do is=1,nmoli
-          call gfsub2(44,nxdd,nydd,nnx,nny,srcml)
-          call gfsub2(44,nxdd,nydd,nnx,nny,edissml)
+          call gfsub2(44,nxdd,nydd,nnx,nny,srcml(0,0,is,1))
+          call gfsub2(44,nxdd,nydd,nnx,nny,edissml(0,0,is,1))
         end do
         read(44,'(2i6)') nlimi,nstsi
         print *,'nlimi,nstsi:',nlimi,nstsi
@@ -273,36 +276,52 @@ cank-960727
               ewldm(ix,is,0)=0.0_R8
             end do
             do istra=1,nstrai
+              if(use_recyceir.gt.0) then
+                recyctmp=recyceir(istra)
+              else
+                recyctmp=recyc(ismain,istra)
+              endif
               wldnek(ix,0)=wldnek(ix,0)+
-     +         wldnek(ix,istra)*recyc(ismain,istra)
+     +         wldnek(ix,istra)*recyctmp
               wldnep(ix,0)=wldnep(ix,0)+
-     +         wldnep(ix,istra)*recyc(ismain,istra)
-              iy=1
+     +         wldnep(ix,istra)*recyctmp
               do is=1,natmi
+                iy=b2espcr(is)
+                if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
                 wldna(ix,is,0)=wldna(ix,is,0)+
-     +                             wldna(ix,is,istra)*recyc(iy,istra)
+     +                             wldna(ix,is,istra)*recyctmp
                 wldra(ix,is,0)=wldra(ix,is,0)+
-     +                             wldra(ix,is,istra)*recyc(iy,istra)
+     +                             wldra(ix,is,istra)*recyctmp
                 ewlda(ix,is,0)=ewlda(ix,is,0)+
-     +                             ewlda(ix,is,istra)*recyc(iy,istra)
+     +                             ewlda(ix,is,istra)*recyctmp
                 iy=iy+nfluids(is)+1
               end do
               do is=1,nmoli
                 if (lmolscl(is).gt.0 .and. lmolscl(is).le.natmi) then
                   iy=eb2spcr(lmolscl(is))+1
+                  if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
                   wldnm(ix,is,0)=wldnm(ix,is,0)+
-     +             wldnm(ix,is,istra)*recyc(iy,istra)
+     +             wldnm(ix,is,istra)*recyctmp
                   wldrm(ix,is,0)=wldrm(ix,is,0)+
-     +             wldrm(ix,is,istra)*recyc(iy,istra)
+     +             wldrm(ix,is,istra)*recyctmp
                   ewldm(ix,is,0)=ewldm(ix,is,0)+
-     +             ewldm(ix,is,istra)*recyc(iy,istra)
+     +             ewldm(ix,is,istra)*recyctmp
+                else if (use_recyceir.gt.0) then !here we are rescaling by stratum, not by species
+                  wldnm(ix,is,0)=wldnm(ix,is,0)+
+     +             wldnm(ix,is,istra)*recyctmp
+                  wldrm(ix,is,0)=wldrm(ix,is,0)+
+     +             wldrm(ix,is,istra)*recyctmp
+                  ewldm(ix,is,0)=ewldm(ix,is,0)+
+     +             ewldm(ix,is,istra)*recyctmp
                 else
-                  write(*,*) 'Faulty of missing LMOLSCL assignment:'
-                  write(*,*) 'LMOLSCL(',is,')=',lmolscl(is)
-                  write(*,*) 'Should be valued between 1 and NATM'
-                  write(*,*) 'Modify in b2.neutrals.parameters'
-                  write(*,*) 'See manual or b2cdcn.f file for usage'
-                  write(*,*) 'Skipping scaling of molecular arrays'
+                  if (ix.eq.1 .and. istra.eq.1) then
+                    write(*,*) 'Faulty or missing LMOLSCL assignment:'
+                    write(*,*) 'LMOLSCL(',is,')=',lmolscl(is)
+                    write(*,*) 'Should be valued between 1 and NATM'
+                    write(*,*) 'Modify in b2.neutrals.parameters'
+                    write(*,*) 'See manual or b2cdcn.f file for usage'
+                    write(*,*) 'Skipping scaling of molecular arrays'
+                  endif
                   wldnm(ix,is,0)=wldnm(ix,is,0)+wldnm(ix,is,istra)
                   wldrm(ix,is,0)=wldrm(ix,is,0)+wldrm(ix,is,istra)
                   ewldm(ix,is,0)=ewldm(ix,is,0)+ewldm(ix,is,istra)
@@ -333,6 +352,69 @@ cank-960727
       end if
 cank
 
+      if(jvft44 .ge. 20000727) then
+        read (44,'(18i4)') (isrftype(i),i=1,nlimi)
+        read (44,'(18i4)') (isrftype(nlim+i),i=1,nstsi)
+      end if
+#ifdef TRIANG
+      if(jvft44 .ge. 20051115) then
+        read (44,'(6e13.5)') (wlarea(i),i=1,nlimi)
+        read (44,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
+      end if
+      if(jvft44 .ge. 20060206) then
+        k=0
+        read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
+        read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,natmi),i=1,nlimi)
+        read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,natmi),
+     ,                                                       i=1,nstsi)
+        k=k+natmi
+        read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
+        read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nmoli),i=1,nlimi)
+        read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nmoli),
+     ,                                                       i=1,nstsi)
+        k=k+nmoli
+        read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
+        read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nioni),i=1,nlimi)
+        read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nioni),
+     ,                                                       i=1,nstsi)
+        k=k+nnioni
+        read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
+        read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
+        read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
+     w                          i=1,nstsi)
+      end if
+
+      if(jvft44 .ge. 20071209) then
+        call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,1,1)) !ak+vk
+      end if
+      
+      if(jvft44 .ge. 20080706) then
+        READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,NSTS+1)        
+        READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,NSTS)    
+        READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,NSTS)    
+        READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,NSTS)    
+        READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,NSTS) 
+      
+        NCL=eirdiag_nds_ind(NSTS+1)
+        CALL INIT_EIRDIAG_FLUXES(NCL)
+ 
+        READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
+        READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natm),i=1,NCL)
+        READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmol),i=1,NCL) 
+        READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natm),i=1,NCL)
+        READ (44,'(6e15.7)') ((ewldm_res(j,i),j=1,nmol),i=1,NCL)
+        READ (44,'(6e15.7)') ((ewldea_res(j,i),j=1,natm),i=1,NCL)
+        READ (44,'(6e15.7)') ((ewldem_res(j,i),j=1,nmol),i=1,NCL)
+        READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL) 
+        READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmol),i=1,NCL) 
+      end if
+#else
+      if(jvft44 .ge. 20130210) then
+        call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,1,1)) !ak+vk
+      end if      
+#endif
+
+cc<<<
 * -- NO ERROR --
 
       call extend(dab2,nxdd,nydd,natm,nnx,nny,natmi)
@@ -355,6 +437,9 @@ cank 960511
       call extend(srcml,nxdd,nydd,nmol,nnx,nny,nmoli)
       call extend(edissml,nxdd,nydd,nmol,nnx,nny,nmoli)
 cank
+cxpb 20130210
+      call extend(eneutrad,nxdd,nydd,natm,nnx,nny,natmi)
+cxpb
 
       NFEND = 1
 

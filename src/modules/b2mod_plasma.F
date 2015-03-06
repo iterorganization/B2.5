@@ -23,6 +23,7 @@
      *  ua(:,:,:),  ua0(:,:,:),  uap(:,:,:),
      *  uadia(:,:,:,:),  fchdia(:,:,:),
      *  fch_p(:,:,:), uahel(:,:,:),                                      !srv 23.12.03 10.06.08 {
+     *  fhm(:,:,:,:), fhp(:,:,:,:), fhj(:,:,:), fht(:,:,:),
      *  fhe_mdf(:,:,:), fhePSch(:,:,:), fhi_mdf(:,:,:), fhiPSch(:,:,:),  !srv 13.10.06
      *  fna_mdf(:,:,:,:), fnaPSch(:,:,:,:), 
      *  fna_fcor(:,:,:,:), fna_he(:,:,:,:),                              !srv 01.10.99 21.01.00
@@ -90,6 +91,10 @@
       allocate(fnap(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(fne(-1:nxd,-1:nyd,0:1))
       allocate(fni(-1:nxd,-1:nyd,0:1))
+      allocate(fhm(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fhp(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fhj(-1:nxd,-1:nyd,0:1))
+      allocate(fht(-1:nxd,-1:nyd,0:1))
       allocate(na(-1:nxd,-1:nyd,0:nsd-1))
       allocate(na0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(nap(-1:nxd,-1:nyd,0:nsd-1))
@@ -174,6 +179,10 @@
       deallocate(fnap)
       deallocate(fne)
       deallocate(fni)
+      deallocate(fhm)
+      deallocate(fhp)
+      deallocate(fhj)
+      deallocate(fht)
       deallocate(na)
       deallocate(na0)
       deallocate(nap)

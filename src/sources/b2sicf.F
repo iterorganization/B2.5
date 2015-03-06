@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2sicf (nx, ny, isb, mb, bb, vol, hx, hz, nb, ub,    !srv 09.07.01 28.01.02 22.07.05
-     *                  smbcf, ctcf, wrk0)                            !srv 06.04.07
+     *                  smbcf, smbcb, ctcf, wrk0)                     !srv 06.04.07
       use b2mod_types
       use b2mod_constants
       use b2mod_indirect
@@ -14,7 +14,8 @@
      *   hz(-1:nx,-1:ny), nb(-1:nx,-1:ny), ub(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   smbcf(-1:nx,-1:ny,0:3), ctcf(-1:nx,-1:ny)                    !srv 06.04.07
+     *   smbcf(-1:nx,-1:ny,0:3), ctcf(-1:nx,-1:ny),                   !srv 06.04.07
+     *   smbcb(-1:nx,-1:ny)
 *   ..workspace
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny)
@@ -23,15 +24,15 @@
 *
 *  1. purpose
 *
-*     B2SICF computes centrifugial force
+*     B2SICF computes centrifugal force
 *
 *-----------------------------------------------------------------------
 *.declarations
 
 *   ..local variables
       integer ncall, style, n2, ix, iy, k
-	integer, save :: iout = 0                                     !srv 17.06.02
-	character chns*2, chark*1                                     !srv 17.06.02
+      integer, save :: iout = 0                                     !srv 17.06.02
+      character chns*3, chark*1                                     !srv 17.06.02
       real (kind=R8) ::
      *    phm0, phm1, t0
       save ncall, style, phm0, phm1
@@ -68,7 +69,7 @@
        call b2xvsg (n2, nb, 1, 'nb', '.gt.')
       endif
 
-* ..compute centrifugial force
+* ..compute centrifugal force
       smbcf = 0.0e0_R8
 	ctcf = 0.0e0_R8                                                 !srv 06.04.07
       if (style.eq.0) then
@@ -124,7 +125,7 @@
 *   .. compute smbcf
        do iy = 0, ny-1
         do ix = 0, nx-1                                               !srv 26.11.02 {
-	    if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 22.07.05 {
+	 if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 22.07.05 {
            smbcf(ix,iy,0) = phm0*vol(ix,iy)*               !srv factor hz/hz=1  
      &       (bb(ix,iy,0)/bb(ix,iy,3))/hx(ix,iy)*mb*ub(ix,iy)**2
      &       *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
@@ -137,18 +138,19 @@
      &       *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
      &                            wrk0(rightix(ix,iy),leftiy(ix,iy))) !srv 06.04.07 }
 
-	    else                                                        !srv 26.11.02 }
+	 else                                                        !srv 26.11.02 }
            smbcf(ix,iy,0) = 0.0e0_R8
            smbcf(ix,iy,1) = 0.0e0_R8
            smbcf(ix,iy,2) = 0.0e0_R8
            smbcf(ix,iy,3) = 0.0e0_R8
 	     ctcf(ix,iy) = 0.0e0_R8                                     !srv 06.04.07
-	    endif                                                       !srv 26.11.02
+	 endif
+         smbcb(ix,iy) =  smbcf(ix,iy,0)
         enddo
        enddo
       endif
 	if (iout.ne.0) then                                            !srv 17.06.02 {
-	 write (chns,'(i2.2)') isb    
+	 write (chns,'(i3.3)') isb    
 	 do k=0,3
 	  write (chark,'(i1)') k  
 	  call my_out(70,nx,ny,smbcf(-1,-1,k),'b2sicf_smbcf'//chark//chns)

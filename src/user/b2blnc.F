@@ -21,8 +21,6 @@ c*** B2-Eirene and the global particle balance in B2
 c----------------------------------------------------------------------
       implicit none
 c
-#     include <DIMENSIONS.F>
-c
       integer nx, ny, ns
       real (kind=R8) :: dtim
 c
@@ -34,11 +32,13 @@ c
 c<<<
       logical hlp_tt
       real (kind=R8) :: hlp_wldpp
-      real (kind=R8) :: 
-     *   hlpit_l,hlpit_r,
-     .   hlpit_lp(DEF_NATM),hlpit_rp(DEF_NATM),hlpit_pl(DEF_NATM)
-      real (kind=R8) :: hlp_pls(nbcd,ns),hlp_neu(nstra,natm)
+      real (kind=R8) :: hlpit_l,hlpit_r
+      real (kind=R8), allocatable :: hlpit_lp(:),hlpit_rp(:),hlpit_pl(:)
+      real (kind=R8) :: hlp_pls(nbcd,ns)
+      real (kind=R8), allocatable, save :: hlp_neu(:,:)
       integer kst_hlp
+      integer use_recyceir
+      real (kind=R8) :: recyctmp
 c>>>
 c
 c*** lv    :  version number to appear in the file
@@ -49,8 +49,7 @@ c
       real (kind=R8) :: 
      *     hlpic,hlpiw,hlpit,hlpia,hlpid,hlpnc,hlpnw,hlpnt,hlpis,hlpnp,
      ,     hlpdt,hlp,hlpids
-      real (kind=R8) :: 
-     *     hlpic_s(DEF_NATM),hlpiw_s(DEF_NATM),hlpit_s(DEF_NATM)
+      real (kind=R8), allocatable :: hlpic_s(:),hlpiw_s(:),hlpit_s(:)
 c
 c----------------------------------------------------------------------
 c*** debug_flags usage:
@@ -89,30 +88,17 @@ c***   bln_blnc  blnne   error in particle balance
 c***   bln_blnr  blnnr   the same divided by the sum of the abs. values
 c***                     of the other terms (relative error)
 c----------------------------------------------------------------------
-      real (kind=R8) :: 
-     *     flxic_tmp(DEF_NATM),flxnc_tmp(DEF_NATM),flxit_tmp(DEF_NATM),
-     ,     flxnt_tmp(DEF_NATM),flxiw_tmp(DEF_NATM),flxnw_tmp(DEF_NATM),
-     ,     flxnp_tmp(DEF_NATM),flxps_tmp(DEF_NATM),blnna_tmp(DEF_NATM),
-     ,     blnnd_tmp(DEF_NATM),blnnc_tmp(DEF_NATM),blnnt_tmp(DEF_NATM),
-     ,     blnnw_tmp(DEF_NATM),blnns_tmp(DEF_NATM),blnne_tmp(DEF_NATM),
-     ,     blnnr_tmp(DEF_NATM),
+      real (kind=R8), allocatable :: 
+     *     flxic_tmp(:),flxnc_tmp(:),flxit_tmp(:),
+     ,     flxnt_tmp(:),flxiw_tmp(:),flxnw_tmp(:),
+     ,     flxnp_tmp(:),flxps_tmp(:),blnna_tmp(:),
+     ,     blnnd_tmp(:),blnnc_tmp(:),blnnt_tmp(:),
+     ,     blnnw_tmp(:),blnns_tmp(:),blnne_tmp(:),
+     ,     blnnr_tmp(:),
 c*** from 960727 on
-     ,     flxid_tmp(DEF_NATM),flxbl_tmp(DEF_NATM),flxbr_tmp(DEF_NATM),
+     ,     flxid_tmp(:),flxbl_tmp(:),flxbr_tmp(:),
 c*** from 960808 on
-     ,     flxrl_tmp(DEF_NATM),
-c
-     ,     eqflx_tmp(DEF_NATM,np_tmp)
-      equivalence
-     ,        (eqflx_tmp(1, 1),flxic_tmp), (eqflx_tmp(1, 2),flxnc_tmp),
-     ,        (eqflx_tmp(1, 3),flxit_tmp), (eqflx_tmp(1, 4),flxnt_tmp),
-     ,        (eqflx_tmp(1, 5),flxiw_tmp), (eqflx_tmp(1, 6),flxnw_tmp),
-     ,        (eqflx_tmp(1, 7),flxnp_tmp), (eqflx_tmp(1, 8),flxps_tmp),
-     ,        (eqflx_tmp(1, 9),blnna_tmp), (eqflx_tmp(1,10),blnnd_tmp),
-     ,        (eqflx_tmp(1,11),blnnc_tmp), (eqflx_tmp(1,12),blnnt_tmp),
-     ,        (eqflx_tmp(1,13),blnnw_tmp), (eqflx_tmp(1,14),blnns_tmp),
-     ,        (eqflx_tmp(1,15),blnne_tmp), (eqflx_tmp(1,16),blnnr_tmp),
-     ,        (eqflx_tmp(1,17),flxid_tmp), (eqflx_tmp(1,18),flxbl_tmp),
-     ,        (eqflx_tmp(1,19),flxbr_tmp), (eqflx_tmp(1,20),flxrl_tmp)
+     ,     flxrl_tmp(:)
 c----------------------------------------------------------------------
 c
       character f*16, hlp_c, hlp_h(np_tmp)*8, hlp_frm*80, tab
@@ -138,11 +124,13 @@ c*** Column headers:
      2          'ntr_wall','ntr_puff','flux_tot','ions_tot','bln_d/dt',
      3          'bln_core','bln_targ','bln_wall','bln_srce','bln_blnc',
      4          'bln_blnr','flx_d/dt','flux_bln','flux_blr','flux_ttr'/
+*   ..initialisation
+      data use_recyceir /0/
 c
       data first / .true. /
 c----------------------------------------------------------------------
       save lun, i, j, k, l, m, n, ic, is, ix, iy,
-     1 js, ks, ls, nc, nv, kks,
+     1 js, ks, ls, nc, nv, kks, use_recyceir,
      2 first, ex, hlp_lw, hlp_lt, hlp_tt,
      3 hlpit_l,hlpit_r,hlpit_lp,hlpit_rp,hlpit_pl,
      4 hlpic,hlpiw,hlpit,hlpia,hlpid,hlpnc,hlpnw,hlpnt,hlpis,hlpnp,
@@ -152,12 +140,15 @@ c----------------------------------------------------------------------
      ,     blnna_tmp,blnnd_tmp,blnnc_tmp,blnnt_tmp,
      ,     blnnw_tmp,blnns_tmp,blnne_tmp,blnnr_tmp,
      ,     flxid_tmp,flxbl_tmp,flxbr_tmp,
-     ,     flxrl_tmp,eqflx_tmp,
+     ,     flxrl_tmp,
      1     f, hlp_c, hlp_h, hlp_frm, tab
 c======================================================================
 
+      if(first_time_step) return
+
       if(first) then
 c<<<
+        call ipgeti ('eirene_use_recyceir', use_recyceir)
         print *,'=== Regions of the grid:'
         print *
         l=ny+1
@@ -167,7 +158,7 @@ c<<<
           l=max(0,m-n+1)
           n=10
           do j=m-1,l-1,-1
-            print '(1x,i2,1x,i1,40(1x,10i1))',j,
+            print '(1x,i4,1x,i1,40(1x,10i1))',j,
      ,                                         (region(i,j,0),i=-1,nx)
           end do
           l=l-1
@@ -176,7 +167,7 @@ c>>>
 c
 c*** Initialisation
 c
-        do j=1,nstrai
+        do j=1,nstrat
           hlp=0.0_R8
           do i=1,nspecies
             hlp=hlp+gpfc(i,j)
@@ -206,7 +197,7 @@ c      do i=1,nlimps
           wldna(i,j,0)=0.0_R8
           wldra(i,j,0)=0.0_R8
           wldpa(i,j,0)=0.0_R8
-          do k=1,nstrai
+          do k=1,nstrat
             wldna(i,j,0)=wldna(i,j,0)+wldna(i,j,k)*sclstra(j,k)
             wldra(i,j,0)=wldra(i,j,0)+wldra(i,j,k)*sclstra(j,k)
             wldpa(i,j,0)=wldpa(i,j,0)+wldpa(i,j,k)*sclstra(j,k)
@@ -217,8 +208,8 @@ c      do i=1,nlimps
           wldnm(i,j,0)=0.0_R8
           wldrm(i,j,0)=0.0_R8
           wldpm(i,j,0)=0.0_R8
-          do k=1,nstrai
-            if(l.gt.0) then
+          do k=1,nstrat
+            if(l.gt.0 .and. l.le.nnatmi) then
               wldnm(i,j,0)=wldnm(i,j,0)+wldnm(i,j,k)*sclstra(l,k)
               wldrm(i,j,0)=wldrm(i,j,0)+wldrm(i,j,k)*sclstra(l,k)
               wldpm(i,j,0)=wldpm(i,j,0)+wldpm(i,j,k)*sclstra(l,k)
@@ -239,7 +230,7 @@ c<<<
           print *
           print *,'wldpp:',k
           do j=nnlimi+debug_flags(90),nnlimi+debug_flags(91)
-            print '(1p,i4,20e9.2)',j,(wldpp(j,i,k),i=1,ns-nnatmi)
+            print '(1p,i4,20e9.2)',j,(wldpp(j,i,k),i=1,nnplsi)
           end do
           print *
           print *,'wldpeb, wldpa, wldpm, hlpit_pl:',k
@@ -283,57 +274,72 @@ c>>>
               do j = 1, ncbs
                 if(ic.eq.lcbs(j)) then
 c***     core boundary
-                  do i = bcstart(ic), bcend(ic)
+                  do i = 1, bc_list_size(ic)
                     hlpic=hlpic+
-     . fna(topix(i,bcpos(ic)),topiy(i,bcpos(ic)),1,ions_list(ks))
+     .               fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .                   topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .                   1,ions_list(ks))
 c<<<
                     hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     . fna(topix(i,bcpos(ic)),topiy(i,bcpos(ic)),1,ions_list(ks))
+     .               fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .                   topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .                   1,ions_list(ks))
 c>>>
                   end do
                   go to 1100
                 end if
               end do
 c***     wall in PFR
-              do i = bcstart(ic), bcend(ic)
+              do i = 1, bc_list_size(ic)
                 hlpiw=hlpiw+
-     . fna(topix(i,bcpos(ic)),topiy(i,bcpos(ic)),1,ions_list(ks))
+     .           fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               1,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     . fna(topix(i,bcpos(ic)),topiy(i,bcpos(ic)),1,ions_list(ks))
+     .           fna(topix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               topiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               1,ions_list(ks))
 c>>>
               end do
             else if (bcchar(ic).eq.'N') then
 c***     outer wall
-              do i = bcstart(ic), bcend(ic)
-                hlpiw=hlpiw-fna(i,bcpos(ic),1,ions_list(ks))
+              do i = 1, bc_list_size(ic)
+                hlpiw=hlpiw
+     .           -fna(bc_list_x(i,ic),bc_list_y(i,ic),1,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)-
-     .           fna(i,bcpos(ic),1,ions_list(ks))
+     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),1,ions_list(ks))
 c>>>
               end do
             else if (bcchar(ic).eq.'W') then
 c***     left target
-              do i = bcstart(ic), bcend(ic)
+              do i = 1, bc_list_size(ic)
                 hlpit=hlpit+
-     . fna(rightix(bcpos(ic),i),rightiy(bcpos(ic),i),0,ions_list(ks))
+     .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               0,ions_list(ks))
                 hlpit_lp(ls)=hlpit_lp(ls)+
-     . fna(rightix(bcpos(ic),i),rightiy(bcpos(ic),i),0,ions_list(ks))
+     .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               0,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)+
-     . fna(rightix(bcpos(ic),i),rightiy(bcpos(ic),i),0,ions_list(ks))
+     .           fna(rightix(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               rightiy(bc_list_x(i,ic),bc_list_y(i,ic)),
+     .               0,ions_list(ks))
 c>>>
               end do
             else if (bcchar(ic).eq.'E') then
 c***     right target
-              do i = bcstart(ic), bcend(ic)
+              do i = 1, bc_list_size(ic)
                 hlpit=hlpit-
-     .           fna(bcpos(ic),i,0,ions_list(ks))
+     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),0,ions_list(ks))
                 hlpit_rp(ls)=hlpit_rp(ls)-
-     .           fna(bcpos(ic),i,0,ions_list(ks))
+     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),0,ions_list(ks))
 c<<<
                 hlp_pls(ic,ls)=hlp_pls(ic,ls)-
-     .           fna(bcpos(ic),i,0,ions_list(ks))
+     .           fna(bc_list_x(i,ic),bc_list_y(i,ic),0,ions_list(ks))
 c>>>
               end do
             end if
@@ -378,12 +384,17 @@ c*** total number of particles and time derivative
           do iy=0,ny-1
             do ix=0,nx-1
               j=region(ix,iy,0)
-              if(j.ne.0) then
+              if(j.ne.0 .and. 
+     &           leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
                 hlpia=hlpia+na(ix,iy,ions_list(ks))*vol(ix,iy)
                 hlpis=hlpis+
      1               sna(ix,iy,0,ions_list(ks))+
      2               sna(ix,iy,1,ions_list(ks))*na(ix,iy,ions_list(ks))
-                hlpdt=dtim*dtco(ions_list(ks),j)
+                if (solveco(ions_list(ks),j)) then
+                  hlpdt=dtim*dtco(ions_list(ks),j)*time_factor(ix,iy)
+                else
+                  hlpdt=0.0_R8
+                endif
                 if(hlpdt.gt.0.0_R8) then
                   hlpdt=vol(ix,iy)/hlpdt
                   hlpid=hlpid+na(ix,iy,ions_list(ks))*hlpdt
@@ -466,11 +477,16 @@ csw 18nov2013 check for nnatmi  (known after 1st EIRENE call)
           end do
         end do
 c*** Gas puffing source and recycling
-        do ic=1,nstrai
+        do ic=1,nstrat
           hlp_tt = debug_flags(90).gt.0 .and.
      .                ic.ge.debug_flags(94) .and. ic.le.debug_flags(95)
+          if(use_recyceir.gt.0) then
+            recyctmp=recyceir(ic)
+          else
+            recyctmp=recyc(kks,ic)
+          endif
           if (crcstra(ic).eq.'C') then
-            hlpnp=hlpnp+userfluxparm(ic,1)*gpfc(ls,ic)*recyc(kks,ic)
+            hlpnp=hlpnp+userfluxparm(ic,1)*gpfc(ls,ic)*recyctmp
           else
             hlp_lw = crcstra(ic).eq.'S' .or. crcstra(ic).eq.'N'
             hlp_lt = crcstra(ic).eq.'E' .or. crcstra(ic).eq.'W'
@@ -520,13 +536,13 @@ c>>>
                 end if
               end do
 c<<<
-              hlp_neu(ic,ls)=hlp*recyc(kks,ic)
+              hlp_neu(ic,ls)=hlp*recyctmp
               if(hlp_tt) print '(1x,a,2l3,2i3,1p,4e12.4)',
      ,          '%%# hlp_lw,hlp_lt,kks,is,hlpiw,hlpit,hlp,recyc=',
-     ,               hlp_lw,hlp_lt,kks,is,hlpiw,hlpit,hlp,recyc(kks,ic)
+     ,               hlp_lw,hlp_lt,kks,is,hlpiw,hlpit,hlp,recyctmp
 c>>>
-              if(hlp_lw) hlpiw=hlpiw+hlp*recyc(kks,ic)
-              if(hlp_lt) hlpit=hlpit+hlp*recyc(kks,ic)
+              if(hlp_lw) hlpiw=hlpiw+hlp*recyctmp
+              if(hlp_lt) hlpit=hlpit+hlp*recyctmp
             end if
           end if
         end do
@@ -536,15 +552,15 @@ c<<<
      ,      '%%# Total fluxes: hlpit, hlpiw, hlpic, hlpid, hlpnp =',
      ,                                hlpit, hlpiw, hlpic, hlpid, hlpnp
           print *,'%%# Recycling sources. ls= ',ls
-          print '(a4,8x,20(5x,i2,5x))',' %%#',(i,i=1,kst_hlp)
+          print '(a4,8x,20(5x,i3,4x))',' %%#',(i,i=1,kst_hlp)
           print '(1x,a,1p,20e12.5)','%%# sclrtio= ',
-     ,                                       (sclrtio(ls,i),i=1,nstrai)
+     ,                                       (sclrtio(ls,i),i=1,nstrat)
           print '(1x,a,1p,20e12.5)','%%# sclstra= ',
-     ,                                       (sclstra(ls,i),i=1,nstrai)
+     ,                                       (sclstra(ls,i),i=1,nstrat)
           print '(1x,a8,1p,20e12.4)','%%# plasma  ',
      ,                                      (hlp_pls(i,ls),i=1,kst_hlp)
           print '(1x,a8,1p,20e12.4)','%%# neutrals',
-     ,                                      (hlp_neu(i,ls),i=1,nstrai)
+     ,                                      (hlp_neu(i,ls),i=1,nstrat)
         end if
 c>>>
         flxid_tmp(ls)=hlpid
@@ -578,7 +594,15 @@ c
           write(*,*) 'b2blnc: unexpected error. nc =',nc
           filedata(ltrc)=.false.
         else
-          write(lun,hlp_frm) tim,((eqflx_tmp(i,j),j=1,nc),i=1,nspecies)
+          write(lun,hlp_frm) tim,
+     .     ((flxic_tmp(i),flxnc_tmp(i),flxit_tmp(i),
+     ,       flxnt_tmp(i),flxiw_tmp(i),flxnw_tmp(i),
+     ,       flxnp_tmp(i),flxps_tmp(i),blnna_tmp(i),
+     ,       blnnd_tmp(i),blnnc_tmp(i),blnnt_tmp(i),
+     ,       blnnw_tmp(i),blnns_tmp(i),blnne_tmp(i),
+     ,       blnnr_tmp(i),
+     ,       flxid_tmp(i),flxbl_tmp(i),flxbr_tmp(i),
+     ,       flxrl_tmp(i)),i=1,nspecies)
         end if
       else
 c
@@ -587,7 +611,15 @@ c
         write(*,*) 'particle_fluxes ',nspecies
         write(*,'(30(3x,a8,1x))') (hlp_h(i),i=1,np_tmp)
         do i=1,nspecies
-          write(*,'(1p,30e12.3)') (eqflx_tmp(i,j),j=1,np_tmp)
+          write(*,'(1p,30e12.3)') 
+     ,     flxic_tmp(i),flxnc_tmp(i),flxit_tmp(i),
+     ,     flxnt_tmp(i),flxiw_tmp(i),flxnw_tmp(i),
+     ,     flxnp_tmp(i),flxps_tmp(i),blnna_tmp(i),
+     ,     blnnd_tmp(i),blnnc_tmp(i),blnnt_tmp(i),
+     ,     blnnw_tmp(i),blnns_tmp(i),blnne_tmp(i),
+     ,     blnnr_tmp(i),
+     ,     flxid_tmp(i),flxbl_tmp(i),flxbr_tmp(i),
+     ,     flxrl_tmp(i)
         end do
       end if
       return
@@ -599,10 +631,25 @@ c*** Initialise the file for tracing data
 c*** Only called with filedata(ntrc_bln)=.true.
 c----------------------------------------------------------------------
 c
-      tab=char(9)
-      nc=0
+      allocate(hlpit_lp(natm),hlpit_rp(natm),hlpit_pl(natm))
+      allocate(hlp_neu(nstra,natm))
+      allocate(hlpic_s(natm),hlpiw_s(natm),hlpit_s(natm))
+      allocate(flxic_tmp(natm),flxnc_tmp(natm),flxit_tmp(natm),
+     ,         flxnt_tmp(natm),flxiw_tmp(natm),flxnw_tmp(natm),
+     ,         flxnp_tmp(natm),flxps_tmp(natm),blnna_tmp(natm),
+     ,         blnnd_tmp(natm),blnnc_tmp(natm),blnnt_tmp(natm),
+     ,         blnnw_tmp(natm),blnns_tmp(natm),blnne_tmp(natm),
+     ,         blnnr_tmp(natm),
+c*** from 960727 on
+     ,         flxid_tmp(natm),flxbl_tmp(natm),flxbr_tmp(natm),
+c*** from 960808 on
+     ,         flxrl_tmp(natm))
+      if(.not.filedata(ntrc_bln)) return
+
 c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
 c*** f     :  the associated file name
+      tab=char(9)
+      nc=0
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
       inquire(file=f,exist=ex)

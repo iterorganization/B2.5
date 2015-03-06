@@ -14,19 +14,20 @@ c======================================================================
 c*** Output of tracing information at the end of each outer iteration
 c----------------------------------------------------------------------
       implicit none
-c
-c
       integer nx, ny, ns, ismain
       real (kind=R8) :: dtim, BoRiS
       integer ix, iy, is, istra
+      integer, save :: use_recyceir
+      real (kind=R8) :: recyctmp
       logical, save :: tracing_initialised
       data tracing_initialised /.false./
+      data use_recyceir /0/
 c----------------------------------------------------------------------
 c
 c*** Correct the neutral fluxes according to recyc values
 c
-      write(*,"(a,5i4)") ' nspecies,nnatmi,nnstsi,nnlimi,nnmoli=',   !srv 18.05.09
-     1 nspecies,nnatmi,nnstsi,nnlimi,nnmoli
+      write(*,'(a,6i5)') 'nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi=',
+     1 nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi
       if(nspecies.eq.nnatmi) then
 csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
         do ix=1,nnstsi+nnlimi
@@ -45,28 +46,56 @@ csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
           if((ix.le.nnlimi).or.
      +       (ix.gt.nnlimi.and.ix.le.nnlimi+nnstsi)) then
             do istra=1,nstrai
+              if(use_recyceir.gt.0) then
+                recyctmp=recyceir(istra)
+              else
+                recyctmp=recyc(ismain,istra)
+              endif
               wldnek(ix,0)=wldnek(ix,0)+
-     +         wldnek(ix,istra)*recyc(ismain,istra)
+     +         wldnek(ix,istra)*recyctmp
               wldnep(ix,0)=wldnep(ix,0)+
-     +         wldnep(ix,istra)*recyc(ismain,istra)
-              iy=ions_list(ismain)
+     +         wldnep(ix,istra)*recyctmp
               do is=1,nnatmi
+                iy=b2espcr(is)
+                if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
                 wldna(ix,is,0)=wldna(ix,is,0)+
-     +           wldna(ix,is,istra)*recyc(iy,istra)
+     +           wldna(ix,is,istra)*recyctmp
                 wldra(ix,is,0)=wldra(ix,is,0)+
-     +           wldra(ix,is,istra)*recyc(iy,istra)
+     +           wldra(ix,is,istra)*recyctmp
                 ewlda(ix,is,0)=ewlda(ix,is,0)+
-     +           ewlda(ix,is,istra)*recyc(iy,istra)
+     +           ewlda(ix,is,istra)*recyctmp
                 iy=iy+nfluids(is)
               end do
               do is=1,nnmoli
-                iy=eb2spcr(lmolscl(is))+1
-                wldnm(ix,is,0)=wldnm(ix,is,0)+
-     +           wldnm(ix,is,istra)*recyc(iy,istra)
-                wldrm(ix,is,0)=wldrm(ix,is,0)+
-     +           wldrm(ix,is,istra)*recyc(iy,istra)
-                ewldm(ix,is,0)=ewldm(ix,is,0)+
-     +           ewldm(ix,is,istra)*recyc(iy,istra)
+                if (lmolscl(is).gt.0 .and. lmolscl(is).le.nnatmi) then
+                  iy=eb2spcr(lmolscl(is))+1
+                  if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
+                  wldnm(ix,is,0)=wldnm(ix,is,0)+
+     +             wldnm(ix,is,istra)*recyctmp
+                  wldrm(ix,is,0)=wldrm(ix,is,0)+
+     +             wldrm(ix,is,istra)*recyctmp
+                  ewldm(ix,is,0)=ewldm(ix,is,0)+
+     +             ewldm(ix,is,istra)*recyctmp
+                else if (use_recyceir.gt.0) then !here we are rescaling by stratum, not by species
+                  wldnm(ix,is,0)=wldnm(ix,is,0)+
+     +             wldnm(ix,is,istra)*recyctmp
+                  wldrm(ix,is,0)=wldrm(ix,is,0)+
+     +             wldrm(ix,is,istra)*recyctmp
+                  ewldm(ix,is,0)=ewldm(ix,is,0)+
+     +             ewldm(ix,is,istra)*recyctmp
+                else 
+                  if (ix.eq.1 .and. istra.eq.1) then
+                    write(*,*) 'Faulty or missing LMOLSCL assignment:'
+                    write(*,*) 'LMOLSCL(',is,')=',lmolscl(is)
+                    write(*,*) 'Should be valued between 1 and NATM'
+                    write(*,*) 'Modify in b2.neutrals.parameters'
+                    write(*,*) 'See manual or b2cdcn.f file for usage'
+                    write(*,*) 'Scaling of molecular tallies skipped'
+                  endif
+                  wldnm(ix,is,0)=wldnm(ix,is,0)+wldnm(ix,is,istra)
+                  wldrm(ix,is,0)=wldrm(ix,is,0)+wldrm(ix,is,istra)
+                  ewldm(ix,is,0)=ewldm(ix,is,0)+ewldm(ix,is,istra)
+                endif
               end do
             end do
           endif
@@ -79,7 +108,7 @@ c*** Particle balance
       call b2blnc(nx,ny,ns,dtim)
 c*** Power balance
       call b2blne(nx,ny,ns,BoRiS)
-c*** Momentum balance
+c*** Parallel momentum balance
       call b2blnm(nx,ny,ns)
 c*** Additional integrals
       call b2wrint(nx,ny,ns,nnreg(0))
@@ -93,6 +122,8 @@ c======================================================================
       entry b2trci(nx,ny,ns,ismain,dtim,BoRiS)
 c*** Initialisation call
       if (tracing_initialised) return
+      call alloc_b2mod_user(nlim,nmol)
+      call ipgeti ('eirene_use_recyceir', use_recyceir)
       call read_b2mod_user_namelist(nx)
       if(filedata(ntrc_bln)) call b2blnci(nx,ny,ns,dtim)
       if(filedata(ntrc_ble)) call b2blnei(nx,ny,ns,BoRiS)
@@ -113,4 +144,4 @@ c*** - to be called BEFORE each timestep
       call b2usrtrs(nx,ny,ns,BoRiS)
       return
 c======================================================================
-      end
+      end subroutine b2trace

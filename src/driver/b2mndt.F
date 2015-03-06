@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mndt (nout, nx, ny, ns, ismain, itim, dtim, ierr)
+      subroutine b2mndt (nout, nx, ny, ns, ismain, ismain0, 
+     . nscx, iscx, itim, dtim, ierr)
       use b2mod_types
       use b2mod_geo
       use b2mod_anomalous_transport
@@ -10,16 +11,19 @@
       use b2mod_residuals
       use b2mod_sources
       use b2mod_transport
-      use b2mod_work
       use b2mod_indirect
       use b2mod_constants
       use b2mod_diag
+      use b2mod_work
       use b2mod_b2cmpa
+      use b2mod_external
+      use b2mod_neoclassical
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nout(0:5), nx, ny, ns, ismain, itim
+      integer nout(0:5), nx, ny, ns, ismain, ismain0,  
+     *  nscx, iscx(0:nscxmax-1), itim
       real (kind=R8) ::
-     *   dtim
+     *  dtim
 *   ..input/output arguments
 *   ..output arguments (unspecified on entry)
       integer ierr
@@ -77,17 +81,16 @@
       logical domoqt, domoit, wrong_flow, ramp_call !, b2fstati_addexists  !xpb !srv 15.07.08
       logical test_residual, quit_residual
       save test_residual
-      integer n2, istg(0:2), nscx, iscx(0:nscxmax-1), is, k
-      save nscx, iscx
+      integer n2, istg(0:2), is, k
       real (kind=R8) ::
-     *  acorpa(0:nsdecl-1), acorua(0:nsdecl-1), acorut,
+     *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
      &  acorte, acorti, acorpo, nasum, na0sum,
      &  vsal(-1:nx,-1:ny,0:1,0:ns-1), pz(-1:nx,-1:ny),lnlam(-1:nx,-1:ny) !srv 11.10.02
 *   ..procedures
       real (kind=R8) ::
-     *  smin, smax, sasum, samax
+     *  smin, smax, b2sasum, samax
       external subini, subend, xertst, ipgeti, ipgetr, smin,
-     &  smax, sasum, samax
+     &  smax, b2sasum, samax
       external b2xvsg, b2xvps, b2xpne, b2xpni,
      &  b2spel, b2spcx, b2sral, b2srdt, b2srst, b2news, b2mxzr,
      &  b2mxar, b2mxac, b2mwqt, b2mwit, b2tral, b2srsm
@@ -122,7 +125,7 @@
        call ipgetr ('b2mndt_rxf', rxf)
        call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      &   'faulty internal parameter rxf')
-       call ipgeti ('b2mndt_density_control',density_control)             !xpb
+       call ipgeti ('b2mndt_density_control',density_control)
        call ipgeti ('b2news_ramp_slow', ramp_slow)
        call ipgetr ('b2news_BoRiS', BoRiS)
        call ipgeti ('b2news_no_solve', no_solve)
@@ -140,21 +143,7 @@
      &      'faulty internal parameter nstg_aresco')
        test_residual=nstg_areshe.gt.0.0_R8.or.nstg_areshi.gt.0.0_R8.or.
      &               nstg_aresco.gt.0.0_R8
-       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrai,natm)
-*   ..find nscx, iscx
-*     (indices for neutral hydrogen species)
-       nscx = 0
-       do is = 0, ns-1
-        if (is_neutral(is).and.zn(is).eq.1.0_R8) then
-         call xertst (nscx.lt.nscxmax, 
-     1    'too many neutral hydrogen species')
-         iscx(nscx) = is
-         nscx = nscx+1
-        endif
-       enddo
-       do k = nscx, nscxmax-1
-        iscx(k) = -1
-       enddo
+       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
        call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)            !srv 31.01.07 {
        call xertst (1.le.ntim_step_out, 
      &   'faulty internal parameter ntim_step_out')                   !srv 31.01.07 }
@@ -169,6 +158,10 @@
      . 'invalid main plasma species index ismain')
       call xertst (.not.is_neutral(ismain),
      . 'invalid main plasma species ismain; must not be neutral')
+      call xertst (0.le.ismain0.and.ismain0.lt.ns,
+     . 'invalid main neutral species index ismain0')
+      call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
+     . 'invalid main neutral species ismain0; must be neutral')
 *   ..test itim, dtim
       call xertst (0.le.itim.and.0.0_R8.lt.dtim,
      &  'faulty argument itim, dtim')
@@ -220,11 +213,12 @@ c therefore initialise here
       call sfill (n2*4, 0.0_R8, shedt, 1)
       call sfill (n2*4, 0.0_R8, shidt, 1)
       call sfill (n2*4, 0.0_R8, schdt, 1)
+      call sfill (n2*2, 0.0_R8, snedt, 1)
 *   ..compute ni0
       call b2xpni (nx, ny, ns, na0, ni0)
 *   ..compute nasum, na0sum
-      nasum = sasum(n2*ns, na, 1)
-      na0sum = sasum(n2*ns, na0, 1)
+      nasum = b2sasum(n2*ns, na, 1)
+      na0sum = b2sasum(n2*ns, na0, 1)
 *   ..rescale densities
       if (density_control.ne.0) then
         ne = ne*na0sum/nasum
@@ -249,10 +243,11 @@ c therefore initialise here
         enddo
 ctmp.dpc
 !       if (nscx.ge.1) then
+!         write(*,*) 'DPC: b2mndt: rlcx'
 !         do k = 0, nscx-1
 !           do is=0, ns-1
-!             write(*,"(a,2i3,2es11.3)") 
-!     &          ' DPC: b2mndt: is0,is,rlcx_0,rlcx_1 ',        !srv 18.05.09
+!             write(*,'(a,2i4,1p,2g14.7)') 
+!     &          ' is0,is,rlcx_0,rlcx_1 ',        !srv 18.05.09
 !     1            k,is,samax(n2,rlcx(-1,-1,0,is,k),1),
 !     2            samax(n2,rlcx(-1,-1,1,is,k),1)
 !           enddo
@@ -264,22 +259,27 @@ ctmp.dpc
 *    ..intermediate iteration
         istg(1) = 0
     2   if (istg(1).lt.nstg(1) .and. .not.quit_residual) then
+*   ..calculate neoclassical transport only in intermediate loop
+          newneo=.true.
+
           if(itcnt.eq.0) then
 *   ..one-off calculation of transport coefficients
             call b2xpni (nx, ny, ns, na, ni)
-            call b2xpne (nx, ny, ns, rza, na, ne)
-            call b2xpne (nx, ny, ns, rz2, na, ne2)
+            call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
+            call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
 *   ..compute flux limit coefficients                                  !srv 11.10.02 03.06.03 {
             call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs, 
      &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)         !srv 11.10.02 03.06.03 }
-            call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain, bb,  !srv 23.11.10 
-     1       conn, vol, gs, hx, hy, hz, qz, qc, pbs, bzb, lnlam,       !srv 13.10.06 01.07.09
+            call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,      !srv 23.11.10 
+     1       bb, wbbl, wbbr, conn, vol, gs, hx, hy, hz, qz, qc, 
+     1       pbs, crx, cry, bzb, lnlam,                                !srv 13.10.06 01.07.09
      1       fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,     !srv 03.06.03
 !     1     fch_p, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,    !srv 03.06.03
      2       cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,           !srv 13.10.06
      3       chvi, csig, csigin, calf, cthe, cthi, 
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
      5       vsal, fllim0fhi, fllimvisc)
+            newneo=.true.
             if(style.ne.0) then                                          !srv 18.06.08 {
 !             INQUIRE (FILE = 'b2fstati_add', EXIST = b2fstati_addexists) !srv 15.07.08
 !             IF (.NOT. b2fstati_addexists) THEN
@@ -333,15 +333,17 @@ ctmp.dpc
                enddo                                                     !srv 01.10.99 25.02.00 13.10.06
 *    ..get current fch_p                                                !srv 11.10.02 {
               call b2tcpa (nx, ny, te, po, ne, csig, calf, fch_p)
-              call b2xppz (nx, ny, ns, rza, na, te, ti, pz)
+              call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
 
-              call b2xpfe (nx, ny, ns, qe, rza, fna_he, fch_p, fne)
+              call b2xpfe (nx, ny, ns, ns_ext, qe, 
+     &         rza, za_ext, fna_he, fa_ext, fch_p, fne)
            
-              call b2tfhe_ (nx, ny, ns, ismain, facdrift,        
-     1         vol, gs, hx, hy, qz, bb, te, po, ne, ne2, lnlam, pz, ti, !srv 01.07.09
+              call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,        
+     1         vol, gs, hx, hy, qz, qc, bb, 
+     1         te, po, ne, ne2, lnlam, pz, ti,                          !srv 01.07.09
      1         ni(-1,-1,1), na, fna, vadia, ua, fne, csig, csigin, chce, 
      &         chve, chci, calf, chvemx, cvsa, cdna, cdpa, cddi, fch,
-     &         fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,   !srv 13.10.06
+     &         fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,  !srv 13.10.06
      &         floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,
      &         fchvisq, fchinert, fchanml)                          !srv 24.03.07
               floe_noc = floe                                
@@ -378,18 +380,20 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
             endif                                                        !srv 18.06.08 }
           endif
           src_ni=0.0_R8
+          src_ne=0.0_R8
           src_mo=0.0_R8
           src_ee=0.0_R8
           src_ei=0.0_R8
           src_ms=0.0_R8
           src_es=0.0_R8
           cor_ni=0.0_R8
+          cor_ne=0.0_R8
           cor_mo=0.0_R8
           cor_ee=0.0_R8
           cor_ei=0.0_R8
 *     ..compute source linearisation
-         call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain,        !xpb
-     &    dtim, BoRiS, facdrift, fac_ExB,                                  !xpb
+         call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain, ismain0,
+     &    dtim, BoRiS, facdrift, fac_ExB,
      &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !srv 09.01.01
      &    na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
      &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
@@ -400,37 +404,40 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir, 
      &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch,
+     &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &    wrong_flow, .true.)						 !xpb, dpc
-
+          if(wrong_flow) write(*,*) 
+     &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources
 csw 17oct2012 incorrect call to b2srsm !
 c          call b2srsm (nx, ny, ns, dtim, vol, na, ua, te, ti, ne, ni,
-c     &     snasm, smosm, shesm, shism, .true.)                       !srv 11.09.09 {
+c     &     snasm, smosm, shesm, shism, snesm, .true.)                       !srv 11.09.09 {
 c*   ..add to previous contributions
-c          call saxpy (n2*2*ns, 1.0_R8, snasm, 1, sna, 1)
-c          call saxpy (n2*4*ns, 1.0_R8, smosm, 1, smo, 1)
-c          call saxpy (n2*4, 1.0_R8, shesm, 1, she, 1)
-c          call saxpy (n2*4, 1.0_R8, shism, 1, shi, 1)                   !srv 11.09.09 }
+c          call b2saxpy (n2*2*ns, 1.0_R8, snasm, 1, sna, 1)
+c          call b2saxpy (n2*4*ns, 1.0_R8, smosm, 1, smo, 1)
+c          call b2saxpy (n2*4, 1.0_R8, shesm, 1, she, 1)
+c          call b2saxpy (n2*4, 1.0_R8, shism, 1, shi, 1)                   !srv 11.09.09 }
 csw 17oct2012 this is the corrected call
-          call b2srsm (nx, ny, ns, dtim, vol, na, ua, te, ti, ne, ni,
-     &     sna, smo, she, shi, .true.)                       !srv 11.09.09 {
+          call b2srsm (nx, ny, ns, 
+     &     dtim, vol, na, ua, te, ti, ne, ni,
+     &     sna, smo, she, shi, sne, .true.)                       !srv 11.09.09 {
 
 *     ..include contributions due to timestep
           call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !srv 09.01.01 01.07.08
      &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &     na, ua, te, ti, ne, ni, kinrgy,                          !srv 16.07.10
-     &     snadt, smodt, shedt, shidt, schdt, .false.)                       !srv 11.09.09
+     &     snadt, smodt, shedt, shidt, schdt, snedt, .false.)                       !srv 11.09.09
 *   ..add to previous contributions
-          call saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
-          call saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
-          call saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
-          call saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
-          call saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                   !srv 11.09.09 }
+          call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
+          call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
+          call b2saxpy (n2*4, 1.0_R8, snedt, 1, sne, 1)
+          call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
+          call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
+          call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                   !srv 11.09.09 }
 *     ..stabilise the source coefficients
           if(use_b2srst.eq.1)
      &    call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,  !srv 01.07.08
-     &     ni, sna, smo, she, shi, sch)
+     &     ni, sna, smo, she, shi, sch, sne)
 *       (smq is inherently stable.)
 *     ..inner iteration
          istg(2) = 0
@@ -438,10 +445,13 @@ csw 17oct2012 this is the corrected call
 *      ..basic iterative step
            if(style.eq.0) then                                          !srv 01.07.08
             ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
-            call b2news (nx, ny, ns, nscx, iscx, ismain, dtim, rxf,     !xpb
-     &                   ier0, wrong_flow, ramp_call)                   !xpb
+            call b2news (nx, ny, ns, nscx, iscx, ismain, ismain0,
+     &       natm, nmol, nion, nlim, nsts, itim,
+     &       dtim, rxf, ier0, wrong_flow, ramp_call)                   !xpb
            else                                                         !srv 01.07.08 {
-            call b2news_(nx, ny, ns, nscx, iscx, ismain, dtim, rxf,ier0) !srv 16.07.10 23.11.10
+            call b2news_(nx, ny, ns, nscx, iscx, ismain, ismain0,
+     &       natm, nmol, nion, nlim, nsts, itim,
+     &       dtim, rxf,ier0)                                              !srv 16.07.10 23.11.10
 	     endif                                                        !srv 01.07.08 )
            if(ier0.eq.10) then
              ierr=ier0
@@ -450,16 +460,17 @@ csw 17oct2012 this is the corrected call
            call xertst (ier0.eq.0, 'error return from b2news')
 *!!      (should develop other error handling)
            ierr = ier0
-*      ..re-compute ne, ni
-           call b2xpne (nx, ny, ns, rza, na, ne)
+*      ..re-compute ne, ne2, ni
+           call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
+           call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
            call b2xpni (nx, ny, ns, na, ni)
-*      ..zero-out residuals on special regions
+*      ..zero out residuals on special regions
 *        (this in order to avoid their contribution to the norms)
            call b2mxzr (nx, ny, ns, resco, resmo, resmt,
      &      reshe, reshi, respo)
 *      ..compute norms of the residuals
            call b2mxar (nx, ny, ns, nnreg(0), BoRiS, 
-     &      vol, na, te, ti, 
+     &      vol, ne, na, te, ti, 
      &      resco, resmo, resmt, reshe, reshi, respo,
      &      rescoreg, resmoreg, reshereg, reshireg,
      &      aresco, aresmo, aresmt, areshe, areshi, arespo)
@@ -500,8 +511,9 @@ csw 17oct2012 this is the corrected call
            endif
 *      ..write the tracing data
            if (ank_tracing.ne.0) then
-             if (ncall.eq.0) call b2filei(ns,nnreg)
-             call b2filew(istg(2),ns,nnreg) 
+             if (ncall.eq.0) call b2filei(ns)
+             if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1) 
+     >        call b2filew(istg(2),ns) 
            endif
 *      ..update iteration counter
            itcnt = itcnt+1

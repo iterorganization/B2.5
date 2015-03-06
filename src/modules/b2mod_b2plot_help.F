@@ -4,8 +4,8 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nwfns,ntrgfns
-      parameter(nlabels=247,nfns=192,nsparameters=27,
-     *     nconstants=10,nwfns=61,nwlabels=85,ntrgfns=82)
+      parameter(nlabels=311,nfns=197,nsparameters=29,
+     *     nconstants=10,nwfns=62,nwlabels=89,ntrgfns=88)
 
       integer, save ::
      * dimensions(nlabels), wdimensions(nwlabels) 
@@ -63,7 +63,7 @@
      8  'brch', 'bcna', 'bcmo', 'bche', 'bchi', 
      9  'bcch', 'dvue', 'dvua', 'exbe', 'exba',
      *  'visa', 'joul', 'fraa', 'str' , 'ke'  / 
-      data labels(201:247) /
+      data labels(201:250) /
      1  'facdrift', 'fac_ExB' , 'fac_vis', 'xymap'  , 'fnax32' ,
      2  'fnay32'  , 'fnax52'  , 'fnay52' , 'fnix32' , 'fniy32' ,
      3  'fnix52'  , 'fniy52'  , 'fnex32' , 'fney32' , 'fnex52' ,
@@ -73,23 +73,38 @@
      7  'nflfnay' , 'nflfhix' , 'nflfhiy', 'flvisc' , 'sna'    ,
      8  'she'     , 'shi'     , 'sch'    , 'crx'    , 'cry'    ,
      9  'nh'      , 'qz0'     , 'qz1'    , 'sxperp' , 'ue'     ,
-     *  'fchp'    , 'za2'     /
+     *  'fchp'    , 'za2'     , 'xreg'   , 'yreg'   , 'b2espcr'/
+      data labels(251:300) /
+     1  'qc'      , 'bc'      , 'ceqp'   , 'sne'    , 'brne'  , 
+     2  'bcne'    , 'exne'    , 'dnneo'  , 'chineo' , 'vnneo' ,
+     3  'vwneo'   , 'lnn'     , 'ltt'    , 'nuab'   , 'nua'   ,
+     4  'nustar'  , 'vth'     , 'rhol'   , 'deltal' , 'wb'    ,
+     5  'deltaw'  , 'deltawn' , 'deltawt', 'omega'  , 'deltab', 
+     6  'deltapar', 'chhichii', 'ne0'    , 'ni0'    , 'za_ext',
+     7  'za2_ext' , 'na_ext'  , 'mi_ext' , 'ua_ext' , 'ta_ext',
+     8  'ne_ext'  , 'bmna'    , 'bmne'   , 'bmmo'   , 'bmhe'  ,
+     9  'bmhi'    , 'bmch'    , 'fax_ext', 'fay_ext', 'lnlam' ,
+     *  'zn_ext'  , 'rc'      , 'srcml'  , 'edissml', 'neutrad'/
+      data labels(301:311) /
+     1  'fnaxnodr', 'fnaynodr', 'ne2'    , 'smth'   , 'ixle'  ,
+     2  'ixge'    , 'iyle'    , 'iyge'   , 'isle'   , 'isge'  ,
+     3  'smcf'/
       data descriptions(1:10) /
      1    'Pitch',
-     2    'bx (T) (poloidal)',
-     3    'by (T)',
-     4    'bz (T) (toroidal)',
+     2    'b_{x} (T) (poloidal)',
+     3    'b_{y} (T)',
+     4    'b_{z} (T) (toroidal)',
      5    'bb (T)',
      6    'B (T) (components)',
-     7    'Ion density (m^-3)',
-     8    'Parallel velocity (ua) (m.s^-1)',
-     9    'Radial velocity (vv) (m.s^-1)',
-     *    'Toroidal velocity (ww) (m.s^-1)'/
+     7    'Ion density (m^{-3})',
+     8    'Parallel velocity (u_{a}) (m.s^{-1})',
+     9    'Radial velocity (vv) (m.s^{-1})',
+     *    'Toroidal velocity (ww) (m.s^{-1})'/
       data descriptions(11:20) /
      1    'Electron temperature (eV)',
      2    'Ion temperature (eV)',
-     3    'Pressure (Pa)',
-     4    'Electron density (m^-3)',
+     3    'Static pressure (Pa)',
+     4    'Electron density (m^{-3})',
      5    'phi (V)',
      6    'diff.fhe (W)',
      7    'diff.fhi (W)',
@@ -102,13 +117,13 @@
      3    'div.fmo (N.s)',
      4    'div.fhm (W)',
      5    'div.fhp (W)',
-     6    'Zeff',
-     7    'Poloidal velocity (up) (m.s^-1)',
-     8    'Poloidal particle flux (s^-1)',
-     9    'Radial particle flux (s^-1)',
-     *    'Poloidal momentum flux (N)'/
+     6    'Z_{eff}',
+     7    'Poloidal velocity (up) (m.s^{-1})',
+     8    'Poloidal particle flux (s^{-1})',
+     9    'Radial particle flux (s^{-1})',
+     *    'Poloidal flux of parallel momentum (N)'/
       data descriptions(31:40) /
-     1    'Radial momentum flux (N)',
+     1    'Radial flux of parallel momentum (N)',
      2    'Poloidal electron energy flux (W)',
      3    'Radial electron energy flux (W)',
      4    'Poloidal electron energy flux [fhetx] (W)',
@@ -117,9 +132,9 @@
      7    'Radial ion energy flux (W)',
      8    'Poloidal ion energy flux [fhitx] (W)',
      9    'Radial ion energy flux [fhity] (W)',
-     *    'Poloidal kinetic energy flux (W)'/
+     *    'Poloidal parallel kinetic energy flux (W)'/
       data descriptions(41:50) /
-     1    'Radial kinetic energy flux (W)',
+     1    'Radial parallel kinetic energy flux (W)',
      2    'Poloidal potential energy flux (W)',
      3    'Radial potential energy flux (W)',
      4    'Poloidal electrostatic energy flux (W)',
@@ -136,62 +151,62 @@
      4    'hx (m)',
      5    'hy (m)',
      6    'hy1 (m) (hy corrected)',
-     7    'sx (m^2)',
-     8    'sy (m^2)',
-     9    'vol (m^3)',
+     7    'sx (m^{2})',
+     8    'sy (m^{2})',
+     9    'vol (m^{3})',
      *    'Mach number'/
       data descriptions(61:70) /
      1    'ehx',
      2    'ehy',
-     3    'Atomic density (m^-3)',
-     4    'Molecular density (m^-3)',
-     5    'Atomic H-alpha emissivity (photons.m^-3.s^-1)',
-     6    'Molecular H-alpha emissivity (photons.m^-3.s^-1)',
+     3    'Atomic density (m^{-3})',
+     4    'Molecular density (m^{-3})',
+     5    'Atomic H-\Ga\R emissivity (photons.m^{-3}.s^{-1})',
+     6    'Molecular H-\Ga\R emissivity (photons.m^{-3}.s^{-1})',
      7    'Electron cooling rate (W) [rqahe]',
      8    'Ionisation ion energy losses (W) [rsahi]',
-     9    'Ionisation particle losses (s^-1) [rsana]',
-     *    'Ionisation momentum losses (m.s^-2) [rsamo]'/
+     9    'Ionisation particle losses (s^{-1}) [rsana]',
+     *    'Ionisation parallel momentum losses (m.s^{-2}) [rsamo]'/
       data descriptions(71:80) /
-     1    'Recombination particle losses (s^-1) [rrana]',
+     1    'Recombination particle losses (s^{-1}) [rrana]',
      2    'Recombination ion energy losses (W) [rrahi]',
-     3    'Recombination momentum losses (m.s^-2) [rramo]',
-     4    'Particle neutral losses (s^-1) [rcxna]',
+     3    'Recombination parallel momentum losses (m.s^{-2}) [rramo]',
+     4    'Particle neutral losses (s^{-1}) [rcxna]',
      5    'Ion energy neutral losses (W) [rcxhi]',
-     6    'Ion momentum neutral losses (m.s^-2) [rcxmo]',
+     6    'Ion parallel momentum neutral losses (m.s^{-2}) [rcxmo]',
      7    'Bremsstrahlung losses (W)',
      8    'Total poloidal internal energy flux (W)',
      9    'Total radial internal energy flux (W)',
      *    'Neutral atom temperature (eV)'/
       data descriptions(81:90) /
      1    'Neutral molecule temperature (eV)',
-     2    'Radial atomic flux (s^-1.m^-2)',
-     3    'Radial molecular flux (s^-1.m^-2)',
-     4    'Radial atomic energy flux (W.m^-2)',
-     5    'Radial molecular energy flux (W.m^-2)',
-     6    'Poloidal atomic flux (s^-1.m^-2)',
-     7    'Poloidal molecular flux (s^-1.m^-2)',
-     8    'Poloidal atomic energy flux (W.m^-2)',
-     9    'Poloidal molecular energy flux (W.m^-2)',
+     2    'Radial atomic flux (s^{-1}.m^{-2})',
+     3    'Radial molecular flux (s^{-1}.m^{-2})',
+     4    'Radial atomic energy flux (W.m^{-2})',
+     5    'Radial molecular energy flux (W.m^{-2})',
+     6    'Poloidal atomic flux (s^{-1}.m^{-2})',
+     7    'Poloidal molecular flux (s^{-1}.m^{-2})',
+     8    'Poloidal atomic energy flux (W.m^{-2})',
+     9    'Poloidal molecular energy flux (W.m^{-2})',
      *    'Normalised parallel velocity'/
       data descriptions(91:100) /
      1    'Ion mass (kg)',
-     2    'Ion charge',
-     3    'Nuclear charge',
+     2    'Ion charge (e)',
+     3    'Nuclear charge (e)',
      4    'Poloidal mass flux (kg/s)',
      5    'Radial mass flux (kg/s)',
-     6    'Static pressure ()',
+     6    'Dynamic pressure (Pa)',
      7    'Connection length (m)',
      8    'CR (m)',
      9    'CZ (m)',
-     *    'na at previous time step (m^-3)'/
+     *    'na at previous time step (m^{-3})'/
       data descriptions(101:110) /
      1    'te at previous time step (eV)',
      2    'ti at previous time step (eV)',
-     3    'ua at previous time step (m.s^-1)',
+     3    'ua at previous time step (m.s^{-1})',
      4    'po at previous time step (V)',
-     5    'Electrical field force',
-     6    'Thermal force',
-     7    'Friction force',
+     5    'Thermal force (proportional to exhp)',
+     6    'Thermal force (proportional to Ti and Te gradients)',
+     7    'Friction force', 
      8    'Potential energy (eV) (cum. ionisation energy)',
      9    'Ionisation energy (eV)',
      *    'Ionisation energy (eV) [shifted down one]'/
@@ -200,9 +215,9 @@
      2    'Region',
      3    'smo',
      4    'smq',
-     5    'smaf',
-     6    'smag',
-     7    'smav',
+     5    'Extended friction term',
+     6    'Pressure gradient term',
+     7    'Additional viscosity term',
      8    'RESCO',
      9    'RESMO',
      *    'RESMT'/
@@ -229,30 +244,30 @@
      9    'q',
      *    'Shear'/
       data descriptions(141:150) /
-     1'alpha (ratio of pressure gradient to critical ballooning value)',
-     2    'D (m^2.s^-1)',
-     3    'Dpa (m^2.s^-1)',
-     4    'kye (m^2.s^-1)',
-     5    'kyi (m^2.s^-1)',
-     6    'kyi0 (m^2.s^-1)',
-     7    'Poloidal pinch velocity (m.s^-1)',
-     8    'Radial pinch velocity (m.s^-1)',
-     9    'Viscosity (m.kg^-1.s^-1)',
+     1'\Ga\R (ratio of pressure gradient to critical ballooning value)',
+     2    'D (m^{2}.s^{-1})',
+     3    'D_{pa} (m^{2}.s^{-1})',
+     4    '\Gv\R_{e} (m^{2}.s^{-1})',
+     5    '\Gv\R_{i} (m^{2}.s^{-1})',
+     6    '\Gv\R_{i}^{0} (m^{2}.s^{-1})',
+     7    'Poloidal pinch velocity (m.s^{-1})',
+     8    'Radial pinch velocity (m.s^{-1})',
+     9    'Viscosity (m.kg^{-1}.s^{-1})',
      *    'Bas'' viscosity piece ()'/
       data descriptions(151:160) /
-     1    'Anomalous conductivity (mho.m^-1)',
-     2    'Thermo-electric coefficient (mho.m^-1)',
-     3    'Poloidal current (A)',
-     4    'Radial current (A)',
-     5    'pol comp of the drift velocity [uadia.x] (m.s^-1)',
-     6    'rad comp of the drift velocity [uadia.y] (m.s^-1)',
-     7    'pol comp of div part of diamag velocity [vadia.x] (m.s^-1)',
-     8    'rad comp of div part of diamag velocity [vadia.y] (m.s^-1)',
-     9    'pol comp of the total diamag velocity [wadia.x] (m.s^-1)',
-     *    'rad comp of the total diamag velocity [wadia.y] (m.s^-1)'/
+     1   'Anomalous conductivity (mho.m^{-1})',
+     2   'Thermo-electric coefficient (mho.m^{-1})',
+     3   'Poloidal current (A)',
+     4   'Radial current (A)',
+     5   'pol comp of the drift velocity [uadia.x] (m.s^{-1})',
+     6   'rad comp of the drift velocity [uadia.y] (m.s^{-1})',
+     7   'pol comp of div part of diamag velocity [vadia.x] (m.s^{-1})',
+     8   'rad comp of div part of diamag velocity [vadia.y] (m.s^{-1})',
+     9   'pol comp of the total diamag velocity [wadia.x] (m.s^{-1})',
+     *   'rad comp of the total diamag velocity [wadia.y] (m.s^{-1})'/
       data descriptions(161:170) /
-     1    'pol comp of the ExB velocity [vaecrb.x] (m.s^-1)',
-     2    'rad comp of the ExB velocity [vaecrb.y] (m.s^-1)',
+     1    'pol comp of the ExB velocity [vaecrb.x] (m.s^{-1})',
+     2    'rad comp of the ExB velocity [vaecrb.y] (m.s^{-1})',
      3    'fchdia.x',
      4    'fchdia.y',
      5    'Isolating region',
@@ -271,20 +286,20 @@
      7    'topiy',
      8    'real cells',
      9    'guard cells',
-     *    'Test ion density (m^-3)'/
+     *    'Test ion density (m^{-3})'/
       data descriptions(181:190) /
      1    'Test ion temperature (eV)',
-     2    'b2stbr_sna',
-     3    'b2stbr_smo',
-     4    'b2stbr_she',
-     5    'b2stbr_shi',
-     6    'b2stbr_sch',
-     7    'b2stbc_sna',
-     8    'b2stbc_smo',
-     9    'b2stbc_she',
-     *    'b2stbc_shi'/
+     2    'Recycling particle source (#/s^{-1})',
+     3    'Recycling parallel momentium source (N)',
+     4    'Recycling electron heat source (W)',
+     5    'Recycling ion heat source (W)',
+     6    'Recycling charge source (A)',
+     7    'Boundary particle source (#/s^{-1})',
+     8    'Boundary parallel momentium source (N)',
+     9    'Boundary electron heat source (W)',
+     *    'Boundary ion heat source (W)'/
       data descriptions(191:200) /
-     1    'b2stbc_sch',
+     1    'Boundary charge source (A)',
      2    'b2sihs_divue (phm0)',
      3    'b2sihs_divua (phm1)',
      4    'b2sihs_exbe (phm5)',
@@ -293,58 +308,130 @@
      7    'b2sihs_joule (phm3)',
      8    'b2sihs_fraa (phm4)',
      9    'b2sihs_str (style)',
-     *    'Kinetic energy (J)'/
+     *    'Parallel kinetic energy (J)'/
       data descriptions(201:210) /
      1    'facdrift',
      2    'fac_ExB',
      3    'fac_vis',
      4    'xymap',
-     5    'fnax_32 (s^-1)',
-     6    'fnay_32 (s^-1)',
-     7    'fnax_52 (s^-1)',
-     8    'fnay_52 (s^-1)',
-     9    'fnix_32 (s^-1)',
-     *    'fniy_32 (s^-1)'/
+     5    'Convective poloidal particle flux (s^{-1})',
+     6    'Convective radial particle flux (s^{-1})',
+     7    'Conductive poloidal particle flux (s^{-1})',
+     8    'Conductive radial particle flux (s^{-1})',
+     9    'Convective poloidal total ion flux (s^{-1})',
+     *    'Convective radial total ion flux (s^{-1})'/
       data descriptions(211:220) /
-     1    'fnix_52 (s^-1)',
-     2    'fniy_52 (s^-1)',
-     3    'fnex_32 (s^-1)',
-     4    'fney_32 (s^-1)',
-     5    'fnex_52 (s^-1)',
-     6    'fney_52 (s^-1)',
-     7    'fchx_32 (A)',
-     8    'fchy_32 (A)',
-     9    'fchx_52 (A)',
-     *    'fchy_52 (A)'/
+     1    'Conductive poloidal total ion flux (s^{-1})',
+     2    'Conductive radial total ion flux (s^{-1})',
+     3    'Convective poloidal electron flux (s^{-1})',
+     4    'Convective radial electron flux (s^{-1})',
+     5    'Conductive poloidal electron flux (s^{-1})',
+     6    'Conductive radial electron flux (s^{-1})',
+     7    'Convective poloidal current (A)',
+     8    'Convective radial current (A)',
+     9    'Conductive poloidal current (A)',
+     *    'Conductive radial current (A)'/
       data descriptions(221:230) /
-     1    'ext_sna',
-     2    'ext_smo',
-     3    'ext_she',
-     4    'ext_shi',
-     5    'ext_sch',
+     1    'External particle source (#.s^{-1})',
+     2    'External parallel momentum source (N)',
+     3    'External electron heat source (W)',
+     4    'External ion heat source (W)',
+     5    'External charge source (A)',
      6    'Radiation rate (W)',
      7    'Mach number (SOLPS4.0)',
      8    'Electron heat flux limit factor',
      9    'Ion heat flux limit factor',
      *    'fllim0fna_x'/
-      data descriptions(231:247) /
+      data descriptions(231:240) /
      1    'fllim0fna_y',
      2    'fllim0fhi_x',
      3    'fllim0fhi_y',
      4    'fllimvisc',
-     5    'sna',
-     6    'she',
-     7    'shi',
-     8    'sch',
+     5    'Particle source (#.s^{-1})',
+     6    'Electron heat source (W)',
+     7    'Ion heat source (W)',
+     8    'Charge source (A)',
      9    'Corner radial coordinate (m)',
-     *    'Corner vertical coordinate (m)',
-     1    'Hydrogenic atom density (m^-3)',
-     2	  'qz0',
-     3	  'qz1',
-     4	  'sxperp (m^2)',
-     5    'Parallel electron velocity (ue) (m.s^-1)',
+     *    'Corner vertical coordinate (m)'/
+      data descriptions(241:250) /
+     1    'Hydrogenic atom density (m^{-3})',
+     2    'qz0',
+     3    'qz1',
+     4    'sxperp (m^{2})',
+     5    'Parallel electron velocity (u_{e}) (m.s^{-1})',
      6    'Parallel current (A)',
-     7    'Squared ion charge' /
+     7    'Squared ion charge (e^{2})',
+     8    'X-directed flux region',
+     9    'Y-directed flux region',
+     *    'Eirene species index'/
+      data descriptions(251:260) /
+     1    'qc',
+     2    'Boundary condition number',
+     3    'ceqp',
+     4    'Electron particle source (e)',
+     5    'Recycling electron particle source (e.s^{-1})',
+     6    'Boundary electron particle source (e.s^{-1})',
+     7    'ext_sne',
+     8    'Neoclassical particle diffusivity D_{n} (m^{2}.s^{-1})',
+     9    'Neoclassical heat conductivity \Gv\R (m^{2}.s^{-1})',
+     *    'Neoclassical particle pinch v_{n} (m.s^{-1})'/
+      data descriptions(261:270) /
+     1    'Neoclassical heat pinch vw (m.s^{-1})',
+     2    'Density gradient length (m)',
+     3    'Temperature gradient length (m)',
+     4    'Two species collision frequency (s^{-1})',
+     5    'Total collision frequency (s^{-1})',
+     6    'Normalized collisionality',
+     7    'Thermal velocity (m.s^{-1})',
+     8    'Full-B Larmor radius (m)',
+     9    'Ratio of Larmor radius to minimum gradient length',
+     *    'Width of the banana orbit (m)'/
+      data descriptions(271:280) /
+     1    'Ratio of banana width to minimum gradient length',
+     2    'Ratio of banana width to density gradient length',
+     3    'Ratio of banana width to temperature gradient length',
+     4    'Gyro-frequency (rad.s^{-1})',
+     5    'Ratio of collision frequency to gyro-frequency',
+     6    'Ratio of perpendicular to parallel dynamics',
+     7    'Chang-Hinton \Gv\R_{i} (m^{2}/s)',
+     8    'ne at previous time step (m^{-3})',
+     9    'ni at previous time step (m^{-3})',
+     *    'External species charge (e)'/
+      data descriptions(281:290) /
+     1    'Squared external species charge (e^{2})',
+     2    'External species density (m^{-3})',
+     3    'External species mass (kg)',
+     4    'External species parallel velocity (m.s^{-1})',
+     5    'External species temperature (eV)',
+     6    'External species associated electron density (m^{-3})',
+     7    'Additional particle source (#.s^{-1})',
+     8    'Additional electron source (e.s^{-1})',
+     9    'Additional parallel momentum source (N)',
+     *    'Additional electron heat source (W)'/
+      data descriptions(291:300) /
+     1    'Additional ion heat source (W)',
+     2    'Additional charge source (A)',
+     3    'External species poloidal flux (#.s^{-1})',
+     4    'External species radial flux (#.s^{-1})',
+     5    'ln \GK\R',
+     6    'External species nuclear charge (e)',
+     7    'Recycling conditions',
+     8    'Molecule dissociation rate (#.s^{-1})',
+     9    'Power to atoms due to molecule dissociation (W)',
+     *    'Total power loss due to atom radiation (W)'/
+      data descriptions(301:310) /
+     1    'Poloidal particle flux without drifts (s^{-1})',
+     2    'Radial particle flux without drifts (s^{-1})',
+     3    'ne2 (m^{-3})',
+     4    'Thermal force (N)',
+     5    'ixle',
+     6    'ixge',
+     7    'iyle',
+     8    'iyge',
+     9    'isle',
+     *    'isge'/  
+      data descriptions(311:311) /
+     1    'Centrifugal force term'/
       data dimensions(1:50) /
      1    2,      2,      2,      2,      2,
      2    3,      3,      3,      3,      3,
@@ -389,7 +476,7 @@
      8    2,      3,      3,      2,      2,
      9    2,      2,      2,      2,      2,
      *    2,      2,      2,      2,      3/
-      data dimensions(201:247) /
+      data dimensions(201:250) /
      1    2,      2,      2,      2,      3,
      2    3,      3,      3,      2,      2,
      3    2,      2,      2,      2,      2,
@@ -399,7 +486,22 @@
      7    3,      3,      3,      3,      3,
      8    2,      2,      2,      2,      2,
      9    2,      2,      2,      2,      2,
-     *    2,      3/    
+     *    2,      3,      2,      2,      3/  
+      data dimensions(251:300) /
+     1    2,      2,      2,      2,      2,
+     2    2,      2,      3,      3,      3,
+     3    3,      3,      3,      3,      3,
+     4    3,      3,      3,      3,      3,
+     5    3,      3,      3,      3,      3,
+     6    3,      3,      2,      3,      3,
+     7    3,      3,      3,      3,      3,
+     8    2,      3,      2,      3,      2,
+     9    2,      2,      3,      3,      2,
+     *    3,      2,      3,      3,      3/  
+      data dimensions(301:311) /
+     1    3,      3,      2,      3,      2,
+     2    2,      2,      2,      3,      3,
+     3    3/    
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
@@ -433,7 +535,7 @@
      8 'sdrop','sdup','idrop', 'idup','rdrop',
      9 'rdup', 'logt', 'lint','movie', 'omp' ,
      * 'imp' , 'yref', 'mmid','target','trgoff'/
-      data fns(151:192) /
+      data fns(151:197) /
      1 'mlt'  , 'mle' , 'meq' , 'mne' , 'mgt' ,
      2 'mge'  , 'clvp', 'xpol', 'xpar', 'i+'  ,
      3 'i-'   , 'i*'  , 'i/'  , 'i**' ,'rswap',
@@ -442,7 +544,8 @@
      6 'rtom' , 'rtow', 'rtot', 'itostr', 'rtostr',
      7 'owid' , 'vwid', 'ewid', 'iprt', 'rprt',
      8 'sprt' , 'list', 'acol', 'dcol', 'wcol',
-     9 'tcol' , 'psxperp'/ 
+     9 'tcol' , 'lfsz', 'zwid', 'psxperp', 'expl',
+     * 'exps' , 'mdims'/ 
       data wlabels /
      1 'wallarea', 'ei'      , 'wallflux', 'wallhflx', 'r1'      ,
      2 'r2'      , 'z1'      , 'z2'      , 'walltemp', 'plathick',
@@ -460,7 +563,8 @@
      4 'ckappaa1', 'ckappaa2', 'ckappaa3', 'ckappaa4', 'ckapppa1', 
      5 'ckapppa2', 'ckapppa3', 'ckapppa4', 'ctgdns'  , 'c_cp_b1' , 
      6 'c_cp_b2' , 'c_cp_b3' , 'coathick', 'lkappa'  , 'lrho'    ,
-     7 'lcp'     , 'lemis'   , 'sputfrac', 'lthick'  , 'ldepth'  / 
+     7 'lcp'     , 'lemis'   , 'sputfrac', 'lthick'  , 'ldepth'  ,
+     8 'iwle'    , 'iwge'    , 'iswle'   , 'iswge'   / 
       data wdimensions /
      1 1,       2,      2,      1,      1,
      2 1,       1,      1,      1,      1,
@@ -478,12 +582,13 @@
      4 1,       1,      1,      1,      1,
      5 1,       1,      1,      1,      1,
      6 1,       1,      1,      1,      1,
-     7 1,       1,      2,      1,      1/
+     7 1,       1,      2,      1,      1,
+     8 1,       1,      2,      2/
       data wdescriptions(1:10) /
-     1 'Wall area (m^2)',
+     1 'Wall area (m^{2})',
      2 'Incident energy (eV)',
-     3 'Wall particle flux (s-1)',
-     4 'Wall heat flux (W/m^2)',
+     3 'Wall particle flux (s^{-1})',
+     4 'Wall heat flux (W/m^{2})',
      5 'Wall start R position (m)',
      6 'Wall end R position (m)',
      7 'Wall start Z position (m)',
@@ -511,7 +616,7 @@
      7 'Physical sputtering yield',
      8 'Physical sputtering energy yield',
      9 'Chemical sputtering yield',
-     * 'Thermal Evaporation Fluxes (/m2/s)'/
+     * 'Thermal Evaporation Fluxes (/m^{2}/s)'/
       data wdescriptions(31:40) /
      1 'RES sputtering yield',
      2 'Backscattering fraction',
@@ -527,51 +632,55 @@
      1 'Kappa A factor (1/AT+B) (m/W)',
      2 'Kappa B factor (1/AT+B) (m.K/W)',
      3 'Kappa A1 polynomial factor (W/m/K)',
-     4 'Kappa A2 polynomial factor (W/m/K^2)',
-     5 'Kappa A3 polynomial factor (W/m/K^3)',
-     6 'Kappa A4 polynomial factor (W/m/K^4)',
+     4 'Kappa A2 polynomial factor (W/m/K^{2})',
+     5 'Kappa A3 polynomial factor (W/m/K^{3})',
+     6 'Kappa A4 polynomial factor (W/m/K^{4})',
      7 'Kappa_perp A1 polynomial factor (W/m/K)',
-     8 'Kappa_perp A2 polynomial factor (W/m/K^2)',
-     9 'Kappa_perp A3 polynomial factor (W/m/K^3)',
-     * 'Kappa_perp A4 polynomial factor (W/m/K^4)'/
+     8 'Kappa_perp A2 polynomial factor (W/m/K^{2})',
+     9 'Kappa_perp A3 polynomial factor (W/m/K^{3})',
+     * 'Kappa_perp A4 polynomial factor (W/m/K^{4})'/
       data wdescriptions(51:60) /
-     1 'Bulk mass density (kg/m^3)',
+     1 'Bulk mass density (kg/m^{3})',
      2 'Heat capacity B1 factor (J/g/K)',
-     3 'Heat capacity B2 factor (J/g/K^2)',
+     3 'Heat capacity B2 factor (J/g/K^{2})',
      4 'Heat capacity B3 factor (J.K/g)',
      5 'Chemical sputtering factor erel',
      6 'Blackbody emissivity',
      7 'Vapor pressure A factor (K)',
      8 'Vapor pressure B factor',
      9 'Vapor pressure (Pa)',
-     * 'Energy lost by vaporisation (J/m^2/s)'/
+     * 'Energy lost by vaporisation (J/m^{2}/s)'/
       data wdescriptions(61:80) /
-     1 'Energy lost by blackbody radiation (J/m^2/s)',
+     1 'Energy lost by blackbody radiation (J/m^{2}/s)',
      2 'Sticking coefficient',
      3 'Heat of sublimation (J/kg)',
      4 'Coating Kappa A factor (1/AT+B) (m/W)',
      5 'Coating Kappa B factor (1/AT+B) (m.K/W)',
      6 'Coating Kappa A1 polynomial factor (W/m/K)',
-     7 'Coating Kappa A2 polynomial factor (W/m/K^2)',
-     8 'Coating Kappa A3 polynomial factor (W/m/K^3)',
-     9 'Coating Kappa A4 polynomial factor (W/m/K^4)',
+     7 'Coating Kappa A2 polynomial factor (W/m/K^{2})',
+     8 'Coating Kappa A3 polynomial factor (W/m/K^{3})',
+     9 'Coating Kappa A4 polynomial factor (W/m/K^{4})',
      * 'Coating Kappa_perp A1 polynomial factor (W/m/K)',
-     1 'Coating Kappa_perp A2 polynomial factor (W/m/K^2)',
-     2 'Coating Kappa_perp A3 polynomial factor (W/m/K^3)',
-     3 'Coating Kappa_perp A4 polynomial factor (W/m/K^4)',
-     4 'Coating mass density (kg/m^3)',
+     1 'Coating Kappa_perp A2 polynomial factor (W/m/K^{2})',
+     2 'Coating Kappa_perp A3 polynomial factor (W/m/K^{3})',
+     3 'Coating Kappa_perp A4 polynomial factor (W/m/K^{4})',
+     4 'Coating mass density (kg/m^{3})',
      5 'Coating heat capacity B1 factor (J/g/K)',
-     6 'Coating heat capacity B2 factor (J/g/K^2)',
+     6 'Coating heat capacity B2 factor (J/g/K^{2})',
      7 'Coating heat capacity B3 factor (J.K/g)',
      8 'Coating thickness (m)',
      9 'Layer heat conductivity (W/m/K)',
-     * 'Layer mass density (kg/m^3)'/
-      data wdescriptions(81:85) /
+     * 'Layer mass density (kg/m^{3})'/
+      data wdescriptions(81:89) /
      1 'Layer heat capacity (J/kg/K)',
      2 'Layer blackbody emissivity',
      3 'Layer fraction',
      4 'Layer thickness (m)',
-     5 'Layer depth (m)'/
+     5 'Layer depth (m)',
+     6 'iwle',
+     7 'iwge',
+     8 'iswle',
+     9 'iswge'/
       data wfns /
      1 'wall' , 'wall_ank', 'logw', 'linw', 'logxw', 'linxw', 'plwl', 
      2 'sumw' , 'intw','intw*', 'pswa','wclvs','wclvd','wclvn', 'wclvp',
@@ -582,7 +691,7 @@
      7 'rwmma','wmlt', 'wmle', 'wmeq', 'wmne',
      8 'wmgt' , 'wmge', 'wlog', 'wln' ,'wsqrt', 
      9 'wexp' ,'wzrng', 'wchs', 'wtos', 'wtot', 'wpos', 
-     * 'wsaw' ,'wallf','outpw', 'wprt', 'wlld', 
+     * 'wsaw' ,'wallf','outpw', 'wprt', 'wtab', 'wlld', 
      1 'woff' ,'wlist'/
       data trgfns /
      1 'logtrg'  , 'lintrg'  , 'tclvs'   , 'tclvd'   , 'tclvn'   ,
@@ -601,12 +710,13 @@
      4 'itrggt'  , 'trgm+'   , 'trgm-'   , 'trgm*'   , 'trgm/'   ,
      5 'trgvol'  , 'tclvp'   , 'inttrgw*', 'ztrglt'  , 'ztrgeq'  ,
      6 'ztrggt'  , 'trgabs'  , 'trgiz'   , 'logxtrg' , 'linxtrg' ,
-     7 'trglist' , 'rho'/
+     7 'trglist' , 'rho'     , 'trgtab'  , 'trgibnd' , 'itrgle'  ,
+     8 'itrgge'  , 'ztrgle'  , 'ztrgge'  /
       data sparameters /
      1 'extl', 'cltb', 'chor', 'chpl', 'cmd' ,
      2 'cmdcdf','chbx','chvl', 'flux', 'chmp',
      3 'cam' , 'movi', 'sonn', 'saw' , 'oson', 'uedgegrd',
-     4 'expf', 'outp', 'pdev', 'mprt', 'amju',
+     4 'expf', 'outp', 'pdev', 'mprt', 'mtab', 'amju', 'adas',
      5 'wallblbl', 'trgblbl', 'glbl' , 'wlbl', 'tlbl',
      6 'tranprof'/
       data constant_name /

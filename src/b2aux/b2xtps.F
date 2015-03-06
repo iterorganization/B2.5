@@ -35,7 +35,7 @@
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      6  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1), 
-     &  fch_p(-1:nx,-1:ny), kinrgy(-1:nx,-1:ny,0:ns-1)
+     &  fch_p(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  na1(-1:nx1,-1:ny1,0:ns1-1), ua1(-1:nx1,-1:ny1,0:ns1-1),
@@ -45,7 +45,7 @@
      *  fna1(-1:nx1,-1:ny1,0:1,0:ns1-1), fhe1(-1:nx1,-1:ny1,0:1),
      &  fhi1(-1:nx1,-1:ny1,0:1), fch1(-1:nx1,-1:ny1,0:1),
      1	fch1_32(-1:nx1,-1:ny1,0:1), fch1_52(-1:nx1,-1:ny1,0:1),
-     2  fch1_p(-1:nx1,-1:ny1), kinrgy1(-1:nx1,-1:ny1,0:ns1-1)
+     2  fch1_p(-1:nx1,-1:ny1,0:1), kinrgy1(-1:nx1,-1:ny1,0:ns1-1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -87,7 +87,7 @@
       save na0eps
       data na0eps/1.0e-30_R8/
 *   ..procedures
-      external subini, subend, xertst, ipgetr, sfill, saxpy
+      external subini, subend, xertst, ipgetr, sfill, b2saxpy
       external b2xtvc, b2xtfx, b2xtfy
 
 *-----------------------------------------------------------------------
@@ -153,35 +153,35 @@
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-            call saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
+            call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
      &        na1(-1,-1,is1), 1)
             call b2xtvc (nx, ny, nx1, ny1, ua(-1,-1,is), wrk1,
      &        nncutmax, non_commensurate, 
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-            call saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
+            call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
      &        ua1(-1,-1,is1), 1)
             call b2xtvc (nx, ny, nx1, ny1, uadia(-1,-1,0,is), wrk1,
      &        nncutmax, non_commensurate, 
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-            call saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
+            call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
      &        uadia1(-1,-1,0,is1), 1)
             call b2xtvc (nx, ny, nx1, ny1, uadia(-1,-1,1,is), wrk1,
      &        nncutmax, non_commensurate, 
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-            call saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
+            call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
      &        uadia1(-1,-1,1,is1), 1)
             call b2xtvc (nx, ny, nx1, ny1, kinrgy(-1,-1,is), wrk1,
      &        nncutmax, non_commensurate, 
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
-            call saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
+            call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
      &        kinrgy1(-1,-1,is1), 1)
           endif
         enddo
@@ -234,7 +234,7 @@
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hy1, qc1)
-            call saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
+            call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
      &        fna1(-1,-1,0,is1), 1)
             call b2xtfy (nx, ny, nx1, ny1, fna(-1,-1,1,is), wrk1, 
      &        nncutmax, non_commensurate,
@@ -242,7 +242,7 @@
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, 
      .        hx, hx1, bottomiy1)
-            call saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
+            call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1, 
      &        fna1(-1,-1,1,is1), 1)
           endif
         enddo
@@ -307,12 +307,18 @@
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, 
      .        hx, hx1, bottomiy1)
-      call b2xtfx (nx, ny, nx1, ny1, fch_p, fch1_p, nncutmax, 
-     &        non_commensurate, nnreg, nncut, periodic_bc, jsep, jsep1, 
-     &        region, region1,
+      call b2xtfx (nx, ny, nx1, ny1, fch_p(-1,-1,0), fch1_p(-1,-1,0), 
+     &        nncutmax, non_commensurate, 
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hy1, qc1)
+      call b2xtfy (nx, ny, nx1, ny1, fch_p(-1,-1,1), fch1_p(-1,-1,1), 
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1, 
+     .        hx, hx1, bottomiy1)
 
 * ..return
       call subend ()

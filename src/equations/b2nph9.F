@@ -90,7 +90,7 @@
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       intrinsic sqrt
-      external subini, subend, xertst, ipgetr, lwget, saxpy
+      external subini, subend, xertst, ipgetr, lwget, b2saxpy
       external b2xvsg, b2xvff, b2xvfx, b2sihs, b2ursd, b2ush9, b2upht  !srv 02.01.07
 *   ..initialization
       data ncall/0/, rxg/1.0e0_R8/, pcm0/1.0e0_R8/, pcm1/1.0e0_R8/
@@ -193,8 +193,8 @@
      *  lnlam, na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, fchdia,  !srv 28.06.03 01.07.09 05.03.11
      *  uadia, vadia, vaecrb, she0, shi0, wrk0)                         !srv 07.06.00 02.06.99 07.07.09
       endif
-      call saxpy (n2*4, 1.0e0_R8, she, 1, she0, 1)
-      call saxpy (n2*4, 1.0e0_R8, shi, 1, shi0, 1)
+      call b2saxpy (n2*4, 1.0e0_R8, she, 1, she0, 1)
+      call b2saxpy (n2*4, 1.0e0_R8, shi, 1, shi0, 1)
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
 *   ..save final electron heat source ignoring equipartition  !srv 10.11.02 {
@@ -235,7 +235,7 @@
 	if(iout .eq. 1) then                                            !srv 17.07.05 01.11.10 {
 	 call my_out(70,nx,ny,shei,'b2nph9_shei')
 !	 do is = 0,ns-1
-!	  write (charns,'(i2.2)') is
+!	  write (charns,'(i3.3)') is
 !	  call my_out(70,nx,ny,na(-1,-1,is),'b2nph9_na'//charns)
 !	  call my_out(70,nx,ny,ua(-1,-1,is),'b2nph9_ua'//charns)
 !	 enddo

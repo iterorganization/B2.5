@@ -1,7 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbc (nx, ny, ns, ismain, BoRiS, facdrift, fac_ExB,   !xpb
+      subroutine b2stbc (nx, ny, ns, ismain, ismain0, 
+     &  BoRiS, facdrift, fac_ExB,   !xpb
      &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !xpb !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
@@ -10,7 +11,7 @@
      &  fnaPSch, fhePSch, fhiPSch,                                       !srv 25.02.00 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
      2  cdna, chce, chve, chci, chvi, calf,
-     &  sna0, smo0, she0, shi0, sch0, wrong_flow, main_call)             !xpb
+     &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call)       !xpb
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
@@ -18,12 +19,15 @@
       use b2mod_geo_corner
       use b2mod_constants
       use b2mod_sources
-     1 , only : b2stbc_sna,b2stbc_smo,b2stbc_she,b2stbc_shi,b2stbc_sch
+     1 , only : b2stbc_sna,b2stbc_smo,b2stbc_she,b2stbc_shi,b2stbc_sch,
+     2          b2stbc_sne
       use b2mod_feedback
       use b2mod_b2cmpa
+      use b2mod_external
+      use b2mod_time
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, ismain
+      integer nx, ny, ns, ismain, ismain0
       real (kind=R8) ::
      *  BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny), 
      &  vol(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny),
@@ -63,7 +67,7 @@
       real (kind=R8) ::
      *   sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     &  sch0(-1:nx,-1:ny,0:3)
+     &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
       logical wrong_flow                                                 !xpb
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -72,8 +76,8 @@
 *  1. purpose
 *
 *     B2STBC provides linearised expressions for the sources of
-*     density, momentum, electron heat, atom heat, and charge, due to
-*     the boundary conditions.
+*     density, parallel momentum, electron heat, atom heat, and charge,
+*     due to the boundary conditions.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -85,22 +89,23 @@
      *   b2stbc_neoclassical, b2stbc_fchy_dia,
      &   praverage(2), prsum(2), gssum(2), tesum(2), tisum(2),
      1   nasum(0:ns-1,2), teave(2), tiave(2),
-     1   naave(0:ns-1,2), nef, tef, tif, naf(0:ns-1),
+     1   naave(0:ns-1,2), nef, nif, tef, tif, naf(0:ns-1), zaf(0:ns-1),
+     x   nxf, taf, zxf,
      1   volsum(2), qeaverage(2), qiaverage(2), qesum(2), qisum(2),
      1   sum_sch0, sum_vol, integral_current
       integer boundary_namelist, diagno, b2stbc_fchy_dia_coreonly,
-     *   sound_model, area_fix
+     *   area_fix, sheath_drift_fix
       integer element_done(-1:nx)
       integer b2stbc_feedback, secmodel
       save ncall, sna0ep, she0ep, shi0ep, boundary_namelist, diagno,
      *   b2stbc_neoclassical, b2stbc_fchy_dia, integral_current,
      1   b2stbc_feedback, b2stbc_fchy_dia_coreonly, secmodel,
-     *   sound_model, area_fix
+     *   area_fix, sheath_drift_fix
 *   ..procedures
       intrinsic mod, nint
       real (kind=R8) ::
      *   ssum, hy1
-      external subini, subend, xertst, sfill, ssum, saxpy,
+      external subini, subend, xertst, sfill, ssum, b2saxpy,
      *   ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
      1   b2stbc_phys, b2stbc_bas, b2stbc_fb
@@ -110,7 +115,8 @@
      1   shi0ep/1.0e-36_R8/, boundary_namelist/0/,diagno/0/,
      2   b2stbc_neoclassical/0.0_R8/, b2stbc_fchy_dia/1.0_R8/,
      3   integral_current/0.0_R8/, b2stbc_feedback/0/, area_fix/3/,
-     4   b2stbc_fchy_dia_coreonly/1/, secmodel/0/, sound_model/0/
+     4   b2stbc_fchy_dia_coreonly/1/, secmodel/0/, 
+     5   sheath_drift_fix/0/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -148,8 +154,8 @@
        call ipgeti ('b2stbc_fchy_dia_coreonly',
      .               b2stbc_fchy_dia_coreonly)
        call ipgeti ('b2stbc_secmodel', secmodel)
-       call ipgeti ('b2stbc_sound_model', sound_model)
        call ipgeti ('b2news_area_fix', area_fix)
+       call ipgeti ('b2stbc_sheath_drift_fix', sheath_drift_fix)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -160,6 +166,10 @@
      . 'invalid main plasma species index ismain')
       call xertst (.not.is_neutral(ismain),
      . 'invalid main neutral species ismain; must not be neutral')
+      call xertst (0.le.ismain0.and.ismain0.lt.ns,
+     . 'invalid main neutral species index ismain0')
+      call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
+     . 'invalid main neutral species ismain0; must be neutral')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of vol, hx, hy
@@ -203,6 +213,7 @@
 *   ..initialise sources to 0
       call sfill (n2*2*ns, 0.0_R8, sna0, 1)
       call sfill (n2*4*ns, 0.0_R8, smo0, 1)
+      call sfill (n2*2, 0.0_R8, sne0, 1)
       call sfill (n2*4, 0.0_R8, she0, 1)
       call sfill (n2*4, 0.0_R8, shi0, 1)
       call sfill (n2*4, 0.0_R8, sch0, 1)
@@ -211,10 +222,10 @@
 *   (This code placed here for want of a better location)
 *   ..low-level particle source
       do is = 0, ns-1
-       call saxpy (n2, sna0ep, vol, 1, sna0(-1,-1,0,is), 1)
+       call b2saxpy (n2, sna0ep, vol, 1, sna0(-1,-1,0,is), 1)
       enddo
-      call saxpy (n2, she0ep, vol, 1, she0(-1,-1,0), 1)
-      call saxpy (n2, shi0ep, vol, 1, shi0(-1,-1,0), 1)
+      call b2saxpy (n2, she0ep, vol, 1, she0(-1,-1,0), 1)
+      call b2saxpy (n2, shi0ep, vol, 1, shi0(-1,-1,0), 1)
 
 *   ..find the average pressure for inner flux surface           !sv 24.03.99
       iy = -1                                                    !sv 24.03.99
@@ -237,23 +248,47 @@
           nef = (ne(ix,iy)*hy1(topix(ix,iy),topiy(ix,iy))+
      &           ne(topix(ix,iy),topiy(ix,iy))*hy1(ix,iy))/
      &          (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
+          nif = (ni(ix,iy,1)*hy1(topix(ix,iy),topiy(ix,iy))+
+     &           ni(topix(ix,iy),topiy(ix,iy),1)*hy1(ix,iy))/
+     &          (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
           naf(:) = (na(ix,iy,:)*hy1(topix(ix,iy),topiy(ix,iy))+
      &           na(topix(ix,iy),topiy(ix,iy),:)*hy1(ix,iy))/
+     &          (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
+          zaf(:) = (rza(ix,iy,:)*hy1(topix(ix,iy),topiy(ix,iy))+
+     &           rza(topix(ix,iy),topiy(ix,iy),:)*hy1(ix,iy))/
      &          (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
           tesum(1)=tesum(1) + tef*gs(topix(ix,iy),topiy(ix,iy),1)
           tisum(1)=tisum(1) + tif*gs(topix(ix,iy),topiy(ix,iy),1)
           nasum(:,1)=nasum(:,1) + naf(:)*gs(topix(ix,iy),topiy(ix,iy),1)
           prsum(1)=prsum(1) +
-     1     (ne(ix,iy)*te(ix,iy)+ni(ix,iy,1)*ti(ix,iy))*vol(ix,iy)
-     2     *bb(ix,iy,2)*vol(ix,iy)/gs(ix,iy,2)
+     1     (nef*tef+nif*tif)*vol(ix,iy)
+     2     *wbbv(topix(ix,iy),topiy(ix,iy),2)*vol(ix,iy)/gs(ix,iy,2)
           qesum(1)=qesum(1)+2.5_R8*vol(ix,iy)/gs(ix,iy,2)*
-     1     ne(ix,iy)*te(ix,iy)**2*bb(ix,iy,2)/qe*
+     1     nef*tef**2*wbbv(topix(ix,iy),topiy(ix,iy),2)/qe*
      2     gs(topix(ix,iy),topiy(ix,iy),1)
           do is = 0, ns-1
             if (.not.is_neutral(is)) then
               qisum(1)=qisum(1)-2.5_R8*vol(ix,iy)/gs(ix,iy,2)*
-     3         na(ix,iy,is)*ti(ix,iy)**2*bb(ix,iy,2)/
-     5         (qe*rza(ix,iy,is))*gs(topix(ix,iy),topiy(ix,iy),1)
+     3         naf(is)*tif**2*wbbv(topix(ix,iy),topiy(ix,iy),2)/
+     5         (qe*zaf(is))*gs(topix(ix,iy),topiy(ix,iy),1)
+            endif
+          enddo
+          do is = 0, ns_ext-1
+            nxf = (na_ext(ix,iy,is)*hy1(topix(ix,iy),topiy(ix,iy))+
+     &             na_ext(topix(ix,iy),topiy(ix,iy),is)*hy1(ix,iy))/
+     &            (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
+            taf = (ta_ext(ix,iy,is)*hy1(topix(ix,iy),topiy(ix,iy))+
+     &             ta_ext(topix(ix,iy),topiy(ix,iy),is)*hy1(ix,iy))/
+     &            (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
+            prsum(1)=prsum(1) + nxf*taf*vol(ix,iy)
+     2        *wbbv(topix(ix,iy),topiy(ix,iy),2)*vol(ix,iy)/gs(ix,iy,2)
+            if (.not.is_ext_neutral(is)) then
+              zxf = (za_ext(ix,iy,is)*hy1(topix(ix,iy),topiy(ix,iy))+
+     &               za_ext(topix(ix,iy),topiy(ix,iy),is)*hy1(ix,iy))/
+     &              (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
+              qisum(1)=qisum(1)-2.5_R8*vol(ix,iy)/gs(ix,iy,2)*
+     3         nxf*taf**2*wbbv(topix(ix,iy),topiy(ix,iy),2)/
+     5         (qe*zxf)*gs(topix(ix,iy),topiy(ix,iy),1)
             endif
           enddo
           gssum(1)=gssum(1) + gs(topix(ix,iy),topiy(ix,iy),1)            !xpb
@@ -290,22 +325,55 @@
           nef = (ne(ix,iy)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      &           ne(bottomix(ix,iy),bottomiy(ix,iy))*hy1(ix,iy))/
      &          (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
+          nif = (ni(ix,iy,1)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
+     &           ni(bottomix(ix,iy),bottomiy(ix,iy),1)*hy1(ix,iy))/
+     &          (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
           naf(:) = (na(ix,iy,:)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      &           na(bottomix(ix,iy),bottomiy(ix,iy),:)*hy1(ix,iy))/
+     &          (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
+          zaf(:) = (rza(ix,iy,:)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
+     &           rza(bottomix(ix,iy),bottomiy(ix,iy),:)*hy1(ix,iy))/
      &          (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
           tesum(2)=tesum(2) + tef*gs(ix,iy,1)                            !xpb
           tisum(2)=tisum(2) + tif*gs(ix,iy,1)                            !xpb
           nasum(:,2)=nasum(:,2) + naf(:)*gs(ix,iy,1)                     !xpb
           prsum(2)=prsum(2) +
-     1     (ne(ix,iy)*te(ix,iy)+ni(ix,iy,1)*ti(ix,iy))*vol(ix,iy)
-     2     *bb(ix,iy,2)*vol(ix,iy)/gs(ix,iy,2)
+     1     (nef*tef+nif*tif)*vol(ix,iy)*
+     2     wbbv(bottomix(ix,iy),bottomiy(ix,iy),2)*
+     3     vol(ix,iy)/gs(ix,iy,2)
           qesum(2)=qesum(2)+2.5_R8*vol(ix,iy)/gs(ix,iy,2)*
-     1     ne(ix,iy)*te(ix,iy)**2*bb(ix,iy,2)/qe*gs(ix,iy,1)
+     1     nef*tef**2*wbbv(bottomix(ix,iy),bottomiy(ix,iy),2)/qe*
+     2     gs(ix,iy,1)
           do is = 0, ns-1
             if (.not.is_neutral(is)) then
               qisum(2)=qisum(2)-2.5_R8*vol(ix,iy)/gs(ix,iy,2)*
-     3         na(ix,iy,is)*ti(ix,iy)**2*bb(ix,iy,2)/
-     5         (qe*rza(ix,iy,is))*gs(ix,iy,1)
+     3         naf(is)*tif**2*wbbv(bottomix(ix,iy),bottomiy(ix,iy),2)/
+     5         (qe*zaf(is))*gs(ix,iy,1)
+            endif
+          enddo
+          do is = 0, ns_ext-1
+            nxf = (na_ext(ix,iy,is)*
+     .             hy1(bottomix(ix,iy),bottomiy(ix,iy))+
+     &             na_ext(bottomix(ix,iy),bottomiy(ix,iy),is)*
+     .             hy1(ix,iy))/
+     &            (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
+            taf = (ta_ext(ix,iy,is)*
+     .             hy1(bottomix(ix,iy),bottomiy(ix,iy))+
+     &             ta_ext(bottomix(ix,iy),bottomiy(ix,iy),is)*
+     .             hy1(ix,iy))/
+     &            (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
+            prsum(2)=prsum(2) + nxf*taf*vol(ix,iy)
+     2        *wbbv(bottomix(ix,iy),bottomiy(ix,iy),2)
+     3        *vol(ix,iy)/gs(ix,iy,2)
+            if (.not.is_ext_neutral(is)) then
+              zxf = (za_ext(ix,iy,is)*
+     .               hy1(bottomix(ix,iy),bottomiy(ix,iy))+
+     &               za_ext(bottomix(ix,iy),bottomiy(ix,iy),is)*
+     .               hy1(ix,iy))/
+     &              (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
+              qisum(2)=qisum(2)-2.5_R8*vol(ix,iy)/gs(ix,iy,2)*
+     3         nxf*taf**2*wbbv(bottomix(ix,iy),bottomiy(ix,iy),2)/
+     5         (qe*zxf)*gs(ix,iy,1)
             endif
           enddo
           gssum(2)=gssum(2) + gs(ix,iy,1)                                !xpb
@@ -323,8 +391,20 @@
       if (ncall.eq.0) lbndusr=.false.                                    !xpb
 
       if(boundary_namelist.ge.1) then
+         if(ncall.eq.0) then
+            call initialize_b2mod_boundary(nx,ny,ns,tim)
+         else
+            call catchup_b2mod_boundary(tim)
+         endif
+
+         if(lfeedback.or.b2stbc_feedback.ne.0)
+     1        call b2stbc_fb_pre(nx, ny, ns, ismain, BoRiS,
+     1        vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
+     &        sna0, smo0, she0, shi0, sch0, sne0, 
+     &        main_call, diagno)
+
         if(ncall.eq.0) write(*,*) ' b2stbc_phys called'
-        call b2stbc_phys(nx, ny, ns, ismain,
+        call b2stbc_phys(nx, ny, ns, ismain, ismain0,
      1   BoRiS, facdrift, fac_ExB, vol, crx, hx, hy, hz, qz, qc, gs,   !srv 24.08.08
      1   pbs, pbshz, bb, na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      2   te, ti, po, ne, ni, kinrgy,  floe_noc, floi_noc, fna, fna_mdf, !srv 28.10.02
@@ -333,33 +413,44 @@
      &   fne, fni,                                                     !srv 13.10.06
      &   fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,!srv 21.10.02
      &   cdna, chce, chve, chci, chvi, calf,                           !srv 25.09.09
-     &   sna0, smo0, she0, shi0, sch0, wrong_flow, main_call, diagno,
+     &   sna0, smo0, she0, shi0, sch0, sne0, 
+     &   wrong_flow, main_call, diagno,
      &   b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
-     &   b2stbc_fchy_dia_coreonly, secmodel, sound_model, area_fix)
+     &   b2stbc_fchy_dia_coreonly, secmodel, area_fix,
+     &   sheath_drift_fix)
+        if(wrong_flow) write(*,*) 
+     &        'b2stbc: wrong_flow returned from b2stbc_phys'
         if(lbndusr) then
           if(ncall.eq.0) write(*,*) 'BNDUSR called'
           call b2stbc_bas(nx, ny, ns, ismain,
      1     facdrift, vol, hx, hy, qz, qc, gs,
-     1     pbs, bb, na, ua, uadia, te, ti, po, ne, ni,
+     1     pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1     fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
-     &     sna0, smo0, she0, shi0, sch0, wrong_flow, main_call, diagno,
+     &     sna0, smo0, she0, shi0, sch0, sne0, 
+     &     wrong_flow, main_call, diagno,
      &     b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
-     &     b2stbc_fchy_dia_coreonly, secmodel, lbndusr, sound_model, 
-     &     area_fix)
+     &     b2stbc_fchy_dia_coreonly, secmodel, lbndusr, 
+     &     area_fix, sheath_drift_fix)
+          if(wrong_flow) write(*,*) 
+     &           'b2stbc: wrong_flow returned from b2stbc_bas'
         endif      !lbndusr
       else      !boundary_namelist.ge.1
         call b2stbc_bas(nx, ny, ns, ismain,
      1   facdrift, vol, hx, hy, qz, qc, gs,
-     1   pbs, bb, na, ua, uadia, te, ti, po, ne, ni,
+     1   pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,
      1   fna, fhe, fhi, fch, fne, fni, chce, chve, chci, chvi, calf,
-     &   sna0, smo0, she0, shi0, sch0, wrong_flow, main_call, diagno,
+     &   sna0, smo0, she0, shi0, sch0, sne0, 
+     &   wrong_flow, main_call, diagno,
      &   b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
-     &   b2stbc_fchy_dia_coreonly, secmodel, lbndusr, sound_model, 
-     &   area_fix)
+     &   b2stbc_fchy_dia_coreonly, secmodel, lbndusr, 
+     &   area_fix, sheath_drift_fix)
+        if(wrong_flow) write(*,*) 
+     &       'b2stbc: wrong_flow returned from b2stbc_bas'
       endif
       if(lfeedback.or.b2stbc_feedback.ne.0)
      1 call b2stbc_fb(nx, ny, ns, ismain, BoRiS,
      1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
+     &	sna0, smo0, she0, shi0, sch0, sne0, 
      &  main_call, diagno)
 
 * ..compute conditions on the cuts
@@ -369,7 +460,7 @@
 *     (the dimension of t0 is m**3/s)
 *   ..loop over species
       do is = 0, ns-1
-*    ..set momentum source
+*    ..set parallel momentum source
        call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,0,is), 1)
        call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,1,is), 1)
        call b2xxgs (nx, ny, 0.0_R8, smo0(-1,-1,2,is), 1)
@@ -392,7 +483,7 @@ c from diamagnetic drifts
      >           vadia(ix,iy,1,is) = ti(ix,iy)*bb(ix,iy,2)/            !xpb
      &            (qe*rza(ix,iy,is)*hx(ix,iy))*(2.0_R8/bb(ix,iy,3)**3) !xpb
      &            *(wbbr(ix,iy,3)-wbbl(ix,iy,3))*facdrift(ix,iy)       !xpb
-                she0(ix,-1,0)=she0(ix,-1,0)
+                t0 = 
      &           -2.5_R8*
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
      &           /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -405,7 +496,9 @@ c from diamagnetic drifts
      1           (te(ix,iy)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      &            te(bottomix(ix,iy),bottomiy(ix,iy))*hy1(ix,iy))/
      &           (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-                shi0(ix,-1,0)=shi0(ix,-1,0)
+                she0(ix,-1,0) = she0(ix,-1,0) + t0
+                testqe = testqe + t0
+                t0 = 
      &           +2.5_R8*
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
      &           /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -415,9 +508,11 @@ c from diamagnetic drifts
      1           (ti(ix,iy)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      &            ti(bottomix(ix,iy),bottomiy(ix,iy))*hy1(ix,iy))/
      &           (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
+                shi0(ix,-1,0) = shi0(ix,-1,0) + t0
+                testqi = testqi + t0
               endif
             enddo
-          elseif(mod(region(ix,-1,0),4).eq.1) then
+          elseif(mod(region(ix,-1,0),4).eq.1 .and. nnreg(0).gt.1) then
             if (diagno.ge.2) write(*,*) 'Before she0,shi0 =',
      &            ix,she0(ix,-1,0),shi0(ix,-1,0)
             she0(ix,-1,0)=she0(ix,-1,0)+qeaverage(1)*facdrift(ix,iy)*
@@ -464,7 +559,7 @@ c from diamagnetic drifts
      &            *(wbbr(bottomix(ix,iy),bottomiy(ix,iy),3)-
      &              wbbl(bottomix(ix,iy),bottomiy(ix,iy),3))*
      &              facdrift(ix,iy)                                      !xpb
-                she0(ix,iy,0)=she0(ix,iy,0)
+                t0 = 
      &           +2.5_R8*
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
      &           /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -477,7 +572,9 @@ c from diamagnetic drifts
      1           (te(ix,iy)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      &            te(bottomix(ix,iy),bottomiy(ix,iy))*hy1(ix,iy))/
      &           (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-                shi0(ix,iy,0)=shi0(ix,iy,0)
+                she0(ix,iy,0)=she0(ix,iy,0)+t0
+                testqe=testqe+t0
+                t0 =
      &           -2.5_R8*
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
      &           /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -487,12 +584,14 @@ c from diamagnetic drifts
      1           (ti(ix,iy)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      &            ti(bottomix(ix,iy),bottomiy(ix,iy))*hy1(ix,iy))/
      &           (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
+                shi0(ix,iy,0)=shi0(ix,iy,0)+t0
+                testqi=testqi+t0
               endif
             enddo
           endif
         enddo
       endif
-      if (diagno.ge.2) write(*,*) 'testqe, testqi ',testqe, testqi
+      if (diagno.ge.2) write(*,*) 'testqe, testqi ', testqe, testqi
 c end 2001.11.26 dpc/xpb addition
 
 c corrections for N & S current boundary conditions
@@ -543,23 +642,23 @@ c if we want the integral current to be 0
       if((ncall.eq.0 .and. diagno.ge.2) .or. diagno.ge.3) then
         do ix=-1,nx
           write(*,*) 'S:ix,ti,ni,shi0 ',
-     1     ix,ti(ix,-1)/ev,ni(ix,-1,0),shi0(ix,-1,:)
+     1     ix,ti(ix,-1)/ev,ni(ix,-1,0),(shi0(ix,-1,is),is=0,3)
           write(*,*) 'S:ix,te,ne,she0 ',
-     1     ix,te(ix,-1)/ev,ne(ix,-1),she0(ix,-1,:)
+     1     ix,te(ix,-1)/ev,ne(ix,-1),(she0(ix,-1,is),is=0,3)
           write(*,*) 'N:ix,ti,ni,shi0 ',
-     1     ix,ti(ix,ny)/ev,ni(ix,ny,0),shi0(ix,ny,:)
+     1     ix,ti(ix,ny)/ev,ni(ix,ny,0),(shi0(ix,ny,is),is=0,3)
           write(*,*) 'N:ix,te,ne,she0 ',
-     1     ix,te(ix,ny)/ev,ne(ix,ny),she0(ix,ny,:)
+     1     ix,te(ix,ny)/ev,ne(ix,ny),(she0(ix,ny,is),is=0,3)
         enddo
         do iy=-1,ny
           write(*,*) 'W:iy,ti,ni,shi0 ',
-     1     iy,ti(-1,iy)/ev,ni(-1,iy,0),shi0(-1,iy,:)
+     1     iy,ti(-1,iy)/ev,ni(-1,iy,0),(shi0(-1,iy,is),is=0,3)
           write(*,*) 'W:iy,te,ne,she0 ',
-     1     iy,te(-1,iy)/ev,ne(-1,iy),she0(-1,iy,:)
+     1     iy,te(-1,iy)/ev,ne(-1,iy),(she0(-1,iy,is),is=0,3)
           write(*,*) 'E:iy,ti,ni,shi0 ',
-     1     iy,ti(nx,iy)/ev,ni(nx,iy,0),shi0(nx,iy,:)
+     1     iy,ti(nx,iy)/ev,ni(nx,iy,0),(shi0(nx,iy,is),is=0,3)
           write(*,*) 'E:iy,te,ne,she0 ',
-     1     iy,te(nx,iy)/ev,ne(nx,iy),she0(nx,iy,:)
+     1     iy,te(nx,iy)/ev,ne(nx,iy),(she0(nx,iy,is),is=0,3)
         enddo
       endif
 c      write(*,*) 'Copying sna0 to b2stbc_sna'
@@ -593,6 +692,10 @@ c      write(*,*) 'Copying sch0 to b2stbc_sch'
      2 sch0(-1:nx,-1:ny,1)*po(-1:nx,-1:ny)+
      3 sch0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
      4 sch0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*po(-1:nx,-1:ny)
+c      write(*,*) 'Copying sne0 to b2stbc_sne'
+      b2stbc_sne(-1:nx,-1:ny)=
+     1 sne0(-1:nx,-1:ny,0)+
+     2 sne0(-1:nx,-1:ny,1)*ne(-1:nx,-1:ny)
 c      write(*,*) 'Copied s..0 to b2stbc_s..'
       if(ncall.eq.0 .or. main_call) ncall = ncall+1
       call subend ()
@@ -602,3 +705,107 @@ c      write(*,*) 'Copied s..0 to b2stbc_s..'
 *.end b2stbc
 
       end subroutine b2stbc
+
+*-----------------------------------------------------------------------
+*.specification
+      function bcint(fun,nx,ny,il,ib)
+      use b2mod_types
+      use b2mod_geo
+      use b2mod_indirect
+      use b2mod_boundary_namelist
+      implicit none
+*   ..output result (undefined upon entry)
+      real (kind=R8) :: bcint
+*   ..input arguments (unchanged on exit)
+      integer nx, ny, il, ib
+      real (kind=R8) :: fun(-1:nx,-1:ny)
+
+*-----------------------------------------------------------------------
+*.documentation
+*
+*  1. purpose
+*
+*     BCINT provides interpolated face-centred values for cell-centred
+*     quantities (array fun), for use in boundary conditions.
+*     The interpolation is done according to distance away from the
+*     cell face. The boundary index is ib, and the cell index along
+*     the boundary is il.
+*
+*
+*-----------------------------------------------------------------------
+*.declarations
+
+*   ..local variables
+      integer ix, iy
+*   ..procedures
+      real (kind=R8) ::
+     *  hy1
+      external xertst, xerrab
+      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
+
+*-----------------------------------------------------------------------
+*.computation
+
+* ..preliminaries
+*  ..test input parameters
+      call xertst (0.le.nx.and.0.le.ny, 'faulty parameter nx, ny')
+      call xertst (0.lt.ib.and.nbc.ge.ib, 'faulty parameter ib')
+      call xertst (1.le.il.and.bc_list_size(ib).ge.il,
+     .  'faulty parameter il')
+
+* ..main computation
+      if (bcchar(ib).eq.'S') then
+        bcint =
+     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
+     .    hy1(topix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        topiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
+     .    fun(topix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        topiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
+     .    hy1(bc_list_x(il,ib),bc_list_y(il,ib)))
+     .  /(hy1(bc_list_x(il,ib),bc_list_y(il,ib))+
+     .    hy1(topix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        topiy(bc_list_x(il,ib),bc_list_y(il,ib))))
+      elseif (bcchar(ib).eq.'N') then
+        bcint =
+     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
+     .    hy1(bottomix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        bottomiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
+     .    fun(bottomix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        bottomiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
+     .    hy1(bc_list_x(il,ib),bc_list_y(il,ib)))
+     .  /(hy1(bc_list_x(il,ib),bc_list_y(il,ib))+
+     .    hy1(bottomix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        bottomiy(bc_list_x(il,ib),bc_list_y(il,ib))))
+      elseif (bcchar(ib).eq.'E') then
+        bcint =
+     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
+     .    hx(leftix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .       leftiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
+     .    fun(leftix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        leftiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
+     .    hx(bc_list_x(il,ib),bc_list_y(il,ib)))
+     .  /(hx(bc_list_x(il,ib),bc_list_y(il,ib))+
+     .    hx(leftix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .       leftiy(bc_list_x(il,ib),bc_list_y(il,ib))))
+      elseif (bcchar(ib).eq.'W') then
+        bcint =
+     .   (fun(bc_list_x(il,ib),bc_list_y(il,ib))*
+     .    hx(rightix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .       rightiy(bc_list_x(il,ib),bc_list_y(il,ib)))+
+     .    fun(rightix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .        rightiy(bc_list_x(il,ib),bc_list_y(il,ib)))*
+     .    hx(bc_list_x(il,ib),bc_list_y(il,ib)))
+     .  /(hx(bc_list_x(il,ib),bc_list_y(il,ib))+
+     .    hx(rightix(bc_list_x(il,ib),bc_list_y(il,ib)),
+     .       rightiy(bc_list_x(il,ib),bc_list_y(il,ib))))
+      else
+        call xerrab ('bcint : Unknown orientation!')
+      endif
+
+* ..return
+      return
+
+*-----------------------------------------------------------------------
+*.end bcint
+
+      end function bcint

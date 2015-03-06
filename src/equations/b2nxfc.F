@@ -4,8 +4,8 @@
       subroutine b2nxfc (nx, ny, isb, vol, pbs, rob, ub, flub, cvsb,
      &  flcb, cvcb, wrk0)
       use b2mod_types
-      use b2mod_boundary_namelist
       use b2mod_indirect
+      use b2mod_boundary_namelist
       use b2mod_work
      , , only : iffboundx, iffboundy
       implicit none
@@ -26,8 +26,8 @@
 *
 *  1. purpose
 *
-*     B2NXFC computes the transport terms in the momentum correction
-*     equation.
+*     B2NXFC computes the transport terms in the parallel momentum
+*     correction equation.
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -35,10 +35,10 @@
 *   ..local variables
       integer ncall, style, n2, ix, iy, ncallout, ib
       integer, save :: iout = 0                                     !srv 17.06.02
-      character charns*2                                            !srv 17.06.02
+      character charns*3                                            !srv 17.06.02
       save ncall, style, ncallout
 *   ..procedures
-      external subini, subend, xertst, ipgeti, ipgetr, scopy
+      external subini, subend, xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvsg, hbout
 *   ..initialisation
       data ncall/0/, style/0/, ncallout/-1/
@@ -126,13 +126,12 @@
           endif                                                         !srv 26.11.02 }
         enddo
        else
-        write(*,*) 'style 0 or 1 in b2nxfc are included only'
-        stop
+        call xerrab ('Only style 0 or 1 in b2nxfc are included')
        endif
       enddo
 *   ..compute flcby, cvcby
-      call scopy (n2, flub(-1,-1,1), 1, flcb(-1,-1,1), 1)
-      call scopy (n2, cvsb(-1,-1,1), 1, cvcb(-1,-1,1), 1)
+      call b2scopy (n2, flub(-1,-1,1), 1, flcb(-1,-1,1), 1)
+      call b2scopy (n2, cvsb(-1,-1,1), 1, cvcb(-1,-1,1), 1)
 
 csw 18feb2014 remove fluxes between guard cells 
         do ix=-1,nx
@@ -152,9 +151,24 @@ csw 18feb2014 remove fluxes between guard cells
          enddo
         enddo
 
+*  INTERIOR BOUNDARY AT DEAD REGIONS
+      DO IB=1,NNISO
+        DO IX=NXISO1(IB), NXISO2(IB)
+          DO IY=NYISO1(IB), NYISO2(IB)
+            flcb(ix,iy,0)=0.0_R8
+            cvcb(ix,iy,0)=0.0_R8
+            flcb(ix,iy,1)=0.0_R8
+            cvcb(ix,iy,1)=0.0_R8
+            flub(ix,iy,0)=0.0_R8
+            cvsb(ix,iy,0)=0.0_R8
+            flub(ix,iy,1)=0.0_R8
+            cvsb(ix,iy,1)=0.0_R8
+          end do
+        end do
+      end do
 
       if (iout.ne.0) then                                              !sv 17.06.02 {
-        write (charns,'(i2.2)') isb    
+        write (charns,'(i3.3)') isb    
         call my_out(70,nx,ny,flub(-1,-1,0),'b2nxfc_flubx'//charns)
         call my_out(70,nx,ny,flub(-1,-1,1),'b2nxfc_fluby'//charns)
         call my_out(70,nx,ny,flcb(-1,-1,0),'b2nxfc_flcbx'//charns)
@@ -171,4 +185,4 @@ csw 18feb2014 remove fluxes between guard cells
 *-----------------------------------------------------------------------
 *.end b2nxfc
 
-      end
+      end subroutine b2nxfc

@@ -19,7 +19,11 @@
       use b2mod_ppout
       implicit none
 csw 28feb2011 mpi
+#ifdef USE_MPI
       include 'mpif.h'
+#else
+#     include "mpif.h"
+#endif
       real*8 dumarr(100)
       logical ltrigger
 csw
@@ -153,8 +157,9 @@ csw 28feb2011 mpi
       call mpi_init(ierr_mpi)
       call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
       call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
+#ifdef USE_EIRENE
       if(rank_mpi .ne. 0) then
-        call eirene_find_param
+        call eirene_find_param(5)
         do
           call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,
      .                   MPI_COMM_WORLD,ierr_mpi)
@@ -169,6 +174,7 @@ csw 28feb2011 mpi
         stop 'b2mn_mpi_child'
       endif
 csw
+#endif
 *   ..program start-up calls
       call prgini ('b2mn')
 !      call ipgeti ('b2mn_istatus_file', istatus_file)

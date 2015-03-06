@@ -228,7 +228,7 @@
        if (iout.ne.0) then
 	  allocate(w1(-1:nx,-1:ny))
 	  do is=0,ns-1                                                 !srv 13.01.04 {
-	   write (charns,'(i2.2)') is 
+	   write (charns,'(i3.3)') is 
 	   call my_out(70, nx, ny, hcimx(-1,-1,0,is),'hcimx'//charns)
 	   call my_out(70, nx, ny, hcimx(-1,-1,1,is),'hcimy'//charns)
 	   w1 = 1.0e0_R8

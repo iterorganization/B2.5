@@ -1,251 +1,277 @@
-      subroutine init_wall(nx,ny,ns,BoRiS,
-     .   plate_model, plate_option, plate_temp, plate_thick)
-      use b2mod_types 
+      subroutine init_wall(nx,ny)
+      use b2mod_types
       use b2mod_geo
       use b2mod_rates
-      use b2mod_plasma 
+      use b2mod_plasma
       use b2mod_sputter
       use b2mod_indirect
       use b2mod_wall
       use b2mod_layer
       use b2mod_b2cmpa
       use b2mod_b2cmpb
+      use b2mod_external
+#ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
+#endif
       implicit none
 
-      integer nx, ny, ns
-      integer plate_model, plate_option
-      real (kind=R8) :: BoRiS, plate_temp, plate_thick
+      integer nx, ny, ns, natm, nmol, nion, nlim, nsts
+      real (kind=R8) :: BoRiS
 
-      integer ix, iy, is, ireg
-      integer ibnd, ibndp, ibndm, i, j, itrack
-      integer imapx_tmp(nwall), imapy_tmp(nwall)
-      integer xymap_tmp(-1:nx,-1:ny)
+      integer ix, iy, is, ixn, iyn, idir, ireg
+      integer ibnd, ibndm, i, j, ik, itrack, icoat, ikink, ikink0
+      integer, allocatable, save :: imapx_tmp(:), imapy_tmp(:) 
+      integer, allocatable, save :: xymap_tmp(:,:)
       real (kind=R8) :: qin, qel, normal_r, normal_z, 
-     *  n1_r, n1_z, n2_r, n2_z, dist, sina, cosa, 
-     *  coshlf, sinhlf, tanhlf, nhalf_r, nhalf_z, sum,
-     *  sput_frac(0:ntrack)
-      logical wall_namelist_used, default_cooling
-      save wall_namelist_used
-      data wall_namelist_used /.false./
-      character*400 line
-      character*17 numstr
-      character*2 track_species_save(ntrack)
-      logical todo, found
+     *  xa, ya, xa2, ya2, xb, yb, xo, yo, nhalf_r, nhalf_z, nhalf,
+     *  xap, yap, xaq, yaq, xbp, ybp, xbq, ybq, xbm, ybm, xint, yint,
+     *  n1_r, n1_z, n2_r, n2_z, dist, distp, dint, sum,
+     *  sput_frac(0:ntrack), wrk(ndepth_nml)
+      logical wall_namelist_used, default_cooling, correct_quadrant
+      logical todo, found, error
 
-      integer, save :: hd_linlog, output, sput_dst, sput_frac_flag
+      integer, save :: hd_linlog, output, sput_frac_flag,
+     *  sput_phys_col, sput_phys_model, refl_model
       real (kind=R8), save :: hd_ratio
       data hd_linlog/1/, hd_ratio/100.0_R8/, output/0/
-      data sput_dst/-1/, sput_frac_flag/0/
+      data sput_frac_flag/0/, sput_phys_col/3/,
+     *  sput_phys_model/1/, refl_model/1/
 
       real (kind=R8) :: mass_density
-      intrinsic mod, max, min, sqrt
-      external mass_density
+      logical overlap
+      intrinsic mod, max, min, sqrt, abs, int
+      external mass_density, overlap
       external xertst, subini, subend, ipgeti, ipgetr
 
-      namelist /wall_save/ ndepth_nml, track_species,
-     *  imapx, imapy, xymap, surface_material_name, bulk_material_name, 
-     *  target_temp, backplate_temp, plate_thickness, plate_time_factor,
-     *  deposition, erosion, chemical_sputtering, physical_sputtering,
-     *  physical_sputtering_energy, RES_sputtering, thermal_evaporation,
-     *  backscattering, backscattering_energy, plate_time, plate_area,
-     *  monolayer_deposition, monolayer_erosion, 
-     *  layer_nconstituents, layer_nzconstituents, 
-     *  layer_nrelconstituents, layer_thermal_contact,
-     *  coating_thickness, coating_material_name,
-     *  layer_alloys, inertial_cooling
+      real (kind=R8) :: onemeps
+      parameter (onemeps =  1.0_R8 - 1.0e-5_R8)
 
       call subini('init_wall')
-      call alloc_b2mod_wall(nx,ny)
+      allocate(imapx_tmp(nwall), imapy_tmp(nwall))
+      allocate(xymap_tmp(-1:DEF_NXD,-1:DEF_NYD))
 cxpb Establish numbering of boundary wall cells
 cxpb We must avoid corner cells and dead cells
       nbnd = 0
-      ndepth_nml = 1
       imapx_tmp= 0
       imapy_tmp= 0
       xymap_tmp= 0
       wall_begin = 0
       wall_end = 0
       nsegments = 0
-      inertial_cooling = .false.
-      backplate_temp = 0.0_R8
-      plate_thickness = 0.0_R8
-      coating_thickness = 0.0_R8
-      plate_time_factor = 0.0_R8
-      surface_material_name = ' '
-      coating_material_name = ' '
-      bulk_material_name = ' '
       itrack_0 = 0
-      layer_alloys = ' '
-      chemical_sputtering = 0.0_R8
-      physical_sputtering = 0.0_R8
-      physical_sputtering_energy = 0.0_R8
-      RES_sputtering = 0.0_R8
-      thermal_evaporation = 0.0_R8
-      backscattering = 0.0_R8
-      backscattering_energy = 0.0_R8
-      deposition = 0.0_R8
-      monolayer_deposition = 0.0_R8
-      erosion = 0.0_R8
-      monolayer_erosion = 0.0_R8
-      target_temp = 0.0_R8
-      plate_time = 0.0_R8
-      layer_nconstituents = 0
-      layer_nzconstituents = 0
-      layer_nrelconstituents = 0.0_R8
-      layer_composition = 0.0_R8
-      layer_thermal_contact = 1.0_R8
       
-cxpb  We follow the same order as in b2plot
+cxpb  We start from the HFS lower corner and go clockwise around the plasma
+cxpb  keeping the plasma to our right (but we are moving in the guard cells!)
 cxpb  Northern boundaries (excluding diverted island)
-      ireg = cbirno
-      do iy = ny, -1, -1
-        do ix = -1, nx
-          if (topiy(ix,iy).eq.ny+1 .and. region(ix,iy,0).ne.0 .and.
-     &        region(ix,iy,0).ne.5 .and.
-     &        leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-            nbnd = nbnd + 1
-            imapx_tmp(nbnd) = ix
-            imapy_tmp(nbnd) = iy
-            r1(nbnd)=crx(ix,iy,2)
-            z1(nbnd)=cry(ix,iy,2)
-            r2(nbnd)=crx(ix,iy,3)
-            z2(nbnd)=cry(ix,iy,3)
-            xymap_tmp(ix,iy)= nbnd
-            plate_area(nbnd) = gs(ix,iy,1)
-            if (xymap_tmp(ix,iy).ne.0 .and. 
-     &          (xymap_tmp(leftix(ix,iy),leftiy(ix,iy)).eq.0 .or.
-     &          (leftix(ix,iy).eq.ix .and. leftiy(ix,iy).eq.iy))) then
-              nsegments = nsegments + 1
-              wall_begin(nsegments) = nbnd
-            endif 
-          endif
-          if(iy.eq.ny) then
-            if (cbrbrk(ireg)*nx.lt.ix+0.5_R8) then
-              ireg = ireg + 1
-            endif
-            if (xymap_tmp(ix,iy).ne.0) imapreg(nbnd) = ireg
-          endif
-        enddo
-      enddo
-cxpb  Eastern boundaries
-      ireg = cbirea+cbnrea-1
-      do ix = nx, -1, -1
-        do iy = ny, -1, -1
-          if (rightix(ix,iy).eq.nx+1 .and. region(ix,iy,0).ne.0 .and.
-     &        bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
-            nbnd = nbnd + 1
-            imapx_tmp(nbnd) = ix
-            imapy_tmp(nbnd) = iy
+      iy = ny
+      ix = -1
+      ixn = rightix(ix,iy)
+      iyn = rightiy(ix,iy)
+      if (rightix(ixn,iyn).ne.nx+1) then
+         idir = 2               ! 0 : left, 1: bottom, 2: right, 3: top
+      else
+! we have the special case that there are no cells on the top
+         idir = 1
+         ixn = bottomix(ixn,iyn)
+         iyn = bottomiy(ixn,iyn)
+         write(*,*) 'Top skipped'
+      endif
+      nsegments = 1
+      wall_begin(1) = 1
+      do while (xymap_tmp(ixn,iyn).eq.0)
+        nbnd = nbnd + 1
+        imapx_tmp(nbnd) = ixn
+        imapy_tmp(nbnd) = iyn
+        xymap_tmp(ixn,iyn)= nbnd
+        ix = ixn
+        iy = iyn
+        DIRVALUE: select case (idir)
+          case(0)  ! left
             r1(nbnd)=crx(ix,iy,3)
             z1(nbnd)=cry(ix,iy,3)
-            r2(nbnd)=crx(ix,iy,1)
-            z2(nbnd)=cry(ix,iy,1)
-            xymap_tmp(ix,iy)= nbnd
-            plate_area(nbnd) = gs(ix,iy,0)
-            if (xymap_tmp(ix,iy).ne.0 .and. 
-     &          (xymap_tmp(topix(ix,iy),topiy(ix,iy)).eq.0 .or.
-     &          (topix(ix,iy).eq.ix .and. topiy(ix,iy).eq.iy))) then
-              nsegments = nsegments + 1
-              wall_begin(nsegments) = nbnd
-            endif 
-          endif
-          if(ix.eq.nx) then
-            if (ireg.gt.cbirea) then
-              if (cbrbrk(ireg-1)*ny.gt.iy+0.5_R8) then
-                ireg = ireg - 1
-              endif
-            endif
-            if (xymap_tmp(ix,iy).ne.0) imapreg(nbnd) = ireg
-          endif
-        enddo
-      enddo
-cxpb  Southern boundaries (excluding core)
-      ireg = cbirso+cbnrso-1
-      do iy = -1, ny
-        do ix = nx, -1, -1      
-          if (bottomiy(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0 .and.
-     &        mod(region(ix,iy,0),4).ne.1 .and.
-     &        leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-            nbnd = nbnd + 1
-            imapx_tmp(nbnd) = ix
-            imapy_tmp(nbnd) = iy
-            r1(nbnd)=crx(ix,iy,1)
-            z1(nbnd)=cry(ix,iy,1)
-            r2(nbnd)=crx(ix,iy,0)
-            z2(nbnd)=cry(ix,iy,0)
-            xymap_tmp(ix,iy)= nbnd
-            plate_area(nbnd) = gs(topix(ix,iy),topiy(ix,iy),1)
-            if (xymap_tmp(ix,iy).ne.0 .and. 
-     &          (xymap_tmp(rightix(ix,iy),rightiy(ix,iy)).eq.0 .or.
-     &          (rightix(ix,iy).eq.ix .and. rightiy(ix,iy).eq.iy))) then
-              nsegments = nsegments + 1
-              wall_begin(nsegments) = nbnd
-            endif 
-          endif
-          if(iy.eq.-1) then
-            if (ireg.gt.cbirso) then
-              if (cbrbrk(ireg-1)*nx.gt.ix+0.5_R8) then
-                ireg = ireg - 1
-              endif
-            endif
-            if (xymap_tmp(ix,iy).ne.0) imapreg(nbnd) = ireg
-          endif
-        enddo
-      enddo
-cxpb  Western boundaries
-      ireg = cbirwe
-      do ix = -1, nx
-        do iy = -1, ny
-          if (leftix(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0 .and.
-     &        bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
-            nbnd = nbnd + 1
-            imapx_tmp(nbnd) = ix
-            imapy_tmp(nbnd) = iy
-            r1(nbnd)=crx(ix,iy,0)
-            z1(nbnd)=cry(ix,iy,0)
             r2(nbnd)=crx(ix,iy,2)
             z2(nbnd)=cry(ix,iy,2)
-            xymap_tmp(ix,iy)= nbnd
-            plate_area(nbnd) = gs(rightix(ix,iy),rightiy(ix,iy),0)
-            if (xymap_tmp(ix,iy).ne.0 .and. 
-     &          (xymap_tmp(bottomix(ix,iy),bottomiy(ix,iy)).eq.0 .or.
-     &          (rightix(ix,iy).eq.ix .and. rightiy(ix,iy).eq.iy))) then
+            plate_area(nbnd) = gs(topix(ix,iy),topiy(ix,iy),1)
+            ixn = leftix(ix,iy)
+            iyn = leftiy(ix,iy)
+            call check_ok(nx, ny, ixn, iyn, idir)
+            if (leftix(ixn,iyn).eq.-2) then 
+              idir = 3
+              ixn = leftix(topix(ix,iy),topiy(ix,iy))
+              iyn = leftiy(topix(ix,iy),topiy(ix,iy))
+              if(iyn.eq.ny) then
+! special case for 1d linear device
+                 write(*,*) 'Special treatment: 1d linear device'
+                 iyn = iy+1
+              endif
+              wall_end(nsegments) = nbnd
               nsegments = nsegments + 1
-              wall_begin(nsegments) = nbnd
-            endif 
-          endif
-          if(ix.eq.-1) then
-            if (cbrbrk(ireg)*ny.lt.iy+0.5_R8) then
-              ireg = ireg + 1
+              wall_begin(nsegments) = nbnd+1
+            elseif (bottomiy(ixn,iyn).ne.-2) then
+              idir = 1
+              ixn = bottomix(leftix(ix,iy),leftiy(ix,iy))
+              iyn = bottomiy(leftix(ix,iy),leftiy(ix,iy))
+              wall_end(nsegments) = nbnd
+              nsegments = nsegments + 1
+              wall_begin(nsegments) = nbnd+1
             endif
-            if (xymap_tmp(ix,iy).ne.0) imapreg(nbnd) = ireg
-          endif
-        enddo
+          case(1)  ! bottom
+            plate_area(nbnd) = gs(ix,iy,0)
+            r1(nbnd)=crx(ix,iy,2)
+            z1(nbnd)=cry(ix,iy,2)
+            r2(nbnd)=crx(ix,iy,0)
+            z2(nbnd)=cry(ix,iy,0)
+            ixn = bottomix(ix,iy)
+            iyn = bottomiy(ix,iy)
+            call check_ok(nx, ny, ixn, iyn, idir)
+            if (bottomiy(ixn,iyn).eq.-2) then
+              idir = 0
+              ixn = bottomix(leftix(ix,iy),leftiy(ix,iy))
+              iyn = bottomiy(leftix(ix,iy),leftiy(ix,iy))
+              wall_end(nsegments) = nbnd
+              nsegments = nsegments + 1
+              wall_begin(nsegments) = nbnd+1
+            else if (rightix(ixn,iyn).ne.nx+1) then
+              idir = 2
+              ixn = rightix(bottomix(ix,iy),bottomiy(ix,iy))
+              iyn = rightiy(bottomix(ix,iy),bottomiy(ix,iy))
+              wall_end(nsegments) = nbnd
+              nsegments = nsegments + 1
+              wall_begin(nsegments) = nbnd+1
+            elseif (iy.eq.iyn) then
+! special case for 1d linear device
+              write(*,*) 'Special treatment: 1d linear device'
+              idir = 0
+              ixn = bottomix(leftix(ix,iy),leftiy(ix,iy))
+              iyn = -1
+              wall_end(nsegments) = nbnd
+              nsegments = nsegments + 1
+              wall_begin(nsegments) = nbnd+1
+            endif 
+          case(2)  ! right
+            plate_area(nbnd) = gs(ix,iy,1)
+            r1(nbnd)=crx(ix,iy,0)
+            z1(nbnd)=cry(ix,iy,0)
+            r2(nbnd)=crx(ix,iy,1)
+            z2(nbnd)=cry(ix,iy,1)
+            ixn = rightix(ix,iy)
+            iyn = rightiy(ix,iy)
+            call check_ok(nx, ny, ixn, iyn, idir)
+            if (rightix(ixn,iyn).eq.nx+1) then
+              idir = 1
+              ixn = rightix(bottomix(ix,iy),bottomiy(ix,iy))
+              iyn = rightiy(bottomix(ix,iy),bottomiy(ix,iy))
+              if(iyn.eq.-1) then
+! special case for 1d linear device
+                 write(*,*) 'Special treatment: 1d linear device'
+                 iyn = iy-1
+              endif
+              wall_end(nsegments) = nbnd
+              nsegments = nsegments + 1
+              wall_begin(nsegments) = nbnd+1
+            else if (topiy(ixn,iyn).ne.ny+1) then
+              idir = 3
+              ixn = topix(rightix(ix,iy),rightiy(ix,iy))
+              iyn = topiy(rightix(ix,iy),rightiy(ix,iy))
+              wall_end(nsegments) = nbnd
+              nsegments = nsegments + 1
+              wall_begin(nsegments) = nbnd+1
+            endif
+          case(3)  ! top
+            plate_area(nbnd) = gs(rightix(ix,iy),rightiy(ix,iy),0)
+            r1(nbnd)=crx(ix,iy,1)
+            z1(nbnd)=cry(ix,iy,1)
+            r2(nbnd)=crx(ix,iy,3)
+            z2(nbnd)=cry(ix,iy,3)
+            ixn = topix(ix,iy)
+            iyn = topiy(ix,iy)
+            call check_ok(nx, ny, ixn, iyn, idir)
+            if (topiy(ixn,iyn).eq.ny+1) then
+              idir = 2
+              ixn = topix(rightix(ix,iy),rightiy(ix,iy))
+              iyn = topiy(rightix(ix,iy),rightiy(ix,iy))
+              wall_end(nsegments) = nbnd
+              nsegments = nsegments + 1
+              wall_begin(nsegments) = nbnd+1
+            else if (leftix(ixn,iyn).ne.-2) then
+              idir = 0
+              ixn = leftix(topix(ix,iy),topiy(ix,iy))
+              iyn = leftiy(topix(ix,iy),topiy(ix,iy))
+              wall_end(nsegments) = nbnd
+              nsegments = nsegments + 1
+              wall_begin(nsegments) = nbnd+1
+            elseif (iy.eq.iyn) then
+! special case for 1d linear device
+              write(*,*) 'Special treatment: 1d linear device'
+              idir = 2
+              ixn = topix(rightix(ix,iy),rightiy(ix,iy))
+              iyn = ny
+              wall_end(nsegments) = nbnd
+              nsegments = nsegments + 1
+              wall_begin(nsegments) = nbnd+1
+            endif 
+          case default DIRVALUE
+            call xerrab ('Invalid direction')
+        end select DIRVALUE
       enddo
-cxpb  Compute end segment positions
-      do is = 2, nsegments
-        wall_end(is-1) = wall_begin(is)-1
-      enddo
-      wall_end(nsegments) = nbnd
+      nsegments = nsegments - 1      
+
+cxpb  We now identify the b2ah region numbers
+      do ibnd = 1, nbnd
+        ix = imapx_tmp(ibnd)
+        iy = imapy_tmp(ibnd)
+        if(iy.eq.ny) then
+          ireg = cbirno
+          do while (cbrbrk(ireg)*nx.lt.ix+0.5_R8 .and. 
+     &                     ireg.le.cbirno+cbnrno-1)
+            ireg = ireg + 1
+          enddo
+          imapreg(ibnd) = ireg
+        elseif (ix.eq.nx) then
+          ireg = cbirea
+          do while (cbrbrk(ireg)*ny.lt.iy+0.5_R8 .and. 
+     &                     ireg.le.cbirea+cbnrea-1)
+            ireg = ireg + 1
+          enddo
+          imapreg(ibnd) = ireg
+        elseif (iy.eq.-1) then
+          ireg = cbirso
+          do while (cbrbrk(ireg)*nx.lt.ix+0.5_R8 .and. 
+     &                     ireg.le.cbirso+cbnrso-1)
+            ireg = ireg + 1
+          enddo
+          imapreg(ibnd) = ireg
+        elseif (ix.eq.-1) then
+          ireg = cbirwe
+          do while (cbrbrk(ireg)*ny.lt.iy+0.5_R8 .and. 
+     &                     ireg.le.cbirwe+cbnrwe-1)
+            ireg = ireg + 1
+          enddo
+          imapreg(ibnd) = ireg
+        else
+          imapreg(ibnd) = -1
+        end if
+      end do  
+
       do is = nsegments+1, nwall_segments
         wall_begin(is) = nbnd+1
       enddo
-      call xertst (nbnd.le.2*DEF_NCUT*(DEF_NXD+2)+2*(DEF_NYD+2),
+#ifndef ALLOCATE_AND_NAMELIST
+      call xertst (nbnd.le.2*(DEF_NXD+2)+(DEF_NCUT+2)*(DEF_NYD+2),
      & 'Increase size of B2 contribution to nwall in b2mod_wall')
+#endif
+cxpb Recopy geometrical arrays into namelist defaults
+      imapx(1:nbnd) = imapx_tmp(1:nbnd)
+      imapy(1:nbnd) = imapy_tmp(1:nbnd)
+      xymap(-1:nx,-1:ny) = xymap_tmp(-1:nx,-1:ny)
+      call subend()
+      return
 
-      inquire(file='../b2.wall_save.parameters',
-     1 exist=wall_namelist_used)
-      if(wall_namelist_used) then
-        track_species_save=track_species
-        open(99,file='../b2.wall_save.parameters')
-        write(*,*) 'Reading ../b2.wall_save.parameters'
-        read(99,wall_save)
-        close(99)
-        write(*,*) 'Read ../b2.wall_save.parameters'
-        call xertst(ndepth_nml.le.ndepth .and. ndepth_nml.ge.1,
-     .   'Invalid array size NDEPTH_NML!')
-        write(*,*) 'track_species : Bulk ', track_species(1:ntargsp)
+      entry get_wall_data(nx,ny,ns,BoRiS,wall_namelist_used)
+      call subini('get_wall_data')
+cxp   Test namelist input
+      write(*,*) 'track_species : Bulk ', track_species(1:ntargsp)
+      if (wall_namelist_used) then
         do is = 1, ntrack
           call xertst(track_species_save(is).eq.track_species(is),
      .     'inconsistent declaration of tracked species')
@@ -256,23 +282,15 @@ cxpb  Compute end segment positions
               call xertst(xymap(ix,iy).eq.xymap_tmp(ix,iy),
      .         'Inconsistent numbering between namelist and code!')
               call xertst(
-     .           imapx(xymap(ix,iy)).eq.ix .and.
-     .           imapy(xymap(ix,iy)).eq.iy,
-     .       'Inconsistent boundary mapping in namelist WALL!')
+     .        imapx(xymap(ix,iy)).eq.ix .and.
+     .        imapy(xymap(ix,iy)).eq.iy,
+     .         'Inconsistent boundary mapping in namelist WALL!')
             endif
           end do
         end do
-      endif
-      imapx(1:nbnd) = imapx_tmp(1:nbnd)
-      imapy(1:nbnd) = imapy_tmp(1:nbnd)
-      xymap(-1:nx,-1:ny) = xymap_tmp(-1:nx,-1:ny)
-      call subend()
-      return
-
-      entry wall_data(nx,ny,ns,BoRiS,
-     .   plate_model, plate_option, plate_temp, plate_thick)
-      call subini('wall_data')
+      end if
 cxpb Fill up array data not given in namelist
+      layer_composition = 0.0_R8
       do ibnd = 1, nbnd
         if (backplate_temp(ibnd).eq.0.0_R8)
      .      backplate_temp(ibnd) = plate_temp
@@ -292,10 +310,21 @@ cxpb Read material data
      .   'faulty input parameter sput_dst')
       if (sput_dst.lt.0) then
         write(*,*) 'No sputtering enabled : Target models turned off!'
+        layer_thickness=0.0_R8
+        layer_depth=0.0_R8
         call subend()
         return
       endif
       call read_b2mod_wall(ntargsp)
+      call ipgeti ('b2stbr_sput_phys_col', sput_phys_col)
+c the TRIM sputtering files have 9 columns corresponding to
+c 0 15 30 45 55 65 75 80 85 degree impact
+      call xertst (0.le.sput_phys_col.and.sput_phys_col.le.9,
+     1 'faulty b2stbr_sput_phys_col')
+      call ipgeti ('b2stbr_sput_phys_model', sput_phys_model)
+      call ipgeti ('b2stbr_refl_model', refl_model)
+      if (sput_dst.ge.0) call read_sputter_data(ns,
+     1 sput_phys_col,sput_phys_model,refl_model)
 
 cxpb For mixed materials, if unspecified, use normal material constituents
       do ibnd = 1, nbnd
@@ -333,12 +362,40 @@ c-xpb  and layer depth (sum of deposition),
 c-xpb  i.e. minimum depth over which material mixing occurs
         layer_thickness(ibnd)=0.0_R8
         layer_depth(ibnd)=0.0_R8
-        do i=1,ndepth_nml-1
+        if (coating_thickness(ibnd).gt.0.0_R8) then
+c-xpb  Figure out where to put the coating-bulk boundary
           if (hd_linlog.eq.1) then
-            target_depth(ibnd,i) = plate_thickness(ibnd) * 
-     .       float(i-1) / float(ndepth_nml - 1)
+            icoat = int(ndepth_nml*coating_thickness(ibnd)/
+     .                       plate_thickness(ibnd) + onemeps)+1
           else
-            target_depth(ibnd,i) = plate_thickness(ibnd) * 
+            icoat = int( (ndepth_nml-1)*
+     .       log(coating_thickness(ibnd)*(hd_ratio-1.0_R8)/
+     .           plate_thickness(ibnd) + 1.0_R8) / log(hd_ratio) + 
+     .           onemeps )+1
+          end if
+        else
+          icoat = 1
+        end if
+        do i=1,icoat-1
+          if (hd_linlog.eq.1) then
+            target_depth(ibnd,i) = coating_thickness(ibnd) * 
+     .        float(i-1) / float(icoat - 1)
+          else
+            target_depth(ibnd,i) = coating_thickness(ibnd) * 
+     .       (hd_ratio ** (float(i-1) / float(icoat - 1)) 
+     .                                                - 1.0_R8)/
+     .       (hd_ratio - 1.0_R8)
+          endif
+        enddo
+        target_depth(ibnd,icoat)=coating_thickness(ibnd)
+        do i=icoat+1,ndepth_nml-1
+          if (hd_linlog.eq.1) then
+            target_depth(ibnd,i) = coating_thickness(ibnd) +
+     .       (plate_thickness(ibnd)-coating_thickness(ibnd)) * 
+     .        float(i-1) / float(ndepth_nml - 1)
+          else
+            target_depth(ibnd,i) = coating_thickness(ibnd) +
+     .       (plate_thickness(ibnd)-coating_thickness(ibnd)) * 
      .       (hd_ratio ** (float(i-1) / float(ndepth_nml - 1)) 
      .                                                - 1.0_R8)/
      .       (hd_ratio - 1.0_R8)
@@ -366,8 +423,8 @@ c no mixed materials
           layer_mass_density(ibnd)=mass_density(ibnd,2)
           sput_frac(0)=1.0_R8
           sput_frac(1:ntrack)=0.0_R8
-          call compose_layer(ibnd,sput_frac)
         endif
+        call compose_layer(ibnd,sput_frac)
         if (ndepth_nml.gt.1) then
           target_depth(ibnd,ndepth_nml) = plate_thickness(ibnd)
         else
@@ -375,132 +432,156 @@ c no mixed materials
         endif
       enddo
 
-cxpb Correct the target_width for non-parallel but neighbouring wall elements
-      do ix = -1, nx
-        do iy = -1, ny
-          ibnd=xymap(ix,iy)
-          if (ibnd.ne.0) then
-            if (topiy(ix,iy).eq.ny+1) then        ! North boundary 
-              ibndm=xymap( leftix(ix,iy), leftiy(ix,iy))
-              ibndp=xymap(rightix(ix,iy),rightiy(ix,iy))
-            else if (bottomiy(ix,iy).eq.-2) then  ! South boundary
-              ibndp=xymap( leftix(ix,iy), leftiy(ix,iy))
-              ibndm=xymap(rightix(ix,iy),rightiy(ix,iy))
-            endif
-            if (leftix(ix,iy).eq.-2) then         ! West boundary
-              ibndm=xymap(bottomix(ix,iy),bottomiy(ix,iy))
-              ibndp=xymap(   topix(ix,iy),   topiy(ix,iy))
-            else if (rightix(ix,iy).eq.nx+1) then ! East boundary
-              ibndp=xymap(bottomix(ix,iy),bottomiy(ix,iy))
-              ibndm=xymap(   topix(ix,iy),   topiy(ix,iy))
-            endif
-            normal_r = -(z1(ibnd)-z2(ibnd))
-            normal_z = -(r2(ibnd)-r1(ibnd))
-            dist = sqrt((r2(ibnd)-r1(ibnd))**2+(z2(ibnd)-z1(ibnd))**2)
-            target_width(ibnd,1:ndepth_nml) = dist
-            normal_r = normal_r / dist
-            normal_z = normal_z / dist
-            if (ibndm.ne.0) then
-              n1_r = -(z1(ibndm)-z2(ibndm))
-              n1_z = -(r2(ibndm)-r1(ibndm))
-              dist = sqrt((r2(ibndm)-r1(ibndm))**2+
-     +                    (z2(ibndm)-z1(ibndm))**2)
-              n1_r = n1_r / dist
-              n1_z = n1_z / dist
-              sina = normal_r * n1_z - normal_z * n1_r
-              cosa = normal_r * n1_r + normal_z * n1_z
-              cosa = max(-1.0_R8, min(1.0_R8, cosa))
-              call xertst (cosa.ne.0.0_R8,
-     .         'perpendicular neighbouring wall elements !')
-              if(cosa.eq.1.0_R8) then
-                coshlf = 1.0_R8
-                sinhlf = 0.0_R8
-              else if(sina.ge.0.0_R8) then
-                coshlf = sqrt((1.0_R8 + cosa)/2.0_R8)
-                sinhlf = sqrt((1.0_R8 - cosa)/2.0_R8)
-              else
-                coshlf = sqrt((1.0_R8 + cosa)/2.0_R8)
-                sinhlf =-sqrt((1.0_R8 - cosa)/2.0_R8)
-              endif
-              tanhlf = sinhlf / coshlf
-cxpb  rotate with an angle -hlf
-              nhalf_r = normal_r * coshlf - normal_z * sinhlf
-              nhalf_z = normal_r * sinhlf + normal_z * coshlf
-              do i = 1, ndepth_nml
-                target_width(ibnd,i) = max(0.0_R8, target_width(ibnd,i) 
-     .           - tanhlf * target_depth(ibnd,i))
-                if (target_width(ibnd,i).gt.0.0_R8) then
-                  targetcr(ibnd,i,1) = r1(ibnd) 
-     .             - target_depth(ibnd,i) * nhalf_r 
-                  targetcz(ibnd,i,1) = z1(ibnd) 
-     .             - target_depth(ibnd,i) * nhalf_z
-                else
-                  targetcr(ibnd,i,1) = (r1(ibnd) + r2(ibnd))/2.0_R8
-     .             - target_depth(ibnd,i) * normal_r
-                  targetcz(ibnd,i,1) = (z1(ibnd) + z2(ibnd))/2.0_R8
-     .             - target_depth(ibnd,i) * normal_z
-                endif 
-              enddo
-            else  ! case of edge cell with no neighbour on this side
-              do i = 1, ndepth_nml
-                targetcr(ibnd,i,1) = r1(ibnd)
-     .           - target_depth(ibnd,i) * normal_r
-                targetcz(ibnd,i,1) = z1(ibnd)
-     .           - target_depth(ibnd,i) * normal_z
-              enddo
-            endif 
-            if (ibndp.ne.0) then
-              n2_r = -(z1(ibndp)-z2(ibndp))
-              n2_z = -(r2(ibndp)-r1(ibndp))
-              dist = sqrt((r2(ibndp)-r1(ibndp))**2+
-     +                    (z2(ibndp)-z1(ibndp))**2)
-              n2_r = n2_r / dist
-              n2_z = n2_z / dist
-              sina = normal_r * n2_z - normal_z * n2_r
-              cosa = normal_r * n2_r + normal_z * n2_z
-              cosa = max(-1.0_R8, min(1.0_R8, cosa))
-              call xertst (cosa.ne.0.0_R8,
-     .         'perpendicular neighbouring wall elements !')
-              if(cosa.eq.1.0_R8) then
-                coshlf = 1.0_R8
-                sinhlf = 0.0_R8
-              else if(sina.ge.0.0_R8) then
-                coshlf = sqrt((1.0_R8 + cosa)/2.0_R8)
-                sinhlf = sqrt((1.0_R8 - cosa)/2.0_R8)
-              else
-                coshlf = sqrt((1.0_R8 + cosa)/2.0_R8)
-                sinhlf =-sqrt((1.0_R8 - cosa)/2.0_R8)
-              endif
-              tanhlf = sinhlf / coshlf
-cxpb  rotate with an angle -hlf
-              nhalf_r = normal_r * coshlf - normal_z * sinhlf
-              nhalf_z = normal_r * sinhlf + normal_z * coshlf
-              do i = 1, ndepth_nml
-                target_width(ibnd,i) = max(0.0_R8, target_width(ibnd,i) 
-     .           - tanhlf * target_depth(ibnd,i))
-                if (target_width(ibnd,i).gt.0.0_R8) then
-                  targetcr(ibnd,i,2) = r2(ibnd) 
-     .             - target_depth(ibnd,i) * nhalf_r 
-                  targetcz(ibnd,i,2) = z2(ibnd) 
-     .             - target_depth(ibnd,i) * nhalf_z 
-                else
-                  targetcr(ibnd,i,2) = (r1(ibnd) + r2(ibnd))/2.0_R8
-     .             - target_depth(ibnd,i) * normal_r
-                  targetcz(ibnd,i,2) = (z1(ibnd) + z2(ibnd))/2.0_R8
-     .             - target_depth(ibnd,i) * normal_z
-                endif 
-              enddo
-            else  ! case of edge cell with no neighbour on this side
-              do i = 1, ndepth_nml
-                targetcr(ibnd,i,2) = r2(ibnd)
-     .           - target_depth(ibnd,i) * normal_r
-                targetcz(ibnd,i,2) = z2(ibnd)
-     .           - target_depth(ibnd,i) * normal_z
-              enddo
-            endif 
+      error = .false.
+      do is = 1, nsegments
+        do ibnd = wall_begin(is), wall_end(is)
+          if (ibnd.eq.wall_begin(is)) then
+            ibndm = ibnd
+            ikink = ndepth_nml+1
+            ikink0 = ndepth_nml+1
+          else
+            ibndm = ibnd-1
           endif
-        enddo
-      enddo
+          xa = r1(ibnd)
+          xb = r2(ibnd)
+          ya = z1(ibnd)
+          yb = z2(ibnd)
+          dist = sqrt((xb-xa)**2+(yb-ya)**2)
+          target_width(ibnd,1) = dist
+          targetcr(ibnd,1,1) = xa
+          targetcz(ibnd,1,1) = ya
+          targetcr(ibnd,1,2) = xb
+          targetcz(ibnd,1,2) = yb
+          if (ibnd.eq.wall_begin(is)) then
+            normal_r = -(yb-ya)/target_width(ibnd,1)
+            normal_z =  (xb-xa)/target_width(ibnd,1)
+          endif
+          nhalf_r = -(z2(ibnd)-z1(ibndm))
+          nhalf_z =  (r2(ibnd)-r1(ibndm))
+          nhalf = sqrt(nhalf_r**2 + nhalf_z**2)
+          nhalf_r = nhalf_r/nhalf
+          nhalf_z = nhalf_z/nhalf  
+          if (ibnd.eq.wall_begin(is)) then
+            xaq = xa + normal_r*target_depth(ibnd,ndepth_nml)
+            yaq = ya + normal_z*target_depth(ibnd,ndepth_nml)
+          else
+            xaq = targetcr(ibnd-1,min(ikink0,ndepth_nml),2)
+            yaq = targetcz(ibnd-1,min(ikink0,ndepth_nml),2)
+          endif
+          xbq = xb + nhalf_r*target_depth(ibnd,ndepth_nml)
+          ybq = yb + nhalf_z*target_depth(ibnd,ndepth_nml)
+          if (abs(normal_r*nhalf_z-normal_z*nhalf_r).le.1.e-10_R8) then  ! parallel case
+            xint = 0.0_R8
+            yint = 0.0_R8
+            dint = 1.0e30_R8
+          else ! We are not interested with the actual intersection, but rather with the intersection
+               ! to a line 0.1*AB closer
+            xa2 = xa + 0.1_R8*(xb-xa)
+            ya2 = ya + 0.1_R8*(yb-ya)
+            if (nhalf_z.eq.0.0_R8) then  ! horizontal case
+              yint = yb
+              xint = xa2 + (normal_r/normal_z)*(yb-ya2)
+            else
+              yint = ((xb-xa2)*normal_z*nhalf_z+ya2*normal_r*nhalf_z
+     .                                         -yb*nhalf_r*normal_z)/
+     .               (normal_r*nhalf_z-normal_z*nhalf_r)
+              xint = xb - (yb-yint)*nhalf_r/nhalf_z
+            endif 
+            dint = sqrt((xint-xb)**2+(yint-yb)**2)
+            if (((xint-xb)*(xbq-xb)+(yint-yb)*(ybq-yb)).lt.0.0_R8)
+     >       dint = -dint
+          end if
+cxpb This does not properly take into account the case where the kink is receding away from the surface !!!
+          if (dint.gt.0.0_R8 .and. 
+     &        dint.lt.target_depth(ibnd,min(ikink0,ndepth_nml))) then
+            ikink = min(ikink0,ndepth_nml)
+            do while (dint.lt.target_depth(ibnd,ikink))
+              ikink = ikink - 1
+            enddo
+          else if (dint.lt.0.0_R8 .or.
+     &             dint.gt.target_depth(ibnd,ndepth_nml)) then
+            ikink = ndepth_nml+1  
+          else
+            ikink = ikink0
+            do while (dint.gt.target_depth(ibnd,ikink))
+              ikink = ikink + 1
+            enddo
+          endif 
+          ik = ikink
+          do i = 2, ndepth_nml
+            if (ibnd.eq.wall_begin(is)) then
+              xap = xa + normal_r*target_depth(ibnd,i)
+              yap = ya + normal_z*target_depth(ibnd,i)
+              xo = xa + normal_r*target_depth(ibnd,i-1)
+              yo = ya + normal_z*target_depth(ibnd,i-1)
+            else
+              xap = targetcr(ibnd-1,i,2)
+              yap = targetcz(ibnd-1,i,2)
+              xo = targetcr(ibnd-1,i-1,2)
+              yo = targetcz(ibnd-1,i-1,2)
+            endif
+            targetcr(ibnd,i,1) = xap
+            targetcz(ibnd,i,1) = yap
+cxpb Proceed carefully, checking at every step that we are not stepping backwards
+cxpb First attempt: we assume the normal case 
+            if (i.le.ik) then
+              xbp = xb + nhalf_r*target_depth(ibnd,i)
+              ybp = yb + nhalf_z*target_depth(ibnd,i)
+            else
+              xbp = xap + 0.1_R8*(xb-xa)
+              ybp = yap + 0.1_R8*(yb-ya)
+            endif 
+            if (ibnd.ne.wall_begin(is)) then
+cxpb We check we remain in the correct quadrant
+              xbm = targetcr(ibnd,i-1,2)
+              ybm = targetcz(ibnd,i-1,2)
+cxpb We check: the segment OBp must be between OBm and OAp
+cxpb and far enough away from the OAp line
+              correct_quadrant = 
+     .         ((xbm-xo)*(ybp-yo)-(ybm-yo)*(xbp-xo))*
+     .         ((xbp-xo)*(yap-yo)-(ybp-yo)*(xap-xo)).gt.0.0_R8
+              distp = ((xbp-xo)*(yap-yo)+(ybp-yo)*(xo-xap))/
+     .         sqrt((yap-yo)**2+(xo-xap)**2)
+              if(.not.(correct_quadrant.and.distp/dist.ge.0.1_R8)) then
+                ik = min(ik,i)
+                xbp = xo + (xbm-xo) + (xap-xo)
+                ybp = yo + (ybm-yo) + (yap-yo)
+              endif 
+cxpb We still need to check if we have not overstepped into a deeper target section
+              do j = i+1, ndepth_nml
+                if (overlap(xo,yo,xap,yap,xbp,ybp,xbm,ybm,
+     .               targetcr(ibnd-1,j-1,1),targetcz(ibnd-1,j-1,1),
+     .               targetcr(ibnd-1,j-1,2),targetcz(ibnd-1,j-1,2),
+     .               targetcr(ibnd-1,j,2),targetcz(ibnd-1,j,2),
+     .               targetcr(ibnd-1,j,1),targetcz(ibnd-1,j,1))) then
+cxpb Do not know yet what to do here. Just a diagnostic in the meantime
+                 error = .true.
+                 write(6,'(a,i3,a1,i3,a,i3,a1,i3,a2)') 
+     .            'Target element (',ibnd,',',i,') overlapping with (',
+     .                               ibnd-1,',',j,')!'
+!                  xbp = xbp + 0.5_R8*
+!     .             (targetcr(ibnd-1,j  ,2)-targetcr(ibnd-1,j  ,1)+
+!     .              targetcr(ibnd-1,j-1,2)-targetcr(ibnd-1,j-1,1))
+!                  ybp = ybp + 0.5_R8*
+!     .             (targetcz(ibnd-1,j  ,2)-targetcz(ibnd-1,j  ,1)+
+!     .              targetcz(ibnd-1,j-1,2)-targetcz(ibnd-1,j-1,1))
+                endif
+              enddo
+            end if
+            targetcr(ibnd,i,2) = xbp
+            targetcz(ibnd,i,2) = ybp
+            target_width(ibnd,i) = sqrt((xbp-xap)**2+(ybp-yap)**2)
+          enddo
+          ikink0 = ik
+          normal_r = nhalf_r
+          normal_z = nhalf_z
+        end do 
+      end do
+      if (error) then
+        write(6,*) 'Found target elements overlap:'
+        write(6,*) 
+     .   'Consider using thinner targets or straigthening them'
+      endif
 
 cxpb Compute any missing temperature profiles if necessary
 cxpb or change them according to plate_option setting
@@ -521,6 +602,11 @@ cxpb          South boundary
      &                topiy(imapx(ibnd),imapy(ibnd)),1))/
      &            gs(topix(imapx(ibnd),imapy(ibnd)),
      &               topiy(imapx(ibnd),imapy(ibnd)),1)
+              qin = qin + max(0.0_R8,
+     &           -fhi_ext(topix(imapx(ibnd),imapy(ibnd)),
+     &                topiy(imapx(ibnd),imapy(ibnd)),1))/
+     &            gs(topix(imapx(ibnd),imapy(ibnd)),
+     &               topiy(imapx(ibnd),imapy(ibnd)),1)
               do is=0,ns-1
                 qin=qin+max(0.0_R8,
      &             -fna(topix(imapx(ibnd),imapy(ibnd)),
@@ -529,6 +615,16 @@ cxpb          South boundary
      &                 topiy(imapx(ibnd),imapy(ibnd)),1)*
      &             (kinrgy(imapx(ibnd),imapy(ibnd),is)*(1.0_R8-BoRiS) + 
      &              rpt(imapx(ibnd),imapy(ibnd),is)*ev)
+              enddo
+              do is=0,ns_ext-1
+                qin=qin+max(0.0_R8,
+     &             -fa_ext(topix(imapx(ibnd),imapy(ibnd)),
+     &                     topiy(imapx(ibnd),imapy(ibnd)),1,is))
+     &             /gs(topix(imapx(ibnd),imapy(ibnd)),
+     &                 topiy(imapx(ibnd),imapy(ibnd)),1)*
+     &             (0.5_R8*am_ext(is)*mp*
+     &              ua_ext(imapx(ibnd),imapy(ibnd),is)**2*(1.0_R8-BoRiS) 
+     &             +pt_ext(imapx(ibnd),imapy(ibnd),is)*ev)
               enddo
               qel = max(0.0_R8,
      &           -fhe(topix(imapx(ibnd),imapy(ibnd)),
@@ -539,17 +635,31 @@ cxpb          South boundary
 cxpb          North boundary
               qin = max(0.0_R8,fhi(imapx(ibnd),imapy(ibnd),1))
      &           /gs(imapx(ibnd),imapy(ibnd),1)
+              qin = qin + max(0.0_R8,fhi_ext(imapx(ibnd),imapy(ibnd),1))
+     &           /gs(imapx(ibnd),imapy(ibnd),1)
               do is=0,ns-1
                 qin=qin+max(0.0_R8,fna(imapx(ibnd),imapy(ibnd),1,is))
      &             /gs(imapx(ibnd),imapy(ibnd),1)*
      &             (kinrgy(imapx(ibnd),imapy(ibnd),is)*(1.0_R8-BoRiS) +  
      &              rpt(imapx(ibnd),imapy(ibnd),is)*ev)
               enddo
+              do is=0,ns_ext-1
+                qin=qin+max(0.0_R8,fa_ext(imapx(ibnd),imapy(ibnd),1,is))
+     &             /gs(imapx(ibnd),imapy(ibnd),1)*
+     &             (0.5_R8*am_ext(is)*mp*
+     &              ua_ext(imapx(ibnd),imapy(ibnd),is)**2*(1.0_R8-BoRiS)
+     &             +pt_ext(imapx(ibnd),imapy(ibnd),is)*ev)
+              enddo
               qel = max(0.0_R8,fhe(imapx(ibnd),imapy(ibnd),1))
      &           /gs(imapx(ibnd),imapy(ibnd),1)
             else if (leftix(imapx(ibnd),imapy(ibnd)).eq.-2) then
 cxpb          West boundary
               qin = max(0.0_R8,-fhi(rightix(imapx(ibnd),imapy(ibnd)),
+     &                          rightiy(imapx(ibnd),imapy(ibnd)),0))
+     &           /gs(rightix(imapx(ibnd),imapy(ibnd)),
+     &               rightiy(imapx(ibnd),imapy(ibnd)),0)
+              qin = qin + max(0.0_R8,
+     &                 -fhi_ext(rightix(imapx(ibnd),imapy(ibnd)),
      &                          rightiy(imapx(ibnd),imapy(ibnd)),0))
      &           /gs(rightix(imapx(ibnd),imapy(ibnd)),
      &               rightiy(imapx(ibnd),imapy(ibnd)),0)
@@ -562,6 +672,16 @@ cxpb          West boundary
      &             (kinrgy(imapx(ibnd),imapy(ibnd),is)*(1.0_R8-BoRiS) +  
      &              rpt(imapx(ibnd),imapy(ibnd),is)*ev)
               enddo
+              do is=0,ns_ext-1
+                qin=qin+max(0.0_R8,
+     &             -fa_ext(rightix(imapx(ibnd),imapy(ibnd)),
+     &                     rightiy(imapx(ibnd),imapy(ibnd)),0,is))
+     &              /gs(rightix(imapx(ibnd),imapy(ibnd)),
+     &                  rightiy(imapx(ibnd),imapy(ibnd)),0)*
+     &             (0.5_R8*am_ext(is)*mp*
+     &              ua_ext(imapx(ibnd),imapy(ibnd),is)**2*(1.0_R8-BoRiS)  
+     &             +pt_ext(imapx(ibnd),imapy(ibnd),is)*ev)
+              enddo
               qel = max(0.0_R8,
      &           -fhe(rightix(imapx(ibnd),imapy(ibnd)),
      &                rightiy(imapx(ibnd),imapy(ibnd)),0))
@@ -571,19 +691,30 @@ cxpb          West boundary
 cxpb          East boundary
               qin = max(0.0_R8,fhi(imapx(ibnd),imapy(ibnd),0))
      &           /gs(imapx(ibnd),imapy(ibnd),0)
+              qin = qin + max(0.0_R8,fhi_ext(imapx(ibnd),imapy(ibnd),0))
+     &           /gs(imapx(ibnd),imapy(ibnd),0)
               do is=0,ns-1
                 qin = qin + 
      &             max(0.0_R8,fna(imapx(ibnd),imapy(ibnd),0,is))
      &             /gs(imapx(ibnd),imapy(ibnd),0)*
-     &             (kinrgy(imapx(ibnd),imapy(ibnd),is)*(1.0_R8-BoRiS) +  
+     &             (kinrgy(imapx(ibnd),imapy(ibnd),is)*(1.0_R8-BoRiS) +
      &              rpt(imapx(ibnd),imapy(ibnd),is)*ev)
+              enddo
+              do is=0,ns_ext-1
+                qin = qin + 
+     &             max(0.0_R8,fa_ext(imapx(ibnd),imapy(ibnd),0,is))
+     &             /gs(imapx(ibnd),imapy(ibnd),0)*
+     &             (0.5_R8*am_ext(is)*mp*
+     &              ua_ext(imapx(ibnd),imapy(ibnd),is)**2*(1.0_R8-BoRiS) 
+     &             +pt_ext(imapx(ibnd),imapy(ibnd),is)*ev)
               enddo
               qel = max(0.0_R8,fhe(imapx(ibnd),imapy(ibnd),0))
      &           /gs(imapx(ibnd),imapy(ibnd),0)
             endif
 cxpb Use 1-D equilibrium profile
-            call heatdiff1D(ibnd,ns,qin+qel,0.0_R8,
-     .       target_temp(ibnd,1:ndepth_nml),output)
+            wrk(1:ndepth_nml) = target_temp(ibnd,1:ndepth_nml)
+            call heatdiff1D(ibnd,ns,qin+qel,0.0_R8,wrk,output)
+            target_temp(ibnd,1:ndepth_nml) = wrk(1:ndepth_nml)
           endif   ! plate_option
         enddo   !  ibnd
       endif   !  ndepth_nml
@@ -591,265 +722,52 @@ cxpb Use 1-D equilibrium profile
       return
 
 * ..finalise time-dependent wall data
-      entry wall_final(nx,ny,ns,plate_model,plate_temp,plate_thick)
-      default_cooling = .true.
-      do ibnd = 1, nbnd
-        default_cooling = default_cooling .and. 
-     &   .not.inertial_cooling(ibnd)
-      enddo
+      entry wall_final(nx,ny,ns,wall_namelist_used)
       wall_namelist_used = wall_namelist_used .or. ntargsp.gt.0 .or.
-     .  layer_thermal_contact.ne.1.0_R8 .or. plate_model.ge.1 .or.
+     .  layer_thermal_contact.ne.1.0_R8 .or. 
      .  maxval(target_temp(1:nbnd,1)).gt.plate_temp .or.
      .  maxval(thermal_evaporation(1:nbnd,0:ns-1)).gt.0.0_R8 .or.
      .  maxval(physical_sputtering(1:nbnd,0:ns-1)).gt.0.0_R8 .or.
      .  maxval(chemical_sputtering(1:nbnd,0:ns-1)).gt.0.0_R8 .or.
      .  maxval(RES_sputtering(1:nbnd,0:ns-1)).gt.0.0_R8 .or.
-     .  maxval(backscattering(1:nbnd,0:ns-1)).gt.0.0_R8 .or.
-     .  .not.default_cooling
+     .  maxval(backscattering(1:nbnd,0:ns-1)).gt.0.0_R8
+      default_cooling = .true.
+      do ibnd = 1, nbnd
+        default_cooling = default_cooling .and. 
+     &   .not.inertial_cooling(ibnd)
+      enddo
       if (.not.wall_namelist_used) return
-      open(99,file='../b2.wall_save.parameters')
-      write(99,'(a10)') '&WALL_SAVE'
-      do itrack=1,nalloys
-        if(layer_alloys(itrack).ne.' ') write(99,'(a13,i1,a4,a6,a2)')
-     .    'LAYER_ALLOYS(',itrack,')= ''',
-     .     layer_alloys(itrack),''','
-      enddo
-      write(99,'(a11,i4,a1)') 'NDEPTH_NML=',ndepth_nml,','
-      do itrack=1,ntargsp
-        write(99,'(a14,i2,a3,a2,a2)') 
-     .   'TRACK_SPECIES(',itrack,')=''',track_species(itrack),''','
-      enddo
-      if (layer_thermal_contact.ne.1.0_R8) write(99,'(a22,1es15.8,a1)') 
-     > 'LAYER_THERMAL_CONTACT=',layer_thermal_contact,','
-      if (.not.(plate_model.ge.1.and.ndepth_nml.gt.1)) then
-	do ibnd = 1, nbnd
-	  if (target_temp(ibnd,1).gt.plate_temp) 
-     >	   write(99,'(a12,i4,a4,1x,1es15.8,a1)') 
-     .	   'TARGET_TEMP(',ibnd,',1)=',target_temp(ibnd,1),','
-	enddo
+      call write_b2mod_wall_namelist(99,nx,ny,ns,'    ')
+      return        
+
+      contains
+
+      subroutine check_ok(nx, ny, ix, iy, idir)
+      implicit none
+      integer nx, ny, ix, iy, idir
+! check on position
+      if(ix.eq.-2) then
+         write(*,*) 'Stepped off the edge of the grid, ix, iy, idir = ',
+     &        ix, iy, idir
+         call xerrab('Invalid ix')
       endif
-      do is = 0, ns-1
-        if (maxval(thermal_evaporation(1:nbnd,is)).gt.0.0_R8) then
-          do i = 1, (nbnd-1)/nline+1
-            if (i.eq.1) then
-              write(line,'(a22,i3,a2)') 'THERMAL_EVAPORATION(1,',is,')='
-            else
-              line = ''
-            endif
-            do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1es15.8,a1)') 
-     .         thermal_evaporation(ibnd,is),','
-              line = trim(line)//numstr
-            enddo
-            write(99,'(a)') trim(line)
-          enddo
-        endif
-        if (maxval(physical_sputtering(1:nbnd,is)).gt.0.0_R8) then
-          do i = 1, (nbnd-1)/nline+1
-            if (i.eq.1) then
-              write(line,'(a22,i3,a2)') 'PHYSICAL_SPUTTERING(1,',is,')='
-            else
-              line = ''
-            endif
-            do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1e15.8,a1)') 
-     .         physical_sputtering(ibnd,is),','
-              line = trim(line)//numstr
-             enddo
-           write(99,'(a)') trim(line)
-          enddo
-          do i = 1, (nbnd-1)/nline+1
-            if (i.eq.1) then
-              write(line,'(a29,i3,a2)') 
-     .         'PHYSICAL_SPUTTERING_ENERGY(1,',is,')='
-            else
-              line = ''
-            endif
-            do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1es15.8,a1)') 
-     .         physical_sputtering_energy(ibnd,is),','
-              line = trim(line)//numstr
-            enddo
-            write(99,'(a)') trim(line)
-          enddo
-        endif
-        if (maxval(chemical_sputtering(1:nbnd,is)).gt.0.0_R8) then
-          do i = 1, (nbnd-1)/nline+1
-            if (i.eq.1) then
-              write(line,'(a22,i3,a2)') 
-     .         'CHEMICAL_SPUTTERING(1,',is,')='
-            else
-              line = ''
-            endif
-            do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1es15.8,a1)') 
-     .         chemical_sputtering(ibnd,is),','
-              line = trim(line)//numstr
-             enddo
-           write(99,'(a)') trim(line)
-          enddo
-        endif
-        if (maxval(RES_sputtering(1:nbnd,is)).gt.0.0_R8) then
-          do i = 1, (nbnd-1)/nline+1
-            if (i.eq.1) then
-              write(line,'(a17,i3,a2)') 
-     .         'RES_SPUTTERING(1,',is,')='
-            else
-              line = ''
-            endif
-            do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1es15.8,a1)') 
-     .         RES_sputtering(ibnd,is),','
-              line = trim(line)//numstr
-            enddo
-            write(99,'(a)') trim(line)
-          enddo
-        endif
-        if (maxval(backscattering(1:nbnd,is)).gt.0.0_R8) then
-          do i = 1, (nbnd-1)/nline+1
-            if (i.eq.1) then
-              write(line,'(a17,i3,a2)') 
-     .         'BACKSCATTERING(1,',is,')='
-            else
-              line = ''
-            endif
-            do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1es15.8,a1)') 
-     .         backscattering(ibnd,is),','
-              line = trim(line)//numstr
-            enddo
-            write(99,'(a)') trim(line)
-          enddo
-          do i = 1, (nbnd-1)/nline+1
-            if (i.eq.1) then
-              write(line,'(a24,i3,a2)') 
-     .         'BACKSCATTERING_ENERGY(1,',is,')='
-            else
-              line = ''
-            endif
-            do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1es15.8,a1)') 
-     .         backscattering_energy(ibnd,is),','
-              line = trim(line)//numstr
-            enddo
-            write(99,'(a)') trim(line)
-          enddo
-        endif
-      enddo
-      if (plate_model.ge.1 .or. wall_namelist_used) then
-cxpb  Use explicit writing of non-default elements only
-        do ix = -1, nx
-          do iy = -1, ny
-            if (xymap(ix,iy).ne.0) write(99,'(a6,i4,a1,i4,a2,i4,a1)')
-     .       'XYMAP(',ix,',',iy,')=',xymap(ix,iy),','     
-          end do
-        end do
-        do ibnd = 1, nbnd
-          write(99,'(a6,i4,a2,i4,a1,1x,a6,i4,a2,i4,a1)') 
-     .     'IMAPX(',ibnd,')=',imapx(ibnd),',',
-     .     'IMAPY(',ibnd,')=',imapy(ibnd),','
-          if (inertial_cooling(ibnd)) 
-     .     write(99,'(a17,i4,a2,l1,a1)')
-     .     'INERTIAL_COOLING(',ibnd,')=',inertial_cooling(ibnd),','
-          if (backplate_temp(ibnd).ne.plate_temp) 
-     .     write(99,'(a15,i4,a2,1es15.8,a1)') 
-     .     'BACKPLATE_TEMP(',ibnd,')=',backplate_temp(ibnd),','
-          if (plate_thickness(ibnd).ne.plate_thick)
-     .     write(99,'(a16,i4,a2,1es15.8,a1)') 
-     .     'PLATE_THICKNESS(',ibnd,')=',plate_thickness(ibnd),','
-          if (coating_thickness(ibnd).gt.0.0_R8)
-     .     write(99,'(a18,i4,a2,1es15.8,a1)') 
-     .     'COATING_THICKNESS(',ibnd,')=',coating_thickness(ibnd),','
-          if (plate_time_factor(ibnd).ne.1.0_R8)
-     .     write(99,'(a18,i4,a2,1es15.8,a1)') 
-     .     'PLATE_TIME_FACTOR(',ibnd,')=',plate_time_factor(ibnd),','
-          if (trim(surface_material_name(ibnd)).ne.'C') 
-     .     write(99,'(a22,i4,a4,a6,a2)') 
-     .     'SURFACE_MATERIAL_NAME(',ibnd,')= ''',
-     .      surface_material_name(ibnd),''','
-          if (coating_thickness(ibnd).gt.0.0_R8) 
-     .     write(99,'(a22,i4,a4,a6,a2)') 
-     .     'COATING_MATERIAL_NAME(',ibnd,')= ''',
-     .      coating_material_name(ibnd),''','
-          if (trim(bulk_material_name(ibnd)).ne.'C') 
-     .     write(99,'(a19,i4,a4,a6,a2)') 
-     .     'BULK_MATERIAL_NAME(',ibnd,')= ''',
-     .      bulk_material_name(ibnd),''','
-          todo = 
-     .     layer_nconstituents(ibnd).ne.matsurf_nconstituents(ibnd)
-          do i = 1, layer_nconstituents(ibnd)
-            found = .false.
-            j = 1
-            do while (.not.found .and. j.le.matsurf_nconstituents(ibnd))
-              found = layer_nzconstituents(ibnd,i).eq.
-     .              matsurf_nzconstituents(ibnd,j)
-              if (.not.found) j = j + 1
-            enddo
-            if (found) todo = todo.or.
-     .          layer_nrelconstituents(ibnd,i).ne.
-     .        matsurf_nrelconstituents(ibnd,j)
-          end do
-          if (todo) then
-            write(99,'(a20,i4,a2,i2,a1)')
-     .       'LAYER_NCONSTITUENTS(',ibnd,')=',
-     .        layer_nconstituents(ibnd),','
-            do i = 1, layer_nconstituents(ibnd)
-              write(99,'(a21,i4,a1,i2,a4,i2,a1)')
-     .         'LAYER_NZCONSTITUENTS(',ibnd,',',i,')=  ',
-     .          layer_nzconstituents(ibnd,i),','
-              write(99,'(a23,i4,a1,i2,a2,1es15.8,a1)')
-     .         'LAYER_NRELCONSTITUENTS(',ibnd,',',i,')=',
-     .          layer_nrelconstituents(ibnd,i),','
-            end do
-          end if
-          do itrack=1,ntargsp
-            if (deposition(ibnd,itrack).ne.0.0_R8)
-     .       write(99,'(a11,i4,a1,i1,a2,1es15.8,a1)')
-     .        'DEPOSITION(',ibnd,',',itrack,')=',
-     1         deposition(ibnd,itrack),','
-            if (monolayer_deposition(ibnd,itrack).ne.0.0_R8)
-     .       write(99,'(a,i4,a,i1,a,1es15.8,a)') 
-     .        'MONOLAYER_DEPOSITION(',ibnd,',',itrack,')=',
-     1         monolayer_deposition(ibnd,itrack),','
-            if (erosion(ibnd,itrack).ne.0.0_R8)
-     .       write(99,'(a8,i4,a1,i1,a2,1es15.8,a1)')
-     .        'EROSION(',ibnd,',',itrack,')=',
-     1         erosion(ibnd,itrack),','
-            if (monolayer_erosion(ibnd,itrack).ne.0.0_R8)
-     .       write(99,'(a,i4,a,i1,a,1es15.8,a)') 
-     .        'MONOLAYER_EROSION(',ibnd,',',itrack,')=',
-     1         monolayer_erosion(ibnd,itrack),','
-          enddo
-          if (plate_time(ibnd).ne.0.0_R8)
-     .     write(99,'(a11,i4,a2,1es15.8,a1)')
-     .      'PLATE_TIME(',ibnd,')=',plate_time(ibnd),','
-          if (plate_area(ibnd).ne.0.0_R8)
-     .     write(99,'(a11,i4,a2,1es15.8,a1)')
-     .      'PLATE_AREA(',ibnd,')=',plate_area(ibnd),','
-        enddo
-        if (plate_model.ge.1.and.ndepth_nml.gt.1) then 
-          do ibnd = 1, nbnd
-            do i = 1, (ndepth_nml-1)/nline+1
-              if (i.eq.1) then
-                write(line,'(a12,i4,a3,i4,a2)') 
-     .           'TARGET_TEMP(',ibnd,',1:',ndepth_nml,')='
-              else
-                line = ''
-              endif
-              do is = (i-1)*nline+1, min(i*nline,ndepth_nml)
-                write(numstr,'(1x,1es15.8,a1)') 
-     .           target_temp(ibnd,is),','
-                line = trim(line)//numstr
-              enddo
-              write(99,'(a)') trim(line)
-            enddo
-          enddo
-        endif
+      if(ix.eq.nx+1) then
+         write(*,*) 'Stepped off the edge of the grid, ix, iy, idir = ',
+     &        ix, iy, idir
+         call xerrab('Invalid ix')
       endif
-      write(99,'(a1)') '/'
-      close(99)
-      return
-        
+      if(iy.eq.-2) then
+         write(*,*) 'Stepped off the edge of the grid, ix, iy, idir = ',
+     &        ix, iy, idir
+         call xerrab('Invalid iy')
+      endif
+      if(iy.eq.ny+1) then
+         write(*,*) 'Stepped off the edge of the grid, ix, iy, idir = ',
+     &        ix, iy, idir
+         call xerrab('Invalid iy')
+      endif
+      end subroutine check_ok
+
       end subroutine init_wall
 
       subroutine add_layer_thickness(nx,ny,ns,ibnd)
@@ -861,7 +779,7 @@ cxpb  Use explicit writing of non-default elements only
       use b2mod_indirect
       implicit none
       integer nx, ny, ns, nz, ibnd
-      integer i, is, ix, iy, ibndm, ibndp, iend, itrack
+      integer i, is, ix, iy, ibndm, ibndp, iend, itrack, icoat
       real (kind=R8) :: normal_r, normal_z, dist, 
      .  cosa, sina, coshlf, sinhlf, tanhlf,
      .  n1_r, n1_z, n2_r, n2_z, nhalf_r, nhalf_z, sum,
@@ -876,6 +794,8 @@ cxpb  Use explicit writing of non-default elements only
      2     sput_frac_flag/0/
 
       real (kind=R8) :: mass_density
+      real (kind=R8) :: onemeps
+      parameter (onemeps = 1.0_R8 - 1.0e-5_R8)
       logical open_file
       intrinsic max, sqrt
       external ipgeti, ipgetr, xertst, xerrab
@@ -903,6 +823,7 @@ cxpb  Use explicit writing of non-default elements only
       endif
         
       if (layer_thickness(ibnd).eq.0.0_R8) then
+	surface_only = .true.     ! no idea what it should be, but otherwise an undefined variable is used later
         continue  ! nothing to do
       else if (layer_thickness(ibnd).gt.0.0_R8) then
 cxpb  The deposited layer is included in the first depth element, raising it.
@@ -933,20 +854,49 @@ cxpb  The first target element must be at least layer_depth thick
             target_depth(ibnd,2) = max(target_depth(ibnd,2),
      .       (plate_thickness(ibnd)-layer_thickness(ibnd))/
      .        float(ndepth_nml-1))
-            do i = 3, ndepth_nml-1
-              target_depth(ibnd,i) = target_depth(ibnd,2) +
-     .         (plate_thickness(ibnd)-target_depth(ibnd,2)) * 
-     .         float(i-2) / float(ndepth_nml - 2)
+            if (coating_thickness(ibnd).gt.0.0_R8) then
+              icoat = int(ndepth_nml*coating_thickness(ibnd)/
+     .                   (plate_thickness(ibnd)-layer_thickness(ibnd)) + 
+     .                    onemeps)+2
+            else
+              icoat = 2
+            endif
+            do i = 2, icoat-1
+              target_depth(ibnd,i+1) = target_depth(ibnd,2) +
+     .         (coating_thickness(ibnd)-target_depth(ibnd,2)) * 
+     .         float(i-1) / float(icoat-1)
+            enddo
+            target_depth(ibnd,icoat)=coating_thickness(ibnd)
+            do i = icoat+1, ndepth_nml-1
+              target_depth(ibnd,i) = target_depth(ibnd,icoat) +
+     .         (plate_thickness(ibnd)-target_depth(ibnd,icoat)) * 
+     .         float(i-icoat) / float(ndepth_nml - icoat)
             end do
           else
             target_depth(ibnd,2) = max(target_depth(ibnd,2),
      .       (plate_thickness(ibnd)-layer_thickness(ibnd)) * 
      .         (hd_ratio ** (1.0_R8 / float(ndepth_nml - 1)) - 1.0_R8)/
      .         (hd_ratio - 1.0_R8))
-            do i = 3, ndepth-1
+            if (coating_thickness(ibnd).gt.0.0_R8) then
+              icoat = int( (ndepth_nml-1)*
+     .         log(coating_thickness(ibnd)*(hd_ratio-1.0_R8)/
+     .            (plate_thickness(ibnd)-layer_thickness(ibnd))+1.0_R8) 
+     .            / log(hd_ratio) + onemeps )+2
+            else
+              icoat = 2
+            endif
+            do i = 2, icoat-1
               target_depth(ibnd,i) = target_depth(ibnd,2) +
-     .         (plate_thickness(ibnd)-target_depth(ibnd,2)) * 
-     .         (hd_ratio ** (float(i-2) / float(ndepth_nml - 2)) 
+     .         (coating_thickness(ibnd)-target_depth(ibnd,2)) * 
+     .         (hd_ratio ** (float(i-1) / float(icoat - 1)) 
+     .                                                      - 1.0_R8)/
+     .         (hd_ratio - 1.0_R8)
+            end do
+            target_depth(ibnd,icoat)=coating_thickness(ibnd)
+            do i = icoat+1, ndepth_nml-1
+              target_depth(ibnd,i) = target_depth(ibnd,icoat) +
+     .         (plate_thickness(ibnd)-target_depth(ibnd,icoat)) * 
+     .         (hd_ratio ** (float(i-icoat) / float(ndepth_nml - icoat)) 
      .                                                      - 1.0_R8)/
      .         (hd_ratio - 1.0_R8)
             end do
@@ -961,7 +911,7 @@ cxpb  The first target element must be at least layer_depth thick
             target_depth(ibnd,2) = max(target_depth(ibnd,2),
      .       (plate_thickness(ibnd)-layer_thickness(ibnd))/
      .        float(ndepth_nml-1))
-            do i = 3, ndepth-1
+            do i = 3, ndepth_nml-1
               target_depth(ibnd,i) = target_depth(ibnd,2) +
      .         (plate_thickness(ibnd)-target_depth(ibnd,2)) * 
      .         float(i-2) / float(ndepth_nml - 2)
@@ -971,7 +921,7 @@ cxpb  The first target element must be at least layer_depth thick
      .       (plate_thickness(ibnd)-layer_thickness(ibnd)) * 
      .         (hd_ratio ** (1.0_R8 / float(ndepth_nml - 1)) - 1.0_R8)/
      .         (hd_ratio - 1.0_R8))
-            do i = 3, ndepth-1
+            do i = 3, ndepth_nml-1
               target_depth(ibnd,i) = target_depth(ibnd,2) +
      .         (plate_thickness(ibnd)-target_depth(ibnd,2)) * 
      .         (hd_ratio ** (float(i-2) / float(ndepth_nml - 2)) 
@@ -1012,133 +962,6 @@ c-xpb Normalise surface constituents
           end do
         endif  
       endif
-cxpb  Modify the target_width, targetcr and targetcz arrays as needed
-cxpb  Code similar to int_wall above
-      if (surface_only .or. layer_thickness(ibnd).eq.0.0_R8) then
-        iend=1
-      else
-        iend=ndepth_nml-1
-      endif
-      ix = imapx(ibnd)
-      iy = imapy(ibnd)
-      normal_r = -(z1(ibnd)-z2(ibnd))
-      normal_z = -(r2(ibnd)-r1(ibnd))
-      dist = sqrt((r2(ibnd)-r1(ibnd))**2+(z2(ibnd)-z1(ibnd))**2)
-      normal_r = normal_r / dist
-      normal_z = normal_z / dist
-      if (topiy(ix,iy).eq.ny+1) then        ! North boundary 
-        ibndm=xymap( leftix(ix,iy), leftiy(ix,iy))
-        ibndp=xymap(rightix(ix,iy),rightiy(ix,iy))
-      else if (bottomiy(ix,iy).eq.-2) then  ! South boundary
-        ibndp=xymap( leftix(ix,iy), leftiy(ix,iy))
-        ibndm=xymap(rightix(ix,iy),rightiy(ix,iy))
-      endif
-      if (leftix(ix,iy).eq.-2) then         ! West boundary
-        ibndm=xymap(bottomix(ix,iy),bottomiy(ix,iy))
-        ibndp=xymap(   topix(ix,iy),   topiy(ix,iy))
-      else if (rightix(ix,iy).eq.nx+1) then ! East boundary
-        ibndp=xymap(bottomix(ix,iy),bottomiy(ix,iy))
-        ibndm=xymap(   topix(ix,iy),   topiy(ix,iy))
-      endif
-      if (ibndm.ne.0 .and. layer_thickness(ibnd).ne.0.0_R8) then
-        n1_r = -(z1(ibndm)-z2(ibndm))
-        n1_z = -(r2(ibndm)-r1(ibndm))
-        dist = sqrt((r2(ibndm)-r1(ibndm))**2+
-     +              (z2(ibndm)-z1(ibndm))**2)
-        n1_r = n1_r / dist
-        n1_z = n1_z / dist
-        sina = normal_r * n1_z - normal_z * n1_r
-        cosa = normal_r * n1_r + normal_z * n1_z
-        cosa = max(-1.0_R8, min(1.0_R8, cosa))
-        call xertst (cosa.ne.0.0_R8,
-     .   'perpendicular neighbouring wall elements !')
-        if(cosa.eq.1.0_R8) then
-          coshlf = 1.0_R8
-          sinhlf = 0.0_R8
-        else if(sina.ge.0.0_R8) then
-          coshlf = sqrt((1.0_R8 + cosa)/2.0_R8)
-          sinhlf = sqrt((1.0_R8 - cosa)/2.0_R8)
-        else
-          coshlf = sqrt((1.0_R8 + cosa)/2.0_R8)
-          sinhlf =-sqrt((1.0_R8 - cosa)/2.0_R8)
-        endif
-        tanhlf = sinhlf / coshlf
-cxpb  rotate with an angle -hlf
-        nhalf_r = normal_r * coshlf - normal_z * sinhlf
-        nhalf_z = normal_r * sinhlf + normal_z * coshlf
-        do i = 1, iend
-          target_width(ibnd,i) = max(0.0_R8, 
-     .     target_width(ibnd,i) 
-     .           - tanhlf * target_depth(ibnd,i))
-          if (target_width(ibnd,i).gt.0.0_R8) then
-            targetcr(ibnd,i,1) = r1(ibnd) 
-     .             - target_depth(ibnd,i) * nhalf_r 
-            targetcz(ibnd,i,1) = z1(ibnd) 
-     .             - target_depth(ibnd,i) * nhalf_z
-          else
-            targetcr(ibnd,i,1) = (r1(ibnd) + r2(ibnd))/2.0_R8
-     .             - target_depth(ibnd,i) * normal_r
-            targetcz(ibnd,i,1) = (z1(ibnd) + z2(ibnd))/2.0_R8
-     .             - target_depth(ibnd,i) * normal_z
-          endif 
-        enddo
-      else if (layer_thickness(ibnd).ne.0.0_R8) then ! case of edge cell with no neighbour on this side
-        do i = 1, iend
-          targetcr(ibnd,i,1) = r1(ibnd)
-     .           - target_depth(ibnd,i) * normal_r
-          targetcz(ibnd,i,1) = z1(ibnd)
-     .           - target_depth(ibnd,i) * normal_z
-        enddo
-      endif
-      if (ibndp.ne.0 .and. layer_thickness(ibnd).ne.0.0_R8) then
-        n2_r = -(z1(ibndp)-z2(ibndp))
-        n2_z = -(r2(ibndp)-r1(ibndp))
-        dist = sqrt((r2(ibndp)-r1(ibndp))**2+
-     +              (z2(ibndp)-z1(ibndp))**2)
-        n2_r = n2_r / dist
-        n2_z = n2_z / dist
-        sina = normal_r * n2_z - normal_z * n2_r
-        cosa = normal_r * n2_r + normal_z * n2_z
-        cosa = max(-1.0_R8, min(1.0_R8, cosa))
-        call xertst (cosa.ne.0.0_R8,
-     .   'perpendicular neighbouring wall elements !')
-        if(cosa.eq.1.0_R8) then
-          coshlf = 1.0_R8
-          sinhlf = 0.0_R8
-        else if(sina.ge.0.0_R8) then
-          coshlf = sqrt((1.0_R8 + cosa)/2.0_R8)
-          sinhlf = sqrt((1.0_R8 - cosa)/2.0_R8)
-        else
-          coshlf = sqrt((1.0_R8 + cosa)/2.0_R8)
-          sinhlf =-sqrt((1.0_R8 - cosa)/2.0_R8)
-        endif
-        tanhlf = sinhlf / coshlf
-cxpb  rotate with an angle -hlf
-        nhalf_r = normal_r * coshlf - normal_z * sinhlf
-        nhalf_z = normal_r * sinhlf + normal_z * coshlf
-        do i = 1, iend
-          target_width(ibnd,i) = max(0.0_R8, target_width(ibnd,i) 
-     .     - tanhlf * target_depth(ibnd,i))
-          if (target_width(ibnd,i).gt.0.0_R8) then
-            targetcr(ibnd,i,2) = r2(ibnd) 
-     .             - target_depth(ibnd,i) * nhalf_r 
-            targetcz(ibnd,i,2) = z2(ibnd) 
-     .             - target_depth(ibnd,i) * nhalf_z 
-          else
-            targetcr(ibnd,i,2) = (r1(ibnd) + r2(ibnd))/2.0_R8
-     .             - target_depth(ibnd,i) * normal_r
-            targetcz(ibnd,i,2) = (z1(ibnd) + z2(ibnd))/2.0_R8
-     .             - target_depth(ibnd,i) * normal_z
-          endif 
-        enddo
-      else if (layer_thickness(ibnd).ne.0.0_R8) then  ! case of edge cell with no neighbour on this side
-        do i = 1, ndepth_nml
-          targetcr(ibnd,i,2) = r2(ibnd)
-     .           - target_depth(ibnd,i) * normal_r
-          targetcz(ibnd,i,2) = z2(ibnd)
-     .           - target_depth(ibnd,i) * normal_z
-        enddo
-      endif    
 
 c-xpb We now identify the track index of the bulk or coating species
 c-xpb below the re-deposited layer.
@@ -1236,17 +1059,19 @@ c-xpb  Contribution from the bulk
       layer_composition(ibnd,1:nz)=
      2  matsurf_nrelconstituents(ibnd,1:nz)*sput_frac(0)
       if (layer_nconstituents(ibnd).eq.nz) return
-      if (ndepth_nml.gt.1) then
 c-xpb  Inventory of bulk or coating particles
-        if (coating_thickness(ibnd).gt.0.0_R8 .and.
-     &      target_depth(ibnd,1).lt.coating_thickness(ibnd)) then
+      if (coating_thickness(ibnd).gt.0.0_R8 .and.
+     &    target_depth(ibnd,1).lt.coating_thickness(ibnd)) then
 c-xpb  Coating case
+        if (itrack_0(ibnd).ne.0) then
           particle_inventory(ibnd,itrack_0(ibnd))=
      1     (coating_thickness(ibnd)-layer_depth(ibnd))*
      2      plate_area(ibnd)*mass_density(ibnd,2)/
      3     (atomic_mass(matsurf_nzconstituents(ibnd,1))*mp)
-        else
+        endif
+      else
 c-xpb  Deep erosion or no coating case
+        if (itrack_0(ibnd).ne.0) then
           particle_inventory(ibnd,itrack_0(ibnd))=
      1     (plate_thickness(ibnd)-layer_depth(ibnd))*
      2      plate_area(ibnd)*mass_density(ibnd,2)/
@@ -1446,3 +1271,91 @@ c-xpb Loop over deposited species contributions
 
       return
       end function layer_emissivity
+
+      logical function overlap(x1,y1,x2,y2,x3,y3,x4,y4,
+     .                         x5,y5,x6,y6,x7,y7,x8,y8)
+      use b2mod_types
+      implicit none  
+      real (kind=R8) :: x1,y1,x2,y2,x3,y3,x4,y4,
+     .                  x5,y5,x6,y6,x7,y7,x8,y8
+      logical inside_rect_strict, intersect
+      external inside_rect_strict, intersect
+cxpb We aim to find if the 1234 quadrangle has an overlap with the 5678 rectangle
+cxpb Sharing a vertex or part of an edge is not considered an overlap here!
+
+cxpb We first test to see if any of the corners of 1234 are inside 5678
+      overlap = inside_rect_strict(x1,y1,x5,y5,x6,y6,x7,y7,x8,y8) .or.
+     .          inside_rect_strict(x2,y2,x5,y5,x6,y6,x7,y7,x8,y8) .or.
+     .          inside_rect_strict(x3,y3,x5,y5,x6,y6,x7,y7,x8,y8) .or.
+     .          inside_rect_strict(x4,y4,x5,y5,x6,y6,x7,y7,x8,y8)
+      if (overlap) return
+
+cxpb We first test to see if any of the corners of 5678 are inside 1234
+      overlap = inside_rect_strict(x5,y5,x1,y1,x2,y2,x3,y3,x4,y4) .or.
+     .          inside_rect_strict(x6,y6,x1,y1,x2,y2,x3,y3,x4,y4) .or.
+     .          inside_rect_strict(x7,y7,x1,y1,x2,y2,x3,y3,x4,y4) .or.
+     .          inside_rect_strict(x8,y8,x1,y1,x2,y2,x3,y3,x4,y4)
+      if (overlap) return
+
+cxpb We must now test the intersection of side 12 with 5678
+      overlap = intersect(x1,y1,x2,y2,x5,y5,x6,y6) .or.
+     .          intersect(x1,y1,x2,y2,x6,y6,x7,y7) .or.
+     .          intersect(x1,y1,x2,y2,x7,y7,x8,y8) .or.
+     .          intersect(x1,y1,x2,y2,x8,y8,x5,y5)
+      if (overlap) return
+
+cxpb We must now test the intersection of side 23 with 5678
+      overlap = intersect(x2,y2,x3,y3,x5,y5,x6,y6) .or.
+     .          intersect(x2,y2,x3,y3,x6,y6,x7,y7) .or.
+     .          intersect(x2,y2,x3,y3,x7,y7,x8,y8) .or.
+     .          intersect(x2,y2,x3,y3,x8,y8,x5,y5)
+      if (overlap) return
+
+cxpb We must now test the intersection of side 34 with 5678
+      overlap = intersect(x3,y3,x4,y4,x5,y5,x6,y6) .or.
+     .          intersect(x3,y3,x4,y4,x6,y6,x7,y7) .or.
+     .          intersect(x3,y3,x4,y4,x7,y7,x8,y8) .or.
+     .          intersect(x3,y3,x4,y4,x8,y8,x5,y5)
+      if (overlap) return
+
+cxpb We must now test the intersection of side 41 with 5678
+      overlap = intersect(x4,y4,x1,y1,x5,y5,x6,y6) .or.
+     .          intersect(x4,y4,x1,y1,x6,y6,x7,y7) .or.
+     .          intersect(x4,y4,x1,y1,x7,y7,x8,y8) .or.
+     .          intersect(x4,y4,x1,y1,x8,y8,x5,y5)
+      return
+      end function overlap
+
+      logical function intersect(x1,y1,x2,y2,x3,y3,x4,y4)
+      use b2mod_types
+      implicit none
+      real (kind=R8) :: x1,y1,x2,y2,x3,y3,x4,y4
+      real (kind=R8) :: d2,d3,d4
+      intrinsic abs, sqrt
+cxpb We aim to find if segment 12 intersects with segment 34
+
+cxpb Check if vector 34 lies between 31 and 32 and vector 12 is between 13 and 14
+      intersect = (((x4-x3)*(y2-y3)-(x2-x3)*(y4-y3))*
+     .             ((x4-x3)*(y1-y3)-(x1-x3)*(y4-y3))).lt.0.0_R8.and.
+     .            (((x2-x1)*(y3-y1)-(x3-x1)*(y2-y1))*
+     .             ((x2-x1)*(y4-y1)-(x4-x1)*(y2-y1))).lt.0.0_R8
+      return
+      end function intersect
+
+      logical function inside_rect_strict(x0,y0,x1,y1,x2,y2,x3,y3,x4,y4)
+      use b2mod_types
+      implicit none
+      real (kind=R8) :: x0,y0,x1,y1,x2,y2,x3,y3,x4,y4
+cxpb We aim to find if point 0 is strictly inside the rectangle 1234
+
+      inside_rect_strict = 
+     . (((x0-x1)*(y1-y2)+(y0-y1)*(x2-x1)).gt.0.0_R8 .and.
+     .  ((x0-x2)*(y2-y3)+(y0-y2)*(x3-x2)).gt.0.0_R8 .and.
+     .  ((x0-x3)*(y3-y4)+(y0-y3)*(x4-x3)).gt.0.0_R8 .and.
+     .  ((x0-x4)*(y4-y1)+(y0-y4)*(x1-x4)).gt.0.0_R8) .or.
+     . (((x0-x1)*(y1-y2)+(y0-y1)*(x2-x1)).lt.0.0_R8 .and.
+     .  ((x0-x2)*(y2-y3)+(y0-y2)*(x3-x2)).lt.0.0_R8 .and.
+     .  ((x0-x3)*(y3-y4)+(y0-y3)*(x4-x3)).lt.0.0_R8 .and.
+     .  ((x0-x4)*(y4-y1)+(y0-y4)*(x1-x4)).lt.0.0_R8)
+      return
+      end function inside_rect_strict

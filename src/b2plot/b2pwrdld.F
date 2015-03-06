@@ -9,9 +9,9 @@ c======================================================================
       use b2mod_types
       use b2mod_b2plot
       use b2mod_sources
+      use b2mod_b2plot_wall_loading
       implicit none
 #     include "DIMENSIONS.F"
-#     include "b2pwcom.h"
 #     include "rdload.inc"
       integer i,k,l,m,is,ix,iy
       real (kind=R8) ::
@@ -120,11 +120,10 @@ c      write(*,*) 'b2pwrdld: after rlcomp'
       write(*,*) '  Total radiation      : ',ttsrc
       write(*,*) '  Reaching the targets : ',tttrg
 c----------------------------------------------------------------------
-c*** Extract the data and put them in the output common block.
+c*** Extract the data and put them in the output module.
 c*** After rlcomp, the radiation loads are stored in radld (rdload.inc)
 c*** in the first ntrg elements, in the order given by the ltrg array.
-c*** We need them put in wldrdld (b2pwcom.h) in the positions just
-c*** after lppp, in the following order:
+c*** We need them put in b2mod_b2plot_wall_loading in the following order:
 c***  inner target, cells ny-1 to 0;
 c***  outer target, cells 0 to ny-1
 c*** Normalisation per unit area is also done here.

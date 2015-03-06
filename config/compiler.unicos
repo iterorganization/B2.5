@@ -11,7 +11,10 @@ MOD = o
 BLD = bld rcv
 
 GRLIBES = $(NCARG)
-LDLIBES = $(NAG) -lperf
+LDLIBES = $(NAG)
+ifdef PERFMON
+LDLIBES += -lperf
+endif
 
 LD = f90
 LDOPTS = -Wl"-M,s"

@@ -1,19 +1,21 @@
 csw 09jan2014 modifications as suggested by J.Terry/MIT
 csw 09jan2014 extra module to define some arrays
       module b2mod_b2_to_astra_com
-        use b2mod_types
-        integer :: np
-        real(kind=R8),allocatable :: p(:),x(:),cb(:),cc(:),cd(:)
+      use b2mod_types
+      integer :: np
+      real(kind=R8),allocatable :: p(:),x(:),cb(:),cc(:),cd(:)
       end module b2mod_b2_to_astra_com
 
       module b2mod_b2_to_astra                          !srv 28.07.11 {
-       use b2mod_types
-       use b2mod_astra_to_b2
-       implicit none
-
+      use b2mod_types
+      use b2mod_astra_to_b2
+      use b2mod_neutrals_namelist
 #ifdef USE_EIRENE
-#     include "DIMENSIONS.F"
-#     include "COUPLE/KOPPLDIM.F"
+      use eirmod_extrab25
+#endif
+      implicit none
+
+#ifndef USE_EIRENE
 #     include "COUPLE/EIRDIAG.F"
 #endif
 
@@ -80,7 +82,8 @@ csw 09jan2014 declare fun to be private
         deallocate (sfhi_mdf)
        end subroutine dealloc_b2mod_b2_to_astra
 
-       subroutine write_b2_to_astra(nxd, nyd, nsd, ismain, nwrite)
+       subroutine write_b2_to_astra(nxd, nyd, nsd, ismain, ismain0, 
+     &   nwrite)
         use b2mod_anomalous_transport
         use b2mod_indirect
         use b2mod_geo 
@@ -91,7 +94,7 @@ csw 09jan2014 use extra little module
         use b2mod_b2_to_astra_com ! IGNORE
 
         implicit none
-        integer :: nxd, nyd, nsd, ismain, nwrite, isa, ism
+        integer :: nxd, nyd, nsd, ismain, ismain0, nwrite, isa, ism
 
         character chns*2
 csw 09jan2014 remove np from declaration here
@@ -177,13 +180,13 @@ csw 09jan2014 add extra allocates
         enddo
 
         open(70,file='Radial_coordinates.dat')
-         write(70,*) ' Number','   Coord. cell face      ',
-     &               '   Coord. cell centre    '
+        write(70,*) ' Number','   Coord. cell face      ',
+     &              '   Coord. cell centre    '
 !        iy = -1
 !        write(70,"(i6,1x,2es25.15)")  iy, R_midpl(iy), R_midpl(iy)  
-         do iy = -1,mintopcut
+        do iy = -1,mintopcut
           write(70,"(i6,1x,2es25.15)") iy, R_midpl(iy), Rc_midpl(iy)  
-         enddo
+        enddo
 !         write(70,"(i6,1x,2es25.15)") iy, R_midpl(mintopcut+1)  
         close(70)
 
@@ -197,9 +200,9 @@ csw 09jan2014 add extra allocates
 !       write(nwrite,"(es25.15, 28x,a,f6.4,a)") tib,
 !     &   'boundary ion temperature in Ratb=',Ratb,'       [keV]'
 
-#ifdef USE_EIRENE
+        isa = -1
         do is = 0, nsd-1
-         do iy = 0,mintopcut   ! for closed surfaces and throught separatrix
+         do iy = 0,mintopcut   ! for closed surfaces and through separatrix
           sfna(iy,is)     = 0.0_R8
           sfna_mdf(iy,is) = 0.0_R8
           if(.not.is_neutral(is)) then
@@ -212,100 +215,64 @@ csw 09jan2014 add extra allocates
            enddo
           endif
          enddo
-         do iy = mintopcut+1,nyd   ! for opened surfaces 
+
+         do iy = mintopcut+1, maxtopcut  ! for opened surfaces of DDN geometry  !srv 20.12.12 {
           sfna(iy,is)     = 0.0_R8
           sfna_mdf(iy,is) = 0.0_R8
-          if(.not.is_neutral(is)) then
-           do ix=0,nxd-1                                                  
+          do ix=-1,nxd 
+            if((topcut(1).lt.topcut(2) .and.                    ! DDN Bottom X-point is active 
+     &         (region(ix,iy,0).eq.3 .or. region(ix,iy,0).eq.2 .or. 
+     &          region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8)) .or. 
+     &         (topcut(1).gt.topcut(2) .and.                    ! DDN TOP X-point is active
+     &         (region(ix,iy,0).eq.2 .or. region(ix,iy,0).eq.4 .or.
+     &          region(ix,iy,0).eq.7 .or. region(ix,iy,0).eq.6))) then
+             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
+               sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,is) 
+               sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,is) 
+             endif
+            endif
+          enddo
+         enddo
+
+         do iy = maxtopcut+1, nyd        ! for opened surfaces
+          sfna(iy,is)     = 0.0_R8
+          sfna_mdf(iy,is) = 0.0_R8
+          do ix=-1,nxd 
+           if(nncut.eq.1 .or. 
+     &       (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.  
+     &        region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
              sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,is) 
              sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,is) 
-           enddo
-          endif
-         enddo
-        enddo
-
-        do intrl=0,nsd-1
-         if(is_neutral(intrl)) exit !use first index for neutral
-        enddo
-        is = intrl
-         do iy = 0,mintopcut   ! for closed surfaces and throught separatrix
-          sfna(iy,is) = 0.0_R8
-          do ix=-1,nxd                                                  
-           if(mod(region(ix,iy,0),4).eq.1 .or. 
-     &        mod(region(ix,iy,0),4).eq.2) then
-              do isa = 1,nnatmi
-                sfna(iy,is) = sfna(iy,is) + 
-     &                      rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
-              enddo
-              do ism = 1,nnmoli
-               sfna(iy,is) = sfna(iy,is) + !  mlcmp(isa,ism)*
-     &                      rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
-              enddo
+            endif
            endif
-          enddo
-          sfna_mdf(iy,is) = sfna(iy,is)
+          enddo                                                                   !srv 20.12.12 }
          enddo
 
-         do iy = mintopcut+1, maxtopcut  ! for opened surfaces OF DDN geometry  !srv 20.12.12 {
-          sfna(iy,is)     = 0.0_R8
-           do ix=-1,nxd 
-            if((topcut(1).lt.topcut(2) .and.                    ! DDN Bottom X-point is active 
-     &         (region(ix,iy,0).eq.3 .or. region(ix,iy,0).eq.2 .or. 
-     &          region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8)) .or. 
-     &         (topcut(1).gt.topcut(2) .and.                    ! DDN TOP X-point is active
-     &         (region(ix,iy,0).eq.2 .or. region(ix,iy,0).eq.4 .or.
-     &          region(ix,iy,0).eq.7 .or. region(ix,iy,0).eq.6))) then
-             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then                                                
-              do isa = 1,nnatmi
-                sfna(iy,is) = sfna(iy,is) + 
-     &                      rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
-              enddo
-              do ism = 1,nnmoli
-               sfna(iy,is) = sfna(iy,is) + !  mlcmp(isa,ism)*
-     &                      rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
-              enddo
-             endif
-            endif
-           enddo
-          sfna_mdf(iy,is) = sfna(iy,is)
-         enddo
-
-         do iy = maxtopcut+1, nyd        ! for opened surfaces
-          sfna(iy,is)     = 0.0_R8
-           do ix=-1,nxd 
-            if(nncut.eq.1 .or. 
-     &         (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.  
-     &            region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
-             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then                                                
-              do isa = 1,nnatmi
-                sfna(iy,is) = sfna(iy,is) + 
-     &                      rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
-              enddo
-              do ism = 1,nnmoli
-               sfna(iy,is) = sfna(iy,is) + !  mlcmp(isa,ism)*
-     &                      rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
-              enddo
-             endif
-            endif
-           enddo
-         enddo                                                                   !srv 20.12.12 }
-#else
-        do is = 0, nsd-1
-          do iy = 0,mintopcut   ! for closed surfaces and throught separatrix
-           sfna(iy,is)     = 0.0_R8
-           sfna_mdf(iy,is) = 0.0_R8
+#ifdef USE_EIRENE
+         if (is_neutral(is)) isa = b2espcr(is)
+         if (is_neutral(is) .and. isa.ne.-1) then
+          do iy = 0,mintopcut   ! for closed surfaces and through separatrix
            do ix=-1,nxd                                                  
             if(mod(region(ix,iy,0),4).eq.1 .or. 
      &         mod(region(ix,iy,0),4).eq.2) then
-              sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,is) 
-              sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,is) 
+             sfna(iy,is) = sfna(iy,is) + 
+     &                     rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
+             sfna_mdf(iy,is) = sfna_mdf(iy,is) + 
+     &                     rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
             endif
+            do ism = 1,nnmoli
+             if (mlcmp(isa,ism).gt.0) then
+              sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
+     &                      rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
+              sfna_mdf(iy,is) = sfna_mdf(iy,is) + mlcmp(isa,ism)*
+     &                      rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
+             endif
+            enddo
            enddo
           enddo
 
-         do iy = mintopcut+1, maxtopcut  ! for opened surfaces OF DDN geometry  !srv 20.12.12 {
-           sfna(iy,is)     = 0.0_R8
-           sfna_mdf(iy,is) = 0.0_R8
+          do iy = mintopcut+1, maxtopcut  ! for opened surfaces of DDN geometry  !srv 20.12.12 {
            do ix=-1,nxd 
             if((topcut(1).lt.topcut(2) .and.                    ! DDN Bottom X-point is active 
      &         (region(ix,iy,0).eq.3 .or. region(ix,iy,0).eq.2 .or. 
@@ -313,36 +280,56 @@ csw 09jan2014 add extra allocates
      &         (topcut(1).gt.topcut(2) .and.                    ! DDN TOP X-point is active
      &         (region(ix,iy,0).eq.2 .or. region(ix,iy,0).eq.4 .or.
      &          region(ix,iy,0).eq.7 .or. region(ix,iy,0).eq.6))) then
-             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then                                                
-               sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,is) 
-               sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,is) 
+             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) 
+     >        then
+              do isa = 1,nnatmi
+               sfna(iy,is) = sfna(iy,is) + 
+     &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
+               sfna_mdf(iy,is) = sfna_mdf(iy,is) + 
+     &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
+              enddo
+              do ism = 1,nnmoli
+               if (mlcmp(isa,ism).gt.0) then
+                sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
+     &                        rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
+                sfna_mdf(iy,is) = sfna_mdf(iy,is) + mlcmp(isa,ism)*
+     &                        rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
+               endif
+              enddo
              endif
             endif
            enddo
-         enddo
+          enddo
 
-         do iy = maxtopcut+1, nyd        ! for opened surfaces
-           sfna(iy,is)     = 0.0_R8
-           sfna_mdf(iy,is) = 0.0_R8
+          do iy = maxtopcut+1, nyd        ! for opened surfaces
            do ix=-1,nxd 
             if(nncut.eq.1 .or. 
-     &         (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.  
-     &            region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
-             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then                                                
-               sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,is) 
-               sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,is) 
+     &        (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.  
+     &         region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
+             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
+              do isa = 1,nnatmi
+               sfna(iy,is) = sfna(iy,is) + 
+     &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
+              enddo
+              do ism = 1,nnmoli
+               if (mlcmp(isa,ism).gt.0) then
+                sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
+     &                        rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
+               endif
+              enddo
              endif
             endif
            enddo
-         enddo                                                                   !srv 20.12.12 }
-        enddo
+          enddo
+         endif                                                                !srv 20.12.12 }
 #endif
+        enddo
 
-         do iy = 0,mintopcut   ! for closed surfaces and throught separatrix
-           sfne(iy) = 0.0_R8
-           sfhe_mdf(iy) = 0.0_R8
-           sfhi_mdf(iy) = 0.0_R8
-           do ix=-1,nxd                                                  
+        do iy = 0,mintopcut   ! for closed surfaces and through separatrix
+          sfne(iy) = 0.0_R8
+          sfhe_mdf(iy) = 0.0_R8
+          sfhi_mdf(iy) = 0.0_R8
+          do ix=-1,nxd                                                  
             if(mod(region(ix,iy,0),4).eq.1 .or. 
      &         mod(region(ix,iy,0),4).eq.2) then
              sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1) 
@@ -365,21 +352,21 @@ csw 09jan2014 add extra allocates
 
              sfne(iy) = sfne(iy) + fne(ix,iy,1) 
             endif
-           enddo
-         enddo
+          enddo
+        enddo
 
-         do iy = mintopcut+1, maxtopcut  ! for opened surfaces OF DDN geometry  !srv 20.12.12 {
-           sfhe_mdf(iy) = 0.0_R8
-           sfhi_mdf(iy) = 0.0_R8
-           sfne(iy) = 0.0_R8
-           do ix=-1,nxd 
+        do iy = mintopcut+1, maxtopcut  ! for opened surfaces of DDN geometry  !srv 20.12.12 {
+          sfhe_mdf(iy) = 0.0_R8
+          sfhi_mdf(iy) = 0.0_R8
+          sfne(iy) = 0.0_R8
+          do ix=-1,nxd 
             if((topcut(1).lt.topcut(2) .and.                    ! DDN Bottom X-point is active 
      &         (region(ix,iy,0).eq.3 .or. region(ix,iy,0).eq.2 .or. 
      &          region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8)) .or. 
      &         (topcut(1).gt.topcut(2) .and.                    ! DDN TOP X-point is active
      &         (region(ix,iy,0).eq.2 .or. region(ix,iy,0).eq.4 .or.
      &          region(ix,iy,0).eq.7 .or. region(ix,iy,0).eq.6))) then
-             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then                                                
+             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
               sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1) 
      &       +fac_ExB(ix,iy)*                                    !srv 11.04.13 {
      &      ((po(ix,iy)-po(leftix(ix,iy),iy))/
@@ -401,18 +388,18 @@ csw 09jan2014 add extra allocates
               sfne(iy) = sfne(iy) + fne(ix,iy,1) 
              endif
             endif
-           enddo
-         enddo
+          enddo
+        enddo
 
-         do iy = maxtopcut+1, nyd        ! for opened surfaces
-           sfhe_mdf(iy) = 0.0_R8
-           sfhi_mdf(iy) = 0.0_R8
-           sfne(iy) = 0.0_R8
-           do ix=-1,nxd 
+        do iy = maxtopcut+1, nyd        ! for opened surfaces
+          sfhe_mdf(iy) = 0.0_R8
+          sfhi_mdf(iy) = 0.0_R8
+          sfne(iy) = 0.0_R8
+          do ix=-1,nxd 
             if(nncut.eq.1 .or. 
      &         (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.  
      &            region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
-             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then                                                
+             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
               sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1)
      &       +fac_ExB(ix,iy)*                                    !srv 11.04.13 {
      &      ((po(ix,iy)-po(leftix(ix,iy),iy))/
@@ -434,8 +421,8 @@ csw 09jan2014 add extra allocates
               sfne(iy) = sfne(iy) + fne(ix,iy,1) 
              endif
             endif
-           enddo
-         enddo                                                                   !srv 20.12.12 }
+          enddo
+        enddo                                                                   !srv 20.12.12 }
 *   ..the simplest linear interpolation 
         iy =  iy_crb_astra 
         neb = (ne(nmdpl,iy)+(crb_astra-Rc_midpl(iy))*
@@ -457,13 +444,12 @@ csw 09jan2014 add extra allocates
         write(nwrite,"(es25.15, 28x,a,f6.4,a)") tib,
      &  'boundary ion temperature in crb_astra=',crb_astra,'      [keV]'
 
-#ifdef USE_EIRENE
-        is = intrl
+        is = ismain0
         write(nwrite,"(es25.15, 28x,a,i4,a)") 
      &     -(sfna(0,is)+sfna(1,is))*0.5_R8/1.0e19_R8,
      &    '- integrated neutral flux',is,
      &    '  in cell centre for inner surface [1e19/s]'
-        iy = 0                    ! it is wrote value in 0-cell instead of -1 cell
+        iy = 0                  ! it is written value in 0-cell instead of -1 cell
         write(nwrite,"(i6,1x,5es25.15)") iy-1, se(iy)/svol(iy)/1.0e19_R8     ! electron source    [1e19/s]
      &   ,(sfna_mdf(iy+1,ismain)-sfna_mdf(iy,ismain))/svol(iy)/1.0e19_R8
      &   ,(sfna_mdf(iy+1,is    )-sfna_mdf(iy,is    ))/svol(iy)/1.0e19_R8
@@ -474,27 +460,8 @@ csw 09jan2014 add extra allocates
      &   ,(sfna_mdf(iy+1,is    )-sfna_mdf(iy,is    ))/svol(iy)/1.0e19_R8
      &   , seh(iy)/svol(iy), sih(iy)/svol(iy)                               !srv 11.06.13
         enddo
-#else
-        do is = 0, nsd-1
-         if(is_neutral(is)) then
-          write(nwrite,"(es25.15, 28x,a,i4,a)") 
-     &     -(sfna(0,is)+sfna(1,is))*0.5_R8/1.0e19_R8,
-     &    '- integrated neutral flux',is,
-     &    '  in cell centre for inner surface [1e19/s]'
-         endif
-        enddo
-        iy = 0                    ! it is wrote value in 0-cell instead of -1 cell
-        write(nwrite,"(i6,1x,4es25.15)") iy-1, se(iy)/svol(iy)/1.0e19_R8     ! electron source    [1e19/s]
-     &   ,(sfna_mdf(iy+1,ismain)-sfna_mdf(iy,ismain))/svol(iy)/1.0e19_R8
-     &   , seh(iy)/svol(iy), sih(iy)/svol(iy)                               !srv 11.06.13
-        do iy = 0,mintopcut-1                                    ! for Core region
-         write(nwrite,"(i6,1x,4es25.15)") iy, se(iy)/svol(iy)/1.0e19_R8    ! electron source    [1e19/s]
-     &   ,(sfna_mdf(iy+1,ismain)-sfna_mdf(iy,ismain))/svol(iy)/1.0e19_R8
-     &   , seh(iy)/svol(iy), sih(iy)/svol(iy)                               !srv 11.06.13
-        enddo
-#endif
 
-       open(70,file='table_01.dat')                    !srv 19.09.11 {
+        open(70,file='table_01.dat')                    !srv 19.09.11 {
         write(70,10) 
    10   format(4x,'Rc(m)',5x,2x,'ne(1/m^3)',3x,3x,'Te(keV)',4x,
      &         3x,'Ti(keV)',4x,3x,'D(m^2/s)',3x,3x,'xe(m^2/s)',2x,
@@ -511,9 +478,9 @@ csw 09jan2014 add extra allocates
       
         enddo
 
-       close(70)                                       !srv 19.09.11 }
+        close(70)                                      !srv 19.09.11 }
 
-       open(70,file='table_02.dat')                    !srv 19.09.11 {
+        open(70,file='table_02.dat')                   !srv 19.09.11 {
         write(70,20) 
    20   format(4x,'Rf(m)',5x,4x,'Fle(1/s)',2x,4x,'qe(MW)',5x,
      &         4x,'qi(MW)',5x,3x,'-Fln(1/s)',2x)
@@ -524,39 +491,39 @@ csw 09jan2014 add extra allocates
      &    sfhi_mdf(iy)/1.0e6_R8,-sfna(iy,0) 
         enddo
 
-       close(70)
+        close(70)
 
-       open(70,file='check_inv_hi_astra.dat')
+        open(70,file='check_inv_hi_astra.dat')
         write(70,*) ' Number    Coord    inv_hi_astra'  
         do iy=-1,nyd
          write(70,40) iy, Rmaj_astra(iy),inv_hi_astra(iy)
         enddo
    40   format(i6,1x,2e13.5)
-       close(70)
+        close(70)
 
         write (*,*) 'Ratb, iy_Ratb', Ratb, iy_Ratb 
         write (*,*) 'data for b2mod_b2_to_astra has been written'
 
 #ifdef USE_EIRENE
-       if(iout.ne.0) then                                                      !srv 14.03.12 {
-        do iy = -1,nyd 
-         do ix = -1,nxd
-               wrk0(ix,iy) = sy(ix,iy)                                                
+        if(iout.ne.0) then                                         !srv 14.03.12 {
+         do iy = -1,nyd 
+          do ix = -1,nxd
+           wrk0(ix,iy) = sy(ix,iy)
+          enddo
          enddo
-        enddo
-        call my_out(70,nxd,nyd,gs(-1,-1,1),'write_b2_to_astra_gsy')
-        call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_sy')
-        do isa = 1,nnatmi
-         write (chns,'(i2.2)') isa
-         call my_out(70,nxd,nyd,dab2(0:nxd+1,0:nyd+1,isa,1),
-     &   'write_b2_to_astra_dab2'//chns)
-         call my_out(70,nxd,nyd,tab2(0:nxd+1,0:nyd+1,isa,1),
-     &   'write_b2_to_astra_tab2'//chns)
-         call my_out(70,nxd,nyd,rfluxa(0:nxd+1,0:nyd+1,isa,1),
+         call my_out(70,nxd,nyd,gs(-1,-1,1),'write_b2_to_astra_gsy')
+         call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_sy')
+         do isa = 1,nnatmi
+          write (chns,'(i2.2)') isa
+          call my_out(70,nxd,nyd,dab2(0:nxd+1,0:nyd+1,isa,1),
+     &     'write_b2_to_astra_dab2'//chns)
+          call my_out(70,nxd,nyd,tab2(0:nxd+1,0:nyd+1,isa,1),
+     &     'write_b2_to_astra_tab2'//chns)
+          call my_out(70,nxd,nyd,rfluxa(0:nxd+1,0:nyd+1,isa,1),
      &    'write_b2_to_astra_rfluxa'//chns)
           do iy = -1,nyd 
            do ix = -1,nxd
-               wrk0(ix,iy) = rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)                                                
+            wrk0(ix,iy) = rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
            enddo
           enddo
          call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_rfluxasy'//chns)
@@ -577,7 +544,7 @@ csw 09jan2014 add extra allocates
      &   'write_b2_to_astra_rfluxm'//chns)
           do iy = -1,nyd 
            do ix = -1,nxd
-               wrk0(ix,iy) = rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)                                                
+            wrk0(ix,iy) = rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
            enddo
           enddo
          call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_rfluxmsy'//chns)
@@ -591,7 +558,7 @@ csw 09jan2014 add extra allocates
         open(70,file='write_b2_to_astra_intrl.dat')
          write(70,*)' Index of neutral in write_b2_to_astra_intrl',intrl  
         close(70)
-       endif                                                                 !srv 14.03.12 }
+       endif                                                       !srv 14.03.12 }
 #endif         
         ncall = ncall +1
 
@@ -614,7 +581,7 @@ csw 09jan2014 add 'fun' function
          fun=-DSEVAL(np+1,arg,p,x,cb,cc,cd)
        end function fun
 
-       subroutine b2_to_astra_src(nxd, nyd, vol, source, svol, src)       !srv 11.06.13
+       subroutine b2_to_astra_src(nxd, nyd, vol, source, svol, src)   !srv 11.06.13
         use b2mod_indirect
         implicit none
 !       integrated source   [1/s]
@@ -667,4 +634,4 @@ csw 09jan2014 add 'fun' function
         ncall = ncall + 1
        end subroutine b2_to_astra_src
 
-      end module b2mod_b2_to_astra                                   !srv 28.07.11 }
+      end module b2mod_b2_to_astra                                  !srv 28.07.11 }

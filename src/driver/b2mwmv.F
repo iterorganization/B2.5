@@ -81,7 +81,7 @@
       real (kind=R8) ::
      *   rdum(0:9)
 *   ..procedures
-      external subini, subend, xertst, scopy, saxpy, cfwuin, cfwure
+      external subini, subend, xertst, b2scopy, b2saxpy, cfwuin, cfwure
       external b2xvsg, b2xvfx
 *   ..initialisation
       data ncall/0/
@@ -113,16 +113,16 @@
        call b2xvsg (n2, ti0, 1, 'ti0', '.gt.')
       endif
 *   ..compute change in plasma state
-      call scopy (n2*ns, na, 1, delna, 1)
-      call saxpy (n2*ns, -1.0_R8, na0, 1, delna, 1)
-      call scopy (n2*ns, ua, 1, delua, 1)
-      call saxpy (n2*ns, -1.0_R8, ua0, 1, delua, 1)
-      call scopy (n2, te, 1, delte, 1)
-      call saxpy (n2, -1.0_R8, te0, 1, delte, 1)
-      call scopy (n2, ti, 1, delti, 1)
-      call saxpy (n2, -1.0_R8, ti0, 1, delti, 1)
-      call scopy (n2, po, 1, delpo, 1)
-      call saxpy (n2, -1.0_R8, po0, 1, delpo, 1)
+      call b2scopy (n2*ns, na, 1, delna, 1)
+      call b2saxpy (n2*ns, -1.0_R8, na0, 1, delna, 1)
+      call b2scopy (n2*ns, ua, 1, delua, 1)
+      call b2saxpy (n2*ns, -1.0_R8, ua0, 1, delua, 1)
+      call b2scopy (n2, te, 1, delte, 1)
+      call b2saxpy (n2, -1.0_R8, te0, 1, delte, 1)
+      call b2scopy (n2, ti, 1, delti, 1)
+      call b2saxpy (n2, -1.0_R8, ti0, 1, delti, 1)
+      call b2scopy (n2, po, 1, delpo, 1)
+      call b2saxpy (n2, -1.0_R8, po0, 1, delpo, 1)
 
 * ..save data for movie
 *   ..save itim, tim, dtim

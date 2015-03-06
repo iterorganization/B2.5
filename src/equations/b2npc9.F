@@ -51,9 +51,9 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-	integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !sv 06.07.06
-      integer, save :: iout = 0                                      !srv 04.07.08
-	character chns*2                                               !srv 04.07.08
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !sv 06.07.06
+      integer, save :: iout = 0                                      !srv 04.07.08    
+      character chns*3                                               !srv 04.07.08
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
       real (kind=R8) ::
@@ -140,7 +140,7 @@
 	  enddo                                                         !srv 27.06.08 }
       endif                                                           !srv 15.02.10 }
 *   ..compute correction
-	write (chns,'(i2.2)') isb
+	write (chns,'(i3.3)') isb
       call b2usc9 (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1, !srv 13.10.06 26.09.12
      &   pbs, nb, pb, snb(-1,-1,1), flob, conb, pccb(-1,-1,1), rescb,  
      &   corpb, aa9, 'b2usc9_')                                       !srv 18.05.02
@@ -169,7 +169,7 @@
 	 enddo                                                           !srv 27.06.08 }
       endif                                                            !srv 06.07.08 }
 	if (iout.ne.0) then                                            !srv 12.07.02 {
-	  write (chns,'(i2.2)') isb
+	  write (chns,'(i3.3)') isb
 	  call my_out(70,nx,ny,pb,'b2npc9_pa'//chns)
 	  call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
 	  call my_out(70,nx,ny,ub,'b2npc9_ua'//chns)

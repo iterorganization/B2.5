@@ -66,7 +66,7 @@ C
               itmax=itmax+1
               zmin=min(zmin,drcofi(itmax))
               zmax=max(zmax,drcofi(itmax))
-              dspec(ix,iy,is)=ne(ix,iy)*NA(ix,iy,is)*
+              dspec(ix,iy,is)=ne(ix,iy)*na(ix,iy,is)*
      1         1.0e-6_R8*10.0_R8**drcofi(itmax)/4.0_R8/pi
             enddo
           enddo
@@ -995,7 +995,7 @@ C-----------------------------------------------------------------------
       LOGICAL     LOPEN
 C-----------------------------------------------------------------------
       CHARACTER   ESYM*2         , EXTIN*3           , EXTLST*3     ,
-     &                             UIDIN*80          , UIDLST*80    ,
+     &                             UIDIN*256         , UIDLST*256   ,
      &                             GRPIN*8           , GRPLST*8     ,
      &                             TYPIN*80          , TYPLST*80    ,
      &            C11*11         ,
@@ -1416,7 +1416,7 @@ C
 C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
       INTEGER    IBSEL           , IZ
-C     INTEGER    XXFCHR          , XXSLEN
+C     INTEGER    XXFCHR
       INTEGER    POS_NOW         , LEN_NAME
       INTEGER    IFIRST          , ILAST
 C-----------------------------------------------------------------------
@@ -1871,7 +1871,7 @@ C
      &           ' IN INPUT DATA SET TOO GREAT.'/
      &        2X,'THE MAXIMUM NUMBER ALLOWED     = ',I3/
      &        2X,'THE NUMBER PRESENT IN DATA SET = ',I3/
-     &        2X,'THEREFORE ONLY THE FIRST ',I2,' HAVE BEEN ACCEPTED'/
+     &        2X,'THEREFORE ONLY THE FIRST ',I3,' HAVE BEEN ACCEPTED'/
      &        1X,31('*'),' END OF MESSAGE ',31('*'))
  2001 FORMAT(/1X,32('*'),' E3DATA ERROR ',32('*')/
      &        2X,'INPUT PHOT. EMISS. DATA SET NAME: ',A80/
@@ -2050,73 +2050,6 @@ C-----------------------------------------------------------------------
 C
       RETURN
       END SUBROUTINE XXSPEC
-CX UNIX PORT - SCCS Info : Module @(#)xxslen.for        1.1 Date 5/1/95
-CX      
-      SUBROUTINE XXSLEN( CSTRNG , IFIRST , ILAST )
-      IMPLICIT NONE
-C-----------------------------------------------------------------------
-C
-C  ****************** FORTRAN77 SUBROUTINE: XXSLEN *********************
-C
-C  PURPOSE: TO IDENTIFY THE FIRST AND LAST NON-BLANK CHARACTER IN A
-C           STRING. (IF INPUT STRING IS BLANK IFIRST=ILAST=0)
-C
-C  CALLING PROGRAM: GENERAL USE
-C
-C  SUBROUTINE:
-C
-C  INPUT : (C*(*)) CSTRNG   = INPUT STRING FOR INTERROGATION
-C
-C  OUTPUT: (I*4)   IFIRST   = BYTE POSITION OF FIRST NON-BLANK CHARACTER
-C                             IN INPUT STRING.
-C  OUTPUT: (I*4)   ILAST    = BYTE POSITION OF LAST  NON-BLANK CHARACTER
-C                             IN INPUT STRING.
-C
-C          (I*4)   I        = GENERAL USE
-C          (I*4)   ILEN     = LENGTH OF 'CSTRNG' STRING IN BYTES
-C
-C ROUTINES: NONE
-C
-C NOTE:
-C
-C
-C AUTHOR:  PAUL E. BRIDEN (TESSELLA SUPPORT SERVICES PLC)
-C          K1/0/37
-C          JET EXT. 6023
-C
-C DATE  :  06/07/93
-C
-C-----------------------------------------------------------------------
-C-----------------------------------------------------------------------
-C
-C-----------------------------------------------------------------------
-      INTEGER     IFIRST     , ILAST    , ILEN    , I
-C-----------------------------------------------------------------------
-      CHARACTER   CSTRNG*(*)
-C-----------------------------------------------------------------------
-C-----------------------------------------------------------------------
-C
-C-----------------------------------------------------------------------
-C
-      ILEN   = LEN(CSTRNG)
-C-----------------------------------------------------------------------
-      IFIRST = 0
-      ILAST  = 0
-C-----------------------------------------------------------------------
-C
-         DO 1 I=1,ILEN
-C
-            IF (CSTRNG(I:I) .NE. ' ') THEN
-               IF (IFIRST .EQ. 0) IFIRST = I
-               ILAST = I
-            ENDIF
-C
-    1    CONTINUE
-C
-C-----------------------------------------------------------------------
-C
-       RETURN
-       END SUBROUTINE XXSLEN
 CX UNIX PORT - SCCS info: Module @(#)xxuid.for  1.2 Date 8/9/96
 CX
       SUBROUTINE XXUID( USERID )
@@ -2480,14 +2413,15 @@ C-----------------------------------------------------------------------
          IF (IOPT .NE. NOPT) LSETX=.TRUE.
       ENDIF
 C-----------------------------------------------------------------------
-         IF (LSETX) THEN
 C
 C***********************************************************************
 C SET UP PARAMETERS RELATING TO 'XIN'-AXIS
 C***********************************************************************
 C
-            NOPT = MAX0( 0 , IOPT )
+         NOPT = MAX0( 0 , IOPT )
+         NIN0 = NIN-1
 C-----------------------------------------------------------------------
+         IF (LSETX) THEN
                DO 1 I=1,NIN
                   X(I)=FINTX(XIN(I))
     1          CONTINUE
@@ -2496,7 +2430,6 @@ C-----------------------------------------------------------------------
             Q(1)  = QVAL(NOPT)
             D2(1) = D2VAL(NOPT)/H(2)
             D3(1) = D3VAL(NOPT)
-            NIN0=NIN-1
 C-----------------------------------------------------------------------
                DO 2 I=2,NIN0
                   H(I+1) = X(I+1) - X(I)
@@ -2642,11 +2575,6 @@ C          (I*4)   ILENC    = LENGTH OF 'CSTRNG' STRING IN BYTES
 C          (I*4)   ILENS    = POSITION OF LAST  NON-BLANK BYTE IN SSTRNG
 C          (I*4)   I        = GENERAL USE - INCLUDING DUMP FOR UNWANTED
 C                             OUTPUT FROM XXSLEN SUBROUTINE.
-C
-C ROUTINES:
-C          ROUTINE    SOURCE    BRIEF DESCRIPTION
-C          ------------------------------------------------------------
-C          XXSLEN     ADAS      FIND FIRST/LAST NONBLANK BYTES IN STRING
 C
 C NOTE  :  ANY TRAILING BLANKS IN THE SEARCH STRING (SSTRNG) ARE
 C          IGNORED.
@@ -2981,285 +2909,6 @@ C
 C-----------------------------------------------------------------------
 C
       END SUBROUTINE XXHKEY
-CX UNIX PORT - SCCS info: Module @(#)i4unit.for 1.1 Date 4/10/95
-CX
-      FUNCTION I4UNIT( IUNIT )
-      IMPLICIT NONE
-C-----------------------------------------------------------------------
-C
-C  ************** FORTRAN77 INTEGER*4 FUNCTION: I4UNIT *****************
-C
-C  PURPOSE: TO RESET OR RETURN A STORED INTEGER*4 VALUE GREATER THAN OR
-C           EQUAL TO ZERO.
-C           THIS IS USED WITHIN ADAS TO STORE THE STREAM/UNIT NUMBER
-C           FOR THE OUTPUT OF ERROR MESSAGES (TO THE SCREEN).
-C
-C           BY DEFAULT THE STORED VALUE WILL BE 6, AND WILL BE RETURNED
-C           BY THE FUNCTION IF IUNIT ON INPUT < 0.
-C
-C           TO RESET THE STORED VALUE THEN SET IUNIT TO THE REQUIRED
-C           POSITIVE INTEGER (INC. ZERO). THIS VALUE WILL ALSO BE
-C           RETURNED BY THE FUNCTION.
-C
-C                 IUNIT VALUE               RETURNED FUNCTION VALUE
-C                 -----------               -----------------------
-C                 IUNIT <  0            = CURRENT STORED INTEGER VALUE
-C                                         (6 BY DEFAULT).
-C                 IUNIT >= 0            = IUNIT , AND RESETS THE STORED
-C                                                 VALUE TO IUNIT.
-C
-C
-C  CALLING PROGRAM: GENERAL USE
-C
-C  SUBROUTINE:
-C
-C  O     : (I*4)  I4UNIT   = FUNCTION NAME - (SEE ABOVE)
-C
-C  I     : (I*4)  IUNIT    = FUNCTION ARGUMENT - (SEE ABOVE)
-C
-C          (I*4)  IDEFLT   = PARAMETER = DEFAULT STORED INTEGER VALUE
-C
-C          (I*4)  ICURNT   = CURRENT STORED INTEGER VALUE
-C
-C
-C ROUTINES:
-C          ROUTINE    SOURCE    BRIEF DESCRIPTION
-C          ------------------------------------------------------------
-C
-C
-C AUTHOR:  PAUL E. BRIDEN (TESSELLA SUPPORT SERVICES PLC)
-C          K1/0/37
-C          JET EXT. 5023
-C
-C DATE:    23/04/93
-C
-C UPDATE:  24/05/93 - PE BRIDEN - ALLOWED 0 TO BE A VALID STORED NUMBER
-C
-C-----------------------------------------------------------------------
-      INTEGER    I4UNIT     , IDEFLT
-C-----------------------------------------------------------------------
-      PARAMETER( IDEFLT = 6 )
-C-----------------------------------------------------------------------
-      INTEGER    IUNIT      , ICURNT
-C-----------------------------------------------------------------------
-      SAVE       ICURNT
-C-----------------------------------------------------------------------
-      DATA       ICURNT / IDEFLT /
-C-----------------------------------------------------------------------
-C
-C-----------------------------------------------------------------------
-C RETRIEVE OR RESET STORED INTEGER VALUE ACCORDINGLY
-C-----------------------------------------------------------------------
-C
-      IF (IUNIT .LT. 0) THEN
-        I4UNIT = ICURNT
-      ELSE
-        ICURNT = IUNIT
-        I4UNIT = IUNIT
-      ENDIF
-C
-C-----------------------------------------------------------------------
-C
-      RETURN
-      END FUNCTION I4UNIT
-CX ULTRIX PORT - SCCS info: Module @(#)i4fctn.for       1.2 Date 4/24/95
-CX
-      FUNCTION I4FCTN( STR , IABT )
-      IMPLICIT NONE
-C-----------------------------------------------------------------------
-C
-C  *************** FORTRAN77 INTEGER*4 FUNCTION: I4FCTN ****************
-C
-C  FUNCTION: TO CONVERT AN INTEGER NUMBER STORED IN THE STRING 'STR'
-C            INTO A INTEGER*4 VARIABLE, USING INTERNAL READ.
-C            INTIALLY THE PROGRAM CHECKS TO SEE IF THE NUMBER IS OF A
-C            VALID FORM.
-C
-C  CALLING PROGRAM: GENERAL USE
-C
-C  FUNCTION:
-C
-C          (I*4)   I4FCTN  = FUNCTION NAME
-C          (C*(*)) STR     = STRING CONTAINING SINGLE FLOATING POINT NO.
-C          (I*4)   IABT    = RETURN CODE:
-C                               0 => NO ERROR
-C                               1 => ERROR (A VALUE 'I4FCTN=0' WILL BE
-C                                           RETURNED).
-C
-C          (C*1)   CH0      = PARAMETER = '0'
-C          (C*1)   CH9      = PARAMETER = '9'
-C          (C*1)   BLANK    = PARAMETER = ' '
-C          (C*1)   CPLUS    = PARAMETER = '+'
-C          (C*1)   CMINUS   = PARAMETER = '-'
-C
-C          (I*4)   ILEN     = LENGTH OF 'STR' STRING IN BYTES
-C          (I*4)   ILAST    = POSITION OF LAST BYTE OF IDENTIFIED NUMBER
-C          (I*4)   I1       = STARTING BYTE IN 'STR' OF NUMBER
-C                             INCLUDING SIGN IF PRESENT
-C          (I*4)   IS       = 0 => NUMBER HAS NO SIGN
-C                             1 => NUMBER HAS A SIGN
-C          (I*4)   ICH0     = ICHAR('0')
-C          (I*4)   ICH9     = ICHAR('9')
-C          (I*4)   ISTR     = ICHAR(CURRENT BYTE POSITION IN 'STR')
-C          (I*4)   I        = GENERAL USE
-C
-C          (L*4)   LFOUND   = .TRUE.  => ALL OF THE INPUT NUMBER BYTES
-C                                        HAVE BEEN ASSESSED.
-C                             .FALSE. => INPUT NUMBER BYTES STILL BEING
-C                                        ASSESSED.
-C          (L*4)   LSTART   = .TRUE.  => THE FIRST DIGIT HAS BEEN FOUND
-C                             .FALSE. => THE FIRST DIGIT HAS NOT YET
-C                                        BEEN REACHED.
-C
-C          (C*5)   CFORM5   = FORMAT FOR INTERNAL READING OF INTEGER
-C
-C
-C NOTE:     AN ERROR WILL OCCUR (IABT=1) IF THERE IS MORE THAN ONE
-C           NUMBER OCCURING IN THE STRING 'STR()'
-C
-C
-C AUTHOR:   PAUL E. BRIDEN (TESSELLA SUPPORT SERVICES PLC)
-C           K1/0/37
-C           JET EXT. 2520
-C
-C DATE:     11/07/90
-C
-C UPDATE:   11/02/92 - PE BRIDEN: BLANKS NOW ALLOWED BETWEEN SIGN AND
-C                                 FIRST DIGIT. LSTART VARIABLE ADDED.
-C                                 VARIABLE I2 REMOVED.
-C                                 + SOME MINOR RECODING - (IF STRING
-C                                 ENTERED IS BLANK IABT IS NOW SET TO 1)
-C
-C UPDATE:   16/08/93 - PE BRIDEN: CORRECTED BUG TO ALLOW BLANKS BETWEEN
-C                                 SIGN AND FIRST DIGIT (SEE ABOVE).
-C                                 1) ILAST VARIABLE ADDED.
-C                                 2) FORMATTED READ USED INSTEAD OF *
-C                                    WHEN CONVERTING IDENTIFIED INTEGER
-C                                    USING THE INTERNAL READ. (THIS
-C                                    RESTRICTS IDENTIFIED NUMBER TO BE
-C                                    < 100 BYTES IN LENGTH!)
-C                                 3) EXCLUDE TRAILING BLANKS IN THE
-C                                    INTERNAL READING OF THE INTEGER
-C                                    I.E. STR(I1:ILAST) INSTEAD OF
-C                                         STR(I1:ILEN)
-C
-C UPDATE:   07/03/95 - PE BRIDEN: INSTEAD OF USING FORMAT SPECIFIER I99
-C                                 WHEN INTERNALLY READING THE INTEGER
-C                                 CREATE THE APPROPRIATE SPECIFIER
-C                                 WITHIN CFORM5 AND USE THIS.
-C
-C-----------------------------------------------------------------------
-C
-C-----------------------------------------------------------------------
-      CHARACTER  CH0*1   , CH9*1   , BLANK*1   , CPLUS*1   , CMINUS*1
-C-----------------------------------------------------------------------
-      PARAMETER( CH0='0', CH9='9', BLANK=' ', CPLUS='+', CMINUS='-' )
-C-----------------------------------------------------------------------
-      CHARACTER  STR*(*)
-C-----------------------------------------------------------------------
-      INTEGER    I4FCTN  , IABT
-      INTEGER    I1      , IS      , ILEN      , ILAST     ,
-     &           ICH0    , ICH9    , ISTR      , I
-C-----------------------------------------------------------------------
-      LOGICAL    LSTART  , LFOUND
-C-----------------------------------------------------------------------
-      CHARACTER  CFORM5*5
-C-----------------------------------------------------------------------
-      DATA       CFORM5 / '(Ixx)' /
-C-----------------------------------------------------------------------
-      SAVE       CFORM5
-C-----------------------------------------------------------------------
-C
-C-----------------------------------------------------------------------
-C INITIALISE VALUES
-C-----------------------------------------------------------------------
-C
-      I4FCTN = 0
-      IABT   = 0
-      I1     = 0
-      IS     = 0
-      LSTART = .FALSE.
-      LFOUND = .FALSE.
-      ICH0   = ICHAR(CH0)
-      ICH9   = ICHAR(CH9)
-      ILEN   = LEN(STR)
-      ILAST  = ILEN
-C
-C-----------------------------------------------------------------------
-C FIND STARTING BYTE OF NUMBER
-C-----------------------------------------------------------------------
-C
-         DO 1 I=1,ILEN
-               IF ( STR(I:I) .NE. BLANK ) THEN
-                  I1 = I
-                  GOTO 2
-               ENDIF
-    1    CONTINUE
-C
-C-----------------------------------------------------------------------
-C IDENTIFY IF NUMBER HAS A SIGN
-C-----------------------------------------------------------------------
-C
-    2    IF (I1 .EQ. 0) THEN
-            IABT = 1
-            RETURN
-         ENDIF
-C
-      IF   ( ( STR(I1:I1) .EQ. CPLUS  )
-     &                   .OR. 
-     &       ( STR(I1:I1) .EQ. CMINUS ) ) IS=1
-C
-C-----------------------------------------------------------------------
-C IDENTIFY IF NUMBER IS OF A VALID FORM
-C-----------------------------------------------------------------------
-C
-         DO 3 I=I1+IS,ILEN
- 
-               IF (LFOUND) THEN
-C
-C-----------------------------------------------------------------------
-C INPUT NO. COMPLETELY DEFINED: IDENTIFY IF EXTRA NON-BLANK BYTES EXIST
-C-----------------------------------------------------------------------
-C
-                  IF (STR(I:I) .NE. BLANK) IABT=1
-C-----------------------------------------------------------------------
-               ELSEIF (STR(I:I) .EQ. BLANK) THEN
-                  LFOUND = LSTART
-C-----------------------------------------------------------------------
-               ELSE
-                  LSTART = .TRUE.
-                  ILAST  = I
-                  ISTR   = ICHAR(STR(I:I))
-                  IF ( (ISTR .LT. ICH0)  .OR.  (ISTR .GT. ICH9) ) IABT=1
-               ENDIF
-C
-C-----------------------------------------------------------------------
-C RETURN ERROR CODE IF ERROR FOUND
-C-----------------------------------------------------------------------
-C
-            IF (IABT .NE. 0) RETURN
-    3    CONTINUE
-C
-C-----------------------------------------------------------------------
-C IDENTIFY IF VALID NUMBER FOUND (RECODED: PEB 11/02/92)
-C                                (RECODED: PEB 07/03/95 - ADDED CFORM5)
-C YES => USE INTERNAL READ TO OBTAIN THE INTEGER NUMBER
-C NO  => RETURN ERROR CODE IF ERROR FOUND
-C-----------------------------------------------------------------------
-C
-         IF (LSTART) THEN
-            I      = 1 + ILAST - I1
-            I      = MIN0(I,99)
-            WRITE(CFORM5(3:4),'(I2.2)') I
-            READ(STR(I1:ILAST),CFORM5) I4FCTN
-         ELSE
-            IABT=1
-         ENDIF
-C
-C-----------------------------------------------------------------------
-C
-      RETURN
-      END FUNCTION I4FCTN
 CX UNIX PORT - SCCS Info : Module @(#)i4eiz0.for        1.1 Date 5/2/95
 CX
       FUNCTION I4EIZ0 ( ESYM )

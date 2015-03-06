@@ -252,11 +252,15 @@ c
 c*** Compute the data
 c
 csw 18nov2013 check alloc
+#ifdef USE_EIRENE
       if(allocated(volsumn)) then
+#endif
         hlp_sumn=sum(volsumn(1:nstrai))
         hlp_sume=sum(volsumee(1:nstrai))
         hlp_sumi=sum(volsumei(1:nstrai))
+#ifdef USE_EIRENE
       endif
+#endif
 
       hlp_brms=0.0_R8
       hlp_rdim=0.0_R8
@@ -300,8 +304,13 @@ csw 20sep2013 added
 
       do j=1,nstrai
 csw 18nov2013 check alloc
-        if(allocated(srcstrn))
-     .   fluxt_tmp(j)=srcstrn(j)
+#ifdef USE_EIRENE
+        if(allocated(srcstrn)) then
+#endif
+          fluxt_tmp(j)=srcstrn(j)
+#ifdef USE_EIRENE
+        endif
+#endif
       end do
       hlp_s=0.0_R8
       hlp_v=0.0_R8

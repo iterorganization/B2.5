@@ -9,9 +9,13 @@
 #     include "DIMENSIONS.F"
       real (kind=R8), save :: eta_hce_mult(-1:DEF_NYD)
 #endif
+
+      namelist /transport_models/ eta_hce_mult
+
       contains
 
       subroutine alloc_b2mod_transport_models(nxd,nyd,nsd)
+      implicit none
       integer nxd,nyd,nsd
       transport_models_allocated=.true.
 #ifdef ALLOCATE_AND_NAMELIST
@@ -21,36 +25,58 @@
 #endif
       end subroutine alloc_b2mod_transport_models
 
-      subroutine read_b2mod_transport_models
-      namelist /transport_models/ eta_hce_mult
+      subroutine read_b2mod_transport_models(nread,edition,found)
+      implicit none
+      integer nread
+      character*4 edition
+      logical found
       logical :: file_ok
       character*260 filename
+
       if(.not.transport_models_allocated) then
 	write(*,*) 'Error: transport_models not yet allocated'
 	stop
       endif
-      filename='../' // 'b2.transport_models_save.parameters'
-      inquire(file=filename,exist=file_ok)
+      if (edition.eq.'    ') then
+        filename = '../b2.transport_models_save.parameters'
+      else
+        filename = 'b2.transport_models_save.parameters.'//edition
+      endif
+      inquire(file=trim(filename),exist=file_ok)
       if(file_ok) then
-	open(99,file=filename)
+	if (edition.eq.'    ') open(nread,file=trim(filename))
 	write(*,*) 'Reading namelist transport_models from ',
-     1	 trim(filename)
-	read(99,transport_models)
+     1   trim(filename)
+	read(nread,transport_models)
 	write(*,*) 'Read namelist transport_models from ',
-     1	 trim(filename)
+     1   trim(filename)
+        if (edition.eq.'    ') close(nread)
       else
 	eta_hce_mult=1.0_R8
+        write(6,*) 'No ',trim(filename)
       endif
+      found = maxval(eta_hce_mult).ne.1.0_R8 .or.
+     .        minval(eta_hce_mult).ne.1.0_R8
+      return
       end subroutine read_b2mod_transport_models
 
-      subroutine write_b2mod_transport_models
-      namelist /transport_models/ eta_hce_mult
+      subroutine write_b2mod_transport_models(nwrite,edition)
+      implicit none
+      integer nwrite
+      character*4 edition
       character*260 filename
+
       if(.not.transport_models_allocated) return
-      filename='../' // 'b2.transport_models_save.parameters'
-      open(99,file=filename)
-      write(99,transport_models)
-      write(*,*) 'Saved b2.transport_models_save.parameters'
+      if (edition.eq.'    ') then
+        filename = '../b2.transport_models_save.parameters'
+      else
+        filename = 'b2.transport_models_save.parameters.'//edition
+      endif
+      open(nwrite,file=trim(filename))
+      write(nwrite,transport_models)
+      close(nwrite)
+      write(*,*) 'Saved ',trim(filename)
+      return
       end subroutine write_b2mod_transport_models
 
       end module b2mod_transport_models

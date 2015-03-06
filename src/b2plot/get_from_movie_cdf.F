@@ -4,9 +4,14 @@
       use b2mod_movies
       use b2mod_plasma
 #ifdef USE_EIRENE
+      use eirmod_parmmod
       use eirmod_extrab25
 #endif
       implicit none
+#ifndef USE_EIRENE
+#     include <COUPLE/KOPPLDIM.F>
+#     include <COUPLE/EIRDIAG.F>
+#endif
       integer ncidcdf,istep
 #ifndef NO_CDF
       integer :: iret, start(4), count(4), varid

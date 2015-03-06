@@ -3,7 +3,7 @@
 
       program b2yv
       use b2mod_types
-	use b2mod_constants
+      use b2mod_constants
       use b2mod_geo
       use b2mod_plasma
       use b2mod_rates
@@ -15,10 +15,12 @@
       use b2mod_indirect
       use b2mod_b2cmpa
       use b2mod_elements
+#ifdef WINDOWS
 ! AVDef is the AViz module file
       use AVDef    ! IGNORE
       use AVVIEWER ! IGNORE
       use DFLIB    ! IGNORE
+#endif
 
       implicit none
 
@@ -43,7 +45,12 @@
       real(4), allocatable :: M(:,:)
       character(1) :: key
       character lblgm*120
+#ifdef WINDOWS
       character(AV_MAX_LABEL_LEN) :: axis1 = 'X', axis2 = 'Y', axis3
+#else
+      character*1 :: axis1 = 'X', axis2 = 'Y'
+      character*40 :: axis3
+#endif
 
       integer ninp(0:5), nout(0:7), nx, ny, ns, ns0, idum(0:9)
       character savefile*16, arg*256, lblmn*120, lblcp*120, title*64
@@ -120,97 +127,98 @@
       call read_b2mod_sources(ninp(4))
       call read_b2mod_transport(ninp(4))
       call alloc_b2mod_elements(ns,zn,am)
-   10	continue
-   	write(*,"(a,<ns>(a2,i1,1x))") 'To look at density of',
+   10 continue
+      write(*,"(a,<ns>(a2,i1,1x))") 'To look at density of',
      &      (adjustr(is_codes(is)),nint(zamin(is)),is=0,ns-1)
-   	write(*,"(4x,a,<ns>(1x,I2,1x)/)")
+      write(*,"(4x,a,<ns>(1x,I2,1x)/)")
      &        ' - input a number', (is,is=0,ns-1)
-   	write(*,"(a,<ns>(a2,i1,1x))") 'To look at parallel velocity of',
+      write(*,"(a,<ns>(a2,i1,1x))") 'To look at parallel velocity of',
      &      (adjustr(is_codes(is)),nint(zamin(is)),is=0,ns-1)
-   	write(*,"(14x,a,<ns>(1x,I2,1x)/)")
+      write(*,"(14x,a,<ns>(1x,I2,1x)/)")
      &        ' - input a number', (is+ns,is=0,ns-1)
 
-   	write(*,"(a,a,(1x,I2,1x))") 'To look at electron tempetature',
+      write(*,"(a,a,(1x,I2,1x))") 'To look at electron tempetature',
      &        '       - input a number', ns+ns
 
-   	write(*,"(a,a,(1x,I2,1x))") 'To look at ion tempetature     ',
+      write(*,"(a,a,(1x,I2,1x))") 'To look at ion tempetature     ',
      &        '       - input a number', ns+ns+1
 
-   	write(*,"(a,a,(1x,I2,1x))") 'To look at electrical potential',
+      write(*,"(a,a,(1x,I2,1x))") 'To look at electrical potential',
      &        '       - input a number', ns+ns+2
 
-   	write(*,"(a,a,(1x,I2,1x))") 'To look at radial electrical field',
+      write(*,"(a,a,(1x,I2,1x))") 'To look at radial electrical field',
      &        '    - input a number', ns+ns+3
 
-	read (*,*) icase 
+      read (*,*) icase 
 
       if(0.le.icase .and. icase.le.ns-1 )then
-	 write(title,"('Density of ',a2,i1)") 
+	write(title,"('Density of ',a2,i1)") 
      &     adjustr(is_codes(icase)),nint(zamin(icase))
-	 write(axis3,"('Density of ',a2,i1,', [1/m^3]')") 
+	write(axis3,"('Density of ',a2,i1,', [1/m^3]')") 
      &     adjustr(is_codes(icase)),nint(zamin(icase))
-       do iy = -1,ny
-        do ix = -1,nx
-	   M(iy,ix) = na(ix,iy,icase)
+        do iy = -1,ny
+          do ix = -1,nx
+	    M(iy,ix) = na(ix,iy,icase)
 	  enddo
-	 enddo
+	enddo
       elseif(ns.le.icase .and. icase.le.ns-1+ns )then
-	 write(title,"('Parallel velocity of ',a2,i1)") 
+	write(title,"('Parallel velocity of ',a2,i1)") 
      &     adjustr(is_codes(icase-ns)),nint(zamin(icase-ns))
-	 write(axis3,"('Parallel velocity of ',a2,i1,', [m/c]')") 
+	write(axis3,"('Parallel velocity of ',a2,i1,', [m/c]')") 
      &     adjustr(is_codes(icase-ns)),nint(zamin(icase-ns))
-       do iy = -1,ny
-        do ix = -1,nx
-	   M(iy,ix) = ua(ix,iy,icase-ns)
+        do iy = -1,ny
+          do ix = -1,nx
+	    M(iy,ix) = ua(ix,iy,icase-ns)
 	  enddo
-	 enddo
+	enddo
       elseif(icase .eq. ns+ns )then
-	 write(title,"('Temperature of electrons')") 
-	 write(axis3,"('Temperature of electrons',', [eV]')") 
-       do iy = -1,ny
-        do ix = -1,nx
-	   M(iy,ix) = te(ix,iy)/ev
+	write(title,"('Temperature of electrons')") 
+	write(axis3,"('Temperature of electrons',', [eV]')") 
+        do iy = -1,ny
+          do ix = -1,nx
+	    M(iy,ix) = te(ix,iy)/ev
 	  enddo
-	 enddo
+	enddo
       elseif(icase .eq. ns+ns+1 )then
-	 write(title,"('Temperature of ions')") 
-	 write(axis3,"('Temperature of ions',', [eV]')") 
-       do iy = -1,ny
-        do ix = -1,nx
-	   M(iy,ix) = ti(ix,iy)/ev
+	write(title,"('Temperature of ions')") 
+	write(axis3,"('Temperature of ions',', [eV]')") 
+        do iy = -1,ny
+          do ix = -1,nx
+	    M(iy,ix) = ti(ix,iy)/ev
 	  enddo
-	 enddo
+	enddo
       elseif(icase .eq. ns+ns+2 )then
-	 write(title,"('Electrical potential')") 
-       do iy = -1,ny
-        do ix = -1,nx
-	   M(iy,ix) = po(ix,iy)
+	write(title,"('Electrical potential')") 
+        do iy = -1,ny
+          do ix = -1,nx
+	    M(iy,ix) = po(ix,iy)
 	  enddo
-	 enddo
+	enddo
       elseif(icase .eq. ns+ns+3 )then
-	 write(title,"('Radial electrical field')") 
-       M=0.0d0
-	 do iy=0,ny
+	write(title,"('Radial electrical field')") 
+        M=0.0d0
+	do iy=0,ny
 	  do ix=-1,nx
-	   M(iy,ix)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
+	    M(iy,ix)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
      *                /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
      *                *2.0e0_R8
 	  enddo
-	 enddo
-	else
-	 stop
-	endif
+	enddo
+      else
+        stop
+      endif
 
-	call faglStartWatch(M, status)
-	lbnd(1:size(shape(M))) = lbound(M)
-	call faglLBound(M, lbnd, status)
+#ifdef WINDOWS
+      call faglStartWatch(M, status)
+      lbnd(1:size(shape(M))) = lbound(M)
+      call faglLBound(M, lbnd, status)
 
-	call favStartViewer(hv,status)
-	call favSetArray(hv,M,status)
+      call favStartViewer(hv,status)
+      call favSetArray(hv,M,status)
       call favSetArrayName(hv,trim(title), status)
-	call favSetUseAxisLabel (hv, x_axis, 1 , status)
-	call favSetUseAxisLabel (hv, y_axis, 1 , status)
-	call favSetUseAxisLabel (hv, z_axis, 1 , status)
+      call favSetUseAxisLabel (hv, x_axis, 1 , status)
+      call favSetUseAxisLabel (hv, y_axis, 1 , status)
+      call favSetUseAxisLabel (hv, z_axis, 1 , status)
       call favSetAxisLabel (hv, x_axis, axis1, status)
       call favSetAxisLabel (hv, y_axis, axis2, status)
       call favSetAxisLabel (hv, z_axis, trim(axis3), status)
@@ -221,18 +229,19 @@
 
 !      call faglName(M, trim(title), status)
 
-	write (*,*) ' Press 0 - 9 to continue',
+      write (*,*) ' Press 0 - 9 to continue',
      &            ' or press any other key to finish'
-	key = GETCHARQQ()
-       call favEndViewer(hv,status)
+      key = GETCHARQQ()
+      call favEndViewer(hv,status)
 !       call faglClose(M, status)
-	 call faglEndWatch(M, status)  
+      call faglEndWatch(M, status)  
+#endif
 
-	select case (key)
-	 case ('0':'9')
+      select case (key)
+	case ('0':'9')
 	  goto 10
 	case default
-	end select
+      end select
 
       deallocate (M)
 * ..end of computation

@@ -7,6 +7,8 @@
       use b2mod_neutrals_namelist
 #ifdef USE_EIRENE
       use eirmod_extrab25
+#else
+#     include <COUPLE/EIRDIAG.F>
 #endif
 c*** Must be preceded by KOPPLDIM.F of EIRDIAG.F - nstra is used here
 c
@@ -27,10 +29,12 @@ c
       real (kind=R8), allocatable :: 
      ,     src_ee(:,:)   , src_ei(:,:),
      ,     src_es(:,:)   , src_ms(:,:),
-     ,     src_ni(:,:,:) , src_mo(:,:,:)
+     ,     src_ni(:,:,:) , src_mo(:,:,:),
+     ,     src_ne(:,:)
       real (kind=R8), allocatable :: 
      ,     cor_ee(:,:)   , cor_ei(:,:),
-     ,     cor_ni(:,:,:) , cor_mo(:,:,:)
+     ,     cor_ni(:,:,:) , cor_mo(:,:,:),
+     ,     cor_ne(:,:)
       real (kind=R8), allocatable :: 
      ,     rescoreg(:,:) , resmoreg(:,:),
      ,     reshereg(:), reshireg(:)
@@ -44,7 +48,7 @@ c*** sclrtio: (S/I from B2) / (S/I from Eirene)
 
 c----------------------------------------------------------------------
       integer lstime, ltime, lmovie, ldiag, ldiag2, ldiag3, ldiag4,
-     1 nldetail, nltrsol
+     1 nldetail, nltrsol, nstages
       integer, allocatable :: IZ(:,:), nfluids(:)
 c----------------------------------------------------------------------
 c*** Specification of the output files and units
@@ -62,7 +66,7 @@ c***  ntrc_bln  :  tracing/blnn.trc       :  particle balance
 c***  ntrc_ble  :  tracing/blne.trc       :  energy balance
 c***  ntrc_int  :  tracing/integral.trc   :  additional integrals
 c***  ntrc_usr  :  tracing/user.trc       :  user-specific data
-c***  ntrc_blm  :  tracing/blnm.trc       :  momentum balance
+c***  ntrc_blm  :  tracing/blnm.trc       :  parallel momentum balance
 c***  ntrc_sep  :  tracing/sepdata.trc    :  separatrix data
 c***
 c*** print_first_step : if false, skip the first timestep in the history
@@ -79,7 +83,7 @@ c***                    tracing
       logical filedata(len_ntrc), print_first_step
       character fn_ntrc(len_ntrc)*32
       character*2, allocatable :: atoms_list(:)
-      integer, allocatable :: ions_list(:)
+      integer, allocatable :: ions_list(:), fluids_list(:)
       character*120 label
       integer nspecies
       integer :: ank_tracing = 0
@@ -90,8 +94,10 @@ c
 
       subroutine alloc_b2mod_diag(nxd,nyd,nsd,nregionv,nstra,natm)
       use b2mod_b2cmpa
+      implicit none
       integer nxd,nyd,nsd,nregionv,nstra,natm
-      integer i
+      integer i, is, iss
+      character*12 hlp_frm
 
       call xertst(1.le.nxd, 'faulty input nxd')
       call xertst(1.le.nyd, 'faulty input nyd')
@@ -115,43 +121,58 @@ c
       allocate(RADARR(0:NXD+1,0:NYD+1))
       allocate(atoms_list(1:natm))
       allocate(ions_list(1:nsd))
+      allocate(fluids_list(0:nsd-1))
       allocate(nfluids(1:natm))
       allocate(
      ,     src_ee(0:nregionv,3)   , src_ei(0:nregionv,3),
      ,     src_es(0:nregionv,3)   , src_ms(0:nregionv,3),
-     ,     src_ni(0:nregionv,3,natm), src_mo(0:nregionv,3,natm))
+     ,     src_ni(0:nregionv,3,natm), src_mo(0:nregionv,3,natm),
+     ,     src_ne(0:nregionv,3))
       allocate(
      ,     cor_ee(-1:nxd,-1:nyd)     , cor_ei(-1:nxd,-1:nyd),
-     ,     cor_ni(-1:nxd,-1:nyd,natm), cor_mo(-1:nxd,-1:nyd,natm))
+     ,     cor_ni(-1:nxd,-1:nyd,natm), cor_mo(-1:nxd,-1:nyd,natm),
+     ,     cor_ne(-1:nxd,-1:nyd))
       allocate(
      ,     rescoreg(0:nregionv,0:nsd-1), resmoreg(0:nregionv,0:nsd-1),
      ,     reshereg(0:nregionv)        , reshireg(0:nregionv))
 
-      nspecies=0
+      call xertst(1.le.nspecies.and.nspecies.le.natm,
+     . 'faulty parameter nspecies')
+
       atoms_list(1:natm)='  '
       ions_list(1:nsd)=-1
+      fluids_list(0:nsd-1)=0
       nfluids=0
       i=0
+      iss=0
+      nstages=0
       do is = 0, nsd-1
         if(atoms_list(b2espcr(is)).eq.'  ') then
           atoms_list(b2espcr(is))=is_codes(is)
-          nspecies=nspecies+1
+          iss=0
         endif
         if (.not.is_neutral(is)) then
           nfluids(b2espcr(is))=nfluids(b2espcr(is))+1
           i=i+1
+          iss=iss+1
           ions_list(i)=is
+          fluids_list(is)=i
         endif
+        nstages=max(nstages,iss)
       enddo 
-      write(*,*) 'natm, nsd ', natm, nsd
-      write(*,*) 'b2espcr : ', b2espcr(0:nsd-1)
-      write(*,*) 'is_codes : ', is_codes
+      write(*,'(1x,a,3i3)') 'natm, nsd, nstages ', natm, nsd, nstages
+      write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nsd,'i3)'
+      write(*,hlp_frm) 'b2espcr : ', b2espcr(0:nsd-1)
+      write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nsd,'a2)'
+      write(*,hlp_frm) 'is_codes : ', is_codes
       write(*,*) 'atoms_list : ', atoms_list(1:nspecies)
-      write(*,*) 'ions_list : ', ions_list(1:i)
-      write(*,*) 'nfluids : ', nfluids(1:nspecies)
+      write(hlp_frm,'(a6,i3,a3)') '(1x,a,',i,'i4)'
+      write(*,hlp_frm) 'ions_list : ', ions_list(1:i)
+      write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nspecies,'i4)'
+      write(*,hlp_frm) 'nfluids : ', nfluids(1:nspecies)
+      write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nsd,'i4)'
+      write(*,hlp_frm) 'fluids_list : ', fluids_list(0:nsd-1)
 
-      call xertst(1.le.nspecies.and.nspecies.le.natm,
-     . 'faulty parameter nspecies')
 c
 c*** Tracing unit assignment (see b2file, b2blnc, etc.)
 c

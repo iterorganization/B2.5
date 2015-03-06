@@ -9,18 +9,18 @@
      *     cell(:,:),cellx(:),celly(:)
       integer, allocatable, save :: table(:,:),index(:,:,:)
       integer, save :: ptr_table, ptr_index
-      real (kind=R8), save :: dl, eion
+      real (kind=R8), save :: dl
 
       contains
 
       subroutine alloc_b2mod_first_flight(in_no_of_slices,
-     *     in_size_of_table,in_no_of_start_points,nx,ny,in_dl,in_eion)
+     *     in_size_of_table,in_no_of_start_points,nx,ny,in_dl)
       use b2mod_constants
       implicit none
       integer in_no_of_slices,in_size_of_table,
      *     in_no_of_start_points,nx,ny
       real (kind=R8) ::
-     *     t1,t2, in_dl, in_eion
+     *     t1,t2, in_dl
       integer ia,ic,ix,iy
       no_of_slices=in_no_of_slices
       size_of_table=in_size_of_table
@@ -50,7 +50,6 @@
       allocate(index(no_of_start_points,no_of_slices,0:1))
       ptr_index=0
       dl=in_dl
-      eion=in_eion
       end subroutine alloc_b2mod_first_flight
 
       subroutine setup_b2mod_first_flight
@@ -70,7 +69,7 @@
       ptr_index=ptr_index+1
       if(ptr_index.gt.no_of_start_points) 
      *     stop 'b2mod_first_flight: increase no_of_start_points'
-      write(*,*) 'setup_b2mod_first_flight: ',
+      write(6,'(a,2i4,1x,a1,1x,2i6)') 'setup_b2mod_first_flight: ',
      *     ix0,iy0,orientation,ptr_index,ptr_table
       do ia=1,no_of_slices
          index(ptr_index,ia,0)=0
@@ -150,21 +149,25 @@
       end subroutine setup_b2mod_first_flight
 
       subroutine process_b2mod_first_flight(
-     *     indptr,ix0,iy0,nx,ny,ns,nscx,iscx,isneut,src,sri,work,wrk2,
-     *     divpuff,mainpuff,corepuff)
+     *     indptr,ix0,iy0,nx,ny,ns,nscx,iscx,isneut,jsep,
+     *     dtim,src,sri,work,wrk2,wrk3,
+     *     pfrpuff,mainpuff,corepuff)
       use b2mod_geo
       use b2mod_plasma
       use b2mod_rates
       use b2mod_indirect
+      use b2mod_numerics_namelist
       use b2mod_constants
       use b2mod_b2cmpa
       implicit none
-      integer indptr,ix0,iy0,nx,ny,ns,nscx,iscx(0:nscxmax-1),isneut
-      integer ix,iy,ia,ptr,ision,k
+      integer indptr,ix0,iy0,nx,ny,ns,nscx,iscx(0:nscxmax-1),isneut,jsep
+      integer ix,iy,ia,ptr,ik,ision,k,ixend,iyend
       real (kind=R8) ::
-     *     dist_start,dist_end,dist_deposit,vcx,
-     *     rcx,src,sri,work(-1:nx,-1:ny),wrk2(-1:nx,-1:ny),
-     *     divpuff,mainpuff,corepuff
+     *     dtim,dist_start,dist_end,dist_deposit,vcx,vion,vnn,vexc,
+     *     rcx,rion,rexc,rnn,src,sri,eion,sxb,
+     *     flight_time,flown_time,thru_time,
+     *     work(-1:nx,-1:ny,0:1),wrk2(-1:nx,-1:ny),wrk3(-1:nx,-1:ny),
+     *     pfrpuff,mainpuff,corepuff
       real (kind=R8) ::
      *   machsfr, expu, cutlo, cutll, t0
       expu(t0) = dim(exp(max(t0,cutll)),cutlo)
@@ -172,47 +175,106 @@
 *   ..set cutll, cutlo
       cutll = log(machsfr())
       cutlo = max(machsfr(),exp(cutll))
-      if((region(ix0,iy0,0).eq.1 .and. nnreg(0).ge.4) .or.
+      if((region(ix0,iy0,0).eq.1 .and. nnreg(0).ge.2) .or.
      &   (region(ix0,iy0,0).eq.5 .and. nnreg(0).eq.8)) return   ! ignore core
+      if (abs(src).lt.cutlo) return  ! jump over zero sources
       dist_start=src/no_of_slices
+      eion=sri/src
+      flight_time=dtim*dtco(isneut,region(ix0,iy0,0))*
+     .            time_factor(ix0,iy0)
+      if (eion.eq.0.0_R8) eion=1.0_R8 ! recover the old default value of 1.0 eV
       k=0
       do while (iscx(k).ne.isneut .and. k.lt.nscx)
         k = k+1
       enddo
       call xertst (k.lt.nscx, 'CX species index not found!')
+cxpb
+cxpb  We follow the launched neutrals over their pre-computed trajectories
+cxpb  and distribute the associated sources along the way.
+cxpb  We must account for:
+cxpb   a. CX processes with ions
+cxpb   b. electron-impact ionization
+cxpb   c. electron-impact excitation (we use the S/XB factor to convert 
+cxpb      electron heat loss rate into number of collision events)
+cxpb   d. elastic collisions with neutrals
+cxpb  We ditribute the sources into
+cxpb   work(:,:,0:1) => sna(:,:,0,is0:is0+1)
+cxpb   wrk2(:,:) => shi(:,:,0)
+cxpb   wrk3(:,:) => she(:,:,0)
+cxpb  We must also take care that we do not allow the neutrals to travel longer
+cxpb  that the timestep permits. We set the average energy of the launched
+cxpb  neutrals to be eion=shi/sna.
       do ia=1,no_of_slices
          dist_end=dist_start
-         do ptr=index(indptr,ia,0),index(indptr,ia,1)
+         flown_time=0.0_R8
+	 ixend=-2
+	 iyend=-2
+         ptr=index(indptr,ia,0)
+         do while (flown_time.lt.flight_time .and. 
+     1     ptr.le.index(indptr,ia,1))
             ix=cellx(table(ptr,0))
             iy=celly(table(ptr,0))
-            vcx=0
+            vcx=0.0_R8
+            vnn=0.0_R8
             do ision = 0, ns-1 
               rcx=expu(rlcx(ix,iy,0,ision,k)+
      *         rlcx(ix,iy,1,ision,k)*log(ti(ix,iy)/(am(isneut)*ev)))
               vcx=vcx+rcx*na(ix,iy,ision)
             enddo
-            dist_deposit=vcx*dl/
-     *       sqrt(eion*ev/(am(isneut)*mp))*table(ptr,1)
-            dist_deposit=min(dist_end*dist_deposit,dist_end)
-            work(ix,iy)=work(ix,iy)+dist_deposit
-            if (src.ne.0.0_R8) 
-     >       wrk2(ix,iy)=wrk2(ix,iy)+dist_deposit*sri/src
+            rion=expu(rlsa(ix,iy,0,isneut)+
+     *         rlsa(ix,iy,1,isneut)*log(te(ix,iy)/ev))
+            vion=rion*ne(ix,iy)
+            rexc=expu(rlqa(ix,iy,0,isneut)+
+     *         rlqa(ix,iy,1,isneut)*log(te(ix,iy)/ev))-
+     *         rion*rpt(ix,iy,isneut+1)
+            sxb=(expu(rlqa(ix,iy,0,isneut)+
+     *         rlqa(ix,iy,1,isneut)*log(te(ix,iy)/ev)))/
+     *         (rion*rpt(ix,iy,isneut+1))
+            vexc=sxb*vion
+            do ik = 0, nscx-1
+              rnn=2.0e-19_R8*sqrt(ti(ix,iy)/(mp*am(iscx(ik))))
+              vnn=vnn+rnn*na(ix,iy,iscx(ik))
+            enddo
+            thru_time=dl/sqrt(eion/(am(isneut)*mp))*table(ptr,1)
+            if (flown_time+thru_time.lt.flight_time) then
+              dist_deposit=(vcx+vion+vexc+vnn)*dl/
+     *         sqrt(eion/(am(isneut)*mp))*table(ptr,1)
+              dist_deposit=min(dist_end*dist_deposit,dist_end)
+            else
+              thru_time=flight_time-flown_time
+              dist_deposit=dist_end
+            endif
+            flown_time=flown_time+thru_time
+            work(ix,iy,0)=work(ix,iy,0)+dist_deposit*
+     *       (vcx+vnn+vexc)/(vcx+vion+vexc+vnn)
+            work(ix,iy,1)=work(ix,iy,1)+dist_deposit*
+     *       vion/(vcx+vion+vexc+vnn)
+            wrk2(ix,iy)=wrk2(ix,iy)+dist_deposit*eion
+            wrk3(ix,iy)=wrk3(ix,iy)-dist_deposit*
+     *       sxb*rpt(ix,iy,isneut+1)*ev*
+     *       (vion+vexc)/(vcx+vion+vexc+vnn) 
             dist_end=dist_end-dist_deposit
-            if(dist_end.le.0) exit
+            if(dist_end.le.0.0_R8) then
+	      ixend = ix
+	      iyend = iy
+              exit
+            endif
+            ptr = ptr + 1
          enddo
-         if(dist_end.gt.0) then
-            if(iy.gt.ny/2) then
+         if(dist_end.gt.0.0_R8.and.ixend.ne.-2.and.iyend.ne.-2) then
+            if(iyend.gt.jsep) then
                mainpuff=mainpuff+dist_end
             else
-               if((region(ix,iy,0).eq.1 .and. nnreg(0).ge.4) .or.
-     &            (region(ix,iy,0).eq.5 .and. nnreg(0).eq.8)) then
+               if((region(ixend,iyend,0).eq.1 .and. nnreg(0).ge.2) .or.
+     &            (region(ixend,iyend,0).eq.5 .and. nnreg(0).eq.8)) then
                   corepuff=corepuff+dist_end
-               else
-                  divpuff=divpuff+dist_end
+               else if (nnreg(0).ge.4) then
+                  pfrpuff=pfrpuff+dist_end
                endif
             endif
          endif
       enddo
+      return
       end subroutine process_b2mod_first_flight
 
       subroutine read_b2mod_first_flight(nread)
@@ -234,6 +296,7 @@
             enddo
          enddo
       enddo
+      return
       end subroutine write_b2mod_first_flight
 
       end module b2mod_first_flight

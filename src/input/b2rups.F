@@ -105,7 +105,7 @@
 *     heat flux through the face between the (ix-1,iy) and (ix,iy)
 *     cells. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fhiy(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix-1,iy) and (ix,iy)
+*     heat flux through the face between the (ix,iy-1) and (ix,iy)
 *     cells. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
 *
 *     fch - (-1:nx,-1:ny,0:1) real*8 array, output.
@@ -119,8 +119,10 @@
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
-*     the parallel kinetic energy of a particle of species (is) in 
-*     cell (ix,iy).
+*     the kinetic energy of a particle of species (is) in cell (ix,iy). 
+*     The velocity used includes the parallel velocity as well
+*     as the total diamagnetic and ExB drift velocities in both the radial
+*     and diamagnetic directions.
 *
 *     tim - real*8.
 *     The simulation time (in seconds).
@@ -136,7 +138,7 @@
 *   ..common blocks
 *   ..local variables
       integer n2, is
-      real (kind=R8) :: time(1)
+      real (kind=R8) :: time(1), zero(-1:nx,-1:ny)
 *   ..procedures
       external subini, subend, xertst, cfrure
       external b2xvsg, b2xpne
@@ -147,8 +149,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2rups')
-*   ..set n2
+*   ..set n2 and zero
       n2 = (nx+2)*(ny+2)
+      zero = 0.0_R8
 *   ..test nget
       call xertst (1.le.nget, 'faulty argument nget')
 *   ..test nx, ny, ns
@@ -165,14 +168,14 @@
           rza(-1:nx,-1:ny,is) = (zamin(is)+zamax(is))/2.0_R8
           rz2(-1:nx,-1:ny,is) = ((zamin(is)+zamax(is))/2.0_R8)**2
         end do
-        call b2xpne (nx, ny, ns, rza, na, ne)
+        call b2xpne (nx, ny, ns, rza, na, zero, ne)
       endif
       call cfrure (nget, n2*ns, ua, 'ua')
-      if(b2fstat_version.ge.'01.001.000') then                           !xpb
-        call cfrure (nget, n2*2*ns, uadia, 'uadia')                      !xpb
-      else                                                               !dpc
-        uadia=0.0_R8                                                     !dpc
-      endif                                                              !xpb
+      if(b2fstat_version.ge.'01.001.000') then                 	!xpb
+        call cfrure (nget, n2*2*ns, uadia, 'uadia')            	!xpb
+      else                                                     	!dpc
+        uadia=0.0_R8                                           	!dpc
+      endif                                                    	!xpb
       call cfrure (nget, n2, te, 'te')
       call cfrure (nget, n2, ti, 'ti')
       call cfrure (nget, n2, po, 'po')
@@ -181,10 +184,10 @@
       call cfrure (nget, n2*2, fhe, 'fhe')
       call cfrure (nget, n2*2, fhi, 'fhi')
       call cfrure (nget, n2*2, fch, 'fch')
-      if(b2fstat_version.ge.'01.001.005') then                          !xpb
+      if(b2fstat_version.ge.'01.001.005') then                 	 !xpb
         call cfrure (nget, n2*2, fch_32, 'fch_32')
         call cfrure (nget, n2*2, fch_52, 'fch_52')
-      else                                                              !dpc
+      else                                                     	 !dpc
         fch_32(:,:,0)=fch(:,:,0)
         fch_32(:,:,1)=0.0_R8
         fch_52(:,:,0)=0.0_R8
@@ -200,7 +203,7 @@
       endif
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 *   ..read time
-      if(b2fstat_version.ge.'01.001.018') then                          !xpb
+      if(b2fstat_version.ge.'01.001.018') then                 	 !xpb
         call cfrure (nget, 1, time, 'time')
       else
         time(1)=0.0_R8
@@ -209,15 +212,22 @@
       call xertst (0.0_R8.le.tim, 'faulty input time')
 *   ..read parallel current
       if(b2fstat_version.ge.'01.001.069') then                          !srv 09.09.11
-	   call cfrure (nget, n2, fch_p, 'fch_p')
-	   fch_p(:,:,1)=0.0_R8                                            !srv 19.03.12
+	call cfrure (nget, n2, fch_p(:,:,0), 'fch_p')
+	fch_p(:,:,1)=0.0_R8                                            !srv 19.03.12
       elseif(b2fstat_version.ge.'01.001.025' .and.
-     &   b2fstat_version.le.'01.001.068') then                          !xpb srv 10.06.08 {
+     &       b2fstat_version.le.'01.001.031') then  ! clash between 5.0/1 and 5.2
+! cxpb This code looks strange but the idea is that cfrure_opt will fail and rewind
+! cxpb if the size of fch_p is n2 and not n2*2
+        fch_p(:,:,1)=0.0_R8
+        call cfrure_opt (nget, n2*2, fch_p, 'fch_p')
+        call cfrure (nget, n2, fch_p(:,:,0), 'fch_p')
+      elseif(b2fstat_version.ge.'01.001.032' .and.
+     &       b2fstat_version.le.'01.001.068') then                          !xpb srv 10.06.08 {
         call cfrure (nget, n2*2, fch_p, 'fch_p')
-	elseif (b2fstat_version.ge.'01.001.022' .and.
-     &   b2fstat_version.ge.'01.001.024') then                          !srv 10.06.08 }
-        call cfrure (nget, n2, fch_p, 'fch_p')
-	   fch_p(:,:,1)=0.0_R8                                            !srv 19.03.12
+      elseif (b2fstat_version.ge.'01.001.022' .and.
+     &        b2fstat_version.ge.'01.001.024') then                          !srv 10.06.08 }
+        call cfrure (nget, n2, fch_p(:,:,0), 'fch_p')
+	fch_p(:,:,1)=0.0_R8                                            !srv 19.03.12
       else
         fch_p(:,:,0) = fch(:,:,0)     ! this ensures the old behaviour is kept
         fch_p(:,:,1) = 0.0_R8         ! this ensures the old behaviour is kept

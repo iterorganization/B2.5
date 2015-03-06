@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po,   !srv 01.07.08
-     &  ne, ni, sna, smo, she, shi, sch)
+     &  ne, ni, sna, smo, she, shi, sch, sne)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -11,14 +11,14 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows                                   !srv 01.07.08
       real (kind=R8) ::
-     *   na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
+     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
 *   ..input/output arguments
       real (kind=R8) ::
      *  sna(-1:nx,-1:ny,0:1,0:ns-1), smo(-1:nx,-1:ny,0:3,0:ns-1),
      &  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3),
-     &  sch(-1:nx,-1:ny,0:3)
+     &  sch(-1:nx,-1:ny,0:3), sne(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -34,23 +34,23 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, k
-	integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
+      integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
       real (kind=R8) ::
      *  snast(-1:nx,-1:ny,0:1,0:ns-1), smost(-1:nx,-1:ny,0:3,0:ns-1), 
      &  shest(-1:nx,-1:ny,0:3), shist(-1:nx,-1:ny,0:3),
-     &  schst(-1:nx,-1:ny,0:3)
- 	character chns*2, chk*1                                        !srv 11.09.09 }
+     &  schst(-1:nx,-1:ny,0:3), snest(-1:nx,-1:ny,0:1)
+      character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
-     *   rf0, rf1, rf2, t0
-      save ncall, rf0, rf1, rf2
+     *   rf0, rf1, rf2, rf3, t0
+      save ncall, rf0, rf1, rf2, rf3
 *   ..procedures
       intrinsic min, max
       external subini, subend, xertst, ipgetr, b2xvsg
 *   ..initialisation
-      data ncall/0/, rf0/1.0_R8/, rf1/1.0_R8/, rf2/1.0_R8/
-*     (rf0/1/2 for numerical stabilisation)
+      data ncall/0/, rf0/1.0_R8/, rf1/1.0_R8/, rf2/1.0_R8/, rf3/1.0_R8/
+*     (rf0/1/2/3 for numerical stabilisation)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -65,9 +65,11 @@
        call ipgetr ('b2srst_rf0', rf0)
        call ipgetr ('b2srst_rf1', rf1)
        call ipgetr ('b2srst_rf2', rf2)
-       call xertst (0.le.rf0.and.0.le.rf1.and.0.le.rf2,
-     &   'faulty internal parameter rf0/1/2')
-       call ipgeti('b2srst_iout', iout)                             !srv 30.06.08
+       call ipgetr ('b2srst_rf3', rf3)
+       call xertst (0.0_R8.le.rf0.and.0.0_R8.le.rf1.and.
+     &              0.0_R8.le.rf2.and.0.0_R8.le.rf3,
+     &              'faulty internal parameter rf0/1/2/3')
+       call ipgeti ('b2srst_iout', iout)                            !srv 30.06.08
        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
        call ipgeti ('b2npmo_iout', iout_b2npmo)
@@ -94,41 +96,34 @@
       shest = she
       shist = shi
       schst = sch
+      snest = sne
 
 *  ..stabilise
 *   ..modify sna
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
-	   if(guard_flows.eq.2) then                                    !srv 01.07.08 {
-	    if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &       bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 ) then  !srv 30.04.08
-           t0 = sna(ix,iy,0,is)+sna(ix,iy,1,is)*na(ix,iy,is)
-           sna(ix,iy,0,is) =
-     &        max(sna(ix,iy,0,is),(1+rf0)*t0,-rf0*t0)
-           sna(ix,iy,1,is) = (1/na(ix,iy,is))*
-     &        min(sna(ix,iy,1,is)*na(ix,iy,is),-rf0*t0,(1+rf0)*t0)
-	    endif
-	   else                                                         !srv 01.07.08 }
-           t0 = sna(ix,iy,0,is)+sna(ix,iy,1,is)*na(ix,iy,is)
-           sna(ix,iy,0,is) =
-     &        max(sna(ix,iy,0,is),(1+rf0)*t0,-rf0*t0)
-           sna(ix,iy,1,is) = (1/na(ix,iy,is))*
-     &        min(sna(ix,iy,1,is)*na(ix,iy,is),-rf0*t0,(1+rf0)*t0)
-	   endif                                                        !srv 01.07.08
+           if(guard_flows.eq.2 .and.
+     &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
+     &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle 
+         t0 = sna(ix,iy,0,is)+sna(ix,iy,1,is)*na(ix,iy,is)
+         sna(ix,iy,0,is) =
+     &     max(sna(ix,iy,0,is),(1.0_R8+rf0)*t0,-rf0*t0)
+         sna(ix,iy,1,is) = (1.0_R8/na(ix,iy,is))*
+     &     min(sna(ix,iy,1,is)*na(ix,iy,is),-rf0*t0,(1.0_R8+rf0)*t0)
         enddo
        enddo
-	 if(guard_flows.eq.2) then                                     !srv 01.07.08 {
+       if(guard_flows.eq.2) then                                     !srv 01.07.08 {
 *     The corner cell value is defined by interpolation in b2npco and b2npc9
 *   ..There is some problem for 9-point stencil case.
         do iy=-1, ny, ny+1                                           !srv 27.06.08  {
          do ix = -1, nx
-	    if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
+	   if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
 	     if(sna(ix,iy,1,is).eq.0.0_R8) sna(ix,iy,1,is) = -1.0_R8
-	    endif
-	   enddo 
-	  enddo                                                        !srv 27.06.08  }
-	 endif                                                         !srv 01.07.08 }
+	   endif
+	 enddo 
+	enddo                                                        !srv 27.06.08  }
+       endif                                                         !srv 01.07.08 }
       enddo
 *   ..modify smo
       do is = 0, ns-1
@@ -150,30 +145,35 @@
        do ix = -1, nx
 *     ..modify she(,,0:1)
         t0 = she(ix,iy,0)+she(ix,iy,1)*te(ix,iy)
-        she(ix,iy,0) = max(she(ix,iy,0),(1+rf1)*t0,-rf1*t0)
-        she(ix,iy,1) = (1/te(ix,iy))*
-     &    min(she(ix,iy,1)*te(ix,iy),-rf1*t0,(1+rf1)*t0)
+        she(ix,iy,0) = max(she(ix,iy,0),(1.0_R8+rf1)*t0,-rf1*t0)
+        she(ix,iy,1) = (1.0_R8/te(ix,iy))*
+     &    min(she(ix,iy,1)*te(ix,iy),-rf1*t0,(1.0_R8+rf1)*t0)
 *     ..modify she(,,2:3)
         t0 = she(ix,iy,2)+she(ix,iy,3)*te(ix,iy)
-        she(ix,iy,2) = max(she(ix,iy,2),(1+rf1)*t0,-rf1*t0)
-        she(ix,iy,3) = (1/te(ix,iy))*
-     &    min(she(ix,iy,3)*te(ix,iy),-rf1*t0,(1+rf1)*t0)
+        she(ix,iy,2) = max(she(ix,iy,2),(1.0_R8+rf1)*t0,-rf1*t0)
+        she(ix,iy,3) = (1.0_R8/te(ix,iy))*
+     &    min(she(ix,iy,3)*te(ix,iy),-rf1*t0,(1.0_R8+rf1)*t0)
 *     ..modify shi(,,0:1)
         t0 = shi(ix,iy,0)+shi(ix,iy,1)*ti(ix,iy)
-        shi(ix,iy,0) = max(shi(ix,iy,0),(1+rf2)*t0,-rf2*t0)
-        shi(ix,iy,1) = (1/ti(ix,iy))*
-     &    min(shi(ix,iy,1)*ti(ix,iy),-rf2*t0,(1+rf2)*t0)
+        shi(ix,iy,0) = max(shi(ix,iy,0),(1.0_R8+rf2)*t0,-rf2*t0)
+        shi(ix,iy,1) = (1.0_R8/ti(ix,iy))*
+     &    min(shi(ix,iy,1)*ti(ix,iy),-rf2*t0,(1.0_R8+rf2)*t0)
 *     ..modify shi(,,2:3)
         t0 = shi(ix,iy,2)+shi(ix,iy,3)*ti(ix,iy)
-        shi(ix,iy,2) = max(shi(ix,iy,2),(1+rf2)*t0,-rf2*t0)
-        shi(ix,iy,3) = (1/ti(ix,iy))*
-     &    min(shi(ix,iy,3)*ti(ix,iy),-rf2*t0,(1+rf2)*t0)
+        shi(ix,iy,2) = max(shi(ix,iy,2),(1.0_R8+rf2)*t0,-rf2*t0)
+        shi(ix,iy,3) = (1.0_R8/ti(ix,iy))*
+     &    min(shi(ix,iy,3)*ti(ix,iy),-rf2*t0,(1.0_R8+rf2)*t0)
 *     ..make sch(,,1) negative
         sch(ix,iy,0) = sch(ix,iy,0)+max(0.0_R8,sch(ix,iy,1))*po(ix,iy)
         sch(ix,iy,1) = min(sch(ix,iy,1),0.0_R8)
 *     ..make sch(,,3) negative
         sch(ix,iy,2) = sch(ix,iy,2)+max(0.0_R8,sch(ix,iy,3))*po(ix,iy)
         sch(ix,iy,3) = min(sch(ix,iy,3),0.0_R8)
+*     ..modify sne
+        t0 = sne(ix,iy,0)+sne(ix,iy,1)*ne(ix,iy)
+        sne(ix,iy,0) = max(sne(ix,iy,0),(1.0_R8+rf3)*t0,-rf3*t0)
+        sne(ix,iy,1) = (1.0_R8/ne(ix,iy))*
+     &   min(sne(ix,iy,1)*ne(ix,iy),-rf3*t0,(1.0_R8+rf3)*t0)
        enddo
       enddo
 
@@ -183,10 +183,11 @@
       shest = she - shest
       shist = shi - shist
       schst = sch - schst
+      snest = sne - snest
 
 	if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is
+	  write (chns,'(i3.3)') is
 !	  call my_out(70,nx,ny,smost(:,:,0,is)+              !srv 07.10.09
 !     &        smost(:,:,1,is)*ua(:,:,is)+
 !     &        smost(:,:,2,is)*na(:,:,is)*mp*am(is)+
@@ -196,7 +197,7 @@
 	endif
 	if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) then
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is
+	  write (chns,'(i3.3)') is
 !	  call my_out(70,nx,ny,snast(:,:,0,is)+              !srv 07.10.09
 !     &             snast(:,:,1,is)*na(:,:,is),'b2srst_snast'//chns)
 	 enddo
@@ -215,7 +216,7 @@
 
 	if (iout.eq.1) then                       !srv 11.09.09 {
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is
+	  write (chns,'(i3.3)') is
 	  do k=0,3
 	   write (chk,'(i1)') k
 	   call my_out(70,nx,ny,smost(-1,-1,k,is),

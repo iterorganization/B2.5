@@ -105,16 +105,15 @@
       if (newversion.ge.'01.001.018')  
      > call cfwure (nput, 1, time, 'time')
 *   ..save parallel current
-      if(newversion.ge.'01.001.069') then                          !srv 09.09.11
-	   call cfwure (nput, n2, fch_p, 'fch_p')
+      if(newversion.ge.'01.001.069') then                       !srv 09.09.11
+	 call cfwure (nput, n2, fch_p(:,:,0), 'fch_p')
       elseif(newversion.ge.'01.001.025' .and.
-     &   newversion.le.'01.001.068') then                          !srv 10.06.08 {
+     &   newversion.le.'01.001.068') then                       !srv 10.06.08 {
         call cfwure (nput, n2*2, fch_p, 'fch_p')
-	elseif (newversion.ge.'01.001.022' .and.
+      elseif (newversion.ge.'01.001.022' .and.
      &   newversion.ge.'01.001.024') then
-        call cfwure (nput, n2, fch_p, 'fch_p')
-      else
-      endif                                                        !srv 10.06.08 }
+        call cfwure (nput, n2, fch_p(:,:,0), 'fch_p')
+      endif                                                     !srv 10.06.08 }
 * ..return
       call subend ()
       return

@@ -1,8 +1,15 @@
       subroutine eirene_mc_init
       use b2mod_types
-      use eirmod_extrab25 
+#ifdef USE_EIRENE
+      use eirmod_parmmod
+      use eirmod_extrab25
+#endif
       implicit none
+#ifndef USE_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
+#     include <COUPLE/EIRDIAG.F>
+#     include <COUPLE/EIRBRA.F>
+#endif
 cwdk
 c#ifndef USE_EIRENE                                                   !srv (mail 15.01.08)
 c      call eirene_extrab25_eirdiag_alloc(nxdd,nydd,
@@ -12,7 +19,8 @@ c     &                                       nstra,nfl)               !srv 03.0
 c#endif
 
 cwdk  copy-paste from eirene_extrab25_eirdiag_alloc (Eirene_dummy)
-c     avoids double module definition in case code is compiled with Eirene   
+c     avoids double module definition in case code is compiled with Eirene 
+#ifdef USE_EIRENE  
             if(.not.allocated(dab2)) then
       allocate(dab2(0:nxdd,0:nydd,natm,1))
       allocate(dmb2(0:nxdd,0:nydd,nmol,1))
@@ -47,6 +55,7 @@ c     avoids double module definition in case code is compiled with Eirene
       allocate(wldspt(nlmpgs,0:nstra+1))
       allocate(eneutrad(0:nxdd,0:nydd,natm,1))
       allocate(isrftype(nlmpgs))
+#endif
 !      write(*,*) ' Allocated arrays in eirene_extrab25_eirdiag_alloc ',  &
 !      ' with nxdd,nydd,natm,nmol,nion,nlmpgs,nstra,npls',             &
 !            nxdd,nydd,natm,nmol,nion,nlmpgs,nstra,npls
@@ -83,24 +92,30 @@ c     avoids double module definition in case code is compiled with Eirene
       wldspt=0
       eneutrad=0
       isrftype=0
+#ifdef USE_EIRENE
 	endif
+#endif
 
 cwdk  copy-paste from eirene_extrab25_eirpbls_alloc (Eirene_dummy, only case im=1)
 c     avoids double module definition in case code is compiled with Eirene  
 c     Note: all arrays allocated in eirene_extrab25_eirpbls_init (Eirene) are allocated here,
-c           so the standard cleanup routine can still be used (checks on allocation of lkindp)
+c     so the standard cleanup routine can still be used (checks on allocation of lkindp)
+#ifdef USE_EIRENE
        if(.not.allocated(lkindm)) then 
         allocate(lkindm(nmol))
         allocate(lkindp(npls))
         allocate(lkindi(nion))
         allocate(srccrfc(natm,nstra))
         allocate(srcstrn(nstra))
+#endif
         lkindm=0
         lkindp=0
         lkindi=0
         srccrfc=0.
         srcstrn=0.
+#ifdef USE_EIRENE
        endif 
+#endif
 
       return
       end

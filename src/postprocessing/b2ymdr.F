@@ -172,8 +172,8 @@
        call cfrure (ninp(1), n2, delti, 'delti')
        call cfrure (ninp(1), n2, delpo, 'delpo')
 *    ..plot change in state
-       call b2wgdt (nout(0), idout, nx, ny, ns, delna, delua,
-     &   delte, delti, delpo)
+       call b2wgdt (nout(0), idout, nx, ny, ns, 
+     &   delne, delni, delna, delua, delte, delti, delpo)
 *    ..loop
        goto 1
       endif

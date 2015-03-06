@@ -742,12 +742,12 @@
 *       SAMAX (BLAS-like) computes the maximum absolute value in
 *       a vector.
 *       SSUM (BLAS-like) sums the elements of a vector.
-*       SASUM (BLAS) sums the absolute values of elements of a vector.
+*       B2SASUM (BLAS) sums the absolute values of elements of a vector.
 *       SFILL (BLAS-like) fills a vector with a constant value.
 *       SBIAS (BLAS-like) adds a constant value to a vector.
-*       SSCAL (BLAS) scales a vector by a constant.
-*       SCOPY (BLAS) copies a vector to another.
-*       SAXPY (BLAS) adds a constant-times-vector to a vector.
+*       B2SSCAL (BLAS) scales a vector by a constant.
+*       B2SCOPY (BLAS) copies a vector to another.
+*       B2SAXPY (BLAS) adds a constant-times-vector to a vector.
 *
 *     ESSEQ determines whether two real*8 numbers differ by no more than
 *     a small multiple of their machine precision.
@@ -855,7 +855,7 @@
 *
 *     GNMAP3 (together with the alternate entry GNDFM3) is a service
 *     routine for use with the CONPACK routines in the NCARG graphics
-*     package. It defines a curvilinear, logically rectangular  map for
+*     package. It defines a curvilinear, logically rectangular map for
 *     CONPACK. The map is specified by a call to the entry gndfm3.
 *
 *     GNCOLR is for use by the routine ARSCAM in the AREAS utility of

@@ -81,10 +81,12 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is, ib, ireg, ncall, ibegin, iend, isize
+      integer n2, i, ix, iy, is, ib, ireg, ncall, ibegin, iend, isize, k
       integer, allocatable :: list_x(:), list_y(:), rix(:), riy(:)
       integer, save :: iout = 0                          !srv 09.07.04
       real (kind=R8), allocatable :: area(:)
+      character charns*3, chark*1, ch*2
+      character*15 hlp_frm
       real (kind=R8) ::
      *   amtol, t0, t1, t2, t3, qin, qel, surface_temp,
      *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
@@ -159,7 +161,7 @@
      &  smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
      &  'faulty argument range qz(,,1)')
 *    ..test sign of pbs
-       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')
+!       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')         !srv 11.01.13
 *    ..test edge values of pbs
        call b2xvff (nx, ny, pbs, 'pbs')
 *    ..test sign of na, ni, ne, te, ti
@@ -276,8 +278,8 @@
         ireg = cbirwe
 *   ..loop over boundary cells
         do iy = -1, ny
-          if(region(-1,iy,0).ne.0.and.  ! do not do dead cells or corners
-     &       bottomiy(-1,iy).ne.-2.and.topiy(-1,iy).ne.ny+1) then
+          if(region(ix,iy,0).ne.0.and.  ! do not do dead cells or corners
+     &       bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1) then
 *    ..update ireg
     3       if (cbrbrk(ireg)*ny.lt.iy+0.5_R8) then
               call xertst (ireg.lt.cbirwe+cbnrwe-1,
@@ -296,23 +298,24 @@
             if(plate_model.eq.2 .and. .not.lcore .and. main_call
      &       .and. iy.eq.ibegin) then
               isize = iend - ibegin + 1
-              allocate(list_x(isize),list_y(isize),rix(isize),riy(isize))
+              allocate(list_x(isize),list_y(isize),
+     &                 rix(isize),riy(isize))
               allocate(area(isize))
-              list_x(1:isize) = -1
-              do ix = 1, isize
-                list_y(ix) = ibegin + ix - 1
-                rix(ix) = rightix(-1,ibegin + ix - 1)
-                riy(ix) = rightiy(-1,ibegin + ix - 1)
-                area(ix) = gs(rix(ix),riy(ix),0)
+              list_x(1:isize) = ix
+              do i = 1, isize
+                list_y(i) = ibegin + i - 1
+                rix(i) = rightix(ix,ibegin + i - 1)
+                riy(i) = rightiy(ix,ibegin + i - 1)
+                area(i) = gs(rix(i),riy(i),0)
               end do
               call prehd2D(ns,isize,list_x,list_y,dtim,-1,
      &          rix,riy,0,area,BoRiS)
               deallocate(list_x,list_y,rix,riy,area)
             endif
-            call recycle(-1,iy,rightix(-1,iy),rightiy(-1,iy),
-     &         -1,rightix(-1,iy),rightiy(-1,iy),0,
-     &         hx(-1,iy),hx(rightix(-1,iy),rightiy(-1,iy)),
-     &         Phi_app,gs(rightix(-1,iy),rightiy(-1,iy),0),lcore)
+            call recycle(ix,iy,rightix(ix,iy),rightiy(ix,iy),
+     &         -1,rightix(ix,iy),rightiy(ix,iy),0,
+     &         hx(ix,iy),hx(rightix(ix,iy),rightiy(ix,iy)),
+     &         Phi_app,gs(rightix(ix,iy),rightiy(ix,iy),0),lcore)
           endif   ! region.ne.0 and corners
         enddo
        endif
@@ -325,8 +328,8 @@
         ireg = cbirea
 *   ..loop over boundary cells
         do iy = -1, ny       
-          if(region(nx,iy,0).ne.0.and.   ! do not do dead cells or corners
-     &       bottomiy(nx,iy).ne.-2.and.topiy(nx,iy).ne.ny+1) then
+          if(region(ix,iy,0).ne.0.and.   ! do not do dead cells or corners
+     &       bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1) then
 *    ..update ireg
     4       if (cbrbrk(ireg)*ny.lt.iy+0.5_R8) then
               call xertst (ireg.lt.cbirea+cbnrea-1,
@@ -346,19 +349,19 @@
      &       .and. iy.eq.ibegin) then
               isize = iend - ibegin + 1
               allocate(list_x(isize),list_y(isize),area(isize))
-              list_x(1:isize) = nx
-              do ix = 1, isize
-                list_y(ix) = ibegin + ix - 1
-                area(ix) = gs(nx,ibegin + ix - 1,0)
+              list_x(1:isize) = ix
+              do i = 1, isize
+                list_y(i) = ibegin + i - 1
+                area(i) = gs(ix,ibegin + i - 1,0)
               end do
               call prehd2D(ns,isize,list_x,list_y,dtim,+1,
      &          list_x,list_y,0,area,BoRiS)
-               deallocate(list_x,list_y,area)
+              deallocate(list_x,list_y,area)
             endif
-            call recycle(nx,iy,leftix(nx,iy),leftiy(nx,iy),
-     &         +1,nx,iy,0,
-     &         hx(nx,iy),hx(leftix(nx,iy),leftiy(nx,iy)),
-     &         Phi_app,gs(nx,iy,0),lcore)
+            call recycle(ix,iy,leftix(ix,iy),leftiy(ix,iy),
+     &         +1,ix,iy,0,
+     &         hx(ix,iy),hx(leftix(ix,iy),leftiy(ix,iy)),
+     &         Phi_app,gs(ix,iy,0),lcore)
          endif   ! region.ne.0 and corners
         enddo
        endif
@@ -810,8 +813,8 @@ c-xpb
             if (is.ne.is0) then
                sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+
      &          cbrec(0,is,ireg)*t0
-               shi0(ix,iy,0) = shi0(ix,iy,0)+cbrec(1,is,ireg)*
-     .          (1.5_R8+BoRiS)*(zaf(is)*tef+tif)*t0
+               shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*
+     &          cbrec(1,is,ireg)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif)*t0
             endif
          enddo
       endif

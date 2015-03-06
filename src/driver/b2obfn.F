@@ -3,18 +3,19 @@
 
       subroutine b2obfn(npar_opt, par_opt, func)
       use b2mod_optim
-	use b2mod_exp
-	use b2mod_exp_file_names
-	use b2mod_par_opt, only : par_opt_phys
+      use b2mod_exp
+      use b2mod_exp_file_names
+      use b2mod_par_opt
+     , , only : par_opt_phys
 #ifdef WINDOWS
-	USE DFLIB 
+      USE DFLIB ! IGNORE
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer npar_opt
-	real (kind=R8) :: par_opt(1:npar_opt)
+      real (kind=R8) :: par_opt(1:npar_opt)
 *   ..output arguments (unspecified on entry)
-	real (kind=R8) :: func
+      real (kind=R8) :: func
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -148,39 +149,39 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       write(70) par_opt_phys
       close(70)
       
-	cpu_s = x05baf()
+      cpu_s = x05baf()
 
 #ifdef WINDOWS
       iresult = RUNQQ ('B2mnOpt','')
-	inquire(file='b2fstate',exist=b2fstate_exist)
-	inquire(file='b2fstate_add',exist=b2fstate_add_exist)
-	inquire(file='b2fstati_add',exist=b2fstati_add_exist)
-	if(b2fstate_exist.and.b2fstate_add_exist) then
-	 if(b2fstati_add_exist) lresult = SYSTEMQQ('del b2fstati_add')
+      inquire(file='b2fstate',exist=b2fstate_exist)
+      inquire(file='b2fstate_add',exist=b2fstate_add_exist)
+      inquire(file='b2fstati_add',exist=b2fstati_add_exist)
+      if(b2fstate_exist.and.b2fstate_add_exist) then
+       if(b2fstati_add_exist) lresult = SYSTEMQQ('del b2fstati_add')
        lresult = SYSTEMQQ('del b2fstati')
        lresult = SYSTEMQQ('ren b2fstate b2fstati')
        lresult = SYSTEMQQ('ren b2fstate_add b2fstati_add')
-	endif
+      endif
 #else
       call system('./B2mnOpt.exe')
-	inquire(file='b2fstate',exist=b2fstate_exist)
-	inquire(file='b2fstate_add',exist=b2fstate_add_exist)
-	inquire(file='b2fstati_add',exist=b2fstati_add_exist)
-	if(b2fstate_exist.and.b2fstate_add_exist) then
-	 if(b2fstati_add_exist) call system('rm b2fstati_add')
+      inquire(file='b2fstate',exist=b2fstate_exist)
+      inquire(file='b2fstate_add',exist=b2fstate_add_exist)
+      inquire(file='b2fstati_add',exist=b2fstati_add_exist)
+      if(b2fstate_exist.and.b2fstate_add_exist) then
+       if(b2fstati_add_exist) call system('rm b2fstati_add')
        call system('rm b2fstati')
        call system('cp b2fstate b2fstati')
        call system('cp b2fstate_add b2fstati_add')
        call system('rm b2fstate b2fstate_add')
-	endif
+      endif
 #endif	 
-	cpu_f= x05baf()
-	write(71,"(' b2obfn takes ',es10.2,' sec')") cpu_f-cpu_s
+      cpu_f= x05baf()
+      write(71,"(' b2obfn takes ',es10.2,' sec')") cpu_f-cpu_s
 * read the results of modelling
       call read_results
 *   .. compute objective function and write the results of modelling
       func = 0.0_R8
-	npoint=0
+      npoint=0
 *   .. for inner lower
       call treat_exp_res(l_ne_inner_lower, fnm_ne_inner_lower,   
      & ny, cy_ne_inner_lower, ne_inner_lower_mod, b_ne_inner_lower_mod,
@@ -303,17 +304,17 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       if(l_power) then
        dif = (power_mod-power_exp)/power_exp
-	 func = func + dif**2
-	 npoint=npoint+1
+       func = func + dif**2
+       npoint=npoint+1
 
-	 write(71,"(5x,'pw_mod',5x,'pw_exp',5x,'dif')") 
-	 write(71,"(1x,3(es14.6))") power_mod, power_exp, dif
-	endif
+       write(71,"(5x,'pw_mod',5x,'pw_exp',5x,'dif')") 
+       write(71,"(1x,3(es14.6))") power_mod, power_exp, dif
+      endif
 
-	func = sqrt(func/npoint)
+      func = sqrt(func/npoint)
 
-	nfunc = nfunc + 1
-	write(71,*) ' b2obfn: nfunc, func, npoint ', nfunc, func, npoint
+      nfunc = nfunc + 1
+      write(71,*) ' b2obfn: nfunc, func, npoint ', nfunc, func, npoint
 
 * ..end of computation
       return
@@ -323,52 +324,52 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       end subroutine b2obfn
 
-	function fab(a, b, z, istyle)
-        use b2mod_types
-	  implicit none
-	  integer istyle
-	  real (kind=R8) :: a, b, z, fab
-	  select case (istyle)
-	   case(0)
+      function fab(a, b, z, istyle)
+      use b2mod_types
+      implicit none
+      integer istyle
+      real (kind=R8) :: a, b, z, fab
+      select case (istyle)
+        case(0)
 !         x = z
           fab = z
-	   case(1)
+	case(1)
 !         x = b + (a-b)*exp(z)/(1+exp(z))
           if(z .le. 0.0_R8) then
-	     fab = b + (a-b)*exp(z)/(1.0_R8+exp(z))
-	    else
-	     fab = b + (a-b)/(1.0_R8+exp(-z))
-	    endif
-	   case(2)
+	    fab = b + (a-b)*exp(z)/(1.0_R8+exp(z))
+	  else
+	    fab = b + (a-b)/(1.0_R8+exp(-z))
+	  endif
+	case(2)
 !         x = (a+b)/2 + (b-a)/2*sin(z)
-	    fab = 0.5_R8*(a+b) + 0.5_R8*(b-a)*sin(z)
-	   case default
-	    write(71,*) ' fab: Incorrect istyle'
-	    stop
-	  end select
+	  fab = 0.5_R8*(a+b) + 0.5_R8*(b-a)*sin(z)
+	case default
+	  write(71,*) ' fab: Incorrect istyle'
+	  stop
+      end select
 	    
-	end function fab
+      end function fab
 
-	function fcain(a, z, istyle)
-        use b2mod_types
-	  implicit none
-	  integer istyle
-	  real (kind=R8) :: a, z, fcain
-	  select case (istyle)
-	   case(0)
+      function fcain(a, z, istyle)
+      use b2mod_types
+      implicit none
+      integer istyle
+      real (kind=R8) :: a, z, fcain
+      select case (istyle)
+	case(0)
 !         x = z
-	    fcain = z
-	   case(1)
+	  fcain = z
+	case(1)
 !         x = a + exp(z)
-	    fcain = a + exp(z) 
-	   case(2)
+	  fcain = a + exp(z) 
+	case(2)
 !         x = a + z**2
-	    fcain = a + z**2 
-	   case default
-	    write(71,*) ' fab: Incorrect istyle'
-	    stop
-	  end select
-	end function fcain
+	  fcain = a + z**2 
+	case default
+	  write(71,*) ' fab: Incorrect istyle'
+	  stop
+	end select
+      end function fcain
 
       subroutine treat_exp_res(l_ne_outer_mdpl, fnm_ne_outer_mdpl,   
      &  ny, cy_ne_outer_mdpl, ne_outer_mdpl_mod,
@@ -385,32 +386,32 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      & c_ne_outer_mdpl_mod(-1:ny), d_ne_outer_mdpl_mod(-1:ny),
      & cy_ne_outer_mdpl_exp(1:ndat_ne), ne_outer_mdpl_exp(1:ndat_ne)  
       
-	integer ::  iy
-	real (kind=R8) ::  dif, nemod, dseval
-	character(128) :: fmt 
+      integer ::  iy
+      real (kind=R8) ::  dif, nemod, dseval
+      character(128) :: fmt 
 
       fmt="(8x,'y',7x,1x,'"//trim(fnm_ne_outer_mdpl)//"_exp'"//
      &  ",4x,'"//trim(fnm_ne_outer_mdpl)//"_mod',8x,'dif')"
-	if(l_ne_outer_mdpl) then
-	 call approx_profile_mod(ny+2,   
+      if(l_ne_outer_mdpl) then
+        call approx_profile_mod(ny+2,   
      &                 cy_ne_outer_mdpl, ne_outer_mdpl_mod,
      &   b_ne_outer_mdpl_mod, c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod)
 !	 write(71,"(7x,'y',7x,5x,'ne_outer_mdpl_exp',8x,
 !     &   'ne_outer_mdpl_mod',8x,'dif')") 
-	 write(71,trim(fmt)) 
-	 do iy=1,ndat_ne
+	write(71,trim(fmt)) 
+	do iy=1,ndat_ne
 	  if(cy_ne_outer_mdpl(-1)*1.0001.le.cy_ne_outer_mdpl_exp(iy) .and. 
      &     cy_ne_outer_mdpl_exp(iy).le.cy_ne_outer_mdpl(ny)*1.0001) then
-	   nemod = dseval(ny+2, cy_ne_outer_mdpl_exp(iy), 
+	    nemod = dseval(ny+2, cy_ne_outer_mdpl_exp(iy), 
      &         cy_ne_outer_mdpl, ne_outer_mdpl_mod, b_ne_outer_mdpl_mod,
      *         c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod)
-	   dif = (nemod-ne_outer_mdpl_exp(iy))/ne_outer_mdpl_exp(iy)
-	   func = func + dif**2
-         npoint=npoint+1
-	   write(71,"(1x,4(es14.6))") cy_ne_outer_mdpl_exp(iy),
+	    dif = (nemod-ne_outer_mdpl_exp(iy))/ne_outer_mdpl_exp(iy)
+	    func = func + dif**2
+            npoint=npoint+1
+	    write(71,"(1x,4(es14.6))") cy_ne_outer_mdpl_exp(iy),
      &              ne_outer_mdpl_exp(iy), nemod, dif
 	  endif
-	 enddo
-	endif
+        enddo
+      endif
       end subroutine treat_exp_res
 

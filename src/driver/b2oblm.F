@@ -3,18 +3,19 @@
 
       subroutine b2oblm(number_exp, npar_opt, par_opt, dif, iflag)
       use b2mod_optim
-	use b2mod_exp
-	use b2mod_exp_file_names
-	use b2mod_par_opt, only : par_opt_phys
+      use b2mod_exp
+      use b2mod_exp_file_names
+      use b2mod_par_opt
+     , , only : par_opt_phys
 #ifdef WINDOWS
-	USE DFLIB 
+      USE DFLIB   ! IGNORE
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer number_exp, npar_opt, iflag
-	real (kind=R8) :: par_opt(1:npar_opt)
+      real (kind=R8) :: par_opt(1:npar_opt)
 *   ..output arguments (unspecified on entry)
-	real (kind=R8) :: dif(1:number_exp)
+      real (kind=R8) :: dif(1:number_exp)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -148,38 +149,38 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       write(70) par_opt_phys
       close(70)
       
-	cpu_s = x05baf()
+      cpu_s = x05baf()
 
 #ifdef WINDOWS
       iresult = RUNQQ ('B2mnOpt','')
-	inquire(file='b2fstate',exist=b2fstate_exist)
-	inquire(file='b2fstate_add',exist=b2fstate_add_exist)
-	inquire(file='b2fstati_add',exist=b2fstati_add_exist)
-	if(b2fstate_exist.and.b2fstate_add_exist) then
-	 if(b2fstati_add_exist) lresult = SYSTEMQQ('del b2fstati_add')
+      inquire(file='b2fstate',exist=b2fstate_exist)
+      inquire(file='b2fstate_add',exist=b2fstate_add_exist)
+      inquire(file='b2fstati_add',exist=b2fstati_add_exist)
+      if(b2fstate_exist.and.b2fstate_add_exist) then
+       if(b2fstati_add_exist) lresult = SYSTEMQQ('del b2fstati_add')
        lresult = SYSTEMQQ('del b2fstati')
        lresult = SYSTEMQQ('ren b2fstate b2fstati')
        lresult = SYSTEMQQ('ren b2fstate_add b2fstati_add')
-	endif
+      endif
 #else
       call system('./B2mnOpt.exe')
-	inquire(file='b2fstate',exist=b2fstate_exist)
-	inquire(file='b2fstate_add',exist=b2fstate_add_exist)
-	inquire(file='b2fstati_add',exist=b2fstati_add_exist)
-	if(b2fstate_exist.and.b2fstate_add_exist) then
-	 if(b2fstati_add_exist) call system('rm b2fstati_add')
+      inquire(file='b2fstate',exist=b2fstate_exist)
+      inquire(file='b2fstate_add',exist=b2fstate_add_exist)
+      inquire(file='b2fstati_add',exist=b2fstati_add_exist)
+      if(b2fstate_exist.and.b2fstate_add_exist) then
+       if(b2fstati_add_exist) call system('rm b2fstati_add')
        call system('rm b2fstati')
        call system('cp b2fstate b2fstati')
        call system('cp b2fstate_add b2fstati_add')
        call system('rm b2fstate b2fstate_add')
-	endif
+      endif
 #endif	 
-	cpu_f= x05baf()
-	write(71,"(' b2oblm takes ',es10.2,' sec')") cpu_f-cpu_s
+      cpu_f= x05baf()
+      write(71,"(' b2oblm takes ',es10.2,' sec')") cpu_f-cpu_s
 * read the results of modelling
       call read_results
-	npoint=0
-	func = 0.0_R8
+      npoint=0
+      func = 0.0_R8
 *   .. compute objective function and write the results of modelling
 *   .. for inner lower
       call treat_exp_res_eq(l_ne_inner_lower, fnm_ne_inner_lower,   
@@ -301,17 +302,17 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      & js_outer_upper_exp, npoint, func, number_exp, dif)
 
       if(l_power) then
-	 npoint=npoint+1
-	 dif(npoint) = (power_mod-power_exp)/power_exp
-	 func = func + dif(npoint)**2
-	 write(71,"(5x,'pw_mod',5x,'pw_exp',5x,'dif')") 
-	 write(71,"(1x,3(es14.6))") power_mod, power_exp, dif(npoint)
-	endif
+       npoint=npoint+1
+       dif(npoint) = (power_mod-power_exp)/power_exp
+       func = func + dif(npoint)**2
+       write(71,"(5x,'pw_mod',5x,'pw_exp',5x,'dif')") 
+       write(71,"(1x,3(es14.6))") power_mod, power_exp, dif(npoint)
+      endif
 
-	nfunc = nfunc + 1
+      nfunc = nfunc + 1
 
-	func = sqrt(func/npoint)
-	write(71,*) ' b2oblm: nfunc, func, npoint ', nfunc, func, npoint
+      func = sqrt(func/npoint)
+      write(71,*) ' b2oblm: nfunc, func, npoint ', nfunc, func, npoint
 
 * ..end of computation
       return
@@ -326,44 +327,45 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      &  b_ne_outer_mdpl_mod, c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod,  
      &  ndat_ne, cy_ne_outer_mdpl_exp, ne_outer_mdpl_exp, npoint, func,
      &  number_exp, dif)
-	use b2mod_types
-	implicit none
-	logical(1) :: l_ne_outer_mdpl
-	character(*) :: fnm_ne_outer_mdpl
-	integer :: ny, npoint, ndat_ne, number_exp
-	real (kind=R8) ::  func, dif(1:number_exp),
+      use b2mod_types
+      implicit none
+      logical(1) :: l_ne_outer_mdpl
+      character(*) :: fnm_ne_outer_mdpl
+      integer :: ny, npoint, ndat_ne, number_exp
+      real (kind=R8) ::  func, dif(1:number_exp),
      &   cy_ne_outer_mdpl(-1:ny), 
      &   ne_outer_mdpl_mod(-1:ny), b_ne_outer_mdpl_mod(-1:ny),
      & c_ne_outer_mdpl_mod(-1:ny), d_ne_outer_mdpl_mod(-1:ny),
      & cy_ne_outer_mdpl_exp(1:ndat_ne), ne_outer_mdpl_exp(1:ndat_ne)  
       
-	integer ::  iy
-	real (kind=R8) :: nemod, dseval
-	character(128) :: fmt 
+      integer ::  iy
+      real (kind=R8) :: nemod, dseval
+      character(128) :: fmt 
 
       fmt="(8x,'y',7x,1x,'"//trim(fnm_ne_outer_mdpl)//"_exp'"//
      &  ",4x,'"//trim(fnm_ne_outer_mdpl)//"_mod',8x,'dif')"
-	if(l_ne_outer_mdpl) then
-	 call approx_profile_mod(ny+2,   
+      if(l_ne_outer_mdpl) then
+       call approx_profile_mod(ny+2,   
      &                 cy_ne_outer_mdpl, ne_outer_mdpl_mod,
      &   b_ne_outer_mdpl_mod, c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod)
-!	 write(71,"(7x,'y',7x,5x,'ne_outer_mdpl_exp',8x,
+!       write(71,"(7x,'y',7x,5x,'ne_outer_mdpl_exp',8x,
 !     &   'ne_outer_mdpl_mod',8x,'dif')") 
-	 write(71,trim(fmt)) 
-	 do iy=1,ndat_ne
-	  if(cy_ne_outer_mdpl(-1)*1.0001.le.cy_ne_outer_mdpl_exp(iy) .and. 
+       write(71,trim(fmt)) 
+       do iy=1,ndat_ne
+        if(cy_ne_outer_mdpl(-1)*1.0001.le.cy_ne_outer_mdpl_exp(iy) .and. 
      &     cy_ne_outer_mdpl_exp(iy).le.cy_ne_outer_mdpl(ny)*1.0001) then
-	   nemod = dseval(ny+2, cy_ne_outer_mdpl_exp(iy), 
+         nemod = dseval(ny+2, cy_ne_outer_mdpl_exp(iy), 
      &         cy_ne_outer_mdpl, ne_outer_mdpl_mod, b_ne_outer_mdpl_mod,
      *         c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod)
          npoint=npoint+1
-	   dif(npoint) = (nemod-ne_outer_mdpl_exp(iy))/ne_outer_mdpl_exp(iy)
-	   func = func + dif(npoint)**2
-	   write(71,"(1x,4(es14.6))") cy_ne_outer_mdpl_exp(iy),
+         dif(npoint) = (nemod-ne_outer_mdpl_exp(iy))/
+     .                        ne_outer_mdpl_exp(iy)
+         func = func + dif(npoint)**2
+         write(71,"(1x,4(es14.6))") cy_ne_outer_mdpl_exp(iy),
      &              ne_outer_mdpl_exp(iy), nemod, dif(npoint)
-	  endif
-	 enddo
-	endif
+        endif
+       enddo
+      endif
       end subroutine treat_exp_res_eq
 
 

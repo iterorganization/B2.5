@@ -164,7 +164,10 @@
 *     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
 *     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic 
 *     field pitch)*(surface area), namely the parallel contact area, 
-*     on the (ix,iy) cell left and bottom faces respectively.  
+*     on the (ix,iy) cell left and bottom faces respectively.
+*     In the case where the grid covers the full vacuum vessel, 
+*     pbsy also contains a contribution from the narrowing of the
+*     flux tube when impacting the wall structures.  
 *     See routine b2xgbs for the form of interpolation employed.
 *
 *     pbshz - (-1:nx,-1:ny,0:1) real*8 array.                       !srv 09.06.08
@@ -259,7 +262,7 @@
 *     heat flux through the face between the (ix-1,iy) and (ix,iy)
 *     cells. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fhiy(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix-1,iy) and (ix,iy)
+*     heat flux through the face between the (ix,iy-1) and (ix,iy)
 *     cells. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
 *
 *     fch - (-1:nx,-1:ny,0:1) real*8 array.
@@ -432,10 +435,10 @@
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
-*     the kinetic energy of a particle of species (is) in cell (ix,iy).
-*     The velocity used includes the parallel velocity as well as the total 
-*     diamagnetic and ExB drift velocities in both the radial and diamagnetic 
-*     directions.
+*     the kinetic energy of a particle of species (is) in cell (ix,iy). 
+*     The velocity used includes the parallel velocity as well
+*     as the total diamagnetic and ExB drift velocities in both the radial
+*     and diamagnetic directions.
 *
 *     veecrb - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let veecrbx(,)=veecrb(,,0) and veecrby(,)=veecrb(,,1).)
@@ -1365,6 +1368,17 @@
 *     For (ix,iy) in (-1:nx,0:ny), csig_any(ix,iy) specifies the anomalous
 *     conductivity between the (ix,iy-1) and the (ix,iy) cell.
 *     For iy.eq.-1, csig_anx(-1:nx,iy) will hold 0.
+*
+*     calf_an - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let calf_anx=calf_an(,,0) and calf_any=calf_an(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), calf_anx(ix,iy) specifies the 
+*     anomalous part of the thermo-electric coefficient 
+*     between the (ix-1,iy) and the (ix,iy) cell.
+*     For ix.eq.-1, calfx(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), calf_any(ix,iy) specifies the 
+*     anomalous part of the thermo-electric coefficient 
+*     between the (ix,iy-1) and the (ix,iy) cell.
+*     For iy.eq.-1, calf_any(-1:nx,iy) will hold 0.
 *
 *   ..parameters for core numerical iteration
 *

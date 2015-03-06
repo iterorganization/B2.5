@@ -59,9 +59,9 @@
 *
 *     resco, resmo, resmt, reshe, reshi, respo - real*8 array, input.
 *     These arrays specify the most recent residuals of the equations
-*     for (respectively) continuity (each species), momentum (each
-*     species), momentum (all species), electron heat, atom heat, and
-*     electric potential.
+*     for (respectively) continuity (each species), parallel momentum
+*     (each species), parallel momentum (all species), electron heat,
+*     atom heat, and electric potential.
 *     See the calling routine for description.
 *
 *     corpa, corua, corut, corte, corti, corpo - real*8 array, input.
@@ -89,18 +89,18 @@
       character fmth*(*), fmth2*(*), fmtp*(*), header*60
       parameter (
      &  fmth='(a,t44,''inc=(5*)'',1pe9.2)',
-     &  fmth2='(a,t36,''is ='',i2,t44,''inc=(5*)'',1pe9.2)',
+     &  fmth2='(a,t35,''is ='',i3,t44,''inc=(5*)'',1pe9.2)',
      &  fmtp='(2x,a6,4x,a)')
       real (kind=R8) ::
-     *   xf(-1:nx),xc(-1:nx),yf(-1:ny),yc(-1:ny)
+     *   xf(-1:nx),xc(-1:nx),yf(-1:ny),yc(-1:ny),zero(-1:nx,-1:ny)
 *   ..procedures
       intrinsic max
       real (kind=R8) ::
      *   samax, scal10
       logical strmas
-      external subini, subend, xertst, samax, scopy, sfill,
+      external subini, subend, xertst, samax, b2scopy, sfill,
      &  scal10, strmas
-      external  b2xpne, b2xpni, b2xxgs, b2wgxp
+      external b2xpne, b2xpni, b2xxgs, b2wgxp
 
 *-----------------------------------------------------------------------
 *.computation
@@ -108,8 +108,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2wgcr')
-*   ..set n2
+*   ..set n2 and zero
       n2 = (nx+2)*(ny+2)
+      zero = 0.0_R8
 *   ..test nprt
       call xertst (1.le.nprt, 'faulty argument nprt')
 *   ..test nx, ny, ns
@@ -133,7 +134,7 @@
 *   ..make contour plots of (ne) residual
       if (strmas(idout,'cpne')) then
 *      (ignore boundaries and singular regions)
-       call b2xpne (nx, ny, ns, rza, resco, wrk0)
+       call b2xpne (nx, ny, ns, rza, resco, zero, wrk0)
        call b2xxgs (nx, ny, 0.0_R8, wrk0, 0)
        call sfill (nx+2, 0.0_R8, wrk0(-1,-1), 1)
        call sfill (nx+2, 0.0_R8, wrk0(-1,ny), 1)
@@ -153,7 +154,7 @@
        write (nprt,fmtp) '+cpne', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10, t0/10, 10)
+     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plots of (ni) residual
       if (strmas(idout,'cpni')) then
@@ -178,12 +179,12 @@
        write (nprt,fmtp) '+cpni', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10, t0/10, 10)
+     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plot of (te) residual
       if (strmas(idout,'cpte')) then
 *      (ignore boundaries and singular regions)
-       call scopy (n2, reshe, 1, wrk0, 1)
+       call b2scopy (n2, reshe, 1, wrk0, 1)
        call b2xxgs (nx, ny, 0.0_R8, wrk0, 0)
        call sfill (nx+2, 0.0_R8, wrk0(-1,-1), 1)
        call sfill (nx+2, 0.0_R8, wrk0(-1,ny), 1)
@@ -202,12 +203,12 @@
        write (nprt,fmtp) '+cpte', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10, t0/10, 10)
+     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plot of (ti) residual
       if (strmas(idout,'cpti')) then
 *      (ignore boundaries and singular regions)
-       call scopy (n2, reshi, 1, wrk0, 1)
+       call b2scopy (n2, reshi, 1, wrk0, 1)
        call b2xxgs (nx, ny, 0.0_R8, wrk0, 0)
        call sfill (nx+2, 0.0_R8, wrk0(-1,-1), 1)
        call sfill (nx+2, 0.0_R8, wrk0(-1,ny), 1)
@@ -226,12 +227,12 @@
        write (nprt,fmtp) '+cpti', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10, t0/10, 10)
+     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plot of (po) residual
       if (strmas(idout,'cppo')) then
 *      (ignore boundaries and singular regions)
-       call scopy (n2, respo, 1, wrk0, 1)
+       call b2scopy (n2, respo, 1, wrk0, 1)
        call b2xxgs (nx, ny, 0.0_R8, wrk0, 0)
        call sfill (nx+2, 0.0_R8, wrk0(-1,-1), 1)
        call sfill (nx+2, 0.0_R8, wrk0(-1,ny), 1)
@@ -250,13 +251,13 @@
        write (nprt,fmtp) '+cppo', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10, t0/10, 10)
+     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plots of (na) residual
       if (strmas(idout,'cpna')) then
        do is = 0, ns-1
 *       (ignore boundaries and singular regions)
-        call scopy (n2, resco(-1,-1,is), 1, wrk0, 1)
+        call b2scopy (n2, resco(-1,-1,is), 1, wrk0, 1)
         call b2xxgs (nx, ny, 0.0_R8, wrk0, 0)
         call sfill (nx+2, 0.0_R8, wrk0(-1,-1), 1)
         call sfill (nx+2, 0.0_R8, wrk0(-1,ny), 1)
@@ -276,14 +277,14 @@
         write (nprt,fmtp) '+cpna', header
         call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &    wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	  24, -t0/10, t0/10, 10)
+     1	  24, -t0/10.0_R8, t0/10.0_R8, 10)
        enddo
       endif
 *   ..make contour plots of (ua) residual
       if (strmas(idout,'cpua')) then
        do is = 0, ns-1
 *       (ignore boundaries and singular regions)
-        call scopy (n2, resmo(-1,-1,is), 1, wrk0, 1)
+        call b2scopy (n2, resmo(-1,-1,is), 1, wrk0, 1)
         call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
         call sfill (nx+2, 0.0_R8, wrk0(-1,-1), 1)
         call sfill (nx+2, 0.0_R8, wrk0(-1,ny), 1)
@@ -298,17 +299,18 @@
           enddo
         enddo
         t0 = scal10(0.8_R8*samax(n2,wrk0,1))
-        write (header,fmth2) 'MOMENTUM RESIDUAL (J/m).', is, t0/50.0_R8
+        write (header,fmth2) 'PARALLEL MOMENTUM RESIDUAL (J/m).',
+     &    is, t0/50.0_R8
         write (nprt,fmtp) '+cpua', header
         call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &    wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	  24, -t0/10, t0/10, 10)
+     1	  24, -t0/10.0_R8, t0/10.0_R8, 10)
        enddo
       endif
 *   ..make contour plot of (ua) residual, all species
       if (strmas(idout,'cpua')) then
 *      (ignore boundaries and singular regions)
-       call scopy (n2, resmt, 1, wrk0, 1)
+       call b2scopy (n2, resmt, 1, wrk0, 1)
        call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
        call sfill (nx+2, 0.0_R8, wrk0(-1,-1), 1)
        call sfill (nx+2, 0.0_R8, wrk0(-1,ny), 1)
@@ -323,12 +325,12 @@
          enddo
        enddo
        t0 = scal10(0.8_R8*samax(n2,wrk0,1))
-       write (header,fmth) 'MOMENTUM RESIDUAL (J/m), all species', 
-     &  t0/50._R8
+       write (header,fmth)
+     &  'PARALLEL MOMENTUM RESIDUAL (J/m), all species', t0/50.0_R8
        write (nprt,fmtp) '+cpua', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10, t0/10, 10)
+     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 
 * ..make plots of corrections
@@ -341,7 +343,7 @@
        write (nprt,fmtp) '+cppr', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   wrk0, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10, t0/10, 10)
+     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plot of (te) correction
       if (strmas(idout,'cpte')) then
@@ -350,7 +352,7 @@
        write (nprt,fmtp) '+cpte', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   corte, 0, ev, -1.2_R8*tthi, 1.2_R8*tthi, 
-     &   24, -tthi/10, tthi/10, 10)
+     &   24, -tthi/10.0_R8, tthi/10.0_R8, 10)
       endif
 *   ..make contour plot of (ti) correction
       if (strmas(idout,'cpti')) then
@@ -359,7 +361,7 @@
        write (nprt,fmtp) '+cpti', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   corti, 0, ev, -1.2_R8*tthi, 1.2_R8*tthi,  
-     &   24, -tthi/10, tthi/10, 10)
+     &   24, -tthi/10.0_R8, tthi/10.0_R8, 10)
       endif
 *   ..make contour plot of (po) correction
       if (strmas(idout,'cppo')) then
@@ -368,7 +370,7 @@
        write (nprt,fmtp) '+cppo', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   corpo, 0, 1.0_R8, -1.2_R8*tthi/ev, 1.2_R8*tthi/ev,  
-     &   24, -tthi/(10*ev), tthi/(10*ev), 10)
+     &   24, -tthi/(10.0_R8*ev), tthi/(10.0_R8*ev), 10)
       endif
 *   ..make contour plots of (pa) correction
       if (strmas(idout,'cpna')) then
@@ -379,7 +381,7 @@
         write (nprt,fmtp) '+cpna', header
         call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &    corpa(-1,-1,is), 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 24,
-     &    -t0/10, t0/10, 10)
+     &    -t0/10.0_R8, t0/10.0_R8, 10)
        enddo
       endif
 *   ..make contour plots of (ua) correction
@@ -391,7 +393,7 @@
         write (nprt,fmtp) '+cpua', header
         call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &    corua(-1,-1,is), 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 24,
-     &    -t0/10, t0/10, 10)
+     &    -t0/10.0_R8, t0/10.0_R8, 10)
        enddo
       endif
 *   ..make contour plots of (ua) correction, all species
@@ -402,7 +404,7 @@
        write (nprt,fmtp) '+cpua', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   corut, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10, t0/10, 10)
+     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 
 * ..return

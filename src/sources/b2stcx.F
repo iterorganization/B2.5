@@ -40,11 +40,11 @@
 
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is, js, k
-	integer, save :: iout = 0,                                        !srv 30.06.08 11.09.09
+      integer, save :: iout = 0,                                        !srv 30.06.08 11.09.09
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
-	character chns*2, chk*1, ch*2                                     !srv 11.09.09
+      character chns*3, chk*1                                     !srv 11.09.09
       real (kind=R8) ::
      *  rg0, t0, t1, t2, du0, du1
       save ncall, styl0, rg0
@@ -287,7 +287,7 @@ ctmp.dpc
 
 	if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is
+	  write (chns,'(i3.3)') is
 !	  do k=0,1
 !	   write (chk,'(i1)') k
 !	   call my_out(70,nx,ny,sna0(-1,-1,k,is),'b2stcx_sna'//chk//chns)
@@ -298,7 +298,7 @@ ctmp.dpc
 	endif
 	if (iout.eq.1 .or. iout_b2npmo.eq.1) then
        do is = 0, ns-1
-	  write (chns,'(i2.2)') is
+	  write (chns,'(i3.3)') is
 !	  do k=0,1
 !	   write (chk,'(i1)') k
 !	   call my_out(70,nx,ny,smq0(-1,-1,k,is),'b2stcx_smq'//chk//chns)

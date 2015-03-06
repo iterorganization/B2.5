@@ -8,11 +8,12 @@ c
       use b2mod_boundary_namelist
       implicit none
       character*44 tmpstring1,tmpstring2
+      character*256 tmpstring,titlestring
       real (kind=R8) ::
      *   lmin,lmax,x1,x2,y1,y2,dsep,dist,xmin,xmax,
      1   y_transform
       integer ix,ixl,ixr,iy,is,iiso,lnblnk,ysepl,ysepr,iystart,iyend
-      integer ixref
+      integer ixx
       logical iniso
       intrinsic min,max,sqrt
       external xertst, lnblnk
@@ -32,12 +33,14 @@ c      if(nidim .ne. 2) call line(2)
         iyend=iyend-1
       enddo
       call xertst(iystart.le.iyend, 'faulty parameter iyend')
+      if (b2plot_debug.ge.6) 
+     > write(6,*) ' iystart, iyend : ', iystart, iyend
       if (.not.map_to_midplane) then
-        ixref = ix
+        ixx = ix
       else
         if (b2plot_debug.ge.5) 
      >   write(*,*) 'Mapping to midplane : jxa = ',jxa
-        ixref = jxa
+        ixx = jxa
       endif
       do is=0,ndim(3,iwrk)-1
         tmpstring1=textwk(is,iwrk)
@@ -45,23 +48,23 @@ c      if(nidim .ne. 2) call line(2)
         lmax=work(ix,iystart,is,iwrk)
         if(y_transform_l .ne. 0) then
           do iy=iystart,iyend
-            wrk(iy)=y_transform(cr(ixref,iy),cz(ixref,iy))
-            write(*,*) wrk(iy),cz(ixref,iy)
+            wrk(iy)=y_transform(cr(ixx,iy),cz(ixx,iy))
+            write(*,*) wrk(iy),cz(ixx,iy)
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           enddo
         else
-          wrk(iystart)=dist(cr(ixref,iystart),cz(ixref,iystart),
-     1          0.5_R8*(crx(ixref,iystart,0)+crx(ixref,iystart,1)),     
-     2          0.5_R8*(cry(ixref,iystart,0)+cry(ixref,iystart,1)))
+          wrk(iystart)=dist(cr(ixx,iystart),cz(ixx,iystart),
+     1          0.5_R8*(crx(ixx,iystart,0)+crx(ixx,iystart,1)),     
+     2          0.5_R8*(cry(ixx,iystart,0)+cry(ixx,iystart,1)))
           do iy=iystart+1,iyend
-            wrk(iy)=wrk(iy-1)+dist(cr(ixref,iy-1),cz(ixref,iy-1),
-     1                             cr(ixref,iy),cz(ixref,iy))
+            wrk(iy)=wrk(iy-1)+dist(cr(ixx,iy-1),cz(ixx,iy-1),
+     1                             cr(ixx,iy),cz(ixx,iy))
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           enddo
           if (iyref.eq.-2) then
-            ixl=ixref
+            ixl=ixx
             ysepl=iystart
             iy=iystart
             iniso=.false.
@@ -82,7 +85,7 @@ c      if(nidim .ne. 2) call line(2)
               end do
             end if
             if(ysepl.eq.iystart) ysepl=iyend
-            ixr=ixref
+            ixr=ixx
             ysepr=iystart
             iniso=.false.
             do while (ixr.lt.nx .and. .not.iniso .and.
@@ -108,20 +111,22 @@ c      if(nidim .ne. 2) call line(2)
 !            dsep=0.5_R8*(wrk(min(ysepr,ysepl))+wrk(min(ysepr,ysepl)-1))
               dsep=wrk(min(ysepr,ysepl))-
      1         dist(
-     1          cr(ixref,min(ysepr,ysepl)),cz(ixref,min(ysepr,ysepl)),
-     1            0.5_R8*(crx(ixref,min(ysepr,ysepl),0)+
-     1                    crx(ixref,min(ysepr,ysepl),1)),     
-     2            0.5_R8*(cry(ixref,min(ysepr,ysepl),0)+
-     2                    cry(ixref,min(ysepr,ysepl),1)))
+     1          cr(ixx,min(ysepr,ysepl)),cz(ixx,min(ysepr,ysepl)),
+     1            0.5_R8*(crx(ixx,min(ysepr,ysepl),0)+
+     1                    crx(ixx,min(ysepr,ysepl),1)),     
+     2            0.5_R8*(cry(ixx,min(ysepr,ysepl),0)+
+     2                    cry(ixx,min(ysepr,ysepl),1)))
+              if (b2plot_debug.ge.6) 
+     >          write(6,*) ' ysepr, ysepl : ', ysepr, ysepl
             else
               dsep=0.0_R8
             endif
           else
             if (iystart.le.iyref .and. iyend.ge.iyref) then
               dsep=wrk(iyref)-
-     1         dist(cr(ixref,iyref),cz(ixref,iyref),
-     1            0.5_R8*(crx(ixref,iyref,0)+crx(ixref,iyref,1)),     
-     2            0.5_R8*(cry(ixref,iyref,0)+cry(ixref,iyref,1)))
+     1         dist(cr(ixx,iyref),cz(ixx,iyref),
+     1            0.5_R8*(crx(ixx,iyref,0)+crx(ixx,iyref,1)),     
+     2            0.5_R8*(cry(ixx,iyref,0)+cry(ixx,iyref,1)))
             else
               dsep=0.0_R8
             endif
@@ -136,6 +141,11 @@ c      if(nidim .ne. 2) call line(2)
           write(tmpstring2,
      .     '('' <ix = '',i4,''> (mapped to midplane)'')') ix
         endif
+        tmpstring = 
+     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
+     2     tmpstring2(1:lnblnk(tmpstring2))//
+     3     tmpstring1(1:lnblnk(tmpstring1))
+        call customise_label(tmpstring,titlestring)
         if(values(9) .ne. values(10)) then
           lmin=values(9)
           lmax=values(10)
@@ -151,12 +161,14 @@ c      if(nidim .ne. 2) call line(2)
         if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
         if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
         if(mod(typeofplot,2) .eq. 1) then
-          if(values(11).ne.init_value) then
+          if(values(11).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
             xmin=values(11)
           else
             xmin=min(wrk(iystart),wrk(iyend))
           endif
-          if(values(12).ne.init_value) then
+          if(values(12).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
             xmax=values(12)
           else
             xmax=max(wrk(iystart),wrk(iyend))
@@ -171,24 +183,27 @@ c      if(nidim .ne. 2) call line(2)
           end if
           if(linlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
           if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
-          call init_page(graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1)),
+          call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)')                                 !srv 21.09.11
+            write(nwtf,'(''# '',a)')
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2       tmpstring2(1:lnblnk(tmpstring2)) //
      2       tmpstring1(1:lnblnk(tmpstring1))
             do iy=iystart,iyend
-              write(nwtf,*) wrk(iy),work(ix,iy,is,iwrk)                   !srv 21.09.11
+              write(nwtf,*) wrk(iy),work(ix,iy,is,iwrk)
             enddo
           endif
 #ifndef PLPLOT
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
-          if (dcol.gt.1) call gsplci(dcol)
+          if (dcol.gt.1) then
+             call gsplci(dcol)
+          elseif(dcol.lt.0) then
+             call gsplci(-dcol)
+             dcol=dcol-1
+          endif
 #endif
           do iy=iystart,iyend-1
             call lined_d(
@@ -199,7 +214,7 @@ c      if(nidim .ne. 2) call line(2)
             if(topiy(ix,iy).ne.iy+1) then
 #ifndef PLPLOT
               call lastd
-              if (scol.gt.1 .or. dcol.gt.1) call gsplci(scol)
+              if (scol.gt.1 .or. dcol.ne.1) call gsplci(scol)
               call gslwsc_d(sepwidth)
               call dashdc('$',1,0)
 #endif
@@ -208,7 +223,7 @@ c      if(nidim .ne. 2) call line(2)
      1                       (wrk(iy)+wrk(iy+1))/2.0_R8,lmax)
 #ifndef PLPLOT
               call lastd
-              if (scol.gt.1 .or. dcol.gt.1) call gsplci(dcol)
+              if (scol.gt.1 .or. dcol.ne.1) call gsplci(abs(dcol))
               call gslwsc_d(lwidth)
               call dashdc(linefmt,8,lfsz)
 #endif
@@ -217,12 +232,12 @@ c      if(nidim .ne. 2) call line(2)
 #ifndef PLPLOT
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)
-          if (dcol.gt.1) call gsplci(1)
+          if (dcol.ne.1) call gsplci(1)
 #endif
           call end_page
         endif
         if(typeofplot/2 .eq. 1) then
-          do iy=-1,ny
+          do iy=iystart,iyend
             wrk(iy)=yy(iy,2)
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
@@ -241,15 +256,17 @@ c      if(nidim .ne. 2) call line(2)
           end if
           if(mod(linlog,2).eq.0.and.lmin.le.0.0_R8) lmin=1.0e-30_R8
           if(mod(linlog,2).eq.0.and.lmax.le.0.0_R8) lmax=1.0_R8
-          if(values(11).ne.init_value) then
+          if(values(11).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
             xmin=values(11)
           else
-            xmin=min(wrk(-1),wrk(ny))
+            xmin=min(wrk(iystart),wrk(iyend))
           endif
-          if(values(12).ne.init_value) then
+          if(values(12).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) then
             xmax=values(12)
           else
-            xmax=max(wrk(-1),wrk(ny))
+            xmax=max(wrk(iystart),wrk(iyend))
           endif
           if(xmin.eq.xmax) then
             xmin=min(xmin*0.9_R8,xmin*1.1_R8)
@@ -262,26 +279,30 @@ c      if(nidim .ne. 2) call line(2)
           if(linlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
           if(linlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
           write(tmpstring2,'('' <ix = '',i4,''>'')') ix
-          call init_page(graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
-     2     tmpstring2(1:lnblnk(tmpstring2))//
-     3     tmpstring1(1:lnblnk(tmpstring1)),
+          call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)')                   !srv 21.09.11
+            write(nwtf,'(''# '',a)')
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
      2       tmpstring2(1:lnblnk(tmpstring2)) //
      2       tmpstring1(1:lnblnk(tmpstring1))
-            do iy=-1,ny
-              write(nwtf,*) wrk(iy),work(ix,iy,is,iwrk)                   !srv 21.09.11
+            do iy=iystart,iyend
+              write(nwtf,*) wrk(iy),work(ix,iy,is,iwrk)
             enddo
           endif
 #ifndef PLPLOT
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(lwidth)
-          if (dcol.gt.1) call gsplci(dcol)
+          if (dcol.gt.1) then
+             call gsplci(dcol)
+          elseif(dcol.lt.0) then
+             if(typeofplot.eq.3) dcol=dcol+1
+             call gsplci(-dcol)
+             dcol=dcol-1
+          endif
 #endif
-          do iy=-1,ny-1
+          do iy=iystart,iyend-1
             call lined_d(
      1       wrk(iy),
      2       min(lmax,max(lmin,work(ix,iy,is,iwrk))),
@@ -290,7 +311,7 @@ c      if(nidim .ne. 2) call line(2)
             if(topiy(ix,iy).ne.iy+1) then
 #ifndef PLPLOT
               call lastd
-              if (scol.gt.1 .or. dcol.gt.1) call gsplci(scol)
+              if (scol.gt.1 .or. dcol.ne.1) call gsplci(scol)
               call gslwsc_d(sepwidth)
               call dashdc('$',1,0)
 #endif
@@ -299,7 +320,7 @@ c      if(nidim .ne. 2) call line(2)
      1                       (wrk(iy)+wrk(iy+1))/2.0_R8,lmax)
 #ifndef PLPLOT
               call lastd
-              if (scol.gt.1 .or. dcol.gt.1) call gsplci(dcol)
+              if (scol.gt.1 .or. dcol.ne.1) call gsplci(abs(dcol))
               call gslwsc_d(lwidth)
               call dashdc(linefmt,8,lfsz)
 #endif
@@ -308,7 +329,7 @@ c      if(nidim .ne. 2) call line(2)
 #ifndef PLPLOT
           call lastd
           if (lwidth.ne.1.0_R8) call gslwsc_d(1.0_R8)
-          if (dcol.gt.1) call gsplci(1)
+          if (dcol.ne.1) call gsplci(1)
 #endif
           call end_page
         endif
@@ -343,7 +364,7 @@ c
         n1=n1+1
         goto 10
    20   continue
-        write(*,*) 'read n.s.r.z.a_inner',n1
+        write(*,*) 'Read n.s.r.z.a_inner',n1
         close(99)
         if(.not.open_file(99,'n.s.r.z.a_outer',
      1   'data.local|data')) then
@@ -397,6 +418,7 @@ c
       subroutine plot_expfile
       use b2mod_types
       use b2mod_b2plot
+      use b2mod_b2plot_debug
       use b2mod_b2plot_values
       implicit none
       character*256 line, title
@@ -415,10 +437,6 @@ c
         write(*,*) 'Couldn''t open ',trim(expfile)
       else
         title = ''
-#ifndef PLPLOT
-        call lastd
-        if(ecol .gt. 1) call gsplci(ecol)
-#endif
    10   read(99,'(a)',end=40) line
         if(line(1:1) .eq. '#') then
           title = line(1:lnblnk(line))
@@ -442,8 +460,12 @@ c
           ymin=min(ymin,yvalues(i))
           ymax=max(ymax,yvalues(i))
         enddo
-        if(values(11).ne.init_value) xmin=values(11)
-        if(values(12).ne.init_value) xmax=values(12)
+        if(values(11).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) 
+     >   xmin=values(11)
+        if(values(12).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) 
+     >   xmax=values(12)
         if(xmin.eq.xmax) then
           xmin=min(xmin*0.9_R8,xmin*1.1_R8)
           xmax=max(xmax*0.9_R8,xmax*1.1_R8)
@@ -469,35 +491,70 @@ c
         call init_page(
      1   title(1:lnblnk(title)),
      1   xmin,xmax,ymin,ymax,linlog,.false.,.false.,.true.)
-        write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
+         if(b2plot_debug.ge.4)
+     >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)')                   !srv 21.09.11
+          write(nwtf,'(''# '',a)')
      1     title(1:lnblnk(title))
           do i=1,inc
-            write(nwtf,*) xvalues(i),yvalues(i)                   !srv 21.09.11
+            write(nwtf,*) xvalues(i),yvalues(i)
+          enddo
+        endif
+#ifndef PLPLOT
+        call lastd
+        if(ecol .gt. 1) then
+          if (expline) then
+            call gsplci(ecol)
+          else
+            call gspmci(ecol)
+          endif
+        elseif(ecol .lt. 0) then
+          if (expline) then
+            call gsplci(-ecol)
+          else
+            call gspmci(-ecol)
+          endif
+          ecol=ecol-1
+        endif
+        if (ewidth.ne.1.0_R8) then
+          call lastd
+          if (expline) then
+            call gslwsc_d(ewidth)
+          else
+            call gsmksc_d(ewidth)
+          endif
+        endif
+#endif
+        if (expline) then
+          do i=1,inc-1
+            call lined_d(xvalues(i),yvalues(i),
+     .                   xvalues(i+1),yvalues(i+1))
+          enddo
+        else
+          do i=1,inc
+            call grpts_d(xvalues(i),yvalues(i),expsymbol)
           enddo
         endif
 #ifndef PLPLOT
         if (ewidth.ne.1.0_R8) then
           call lastd
-          call gslwsc_d(ewidth)
-        endif
-#endif
-        do i=1,inc-1
-          call lined_d(xvalues(i),yvalues(i),xvalues(i+1),yvalues(i+1))
-        enddo
-#ifndef PLPLOT
-        if (ewidth.ne.1.0_R8) then
-          call lastd
-          call gslwsc_d(1.0_R8)
+          if (expline) then
+            call gslwsc_d(1.0_R8)
+          else
+            call gsmksc_d(1.0_R8)
+          endif
         endif
 #endif
         call end_page
    40   continue
-        if(ecol .gt. 1) then
+        if(ecol .ne. 1) then
 #ifndef PLPLOT
           call lastd
-          call gsplci(1)
+          if (expline) then
+            call gsplci(1)
+          else
+            call gspmci(1)
+          endif
 #endif
         endif
       endif
@@ -507,6 +564,7 @@ c
       subroutine plot_wallfile
       use b2mod_types
       use b2mod_b2plot
+      use b2mod_b2plot_debug
       use b2mod_b2plot_values
       implicit none
       character*256 line, title
@@ -530,6 +588,12 @@ c
           call lastd
           call gsplci(ecol)
 #endif
+        elseif(ecol.lt.0) then
+#ifndef PLPLOT
+          call lastd
+          call gsplci(-ecol)
+#endif
+          ecol=ecol-1
         endif
    10   read(99,'(a)',end=40) line
         if(line(1:1) .eq. '#') then
@@ -554,8 +618,12 @@ c
           ymin=min(ymin,yvalues(i))
           ymax=max(ymax,yvalues(i))
         enddo
-        if(values(11).ne.init_value) xmin=values(11)
-        if(values(12).ne.init_value) xmax=values(12)
+        if(values(11).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) 
+     >   xmin=values(11)
+        if(values(12).ne.init_value .and.
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) 
+     >   xmax=values(12)
         if(xmin.eq.xmax) then
           xmin=min(xmin*0.9_R8,xmin*1.1_R8)
           xmax=max(xmax*0.9_R8,xmax*1.1_R8)
@@ -581,12 +649,13 @@ c
         call init_page(
      1   title(1:lnblnk(title)),
      1   xmin,xmax,ymin,ymax,wlinlog,.false.,.false.,.true.)
-        write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
+        if(b2plot_debug.ge.4)
+     >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)')                   !srv 21.09.11
+          write(nwtf,'(''# '',a)')
      1     title(1:lnblnk(title))
           do i=1,inc
-            write(nwtf,*) xvalues(i),yvalues(i)                   !srv 21.09.11
+            write(nwtf,*) xvalues(i),yvalues(i)
           enddo
         endif
 #ifndef PLPLOT
@@ -606,7 +675,7 @@ c
 #endif
         call end_page
    40   continue
-        if(ecol .gt. 1) then
+        if(ecol .ne. 1) then
 #ifndef PLPLOT
           call lastd
           call gsplci(1)

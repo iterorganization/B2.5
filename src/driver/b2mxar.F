@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2mxar (nx, ny, ns, nregionv, BoRiS, 
-     &  vol, na, te, ti, 
+     &  vol, ne, na, te, ti, 
      &  resco, resmo, resmt, reshe, reshi, respo, 
      &  rescoreg, resmoreg, reshereg, reshireg,
      &  aresco, aresmo, aresmt, areshe, areshi, arespo)
@@ -16,7 +16,7 @@
       integer nx, ny, ns, nregionv
       real (kind=R8) :: BoRiS,
      *  vol(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
+     &  ne(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  resco(-1:nx,-1:ny,0:ns-1), resmo(-1:nx,-1:ny,0:ns-1),
      &  resmt(-1:nx,-1:ny), reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny),
      &  respo(-1:nx,-1:ny)
@@ -39,7 +39,7 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine computes scaled L1-norms of the residuals of the
-*     equations for continuity, momentum balance, electron heat
+*     equations for continuity, parallel momentum balance, electron heat
 *     balance, atom heat balance, and charge balance. The scaling is
 *     such that the resulting quantity has a dimension (1/time).
 *
@@ -55,8 +55,8 @@
 *   ..procedures
       intrinsic sqrt, abs
       real (kind=R8) ::
-     *  sasum
-      external subini, subend, xertst, sasum
+     *  b2sasum
+      external subini, subend, xertst, b2sasum
 *   ..initialisation
       data ncall/0/
 
@@ -78,8 +78,10 @@
        movi = 0.0_R8
        do iy = -1, ny
         do ix =-1, nx
-         navi = navi+vol(ix,iy)*na(ix,iy,is)
-         movi = movi+vol(ix,iy)*
+         if (resignore(ix,iy,1).ne.0) 
+     >    navi = navi+vol(ix,iy)*na(ix,iy,is)
+         if (resignore(ix,iy,2).ne.0)
+     >    movi = movi+vol(ix,iy)*
      &     na(ix,iy,is)*sqrt(ti(ix,iy)*am(is)*mp)
         enddo
        enddo
@@ -87,8 +89,8 @@
        t0 = 0.0_R8
        t1 = 0.0_R8
        do iy = 0, ny-1
-        t0 = t0+sasum(nx,resco(0,iy,is),1)
-        t1 = t1+sasum(nx,resmo(0,iy,is),1)
+        t0 = t0+b2sasum(nx,resco(0,iy,is),1)
+        t1 = t1+b2sasum(nx,resmo(0,iy,is),1)
        enddo
        aresco(is) = t0/navi
        aresmo(is) = t1/movi
@@ -96,18 +98,19 @@
 *   ..compute aresmt
       t0 = 0.0_R8
       do iy = 0, ny-1
-       t0 = t0+sasum(nx,resmt(0,iy),1)
+       t0 = t0+b2sasum(nx,resmt(0,iy),1)
       enddo
       aresmt = t0/mtvi
 *   ..compute nevi, prvi
       nevi = 0.0_R8
       prvi = 0.0_R8
-      do is = 0, ns-1
-       do iy = -1, ny
-        do ix = -1, nx
-         nevi = nevi+vol(ix,iy)*rza(ix,iy,is)*na(ix,iy,is)
-         prvi = prvi+vol(ix,iy)*na(ix,iy,is)*
-     &     (rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))
+      do iy = -1, ny
+       do ix = -1, nx
+        if (resignore(ix,iy,1).eq.0) cycle
+        nevi = nevi+vol(ix,iy)*ne(ix,iy)
+        prvi = prvi+vol(ix,iy)*ne(ix,iy)*te(ix,iy)
+        do is = 0, ns-1
+         prvi = prvi+vol(ix,iy)*na(ix,iy,is)*ti(ix,iy)
         enddo
        enddo
       enddo
@@ -116,9 +119,9 @@
       t1 = 0.0_R8
       t2 = 0.0_R8
       do iy = 0, ny-1
-       t0 = t0+sasum(nx,reshe(0,iy),1)
-       t1 = t1+sasum(nx,reshi(0,iy),1)
-       t2 = t2+sasum(nx,respo(0,iy),1)
+       t0 = t0+b2sasum(nx,reshe(0,iy),1)
+       t1 = t1+b2sasum(nx,reshi(0,iy),1)
+       t2 = t2+b2sasum(nx,respo(0,iy),1)
       enddo
       areshe = t0/((1.5_R8+BoRiS)*prvi)
       areshi = t1/((1.5_R8+BoRiS)*prvi)
@@ -133,8 +136,10 @@
        movi = 0.0_R8
        do iy = 0, ny-1
         do ix = 0, nx-1
-         navi = navi+vol(ix,iy)*na(ix,iy,is)
-         movi = movi+vol(ix,iy)*
+         if (resignore(ix,iy,1).ne.0) 
+     >    navi = navi+vol(ix,iy)*na(ix,iy,is)
+         if (resignore(ix,iy,2).ne.0)
+     >    movi = movi+vol(ix,iy)*
      &     na(ix,iy,is)*sqrt(ti(ix,iy)*am(is)*mp)
         enddo
        enddo
@@ -154,15 +159,15 @@
       enddo
 *   ..compute prvi
       prvi = 0.0_R8
-      do is = 0, ns-1
-       if (.not.is_neutral(is)) then
-        do iy = -1, ny
-         do ix = -1, nx
-          prvi = prvi+vol(ix,iy)*na(ix,iy,is)*
-     &      (rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))
-         enddo
+      do iy = -1, ny
+       do ix = -1, nx
+        if (resignore(ix,iy,1).eq.0) cycle
+        prvi = prvi+vol(ix,iy)*ne(ix,iy)*te(ix,iy)
+        do is = 0, ns-1
+         if (.not.is_neutral(is)) 
+     >    prvi = prvi+vol(ix,iy)*na(ix,iy,is)*ti(ix,iy)
         enddo
-       endif
+       enddo
       enddo
 *   ..compute reshereg, reshireg
       reshereg = 0.0_R8

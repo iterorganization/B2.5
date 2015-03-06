@@ -34,15 +34,18 @@ c
 c======================================================================
       subroutine b2prdn(unm)
       use b2mod_types
+      use b2mod_b2plot_wall_loading
 #ifdef USE_EIRENE
+      use eirmod_parmmod
       use eirmod_extrab25
 #endif
       implicit none
 c
 c*** Reads the data from dg output file
 c----------------------------------------------------------------------
+#ifndef USE_EIRENE
 #include "COUPLE/KOPPLDIM.F"
-#include "b2pinpc.h"
+#endif
       integer nnns
       parameter (nnns=6)
       character*8 unm,unms(nnns),u
@@ -64,8 +67,9 @@ c      print *,'b2prdn >> ',unm
 c----------------------------------------------------------------------
  10   if(ll.le.0 .or. ll.gt.nwldprtx) then
           print '(1x,a,i4,a,i4)','Wrong wall segment number:',ll,
-     ,                              '.  Must be positive =< ',nwldprtx
-          if(ll.gt.nwldprtx) print *,'Check nwldprtx in b2pinpc.h'
+     ,                           '.  Must be positive and =< ',nwldprtx
+          if(ll.gt.nwldprtx) 
+     >     print *,'Check nwldprtx in b2mod_b2plot_wall_loading.F'
           return
       end if
       call resimi(lwldstrt(ll))
@@ -73,8 +77,9 @@ c----------------------------------------------------------------------
 c----------------------------------------------------------------------
  20   if(ll.le.0 .or. ll.gt.nwldprtx) then
           print '(1x,a,i4,a,i4)','Wrong wall segment number:',ll,
-     ,                              '.  Must be positive =< ',nwldprtx
-          if(ll.gt.nwldprtx) print *,'Check nwldprtx in b2pinpc.h'
+     ,                           '.  Must be positive and =< ',nwldprtx
+          if(ll.gt.nwldprtx) 
+     >     print *,'Check nwldprtx in b2mod_b2plot_wall_loading.F'
           return
       end if
       call rearri(lwldlis(1,ll),nlim,nwldlis(ll))

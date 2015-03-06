@@ -11,8 +11,8 @@
      &                       ddens  , dtev   , drcof  ,
      &                       lres   , lstan  , lptn  
      &                     )
-       use b2mod_types
-       implicit none
+      use b2mod_types
+      implicit none
 c-----------------------------------------------------------------------
 c
 c  ****************** fortran77 subroutine: xxdata_11 ******************
@@ -40,7 +40,7 @@ c                inations of the two called `partitions'.
 c                A `partition level' is a specification of the 
 c                partitions which span all the ionisation stages (and
 c                metastables) of an element.  Successive partition 
-c                levels give a heirarchy corresponding to larger 
+c                levels give a hierarchy corresponding to larger 
 c                partitions and greater clumping. 
 c                A `superstage' is a set of partitions which are close-
 c                coupled.
@@ -53,12 +53,12 @@ c                superstage comprising only one partition) or resolved.
 c                A partitioned file is distinguished by the presence of 
 c                `partition specification block' in the adf11 data  
 c                file header lines.
-c            (3) When  a partition specification block is present, it 
+c            (3) When a partition specification block is present, it 
 c                should be ordered from the highest partition level  
 c                index to lowest partition level index.  Thus the first 
 c                partition in the partition block has the least number 
 c                of partitions and the last has the greatest number.
-c            (4) Twelev classes of adf11 data file may be read by the
+c            (4) Twelve classes of adf11 data file may be read by the
 c                subroutine as follow:
 c
 c            	 class index	type	  GCR data content
@@ -310,6 +310,9 @@ c
 c-----------------------------------------------------------------------
 c  search for 'prnt' and count number of dash delimiters
 c-----------------------------------------------------------------------
+
+*   ..subprogram start-up calls
+      call subini ('xxdata_11')
 
        ic = 0
        icptn = 0
@@ -802,6 +805,7 @@ c
 c
 c-----------------------------------------------------------------------
 c
+      call subend ()
       return
       end subroutine xxdata_11
 CX ULTRIX PORT - SCCS info: Module @(#)$Header: /home/adascvs/fortran/adaslib/utility/i4fctn.for,v 1.3 2004/07/06 14:06:47 whitefor Exp $ Date $Date: 2004/07/06 14:06:47 $
@@ -1344,7 +1348,7 @@ c-----------------------------------------------------------------------
       integer   ncptn_stack
 c-----------------------------------------------------------------------
       character cstrg*80  
-      Character strg*80 
+      character strg*256
 c-----------------------------------------------------------------------
       logical   lresol    , lptn 
       logical   lptn_in 
