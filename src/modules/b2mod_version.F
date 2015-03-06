@@ -1,5 +1,6 @@
       module b2mod_version
-      character*10 :: newversion='03.000.000'
+#     include <git_version.h>
+      character*10 :: newversion ='03.000.000'
 
       character*10, save ::
      1 b2fstati_version = '00.000.000',

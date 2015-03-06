@@ -88,30 +88,30 @@ OTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OT}}
 OPEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OP}}
 MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
 
-.PHONY: DEFAULT NOPLOT ALL clean realclean depend listobj tags
+.PHONY: DEFAULT NOPLOT ALL VERSION clean realclean depend listobj tags
 
 ifdef MDSPLUS_DIR
 ifdef PAR_OPT
-DEFAULT: ${MNEXE} ${OTEXE} ${GREXE} ${MDEXE} ${OPEXE}
-ALL: ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE} ${MDEXE} ${OPEXE}
-NOPLOT: ${MNEXE} ${OTEXE} ${MDEXE} ${OPEXE}
+DEFAULT: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${MDEXE} ${OPEXE}
+ALL: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE} ${MDEXE} ${OPEXE}
+NOPLOT: VERSION ${MNEXE} ${OTEXE} ${MDEXE} ${OPEXE}
 else
-DEFAULT: ${MNEXE} ${OTEXE} ${GREXE} ${MDEXE}
-ALL: ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE} ${MDEXE}
-NOPLOT: ${MNEXE} ${OTEXE} ${MDEXE}
+DEFAULT: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${MDEXE}
+ALL: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE} ${MDEXE}
+NOPLOT: VERSION ${MNEXE} ${OTEXE} ${MDEXE}
 endif
 else
 ifdef PAR_OPT
-DEFAULT: ${MNEXE} ${OTEXE} ${GREXE} ${OPEXE}
-ALL: ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE} ${OPEXE}
-NOPLOT: ${MNEXE} ${OTEXE} ${OPEXE}
+DEFAULT: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${OPEXE}
+ALL: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE} ${OPEXE}
+NOPLOT: VERSION ${MNEXE} ${OTEXE} ${OPEXE}
 else
-DEFAULT: ${MNEXE} ${OTEXE} ${GREXE}
-ALL: ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE}
-NOPLOT: ${MNEXE} ${OTEXE}
+DEFAULT: VERSION ${MNEXE} ${OTEXE} ${GREXE}
+ALL: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE}
+NOPLOT: VERSION ${MNEXE} ${OTEXE}
 endif
 endif
-MAIN: ${MNEXE}
+MAIN: VERSION ${MNEXE}
 
 ifdef USE_EIRENE
 VPATH=${FPATH}:${SRCEIR}/modules:${SRCEIR}/extraB25
@@ -295,6 +295,15 @@ endif
 	echo "$$l" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
 
 ${OBJDIR}/LISTOBJ: listobj
+
+VERSION: ${SRCLOCAL}/git_version.h
+
+${SRCLOCAL}/git_version.h:
+ifeq ($(shell [ -d ${SOLPSTOP} ] && echo yes || echo no ),yes)
+	echo "      character*15 :: gitversion ='`(cd ${SOLPSTOP}; git describe --dirty --always)`'" > ${SRCLOCAL}/git_version.h
+else
+	echo "      character*15 :: gitversion ='`git describe --dirty --always`'" > ${SRCLOCAL}/git_version.h
+endif
 
 ${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
 ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
