@@ -3,9 +3,9 @@ ifdef USE_EIRENE
 DEFINES += ${USE_EIRENE}
 SRCEIR = ${SOLPSTOP}/src/Eirene
 ifdef USE_MPI
-EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/Eirene
+EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/b25eirene/Eirene.mpi
 else
-EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/Eirene.nompi
+EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/b25eirene/Eirene
 endif
 endif
 ifdef USE_MPI
@@ -88,7 +88,7 @@ OTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OT}}
 OPEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OP}}
 MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
 
-.PHONY: DEFAULT NOPLOT ALL VERSION clean realclean depend listobj tags
+.PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags
 
 ifdef MDSPLUS_DIR
 ifdef PAR_OPT
@@ -214,10 +214,10 @@ ${OBJDIR}/libb2.a: ${ALLOBJS}
 endif
 	${BLD} $@ $?
 
-# targets 'clean' and 'realclean' clean up the directory.
+# target 'clean' cleans up the directory.
 clean : 
 	-mkdir ${OBJDIR}/.delete
-	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${OBJDIR}/.delete
+	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCLOCAL}/git_version.h ${OBJDIR}/.delete
 ifneq (${MOD},o)
 	-mv -i ${OBJDIR}/*.${MOD} ${OBJDIR}/.delete
 endif

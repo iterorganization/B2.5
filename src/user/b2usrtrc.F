@@ -9,7 +9,7 @@
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_boundary_namelist
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
 #endif
@@ -23,7 +23,7 @@ c-----------------------------------------------------------------------
       implicit none
 
 #     include <DIMENSIONS.F>
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include <COUPLE/EIRBRA.F>
 #endif
 

@@ -32,7 +32,7 @@
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
       use b2mod_external
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_ccoupl
       use eirmod_braeir
@@ -1074,7 +1074,7 @@ csw 21feb2014
 
 * ..initialisation
       if(use_eirene.eq.1) then
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(5)
         CALL SET_PARMMOD(1)
@@ -1102,11 +1102,11 @@ csw 21feb2014
 	nlmpgs=DEF_NLIM+DEF_NSTS
 #else
         call xerrab
-     &   ('Compile code with USE_EIRENE option for coupled runs')
+     &   ('Compile code with B25_EIRENE option for coupled runs')
 #endif
       endif
       NFLAI = NFL
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       CALL ALLOC_BRAEIR(NDX,NDY,NFL)
       CALL ALLOC_CCOUPL(1)
       CALL ALLOC_EIRDIAG
@@ -1797,10 +1797,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 * finalise transport_models
       call write_b2mod_transport_models(99,'    ')
       if(use_eirene.ne.0.and.itim.gt.0) then
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
          call eirene_mc_final(nx,ny,ns,BoRiS)
 #else
-         call xerrab ('b2mndr not compiled with the USE_EIRENE option')
+         call xerrab ('b2mndr not compiled with the B25_EIRENE option')
 #endif
       endif
 * finalise sputtering 

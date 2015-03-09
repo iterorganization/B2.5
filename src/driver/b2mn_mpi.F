@@ -157,7 +157,7 @@ csw 28feb2011 mpi
       call mpi_init(ierr_mpi)
       call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
       call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       if(rank_mpi .ne. 0) then
         call eirene_find_param(5)
         do

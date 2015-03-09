@@ -27,13 +27,13 @@ cank }
       use b2mod_b2cmfs
       use b2mod_version
       use b2mod_user_namelist
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
       implicit none
 #     include "DIMENSIONS.F"
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
 #     include "COUPLE/EIRSRT.F"
 #endif
@@ -123,7 +123,7 @@ csw 21feb2012
       use b2mod_elements
      & ,only : is_codes
       use b2mod_b2cmpa
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
 #endif
@@ -134,7 +134,7 @@ csw 21feb2012
       external xertst
 #endif
 #     include "DIMENSIONS.F"
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
 #     include "COUPLE/BRAEIR.F"
 #endif
@@ -311,7 +311,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
      & ,only : is_codes
       use b2mod_boundary_namelist
       use b2mod_b2cmpa
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_braeir
 #endif
@@ -319,7 +319,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       integer nx, ny, ns
       logical dotest
 #     include <DIMENSIONS.F>
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
 #     include "COUPLE/BRAEIR.F"
 #endif
@@ -445,7 +445,7 @@ c
      .             0.0_R8.lt.rf_neut(3).and.0.0_R8.lt.rf_neut(4), 
      .  'faulty input rf_neut')
 #ifndef NO_B2_CHEM_SPUT
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       call xertst (0.le.issput_chemical,
      .  'faulty input issput_chemical')
 #endif

@@ -3,12 +3,12 @@
       use b2mod_b2plot
       use b2mod_movies
       use b2mod_plasma
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
       implicit none
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #     include <COUPLE/EIRDIAG.F>
 #endif

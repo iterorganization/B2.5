@@ -35,7 +35,7 @@ c======================================================================
       subroutine b2prdn(unm)
       use b2mod_types
       use b2mod_b2plot_wall_loading
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
@@ -43,7 +43,7 @@ c======================================================================
 c
 c*** Reads the data from dg output file
 c----------------------------------------------------------------------
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #include "COUPLE/KOPPLDIM.F"
 #endif
       integer nnns

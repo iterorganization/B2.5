@@ -4,7 +4,7 @@
       use b2mod_indirect
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
 c

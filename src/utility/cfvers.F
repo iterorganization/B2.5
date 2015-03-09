@@ -1,5 +1,6 @@
       subroutine cfvers
       implicit none
+#     include <git_version.h>
       character*10 version_in, newversion
       integer nget, nput
       character chf*12,label*7
@@ -27,11 +28,11 @@
       entry cfverw(nput, newversion)
       inquire (nput,form=chf,err=20)
       if (streql(chf,'formatted')) then
-        write(nput,'(a,a)') 'VERSION',newversion
+        write(nput,'(a,a,1x,a)') 'VERSION',newversion,gitversion
       else
-        write(nput) 'VERSION',newversion
+        write(nput) 'VERSION',newversion,gitversion
       endif
-      write(*,*) 'VERSION: ',newversion
+      write(*,*) 'VERSION: ',newversion,gitversion
    20 continue
       return
 

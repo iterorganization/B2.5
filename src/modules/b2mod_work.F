@@ -19,7 +19,7 @@
       real (kind=R8), allocatable, save :: 
      &  facdrift_profile(:,:), fac_ExB_profile(:,:), ds(:),
      1	fac_vis_profile(:,:)
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       real (kind=R8), allocatable, save ::                            !IYS 28.03.12 {
      &  sna0_eir_h(:,:,:,:,:),
      &  smo0_eir_h(:,:,:,:,:),
@@ -107,7 +107,7 @@
 
       end subroutine alloc_b2mod_work
 
-#ifdef USE_EIRENE  
+#ifdef B25_EIRENE  
       subroutine alloc_hist_arrays(nxd,nyd,nsd_local,nhistd)      !IYS 28.03.12 {
 
       use eirmod_parmmod

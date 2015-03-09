@@ -8,12 +8,12 @@
       use b2mod_movies
 #endif
       use b2mod_constants
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
       implicit none
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #     include <COUPLE/EIRDIAG.F>
 #endif

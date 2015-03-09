@@ -13,7 +13,7 @@
       use b2mod_b2cmpa
       use b2mod_neutrals_namelist
       implicit none
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include <COUPLE/EIRDIAG.F>
 #endif
 *   ..input arguments (unchanged on exit)
@@ -402,7 +402,7 @@
 	  endif
 	enddo                                                            !srv 08.07.09 }
       endif
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       if(iout.ne.0) then
        do ia = 1,natm
 	  write (chns,'(i2.2)') ia

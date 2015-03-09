@@ -8,7 +8,7 @@
       use b2mod_tallies
       use b2mod_indirect
       use b2mod_numerics_namelist
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
 #endif
@@ -22,7 +22,7 @@ c-----------------------------------------------------------------------
       implicit none
 c
 #     include <DIMENSIONS.F>
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include <COUPLE/EIRBRA.F>
 #endif
 c-----------------------------------------------------------------------
@@ -252,13 +252,13 @@ c
 c*** Compute the data
 c
 csw 18nov2013 check alloc
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       if(allocated(volsumn)) then
 #endif
         hlp_sumn=sum(volsumn(1:nstrai))
         hlp_sume=sum(volsumee(1:nstrai))
         hlp_sumi=sum(volsumei(1:nstrai))
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       endif
 #endif
 
@@ -304,11 +304,11 @@ csw 20sep2013 added
 
       do j=1,nstrai
 csw 18nov2013 check alloc
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
         if(allocated(srcstrn)) then
 #endif
           fluxt_tmp(j)=srcstrn(j)
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
         endif
 #endif
       end do

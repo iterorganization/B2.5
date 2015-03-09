@@ -11,7 +11,7 @@
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
       use b2mod_external
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
 

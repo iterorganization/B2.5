@@ -44,13 +44,13 @@ c
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
       use eirmod_extrab25
 #endif
       implicit none
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #     include <COUPLE/BRAEIR.F>
 #endif
@@ -323,13 +323,13 @@ c
       use b2mod_constants
       use b2mod_eirene_globals
       use b2mod_b2cmpa
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
       use eirmod_extrab25
 #endif
       implicit none
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #     include <COUPLE/BRAEIR.F>
 #endif
@@ -750,13 +750,13 @@ c
       use b2mod_types
       use b2mod_eirene_globals
       use b2mod_b2cmpa
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
       use eirmod_braeir
 #endif
       implicit none
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
 #     include <COUPLE/BRAEIR.F>
 #endif

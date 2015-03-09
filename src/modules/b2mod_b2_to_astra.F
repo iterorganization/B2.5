@@ -10,12 +10,12 @@ csw 09jan2014 extra module to define some arrays
       use b2mod_types
       use b2mod_astra_to_b2
       use b2mod_neutrals_namelist
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
       implicit none
 
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include "COUPLE/EIRDIAG.F"
 #endif
 
@@ -249,7 +249,7 @@ csw 09jan2014 add extra allocates
           enddo                                                                   !srv 20.12.12 }
          enddo
 
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
          if (is_neutral(is)) isa = b2espcr(is)
          if (is_neutral(is) .and. isa.ne.-1) then
           do iy = 0,mintopcut   ! for closed surfaces and through separatrix
@@ -504,7 +504,7 @@ csw 09jan2014 add extra allocates
         write (*,*) 'Ratb, iy_Ratb', Ratb, iy_Ratb 
         write (*,*) 'data for b2mod_b2_to_astra has been written'
 
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
         if(iout.ne.0) then                                         !srv 14.03.12 {
          do iy = -1,nyd 
           do ix = -1,nxd

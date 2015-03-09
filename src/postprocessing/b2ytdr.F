@@ -39,7 +39,7 @@ c 2002-09-11: logic revised
       use b2mod_b2cmrc
       use b2mod_b2cmfs
       use b2mod_ppout
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
       use eirmod_comusr
@@ -49,7 +49,7 @@ c 2002-09-11: logic revised
 #endif
       implicit none
 #     include "DIMENSIONS.F"
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include <COUPLE/BRAEIR.F>
 #endif
 
@@ -217,7 +217,7 @@ c 2002-09-11: logic revised
       integer nyiso3(nnisod), nyiso4(nnisod)
       integer ixa, ixb, iya, iyb
       integer nstrai1, nstrat1
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       integer IUNIN, IUNOT, INDGRD(3), NR1ST, NP2ND, NSTSI, NLIMI
       integer INDPRO(12), NMODE, NAINI
       integer NZADD, NVOLPR, NSURPR, NVOLPL, NSP
@@ -368,7 +368,7 @@ c 2002-09-11: logic revised
       character*42 fmt0
       parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
       character*134 line
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       character*80 ZEILE, ZEILEN(100)
       character*24 TXTSPC, TXTUNT, TEXTLA
       character*72 TXTMOL, TXTION, TXTPLS, TXTPHOT, TXTCRM
@@ -390,7 +390,7 @@ c 2002-09-11: logic revised
       logical chemsp1(nstraid), savestratum(0:nstraid)
       logical, allocatable :: is_neutral1(:)
       logical, allocatable :: savesigv(:), savesigs(:), savesigc(:)
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       logical, allocatable :: NLAVRP(:), NLAVRT(:), NLSYMP(:), NLSYMT(:)
       logical, allocatable :: NLATM(:), NLMOL(:), NLION(:), NLPLS(:)
       logical, allocatable :: NLPNT(:), NLLNE(:), NLSRF(:),
@@ -588,7 +588,7 @@ c 2002-09-11: logic revised
       call xertst (0.le.nx1.and.0.le.ny1, 'faulty argument nx1, ny1')
       write(*,*) 'nx, nx1 = ', nx, nx1
       write(*,*) 'ny, ny1 = ', ny, ny1
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
       allocate(idum(0:12))
 #else
       allocate(idum(0:max(12,msrfclsx,nlimps,mgwtiesx)))
@@ -615,7 +615,7 @@ c 2002-09-11: logic revised
        goto 3
     4  continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
 *   ..import parameters from Eirene input.dat file
       inquire(file='input.dat',exist=ex)
       if (ex) then
@@ -2762,7 +2762,7 @@ cxpb This will need to be checked !!!
         close(99)
       endif
 
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
 *  ..write new input.dat file if present
       IUNIN = 86
       IUNOT = 87

@@ -30,7 +30,7 @@
       use b2mod_mdsplus
 #endif
       use b2mod_version
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
       use b2mod_b2cmpa
@@ -38,7 +38,7 @@
       use b2mod_external
       implicit none
 #     include <DIMENSIONS.F>
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include <COUPLE/EIRDIAG.F>
 #endif
 #ifdef MDSPLUS
@@ -116,7 +116,7 @@ c
 c Function to check the correct parameters!
 c
       call subini('b2mds')
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       inquire(file='input.dat',exist=ex)
       if (ex) then
         open(unit=45,file='input.dat')
@@ -155,7 +155,7 @@ c
       endif
 #endif
       NFLAI = NFL
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       CALL ALLOC_BRAEIR(NDX,NDY,NFL)
       CALL ALLOC_CCOUPL(1)
       CALL ALLOC_EIRDIAG
@@ -576,7 +576,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
      .  'Inconsistent values of ndepth_nml and plate_model')
       call get_wall_data(nx,ny,ns,BoRiS,ex)
 
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
 #ifndef HPUX
       inquire(file='fort.44',exist=ex)
 #else
@@ -1082,7 +1082,7 @@ c
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
       call mds_err_msg(status)
 
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       if(natmi.gt.0) then
         call mds_put_double_rzns('\TOP.SNAPSHOT:DAB2','/m^3',nx+2,
      1   ny+2,natmi,dab2(0:nx+1,0:ny+1,1:natmi,1),'TEXTAN','')
@@ -1102,7 +1102,7 @@ c
      1   ny+2,natmi,eneutrad(0:nx+1,0:ny+1,1:natmi,1),'')
       endif
 #endif
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       if(nmoli.gt.0) then
         call mds_put_double_rzns('\TOP.SNAPSHOT:DMB2','/m^3',nx+2,
      1   ny+2,nmoli,dmb2(0:nx+1,0:ny+1,1:nmoli,1),'TEXTMN','')
@@ -1124,7 +1124,7 @@ c
      1   ny+2,nmoli,edissml(0:nx+1,0:ny+1,1:nmoli,1),'TEXTMN','')
       endif
 #endif
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       if(nioni.gt.0) then
         call mds_put_double_rzns('\TOP.SNAPSHOT:DIB2','/m^3',nx+2,
      1   ny+2,nioni,dib2(0:nx+1,0:ny+1,1:nioni,1),'TEXTMN','')

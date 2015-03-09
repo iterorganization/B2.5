@@ -21,7 +21,7 @@
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
      2          b2stbr_sne
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25
       use b2mod_work
      1 , only : sna0_eir_h, smo0_eir_h, she0_eir_h,       !IYS 28.03.12 {
@@ -204,8 +204,8 @@ csw 25feb2014 fix IVS's version of source term avergaing
      &                      recycled_neutrals_contr)
         call xertst (0.0_R8.le.recycled_neutrals_contr, 
      &      'faulty internal parameter recycled_neutrals_contr')
-#ifdef USE_EIRENE
-csw 25feb2014   fix IVS's version of source term avergaing
+#ifdef B25_EIRENE
+csw 25feb2014   fix IVS's version of source term averaging
         if (nhist .gt. 1) nhist = min(max_eir_hist_slc,nhist)        !IYS 28.03.12 
 #endif
         call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
@@ -587,7 +587,7 @@ c   --> better solution wanted here..
       endif                                                         ! xpb
 
       if(use_eirene.ne.0) then
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
         call eirene_mc(nx, ny, ns, ismain, dtim, BoRiS, sna0_eir,     !srv 29.04.10 {
      &                 smo0_eir, she0_eir, shi0_eir, main_call)
         if (nhist .gt. 1 .and. ncall .eq. 0)                          !IYS 28.03.12 {
@@ -695,7 +695,7 @@ c            rfluxm = rfluxm / min(dble(nhist),dble(ncall+1))
          enddo
         enddo
 #else
-        call xerrab ('b2stbr not compiled with the USE_EIRENE option')
+        call xerrab ('b2stbr not compiled with the B25_EIRENE option')
 #endif
       else
 cwdk remove this if-test, to allow runs without Eirene if code is compiled with Eirene
@@ -913,7 +913,7 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
          call my_out(70,nx,ny,b2stbr_sna(-1,-1,is),'b2stbr_sna'//chns)
         endif
        enddo                                                          !srv 29.04.10
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
        do ia = 1,nnatmi
         write (chns,'(i2.2)') ia
         call my_out(70,nx,ny,rfluxa(0:nx+1,0:ny+1,ia,1),
@@ -988,12 +988,12 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
         call ipgeti('eirene_ank_mods',ank_mods)
       endif
       if(use_eirene.ne.0.and.ank_mods.ne.0) then
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
 c        write(*,*) 'Calling neutr_scl'
         call neutr_scl(nx, ny, ns)
 c        write(*,*) 'Called neutr_scl'
 #else
-        call xerrab ('b2stbr not compiled with the USE_EIRENE option')
+        call xerrab ('b2stbr not compiled with the B25_EIRENE option')
 #endif
       endif
       ncall = ncall+1

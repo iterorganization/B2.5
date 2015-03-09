@@ -20,11 +20,11 @@
       use b2mod_tallies
       use b2mod_wall
       use b2mod_b2cmpa
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
       implicit none
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include <COUPLE/EIRDIAG.F>
 #endif
 *   ..input arguments (unchanged on exit)

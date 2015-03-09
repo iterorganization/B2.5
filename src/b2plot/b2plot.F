@@ -45,14 +45,15 @@ c 2002-09-11: logic revised
 #ifdef NAGF95
       use f90_unix       ! IGNORE
 #endif
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
       use eirmod_braeir
 #endif
       implicit none
 #     include <DIMENSIONS.F>
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
+#     include <COUPLE/KOPPLDIM.F>
 #     include <COUPLE/BRAEIR.F>
 #endif
       integer nxd,nyd,nsd_local
@@ -232,7 +233,7 @@ c
 c Function to check the correct parameters!
 c
       call subini ('b2plot')
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       inquire(file='input.dat',exist=ex)
       if (ex) then
         open(unit=45,file='input.dat')
@@ -274,7 +275,7 @@ c
       nmoli = nmol
       nioni = nion
       NFLAI = NFL
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       CALL ALLOC_BRAEIR(NDX,NDY,NFL)
       CALL ALLOC_CCOUPL(1)
       CALL ALLOC_EIRDIAG
@@ -927,7 +928,7 @@ c
       call mapy(nx,ny,1,fch_p(:,:,1),work)           !srv 10.06.09
 c
       inquire(file='B2SDIAG',exist=ex)
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
 #ifndef HPUX
       inquire(file='fort.44',exist=ex)
 #else

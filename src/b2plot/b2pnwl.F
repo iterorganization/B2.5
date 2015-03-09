@@ -11,11 +11,11 @@ c======================================================================
       use b2mod_constants
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
       implicit none
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include <COUPLE/EIRDIAG.F>
 #endif
 c*** Local variables
@@ -259,12 +259,12 @@ c
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2plot_wall_loading
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
       implicit none
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
 #     include "COUPLE/EIRDIAG.F"
 #endif

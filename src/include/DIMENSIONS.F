@@ -1,15 +1,15 @@
-c  Common dimensions
-c
-c  version : 01.12.98 21:42
-c
+!  Common dimensions
+!
+!  version : 01.12.98 21:42
+!
 #ifndef DIMENSIONS_DEFINED
 #define DIMENSIONS_DEFINED
 
-c
-c parameters that are common to Eirene and B2
-c
+!
+! parameters that are common to Eirene and B2
+!
 
-c NOTE: DEF_NXD should not include the additional cells to handle the cuts
+! NOTE: DEF_NXD should not include the additional cells to handle the cuts
 #define DEF_NXD 128
 #define DEF_NCUT 4
 #define DEF_ISOEXTRA 0
@@ -24,31 +24,31 @@ c NOTE: DEF_NXD should not include the additional cells to handle the cuts
 #define DEF_NLIM 300
 #define DEF_NSTS 50
 #define DEF_NTOR 1
-c*** Max. number of groups of Eirene surfaces for which the data can
-c*** be transferred from B2 (DG specification "Surface special")
+!*** Max. number of groups of Eirene surfaces for which the data can
+!*** be transferred from B2 (DG specification "Surface special")
 #define DEF_NSPCSRFG 40
 
-c new! [2002.04.22]
+! new! [2002.04.22]
 #define DEF_NADD 4
 #define DEF_NPRNL 50000
-c new! [2002.06.14]
+! new! [2002.06.14]
 #define DEF_NSRFS 2
 
-c
-c parameters that are unique to B2
-c
+!
+! parameters that are unique to B2
+!
 
 #define DEF_NSD 42
 
-c
-c parameters that are unique to Eirene
-c
+!
+! parameters that are unique to Eirene
+!
 
 #define DEF_NGSTAL 1
 
-c
-c parameters needed by uinp
-c
+!
+! parameters needed by uinp
+!
 
 #define DEF_NREAC 60
 

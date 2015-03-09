@@ -8,12 +8,12 @@ c======================================================================
 c*** Reads the data from dg output file (called from imprt)
 c*** MUST be compiled in single precision!!!
 c======================================================================
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
 #endif
       implicit none
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #include "COUPLE/KOPPLDIM.F"
 #endif
       integer nnns

@@ -21,7 +21,7 @@
       use b2mod_b2cmpb 
       use b2mod_b2cmpt 
       use b2mod_b2cmrc 
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25 
 #endif
       implicit none
@@ -118,7 +118,7 @@
 
       if (iout.eq.1) then                                          !srv begin if for iout
 
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
        open(70,file='eirdiag.dat')
 	  write(70,"(a/6i5)") 'nlmpgs natm nmol npls nstra nstsid',
      &                     nlmpgs, natm, nmol, npls, nstra, nstsid
@@ -976,7 +976,7 @@
         wrk0(5,iy) = hlp + wrk0(-1,iy)+wrk0(3,iy) 
         hlp_s=hlp_s+s
       end do !}
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       js=ltns(1)+nlim
       do iy=0,ny-1 !{
         wrk0(5,iy)=wrk0(5,iy)+(wldnek(js,0)+wldnep(js,0))*
@@ -998,7 +998,7 @@
         wrk0(6,iy) = hlp + wrk0(0,iy)+wrk0(4,iy) 
         hlp_s=hlp_s+s
       end do !}
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       js=ltns(nncut)+nlim
       do iy=0,ny-1 !{
       wrk0(6,iy)=wrk0(6,iy)+(wldnek(js,0)+wldnep(js,0))*
@@ -1028,7 +1028,7 @@
           wrk0(14,iy) = hlp + wrk0(8,iy)+wrk0(12,iy) 
           hlp_s=hlp_s+s
         end do !}
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
         js=ltns(3)+nlim
         do iy=0,ny-1 !{
           wrk0(14,iy) = wrk0(14,iy) +(wldnek(js,0)+wldnep(js,0))*
@@ -1053,7 +1053,7 @@
           wrk0(13,iy) = hlp + wrk0(7,iy)+wrk0(11,iy) 
           hlp_s=hlp_s+s
         end do !}
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
         js=ltns(2)+nlim
         do iy=0,ny-1 !{
           wrk0(13,iy)=wrk0(13,iy)+(wldnek(js,0)+wldnep(js,0))*

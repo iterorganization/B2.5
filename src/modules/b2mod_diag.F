@@ -5,7 +5,7 @@
       use b2mod_eirene_globals
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25
 #else
 #     include <COUPLE/EIRDIAG.F>

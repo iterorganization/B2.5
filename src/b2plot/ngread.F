@@ -24,7 +24,7 @@ c
       use b2mod_b2plot
       use b2mod_indirect
       use b2mod_b2cmpa
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
       implicit none

@@ -801,7 +801,7 @@
 *
 *    'b2mndr_eirene'            '0'                    Run
 *    Turns on coupling with the Eirene Monte-Carlo neutral code if non-zero. 
-*    To be used, the code must be compiled with the -DUSE_EIRENE option.
+*    To be used, the code must be compiled with the -DB25_EIRENE option.
 *
 *    'b2mndr_astra'             '0'                    Run
 *    Turns on coupling with the ASTRA core transport code if non-zero. 

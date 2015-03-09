@@ -27,7 +27,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_external
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
 #ifdef PAR_OPT
@@ -36,7 +36,7 @@
       use b2mod_astra_to_b2                                          !srv 28.07.11
       implicit none
 #     include "DIMENSIONS.F"
-#ifndef USE_EIRENE
+#ifndef B25_EIRENE
 #     include "COUPLE/EIRDIAG.F"
 #endif
 *   ..input arguments (unchanged on exit)
@@ -1944,7 +1944,7 @@ c dpc
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
                     isa = b2espcr(ismain0)
                     if (isa.ne.-1) then
                       totfluxn = totfluxn + rfluxa(
@@ -2399,7 +2399,7 @@ cxpb Careful here because of BC number clash
                IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >          THEN
                  DO IX = 1, BC_LIST_SIZE(IBW)
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
                   isa = b2espcr(ismain0)
                   if (isa.ne.-1) then
                     totfluxn = totfluxn + rfluxa(
