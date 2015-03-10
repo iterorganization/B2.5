@@ -1077,7 +1077,7 @@ csw 21feb2014
 #ifdef B25_EIRENE
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(5)
-        CALL SET_PARMMOD(1)
+        CALL EIRENE_SET_PARMMOD(1)
         write(*,*) 'Called FIND_PARAM'
         write(*,*) '   NDX = ',NDX
         write(*,*) '   NDY = ',NDY
@@ -1107,9 +1107,8 @@ csw 21feb2014
       endif
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL ALLOC_BRAEIR(NDX,NDY,NFL)
-      CALL ALLOC_CCOUPL(1)
-      CALL ALLOC_EIRDIAG
+      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
+      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
 #endif
       
 *   ..read geometry and metric

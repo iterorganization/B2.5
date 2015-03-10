@@ -102,10 +102,11 @@ c*** Values by regions
       integer nrgn_tmp, nrg_tmp, nr_tmp
       parameter (nrgn_tmp=10)
       real (kind=R8) ::
-     *     radim_tmp(NNREGMAX), radnu_tmp(NNREGMAX),
+     * radim_tmp(NNREGMAX), radnu_tmp(NNREGMAX),
      1 radtt_tmp(NNREGMAX), ssee_tmp(NNREGMAX),
      2 ssei_tmp(NNREGMAX),  brms_tmp(NNREGMAX),
-     3 eesum(NNREGMAX),eisum(NNREGMAX),nesum(NNREGMAX),volsum(NNREGMAX)
+     3 eesum(NNREGMAX),     eisum(NNREGMAX),
+     4 nesum(NNREGMAX),     volsum(NNREGMAX)
 
       real (kind=R8) ::
      *     equr_tmp(NNREGMAX,nrgn_tmp)
@@ -154,19 +155,18 @@ c*** Values by strata
       integer nstr_tmp, nf_tmp, nfl_tmp
       parameter (nstr_tmp=1)
       real (kind=R8) ::
-     *     equf_tmp(nstra,nstr_tmp)
-      real (kind=R8) ::
-     *     fluxt_tmp(nstra)
-      equivalence (equf_tmp(1,1), fluxt_tmp)
+     *     equf_tmp(DEF_NSTRA,nstr_tmp)
+      real (kind=R8) :: fluxt_tmp(DEF_NSTRA)
       character hlp_hf(nstr_tmp)*8
 c
 c*** Values by species and strata
       integer nssb_tmp, nb_tmp
       parameter (nssb_tmp=2)
       real (kind=R8) ::
-     *     equb_tmp(0:DEF_NATM,nstra,nssb_tmp)
+     *     equb_tmp(0:DEF_NATM,DEF_NSTRA,nssb_tmp)
       real (kind=R8) ::
-     *     sclf_tmp(0:DEF_NATM,nstra), rtio_tmp(0:DEF_NATM,nstra)
+     *     sclf_tmp(0:DEF_NATM,DEF_NSTRA), 
+     *     rtio_tmp(0:DEF_NATM,DEF_NSTRA)
       equivalence (equb_tmp(0,1,1), sclf_tmp)
       equivalence (equb_tmp(0,1,2), rtio_tmp)
       character*2 hlp_hb(nssb_tmp)*8
@@ -468,7 +468,7 @@ c#endif
         if(nfl_tmp.ne.nstrai) then
           warn_tmp=.true.
           write(*,*) '!!! b2wrint: current number of strata ',
-     ,               nstr_tmp,'  differs from that in the file ',f
+     ,               nfl_tmp,'  differs from that in the file ',f
           filedata(ltrc)=.false.
         end if
         if(nb_tmp.ne.nssb_tmp) then

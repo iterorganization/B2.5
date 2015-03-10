@@ -53,7 +53,6 @@ c 2002-09-11: logic revised
       implicit none
 #     include <DIMENSIONS.F>
 #ifndef B25_EIRENE
-#     include <COUPLE/KOPPLDIM.F>
 #     include <COUPLE/BRAEIR.F>
 #endif
       integer nxd,nyd,nsd_local
@@ -276,9 +275,8 @@ c
       nioni = nion
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL ALLOC_BRAEIR(NDX,NDY,NFL)
-      CALL ALLOC_CCOUPL(1)
-      CALL ALLOC_EIRDIAG
+      CALL ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
+      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlmpgs)

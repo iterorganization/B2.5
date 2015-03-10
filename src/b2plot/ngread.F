@@ -385,7 +385,9 @@ cank
       end if
 
       if(jvft44 .ge. 20071209) then
-        call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,1,1)) !ak+vk
+        do is = 1, natmi
+          call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,is,1))
+        end do
       end if
       
       if(jvft44 .ge. 20080706) then
@@ -396,7 +398,14 @@ cank
         READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,NSTS) 
       
         NCL=eirdiag_nds_ind(NSTS+1)
-        CALL INIT_EIRDIAG_FLUXES(NCL)
+#ifdef B25_EIRENE
+        IF(.NOT.ALLOCATED(wldna_res)) 
+     >   ALLOCATE(wldna_res(NATM,NCL), wldnm_res(NMOL,NCL),
+     .            ewlda_res(NATM,NCL), ewldm_res(NMOL,NCL), 
+     .            ewldea_res(NATM,NCL), ewldem_res(NMOL,NCL), 
+     .            ewldrp_res(NCL), ewldmr_res(NMOL,NCL),
+     .            sarea_res(NCL) ) 
+#endif
  
         READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
         READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natm),i=1,NCL)
@@ -410,7 +419,9 @@ cank
       end if
 #else
       if(jvft44 .ge. 20130210) then
-        call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,1,1)) !ak+vk
+        do is = 1, natmi
+          call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,is,1))
+        end do
       end if      
 #endif
 

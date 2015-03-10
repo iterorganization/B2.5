@@ -36,9 +36,7 @@ c
 #endif
 #endif
         if(solpstop.eq.' ') then
-          solpstop='/afs/ipp-garching.mpg.de/u/dpc/solps4.0'
-          write(*,*) 'open_file: no SOLPSTOP set, using: ',
-     1	   solpstop(1:lnblnk(solpstop))
+          write(*,*) 'open_file: no SOLPSTOP set '
         else
           write(*,*) 'open_file: SOLPSTOP = : ',
      1	   solpstop(1:lnblnk(solpstop))

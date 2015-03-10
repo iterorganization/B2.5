@@ -279,7 +279,7 @@ c not sure this is the right place
         call ipgeti ('eirene_use_recyceir', use_recyceir)
 csw 28jan2011, call to eirene_mc_init not used anymore, use new modules
 c        call eirene_mc_init
-        call eirene_extrab25_alloc_mods(nx+2,ny)
+        call eirene_extrab25_alloc_mods
         call eirene_extrab25_eirpbls_init(1,
      .                       natm,nmol,nion,npls,nstra,0)
         call eirene_extrab25_eirpbls_init(2,0,0,0,0,nstra,npls)

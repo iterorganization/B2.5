@@ -622,7 +622,7 @@ c 2002-09-11: logic revised
         open(unit=45,file='input.dat')
         CALL EIRENE_FIND_PARAM(45)
         close(45)
-        CALL SET_PARMMOD(1)
+        CALL EIRENE_SET_PARMMOD(1)
         write(*,*) 'Called FIND_PARAM'
         write(*,*) '   NDX = ',NDX
         write(*,*) '   NDY = ',NDY
@@ -651,10 +651,9 @@ c 2002-09-11: logic revised
       NPLSI = NPLS
       NMOLI = NMOL
       NIONI = NION
-      CALL ALLOC_BRAEIR(NDX,NDY,NFL)
-      CALL ALLOC_CCOUPL(1)
       NFLA = NFL
-      CALL ALLOC_EIRDIAG
+      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
+      CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
 #else
       ex = .false.
 #endif
