@@ -1,6 +1,12 @@
-DEFINES = -DWANT_THIS ${SOLPS_CPP}
+SRCB2 = ${PWD}
+SRCDIR = ${SRCB2}/src
+ifeq ($(shell [ -d ${SOLPSTOP} ] && echo yes || echo no ),yes)
+ifdef USE_MPI
+OBJDIR=${SOLPSTOP}/bin/${OBJECTCODE}/B2.5.mpi
+else
+OBJDIR=${SOLPSTOP}/bin/${OBJECTCODE}/B2.5
+endif
 ifdef USE_EIRENE
-DEFINES += ${USE_EIRENE}
 SRCEIR = ${SOLPSTOP}/src/Eirene
 ifdef USE_MPI
 EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/b25eirene/Eirene.mpi
@@ -8,20 +14,14 @@ else
 EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/b25eirene/Eirene
 endif
 endif
+else
 ifdef USE_MPI
-DEFINES += ${USE_MPI}
+OBJDIR=bin/${OBJECTCODE}.mpi
+else
+OBJDIR=bin/${OBJECTCODE}
 endif
-ifdef PERFMON
-DEFINES += ${PERFMON}
 endif
 
-SRCB2 = ${PWD}
-SRCDIR = ${SRCB2}/src
-ifdef USE_MPI
-OBJDIR = bin/${OBJECTCODE}
-else
-OBJDIR = bin/${OBJECTCODE}.nompi
-endif
 BASEDIR = ${OBJDIR}
 SRCLOCAL = ${SRCB2}/src.local
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
@@ -30,6 +30,17 @@ else
 INCLUDE =
 endif
 INCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include.local -I${SRCDIR}/include
+
+DEFINES = -DWANT_THIS ${SOLPS_CPP}
+ifdef USE_MPI
+DEFINES += ${USE_MPI}
+endif
+ifdef PERFMON
+DEFINES += ${PERFMON}
+endif
+ifdef USE_EIRENE
+DEFINES += ${USE_EIRENE}
+endif
 
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
 VPATH+=${SRCDIR}/modules.local:${SRCLOCAL}:${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentation:${SRCDIR}/driver:${SRCDIR}/equations:${SRCDIR}/input:${SRCDIR}/output:${SRCDIR}/postprocessing:${SRCDIR}/preprocessing:${SRCDIR}/solvers:${SRCDIR}/sources:${SRCDIR}/transport:${SRCDIR}/utility:${SRCDIR}/b2plot:${SRCDIR}/user
