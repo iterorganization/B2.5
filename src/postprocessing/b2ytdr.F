@@ -42,6 +42,7 @@ c 2002-09-11: logic revised
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
+      use eirmod_eirbra
       use eirmod_comusr
      , ,only: NSPH, NMASSA, NCHARA, TEXTS
       use eirmod_ccoupl
@@ -3116,7 +3117,7 @@ C  READ ONE MORE LINE FOR NON-DEFAULT SPUTTER MODEL
           IREAD=1
           IF (ZEILE(1:3).EQ.'CH0') THEN
             IREAD=0
-            CALL DEKEY (ZEILE(4:80),IHELP,1,1,1,NLIMI)
+            CALL EIRENE_DEKEY (ZEILE(4:80),IHELP,1,1,1,NLIMI)
             GOTO 351
           ENDIF
           DO 352 I=1,NLIMI
@@ -3632,7 +3633,7 @@ Cxpb then rewrite the entire block
      .                                     ISRSP(IPLS),NRCP(IPLS),
      .                                     DENSLIM(IPLS),idum(0:2),
      .                                     CDENMODEL(IPLS),NRE(IPLS)
-          CALL UPPERCASE (CDENMODEL(IPLS))
+          CALL EIRENE_UPPERCASE (CDENMODEL(IPLS))
           DO 512 K=1,NRCP(IPLS)
             READ (IUNIN,6666) idum(0:4) 
             READ (IUNIN,6664) rdum(0:4) 

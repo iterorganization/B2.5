@@ -49,6 +49,8 @@ c 2002-09-11: logic revised
       use eirmod_parmmod
       use eirmod_extrab25
       use eirmod_braeir
+      use eirmod_eirbra
+     & , smo_eir => smo
 #endif
       implicit none
 #     include <DIMENSIONS.F>
@@ -238,9 +240,9 @@ c
         open(unit=45,file='input.dat')
         read(45,'(A72)',END=6999) ZEILE
         rewind(45)
-        CALL FIND_PARAM(45)
+        CALL EIRENE_FIND_PARAM(45)
         close(45)
-        CALL SET_PARMMOD(1)
+        CALL EIRENE_SET_PARMMOD(1)
         write(*,*) 'Called FIND_PARAM'
         write(*,*) '   NDX = ',NDX
         write(*,*) '   NDY = ',NDY
@@ -275,7 +277,7 @@ c
       nioni = nion
       NFLAI = NFL
 #ifdef B25_EIRENE
-      CALL ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
+      CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
