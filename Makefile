@@ -507,7 +507,7 @@ endif
 # target 'clean' cleans up the directory.
 clean : 
 	-mkdir ${OBJDIR}/.delete
-	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCLOCAL}/git_version.h ${OBJDIR}/.delete
+	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version.h ${OBJDIR}/.delete
 ifneq (${MOD},o)
 	-mv -i ${OBJDIR}/*.${MOD} ${OBJDIR}/.delete
 endif
@@ -586,13 +586,13 @@ endif
 
 ${OBJDIR}/LISTOBJ: listobj
 
-VERSION: ${SRCLOCAL}/git_version.h
+VERSION: ${SRCDIR}/include/git_version.h
 
-${SRCLOCAL}/git_version.h:
+${SRCDIR}/include/git_version.h:
 ifeq ($(shell [ -d ${SOLPSTOP} ] && echo yes || echo no ),yes)
-	echo "      character*15 :: gitversion ='`(cd ${SOLPSTOP}; git describe --dirty --always)`'" > ${SRCLOCAL}/git_version.h
+	echo "      character*15 :: gitversion ='`(cd ${SOLPSTOP}; git describe --dirty --always)`'" > ${SRCDIR}/include/git_version.h
 else
-	echo "      character*15 :: gitversion ='`git describe --dirty --always`'" > ${SRCLOCAL}/git_version.h
+	echo "      character*15 :: gitversion ='`git describe --dirty --always`'" > ${SRCDIR}/include/git_version.h
 endif
 
 ${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
@@ -601,6 +601,7 @@ ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
 endif
 	touch ${OBJDIR}/dependencies
 	${MAKE} tags
+	${MAKE} VERSION
 	${MAKE} listobj
 	${MAKE} depend
 

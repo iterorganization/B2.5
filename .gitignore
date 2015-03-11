@@ -4,6 +4,7 @@
 \#*\#
 TAGS
 LISTOBJ
+git_version.h
 
 # ignore anything in directories with executables
 Release/
