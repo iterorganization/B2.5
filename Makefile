@@ -9,7 +9,7 @@ endif
 ifdef USE_EIRENE
 SRCEIR = ${SOLPSTOP}/src/Eirene
 ifdef USE_MPI
-EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/b25eirene/Eirene.mpi
+EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/b25eirene.mpi/Eirene
 else
 EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/b25eirene/Eirene
 endif
@@ -472,6 +472,24 @@ ${OBJDIR}/eirmod_parmmod.o:
 
 ${OBJDIR}/eirmod_precision.o:
 	ln -sf ${EIRDIR}/eirmod_precision.o ${OBJDIR}
+else
+${OBJDIR}/eirmod_braeir.${MOD}:
+	touch ${OBJDIR}/eirmod_braeir.${MOD}
+
+${OBJDIR}/eirmod_ccoupl.${MOD}:
+	touch ${OBJDIR}/eirmod_ccoupl.${MOD}
+
+${OBJDIR}/eirmod_comusr.${MOD}:
+	touch ${OBJDIR}/eirmod_comusr.${MOD}
+
+${OBJDIR}/eirmod_eirbra.${MOD}:
+	touch ${OBJDIR}/eirmod_eirbra.${MOD}
+
+${OBJDIR}/eirmod_extrab25.${MOD}:
+	touch ${OBJDIR}/eirmod_extrab25.${MOD}
+
+${OBJDIR}/eirmod_parmmod.${MOD}:
+	touch ${OBJDIR}/eirmod_parmmod.${MOD}
 endif
 
 ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
@@ -517,10 +535,9 @@ depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${EXELIST:.o=.F}
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} $^ | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' > ${OBJDIR}/dependencies 
 ifneq (${MOD},o)
-	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} $^ -o.${MOD} | \
+	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${SRCDIR}/modules.local/*.F ${SRCDIR}/modules/*.F -o.${MOD} | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' >> ${OBJDIR}/dependencies 
 endif
-ifdef USE_EIRENE
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
 	@egrep '^ {6,}use ' ${SRCLOCAL}/*.F ${SRCDIR}/*/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
 ifneq (${MOD},o)
@@ -530,19 +547,6 @@ else
 	@egrep '^ {6,}use ' ${SRCDIR}/*/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
 ifneq (${MOD},o)
 	@egrep '^ {6,}use ' ${SRCDIR}/modules/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-endif
-endif
-else
-ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
-	@egrep '^ {6,}use ' ${SRCLOCAL}/*.F ${SRCDIR}/*/*.F | grep -v 'IGNORE' | grep -v eirmod | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-ifneq (${MOD},o)
-	@egrep '^ {6,}use ' ${SRCDIR}/modules.local/*.F ${SRCDIR}/modules/*.F | grep -v eirmod | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-endif
-else
-	@egrep '^ {6,}use ' ${SRCDIR}/*/*.F | grep -v 'IGNORE' | grep -v eirmod | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-ifneq (${MOD},o)
-	@egrep '^ {6,}use ' ${SRCDIR}/modules/*.F | grep -v 'IGNORE' | grep -v eirmod | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-endif
 endif
 endif
 
@@ -600,6 +604,7 @@ ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
 	-mkdir -p ${OBJDIR}
 endif
 	touch ${OBJDIR}/dependencies
+	${MAKE} VERSION
 	${MAKE} tags
 	${MAKE} listobj
 	${MAKE} depend
@@ -639,9 +644,8 @@ endif
 echo:
 	@echo VPATH=${VPATH}
 	@echo FPATH=${FPATH}
+	@echo OBJDIR=${OBJDIR}
 #	@echo OBJS=${OBJS}
-#	@echo SOBJS=${SOBJS}
-#	@echo DOBJS=${DOBJS}
 	@echo MODLIST=${MODLIST}
 	@echo MODULES=${MODULES}
 	@echo MODOBJS=${MODOBJS}
@@ -654,7 +658,6 @@ echo:
 	@echo XDEXE=${XDEXE}
 	@echo OTEXE=${OTEXE}
 #	@echo ${SRCF}
-#	@echo ${OBJDEST}
 
 local: 
 	mkdir -p ${SRCLOCAL}
