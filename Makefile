@@ -99,7 +99,7 @@ OTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OT}}
 OPEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OP}}
 MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
 
-.PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags
+.PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags force
 
 ifdef MDSPLUS_DIR
 ifdef PAR_OPT
@@ -516,9 +516,9 @@ ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
 endif
 
 ifeq (${MOD},o)
-${OBJDIR}/libb2.a: $(filter-out ${MODOBJS},${ALLOBJS})
+${OBJDIR}/libb2.a: $(filter-out ${MODOBJS},${ALLOBJS}) ${SRCDIR}/include/git_version.h
 else
-${OBJDIR}/libb2.a: ${ALLOBJS}
+${OBJDIR}/libb2.a: ${ALLOBJS} ${SRCDIR}/include/git_version.h
 endif
 	${BLD} $@ $?
 
@@ -592,12 +592,13 @@ ${OBJDIR}/LISTOBJ: listobj
 
 VERSION: ${SRCDIR}/include/git_version.h
 
-${SRCDIR}/include/git_version.h:
+${SRCDIR}/include/git_version.h: force
 ifeq ($(shell [ -d ${SOLPSTOP} ] && echo yes || echo no ),yes)
-	echo "      character*15 :: gitversion ='`(cd ${SOLPSTOP}; git describe --dirty --always)`'" > ${SRCDIR}/include/git_version.h
+	@echo "      character*15 :: gitversion ='`(cd ${SOLPSTOP}; git describe --dirty --always)`'" > ${SRCDIR}/include/git_version_new.h
 else
-	echo "      character*15 :: gitversion ='`git describe --dirty --always`'" > ${SRCDIR}/include/git_version.h
+	@echo "      character*15 :: gitversion ='`git describe --dirty --always`'" > ${SRCDIR}/include/git_version_new.h
 endif
+	@if cmp -s ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version.h; then rm ${SRCDIR}/include/git_version_new.h; else mv ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version.h; fi
 
 ${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
 ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
