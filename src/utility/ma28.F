@@ -676,14 +676,14 @@ c     unchanged since this earlier call and    they are not altered by
 c     ma28i/id.
 c the  other parameters are as follows:
 c rhs is an array of length n. the user must set rhs(i) to contain the
-c     value of the i th component of the right hand side. it is not
+c     value of the i-th component of the right hand side. it is not
 c     altered by ma28i/id.
 c x is an array of length n. if an initial guess of the solution is
 c     given (istart equal to 1), then the user must set x(i) to contain
-c     the value of the i th component of the estimated solution.  on
-c     exit, x(i) contains the i th component of the solution vector.
+c     the value of the i-th component of the estimated solution.  on
+c     exit, x(i) contains the i-th component of the solution vector.
 c r is an array of length n. it need not be set on entry.  on exit, r(i)
-c     contains the i th component of an estimate of the error if maxit
+c     contains the i-th component of an estimate of the error if maxit
 c     is greater than 0.
 c w is an array of length n. it is used as workspace by ma28i/id.
 c mtype must be set to determine whether ma28i/id will solve a*x=rhs
@@ -930,13 +930,13 @@ c     the integers 1 to n.  on input to ma30a/ad, the absolute value of
 c     ip(i) must be set to the row of a which is row i of p1*a*q1. a
 c     negative value for ip(i) indicates that row i is at the end of a
 c     diagonal block.  on output from ma30a/ad, ip(i) indicates the row
-c     of a which is the i th row in paq. ip(i) will still be negative
+c     of a which is the i-th row in paq. ip(i) will still be negative
 c     for the last row of each block (except the last).
 c iq is an integer array of length n which again holds a
 c     permutation of the integers 1 to n.  on input to ma30a/ad, iq(j)
 c     must be set to the column of a which is column j of p1*a*q1. on
 c     output from ma30a/ad, the absolute value of iq(j) indicates the
-c     column of a which is the j th in paq.  for rows, i say, in which
+c     column of a which is the j-th in paq.  for rows, i say, in which
 c     structural or numerical singularity is detected iq(i) is
 c     negated.
 c irn  is an integer array of length lirn used as workspace by

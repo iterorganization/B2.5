@@ -308,7 +308,7 @@
       goto 100
  98   write (*,*) 'Error in computing axial profile'
       goto 100
- 99   write (*,*) 'Error in reading the dsa-file'
+ 99   write (*,*) 'Error in reading the dsa file'
  100  continue
 
       ext_sna(:,:,:)=sna0(:,:,0,:)
@@ -686,7 +686,7 @@
        
        
       goto 100
- 99   write (*,*) 'Error in reading the dsa-file'
+ 99   write (*,*) 'Error in reading the dsa file'
  100  continue
        
         
