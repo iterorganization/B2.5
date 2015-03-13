@@ -9,9 +9,9 @@ endif
 ifdef USE_EIRENE
 SRCEIR = ${SOLPSTOP}/src/Eirene
 ifdef USE_MPI
-EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/b25eirene.mpi/Eirene
+EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/B25eirene.mpi/Eirene
 else
-EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/b25eirene/Eirene
+EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/B25eirene/Eirene
 endif
 endif
 else
@@ -605,7 +605,6 @@ ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
 	-mkdir -p ${OBJDIR}
 endif
 	touch ${OBJDIR}/dependencies
-	${MAKE} VERSION
 	${MAKE} tags
 	${MAKE} VERSION
 	${MAKE} listobj
