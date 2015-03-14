@@ -26,7 +26,7 @@
  FCOPTS = -i4 -r$(realkind) -Nl39 -fast -xO4 -xdepend
  CPP = /usr/ccs/lib/cpp
  CPPOPTS = -C -P -I$(srcdir) $(EQUIVS)
- BLD = /usr/xpg4/bin/ar rcv
+ BLD = /usr/xpg4/bin/ar rucv
  ifeq ($(locale),cims.nyu.edu)
   NAG = -L${HOME}/lib -lnag
   NCARG = -L$(NCARG_ROOT)/lib -L/usr/openwin/lib -L/usr/dt/lib\

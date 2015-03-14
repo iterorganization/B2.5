@@ -19,7 +19,7 @@
  FC = f77
  CPP = /usr/lib/cpp
  CPPOPTS = -C -P -I$(srcdir) $(EQUIVS)
- BLD = ar rcv
+ BLD = ar rucv
  ifeq ($(locale),cims.nyu.edu)
   NAG = -lnag
   NCARG = -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lncarg_loc -lX11 -lm

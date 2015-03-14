@@ -15,7 +15,7 @@
  FC = f77
  CPP = /lib/cpp
  CPPOPTS = -C -P -I$(srcdir) $(EQUIVS)
- BLD = ar -r -c -s -v
+ BLD = ar -r -c -u -s -v
  ifeq ($(locale),acf.nyu.edu)
   NAG = -lnag
   NCARG = -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_loc

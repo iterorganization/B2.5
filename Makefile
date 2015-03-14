@@ -522,7 +522,7 @@ ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
 endif
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version.h
-	${BLD} $@ ${LIBOBJS}
+	@${BLD} $@ ${LIBOBJS}
 
 # target 'clean' cleans up the directory.
 clean : 

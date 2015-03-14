@@ -9,7 +9,7 @@ FCOPTS = -O -Nl99 -x77 # -mismatch
 INCMOD = -I
 MOD = mod
 
-BLD = ar rcv
+BLD = ar rucv
 
 GRLIBES = ${NCARG} -lmscl
 LDLIBES = -L${SOLPS_LIB} ${NAG} ${NETCDF}

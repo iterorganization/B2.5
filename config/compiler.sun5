@@ -18,7 +18,7 @@ DBLSED = sed -e 's:\#PREC\#:e:g' -e 's:real\*8:real:g'
 INCMOD = -M
 MOD = mod
 
-BLD = ar rcv
+BLD = ar rucv
 
 GRLIBES = ${NCARG} -lmscl
 LDLIBES = -L${SOLPSMASTER}/@sys/lib -L${SOLPS_LIB} ${NAG} ${NETCDF}

@@ -19,7 +19,7 @@ INCMOD = -I
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
 
-BLD = ar rcv
+BLD = ar rucv
 
 GRLIBES = ${NCARG} -lmscl
 LDLIBES = -lblas ${NAG} -L${SOLPSMASTER}/@sys/lib ${NETCDF}

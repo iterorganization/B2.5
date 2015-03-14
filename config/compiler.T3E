@@ -15,7 +15,7 @@ endif
 INCMOD = -p
 MOD = o
 
-BLD = ar rcv
+BLD = ar rucv
 
 GRLIBES = $(NCARG)
 LDLIBES = $(NAG)

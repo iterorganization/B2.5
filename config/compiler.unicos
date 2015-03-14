@@ -8,7 +8,7 @@ FCOPTS = -Oscalar2,vector3,task1 -ei -r2 -Wr"-v 200" -ef
 INCMOD = -p
 MOD = o
 
-BLD = bld rcv
+BLD = bld rucv
 
 GRLIBES = $(NCARG)
 LDLIBES = $(NAG)

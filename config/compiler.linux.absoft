@@ -21,7 +21,7 @@ INCMOD = -p
 MOD = mod
 OBJDEST = -o ${OBJDIR}/$*.o
 
-BLD = ar rcv
+BLD = ar rucv
 
 GRLIBES = ${NCARG} -lmscl
 LDLIBES = -L${SOLPS_LIB} ${NAG} ${NETCDF}
