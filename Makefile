@@ -137,6 +137,12 @@ MODULES = ${patsubst %.F %.f %.F90,%.o,${shell echo ${MODLIST} } }
 MODMODS = ${MODULES:%.o=${OBJDIR}/%.${MOD}}
 MODOBJS = ${MODULES:%.o=${OBJDIR}/%.o}
 
+ifeq (${MOD},o)
+LIBOBJS = $(filter-out ${MODOBJS},${ALLOBJS})
+else
+LIBOBJS = ${ALLOBJS}
+endif
+
 ifdef USE_EIRENE
 ${OBJDIR}/libgr_dummy.a:
 	ln -sf ${EIRDIR}/libgr_dummy.a ${OBJDIR}
@@ -515,12 +521,8 @@ ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
 	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${SOLPS_MDSPLUS_LIB} ${LDOPTSend}
 endif
 
-ifeq (${MOD},o)
-${OBJDIR}/libb2.a: $(filter-out ${MODOBJS},${ALLOBJS}) ${SRCDIR}/include/git_version.h
-else
-${OBJDIR}/libb2.a: ${ALLOBJS} ${SRCDIR}/include/git_version.h
-endif
-	${BLD} $@ $?
+${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version.h
+	${BLD} $@ ${LIBOBJS}
 
 # target 'clean' cleans up the directory.
 clean : 
