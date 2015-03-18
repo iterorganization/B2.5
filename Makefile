@@ -1,26 +1,49 @@
-SRCB2 = ${PWD}
-SRCDIR = ${SRCB2}/src
-ifeq ($(shell [ -d ${SOLPSTOP} ] && echo yes || echo no ),yes)
-ifdef USE_MPI
-OBJDIR=${SOLPSTOP}/bin/${OBJECTCODE}/B2.5.mpi
-else
-OBJDIR=${SOLPSTOP}/bin/${OBJECTCODE}/B2.5
+# Test whether necessary environment variables are defined; if not, exit
+ifndef HOSTNAME
+  $(error HOSTNAME not defined)
+endif
+ifndef OBJECTCODE
+  $(error OBJECTCODE not defined)
+endif
+ifndef LD_MSCL
+  $(error LD_MSCL not defined)
+endif
+ifndef LD_NCARG
+  $(error LD_NCARG not defined)
+endif
+ifndef LD_NAG
+  $(error LD_NAG not defined)
+endif
+ifndef LD_NETCDF
+  $(error LD_NETCDF not defined)
 endif
 ifdef USE_EIRENE
-SRCEIR = ${SOLPSTOP}/src/Eirene
+  ifndef SOLPSTOP
+    $(error SOLPSTOP not defined, but trying to compile with Eirene)
+  endif
+endif
+
+SRCB2   = ${PWD}
+SRCDIR  = ${SRCB2}/src
+
+# Extension for OBJDIR if mpi and/or debug options are used
 ifdef USE_MPI
-EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/B25eirene.mpi/Eirene
-else
-EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/B25eirene/Eirene
+EXT_MPI = .mpi
 endif
+ifdef SOLPS_DEBUG
+EXT_DEBUG = .debug
 endif
-else
-ifdef USE_MPI
-OBJDIR=bin/${OBJECTCODE}.mpi
-else
-OBJDIR=bin/${OBJECTCODE}
+
+# If compiling standalone, objectcode will go into $SRCB2/builds/${HOSTNAME}.${OBJECTCODE}(.mpi)(.debug)
+OBJDIR=${SRCB2}/builds/${HOSTNAME}.${OBJECTCODE}${EXT_MPI}${EXT_DEBUG}
+
+# If compiling with Eirene, objectcode will go into $SOLPSTOP/builds/${HOSTNAME}.${OBJECTCODE}(.debug)/B25Eirene(.mpi)/B2.5
+ifdef USE_EIRENE
+  SRCEIR = ${SOLPSTOP}/src/Eirene
+  OBJDIR = ${SOLPSTOP}/builds/${HOSTNAME}.${OBJECTCODE}${EXT_DEBUG}/B25Eirene${EXT_MPI}/B2.5
+  EIRDIR = ${SOLPSTOP}/builds/${HOSTNAME}.${OBJECTCODE}${EXT_DEBUG}/B25Eirene${EXT_MPI}/Eirene
 endif
-endif
+
 
 BASEDIR = ${OBJDIR}
 SRCLOCAL = ${SRCB2}/src.local
@@ -50,13 +73,13 @@ endif
 FPATH:=${VPATH}
 
 ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
-include ${OBJDIR}/LISTOBJ
+  include ${OBJDIR}/LISTOBJ
 endif
-include ${SRCB2}/config/compile
-MAKES = ${SRCB2}/Makefile ${SRCB2}/config/compile ${SRCB2}/config/compiler.${OBJECTCODE}
-ifeq ($(shell [ -e ${SRCB2}/config.local/compiler.${OBJECTCODE} ] && echo yes || echo no ),yes)
-include ${SRCB2}/config.local/compiler.${OBJECTCODE}
-MAKES+ = ${SRCB2}/config.local/compiler.${OBJECTCODE}
+  include ${SRCB2}/config/compile
+  MAKES = ${SRCB2}/Makefile ${SRCB2}/config/compile ${SRCB2}/config/config.${HOSTNAME}.${OBJECTCODE}
+ifeq ($(shell [ -e ${SRCB2}/config/config.${HOSTNAME}.${OBJECTCODE}.local ] && echo yes || echo no ),yes)
+  include ${SRCB2}/config/config.${HOSTNAME}.${OBJECTCODE}.local
+  MAKES+ = ${SRCB2}/config/config.${HOSTNAME}.${OBJECTCODE}.local
 endif
 
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
@@ -600,7 +623,7 @@ ${OBJDIR}/LISTOBJ: listobj
 VERSION: ${SRCDIR}/include/git_version.h
 
 ${SRCDIR}/include/git_version.h: force
-ifeq ($(shell [ -d ${SOLPSTOP} ] && echo yes || echo no ),yes)
+ifdef SOLPSTOP
 	@echo "      character*15 :: gitversion ='`(cd ${SOLPSTOP}; git describe --dirty --always)`'" > ${SRCDIR}/include/git_version_new.h
 else
 	@echo "      character*15 :: gitversion ='`git describe --dirty --always`'" > ${SRCDIR}/include/git_version_new.h

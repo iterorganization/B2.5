@@ -7,11 +7,7 @@ SED =
 LINK_MOD = 
 
 ifdef USE_MPI
-ifdef IFERC
-FC = mpif90 -fc=ifort
-else
 FC = mpif90
-endif
 else
 FC = ifort
 endif
@@ -41,12 +37,13 @@ OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
 BLD = ar rucv
 
-GRLIBES = ${NCARG} -lmscl
-LDLIBES = -L${SOLPS_LIB} ${NETCDF} ${NAG} # -lblas
+GRLIBES = ${LD_NCARG} ${LD_MSCL}
+LDLIBES = ${LD_NETCDF} ${LD_NAG} # -lblas
 
-ifdef USE_EIRENE
-LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
-endif
+#wd: removed; seems to be unused
+#ifdef USE_EIRENE
+#LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
+#endif
 ifdef PERFMON
 LDLIBES += -lperf
 endif
