@@ -101,18 +101,13 @@ SOLPS4OBJS = ${SOLPS4}/readwrite.o ${SOLPS4}/b2rw.o ${SOLPS4}/calcalpha.o \
 SRCF = ${OBJS:%.o=%.F}
 
 PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe b2pl.exe
-ifdef USE_MPI
-PROG_MN = b2mn_mpi.exe
-else
-PROG_MN = b2mn_nompi.exe
-endif
-EXCL_MN = b2mn.exe b2mn_mpi.exe b2mn_nompi.exe
+PROG_MN = b2mn.exe
 PROG_XD = b2xd.exe
 PROG_OT = b2ag.exe b2ah.exe b2ai.exe b2ar.exe b2co.exe b2uf.exe b2fu.exe b2ts.exe b2yi_gnuplot.exe b2yh.exe b2yt.exe b2yv.exe b2fgmtry_mod.exe
 PROG_OP = b2op.exe b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
 
-EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${EXCL_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} ${PROG_OP} }
+EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} ${PROG_OP} }
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} ${PROG_OP} }
 
 GREXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_GR}}

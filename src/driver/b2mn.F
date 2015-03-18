@@ -18,6 +18,15 @@
       use b2mod_neutr_src_scaling
       use b2mod_ppout
       implicit none
+csw 28feb2011 mpi
+#ifdef USE_MPI
+      include 'mpif.h'
+#else
+#     include "mpif.h"
+#endif
+      real*8 dumarr(100)
+      logical ltrigger
+csw
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -141,7 +150,31 @@ crfs put here the other main programs b2ag (prepares geometry and
 crfs  magnetic field), b2ah (prepares tables of default physics
 crfs  parameters), b2ai (prepares an initial plasma state),
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+#ifdef USE_MPI
+csw 28feb2011 mpi
+      integer rank_mpi,size_mpi,ierr_mpi
+      call mpi_init(ierr_mpi)
+      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
+      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
+#ifdef B25_EIRENE
+      if(rank_mpi .ne. 0) then
+        call eirene_find_param(5)
+        do
+          call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,
+     .                   MPI_COMM_WORLD,ierr_mpi)
+          if(ltrigger) then
+            call eirene_eirsrt(.false.,.false.,0.,dumarr,0,0,0,0,0.)
+          else
+            exit
+          endif
+        enddo
+        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+        call mpi_finalize(ierr_mpi)
+        stop 'b2mn_mpi_child'
+      endif
+csw
+#endif
+#endif
 *   ..program start-up calls
       call prgini ('b2mn')
 *   ..open files
@@ -221,6 +254,15 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 * ..end of computation
       call prgend ()
+csw 28feb2011 mpi
+#ifdef USE_MPI
+      ltrigger=.false.
+      call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,
+     .                   MPI_COMM_WORLD,ierr_mpi)
+      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+      call mpi_finalize(ierr_mpi)
+csw
+#endif
       stop 'b2mn'
 
 *-----------------------------------------------------------------------
