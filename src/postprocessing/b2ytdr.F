@@ -2823,14 +2823,12 @@ cxpb  Start reading input.dat file
           READ (ZEILE,6666) idum(0:8)  ! IDUM,NOPTM1,NGEOM_USR,NCOUP_INPUT,
                                        ! NSMSTRA,NSTORAM,NGSTAL,NRTAL1,NREAC_ADD
           WRITE(IUNOT,'(A80)') ZEILE
-          READ (IUNIN,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                       ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,nltrimesh
-          WRITE(IUNOT,6665) ldum(0:10)
-        ELSE
-          READ (IUNIN,6665) ldum(0:9)  ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                       ! NLERG,LIDENT,LHABER,RESCFLUX,nltrimesh
-          WRITE(IUNOT,6665) ldum(0:9)
         ENDIF
+        READ (IUNIN,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+                                     ! NLERG,NLIDENT,NLONE,LTSTV,NLDFST,
+                                     ! NLOLDRAN,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
+                                     ! NLTRIMESH
+        WRITE(IUNOT,6665) ldum(0:15)
         READ (IUNIN,'(A80)') ZEILE
         WRITE(IUNOT,'(A80)') ZEILE
         IREAD=1
