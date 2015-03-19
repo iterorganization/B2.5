@@ -1,0 +1,55 @@
+# Test whether necessary variables are set
+ifndef LD_MSCL
+  $(error LD_MSCL not defined)
+endif
+ifndef LD_NCARG
+  $(error LD_NCARG not defined)
+endif
+ifndef LD_NAG
+  $(error LD_NAG not defined)
+endif
+ifndef LD_NETCDF
+  $(error LD_NETCDF not defined)
+endif
+ifndef LD_SONNET
+  $(error LD_SONNET not defined)
+endif
+
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
+
+CPP = /lib/cpp -C -traditional
+CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
+SED = sed s:\#PREC\#:d:g
+SED =
+LINK_MOD = 
+
+FC = f95i -v 9.1
+
+ifdef SOLPS_DEBUG
+FCOPTS = -g -O -C -d10
+else
+FCOPTS = -O3 -tpp7
+endif
+
+DBLFC = ${FC}
+DDBLOPTION = -Ad # ???
+DBLSED = sed -e s:\#PREC\#:d:g
+DBLSED = 
+
+INCMOD = -M
+MOD = mod
+OBJDEST = -o ${OBJDIR}/$*.o
+
+BLD = ar rucv
+
+GRLIBES = ${LD_NCARG} ${LD_MSCL}
+LDLIBES = ${LD_NAG} ${LD_NETCDF} # -lblas
+
+ifdef USE_EIRENE
+LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o -lnag
+endif
+
+LD = f95i -v 9.1
+# LDOPTS = -Bstatic
+
+#LCPP = ${LD_SONNET} /usr/lib/libstdc++.so.2.9 -lblas

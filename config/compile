@@ -1,4 +1,4 @@
-include ${SRCB2}/config/config.${HOSTNAME}.${OBJECTCODE}
+include ${SRCB2}/config/config.${HOST}.${COMPILER}
 INCMODS = ${INCMOD}${OBJDIR}
 ifdef USE_EIRENE
 INCMODS += ${INCMOD}${EIRDIR}

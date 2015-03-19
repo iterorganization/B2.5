@@ -1,0 +1,34 @@
+# Test whether necessary variables are set
+ifndef LD_MSCL
+  $(error LD_MSCL not defined)
+endif
+ifndef LD_NCARG
+  $(error LD_NCARG not defined)
+endif
+ifndef LD_NAG
+  $(error LD_NAG not defined)
+endif
+ifndef LD_NETCDF
+  $(error LD_NETCDF not defined)
+endif
+
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DNO_PROCESS -DNO_CDF
+
+CPP = /lib/cpp -C
+CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
+SED = sed s:\#PREC\#:d:g
+
+FC = /afs/ipp-garching.mpg.de/@sys/bin/f90
+FCOPTS = -O -Nl99 -x77 # -mismatch
+INCMOD = -I
+MOD = mod
+
+BLD = ar rucv
+
+GRLIBES = ${LD_NCARG} ${LD_MSCL}
+LDLIBES = ${LD_NAG} ${LD_NETCDF}
+
+LD = f90
+LDOPTS = 
+
+# LDEXTRA  = env.o

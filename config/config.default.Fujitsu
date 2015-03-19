@@ -1,0 +1,60 @@
+# Test whether necessary variables are set
+ifndef LD_MSCL
+  $(error LD_MSCL not defined)
+endif
+ifndef LD_NCARG
+  $(error LD_NCARG not defined)
+endif
+ifndef LD_NAG
+  $(error LD_NAG not defined)
+endif
+ifndef LD_NETCDF
+  $(error LD_NETCDF not defined)
+endif
+#ifndef LD_SONNET
+#  $(error LD_SONNET not defined)
+#endif
+
+EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
+
+CPP = /lib/cpp -C -traditional
+CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
+SED = sed s:\#PREC\#:d:g
+SED =
+LINK_MOD = 
+
+FC = /opt/Fujitsu/bin/f90
+FC = f95f
+
+ifdef SOLPS_DEBUG
+FCOPTS = -g -A2 -Am -X9 -Hasu --trace
+else
+FCOPTS = -O -A2 -fw -Am -X9 -Kfast,eval
+endif
+
+DBLFC = ${FC}
+DBLOPTION = -Ad # ???
+DBLSED = sed -e s:\#PREC\#:d:g
+DBLSED = 
+
+INCMOD = -I
+MOD = mod
+OBJDEST = -o ${OBJDIR}/$*.o
+
+BLD = ar rucv
+
+GRLIBES = ${LD_NCARG} ${LD_MSCL}
+LDLIBES = ${LD_NAG} ${LD_NETCDF}
+
+ifdef USE_EIRENE
+LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
+endif
+ifdef PERFMON
+LDLIBES += -L/afs/ipp-garching.mpg.de/@sys/lib/ -lperf
+endif
+
+LD = /opt/Fujitsu/bin/f90
+LD = f95f
+# LDOPTS = -Bstatic
+
+#LCPP = ${LD_SONNET} /usr/lib/libstdc++.so.2.9 -lblas
