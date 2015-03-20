@@ -15,7 +15,7 @@
 #define DEF_ISOEXTRA 0
 #define DEF_NYD 36
 #define DEF_NPHID 1
-#define DEF_NSTRA 10
+#define DEF_NSTRA 20
 #define DEF_NFL 9
 #define DEF_NPLS 9
 #define DEF_NATM 3
@@ -23,7 +23,7 @@
 #define DEF_NION 1
 #define DEF_NLIM 300
 #define DEF_NSTS 50
-#define DEF_NTOR 1
+#define DEF_NTOR 60
 !*** Max. number of groups of Eirene surfaces for which the data can
 !*** be transferred from B2 (DG specification "Surface special")
 #define DEF_NSPCSRFG 40
