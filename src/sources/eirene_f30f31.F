@@ -57,23 +57,27 @@ c
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
       integer ix,iy,is,ncall,eirene_extrap,in,eirene_fixmap,
-     1 eirene_fixuub
+     1 eirene_fixuub, print_minmax
       external ipgetr, ipgeti
       real (kind=R8) ::
-     * te_min, te_max, ti_min, ti_max, na_min, na_max, ua_min, ua_max
+     * te_min, te_max, ti_min, ti_max, na_min, na_max, ua_min, ua_max,
+     * te_min_val, te_max_val, ti_min_val, ti_max_val,
+     * na_min_val, na_max_val, ua_min_val, ua_max_val
       save te_min, te_max, ti_min, ti_max,
      1 na_min, na_max, ua_min, ua_max, ncall,
-     2 eirene_extrap, eirene_fixmap, eirene_fixuub
+     2 eirene_extrap, eirene_fixmap, eirene_fixuub, print_minmax
       data te_min/0.0_R8/, te_max/1.0e30_R8/,
      1 ti_min/0.0_R8/, ti_max/1.0e30_R8/,
      1 na_min/0.0_R8/, na_max/1.0e30_R8/,
-     1 ua_min/-2.99792458e8_R8/, ua_max/+2.99792458e8_R8/,
-     2 ncall/0/, eirene_extrap/1/, eirene_fixmap/1/, eirene_fixuub/0/   !srv 28.07.10
+     2 ncall/0/, eirene_extrap/1/, eirene_fixmap/1/, 
+     & eirene_fixuub/0/, print_minmax/0/
       real (kind=R8) :: kintmp
       real (kind=R8) :: hy1
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 
       if(ncall.eq.0) then
+        ua_min = -c
+        ua_max = +c
 	call ipgetr('eirene_te_min',te_min)
 	call ipgetr('eirene_te_max',te_max)
 	call ipgetr('eirene_ti_min',ti_min)
@@ -85,18 +89,33 @@ c
 	call ipgeti('eirene_extrap',eirene_extrap)
 	call ipgeti('eirene_fixmap',eirene_fixmap)
 	call ipgeti('eirene_fixuub',eirene_fixuub)
+	call ipgeti('eirene_print_minmax',print_minmax)
       endif
 
       if(nx.ge.NDXP) call xerrab('eirene_mc: increase size of ndxp')
       if(ny.ge.NDYP) call xerrab('eirene_mc: increase size of ndyp')
-* cell-centred
+      if(print_minmax.ne.0) then
+         te_min_val=minval(te(-1:nx,-1:ny))/ev
+         te_max_val=maxval(te(-1:nx,-1:ny))/ev
+         ti_min_val=minval(ti(-1:nx,-1:ny))/ev
+         ti_max_val=maxval(ti(-1:nx,-1:ny))/ev
+         na_min_val=minval(na(-1:nx,-1:ny,0:ns-1))
+         na_max_val=maxval(na(-1:nx,-1:ny,0:ns-1))
+         ua_min_val=minval(ua(-1:nx,-1:ny,0:ns-1))
+         ua_max_val=maxval(ua(-1:nx,-1:ny,0:ns-1))
+	 write(*,'(a,1p,8(1x,g12.3))') 'minmax:te ,ti ,na ,ua  ',
+     &	   te_min_val, te_max_val, ti_min_val, ti_max_val, 
+     &     na_min_val, na_max_val, ua_min_val, ua_max_val
+      endif
+
+* cell centred
       do iy=-1,ny
         do ix=-1,nx
           teb(ix+1,iy+1)=max(min(te(ix,iy),te_max*ev),te_min*ev)
           tib(ix+1,iy+1)=max(min(ti(ix,iy),ti_max*ev),ti_min*ev)
           pob(ix+1,iy+1)=po(ix,iy)
-	    prb(ix+1,iy+1)=teb(ix+1,iy+1)*
-     1	max(min(ne(ix,iy),na_max),na_min)
+	  prb(ix+1,iy+1)=teb(ix+1,iy+1)*
+     1	   max(min(ne(ix,iy),na_max),na_min)
           rrb(ix+1,iy+1)=abs(bb(ix,iy,0)/bb(ix,iy,3))
           volb(ix+1,iy+1)=vol(ix,iy)
           bfeldb(ix+1,iy+1)=bb(ix,iy,3)
@@ -104,17 +123,19 @@ c
       enddo
 * cell face x
       do iy=-1,ny
-	  do ix=0,nx
-	    if(eirene_fixmap.eq.0) then
+	do ix=0,nx
+	  if(eirene_fixmap.eq.0) then
 	    feixb(ix,iy+1)=fhi(ix,iy,0)
-            do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(ix,iy,is)*hx(leftix(ix,iy),leftiy(ix,iy))+
-     .          kinrgy(leftix(ix,iy),leftiy(ix,iy),is)*hx(ix,iy))/
-     .         (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-              feixb(ix,iy+1)=feixb(ix,iy+1)+kintmp*(1.0_R8-BoRiS)
-     .         *fna(ix,iy,0,is)
-            enddo
+            if(leftix(ix,iy).gt.-2) then
+              do is=0,ns-1
+                kintmp = 
+     .           (kinrgy(ix,iy,is)*hx(leftix(ix,iy),leftiy(ix,iy))+
+     .            kinrgy(leftix(ix,iy),leftiy(ix,iy),is)*hx(ix,iy))/
+     .           (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
+                feixb(ix,iy+1)=feixb(ix,iy+1)+kintmp*(1.0_R8-BoRiS)
+     .           *fna(ix,iy,0,is)
+              enddo
+            endif
 	    feexb(ix,iy+1)=fhe(ix,iy,0)
 	  else
 	    if(rightix(ix-1,iy).ne.nx+1) then
@@ -144,10 +165,14 @@ c
         do ix=-1,nx
           feiyb(ix+1,iy)=fhi(ix,iy,1)
           do is=0,ns-1
-            kintmp = 
-     .       (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-     .        kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
-     .       (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
+            if (bottomiy(ix,iy).ne.-2) then 
+              kintmp = 
+     .         (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
+     .          kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
+     .         (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
+            else
+              kintmp = kinrgy(ix,iy,is)
+            endif
             feiyb(ix+1,iy)=feiyb(ix+1,iy)+kintmp*(1.0_R8-BoRiS)
      .       *fna(ix,iy,1,is)
           enddo
@@ -165,64 +190,64 @@ c
 * cell centred
           do iy=-1,ny
             do ix=-1,nx
-	       dnib(ix+1,iy+1,nflai)=max(min(na(ix,iy,is),na_max),na_min)
+	      dnib(ix+1,iy+1,nflai)=max(min(na(ix,iy,is),na_max),na_min)
               upb(ix+1,iy+1,nflai)=max(min(ua(ix,iy,is),ua_max),ua_min)
-	       uudiab(ix+1,iy+1,nflai)=max(min(
+	      uudiab(ix+1,iy+1,nflai)=max(min(
      1         wadia(ix,iy,0,is)+vaecrb(ix,iy,0,is),ua_max),ua_min)
-	       vvdiab(ix+1,iy+1,nflai)=max(min(
+	      vvdiab(ix+1,iy+1,nflai)=max(min(
      1	       wadia(ix,iy,1,is)+vaecrb(ix,iy,1,is),ua_max),ua_min)
-	       prb(ix+1,iy+1)=prb(ix+1,iy+1)+tib(ix+1,iy+1)*
+	      prb(ix+1,iy+1)=prb(ix+1,iy+1)+tib(ix+1,iy+1)*
      1	       dnib(ix+1,iy+1,nflai)
-	       if(eirene_fixuub.eq.1) then
-		    if(gs(ix,iy,0).ne.0_R8.and.rightix(ix,iy).ne.nx+1) then
-		     uub(ix+1,iy+1,nflai)=max(min(
+	      if(eirene_fixuub.eq.1) then
+		if(gs(ix,iy,0).ne.0.0_R8.and.rightix(ix,iy).ne.nx+1) then
+		  uub(ix+1,iy+1,nflai)=max(min(
      1		   (fna(ix,iy,0,is)/gs(ix,iy,0)+
      2		   fna(rightix(ix,iy),rightiy(ix,iy),0,is)/
      3		   gs(rightix(ix,iy),rightiy(ix,iy),0))/2.0_R8/
      4		   na(ix,iy,is)/qz(ix,iy,1),
      5		   ua_max),ua_min)
-		    elseif(
-     1		 gs(ix,iy,0).eq.0_R8.and.rightix(ix,iy).ne.nx+1) then
-		     uub(ix+1,iy+1,nflai)=max(min(
+		elseif(
+     1		 gs(ix,iy,0).eq.0.0_R8.and.rightix(ix,iy).ne.nx+1) then
+		  uub(ix+1,iy+1,nflai)=max(min(
      1		   fna(rightix(ix,iy),rightiy(ix,iy),0,is)/
      3		   gs(rightix(ix,iy),rightiy(ix,iy),0)/
      4		   na(ix,iy,is)/qc(rightix(ix,iy),rightiy(ix,iy)),
      5		   ua_max),ua_min)
-		    else
-		     uub(ix+1,iy+1,nflai)=max(min(
+		else
+		  uub(ix+1,iy+1,nflai)=max(min(
      1		   fna(ix,iy,0,is)/gs(ix,iy,0)/
      4		   na(ix,iy,is)/qc(ix,iy),
      5		   ua_max),ua_min)
-		    endif
-             elseif(eirene_fixuub.eq.2) then
+		endif
+              elseif(eirene_fixuub.eq.2) then
                 uub(ix+1,iy+1,nflai)=max(min(
      1           upb(ix+1,iy+1,nflai)*rrb(ix+1,iy+1),
      2           ua_max),ua_min)
-	       endif
+	      endif
             enddo
           enddo
 * cell face x
           do iy=-1,ny
             do ix=0,nx
 	       if(eirene_fixmap.eq.0) then
-		    if(leftix(ix,iy).ne.-2) then
-		     fnixb(ix,iy+1,nflai)=fna(ix,iy,0,is)
-		     if(eirene_fixuub.eq.0) then
-		      uub(ix,iy+1,nflai)=max(min(
-     1		    fna(ix,iy,0,is)/gs(ix,iy,0)/qc(ix,iy)*2.0_R8/
-     1		    (na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is)),
-     3		    ua_max),ua_min)
-		     endif
-		    else
-		     fnixb(ix,iy+1,nflai)=0.0_R8
-		     if(eirene_fixuub.eq.0) uub(ix,iy+1,nflai)=0.0_R8
-		    endif
+	         if(leftix(ix,iy).ne.-2) then
+	           fnixb(ix,iy+1,nflai)=fna(ix,iy,0,is)
+		   if(eirene_fixuub.eq.0) then
+		     uub(ix,iy+1,nflai)=max(min(
+     1		      fna(ix,iy,0,is)/gs(ix,iy,0)/qc(ix,iy)*2.0_R8/
+     1		      (na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is)),
+     3		       ua_max),ua_min)
+		   endif
+		 else
+	           fnixb(ix,iy+1,nflai)=0.0_R8
+	           if(eirene_fixuub.eq.0) uub(ix,iy+1,nflai)=0.0_R8
+	         endif
 	       else
-		    if(rightix(ix-1,iy).ne.nx+1) then
-		     if(leftix(ix,iy).ne.-2) then
-		      fnixb(ix,iy+1,nflai)=
-     1		     fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,is)
-		      if(eirene_fixuub.eq.0) then
+		 if(rightix(ix-1,iy).ne.nx+1) then
+		   if(leftix(ix,iy).ne.-2) then
+		     fnixb(ix,iy+1,nflai)=
+     1		      fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,is)
+		     if(eirene_fixuub.eq.0) then
 		       uub(ix,iy+1,nflai)=max(min(
      1		       fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,is)/
      2		       gs(rightix(ix-1,iy),rightiy(ix-1,iy),0)*2.0_R8/
@@ -230,20 +255,18 @@ c
      2		       na(ix-1,iy,is))/
      3		       qc(rightix(ix-1,iy),rightiy(ix-1,iy)),
      3		       ua_max),ua_min)
-		      endif
-		     else
-		      write(*,*) 'WARNING: ',
-     1		     'You should not have executed this block!'
-		      fnixb(ix,iy+1,nflai)=0.0_R8
-		      if(eirene_fixuub.eq.0) uub(ix,iy+1,nflai)=0.0_R8
-		     endif
-		    else
-		     fnixb(ix,iy+1,nflai)=0.0_R8
-		     if(eirene_fixuub.eq.0) uub(ix,iy+1,nflai)=0.0_R8
 		    endif
-	       endif  !eirene_fixmap
-	      enddo
+		  else
+		    fnixb(ix,iy+1,nflai)=0.0_R8
+		    if(eirene_fixuub.eq.0) uub(ix,iy+1,nflai)=0.0_R8
+		  endif
+		else
+		  fnixb(ix,iy+1,nflai)=0.0_R8
+		  if(eirene_fixuub.eq.0) uub(ix,iy+1,nflai)=0.0_R8
+		endif
+	      endif  !eirene_fixmap
 	    enddo
+	  enddo
           fnixb(nx+1,:,nflai)=0.0_R8
           if(eirene_fixuub.eq.0) uub(nx+1,:,nflai)=0.0_R8
 * cell face y
@@ -311,6 +334,19 @@ c declared -1:nx,-1:ny
 	write(*,*) eirene_extrap,
      1	 ' not avaible as an eirene_extrap option'
       endif
+      if(print_minmax.ne.0) then
+         te_min_val=minval(teb(0:nx+1,0:ny+1))/ev
+         te_max_val=maxval(teb(0:nx+1,0:ny+1))/ev
+         ti_min_val=minval(tib(0:nx+1,0:ny+1))/ev
+         ti_max_val=maxval(tib(0:nx+1,0:ny+1))/ev
+         na_min_val=minval(dnib(0:nx+1,0:ny+1,1:nflai))
+         na_max_val=maxval(dnib(0:nx+1,0:ny+1,1:nflai))
+         ua_min_val=minval(uub(0:nx+1,0:ny+1,1:nflai))
+         ua_max_val=maxval(uub(0:nx+1,0:ny+1,1:nflai))
+         write(*,'(a,1p,8(1x,g12.3))') 'minmax:teb,tib,nab,uub ', 
+     &     te_min_val, te_max_val, ti_min_val, ti_max_val, 
+     &     na_min_val, na_max_val, ua_min_val, ua_max_val
+      endif
       ncall=ncall+1
       return
       end subroutine copy_background
@@ -338,23 +374,27 @@ c
       character chns*3                                                 !srv 16.09.02
       integer, save :: drift_style = 0, iout = 0                        !srv 21.06.08
       integer ix,iy,is,ncall,eirene_extrap,in,eirene_fixmap,
-     1 eirene_fixuub
+     1 eirene_fixuub, print_minmax
       external ipgetr, ipgeti
       real (kind=R8) ::
-     * te_min, te_max, ti_min, ti_max, na_min, na_max, ua_min, ua_max
+     * te_min, te_max, ti_min, ti_max, na_min, na_max, ua_min, ua_max,
+     * te_min_val, te_max_val, ti_min_val, ti_max_val,
+     * na_min_val, na_max_val, ua_min_val, ua_max_val
       save te_min, te_max, ti_min, ti_max,
      1 na_min, na_max, ua_min, ua_max, ncall,
-     2 eirene_extrap, eirene_fixmap, eirene_fixuub
+     2 eirene_extrap, eirene_fixmap, eirene_fixuub, print_minmax
       data te_min/0.0_R8/, te_max/1.0e30_R8/,
      1 ti_min/0.0_R8/, ti_max/1.0e30_R8/,
      1 na_min/0.0_R8/, na_max/1.0e30_R8/,
-     1 ua_min/-2.99792458e8_R8/, ua_max/+2.99792458e8_R8/,
-     2 ncall/0/, eirene_extrap/1/, eirene_fixmap/1/, eirene_fixuub/0/   !srv 28.07.10
+     2 ncall/0/, eirene_extrap/1/, eirene_fixmap/1/, 
+     & eirene_fixuub/0/, print_minmax/0/   !srv 28.07.10
       real (kind=R8) :: kintmp
       real (kind=R8) :: hy1
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 
       if(ncall.eq.0) then
+        ua_min = -c
+        ua_max = +c
 	call ipgetr('eirene_te_min',te_min)
 	call ipgetr('eirene_te_max',te_max)
 	call ipgetr('eirene_ti_min',ti_min)
@@ -395,6 +435,19 @@ c
 
       if(nx.ge.NDXP) call xerrab('eirene_mc: increase size of ndxp')
       if(ny.ge.NDYP) call xerrab('eirene_mc: increase size of ndyp')
+      if(print_minmax.ne.0) then
+         te_min_val=minval(te(-1:nx,-1:ny))/ev
+         te_max_val=maxval(te(-1:nx,-1:ny))/ev
+         ti_min_val=minval(ti(-1:nx,-1:ny))/ev
+         ti_max_val=maxval(ti(-1:nx,-1:ny))/ev
+         na_min_val=minval(na(-1:nx,-1:ny,0:ns-1))
+         na_max_val=maxval(na(-1:nx,-1:ny,0:ns-1))
+         ua_min_val=minval(ua(-1:nx,-1:ny,0:ns-1))
+         ua_max_val=maxval(ua(-1:nx,-1:ny,0:ns-1))
+	 write(*,'(a,1p,8(1x,g12.3))') 'minmax:te ,ti ,na ,ua  ',
+     &	   te_min_val, te_max_val, ti_min_val, ti_max_val, 
+     &     na_min_val, na_max_val, ua_min_val, ua_max_val
+      endif
 
 * cell centred
       do iy=-1,ny
@@ -415,14 +468,16 @@ c
 	do ix=0,nx
 	  if(eirene_fixmap.eq.0) then
 	    feixb(ix,iy+1)=fhi_eir(ix,iy,0)                               !srv 14.07.10
-            do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(ix,iy,is)*hx(leftix(ix,iy),leftiy(ix,iy))+
-     .          kinrgy(leftix(ix,iy),leftiy(ix,iy),is)*hx(ix,iy))/
-     .         (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-              feixb(ix,iy+1)=feixb(ix,iy+1)+kintmp*(1.0_R8-BoRiS)
-     .         *fna_eir(ix,iy,0,is)                                     !srv 14.07.10
-            enddo
+            if (leftix(ix,iy).gt.-2) then
+              do is=0,ns-1
+                kintmp = 
+     .           (kinrgy(ix,iy,is)*hx(leftix(ix,iy),leftiy(ix,iy))+
+     .            kinrgy(leftix(ix,iy),leftiy(ix,iy),is)*hx(ix,iy))/
+     .           (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
+                feixb(ix,iy+1)=feixb(ix,iy+1)+kintmp*(1.0_R8-BoRiS)
+     .           *fna_eir(ix,iy,0,is)                                     !srv 14.07.10
+              enddo
+            endif
 	    feexb(ix,iy+1)=fhe_eir(ix,iy,0)                               !srv 14.07.10
 	  else
 	    if(rightix(ix-1,iy).ne.nx+1) then
@@ -453,10 +508,14 @@ c
         do ix=-1,nx
           feiyb(ix+1,iy)=fhi_eir(ix,iy,1)                               !srv 14.07.10
           do is=0,ns-1
-            kintmp = 
-     .       (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
-     .        kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
-     .       (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
+            if (bottomiy(ix,iy).ne.-2) then
+              kintmp = 
+     .         (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
+     .          kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
+     .         (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
+            else
+              kintmp = kinrgy(ix,iy,is)
+            endif
             feiyb(ix+1,iy)=feiyb(ix+1,iy)+kintmp*(1.0_R8-BoRiS)
      .       *fna_eir(ix,iy,1,is)                                       !srv 14.07.10
           enddo
@@ -735,9 +794,9 @@ c
       write (30,*) ' '
       do ix=0,nx-1
         do iy=0,ny-1
-          write (30,'(4e15.7)')
+          write (30,'(4e16.8)')
      1     crx(ix,iy,1),crx(ix,iy,3),crx(ix,iy,2),crx(ix,iy,0)
-          write (30,'(4e15.7)')
+          write (30,'(4e16.8)')
      1     cry(ix,iy,1),cry(ix,iy,3),cry(ix,iy,2),cry(ix,iy,0)
         end do
       end do
