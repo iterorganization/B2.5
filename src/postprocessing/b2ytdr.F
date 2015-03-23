@@ -42,11 +42,12 @@ c 2002-09-11: logic revised
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
-      use eirmod_eirbra
       use eirmod_comusr
-     , ,only: NSPH, NMASSA, NCHARA, TEXTS
+     , ,only: NSPH, NMASSA, NCHARA, TEXTS, EIRENE_ALLOC_COMUSR
       use eirmod_ccoupl
+      use eirmod_eirbra
       use eirmod_extrab25
+     , ,only: msrfclsx, mgwtiesx, lkindp
 #endif
       implicit none
 #     include "DIMENSIONS.F"
@@ -642,6 +643,7 @@ c 2002-09-11: logic revised
         nmol=DEF_NMOL
         nion=DEF_NION
         npls=DEF_NPLS
+        nspz=DEF_NATM+DEF_NMOL+DEF_NION+DEF_NPLS
         nlim=DEF_NLIM
         nsts=DEF_NSTS
         nstra=DEF_NSTRA
@@ -652,9 +654,9 @@ c 2002-09-11: logic revised
       NPLSI = NPLS
       NMOLI = NMOL
       NIONI = NION
-      NFLA = NFL
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
+      CALL EIRENE_ALLOC_COMUSR(4)
 #else
       ex = .false.
 #endif
@@ -749,8 +751,6 @@ c 2002-09-11: logic revised
       allocate(b2espcr1(0:ns1-1))
       allocate(eb2ibcr(npls))
       allocate(ispecies1(natm))
-      allocate(eb2spcr1(natm))
-      allocate(isp1(natm))
       allocate(ifl1(ns1))
       allocate(cftmp(0:nsm-1))
       allocate(istmp(0:nsm-1))
@@ -798,11 +798,21 @@ c 2002-09-11: logic revised
           zamax1(is) = zamax(is)
           bundle_frac(is,is) = 1.0_R8
         enddo
+        nspecies1 = nspecies
       else 
         call de_bundle (ns, zn, am, zamin, zamax,
      *   is0, bundle_contr, zn0, am0, zamin0, zamax0)
         call re_bundle (ns, is0, bundle_contr, zn0, am0, zamin0, zamax0,
      *   ns1, is1, bundle_frac, zn1, am1, zamin1, zamax1)
+        nspecies1 = 1
+        ib = 1
+        do while (ib.lt.ns1)
+          if (nint(zn1(ib)).ne.nint(zn1(ib-1)) .or.
+     &        nint(am1(ib)).ne.nint(am1(ib-1))) then
+            nspecies1=nspecies1+1
+          end if
+          ib = ib + 1
+        end do
       endif
       ifl = 0
       do is = 0, ns1-1
@@ -956,19 +966,6 @@ c 2002-09-11: logic revised
         call read_neutrals_namelist(nx, ny, ns, .false.)
         if (nstrat.gt.nstraid) stop 'Increase DEF_NSTRA in DIMENSIONS.F'
         call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrat,natm)
-        if (same_bundling) then
-          nspecies1 = nspecies
-        else
-          nspecies1 = 1
-          ib = 1
-          do while (ib.lt.ns1)
-            if (nint(zn1(ib)).ne.nint(zn1(ib-1)) .or.
-     &          nint(am1(ib)).ne.nint(am1(ib-1))) then
-              nspecies1=nspecies1+1
-            end if
-            ib = ib + 1
-          end do
-        end if
       endif
 *   ..modify b2mn.dat parameters
       ismain = is1(ismain)
@@ -5803,7 +5800,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
         IF (ZEILE(1:3).EQ.'CH4') GOTO 1227
         IREAD=1
  1230   CONTINUE
-CVK DATA FOR POSTPROCESSING WINDOWS
+CVK DATA FOR POST-PROCESSING WINDOWS
         READ (IUNIN,'(A80)') ZEILE
         WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:3).NE.'***') THEN !{
@@ -6616,34 +6613,34 @@ cxpb as they no longer necessarily point to the same species
      >     write(34,hlp_frm) 'KSNS=',(ksns(ib),ib=1,nsns) 
         endif     
         write(34,'(a,1pg10.3,a)') 'NEUT_SCL_LIM=',neut_scl_lim,','
-        if (bn_spcsrf.gt.0) then
-          write(34,'(a,i2,a)') 'BN_SPCSRF=',bn_spcsrf,','
-          ii=minloc(bl_spcsrf)
+        if (n_spcsrf.gt.0) then
+          write(34,'(a,i2,a)') 'N_SPCSRF=',n_spcsrf,','
+          ii=minloc(l_spcsrf)
           write(hlp_frm,'(a,i3,a)') '(a,',ii(1),'(i3,'',''))'
-          write(34,hlp_frm) 'BL_SPCSRF=',(bl_spcsrf(ib),ib=1,ii(1))
-          line = 'BSPS_ID=  '
+          write(34,hlp_frm) 'L_SPCSRF=',(l_spcsrf(ib),ib=1,ii(1))
+          line = 'SPS_ID=  '
           len=9
-          do ib = 1, bn_spcsrf
-            line = line(1:len)//''''//bsps_id(ib)//''','
+          do ib = 1, n_spcsrf
+            line = line(1:len)//''''//sps_id(ib)//''','
             len=len+1+8+2
           end do
           write(34,'(a)') line
-          write(hlp_frm,'(a,i2,a)') '(a,',bn_spcsrf,'(i10,'',''))'
-          write(34, hlp_frm) 'BI_SPCSRF=',(bi_spcsrf(ib),ib=1,bn_spcsrf)
-          write(34, hlp_frm) 'BJ_SPCSRF=',(bj_spcsrf(ib),ib=1,bn_spcsrf)
-          write(hlp_frm,'(a,i2,a)') '(a,1p,',bn_spcsrf,'(g10.3,'',''))'
-          write(34, hlp_frm) 'BSPS_ABSR=',(bsps_absr(ib),ib=1,bn_spcsrf)
-          write(34, hlp_frm) 'BSPS_TRNO=',(bsps_trno(ib),ib=1,bn_spcsrf)
-          write(34, hlp_frm) 'BSPS_TRNI=',(bsps_trni(ib),ib=1,bn_spcsrf)
-          write(34, hlp_frm) 'BSPS_MTRI=',(bsps_mtri(ib),ib=1,bn_spcsrf)
-          write(34, hlp_frm) 'BSPS_TMPR=',(bsps_tmpr(ib),ib=1,bn_spcsrf)
-          write(34, hlp_frm) 'BSPS_SPPH=',(bsps_spph(ib),ib=1,bn_spcsrf)
-          write(34, hlp_frm) 'BSPS_SPCH=',(bsps_spch(ib),ib=1,bn_spcsrf)
-          write(hlp_frm,'(a,i2,a)') '(a,',bn_spcsrf,'(i10,'',''))'
-          write(34, hlp_frm) 'BSPS_SGRP=',(bsps_sgrp(ib),ib=1,bn_spcsrf)
+          write(hlp_frm,'(a,i2,a)') '(a,',n_spcsrf,'(i10,'',''))'
+          write(34, hlp_frm) 'I_SPCSRF=',(i_spcsrf(ib),ib=1,n_spcsrf)
+          write(34, hlp_frm) 'J_SPCSRF=',(j_spcsrf(ib),ib=1,n_spcsrf)
+          write(hlp_frm,'(a,i2,a)') '(a,1p,',n_spcsrf,'(g10.3,'',''))'
+          write(34, hlp_frm) 'SPS_ABSR=',(sps_absr(ib),ib=1,n_spcsrf)
+          write(34, hlp_frm) 'SPS_TRNO=',(sps_trno(ib),ib=1,n_spcsrf)
+          write(34, hlp_frm) 'SPS_TRNI=',(sps_trni(ib),ib=1,n_spcsrf)
+          write(34, hlp_frm) 'SPS_MTRI=',(sps_mtri(ib),ib=1,n_spcsrf)
+          write(34, hlp_frm) 'SPS_TMPR=',(sps_tmpr(ib),ib=1,n_spcsrf)
+          write(34, hlp_frm) 'SPS_SPPH=',(sps_spph(ib),ib=1,n_spcsrf)
+          write(34, hlp_frm) 'SPS_SPCH=',(sps_spch(ib),ib=1,n_spcsrf)
+          write(hlp_frm,'(a,i2,a)') '(a,',n_spcsrf,'(i10,'',''))'
+          write(34, hlp_frm) 'SPS_SGRP=',(sps_sgrp(ib),ib=1,n_spcsrf)
           write(hlp_frm,'(a,i2,a)') 
-     .     '(a,',bn_spcsrf,'('''''''',a8,'''''''','',''))'
-          write(34, hlp_frm) 'BSPS_MTRL=',(bsps_mtrl(ib),ib=1,bn_spcsrf)
+     .     '(a,',n_spcsrf,'('''''''',a8,'''''''','',''))'
+          write(34, hlp_frm) 'SPS_MTRL=',(sps_mtrl(ib),ib=1,n_spcsrf)
         endif
         do ib = 1, 100
           if (debug_flags(ib).ne.0) write(34,'(a,i3,a,i3,a)')

@@ -12,6 +12,9 @@
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_neutrals_namelist
+#ifdef B25_EIRENE
+      use eirmod_extrab25
+#endif
       implicit none
 #ifndef B25_EIRENE
 #     include <COUPLE/EIRDIAG.F>

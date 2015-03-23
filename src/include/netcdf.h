@@ -726,7 +726,7 @@ nc_get_var_double(int ncid, int varid, double *ip);
 
 /* Begin v2.4 backward compatiblity */
 /*
- * defining NO_NETCDF_2 to the preprocessor
+ * defining NO_NETCDF_2 to the pre-processor
  * turns off backward compatiblity declarations.
  */
 #ifndef NO_NETCDF_2

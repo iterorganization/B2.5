@@ -284,11 +284,13 @@ c        call eirene_mc_init
      .                       natm,nmol,nion,npls,nstra,0)
         call eirene_extrab25_eirpbls_init(2,0,0,0,0,nstra,npls)
 csw 22jul2011
-        call eirene_extrab25_iniusr_init(bn_spcsrf,bl_spcsrf,bi_spcsrf,
-     .           bj_spcsrf,bsps_sgrp,bsps_absr,bsps_trno,bsps_trni,
-     .           bsps_mtri,bsps_tmpr,bsps_spph,bsps_spch,
-     .           bsps_mtrl,bsps_id)
-
+        call eirene_extrab25_iniusr_init(n_spcsrf,l_spcsrf,i_spcsrf,
+     .           j_spcsrf,sps_sgrp,sps_absr,sps_trno,sps_trni,
+     .           sps_mtri,sps_tmpr,sps_spph,sps_spch,
+     .           sps_mtrl,sps_id)
+#ifndef NO_B2_CHEM_SPUT
+        call eirene_extrab25_braeir_init(chemical_sputter_yield)
+#endif
 csw 26mar2013
         call ipgeti ('eirene_iscltst',iscltst)
 

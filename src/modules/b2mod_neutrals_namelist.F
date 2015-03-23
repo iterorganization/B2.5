@@ -29,14 +29,13 @@ cank }
       use b2mod_user_namelist
 #ifdef B25_EIRENE
       use eirmod_parmmod
-      use eirmod_extrab25
 #endif
       implicit none
 #     include "DIMENSIONS.F"
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#     include "COUPLE/EIRSRT.F"
 #endif
+#     include "COUPLE/EIRSRT.F"
       integer nstraid, nsdmax, natmid, nmolid, nstsid, nlmpgsd
       parameter (NSTRAID=DEF_NSTRA, NSDMAX=DEF_NSD)
       parameter (natmid=DEF_NATM, nmolid=DEF_NMOL, nstsid=DEF_NSTS)
@@ -48,6 +47,10 @@ cank }
      *   volrecstart(:), saved_volrec(:), 
      *   phys_sput(:,:), chem_sput(:,:),
      1   gpfc(:,:)
+#ifndef NO_B2_CHEM_SPUT
+      real (kind=R8), allocatable, save :: 
+     *   chemical_sputter_yield(:)
+#endif
       integer, allocatable, save ::
      *   RCPOS(:), 
      *   RCSTART(:), 
@@ -73,6 +76,10 @@ cank }
       real (kind=R8), save :: saved_volrec(NSTRAID)
       real (kind=R8), save :: chem_sput(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: phys_sput(0:nsdmax-1,NSTRAID)
+#ifndef NO_B2_CHEM_SPUT
+      real (kind=R8), save :: 
+     ,  chemical_sputter_yield(0:DEF_NLIM+DEF_NSTS)
+#endif
       integer, save :: RCPOS(NSTRAID)
       integer, save :: RCSTART(NSTRAID)
       integer, save :: RCEND(NSTRAID)
@@ -102,6 +109,11 @@ cank }
       real (kind=R8), save :: neutrals_time_switch
       real (kind=R8), save :: neut_scl_lim
 
+#ifndef NO_B2_CHEM_SPUT
+      real (kind=R8), save :: fchar_chemical
+      integer, save :: igass_chemical, itsput_chemical, issput_chemical
+#endif
+
       real(kind=R8), save ::
      1 chemical_erosion_redep_fac,
      2 chemical_erosion_be_fac_a,
@@ -123,20 +135,11 @@ csw 21feb2012
       use b2mod_elements
      & ,only : is_codes
       use b2mod_b2cmpa
-#ifdef B25_EIRENE
-      use eirmod_parmmod
-      use eirmod_braeir
-#endif
       implicit none
       integer, intent(in) :: nxd, nyd, nsd, 
      &  natm_in, nstraid_in, nsts_in, sput_dst
 #ifndef ALLOCATE_AND_NAMELIST
       external xertst
-#endif
-#     include "DIMENSIONS.F"
-#ifndef B25_EIRENE
-#     include "COUPLE/KOPPLDIM.F"
-#     include "COUPLE/BRAEIR.F"
 #endif
       integer is, isstart, isend
       integer is0, ispecies
@@ -177,6 +180,9 @@ csw 21feb2012
       allocate(lsns(nlmpgs))
       allocate(ksns(NSTRAID))
       allocate(msns(2,NSTRAID))
+#ifndef NO_B2_CHEM_SPUT
+      allocate(chemical_sputter_yield(0:DEF_NLIM+DEF_NSTS))
+#endif
 #else
       call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
       call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
@@ -184,8 +190,8 @@ csw 21feb2012
       call xertst (nstraid_in.le.nstraid, 'faulty parameter nstraid_in')
 #endif
       CRCSTRA=' '
-      BSPS_ID=' '
-      BSPS_MTRL=' '
+      SPS_ID=' '
+      SPS_MTRL=' '
       NSTRAI=0
       RCPOS=-2
       RCSTART=-2
@@ -213,7 +219,7 @@ cxpb 30% energy recycling for all ionised species except carbon.
       phys_sput=0.0
       chem_sput=0.0
 #ifndef NO_B2_CHEM_SPUT
-      chemical_sputter_yield=0.0
+      chemical_sputter_yield=0.0_R8
       fchar_chemical=0
       igass_chemical=0
       itsput_chemical=0
@@ -311,18 +317,9 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
      & ,only : is_codes
       use b2mod_boundary_namelist
       use b2mod_b2cmpa
-#ifdef B25_EIRENE
-      use eirmod_extrab25
-      use eirmod_braeir
-#endif
       implicit none
       integer nx, ny, ns
       logical dotest
-#     include <DIMENSIONS.F>
-#ifndef B25_EIRENE
-#     include "COUPLE/KOPPLDIM.F"
-#     include "COUPLE/BRAEIR.F"
-#endif
       external xertst
       integer is, ic, ix, istra, i, j, k, n, ii(1), itrack
       logical hydrogen, helium, found, side
@@ -349,9 +346,9 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
      *  chemical_erosion_be_fac_a,
      *  chemical_erosion_be_fac_b,
      *  chemical_erosion_be_fac_c,
-     6  bn_spcsrf, bl_spcsrf, bsps_id, bi_spcsrf, bj_spcsrf, 
-     7  bsps_absr, bsps_trno, bsps_trni, bsps_mtri, bsps_tmpr, 
-     8  bsps_spph, bsps_spch, bsps_sgrp, bsps_mtrl,
+     6  n_spcsrf, l_spcsrf, sps_id, i_spcsrf, j_spcsrf, 
+     7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr, 
+     8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
      .  msns
       logical :: file_ok
       logical, allocatable :: old_style(:)
@@ -445,10 +442,8 @@ c
      .             0.0_R8.lt.rf_neut(3).and.0.0_R8.lt.rf_neut(4), 
      .  'faulty input rf_neut')
 #ifndef NO_B2_CHEM_SPUT
-#ifdef B25_EIRENE
       call xertst (0.le.issput_chemical,
      .  'faulty input issput_chemical')
-#endif
 #endif
       call xertst (0.0_R8.le.eirene_step_cpu, 
      . 'faulty input eirene_step_cpu')

@@ -205,33 +205,33 @@
 *    where frac is the fractional content of Be in the surface layer material.
 *  CHEMICAL_EROSION_BE_FAC_B - real*8. Defaults to 0.05. see above.
 *  CHEMICAL_EROSION_BE_FAC_C - real*8. Defaults to 0.9. See above.
-*  BN_SPCSRF - integer. Number of special surfaces groups for diagnostics. 
+*  N_SPCSRF - integer. Number of special surfaces groups for diagnostics. 
 *    Defaults to 0.
-*  BL_SPCSRF - integer array of length (NLIM+NSTS). List of surface segments 
+*  L_SPCSRF - integer array of length (NLIM+NSTS). List of surface segments 
 *    (non-default standard surfaces [NDSS] or additional surfaces in Eirene 
 *    notation) included in the groups. Negative numbers correspond to NDSS.
-*  BSPS_ID - character*8 array of length (BN_SPCSRF). Labels of groups of 
+*  SPS_ID - character*8 array of length (N_SPCSRF). Labels of groups of 
 *    special surfaces.
-*  BI_SPCSRF - integer array of length (BN_SPCSRF). Index of the first Eirene 
+*  I_SPCSRF - integer array of length (N_SPCSRF). Index of the first Eirene 
 *    surface belonging to a special surface group in the L_SPCSRF list. 
-*  BJ_SPCSRF - integer array of length (BN_SPCSRF). Index of the last Eirene 
+*  J_SPCSRF - integer array of length (N_SPCSRF). Index of the last Eirene 
 *    surface belonging to a special surface group in the L_SPCSRF list. 
-*  BSPS_ABSR - real*8 array of length (BN_SPCSRF). Particle absorption on the 
+*  SPS_ABSR - real*8 array of length (N_SPCSRF). Particle absorption on the 
 *    surface.
-*  BSPS_TRNO - real*8 array of length (BN_SPCSRF). Surface transparency in 
+*  SPS_TRNO - real*8 array of length (N_SPCSRF). Surface transparency in 
 *    positive direction.
-*  BSPS_TRNI - real*8 array of length (BN_SPCSRF). Surface transparency in 
+*  SPS_TRNI - real*8 array of length (N_SPCSRF). Surface transparency in 
 *    negative direction. If not declared, SPS_TRNO is used.
-*  BSPS_MTRI - real*8 array of length (BN_SPCSRF). Surface material in Eirene 
+*  SPS_MTRI - real*8 array of length (N_SPCSRF). Surface material in Eirene 
 *    notation (e.g., 1206 for C).
-*  BSPS_MTRL - character*8 array of length (BN_SPCSRF). Surface material in 
+*  SPS_MTRL - character*8 array of length (N_SPCSRF). Surface material in 
 *    human notation (e.g., 'C').
-*  BSPS_TMPR - real*8 array of length (BN_SPCSRF). Surface temperature (in eV).
-*  BSPS_SPPH - real*8 array of length (BN_SPCSRF). Fudge factor for physical 
+*  SPS_TMPR - real*8 array of length (N_SPCSRF). Surface temperature (in eV).
+*  SPS_SPPH - real*8 array of length (N_SPCSRF). Fudge factor for physical 
 *    sputtering.
-*  BSPS_SPCH - real*8 array of length (BN_SPCSRF). Fudge factor for chemical 
+*  SPS_SPCH - real*8 array of length (N_SPCSRF). Fudge factor for chemical 
 *    sputtering.
-*  BSPS_SGRP - integer array of length (BN_SPCSRF). Surface group for chemical 
+*  SPS_SGRP - integer array of length (N_SPCSRF). Surface group for chemical 
 *    sputtering.
 *
 !! FIXME: TO be checked !!

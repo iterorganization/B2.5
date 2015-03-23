@@ -2,6 +2,8 @@
       use b2mod_types
       use b2mod_b2cmpa
      , ,only : is_neutral, partition_number
+      use b2mod_diag
+     , ,only : nspecies
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, ns
@@ -47,6 +49,7 @@
       do is = 0, ns-1
         is_neutral(is) = zamin(is).eq.0.0_R8
       end do
+      nspecies = 1
       is = 0
       partition_number(is) = 0
       do while (is.lt.ns-1)        
@@ -54,6 +57,7 @@
           partition_number(is+1) = partition_number(is)+1
         else
           partition_number(is+1) = 0
+          nspecies = nspecies + 1
         endif
         is = is + 1
       end do

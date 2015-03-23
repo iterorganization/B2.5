@@ -30,9 +30,9 @@
       if (streql(chf,'formatted')) then
         write(nput,'(a,a,1x,a)') 'VERSION',newversion,gitversion
       else
-        write(nput) 'VERSION',newversion,gitversion
+        write(nput) 'VERSION',newversion,' ',gitversion
       endif
-      write(*,*) 'VERSION: ',newversion,gitversion
+      write(*,'(4a)') 'VERSION: ',newversion,' GIT hash: ',gitversion
    20 continue
       return
 

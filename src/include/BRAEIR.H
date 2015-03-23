@@ -14,13 +14,7 @@ c
      R  FEEXB(0:NDXP,0:NDYP),FEEYB(0:NDXP,0:NDYP),
      R  UUDIAB(0:NDXP,0:NDYP,NFL),VVDIAB(0:NDXP,0:NDYP,NFL),
      R  VOLB(0:NDXP,0:NDYP),BFELDB(0:NDXP,0:NDYP)
-#ifndef NO_B2_CHEM_SPUT
-c
-c*** Data for chemical sputtering input from B2 - for compatibility!
-c
-      common /chemical_sputter_data/ chemical_sputter_yield,
-     1 fchar_chemical,igass_chemical,itsput_chemical,issput_chemical
-#endif
+
 #ifndef NO_SAVE
       save /BRAEIR/                      ! dpc
 #endif

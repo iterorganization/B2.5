@@ -57,8 +57,8 @@
 *    Most of these switches should only be modified with the most extreme
 *    caution. The user need be concerned with only very few of these.
 *
-*    Atomic Physics includes switches used in the atomic physics preprocessing
-*    module B2AR.
+*    Atomic Physics includes switches used in the atomic physics 
+*    pre-processing module B2AR.
 *
 *    Switch name:               Default value:         Category:
 *  -----------------------------------------------------------------
