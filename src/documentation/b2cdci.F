@@ -416,6 +416,7 @@
 *    'eirene_dpc_fix'           '-1'                   Numerics
 *    'eirene_extrap'            '1'                    Numerics
 *    'eirene_ionising_core'     '0'                    Physics
+*    'eirene_format'            'iter'                 Output
 *    'eirene_lhalpha'           '1'                    Physics
 *    'eirene_lvib'              '0'                    Physics
 *    'eirene_mc_linearisation'  '1'                    Numerics
@@ -1587,6 +1588,15 @@
 *     A particular segment will be produced only if its associated word
 *     has a match, as defined by the routine strmas, in idout.
 *
+*    'eirene_format'            'iter'                 Output
+*    This switch is to be provided within b2yt.dat to indicate to the b2yt
+*    converter the format of the original Eirene input.dat file to be
+*    modified. The accepted values are (case-insensitive):
+*    'old' for input files from SOLPS4.0 and SOLPS5.0 runs using "old" Eirene_96
+*    'new' for input files from SOLPS4.0 and SOLPS5.0 runs using "new" Eirene_99
+*    'facelift' for input files from SOLPS5.1 runs
+*    'juelich' for input files from Juelich Eirene versions (2008 and younger)
+*    'iter' for input files from SOLPS4.2/4.3 and SOLPS-ITER runs
 *
 *
 *   1.5. Numerics switches

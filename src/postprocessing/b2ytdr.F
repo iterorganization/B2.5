@@ -152,6 +152,8 @@ c 2002-09-11: logic revised
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120, 
      .          ligne*120
       character id0*8
+      character*8 eirene_format
+      data eirene_format / 'iter' /
       character*10 :: b2fgmtry_oldversion, b2fgmtry_newversion
       data b2fgmtry_oldversion / '00.000.000' /
       character tab
@@ -402,6 +404,7 @@ c 2002-09-11: logic revised
       logical, allocatable :: TRCSRC(:), TRCSR1(:)
       logical, allocatable :: nlpbls(:), nlpbl1(:)
       logical, allocatable :: done(:)
+      logical LRPSCUT
       logical in_bundle, charges_match
 #endif
       logical todo, same_bundling
@@ -415,8 +418,8 @@ c 2002-09-11: logic revised
       integer conformal_convert, convert_eirene, b2idez
       real (kind=R8) :: cr, cz, cr1, cz1, rratio
       logical open_file, streql
-      external subini, subend, xertst, cfruch, cfrure, cfwuin,
-     &  cfwuch, cfwure, ipgeti, lnblnk, convert_position,
+      external subini, subend, xertst, xerrab, cfruch, cfrure, cfwuin,
+     &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk, convert_position,
      &  len_of_digits, open_file, get_jsep, conformal_convert,
      &  convert_eirene, b2idez, streql, get_nxt, b2yt_nxt
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
@@ -618,6 +621,24 @@ c 2002-09-11: logic revised
     4  continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
 #ifdef B25_EIRENE
+      call ipgetc ('eirene_format', eirene_format)
+      write(*,*) 'Eirene input.dat format entered : ', eirene_format
+      if (streql(eirene_format,'iter')) then
+        write(*,*) 
+     .   'Assuming standard SOLPS-ITER input.dat format (default)'
+      else if (streql(eirene_format,'old')) then
+        write(*,*) 'Assuming "old" Eirene_96 input.dat format'
+      else if (streql(eirene_format,'new')) then
+        write(*,*) 'Assuming "new" Eirene_99 input.dat format'
+      else if (streql(eirene_format,'facelift')) then
+        write(*,*) 'Assuming Eirene_facelift input.dat format'
+      else if (streql(eirene_format,'juelich')) then
+        write(*,*) 'Assuming Juelich Eirene input.dat format'
+      else
+        write(*,*) 'Accepted values are (case-insensitive): '
+        write(*,*) '"ITER", "old", "new", "facelift", "Juelich"'
+        call xerrab ('Unrecognized Eirene input.dat format!')
+      endif
 *   ..import parameters from Eirene input.dat file
       inquire(file='input.dat',exist=ex)
       if (ex) then
@@ -3077,7 +3098,10 @@ C  NEW INPUT VERSION
             ELSE IF (idum(3).gt.NATMI .and. idum(3).le.NATMI+NMOLI) THEN
               idum(3) = idum(3) - NATMI + NATMI1
             ENDIF
-            WRITE(IUNOT,'(A80)') ZEILE
+            IF (streql(eirene_format,'juelich') .or. 
+     .          streql(eirene_format,'old') .or. 
+     .          streql(eirene_format,'new')) idum(4) = 1
+            WRITE(IUNOT,6666) idum(0:4)
             IREAD=0
             READ (IUNIN,'(A72)') ZEILE ! ZNML(NLJ),EWALL(NLJ),EWBIN(NLJ),
                                        ! TRANSP(1,NLJ),TRANSP(2,NLJ),FSHEAT(NLJ)
@@ -3086,10 +3110,24 @@ C  NEW INPUT VERSION
                                        ! EXPPL(1,NLJ),EXPEL(1,NLJ),EXPIL(1,NLJ)
             WRITE(IUNOT,'(A72)') ZEILE
             READ (IUNIN,'(A80)') ZEILE
-            WRITE(IUNOT,'(A80)') ZEILE
             IREAD=1
 C  READ ONE MORE LINE FOR NON-DEFAULT SPUTTER MODEL
-            IF (ZEILE(1:1).NE.'*') IREAD=0
+            IF (ZEILE(1:1).NE.'*') THEN
+              IF (streql(eirene_format,'juelich').or.
+     .            streql(eirene_format,'new')) THEN
+                READ (ZEILE,6664) rdum(0:1),rdum(4) ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+                                                    ! SPTPRM(1,NLJ)
+                rdum(2) = 1.0_R8
+                rdum(3) = 0.0_R8
+              ELSE
+                READ (ZEILE,6664) rdum(0:4)         ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+                                                    ! ECHSPTG(1,NLJ),FCHSPTG(1,NLJ),
+                                                    ! SPTPRM(1,NLJ)
+              ENDIF
+              IREAD=0
+              WRITE(IUNOT,6664) rdum(0:4)
+              GOTO 311
+            ENDIF
           ENDIF
   314     CONTINUE
           WRITE(IUNOT,'(A80)') ZEILE
@@ -3212,6 +3250,9 @@ C READ LOCAL SURFACE INTERACTION MODEL FOR SURFACE NO. I
      >       idum(2) = iatm1(idum(2))
             IF (idum(3).gt.0 .and. idum(3).le.NATMI)
      >       idum(3) = iatm1(idum(3)) 
+            IF (streql(eirene_format,'juelich') .or. 
+     .          streql(eirene_format,'old') .or. 
+     .          streql(eirene_format,'new')) idum(4) = 1
             WRITE(IUNOT,6666) idum(0:4)
             IREAD=0
             READ (IUNIN,'(A72)') ZEILE ! ZNML(I),EWALL(I),EWBIN(I),
@@ -3221,9 +3262,24 @@ C READ LOCAL SURFACE INTERACTION MODEL FOR SURFACE NO. I
                                        ! EXPPL(1,I),EXPEL(1,I),EXPIL(1,I)
             WRITE(IUNOT,'(A72)') ZEILE
             READ (IUNIN,'(A80)') ZEILE
-            WRITE(IUNOT,'(A80)') ZEILE
             IREAD=1
-            IF (ZEILE(1:1).NE.'*'.AND.ZEILE(1:9).NE.'TRANSFORM') IREAD=0
+            IF (ZEILE(1:1).NE.'*'.AND.ZEILE(1:9).NE.'TRANSFORM') THEN
+              IF (streql(eirene_format,'juelich').or.
+     .            streql(eirene_format,'new')) THEN
+                READ (ZEILE,6664) rdum(0:1),rdum(4) ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+                                                    ! SPTPRM(1,NLJ)
+                rdum(2) = 1.0_R8
+                rdum(3) = 0.0_R8
+              ELSE
+                READ (ZEILE,6664) rdum(0:4)         ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+                                                    ! ECHSPTG(1,NLJ),FCHSPTG(1,NLJ),
+                                                    ! SPTPRM(1,NLJ)
+              ENDIF
+              IREAD=0
+              WRITE(IUNOT,6664) rdum(0:4)
+            ELSE
+              WRITE(IUNOT,'(A80)') ZEILE
+            ENDIF
           ENDIF
   368     IF (IREAD.EQ.0) THEN
             READ (IUNIN,'(A80)') ZEILE
@@ -5582,8 +5638,20 @@ cxpb Read first, transform and rewrite
           WRITE(IUNOT,6666) idum(0:4)
  1130   CONTINUE
  1131   READ (IUNIN,'(A80)') ZEILE
-        WRITE(IUNOT,'(A80)') ZEILE
-        IF (ZEILE(1:1) .EQ. '*') GOTO 1131
+        IF (ZEILE(1:1) .EQ. '*') THEN
+          WRITE(IUNOT,'(A80)') ZEILE
+          GOTO 1131
+        ELSE
+          READ (ZEILE,6665) ldum(0:14) ! PL1ST,PL2ND,PL3RD,PLADD,PLHST,
+                                       ! PLCUT(1),PLCUT(2),PLCUT(3),PLBOX,PLSTOR,
+                                       ! PLNUMV,PLNUMS,PLARR,LRPSCUT,PLIDL
+          LRPSCUT = ldum(13)
+          IF (streql(eirene_format,'old')) THEN
+            ldum(11) = ldum(10)        ! PLNUMB -> PLNUMS
+            ldum(10) = .false.         ! no PLNUMV in "old" Eirene
+          ENDIF
+          WRITE (IUNOT,6665) ldum(0:14)
+        ENDIF
         READ (IUNIN,6666) NPLINR,NPLOTR,NPLDLR,NPLINP,NPLOTP,NPLDLP,
      .                    NPLINT,NPLOTT,NPLDLT,idum(9) ! nsrfcls
         idum(0) = convert_eirene
@@ -5662,13 +5730,32 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
         IF (ZEILE(1:1) .EQ. '*') GOTO 1151
         READ (ZEILE,6666) NVOLPL
         IF (NVOLPL.LE.0) GOTO 1175
-        READ (IUNIN,6665) (ldum(J),J=0,NSTRA)
-        WRITE(IUNOT,6665) (ldum(J),J=0,NSTRA)
+        IF (streql(eirene_format,'iter') .or.
+     .      streql(eirene_format,'juelich') .or.
+     .      streql(eirene_format,'facelift')) then
+          READ (IUNIN,6665) (ldum(J),J=0,NSTRA)
+          WRITE(IUNOT,6665) (ldum(J),J=0,NSTRA)
+        ENDIF
+        IF (streql(eirene_format,'iter') .or.
+     .      streql(eirene_format,'juelich')) then
+          IF (LRPSCUT) THEN
+            READ (IUNIN,'(A72)') ZEILE ! CUTPLANE(1:4)
+            WRITE(IUNOT,'(A72)') ZEILE
+          END IF
+        ENDIF
         DO 1150 J=1,NVOLPL
- 1152     READ (IUNIN,'(A80)') ZEILE
-          WRITE(IUNOT,'(A80)') ZEILE
-          IF (ZEILE(1:1) .EQ. '*') GOTO 1152
-          READ (ZEILE,6666) NSP
+          IF (streql(eirene_format,'iter') .or.
+     .        streql(eirene_format,'juelich') .or.
+     .        streql(eirene_format,'facelift') .or.
+     .        streql(eirene_format,'new')) then
+ 1152       READ (IUNIN,'(A80)') ZEILE
+            WRITE(IUNOT,'(A80)') ZEILE
+            IF (ZEILE(1:1) .EQ. '*') GOTO 1152
+            READ (ZEILE,6666) NSP
+          ELSE IF (streql(eirene_format,'old')) then
+            READ (IUNIN,6666) NTL,NSP
+            WRITE(IUNOT,6666) NSP
+          ENDIF
           READ (IUNIN,6665) ldum(0:3) ! PLTL2D(J),PLTL3D(J),PLTLLG(J),PLTLER(J)
           WRITE(IUNOT,6665) ldum(0:3)
           READ (IUNIN,'(A72)') ZEILE ! TALZMI(J),TALZMA(J),TALXMI(J),TALXMA(J),
@@ -5678,7 +5765,14 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
             READ (IUNIN,6665) ldum(2:3) ! LHIST2(J),LSMOT2(J)
             WRITE(IUNOT,6665) ldum(2:3)
             DO 1160 I=1,NSP
-              READ (IUNIN,6666) ISPL,NTL,NPLIN2,NPLOT2,NPLDL2
+              IF (streql(eirene_format,'iter') .or.
+     .            streql(eirene_format,'juelich') .or.
+     .            streql(eirene_format,'facelift') .or.
+     .            streql(eirene_format,'new')) then
+                READ (IUNIN,6666) ISPL,NTL,NPLIN2,NPLOT2,NPLDL2
+              ELSE IF (streql(eirene_format,'old')) then
+                READ (IUNIN,6666) ISPL,NPLIN2,NPLOT2,NPLDL2
+              ENDIF
               idum(1) = transform_tally(.true.,NTL,ISPL,iatm1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
      .                                 natmi1,nplsi1)
@@ -5693,15 +5787,34 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
  1160       CONTINUE
           ENDIF
           IF (ldum(1)) THEN
-            READ (IUNIN,6665) ldum(2:10) ! LHIST3(J),LCNTR3(J),LSMOT3(J),
-                                         ! LRAPS3(J),LVECT3(J),LRPVC3(J),
-                                         ! LRPS3D,LRPSCN
-            WRITE(IUNOT,6665) ldum(2:10)
-            READ (IUNIN,6665) ldum(2:4) ! LPRAD3(J),LPPOL3(J),LPTOR3(J)
-            WRITE(IUNOT,6665) ldum(2:4)
+            IF (streql(eirene_format,'iter') .or.
+     .          streql(eirene_format,'juelich') .or.
+     .          streql(eirene_format,'facelift') .or.
+     .          streql(eirene_format,'new')) then
+              READ (IUNIN,6665) ldum(2:10) ! LHIST3(J),LCNTR3(J),LSMOT3(J),
+                                           ! LRAPS3(J),LVECT3(J),LRPVC3(J),
+                                           ! LRPS3D,LRPSCN
+              WRITE(IUNOT,6665) ldum(2:10)
+              READ (IUNIN,6665) ldum(2:4) ! LPRAD3(J),LPPOL3(J),LPTOR3(J)
+              WRITE(IUNOT,6665) ldum(2:4)
+            ELSE IF (streql(eirene_format,'old')) then
+              READ (IUNIN,6665) ldum(2:8) ! LHIST3(J),LCTOUR(J),LSMOT3(J),
+                                          ! LRAPS(J),LPRAD(J),LPPOL(J),LPTOR(J)
+              WRITE(IUNOT,6665) ldum(2:5),
+     .                          .false.,.false.,.false.,.false.
+              WRITE(IUNOT,6665) ldum(6:8)
+            ENDIF
             DO 1161 I=1,NSP
-              READ (IUNIN,6666) 
-     &         ISPL,NTL,IPROJ,NPLI1,NPLO1,NPLI2,NPLO2,idum(8)  ! IPLN
+              IF (streql(eirene_format,'iter') .or.
+     .            streql(eirene_format,'juelich') .or.
+     .            streql(eirene_format,'facelift') .or.
+     .            streql(eirene_format,'new')) then
+                READ (IUNIN,6666) 
+     &           ISPL,NTL,IPROJ,NPLI1,NPLO1,NPLI2,NPLO2,idum(8)  ! IPLN
+              ELSE IF (streql(eirene_format,'old')) then
+                READ (IUNIN,6666) ISPL,IPROJ,NPLI1,NPLO1,NPLI2,NPLO2
+                idum(8) = 0
+              ENDIF
               idum(1) = transform_tally(.true.,NTL,ISPL,iatm1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
      .                                 natmi1,nplsi1)
@@ -5933,6 +6046,7 @@ C  SKIP READING REST OF THIS BLOCK
         ELSE IF (NMODE.NE.0) THEN
           READ (IUNIN,'(A72)') ZEILE ! LSYMET,LBALAN
           WRITE(IUNOT,'(A72)') ZEILE
+          IF (streql(eirene_format,'old')) READ (IUNIN,'(A72)') ZEILE
           READ (IUNIN,'(3I6)') idum(0:2) ! NFLA,NCUTB,NCUTL
           idum(0) = nplsi1
           WRITE(IUNOT,'(3I6)') idum(0:2)
@@ -5981,7 +6095,11 @@ C  NUMBER OF TARGETS ON B2 SURFACES: NTARGI
           WRITE(IUNOT,'(I6)') NTARGI
           allocate(NTGPRT(NTARGI))
           IF (NTARGI.GT.0) THEN
-            READ (IUNIN,6666) (NTGPRT(I),I=1,NTARGI)
+            IF (streql(eirene_format,'old')) THEN
+              NTGPRT(1:NTARGI) = 1
+            ELSE
+              READ (IUNIN,6666) (NTGPRT(I),I=1,NTARGI)
+            ENDIF
             WRITE(IUNOT,6666) (NTGPRT(I),I=1,NTARGI)
           END IF
           DO 3030 I=1,NTARGI
