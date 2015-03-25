@@ -540,14 +540,14 @@ ${XDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${SOLPS4OBJS} ${OBJDIR}/libb2.a ${MNEXT
 	${LD} ${LDOPTS} -o $@ $^ ${LCPP} ${GRLIBES} ${LDLIBES} ${LDEXTRA} ${LDOPTSend}
 
 ifdef MDSPLUS_DIR
-ifndef SOLPS_MDSPLUS_LIB
-SOLPS_MDSPLUS_LIB=-L${MDSPLUS_DIR}/lib -lMdsLib_client 
+ifndef LD_MDSPLUS
+LD_MDSPLUS=-L${MDSPLUS_DIR}/lib -lMdsLib_client 
 endif
 INCLUDE += -I${MDSPLUS_DIR}/include
 DEFAULT: ${MDEXE}
 
 ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
-	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${SOLPS_MDSPLUS_LIB} ${LDOPTSend}
+	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${LD_MDSPLUS} ${LDOPTSend}
 endif
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version.h
