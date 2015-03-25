@@ -44,6 +44,9 @@
 *     ninp(3): un*formatted; provides the (new) geometry.
 *     ninp(4): un*formatted; provides the (new) atomic rates.
 *     ninp(5): formatted; provides the transport switches.
+*     ninp(6): formatted; provides the initial state.
+*     ninp(7): formatted; provides geometric parameters.
+*     ninp(8): un*formatted; provides default physics parameters.
 *     For non-conformal cases, we additionally have:
 *     70: un*formatted; provides the (old) geometry.
 *
@@ -52,6 +55,7 @@
 *     nout(1): un*formatted; provides the transferred plasma state.
 *     nout(2): formatted; provides modified run switches.
 *     nout(3): formatted; provides modified transport parameters.
+*     nout(4): formatted; provides modified initial state.
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -73,14 +77,14 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:5), nout(0:3), nx, ny, ns, nx1, ny1, idum(0:9)
+      integer ninp(0:8), nout(0:4), nx, ny, ns, nx1, ny1, idum(0:9)
       integer io
 *   ..procedures
       external prgini, prgfin, xerset, xertst, cfopen, cfruin
       external b2ytdr, b2ytx0, ipsetc, ipgeti
 *   ..initialise input/output units
-      data ninp/50,51,52,53,54,55/
-      data nout/60,61,62,63/
+      data ninp/50,51,52,53,54,55,56,57,58/
+      data nout/60,61,62,63,64/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -90,10 +94,10 @@
 *
 *     Description of some local variables:
 *
-*     ninp - (0:5) integer array.
+*     ninp - (0:8) integer array.
 *     ninp specifies the input unit numbers.
 *
-*     nout - (0:3) integer array.
+*     nout - (0:4) integer array.
 *     nout specifies the output unit numbers.
 *
 *     nx, ny - integers.
@@ -123,17 +127,20 @@
       call cfopen (ninp(3),'b2fgmtry','old','un*formatted')
       call cfopen (ninp(4),'b2frates','old','un*formatted')
       call cfopen (ninp(5),'b2ah.dat','old','formatted')
+      call cfopen (ninp(6),'b2ai.dat','old','formatted')
+      call cfopen (ninp(7),'b2ag.dat','old','formatted')
+      call cfopen (ninp(8),'b2fpardf','old','un*formatted')
       call cfopen (nout(0),'b2yt.prt','new','formatted')
       call cfopen (nout(1),'b2fstatt','new','un*formatted')
       call cfopen (nout(2),'b2mn.dat.2','new','formatted')
-      call cfopen (nout(3),'b2ah.dat.2','new','formatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers						 !xpb
       call cfverr (ninp(1), b2fstate_version)				 !xpb
       call cfverr (ninp(3), b2fgmtry_version)				 !xpb
       call cfverr (ninp(4), b2frates_version)				 !xpb
-*   ..obtain nx, ny, ns
+      call cfverr (ninp(8), b2fparam_version)                            !xpb
+*   ..obtain nx, ny, ns from old state file
       call cfruin (ninp(1), 3, idum, 'nx,ny,ns')
       nx = idum(0)
       ny = idum(1)
@@ -147,9 +154,13 @@
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(3), 2, idum, 'nx,ny')
       call xertst (nx1.eq.idum(0), 
-     & 'inconsitent nx definition between b2fgmtry and b2yt.dat!')
+     & 'inconsistent nx definition between b2fgmtry and b2yt.dat!')
       call xertst (ny1.eq.idum(1),
-     & 'inconsitent ny definition between b2fgmtry and b2yt.dat!')
+     & 'inconsistent ny definition between b2fgmtry and b2yt.dat!')
+*   ..read and check ns from parameters file
+      call cfruin (ninp(8), 1, idum, 'ns')
+      call xertst (idum(0).eq.ns, 
+     & 'faulty input ns from parameters file')
 *   ..call principal driver routine
       call alloc_b2mod_plasma(nx,ny,ns)
       call alloc_b2mod_geo(nx,ny)

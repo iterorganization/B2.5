@@ -325,7 +325,7 @@
 *    ..new version: zamin, zamax, zn, am
        oldversion = .true.
        do is = 0, ns-1
-        read (nrid,*,err=92) id0, zpdum(is,0:3)
+        read (nrid,*,err=92) id0, (zpdum(is,i), i=0,3)
         read (id0,'(i8)',err=93) is0
         call xertst (is0.eq.is, 'faulty input under *specs')
         oldversion = oldversion .and. 

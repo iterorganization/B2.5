@@ -496,7 +496,7 @@ c-dpc-debug
         write(*,*) 'Bz is into the page away from you.'
       endif
       write(*,*) 'If this is not correct, please set :'
-      write(*,*) '"b2gafs_Bt_reversal" to "1" in "b2ag.dat" and rerun.'
+      write(*,*) '"b2agfs_Bt_reversal" to "1" in "b2ag.dat" and rerun.'
       write(*,*) 'If already set to "1", set to "0" instead.'
       write(*,'()')
       if (bb(nx,ny,0)*bb(nx,ny,2).lt.0.0_R8) then
@@ -508,7 +508,7 @@ c-dpc-debug
      .   'toroidal field.'
       endif
       write(*,*) 'If this is not correct, please set :'
-      write(*,*) '"b2gafs_pit_rescale" to "-1.0" in "b2ag.dat" '//
+      write(*,*) '"b2agfs_pit_rescale" to "-1.0" in "b2ag.dat" '//
      .   'and rerun.'
       write(*,*) 'If already set to "-1.0", set to "1.0" instead.'
       write(*,'()')
@@ -533,6 +533,8 @@ c-dpc-debug
 *   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')
       write(*,*) 'b2agdr3: bb(nx,ny,0) ',bb(nx,ny,0)
+*   ..in 5.1, we need a fort.30 file early to build triangular grids
+      call write_f30 (nx, ny)
 
 * ..return
       call subend ()

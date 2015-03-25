@@ -176,7 +176,7 @@ c    Version 01.001.067  02.06.11 introduced restriction of diamagnetic velociti
 c                        09.06.11 introduced new numerical manner of calculation fnbPSch(ix,iy,0) and fnbPSch(ix,iy,1)
 c                        15.07.11 replaced 1.e-3 by 3.e-3 in Eirene's sputer.F There was very strange "access violation" in this place  
 c                        22.07.11 corrected grlib.F (dummy) and masr3.F
-c    Version 01.001.068  28.07.11 added coupling B2 and ASTRA. For coupling it is necessary to use preprocessor variable ASTRA  
+c    Version 01.001.068  28.07.11 added coupling B2 and ASTRA. For coupling it is necessary to use pre-processor variable ASTRA  
 c    Version 01.001.069  09.09.11 changed output in b2fstate, b2fplasma and input from b2fstati fch_p. In both cases it is used array fch_p(:,:)  
 c                        20.09.11 modyfied b2tlnl.F
 c                        21.09.11 introduced nwtf in b2plot.F instead of 97

@@ -98,25 +98,25 @@
        call xertst (cbrbrk(ireg).le.cbrbrk(ireg+1),
      &   'faulty argument cbrbrk, south, not monotone')
       enddo
-      call xertst (1.lt.cbrbrk(cbirso+cbnrso-1),
+      call xertst (1.0_R8.lt.cbrbrk(cbirso+cbnrso-1),
      &  'faulty argument cbrbrk, south, endpoint')
       do ireg = cbirno, cbirno+cbnrno-2
        call xertst (cbrbrk(ireg).le.cbrbrk(ireg+1),
      &   'faulty argument cbrbrk, north, not monotone')
       enddo
-      call xertst (1.lt.cbrbrk(cbirno+cbnrno-1),
+      call xertst (1.0_R8.lt.cbrbrk(cbirno+cbnrno-1),
      &  'faulty argument cbrbrk, north, endpoint')
       do ireg = cbirwe, cbirwe+cbnrwe-2
        call xertst (cbrbrk(ireg).le.cbrbrk(ireg+1),
      &   'faulty argument cbrbrk, west, not monotone')
       enddo
-      call xertst (1.lt.cbrbrk(cbirwe+cbnrwe-1),
+      call xertst (1.0_R8.lt.cbrbrk(cbirwe+cbnrwe-1),
      &  'faulty argument cbrbrk, west, endpoint')
       do ireg = cbirea, cbirea+cbnrea-2
        call xertst (cbrbrk(ireg).le.cbrbrk(ireg+1),
      &   'faulty argument cbrbrk, east, not monotone')
       enddo
-      call xertst (1.lt.cbrbrk(cbirea+cbnrea-1),
+      call xertst (1.0_R8.lt.cbrbrk(cbirea+cbnrea-1),
      &  'faulty argument cbrbrk, east, endpoint')
 *   ..test boundary cross-consistency in /b2cmpb/
       do ic = 1, nncut
@@ -162,9 +162,9 @@
      &   cbshe(5,ireg).le.0.0_R8.and.0.0_R8.le.cbshe(6,ireg).and.
      &   cbshe(7,ireg).le.0.0_R8, 'faulty argument sign cbshe')
 *    ..test cbsch
-       call xertst (cbsch(1,ireg).le.0.and.
-     &   cbsch(3,ireg).le.0.and.cbsch(5,ireg).le.0.and.
-     &   cbsch(6,ireg).ge.0.and.cbsch(7,ireg).ge.0,
+       call xertst (cbsch(1,ireg).le.0.0_R8.and.
+     &   cbsch(3,ireg).le.0.0_R8.and.cbsch(5,ireg).le.0.0_R8.and.
+     &   cbsch(6,ireg).ge.0.0_R8.and.cbsch(7,ireg).ge.0.0_R8,
      &   'faulty argument sign cbsch')
 *    ..test cbrec, cbmsa, cbmsb
 *      (there are no tests for cbrec, cbmsa, cbmsb)
@@ -179,7 +179,7 @@
       enddo
       call b2xvsg (3, cfhce(0), 1, 'cfhce', '.ge.')
       call b2xvsg (3, cfsig(0), 1, 'cfsig', '.ge.')
-      do i = 0, 2
+      do i = 0, 3
        call xertst (cfalf(i)**2.le.cfhce(i)*cfsig(i),
      &   'faulty argument, cfhce*cfsig.lt.cfalf**2')
       enddo

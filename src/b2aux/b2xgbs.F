@@ -116,7 +116,7 @@
 *
 *-----------------------------------------------------------------------
 *   ..preliminaries
-      call subini ('b2xgbs')
+      call subini ('b2xgbs1')
 *   ..read switches
       if (ncall.eq.0) then
         call ipgeti ('b2news_area_fix', area_fix)

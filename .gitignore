@@ -5,6 +5,8 @@
 TAGS
 LISTOBJ
 git_version.h
+mpif.h
+!src/include/mpif.h
 
 # ignore anything in directories with executables
 Release/

@@ -65,7 +65,7 @@ c     -------------------------------------------------------------------------
 
 c     INPUT
       integer iarg(1:ns+7)              !parameters
-      integer specnum                   !number of species
+      integer specnum                   !location of the number of species
 
 c     the traj common
       integer nplot                     !number of plots
@@ -95,6 +95,7 @@ c                                       !number of particles per cell:
      *   deltat                         !timestep between plots
       logical ls_active(0:ns-1)         !species active?
       integer isclvl(0:ns-1)
+      character*16 texttraj(1:ns)
 
       integer zaehler,zaehler2,ip,randzaehler
 
@@ -103,6 +104,12 @@ c                                       !number of particles per cell:
       real (kind=R8) ::
      *   x05baf                            !cpu
       external x05baf
+#ifdef NAG22
+      integer IGEN
+      integer ISEED(4)
+      common /nag22/ igen, iseed
+      external G05KBF
+#endif
       real (kind=R8) ::
      *   cpu_start, cpu_end
 
@@ -115,7 +122,7 @@ c     parameter (destmode=2)               !hardwired to 2
 
       integer icol,oocol,lnblnk
       external lnblnk
-      character argstring*256
+      character argstring*256,tmpstring*256,titlestring*256
       real (kind=R8) ::
      *   currtime
 
@@ -184,6 +191,7 @@ c     getting the species numbers
       enddo
       do zaehler=0,iarg(specnum)-1
         ls_active(iarg(7+zaehler))=.true.
+        texttraj(zaehler+1)=textpl(iarg(7+zaehler))
       enddo
 
 c     find weighting function for the particle positions
@@ -200,10 +208,21 @@ c     find weighting function for the particle positions
       endif
 
 c     initialising the randomiser
+#ifndef NAG22
       call g05cbf(1000)       
+#else
+      IGEN=0
+      ISEED(1)=1000
+      call g05kbf(IGEN,ISEED)
+#endif
 
 c     open the Plot-Screen
-      call init_page('Trajectories',values(5),values(6),
+      tmpstring='Trajectories'
+      if (iarg(specnum).eq.1) 
+     > tmpstring=tmpstring(1:lnblnk(tmpstring))//
+     +           texttraj(1)(1:lnblnk(texttraj(1)))
+      call customise_label(tmpstring,titlestring)
+      call init_page(titlestring,values(5),values(6),
      +               values(7),values(8),1,.true.,.true.,.true.)
       call GOPWK(9,1,3)         !open GFLASH
 
@@ -281,7 +300,7 @@ c     initialise graphics
       else
         call data_copy(0)
         call additional_elements(nx,ny,.true.) !draws mesh/separatrix/etc... if wanted 
-        call specieslblbar(ns,isclvl,textpl)
+        call specieslblbar(iarg(specnum),isclvl,texttraj)
       endif
 !      call GFLAS2(1)
       call GFLAS2                              ! sv 27.02.01
@@ -927,7 +946,7 @@ c     --------------------------------------------------------------------------
       do is=0,ns-1
         do ix=-1,nx
           do iy=-1,ny
-            warr(ix,iy,is)=0
+            warr(ix,iy,is)=0.0_R8
           enddo
         enddo
       enddo
@@ -999,8 +1018,16 @@ c
       integer ix,iy,is,ip,ikilled,ipt,ipto,iptoo,nadd
       real (kind=R8) ::
      *   killval,addval,rmin,rmax,zmin,zmax,rre,zre
+#ifndef NAG22
       real (kind=R8) ::
      *   g05caf
+#else
+      integer IGEN
+      integer ISEED(4)
+      common /nag22/ igen, iseed
+      real (kind=R8) ::
+     *   g05kaf
+#endif
       logical phase1,inside_rectangle,gefunden
       if (b2plot_debug.ge.8) 
      . write(*,*) 'Starting allocate_particles: nps, np = ',nps,np
@@ -1139,8 +1166,13 @@ c add particle of species is in cell (ix,iy)
      2               crx(ix,iy,2),crx(ix,iy,0))
                 gefunden=.false.
                 do while (.not.gefunden)
+#ifndef NAG22
                   rre=g05caf(3.1_R8)*(rmax-rmin)+rmin
                   zre=g05caf(3.1_R8)*(zmax-zmin)+zmin
+#else
+                  rre=g05kaf(IGEN,ISEED)*(rmax-rmin)+rmin
+                  rre=g05kaf(IGEN,ISEED)*(zmax-zmin)+zmin
+#endif
                   gefunden=inside_rectangle(rre,zre,
      1             crx(ix,iy,1),cry(ix,iy,1),
      2             crx(ix,iy,3),cry(ix,iy,3),
