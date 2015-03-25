@@ -33,7 +33,7 @@ OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST}.${COMPILER}${EXT_MPI}${EXT_DEBUG
 
 # If compiling with Eirene, look in default place for Eirene sources/lib
 ifdef USE_EIRENE
-  SRCEIR = ${SOLPSTOP}/src/Eirene
+  SRCEIR = ${SOLPSTOP}/modules/Eirene
   EIRDIR = ${SRCEIR}/builds/couple_SOLPS-ITER.${HOST}.${COMPILER}${EXT_MPI}${EXT_DEBUG}
 endif
 
