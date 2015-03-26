@@ -12,6 +12,7 @@ c*                  for electron energy (TBD).
 c*  gpfc(i,j)     : fraction of nuclei of kind i (Eirene atoms) in one
 c*                  particle puffed in stratum number j
 c*  lmolscl(i)    : atomic species with which molecules of kind i scale
+c*  lionscl(i)    : atomic species with which test ions of kind i scale
 c*  mlcmp(i,j)    : number of atoms i in a molecule j
 c*  lcns          : Eirene 'non-default surfaces' for the core boundary
 c*  ncns          : number of these surfaces
@@ -36,9 +37,10 @@ cank }
 #     include "COUPLE/KOPPLDIM.F"
 #endif
 #     include "COUPLE/EIRSRT.F"
-      integer nstraid, nsdmax, natmid, nmolid, nstsid, nlmpgsd
+      integer nstraid, nsdmax, natmid, nmolid, nionid, nstsid, nlmpgsd
       parameter (NSTRAID=DEF_NSTRA, NSDMAX=DEF_NSD)
-      parameter (natmid=DEF_NATM, nmolid=DEF_NMOL, nstsid=DEF_NSTS)
+      parameter (natmid=DEF_NATM, nmolid=DEF_NMOL, nionid=DEF_NION)
+      parameter (nstsid=DEF_NSTS)
       parameter (nlmpgsd=DEF_NLIM+(DEF_NGSTAL+1)*DEF_NSTS)
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
@@ -60,7 +62,7 @@ cank }
      *   RC_LIST_Y(:,:),
      *   TARGSP(:,:),
      *   species_start(:), species_end(:),
-     *   b2espcr(:), eb2spcr(:), lstrascl(:,:), lmolscl(:),
+     *   b2espcr(:), eb2spcr(:), lstrascl(:,:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:)
       logical, allocatable, save ::
      *   CHEMSP(:)
@@ -94,6 +96,7 @@ cank }
       integer, save :: lstrascl(NSTRAID,0:natmid)
       character*1, save :: CRCSTRA(NSTRAID)
       integer, save :: lmolscl(nmolid), mlcmp(natmid,nmolid),
+     ,  lionscl(nionid),
      ,  lcns(nstsid), ltns(nstsid), lsns(nlmpgsd), ksns(NSTRAID), 
      ,  msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
@@ -173,6 +176,7 @@ csw 21feb2012
       allocate(eb2spcr(1:natmid))
       allocate(lstrascl(NSTRAID,0:natmid))
       allocate(lmolscl(nmolid))
+      allocate(lionscl(nionid))
       allocate(gpfc(natmid,NSTRAID))
       allocate(mlcmp(natmid,nmolid))
       allocate(lcns(nstsid))
@@ -242,6 +246,7 @@ cxpb 30% energy recycling for all ionised species except carbon.
       b2espcr=0
       eb2spcr=0
       lmolscl=0
+      lionscl=0
       mlcmp=0
       lcns=0
       ltns=0
@@ -338,7 +343,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
      .  volrecstart, volrecinc, volrecwt,
      .  species_start, species_end,
      5  neutrals_filename, neutrals_time_mod, neutrals_time_switch,
-     ,  lstrascl, l_neutrad, b2espcr, eb2spcr, lmolscl, mlcmp,
+     ,  lstrascl, l_neutrad, b2espcr, eb2spcr, lmolscl, mlcmp, lionscl,
      ,  lcns, ltns, lsns, ksns, gpfc, dbg_eir_mc, debug_flags,
      ,  neut_scl_lim, track_index, track_chem_sput,
      *  chemical_erosion_redep_fac,
@@ -597,6 +602,9 @@ c
      .   (l_h_mol(is).eq.mlcmp(j_h_at,is), 
      .    'faulty inputs l_h_mol, mlcmp')
       enddo
+      do is = 1, nionid
+        call xertst(0.le.lionscl(is), 'faulty input lionscl')
+      end do
       do is = 1, nstsid
         call xertst (0.le.lcns(is).and.lcns(is).le.nsts, 
      &   'faulty input lcns')

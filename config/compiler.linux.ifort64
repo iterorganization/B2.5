@@ -20,7 +20,7 @@ ifdef SOLPS_DEBUG
 ifdef USE_MPI
 FCOPTS = -g -C -traceback -r8
 else
-FCOPTS = -g -C -debug all -traceback
+FCOPTS = -g -C -debug all -traceback -check all
 endif
 else
 ifdef USE_MPI

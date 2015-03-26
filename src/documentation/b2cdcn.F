@@ -162,6 +162,9 @@
 *  MLCMP - integer array of size (NATM,NMOL). Contains the number of atoms 
 *    from Eirene atomic species IATM within each molecule of Eirene molecular 
 *    species IMOL. Defaults to 0.
+*  LIONSCL - integer array of size (NION). Contains the index of the Eirene 
+*    atomic species with which the Eirene test ion species (IION) should be 
+*    scaled. Defaults to 0.
 *  LCNS - integer array of size (NSTS). Contains the indices of Eirene 
 *    non-standard surfaces (block 3A in input.dat) corresponding to core 
 *    boundaries. Defaults to 0.
