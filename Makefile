@@ -1,26 +1,42 @@
-SRCB2 = ${PWD}
-SRCDIR = ${SRCB2}/src
-ifeq ($(shell [ -d ${SOLPSTOP} ] && echo yes || echo no ),yes)
-ifdef USE_MPI
-OBJDIR=${SOLPSTOP}/bin/${OBJECTCODE}/B2.5.mpi
-else
-OBJDIR=${SOLPSTOP}/bin/${OBJECTCODE}/B2.5
+# Test whether necessary environment variables are defined; if not, exit
+ifndef HOST_NAME
+  $(error HOST_NAME not defined)
+endif
+ifndef COMPILER
+  $(error COMPILER not defined)
 endif
 ifdef USE_EIRENE
-SRCEIR = ${SOLPSTOP}/src/Eirene
+  ifndef SOLPSTOP
+    $(error SOLPSTOP not defined, but trying to compile with Eirene)
+  endif
+endif
+
+SRCB2   = ${PWD}
+SRCDIR  = ${SRCB2}/src
+
+# Default prefix for OBJDIR: standalone
+PREF_OBJDIR = standalone
+ifdef USE_EIRENE
+PREF_OBJDIR = couple_Eirene
+endif
+
+# Extension for OBJDIR if mpi and/or debug options are used
 ifdef USE_MPI
-EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/B25Eirene.mpi/Eirene
-else
-EIRDIR = ${SOLPSTOP}/bin/${OBJECTCODE}/B25Eirene/Eirene
+EXT_MPI = .mpi
 endif
+ifdef SOLPS_DEBUG
+EXT_DEBUG = .debug
 endif
-else
-ifdef USE_MPI
-OBJDIR=bin/${OBJECTCODE}.mpi
-else
-OBJDIR=bin/${OBJECTCODE}
+
+# Directory where objectcode/binaries will be created
+OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_DEBUG}
+
+# If compiling with Eirene, look in default place for Eirene sources/lib
+ifdef USE_EIRENE
+  SRCEIR = ${SOLPSTOP}/modules/Eirene
+  EIRDIR = ${SRCEIR}/builds/couple_SOLPS-ITER.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_DEBUG}
 endif
-endif
+
 
 BASEDIR = ${OBJDIR}
 SRCLOCAL = ${SRCB2}/src.local
@@ -50,13 +66,13 @@ endif
 FPATH:=${VPATH}
 
 ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
-include ${OBJDIR}/LISTOBJ
+  include ${OBJDIR}/LISTOBJ
 endif
-include ${SRCB2}/config/compile
-MAKES = ${SRCB2}/Makefile ${SRCB2}/config/compile ${SRCB2}/config/compiler.${OBJECTCODE}
-ifeq ($(shell [ -e ${SRCB2}/config.local/compiler.${OBJECTCODE} ] && echo yes || echo no ),yes)
-include ${SRCB2}/config.local/compiler.${OBJECTCODE}
-MAKES+ = ${SRCB2}/config.local/compiler.${OBJECTCODE}
+  include ${SRCB2}/config/compile
+  MAKES = ${SRCB2}/Makefile ${SRCB2}/config/compile ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
+ifeq ($(shell [ -e ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
+  include ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
+  MAKES+ = ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
 endif
 
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
@@ -78,18 +94,13 @@ SOLPS4OBJS = ${SOLPS4}/readwrite.o ${SOLPS4}/b2rw.o ${SOLPS4}/calcalpha.o \
 SRCF = ${OBJS:%.o=%.F}
 
 PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe b2pl.exe
-ifdef USE_MPI
-PROG_MN = b2mn_mpi.exe
-else
-PROG_MN = b2mn_nompi.exe
-endif
-EXCL_MN = b2mn.exe b2mn_mpi.exe b2mn_nompi.exe
+PROG_MN = b2mn.exe
 PROG_XD = b2xd.exe
 PROG_OT = b2ag.exe b2ah.exe b2ai.exe b2ar.exe b2co.exe b2uf.exe b2fu.exe b2ts.exe b2yi_gnuplot.exe b2yh.exe b2yt.exe b2yv.exe b2fgmtry_mod.exe
 PROG_OP = b2op.exe b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
 
-EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${EXCL_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} ${PROG_OP} }
+EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} ${PROG_OP} }
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} ${PROG_OP} }
 
 GREXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_GR}}
@@ -529,14 +540,14 @@ ${XDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${SOLPS4OBJS} ${OBJDIR}/libb2.a ${MNEXT
 	${LD} ${LDOPTS} -o $@ $^ ${LCPP} ${GRLIBES} ${LDLIBES} ${LDEXTRA} ${LDOPTSend}
 
 ifdef MDSPLUS_DIR
-ifndef SOLPS_MDSPLUS_LIB
-SOLPS_MDSPLUS_LIB=-L${MDSPLUS_DIR}/lib -lMdsLib_client 
+ifndef LD_MDSPLUS
+LD_MDSPLUS=-L${MDSPLUS_DIR}/lib -lMdsLib_client 
 endif
 INCLUDE += -I${MDSPLUS_DIR}/include
 DEFAULT: ${MDEXE}
 
 ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
-	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${SOLPS_MDSPLUS_LIB} ${LDOPTSend}
+	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${LD_MDSPLUS} ${LDOPTSend}
 endif
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version.h
@@ -618,11 +629,7 @@ ${OBJDIR}/LISTOBJ: listobj
 VERSION: ${SRCDIR}/include/git_version.h
 
 ${SRCDIR}/include/git_version.h: force
-ifeq ($(shell [ -d ${SOLPSTOP} ] && echo yes || echo no ),yes)
-	@echo "      character*15 :: gitversion ='`(cd ${SOLPSTOP}; git describe --dirty --always)`'" > ${SRCDIR}/include/git_version_new.h
-else
 	@echo "      character*15 :: gitversion ='`git describe --dirty --always`'" > ${SRCDIR}/include/git_version_new.h
-endif
 	@if cmp -s ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version.h; then rm ${SRCDIR}/include/git_version_new.h; else mv ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version.h; fi
 
 ${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
@@ -651,7 +658,7 @@ endif
 endif
 	@if [ -f process.o ] ; then /bin/mv process.o ${OBJDIR}/ ; fi
 
-ifeq ($(OBJECTCODE),g77)
+ifeq ($(COMPILER),g77)
 ${OBJDIR}/b2stbc.o : b2stbc.F
 	@- /bin/rm -f ${OBJDIR}/b2stbc.f ${OBJDIR}/b2stbc.o
 ifeq ($(strip $(CPP)),)

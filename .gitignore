@@ -11,7 +11,9 @@ mpif.h
 # ignore anything in directories with executables
 Release/
 bin/
+builds/
+lib/
 
-#ignore local files
+#ignore local files and directories
+*.local
 *.local/
-
