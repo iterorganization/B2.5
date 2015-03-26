@@ -1,6 +1,6 @@
 # Test whether necessary environment variables are defined; if not, exit
-ifndef HOST
-  $(error HOST not defined)
+ifndef HOST_NAME
+  $(error HOST_NAME not defined)
 endif
 ifndef COMPILER
   $(error COMPILER not defined)
@@ -29,12 +29,12 @@ EXT_DEBUG = .debug
 endif
 
 # Directory where objectcode/binaries will be created
-OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST}.${COMPILER}${EXT_MPI}${EXT_DEBUG}
+OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_DEBUG}
 
 # If compiling with Eirene, look in default place for Eirene sources/lib
 ifdef USE_EIRENE
   SRCEIR = ${SOLPSTOP}/modules/Eirene
-  EIRDIR = ${SRCEIR}/builds/couple_SOLPS-ITER.${HOST}.${COMPILER}${EXT_MPI}${EXT_DEBUG}
+  EIRDIR = ${SRCEIR}/builds/couple_SOLPS-ITER.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_DEBUG}
 endif
 
 
@@ -69,10 +69,10 @@ ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
   include ${OBJDIR}/LISTOBJ
 endif
   include ${SRCB2}/config/compile
-  MAKES = ${SRCB2}/Makefile ${SRCB2}/config/compile ${SRCB2}/config/config.${HOST}.${COMPILER}
-ifeq ($(shell [ -e ${SRCB2}/config/config.${HOST}.${COMPILER}.local ] && echo yes || echo no ),yes)
-  include ${SRCB2}/config/config.${HOST}.${COMPILER}.local
-  MAKES+ = ${SRCB2}/config/config.${HOST}.${COMPILER}.local
+  MAKES = ${SRCB2}/Makefile ${SRCB2}/config/compile ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
+ifeq ($(shell [ -e ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
+  include ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
+  MAKES+ = ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
 endif
 
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
