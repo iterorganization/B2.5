@@ -130,10 +130,14 @@ csw 10oct2012 check if EIRENE was called -> avoid double counting
            rsa(ix,iy,is) = 0.0_R8
           endif
 *      ..compute recombination rate coefficient
-          if(is.gt.0 .and. .not.is_neutral(is)
-     .               .and. .not.is_neutral(is-1)) then
-           rra(ix,iy,is) = phm1*
-     &     expu(rlra(ix,iy,0,is)+rlra(ix,iy,1,is)*wrk0(ix,iy))
+cwd break if-test in two pieces to avoid some compilers evaluating is_neutral(is-1) if is=0 
+          if(is.gt.0) then
+           if (.not.is_neutral(is) .and. .not.is_neutral(is-1)) then
+             rra(ix,iy,is) = phm1*
+     &       expu(rlra(ix,iy,0,is)+rlra(ix,iy,1,is)*wrk0(ix,iy))
+           else
+            rra(ix,iy,is) = 0.0_R8
+           endif
           else
            rra(ix,iy,is) = 0.0_R8
           endif
