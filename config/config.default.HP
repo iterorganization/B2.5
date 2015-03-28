@@ -26,6 +26,7 @@ endif
    -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
   FCOPTS = -I4 -R8 +autodblpad +E4 -O
  endif
+ EQUIVS += -DHPUX
  FC = fort77
  CPP = /lib/cpp
  CPPOPTS = -C -P -I$(srcdir) $(EQUIVS)

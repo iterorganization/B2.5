@@ -514,6 +514,9 @@ ${OBJDIR}/eirmod_braeir.${MOD}:
 ${OBJDIR}/eirmod_ccoupl.${MOD}:
 	touch ${OBJDIR}/eirmod_ccoupl.${MOD}
 
+${OBJDIR}/eirmod_clogau.${MOD}:
+	touch ${OBJDIR}/eirmod_clogau.${MOD}
+
 ${OBJDIR}/eirmod_comusr.${MOD}:
 	touch ${OBJDIR}/eirmod_comusr.${MOD}
 

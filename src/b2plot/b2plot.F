@@ -47,6 +47,7 @@ c 2002-09-11: logic revised
 #endif
 #ifdef B25_EIRENE
       use eirmod_parmmod
+      use eirmod_clogau
       use eirmod_extrab25
       use eirmod_braeir
       use eirmod_eirbra

@@ -26,6 +26,7 @@ c
       use b2mod_b2cmpa
 #ifdef B25_EIRENE
       use eirmod_extrab25
+      use eirmod_clogau
 #endif
       implicit none
 
@@ -356,74 +357,74 @@ cank
         read (44,'(18i4)') (isrftype(i),i=1,nlimi)
         read (44,'(18i4)') (isrftype(nlim+i),i=1,nstsi)
       end if
-#ifdef TRIANG
-      if(jvft44 .ge. 20051115) then
-        read (44,'(6e13.5)') (wlarea(i),i=1,nlimi)
-        read (44,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
-      end if
-      if(jvft44 .ge. 20060206) then
-        k=0
-        read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
-        read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,natmi),i=1,nlimi)
-        read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,natmi),
+      if (NLWRMSH) then
+        if(jvft44 .ge. 20051115) then
+          read (44,'(6e13.5)') (wlarea(i),i=1,nlimi)
+          read (44,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
+        end if
+        if(jvft44 .ge. 20060206) then
+          k=0
+          read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
+          read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,natmi),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,natmi),
      ,                                                       i=1,nstsi)
-        k=k+natmi
-        read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
-        read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nmoli),i=1,nlimi)
-        read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nmoli),
+          k=k+natmi
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
+          read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nmoli),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nmoli),
      ,                                                       i=1,nstsi)
-        k=k+nmoli
-        read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
-        read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nioni),i=1,nlimi)
-        read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nioni),
+          k=k+nmoli
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
+          read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nioni),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nioni),
      ,                                                       i=1,nstsi)
-        k=k+nnioni
-        read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
-        read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
-        read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
+          k=k+nnioni
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
+          read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
      w                          i=1,nstsi)
-      end if
+        end if
 
-      if(jvft44 .ge. 20071209) then
-        do is = 1, natmi
-          call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,is,1))
-        end do
-      end if
+        if(jvft44 .ge. 20071209) then
+          do is = 1, natmi
+            call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,is,1))
+          end do
+        end if
       
-      if(jvft44 .ge. 20080706) then
-        READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,NSTS+1)        
-        READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,NSTS)    
-        READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,NSTS)    
-        READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,NSTS)    
-        READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,NSTS) 
+        if(jvft44 .ge. 20080706) then
+          READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,NSTS+1)        
+          READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,NSTS)    
+          READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,NSTS)    
+          READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,NSTS)    
+          READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,NSTS) 
       
-        NCL=eirdiag_nds_ind(NSTS+1)
+          NCL=eirdiag_nds_ind(NSTS+1)
 #ifdef B25_EIRENE
-        IF(.NOT.ALLOCATED(wldna_res)) 
-     >   ALLOCATE(wldna_res(NATM,NCL), wldnm_res(NMOL,NCL),
-     .            ewlda_res(NATM,NCL), ewldm_res(NMOL,NCL), 
-     .            ewldea_res(NATM,NCL), ewldem_res(NMOL,NCL), 
-     .            ewldrp_res(NCL), ewldmr_res(NMOL,NCL),
-     .            sarea_res(NCL) ) 
+          IF(.NOT.ALLOCATED(wldna_res)) 
+     >     ALLOCATE(wldna_res(NATM,NCL), wldnm_res(NMOL,NCL),
+     .              ewlda_res(NATM,NCL), ewldm_res(NMOL,NCL), 
+     .              ewldea_res(NATM,NCL), ewldem_res(NMOL,NCL), 
+     .              ewldrp_res(NCL), ewldmr_res(NMOL,NCL),
+     .              sarea_res(NCL) ) 
 #endif
  
-        READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
-        READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natm),i=1,NCL)
-        READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmol),i=1,NCL) 
-        READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natm),i=1,NCL)
-        READ (44,'(6e15.7)') ((ewldm_res(j,i),j=1,nmol),i=1,NCL)
-        READ (44,'(6e15.7)') ((ewldea_res(j,i),j=1,natm),i=1,NCL)
-        READ (44,'(6e15.7)') ((ewldem_res(j,i),j=1,nmol),i=1,NCL)
-        READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL) 
-        READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmol),i=1,NCL) 
+          READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
+          READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natm),i=1,NCL)
+          READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmol),i=1,NCL) 
+          READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natm),i=1,NCL)
+          READ (44,'(6e15.7)') ((ewldm_res(j,i),j=1,nmol),i=1,NCL)
+          READ (44,'(6e15.7)') ((ewldea_res(j,i),j=1,natm),i=1,NCL)
+          READ (44,'(6e15.7)') ((ewldem_res(j,i),j=1,nmol),i=1,NCL)
+          READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL) 
+          READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmol),i=1,NCL) 
+        end if
+      else  ! NLWRMSH
+        if(jvft44 .ge. 20130210) then
+          do is = 1, natmi
+            call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,is,1))
+          end do
+        end if      
       end if
-#else
-      if(jvft44 .ge. 20130210) then
-        do is = 1, natmi
-          call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,is,1))
-        end do
-      end if      
-#endif
 
 cc<<<
 * -- NO ERROR --
