@@ -58,6 +58,8 @@ C
       do is = 0, ns-1
         if (.not.is_neutral(is)) nplsi = nplsi + 1
       end do
+
+#ifdef B25_EIRENE
 C
 * ----------------------------------------------------------------------
 *  READ EIRENE SPECIES DENSITIES AND TEMPERATURES
@@ -452,7 +454,7 @@ cank
 cxpb 20130210
       call extend(eneutrad,nxdd,nydd,natm,nnx,nny,natmi)
 cxpb
-
+#endif
       NFEND = 1
 
 *  ---------------------------------------------------------------------
