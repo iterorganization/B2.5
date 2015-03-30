@@ -78,7 +78,7 @@
      * smin, smax, b2xvsg, b2xvff, ipgeti, ipgetr
       intrinsic abs, mod, sqrt
 *   ..initialisation
-      data ncall/0/, linearisation/1.0_R8/, impgyro_mod/1/, 
+      data ncall/0/, linearisation/1.0_R8/, impgyro_mod/0/, 
      * internal_energy_sources/.false./
 
 *-----------------------------------------------------------------------
@@ -167,6 +167,8 @@ cxpb Must convert fluxes to flux densities
         if (is0.ne.0) then
           do ix = -1, nx
             do iy = -1, ny
+              if (bottomiy(ix,iy).eq.-2) cycle
+              if (topiy(ix,iy).eq.ny+1) cycle
               ixr = rightix(ix,iy)
               iyr = rightiy(ix,iy)
               if (leftix(ix,iy).ne.-2 .and. 
