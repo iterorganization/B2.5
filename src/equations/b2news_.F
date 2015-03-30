@@ -89,6 +89,7 @@
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
      3  ue(-1:nx,-1:ny), vsal(-1:nx,-1:ny,0:1,0:ns-1),lnlam(-1:nx,-1:ny)
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
+      logical, allocatable :: solvemt(:,:)
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok                !srv 09.07.99
      &     , vis_per, solving, area_fix, no_current                   !srv 06.07.00
      &     , nsmin, nsmax
@@ -758,10 +759,12 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
         ue(:,:)=ue(:,:)/ne(:,:)                                         !srv 05.03.11 }
 
 *   ..iterate on heat balance
+      allocate(solvemt(0:ns-1,0:nnreg(0)))
+      solvemt(0:ns-1,0:nnreg(0)) = solvemo(0:ns-1,0:nnreg(0))
       if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                          !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall,
      &  solving(4), solving(3), solving(1),  
-     &  solveee, solveei, solvepo, solvemo(0:ns-1,0:nnreg(0)), 
+     &  solveee, solveei, solvepo, solvemt, 
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
      &  fne_, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,           !srv 27.12.01 28.06.03 30.06.03 07.07.09
@@ -772,7 +775,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        if(all(solveee(0:nnreg(0))).and.all(solveei(0:nnreg(0))))        !srv 26.09.12
      &  call b2nph9 (nx, ny, ns, nnreg(0), ncall,
      &  solving(4), solving(3), solving(1),  
-     &  solveee, solveei, solvepo, solvemo(0:ns-1,0:nnreg(0)), 
+     &  solveee, solveei, solvepo, solvemt, 
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
      &  fne_, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,           !srv 27.12.01 28.06.03 30.06.03 07.07.09
@@ -782,7 +785,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       if(mdf_fhe.eq.0 .and. mdf_fhi.ne.0) then                          !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall, 
      &  solving(4), solving(3), solving(1),  
-     &  solveee, solveei, solvepo, solvemo(0:ns-1,0:nnreg(0)), 
+     &  solveee, solveei, solvepo, solvemt, 
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
      &  fne_, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,           !srv 27.12.01 28.06.03 30.06.03 07.07.09
@@ -792,7 +795,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       if(mdf_fhe.ne.0 .and. mdf_fhi.eq.0) then                          !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall, 
      &  solving(4), solving(3), solving(1),  
-     &  solveee, solveei, solvepo, solvemo(0:ns-1,0:nnreg(0)), 
+     &  solveee, solveei, solvepo, solvemt, 
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
      &  fne_, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,           !srv 27.12.01 28.06.03 30.06.03 07.07.09
@@ -802,8 +805,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 #ifdef BLOCK
 !      stop
 #endif
-
-
+      deallocate(solvemt)
 
 csw 16aug2011 init potential 
       if(pot_eq.eq.0) po=0.0_R8                                     !srv 13.07.05

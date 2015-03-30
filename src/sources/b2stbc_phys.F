@@ -155,7 +155,7 @@
      &                         phm2 = 1.0e0_R8,
      &                         corr_flux   = 0.0e0_R8                 !srv 25.07.05
       character chns*3, chk*1                                        !srv 11.07.05
-      logical done
+      logical done, decay_length_ok
       real (kind=R8) ::
      *  ro(-1:nx,-1:ny), cs, csb, uuout, upout, zbar, zarg, uutest,  !srv 01.02.09
      *  fchy_dia, fchy_inertia, seec                                 !srv 07.04.00
@@ -6381,7 +6381,13 @@ cghgh
      1     BCCHAR(IB),boundary_location(ib)
           call xertst(ENIPAR(IB,1).ne.0.0_R8,
      1     'BCENI = 9, ENIPAR(,1) = 0')
-          if (.not.(all(bccon(0:ns-1,ib).eq.9))) then
+          decay_length_ok = .true.
+          do is = 0, ns-1
+            decay_length_ok = decay_length_ok .and.
+     1       (bccon(is,ib).eq.9 .or.
+     2       (is_neutral(is) .and. use_eirene.eq.1))
+          end do
+          if (.not.decay_length_ok) then
 !          call xertst(all(BCCON(0:NS-1,IB).EQ.9),
 !     1     'Should use BCCON(IS,IB).EQ.9 together with BCENI=9 ')       !srv 16.07.12
             write(0,*)
