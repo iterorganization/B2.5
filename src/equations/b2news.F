@@ -388,13 +388,13 @@
 cxpb
 *   ..iterate on parallel momentum balance
         if(coriolis.eq.0) then                                           !srv 19.10.08 {
-         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, guard_flows, 
+         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,  
      &    vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                        !srv 01.07.09
      &    na, te, ti, po, fna, cvsahz, cvsa, cvsa_cl, cvsahz_cl,         !srv 02.07.08
      &    smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
      &    resmt, corua, corut, pcca, pccm, ier0)
         else
-         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, guard_flows, 
+         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,  
      &    vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                        !srv 01.07.09
      &    na, te, ti, po, fna_fcor, cvsahz, cvsa, cvsa_cl, cvsahz_cl,    !srv 02.07.08
      &    smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,

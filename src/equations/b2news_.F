@@ -387,13 +387,13 @@ c   extra call at this place within internal iteration)
 csw 11oct2012 added check on coriolis force (taken from b2news())
         ier0=0
         if(coriolis.eq.0) then
-         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, guard_flows, 
+         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, 
      &   vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                        !srv 01.07.09
      &   na, te, ti, po, fna, cvsahz, cvsa, cvsa_cl, cvsahz_cl,         !srv 02.07.08
      &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
      &   resmt, corua, corut, pcca, pccm, ier0)
         else
-         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, guard_flows, 
+         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,  
      &   vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                                     !srv 23.07.99 09.01.01 01.07.09
      &   na, te, ti, po, fna_fcor, cvsahz, cvsa, cvsa_cl, cvsahz_cl,     !srv 19.07.02
      &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,     !srv 23.07.99 01.10.99 04.10.99 09.01.01

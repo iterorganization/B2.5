@@ -276,7 +276,7 @@
 *
 *     flag - character*8.
 *     flag specifies which code is to be used to calculate the rate
-*     coefficients. Its value may be 'adpak' or 'strahl'.
+*     coefficients. Its value may be 'adpak', 'strahl', 'adas' or 'amns'.
 *
 *     lblrc - character*120.
 *     lblrc identifies the instance of the program employed to prepare
