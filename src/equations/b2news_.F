@@ -701,7 +701,7 @@ c      with diamagnetic drift part                                      !srv 13.
      . rza, za_ext, fna_he, fa_ext, fch_p, fne)             !srv 13.05.99 21.01.00 11.10.02
       call b2xpfi (nx, ny, ns, fna_he, fni)                             !srv 13.05.99 21.01.00
 *   ..compute heat fluxes
-      call b2tfhe_ (nx, ny, ns, guard_flows, ismain, ismain0, facdrift,
+      call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,
      1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,        !srv 11.07.99 18.01.02 01.07.09
      1  ti, ni(-1,-1,1), na, fna,  vadia,                               !srv 17.05.99 25.01.02
      &  ua, fne, csig, csigin, chce,                                    !srv
