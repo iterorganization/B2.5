@@ -271,7 +271,7 @@ ctmp.dpc
             call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs, 
      &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)         !srv 11.10.02 03.06.03 }
             call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,      !srv 23.11.10 
-     1       bb, wbbl, wbbr, conn, vol, gs, hx, hy, hz, qz, qc, 
+     1       bb, conn, vol, gs, hx, hy, hz, qz, qc, 
      1       pbs, crx, cry, bzb, lnlam,                                !srv 13.10.06 01.07.09
      1       fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,     !srv 03.06.03
 !     1     fch_p, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,    !srv 03.06.03

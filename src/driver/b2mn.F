@@ -17,6 +17,7 @@
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_ppout
+      use b2mod_external
       implicit none
 csw 28feb2011 mpi
 #ifdef USE_MPI
@@ -226,6 +227,7 @@ csw
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
       call alloc_b2mod_ppout(nx,ny,ns)
+      call alloc_b2mod_external(nx,ny,ns)
       call b2mndr (ninp, nout, nx, ny, ns, ns0)
 *   ..write plasma state
       call cfverw(nout(7), newversion)
