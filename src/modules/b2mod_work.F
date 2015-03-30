@@ -70,6 +70,10 @@
       allocate(iffboundy(-1:nxd,-1:nyd))
       allocate(ifenebound(-1:nxd,-1:nyd))
       allocate(iftimbound(-1:nxd,-1:nyd))
+      allocate(facdrift_profile(-1:nxd,-1:nyd))
+      allocate(fac_ExB_profile(-1:nxd,-1:nyd))
+      allocate(fac_vis_profile(-1:nxd,-1:nyd))
+      allocate(ds(-1:nyd))
 
       avisper=0.0_R8                                              !srv 05.07.00
       bvisper=0.0_R8                                              !srv 05.07.00
@@ -100,6 +104,10 @@
       pccm=0.0_R8
       wrk0=0.0_R8
       wrk1=0.0_R8
+      facdrift_profile=1.0_R8
+      fac_ExB_profile=1.0_R8
+      fac_vis_profile=1.0_R8
+      ds=0.0_R8
       iffboundx=0
       iffboundy=0
       ifenebound=0

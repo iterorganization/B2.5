@@ -141,7 +141,7 @@
      *  na0eps, dtim, stim, etim, 
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,
      &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
-     &  density_rescale, BoRiS, ne_wanted, no_current,
+     &  density_rescale, BoRiS, ne_wanted, 
      &  ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, factor,
      &  ixfb, iyfb, ax, ay
       save ne_wanted, ne_wanted_time, ne_wanted_next_time,
@@ -149,7 +149,7 @@
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
       integer n2, itim, ierr, edition, i, b2time, coronal, use_eirene,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
-     *  save_f30, save_f31, external_species
+     *  save_f30, save_f31, external_species, no_current
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale, 
      *  neutral_sources_rescale,
