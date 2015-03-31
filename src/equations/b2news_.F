@@ -92,6 +92,7 @@
       logical, allocatable :: solvemt(:,:)
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok                !srv 09.07.99
      &     , vis_per, solving, area_fix, no_current                   !srv 06.07.00
+     &     , nsmin, nsmax
 !     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec   !srv 09.07.99
 !      real (kind=R8) ::                                                         !srv 04.06.99
 !     *   fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1)                         !srv 04.06.99
