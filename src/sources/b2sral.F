@@ -245,7 +245,7 @@
             catch_up=.false.
           endif
         enddo
-       else
+      else
         if(numerics_time_mod.gt.0.0_R8) then
           write(*,'(a,1p,3e12.4,2i6)') 
      .     'ELM: ',tim,mod(tim,numerics_time_mod),
@@ -263,9 +263,9 @@
       call xertst (0.0_R8.le.minval(fac_ExB) .and.
      &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
 	
-      if(style.eq.0) then                                               !srv 28.07.08
+      if (ncall.eq.0) then
 *   ..compute temporary drift velocities on first call
-       if (ncall.eq.0) then
+        if(style.eq.0) then                                              !srv 28.07.08
          call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpo)
          do is = 0, ns-1
            pb(-1:nx,-1:ny,is) = na(-1:nx,-1:ny,is)*ti(-1:nx,-1:ny)
@@ -354,8 +354,8 @@
             wadia(ix,iy,0,:) = 0.0_R8                                     !xpb
            endif
           enddo
-         enddo                                                            !xpb 
-         if(guard_flows.eq.0) then                                        !xpb
+         enddo                                                          !xpb 
+         if(guard_flows.eq.0) then                                      !xpb
 cxpb turn off flows between boundary cells
            do iy = -1, ny
             do ix = -1, nx
@@ -372,12 +372,12 @@ cxpb turn off poloidal flows in core boundary
              wadia(ix,-1,0,:) = 0.0_R8
             endif
            enddo
-         endif                                                            !xpb
+         endif                                                          !xpb
+       endif   ! style.eq.0
 cxpb initialize the data necessary for boundary conditions
-        call b2stbr_init (nx, ny, ns, BoRiS,
+       call b2stbr_init (nx, ny, ns, BoRiS,
      .   neutrals_count, sputter_namelist_used)
-       endif
-	endif                                                               !srv 28.07.08
+      endif                                                             !srv 28.07.08
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
        if((maxval(facdrift).ne.0.0_R8 .or.
