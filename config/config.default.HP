@@ -13,7 +13,7 @@ ifndef LD_NETCDF
 endif
 
  opsys = hpux
- ifneq ($(nil),$(findstring |$(shell hostname)|,|sas-hp|toucan|))
+ ifeq ($(HOST_NAME),NERSC)
   locale = nersc.gov
   grkind = 4
  endif
@@ -31,7 +31,7 @@ endif
  CPP = /lib/cpp
  CPPOPTS = -C -P -I$(srcdir) $(EQUIVS)
  BLD = ar rucv
- ifeq ($(locale),nersc.gov)
+ ifeq ($(HOST_NAME),NERSC)
   LAPACK = -llapack
   NAG = -L$(HOME)/lib -lnagsubst
   NCARG = -L$(NCARG_ROOT)/lib \
