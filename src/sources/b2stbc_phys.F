@@ -6384,7 +6384,7 @@ cghgh
           decay_length_ok = .true.
           do is = 0, ns-1
             decay_length_ok = decay_length_ok .and.
-     1       (bccon(is,ib).eq.9 .or.
+     1       (bccon(is,ib).eq.9 .or. bccon(is,ib).eq.0 .or.
      2       (is_neutral(is) .and. use_eirene.eq.1))
           end do
           if (.not.decay_length_ok) then
