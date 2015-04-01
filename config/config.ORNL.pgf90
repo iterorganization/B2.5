@@ -8,10 +8,13 @@ endif
 ifndef NCDIR
   $(error NCDIR not defined)
 endif
+ifndef SOLPS_LIB
+  $(error SOLPS_LIB not defined)
+endif
 LD_NETCDF  ?= -L${NCDIR} -lnetcdff 
 LD_MSCL    ?= -L${MSCL_ROOT} -lmscl
 LD_NCARG   ?= -L${NCARG_ROOT} -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
-LD_NAG     =
+LD_NAG     ?= -L${SOLPS_LIB} -lblaslapack
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
