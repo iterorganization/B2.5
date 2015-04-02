@@ -58,6 +58,7 @@ c     -------------------------------------------------------------------------
      
       use b2mod_types
       use b2mod_geo
+      use b2mod_plasma
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
