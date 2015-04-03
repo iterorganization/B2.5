@@ -1795,13 +1795,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call b2stbc_fb_final
 * finalise transport_models
       call write_b2mod_transport_models(99,'    ')
-      if(use_eirene.ne.0.and.itim.gt.0) then
-#ifdef B25_EIRENE
-         call eirene_mc_final(nx,ny,ns,BoRiS)
-#else
-         call xerrab ('b2mndr not compiled with the B25_EIRENE option')
-#endif
-      endif
 * finalise sputtering 
       call write_b2mod_sputter_namelist(99, nx, ny, ns, '    ')
 * finalise time-dependent wall data
@@ -1874,6 +1867,15 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call tallies(nx,ny,ns,BoRiS)
         endif
       endif     
+
+* finalise eirene_mc
+      if(use_eirene.ne.0.and.itim.gt.0) then
+#ifdef B25_EIRENE
+         call eirene_mc_final(nx,ny,ns,BoRiS)
+#else
+         call xerrab ('b2mndr not compiled with the B25_EIRENE option')
+#endif
+      endif
 
 !      open (70, file='b2fstate_add',form='unformatted')                   !srv 11.10.02 {
 !	 write(70) vaecrb, vadia, floe_noc, floi_noc, fna, fna_fcor,
