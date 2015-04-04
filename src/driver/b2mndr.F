@@ -1076,7 +1076,7 @@ csw 21feb2014
       if(use_eirene.eq.1) then
 #ifdef B25_EIRENE
         write(*,*) 'Calling FIND_PARAM'
-        CALL EIRENE_FIND_PARAM(5)
+        CALL EIRENE_FIND_PARAM(0)
         CALL EIRENE_SET_PARMMOD(1)
         write(*,*) 'Called FIND_PARAM'
         write(*,*) '   NDX = ',NDX
