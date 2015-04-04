@@ -1,0 +1,11 @@
+'Aluminium'         ! material long name (*32)
+1                   ! number of material constituents
+13                  ! atomic number of the material constituents (must all be on the same line!)
+1                   ! relative abundance of the material constituents (must all be integer)
+0.00                ! chemical sputtering parameter erel
+0.065               ! blackbody emissivity
+-16165.0            ! parameter A in the Vapor pressure : 10^(A/T+B)
+10.91               ! parameter B in the Vapor pressure : 10^(A/T+B)
+0.75                ! sticking coefficient for vapor pressure calculation
+933.0               ! melting point (K)
+0.399e6             ! heat of fusion (J/Kg)

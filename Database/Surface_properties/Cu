@@ -1,0 +1,11 @@
+'Copper'            ! material long name (*32)
+1                   ! number of material constituents
+29                  ! atomic number of the material constituents (must all be on the same line!)
+1                   ! relative abundance of the material constituents (must all be integer)
+0.00                ! chemical sputtering parameter erel
+0.10                ! blackbody emissivity
+-17079.0            ! parameter A in the Vapor pressure : 10^(A/T+B)
+11.26               ! parameter B in the Vapor pressure : 10^(A/T+B)
+0.75                ! sticking coefficient for vapor pressure calculation
+1356.0              ! melting point (K)
+0.205e6             ! heat of fusion (J/Kg)

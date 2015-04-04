@@ -1,0 +1,80 @@
+'SOLPSTOP/data/adas'
+54
+'12  ' '12  ' '96  ' '12  ' '12  ' '96  ' '96  ' 'h '
+'96  ' '96  ' '89  ' '96  ' '96  ' '96  ' '96  ' 'he'
+'96  ' '96  ' '89  ' '96  ' '96  ' '96  ' '96  ' 'li'
+'96  ' '96  ' '89  ' '96  ' '96  ' '96  ' '96  ' 'be'
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'b '
+'96  ' '96  ' '96  ' '96  ' '96  ' '96  ' '96  ' 'c '
+'96  ' '96  ' '89  ' '96  ' '96  ' '96  ' '96  ' 'n '
+'96  ' '96  ' '89  ' '96  ' '96  ' '96  ' '96  ' 'o '
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'f '
+'96  ' '96  ' '89  ' '96  ' '96  ' '96  ' '96  ' 'ne'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'na'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'mg'
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'al'
+'96  ' '96  ' '89  ' '96  ' '96  ' '96  ' '96  ' 'si'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'p '
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 's '
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'cl'
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'ar'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'k ' 
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'ca'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'sc'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'ti'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'v ' 
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'cr'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'mn'
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'fe'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'co'
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'ni'
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'cu'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'zn'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'ga'
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'ge'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'as'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'se'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'br'
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'kr'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'rb'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'sr'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'y ' 
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'zr'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'nb'
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'mo'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'tc'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'ru'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'rh'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'pd'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'ag'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'cd'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'in'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'sn'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'sb'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'te'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'i '
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'xe'
+ rec    ion    cex    prb    plt    zcd    ecd    es      [names in ratadas.F]
+ acd    scd    ccd    prb    plt    zcd    ecd            [directories in adas]
+
+Change log:
+        2013.07.01	DPC	Changed H acd, scd, prb, plt to '12
+        2014.04.29	DPC	Changed Si from '89 to '96 except for CCD (= '89)
+	2012.03.21	DPC	Changed Li from none to '96 except for CCD (= '89)
+				Changed Be from '93 to  '96 except for CCD (= '89)
+				Changed Ne from '89 to  '96 except for CCD (= '89)	
+				Changed Al from none to '89
+				Changed Cr from none to '89
+				Changed Fe from none to '89
+				Changed Ni from none to '89
+				Changed Cu from none to '89
+				Changed Ge from none to '89
+				Changed Kr from none to '89
+				Changed Mo from none to '89
+				Changed He CCD from '96 to '89 (zero in '96)
+	2012.03.20      DPC     '96 data for O seems to be missing CCD --- use '89 data
+	2011.11.18      DPC     '96 data for N seems to be missing CCD --- use '89 data
+	2003.01.23	XPB	Added elements 'Sb' to 'Xe' (51 to 54)
+	2000.07.10	DPC	Changed h, he, c, n, o from 89 to 96
+				Changed be to 93
+				Recommended by Behringer and Horton

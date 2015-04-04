@@ -1,0 +1,11 @@
+'Titanium Carbide'  ! material long name (*32)
+2                   ! number of material constituents
+22 6                ! atomic number of the material constituents (must all be on the same line!)
+ 1 1                ! relative abundance of the material constituents (must all be integer)
+1.5                 ! chemical sputtering parameter erel
+0.7                 ! blackbody emissivity
+-39117.9            ! parameter A in the Vapor pressure : 10^(A/T+B)
+15.23               ! parameter B in the Vapor pressure : 10^(A/T+B)
+0.05                ! sticking coefficient for vapor pressure calculation
+3290.0              ! melting point (K)
+1.187e6             ! heat of fusion (J/Kg)

@@ -1,0 +1,11 @@
+'Graphite'          ! material long name (*32)
+1                   ! number of material constituents
+6                   ! atomic number of the material consituents (must all be on the same line!)
+1                   ! relative abundance of the material constituents (must all be integer)
+1.8                 ! chemical sputtering parameter erel
+0.9                 ! blackbody emissivity
+-40181.0            ! parameter A in the Vapor pressure : 10^(A/T+B)
+14.80               ! parameter B in the Vapor pressure : 10^(A/T+B)
+0.4                 ! sticking coefficient for vapor pressure calculation
+3400.0              ! vaporisation temperature (K)
+59.9e6              ! heat of sublimation (J/Kg)

@@ -1,0 +1,11 @@
+'Stainless steel type 304'   ! material long name (*32)
+4                   ! number of material constituents
+26 24 28 25         ! atomic number of the material constituents (must all be on the same line!)
+71 19  9  1         ! relative abundance of the material constituents (must all be integer)
+0.00                ! chemical sputtering parameter erel
+0.35                ! blackbody emissivity
+-14321.9            ! parameter A in the Vapor pressure : 10^(A/T+B)
+9.44                ! parameter B in the Vapor pressure : 10^(A/T+B)
+0.75                ! sticking coefficient for vapor pressure calculation
+1700.0              ! melting point (K)
+0.266e6             ! heat of fusion (J/Kg)
