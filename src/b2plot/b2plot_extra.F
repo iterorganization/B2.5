@@ -52,7 +52,8 @@ c     log10 of rate coefficient (in cm3/s)
         if (trim(ELNAME).eq.'d'.or.trim(ELNAME).eq.'t') ELNAME = 'h'
         DSN = trim(REAC)//'/'//trim(REAC)//'_'//trim(ELNAME)//'.dat'
         call xertst(open_file(29,DSN,
-     .   'data.local/adas/adf11|data/adas/adf11'),'No ADAS file found')
+     .   'data.local/adas/adf11|modules/adas/adf11'),
+     .   'No ADAS file found')
 c     reading in data
 cxpb The number 2 is dependent on the type of data being read
         if(index(REAC,'acd').NE.0) then  ! recombination
@@ -322,15 +323,15 @@ C
       IF (INDEX(FILNAM,'AMJUEL').NE.0) THEN
         LCONST=.FALSE.
         if(.not.open_file(29,'AMJUEL',
-     1   'data.local|data')) stop 'No AMJUEL found'
+     1   'data.local|modules/Eirene/Database')) stop 'No AMJUEL found'
       ELSEIF (INDEX(FILNAM,'METHAN').NE.0) THEN
         LCONST=.FALSE.
         if(.not.open_file(29,'METHANE',
-     1   'data.local|data')) stop 'No METHANE found'
+     1   'data.local|modules/Eirene/Database')) stop 'No METHANE found'
       ELSEIF (INDEX(FILNAM,'HYDHEL').NE.0) THEN
         LCONST=.FALSE.
         if(.not.open_file(29,'HYDHEL',
-     1   'data.local|data')) stop 'No HYDHEL found'
+     1   'data.local|modules/Eirene/Database')) stop 'No HYDHEL found'
       ELSE
         LCONST=.TRUE.
         READ (REAC(1:9),'(E9.2)') CONST

@@ -41,7 +41,7 @@ c
       mimp=lun
       ufile='param.dg'
 c      open(lun,file=ufile,status='old',err=998)
-      if(.not.open_file(lun,ufile,'/src/DivGeo/uinp/')) then
+      if(.not.open_file(lun,ufile,'/modules/Uinp/')) then
         l2pwinp=.false.
         write(*,*) 'b2pwinp: unable to open param.dg'
         return

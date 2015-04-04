@@ -286,7 +286,7 @@ cxpb  Replaced with explicit writing of non-zero elements only
           call lower_case(filename2)
           if(sput_model.eq.1.and.open_file(99,filename,
      1     'data.local/trim.data/sputter.data|' // 
-     2     'data/trim.data/sputter.data')) then
+     2     'modules/B2.5/Database/trim.data/sputter.data')) then
             read(99,*)
             read(99,'(a80)') line
             read(line(index(line,'Es=')+3:index(line,'Es=')+7),*)
@@ -319,7 +319,7 @@ cxpb  Replaced with explicit writing of non-zero elements only
             sputter_length(is,itargsp)=ic
             if(open_file(nfile,filename2,
      1       'data.local/trim.data/sputter.data|' // 
-     2       'data/trim.data/sputter.data')) then
+     2       'modules/B2.5/Database/trim.data/sputter.data')) then
               do i=1,6
                 read(nfile,*)
               enddo
@@ -344,7 +344,8 @@ cxpb  Replaced with explicit writing of non-zero elements only
           else
             if (sput_model.eq.1) write(*,*) 'No sputtering data for ',
      1       sputter_codes(is),' onto ',target_code(itargsp)
-            if(open_file(98,'incatm','data.local|data')) then
+            if(open_file(98,'incatm',
+     .                      'data.local|modules/B2.5/Database')) then
               do ic=1,94
                 read(98,*) adum, idum1, atomic_mass(idum1), 
      1           surface_binding_energy(idum1), target_density(idum1)
@@ -395,7 +396,7 @@ c     2    i=1,sputter_length(is,itargsp))
           call lower_case(filename4)
           if(refl_model.eq.1.and.open_file(96,filename3,
      1     'data.local/trim.data/refl.data|' // 
-     2     'data/trim.data/refl.data')) then
+     2     'modules/B2.5/Database/trim.data/refl.data')) then
             read(96,*)
             if (itargsp.gt.ntargsp) then
               read(96,'(a80)') line
@@ -434,7 +435,7 @@ c     2    i=1,sputter_length(is,itargsp))
             reflect_length(is,itargsp)=ic
             if(open_file(95,filename4,
      1       'data.local/trim.data/refl.data|' // 
-     2       'data/trim.data/refl.data')) then
+     2       'modules/B2.5/Database/trim.data/refl.data')) then
               do i=1,6
                 read(95,*)
               enddo

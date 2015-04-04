@@ -192,7 +192,7 @@ cxpb    za_ext, pt_ext, am_ext, text_ext
               if(allocated(pdum)) deallocate(pdum)
               allocate(pdum(1:nint(zn_ext(is))))
               if(open_file(99,'ionization_potentials',
-     1         'data.local|data')) then
+     1         'data.local|modules/B2.5/Database')) then
                 do iss=1,nint(zn_ext(is))-1
                   read(99,*)
                 end do

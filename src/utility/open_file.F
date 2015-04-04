@@ -140,8 +140,6 @@ c
         call getenv ('SOLPSTOP', solpstop)
 #endif
 #endif
-        if(solpstop.eq.' ') 
-     >   solpstop='/afs/ipp-garching.mpg.de/u/dpc/solps4.0'
         first=.false.
       endif
       silent_open=.true.

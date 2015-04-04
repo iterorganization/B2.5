@@ -646,7 +646,7 @@ cxpb  Use explicit writing of non-default elements only
       character*32 str_dummy
       character*256 filenamecat
 
-      if(open_file(98,'incatm','data.local|data')) then
+      if(open_file(98,'incatm','data.local|modules/B2.5/Database')) then
         do ic=1,94
           read(98,*) adum, idum(0), atomic_mass(idum(0)), 
      1     surface_binding_energy(idum(0)), target_density(idum(0))
@@ -671,7 +671,8 @@ cxpb  Use explicit writing of non-default elements only
         end do
         if (.not.done) then
           ifile = ifile + 1
-          if(open_file(99,filename,'data.local|data')) then
+          if(open_file(99,filename,
+     .       'data.local|modules/B2.5/Database')) then
             read(99,*) surface_long_name(ibnd)
             read(99,*) matsurf_nconstituents(ibnd)
             nmax = max(nmax,matsurf_nconstituents(ibnd))
@@ -716,8 +717,8 @@ cxpb  Use explicit writing of non-default elements only
         end do
         if (.not.done) then
           ifile = ifile + 1
-          if(silent_open(99,filename,'data.local|data',filenamecat)) 
-     >     then
+          if(silent_open(99,filename,
+     .       'data.local|modules/B2.5/Database',filenamecat)) then
             read(99,*) str_dummy
             read(99,*) idum(0)
             read(99,*) (matsurf_nzconstituents(ibnd,i),i=1,idum(0)) 
@@ -766,7 +767,8 @@ c-xpb Normalise surface constituents
         end do
         if (.not.done) then
           ifile = ifile + 1
-          if(open_file(99,filename,'data.local|data')) then
+          if(open_file(99,filename,
+     .       'data.local|modules/B2.5/Database')) then
             read(99,*) bulk_long_name(ibnd)
             read(99,*) matbulk_target_density(ibnd)
             read(99,*) matbulk_Kappa_KA(ibnd)
@@ -830,7 +832,8 @@ c-xpb Normalise surface constituents
           end do
           if (.not.done) then
             ifile = ifile + 1
-            if(open_file(99,filename,'data.local|data')) then
+            if(open_file(99,filename,
+     .         'data.local|modules/B2.5/Database')) then
               read(99,*) coating_long_name(ibnd)
               read(99,*) coating_target_density(ibnd)
               read(99,*) coating_Kappa_KA(ibnd)
@@ -883,7 +886,8 @@ c-xpb Normalise surface constituents
         if(layer_alloys(ifile).ne.' ') then
           if (ifile.eq.0) write(*,*) 'Obtaining alloy properties'
           filename='Bulk_properties/'//trim(layer_alloys(ifile))
-          if(open_file(99,filename,'data.local|data')) then
+          if(open_file(99,filename,
+     .       'data.local|modules/B2.5/Database')) then
             read(99,*) alloy_long_name(ifile)
             read(99,*) alloy_Kappa_KA(ifile)
             read(99,*) alloy_Kappa_KB(ifile)
@@ -897,7 +901,8 @@ c-xpb Normalise surface constituents
 96          close(99)
           endif
           filename='Surface_properties/'//trim(layer_alloys(ifile))
-          if(open_file(99,filename,'data.local|data')) then
+          if(open_file(99,filename,
+     .       'data.local|imodules/B2.5/Database')) then
             read(99,*) adum
             read(99,*) alloy_nconstituents(ifile)
             read(99,*) alloy_nzconstituents
@@ -921,7 +926,8 @@ c-xpb Normalise surface constituents
           if (itrack.eq.1) 
      >     write(*,*) 'Obtaining tracked species properties'
           filename='Bulk_properties/'//trim(track_species(itrack))
-          if(open_file(99,filename,'data.local|data')) then
+          if(open_file(99,filename,
+     .       'data.local|modules/B2.5/Database')) then
             read(99,*) species_long_name(itrack)
             read(99,*) species_target_density(itrack)
             read(99,*) species_Kappa_KA(itrack)
@@ -936,7 +942,8 @@ c-xpb Normalise surface constituents
             close(99)
           endif
           filename='Surface_properties/'//trim(track_species(itrack))
-          if(open_file(99,filename,'data.local|data')) then
+          if(open_file(99,filename,
+     .       'data.local|modules/B2.5/Database')) then
             read(99,*) adum
             read(99,*) idum(0)
             read(99,*) idum(1:idum(0))

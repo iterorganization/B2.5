@@ -44,7 +44,7 @@ c     It is not allowed to bundled neutral and charged states together.
 
       if(.not.initialised) then
         if(open_file(99,'ionization_potentials',
-     1    'data.local|data')) then
+     1    'data.local|modules/B2.5/Database')) then
           is=0
           do while(is .lt. ns)
             if(.not.is_neutral(is)) then

@@ -1,0 +1,30 @@
+Datafiles for particle and energy reflection coefficients 
+as a function of impact energy and angle.    
+The tables are calculated with the Monte Carlo program
+trvmcmom, which is vectorized version of trim.sp
+determining also moments of distributions. The program
+assumes a nearly flat surface, a statistically roughness
+in the order of a monolayer is taken into account.
+Well polished surfaces give a good agreement with the
+calculated yields, but for rough surfaces the strong
+angular dependence is reduced. 
+
+The tables are arranged in such a way that lines give an
+angular dependence of sputtering yields at a fixed energy
+E0, and columns give an energy dependence at a fixed angle
+of incidence. On top of the tables the values for the 
+atomic numbers (z) and the masses (m) of the projectile 
+(index 1) and the target atoms (index 2) and the value for
+the surface binding energy (Es) are given. Furthermore, the
+number ne of incident energies and the number na of incident
+angles are provided.
+The names of the files consist of the symbol for the projectile
+and the target atom. The letter rn after the point indicates a  
+table with values of the particle reflection coefficient, the 
+term re a table with values of the energy reflection coefficient.
+
+Similar tables exist for the sputtering yield (y) and the 
+sputtered energy (ye) in the subdirectory sputter.data.
+
+If these data are used in a publication or report the origin
+of the data should be referenced.
