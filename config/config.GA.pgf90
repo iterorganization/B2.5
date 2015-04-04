@@ -59,4 +59,4 @@ else
 LDOPTS =
 endif
 
-#LCPP = -L${SOLPS_LIB} -lsonnet -lstdc++ -lblas
+#LCPP = -L${SOLPSLIB} -lsonnet -lstdc++ -lblas

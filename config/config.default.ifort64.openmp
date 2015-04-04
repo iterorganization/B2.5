@@ -50,10 +50,10 @@ LDLIBES = ${LD_NAG} ${LD_NETCDF} # -lblas
 #LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o -lnag
 #endif
 #ifdef PERFMON
-#LDLIBES += -L${SOLPS_LIB} -lperf
+#LDLIBES += -L${SOLPSLIB} -lperf
 #endif
 
 LD = ${FC}
 LDOPTS = -openmp
 
-#LCPP = -L${SOLPS_LIB} -lsonnet -lstdc++ -lblas
+#LCPP = -L${SOLPSLIB} -lsonnet -lstdc++ -lblas
