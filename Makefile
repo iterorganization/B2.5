@@ -58,7 +58,7 @@ INCLUDE += -I${SRCLOCAL}
 endif
 INCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include.local -I${SRCDIR}/include
 
-DEFINES = -DWANT_THIS ${SOLPS_CPP}
+DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
 ifdef USE_MPI
 DEFINES += ${USE_MPI}
 endif
