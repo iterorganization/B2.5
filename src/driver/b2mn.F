@@ -17,6 +17,7 @@
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_ppout
+      use b2mod_external
       implicit none
 csw 28feb2011 mpi
 #ifdef USE_MPI
@@ -133,6 +134,7 @@ csw
 #else
       integer ninp(0:5), nout(0:7), nx, ny, ns, ns0, idum(0:9), io
 #endif
+      integer process_id
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin
       external b2mndr
@@ -226,6 +228,7 @@ csw
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
       call alloc_b2mod_ppout(nx,ny,ns)
+      call alloc_b2mod_external(nx,ny,ns)
       call b2mndr (ninp, nout, nx, ny, ns, ns0)
 *   ..write plasma state
       call cfverw(nout(7), newversion)
@@ -235,7 +238,7 @@ csw
       call write_b2mod_sources(nout(7))
       call write_b2mod_transport(nout(7))
       call write_b2mod_anomalous_transport(nout(7))
-      call write_b2mod_neutr_src_scaling(nout(7),nstrai)
+      call write_b2mod_neutr_src_scaling(nout(7),nstrat)
       close(nout(7))
 #ifdef JET
 *   ..set and write ppout
