@@ -41,24 +41,22 @@
 *.declarations
 
 *   ..local variables
-      integer is, ix, iy, n2, ncall, diagno, enable, numerics_namelist
-      integer elm_count, k
+      integer is, ix, iy, n2, ncall, diagno, enable
+      integer k
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0                                
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *  timescale, invtimescale, timefactor, hlp
-      logical catch_up
-      save elm_count
 *   ..procedures
       real (kind=R8) :: roxa
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
       external subini, subend, xertst, ipgeti, b2xvsg
       intrinsic abs, min, mod, int
 *   ..initialisation
-      save ncall, diagno, enable, numerics_namelist
-      data ncall/0/, diagno/0/, enable/0/, numerics_namelist/0/
+      save ncall, diagno, enable
+      data ncall/0/, diagno/0/, enable/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -98,41 +96,7 @@
         if(enable.eq.0) then
           write(*,*) 'b2srsm disabled'
         endif
-        call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
-        call alloc_b2mod_numerics(nx,ny,ns)
-        if(numerics_namelist.ge.1) then
-          call read_b2mod_numerics_namelist(nx,ny)
-          call write_b2mod_numerics_namelist
-        endif
         if(eirene_mod.le.0) eirene_mod=1
-        if(numerics_time_mod.gt.0.0_R8) then
-          elm_count=tim/numerics_time_mod
-        else
-          elm_count=0
-        endif
-        catch_up=numerics_time_mod.gt.0.0_R8
-        do while(catch_up)
-          if(mod(tim,numerics_time_mod).gt.numerics_time_switch)
-     1     then
-            write(*,*) 'b2srsm: catching up ...' 
-            call read_b2mod_numerics_namelist(nx,ny)
-            call write_b2mod_numerics_namelist
-            catch_up=numerics_time_mod.gt.0.0_R8
-          else
-            catch_up=.false.
-          endif
-        enddo
-      else
-        if(numerics_time_mod.gt.0.0_R8) then
-          write(*,*) 'ELM: ',tim,mod(tim,numerics_time_mod),
-     1     numerics_time_switch,int(tim/numerics_time_mod),elm_count
-          if(mod(tim,numerics_time_mod).gt.numerics_time_switch.or.
-     1     int(tim/numerics_time_mod).gt.elm_count) then
-            elm_count=tim/numerics_time_mod
-            call read_b2mod_numerics_namelist(nx,ny)
-            call write_b2mod_numerics_namelist
-          endif
-        endif
       endif
 
       if(enable.ne.0) then

@@ -29,7 +29,11 @@ cank }
       use b2mod_version
       use b2mod_user_namelist
 #ifdef B25_EIRENE
+#ifndef SOLPS4_3
       use eirmod_parmmod
+#else
+      use parmmod   ! IGNORE
+#endif
 #endif
       implicit none
 #     include "DIMENSIONS.F"

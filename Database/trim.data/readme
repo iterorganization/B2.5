@@ -1,0 +1,60 @@
+Datafiles for sputter yields and sputtered energy,  
+particle and energy reflection coefficients and 
+mean ranges as a function of impact energy and angle.
+
+Tables exist for H, D, T, He4, N, Ne, and Ar on Be (not N), 
+C, and W, as well as selfbombardment. The incident energy 
+covers a range from 10 eV to 1 keV (up to 50 keV for He), 
+and 9 angles of incidence are chosen: 0 (normal incidence),
+15, 30, 45, 55, 65, 75, 80, and 85 degree.
+
+The tables are calculated with the Monte Carlo program
+trvmcmom, which is vectorized version of trim.sp
+determining also moments of distributions. The program
+assumes a nearly flat surface, a statistically roughness
+in the order of a monolayer is taken into account.
+Well polished surfaces give a good agreement with the
+calculated yields, but for rough surfaces the strong
+angular dependence is reduced. 
+
+The tables are arranged in such a way that lines give an
+angular dependence of sputtering yields at a fixed energy
+E0, and columns give an energy dependence at a fixed angle
+of incidence. On top of the tables the values for the 
+atomic numbers (z) and the masses (m) of the projectile 
+(index 1) and the target atoms (index 2) and the value for
+the surface binding energy (Es) are given. Furthermore, the
+number ne of incident energies and the number na of incident
+angles are provided. In the case for H, D, T, and N a binding 
+energy of 1 eV for the projectiles is assumed.
+
+The names of the files consist of the symbol for the projectile
+and the target atom. The letter y after the point indicates 
+sputter yields, the term ye sputtered energy. Analoguously,   
+the term rn after the point indicates a table with values of  
+the particle reflection coefficient, the term re a table with 
+values of the energy reflection coefficient. The term 1m 
+indicates the first moment of the depth distribution of 
+implanted projectiles.
+
+To check the sensitivity of simulation results depending on 
+the sputter yields given in the tables a sputtering yield of
+twice the yield at normal incidence and independent
+on the angle of incidence can be tried (an assumption
+in divimp for rough surfaces).
+The energy distribution of the sputtered atoms can be
+described by a Thompson distribution. An energy E can be
+determined by a pseudorandom number r due to the formula
+   E/Es = 1/((1.+1./a)*sqrt(1./r)-1.) ,
+where Es is the surface binding energy and a the maximum
+transferable energy divided by the surface binding energy.
+   a = 4*m1*m2/(m1+m2)**2*E0/Es
+E0 is the incident energy.
+The angular distribution of sputtered atoms can be
+approximated by a cosine distribution. An exit angle theta
+can again be determined by a random number r
+   theta = arcsin(r) .
+
+If these data are used in a publication or report the origin
+of the data should be referenced: W.Eckstein, IPP-Report 9/117,
+Garching, March 1998.

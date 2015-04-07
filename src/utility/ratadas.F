@@ -208,7 +208,7 @@ c     ionisation potentials
 
 c     reading in filename and mass
       if(.not.silent_open(99,'ratadas.filelist',
-     1 'data.local|data',actual_file))
+     1 'data.local|modules/B2.5/Database',actual_file))
      1 stop 'missing file'
       write(*,*) 'Getting ADAS file list from ',trim(actual_file)
       write(nput,*) 'Getting ADAS file list from ',trim(actual_file)
@@ -381,7 +381,8 @@ c     reading in data, recombination
         DDENSDrec(1:IDMAXDrec)=Ddummy(1:IDMAXDrec)
         DTEVDrec(1:ITMAXDrec)=Tdummy(1:ITMAXDrec)
         DREC=-74.0_R8
-      else if(silent_open(99,fnrec,'data.local|data',actual_file)) then
+      else 
+     . if(silent_open(99,fnrec,'data.local|modules',actual_file)) then
         write(*,*) 'Used ',trim(actual_file),
      .   ' for recombination'
         write(nput,*) 'Used ',trim(actual_file),
@@ -420,7 +421,8 @@ c     reading in data, ionisation
         DDENSDion(1:IDMAXDion)=Ddummy(1:IDMAXDion)
         DTEVDion(1:ITMAXDion)=Tdummy(1:ITMAXDion)
         DION=-74.0_R8
-      else if(silent_open(99,fnion,'data.local|data',actual_file)) then
+      else 
+     . if(silent_open(99,fnion,'data.local|modules',actual_file)) then
         write(*,*) 'Used ',trim(actual_file),
      .   ' for ionisation'
         write(nput,*) 'Used ',trim(actual_file),
@@ -459,7 +461,8 @@ c     reading in data, charge exchange
         DDENSDcex(1:IDMAXDcex)=Ddummy(1:IDMAXDcex)
         DTEVDcex(1:ITMAXDcex)=Tdummy(1:ITMAXDcex)
         DCEX=-74.0_R8
-      else if(silent_open(99,fncex,'data.local|data',actual_file)) then
+      else 
+     . if(silent_open(99,fncex,'data.local|modules',actual_file)) then
         write(*,*) 'Used ',trim(actual_file),
      .   ' for charge exchange'
         write(nput,*) 'Used ',trim(actual_file),
@@ -498,7 +501,8 @@ c     reading in data, bremsstrahlung + radiative recombination contribution
         DDENSDprb(1:IDMAXDprb)=Ddummy(1:IDMAXDprb)
         DTEVDprb(1:ITMAXDprb)=Tdummy(1:ITMAXDprb)
         DPRB=-74.0_R8
-      else if(silent_open(99,fnprb,'data.local|data',actual_file)) then
+      else 
+     . if(silent_open(99,fnprb,'data.local|modules',actual_file)) then
         write(*,*) 'Used ',trim(actual_file),
      .   ' for bremsstrahlung'
         write(nput,*) 'Used ',trim(actual_file),
@@ -537,7 +541,8 @@ c     reading in data, line radiation
         DDENSDplt(1:IDMAXDplt)=Ddummy(1:IDMAXDplt)
         DTEVDplt(1:ITMAXDplt)=Tdummy(1:ITMAXDplt)
         DPLT=-74.0_R8
-      else if(silent_open(99,fnplt,'data.local|data',actual_file)) then
+      else 
+     . if(silent_open(99,fnplt,'data.local|modules',actual_file)) then
         write(*,*) 'Used ',trim(actual_file),
      .   ' for line radiation'
         write(nput,*) 'Used ',trim(actual_file),
@@ -581,7 +586,8 @@ c     reading in data, effective charge
           izpmin(ic) = ic
           izpmax(ic) = ic
         enddo
-      else if(silent_open(99,fnzav,'data.local|data',actual_file)) then
+      else 
+     . if(silent_open(99,fnzav,'data.local|modules',actual_file)) then
         write(*,*) 'Used ',trim(actual_file),
      .   ' for effective charge'
         write(nput,*) 'Used ',trim(actual_file),
@@ -637,7 +643,8 @@ c     reading in data, effective square charge
         DDENSDza2(1:IDMAXDza2)=Ddummy(1:IDMAXDza2)
         DTEVDza2(1:ITMAXDza2)=Tdummy(1:ITMAXDza2)
         DZA2=-1.0_R8
-      else if(silent_open(99,fnza2,'data.local|data',actual_file)) then
+      else 
+     . if(silent_open(99,fnza2,'data.local|modules',actual_file)) then
         write(*,*) 'Used ',trim(actual_file),
      .   ' for effective square charge'
         write(nput,*) 'Used ',trim(actual_file),
@@ -684,7 +691,8 @@ c     reading in data, effective ionisation potential
         DDENSDpot(1:IDMAXDpot)=Ddummy(1:IDMAXDpot)
         DTEVDpot(1:ITMAXDpot)=Tdummy(1:ITMAXDpot)
         DPOT=-1.0_R8
-      else if(silent_open(99,fnpot,'data.local|data',actual_file)) then
+      else 
+     . if(silent_open(99,fnpot,'data.local|modules',actual_file)) then
         write(*,*) 'Used ',trim(actual_file),
      .   ' for effective ionisation potential'
         write(nput,*) 'Used ',trim(actual_file),
@@ -722,7 +730,7 @@ c     reading in data, effective ionisation potential
       endif
 c     reading in data, ionisation potentials
       if(.not.silent_open(99,'ionization_potentials',
-     1 'data.local|data',actual_file))
+     1 'data.local|modules/B2.5/Database',actual_file))
      1 stop 'missing file'
       write(*,*) 'Used ',trim(actual_file),
      .   ' for ionisation potentials table'

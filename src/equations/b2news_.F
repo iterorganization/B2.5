@@ -89,8 +89,10 @@
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
      3  ue(-1:nx,-1:ny), vsal(-1:nx,-1:ny,0:1,0:ns-1),lnlam(-1:nx,-1:ny)
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
+      logical, allocatable :: solvemt(:,:)
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok                !srv 09.07.99
      &     , vis_per, solving, area_fix, no_current                   !srv 06.07.00
+     &     , nsmin, nsmax
 !     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec   !srv 09.07.99
 !      real (kind=R8) ::                                                         !srv 04.06.99
 !     *   fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1)                         !srv 04.06.99
@@ -387,13 +389,13 @@ c   extra call at this place within internal iteration)
 csw 11oct2012 added check on coriolis force (taken from b2news())
         ier0=0
         if(coriolis.eq.0) then
-         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, guard_flows, 
+         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, 
      &   vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                        !srv 01.07.09
      &   na, te, ti, po, fna, cvsahz, cvsa, cvsa_cl, cvsahz_cl,         !srv 02.07.08
      &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
      &   resmt, corua, corut, pcca, pccm, ier0)
         else
-         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, guard_flows, 
+         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,  
      &   vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                                     !srv 23.07.99 09.01.01 01.07.09
      &   na, te, ti, po, fna_fcor, cvsahz, cvsa, cvsa_cl, cvsahz_cl,     !srv 19.07.02
      &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,     !srv 23.07.99 01.10.99 04.10.99 09.01.01
@@ -701,7 +703,7 @@ c      with diamagnetic drift part                                      !srv 13.
      . rza, za_ext, fna_he, fa_ext, fch_p, fne)             !srv 13.05.99 21.01.00 11.10.02
       call b2xpfi (nx, ny, ns, fna_he, fni)                             !srv 13.05.99 21.01.00
 *   ..compute heat fluxes
-      call b2tfhe_ (nx, ny, ns, guard_flows, ismain, ismain0, facdrift,
+      call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,
      1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,        !srv 11.07.99 18.01.02 01.07.09
      1  ti, ni(-1,-1,1), na, fna,  vadia,                               !srv 17.05.99 25.01.02
      &  ua, fne, csig, csigin, chce,                                    !srv
@@ -757,10 +759,12 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
         ue(:,:)=ue(:,:)/ne(:,:)                                         !srv 05.03.11 }
 
 *   ..iterate on heat balance
+      allocate(solvemt(0:ns-1,0:nnreg(0)))
+      solvemt(0:ns-1,0:nnreg(0)) = solvemo(0:ns-1,0:nnreg(0))
       if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                          !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall,
      &  solving(4), solving(3), solving(1),  
-     &  solveee, solveei, solvepo, solvemo(0:ns-1,0:nnreg(0)), 
+     &  solveee, solveei, solvepo, solvemt, 
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
      &  fne_, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,           !srv 27.12.01 28.06.03 30.06.03 07.07.09
@@ -771,7 +775,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        if(all(solveee(0:nnreg(0))).and.all(solveei(0:nnreg(0))))        !srv 26.09.12
      &  call b2nph9 (nx, ny, ns, nnreg(0), ncall,
      &  solving(4), solving(3), solving(1),  
-     &  solveee, solveei, solvepo, solvemo(0:ns-1,0:nnreg(0)), 
+     &  solveee, solveei, solvepo, solvemt, 
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
      &  fne_, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,           !srv 27.12.01 28.06.03 30.06.03 07.07.09
@@ -781,7 +785,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       if(mdf_fhe.eq.0 .and. mdf_fhi.ne.0) then                          !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall, 
      &  solving(4), solving(3), solving(1),  
-     &  solveee, solveei, solvepo, solvemo(0:ns-1,0:nnreg(0)), 
+     &  solveee, solveei, solvepo, solvemt, 
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
      &  fne_, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,           !srv 27.12.01 28.06.03 30.06.03 07.07.09
@@ -791,7 +795,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       if(mdf_fhe.ne.0 .and. mdf_fhi.eq.0) then                          !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall, 
      &  solving(4), solving(3), solving(1),  
-     &  solveee, solveei, solvepo, solvemo(0:ns-1,0:nnreg(0)), 
+     &  solveee, solveei, solvepo, solvemt, 
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
      &  fne_, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,           !srv 27.12.01 28.06.03 30.06.03 07.07.09
@@ -801,8 +805,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 #ifdef BLOCK
 !      stop
 #endif
-
-
+      deallocate(solvemt)
 
 csw 16aug2011 init potential 
       if(pot_eq.eq.0) po=0.0_R8                                     !srv 13.07.05

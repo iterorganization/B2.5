@@ -1,0 +1,11 @@
+'Titanium'          ! material long name (*32)
+1                   ! number of material constituents
+22                  ! atomic number of the material constituents (must all be on the same line!)
+1                   ! relative abundance of the material constituents (must all be integer)
+0.00                ! chemical sputtering parameter erel
+0.63                ! blackbody emissivity
+-23340.0            ! parameter A in the Vapor pressure : 10^(A/T+B)
+9.79                ! parameter B in the Vapor pressure : 10^(A/T+B)
+0.75                ! sticking coefficient for vapor pressure calculation
+1155.0              ! triple point (K)
+0.0                 ! heat of sublimation (J/Kg)

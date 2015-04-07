@@ -47,6 +47,7 @@ c 2002-09-11: logic revised
 #endif
 #ifdef B25_EIRENE
       use eirmod_parmmod
+      use eirmod_clogau
       use eirmod_extrab25
       use eirmod_braeir
       use eirmod_eirbra
@@ -5161,7 +5162,7 @@ c
             lu=lu+1
           endif
           if(.not.open_file(lu,spop(sstack,isstack),
-     1           'data.local/commands|data/commands')) then
+     1           'data.local/commands|scripts/commands')) then
             write(*,*) 'cmd failed top open file'
             lu=save_lu(lu_pos)
             lu_pos=lu_pos-1
@@ -5186,7 +5187,7 @@ c
           endif
           lucdf=lu
           if(.not.open_file(lu,spop(sstack,isstack),
-     1           'data.local/commands|data/commands')) then
+     1           'data.local/commands|scripts/commands')) then
             write(*,*) 'cmd failed top open file'
             lu=save_lu(lu_pos)
             lu_pos=lu_pos-1

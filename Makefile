@@ -38,16 +38,27 @@ ifdef USE_EIRENE
 endif
 
 
+# Add external includes first
+INCLUDE = 
+ifdef NCDIR
+INCLUDE += -I${NCDIR}/include
+endif
+
+ifdef MDSPLUS_DIR
+ifndef LD_MDSPLUS
+LD_MDSPLUS=-L${MDSPLUS_DIR}/lib -lMdsLib_client 
+endif
+INCLUDE += -I${MDSPLUS_DIR}/include
+
+# Local includes
 BASEDIR = ${OBJDIR}
 SRCLOCAL = ${SRCB2}/src.local
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
-INCLUDE = -I${SRCLOCAL}
-else
-INCLUDE =
+INCLUDE += -I${SRCLOCAL}
 endif
 INCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include.local -I${SRCDIR}/include
 
-DEFINES = -DWANT_THIS ${SOLPS_CPP}
+DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
 ifdef USE_MPI
 DEFINES += ${USE_MPI}
 endif
@@ -514,6 +525,9 @@ ${OBJDIR}/eirmod_braeir.${MOD}:
 ${OBJDIR}/eirmod_ccoupl.${MOD}:
 	touch ${OBJDIR}/eirmod_ccoupl.${MOD}
 
+${OBJDIR}/eirmod_clogau.${MOD}:
+	touch ${OBJDIR}/eirmod_clogau.${MOD}
+
 ${OBJDIR}/eirmod_comusr.${MOD}:
 	touch ${OBJDIR}/eirmod_comusr.${MOD}
 
@@ -539,11 +553,7 @@ ${GREXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
 ${XDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${SOLPS4OBJS} ${OBJDIR}/libb2.a ${MNEXTRA}
 	${LD} ${LDOPTS} -o $@ $^ ${LCPP} ${GRLIBES} ${LDLIBES} ${LDEXTRA} ${LDOPTSend}
 
-ifdef MDSPLUS_DIR
-ifndef LD_MDSPLUS
-LD_MDSPLUS=-L${MDSPLUS_DIR}/lib -lMdsLib_client 
-endif
-INCLUDE += -I${MDSPLUS_DIR}/include
+
 DEFAULT: ${MDEXE}
 
 ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}

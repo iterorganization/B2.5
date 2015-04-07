@@ -355,6 +355,10 @@ c*** Check the b2espcr array
           hlp_bad_isp=.false.
           ispc_ref=-1
           do i=0,ns-1 !{
+cwd exclude fluid neutrals from this check: their recycling coefficient doesn't
+c   necessarily have to match that of the ions, since they are not treated in the
+c   same Eirene stratum
+            if (is_neutral(i)) cycle
             j=b2espcr(i)
             if(ispc_ref(j).lt.0) then !{
               ispc_ref(j)=i
@@ -590,7 +594,11 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         eircount=1
         if(ncall.eq.0) then 
           write(*,*) 'Calling post_couple'
-          call post_couple(nx,ny,ns,nstrat)
+          if (crcstra(nstrat) .eq. 'T') then 
+            call post_couple(nx,ny,ns,nstrat-1)
+          else
+            call post_couple(nx,ny,ns,nstrat)
+          endif
           write(*,*) 'Called post_couple'
         endif
         if(ncall.eq.0.and.repeat_first_call.gt.0) then

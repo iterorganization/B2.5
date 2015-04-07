@@ -1,0 +1,11 @@
+'Place holder'      ! material long name (*32)
+                    ! number of material constituents
+                    ! atomic number of the material constituents (must all be on the same line!)
+                    ! relative abundance of the material constituents (must all be integer)
+                    ! chemical sputtering parameter erel
+                    ! blackbody emissivity
+                    ! parameter A in the Vapor pressure : 10^(A/T+B)
+                    ! parameter B in the Vapor pressure : 10^(A/T+B)
+                    ! sticking coefficient for vapor pressure calculation
+                    ! vaporisation temperature (K)
+                    ! heat of sublimation (J/Kg)

@@ -301,7 +301,7 @@
 *    'b2stbc_volrec_alpha'      '1.0e-3'               Numerics
 *    'b2stbc_volrec_beta'       '1.0'                  Numerics
 *    'b2stbc_volrec_overshoot'  '0.0'                  Physics
-*    'b2stbm_impgyro_mod'       '1'                    Numerics
+*    'b2stbm_impgyro_mod'       '0'                    Numerics
 *    'b2stbm_linearisation'     '1.0'                  Numerics
 *    'b2stbr_alpha'             '0.25'                 Physics
 *    'b2stbr_b2wall_netcdf'     '0'                    Output
@@ -434,7 +434,7 @@
 *    'eirene_ua_max'            '+c'                   Numerics
 *    'eirene_ua_min'            '-c'                   Numerics
 *    'eirene_print_minmax'      '0'                    Numerics
-*    'eirene_use_recyceir'      '1'                    Physics
+*    'eirene_use_recyceir'      '0'                    Physics
 *    'heatdiff1D_linlog'        '1'                    Numerics
 *    'heatdiff1D_ratio'         '100.0'                Numerics
 *    'ma28_nwrite'              '0'                    Output
@@ -1988,7 +1988,7 @@
 *    treatment of trace impurity ions. 
 *    'b2stbm_linearization' is an alias for this switch.
 *
-*    'b2stbm_impgyro_mod'       '1'                    Numerics
+*    'b2stbm_impgyro_mod'       '0'                    Numerics
 *    Specifies the frequency (in units of full b2 timesteps) at which an
 *    externally coupled code providing additional source (for instance a
 *    kinetic treatment of trace impurity ions such as IMPGYRO) should be

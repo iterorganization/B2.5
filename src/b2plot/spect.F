@@ -112,7 +112,7 @@ cc    -------------------------------------------------------------------------
       logical open_file
 
       if(.not.open_file(99,fn,
-     1 'data.local/adas|data/adas')) return
+     1 'data.local/adas|modules/adas')) return
       read(99,*) UIDIN
       if(uidin(1:8).eq.'SOLPSTOP') then
         if (uidin(9:9).ne.'/') then
@@ -2995,7 +2995,7 @@ c     initialising
       dwl=idwl*1.0_R8
       nz=size(elements)
       allocate(iae(nz),iar(nz),iac(nz))
-c      if(.not.open_file(99,'source.location','data.local/adas|data/adas')) return
+c      if(.not.open_file(99,'source.location','data.local/adas|modules/adas')) return
 c      read(99,*) extension,mie,mir,mic
 c      read(99,*) filename
 c      close(99)

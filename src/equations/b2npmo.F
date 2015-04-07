@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npmo (nx, ny, ns, itcnt, solving, rxf, guard_flows, 
+      subroutine b2npmo (nx, ny, ns, itcnt, solving, rxf, 
      &  vol, hx, hy, hz, bb, pbs, pbshz, 
      &  lnlam, na, te, ti, po, fna_fcor,                             !srv 09.01.01 01.07.09
      &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, smo, smq, cthe, cthi, chci, 
@@ -21,7 +21,7 @@
       use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, itcnt, guard_flows
+      integer nx, ny, ns, itcnt
       real (kind=R8) ::
      *  rxf, 
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),           !srv 09.01.01
@@ -235,7 +235,7 @@
         call b2saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                   !srv 11.09.09
        endif                                                           !srv 19.01.05 }
 *    ..compute flcb, cvcb
-       call b2nxfc (nx, ny, guard_flows, is, vol, pbshz, rob, 
+       call b2nxfc (nx, ny, is, vol, pbshz, rob, 
      &   ua(-1,-1,is), flub, cvsahz(-1,-1,0,is), flcb, cvcb, wrk0)     !srv 09.01.01
 *    ..compute additional viscosity term
         call b2siav (nx, ny, ns, is, modvis, am(is)*mp, hx, hy, hz, vol, 

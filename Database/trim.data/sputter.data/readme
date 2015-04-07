@@ -1,0 +1,45 @@
+Datafiles for sputtering yields as a function of
+impact energy and angle.    
+The tables are calculated with the Monte Carlo program
+trvmcmom, which is vectorized version of trim.sp
+determining also moments of distributions. The program
+assumes a nearly flat surface, a statistically roughness
+in the order of a monolayer is taken into account.
+Well polished surfaces give a good agreement with the
+calculated yields, but for rough surfaces the strong
+angular dependence is reduced, leading to an increase
+in the sputtering yield at normal incidence and a 
+decrease around the sputtering maximum.
+To check the sensitivity of results depending on the
+yields given in the tables a sputtering yield of 
+twice the yield at normal incidence and independent
+on the angle of incidence can be tried (an assumption
+in divimp for rough surfaces).
+The energy distribution of the sputtered atoms can be 
+described by a Thompson distribution. An energy E can be
+determined by a pseudorandom number r due to the formula
+   E/Es = 1/((1.+1./a)*sqrt(1./r)-1.) ,
+where Es is the surface binding energy and a the maximum
+transferable energy divided by the surface binding energy.
+   a = 4*m1*m2/(m1+m2)**2*E0/Es
+E0 is the incident energy.
+The angular distribution of sputtered atoms can be 
+approximated by a cosine distribution. An exit angle theta
+can again be determined by a random number r
+   theta = arcsin(r) .
+
+The tables are arranged in such a way that lines give an
+angular dependence of sputtering yields at a fixed energy
+E0, and columns give an energy dependence at a fixed angle
+of incidence. On top of the tables the values for the 
+atomic numbers (z) and the masses (m) of the projectile 
+(index 1) and the target atoms (index 2) and the value for
+the surface binding energy (Es) are given. Furthermore, the
+number ne of incident energies and the number na of incident
+angles are provided.
+The names of the files consist of the symbol for the projectile
+and the target atom. The letter y after the point indicates a  
+table with values of the sputtering yields, the term ye a table
+with values of the sputtered energy.
+Similar tables exist for the particle (rn) and energy (re)
+reflection coefficients in the subdirectory refl.data.

@@ -5,57 +5,57 @@ LD_NCARG  ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lm  -lX11 -lXext
 #LD_NCARG ?= -L$(NCARG_ROOT)/lib -lncarg -lncarg_gks -lncarg_c -lX11 -lm
 LD_NAG    ?= `pkg-config nag --libs`
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
+EQUIVS     = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
 
-CPP = /lib/cpp -C -traditional
-CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
-SED = sed s:\#PREC\#:d:g
-SED =
-LINK_MOD = 
+CPP        = /lib/cpp -C -traditional
+CPPOPTS    = -C -P -I${srcdir} ${EQUIVS}
+SED        = sed s:\#PREC\#:d:g
+SED        =
+LINK_MOD   = 
 
 ifdef USE_MPI
-FC = mpif90
+FC         = mpif90
 else
-FC = ifort
+FC         = ifort
 endif
 
 ifdef SOLPS_DEBUG
 ifdef USE_MPI
-FCOPTS = -g -C -traceback -r8
+FCOPTS     = -g -C -traceback -r8
 else
-FCOPTS = -g -C -debug all -traceback -check all
+FCOPTS     = -g -C -debug all -traceback -check all
 endif
 else
 ifdef USE_MPI
-FCOPTS = -O2 -vec_report0 -r8
+FCOPTS     = -O2 -vec_report0 -r8
 else
-FCOPTS = -O2 -vec_report0
+FCOPTS     = -O2 -vec_report0
 endif
 endif
 
-DBLFC=${FC}
-DDBLOPTION=-Ad # ???
-DBLSED = sed -e s:\#PREC\#:d:g
-DBLSED = 
+DBLFC      = ${FC}
+DBLSED     = sed -e s:\#PREC\#:d:g
+DBLSED     = 
 
-INCMOD = -I
-MOD = mod
-OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+INCMOD     = -I
+MOD        = mod
+OBJDEST    = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
-BLD = ar rucv
+BLD        = ar rucv
 
-GRLIBES = ${LD_NCARG} ${LD_MSCL}
-LDLIBES = ${LD_NETCDF} ${LD_NAG} # -lblas
+GRLIBES    = ${LD_NCARG} ${LD_MSCL}
+LDLIBES    = ${LD_NETCDF} ${LD_NAG} # -lblas
 
 #wd: removed; seems to be unused
-#ifdef USE_EIRENE
+#ifdef B25_EIRENE
 #LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
 #endif
 ifdef PERFMON
-LDLIBES += -lperf
+LDLIBES   += -lperf
 endif
 
-LD = ${FC}
-LDOPTS = -i_dynamic
+LD         = ${FC}
+LDOPTS     = -i_dynamic
 
-LCPP = -L${SOLPS_LIB} -lsonnet -lstdc++ -lblas
+LCPP       = -L${SOLPSLIB} -lsonnet -lstdc++ -lblas
+

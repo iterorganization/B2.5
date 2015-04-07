@@ -311,7 +311,7 @@ csw 25feb2014   fix IVS's version of source term averaging
      1   core_sources_rescale)
         call xertst (0.0_R8.le.core_sources_rescale,
      1   'faulty internal parameter core_sources_rescale')
-        call ipgeti('b2stbr_no_b2stbr_phys_call',no_b2stbr_phys_call)
+        call ipgeti ('b2stbr_no_b2stbr_phys_call', no_b2stbr_phys_call)
         call ipgetr ('b2stbr_redep_alpha',redep_alpha)
         call xertst (0.0_R8.le.redep_alpha,
      1   'faulty internal parameter redep_alpha')

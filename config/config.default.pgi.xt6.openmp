@@ -54,5 +54,5 @@ else
 LDOPTS = -mp=nonuma -O3
 endif
 
-#LCPP=-L${SOLPS_LIB} -lsonnet /usr/lib/libstdc++.so.2.9 -lblas
+#LCPP=-L${SOLPSLIB} -lsonnet /usr/lib/libstdc++.so.2.9 -lblas
 

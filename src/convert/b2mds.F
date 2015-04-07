@@ -31,6 +31,7 @@
 #endif
       use b2mod_version
 #ifdef B25_EIRENE
+      use eirmod_clogau
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25

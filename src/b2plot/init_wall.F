@@ -933,7 +933,8 @@ cxpb  The first target element must be at least layer_depth thick
           write(*,*) 
      .     'Fully eroded coating. Read new bulk surface properties'
           filename='Surface_properties/'//trim(bulk_material_name(ibnd))
-          if(open_file(99,filename,'data.local|data')) then
+          if(open_file(99,filename,
+     .       'data.local|modules/B2.5/Database')) then
             read(99,*) surface_long_name(ibnd)
             read(99,*) matsurf_nconstituents(ibnd)
             read(99,*) matsurf_nzconstituents

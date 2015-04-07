@@ -1,0 +1,11 @@
+'Beryllium'         ! material long name (*32)
+1                   ! number of material constituents
+4                   ! atomic number of the material constituents (must all be on the same line!)
+1                   ! relative abundance of the material constituents (must all be integer)
+0.00                ! chemical sputtering parameter erel
+0.61                ! blackbody emissivity
+-16720              ! parameter A in the Vapor pressure : 10^(A/T+B)
+11.61               ! parameter B in the Vapor pressure : 10^(A/T+B)
+0.75                ! sticking coefficient for vapor pressure calculation
+1556.0              ! melting temperature (K)
+1.35518e6           ! heat of transition (J/Kg)

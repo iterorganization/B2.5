@@ -13,7 +13,7 @@ ifndef LD_NETCDF
 endif
 
  opsys = hpux
- ifneq ($(nil),$(findstring |$(shell hostname)|,|sas-hp|toucan|))
+ ifeq ($(HOST_NAME),NERSC)
   locale = nersc.gov
   grkind = 4
  endif
@@ -26,11 +26,12 @@ endif
    -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
   FCOPTS = -I4 -R8 +autodblpad +E4 -O
  endif
+ EQUIVS += -DHPUX
  FC = fort77
  CPP = /lib/cpp
  CPPOPTS = -C -P -I$(srcdir) $(EQUIVS)
  BLD = ar rucv
- ifeq ($(locale),nersc.gov)
+ ifeq ($(HOST_NAME),NERSC)
   LAPACK = -llapack
   NAG = -L$(HOME)/lib -lnagsubst
   NCARG = -L$(NCARG_ROOT)/lib \

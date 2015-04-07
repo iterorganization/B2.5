@@ -95,7 +95,6 @@
       allocate(smpt(-1:nxd,-1:nyd,0:nsd-1))
       allocate(smfr(-1:nxd,-1:nyd,0:nsd-1))
       allocate(smcf(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(sna(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(rsana(-1:nxd,-1:nyd,0:nsd-1))
       allocate(rsahi(-1:nxd,-1:nyd,0:nsd-1))
       allocate(rsamo(-1:nxd,-1:nyd,0:nsd-1))

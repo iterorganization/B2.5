@@ -372,12 +372,12 @@ c
       do 100 k=1,lf_tmp
         if(filedata(k)) then
           f=fn_ntrc(k)
-#ifdef AIX
+#ifdef IBMaix
           call flush_(ntrc(k))
 #else
           l=5
           close(ntrc(k),err=86)
-#ifdef Fortran_90
+#ifndef F77
           l=1
           open(ntrc(k),file=f,err=86,position='append')
 #else

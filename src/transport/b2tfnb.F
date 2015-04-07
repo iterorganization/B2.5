@@ -178,7 +178,7 @@
         call ipgeti ('b2tfnb_PSch_style', PSch_style)                   !srv 12.11.08
         call ipgeti ('b2tfnb_fnb_nodrift_style', fnb_nodrift_style)     !srv 20.06.08
         call ipgeti ('b2tfnb_drift_style', drift_style)                 !srv 21.06.08
-        call ipgeti ('b2tfnb_ycur', ycur)                               !srv 17.07.08
+        call ipgetr ('b2tfnb_ycur', ycur)                               !srv 17.07.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                        !srv 11.09.09
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npmo_iout', iout_b2npmo)

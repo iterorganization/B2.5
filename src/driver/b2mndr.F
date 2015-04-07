@@ -141,7 +141,7 @@
      *  na0eps, dtim, stim, etim, 
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,
      &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
-     &  density_rescale, BoRiS, ne_wanted, no_current,
+     &  density_rescale, BoRiS, ne_wanted, 
      &  ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, factor,
      &  ixfb, iyfb, ax, ay
       save ne_wanted, ne_wanted_time, ne_wanted_next_time,
@@ -149,7 +149,7 @@
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
       integer n2, itim, ierr, edition, i, b2time, coronal, use_eirene,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
-     *  save_f30, save_f31, external_species
+     *  save_f30, save_f31, external_species, no_current
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale, 
      *  neutral_sources_rescale,
@@ -1076,7 +1076,7 @@ csw 21feb2014
       if(use_eirene.eq.1) then
 #ifdef B25_EIRENE
         write(*,*) 'Calling FIND_PARAM'
-        CALL EIRENE_FIND_PARAM(5)
+        CALL EIRENE_FIND_PARAM(0)
         CALL EIRENE_SET_PARMMOD(1)
         write(*,*) 'Called FIND_PARAM'
         write(*,*) '   NDX = ',NDX
@@ -1795,13 +1795,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call b2stbc_fb_final
 * finalise transport_models
       call write_b2mod_transport_models(99,'    ')
-      if(use_eirene.ne.0.and.itim.gt.0) then
-#ifdef B25_EIRENE
-         call eirene_mc_final(nx,ny,ns,BoRiS)
-#else
-         call xerrab ('b2mndr not compiled with the B25_EIRENE option')
-#endif
-      endif
 * finalise sputtering 
       call write_b2mod_sputter_namelist(99, nx, ny, ns, '    ')
 * finalise time-dependent wall data
@@ -1874,6 +1867,15 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call tallies(nx,ny,ns,BoRiS)
         endif
       endif     
+
+* finalise eirene_mc
+      if(use_eirene.ne.0.and.itim.gt.0) then
+#ifdef B25_EIRENE
+         call eirene_mc_final(nx,ny,ns,BoRiS)
+#else
+         call xerrab ('b2mndr not compiled with the B25_EIRENE option')
+#endif
+      endif
 
 !      open (70, file='b2fstate_add',form='unformatted')                   !srv 11.10.02 {
 !	 write(70) vaecrb, vadia, floe_noc, floi_noc, fna, fna_fcor,

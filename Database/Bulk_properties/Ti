@@ -1,0 +1,12 @@
+'Titanium'          ! material long name (*32)
+4.54e3              ! mass density (Kg/m3)
+3.68756e-06         ! parameter KA for fit of thermal conductivity : 1/(KA*T+KB)
+0.046376            ! parameter KB for fit of thermal conductivity : 1/(KA*T+KB)
+27.44               ! parameter A1 for fit of thermal conductivity : A1 + A2*T + A3*T**2 + A4*T**3
+-2.54e-2            ! parameter A2 for fit of thermal conductivity : A1 + A2*T + A3*T**2 + A4*T**3
+2.39e-5             ! parameter A3 for fit of thermal conductivity : A1 + A2*T + A3*T**2 + A4*T**3
+-5.485e-9           ! parameter A4 for fit of thermal conductivity : A1 + A2*T + A3*T**2 + A4*T**3
+0.459               ! parameter B1 for fit of heat capacity : B1 + B2*T - B3/T**2
+2.20e-4             ! parameter B2 for fit of heat capacity : B1 + B2*T - B3/T**2
+0.00                ! parameter B3 for fit of heat capacity : B1 + B2*T - B3/T**2
+
