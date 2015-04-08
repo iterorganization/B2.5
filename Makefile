@@ -566,7 +566,7 @@ ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version.h
 # target 'clean' cleans up the directory.
 clean : 
 	-mkdir ${OBJDIR}/.delete
-	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version.h ${OBJDIR}/.delete
+	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version.h ${OBJDIR}/LISTOBJ ${OBJDIR}/dependencies ${OBJDIR}/.delete
 ifneq (${MOD},o)
 	-mv -i ${OBJDIR}/*.${MOD} ${OBJDIR}/.delete
 endif
