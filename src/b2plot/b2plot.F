@@ -5113,7 +5113,7 @@ c
           if(bad_args(stack_req)) return
           values(37)=rpop(rstack,irstack)
           write(*,*) 'Set parameter ',trim(cval),' to ',values(37)
-	case ('neo_ic')
+	case ('neo_ic')       ! Neoclassical model number
 	  stack_req=(/1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
 	  neo_ic=ipop(istack,iistack)
