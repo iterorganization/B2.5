@@ -17,7 +17,7 @@ SRCDIR  = ${SRCB2}/src
 # Default prefix for OBJDIR: standalone
 PREF_OBJDIR = standalone
 ifdef USE_EIRENE
-PREF_OBJDIR = couple_Eirene
+PREF_OBJDIR = couple_SOLPS-ITER
 endif
 
 # Extension for OBJDIR if mpi and/or debug options are used
@@ -33,8 +33,8 @@ OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_
 
 # If compiling with Eirene, look in default place for Eirene sources/lib
 ifdef USE_EIRENE
-  SRCEIR = ${SOLPSTOP}/modules/Eirene
-  EIRDIR = ${SRCEIR}/builds/couple_SOLPS-ITER.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_DEBUG}
+  SRCEIR = ${SOLPSTOP}/modules/Eirene/src
+  EIRDIR = ${SOLPSTOP}/modules/Eirene/builds/couple_SOLPS-ITER.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_DEBUG}
 endif
 
 
