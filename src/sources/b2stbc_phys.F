@@ -161,7 +161,7 @@
      *  fchy_dia, fchy_inertia, seec                                 !srv 07.04.00
       integer isfeedback, fix_fch_in_fhe_sheath
       integer, save :: fix_sx_in_fhe_sheath = 1                       !srv 08.05.09
-      integer, save :: use_eirene
+      integer, save :: use_eirene, no_current 
       real (kind=R8) :: nesepm, nesepm_overshoot,
      1 bc_type13_norm, bc_type13_fac, na0eps
       real (kind=R8) :: fch_anomalous
@@ -191,7 +191,7 @@
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
-     & fch_anomalous/1.0_R8/, bc_type21_ref/1/,
+     & fch_anomalous/1.0_R8/, bc_type21_ref/1/, no_current/0/, 
      & use_astra/0/, use_eirene/0/, drift_style/0/
 !! FIXME: Maybe change default value of drift_style ???
 #ifdef WANT_THIS
@@ -200,9 +200,9 @@
      .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,
      .  cum_flo_vadia, cum_flo_vaecrb, flo_vedia, flo_veecrb
       real (kind=R8) :: hybr, harm, pit, upwind
-      integer ibnd, no_current, conduction_only, no_hybr_e, no_hybr_i
-      data no_current/0/, conduction_only/0/, no_hybr_e/0/, no_hybr_i/0/
-      save no_current, conduction_only, no_hybr_e, no_hybr_i
+      integer ibnd, conduction_only, no_hybr_e, no_hybr_i
+      data conduction_only/0/, no_hybr_e/0/, no_hybr_i/0/
+      save conduction_only, no_hybr_e, no_hybr_i
       hybr(flo,t1) = max(t1,abs(flo/2.),sqrt(t1**2+flo**2/4.))
       harm(t1,t2)= 2.0_R8*t1*t2/(t1+t2)
       pit(ix,iy)=abs(bb(ix,iy,0)/bb(ix,iy,3))

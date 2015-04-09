@@ -15,8 +15,8 @@ LINK_MOD   =
 
 ifdef USE_MPI
 FC         = mpif90
-MPI_CPP    = `pkg-config mpich --cflags`
-LD_MPI     = `pkg-config mpich --libs`
+MPI_CPP   ?= `pkg-config mpich --cflags`
+LD_MPI    ?= `pkg-config mpich --libs`
 else
 FC         = ifort
 endif
