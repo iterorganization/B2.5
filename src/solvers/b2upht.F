@@ -36,10 +36,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, stylec, ix, iy, is, ireg
+      integer ncall, n2, stylec, pot_eq, ix, iy, is, ireg
       real (kind=R8) ::
      *  ctt, dte, dti, t0, t1, t2
-      save ncall, stylec
+      save ncall, stylec, pot_eq
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
@@ -47,7 +47,7 @@
       external subini, subend, xertst, ipgeti, b2xvsg
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *   ..initialisation
-      data ncall/0/, stylec/0/
+      data ncall/0/, stylec/0/, pot_eq/1/
 *!!   (stylec is a numerical switch, needs experiments)
 
 *-----------------------------------------------------------------------
@@ -62,6 +62,7 @@
       if (ncall.eq.0) then
        call ipgeti ('b2upht_stylec', stylec)
        call xertst (0.le.stylec, 'faulty internal parameter stylec')
+       call ipgeti ('b2news_poteq', pot_eq)
       endif
 *   ..test nx, ny, ns
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -121,7 +122,8 @@
      &                 ne(leftix(ix,iy),leftiy(ix,iy))*dte-
      &                 ni(leftix(ix,iy),leftiy(ix,iy),0)*dti
         if (solvereg(ireg)) te(ix,iy) = max(1.0e-5_R8*ev,te(ix,iy)+dte)	 !xpb
-        if (solvpreg(ireg).and.po_solve) po(ix,iy) = po(ix,iy)+dte/qe
+        if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1)
+     >                      po(ix,iy) = po(ix,iy)+dte/qe
         if (solvireg(ireg)) ti(ix,iy) = max(1.0e-5_R8*ev,ti(ix,iy)+dti)	 !xpb
        enddo
       enddo

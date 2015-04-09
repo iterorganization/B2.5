@@ -267,20 +267,10 @@
      &  ceqp, resht, reshe, reshi, cortt, corte, corti,
      &  wrkf, wrkc, aa9)
 *   ..apply correction
-       if(style.eq.0) then
         call b2upht (nx, ny, ns, nregionv, po_solve, ua_solve,
      &   solvereg, solvireg, solvpreg, solvmreg,
      &   rxf, pcm0, cortt, corte, corti,
      &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0, vol)
-       else
-csw 04dec2014 wrong argument list here (why?) --> fixed
-c        call b2upht_ (nx, ny, ns, rxf, pcm0, vol, cortt, corte, corti,  !srv 01.07.05
-c     &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0)
-         call b2upht_ (nx, ny, ns, nregionv, po_solve, ua_solve,
-     &   solvereg, solvireg, solvpreg, solvmreg,
-     &   rxf, pcm0, cortt, corte, corti,
-     &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0, vol)
-       endif
       endif
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)

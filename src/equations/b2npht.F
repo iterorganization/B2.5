@@ -308,22 +308,10 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
      &   ceqp, resht, reshe, reshi, cortt, corte, corti,
      &   wrkf, wrkc, aa5, 'b2npht_')                                     !srv 18.03.10
 *   ..apply correction
-       if(style.eq.0) then
         call b2upht (nx, ny, ns, nregionv, po_solve, ua_solve,
      &   solvereg, solvireg, solvpreg, solvmreg,
      &   rxf, pcm0, cortt, corte, corti,
      &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0, vol)
-       else
-csw 21feb2014, added nregionv,...solvmreg to argument list
-c            and some rearrangements in b2upht_
-c            (probably we can remove now b2upht_ and use b2upht
-c            instead ???)
-        call b2upht_ (nx, ny, ns, 
-     &   nregionv, po_solve, ua_solve,
-     &   solvereg, solvireg, solvpreg, solvmreg,
-     &   rxf, pcm0, cortt, corte, corti,   !srv 01.07.05
-     &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0, vol)
-       endif
       endif
       if(iout .eq. 1) then                                          !srv 17.07.05 {
        do is = 0,ns-1
