@@ -44,6 +44,10 @@ ifdef NCDIR
 INCLUDE += -I${NCDIR}/include
 endif
 
+ifdef USE_MPI
+INCLUDE += ${MPI_CPP}
+endif
+
 ifdef MDSPLUS_DIR
 ifndef LD_MDSPLUS
 LD_MDSPLUS=-L${MDSPLUS_DIR}/lib -lMdsLib_client 

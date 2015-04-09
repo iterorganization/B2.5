@@ -15,19 +15,21 @@ LINK_MOD   =
 
 ifdef USE_MPI
 FC         = mpif90
+MPI_CPP    = `pkg-config mpich --cflags`
+LD_MPI     = `pkg-config mpich --libs`
 else
 FC         = ifort
 endif
 
 ifdef SOLPS_DEBUG
 ifdef USE_MPI
-FCOPTS     = -g -C -traceback -r8
+FCOPTS     = -g -C -traceback -r8 ${MPI_CPP}
 else
 FCOPTS     = -g -C -debug all -traceback -check all
 endif
 else
 ifdef USE_MPI
-FCOPTS     = -O2 -vec_report0 -r8
+FCOPTS     = -O2 -vec_report0 -r8 ${MPI_CPP}
 else
 FCOPTS     = -O2 -vec_report0
 endif
@@ -55,7 +57,7 @@ LDLIBES   += -lperf
 endif
 
 LD         = ${FC}
-LDOPTS     = -i_dynamic
+LDOPTS     = -i_dynamic ${LD_MPI}
 
 LCPP       = -L${SOLPSLIB} -lsonnet -lstdc++ -lblas
 
