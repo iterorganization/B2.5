@@ -902,7 +902,7 @@ c 2002-09-11: logic revised
      &  fna1, fhe1, fhi1, fch1, fch1_32, fch1_52, fch1_p, kinrgy1)
 
 * ..check for need to transform other input files: 
-* ..b2mn.dat, b2.*.parameters, input.dat, b2ah.dat, b2ai.dat
+* ..b2mn.dat, b2.*.parameters, input.dat, b2ah.dat b2ai.dat
 
 *   ..read default physics common
       call cfruch (ninp(8), 120, lblcp, 'label')
@@ -7668,6 +7668,20 @@ cxpb as they no longer necessarily point to the same species
         zamax(0:ns1-1) = zamax1(0:ns1-1) ! so that the write in
         zn(0:ns1-1) = zn1(0:ns1-1)       ! b2wfcp is correct
         am(0:ns1-1) = am1(0:ns1-1)
+*    ..we now need to convert the cbrbrk values for non_commensurate cases
+        if (non_commensurate.eq.1 .and. nncut.ge.1) then
+          if (nncut.eq.1) then
+            cbrbrk(cbirso) = leftcut1(1)/nx1
+            cbrbrk(cbirso+1) = rightcut(1)/nx1
+          else if (nncut.eq.2) then
+            cbrbrk(cbirso) = leftcut1(1)/nx1
+            cbrbrk(cbirso+1) = rightcut(1)/nx1
+            cbrbrk(cbirso+2) = nxtl1/nx1
+            cbrbrk(cbirso+3) = rightcut(2)/nx1
+            cbrbrk(cbirso+4) = leftcut(2)/nx2
+            cbrbrk(cbirno+1) = nxtl1/nx1
+          end if
+        end if
         do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
           do i = 0, 7
             cftmp(0:ns-1) = cbsna(i,0:ns-1,ireg)
