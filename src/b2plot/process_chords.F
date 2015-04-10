@@ -128,8 +128,10 @@ c
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       implicit none
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
 #     include <netcdf.inc>
+#endif
 #endif
 
       character*(*) filename
@@ -151,12 +153,14 @@ c
       integer indchd(maxchords+1),indix(maxcompile),indiy(maxcompile)
       real(kind=R8) ::
      * indscl(maxcompile)
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
       character*5 rw
       integer ncid,imap(maxvdims),iret
       real (kind=R8) ::
      *   htime
       integer itstep,ntstep,dtstep
+#endif
 #endif
       integer inpts,is,i,lnblnk,nxcam,nycam
       external lnblnk
@@ -200,6 +204,7 @@ c
      2     linlog)
           call end_page
         enddo
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
       else
         rw='read'
@@ -241,6 +246,7 @@ c
         enddo
         call ncclos(ncid, iret)
       endif
+#endif
 #endif
       return
       end subroutine process_camera

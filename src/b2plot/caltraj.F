@@ -127,6 +127,7 @@ c     parameter (destmode=2)               !hardwired to 2
       real (kind=R8) ::
      *   currtime
 
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
 #     include <netcdf.inc>
       character rw*5
@@ -135,6 +136,7 @@ c     parameter (destmode=2)               !hardwired to 2
       real (kind=R8) ::
      *   lwarr(-1:nx,-1:ny,0:ns-1),
      1   starttime
+#endif
 #endif
 
       oocol=-1
@@ -145,6 +147,7 @@ c     Getting the values for globaltime and deltat
         globaltime=values(16)
         deltat=globaltime/nplot
         currtime=0.0_R8
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
       else
         rw='read'
@@ -162,6 +165,7 @@ c     Getting the values for globaltime and deltat
         call rwcdf(rw,ncid,'time',imap,globaltime,iret)
         globaltime=globaltime-starttime
       endif
+#endif
 #endif
 
 c     writing callup information
@@ -288,7 +292,7 @@ c     initialise graphics
       call gsplci(1)
       if(iarg(specnum) .eq. 1 .and. iarg(6) .eq. 0) then  ! 1 species and trajectories
         call data_copy(iarg(7))
-        call additional_elements(nx,ny,.true.) !draws mesh/separatrix/etc... if wanted 
+        call additional_elements(nx,ny,.true.) !draws mesh/separatrix/etc... if wanted
 #ifdef CDF_MOVIE
         if(moviename .eq. ' ') then
 #endif
@@ -340,6 +344,7 @@ c                         particles than at beginning, it is destroyed.
 #endif
             globaltime=globaltime-deltat
             currtime=currtime+deltat
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
           else
             itstep=counter-1
@@ -370,6 +375,7 @@ c                         particles than at beginning, it is destroyed.
               end do
             end do
           endif
+#endif
 #endif
           if (b2plot_debug.ge.2) 
      .     write(*,*)'plotnumber: ',counter,'(of ',nplot,')'
@@ -446,6 +452,7 @@ c     TRAJECTORIES:
 #endif
             globaltime=globaltime-deltat
             currtime=currtime+deltat
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
           else
             itstep=itstep+1
@@ -476,6 +483,7 @@ c     TRAJECTORIES:
               end do
             end do
           endif
+#endif
 #endif
           if(iarg(specnum) .eq. 1) then
             call lblbartrajcol(currtime,icol)
@@ -516,8 +524,10 @@ c     close Plot-Screen
       call lastd
       call gsplci(1)
 
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
       call ncclos(ncid, iret)
+#endif
 #endif
       return
       end subroutine caltraj
