@@ -7678,7 +7678,7 @@ cxpb as they no longer necessarily point to the same species
             cbrbrk(cbirso+1) = rightcut(1)/nx1
             cbrbrk(cbirso+2) = nxtl1/nx1
             cbrbrk(cbirso+3) = rightcut(2)/nx1
-            cbrbrk(cbirso+4) = leftcut(2)/nx2
+            cbrbrk(cbirso+4) = leftcut(2)/nx1
             cbrbrk(cbirno+1) = nxtl1/nx1
           end if
         end if
