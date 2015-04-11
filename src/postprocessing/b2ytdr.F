@@ -7671,15 +7671,15 @@ cxpb as they no longer necessarily point to the same species
 *    ..we now need to convert the cbrbrk values for non_commensurate cases
         if (non_commensurate.eq.1 .and. nncut.ge.1) then
           if (nncut.eq.1) then
-            cbrbrk(cbirso) = leftcut1(1)/nx1
-            cbrbrk(cbirso+1) = rightcut(1)/nx1
+            cbrbrk(cbirso) = rratio(leftcut1(1),nx1)
+            cbrbrk(cbirso+1) = rratio(rightcut1(1),nx1)
           else if (nncut.eq.2) then
-            cbrbrk(cbirso) = leftcut1(1)/nx1
-            cbrbrk(cbirso+1) = rightcut(1)/nx1
-            cbrbrk(cbirso+2) = nxtl1/nx1
-            cbrbrk(cbirso+3) = rightcut(2)/nx1
-            cbrbrk(cbirso+4) = leftcut(2)/nx1
-            cbrbrk(cbirno+1) = nxtl1/nx1
+            cbrbrk(cbirso) = rratio(leftcut1(1),nx1)
+            cbrbrk(cbirso+1) = rratio(rightcut1(1),nx1)
+            cbrbrk(cbirso+2) = rratio(nxtl1,nx1)
+            cbrbrk(cbirso+3) = rratio(rightcut1(2),nx1)
+            cbrbrk(cbirso+4) = rratio(leftcut1(2),nx1)
+            cbrbrk(cbirno+1) = rratio(nxtl1,nx1)
           end if
         end if
         do ireg = 0, cbnrso+cbnrno+cbnrwe+cbnrea-1
