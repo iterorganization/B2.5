@@ -3432,11 +3432,34 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
         READ (IUNIN,*) idum(0)  ! NREACI
         WRITE(IUNOT,6666) idum(0)
   411   READ (IUNIN,'(A80)') ZEILE
-        WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:1).NE.'*') THEN
           IF (INDEX(ZEILE,'PHOTON').EQ.0) THEN
             READ (ZEILE,66661)
      .            I,FILNAM,H123,REAC,CRC,idum(0:1),rdum(0),RMN,RMX
+!  CORRECT FOR OLD REACTION NO LONGER SUPPORTED
+            IF (streql(FILNAM,'AMJUEL')) THEN
+              IF (streql(REAC,'0.1')) THEN
+                REAC='0.1T'
+                IF (RMN.NE.0.0_R8) THEN
+                  RMN = 0.0_R8
+                  READ (IUNIN,1028)
+                ENDIF
+                IF (RMX.NE.0.0_R8) THEN
+                  RMX = 0.0_R8
+                  READ (IUNIN,1028)
+                ENDIF
+              END IF
+              IF (streql(REAC,'0.2')) REAC='0.2T'
+              IF (streql(REAC,'0.3')) REAC='0.3T'
+              IF (streql(REAC,'0.4')) REAC='0.4T'
+              IF (streql(REAC,'0.5')) REAC='0.5T'
+              IF (streql(REAC,'0.6')) REAC='0.6T'
+              IF (streql(REAC,'0.7')) REAC='0.7T'
+              IF (streql(REAC,'0.8')) REAC='0.8T'
+            END IF
+            WRITE(ZEILE,66661)
+     .            I,FILNAM,H123,REAC,CRC,idum(0:1),rdum(0),RMN,RMX
+            WRITE(IUNOT,'(A80)') ZEILE
           ELSE
             ZEILE=ADJUSTL(ZEILE)
             I1=SCAN(ZEILE,' ')
@@ -3466,6 +3489,7 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
             IEND=IANF+SCAN(ZEILE(IANF+1:),' ')-1
             CRC(1:IEND-IANF+1)=ZEILE(IANF:IEND)
             READ (ZEILE(IEND+1:),*) idum(0:1),rdum(0),RMN,RMX
+            WRITE(IUNOT,'(A80)') ZEILE
           ENDIF
           IF (INDEX(ZEILE,'ADAS') .NE. 0) THEN
             READ (IUNIN,'(4X,A2,1X,I3)') ELNAME,idum(0)
@@ -3495,6 +3519,8 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
             ENDIF
           ENDIF
           GOTO 411
+        ELSE
+          WRITE(IUNOT,'(A80)') ZEILE
         ENDIF
 *4A.   NEUTRAL ATOMS SPECIES CARDS, NATMI SPECIES
 Cxpb We must read up to section 5 first, to identify ion species
