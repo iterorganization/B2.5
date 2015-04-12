@@ -6608,6 +6608,8 @@ C  HERE: EIRENE SURFACE TALLIES
               NASMOD = max(npplg/3,1)*4
               NORMOD = 0
               IGEOUSR = -1
+              WRITE(IUNOT,6666) NADMOD,NASMOD,NORMOD
+              WRITE(IUNOT,'(A80)') ZEILE
             ELSE             ! we read both, but limpos, onetwo ! This will be the default writing format
               READ (ZEILE,6666) NADMOD,NASMOD,NORMOD
               WRITE(IUNOT,6666) NADMOD,NASMOD,NORMOD
@@ -6623,6 +6625,7 @@ C  HERE: EIRENE SURFACE TALLIES
             NASMOD = max(npplg/3,1)*4
             NORMOD = 0
             IGEOUSR = -1
+            WRITE(IUNOT,6666) NADMOD,NASMOD,NORMOD
           END IF
 
           DO I=1,NADMOD
