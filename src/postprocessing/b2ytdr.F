@@ -6593,14 +6593,14 @@ C  HERE: EIRENE SURFACE TALLIES
             READ (IUNIN,'(A80)') ZEILE
           END DO !}
           IF (streql(eirene_format,'juelich')) THEN    ! using geousr.F from user_general
-            READ (ZEILE,6664) NADMOD,NASMOD,NORMOD
-            WRITE(IUNOT,6664) NADMOD,NASMOD,NORMOD
+            READ (ZEILE,6666) NADMOD,NASMOD,NORMOD
+            WRITE(IUNOT,6666) NADMOD,NASMOD,NORMOD
             IGEOUSR = 0
           ELSE IF (streql(eirene_format,'iter')) THEN  ! using geousr.F from user_iter
             IF (INDEX(ZEILE,'GENERAL') /= 0) THEN      ! we read only nadmod, nasmod, normod
               WRITE(IUNOT,'(A80)') ZEILE
-              READ (IUNIN,6664) NADMOD,NASMOD,NORMOD
-              WRITE(IUNOT,6664) NADMOD,NASMOD,NORMOD
+              READ (IUNIN,6666) NADMOD,NASMOD,NORMOD
+              WRITE(IUNOT,6666) NADMOD,NASMOD,NORMOD
               IGEOUSR = 0
             ELSEIF (INDEX(ZEILE,'BIASED_GARCHING') /= 0) THEN ! we read only onetwo, limpos (reverse order !)
               WRITE(IUNOT,'(A80)') ZEILE
@@ -6609,13 +6609,13 @@ C  HERE: EIRENE SURFACE TALLIES
               NORMOD = 0
               IGEOUSR = -1
             ELSE             ! we read both, but limpos, onetwo ! This will be the default writing format
-              READ (ZEILE,6664) NADMOD,NASMOD,NORMOD
-              WRITE(IUNOT,6664) NADMOD,NASMOD,NORMOD
+              READ (ZEILE,6666) NADMOD,NASMOD,NORMOD
+              WRITE(IUNOT,6666) NADMOD,NASMOD,NORMOD
               IGEOUSR = 1
             END IF
           ELSE IF (streql(eirene_format,'facelift')) THEN  ! we read both, but limpos, onetwo, xpt, ypt
-            READ (ZEILE,6664) NADMOD,NASMOD,NORMOD
-            WRITE(IUNOT,6664) NADMOD,NASMOD,NORMOD
+            READ (ZEILE,6666) NADMOD,NASMOD,NORMOD
+            WRITE(IUNOT,6666) NADMOD,NASMOD,NORMOD
             IGEOUSR = 1
           ELSE IF (streql(eirene_format,'old') .or.
      .             streql(eirene_format,'new')) THEN ! we read only onetwo, limpos (reverse order !)
