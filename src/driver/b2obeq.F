@@ -142,10 +142,9 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        par_opt_phys(15) =  fab(0.200_R8, 1.000_R8, par_opt(15), istyle) ! te_alfa2  [0.20, 1.0] [m]
        par_opt_phys(16) =  fab(1.000_R8, 3.000_R8, par_opt(16), istyle) ! te_alfa3  [1.00, 3.0] [m]
       endif
-      write(71,11) ' b2obeq: par_opt             ', par_opt
-      write(71,11) ' b2obeq: par_opt_phys        ', par_opt_phys
       write(hlp_frm,'(a,i2,a)') '(a,',npar_opt,'es14.6)'
-   11 format(hlp_frm)
+      write(71,hlp_frm) ' b2obeq: par_opt             ', par_opt
+      write(71,hlp_frm) ' b2obeq: par_opt_phys        ', par_opt_phys
 *   .. write binary file of physical parameters
       open(70,file='b2fparop.dat',form='unformatted')
       write(70) par_opt_phys
