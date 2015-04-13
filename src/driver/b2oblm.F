@@ -99,6 +99,7 @@
       integer ninp(0:5), nout(0:7), iy, npoint
       real (kind=R8) :: cpu_s, cpu_f, x05baf, dseval,                 !srv 26.04.09
      & nemod, temod, timod, func, fcain, fab, shift
+      character*12 hlp_frm
 *   ..procedures
 !      external xerset, xertst
 *   ..initialise input/output unit numbers
@@ -143,7 +144,8 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       endif
       write(71,11) ' b2oblm: par_opt             ', par_opt
       write(71,11) ' b2oblm: par_opt_phys        ', par_opt_phys
-   11 format((a,<npar_opt>es14.6))
+      write(hlp_frm,'(a,i2,a)') '(a,',npar_opt,'es14.6)'
+   11 format(hlp_frm)
 *   .. write binary file of physical parameters
       open(70,file='b2fparop.dat',form='unformatted')
       write(70) par_opt_phys
