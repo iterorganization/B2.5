@@ -280,9 +280,10 @@ c not sure this is the right place
 csw 28jan2011, call to eirene_mc_init not used anymore, use new modules
 c        call eirene_mc_init
         call eirene_extrab25_alloc_mods
-        call eirene_extrab25_eirpbls_init(1,
-     .                       natm,nmol,nion,npls,nstra,0)
-        call eirene_extrab25_eirpbls_init(2,0,0,0,0,nstra,npls)
+!pb 13dec2013 eirpbls removed - not needed
+!pb        call eirene_extrab25_eirpbls_init(1,
+!pb     .                       natm,nmol,nion,npls,nstra,0)
+!pb        call eirene_extrab25_eirpbls_init(2,0,0,0,0,nstra,npls)
 csw 22jul2011
         call eirene_extrab25_iniusr_init(n_spcsrf,l_spcsrf,i_spcsrf,
      .           j_spcsrf,sps_sgrp,sps_absr,sps_trno,sps_trni,
@@ -1987,10 +1988,16 @@ csw 21feb2012 add test l_neutrad (SOLPS4.3)
      &          region(ix,iy,0).ne.0) then
               k=region(ix,iy,0)
               do imol = 1, nnmoli
-                radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,1)
-                rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,1)
-                rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,1)
-                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,1)
+!pb  eneutrad dimensioned per stratum to allow for short cycling
+!pb  only sum over strata used here
+!                radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,1)
+!                rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,1)
+!                rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,1)
+!                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,1)
+                radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,0)
+                rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,0)
+                rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,0)
+                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,0)
               end do
             end if
           end do
@@ -1998,7 +2005,7 @@ csw 21feb2012 add test l_neutrad (SOLPS4.3)
         write (hlp_frm,'(a,i2,a)') '(a,1p,',nnmoli,'(1x,e14.7))'
         if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
      .   'EIRENE_MC. EDISSML : ', 
-     .   (SUM(edissml(1:nx,1:ny,imol,1)),imol=1,nnmoli)
+     .   (SUM(edissml(1:nx,1:ny,imol,0)),imol=1,nnmoli)
       else
 
 csw 21feb2012, calculate neutral radiation directly from EIRENE (SOLPS4.3)
@@ -2014,16 +2021,30 @@ c
      &          region(ix,iy,0).ne.0) then
               k=region(ix,iy,0)
               do iatm = 1, nnatmi
-                radarr(ix,iy)=radarr(ix,iy)+eneutrad(ix+1,iy+1,iatm,1)
-                rad_neutr=rad_neutr+eneutrad(ix+1,iy+1,iatm,1)
-                rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,1)
-                recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,1)
+!pb  18.12.2013
+!pb  eneutrad dimensioned per stratum to allow for short cycling
+!pb  only sum over strata used here
+!                radarr(ix,iy)=radarr(ix,iy)+eneutrad(ix+1,iy+1,iatm,1)
+!                rad_neutr=rad_neutr+eneutrad(ix+1,iy+1,iatm,1)
+!                rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,1)
+!                recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,1)
+!pb
+                 radar(ix,iy)=eneutrad(ix+1,iy+1,iatm,0)
+                 rad_neutr=rad_neutr+eneutrad(ix+1,iy+1,iatm,0)
+                 rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,0)
+                 recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,0)
               enddo
               do imol = 1, nnmoli
-                radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,1)
-                rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,1)
-                rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,1)
-                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,1)
+!pb  edissml dimensioned per stratum to allow for short cycling
+!pb  only sum over strata used here
+!                radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,1)
+!                rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,1)
+!                rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,1)
+!                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,1)
+                radarr(ix,iy)=radarr(ix,iy)-edissml(ix+1,iy+1,imol,0)
+                rad_neutr=rad_neutr-edissml(ix+1,iy+1,imol,0)
+                rdneureg(k)=rdneureg(k)-edissml(ix+1,iy+1,imol,0)
+                recycereg(k)=recycereg(k)-edissml(ix+1,iy+1,imol,0)
               end do
             endif
           enddo
@@ -2031,7 +2052,7 @@ c
         write (hlp_frm,'(a,i2,a)') '(a,1p,',nnatmi,'(1x,e14.7))'
         if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
      .   'EIRENE_MC. ENEUTRAD : ', 
-     .   (SUM(eneutrad(1:nx,1:ny,iatm,1)),iatm=1,nnatmi)
+     .   (SUM(eneutrad(1:nx,1:ny,iatm,0)),iatm=1,nnatmi)
       endif
       if (dbg_eir_mc.ge.2 .and. main_call) write(*,'(a,1p,2(1x,e14.7))')
      . 'EIRENE_MC. RADARR, RAD_NEUTR : ', 
