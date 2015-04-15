@@ -330,7 +330,8 @@
                   do iy=0,ny-1
 	            do ix=-1,nx
 	              if(leftix(ix,iy).ne.-2) then
-	                fchin(ix,iy,0)=fchin(ix,iy,0)+csigin(ix,iy,0,is,is0)*(      !srv 24.06.08
+	                fchin(ix,iy,0)=fchin(ix,iy,0)+
+     &        csigin(ix,iy,0,is,is0)*( !srv 24.06.08
      &        ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))	   
      &          -(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
      &          +til(ix,iy)*(log(na(ix,iy,is))-
@@ -345,7 +346,8 @@
                   do iy=0,ny-1
 	            do ix=-1,nx
 	              if(leftix(ix,iy).ne.-2) then
-	                fchin(ix,iy,0)=fchin(ix,iy,0)+csigin(ix,iy,0,is,is0)*(      !srv 24.06.08
+	                fchin(ix,iy,0)=fchin(ix,iy,0)+
+     &        csigin(ix,iy,0,is,is0)*(      !srv 24.06.08
      &        ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))	   
      &          -(na(ix,iy,is)*ti(ix,iy)-
      &            na(leftix(ix,iy),leftiy(ix,iy),is)*
