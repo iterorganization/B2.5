@@ -36,7 +36,7 @@ DBLSED =
 
 INCMOD = -B
 MOD = mod
-OBJDEST = -o ${OBJDIR}/$*.o
+OBJDEST = -J${OBJDIR} -o $@
 
 BLD = ar rucv
 
