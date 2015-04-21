@@ -2830,7 +2830,7 @@ cxpb start by identifying the correspondence with the new run species
         END DO
         NATMI1 = iss
         if (streql(eirene_format,'iter') .and. same_bundling .and.
-     .      nx.eq.nx1 .and. ny.eq.ny1 .and. .not.non_commensurate)
+     .      nx.eq.nx1 .and. ny.eq.ny1 .and. non_commensurate.eq.0)
      .   goto 8688  ! no need to convert input.dat file
 cxpb  Start reading input.dat file
         read(IUNIN,'(A72)',end=8687) ZEILE   ! TXTRUN 
