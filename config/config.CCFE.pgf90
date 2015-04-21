@@ -14,7 +14,7 @@ endif
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
-CPP = /lib/cpp -C -traditional
+CPP = /lib/cpp -C -traditional -DNO_IEEE
 CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 LINK_MOD = 
@@ -27,16 +27,16 @@ endif
 
 ifdef SOLPS_DEBUG
 ifdef USE_MPI
-FCOPTS = -g -Mr8
+FCOPTS = -g -Mr8 -Kieee
 else
-FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
+FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff -Kieee
 endif
 else
 ifdef USE_MPI
-FCOPTS = -O2 -Mr8
+FCOPTS = -O2 -Mr8 -Kieee
 else
-FCOPTS = -O2 -Mbackslash
-FCOPTS = -fast -Mbackslash
+FCOPTS = -O2 -Mbackslash -Kieee
+FCOPTS = -fast -Mbackslash -Kieee
 endif
 endif
 
@@ -46,7 +46,7 @@ DBLSED = sed -e s:\#PREC\#:d:g
 
 INCMOD = -I
 MOD = mod
-OBJDEST = -module ${OBJDIR} -o $@
+OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 
 BLD = ar rucv
 

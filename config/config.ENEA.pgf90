@@ -34,7 +34,7 @@ DBLFC = ${FC}
 DBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g
 
-OBJDEST = -module ${OBJDIR} -o $@
+OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 INCMOD = -I
 MOD = mod
 

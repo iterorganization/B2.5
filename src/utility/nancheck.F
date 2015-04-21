@@ -1,4 +1,4 @@
-#ifdef JET
+#ifdef NO_IEEE
       logical function my_isnan(a)
       implicit none
       real*8 :: a
@@ -13,11 +13,11 @@
 
       subroutine nancheck(nx, ny, data, label)
       use b2mod_types
-#ifndef JET
+#ifndef NO_IEEE
       use ieee_arithmetic    ! IGNORE
 #endif
       implicit none
-#ifdef JET
+#ifdef NO_IEEE
       logical, external :: my_isnan
 #endif
 *   ..input arguments (unchanged on exit)
@@ -30,7 +30,7 @@
 
       do iy = -1, ny
        do ix = -1, nx
-#ifndef JET
+#ifndef NO_IEEE
         if(ieee_is_nan(data(ix,iy))) then
 #else
         if(my_isnan(data(ix,iy))) then

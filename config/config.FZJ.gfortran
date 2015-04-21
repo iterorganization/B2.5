@@ -14,7 +14,7 @@ endif
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
 
-CPP = /lib/cpp -C -traditional
+CPP = /lib/cpp -C -traditional -DNO_IEEE
 CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 SED =
@@ -24,9 +24,9 @@ FC = gfortran
 
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g -fbounds-check -fsecond-underscore -fbacktrace -freal-4-real-8
+FCOPTS = -g -fbounds-check -fsecond-underscore -fbacktrace -freal-4-real-8 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 else
-FCOPTS = -O2 -fsecond-underscore -freal-4-real-8
+FCOPTS = -O2 -fsecond-underscore -freal-4-real-8 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 endif
 
 DBLFC = ${FC}
@@ -36,7 +36,7 @@ DBLSED =
 
 INCMOD = -B
 MOD = mod
-OBJDEST = -J${OBJDIR} -o $@
+OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
 
 BLD = ar rucv
 
