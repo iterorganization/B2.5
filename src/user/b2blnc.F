@@ -595,14 +595,14 @@ c
           filedata(ltrc)=.false.
         else
           write(lun,hlp_frm) tim,
-     .     ((flxic_tmp(i),flxnc_tmp(i),flxit_tmp(i),
+     .      (flxic_tmp(i),flxnc_tmp(i),flxit_tmp(i),
      ,       flxnt_tmp(i),flxiw_tmp(i),flxnw_tmp(i),
      ,       flxnp_tmp(i),flxps_tmp(i),blnna_tmp(i),
      ,       blnnd_tmp(i),blnnc_tmp(i),blnnt_tmp(i),
      ,       blnnw_tmp(i),blnns_tmp(i),blnne_tmp(i),
      ,       blnnr_tmp(i),
      ,       flxid_tmp(i),flxbl_tmp(i),flxbr_tmp(i),
-     ,       flxrl_tmp(i)),i=1,nspecies)
+     ,       flxrl_tmp(i),i=1,nspecies)
         end if
       else
 c
