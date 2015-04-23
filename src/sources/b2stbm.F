@@ -152,7 +152,8 @@
       call sfill (n2, 0.0_R8, b2stbm_sch, 1)
 
 * ..obtain sources from IMPGYRO
-      if (impgyro_mod.eq.0) return
+      if (impgyro_mod.eq.0) goto 999
+
 cxpb First provide plasma background (include neutral quantities)
 cxpb Must convert fluxes to flux densities
       ti0 = 0.0_R8
@@ -376,8 +377,10 @@ cxpb And then derive: ua_ext
       b2stbm_shi(:,:)=shi0(:,:,0)+shi0(:,:,1)*ti(:,:)
       b2stbm_sch(:,:)=sch0(:,:,0)+sch0(:,:,1)*po(:,:)
 
+
+
 * ..return
-      if (main_call.or.ncall.eq.0) ncall = ncall+1
+ 999  if (main_call.or.ncall.eq.0) ncall = ncall+1
       call subend ()
       return
 
