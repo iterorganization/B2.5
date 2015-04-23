@@ -54,6 +54,7 @@
 
       integer ninp(0:5), nout(0:7), nx, ny, ns, ns0, idum(0:9)
       character savefile*16, arg*256, lblmn*120, lblcp*120, title*64
+      character hlp_frm*22
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin
 *   ..initialize input/output unit numbers
@@ -128,14 +129,18 @@
       call read_b2mod_transport(ninp(4))
       call alloc_b2mod_elements(ns,zn,am)
    10 continue
-      write(*,"(a,<ns>(a2,i1,1x))") 'To look at density of',
+      write(hlp_frm,'(a,i3,a)') '(a,',ns,'(a2,i1,1x))'
+      write(*,hlp_frm) 'To look at density of',
      &      (adjustr(is_codes(is)),nint(zamin(is)),is=0,ns-1)
-      write(*,"(4x,a,<ns>(1x,I2,1x)/)")
+      write(hlp_frm,'(a,i3,a)') '(4x,a,',ns,'(1x,I2,1x)/)'
+      write(*,hlp_frm)
      &        ' - input a number', (is,is=0,ns-1)
-      write(*,"(a,<ns>(a2,i1,1x))") 'To look at parallel velocity of',
+      write(hlp_frm,'(a,i3,a)') '(a,',ns,'(a2,i1,1x))'
+      write(*,hlp_frm) 'To look at parallel velocity of',
      &      (adjustr(is_codes(is)),nint(zamin(is)),is=0,ns-1)
-      write(*,"(14x,a,<ns>(1x,I2,1x)/)")
-     &        ' - input a number', (is+ns,is=0,ns-1)
+      write(hlp_frm,'(a,i3,a)') '(14x,a,',ns,'(1x,I2,1x)/)'
+      write(*,hlp_frm)
+     &        ' - input a number', (is+ns,is=0,ns-1) 
 
       write(*,"(a,a,(1x,I2,1x))") 'To look at electron tempetature',
      &        '       - input a number', ns+ns
