@@ -1943,7 +1943,7 @@ cxpb We must ensure we have not already listed this additional species
      .              t1data(3,ix,j,is1(is)),','
                 enddo
               endif
-              if (prdone) deallocate(felm,delm)
+              if (prdone) deallocate(felm,delm,prdsa,r,f,pra,dprof)
             enddo
           enddo
           todo = .false.

@@ -214,7 +214,7 @@ cank }
       allocate(lcbs(NBCD))
 #else
       call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
-      call xertst (nyd.le.DEF_NYD, 'faulty parameter nxd')
+      call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
       call xertst (nsd.le.nsdmax, 'faulty parameter nsd')
       call xertst (nbcd_in.le.nbcd, 'faulty parameter nbcd_in')
       call xertst (nnisod_in.le.nnisod, 'faulty parameter nnisod_in')
