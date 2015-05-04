@@ -797,29 +797,29 @@ cxpb  Western boundary
           hh = hx(ix,iy)
           hhn = hx(ixn,iyn)
         endif
-          wall_heatflux(ibnd)=max(0.0_R8,
+        wall_heatflux(ibnd)=max(0.0_R8,
      .    isign*(fht(ixf,iyf,idir)+fhi_ext(ixf,iyf,idir)))/
      .                                 gs(ixf,iyf,idir)
 *    ..compute cell-faced quantities
-          do is = 0, ns-1
+        do is = 0, ns-1
           zaf(is) = (rza(ix,iy,is)*hhn+rza(ixn,iyn,is)*hh)/(hhn+hh)
           ptf(is) = (rpt(ix,iy,is)*hhn+rpt(ixn,iyn,is)*hh)/(hhn+hh)
-          enddo
+        enddo
         tif = (ti(ix,iy)*hhn+ti(ixn,iyn)*hh)/(hhn+hh)
         pof = (po(ix,iy)*hhn+po(ixn,iyn)*hh)/(hhn+hh)
-          do is = 0, ns-1
-            incident_energy(ibnd,is)=
+        do is = 0, ns-1
+          incident_energy(ibnd,is)=
      .     max(0.0_R8,tif/ev+(po(ix,iy)-Phi_app)*zaf(is)) ! xpb: Incident energy (eV)
-           wall_flux(ibnd,is)=max(0.0_R8,isign*fna(ixf,iyf,idir,is))
-          enddo
-          do is = 0, ns_ext-1
+          wall_flux(ibnd,is)=max(0.0_R8,isign*fna(ixf,iyf,idir,is))
+        enddo
+        do is = 0, ns_ext-1
           pxf = (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/
      &          (hhn+hh)
-            wall_heatflux(ibnd)=wall_heatflux(ibnd)+
+          wall_heatflux(ibnd)=wall_heatflux(ibnd)+
      &     max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))/gs(ixf,iyf,idir)*
      &          (0.5_R8*mp*am_ext(is)*ua_ext(ix,iy,is)**2*
      &                    (1.0_R8-BoRiS) + pxf*ev)
-          enddo
+        enddo
       enddo
       ndata = nbnd
       do ibnd = 1, nbnd

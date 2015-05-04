@@ -354,7 +354,7 @@ csw 25feb2014   fix IVS's version of source term averaging
      &   smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
      &   'faulty argument range qz(,,1)')
 *    ..test sign of pbs
-       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')
+!       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')                    !srv 11.01.13
 *    ..test edge values of pbs
        call b2xvff (nx, ny, pbs, 'pbs')
 *    ..test sign of na, ni, ne, te, ti

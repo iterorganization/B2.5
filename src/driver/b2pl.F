@@ -16,6 +16,7 @@
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_ppout
+      use b2mod_external
       implicit none
 
 *-----------------------------------------------------------------------
@@ -147,6 +148,7 @@
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
       call alloc_b2mod_ppout(nx,ny,ns)
+      call alloc_b2mod_external(nx,ny,ns)
 *   ..read plasma state
       call cfverr(ninp(4), b2fplasma_version)
       call read_b2mod_geo(nx,ny,ninp(4))
@@ -155,7 +157,7 @@
       call read_b2mod_sources(ninp(4))
       call read_b2mod_transport(ninp(4))
       call read_b2mod_anomalous_transport(ninp(4))
-      call read_b2mod_neutr_src_scaling(ninp(4),ns,nstrai)
+      call read_b2mod_neutr_src_scaling(ninp(4),ns,nstrat)
       call b2pldr (ninp, nout, nx, ny, ns)
 *   ..close files
       do io=0,size(ninp)-1
