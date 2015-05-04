@@ -18,7 +18,7 @@ LD_NAG     ?= -L${SOLPSLIB} -lblaslapack
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf
 
-CPP = /lib/cpp -traditional
+CPP = /lib/cpp -traditional -DNO_IEEE
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
 SED = sed s:\#PREC\#:d:g
 LINK_MOD = 
@@ -26,20 +26,20 @@ LINK_MOD =
 ifdef USE_MPI
 FC = mpif90
 else
-FC = pgf90
+FC = gfortran
 endif
 
 ifdef SOLPS_DEBUG
 ifdef USE_MPI
-FCOPTS = -g -Mr8
+FCOPTS = -g -fbounds-check -fno-second-underscore -fbacktrace -freal-4-real-8 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 else
-FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
+FCOPTS = -g -fbounds-check -fno-second-underscore -fbacktrace -freal-4-real-8 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 endif
 else
 ifdef USE_MPI
-FCOPTS = -O2 -Mr8
+FCOPTS = -O2 -fno-second-underscore -freal-4-real-8 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 else
-FCOPTS = -O2 -Mbackslash
+FCOPTS = -O2 -fno-second-underscore -freal-4-real-8 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
 endif
 endif
 
@@ -49,14 +49,14 @@ DBLSED = sed -e s:\#PREC\#:d:g
 
 INCMOD = -I
 MOD = mod
-OBJDEST = -module ${OBJDIR} -o ${OBJDIR}/$*.o
+OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
 
 BLD = ar rucv
 
 GRLIBES = ${LD_NCARG} ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
-LD = pgf90
+LD = gfortran
 ifdef SOLPS_DEBUG
 LDOPTS = -g -C 
 else
