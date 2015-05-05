@@ -65,7 +65,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer n2, is, i, is0, idum(0:9), zero(-1:nx,-1:ny)
+      integer n2, is, i, is0, idum(0:9)
       integer, save :: read_b2fstate = 0                              !srv 22.12.09
       real (kind=R8) :: t0, t1                                        !srv 22.12.09
       real (kind=R8), allocatable :: zcdum(:,:), 
@@ -73,7 +73,7 @@
      &  te1(:,:), ti1(:,:), po1(:,:), fna1(:,:,:,:), fhe1(:,:,:),
      &  fhi1(:,:,:), fch1(:,:,:), fch_321(:,:,:), fch_521(:,:,:),
      &  fch_p1(:,:,:), kinrgy1(:,:,:)   
-      real (kind=R8) :: zpdum(0:ns-1,0:3)
+      real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
       character lblps*120, lblgm*120, id*8, id0*8
       character idout*80, cnamip*80, cvalip*80                        !srv 22.12.09
       real (kind=R8) ::
