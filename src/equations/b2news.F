@@ -84,6 +84,7 @@
      7  lnlam(-1:nx,-1:ny), zero(-1:nx,-1:ny)
       character charnc*6, hlp_frm*4
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
+      logical, allocatable :: solvemt(:,:)
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok, pot_eq,
      1  recalculate_contributions, ramp_slow, guard_flows,       !xpb,dpc
      3  potitmin, BoRiS, vis_per, area_fix, no_solve, solving,
@@ -869,10 +870,12 @@ c     with diamagnetic drift part                                        !xpb
         ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
         ue(:,:)=ue(:,:)/ne(:,:)
 *   ..iterate on heat balance
+      allocate(solvemt(0:ns-1,0:nnreg(0)))
+      solvemt(0:ns-1,0:nnreg(0)) = solvemo(0:ns-1,0:nnreg(0))
       if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                          !srv 13.10.06
         call b2npht (nx, ny, ns, nnreg(0), ncall, 
      &   solving(4), solving(3), solving(1),
-     &   solveee, solveei, solvepo, solvemo(0:ns-1,0:nnreg(0)),
+     &   solveee, solveei, solvepo, solvemt,
      &   rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
      &   pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,   !srv 01.07.09
      &   fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,        !srv 09.07.08 07.07.09
@@ -882,7 +885,7 @@ c     with diamagnetic drift part                                        !xpb
       if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.1) then    !srv 13.10.06
        call b2nph9 (nx, ny, ns, nnreg(0), ncall,
      &  solving(4), solving(3), solving(1),  
-     &  solveee, solveei, solvepo, solvemo(0:ns-1,0:nnreg(0)), 
+     &  solveee, solveei, solvepo, solvemt, 
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
      &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,            !srv 27.12.01 28.06.03 30.06.03 07.07.09
@@ -892,7 +895,7 @@ c     with diamagnetic drift part                                        !xpb
       if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.0) then    !srv 13.10.06
        call b2npht (nx, ny, ns, nnreg(0), ncall,
      &  solving(4), solving(3), solving(1),  
-     &  solveee, solveei, solvepo, solvemo(0:ns-1,0:nnreg(0)), 
+     &  solveee, solveei, solvepo, solvemt, 
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
      &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,            !srv 27.12.01 28.06.03 30.06.03 07.07.09
@@ -900,6 +903,7 @@ c     with diamagnetic drift part                                        !xpb
      &  reshe, reshi, wrk0, corte, corti, ier0)                         !srv 31.05.99 10.11.02
 	endif                                                             !srv 13.10.06 }
         call xertst (ier0.eq.0, 'error return from b2npht')
+        deallocate(solvemt)
         if(pot_eq.eq.0) po=0.0_R8     !xpb remove pot. correction if unneeded
         if(pot_eq.eq.2) po(:,:)=3.1_R8*te(:,:)/qe                        !xpb
         ipass = ipass + 1                                                !xpb
