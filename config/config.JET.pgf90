@@ -37,6 +37,7 @@ FCOPTS = -O2 -Mr8 -Kieee
 else
 FCOPTS = -O2 -Mbackslash -Kieee
 FCOPTS = -fast -Mbackslash -Kieee
+FCOPTS = -fast -Mvect=nofuse -Mbackslash -Kieee
 endif
 endif
 

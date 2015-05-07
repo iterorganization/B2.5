@@ -37,6 +37,7 @@ FCOPTS = -O2 -Mr8
 else
 FCOPTS = -O2 -Mbackslash
 FCOPTS = -fast -Mbackslash
+FCOPTS = -fast -Mvect=nofuse -Mbackslash
 endif
 endif
 

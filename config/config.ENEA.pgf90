@@ -28,6 +28,7 @@ FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
 else
 FCOPTS = -O2 -Mbackslash
 FCOPTS = -fast -Mbackslash
+FCOPTS = -fast -Mvect=nofuse -Mbackslash
 endif
 
 DBLFC = ${FC}
