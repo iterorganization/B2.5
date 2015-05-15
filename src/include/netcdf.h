@@ -85,11 +85,11 @@ typedef enum {
 #define NC_NOWRITE	0	/* default is read only */
 #define NC_WRITE    	0x1	/* read & write */
 #define NC_CLOBBER	0
-#define NC_NOCLOBBER	0x4	/* Don't destroy existing file on create */
+#define NC_NOCLOBBER	0x4	/* Do not destroy existing file on create */
 #define NC_FILL		0	/* argument to ncsetfill to clear NC_NOFILL */
-#define NC_NOFILL	0x100	/* Don't fill data section an records */
+#define NC_NOFILL	0x100	/* Do not fill data section and records */
 #define NC_LOCK		0x0400	/* Use locking if available */
-#define NC_SHARE	0x0800	/* Share updates, limit cacheing */
+#define NC_SHARE	0x0800	/* Share updates, limit caching */
 
 /*
  * 'size' argument to ncdimdef for an unlimited dimension

@@ -1397,7 +1397,7 @@ c   --> better way doing this is necessary)
      &  te, ti, po, fna, fhe, fhi, fch)
 
 csw 21feb2014, setup some additional work variables for boundary conditions
-!!! FIXME: Why can't we move this to b2.boundary.parameters ?
+!!! FIXME: Why cannot we move this to b2.boundary.parameters ?
       iffboundx=0
       iffboundy=0
       if(l_fbound .ne. 0) then

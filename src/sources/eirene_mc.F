@@ -355,7 +355,7 @@ c*** Check the b2espcr array
           hlp_bad_isp=.false.
           ispc_ref=-1
           do i=0,ns-1 !{
-cwd exclude fluid neutrals from this check: their recycling coefficient doesn't
+cwd exclude fluid neutrals from this check: their recycling coefficient does not
 c   necessarily have to match that of the ions, since they are not treated in the
 c   same Eirene stratum
             if (is_neutral(i)) cycle
