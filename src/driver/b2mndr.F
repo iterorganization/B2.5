@@ -1504,7 +1504,7 @@ c new CDF movie option (1st frame at t=0)
       cpuinit=x05baf()
       elapsedinit=epoch_seconds()
     1 continue
-      write(*,'(a,i8,1p,g14.7,i8,i3,1x,l1)') 
+      write(*,'(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') 
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
      1 itim,dtim,ntim,stack_ptr,quit
 

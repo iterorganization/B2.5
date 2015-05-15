@@ -594,11 +594,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         eircount=1
         if(ncall.eq.0) then 
           write(*,*) 'Calling post_couple'
-          if (crcstra(nstrat) .eq. 'T') then 
-            call post_couple(nx,ny,ns,nstrat-1)
-          else
-            call post_couple(nx,ny,ns,nstrat)
-          endif
+          call post_couple(nx,ny,ns,nstrat)
           write(*,*) 'Called post_couple'
         endif
         if(ncall.eq.0.and.repeat_first_call.gt.0) then
