@@ -413,7 +413,7 @@
 *    'b2ytdr_ns'                ns                     Run
 *    'b2ytdr_rescale_neutrals'  '1.0'                  Run
 *    'eirene_ank_mods'          '0'                    Numerics
-*    'eirene_dpc_fix'           '-1'                   Numerics
+*    'eirene_dpc_fix'           '1'                    Numerics
 *    'eirene_extrap'            '1'                    Numerics
 *    'eirene_ionising_core'     '0'                    Physics
 *    'eirene_format'            'iter'                 Output
@@ -1663,11 +1663,9 @@
 *    $SOLPSTOP/doc/Source_Scaling_in_B2.pdf for a full description of
 *    the method used.
 *
-*    'eirene_dpc_fix'           '-1'                   Numerics
+*    'eirene_dpc_fix'           '1'                    Numerics
 *    If dpc_fix.eq.1, then uses the true particle source from the
 *    stratum. If dpc_fix.eq.2, sets this particle source to zero.
-*    The default setting (dpc_fix.eq.-1) will cause the code to stop with
-*    message telling the user to set the variable explicitly!
 *    The equivalent of the old behaviour is dpc_fix.eq.0 and is wrong!
 *
 *    'b2news_area_fix'          '3'                    Numerics
