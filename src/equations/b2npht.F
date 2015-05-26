@@ -83,9 +83,9 @@
       real (kind=R8) ::
      *  rxg, pcm0, pcm1, t0
       real (kind=R8) ::
-     *  aa5(-1:nx,-1:ny,-2:2),wrkf(-1:nx,-1:ny,0:1),
+     *  aa5(-1:nx,-1:ny,-2:2), wrkf(-1:nx,-1:ny,0:1),
      1  wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                 !srv 25.11.08
-     2  she0(-1:nx,-1:ny,0:3),shi0(-1:nx,-1:ny,0:3),
+     2  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      3  wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny)                           !srv 18.09.09
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
