@@ -20,7 +20,7 @@ EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Ds
 
 CPP = /lib/cpp -traditional -DNO_IEEE
 CPPOPTS = -P -I${srcdir} ${EQUIVS}
-SED = sed s:\#PREC\#:d:g
+SED = 
 LINK_MOD = 
 
 ifdef USE_MPI
@@ -45,7 +45,7 @@ endif
 
 DBLFC = ${FC}
 DBLOPTION =
-DBLSED = sed -e s:\#PREC\#:d:g
+DBLSED =
 
 INCMOD = -I
 MOD = mod
