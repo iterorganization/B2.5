@@ -131,6 +131,11 @@ cxpb  Northern boundaries (excluding diverted island)
               wall_end(nsegments) = nbnd
               nsegments = nsegments + 1
               wall_begin(nsegments) = nbnd+1
+            else if (leftix(ixn,iyn).eq.-2) then
+              idir = 3
+              wall_end(nsegments) = nbnd
+              nsegments = nsegments + 1
+              wall_begin(nsegments) = nbnd+1
             else if (rightix(ixn,iyn).ne.nx+1) then
               idir = 2
               ixn = rightix(bottomix(ix,iy),bottomiy(ix,iy))
