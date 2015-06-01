@@ -865,7 +865,7 @@ c total ion drift velocity in radial direction
       CALL GFSUB3(31,NX,NY,NXx,NYy,NFLAI,VVDIAB(0,0,1))
 !pb preparation for future use
       CALL GFSUB3(31,NX,NY,NXx,NYy,1,POB(0,0))
- c cell volumes
+c cell volumes
       CALL GFSUB3(31,NX,NY,NXx,NYy,1,VOLB(0,0))
 c magnitude of the magnetic field
       CALL GFSUB3(31,NX,NY,NXx,NYy,1,BFELDB(0,0))

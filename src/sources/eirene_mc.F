@@ -2029,7 +2029,7 @@ c
 !                rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,1)
 !                recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,1)
 !pb
-                 radar(ix,iy)=eneutrad(ix+1,iy+1,iatm,0)
+                 radarr(ix,iy)=eneutrad(ix+1,iy+1,iatm,0)
                  rad_neutr=rad_neutr+eneutrad(ix+1,iy+1,iatm,0)
                  rdneureg(k)=rdneureg(k)+eneutrad(ix+1,iy+1,iatm,0)
                  recycereg(k)=recycereg(k)+eneutrad(ix+1,iy+1,iatm,0)
