@@ -6443,7 +6443,7 @@ C  SKIP READING REST OF THIS BLOCK
             WRITE(IUNOT,'(2A24)') TXTSPC,TXTUNT
  3020     CONTINUE
         ELSE IF (NMODE.NE.0) THEN
-          READ (IUNIN,'(A72)') ZEILE ! LSYMET,LBALAN
+          READ (IUNIN,'(A72)') ZEILE ! LSYMET,LBALAN,LCHKQUD
           WRITE(IUNOT,'(A72)') ZEILE
           IF (streql(eirene_format,'old')) READ (IUNIN,'(A72)') ZEILE
           READ (IUNIN,'(3I6)') idum(0:2) ! NFLA,NCUTB,NCUTL
