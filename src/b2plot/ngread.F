@@ -192,7 +192,7 @@ cank 960511
         do ix=0,nx+1
           do iy=0,ny+1
             srcml(ix,iy,is,1)=0.0_R8
-            edissml(ix,iy,is,1)=0.0_R8
+            edissml(ix,iy,is,0)=0.0_R8
           end do
         end do
       end do
@@ -215,7 +215,7 @@ cank 960511
       if(jvft44 .ge. 960511) then
         do is=1,nmoli
           call gfsub2(44,nxdd,nydd,nnx,nny,srcml(0,0,is,1))
-          call gfsub2(44,nxdd,nydd,nnx,nny,edissml(0,0,is,1))
+          call gfsub2(44,nxdd,nydd,nnx,nny,edissml(0,0,is,0))
         end do
         read(44,'(2i6)') nlimi,nstsi
         print *,'nlimi,nstsi:',nlimi,nstsi
@@ -389,7 +389,7 @@ cank
 
         if(jvft44 .ge. 20071209) then
           do is = 1, natmi
-            call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,is,1))
+            call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,is,0))
           end do
         end if
       
@@ -423,7 +423,7 @@ cank
       else  ! NLWRMSH
         if(jvft44 .ge. 20130210) then
           do is = 1, natmi
-            call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,is,1))
+            call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,is,0))
           end do
         end if      
       end if

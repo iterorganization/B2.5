@@ -39,7 +39,7 @@ c     avoids double module definition in case code is compiled with Eirene
         allocate(emiss(0:nxdd,0:nydd,1,1))
         allocate(emissmol(0:nxdd,0:nydd,1,1))
         allocate(srcml(0:nxdd,0:nydd,nmol,1))
-        allocate(edissml(0:nxdd,0:nydd,nmol,1))
+        allocate(edissml(0:nxdd,0:nydd,nmol,0:nstra+1))
         allocate(wldnek(nlmpgs,0:nstra+1)) 
         allocate(wldnep(nlmpgs,0:nstra+1))
         allocate(wldna(nlmpgs,natm,0:nstra+1))
@@ -53,7 +53,7 @@ c     avoids double module definition in case code is compiled with Eirene
         allocate(wldpm(nlmpgs,nmol,0:nstra+1))
         allocate(wldpeb(nlmpgs,0:nstra+1))
         allocate(wldspt(nlmpgs,0:nstra+1))
-        allocate(eneutrad(0:nxdd,0:nydd,natm,1))
+        allocate(eneutrad(0:nxdd,0:nydd,natm,0:nstra+1))
         allocate(isrftype(nlmpgs))
 #endif
 !       write(*,*) ' Allocated arrays in eirene_extrab25_eirdiag_alloc ',  &

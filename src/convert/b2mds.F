@@ -1101,7 +1101,7 @@ c
         call mds_put_double_rz('\TOP.SNAPSHOT:EMISS','ph.m^-3.s^-1',
      1   nx+2,ny+2,emiss(0:nx+1,0:ny+1,1,1),'')
         call mds_put_double_rzns('\TOP.SNAPSHOT:ENEUTRAD','W',nx+2,
-     1   ny+2,natmi,eneutrad(0:nx+1,0:ny+1,1:natmi,1),'')
+     1   ny+2,natmi,eneutrad(0:nx+1,0:ny+1,1:natmi,0),'')
       endif
 #endif
 #ifdef B25_EIRENE
@@ -1123,7 +1123,7 @@ c
         call mds_put_double_rzns('\TOP.SNAPSHOT:SRCML','/s',nx+2,
      1   ny+2,nmoli,srcml(0:nx+1,0:ny+1,1:nmoli,1),'TEXTMN','')
         call mds_put_double_rzns('\TOP.SNAPSHOT:EDISSML','W',nx+2,
-     1   ny+2,nmoli,edissml(0:nx+1,0:ny+1,1:nmoli,1),'TEXTMN','')
+     1   ny+2,nmoli,edissml(0:nx+1,0:ny+1,1:nmoli,0),'TEXTMN','')
       endif
 #endif
 #ifdef B25_EIRENE

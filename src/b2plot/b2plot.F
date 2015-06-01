@@ -1787,12 +1787,12 @@ c
         case ('edissml')
           description='Power to atoms due to molecule dissociation (W)'
           nz=nmoli
-          mach(:,:,0:nz-1)=edissml(0:nx+1,0:ny+1,1:nz,1)
+          mach(:,:,0:nz-1)=edissml(0:nx+1,0:ny+1,1:nz,0)
           call copy(mach,-1.0_R8,nz,textmn)
         case ('neutrad')
           description='Total power loss due to atom radiation (W)'
           nz=natmi
-          mach(:,:,0:nz-1)=eneutrad(0:nx+1,0:ny+1,1:nz,1)
+          mach(:,:,0:nz-1)=eneutrad(0:nx+1,0:ny+1,1:nz,0)
           call copy(mach,-1.0_R8,nz,textan)
         case ('rqae')
           description='Electron cooling rate (W) [rqahe]'

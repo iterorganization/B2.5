@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10 :: newversion ='03.000.000'
+      character*10 :: newversion ='03.000.001'
 
       character*10, save ::
      1 b2fstati_version = '00.000.000',
@@ -248,4 +248,5 @@ c    Versions 02.00x.0xx  Reserved for SOLPS6.0
 c
 c    Version 03.000.000  09.02.15 Inaugural SOLPS-ITER version
 c                                 Added smcf centrifugal force array to b2fplasma
+c    Version 03.000.001  01.06.15 Adding the POB array to fort.44 per Juelich code
 c  

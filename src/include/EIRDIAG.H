@@ -7,14 +7,16 @@ c  version : 27.07.2000 22:52
      .	pfluxa(0:ndxp,0:ndyp,natm,1),  pfluxm(0:ndxp,0:ndyp,nmol,1),
      .	pefluxa(0:ndxp,0:ndyp,natm,1), pefluxm(0:ndxp,0:ndyp,nmol,1),
      .	emiss(0:ndxp,0:ndyp,1,1),      emissmol(0:ndxp,0:ndyp,1,1),
-     .	srcml(0:ndxp,0:ndyp,nmol,1),   edissml(0:ndxp,0:ndyp,nmol,1),
+     .	srcml(0:ndxp,0:ndyp,nmol,1),   
+     .  edissml(0:ndxp,0:ndyp,nmol,0:nstra),
      .	wldnek(nlmpgs,0:nstra),        wldnep(nlmpgs,0:nstra),
      .	wldna(nlmpgs,natm,0:nstra),    ewlda(nlmpgs,natm,0:nstra),
      .	wldnm(nlmpgs,nmol,0:nstra),    ewldm(nlmpgs,nmol,0:nstra),
      .	wldra(nlmpgs,natm,0:nstra),    wldrm(nlmpgs,nmol,0:nstra),
      .	wldpp(nlmpgs,npls,0:nstra),    wldpa(nlmpgs,natm,0:nstra),
      .	wldpm(nlmpgs,nmol,0:nstra),    wldpeb(nlmpgs,0:nstra),
-     .	wldspt(nlmpgs,0:nstra),        eneutrad(0:ndxp,0:ndyp,natm,1),
+     .	wldspt(nlmpgs,0:nstra),        
+     .  eneutrad(0:ndxp,0:ndyp,natm,0:nstra),
      .  wlarea(nlmpgs),                wlabsrp(nspz,nlmpgs),
      .  wldna_res(natm,nsgmx),     !incident atom flux
      .  wldnm_res(nmol,nsgmx),     !incident molecule flux
