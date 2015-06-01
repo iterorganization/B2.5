@@ -3436,7 +3436,7 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
           IF (INDEX(ZEILE,'PHOTON').EQ.0) THEN
             READ (ZEILE,66661)
      .            I,FILNAM,H123,REAC,CRC,idum(0:1),rdum(0),RMN,RMX
-!  CORRECT FOR OLD REACTION NO LONGER SUPPORTED
+!  CORRECT FOR OLD REACTIONS NO LONGER SUPPORTED
             IF (streql(FILNAM,'AMJUEL')) THEN
               IF (streql(REAC,'0.1')) THEN
                 REAC='0.1T'
@@ -3456,6 +3456,8 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
               IF (streql(REAC,'0.6')) REAC='0.6T'
               IF (streql(REAC,'0.7')) REAC='0.7T'
               IF (streql(REAC,'0.8')) REAC='0.8T'
+              IF (streql(REAC,'7.0c') .and. streql(H123,'H.11'))
+     .         REAC='7.0a'
             END IF
             WRITE(ZEILE,66661)
      .            I,FILNAM,H123,REAC,CRC,idum(0:1),rdum(0),RMN,RMX
