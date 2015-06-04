@@ -220,6 +220,7 @@
 ! cxpb if the size of fch_p is n2 and not n2*2
         fch_p(:,:,1)=0.0_R8
         call cfrure_opt (nget, n2*2, fch_p, 'fch_p')
+        write(6,*) 'Recovering by reading fch_p with array size ', n2
         call cfrure (nget, n2, fch_p(:,:,0), 'fch_p')
       elseif(b2fstat_version.ge.'01.001.032' .and.
      &       b2fstat_version.le.'01.001.068') then                          !xpb srv 10.06.08 {

@@ -208,6 +208,7 @@ cxpb  Geometric information
       allocate(imapw(nwall), imapreg(nwall),
      *  wall_begin(nwall_segments), wall_end(nwall_segments))
       allocate(r1(nwall), r2(nwall), z1(nwall), z2(nwall))
+      allocate(itrack_0(nwall))
 
       call subend()
       return
@@ -293,8 +294,6 @@ cxpb Data file material properties
      *  matbulk_Cp_B1(nwall),
      *  matbulk_Cp_B2(nwall),
      *  matbulk_Cp_B3(nwall))
-
-      allocate(itrack_0(nwall))
 
       call xertst(1.le.ndepth .and. ndepth.le.1001,
      . 'invalid dimension ndepth')

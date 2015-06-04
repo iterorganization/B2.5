@@ -189,7 +189,7 @@ c 2002-09-11: logic revised
      6 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
      7 na_feedback_overshoot1(:)
       real (kind=R8) :: ds_offset, l_total, l_ref
-      integer ns1, nsm, nym, natmm 
+      integer ns1, nsm, nym, natmm, nwallm 
       integer i, j, k, ix, iy, is, ib, ireg, len, nsns
       integer ib1, ib2, ifl, js, ks, kmod, kint, itrack
       integer natm1, nspecies1, iss
@@ -232,7 +232,7 @@ c 2002-09-11: logic revised
       integer IRPTA3, IRPTE3
       integer NATMI, NMOLI, NIONI, NPHOTI, NPLSI, NNREAC, IPLTA
       integer NATMI1, NREAC1, NSTRA1, NPLSI1, NPLSM
-      integer IREAD, IEND, IANF, ISTS, IH, L, M, JSS
+      integer IREAD, IEND, IANF, ISTS, IH, I3, L, M, JSS
       integer IATM, IMOL, IION, IPHOT, ICRM, IPLS, IPLSS, ISTRA
       integer MAXRAD, NSIGVI, NSIGSI, NSIGCI, NPPLG, NCRM
       integer NSIGV1, NSIGS1, NSIGC1
@@ -383,6 +383,7 @@ c 2002-09-11: logic revised
       character*24 TXTSPC, TXTUNT, TEXTLA
       character*72 TXTMOL, TXTION, TXTPLS, TXTPHOT, TXTCRM
       character*72 TITLE5, CHRTAL
+      character HANDLE*6
       character FILNAM*8,H123*4,REAC*9,REAC2*50,CRC*3
       character ELNAME*2,REACSTR*11
       character*8 varname
@@ -2908,20 +2909,57 @@ cxpb  Start reading input.dat file
           WRITE(IUNOT,6665) ldum(0:15)
         ENDIF
         READ (IUNIN,'(A80)') ZEILE
-        WRITE(IUNOT,'(A80)') ZEILE
-        IREAD=1
         I1 = INDEX(ZEILE,'CFILE')
-        DO WHILE (I1 /= 0)
-          READ (IUNIN,'(A80)') ZEILE       
+        IF (I1.EQ.0) THEN
           WRITE(IUNOT,'(A80)') ZEILE
-          I1 = INDEX(ZEILE,'CFILE')
-        END DO      
+          IREAD=0
+        ELSE
+          DO WHILE (I1 /= 0)
+            if (streql(eirene_format,'iter')) then ! no conversion necessary
+              WRITE(IUNOT,'(A80)') ZEILE
+            else
+! FIXME: Need to change the handles here
+              I2 = VERIFY(ZEILE(I1+5:),' ') + I1 + 4
+              I3 = SCAN(ZEILE(I2+1:),' ')
+              HANDLE=REPEAT(' ',6)
+              HANDLE(1:I3) = ZEILE(I2:I2+I3-1)
+c   cfile card found. Is this one of the permitted external files?
+              if (streql(handle,'AMJUEL')) then
+                WRITE(IUNOT,'(A47)')
+     .           'CFILE AMJUEL Database/AMdata/amjuel.tex        '
+              else if (streql(handle,'HYDHEL')) then
+                WRITE(IUNOT,'(A47)')
+     .           'CFILE HYDHEL Database/AMdata/hydhel.tex        '
+              else if (streql(handle,'SPUTER')) then
+                WRITE(IUNOT,'(A47)')
+     .           'CFILE SPUTER Database/Surfacedata/SPUTER       '
+              else if (streql(handle,'TRIM')) then
+                WRITE(IUNOT,'(A47)')
+     .           'CFILE TRIM   Database/Surfacedata/TRIM/trim.dat'
+              else if (streql(handle,'METHAN')) then
+                WRITE(IUNOT,'(A47)')
+     .           'CFILE METHAN Database/AMdata/methane.tex       '
+              else if (streql(handle,'gr_ext')) then
+                WRITE(IUNOT,'(A47)')
+     .           'CFILE gr_ext Database/graphite_ext.dat         '
+              else if (streql(handle,'mo_ext')) then
+                WRITE(IUNOT,'(A47)')
+     .           'CFILE mo_ext Database/mo_ext.dat               '
+              else
+                WRITE(IUNOT,'(A80)') ZEILE
+              ENDIF
+            endif
+            READ (IUNIN,'(A80)') ZEILE
+            I1 = INDEX(ZEILE,'CFILE')
+          END DO 
+          IREAD=1 
+        END IF    
           
 *** 2. DATA FOR STANDARD MESH
         IF (IREAD.EQ.0) THEN
           READ (IUNIN,'(A80)') ZEILE
-          WRITE(IUNOT,'(A80)') ZEILE
         ENDIF
+        WRITE(IUNOT,'(A80)') ZEILE
   201   READ (IUNIN,'(A80)') ZEILE
         WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:1) .EQ. '*') GOTO 201
@@ -7340,6 +7378,7 @@ cxpb as they no longer necessarily point to the same species
           close(99)
 *  ..convert the sputter namelist data
           natmm = max(natm,natm1)
+          nwallm = max(nwall,nwall1)
           allocate(sputter_tmp(nwall,0:nsm-1+natmm+nmol+nion))
           sputter_yield_yt = 0.0_R8
           sputter_yield2_yt = 0.0_R8
@@ -7352,7 +7391,7 @@ cxpb as they no longer necessarily point to the same species
           enddo
           call b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,
      .     bundle_frac,natm,natm1,natmm,nmol,nion,iatm1,
-     .     nwall,sputter_tmp,contr_area)
+     .     nwall,nwall1,nwallm,sputter_tmp,contr_area)
           do ib = 1, nbnd1
             sputter_yield_yt(imapx1(ib),imapy1(ib),0:ns1-1,1) = 
      .       sputter_tmp(ib,0:ns1-1)
@@ -7366,7 +7405,7 @@ cxpb as they no longer necessarily point to the same species
           enddo
           call b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,
      .     bundle_frac,natm,natm1,natmm,nmol,nion,iatm1,
-     .     nwall,sputter_tmp,contr_area)
+     .     nwall,nwall1,nwallm,sputter_tmp,contr_area)
           do ib = 1, nbnd1
             sputter_yield_yt(imapx1(ib),imapy1(ib),0:ns1-1,2) = 
      .       sputter_tmp(ib,0:ns1-1)
@@ -7380,7 +7419,7 @@ cxpb as they no longer necessarily point to the same species
           enddo
           call b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,
      .     bundle_frac,natm,natm1,natmm,nmol,nion,iatm1,
-     .     nwall,sputter_tmp,contr_area)
+     .     nwall,nwall1,nwallm,sputter_tmp,contr_area)
           do ib = 1, nbnd1
             sputter_yield2_yt(imapx1(ib),imapy1(ib),0:ns1-1,1) = 
      .       sputter_tmp(ib,0:ns1-1)
@@ -7394,7 +7433,7 @@ cxpb as they no longer necessarily point to the same species
           enddo
           call b2yt_wall_bundle_sum(ns,ns1,nsm,is_neutral1,
      .     bundle_frac,natm,natm1,natmm,nmol,nion,iatm1,
-     .     nwall,sputter_tmp,contr_area)
+     .     nwall,nwall1,nwallm,sputter_tmp,contr_area)
           do ib = 1, nbnd1
             sputter_yield2_yt(imapx1(ib),imapy1(ib),0:ns1-1,2) = 
      .       sputter_tmp(ib,0:ns1-1)
