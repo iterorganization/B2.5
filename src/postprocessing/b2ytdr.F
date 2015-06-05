@@ -3258,16 +3258,20 @@ C  OLD INPUT VERSION BEGIN
             IREAD=1
 C  READ ONE MORE LINE FOR NON-DEFAULT SPUTTER MODEL
             IF (ZEILE(1:1).NE.'*') THEN
-              IF (streql(eirene_format,'juelich').or.
-     .            streql(eirene_format,'new')) THEN
-                READ (ZEILE,6664) rdum(0:1),rdum(4) ! RECYCS(1,NLJ),RECYCC(1,NLJ),
-                                                    ! SPTPRM(1,NLJ)
-                rdum(2) = 1.0_R8
+              IF (streql(eirene_format,'facelift')) THEN
+                READ (ZEILE,6664) rdum(0:1), ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+     .                     rdum(4), rdum(5), ! ECHSPTG(1,NLJ),FCHSPTG(1,NLJ),
+     .                     rdum(2)           ! SPTPRM(1,NLJ)
                 rdum(3) = 0.0_R8
+              ELSE IF (streql(eirene_format,'iter')) THEN
+                READ (ZEILE,6664) rdum(0:4)  ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+                                             ! SPTPRM(1,NLJ),ESPUTS(1,NLJ),
+                                             ! ESPUTC(1,NLJ)
               ELSE
-                READ (ZEILE,6664) rdum(0:4)         ! RECYCS(1,NLJ),RECYCC(1,NLJ),
-                                                    ! ECHSPTG(1,NLJ),FCHSPTG(1,NLJ),
-                                                    ! SPTPRM(1,NLJ)
+                READ (ZEILE,6664) rdum(0:2)  ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+                                             ! SPTPRM(1,NLJ)
+                rdum(3) = 0.0_R8
+                rdum(4) = 0.0_R8
               ENDIF
               IREAD=0
               WRITE(IUNOT,6664) rdum(0:4)
@@ -3420,16 +3424,20 @@ C READ LOCAL SURFACE INTERACTION MODEL FOR SURFACE NO. I
             READ (IUNIN,'(A80)') ZEILE
             IREAD=1
             IF (ZEILE(1:1).NE.'*'.AND.ZEILE(1:9).NE.'TRANSFORM') THEN
-              IF (streql(eirene_format,'juelich').or.
-     .            streql(eirene_format,'new')) THEN
-                READ (ZEILE,6664) rdum(0:1),rdum(4) ! RECYCS(1,NLJ),RECYCC(1,NLJ),
-                                                    ! SPTPRM(1,NLJ)
-                rdum(2) = 1.0_R8
+              IF (streql(eirene_format,'facelift')) THEN
+                READ (ZEILE,6664) rdum(0:1), ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+     .                     rdum(4), rdum(5), ! ECHSPTG(1,NLJ),FCHSPTG(1,NLJ),
+     .                     rdum(2)           ! SPTPRM(1,NLJ)
                 rdum(3) = 0.0_R8
+              ELSE IF (streql(eirene_format,'iter')) THEN
+                READ (ZEILE,6664) rdum(0:4)  ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+                                             ! SPTPRM(1,NLJ),ESPUTS(1,NLJ),
+                                             ! ESPUTC(1,NLJ)
               ELSE
-                READ (ZEILE,6664) rdum(0:4)         ! RECYCS(1,NLJ),RECYCC(1,NLJ),
-                                                    ! ECHSPTG(1,NLJ),FCHSPTG(1,NLJ),
-                                                    ! SPTPRM(1,NLJ)
+                READ (ZEILE,6664) rdum(0:2)  ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+                                             ! SPTPRM(1,NLJ)
+                rdum(3) = 0.0_R8
+                rdum(4) = 0.0_R8
               ENDIF
               IREAD=0
               WRITE(IUNOT,6664) rdum(0:4)
@@ -5366,20 +5374,29 @@ cxpb We now rewrite the modified block 4
             select case (varname)
             case ('ISRS','ISRC','LCHSPNWL','TRANSP1','TRANSP2','RECYCF',
      .            'RECYCT','RECPRM','EXPPL','EXPEL','EXPIL','RECYCS',
-     .            'RECYCC','ECHSPTG','FCHSPTG','SPTPRM')
+     .            'RECYCC','SPTPRM','ESPUTS','ESPUTC')
               WRITE(IUNOT,'(A80)') ZEILE
               IREAD=0
+            case ('ECHSPTG')
+              WRITE(IUNOT,'(A8,A72)') 'ESPUTC  ',ZEILE(9:80)
+              IREAD=0
+            case ('FCHSPTG')
+              IREAD=0
             case default
-              IF (streql(eirene_format,'juelich').or.
-     .            streql(eirene_format,'new')) THEN
-                READ (ZEILE,6664) rdum(0:1),rdum(4) ! RECYCS(1,NLJ),RECYCC(1,NLJ),
-                                                    ! SPTPRM(1,NLJ)
-                rdum(2) = 1.0_R8
+              IF (streql(eirene_format,'facelift')) THEN
+                READ (ZEILE,6664) rdum(0:1), ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+     .                     rdum(4), rdum(5), ! ECHSPTG(1,NLJ),FCHSPTG(1,NLJ),
+     .                     rdum(2)           ! SPTPRM(1,NLJ)
                 rdum(3) = 0.0_R8
+              ELSE IF (streql(eirene_format,'iter')) THEN
+                READ (ZEILE,6664) rdum(0:4)  ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+                                             ! SPTPRM(1,NLJ),ESPUTS(1,NLJ),
+                                             ! ESPUTC(1,NLJ)
               ELSE
-                READ (ZEILE,6664) rdum(0:4)         ! RECYCS(1,NLJ),RECYCC(1,NLJ),
-                                                    ! ECHSPTG(1,NLJ),FCHSPTG(1,NLJ),
-                                                    ! SPTPRM(1,NLJ)
+                READ (ZEILE,6664) rdum(0:2)  ! RECYCS(1,NLJ),RECYCC(1,NLJ),
+                                             ! SPTPRM(1,NLJ)
+                rdum(3) = 0.0_R8
+                rdum(4) = 0.0_R8
               ENDIF
               WRITE(IUNOT,6664) rdum(0:4)
               IREAD=0
