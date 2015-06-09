@@ -94,9 +94,11 @@
 *    'b2ardr_fix_cx'            '1'                    Atomic Physics
 *    'b2ardr_fix_recomb'        '0'                    Atomic Physics
 *    'b2ardr_no_weisheit'       '0'                    Atomic Physics
+*    'b2ardr_no_smoothing'      '0'                    Numerics
 *    'b2ardr_rtnt'              '40'                   Atomic Physics
 *    'b2ardr_rtnn'              '16'                   Atomic Physics
 *    'b2mndr_astra'             '0'                    Run
+*    'b2mndr_atomic_physics_rescale' '0'               Physics
 *    'b2mndr_b2time'            '1'                    Output
 *    'b2mndr_cdfmovietim'       '0.0'                  Output
 *    'b2mndr_coronal_model'     '0'                    Physics
@@ -114,9 +116,10 @@
 *    'b2mndr_eirene'            '0'                    Run
 *    'b2mndr_elapsed'           '0'                    Run
 *    'b2mndr_etim'              '0.0'                  Run
-*    'b2mndr_hz'                '0.0'                  Physics     !srv 09.06.08
+*    'b2mndr_hz'                '0.0'                  Physics
 *    'b2mndr_idout0'            'pgnl;pgmm;pzmm'       Output
 *    'b2mndr_idout1'            'pzmm'                 Output
+*    'b2mndr_inverse_ua'        '0'                    Numerics
 *    'b2mndr_isfb'              ismain                 Numerics
 *    'b2mndr_ismain'            '1'                    Run
 *    'b2mndr_ixfb'              5*nx/8                 Numerics
@@ -151,7 +154,10 @@
 *    'b2mndt_nstg0'             '1'                    Run
 *    'b2mndt_nstg1'             '1'                    Run
 *    'b2mndt_nstg2'             '1'                    Run
+*    'b2mndt_ntim_step_out'     '1'                    Numerics
 *    'b2mndt_rxf'               '0.5'                  Numerics
+*    'b2mndt_style'             '0'                    Numerics
+*    'b2mndt_use_b2srst'        '1'                    Numerics
 *    'b2mwqt_style'             '1'                    Output
 *    'b2mwti_ismain0'           '0'                    Output
 *    'b2mwti_jxa'               See description (integer)  Geometry
@@ -192,6 +198,7 @@
 *    'b2news_ramp_slow'         '0'                    Numerics
 *    'b2news_recalculate_contributions'  '1'           Numerics
 *    'b2news_vis'               '0.0'                  Physics
+*    'b2news_vis_per'           '0.0'                  Numerics
 *    'b2news_xfm0'              '1.0'                  Numerics
 *    'b2news_xfm1'              '1.0'                  Numerics
 *    'b2news_xfm2'              '1.0'                  Numerics
@@ -202,10 +209,16 @@
 *    'b2npht_pcm0'              '1.0'                  Numerics
 *    'b2npht_pcm1'              '1.0'                  Numerics
 *    'b2npht_rxg'               '1.0'                  Numerics
+*    'b2npht_style'             '0'                    Numerics
+*    'b2nph9_style'             '0'                    Numerics
+*    'b2npmo_modvis'            '0'                    Physics
 *    'b2npmo_rxg'               '1.0e6'                Numerics
+*    'b2nxdv_style'             '0'                    Numerics
 *    'b2nxfc_style'             '0'                    Numerics
-*    'b2mndr_atomic_physics_rescale' '0'               Physics
+*    'b2nxfx_style'             '0'                    Numerics
 *    'b2sdia_facgt'             '0.0'                  Physics
+*    'b2sicf_phm0'              '0.0'                  Physics
+*    'b2sicf_phm1'              '0.0'                  Physics
 *    'b2sifr_limthee'           '0.3'                  Physics
 *    'b2sifr_limthii'           '0.3'                  Physics
 *    'b2sifr_phm0'              '1.0'                  Physics
@@ -213,6 +226,7 @@
 *    'b2sifr_phm2'              '1.0'                  Unused
 *    'b2sifr_styl0'             '0'                    Numerics
 *    'b2sifr_styl1'             '0'                    Numerics
+*    'b2sigp_style'             '0'                    Numerics
 *    'b2sihs_phm0'              '1.0'                  Physics
 *    'b2sihs_phm1'              '1.0'                  Physics
 *    'b2sihs_phm2'              '1.0'                  Physics
@@ -266,6 +280,8 @@
 *    'b2stbc_fnaycore_alpha'    '0.1'                  Numerics
 *    'b2stbc_integral_current'  '0.0'                  Numerics
 *    'b2stbc_isfeedback'        '0'                    Physics
+*    'b2stbc_istyle_cur_contr_on_S_and_N'   '0'        Numerics
+*    'b2stbc_istyle_fchi'       '0'                    Numerics
 *    'b2stbc_iyped'             jsep/2                 Physics
 *    'b2stbc_ncallfeedback'     '0'                    Run
 *    'b2stbc_ndes'              '0.0'                  Physics
@@ -355,23 +371,34 @@
 *    'b2tfcc_xfac'              '1.0'                  Numerics
 *    'b2tfhe_anomalous'		'1.0'                  Physics
 *    'b2tfhe_conduction_only'   '0'                    Physics
-*    'b2tfhe_neutral'		'0.0'                  Physics
+*    'b2tfhe_alfTeEh'           '0.0'                  Physics
+*    'b2tfhe_fch_pTe'           '0.0'                  Physics 
+*    'b2tfhe_lim_flux'          '0'                    Physics      
+*    'b2tfhe_neutral'	        '0.0'                  Physics
 *    'b2tfhe_no_current'        '0'                    Numerics
 *    'b2tfhe_no_hybr'           '0'                    Numerics
 *    'b2tfhe_vis_par'	        '0.0'                  Physics
 *    'b2tfhe_vis_per'	        '0.0'                  Physics      !srv 20.11.08
 *    'b2tfhe_vis_q'	        '1.0'                  Physics      !srv 20.11.08
+*    'b2tfhi_lim_flux'          '1'                    Physics      
 *    'b2tfhi_no_hybr'           '0'                    Numerics
 *    'b2tfnb_alpha'             '0.0'                  Physics
+*    'b2tfnb_drift_style'       '0'                    Numerics
 *    'b2tfnb_gamma'             '2.0'                  Physics
 *    'b2tfnb_flux_limit_min_ti' '0.0'                  Physics
+*    'b2tfnb_mdf'               '0'                    Numerics
 *    'b2tfnb_no_hybr'           '0'                    Numerics
+*    'b2tfnb_nodrift_style'     '0'                    Numerics
 *    'b2tfnb_xfrhie'            '1.0'                  Numerics
+*    'b2tfnb_xfrhiehz'          '1.0'                  Numerics
+*    'b2tlc0_alpha'             '0.0'                  Phycics
+*    'b2tlc0_gamma'             '2.0'                  Physics
 *    'b2tlh0_alpha'             '0.0'                  Physics
 *    'b2tlh0_gamma'             '2.0'                  Physics
 *    'b2tlh0_flux_limit_min_ti' '0.0'                  Physics
+*    'b2tlh0_flux_limit_style'  '0'                    Numerics
 *    'b2tlh0_hcimx_flag'        '1'                    Numerics
-*    'b2tlmv_model'             '0'                    Physics      !srv 30.05.08
+*    'b2tlmv_style'             '0'                    Physics      !srv 30.05.08
 *    'b2tqca_model'             '1'                    Physics
 *    'b2tqca_phm0'              '1.0'                  Physics
 *    'b2tqce_model'             '1'                    Physics
@@ -384,11 +411,13 @@
 *    'b2tqna_ixref'             See description (integer)  Physics
 *    'b2tqna_max_df0'           '1e30'                 Physics
 *    'b2tqna_min_df0'           '0.0'                  Physics
+*    'b2tqna_model_sig'         '0'                    Physics
 *    'b2tqna_new_df0'           '0'                    Physics
 *    'b2tqna_pfr_rescale'       '1.0'                  Physics
 *    'b2tqna_transport_namelist''0'                    Run
 *    'b2tqna_user_transport'    '0'                    Physics
 *    'b2tral_mode'              '1'                    Numerics
+*    'b2trcl_conductive limit'  '0'                    Numerics
 *    'b2trcl_cthe'              '0.0'                  Physics
 *    'b2trcl_cthi'              '2.65'                 Physics
 *    'b2trcl_lambda'            '-5.0'                 Physics
@@ -396,6 +425,7 @@
 *    'b2trcl_lthf21'            '0'                    Physics
 *    'b2trcl_lvis21'            '0'                    Physics
 *    'b2treq_phm0'              '1.0'                  Physics
+*    'b2trno_flux_limit_to_dpa' '0'                    Numerics
 *    'b2trno_pol_anom_scale'    '1.0'                  Physics
 *    'b2upht_stylec'            '0'                    Numerics
 *    'b2usmo_cfc0'              '1.0'                  Numerics
@@ -406,6 +436,10 @@
 *    'b2ux5p_mult_solvdim1'     '10'                   Numerics
 *    'b2ux5p_nltrsol'           '2'                    Output
 *    'b2ux5p_style'             '2'                    Numerics
+*    'b2ux7p_nltrsol'           '0'                    Output
+*    'b2ux7p_style'             '2'                    Numerics
+*    'b2ux9p_nltrsol'           '0'                    Output
+*    'b2ux9p_style'             '2'                    Numerics
 *    'b2xzdd_zero_dead_and_core''1'                    Numerics
 *    'b2yrdr_ns'                ns                     Output
 *    'b2ytdr_ndepth1'           ndepth_nml             Run
@@ -776,6 +810,13 @@
 *    Ramping parameters for facvis, which multiplies the drift 
 *    viscosity terms. Same treatment as above for facdrift.
 *
+*    'b2news_vis_per'           '0.0'                  Numerics
+*    If '1.0', the electrical potential equation is solved by the
+*    subroutine b2npp7 using a 7-point stencil. 
+*    The value '1.0' is recommended for runs with drifts when 
+*    perpendicular viscosity and corresponding perpendicular 
+*    viscosity current is taken into account, i.e. 'b2tfhe_vis_per' '1.0'.
+*
 *    'b2stbc_boundary_namelist' '0'                    Run
 *    'b2stbr_neutrals_namelist' '0'                    Run
 *    'b2srdt_numerics_namelist' '0'                    Run
@@ -857,6 +898,18 @@
 *
 *   1.3. Physics switches
 *
+*    'b2npmo_modvis'          '0'                    Physics
+*    when set to '1', new correct form of viscosity is used.
+*    It is important for runs with drifts. It is recommended '1'.
+*
+*    'b2sicf_phm0'              '0.0'                  Physics
+*    Multiplier of the centrifugal force term. 
+*    It is recommended '1.0'
+*
+*    'b2sicf_phm1'              '0.0'                  Physics
+*    Multiplier of the centrifugal force correction term
+*    due to linearization. It is recommended '1.0'
+*
 *    'b2tfhe_anomalous'		'1.0'                  Physics
 *    real parameter which determines anomalous current.
 *    If b2tfhe_anomalous is 0 then anomalous current is
@@ -891,6 +944,7 @@
 *    If lluciani.eq.1, the standard connection length formulation is used.
 *    If lluciani.eq.2, the old SOLPS4.0 formulation is used for
 *    backward compatibility.
+*    If lluciani.eq.3, Spb's new form Luciani's coefficients
 *
 *    'b2trcl_lthf21'            '0'                    Physics
 *    If lthf21.ne.0, then the heat transfer model is modified according
@@ -1138,9 +1192,44 @@
 *    If fac_hz = 0.0 then hz = 1 and old form of equations is used.
 *    If fac_hz = 1.0 then new form of equations is used.
 *
+*    'b2mndt_style'             '0'                    Numerics
+*    When set to '1', all important variables will be calculated for 
+*    the first step. 
+*    This avoids a jump of residuals when continuing the run.  
+*
+*    'b2mndt_ntim_step_out'     '1'                    Numerics
+*    When set to a value of 'K', residuals at each K-th step will be written
+*    in b2ftrace. It helps to avoid a huge b2ftrace files during long time run.
+*
+*    'b2mndt_use_b2srst'        '1'                    Numerics
+*    Switches off the stabilization of the source coefficients.
+*
 *    'b2stbr_bas_recycled_neutrals_contr' '1.0'        Physics       !srv 12.04.08
 *    introduced for nulling recycling energy when it is zero.
 *
+*    'b2stbc_istyle_cur_contr_on_S_and_N'   '0'        Numerics
+*     When set to '1', SPb's form of adding of fchy_dia contributions
+*     on South and North boundaries is used. It is recommended '1'.
+*
+*    'b2stbc_istyle_fchi'       '0'                    Numerics
+*    If '1', explicitly use the expression (bx*cs*na) of particle flux
+*    (fna) from boundary condition instead of fna.
+* 
+*    'b2tfhe_alfTeEh'           '1.0'                  Physics
+*    When set to '0.0', the old form of the electron heat flux calculation
+*    is used.
+*    It is recommended to use 0.0.
+*
+*    'b2tfhe_fch_pTe'           '0.0'                  Physics         
+*    When set to '1.0', the new form of the electron heat flux calculation
+*    is used.
+*    It is recommended to use 1.0.
+*
+*
+*    'b2tqce_fke_Zhdanov'       '0'                    Physics
+*     When set to '1', Zhdanov's expression is used in the electron thermal 
+*     conductivity. It is recommended to use 'b2tqce_fke_Zhdanov'  '1'
+
 *    'b2tqna_ixref'             See description (integer)  Physics
 *    Poloidal index (on the basis mesh) of the reference surface for the
 *    flux-scaled transport model. The default value is the outer midplane,
@@ -1239,6 +1328,12 @@
 *    'b2trcl_cthi'              '2.65'                 Physics
 *    Parameters for the computation of the thermal force term.
 *
+*    'b2trcl_conductive limit'  '0'                    Numerics
+*    When set to '1', flux limit of the parallel electron
+*    and ion heat fluxes is applied to transport coefficients.
+*    It is recommended '1'. If 'b2trcl_conductive limit' '0' then 
+*    the keys 'b2tfhe_lim_flux' and 'b2tfhi_lim_flux' must be '0'.  
+*    
 *    'b2trcl_lambda'            '-5.0'                 Physics
 *    If lambda is negative, then abs(lambda) is the lower bound to be used
 *    when computing the Coulomb logarithm according to the NRL formulae.
@@ -1268,6 +1363,13 @@
 *    If alpha.eq.0, no flux limit is applied.
 *    flux_limit_min_ti specifies the minimum ti to be used (in eV)
 *
+*    'b2tlc0_alpha'             '0.0'                  Physics
+*    'b2tlc0_gamma'             '2.0'                  Physics
+*    Parameters for the flux limit to dpa0 - pressure driven neutral diffusion
+*    Alpha is a multiplier to the classical flux limit value.
+*    Gamma is the exponent used in the flux-limiting formula.
+*    If alpha.eq.0, no flux limit is applied.
+*
 *    'b2tlh0_alpha'             '0.0'                  Physics
 *    'b2tlh0_gamma'             '2.0'                  Physics
 *    'b2tlh0_flux_limit_min_ti' '0.0'                  Physics
@@ -1279,7 +1381,7 @@
 *    If alpha.eq.0, no flux limit is applied.
 *    flux_limit_min_ti specifies the minimum ti to be used (in eV)
 *
-*    'b2tlmv_model'             '0'                    Physics     !srv 30.05.08
+*    'b2tlmv_style'             '0'                    Physics     !srv 30.05.08
 *    if model = 0 then 
 *      it is applied the origin flux limit to the viscosity
 *    else
@@ -1326,6 +1428,14 @@
 *    multiplied by facdrift. This term is no longer needed as it has been
 *    transferred from being a source to being included in the flows.
 *
+*    'b2sral_style'             '0'                    Physics  
+*    When set to '0', in the expression of the electron particle flux (fne) 
+*    the particle flux with drift terms is used and temporary 
+*    drift velocities on the first call are calculated.
+*    When set to '1' or '2', the particle flux without drift terms is used
+*    in fne. 
+*    It is recommended '2'.             
+*
 *    'b2sqcx_styl0'             '0'                    Physics
 *    'b2sqcx_phm0'              '1.0'                  Physics
 *    phm0 : Multiplier to the charge-exchange rate coefficient. Subservient
@@ -1347,8 +1457,25 @@
 *    rate (if ADPAK rates are not used because those are already included).
 *    Assumes all recombination is three-body.
 *
+*    'b2tfhe_lim_flux'          '1'                    Physics      
+*    If '0', flux limit is not applied directly to the electron heat flux
+*    but is applied through transport coefficients if 
+*    'b2trcl_conductive limit' is '1'
+*    It is recommended '0'.
+*
+*    'b2tfhi_lim_flux'          '1'                    Physics      
+*    If '0', flux limit is not applied directly to the ion heat flux
+*    but is applied through transport coefficients if 
+*    'b2trcl_conductive limit' is '1'
+*    It is recommended '0'.
+*
 *    'b2treq_phm0'              '1.0'                  Physics
 *    Multiplier to the temperature equipartition term.
+*
+*    'b2tlh0_flux_limit_style'  '0'                    Numerics
+*    If '1', Spb's form to calculate parallel and perpendicular  
+*    neutral heat conductivity flux limit.
+*    It is recommended '1'.
 *
 *    'b2tqca_phm0'              '1.0'                  Physics
 *    Multiplier for the classical parallel viscosity.
@@ -1357,6 +1484,9 @@
 *    If model.eq.1, use the Balescu formulation from SOLPS5.0 
 *    classical parallel ion heat diffusivity.
 *    If model.eq.2, use the older Braginskii SOLPS4.0 model.
+*    If model.eq.3, it is as model.eq.1 but without factor 4/3
+*    which is applied to cvsahz for main ions in b2tral.F.
+*    It is recommended '3'.  
 *
 *    'b2tqce_model'             '1'                    Physics
 *    If model.eq.1, use the fitted Balescu formulation from SOLPS5.0 
@@ -1365,11 +1495,29 @@
 *    If model.eq.3, use the 21-moment Balescu results.
 *    If model.eq.4, use the Zhdanov fit to the Braginskii table.
 *
+*    'b2tqna_model_sig'         '0'                    Physics
+*    If '1', use constant density in core region to calculate
+*    anomalous conductivity sig0=dfsig*qe*ne(nmdpl,-1),
+*    nmdpl - number of midplane cell.
+*    If '0', use sig0=dfsig*qe*ne(x,y)
+*    
 *    'b2trno_pol_anom_scale'    '1.0'                  Physics
 *    If pol_anom_scale.ne.1, the poloidal anomalous transport coefficients
 *    are scaled by the number.  To get the same treatment as setting the old
 *    switch (radial_only) to 1, set the new switch to 0.0.
 *    This multiplication is to only take place for charged species.
+*
+*    'b2trno_flux_limit_to_dpa' '0'                    Numerics
+*    If '1', flux limit to neutrals contribution to dpa0 - the diffusion
+*    coefficient is applied in b2tlc0.F. It is recommended '1'.
+*    b2tlc0.F has the flux limit parameters alpha and gamma which are
+*    given by 'b2tlc0_alpha' and 'b2tlc0_gamma'. 'b2tfnb_alpha' 
+*    and 'b2tlc0_alpha' cannot be differed from zero simultaneously.
+*    'b2tfnb_alpha' gives another form of flux limit which is applied 
+*    to whole partical flux.
+*
+*    'b2sifr_phm2'              '1.0'                  Unused
+*    Must be positive.
 *
 *    'eirene_lhalpha'           '1'                    Physics
 *    If 0 then no calculation of halpha in wneutral, otherwise halpha
@@ -1532,9 +1680,10 @@
 *    by Eirene. This happens irrespective of the setting of the two switches 
 *    above. If however, the user wishes to obtain these files for a non-coupled
 *    run, then these two switches can be set to 1 and the files will then be
-*    produced at the end of the run. If savef31.lt.0, then a fort.31.###### file 
-*    is produced after every B2.5 time step. Additionally, if savef31.ne.0, the 
-*    fort.31 file will be updated before every Eirene call for coupled runs.
+*    produced at the end of the run. If savef31.lt.0, then a fort.31.######
+*    file is produced after every B2.5 time step. Additionally, if 
+*    savef31.ne.0, the fort.31 file will be updated before every Eirene call 
+*    for coupled runs.
 *
 *    'b2yrdr_ns'                ns                     Output
 *    New number of species desired when reading a new atomic rates file
@@ -1553,6 +1702,14 @@
 *    If cpu.gt.0, prints out the time spent in the matrix solver.
 *    
 *    'b2ux5p_nltrsol'           '2'                    Output
+*    Output flag for the iluter matrix solver. Larger numbers mean increasing
+*    output level.
+*
+*    'b2ux7p_nltrsol'           '0'                    Output
+*    Output flag for the iluter matrix solver. Larger numbers mean increasing
+*    output level.
+*
+*    'b2ux9p_nltrsol'           '0'                    Output
 *    Output flag for the iluter matrix solver. Larger numbers mean increasing
 *    output level.
 *
@@ -1730,6 +1887,18 @@
 *    stencil, Style.eq.2 = MA28. NOTE: Only style.eq.2 will give good results.
 *    Other values are NOT recommended!
 *
+*    'b2ux7p_style'             '2'                    Numerics
+*    Choose the type of matrix solver. Style.eq.0 = iluter, Style.eq.1 = 5-pt
+*    stencil, Style.eq.2 = MA28copy. Style.eq.3 = SDRV from YSMP
+*    NOTE: Only style.eq.3 will give good results.
+*    Other values are NOT recommended!
+*
+*    'b2ux9p_style'             '2'                    Numerics
+*    Choose the type of matrix solver. Style.eq.0 = iluter, Style.eq.1 = 5-pt
+*    stencil, Style.eq.2 = MA28copy. NOTE: Only style.eq.2 will give good 
+*    results.
+*    Other values are NOT recommended!
+*
 *    'b2ux5p_acpar'             '8.0'                  Numerics
 *    Paremeter needed for iluter matrix solver.
 *
@@ -1786,6 +1955,9 @@
 *
 *    'b2news_guard_flows'       '1'                    Numerics
 *    If guard_flows.eq.0, flows between neighbouring guard cells are blocked.
+*    If guard_flows.eq.2, particle flows between neighbouring guard cells 
+*    are blocked for density equation and replace the incorrect corner values
+*    by the interpolated values. It is recommended 2.
 *
 *    'b2news_fac_ref'           See description (integer) Numerics
 *    'b2news_facdrift_tanh_a'   '0.0'                  Numerics
@@ -1911,6 +2083,14 @@
 *    computed correction. rxg is dimensionless and of order unity;
 *    smaller values of rxg imply stronger damping.
 *
+*    'b2npht_style'             '0'                    Numerics
+*    When set to '1', SPb's form of the program b2sihs_ is called.
+*    It is recommended '1'.
+*
+*    'b2nph9_style'             '0'                    Numerics
+*    When set to '1', SPb's form of the program b2sihs_ is called.
+*    It is recommended '1'.
+*
 *    'b2npmo_rxg'               '1.0e6'                Numerics
 *    Normalisation factor for the parallel momentum equation.
 *
@@ -1925,10 +2105,27 @@
 *    style specifies the precise form of interpolation used in the
 *    computation of flcb and cvcb.
 *
+*    'b2nxdv_style'             '0'                    Numerics
+*    When set to '1', the total friction force cancel is not calculated
+*    at the guard boundary cells. It is recommended '1'.
+* 
+*    'b2nxfc_style'             '0'                    Numerics
+*    When set to '1', SPb's form of the transport terms in the momentum 
+*    correction equation is used. It is recommended '1'.    
+*   
+*    'b2nxfx_style'             '0'                    Numerics
+*    When set to '1', SPb's form of an expression that occurs in the 
+*    electron-atom thermal force is used. It is recommended '1'.    
+*
 *    'b2sifr_styl0'             '0'                    Numerics
 *    'b2sifr_styl1'             '0'                    Numerics
 *    Specify the type of linearisation used in the thermal force term.
 *
+*    'b2sigp_style'             '0'                    Numerics
+*    When set to '1', SPb's form of the pressure gradient term 
+*    on the right hand of the momentum balance equation is used.
+*    It is recommended '1'.
+*    
 *    'b2xzdd_zero_dead_and_core''1'                    Numerics
 *    If 1 then zero passed sources in dead regions, 
 *    If 2 zero passed sources in dead regions and core boundary cells 
@@ -2008,13 +2205,39 @@
 *    'b2tfcc_xfac'              '1.0'                  Numerics
 *    Multiplier to the pressure force term.
 *
+*    'b2tfhe_mdf'               '0'                    Numerics
+*    If '1', Spb's new form of calculating electron heat flux is used.
+*    It is recommended '1' for runs with drifts.
+*
 *    'b2tfhe_no_current'        '0'                    Numerics
 *    If no_current.eq.1, all currents are set to zero.
 *    The setting no_current.eq.1 must be used if the potential equation
 *    is not explicitly solved for, i.e. for b2news_poteq.ne.1.
 *
+*    'b2tfhi_mdf'               '0'                    Numerics
+*    If '1', Spb's new form of calculating ion heat flux is used.
+*    It is recommended '1' for runs with drifts.
+*
+*    'b2tfnb_drift_style'       '0'                    Numerics
+*    when set to '0', drift velocities are calculated in cell centers
+*    when set to '1', drift velocities are calculated in cell faces
+*    It is recommended '1'.
+*
+*    'b2tfnb_nodrift_style'        '0'                    Numerics
+*    when set to '1', SPb's form of calculating no drift part of 
+*    the particle fluxes is used
+*    It is recommended '1'.
+*
+*    'b2tfnb_mdf'               '0'                    Numerics
+*    If '1', Spb's new form of calculating particle flux is used.
+*    It is recommended '1' for runs with drifts.
+*
 *    'b2tfnb_xfrhie'            '1.0'                  Numerics
 *    Multiplier to the Rhie and Chow upwind correction.
+*
+*    'b2tfnb_xfrhiehz'          '1.0'                  Numerics
+*    Multiplier to the Rhie and Chow upwind correction in particle flux 
+*    which is passed to parallel balance momentum equation with drifts.
 *
 *    'b2upht_stylec'            '0'                    Numerics
 *    (stylec is a numerical switch, needs experiments)
@@ -2049,6 +2272,12 @@
 *    rate data with the Weisheit data using ratwei.
 *    *** Use with caution! ***
 *
+*    'b2ardr_no_smoothing'      '0'                    Numerics        !srv 02.07.12
+*    When set to 1, disables the tail smoothing for of rate coefficients 
+*    to represent the effect of a power-law tail on the distribution
+*    function. It has been added for compatibility with SOLPS4.3 
+
+*    
 *    'b2ardr_fix_recomb'        '0'                    Atomic Physics 
 *    When changed from 0, and if the ADAS option is in use, then uses the 
 *    PRB file to add the contribution arising from is-->is-1 processes. 

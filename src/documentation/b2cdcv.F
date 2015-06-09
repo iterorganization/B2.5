@@ -247,6 +247,31 @@
 *     (ix,iy-1) and (ix,iy) cells.
 *     For iy.eq.-1, fnay(-1:nx,iy,0:ns-1) will hold 0.
 *
+*     fna_mdf - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
+*     (Let fnax_mdf(,,)=fna_mdf(,,0,) and fnay_mdf(,,)=fna_mdf(,,1,).)
+*     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fnax_mdf(ix,iy,is) specifies
+*     the modified flux of atoms of species (is) through the face between
+*     the (ix-1,iy) and (ix,iy) cells.
+*     For ix.eq.-1, fnax_mdf(ix,-1:ny,0:ns-1) will hold 0.
+*     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fnay_mdf(ix,iy,is) specifies
+*     the modified flux of atoms of species (is) through the face between
+*     the (ix,iy-1) and (ix,iy) cells.
+*     For iy.eq.-1, fnay_mdf(-1:nx,iy,0:ns-1) will hold 0.
+*     fna_mdf is equal fna for runs without drifts. 
+*
+*     fna_fcor - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
+*     (Let fna_fcorx(,,)=fna_fcor(,,0,) and fna_fcory(,,)=fna_fcor(,,1,).)
+*     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fna_fcorx(ix,iy,is) specifies
+*     the flux of atoms of species (is) for calculating momentum transport
+*     through the face between the (ix-1,iy) and (ix,iy) cells.
+*     For ix.eq.-1, fna_fcorx(ix,-1:ny,0:ns-1) will hold 0.
+*     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fna_fcory(ix,iy,is) specifies
+*     the flux of atoms of species (is) for calculating momentum transport
+*     through the face between the(ix,iy-1) and (ix,iy) cells.
+*     For iy.eq.-1, fna_fcory(-1:nx,iy,0:ns-1) will hold 0.
+*     fna_fcor takes into account Coriolis force.
+*     fna_fcor is equal fna for runs without drifts. 
+*
 *     fhe - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhex(,)=fhe(,,0) and fhey(,)=fhe(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fhex(ix,iy) specifies the electron
@@ -256,6 +281,16 @@
 *     heat flux through the face between the (ix,iy-1) and (ix,iy)
 *     cells. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
 *
+*     fhe_mdf - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fhex_mdf(,)=fhe_mdf(,,0) and fhey_mdf(,)=fhe_mdf(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fhex_mdf(ix,iy) specifies the modified
+*     electron heat flux through the face between the (ix-1,iy) and (ix,iy)
+*     cells. For ix.eq.-1, fhex_mdf(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fhey_mdf(ix,iy) specifies the modified
+*     electron heat flux through the face between the (ix,iy-1) and (ix,iy)
+*     cells. For iy.eq.-1, fhey_mdf(-1:nx,iy) will hold 0.
+*     fhe_mdf is equal fhe for runs without drifts. 
+*
 *     fhi - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhix(,)=fhi(,,0) and fhiy(,)=fhi(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fhix(ix,iy) specifies the all atom
@@ -264,6 +299,15 @@
 *     For (ix,iy) in (-1:nx,0:ny), fhiy(ix,iy) specifies the all atom
 *     heat flux through the face between the (ix,iy-1) and (ix,iy)
 *     cells. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
+*
+*     fhi_mdf - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fhix_mdf(,)=fhi_mdf(,,0) and fhiy_mdf(,)=fhi_mdf(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fhix_mdf(ix,iy) specifies the 
+*     modified all atom heat flux through the face between the (ix-1,iy)
+*      and (ix,iy) cells. For ix.eq.-1, fhix_mdf(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fhiy_mdf(ix,iy) specifies the modified
+*     all atom heat flux through the face between the (ix-1,iy) and (ix,iy)
+*     cells. For iy.eq.-1, fhiy_mdf(-1:nx,iy) will hold 0.
 *
 *     fch - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fchx(,)=fch(,,0) and fchy(,)=fch(,,1).)
@@ -297,6 +341,35 @@
 *     the selected atomic species through the face between the
 *     (ix,iy-1) and the (ix,iy) cell.
 *     For iy.eq.-1, fnby(-1:nx,iy) will hold 0.
+*     fnb_mdf is equal fnb for runs without drifts. 
+*
+*     fnb_mdf - (-1:nx,-1:ny,0:1) real*8 array.
+*     fnb_mdf specifies the flux of one selected atomic species.
+*     If that species has index (is) then fnb_mdf(,,)=fna_mdf(,,,is).
+*     precisely: (Let fnbx_mdf(,)=fnb_mdf(,,0) and fnby_mdf(,)=fnb_mdf(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fnbx_mdf(ix,iy) specifies the modified
+*     flux of the selected atomic species through the face between the
+*     (ix-1,iy) and the (ix,iy) cell.
+*     For ix.eq.-1, fnbx_mdf(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fnby_mdf(ix,iy) specifies the modified
+*     flux of the selected atomic species through the face between the
+*     (ix,iy-1) and the (ix,iy) cell.
+*     For iy.eq.-1, fnby_mdf(-1:nx,iy) will hold 0.
+*
+*     fnb_fcor - (-1:nx,-1:ny,0:1) real*8 array.
+*     fnb_fcor specifies the flux of one selected atomic species 
+*     for calculating momentum transport.
+*     If that species has index (is) then fnb_fcor(,,)=fna_fcor(,,,is).
+*     precisely: (Let fnbx_fcor(,)=fnb_fcor(,,0) and fnby_fcor(,)=fnb_fcor(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fnb_fcorx(ix,iy) specifies the flux of
+*     the selected atomic species through the face between the
+*     (ix-1,iy) and the (ix,iy) cell.
+*     For ix.eq.-1, fnb_fcorx(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fnb_fcory(ix,iy) specifies the flux of
+*     the selected atomic species through the face between the
+*     (ix,iy-1) and the (ix,iy) cell.
+*     For iy.eq.-1, fnb_fcory(-1:nx,iy) will hold 0.
+*     fnb_fcor is equal fnb for runs without drifts. 
 *
 *     ni - (-1:nx,-1:ny,0:1) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), ni(ix,iy,0) specifies the total atom
@@ -365,7 +438,7 @@
 *     The defining expression for fni is
 *       fni(,,) = (sum is :: fna(,,,is))
 *
-*     fchvispar - (-1:nx,-1:ny,0:1) real*8 array.			 !xpb
+*     fchvispar - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fchvisparx(,)=fch(,,0) and fchvispary(,)=fch(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchvisparx(ix,iy) specifies the
 *     electric current driven by parallel viscosity through the face
@@ -376,12 +449,76 @@
 *     between the (ix,iy-1) and (ix,iy) cells.
 *     For iy.eq.-1, fchvispary(-1:nx,iy) will hold 0.
 *
-*     fch_p - (-1:nx,-1:ny,0:1) real*8 array.				!xpb srv 10.06.08 {
+*     fchvisq - (-1:nx,-1:ny,0:1) real*8 array.
+*     fchvisq specifies the electric current produced by the components
+*     of the viscosity tensor which is connected with the heat fluxes.
+*     (Let fchvisqx(,)=fch(,,0) and fchvisqy(,)=fch(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fchvisqx(ix,iy) specifies the current
+*     through the face between the (ix-1,iy) and (ix,iy) cells.
+*     For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fchvisqy(ix,iy) specifies the current
+*     through the face between the (ix,iy-1) and (ix,iy) cells.
+*     For iy.eq.-1, fchvisqy(-1:nx,iy) will hold 0.
+*
+*     fchinert - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fchinertx(,)=fch(,,0) and fchinerty(,)=fch(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fchinertx(ix,iy) specifies the
+*     contributions from inertia and gyroviscosity current through
+*     the face between the (ix-1,iy) and (ix,iy) cells.
+*     For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fchinerty(ix,iy) specifies the
+*     contributions from inertia and gyroviscosity current through
+*     the face between the (ix,iy-1) and (ix,iy) cells.
+*     For iy.eq.-1, fchinerty(-1:nx,iy) will hold 0.
+*
+*     fchanml - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fchanmlx(,)=fch(,,0) and fchanmly(,)=fch(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fchanmlx(ix,iy) specifies the
+*     anomalous current through the face between the (ix-1,iy)
+*     and (ix,iy) cells.
+*     For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fchanmly(ix,iy) specifies the
+*     amomalous current through the face between the (ix,iy-1)
+*     and (ix,iy) cells.
+*     For iy.eq.-1, fchanmly(-1:nx,iy) will hold 0.
+*
+*     fchdia - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fchdiax(,)=fch(,,0) and fchdiay(,)=fch(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fchdiax(ix,iy) specifies the
+*     modified diamagnetic current through the face between 
+*     the (ix-1,iy) and (ix,iy) cells.
+*     For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fchdiay(ix,iy) specifies the
+*     modified diamagnetic current through the face between
+*     the (ix,iy-1) and (ix,iy) cells.
+*     For iy.eq.-1, fchdiay(-1:nx,iy) will hold 0.
+*
+*     fchin - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fchinx(,)=fch(,,0) and fchiny(,)=fch(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fchinx(ix,iy) specifies the
+*     contribution from ion-neutral friction through the face between 
+*     the (ix-1,iy) and (ix,iy) cells.
+*     For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fchiny(ix,iy) specifies the
+*     contribution from ion-neutral friction through the face between
+*     the (ix,iy-1) and (ix,iy) cells.
+*     For iy.eq.-1, fchiny(-1:nx,iy) will hold 0.
+*
+*     fch_p - (-1:nx,-1:ny,0:1) real*8 array.
 *     For (ix,iy) in (0:nx,-1:ny), fch_p(ix,iy,0) specifies the parallel 
 *     electric current along the magnetic field through the face between 
 *     the (ix-1,iy) and (ix,iy) cells.
 *     For ix.eq.-1, fch_p(ix,-1:ny,0) will hold 0. 
-*     fch_p(-1:nx,-1:ny,1) = 0                                    !srv 10.06.08 }
+*     fch_p(-1:nx,-1:ny,1) = 0
+*
+*     fchvisper - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fchvisperx(,)=fch(,,0) and fchvispery(,)=fch(,,1).)
+*     For (ix,iy) in (-1:nx,-1:ny), fchvisperx(ix,iy) = 0.
+*     For (ix,iy) in (-1:nx, 0:ny), fchvispery(ix,iy) specifies the
+*     electric current connected with contribution from
+*     the perpendicular viscositythrough the face between the (ix,iy-1) 
+*     and (ix,iy) cells.
+*     For iy.eq.-1, fchvispery(-1:nx,iy) will hold 0.
 *
 *     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let uadiax(,,)=uadia(,,0,) and uadiay(,)=uadia(,,1,).)
@@ -392,6 +529,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadiay(ix,iy,is) specifies
 *     the total effective drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
+*     uadia referes to cell center if 'b2tfnb_drift_style' has '0'
+*     uadia referes to cell faces if 'b2tfnb_drift_style' has '1'
 *
 *     vadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vadiax(,,)=vadia(,,0,) and vadiay(,)=vadia(,,1,).)
@@ -402,6 +541,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiay(ix,iy,is) specifies
 *     the effective diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
+*     vadia referes to cell center if 'b2tfnb_drift_style' has '0'
+*     vadia referes to cell faces if 'b2tfnb_drift_style' has '1'
 *
 *     vedia - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let vediax(,)=vedia(,,0) and vediay(,)=vedia(,,1).)
@@ -422,6 +563,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), wadiay(ix,iy,is) specifies
 *     the total diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
+*     wadia referes to cell center if 'b2tfnb_drift_style' has '0'
+*     wadia referes to cell faces if 'b2tfnb_drift_style' has '1'
 *
 *     vaecrb - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vaecrbx(,,)=vaecrb(,,0,) and vaecrby(,)=vaecrb(,,1,).)
@@ -432,6 +575,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vaecrby(ix,iy,is) specifies
 *     the ExB drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
+*     vaecrb referes to cell center if 'b2tfnb_drift_style' has '0'
+*     vaecrb referes to cell faces if 'b2tfnb_drift_style' has '1'
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
