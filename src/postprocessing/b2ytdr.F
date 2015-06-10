@@ -6186,24 +6186,24 @@ C  3D GEOMETRY PLOT
         READ (IUNIN,6666) idum(0:10) ! I1TRC,I2TRC,(ISYPLT(J),J=1,8),ILINIE
         DO I=2,9 ! Convert to new symbol numbers
           IF (streql(eirene_format,'old')) THEN
-            IF (idim(I).eq.4) THEN
-              idim(I) = 6
-            ELSE IF (idim(I).ge.6 .and. idim(I).le.8) THEN
-              idim(I) = idim(I)+2
-            ELSE IF (idim(I).ge.10 .and. idim(I).le.14) THEN
-              idim(I) = idim(I)+2
-            ELSE IF (idim(I).eq.15) THEN
-              idim(I) = 18
+            IF (idum(I).eq.4) THEN
+              idum(I) = 6
+            ELSE IF (idum(I).ge.6 .and. idum(I).le.8) THEN
+              idum(I) = idum(I)+2
+            ELSE IF (idum(I).ge.10 .and. idum(I).le.14) THEN
+              idum(I) = idum(I)+2
+            ELSE IF (idum(I).eq.15) THEN
+              idum(I) = 18
             END IF
           ELSE IF (streql(eirene_format,'new')) THEN
-            IF (idim(I).ge.4 .and. idim(I).le.14) THEN
-              idim(I) = idim(I)+2
-            ELSE IF (idim(I).eq.15) THEN
-              idim(I) = 18
+            IF (idum(I).ge.4 .and. idum(I).le.14) THEN
+              idum(I) = idum(I)+2
+            ELSE IF (idum(I).eq.15) THEN
+              idum(I) = 18
             END IF
           ELSE IF (streql(eirene_format,'facelift')) THEN
-            IF (idim(I).ge.3 .and. idim(I).le.16) THEN
-              idim(I) = idim(I)+2
+            IF (idum(I).ge.3 .and. idum(I).le.16) THEN
+              idum(I) = idum(I)+2
             ENDIF
           ENDIF
         END DO
