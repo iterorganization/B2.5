@@ -62,7 +62,7 @@
       integer ncall, n2, ix, iy, model
 	integer, save :: icase = 0                                      !srv 20.09.11
 	integer, save :: iout = 0,                                      !srv 16.06.08
-     &                 iout_b2nph9 = 0, iout_b2npht = 0, fke_Zhdanov = 0
+     &                 iout_b2nph9 = 0, iout_b2npht = 0, fke_Zhdanov = 1
       integer, save :: style_guard_cells = 0                          !srv 19.04.13
       character(23) hlp_frm                                           !srv 11.03.13
 	real (kind=R8), save :: fch_pTe = 0.0_R8                        !srv 30.12.09

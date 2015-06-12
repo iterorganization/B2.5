@@ -61,10 +61,10 @@ csw 30apr2014 added fna_he, ia
       integer ncall, n2, ix, iy, is, ib, ixl, iyl, ixb, iyb
       integer, save :: iout = 0,                                       !srv 16.09.02
      &                 iout_b2nph9 = 0, iout_b2npht = 0
-      integer, save :: lim_flux = 1, mdf_fhi = 0                       !srv 04.02.03 13.10.06
+      integer, save :: lim_flux = 0, mdf_fhi = 1                       !srv 04.02.03 13.10.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
-      integer, save :: conductive limit = 0                           !srv 16.06.08 17.01.12
-      integer, save :: model = 1
+      integer, save :: conductive_limit = 1                           !srv 16.06.08 17.01.12
+      integer, save :: model = 3
       integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
       integer, save :: b2kin=0, b2vis=0
       real (kind=R8), save :: PSch=1.0e0_R8                            !srv 17.01.07
@@ -111,7 +111,7 @@ cpax
        call ipgetr ('b2tfhi_PSch', PSch)                                 !srv 17.01.07
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)
-       call ipgeti ('b2trcl_conductive limit', conductive limit)         !srv 16.06.08 17.01.12
+       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 16.06.08 17.01.12
        call ipgeti ('b2tqca_model', model)
        call ipgeti ('b2tfhi_upwind', b2_upwind)
        call ipgeti ('b2tfhi_hybr2', b2tfhi_hybr2)
@@ -366,7 +366,7 @@ c  ..set null flux in guard cells  ?
          floi0_mdf = 1.5e0_R8*fni(ix,iy,0)+                           !srv 13.10.06 {
      &   chvi(ix,iy,0)*(ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2
 
-         if(lim_flux.eq.1 .and. conductive limit.eq.0) then           !srv 17.01.12
+         if(lim_flux.eq.1 .and. conductive_limit.eq.0) then           !srv 17.01.12
 
 csw 17feb2012
           if(no_Ptncr_x_hi.eq.0) then

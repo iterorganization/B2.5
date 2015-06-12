@@ -372,7 +372,7 @@ c
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
       character chns*3                                                 !srv 16.09.02
-      integer, save :: drift_style = 0, iout = 0                        !srv 21.06.08
+      integer, save :: drift_style = 1, iout = 0                        !srv 21.06.08
       integer ix,iy,is,ncall,eirene_extrap,in,eirene_fixmap,
      1 eirene_fixuub, print_minmax
       external ipgetr, ipgeti
@@ -406,8 +406,8 @@ c
 	call ipgeti('eirene_extrap',eirene_extrap)
 	call ipgeti('eirene_fixmap',eirene_fixmap)
 	call ipgeti('eirene_fixuub',eirene_fixuub)
-      call ipgeti('b2tfnb_drift_style', drift_style)                 !srv 21.06.08
-      call ipgeti('copy_background_iout', iout)                      !srv 14.07.10
+        call ipgeti('b2tfnb_drift_style', drift_style)                 !srv 21.06.08
+        call ipgeti('copy_background_iout', iout)                      !srv 14.07.10
       endif
 	if(iout.ne.0) then                                             !srv 18.06.08 {
 	 do is = 0,ns-1

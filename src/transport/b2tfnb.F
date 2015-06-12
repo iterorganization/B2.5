@@ -73,13 +73,12 @@
      &        ixl, iyl, ixb, iyb                                         !srv 13.10.06
       integer, save :: iout = 0,                                         !srv 16.09.02
      &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
-      integer, save :: mdf_fnb = 0                                       !srv 13.10.06
+      integer, save :: mdf_fnb = 1                                       !srv 13.10.06
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !sv 06.07.06
       integer, save :: PSch_style = 1                                    !srv 12.11.08
       character chns*3                                                   !srv 16.09.02
-      integer, save :: fnb_nodrift_style = 0                             !srv 20.06.08
-!! FIXME: Maybe change default value of drift_style ???
-      integer, save :: drift_style = 0                                   !srv 21.06.08
+      integer, save :: fnb_nodrift_style = 1                             !srv 20.06.08
+      integer, save :: drift_style = 1                                   !srv 21.06.08
       real (kind=R8), save ::  cfvma = 0.0_R8                            !srv 15.12.05
       real (kind=R8), save ::  alpha_ = 0.0_R8                           !srv 09.07.03
       real (kind=R8), save ::  ycur = 0.0_R8                             !srv 07.07.08

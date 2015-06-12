@@ -85,7 +85,7 @@
 
 *   ..local variables
       integer ix, iy, is, n2, ncall, pot_eq, no_current, no_solve, is0
-      integer, save :: iout = 0, model = 1,                             !srv 17.06.08
+      integer, save :: iout = 0, model = 3,                             !srv 17.06.08
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0

@@ -78,12 +78,12 @@
       integer, save :: iout = 0,                                      !srv 16.09.02
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0
-      integer, save :: lim_flux = 1, mdf_fhe = 0                      !srv 04.02.03 13.10.06
+      integer, save :: lim_flux = 0, mdf_fhe = 1                      !srv 04.02.03 13.10.06
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
       integer, save :: pot_eq = 1                                     !srv 26.07.06
       integer, save :: mode_ehx = 0                                   !srv 21.10.09
       integer, save :: qstyle = 0                                     !lk 23.05.06 05.07.07 {
-      integer, save :: conductive limit = 0                           !srv 16.06.08 17.01.12
+      integer, save :: conductive_limit = 1                           !srv 16.06.08 17.01.12
       integer mintopcut                                               !lk  
       integer, save :: no_current=0                          !srv 27.02.13
 csw 10oct2012
@@ -91,8 +91,8 @@ csw 10oct2012
       integer, save :: b2tfhe_hybr2=0, flo53=0
 
       character(2) :: charns, charns0
-      real (kind=R8), save :: alfTeEh = 1.0_R8                     !srv 28.04.08 30.05.08
-      real (kind=R8), save :: fch_pTe = 0.0_R8                        !srv 30.12.09
+      real (kind=R8), save :: alfTeEh = 0.0_R8                     !srv 28.04.08 30.05.08
+      real (kind=R8), save :: fch_pTe = 1.0_R8                        !srv 30.12.09
       real (kind=R8), save :: cqip1 = 0.5e0_R8                        !lk   
       real (kind=R8) :: tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny)     !lk
      &                  , conn(-1:ny), tt2(-1:ny), tt3(-1:ny)
@@ -192,7 +192,7 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        call ipgeti ('b2npp7_iout', iout_b2npp7)
        call ipgeti ('b2nppo_iout', iout_b2nppo)
        call ipgeti ('b2tfhe_mode_ehx',mode_ehx)                          !srv 21.10.09
-       call ipgeti ('b2trcl_conductive limit', conductive limit)         !srv 16.06.08 17.01.12
+       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 16.06.08 17.01.12
        call ipgeti ('b2tfhe_no_current',no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
@@ -917,7 +917,7 @@ c  ..set null flux in guard cells  ?
      &    -0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe                        !srv 30.12.09
 
 
-         if(lim_flux.eq.1 .and. conductive limit.eq.0) then           !srv 04.02.03 17.01.12
+         if(lim_flux.eq.1 .and. conductive_limit.eq.0) then           !srv 04.02.03 17.01.12
 
           if(no_Ptncr_x_he.eq.0) then
            cone0 = hybr(floe0,chce(ix,iy,0))-abs(floe0/2.0)

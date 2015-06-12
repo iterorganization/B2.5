@@ -51,7 +51,7 @@
 
 *   ..local variables
       integer ncall, ix, iy
-      integer, save :: style = 0, iout = 0                            !srv 26.10.08
+      integer, save :: style = 1, iout = 0                            !srv 26.10.08
       integer, save :: pot_eq = 1, no_current=0                       !srv 16.07.12
       save ncall
 *   ..procedures
@@ -76,10 +76,10 @@
       endif
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
-	if(pot_eq.eq.0 .or. pot_eq.eq.2) then                           !srv 16.07.12 27.02.13
-	 ehxp = 0.0_R8
-	elseif(pot_eq.eq.1) then
-	if(style.eq.0) then                                             !srv 26.10.08
+      if(pot_eq.eq.0 .or. pot_eq.eq.2) then                           !srv 16.07.12 27.02.13
+	ehxp = 0.0_R8
+      elseif(pot_eq.eq.1) then
+       if(style.eq.0) then                                             !srv 26.10.08
 *   ..compute wrk0 and wrk1
        do iy = -1, ny
         do ix = -1, nx
@@ -124,7 +124,7 @@
          endif
         enddo
        enddo
-      else                                               !srv 26.10.08 {
+      else ! style                                     !srv 26.10.08 {
 *   ..compute wrk0 and wrk1
        do iy = -1, ny
         do ix = -1, nx
@@ -158,14 +158,14 @@
 	   endif
         enddo
        enddo
-	endif                                               !srv 26.10.08 }
+      endif                                               !srv 26.10.08 }
       else                                                !srv 16.07.12
 
-	endif                                               !srv 16.07.12
+      endif                                               !srv 16.07.12
 
-	if (iout.eq.1) then                                 !srv 11.09.09
-	 call my_out(70,nx,ny,ehxp,'b2nxfx_ehxp')
-	endif
+      if (iout.eq.1) then                                 !srv 11.09.09
+        call my_out(70,nx,ny,ehxp,'b2nxfx_ehxp')
+      endif
 
 * ..return
       ncall = ncall+1

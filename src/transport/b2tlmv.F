@@ -14,7 +14,7 @@
 *     B2TLMV applies a flux limit to the viscosity.
 *     ------------------------------------------------------------------
       integer ncall, n2, ix, iy, area_fix
-      integer, save :: style = 0, iout = 0                           !srv 30.05.08
+      integer, save :: style = 1, iout = 0                           !srv 30.05.08
       character charns*3                                             !srv 12.04.04
       save ncall, area_fix
       real (kind=R8) ::

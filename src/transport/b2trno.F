@@ -82,7 +82,7 @@
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
       character(3) chns                                            !srv 17.06.08
-      integer, save :: flux_limit_to_dpa = 0, csig_an_style = 0      !srv 15.06.08
+      integer, save :: flux_limit_to_dpa = 1, csig_an_style = 1    !srv 15.06.08
       real (kind=R8) ::
      *  wrk(-1:nx,-1:ny), hcimx(-1:nx,-1:ny,0:1,0:ns-1),
      1  hvi0(-1:nx,-1:ny,0:1), hve0(-1:nx,-1:ny,0:1),

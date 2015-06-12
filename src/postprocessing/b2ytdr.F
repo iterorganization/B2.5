@@ -2912,13 +2912,12 @@ cxpb  Start reading input.dat file
         I1 = INDEX(ZEILE,'CFILE')
         IF (I1.EQ.0) THEN
           WRITE(IUNOT,'(A80)') ZEILE
-          IREAD=0
+          IREAD=1
         ELSE
           DO WHILE (I1 /= 0)
             if (streql(eirene_format,'iter')) then ! no conversion necessary
               WRITE(IUNOT,'(A80)') ZEILE
             else
-! FIXME: Need to change the handles here
               I2 = VERIFY(ZEILE(I1+5:),' ') + I1 + 4
               I3 = SCAN(ZEILE(I2+1:),' ')
               HANDLE=REPEAT(' ',6)
@@ -4139,7 +4138,8 @@ cxpb Now we have read the species data and can identify the bundles
           jss = iss
           if (jss.lt.ns1-1) then
             do while (jss.le.ns1-2 .and.
-     .       am1(jss+1).eq.am1(iss) .and. zn1(jss+1).eq.zn1(iss))
+     .       am1(min(jss+1,ns1-1)).eq.am1(iss) .and. 
+     .       zn1(min(jss+1,ns1-1)).eq.zn1(iss))
               jss = jss + 1
             end do
           end if

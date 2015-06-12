@@ -78,7 +78,7 @@
       external b2xvsg
       pitx(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
 *   ..initialisation
-      data ncall/0/, phm0/1.0_R8/, model/1/
+      data ncall/0/, phm0/1.0_R8/, model/3/
 
 *-----------------------------------------------------------------------
 *.documentation-internal

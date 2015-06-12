@@ -41,7 +41,7 @@
       external subini, subend, xertst, ipgeti, ipgetr, b2scopy
       external b2xvff, b2xvsg, hbout
 *   ..initialisation
-      data ncall/0/, style/0/, ncallout/-1/
+      data ncall/0/, style/1/, ncallout/-1/
 *!!   (style is a numerical switch; needs experiments)
 
 *-----------------------------------------------------------------------

@@ -76,7 +76,7 @@
 
 *   ..local variables
       integer ncall, n2, k, is, is0, lthf21, lvis21, lluciani, ix, iy
-      integer, save :: conductive limit = 0                           !srv 16.06.08
+      integer, save :: conductive_limit = 1                           !srv 16.06.08
       integer, save :: iout = 0,                                       !srv 17.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
@@ -107,9 +107,9 @@ csw 13mar2012
      &  ipgeti, ipgetr, b2ttia                                        !lk 19.09.07
 *   ..initialisation
       save ncall, lthf21, lvis21, cthiv, cthev, lluciani, mode, model
-      data ncall/0/, lthf21/0/, lvis21/0/, mode/1/, model/1/,
+      data ncall/0/, lthf21/0/, lvis21/0/, mode/1/, model/3/,
      1  cthiv/2.65_R8/, cthev/0.0_R8/, vis_par/0.0_R8/,
-     1  lluciani/0/
+     1  lluciani/3/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -142,7 +142,7 @@ csw 13mar2012
         call ipgetr ('b2trcl_cthe', cthev)
         call xertst (0.0_R8.le.cthev,
      &   'faulty internal parameter cthev')
-        call ipgeti ('b2trcl_conductive limit', conductive limit)    !srv 16.06.08
+        call ipgeti ('b2trcl_conductive_limit', conductive_limit)    !srv 16.06.08
         call ipgeti ('b2trcl_iout', iout)                            !srv 17.06.08                    
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
@@ -486,13 +486,13 @@ csw 13mar2012
 !        call my_out(70,nx,ny,csig(-1,-1,1),'b2trcl_luciani_csigy')
       endif
 
-      if(conductive limit.ne.0) then                                 !srv 16.06.08 {
-*   .. applay the conductive limit of parallel electron heat flux    !srv 03.06.03 {
+      if(conductive_limit.ne.0) then                                 !srv 16.06.08 {
+*   .. apply the conductive limit of parallel electron heat flux    !srv 03.06.03 {
        if(cflim(0).ne.0.0e0_R8) then
         do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
-csw 19oct2011, also in core for SOLPS4.3 comaprison!!!
+csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c            if(mod(region(ix,iy,0),4).ne.1) then                      !lk 06.05.07
            if(core_cond_limit.ne.0.or.mod(region(ix,iy,0),4).ne.1) then
             dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
@@ -512,7 +512,7 @@ c            if(mod(region(ix,iy,0),4).ne.1) then                      !lk 06.05
         do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
-csw 19oct2011, also in core for SOLPS4.3 comaprison!!!
+csw 19oct2011, also in core for SOLPS4.3 comparison!!!
 c          if(mod(region(ix,iy,0),4).ne.1) then                      !lk 06.05.07
            if(core_cond_limit.ne.0.or.mod(region(ix,iy,0),4).ne.1) then
             dti = ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))

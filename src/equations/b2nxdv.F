@@ -11,7 +11,7 @@
 *     required to make the total friction force cancel.
 *     ------------------------------------------------------------------
       integer ncall, ix, iy
-	integer, save :: style = 0                                       !srv 26.10.08
+      integer, save :: style = 1                                       !srv 26.10.08
       save ncall
       external subini, subend, xertst
 *   ..initialisation
@@ -32,16 +32,16 @@
      &    smqb(ix,iy,3)*rob(ix,iy)*smqdu(ix,iy)
         enddo
        enddo
-	else
+      else
        do iy = 0, ny-1
         do ix = 0, nx-1
-	   if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !sv 26.11.02  !sv 01.07.05
+	 if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !sv 26.11.02  !sv 01.07.05
           smb(ix,iy,0) = smb(ix,iy,0)-smqb(ix,iy,1)*smqdu(ix,iy)-
      &                  smqb(ix,iy,3)*rob(ix,iy)*smqdu(ix,iy)
-	   endif                                                         !sv 26.11.02
+	 endif                                                         !sv 26.11.02
         enddo
        enddo
-	endif
+      endif
       ncall = ncall+1
       call subend ()
       return

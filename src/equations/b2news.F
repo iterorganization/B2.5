@@ -64,8 +64,8 @@
       integer potit, ipass, recalculate_contributions, pot_eq,       !xpb,dpc
      *  potitmin, area_fix, nsmin, nsmax, no_current
       integer, save :: style = 2                                     !srv 29.05.02
-      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0         !srv 13.10.06
-      integer, save :: anomalous_core_only = 0                        !srv 19.04.07
+      integer, save :: mdf_fnb = 1, mdf_fhe = 1, mdf_fhi = 1         !srv 13.10.06
+      integer, save :: anomalous_core_only = 0                       !srv 19.04.07
       integer, save :: use_b2npc9 = 1, use_b2nph9 = 1, coriolis = 0  !srv 06.11.08 11.08.08
       real (kind=R8) ::
      *  potok, mach10, BoRiS, vis_per
@@ -104,7 +104,7 @@
 *   ..initialisation
       data ncall/0/, xfm0/1.0_R8/, xfm1/1.0_R8/, xfm2/1.0_R8/, 
      1  xfm3/1.0_R8/, potit/50/, potok/1.0e-2_R8/, pot_eq/1/,
-     2  ncallout/-1/, guard_flows/1/, area_fix/3/, no_solve/0/,          !xpb
+     2  ncallout/-1/, guard_flows/2/, area_fix/3/, no_solve/0/,          !xpb
      5  recalculate_contributions/1/, ramp_slow/0/, no_current/0/,       !dpc
      6  potitmin/0/, BoRiS/0.0_R8/, vis_per/0.0_R8/
 *

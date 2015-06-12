@@ -58,8 +58,8 @@
       integer ncall, n2, ix, iy, ib, is, ixl, iyl, ixb, iyb,
      *   no_current, conduction_only, no_hybr, model, pot_eq
 	integer, save :: iout = 0                                         !srv 18.06.08
-	integer, save :: lim_flux = 1, mdf_fhe = 0                        !srv 04.02.03 13.10.06
-	real (kind=R8), save :: no_alfTeEh = 1.0_R8                       !srv 28.04.08 30.05.08
+	integer, save :: lim_flux = 0, mdf_fhe = 1                        !srv 04.02.03 13.10.06
+	real (kind=R8), save :: alfTeEh = 0.0_R8                       !srv 28.04.08 30.05.08
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, alfe0, t0, t1, 
      &   tex, tex0, cutlo, fch_anomalous,
@@ -106,7 +106,7 @@
        call ipgeti ('b2tfhe_mdf', mdf_fhe)                               !srv 13.10.06
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
        call ipgeti ('b2tfhe_iout', iout)                                 !srv 18.06.08
-       call ipgetr ('b2tfhe_no_alfTeEh', no_alfTeEh)                     !srv 28.04.08
+       call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                           !srv 28.04.08
       endif                                                              !xpb
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -378,12 +378,12 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
               fhe(ix,iy,0) =
      &         floe0*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
      &         -abs(floe0/2.0_R8)*tex-
-     &          cone0*tex0 + no_alfTeEh*alfe0*
+     &          cone0*tex0 + alfTeEh*alfe0*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
               fhe_mdf(ix,iy,0) =floe0_mdf*                              !srv 18.08.08
      &           (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
      &         abs(floe0_mdf/2.0_R8)*tex-cone0_mdf*tex0_mdf+
-     &         no_alfTeEh*alfe0_mdf*
+     &         alfTeEh*alfe0_mdf*
      &         harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
      &         -fhePSch(ix,iy,0)                                       !srv 13.06.06 }
             else
@@ -395,7 +395,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
               fhe(ix,iy,0) = 
      .         upwind(floe0, te(leftix(ix,iy),leftiy(ix,iy)), te(ix,iy))
      .         - t1 * (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))) 
-     &         +no_alfTeEh*alfe0*
+     &         +alfTeEh*alfe0*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
             endif
             fhet(ix,iy,0) = fhe(ix,iy,0) +
@@ -463,13 +463,13 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
               fhe(ix,iy,1) = floe(ix,iy,1)*
      &          (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8-
      &           cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &          +no_alfTeEh*
+     &          +alfTeEh*
      &           (calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
               fhe_mdf(ix,iy,1) = floe(ix,iy,1)*
      &          (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8-
      &           cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &          +no_alfTeEh*
+     &          +alfTeEh*
      &           (calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
      &            -fhePSch(ix,iy,1)                                     !srv 13.10.06
@@ -485,7 +485,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      .         upwind(floe(ix,iy,1), 
      .                te(bottomix(ix,iy),bottomiy(ix,iy)), te(ix,iy))
      .          - t1 * (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &          +no_alfTeEh*
+     &          +alfTeEh*
      &           (calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
             endif

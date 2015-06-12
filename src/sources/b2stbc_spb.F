@@ -78,8 +78,8 @@
       integer, save :: idrifts_to_the_wall = 0                        !sv 02.03.05
       integer, save :: ivminus = 1, ivplus = 1                        !sv 24.03.05
       integer, save :: iform_corr_dia = 0, istyle_cs = 0              !sv 25.07.05 25.04.08
-      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0          !sv 03.10.06
-	integer       :: num_inner                                      !sv 26.11.02
+      integer, save :: mdf_fnb = 1, mdf_fhe = 1, mdf_fhi = 1          !sv 03.10.06
+      integer       :: num_inner                                      !sv 26.11.02
       real (kind=R8) ::
      1   facdriftm
      &  ,pzaverage, pzsum, volsum                                     !sv 24.03.99 18.01.02
@@ -149,9 +149,9 @@
        call ipgeti ('b2stbc_ivminus', ivminus)                            !sv 24.03.05
        call ipgeti ('b2stbc_iform_corr_dia', iform_corr_dia)              !sv 25.07.05
        call ipgetr ('b2stbc_corr_flux_in_core', corr_flux)                !sv 25.07.05
-	 call ipgeti ('b2tfnb_mdf', mdf_fnb)                                !sv 13.10.06 {
-	 call ipgeti ('b2tfhe_mdf', mdf_fhe)
-	 call ipgeti ('b2tfhi_mdf', mdf_fhi)                                !sv 13.10.06 }
+       call ipgeti ('b2tfnb_mdf', mdf_fnb)                                !sv 13.10.06 {
+       call ipgeti ('b2tfhe_mdf', mdf_fhe)
+       call ipgeti ('b2tfhi_mdf', mdf_fhi)                                !sv 13.10.06 }
        call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
        call ipgetr ('b2stbc_sna0ep', sna0ep)
        call xertst (0.le.sna0ep, 'faulty internal parameter sna0ep')
@@ -591,9 +591,9 @@
 *!!     cbsna(6,,) and cbsna(7,,) to be introduced with ua*pbs(,,1)
          sna0(ix,ny,0,is) = sna0(ix,ny,0,is)+
      &    cbsna(0,is,ireg)*s0
-	   if(mdf_fnb.ne.0 .and. .not.is_neutral(is)) then             !sv 09.11.06 {
+	 if(mdf_fnb.ne.0 .and. .not.is_neutral(is)) then             !sv 09.11.06 {
           sna0(ix,ny,0,is) = sna0(ix,ny,0,is) + fnaPSch(ix,ny,1,is)
-	   endif                                                      !sv 09.11.06 }
+	 endif                                                      !sv 09.11.06 }
          sna0(ix,ny,1,is) = sna0(ix,ny,1,is)+
      &    cbsna(1,is,ireg)*s0+
      &    cbsna(2,is,ireg)*csb*s0+
@@ -793,11 +793,11 @@ c         fchi=0.0e0_R8                            ! was commented
      &      cbsna(0,is,ireg)*s0+
      &      cbsna(6,is,ireg)*max(0.0e0_R8,ua(ix,iy,is)                  !sv 26.11.02 01.07.05
      &          *pbs(rightix(ix,iy),rightiy(ix,iy),0))                  !sv 26.11.02
-	     if(mdf_fnb .ne. 0) then                                       !sv 13.10.06 {
+	    if(mdf_fnb .ne. 0) then                                       !sv 13.10.06 {
             sna0(ix,iy,0,is) = sna0(ix,iy,0,is)-
      &                      fnaPSch(rightix(ix,iy),rightiy(ix,iy),0,is)
-	     endif                                                         !sv 13.10.06 }
-	     if(ubig0 .gt. 0.0e0_R8)                                       !iyv 22.04.08 {
+	    endif                                                         !sv 13.10.06 }
+	    if(ubig0 .gt. 0.0e0_R8)                                       !iyv 22.04.08 {
      &      sna0(ix,iy,0,is) = sna0(ix,iy,0,is) - cbsna(7,is,ireg)*
      &      ubig0*s0*na(rightix(ix,iy),rightiy(ix,iy),is) 
            sna0(ix,iy,1,is) = sna0(ix,iy,1,is)+                          !sv 26.11.02
@@ -1004,10 +1004,10 @@ c         fchi=0.0e0_R8                      !sv was commented
            sna0(ix,iy,0,is) = sna0(ix,iy,0,is)+                          !sv 26.11.02
      &      cbsna(0,is,ireg)*s0+
      &      cbsna(6,is,ireg)*max(0.0e0_R8,-ua(ix,iy,is)*pbs(ix,iy,0))   !sv 26.11.02
-	     if(mdf_fnb .ne. 0) then                                       !sv 13.10.06 {
+	    if(mdf_fnb .ne. 0) then                                       !sv 13.10.06 {
             sna0(ix,iy,0,is) = sna0(ix,iy,0,is) + fnaPSch(ix,iy,0,is)
-	     endif                                                         !sv 13.10.06 }
-	     if(ubig0 .gt. 0.0e0_R8)                                       !iyv 22.04.08
+	    endif                                                         !sv 13.10.06 }
+	    if(ubig0 .gt. 0.0e0_R8)                                       !iyv 22.04.08
      &      sna0(ix,iy,0,is) = sna0(ix,iy,0,is) -                        
      &       cbsna(7,is,ireg)*ubig0*s0*na(leftix(ix,iy),iy,is) 
            sna0(ix,iy,1,is) = sna0(ix,iy,1,is)+                          !sv 26.11.02

@@ -84,7 +84,7 @@
       integer, save :: iout = 0                                        !srv 17.07.05
 	integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
 	integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
-	integer, save :: style = 0                                       !srv 09.07.08
+	integer, save :: style = 1                                       !srv 09.07.08
 	integer, save :: style_shei = 0                                  !srv 18.09.09 30.01.10
 	character charns*2                                               !srv 17.07.05
       save ncall, rxg, pcm0, pcm1

@@ -187,7 +187,7 @@ c                        15.11.11 changed b2mwti.F and b2mndr.F in according to 
 c                        29.11.11 introduced BCCON=18 for B2-ASTRA coupling  
 c    Version 01.001.071  11.01.12 inserted call b2stbr_neutr_scl(nx, ny, ns) into b2news_.F
 c                                 corrected the contribution from friction between charged species in b2sihs_.F
-c                        17.01.12 added internal key 'b2trcl_conductive limit' in b2tfhe_.F and b2tfhi_.F
+c                        17.01.12 added internal key 'b2trcl_conductive_limit' in b2tfhe_.F and b2tfhi_.F
 c                                 corrected default value of lluciani in b2siav.F
 c                        27.01.12 added diagnostic keys into b2tfrn.F
 c                        07.02.12 corrected diagnostic output in b2sifr_.F
@@ -249,4 +249,6 @@ c
 c    Version 03.000.000  09.02.15 Inaugural SOLPS-ITER version
 c                                 Added smcf centrifugal force array to b2fplasma
 c    Version 03.000.001  01.06.15 Adding the POB array to fort.44 per Juelich code
+c                        11.06.15 Making the default switches follow the 5.2 code
+c                                 base physics as opposed to 5.0
 c  

@@ -114,7 +114,7 @@
       integer ncall, n2, k, is, ix, iy, sources_inputfile
       integer guard_flows, numerics_namelist, use_astra
       integer, save :: elm_count, neutrals_count
-      integer, save :: style = 0                                 !srv 28.06.08
+      integer, save :: style = 2                                 !srv 28.06.08
       integer, save :: iout = 0                                  !srv 30.06.08
       integer, save :: use_eirene =0, save_f30 = 0, save_f31 = 0 !srv 14.07.10
       integer, save :: anomalous_core_only = 0                   !srv 19.04.07
@@ -148,7 +148,7 @@
      &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti, b2xzdd
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
-      data ncall/0/, sources_inputfile/0/, guard_flows/1/, use_astra/0/,
+      data ncall/0/, sources_inputfile/0/, guard_flows/2/, use_astra/0/,
      *  numerics_namelist/0/, sputter_namelist_used/.false./
 
 *-----------------------------------------------------------------------
@@ -457,7 +457,7 @@ csw 30sep2013, added cdpa in call, uadia
      &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)			 !xpb
        call b2xpfe (nx, ny, ns, ns_ext, qe, rza, za_ext, 
      &  fna, fa_ext, fch_p, fne)               !srv 25.12.06
-	endif                                              !srv 28.07.08 }
+      endif                                                 !srv 28.07.08 }
       if (use_astra.ne.0) then
         se  =0.0_R8                                         !srv 28.07.11
         seh =0.0_R8                                         !srv 11.06.13

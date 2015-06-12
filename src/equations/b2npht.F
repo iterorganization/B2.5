@@ -77,7 +77,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is
       integer, save :: iout = 0                                        !srv 17.07.05
-      integer, save :: style = 0                                       !srv 09.07.08
+      integer, save :: style = 1                                       !srv 09.07.08
       integer, save :: style_shei = 0                                  !srv 18.09.09 30.01.10
       character chns*3                                                 !srv 17.07.05
       real (kind=R8) ::

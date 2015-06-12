@@ -40,7 +40,7 @@
       external subini, subend, xertst, ipgeti, ipgetr
       external b2xvff, b2xvsg
 *   ..initialization
-      data ncall/0/, style/0/, phm0/0.0e0_R8/, phm1/0.0e0_R8/         !srv 18.01.02
+      data ncall/0/, style/0/, phm0/1.0e0_R8/, phm1/1.0e0_R8/         !srv 18.01.02
 
 *-----------------------------------------------------------------------
 *.computation

@@ -117,18 +117,18 @@
       integer       :: num_inner, k, isb, isa, ism, ibw                 !srv 26.11.02
       integer, save :: istyle_average_pr = 0, istyle_fchi = 0           !srv 08.08.02 14.02.05
       integer, save :: iform_corr_dia = 0                               !srv 25.07.05
-      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0, iout = 0, !srv 13.10.06
+      integer, save :: mdf_fnb = 1, mdf_fhe = 1, mdf_fhi = 1, iout = 0, !srv 13.10.06
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
-      integer, save :: istyle_cur_contr_on_S_and_N = 0                  !srv 01.02.09
+      integer, save :: istyle_cur_contr_on_S_and_N = 1                  !srv 01.02.09
       integer, save :: bcene_16_style =0, bceni_16_style = 0            !srv 16.02.12
       integer, save :: bcene_15_style =0                                !srv 19.04.13
       integer, save :: pot_eq = 1                                       !srv 27.02.13
       integer, save :: use_astra
       integer, save :: drift_style
       logical once_bccon, once_bcene, once_bceni                        !srv 16.02.12
-      real (kind=R8) , save :: cbc = 0.0e0_R8, bc_ref = 0.01            !srv 14.10.99
+      real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
       real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
       real (kind=R8) , save :: senepar, senipar, sconpar                !srv 16.02.12
       real (kind=R8) ::
@@ -192,8 +192,7 @@
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
      & fch_anomalous/1.0_R8/, bc_type21_ref/1/, no_current/0/, 
-     & use_astra/0/, use_eirene/0/, drift_style/0/
-!! FIXME: Maybe change default value of drift_style ???
+     & use_astra/0/, use_eirene/0/, drift_style/1/
 #ifdef WANT_THIS
       real (kind=R8) ::
      .  Tguess, fy, ehy, fylimt, prefactor,

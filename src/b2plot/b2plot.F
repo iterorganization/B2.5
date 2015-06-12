@@ -211,7 +211,7 @@ c
      9     boundary_namelist/0/, 
      *     neutrals_namelist/0/, BoRiS/0.0_R8/, sput_frac_flag/0/,
      1     sput_mixed_alpha/1.0_R8/, sput_mixed_beta/1.0_R8/,
-     2     use_eirene/0/, ismain0/0/
+     2     use_eirene/0/, ismain0/0/, drift_style/1/
       save sput_src, sput_frc,
      1     plate_kb, plate_ka, vappr_a, vappr_b, stick_coef, ismain,
      2     refl_model, sput_chem_model,

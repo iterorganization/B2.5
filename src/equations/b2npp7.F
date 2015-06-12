@@ -52,7 +52,7 @@
 
 *   ..local variables
       integer ncall, n2
-	integer, save :: style = 0, iout = 0
+      integer, save :: style = 1, iout = 0
       real (kind=R8) ::
      *   aa7(-1:nx,-1:ny,-3:3)                                 !srv 11.01.00
       save ncall

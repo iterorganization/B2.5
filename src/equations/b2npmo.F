@@ -77,8 +77,8 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, diagno, ireg, nsmin, nsmax, k, ii
-      integer, save :: modvis = 0                                    !srv 19.01.05
-      integer, save :: iout = 0, b2sifr_ver=0                        !srv 04.07.08 26.10.08
+      integer, save :: modvis = 1                                    !srv 19.01.05
+      integer, save :: iout = 0, b2sifr_ver=1                        !srv 04.07.08 26.10.08
       character chns*3, chk*1                                        !srv 04.07.08
       real (kind=R8) ::
      *  rxg, t0, t1, t2, vis_par

@@ -529,8 +529,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadiay(ix,iy,is) specifies
 *     the total effective drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     uadia referes to cell center if 'b2tfnb_drift_style' has '0'
-*     uadia referes to cell faces if 'b2tfnb_drift_style' has '1'
+*     uadia refers to cell center if 'b2tfnb_drift_style' has '0'
+*     uadia refers to cell faces if 'b2tfnb_drift_style' has '1'
 *
 *     vadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vadiax(,,)=vadia(,,0,) and vadiay(,)=vadia(,,1,).)
@@ -541,8 +541,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiay(ix,iy,is) specifies
 *     the effective diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     vadia referes to cell center if 'b2tfnb_drift_style' has '0'
-*     vadia referes to cell faces if 'b2tfnb_drift_style' has '1'
+*     vadia refers to cell center if 'b2tfnb_drift_style' has '0'
+*     vadia refers to cell faces if 'b2tfnb_drift_style' has '1'
 *
 *     vedia - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let vediax(,)=vedia(,,0) and vediay(,)=vedia(,,1).)
@@ -563,8 +563,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), wadiay(ix,iy,is) specifies
 *     the total diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     wadia referes to cell center if 'b2tfnb_drift_style' has '0'
-*     wadia referes to cell faces if 'b2tfnb_drift_style' has '1'
+*     wadia refers to cell center if 'b2tfnb_drift_style' has '0'
+*     wadia refers to cell faces if 'b2tfnb_drift_style' has '1'
 *
 *     vaecrb - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vaecrbx(,,)=vaecrb(,,0,) and vaecrby(,)=vaecrb(,,1,).)
@@ -575,8 +575,8 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vaecrby(ix,iy,is) specifies
 *     the ExB drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     vaecrb referes to cell center if 'b2tfnb_drift_style' has '0'
-*     vaecrb referes to cell faces if 'b2tfnb_drift_style' has '1'
+*     vaecrb refers to cell center if 'b2tfnb_drift_style' has '0'
+*     vaecrb refers to cell faces if 'b2tfnb_drift_style' has '1'
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies

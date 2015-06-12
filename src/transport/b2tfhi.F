@@ -53,8 +53,8 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, ib, conduction_only, no_hybr, 
      &        ixl, iyl, ixb, iyb
-	integer, save :: iout = 0                                        !sv 16.09.02
-	integer, save :: lim_flux = 1, mdf_fhi = 0                       !srv 04.02.03 13.10.06
+      integer, save :: iout = 0                                        !sv 16.09.02
+      integer, save :: lim_flux = 0, mdf_fhi = 1                       !srv 04.02.03 13.10.06
       real (kind=R8), save :: PSch=1.0e0_R8                            !srv 17.01.07
       real (kind=R8) ::
      *  flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0, w1,
@@ -456,12 +456,12 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      1        prefactor*vaecrb(ix,iy,1,is)
            enddo
          endif
-	   if(mdf_fhi.eq.0) then
+	 if(mdf_fhi.eq.0) then
           floi(ix,iy,1) = floi0+
      1     2.5_R8*cum_flo_vadia+1.5_R8*cum_flo_vaecrb
-	   else
+	 else
           floi(ix,iy,1) = floi0+1.5_R8*cum_flo_vaecrb
-	   endif
+	 endif
          if (no_hybr.eq.0) then
            coni(ix,iy,1,0) = hybr(floi(ix,iy,1),chci(ix,iy,1))    !srv 02.01.07
            fhi(ix,iy,1) = w1 + floi(ix,iy,1)*

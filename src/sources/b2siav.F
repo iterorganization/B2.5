@@ -42,14 +42,14 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, k
-      integer, save :: qstyle = 0, lluciani = 0                     !lk 03.12.09
+      integer, save :: qstyle = 0, lluciani = 3                     !lk 03.12.09
       integer, save :: iout = 0                                     !srv 17.06.02
       character chns*3, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
      *     t0
       real (kind=R8), save ::
      &     addvis=0.0_R8, addvis1=0.0_R8, cqip1 = 0.5e0_R8           !srv 28.03.06 !srv 19.10.08
-      real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 30.01.10
+      real (kind=R8), save :: fac_hz = 1.0e0_R8                      !srv 30.01.10
       real (kind=R8) ::
      *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),                    !srv 23.07.99
      *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                          !srv 23.07.99 19.01.05

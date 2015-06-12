@@ -34,7 +34,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, k
-      integer, save :: style = 0
+      integer, save :: style = 1
       integer, save :: iout = 0, iout_b2npmo = 0
       integer, save :: pot_eq = 1, no_current = 0  !srv 17.06.02 11.09.09 23.03.10
       character chns*3, chk*1, ch*2                                  !srv 17.06.02
@@ -141,7 +141,7 @@
             endif
           enddo
         enddo
-	elseif(style.eq.1) then                                           !srv 02.07.08 {
+      elseif(style.eq.1) then                                           !srv 02.07.08 {
         do iy = -1, ny
           do ix = -1, nx
 	     if(leftix(ix,iy).eq.-2) then
@@ -184,11 +184,11 @@
 	    endif                                                        !srv 26.11.02
          enddo
         enddo
-	else                                                             !srv 23.03.10 {
-	  if(pot_eq.ne.1) then
-	   write(*,*) ' This case works when potential equation is solved'
-	   stop
-	  endif
+      else                                                             !srv 23.03.10 {
+	if(pot_eq.ne.1) then
+	  write(*,*) ' This case works when potential equation is solved'
+	  stop
+	endif
         do iy = -1, ny
           do ix = -1, nx
 	     if(leftix(ix,iy).eq.-2) then
@@ -229,14 +229,14 @@
 	    endif
          enddo
         enddo                                                          !srv 23.03.10 }
-	endif                                                            !srv 02.07.08 }
-	if (iout.ne.0 .or. iout_b2npmo.eq.1) then                        !srv 17.06.02 {
+      endif                                                            !srv 02.07.08 }
+      if (iout.ne.0 .or. iout_b2npmo.eq.1) then                        !srv 17.06.02 {
 !	   write (chns,'(i3.3)') isb    
 !	   do k=0,3
 !	    write (chk,'(i1)') k  
 !	    call my_out(70,nx,ny,smbgp(-1,-1,k),'b2sigp_smbgp'//chk//chns)
 !	   enddo
-	endif                                                            !srv 17.06.02 }
+      endif                                                            !srv 17.06.02 }
 
 * ..return
       ncall = ncall+1
