@@ -3,7 +3,7 @@
 
       subroutine b2tfhe (nx, ny, ns, guard_flows, facdrift,
      1  BoRiS, vol, hx, hy, qz, te, po, ne, vedia, veecrb,
-     2  fne_32, fne_52, csig, chce, chve, calf, chvemx,                  !xpb
+     2  fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,           !xpb
      &  cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime)   !srv 13.10.06
       use b2mod_types
       use b2mod_boundary_namelist
@@ -20,6 +20,7 @@
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      & vol(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
      & fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
+     & fch_p(-1:nx,-1:ny,0:1),
      1 csig(-1:nx,-1:ny,0:1), 
      & chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
@@ -57,9 +58,10 @@
 *   ..local variables
       integer ncall, n2, ix, iy, ib, is, ixl, iyl, ixb, iyb,
      *   no_current, conduction_only, no_hybr, model, pot_eq
-	integer, save :: iout = 0                                         !srv 18.06.08
-	integer, save :: lim_flux = 0, mdf_fhe = 1                        !srv 04.02.03 13.10.06
-	real (kind=R8), save :: alfTeEh = 0.0_R8                       !srv 28.04.08 30.05.08
+      integer, save :: iout = 0                                         !srv 18.06.08
+      integer, save :: lim_flux = 0, mdf_fhe = 1                        !srv 04.02.03 13.10.06
+      real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
+      real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, alfe0, t0, t1, 
      &   tex, tex0, cutlo, fch_anomalous,
@@ -107,6 +109,10 @@
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
        call ipgeti ('b2tfhe_iout', iout)                                 !srv 18.06.08
        call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                           !srv 28.04.08
+       call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                           !srv 30.12.09
+       if(fch_pTe .eq. 1.0_R8) alfTeEh = 0.0_R8                          !srv 16.04.10
+       call xertst (.not.(0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe),
+     &        ' Do not set 0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe')
       endif                                                              !xpb
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -320,6 +326,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      1         2.5_R8*fne_52(ix,iy,0)+
      &         chve(ix,iy,0)*
      1           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8
+     &         -0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe                      !srv 30.12.09
               prefactor=
      1         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))    	 !xpb
      &         /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))     	 !xpb
