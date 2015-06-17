@@ -418,7 +418,7 @@ c 2002-09-11: logic revised
       logical in_bundle, charges_match
 #endif
       logical todo, same_bundling
-      logical sputter_namelist_used, wall_namelist_used
+      logical wall_namelist_used
       logical region_flags(NNREGMAX,nkind_coeff), no_pflux
       logical poloidal_scaling, prdone, axdone
       logical clash(ns-1), shared(0:ns-1)

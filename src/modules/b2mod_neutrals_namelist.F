@@ -107,7 +107,7 @@ cank }
 #endif
 
       integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns, 
-     .     dbg_eir_mc, debug_flags(100)
+     .     dbg_eir_mc, debug_flags(100), neutrals_count
       real (kind=R8), save :: RF_NEUT(4)
       real (kind=R8), save :: eirene_step_cpu, eirene_step_dt,
      .     volrecinc, volrecwt

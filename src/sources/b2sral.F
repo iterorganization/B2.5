@@ -15,7 +15,7 @@
      &  rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rza, rz2, rpt, rpi,
      &  sna, smo, smq, she, shi, sch, sne,
-     &  wrong_flow, main_call)						 !xpb, dpc
+     &  wrong_flow, main_call)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -113,7 +113,7 @@
 *   ..local variables
       integer ncall, n2, k, is, ix, iy, sources_inputfile
       integer guard_flows, numerics_namelist, use_astra
-      integer, save :: elm_count, neutrals_count
+      integer, save :: elm_count
       integer, save :: style = 2                                 !srv 28.06.08
       integer, save :: iout = 0                                  !srv 30.06.08
       integer, save :: use_eirene =0, save_f30 = 0, save_f31 = 0 !srv 14.07.10
@@ -136,10 +136,10 @@
      &  shi0_rec(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),
      &  smo0(-1:nx,-1:ny,0:3,0:ns-1), sch0(-1:nx,-1:ny,0:3),
      1  wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny), pb(-1:nx,-1:ny,0:ns-1)
-      logical catch_up, sputter_namelist_used
+      logical catch_up
       character*21 hlp_frm
       save ncall, sources_inputfile, guard_flows, numerics_namelist
-      save sputter_namelist_used, use_astra
+      save use_astra
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, hy1
@@ -149,7 +149,7 @@
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, sources_inputfile/0/, guard_flows/2/, use_astra/0/,
-     *  numerics_namelist/0/, sputter_namelist_used/.false./
+     *  numerics_namelist/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -374,9 +374,6 @@ cxpb turn off poloidal flows in core boundary
            enddo
          endif                                                          !xpb
        endif   ! style.eq.0
-cxpb initialize the data necessary for boundary conditions
-       call b2stbr_init (nx, ny, ns, BoRiS,
-     .   neutrals_count, sputter_namelist_used)
       endif                                                             !srv 28.07.08
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
@@ -384,24 +381,24 @@ cxpb initialize the data necessary for boundary conditions
      &    maxval(fac_ExB).ne.0.0_R8)) then
         call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,        !srv 20.09.06  {
      &                       facdrift, fchvispar)
-	  call b2tiner (nx, ny, ns, vol,
+	call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
         call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
      &                       fchanml)                                   !srv 20.09.06  }
-	  if(anomalous_core_only.ne.0) then                               !srv 19.04.07  {
-	     do iy = 0, ny                                                !lk 19.09.07
-             do ix = -1, nx
-     			 if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then    !lk 19.09.07
-                 fchanml(ix,iy,1) = 0.0e0_R8
-               endif 
-		   enddo
-	     enddo
-	  endif                                                           !srv 19.04.07  }
-	 else
+	if(anomalous_core_only.ne.0) then                               !srv 19.04.07  {
+	  do iy = 0, ny                                                !lk 19.09.07
+            do ix = -1, nx
+     	      if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then    !lk 19.09.07
+                fchanml(ix,iy,1) = 0.0e0_R8
+              endif 
+	    enddo
+	  enddo
+        endif                                                           !srv 19.04.07  }
+      else
         fchvispar = 0.0_R8
         fchinert  = 0.0_R8
         fchanml   = 0.0_R8
-       endif
+      endif
 
 csw 30sep2013, added cdpa in call, uadia
       call b2tfrn (nx, ny, ns, guard_flows,
@@ -482,8 +479,7 @@ csw 30sep2013, added cdpa in call, uadia
      &  dtim, BoRiS, 
      &  vol, hx, hy, gs, qz, pbs, na, ua, kinrgy, te, ti,
      &  po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
-     &  sna0, smo0, she0, shi0, sch0, sne0, wrk1, main_call,
-     &  neutrals_count, sputter_namelist_used)
+     &  sna0, smo0, she0, shi0, sch0, sne0, wrk1, main_call)
 *   ..zero out contributions in dead cells
       do is = 0, ns-1
         call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))

@@ -22,7 +22,9 @@
      *  sputter_energy2(:,:,:), reflect_energy2(:,:,:)
       real (kind=R8), allocatable, save :: tgdns(:), es(:), theta(:),
      *  monolayer_l(:)
+      logical, save :: sputter_namelist_used
       logical, save :: sputter_initialised
+      data sputter_namelist_used /.false./
       data sputter_initialised /.false./
       data sput_dst/-1/, sput_dst2/-1/, sput_dst3/-1/
 

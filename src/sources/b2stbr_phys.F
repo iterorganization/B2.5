@@ -9,9 +9,8 @@
      &  neutral_sources_rescale, core_sources_rescale,  
      &  sput_src, sput_chem_alpha, sput_phys_alpha, alpha,
      &  sput_chem_model, therm_evap, sput_res,  
-     &  sputter_namelist_used, reflection_on, 
-     &  sputter_energy_on, main_call, output, sput_frac_flag,
-     &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
+     &  reflection_on, sputter_energy_on, main_call, output, 
+     &  sput_frac_flag, sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      1  sput_mixed_alpha, sput_mixed_beta,
      2  new_sputter_namelist, shi0_ff, f_redep,
      3  potential_at_guard_cell, recycled_neutrals_contr)
@@ -56,7 +55,6 @@
      &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      1  sput_mixed_alpha, sput_mixed_beta,
      2  recycled_neutrals_contr
-      logical sputter_namelist_used
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),

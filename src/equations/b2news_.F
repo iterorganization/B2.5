@@ -366,7 +366,7 @@ c   extra call at this place within internal iteration)
      &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
-     &    wrong_flow, .false.)                                             !xpb, dpc
+     &    wrong_flow, .false.)
         if(wrong_flow) write(*,*) 
      &       'b2news: wrong_flow returned from b2sral'
 

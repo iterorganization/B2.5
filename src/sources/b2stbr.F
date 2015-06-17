@@ -5,8 +5,7 @@
      &  dtim, BoRiS, 
      &  vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
-     &  sna0, smo0, she0, shi0, sch0, sne0, wrk1, main_call,
-     &  neutrals_count, sputter_namelist_used)
+     &  sna0, smo0, she0, shi0, sch0, sne0, wrk1, main_call)
       use b2mod_types
       use b2mod_wall
       use b2mod_diag
@@ -43,8 +42,7 @@ csw 25feb2014 fix IVS's version of source term avergaing
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain,
-     &  neutrals_count
+      integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
       real (kind=R8) :: dtim, BoRiS,
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2)
@@ -57,7 +55,7 @@ csw 25feb2014 fix IVS's version of source term avergaing
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      &  rsa(-1:nx,-1:ny,0:ns-1), bb(-1:nx,-1:ny,0:3)
-      logical main_call, sputter_namelist_used
+      logical main_call
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -441,9 +439,8 @@ c   --> better solution wanted here..
      &   neutral_sources_rescale, core_sources_rescale,  
      &   sput_src, sput_chem_alpha, sput_phys_alpha, alpha,
      &   sput_chem_model, therm_evap, sput_res,  
-     &   sputter_namelist_used, reflection_on, 
-     &   sputter_energy_on, main_call, output, sput_frac_flag,
-     &   sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
+     &   reflection_on, sputter_energy_on, main_call, output, 
+     &   sput_frac_flag, sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      1   sput_mixed_alpha, sput_mixed_beta,
      2   new_sputter_namelist, shi0_ff, f_redep,
      3   potential_at_guard_cell, recycled_neutrals_contr)
@@ -459,8 +456,7 @@ c   --> better solution wanted here..
      &   sput_src, sput_frc, sput_phys,
      &   sput_chem_alpha, sput_phys_alpha, alpha,
      &   sput_chem_model, therm_evap, sput_res, 
-     &   sputter_namelist_used, reflection_on, 
-     &   sputter_energy_on, main_call,
+     &   reflection_on, sputter_energy_on, main_call,
      &   sput_chem_cutoff_alpha, sput_chem_cutoff_beta, shi0_ff,
      &   f_redep, potential_at_guard_cell, recycled_neutrals_contr)
        endif
@@ -1005,8 +1001,7 @@ c        write(*,*) 'Called neutr_scl'
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr_init (nx, ny, ns, BoRiS, 
-     .  neutrals_count, sputter_namelist_used)
+      subroutine b2stbr_init (nx, ny, ns, BoRiS)
       use b2mod_types
       use b2mod_time
       use b2mod_wall
@@ -1022,9 +1017,6 @@ c        write(*,*) 'Called neutr_scl'
 *   ..input arguments (unchanged on exit)
       integer, intent(in) :: nx, ny, ns
       real (kind=R8), intent(in) :: BoRiS
-*   ..output arguments (unspecified on entry)
-      integer, intent(out) :: neutrals_count
-      logical :: sputter_namelist_used
 *-----------------------------------------------------------------------
 *.documentation
 *

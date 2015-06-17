@@ -301,7 +301,7 @@
      &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
-     &    wrong_flow, .false.)						 !xpb, dpc
+     &    wrong_flow, .false.)
 *     ..smooth out sources
           call b2srsm (nx, ny, ns, dtim, 
      &     vol, na, ua, te, ti, ne, ni,
@@ -373,7 +373,7 @@
      &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
-     &    wrong_flow, .false.)						 !xpb, dpc
+     &    wrong_flow, .false.)
 *     ..smooth out sources
         call b2srsm (nx, ny, ns, dtim, 
      &    vol, na, ua, te, ti, ne, ni,
@@ -641,7 +641,7 @@ cxpb
      &           rlsa, rlra, rlqa, rlcx, rlrd, 
      &           rlbr, rlza, rlz2, rlpt, rlpi,
      &           rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
-     &           wrong_flow, .false.)						 !xpb, dpc
+     &           wrong_flow, .false.)
 *     ..smooth out sources
                 call b2srsm (nx, ny, ns, dtim, 
      &           vol, na, ua, te, ti, ne, ni, 

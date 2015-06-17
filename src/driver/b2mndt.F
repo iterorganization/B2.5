@@ -67,10 +67,10 @@
 *   ..local variables
       integer ncall, nstg(0:2), moqtlv, moitlv, itcnt, density_control,  !xpb
      *  ramp_slow, ier0, no_solve, ix, iy
-	integer, save :: style = 1, guard_flows = 2                        !srv 18.06.08
+      integer, save :: style = 1, guard_flows = 2                        !srv 18.06.08
       integer, save :: anomalous_core_only = 0                           !srv 19.04.07
-	integer, save :: ntim_step_out = 1                                 !srv 31.10.07
-	integer, save :: use_b2srst = 1                                    !srv 13.07.12                                 
+      integer, save :: ntim_step_out = 1                                 !srv 31.10.07
+      integer, save :: use_b2srst = 1                                    !srv 13.07.12                                 
       real (kind=R8) ::
      *  rxf, BoRiS
       real (kind=R8) ::
@@ -405,7 +405,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
-     &    wrong_flow, .true.)						 !xpb, dpc
+     &    wrong_flow, .true.)
           if(wrong_flow) write(*,*) 
      &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources

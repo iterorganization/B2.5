@@ -1177,9 +1177,9 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
 c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
 !      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)           !srv 09.01.01
 !! FIXME: Do a proper computation here!!!
-	hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
-	hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
-	hzconst = 1.0_R8                                               !srv 30.01.10
+      hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
+      hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
+      hzconst = 1.0_R8                                               !srv 30.01.10
       hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)            !srv 16.06.09
 *   ..compute pbshz (magnetic field pitch * surface area  at cell faces * hz)
 c      wrk0 = hz*vol
@@ -1198,35 +1198,35 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
       enddo    
       do iy=-1,ny
         do ix=-1,nx
-	   if(bottomiy(ix,iy).ne.-2) then
-          pbshz(ix,iy,1)=pbs(ix,iy,1)*
-     &      (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))
-     &      +hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))
-     &      /(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy)) 
-         else
+	  if(bottomiy(ix,iy).ne.-2) then
+            pbshz(ix,iy,1)=pbs(ix,iy,1)*
+     &       (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))
+     &       +hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))
+     &       /(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy)) 
+          else
 	    pbshz(ix,iy,1)=0.0e0_R8 
-	   endif             
+	  endif             
         enddo 
       enddo                                                          !srv 11.03.08 }
 *   ..find the poloidal number of midplane cell as a number of cell with min Bz                         
-         if(nncut.eq.2) then                                         !srv 22.05.09 {
-	    nmdpl = rightcut(nncut)
-	    do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
-	     if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix  !srv 11.01.13
-	    enddo
-	   elseif(nncut.eq.1) then
-	    nmdpl = leftcut(nncut)
-	    do ix = leftcut(nncut)+1, rightcut(nncut)-1
-	     if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix  !srv 11.01.13
-	    enddo
-	   else
-	    write(*,*) ' b2mndr: nncut = ', nncut
-	    nmdpl = (nx+2)/2
-	    do ix = -1, nx
-	     if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix  !srv 11.01.13
-	    enddo
-	   endif 
-	   write(*,"(' Number of midplane cell =',i4)") nmdpl          !srv 22.05.09 }
+      if(nncut.eq.2) then                                         !srv 22.05.09 {
+	nmdpl = rightcut(nncut)
+	do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
+	  if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix  !srv 11.01.13
+	enddo
+      elseif(nncut.eq.1) then
+	nmdpl = leftcut(nncut)
+	do ix = leftcut(nncut)+1, rightcut(nncut)-1
+	  if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix  !srv 11.01.13
+	enddo
+      else
+	write(*,*) ' b2mndr: nncut = ', nncut
+	nmdpl = (nx+2)/2
+	do ix = -1, nx
+	  if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix  !srv 11.01.13
+	enddo
+      endif 
+      write(*,"(' Number of midplane cell =',i4)") nmdpl          !srv 22.05.09 }
 *   ..compute length along y-direction                               !srv 24.04.02 {
       lengthy(:,-1) = hy(:,-1)*0.5e0_R8
       do iy = 0, ny
@@ -1236,25 +1236,26 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
        enddo
       enddo                                                          !srv 24.04.02 }
 *
-	len_surf=0.0d0                                                 !srv 02.05.09 {
-	do ix=-1,nx
-	 do iy=1,ny
+      len_surf=0.0d0                                                 !srv 02.05.09 {
+      do ix=-1,nx
+	do iy=1,ny
 	  len_surf(ix,iy)=len_surf(ix,iy-1)+hy(ix,iy-1)
-	 enddo
 	enddo
+      enddo
 *
-	do ix=-1,nx
-       crdy_surf(ix,-1:ny) = len_surf(ix,-1:ny) - len_surf(ix,topcut(1))
-	enddo
+      do ix=-1,nx
+        crdy_surf(ix,-1:ny) = len_surf(ix,-1:ny) - 
+     .                        len_surf(ix,topcut(1))
+      enddo
 *
-	do ix=-1,nx
-	 do iy = -1, ny-1
-        crdy_c_cell(ix,iy) = (crdy_surf(ix,iy) + 
-     &                        crdy_surf(topix(ix,iy),topiy(ix,iy)))/2
-	 enddo
-	 iy = ny
-       crdy_c_cell(ix,iy) = crdy_surf(ix,iy)
-	enddo                                                          !srv 02.05.09 }
+      do ix=-1,nx
+        do iy = -1, ny-1
+          crdy_c_cell(ix,iy) = (crdy_surf(ix,iy) + 
+     &                          crdy_surf(topix(ix,iy),topiy(ix,iy)))/2
+	enddo 
+        iy = ny
+        crdy_c_cell(ix,iy) = crdy_surf(ix,iy)
+      enddo                                                          !srv 02.05.09 }
 *
 *   ..compute Bz/B**2 - Bz/<B**2>
       call b2xbzb (nx, ny, bb, vol, bzb)                          !srv 13.10.06  09.06.08 23.07.10}
@@ -1478,6 +1479,8 @@ csw 21feb2014, setup some additional work variables for boundary conditions
       enddo
       call xertst (natmi.le.DEF_NATM,
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
+cxpb initialize the data necessary for boundary conditions
+      call b2stbr_init (nx, ny, ns, BoRiS)
 c new CDF movie option (1st frame at t=0)
       if(tim.ge.save_cdfmovie_time.and.
      1 delta_cdfmovie_time.gt.0.0_R8) then

@@ -11,8 +11,7 @@
      &  sput_src, sput_frc, sput_phys, 
      &  sput_chem_alpha, sput_phys_alpha, alpha,
      &  sput_chem_model, therm_evap, sput_res,  
-     &  sputter_namelist_used, reflection_on, 
-     &  sputter_energy_on, main_call,
+     &  reflection_on, sputter_energy_on, main_call,
      &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta, 
      &  shi0_ff, f_redep, potential_at_guard_cell, 
      &  recycled_neutrals_contr)
@@ -55,7 +54,6 @@
      &  therm_evap, sput_res, alpha,
      &  sput_chem_cutoff_alpha, sput_chem_cutoff_beta,
      &  recycled_neutrals_contr
-      logical sputter_namelist_used
       logical main_call
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
