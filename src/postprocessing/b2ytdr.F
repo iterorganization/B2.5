@@ -625,8 +625,10 @@ c 2002-09-11: logic revised
      . 'non-default internal parameters from b2yt.dat:'
     3 continue
        read (ninp(0),*,end=4,err=91) cnamip, cvalip
-       write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
-       call ipsetc (cnamip, cvalip)
+       if (cnamip(1:1).ne.'*') then
+         write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
+         call ipsetc (cnamip, cvalip)
+       endif
        goto 3
     4  continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
@@ -923,8 +925,10 @@ c 2002-09-11: logic revised
      . 'non-default internal parameters from b2mn.dat:'
     1 continue
        read (ninp(2),*,end=2,err=91) cnamip, cvalip
-       write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
-       call ipsetc (cnamip, cvalip)
+       if (cnamip(1:1).ne.'*') then
+         write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
+         call ipsetc (cnamip, cvalip)
+       endif
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
@@ -1184,7 +1188,12 @@ c 2002-09-11: logic revised
         read (ninp(2),*,end=6,err=91) ligne
       enddo
     5 continue
-      read (ninp(2),*,end=6,err=91) cnamip, cvalip
+      read (ninp(2),'(a)',end=6,err=91) line
+      if (line(1:1).ne.'*') then
+        read (line,*) cnamip, cvalip
+      else
+        read (line(2:132),*) cnamip, cvalip
+      endif
 *   ..integer switches
       todo = .true.
       ISWITCHES: select case (cnamip)
@@ -1258,8 +1267,13 @@ c 2002-09-11: logic revised
           todo = .false.
       end select RSWITCHES
       if (todo) write(cvalip,'(1p,e10.3)') 
-      write(nout(2),'(a1,a,a,a,a1)') 
-     .  '''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
+      if (line(1:1).ne.'*') then
+        write(nout(2),'(a1,a,a,a,a1)') 
+     .   '''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
+      else
+        write(nout(2),'(a2,a,a,a,a1)') 
+     .   '*''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
+      endif
       goto 5
     6 continue
 
@@ -6527,6 +6541,9 @@ C  SKIP READING REST OF THIS BLOCK
           READ (IUNIN,'(9I6)') idum(0:8) ! NFLA,NCUTB,NCUTL,IMF,
                                          ! ntrfrm,nfull,ibrad,ibpol,ibtor
           idum(0) = nplsi1
+          if (idum(6).eq.0) idum(6)=1
+          if (idum(7).eq.0) idum(7)=1
+          if (idum(8).eq.0) idum(8)=1
           WRITE(IUNOT,'(9I6)') idum(0:8)
           allocate(IFLB1(NPLSI1),FCTE1(NPLSI1),BMASS1(NPLSI1),
      .             LKINDP1(NPLSI1))

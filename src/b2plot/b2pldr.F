@@ -80,7 +80,7 @@
 *   ..read and echo code internal parameters
     1 continue
        read (ninp(0),*,end=2,err=91) cnamip, cvalip
-       call ipsetc (cnamip, cvalip)
+       if (cnamip(1:1).ne.'*') call ipsetc (cnamip, cvalip)
        goto 1
     2 continue
 *   ..read plasma state file

@@ -86,8 +86,10 @@
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
        read (ninp(5),*,end=2,err=91) cnamip, cvalip
-       write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
-       call ipsetc (cnamip, cvalip)
+       if (cnamip(1:1).ne.'*') then
+         write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
+         call ipsetc (cnamip, cvalip)
+       endif
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'

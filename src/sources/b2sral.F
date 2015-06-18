@@ -179,10 +179,10 @@
        endif
 *   ..inputfile for profile sources
       if (ncall.eq.0) then
-        call ipgeti('b2sral_inputfile', sources_inputfile)
+        call ipgeti ('b2sral_inputfile', sources_inputfile)
         call alloc_input_profile(ny,ns)
-        call ipgeti('b2sral_style', style)                               !srv 28.07.08
-        call ipgeti('b2sral_iout', iout)                                 !srv 30.06.08
+        call ipgeti ('b2sral_style', style)                              !srv 28.07.08
+        call ipgeti ('b2sral_iout', iout)                                !srv 30.06.08
         call ipgeti ('b2tfnb_anomalous_core_only', anomalous_core_only)  !srv 19.04.07
         call ipgeti ('b2mndr_astra', use_astra)
         call ipgeti ('b2mndr_eirene', use_eirene)                        !srv 14.07.10 {
@@ -429,7 +429,7 @@ csw 30sep2013, added cdpa in call, uadia
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
      2  cdna, chce, chve, chci, chvi, calf,				               !xpb
      &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)			 !xpb
-	elseif(style.eq.1) then                                           !srv 28.07.08 {
+      elseif(style.eq.1) then                                           !srv 28.07.08 {
 !! FIXME : Need to add sne in argument list here ???
        call b2stbc_spb (nx, ny, ns, facdrift, vol, gs, hx, hy, hz, qz,  !srv 09.01.01
      &  pbs, pbshz, bb, na, ua, uadia, vaecrb, vadia, te, ti, po, ne,   !srv 14.10.99 12.05.00 09.01.01 28.10.02

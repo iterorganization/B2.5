@@ -265,18 +265,18 @@
         call my_out(70,nx,ny,alf(-1,-1,1),'alfy')
         open (70,file='b2tqce_fke.dat')                         
         open (71,file='b2tqce_fke_Zh.dat')                         
-	   write(hlp_frm,"(a10,i4,a9)") '(1x,3x,1x,',nx+2,'(es14.6))'  !srv 11.03.13
-         do iy = -1, ny
+        write(hlp_frm,"(a10,i4,a9)") '(1x,3x,1x,',nx+2,'(es14.6))'  !srv 11.03.13
+        do iy = -1, ny
           z = ne2(ix,iy)/ne(ix,iy)
 	    write(70,hlp_frm) (fke(z), ix = -1, nx)                    !srv 11.03.13
 	    write(71,hlp_frm) (fke_Zh(z), ix = -1, nx)                 !srv 11.03.13
-         enddo
-	  close(71)
-	  close(70)
-	endif                                                          !srv 16.06.08 }
-	if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+        enddo
+	close(71)
+	close(70) 
+      endif                                                          !srv 16.06.08 }
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
         call my_out(70,nx,ny,tau,'b2tqce_taue')
-	endif
+      endif
 
 * ..return
       ncall = ncall+1

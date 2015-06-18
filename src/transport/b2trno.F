@@ -115,8 +115,8 @@
         call ipgeti ('b2trno_hcimx_flag', hcimx_flag)
         call ipgeti ('b2tral_mode', mode)
         call ipgeti ('b2trno_flux_limit_to_dpa', flux_limit_to_dpa)
-	call ipgeti ('b2trno_csig_an_style',csig_an_style)           !srv 15.06.08
-        call ipgeti ('b2trno_iout', iout)                            !srv 17.06.08                    
+	call ipgeti ('b2trno_csig_an_style', csig_an_style)          !srv 15.06.08
+        call ipgeti ('b2trno_iout', iout)                            !srv 17.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 19.05.10 {
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npmo_iout', iout_b2npmo)

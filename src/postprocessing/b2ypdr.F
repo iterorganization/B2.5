@@ -612,7 +612,7 @@
 *   ..read and echo code internal parameters
     1 continue
        read (ninp(5),*,end=2,err=97) cnamip, cvalip
-       call ipsetc (cnamip, cvalip)
+       if (cnamip(1:1).ne.'*') call ipsetc (cnamip, cvalip)
        goto 1
     2 continue
 *   ..read geometry
