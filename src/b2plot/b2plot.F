@@ -277,9 +277,12 @@ c
       nmoli = nmol
       nioni = nion
       NFLAI = NFL
+      NLMPGS = NLIM + NSTS
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
+      CALL EIRENE_SETCON
+      CALL EIRENE_EXTRAB25_WNEUINIT
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlmpgs)
