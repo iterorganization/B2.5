@@ -277,7 +277,6 @@ c
       nmoli = nmol
       nioni = nion
       NFLAI = NFL
-      NLMPGS = NLIM + NSTS
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
