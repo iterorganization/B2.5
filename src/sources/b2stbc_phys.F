@@ -117,7 +117,7 @@
       integer       :: num_inner, k, isb, isa, ism, ibw                 !srv 26.11.02
       integer, save :: istyle_average_pr = 0, istyle_fchi = 0           !srv 08.08.02 14.02.05
       integer, save :: iform_corr_dia = 0                               !srv 25.07.05
-      integer, save :: mdf_fnb = 1, mdf_fhe = 1, mdf_fhi = 1, iout = 0, !srv 13.10.06
+      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0, iout = 0, !srv 13.10.06
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0

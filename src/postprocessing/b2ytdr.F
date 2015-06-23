@@ -2958,6 +2958,9 @@ c   cfile card found. Is this one of the permitted external files?
               else if (streql(handle,'mo_ext')) then
                 WRITE(IUNOT,'(A47)')
      .           'CFILE mo_ext Database/mo_ext.dat               '
+              else if (streql(handle,'ADAS')) then
+                WRITE(IUNOT,'(A47)')
+     .           'CFILE ADAS   modules/adas/adf11                '
               else
                 WRITE(IUNOT,'(A80)') ZEILE
               ENDIF

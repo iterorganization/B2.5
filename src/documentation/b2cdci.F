@@ -156,7 +156,7 @@
 *    'b2mndt_nstg2'             '1'                    Run
 *    'b2mndt_ntim_step_out'     '1'                    Numerics
 *    'b2mndt_rxf'               '0.5'                  Numerics
-*    'b2mndt_style'             '1'                    Numerics
+*    'b2mndt_style'             '0'                    Numerics
 *    'b2mndt_use_b2srst'        '1'                    Numerics
 *    'b2mwqt_style'             '1'                    Output
 *    'b2mwti_ismain0'           '0'                    Output
@@ -378,7 +378,7 @@
 *    'b2tfhe_conduction_only'   '0'                    Physics
 *    'b2tfhe_fch_pTe'           '1.0'                  Physics 
 *    'b2tfhe_lim_flux'          '0'                    Physics      
-*    'b2tfhe_mdf'               '1'                    Numerics
+*    'b2tfhe_mdf'               '0'                    Numerics
 *    'b2tfhe_neutral'	        '0.0'                  Physics
 *    'b2tfhe_no_current'        '0'                    Numerics
 *    'b2tfhe_no_hybr'           '0'                    Numerics
@@ -386,14 +386,14 @@
 *    'b2tfhe_vis_per'	        '0.0'                  Physics      !srv 20.11.08
 *    'b2tfhe_vis_q'	        '1.0'                  Physics      !srv 20.11.08
 *    'b2tfhi_lim_flux'          '0'                    Physics      
-*    'b2tfhi_mdf'               '1'                    Numerics
+*    'b2tfhi_mdf'               '0'                    Numerics
 *    'b2tfhi_no_hybr'           '0'                    Numerics
 *    'b2tfnb_alpha'             '0.0'                  Physics
 *    'b2tfnb_drift_style'       '1'                    Numerics
 *    'b2tfnb_gamma'             '2.0'                  Physics
 *    'b2tfnb_flux_limit_min_ti' '0.0'                  Physics
 *    'b2tfnb_fnb_nodrift_style' '1'                    Numerics
-*    'b2tfnb_mdf'               '1'                    Numerics
+*    'b2tfnb_mdf'               '0'                    Numerics
 *    'b2tfnb_no_hybr'           '0'                    Numerics
 *    'b2tfnb_xfrhie'            '1.0'                  Numerics
 *    'b2tfnb_xfrhiehz'          '1.0'                  Numerics
@@ -1207,7 +1207,7 @@
 *    If fac_hz = 0.0 then hz = 1 and old form of equations is used.
 *    If fac_hz = 1.0 then new form of equations is used.
 *
-*    'b2mndt_style'             '1'                    Numerics
+*    'b2mndt_style'             '0'                    Numerics
 *    When set to '1', all important variables will be calculated for 
 *    the first step. 
 *    This avoids a jump of residuals when continuing the run.  
@@ -2225,7 +2225,7 @@
 *    'b2tfcc_xfac'              '1.0'                  Numerics
 *    Multiplier to the pressure force term.
 *
-*    'b2tfhe_mdf'               '1'                    Numerics
+*    'b2tfhe_mdf'               '0'                    Numerics
 *    If '1', Spb's new form of calculating electron heat flux is used.
 *    It is recommended '1' for runs with drifts.
 *
@@ -2234,7 +2234,7 @@
 *    The setting no_current.eq.1 must be used if the potential equation
 *    is not explicitly solved for, i.e. for b2news_poteq.ne.1.
 *
-*    'b2tfhi_mdf'               '1'                    Numerics
+*    'b2tfhi_mdf'               '0'                    Numerics
 *    If '1', Spb's new form of calculating ion heat flux is used.
 *    It is recommended '1' for runs with drifts.
 *
@@ -2248,7 +2248,7 @@
 *    the particle fluxes is used
 *    It is recommended '1'.
 *
-*    'b2tfnb_mdf'               '1'                    Numerics
+*    'b2tfnb_mdf'               '0'                    Numerics
 *    If '1', Spb's new form of calculating particle flux is used.
 *    It is recommended '1' for runs with drifts.
 *

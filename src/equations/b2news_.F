@@ -61,7 +61,7 @@
 *   ..local variables
       integer potit, area_fix, nsmin, nsmax, no_current
       integer, save :: style = 2, pot_eq = 1                          !srv 29.05.02 13.07.05
-      integer, save :: mdf_fnb = 1, mdf_fhe = 1, mdf_fhi = 1          !srv 13.10.06
+      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0          !srv 13.10.06
       integer, save :: guard_flows = 2   
       integer, save :: anomalous_core_only = 0                        !srv 19.04.07
       integer, save :: no_solve = 0                                   !srv 02.07.08

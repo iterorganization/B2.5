@@ -67,7 +67,7 @@
 *   ..local variables
       integer ncall, nstg(0:2), moqtlv, moitlv, itcnt, density_control,  !xpb
      *  ramp_slow, ier0, no_solve, ix, iy
-      integer, save :: style = 1, guard_flows = 2                        !srv 18.06.08
+      integer, save :: style = 0, guard_flows = 2                        !srv 18.06.08
       integer, save :: anomalous_core_only = 0                           !srv 19.04.07
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12                                 
@@ -447,11 +447,11 @@ csw 17oct2012 this is the corrected call
             ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
             call b2news (nx, ny, ns, nscx, iscx, ismain, ismain0,
      &       natm, nmol, nion, nlim, nsts, itim,
-     &       dtim, rxf, ier0, wrong_flow, ramp_call)                   !xpb
+     &       dtim, rxf, ier0, wrong_flow, ramp_call)                    !xpb
            else                                                         !srv 01.07.08 {
             call b2news_(nx, ny, ns, nscx, iscx, ismain, ismain0,
      &       natm, nmol, nion, nlim, nsts, itim,
-     &       dtim, rxf,ier0)                                              !srv 16.07.10 23.11.10
+     &       dtim, rxf,ier0)                                            !srv 16.07.10 23.11.10
 	   endif                                                        !srv 01.07.08 )
            if(ier0.eq.10) then
              ierr=ier0

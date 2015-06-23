@@ -78,7 +78,7 @@
       integer, save :: idrifts_to_the_wall = 0                        !sv 02.03.05
       integer, save :: ivminus = 1, ivplus = 1                        !sv 24.03.05
       integer, save :: iform_corr_dia = 0, istyle_cs = 0              !sv 25.07.05 25.04.08
-      integer, save :: mdf_fnb = 1, mdf_fhe = 1, mdf_fhi = 1          !sv 03.10.06
+      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0          !sv 03.10.06
       integer       :: num_inner                                      !sv 26.11.02
       real (kind=R8) ::
      1   facdriftm
