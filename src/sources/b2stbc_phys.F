@@ -7546,10 +7546,10 @@ c see label 2980
      &           leftiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))))/
      &       (hx(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+
      &        hx(leftix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &           leftix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))))+
+     &           leftiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))))+
      &       (po(rightix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &           rightiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))-
-     &        po(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))))/
+     &           rightiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))-
+     &        po(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))/
      &       (hx(rightix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &           rightiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))+
      &        hx(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))))*
