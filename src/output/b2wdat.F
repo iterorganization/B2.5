@@ -1132,7 +1132,7 @@
      &           'Energy e-flux to inner low plate       =',es11.3/
      &           'Energy i-flux to inner low plate       =',es11.3/
      &           'Energy e-flux to inner upper plate     =',es11.3/
-     &       	   'Energy i-flux to inner upper plate     =',es11.3// 
+     &           'Energy i-flux to inner upper plate     =',es11.3// 
 
      &           'Total Energy flux to outer upper plate =',es11.3/
      &           'Total Energy flux to outer low plate   =',es11.3/
