@@ -834,22 +834,26 @@ c
         goto 10
    20   continue
         write(*,*) 'Vessel size = ',icnt
-        allocate(vesl(4,icnt))
-        close(99)
-        open(99,file='mesh.extra',status='old')
-        do i=1,icnt
-          read(99,*) (vesl(ix,i),ix=1,4)
-        enddo
-        close(99)
-        tdi='build_with_units($,"m")'
-        write(*,*) 'mdsput2 of ','\TOP.SNAPSHOT.GRID:VESSEL',
-     1   ' with ',trim(tdi)
-        status=mdsput2(
-     *   '\TOP.SNAPSHOT.GRID:VESSEL'//char(0),trim(tdi)//char(0),
-     *   descr2(idtype_double,4,icnt,0),vesl,
-     *   0)
-        call mds_err_msg(status)
-        deallocate(vesl)
+        if (icnt.gt.0) then
+          allocate(vesl(4,icnt))
+          close(99)
+          open(99,file='mesh.extra',status='old')
+          do i=1,icnt
+            read(99,*) (vesl(ix,i),ix=1,4)
+          enddo
+          close(99)
+          tdi='build_with_units($,"m")'
+          write(*,*) 'mdsput2 of ','\TOP.SNAPSHOT.GRID:VESSEL',
+     1     ' with ',trim(tdi)
+          status=mdsput2(
+     *     '\TOP.SNAPSHOT.GRID:VESSEL'//char(0),trim(tdi)//char(0),
+     *     descr2(idtype_double,4,icnt,0),vesl,
+     *     0)
+          call mds_err_msg(status)
+          deallocate(vesl)
+        else
+          write(*,*) 'Empty mesh.extra file found !'
+        endif
       endif
 
       call mds_put_int_rz(
