@@ -10,12 +10,12 @@
 
       filename = trim(first_name)//'.dat'
       open (nwrite,file=filename)
-	 write(hlp_frm,"(a4,i4,a11)") '(5x,',nx+2,'(6x,i3,5x))'
-	 write (nwrite,hlp_frm) (ix,ix=-1,nx)	 
-	 write(hlp_frm,"(a10,i4,a9)") '(1x,i3,1x,',nx+2,'(es14.6))'
-       do iy=ny,-1,-1 
-	   write(nwrite,hlp_frm) iy, (fun(ix,iy), ix = -1, nx) 
-       enddo 
+      write(hlp_frm,"(a4,i4,a11)") '(5x,',nx+2,'(6x,i3,5x))'
+      write (nwrite,hlp_frm) (ix,ix=-1,nx)
+      write(hlp_frm,"(a10,i4,a9)") '(1x,i3,1x,',nx+2,'(es14.6))'
+      do iy=ny,-1,-1
+        write(nwrite,hlp_frm) iy, (fun(ix,iy), ix = -1, nx)
+      enddo
       close (nwrite)
 
       return

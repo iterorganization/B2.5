@@ -252,7 +252,7 @@ c
         write(*,*) '  NATM = ',NATM
         write(*,*) '  NMOL = ',NMOL
         write(*,*) '  NION = ',NION
-        write(*,*) 'NLMPGS = ',NLMPGS
+        write(*,*) 'NLIMPS = ',NLIMPS
       endif
       goto 7000
  6999 continue
@@ -270,7 +270,7 @@ c
         nsts=DEF_NSTS
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
-        nlmpgs=DEF_NLIM+DEF_NSTS
+        nlimps=DEF_NLIM+DEF_NSTS
       endif
 #endif
       natmi = natm
@@ -284,7 +284,7 @@ c
       CALL EIRENE_EXTRAB25_WNEUINIT
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
-     1 natm,nmol,nion,nlmpgs)
+     1 natm,nmol,nion,nlimps)
       allocate(mach(-1:nxd,-1:nyd,
      *     0:max(1,nsd_local,ns_ext,natm,nmol,nion)-1))
 #ifdef NO_GETENV

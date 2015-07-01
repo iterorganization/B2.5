@@ -40,8 +40,8 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k                !sv 26.01.00
-	integer, save :: iout = 0                                       !srv 08.07.08
-	character charns*2, chark*1                                     !srv 08.07.08
+      integer, save :: iout = 0                                       !srv 08.07.08
+      character charns*3, chark*1                                     !srv 08.07.08
       integer ireg, ileft, ibot, itop
       real (kind=R8) :: vis_per                                    !sv 27.01.00
       save ncall, vis_per                                          !sv 27.01.00

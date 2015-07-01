@@ -41,11 +41,11 @@ cank }
 #     include "COUPLE/KOPPLDIM.F"
 #endif
 #     include "COUPLE/EIRSRT.F"
-      integer nstraid, nsdmax, natmid, nmolid, nionid, nstsid, nlmpgsd
+      integer nstraid, nsdmax, natmid, nmolid, nionid, nstsid, nlimpsd
       parameter (NSTRAID=DEF_NSTRA, NSDMAX=DEF_NSD)
       parameter (natmid=DEF_NATM, nmolid=DEF_NMOL, nionid=DEF_NION)
       parameter (nstsid=DEF_NSTS)
-      parameter (nlmpgsd=DEF_NLIM+(DEF_NGSTAL+1)*DEF_NSTS)
+      parameter (nlimpsd=DEF_NLIM+DEF_NSTS)
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
      *   RECYC(:,:), ERECYC(:,:), RCION(:,:), recyceir(:),
@@ -101,7 +101,7 @@ cank }
       character*1, save :: CRCSTRA(NSTRAID)
       integer, save :: lmolscl(nmolid), mlcmp(natmid,nmolid),
      ,  lionscl(nionid),
-     ,  lcns(nstsid), ltns(nstsid), lsns(nlmpgsd), ksns(NSTRAID), 
+     ,  lcns(nstsid), ltns(nstsid), lsns(nlimpsd), ksns(NSTRAID), 
      ,  msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
 #endif
@@ -185,7 +185,7 @@ csw 21feb2012
       allocate(mlcmp(natmid,nmolid))
       allocate(lcns(nstsid))
       allocate(ltns(nstsid))
-      allocate(lsns(nlmpgs))
+      allocate(lsns(nlimps))
       allocate(ksns(NSTRAID))
       allocate(msns(2,NSTRAID))
 #ifndef NO_B2_CHEM_SPUT
@@ -245,7 +245,6 @@ cxpb 30% energy recycling for all ionised species except carbon.
       neutrals_time_mod=0.0_R8
       neutrals_time_switch=0.0_R8
 
-      l_neutrad=-1
       lstrascl=0
       b2espcr=0
       eb2spcr=0

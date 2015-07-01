@@ -1086,7 +1086,7 @@ csw 21feb2014
         write(*,*) '  NATM = ',NATM
         write(*,*) '  NMOL = ',NMOL
         write(*,*) '  NION = ',NION
-        write(*,*) 'NLMPGS = ',NLMPGS
+        write(*,*) 'NLIMPS = ',NLIMPS
       else
         ndx=DEF_NXD
         ndy=DEF_NYD
@@ -1099,7 +1099,7 @@ csw 21feb2014
         nsts=DEF_NSTS
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
-	nlmpgs=DEF_NLIM+DEF_NSTS
+	nlimps=DEF_NLIM+DEF_NSTS
 #else
         call xerrab
      &   ('Compile code with B25_EIRENE option for coupled runs')

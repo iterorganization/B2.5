@@ -7,7 +7,7 @@ c
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       implicit none
-      character*32 tmpstring
+      character*256 tmpstring,titlestring
       integer is,lnblnk,igraphs
       external lnblnk
 
@@ -20,11 +20,12 @@ c
       endif
 
       do is=0,ndim(3,iwrk)-1
-        tmpstring=textwk(is,iwrk)
+        tmpstring=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
+     1   textwk(is,iwrk)
+        call customise_label(tmpstring,titlestring)
         if(typeofplot .ge. 2) then
           if(b2plot_debug.ge.7) write(*,*) 'computational domain'
-          call init_page(
-     1	   graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//tmpstring,
+          call init_page(titlestring,
      1	   values(1),values(2),values(3),values(4),1,.false.,.true.,
      2     .false.)
           call plotpatch(NX,NY,is,
@@ -34,8 +35,7 @@ c
         endif
         if(mod(typeofplot,2) .eq. 1) then
           if(b2plot_debug.ge.7) write(*,*) 'physical domain'
-          call init_page(
-     1	   graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//tmpstring,
+          call init_page(titlestring,
      1	   values(5),values(6),values(7),values(8),1,.true.,.true.,
      2     .true.)
           call plotpatch(nx,ny,is,

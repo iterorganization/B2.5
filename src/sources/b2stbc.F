@@ -116,7 +116,7 @@
      2   b2stbc_neoclassical/0.0_R8/, b2stbc_fchy_dia/1.0_R8/,
      3   integral_current/0.0_R8/, b2stbc_feedback/0/, area_fix/3/,
      4   b2stbc_fchy_dia_coreonly/1/, secmodel/0/, 
-     5   sheath_drift_fix/0/
+     5   sheath_drift_fix/1/
 *-----------------------------------------------------------------------
 *.computation
 

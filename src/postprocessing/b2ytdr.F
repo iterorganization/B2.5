@@ -667,7 +667,7 @@ c 2002-09-11: logic revised
         write(*,*) '  NMOL = ',NMOL
         write(*,*) '  NION = ',NION
         write(*,*) '  NPLS = ',NPLS
-        write(*,*) 'NLMPGS = ',NLMPGS
+        write(*,*) 'NLIMPS = ',NLIMPS
       else
         ndx=DEF_NXD
         ndy=DEF_NYD
@@ -681,7 +681,7 @@ c 2002-09-11: logic revised
         nsts=DEF_NSTS
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
-        nlmpgs=DEF_NLIM+DEF_NSTS      
+        nlimps=DEF_NLIM+DEF_NSTS
       endif
       NATMI = NATM
       NPLSI = NPLS
@@ -7280,7 +7280,7 @@ cxpb as they no longer necessarily point to the same species
             end if
           end do
         endif
-        if (l_neutrad.ge.0)
+        if (l_neutrad.ne.0)
      >   write(34,'(a,i2,a)') 'L_NEUTRAD=',l_neutrad,','
         write(hlp_frm,'(a,i2,a)') '(a,',nmol,'(1x,i2,'',''))'
         if (maxval(lmolscl).gt.0) 

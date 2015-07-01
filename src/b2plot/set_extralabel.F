@@ -140,7 +140,7 @@ C ===================================================================
       endif
       goto 10
   100 continue ! found locallabel
-        icpos=icpos+2
+      icpos=icpos+2
       iend=icpos
       do while (iend.lt.elength.and.locallabel(iend:iend).ne.'}')
         iend=iend+1
@@ -150,7 +150,7 @@ C ===================================================================
       var=locallabel(icpos:iend-1)
       if(var.eq.'time'.or.var.eq.'TIME') then
         if((runtime.lt.1e-6.and.runtime.ne.0).or.(runtime.ge.100)) then
-          write(envvar,'(1pg11.7)') runtime
+          write(envvar,'(1pg11.4)') runtime
         else
           write(envvar,'(f9.6)') runtime
         endif

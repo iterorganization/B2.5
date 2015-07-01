@@ -23,7 +23,7 @@
       integer ix, iy, is, n2, ncall, c3, hcimx_flag
       integer, save :: iout = 0                                       !srv 13.01.04 {
       real (kind=R8), allocatable :: w1(:,:)
-      character charns*2                                              !srv 13.01.04 }
+      character charns*3                                              !srv 13.01.04 }
       integer, save :: flux_limit_style = 1                           !srv 13.06.08
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, t3, dti, vthi, maxfluxlimit(0:1),

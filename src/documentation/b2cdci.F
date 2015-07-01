@@ -305,7 +305,7 @@
 *    'b2stbc_pfrregno2'         '2'                    Geometry
 *    'b2stbc_private_flux_puff' '0.0'                  Physics
 *    'b2stbc_secmodel'          '0'                    Physics
-*    'b2stbc_sheath_drift_fix'  '0'                    Numerics
+*    'b2stbc_sheath_drift_fix'  '1'                    Numerics
 *    'b2stbc_she0ep'            '1.0e-36'              Numerics
 *    'b2stbc_shi0ep'            '1.0e-36'              Numerics
 *    'b2stbc_sna0ep'            '1.0e-36'              Numerics
@@ -1853,7 +1853,7 @@
 *    If area_fix.ge.3, then additionally this treatment is used for all
 *    parallel contact areas.
 *
-*    'b2stbc_sheath_drift_fix'  '0'                    Numerics
+*    'b2stbc_sheath_drift_fix'  '1'                    Numerics
 *    If sheath_drift_fix.eq.0, then the drift velocity used in the
 *    sheath boundary conditions is the sum of diamagnetic and ExB
 *    contributions (old, but likely wrong, treatment).

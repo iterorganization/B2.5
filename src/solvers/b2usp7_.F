@@ -36,9 +36,9 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k                !sv 26.01.00
-	integer, save :: iout = 0                                       !sv 08.07.08
-	character charns*2, chark*1                                     !sv 08.07.08
-	real (kind=R8) :: vis_per, aa7p2, aa7m2                         !sv 27.01.00
+      integer, save :: iout = 0                                       !sv 08.07.08
+      character charns*3, chark*1                                     !sv 08.07.08
+      real (kind=R8) :: vis_per, aa7p2, aa7m2                         !sv 27.01.00
       save ncall, vis_per                                             !sv 27.01.00
 *   ..procedures
       intrinsic min, abs

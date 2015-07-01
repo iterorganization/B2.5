@@ -13,7 +13,7 @@
 cwdk
 c#ifndef B25_EIRENE                                                   !srv (mail 15.01.08)
 c      call eirene_extrab25_eirdiag_alloc(nxdd,nydd,
-c     .                     natm,nmol,nion,nlmpgs,nstra,npls)          !srv 14.10.13
+c     .                     natm,nmol,nion,nlimps,nstra,npls)          !srv 14.10.13
 c      call eirene_extrab25_eirpbls_alloc(1,natm,nmol,nion,npls,       !srv 14.10.13
 c     &                                       nstra,nfl)               !srv 03.04.13
 c#endif
@@ -40,25 +40,25 @@ c     avoids double module definition in case code is compiled with Eirene
         allocate(emissmol(0:nxdd,0:nydd,1,1))
         allocate(srcml(0:nxdd,0:nydd,nmol,1))
         allocate(edissml(0:nxdd,0:nydd,nmol,0:nstra+1))
-        allocate(wldnek(nlmpgs,0:nstra+1)) 
-        allocate(wldnep(nlmpgs,0:nstra+1))
-        allocate(wldna(nlmpgs,natm,0:nstra+1))
-        allocate(ewlda(nlmpgs,natm,0:nstra+1))
-        allocate(wldnm(nlmpgs,nmol,0:nstra+1))
-        allocate(ewldm(nlmpgs,nmol,0:nstra+1))
-        allocate(wldra(nlmpgs,natm,0:nstra+1))
-        allocate(wldrm(nlmpgs,nmol,0:nstra+1))
-        allocate(wldpp(nlmpgs,npls,0:nstra+1))
-        allocate(wldpa(nlmpgs,natm,0:nstra+1))
-        allocate(wldpm(nlmpgs,nmol,0:nstra+1))
-        allocate(wldpeb(nlmpgs,0:nstra+1))
-        allocate(wldspt(nlmpgs,0:nstra+1))
+        allocate(wldnek(nlimps,0:nstra+1)) 
+        allocate(wldnep(nlimps,0:nstra+1))
+        allocate(wldna(nlimps,natm,0:nstra+1))
+        allocate(ewlda(nlimps,natm,0:nstra+1))
+        allocate(wldnm(nlimps,nmol,0:nstra+1))
+        allocate(ewldm(nlimps,nmol,0:nstra+1))
+        allocate(wldra(nlimps,natm,0:nstra+1))
+        allocate(wldrm(nlimps,nmol,0:nstra+1))
+        allocate(wldpp(nlimps,npls,0:nstra+1))
+        allocate(wldpa(nlimps,natm,0:nstra+1))
+        allocate(wldpm(nlimps,nmol,0:nstra+1))
+        allocate(wldpeb(nlimps,0:nstra+1))
+        allocate(wldspt(nlimps,0:nstra+1))
         allocate(eneutrad(0:nxdd,0:nydd,natm,0:nstra+1))
-        allocate(isrftype(nlmpgs))
+        allocate(isrftype(nlimps))
 #endif
 !       write(*,*) ' Allocated arrays in eirene_extrab25_eirdiag_alloc ',  &
-!        ' with nxdd,nydd,natm,nmol,nion,nlmpgs,nstra,npls',             &
-!               nxdd,nydd,natm,nmol,nion,nlmpgs,nstra,npls
+!        ' with nxdd,nydd,natm,nmol,nion,nlimps,nstra,npls',             &
+!               nxdd,nydd,natm,nmol,nion,nlimps,nstra,npls
         dab2=0
         dmb2=0
         dib2=0

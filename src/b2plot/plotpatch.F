@@ -23,7 +23,7 @@ C =====================================================================
       real dst(nst)
 #endif
       real xbox(8),ybox(8),
-     1 zlo,zhi,zval,clv,zinc,rlo,rhi
+     1 zlo,zhi,zval,clv,zinc,rlo,rhi,small
       integer ix,iy,icol,ici,n,i,ic,
      2 no_available_colors,noz,nozm,nfmtz
       real floor,ceil
@@ -45,6 +45,10 @@ C =====================================================================
         ZLO=RLO
         ZHI=RHI
       end if
+
+      small = tiny(1.0)
+      if (abs(zlo).lt.small) zlo = 0.0
+      if (abs(zhi).lt.small) zhi = 0.0
 
       if(zlo.eq.zhi) then
         zlo=min(zlo*0.9,zlo*1.1)
@@ -357,11 +361,14 @@ c
 
       integer ns,isclvl(ns)
       character*(*) lbls(ns)
+      character*256 tmplbl(ns)
 
       integer i
 
-      do i=0,ns-1
-        isclvl(i)=i+1
+      do i=1,ns
+        isclvl(i)=i
+        call customise_label(lbls(i),tmplbl(i))
+        lbls(i)=trim(tmplbl(i))
       enddo
 #ifndef PLPLOT
       if(noax.gt.0) call lblbar(1,

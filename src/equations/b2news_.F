@@ -73,7 +73,7 @@
       real (kind=R8) ::
      *   potok
       integer ncall, n2, is, ier0, i, ix, iy
-      character charns*2, ch*2                                        !srv 30.06.03
+      character charns*3, ch*2                                        !srv 30.06.03
       real (kind=R8), save :: BoRiS = 0.0_R8
       real (kind=R8) :: 
      *  xfm0, xfm1, xfm2, xfm3, rxf0, rxf1, rxf2, rxf3,
@@ -208,7 +208,7 @@ csw 26feb2014 some extra variables
         endif
        endif
        if(nhist .ne. 0 .and. neutr_avg .ne. 0) then
-          call xerrab('dont use of both EIRENE source averaging procs')
+         call xerrab('Do not use of both EIRENE source averaging procs')
        endif
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then

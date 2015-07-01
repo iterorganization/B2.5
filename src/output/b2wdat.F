@@ -120,8 +120,8 @@
 
 #ifdef B25_EIRENE
        open(70,file='eirdiag.dat')
-	  write(70,"(a/6i5)") 'nlmpgs natm nmol npls nstra nstsid',
-     &                     nlmpgs, natm, nmol, npls, nstra, nstsid
+	  write(70,"(a/6i5)") 'nlimps natm nmol npls nstra nstsid',
+     &                     nlimps, natm, nmol, npls, nstra, nstsid
 	  write(70,"(a/6i5)") 'natmid nmolid ', natmid, nmolid
 	  write(70,"(a/6i5)") 'nnatmi nnmoli ', nnatmi, nnmoli
 	 close(70)

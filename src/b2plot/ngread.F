@@ -41,6 +41,8 @@ c
       integer i, j, k, ncl
       integer, save :: use_recyceir
       real (kind=R8) :: recyctmp
+      real (kind=R8), allocatable :: ft44data(:,:)
+      character charns*2
       data use_recyceir /0/
 
 *  -- PROCEDURES --
@@ -72,13 +74,14 @@ C
       READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
       write(*,'(a,5i4)') 
      . ' Dimensions in fort.44 = ',nnx,nny,natmi,nmoli,nioni
-      write(*,'(a,2i4)') ' Outer dimensions = ', ndxp, ndyp
+      write(*,'(a,2i4)') ' Array inner dimensions = ', ndx , ndy
       if(natmi .gt. natm) stop 'NGREAD: NATMI > NATM'
       if(nmoli .gt. nmol) stop 'NGREAD: NMOLI > NMOL'
       if(nioni .gt. nion) stop 'NGREAD: NIONI > NION'
-      if(nnx   .gt. nxdd) stop 'NGREAD:   NNX > NXDD'
-      if(nny   .gt. nydd) stop 'NGREAD:   NNY > NYDD'
+      if(nnx   .gt. ndx ) stop 'NGREAD:   NNX > NDX '
+      if(nny   .gt. ndy ) stop 'NGREAD:   NNY > NDY '
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
+      allocate(ft44data(0:nx+1,0:ny+1))
 c
 * labels
 * neutral atoms
@@ -103,89 +106,89 @@ C
 * neutral atoms
 C
       do 14 IS = 1, NATMI
-        call gfsub2(44,nxdd,nydd,nnx,nny,dab2(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,dab2(:,:,is,1))
+        write(charns,'(i2.2)') is
+        ft44data = dab2(0:nx+1,0:ny+1,is,1)
+        call my_out(70,nx,ny,ft44data,'dab2_'//charns)
    14 CONTINUE
-      do is = 1,natmi                                                      !srv 04.06.09 16.02.12{
-       call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,is,1),'dab2')
-      enddo
 
       do 24 IS = 1, NATMI
-        call gfsub2(44,nxdd,nydd,nnx,nny,tab2(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,tab2(:,:,is,1))
    24 CONTINUE
 
 * neutral molecules
 C
       do 15 IS = 1, NMOLI
-        call gfsub2(44,nxdd,nydd,nnx,nny,dmb2(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,dmb2(:,:,is,1))
+        write(charns,'(i2.2)') is
+        ft44data = dmb2(0:nx+1,0:ny+1,is,1)
+        call my_out(70,nx,ny,ft44data,'dmb2_'//charns)       !srv 29.04.10
    15 CONTINUE
-      do is = 1,nmoli                                                      !srv 16.02.12
-       call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,is,1),'dmb2')          !srv 29.04.10
-      enddo                                                                 !srv 04.06.09 }
 
       do 25 IS = 1, NMOLI
-        call gfsub2(44,nxdd,nydd,nnx,nny,tmb2(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,tmb2(:,:,is,1))
    25 CONTINUE
 
 * test ions
 C
       do 16 IS = 1, NIONI
-        call gfsub2(44,nxdd,nydd,nnx,nny,dib2(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,dib2(:,:,is,1))
    16 CONTINUE
 
       do 26 IS = 1, NIONI
-        call gfsub2(44,nxdd,nydd,nnx,nny,tib2(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,tib2(:,:,is,1))
    26 CONTINUE
 
 * neutral atom radial particle flux
 C
       do 114 IS = 1, NATMI
-        call gfsub2(44,nxdd,nydd,nnx,nny,rfluxa(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,rfluxa(:,:,is,1))
  114  CONTINUE
 
 * neutral molecules radial particle flux
 C
       do 115 IS = 1, NMOLI
-        call gfsub2(44,nxdd,nydd,nnx,nny,rfluxm(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,rfluxm(:,:,is,1))
  115  CONTINUE
 
 * neutral atom poloidal particle flux
 C
       do 214 IS = 1, NATMI
-        call gfsub2(44,nxdd,nydd,nnx,nny,pfluxa(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,pfluxa(:,:,is,1))
  214  CONTINUE
 
 * neutral molecules poloidal particle flux
 C
       do 215 IS = 1, NMOLI
-        call gfsub2(44,nxdd,nydd,nnx,nny,pfluxm(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,pfluxm(:,:,is,1))
  215  CONTINUE
 
 * neutral atom radial energy flux
 C
       do 314 IS = 1, NATMI
-        call gfsub2(44,nxdd,nydd,nnx,nny,refluxa(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,refluxa(:,:,is,1))
  314  CONTINUE
 
 * neutral molecules radial energy flux
 C
       do 415 IS = 1, NMOLI
-        call gfsub2(44,nxdd,nydd,nnx,nny,refluxm(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,refluxm(:,:,is,1))
  415  CONTINUE
 
 * neutral atom poloidal energy flux
 C
       do 514 IS = 1, NATMI
-        call gfsub2(44,nxdd,nydd,nnx,nny,pefluxa(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,pefluxa(:,:,is,1))
  514  CONTINUE
 
 * neutral molecules poloidal energy flux
 C
       do 515 IS = 1, NMOLI
-        call gfsub2(44,nxdd,nydd,nnx,nny,pefluxm(:,:,is,1))
+        call gfsub2(44,ndx,ndy,nnx,nny,pefluxm(:,:,is,1))
  515  CONTINUE
 
-      call gfsub2(44,nxdd,nydd,nnx,nny,emiss)
-      call gfsub2(44,nxdd,nydd,nnx,nny,emissmol)
+      call gfsub2(44,ndx,ndy,nnx,nny,emiss(:,:,1,1))
+      call gfsub2(44,ndx,ndy,nnx,nny,emissmol(:,:,1,1))
 
 cank 960511
       do is=1,nmoli
@@ -197,7 +200,7 @@ cank 960511
         end do
       end do
       do istra=0,nstra
-        do ix=1,nlmpgs
+        do ix=1,nlimps
           wldnek(ix,istra)=0.0_R8
           wldnep(ix,istra)=0.0_R8
           do is=1,natmi
@@ -214,11 +217,15 @@ cank 960511
       end do
       if(jvft44 .ge. 960511) then
         do is=1,nmoli
-          call gfsub2(44,nxdd,nydd,nnx,nny,srcml(0,0,is,1))
-          call gfsub2(44,nxdd,nydd,nnx,nny,edissml(0,0,is,0))
+          call gfsub2(44,ndx,ndy,nnx,nny,srcml(:,:,is,1))
         end do
-        read(44,'(2i6)') nlimi,nstsi
-        print *,'nlimi,nstsi:',nlimi,nstsi
+        do is=1,nmoli
+          call gfsub2(44,ndx,ndy,nnx,nny,edissml(:,:,is,0))
+        end do
+      end if
+      if(jvft44 .ge. 960513) then
+        read(44,'(3i6)') nlimi,nstsi,nstrai
+        print *,'nlimi,nstsi,nstrai:',nlimi,nstsi,nstrai
         call rdneutrs(44,wldnek,1)
         call rdneutrs(44,wldnep,1)
         call rdneutrs(44,wldna,natmi)
@@ -232,7 +239,8 @@ c*** read the wall geometry
 cank
 cank-960727
       if(jvft44 .ge. 960623) then
-        print *,'nstrai,natmi,nmoli,nplsi=',nstrai,natmi,nmoli,nplsi
+        print *,'natmi,nmoli,nioni,nplsi=',
+     .           natmi,nmoli,nioni,nplsi
         call rdneutrs(44,wldra,natmi)
         call rdneutrs(44,wldrm,nmoli)
       end if
@@ -249,7 +257,7 @@ cank-960727
             call rdneutrs(44,wldrm(:,:,istra),nmoli)
           end do
         else
-          do ix=1,nlmpgs
+          do ix=1,nlimps
             wldnek(ix,1)=wldnek(ix,0)
             wldnep(ix,1)=wldnep(ix,0)
             do is=1,natmi
@@ -265,7 +273,7 @@ cank-960727
           end do
         end if
         if(nspecies .eq. natmi) then
-          do ix=1,nlmpgs
+          do ix=1,nlimps
             wldnek(ix,0)=0.0_R8
             wldnep(ix,0)=0.0_R8
             do is=1,natmi
@@ -380,7 +388,7 @@ cank
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nioni),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nioni),
      ,                                                       i=1,nstsi)
-          k=k+nnioni
+          k=k+nioni
           read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
@@ -389,7 +397,7 @@ cank
 
         if(jvft44 .ge. 20071209) then
           do is = 1, natmi
-            call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,is,0))
+            call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
           end do
         end if
       
@@ -420,10 +428,25 @@ cank
           READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL) 
           READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmol),i=1,NCL) 
         end if
+
+        if(jvft44 .ge. 20081111) then
+          READ (44,'(6e15.7)') ((PDENA_INT(I,J),I=1,NATM),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENM_INT(I,J),I=1,NMOL),J=0,NSTRA)
+          READ (44,'(6e15.7)') ((PDENI_INT(I,J),I=1,NION),J=0,NSTRA)
+          READ (44,'(6e15.7)') ((PDENA_INT_B2(I,J),I=1,NATM),J=0,NSTRA)
+          READ (44,'(6e15.7)') ((PDENM_INT_B2(I,J),I=1,NMOL),J=0,NSTRA)
+          READ (44,'(6e15.7)') ((PDENI_INT_B2(I,J),I=1,NION),J=0,NSTRA)
+          READ (44,'(6e15.7)') ((EDENA_INT(I,J),I=1,NATM),J=0,NSTRA)
+          READ (44,'(6e15.7)') ((EDENM_INT(I,J),I=1,NMOL),J=0,NSTRA)
+          READ (44,'(6e15.7)') ((EDENI_INT(I,J),I=1,NION),J=0,NSTRA)
+          READ (44,'(6e15.7)') ((EDENA_INT_B2(I,J),I=1,NATM),J=0,NSTRA)
+          READ (44,'(6e15.7)') ((EDENM_INT_B2(I,J),I=1,NMOL),J=0,NSTRA)
+          READ (44,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,NION),J=0,NSTRA)
+        end if
       else  ! NLWRMSH
-        if(jvft44 .ge. 20130210) then
+        if(jvft44 .ge. 20071209) then
           do is = 1, natmi
-            call gfsub2(44,nxdd,nydd,nnx,nny,eneutrad(0,0,is,0))
+            call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
           end do
         end if      
       end if
@@ -431,29 +454,30 @@ cank
 cc<<<
 * -- NO ERROR --
 
-      call extend(dab2,nxdd,nydd,natm,nnx,nny,natmi)
-      call extend(tab2,nxdd,nydd,natm,nnx,nny,natmi)
-      call extend(dmb2,nxdd,nydd,nmol,nnx,nny,nmoli)
-      call extend(tmb2,nxdd,nydd,nmol,nnx,nny,nmoli)
-      call extend(dib2,nxdd,nydd,nion,nnx,nny,nioni)
-      call extend(tib2,nxdd,nydd,nion,nnx,nny,nioni)
-      call extend(rfluxa,nxdd,nydd,natm,nnx,nny,natmi)
-      call extend(rfluxm,nxdd,nydd,nmol,nnx,nny,nmoli)
-      call extend(pfluxa,nxdd,nydd,natm,nnx,nny,natmi)
-      call extend(pfluxm,nxdd,nydd,nmol,nnx,nny,nmoli)
-      call extend(refluxa,nxdd,nydd,natm,nnx,nny,natmi)
-      call extend(refluxm,nxdd,nydd,nmol,nnx,nny,nmoli)
-      call extend(pefluxa,nxdd,nydd,natm,nnx,nny,natmi)
-      call extend(pefluxm,nxdd,nydd,nmol,nnx,nny,nmoli)
-      call extend(emiss,nxdd,nydd,1,nnx,nny,1)
-      call extend(emissmol,nxdd,nydd,1,nnx,nny,1)
+      call extend(dab2,ndx,ndy,natm,nnx,nny,natmi)
+      call extend(tab2,ndx,ndy,natm,nnx,nny,natmi)
+      call extend(dmb2,ndx,ndy,nmol,nnx,nny,nmoli)
+      call extend(tmb2,ndx,ndy,nmol,nnx,nny,nmoli)
+      call extend(dib2,ndx,ndy,nion,nnx,nny,nioni)
+      call extend(tib2,ndx,ndy,nion,nnx,nny,nioni)
+      call extend(rfluxa,ndx,ndy,natm,nnx,nny,natmi)
+      call extend(rfluxm,ndx,ndy,nmol,nnx,nny,nmoli)
+      call extend(pfluxa,ndx,ndy,natm,nnx,nny,natmi)
+      call extend(pfluxm,ndx,ndy,nmol,nnx,nny,nmoli)
+      call extend(refluxa,ndx,ndy,natm,nnx,nny,natmi)
+      call extend(refluxm,ndx,ndy,nmol,nnx,nny,nmoli)
+      call extend(pefluxa,ndx,ndy,natm,nnx,nny,natmi)
+      call extend(pefluxm,ndx,ndy,nmol,nnx,nny,nmoli)
+      call extend(emiss,ndx,ndy,1,nnx,nny,1)
+      call extend(emissmol,ndx,ndy,1,nnx,nny,1)
 cank 960511
-      call extend(srcml,nxdd,nydd,nmol,nnx,nny,nmoli)
-      call extend(edissml,nxdd,nydd,nmol,nnx,nny,nmoli)
+      call extend(srcml,ndx,ndy,nmol,nnx,nny,nmoli)
+      call extend(edissml,ndx,ndy,nmol,nnx,nny,nmoli)
 cank
 cxpb 20130210
-      call extend(eneutrad,nxdd,nydd,natm,nnx,nny,natmi)
+      call extend(eneutrad,ndx,ndy,natm,nnx,nny,natmi)
 cxpb
+      deallocate(ft44data)
 #endif
       NFEND = 1
 

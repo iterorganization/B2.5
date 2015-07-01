@@ -9,15 +9,15 @@ c  version : 27.07.2000 22:52
      .	emiss(0:ndxp,0:ndyp,1,1),      emissmol(0:ndxp,0:ndyp,1,1),
      .	srcml(0:ndxp,0:ndyp,nmol,1),   
      .  edissml(0:ndxp,0:ndyp,nmol,0:nstra),
-     .	wldnek(nlmpgs,0:nstra),        wldnep(nlmpgs,0:nstra),
-     .	wldna(nlmpgs,natm,0:nstra),    ewlda(nlmpgs,natm,0:nstra),
-     .	wldnm(nlmpgs,nmol,0:nstra),    ewldm(nlmpgs,nmol,0:nstra),
-     .	wldra(nlmpgs,natm,0:nstra),    wldrm(nlmpgs,nmol,0:nstra),
-     .	wldpp(nlmpgs,npls,0:nstra),    wldpa(nlmpgs,natm,0:nstra),
-     .	wldpm(nlmpgs,nmol,0:nstra),    wldpeb(nlmpgs,0:nstra),
-     .	wldspt(nlmpgs,0:nstra),        
+     .	wldnek(nlimps,0:nstra),        wldnep(nlimps,0:nstra),
+     .	wldna(nlimps,natm,0:nstra),    ewlda(nlimps,natm,0:nstra),
+     .	wldnm(nlimps,nmol,0:nstra),    ewldm(nlimps,nmol,0:nstra),
+     .	wldra(nlimps,natm,0:nstra),    wldrm(nlimps,nmol,0:nstra),
+     .	wldpp(nlimps,npls,0:nstra),    wldpa(nlimps,natm,0:nstra),
+     .	wldpm(nlimps,nmol,0:nstra),    wldpeb(nlimps,0:nstra),
+     .	wldspt(nlimps,0:nstra),        
      .  eneutrad(0:ndxp,0:ndyp,natm,0:nstra),
-     .  wlarea(nlmpgs),                wlabsrp(nspz,nlmpgs),
+     .  wlarea(nlimps),                wlabsrp(nspz,nlimps),
      .  wldna_res(natm,nsgmx),     !incident atom flux
      .  wldnm_res(nmol,nsgmx),     !incident molecule flux
      .  ewlda_res(natm,nsgmx),     !incident energy flux of atoms
@@ -60,7 +60,7 @@ C
 C
       CHARACTER(8) :: eirtxt(nspz) !ak+vk
 
-      integer nnlimi,nnstsi,nnatmi,nnmoli,nnioni,nnplsi,isrftype(nlmpgs)
+      integer nnlimi,nnstsi,nnatmi,nnmoli,nnioni,nnplsi,isrftype(nlimps)
       integer lkindp(npls), lkindm(nmol), lkindi(nion)
       logical lhalpha,lvib
 c

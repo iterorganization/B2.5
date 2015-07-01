@@ -136,7 +136,7 @@ c
         write(*,*) '  NATM = ',NATM
         write(*,*) '  NMOL = ',NMOL
         write(*,*) '  NION = ',NION
-        write(*,*) 'NLMPGS = ',NLMPGS
+        write(*,*) 'NLIMPS = ',NLIMPS
       endif
       goto 7000
  6999 continue
@@ -154,7 +154,7 @@ c
         nsts=DEF_NSTS
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
-        nlmpgs=DEF_NLIM+DEF_NSTS      
+        nlimps=DEF_NLIM+DEF_NSTS
       endif
 #endif
       NFLAI = NFL
@@ -163,7 +163,7 @@ c
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
-     1 natm,nmol,nion,nlmpgs)
+     1 natm,nmol,nion,nlimps)
 #ifdef NO_GETENV
       solpstop=' '
 #else

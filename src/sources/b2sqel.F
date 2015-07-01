@@ -59,7 +59,7 @@
       real (kind=R8) ::
      *   phm0, phm1, phm2, cutlo, cutll, t0, art_rad, tnorm
       save ncall, phm0, phm1, phm2, art_rad
-      integer , save :: with_eirene=0
+      integer, save :: use_eirene=0
 *   ..procedures
       intrinsic log, exp, min, max, dim
       real (kind=R8) ::
@@ -85,7 +85,7 @@
        call xertst (0.0_R8.le.min(phm0,phm1,phm2),
      &  'faulty internal parameter phm0, phm1, phm2')
        call ipgetr ('b2sqel_artificial_radiation', art_rad)
-       call ipgeti ('b2sqel_with_eirene', with_eirene)
+       call ipgeti ('b2mndr_eirene', use_eirene)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -114,7 +114,7 @@
        do iy = -1, ny
         do ix = -1, nx
 csw 10oct2012 check if EIRENE was called -> avoid double counting
-         if(with_eirene.eq.0) then
+         if(use_eirene.eq.0) then
 *      ..compute ionisation rate coefficient
           rsa(ix,iy,is) = phm0*
      &     expu(rlsa(ix,iy,0,is)+rlsa(ix,iy,1,is)*wrk0(ix,iy))
@@ -133,23 +133,13 @@ csw 10oct2012 check if EIRENE was called -> avoid double counting
 cwd break if-test in two pieces to avoid some compilers evaluating is_neutral(is-1) if is=0 
           if(is.gt.0) then
            if (.not.is_neutral(is) .and. .not.is_neutral(is-1)) then
-             rra(ix,iy,is) = phm1*
+            rra(ix,iy,is) = phm1*
      &       expu(rlra(ix,iy,0,is)+rlra(ix,iy,1,is)*wrk0(ix,iy))
            else
             rra(ix,iy,is) = 0.0_R8
            endif
           else
            rra(ix,iy,is) = 0.0_R8
-          endif
-
-csw 25apr2014 make sure that recombination ONLY for non-bulk, i.e,
-c             is(plasma) >1 --> erase rra for is==1
-c             (not ideal, e.g. what if 2 bulk species? D & T ? ) --> fix
-c             later
-          if(.not.is_neutral(is)) then
-           rra(ix,iy,is) = phm1*
-     &     expu(rlra(ix,iy,0,is)+rlra(ix,iy,1,is)*wrk0(ix,iy))
-           if(is .eq. 1) rra(ix,iy,is) = 0.0_R8
           endif
          endif
 

@@ -6,7 +6,7 @@ c
       use b2mod_b2plot_values
       use b2mod_boundary_namelist
       implicit none
-      character*32 tmpstring
+      character*132 tmpstring, titlestring
       integer is,lnblnk
       external lnblnk
       if(b2plot_debug.ge.10) write(*,*) 'Plotting array: nx, ny, nz = ',
@@ -19,11 +19,12 @@ c
       call map(nx,ny,vol,cr,work(-1,-1,ns+1,iwrk))
       call map(nx,ny,vol,cz,work(-1,-1,ns+2,iwrk))
       do is=0,ndim(3,iwrk)-1
-        tmpstring=textwk(is,iwrk)
+        tmpstring=graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
+     .   textwk(is,iwrk)
+        call customise_label(tmpstring,titlestring)
         if(typeofplot .ge. 2) then
           if(b2plot_debug.ge.7) write(*,*) 'computational domain'
-          call init_page(
-     1	   graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//tmpstring,
+          call init_page(titlestring,
      1	   values(1),values(2),values(3),values(4),1,.false.,.true.,
      3     .false.)
           call plotcontour(nx,ny,nx,ny,is,
@@ -36,8 +37,7 @@ c
           if(b2plot_debug.ge.7) write(*,*) 'physical domain'
           call map(nx,ny,
      1         vol,work(-1,-1,is,iwrk),work(-1,-1,ns+3,iwrk))
-          call init_page(
-     1	   graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//tmpstring,
+          call init_page(titlestring,
      1	   values(5),values(6),values(7),values(8),1,.true.,.true.,
      2     .true.)
           call plotcontour(nx,ny,nx,nx,is,

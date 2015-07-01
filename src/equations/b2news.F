@@ -450,11 +450,12 @@ cxpb
      &             abs(ext_sna(ix,iy,is)).gt.1.0e8_R8) then
                   write(*,*)
      1             'Velocity limit active for ix,iy,is = ',ix,iy,is
-                  write(*,*) 'ua,uadia(x&y),te,ti,mach10,na/ne',
+                  write(*,'(a,1p,7g14.7)') 
+     .             'ua,uadia(x&y),te,ti,mach10,na/ne',
      1             ua(ix,iy,is),(uadia(ix,iy,i,is),i=0,1),
      2             te(ix,iy)/ev,ti(ix,iy)/ev,mach10,
      3             na(ix,iy,is)/ne(ix,iy)
-                  write(*,*) 'sources(r,m,ext):',
+                  write(*,'(a,1p,3g14.7)') 'sources(r,m,ext):',
      1             b2stbr_sna(ix,iy,is),b2stbm_sna(ix,iy,is),
      2             ext_sna(ix,iy,is)
                 endif
@@ -467,11 +468,12 @@ cxpb
      &             abs(ext_sna(ix,iy,is)).gt.1.0e8_R8) then
                   write(*,*)
      1             'Velocity limit active for ix,iy,is = ',ix,iy,is
-                  write(*,*) 'ua,uadia(x&y),te,ti,mach10,na/ne',
+                  write(*,'(a,1p,7g14.7)') 
+     .             'ua,uadia(x&y),te,ti,mach10,na/ne',
      1             ua(ix,iy,is),(uadia(ix,iy,i,is),i=0,1),
      2             te(ix,iy)/ev,ti(ix,iy)/ev,mach10,
      3             na(ix,iy,is)/ne(ix,iy)
-                  write(*,*) 'sources(r,m,ext):',
+                  write(*,'(a,1p,3g14.7)') 'sources(r,m,ext):',
      1             b2stbr_sna(ix,iy,is),b2stbm_sna(ix,iy,is),
      2             ext_sna(ix,iy,is)
                 endif
@@ -694,8 +696,8 @@ cxpb  Do not count residuals from dead or unsolved cells
                     endif                                                !xpb
                   enddo
                 enddo
-                write(*,*) 't0, tmax, ixmax, iymax = ', 
-     &               t0, tmax, ixmax, iymax
+                write(*,'(a,1p,2g14.7,2i4)') 
+     &           't0, tmax, ixmax, iymax = ', t0, tmax, ixmax, iymax
                 if (i.eq.0) then
                   respo = wrk0
                   corpo = wrk1

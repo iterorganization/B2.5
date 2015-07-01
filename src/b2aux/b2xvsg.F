@@ -30,21 +30,21 @@
      &  'b2xvsg--faulty argument n, inc')
       vrnam0 = vrname
 !	if(no_test_sign.eq.0) then                                         !srv 26.10.08
-       if (chsg.eq.'.lt.') then
+      if (chsg.eq.'.lt.') then
         call xertst (smax(n,fun,inc).lt.0,
      &   'b2xvsg--faulty argument sign '//vrnam0)
-       else if (chsg.eq.'.le.') then
+      else if (chsg.eq.'.le.') then
         call xertst (smax(n,fun,inc).le.0,
      &   'b2xvsg--faulty argument sign '//vrnam0)
-       else if (chsg.eq.'.gt.') then
+      else if (chsg.eq.'.gt.') then
         call xertst (smin(n,fun,inc).gt.0,
      &   'b2xvsg--faulty argument sign '//vrnam0)
-       else if (chsg.eq.'.ge.') then
+      else if (chsg.eq.'.ge.') then
         call xertst (smin(n,fun,inc).ge.0,
      &   'b2xvsg--faulty argument sign '//vrnam0)
-       else
+      else
         call xerrab ('b2xvsg--faulty argument chsg')
-       endif
+      endif
 !	endif
 !	ncall = ncall + 1
 *$$$  call subend ()

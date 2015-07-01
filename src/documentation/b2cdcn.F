@@ -146,7 +146,7 @@
 *     which a new NEUTRALS namelist is read. Defaults to 0.0.
 *  L_NEUTRAD - integer. If l_neutrad >= 0, then the radiated power due to the
 *     neutrals atoms is taken directly from the Eirene calculation, instead
-*     of being recomputed by B2. Defaults to -1.
+*     of being recomputed by B2. Defaults to 0.
 *  LSTRASCL - integer array of size (NSTRAT,0:natm). Indicates with which 
 *    Eirene atomic species to scale the Eirene stratum (istra) 
 *    (0 means no scaling, default). Atomic species 0 stands for electrons.
@@ -171,7 +171,7 @@
 *  LTNS - integer array of size (NSTS). Contains the indices of Eirene 
 *    non-standard surfaces (block 3A in input.dat) corresponding to target 
 *    boundaries. Defaults to 0.
-*  LSNS - integer array of size (NLMPGS). Contains the indices of Eirene 
+*  LSNS - integer array of size (NLIMPS). Contains the indices of Eirene 
 *    surfaces. Only override the default setting if you know what you're doing!
 *  KSNS - integer array of size (NSTRAT). Contains the indices of Eirene 
 *    targets. (?) Only override the default setting if you know what you're 
@@ -237,7 +237,6 @@
 *  SPS_SGRP - integer array of length (N_SPCSRF). Surface group for chemical 
 *    sputtering.
 *
-!! FIXME: TO be checked !!
 * The following are active only if NO_B2_CHEM_SPUT is not defined among the 
 * compiler options and are used to override the Eirene chemical sputtering
 * settings:

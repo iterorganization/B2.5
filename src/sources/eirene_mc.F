@@ -186,7 +186,7 @@ c not sure this is the right place
         allocate(sum_wld(2,2+NATM))
 
         write(*,*) 'Calling test_couple'
-        call test_couple(ndx,ndy,nstra,nfl,natm,nmol,nion,nlmpgs)
+        call test_couple(ndx,ndy,nstra,nfl,natm,nmol,nion,nlimps)
         write(*,*) 'Called test_couple'
         call ipgeti ('eirene_mc_output_style', output_style)
         call ipgeti ('eirene_repeat_first_call', repeat_first_call)
@@ -711,7 +711,7 @@ cxpb
         if(dbg_eir_mc.gt.9 .and. 
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
           print *
-          print *,'%%% Eirene data in B2 %%%',nlmpgs
+          print *,'%%% Eirene data in B2 %%%',nlimps
           print *,'nnatmi,nnmoli,nnplsi,nnstsi,nnlimi = ',
      ,       nnatmi,nnmoli,nnplsi,nnstsi,nnlimi
           do k=0,nstrat !{
@@ -741,6 +741,7 @@ cxpb
               end if !}
             end do !}
 
+            print *
             print *,'wldpp:',k
             do j=nnlimi+1,nnlimi+nnstsi !{
               hlp_pr=.false.
@@ -1978,8 +1979,6 @@ c
 c*** correct radiation losses for the molecule dissociation
 c
 csw 21feb2012 add test l_neutrad (SOLPS4.3)
-!! FIXME: Check here the use of molecule and atom indices and 
-!! logic concerning l_neutrad
       if(l_neutrad.lt.0) then
         do iy=-1,ny
           do ix=-1,nx
