@@ -59,7 +59,7 @@
       integer ncall, n2, ix, iy, ib, is, ixl, iyl, ixb, iyb,
      *   no_current, conduction_only, no_hybr, model, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
-      integer, save :: lim_flux = 0, mdf_fhe = 1                        !srv 04.02.03 13.10.06
+      integer, save :: lim_flux = 0, mdf_fhe = 0                        !srv 04.02.03 13.10.06
       real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
@@ -138,11 +138,11 @@
       endif
 
       fhePSch = 0.0e0_R8                                              !sv 13.10.06
-	cone    = 0.0e0_R8                                              !sv 02.01.07
-	if(maxval(facdrift).ne.0.0e0_R8) then
+      cone    = 0.0e0_R8                                              !sv 02.01.07
+      if(maxval(facdrift).ne.0.0e0_R8) then
 *   ..compute P.Sch heat x-flux                                 !sv 13.10.06 {
        do is = 0,ns 
-	  if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
+	if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
 !        iy = -1
 !         do ix = -1, nx
 !	  if(leftix(ix,iy).eq.-2) then
@@ -162,11 +162,11 @@
 
          do iy = 0, ny-1
           do ix = -1, nx
-	     if(leftix(ix,iy).eq.-2) then
+	   if(leftix(ix,iy).eq.-2) then
             fhePSch(ix,iy,0)=0.0e0_R8
-	     else
-	      ixl = leftix(ix,iy)
-	      iyl = leftiy(ix,iy)
+	   else
+	    ixl = leftix(ix,iy)
+	    iyl = leftiy(ix,iy)
             fhePSch(ix,iy,0)=-0.25e0_R8*PSch*(
      &       cddi(topix(ix,iy),topiy(ix,iy),1,is)*
      &        (ne(topix(ix,iy),topiy(ix,iy))*
@@ -183,13 +183,13 @@
      &       (ne(ix,iy)*te(ix,iy)**2-ne(bottomix(ix,iy),bottomiy(ix,iy))
      &                          *te(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                                  )
-             cone(ix,iy,0,1) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*  ! 0.25*2  !sv 02.01.07
+            cone(ix,iy,0,1) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*  ! 0.25*2  !sv 02.01.07
      *                                               ne(ix,iy)*te(ix,iy)
-             cone(ix,iy,0,2) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*            ! 0.25*2  !sv 02.01.07
+            cone(ix,iy,0,2) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*            ! 0.25*2  !sv 02.01.07
      &                         ne(bottomix(ix,iy),bottomiy(ix,iy))*
      &                         te(bottomix(ix,iy),bottomiy(ix,iy))
-	     endif
-	    enddo
+	   endif
+	  enddo
          enddo
 
 !         iy = ny
@@ -235,11 +235,11 @@
 !        &                            te(leftix(ix,iy),bottomiy(ix,iy))**2)
 !        &                               )
 !	   else
-	     if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+	   if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
             fhePSch(ix,iy,1) = 0.0e0_R8
-	     else
-	      ixb = bottomix(ix,iy)
-	      iyb = bottomiy(ix,iy)
+	   else
+	    ixb = bottomix(ix,iy)
+	    iyb = bottomiy(ix,iy)
             fhePSch(ix,iy,1) = 0.25e0_R8*PSch*(
      &       cddi(rightix(ix,iy),rightiy(ix,iy),0,is)*
      &        (ne(rightix(ix,iy),rightiy(ix,iy))*
@@ -260,22 +260,22 @@
      &                         -ne(bottomix(ix,iy),bottomiy(ix,iy))*
      &                          te(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                                  )
-             cone(ix,iy,1,1) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*   ! 0.25*2 !sv 02.01.07 {
+            cone(ix,iy,1,1) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*   ! 0.25*2 !sv 02.01.07 {
      &                                              ne(ix,iy)*te(ix,iy)
-             cone(ix,iy,1,2) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*             ! 0.25*2
+            cone(ix,iy,1,2) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*             ! 0.25*2
      &                           ne(leftix(ix,iy),leftiy(ix,iy))*
      &                           te(leftix(ix,iy),leftiy(ix,iy))      !sv 02.01.07 }
-	     endif
-	    enddo
-         enddo
-	  endif
-       enddo
-       do iy = -1, ny                                                  !srv 02.01.07 {
+	    endif
+	   enddo
+          enddo
+	 endif
+        enddo
+        do iy = -1, ny                                                  !srv 02.01.07 {
         do ix = -1, nx
          fhePSch(ix,iy,:)=2.5e0_R8*fhePSch(ix,iy,:)*facdrift(ix,iy)
          cone(ix,iy,:,1) = cone(ix,iy,:,1)*facdrift(ix,iy)
          cone(ix,iy,:,2) = cone(ix,iy,:,2)*facdrift(ix,iy)
-	  enddo
+	enddo
        enddo                                                           !srv 02.01.07 }
 
 c  ...set null flux in guard cells  ?
@@ -283,7 +283,7 @@ c  ...set null flux in guard cells  ?
 !       fhePSch(nx, :,1)=0.0e0_R8
 !       fhePSch( :,-1,:)=0.0e0_R8
 !       fhePSch( :,ny,0)=0.0e0_R8
-	endif
+      endif
 
       fhe_mdf = 0.0e0_R8                                              !sv 13.10.06
 

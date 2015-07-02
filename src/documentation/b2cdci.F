@@ -377,7 +377,7 @@
 *    'b2tfhe_anomalous'		'1.0'                  Physics
 *    'b2tfhe_conduction_only'   '0'                    Physics
 *    'b2tfhe_fch_pTe'           '1.0'                  Physics 
-*    'b2tfhe_lim_flux'          '0'                    Physics      
+*    'b2tfhe_lim_flux'          '1'                    Physics      
 *    'b2tfhe_mdf'               '0'                    Numerics
 *    'b2tfhe_neutral'	        '0.0'                  Physics
 *    'b2tfhe_no_current'        '0'                    Numerics
@@ -385,7 +385,7 @@
 *    'b2tfhe_vis_par'	        '0.0'                  Physics
 *    'b2tfhe_vis_per'	        '0.0'                  Physics      !srv 20.11.08
 *    'b2tfhe_vis_q'	        '1.0'                  Physics      !srv 20.11.08
-*    'b2tfhi_lim_flux'          '0'                    Physics      
+*    'b2tfhi_lim_flux'          '1'                    Physics      
 *    'b2tfhi_mdf'               '0'                    Numerics
 *    'b2tfhi_no_hybr'           '0'                    Numerics
 *    'b2tfnb_alpha'             '0.0'                  Physics
@@ -424,7 +424,7 @@
 *    'b2tqna_transport_namelist''0'                    Run
 *    'b2tqna_user_transport'    '0'                    Physics
 *    'b2tral_mode'              '1'                    Numerics
-*    'b2trcl_conductive_limit'  '1'                    Numerics
+*    'b2trcl_conductive_limit'  '0'                    Numerics
 *    'b2trcl_cthe'              '0.0'                  Physics
 *    'b2trcl_cthi'              '2.65'                 Physics
 *    'b2trcl_lambda'            '-5.0'                 Physics
@@ -1343,7 +1343,7 @@
 *    'b2trcl_cthi'              '2.65'                 Physics
 *    Parameters for the computation of the thermal force term.
 *
-*    'b2trcl_conductive_limit'  '1'                    Numerics
+*    'b2trcl_conductive_limit'  '0'                    Numerics
 *    When set to '1', flux limit of the parallel electron
 *    and ion heat fluxes is applied to transport coefficients.
 *    It is recommended '1'. If 'b2trcl_conductive_limit' '0' then 
@@ -1472,13 +1472,13 @@
 *    rate (if ADPAK rates are not used because those are already included).
 *    Assumes all recombination is three-body.
 *
-*    'b2tfhe_lim_flux'          '0'                    Physics      
+*    'b2tfhe_lim_flux'          '1'                    Physics      
 *    If '0', flux limit is not applied directly to the electron heat flux
 *    but is applied through transport coefficients if 
 *    'b2trcl_conductive_limit' is '1'.
 *    It is recommended '0'.
 *
-*    'b2tfhi_lim_flux'          '0'                    Physics      
+*    'b2tfhi_lim_flux'          '1'                    Physics      
 *    If '0', flux limit is not applied directly to the ion heat flux
 *    but is applied through transport coefficients if 
 *    'b2trcl_conductive_limit' is '1'.

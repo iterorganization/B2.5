@@ -54,7 +54,7 @@
       integer ncall, n2, ix, iy, is, ib, conduction_only, no_hybr, 
      &        ixl, iyl, ixb, iyb
       integer, save :: iout = 0                                        !sv 16.09.02
-      integer, save :: lim_flux = 0, mdf_fhi = 1                       !srv 04.02.03 13.10.06
+      integer, save :: lim_flux = 0, mdf_fhi = 0                       !srv 04.02.03 13.10.06
       real (kind=R8), save :: PSch=1.0e0_R8                            !srv 17.01.07
       real (kind=R8) ::
      *  flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0, w1,

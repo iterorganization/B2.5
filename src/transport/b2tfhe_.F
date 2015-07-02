@@ -83,7 +83,7 @@
       integer, save :: pot_eq = 1                                     !srv 26.07.06
       integer, save :: mode_ehx = 0                                   !srv 21.10.09
       integer, save :: qstyle = 0                                     !lk 23.05.06 05.07.07 {
-      integer, save :: conductive_limit = 1                           !srv 16.06.08 17.01.12
+      integer, save :: conductive_limit = 0                           !srv 16.06.08 17.01.12
       integer mintopcut                                               !lk  
       integer, save :: no_current=0                          !srv 27.02.13
 csw 10oct2012
