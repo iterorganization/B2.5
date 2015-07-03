@@ -466,7 +466,7 @@
 *    'eirene_na_max'            '1e30'                 Numerics
 *    'eirene_na_min'            '0.0'                  Numerics
 *    'eirene_nesepm_istra'      '-1'                   Physics
-*    'eirene_repeat_first_call' '0'                    Physics
+*    'eirene_repeat_first_call' '1'                    Physics
 *    'eirene_savef30'           '0'                    Output
 *    'eirene_savef31'           '0'                    Output
 *    'eirene_te_max'            '1e30'                 Numerics
@@ -1546,7 +1546,7 @@
 *    contributions to the halpha in wneutral are not included, otherwise
 *    they are
 *
-*    'eirene_repeat_first_call' '0'                    Physics
+*    'eirene_repeat_first_call' '1'                    Physics
 *    If > 0 then repeats the first call to eirene in eirene_mc so many times.  
 *    Useful if a density feedback gas puff is being used because the flux 
 *    passed to Eirene on its first call is ignored (instead the value in the 
