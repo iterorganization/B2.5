@@ -987,6 +987,7 @@ c
       tmhacore(1)=0.0_R8
       tmhasol(1)=0.0_R8
       tmhadiv(1)=0.0_R8
+#ifdef B25_EIRENE
 c note no emission in guard cells and offset of array by 1
       do iy=-1,ny
         do ix=-1,nx
@@ -1010,7 +1011,7 @@ c note no emission in guard cells and offset of array by 1
           endif
         enddo
       enddo
-
+#endif
       imap(1)=1
       tstepn(1) = ntstep
       call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)

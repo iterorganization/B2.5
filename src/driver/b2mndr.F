@@ -162,6 +162,10 @@
       integer tran_num
       character*6 tran_file_name
 #endif
+#ifdef B25_EIRENE
+      integer iflag
+      logical ex
+#endif
 
       character*16 fort31name      ! used to write to 'fort.31.########'
       real (kind=R8) ::
@@ -1109,6 +1113,16 @@ csw 21feb2014
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
+      if (ntim.eq.0) then
+#ifndef HPUX
+        inquire(file='fort.44',exist=ex)
+#else
+        inquire(file='ftn44',exist=ex)
+#endif
+        CALL EIRENE_SETCON
+        CALL EIRENE_EXTRAB25_WNEUINIT
+        if (ex) call ngread(ismain,iflag)
+      endif
 #endif
       
 *   ..read geometry and metric
