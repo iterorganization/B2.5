@@ -60,8 +60,8 @@
      *   no_current, conduction_only, no_hybr, model, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
       integer, save :: lim_flux = 0, mdf_fhe = 0                        !srv 04.02.03 13.10.06
-      real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
-      real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
+      real (kind=R8), save :: alfTeEh = 1.0_R8                          !srv 28.04.08 30.05.08
+      real (kind=R8), save :: fch_pTe = 0.0_R8                          !srv 30.12.09
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, alfe0, t0, t1, 
      &   tex, tex0, cutlo, fch_anomalous,
