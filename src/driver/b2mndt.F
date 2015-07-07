@@ -242,19 +242,18 @@ c therefore initialise here
      &     rlcx(-1,-1,0,0,k))
         enddo
 ctmp.dpc
-!       if (nscx.ge.1) then
-!         write(*,*) 'DPC: b2mndt: rlcx'
-!         do k = 0, nscx-1
-!           do is=0, ns-1
-!             write(*,'(a,2i4,1p,2g14.7)') 
-!     &          ' is0,is,rlcx_0,rlcx_1 ',        !srv 18.05.09
-!     1            k,is,samax(n2,rlcx(-1,-1,0,is,k),1),
-!     2            samax(n2,rlcx(-1,-1,1,is,k),1)
-!           enddo
-!         enddo
-!       else
-!         write(*,*) 'DPC: b2mndt: no CX reactions'
-!       endif
+       if (nscx.ge.1) then
+         write(*,*) 'DPC: b2mndt: rlcx'
+         do k = 0, nscx-1
+           do is=0, ns-1
+             write(*,'(a,2i4,1p,2g14.7)') 'is0,is,rlcx_0,rlcx_1 ',
+     1            k,is,samax(n2,rlcx(-1,-1,0,is,k),1),
+     2            samax(n2,rlcx(-1,-1,1,is,k),1)
+           enddo
+         enddo
+       else
+         write(*,*) 'DPC: b2mndt: no CX reactions'
+       endif
 ctmp.dpc
 *    ..intermediate iteration
         istg(1) = 0

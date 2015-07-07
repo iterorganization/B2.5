@@ -175,7 +175,6 @@
       real (kind=R8) ::
      *  te_hot, ne_hot_frac
       logical quitexist, quit, quitexist_
-      logical, save :: outputexist = .false.
       real (kind=R8) ::
      *  stack_dtim(20)
       integer stack_ntim(20)
@@ -1618,17 +1617,14 @@ csw 09oct2012 set default potential already at this point (BCs)
        if (no_solve.le.0) then
          tim = tim+dtim
        endif
-       inquire(file='_out',exist=outputexist)                     !srv 18.05.09
-       if(outputexist) then
-        write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
+       write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
      &     ' TIME ',tim, ' NTIM ', ntim,' DTIM ',dtim
-        write(*,*) 'delta na ',maxval(abs((na-na0)/(na+na_eps)))
-        write(*,*) 'delta te ',maxval(abs((te-te0)/(te+te_eps*ev)))
-        write(*,*) 'delta ti ',maxval(abs((ti-ti0)/(ti+ti_eps*ev)))
-        write(*,*) 'delta po ',maxval(abs((po-po0)/(abs(po)+po_eps)))
-        write(*,*) 'delta ua ',
+       write(*,*) 'delta na ',maxval(abs((na-na0)/(na+na_eps)))
+       write(*,*) 'delta te ',maxval(abs((te-te0)/(te+te_eps*ev)))
+       write(*,*) 'delta ti ',maxval(abs((ti-ti0)/(ti+ti_eps*ev)))
+       write(*,*) 'delta po ',maxval(abs((po-po0)/(abs(po)+po_eps)))
+       write(*,*) 'delta ua ',
      *   maxval(abs((na*ua-na0*ua0)/(abs(na*ua)+na_eps*ua_eps)))
-       endif
        if(delta_min.gt.0.0_R8.and.delta_max.gt.0.0_R8) then
          max_delta=max(
      1    maxval(abs((na-na0)/(na+na_eps))),
@@ -1720,7 +1716,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
        inquire(file='.quit',exist=quitexist)
        cpuval=x05baf()
        elapsedval=epoch_seconds()
-!      if(outputexist)
        write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
      & ' elapsed ', elapsedval-elapsedstart, 
      & ' remaining time (s) =',

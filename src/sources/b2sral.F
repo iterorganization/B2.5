@@ -121,7 +121,7 @@
       integer, save :: no_fluid_neutral_sources = 0
       character chns*3, chk*1                                    !srv 30.06.08
       real (kind=R8) ::
-!     *  snatot(0:ns-1),                                         !srv 18.05.09
+     *  snatot(0:ns-1),                                         !srv 18.05.09
      1  rsa(-1:nx,-1:ny,0:ns-1), wrk1(-1:nx,-1:ny),
      2  wrk0(-1:nx,-1:ny), rra(-1:nx,-1:ny,0:ns-1),
      3  rcx(-1:nx,-1:ny,0:ns-1),
@@ -496,18 +496,18 @@ csw 30sep2013, added cdpa in call, uadia
       call b2saxpy (n2*4, 1.0_R8, she0, 1, she, 1)
       call b2saxpy (n2*4, 1.0_R8, shi0, 1, shi, 1)
       call b2saxpy (n2*4, 1.0_R8, sch0, 1, sch, 1)
-!      do is=0,ns-1                                                          !srv 18.05.09 {
-!        snatot(is)=0.0_R8
-!        do ix=-1,nx
-!          do iy=-1,ny
-!            snatot(is)=snatot(is)+sna(ix,iy,0,is)+
-!     &	     sna(ix,iy,1,is)*na(ix,iy,is)
-!          enddo
-!        enddo
-!      enddo
-!      write(hlp_frm,'(a,i3,a)') '(a,1p,',ns,'(1x,1e14.7))'
-!      if(main_call.or.wrong_flow)                                       !xpb !srv 18.05.09 }
-!     > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
+      do is=0,ns-1                                                          !srv 18.05.09 {
+        snatot(is)=0.0_R8
+        do ix=-1,nx
+          do iy=-1,ny
+            snatot(is)=snatot(is)+sna(ix,iy,0,is)+
+     &	     sna(ix,iy,1,is)*na(ix,iy,is)
+          enddo
+        enddo
+      enddo
+      write(hlp_frm,'(a,i3,a)') '(a,1p,',ns,'(1x,1e14.7))'
+      if(main_call.or.wrong_flow)                                       !xpb !srv 18.05.09 }
+     > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
 *   ..compute more special contributions
       call b2stbm (nx, ny, ns, ismain, dtim,
      &  vol, gs, hx, hy, qz, qc, pbs, 

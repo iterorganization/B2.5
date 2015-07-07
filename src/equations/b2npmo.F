@@ -237,6 +237,7 @@
 *    ..compute flcb, cvcb
        call b2nxfc (nx, ny, is, vol, pbshz, rob, 
      &   ua(-1,-1,is), flub, cvsahz(-1,-1,0,is), flcb, cvcb, wrk0)     !srv 09.01.01
+
 *    ..compute additional viscosity term
         call b2siav (nx, ny, ns, is, modvis, am(is)*mp, hx, hy, hz, vol, 
      &   bb, ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),  
