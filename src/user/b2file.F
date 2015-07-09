@@ -22,12 +22,12 @@ c***    tracing/sources.trc     to  ntrc(ntrc_src)
 c----------------------------------------------------------------------
       implicit none
 c
-      integer ns,nnreg(0:2)
+      integer ns,nnreg(0:2), it
 c
-      integer i, j, k, l, m, n, it, lvr, lvs, lvt,
-     ,  nh_tmp, mh_tmp(0:ns-1), lf_tmp, nf_tmp, nis_tmp
+      integer, save ::  i, j, k, l, m, n, lf_tmp, nis_tmp
+      integer :: mh_tmp(0:ns-1), nh_tmp, nf_tmp, lvr, lvs, lvt
       parameter (nh_tmp=6, nf_tmp=3)
-      logical ex, op
+      logical, save :: ex, op
 c
 c*** lvr, lvs:    version numbers to appear in the files
 c
@@ -43,14 +43,13 @@ c***        ntrc(ntrc_res)     'tracing/residuals.trc'
 c***        ntrc(ntrc_src)     'tracing/sources.trc'
 c***        ntrc(ntrc_tst)     'tracing/test.trc'
 c
-      character tab, hlp_c, f*32, hlp_s(3), 
+      character, save :: tab, hlp_c, f*32, hlp_s(3), 
      ,          hlp_frmr*160, hlp_frms*160, hlp_frmt*160,
-     ,          hlp_h(-1:nh_tmp)*2, hlp_al(0:ns-1)*2, hlp_emsg(5)*30
-
+     ,          hlp_emsg(5)*30
+      character :: hlp_h(-1:nh_tmp)*2, hlp_al(0:ns-1)*2
 c
       external subini, subend, xertst, xerrab
 c
-      save
 c
 c----------------------------------------------------------------------
       data hlp_h / 'ms', 'es', 'ee', 'ei', 'co', 'mo', 'ni', 'mo' /

@@ -148,7 +148,7 @@
       sig0 = 0._R8
       alf0 = 0._R8
       hvi0 = 0._R8
-      hve0 = 0._R8
+      hve0 = 0._R8      
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tqna')
@@ -1784,13 +1784,13 @@ c
      &  vla0(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..common blocks
 *   ..local variables
-      integer ncall, n2, ix, iy, is, ir, jxi, jxa, jsep
-      real (kind=R8) ::
+      integer, save ::  ncall, n2, ix, iy, is, ir, jxi, jxa, jsep
+      real (kind=R8), save ::
      *  alpha, min_df0, max_df0,
-     *  wb, seglen, perimeter, L_perp, 
+     *  wb, seglen, perimeter, L_perp
+      real (kind=R8) ::      
      *  pe(-1:nx,-1:ny), pri(-1:nx,-1:ny), pp(-1:nx,-1:ny), 
      *  coss(-1:nx,-1:ny), R, width(-1:nx), rzb(-1:nx,-1:ny)
-      save 
 *   ..procedures
       real (kind=R8) ::
      *  hy1
