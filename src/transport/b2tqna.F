@@ -137,18 +137,6 @@
       expu(t0) = dim(exp(max(t0,cutll)),cutlo)
 *-----------------------------------------------------------------------
 *.computation
-      dna0 = 0._R8
-      dpa0 = 0._R8
-      vla0 = 0._R8
-      vsa0 = 0._R8
-      hci0 = 0._R8
-      hcib = 0._R8
-      vma0 = 0._R8
-      hce0 = 0._R8
-      sig0 = 0._R8
-      alf0 = 0._R8
-      hvi0 = 0._R8
-      hve0 = 0._R8      
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tqna')
@@ -279,6 +267,17 @@
 *   ..compute dna0, dpa0, vla0, vma0, vsa0, hci0
 *     (initialise hci0 to 0)
       call sfill (n2, 0.0_R8, hci0, 1)
+      call sfill (n2*ns, 0.0_R8, dna0, 1)  
+      call sfill (n2*ns, 0.0_R8, dpa0, 1)  
+      call sfill (n2*ns*2, 0.0_R8, vla0, 1)
+      call sfill (n2*ns, 0.0_R8, vsa0, 1)
+      call sfill (n2*ns, 0.0_R8, hcib, 1)
+      call sfill (n2*ns*2, 0.0_R8, vma0, 1)
+      call sfill (n2, 0.0_R8, hce0, 1)
+      call sfill (n2, 0.0_R8, sig0, 1)
+      call sfill (n2, 0.0_R8, alf0, 1)
+      call sfill (n2*2, 0.0_R8, hvi0, 1)
+      call sfill (n2*2, 0.0_R8, hve0, 1)                  
       do is = 0, ns-1
         max_df0_tmp=0.0_R8
         min_df0_tmp=1.0e30_R8
