@@ -137,7 +137,18 @@
       expu(t0) = dim(exp(max(t0,cutll)),cutlo)
 *-----------------------------------------------------------------------
 *.computation
-
+      dna0 = 0._R8
+      dpa0 = 0._R8
+      vla0 = 0._R8
+      vsa0 = 0._R8
+      hci0 = 0._R8
+      hcib = 0._R8
+      vma0 = 0._R8
+      hce0 = 0._R8
+      sig0 = 0._R8
+      alf0 = 0._R8
+      hvi0 = 0._R8
+      hve0 = 0._R8
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tqna')
