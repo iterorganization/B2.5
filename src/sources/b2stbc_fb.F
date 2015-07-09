@@ -600,11 +600,13 @@ cxpb current feedback not yet tested!
           if(diagno.ge.1)
      >     write(*,*)
      1     ncall,': PFLUXPUFFFEEDBACK (+)',ntot,ndes,cbsnainc
-          cbsna(0,isfeedback,pfrregno1)= neutral_sources_rescale * 
-     .     max(0.0_R8,cbsna(0,isfeedback,pfrregno1)+cbsnainc)
+          cbsna(0,isfeedback,pfrregno1)= 
+     .     max(0.0_R8,cbsna(0,isfeedback,pfrregno1)+
+     &     neutral_sources_rescale * cbsnainc)
           if (pfrregno1.ne.pfrregno2)
-     >     cbsna(0,isfeedback,pfrregno2)= neutral_sources_rescale * 
-     .     max(0.0_R8,cbsna(0,isfeedback,pfrregno2)+cbsnainc)
+     >     cbsna(0,isfeedback,pfrregno2)= 
+     .     max(0.0_R8,cbsna(0,isfeedback,pfrregno2)+
+     &     neutral_sources_rescale * cbsnainc)
         endif
         if (pfrregno1.ne.pfrregno2) then
           if (diagno.ge.1)
