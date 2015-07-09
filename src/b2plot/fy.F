@@ -381,7 +381,8 @@ c
       endif
       first=.false.
 
-      if(r0r .eq. 0.0_R8) r0r=1.5_R8
+c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
+      r0r=1.5_R8
       if(r .lt. r0r) then
         write(*,*) 'r <'
         i1=(z-z1(1))/(z1(n1)-z1(1))*n1+1

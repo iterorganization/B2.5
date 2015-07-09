@@ -17,8 +17,8 @@
 
       contains
 
-      subroutine alloc_b2mod_nclass(nxd,nyd,nsd,nzd)
-      integer nxd,nyd,nsd,nzd
+      subroutine alloc_b2mod_nclass(nxd,nyd,nsd,nzd,mmxd)
+      integer nxd,nyd,nsd,nzd,mmxd
 
       allocate(ncl(0:nsd))
       allocate(isort(0:nsd,0:nzd-1))
