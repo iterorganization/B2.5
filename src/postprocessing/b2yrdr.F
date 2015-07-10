@@ -269,7 +269,7 @@
        read (ninp(0),*,err=94) (idis(i),i=0,nidis-1)
       endif
       do i = 0, nidis-1
-       call xertst (0.le.idis(i).and.idis(i).lt.rtnt,
+       call xertst (0.le.idis(i).and.idis(i).le.rtnt,
      &   'faulty data for idis')
       enddo
       read (ninp(0),'(a8)',err=95) id
@@ -279,7 +279,7 @@
        read (ninp(0),*,err=96) (jdis(i),i=0,njdis-1)
       endif
       do i = 0, njdis-1
-       call xertst (0.le.jdis(i).and.jdis(i).lt.rtnn,
+       call xertst (0.le.jdis(i).and.jdis(i).le.rtnn,
      &   'faulty data for jdis')
       enddo
 *   ..write credit

@@ -140,12 +140,12 @@
 
 *   ..local variables
       integer nmax, i, j, k, ind, izn0
-      parameter (nmax=300)
       character header*60, chk*2, chdc*(*), fmtp*(*)
       parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''',
      &  fmtp='(2x,a6,4x,a)')
       real (kind=R8) ::
-     *   cutll, rydberg, Ei, Ef, t0, wt(0:nmax), wn(0:nmax)
+     *   cutll, rydberg, Ei, Ef, t0
+      real (kind=R8), allocatable :: wt(:), wn(:)
 *   ..procedures
       intrinsic nint, max, exp, log
       real (kind=R8) ::
@@ -167,8 +167,9 @@
       call xertst (1.le.nprt, 'faulty argument nprt')
 *   ..test ns0, nt, nn
       call xertst (1.le.ns0, 'faulty argument ns0')
-      call xertst (0.le.nt.and.nt.le.nmax.and.0.le.nn.and.nn.le.nmax,
-     &  'faulty argument nt or nn')
+      call xertst (0.le.nt.and.0.le.nn, 'faulty argument nt or nn')
+      allocate (wn(0:nn))
+      allocate (wt(0:nt))
 *   ..set cutll
       cutll = log(2*machsfr())
       small_real_constant=tiny(small_real_constant)
@@ -491,6 +492,7 @@
       enddo
 
 * ..return
+      deallocate(wn,wt)
       call subend ()
       return
 

@@ -116,7 +116,7 @@
 *    'b2mndr_eirene'            '0'                    Run
 *    'b2mndr_elapsed'           '0'                    Run
 *    'b2mndr_etim'              '0.0'                  Run
-*    'b2mndr_hz'                '1.0'                  Physics
+*    'b2mndr_hz'                '0.0'                  Physics
 *    'b2mndr_idout0'            'pgnl;pgmm;pzmm'       Output
 *    'b2mndr_idout1'            'pzmm'                 Output
 *    'b2mndr_inverse_ua'        '0'                    Numerics
@@ -1201,7 +1201,7 @@
 *    all reactions are made density-independent, and the value computed at
 *    the lowest density (given in b2ar.dat) is used.
 *
-*    'b2mndr_hz'                '1.0'                  Physics       !srv 09.06.08
+*    'b2mndr_hz'                '0.0'                  Physics       !srv 09.06.08
 *    hz has been introduced into the new form of the 
 *    parallel momentum balance equation.
 *    If fac_hz = 0.0 then hz = 1 and old form of equations is used.
@@ -1223,9 +1223,9 @@
 *    introduced for nulling recycling energy when it is zero.
 *
 *    'b2stbc_istyle_cur_contr_on_S_and_N'   '1'        Numerics
-*     When set to '1', SPb's form of adding of fchy_dia contributions
-*     on South and North boundaries is used. It is recommended '1'.
-*     The old 5.0 calculation is recovered by using the value '0'.
+*    When set to '1', SPb's form of adding of fchy_dia contributions
+*    on South and North boundaries is used. It is recommended '1'.
+*    The old 5.0 calculation is recovered by using the value '0'.
 *
 *    'b2stbc_istyle_fchi'       '0'                    Numerics
 *    If '1', explicitly use the expression (bx*cs*na) of particle flux
@@ -1242,8 +1242,8 @@
 *    It is recommended to use 1.0.
 *
 *    'b2tqce_fke_Zhdanov'       '1'                    Physics
-*     When set to '1', Zhdanov's expression is used in the electron thermal 
-*     conductivity. It is recommended to use 'b2tqce_fke_Zhdanov'  '1'
+*    When set to '1', Zhdanov's expression is used in the electron thermal 
+*    conductivity. It is recommended to use 'b2tqce_fke_Zhdanov'  '1'
 *
 *    'b2tqna_ixref'             See description (integer)  Physics
 *    Poloidal index (on the basis mesh) of the reference surface for the

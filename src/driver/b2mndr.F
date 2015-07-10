@@ -136,7 +136,7 @@
       integer, save :: background_new=0  !srv 01.03.10 14.07.10
       integer, save :: inverse_ua = 0                                !srv 11.01.13
       integer, save :: pot_eq=1
-      real (kind=R8), save :: fac_hz = 1.0e0_R8                      !srv 09.01.01 09.06.08
+      real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na0eps, dtim, stim, etim, 
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,

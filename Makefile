@@ -37,6 +37,15 @@ ifdef USE_EIRENE
   EIRDIR = ${SOLPSTOP}/modules/Eirene/builds/couple_SOLPS-ITER.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_DEBUG}
 endif
 
+ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
+  include ${OBJDIR}/LISTOBJ
+endif
+  include ${SRCB2}/config/compile
+  MAKES = ${SRCB2}/Makefile ${SRCB2}/config/compile ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
+ifeq ($(shell [ -e ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
+  include ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
+  MAKES+ = ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
+endif
 
 # Add external includes first
 INCLUDE = 
@@ -80,16 +89,6 @@ else
 VPATH+=${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentation:${SRCDIR}/driver:${SRCDIR}/equations:${SRCDIR}/input:${SRCDIR}/output:${SRCDIR}/postprocessing:${SRCDIR}/preprocessing:${SRCDIR}/solvers:${SRCDIR}/sources:${SRCDIR}/transport:${SRCDIR}/utility:${SRCDIR}/b2plot:${SRCDIR}/user
 endif
 FPATH:=${VPATH}
-
-ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
-  include ${OBJDIR}/LISTOBJ
-endif
-  include ${SRCB2}/config/compile
-  MAKES = ${SRCB2}/Makefile ${SRCB2}/config/compile ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
-ifeq ($(shell [ -e ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
-  include ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
-  MAKES+ = ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
-endif
 
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
 MODLIST = ${SRCDIR}/modules.local/*.F ${SRCDIR}/modules/*.F

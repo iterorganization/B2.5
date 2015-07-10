@@ -148,9 +148,9 @@ csw aug2014 fix hy1 as suggested by xpb (multiply qz instead divide)
 csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
 *   ..initialization
-      data ncall/0/, fch_ion_neutral/1.0e0_R8/, fch_inert/1.0e0_R8/      !srv 07.07.99 22.03.02    
+      data ncall/0/, fch_ion_neutral/0.0e0_R8/, fch_inert/1.0e0_R8/      !srv 07.07.99 22.03.02    
      *        , fch_anomalous/1.0e0_R8/                                  !srv 22.03.02
-     *        , dia_cur/1.0e0_R8/, vis_par/1.0e0_R8/, vdia_par/1.0e0_R8/ !srv 17.05.99 22.03.02
+     *        , dia_cur/1.0e0_R8/, vis_par/0.0e0_R8/, vdia_par/1.0e0_R8/ !srv 17.05.99 22.03.02
      *        , vis_q/1.0e0_R8/, vis_per/1.0e0_R8/                       !srv 11.07.99 22.11.99 22.03.02
 
 *-----------------------------------------------------------------------
