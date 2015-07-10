@@ -942,7 +942,7 @@ csw 05oct2012 check for solps4 model
            else
              t0=0.0_R8
            endif
-          else
+          else if (model.eq.2) then   ! SOLPS4.x treatments
 csw 2014 changed flux limiting expression (no t0 cutoff for neg. flomx)
 c        i.e.for  model .eq. 2 (SOLPS4)
            flomx = chvemx(ix,iy)

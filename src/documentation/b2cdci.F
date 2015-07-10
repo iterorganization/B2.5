@@ -1244,6 +1244,8 @@
 *    'b2tqce_fke_Zhdanov'       '1'                    Physics
 *    When set to '1', Zhdanov's expression is used in the electron thermal 
 *    conductivity. It is recommended to use 'b2tqce_fke_Zhdanov'  '1'
+*    This switch is only active if, simultaneously, one has
+*    b2tqce_model.eq.1 and b2tfhe_fch_pTe.eq.1.0.
 *
 *    'b2tqna_ixref'             See description (integer)  Physics
 *    Poloidal index (on the basis mesh) of the reference surface for the
@@ -1508,7 +1510,6 @@
 *    classical parallel electron heat diffusivity.
 *    If model.eq.2, use the older Braginskii SOLPS4.0 model.
 *    If model.eq.3, use the 21-moment Balescu results.
-*    If model.eq.4, use the Zhdanov fit to the Braginskii table.
 *
 *    'b2tqna_model_sig'         '0'                    Physics
 *    If '1', use constant density in core region to calculate
