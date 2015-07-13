@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nwfns,ntrgfns
-      parameter(nlabels=311,nfns=197,nsparameters=29,
+      parameter(nlabels=331,nfns=197,nsparameters=29,
      *     nconstants=10,nwfns=62,nwlabels=89,ntrgfns=88)
 
       integer, save ::
@@ -64,31 +64,35 @@
      9  'bcch', 'dvue', 'dvua', 'exbe', 'exba',
      *  'visa', 'joul', 'fraa', 'str' , 'ke'  / 
       data labels(201:250) /
-     1  'facdrift', 'fac_ExB' , 'fac_vis', 'xymap'  , 'fnax32' ,
-     2  'fnay32'  , 'fnax52'  , 'fnay52' , 'fnix32' , 'fniy32' ,
-     3  'fnix52'  , 'fniy52'  , 'fnex32' , 'fney32' , 'fnex52' ,
-     4  'fney52'  , 'fchx32'  , 'fchy32' , 'fchx52' , 'fchy52' ,
-     5  'exna'    , 'exmo'    , 'exhe'   , 'exhi'   , 'exch'   ,
-     6  'b2ra'    , 'mach4'   , 'fle'    , 'fli'    , 'nflfnax',
-     7  'nflfnay' , 'nflfhix' , 'nflfhiy', 'flvisc' , 'sna'    ,
-     8  'she'     , 'shi'     , 'sch'    , 'crx'    , 'cry'    ,
-     9  'nh'      , 'qz0'     , 'qz1'    , 'sxperp' , 'ue'     ,
-     *  'fchp'    , 'za2'     , 'xreg'   , 'yreg'   , 'b2espcr'/
+     1  'facdrift', 'fac_ExB' , 'fac_vis' , 'xymap'   , 'fnax32'  ,
+     2  'fnay32'  , 'fnax52'  , 'fnay52'  , 'fnix32'  , 'fniy32'  ,
+     3  'fnix52'  , 'fniy52'  , 'fnex32'  , 'fney32'  , 'fnex52'  ,
+     4  'fney52'  , 'fchx32'  , 'fchy32'  , 'fchx52'  , 'fchy52'  ,
+     5  'exna'    , 'exmo'    , 'exhe'    , 'exhi'    , 'exch'    ,
+     6  'b2ra'    , 'mach4'   , 'fle'     , 'fli'     , 'nflfnax' ,
+     7  'nflfnay' , 'nflfhix' , 'nflfhiy' , 'flvisc'  , 'sna'     ,
+     8  'she'     , 'shi'     , 'sch'     , 'crx'     , 'cry'     ,
+     9  'nh'      , 'qz0'     , 'qz1'     , 'sxperp'  , 'ue'      ,
+     *  'fchp'    , 'za2'     , 'xreg'    , 'yreg'    , 'b2espcr' /
       data labels(251:300) /
-     1  'qc'      , 'bc'      , 'ceqp'   , 'sne'    , 'brne'  , 
-     2  'bcne'    , 'exne'    , 'dnneo'  , 'chineo' , 'vnneo' ,
-     3  'vwneo'   , 'lnn'     , 'ltt'    , 'nuab'   , 'nua'   ,
-     4  'nustar'  , 'vth'     , 'rhol'   , 'deltal' , 'wb'    ,
-     5  'deltaw'  , 'deltawn' , 'deltawt', 'omega'  , 'deltab', 
-     6  'deltapar', 'chhichii', 'ne0'    , 'ni0'    , 'za_ext',
-     7  'za2_ext' , 'na_ext'  , 'mi_ext' , 'ua_ext' , 'ta_ext',
-     8  'ne_ext'  , 'bmna'    , 'bmne'   , 'bmmo'   , 'bmhe'  ,
-     9  'bmhi'    , 'bmch'    , 'fax_ext', 'fay_ext', 'lnlam' ,
-     *  'zn_ext'  , 'rc'      , 'srcml'  , 'edissml', 'neutrad'/
-      data labels(301:311) /
-     1  'fnaxnodr', 'fnaynodr', 'ne2'    , 'smth'   , 'ixle'  ,
-     2  'ixge'    , 'iyle'    , 'iyge'   , 'isle'   , 'isge'  ,
-     3  'smcf'/
+     1  'qc'      , 'bc'      , 'ceqp'    , 'sne'     , 'brne'    ,
+     2  'bcne'    , 'exne'    , 'dnneo'   , 'chineo'  , 'vnneo'   ,
+     3  'vwneo'   , 'lnn'     , 'ltt'     , 'nuab'    , 'nua'     ,
+     4  'nustar'  , 'vth'     , 'rhol'    , 'deltal'  , 'wb'      ,
+     5  'deltaw'  , 'deltawn' , 'deltawt' , 'omega'   , 'deltab'  ,
+     6  'deltapar', 'chhichii', 'ne0'     , 'ni0'     , 'za_ext'  ,
+     7  'za2_ext' , 'na_ext'  , 'mi_ext'  , 'ua_ext'  , 'ta_ext'  ,
+     8  'ne_ext'  , 'bmna'    , 'bmne'    , 'bmmo'    , 'bmhe'    ,
+     9  'bmhi'    , 'bmch'    , 'fax_ext' , 'fay_ext' , 'lnlam'   ,
+     *  'zn_ext'  , 'rc'      , 'srcml'   , 'edissml' , 'neutrad' /
+      data labels(301:331) /
+     1  'fnaxnodr', 'fnaynodr', 'ne2'     , 'smth'    , 'ixle'    ,
+     2  'ixge'    , 'iyle'    , 'iyge'    , 'isle'    , 'isge'    ,
+     3  'smcf'    , 'fnaxmdf' , 'fnaymdf' , 'fhexmdf' , 'fheymdf' ,
+     4  'fhixmdf' , 'fhiymdf' , 'fhexps'  , 'fheyps'  , 'fhixps'  ,
+     5  'fhiyps'  , 'fnaxps'  , 'fnayps'  , 'fnaxfcor', 'fnayfcor',
+     6  'fnaxhe'  , 'fnayhe'  , 'fchxvisq', 'fchyvisq', 'fchxinrt',
+     7  'fchyinrt'/
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -430,8 +434,30 @@
      8    'iyge',
      9    'isle',
      *    'isge'/  
-      data descriptions(311:311) /
-     1    'Centrifugal force term'/
+      data descriptions(311:320) /
+     1    'Centrifugal force term',
+     2    'Modified poloidal particle flux (s^{-1})',
+     3    'Modified radial particle flux (s^{-1})',
+     4    'Modified poloidal electron heat flux (W)',
+     5    'Modified radial electron heat flux (W)',
+     6    'Modified poloidal ion heat flux (W)',
+     7    'Modified radial ion heat flux (W)',
+     8    'Pfirsch-Schlueter poloidal electron heat flux (W)',
+     9    'Pfirsch-Schlueter radial electron heat flux (W)',
+     *    'Pfirsch-Schlueter poloidal ion heat flux (W)'/
+      data descriptions(321:330) /
+     1    'Pfirsch-Schlueter radial ion heat flux (W)',
+     2    'Pfirsch-Schlueter poloidal particle flux (s^{-1})',
+     3    'Pfirsch-Schlueter radial particle flux (s^{-1})',
+     4    'Poloidal particle flux with Coriolis term (s^{-1})',
+     5    'Radial particle flux with Coriolis term (s^{-1})',
+     6    'Poloidal particle flux for heat equations (s^{-1})',
+     7    'Radial particle flux for heat equations (s^{-1})',
+     8    'Poloidal current due to heat flux viscosity tensor (A)',
+     9    'Radial current due to heat flux viscosity tensor (A)',
+     *    'Poloidal current due to inertia and gyroviscosity (A)'/
+      data descriptions(331:331) /
+     1    'Radial current due to inertia and gyroviscosity (A)'/
       data dimensions(1:50) /
      1    2,      2,      2,      2,      2,
      2    3,      3,      3,      3,      3,
@@ -498,10 +524,14 @@
      8    2,      3,      2,      3,      2,
      9    2,      2,      3,      3,      2,
      *    3,      2,      3,      3,      3/  
-      data dimensions(301:311) /
+      data dimensions(301:331) /
      1    3,      3,      2,      3,      2,
      2    2,      2,      2,      3,      3,
-     3    3/    
+     3    3,      3,      3,      2,      2,
+     4    2,      2,      2,      2,      2,
+     5    2,      3,      3,      3,      3,
+     6    3,      3,      2,      2,      2,
+     7    2/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',

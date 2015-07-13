@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10 :: newversion ='03.000.002'
+      character*10 :: newversion ='03.000.003'
 
       character*10, save ::
      1 b2fstati_version = '00.000.000',
@@ -254,4 +254,6 @@ c                                 base physics as opposed to 5.0
 c    Version 03.000.002  29.06.15 Changed default value to L_NEUTRAD to 0
 c                                 Brings in neutral radiation from Eirene computation
 c                                 Changed default value of sheath_drift_fix to 1
+c    Version 03.000.003  13.07.15 Added modified and Pfirsch-Schlueter fluxes to b2fplasma
+c                                 Added fna_fcor, fna_he, fchvisq, fchinert to b2fplasma
 c  

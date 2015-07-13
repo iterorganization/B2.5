@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usp7 (nx, ny, nregionv, solvereg, itcnt,        !sv 27.01.00
-     &    ne, te, conc, avisper, bvisper, cvisper,                 !sv 27.01.00
-     &    sch, respo, corpo, aa7)                                  !sv 27.01.00
+      subroutine b2usp7 (nx, ny, nregionv, solvereg, itcnt,        !srv 27.01.00
+     &    ne, te, conc, avisper, bvisper, cvisper,                 !srv 27.01.00
+     &    sch, respo, corpo, aa7)                                  !srv 27.01.00
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -16,8 +16,8 @@
       real (kind=R8) ::
      *   ne(-1:nx,-1:ny), te(-1:nx,-1:ny), 
      2   conc(-1:nx,-1:ny,0:1),
-     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),       !sv 27.01.00
-     4   cvisper(-1:nx,-1:ny,0:1),                                 !sv 27.01.00
+     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),       !srv 27.01.00
+     4   cvisper(-1:nx,-1:ny,0:1),                                 !srv 27.01.00
      &   sch(-1:nx,-1:ny,0:3), respo(-1:nx,-1:ny)
       logical solvereg(0:nregionv)      
 *   ..output arguments (unspecified on entry)
@@ -25,7 +25,7 @@
      *   corpo(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   aa7(-1:nx,-1:ny,-3:3)                                     !sv 11.01.00
+     *   aa7(-1:nx,-1:ny,-3:3)                                     !srv 11.01.00
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -39,30 +39,30 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k                !sv 26.01.00
-      integer, save :: iout = 0                                       !srv 08.07.08
-      character charns*3, chark*1                                     !srv 08.07.08
+      integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k             !srv 26.01.00
+      integer, save :: iout = 0                                    !srv 08.07.08
+      character charns*3, chark*1                                  !srv 08.07.08
       integer ireg, ileft, ibot, itop
-      real (kind=R8) :: vis_per                                    !sv 27.01.00
-      save ncall, vis_per                                          !sv 27.01.00
+      real (kind=R8) :: vis_per                                    !srv 27.01.00
+      save ncall, vis_per                                          !srv 27.01.00
 *   ..procedures
       intrinsic min
       external subini, subend, xertst, sfill
-      external b2xvsg, b2xvff, b2ux7p                              !sv 11.01.00
+      external b2xvsg, b2xvff, b2ux7p                              !srv 11.01.00
 *   ..initialisation
-      data ncall/0/, vis_per/0.0e0_R8/                             !sv 27.01.00
+      data ncall/0/, vis_per/0.0e0_R8/                             !srv 27.01.00
 
 *-----------------------------------------------------------------------
 *.computation
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2usp7')                                       !sv 06.07.00
-*   ..set internal parameters on first call                        !sv
-      if (ncall.eq.0) then                                         !sv
-       call ipgetr ('b2tfhe_vis_per', vis_per)                     !sv 27.01.00
-       call ipgeti ('b2usp7_iout', iout)                              !srv 08.07.08
-      endif                                                        !sv
+      call subini ('b2usp7')                                       !srv 06.07.00
+*   ..set internal parameters on first call                        !srv
+      if (ncall.eq.0) then                                         !srv
+       call ipgetr ('b2tfhe_vis_per', vis_per)                     !srv 27.01.00
+       call ipgeti ('b2usp7_iout', iout)                           !srv 08.07.08
+      endif                                                        !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny

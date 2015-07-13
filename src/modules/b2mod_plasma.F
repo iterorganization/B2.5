@@ -82,10 +82,18 @@
       allocate(fne_eir(-1:nxd,-1:nyd,0:1))
       allocate(fhe_eir(-1:nxd,-1:nyd,0:1))
       allocate(fhi_eir(-1:nxd,-1:nyd,0:1))
+      fna_he = 0.0_R8
+      fnaPSch = 0.0_R8
+      fhePSch = 0.0_R8
+      fhiPSch = 0.0_R8
+      fna_mdf = 0.0_R8
+      fhe_mdf = 0.0_R8
+      fhi_mdf = 0.0_R8
       fna_eir = 0.0_R8
       fne_eir = 0.0_R8
-	fhe_eir = 0.0_R8
-	fhi_eir = 0.0_R8                                             !srv 14.07.10 }
+      fhe_eir = 0.0_R8
+      fhi_eir = 0.0_R8  
+      fna_fcor = 0.0_R8                                           !srv 14.07.10 }
       allocate(fna(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(fna0(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(fnap(-1:nxd,-1:nyd,0:1,0:nsd-1))
@@ -120,31 +128,39 @@
       allocate(uadia(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(uahel(-1:nxd,-1:nyd,0:nsd-1))                         !srv 23.12.03
       allocate(fchdia(-1:nxd,-1:nyd,0:1))
-      allocate(fch_p(-1:nxd,-1:nyd,0:1))                                 !xpb srv 10.06.08
-      allocate(fchvispar(-1:nxd,-1:nyd,0:1))                             !xpb
-      allocate(fchvisper(-1:nxd,-1:nyd,0:1))                             !xpb
+      fchdia=0.0_R8;
+      allocate(fch_p(-1:nxd,-1:nyd,0:1))                             !xpb srv 10.06.08
+      allocate(fchvispar(-1:nxd,-1:nyd,0:1))                         !xpb
+      fchvispar=0.0_R8
+      allocate(fchvisper(-1:nxd,-1:nyd,0:1))                         !xpb
+      fchvisper=0.0_R8
       allocate(fchvisq(-1:nxd,-1:nyd,0:1))                           !srv 11.07.99
+      fchvisq=0.0_R8
       allocate(fchinert(-1:nxd,-1:nyd,0:1))                          !srv 07.07.99
+      fchinert=0.0_R8
       allocate(fchin(-1:nxd,-1:nyd,0:1))                             !srv 30.09.02
+      fchin=0.0_R8
       allocate(fchanml(-1:nxd,-1:nyd,0:1))                           !srv 24.03.07
-      fchin=0
-      allocate(vadia(-1:nxd,-1:nyd,0:1,0:nsd-1))                         !xpb
-      allocate(vedia(-1:nxd,-1:nyd,0:1))                                 !xpb
-      allocate(wadia(-1:nxd,-1:nyd,0:1,0:nsd-1))                         !xpb
+      allocate(vadia(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !xpb
+      vadia=0.0_R8
+      allocate(vedia(-1:nxd,-1:nyd,0:1))                             !xpb
+      allocate(wadia(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !xpb
       allocate(wedia(-1:nxd,-1:nyd,0:1))                             !srv 14.07.10
-      allocate(ve(-1:nxd,-1:nyd))                                !srv 14.07.10
-      allocate(vaecrb(-1:nxd,-1:nyd,0:1,0:nsd-1))                        !xpb
-      allocate(veecrb(-1:nxd,-1:nyd,0:1))                                !xpb
-      allocate(fna_nodrift(-1:nxd,-1:nyd,0:1,0:nsd-1))                   !xpb
-      allocate(kinrgy(-1:nxd,-1:nyd,0:nsd-1))                            !xpb
-      allocate(kinrgy0(-1:nxd,-1:nyd,0:nsd-1))                           !xpb
-      allocate(kinrgyp(-1:nxd,-1:nyd,0:nsd-1))                           !xpb
+      allocate(ve(-1:nxd,-1:nyd))                                    !srv 14.07.10
+      allocate(vaecrb(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !xpb
+      vaecrb=0.0_R8
+      allocate(veecrb(-1:nxd,-1:nyd,0:1))                            !xpb
+      allocate(fna_nodrift(-1:nxd,-1:nyd,0:1,0:nsd-1))               !xpb
+      fna_nodrift=0.0_R8
+      allocate(kinrgy(-1:nxd,-1:nyd,0:nsd-1))                        !xpb
+      allocate(kinrgy0(-1:nxd,-1:nyd,0:nsd-1))                       !xpb
+      allocate(kinrgyp(-1:nxd,-1:nyd,0:nsd-1))                       !xpb
       allocate(fmo(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(facdrift(-1:nxd,-1:nyd))                                  !dpc
+      allocate(facdrift(-1:nxd,-1:nyd))                              !dpc
       facdrift=0.0_R8
-      allocate(fac_ExB(-1:nxd,-1:nyd))                                   !dpc
+      allocate(fac_ExB(-1:nxd,-1:nyd))                               !dpc
       fac_ExB=0.0_R8
-      allocate(fac_vis(-1:nxd,-1:nyd))                                   !dpc
+      allocate(fac_vis(-1:nxd,-1:nyd))                               !dpc
       fac_vis=0.0_R8
 
       return
@@ -354,6 +370,18 @@
       else
         fac_vis = 0.0_R8
       endif
+      if(b2fplasma_version.ge.'03.000.003') then
+        call cfrure (nread, size(fna_mdf), fna_mdf, 'fna_mdf')
+        call cfrure (nread, size(fhe_mdf), fhe_mdf, 'fhe_mdf')
+        call cfrure (nread, size(fhi_mdf), fhi_mdf, 'fhi_mdf')
+        call cfrure (nread, size(fnaPSch), fnaPSch, 'fnaPSch')
+        call cfrure (nread, size(fhePSch), fhePSch, 'fhePSch')
+        call cfrure (nread, size(fhiPSch), fhiPSch, 'fhiPSch')
+        call cfrure (nread, size(fna_fcor), fna_fcor, 'fna_fcor')
+        call cfrure (nread, size(fna_he), fna_he, 'fna_he')
+        call cfrure (nread, size(fchvisq), fchvisq, 'fchvisq')
+        call cfrure (nread, size(fchinert), fchinert, 'fchinert')
+      endif
 
       return
       end subroutine read_b2mod_plasma
@@ -433,6 +461,18 @@
       endif
       if(newversion.ge.'01.001.015') then
         call cfwure (nwrite, size(fac_vis), fac_vis, 'fac_vis')
+      endif
+      if(newversion.ge.'03.000.003') then
+        call cfwure (nwrite, size(fna_mdf), fna_mdf, 'fna_mdf')
+        call cfwure (nwrite, size(fhe_mdf), fhe_mdf, 'fhe_mdf')
+        call cfwure (nwrite, size(fhi_mdf), fhi_mdf, 'fhi_mdf')
+        call cfwure (nwrite, size(fnaPSch), fnaPSch, 'fnaPSch')
+        call cfwure (nwrite, size(fhePSch), fhePSch, 'fhePSch')
+        call cfwure (nwrite, size(fhiPSch), fhiPSch, 'fhiPSch')
+        call cfwure (nwrite, size(fna_fcor), fna_fcor, 'fna_fcor')
+        call cfwure (nwrite, size(fna_he), fna_he, 'fna_he')
+        call cfwure (nwrite, size(fchvisq), fchvisq, 'fchvisq')
+        call cfwure (nwrite, size(fchinert), fchinert, 'fchinert')
       endif
 
       return

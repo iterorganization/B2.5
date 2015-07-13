@@ -69,7 +69,7 @@
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,    !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0                                
-      integer, save :: coriolis = 1
+      integer, save :: coriolis = 0
       real (kind=R8) ::
      *   potok
       integer ncall, n2, is, ier0, i, ix, iy
@@ -291,7 +291,6 @@ csw 01oct2012 initialize potential if necessary
       call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,           !srv 09.07.04 23.11.10
      1 bb, conn, vol, gs, hx, hy, hz, qz, qc, pbs, crx, cry, bzb, lnlam,  !srv 09.01.01 13.10.06 01.07.09
      2 fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx, cdna,    !srv 03.06.03
-!     2 fch_p, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx, cdna,    !srv 03.06.03
      3 cdpa, cddi, cvla, cvsa, chce, chve, chci,                      !srv 04.10.99 23.12.03 13.10.06
      5 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
@@ -517,7 +516,7 @@ csw 16oct2012 init ier0
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
      &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
      &   cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,               !srv 19.07.02 20.09.06
-     1   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),fna_fcor(-1,-1,0,is),
+     1   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
@@ -713,7 +712,7 @@ c      with diamagnetic drift part                                      !srv 13.
      &  fchvisq, fchinert, fchanml)                                     !srv 07.07.99 11.07.99 22.11.99 24.03.07
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ti, ni, 
-     1  na, fni, fna_he, ua, chci, cddi, chvi, chvimx,cvsa,vadia,       !srv 17.05.99 27.12.01 25.01.02 13.10.06
+     1  na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa, vadia,     !srv 17.05.99 27.12.01 25.01.02 13.10.06
      &  fchvispar, fchvisq, fchinert, fchanml,              
      &  fhi, fhi_mdf, fhiPSch, floi, coni)                              !srv 13.10.06
        floi_noc = floi                                                  !srv 24.10.02

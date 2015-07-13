@@ -876,6 +876,14 @@ c
         call mapy(nx,ny,1,fhm(:,:,1,is),work)
         call mapx(nx,ny,1,fhp(:,:,0,is),work)
         call mapy(nx,ny,1,fhp(:,:,1,is),work)
+        call mapx(nx,ny,1,fna_mdf(:,:,0,is),work)
+        call mapy(nx,ny,1,fna_mdf(:,:,1,is),work)
+        call mapx(nx,ny,1,fnaPSch(:,:,0,is),work)
+        call mapy(nx,ny,1,fnaPSch(:,:,1,is),work)
+        call mapx(nx,ny,1,fna_fcor(:,:,0,is),work)
+        call mapy(nx,ny,1,fna_fcor(:,:,1,is),work)
+        call mapx(nx,ny,1,fna_he(:,:,0,is),work)
+        call mapy(nx,ny,1,fna_he(:,:,1,is),work)
         if (drift_style.eq.1) then
           call mapx(nx,ny,1,uadia(:,:,0,is),work)
           call mapy(nx,ny,1,uadia(:,:,1,is),work)
@@ -929,6 +937,18 @@ c
       call mapy(nx,ny,1,fchin(:,:,1),work)
       call mapx(nx,ny,1,fch_p(:,:,0),work)           !srv 10.06.09
       call mapy(nx,ny,1,fch_p(:,:,1),work)           !srv 10.06.09
+      call mapx(nx,ny,1,fhe_mdf(:,:,0),work)
+      call mapx(nx,ny,1,fhe_mdf(:,:,1),work)
+      call mapx(nx,ny,1,fhi_mdf(:,:,0),work)
+      call mapx(nx,ny,1,fhi_mdf(:,:,1),work)
+      call mapx(nx,ny,1,fhePSch(:,:,0),work)
+      call mapx(nx,ny,1,fhePSch(:,:,1),work)
+      call mapx(nx,ny,1,fhiPSch(:,:,0),work)
+      call mapx(nx,ny,1,fhiPSch(:,:,1),work)
+      call mapx(nx,ny,1,fchvisq(:,:,0),work)
+      call mapx(nx,ny,1,fchvisq(:,:,1),work)
+      call mapx(nx,ny,1,fchinert(:,:,0),work)
+      call mapx(nx,ny,1,fchinert(:,:,1),work)
 c
       inquire(file='B2SDIAG',exist=ex)
 #ifdef B25_EIRENE
@@ -3558,6 +3578,106 @@ c     assumes that bb is OK for 1d cases
           description='Rad comp of fchin (A)'
           nz=1
           call copy(fchin(:,:,1),1.0_R8,nz,textbl)
+        case ('fnaxmdf')
+          description='Modified poloidal particle flux (s^{-1})'
+          nz=ns
+          mach(:,:,0:ns-1)=fna_mdf(:,:,0,0:ns-1)
+          call copy(mach,1.0_R8,nz,textpl)
+        case ('fnaymdf')
+          description='Modified radial particle flux (s^{-1})'
+          nz=ns
+          mach(:,:,0:ns-1)=fna_mdf(:,:,1,0:ns-1)
+          call copy(mach,1.0_R8,nz,textpl)
+        case ('fhexmdf')
+          description='Modified poloidal electron heat flux (W)'
+          nz=1
+          call copy(fhe_mdf(:,:,0),1.0_R8,nz,textbl)
+        case ('fheymdf')
+          description='Modified radial electron heat flux (W)'
+          nz=1
+          call copy(fhe_mdf(:,:,1),1.0_R8,nz,textbl)
+        case ('fhixmdf')
+          description='Modified poloidal ion heat flux (W)'
+          nz=1
+          call copy(fhi_mdf(:,:,0),1.0_R8,nz,textbl)
+        case ('fhiymdf')
+          description='Modified radial ion heat flux (W)'
+          nz=1
+          call copy(fhi_mdf(:,:,1),1.0_R8,nz,textbl)
+        case ('fhexps')
+          description=
+     .     'Pfirsch-Schlueter poloidal electron heat flux (W)'
+          nz=1
+          call copy(fhePSch(:,:,0),1.0_R8,nz,textbl)
+        case ('fheyps')
+          description=
+     .     'Pfirsch-Schlueter radial electron heat flux (W)'
+          nz=1
+          call copy(fhePSch(:,:,1),1.0_R8,nz,textbl)
+        case ('fhixps')
+          description='Pfirsch-Schlueter poloidal ion heat flux (W)'
+          nz=1
+          call copy(fhiPSch(:,:,0),1.0_R8,nz,textbl)
+        case ('fhiyps')
+          description='Pfirsch-Schlueter radial ion heat flux (W)'
+          nz=1
+          call copy(fhiPSch(:,:,1),1.0_R8,nz,textbl)
+        case ('fnaxps')
+          description=
+     .     'Pfirsch-Schlueter poloidal particle flux (s^{-1})'
+          nz=ns
+          mach(:,:,0:ns-1)=fnaPSch(:,:,0,0:ns-1)
+          call copy(mach,1.0_R8,nz,textpl)
+        case ('fnayps')
+          description=
+     .     'Pfirsch-Schlueter radial particle flux (s^{-1})'
+          nz=ns
+          mach(:,:,0:ns-1)=fnaPSch(:,:,1,0:ns-1)
+          call copy(mach,1.0_R8,nz,textpl)
+        case ('fnaxfcor')
+          description=
+     .     'Poloidal particle flux with Coriolis term (s^{-1})'
+          nz=ns
+          mach(:,:,0:ns-1)=fna_fcor(:,:,0,0:ns-1)
+          call copy(mach,1.0_R8,nz,textpl)
+        case ('fnayfcor')
+          description=
+     .     'Radial particle flux with Coriolis term (s^{-1})'
+          nz=ns
+          mach(:,:,0:ns-1)=fna_fcor(:,:,1,0:ns-1)
+          call copy(mach,1.0_R8,nz,textpl)
+        case ('fnaxhe')
+          description=
+     .     'Poloidal particle flux for heat equations (s^{-1})'
+          nz=ns
+          mach(:,:,0:ns-1)=fna_he(:,:,0,0:ns-1)
+          call copy(mach,1.0_R8,nz,textpl)
+        case ('fnayhe')
+          description=
+     .     'Radial particle flux for heat equations (s^{-1})'
+          nz=ns
+          mach(:,:,0:ns-1)=fna_he(:,:,1,0:ns-1)
+          call copy(mach,1.0_R8,nz,textpl)
+        case ('fchxvisq')
+          description=
+     .     'Poloidal current due to heat flux viscosity tensor (A)'
+          nz=1
+          call copy(fchvisq(:,:,0),1.0_R8,nz,textbl)
+        case ('fchyvisq')
+          description=
+     .     'Radial current due to heat flux viscosity tensor (A)'
+          nz=1
+          call copy(fchvisq(:,:,1),1.0_R8,nz,textbl)
+        case ('fchxinrt')
+          description=
+     .     'Poloidal current due to inertia and gyroviscosity (A)'
+          nz=1
+          call copy(fchinert(:,:,0),1.0_R8,nz,textbl)
+        case ('fchyinrt')
+          description=
+     .     'Radial current due to inertia and gyroviscosity (A)'
+          nz=1
+          call copy(fchinert(:,:,1),1.0_R8,nz,textbl)
 *    neoclassical part                                               !cjk
         case ('dnneo')
           description='Neoclassical particle diffusivity D_{n} ' //

@@ -103,7 +103,7 @@
      &                         fchy_visq_at_north = 0.0e0_R8,         !sv 21.10.02
      &                         fchy_visper_at_north = 0.0e0_R8,       !sv 21.10.02
      &                         fchy_inert_at_north = 0.0e0_R8         !sv 21.10.02
-      real (kind=R8) , save :: cbc = 0.0e0_R8                         !sv 14.10.99
+      real (kind=R8) , save :: cbc = 1.0e0_R8                         !sv 14.10.99
       real (kind=R8) , save :: po_in_lower = 0.0e0_R8,
      &                         po_in_upper = 0.0e0_R8,                !sv 16.11.04
      &                         corr_flux   = 0.0e0_R8                 !sv 25.07.05

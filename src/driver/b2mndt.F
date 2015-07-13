@@ -273,7 +273,6 @@ ctmp.dpc
      1       bb, conn, vol, gs, hx, hy, hz, qz, qc, 
      1       pbs, crx, cry, bzb, lnlam,                                !srv 13.10.06 01.07.09
      1       fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,     !srv 03.06.03
-!     1     fch_p, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,    !srv 03.06.03
      2       cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,           !srv 13.10.06
      3       chvi, csig, csigin, calf, cthe, cthi, 
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
@@ -330,7 +329,7 @@ ctmp.dpc
      &          fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
      &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
                enddo                                                     !srv 01.10.99 25.02.00 13.10.06
-*    ..get current fch_p                                                !srv 11.10.02 {
+*    ..get current fch_p                                                 !srv 11.10.02 {
               call b2tcpa (nx, ny, te, po, ne, csig, calf, fch_p)
               call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
 
@@ -339,43 +338,35 @@ ctmp.dpc
            
               call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,        
      1         vol, gs, hx, hy, qz, qc, bb, 
-     1         te, po, ne, ne2, lnlam, pz, ti,                          !srv 01.07.09
+     1         te, po, ne, ne2, lnlam, pz, ti,                           !srv 01.07.09
      1         ni(-1,-1,1), na, fna, vadia, ua, fne, csig, csigin, chce, 
      &         chve, chci, calf, chvemx, cvsa, cdna, cdpa, cddi, fch,
-     &         fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,  !srv 13.10.06
+     &         fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,   !srv 13.10.06
      &         floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,
-     &         fchvisq, fchinert, fchanml)                          !srv 24.03.07
+     &         fchvisq, fchinert, fchanml)                               !srv 24.03.07
               floe_noc = floe                                
               call b2xpfi (nx, ny, ns, fna_he, fni)                      !srv 28.10.02 {
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
               call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb,   
-     &         ti, ni, na, fni, fna_he,ua,chci,cddi,chvi,chvimx,cvsa,
-     &         vadia,                                               !srv 13.10.06
+     &         ti, ni, na, fni, fna_he, ua, 
+     &         chci, cddi, chvi, chvimx, cvsa, vadia,                    !srv 13.10.06
      &         fchvispar, fchvisq, fchinert, fchanml,
      &         fhi, fhi_mdf, fhiPSch, floi, coni)
-              floi_noc = floi                                       !srv 24.10.02
+              floi_noc = floi                                            !srv 24.10.02
 !	       ELSE
 !              open (70, file='b2fstati_add',form='unformatted')
 !	          read(70,end=10) vaecrb, vadia, floe_noc, floi_noc, fna, 
 !     &          fna_fcor, fna_nodrift, fna_he, fhe, fhi, fch,
 !     &          fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,
-!     &          fchinert, fnaPSch, fna_mdf, fhePSch, fhiPSch,               !srv 13.10.06
-!     &          fhe_mdf, fhi_mdf                                          !srv 29.10.09 {
+!     &          fchinert, fnaPSch, fna_mdf, fhePSch, fhiPSch,           !srv 13.10.06
+!     &          fhe_mdf, fhi_mdf                                        !srv 29.10.09 {
 !	          goto 20
 !   10	          write(*,*) ' File b2fstati_add is old. '
 !   	          write(*,*) ' fhe_mdf = fhe and fhi_mdf = fhi'
 !                fhe_mdf = fhe
 !	          fhi_mdf = fhi
-!   20	        close(70)                                                   !srv 29.10.09 }
+!   20	        close(70)                                                !srv 29.10.09 }
 !	       ENDIF
-            else ! if(style)
-             vaecrb=0.0_R8; vadia=0.0_R8; floe_noc=0.0_R8;                !srv 19.11.09 {
-             floi_noc=0.0_R8; fna_fcor=0.0_R8; fna_nodrift=0.0_R8;
-             fna_he=0.0_R8; fchdia=0.0_R8; fchin=0.0_R8; fch_p=0.0_R8;
-             fchvispar=0.0_R8; fchvisper=0.0_R8; fchvisq=0.0_R8;
-             fchinert=0.0_R8; fnaPSch=0.0_R8; fhePSch=0.0_R8; 
-             fhiPSch=0.0_R8; fna_mdf=0.0_R8; fhe_mdf=0.0_R8;
-             fhi_mdf=0.0_R8;                                               !srv 19.11.09 }
             endif                                                        !srv 18.06.08 }
           endif
           src_ni=0.0_R8
