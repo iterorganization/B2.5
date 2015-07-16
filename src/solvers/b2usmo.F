@@ -162,13 +162,13 @@ csw 18feb2014 corrected BCs (SOLPS4)
         if(bottomiy(ix,iy).eq.-2) then
           aa5(ix,iy,-2) = 0.0_R8
         else
-         if(no_Ptncr_y_co.eq.0) then                                  !sv 06.07.06 {
+         if(no_Ptncr_y_co.eq.0) then                                  !srv 06.07.06 {
           t0 =  flcb(ix,iy,1)/2 - hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
           t1 = -flcb(ix,iy,1)/2 - hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
          else
           t0 =  flcb(ix,iy,1)/2 - cvsb(ix,iy,1)
           t1 = -flcb(ix,iy,1)/2 - cvsb(ix,iy,1)
-         endif                                                        !sv 06.07.06 }
+         endif                                                        !srv 06.07.06 }
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot))
      >     aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0
@@ -212,10 +212,10 @@ cxpb
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (solvereg(ireg)) then
-         pccb(ix,iy,0) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*           !srv 09.01.01
-     .    bb(ix,iy,0)/bb(ix,iy,3)/aa5(ix,iy,0)                       !srv 11.01.13
-         pccb(ix,iy,1) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*           !srv 09.01.01
-     .    bb(ix,iy,0)/bb(ix,iy,3)/aad0(ix,iy)                        !srv 11.01.13
+         pccb(ix,iy,0) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*            !srv 09.01.01
+     .    bb(ix,iy,0)/bb(ix,iy,3)/aa5(ix,iy,0)                        !srv 11.01.13
+         pccb(ix,iy,1) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*            !srv 09.01.01
+     .    bb(ix,iy,0)/bb(ix,iy,3)/aad0(ix,iy)                         !srv 11.01.13
         else
          pccb(ix,iy,0) = 0.0_R8
          pccb(ix,iy,1) = 0.0_R8   
@@ -224,12 +224,12 @@ cxpb
        enddo
       enddo
 *   ..contribution from linearization of centifugal force
-      aa5(:,:,0) = aa5(:,:,0) - min(0.0e0_R8,ctcfb)                    !srv 06.04.07
+      aa5(:,:,0) = aa5(:,:,0) - min(0.0e0_R8,ctcfb)                   !srv 06.04.07
 *   ..solve the correction equation
       write(*,*) 'Calling b2ux5p from b2usmo'
-      call b2ux5p (nx, ny, aa5, itcnt, resmb, corub, name)      !srv 18.03.10
+      call b2ux5p (nx, ny, aa5, itcnt, resmb, corub, name)            !srv 18.03.10
 
-      if (iout.ne.0) then                                              !srv 17.06.02 {
+      if (iout.ne.0) then                                             !srv 17.06.02 {
        write (chns,'(i3.3)') isb    
        do k=0,3
         write (chk,'(i1)') k  
@@ -243,7 +243,7 @@ cxpb
        call my_out(70,nx,ny,corub,name//'_corub'//chns)
        call my_out(70,nx,ny,pccb(-1,-1,0),name//'_pccbx'//chns)
        call my_out(70,nx,ny,pccb(-1,-1,1),name//'_pccby'//chns)
-      endif                                                            !srv 17.06.02 }
+      endif                                                           !srv 17.06.02 }
 * ..return
       ncall = ncall+1
       call subend ()

@@ -38,7 +38,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-	integer, save :: icase = 0
+      integer, save :: icase = 0
       real (kind=R8) ::
      *  cfeqp, phm0
       parameter (cfeqp=4.8e-15_R8)

@@ -110,7 +110,7 @@
 
          enddo
         enddo
-	 case(2)    ! Wesson formula for electr-electron collisions
+	 case(2)    ! Wesson formula for electron-electron collisions
         do iy = -1, ny
          do ix = -1, nx
            lnlam(ix,iy)=max(-lambda,14.9_R8-

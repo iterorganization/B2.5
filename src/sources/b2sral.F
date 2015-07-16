@@ -137,7 +137,7 @@
      &  smo0(-1:nx,-1:ny,0:3,0:ns-1), sch0(-1:nx,-1:ny,0:3),
      1  wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny), pb(-1:nx,-1:ny,0:ns-1)
       logical catch_up
-      character*21 hlp_frm
+      character*32 hlp_frm
       save ncall, sources_inputfile, guard_flows, numerics_namelist
       save use_astra
 *   ..procedures
@@ -408,7 +408,7 @@ csw 30sep2013, added cdpa in call, uadia
      &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
      &  uadia,
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
-      endif                                                         !srv 14.07.10 }
+      endif                                                             !srv 14.07.10 }
 
 * ..compute source coefficients
 *   ..compute electron rate coefficients
@@ -416,21 +416,23 @@ csw 30sep2013, added cdpa in call, uadia
      &  rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
 *   ..compute standard contributions due to boundaries
-      wrong_flow = .false.						 !xpb
+      wrong_flow = .false.						!xpb
       if(style.eq.0) then                                               !srv 28.07.08
+       if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc called'
        call b2stbc (nx, ny, ns, ismain, ismain0, 
      &  BoRiS, facdrift, fac_ExB,         !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                 !xpb !srv 09.01.01
+     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,               !xpb !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb, 
      .  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
      &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,            !srv 16.02.12
      &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
-     &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
-     2  cdna, chce, chve, chci, chvi, calf,				               !xpb
-     &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)			 !xpb
+     &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
+     2  cdna, chce, chve, chci, chvi, calf,				!xpb
+     &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)		!xpb
       elseif(style.eq.1) then                                           !srv 28.07.08 {
 !! FIXME : Need to add sne in argument list here ???
+       if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc_spb called'
        call b2stbc_spb (nx, ny, ns, facdrift, vol, gs, hx, hy, hz, qz,  !srv 09.01.01
      &  pbs, pbshz, bb, na, ua, uadia, vaecrb, vadia, te, ti, po, ne,   !srv 14.10.99 12.05.00 09.01.01 28.10.02
      1  ni, floe_noc, floi_noc, fna, fna_fcor, fnaPSch, fhe, fhi,       !srv 13.10.06
@@ -442,8 +444,8 @@ csw 30sep2013, added cdpa in call, uadia
       else
        if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc called'
        call b2stbc (nx, ny, ns, ismain, ismain0, 
-     &  BoRiS, facdrift, fac_ExB,         !xpb
-     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                 !xpb !srv 09.01.01
+     &  BoRiS, facdrift, fac_ExB,                                       !xpb
+     &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,               !xpb !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb, 
      .  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 

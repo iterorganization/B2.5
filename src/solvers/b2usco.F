@@ -51,8 +51,8 @@
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xxgs, b2ux5p
 ! if uncomment rscal(t0) = t0 then uncomment nb(ix,iy) = nb(ix,iy)+rxf*corpb(ix,iy)/pb(ix,iy) in b2upco
-!      rscal(t0) = t0                                                 !srv 13.10.06
-      rscal(t0) = 1.0e0_R8                                            !srv 13.10.06
+      rscal(t0) = t0                                                 !srv 13.10.06
+!      rscal(t0) = 1.0e0_R8                                            !srv 13.10.06
 *   ..initialisation
       data ncall/0/
 
@@ -117,7 +117,7 @@
         ireg = region(ix,iy,0)
         if (solvereg(ireg)) then
          aa5(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+
-     &     abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))
+     &    abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))
         else
          aa5(ix,iy,0) = rscal(pb(ix,iy))
         endif
@@ -222,6 +222,7 @@ cxpb
       enddo
       
 *   ..solve the correction equation
+      write(*,*) 'Calling b2ux5p from b2usco'
       call b2ux5p (nx, ny, aa5, itcnt, rescb, corpb, name)           !srv 18.03.10
 *   ..redo the scaling
       do iy = -1, ny

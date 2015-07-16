@@ -211,20 +211,20 @@
        call b2sscal (n2, am(is)*mp, rob, 1)
        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute extended friction term
-       if(b2sifr_ver.eq.0) then                                       !srv 26.10.08 {
-        call b2sifr (nx, ny, ns, is, vol, hx, hz, bb, na, ua, te, ti, !srv 09.01.01
-     &   ni, ne, ne2, ehxp, lnlam, cthe, cthi, smbch, smbtf,       !srv 11.09.09
+       if(b2sifr_ver.eq.0) then                                        !srv 26.10.08 {
+        call b2sifr (nx, ny, ns, is, vol, hx, hz, bb, na, ua, te, ti,  !srv 09.01.01
+     &   ni, ne, ne2, ehxp, lnlam, cthe, cthi, smbch, smbtf,           !srv 11.09.09
      &   smpr(-1,-1,is), smpt(-1,-1,is), smfr(-1,-1,is), 
      &   wrk0, wrk1, wrk2)                     !srv 02.07.08 01.07.09
        else
         call b2sifr_ (nx, ny, ns, is, hx, hz, vol, bb, na, ua, te, ti, !srv 09.01.01 18.10.02
-     &   ni, ne, ne2, ehxp, lnlam, cthe, cthi, smbch, smbtf,       !srv 11.09.09
+     &   ni, ne, ne2, ehxp, lnlam, cthe, cthi, smbch, smbtf,           !srv 11.09.09
      &   smpr(-1,-1,is), smpt(-1,-1,is), smfr(-1,-1,is), 
      &   wrk0, wrk1, wrk2)                    !srv 01.07.09
-       endif                                                          !srv 26.10.08 }
+       endif                                                           !srv 26.10.08 }
 *    ..compute pressure gradient term
        call b2sigp (nx, ny, is, rza(-1,-1,is), vol, hx, hz, bb,  
-     &   na(-1,-1,is), ti, ne, te, po, smbgp, wrk0, wrk1, wrk2)         !srv 02.07.08
+     &   na(-1,-1,is), ti, ne, te, po, smbgp, wrk0, wrk1, wrk2)        !srv 02.07.08
 *    ..compute flub
        call b2scopy (n2*2, fna_fcor(-1,-1,0,is), 1, flub, 1)
        call b2sscal (n2*2, am(is)*mp, flub, 1)
@@ -232,7 +232,7 @@
        if (modvis.eq.1) then                                           !srv 19.01.05 11.09.09 {
 *    ..add convective term due to new form of ion viscosity term only
         call b2nxfv (nx, ny, is, hz, cvsahz(-1,-1,0,is), flubv)        !srv 01.07.05 11.09.09
-        call b2saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                   !srv 11.09.09
+        call b2saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                 !srv 11.09.09
        endif                                                           !srv 19.01.05 }
 *    ..compute flcb, cvcb
        call b2nxfc (nx, ny, is, vol, pbshz, rob, 
@@ -241,9 +241,9 @@
 *    ..compute additional viscosity term
         call b2siav (nx, ny, ns, is, modvis, am(is)*mp, hx, hy, hz, vol, 
      &   bb, ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),  
-     &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,      !srv 01.07.09
+     &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,     !srv 01.07.09
      &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is), 
-     &   cvsahz_cl(-1,-1,0,is), smbvh, smbvv, wrk0, wrk1, wrk2)         !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05 
+     &   cvsahz_cl(-1,-1,0,is), smbvh, smbvv, wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
 *    ..compute centrifugal force term                                 !srv 09.07.01
        call b2sicf (nx, ny, is, am(is)*mp, bb, vol, hx, hz, 
      *     na(-1,-1,is), ua(-1,-1,is), smbcf, smcf(-1,-1,is), ctcfb, 
@@ -251,24 +251,24 @@
 *    ..compute total parallel momentum source
        call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smq(-1,-1,0,is), 1, smb, 1)
-       b2npmo_smaf(:,:,:,is)=smbch(:,:,:)+smbtf(:,:,:)            !srv 11.09.09 {
+       b2npmo_smaf(:,:,:,is)=smbch(:,:,:)+smbtf(:,:,:)                !srv 11.09.09 {
        call b2saxpy (n2*4, 1.0_R8, smbch, 1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smbtf, 1, smb, 1)                  !srv 11.09.09 }
        b2npmo_smag(:,:,:,is)=smbgp(:,:,:)
        call b2saxpy (n2*4, 1.0_R8, smbgp, 1, smb, 1)
-       b2npmo_smav(:,:,:,is)=smbvh(:,:,:)+smbvv(:,:,:)                 !srv 03.07.08 {
+       b2npmo_smav(:,:,:,is)=smbvh(:,:,:)+smbvv(:,:,:)                !srv 03.07.08 {
        call b2saxpy (n2*4, 1.0_R8, smbvh,  1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)
-       call b2saxpy (n2*4, 1.0_R8, smbcf,  1, smb, 1)                    !srv 03.07.08 }
+       call b2saxpy (n2*4, 1.0_R8, smbcf,  1, smb, 1)                 !srv 03.07.08 }
        call b2nxdv (nx, ny, rob, smq(-1,-1,0,is), smqdu, smb)         !srv ???
 *    ..save final source for species (is)                             !srv 10.11.02
        smof(:,:,:,is) = smb                                           !srv 10.11.02
 *    ..compute residual
        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
-     &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)           !srv 04.07.08
+     &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)             !srv 04.07.08
        fmo(:,:,:,is)=wrkf
-       write (chns,'(i3.3)') is                                     !srv 18.03.10
-       if (iout.ne.0) then                                          !srv 12.07.02 {
+       write (chns,'(i3.3)') is                                       !srv 18.03.10
+       if (iout.ne.0) then                                            !srv 12.07.02 {
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua_input'//chns)
         call my_out(70,nx,ny,resmo(-1,-1,is),'b2npmo_resmo'//chns)
         call my_out(70,nx,ny,fmo(-1,-1,0,is),'b2npmo_fmox'//chns)

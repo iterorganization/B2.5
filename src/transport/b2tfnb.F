@@ -70,52 +70,52 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ib, area_fix, no_hybr,
-     &        ixl, iyl, ixb, iyb                                         !srv 13.10.06
-      integer, save :: iout = 0,                                         !srv 16.09.02
+     &        ixl, iyl, ixb, iyb                                        !srv 13.10.06
+      integer, save :: iout = 0,                                        !srv 16.09.02
      &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
-      integer, save :: mdf_fnb = 0                                       !srv 13.10.06
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !sv 06.07.06
-      integer, save :: PSch_style = 1                                    !srv 12.11.08
-      character chns*3                                                   !srv 16.09.02
-      integer, save :: fnb_nodrift_style = 1                             !srv 20.06.08
-      integer, save :: drift_style = 1                                   !srv 21.06.08
-      real (kind=R8), save :: cfvma = 0.0_R8                             !srv 15.12.05
-      real (kind=R8), save :: alpha_ = 0.0_R8                            !srv 09.07.03
-      real (kind=R8), save :: ycur = 0.0_R8                              !srv 07.07.08
-      real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
+      integer, save :: mdf_fnb = 0                                      !srv 13.10.06
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
+      integer, save :: PSch_style = 1                                   !srv 12.11.08
+      character chns*3                                                  !srv 16.09.02
+      integer, save :: fnb_nodrift_style = 1                            !srv 20.06.08
+      integer, save :: drift_style = 1                                  !srv 21.06.08
+      real (kind=R8), save :: cfvma = 0.0_R8                            !srv 15.12.05
+      real (kind=R8), save :: alpha_ = 0.0_R8                           !srv 09.07.03
+      real (kind=R8), save :: ycur = 0.0_R8                             !srv 07.07.08
+      real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8           !srv 27.01.12
       real (kind=R8), save ::  
-     &   poleldr = 1.0_R8, radeldr = 1.0_R8,                             !srv 25.04.00
-     &   poldidr = 1.0_R8, raddidr = 1.0_R8,                             !srv 25.04.00
-     &   vis_par = 1.0_R8, fch_inert = 1.0_R8,                           !srv 20.09.06
-     &   fch_anomalous = 1.0_R8, vis_per = 0.0_R8, PSch = 1.0_R8         !srv 17.01.07
-      real (kind=R8), save :: xfrhie_no_drift = 1.0_R8                   !srv 20.11.09
-      real (kind=R8), save :: xfrhiehz = 1.0_R8                          !srv 05.11.09 30.01.10
+     &   poleldr = 1.0_R8, radeldr = 1.0_R8,                            !srv 25.04.00
+     &   poldidr = 1.0_R8, raddidr = 1.0_R8,                            !srv 25.04.00
+     &   vis_par = 1.0_R8, fch_inert = 1.0_R8,                          !srv 20.09.06
+     &   fch_anomalous = 1.0_R8, vis_per = 0.0_R8, PSch = 1.0_R8        !srv 17.01.07
+      real (kind=R8), save :: xfrhie_no_drift = 1.0_R8                  !srv 20.11.09
+      real (kind=R8), save :: xfrhiehz = 1.0_R8                         !srv 05.11.09 30.01.10
       real (kind=R8) ::
      *   con(-1:nx,-1:ny), dif, flo, con_nodrift, flo_nodrift, xfrhie, 
      *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
      *   flux_limit_min_ti,
-     *   flo2dia, con_2dia(-1:nx,-1:ny), flo_mdf, con_mdf(-1:nx,-1:ny),  !srv 01.10.99 21.01.00 22.05.03 04.02.05 13.10.06
-     *   term(-1:nx,-1:ny), flo_he, con_he(-1:nx,-1:ny),                 !srv 25.04.00 13.09.02 11.09.09
-     &   termhz(-1:nx,-1:ny)                                             !srv 05.11.09
+     *   flo2dia, con_2dia(-1:nx,-1:ny), flo_mdf, con_mdf(-1:nx,-1:ny), !srv 01.10.99 21.01.00 22.05.03 04.02.05 13.10.06
+     *   term(-1:nx,-1:ny), flo_he, con_he(-1:nx,-1:ny),                !srv 25.04.00 13.09.02 11.09.09
+     &   termhz(-1:nx,-1:ny)                                            !srv 05.11.09
       real (kind=R8) :: 
-     &   vbecrb_(-1:nx,-1:ny,0:1), wbdia_(-1:nx,-1:ny,0:1),              !srv 14.07.10 {
-     &   wedia_(-1:nx,-1:ny,0:1), wedia(-1:nx,-1:ny,0:1),                !srv 14.07.10 }
-     &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1)               !srv 21.10.10
+     &   vbecrb_(-1:nx,-1:ny,0:1), wbdia_(-1:nx,-1:ny,0:1),             !srv 14.07.10 {
+     &   wedia_(-1:nx,-1:ny,0:1), wedia(-1:nx,-1:ny,0:1),               !srv 14.07.10 }
+     &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1)              !srv 21.10.10
       parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
-     *   wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny), wrk5(-1:nx,-1:ny),        !srv 11.09.09
-     *   wrk6(-1:nx,-1:ny), wrk7(-1:nx,-1:ny), wrk8(-1:nx,-1:ny),        !srv 11.09.09 !iys 17.04.12
+     *   wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny), wrk5(-1:nx,-1:ny),       !srv 11.09.09
+     *   wrk6(-1:nx,-1:ny), wrk7(-1:nx,-1:ny), wrk8(-1:nx,-1:ny),       !srv 11.09.09 !iys 17.04.12
      &   wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny)
       real (kind=R8) ::
-     *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1), nbcor(-1:nx,-1:ny),  !srv 01.10.99 !lk 09.06.11
-     *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny)                           !srv 08.10.04
-      real (kind=R8) :: weight(-1:nx,-1:ny)                              !lk 
+     *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1), nbcor(-1:nx,-1:ny), !srv 01.10.99 !lk 09.06.11
+     *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny)                          !srv 08.10.04
+      real (kind=R8) :: weight(-1:nx,-1:ny)                             !lk
       save ncall, alpha, gamma, flux_limit_min_ti, area_fix, no_hybr
 *   ..procedures
       real (kind=R8) ::
      *   kmpr, hybr, kap, cvmgp, hy1
-      external subini, subend, xertst, ipgeti, ipgetr                    !xpb
+      external subini, subend, xertst, ipgeti, ipgetr                   !xpb
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
       intrinsic abs, max, min, mod, sqrt
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
@@ -182,8 +182,8 @@
         call ipgeti ('b2npc9_iout', iout_b2npc9)                        !srv 11.09.09
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npmo_iout', iout_b2npmo)
-        call ipgetr ('b2tfrn_xvecrb', xvecrb)                             !srv 27.01.12
-        call ipgetr ('b2tfrn_xwdia', xwdia)                               !srv 27.01.12
+        call ipgetr ('b2tfrn_xvecrb', xvecrb)                           !srv 27.01.12
+        call ipgetr ('b2tfrn_xwdia', xwdia)                             !srv 27.01.12
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
