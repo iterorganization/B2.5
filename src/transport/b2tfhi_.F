@@ -555,11 +555,9 @@ csw 27nov2012 added check upwind (SOLPS4 style)
           else
             fhi(ix,iy,0) = floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
      &                            +ti(ix,iy))/2.0 
-!     &      -abs(floi0/2.0) 
      &      - coni0*dti0
             fhi_mdf(ix,iy,0) = floi0_mdf*                         !srv 13.10.06 {
      &           (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0 
-!     &           -abs(floi0_mdf/2.0) 
      &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)                        !srv 13.10.06 }
           endif
 
