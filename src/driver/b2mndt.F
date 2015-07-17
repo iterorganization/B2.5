@@ -501,9 +501,9 @@ csw 17oct2012 this is the corrected call
            endif
 *      ..write the tracing data
            if (ank_tracing.ne.0) then
-             if (ncall.eq.0) call b2filei(ns)
+             if (ncall.eq.0) call b2filei(ns,nnreg)
              if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1) 
-     >        call b2filew(istg(2),ns) 
+     >        call b2filew(istg(2),ns,nnreg) 
            endif
 *      ..update iteration counter
            itcnt = itcnt+1
