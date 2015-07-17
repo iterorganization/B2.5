@@ -352,11 +352,11 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
          t1 = t0/(1.0_R8+t0)
          dti0_mdf = dti/(1.0_R8+t0_mdf)             !srv 18.08.08 {
          t1_mdf = t0_mdf/(1.0_R8+t0_mdf)
-	   if(mdf_fhi.eq.0) then
+	 if(mdf_fhi.eq.0) then
           fllimi(ix,iy) = 1.0_R8+t0
-	   else
+	 else
           fllimi(ix,iy) = 1.0_R8+t0_mdf
-	   endif                                      !srv 18.08.08 }
+	 endif                                      !srv 18.08.08 }
          if (no_hybr.eq.0) then
            fhi(ix,iy,0) = w1 +
      .                    floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
@@ -380,22 +380,22 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
          fhit(ix,iy,0) = fhi(ix,iy,0) +
      1    ((1.0_R8-BoRiS)*fni_32(ix,iy,0)+cum_flo_vaecrb)*
      &    (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-	   if(mdf_fhi.eq.0) then
+	 if(mdf_fhi.eq.0) then
           floi(ix,iy,0) = floi0-
      &    sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
      &    min(0.0_R8,t1)**2
-	   else
+	 else
           floi(ix,iy,0) = floi0_mdf-
      &    sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
      &    min(0.0_R8,t1_mdf)**2
-	   endif
+	 endif
          if (no_hybr.eq.0) then
-	    if(mdf_fhi.eq.0) then
+	  if(mdf_fhi.eq.0) then
            coni(ix,iy,0,0) = abs(floi0/2.0_R8)+coni0/(1.0_R8+t0)     !srv 02.01.07
-	    else
+	  else
            coni(ix,iy,0,0) = abs(floi0_mdf/2.0_R8)+
      &                       coni0_mdf/(1.0_R8+t0_mdf)     !srv 02.01.07
-	    endif
+	  endif
          else
            coni(ix,iy,0,0) = coni0/(1.0_R8+t0)                       !srv 02.01.07
          endif

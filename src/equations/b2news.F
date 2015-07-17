@@ -587,8 +587,8 @@ cxpb
               if(vis_per.eq.0.0_R8) then
                 call restart_ma28
               else
-	         if (style.eq.2) call restart_ma28_for_7                     !srv 11.01.00 29.05.02
-	         if (style.eq.3) call restart_sdrv_for_7                     !srv 29.05.02
+	        if (style.eq.2) call restart_ma28_for_7                  !srv 11.01.00 29.05.02
+	        if (style.eq.3) call restart_sdrv_for_7                  !srv 29.05.02
               endif
             endif
             do while(i.lt.potit.and.(t0.gt.potok.or.i.le.potitmin).and.

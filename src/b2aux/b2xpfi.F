@@ -17,9 +17,7 @@
       n2 = (nx+2)*(ny+2)
       call sfill (n2*2, 0.0_R8, fni, 1)
       do is = 0, ns-1
-       if(.not.is_neutral(is)) then
         call b2saxpy (n2*2, 1.0_R8, fna(-1,-1,0,is), 1, fni, 1)
-       endif
       enddo
 *$$$  call subend ()
       return

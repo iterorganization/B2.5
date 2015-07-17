@@ -247,6 +247,7 @@ cxpb
       enddo
 
 *   ..solve the correction equation
+      write(*,*) 'Calling b2ux5p from b2usht (1)'
       call b2ux5p (nx, ny, aa5, itcnt, resht, cortt, name//'tt')    !srv 18.03.10
 
 * ..electron temperature correction equation
@@ -385,6 +386,7 @@ cxpb
       enddo
 
 *   ..solve the correction equation
+      write(*,*) 'Calling b2ux5p from b2usht (2)'
       call b2ux5p (nx, ny, aa5, itcnt, reshe, corte, name//'te')    !srv 18.03.10
 
 * ..atom temperature correction equation
@@ -526,6 +528,7 @@ cxpb
       enddo
 
 *   ..solve the correction equation
+      write(*,*) 'Calling b2ux5p from b2usht (3)'
       call b2ux5p (nx, ny, aa5, itcnt, reshi, corti, name//'ti')    !srv 18.03.10
       do iy = -1, ny
        do ix = -1, nx
