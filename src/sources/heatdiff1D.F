@@ -759,11 +759,12 @@ c  Checking inputs
 
       subroutine pdedef(npde, T, X, U, UX, P, Q, R, ires)
       use b2mod_types
+      use b2mod_wall
       implicit none
       integer npde, ires
       real (kind=R8) :: T, X, U(NPDE), UX(NPDE), 
      .  P(NPDE,NPDE), Q(NPDE), R(NPDE)
-      integer i
+      integer i, ib, it, ih
 
       real (kind=R8) :: Cp, Kappa, mass_density
       external Cp, Kappa, mass_density
@@ -774,10 +775,30 @@ c  Checking inputs
       integer :: iwall, ns
       common /location/ iwall, ns
 
+      if (X.le.target_depth(iwall,1)) then
+        ih = 1
+      else if (X.ge.target_depth(iwall,ndepth_nml)) then
+        ih = ndepth_nml
+      else
+        ib = 1
+        it = ndepth_nml
+        do while (it-ib.gt.1)
+          ih = (ib+it)/2
+          if (X.lt.target_depth(iwall,ih)) then
+            it = ih
+          else if (X.gt.target_depth(iwall,ih)) then
+            ib = ih
+          else
+            ib = ih
+            it = ih
+          endif
+        end do
+      end if
+
       do i = 1, npde
-        P(i,1:npde) = mass_density(iwall, i) * Cp(iwall, i, U(i))
+        P(i,1:npde) = mass_density(iwall, ih) * Cp(iwall, ih, U(i))
         Q(i) = 0.0_R8
-        R(i) = Kappa(iwall, i, U(i)) * UX(i)
+        R(i) = Kappa(iwall, ih, U(i)) * UX(i)
       enddo
 
       return

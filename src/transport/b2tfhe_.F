@@ -78,7 +78,7 @@
       integer, save :: iout = 0,                                      !srv 16.09.02
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0
-      integer, save :: lim_flux = 0, mdf_fhe = 0                      !srv 04.02.03 13.10.06
+      integer, save :: lim_flux = 1, mdf_fhe = 0                      !srv 04.02.03 13.10.06
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0           !srv 06.07.06
       integer, save :: pot_eq = 1                                     !srv 26.07.06
       integer, save :: mode_ehx = 0                                   !srv 21.10.09
@@ -292,14 +292,14 @@ c Drift terms
 !     &      -(ne(ix,iy)+ne(bottomix(ix,iy),bottomiy(ix,iy)))/2.0e0_R8  !srv
 !     &      *(te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy))                       !srv
 !     &       +ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy)))/2.0e0_R8  !srv
-!     &      *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2))         !srv
+!     &      *(bb(ix,iy,2)+bb(bottomix(ix,iy),bottomiy(ix,iy),2))       !srv
 !     ^       /2.0e0_R8                                                 !srv
-!     &      *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))           !srv
-!     &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))         !srv
-!     &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy))    !srv
-            endif                                                        !srv 26.11.02
-           enddo                                                                                                                   !srv
-         enddo                                                                                                             !srv
+!     &      *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))         !srv
+!     &      /(gs(ix,iy,2)+gs(bottomix(ix,iy),bottomiy(ix,iy),2))       !srv
+!     &      *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !srv
+            endif                                                       !srv 26.11.02
+           enddo                                                        !srv
+         enddo                                                          !srv
 
         endif
 *  ..calculate  X,Y-COMPONENTS OF VISCOSITY PARALLEL CURRENT
@@ -307,17 +307,17 @@ c Drift terms
      &   call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, 
      &       cvsa, facdrift, fchvispar) !srv 20.09.06
  
-* ..calculate the contribution of viscosity perpendicular current        !srv 22.11.99 
+* ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99 
         va=0.0e0_R8
          dva=0.0e0_R8
 
-        if(vis_per.ne.0.0e0_R8) then                                        !srv 22.11.99
+        if(vis_per.ne.0.0e0_R8) then                                    !srv 22.11.99
 
 !      analogous part for avisper and va takes place in b2siav          !srv 17.01.01
 
-         is = ismain                                         !srv 23.11.10
+         is = ismain                                                    !srv 23.11.10
 
-!         avisper(:,-1,1)=0.0e0_R8                          !srv 06.05.02 {
+!         avisper(:,-1,1)=0.0e0_R8                                      !srv 06.05.02 {
 !         do iy=0,ny    
 !          do ix=-1,nx
 !               avisper(ix,iy,1)=
@@ -330,19 +330,19 @@ c Drift terms
 !     *         /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))**2
 !     *         /(bb(ix,iy,3)+bb(bottomix(ix,iy),bottomiy(ix,iy),3))
 !          enddo
-!         enddo                                                !srv 06.05.02 }
+!         enddo                                                         !srv 06.05.02 }
 
-         avisper(:,-1,1) = 0.0e0_R8                                  !srv 06.05.02
+         avisper(:,-1,1) = 0.0e0_R8                                     !srv 06.05.02
          cvisper(:,-1,1) = 0.0e0_R8
          do iy=0,ny
           do ix=-1,nx
-           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then   !srv 26.11.02
+           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
              cvisper(ix,iy,1)=
      &         4.0e0_R8/(bb(ix,iy,3)+
      1         bb(bottomix(ix,iy),bottomiy(ix,iy),3))/
      &         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-             avisper(ix,iy,1) = cvisper(ix,iy,1)                      !srv 06.05.02
-           endif                                                      !srv 26.11.02
+             avisper(ix,iy,1) = cvisper(ix,iy,1)                        !srv 06.05.02
+           endif                                                        !srv 26.11.02
           enddo
          enddo
 

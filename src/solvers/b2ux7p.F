@@ -109,16 +109,16 @@
          nltrsol=2
          call ipgeti ('b2ux7p_nltrsol', nltrsol)                   !sv 11.01.00
        endif
-       if(style.eq.3) then                                           !srv 29.05.02 {
-	   nnd=(nx+2)*(ny+2)
+       if(style.eq.3) then                                         !srv 29.05.02 {
+	 nnd=(nx+2)*(ny+2)
          nnd_sdrv  = (nx+2)*(ny+2)
-	   n_nz_sdrv = 4*nnd_sdrv   
+	 n_nz_sdrv = 4*nnd_sdrv   
 !	   nsp = 3*nnd + 12*n_nz_sdrv  ! was 7*n_nz_sdrv without vis per !srv 13.02.03
-	   nsp = 3*nnd + 13*n_nz_sdrv                                    !srv 20.02.06
-	   call alloc_b2mod_ysmp_sdrv
-	   ia = 0                                                        !srv 15.05.07
-	   ja = 0                                                        !srv 15.05.07
-       endif                                                         !srv 29.05.02 }
+	 nsp = 3*nnd + 13*n_nz_sdrv                                !srv 20.02.06
+	 call alloc_b2mod_ysmp_sdrv
+	 ia = 0                                                    !srv 15.05.07
+	 ja = 0                                                    !srv 15.05.07
+       endif                                                       !srv 29.05.02 }
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)

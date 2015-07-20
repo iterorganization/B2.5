@@ -414,6 +414,7 @@ csw 27nov2012  added check upwind (SOLPS4 style)
           if(b2_upwind .ne. 0) then
            fhi(ix,iy,0) = upwind(floi0,ti(leftix(ix,iy),leftiy(ix,iy))
      &                                  ,ti(ix,iy))
+     &                    -
      &                    -coni0*dti
           else
            fhi(ix,iy,0) = floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
@@ -548,22 +549,24 @@ csw 27nov2012 added check upwind (SOLPS4 style)
           if(b2_upwind .ne. 0) then
             fhi(ix,iy,0) = upwind(floi0,ti(leftix(ix,iy),leftiy(ix,iy))
      &                                ,ti(ix,iy))
+     &           - abs(floi0/2.0d0)*dti0
      &           - coni0*dti0
-            fhi_mdf(ix,iy,0) = upwind(floi0_mdf,                         !srv 13.10.06 {
+            fhi_mdf(ix,iy,0) = upwind(floi0_mdf,                       !srv 13.10.06 {
      &           ti(leftix(ix,iy),leftiy(ix,iy)) ,ti(ix,iy)) 
+     &       -abs(floi0_mdf/2.0d0)*dti0
      &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)                        !srv 13.10.06 }
           else
             fhi(ix,iy,0) = floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
      &                            +ti(ix,iy))/2.0 
      &      - coni0*dti0
-            fhi_mdf(ix,iy,0) = floi0_mdf*                         !srv 13.10.06 {
+            fhi_mdf(ix,iy,0) = floi0_mdf*                              !srv 13.10.06 {
      &           (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0 
      &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)                        !srv 13.10.06 }
           endif
 
-          if(mdf_fhi.eq.0) then                                       !srv 13.10.06 {
+          if(mdf_fhi.eq.0) then                                        !srv 13.10.06 {
            floi(ix,iy,0)   = floi0
-           coni(ix,iy,0,0) = coni0                      !srv 02.01.07
+           coni(ix,iy,0,0) = coni0                                     !srv 02.01.07
           else
            floi(ix,iy,0)   = floi0_mdf
            coni(ix,iy,0,0) = coni0_mdf                      !srv 02.01.07

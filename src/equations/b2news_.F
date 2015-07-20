@@ -153,28 +153,28 @@
        call ipgetr ('b2news_potok', potok)
        call xertst (0.0_R8.lt.potok,
      &   'faulty internal parameter potok')
-       call ipgetr ('b2news_vis_per', vis_per)                        !srv 06.07.00
-       call ipgeti ('b2news_poteq', pot_eq)                           !srv 13.07.05
+       call ipgetr ('b2news_vis_per', vis_per)                   !srv 06.07.00
+       call ipgeti ('b2news_poteq', pot_eq)                      !srv 13.07.05
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-       call ipgeti ('b2tfnb_mdf', mdf_fnb)                            !srv 13.10.06 {
+       call ipgeti ('b2tfnb_mdf', mdf_fnb)                       !srv 13.10.06 {
        call ipgeti ('b2tfhe_mdf', mdf_fhe)
        call ipgeti ('b2tfhi_mdf', mdf_fhi) 
        call ipgeti ('b2news_iout', iout)
-       call ipgeti ('b2npc9_iout', iout_b2npc9)                        !srv 16.07.10 {
+       call ipgeti ('b2npc9_iout', iout_b2npc9)                  !srv 16.07.10 {
        call ipgeti ('b2npco_iout', iout_b2npco)
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2npp7_iout', iout_b2npp7)
        call ipgeti ('b2nppo_iout', iout_b2nppo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
-       call ipgeti ('b2npht_iout', iout_b2npht)                        !srv 16.07.10 }
-!       call ipgeti ('b2news_re_compute_pb', re_compute_pb)             !srv 15.02.10
-       call ipgeti ('b2news_guard_flows', guard_flows)                 !xpb
+       call ipgeti ('b2npht_iout', iout_b2npht)                  !srv 16.07.10 }
+!       call ipgeti ('b2news_re_compute_pb', re_compute_pb)      !srv 15.02.10
+       call ipgeti ('b2news_guard_flows', guard_flows)           !xpb
        call ipgeti ('b2tfnb_anomalous_core_only', anomalous_core_only) !srv 19.04.07
        call ipgeti ('b2news_coriolis', coriolis)
-       call ipgeti ('b2news_area_fix', area_fix)                       !srv 09.03.09
-       call ipgeti ('b2news_no_solve', no_solve)                       !srv 02.07.08 {
+       call ipgeti ('b2news_area_fix', area_fix)                 !srv 09.03.09
+       call ipgeti ('b2news_no_solve', no_solve)                 !srv 02.07.08 {
        call xertst (-15.le.no_solve.and.no_solve.le.1,
      &   'faulty input no_solve')
        solving(1:4)=no_solve.eq.0
