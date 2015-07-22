@@ -49,12 +49,15 @@ endif
 
 # Add external includes first
 INCLUDE = 
+TAGSLIST =
 ifdef NCDIR
 INCLUDE += -I${NCDIR}/include
 endif
 
 ifdef USE_MPI
 INCLUDE += ${MPI_CPP}
+else
+INCLUDE += -I${SRCDIR}/mpi_dummy
 endif
 
 ifdef MDSPLUS_DIR
@@ -69,8 +72,14 @@ BASEDIR = ${OBJDIR}
 SRCLOCAL = ${SRCB2}/src.local
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
 INCLUDE += -I${SRCLOCAL}
+TAGSLIST += ${SRCDIR}/modules.local/*.F ${SRCLOCAL}/*.F
 endif
-INCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include.local -I${SRCDIR}/include
+ifeq ($(shell [ -d ${SRCLDIR}/include.local ] && echo yes || echo no ),yes)
+INCLUDE += -I${SRCDIR}/include.local
+TAGSLIST += ${SRCDIR}/include.local/*.* 
+endif
+INCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include
+TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F
 
 DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
 ifdef USE_MPI
@@ -603,11 +612,7 @@ endif
 endif
 
 tags:
-ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
-	rm -f ${SRCB2}/TAGS ; etags -o ${SRCB2}/TAGS ${SRCDIR}/modules.local/*.F ${SRCDIR}/include.local/*.* ${SRCDIR}/include/*.* ${SRCLOCAL}/*.F ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F
-else
-	rm -f ${SRCB2}/TAGS ; etags -o ${SRCB2}/TAGS ${SRCDIR}/include.local/*.* ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F
-endif
+	rm -f ${SRCB2}/TAGS ; etags -o ${SRCB2}/TAGS ${TAGSLIST}
 
 listobj:
 ifdef USE_EIRENE
