@@ -69,14 +69,20 @@ endif
 
 # Local includes
 BASEDIR = ${OBJDIR}
+INCLOCAL = ${SRCDIR}/include.local
+MODLOCAL = ${SRCDIR}/modules.local
 SRCLOCAL = ${SRCB2}/src.local
+ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
+INCLUDE += -I${MODLOCAL}
+TAGSLIST += ${MODLOCAL}/*.F
+endif
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
 INCLUDE += -I${SRCLOCAL}
-TAGSLIST += ${SRCDIR}/modules.local/*.F ${SRCLOCAL}/*.F
+TAGSLIST += ${SRCLOCAL}/*.F
 endif
-ifeq ($(shell [ -d ${SRCLDIR}/include.local ] && echo yes || echo no ),yes)
-INCLUDE += -I${SRCDIR}/include.local
-TAGSLIST += ${SRCDIR}/include.local/*.* 
+ifeq ($(shell [ -d ${INCLOCAL} ] && echo yes || echo no ),yes)
+INCLUDE += -I${INCLOCAL}
+TAGSLIST += ${INCLOCAL}/*.*
 endif
 INCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include
 TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F
@@ -92,18 +98,22 @@ ifdef USE_EIRENE
 DEFINES += ${USE_EIRENE}
 endif
 
-ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
-VPATH+=${SRCDIR}/modules.local:${SRCLOCAL}:${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentation:${SRCDIR}/driver:${SRCDIR}/equations:${SRCDIR}/input:${SRCDIR}/output:${SRCDIR}/postprocessing:${SRCDIR}/preprocessing:${SRCDIR}/solvers:${SRCDIR}/sources:${SRCDIR}/transport:${SRCDIR}/utility:${SRCDIR}/b2plot:${SRCDIR}/user
-else
-VPATH+=${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentation:${SRCDIR}/driver:${SRCDIR}/equations:${SRCDIR}/input:${SRCDIR}/output:${SRCDIR}/postprocessing:${SRCDIR}/preprocessing:${SRCDIR}/solvers:${SRCDIR}/sources:${SRCDIR}/transport:${SRCDIR}/utility:${SRCDIR}/b2plot:${SRCDIR}/user
+VHEAD =
+ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
+VHEAD+=${MODLOCAL}:
 endif
+ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
+VHEAD+=${SRCLOCAL}:
+endif
+VPATH+=${VHEAD}${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentation:${SRCDIR}/driver:${SRCDIR}/equations:${SRCDIR}/input:${SRCDIR}/output:${SRCDIR}/postprocessing:${SRCDIR}/preprocessing:${SRCDIR}/solvers:${SRCDIR}/sources:${SRCDIR}/transport:${SRCDIR}/utility:${SRCDIR}/b2plot:${SRCDIR}/user
 FPATH:=${VPATH}
 
-ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
-MODLIST = ${SRCDIR}/modules.local/*.F ${SRCDIR}/modules/*.F
-else
-MODLIST = ${SRCDIR}/modules/*.F
+MODLIST  =
+ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
+MODLIST += ${MODLOCAL}/*.F
 endif
+MODLIST += ${SRCDIR}/modules/*.F
+
 ALLOBJS = ${OBJS:%.o=${OBJDIR}/%.o}
 SOLPS4OBJS = ${SOLPS4}/readwrite.o ${SOLPS4}/b2rw.o ${SOLPS4}/calcalpha.o \
 	${SOLPS4}/calcalphatrigger.o ${SOLPS4}/calcdifpr.o ${SOLPS4}/calcdifpr0.o \
@@ -588,27 +598,32 @@ depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${EXELIST:.o=.F}
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} $^ | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
         sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' > ${OBJDIR}/dependencies 
+	@echo '# 1' >> ${OBJDIR}/dependencies
 ifneq (${MOD},o)
-ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
-	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${SRCDIR}/modules.local/*.F ${SRCDIR}/modules/*.F -o.${MOD} | \
+ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
+	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${MODLOCAL}/*.F -o.${MOD} | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
         sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' >> ${OBJDIR}/dependencies 
-else
+	@echo '# 2' >> ${OBJDIR}/dependencies
+endif
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${SRCDIR}/modules/*.F -o.${MOD} | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
         sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' >> ${OBJDIR}/dependencies 
-endif
+	@echo '# 3' >> ${OBJDIR}/dependencies
 endif
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
-	@egrep -a '^ {6,}use ' ${SRCLOCAL}/*.F ${SRCDIR}/*/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-ifneq (${MOD},o)
-	@egrep -a '^ {6,}use ' ${SRCDIR}/modules.local/*.F ${SRCDIR}/modules/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {6,}use ' ${SRCLOCAL}/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 4' >> ${OBJDIR}/dependencies
 endif
-else
-	@egrep -a '^ {6,}use ' ${SRCDIR}/*/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {6,}use ' ${SRCDIR}/*/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 5' >> ${OBJDIR}/dependencies
 ifneq (${MOD},o)
-	@egrep -a '^ {6,}use ' ${SRCDIR}/modules/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
+ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
+	@egrep -aiH '^ {6,}use ' ${MODLOCAL}/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 6' >> ${OBJDIR}/dependencies
 endif
+	@egrep -aiH '^ {6,}use ' ${SRCDIR}/modules/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 7' >> ${OBJDIR}/dependencies
 endif
 
 tags:
@@ -704,6 +719,7 @@ echo:
 	@echo MODULES=${MODULES}
 	@echo MODOBJS=${MODOBJS}
 	@echo MODMODS=${MODMODS}
+	@echo MODLOCAL=${MODLOCAL}
 #	@echo $(filter-out ${MODOBJS},${ALLOBJS})
 	@echo EXCLUDELIST=${EXCLUDELIST}
 	@echo EXELIST=${EXELIST}
@@ -723,13 +739,14 @@ local:
 	echo '#include "b2local.h"' >> ${SRCLOCAL}/b2local.F
 	echo "c" >> ${SRCLOCAL}/b2local.F
 	echo "      end" >> ${SRCLOCAL}/b2local.F
-	mkdir -p ${SRCDIR}/modules.local
-	echo "      module b2mod_local" > ${SRCDIR}/modules.local/b2mod_local.F
-	echo "c" >> ${SRCDIR}/modules.local/b2mod_local.F
-	echo "c store local or locally modified modules in this directory" >> ${SRCDIR}/modules.local/b2mod_local.F
-	echo "c" >> ${SRCDIR}/modules.local/b2mod_local.F
-	echo "      end" >> ${SRCDIR}/modules.local/b2mod_local.F 
-	mkdir -p ${SRCDIR}/include.local
-	echo "c" > ${SRCDIR}/include.local/b2local.h
-	echo "c store local or locally modified include files in this directory" >> ${SRCDIR}/include.local/b2local.h
-	echo "c" >> ${SRCDIR}/include.local/b2local.h
+	mkdir -p ${MODLOCAL}
+	echo "      module b2mod_local" > ${MODLOCAL}/b2mod_local.F
+	echo "c" >> ${MODLOCAL}/b2mod_local.F
+	echo "c store local or locally modified modules in this directory" >> ${MODLOCAL}/b2mod_local.F
+	echo "c" >> ${MODLOCAL}/b2mod_local.F
+	echo "      end" >> ${MODLOCAL}/b2mod_local.F 
+	mkdir -p ${INCLOCAL}
+	echo "c" > ${INCLOCAL}/b2local.h
+	echo "c store local or locally modified include files in this directory" >> ${INCLOCAL}/b2local.h
+	echo "c" >> ${INCLOCAL}/b2local.h
+

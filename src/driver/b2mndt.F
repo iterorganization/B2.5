@@ -108,8 +108,8 @@
       call subini ('b2mndt')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgeti ('b2mndt_style', style)                            !srv 18.06.08
-       call ipgeti ('b2news_guard_flows', guard_flows)                !srv 18.06.08
+       call ipgeti ('b2mndt_style', style)                             !srv 18.06.08
+       call ipgeti ('b2news_guard_flows', guard_flows)                 !srv 18.06.08
        call ipgeti ('b2tfnb_anomalous_core_only', anomalous_core_only) !srv 19.04.07
        call ipgeti ('b2mndt_nstg0', nstg(0))
        call ipgeti ('b2mndt_nstg1', nstg(1))

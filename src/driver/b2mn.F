@@ -22,8 +22,6 @@
 csw 28feb2011 mpi
 #ifdef USE_MPI
       include 'mpif.h'
-#else
-#     include "mpif.h"
 #endif
       real*8 dumarr(100)
       logical ltrigger

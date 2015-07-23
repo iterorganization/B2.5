@@ -1065,9 +1065,9 @@ csw 09oct2012
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
 csw 21feb2014
-       call ipgeti ('b2news_l_fbound',l_fbound)
-       call ipgeti ('b2news_l_enebound',l_enebound)
-       call ipgeti ('b2news_l_timbound',l_timbound)
+       call ipgeti ('b2news_l_fbound', l_fbound)
+       call ipgeti ('b2news_l_enebound', l_enebound)
+       call ipgeti ('b2news_l_timbound', l_timbound)
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
@@ -1471,9 +1471,6 @@ csw 21feb2014, setup some additional work variables for boundary conditions
         enddo
        enddo
       endif
-
-
-
 
 * ..main loop
 *   ..initialise counters

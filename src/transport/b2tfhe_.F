@@ -197,9 +197,9 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2tqce_model', model)
-       call ipgeti ('b2tfhe_upwind',b2_upwind)
-       call ipgeti ('b2tfhe_hybr2',b2tfhe_hybr2)
-       call ipgeti ('b2tfhe_flo53',flo53)
+       call ipgeti ('b2tfhe_upwind', b2_upwind)
+       call ipgeti ('b2tfhe_hybr2', b2tfhe_hybr2)
+       call ipgeti ('b2tfhe_flo53', flo53)
        endif                                                              !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
