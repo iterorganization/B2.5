@@ -17,22 +17,23 @@ c======================================================================
 #include "COUPLE/KOPPLDIM.F"
 #endif
       integer nnns
-      parameter (nnns=14)
+      parameter (nnns=17)
       character*8 unm,unms(nnns),u
-      integer ll, luswch
+      integer ll, lt, luswch
       integer i
       data unms /
      1        'starting','segmlist','plotzone','shdw_str','p1      ',
      2        'p2      ','rad_srcs','radpower','sources ','jedgi1  ',
-     3        'jedgi2  ','jedgo1  ','jedgo2  ','elemlist'/
-      data ll / 0 /, luswch / 0 /
+     3        'jedgi2  ','jedgo1  ','jedgo2  ','elemlist','sol_edge',
+     4        'pfr_edge','trg_spcf'/
+      data ll / 0 /, luswch / 0 /, lt / 0 /
 c======================================================================
 c
 c      print *,'b2pwinm >> ',unm
       call locase(unm,u,8)
       do i=1,nnns
         if(u.eq.unms(i)) go to (10,20,30,40,50,60,70,80,90,100,
-     ,                                               110,120,130,140),i
+     ,                          110,120,130,140,150,160,170),i
       end do
       ll=0
       call scipit
@@ -106,22 +107,22 @@ c----------------------------------------------------------------------
 c*** Inner edge of inner target
  100  call resimi(i)
       luswch=1
-      return
+      goto 140
 c----------------------------------------------------------------------
 c*** Inner edge of outer target
  110  call resimi(i)
       luswch=2
-      return
+      goto 140
 c----------------------------------------------------------------------
 c*** Outer edge of inner target
  120  call resimi(i)
       luswch=3
-      return
+      goto 140
 c----------------------------------------------------------------------
 c*** Outer edge of outer target
  130  call resimi(i)
       luswch=4
-      return
+      goto 140
 c----------------------------------------------------------------------
 c*** Values for the target edges
  140  if(luswch.ge.1 .and. luswch.le.4) then
@@ -130,6 +131,35 @@ c*** Values for the target edges
         call scipit
       end if
       luswch=0
+      return
+c----------------------------------------------------------------------
+c*** Old style values for the target SOL edges
+ 150  if (lt.eq.0) then
+        call scipit
+      else if(lt.lt.0 .or. lt.gt.4) then
+        write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
+     ,                            '.  Must be positive and =< 4'
+      else if (lt.ge.1 .and. lt.le.4) then
+        call resimi(jedge(2*lt-1))
+      end if
+      return
+c----------------------------------------------------------------------
+c*** Old style values for the target PFR edges
+ 160  if (lt.eq.0) then
+        call scipit
+      else if(lt.lt.0 .or. lt.gt.4) then
+        write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
+     ,                            '.  Must be positive and =< 4'
+      else if (lt.ge.1 .and. lt.le.4) then
+        call resimi(jedge(2*lt))
+      end if
+      return
+c----------------------------------------------------------------------
+c*** Target specifications
+ 170  call resimi(lt)
+      if(lt.lt.0 .or. lt.gt.4)
+     >   write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
+     ,                            '.  Must be positive and =< 4'
       return
 c======================================================================
       end subroutine b2pwinm

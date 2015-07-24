@@ -42,7 +42,7 @@ c
       integer, save :: use_recyceir
       real (kind=R8) :: recyctmp
       real (kind=R8), allocatable :: ft44data(:,:)
-      character charns*2
+      character charns*3
       data use_recyceir /0/
 
 *  -- PROCEDURES --
@@ -107,7 +107,7 @@ C
 C
       do 14 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,dab2(:,:,is,1))
-        write(charns,'(i2.2)') is
+        write(charns,'(i3.3)') is
         ft44data = dab2(0:nx+1,0:ny+1,is,1)
         call my_out(70,nx,ny,ft44data,'dab2_'//charns)
    14 CONTINUE
@@ -120,7 +120,7 @@ C
 C
       do 15 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,dmb2(:,:,is,1))
-        write(charns,'(i2.2)') is
+        write(charns,'(i3.3)') is
         ft44data = dmb2(0:nx+1,0:ny+1,is,1)
         call my_out(70,nx,ny,ft44data,'dmb2_'//charns)       !srv 29.04.10
    15 CONTINUE

@@ -47,5 +47,6 @@ c
   700         format(1x,2i4,3e17.7)
           end do
       end do
+      print*,'Wrote file radsrc.b2e'
 c
       end

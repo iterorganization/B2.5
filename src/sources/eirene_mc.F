@@ -583,8 +583,7 @@ c          end if !}
 
 cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       eircount=0
-      if((main_call .and. mod(ncall,eirene_mod).eq.0) .or.
-     . ncall.eq.0) then !{
+      if(main_call .and. mod(ncall,eirene_mod).eq.0) then !{
 
 csw 25jan2011 LTIME=.false. in eirsrt call
         my_ltime=.false.

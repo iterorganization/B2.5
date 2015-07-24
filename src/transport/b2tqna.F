@@ -778,7 +778,7 @@ c-xpb     hcib(ix,iy,is)=d_new*na(in,is)
       real (kind=R8), save :: ti_alfa4 = 1.0e0_R8                      
       real (kind=R8), save :: vl_alfa4 = 1.0e0_R8
 ! IYS 29.12.2012} 
-	character chns*2                                               !srv 05.11.03
+      character chns*3                                                 !srv 05.11.03
       save ncall
 *   ..procedures
       real (kind=R8) ::

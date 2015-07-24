@@ -91,6 +91,14 @@ c***  Standard setup:
       return
       end subroutine alloc_b2mod_user
 
+      subroutine dealloc_b2mod_user
+#ifdef ALLOCATE_AND_NAMELIST
+      deallocate(lhetrgts,lpfrgrp,lntrgrp)
+      deallocate(l_h_mol)
+#endif
+      return
+      end subroutine dealloc_b2mod_user
+
       subroutine read_b2mod_user_namelist(nx)
       use b2mod_b2cmpa
       implicit none

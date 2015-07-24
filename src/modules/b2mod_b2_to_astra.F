@@ -96,7 +96,7 @@ csw 09jan2014 use extra little module
         implicit none
         integer :: nxd, nyd, nsd, ismain, ismain0, nwrite, isa, ism
 
-        character chns*2
+        character chns*3
 csw 09jan2014 remove np from declaration here
 c        integer :: mintopcut, ix, iy, is, ixx, intrl, iout, np
         integer :: mintopcut, ix, iy, is, ixx, intrl, iout
@@ -514,7 +514,7 @@ csw 09jan2014 add extra allocates
          call my_out(70,nxd,nyd,gs(-1,-1,1),'write_b2_to_astra_gsy')
          call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_sy')
          do isa = 1,nnatmi
-          write (chns,'(i2.2)') isa
+          write (chns,'(i3.3)') isa
           call my_out(70,nxd,nyd,dab2(0:nxd+1,0:nyd+1,isa,1),
      &     'write_b2_to_astra_dab2'//chns)
           call my_out(70,nxd,nyd,tab2(0:nxd+1,0:nyd+1,isa,1),
@@ -535,7 +535,7 @@ csw 09jan2014 add extra allocates
 !     &   'write_b2_to_astra_pefluxa'//chns)
         enddo
         do ism = 1,nnmoli
-         write (chns,'(i2.2)') ism
+         write (chns,'(i3.3)') ism
          call my_out(70,nxd,nyd,dmb2(0:nxd+1,0:nyd+1,ism,1),
      &   'write_b2_to_astra_dmb2'//chns)
          call my_out(70,nxd,nyd,tmb2(0:nxd+1,0:nyd+1,ism,1),

@@ -144,4 +144,17 @@ c*** - to be called BEFORE each timestep
       call b2usrtrs(nx,ny,ns,BoRiS)
       return
 c======================================================================
+      entry b2trcf(nx,ny,ns,ismain,dtim,BoRiS)
+c*** Finalization call
+      if (.not.tracing_initialised) return
+      call dealloc_b2mod_user
+      if(filedata(ntrc_bln)) call b2blncf(nx,ny,ns,dtim)
+      if(filedata(ntrc_ble)) call b2blnef(nx,ny,ns,BoRiS)
+      if(filedata(ntrc_blm)) call b2blnmf(nx,ny,ns)
+      if(filedata(ntrc_int)) call b2wrintf(nx,ny,ns,nnreg(0))
+      if(filedata(ntrc_sep)) call b2wrsepf(nx,ny,ns,BoRiS)
+      if(filedata(ntrc_usr)) call b2usrtrf(nx,ny,ns,BoRiS)
+      tracing_initialised = .false.
+      return
+c======================================================================
       end subroutine b2trace

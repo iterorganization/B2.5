@@ -90,29 +90,22 @@ c*** Global values
 c*** Values by species
       integer nspc_tmp, nsp_tmp, ns_tmp
       parameter (nspc_tmp=10)
-      real  (kind=R8) ::
-     *      equs_tmp(DEF_NATM,nspc_tmp)
-      real  (kind=R8) ::
-     *      nisp_tmp(DEF_NATM),zisp_tmp(DEF_NATM),zesp_tmp(DEF_NATM),
-     ,      gisp_tmp(DEF_NATM),nasp_tmp(DEF_NATM),tasp_tmp(DEF_NATM),
-     ,      gasp_tmp(DEF_NATM),gpuf_tmp(DEF_NATM),
-     ,      prsr_tmp(DEF_NATM), nrsr_tmp(DEF_NATM)
-      equivalence 
-     ,  (equs_tmp(1,1), nisp_tmp), (equs_tmp(1,2), zisp_tmp),
-     ,  (equs_tmp(1,3), zesp_tmp), (equs_tmp(1,4), gisp_tmp),
-     ,  (equs_tmp(1,5), nasp_tmp), (equs_tmp(1,6), tasp_tmp),
-     ,  (equs_tmp(1,7), gasp_tmp), (equs_tmp(1,8), gpuf_tmp),
-     ,  (equs_tmp(1,9), prsr_tmp), (equs_tmp(1,10),nrsr_tmp)
+      real (kind=R8), allocatable ::
+     *      equs_tmp(:,:)
+      real (kind=R8), allocatable ::
+     *      nisp_tmp(:), zisp_tmp(:), zesp_tmp(:),
+     ,      gisp_tmp(:), nasp_tmp(:), tasp_tmp(:),
+     ,      gasp_tmp(:), gpuf_tmp(:),
+     ,      prsr_tmp(:), nrsr_tmp(:)
       character hlp_hs(nspc_tmp)*7
 
 c*** Values by ion charge states
       integer nion_tmp, ni_tmp, nii_tmp, nis_tmp
       parameter (nion_tmp=2)
-      real (kind=R8) ::
-     *     equi_tmp(DEF_NPLS,nion_tmp)
-      real (kind=R8) ::
-     *     nisi_tmp(DEF_NPLS), gisi_tmp(DEF_NPLS)
-      equivalence (equi_tmp(1,1), nisi_tmp), (equi_tmp(1,2), gisi_tmp)
+      real (kind=R8), allocatable ::
+     *     equi_tmp(:,:)
+      real (kind=R8), allocatable ::
+     *     nisi_tmp(:), gisi_tmp(:)
       character hlp_hi(nion_tmp)*8
 
 c*** Local variables of general use
@@ -120,14 +113,15 @@ c*** Local variables of general use
       parameter (ltrc=ntrc_sep)
       real (kind=R8) ::
      *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff
-      real (kind=R8) ::
-     *  hlp_ni(DEF_NATM),hlp_zi(DEF_NATM),hlp_ze(DEF_NATM),
-     ,  hlp_gi(DEF_NATM),hlp_na(DEF_NATM),
-     ,  hlp_ga(DEF_NATM),hlp_nii(DEF_NATM),hlp_gii(DEF_NATM)
-      integer i,j,k,l,is,ix,iy,jxi,jxa,jsep,nv,ii(DEF_NPLS)
+      real (kind=R8), allocatable ::
+     *  hlp_ni(:), hlp_zi(:), hlp_ze(:),
+     ,  hlp_gi(:), hlp_na(:),
+     ,  hlp_ga(:), hlp_nii(:),hlp_gii(:)
+      integer i,j,k,l,is,ix,iy,jxi,jxa,jsep,nv
+      integer, allocatable :: ii(:)
       logical ex, warn_tmp
-      character tab, hlp_c, f*40, hlp_frm*256, hlp_frf*400, 
-     ,  hlp_a(DEF_NPLS)*2
+      character tab, hlp_c, f*40, hlp_frm*256, hlp_frf*400
+      character*2, allocatable :: hlp_a(:)
 c*** Procedures
       real (kind=R8) :: hy1
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
@@ -143,23 +137,32 @@ c*** Column headers:
 c----------------------------------------------------------------------
 
       save
-     i lun, nsp_tmp, ns_tmp, jsep,
-     . ng_tmp, ni_tmp, nii_tmp, nis_tmp,
-     c hlp_frm
 c======================================================================
 
 c*** Initialise the arrays
 c
       equg_tmp=0.0_R8
-      equs_tmp=0.0_R8
-      equi_tmp=0.0_R8
       do i=1,nspecies !{
+        nisp_tmp(i)=0.0_R8
+        zisp_tmp(i)=0.0_R8
+        zesp_tmp(i)=0.0_R8
+        gisp_tmp(i)=0.0_R8
+        nasp_tmp(i)=0.0_R8
+        tasp_tmp(i)=0.0_R8
+        gasp_tmp(i)=0.0_R8
+        gpuf_tmp(i)=0.0_R8
+        prsr_tmp(i)=0.0_R8
+        nrsr_tmp(i)=0.0_R8
         hlp_ni(i)=0.0_R8
         hlp_zi(i)=0.0_R8
         hlp_ze(i)=0.0_R8
         hlp_gi(i)=0.0_R8
         hlp_na(i)=0.0_R8
         hlp_ga(i)=0.0_R8
+      end do !}
+      do i=1,ns !{
+        nisi_tmp(i)=0.0_R8
+        gisi_tmp(i)=0.0_R8
       end do !}
       hlp_nii=0.0_R8
       hlp_gii=0.0_R8
@@ -333,6 +336,22 @@ c     ,                                i,wldnm(l,i,0),mlcmp(is,i)  !###
       if(filedata(ltrc)) then !{
 
 c*** Write the data in a separate file for plotting...
+        do k=1, nspecies !{
+          equs_tmp(k,1) = nisp_tmp(k)
+          equs_tmp(k,2) = zisp_tmp(k)
+          equs_tmp(k,3) = zesp_tmp(k)
+          equs_tmp(k,4) = gisp_tmp(k)
+          equs_tmp(k,5) = nasp_tmp(k)
+          equs_tmp(k,6) = tasp_tmp(k)
+          equs_tmp(k,7) = gasp_tmp(k)
+          equs_tmp(k,8) = gpuf_tmp(k)
+          equs_tmp(k,9) = prsr_tmp(k)
+          equs_tmp(k,10)= nrsr_tmp(k)
+        end do !}
+        do k = 1, ns !{
+          equi_tmp(k,1) = nisi_tmp(k)
+          equi_tmp(k,2) = gisi_tmp(k)
+        end do !}
 
         write(lun,hlp_frm,err=94) tim,
      ,          (equg_tmp(j),j=1,ng_tmp),
@@ -374,6 +393,8 @@ c*** f     :  the associated file name
       lun=ntrc(ltrc)
       f=fn_ntrc(ltrc)
 
+      allocate(ii(ns))
+      allocate(hlp_a(ns))
       inquire(file=f,exist=ex)
       open(lun,file=f,err=90)
       rewind(lun)
@@ -455,7 +476,7 @@ c<<<
 c        print *,'%%%b2wrsep: nb_tmp,nsp_tmp,nfl_tmp= ',
 c     ,                                           nb_tmp,nsp_tmp,nfl_tmp
 c        print *,'hlp_frm:'
-c        print *,hlp_frm
+c        print *, hlp_frm
 c>>>
 
         k=0
@@ -475,6 +496,28 @@ c>>>
       write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.4)))')
      -                       ng_tmp + ns_tmp*nsp_tmp + ni_tmp*nii_tmp
 
+      allocate(equs_tmp(nspecies,nspc_tmp))
+      allocate(nisp_tmp(nspecies))
+      allocate(zisp_tmp(nspecies))
+      allocate(zesp_tmp(nspecies))
+      allocate(gisp_tmp(nspecies))
+      allocate(nasp_tmp(nspecies))
+      allocate(tasp_tmp(nspecies))
+      allocate(gasp_tmp(nspecies))
+      allocate(gpuf_tmp(nspecies))
+      allocate(prsr_tmp(nspecies))
+      allocate(nrsr_tmp(nspecies))
+      allocate(equi_tmp(ns,nion_tmp))
+      allocate(nisi_tmp(ns))
+      allocate(gisi_tmp(ns))
+      allocate(hlp_ni(nspecies))
+      allocate(hlp_zi(nspecies))
+      allocate(hlp_ze(nspecies))
+      allocate(hlp_gi(nspecies))
+      allocate(hlp_na(nspecies))
+      allocate(hlp_ga(nspecies))
+      allocate(hlp_nii(nspecies))
+      allocate(hlp_gii(nspecies))
 c<<<
 c      print *,'hlp_frm:'
 c      print *,hlp_frm
@@ -496,6 +539,35 @@ c======================================================================
       entry b2wrseps(nx,ny,ns,BoRiS)
 c----------------------------------------------------------------------
 c
+      return
+c======================================================================
+      entry b2wrsepf(nx,ny,ns,BoRiS)
+c----------------------------------------------------------------------
+c     Finalization step
+      deallocate(equs_tmp)
+      deallocate(nisp_tmp)
+      deallocate(zisp_tmp)
+      deallocate(zesp_tmp)
+      deallocate(gisp_tmp)
+      deallocate(nasp_tmp)
+      deallocate(tasp_tmp)
+      deallocate(gasp_tmp)
+      deallocate(gpuf_tmp)
+      deallocate(prsr_tmp)
+      deallocate(nrsr_tmp)
+      deallocate(equi_tmp)
+      deallocate(nisi_tmp)
+      deallocate(gisi_tmp)
+      deallocate(hlp_ni)
+      deallocate(hlp_zi)
+      deallocate(hlp_ze)
+      deallocate(hlp_gi)
+      deallocate(hlp_na)
+      deallocate(hlp_ga)
+      deallocate(hlp_nii)
+      deallocate(hlp_gii)
+      deallocate(ii)
+      deallocate(hlp_a)
       return
 c======================================================================
   700 format('#   ',10i8/'##  ',a)

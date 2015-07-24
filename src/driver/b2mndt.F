@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2mndt (nout, nx, ny, ns, ismain, ismain0, 
-     . nscx, iscx, itim, dtim, ierr)
+     . nscx, iscx, itim, dtim, ntim, ierr)
       use b2mod_types
       use b2mod_geo
       use b2mod_anomalous_transport
@@ -21,7 +21,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nout(0:5), nx, ny, ns, ismain, ismain0,  
-     *  nscx, iscx(0:nscxmax-1), itim
+     *  nscx, iscx(0:nscxmax-1), itim, ntim
       real (kind=R8) ::
      *  dtim
 *   ..input/output arguments
@@ -79,7 +79,7 @@
      *  density_control, ramp_slow, BoRiS, no_solve,
      *  nstg_areshe, nstg_areshi, nstg_aresco
       logical domoqt, domoit, wrong_flow, ramp_call !, b2fstati_addexists  !xpb !srv 15.07.08
-      logical test_residual, quit_residual
+      logical test_residual, quit_residual, main_call
       save test_residual
       integer n2, istg(0:2), is, k
       real (kind=R8) ::
@@ -111,11 +111,17 @@
        call ipgeti ('b2mndt_style', style)                             !srv 18.06.08
        call ipgeti ('b2news_guard_flows', guard_flows)                 !srv 18.06.08
        call ipgeti ('b2tfnb_anomalous_core_only', anomalous_core_only) !srv 19.04.07
-       call ipgeti ('b2mndt_nstg0', nstg(0))
-       call ipgeti ('b2mndt_nstg1', nstg(1))
-       call ipgeti ('b2mndt_nstg2', nstg(2))
-       call xertst (1.le.nstg(0).and.1.le.nstg(1).and.1.le.nstg(2),
-     &   'faulty internal parameter nstg(0:2)')
+       if (ntim.ne.0) then
+         call ipgeti ('b2mndt_nstg0', nstg(0))
+         call ipgeti ('b2mndt_nstg1', nstg(1))
+         call ipgeti ('b2mndt_nstg2', nstg(2))
+         call xertst (1.le.nstg(0).and.1.le.nstg(1).and.1.le.nstg(2),
+     &    'faulty internal parameter nstg(0:2)')
+       else
+         nstg(0) = 1
+         nstg(1) = 1
+         nstg(2) = 0
+       end if
        call ipgeti ('b2mndt_moqtlv', moqtlv)
        call xertst (-1.le.moqtlv.and.moqtlv.le.3,
      &   'faulty internal parameter moqtlv')
@@ -382,6 +388,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
           cor_ee=0.0_R8
           cor_ei=0.0_R8
 *     ..compute source linearisation
+         main_call = ntim.ne.0
          call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain, ismain0,
      &    dtim, BoRiS, facdrift, fac_ExB,
      &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !srv 09.01.01
@@ -395,7 +402,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
-     &    wrong_flow, .true.)
+     &    wrong_flow, main_call)
           if(wrong_flow) write(*,*) 
      &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources

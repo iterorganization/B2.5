@@ -34,10 +34,10 @@ c*** and for the power flux.
       real (kind=R8) ::
      *   x,dist,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
      ,     wwj(natm+nmol),wwe(natm+nmol)
-      character*8 text_an(natm),text_mn(natm)
+      character*8 text_an(natm),text_mn(nmol)
       intrinsic max
 c----------------------------------------------------------------------
-      print *,'Starting b2pnwl...',nlimi,nnlimi
+      print *,'Starting b2pnwl...',nlim
 c*** Set the default values
       npumplis=0
       nwldprt=0
@@ -82,10 +82,10 @@ c      end do
 cc>>>
 c*** ... and produce the output file
       do i=1,natmi
-        text_an(i)=textan(i)(2:8)
+        text_an(i)=textan(i-1)(2:8)
       end do
       do i=1,nmoli
-        text_mn(i)=textmn(i)(2:8)
+        text_mn(i)=textmn(i-1)(2:8)
       end do
       open (lun,file='wlld.dat')
       write(lun,

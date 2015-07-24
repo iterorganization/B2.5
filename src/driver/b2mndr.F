@@ -1525,8 +1525,9 @@ c new CDF movie option (1st frame at t=0)
       elapsedstart=epoch_seconds()
 *   ..loop test
 *!!   (Note: better loop control yet to be developed)
-      if (.not.quit.and.itim.lt.ntim.and.ierr.eq.0.and.
-     &    (etim.gt.tim.or.etim.eq.0.0_R8)) then !{
+      if (first_time_step.or.
+     &    (.not.quit.and.itim.lt.ntim.and.ierr.eq.0.and.
+     &     (etim.gt.tim.or.etim.eq.0.0_R8))) then !{
 
 !!!
 !!! DPC experimental
@@ -1578,7 +1579,7 @@ csw 09oct2012 set default potential already at this point (BCs)
      .    'b2mndr_ok:itim,dtim,ntim,stack_ptr', 
      1               itim,dtim,ntim,stack_ptr
           call b2mndt (nout, nx, ny, ns, ismain, ismain0, nscx, iscx,
-     &     itim, dtim, ierr)
+     &     itim, dtim, ntim, ierr)
 
           if(ierr.eq.10) then
              stack_ptr=stack_ptr+1
@@ -1892,6 +1893,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 !     &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,fchinert,
 !     &    fnaPSch, fna_mdf, fhePSch, fhiPSch, fhe_mdf, fhi_mdf       !srv 13.10.06 !srv 29.10.09  
 !	close(70)                                                      !srv 11.10.02 }
+
+*  .. finalize tracing routines
+      call b2trcf(nx,ny,ns,ismain,dtim,BoRiS)
 
 * ..return
       ncall = ncall+1
