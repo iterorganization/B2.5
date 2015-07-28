@@ -25,7 +25,8 @@
      &     db_version_b2fmovie='NOT_SET',
      &     db_version_b2ftrack='NOT_SET',
      &     db_version_plasmastate='NOT_SET',
-     &     db_version_b2fplasma='NOT_SET'
+     &     db_version_b2fplasma='NOT_SET',
+     &     dbgit='None'
       character*(255) :: dbspecies='NOT_SET', dbdirectory='NOT_SET',
      &     dbcomments='NOT_SET', dbgeometry='NOT_SET', 
      &     dbphysics='NOT_SET', dbmain='NOT_SET', dbsolpstop='NOT_SET'
@@ -44,7 +45,7 @@
 
       write(dbline,
      &     '(a,a,i10,a,3a,a,i10,a,a,f20.12,a,9a,3(a,i6,a),3a,
-     &     22(a,e30.20,a),18(a,a,a),2(a,i10,a),3a,a,a)')
+     &     22(a,e30.20,a),19(a,a,a),2(a,i10,a),6a,a,a)')
      &    'sqlshot("insert into id set ',
      &    'solpsindex=',dbsolpsindex,',',
      &    'exp=''',trim(dbexp),''',',
@@ -100,6 +101,7 @@
      &    'plasmastate_version=''',trim(db_version_plasmastate),''',',
      &    'svn_version=',dbsvn,',',
      &    'version=',dbversion,',',
+     &    'git_version=''',trim(dbgit),''',',
      &    'solpsversion=''',trim(dbsolpsversion),'''',
      &    '","select last_insert_id()",',
      &    '"solps")'
@@ -123,7 +125,7 @@
       if(shotnumber.ne.'0') then
         write(dbline,
      &   '(a,3a,a,i10,a,a,f20.12,a,9a,3(a,i6,a),3a,
-     &   22(a,e30.20,a),18(a,a,a),2(a,i10,a),3a,a,i10,a,a)')
+     &   22(a,e30.20,a),19(a,a,a),2(a,i10,a),6a,a,i10,a,a)')
      &   'sqlshot("update id set ',
      &   'exp=''',trim(dbexp),''',',
      &   'shot=',dbshot,',',
@@ -178,6 +180,7 @@
      &   'plasmastate_version=''',trim(db_version_plasmastate),''',',
      &   'svn_version=',dbsvn,',',
      &   'version=',dbversion,',',
+     &   'git_version=''',trim(dbgit),''',',
      &   'solpsversion=''',trim(dbsolpsversion),'''',
      &   ' where solpsindex=',dbsolpsindex,
      &   '","select last_insert_id()",',

@@ -398,8 +398,12 @@ c-dpc        endif
           case('Revision')
             read(line,*,err=10,end=20) svn_revision
             call mds_put_int('\TOP.IDENT.VERSION:SVN',svn_revision)
-            write(nout(0),'(a,i8)') '       SVN : ',svn_revision
+            write(nout(0),'(a,i8)') '          SVN : ',svn_revision
             dbsvn=svn_revision
+          case('git')
+            call mds_put_string('\TOP.IDENT.VERSION:GIT',trim(line))
+            write(nout(0),'(a,a)') '          GIT : ',trim(line)
+            dbgit=trim(line)
           case default
             write(*,*) 'Line option "',trim(caseline),'" not recognised'
         end select

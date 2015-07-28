@@ -271,7 +271,7 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
       call b2xpen (nx, ny, ns,
      1 fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
      2 fhm, fhp, fhj, fht)
-      fht=fht+fhi_ext
+      if(allocated(fhi_ext)) fht=fht+fhi_ext
       do is=0,ns_ext-1
         do iy=-1,ny
           do ix=-1,nx
