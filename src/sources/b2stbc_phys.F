@@ -3345,8 +3345,10 @@ cxpb  and max(,,) statement for stability
               s1hz = pbshz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)      !srv 11.01.13
              veast = cs*s1hz-                                      !srv 17.02.04 19.02.08 25.04.08 { 11.01.13
      &          hz(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
-     &          vol(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),iy)/
-     &          hx(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),iy)        !*signmf*bb(bc_list_x(iy,ib),bc_list_y(iy,ib),2)/bb(bc_list_x(iy,ib),bc_list_y(iy,ib),3) !srv 05.02.05
+     &          vol(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &              leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))/
+     &          hx(leftix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &             leftiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))        !*signmf*bb(bc_list_x(iy,ib),bc_list_y(iy,ib),2)/bb(bc_list_x(iy,ib),bc_list_y(iy,ib),3) !srv 05.02.05
      &          *vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)*cbc*    !srv 17.02.04 19.02.08
      &          (abs(bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))/
      &               bb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))         !srv 11.01.13
