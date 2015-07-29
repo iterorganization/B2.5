@@ -13,8 +13,6 @@
      *  arrowy(:,:,:),
      *  p1(:,:),
      *  p2(:,:),
-     *  pp1(:,:),
-     *  pp2(:,:),
      *  xx(:,:),
      *  yy(:,:),
      *  cr(:,:),
@@ -31,6 +29,10 @@
      *  wwrk_hlp(:),
      *  twrk_hlp(:)
 
+      real (kind=R8), save ::
+     *  pp1(2,DEF_NLIM),
+     *  pp2(2,DEF_NLIM)
+
       integer, allocatable, save ::
      *  ind_hlp(:), indt_hlp(:)
 
@@ -41,8 +43,7 @@
      *  incident_energy(:,:),
      *  wall_heatflux(:),
      *  wall_temp(:),
-     *  target_stack(:,:,:),
-     *  target_vol(:,:)
+     *  target_stack(:,:,:)
 
       integer wklng
       parameter (wklng=10)
@@ -155,8 +156,6 @@ cank
       allocate(arrowy(-1:nxd,-1:nyd,0:nsw))
       allocate(p1(2,nlim))
       allocate(p2(2,nlim))
-      allocate(pp1(2,nlim))
-      allocate(pp2(2,nlim))
       allocate(xx(-1:nx,2))
       allocate(yy(-1:ny,2))     
       allocate(cr(-1:nxd,-1:nyd))
@@ -213,7 +212,6 @@ cank
       allocate(targetz(1:nwall,1:ndepth))
       allocate(wwrk(1:nwall+ndepth))
       allocate(target_stack(1:nwall,1:ndepth,wklngd))
-      allocate(target_vol(1:nwall,1:ndepth))
 
       return
       end subroutine alloc_b2mod_b2plot_wall

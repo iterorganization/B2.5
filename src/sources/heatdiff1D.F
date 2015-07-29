@@ -338,7 +338,7 @@ c  Coefficients at x=x0
       a0 = 0.0_R8
       b0 = 1.0_R8
       c0 = 1.0_R8/Kappa(ibnd,1,Ts)*
-     . (-Qtot+qevap(ibnd,ns,Ts)+qrad(ibnd,Ts))
+     . (-Qtot+qevap(ibnd,ns,Ts)+qrad(ibnd,Ts,.true.))
 
 c  Coefficients at x=xn
       if (active) then
@@ -572,7 +572,7 @@ c  for graphite at temperature T.
 c      ref) R.A. Langley, Evaporation, Data Compendium for Plasma
 c           Surface Interactions, Special Issue, NUCLEAR FUSION,
 c           IAEA, Vienna, (1984) 57.
-                                                                                
+
       function Cp(ibnd,i,T)
       use b2mod_types
       use b2mod_wall
@@ -660,7 +660,7 @@ c  element ibnd at depth i.
 
 c Getting the heat loss due to evaporation and radiation from surface.
 c....................................................................
-      function qrad(ibnd,Ts)
+      function qrad(ibnd,Ts,top_layer)
       use b2mod_types
       use b2mod_constants
       use b2mod_wall
@@ -668,6 +668,7 @@ c....................................................................
       integer ibnd
 #     include "emissivity.constants"
       real (kind=R8) :: Ts, Tw, SBconst, qrad
+      logical top_layer
       parameter (SBconst = 
      . pi**5 * (4.0_R8/15.0_R8) * (KBolt/const_h)**3
      . * KBolt / c**2)
@@ -675,7 +676,7 @@ c....................................................................
       external layer_emissivity
 
       Tw = backplate_temp(ibnd)      ! Temp of walls around taken = 0
-      if (layer_depth(ibnd).eq.0.0_R8) then
+      if (layer_depth(ibnd).eq.0.0_R8 .or. .not.top_layer) then
         qrad = matsurf_blackbody_emiss(ibnd)*SBconst*(Ts**4-Tw**4)
       else
         qrad = layer_emissivity(ibnd)*SBconst*(Ts**4-Tw**4)
@@ -821,7 +822,7 @@ c  Checking inputs
 
       if (iposb.eq.0) then  ! LHS BC : x=0 : Heat flux imposed
         beta(1)=-1.0_R8
-        gamma(1)=Qtot-qrad(iwall,U(1))-qevap(iwall,ns,U(1))
+        gamma(1)=Qtot-qrad(iwall,U(1),.true.)-qevap(iwall,ns,U(1))
       else if (iposb.eq.1.and.active) then ! RHS BC : x=xn : Cooling temperature imposed
         beta(1)= 0.0_R8
         gamma(1)= U(1)-Tcbc

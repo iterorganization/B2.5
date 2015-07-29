@@ -832,25 +832,6 @@ cxpb  Western boundary
      1  target_temp(1:nbnd,1:ndepth_nml)
       target_label(1)='Target temperature (K)'
       call set_targetbarlabel(target_label(1))
-      if (ndepth_nml.gt.1) then
-        do ibnd = 1, nbnd
-          target_vol(ibnd,1) = target_width(ibnd,1)*
-     1     ((target_depth(ibnd,2)-target_depth(ibnd,1))/2.0_R8)*
-     2     pi*(targetcr(ibnd,1,1)+targetcr(ibnd,1,2))
-          do is = 2, ndepth_nml-1
-            target_vol(ibnd,is) = target_width(ibnd,is)*
-     1       (target_depth(ibnd,is)-target_depth(ibnd,is-1))*
-     2       pi*(targetcr(ibnd,is,1)+targetcr(ibnd,is,2))   
-          enddo
-          target_vol(ibnd,ndepth_nml) = target_width(ibnd,ndepth_nml)*
-     1     ((target_depth(ibnd,ndepth_nml)-
-     .       target_depth(ibnd,ndepth_nml-1))
-     2      /2.0_R8)*
-     3     pi*(targetcr(ibnd,ndepth_nml,1)+targetcr(ibnd,ndepth_nml,2))
-        enddo
-      else
-        target_vol(1:nbnd,1) = target_width(1:nbnd,1)
-      endif
 c
       call mapx(nx,ny,1,gs(:,:,0),work)
       call mapy(nx,ny,1,gs(:,:,1),work)
@@ -6435,7 +6416,7 @@ c-dpc still in testing phase
           description='Energy lost by blackbody radiation (J/m^{2}/s)'
           nz=1
           do ibnd = 1, nbnd
-            data(ibnd)=qrad(ibnd,target_temp(ibnd,1))
+            data(ibnd)=qrad(ibnd,target_temp(ibnd,1),.true.)
           enddo
           call wall_copy(data,1.0_R8,nz,textbl)
         case('stckcoef')

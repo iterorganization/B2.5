@@ -587,6 +587,25 @@ cxpb Do not know yet what to do here. Just a diagnostic in the meantime
         write(6,*) 
      .   'Consider using thinner targets or straigthening them'
       endif
+      if (ndepth_nml.gt.1) then
+        do ibnd = 1, nbnd
+          target_vol(ibnd,1) = target_width(ibnd,1)*
+     1     ((target_depth(ibnd,2)-target_depth(ibnd,1))/2.0_R8)*
+     2     pi*(targetcr(ibnd,1,1)+targetcr(ibnd,1,2))
+          do is = 2, ndepth_nml-1
+            target_vol(ibnd,is) = target_width(ibnd,is)*
+     1       (target_depth(ibnd,is)-target_depth(ibnd,is-1))*
+     2       pi*(targetcr(ibnd,is,1)+targetcr(ibnd,is,2))
+          enddo
+          target_vol(ibnd,ndepth_nml) = target_width(ibnd,ndepth_nml)*
+     1     ((target_depth(ibnd,ndepth_nml)-
+     .       target_depth(ibnd,ndepth_nml-1))
+     2      /2.0_R8)*
+     3     pi*(targetcr(ibnd,ndepth_nml,1)+targetcr(ibnd,ndepth_nml,2))
+        enddo
+      else
+        target_vol(1:nbnd,1) = target_width(1:nbnd,1)
+      endif
 
 cxpb Compute any missing temperature profiles if necessary
 cxpb or change them according to plate_option setting

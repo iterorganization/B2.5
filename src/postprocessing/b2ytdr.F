@@ -49,6 +49,7 @@ c 2002-09-11: logic revised
       use eirmod_extrab25
      , ,only: msrfclsx, mgwtiesx, lkindp, lkindm, lkindi, texta,
      ,        eirene_extrab25_eirpbls_init
+      use eirmod_clogau
 #endif
       implicit none
 #     include "DIMENSIONS.F"
@@ -154,7 +155,8 @@ c 2002-09-11: logic revised
      .          ligne*120
       character id0*8
       character*8 eirene_format
-      data eirene_format / 'iter' /
+      character*4 solps_version
+      data eirene_format / 'iter' /, solps_version / 'iter' /
       character*10 :: b2fgmtry_oldversion, b2fgmtry_newversion
       data b2fgmtry_oldversion / '00.000.000' /
       character tab
@@ -651,6 +653,24 @@ c 2002-09-11: logic revised
         write(*,*) 'Accepted values are (case-insensitive): '
         write(*,*) '"ITER", "old", "new", "facelift", "Juelich"'
         call xerrab ('Unrecognized Eirene input.dat format!')
+      endif
+      call ipgetc ('solps_version', solps_version)
+      write(*,*) 'Incoming SOLPS version entered : ', solps_version
+      if (streql(eirene_format,'iter')) then
+        write(*,*)
+     .   'Assuming standard SOLPS-ITER fort.44 format (default)'
+      else if (streql(eirene_format,'4.3')) then
+        write(*,*) 'Assuming SOLPS4.3 fort.44 format'
+      else if (streql(eirene_format,'5.0')) then
+        write(*,*) 'Assuming SOLPS5.0 fort.44 format'
+      else if (streql(eirene_format,'5.1')) then
+        write(*,*) 'Assuming SOLPS5.1 fort.44 format'
+      else if (streql(eirene_format,'5.2')) then
+        write(*,*) 'Assuming SOLPS5.2 fort.44 format'
+      else
+        write(*,*) 'Accepted values are (case-insensitive): '
+        write(*,*) '"ITER", "4.3", "5.0", "5.1", "5.2"'
+        call xerrab ('Unrecognized SOLPS version format!')
       endif
 *   ..import parameters from Eirene input.dat file
       inquire(file='input.dat',exist=ex)
@@ -2890,7 +2910,7 @@ cxpb  Start reading input.dat file
             ldum(10) = .true.
             ldum(11) = .false.
             ldum(12) = .false.
-            ldum(13) = ldum(10)
+            ldum(13) = .true.
           ELSE
             READ (IUNIN,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,LTSTV,NLDFST,
@@ -2912,7 +2932,7 @@ cxpb  Start reading input.dat file
             ldum(10) = .true.
             ldum(11) = .false.
             ldum(12) = .false.
-            ldum(13) = ldum(10)
+            ldum(13) = .false.
           ELSE
             READ (ZEILE,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,LTSTV,NLDFST,
@@ -2923,6 +2943,7 @@ cxpb  Start reading input.dat file
           ENDIF
           WRITE(IUNOT,6665) ldum(0:15)
         ENDIF
+        NLWRMSH = ldum(13)
         READ (IUNIN,'(A80)') ZEILE
         I1 = INDEX(ZEILE,'CFILE')
         IF (I1.EQ.0) THEN
@@ -6806,6 +6827,11 @@ C  HERE: EIRENE SURFACE TALLIES
         savestratum(0:nstrai) = .true.
  8688   continue
         close(IUNIN)
+cxpb  Convert fort.44 file if needed
+        inquire(file='../fort.44',exist=todo)
+        if (todo.and..not.streql(solps_version,'iter')) then
+          call b2yt_ngread(solps_version,eirene_format)
+        endif
       else
         iatm1(1:natm) = 0
         savestratum(0:nstrai) = .true.

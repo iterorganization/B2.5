@@ -28,6 +28,7 @@ c======================================================================
       use eirmod_extrab25
 #endif
       implicit none
+#include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
 #endif
@@ -132,7 +133,7 @@ c
       k=iabs(lwldlis(n,1))
       if(lwlddir(1)) then
         if(abs(pp1(1,l)-pp2(1,k)) .gt. wsrttol  .or. 
-     .   abs(pp1(2,l)-pp2(2,k)) .gt. wsrttol) then
+     .     abs(pp1(2,l)-pp2(2,k)) .gt. wsrttol) then
           write(*,*) 'b2pwlprp: the shadowing structure must be closed!'
           write(*,*) 'lwlddir(1) = ',lwlddir(1)
           write(*,*) 'Starting segment: ',l,pp1(1,l),pp1(2,l)
@@ -143,7 +144,7 @@ c
         end if
       else
         if(abs(pp1(1,k)-pp2(1,l)) .gt. wsrttol  .or. 
-     .   abs(pp1(2,k)-pp2(2,l)) .gt. wsrttol) then
+     .     abs(pp1(2,k)-pp2(2,l)) .gt. wsrttol) then
           write(*,*) 'b2pwlprp: the shadowing structure must be closed!'
           write(*,*) 'lwlddir(1) = ',lwlddir(1)
           write(*,*) 'Starting segment: ',l,pp2(1,l),pp2(2,l)
@@ -215,10 +216,10 @@ c
       do k=1,4
         j=jedge(k)
 c        print *,'%% Check ',k,j
-        if(abs(p1(1,j)-pp1(1,j)) .le. wsrttol  .and. 
-     .   abs(p1(2,j)-pp1(2,j)) .le. wsrttol  .and. 
-     .   abs(p2(1,j)-pp2(1,j)) .le. wsrttol  .and. 
-     .   abs(p2(2,j)-pp2(2,j)) .le. wsrttol) then
+        if(abs(p1(1,j)-pp1(1,j)) .le. wsrttol  .and.
+     .     abs(p1(2,j)-pp1(2,j)) .le. wsrttol  .and.
+     .     abs(p2(1,j)-pp2(1,j)) .le. wsrttol  .and.
+     .     abs(p2(2,j)-pp2(2,j)) .le. wsrttol) then
 c          print *,'== OK'
           do il=1,nwldprt
             n=nwldlis(il)
@@ -265,10 +266,10 @@ c
             k=iabs(lwldlis(is,il))
             if(k .eq. jedge(1)  .or.  k .eq. jedge(2)) then
               if(kb .ne. 0) then
-                write(*,*) 'b2pwlprp: unexpected error. ',
+                write(*,'(a,a,3i6)') 'b2pwlprp: unexpected error. ',
      ,           'Outer edge not found ',il,i,kb
-                write(*,*) 'k,jedgi1,jedgi2,jedgo1,jedgo2 = ',
-     ,           k,jedge(1:4)
+                write(*,'(a,5i6)')
+     ,           'k,jedgi1,jedgi2,jedgo1,jedgo2 = ',k,jedge(1:4)
                 stop
               end if
               if(k .eq. jedge(1)) then
@@ -287,10 +288,11 @@ c
               else
                 if((k .eq. jedge(3)  .and.  kb .ne. 1)  .or. 
      ,           (k .eq. jedge(4)  .and.  kb .ne. 2)) then
-                  write(*,*) 'b2pwlprp: unexpected error. ',
+                  write(*,'(a,a,3i6)')
+     ,             'b2pwlprp: unexpected error. ',
      ,             'Inner edge not found ',il,i,kb
-                  write(*,*) 'k,jedgi1,jedgi2,jedgo1,jedgo2 = ',
-     ,             k,jedge(1:4)
+                  write(*,'(a,5i6)')
+     ,             'k,jedgi1,jedgi2,jedgo1,jedgo2 = ',k,jedge(1:4)
                   stop
                 end if
               end if

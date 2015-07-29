@@ -10,7 +10,7 @@ c***
 c***  nwldprt : the number of lists to be sorted
 c***  lwldstrt: the initial segments of the chains
 c***  nwldlis : the list lengths
-c***  lwldlis : the list themselves
+c***  lwldlis : the lists themselves
 c***  lwlddir : the orientation of the chain (true = CCW)
 c
       use b2mod_types
@@ -54,7 +54,7 @@ c      end do
 cc%%%
       do il=1,nwldprt
         is=lwldstrt(il)
-        if(is .gt. nlim  .or.  is .le. 0) then
+        if(is .gt. lppp  .or.  is .le. 0) then
           write (*,*) 'Starting segment outside the limits',is,il
           nwldlis(il)=0.0_R8
         else

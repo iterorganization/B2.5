@@ -1,6 +1,7 @@
       module b2mod_b2plot_wall_loading
       use b2mod_types
       implicit none
+#include <DIMENSIONS.F>
 c======================================================================
 c*** Header file for the routines calculating the wall loading
 c*** !!! If used, must be preceded by DIMENSIONS.F !!!
@@ -16,7 +17,7 @@ c
       integer, allocatable :: indwll(:), luwrk(:), lwldrad(:),
      ,  lwldlis(:,:), lpumplis(:)
       logical l2rdldw, l2rdldt, l2pwinp, lwlddir(nwldprtx)
-      real (kind=R4), allocatable :: ppp1(:,:), ppp2(:,:)
+      real (kind=R4) :: ppp1(3,DEF_NLIM), ppp2(3,DEF_NLIM)
       real (kind=R4) :: addsrc_xy(2,nadsrcm), add_rad
       real (kind=R8), allocatable :: segm_area(:), segm_len(:),
      ,	wldrfdst(:,:), wldrdld(:), co_data(:)
@@ -62,7 +63,6 @@ c======================================================================
       allocate(indwll(nsgmx), luwrk(nsgmx), lwldrad(nsgmx))
       allocate(lwldlis(nsgmx,nwldprtx))
       allocate(lpumplis(nlim))
-      allocate(ppp1(3,nlim), ppp2(3,nlim))
       allocate(segm_area(nsgmx), segm_len(nsgmx),
      ,	wldrfdst(nsgmx,nwldprtx), wldrdld(nsgmx), co_data(nsgmx))
 

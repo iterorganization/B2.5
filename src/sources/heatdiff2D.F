@@ -166,7 +166,7 @@ c       function of the position "x" at ndepth_nml grid points.
 *    ..treat incoming heat flux b.c.
         i = 1
         Qtot = Q(iwall)-qevap(bndx(iwall),ns,Tp(iwall,i))
-     &                 - qrad(bndx(iwall),Tp(iwall,i))
+     &                 - qrad(bndx(iwall),Tp(iwall,i),.true.)
         t0 = Kappa(bndx(iwall),i,Tp(iwall,i)) / (x(2)-x(1))
         aa5(iwall,i,-2) = 0.0_R8
         aa5(iwall,i, 0) = aa5(iwall,i, 0) + t0
@@ -207,7 +207,7 @@ c       function of the position "x" at ndepth_nml grid points.
 *    ..treat radiative cooling b.c.
       iwall = 1
       do i = 1, ndepth_nml-1
-        Qtot = -qrad(bndx(iwall),Tp(iwall,i))
+        Qtot = -qrad(bndx(iwall),Tp(iwall,i),.false.)
         t0 = Kappa_perp(bndx(iwall),i,Tp(iwall,i)) /
      2   (0.5_R8*(y(iwall,i)+y(iwall+1,i))) 
         aa5(iwall,i,-1) = 0.0_R8
@@ -233,7 +233,7 @@ c       function of the position "x" at ndepth_nml grid points.
 *    ..treat radiative cooling b.c.
       iwall = nw
       do i = 1, ndepth_nml-1
-        Qtot = -qrad(bndx(iwall),Tp(iwall,i))
+        Qtot = -qrad(bndx(iwall),Tp(iwall,i),.false.)
         t0 = Kappa_perp(bndx(iwall),i,Tp(iwall,i)) /
      2   (0.5_R8*(y(iwall,i)+y(iwall-1,i)))
         aa5(iwall,i,-1) = aa5(iwall,i,-1) - t0
@@ -245,10 +245,13 @@ c       function of the position "x" at ndepth_nml grid points.
 *   ..add the d/dt term contribution
       do iwall = 1, nw
         do i = 1, ndepth_nml-1
-          rho = mass_density(bndx(iwall), i)
-          t0 = rho * Cp(bndx(iwall),i,Tp(iwall,i)) / dt
-          aa5(iwall, i, 0) = aa5(iwall,i, 0) + t0
-          rhs(iwall, i) = rhs(iwall,i) + t0 * Tp(iwall,i)
+          if (target_vol(bndx(iwall),i).gt.0.0_R8) then
+            rho = mass_density(bndx(iwall),i) *
+     .            target_vol(bndx(iwall),i)
+            t0 = rho * Cp(bndx(iwall),i,Tp(iwall,i)) / dt
+            aa5(iwall, i, 0) = aa5(iwall,i, 0) + t0
+            rhs(iwall, i) = rhs(iwall,i) + t0 * Tp(iwall,i)
+          endif
         enddo
       enddo
 

@@ -1,6 +1,7 @@
       subroutine b2pinp(*)
       use b2mod_types
       implicit none
+#include <DIMENSIONS.F>
 c
 c  version : 11.11.97 21:29
 c
@@ -52,11 +53,11 @@ c----------------------------------------------------------------------
 #include "COUPLE/KOPPLDIM.F"
 #endif
       integer nnns
-      parameter (nnns=6)
+      parameter (nnns=8)
       character*8 unm,unms(nnns),u
       data unms /
      1        'starting','partlist','wlldpart','duct    ','p1      ',
-     2        'p2      '/
+     2        'p2      ','segmlist','plotzone'/
       integer i
       integer ll
       data ll / 0 /
@@ -65,7 +66,7 @@ c
 c      print *,'b2prdn >> ',unm
       call locase(unm,u,8)
       do 1000 i=1,nnns
-          if(u.eq.unms(i)) go to (10,20,30,40,50,60),i
+          if(u.eq.unms(i)) go to (10,20,30,40,50,60,20,30),i
  1000 continue
       call scipit
       return
@@ -97,11 +98,11 @@ c----------------------------------------------------------------------
  40   call rearri(lpumplis,nlim,npumplis)
       return
 c----------------------------------------------------------------------
- 50   call rearre(ppp1,3*nlim,ll)
+ 50   call rearre(ppp1,3*DEF_NLIM,ll)
       lppp=ll/3
       return
 c----------------------------------------------------------------------
- 60   call rearre(ppp2,3*nlim,ll)
+ 60   call rearre(ppp2,3*DEF_NLIM,ll)
       lppp=ll/3
       return
 c======================================================================

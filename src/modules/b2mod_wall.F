@@ -15,6 +15,11 @@ cxpb  Namelist data
       logical, allocatable :: inertial_cooling(:)
       real (kind=R8), allocatable, save ::
      *  target_temp(:,:),
+     *  target_depth(:,:),
+     *  target_width(:,:),
+     *  target_vol(:,:),
+     *  targetcr(:,:,:),
+     *  targetcz(:,:,:),
      *  backplate_temp(:),
      *  plate_thickness(:),
      *  plate_time_factor(:),
@@ -54,6 +59,7 @@ cxpb Data file material properties
      *  target_temp(nwall,ndepth),
      *  target_depth(nwall,ndepth),
      *  target_width(nwall,ndepth),
+     *  target_vol(nwall,ndepth),
      *  targetcr(nwall,ndepth,2),
      *  targetcz(nwall,ndepth,2),
      *  backplate_temp(nwall),
@@ -225,6 +231,11 @@ cxpb  Namelist data
       allocate(inertial_cooling(nwall))
       allocate(
      *  target_temp(nwall,ndepth),
+     *  target_depth(nwall,ndepth),
+     *  target_width(nwall,ndepth),
+     *  target_vol(nwall,ndepth),
+     *  targetcr(nwall,ndepth,2),
+     *  targetcz(nwall,ndepth,2),
      *  backplate_temp(nwall),
      *  plate_thickness(nwall),
      *  plate_time_factor(nwall),

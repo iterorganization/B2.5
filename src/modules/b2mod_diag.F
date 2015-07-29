@@ -106,6 +106,7 @@ c
 
       call ipgeti ('ank_tracing', ank_tracing)
 
+      if (allocated(IZ)) return
       allocate(IZ(-1:NXD,-1:NYD))
       allocate(RESHLP(-1:NXD,-1:NYD))
       allocate(rad_imp(1:natm))

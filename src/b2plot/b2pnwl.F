@@ -15,6 +15,7 @@ c======================================================================
       use eirmod_extrab25
 #endif
       implicit none
+#include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #     include <COUPLE/EIRDIAG.F>
 #endif
@@ -37,7 +38,7 @@ c*** and for the power flux.
       character*8 text_an(natm),text_mn(nmol)
       intrinsic max
 c----------------------------------------------------------------------
-      print *,'Starting b2pnwl...',nlim
+      print *,'Starting b2pnwl...',nlim,DEF_NLIM
 c*** Set the default values
       npumplis=0
       nwldprt=0
@@ -254,7 +255,7 @@ c***
 c***  nwldprt : the number of lists to be sorted
 c***  lwldstrt: the initial segments of the chains
 c***  nwldlis : the list lengths
-c***  lwldlis : the list themselvs
+c***  lwldlis : the lists themselves
 c
       use b2mod_types
       use b2mod_b2plot
@@ -277,8 +278,8 @@ c*** lwsrtwrk: a temporary array for sorting
 c*** nwsrtwrk: a counter for this array
 c*** wsrttol : a tolerance parameter for defining adjacent segments
 c
-      logical goup,placed(nlim)
-      integer lwsrtwrk(nlim),il,is,ii,jj,js,nwsrtwrk,k,ik,j
+      logical goup,placed(DEF_NLIM),found
+      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j
       real (kind=R8) ::
      *   wsrttol
       parameter (wsrttol=2.0e-4_R8)
@@ -288,7 +289,7 @@ cc%%%
 c      print *,'b2pwsrt',nwldprt
 c      do il=1,nwldprt
 c        print '(1x,20i4)',il,nwldlis(il),lwldstrt(il)
-c        print '(1x,20i4)',(lwldlis(i,il),i=1,nwldlis(il))
+c        print '(1x,20i4)',(lwldlis(ii,il),ii=1,nwldlis(il))
 c        do ii=1,nwldlis(il)
 c          is=lwldlis(ii,il)
 c          print '(4f12.4)',pp1(1,is),pp1(2,is),pp2(1,is),pp2(2,is)
@@ -297,7 +298,7 @@ c      end do
 cc%%%
       do il=1,nwldprt
         is=lwldstrt(il)
-        if(is .gt. nlim  .or.  is .le. 0) then
+        if(is .gt. lppp  .or.  is .le. 0) then
           write(*,*) 'Starting segment outside the limits',is,il
           nwldlis(il)=0.e0_R8
         else
@@ -329,7 +330,7 @@ c                  print *,'do jj:',jj,is,goup,placed(jj)
 c                    print *,'js:',js,is,goup
                     if(goup) then
                       if(abs(pp2(1,is)-pp1(1,js)) .le. wsrttol  .and. 
-     .                 abs(pp2(2,is)-pp1(2,js)) .le. wsrttol) then
+     .                   abs(pp2(2,is)-pp1(2,js)) .le. wsrttol) then
                         goup=.true.
                         is=js
                         nwsrtwrk=nwsrtwrk+1
@@ -339,7 +340,7 @@ c                        print *,'2->1:',is,nwsrtwrk
                         go to 100
                       end if
                       if(abs(pp2(1,is)-pp2(1,js)) .le. wsrttol  .and. 
-     .                 abs(pp2(2,is)-pp2(2,js)) .le. wsrttol) then
+     .                   abs(pp2(2,is)-pp2(2,js)) .le. wsrttol) then
                         goup=.false.
                         is=js
                         nwsrtwrk=nwsrtwrk+1
@@ -350,7 +351,7 @@ c                        print *,'2->2:',is,nwsrtwrk
                       end if
                     else
                       if(abs(pp1(1,is)-pp2(1,js)) .le. wsrttol  .and. 
-     .                 abs(pp1(2,is)-pp2(2,js)) .le. wsrttol) then
+     .                   abs(pp1(2,is)-pp2(2,js)) .le. wsrttol) then
                         goup=.false.
                         is=js
                         nwsrtwrk=nwsrtwrk+1
@@ -360,7 +361,7 @@ c                        print *,'1->2:',is,nwsrtwrk
                         go to 100
                       end if
                       if(abs(pp1(1,is)-pp1(1,js)) .le. wsrttol  .and. 
-     .                 abs(pp1(2,is)-pp1(2,js)) .le. wsrttol) then
+     .                   abs(pp1(2,is)-pp1(2,js)) .le. wsrttol) then
                         goup=.true.
                         is=js
                         nwsrtwrk=nwsrtwrk+1

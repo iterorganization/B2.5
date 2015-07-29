@@ -13,6 +13,7 @@ c======================================================================
       use eirmod_extrab25
 #endif
       implicit none
+#include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #include "COUPLE/KOPPLDIM.F"
 #endif
@@ -78,12 +79,12 @@ c*** Shadowing structure
       return
 c----------------------------------------------------------------------
 c*** Starting points of the segments
- 50   call rearre(ppp1,3*nlim,ll)
+ 50   call rearre(ppp1,3*DEF_NLIM,ll)
       lppp=ll/3
       return
 c----------------------------------------------------------------------
 c*** Ending points of the segments
- 60   call rearre(ppp2,3*nlim,ll)
+ 60   call rearre(ppp2,3*DEF_NLIM,ll)
       lppp=ll/3
       return
 c----------------------------------------------------------------------
