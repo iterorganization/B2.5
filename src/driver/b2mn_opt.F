@@ -75,9 +75,10 @@
 *     nout(3): un*formatted; may provide data for movie.
 *     nout(4): un*formatted; provides data on the numerical evolution.
 *     nout(5): un*formatted; may provide detailed convergence data.
-*     nout(6): un*formatted;
-*     nout(7): un*formatted;
-*     nout(8): formatted; post-processor output. [JET]
+*     nout(6): un*formatted; save file for restart
+*     nout(7): un*formatted; full plasma description with derived quantities
+*     nout(8): un*formatted; ASTRA coupling data file
+*     nout(9): formatted; post-processor output. [JET]
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -124,9 +125,9 @@
 *   ..local variables
       integer ix, iy, ic
 #ifdef JET
-      integer ninp(0:6), nout(0:8), nx, ny, ns, ns0, idum(0:9), io   !srv 02.05.07
+      integer ninp(0:6), nout(0:9), nx, ny, ns, ns0, idum(0:9), io   !srv 02.05.07
 #else
-      integer ninp(0:6), nout(0:7), nx, ny, ns, ns0, idum(0:9), io   !srv 02.05.07
+      integer ninp(0:6), nout(0:8), nx, ny, ns, ns0, idum(0:9), io   !srv 02.05.07
 #endif
       real (kind=R8) :: cpu_s, cpu_f, x05baf
 *   ..procedures
@@ -135,9 +136,9 @@
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                               !srv 02.05.07
 #ifdef JET
-      data nout/60,61,62,63,64,65,66,67,68/
+      data nout/60,61,62,63,64,65,66,67,68,69/
 #else
-      data nout/60,61,62,63,64,65,66,67/
+      data nout/60,61,62,63,64,65,66,67,58/
 #endif
 *-----------------------------------------------------------------------
 *.computation
@@ -224,10 +225,10 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call write_results(nx, ny)
 #ifdef JET
 *   ..set and write ppout
-      call cfopen (nout(8),'tran','new','unformatted')
+      call cfopen (nout(9),'tran','new','unformatted')
       call set_b2mod_ppout
-      call write_b2mod_ppout(nout(8))
-      close (nout(8))
+      call write_b2mod_ppout(nout(9))
+      close (nout(9))
 #endif
 *   ..close files
       do io=0,size(ninp)-1

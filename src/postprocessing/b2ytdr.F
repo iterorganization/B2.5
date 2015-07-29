@@ -595,7 +595,8 @@ c 2002-09-11: logic revised
      &             1.le.ninp(6).and.1.le.ninp(7).and.1.le.ninp(8), 
      &             'faulty argument ninp')
       call xertst (1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2).and.
-     &             1.le.nout(3), 'faulty argument nout')
+     &             1.le.nout(3).and.1.le.nout(4),
+     &             'faulty argument nout')
 *   ..test dimensions
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')

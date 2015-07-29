@@ -33,26 +33,6 @@
 *  3. description (see also routine b2cdca)
 *
 *
-*     The input units are:
-*     ninp(0): formatted; provides physics and numerics parameters.
-*     ninp(1): un*formatted; provides the geometry.
-*     ninp(2): un*formatted; provides default physics parameters.
-*     ninp(3): un*formatted; provides the initial state.
-*     ninp(4): un*formatted; provides atomic rate data.
-*     ninp(5): un*formatted; provides source term data.
-*
-*     The output units are:
-*     nout(0): formatted; provides summary print output.
-*     nout(1): un*formatted; provides actual physics parameters.
-*     nout(2): un*formatted; provides the final state.
-*     nout(3): un*formatted; may provide data for movie.
-*     nout(4): un*formatted; provides data on the numerical evolution.
-*     nout(5): un*formatted; may provide detailed convergence data.
-*     nout(6): un*formatted;
-*     nout(7): un*formatted;
-*     nout(8): formatted; post-processor output. [JET]
-*
-*     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
 *
 *  4. references
@@ -96,15 +76,12 @@
 #endif
       logical(4) ::  b2fstate_exist, b2fstate_add_exist,
      &               b2fstati_add_exist
-      integer ninp(0:5), nout(0:7), iy, npoint
+      integer iy, npoint
       real (kind=R8) :: cpu_s, cpu_f, x05baf, dseval,                 !srv 26.04.09
      & nemod, temod, timod, func, fcain, fab, shift
       character*12 hlp_frm
 *   ..procedures
 !      external xerset, xertst
-*   ..initialise input/output unit numbers
-      data ninp/50,51,52,53,54,55/
-      data nout/60,61,62,63,64,65,66,67/
 *-----------------------------------------------------------------------
 *.computation
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

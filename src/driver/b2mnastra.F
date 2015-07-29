@@ -75,9 +75,10 @@
 *     nout(3): un*formatted; may provide data for movie.
 *     nout(4): un*formatted; provides data on the numerical evolution.
 *     nout(5): un*formatted; may provide detailed convergence data.
-*     nout(6): un*formatted;
-*     nout(7): un*formatted;
-*     nout(8): formatted; post-processor output. [JET]
+*     nout(6): un*formatted; save file for restart
+*     nout(7): un*formatted; full plasma description with derived quantities
+*     nout(8): un*formatted; ASTRA coupling data file
+*     nout(9): formatted; post-processor output. [JET]
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -124,7 +125,7 @@
 *   ..local variables
       integer ix, iy, ic
 #ifdef JET
-      integer ninp(0:6), nout(0:8), nx, ny, ns, ns0, idum(0:9), io   !srv 02.05.07
+      integer ninp(0:6), nout(0:9), nx, ny, ns, ns0, idum(0:9), io   !srv 02.05.07
 #else
       integer ninp(0:6), nout(0:8), nx, ny, ns, ns0, idum(0:9), io   !srv 02.05.07
 #endif
@@ -135,7 +136,7 @@
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                               !srv 02.05.07
 #ifdef JET
-      data nout/60,61,62,63,64,65,66,67,68/
+      data nout/60,61,62,63,64,65,66,67,68,69/
 #else
       data nout/60,61,62,63,64,65,66,67,68/
 #endif
@@ -203,12 +204,12 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
       call alloc_b2mod_ppout(nx,ny,ns)
 
-      call alloc_b2mod_astra_to_b2(nx, ny)                          !srv 28.07.11 {
+      call alloc_b2mod_astra_to_b2(nx, ny)                      !srv 28.07.11 {
       call alloc_b2mod_b2_to_astra(nx, ny, ns)
       call read_astra_to_b2(ny, ninp(6))
-	open(70,file='check_astra_to_b2.prt')
-	 call write_to_check_astra_to_b2(ny,70)
-	close(70)                                                 !srv 28.07.11 }
+      open(70,file='check_astra_to_b2.prt')
+      call write_to_check_astra_to_b2(ny,70)
+      close(70)                                                 !srv 28.07.11 }
 
       call b2mndr (ninp, nout, nx, ny, ns, ns0)
 *   ..write plasma state
@@ -224,10 +225,10 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #ifdef JET
 *   ..set and write ppout
-      call cfopen (nout(8),'tran','new','unformatted')
+      call cfopen (nout(9),'tran','new','unformatted')
       call set_b2mod_ppout
-      call write_b2mod_ppout(nout(8))
-      close (nout(8))
+      call write_b2mod_ppout(nout(9))
+      close (nout(9))
 #endif
 *   ..close files
       do io=0,size(ninp)-1
@@ -237,15 +238,15 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          close(nout(io))
       enddo
 
-	cpu_f= x05baf()
-	write(*,"(/' b2mnastra takes ',f12.1,' sec'/)") cpu_f - cpu_s
+      cpu_f= x05baf()
+      write(*,"(/' b2mnastra takes ',f12.1,' sec'/)") cpu_f - cpu_s
 
 * ..end of computation
       call prgend ()
       stop
 
 *-----------------------------------------------------------------------
-*.end b2mn
+*.end b2mnastra
 
       end program b2mnastra
 

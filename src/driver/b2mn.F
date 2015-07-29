@@ -17,6 +17,8 @@
       use b2mod_neutrals_namelist
       use b2mod_neutr_src_scaling
       use b2mod_ppout
+      use b2mod_b2_to_astra
+      use b2mod_astra_to_b2
       use b2mod_external
       implicit none
 csw 28feb2011 mpi
@@ -80,9 +82,10 @@ csw
 *     nout(3): un*formatted; may provide data for movie.
 *     nout(4): un*formatted; provides data on the numerical evolution.
 *     nout(5): un*formatted; may provide detailed convergence data.
-*     nout(6): un*formatted;
-*     nout(7): un*formatted;
-*     nout(8): formatted; post-processor output. [JET]
+*     nout(6): un*formatted; save file for restart
+*     nout(7): un*formatted; full plasma description with derived quantities
+*     nout(8): un*formatted; ASTRA coupling data file
+*     nout(9): formatted; post-processor output. [JET]
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -128,9 +131,9 @@ csw
 
 *   ..local variables
 #ifdef JET
-      integer ninp(0:5), nout(0:8), nx, ny, ns, ns0, idum(0:9), io
+      integer ninp(0:5), nout(0:9), nx, ny, ns, ns0, idum(0:9), io
 #else
-      integer ninp(0:5), nout(0:7), nx, ny, ns, ns0, idum(0:9), io
+      integer ninp(0:5), nout(0:8), nx, ny, ns, ns0, idum(0:9), io
 #endif
       integer process_id
 *   ..procedures
@@ -139,9 +142,9 @@ csw
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55/
 #ifdef JET
-      data nout/60,61,62,63,64,65,66,67,68/
+      data nout/60,61,62,63,64,65,66,67,68,69/
 #else
-      data nout/60,61,62,63,64,65,66,67/
+      data nout/60,61,62,63,64,65,66,67,68/
 #endif
 *-----------------------------------------------------------------------
 *.computation
@@ -192,6 +195,7 @@ csw
       call cfopen (nout(4),'b2ftrace','new','un*formatted')
       call cfopen (nout(5),'b2ftrack','new','un*formatted')
       call cfopen (nout(7),'b2fplasma','new','unformatted')
+      call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted') 
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers						 !xpb
@@ -227,6 +231,8 @@ csw
       call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
       call alloc_b2mod_ppout(nx,ny,ns)
       call alloc_b2mod_external(nx,ny,ns)
+      call alloc_b2mod_astra_to_b2(nx, ny)
+      call alloc_b2mod_b2_to_astra(nx, ny, ns)
       call b2mndr (ninp, nout, nx, ny, ns, ns0)
 *   ..write plasma state
       call cfverw(nout(7), newversion)
@@ -240,10 +246,10 @@ csw
       close(nout(7))
 #ifdef JET
 *   ..set and write ppout
-      call cfopen (nout(8),'tran','new','unformatted')
+      call cfopen (nout(9),'tran','new','unformatted')
       call set_b2mod_ppout
-      call write_b2mod_ppout(nout(8))
-      close (nout(8))
+      call write_b2mod_ppout(nout(9))
+      close (nout(9))
 #endif
 *   ..close files
       do io=0,size(ninp)-1

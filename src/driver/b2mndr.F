@@ -46,7 +46,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
 #ifdef JET
-      integer ninp(0:5), nout(0:8), nx, ny, ns, ns0
+      integer ninp(0:5), nout(0:9), nx, ny, ns, ns0
 #else
       integer ninp(0:5), nout(0:8), nx, ny, ns, ns0
 #endif
@@ -1670,10 +1670,10 @@ csw 09oct2012 set default potential already at this point (BCs)
          if(tran_num.le.99) then
            write(tran_file_name,'(a4,i2)') 'tran',tran_num
            if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
-           call cfopen (nout(8),tran_file_name,'new','unformatted')
+           call cfopen (nout(9),tran_file_name,'new','unformatted')
            call set_b2mod_ppout
-           call write_b2mod_ppout(nout(8))
-           close(nout(8))
+           call write_b2mod_ppout(nout(9))
+           close(nout(9))
            write(*,*) 'Saved ',tran_file_name
          else
            write(*,*) 'More than 99 tran files --- no more saved'
@@ -1846,10 +1846,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         if(tran_num.le.99) then
           write(tran_file_name,'(a4,i2)') 'tran',tran_num
           if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
-          call cfopen (nout(8),tran_file_name,'new','unformatted')
+          call cfopen (nout(9),tran_file_name,'new','unformatted')
           call set_b2mod_ppout
-          call write_b2mod_ppout(nout(8))
-          close(nout(8))
+          call write_b2mod_ppout(nout(9))
+          close(nout(9))
           write(*,*) 'Saved ',tran_file_name
         else
           write(*,*) 'More than 99 tran files --- no more saved'
