@@ -42,15 +42,15 @@ c======================================================================
 c     integer i
 c
 cc%%%
-c      print *,'b2pwsrt',nwldprt
-c      do il=1,nwldprt
-c        print '(1x,20i4)',il,nwldlis(il),lwldstrt(il)
-c        print '(1x,20i4)',(lwldlis(i,il),i=1,nwldlis(il))
-c        do ii=1,nwldlis(il)
-c          is=lwldlis(ii,il)
-c          print '(4f12.4)',pp1(1,is),pp1(2,is),pp2(1,is),pp2(2,is)
-c        end do
-c      end do
+      print *,'b2pwsrt',nwldprt
+      do il=1,nwldprt
+        print '(1x,20i4)',il,nwldlis(il),lwldstrt(il)
+        print '(1x,20i4)',(lwldlis(ii,il),ii=1,nwldlis(il))
+        do ii=1,nwldlis(il)
+          is=lwldlis(ii,il)
+          print '(4f12.4)',pp1(1,is),pp1(2,is),pp2(1,is),pp2(2,is)
+        end do
+      end do
 cc%%%
       do il=1,nwldprt
         is=lwldstrt(il)

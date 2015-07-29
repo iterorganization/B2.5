@@ -53,8 +53,8 @@ c======================================================================
 c<<<
 c      tab=char(9)
 c
-c      print *,'Starting b2pwlprp...',nlimi,nnlimi
-c      print *,'jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+      print *,'Starting b2pwlprp...',nlim,lppp,DEF_NLIM
+      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
 c>>>
 c
 c*** Check the presence of the shadowing structure
@@ -85,13 +85,13 @@ c
         pp2(2,i)=0.001_R8*ppp2(2,i)
       end do
 c<<<
-c      print *,'nwldprt =',nwldprt
-c      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
-c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
-c      do il=1,nwldprt
-c        print '(a,i5/(5x,15i5))','lwldlis :',il,
-c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-c      end do
+      print *,'nwldprt =',nwldprt
+      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
+      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
+      do il=1,nwldprt
+        print '(a,i5/(5x,15i5))','lwldlis :',il,
+     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
+      end do
 c
 c      open(lun_w,file='layout-d.dat')
 c      write(lun_w,'(6a)') '#Wall layout (DG) : ',label

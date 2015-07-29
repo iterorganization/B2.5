@@ -384,19 +384,37 @@ c*** No connection found
               write(*,*) 'The chain is broken: ',il
               nwldlis(il)=nwsrtwrk
             end if
+            write(*,*) 'DG 191 : ' , pp1(1,191),pp1(2,191),
+     .                               pp2(1,191),pp2(2,191)
+            write(*,*) 'Eir180 : ' ,  p1(1,180), p1(2,180),
+     .                                p2(1,180), p2(2,180)
             do ii=1,nwldlis(il)
-              j=lwsrtwrk(ii)
-              if(abs(p1(1,j)-pp1(1,j)) .le. wsrttol  .and. 
-     .         abs(p1(2,j)-pp1(2,j)) .le. wsrttol  .and. 
-     .         abs(p2(1,j)-pp2(1,j)) .le. wsrttol  .and. 
-     .         abs(p2(2,j)-pp2(2,j)) .le. wsrttol) then
-                lwldlis(ii,il)=j
-              else
-                lwldlis(ii,il)=-j
-              end if
+              j = lwsrtwrk(ii)
+              k = 1
+              found = .false.
+              do while (.not.found .and. k.le.nlim)
+                if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .             abs(p1(2,k)-pp1(2,j)) .le. wsrttol  .and.
+     .             abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .             abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
+                  lwldlis(ii,il)=k
+                  found = .true.
+                else
+     .          if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .             abs(p1(2,k)-pp2(2,j)) .le. wsrttol  .and.
+     .             abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .             abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
+                  found = .true.
+                  lwldlis(ii,il)=-k
+                end if
+                k = k + 1
+              end do
+              if (.not.found) write(*,*)
+     .         'Found no correspondence between DG wall # ', j ,
+     .         ' and Eirene wall list'
             end do
-c            print '(a,i2/(1x,20i4))','il =',il,
-c     ,                                (lwldlis(ii,il),ii=1,nwldlis(il))
+            print '(a,i2/(1x,20i4))','il =',il,
+     ,                                (lwldlis(ii,il),ii=1,nwldlis(il))
           end if
         end if
       end do
