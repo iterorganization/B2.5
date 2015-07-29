@@ -656,16 +656,16 @@ c 2002-09-11: logic revised
       endif
       call ipgetc ('solps_version', solps_version)
       write(*,*) 'Incoming SOLPS version entered : ', solps_version
-      if (streql(eirene_format,'iter')) then
+      if (streql(solps_version,'iter')) then
         write(*,*)
      .   'Assuming standard SOLPS-ITER fort.44 format (default)'
-      else if (streql(eirene_format,'4.3')) then
+      else if (streql(solps_version,'4.3')) then
         write(*,*) 'Assuming SOLPS4.3 fort.44 format'
-      else if (streql(eirene_format,'5.0')) then
+      else if (streql(solps_version,'5.0')) then
         write(*,*) 'Assuming SOLPS5.0 fort.44 format'
-      else if (streql(eirene_format,'5.1')) then
+      else if (streql(solps_version,'5.1')) then
         write(*,*) 'Assuming SOLPS5.1 fort.44 format'
-      else if (streql(eirene_format,'5.2')) then
+      else if (streql(solps_version,'5.2')) then
         write(*,*) 'Assuming SOLPS5.2 fort.44 format'
       else
         write(*,*) 'Accepted values are (case-insensitive): '
