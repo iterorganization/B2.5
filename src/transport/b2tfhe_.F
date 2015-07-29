@@ -1260,6 +1260,30 @@ csw 30apr2014 flo53 ONLY FOR TESTING (SOLPS4)
      .   max(cutlo,te(ix,iy)+te(bottomix(ix,iy), bottomiy(ix,iy))))
         endif
 
+        if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then  !srv 16.09.02 {
+         if(mdf_fhe.eq.0) then                           !srv 13.10.06 {
+          w1(ix,iy)=1.5e0_R8*fne(ix,iy,1)*
+     1      (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+          w2(ix,iy)=2.5e0_R8*fledia(ix,iy,1)*
+     &      (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8
+     1     *(te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+          w3(ix,iy)=-cone0*
+     1      (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
+          w4(ix,iy)=(calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
+     &       harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
+          w6(ix,iy) = cone0
+         else
+          w1(ix,iy)=1.5e0_R8*fne(ix,iy,1)*
+     1      (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+          w2(ix,iy)=0.0e0_R8
+          w3(ix,iy)=-cone0_mdf*
+     1      (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
+          w4(ix,iy)=(calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
+     &       harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
+          w6(ix,iy) = cone0_mdf
+         endif
+        endif                                                !srv 16.09.02 }
+
 csw 13mar2013 added check upwind (SOLPS4 style)
         if(b2_upwind .ne. 0) then
          fhe(ix,iy,1) = upwind(floe0,
@@ -1342,33 +1366,6 @@ csw 18feb2014 remove fluxes between guard cells
          endif
        enddo
       enddo
-
-
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then  !srv 16.09.02 {
-       if(mdf_fhe.eq.0) then                                         !srv 13.10.06 {
-        w1(ix,iy)=1.5e0_R8*fne(ix,iy,1)*
-     1   (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
-        w2(ix,iy)=2.5e0_R8*fledia(ix,iy,1)*
-     &    (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8
-     1   *(te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
-        w3(ix,iy)=-cone0*
-     1    (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-        w4(ix,iy)=(calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
-     &     harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
-        w6(ix,iy) = cone0
-       else
-        w1(ix,iy)=1.5e0_R8*fne(ix,iy,1)*
-     1   (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
-        w2(ix,iy)=0.0e0_R8
-        w3(ix,iy)=-cone0_mdf*
-     1    (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-        w4(ix,iy)=(calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
-     &     harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
-        w6(ix,iy) = cone0_mdf
-       endif
-      endif                                                !srv 16.09.02 }
-
-
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then  !srv 16.09.02 {
        call my_out(70,nx,ny,w1,'b2tfhe__qe_32y')        !srv 16.09.02 {
