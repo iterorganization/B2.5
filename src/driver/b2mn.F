@@ -195,7 +195,7 @@ csw
       call cfopen (nout(4),'b2ftrace','new','un*formatted')
       call cfopen (nout(5),'b2ftrack','new','un*formatted')
       call cfopen (nout(7),'b2fplasma','new','unformatted')
-      call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted') 
+      call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers						 !xpb

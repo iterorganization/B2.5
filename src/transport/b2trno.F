@@ -254,6 +254,8 @@ csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
      & chci(-1,-1,1))
       endif
 
+      call b2txcx (nx, ny, -1, vol, gs, hx, qz, alf0, calf(-1,-1,0))
+      call b2txcy (nx, ny, -1, vol, gs, hy, qz, alf0, calf(-1,-1,1))
       if(csig_an_style. eq.0) then                                !srv 15.06.08
        call b2txcx (nx, ny, mode, vol, gs, hx, qz, sig0, 
      &      csig_an(-1,-1,0))
