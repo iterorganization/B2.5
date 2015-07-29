@@ -1702,7 +1702,7 @@ c new CDF movie option
             call tallies(nx,ny,ns,BoRiS)
          endif
        endif
-       if (itim.eq.1) call b2trci(nx,ny,ns,ismain,dtim,BoRiS)
+       if (first_time_step) call b2trci(nx,ny,ns,ismain,dtim,BoRiS)
        if (ank_tracing.ne.0) then
          if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1) 
      >    call b2trace(nx,ny,ns,ismain,dtim,BoRiS)
