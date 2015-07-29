@@ -105,17 +105,17 @@ csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
      &  'b2trace: no source rescaling: natmi,nspecies=', nnatmi,nspecies  !srv 18.05.09
       end if
 c*** Particle balance
-      call b2blnc(nx,ny,ns,dtim)
+      if(filedata(ntrc_bln)) call b2blnc(nx,ny,ns,dtim)
 c*** Power balance
-      call b2blne(nx,ny,ns,BoRiS)
+      if(filedata(ntrc_ble)) call b2blne(nx,ny,ns,BoRiS)
 c*** Parallel momentum balance
-      call b2blnm(nx,ny,ns)
+      if(filedata(ntrc_blm)) call b2blnm(nx,ny,ns)
 c*** Additional integrals
-      call b2wrint(nx,ny,ns,nnreg(0))
+      if(filedata(ntrc_int)) call b2wrint(nx,ny,ns,nnreg(0))
 c*** Separatrix data
-      call b2wrsep(nx,ny,ns,BoRiS)
+      if(filedata(ntrc_sep)) call b2wrsep(nx,ny,ns,BoRiS)
 c*** User-specific data
-      call b2usrtrc(nx,ny,ns,BoRiS)
+      if(filedata(ntrc_usr)) call b2usrtrc(nx,ny,ns,BoRiS)
 c
       return
 c======================================================================
@@ -136,12 +136,12 @@ c*** Initialisation call
 c======================================================================
       entry b2trcs(nx,ny,ns,ismain,dtim,BoRiS)
 c*** - to be called BEFORE each timestep
-      call b2blncs(nx,ny,ns,dtim)
-      call b2blnes(nx,ny,ns,BoRiS)
-      call b2blnms(nx,ny,ns)
-      call b2wrints(nx,ny,ns,nnreg(0))
-      call b2wrseps(nx,ny,ns,BoRiS)
-      call b2usrtrs(nx,ny,ns,BoRiS)
+      if(filedata(ntrc_bln)) call b2blncs(nx,ny,ns,dtim)
+      if(filedata(ntrc_ble)) call b2blnes(nx,ny,ns,BoRiS)
+      if(filedata(ntrc_blm)) call b2blnms(nx,ny,ns)
+      if(filedata(ntrc_int)) call b2wrints(nx,ny,ns,nnreg(0))
+      if(filedata(ntrc_sep)) call b2wrseps(nx,ny,ns,BoRiS)
+      if(filedata(ntrc_usr)) call b2usrtrs(nx,ny,ns,BoRiS)
       return
 c======================================================================
       entry b2trcf(nx,ny,ns,ismain,dtim,BoRiS)
