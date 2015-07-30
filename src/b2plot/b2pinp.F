@@ -53,20 +53,23 @@ c----------------------------------------------------------------------
 #include "COUPLE/KOPPLDIM.F"
 #endif
       integer nnns
-      parameter (nnns=8)
+      parameter (nnns=16)
       character*8 unm,unms(nnns),u
       data unms /
      1        'starting','partlist','wlldpart','duct    ','p1      ',
-     2        'p2      ','segmlist','plotzone'/
+     2        'p2      ','segmlist','plotzone','jedgi1  ','jedgi2  ',
+     3        'jedgo1  ','jedgo2  ','elemlist','sol_edge','pfr_edge',
+     4        'trg_spcf'/
       integer i
-      integer ll
-      data ll / 0 /
+      integer ll, lt, luswch
+      data ll / 0 /, luswch / 0 /, lt / 0 /
 c-----------------------------------------------------
 c
 c      print *,'b2prdn >> ',unm
       call locase(unm,u,8)
       do 1000 i=1,nnns
-          if(u.eq.unms(i)) go to (10,20,30,40,50,60,20,30),i
+          if(u.eq.unms(i)) go to (10,20,30,40,50,60,20,30,90,100,
+     ,                            110,120,130,140,150,160),i
  1000 continue
       call scipit
       return
@@ -104,6 +107,64 @@ c----------------------------------------------------------------------
 c----------------------------------------------------------------------
  60   call rearre(ppp2,3*DEF_NLIM,ll)
       lppp=ll/3
+      return
+c----------------------------------------------------------------------
+c*** Inner edge of inner target
+ 90   call resimi(i)
+      luswch=1
+      goto 130
+c----------------------------------------------------------------------
+c*** Inner edge of outer target
+ 100  call resimi(i)
+      luswch=2
+      goto 130
+c----------------------------------------------------------------------
+c*** Outer edge of inner target
+ 110  call resimi(i)
+      luswch=3
+      goto 130
+c----------------------------------------------------------------------
+c*** Outer edge of outer target
+ 120  call resimi(i)
+      luswch=4
+      goto 130
+c----------------------------------------------------------------------
+c*** Values for the target edges
+ 130  if(luswch.ge.1 .and. luswch.le.4) then
+        call rearri(jedge(luswch),1,i)
+      else
+        call scipit
+      end if
+      luswch=0
+      return
+c----------------------------------------------------------------------
+c*** Old style values for the target SOL edges
+ 140  if (lt.eq.0) then
+        call scipit
+      else if(lt.lt.0 .or. lt.gt.4) then
+        write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
+     ,                            '.  Must be positive and =< 4'
+      else if (lt.ge.1 .and. lt.le.4) then
+        call resimi(jedge(2*lt-1))
+      end if
+      return
+c----------------------------------------------------------------------
+c*** Old style values for the target PFR edges
+ 150  if (lt.eq.0) then
+        call scipit
+      else if(lt.lt.0 .or. lt.gt.4) then
+        write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
+     ,                            '.  Must be positive and =< 4'
+      else if (lt.ge.1 .and. lt.le.4) then
+        call resimi(jedge(2*lt))
+      end if
+      return
+c----------------------------------------------------------------------
+c*** Target specifications
+ 160  call resimi(lt)
+      if(lt.lt.0 .or. lt.gt.4)
+     >   write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
+     ,                            '.  Must be positive and =< 4'
       return
 c======================================================================
       end subroutine b2prdn

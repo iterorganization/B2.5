@@ -63,6 +63,7 @@ C
 
       rewind (44)
       open(unit=45,file='fort.44.2',status='unknown')
+      write(*,*) 'Writing fort.44.2'
 C
       READ (44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
       if((streql(solps_version,'5.0').or.streql(solps_version,'5.2'))
@@ -239,19 +240,21 @@ C
       if(jvft44 .ge. 960513) then
         read (44,'(3i6)') nlimi,nstsi,nstrai
         write(45,'(3i6)') nlimi,nstsi,nstrai
+        nnlimi=nlimi
+        nnstsi=nstsi
         print *,'nlimi,nstsi,nstrai:',nlimi,nstsi,nstrai
         call rdneutrs(44,wldnek,1)
-        call   neutrs(45,wldnek,1)
+        call wrneutrs(45,wldnek,1)
         call rdneutrs(44,wldnep,1)
-        call   neutrs(45,wldnep,1)
+        call wrneutrs(45,wldnep,1)
         call rdneutrs(44,wldna,natmi)
-        call   neutrs(45,wldna,natmi)
+        call wrneutrs(45,wldna,natmi)
         call rdneutrs(44,ewlda,natmi)
-        call   neutrs(45,ewlda,natmi)
+        call wrneutrs(45,ewlda,natmi)
         call rdneutrs(44,wldnm,nmoli)
-        call   neutrs(45,wldnm,nmoli)
+        call wrneutrs(45,wldnm,nmoli)
         call rdneutrs(44,ewldm,nmoli)
-        call   neutrs(45,ewldm,nmoli)
+        call wrneutrs(45,ewldm,nmoli)
 c*** read the wall geometry
         read (44,'(8f10.4)') (p1(1,ix), p1(2,ix),
      ,                        p2(1,ix), p2(2,ix), ix=1,nlimi)
@@ -264,9 +267,9 @@ cank-960727
         print *,'natmi,nmoli,nioni,nplsi=',
      .           natmi,nmoli,nioni,nplsi
         call rdneutrs(44,wldra,natmi)
-        call   neutrs(45,wldra,natmi)
+        call wrneutrs(45,wldra,natmi)
         call rdneutrs(44,wldrm,nmoli)
-        call   neutrs(45,wldrm,nmoli)
+        call wrneutrs(45,wldrm,nmoli)
       end if
       if(jvft44 .ge. 960727) then
         if(nstrai .gt. 1) then
@@ -281,14 +284,14 @@ cank-960727
             call rdneutrs(44,wldrm(:,:,istra),nmoli)
           end do
           do istra=1,nstrai
-            call neutrs(45,wldnek(1,istra),1)
-            call neutrs(45,wldnep(1,istra),1)
-            call neutrs(45,wldna(1,1,istra),natmi)
-            call neutrs(45,ewlda(1,1,istra),natmi)
-            call neutrs(45,wldnm(1,1,istra),nmoli)
-            call neutrs(45,ewldm(1,1,istra),nmoli)
-            call neutrs(45,wldra(1,1,istra),natmi)
-            call neutrs(45,wldrm(1,1,istra),nmoli)
+            call wrneutrs(45,wldnek(1,istra),1)
+            call wrneutrs(45,wldnep(1,istra),1)
+            call wrneutrs(45,wldna(1,1,istra),natmi)
+            call wrneutrs(45,ewlda(1,1,istra),natmi)
+            call wrneutrs(45,wldnm(1,1,istra),nmoli)
+            call wrneutrs(45,ewldm(1,1,istra),nmoli)
+            call wrneutrs(45,wldra(1,1,istra),natmi)
+            call wrneutrs(45,wldrm(1,1,istra),nmoli)
           end do
         end if
       end if
@@ -298,11 +301,11 @@ cank-960727
         call rdneutrs(44,wldpm,nmoli)
         call rdneutrs(44,wldpeb,1)
         call rdneutrs(44,wldspt,1)
-        call   neutrs(45,wldpp,nplsi)
-        call   neutrs(45,wldpa,natmi)
-        call   neutrs(45,wldpm,nmoli)
-        call   neutrs(45,wldpeb,1)
-        call   neutrs(45,wldspt,1)
+        call wrneutrs(45,wldpp,nplsi)
+        call wrneutrs(45,wldpa,natmi)
+        call wrneutrs(45,wldpm,nmoli)
+        call wrneutrs(45,wldpeb,1)
+        call wrneutrs(45,wldspt,1)
         if(nstrai .gt. 1) then
           do istra=1,nstrai
             call rdneutrs(44,wldpp(:,:,istra),nplsi)
@@ -312,11 +315,11 @@ cank-960727
             call rdneutrs(44,wldspt(1,istra),1)
           end do
           do istra=1,nstrai
-            call neutrs(45,wldpp(1,1,istra),nplsi)
-            call neutrs(45,wldpa(1,1,istra),natmi)
-            call neutrs(45,wldpm(1,1,istra),nmoli)
-            call neutrs(45,wldpeb(1,istra),1)
-            call neutrs(45,wldspt(1,istra),1)
+            call wrneutrs(45,wldpp(1,1,istra),nplsi)
+            call wrneutrs(45,wldpa(1,1,istra),natmi)
+            call wrneutrs(45,wldpm(1,1,istra),nmoli)
+            call wrneutrs(45,wldpeb(1,istra),1)
+            call wrneutrs(45,wldspt(1,istra),1)
           end do
         end if
       end if
@@ -465,7 +468,6 @@ cank
           WRITE(45,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,NION),J=0,NSTRA)
         end if
       else  ! NLWRMSH
-!! FIXME: If coming from 5.1, date is 20130210 and only sum over species is provided
         if(streql(solps_version,'5.1')) then
           if (jvft44.ge.20130210) then
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,1,0))
@@ -490,6 +492,8 @@ cank
 
 *  ---------------------------------------------------------------------
    99 CONTINUE
+      close(44)
+      close(45)
 C
       call subend ()
       RETURN

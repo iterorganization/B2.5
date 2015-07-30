@@ -12,7 +12,7 @@ c 2002-09-11: logic revised
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2ytdr (ninp, nout, nx, ny, ns, nx1, ny1)
+      subroutine b2ytdr (ninp, nout, nx1, ny1)
       use b2mod_types
       use b2mod_geo
       use b2mod_geo2
@@ -39,7 +39,14 @@ c 2002-09-11: logic revised
       use b2mod_b2cmrc
       use b2mod_b2cmfs
       use b2mod_ppout
+      use b2mod_b2plot
+     , ,only: nx, ny, ns, wklng,
+     ,        ixref, iyref,
+     ,        jsep, jxa, jxi, nxtl, nxtr,
+     ,        nstsi, nlimi, natmi, nmoli, nioni,
+     ,        alloc_b2mod_b2plot
 #ifdef B25_EIRENE
+      use b2mod_external
       use eirmod_parmmod
       use eirmod_braeir
       use eirmod_comusr
@@ -48,7 +55,7 @@ c 2002-09-11: logic revised
       use eirmod_eirbra
       use eirmod_extrab25
      , ,only: msrfclsx, mgwtiesx, lkindp, lkindm, lkindi, texta,
-     ,        eirene_extrab25_eirpbls_init
+     ,        eirene_extrab25_eirpbls_init, eirene_extrab25_wneuinit
       use eirmod_clogau
 #endif
       implicit none
@@ -58,7 +65,7 @@ c 2002-09-11: logic revised
 #endif
 
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:8), nout(0:4), nx, ny, ns, nx1, ny1
+      integer ninp(0:8), nout(0:4), nx1, ny1
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -138,14 +145,13 @@ c 2002-09-11: logic revised
       integer ismain, ismain0, isfeedback, isfb
       integer nsmin, nsmax, ns1min, ns1max
       integer sput_phys_col, sput_phys_model, refl_model
-      integer iy_nocoreExB, bc_type16_ref, bc_type20_ref, ixref, iyref
+      integer iy_nocoreExB, bc_type16_ref, bc_type20_ref
       integer ixref1, iyref1
       integer ix1, ix2, iy1, iy2
       integer ix11, ix21, iy11, iy21
       integer elm_ix1, elm_ix2
       integer mw_ix1, mw_ix2, mw_jxa, mw_jsep
       integer mw_jxa1, mw_jsep1
-      integer jsep, jxa, jxi, nxtl, nxtr
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch
       integer nncut1, nnreg1(0:2), periodic_bc1
       integer scaling_ix_begin, scaling_ix_end
@@ -225,14 +231,14 @@ c 2002-09-11: logic revised
       integer ixa, ixb, iya, iyb
       integer nstrai1, nstrat1
 #ifdef B25_EIRENE
-      integer IUNIN, IUNOT, INDGRD(3), NR1ST, NP2ND, NSTSI, NLIMI
+      integer IUNIN, IUNOT, INDGRD(3), NR1ST, NP2ND
       integer INDPRO(12), NMODE, NAINI
       integer NZADD, NVOLPR, NSURPR, NVOLPL, NSP
       integer NPLINR,NPLOTR,NPLDLR,NPLINP,NPLOTP,NPLDLP,
      .        NPLINT,NPLOTT,NPLDLT
       integer IDIMP, INUMP, IRPTA1, IRPTE1, IRPTA2, IRPTE2, ILEQUI
       integer IRPTA3, IRPTE3
-      integer NATMI, NMOLI, NIONI, NPHOTI, NPLSI, NNREAC, IPLTA
+      integer NPHOTI, NPLSI, NNREAC, IPLTA
       integer NATMI1, NREAC1, NSTRA1, NPLSI1, NPLSM
       integer IREAD, IEND, IANF, ISTS, IH, I3, L, M, JSS
       integer IATM, IMOL, IION, IPHOT, ICRM, IPLS, IPLSS, ISTRA
@@ -448,8 +454,7 @@ c 2002-09-11: logic revised
       data ismain/1/, ismain0/0/, isfeedback/0/, b2stbc_feedback/0/
       data sput_phys_col/3/, sput_phys_model/1/, refl_model/1/
       data iy_nocoreExB/-2/, bc_type16_ref/1/, bc_type20_ref/1/
-      data ixref/-1/, iyref/-1/, mw_jxa/-1/, mw_jsep/-1/
-      data jxa/-2/, jxi/-2/
+      data mw_jxa/-1/, mw_jsep/-1/
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
       data BoRiS/0.0_R8/
@@ -711,6 +716,8 @@ c 2002-09-11: logic revised
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
       CALL EIRENE_ALLOC_CCOUPL(1)
+      CALL EIRENE_SETCON
+      CALL EIRENE_EXTRAB25_WNEUINIT
       CALL EIRENE_extrab25_eirpbls_init(1,natm,nmol,nion,npls,nstra,nfl)
 #else
       ex = .false.
@@ -786,6 +793,8 @@ c 2002-09-11: logic revised
       endif
       call get_jsep(nx,ny,jxi,jxa,jsep)
       call get_nxt(nx,nxtl,nxtr)
+      call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
+     1 natm,nmol,nion,nlimps)
       nsm=max(ns,ns1)
       nym=max(ny,ny1)
       call alloc_input_profile(nym,nsm)
@@ -6828,7 +6837,7 @@ C  HERE: EIRENE SURFACE TALLIES
  8688   continue
         close(IUNIN)
 cxpb  Convert fort.44 file if needed
-        inquire(file='../fort.44',exist=todo)
+        inquire(file='fort.44',exist=todo)
         if (todo.and..not.streql(solps_version,'iter')) then
           call b2yt_ngread(solps_version,eirene_format)
         endif

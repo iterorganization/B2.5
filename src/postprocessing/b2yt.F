@@ -7,6 +7,7 @@
       use b2mod_geo2
       use b2mod_rates
       use b2mod_plasma
+      use b2mod_b2plot
       use b2mod_version
       use b2mod_indirect
       implicit none
@@ -77,7 +78,7 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:8), nout(0:4), nx, ny, ns, nx1, ny1, idum(0:9)
+      integer ninp(0:8), nout(0:4), nx1, ny1, idum(0:9)
       integer io
 *   ..procedures
       external prgini, prgfin, xerset, xertst, cfopen, cfruin
@@ -167,7 +168,7 @@
       call alloc_b2mod_geo2(nx1,ny1,10)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)
-      call b2ytdr (ninp, nout, nx, ny, ns, nx1, ny1)
+      call b2ytdr (ninp, nout, nx1, ny1)
 *   ..close files
       do io = 0, size(ninp)-1
         close(ninp(io))

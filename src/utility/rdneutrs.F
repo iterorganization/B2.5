@@ -48,5 +48,26 @@ c
       return
 *=======================================================================
 *//END RDNEUTRS//
+      end subroutine rdneutrs
 
-      END
+      subroutine wrneutrs(kard,dummy,ldmf)
+      use b2mod_types
+      use b2mod_b2plot
+#ifdef B25_EIRENE
+      use eirmod_parmmod
+      use eirmod_extrab25
+#endif
+      implicit none
+#ifndef B25_EIRENE
+#     include <COUPLE/KOPPLDIM.F>
+#endif
+      integer :: kard,ldmf,is,iif
+      real (kind=R8) :: dummy(nlimps,*)
+      do iif=1,ldmf
+        if(nlimi.gt.0) write(kard,'(5(e16.8))') 
+     &                 (dummy(is,iif),is=1,nlimi)
+        if(nstsi.gt.0) write(kard,'(5(e16.8))') 
+     &                 (dummy(is+nlim,iif),is=1,nstsi)
+      enddo
+      end subroutine wrneutrs
+
