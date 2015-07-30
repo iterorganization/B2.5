@@ -427,7 +427,7 @@ csw 17oct2012 this is the corrected call
 *   ..add to previous contributions
           call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
           call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
-          call b2saxpy (n2*4, 1.0_R8, snedt, 1, sne, 1)
+          call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)
           call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
           call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
           call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                   !srv 11.09.09 }
