@@ -9,6 +9,7 @@
       use b2mod_layer
       use b2mod_b2cmpa
       use b2mod_b2cmpb
+      use b2mod_b2cmfs
       use b2mod_external
 #ifndef ALLOCATE_AND_NAMELIST
 #     include "DIMENSIONS.F"
@@ -22,7 +23,7 @@
       integer ibnd, ibndm, i, j, ik, itrack, icoat, ikink, ikink0
       integer, allocatable, save :: imapx_tmp(:), imapy_tmp(:) 
       integer, allocatable, save :: xymap_tmp(:,:)
-      real (kind=R8) :: qin, qel, normal_r, normal_z, 
+      real (kind=R8) :: qin, qel, normal_r, normal_z, torl,
      *  xa, ya, xa2, ya2, xb, yb, xo, yo, nhalf_r, nhalf_z, nhalf,
      *  xap, yap, xaq, yaq, xbp, ybp, xbq, ybq, xbm, ybm, xint, yint,
      *  n1_r, n1_z, n2_r, n2_z, dist, distp, dint, sum,
@@ -32,10 +33,10 @@
 
       integer, save :: hd_linlog, output, sput_frac_flag,
      *  sput_phys_col, sput_phys_model, refl_model
-      real (kind=R8), save :: hd_ratio
+      real (kind=R8), save :: hd_ratio, width
       data hd_linlog/1/, hd_ratio/100.0_R8/, output/0/
       data sput_frac_flag/0/, sput_phys_col/3/,
-     *  sput_phys_model/1/, refl_model/1/
+     *  sput_phys_model/1/, refl_model/1/, width/1.0_R8/
 
       real (kind=R8) :: mass_density
       logical overlap
@@ -352,6 +353,8 @@ cxpb  normalise the layer constituents relative concentrations
 
 cxpb Compute target geometry data
       call ipgeti('b2stbr_output', output)
+      call ipgetr('b2agmt_1d_width', width)
+      call xertst(0.0_R8.lt.width, 'faulty input width')
       call ipgeti('heatdiff1D_linlog', hd_linlog)
       call xertst(hd_linlog.eq.1 .or. hd_linlog.eq.2,
      .   'faulty parameter heatdiff1D_linlog')
@@ -589,19 +592,39 @@ cxpb Do not know yet what to do here. Just a diagnostic in the meantime
       endif
       if (ndepth_nml.gt.1) then
         do ibnd = 1, nbnd
-          target_vol(ibnd,1) = target_width(ibnd,1)*
-     1     ((target_depth(ibnd,2)-target_depth(ibnd,1))/2.0_R8)*
-     2     pi*(targetcr(ibnd,1,1)+targetcr(ibnd,1,2))
+          if (isymm.eq.0) then
+            torl = width
+          else if (isymm.eq.1 .or. isymm.eq.2) then
+            torl = pi*(targetcr(ibnd,1,1)+targetcr(ibnd,1,2))
+          else if (isymm.eq.3 .or. isymm.eq.4) then
+            torl = pi*(targetcz(ibnd,1,1)+targetcz(ibnd,1,2))
+          endif
+          target_vol(ibnd,1) = target_width(ibnd,1)*torl*
+     1     ((target_depth(ibnd,2)-target_depth(ibnd,1))/2.0_R8)
           do is = 2, ndepth_nml-1
-            target_vol(ibnd,is) = target_width(ibnd,is)*
-     1       (target_depth(ibnd,is)-target_depth(ibnd,is-1))*
-     2       pi*(targetcr(ibnd,is,1)+targetcr(ibnd,is,2))
+            if (isymm.eq.0) then
+              torl = width
+            else if (isymm.eq.1 .or. isymm.eq.2) then
+              torl = pi*(targetcr(ibnd,is,1)+targetcr(ibnd,is,2))
+            else if (isymm.eq.3 .or. isymm.eq.4) then
+              torl = pi*(targetcz(ibnd,is,1)+targetcz(ibnd,is,2))
+            endif
+            target_vol(ibnd,is) = target_width(ibnd,is)*torl*
+     1       (target_depth(ibnd,is)-target_depth(ibnd,is-1))
           enddo
+          if (isymm.eq.0) then
+            torl = width
+          else if (isymm.eq.1 .or. isymm.eq.2) then
+            torl = pi*(targetcr(ibnd,ndepth_nml,1)+
+     .               targetcr(ibnd,ndepth_nml,2))
+          else if (isymm.eq.3 .or. isymm.eq.4) then
+            torl = pi*(targetcz(ibnd,ndepth_nml,1)+
+     .               targetcz(ibnd,ndepth_nml,2))
+          endif
           target_vol(ibnd,ndepth_nml) = target_width(ibnd,ndepth_nml)*
      1     ((target_depth(ibnd,ndepth_nml)-
      .       target_depth(ibnd,ndepth_nml-1))
-     2      /2.0_R8)*
-     3     pi*(targetcr(ibnd,ndepth_nml,1)+targetcr(ibnd,ndepth_nml,2))
+     2      /2.0_R8)*torl
         enddo
       else
         target_vol(1:nbnd,1) = target_width(1:nbnd,1)

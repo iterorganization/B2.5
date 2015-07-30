@@ -45,8 +45,8 @@ c 2002-09-11: logic revised
      ,        jsep, jxa, jxi, nxtl, nxtr,
      ,        nstsi, nlimi, natmi, nmoli, nioni,
      ,        alloc_b2mod_b2plot
-#ifdef B25_EIRENE
       use b2mod_external
+#ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
       use eirmod_comusr
