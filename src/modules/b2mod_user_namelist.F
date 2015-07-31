@@ -15,7 +15,7 @@
       real (kind=R8) ::
      ,  fusion_power, Spmp_He_to_D, Spmp_nom
       integer lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
-     ,  j_he_at,j_h_at,lpfrs_pmp,
+     ,  j_he_at,j_h_at,j_ne_at,lpfrs_pmp,
      ,  npfrgrp,ipfrgrp(npfrgrpd),jpfrgrp(npfrgrpd),
      ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd)
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
@@ -68,9 +68,10 @@ c***  Standard setup:
       fusion_power=0.0_R8    ! no helium
       Spmp_He_to_D=1.0_R8    ! same pumping speed for He and D
       Spmp_nom=0.0_R8
-      j_h_at = 0
+      j_h_at =0
       l_h_mol=0
       j_he_at=0
+      j_ne_at=0
       lpfrb_i=-2
       lpfrb_o=-2
       lpfrt_i=-2

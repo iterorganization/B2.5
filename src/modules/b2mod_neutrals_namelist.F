@@ -330,7 +330,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       logical dotest
       external xertst
       integer is, ic, ix, istra, i, j, k, n, ii(1), itrack
-      logical hydrogen, helium, found, side
+      logical hydrogen, helium, neon, found, side
       intrinsic mod
       real (kind=R8) hlp
 
@@ -432,6 +432,13 @@ c
       do while (.not.helium .and. is.lt.ns)
         helium = is_neutral(is) .and. nint(zn(is)).eq.2
         if (helium) j_he_at = b2espcr(is)
+        is = is + 1
+      end do
+      neon = .false.
+      is = 0
+      do while (.not.neon .and. is.lt.ns)
+        neon = is_neutral(is) .and. nint(zn(is)).eq.10
+        if (neon) j_ne_at = b2espcr(is)
         is = is + 1
       end do
       do is = 1, nstrat
@@ -592,6 +599,8 @@ c
       end if
       if (helium) call xertst(nint(zn(eb2spcr(j_he_at))).eq.2,
      . 'faulty input j_he_at')
+      if (neon) call xertst(nint(zn(eb2spcr(j_ne_at))).eq.10,
+     . 'faulty input j_ne_at')
       do is = 1, natmid
         call xertst(0.le.eb2spcr(is).and.eb2spcr(is).lt.ns,
      .   'faulty input eb2spcr')

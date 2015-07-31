@@ -1025,6 +1025,8 @@
 *              from the x-point, if non-positive) (outer side). Defaults to -2.
 *  J_HE_AT - integer. Species index of the helium atoms in Eirene. The code
 *              attempts to find a match by default.
+*  J_NE_AT - integer. Species index of the neon atoms in Eirene. The code
+*              attempts to find a match by default.
 *  J_H_AT - integer. Species index of the hydrogen atoms in Eirene. The code
 *              attempts to find a match by default.
 *  L_H_MOL - integer. Species index of the hydrogen molecules in Eirene. The code

@@ -211,31 +211,41 @@ c        close(lun)
 c      end if
       write(*,*) '*** Target loading with neutrals ***'
       write(*,700) 'Total power released',
-     ,                               wldnek(nlim+7,0)+wldnep(nlim+7,0),
-     ,                               wldnek(nlim+8,0)+wldnep(nlim+8,0)
-      write(*,700) 'incl. potential energy',wldnep(nlim+7,0),
-     ,                                                 wldnep(nlim+8,0)
+     ,              wldnek(nlim+ltns(1),0)+wldnep(nlim+ltns(1),0),
+     ,              wldnek(nlim+ltns(2),0)+wldnep(nlim+ltns(2),0)
+      write(*,700) 'incl. potential energy',wldnep(nlim+ltns(1),0),
+     ,                                      wldnep(nlim+ltns(2),0)
       do i=1,natmi
         write(*,710) text_an(i),' atom flux',
-     ,                              wldna(nlim+7,i,0),wldna(nlim+8,i,0)
+     ,               wldna(nlim+ltns(1),i,0),wldna(nlim+ltns(2),i,0)
         write(*,710) text_an(i),' average energy',
-     ,                              ewlda(nlim+7,i,0),ewlda(nlim+8,i,0)
+     ,               ewlda(nlim+ltns(1),i,0),ewlda(nlim+ltns(2),i,0)
       end do
       if(ic .gt. 0) then
-        wwyn=wldra(nlim+7,ic,0)-wldna(nlim+7,ic,0)
-        wwyg=wldra(nlim+8,ic,0)-wldna(nlim+8,ic,0)
+        wwyn=wldra(nlim+ltns(1),ic,0)-wldna(nlim+ltns(1),ic,0)
+        wwyg=wldra(nlim+ltns(2),ic,0)-wldna(nlim+ltns(2),ic,0)
         write(*,700) 'Net   C erosion',wwyn,wwyg
-        write(*,700) 'Gross C erosion',wldspt(nlim+7,0),wldspt(nlim+8,0)
+        write(*,700) 'Gross C erosion',wldspt(nlim+ltns(1),0),
+     .                                 wldspt(nlim+ltns(2),0)
       end if
-c      print 700,'Hydrogen atom flux',wldna(nlim+7,1,0),wldna(nlim+8,1,0
-c      print 700,'Average energy',ewlda(nlim+7,1,0),ewlda(nlim+8,1,0)
-c      print 700,'Helium   atom flux',wldna(nlim+7,2,0),wldna(nlim+8,2,0
-c      print 700,'Average energy',ewlda(nlim+7,2,0),ewlda(nlim+8,2,0)
-c      if(ns .gt. 2) then
-c          print 700,'Neon     atom flux',wldna(nlim+7,3,0),
-c     ,                                                 wldna(nlim+8,3,0
-c          print 700,'Average energy',ewlda(nlim+7,3,0),ewlda(nlim+8,3,0
-c      end if
+c     if (j_h_at.ne.0) then
+c      print 700,'Hydrogen atom flux',wldna(nlim+ltns(1),j_h_at,0),
+c                                     wldna(nlim+ltns(2),j_h_at,0)
+c      print 700,'Average energy',ewlda(nlim+ltns(1),j_h_at,0),
+c                                 ewlda(nlim+ltns(2),j_h_at,0)
+c     end if
+c     if (j_he_at.ne.0) then
+c      print 700,'Helium   atom flux',wldna(nlim+ltns(1),j_he_at,0),
+c                                     wldna(nlim+ltns(2),j_he_at,0)
+c      print 700,'Average energy',ewlda(nlim+ltns(1),j_he_at,0),
+c                                 ewlda(nlim+ltns(2),j_he_at,0)
+c     end if
+c     if(j_ne_at.ne.0) then
+c      print 700,'Neon     atom flux',wldna(nlim+ltns(1),j_ne_at,0),
+c     ,                               wldna(nlim+ltns(2),j_ne_at,0)
+c      print 700,'Average energy',ewlda(nlim+ltns(1),j_ne_at,0),
+c                                 ewlda(nlim+ltns(2),j_ne_at,0)
+c     end if
   700 format(1x,a22,':',1p,2e14.3)
   710 format(1x,a2,a20,':',1p,2e14.3)
       return
@@ -265,6 +275,7 @@ c
       use eirmod_extrab25
 #endif
       implicit none
+#include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
 #     include "COUPLE/EIRDIAG.F"
@@ -281,13 +292,13 @@ c
       logical goup,placed(DEF_NLIM),found,direction_same
       integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j,ic
       real (kind=R8) ::
-     *   wsrttol
-      parameter (wsrttol=2.0e-4_R8)
+     *   wsrttol, d2etol
+      parameter (wsrttol=2.0e-4_R8, d2etol=1.0e-2_R8)
 c----------------------------------------------------------------------
 c
 cc%%%
-      print *,'b2pwsrt',nwldprt
-      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      print *,'b2pwsrt',nwldprt
+c      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
 c      do il=1,nwldprt
 c        print '(1x,20i4)',il,nwldlis(il),lwldstrt(il)
 c        print '(1x,20i4)',(lwldlis(ii,il),ii=1,nwldlis(il))
@@ -401,7 +412,7 @@ c*** No connection found
      .                (sqrt(( p2(1,k)- p1(1,k))**2+
      .                      ( p2(2,k)- p1(2,k))**2)*
      .                 sqrt((pp2(1,j)-pp1(1,j))**2+
-     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.wsrttol
+     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.d2etol
                   else
      .            if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .               abs(p1(2,k)-pp2(2,j)) .le. wsrttol) then
@@ -412,7 +423,7 @@ c*** No connection found
      .                (sqrt(( p2(1,k)- p1(1,k))**2+
      .                      ( p2(2,k)- p1(2,k))**2)*
      .                 sqrt((pp2(1,j)-pp1(1,j))**2+
-     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.wsrttol
+     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.d2etol
                   else
      .            if(abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .               abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
@@ -423,7 +434,7 @@ c*** No connection found
      .                (sqrt(( p2(1,k)- p1(1,k))**2+
      .                      ( p2(2,k)- p1(2,k))**2)*
      .                 sqrt((pp2(1,j)-pp1(1,j))**2+
-     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.wsrttol
+     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.d2etol
                   else
      .            if(abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .               abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
@@ -434,7 +445,7 @@ c*** No connection found
      .                (sqrt(( p2(1,k)- p1(1,k))**2+
      .                      ( p2(2,k)- p1(2,k))**2)*
      .                 sqrt((pp2(1,j)-pp1(1,j))**2+
-     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.wsrttol
+     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.d2etol
                   else
                     direction_same = .false.
                   end if
@@ -477,8 +488,8 @@ c*** No connection found
      .           ' and Eirene wall list'
               end if
             end do
-            print '(a,i2/(1x,20i4))','il =',il,
-     ,                                (lwldlis(ii,il),ii=1,nwldlis(il))
+c            print '(a,i2/(1x,20i4))','il =',il,
+c     ,                                (lwldlis(ii,il),ii=1,nwldlis(il))
           end if
         end if
       end do
