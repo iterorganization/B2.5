@@ -233,7 +233,7 @@ c Poloidal contact areas
      1   ns, iret)
         rw='write'
         ncid=ncopn('b2time.nc',ncwrite,iret)
-        write(*,*) 'After ncopn: ', ncid, ncwrite, iret
+c       write(*,*) 'After ncopn: ', ncid, ncwrite, iret
         ntstep=0
         imap(1)=1
         tstepn(1) = ntstep
@@ -248,7 +248,7 @@ c Poloidal contact areas
 *   ..compute change in plasma state
 c
       ntstep = ntstep + 1
-      write(*,*) 'ntstep = ',ntstep
+c     write(*,*) 'ntstep = ',ntstep
 #ifndef NO_CDF
       rw = 'write'
       ncid = ncopn ('b2time.nc', ncwrite, iret)
@@ -2264,7 +2264,7 @@ c
       external lnblnk
       integer data_id
 c
-      write(*,*) 'Processing ',data_name,' with ncid ',ncid
+c     write(*,*) 'Processing ',data_name,' with ncid ',ncid
       data_id=ncvid(ncid,data_name,iret)
       if(iret.ne.0) then
         write(*,*) data_name,' not declared'
@@ -2286,12 +2286,12 @@ c
         endif
         do i=1,nvdims
           call ncdinq(ncid,vdims(i),dimnam,count(i),iret)
-         write(*,*) 'Dimension ',i,' is ',dimnam(1:lnblnk(dimnam)),
-     1    ' with length ',count(i)
+c        write(*,*) 'Dimension ',i,' is ',dimnam(1:lnblnk(dimnam)),
+c    1    ' with length ',count(i)
           if(dimnam.eq.timsav) then
             start(i)=ntsav
             count(i)=1
-            write(*,*) 'TIME dimension'
+c           write(*,*) 'TIME dimension'
           else
             start(i)=1
           endif
@@ -2300,13 +2300,13 @@ c
         if(rw.eq.'read') then
           call ncvgtg(ncid,data_id,start,count,one,lmap,data_set,iret)
         elseif(rw.eq.'write') then
-          write(*,*) 'ncid : ', ncid
-          write(*,*) 'data_id :', data_id
-          write(*,*) 'start :', start(1:nvdims)
-          write(*,*) 'count :', count(1:nvdims)
-          write(*,*) 'one :', one(1:nvdims)
-          write(*,*) 'lmap :', lmap(1:nvdims)
-          write(*,*) 'data_set :', data_set(1:nvdims)
+c         write(*,*) 'ncid : ', ncid
+c         write(*,*) 'data_id :', data_id
+c         write(*,*) 'start :', start(1:nvdims)
+c         write(*,*) 'count :', count(1:nvdims)
+c         write(*,*) 'one :', one(1:nvdims)
+c         write(*,*) 'lmap :', lmap(1:nvdims)
+c         write(*,*) 'data_set :', data_set(1:nvdims)
           call ncvptg(ncid,data_id,start,count,one,lmap,data_set,iret)
         else
           write(*,*) 'Either "read" or "write" must be chosen, not',
