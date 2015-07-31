@@ -396,45 +396,47 @@ c*** No connection found
      .               abs(p1(2,k)-pp1(2,j)) .le. wsrttol) then
                     ic = 1
                     direction_same = abs(
-     .               (((p2(1,k)-p1(1,k))*(pp2(1,k)-pp1(1,k))+
-     .                 (p2(2,k)-p1(2,k))*(pp2(2,k)-pp1(2,k)))/
+     .               (((p2(1,k)-p1(1,k))*(pp2(1,j)-pp1(1,j))+
+     .                 (p2(2,k)-p1(2,k))*(pp2(2,j)-pp1(2,j)))/
      .                (sqrt(( p2(1,k)- p1(1,k))**2+
      .                      ( p2(2,k)- p1(2,k))**2)*
-     .                 sqrt((pp2(1,k)-pp1(1,k))**2+
-     .                      (pp2(2,k)-pp1(2,k))**2)))-1.0_R8).le.wsrttol
+     .                 sqrt((pp2(1,j)-pp1(1,j))**2+
+     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.wsrttol
                   else
      .            if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .               abs(p1(2,k)-pp2(2,j)) .le. wsrttol) then
                     ic = 2
                     direction_same = abs(
-     .               (((p2(1,k)-p1(1,k))*(pp1(1,k)-pp2(1,k))+
-     .                 (p2(2,k)-p1(2,k))*(pp1(2,k)-pp2(2,k)))/
+     .               (((p2(1,k)-p1(1,k))*(pp1(1,j)-pp2(1,j))+
+     .                 (p2(2,k)-p1(2,k))*(pp1(2,j)-pp2(2,j)))/
      .                (sqrt(( p2(1,k)- p1(1,k))**2+
      .                      ( p2(2,k)- p1(2,k))**2)*
-     .                 sqrt((pp2(1,k)-pp1(1,k))**2+
-     .                      (pp2(2,k)-pp1(2,k))**2)))-1.0_R8).le.wsrttol
+     .                 sqrt((pp2(1,j)-pp1(1,j))**2+
+     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.wsrttol
                   else
      .            if(abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
      .               abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
                     ic = 2
                     direction_same = abs(
-     .               (((p1(1,k)-p2(1,k))*(pp2(1,k)-pp1(1,k))+
-     .                 (p1(2,k)-p2(2,k))*(pp2(2,k)-pp1(2,k)))/
+     .               (((p1(1,k)-p2(1,k))*(pp2(1,j)-pp1(1,j))+
+     .                 (p1(2,k)-p2(2,k))*(pp2(2,j)-pp1(2,j)))/
      .                (sqrt(( p2(1,k)- p1(1,k))**2+
      .                      ( p2(2,k)- p1(2,k))**2)*
-     .                 sqrt((pp2(1,k)-pp1(1,k))**2+
-     .                      (pp2(2,k)-pp1(2,k))**2)))-1.0_R8).le.wsrttol
+     .                 sqrt((pp2(1,j)-pp1(1,j))**2+
+     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.wsrttol
                   else
      .            if(abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
      .               abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
                     ic = 1
                     direction_same = abs(
-     .               (((p1(1,k)-p2(1,k))*(pp1(1,k)-pp2(1,k))+
-     .                 (p1(2,k)-p2(2,k))*(pp1(2,k)-pp2(2,k)))/
+     .               (((p1(1,k)-p2(1,k))*(pp1(1,j)-pp2(1,j))+
+     .                 (p1(2,k)-p2(2,k))*(pp1(2,j)-pp2(2,j)))/
      .                (sqrt(( p2(1,k)- p1(1,k))**2+
      .                      ( p2(2,k)- p1(2,k))**2)*
-     .                 sqrt((pp2(1,k)-pp1(1,k))**2+
-     .                      (pp2(2,k)-pp1(2,k))**2)))-1.0_R8).le.wsrttol
+     .                 sqrt((pp2(1,j)-pp1(1,j))**2+
+     .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.wsrttol
+                  else
+                    direction_same = .false.
                   end if
                   if (direction_same) then
                     found = .true.
@@ -448,7 +450,7 @@ c*** No connection found
                   end if
                 end do
                 if (.not.found) write(*,*)
-     .             'Found no correspondence between DG wall # ', j ,
+     .             'Found no correspondence (1) between DG wall # ', j ,
      .             ' and Eirene wall list'
               else
                 k = 1
@@ -471,7 +473,7 @@ c*** No connection found
                   k = k + 1
                 end do
                 if (.not.found) write(*,*)
-     .           'Found no correspondence between DG wall # ', j ,
+     .           'Found no correspondence (2) between DG wall # ', j ,
      .           ' and Eirene wall list'
               end if
             end do
