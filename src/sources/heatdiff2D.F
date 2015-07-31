@@ -190,6 +190,7 @@ c       function of the position "x" at ndepth_nml grid points.
           aa5(iwall,i,-2) = aa5(iwall,i,-2) - t0
           aa5(iwall,i, 0) = aa5(iwall,i, 0) + t0
           aa5(iwall,i, 2) = 0.0_R8
+!! FIXME : Could also include radiative and evaporative cooling term here !!
           rhs(iwall,i) = rhs(iwall,i) - 
      .     100.0_R8*(Tp(iwall,i)-backplate_temp(bndx(iwall))) ! we assume the contact heat conductivity of 100 W.m-2.K-1
         else
@@ -207,6 +208,8 @@ c       function of the position "x" at ndepth_nml grid points.
 *    ..treat radiative cooling b.c.
       iwall = 1
       do i = 1, ndepth_nml-1
+!! FIXME: Careful about the area over which the radiative cooloing occurs, it should be here the side area, not the top area !!
+!! Can also include evaporative cooling term !!
         Qtot = -qrad(bndx(iwall),Tp(iwall,i),.false.)
         t0 = Kappa_perp(bndx(iwall),i,Tp(iwall,i)) /
      2   (0.5_R8*(y(iwall,i)+y(iwall+1,i))) 
@@ -233,6 +236,8 @@ c       function of the position "x" at ndepth_nml grid points.
 *    ..treat radiative cooling b.c.
       iwall = nw
       do i = 1, ndepth_nml-1
+!! FIXME: Careful about the area over which the radiative cooloing occurs, it should be here the side area, not the top area !!
+!! Can also include evaporative cooling term !!
         Qtot = -qrad(bndx(iwall),Tp(iwall,i),.false.)
         t0 = Kappa_perp(bndx(iwall),i,Tp(iwall,i)) /
      2   (0.5_R8*(y(iwall,i)+y(iwall-1,i)))
@@ -247,7 +252,10 @@ c       function of the position "x" at ndepth_nml grid points.
         do i = 1, ndepth_nml-1
           if (target_vol(bndx(iwall),i).gt.0.0_R8) then
             rho = mass_density(bndx(iwall),i) *
-     .            target_vol(bndx(iwall),i)
+!! FIXME : Need to test if proper quantity here is
+     .            (x(i+1)-x(i))
+! or may be :
+!    .             target_vol(bndx(iwall),i)
             t0 = rho * Cp(bndx(iwall),i,Tp(iwall,i)) / dt
             aa5(iwall, i, 0) = aa5(iwall,i, 0) + t0
             rhs(iwall, i) = rhs(iwall,i) + t0 * Tp(iwall,i)
