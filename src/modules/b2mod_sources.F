@@ -139,7 +139,7 @@
       allocate(ext_she(-1:nxd,-1:nyd))
       allocate(ext_shi(-1:nxd,-1:nyd))
       allocate(ext_sch(-1:nxd,-1:nyd))
-      allocate(snedt(-1:nxd,-1:nyd,0:3))
+      allocate(snedt(-1:nxd,-1:nyd,0:1))
       allocate(schdt(-1:nxd,-1:nyd,0:3))                        !srv 16.07.10 {
       allocate(shedt(-1:nxd,-1:nyd,0:3))
       allocate(shidt(-1:nxd,-1:nyd,0:3))
