@@ -161,6 +161,8 @@ c
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
+      CALL EIRENE_SETCON
+      CALL EIRENE_EXTRAB25_WNEUINIT
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
@@ -1105,7 +1107,7 @@ c
         call mds_put_double_rz('\TOP.SNAPSHOT:EMISS','ph.m^-3.s^-1',
      1   nx+2,ny+2,emiss(0:nx+1,0:ny+1,1,1),'')
         call mds_put_double_rzns('\TOP.SNAPSHOT:ENEUTRAD','W',nx+2,
-     1   ny+2,natmi,eneutrad(0:nx+1,0:ny+1,1:natmi,0),'')
+     1   ny+2,natmi,eneutrad(0:nx+1,0:ny+1,1:natmi,0),'TEXTAN','')
       endif
 #endif
 #ifdef B25_EIRENE
