@@ -278,15 +278,16 @@ c*** lwsrtwrk: a temporary array for sorting
 c*** nwsrtwrk: a counter for this array
 c*** wsrttol : a tolerance parameter for defining adjacent segments
 c
-      logical goup,placed(DEF_NLIM),found
-      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j
+      logical goup,placed(DEF_NLIM),found,direction_same
+      integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j,ic
       real (kind=R8) ::
      *   wsrttol
       parameter (wsrttol=2.0e-4_R8)
 c----------------------------------------------------------------------
 c
 cc%%%
-c      print *,'b2pwsrt',nwldprt
+      print *,'b2pwsrt',nwldprt
+      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
 c      do il=1,nwldprt
 c        print '(1x,20i4)',il,nwldlis(il),lwldstrt(il)
 c        print '(1x,20i4)',(lwldlis(ii,il),ii=1,nwldlis(il))
@@ -384,34 +385,95 @@ c*** No connection found
               write(*,*) 'The chain is broken: ',il
               nwldlis(il)=nwsrtwrk
             end if
-            write(*,*) 'DG 191 : ' , pp1(1,191),pp1(2,191),
-     .                               pp2(1,191),pp2(2,191)
-            write(*,*) 'Eir180 : ' ,  p1(1,180), p1(2,180),
-     .                                p2(1,180), p2(2,180)
             do ii=1,nwldlis(il)
               j = lwsrtwrk(ii)
-              k = 1
-              found = .false.
-              do while (.not.found .and. k.le.nlim)
-                if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .             abs(p1(2,k)-pp1(2,j)) .le. wsrttol  .and.
-     .             abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .             abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
-                  lwldlis(ii,il)=k
-                  found = .true.
-                else
-     .          if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .             abs(p1(2,k)-pp2(2,j)) .le. wsrttol  .and.
-     .             abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .             abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
-                  found = .true.
-                  lwldlis(ii,il)=-k
-                end if
-                k = k + 1
-              end do
-              if (.not.found) write(*,*)
-     .         'Found no correspondence between DG wall # ', j ,
-     .         ' and Eirene wall list'
+              if (j.eq.jedge(1).or.j.eq.jedge(2).or.
+     .            j.eq.jedge(3).or.j.eq.jedge(4)) then
+                k = 1
+                found = .false.
+                do while (.not.found .and. k.le.nlim)
+                  if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .               abs(p1(2,k)-pp1(2,j)) .le. wsrttol) then
+                    ic = 1
+                    direction_same = abs(
+     .               (((p2(1,k)-p1(1,k))*(pp2(1,k)-pp1(1,k))+
+     .                 (p2(2,k)-p1(2,k))*(pp2(2,k)-pp1(2,k)))/
+     .                (sqrt(( p2(1,k)- p1(1,k))**2+
+     .                      ( p2(2,k)- p1(2,k))**2)*
+     .                 sqrt((pp2(1,k)-pp1(1,k))**2+
+     .                      (pp2(2,k)-pp1(2,k))**2)))-1.0_R8).le.wsrttol
+                  else
+     .            if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .               abs(p1(2,k)-pp2(2,j)) .le. wsrttol) then
+                    ic = 2
+                    direction_same = abs(
+     .               (((p2(1,k)-p1(1,k))*(pp1(1,k)-pp2(1,k))+
+     .                 (p2(2,k)-p1(2,k))*(pp1(2,k)-pp2(2,k)))/
+     .                (sqrt(( p2(1,k)- p1(1,k))**2+
+     .                      ( p2(2,k)- p1(2,k))**2)*
+     .                 sqrt((pp2(1,k)-pp1(1,k))**2+
+     .                      (pp2(2,k)-pp1(2,k))**2)))-1.0_R8).le.wsrttol
+                  else
+     .            if(abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .               abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
+                    ic = 2
+                    direction_same = abs(
+     .               (((p1(1,k)-p2(1,k))*(pp2(1,k)-pp1(1,k))+
+     .                 (p1(2,k)-p2(2,k))*(pp2(2,k)-pp1(2,k)))/
+     .                (sqrt(( p2(1,k)- p1(1,k))**2+
+     .                      ( p2(2,k)- p1(2,k))**2)*
+     .                 sqrt((pp2(1,k)-pp1(1,k))**2+
+     .                      (pp2(2,k)-pp1(2,k))**2)))-1.0_R8).le.wsrttol
+                  else
+     .            if(abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .               abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
+                    ic = 1
+                    direction_same = abs(
+     .               (((p1(1,k)-p2(1,k))*(pp1(1,k)-pp2(1,k))+
+     .                 (p1(2,k)-p2(2,k))*(pp1(2,k)-pp2(2,k)))/
+     .                (sqrt(( p2(1,k)- p1(1,k))**2+
+     .                      ( p2(2,k)- p1(2,k))**2)*
+     .                 sqrt((pp2(1,k)-pp1(1,k))**2+
+     .                      (pp2(2,k)-pp1(2,k))**2)))-1.0_R8).le.wsrttol
+                  end if
+                  if (direction_same) then
+                    found = .true.
+                    if (ic.eq.1) then
+                      lwldlis(ii,il)=k
+                    else if (ic.eq.2) then
+                      lwldlis(ii,il)=-k
+                    end if
+                  else
+                    k = k + 1
+                  end if
+                end do
+                if (.not.found) write(*,*)
+     .             'Found no correspondence between DG wall # ', j ,
+     .             ' and Eirene wall list'
+              else
+                k = 1
+                found = .false.
+                do while (.not.found .and. k.le.nlim)
+                  if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .               abs(p1(2,k)-pp1(2,j)) .le. wsrttol  .and.
+     .               abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .               abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
+                    lwldlis(ii,il)=k
+                    found = .true.
+                  else
+     .            if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .               abs(p1(2,k)-pp2(2,j)) .le. wsrttol  .and.
+     .               abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .               abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
+                    found = .true.
+                    lwldlis(ii,il)=-k
+                  end if
+                  k = k + 1
+                end do
+                if (.not.found) write(*,*)
+     .           'Found no correspondence between DG wall # ', j ,
+     .           ' and Eirene wall list'
+              end if
             end do
             print '(a,i2/(1x,20i4))','il =',il,
      ,                                (lwldlis(ii,il),ii=1,nwldlis(il))
