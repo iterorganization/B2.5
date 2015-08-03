@@ -184,7 +184,7 @@ cxpb            ctaui = ctaup*sqrt(2.0_R8)/lnlam/rz2(ix,iy,is)  ! lower precisio
           else if (model.eq.3) then ! SOLPS5.0 model : without 4/3     !srv 16.06.08 { see b2trcl
             hci(ix,iy,0) = hci(ix,iy,0)+
      &       2.5_R8*(ti(ix,iy)/(mp*am(is)))*fki*tnp
-            vsa(ix,iy,0,is) = 1.357_R8*ti(ix,iy)*tnp                   !srv 16.06.08 }
+            vsa(ix,iy,0,is) = phm0*eta*sqrt(2.0_R8)*ti(ix,iy)*tnp      !srv 16.06.08 }
           endif
          enddo
         enddo

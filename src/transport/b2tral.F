@@ -187,7 +187,11 @@
 !      if (addvis1.ne.0.0_R8.and.model.eq.3) then 
 !      if (addvis1.ne.0.0_R8) then 
       if (model.eq.3) then                                             !srv 20.10.09
-       call b2sscal (n2, 4.0e0_R8/3.0e0_R8, cvsahz(-1,-1,0,ismain), 1) !srv 23.11.10
+        do is = 0, ns-1
+          if (.not.is_neutral(is)) then
+            call b2sscal (n2, 4.0e0_R8/3.0e0_R8, cvsahz(-1,-1,0,is), 1) !for all ions
+          end if
+        end do
       endif                                                            !srv 31.07.02 }
 
 *   ..compute terms from diamagnetic parts                             !srv 13.10.06 {
