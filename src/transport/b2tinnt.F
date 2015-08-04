@@ -58,7 +58,10 @@
      &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny), csigia(-1:nx,-1:ny,0:1),  !srv 15.02.11
      &   sigi(-1:nx,-1:ny), csigi(-1:nx,-1:ny,0:1) !, dab2_(-1:nx,-1:ny)
 *   ..procedures
+      real (kind=R8) ::
+     *   hy1                                                         !srv 07.07.14
       external subini, subend, ipgeti, xertst
+      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                             !srv 07.07.14
 *   ..initialisation
       data use_eirene/0/, area_fix/3/
 *-----------------------------------------------------------------------
@@ -241,9 +244,9 @@
      &         )/(qe*rza(ix,iy,ismain))
      &                                                      )
      &        - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*      !srv 11.01.13
-     &           (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
+     &           (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &       - csigia(ix,iy,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
-!     &           (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
+!     &           (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 	      endif
 	    enddo
 	  enddo
@@ -260,9 +263,9 @@
      &          (nab(ix,iy,ismain)*qe*rza(ix,iy,ismain))
      &                                                      )
      &        - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*      !srv 11.01.13
-     &           (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
+     &           (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &        - csigia(ix,iy,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
-!     &           (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
+!     &           (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 	      endif
 	    enddo
 	  enddo
@@ -380,7 +383,7 @@
      &          tib(ix,iy)*(log(na(ix,iy,is))-
      &                      log(na(bottomix(ix,iy),bottomiy(ix,iy),is)))
      &         )/(qe*rza(ix,iy,is)) - wbbv(ix,iy,2)*vntrb(ix,iy)*        !srv 11.01.13
-     &           (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
+     &           (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
 	              endif
 	            enddo
 	          enddo
@@ -397,7 +400,7 @@
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &          (nab(ix,iy,is)*qe*rza(ix,iy,is))
      &        - wbbv(ix,iy,2)*vntrb(ix,iy)*                             !srv 11.01.13
-     &           (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
+     &           (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
 	              endif
 	            enddo
 	          enddo
