@@ -244,9 +244,9 @@
      &         )/(qe*rza(ix,iy,ismain))
      &                                                      )
      &        - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*      !srv 11.01.13
-     &           (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
+     &         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &       - csigia(ix,iy,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
-!     &           (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
+!     &        (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 	      endif
 	    enddo
 	  enddo
@@ -263,9 +263,9 @@
      &          (nab(ix,iy,ismain)*qe*rza(ix,iy,ismain))
      &                                                      )
      &        - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*      !srv 11.01.13
-     &           (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
+     &         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 !     &        - csigia(ix,iy,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
-!     &           (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
+!     &         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
 	      endif
 	    enddo
 	  enddo
@@ -383,7 +383,7 @@
      &          tib(ix,iy)*(log(na(ix,iy,is))-
      &                      log(na(bottomix(ix,iy),bottomiy(ix,iy),is)))
      &         )/(qe*rza(ix,iy,is)) - wbbv(ix,iy,2)*vntrb(ix,iy)*        !srv 11.01.13
-     &           (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
+     &         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
 	              endif
 	            enddo
 	          enddo
@@ -400,7 +400,7 @@
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &          (nab(ix,iy,is)*qe*rza(ix,iy,is))
      &        - wbbv(ix,iy,2)*vntrb(ix,iy)*                             !srv 11.01.13
-     &           (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
+     &         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8)
 	              endif
 	            enddo
 	          enddo
