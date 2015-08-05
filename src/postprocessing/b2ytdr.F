@@ -439,7 +439,7 @@ c 2002-09-11: logic revised
       external subini, subend, xertst, xerrab, cfruch, cfrure, cfwuin,
      &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk, convert_position,
      &  len_of_digits, open_file, get_jsep, conformal_convert,
-     &  convert_eirene, b2idez, streql, get_nxt, b2yt_nxt
+     &  convert_eirene, b2idez, streql, get_nxt, b2yt_nxt, b2yt_ngread
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm, cfverr
       external E01BEF, E01BFF
