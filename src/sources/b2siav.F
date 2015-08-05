@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2siav (nx, ny, ns, isb, modvis, mb, hx, hy, hz, vol, 
-     & bb, ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam, chci,     !srv 01.07.09
+     & qz, bb, ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam, chci,  !srv 01.07.09
      & cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, wrk0, wrk1, wrk2) !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05 
       use b2mod_types
       use b2mod_constants
@@ -14,7 +14,8 @@
       integer nx, ny, ns, isb, modvis
       real (kind=R8) ::
      & mb, hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), 
-     & vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), lnlam(-1:nx,-1:ny),     !srv 01.07.09
+     & vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     1 bb(-1:nx,-1:ny,0:3), lnlam(-1:nx,-1:ny),                       !srv 01.07.09
      2 ub(-1:nx,-1:ny), wbdia(-1:nx,-1:ny,0:1), vbecrb(-1:nx,-1:ny,0:1),
      & te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
      & po(-1:nx,-1:ny), ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
@@ -63,6 +64,8 @@
       data ncall/0/
 *   ..procedures
       intrinsic abs, sqrt
+      real (kind=R8) :: hy1
+      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *-----------------------------------------------------------------------
 *.computation
 
@@ -105,7 +108,7 @@
 	        tt1(iy) = tt1(iy) +vol(ix,iy)
 	        conn(iy) = conn(iy)+hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))   !srv 11.01.13
                 tt2(iy) = tt2(iy) +hx(ix,iy)
-	        tt3(iy) = tt3(iy) +vol(ix,iy)/hy(ix,iy)
+	        tt3(iy) = tt3(iy) +vol(ix,iy)/hy1(ix,iy)
 	      endif
 	    enddo
 	  enddo
@@ -129,8 +132,8 @@
      &             *(ni(ix,iy)*ti(ix,iy)/qe)*
      &              (ti(topix(ix,iy),topiy(ix,iy))
      &              -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &              (hy(ix,iy)+0.5e0_R8*hy(topix(ix,iy),topiy(ix,iy))+
-     &               0.5e0_R8*hy(bottomix(ix,iy),bottomiy(ix,iy)))    
+     &              (hy1(ix,iy)+0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
+     &               0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))    
 	        endif
 	      enddo
 	    enddo
@@ -180,8 +183,8 @@
      &             *(ni(ix,iy)*ti(ix,iy)/qe)*
      &              (ti(topix(ix,iy),topiy(ix,iy))
      &              -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &              (hy(ix,iy)+0.5e0_R8*hy(topix(ix,iy),topiy(ix,iy))+
-     &              0.5e0_R8*hy(bottomix(ix,iy),bottomiy(ix,iy))) 
+     &              (hy1(ix,iy)+0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
+     &              0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy))) 
      	        endif                                                      
 	      enddo                                                       
 	    enddo 

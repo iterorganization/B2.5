@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2npmo (nx, ny, ns, itcnt, solving, rxf, 
-     &  vol, hx, hy, hz, bb, pbs, pbshz, 
+     &  qz, vol, hx, hy, hz, bb, pbs, pbshz, 
      &  lnlam, na, te, ti, po, fna_fcor,                             !srv 09.01.01 01.07.09
      &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, smo, smq, cthe, cthi, chci, 
      &  ua, smof, wadia, vaecrb, resmo, resmt, corua, corut,         !srv 10.11.02
@@ -25,6 +25,7 @@
       real (kind=R8) ::
      *  rxf, 
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),           !srv 09.01.01
+     &  qz(-1:nx,-1:ny,0:1),
      &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
      &  pbshz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny),                  !srv 01.07.09
      &  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
@@ -240,7 +241,7 @@
 
 *    ..compute additional viscosity term
         call b2siav (nx, ny, ns, is, modvis, am(is)*mp, hx, hy, hz, vol, 
-     &   bb, ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),  
+     &   qz, bb, ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),  
      &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,     !srv 01.07.09
      &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is), 
      &   cvsahz_cl(-1,-1,0,is), smbvh, smbvv, wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05

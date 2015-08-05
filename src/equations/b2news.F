@@ -381,22 +381,22 @@
 *     ..include contributions due to timestep                            !xpb
         call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,           !xpb !srv 09.01.01 01.07.08
      &    vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
-     &    na, ua, te, ti, ne, ni, kinrgy,                         !srv 16.07.10
+     &    na, ua, te, ti, ne, ni, kinrgy,                                !srv 16.07.10
      &    sna, smo, she, shi, sch, sne, .false.)                         !xpb
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,    !xpb !srv 01.07.08
-     &    ni, sna, smo, she, shi, sch, sne)                                   !xpb
+     &    ni, sna, smo, she, shi, sch, sne)                              !xpb
 cxpb
 *   ..iterate on parallel momentum balance
         if(coriolis.eq.0) then                                           !srv 19.10.08 {
          call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,  
-     &    vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                        !srv 01.07.09
+     &    qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                    !srv 01.07.09
      &    na, te, ti, po, fna, cvsahz, cvsa, cvsa_cl, cvsahz_cl,         !srv 02.07.08
      &    smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
      &    resmt, corua, corut, pcca, pccm, ier0)
         else
          call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,  
-     &    vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                        !srv 01.07.09
+     &    qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                    !srv 01.07.09
      &    na, te, ti, po, fna_fcor, cvsahz, cvsa, cvsa_cl, cvsahz_cl,    !srv 02.07.08
      &    smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
      &    resmt, corua, corut, pcca, pccm, ier0)

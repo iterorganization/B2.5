@@ -433,7 +433,7 @@
 *  BC_LIST_X - integer array of length (2*(NXD+NYD),NBC). Contains the 
 *     X-coordinate of the cells where boundaries conditions are applied. 
 *     Defaults to -2.
-*  BC_LIST_Y - integer array of length (2*(NXD+NYD),NSTRAI). Contains the 
+*  BC_LIST_Y - integer array of length (2*(NXD+NYD),NBC). Contains the 
 *     Y-coordinate of the cells where boundaries conditions are applied. 
 *     Defaults to -2.
 *  BCCON - integer array, length (0:NS-1,NBC), specifying
