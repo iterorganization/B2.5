@@ -333,16 +333,16 @@ csw 13mar2012
 
        mintopcut = minval(topcut(1:nncut))                           
 
-       do iy = 0,mintopcut    ! for inner surfaces and first open surface                                                                                             
+       do iy = -1,mintopcut    ! for inner surfaces and first open surface                                                                                             
         do ix=0,nx                                                  
-         if(mod(region(bottomix(ix,iy),bottomiy(ix,iy),0),4).eq.1) then                         
+         if(mod(region(ix,iy,0),4).eq.1) then                         
           tt0(iy) = tt0(iy) +hx(ix,iy)
           tt1(iy) = tt1(iy) +vol(ix,iy)/hy(ix,iy)
          endif
         enddo
        enddo
 
-       do iy = 0,mintopcut                                                       
+       do iy = -1,mintopcut                                                       
         eps1(iy) = tt0(iy)**2/tt1(iy)
        enddo
 
@@ -353,7 +353,7 @@ csw 13mar2012
        t1 = (4.0_R8*pi*eps0/qe)/qe
        t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
      
-       do iy = 0,mintopcut                                                        
+       do iy = -1,mintopcut                                                        
         do ix=0,nx
          if(mod(region(ix,iy,0),4).eq.1) then                       
           tau(ix,iy) = t2/lnlam(ix,iy)*te(ix,iy)/ev
@@ -379,7 +379,7 @@ csw 13mar2012
          endif    
         enddo
        enddo                                                             !lk 19.09.07 } 
-       do iy= 0,mintopcut
+       do iy= -1,mintopcut
         do ix=0,nx
          if(mod(region(ix,iy,0),4).eq.1) then                       !srv 26.11.02
           do is=0,ns-1
