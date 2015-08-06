@@ -23,7 +23,7 @@ LINK_MOD =
 FC = ftn
 
 ifdef SOLPS_DEBUG
-FCOPTS = -mp=nonuma  -g -C 
+FCOPTS = -mp=nonuma -g -C 
 else
 FCOPTS = -mp=nonuma -O3
 endif

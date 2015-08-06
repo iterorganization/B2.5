@@ -27,13 +27,13 @@ endif
 
 ifdef SOLPS_DEBUG
 ifdef USE_MPI
-FCOPTS = -g -Mr8 -Kieee
+FCOPTS = -g -Kieee
 else
 FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff -Kieee
 endif
 else
 ifdef USE_MPI
-FCOPTS = -O2 -Mr8 -Kieee
+FCOPTS = -O2 -Kieee
 else
 FCOPTS = -O2 -Mbackslash -Kieee
 FCOPTS = -fast -Mbackslash -Kieee

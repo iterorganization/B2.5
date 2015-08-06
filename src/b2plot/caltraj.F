@@ -1228,17 +1228,16 @@ c
 #define ranset g05cbf
 
       function ranf (dummy)                       !srv 17.12.07
-      Use b2mod_types
+      use b2mod_types
       implicit none
       real(kind=R8) :: ra, ranf, dummy
-      Real(kind=R8),External :: local_h1rn
+      real(kind=R8), external :: local_h1rn
       ra=local_h1rn(dummy)
       ranf=ra
       return
       end function ranf
 
       subroutine ranset (iseed)
-      Use b2mod_types
       implicit none
       integer :: iseed, iseed1, iseed2
       iseed1=iseed

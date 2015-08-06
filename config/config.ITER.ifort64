@@ -24,13 +24,13 @@ endif
 
 ifdef SOLPS_DEBUG
 ifdef USE_MPI
-FCOPTS     = -g -C -traceback -r8 ${MPI_CPP}
+FCOPTS     = -g -C -traceback ${MPI_CPP}
 else
 FCOPTS     = -g -C -debug all -traceback -check all
 endif
 else
 ifdef USE_MPI
-FCOPTS     = -O2 -vec_report0 -r8 ${MPI_CPP}
+FCOPTS     = -O2 -vec_report0 ${MPI_CPP}
 else
 FCOPTS     = -O2 -vec_report0
 endif
