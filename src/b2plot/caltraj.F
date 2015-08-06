@@ -1228,14 +1228,19 @@ c
 #define ranset g05cbf
 
       function ranf (dummy)                       !srv 17.12.07
-c      implicit double precision (a-h,o-z)
+      Use b2mod_types
+      implicit none
+      real(kind=R8) :: ra, ranf, dummy
+      Real(kind=R8),External :: local_h1rn
       ra=local_h1rn(dummy)
       ranf=ra
       return
       end function ranf
 
       subroutine ranset (iseed)
-c      implicit double precision (a-h,o-z)
+      Use b2mod_types
+      implicit none
+      integer :: iseed, iseed1, iseed2
       iseed1=iseed
       iseed2=iseed+1
       call local_h1rnin(iseed1,iseed2)
@@ -1245,6 +1250,7 @@ c      implicit double precision (a-h,o-z)
       FUNCTION LOCAL_H1RN(DUMMY)
       use b2mod_types
       use b2mod_b2plot_debug
+      implicit none
 *
 *#**********************************************************************
 *# RANDOM NUMBER GENERATOR AS ADVOCATED BY F. JAMES FROM PROPOSAL OF   *
@@ -1267,6 +1273,8 @@ c      implicit double precision (a-h,o-z)
 *#**********************************************************************
 *
 c      IMPLICIT REAL*8 (A-H,O-Z)
+      REAL(kind=R8) :: dummy,C,CD,CM,U,LOCAL_H1RN
+      INTEGER :: I,J,ISEED1,ISEED2
       CHARACTER*16    FLAG,CHECK
       COMMON /RASET1/ U(97),C,CD,CM,I,J
       COMMON /RASET2/ FLAG
@@ -1308,8 +1316,9 @@ c-dpc split logical and data
       SUBROUTINE LOCAL_H1RNIN(IJ,KL)
       use b2mod_types
       use b2mod_b2plot_debug
-*
-c      IMPLICIT REAL*8 (A-H,O-Z)
+      implicit none
+      INTEGER :: IJ,KL,I,II,J,JJ,IP,JP,K,L,M
+      REAL(kind=R8) :: C,CD,CM,T,U,S
       CHARACTER*16    FLAG
       COMMON /RASET1/ U(97),C,CD,CM,IP,JP
       COMMON /RASET2/ FLAG
