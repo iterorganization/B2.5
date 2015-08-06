@@ -10,6 +10,11 @@ ifdef USE_EIRENE
     $(error SOLPSTOP not defined, but trying to compile with Eirene)
   endif
 endif
+ifdef SOLPS_MPI
+  ifndef USE_MPI
+	  USE_MPI = -DUSE_MPI
+  endif
+endif
 
 SRCB2   = ${PWD}
 SRCDIR  = ${SRCB2}/src
