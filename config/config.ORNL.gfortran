@@ -31,15 +31,15 @@ endif
 
 ifdef SOLPS_DEBUG
 ifdef USE_MPI
-FCOPTS = -g -fbounds-check -fbacktrace -freal-4-real-8 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
+FCOPTS = -g -fbounds-check -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
 else
-FCOPTS = -g -fbounds-check -fbacktrace -freal-4-real-8 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
+FCOPTS = -g -fbounds-check -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
 endif
 else
 ifdef USE_MPI
-FCOPTS = -O2 -freal-4-real-8 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
+FCOPTS = -O2 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
 else
-FCOPTS = -O2 -freal-4-real-8 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
+FCOPTS = -O2 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
 endif
 endif
 
