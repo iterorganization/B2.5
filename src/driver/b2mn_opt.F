@@ -134,11 +134,11 @@
       external prgini, prgend, xerset, xertst, cfopen, cfruin
       external b2mndr
 *   ..initialise input/output unit numbers
-      data ninp/50,51,52,53,54,55,56/                               !srv 02.05.07
+      data ninp/50,51,52,53,54,55,56/                                !srv 02.05.07
 #ifdef JET
       data nout/60,61,62,63,64,65,66,67,68,69/
 #else
-      data nout/60,61,62,63,64,65,66,67,58/
+      data nout/60,61,62,63,64,65,66,67,68/
 #endif
 *-----------------------------------------------------------------------
 *.computation
@@ -150,7 +150,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 *   ..program start-up calls
       call prgini ('b2mn_opt')
-	cpu_s = x05baf()
+      cpu_s = x05baf()
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
@@ -247,7 +247,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       stop
 
 *-----------------------------------------------------------------------
-*.end b2mn
+*.end b2mn_opt
 
       end program b2mn_opt
 

@@ -500,7 +500,8 @@
      *   nfev,w(mp5n+1), number_exp, iw, w(npar_opt+1), w(2*npar_opt+1),
      *   w(3*npar_opt+1), w(4*npar_opt+1), w(5*npar_opt+1))
        if (info .eq. 8) info = 4
-       if(info.eq.0) write(71,"(a)")'INFO = 0:improper input parameters'            
+       if(info.eq.0) write(71,"(2a)")'INFO = 0: ',
+     &              'improper input parameters'
        if(info.eq.1) write(71,"(3a)") 'INFO = 1: algorithm estimates ',
      &              'that the relative error between x and',
      &              ' the solution is at most tol'           
@@ -541,7 +542,7 @@
        deallocate (iw, w, FVEC )
 
       case('study')
-       write(71,"(' Analize')")
+       write(71,"(' Analyze')")
        allocate(hess(npar_opt,npar_opt), grad(npar_opt))
        allocate(eigval(npar_opt), eigvec(npar_opt,npar_opt))
        allocate(wrk1(npar_opt), wrk2(npar_opt))
