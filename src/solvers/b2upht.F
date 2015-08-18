@@ -122,7 +122,9 @@
      &                 ne(leftix(ix,iy),leftiy(ix,iy))*dte-
      &                 ni(leftix(ix,iy),leftiy(ix,iy),0)*dti
         if (solvereg(ireg)) te(ix,iy) = max(1.0e-5_R8*ev,te(ix,iy)+dte)	 !xpb
-        if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1)
+        if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1.and.
+     &      leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
      >                      po(ix,iy) = po(ix,iy)+dte/qe
         if (solvireg(ireg)) ti(ix,iy) = max(1.0e-5_R8*ev,ti(ix,iy)+dti)	 !xpb
        enddo
@@ -141,7 +143,9 @@
           t0 = pcm0*pccm0(ix,iy)*vol(ix,iy)*
      &     wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
          elseif(leftix(ix,iy).eq.-2) then
-          t0 = 0.0_R8
+          t0 = pcm0*pccm0(ix,iy)*vol(ix,iy)*
+     &     wrk0(rightix(ix,iy),rightiy(ix,iy))/(vol(ix,iy)+
+     &       vol(rightix(ix,iy),rightiy(ix,iy)))
          endif
          do is = 0, ns-1
           if (solvmreg(is,ireg)) ua(ix,iy,is) = ua(ix,iy,is)-t0
@@ -158,4 +162,4 @@
 *-----------------------------------------------------------------------
 *.end b2upht
 
-      end
+      end subroutine b2upht
