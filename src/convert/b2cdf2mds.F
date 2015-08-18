@@ -24,17 +24,18 @@
      1 tdi*(128), mds_signal_prefix*(8), mds_signal_suffix*(8)
 #endif
 
-      character*4 :: ds_filename(10)
-      character*24 :: ds_mds(10)
+      character*4 :: ds_filename(11)
+      character*24 :: ds_mds(11)
       data ds_filename /
      * 'dsl','dsi','dsa','dsr','dstl','dstr',
-     1 'dsL','dsR','dsTL','dsTR'/
+     1 'dsL','dsR','dsTL','dsTR','dsp'/
       data ds_mds/
      1 '\TOP.TIMEDEP.TARGET1:DS', '\TOP.TIMEDEP.IMP:DS',
      1 '\TOP.TIMEDEP.OMP:DS',     '\TOP.TIMEDEP.TARGET4:DS',
      1 '\TOP.TIMEDEP.TARGET2:DS', '\TOP.TIMEDEP.TARGET3:DS',
      1 '\TOP.TIMEDEP.TARGET1:DA', '\TOP.TIMEDEP.TARGET4:DA',
-     1 '\TOP.TIMEDEP.TARGET2:DA', '\TOP.TIMEDEP.TARGET3:DA'/
+     1 '\TOP.TIMEDEP.TARGET2:DA', '\TOP.TIMEDEP.TARGET3:DA',
+     1 '\TOP.TIMEDEP.INPUT:DS'/
 #ifndef NO_CDF
       data cdf_suffix /'l','i','a','r','tl','tr'/
       data mds_zone /'TARGET1','IMP','OMP','TARGET4',
@@ -48,7 +49,7 @@
 
 c first handle x-coordinate of profiles (and areas)
       len_da=0
-      do i=1,10
+      do i=1,11
         inquire(file=trim(ds_filename(i)),exist=exists)
         if(exists) then
           open(1,file=trim(ds_filename(i)),status='old')

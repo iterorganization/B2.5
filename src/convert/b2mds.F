@@ -753,7 +753,8 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 c
       dbsolpsversion=b2fplasma_version
       call mds_put_string('\TOP.IDENT:SOLPSVERSION',dbsolpsversion)
-c change this when MDS+ output format/data is amended/augmented
+
+c change dbversion below when MDS+ output format/data is amended/augmented
 c 1: fht uses fhe and fhi instead of fhet and fhit
 c 2: added fna{xy}_{35}2
 c 3: fixed definition of \top.ident.impsep:kyi0 and \top.ident.ompsep:kyi0
@@ -775,8 +776,10 @@ c     \TOP.TALLIES:fhjxreg \TOP.TALLIES:fhjyreg
 c 17: corrected cr and cz locations for inner and outer separatrix midplanes
 c 18: introduced new quantities from SOLPS_ITER
 c     ENEUTRAD now with third dimension for atomic species
+c 19: added GIT version
+c 20: output na0, ua0, ne0, te0, ti0, po0
 
-      dbversion=18
+      dbversion=20
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -888,10 +891,18 @@ c
      1 '\TOP.SNAPSHOT.GRID:IMAPY',nbnd,imapy)
 
       call mds_put_double_rz('\TOP.SNAPSHOT:TE','eV',nx+2,ny+2,te/qe,'')
+      call mds_put_double_rz('\TOP.SNAPSHOT:TE0','eV',
+     &     nx+2,ny+2,te0/qe,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:TI','eV',nx+2,ny+2,ti/qe,'')
+      call mds_put_double_rz('\TOP.SNAPSHOT:TI0','eV',
+     &     nx+2,ny+2,ti0/qe,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:NE','/m^3',nx+2,ny+2,ne,'')
+      call mds_put_double_rz('\TOP.SNAPSHOT:NE0','/m^3',
+     &     nx+2,ny+2,ne0,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:PR','Pa',nx+2,ny+2,pr,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:PO','V',nx+2,ny+2,po,'')
+      call mds_put_double_rz('\TOP.SNAPSHOT:PO0','V',
+     &     nx+2,ny+2,po0,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:VOL','m^3',nx+2,ny+2,vol,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HX','m',nx+2,ny+2,hx,'')
       call mds_put_double_rz('\TOP.SNAPSHOT:HY','m',nx+2,ny+2,hy,'')
@@ -912,8 +923,12 @@ c
      1 nx+2,ny+2,ns,rpi,'TEXTPL','')
       call mds_put_double_rzns('\TOP.SNAPSHOT:NA','/m^3',
      1 nx+2,ny+2,ns,na,'TEXTPL','')
+      call mds_put_double_rzns('\TOP.SNAPSHOT:NA0','/m^3',
+     1 nx+2,ny+2,ns,na0,'TEXTPL','')
       call mds_put_double_rzns('\TOP.SNAPSHOT:UA','m/s',
      1 nx+2,ny+2,ns,ua,'TEXTPL','')
+      call mds_put_double_rzns('\TOP.SNAPSHOT:UA0','m/s',
+     1 nx+2,ny+2,ns,ua0,'TEXTPL','')
       call mds_put_double_rzdns('\TOP.SNAPSHOT:UADIA','m/s',
      1 nx+2,ny+2,2,ns,uadia,'TEXTDRIFT','TEXTPL','')
       call mds_put_double_rzns('\TOP.SNAPSHOT:KINRGY','J',

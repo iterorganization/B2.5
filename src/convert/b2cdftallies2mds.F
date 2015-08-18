@@ -10,9 +10,16 @@
 #ifndef NO_CDF
       real (kind=R8), allocatable  :: data1(:),
      1 data2(:,:), data2T(:,:), data3(:,:,:), data3T(:,:,:)
+      character, allocatable :: data2c(:,:)
+#ifdef F2003
+      character(len=:), allocatable :: str1(:)
+#else
+      integer, parameter :: strmax = 1024
+      character(len=strmax+1), allocatable :: str1(:)
+#endif
       integer :: i,ivar,idim,iatt,i1,i2,i3
       integer :: status, 
-     1 ncid, ndims, nvars, natts, unlimid, xtype,
+     1 ncid, ndims, nvars, natts, unlimid, xtypev, xtypeu,
      2 dimids(NF_MAX_VAR_DIMS), length,
      3 dimsize(NF_MAX_VAR_DIMS), underscore_pos
       character*(NF_MAX_NAME) ::
@@ -36,10 +43,10 @@ c access the b2tallies.nc file
 
 c loop over all variables in the file
       do ivar=1,nvars
-        status=nf_inq_var(ncid,ivar,varname,xtype,
+        status=nf_inq_var(ncid,ivar,varname,xtypev,
      1   ndims,dimids,natts)
         call check_cdf_status(status)
-        write(*,*) 'variable: ',trim(varname),' has type ',xtype,
+        write(*,*) 'variable: ',trim(varname),' has type ',xtypev,
      1   ' and ',ndims,' dimensions'
         do idim=1,ndims
           status=nf_inq_dim(ncid,dimids(idim),dimname(idim),
@@ -52,10 +59,10 @@ c loop over all variables in the file
         do iatt=1,natts
           status=nf_inq_attname(ncid,ivar,iatt,attname)
           call check_cdf_status(status)
-          status=nf_inq_att(ncid,ivar,attname,xtype,length)
+          status=nf_inq_att(ncid,ivar,attname,xtypeu,length)
           call check_cdf_status(status)
           write(*,*) '    attribute: ',trim(attname),
-     1     ' of type ',xtype,' and length ',length
+     1     ' of type ',xtypeu,' and length ',length
           if(attname.eq.'units') then
             if(length.le.24) then
               status=nf_get_att_text(ncid,ivar,attname,units)
@@ -175,6 +182,34 @@ c first deal with the time vector
           enddo
           write(*,*) 'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
+	  if(xtypev.eq.nf_char) then
+! this is 1 1d array of text strings and not time dependent
+	    allocate(data2c(dimsize(1),dimsize(2)))
+	    status=nf_get_var_text(ncid,ivar,data2c)
+	    call check_cdf_status(status)
+#ifdef F2003            
+	    allocate(character(len=dimsize(1)+1) :: str1(dimsize(2)))
+#else
+            call xertst(dimsize(1).le.strmax,
+     &           'increase size of strmax in b2cdftallies2mds')
+            allocate(str1(dimsize(2)))
+#endif
+	    do i2=1, dimsize(2)
+	      str1(i2)=''
+	      do i1=1,dimsize(1)
+		str1(i2)(i1:i1) = data2c(i1,i2)
+	      enddo
+	      write(*,*) trim(str1(i2))
+	      str1(i2) = trim(str1(i2)) // char(0)
+	    enddo
+	    status=mdsput2(
+     *	     trim(mds_signal_name)//char(0),
+     *	     '$'//char(0),
+     *	     descr2(idtype_cstring,dimsize(2),0,len(str1(1))),str1,0)
+	    write(*,*) 'mdsput2'
+	    call mds_err_msg(status)
+	    deallocate(data2c,str1)
+	  elseif(xtypev.eq.nf_double) then
           allocate(data2(dimsize(1),dimsize(2)))
           status=nf_get_var_double(ncid,ivar,data2)
           call check_cdf_status(status)
@@ -210,6 +245,9 @@ c first deal with the time vector
             deallocate(data2T)
           endif
           deallocate(data2)
+	  else
+	    write(*,*) "Dim 2 case for type ",xtypev," not coded yet"
+	  endif
         else
           write(*,*) 'Case for ',ndims,' dimensions not yet coded'
         endif

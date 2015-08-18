@@ -27,7 +27,8 @@
      &     db_version_plasmastate='NOT_SET',
      &     db_version_b2fplasma='NOT_SET',
      &     dbgit='None'
-      character*(255) :: dbspecies='NOT_SET', dbdirectory='NOT_SET',
+      character*(511) :: dbspecies='NOT_SET'
+      character*(255) :: dbdirectory='NOT_SET',
      &     dbcomments='NOT_SET', dbgeometry='NOT_SET', 
      &     dbphysics='NOT_SET', dbmain='NOT_SET', dbsolpstop='NOT_SET'
       character*8192 dbline
