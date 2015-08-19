@@ -6,6 +6,7 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_anomalous_transport
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -15,6 +16,8 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &     fch_p(-1:nx,-1:ny,0:1)
+*   ..local variables
+      real (kind=R8), save :: fch_anomalous = 1.0e0_R8
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -54,6 +57,7 @@
        call ipgeti ('b2tfhe_no_current',no_current)                      !srv 27.02.13
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
+       call ipgetr ('b2tfhe_anomalous', fch_anomalous)                   !srv
       endif                                                              !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -90,7 +94,8 @@
 !     &    (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy))))        !srv 
 !     &   )/qe                                                          !srv .98 
 	      tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-	      fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex           !srv 03.02.03
+              fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-
+     &      (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*tex 
 	    endif                                                         !srv 26.11.02
 	  enddo
         enddo
