@@ -3716,6 +3716,7 @@ Cxpb then rewrite the entire block
             NGENM(IMOL) = 0
             NHSTM(IMOL) = 0
           ENDIF
+          IF (ISRTM(IMOL).LT.0) ISRTM(IMOL) = NMOLI+1
           DO 432 K=1,NRCM(IMOL)
             IF (ISRSM(IMOL).LT.3) THEN
               READ (IUNIN,6666) idum(0:6) ! IREACM(IMOL,K),IBULKM(IMOL,K),
