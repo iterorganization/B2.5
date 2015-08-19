@@ -205,7 +205,7 @@ c 2002-09-11: logic revised
       integer non_commensurate
       integer is0(0:100), is1(0:ns-1)
       integer is1beginrange, is1endrange, iatmbeginrange, iatmendrange
-      integer, allocatable :: iatm1(:), ipls1(:)
+      integer, allocatable :: iatm1(:), ipls1(:), istra1(:)
       integer, allocatable :: istmp(:), ns1data(:,:,:), nx1data(:,:,:)
       integer, allocatable :: mlcmp1(:,:), ifl1(:), ispecies1(:)
       integer, allocatable :: b2espcr1(:), eb2spcr1(:), eb2ibcr(:)
@@ -818,13 +818,7 @@ c 2002-09-11: logic revised
       allocate(ifl1(ns1))
       allocate(cftmp(0:nsm-1))
       allocate(istmp(0:nsm-1))
-      allocate(recyc1(0:ns1-1,nstra))
-      allocate(erecyc1(0:ns1-1,nstra))
-      allocate(rcion1(0:ns1-1,nstra))
-      allocate(phys_sput1(0:ns1-1,nstra))
-      allocate(chem_sput1(0:ns1-1,nstra))
       allocate(iatm1(natm))
-      allocate(lstrascl1(nstra,natm))
       allocate(ipls1(npls))
       bundle_frac=0.0_R8
       bundle_contr=0.0_R8
@@ -1219,10 +1213,11 @@ c 2002-09-11: logic revised
       enddo
     5 continue
       read (ninp(2),'(a)',end=6,err=91) line
-      if (line(1:1).ne.'*') then
+      if (line(1:1).ne.'*' .and. .not.streql(line,' ')) then
         read (line,*) cnamip, cvalip
-      else
-        read (line(2:132),*) cnamip, cvalip
+      else if (line(1:1).eq.'*') then
+        i = index(ligne,'''')
+        if (i.gt.0) read (line(i:132),*) cnamip, cvalip
       endif
 *   ..integer switches
       todo = .true.
@@ -6897,11 +6892,26 @@ cxpb  Convert fort.44 file if needed
         ib1 = 0
         nstrai1 = 0
         nstrat1 = 0
+        allocate(istra1(nstrat))
         do ib = 1, nstrat
          if (savestratum(ib) .or. crcstra(ib).eq.'T') then
           ib1 = ib1 + 1
+          istra1(ib) = ib1
           nstrat1 = nstrat1 + 1
           if (crcstra(ib).ne.'T') nstrai1 = nstrai1 + 1
+         else
+          istra1(ib) = 0
+         end if
+        end do
+        allocate(recyc1(0:ns1-1,nstrat1))
+        allocate(erecyc1(0:ns1-1,nstrat1))
+        allocate(rcion1(0:ns1-1,nstrat1))
+        allocate(phys_sput1(0:ns1-1,nstrat1))
+        allocate(chem_sput1(0:ns1-1,nstrat1))
+        allocate(lstrascl1(nstrat1,natm))
+        do ib = 1, nstrat
+         if (savestratum(ib) .or. crcstra(ib).eq.'T') then
+          ib1 = istra1(ib)
           crcstra1(ib1) = crcstra(ib)
           if (crcstra(ib).eq.'S') then
             rcpos1(ib1) = conformal_convert(non_commensurate,
