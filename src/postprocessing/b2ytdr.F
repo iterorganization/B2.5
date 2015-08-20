@@ -862,6 +862,12 @@ c 2002-09-11: logic revised
      *   is0, bundle_contr, zn0, am0, zamin0, zamax0)
         call re_bundle (ns, is0, bundle_contr, zn0, am0, zamin0, zamax0,
      *   ns1, is1, bundle_frac, zn1, am1, zamin1, zamax1)
+        write(hlp_frm,'(a,i3,a)') '(3x, ',ns,'(1x, i4))'
+        write(*,hlp_frm) (is, is = 0, ns-1)
+        write(hlp_frm,'(a,i3,a)') '(i3, ',ns,'(1x, f4.2))'
+        do iss = 0, ns1-1
+          write(*,hlp_frm) iss, (bundle_frac(iss,is), is = 0, ns-1)
+        end do
         nspecies1 = 1
         ib = 1
         do while (ib.lt.ns1)
@@ -2187,7 +2193,7 @@ cxpb Some profiles clash: we must compute a new combined profile
                   sf1(1:ndat) = sdata(2,1:ndat,j,is)
                   call E01BEF(ndat,sr1,sf1,sd1,ifail)
 cxpb Calculate radial locations of combined profile spr(1:ndim)
-                  allocate(spr(1:nnc*(ny+2)))
+                  allocate(spr(1:nnc*(ny+2+2)))
                   ndim = ndat
                   allocate(s1d(2,1:ndim,1:nkind_source,0:nsm-1))
                   spr(1:ndat) = sr1(1:ndat)
@@ -8489,12 +8495,13 @@ cxpb basic species 'ic'
      *   am1(0:ns1-1), bundle_frac(0:ns1-1,0:ns-1)
 *   ..local variables
       integer ic, iss, nz, ii(1)
-      logical found
+      logical found, unused(0:100)
 *   ..procedures
       intrinsic nint
       external xerrab
 
 cxpb We first need to find the total number of basic species nz
+      unused = .true.
       ii = minloc(is0)
       nz = ii(1)-1
       do ic = 0, nz-1
@@ -8503,12 +8510,21 @@ cxpb We first need to find the total number of basic species nz
         do while (.not.found .and. iss.lt.ns1)
           found = nint(zn1(iss)).eq.nint(zn0(ic)) .and.
      &     nint(zamin1(iss)).le.nint(zamin0(ic)) .and.
-     &     nint(zamax1(iss)).ge.nint(zamax0(ic))
+     &     nint(zamax1(iss)).ge.nint(zamax0(ic)) .and. unused(iss)
           if (.not.found) iss = iss + 1
         enddo
         if (iss.lt.ns1) then
           is1(is0(ic)) = iss
           am1(iss) = am0(ic)
+          if (ic.lt.nz-1) then
+            if (.not.(nint(zn1(iss)).eq.nint(zn0(ic+1)) .and.
+     &          nint(zamin1(iss)).le.nint(zamin0(ic+1)) .and.
+     &          nint(zamax1(iss)).ge.nint(zamax0(ic+1)))) then
+              unused(iss) = .false.
+            endif
+          else
+            unused(iss) = .false.
+          endif
           bundle_frac(iss,is0(ic)) = bundle_frac(iss,is0(ic)) + 
      &     bundle_contr(is0(ic),ic)
 cxpb New bundle 'iss' receives contribution 'bundle_frac(iss,is)'

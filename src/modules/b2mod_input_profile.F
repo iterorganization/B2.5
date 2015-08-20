@@ -19,7 +19,7 @@
       integer, allocatable, save :: addspec(:,:,:)
 #else
 #     include "DIMENSIONS.F"
-      parameter(nrr = DEF_NYD+2, nxx = DEF_NXD, nss = DEF_NSD)
+      parameter(nrr = DEF_NYD+2, nxx = DEF_NXD+2, nss = DEF_NSD)
       integer, save :: nsdata(nkind_data,nkind_source,0:nss)
       integer, save :: nxdata(nkind_data,nkind_source,0:nss)
       real(kind=R8), save :: sdata(2,nrr,nkind_source,0:nss)
@@ -37,6 +37,7 @@
 
 #ifdef ALLOCATE_AND_NAMELIST
       nrr = ny+2
+      nxx = nx+2
       nss = ns
 
       if (.not.allocated(nsdata)) then

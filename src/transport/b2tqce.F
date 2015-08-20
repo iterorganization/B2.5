@@ -219,29 +219,29 @@
          tnp = tau(ix,iy)*ne(ix,iy)*pitx(ix,iy)**2
          z = ne2(ix,iy)/ne(ix,iy)
          if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit
-	    if(fch_pTe .eq. 1.0_R8.and.fke_Zhdanov.eq.1) then            !srv 02.12.10
+	  if(fch_pTe .eq. 1.0_R8.and.fke_Zhdanov.eq.1) then            !srv 02.12.10
            hce(ix,iy,0) =     (te(ix,iy)/me)*fke_zh(z)*tnp
-	    else
+	  else
            hce(ix,iy,0) = 2.5_R8*(te(ix,iy)/me)*fke(z)*tnp
-	    endif
+          endif
           if ((iy .ne. -1 .and. iy .ne. ny) 
      &                .or. mod(region(ix,iy,0),4).eq.1) then   ! IYS and lk 21.11.2012
-            sig(ix,iy,0) = (qe**2/me)*fse(z)*tnp
-            alf(ix,iy,0) = sqrt(2.5_R8)*(qe/me)*fal(z)*tnp
+           sig(ix,iy,0) = (qe**2/me)*fse(z)*tnp
+           alf(ix,iy,0) = sqrt(2.5_R8)*(qe/me)*fal(z)*tnp
           endif
          else if (model.eq.2) then ! old SOLPS4.0 Braginskii model for hce
           hce(ix,iy,0) = ce*(te(ix,iy)/me)*tnp
           if ((iy .ne. -1 .and. iy .ne. ny) 
      &                .or. mod(region(ix,iy,0),4).eq.1) then   ! IYS and lk 21.11.2012
-            sig(ix,iy,0) = (qe**2/me)*fse(z)*tnp
-            alf(ix,iy,0) = sqrt(2.5_R8)*(qe/me)*fal(z)*tnp
+           sig(ix,iy,0) = (qe**2/me)*fse(z)*tnp
+           alf(ix,iy,0) = sqrt(2.5_R8)*(qe/me)*fal(z)*tnp
           endif
          else if (model.eq.3) then  ! Balescu exact 21-moment expressions
           hce(ix,iy,0) = 2.5_R8*(te(ix,iy)/me)*(d15e(z)/f135e(z))*tnp
           if ((iy .ne. -1 .and. iy .ne. ny) 
      &                .or. mod(region(ix,iy,0),4).eq.1) then   ! IYS and lk 21.11.2012
-            sig(ix,iy,0) = (qe**2/me)*(d35e(z)/f135e(z))*tnp
-            alf(ix,iy,0) = sqrt(2.5_R8)*(qe/me)*(-h153e(z)/f135e(z))*tnp
+           sig(ix,iy,0) = (qe**2/me)*(d35e(z)/f135e(z))*tnp
+           alf(ix,iy,0) = sqrt(2.5_R8)*(qe/me)*(-h153e(z)/f135e(z))*tnp
           endif
          endif
         enddo
