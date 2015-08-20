@@ -728,34 +728,32 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2xpfe (nx, ny, ns, ns_ext, qe, 
      & rza, za_ext, fna_nodrift, fa_ext, fch_p, fne_)       !srv 31.05.99 11.10.02 30.06.03
 *   ..compute ue, electron parallel velocity                            !srv 05.03.11 {
-          do iy=-1,ny
-            do ix=-1,nx
-              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &         region(ix,iy,0).ne.0) then
-                ue(ix,iy)=-(
-     1           fch_p(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)+
-     1           fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
-     2              gs(rightix(ix,iy),rightiy(ix,iy),0)/
-     3              qc(rightix(ix,iy),rightiy(ix,iy)))/qe/2.0_R8
-              elseif(leftix(ix,iy).eq.-2 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &         region(ix,iy,0).ne.0) then
-                ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
-     2           gs(rightix(ix,iy),rightiy(ix,iy),0)/
-     3           qc(rightix(ix,iy),rightiy(ix,iy))/qe
-              elseif(rightix(ix,iy).eq.nx+1 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &         region(ix,iy,0).ne.0) then
-                ue(ix,iy)=-fch_p(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)/qe
-              endif
-            enddo
-          enddo
-        do is=0,ns-1
-          ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
+      do iy=-1,ny
+        do ix=-1,nx
+          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &       bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
+     &       region(ix,iy,0).ne.0) then
+            ue(ix,iy)=-(
+     1       fch_p(ix,iy,0)/pbs(ix,iy,0)+
+     1       fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+     2         pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
+          elseif(leftix(ix,iy).eq.-2 .and.
+     &           bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
+     &           region(ix,iy,0).ne.0) then
+            ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+     2                 pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
+          elseif(rightix(ix,iy).eq.nx+1 .and.
+     &           bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
+     &           region(ix,iy,0).ne.0) then
+            ue(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe
+          endif
         enddo
-        ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
-        ue(:,:)=ue(:,:)/ne(:,:)                                         !srv 05.03.11 }
+      enddo
+      do is=0,ns-1
+        ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
+      enddo
+      ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
+      ue(:,:)=ue(:,:)/ne(:,:)                                         !srv 05.03.11 }
 
 *   ..iterate on heat balance
       allocate(solvemt(0:ns-1,0:nnreg(0)))

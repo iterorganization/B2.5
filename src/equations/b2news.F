@@ -62,7 +62,7 @@
 
 *   ..local variables
       integer potit, ipass, recalculate_contributions, pot_eq,       !xpb,dpc
-     *  potitmin, area_fix, nsmin, nsmax, no_current
+     *  potitmin, nsmin, nsmax, no_current
       integer, save :: style = 2                                     !srv 29.05.02
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0         !srv 13.10.06
       integer, save :: anomalous_core_only = 0                       !srv 19.04.07
@@ -86,8 +86,8 @@
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical, allocatable :: solvemt(:,:)
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok, pot_eq,
-     1  recalculate_contributions, ramp_slow, guard_flows,       !xpb,dpc
-     3  potitmin, BoRiS, vis_per, area_fix, no_solve, solving,
+     1  recalculate_contributions, ramp_slow, guard_flows,
+     3  potitmin, BoRiS, vis_per, no_solve, solving,
      *  nsmin, nsmax, no_current
 *   ..procedures
       intrinsic abs, min, mod
@@ -104,7 +104,7 @@
 *   ..initialisation
       data ncall/0/, xfm0/1.0_R8/, xfm1/1.0_R8/, xfm2/1.0_R8/, 
      1  xfm3/1.0_R8/, potit/50/, potok/1.0e-2_R8/, pot_eq/1/,
-     2  ncallout/-1/, guard_flows/2/, area_fix/3/, no_solve/0/,          !xpb
+     2  ncallout/-1/, guard_flows/2/, no_solve/0/,
      5  recalculate_contributions/1/, ramp_slow/0/, no_current/0/,       !dpc
      6  potitmin/0/, BoRiS/0.0_R8/, vis_per/0.0_R8/
 *
@@ -152,7 +152,6 @@
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-       call ipgeti ('b2news_area_fix', area_fix)
        call ipgeti ('b2news_no_solve', no_solve)
        call xertst (-15.le.no_solve.and.no_solve.le.1,
      &   'faulty input no_solve')
@@ -820,90 +819,64 @@ c     with diamagnetic drift part                                        !xpb
      1   she, shi, facdrift)                                             !xpb
 *   ..compute ue, electron parallel velocity
         ue=0.0_R8
-        if(area_fix.ge.1) then
-          do iy=-1,ny
-            do ix=-1,nx
-              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+        do iy=-1,ny
+          do ix=-1,nx
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
-                ue(ix,iy)=-(
-     1           fch_p(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)+               !srv 10.06.08
+              ue(ix,iy)=-(
+     1           fch_p(ix,iy,0)/pbs(ix,iy,0)+               !srv 10.06.08
      1           fch_p(rightix(ix,iy),rightiy(ix,iy),0)/             !srv 10.06.08
-     2              gs(rightix(ix,iy),rightiy(ix,iy),0)/
-     3              qc(rightix(ix,iy),rightiy(ix,iy)))/qe/2.0_R8
-              elseif(leftix(ix,iy).eq.-2 .and.
+     2             pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
+            elseif(leftix(ix,iy).eq.-2 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
-                ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/   !srv 10.06.08
-     2           gs(rightix(ix,iy),rightiy(ix,iy),0)/
-     3           qc(rightix(ix,iy),rightiy(ix,iy))/qe
-              elseif(rightix(ix,iy).eq.nx+1 .and.
+              ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/   !srv 10.06.08
+     2           pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
+            elseif(rightix(ix,iy).eq.nx+1 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
-                ue(ix,iy)=-fch_p(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)/qe   !srv 10.06.08
-              endif
-            enddo
-          enddo
-        else
-          do iy=-1,ny
-            do ix=-1,nx
-              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &         region(ix,iy,0).ne.0) then
-                ue(ix,iy)=-(
-     1           fch_p(ix,iy,0)/gs(ix,iy,0)+                         !srv 10.06.08
-     1           fch_p(rightix(ix,iy),rightiy(ix,iy),0)/             !srv 10.06.08
-     2              gs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
-              elseif(leftix(ix,iy).eq.-2 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &         region(ix,iy,0).ne.0) then
-                ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/   !srv 10.06.08
-     2           gs(rightix(ix,iy),rightiy(ix,iy),0)/qe
-              elseif(rightix(ix,iy).eq.nx+1 .and.
-     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &         region(ix,iy,0).ne.0) then
-                ue(ix,iy)=-fch_p(ix,iy,0)/gs(ix,iy,0)/qe             !srv 10.06.08
-              endif
-            enddo
-          enddo
-        endif
+              ue(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe   !srv 10.06.08
+            endif
+          end do
+        end do
         do is=0,ns-1
           ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
         enddo
         ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
         ue(:,:)=ue(:,:)/ne(:,:)
 *   ..iterate on heat balance
-      allocate(solvemt(0:ns-1,0:nnreg(0)))
-      solvemt(0:ns-1,0:nnreg(0)) = solvemo(0:ns-1,0:nnreg(0))
-      if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                          !srv 13.10.06
-        call b2npht (nx, ny, ns, nnreg(0), ncall, 
-     &   solving(4), solving(3), solving(1),
-     &   solveee, solveei, solvepo, solvemt,
-     &   rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
-     &   pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,   !srv 01.07.09
-     &   fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,        !srv 09.07.08 07.07.09
-     &   na, ua, ue, te, ti, po, ne, ni, fhe, fhi, shef, shif,       !srv 09.07.08
-     &   reshe, reshi, wrk0, corte, corti, ier0)
+        allocate(solvemt(0:ns-1,0:nnreg(0)))
+        solvemt(0:ns-1,0:nnreg(0)) = solvemo(0:ns-1,0:nnreg(0))
+        if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                          !srv 13.10.06
+          call b2npht (nx, ny, ns, nnreg(0), ncall, 
+     &     solving(4), solving(3), solving(1),
+     &     solveee, solveei, solvepo, solvemt,
+     &     rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
+     &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,   !srv 01.07.09
+     &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,        !srv 09.07.08 07.07.09
+     &     na, ua, ue, te, ti, po, ne, ni, fhe, fhi, shef, shif,       !srv 09.07.08
+     &     reshe, reshi, wrk0, corte, corti, ier0)
 	endif                                                           !srv 13.10.06 }
-      if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.1) then    !srv 13.10.06
-       call b2nph9 (nx, ny, ns, nnreg(0), ncall,
-     &  solving(4), solving(3), solving(1),  
-     &  solveee, solveei, solvepo, solvemt, 
-     &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
-     &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
-     &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,            !srv 27.12.01 28.06.03 30.06.03 07.07.09
-     &  na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf, shef, shif,   !srv 31.05.99
-     &  reshe, reshi, wrk0, corte, corti, ier0)                         !srv 31.05.99 10.11.02
+        if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.1) then    !srv 13.10.06
+          call b2nph9 (nx, ny, ns, nnreg(0), ncall,
+     &     solving(4), solving(3), solving(1),  
+     &     solveee, solveei, solvepo, solvemt, 
+     &     rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
+     &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
+     &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,            !srv 27.12.01 28.06.03 30.06.03 07.07.09
+     &     na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf, shef, shif,   !srv 31.05.99
+     &     reshe, reshi, wrk0, corte, corti, ier0)                         !srv 31.05.99 10.11.02
 	endif                                                             !srv 13.10.06 }
-      if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.0) then    !srv 13.10.06
-       call b2npht (nx, ny, ns, nnreg(0), ncall,
-     &  solving(4), solving(3), solving(1),  
-     &  solveee, solveei, solvepo, solvemt, 
-     &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
-     &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
-     &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,            !srv 27.12.01 28.06.03 30.06.03 07.07.09
-     &  na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf, shef, shif,   !srv 31.05.99
-     &  reshe, reshi, wrk0, corte, corti, ier0)                         !srv 31.05.99 10.11.02
+        if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.0) then    !srv 13.10.06
+          call b2npht (nx, ny, ns, nnreg(0), ncall,
+     &     solving(4), solving(3), solving(1),  
+     &     solveee, solveei, solvepo, solvemt, 
+     &     rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
+     &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
+     &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,            !srv 27.12.01 28.06.03 30.06.03 07.07.09
+     &     na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi_mdf, shef, shif,   !srv 31.05.99
+     &     reshe, reshi, wrk0, corte, corti, ier0)                         !srv 31.05.99 10.11.02
 	endif                                                             !srv 13.10.06 }
         call xertst (ier0.eq.0, 'error return from b2npht')
         deallocate(solvemt)

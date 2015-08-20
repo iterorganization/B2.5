@@ -835,6 +835,8 @@ cxpb  Western boundary
 c
       call mapx(nx,ny,1,gs(:,:,0),work)
       call mapy(nx,ny,1,gs(:,:,1),work)
+      call mapx(nx,ny,1,pbs(:,:,0),work)
+      call mapy(nx,ny,1,pbs(:,:,1),work)
 !!!      call mapx(nx,ny,ns,ua,work)
       do is=0,ns-1
         call mapx(nx,ny,1,fna(:,:,0,is),work)
@@ -1135,7 +1137,7 @@ c
       call xertst (0.le.neo_ic .and. neo_ic.le.4,
      . 'faulty parameter neoclassical_ic')
       set_resignore_regions_to_zero=.false.
-      ue(:,:)=-fch_p(:,:,0)/gs(:,:,0)/qz(:,:,1)/qe       !srv 10.06.09
+      ue(:,:)=-fch_p(:,:,0)/pbs(:,:,0)/qe       !srv 10.06.09
       do is=0,ns-1
         do iy=-1,ny
           do ix=-1,nx

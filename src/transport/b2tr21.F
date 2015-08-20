@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2t21t(nx, ny, ns, lnlam, bb, vol, hx, gs, qc,       !srv 01.07.09
+      subroutine b2t21t(nx, ny, ns, lnlam, bb, vol, hx, pbs,        !srv 01.07.09
      1 ne, na, ne2, te, ti, ua, fch_p, chce, chci, cthe, cthi)
       use b2mod_types
       use b2mod_rates
@@ -14,8 +14,8 @@
       integer nx, ny, ns
       real (kind=R8) ::
      *  lnlam(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny),     !srv 01.07.09
-     &  hx(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), fch_p(-1:nx,-1:ny,0:1), 
-     &  qc(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1), 
+     &  hx(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1), fch_p(-1:nx,-1:ny,0:1), 
+     &  na(-1:nx,-1:ny,0:ns-1), 
      &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny), 
      &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
@@ -60,9 +60,9 @@ c     local variables:
       external subini, subend, xertst, b2xvff, b2xvsg, ipgeti
 
       integer, save :: icase = 0
-      integer ncall, n2, failcount, failcount0, area_fix
-      save ncall, failcount, area_fix
-      data ncall/0/, failcount/0/, area_fix/3/
+      integer ncall, n2, failcount, failcount0
+      save ncall, failcount
+      data ncall/0/, failcount/0/
 
 *=======================================================================
 *//COMPUTATION//
@@ -76,7 +76,6 @@ c     local variables:
       n2=(nx+2)*(ny+2)
 *  ..read switches
       if(ncall.eq.0) then
-       call ipgeti ('b2news_area_fix', area_fix)
        call ipgeti ('b2tlnl_ii', icase)
        call xertst (0.eq.icase .or. 1.eq.icase, 
      &               'faulty input b2tlnl_ii')
@@ -187,11 +186,7 @@ c         --------------------------------------
      .        ue_ext(ix,iy)*ne_ext(ix,iy)*
      .        hx(leftix(ix,iy),leftiy(ix,iy)))/
      .       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-            if(area_fix.ge.1) then  ! parallel current
-              u(1) = u(1) - fch_p(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)/qe
-            else
-              u(1) = u(1) - fch_p(ix,iy,0)/gs(ix,iy,0)/qe  ! parallel current
-            endif
+            u(1) = u(1) - fch_p(ix,iy,0)/pbs(ix,iy,0)/qe  ! parallel current
 c !? do we need to apply a 21-moment ansatz for 
 c    the electrical conductivities
 c

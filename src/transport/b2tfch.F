@@ -723,11 +723,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      1       +fchin(ix,iy,0)+fchvispar(ix,iy,0)
      &       +fchvisper(ix,iy,0)
             fch_52(ix,iy,0) = -calf(ix,iy,0)*tex0_nd
-            if(isymm.ne.2 .and. isymm.ne.4 .and. no_current.ne.1) then
-              fch_p(ix,iy,0) = (csig(ix,iy,0)*ehx-
-     &         (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*tex0)    !xpb !srv 10.06.08
-     &         /abs(wbbl(ix,iy,0)/wbbl(ix,iy,2))
-            else if (no_current.ne.1) then
+            if (no_current.ne.1) then
               fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-
      &         (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*tex0      !srv 10.06.08
             endif

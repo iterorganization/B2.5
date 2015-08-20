@@ -268,7 +268,7 @@ csw 13mar2012
 *   ..call 21 moment routines
 #ifndef NO_21
       if (lthf21.ne.0) call b2t21t (nx, ny, ns, lnlam, bb, vol, hx,     !srv 01.07.09
-     1 gs, qc, ne, na, ne2, te, ti, ua, fch_p, chce, chci, cthe, cthi)
+     1 pbs, ne, na, ne2, te, ti, ua, fch_p, chce, chci, cthe, cthi)
       if (lvis21.ne.0) call b2t21v (nx, ny, ns, lnlam,                  !srv 01.07.09
      1 bb, vol, hx, pbs, ne, na, te, ti, ua, cvsa)
 #endif
