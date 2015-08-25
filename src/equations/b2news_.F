@@ -817,7 +817,7 @@ c   recompute particle fluxes
 *    ..DPC
         do iy=-1,ny
           do ix=-1,nx
-            na(ix,iy,is)=max(na(ix,iy,is),1.0) 
+            na(ix,iy,is)=max(na(ix,iy,is),1.0_R8) 
           enddo
         enddo
 *    ..compute partial pressure
