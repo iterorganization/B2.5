@@ -56,7 +56,12 @@ BLD = ar rucv
 GRLIBES = ${LD_NCARG} ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
+ifdef USE_MPI
+LD = mpif90
+else
 LD = pgf90
+endif
+
 ifdef SOLPS_DEBUG
 LDOPTS = -g -C -Kieee
 else
