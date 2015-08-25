@@ -405,7 +405,7 @@ csw 30apr2014 for TESTING only
            endif
 
            coni0=dim(chci(ix,iy,0)/(1.d0+t0), abs(floi0)*
-     .      max(0.0,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
+     .      max(0.0_R8,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
      .      max(cutlo,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
           endif
 
@@ -478,8 +478,8 @@ csw 17feb2012
 csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
            if(b2tfhi_hybr2 .ne. 0) then
             coni0_mdf=dim(chci(ix,iy,0), abs(floi0_mdf)*
-     .       max(0.0,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
-     .       max(1.e-30,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
+     .       max(0._R8,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
+     .       max(1.e-30_R8,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
            endif
 
            t0_mdf =coni0_mdf*abs(dti)/(flomx*
@@ -520,11 +520,11 @@ csw 27nov2012 added check upwind (SOLPS4 style)
 csw 13mar2013 SOLPS4 style (overwrite coni0/coni0_mdf)
           if(b2tfhi_hybr2 .ne. 0) then
             coni0=dim(chci(ix,iy,0), abs(floi0)*
-     .       max(0.0,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
-     .       max(1.e-30,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
+     .       max(0._R8,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
+     .       max(1.e-30_R8,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
             coni0_mdf=dim(chci(ix,iy,0), abs(floi0_mdf)*
-     .       max(0.0,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
-     .       max(1.e-30,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
+     .       max(0._R8,min(ti(ix,iy),ti(leftix(ix,iy), leftiy(ix,iy))))/
+     .       max(1.e-30_R8,ti(ix,iy)+ti(leftix(ix,iy), leftiy(ix,iy))))
           endif
 
           dti0 = dti
@@ -630,11 +630,11 @@ csw 30apr2014 only for TESTING
          endif
 
          coni0=dim(chci(ix,iy,1), abs(floi0)*
-     .   max(0.0,min(ti(ix,iy),ti(bottomix(ix,iy), bottomiy(ix,iy))))/
-     .   max(1.e-30,ti(ix,iy)+ti(bottomix(ix,iy), bottomiy(ix,iy))))
+     .   max(0._R8,min(ti(ix,iy),ti(bottomix(ix,iy), bottomiy(ix,iy))))/
+     .   max(1.e-30_R8,ti(ix,iy)+ti(bottomix(ix,iy), bottomiy(ix,iy))))
          coni0_mdf=dim(chci(ix,iy,1), abs(floi0_mdf)*
-     .   max(0.0,min(ti(ix,iy),ti(bottomix(ix,iy), bottomiy(ix,iy))))/
-     .   max(1.e-30,ti(ix,iy)+ti(bottomix(ix,iy), bottomiy(ix,iy))))
+     .   max(0._R8,min(ti(ix,iy),ti(bottomix(ix,iy), bottomiy(ix,iy))))/
+     .   max(1.e-30_R8,ti(ix,iy)+ti(bottomix(ix,iy), bottomiy(ix,iy))))
         endif
 
 

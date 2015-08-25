@@ -1003,8 +1003,8 @@ csw 17feb2012
 csw 13mar2013 SOLPS4 modified f. flux limited hybrid style (overwrite cone0_mdf)
            if(b2tfhe_hybr2 .ne. 0) then
             cone0_mdf=dim(chce(ix,iy,0), abs(floe0_mdf)*
-     .        max(0.0,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
-     .        max(1.e-30,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
+     .        max(0._R8,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
+     .        max(1.e-30_R8,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
            endif
 
            if (chce(ix,iy,0).eq.0) then
@@ -1027,7 +1027,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
            else
              fhe_mdf(ix,iy,0) =
      &       floe0_mdf*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.d0
-     &       -abs(floe0_mdf/2.0)*tex
+     &       -abs(floe0_mdf/2.0_R8)*tex
      &       -cone0_mdf*tex0_mdf + alfTeEh*alfe0_mdf*
      &       harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
            endif
@@ -1065,11 +1065,11 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
 csw 13mar2013 overwrite cone0/cone0_mdf (SOLPS4 style)
             if(b2tfhe_hybr2 .ne. 0) then
              cone0=dim(chce(ix,iy,0), abs(floe0)*
-     .        max(0.0,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
-     .        max(1.e-30,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
+     .        max(0._R8,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
+     .        max(1.e-30_R8,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
              cone0_mdf=dim(chce(ix,iy,0), abs(floe0_mdf)*
-     .        max(0.0,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
-     .        max(1.e-30,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
+     .        max(0._R8,min(te(ix,iy),te(leftix(ix,iy),leftiy(ix,iy))))/
+     .        max(1.e-30_r8,te(ix,iy)+te(leftix(ix,iy), leftiy(ix,iy))))
             endif
 
           else
@@ -1253,10 +1253,10 @@ csw 30apr2014 flo53 ONLY FOR TESTING (SOLPS4)
          endif
 
          cone0=dim(chce(ix,iy,1), abs(floe0)*
-     .   max(0.0,min(te(ix,iy),te(bottomix(ix,iy),bottomiy(ix,iy))))/
+     .   max(0._R8,min(te(ix,iy),te(bottomix(ix,iy),bottomiy(ix,iy))))/
      .   max(cutlo,te(ix,iy)+te(bottomix(ix,iy), bottomiy(ix,iy))))
          cone0_mdf=dim(chce(ix,iy,1), abs(floe0_mdf)*
-     .   max(0.0,min(te(ix,iy),te(bottomix(ix,iy),bottomiy(ix,iy))))/
+     .   max(0._R8,min(te(ix,iy),te(bottomix(ix,iy),bottomiy(ix,iy))))/
      .   max(cutlo,te(ix,iy)+te(bottomix(ix,iy), bottomiy(ix,iy))))
         endif
 
