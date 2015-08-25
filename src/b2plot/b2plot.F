@@ -31,7 +31,6 @@ c 2002-09-11: logic revised
       use b2mod_b2plot_help
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
-      use b2mod_b2plot_inputs
       use b2mod_b2plot_wall_loading
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
@@ -744,7 +743,6 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
      *   nwall,ndepth_nml,wklng)
       call alloc_b2mod_b2plot_ank(nwall)
       call alloc_b2plot_wall_loading(nlim,nsgmx)
-      call alloc_b2plot_inputs(nlim)
       call xertst (ndepth_nml.gt.1.or.plate_model.eq.0, 
      .  'Inconsistent values of ndepth_nml and plate_model')
       do i = 1, ntargsp

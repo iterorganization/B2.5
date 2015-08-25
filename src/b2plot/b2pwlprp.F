@@ -14,13 +14,15 @@ c***  pp1,pp2 : arrays of the wall segments as read from DG
 c***  p1, p2  : arrays of the wall segments as saved in Eirene
 c***
 c*** Output
-c***  lwldlis : sorted lists of the "plot zones"
+c***  lwldlis : sorted lists of the "plot zones" (DG numbering)
+c***  leirlis : sorted lists of the "plot zones" (Eirene numbering)
 c***  lwlddir : orientation of the "plot zones" (true = CCW)
 c***  pp1,pp2 : completed arrays of the wall segments
 c======================================================================
       use b2mod_types
       use b2mod_geo
       use b2mod_b2plot
+      use b2mod_b2cmfs
       use b2mod_constants
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
@@ -37,8 +39,11 @@ c======================================================================
       integer i,j,k,l,n,i1,i2,ii,il,is,kb,ke,kk,ks,kkb,kke,kks,
      ,        n_atg,n_targ,
      ,        ib(2),ie(2),ibb(2),iee(2),iit(2),l_atg(2)
-      logical add_trg
+      logical add_trg,checked
 c
+      real (kind=R8) :: width
+      data width /1.0_R8/
+      save width
 c*** wsrttol : a tolerance parameter for defining coinciding segments
       real (kind=R8) ::
      *   wsrttol
@@ -49,12 +54,14 @@ c      parameter (lun_w=76)
 c      character tab
 c>>>
       intrinsic mod
+      external ipgeti
 c======================================================================
 c<<<
 c      tab=char(9)
 c
       print *,'Starting b2pwlprp...',nlim,lppp,DEF_NLIM
-      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+c      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+      call ipgeti ('b2agmt_1d_width', width)
 c>>>
 c
 c*** Check the presence of the shadowing structure
@@ -85,13 +92,13 @@ c
         pp2(2,i)=0.001_R8*ppp2(2,i)
       end do
 c<<<
-      print *,'nwldprt =',nwldprt
-      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
-      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
-      do il=1,nwldprt
-        print '(a,i5/(5x,15i5))','lwldlis :',il,
-     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-      end do
+c      print *,'nwldprt =',nwldprt
+c      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
+c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
+c      do il=1,nwldprt
+c        print '(a,i5/(5x,15i5))','lwldlis :',il,
+c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
+c      end do
 c
 c      open(lun_w,file='layout-d.dat')
 c      write(lun_w,'(6a)') '#Wall layout (DG) : ',label
@@ -124,6 +131,8 @@ c      print '(a,(20l5))','lwlddir :',(lwlddir(i),i=1,nwldprt)
 c      do il=1,nwldprt
 c        print '(a,i5/(5x,15i5))','lwldlis :',il,
 c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
+c        print '(a,i5/(5x,15i5))','leirlis :',il,
+c     ,                                  (leirlis(i,il),i=1,nwldlis(il))
 c      end do
 c>>>
 c*** Check the shadowing structure - it must be closed
@@ -174,8 +183,9 @@ cc>>>
         pp2(2,i+1+lppp+ny)=cry(nx,i,2)
       end do
 c<<<
-c      print '(1x,i4,1p,8e12.4)',(i,(pp1(j,i+1+lppp),pp2(j,i+1+lppp),j=1,2),
-c     ,                (pp1(j,i+1+lppp+ny),pp2(j,i+1+lppp+ny),j=1,2),i=0,ny-1)
+c      print '(1x,i4,1p,8e12.4)',
+c     , (i,(pp1(j,i+1+lppp)   ,pp2(j,i+1+lppp)   ,j=1,2),
+c     ,    (pp1(j,i+1+lppp+ny),pp2(j,i+1+lppp+ny),j=1,2),i=0,ny-1)
 c
 c      open(lun_w,file='layout-g.dat')
 c      write(lun_w,'(6a)') '#Wall layout (g) : ',label
@@ -190,12 +200,19 @@ c>>>
 c
 c*** Modify the target edges for continuity with B2 grid edges
 c
-      pp2(1,jedge(1))=crx(0,0,0)
-      pp2(2,jedge(1))=cry(0,0,0)
+c      print *,'Before modification: ', jedge(1:4)
+c      print '((2(1x,a3,1p,4e12.4)))',
+c     ,          'i1',(pp1(j,jedge(1)),pp2(j,jedge(1)),j=1,2),
+c     ,          'o1',(pp1(j,jedge(3)),pp2(j,jedge(3)),j=1,2),
+c     ,          'i2',(pp1(j,jedge(2)),pp2(j,jedge(2)),j=1,2),
+c     ,          'o2',(pp1(j,jedge(4)),pp2(j,jedge(4)),j=1,2)
+
+      pp1(1,jedge(1))=crx(0,0,0)
+      pp1(2,jedge(1))=cry(0,0,0)
       pp2(1,jedge(2))=crx(nx-1,0,1)
       pp2(2,jedge(2))=cry(nx-1,0,1)
-      pp1(1,jedge(3))=crx(0,ny-1,2)
-      pp1(2,jedge(3))=cry(0,ny-1,2)
+      pp2(1,jedge(3))=crx(0,ny-1,2)
+      pp2(2,jedge(3))=cry(0,ny-1,2)
       pp1(1,jedge(4))=crx(nx-1,ny-1,3)
       pp1(2,jedge(4))=cry(nx-1,ny-1,3)
 
@@ -214,24 +231,36 @@ c
 c*** Check whether the modified edges coincide with the saved ones
 c
       do k=1,4
+        checked=.false.
         j=jedge(k)
 c        print *,'%% Check ',k,j
-        if(abs(p1(1,j)-pp1(1,j)) .le. wsrttol  .and.
-     .     abs(p1(2,j)-pp1(2,j)) .le. wsrttol  .and.
-     .     abs(p2(1,j)-pp2(1,j)) .le. wsrttol  .and.
-     .     abs(p2(2,j)-pp2(2,j)) .le. wsrttol) then
-c          print *,'== OK'
-          do il=1,nwldprt
-            n=nwldlis(il)
-            do i=1,n
-              if(iabs(lwldlis(i,il)) .eq. j) lwldlis(i,il)=j
-            end do
+        do il=1,nwldprt
+          if(checked) cycle
+          n=nwldlis(il)
+          do i=1,n
+            l=leirlis(i,il)
+            if(iabs(lwldlis(i,il)) .eq. j) then
+c              print *,'%% Checking ',n,i,l
+              if(abs(p1(1,l)-pp1(1,j)) .le. wsrttol  .and.
+     .           abs(p1(2,l)-pp1(2,j)) .le. wsrttol  .and.
+     .           abs(p2(1,l)-pp2(1,j)) .le. wsrttol  .and.
+     .           abs(p2(2,l)-pp2(2,j)) .le. wsrttol) then
+c                print *,'== OK'
+                lwldlis(i,il)=j
+              else
+                print '(a,i3,1p,4e12.4)',
+     .           'Eirene  : ', l, p1(1,l), p1(2,l), p2(1,l), p2(2,l)
+                print '(a,i3,1p,4e12.4)',
+     .           'DG (mod): ', j, pp1(1,j),pp1(2,j),pp2(1,j),pp2(2,j)
+              end if
+              checked = .true.
+            end if
           end do
-        end if
+        end do
       end do
 c
 c<<<
-c      print *,jedge(1:4)
+c      print *,'After modification: ', jedge(1:4)
 c      print '((2(1x,a3,1p,4e12.4)))',
 c     ,          'i1',(pp1(j,jedge(1)),pp2(j,jedge(1)),j=1,2),
 c     ,          'o1',(pp1(j,jedge(3)),pp2(j,jedge(3)),j=1,2),
@@ -265,19 +294,24 @@ c
           do i=1,n
             k=iabs(lwldlis(is,il))
             if(k .eq. jedge(1)  .or.  k .eq. jedge(2)) then
-              if(kb .ne. 0) then
-                write(*,'(a,a,3i6)') 'b2pwlprp: unexpected error. ',
-     ,           'Outer edge not found ',il,i,kb
-                write(*,'(a,5i6)')
-     ,           'k,jedgi1,jedgi2,jedgo1,jedgo2 = ',k,jedge(1:4)
-                stop
-              end if
-              if(k .eq. jedge(1)) then
-                kb=1
+              if(kb .eq. 0) then
+                if(k .eq. jedge(1)) then
+                  kb=1
+                else
+                  kb=2
+                end if
               else
-                kb=2
+                if((k .eq. jedge(1)  .and.  kb .ne. 1)  .or.
+     ,             (k .eq. jedge(2)  .and.  kb .ne. 2)) then
+                  write(*,'(a,a,3i6)') 'b2pwlprp: unexpected error. ',
+     ,             'Inner edge not found ',il,i,kb
+                  write(*,'(a,5i6)')
+     ,             'k,jedgi1,jedgi2,jedgo1,jedgo2 = ',k,jedge(1:4)
+                  stop
+                end if
               end if
               ib(kb)=is
+              kb=0
             else if(k .eq. jedge(3)  .or.  k .eq. jedge(4)) then
               if(kb .eq. 0) then
                 if(k .eq. jedge(3)) then
@@ -287,10 +321,10 @@ c
                 end if
               else
                 if((k .eq. jedge(3)  .and.  kb .ne. 1)  .or. 
-     ,           (k .eq. jedge(4)  .and.  kb .ne. 2)) then
+     ,             (k .eq. jedge(4)  .and.  kb .ne. 2)) then
                   write(*,'(a,a,3i6)')
      ,             'b2pwlprp: unexpected error. ',
-     ,             'Inner edge not found ',il,i,kb
+     ,             'Outer edge not found ',il,i,kb
                   write(*,'(a,5i6)')
      ,             'k,jedgi1,jedgi2,jedgo1,jedgo2 = ',k,jedge(1:4)
                   stop
@@ -317,14 +351,14 @@ c*** sorted along the list direction and mark
 c***  ibb   the first edge
 c***  iee   the matching edge
 c***  itt   the corresponding target
-c*** for each passible target, that is (depending on the orientation)
+c*** for each possible target, that is (depending on the orientation)
 c***            CCW             CW
 c*** ibb =  ib(1),ib(2)     ie(2),ie(1)
 c*** iee =  ie(1),ie(2)     ib(2),ib(1)
 c*** iit =      1,2             2,1
 c***
 c*** iit=0 : corresponding target does not belong to the list
-c*** ibb=0 : target starts from the begining of the list
+c*** ibb=0 : target starts from the beginning of the list
 c*** iee=0 : target continues over the end of the list
 c***
 c*** The list orientation is given by lwlddir value (true=CCW)
@@ -332,7 +366,10 @@ c
           k=0
           iit(1)=0
           iit(2)=0
+          ibb(1)=0
           ibb(2)=0
+          iee(1)=0
+          iee(2)=0
           if(lwlddir(il)) then
             do i=1,2
               if(ib(i)+ie(i) .gt. 0) then
@@ -406,27 +443,26 @@ c***   kk      is the counter for the old list
 c***   kb      if non-zero, the target number kb is "open"
 c***   ks      is the counter for the target starts
 c***   ke      is the counter for the target ends
-c***           very begining of the list (needed to avoid duplication)
+c***           very beginning of the list (needed to avoid duplication)
 c***   l_atg   list of target sections already added to the segment list
 c***   n_atg   length of this list
 c
             n_targ=2
             k=0
-            kb=0
             kkb=0
             ks=1
             ke=1
             kk=1
             n_atg=0
 c<<<
-c            print *,         'Before merging the targets.  ',
-c     ,                      ':  ibb  :  iee  :  ib   :  ie   :  iit  :'
+c            print '(a,a)',   'Before merging the targets.  ',
+c     ,                       ':  ibb  :  iee  :  ib   :  ie   :  iit  :'
 c            print '(a,10i4)','                             ',
-c     ,                      ibb,iee,ib,ie,iit
+c     ,                           ibb,    iee,    ib,     ie,     iit
 c>>>
 
             do ii=1,2*n_targ
-
+              if (mod(ii,2).eq.1) kb=0
 c<<<
 c              print *,' ii   k  kb  ks  ke  kk n_atg,l_atg'
 c              print '(12i4)',ii,k,kb,ks,ke,kk,n_atg,l_atg(1),l_atg(2)
@@ -435,14 +471,14 @@ c>>>
                 add_trg=.false.
                 kks=nsgmx+5
                 if(ks .gt. 0) then
-                  kks=ibb(ib(ks))
+                  if (ib(ks).gt.0) kks=ibb(ib(ks))
                 end if
                 if(kks .eq. 0) then
                   kks=nsgmx+5
                 end if
                 kke=nsgmx+5
                 if(ke .gt. 0) then
-                  kke=iee(ie(ke))
+                  if (ie(ke).gt.0) kke=iee(ie(ke))
                 end if
                 if(kke .eq. 0) then
                   kke=nsgmx+5
@@ -468,6 +504,8 @@ c*** entering a target
                   write(*,*) 'Unexpected error in b2pwlprp: ',
      ,             'kks = kke = ',kks
                     stop
+                else if(kks .eq. kke .and. kks .eq. nsgmx+5) then
+                  kb = 0
                 else
                   if(kb .eq. 0) then
                     if(n_atg .gt. 0) then
@@ -549,7 +587,13 @@ c*** Calculate the segment areas and related quantities
 c
       do i=1,lppp+2*ny
         segm_len(i)=sqrt((pp1(1,i)-pp2(1,i))**2+(pp1(2,i)-pp2(2,i))**2)
-        segm_area(i) = pi*(pp1(1,i)+pp2(1,i))*segm_len(i)
+        if (isymm.eq.0) then
+          segm_area(i) = width*segm_len(i)
+        else if (isymm.eq.1 .or. isymm.eq.2) then
+          segm_area(i) = pi*(pp1(1,i)+pp2(1,i))*segm_len(i)
+        else if (isymm.eq.3 .or. isymm.eq.4) then
+          segm_area(i) = pi*(pp1(2,i)+pp2(2,i))*segm_len(i)
+        end if
       end do
       do il=2,nwldprt
         d=0.5_R8*segm_len(iabs(lwldlis(1,il)))

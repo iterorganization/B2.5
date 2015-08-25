@@ -15,7 +15,7 @@ c
      ,	jedge(4),
      ,	nadsrc, nwldrad, npumplis 
       integer, allocatable :: indwll(:), luwrk(:), lwldrad(:),
-     ,  lwldlis(:,:), lpumplis(:)
+     ,  lwldlis(:,:), leirlis(:,:), lpumplis(:)
       logical l2rdldw, l2rdldt, l2pwinp, lwlddir(nwldprtx)
       real (kind=R4) :: ppp1(3,DEF_NLIM), ppp2(3,DEF_NLIM)
       real (kind=R4) :: addsrc_xy(2,nadsrcm), add_rad
@@ -30,7 +30,8 @@ c*** nwldprt  : actual number of the "plot zones" + 1 for shadowing
 c*** lwldstrt : list of starting segments for the "plot zones"
 c*** nwldlis  : list of lengths of the "plot zones"
 c*** lwlddir  : orientation of the "plot zones" (true = CCW)
-c*** lwldlis  : list of segments belonging to the "plot zones"
+c*** lwldlis  : list of segments belonging to the "plot zones" (DG numbering)
+c*** leirlis  : list of segments belonging to the "plot zones" (Eirene numbering)
 c*** nwldrad  : number of segments where rad. load is to be calculated
 c*** lwldrad  : list of segments where rad. load is to be calculated
 c*** jedgi1   : inner edge of inner target => jedge(1)
@@ -62,6 +63,7 @@ c======================================================================
       
       allocate(indwll(nsgmx), luwrk(nsgmx), lwldrad(nsgmx))
       allocate(lwldlis(nsgmx,nwldprtx))
+      allocate(leirlis(nsgmx,nwldprtx))
       allocate(lpumplis(nlim))
       allocate(segm_area(nsgmx), segm_len(nsgmx),
      ,	wldrfdst(nsgmx,nwldprtx), wldrdld(nsgmx), co_data(nsgmx))

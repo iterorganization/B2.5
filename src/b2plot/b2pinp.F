@@ -141,30 +141,30 @@ c----------------------------------------------------------------------
 c*** Old style values for the target SOL edges
  140  if (lt.eq.0) then
         call scipit
-      else if(lt.lt.0 .or. lt.gt.4) then
+      else if(lt.lt.0 .or. lt.gt.2) then
         write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
-     ,                            '.  Must be positive and =< 4'
-      else if (lt.ge.1 .and. lt.le.4) then
-        call resimi(jedge(2*lt-1))
+     ,                            '.  Must be positive and =< 2'
+      else if (lt.ge.1 .and. lt.le.2) then
+        call resimi(jedge(2+lt))
       end if
       return
 c----------------------------------------------------------------------
 c*** Old style values for the target PFR edges
  150  if (lt.eq.0) then
         call scipit
-      else if(lt.lt.0 .or. lt.gt.4) then
+      else if(lt.lt.0 .or. lt.gt.2) then
         write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
-     ,                            '.  Must be positive and =< 4'
-      else if (lt.ge.1 .and. lt.le.4) then
-        call resimi(jedge(2*lt))
+     ,                            '.  Must be positive and =< 2'
+      else if (lt.ge.1 .and. lt.le.2) then
+        call resimi(jedge(lt))
       end if
       return
 c----------------------------------------------------------------------
 c*** Target specifications
  160  call resimi(lt)
-      if(lt.lt.0 .or. lt.gt.4)
+      if(lt.lt.0 .or. lt.gt.2)
      >   write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
-     ,                            '.  Must be positive and =< 4'
+     ,                            '.  Must be positive and =< 2'
       return
 c======================================================================
       end subroutine b2prdn

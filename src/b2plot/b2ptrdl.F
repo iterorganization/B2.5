@@ -28,7 +28,7 @@ c        print '(a/5a10/1p,l10,3i10,e10.2)','After b2pwinp',
 c     ,          'l2pwinp','lppp','nwldprt','nadsrc','add_rad',
 c     ,                              l2pwinp,lppp,nwldprt,nadsrc,add_rad
 c        print '(a/(16i5))','Shadowing structure',
-c     ,                                     (lwldlis(i,1),i=1,nwldlis(1)
+c     ,                                     (lwldlis(i,1),i=1,nwldlis(1))
 c        print '(a/(5(2f8.3,1x)))','Inner target',
 c     ,                             (pp1(1,lppp+i),pp1(2,lppp+i),i=0,ny-1)
 c        print '(a/(5(2f8.3,1x)))','Outer target',

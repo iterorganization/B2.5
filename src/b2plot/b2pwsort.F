@@ -87,7 +87,7 @@ c                  print *,'do jj:',jj,is,goup,placed(jj)
 c                    print *,'js:',js,is,goup
                     if(goup) then
                       if(abs(pp2(1,is)-pp1(1,js)) .le. wsrttol  .and. 
-     .                 abs(pp2(2,is)-pp1(2,js)) .le. wsrttol) then
+     .                   abs(pp2(2,is)-pp1(2,js)) .le. wsrttol) then
                         goup=.true.
                         is=js
                         nwsrtwrk=nwsrtwrk+1
@@ -97,7 +97,7 @@ c                        print *,'2->1:',is,nwsrtwrk
                         go to 100
                       end if
                       if(abs(pp2(1,is)-pp2(1,js)) .le. wsrttol  .and. 
-     .                 abs(pp2(2,is)-pp2(2,js)) .le. wsrttol) then
+     .                   abs(pp2(2,is)-pp2(2,js)) .le. wsrttol) then
                         goup=.false.
                         is=js
                         nwsrtwrk=nwsrtwrk+1
@@ -108,7 +108,7 @@ c                        print *,'2->2:',is,nwsrtwrk
                       end if
                     else
                       if(abs(pp1(1,is)-pp2(1,js)) .le. wsrttol  .and. 
-     .                 abs(pp1(2,is)-pp2(2,js)) .le. wsrttol) then
+     .                   abs(pp1(2,is)-pp2(2,js)) .le. wsrttol) then
                         goup=.false.
                         is=js
                         nwsrtwrk=nwsrtwrk+1
@@ -118,7 +118,7 @@ c                        print *,'1->2:',is,nwsrtwrk
                         go to 100
                       end if
                       if(abs(pp1(1,is)-pp1(1,js)) .le. wsrttol  .and. 
-     .                 abs(pp1(2,is)-pp1(2,js)) .le. wsrttol) then
+     .                   abs(pp1(2,is)-pp1(2,js)) .le. wsrttol) then
                         goup=.true.
                         is=js
                         nwsrtwrk=nwsrtwrk+1
@@ -196,11 +196,8 @@ c*** No connection found
                   end if
                   if (direction_same) then
                     found = .true.
-                    if (ic.eq.1) then
-                      lwldlis(ii,il)=k
-                    else if (ic.eq.2) then
-                      lwldlis(ii,il)=-k
-                    end if
+                    lwldlis(ii,il)=j
+                    leirlis(ii,il)=k
                   else
                     k = k + 1
                   end if
@@ -212,19 +209,17 @@ c*** No connection found
                 k = 1
                 found = .false.
                 do while (.not.found .and. k.le.nlim)
-                  if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .               abs(p1(2,k)-pp1(2,j)) .le. wsrttol  .and.
-     .               abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .               abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
-                    lwldlis(ii,il)=k
+                  if((abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .                abs(p1(2,k)-pp1(2,j)) .le. wsrttol  .and.
+     .                abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .                abs(p2(2,k)-pp2(2,j)) .le. wsrttol) .or.
+     .               (abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .                abs(p1(2,k)-pp2(2,j)) .le. wsrttol  .and.
+     .                abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .                abs(p2(2,k)-pp1(2,j)) .le. wsrttol)) then
+                    lwldlis(ii,il)=j
+                    leirlis(ii,il)=k
                     found = .true.
-                  else
-     .            if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .               abs(p1(2,k)-pp2(2,j)) .le. wsrttol  .and.
-     .               abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .               abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
-                    found = .true.
-                    lwldlis(ii,il)=-k
                   end if
                   k = k + 1
                 end do
@@ -235,6 +230,7 @@ c*** No connection found
              end do
 c            print '(a,i2/(1x,20i4))','il =',il,
 c     ,                                (lwldlis(ii,il),ii=1,nwldlis(il))
+c            print '(1x,20i4)', (leirlis(ii,il),ii=1,nwldlis(il))
           end if
           lwlddir(il)=goup
         end if

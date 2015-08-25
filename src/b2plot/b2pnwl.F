@@ -31,7 +31,7 @@ c*** and for the power flux.
       real (kind=R8) ::
      *   flxctff,enrctff,pwrctff
       parameter (flxctff=0.1e0_R8, enrctff=1.e-8_R8, pwrctff=1.e-8_R8)
-      integer il,is,i,ii,ia,k,ic
+      integer il,is,i,ii,ia,ib,k,ic
       real (kind=R8) ::
      *   x,dist,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
      ,     wwj(natm+nmol),wwe(natm+nmol)
@@ -79,6 +79,8 @@ c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt
 c        print '(a,(20i5))','lwldlis :',il,
 c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
+c        print '(a,(20i5))','leirlis :',il,
+c     ,                                  (leirlis(i,il),i=1,nwldlis(il))
 c      end do
 cc>>>
 c*** ... and produce the output file
@@ -119,7 +121,7 @@ c*** calculate the length of the target segment
           hlpx=0.e0_R8
           do i=1,nwldlis(il)
             ia=lwldlis(i,il)
-            is=iabs(ia)
+            is=leirlis(i,il)
             dist=sqrt((p1(1,is)-p2(1,is))**2+(p1(2,is)-p2(2,is))**2)
             hlpx=hlpx+dist
           end do
@@ -129,10 +131,11 @@ c
           hlpw=0.e0_R8
           do i=1,nwldlis(il)
             ia=lwldlis(i,il)
-            is=iabs(ia)
+            ib=iabs(ia)
+            is=leirlis(i,il)
             h=dist
-            dist=sqrt((pp1(1,is)-pp2(1,is))**2+(pp1(2,is)-pp2(2,is))**2)
-            a=pi*(pp1(1,is)+pp2(1,is))*dist
+            dist=sqrt((pp1(1,ib)-pp2(1,ib))**2+(pp1(2,ib)-pp2(2,ib))**2)
+            a=pi*(pp1(1,ib)+pp2(1,ib))*dist
             dist=0.5e0_R8*dist
             x=x+h+dist
             if(ia .gt. 0) then
@@ -175,8 +178,8 @@ c*** (temporary solution, no molecules involved)
                 wwe(ii)=enrctff
               end do
             end if
-            write (lun,'(1x,a5,i3.3,i5,5f10.4,1p,24e12.4)') 'zone#',
-     ,                il,is,pp1(1,is),pp1(2,is),pp2(1,is),pp2(2,is),
+            write (lun,'(1x,a5,i3.3,2i5,5f10.4,1p,24e12.4)') 'zone#',
+     ,                il,ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
      ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k),
      ,                wwyn,wwyg
           end do
@@ -265,7 +268,8 @@ c***
 c***  nwldprt : the number of lists to be sorted
 c***  lwldstrt: the initial segments of the chains
 c***  nwldlis : the list lengths
-c***  lwldlis : the lists themselves
+c***  lwldlis : the lists themselves (DG numbering)
+c***  leirlis : the lists themselves (Eirene numbering)
 c
       use b2mod_types
       use b2mod_b2plot
@@ -451,11 +455,8 @@ c*** No connection found
                   end if
                   if (direction_same) then
                     found = .true.
-                    if (ic.eq.1) then
-                      lwldlis(ii,il)=k
-                    else if (ic.eq.2) then
-                      lwldlis(ii,il)=-k
-                    end if
+                    lwldlis(ii,il)=j
+                    leirlis(ii,il)=k
                   else
                     k = k + 1
                   end if
@@ -467,19 +468,17 @@ c*** No connection found
                 k = 1
                 found = .false.
                 do while (.not.found .and. k.le.nlim)
-                  if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .               abs(p1(2,k)-pp1(2,j)) .le. wsrttol  .and.
-     .               abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .               abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
-                    lwldlis(ii,il)=k
+                  if((abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .                abs(p1(2,k)-pp1(2,j)) .le. wsrttol  .and.
+     .                abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .                abs(p2(2,k)-pp2(2,j)) .le. wsrttol) .or.
+     .               (abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .                abs(p1(2,k)-pp2(2,j)) .le. wsrttol  .and.
+     .                abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .                abs(p2(2,k)-pp1(2,j)) .le. wsrttol)) then
+                    lwldlis(ii,il)=j
+                    leirlis(ii,il)=k
                     found = .true.
-                  else
-     .            if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .               abs(p1(2,k)-pp2(2,j)) .le. wsrttol  .and.
-     .               abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .               abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
-                    found = .true.
-                    lwldlis(ii,il)=-k
                   end if
                   k = k + 1
                 end do
@@ -490,6 +489,7 @@ c*** No connection found
             end do
 c            print '(a,i2/(1x,20i4))','il =',il,
 c     ,                                (lwldlis(ii,il),ii=1,nwldlis(il))
+c            print '(1x,20i4)', (leirlis(ii,il),ii=1,nwldlis(il))
           end if
         end if
       end do

@@ -30,8 +30,8 @@
      *  twrk_hlp(:)
 
       real (kind=R8), save ::
-     *  pp1(2,DEF_NLIM),
-     *  pp2(2,DEF_NLIM)
+     *  pp1(2,DEF_NLIM+2*DEF_NYD),
+     *  pp2(2,DEF_NLIM+2*DEF_NYD)
 
       integer, allocatable, save ::
      *  ind_hlp(:), indt_hlp(:)
