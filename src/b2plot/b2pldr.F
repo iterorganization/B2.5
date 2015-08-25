@@ -18,6 +18,7 @@
       use b2mod_b2cmrc
       use b2mod_b2cmwg
       use b2mod_ppout
+      use b2mod_diag
       use b2mod_work
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -62,6 +63,7 @@
 *   ..obtain lblmn
       call b2xxid ('b2mn', lblmn(1:60))
       call b2rflb (ninp(0), lblmn(61:120))
+      label = lblmn
 *   ..read geometry
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')

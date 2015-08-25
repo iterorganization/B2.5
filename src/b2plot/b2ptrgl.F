@@ -528,14 +528,14 @@ c
       write(fmt_peak,730) 3,tab
   730 format('(1p,1x,a11,',i3,'(1h',a1,',e12.4))')
       write(lun,*) 'Particle fluxes [1/s]'
-      write(lun,fmt_peak) 'D ions on',sjhp_w,sjhp_w(1)+sjhp_w(2)
-      write(lun,fmt_peak) 'D atoms on',sjha_w,sjha_w(1)+sjha_w(2)
-      write(lun,fmt_peak) 'D total on',sjht_w,sjht_w(1)+sjht_w(2)
-      write(lun,fmt_peak) 'C ions on',sjcp_w,sjcp_w(1)+sjcp_w(2)
-      write(lun,fmt_peak) 'C atoms on',sjca_w,sjca_w(1)+sjca_w(2)
-      write(lun,fmt_peak) 'C total on',sjct_w,sjct_w(1)+sjct_w(2)
+      write(lun,fmt_peak) 'D ions on',  sjhp_w,sjhp_w(1)+sjhp_w(2)
+      write(lun,fmt_peak) 'D atoms on', sjha_w,sjha_w(1)+sjha_w(2)
+      write(lun,fmt_peak) 'D total on', sjht_w,sjht_w(1)+sjht_w(2)
+      write(lun,fmt_peak) 'C ions on',  sjcp_w,sjcp_w(1)+sjcp_w(2)
+      write(lun,fmt_peak) 'C atoms on', sjca_w,sjca_w(1)+sjca_w(2)
+      write(lun,fmt_peak) 'C total on', sjct_w,sjct_w(1)+sjct_w(2)
       write(lun,fmt_peak) 'C sputtered',sjcs_w,sjcs_w(1)+sjcs_w(2)
-      write(lun,fmt_peak) 'C removed',sjcb_w,sjcb_w(1)+sjcb_w(2)
+      write(lun,fmt_peak) 'C removed',  sjcb_w,sjcb_w(1)+sjcb_w(2)
       write(lun,*)
       write(lun,*) 'Erosion [mm/y]'
       ersn_pm=0.0_R8
@@ -557,8 +557,8 @@ c
         ersn_am=ersn_am+sjcb_w(j)
       end do
       ersn_am=ersn_am*ers_factor/ss_m
-      write(lun,fmt_peak) 'average',ersn_a,ersn_am
-      write(lun,fmt_peak) 'peak',ersn_p,ersn_pm
+      write(lun,fmt_peak) 'average',  ersn_a,ersn_am
+      write(lun,fmt_peak) 'peak',     ersn_p,ersn_pm
       write(lun,fmt_peak) 'peak pos.',ersn_l
 c
       close (lun)
