@@ -16,11 +16,11 @@ c*** All the data are transferred via the common blocks.
 c***
 c*** Input
 c***  nplg    number of the segments in the structure
-c***  xp,yp   co-ordinates of the corners of the structure
+c***  xp,yp   coordinates of the corners of the structure
 c***  jcb     index of the "base" segment
-c***  [xy]src co-ordinates of the source
+c***  [xy]src coordinates of the source
 c***
-c***  xb,yb   co-ordinates of the base starting point
+c***  xb,yb   coordinates of the base starting point
 c***  sb,se   starting and ending points of the irradiated part of the
 c***          base segment normalised to the base length.
 c***          Should be set to 0 and 1 before the call.

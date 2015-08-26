@@ -59,7 +59,7 @@ c======================================================================
 c<<<
 c      tab=char(9)
 c
-      print *,'Starting b2pwlprp...',nlim,lppp,DEF_NLIM
+c      print *,'Starting b2pwlprp...',nlim,lppp,DEF_NLIM
 c      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
       call ipgeti ('b2agmt_1d_width', width)
 c>>>

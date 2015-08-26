@@ -32,11 +32,14 @@ c*** and for the power flux.
      *   flxctff,enrctff,pwrctff
       parameter (flxctff=0.1e0_R8, enrctff=1.e-8_R8, pwrctff=1.e-8_R8)
       integer il,is,i,ii,ia,ib,k,ic
+      character*68 hlp_frm
       real (kind=R8) ::
      *   x,dist,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
      ,     wwj(natm+nmol),wwe(natm+nmol)
       character*8 text_an(natm),text_mn(nmol)
+      logical streql
       intrinsic max
+      external streql
 c----------------------------------------------------------------------
       print *,'Starting b2pnwl...',nlim,DEF_NLIM
 c*** Set the default values
@@ -45,7 +48,7 @@ c*** Set the default values
 c*** Read the data from dg files
       call b2pinp(*999)
 c
-c*** Convert the input wall co-ordinates into double precision
+c*** Convert the input wall coordinates into double precision
 c*** and scale them to meters.
 c*** We have now two sets of the wall segments, one saved by Eirene
 c*** and (another) one read from dg file. Only the segments which are
@@ -64,8 +67,9 @@ c
       end do
 cc%%%
 c      print *,'After b2pinp',nwldprt
-c      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
-c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
+c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
+c      write (6,hlp_frm) 'lwldstrt:',(lwldstrt(i),i=1,nwldprt)
+c      write (6,hlp_frm) 'nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt
 c        print '(a,(20i5))','lwldlis :',il,(lwldlis(i,il),i=1,nwldprt)
 c      end do
@@ -74,8 +78,9 @@ c*** Then sort the target lists
       call b2pwsrt(*999)
 cc<<<
 c      print *,'After b2pwsrt',nwldprt
-c      print '(a,(20i5))','lwldstrt:',(lwldstrt(i),i=1,nwldprt)
-c      print '(a,(20i5))','nwldlis :',(nwldlis(i),i=1,nwldprt)
+c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
+c      write (6,hlp_frm) 'lwldstrt:',(lwldstrt(i),i=1,nwldprt)
+c      write (6,hlp_frm) 'nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt
 c        print '(a,(20i5))','lwldlis :',il,
 c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
@@ -91,8 +96,11 @@ c*** ... and produce the output file
         text_mn(i)=textmn(i-1)(2:8)
       end do
       open (lun,file='wlld.dat')
-      write(lun,
-     ,      '(2x,a4,5x,a3,6(5x,a2,3x),4(5x,a4,3x),16(3x,a4,a4,1x))')
+      write (hlp_frm,'(a,i2,a)')
+     .      '(2x,a4,5x,a3,6(5x,a2,3x),4(5x,a4,3x),',
+     .      2*natmi+2*nmoli,
+     .      '(3x,a4,a4,1x),4(5x,a4,3x))'
+      write(lun,hlp_frm)
      -     'zone','elm',
      ,     'R1','Z1','R2','Z2',' X','Xr',
      ,     'area','Wtot','Wkin','Wpot',
@@ -111,7 +119,7 @@ c*** Check whether carbon atoms are present in the calculation
 c
       ic=0
       do i=1,natmi
-        if(text_an(i) .eq. 'C') ic=i
+        if(streql(text_an(i),'C')) ic=i
       end do
 c
       do il=1,nwldprt

@@ -11,9 +11,9 @@ c*** Returns the total radiation power coming to each of the specified
 c*** wall segments with possible shadowing taken into account.
 c***
 c*** Input:
-c***  xysrc   R and Z co-ordinates of the point sources
+c***  xysrc   R and Z coordinates of the point sources
 c***  ssrcm   their intensities
-c***  xp,yp   co-ordinates of the boundary polygon P
+c***  xp,yp   coordinates of the boundary polygon P
 c***  nbndry  number of points in shadowing structure S
 c***  lbnd    indices of the S segments (assumed closed) in P
 c***  ntrg    number of segments representing the radiation target T
