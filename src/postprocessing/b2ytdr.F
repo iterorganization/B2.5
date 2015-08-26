@@ -862,9 +862,9 @@ c 2002-09-11: logic revised
      *   is0, bundle_contr, zn0, am0, zamin0, zamax0)
         call re_bundle (ns, is0, bundle_contr, zn0, am0, zamin0, zamax0,
      *   ns1, is1, bundle_frac, zn1, am1, zamin1, zamax1)
-        write(hlp_frm,'(a,i3,a)') '(3x, ',ns,'(1x, i4))'
+        write(hlp_frm,'(a,i3,a)') '(3x,',ns,'(1x,i4))'
         write(*,hlp_frm) (is, is = 0, ns-1)
-        write(hlp_frm,'(a,i3,a)') '(i3, ',ns,'(1x, f4.2))'
+        write(hlp_frm,'(a,i3,a)') '(i3,',ns,'f5.2)'
         do iss = 0, ns1-1
           write(*,hlp_frm) iss, (bundle_frac(iss,is), is = 0, ns-1)
         end do
