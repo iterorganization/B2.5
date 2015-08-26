@@ -27,7 +27,7 @@
       real (kind=R8) :: qin, qel, normal_r, normal_z, torl,
      *  xa, ya, xa2, ya2, xb, yb, xo, yo, nhalf_r, nhalf_z, nhalf,
      *  xap, yap, xaq, yaq, xbp, ybp, xbq, ybq, xbm, ybm, xint, yint,
-     *  n1_r, n1_z, n2_r, n2_z, dist, distp, dint, sum,
+     *  dist, distp, dint, sum,
      *  sput_frac(0:ntrack), wrk(ndepth_nml)
       logical wall_namelist_used, default_cooling, correct_quadrant
       logical todo, found, error
@@ -896,8 +896,7 @@ cxpb Use 1-D equilibrium profile
       integer nx, ny, ns, nz, ibnd
       integer i, is, ix, iy, ibndm, ibndp, iend, itrack, icoat
       real (kind=R8) :: normal_r, normal_z, dist,
-     .  cosa, sina, coshlf, sinhlf, tanhlf,
-     .  n1_r, n1_z, n2_r, n2_z, nhalf_r, nhalf_z, sum,
+     .  nhalf_r, nhalf_z, sum,
      .  sput_frac(0:ntrack)
       logical surface_only, found
       character*24 filename
