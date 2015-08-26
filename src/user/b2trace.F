@@ -21,7 +21,7 @@ c----------------------------------------------------------------------
       real (kind=R8) :: recyctmp
       logical, save :: tracing_initialised
       data tracing_initialised /.false./
-      data use_recyceir /0/
+      data use_recyceir /1/
 c----------------------------------------------------------------------
 c
 c*** Correct the neutral fluxes according to recyc values

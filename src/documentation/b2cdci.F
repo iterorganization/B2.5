@@ -489,7 +489,7 @@
 *    'eirene_ua_max'            '+c'                   Numerics
 *    'eirene_ua_min'            '-c'                   Numerics
 *    'eirene_print_minmax'      '0'                    Numerics
-*    'eirene_use_recyceir'      '0'                    Physics
+*    'eirene_use_recyceir'      '1'                    Physics
 *    'heatdiff1D_linlog'        '1'                    Numerics
 *    'heatdiff1D_ratio'         '100.0'                Numerics
 *    'ma28_nwrite'              '0'                    Output
@@ -1546,7 +1546,7 @@
 *    passed to Eirene on its first call is ignored (instead the value in the 
 *    Eirene input file is used).
 *
-*    'eirene_use_recyceir'      '0'                    Physics
+*    'eirene_use_recyceir'      '1'                    Physics
 *    If > 0 use recyceir (non species dependent) to specify the recycling
 *    coefficients, else if 0 use recyc (species dependent).
 *

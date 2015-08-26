@@ -43,7 +43,7 @@ c
       real (kind=R8) :: recyctmp
       real (kind=R8), allocatable :: ft44data(:,:)
       character charns*3
-      data use_recyceir /0/
+      data use_recyceir /1/
 
 *  -- PROCEDURES --
       EXTERNAL GFSUB2

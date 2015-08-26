@@ -70,7 +70,7 @@
 *     the neutral species associated to their homonuclear sequence.
 *     Applies to B2 neutral fluid species.
 *     Also multiplies Eirene recycling fluxes if 'eirene_use_recyceir' is set 
-*     to 0 (default, see b2cdci for details).
+*     to 0 (see b2cdci for details).
 *  ERECYC - real*8 array of size (0:NS-1,NSTRAT). Stores the energy recycling 
 *     coefficients of species (is) on stratum (istra). Defaults to 0.3 for 
 *     non-carbon species and 0.0 for carbon species. The energy is carried back
@@ -82,7 +82,7 @@
 *     homonuclear sequence. Applies only to B2 neutral fluid species.
 *  RECYCEIR - real*8 array of size (NSTRAT). Multiplier to the Eirene recycling
 *     fluxes from stratum (istra). Only used if 'eirene_use_recyceir' is set 
-*     to 1. Defaults to 1.0.
+*     to 1 (default). Defaults to 1.0.
 *  USERFLUXPARM - real*8 array of size (NSTRAT,2). The element (istra,1) 
 *     contains the strength of constant gas puff strata (type 'C') for Eirene 
 *     in particles/second. Defaults to 0.

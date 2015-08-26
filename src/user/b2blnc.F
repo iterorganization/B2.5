@@ -125,7 +125,7 @@ c*** Column headers:
      3          'bln_core','bln_targ','bln_wall','bln_srce','bln_blnc',
      4          'bln_blnr','flx_d/dt','flux_bln','flux_blr','flux_ttr'/
 *   ..initialisation
-      data use_recyceir /0/
+      data use_recyceir /1/
 c
       data first / .true. /
 c----------------------------------------------------------------------

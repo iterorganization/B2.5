@@ -247,7 +247,7 @@ cxpb 30% energy recycling for all ionised species except carbon.
 
       lstrascl=0
       b2espcr=0
-      eb2spcr=0
+      eb2spcr=-1
       lmolscl=0
       lionscl=0
       mlcmp=0
