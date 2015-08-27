@@ -209,6 +209,10 @@
         if(mod(status,2).eq.1) then
           write(*,*) 'old shotnumber: ',shotnumber
           write(nout(0),'(a,i8)') 'The previous shot was # ',shotnumber
+          if(shotnumber.eq.0) then
+            write(*,*) 'Stopping because previous shotnumber = 0'
+            stop
+          endif
         else
           call mds_err_msg(status)
           stop
@@ -223,6 +227,10 @@
           call mds_err_msg(status)
           write(*,*) 'new shotnumber: ',shotnumber
           write(nout(0),'(a,i8)') 'The new shot was # ',shotnumber
+          if(shotnumber.eq.0) then
+            write(*,*) 'Stopping because shotnumber = 0'
+            stop
+          endif
           dbsolpsindex=shotnumber
         else
           call mds_err_msg(status)
@@ -262,6 +270,10 @@ c-dpc        endif
         shotnumber=overwrite_shotnumber
         write(*,*) 'Overwriting: ',shotnumber
         write(nout(0),'(a,i8)') 'Overwriting shot # ',shotnumber
+        if(shotnumber.eq.0) then
+          write(*,*) 'Stopping because overwriting shotnumber = 0'
+          stop
+        endif
         dbsolpsindex=shotnumber
 
         tcl='TCL("set tree solps")'

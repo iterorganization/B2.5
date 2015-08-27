@@ -217,11 +217,11 @@
       data descriptions(111:120) /
      1    'Self pressure force',
      2    'Region',
-     3    'smo',
-     4    'smq',
-     5    'Extended friction term',
-     6    'Pressure gradient term',
-     7    'Additional viscosity term',
+     3    'Parallel momentum source (N)',
+     4    'Momentum sources from atomic physics (N)',
+     5    'Extended friction term (N)',
+     6    'Pressure gradient term (N)',
+     7    'Additional viscosity term (N)',
      8    'RESCO',
      9    'RESMO',
      *    'RESMT'/

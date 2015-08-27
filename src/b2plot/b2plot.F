@@ -2457,7 +2457,7 @@ c
           write(*,*) '"smo" option with ',isel
           call copy(mach,1.0_R8,nz,textpl)
         case ('smq')
-          description='smq (N)'
+          description='smq (momentum sources from atomic physics) (N)'
           nz=ns
           stack_req=(/1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -2512,7 +2512,7 @@ c
           write(*,*) '"sch" option with ',isel
           call copy(sch(:,:,isel),1.0_R8,nz,textbl)
         case ('smaf')
-          description='smaf (N)'
+          description='smaf (extended friction term) (N)'
           nz=ns
           stack_req=(/1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -2529,7 +2529,7 @@ c
      &         '"smaf (extended friction term)" option with ',isel
           call copy(mach,1.0_R8,nz,textpl)
         case ('smag')
-          description='smag (N)'
+          description='smag (pressure gradient term) (N)'
           nz=ns
           stack_req=(/1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -2546,7 +2546,7 @@ c
      &         '"smag (pressure gradient term)" option with ',isel
           call copy(mach,1.0_R8,nz,textpl)
         case ('smav')
-          description='smav (N)'
+          description='smav (additional viscosity term) (N)'
           nz=ns
           stack_req=(/1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -5729,7 +5729,7 @@ c-dpc still in testing phase
           write(99,hlp_frm) '#',
      1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))),
      2       (textwk(is,iwrk)(1:lnblnk(textwk(is,iwrk))),is=0,nz-1)
-          write(hlp_frm,'(a,i3,a)') '(2i4,1p,',nz,'(1e12.5,1x))'
+          write(hlp_frm,'(a,i3,a)') '(2i4,1p,',nz,'(1x,1e12.5))'
           do iy=iy1,iy2
             do ix=ix1,ix2
               write(99,hlp_frm) ix,iy,work(ix,iy,0:nz-1,iwrk)
