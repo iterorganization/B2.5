@@ -247,11 +247,12 @@ c              print *,'%% Checking ',n,i,l
      .           abs(p2(2,l)-pp2(2,j)) .le. wsrttol) then
 c                print *,'== OK'
                 lwldlis(i,il)=j
-              else
+              else if (p1(1,l).ne.0.0_R8 .or. p1(2,l).ne.0.0_R8 .or.
+     .                 p2(1,l).ne.0.0_R8 .or. p2(2,l).ne.0.0_R8) then
                 print '(a,i3,1p,4e12.4)',
      .           'Eirene  : ', l, p1(1,l), p1(2,l), p2(1,l), p2(2,l)
                 print '(a,i3,1p,4e12.4)',
-     .           'DG (mod): ', j, pp1(1,j),pp1(2,j),pp2(1,j),pp2(2,j)
+     .           'DG (mod): ', j,pp1(1,j),pp1(2,j),pp2(1,j),pp2(2,j)
               end if
               checked = .true.
             end if
