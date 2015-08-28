@@ -195,8 +195,11 @@ csw 21feb2012
       call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
       call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
       call xertst (nsd.le.nsdmax, 'faulty parameter nsd')
+      call xertst (natmid.le.DEF_NATM, 'faulty parameter natmid')
+      call xertst (nmolid.le.DEF_NMOL, 'faulty parameter nmolid')
       call xertst (nstraid_in.le.nstraid, 'faulty parameter nstraid_in')
 #endif
+      call xertst (natmid.ge.nspecies, 'faulty parameter natmid')
       CRCSTRA=' '
       SPS_ID=' '
       SPS_MTRL=' '
@@ -584,13 +587,13 @@ c
      .     'faulty input chem_sput')
         enddo
         call xertst (0.0_R8.le.recyceir(istra), 'faulty input recyceir')
-        do is = 1, natmid
+        do is = 1, nspecies
           call xertst(0.0_R8.le.gpfc(is,istra), 'faulty input gpfc')
           call xertst(0.le.lstrascl(istra,is), 'faulty input lstrascl')
         enddo
       enddo
       do is = 0, ns-1
-        call xertst(1.le.b2espcr(is).and.b2espcr(is).le.natmid,
+        call xertst(1.le.b2espcr(is).and.b2espcr(is).le.nspecies,
      .   'faulty input b2espcr')
       enddo
       if (hydrogen) then
@@ -601,13 +604,13 @@ c
      . 'faulty input j_he_at')
       if (neon) call xertst(nint(zn(eb2spcr(j_ne_at))).eq.10,
      . 'faulty input j_ne_at')
-      do is = 1, natmid
+      do is = 1, nspecies
         call xertst(0.le.eb2spcr(is).and.eb2spcr(is).lt.ns,
      .   'faulty input eb2spcr')
       enddo
       do is = 1, nmolid
         call xertst(0.le.lmolscl(is), 'faulty input lmolscl')
-        do i = 1, natmid
+        do i = 1, nspecies
           call xertst(0.le.mlcmp(i,is), 'faulty input mlcmp')
         enddo
         if (hydrogen .and. user_namelist_used) call xertst
@@ -667,11 +670,11 @@ c>>>
 
       do j=1,nstrai !{
         hlp=0.0_R8
-        do i=1,natmid !{
+        do i=1,nspecies !{
           hlp=hlp+gpfc(i,j)
         end do !}
         if(hlp.gt.0.0_R8) then !{
-          do i=1,natmid !{
+          do i=1,nspecies !{
             gpfc(i,j)=gpfc(i,j)/hlp
           end do !}
         end if !}

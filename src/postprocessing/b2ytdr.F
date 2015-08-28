@@ -935,7 +935,7 @@ c 2002-09-11: logic revised
      &  fna1, fhe1, fhi1, fch1, fch1_32, fch1_52, fch1_p, kinrgy1)
 
 * ..check for need to transform other input files: 
-* ..b2mn.dat, b2.*.parameters, input.dat, b2ah.dat b2ai.dat
+* ..b2mn.dat, b2.*.parameters, input.dat, b2ah.dat, b2ai.dat
 
 *   ..read default physics common
       call cfruch (ninp(8), 120, lblcp, 'label')
