@@ -4,6 +4,7 @@
 * DPC: constant declaration now in b2mod_constants
       integer nsdecl
       parameter (nsdecl=45)
+      integer nspecies
       integer partition_number(0:nsdecl-1)
       real (kind=R8), save ::
      *  zn(0:nsdecl-1), am(0:nsdecl-1),
@@ -24,7 +25,7 @@ c     potimax : Ionization cost to reach zamax(is) from zamin(is-1) (in eV)
 c     is_neutral(is) is true if a stage is a neutral species
 c     partition_number indicates the stage number within its homonuclear sequence
 c     
-c     It is not allowed to bundled neutral and charged states together.
+c     It is not allowed to bundle neutral and charged states together.
 
       contains
 

@@ -55,7 +55,7 @@ c     local variables:
      *          z(-1:nx,-1:ny,ns+1), z2(-1:nx,-1:ny,ns+1)
 
       integer 	nz(ns+1)
-      integer 	i, ix, iy, ifail, nspecies, ncharged
+      integer 	i, ix, iy, ifail, nspec, ncharged
 
       external subini, subend, xertst, b2xvff, b2xvsg, ipgeti
 
@@ -102,21 +102,21 @@ c     local variables:
       failcount0=failcount
       mm(1) = me
       nz(1) = 1
-      nspecies=2
-      nz(nspecies)=0
-      mm(nspecies)=am(0)*mp 	 ! xpb <------- new line
+      nspec=2
+      nz(nspec)=0
+      mm(nspec)=am(0)*mp 	 ! xpb <------- new line
       do i=1,ns-1
         if(.not.is_neutral(i-1)) then
-          nz(nspecies)=nz(nspecies)+1
+          nz(nspec)=nz(nspec)+1
           if(zn(i).ne.zn(i-1)) then
-            mm(nspecies)=am(i-1)*mp
-            nspecies=nspecies+1
-            nz(nspecies)=0
-            mm(nspecies)=am(i)*mp
+            mm(nspec)=am(i-1)*mp
+            nspec=nspec+1
+            nz(nspec)=0
+            mm(nspec)=am(i)*mp
           endif
         endif
       enddo
-      nz(nspecies)=nz(nspecies)+1
+      nz(nspec)=nz(nspec)+1
 
       z(-1:nx,-1:ny,1) = 1.e0_R8
       z2(-1:nx,-1:ny,1) = 1.e0_R8
@@ -205,11 +205,11 @@ c       write(*,*) 'mm',mm
 c       write(*,*) 'tef,tif',tef,tif
 c       write(*,*) 'gte,gti',gte,gti
 c       write(*,*) 'nz',nz
-c       write(*,*) 'nspecies',nspecies
+c       write(*,*) 'nspec',nspec
 c       write(*,*) 'ncharged',ncharged
           call thermf( u, n, z(ix,iy,1), z2(ix,iy,1), 
      &     mm, tef, tif, gte, gti, lnlam(ix,iy),                     !srv 01.07.09
-     *     nz, nspecies, ncharged, ce, ci, he, hi, r, ifail, cond )
+     *     nz, nspec, ncharged, ce, ci, he, hi, r, ifail, cond )
           fac=(atan(xscal*(cond-xpos))-atan(-xscal*xpos))/
      1     (atan(1.0e8_R8)-atan(-xscal*xpos))
 c       write(*,*) 'b2t21t:ix,iy,cond,fac',ix,iy,cond,fac
@@ -355,7 +355,7 @@ c       ( ix )
      *                  eta(ns), mm(ns), coef, pit, cond,
      *                  z2(-1:nx,-1:ny,ns)
       integer	        nz(ns)
-      integer	        i, ix, iy, ifail, nspecies, ncharged
+      integer	        i, ix, iy, ifail, nspec, ncharged
 
       external subini, subend, xertst, b2xvsg
 
@@ -397,21 +397,21 @@ c       ( ix )
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)              !srv 20.09.11
 
       failcount0=failcount
-      nspecies=1
-      nz(nspecies)=0
-      mm(nspecies)=am(0)*mp 	 ! xpb <------- new line
+      nspec=1
+      nz(nspec)=0
+      mm(nspec)=am(0)*mp 	 ! xpb <------- new line
       do i=1,ns-1
         if(.not.is_neutral(i-1)) then
-          nz(nspecies)=nz(nspecies)+1
+          nz(nspec)=nz(nspec)+1
           if(zn(i).ne.zn(i-1)) then
-            mm(nspecies)=am(i-1)*mp
-            nspecies=nspecies+1
-            nz(nspecies)=0
-            mm(nspecies)=am(i)*mp
+            mm(nspec)=am(i-1)*mp
+            nspec=nspec+1
+            nz(nspec)=0
+            mm(nspec)=am(i)*mp
           endif
         endif
       enddo
-      nz(nspecies)=nz(nspecies)+1
+      nz(nspec)=nz(nspec)+1
 
       ncharged=0
       do i=0,ns-1
@@ -455,10 +455,10 @@ c         write(*,*) 'z2',z2(ix,iy,1:ncharged)
 c         write(*,*) 'mm',mm
 c         write(*,*) 'ti(ix,iy)',ti(ix,iy)
 c         write(*,*) 'nz',nz
-c         write(*,*) 'nspecies,ncharged',nspecies,ncharged
+c         write(*,*) 'nspec,ncharged',nspec,ncharged
 c         write(*,*) 'wwpp',wwpp
             call viscalc(n, z(ix,iy,1), z2(ix,iy,1), mm, ti(ix,iy), nz, 
-     *       nspecies, ncharged, wwpp, visc, eta, lnlam(ix,iy), ifail,   !srv 01.07.09
+     *       nspec, ncharged, wwpp, visc, eta, lnlam(ix,iy), ifail,   !srv 01.07.09
      *       cond)
 c         write(*,*) 'b2t21v:ix,iy,cond',ix,iy,cond
 

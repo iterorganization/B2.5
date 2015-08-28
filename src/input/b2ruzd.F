@@ -1,9 +1,7 @@
       subroutine b2ruzd(nget, version, ns, zamin, zamax, zn, am)
       use b2mod_types
       use b2mod_b2cmpa
-     , ,only : is_neutral, partition_number
-      use b2mod_diag
-     , ,only : nspecies
+     , ,only : is_neutral, partition_number, nspecies
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, ns

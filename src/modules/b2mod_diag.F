@@ -83,7 +83,6 @@ c***                    tracing
       character*2, allocatable :: atoms_list(:)
       integer, allocatable :: ions_list(:), fluids_list(:)
       character*120 label
-      integer nspecies
       integer :: ank_tracing = 0
 c
       save
