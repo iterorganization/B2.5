@@ -20,6 +20,7 @@
       use b2mod_b2cmpb
       use b2mod_b2cmpt
       use b2mod_b2cmwg
+      use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:2), nx, ny, ns
@@ -36,6 +37,7 @@
 #endif
 *   ..local variables
       integer k, is, idum(0:9), nscx, iscx(0:nscxmax-1), ismain
+      integer external_species
       real (kind=R8) :: BoRiS, t0, t1
       real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
@@ -44,8 +46,8 @@
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80
 *   ..initialisation
-      save BoRiS, ismain
-      data BoRiS/0.0_R8/, ismain/1/
+      save BoRiS, ismain, external_species
+      data BoRiS/0.0_R8/, ismain/1/, external_species/0/
 *   ..procedures
       intrinsic abs
       logical ltst
@@ -165,6 +167,13 @@
         call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti, rlcx(-1,-1,0,0,k),
      &   rcx, wrk0)
       enddo
+*   ..obtain external species data if any
+      call ipgeti ('b2mndr_external_species', external_species)
+      if (external_species.ne.0) then
+        call read_b2mod_external(nx,ny,ns,ismain)
+      else
+        call alloc_b2mod_external_dummy(nx,ny)
+      endif
 
 *   ..process
       exp='NOT_SET'

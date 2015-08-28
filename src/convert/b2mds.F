@@ -778,8 +778,9 @@ c 18: introduced new quantities from SOLPS_ITER
 c     ENEUTRAD now with third dimension for atomic species
 c 19: added GIT version
 c 20: output na0, ua0, ne0, te0, ti0, po0
+c 21: output smaf, smag, smav, smfr, smo, smpr, smpt, smq, smth, resco, reshe, reshi, resmo, resmt, respo
 
-      dbversion=20
+      dbversion=21
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)
@@ -828,6 +829,7 @@ c
      1 call mds_put_string_ns('\TOP.SNAPSHOT:TEXTIN',nioni,textin)
       call mds_put_string_ns('\TOP.SNAPSHOT:TEXTCOMP',4,textcomponents)
       call mds_put_string_ns('\TOP.SNAPSHOT:TEXTDRIFT',2,textdrift)
+      call mds_put_string_ns('\TOP.SNAPSHOT:TEXTLIN',4,text0123)
 c
       inquire(file='mesh.extra',exist=ex)
       if(ex) then
@@ -1104,6 +1106,37 @@ c
      * descr2(idtype_double,nbnd,ndepth_nml,0),target_temp,0)
       write(*,*) 'mdsput2 of ',trim(mds_signal_name),' with ',trim(tdi)
       call mds_err_msg(status)
+
+      call mds_put_double_rzdns('\TOP.SNAPSHOT:SMAF','N',
+     1 nx+2,ny+2,4,ns,b2npmo_smaf,'TEXTLIN','TEXTPL','')
+      call mds_put_double_rzdns('\TOP.SNAPSHOT:SMAG','N',
+     1 nx+2,ny+2,4,ns,b2npmo_smag,'TEXTLIN','TEXTPL','')
+      call mds_put_double_rzdns('\TOP.SNAPSHOT:SMAV','N',
+     1 nx+2,ny+2,4,ns,b2npmo_smav,'TEXTLIN','TEXTPL','')
+      call mds_put_double_rzns('\TOP.SNAPSHOT:SMFR','N',
+     1 nx+2,ny+1,ns,smfr,'TEXTPL','')
+      call mds_put_double_rzdns('\TOP.SNAPSHOT:SMO','N',
+     1 nx+2,ny+2,4,ns,smo,'TEXTLIN','TEXTPL','')
+      call mds_put_double_rzns('\TOP.SNAPSHOT:SMPR','N',
+     1 nx+2,ny+1,ns,smpr,'TEXTPL','')
+      call mds_put_double_rzns('\TOP.SNAPSHOT:SMPT','N',
+     1 nx+2,ny+1,ns,smpt,'TEXTPL','')
+      call mds_put_double_rzdns('\TOP.SNAPSHOT:SMQ','N',
+     1 nx+2,ny+2,4,ns,smq,'TEXTLIN','TEXTPL','')
+      call mds_put_double_rzns('\TOP.SNAPSHOT:SMTH','N',
+     1 nx+2,ny+1,ns,smpr+smpt,'TEXTPL','')
+      call mds_put_double_rzns('\TOP.SNAPSHOT:RESCO','#/s',
+     1 nx+2,ny+1,ns,resco,'TEXTPL','')
+      call mds_put_double_rz('\TOP.SNAPSHOT:RESHE','W',
+     1 nx+2,ny+2,reshe,'')
+      call mds_put_double_rz('\TOP.SNAPSHOT:RESHI','W',
+     1 nx+2,ny+2,reshi,'')
+      call mds_put_double_rzns('\TOP.SNAPSHOT:RESMO','N',
+     1 nx+2,ny+1,ns,resmo,'TEXTPL','')
+      call mds_put_double_rz('\TOP.SNAPSHOT:RESMT','N',
+     1 nx+2,ny+2,resmt,'')
+       call mds_put_double_rz('\TOP.SNAPSHOT:RESPO','V',
+     1 nx+2,ny+2,respo,'')
 
 #ifdef B25_EIRENE
       if(natmi.gt.0) then
