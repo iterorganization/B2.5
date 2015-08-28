@@ -34,6 +34,7 @@
       use eirmod_clogau
       use eirmod_braeir
       use eirmod_eirbra
+     * , only : eirene_alloc_eirbra
       use eirmod_extrab25
 #endif
       use b2mod_b2cmpa
