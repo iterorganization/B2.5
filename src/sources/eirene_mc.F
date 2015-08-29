@@ -1445,12 +1445,13 @@ c              style)
       if(neutr_avg .gt. 0) then
 
        if(main_call.and.mod(ncall,eirene_mod).eq.0) then
-        ihist=mod(ncall, neutr_avg)+1
-        if(ihist.eq.1) then
+        ihist=ihist+1
+        if(ihist.eq.neutr_avg+1) then
          sni_av=0.0_R8
          smo_av=0.0_R8
          see_av=0.0_R8
          sei_av=0.0_R8
+         ihist = 1
         endif
         sni_av = sni_av + sni
         smo_av = smo_av + smo
