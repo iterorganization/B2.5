@@ -199,13 +199,8 @@ csw 26feb2014 some extra variables
        call ipgeti ('eirene_neutr_avg', neutr_avg)
        call ipgeti ('b2stbr_eir_src_nhist', nhist)
        call ipgeti ('b2mndt_nstg2', nstg2)
-       if(nstg2 > 1) then
-        if(no_neutr_scl .ne. 0) then
-          write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
-        endif
-        if(nhist.ne.0 .or. neutr_avg.ne.0) then
-          call xerrab('nstg2>1 + EIRENE source averaging not possible')
-        endif
+       if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
+         write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
        endif
        if(nhist .ne. 0 .and. neutr_avg .ne. 0) then
          call xerrab('Do not use of both EIRENE source averaging procs')

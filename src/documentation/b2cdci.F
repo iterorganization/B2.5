@@ -328,6 +328,7 @@
 *    'b2stbr_alpha'             '0.25'                 Physics
 *    'b2stbr_b2wall_netcdf'     '0'                    Output
 *    'b2stbr_core_sources_rescale'  '1.0'              Run
+*    'b2stbr_eir_src_nhist'     '0'                    Numerics
 *    'b2stbr_first_flight'      '0'                    Run
 *    'b2stbr_first_flight_dl'   '0.001'                Numerics
 *    'b2stbr_first_flight_no_of_flights'  '9'          Numerics
@@ -876,6 +877,11 @@
 *
 *    'b2stbr_core_sources_rescale'  '1.0'              Run
 *    Multiplier to the totally ionised species sources at the core boundary.
+*
+*    'b2stbr_eir_src_nhist'     '0'                    Numerics
+*    If b2stbr_eir_src_nhist.gt.0, then Eirene sources are accumulated and
+*    a moving average is computed.  Note that either b2stbr_eir_src_nhist
+*    or eirene_neutr_avg may be nonzero, but not both.
 *
 *    'b2mndt_density_control'   '0'                    Run
 *    Feedback on the total heavy particle density. If density_control.ne.0,
@@ -1852,7 +1858,7 @@
 *    'eirene_neutr_avg'         '0'                    Numerics
 *    If eirene_neutr_avg.gt.0, then Eirene sources are accumulated and
 *    averaged until eirene_neutr_avg+1 steps, at which point the averaging
-*    process is reset.  Only use with b2mndt_nstg2.eq.1.
+*    process is reset.
 *
 *    'b2news_area_fix'          '3'                    Numerics
 *    When area_fix.eq.0, recovers old SOLPS5.0 behaviour.
