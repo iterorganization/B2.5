@@ -24,7 +24,7 @@
      &  sna0_eir_h(:,:,:,:,:),
      &  smo0_eir_h(:,:,:,:,:),
      &  she0_eir_h(:,:,:,:), shi0_eir_h(:,:,:,:),
-     &  rfluxa_h(:,:,:,:,:), rfluxm_h(:,:,:,:,:)
+     &  rfluxa_h(:,:,:,:,:), rfluxm_h(:,:,:,:,:),
 ! _h is an abbreviation from 'history'
      &  sna0_eir_s(:,:,:,:),
      &  smo0_eir_s(:,:,:,:),
