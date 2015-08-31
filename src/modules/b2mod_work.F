@@ -26,7 +26,11 @@
      &  she0_eir_h(:,:,:,:), shi0_eir_h(:,:,:,:),
      &  rfluxa_h(:,:,:,:,:), rfluxm_h(:,:,:,:,:)
 ! _h is an abbreviation from 'history'
-      integer, save :: max_eir_hist_slc = 100                     !IYS 28.03.12 }
+     &  sna0_eir_s(:,:,:,:),
+     &  smo0_eir_s(:,:,:,:),
+     &  she0_eir_s(:,:,:), shi0_eir_s(:,:,:),
+     &  rfluxa_s(:,:,:,:), rfluxm_s(:,:,:,:)
+! _s is an abbreviation from 'sum'
 #endif
       integer, allocatable, save ::
      .  iffboundx(:,:), iffboundy(:,:),
@@ -129,7 +133,13 @@
       allocate(she0_eir_h(-1:nxd,-1:nyd,0:3,nhistd))
       allocate(shi0_eir_h(-1:nxd,-1:nyd,0:3,nhistd))
       allocate(rfluxa_h(0:ndxp,0:ndyp,natm,1,nhistd))
-      allocate(rfluxm_h(0:ndxp,0:ndyp,natm,1,nhistd))
+      allocate(rfluxm_h(0:ndxp,0:ndyp,nmol,1,nhistd))
+      allocate(sna0_eir_s(-1:nxd,-1:nyd,0:1,0:nsd_local-1))
+      allocate(smo0_eir_s(-1:nxd,-1:nyd,0:3,0:nsd_local-1))
+      allocate(she0_eir_s(-1:nxd,-1:nyd,0:3))
+      allocate(shi0_eir_s(-1:nxd,-1:nyd,0:3))
+      allocate(rfluxa_s(0:ndxp,0:ndyp,natm,1))
+      allocate(rfluxm_s(0:ndxp,0:ndyp,nmol,1))
       call clear_hist_arrays
       end subroutine alloc_hist_arrays
 
@@ -141,6 +151,12 @@
       shi0_eir_h = 0.0_R8 
       rfluxa_h = 0.0_R8  
       rfluxm_h = 0.0_R8    
+      sna0_eir_s = 0.0_R8
+      smo0_eir_s = 0.0_R8
+      she0_eir_s = 0.0_R8
+      shi0_eir_s = 0.0_R8 
+      rfluxa_s = 0.0_R8  
+      rfluxm_s = 0.0_R8    
       end subroutine clear_hist_arrays                            !IYS 28.03.12 }
 #endif            
 

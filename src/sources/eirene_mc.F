@@ -127,7 +127,7 @@ c      data lis_hlp / 110, 111, 112, 49 /
 csw 26mar2013
       integer, save :: iscltst=0
 csw 26feb2014
-      integer, save :: ihist=0, neutr_avg=0
+      integer, save :: ihist=0, neutr_avg=0, nhist=0
 
       real (kind=R8), save, allocatable :: 
      .   sni_av(:,:,:,:),smo_av(:,:,:,:),sei_av(:,:,:),see_av(:,:,:)
@@ -297,6 +297,9 @@ csw 26mar2013
 
 csw 26feb2013
         call ipgeti ('eirene_neutr_avg',neutr_avg)
+        call ipgeti ('b2stbr_eir_src_nhist',nhist)
+        call xertst (.not.(neutr_avg.gt.1 .and. nhist.gt.1),
+     .   'Cannot have both Eirene averaging schemes simultaneously!')
         if(lhalpha) then
           itmp=1
         else
