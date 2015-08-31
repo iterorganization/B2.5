@@ -116,7 +116,7 @@
       integer, save :: no_neutr_scl = 0, no_b2sral_call = 0
       integer, save :: do_2nd_b2npco_call=0
       integer, save :: re_eval_prtls_fluxes = 1                      !srv 28.06.13
-      integer, save :: nhist=0, neutr_avg=0, nstg2=0
+      integer, save :: nhist=0, neutr_avg=0, nrelax=0, nstg2=0
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -197,14 +197,17 @@
 
 csw 26feb2014 some extra variables
        call ipgeti ('eirene_neutr_avg', neutr_avg)
+       call ipgeti ('eirene_underrelax', nrelax)
        call ipgeti ('b2stbr_eir_src_nhist', nhist)
        call ipgeti ('b2mndt_nstg2', nstg2)
        if(nstg2 > 1 .and. no_neutr_scl .ne. 0) then
          write(*,*) 'WARNING, b2mndt_nstg2>1 .and. no_neutr_scl.ne.0'
        endif
-       if(nhist .ne. 0 .and. neutr_avg .ne. 0) then
-         call xerrab('Do not use of both EIRENE source averaging procs')
-       endif
+       call xertst (.not.(
+     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
+     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
+     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
+     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
           nsmin=ns

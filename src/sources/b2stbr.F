@@ -25,7 +25,7 @@
       use b2mod_work
      1 , only : sna0_eir_h, smo0_eir_h, she0_eir_h,       !IYS 28.03.12 {
      &          shi0_eir_h, rfluxa_h, rfluxm_h,
-csw 25feb2014 fix IVS's version of source term averaging
+csw 25feb2014 fix IYS's version of source term averaging
      &          alloc_hist_arrays                         !IYS 28.03.12 } 
 #endif
       use b2mod_b2cmpa
@@ -129,8 +129,9 @@ csw 25feb2014 fix IVS's version of source term averaging
       logical equilibrium(ntrack), over_erosion
 #ifdef B25_EIRENE
       integer ih_end
-      integer, save :: neutr_avg = 0
+      integer, save :: neutr_avg = 0, nrelax = 0
       logical, save :: full_history = .false.
+      real (kind=R8) :: relax
 #endif
 #ifndef NO_CDF
 #include <netcdf.inc>
@@ -143,6 +144,10 @@ csw 25feb2014 fix IVS's version of source term averaging
       external b2xvsg, b2xvff, x05baf, smax, smin, get_jsep
       real (kind=R8) ::
      *  x05baf, smax, smin
+#ifdef B25_EIRENE
+      real (kind=R8) :: rratio
+      external rratio
+#endif
       intrinsic abs, mod, max
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
@@ -205,9 +210,14 @@ csw 25feb2014 fix IVS's version of source term averaging
         call ipgeti ('b2stbr_eir_src_nhist', nhist)                  !IYS 28.03.12
 #ifdef B25_EIRENE
         call ipgeti ('eirene_neutr_avg', neutr_avg)
-        call xertst (.not.(neutr_avg.gt.1 .and. nhist.gt.1),
-     .   'Cannot have both Eirene averaging schemes simultaneously!')
+        call ipgeti ('eirene_underrelax', nrelax)
+        call xertst (.not.,
+     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
+     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
+     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
+     .   'Cannot have multiple simultaneous Eirene averaging schemes!')
         if (nhist.gt.1) call alloc_hist_arrays(nx,ny,ns,nhist)
+        if (nrelax.gt.1) call alloc_hist_arrays(nx,ny,ns,1)
 #endif
         call ipgetr ('b2stbr_recycled_neutrals_contr',               !srv 12.04.08 
      &                      recycled_neutrals_contr)
@@ -591,70 +601,104 @@ c   --> better solution wanted here..
 
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
-        call eirene_mc(nx, ny, ns, ismain, dtim, BoRiS, sna0_eir,     !srv 29.04.10 {
+        call eirene_mc(nx, ny, ns, ismain, dtim, BoRiS, sna0_eir,   !srv 29.04.10 {
      &                 smo0_eir, she0_eir, shi0_eir, main_call)
 
-csw 25feb2014  fix IVS's version of source term averaging (running average)
+csw 25feb2014  fix IYS's version of source term averaging (running average)
 c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
 c (25feb2014 different from SOLPS4.3 averaging procedure as implemented in
 c eirene_mc)
-        if(nhist .gt. 1 .and. main_call) then
+        if((nhist .gt. 1 .or. nrelax.gt.1) .and. main_call) then
           ihist = ihist + 1
-          if (ihist.eq.nhist) full_history = .true.
-          if (ihist.eq.nhist+1) ihist = 1
-          write(*,*) 'b2stbr: EIRENE source averaging ', nhist, ihist
+          if (nhist.gt.1) then
+            if (ihist.eq.nhist) full_history = .true.
+            if (ihist.eq.nhist+1) ihist = 1
+            write(*,*) 'b2stbr: EIRENE source averaging ', nhist, ihist
+          else if (nrelax.gt.1) then
+            if (ihist.eq.nrelax) full_history = .true.
+            if (ihist.eq.nrelax+1) ihist = 1
+            write(*,*) 
+     .       'b2stbr: EIRENE source under-relaxation ', nrelax, ihist
+          end if
 
-          sna0_eir_h(:,:,:,:,ihist) = sna0_eir
-          smo0_eir_h(:,:,:,:,ihist) = smo0_eir
-          she0_eir_h(:,:,:,ihist) = she0_eir
-          shi0_eir_h(:,:,:,ihist) = shi0_eir
-          do ia = 1,nnatmi
-            rfluxa_h(:,:,ia,1,ihist) = rfluxa(:,:,ia,1)
-          enddo
-          do im = 1,nnmoli
-            rfluxm_h(:,:,im,1,ihist) = rfluxm(:,:,im,1)
-          enddo                  
+          if (nhist.gt.1) then
+            sna0_eir_h(:,:,:,:,ihist) = sna0_eir
+            smo0_eir_h(:,:,:,:,ihist) = smo0_eir
+            she0_eir_h(:,:,:,ihist) = she0_eir
+            shi0_eir_h(:,:,:,ihist) = shi0_eir
+            do ia = 1,nnatmi
+              rfluxa_h(:,:,ia,1,ihist) = rfluxa(:,:,ia,1)
+            enddo
+            do im = 1,nnmoli
+              rfluxm_h(:,:,im,1,ihist) = rfluxm(:,:,im,1)
+            enddo
+          end if                  
           
           if (ihist.gt.1) then
-            sna0_eir = 0.0_R8
-            smo0_eir = 0.0_R8
-            she0_eir = 0.0_R8
-            shi0_eir = 0.0_R8
-            rfluxa = 0.0_R8      
-            rfluxm = 0.0_R8      
-csw 25feb2014  fix IVS's version of source term averaging
             if (full_history) then
               ih_end = nhist
             else
               ih_end = ihist
             end if
-            do iih=1,ih_end
-              sna0_eir_s = sna0_eir_s + sna0_eir_h(:,:,:,:,iih)
-              smo0_eir_s = smo0_eir_s + smo0_eir_h(:,:,:,:,iih)
-              she0_eir_s = she0_eir_s + she0_eir_h(:,:,:,iih)
-              shi0_eir_s = shi0_eir_s + shi0_eir_h(:,:,:,iih) 
+            if (nhist.gt.1) then
+              if (full_history) then
+                ih_end = nhist
+              else
+                ih_end = ihist
+              end if
+csw 25feb2014  fix IYS's version of source term averaging
+              sna0_eir = 0.0_R8
+              smo0_eir = 0.0_R8
+              she0_eir = 0.0_R8
+              shi0_eir = 0.0_R8
+              rfluxa = 0.0_R8      
+              rfluxm = 0.0_R8      
+              do iih=1,ih_end
+                sna0_eir_s = sna0_eir_s + sna0_eir_h(:,:,:,:,iih)
+                smo0_eir_s = smo0_eir_s + smo0_eir_h(:,:,:,:,iih)
+                she0_eir_s = she0_eir_s + she0_eir_h(:,:,:,iih)
+                shi0_eir_s = shi0_eir_s + shi0_eir_h(:,:,:,iih) 
+                do ia = 1,nnatmi
+                  rfluxa_s(:,:,ia,1) = rfluxa_s(:,:,ia,1) 
+     .                               + rfluxa_h(:,:,ia,1,iih)
+                enddo
+                do im = 1,nnmoli
+                  rfluxm_s(:,:,im,1) = rfluxm_s(:,:,im,1)
+     .                               + rfluxm_h(:,:,im,1,iih)
+                enddo                  
+              enddo
+              sna0_eir = sna0_eir_s / dble(ih_end)
+              smo0_eir = smo0_eir_s / dble(ih_end)
+              she0_eir = she0_eir_s / dble(ih_end)
+              shi0_eir = shi0_eir_s / dble(ih_end)
+              rfluxa = rfluxa_s / dble(ih_end)
+              rfluxm = rfluxm_s / dble(ih_end)
+            else if (nrelax.gt.1) then
+              if (full_history) then
+                ih_end = nrelax
+              else
+                ih_end = ihist
+              end if
+              relax = rratio(ih_end-1,ih_end)
+              sna0_eir_s = sna0_eir_s*relax + sna0_eir/dble(ih_end)
+              smo0_eir_s = smo0_eir_s*relax + smo0_eir/dble(ih_end)
+              she0_eir_s = she0_eir_s*relax + she0_eir/dble(ih_end)
+              shi0_eir_s = shi0_eir_s*relax + shi0_eir/dble(ih_end)
               do ia = 1,nnatmi
-                rfluxa_s(:,:,ia,1) = rfluxa_s(:,:,ia,1) 
-     .                           + rfluxa_h(:,:,ia,1,iih)
+                rfluxa_s(:,:,ia,1) = rfluxa_s(:,:,ia,1)*relax
+     .                             + rfluxa(:,:,ia,1)/dble(ih_end)
               enddo
               do im = 1,nnmoli
-                rfluxm_s(:,:,im,1) = rfluxm_s(:,:,im,1)
-     .                             + rfluxm_h(:,:,im,1,iih)
+                rfluxm_s(:,:,im,1) = rfluxm_s(:,:,im,1)*relax
+     .                             + rfluxm(:,:,im,1)/dble(ih_end)
               enddo                  
-            enddo
-csw 25feb2014  fix IVS's version of source term averaging
-c            sna0_eir = sna0_eir / min(dble(nhist),dble(ncall+1))
-c            smo0_eir = smo0_eir / min(dble(nhist),dble(ncall+1))
-c            she0_eir = she0_eir / min(dble(nhist),dble(ncall+1))
-c            shi0_eir = shi0_eir / min(dble(nhist),dble(ncall+1))
-c            rfluxa = rfluxa / min(dble(nhist),dble(ncall+1))                    
-c            rfluxm = rfluxm / min(dble(nhist),dble(ncall+1))                    
-            sna0_eir = sna0_eir_s / dble(ih_end)
-            smo0_eir = smo0_eir_s / dble(ih_end)
-            she0_eir = she0_eir_s / dble(ih_end)
-            shi0_eir = shi0_eir_s / dble(ih_end)
-            rfluxa = rfluxa_s / dble(ih_end)                    
-            rfluxm = rfluxm_s / dble(ih_end)                    
+              sna0_eir = sna0_eir_s
+              smo0_eir = smo0_eir_s
+              she0_eir = she0_eir_s
+              shi0_eir = shi0_eir_s
+              rfluxa = rfluxa_s                  
+              rfluxm = rfluxm_s
+            endif
 
 !----  end of averaging procedure -----------------
           endif

@@ -117,9 +117,9 @@ c      data lis_hlp / 110, 111, 112, 49 /
 
       integer output_style, linearisation, ank_mods, save_f31,
      1 repeat_first_call, ionising_core, dpc_fix, eircount,
-     2 no_sseicorr, save_f30
+     2 no_sseicorr, save_f30, nrelax
       save ncall, output_style, saved_volrec_used,
-     * pfrregno1, pfrregno2, solregno, isfeedback,
+     * pfrregno1, pfrregno2, solregno, isfeedback, nrelax,
      * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
      * neutral_sources_rescale, ncallfeedback, ank_mods, save_f31,
      1 repeat_first_call, use_recyceir, ionising_core, dpc_fix,
@@ -147,7 +147,8 @@ csw 26feb2014
      4  private_flux_puff/0.0_R8/, ionising_core/0/, dpc_fix/1/,
      5  ndes/0.0_R8/, ank_mods/0/, save_f31/0/, repeat_first_call/1/,
      6  use_recyceir/1/, volrec_sol/0.0_R8/, ndes_sol/0.0_R8/,
-     7  no_sseicorr/0/, nepedm_sol/0.0_R8/, save_f30/0/
+     7  no_sseicorr/0/, nepedm_sol/0.0_R8/, save_f30/0/,
+     8  nrelax/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -298,8 +299,12 @@ csw 26mar2013
 csw 26feb2013
         call ipgeti ('eirene_neutr_avg',neutr_avg)
         call ipgeti ('b2stbr_eir_src_nhist',nhist)
-        call xertst (.not.(neutr_avg.gt.1 .and. nhist.gt.1),
-     .   'Cannot have both Eirene averaging schemes simultaneously!')
+        call ipgeti ('eirene_underrelax',nrelax)
+        call xertst (.not.(
+     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
+     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
+     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
+     .   'Cannot have simultaneous multiple Eirene averaging schemes!')
         if(lhalpha) then
           itmp=1
         else
@@ -1432,7 +1437,7 @@ c!###}
 
 
 csw 26feb2014 accumulate source terms for SOLPS4.3-like averaging procedure
-c             (this is new and similar to Kotov's SOLPS4 style, it is NOT IVYs
+c             (this is new and similar to Kotov's SOLPS4 style, it is NOT IYSs
 c              style)
       if(ncall .eq. 0 .and. .not.allocated(sni_av)) then
         allocate(sni_av(0:(size(sni,1)-1), 0:(size(sni,2)-1),
@@ -1469,7 +1474,6 @@ c              style)
        sei_av = sei
        see_av = see
       endif
-
 
 csw 2012 fixed rescaling procedure
 c  otherwise rescaling procedure does not work with internal iterations nstg2>1

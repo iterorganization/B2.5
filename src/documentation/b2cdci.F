@@ -481,6 +481,7 @@
 *    'eirene_na_min'            '0.0'                  Numerics
 *    'eirene_nesepm_istra'      '-1'                   Physics
 *    'eirene_neutr_avg'         '0'                    Numerics
+*    'eirene_print_minmax'      '0'                    Numerics
 *    'eirene_repeat_first_call' '1'                    Physics
 *    'eirene_savef30'           '0'                    Output
 *    'eirene_savef31'           '0'                    Output
@@ -490,7 +491,7 @@
 *    'eirene_ti_min'            '0.0'                  Numerics
 *    'eirene_ua_max'            '+c'                   Numerics
 *    'eirene_ua_min'            '-c'                   Numerics
-*    'eirene_print_minmax'      '0'                    Numerics
+*    'eirene_underrelax'        '0'                    Numerics
 *    'eirene_use_recyceir'      '1'                    Physics
 *    'heatdiff1D_linlog'        '1'                    Numerics
 *    'heatdiff1D_ratio'         '100.0'                Numerics
@@ -880,8 +881,8 @@
 *
 *    'b2stbr_eir_src_nhist'     '0'                    Numerics
 *    If b2stbr_eir_src_nhist.gt.0, then Eirene sources are accumulated and
-*    a moving average is computed.  Note that either b2stbr_eir_src_nhist
-*    or eirene_neutr_avg may be nonzero, but not both.
+*    a moving average is computed. Note that only one of b2stbr_eir_src_nhist,
+*    eirene_neutr_avg, or eirene_underrelax may be nonzero.
 *
 *    'b2mndt_density_control'   '0'                    Run
 *    Feedback on the total heavy particle density. If density_control.ne.0,
@@ -1858,7 +1859,15 @@
 *    'eirene_neutr_avg'         '0'                    Numerics
 *    If eirene_neutr_avg.gt.0, then Eirene sources are accumulated and
 *    averaged until eirene_neutr_avg+1 steps, at which point the averaging
-*    process is reset.
+*    process is reset. Note that only one of b2stbr_eir_src_nhist,
+*    eirene_neutr_avg, or eirene_underrelax may be nonzero.
+*
+*    'eirene_underrelax'        '0'                    Numerics
+*    If eirene_underrelax.gt.0, then an underrelaxation scheme is used
+*    for the Eirene sources, with an underrelaxation ratio of 
+*    1/eirene_underrelax. 
+*    Note that only one of b2stbr_eir_src_nhist,
+*    eirene_neutr_avg, or eirene_underrelax may be nonzero.
 *
 *    'b2news_area_fix'          '3'                    Numerics
 *    When area_fix.eq.0, recovers old SOLPS5.0 behaviour.
