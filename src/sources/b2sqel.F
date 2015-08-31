@@ -3,7 +3,7 @@
 
       subroutine b2sqel (nx, ny, ns, ismain, ev, te, 
      &  rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
+     &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
       use b2mod_types
       use b2mod_b2cmpa
       implicit none
@@ -22,9 +22,6 @@
      &  rbr(-1:nx,-1:ny,0:ns-1),
      &  rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1),
      &  rpt(-1:nx,-1:ny,0:ns-1), rpi(-1:nx,-1:ny,0:ns-1)
-*   ..workspace arguments (unspecified on entry and on exit)
-      real (kind=R8) ::
-     *  wrk0(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -58,6 +55,8 @@
       integer ncall, n2, ix, iy, is
       real (kind=R8) ::
      *   phm0, phm1, phm2, cutlo, cutll, t0, art_rad, tnorm
+      real (kind=R8) ::
+     *  wrk0(-1:nx,-1:ny)
       save ncall, phm0, phm1, phm2, art_rad
       integer, save :: use_eirene=0
 *   ..procedures

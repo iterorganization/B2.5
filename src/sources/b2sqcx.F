@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sqcx (nx, ny, ns, ev, amh0, th0, rlcx0, rcx, wrk0)
+      subroutine b2sqcx (nx, ny, ns, ev, amh0, th0, rlcx0, rcx)
       use b2mod_types
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -11,9 +11,6 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   rcx(-1:nx,-1:ny,0:ns-1)
-*   ..workspace arguments (unspecified on entry and on exit)
-      real (kind=R8) ::
-     *   wrk0(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -47,6 +44,8 @@
       integer ncall, styl0, n2, ix, iy, is
       real (kind=R8) ::
      *   phm0, cutlo, cutll, t0
+      real (kind=R8) ::
+     *   wrk0(-1:nx,-1:ny)
       save ncall, styl0, phm0
 *   ..procedures
       intrinsic log, exp, max, dim

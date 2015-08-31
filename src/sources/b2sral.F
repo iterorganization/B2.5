@@ -122,8 +122,8 @@
       character chns*3, chk*1                                    !srv 30.06.08
       real (kind=R8) ::
      *  snatot(0:ns-1),                                         !srv 18.05.09
-     1  rsa(-1:nx,-1:ny,0:ns-1), wrk1(-1:nx,-1:ny),
-     2  wrk0(-1:nx,-1:ny), rra(-1:nx,-1:ny,0:ns-1),
+     1  rsa(-1:nx,-1:ny,0:ns-1),
+     2  rra(-1:nx,-1:ny,0:ns-1),
      3  rcx(-1:nx,-1:ny,0:ns-1),
      4  smq0(-1:nx,-1:ny,0:3,0:ns-1), smq0_ion(-1:nx,-1:ny,0:3,0:ns-1), !srv 11.09.09
      4  smq0_rec(-1:nx,-1:ny,0:3,0:ns-1),
@@ -414,7 +414,7 @@ csw 30sep2013, added cdpa in call, uadia
 *   ..compute electron rate coefficients
       call b2sqel (nx, ny, ns, ismain, ev, te, 
      &  rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
+     &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 *   ..compute standard contributions due to boundaries
       wrong_flow = .false.						!xpb
       if(style.eq.0) then                                               !srv 28.07.08
@@ -481,7 +481,7 @@ csw 30sep2013, added cdpa in call, uadia
      &  dtim, BoRiS, 
      &  vol, hx, hy, gs, qz, pbs, na, ua, kinrgy, te, ti,
      &  po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
-     &  sna0, smo0, she0, shi0, sch0, sne0, wrk1, main_call)
+     &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
 *   ..zero out contributions in dead cells
       do is = 0, ns-1
         call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
@@ -514,8 +514,7 @@ csw 30sep2013, added cdpa in call, uadia
       call b2stbm (nx, ny, ns, ismain, dtim,
      &  vol, gs, hx, hy, qz, qc, pbs, 
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &  sna0, smo0, she0, shi0, sch0, sne0,
-     &  wrk0, wrk1, main_call)
+     &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
         call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
@@ -588,8 +587,8 @@ csw 30sep2013, added cdpa in call, uadia
       rcxmo=0.0_R8
       do k = 0, nscx-1
 *    ..compute charge-exchange rate coefficients
-        call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti, rlcx(-1,-1,0,0,k),
-     &   rcx, wrk0)
+        call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti, 
+     &   rlcx(-1,-1,0,0,k), rcx)
 *    ..compute sources due to charge exchange
 *      (parallel momentum source must be pure friction)
         call b2stcx (nx, ny, ns, iscx(k), ismain, hz, BoRiS, vol, na,     !srv 09.01.01

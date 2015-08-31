@@ -4,7 +4,7 @@
       subroutine b2stbm (nx, ny, ns, ismain, dtim,
      &  vol, gs, hx, hy, qz, qc, pbs, 
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &  sna0, smo0, she0, shi0, sch0, sne0, wrk0, wrk1, main_call)
+     &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -43,9 +43,6 @@
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
-*   ..workspace arguments (unspecified on entry and on exit)
-      real (kind=R8) ::
-     *  wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation

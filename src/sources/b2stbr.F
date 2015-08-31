@@ -5,7 +5,7 @@
      &  dtim, BoRiS, 
      &  vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
-     &  sna0, smo0, she0, shi0, sch0, sne0, wrk1, main_call)
+     &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types
       use b2mod_wall
       use b2mod_diag
@@ -23,10 +23,6 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use b2mod_work
-     1 , only : sna0_eir_h, smo0_eir_h, she0_eir_h,       !IYS 28.03.12 {
-     &          shi0_eir_h, rfluxa_h, rfluxm_h,
-csw 25feb2014 fix IYS's version of source term averaging
-     &          alloc_hist_arrays                         !IYS 28.03.12 } 
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -61,9 +57,6 @@ csw 25feb2014 fix IYS's version of source term averaging
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
-*   ..workspace arguments (unspecified on entry and on exit)
-      real (kind=R8) ::
-     *  wrk1(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -211,7 +204,7 @@ csw 25feb2014 fix IYS's version of source term averaging
 #ifdef B25_EIRENE
         call ipgeti ('eirene_neutr_avg', neutr_avg)
         call ipgeti ('eirene_underrelax', nrelax)
-        call xertst (.not.,
+        call xertst (.not.(
      .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
      .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
      .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
