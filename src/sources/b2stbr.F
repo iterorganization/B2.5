@@ -628,11 +628,6 @@ c eirene_mc)
           end if                  
           
           if (ihist.gt.1) then
-            if (full_history) then
-              ih_end = nhist
-            else
-              ih_end = ihist
-            end if
             if (nhist.gt.1) then
               if (full_history) then
                 ih_end = nhist
@@ -640,12 +635,12 @@ c eirene_mc)
                 ih_end = ihist
               end if
 csw 25feb2014  fix IYS's version of source term averaging
-              sna0_eir = 0.0_R8
-              smo0_eir = 0.0_R8
-              she0_eir = 0.0_R8
-              shi0_eir = 0.0_R8
-              rfluxa = 0.0_R8      
-              rfluxm = 0.0_R8      
+              sna0_eir_s = 0.0_R8
+              smo0_eir_s = 0.0_R8
+              she0_eir_s = 0.0_R8
+              shi0_eir_s = 0.0_R8
+              rfluxa_s = 0.0_R8      
+              rfluxm_s = 0.0_R8      
               do iih=1,ih_end
                 sna0_eir_s = sna0_eir_s + sna0_eir_h(:,:,:,:,iih)
                 smo0_eir_s = smo0_eir_s + smo0_eir_h(:,:,:,:,iih)
