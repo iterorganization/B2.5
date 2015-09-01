@@ -8,6 +8,7 @@ c***
 c======================================================================
       use b2mod_types
       use b2mod_b2plot
+      use b2mod_b2cmfs
       use b2mod_constants
       use b2mod_neutrals_namelist
       use b2mod_b2plot_wall_loading
@@ -36,12 +37,16 @@ c*** and for the power flux.
       real (kind=R8) ::
      *   x,dist,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
      ,     wwj(natm+nmol),wwe(natm+nmol)
+      real (kind=R8) :: width
+      data width /1.0_R8/
+      save width
       character*8 text_an(natm),text_mn(nmol)
       logical streql
       intrinsic max
-      external streql
+      external streql, ipgeti
 c----------------------------------------------------------------------
       print *,'Starting b2pnwl...',nlim,DEF_NLIM
+      call ipgeti ('b2agmt_1d_width', width)
 c*** Set the default values
       npumplis=0
       nwldprt=0
@@ -143,7 +148,13 @@ c
             is=leirlis(i,il)
             h=dist
             dist=sqrt((pp1(1,ib)-pp2(1,ib))**2+(pp1(2,ib)-pp2(2,ib))**2)
-            a=pi*(pp1(1,ib)+pp2(1,ib))*dist
+            if (isymm.eq.0) then
+              a=width*dist
+            else if (isymm.eq.1 .or. isymm.eq.2) then
+              a=pi*(pp1(1,ib)+pp2(1,ib))*dist
+            else if (isymm.eq.3 .or. isymm.eq.4) then
+              a=pi*(pp1(2,ib)+pp2(2,ib))*dist
+            end if
             dist=0.5e0_R8*dist
             x=x+h+dist
             if(ia .gt. 0) then

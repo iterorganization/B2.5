@@ -17,6 +17,7 @@ c======================================================================
       use b2mod_b2cmpa
       use b2mod_indirect
       use b2mod_b2cmpa
+      use b2mod_b2cmfs
       use b2mod_constants
       use b2mod_external
       use b2mod_b2plot_wall_loading
@@ -69,7 +70,11 @@ c
       parameter (ers_factor=nsecyr*1.0e-3_R8*ba/(avogr*sgro))
       real (kind=R8) ::
      *   ss(2),ss_m,ersn_a(2),ersn_am,ersn_p(2),ersn_pm,ersn_l(2)
+      real (kind=R8) :: width
+      data width /1.0_R8/
+      save width
       intrinsic sqrt, max
+      external ipgeti
 c
 c*** Text variables:
 c***  ftrg    filenames for the profiles along the targets
@@ -93,6 +98,7 @@ c
 c      print *,'Starting b2ptrgl...'
 c      print *,'ers_factor= ',ers_factor
       tab=char(9)
+      call ipgeti ('b2agmt_1d_width', width)
 c
 c*** Target geometry
 c
@@ -105,13 +111,25 @@ c
      +                     (cry(nx-1,iy,3)-cry(nx-1,iy,1))**2)
       end do
       do iy=0,ny-1
-        u=0.5_R8*(crx(0,iy,2)+crx(0,iy,0))*2.0_R8*pi
+        if (isymm.eq.0) then
+          u=width
+        else if (isymm.eq.1 .or. isymm.eq.2) then
+          u=0.5_R8*(crx(0,iy,2)+crx(0,iy,0))*2.0_R8*pi
+        else if (isymm.eq.3 .or. isymm.eq.4) then
+          u=0.5_R8*(cry(0,iy,2)+cry(0,iy,0))*2.0_R8*pi
+        endif
         h=sqrt((crx(0,iy,2)-crx(0,iy,0))**2+
      +         (cry(0,iy,2)-cry(0,iy,0))**2)
         s(iy,1)=u*h
         zwest=zwest+0.5_R8*h
         xtrg(iy,1)=zwest
-        u=0.5_R8*(crx(nx-1,iy,3)+crx(nx-1,iy,1))*2.0_R8*pi
+        if (isymm.eq.0) then
+          u=width
+        else if (isymm.eq.1 .or. isymm.eq.2) then
+          u=0.5_R8*(crx(nx-1,iy,3)+crx(nx-1,iy,1))*2.0_R8*pi
+        else if (isymm.eq.3 .or. isymm.eq.4) then
+          u=0.5_R8*(cry(nx-1,iy,3)+cry(nx-1,iy,1))*2.0_R8*pi
+        endif
         h=sqrt((crx(nx-1,iy,3)-crx(nx-1,iy,1))**2+
      +         (cry(nx-1,iy,3)-cry(nx-1,iy,1))**2)
         s(iy,2)=u*h
