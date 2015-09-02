@@ -390,7 +390,7 @@
       call sfill (n2*4, 0.0_R8, sch0, 1)
       call sfill (n2*nscx, 0.0_R8, shi0_ff, 1)
 
-      call sfill (n2*2*ns, 0.0_R8, sna0_eir, 1)                      !srv 29.04.10 {
+      call sfill (n2*2*ns, 0.0_R8, sna0_eir, 1)                    !srv 29.04.10 {
       call sfill (n2*4*ns, 0.0_R8, smo0_eir, 1)
       call sfill (n2*4, 0.0_R8, she0_eir, 1)
       call sfill (n2*4, 0.0_R8, shi0_eir, 1)
@@ -627,7 +627,7 @@ c eirene_mc)
             enddo
           end if                  
           
-          if (ihist.gt.1) then
+          if (ihist.gt.1 .or. full_history) then
             if (nhist.gt.1) then
               if (full_history) then
                 ih_end = nhist

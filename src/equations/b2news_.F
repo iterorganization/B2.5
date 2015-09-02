@@ -266,7 +266,7 @@ csw 26feb2014 some extra variables
       rxf3 = rxf*xfm3
 
 csw 01oct2012 initialize potential if necessary
-      if (pot_eq.eq.0) then                                           !srv 13.07.05 {
+      if (pot_eq.eq.0) then                                    !srv 13.07.05 {
         po   =0.0e0_R8
       else if (pot_eq.eq.2) then
         po(:,:)=3.1_R8*te(:,:)/qe
@@ -279,33 +279,33 @@ csw 01oct2012 initialize potential if necessary
       call b2xpni (nx, ny, ns, na, ni)
       call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
       call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
-!*   ..compute ceqp                                                   !srv 03.07.03 {
+!*   ..compute ceqp                                            !srv 03.07.03 {
 !      call b2xpnm (nx, ny, ns, rz2, am, na, wrk0)
 !      call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp)       !srv 03.07.03 }
 *   ..compute flux limit coefficients
       call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs, na, ua,   !srv 03.06.03
      &  te, ti, po, ne, ni, ne2, chvemx, chvimx)
 *   ..compute transport coefficients
-      call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,           !srv 09.07.04 23.11.10
+      call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,         !srv 09.07.04 23.11.10
      1 bb, conn, vol, gs, hx, hy, hz, qz, qc, pbs, crx, cry, bzb, lnlam,  !srv 09.01.01 13.10.06 01.07.09
-     2 fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx, cdna,    !srv 03.06.03
-     3 cdpa, cddi, cvla, cvsa, chce, chve, chci,                      !srv 04.10.99 23.12.03 13.10.06
+     2 fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx, cdna,  !srv 03.06.03
+     3 cdpa, cddi, cvla, cvsa, chce, chve, chci,                    !srv 04.10.99 23.12.03 13.10.06
      5 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
-     5 vsal, fllim0fhi, fllimvisc)                                    !srv 09.01.01 15.12.05
+     5 vsal, fllim0fhi, fllimvisc)                                  !srv 09.01.01 15.12.05
 
 
 
       if((maxval(facdrift).ne.0.0_R8 .or. 
      &    maxval(fac_ExB).ne.0.0_R8)) then
 
-        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,     !srv 20.09.06  {
+        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,    !srv 20.09.06  {
      &                       facdrift, fchvispar)
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
         call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                       fchanml)                                !srv 20.09.06  }
-        if(anomalous_core_only.ne.0) then                            !srv 19.04.07  {
+     &                       fchanml)                               !srv 20.09.06  }
+        if(anomalous_core_only.ne.0) then                           !srv 19.04.07  {
           do iy = 0, ny                                             !lk 19.09.07
             do ix = -1, nx
               if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then     !lk 19.09.07
@@ -313,7 +313,7 @@ csw 01oct2012 initialize potential if necessary
               endif 
             enddo
           enddo
-        endif                                                        !srv 19.04.07  }
+        endif                                                       !srv 19.04.07  }
       else
        fchvispar = 0.0_R8
        fchinert  = 0.0_R8
