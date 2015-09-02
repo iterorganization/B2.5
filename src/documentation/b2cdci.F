@@ -328,7 +328,7 @@
 *    'b2stbr_alpha'             '0.25'                 Physics
 *    'b2stbr_b2wall_netcdf'     '0'                    Output
 *    'b2stbr_core_sources_rescale'  '1.0'              Run
-*    'b2stbr_eir_src_nhist'     '0'                    Numerics
+*    'b2stbr_eir_src_nhist'     '1'                    Numerics
 *    'b2stbr_first_flight'      '0'                    Run
 *    'b2stbr_first_flight_dl'   '0.001'                Numerics
 *    'b2stbr_first_flight_no_of_flights'  '9'          Numerics
@@ -879,8 +879,8 @@
 *    'b2stbr_core_sources_rescale'  '1.0'              Run
 *    Multiplier to the totally ionised species sources at the core boundary.
 *
-*    'b2stbr_eir_src_nhist'     '0'                    Numerics
-*    If b2stbr_eir_src_nhist.gt.0, then Eirene sources are accumulated and
+*    'b2stbr_eir_src_nhist'     '1'                    Numerics
+*    If b2stbr_eir_src_nhist.gt.1, then Eirene sources are accumulated and
 *    a moving average is computed. Note that only one of b2stbr_eir_src_nhist,
 *    eirene_neutr_avg, or eirene_underrelax may be nonzero.
 *

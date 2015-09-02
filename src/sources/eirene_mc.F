@@ -21,6 +21,7 @@ c  version : 26.07.2002 23:39
       use b2mod_b2cmpa
       use b2mod_b2cmpb
 #ifdef B25_EIRENE
+      use b2mod_work
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25
@@ -40,7 +41,7 @@ csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
       integer, save :: background_new=0                              !srv 14.07.10
-      integer ix,iy,is,ib,ifl,istrai,ncall,iatm,imol
+      integer ix,iy,is,ib,ih,ifl,istrai,ncall,iatm,imol
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir
       real (kind=R8) ::
@@ -117,9 +118,9 @@ c      data lis_hlp / 110, 111, 112, 49 /
 
       integer output_style, linearisation, ank_mods, save_f31,
      1 repeat_first_call, ionising_core, dpc_fix, eircount,
-     2 no_sseicorr, save_f30, nrelax
+     2 no_sseicorr, save_f30
       save ncall, output_style, saved_volrec_used,
-     * pfrregno1, pfrregno2, solregno, isfeedback, nrelax,
+     * pfrregno1, pfrregno2, solregno, isfeedback,
      * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
      * neutral_sources_rescale, ncallfeedback, ank_mods, save_f31,
      1 repeat_first_call, use_recyceir, ionising_core, dpc_fix,
@@ -127,14 +128,30 @@ c      data lis_hlp / 110, 111, 112, 49 /
 csw 26mar2013
       integer, save :: iscltst=0
 csw 26feb2014
-      integer, save :: ihist=0, neutr_avg=0, nhist=0
+      integer, save :: ihist=0, neutr_avg=0, nhist=1, nrelax = 0
+      integer, save :: ih_end
+      logical, save :: full_history = .false.
+      real (kind=R8) :: relax
 
       real (kind=R8), save, allocatable :: 
      .   sni_av(:,:,:,:),smo_av(:,:,:,:),sei_av(:,:,:),see_av(:,:,:)
+      real (kind=R8), allocatable, save ::                        !IYS 28.03.12 {
+     &  sna0_eir_h(:,:,:,:,:),
+     &  smo0_eir_h(:,:,:,:,:),
+     &  she0_eir_h(:,:,:,:), shi0_eir_h(:,:,:,:),
+     &  pfluxa_h(:,:,:,:,:), rfluxa_h(:,:,:,:,:), rfluxm_h(:,:,:,:,:),
+! _h is an abbreviation from 'history'
+     &  sna0_eir_s(:,:,:,:),
+     &  smo0_eir_s(:,:,:,:),
+     &  she0_eir_s(:,:,:), shi0_eir_s(:,:,:),
+     &  pfluxa_s(:,:,:,:), rfluxa_s(:,:,:,:), rfluxm_s(:,:,:,:),
+! _s is an abbreviation from 'sum'
+     &  dab2_h(:,:,:,:,:), dab2_s(:,:,:,:)
 
 *   ..procedures
+      real (kind=R8) :: rratio
       intrinsic min, max, mod, abs, sqrt, log
-      external subini, subend, xertst, ipgeti, ipgetr
+      external subini, subend, xertst, ipgeti, ipgetr, rratio
       logical lnext
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.1.0e-3_R8
@@ -147,8 +164,7 @@ csw 26feb2014
      4  private_flux_puff/0.0_R8/, ionising_core/0/, dpc_fix/1/,
      5  ndes/0.0_R8/, ank_mods/0/, save_f31/0/, repeat_first_call/1/,
      6  use_recyceir/1/, volrec_sol/0.0_R8/, ndes_sol/0.0_R8/,
-     7  no_sseicorr/0/, nepedm_sol/0.0_R8/, save_f30/0/,
-     8  nrelax/0/
+     7  no_sseicorr/0/, nepedm_sol/0.0_R8/, save_f30/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -305,6 +321,8 @@ csw 26feb2013
      .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
      .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
      .   'Cannot have simultaneous multiple Eirene averaging schemes!')
+        if(nhist.gt.1) call alloc_hist_arrays(nhist)
+        if(nrelax.gt.1) call alloc_sum_arrays
         if(lhalpha) then
           itmp=1
         else
@@ -1448,6 +1466,10 @@ c              style)
      .                    size(sei,3)))
         allocate(see_av(0:(size(see,1)-1), 0:(size(see,2)-1),
      .                    size(see,3)))
+        sni_av=0.0_R8
+        smo_av=0.0_R8
+        see_av=0.0_R8
+        sei_av=0.0_R8
       endif
 
       if(neutr_avg .gt. 0) then
@@ -1466,9 +1488,100 @@ c              style)
         sei_av = sei_av + sei
         see_av = see_av + see
        endif
-
+       ih_end=ihist
+      else if (nhist.gt.1) then
+csw 25feb2014  fix IYS's version of source term averaging (running average)
+c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
+       if(main_call.and.mod(ncall,eirene_mod).eq.0) then
+        ihist=ihist+1
+        if (ihist.eq.nhist) full_history = .true.
+        if (ihist.eq.nhist+1) ihist = 1
+        write(*,*) 'eirene_mc: EIRENE source averaging ', nhist, ihist
+        sna0_eir_h(:,:,:,:,ihist) = sni
+        smo0_eir_h(:,:,:,:,ihist) = smo
+        she0_eir_h(:,:,:,ihist) = see
+        shi0_eir_h(:,:,:,ihist) = sei
+        do iatm = 1,nnatmi
+         pfluxa_h(:,:,iatm,1,ihist) = pfluxa(:,:,iatm,1)
+         rfluxa_h(:,:,iatm,1,ihist) = rfluxa(:,:,iatm,1)
+         dab2_h(:,:,iatm,1,ihist) = dab2(:,:,iatm,1)
+        enddo
+        do imol = 1,nnmoli
+         rfluxm_h(:,:,imol,1,ihist) = rfluxm(:,:,imol,1)
+        enddo
+        if (full_history) then
+         ih_end = nhist
+        else
+         ih_end = ihist
+        end if
+        sni_av = 0.0_R8
+        smo_av = 0.0_R8
+        see_av = 0.0_R8
+        sei_av = 0.0_R8
+        dab2_s = 0.0_R8
+        pfluxa_s = 0.0_R8      
+        rfluxa_s = 0.0_R8      
+        rfluxm_s = 0.0_R8      
+        do ih = 1, ih_end
+         sni_av = sni_av + sna0_eir_h(:,:,:,:,ih)
+         smo_av = smo_av + smo0_eir_h(:,:,:,:,ih)
+         see_av = see_av + she0_eir_h(:,:,:,ih)
+         sei_av = sei_av + shi0_eir_h(:,:,:,ih) 
+         do iatm = 1,nnatmi
+          dab2_s(:,:,iatm,1) = dab2_s(:,:,iatm,1) 
+     .                       + dab2_h(:,:,iatm,1,ih)
+          pfluxa_s(:,:,iatm,1) = pfluxa_s(:,:,iatm,1) 
+     .                         + pfluxa_h(:,:,iatm,1,ih)
+          rfluxa_s(:,:,iatm,1) = rfluxa_s(:,:,iatm,1) 
+     .                         + rfluxa_h(:,:,iatm,1,ih)
+         enddo
+         do imol = 1,nnmoli
+          rfluxm_s(:,:,imol,1) = rfluxm_s(:,:,imol,1)
+     .                         + rfluxm_h(:,:,imol,1,ih)
+         enddo
+        enddo
+        dab2 = dab2_s / dble(ih_end)
+        pfluxa = pfluxa_s / dble(ih_end)
+        rfluxa = rfluxa_s / dble(ih_end)
+        rfluxm = rfluxm_s / dble(ih_end)
+       end if
+      else if (nrelax.gt.1) then
+cxpb Under-relaxation scheme for smoothing of Eirene sources
+       if(main_call.and.mod(ncall,eirene_mod).eq.0) then
+        ihist=ihist+1
+        if (ihist.eq.nrelax) full_history = .true.
+        if (ihist.eq.nrelax+1) ihist = 1
+        write(*,*) 
+     .   'eirene_mc: EIRENE source under-relaxation ', nrelax, ihist
+        if (full_history) then
+         ih_end = nrelax
+        else
+         ih_end = ihist
+        end if
+        sni_av = sni_av*(ih_end-1) + sni
+        smo_av = smo_av*(ih_end-1) + smo
+        see_av = see_av*(ih_end-1) + see
+        sei_av = sei_av*(ih_end-1) + sei
+        relax = rratio(ih_end-1,ih_end)
+        do iatm = 1,nnatmi
+         dab2_s(:,:,iatm,1) = dab2_s(:,:,iatm,1)*relax
+     .                      + dab2(:,:,iatm,1)/dble(ih_end)
+         pfluxa_s(:,:,iatm,1) = pfluxa_s(:,:,iatm,1)*relax
+     .                        + pfluxa(:,:,iatm,1)/dble(ih_end)
+         rfluxa_s(:,:,iatm,1) = rfluxa_s(:,:,iatm,1)*relax
+     .                        + rfluxa(:,:,iatm,1)/dble(ih_end)
+        enddo
+        do imol = 1,nnmoli
+         rfluxm_s(:,:,imol,1) = rfluxm_s(:,:,imol,1)*relax
+     .                        + rfluxm(:,:,imol,1)/dble(ih_end)
+        enddo
+        dab2 = dab2_s
+        pfluxa = pfluxa_s
+        rfluxa = rfluxa_s
+        rfluxm = rfluxm_s
+       end if
       else
-       ihist=1
+       ih_end=1
        sni_av = sni
        smo_av = smo
        sei_av = sei
@@ -1659,7 +1772,7 @@ c                  t00=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *             recyctmp*flux_scale(istrai)
                   t00=sni_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
      *             recyctmp*flux_scale(istrai)/
-     *             dble(ihist)
+     *             dble(ih_end)
 
                   if(dpc_fix.lt.0) then
                     write(*,*) 'You are running the code with ' //
@@ -1741,7 +1854,7 @@ c                  t0=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
                   t0=smo_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
      *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
-     *             dble(ihist)
+     *             dble(ih_end)
 
                   VTHE=SQRT(TE(IX,IY)/me)
 c SCALE VTHE TO GET A VELOCITY CLOSER TO THE ION VELOCITIES
@@ -1811,7 +1924,7 @@ c              t0=see(ix+1,iy+1,istrai)*tflux(istrai)*
 c     *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
               t0=see_av(ix+1,iy+1,istrai)*tflux(istrai)*
      *         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     *         dble(ihist)
+     *         dble(ih_end)
 
               if (linearisation.eq.1) then !{
                 she0(ix,iy,0)=she0(ix,iy,0)+max(0.0_R8,t0)+abs(t0)*rf0
@@ -1861,7 +1974,7 @@ c              t0=sei(ix+1,iy+1,istrai)*tflux(istrai)*
 c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
               t0=sei_av(ix+1,iy+1,istrai)*tflux(istrai)*
      1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
-     1         dble(ihist)
+     1         dble(ih_end)
 
               ssei(istrai)=ssei(istrai)+t0
 c ? RADARR ?
@@ -1934,7 +2047,7 @@ c                    t2=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
                     t2=smo_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
      *               recyctmp*flux_scale(istrai)/
-     *               dble(ihist)
+     *               dble(ih_end)
 
                     t2=t2*sclstra(j,istrai)
 
@@ -1945,7 +2058,7 @@ c                    t3=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
                     t3=sni_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
      *               recyctmp*flux_scale(istrai)/
-     *               dble(ihist)
+     *               dble(ih_end)
 
 
 csw 26mar2013 (for TESTING)
@@ -2401,4 +2514,74 @@ c!###}
       endif ! ank_mods
       return
 
+      contains
+
+      subroutine alloc_hist_arrays(nhistd)      !IYS 28.03.12 {
+#ifdef B25_EIRENE
+      use eirmod_parmmod
+      use eirmod_braeir
+#endif
+      implicit none
+      integer nhistd
+#ifndef B25_EIRENE
+#include "COUPLE/KOPPLDIM.F"
+#endif
+
+! to store the time history of sources from EIRENE
+      allocate(sna0_eir_h(0:ndxp,0:ndyp,nfl,nstra,nhistd))
+      allocate(smo0_eir_h(0:ndxp,0:ndyp,nfl,nstra,nhistd))
+      allocate(she0_eir_h(0:ndxp,0:ndyp,nstra,nhistd))
+      allocate(shi0_eir_h(0:ndxp,0:ndyp,nstra,nhistd))
+      allocate(pfluxa_h(0:ndxp,0:ndyp,natm,1,nhistd))
+      allocate(rfluxa_h(0:ndxp,0:ndyp,natm,1,nhistd))
+      allocate(rfluxm_h(0:ndxp,0:ndyp,nmol,1,nhistd))
+      allocate(dab2_h(0:ndxp,0:ndyp,natm,1,nhistd))
+      call clear_hist_arrays
+      end subroutine alloc_hist_arrays
+
+      subroutine clear_hist_arrays                                !csw 24feb2014
+      implicit none
+      sna0_eir_h = 0.0_R8
+      smo0_eir_h = 0.0_R8
+      she0_eir_h = 0.0_R8
+      shi0_eir_h = 0.0_R8
+      pfluxa_h = 0.0_R8
+      rfluxa_h = 0.0_R8
+      rfluxm_h = 0.0_R8
+      dab2_h = 0.0_R8
+      end subroutine clear_hist_arrays                            !IYS 28.03.12 }
+
+      subroutine alloc_sum_arrays
+#ifdef B25_EIRENE
+      use eirmod_parmmod
+      use eirmod_braeir
+#endif
+      implicit none
+#ifndef B25_EIRENE
+#include "COUPLE/KOPPLDIM.F"
+#endif
+      allocate(sna0_eir_s(0:ndxp,0:ndyp,nfl,nstra))
+      allocate(smo0_eir_s(0:ndxp,0:ndyp,nfl,nstra))
+      allocate(she0_eir_s(0:ndxp,0:ndyp,nstra))
+      allocate(shi0_eir_s(0:ndxp,0:ndyp,nstra))
+      allocate(pfluxa_s(0:ndxp,0:ndyp,natm,1))
+      allocate(rfluxa_s(0:ndxp,0:ndyp,natm,1))
+      allocate(rfluxm_s(0:ndxp,0:ndyp,nmol,1))
+      allocate(dab2_s(0:ndxp,0:ndyp,natm,1))
+      call clear_sum_arrays
+      end subroutine alloc_sum_arrays
+
+      subroutine clear_sum_arrays                                !csw 24feb2014
+      implicit none
+      sna0_eir_s = 0.0_R8
+      smo0_eir_s = 0.0_R8
+      she0_eir_s = 0.0_R8
+      shi0_eir_s = 0.0_R8
+      pfluxa_s = 0.0_R8
+      rfluxa_s = 0.0_R8
+      rfluxm_s = 0.0_R8
+      dab2_s = 0.0_R8
+      end subroutine clear_sum_arrays                            !IYS 28.03.12 }
+
       end subroutine eirene_mc
+
