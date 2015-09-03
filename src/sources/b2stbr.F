@@ -22,7 +22,7 @@
      2          b2stbr_sne
 #ifdef B25_EIRENE
       use eirmod_extrab25
-      use b2mod_work
+!      use b2mod_work
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -120,12 +120,6 @@
       parameter (amtol=1.0e-2_R8)
       logical catch_up, new_sputter_namelist, wall_namelist_used
       logical equilibrium(ntrack), over_erosion
-#ifdef B25_EIRENE
-      integer ih_end
-      integer, save :: neutr_avg = 0, nrelax = 0
-      logical, save :: full_history = .false.
-      real (kind=R8) :: relax
-#endif
 #ifndef NO_CDF
 #include <netcdf.inc>
       integer :: status, ncid
@@ -137,10 +131,6 @@
       external b2xvsg, b2xvff, x05baf, smax, smin, get_jsep
       real (kind=R8) ::
      *  x05baf, smax, smin
-#ifdef B25_EIRENE
-      real (kind=R8) :: rratio
-      external rratio
-#endif
       intrinsic abs, mod, max
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
@@ -200,18 +190,6 @@
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
         call ipgeti ('b2mndr_eirene', use_eirene)
-c$$$        call ipgeti ('b2stbr_eir_src_nhist', nhist)                  !IYS 28.03.12
-#ifdef B25_EIRENE
-c$$$        call ipgeti ('eirene_neutr_avg', neutr_avg)
-c$$$        call ipgeti ('eirene_underrelax', nrelax)
-c$$$        call xertst (.not.(
-c$$$     .    (neutr_avg.gt.1 .and. (nhist.gt.1 .or. nrelax.gt.1)) .or.
-c$$$     .    (nhist.gt.1 .and. (neutr_avg.gt.1 .or. nrelax.gt.1)) .or.
-c$$$     .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
-c$$$     .   'Cannot have multiple simultaneous Eirene averaging schemes!')
-c$$$        if (nhist.gt.1) call alloc_hist_arrays(nx,ny,ns,nhist)
-c$$$        if (nrelax.gt.1) call alloc_hist_arrays(nx,ny,ns,1)
-#endif
         call ipgetr ('b2stbr_recycled_neutrals_contr',               !srv 12.04.08 
      &                      recycled_neutrals_contr)
         call xertst (0.0_R8.le.recycled_neutrals_contr, 
@@ -597,100 +575,6 @@ c   --> better solution wanted here..
         call eirene_mc(nx, ny, ns, ismain, dtim, BoRiS, sna0_eir,   !srv 29.04.10 {
      &                 smo0_eir, she0_eir, shi0_eir, main_call)
 
-csw 25feb2014  fix IYS's version of source term averaging (running average)
-c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
-c (25feb2014 different from SOLPS4.3 averaging procedure as implemented in
-c eirene_mc)
-c$$$        if((nhist .gt. 1 .or. nrelax.gt.1) .and. main_call) then
-c$$$          ihist = ihist + 1
-c$$$          if (nhist.gt.1) then
-c$$$            if (ihist.eq.nhist) full_history = .true.
-c$$$            if (ihist.eq.nhist+1) ihist = 1
-c$$$            write(*,*) 'b2stbr: EIRENE source averaging ', nhist, ihist
-c$$$          else if (nrelax.gt.1) then
-c$$$            if (ihist.eq.nrelax) full_history = .true.
-c$$$            if (ihist.eq.nrelax+1) ihist = 1
-c$$$            write(*,*) 
-c$$$     .       'b2stbr: EIRENE source under-relaxation ', nrelax, ihist
-c$$$          end if
-c$$$
-c$$$          if (nhist.gt.1) then
-c$$$            sna0_eir_h(:,:,:,:,ihist) = sna0_eir
-c$$$            smo0_eir_h(:,:,:,:,ihist) = smo0_eir
-c$$$            she0_eir_h(:,:,:,ihist) = she0_eir
-c$$$            shi0_eir_h(:,:,:,ihist) = shi0_eir
-c$$$            do ia = 1,nnatmi
-c$$$              rfluxa_h(:,:,ia,1,ihist) = rfluxa(:,:,ia,1)
-c$$$            enddo
-c$$$            do im = 1,nnmoli
-c$$$              rfluxm_h(:,:,im,1,ihist) = rfluxm(:,:,im,1)
-c$$$            enddo
-c$$$          end if                  
-c$$$          
-c$$$          if (ihist.gt.1 .or. full_history) then
-c$$$            if (nhist.gt.1) then
-c$$$              if (full_history) then
-c$$$                ih_end = nhist
-c$$$              else
-c$$$                ih_end = ihist
-c$$$              end if
-csw 25feb2014  fix IYS's version of source term averaging
-c$$$              sna0_eir_s = 0.0_R8
-c$$$              smo0_eir_s = 0.0_R8
-c$$$              she0_eir_s = 0.0_R8
-c$$$              shi0_eir_s = 0.0_R8
-c$$$              rfluxa_s = 0.0_R8      
-c$$$              rfluxm_s = 0.0_R8      
-c$$$              do iih=1,ih_end
-c$$$                sna0_eir_s = sna0_eir_s + sna0_eir_h(:,:,:,:,iih)
-c$$$                smo0_eir_s = smo0_eir_s + smo0_eir_h(:,:,:,:,iih)
-c$$$                she0_eir_s = she0_eir_s + she0_eir_h(:,:,:,iih)
-c$$$                shi0_eir_s = shi0_eir_s + shi0_eir_h(:,:,:,iih) 
-c$$$                do ia = 1,nnatmi
-c$$$                  rfluxa_s(:,:,ia,1) = rfluxa_s(:,:,ia,1) 
-c$$$     .                               + rfluxa_h(:,:,ia,1,iih)
-c$$$                enddo
-c$$$                do im = 1,nnmoli
-c$$$                  rfluxm_s(:,:,im,1) = rfluxm_s(:,:,im,1)
-c$$$     .                               + rfluxm_h(:,:,im,1,iih)
-c$$$                enddo                  
-c$$$              enddo
-c$$$              sna0_eir = sna0_eir_s / dble(ih_end)
-c$$$              smo0_eir = smo0_eir_s / dble(ih_end)
-c$$$              she0_eir = she0_eir_s / dble(ih_end)
-c$$$              shi0_eir = shi0_eir_s / dble(ih_end)
-c$$$              rfluxa = rfluxa_s / dble(ih_end)
-c$$$              rfluxm = rfluxm_s / dble(ih_end)
-c$$$            else if (nrelax.gt.1) then
-c$$$              if (full_history) then
-c$$$                ih_end = nrelax
-c$$$              else
-c$$$                ih_end = ihist
-c$$$              end if
-c$$$              relax = rratio(ih_end-1,ih_end)
-c$$$              sna0_eir_s = sna0_eir_s*relax + sna0_eir/dble(ih_end)
-c$$$              smo0_eir_s = smo0_eir_s*relax + smo0_eir/dble(ih_end)
-c$$$              she0_eir_s = she0_eir_s*relax + she0_eir/dble(ih_end)
-c$$$              shi0_eir_s = shi0_eir_s*relax + shi0_eir/dble(ih_end)
-c$$$              do ia = 1,nnatmi
-c$$$                rfluxa_s(:,:,ia,1) = rfluxa_s(:,:,ia,1)*relax
-c$$$     .                             + rfluxa(:,:,ia,1)/dble(ih_end)
-c$$$              enddo
-c$$$              do im = 1,nnmoli
-c$$$                rfluxm_s(:,:,im,1) = rfluxm_s(:,:,im,1)*relax
-c$$$     .                             + rfluxm(:,:,im,1)/dble(ih_end)
-c$$$              enddo                  
-c$$$              sna0_eir = sna0_eir_s
-c$$$              smo0_eir = smo0_eir_s
-c$$$              she0_eir = she0_eir_s
-c$$$              shi0_eir = shi0_eir_s
-c$$$              rfluxa = rfluxa_s                  
-c$$$              rfluxm = rfluxm_s
-c$$$            endif
-c$$$
-!----  end of averaging procedure -----------------
-c$$$          endif
-c$$$        endif                                                            !IYS 28.03.12}
         if(ncall.le.999. and. ncall.le.ncall_iout) then
          do is = 0, ns-1
           write (chns,'(i3.3)') is

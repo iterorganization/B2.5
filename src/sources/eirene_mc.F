@@ -136,14 +136,14 @@ csw 26feb2014
       real (kind=R8), save, allocatable :: 
      .   sni_av(:,:,:,:),smo_av(:,:,:,:),sei_av(:,:,:),see_av(:,:,:)
       real (kind=R8), allocatable, save ::                        !IYS 28.03.12 {
-     &  sna0_eir_h(:,:,:,:,:),
-     &  smo0_eir_h(:,:,:,:,:),
-     &  she0_eir_h(:,:,:,:), shi0_eir_h(:,:,:,:),
+     &  sni_h(:,:,:,:,:),
+     &  smo_h(:,:,:,:,:),
+     &  see_h(:,:,:,:), sei_h(:,:,:,:),
      &  pfluxa_h(:,:,:,:,:), rfluxa_h(:,:,:,:,:), rfluxm_h(:,:,:,:,:),
 ! _h is an abbreviation from 'history'
-     &  sna0_eir_s(:,:,:,:),
-     &  smo0_eir_s(:,:,:,:),
-     &  she0_eir_s(:,:,:), shi0_eir_s(:,:,:),
+     &  sni_s(:,:,:,:),
+     &  smo_s(:,:,:,:),
+     &  see_s(:,:,:), sei_s(:,:,:),
      &  pfluxa_s(:,:,:,:), rfluxa_s(:,:,:,:), rfluxm_s(:,:,:,:),
 ! _s is an abbreviation from 'sum'
      &  dab2_h(:,:,:,:,:), dab2_s(:,:,:,:)
@@ -322,7 +322,7 @@ csw 26feb2013
      .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
      .   'Cannot have simultaneous multiple Eirene averaging schemes!')
         if(nhist.gt.1) call alloc_hist_arrays(nhist)
-        if(nrelax.gt.1) call alloc_sum_arrays
+        if(nrelax.gt.1 . or. nhist.gt.1) call alloc_sum_arrays
         if(lhalpha) then
           itmp=1
         else
@@ -1497,10 +1497,10 @@ c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
         if (ihist.eq.nhist) full_history = .true.
         if (ihist.eq.nhist+1) ihist = 1
         write(*,*) 'eirene_mc: EIRENE source averaging ', nhist, ihist
-        sna0_eir_h(:,:,:,:,ihist) = sni
-        smo0_eir_h(:,:,:,:,ihist) = smo
-        she0_eir_h(:,:,:,ihist) = see
-        shi0_eir_h(:,:,:,ihist) = sei
+        sni_h(:,:,:,:,ihist) = sni
+        smo_h(:,:,:,:,ihist) = smo
+        see_h(:,:,:,ihist) = see
+        sei_h(:,:,:,ihist) = sei
         do iatm = 1,nnatmi
          pfluxa_h(:,:,iatm,1,ihist) = pfluxa(:,:,iatm,1)
          rfluxa_h(:,:,iatm,1,ihist) = rfluxa(:,:,iatm,1)
@@ -1523,10 +1523,10 @@ c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
         rfluxa_s = 0.0_R8      
         rfluxm_s = 0.0_R8      
         do ih = 1, ih_end
-         sni_av = sni_av + sna0_eir_h(:,:,:,:,ih)
-         smo_av = smo_av + smo0_eir_h(:,:,:,:,ih)
-         see_av = see_av + she0_eir_h(:,:,:,ih)
-         sei_av = sei_av + shi0_eir_h(:,:,:,ih) 
+         sni_av = sni_av + sni_h(:,:,:,:,ih)
+         smo_av = smo_av + smo_h(:,:,:,:,ih)
+         see_av = see_av + see_h(:,:,:,ih)
+         sei_av = sei_av + sei_h(:,:,:,ih) 
          do iatm = 1,nnatmi
           dab2_s(:,:,iatm,1) = dab2_s(:,:,iatm,1) 
      .                       + dab2_h(:,:,iatm,1,ih)
@@ -1558,11 +1558,11 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
         else
          ih_end = ihist
         end if
-        sni_av = sni_av*(ih_end-1) + sni
-        smo_av = smo_av*(ih_end-1) + smo
-        see_av = see_av*(ih_end-1) + see
-        sei_av = sei_av*(ih_end-1) + sei
         relax = rratio(ih_end-1,ih_end)
+        sni_s = sni_s*relax + sni/dble(ih_end)
+        smo_s = smo_s*relax + smo/dble(ih_end)
+        see_s = see_s*relax + see/dble(ih_end)
+        sei_s = sei_s*relax + sei/dble(ih_end)
         do iatm = 1,nnatmi
          dab2_s(:,:,iatm,1) = dab2_s(:,:,iatm,1)*relax
      .                      + dab2(:,:,iatm,1)/dble(ih_end)
@@ -1575,6 +1575,10 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
          rfluxm_s(:,:,imol,1) = rfluxm_s(:,:,imol,1)*relax
      .                        + rfluxm(:,:,imol,1)/dble(ih_end)
         enddo
+        sni_av = sni_s*dble(ih_end)
+        smo_av = smo_s*dble(ih_end)
+        sei_av = sei_s*dble(ih_end)
+        see_av = see_s*dble(ih_end)
         dab2 = dab2_s
         pfluxa = pfluxa_s
         rfluxa = rfluxa_s
@@ -2528,10 +2532,10 @@ c!###}
 #endif
 
 ! to store the time history of sources from EIRENE
-      allocate(sna0_eir_h(0:ndxp,0:ndyp,nfl,nstra,nhistd))
-      allocate(smo0_eir_h(0:ndxp,0:ndyp,nfl,nstra,nhistd))
-      allocate(she0_eir_h(0:ndxp,0:ndyp,nstra,nhistd))
-      allocate(shi0_eir_h(0:ndxp,0:ndyp,nstra,nhistd))
+      allocate(sni_h(0:ndxp,0:ndyp,nfl,nstra,nhistd))
+      allocate(smo_h(0:ndxp,0:ndyp,nfl,nstra,nhistd))
+      allocate(see_h(0:ndxp,0:ndyp,nstra,nhistd))
+      allocate(sei_h(0:ndxp,0:ndyp,nstra,nhistd))
       allocate(pfluxa_h(0:ndxp,0:ndyp,natm,1,nhistd))
       allocate(rfluxa_h(0:ndxp,0:ndyp,natm,1,nhistd))
       allocate(rfluxm_h(0:ndxp,0:ndyp,nmol,1,nhistd))
@@ -2541,10 +2545,10 @@ c!###}
 
       subroutine clear_hist_arrays                                !csw 24feb2014
       implicit none
-      sna0_eir_h = 0.0_R8
-      smo0_eir_h = 0.0_R8
-      she0_eir_h = 0.0_R8
-      shi0_eir_h = 0.0_R8
+      sni_h = 0.0_R8
+      smo_h = 0.0_R8
+      see_h = 0.0_R8
+      sei_h = 0.0_R8
       pfluxa_h = 0.0_R8
       rfluxa_h = 0.0_R8
       rfluxm_h = 0.0_R8
@@ -2560,10 +2564,10 @@ c!###}
 #ifndef B25_EIRENE
 #include "COUPLE/KOPPLDIM.F"
 #endif
-      allocate(sna0_eir_s(0:ndxp,0:ndyp,nfl,nstra))
-      allocate(smo0_eir_s(0:ndxp,0:ndyp,nfl,nstra))
-      allocate(she0_eir_s(0:ndxp,0:ndyp,nstra))
-      allocate(shi0_eir_s(0:ndxp,0:ndyp,nstra))
+      allocate(sni_s(0:ndxp,0:ndyp,nfl,nstra))
+      allocate(smo_s(0:ndxp,0:ndyp,nfl,nstra))
+      allocate(see_s(0:ndxp,0:ndyp,nstra))
+      allocate(sei_s(0:ndxp,0:ndyp,nstra))
       allocate(pfluxa_s(0:ndxp,0:ndyp,natm,1))
       allocate(rfluxa_s(0:ndxp,0:ndyp,natm,1))
       allocate(rfluxm_s(0:ndxp,0:ndyp,nmol,1))
@@ -2573,10 +2577,10 @@ c!###}
 
       subroutine clear_sum_arrays                                !csw 24feb2014
       implicit none
-      sna0_eir_s = 0.0_R8
-      smo0_eir_s = 0.0_R8
-      she0_eir_s = 0.0_R8
-      shi0_eir_s = 0.0_R8
+      sni_s = 0.0_R8
+      smo_s = 0.0_R8
+      see_s = 0.0_R8
+      sei_s = 0.0_R8
       pfluxa_s = 0.0_R8
       rfluxa_s = 0.0_R8
       rfluxm_s = 0.0_R8
