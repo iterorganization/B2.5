@@ -2,8 +2,7 @@
 *.specification
 
       subroutine b2wgcr (nprt, idout, nx, ny, ns, resco, resmo, resmt,
-     &  reshe, reshi, respo, corpa, corua, corut, corte, corti, corpo,
-     &  wrk0)
+     &  reshe, reshi, respo, corpa, corua, corut, corte, corti, corpo)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
@@ -22,9 +21,6 @@
      &  corpo(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
 *     (none)
-*   ..workspace arguments (unspecified on entry and on exit)
-      real (kind=R8) ::
-     *   wrk0(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -93,6 +89,8 @@
      &  fmtp='(2x,a6,4x,a)')
       real (kind=R8) ::
      *   xf(-1:nx),xc(-1:nx),yf(-1:ny),yc(-1:ny),zero(-1:nx,-1:ny)
+      real (kind=R8) ::
+     *   wrk0(-1:nx,-1:ny)
 *   ..procedures
       intrinsic max
       real (kind=R8) ::

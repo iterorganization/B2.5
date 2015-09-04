@@ -10,7 +10,7 @@
       use b2mod_numerics_namelist 
       use b2mod_constants 
       use b2mod_b2cmpa 
-      use b2mod_work 
+      use b2mod_boundary_namelist
      , , only : iftimbound
       implicit none
 *   ..input arguments (unchanged on exit)

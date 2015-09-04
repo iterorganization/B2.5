@@ -448,7 +448,7 @@ csw 17oct2012 this is the corrected call
            else                                                         !srv 01.07.08 {
             call b2news_(nx, ny, ns, nscx, iscx, ismain, ismain0,
      &       natm, nmol, nion, nlim, nsts, itim,
-     &       dtim, rxf,ier0)                                            !srv 16.07.10 23.11.10
+     &       dtim, rxf, ier0)                                           !srv 16.07.10 23.11.10
 	   endif                                                        !srv 01.07.08 )
            if(ier0.eq.10) then
              ierr=ier0

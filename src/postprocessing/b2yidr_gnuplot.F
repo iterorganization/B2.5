@@ -15,13 +15,10 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_geo_corner
-      use b2mod_work
+!      use b2mod_work
       use b2mod_b2cmpa
       use b2mod_b2cmrc
       use b2mod_b2cmfs
-      use b2mod_ppout
-      use b2mod_geo_corner
-      use b2mod_work
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:4), nout(0:1), nx, ny, ns
@@ -270,7 +267,7 @@
      . 'invalid main plasma species ismain; must not be neutral')
       call b2sqel (nx, ny, ns, ismain, ev, te, 
      &    rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
+     &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 *   ..test rtns, rtzmin, rtzmax, rtzn
       call xertst (ns.eq.rtns, 'faulty input rtns--wrong rate table?')
       do is = 0, ns-1

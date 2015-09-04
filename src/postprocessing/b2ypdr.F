@@ -78,7 +78,7 @@
       real (kind=R8) :: t0, t1,
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-     &  rbr(-1:nx,-1:ny,0:ns-1), wrk0(-1:nx,-1:ny)
+     &  rbr(-1:nx,-1:ny,0:ns-1)
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120, idout*80,
      &  id*8, cnamip*80, cvalip*80
 *   ..initialisation
@@ -657,7 +657,7 @@
      . 'invalid main plasma species ismain; must not be neutral')
       call b2sqel (nx, ny, ns, ismain, ev, te, 
      &    rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
+     &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 *   ..write labels
       write (nout(0),'(/2x,a)') 'labels for this calculation:'
       write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)

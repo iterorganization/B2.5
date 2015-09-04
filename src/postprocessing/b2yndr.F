@@ -285,7 +285,7 @@
      . 'invalid main plasma species ismain; must not be neutral')
       call b2sqel (nx, ny, ns, ismain, ev, te, 
      &    rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
+     &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 
 * ..produce plots
 *   ..activate graphics on nout(1)
@@ -317,8 +317,7 @@
 *    ..plot corrections and residuals
        call b2wgcr (nout(0), idout, nx, ny, ns, resco, resmo,
      &   resmt, reshe, reshi, respo, corpa,
-     &   corua, corut, corte, corti, corpo,
-     &   wrk0)
+     &   corua, corut, corte, corti, corpo)
 *    ..loop
        goto 10
       endif

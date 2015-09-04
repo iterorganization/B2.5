@@ -12,7 +12,6 @@
       use b2mod_constants
       use b2mod_mdsplus
       use b2mod_geo_corner
-      use b2mod_work
       use b2mod_b2cmfs
       use b2mod_b2cmrc
       use b2mod_b2cmgs
@@ -142,7 +141,7 @@
      . 'invalid main plasma species ismain; must not be neutral')
       call b2sqel (nx, ny, ns, ismain, ev, te, 
      &  rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
+     &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 *   ..find nscx, iscx
 *     (indices for neutral hydrogen species)
       nscx = 0
@@ -164,8 +163,8 @@
       enddo
 *   ..compute charge-exchange rate coefficients
       do k = 0, nscx-1
-        call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti, rlcx(-1,-1,0,0,k),
-     &   rcx, wrk0)
+        call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
+     &   rlcx(-1,-1,0,0,k), rcx)
       enddo
 *   ..obtain external species data if any
       call ipgeti ('b2mndr_external_species', external_species)

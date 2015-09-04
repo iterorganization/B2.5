@@ -13,8 +13,7 @@
       use b2mod_indirect
       use b2mod_tallies
       use b2mod_b2cmpa
-      use b2mod_work
-     , , only : ifenebound
+      use b2mod_boundary_namelist
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt

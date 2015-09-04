@@ -22,7 +22,6 @@
      2          b2stbr_sne
 #ifdef B25_EIRENE
       use eirmod_extrab25
-!      use b2mod_work
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmpb

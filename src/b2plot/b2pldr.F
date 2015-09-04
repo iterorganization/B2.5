@@ -19,7 +19,7 @@
       use b2mod_b2cmwg
       use b2mod_ppout
       use b2mod_diag
-      use b2mod_work
+!      use b2mod_work
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:5), nout(0:2), nx, ny, ns
@@ -122,7 +122,7 @@
      &         'ismain cannot refer to a neutral species')
       call b2sqel (nx, ny, ns, ismain, ev, te, 
      &     rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &     rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
+     &     rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 *   ..find nscx, iscx
 *     (indices for neutral hydrogen species)
       nscx = 0
@@ -144,8 +144,8 @@
       enddo
 *   ..compute charge-exchange rate coefficients
       do k = 0, nscx-1
-        call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti, rlcx(-1,-1,0,0,k),
-     &   rcx, wrk0)
+        call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
+     &   rlcx(-1,-1,0,0,k), rcx)
       enddo
 *  .. interpolate magnetic field to cell corners                         !xpb
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!

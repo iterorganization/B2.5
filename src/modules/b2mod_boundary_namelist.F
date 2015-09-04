@@ -64,6 +64,11 @@ cank }
       real (kind=R8), save :: NIISO(0:nsdmax-1)
       integer, save :: lcbs(NBCD)
 #endif
+csw 18feb2014 added for correct implementation of boundary conditions
+      integer, save :: l_fbound=0, l_enebound=0, l_timbound=0
+      integer, allocatable, save ::
+     .  iffboundx(:,:), iffboundy(:,:),
+     .  ifenebound(:,:), iftimbound(:,:)
 
       integer, save :: NBC, NNISO, ncbs
       real (kind=R8) , save :: gammai, gammae, TEISO, TIISO, PHIISO
@@ -156,6 +161,44 @@ cank }
      >        resignore(bc_list_x(1:bc_list_size(ib),ib),
      .        bc_list_y(1:bc_list_size(ib),ib),1) = 0
       enddo
+
+csw 21feb2014, setup some additional work variables for boundary conditions
+cxpb overwrite the defaults with the namelist data
+      iffboundx=0
+      iffboundy=0
+      if(l_fbound .ne. 0) then
+       do ib=1,nbc
+         if(bcchar(ib).eq.'S' .or. bcchar(ib).eq.'N') then
+           do ix=1, bc_list_size(ib)
+             iffboundx(bc_list_x(ix,ib),bc_list_y(ix,ib))=1
+           end do
+         else if (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W') then
+           do ix = 1, bc_list_size(ib)
+             iffboundy(bc_list_x(ix,ib),bc_list_y(ix,ib))=1
+           enddo
+         endif
+       enddo
+      endif
+
+      ifenebound=0
+      if(l_enebound .ne. 0) then
+       do ib=1,nbc
+         if(bcchar(ib).eq.'S' .or. bcchar(ib).eq.'N') then
+           do ix=1, bc_list_size(ib)
+             iffboundx(bc_list_x(ix,ib),bc_list_y(ix,ib))=1
+           end do
+         else if (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W') then
+           do ix = 1, bc_list_size(ib)
+             iffboundy(bc_list_x(ix,ib),bc_list_y(ix,ib))=1
+           enddo
+         endif
+       enddo
+      endif
+
+      iftimbound=0
+      if(l_timbound .ne. 0) iftimbound(:,:)=ifenebound(:,:)
+
+      return
       end subroutine initialize_b2mod_boundary
 
       subroutine catchup_b2mod_boundary(tim)
@@ -219,6 +262,10 @@ cank }
       call xertst (nbcd_in.le.nbcd, 'faulty parameter nbcd_in')
       call xertst (nnisod_in.le.nnisod, 'faulty parameter nnisod_in')
 #endif
+      allocate(iffboundx(-1:nxd,-1:nyd))
+      allocate(iffboundy(-1:nxd,-1:nyd))
+      allocate(ifenebound(-1:nxd,-1:nyd))
+      allocate(iftimbound(-1:nxd,-1:nyd))
       nbc=0
       ncbs=0
       lcbs=0
@@ -256,6 +303,44 @@ cank }
       boundary_time_mod=0.0_R8
       boundary_time_switch=0.0_R8
 
+csw 21feb2014, setup some additional work variables for boundary conditions
+cxpb Have to do this here already in case the namelist is not used
+      call ipgeti ('b2news_l_fbound', l_fbound)
+      call ipgeti ('b2news_l_enebound', l_enebound)
+      call ipgeti ('b2news_l_timbound', l_timbound)
+      iffboundx=0
+      iffboundy=0
+      if(l_fbound .ne. 0) then
+       do ix=-1,nx
+        do iy=-1,ny
+          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+            iffboundy(ix,iy)=1
+          endif
+          if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
+            iffboundx(ix,iy)=1
+          endif
+        enddo
+       enddo
+      endif
+
+      ifenebound=0
+      if(l_enebound .ne. 0) then
+       do ix=-1,nx
+        do iy=-1,ny
+          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+            ifenebound(ix,iy)=1
+          endif
+        enddo
+       enddo
+       do iy=-1,ny,ny+1
+         ifenebound(:,iy)=1
+       enddo
+      endif
+
+      iftimbound=0
+      if(l_timbound .ne. 0) iftimbound(:,:)=ifenebound(:,:)
+
+      return
       end subroutine alloc_b2mod_boundary
 
       subroutine read_b2mod_boundary_namelist(nx, ny, ns, dotest)

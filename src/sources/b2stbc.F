@@ -435,6 +435,7 @@
      &           'b2stbc: wrong_flow returned from b2stbc_bas'
         endif      !lbndusr
       else      !boundary_namelist.ge.1
+        call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
         call b2stbc_bas(nx, ny, ns, ismain,
      1   facdrift, vol, hx, hy, qz, qc, gs,
      1   pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,

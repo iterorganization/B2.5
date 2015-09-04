@@ -19,9 +19,6 @@
       real (kind=R8), allocatable, save :: 
      &  facdrift_profile(:,:), fac_ExB_profile(:,:), ds(:),
      1	fac_vis_profile(:,:)
-      integer, allocatable, save ::
-     .  iffboundx(:,:), iffboundy(:,:),
-     .  ifenebound(:,:), iftimbound(:,:)
 
       contains
 
@@ -57,10 +54,6 @@
       allocate(cvisper(-1:nxd,-1:nyd,0:1))                        !srv 05.07.00
       allocate(wrk0(-1:nxd,-1:nyd))
       allocate(wrk1(-1:nxd,-1:nyd))
-      allocate(iffboundx(-1:nxd,-1:nyd))
-      allocate(iffboundy(-1:nxd,-1:nyd))
-      allocate(ifenebound(-1:nxd,-1:nyd))
-      allocate(iftimbound(-1:nxd,-1:nyd))
       allocate(facdrift_profile(-1:nxd,-1:nyd))
       allocate(fac_ExB_profile(-1:nxd,-1:nyd))
       allocate(fac_vis_profile(-1:nxd,-1:nyd))
@@ -99,10 +92,6 @@
       fac_ExB_profile=1.0_R8
       fac_vis_profile=1.0_R8
       ds=0.0_R8
-      iffboundx=0
-      iffboundy=0
-      ifenebound=0
-      iftimbound=0
 
       end subroutine alloc_b2mod_work
 

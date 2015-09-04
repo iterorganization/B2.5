@@ -10,7 +10,6 @@
       use b2mod_residuals
       use b2mod_sources
       use b2mod_transport
-      use b2mod_work
       use b2mod_tallies
       use b2mod_indirect
       use b2mod_constants
@@ -196,8 +195,6 @@
      3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
       integer atomic_physics_rescale_flag
       real (kind=R8) :: hzconst                                      !srv 30.01.10 
-csw 18feb2014 added for correct implementation of boundary conditions
-      integer, save :: l_fbound=0, l_enebound=0, l_timbound=0
 *   ..procedures
       logical lnext
       real (kind=R8) ::
@@ -1064,10 +1061,6 @@ csw 09oct2012
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-csw 21feb2014
-       call ipgeti ('b2news_l_fbound', l_fbound)
-       call ipgeti ('b2news_l_enebound', l_enebound)
-       call ipgeti ('b2news_l_timbound', l_timbound)
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
@@ -1288,7 +1281,7 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
      . 'invalid main plasma species index ismain')
       call b2sqel (nx, ny, ns0, ismain, ev, te, 
      &    rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
+     &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 *   ..extend initial state to species (ns0:ns-1)
       if (ns0.lt.ns) then
        call sfill (n2*(ns-ns0), na0eps, na(-1,-1,ns0), 1)
@@ -1363,7 +1356,7 @@ c   --> better way doing this is necessary)
 *   ..compute electron rate coefficients
           call b2sqel (nx, ny, ns, ismain, ev, te, 
      &     rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
-     &     rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, wrk0)
+     &     rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
           call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
           max_delta = max(
      1     maxval(abs((rza-rza0)/(rza+1.0_R8))),
@@ -1409,68 +1402,6 @@ c   --> better way doing this is necessary)
 *   ..write summary of initial state
       call b2wfpi (nout(0), idout0, nx, ny, ns, ne, na, ua,
      &  te, ti, po, fna, fhe, fhi, fch)
-
-csw 21feb2014, setup some additional work variables for boundary conditions
-!!! FIXME: Why cannot we move this to b2.boundary.parameters ?
-      iffboundx=0
-      iffboundy=0
-      if(l_fbound .ne. 0) then
-       do ix=-1,nx
-        do iy=-1,ny
-          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-            iffboundy(ix,iy)=1
-          endif
-          if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
-            iffboundx(ix,iy)=1
-          endif
-        enddo
-       enddo
-       ! core boundary special treatment
-       do ib=1,nbc
-         if(bcchar(ib).eq.'S') then
-           do ix=1, bc_list_size(ib)
-             if(mod(region(bc_list_x(ix,ib),bc_list_y(ix,ib),0),4).eq.1)
-     >        then
-               iffboundx(bc_list_x(ix,ib),bc_list_y(ix,ib))=1
-             endif
-           enddo
-         endif
-       enddo
-      endif
-
-      ifenebound=0
-      if(l_enebound .ne. 0) then
-       do ix=-1,nx
-        do iy=-1,ny
-          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-            ifenebound(ix,iy)=1
-          endif
-        enddo
-       enddo
-       do iy=-1,ny,ny+1
-         ifenebound(:,iy)=1
-       enddo 
-       ! core boundary special treatment
-       do ib=1,nbc
-         if(bcchar(ib).eq.'S') then
-           if(mod(region(bc_list_x(1,ib),bc_list_y(1,ib),0),4).eq.1) 
-     >      then
-             do ix=1, bc_list_size(ib)
-               ifenebound(bc_list_x(ix,ib),bc_list_y(ix,ib))=1
-             enddo
-           endif
-         endif
-       enddo
-      endif
-
-      iftimbound=0
-      if(l_timbound .ne. 0) then
-       do ix=-1,nx
-        do iy=-1,ny
-          iftimbound(ix,iy)=ifenebound(ix,iy)
-        enddo
-       enddo
-      endif
 
 * ..main loop
 *   ..initialise counters

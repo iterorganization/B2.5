@@ -7,7 +7,7 @@
      &  resht, reshe, reshi, cortt, corte, corti, flo0, con0, aa5, name)
       use b2mod_types
       use b2mod_indirect
-      use b2mod_work
+      use b2mod_boundary_namelist
      , , only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
