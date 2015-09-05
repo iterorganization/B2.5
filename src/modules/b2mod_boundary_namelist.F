@@ -183,15 +183,12 @@ cxpb overwrite the defaults with the namelist data
       ifenebound=0
       if(l_enebound .ne. 0) then
        do ib=1,nbc
-         if(bcchar(ib).eq.'S' .or. bcchar(ib).eq.'N') then
+         if(bcchar(ib).eq.'S' .or. bcchar(ib).eq.'N' .or.
+     &      bcchar(ib).eq.'W' .or. bcchar(ib).eq.'E') then
            do ix=1, bc_list_size(ib)
-             iffboundx(bc_list_x(ix,ib),bc_list_y(ix,ib))=1
+             ifenebound(bc_list_x(ix,ib),bc_list_y(ix,ib))=1
            end do
-         else if (bcchar(ib).eq.'E' .or. bcchar(ib).eq.'W') then
-           do ix = 1, bc_list_size(ib)
-             iffboundy(bc_list_x(ix,ib),bc_list_y(ix,ib))=1
-           enddo
-         endif
+         end if
        enddo
       endif
 
