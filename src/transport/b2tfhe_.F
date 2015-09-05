@@ -16,8 +16,6 @@
       use b2mod_rates
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_work
-     , , only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0

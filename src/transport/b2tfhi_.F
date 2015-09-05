@@ -12,8 +12,6 @@ csw 2013 added fna_he, cvsa, vadia into argument list
       use b2mod_rates
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_work
-     1 , only : iffboundx, iffboundy
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
