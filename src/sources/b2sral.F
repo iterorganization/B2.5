@@ -24,6 +24,7 @@
      &     , only: rcxna, rcxhi, rcxmo
       use b2mod_input_profile
       use b2mod_numerics_namelist
+      use b2mod_boundary_namelist
       use b2mod_time
       use b2mod_anomalous_transport
       use b2mod_b2cmpa
@@ -112,7 +113,8 @@
 
 *   ..local variables
       integer ncall, n2, k, is, ix, iy, sources_inputfile
-      integer guard_flows, numerics_namelist, use_astra
+      integer guard_flows, numerics_namelist, boundary_namelist 
+      integer use_astra
       integer, save :: elm_count
       integer, save :: style = 2                                 !srv 28.06.08
       integer, save :: iout = 0                                  !srv 30.06.08
@@ -139,7 +141,7 @@
       logical catch_up
       character*32 hlp_frm
       save ncall, sources_inputfile, guard_flows, numerics_namelist
-      save use_astra
+      save boundary_namelist, use_astra
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, hy1
@@ -149,7 +151,7 @@
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, sources_inputfile/0/, guard_flows/2/, use_astra/0/,
-     *  numerics_namelist/0/
+     *  numerics_namelist/0/, boundary_namelist/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -245,6 +247,12 @@
             catch_up=.false.
           endif
         enddo
+        call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+        if (boundary_namelist.ge.1) then
+          call initialize_b2mod_boundary(nx,ny,ns,tim)
+        else
+          call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
+        endif
       else
         if(numerics_time_mod.gt.0.0_R8) then
           write(*,'(a,1p,3e12.4,2i6)') 
@@ -256,6 +264,9 @@
             call read_b2mod_numerics_namelist(nx,ny)
             call write_b2mod_numerics_namelist
           endif
+        endif
+        if (boundary_namelist.ge.1) then
+          call catchup_b2mod_boundary(tim)
         endif
       endif                                                     	 !xpb
       call xertst (0.0_R8.le.minval(facdrift) .and.

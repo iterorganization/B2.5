@@ -391,11 +391,6 @@
       if (ncall.eq.0) lbndusr=.false.                                    !xpb
 
       if(boundary_namelist.ge.1) then
-         if(ncall.eq.0) then
-            call initialize_b2mod_boundary(nx,ny,ns,tim)
-         else
-            call catchup_b2mod_boundary(tim)
-         endif
 
          if(lfeedback.or.b2stbc_feedback.ne.0)
      1        call b2stbc_fb_pre(nx, ny, ns, ismain, BoRiS,
@@ -435,7 +430,7 @@
      &           'b2stbc: wrong_flow returned from b2stbc_bas'
         endif      !lbndusr
       else      !boundary_namelist.ge.1
-        call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
+        
         call b2stbc_bas(nx, ny, ns, ismain,
      1   facdrift, vol, hx, hy, qz, qc, gs,
      1   pbs, bb, na, ua, uadia, vaecrb, te, ti, po, ne, ni,

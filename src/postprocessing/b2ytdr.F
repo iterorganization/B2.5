@@ -3531,6 +3531,8 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
             READ (ZEILE,66661)
      .            I,FILNAM,H123,REAC,CRC,idum(0:1),rdum(0),RMN,RMX
 !  CORRECT FOR OLD REACTIONS NO LONGER SUPPORTED
+!! FIXME: Remove H.6 reactions
+!! FIXME: Remove H.9 0.2/0.3/0.4 reactions
             IF (streql(FILNAM,'AMJUEL')) THEN
               IF (streql(REAC,'0.1')) THEN
                 REAC='0.1T'
