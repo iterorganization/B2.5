@@ -15,9 +15,11 @@
       use b2mod_constants
       use b2mod_diag
       use b2mod_work
+      use b2mod_time
       use b2mod_b2cmpa
       use b2mod_external
       use b2mod_neoclassical
+      use b2mod_boundary_namelist
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nout(0:5), nx, ny, ns, ismain, ismain0,  
@@ -66,7 +68,7 @@
 
 *   ..local variables
       integer ncall, nstg(0:2), moqtlv, moitlv, itcnt, density_control,  !xpb
-     *  ramp_slow, ier0, no_solve, ix, iy
+     *  ramp_slow, ier0, no_solve, ix, iy, boundary_namelist
       integer, save :: style = 0, guard_flows = 2                        !srv 18.06.08
       integer, save :: anomalous_core_only = 0                           !srv 19.04.07
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
@@ -77,7 +79,7 @@
      *  nstg_areshe, nstg_areshi, nstg_aresco
       save ncall, nstg, moqtlv, moitlv, rxf, itcnt,                      !xpb
      *  density_control, ramp_slow, BoRiS, no_solve,
-     *  nstg_areshe, nstg_areshi, nstg_aresco
+     *  nstg_areshe, nstg_areshi, nstg_aresco, boundary_namelist
       logical domoqt, domoit, wrong_flow, ramp_call !, b2fstati_addexists  !xpb !srv 15.07.08
       logical test_residual, quit_residual, main_call
       save test_residual
@@ -97,7 +99,7 @@
 *   ..initialisation
       data ncall/0/, nstg/1,1,1/, moqtlv/3/, moitlv/-1/, rxf/0.5_R8/
       data itcnt/0/, density_control/0/, ramp_slow/0/, BoRiS/0.0_R8/
-      data no_solve/0/
+      data no_solve/0/, boundary_namelist/0/
       data nstg_areshe/0.0_R8/, nstg_areshi/0.0_R8/, nstg_aresco/0.0_R8/
 *
 *-----------------------------------------------------------------------
@@ -153,7 +155,17 @@
        call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)            !srv 31.01.07 {
        call xertst (1.le.ntim_step_out, 
      &   'faulty internal parameter ntim_step_out')                   !srv 31.01.07 }
-       call ipgeti ('b2mndt_use_b2srst', use_b2srst)            !srv 13.07.12
+       call ipgeti ('b2mndt_use_b2srst', use_b2srst)                  !srv 13.07.12
+       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+       if (boundary_namelist.ge.1) then
+         call initialize_b2mod_boundary(nx,ny,ns,tim)
+       else
+         call alloc_b2mod_boundary(nx,ny,ns,nbcd,nnisod)
+       endif
+      else
+       if (boundary_namelist.ge.1) then
+         call catchup_b2mod_boundary(tim)
+       endif
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)

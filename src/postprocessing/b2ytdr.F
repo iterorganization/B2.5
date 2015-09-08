@@ -238,7 +238,7 @@ c 2002-09-11: logic revised
      .        NPLINT,NPLOTT,NPLDLT
       integer IDIMP, INUMP, IRPTA1, IRPTE1, IRPTA2, IRPTE2, ILEQUI
       integer IRPTA3, IRPTE3
-      integer NPHOTI, NPLSI, NNREAC, IPLTA
+      integer NPHOTI, NPLSI, NNREAC, IPLTA, ILINE
       integer NATMI1, NREAC1, NSTRA1, NPLSI1, NPLSM
       integer IREAD, IEND, IANF, ISTS, IH, I3, L, M, JSS
       integer IATM, IMOL, IION, IPHOT, ICRM, IPLS, IPLSS, ISTRA
@@ -258,6 +258,7 @@ c 2002-09-11: logic revised
       integer NADMOD, NASMOD, NORMOD, IGEOUSR
       integer NSSIR, NSSIP, IR, IP
       integer, allocatable :: NPOINT(:,:), ILIIN(:), IHELP(:), IGJUM0(:)
+      integer, allocatable :: IREAC1(:)
       integer, allocatable :: INDSRC(:)
       integer, allocatable :: NPRTA(:), 
      &                        ISRFA(:), ISRTA(:), ISRSA(:), NRCA(:),
@@ -388,6 +389,7 @@ c 2002-09-11: logic revised
       character*134 line
 #ifdef B25_EIRENE
       character*80 ZEILE, ZEILEN(100)
+      character*80, allocatable :: REAC_LINE(:)
       character*24 TXTSPC, TXTUNT, TEXTLA
       character*72 TXTMOL, TXTION, TXTPLS, TXTPHOT, TXTCRM
       character*72 TITLE5, CHRTAL
@@ -3524,41 +3526,61 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
         READ (IUNIN,'(A72)') ZEILE
         WRITE(IUNOT,'(A72)') ZEILE
         READ (IUNIN,*) idum(0)  ! NREACI
-        WRITE(IUNOT,6666) idum(0)
+        allocate(IREAC1(idum(0)))
+        allocate(REAC_LINE(3*idum(0)))
+        IREAC1 = -1
+        NREAC1 = 0
+        ILINE = 0
   411   READ (IUNIN,'(A80)') ZEILE
         IF (ZEILE(1:1).NE.'*') THEN
           IF (INDEX(ZEILE,'PHOTON').EQ.0) THEN
             READ (ZEILE,66661)
      .            I,FILNAM,H123,REAC,CRC,idum(0:1),rdum(0),RMN,RMX
 !  CORRECT FOR OLD REACTIONS NO LONGER SUPPORTED
-!! FIXME: Remove H.6 reactions
-!! FIXME: Remove H.9 0.2/0.3/0.4 reactions
-            IF (streql(FILNAM,'AMJUEL')) THEN
-              IF (streql(REAC,'0.1')) THEN
-                REAC='0.1T'
-                IF (RMN.NE.0.0_R8) THEN
-                  RMN = 0.0_R8
-                  READ (IUNIN,1028)
-                ENDIF
-                IF (RMX.NE.0.0_R8) THEN
-                  RMX = 0.0_R8
-                  READ (IUNIN,1028)
-                ENDIF
+!  Remove AMJUEL H.6 reactions
+!  Remove AMJUEL H.9 0.2/0.3/0.4 reactions
+            skip_reac = .false.
+            IF((streql(FILNAM,'AMJUEL')) THEN
+              IF (streql(H123,'H.6')) skip_reac = .true.
+              IF (streql(H123,'H.9')) THEN
+                IF (streql(H123,'0.2')) skip_reac = .true.
+                IF (streql(H123,'0.3')) skip_reac = .true.
+                IF (streql(H123,'0.4')) skip_reac = .true.
               END IF
-              IF (streql(REAC,'0.2')) REAC='0.2T'
-              IF (streql(REAC,'0.3')) REAC='0.3T'
-              IF (streql(REAC,'0.4')) REAC='0.4T'
-              IF (streql(REAC,'0.5')) REAC='0.5T'
-              IF (streql(REAC,'0.6')) REAC='0.6T'
-              IF (streql(REAC,'0.7')) REAC='0.7T'
-              IF (streql(REAC,'0.8')) REAC='0.8T'
-              IF (streql(REAC,'7.0c') .and. streql(H123,'H.11'))
-     .         REAC='7.0a'
             END IF
-            WRITE(ZEILE,66661)
-     .            I,FILNAM,H123,REAC,CRC,idum(0:1),rdum(0),RMN,RMX
-            WRITE(IUNOT,'(A80)') ZEILE
+            IF (.not.skip_reac) THEN
+              IF (IREAC1(I).EQ.-1) THEN ! To account for reaction with multiple rates
+                NREAC1=NREAC1+1
+                IREAC1(I)=NREAC1
+              END IF
+              ILINE=ILINE+1
+              IF (streql(FILNAM,'AMJUEL')) THEN
+                IF (streql(REAC,'0.1')) THEN
+                  REAC='0.1T'
+                  IF (RMN.NE.0.0_R8) THEN
+                    RMN = 0.0_R8
+                    READ (IUNIN,1028)
+                  ENDIF
+                  IF (RMX.NE.0.0_R8) THEN
+                    RMX = 0.0_R8
+                    READ (IUNIN,1028)
+                  ENDIF
+                END IF
+                IF (streql(REAC,'0.2')) REAC='0.2T'
+                IF (streql(REAC,'0.3')) REAC='0.3T'
+                IF (streql(REAC,'0.4')) REAC='0.4T'
+                IF (streql(REAC,'0.5')) REAC='0.5T'
+                IF (streql(REAC,'0.6')) REAC='0.6T'
+                IF (streql(REAC,'0.7')) REAC='0.7T'
+                IF (streql(REAC,'0.8')) REAC='0.8T'
+                IF (streql(REAC,'7.0c') .and. streql(H123,'H.11'))
+     .           REAC='7.0a'
+              END IF
+              WRITE(REAC_LINE(ILINE),66661) IREAC1(I),
+     .            FILNAM,H123,REAC,CRC,idum(0:1),rdum(0),RMN,RMX
+            END IF
           ELSE
+            NREAC1 = NREAC1 + 1
             ZEILE=ADJUSTL(ZEILE)
             I1=SCAN(ZEILE,' ')
             READ (ZEILE(1:I1-1),*) I
@@ -3587,39 +3609,51 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
             IEND=IANF+SCAN(ZEILE(IANF+1:),' ')-1
             CRC(1:IEND-IANF+1)=ZEILE(IANF:IEND)
             READ (ZEILE(IEND+1:),*) idum(0:1),rdum(0),RMN,RMX
-            WRITE(IUNOT,'(A80)') ZEILE
+            ILINE = ILINE+1
+            WRITE(REAC_LINE(ILINE),'(A80)') ZEILE
           ENDIF
           IF (INDEX(ZEILE,'ADAS') .NE. 0) THEN
             READ (IUNIN,'(4X,A2,1X,I3)') ELNAME,idum(0)
-            WRITE(IUNOT,'(4X,A2,1X,I3)') ELNAME,idum(0)
+            ILINE = ILINE+1
+            WRITE(REAC_LINE(ILINE),'(4X,A2,1X,I3)') ELNAME,idum(0)
           ENDIF
           IF (INDEX(H123,'P.').EQ.0) THEN  !PVK
             IF (RMN.GT.0.0_R8) THEN
+              ILINE = ILINE+1
               READ (IUNIN,66664) idum(0),(rdum(I),I=1,3) ! IFEXMN(IR,J),(FPARM(IR,I,J),I=1,3)
-              WRITE(IUNOT,66664) idum(0),(rdum(I),I=1,3)
+              WRITE(REAC_LINE(ILINE),66664) idum(0),(rdum(I),I=1,3)
             ENDIF
             IF (RMX.GT.0.0_R8) THEN
+              ILINE = ILINE+1
               READ (IUNIN,66664) idum(0),(rdum(I),I=4,6) ! IFEXMN(IR,J),(FPARM(IR,I,J),I=4,6)
-              WRITE(IUNOT,66664) idum(0),(rdum(I),I=4,6)
+              WRITE(REAC_LINE(ILINE),66664) idum(0),(rdum(I),I=4,6)
             ENDIF
           ENDIF
           IF (INDEX(ZEILE,'CONST') .NE. 0) THEN
-            I=INDEX(REACSTR,'FT')
+            I=INDEX(ZEILE(16:),'FT')
             IF (I /= 0) THEN
               READ (REACSTR(I+2:),*) idum(0) ! IFTFLG(IR,IFLG)
             END IF
-            IF (MOD(idum(0),100) == 10) THEN              
+            IF (MOD(idum(0),100) == 10) THEN   
+              ILINE = ILINE+1           
               READ (IUNIN,6664) rdum(0) ! CREACD(1,1)
-              WRITE(IUNOT,6664) rdum(0)
+              WRITE(REAC_LINE(ILINE),6664) rdum(0)
             ELSE
+              ILINE = ILINE+1           
               READ (IUNIN,6664) (rdum(I),I=1,9) ! (CREACD(IC,1),IC=1,9)
-              WRITE(IUNOT,6664) (rdum(I),I=1,9)
+              WRITE(REAC_LINE(ILINE),6664) (rdum(I),I=1,9)
             ENDIF
           ENDIF
           GOTO 411
         ELSE
           WRITE(IUNOT,'(A80)') ZEILE
         ENDIF
+! We now write the new list of reactions
+        WRITE(IUNOT,6666) NREAC1
+        DO I = 1, ILINE 
+          WRITE(IUNOT,'(A80)') REAC_LINE(I)
+        END DO
+        deallocate(reac_line)
 *4A.   NEUTRAL ATOMS SPECIES CARDS, NATMI SPECIES
 Cxpb We must read up to section 5 first, to identify ion species
 Cxpb and bundles, compute new bulk ion species indices and only
@@ -3690,6 +3724,32 @@ Cxpb then rewrite the entire block
      .                        ESCD1A(IATM,K),ESCD2A(IATM,K),
      .                        FREACA(IATM,K),FLDLMA(IATM,K)
  4222     CONTINUE
+          J=0
+          DO K=1,NRCA(IATM)
+            IF (IREAC1(IREACA(IATM,K)).GE.1) THEN
+              J = J + 1
+              IREACA(IATM,J) = IREAC1(IREACA(IATM,K))
+              IBULKA(IATM,J) = IBULKA(IATM,K)
+              ISCD1A(IATM,J) = ISCD1A(IATM,K)
+              ISCD2A(IATM,J) = ISCD2A(IATM,K)
+              ISCD3A(IATM,J) = ISCD3A(IATM,K)
+              ISCD4A(IATM,J) = ISCD4A(IATM,K)
+              ISCDEA(IATM,J) = ISCDEA(IATM,K)
+              IESTMA(IATM,J) = IESTMA(IATM,K)
+              IBGKA(IATM,J) = IBGKA(IATM,K)
+              IF (B2IDEZ(ISCDEA(IATM,J),5,5).eq.3) THEN
+                EELECA(IATM,J) = IREAC1(EELECA(IATM,K))
+              ELSE
+                EELECA(IATM,J) = EELECA(IATM,K)
+              END IF
+              EBULKA(IATM,J) = EBULKA(IATM,K)
+              ESCD1A(IATM,J) = ESCD1A(IATM,K)
+              ESCD2A(IATM,J) = ESCD2A(IATM,K)
+              FREACA(IATM,J) = FREACA(IATM,K)
+              FLDLMA(IATM,J) = FLDLMA(IATM,K)
+            END IF
+          END DO
+          NRCA(IATM) = J
  4212   CONTINUE
 *4B.   NEUTRAL MOLECULE SPECIES CARDS, NMOLI SPECIES
         READ (IUNIN,'(A72)') TXTMOL
@@ -3789,7 +3849,32 @@ Cxpb then rewrite the entire block
      .                        ESCD1M(IMOL,K),ESCD2M(IMOL,K),
      .                        FREACM(IMOL,K)
  4322     CONTINUE
- 4312   CONTINUE
+          J=0
+          DO K=1,NRCM(IMOL)
+            IF (IREAC1(IREACM(IMOL,K)).GE.1) THEN
+              J = J + 1
+              IREACM(IMOL,J) = IREAC1(IREACA(IMOL,K))
+              IBULKM(IMOL,J) = IBULKM(IMOL,K)
+              ISCD1M(IMOL,J) = ISCD1M(IMOL,K)
+              ISCD2M(IMOL,J) = ISCD2M(IMOL,K)
+              ISCD3M(IMOL,J) = ISCD3M(IMOL,K)
+              ISCD4M(IMOL,J) = ISCD4M(IMOL,K)
+              ISCDEM(IMOL,J) = ISCDEM(IMOL,K)
+              IESTMM(IMOL,J) = IESTMM(IMOL,K)
+              IBGKM(IMOL,J) = IBGKM(IMOL,K)
+              IF (B2IDEZ(ISCDEM(IMOL,J),5,5).eq.3) THEN
+                EELECM(IMOL,J) = IREAC1(EELECM(IMOL,K))
+              ELSE
+                EELECM(IMOL,J) = EELECM(IMOL,K)
+              END IF
+              EBULKM(IMOL,J) = EBULKM(IMOL,K)
+              ESCD1M(IMOL,J) = ESCD1M(IMOL,K)
+              ESCD2M(IMOL,J) = ESCD2M(IMOL,K)
+              FREACM(IMOL,J) = FREACM(IMOL,K)
+            END IF
+          END DO
+          NRCM(IMOL) = J
+4312   CONTINUE
 *4C.   TEST IONS SPECIES CARDS, NIONI SPECIES 
         READ (IUNIN,'(A72)') TXTION
   440   READ (IUNIN,*) NIONI
@@ -3878,6 +3963,31 @@ Cxpb then rewrite the entire block
      .                        ESCD1I(IION,K),ESCD2I(IION,K),
      .                        FREACI(IION,K)
  4422     CONTINUE
+          J=0
+          DO K=1,NRCI(IION)
+            IF (IREAC1(IREACI(IION,K)).GE.1) THEN
+              J = J + 1
+              IREACI(IION,J) = IREAC1(IREACI(IION,K))
+              IBULKI(IION,J) = IBULKI(IION,K)
+              ISCD1I(IION,J) = ISCD1I(IION,K)
+              ISCD2I(IION,J) = ISCD2I(IION,K)
+              ISCD3I(IION,J) = ISCD3I(IION,K)
+              ISCD4I(IION,J) = ISCD4I(IION,K)
+              ISCDEI(IION,J) = ISCDEI(IION,K)
+              IESTMI(IION,J) = IESTMI(IION,K)
+              IBGKI(IION,J) = IBGKI(IION,K)
+              IF (B2IDEZ(ISCDEI(IION,J),5,5).eq.3) THEN
+                EELECI(IION,J) = IREAC1(EELECI(IION,K))
+              ELSE
+                EELECI(IION,J) = EELECI(IION,K)
+              END IF
+              EBULKI(IION,J) = EBULKI(IION,K)
+              ESCD1I(IION,J) = ESCD1I(IION,K)
+              ESCD2I(IION,J) = ESCD2I(IION,K)
+              FREACI(IION,J) = FREACI(IION,K)
+            END IF
+          END DO
+          NRCI(IION) = J
  4412   CONTINUE
 *4D.   NEUTRAL PHOTONS SPECIES CARDS, NPHOTI SPECIES 
         READ (IUNIN,'(A80)') ZEILE
@@ -3957,6 +4067,31 @@ Cxpb then rewrite the entire block
      .                        ESCD1PH(IPHOT,K),ESCD2PH(IPHOT,K),
      .                        FREACPH(IPHOT,K),FLDLMPH(IPHOT,K)
  4522     CONTINUE
+          J=0
+          DO K=1,NRCPH(IPHOT)
+            IF (IREAC1(IREACPH(IPHOT,K)).GE.1) THEN
+              J = J + 1
+              IREACPH(IPHOT,J) = IREAC1(IREACPH(IPHOT,K))
+              IBULKPH(IPHOT,J) = IBULKPH(IPHOT,K)
+              ISCD1PH(IPHOT,J) = ISCD1PH(IPHOT,K)
+              ISCD2PH(IPHOT,J) = ISCD2PH(IPHOT,K)
+              ISCD3PH(IPHOT,J) = ISCD3PH(IPHOT,K)
+              ISCD4PH(IPHOT,J) = ISCD4PH(IPHOT,K)
+              ISCDEPH(IPHOT,J) = ISCDEPH(IPHOT,K)
+              IESTMPH(IPHOT,J) = IESTMPH(IPHOT,K)
+              IBGKPH(IPHOT,J) = IBGKPH(IPHOT,K)
+              IF (B2IDEZ(ISCDEPH(IPHOT,J),5,5).eq.3) THEN
+                EELECPH(IPHOT,J) = IREAC1(EELECPH(IPHOT,K))
+              ELSE
+                EELECPH(IPHOT,J) = EELECPH(IPHOT,K)
+              END IF
+              EBULKPH(IPHOT,J) = EBULKPH(IPHOT,K)
+              ESCD1PH(IPHOT,J) = ESCD1PH(IPHOT,K)
+              ESCD2PH(IPHOT,J) = ESCD2PH(IPHOT,K)
+              FREACPH(IPHOT,J) = FREACPH(IPHOT,K)
+            END IF
+          END DO
+          NRCPH(IPHOT) = J
  4512   CONTINUE
 *4E. DATA FOR COLLISIONAL-RADIATIVE MODELS
         READ (IUNIN,'(A72)') ZEILE
@@ -4100,6 +4235,31 @@ Cxpb then rewrite the entire block
      .                        ESCD1P(IPLS,K),ESCD2P(IPLS,K),
      .                        FREACP(IPLS,K)
  5122     CONTINUE
+          J=0
+          DO K=1,NRCP(IPLS)
+            IF (IREAC1(IREACP(IPLS,K)).GE.1) THEN
+              J = J + 1
+              IREACP(IPLS,J) = IREAC1(IREACP(IPLS,K))
+              IBULKP(IPLS,J) = IBULKP(IPLS,K)
+              ISCD1P(IPLS,J) = ISCD1P(IPLS,K)
+              ISCD2P(IPLS,J) = ISCD2P(IPLS,K)
+              ISCD3P(IPLS,J) = ISCD3P(IPLS,K)
+              ISCD4P(IPLS,J) = ISCD4P(IPLS,K)
+              ISCDEP(IPLS,J) = ISCDEP(IPLS,K)
+              IESTMP(IPLS,J) = IESTMP(IPLS,K)
+              IBGKP(IPHLS,J) = IBGKP(IPLS,K)
+              IF (B2IDEZ(ISCDEP(IPLS,J),5,5).eq.3) THEN
+                EELECP(IPLS,J) = IREAC1(EELECP(IPLS,K))
+              ELSE
+                EELECP(IPLS,J) = EELECP(IPLS,K)
+              END IF
+              EBULKP(IPLS,J) = EBULKP(IPLS,K)
+              ESCD1P(IPLS,J) = ESCD1P(IPLS,K)
+              ESCD2P(IPLS,J) = ESCD2P(IPLS,K)
+              FREACP(IPLS,J) = FREACP(IPLS,K)
+            END IF
+          END DO
+          NRCP(IPLS) = J
           SELECT CASE (CDENMODEL(IPLS))
           CASE ('FORT.13   ')
             READ (IUNIN,6666) TDMISP(1,IPLS)
