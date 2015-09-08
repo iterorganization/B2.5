@@ -425,7 +425,7 @@ c 2002-09-11: logic revised
       logical, allocatable :: nlpbls(:), nlpbl1(:)
       logical, allocatable :: done(:)
       logical LRPSCUT
-      logical in_bundle, charges_match
+      logical in_bundle, charges_match, skip_reac
 #endif
       logical todo, same_bundling
       logical wall_namelist_used
@@ -3540,7 +3540,7 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
 !  Remove AMJUEL H.6 reactions
 !  Remove AMJUEL H.9 0.2/0.3/0.4 reactions
             skip_reac = .false.
-            IF((streql(FILNAM,'AMJUEL')) THEN
+            IF(streql(FILNAM,'AMJUEL')) THEN
               IF (streql(H123,'H.6')) skip_reac = .true.
               IF (streql(H123,'H.9')) THEN
                 IF (streql(H123,'0.2')) skip_reac = .true.
@@ -4246,8 +4246,6 @@ Cxpb then rewrite the entire block
               ISCD3P(IPLS,J) = ISCD3P(IPLS,K)
               ISCD4P(IPLS,J) = ISCD4P(IPLS,K)
               ISCDEP(IPLS,J) = ISCDEP(IPLS,K)
-              IESTMP(IPLS,J) = IESTMP(IPLS,K)
-              IBGKP(IPHLS,J) = IBGKP(IPLS,K)
               IF (B2IDEZ(ISCDEP(IPLS,J),5,5).eq.3) THEN
                 EELECP(IPLS,J) = IREAC1(EELECP(IPLS,K))
               ELSE
