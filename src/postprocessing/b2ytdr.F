@@ -3527,7 +3527,7 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
         WRITE(IUNOT,'(A72)') ZEILE
         READ (IUNIN,*) idum(0)  ! NREACI
         allocate(IREAC1(idum(0)))
-        allocate(REAC_LINE(3*idum(0)))
+        allocate(REAC_LINE(3*idum(0)+1))
         IREAC1 = -1
         NREAC1 = 0
         ILINE = 0
@@ -3543,9 +3543,9 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
             IF(streql(FILNAM,'AMJUEL')) THEN
               IF (streql(H123,'H.6')) skip_reac = .true.
               IF (streql(H123,'H.9')) THEN
-                IF (streql(H123,'0.2')) skip_reac = .true.
-                IF (streql(H123,'0.3')) skip_reac = .true.
-                IF (streql(H123,'0.4')) skip_reac = .true.
+                IF (streql(REAC,'0.2')) skip_reac = .true.
+                IF (streql(REAC,'0.3')) skip_reac = .true.
+                IF (streql(REAC,'0.4')) skip_reac = .true.
               END IF
             END IF
             IF (.not.skip_reac) THEN
@@ -3641,12 +3641,19 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
             ELSE
               ILINE = ILINE+1           
               READ (IUNIN,6664) (rdum(I),I=1,9) ! (CREACD(IC,1),IC=1,9)
-              WRITE(REAC_LINE(ILINE),6664) (rdum(I),I=1,9)
+              WRITE(REAC_LINE(ILINE),6664) (rdum(I),I=1,6)
+              ILINE = ILINE+1
+              WRITE(REAC_LINE(ILINE),6664) (rdum(I),I=7,9)
             ENDIF
           ENDIF
           GOTO 411
         ELSE
-          WRITE(IUNOT,'(A80)') ZEILE
+          IF (ILINE.EQ.0) THEN ! Block 4 header lines
+            WRITE(IUNOT,'(A80)') ZEILE
+          ELSE ! Block 4a header lines
+            ILINE = ILINE+1
+            WRITE(REAC_LINE(ILINE),'(A80)') ZEILE
+          ENDIF
         ENDIF
 ! We now write the new list of reactions
         WRITE(IUNOT,6666) NREAC1
