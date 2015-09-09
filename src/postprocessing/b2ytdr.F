@@ -3738,7 +3738,7 @@ Cxpb then rewrite the entire block
               IESTMA(IATM,J) = IESTMA(IATM,K)
               IBGKA(IATM,J) = IBGKA(IATM,K)
               IF (B2IDEZ(ISCDEA(IATM,J),5,5).eq.3) THEN
-                IR = nint(EELECA(IATM,K)
+                IR = nint(EELECA(IATM,K))
                 EELECA(IATM,J) = dble(IREAC1(IR))
               ELSE
                 EELECA(IATM,J) = EELECA(IATM,K)
