@@ -3738,7 +3738,8 @@ Cxpb then rewrite the entire block
               IESTMA(IATM,J) = IESTMA(IATM,K)
               IBGKA(IATM,J) = IBGKA(IATM,K)
               IF (B2IDEZ(ISCDEA(IATM,J),5,5).eq.3) THEN
-                EELECA(IATM,J) = IREAC1(EELECA(IATM,K))
+                IR = nint(EELECA(IATM,K)
+                EELECA(IATM,J) = dble(IREAC1(IR))
               ELSE
                 EELECA(IATM,J) = EELECA(IATM,K)
               END IF
@@ -3805,7 +3806,8 @@ Cxpb then rewrite the entire block
                                           ! IBGKM(IMOL,K)
             END IF
             READ (IUNIN,6664) rdum(0:4) ! EELECM(IMOL,K),EBULKM(IMOL,K),
-                                        ! ESCD1M(IMOL,K),ESCD2M(IMOL,K),FREACM(IMOL,K)
+                                        ! ESCD1M(IMOL,K),ESCD2M(IMOL,K),
+                                        ! FREACM(IMOL,K)
 432       CONTINUE
 431     CONTINUE
         DO 4311 IMOL=1,NMOLI
@@ -3853,7 +3855,7 @@ Cxpb then rewrite the entire block
           DO K=1,NRCM(IMOL)
             IF (IREAC1(IREACM(IMOL,K)).GE.1) THEN
               J = J + 1
-              IREACM(IMOL,J) = IREAC1(IREACA(IMOL,K))
+              IREACM(IMOL,J) = IREAC1(IREACM(IMOL,K))
               IBULKM(IMOL,J) = IBULKM(IMOL,K)
               ISCD1M(IMOL,J) = ISCD1M(IMOL,K)
               ISCD2M(IMOL,J) = ISCD2M(IMOL,K)
@@ -3863,7 +3865,8 @@ Cxpb then rewrite the entire block
               IESTMM(IMOL,J) = IESTMM(IMOL,K)
               IBGKM(IMOL,J) = IBGKM(IMOL,K)
               IF (B2IDEZ(ISCDEM(IMOL,J),5,5).eq.3) THEN
-                EELECM(IMOL,J) = IREAC1(EELECM(IMOL,K))
+                IR = nint(EELECM(IMOL,K))
+                EELECM(IMOL,J) = dble(IREAC1(IR))
               ELSE
                 EELECM(IMOL,J) = EELECM(IMOL,K)
               END IF
@@ -3912,14 +3915,16 @@ Cxpb then rewrite the entire block
             IF (ISRSI(IION).LT.3) THEN
               READ (IUNIN,6666) idum(0:6) ! IREACI(IION,K),IBULKI(IION,K),
                                           ! ISCD1I(IION,K),ISCD2I(IION,K),
-                                          ! ISCDEI(IION,K),IESTMI(IION,K),IBGKI(IION,K)
+                                          ! ISCDEI(IION,K),IESTMI(IION,K),
+                                          ! IBGKI(IION,K)
             ELSE IF (ISRSI(IION).EQ.3) THEN
               READ (IUNIN,6666) idum(0:7)
             ELSE IF (ISRSI(IION).EQ.4) THEN
               READ (IUNIN,6666) idum(0:8)
             ENDIF
             READ (IUNIN,6664) rdum(0:4) ! EELECI(IION,K),EBULKI(IION,K),
-                                        ! ESCD1I(IION,K),ESCD2I(IION,K),FREACI(IION,K)
+                                        ! ESCD1I(IION,K),ESCD2I(IION,K),
+                                        ! FREACI(IION,K)
 442       CONTINUE
 441     CONTINUE
         DO 4411 IION=1,NIONI
@@ -3977,7 +3982,8 @@ Cxpb then rewrite the entire block
               IESTMI(IION,J) = IESTMI(IION,K)
               IBGKI(IION,J) = IBGKI(IION,K)
               IF (B2IDEZ(ISCDEI(IION,J),5,5).eq.3) THEN
-                EELECI(IION,J) = IREAC1(EELECI(IION,K))
+                IR = nint(EELECI(IION,K))
+                EELECI(IION,J) = dble(IREAC1(IR))
               ELSE
                 EELECI(IION,J) = EELECI(IION,K)
               END IF
@@ -4016,14 +4022,16 @@ Cxpb then rewrite the entire block
             IF (ISRSPH(IPHOT).LT.3) THEN
               READ (IUNIN,6666) idum(0:6) ! IREACPH(IPHOT,K),IBULKPH(IPHOT,K),
                                           ! ISCD1PH(IPHOT,K),ISCD2PH(IPHOT,K),
-                                          ! ISCDEPH(IPHOT,K),IESTMPH(IPHOT,K),IBGKPH(IPHOT,K)
+                                          ! ISCDEPH(IPHOT,K),IESTMPH(IPHOT,K),
+                                          ! IBGKPH(IPHOT,K)
             ELSE IF (ISRSPH(IPHOT).EQ.3) THEN
               READ (IUNIN,6666) idum(0:7)
             ELSE IF (ISRSPH(IPHOT).EQ.4) THEN
               READ (IUNIN,6666) idum(0:8)
             ENDIF
-            READ (IUNIN,6664) rdum(0:5) ! EELECPH(IPHOT,K),EBULKPH(IPHOT,K),ESCD1PH(IPHOT,K),
-                                        ! ESCD2PH(IPHOT,K),FREACPH(IPHOT,K),FLDLMPH(IPHOT,K)
+            READ (IUNIN,6664) rdum(0:5) ! EELECPH(IPHOT,K),EBULKPH(IPHOT,K),
+                                        ! ESCD1PH(IPHOT,K),ESCD2PH(IPHOT,K),
+                                        ! FREACPH(IPHOT,K),FLDLMPH(IPHOT,K)
 452       CONTINUE
 451     CONTINUE
         DO 4511 IPHOT=1,NPHOTI
@@ -4081,7 +4089,8 @@ Cxpb then rewrite the entire block
               IESTMPH(IPHOT,J) = IESTMPH(IPHOT,K)
               IBGKPH(IPHOT,J) = IBGKPH(IPHOT,K)
               IF (B2IDEZ(ISCDEPH(IPHOT,J),5,5).eq.3) THEN
-                EELECPH(IPHOT,J) = IREAC1(EELECPH(IPHOT,K))
+                IR = nint(EELECPH(IPHOT,K))
+                EELECPH(IPHOT,J) = dble(IREAC1(IR))
               ELSE
                 EELECPH(IPHOT,J) = EELECPH(IPHOT,K)
               END IF
@@ -4089,6 +4098,7 @@ Cxpb then rewrite the entire block
               ESCD1PH(IPHOT,J) = ESCD1PH(IPHOT,K)
               ESCD2PH(IPHOT,J) = ESCD2PH(IPHOT,K)
               FREACPH(IPHOT,J) = FREACPH(IPHOT,K)
+              FLDLMPH(IPHOT,J) = FLDLMPH(IPHOT,K)
             END IF
           END DO
           NRCPH(IPHOT) = J
@@ -4247,7 +4257,8 @@ Cxpb then rewrite the entire block
               ISCD4P(IPLS,J) = ISCD4P(IPLS,K)
               ISCDEP(IPLS,J) = ISCDEP(IPLS,K)
               IF (B2IDEZ(ISCDEP(IPLS,J),5,5).eq.3) THEN
-                EELECP(IPLS,J) = IREAC1(EELECP(IPLS,K))
+                IR = nint(EELECP(IPLS,K))
+                EELECP(IPLS,J) = dble(IREAC1(IR))
               ELSE
                 EELECP(IPLS,J) = EELECP(IPLS,K)
               END IF
