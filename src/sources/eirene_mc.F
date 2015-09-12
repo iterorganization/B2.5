@@ -139,12 +139,14 @@ csw 26feb2014
      &  sni_h(:,:,:,:,:),
      &  smo_h(:,:,:,:,:),
      &  see_h(:,:,:,:), sei_h(:,:,:,:),
-     &  pfluxa_h(:,:,:,:,:), rfluxa_h(:,:,:,:,:), rfluxm_h(:,:,:,:,:),
+     &  pfluxa_h(:,:,:,:,:), rfluxa_h(:,:,:,:,:), 
+     &  pfluxm_h(:,:,:,:,:), rfluxm_h(:,:,:,:,:),
 ! _h is an abbreviation from 'history'
      &  sni_s(:,:,:,:),
      &  smo_s(:,:,:,:),
      &  see_s(:,:,:), sei_s(:,:,:),
-     &  pfluxa_s(:,:,:,:), rfluxa_s(:,:,:,:), rfluxm_s(:,:,:,:),
+     &  pfluxa_s(:,:,:,:), rfluxa_s(:,:,:,:), 
+     &  pfluxm_s(:,:,:,:), rfluxm_s(:,:,:,:),
 ! _s is an abbreviation from 'sum'
      &  dab2_h(:,:,:,:,:), dab2_s(:,:,:,:)
 
@@ -1481,12 +1483,27 @@ c              style)
          smo_av=0.0_R8
          see_av=0.0_R8
          sei_av=0.0_R8
+         dab2_s=0.0_R8
+         pfluxa_s=0.0_R8
+         pfluxm_s=0.0_R8
+         rfluxa_s=0.0_R8
+         rfluxm_s=0.0_R8
          ihist = 1
         endif
         sni_av = sni_av + sni
         smo_av = smo_av + smo
         sei_av = sei_av + sei
         see_av = see_av + see
+        dab2_s = dab2_s + dab2
+        pfluxa_s = pfluxa_s + pfluxa
+        pfluxm_s = pfluxm_s + pfluxm
+        rfluxa_s = rfluxa_s + rfluxa
+        rfluxm_s = rfluxm_s + rfluxm
+        dab2 = dab2_s/dble(ihist)
+        pfluxa = pfluxa_s/dble(ihist)
+        pfluxm = pfluxm_s/dble(ihist)
+        rfluxa = rfluxa_s/dble(ihist)
+        rfluxm = rfluxm_s/dble(ihist)
        endif
        ih_end=ihist
       else if (nhist.gt.1) then
@@ -1507,6 +1524,7 @@ c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
          dab2_h(:,:,iatm,1,ihist) = dab2(:,:,iatm,1)
         enddo
         do imol = 1,nnmoli
+         pfluxm_h(:,:,imol,1,ihist) = pfluxm(:,:,imol,1)
          rfluxm_h(:,:,imol,1,ihist) = rfluxm(:,:,imol,1)
         enddo
         if (full_history) then
@@ -1520,6 +1538,7 @@ c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
         sei_av = 0.0_R8
         dab2_s = 0.0_R8
         pfluxa_s = 0.0_R8      
+        pfluxm_s = 0.0_R8      
         rfluxa_s = 0.0_R8      
         rfluxm_s = 0.0_R8      
         do ih = 1, ih_end
@@ -1536,12 +1555,15 @@ c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
      .                         + rfluxa_h(:,:,iatm,1,ih)
          enddo
          do imol = 1,nnmoli
+          pfluxm_s(:,:,imol,1) = pfluxm_s(:,:,imol,1)
+     .                         + pfluxm_h(:,:,imol,1,ih)
           rfluxm_s(:,:,imol,1) = rfluxm_s(:,:,imol,1)
      .                         + rfluxm_h(:,:,imol,1,ih)
          enddo
         enddo
         dab2 = dab2_s / dble(ih_end)
         pfluxa = pfluxa_s / dble(ih_end)
+        pfluxm = pfluxm_s / dble(ih_end)
         rfluxa = rfluxa_s / dble(ih_end)
         rfluxm = rfluxm_s / dble(ih_end)
        end if
@@ -1572,6 +1594,8 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
      .                        + rfluxa(:,:,iatm,1)/dble(ih_end)
         enddo
         do imol = 1,nnmoli
+         pfluxm_s(:,:,imol,1) = pfluxm_s(:,:,imol,1)*relax
+     .                        + pfluxm(:,:,imol,1)/dble(ih_end)
          rfluxm_s(:,:,imol,1) = rfluxm_s(:,:,imol,1)*relax
      .                        + rfluxm(:,:,imol,1)/dble(ih_end)
         enddo
@@ -1581,6 +1605,7 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
         see_av = see_s*dble(ih_end)
         dab2 = dab2_s
         pfluxa = pfluxa_s
+        pfluxm = pfluxm_s
         rfluxa = rfluxa_s
         rfluxm = rfluxm_s
        end if
@@ -2537,6 +2562,7 @@ c!###}
       allocate(see_h(0:ndxp,0:ndyp,nstra,nhistd))
       allocate(sei_h(0:ndxp,0:ndyp,nstra,nhistd))
       allocate(pfluxa_h(0:ndxp,0:ndyp,natm,1,nhistd))
+      allocate(pfluxm_h(0:ndxp,0:ndyp,nmol,1,nhistd))
       allocate(rfluxa_h(0:ndxp,0:ndyp,natm,1,nhistd))
       allocate(rfluxm_h(0:ndxp,0:ndyp,nmol,1,nhistd))
       allocate(dab2_h(0:ndxp,0:ndyp,natm,1,nhistd))
@@ -2550,6 +2576,7 @@ c!###}
       see_h = 0.0_R8
       sei_h = 0.0_R8
       pfluxa_h = 0.0_R8
+      pfluxm_h = 0.0_R8
       rfluxa_h = 0.0_R8
       rfluxm_h = 0.0_R8
       dab2_h = 0.0_R8
@@ -2569,6 +2596,7 @@ c!###}
       allocate(see_s(0:ndxp,0:ndyp,nstra))
       allocate(sei_s(0:ndxp,0:ndyp,nstra))
       allocate(pfluxa_s(0:ndxp,0:ndyp,natm,1))
+      allocate(pfluxm_s(0:ndxp,0:ndyp,nmol,1))
       allocate(rfluxa_s(0:ndxp,0:ndyp,natm,1))
       allocate(rfluxm_s(0:ndxp,0:ndyp,nmol,1))
       allocate(dab2_s(0:ndxp,0:ndyp,natm,1))
@@ -2582,6 +2610,7 @@ c!###}
       see_s = 0.0_R8
       sei_s = 0.0_R8
       pfluxa_s = 0.0_R8
+      pfluxm_s = 0.0_R8
       rfluxa_s = 0.0_R8
       rfluxm_s = 0.0_R8
       dab2_s = 0.0_R8

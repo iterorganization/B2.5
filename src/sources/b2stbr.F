@@ -835,7 +835,7 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
        enddo                                                          !srv 29.04.10
 #ifdef B25_EIRENE
        do ia = 1,nnatmi
-        write (chns,'(i2.2)') ia
+        write (chns,'(i3.3)') ia
         call my_out(70,nx,ny,rfluxa(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_rfluxa_eir'//chns)
         call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,ia,1),
@@ -844,7 +844,7 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
      &                'b2stbr_dab2_eir'//chns)
        enddo
        do im = 1,nmol
-        write (chns,'(i2.2)') im
+        write (chns,'(i3.3)') im
         call my_out(70,nx,ny,rfluxm(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_rfluxm_eir'//chns)
         call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,im,1),

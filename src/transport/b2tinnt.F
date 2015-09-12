@@ -413,7 +413,7 @@
 #ifdef B25_EIRENE
       if(iout.ne.0) then
        do ia = 1,natm
-	  write (chns,'(i2.2)') ia
+	  write (chns,'(i3.3)') ia
         call my_out(70,nx,ny,rfluxa(0:nx+1,0:ny+1,ia,1),
      &                'b2tinnt_rfluxa_eir'//chns)
         call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,ia,1),
@@ -422,7 +422,7 @@
      &                'b2tinnt_dab2_eir'//chns)
 	 enddo
        do im = 1,nmol
-	  write (chns,'(i2.2)') im
+	  write (chns,'(i3.3)') im
         call my_out(70,nx,ny,rfluxm(0:nx+1,0:ny+1,im,1),
      &              'b2tinnt_rfluxm_eir'//chns)
         call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,im,1),

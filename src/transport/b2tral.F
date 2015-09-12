@@ -1,10 +1,10 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,    !srv 23.11.10
+      subroutine b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain, !srv 23.11.10
      1 bb, conn, vol, gs, hx, hy, hz, qz, qc, pbs, crx, cry, bzb, lnlam,  !srv 09.01.01 01.07.09
-     1 fch_p, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,       !srv 03.06.03
-     2 cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,               !srv 13.10.06
+     1 fch_p, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,    !srv 03.06.03
+     2 cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,            !srv 13.10.06
      3 chvi, csig, csigin, calf, cthe, cthi, 
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,   !srv 09.01.01 15.12.05
      4 vsal, fllim0fhi, fllimvisc)
@@ -23,24 +23,24 @@
       real (kind=R8) ::
      *  bb(-1:nx,-1:ny,0:3), 
      &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),            !srv 09.01.01
+     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),        !srv 09.01.01
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), bzb(-1:nx,-1:ny),  !srv 13.10.06
-     &  lnlam(-1:nx,-1:ny),                                           !srv 01.07.09
+     &  lnlam(-1:nx,-1:ny),                                       !srv 01.07.09
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne2(-1:nx,-1:ny),
-     &  fch_p(-1:nx,-1:ny,0:1), conn(-1:ny), qc(-1:nx,-1:ny),         !srv 10.06.08
+     &  fch_p(-1:nx,-1:ny,0:1), conn(-1:ny), qc(-1:nx,-1:ny),     !srv 10.06.08
      &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)                      !srv 03.06.03
+     &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)                  !srv 03.06.03
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  cdna(-1:nx,-1:ny,0:1,0:ns-1), cdpa(-1:nx,-1:ny,0:1,0:ns-1),
-     *  cddi(-1:nx,-1:ny,0:1,0:ns-1),                                   !srv 13.10.06
+     *  cddi(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 13.10.06
      &  cvla(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      &  cdnahz(-1:nx,-1:ny,0:1,0:ns-1), cdpahz(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
      &  cvlahz(-1:nx,-1:ny,0:1,0:ns-1), cvsahz(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
-     &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 09.01.01
-     &  cvmahz(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 15.12.05
+     &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                        !srv 09.01.01
+     &  cvmahz(-1:nx,-1:ny,0:1,0:ns-1),                           !srv 15.12.05
      &  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      &  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
      &  csig(-1:nx,-1:ny,0:1), csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), 	!xpb
@@ -85,11 +85,11 @@
 
 *   ..local variables
       integer ix, iy, is, n2, ncall, pot_eq, no_current, no_solve, is0
-      integer, save :: iout = 0, model = 3,                             !srv 17.06.08
+      integer, save :: iout = 0, model = 3,                       !srv 17.06.08
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
-      character(3) chns, chns0                                          !srv 17.06.08
+      character(3) chns, chns0                                    !srv 17.06.08
       real (kind=R8) ::
      1  chvi0(-1:nx,-1:ny,0:1), csig0(-1:nx,-1:ny,0:1),
      2  calf0(-1:nx,-1:ny,0:1), chci0(-1:nx,-1:ny,0:1),
@@ -99,7 +99,7 @@
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
       logical solving(4)
-      real (kind=R8), save :: addvis1=0.0_R8                            !srv 31.07.02
+      real (kind=R8), save :: addvis1=0.0_R8                      !srv 31.07.02
       save ncall, pol_anom_scale, pot_eq, no_solve, solving, 
      .  fch_anomalous, no_current
 *   ..procedures
@@ -136,35 +136,35 @@
           solving(is)=solving(is).or.
      &    (no_solve.lt.0.and.mod(abs(no_solve),2**is).ge.2**(is-1))
         enddo
-        call ipgetr ('b2siav_addvis1', addvis1)                      !srv 31.07.02
-        call ipgeti ('b2tral_iout', iout)                            !srv 17.06.08                    
+        call ipgetr ('b2siav_addvis1', addvis1)                   !srv 31.07.02
+        call ipgeti ('b2tral_iout', iout)                         !srv 17.06.08                    
         call ipgeti ('b2tqca_model', model)
-        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
+        call ipgeti ('b2npc9_iout', iout_b2npc9)                  !srv 11.09.09 {
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
         call ipgeti ('b2npp7_iout', iout_b2npp7)
-        call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
+        call ipgeti ('b2nppo_iout', iout_b2nppo)                  !srv 11.09.09 }
         call alloc_input_profile(ny,ns)
       end if
 
 * ..compute transport coefficients
 *   ..compute anomalous terms
       call b2trno (nx, ny, ns, nscx, nscxmax, iscx, 
-     &  bb, vol, gs, hx, hy, hz, qz, pbs, crx, cry, conn,             !srv 09.01.01
+     &  bb, vol, gs, hx, hy, hz, qz, pbs, crx, cry, conn,         !srv 09.01.01
      &  na, ua, te, ti, po, ne, ni, ne2, cdna, cdpa, cvla, cvsa,
-     &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                       !srv 09.01.01 15.12.05
+     &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                   !srv 09.01.01 15.12.05
      &  chce, chve, chci, chvi, csig, calf, fllim0fhi)
 *   ..compute classical terms
       call b2trcl (nx, ny, ns, nscx, iscx, ismain, 
-     &  bb, conn, vol, gs, hx, hy, hz,                                !srv 23.11.10
+     &  bb, conn, vol, gs, hx, hy, hz,                            !srv 23.11.10
      1  qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,   !srv 01.07.09
-     2  chvemx, chvimx, cvsahz0,                                      !srv 09.01.01 03.06.03
+     2  chvemx, chvimx, cvsahz0,                                  !srv 09.01.01 03.06.03
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, csigin,
-     4  cthe, cthi, cvsa_cl, cvsahz_cl, vsal, fllimvisc)              !srv 09.01.01
+     4  cthe, cthi, cvsa_cl, cvsahz_cl, vsal, fllimvisc)          !srv 09.01.01
 *   ..add to previous contributions
-      call b2saxpy (n2*2*ns, 1.0_R8, cvsahz0, 1, cvsahz, 1)           !srv 09.01.01
+      call b2saxpy (n2*2*ns, 1.0_R8, cvsahz0, 1, cvsahz, 1)       !srv 09.01.01
       call b2saxpy (n2*2*ns, 1.0_R8, cvsa0, 1, cvsa, 1)
       do is = 0, ns-1
         if (is_neutral(is)) then
@@ -183,18 +183,18 @@
       call b2saxpy (n2*2, 1.0_R8, chvi0, 1, chvi, 1)
       call b2saxpy (n2*2, 1.0_R8, csig0, 1, csig, 1)
       call b2saxpy (n2*2, 1.0_R8, calf0, 1, calf, 1)
-*   ..multiply x-component cvsahz by 4/3 only for base ion             !srv 31.07.02 {
+*   ..multiply x-component cvsahz by 4/3 only for base ion        !srv 31.07.02 {
 !      if (addvis1.ne.0.0_R8.and.model.eq.3) then 
 !      if (addvis1.ne.0.0_R8) then 
-      if (model.eq.3) then                                             !srv 20.10.09
+      if (model.eq.3) then                                        !srv 20.10.09
         do is = 0, ns-1
           if (.not.is_neutral(is)) then
             call b2sscal (n2, 4.0e0_R8/3.0e0_R8, cvsahz(-1,-1,0,is), 1) !for all ions
           end if
         end do
-      endif                                                            !srv 31.07.02 }
+      endif                                                       !srv 31.07.02 }
 
-*   ..compute terms from diamagnetic parts                             !srv 13.10.06 {
+*   ..compute terms from diamagnetic parts                        !srv 13.10.06 {
       do is = 0, ns-1
        if(is_neutral(is)) then
         cddi(:,:,0,is) = 0.0_R8
@@ -265,6 +265,11 @@
      .     'No particle diffusion for species ',is,
      .     ' in radial direction'
           call xertst (wrkmin.gt.0.0_R8 .or. .not.solving(2), message)
+*  ..check that we have some anomalous ion heat transport
+          wrkmin = minval(hcib(-1:nx,-1:ny,is))
+          write(message,'(a, i3)')
+     .     'No ion heat diffusivity for species ',is
+          call xertst (wrkmin.gt.0.0_R8 .or. .not.solving(4), message)
         enddo
 *  ..check that we have some anomalous perpendicular currents
         wrk(:,:) = calf_an(:,:,1)+csig_an(:,:,1)

@@ -2,8 +2,8 @@
 *.specification
 
       subroutine b2tqna (nx, ny, ns, nscx, iscx, bb, na,
-     &   te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn, qz,     !srv 15.12.05
-     &   dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0, alf0, 
+     &   te, ti, ni, ne, ne2, hx, hy, vol, crx, cry, conn, qz,    !srv 15.12.05
+     &   dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0, alf0,
      &   hvi0, hve0, wrk0)
       use b2mod_types
       use b2mod_rates
@@ -19,7 +19,7 @@
       use b2mod_external
       use b2mod_neoclassical
       use b2mod_geo_corner
-     &                    , only : lengthy, nmdpl                    !srv 26.11.04
+     &                    , only : lengthy, nmdpl                 !srv 26.11.04
 #ifdef PAR_OPT
       use b2mod_par_opt
 #endif
@@ -29,16 +29,16 @@
       real (kind=R8) ::
      *  bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
-     &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), 
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny), 
-     &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3), conn(-1:ny), 
+     &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
+     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
+     &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3), conn(-1:ny),
      &  qz(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  dna0(-1:nx,-1:ny,0:ns-1), dpa0(-1:nx,-1:ny,0:ns-1),
      &  vla0(-1:nx,-1:ny,0:1,0:ns-1), vsa0(-1:nx,-1:ny,0:ns-1),
      &  hci0(-1:nx,-1:ny), hcib(-1:nx,-1:ny,0:ns-1),
-     &  vma0(-1:nx,-1:ny,0:1,0:ns-1)                                  !srv 15.12.05
+     &  vma0(-1:nx,-1:ny,0:1,0:ns-1)                              !srv 15.12.05
       real (kind=R8) ::
      *  hce0(-1:nx,-1:ny), sig0(-1:nx,-1:ny), alf0(-1:nx,-1:ny),
      &  hvi0(-1:nx,-1:ny,0:1), hve0(-1:nx,-1:ny,0:1)
@@ -77,8 +77,8 @@
 *       fnay(is) = -dna0(is)*(d/dy)na(is)-dpa0(is)*(d/dy)pa(is)+
 *         vla0*na(is)
 *     Parallel momentum transport.
-*       momx(is) = na(is)*up(is)*vma0 - vsa0(is)*(d/dx)up(is)        !srv 15.12.05
-*       momy(is) = na(is)*up(is)*vma0 - vsa0(is)*(d/dy)up(is)        !srv 15.12.05
+*       momx(is) = na(is)*up(is)*vma0 - vsa0(is)*(d/dx)up(is)     !srv 15.12.05
+*       momy(is) = na(is)*up(is)*vma0 - vsa0(is)*(d/dy)up(is)     !srv 15.12.05
 *     Atom heat flux.
 *       fhix = -hci0*(d/dx)ti+hvi0*na*ti
 *       fhiy = -hci0*(d/dy)ti+hvi0*na*ti
@@ -103,8 +103,8 @@
       integer ncall, n2, ix, iy, is, ic, k, new_df0, ixref, diagno,
      1  transport_namelist, user_transport, transport_inputfile,
      2  jsep, jxi, jxa
-      integer, save :: model_sig = 0, iout = 0                        !srv 02.12.04
-      character chns*3                                                !srv 10.11.09
+      integer, save :: model_sig = 0, iout = 0                    !srv 02.12.04
+      character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
      *  ballooning, bb_ref, ballooning_rescale, pfr_rescale,
      1  divsol_rescale
@@ -115,7 +115,7 @@
       real (kind=R8) ::
      *  t0, t1, min_df0, max_df0,
      *  min_df0_tmp, max_df0_tmp, hy1(-1:nx,-1:ny)
-      real (kind=R8), save :: cfvma = 0.0e0_R8                       !srv 15.12.05      
+      real (kind=R8), save :: cfvma = 0.0e0_R8                   !srv 15.12.05
       integer elm_count
       save ncall, new_df0, ixref, transport_namelist, user_transport,
      1  ballooning, bb_ref, ballooning_rescale, elm_count, pfr_rescale,
@@ -191,9 +191,9 @@
         call ipgetr ('b2tqna_divsol_rescale', divsol_rescale)
         call xertst (divsol_rescale.gt.0.0_R8,
      1   'faulty input divsol_rescale')
-        call ipgetr ('b2tqna_cfvma', cfvma)                             !srv 15.12.05
-        call ipgeti ('b2tqna_model_sig', model_sig)                     !srv 02.12.04
-        call ipgeti ('b2tqna_iout', iout)                               !srv 10.11.09
+        call ipgetr ('b2tqna_cfvma', cfvma)                       !srv 15.12.05
+        call ipgeti ('b2tqna_model_sig', model_sig)               !srv 02.12.04
+        call ipgeti ('b2tqna_iout', iout)                         !srv 10.11.09
       else
         if(transport_namelist.eq.1.and.
      1   transport_time_mod.gt.0.0_R8) then
@@ -267,8 +267,8 @@
 *   ..compute dna0, dpa0, vla0, vma0, vsa0, hci0
 *     (initialise hci0 to 0)
       call sfill (n2, 0.0_R8, hci0, 1)
-      call sfill (n2*ns, 0.0_R8, dna0, 1)  
-      call sfill (n2*ns, 0.0_R8, dpa0, 1)  
+      call sfill (n2*ns, 0.0_R8, dna0, 1)
+      call sfill (n2*ns, 0.0_R8, dpa0, 1)
       call sfill (n2*ns*2, 0.0_R8, vla0, 1)
       call sfill (n2*ns, 0.0_R8, vsa0, 1)
       call sfill (n2*ns, 0.0_R8, hcib, 1)
@@ -277,7 +277,7 @@
       call sfill (n2, 0.0_R8, sig0, 1)
       call sfill (n2, 0.0_R8, alf0, 1)
       call sfill (n2*2, 0.0_R8, hvi0, 1)
-      call sfill (n2*2, 0.0_R8, hve0, 1)                  
+      call sfill (n2*2, 0.0_R8, hve0, 1)
       do is = 0, ns-1
         max_df0_tmp=0.0_R8
         min_df0_tmp=1.0e30_R8
@@ -328,7 +328,7 @@ c-wrong(Bonnin,Owen)                dnn=1.0_R8/na(ix,iy,is)/2.0e-19_R8
                 if (diagno.gt.1) then
                   write(*,*) 'new_df0',
      1             ix,iy,is,lcx,lion,din,dnn,addup(din,dnn),df0
-                else if (addup(din,dnn)/df0.gt.100.0_R8 
+                else if (addup(din,dnn)/df0.gt.100.0_R8
      &           .and. diagno.eq.1) then
                   write(*,*) 'new_df0:problem',
      1             ix,iy,is,lcx,lion,din,dnn,addup(din,dnn),df0
@@ -347,7 +347,7 @@ c-wrong(Bonnin,Owen)                dnn=1.0_R8/na(ix,iy,is)/2.0e-19_R8
             if(cfdna(7,is).ne.0.0_R8)
      &       dna0(ix,iy,is) = dna0(ix,iy,is)*
      &        cfdna(7,is)*(hy1(ix,iy)/hy1(ixref,iy))**2
-            dpa0(ix,iy,is) = 
+            dpa0(ix,iy,is) =
      &       (1.0_R8/(rza(ix,iy,is)*te(ix,iy)+ti(ix,iy)))*
      &       (cfdpa(0,is)+cfdpa(1,is)/
      &       (max(1.0e-50_R8,ne(ix,iy))/1.0e20_R8)+    ! dpc changed na(ix,iy,is) to ne(ix,iy)
@@ -364,14 +364,14 @@ c-wrong(Bonnin,Owen)                dnn=1.0_R8/na(ix,iy,is)/2.0e-19_R8
             if(cfvla(7,is).ne.0.0_R8)
      &       vla0(ix,iy,1,is) = vla0(ix,iy,1,is)*
      &        cfvla(7,is)*hy1(ix,iy)/hy1(ixref,iy)
-	      if(.not.is_neutral(is)) then                             !srv 15.12.05 {
-	        vma0(ix,iy,0,is) = 0.0_R8
-	        vma0(ix,iy,1,is) = 0.0_R8
-	      else
-	        vma0(ix,iy,0,is) = 0.0_R8
+            if(.not.is_neutral(is)) then                             !srv 15.12.05 {
+              vma0(ix,iy,0,is) = 0.0_R8
+              vma0(ix,iy,1,is) = 0.0_R8
+            else
+              vma0(ix,iy,0,is) = 0.0_R8
 !             vma0(ix,iy,1,is) = cfvma(0,is)
               vma0(ix,iy,1,is) = cfvma                               !srv 15.12.05 }
-	      endif
+            endif
 *      ..compute dfvsb and dfhcb
 *        (dfvsb and dfhcb specify effective diffusivities, of
 *         dimension m**2/s, for the anomalous transport coefficients
@@ -422,12 +422,12 @@ c-wrong(Bonnin,Owen)                dnn=1.0_R8/na(ix,iy,is)/2.0e-19_R8
      &    dfalf=dfalf*cfalf(7)*(hy1(ix,iy)/hy1(ixref,iy))**2
 *     ..compute hce0, sig0, alf0
          hce0(ix,iy) = dfhce*ne(ix,iy)
-	   if(model_sig.eq.0) then                !srv 02.12.04 {
+         if(model_sig.eq.0) then                !srv 02.12.04 {
            sig0(ix,iy) = dfsig*qe*ne(ix,iy)
-	   else
-!	     sig0(ix,iy) = dfsig*qe*(cbsna(0,1,1)/abs(cbsna(1,1,1))) ! use constant density as core region
-	     sig0(ix,iy) = dfsig*qe*ne(nmdpl,-1)  !srv 10.06.09 ! use constant density as core region 
-	   endif                                  !srv 02.12.04 } 
+         else
+!          sig0(ix,iy) = dfsig*qe*(cbsna(0,1,1)/abs(cbsna(1,1,1))) ! use constant density as core region
+           sig0(ix,iy) = dfsig*qe*ne(nmdpl,-1)  !srv 10.06.09 ! use constant density as core region
+         endif                                  !srv 02.12.04 }
          alf0(ix,iy) = dfalf*ne(ix,iy)*sqrt(qe/te(ix,iy))
        enddo
       enddo
@@ -436,35 +436,36 @@ c-wrong(Bonnin,Owen)                dnn=1.0_R8/na(ix,iy,is)/2.0e-19_R8
         call transport_input(nx, ny, ns, rza, na, ne, te, ti, hcib,
      &   dna0, dpa0, vla0, vsa0, hci0, hce0, sig0, alf0, ncall)
         do ix=-1,nx
-           do iy=-1,ny
-              hci0(ix,iy)=0.0_R8
-              do is=0,ns-1
-                hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
-              enddo
-           enddo
+          do iy=-1,ny
+            hci0(ix,iy)=0.0_R8
+            do is=0,ns-1
+              hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
+            enddo
+          enddo
         enddo
-        if(iout.ne.0) then                                            !srv 10.11.09 {
-	   do is = 0,ns-1
-	    write (chns,'(i3.3)') is
-	    call my_out(70,nx,ny,dna0(-1,-1,is),'b2tqna_in_dna0'//chns)
-	    call my_out(70,nx,ny,dpa0(-1,-1,is),'b2tqna_in_dpa0'//chns)
-	    call my_out(70,nx,ny,vsa0(-1,-1,is),'b2tqna_in_vsa0'//chns)
-	    call my_out(70,nx,ny,vla0(-1,-1,0,is),'b2tqna_in_vla0x'//chns)
-	    call my_out(70,nx,ny,vla0(-1,-1,1,is),'b2tqna_in_vla0y'//chns)
-	    call my_out(70,nx,ny,hcib(-1,-1,is),'b2tqna_in_hcib'//chns)
-	   enddo
-	   call my_out(70,nx,ny,hci0,'b2tqna_in_hci0')
-	   call my_out(70,nx,ny,hce0,'b2tqna_in_hce0')
-	   call my_out(70,nx,ny,sig0,'b2tqna_in_sig0')
-	   call my_out(70,nx,ny,alf0,'b2tqna_in_alf0')
-	  endif                                                           !srv 10.11.09 }
       endif
-      
+
+      if(iout.ne.0) then                                            !srv 10.11.09 {
+        do is = 0,ns-1
+          write (chns,'(i3.3)') is
+          call my_out(70,nx,ny,dna0(-1,-1,is),'b2tqna_in_dna0'//chns)
+          call my_out(70,nx,ny,dpa0(-1,-1,is),'b2tqna_in_dpa0'//chns)
+          call my_out(70,nx,ny,vsa0(-1,-1,is),'b2tqna_in_vsa0'//chns)
+          call my_out(70,nx,ny,vla0(-1,-1,0,is),'b2tqna_in_vla0x'//chns)
+          call my_out(70,nx,ny,vla0(-1,-1,1,is),'b2tqna_in_vla0y'//chns)
+          call my_out(70,nx,ny,hcib(-1,-1,is),'b2tqna_in_hcib'//chns)
+        enddo
+        call my_out(70,nx,ny,hci0,'b2tqna_in_hci0')
+        call my_out(70,nx,ny,hce0,'b2tqna_in_hce0')
+        call my_out(70,nx,ny,sig0,'b2tqna_in_sig0')
+        call my_out(70,nx,ny,alf0,'b2tqna_in_alf0')
+      endif                                                           !srv 10.11.09 }
+
       if(user_transport.eq.0) then
 c do nothing
       elseif(user_transport.eq.1) then
         call set_transport(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
-     &  hy, qz, dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0, 
+     &  hy, qz, dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
      &  wrk0)
       elseif(user_transport.eq.2) then
         call set_transport_swy(nx, ny, ns,
@@ -473,34 +474,34 @@ c do nothing
         call set_transport_eta(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
      &   hy, dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0)
       elseif(user_transport.eq.4) then
-        call set_transport_xpb(nx, ny, ns, bb, na, ne, te, ti, ni, 
+        call set_transport_xpb(nx, ny, ns, bb, na, ne, te, ti, ni,
      &   hx, hy, qz, dna0, vla0)
 c mw added transport
       elseif(user_transport.eq.5) then
-        call set_transport_mw(nx, ny, ns, ne, jsep, jxa, 
+        call set_transport_mw(nx, ny, ns, ne, jsep, jxa,
      &   dna0, vla0, hci0, hcib, hce0)
 c mw end
       elseif(user_transport.eq.6) then                                    !srv 13.06.08
 !! FIXME: Need to fix clash with ank blobby transport model
         call set_transport_srv(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
-     &  hy, qz, dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0,  
+     &  hy, qz, dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0,
      &  alf0, wrk0)
 !! FIXME: in routines below, remove hvi0, hve0 ???
       elseif(user_transport.eq.7) then
-        call set_transport_disruption(nx, ny, ns, 
-     1   dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0, 
+        call set_transport_disruption(nx, ny, ns,
+     1   dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
      2   na, ne, te, ti, crx, hy1)
       elseif(user_transport.eq.8) then
-	if(ncall.eq.0) then
-	  call alloc_b2mod_neoclassical(nx,ny,ns,nstages,mmx)
-	endif
-        call set_transport_neo(nx, ny, ns, nstages, 
-     &   hx, hy, vol, crx, cry, conn, qz, bb, 
-     &   na, te, ti, ni, ne, dna0, dpa0, vla0, vsa0, 
+        if(ncall.eq.0) then
+          call alloc_b2mod_neoclassical(nx,ny,ns,nstages,mmx)
+        endif
+        call set_transport_neo(nx, ny, ns, nstages,
+     &   hx, hy, vol, crx, cry, conn, qz, bb,
+     &   na, te, ti, ni, ne, dna0, dpa0, vla0, vsa0,
      &   hci0, hcib, hce0, sig0, alf0, hvi0, hve0)
 c ank added blobby transport
 !! FIXME: Was user_transport.eq.6 in 4.x, 5.0/5.1
-      elseif(user_transport.eq.9) then 
+      elseif(user_transport.eq.9) then
         call set_transport_blob(nx, ny, ns, jsep, jxa, vla0)
       else
         write(*,*) 'user_transport = ',user_transport,' not coded'
@@ -598,7 +599,7 @@ ccc-dpc
       end subroutine b2tqna
 
       subroutine set_transport(nx, ny, ns, bb, na, te, ti, ni, ne, ne2,
-     &  hy, qz, dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0, 
+     &  hy, qz, dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
      &  wrk0)
       use b2mod_types
       use b2mod_indirect
@@ -714,8 +715,8 @@ c-xpb     hcib(ix,iy,is)=d_new*na(in,is)
       return
       end subroutine set_transport
 
-      subroutine set_transport_srv(nx, ny, ns, bb, na, te, ti, ni, ne,     !srv 12.06.08 { 
-     &  ne2, hy, qz, dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0,   
+      subroutine set_transport_srv(nx, ny, ns, bb, na, te, ti, ni, ne,     !srv 12.06.08 {
+     &  ne2, hy, qz, dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0,
      &  sig0, alf0, wrk0)
       use b2mod_types
       use b2mod_indirect
@@ -751,34 +752,34 @@ c-xpb     hcib(ix,iy,is)=d_new*na(in,is)
 *   ..local variables
       integer ncall, n2, ix, iy, is
       integer, save :: itype = 0, iout = 0                            !srv 24.04.02 05.11.03 15.04.11
-      real (kind=R8) :: fdnc(-1:nx,-1:ny,0:ns-1), wrk1(-1:nx,-1:ny)    !srv 13.11.02 26.11.04 01.03.07
-      real (kind=R8) :: fvsc(-1:nx,-1:ny,0:ns-1), 
+      real (kind=R8) :: fdnc(-1:nx,-1:ny,0:ns-1), wrk1(-1:nx,-1:ny)   !srv 13.11.02 26.11.04 01.03.07
+      real (kind=R8) :: fvsc(-1:nx,-1:ny,0:ns-1),
      &                  ftec(-1:nx,-1:ny), ftic(-1:nx,-1:ny,0:ns-1),  !srv 17.04.06 01.03.07
      &                  fvlc(-1:nx,-1:ny,0:1,0:ns-1)                  !srv 19.04.10
       real (kind=R8), save :: cdf = 0.0e0_R8, alf = 0.0e0_R8,         !srv 24.04.02 05.11.03
      &      alfa1 = 0.0e0_R8, alfa2 = 0.0e0_R8,
      &      delta1 = 0.0e0_R8, delta2 = 0.0e0_R8                      !srv 13.11.02 24.06.03
       real (kind=R8), save :: vs_alfa1 = 1.0e0_R8, vs_alfa2 = 1.0e0_R8,
-     &                       vs_delta1 = 1.0e0_R8, vs_delta2 = 1.0e0_R8 !srv 17.04.06 {
+     &                       vs_delta1 = 1.0e0_R8, vs_delta2= 1.0e0_R8 !srv 17.04.06 {
       real (kind=R8), save :: te_alfa1 = 1.0e0_R8, te_alfa2 = 1.0e0_R8,
-     &                       te_delta1 = 1.0e0_R8, te_delta2 = 1.0e0_R8
+     &                       te_delta1 = 1.0e0_R8, te_delta2= 1.0e0_R8
       real (kind=R8), save :: ti_alfa1 = 1.0e0_R8, ti_alfa2 = 1.0e0_R8,
-     &                       ti_delta1 = 1.0e0_R8, ti_delta2 = 1.0e0_R8 !srv 17.04.06 }
+     &                       ti_delta1 = 1.0e0_R8, ti_delta2= 1.0e0_R8 !srv 17.04.06 }
       real (kind=R8), save :: vl_alfa1 = 1.0e0_R8, vl_alfa2 = 1.0e0_R8,
-     &                       vl_delta1 = 1.0e0_R8, vl_delta2 = 1.0e0_R8 !srv 19.04.10
+     &                       vl_delta1 = 1.0e0_R8, vl_delta2= 1.0e0_R8 !srv 19.04.10
       real (kind=R8), save ::    alfa3 = 1.0e0_R8                      !srv 13.03.07 {
       real (kind=R8), save :: vs_alfa3 = 1.0e0_R8
       real (kind=R8), save :: te_alfa3 = 1.0e0_R8
       real (kind=R8), save :: ti_alfa3 = 1.0e0_R8                      !srv 13.03.07 }
       real (kind=R8), save :: vl_alfa3 = 1.0e0_R8                      !srv 19.04.10
 ! { IYS 29.11.2012
-      real (kind=R8), save ::    alfa4 = 1.0e0_R8                      !srv 19.04.13                     
+      real (kind=R8), save ::    alfa4 = 1.0e0_R8                      !srv 19.04.13
       real (kind=R8), save :: vs_alfa4 = 1.0e0_R8
       real (kind=R8), save :: te_alfa4 = 1.0e0_R8
-      real (kind=R8), save :: ti_alfa4 = 1.0e0_R8                      
+      real (kind=R8), save :: ti_alfa4 = 1.0e0_R8
       real (kind=R8), save :: vl_alfa4 = 1.0e0_R8
-! IYS 29.12.2012} 
-      character chns*3                                                 !srv 05.11.03
+! IYS 29.12.2012}
+      character chns*3                                                !srv 05.11.03
       save ncall
 *   ..procedures
       real (kind=R8) ::
@@ -792,22 +793,22 @@ c-xpb     hcib(ix,iy,is)=d_new*na(in,is)
       call subini ('set_transport')
       if (ncall.eq.0) then
        call ipgeti ('b2tqna_iout', iout)                          !srv 05.11.03
-	 call ipgetr ('b2tqna_cdf', cdf)                            !srv 24.04.02
-	 call ipgetr ('b2tqna_alf', alf)                            !srv 05.11.03
-	 call ipgeti ('b2tqna_itype', itype)                        !srv 24.04.02
-	 call ipgetr ('b2tqna_alfa1', alfa1)                        !srv 13.11.02 {
-	 call xertst (0.le.alfa1,'faulty argument b2tqna_alfa1')
-	 call ipgetr ('b2tqna_alfa2', alfa2)
-	 call xertst (0.le.alfa2,'faulty argument b2tqna_alfa2')
-	 call ipgetr ('b2tqna_alfa3', alfa3)                        !srv 13.03.07
-	 call xertst (0.le.alfa3,'faulty argument b2tqna_alfa3')    !srv 13.03.07
+       call ipgetr ('b2tqna_cdf', cdf)                            !srv 24.04.02
+       call ipgetr ('b2tqna_alf', alf)                            !srv 05.11.03
+       call ipgeti ('b2tqna_itype', itype)                        !srv 24.04.02
+       call ipgetr ('b2tqna_alfa1', alfa1)                        !srv 13.11.02 {
+       call xertst (0.le.alfa1,'faulty argument b2tqna_alfa1')
+       call ipgetr ('b2tqna_alfa2', alfa2)
+       call xertst (0.le.alfa2,'faulty argument b2tqna_alfa2')
+       call ipgetr ('b2tqna_alfa3', alfa3)                        !srv 13.03.07
+       call xertst (0.le.alfa3,'faulty argument b2tqna_alfa3')    !srv 13.03.07
        alfa4 = alfa3                                              !IYS 29.11.2012
-	 call ipgetr ('b2tqna_alfa4', alfa4)                        !IYS 29.11.2012
-	 call xertst (0.le.alfa4,'faulty argument b2tqna_alfa4')    !IYS 29.11.2012
-	 call ipgetr ('b2tqna_delta1', delta1)                        
-	 call ipgetr ('b2tqna_delta2', delta2)                      !srv 24.06.03
-	 call xertst (0.le.delta1,'faulty argument b2tqna_delta1')  !srv 13.11.02 }
-	 call xertst (0.le.delta2,'faulty argument b2tqna_delta2')  !srv 24.06.03 }
+       call ipgetr ('b2tqna_alfa4', alfa4)                        !IYS 29.11.2012
+       call xertst (0.le.alfa4,'faulty argument b2tqna_alfa4')    !IYS 29.11.2012
+       call ipgetr ('b2tqna_delta1', delta1)
+       call ipgetr ('b2tqna_delta2', delta2)                      !srv 24.06.03
+       call xertst (0.le.delta1,'faulty argument b2tqna_delta1')  !srv 13.11.02 }
+       call xertst (0.le.delta2,'faulty argument b2tqna_delta2')  !srv 24.06.03 }
 
        vs_alfa1 = alfa1; te_alfa1 = alfa1; ti_alfa1 = alfa1;      !srv 17.04.06 {
        vs_alfa2 = alfa2; te_alfa2 = alfa2; ti_alfa2 = alfa2;
@@ -815,7 +816,7 @@ c-xpb     hcib(ix,iy,is)=d_new*na(in,is)
        vs_alfa4 = alfa4; te_alfa4 = alfa4; ti_alfa4 = alfa4;      !IYS 29.11.2012
        vs_delta1=delta1; te_delta1=delta1; ti_delta1=delta1;
        vs_delta2=delta2; te_delta2=delta2; ti_delta2=delta2;
-       
+
        vl_alfa1 = alfa1;                                          !srv 19.04.10 {
        vl_alfa2 = alfa2;
        vl_alfa3 = alfa3;
@@ -823,11 +824,11 @@ c-xpb     hcib(ix,iy,is)=d_new*na(in,is)
        vl_delta1=delta1;
        vl_delta2=delta2;                                          !srv 19.04.10 }
 c                      Connected double-null geometry case
-c    Figure show values of coefficients which are applied to transport anomalous
-c    coefficients in regions.
+c    Figure shows values of coefficients which are applied to anomalous
+c    transport coefficients in regions.
 c    alfa1 is applied on cells which have radial coordinates less than delta1 [m] in outmidplane
-c    alfa2 is applied jn cells which have radial coordinates great than -delta2 [m] in outmidplane
-c                                   
+c    alfa2 is applied on cells which have radial coordinates greater than -delta2 [m] in outmidplane
+c
 c    +-------+---------------+-------++-------+---------------+-------+
 c    |       :               :       ||       :               :       |
 c    |       :               :       ||       :               :       |
@@ -847,57 +848,57 @@ c    |       |               |       ||       |               |       |
 c    |       |       1       |       ||       |       1       |       |
 c    +-------+---------------+-------++-------+---------------+-------+
 c
- 	 call ipgetr ('b2tqna_vs_alfa1', vs_alfa1)           
-	 call xertst (0.le.vs_alfa1,'faulty argument b2tqna_vs_alfa1')
-	 call ipgetr ('b2tqna_vs_alfa2', vs_alfa2)
-	 call xertst (0.le.vs_alfa2,'faulty argument b2tqna_vs_alfa2')
-	 call ipgetr ('b2tqna_vs_alfa3', vs_alfa3)                       !srv 13.03.07
-	 call xertst (0.le.vs_alfa3,'faulty argument b2tqna_vs_alfa3')   !srv 13.03.07
+       call ipgetr ('b2tqna_vs_alfa1', vs_alfa1)
+       call xertst (0.le.vs_alfa1,'faulty argument b2tqna_vs_alfa1')
+       call ipgetr ('b2tqna_vs_alfa2', vs_alfa2)
+       call xertst (0.le.vs_alfa2,'faulty argument b2tqna_vs_alfa2')
+       call ipgetr ('b2tqna_vs_alfa3', vs_alfa3)                       !srv 13.03.07
+       call xertst (0.le.vs_alfa3,'faulty argument b2tqna_vs_alfa3')   !srv 13.03.07
        vs_alfa4 = vs_alfa3                                             !IYS 29.11.2012
-	 call ipgetr ('b2tqna_vs_alfa4', vs_alfa4)                       !IYS 29.11.2012
-	 call xertst (0.le.vs_alfa4,'faulty argument b2tqna_vs_alfa4')   !IYS 29.11.2012
-	 call ipgetr ('b2tqna_vs_delta1', vs_delta1)                        
-	 call ipgetr ('b2tqna_vs_delta2', vs_delta2)
-	 call xertst (0.le.vs_delta1,'faulty argument b2tqna_vs_delta1')
-	 call xertst (0.le.vs_delta2,'faulty argument b2tqna_vs_delta2')
+       call ipgetr ('b2tqna_vs_alfa4', vs_alfa4)                       !IYS 29.11.2012
+       call xertst (0.le.vs_alfa4,'faulty argument b2tqna_vs_alfa4')   !IYS 29.11.2012
+       call ipgetr ('b2tqna_vs_delta1', vs_delta1)
+       call ipgetr ('b2tqna_vs_delta2', vs_delta2)
+       call xertst (0.le.vs_delta1,'faulty argument b2tqna_vs_delta1')
+       call xertst (0.le.vs_delta2,'faulty argument b2tqna_vs_delta2')
 
-	 call ipgetr ('b2tqna_te_alfa1', te_alfa1)
-	 call xertst (0.le.te_alfa1,'faulty argument b2tqna_te_alfa1')
-	 call ipgetr ('b2tqna_te_alfa2', te_alfa2)
-	 call xertst (0.le.te_alfa2,'faulty argument b2tqna_te_alfa2')
-	 call ipgetr ('b2tqna_te_alfa3', te_alfa3)                       !srv 13.03.07
-	 call xertst (0.le.te_alfa3,'faulty argument b2tqna_te_alfa3')   !srv 13.03.07
+       call ipgetr ('b2tqna_te_alfa1', te_alfa1)
+       call xertst (0.le.te_alfa1,'faulty argument b2tqna_te_alfa1')
+       call ipgetr ('b2tqna_te_alfa2', te_alfa2)
+       call xertst (0.le.te_alfa2,'faulty argument b2tqna_te_alfa2')
+       call ipgetr ('b2tqna_te_alfa3', te_alfa3)                       !srv 13.03.07
+       call xertst (0.le.te_alfa3,'faulty argument b2tqna_te_alfa3')   !srv 13.03.07
        te_alfa4 = te_alfa3                                             !IYS 29.11.2012
-	 call ipgetr ('b2tqna_te_alfa4', te_alfa4)                       !IYS 29.11.2012
-	 call xertst (0.le.te_alfa4,'faulty argument b2tqna_te_alfa4')   !IYS 29.11.2012
-	 call ipgetr ('b2tqna_te_delta1', te_delta1)                        
-	 call ipgetr ('b2tqna_te_delta2', te_delta2)
-	 call xertst (0.le.te_delta1,'faulty argument b2tqna_te_delta1')
-	 call xertst (0.le.te_delta2,'faulty argument b2tqna_te_delta2')
+       call ipgetr ('b2tqna_te_alfa4', te_alfa4)                       !IYS 29.11.2012
+       call xertst (0.le.te_alfa4,'faulty argument b2tqna_te_alfa4')   !IYS 29.11.2012
+       call ipgetr ('b2tqna_te_delta1', te_delta1)
+       call ipgetr ('b2tqna_te_delta2', te_delta2)
+       call xertst (0.le.te_delta1,'faulty argument b2tqna_te_delta1')
+       call xertst (0.le.te_delta2,'faulty argument b2tqna_te_delta2')
 
-	 call ipgetr ('b2tqna_ti_alfa1', ti_alfa1)
-	 call xertst (0.le.ti_alfa1,'faulty argument b2tqna_ti_alfa1')
-	 call ipgetr ('b2tqna_ti_alfa2', ti_alfa2)
-	 call xertst (0.le.ti_alfa2,'faulty argument b2tqna_ti_alfa2')
-	 call ipgetr ('b2tqna_ti_alfa3', ti_alfa3)                       !srv 13.03.07
-	 call xertst (0.le.ti_alfa3,'faulty argument b2tqna_ti_alfa3')   !srv 13.03.07
+       call ipgetr ('b2tqna_ti_alfa1', ti_alfa1)
+       call xertst (0.le.ti_alfa1,'faulty argument b2tqna_ti_alfa1')
+       call ipgetr ('b2tqna_ti_alfa2', ti_alfa2)
+       call xertst (0.le.ti_alfa2,'faulty argument b2tqna_ti_alfa2')
+       call ipgetr ('b2tqna_ti_alfa3', ti_alfa3)                       !srv 13.03.07
+       call xertst (0.le.ti_alfa3,'faulty argument b2tqna_ti_alfa3')   !srv 13.03.07
        ti_alfa4 = ti_alfa3                                             !IYS 29.11.2012
-	 call ipgetr ('b2tqna_ti_alfa4', ti_alfa4)                       !IYS 29.11.2012
-	 call xertst (0.le.ti_alfa4,'faulty argument b2tqna_ti_alfa4')   !IYS 29.11.2012
-	 call ipgetr ('b2tqna_ti_delta1', ti_delta1)                        
-	 call ipgetr ('b2tqna_ti_delta2', ti_delta2)
-	 call xertst (0.le.ti_delta1,'faulty argument b2tqna_ti_delta1')
-	 call xertst (0.le.ti_delta2,'faulty argument b2tqna_ti_delta2') !srv 17.04.06 }
+       call ipgetr ('b2tqna_ti_alfa4', ti_alfa4)                       !IYS 29.11.2012
+       call xertst (0.le.ti_alfa4,'faulty argument b2tqna_ti_alfa4')   !IYS 29.11.2012
+       call ipgetr ('b2tqna_ti_delta1', ti_delta1)
+       call ipgetr ('b2tqna_ti_delta2', ti_delta2)
+       call xertst (0.le.ti_delta1,'faulty argument b2tqna_ti_delta1')
+       call xertst (0.le.ti_delta2,'faulty argument b2tqna_ti_delta2') !srv 17.04.06 }
 
-	 call ipgetr ('b2tqna_vl_alfa1', vl_alfa1)  !sign any            !srv 19.04.10 {
-	 call ipgetr ('b2tqna_vl_alfa2', vl_alfa2)
-	 call ipgetr ('b2tqna_vl_alfa3', vl_alfa3)
+       call ipgetr ('b2tqna_vl_alfa1', vl_alfa1)  !sign any            !srv 19.04.10 {
+       call ipgetr ('b2tqna_vl_alfa2', vl_alfa2)
+       call ipgetr ('b2tqna_vl_alfa3', vl_alfa3)
        vl_alfa4 = vl_alfa3                         !IYS 29.11.2012
-	 call ipgetr ('b2tqna_vl_alfa4', vl_alfa4)   !IYS 29.11.2012
-	 call ipgetr ('b2tqna_vl_delta1', vl_delta1)                        
-	 call ipgetr ('b2tqna_vl_delta2', vl_delta2)
-	 call xertst (0.le.vl_delta1,'faulty argument b2tqna_vl_delta1')
-	 call xertst (0.le.vl_delta2,'faulty argument b2tqna_vl_delta2') !srv 19.04.10 }
+       call ipgetr ('b2tqna_vl_alfa4', vl_alfa4)   !IYS 29.11.2012
+       call ipgetr ('b2tqna_vl_delta1', vl_delta1)
+       call ipgetr ('b2tqna_vl_delta2', vl_delta2)
+       call xertst (0.le.vl_delta1,'faulty argument b2tqna_vl_delta1')
+       call xertst (0.le.vl_delta2,'faulty argument b2tqna_vl_delta2') !srv 19.04.10 }
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -920,580 +921,582 @@ c
 *   ..main
 #ifdef PAR_OPT
       if(npar_opt.eq.16) then
-       delta1 = par_opt_phys(9)                        
-       delta2 = par_opt_phys(10)
-       alfa1  = par_opt_phys(11) 
-       alfa2  = par_opt_phys(12) 
-       alfa3  = par_opt_phys(13) 
+        delta1 = par_opt_phys(9)
+        delta2 = par_opt_phys(10)
+        alfa1  = par_opt_phys(11)
+        alfa2  = par_opt_phys(12)
+        alfa3  = par_opt_phys(13)
 
-       vs_alfa1 = alfa1
-       vs_alfa2 = alfa2 
-       vs_alfa3 = alfa3 
-       vs_delta1=delta1 
-       vs_delta2=delta2 
+        vs_alfa1 = alfa1
+        vs_alfa2 = alfa2
+        vs_alfa3 = alfa3
+        vs_delta1=delta1
+        vs_delta2=delta2
 
-       te_alfa1 = par_opt_phys(14) 
-       te_alfa2 = par_opt_phys(15) 
-       te_alfa3 = par_opt_phys(16)
-       te_delta1=delta1 
-       te_delta2=delta2 
-      
-       ti_alfa1 =te_alfa1 
-       ti_alfa2 =te_alfa2 
-       ti_alfa3 =te_alfa3 
-       ti_delta1=te_delta1
-       ti_delta2=te_delta2
+        te_alfa1 = par_opt_phys(14)
+        te_alfa2 = par_opt_phys(15)
+        te_alfa3 = par_opt_phys(16)
+        te_delta1=delta1
+        te_delta2=delta2
+
+        ti_alfa1 =te_alfa1
+        ti_alfa2 =te_alfa2
+        ti_alfa3 =te_alfa3
+        ti_delta1=te_delta1
+        ti_delta2=te_delta2
       endif
 #endif
 *   ..compute special factor for dna0, vsa0, hci0, hce0               !srv 13.11.02
       call defdc(nx, ny, itype, ns, fdnc, fvsc, ftec, ftic)           !srv 13.11.02 17.04.06 01.03.07
-	if(iout.ne.0 .and. ncall.eq.0) then                             !srv 09.10.01
-	 do is = 0,ns-1
-	  write (chns,'(i3.3)') is                                      !srv 09.10.01
-	  call my_out(70,nx,ny,fdnc(-1,-1,is),'Fdnc'//chns)             !srv 28.06.02
-	  call my_out(70,nx,ny,fvsc(-1,-1,is),'Fvsc'//chns)             !srv 17.04.06
-	  call my_out(70,nx,ny,ftic(-1,-1,is),'Ftic'//chns)             !srv 17.04.06
-	  call my_out(70,nx,ny,fvlc(-1,-1,0,is),'Fvlcx'//chns)          !srv 19.04.10
-	  call my_out(70,nx,ny,fvlc(-1,-1,1,is),'Fvlcy'//chns)          !srv 19.04.10
-	 enddo
-	 call my_out(70,nx,ny,ftec,'Ftec')                              !srv 17.04.06
-	 call my_out(70,nx,ny,sig0,'sig0')
-	endif
+      if(iout.ne.0 .and. ncall.eq.0) then                             !srv 09.10.01
+       do is = 0,ns-1
+        write (chns,'(i3.3)') is                                      !srv 09.10.01
+        call my_out(70,nx,ny,fdnc(-1,-1,is),'Fdnc'//chns)             !srv 28.06.02
+        call my_out(70,nx,ny,fvsc(-1,-1,is),'Fvsc'//chns)             !srv 17.04.06
+        call my_out(70,nx,ny,ftic(-1,-1,is),'Ftic'//chns)             !srv 17.04.06
+        call my_out(70,nx,ny,fvlc(-1,-1,0,is),'Fvlcx'//chns)          !srv 19.04.10
+        call my_out(70,nx,ny,fvlc(-1,-1,1,is),'Fvlcy'//chns)          !srv 19.04.10
+       enddo
+       call my_out(70,nx,ny,ftec,'Ftec')                              !srv 17.04.06
+       call my_out(70,nx,ny,sig0,'sig0')
+      endif
       do iy=-1,ny
         do ix=-1,nx
-          hce0(ix,iy) = hce0(ix,iy)*ftec(ix,iy) 
+          hce0(ix,iy) = hce0(ix,iy)*ftec(ix,iy)
         enddo
       enddo
       do iy=-1,ny
         do ix=-1,nx
           hci0(ix,iy) = 0.0_R8
           do is=0,ns-1
-	      dna0(ix,iy,is) = dna0(ix,iy,is)*fdnc(ix,iy,is)
-	      vla0(ix,iy,:,is) = vla0(ix,iy,:,is)*fvlc(ix,iy,:,is)      !srv 19.04.10
-	      vsa0(ix,iy,is) = vsa0(ix,iy,is)*fvsc(ix,iy,is)
+            dna0(ix,iy,is) = dna0(ix,iy,is)*fdnc(ix,iy,is)
+            vla0(ix,iy,:,is) = vla0(ix,iy,:,is)*fvlc(ix,iy,:,is)      !srv 19.04.10
+            vsa0(ix,iy,is) = vsa0(ix,iy,is)*fvsc(ix,iy,is)
             hcib(ix,iy,is) = hcib(ix,iy,is)*ftic(ix,iy,is)            !srv 19.05.03
             hci0(ix,iy)    = hci0(ix,iy) + hcib(ix,iy,is)
           enddo
         enddo
       enddo
 
-	if(iout.ne.0) then                             !srv 15.06.08 {
-	 do is = 0,ns-1
-	  write (chns,'(i3.3)') is
-	  call my_out(70,nx,ny,dna0(-1,-1,is),'dna0'//chns)
-	  call my_out(70,nx,ny,dpa0(-1,-1,is),'dpa0'//chns)
-	  call my_out(70,nx,ny,vsa0(-1,-1,is),'vsa0'//chns)
-	  call my_out(70,nx,ny,vla0(-1,-1,0,is),'vla0x'//chns)
-	  call my_out(70,nx,ny,vla0(-1,-1,1,is),'vla0y'//chns)
-	  call my_out(70,nx,ny,vma0(-1,-1,0,is),'vma0x'//chns)
-	  call my_out(70,nx,ny,vma0(-1,-1,1,is),'vma0y'//chns)
-	  call my_out(70,nx,ny,hcib(-1,-1,is),'hcib'//chns)
-	 enddo
-	 call my_out(70,nx,ny,hci0,'hci0')
-	 call my_out(70,nx,ny,hce0,'hce0')
-	 call my_out(70,nx,ny,sig0,'sig0')
-	 call my_out(70,nx,ny,alf0,'alf0')
-	endif                                                           !srv 15.06.08
+      if(iout.ne.0) then                             !srv 15.06.08 {
+       do is = 0,ns-1
+        write (chns,'(i3.3)') is
+        call my_out(70,nx,ny,dna0(-1,-1,is),'dna0'//chns)
+        call my_out(70,nx,ny,dpa0(-1,-1,is),'dpa0'//chns)
+        call my_out(70,nx,ny,vsa0(-1,-1,is),'vsa0'//chns)
+        call my_out(70,nx,ny,vla0(-1,-1,0,is),'vla0x'//chns)
+        call my_out(70,nx,ny,vla0(-1,-1,1,is),'vla0y'//chns)
+        call my_out(70,nx,ny,vma0(-1,-1,0,is),'vma0x'//chns)
+        call my_out(70,nx,ny,vma0(-1,-1,1,is),'vma0y'//chns)
+        call my_out(70,nx,ny,hcib(-1,-1,is),'hcib'//chns)
+       enddo
+       call my_out(70,nx,ny,hci0,'hci0')
+       call my_out(70,nx,ny,hce0,'hce0')
+       call my_out(70,nx,ny,sig0,'sig0')
+       call my_out(70,nx,ny,alf0,'alf0')
+      endif                                                           !srv 15.06.08
 
 *   ..return
       ncall = ncall+1
       call subend ()
       return
 
-	contains                          !srv 24.04.02 {
+      contains                          !srv 24.04.02 {
 
-	 function barier1(x, x1, level1, x2, level2, x3, level3)
-	  implicit none
-	  real (kind=R8) :: x, x1, level1, x2, level2, x3, level3
-	  real (kind=R8) :: barier1
+       function barier1(x, x1, level1, x2, level2, x3, level3)
+        implicit none
+        real (kind=R8) :: x, x1, level1, x2, level2, x3, level3
+        real (kind=R8) :: barier1
 *   ..   x1 < x2 < x3
-	   if(x .le. x1) then
-	    barier1 = level1
-	   elseif(x .le. x2) then
-	    barier1 = level1+(x - x1)*(level2 - level1)/(x2 - x1)
-	   elseif(x .le. x3) then
-	    barier1 = level2
-	   else
+         if(x .le. x1) then
+          barier1 = level1
+         elseif(x .le. x2) then
+          barier1 = level1+(x - x1)*(level2 - level1)/(x2 - x1)
+         elseif(x .le. x3) then
+          barier1 = level2
+         else
           barier1 = level3
-	   endif
-	 end function barier1
+         endif
+       end function barier1
 
-	 function barier2(x, x1, level1, x2, level2, x3, level3)
-	  implicit none
-	  real (kind=R8) :: x, x1, level1, x2, level2, x3, level3
-	  real (kind=R8) :: barier2
+       function barier2(x, x1, level1, x2, level2, x3, level3)
+        implicit none
+        real (kind=R8) :: x, x1, level1, x2, level2, x3, level3
+        real (kind=R8) :: barier2
 *   ..   x1 > x2 > x3
-	   if(x .le. x1) then
-	    barier2 = level1
-	   elseif(x .le. x2) then
-	    barier2 = level2
-	   elseif(x .le. x3) then
-	    barier2 = level2+(x - x2)*(level3 - level2)/(x3 - x2)
-	   else
-	    barier2 = level3
-	   endif
-	 end function barier2
+         if(x .le. x1) then
+          barier2 = level1
+         elseif(x .le. x2) then
+          barier2 = level2
+         elseif(x .le. x3) then
+          barier2 = level2+(x - x2)*(level3 - level2)/(x3 - x2)
+         else
+          barier2 = level3
+         endif
+       end function barier2
 
-	 subroutine defdc(nx, ny, itype, ns, fdnc, fvsc, ftec, ftic)    !srv 13.11.02 01.03.07
-	  implicit none
-	  integer :: nx, ny, itype, ns
+       subroutine defdc(nx, ny, itype, ns, fdnc, fvsc, ftec, ftic)    !srv 13.11.02 01.03.07
+        implicit none
+        integer :: nx, ny, itype, ns
         real(kind=R8) :: fdnc(-1:nx,-1:ny,0:ns-1)                     !srv 17.04.06 {
         real(kind=R8) :: fvsc(-1:nx,-1:ny,0:ns-1)
         real(kind=R8) :: ftec(-1:nx,-1:ny), ftic(-1:nx,-1:ny,0:ns-1) !srv 17.04.06 }
 
         logical :: exist_file(0:2)
-	  integer ix, iy, is, nc_c_m_f(1)                           !srv 05.07.04
-	  integer, save :: ncall = 0, bottomdelta1, topdelta2, mintopcut !srv 28.07.10
+        integer ix, iy, is, nc_c_m_f(1)                           !srv 05.07.04
+        integer, save :: ncall = 0, bottomdelta1, topdelta2, mintopcut !srv 28.07.10
         real (kind=R8) :: width, bbaverage, t0, t1, step
         real (kind=R8), allocatable, save :: coord(:), fun(:,:)
 
-	  fdnc = 1.0e0_R8
-	  fvsc = 1.0e0_R8                                           !srv 17.04.06 {
-	  ftec = 1.0e0_R8
-	  ftic = 1.0e0_R8                                           !srv 17.04.06 }
-	  fvlc = 1.0e0_R8                                           !srv 19.04.10 }
+        fdnc = 1.0e0_R8
+        fvsc = 1.0e0_R8                                           !srv 17.04.06 {
+        ftec = 1.0e0_R8
+        ftic = 1.0e0_R8                                           !srv 17.04.06 }
+        fvlc = 1.0e0_R8                                           !srv 19.04.10 }
 
-	  select case (itype)
-	   case(9)                                                !srv 22.05.09 {
-	    mintopcut=minval(topcut(1:nncut))
+        select case (itype)
+         case(9)                                                !srv 22.05.09 {
+          mintopcut=minval(topcut(1:nncut))
 *   ..modification of case (5). It is used barer function
-	    do iy = -1, ny                  ! for SOL and PR region
-	     do ix = -1, nx
-	      if(mod(region(ix,iy,0),4).ne.1) then 
+          do iy = -1, ny                  ! for SOL and PR region
+           do ix = -1, nx
+            if(mod(region(ix,iy,0),4).ne.1) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
-	         fdnc(ix,iy,is) =    alfa3
-	         fvsc(ix,iy,is) = vs_alfa3
-	         ftic(ix,iy,is) = ti_alfa3
-	        endif
-	       enddo
-	       ftec(ix,iy) = te_alfa3
-	      endif
-	     enddo
-	    enddo
+               fdnc(ix,iy,is) =    alfa3
+               fvsc(ix,iy,is) = vs_alfa3
+               ftic(ix,iy,is) = ti_alfa3
+              endif
+             enddo
+             ftec(ix,iy) = te_alfa3
+            endif
+           enddo
+          enddo
           step = maxval(hy(nmdpl,mintopcut:ny))
-	    do iy = mintopcut,ny          ! for SOL region
-	     do ix=-1,nx
-	      if(mod(region(ix,iy,0),4).eq.2) then
+          do iy = mintopcut,ny          ! for SOL region
+           do ix=-1,nx
+            if(mod(region(ix,iy,0),4).eq.2) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
 
-	         fdnc(ix,iy,is)= barier2(crdy_c_cell(nmdpl,iy),
-     &		  crdy_surf(nmdpl,mintopcut), 1.0_R8, delta2-step,
-     &		  alfa2, delta2, alfa3)
-	         fvsc(ix,iy,is)= barier2(crdy_c_cell(nmdpl,iy),
-     &		  crdy_surf(nmdpl,mintopcut), 1.0_R8, vs_delta2-step,
-     &		  vs_alfa2, vs_delta2, vs_alfa3)
-	         ftic(ix,iy,is)= barier2(crdy_c_cell(nmdpl,iy),
-     &		  crdy_surf(nmdpl,mintopcut), 1.0_R8, ti_delta2-step,
-     &		  ti_alfa2, ti_delta2, ti_alfa3)
-	        endif
-	       enddo
-	       ftec(ix,iy)= barier2(crdy_c_cell(nmdpl,iy),
-     &		  crdy_surf(nmdpl,mintopcut), 1.0_R8, te_delta2-step,
-     &		  te_alfa2, te_delta2, te_alfa3)
-	      endif
-	     enddo
-	    enddo
+               fdnc(ix,iy,is)= barier2(crdy_c_cell(nmdpl,iy),
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8, delta2-step,
+     &          alfa2, delta2, alfa3)
+               fvsc(ix,iy,is)= barier2(crdy_c_cell(nmdpl,iy),
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8, vs_delta2-step,
+     &          vs_alfa2, vs_delta2, vs_alfa3)
+               ftic(ix,iy,is)= barier2(crdy_c_cell(nmdpl,iy),
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8, ti_delta2-step,
+     &          ti_alfa2, ti_delta2, ti_alfa3)
+              endif
+             enddo
+             ftec(ix,iy)= barier2(crdy_c_cell(nmdpl,iy),
+     &          crdy_surf(nmdpl,mintopcut), 1.0_R8, te_delta2-step,
+     &          te_alfa2, te_delta2, te_alfa3)
+            endif
+           enddo
+          enddo
 
           step = maxval(hy(nmdpl,-1:mintopcut-1))
-	    do iy = -1, mintopcut-1   ! for inner surfaces 
-	     do ix=-1,nx
-	      if(mod(region(ix,iy,0),4).eq.1) then
+          do iy = -1, mintopcut-1   ! for inner surfaces
+           do ix=-1,nx
+            if(mod(region(ix,iy,0),4).eq.1) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
-	         fdnc(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy), 
+               fdnc(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy),
      &          -delta1, 1.0_R8, -delta1+step, alfa1,
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
-	         fvsc(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy), 
+               fvsc(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy),
      &          -vs_delta1, 1.0_R8, -vs_delta1+step, vs_alfa1,
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
-	         ftic(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy), 
+               ftic(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy),
      &          -ti_delta1, 1.0_R8, -ti_delta1+step, ti_alfa1,
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
-	        endif
-	       enddo
-	       ftec(ix,iy)= barier1(crdy_c_cell(nmdpl,iy), 
+              endif
+             enddo
+             ftec(ix,iy)= barier1(crdy_c_cell(nmdpl,iy),
      &          -te_delta1, 1.0_R8, -te_delta1+step, te_alfa1,
      &          crdy_surf(nmdpl,mintopcut), 1.0_R8)
-	      endif
-	     enddo
-	    enddo                                                   !srv 2.05.09 }
+            endif
+           enddo
+          enddo                                                   !srv 2.05.09 }
 
-	   case (8)                                                 !srv 01.03.07 {
-*   ..setting of transport coefficients from files 
-	    if(ncall.eq.0) then
+         case (8)                                                 !srv 01.03.07 {
+*   ..setting of transport coefficients from files
+          if(ncall.eq.0) then
            if(nncut.eq.2) then
-	      nmdpl = rightcut(nncut)
-	      do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
-	       if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
-	      enddo
-	     elseif(nncut.eq.1) then
-	      nmdpl = leftcut(nncut)
-	      do ix = leftcut(nncut)+1, rightcut(nncut)-1
-	       if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
-	      enddo
-	     else
-	      write(*,*) ' b2tqna: nncut not equal 1 or 2'
-	      stop
-	     endif 
-	     write(*,"(/' Parameters of H-regime')")
-	     write(*,"(' Number of midplane cell =',i4)") nmdpl
-	     call xertst(0.0e0_R8.le.delta1,
+            nmdpl = rightcut(nncut)
+            do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
+             if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
+            enddo
+           elseif(nncut.eq.1) then
+            nmdpl = leftcut(nncut)
+            do ix = leftcut(nncut)+1, rightcut(nncut)-1
+             if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
+            enddo
+           else
+            write(*,*) ' b2tqna: nncut not equal 1 or 2'
+            stop
+           endif
+           write(*,"(/' Parameters of H-regime')")
+           write(*,"(' Number of midplane cell =',i4)") nmdpl
+           call xertst(0.0e0_R8.le.delta1,
      &                 'faulty argument b2tqna_delta1') !srv 15.05.09
-	     call xertst(0.0e0_R8.le.delta2,
+           call xertst(0.0e0_R8.le.delta2,
      &                 'faulty argument b2tqna_delta2') !srv 15.05.09
 
            allocate(coord(-1:ny), fun(-1:ny,0:2))
 
 *          shift coordinates in order to separatrix is located in zero
-	     coord(-1:ny) = lengthy(nmdpl,-1:ny)-lengthy(nmdpl,topcut(1))
+           coord(-1:ny) = lengthy(nmdpl,-1:ny)-lengthy(nmdpl,topcut(1))
 
            inquire (file = 'b2tdnc.dat', exist = exist_file(0))
            inquire (file = 'b2thic.dat', exist = exist_file(1))
            inquire (file = 'b2thec.dat', exist = exist_file(2))
-	     call xertst (all(exist_file),
-     1	 'There are no b2tdnc.dat or b2thic.dat or b2thec.dat files')
+           call xertst (all(exist_file),
+     1      'There are no b2tdnc.dat or b2thic.dat or b2thec.dat files')
 
            call set_profile('b2tdnc.dat', ny, coord, fun(-1,0))
- 	     do iy = -1, ny
-	      call xertst (fun(iy,0).gt. 0.0e0_R8,
-     1	 'Approximation of data from file '//'b2tdnc.dat'//
-     2      ' has gave '//'negative coefficient')
- 	     enddo
+           do iy = -1, ny
+             call xertst (fun(iy,0).gt. 0.0e0_R8,
+     1        'Approximation of data from file '//'b2tdnc.dat'//
+     2        ' has given '//'negative coefficient')
+           enddo
 
            call set_profile('b2thic.dat', ny, coord, fun(-1,1))
- 	     do iy = -1, ny
-	      call xertst (fun(iy,1).gt. 0.0e0_R8,
-     1	 'Approximation of data from file '//'b2thic.dat'//
-     2      ' has gave '//'negative coefficient')
- 	     enddo
+           do iy = -1, ny
+             call xertst (fun(iy,1).gt. 0.0e0_R8,
+     1        'Approximation of data from file '//'b2thic.dat'//
+     2        ' has given '//'negative coefficient')
+           enddo
 
            call set_profile('b2thec.dat', ny, coord, fun(-1,2))
- 	     do iy = -1, ny-1
-	      call xertst (fun(iy,2).gt. 0.0e0_R8,
-     1	 'Approximation of data from file '//'b2thec.dat'//
-     2      ' has gave '//'negative coefficient')
- 	     enddo
+           do iy = -1, ny-1
+             call xertst (fun(iy,2).gt. 0.0e0_R8,
+     1        'Approximation of data from file '//'b2thec.dat'//
+     2        ' has given '//'negative coefficient')
+           enddo
 
            write(*,"(/' Exchanges of transport coefficients',
      &               ' have been done'/)")
-	     do is = 0, ns-1
-	      if(.not.is_neutral(is)) then
-	       cfdna(2,is)   = 1.0e0_R8
-	       cfhci(2,is)   = 1.0e0_R8
-             write(*,"(' Now cfdna(2,',i2,') =',es10.2)")is, cfdna(2,is) 
-             write(*,"(' Now cfhci(2,',i2,') =',es10.2)")is, cfhci(2,is) 
-	      endif 
-	     enddo
+           do is = 0, ns-1
+             if(.not.is_neutral(is)) then
+               cfdna(2,is)   = 1.0e0_R8
+               cfhci(2,is)   = 1.0e0_R8
+               write(*,"(' Now cfdna(2,',i3,') =',es10.2)")
+     &          is, cfdna(2,is)
+               write(*,"(' Now cfhci(2,',i3,') =',es10.2)")
+     &          is, cfhci(2,is)
+             endif
+           enddo
 
            cfhce(0) = 1.0e0_R8
-           write(*,"( ' Now cfhce(0)    =',es10.2/)") cfhce(0) 
+           write(*,"( ' Now cfhce(0)    =',es10.2/)") cfhce(0)
 
           endif
-          
-	    do is = 0, ns-1
-	     if(.not.is_neutral(is)) then
-	      do ix = -1,nx
+
+          do is = 0, ns-1
+           if(.not.is_neutral(is)) then
+            do ix = -1,nx
              fdnc(ix,:,is)  = fun(:,0)
-             ftic(ix,:,is) = fun(:,1)    ! ???? 
-	      enddo
-	     endif 
-	    enddo
+             ftic(ix,:,is) = fun(:,1)    ! ????
+            enddo
+           endif
+          enddo
 
-	    do ix = -1,nx
-           ftec(ix,:) = fun(:,2) 
-	    enddo
+          do ix = -1,nx
+           ftec(ix,:) = fun(:,2)
+          enddo
 
-	    nc_c_m_f(:)=maxloc(cry(-1:nx,-1,0))-2 ! number of cell for the centre of magnetic axis
-	    write(*,*)' number of cell for the centre of magnetic axis =', 
+          nc_c_m_f(:)=maxloc(cry(-1:nx,-1,0))-2 ! number of cell for the centre of magnetic axis
+          write(*,*)' number of cell for the centre of magnetic axis =',
      *              nc_c_m_f(1)
-	    do iy = -1, ny
-	     do ix = -1, nx
-	      t0 = bb(nc_c_m_f(1),iy,2)/bb(ix,iy,2)
-	      do is = 0, ns-1
-	       if(.not.is_neutral(is)) then
+          do iy = -1, ny
+           do ix = -1, nx
+            t0 = bb(nc_c_m_f(1),iy,2)/bb(ix,iy,2)
+            do is = 0, ns-1
+             if(.not.is_neutral(is)) then
               fdnc(ix,iy,is)  = fdnc(ix,iy,is)*t0
-              ftic(ix,iy,is) = ftic(ix,iy,is)*t0 
-	       endif 
-	      enddo
-            ftec(ix,iy) = ftec(ix,iy)*t0 
-	     enddo
-	    enddo
+              ftic(ix,iy,is) = ftic(ix,iy,is)*t0
+             endif
+            enddo
+            ftec(ix,iy) = ftec(ix,iy)*t0
+           enddo
+          enddo
 
-	   case (7)                                                  !srv 05.07.04 {
-*   ..calculate 
+         case (7)                                                  !srv 05.07.04 {
+*   ..calculate
           do is = 0, ns-1
            if(.not.is_neutral(is)) then
             t0 = 0.0e0_R8
-	      t1 = 0.0e0_R8
-	      mintopcut=min(topcut(1)-1,topcut(2)-1)
-	      do iy = 0,mintopcut    ! for inner surfaces 
-	       do ix=0,nx
-	        if(mod(region(ix,iy,0),4).eq.1) then
-	         t0 = t0 +bb(ix,iy,3)*vol(ix,iy)/hy1(ix,iy)
-	         t1 = t1 +vol(ix,iy)/hy1(ix,iy)
-	        endif
-	       enddo
-	      enddo
+            t1 = 0.0e0_R8
+            mintopcut=min(topcut(1)-1,topcut(2)-1)
+            do iy = 0,mintopcut    ! for inner surfaces
+             do ix=0,nx
+              if(mod(region(ix,iy,0),4).eq.1) then
+               t0 = t0 +bb(ix,iy,3)*vol(ix,iy)/hy1(ix,iy)
+               t1 = t1 +vol(ix,iy)/hy1(ix,iy)
+              endif
+             enddo
+            enddo
             bbaverage=t0/t1
-	      do iy = -1, ny                   ! for all surfaces 
-	       do ix = -1, nx
-	        if(mod(region(ix,iy,0),4).eq.1 .and. iy.le.mintopcut) then
-	         fdnc(ix,iy,is)=1.0e0_R8
-	        else
-	         fdnc(ix,iy,is)=1.0e0_R8+cdf*(bbaverage/bb(ix,iy,3))**alf
-	        endif
-	       enddo
-	      enddo
-	     endif                                                     !srv 05.07.04 }
+            do iy = -1, ny                   ! for all surfaces
+             do ix = -1, nx
+              if(mod(region(ix,iy,0),4).eq.1 .and. iy.le.mintopcut) then
+               fdnc(ix,iy,is)=1.0e0_R8
+              else
+               fdnc(ix,iy,is)=1.0e0_R8+cdf*(bbaverage/bb(ix,iy,3))**alf
+              endif
+             enddo
+            enddo
+           endif                                                     !srv 05.07.04 }
           enddo
-	   case (6)                                                  !srv 05.11.03 {
+         case (6)                                                  !srv 05.11.03 {
 
 *   ..calculate poloidal variation of transport coefficients
           do is = 0, ns-1
            if(.not.is_neutral(is)) then
             if(alf .ne. 0.0e0_R8) then
              t0 = 0.0e0_R8
-	       t1 = 0.0e0_R8
-	       do iy = 0, topcut(1)-1   ! for inner surfaces 
-!	     do ix = leftcut(1), rightcut(1)-1
-	        do ix=0,nx
-	         if(mod(region(ix,iy,0),4).eq.1) then
-	          t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
-	          t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
-	         endif
-	        enddo
-	       enddo
-	       bbaverage = (t0/t1)**(-1.0e0_R8/alf)
-	       do iy = -1, ny                   ! for all surfaces 
-	        do ix = -1, nx
-	         fdnc(ix,iy,is) = (bbaverage/bb(ix,iy,3))**alf
-	        enddo
-	       enddo
-	      else
-	       fdnc(:,:,is) = 1.0e0_R8
-	      endif
-	     endif                                     !srv 05.11.03 }
+             t1 = 0.0e0_R8
+             do iy = 0, topcut(1)-1   ! for inner surfaces
+!           do ix = leftcut(1), rightcut(1)-1
+              do ix=0,nx
+               if(mod(region(ix,iy,0),4).eq.1) then
+                t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
+                t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
+               endif
+              enddo
+             enddo
+             bbaverage = (t0/t1)**(-1.0e0_R8/alf)
+             do iy = -1, ny                   ! for all surfaces
+              do ix = -1, nx
+               fdnc(ix,iy,is) = (bbaverage/bb(ix,iy,3))**alf
+              enddo
+             enddo
+            else
+             fdnc(:,:,is) = 1.0e0_R8
+            endif
+           endif                                     !srv 05.11.03 }
           enddo
-	   case (5)                                               !srv 13.11.02 12.07.10 {
+         case (5)                                               !srv 13.11.02 12.07.10 {
 
-	    if(ncall.eq.0) then
-	     mintopcut=minval(topcut(1:nncut))
-	     call xertst(0.0e0_R8.le.delta1,
+          if(ncall.eq.0) then
+           mintopcut=minval(topcut(1:nncut))
+           call xertst(0.0e0_R8.le.delta1,
      *         'faulty argument b2tqna_delta1') !srv 15.05.09
-	     call xertst(0.0e0_R8.le.delta2,
-     *         'faulty argument b2tqna_delta2') !srv 15.05.09  
-	     if(delta1.eq.0) then
+           call xertst(0.0e0_R8.le.delta2,
+     *         'faulty argument b2tqna_delta2') !srv 15.05.09
+           if(delta1.eq.0) then
             bottomdelta1 = mintopcut
-	     elseif(delta1.lt.lengthy(nmdpl,mintopcut)) then              !srv 15.05.09 {
-	      bottomdelta1 = mintopcut
-	      width = 0.0e0_R8
-	      do iy =mintopcut-1,-1,-1               ! srv 15.05.09 was topcut(1)-1,0,-1
-	       width = width + hy(nmdpl,iy)
-	       if(width.ge.delta1) then
-	        bottomdelta1 = iy
-	        exit
-	       endif
-	      enddo
-	     else
-	      bottomdelta1 = -1
-	     endif
+           elseif(delta1.lt.lengthy(nmdpl,mintopcut)) then              !srv 15.05.09 {
+            bottomdelta1 = mintopcut
+            width = 0.0e0_R8
+            do iy =mintopcut-1,-1,-1               ! srv 15.05.09 was topcut(1)-1,0,-1
+             width = width + hy(nmdpl,iy)
+             if(width.ge.delta1) then
+              bottomdelta1 = iy
+              exit
+             endif
+            enddo
+           else
+            bottomdelta1 = -1
+           endif
 
-	     if(delta2.eq.0) then
+           if(delta2.eq.0) then
             topdelta2 = mintopcut-1
-	     elseif(delta2.lt.
+           elseif(delta2.lt.
      &           lengthy(nmdpl,ny)-lengthy(nmdpl,mintopcut)) then
             topdelta2 = mintopcut                 !srv 24.06.03 {
-	      width = 0.0e0_R8
-	      do iy =mintopcut+1,ny
-	       width = width + hy(nmdpl,iy)
-	       if(width.ge.delta2) then
-	        topdelta2 = iy
-	        exit
-	       endif
-	      enddo                                !srv 24.06.03 {
-	     else
-	      topdelta2 = ny
-	     endif                                                       !srv 15.05.09 }
-	     if(iout.ne.0) then
-	      open(70,file= 'Parameters_of_H-regime.dat')
-	      write(70,"(/' Parameters of H-regime')")
-	      write(70,"(' Number of midplane cell =',i4)") nmdpl
-	      write(70,"(' Number of first cell in CORE where transport ',
+            width = 0.0e0_R8
+            do iy =mintopcut+1,ny
+             width = width + hy(nmdpl,iy)
+             if(width.ge.delta2) then
+              topdelta2 = iy
+              exit
+             endif
+            enddo                                !srv 24.06.03 {
+           else
+            topdelta2 = ny
+           endif                                                       !srv 15.05.09 }
+           if(iout.ne.0) then
+            open(70,file= 'Parameters_of_H-regime.dat')
+            write(70,"(/' Parameters of H-regime')")
+            write(70,"(' Number of midplane cell =',i4)") nmdpl
+            write(70,"(' Number of first cell in CORE where transport ',
      &         ' coefficients are changed',2i5)") bottomdelta1
-	      write(70,"(' Number of last  cell in CORE where transport ',
+            write(70,"(' Number of last  cell in CORE where transport ',
      &         ' coefficients are changed',2i5)") topdelta2
             close(70)
-	     endif
-	    endif
+           endif
+          endif
 
-	    do iy = -1, ny                  ! for SOL and PR region  !srv 13.03.07
-	     do ix = -1, nx
-	      if(mod(region(ix,iy,0),4).ne.1) then 
+          do iy = -1, ny                  ! for SOL and PR region  !srv 13.03.07
+           do ix = -1, nx
+            if(mod(region(ix,iy,0),4).ne.1) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
-	         fdnc(ix,iy,is)  =    alfa3
-	         fvsc(ix,iy,is) = vs_alfa3
-	         ftic(ix,iy,is) = ti_alfa3
-	         fvlc(ix,iy,1,is) = vl_alfa3                      !srv 19.04.10
-	        endif
-	       enddo
-	       ftec(ix,iy) = te_alfa3
-	      endif
-	     enddo
-	    enddo
+               fdnc(ix,iy,is)  =    alfa3
+               fvsc(ix,iy,is) = vs_alfa3
+               ftic(ix,iy,is) = ti_alfa3
+               fvlc(ix,iy,1,is) = vl_alfa3                      !srv 19.04.10
+              endif
+             enddo
+             ftec(ix,iy) = te_alfa3
+            endif
+           enddo
+          enddo
 
-	    do iy = mintopcut,topdelta2          ! for SOL region !srv 24.06.03
-	     do ix=-1,nx                                          !srv 10.03.06
-	      if(mod(region(ix,iy,0),4).eq.2) then
+          do iy = mintopcut,topdelta2          ! for SOL region !srv 24.06.03
+           do ix=-1,nx                                          !srv 10.03.06
+            if(mod(region(ix,iy,0),4).eq.2) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
-		   fdnc(ix,iy,is)  = alfa2
-	         fvsc(ix,iy,is) = vs_alfa2
-	         ftic(ix,iy,is) = ti_alfa2
-	         fvlc(ix,iy,1,is) = vl_alfa2                        !srv 19.04.10
-	        endif
-	       enddo
-	       ftec(ix,iy)    = te_alfa2
-	      endif
-	     enddo
-	    enddo
+               fdnc(ix,iy,is)  = alfa2
+               fvsc(ix,iy,is) = vs_alfa2
+               ftic(ix,iy,is) = ti_alfa2
+               fvlc(ix,iy,1,is) = vl_alfa2                        !srv 19.04.10
+              endif
+             enddo
+             ftec(ix,iy)    = te_alfa2
+            endif
+           enddo
+          enddo
 
-	    do iy = bottomdelta1, mintopcut-1   ! for inner surfaces 
-	     do ix=-1,nx                                          !srv 10.03.06
-	      if(mod(region(ix,iy,0),4).eq.1) then
+          do iy = bottomdelta1, mintopcut-1   ! for inner surfaces
+           do ix=-1,nx                                          !srv 10.03.06
+            if(mod(region(ix,iy,0),4).eq.1) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
-		   fdnc(ix,iy,is) = alfa1
-	         fvsc(ix,iy,is) = vs_alfa1
-	         ftic(ix,iy,is) = ti_alfa1
-	         fvlc(ix,iy,1,is) = vl_alfa1                        !srv 19.04.10
-	        endif
-	       enddo
-	       ftec(ix,iy) = te_alfa1
-	      endif
-	     enddo
-	    enddo
+               fdnc(ix,iy,is) = alfa1
+               fvsc(ix,iy,is) = vs_alfa1
+               ftic(ix,iy,is) = ti_alfa1
+               fvlc(ix,iy,1,is) = vl_alfa1                        !srv 19.04.10
+              endif
+             enddo
+             ftec(ix,iy) = te_alfa1
+            endif
+           enddo
+          enddo
 
-	    do iy = -1, ny                  ! correction for   !IYS 29.11.12
-	     do ix = -1, nx
-	      if(mod(region(ix,iy,0),4).ne.1 .and.    ! NOT Core
+          do iy = -1, ny                  ! correction for   !IYS 29.11.12
+           do ix = -1, nx
+            if(mod(region(ix,iy,0),4).ne.1 .and.    ! NOT Core
      &                mod(region(ix,iy,0),4).ne.2) then   ! NOT SOL
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
-	         fdnc(ix,iy,is)   =    alfa4
-	         fvsc(ix,iy,is)   = vs_alfa4
-	         ftic(ix,iy,is)   = ti_alfa4
-	         fvlc(ix,iy,1,is) = vl_alfa4               
-	        endif
-	       enddo
-	       ftec(ix,iy) = te_alfa4
-	      endif
-	     enddo
-	    enddo
+               fdnc(ix,iy,is)   =    alfa4
+               fvsc(ix,iy,is)   = vs_alfa4
+               ftic(ix,iy,is)   = ti_alfa4
+               fvlc(ix,iy,1,is) = vl_alfa4
+              endif
+             enddo
+             ftec(ix,iy) = te_alfa4
+            endif
+           enddo
+          enddo
 
 *   ..take into account poloidal variation of transport coefficients
           if(alf .ne. 0.0e0_R8) then                                     !srv 04.07.06 {
            t0 = 0.0e0_R8
-	     t1 = 0.0e0_R8
-	     do iy = 0, mintopcut-1   ! for inner surfaces 
-	      do ix=0,nx
-	       if(mod(region(ix,iy,0),4).eq.1) then
-	        t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
-	        t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
-	       endif
-	      enddo
-	     enddo
-	     bbaverage = (t0/t1)**(-1.0e0_R8/alf)
+           t1 = 0.0e0_R8
+           do iy = 0, mintopcut-1   ! for inner surfaces
+            do ix=0,nx
+             if(mod(region(ix,iy,0),4).eq.1) then
+              t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
+              t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
+             endif
+            enddo
+           enddo
+           bbaverage = (t0/t1)**(-1.0e0_R8/alf)
 
-	     do iy = topdelta2+1, ny                    ! for SOL region
-	      do ix = -1,nx
-	       if(mod(region(ix,iy,0),4).eq.2) then
+           do iy = topdelta2+1, ny                    ! for SOL region
+            do ix = -1,nx
+             if(mod(region(ix,iy,0),4).eq.2) then
               do is = 0, ns-1
                if(.not.is_neutral(is)) then
-	          fdnc(ix,iy,is)  = fdnc(ix,iy,is)*
+                fdnc(ix,iy,is)  = fdnc(ix,iy,is)*
      &                           (bbaverage/bb(ix,iy,3))**alf
-	          fvsc(ix,iy,is) = fvsc(ix,iy,is)*
+                fvsc(ix,iy,is) = fvsc(ix,iy,is)*
      &                           (bbaverage/bb(ix,iy,3))**alf
-	          ftic(ix,iy,is) = ftic(ix,iy,is)*
+                ftic(ix,iy,is) = ftic(ix,iy,is)*
      &                           (bbaverage/bb(ix,iy,3))**alf
-	          fvlc(ix,iy,1,is) = fvlc(ix,iy,1,is)*
+                fvlc(ix,iy,1,is) = fvlc(ix,iy,1,is)*
      &                           (bbaverage/bb(ix,iy,3))**alf         !srv 19.04.10
-	         endif
-	        enddo
-	        ftec(ix,iy) = ftec(ix,iy)*(bbaverage/bb(ix,iy,3))**alf
-	       endif
-	      enddo
-	     enddo
+               endif
+              enddo
+              ftec(ix,iy) = ftec(ix,iy)*(bbaverage/bb(ix,iy,3))**alf
+             endif
+            enddo
+           enddo
 
-	     do iy = -1, bottomdelta1-1                 ! for inner surfaces 
-	      do ix = -1,nx
-	       if(mod(region(ix,iy,0),4).eq.1) then
+           do iy = -1, bottomdelta1-1                 ! for inner surfaces
+            do ix = -1,nx
+             if(mod(region(ix,iy,0),4).eq.1) then
               do is = 0, ns-1
                if(.not.is_neutral(is)) then
-	          fdnc(ix,iy,is)  = fdnc(ix,iy,is)*
+                fdnc(ix,iy,is)  = fdnc(ix,iy,is)*
      &                           (bbaverage/bb(ix,iy,3))**alf
-	          fvsc(ix,iy,is) = fvsc(ix,iy,is)*
+                fvsc(ix,iy,is) = fvsc(ix,iy,is)*
      &                           (bbaverage/bb(ix,iy,3))**alf
-	          ftic(ix,iy,is) = ftic(ix,iy,is)*
+                ftic(ix,iy,is) = ftic(ix,iy,is)*
      &                           (bbaverage/bb(ix,iy,3))**alf
-	          fvlc(ix,iy,1,is) = fvlc(ix,iy,1,is)*
+                fvlc(ix,iy,1,is) = fvlc(ix,iy,1,is)*
      &                           (bbaverage/bb(ix,iy,3))**alf         !srv 19.04.10
-	         endif
-	        enddo
-	       ftec(ix,iy) = ftec(ix,iy)*(bbaverage/bb(ix,iy,3))**alf
-	       endif
-	      enddo
-	     enddo
-	    endif                                                          !srv 04.07.06 12.07.10 }
+               endif
+              enddo
+             ftec(ix,iy) = ftec(ix,iy)*(bbaverage/bb(ix,iy,3))**alf
+             endif
+            enddo
+           enddo
+          endif                                                          !srv 04.07.06 12.07.10 }
 
-	   case (4)
-        
-	    do iy = topcut(1),ny              ! for SOL region
-	     do ix = -1,nx
-	      fdnc(ix,iy,:) = fdnc(ix,iy,:) + cdf            !srv 01.03.07 ???
-	     enddo
-	    enddo
+         case (4)
 
-	   case (3)
+          do iy = topcut(1),ny              ! for SOL region
+           do ix = -1,nx
+            fdnc(ix,iy,:) = fdnc(ix,iy,:) + cdf            !srv 01.03.07 ???
+           enddo
+          enddo
 
-	    do iy = topcut(1),ny              ! for SOL region
-	     do ix = -1,nx
-	      fdnc(ix,iy,:) = fdnc(ix,iy,:) + cdf*                !srv 01.03.07 ???
+         case (3)
+
+          do iy = topcut(1),ny              ! for SOL region
+           do ix = -1,nx
+            fdnc(ix,iy,:) = fdnc(ix,iy,:) + cdf*                !srv 01.03.07 ???
      *                 sqrt((lengthy(nx/2,iy)-lengthy(nx/2,topcut(1)))
      *                     /(lengthy(nx/2,ny)-lengthy(nx/2,topcut(1))))
 
-	     enddo
-	    enddo
+           enddo
+          enddo
 
-	   case (2)
+         case (2)
 
-	    do iy = topcut(1),ny              ! for SOL region
-	     do ix = -1,nx
-	      fdnc(ix,iy,:) = fdnc(ix,iy,:) +               !srv 01.03.07 ???
+          do iy = topcut(1),ny              ! for SOL region
+           do ix = -1,nx
+            fdnc(ix,iy,:) = fdnc(ix,iy,:) +               !srv 01.03.07 ???
      *                 cdf*((lengthy(nx/2,iy)-lengthy(nx/2,topcut(1)))
      *                 /(lengthy(nx/2,ny)-lengthy(nx/2,topcut(1))))**2
-	     enddo
-	    enddo
+           enddo
+          enddo
 
-	   case (1)
+         case (1)
 
-	    do iy = topcut(1),ny              ! for SOL region
-	     do ix = -1,nx
-	      fdnc(ix,iy,:) = fdnc(ix,iy,:) +               !srv 01.03.07 ???
+          do iy = topcut(1),ny              ! for SOL region
+           do ix = -1,nx
+            fdnc(ix,iy,:) = fdnc(ix,iy,:) +               !srv 01.03.07 ???
      *                  cdf*((lengthy(nx/2,iy)-lengthy(nx/2,topcut(1)))
      *                     /(lengthy(nx/2,ny)-lengthy(nx/2,topcut(1))))
-	     enddo
-	    enddo
-	   case default
+           enddo
+          enddo
+         case default
 
-	    fdnc = 1.0e0_R8
-	  end select
+          fdnc = 1.0e0_R8
+        end select
 
-	  ncall = ncall + 1
+        ncall = ncall + 1
 
-	end subroutine defdc                  !srv 24.02.04 13.11.02}
+      end subroutine defdc                  !srv 24.02.04 13.11.02}
 
       end subroutine set_transport_srv                            !srv 12.06.08 }
 
@@ -1761,13 +1764,13 @@ c
       return
       end subroutine set_transport_eta
 
-      subroutine set_transport_xpb(nx, ny, ns, 
+      subroutine set_transport_xpb(nx, ny, ns,
      & bb, na, ne, te, ti, ni, hx, hy, qz, dna0, vla0)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_geo 
+      use b2mod_geo
      & , only : crx
       use b2mod_b2cmpa
       implicit none
@@ -1775,11 +1778,11 @@ c
       integer nx, ny, ns
       real (kind=R8) ::
      *  bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny),
-     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), 
+     &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1)
 *   ..input/output arguments (changed on exit)
       real (kind=R8) ::
-     *  dna0(-1:nx,-1:ny,0:ns-1), 
+     *  dna0(-1:nx,-1:ny,0:ns-1),
      &  vla0(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..common blocks
 *   ..local variables
@@ -1787,8 +1790,8 @@ c
       real (kind=R8), save ::
      *  alpha, min_df0, max_df0,
      *  wb, seglen, perimeter, L_perp
-      real (kind=R8) ::      
-     *  pe(-1:nx,-1:ny), pri(-1:nx,-1:ny), pp(-1:nx,-1:ny), 
+      real (kind=R8) ::
+     *  pe(-1:nx,-1:ny), pri(-1:nx,-1:ny), pp(-1:nx,-1:ny),
      *  coss(-1:nx,-1:ny), R, width(-1:nx), rzb(-1:nx,-1:ny)
 *   ..procedures
       real (kind=R8) ::
@@ -1805,7 +1808,7 @@ cxpb  Apply a space-varying pinch velocity according to
 cxpb  V. Naulin, Phys. Rev. E 71, 015402(R), (2005).
 cxpb  The poloidal coordinate is made to run from X-point
 cxpb  to X-point in order to avoid strong discontinuities
-cxpb  at the divertor throats, so that the cos(s) factor 
+cxpb  at the divertor throats, so that the cos(s) factor
 cxpb  vanishes there.
 cxpb  The model is applied inside the separatrix and an
 cxpb  effective diffusion coefficient is used outside.
@@ -1863,7 +1866,7 @@ cxpb
           width(ix) = 0.5_R8 * hy1(ix,0)
           do iy = 0, jsep
             width(ix) = width(ix) + 0.5_R8 * (hy1(ix,iy-1)+hy1(ix,iy))
-          end do 
+          end do
           width(ix) = width(ix) + 0.5_R8 * hy1(ix,jsep)
           if (pp(ix,0).gt.pp(ix,jsep)) then
             L_perp = L_perp + width(ix) / log(pp(ix,0)/pp(ix,jsep))
@@ -1887,11 +1890,11 @@ cxpb  Compute inner SOL part (coss > 0 by convention)
      2         + 0.5_R8 * hx(ix,iy)/
      3         (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
             end do
-            seglen = coss(leftcut(2)-1,iy) 
+            seglen = coss(leftcut(2)-1,iy)
      .       + 0.5_R8 * hx(leftcut(2)-1,iy)/
      1       (sqrt(bb(leftcut(2)-1,iy,0)**2+bb(leftcut(2)-1,iy,1)**2)/
      2       bb(leftcut(2)-1,iy,3))
-            coss(leftcut(1):leftcut(2)-1,iy) = 
+            coss(leftcut(1):leftcut(2)-1,iy) =
      .       sin(pi*coss(leftcut(1):leftcut(2)-1,iy)/seglen)
 cxpb  Compute outer SOL part (coss < 0 by convention)
             coss(rightcut(2),iy) = 0.5_R8 * hx(rightcut(2),iy)/
@@ -1903,13 +1906,13 @@ cxpb  Compute outer SOL part (coss < 0 by convention)
      2         + 0.5_R8 * hx(ix,iy)/
      3         (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
             end do
-            seglen = coss(rightcut(1)-1,iy) + 
+            seglen = coss(rightcut(1)-1,iy) +
      1       0.5_R8 * hx(rightcut(1)-1,iy)/
      1       (sqrt(bb(rightcut(1)-1,iy,0)**2+bb(rightcut(1)-1,iy,1)**2)/
-     2       bb(rightcut(1)-1,iy,3))            
-            coss(rightcut(2):rightcut(1)-1,iy) = 
+     2       bb(rightcut(1)-1,iy,3))
+            coss(rightcut(2):rightcut(1)-1,iy) =
      .       -sin(pi*coss(rightcut(2):rightcut(1)-1,iy)/seglen)
-         end do  
+         end do
       else if (nnreg(0).eq.4) then
 cxpb  Compute cos(s) factor
          do iy = -1, jsep
@@ -1922,15 +1925,15 @@ cxpb  Compute cos(s) factor
      2         + 0.5_R8 * hx(ix,iy)/
      3         (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
             end do
-            seglen = coss(rightcut(1)-1,iy) + 
+            seglen = coss(rightcut(1)-1,iy) +
      1       0.5_R8 * hx(rightcut(1)-1,iy)/
      1       (sqrt(bb(rightcut(1)-1,iy,0)**2+bb(rightcut(1)-1,iy,1)**2)/
-     2       bb(rightcut(1)-1,iy,3)) 
-            coss(leftcut(1):rightcut(1)-1,iy) = 
+     2       bb(rightcut(1)-1,iy,3))
+            coss(leftcut(1):rightcut(1)-1,iy) =
      .       sin(2.0_R8*pi*coss(leftcut(1):rightcut(1)-1,iy)/seglen)
          end do
       else
-         call xerrab 
+         call xerrab
      .     ('Invalid number of regions : Case not yet coded!')
       end if
 *   ..computation
@@ -1986,11 +1989,11 @@ c under development
       integer mw_interpol, mw_jxa, mw_jsep                           !mw
       real (kind=R8) ::                                              !mw
      *     vsep, vwall,                                              !mw
-c     *     vtop, vox, 
+c     *     vtop, vox,
      &     mw_flux, mw_alpha, mw_flux_wall, vold, mw_fluxalpha       !mw
        save ncall,
      *     vsep, vwall,                                              !mw
-c     *     vtop, vox, 
+c     *     vtop, vox,
      &     mw_interpol, mw_flux, mw_alpha, mw_flux_wall              !mw
       data ncall/0/,
      * vsep/0.0_R8/, vwall/0.0_R8/,                                  !mw
@@ -2008,7 +2011,7 @@ c     * vtop/0.0_R8/, vox/0.0_R8/,                                    !mw
         call ipgetr ('b2tqna_mw_vsep', vsep)
         call ipgetr ('b2tqna_mw_vwall', vwall)
         call ipgetr ('b2tqna_mw_flux', mw_flux)
-        mw_flux_wall = mw_flux 
+        mw_flux_wall = mw_flux
         call ipgetr ('b2tqna_mw_flux_wall', mw_flux_wall)
         call ipgetr ('b2tqna_mw_alpha', mw_alpha)
 c        call ipgetr ('b2tqna_mw_vtop', vtop)
@@ -2046,66 +2049,66 @@ c         in the SOL
             vla0(ix,iy,0,:) = vla0(ix,iy,0,:)
             if(mw_interpol.eq.0) then !default value
               vla0(ix,iy,1,1) = (vwall-vsep)/(ny-(mw_jsep+1))*
-     &        (iy-(mw_jsep+1))+vsep
+     &         (iy-(mw_jsep+1))+vsep
             elseif(mw_interpol.eq.1.and.ix.le.mw_jxa) then !sin poloidal
               vla0(ix,iy,1,1)=(((vwall-vsep)/(ny-(mw_jsep+1))*
-     &        (iy-(mw_jsep+1)))+vsep)*
-     &        sin(pi/2.0_R8*(ix-xtop)/(mw_jxa-xtop))
+     &         (iy-(mw_jsep+1)))+vsep)*
+     &         sin(pi/2.0_R8*(ix-xtop)/(mw_jxa-xtop))
             elseif(mw_interpol.eq.1.and.mw_jxa.lt.ix) then !sin poloidal
               vla0(ix,iy,1,1)=(((vwall-vsep)/(ny-(mw_jsep+1))*
-     &        (iy-(mw_jsep+1)))+vsep)*sin(pi/2.0_R8*(ix-xbottom)/
-     &        (mw_jxa-xbottom))
+     &         (iy-(mw_jsep+1)))+vsep)*sin(pi/2.0_R8*(ix-xbottom)/
+     &         (mw_jxa-xbottom))
             elseif(mw_interpol.eq.2) then !sin radial
               vla0(ix,iy,1,1) = (vwall-vsep)*sin(pi/2.0_R8*(iy-mw_jsep)/
-     &        (ny-mw_jsep))+vsep
+     &         (ny-mw_jsep))+vsep
             elseif(mw_interpol.eq.3) then
               vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)
             elseif(mw_interpol.eq.4.and.ix.le.mw_jxa) then !sin poloidal
               vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)*
-     &        sin(pi/2.0_R8*(ix-xtop)/(mw_jxa-xtop))
+     &         sin(pi/2.0_R8*(ix-xtop)/(mw_jxa-xtop))
             elseif(mw_interpol.eq.4.and.mw_jxa.lt.ix) then !sin poloidal
               vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)*
-     &        sin(pi/2.0_R8*(ix-xbottom)/(mw_jxa-xbottom))
+     &         sin(pi/2.0_R8*(ix-xbottom)/(mw_jxa-xbottom))
             elseif(mw_interpol.eq.5.and.ix.le.mw_jxa) then
               if(iy.lt.ny) then
                 if(ne(ix,iy) < ne(ix,iy+1)) then
-                 vla0(ix,iy,1,1) = 0.9_R8*vla0(ix,iy-1,1,1)
+                  vla0(ix,iy,1,1) = 0.9_R8*vla0(ix,iy-1,1,1)
                 else
-                 vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)*
-     &           sin(pi/2.0_R8*(ix-xtop)/(mw_jxa-xtop))
+                  vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)*
+     &             sin(pi/2.0_R8*(ix-xtop)/(mw_jxa-xtop))
                 endif
               else
                 if(ne(ix,ny).gt.ne(ix,ny-1)) then
-                 vla0(ix,ny-1,1,1) = 0.9_R8*vla0(ix,ny,1,1)
-                 vla0(ix,ny,1,1) = vla0(ix,ny-1,1,1)
+                  vla0(ix,ny-1,1,1) = 0.9_R8*vla0(ix,ny,1,1)
+                  vla0(ix,ny,1,1) = vla0(ix,ny-1,1,1)
                 else
-                 vla0(ix,ny,1,1) = mw_flux_wall / ne(ix,ny)*
-     &           sin(pi/2.0_R8*(ix-xtop)/(mw_jxa-xtop))
+                  vla0(ix,ny,1,1) = mw_flux_wall / ne(ix,ny)*
+     &             sin(pi/2.0_R8*(ix-xtop)/(mw_jxa-xtop))
                 endif
               endif
             elseif(mw_interpol.eq.5.and.mw_jxa.lt.ix) then
               if(iy.lt.ny) then
                 if(ne(ix,iy-1).le.ne(ix,iy)) then
-                 vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
+                  vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
                 else
-                 vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)*
-     &           sin(pi/2.0_R8*(ix-xbottom)/(mw_jxa-xbottom))
+                  vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)*
+     &             sin(pi/2.0_R8*(ix-xbottom)/(mw_jxa-xbottom))
                 endif
               else
                 if(ne(ix,ny).gt.ne(ix,ny-1)) then
-                 vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
-                 vla0(ix,iy,1,1) = vla0(ix,iy-1,1,1)
+                  vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
+                  vla0(ix,iy,1,1) = vla0(ix,iy-1,1,1)
                 else
-                 vla0(ix,iy,1,1) = mw_flux_wall / ne(ix,iy)*
-     &           sin(pi/2.0_R8*(ix-xbottom)/(mw_jxa-xbottom))
+                  vla0(ix,iy,1,1) = mw_flux_wall / ne(ix,iy)*
+     &             sin(pi/2.0_R8*(ix-xbottom)/(mw_jxa-xbottom))
                 endif
               endif
             elseif(mw_interpol.eq.6.and.ix.le.mw_jxa) then
               if(iy.le.ny) then
                 if(ne(ix,iy-1).le.ne(ix,iy)) then
-                 vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
+                  vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
                 else
-                 vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)
+                  vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)
                 endif
               else
                 vla0(ix,iy,1,1) = mw_flux_wall / ne(ix,iy)
@@ -2113,122 +2116,123 @@ c         in the SOL
             elseif(mw_interpol.eq.6.and.mw_jxa.lt.ix) then
               if(iy.lt.ny) then
                 if(ne(ix,iy).lt.ne(ix,iy+1)) then
-                 vla0(ix,iy,1,1) = 0.9_R8*vla0(ix,iy-1,1,1)
+                  vla0(ix,iy,1,1) = 0.9_R8*vla0(ix,iy-1,1,1)
                 else
-                 vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)
+                  vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)
                 endif
               else
                 vla0(ix,iy,1,1) = mw_flux_wall / ne(ix,iy)
-              endif 
-c MW working                                 
+              endif
+c MW working
             elseif(mw_interpol.eq.7.and.ix.le.mw_jxa) then
               if(iy.lt.ny) then
                 if(ne(ix,iy).lt.ne(ix,iy+1)) then
-                 vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
-                 vla0(ix,iy,1,1) = vla0(ix,iy-1,1,1)*ne(ix,iy-1)/
-     &           ne(ix,iy)
+                  vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
+                  vla0(ix,iy,1,1) = vla0(ix,iy-1,1,1)*ne(ix,iy-1)/
+     &             ne(ix,iy)
                 else
-                 vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)
+                  vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)
                 endif
               else
                 if(ne(ix,ny-1).le.ne(ix,ny)) then
-                 vla0(ix,ny-1,1,1) = 0.9_R8*vla0(ix,ny,1,1)
-                 vla0(ix,ny,1,1) = vla0(ix,ny-1,1,1)*ne(ix,ny-1)/
-     &           ne(ix,ny)
+                  vla0(ix,ny-1,1,1) = 0.9_R8*vla0(ix,ny,1,1)
+                  vla0(ix,ny,1,1) = vla0(ix,ny-1,1,1)*ne(ix,ny-1)/
+     &             ne(ix,ny)
                 else
-                 vla0(ix,ny,1,1) = mw_flux_wall / ne(ix,ny)
+                  vla0(ix,ny,1,1) = mw_flux_wall / ne(ix,ny)
                 endif
               endif
             elseif(mw_interpol.eq.7.and.mw_jxa.lt.ix) then
               if(iy.lt.ny) then
                 if(ne(ix,iy).le.ne(ix,iy+1)) then
-                 vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
-                 vla0(ix,iy,1,1) = vla0(ix,iy-1,1,1)*ne(ix,iy-1)/
-     &           ne(ix,iy)
+                  vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
+                  vla0(ix,iy,1,1) = vla0(ix,iy-1,1,1)*ne(ix,iy-1)/
+     &             ne(ix,iy)
                 else
-                 vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)
+                  vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)
                 endif
               else
                 if(ne(ix,ny-1).le.ne(ix,ny)) then
-                 vla0(ix,ny-1,1,1) = 0.9_R8*vla0(ix,ny,1,1)
-                 vla0(ix,ny,1,1) = vla0(ix,iy-1,1,1)*ne(ix,ny-1)/
-     &           ne(ix,ny)
+                  vla0(ix,ny-1,1,1) = 0.9_R8*vla0(ix,ny,1,1)
+                  vla0(ix,ny,1,1) = vla0(ix,iy-1,1,1)*ne(ix,ny-1)/
+     &             ne(ix,ny)
                 else
-                 vla0(ix,iy,1,1) = mw_flux_wall / ne(ix,iy)
+                  vla0(ix,iy,1,1) = mw_flux_wall / ne(ix,iy)
                 endif
-              endif 
+              endif
 c MW working end
-c MW working 2                                
+c MW working 2
             elseif(mw_interpol.eq.8) then
               if(iy.lt.ny) then
                 if(ne(ix,iy).le.ne(ix,iy+1)) then
                    vold = vla0(ix,iy,1,1)
                    vla0(ix,iy,1,1) = vold - vold * 0.5_R8 * mw_fluxalpha
                  if(vla0(ix,iy,1,1).lt.0.0_R8) then
-                    vla0(ix,iy,1,1) = 0.0_R8
+                   vla0(ix,iy,1,1) = 0.0_R8
                  endif
                 else
-                  vla0(ix,iy,1,1) = (mw_flux / ne(ix,iy) - 
+                  vla0(ix,iy,1,1) = (mw_flux / ne(ix,iy) -
      &            vla0(ix,iy,1,1)) * mw_fluxalpha + vla0(ix,iy,1,1)
                 endif
               else
                 if(ne(ix,ny-1).le.ne(ix,ny)) then
-                 vold = vla0(ix,ny,1,1)
-                 vla0(ix,ny,1,1) = vold - vold * 0.5_R8 * mw_fluxalpha
-                 if(vla0(ix,ny,1,1).lt.0.0_R8) then
+                  vold = vla0(ix,ny,1,1)
+                  vla0(ix,ny,1,1) = vold - vold * 0.5_R8 * mw_fluxalpha
+                  if(vla0(ix,ny,1,1).lt.0.0_R8) then
                     vla0(ix,ny,1,1) = 0.0_R8
-                 endif                 
+                  endif
                 else
-                  vla0(ix,ny,1,1) = (mw_flux_wall / ne(ix,ny) - 
-     &            vla0(ix,ny,1,1)) * mw_fluxalpha + vla0(ix,ny,1,1)                  
+                  vla0(ix,ny,1,1) = (mw_flux_wall / ne(ix,ny) -
+     &            vla0(ix,ny,1,1)) * mw_fluxalpha + vla0(ix,ny,1,1)
                 endif
-              endif 
+              endif
 c MW working end 2
 c MW working 3
 c MW same as int8 + mw_flux also for cells at mw_jsep - transport
 c through separatrix
-C This is the one really used...                                
+C This is the one really used...
             elseif(mw_interpol.eq.9) then
               if(iy.lt.ny) then
                 if(ne(ix,iy).le.ne(ix,iy+1)) then
                    vold = vla0(ix,iy,1,1)
                    vla0(ix,iy,1,1) = vold - vold * 0.5_R8 * mw_fluxalpha
-                 if(vla0(ix,iy,1,1).lt.0.0_R8) then
+                  if(vla0(ix,iy,1,1).lt.0.0_R8) then
                     vla0(ix,iy,1,1) = 0.0_R8
-                 endif
+                  endif
                 else
-                  vla0(ix,iy,1,1) = (mw_flux / ne(ix,iy) - 
+                  vla0(ix,iy,1,1) = (mw_flux / ne(ix,iy) -
      &            vla0(ix,iy,1,1)) * mw_fluxalpha + vla0(ix,iy,1,1)
                 endif
                 if(iy.eq.mw_jsep+1) then
-                 if(ne(ix,iy-1).le.ne(ix,iy)) then
-                   vold = vla0(ix,iy-1,1,1)
-                   vla0(ix,iy-1,1,1) = 
-     &              vold - vold * 0.5_R8 * mw_fluxalpha
-                 if(vla0(ix,iy-1,1,1).lt.0.0_R8) then
-                    vla0(ix,iy-1,1,1) = 0.0_R8
-                 endif
-                else
-                  vla0(ix,iy-1,1,1) = (mw_flux / ne(ix,iy-1) - 
-     &            vla0(ix,iy-1,1,1)) * mw_fluxalpha + vla0(ix,iy-1,1,1)
-                endif               
+                  if(ne(ix,iy-1).le.ne(ix,iy)) then
+                    vold = vla0(ix,iy-1,1,1)
+                    vla0(ix,iy-1,1,1) =
+     &               vold - vold * 0.5_R8 * mw_fluxalpha
+                    if(vla0(ix,iy-1,1,1).lt.0.0_R8) then
+                      vla0(ix,iy-1,1,1) = 0.0_R8
+                    endif
+                  else
+                    vla0(ix,iy-1,1,1) = (mw_flux / ne(ix,iy-1) -
+     &               vla0(ix,iy-1,1,1)) * mw_fluxalpha +
+     &               vla0(ix,iy-1,1,1)
+                  endif
                 endif
               else
                 if(ne(ix,ny-1).le.ne(ix,ny)) then
                  vold = vla0(ix,ny,1,1)
                  vla0(ix,ny,1,1) = vold - vold * mw_fluxalpha
                  if(vla0(ix,ny,1,1).lt.0.0_R8) then
-                    vla0(ix,ny,1,1) = 0.0_R8
+                   vla0(ix,ny,1,1) = 0.0_R8
                  endif
                 else
-                  vla0(ix,ny,1,1) = (mw_flux_wall / ne(ix,ny) - 
-     &            vla0(ix,ny,1,1)) * mw_fluxalpha + vla0(ix,ny,1,1)                  
+                  vla0(ix,ny,1,1) = (mw_flux_wall / ne(ix,ny) -
+     &            vla0(ix,ny,1,1)) * mw_fluxalpha + vla0(ix,ny,1,1)
                 endif
-              endif 
+              endif
 c MW working end 3
             else
-             write(*,*) 'mw_interpol = ',mw_interpol,' not coded'
-             stop
+              write(*,*) 'mw_interpol = ',mw_interpol,' not coded'
+              stop
             endif
           endif
           else
@@ -2343,9 +2347,9 @@ c*** We only apply this in the outer SOL region
             fac=max(0.0_R8,(1.0_R8-p_p(ix)**pw1_cnv(is))**pw2_cnv(is))*
      .       vout_cnv(is)
             do iy=jsep+1, ny
-              vla0(ix,iy,1,is)=fac*p_r(iy)**pw0_cnv(is)     
+              vla0(ix,iy,1,is)=fac*p_r(iy)**pw0_cnv(is)
             end do
-          end do            
+          end do
         end if
       end do
 
@@ -2370,7 +2374,7 @@ c*** We only apply this in the outer SOL region
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
-      real (kind=R8) :: 
+      real (kind=R8) ::
      *   te(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3),
      *   ti(-1:nx,-1:ny), hy1(-1:nx,-1:ny)
 *   ..in/out arguments
@@ -2385,7 +2389,7 @@ c*** We only apply this in the outer SOL region
 *   ..local variables
       integer ncall, ix, iy, is, ixref, iyref
       integer get_quenching
-      real (kind=R8):: get_time_quenching                             
+      real (kind=R8):: get_time_quenching
       save ncall, ixref, iyref
 *   ..initialisation
       data ncall/0/
@@ -2441,7 +2445,7 @@ c*** We only apply this in the outer SOL region
 
 *   ..strongly enhanced perpendicular heat and particle transport for  !cjk
 *       plasma disruption (quenching=1, time > time_quenching)
-*       
+*
 *       chi_e=1000*f_quench*ne_ref/ne*Te^5/2*geometry_factor
 *       chi_i=1000/sqrt(mi/me)*f_quench*ni_ref/ni*Ti^5/2*geometry_factor
 *       Dn_i=1000/sqrt(mi/me)*f_quench*Ti^5/2*geometry_factor
@@ -2502,8 +2506,8 @@ c*** We only apply this in the outer SOL region
       integer nx, ny, ns, nz
       real (kind=R8) ::
      *   bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
-     &   te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), 
-     &   ne(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
+     &   te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
+     &   ne(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &   vol(-1:nx,-1:ny), conn(-1:ny), qz(-1:nx,-1:ny,0:1),
      &   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)
@@ -2541,12 +2545,12 @@ c*** We only apply this in the outer SOL region
      &   den(0:ns,0:nz-1), ds(0:ns,0:nz-1,2),
      &   denl(0:ns,0:nz-1), tl(0:ns),
      &   denr(0:ns,0:nz-1), tr(0:ns),
-     &   vtn(0:ns,0:nz-1,-1:ny), 
+     &   vtn(0:ns,0:nz-1,-1:ny),
      &   kappa(0:ns,0:nz-1,-1:ny),
      &   chi(0:ns,0:nz-1,-1:ny), vw(0:ns,0:nz-1,-1:ny),
-     &   xi(0:ns,0:nz-1), ntau(0:ns,0:ns), 
-     &   dfhcb, dfhce, 
-     &   hthet(-1:nx,-1:ny), quant(-1:nx,-1:ny), 
+     &   xi(0:ns,0:nz-1), ntau(0:ns,0:ns),
+     &   dfhcb, dfhce,
+     &   hthet(-1:nx,-1:ny), quant(-1:nx,-1:ny),
      &   cellface(0:ns,0:nz-1,-1:ny,1:5),
      &   vwt(0:ns,0:nz-1,-1:ny)
       real (kind=R8) ::
@@ -2568,7 +2572,7 @@ c*** We only apply this in the outer SOL region
 
 *   ..procedures
       real (kind=R8) :: hy1
-      external ipgeti, ipgetr, xertst, b2xvsg, fluxav, sfluxav, 
+      external ipgeti, ipgetr, xertst, b2xvsg, fluxav, sfluxav,
      &         tfluxav, neodv, neochi
 *   ..statement functions
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
@@ -2579,7 +2583,7 @@ c*** We only apply this in the outer SOL region
 *     2 --- Pfirsch Schlueter contribution
 *     3 --- both banana and PS
 *     4 --- all contributions
-*     mind that B2 already calculates the classical transport ! 
+*     mind that B2 already calculates the classical transport !
 *     avoid double transport, 0+4 for cross checks only !
       data ic /3/
 
@@ -2604,20 +2608,20 @@ c*** We only apply this in the outer SOL region
         call ipgeti ('set_transport_iyref', iyref)
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
-	call ipgeti ('neoclassical_ic', ic)
+      call ipgeti ('neoclassical_ic', ic)
         call xertst(0.le.ic .and. ic.le.4,
      .   'invalid parameter neoclassical_ic')
-	write(*,*) 'NEOART option ', ic, ' has been used'
-	if(ic.eq.0)
-     1	 write(*,*) '  NEOART: classical'
-	if(ic.eq.1)
-     1	 write(*,*) '  NEOART: banana plateau'
-	if(ic.eq.2)
-     1	 write(*,*) '  NEOART: Pfirsch-Schlueter'
-	if(ic.eq.3)
-     1	 write(*,*) '  NEOART: banana plateau + Pfirsch-Schlueter'
-	if(ic.eq.4)
-     1	 write(*,*) '  NEOART: all'
+      write(*,*) 'NEOART option ', ic, ' has been used'
+      if(ic.eq.0)
+     1   write(*,*) '  NEOART: classical'
+      if(ic.eq.1)
+     1   write(*,*) '  NEOART: banana plateau'
+      if(ic.eq.2)
+     1   write(*,*) '  NEOART: Pfirsch-Schlueter'
+      if(ic.eq.3)
+     1   write(*,*) '  NEOART: banana plateau + Pfirsch-Schlueter'
+      if(ic.eq.4)
+     1   write(*,*) '  NEOART: all'
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -2667,144 +2671,144 @@ c      enddo
 
 *    ..loop voltage eparr (to be included in a separate routine!)
 *       default value:
-      eparr=0.0_R8                                  
+      eparr=0.0_R8
 *       read scalar from b2mn.dat
       call ipgetr ('b2tqna_eparr', eparr)
       write(*,*) 'eparr =', eparr
 
 *   ..initialize geometric parameters
-        do iy=-1,ny
-          bav_(iy)=0.0_R8
-          b2av_(iy)=0.0_R8
-          bi2a_(iy)=0.0_R8
-          rbt_(iy)=0.0_R8
-          bgradp_(iy)=0.0_R8
-          dpsidr_(iy)=0.0_R8
-          rnq_(iy)=0.0_R8
-          fc_(iy)=0.0_R8
-          gclass_(iy)=0.0_R8
-          do is=1,mmx
-            fm_(is,iy)=0.0_R8
-          enddo
-          r2i_(iy)=0.0_R8
-          rho_(iy)=0.0_R8
-        enddo 
+      do iy=-1,ny
+        bav_(iy)=0.0_R8
+        b2av_(iy)=0.0_R8
+        bi2a_(iy)=0.0_R8
+        rbt_(iy)=0.0_R8
+        bgradp_(iy)=0.0_R8
+        dpsidr_(iy)=0.0_R8
+        rnq_(iy)=0.0_R8
+        fc_(iy)=0.0_R8
+        gclass_(iy)=0.0_R8
+        do is=1,mmx
+          fm_(is,iy)=0.0_R8
+        enddo
+        r2i_(iy)=0.0_R8
+        rho_(iy)=0.0_R8
+      enddo
 
 *   ..split species into species and charge states
-        nar=ns
-        nzm=nz-1
-        do is=0,ns
-          ncl(is)=0
-          do istate=0,nz-1
-            isort(is,istate)=0
-          enddo
+      nar=ns
+      nzm=nz-1
+      do is=0,ns
+        ncl(is)=0
+        do istate=0,nz-1
+          isort(is,istate)=0
         enddo
-        do is=0,ns-1
-          zah(is)=(zamin(is)+zamax(is))/2.0_R8
-          if (zamin(is).ne.zamax(is)) then
-            write(6,*) 'Warning: '//
-     .       'neoclassical transport model may not be accurate '//
-     .       'for bundled charge states!'
-          end if
-          amh(is)=am(is)
-        enddo
-        do is=0,ns-2
-          zacomp=zah(is)
-          amcomp=amh(is)
-          ispecies=is
-          do is2=is+1,ns-1
-            if((abs(amh(is2)-amcomp).lt.0.5_R8).and.
-     &         (zah(is2).lt.zacomp)) then
-              zacomp=zah(is2)
-              ispecies=is2
-            elseif(amh(is2).lt.amcomp) then
-              amcomp=amh(is2)
-              zacomp=zah(is2)
-              ispecies=is2
-            endif
-          enddo
-          zah(ispecies)=zah(is)
-          amh(ispecies)=amh(is)
-          zah(is)=zacomp
-          amh(is)=amcomp
-        enddo
-        ispecies=1
-        istate=1
-        amcomp=amh(0)
-        do is=1,ns-1
-         if((amh(is)-amcomp).gt.0.5_R8) then
-           ncl(ispecies-1)=istate
-           ispecies=ispecies+1
-           amcomp=amh(is)
-           istate=1
-         elseif(abs(amh(is)-amcomp).lt.0.5_R8) then
-           istate=istate+1
-         endif
-        enddo
-
-        ncl(ispecies-1)=istate
-
-        nsl=ispecies
-
-        is=0
-        do ispecies=0,nsl-1
-          do istate=0,ncl(ispecies)-1
-            do is2=0,ns-1 
-              if((abs(am(is2)-amh(is)).lt.0.5_R8).and.
-     &           (abs((zamin(is2)+zamax(is2))/2.0_R8-zah(is)).lt.
-     .            0.5_R8)) then
-                isort(ispecies,istate)=is2
-              endif
-            enddo
-            is=is+1
-          enddo
-        enddo
-
-*   ..remove neutrals from list
-        do ispecies=0,nsl-1
-          nclh(ispecies)=ncl(ispecies)
-        enddo
-        nslh=nsl
-        isorth=isort
-        do ispecies=0,nsl-1
-          do istate=0,ncl(ispecies)-1
-            if (is_neutral(isort(ispecies,istate))) then
-              nclh(ispecies)=nclh(ispecies)-1
-              if (nclh(ispecies).eq.0) nslh=nslh-1
-            endif
-          enddo
-        enddo
-        is=0
-        do ispecies=0,nsl-1
-          if (nclh(ispecies).ne.0) then
-             nclh(is)=nclh(ispecies)
-             is=is+1
+      enddo
+      do is=0,ns-1
+        zah(is)=(zamin(is)+zamax(is))/2.0_R8
+        if (zamin(is).ne.zamax(is)) then
+          write(6,*) 'Warning: '//
+     .     'neoclassical transport model may not be accurate '//
+     .     'for bundled charge states!'
+        end if
+        amh(is)=am(is)
+      enddo
+      do is=0,ns-2
+        zacomp=zah(is)
+        amcomp=amh(is)
+        ispecies=is
+        do is2=is+1,ns-1
+          if((abs(amh(is2)-amcomp).lt.0.5_R8).and.
+     &       (zah(is2).lt.zacomp)) then
+            zacomp=zah(is2)
+            ispecies=is2
+          elseif(amh(is2).lt.amcomp) then
+            amcomp=amh(is2)
+            zacomp=zah(is2)
+            ispecies=is2
           endif
         enddo
-        is=0
-        is2=0
-        do ispecies=0,nsl-1
-          do istate=0,ncl(ispecies)-1
-            if (.not. is_neutral(isorth(ispecies,istate))) then
-              isort(is,is2)=isorth(ispecies,istate)
-              is2=is2+1
-              if (is2.gt.(nclh(is)-1)) then
+        zah(ispecies)=zah(is)
+        amh(ispecies)=amh(is)
+        zah(is)=zacomp
+        amh(is)=amcomp
+      enddo
+      ispecies=1
+      istate=1
+      amcomp=amh(0)
+      do is=1,ns-1
+        if((amh(is)-amcomp).gt.0.5_R8) then
+          ncl(ispecies-1)=istate
+          ispecies=ispecies+1
+          amcomp=amh(is)
+          istate=1
+        elseif(abs(amh(is)-amcomp).lt.0.5_R8) then
+          istate=istate+1
+        endif
+      enddo
+
+      ncl(ispecies-1)=istate
+
+      nsl=ispecies
+
+      is=0
+      do ispecies=0,nsl-1
+        do istate=0,ncl(ispecies)-1
+          do is2=0,ns-1
+            if((abs(am(is2)-amh(is)).lt.0.5_R8).and.
+     &         (abs((zamin(is2)+zamax(is2))/2.0_R8-zah(is)).lt.
+     .            0.5_R8)) then
+              isort(ispecies,istate)=is2
+            endif
+          enddo
+          is=is+1
+        enddo
+      enddo
+
+*   ..remove neutrals from list
+      do ispecies=0,nsl-1
+        nclh(ispecies)=ncl(ispecies)
+      enddo
+      nslh=nsl
+      isorth=isort
+      do ispecies=0,nsl-1
+        do istate=0,ncl(ispecies)-1
+          if (is_neutral(isort(ispecies,istate))) then
+            nclh(ispecies)=nclh(ispecies)-1
+            if (nclh(ispecies).eq.0) nslh=nslh-1
+          endif
+        enddo
+      enddo
+      is=0
+      do ispecies=0,nsl-1
+        if (nclh(ispecies).ne.0) then
+           nclh(is)=nclh(ispecies)
+           is=is+1
+        endif
+      enddo
+      is=0
+      is2=0
+      do ispecies=0,nsl-1
+        do istate=0,ncl(ispecies)-1
+          if (.not. is_neutral(isorth(ispecies,istate))) then
+            isort(is,is2)=isorth(ispecies,istate)
+            is2=is2+1
+            if (is2.gt.(nclh(is)-1)) then
                 is=is+1
                 is2=0
               endif
             endif
           enddo
         enddo
-        
+
         do ispecies=0,nsl-1
           if (ispecies.lt.nslh) then
             ncl(ispecies)=nclh(ispecies)
-          else 
+          else
             ncl(ispecies)=0
           endif
         enddo
         nsl=nslh
-            
+
 *   ..mass
         do ispecies=0,nsl-1
           m(ispecies)=am(isort(ispecies,0))*mp
@@ -2828,7 +2832,7 @@ c      enddo
           thet=0._R8
           ilp(iy)=0._R8
           do ix=ixref,-1,-1
-           if (mod(region(ix,iy,0),4).eq.1) then 
+           if (mod(region(ix,iy,0),4).eq.1) then
              theta(ix,iy)=thet
              hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
      &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
@@ -2858,7 +2862,7 @@ c      enddo
            endif
           enddo
           do ix=nx,ixref+1,-1
-           if (mod(region(ix,iy,0),4).eq.1) then 
+           if (mod(region(ix,iy,0),4).eq.1) then
              theta(ix,iy)=thet
              hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
      &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
@@ -2890,7 +2894,7 @@ c      enddo
           theta(ixref,iy)=thet
           ilpb=thet
           do ix=-1,nx
-           if (mod(region(ix,iy,0),4).eq.1) then 
+           if (mod(region(ix,iy,0),4).eq.1) then
             theta(ix,iy)=2._R8*pi*theta(ix,iy)/ilpb
            endif
           enddo
@@ -2930,7 +2934,7 @@ c      enddo
 
            bmax=0._R8
            do ix=-1,nx
-             if (mod(region(ix,iy,0),4).eq.1) then          
+             if (mod(region(ix,iy,0),4).eq.1) then
                if (bb(ix,iy,3).gt.bmax) then
                  bmax=bb(ix,iy,3)
                endif
@@ -2990,7 +2994,7 @@ c      enddo
        else
         write(*,*) 'call nr. ',ncall
       endif
-      
+
 
 *   ..now calculate the neoclassical transport (if newneo set)
 
@@ -3412,24 +3416,24 @@ c      close(14)
       enddo
 
 !            call dcscon (ndat, r, f, ibreak, break, cscoef)
-!	      write(*,*) ' ibreak = ', ibreak
+!            write(*,*) ' ibreak = ', ibreak
 !            ideriv = 0
-!	      nintv  = ndat-1
+!            nintv  = ndat-1
 !            call dcs1gd (ideriv, ndat, r, nintv, break, cscoef, pf)
-!	      do iy = 1,ndat 
-!	       pf(iy-2) = dcsval(r(iy), nintv, break, cscoef)
-!	       write(*,*) r(iy), pf(iy-2)
-!	      enddo
+!            do iy = 1,ndat
+!             pf(iy-2) = dcsval(r(iy), nintv, break, cscoef)
+!             write(*,*) r(iy), pf(iy-2)
+!            enddo
 
 !        CALL DSPLINE(NDAT, R, F, B, C, D)
-*   ..the simplest linear interpolation   
+*   ..the simplest linear interpolation
       do i = 1, ndat-1
-	b(i) = (f(i+1)-f(i))/(r(i+1)-r(i))
+        b(i) = (f(i+1)-f(i))/(r(i+1)-r(i))
       enddo
       b(ndat) = b(ndat-1)
       c = 0.0e0_R8
       d = 0.0e0_R8
-      do i = -1, n 
+      do i = -1, n
         fun(i) = dseval(ndat, coord(i), r, f, b, c, d)
         write(*,*) coord(i), fun(i)
       enddo

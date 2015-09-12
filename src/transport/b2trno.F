@@ -77,7 +77,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is
       integer hcimx_flag, mode
-	integer, save :: iout = 0,                                      !srv 17.06.08
+	integer, save :: iout = 0,                                 !srv 17.06.08
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
@@ -86,7 +86,7 @@
       real (kind=R8) ::
      *  wrk(-1:nx,-1:ny), hcimx(-1:nx,-1:ny,0:1,0:ns-1),
      1  hvi0(-1:nx,-1:ny,0:1), hve0(-1:nx,-1:ny,0:1),
-     2  work(-1:nx,-1:ny), dpa0mx(-1:nx,-1:ny,0:1,0:ns-1),           !srv 09.07.03
+     2  work(-1:nx,-1:ny), dpa0mx(-1:nx,-1:ny,0:1,0:ns-1),         !srv 09.07.03
      1	pol_anom_scale
       save ncall, pol_anom_scale, hcimx_flag, mode
 *   ..procedures
@@ -158,45 +158,46 @@
      & hvi0, hve0, wrk)
 *   ..apply flux limit to neutrals contribution to hci
       call b2tlh0 (nx, ny, ns, hx, hy, na, ti, hcib, hcimx, fllim0fhi)      
+      write(6,*) ' hcimx(-1,-1,1,is) [1] = ', hcimx(-1,-1,1,0:ns-1)
       if(hcimx_flag.eq.1) then
-         hcib(:,:,:)=hcimx(:,:,1,:)
-         do ix=-1,nx
-            do iy=-1,ny
-               hci0(ix,iy)=0.0_R8
-               do is=0,ns-1
-                  hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
-               enddo
+        hcib(:,:,:)=hcimx(:,:,1,:)
+        do ix=-1,nx
+          do iy=-1,ny
+            hci0(ix,iy)=0.0_R8
+            do is=0,ns-1
+              hci0(ix,iy)=hci0(ix,iy)+hcib(ix,iy,is)
             enddo
-         enddo
+          enddo
+        enddo
       endif
       if(flux_limit_to_dpa .ne. 0) then                              !srv 15.06.08 {
 *   .. apply flux limit to neutrals contribution to dpa0
-       call b2tlc0 (nx, ny, ns, hx, hy, na, te, ti, dpa0, dpa0mx)    !srv 09.07.03 
+        call b2tlc0 (nx, ny, ns, hx, hy, na, te, ti, dpa0, dpa0mx)   !srv 09.07.03 
       endif                                                          !srv 15.06.08 }
 *   ..incorporate geometry
       do is = 0, ns-1
-       call b2txcx (nx, ny, mode, vol, gs, hx, qz, dna0(-1,-1,is),
+        call b2txcx (nx, ny, mode, vol, gs, hx, qz, dna0(-1,-1,is),
      &   cdna(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, vol, gs, hy, qz, dna0(-1,-1,is),
+        call b2txcy (nx, ny, mode, vol, gs, hy, qz, dna0(-1,-1,is),
      &   cdna(-1,-1,1,is))
-       if(flux_limit_to_dpa .ne. 0) then                             !srv 15.06.08
-        call b2txcx (nx, ny, mode, vol, gs, hx, qz, dpa0mx(-1,-1,0,is),
-     &   cdpa(-1,-1,0,is))
-        call b2txcy (nx, ny, mode, vol, gs, hy, qz, dpa0mx(-1,-1,1,is),
-     &   cdpa(-1,-1,1,is))
-       else                                                          !srv 15.06.08 {
-        call b2txcx (nx, ny, mode, vol, gs, hx, qz, dpa0(-1,-1,is),
-     &   cdpa(-1,-1,0,is))
-        call b2txcy (nx, ny, mode, vol, gs, hy, qz, dpa0(-1,-1,is),
-     &   cdpa(-1,-1,1,is))
-       endif                                                         !srv 15.06.08 }
-       call b2txsx (nx, ny, vol, hx, qz, vla0(-1,-1,0,is),
+        if(flux_limit_to_dpa .ne. 0) then                             !srv 15.06.08
+          call b2txcx (nx, ny, mode, vol, gs, hx, qz, 
+     &     dpa0mx(-1,-1,0,is), cdpa(-1,-1,0,is))
+          call b2txcy (nx, ny, mode, vol, gs, hy, qz, 
+     &     dpa0mx(-1,-1,1,is), cdpa(-1,-1,1,is))
+        else                                                          !srv 15.06.08 {
+          call b2txcx (nx, ny, mode, vol, gs, hx, qz, dpa0(-1,-1,is),
+     &     cdpa(-1,-1,0,is))
+          call b2txcy (nx, ny, mode, vol, gs, hy, qz, dpa0(-1,-1,is),
+     &     cdpa(-1,-1,1,is))
+        endif                                                         !srv 15.06.08 }
+        call b2txsx (nx, ny, vol, hx, qz, vla0(-1,-1,0,is),
      &   cvla(-1,-1,0,is))
-       call b2txsy (nx, ny, vol, hy, qz, vla0(-1,-1,1,is),
+        call b2txsy (nx, ny, vol, hy, qz, vla0(-1,-1,1,is),
      &   cvla(-1,-1,1,is))
-       call b2txcx (nx, ny, mode, vol, gs, hx, qz, vsa0(-1,-1,is),
+        call b2txcx (nx, ny, mode, vol, gs, hx, qz, vsa0(-1,-1,is),
      &   cvsa(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, vol, gs, hy, qz, vsa0(-1,-1,is),
+        call b2txcy (nx, ny, mode, vol, gs, hy, qz, vsa0(-1,-1,is),
      &   cvsa(-1,-1,1,is))
       enddo
 
