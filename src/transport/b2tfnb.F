@@ -218,7 +218,7 @@
            wrk4(ix,iy) = 0.0_R8
           else
            wrk4(ix,iy)=
-     &      (wrk3(bottomix(ix,iy),bottomiy(ix,iy))-wrk3(ix,iy))
+     &      (wrk3(ix,iy)-wrk3(bottomix(ix,iy),bottomiy(ix,iy)))
 !     &    /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))*2.0_R8 because cddi contains factor vol/hx/hy
           endif
          enddo
@@ -242,7 +242,7 @@
           if(leftix(ix,iy).eq.-2) then
            wrk4(ix,iy) = 0.0_R8
           else
-           wrk4(ix,iy) = (wrk3(leftix(ix,iy),leftiy(ix,iy))-wrk3(ix,iy))
+           wrk4(ix,iy) = (wrk3(ix,iy)-wrk3(leftix(ix,iy),leftiy(ix,iy)))
 !     &    /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*2.0_R8  because cddi contains factor vol/hx/hy
           endif
          enddo
