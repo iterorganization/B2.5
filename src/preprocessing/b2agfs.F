@@ -959,6 +959,9 @@ c
       subroutine b2gxdr_dummy(local_sonnet, nx, ny, istyle, isymm,
      & crxs, crys, bp, bt)
       use b2mod_types
+#ifdef NAGF95
+      use f90_unix           ! IGNORE
+#endif
       implicit none
       integer nx, ny, istyle, isymm
       real (kind=R8) ::
@@ -970,9 +973,14 @@ c
   
       integer nnx, nny,
      1 i, j, ix, iy, ixd, iyd, lun, line_length, mx, my, iostat
+#ifdef USE_PXFGETENV
+      integer lenval, ierror
+#endif
       real (kind=R8) ::
      *  ubr, ubt, ubp, upsi
       parameter (line_length=256)
+      character*256 meshpath
+      character*12 device
       logical open_file, uop, first_read, new_format
       character uline*(line_length)
       external xertst, subini, subend, open_file
@@ -988,9 +996,20 @@ c
       i=-1
       j=-1
       lun=96
-      if(open_file(lun,local_sonnet,
-     *     'data.local/meshes|data/meshes')) then
-        if(istyle.eq.-1) then      	 !xpb  DG-format geometry input
+      meshpath = 'data.local/meshes|data/meshes'
+#ifdef NO_GETENV
+      device = 'iter'
+#else
+#ifdef USE_PXFGETENV
+      CALL PXFGETENV ('DEVICE', 0, device, lenval, ierror)
+#else
+      call getenv ('DEVICE', device)
+#endif
+#endif
+      if(istyle.eq.-1) then      	 !xpb  DG-CARRE-format geometry input
+        meshpath = trim(meshpath)
+     .   //'|modules/Carre/meshes/'//trim(device)
+        if(open_file(lun,local_sonnet,meshpath)) then
 	  write(*,*)
      1	   "Reading the geometry file assuming the 'new' format"
           read(lun,*) nnx,nny
@@ -1006,7 +1025,14 @@ c
      2         bp(ix,iy),bt(ix,iy)
             enddo
           enddo
-        elseif(istyle.eq.-2) then  	 !xpb  SONNET-format geometry input
+          close(lun)
+        else
+          call xerrab('Error in reading geometry file')
+        endif
+      elseif(istyle.eq.-2) then  	 !xpb  SONNET-format geometry input
+        meshpath = trim(meshpath)
+     .   //'|modules/DivGeo/device/'//trim(device)
+        if(open_file(lun,local_sonnet,meshpath)) then
 	  write(*,*)
      1	   "Reading the geometry file assuming the 'old' format"
           write(*,'(a,i3,2a)') '==== b2gxdr_dummy: read unit',lun,
@@ -1127,10 +1153,10 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
             write(*,*) 'b2gxdr_dummy: my.ne.ny:  ',my,ny
             stop 'b2gxdr_dummy: Sonnet file inconsistent with the grid'
           end if
+          close(lun)
+        else
+          call xerrab('Error in reading geometry file')
         endif
-        close(lun)
-      else
-        call xerrab('Error in reading geometry file')
       endif
 
       call subend ()

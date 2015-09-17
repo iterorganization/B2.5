@@ -8,7 +8,7 @@
 *     prname = 'b2mn'.
 *     ------------------------------------------------------------------
       character id0*12, id1*12, prnam0*8
-      parameter (id0='B2 bjb99/7', id1='SOLPS 5.00')
+      parameter (id0='B2.5 bjb99/7', id1=' SOLPS-ITER ')
       character jobnam*26
       external jobnam
 *     id0 identifies the core version of b2; its value is set by bjb.

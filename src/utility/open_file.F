@@ -58,19 +58,6 @@ c
       return
  12   continue                           
       close(lu)
-      filenamecat='/data/adas/adf15/'//filename(1:lnblnk(filename))
-      write(*,*) 'Trying ',filenamecat(1:lnblnk(filenamecat))
-      open(lu,file=filenamecat(1:lnblnk(filenamecat)),
-     1 status='old',err=13,recl=1000010)             !srv 12.05.08 } !srv 15.07.09 {
-      return
- 13   continue                           
-      close(lu)
-      filenamecat='/data/'//filename(1:lnblnk(filename))
-      write(*,*) 'Trying ',filenamecat(1:lnblnk(filenamecat))
-      open(lu,file=filenamecat(1:lnblnk(filenamecat)),
-     1 status='old',err=15,recl=1000010)                             !srv 15.07.09 }
-      return
- 15   continue
       copyarea=area
  17   iend=index(copyarea,'|')
       if(iend.eq.0) then
