@@ -422,7 +422,7 @@ csw 30sep2013, added cdpa in call, uadia
       if(style.eq.0) then                                               !srv 28.07.08
        if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc called'
        call b2stbc (nx, ny, ns, ismain, ismain0, 
-     &  BoRiS, facdrift, fac_ExB,         !xpb
+     &  BoRiS, facdrift, fac_ExB,                                       !xpb
      &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,               !xpb !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb, 
      .  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,
@@ -457,7 +457,7 @@ csw 30sep2013, added cdpa in call, uadia
      2  cdna, chce, chve, chci, chvi, calf,					             !xpb
      &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)			 !xpb
        call b2xpfe (nx, ny, ns, ns_ext, qe, rza, za_ext, 
-     &  fna, fa_ext, fch_p, fne)               !srv 25.12.06
+     &  fna, fa_ext, fch_p, fne)                            !srv 25.12.06
       endif                                                 !srv 28.07.08 }
       if (use_astra.ne.0) then
         se  =0.0_R8                                         !srv 28.07.11
@@ -557,8 +557,8 @@ csw 30sep2013, added cdpa in call, uadia
 
 *   ..compute sources due to electron-atom processes
 *     (parallel momentum source must be pure friction)
-      call b2stel (nx, ny, ns, ismain, BoRiS, bb, vol, hx, hy, hz, na,     !srv 09.01.01
-     & ua, wadia, vadia, vaecrb, te, ti, po, ne, ni, facdrift, fac_ExB,   !srv 07.07.09
+      call b2stel (nx, ny, ns, ismain, BoRiS, bb, vol, hx, hy, hz, na,   !srv 09.01.01
+     & ua, wadia, vadia, vaecrb, te, ti, po, ne, ni, facdrift, fac_ExB,  !srv 07.07.09
      & rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, rlsa, rlra, rlqa, 
      & sna0_ion, sna0_rec, smq0_ion, smq0_rec, she0, shi0_ion, shi0_rec) !srv 11.09.09 {
 *   ..zero out contributions in dead cells and core boundary

@@ -202,10 +202,6 @@ c     ionisation potentials
         Ddummy(ic) = (12.0_R8+9.0_R8*(ic-1.0_R8)/(iddimd-1.0_R8))
       enddo
 
-      if(fix_recomb.ne.0) then
-         write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb
-      endif
-
 c     reading in filename and mass
       if(.not.silent_open(99,'ratadas.filelist',
      1 'data.local|modules/B2.5/Database',actual_file))

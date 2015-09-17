@@ -258,13 +258,13 @@ csw 21feb2014 remove sources in ghostcells (SOLPS4)
       endif
 
 csw 21feb2014 remove source in ghostcells (SOLPS4)
-       do ix=-1,nx
-        do iy=-1,ny
-         if(ifenebound(ix,iy) .ne. 0) then
-          shei(ix,iy) = 0.0_R8
-         endif
-        enddo
+      do ix=-1,nx
+       do iy=-1,ny
+        if(ifenebound(ix,iy) .ne. 0) then
+         shei(ix,iy) = 0.0_R8
+        endif
        enddo
+      enddo
 
 *   ..compute final resht, reshe, reshi
       b2qie=0.0_R8
@@ -283,19 +283,19 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        call my_out(70,nx,ny,reshe,'b2npht_reshe')
        call my_out(70,nx,ny,fhe(-1,-1,0),'b2npht_fhex')               !srv 10.03.10
        call my_out(70,nx,ny,fhe(-1,-1,1),'b2npht_fhey')               !srv 10.03.10
-!	  call my_out(70,nx,ny,she0(-1,-1,0),'b2npht_she0')
-!	  call my_out(70,nx,ny,she0(-1,-1,1),'b2npht_she1')
-!	  call my_out(70,nx,ny,she0(-1,-1,2),'b2npht_she2')
-!	  call my_out(70,nx,ny,she0(-1,-1,3),'b2npht_she3')
+       call my_out(70,nx,ny,she0(-1,-1,0),'b2npht_she0')
+       call my_out(70,nx,ny,she0(-1,-1,1),'b2npht_she1')
+       call my_out(70,nx,ny,she0(-1,-1,2),'b2npht_she2')
+       call my_out(70,nx,ny,she0(-1,-1,3),'b2npht_she3')
        call my_out(70,nx,ny,she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
      &                      she0(:,:,3)*te*ne,'b2npht_she')
        call my_out(70,nx,ny,reshi,'b2npht_reshi')
        call my_out(70,nx,ny,fhi(-1,-1,0),'b2npht_fhix')               !srv 10.03.10
        call my_out(70,nx,ny,fhi(-1,-1,1),'b2npht_fhiy')               !srv 10.03.10
-!	  call my_out(70,nx,ny,shi0(-1,-1,0),'b2npht_shi0')
-!	  call my_out(70,nx,ny,shi0(-1,-1,1),'b2npht_shi1')
-!	  call my_out(70,nx,ny,shi0(-1,-1,2),'b2npht_shi2')
-!	  call my_out(70,nx,ny,shi0(-1,-1,3),'b2npht_shi3')
+       call my_out(70,nx,ny,shi0(-1,-1,0),'b2npht_shi0')
+       call my_out(70,nx,ny,shi0(-1,-1,1),'b2npht_shi1')
+       call my_out(70,nx,ny,shi0(-1,-1,2),'b2npht_shi2')
+       call my_out(70,nx,ny,shi0(-1,-1,3),'b2npht_shi3')
        call my_out(70,nx,ny,shi0(:,:,0)+shi0(:,:,1)*ti+
      &     shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0),'b2npht_shi')
       endif                                                            !srv 17.07.05 }

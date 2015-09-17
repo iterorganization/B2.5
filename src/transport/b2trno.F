@@ -158,7 +158,6 @@
      & hvi0, hve0, wrk)
 *   ..apply flux limit to neutrals contribution to hci
       call b2tlh0 (nx, ny, ns, hx, hy, na, ti, hcib, hcimx, fllim0fhi)      
-      write(6,*) ' hcimx(-1,-1,1,is) [1] = ', hcimx(-1,-1,1,0:ns-1)
       if(hcimx_flag.eq.1) then
         hcib(:,:,:)=hcimx(:,:,1,:)
         do ix=-1,nx
