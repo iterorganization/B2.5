@@ -847,7 +847,7 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
         write (chns,'(i3.3)') im
         call my_out(70,nx,ny,rfluxm(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_rfluxm_eir'//chns)
-        call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,im,1),
+        call my_out(70,nx,ny,pfluxm(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_pfluxm_eir'//chns)
         call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_dmb2_eir'//chns)
