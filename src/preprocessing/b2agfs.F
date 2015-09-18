@@ -980,11 +980,19 @@ c
      *  ubr, ubt, ubp, upsi
       parameter (line_length=256)
       character*256 meshpath
+      character*80 format_string(3)
+      integer new_format
       character*12 device
-      logical open_file, uop, first_read, new_format
+      logical open_file, uop, first_read
       character uline*(line_length)
       external xertst, subini, subend, open_file
       intrinsic index, sqrt
+
+      data new_format/1/
+      data format_string/
+     1 '(19x,i3,1x,i3,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)',
+     2 '(19x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)',
+     3 '(21x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)'/
 
 *   ..subprogram start-up calls
       call subini('b2gxdr_dummy')
@@ -1059,24 +1067,26 @@ c*** Start reading the grid data
 c
           write(*,*) 'Reading the grid data ...'
           first_read = .true.
-          new_format = .false.
           mx=0
           my=0
    30     uop=.false.
-          if (.not.new_format) then
-            read (lun,700,end=40,err=31) i,j,crxs(i,j,3),crys(i,j,3),
-     ,       crxs(i,j,4),crys(i,j,4)
-          end if
-          if (.not.new_format) goto 32
+          read (lun,format_string(new_format),end=40,err=31) 
+     ,       i,j,crxs(i,j,3),crys(i,j,3),crxs(i,j,4),crys(i,j,4)
+          go to 32
    31     continue
           if (first_read) then
             backspace(lun)
-            first_read = .false.
-            new_format = .true.
+            new_format = new_format+1
+            if (new_format.le.3) then
+              go to 30
+            else
+              stop "Unrecognized format in geometry file"
+            end if
+          else
+            stop "Unrecognized format in geometry file"
           end if
-          read (lun,701,end=40) i,j,crxs(i,j,3),crys(i,j,3),
-     ,     crxs(i,j,4),crys(i,j,4)
    32     continue
+          first_read = .false.
           uop = i.le.5 .and. j.le.1 .and. .false.
           if(uop) then
             print *,'*3* ',i,j,crxs(i,j,3),crys(i,j,3)
@@ -1169,6 +1179,7 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
 
   700 format(19x,i3,1x,i3,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
   701 format(19x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
+  702 format(21x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
   710 format(18x,e17.0,14x,e17.0,1x,e17.0)
   720 format(30x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0/)
 
