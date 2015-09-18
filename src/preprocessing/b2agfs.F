@@ -980,7 +980,7 @@ c
      *  ubr, ubt, ubp, upsi
       parameter (line_length=256)
       character*256 meshpath
-      character*80 format_string(3)
+      character*80 format_string(4)
       integer new_format
       character*12 device
       logical open_file, uop, first_read
@@ -992,7 +992,8 @@ c
       data format_string/
      1 '(19x,i3,1x,i3,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)',
      2 '(19x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)',
-     3 '(21x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)'/
+     3 '(21x,i3,1x,i3,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)',
+     4 '(21x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)'/
 
 *   ..subprogram start-up calls
       call subini('b2gxdr_dummy')
@@ -1070,6 +1071,9 @@ c
           mx=0
           my=0
    30     uop=.false.
+          if(first_read) 
+     &         write(*,*) 'Trying with format_string option ',
+     &         new_format
           read (lun,format_string(new_format),end=40,err=31) 
      ,       i,j,crxs(i,j,3),crys(i,j,3),crxs(i,j,4),crys(i,j,4)
           go to 32
@@ -1077,7 +1081,7 @@ c
           if (first_read) then
             backspace(lun)
             new_format = new_format+1
-            if (new_format.le.3) then
+            if (new_format.le.4) then
               go to 30
             else
               stop "Unrecognized format in geometry file"
