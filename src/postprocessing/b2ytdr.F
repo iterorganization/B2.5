@@ -231,7 +231,7 @@ c 2002-09-11: logic revised
       integer ixa, ixb, iya, iyb
       integer nstrai1, nstrat1
 #ifdef B25_EIRENE
-      integer IUNIN, IUNOT, INDGRD(3), NR1ST, NP2ND
+      integer IUNIN, IUNOT, INDGRD(3), NR1ST, NP2ND, NT3RD
       integer INDPRO(12), NMODE, NAINI
       integer NZADD, NVOLPR, NSURPR, NVOLPL, NSP
       integer NPLINR,NPLOTR,NPLDLR,NPLINP,NPLOTP,NPLDLP,
@@ -413,7 +413,6 @@ c 2002-09-11: logic revised
       logical, allocatable :: is_neutral1(:)
       logical, allocatable :: savesigv(:), savesigs(:), savesigc(:)
 #ifdef B25_EIRENE
-      logical NLTRI, NLTET
       logical, allocatable :: NLAVRP(:), NLAVRT(:), NLSYMP(:), NLSYMT(:)
       logical, allocatable :: NLRAY(:)
       logical, allocatable :: NLATM(:), NLMOL(:), NLION(:), NLPLS(:), 
@@ -3117,6 +3116,7 @@ C  TOROIDAL MESH
         READ (IUNIN,6665) ldum(0:2) ! NLTRZ,NLTRA,NLTRT
         WRITE(IUNOT,6665) ldum(0:2)
         READ (IUNIN,6666) idum(0:3) ! NT3RD,NTSEP,NTTRA,NTPER
+        NT3RD = idum(0)
         WRITE(IUNOT,6666) idum(0:3)
         IF (INDGRD(3).LE.5) THEN
           READ (IUNIN,'(A72)') ZEILE ! ZIA,ZGA,ZAA,ZZA,ROA
