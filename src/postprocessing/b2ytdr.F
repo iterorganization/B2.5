@@ -1013,7 +1013,8 @@ c 2002-09-11: logic revised
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
-      if (boundary_namelist.eq.1) 
+      inquire(file='../b2.boundary.parameters',exist=todo)
+      if (boundary_namelist.eq.1.or.todo) 
      > call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
       inquire(file='../b2.sputter_save.parameters',
      1 exist=sputter_namelist_used)
