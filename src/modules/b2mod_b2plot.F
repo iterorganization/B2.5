@@ -139,12 +139,12 @@ cank
 
       call get_jsep(nx,ny,jxi,jxa,jsep)
       ixref=jxa
-      iyref=-2
+      iyref=jsep
       call ipgeti ('set_transport_ixref', ixref)
       call xertst (-1.le.ixref.and.ixref.le.nxd,
      1   'faulty argument set_transport_ixref')
       call ipgeti ('set_transport_iyref', iyref)
-      call xertst (-2.le.iyref.and.iyref.le.nyd,
+      call xertst (-1.le.iyref.and.iyref.le.nyd,
      1   'faulty argument set_transport_iyref')
       call get_nxt(nx,nxtl,nxtr)
 
