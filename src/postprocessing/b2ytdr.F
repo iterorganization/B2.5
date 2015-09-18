@@ -413,6 +413,7 @@ c 2002-09-11: logic revised
       logical, allocatable :: is_neutral1(:)
       logical, allocatable :: savesigv(:), savesigs(:), savesigc(:)
 #ifdef B25_EIRENE
+      logical NLTRI, NLTET
       logical, allocatable :: NLAVRP(:), NLAVRT(:), NLSYMP(:), NLSYMT(:)
       logical, allocatable :: NLRAY(:)
       logical, allocatable :: NLATM(:), NLMOL(:), NLION(:), NLPLS(:), 
@@ -3024,6 +3025,8 @@ C  RADIAL MESH
         WRITE(IUNOT,6665) ldum(0)
         IF (ldum(0)) THEN
           READ (IUNIN,6665) ldum(0:7)  ! NLSLB,NLCRC,NLELL,NLTRI,NLPLG,NLFEM,NLTET,NLGEN
+          NLTRI = ldum(3)
+          NLTET = ldum(6)
           WRITE(IUNOT,6665) ldum(0:7)
           READ (IUNIN,6666) idum(0:4)  ! NR1ST,NRSEP,NRPLG,NPPLG,NRKNOT
           NR1ST = idum(0)
@@ -6343,6 +6346,19 @@ cxpb Read first, transform and rewrite
         ENDIF
         READ (IUNIN,6666) NPLINR,NPLOTR,NPLDLR,NPLINP,NPLOTP,NPLDLP,
      .                    NPLINT,NPLOTT,NPLDLT,idum(9) ! nsrfcls
+        IF (NPLOTR.LE.0) NPLOTR=NR1ST
+        IF (NPLOTP.LE.0) NPLOTP=NP2ND
+        IF (NPLOTT.LE.0) NPLOTT=NT3RD
+        NPLOTR=MIN0(NPLOTR,NR1ST)
+        if (nltri.or.nltet) NPLOTR=MIN0(NPLOTR,NR1ST-1)
+        NPLINR=MAX0(NPLINR,1)
+        NPLDLR=MAX0(NPLDLR,1)
+        NPLOTP=MIN0(NPLOTP,NP2ND)
+        NPLINP=MAX0(NPLINP,1)
+        NPLDLP=MAX0(NPLDLP,1)
+        NPLOTT=MIN0(NPLOTT,NT3RD)
+        NPLINT=MAX0(NPLINT,1)
+        NPLDLT=MAX0(NPLDLT,1)
         idum(0) = convert_eirene
      .   (non_commensurate,1,NPLINR,NPLINP,nx,ny,nx1,ny1,0)
         idum(1) = convert_eirene
