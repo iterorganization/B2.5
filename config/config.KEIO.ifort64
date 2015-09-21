@@ -62,7 +62,7 @@ LDLIBES += -lperf
 endif
 
 LD       = ${FC}
-LDOPTS   = -i_dynamic
+LDOPTS   = 
 
 LCPP     = -L${SOLPSLIB} -lsonnet -lstdc++ -lblas
 
