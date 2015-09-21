@@ -504,6 +504,7 @@
 *    'set_transport_ixref'      See description (integer)  Physics
 *    'set_transport_iyref'      See description (integer)  Physics
 *    'set_transport_required_te_gradient' '5.0e4'      Physics
+*    'solps_version'            'iter'                 Output
 *    'tallies_netcdf'           '0'                    Output
 *  -----------------------------------------------------------------
 *
@@ -1775,6 +1776,16 @@
 *    'juelich' for input files from Juelich Eirene versions (2008 and younger)
 *    'iter' for input files from SOLPS4.2/4.3 and SOLPS-ITER runs
 *
+*    'solps_version'            'iter'                 Output
+*    This switch is to be provided within b2yt.dat to indicate to the b2yt
+*    converter the format of the original fort.44 file to be
+*    modified. The accepted values are (case-insensitive):
+*    '4.3' for a fort.44 file produced from SOLPS4.3 runs
+*    '5.0' for a fort.44 file produced from SOLPS5.0 runs
+*    '5.1' for a fort.44 file produced from SOLPS5.1 runs
+*    '5.2' for a fort.44 file produced from SOLPS5.2 runs
+*    'iter' for input files from SOLPS-ITER runs (no conversion necessary)
+*    
 *
 *   1.5. Numerics switches
 *
