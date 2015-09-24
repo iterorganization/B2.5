@@ -981,7 +981,7 @@ c
       parameter (line_length=256)
       character*256 meshpath
       character*80 format_string(4)
-      integer new_format
+      integer, save :: new_format
       character*12 device
       logical open_file, uop, first_read
       character uline*(line_length)
