@@ -7025,6 +7025,11 @@ C  HERE: EIRENE SURFACE TALLIES
             WRITE(IUNOT,6666) idum(7:9)
           ENDDO
         END IF
+*** IMFORMATION FOR MPI
+ 8685   CONTINUE
+        READ (IUNIN,'(A80)',end=8686) ZEILE
+        WRITE(IUNOT,'(A80)') ZEILE
+        goto 8685
  8686   continue
         close(IUNOT)
         goto 8688

@@ -421,6 +421,13 @@ c
      3 chemical_erosion_be_fac_a,
      4 chemical_erosion_be_fac_b,
      5 chemical_erosion_be_fac_c
+c
+      do istra = 1, nstrat
+        do is = 1, nspecies
+          if (lstrascl(istra,is).lt.0) lstrascl(istra,is)=is
+          if (lstrascl(istra,is).gt.nspecies) lstrascl(istra,is)=is
+        end do
+      end do
 
 *   ..set additional variables
       hydrogen = .false.
@@ -589,7 +596,9 @@ c
         call xertst (0.0_R8.le.recyceir(istra), 'faulty input recyceir')
         do is = 1, nspecies
           call xertst(0.0_R8.le.gpfc(is,istra), 'faulty input gpfc')
-          call xertst(0.le.lstrascl(istra,is), 'faulty input lstrascl')
+          call xertst(0.le.lstrascl(istra,is) .and.
+     .                lstrascl(istra,is).le.nspecies, 
+     .                'faulty input lstrascl')
         enddo
       enddo
       do is = 0, ns-1
