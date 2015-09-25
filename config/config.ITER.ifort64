@@ -58,7 +58,11 @@ LDLIBES   += -lperf
 endif
 
 LD         = ${FC}
+ifdef USE_MPI
 LDOPTS     = -i_dynamic ${LD_MPI}
+else
+LDOPTS     = -i_dynamic
+endif
 
 LCPP       = -L${SOLPSLIB} -lsonnet -lstdc++ -lblas
 

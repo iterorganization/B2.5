@@ -303,6 +303,17 @@
              nesepm_istra=istrai
            endif
          enddo
+         if (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
+     &    private_flux_puff.gt.0.0_R8.or.nesepm_sol.gt.0.0_R8.or.
+     *    volrec_sol.gt.0.0_R8.or.ndes_sol.gt.0.0_R8.or.
+     &    nepedm_sol.gt.0.0_R8) then
+           icount = 0
+           do istrai = 1, nstrat
+             if (crcstra(istrai).eq.'C') icount = icount+1
+           end do
+           call xertst (icount.eq.1,
+     .      'Multiple definitions of puff strata, use nesepm_istra')
+         endif
        endif
        if (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.
      &    private_flux_puff.gt.0.0_R8.or.nesepm_sol.gt.0.0_R8.or.
@@ -310,12 +321,6 @@
      &    nepedm_sol.gt.0.0_R8) then
          call xertst (nesepm_istra.gt.0,
      &     'No "C" stratum for feedback scheme specified !')
-         icount = 0
-         do istrai = 1, nstrat
-           if (crcstra(istrai).eq.'C') icount = icount+1
-         end do
-         call xertst (icount.eq.1 .or. nesepm_istra.gt.0,
-     .    'Multiple definitions of puff strata, use nesepm_istra') 
        endif
        call read_b2mod_feedback(99,'    ',feedback_namelist_used)
       endif
@@ -1284,9 +1289,9 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
          do ispecies = 0, nspecies-1
 
             if(na_feedback_target(ispecies) .gt. 0.0_R8 .and.
-     &           na_feedback_choice(ispecies) .gt. 0 .and.
-     &           na_feedback_option(ispecies) .gt. 0 .and.
-     &           na_feedback_actuator(ispecies) .gt.0) then
+     &         na_feedback_choice(ispecies) .gt. 0 .and.
+     &         na_feedback_option(ispecies) .gt. 0 .and.
+     &         na_feedback_actuator(ispecies) .gt.0) then
 
 ! phase 1:
                select case(na_feedback_choice(ispecies))
