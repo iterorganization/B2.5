@@ -162,14 +162,14 @@
       integer isfeedback, fix_fch_in_fhe_sheath
       integer, save :: fix_sx_in_fhe_sheath = 1                       !srv 08.05.09
       integer, save :: use_eirene, no_current 
-      real (kind=R8) :: nesepm, nesepm_overshoot,
+      real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
      1 bc_type13_norm, bc_type13_fac, na0eps
       real (kind=R8) :: fch_anomalous
       character*26 boundary_location(nbcd)
       character*24 hlp_frm
       save ncall, coreregno, coreregn2,  bc_type13_ref,
      1  bc_type16_ref, bc_type20_ref, bc_type13_norm, bc_type13_fac,
-     2  na0eps, fch_anomalous, bc_type21_ref,
+     2  na0eps, fch_anomalous, bc_type21_ref, ndes_sol,
      *  isfeedback, nesepm, nesepm_overshoot, fix_fch_in_fhe_sheath
 *   ..procedures
       intrinsic min, max, abs, sqrt, exp, log, dim, mod
@@ -192,7 +192,7 @@
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
      & fch_anomalous/1.0_R8/, bc_type21_ref/1/, no_current/0/, 
-     & use_astra/0/, use_eirene/0/, drift_style/1/
+     & use_astra/0/, use_eirene/0/, drift_style/1/, ndes_sol/0.0_R8/
 #ifdef WANT_THIS
       real (kind=R8) ::
      .  Tguess, fy, ehy, fylimt, prefactor,
@@ -1422,8 +1422,9 @@ cghgh
      1       'BCCON(,IS,1) = 12 for IS <> ISFEEDBACK!')
            call xertst(lfeedback, 'LFEEDBACK must be turned on!')
            call ipgetr ('b2stbc_nesepm', nesepm)
+           call ipgetr ('b2stbc_ndes_sol', ndes_sol)
            call ipgetr ('b2stbc_nesepm_overshoot', nesepm_overshoot)
-           call xertst (0.0_R8.eq.nesepm.or.
+           call xertst ((0.0_R8.eq.nesepm.and.0.0_R8.eq.ndes_sol).or.
      1      0.0_R8.eq.nesepm_overshoot,
      1      'BCCON=12 coding incompatible with nesepm_overshoot!')
           endif

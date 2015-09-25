@@ -2484,8 +2484,9 @@ c          hlp_pr= istrai.eq.7 .and. j.eq.3 !###
      *         sclstra(l,istrai)/sclrtio(j,istrai)
             else !}{
               if(sclrtio(j,istrai).lt.0.0_R8)
-     -         write(0,*) '@eirene_mc: negative plasma source. ',
-     ,         'istrai,ispecies,source = ',istrai,j,sclrtio(j,istrai)
+     -         write(0,'(a,a,i3,i3,1p,1e14.7)') 
+     ,          '@eirene_mc: negative plasma source. ',
+     ,          'istrai,ispecies,source = ',istrai,j,sclrtio(j,istrai)
               sclrtio(j,istrai)=1.0_R8
             end if !}
           end do !}
