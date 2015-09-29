@@ -3545,6 +3545,7 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
 !  Remove AMJUEL H.9 0.2/0.3/0.4 reactions
             skip_reac = .false.
             IF(streql(FILNAM,'AMJUEL')) THEN
+              IF (streql(REAC,'0.1')) skip_reac = .true.
               IF (streql(H123,'H.6')) skip_reac = .true.
               IF (streql(H123,'H.9')) THEN
                 IF (streql(REAC,'0.2')) skip_reac = .true.
@@ -3559,17 +3560,6 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
               END IF
               ILINE=ILINE+1
               IF (streql(FILNAM,'AMJUEL')) THEN
-                IF (streql(REAC,'0.1')) THEN
-                  REAC='0.1T'
-                  IF (RMN.NE.0.0_R8) THEN
-                    RMN = 0.0_R8
-                    READ (IUNIN,1028)
-                  ENDIF
-                  IF (RMX.NE.0.0_R8) THEN
-                    RMX = 0.0_R8
-                    READ (IUNIN,1028)
-                  ENDIF
-                END IF
                 IF (streql(REAC,'0.2')) REAC='0.2T'
                 IF (streql(REAC,'0.3')) REAC='0.3T'
                 IF (streql(REAC,'0.4')) REAC='0.4T'

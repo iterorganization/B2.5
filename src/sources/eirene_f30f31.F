@@ -728,6 +728,20 @@ c
      &        nxiso1(nncutmax),nxiso2(nncutmax),
      &        nyiso1(nncutmax),nyiso2(nncutmax)
 
+      character*54 format_string(2)
+      character*80 line
+      integer, save :: new_format
+
+#ifdef B25_EIRENE
+      integer, save :: exp_location, dot_location
+      data new_format/1/
+      logical open_file
+      external open_file
+#else
+      data new_format/2/
+#endif
+      data format_string/ '(4E15.7)', '(4E16.8)' /
+
       nniso=nncut-1
       if(nncut.eq.1) then
         if (nnreg(0).eq.1) then
@@ -775,6 +789,42 @@ c
         nyiso2(1)=ny
       endif
 
+#ifdef B25_EIRENE
+cxpb Deduce from fort.33 triangle vertices files which format precision to use
+      if (open_file(33,'fort.33','')) then
+        rewind(33)
+        read(33,1028)
+        read(33,'(A80)') line
+        exp_location = 81
+        dot_location = 0
+        if (index(line,'E').ne.0)
+     .   exp_location = min(exp_location,index(line,'E'))
+        if (index(line,'e').ne.0)
+     .   exp_location = min(exp_location,index(line,'e'))
+        if (index(line,'d').ne.0)
+     .   exp_location = min(exp_location,index(line,'d'))
+        if (index(line,'D').ne.0)
+     .   exp_location = min(exp_location,index(line,'D'))
+        if (exp_location.ne.81)
+     .   dot_location = index(line(1:exp_location),'.')
+        if (dot_location.ne.0) then
+          if (exp_location-dot_location.eq.8) then
+            new_format = 1
+          else if (exp_location-dot_location.eq.9) then
+            new_format = 2
+          else
+            stop "Unrecognized format (1) in fort.33 file"
+          end if
+        else
+          stop "Unrecognized format (2) in fort.33 file"
+        end if
+        close(33)
+      else
+        new_format = 2
+      end if
+#endif
+      write(*,'(a,a)')
+     . 'Writing fort.30 with ', format_string(new_format)
       rewind(30)
       write (30,*) 'Geometry from B2'
       write (30,*) ' '
@@ -794,15 +844,16 @@ c
       write (30,*) ' '
       do ix=0,nx-1
         do iy=0,ny-1
-          write (30,'(4e16.8)')
+          write (30,format_string(new_format))
      1     crx(ix,iy,1),crx(ix,iy,3),crx(ix,iy,2),crx(ix,iy,0)
-          write (30,'(4e16.8)')
+          write (30,format_string(new_format))
      1     cry(ix,iy,1),cry(ix,iy,3),cry(ix,iy,2),cry(ix,iy,0)
         end do
       end do
       close (30)
 
       return
+ 1028 format()
       end subroutine write_f30
 c
       subroutine write_f31(nx, ny)

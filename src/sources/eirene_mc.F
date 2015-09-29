@@ -109,7 +109,7 @@ c*** Otherwise: take the radiation explicitly calculated in EIRENE.
       character*13, save, allocatable :: ion_name(:)
       real (kind=R8), allocatable :: sum_wld(:,:)
 cank }
-      character*20 hlp_frm
+      character*24 hlp_frm, hlp_frm1, hlp_frm2, hlp_frm3, hlp_frm4
 c      integer lns_hlp
 c      parameter (lns_hlp=4)
 c      integer lis_hlp(lns_hlp) 
@@ -741,10 +741,18 @@ cxpb
           print *,'%%% Eirene data in B2 %%%',nlimps
           print *,'nnatmi,nnmoli,nnplsi,nnstsi,nnlimi = ',
      ,       nnatmi,nnmoli,nnplsi,nnstsi,nnlimi
+          write(hlp_frm1,'(a,i2,a)')
+     ,     '(1x,',2*nnatmi+2*nnmoli,'(6x,a2,i3.2))'
+          write(hlp_frm2,'(a,i2,a)')
+     ,     '(1p,i4,',2*nnatmi+2*nnmoli,'e11.4)'
+          write(hlp_frm3,'(a,i2,a)')
+     ,     '(1p,i4,',nnplsi,'e9.2)'
+          write(hlp_frm4,'(a,i2,a)')
+     ,     '(1p,i4,',1+nnatmi+nnmoli,'e9.2)'
           do k=0,nstrat !{
             print *
             print *,'wldna, wldnm, wldra, wldrm:',k
-            print '(1x,20(6x,a2,i3.2))',
+            write (*,hlp_frm1)
      ,         ('na',i,i=1,nnatmi),('nm',i,i=1,nnmoli),
      ,         ('ra',i,i=1,nnatmi),('rm',i,i=1,nnmoli)
             do j=1,nnlimi+nnstsi !{
@@ -759,7 +767,7 @@ cxpb
      .               .or. wldrm(j,i,k).ne.0.0_R8
                 end do !}
                 if(hlp_pr) then !{
-                  print '(1p,i4,20e11.4)',j,
+                  write(*,hlp_frm2) j,
      ,               (wldna(j,i,k),i=1,nnatmi),
      ,               (wldnm(j,i,k),i=1,nnmoli),
      ,               (wldra(j,i,k),i=1,nnatmi),
@@ -776,7 +784,7 @@ cxpb
                 hlp_pr = hlp_pr .or. wldpp(j,i,k).ne.0.0_R8
               end do !}
               if (hlp_pr)
-     >         print '(1p,i4,20e9.2)',j,(wldpp(j,i,k),i=1,nnplsi)
+     >         write(*,hlp_frm3) j,(wldpp(j,i,k),i=1,nnplsi)
             end do !}
             print *
             print *,'wldpeb, wldpa, wldpm:',k
@@ -788,7 +796,7 @@ cxpb
               do i=1,nnmoli !{
                 hlp_pr= hlp_pr .or. wldpm(j,i,k).ne.0.0_R8
               end do !}
-              if (hlp_pr) print '(1p,i4,20e9.2)',j,wldpeb(j,k),
+              if (hlp_pr) write(*,hlp_frm4) j,wldpeb(j,k),
      ,           (wldpa(j,i,k),i=1,nnatmi),
      ,           (wldpm(j,i,k),i=1,nnmoli)
             end do !}
@@ -915,6 +923,7 @@ c        this is phase 1 of rescaling process
 c
       if(main_call.and.mod(ncall,eirene_mod).eq.0
      .            .and.ank_mods.ne.0) then
+        write(hlp_frm1,'(a,i2,a)') '(a,1p,i3,',nnatmi,'e13.5)'
         do istrai=1,nstrat !{
           if((crcstra(istrai).eq.'W' .or.
      .        crcstra(istrai).eq.'E' .or.
@@ -956,11 +965,11 @@ c*** species to be scaled with themselves (recycling species)
               end if !}
             end do !}
 c!###{
-              print '(a,1p,i3,20e13.5)',' @@@ istrai,pi: ',
+            write(*,hlp_frm1) ' @@@ istrai,pi: ',
      ,                            istrai,(hlp_pi(ls),ls=1,nnatmi)
-              print '(a,1p,i3,20e13.5)',' @@@       tfl: ',
+            write(*,hlp_frm1) ' @@@       tfl: ',
      ,                        istrai,(tfl(istrai,ls),ls=1,nnatmi)
-              print '(a,1p,i3,20e13.5)',' @@@       scl: ',
+            write(*,hlp_frm1) ' @@@       scl: ',
      ,                           istrai,(hlp_scl(ls),ls=1,nnatmi)
 c!###}
 
@@ -1033,7 +1042,7 @@ c!###}
                   wldra(j,ls,istrai)=wldra(j,ls,istrai)*hlp_scl(ls)
                 end if !}
 c!###{
-c              if(hlp_tt) print '(a,1p,3i4,l3,20e13.5)',
+c              if(hlp_tt) print '(a,1p,3i4,l3,4e13.5)',
 c     ,          ' @@@ istrai,j,ls,log,scl,wldpa,wldna,wldra',
 c     ,          istrai,j,ls,hlp_log,hlp_scl(ls),wldpa(j,ls,istrai),
 c     ,                        wldna(j,ls,istrai),wldra(j,ls,istrai)
@@ -1068,7 +1077,7 @@ c!###}
 c!###{
             do ls=1,nnatmi !{
               s=hlp_po(ls)+hlp_no(ls)-hlp_s(ls)-hlp_ni(ls)
-              print '(i6,2i8,3x,1p,20e13.5)',istrai,ls,
+              print '(i6,2i8,3x,1p,8e13.5)',istrai,ls,
      ,                    lstrascl(istrai,ls),tfl(istrai,ls),
      ,                    hlp_pi(ls),hlp_po(ls),hlp_ni(ls),
      ,                    hlp_no(ls),hlp_s(ls),hlp_scl(ls),s
@@ -1103,7 +1112,7 @@ c*** terms in balance.
      .            sign(1.0_R8,s).eq.sign(1.0_R8,hlp_s(ls)))
      >               hlp_scl(ls)=hlp_s(ls)/s
 c<<<
-               print '(1x,a,1p,10e13.5)','@@@ scl,s,po,no,ni,t: ',
+               print '(1x,a,1p,5e13.5)','@@@ scl,s,po,no,ni,t: ',
      ,          hlp_scl(ls),s,hlp_po(ls),hlp_no(ls),hlp_ni(ls),hlp_t(ls)
 c>>>
 
@@ -1323,7 +1332,7 @@ c*** Here only the second pass of correction
               end do !}
             end do !}
 c!###{
-            print '(i6,2i8,3x,1p,20e13.5)',istrai,ls,
+            print '(i6,2i8,3x,1p,7e13.5)',istrai,ls,
      ,                  lstrascl(istrai,ls),tfl(istrai,ls),
      ,                  hlp_pi(ls),hlp_po(ls),
      ,                  hlp_ni(ls),hlp_no(ls),hlp_s(ls),hlp_scl(ls)
@@ -1336,7 +1345,7 @@ c!###}
 c*** Print the particle fluxes for each stratum and species
           print *,'%%%=============== total fluxes by stratum and ',
      ,       'species after correction ================%%%'
-          print '(a25,20(4x,a5,4x))',' Stratum Species lstrascl',
+          print '(a25,10(4x,a5,4x))',' Stratum Species lstrascl',
      ,       ' tfl ','wldpi','wldpo','wldni','wldno',
      ,       'Srcpl','puff ',' d/dt','crsrc','error'
           do istrai=1,nstrat !{
@@ -1438,17 +1447,19 @@ c*** Print the particle fluxes for each stratum and species
         end if !}
 
 c!###{
+c        write(hlp_frm1,'(a,i2,a)') '(3x,',nstrat,'i12)'
+c        write(hlp_frm2,'(a,i2,a)') '(1x,a5,2x,1p,',nstrat,'e12.4)'
 c        do j=1,lns_hlp !{
 c          l=lis_hlp(j)
 c          print *,'%%%=============== surface ',l
-c          print '(3x,20i12)',(i,i=1,nstrat)
-c          print '(1x,a5,2x,1p,20e12.4)','wldnm',
+c          write(*,hlp_frm1) (i,i=1,nstrat)
+c          write(*,hlp_frm2) 'wldnm',
 c     ,                                    (wldnm(l,1,i),i=1,nstrat)
-c          print '(1x,a5,2x,1p,20e12.4)','wldrm',
+c          write(*,hlp_frm2) 'wldrm',
 c     ,                                    (wldrm(l,1,i),i=1,nstrat)
-c          print '(1x,a5,2x,1p,20e12.4)','wldna',
+c          write(*,hlp_frm2) 'wldna',
 c     ,                                    (wldna(l,1,i),i=1,nstrat)
-c          print '(1x,a5,2x,1p,20e12.4)','wldra',
+c          write(*,hlp_frm2) 'wldra',
 c     ,                                    (wldra(l,1,i),i=1,nstrat)
 c          print *
 c        end do !}
