@@ -1545,8 +1545,8 @@ c dpc
             VS=0.0_R8
             NAS=0.0_R8
             DO IY = 1, BC_LIST_SIZE(IB)
-               bc_type13_ix=bc_list_x(ib,iy)
-               bc_type13_iy=bc_list_y(ib,iy)
+               bc_type13_ix=bc_list_x(iy,ib)
+               bc_type13_iy=bc_list_y(iy,ib)
                do bc_type13_i=1,bc_type13_ref ! how many steps away from the boundary?
                   bc_type13_ixx=rightix(bc_type13_ix,bc_type13_iy)
                   bc_type13_iy=rightiy(bc_type13_ix,bc_type13_iy)
@@ -1559,9 +1559,9 @@ c dpc
      1                 'stepped off y-grid in type 13 bc')
                enddo
                FS=FS+FNA(bc_type13_ix,bc_type13_iy,0,is)
-               VS=VS+VOL(bc_list_x(ib,iy),bc_list_y(ib,iy))
-               NAS=NAS+NA(bc_list_x(ib,iy),bc_list_y(ib,iy),is)*
-     .          vol(bc_list_x(ib,iy),bc_list_y(ib,iy))
+               VS=VS+VOL(bc_list_x(iy,ib),bc_list_y(iy,ib))
+               NAS=NAS+NA(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
+     .          vol(bc_list_x(iy,ib),bc_list_y(iy,ib))
             ENDDO
             NAS=NAS/VS
             DFS=CONPAR(IS,IB,1)+CONPAR(IS,IB,3)
@@ -1574,10 +1574,10 @@ c dpc
      1       'b2stbc_conpar=13: is,curr_flux,desired_flux,density ',
      2       IS,FS,DFS,NAS
             DO IY = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IB,IY),BC_LIST_Y(IB,IY),0,IS)=
-     .         VBIG*NAS*SX(BC_LIST_X(IB,IY),BC_LIST_Y(IB,IY))
-              SNA0(BC_LIST_X(IB,IY),BC_LIST_Y(IB,IY),1,IS)=
-     .        -VBIG*SX(BC_LIST_X(IB,IY),BC_LIST_Y(IB,IY))
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=
+     .         VBIG*NAS*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+              SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     .        -VBIG*SX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
             ENDDO
           ELSE
             CALL XERRAB
@@ -1712,7 +1712,7 @@ c dpc
                 call xertst(
      .         mod(region(BC_LIST_X(1,IBW),BC_LIST_Y(1,IBW),0),4).eq.1,
      .           'BCCON = 16 only applicable to core boundaries !')
-                call xertst(CONPAR(IS,IBW,1).gt.0.0_R8,
+                call xertst(CONPAR(IS,IBW,1).ge.0.0_R8,
      1           'BCCON = 16, CONPAR(,,1) !> 0')
               endif
               if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.19.or.
@@ -1745,9 +1745,9 @@ c dpc
           DO IBW=IB,NBC
           if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))THEN
                DO IX = 1, BC_LIST_SIZE(IBW)
-               NAS = NAS+NA(BC_LIST_X(IBW,IX),BC_LIST_Y(IBW,IX),is)*
-     .                     VOL(BC_LIST_X(IBW,IX),BC_LIST_Y(IBW,IX))
-                 VS = VS + VOL(BC_LIST_X(IBW,IX),BC_LIST_Y(IBW,IX))
+               NAS = NAS+NA(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),is)*
+     .                     VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                 VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                END DO
              endif
           END DO
@@ -1823,15 +1823,15 @@ c dpc
      1       'BCCON = 18 is applied for main ion only ')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
-          t0 = 0.0_R8
+            t0 = 0.0_R8
             US=0.0_R8
             DO IX = 1, BC_LIST_SIZE(IB)
-              US=US+SY(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX))
+              US=US+SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
               DO ISB = 0, NS-1
                 if (is_neutral(isb)) then
                   t0 = t0 +
-     .             fna(topix(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX)),
-     .                 topiy(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX)),1,isb)
+     .             fna(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .                 topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,isb)
                 endif
               END DO
             END DO
@@ -1845,27 +1845,27 @@ c dpc
 !            endif
 
             DO IX = 1, BC_LIST_SIZE(IB)
-              SNA0(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX),0,IS)=
-     &         SNA0(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX),0,IS)+         !srv 01.02.09
-     1          CONPAR(IS,IB,1)/US*SY(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX))
-              SNA0(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX),1,IS)=0.0_R8
-              sna0_no_mdf(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX),0,is) =
-     &         sna0_no_mdf(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX),0,is)+
-     &         sna0(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX),0,is) !srv 23.09.08
-              sna0_no_mdf(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX),1,is) =
-     &         sna0_no_mdf(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX),1,is)+
-     &         sna0(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX),1,is) !srv 23.09.08
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
+     &         SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)+         !srv 01.02.09
+     1          CONPAR(IS,IB,1)/US*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=0.0_R8
+              sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
+     &         sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is)+
+     &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) !srv 23.09.08
+              sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB,1,is) =
+     &         sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
+     &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) !srv 23.09.08
             if(mdf_fnb.ne.0) then                                    !srv 12.09.08 {
-                sna0(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX),0,is) =
-     &           sna0(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX),0,is) -
-     &           fnaPSch(topix(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX)),
-     &                   topiy(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX)),1,is)
-               sna0(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX),1,is) =
-     &          sna0(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX),1,is) +
-     &           vol(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX))/
-     &           hy1(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX))*
-     &           vaecrb(topix(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX)),
-     &                  topiy(BC_LIST_X(IB,IX),BC_LIST_Y(IB,IX)),1,is)
+                sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
+     &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) -
+     &           fnaPSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &                   topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
+               sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
+     &          sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) +
+     &           vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     &           hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
+     &           vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
             endif                                                    !srv 12.09.08 }
             ENDDO
           ELSE
