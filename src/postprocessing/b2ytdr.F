@@ -6761,7 +6761,7 @@ C  SKIP READING REST OF THIS BLOCK
           IF (streql(eirene_format,'old')) READ (IUNIN,'(A72)') ZEILE
           READ (IUNIN,'(9I6)') idum(0:8) ! NFLA,NCUTB,NCUTL,IMF,
                                          ! ntrfrm,nfull,ibrad,ibpol,ibtor
-          idum(0) = nplsi1
+          idum(0) = ns1-natmi1
           if (idum(6).eq.0) idum(6)=1
           if (idum(7).eq.0) idum(7)=1
           if (idum(8).eq.0) idum(8)=1
