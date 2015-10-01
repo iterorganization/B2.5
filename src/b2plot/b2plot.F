@@ -1080,11 +1080,11 @@ c
       call b2page(1,1)
       color_set=.true.
       call contourplot(.true.)     ! draw contour plot by default
-      call nofill(.false.)       ! fill contours by default
+      call nofill(.false.)         ! fill contours by default
       call ipolate(.false.)        ! do not use splines untless wanted
-      call clvl(.true.)          ! contour level lines plotted
-      call labelon(.true.)       ! contour labels drawn
-      call gridon(.false.)       ! overlayed mesh off by default
+      call clvl(.true.)            ! contour level lines plotted
+      call labelon(.true.)         ! contour labels drawn
+      call gridon(.false.)         ! overlayed mesh off by default
       call vesselon(.false.)       ! same for vessel
       call separatrixon(.false.)   ! same for separatrix
       call set_midplane_mapping(.false.) ! do not map to midplane by default

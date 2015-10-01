@@ -147,6 +147,7 @@ c special treatment of diverted island X-points
 c special treatment of limiter tangency X-points
       do iy=-1,ny-1
         do ix=-1,nx-1
+          if(bottomiy(ix,iy).eq.-2) cycle
           if(bottomiy(bottomix(ix,iy),bottomiy(ix,iy)).eq.iy 
      &     .and. ny.gt.1) then
             ix1=ix

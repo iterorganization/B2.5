@@ -14,8 +14,8 @@ c
       if(vessel.and.physical) then
         call pltvessel
       endif
-      if(outline.and.physical) then
-        call pltoutline
+      if(outline) then
+        call pltoutline(physical)
       endif
 #ifdef WOS
       call flux_add(nx,ny)

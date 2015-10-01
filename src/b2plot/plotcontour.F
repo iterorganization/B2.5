@@ -262,6 +262,11 @@ C Initialise Areas
         IC=IC+1
         X(IC)=XLO
         Y(IC)=YLO
+        if (b2plot_debug.ge.8) then
+          write(*,*) 'Physical domain bounding box : '
+          write(*,*) 'X : ', X(1:5)
+          write(*,*) 'Y : ', Y(1:5)
+        end if
         CALL AREDAM(MAP,X,Y,IC,2,-1,0)
         IC=1
         IX=-1
@@ -525,6 +530,11 @@ cxpb	  else
 cxpb	    stop 'NOT CODED'
 cxpb	  ENDIF
 cxpb	endif
+        if (b2plot_debug.ge.8) then
+          write(*,*) 'Physical domain data bounds (1) : '
+          write(*,*) 'X : ', X(1:5)
+          write(*,*) 'Y : ', Y(1:5)
+        end if
         CALL AREDAM(MAP,X,Y,IC,2,0,1)
         IF(.NOT.COLPRT.OR..NOT.CONTPLOT) CALL CURVED(X,Y,IC)
         if(iyt.eq.ny) then
@@ -568,6 +578,11 @@ cxpb	  ENDIF
 cxpb	  IC=IC+1
 cxpb	  X(IC)=CR(NXCUT1(2),-1)
 cxpb	  Y(IC)=CZ(NXCUT1(2),-1)
+        if (b2plot_debug.ge.8) then
+          write(*,*) 'Physical domain data bounds (2) : '
+          write(*,*) 'X : ', X(1:5)
+          write(*,*) 'Y : ', Y(1:5)
+        end if
         CALL AREDAM(MAP,X,Y,IC,2,0,1)
         IF(.NOT.COLPRT.OR..NOT.CONTPLOT) CALL CURVED(X,Y,IC)
 cxpb    endif
@@ -995,6 +1010,8 @@ C =============================== Setup individual zones
             nnx=nxend(k)-nxstrt(k)+1
             if (nperd(k).ne.-1) nnx=nnx+1
             nny=nyend(k)-nystrt(k)+1
+            if (b2plot_debug.eq.8) write(*,*) 'k, nnx, nny : ',
+     .                                         k, nnx, nny
             if(ic.ne.nnx*nny) stop 'ic.ne.nnx*nny'
             CALL CPSETI('SET - DO-SET-CALL FLAG',0)
             CALL CPRECT(z, NNX, NNX, NNY, RWRK, LRWK, IWRK, LIWK)
@@ -1057,6 +1074,11 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
         IC=IC+1
         X(IC)=XLO
         Y(IC)=YLO
+        if (b2plot_debug.ge.8) then
+          write(*,*) 'Computational domain bounding box : '
+          write(*,*) 'X : ', X(1:5)
+          write(*,*) 'Y : ', Y(1:5)
+        end if
         CALL AREDAM(MAP,X,Y,IC,2,-1,0)
         IC=1
         X(IC)=CR(-1,-1)
@@ -1073,6 +1095,11 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
         IC=IC+1
         X(IC)=CR(-1,-1)
         Y(IC)=CZ(-1,-1)
+        if (b2plot_debug.ge.8) then
+          write(*,*) 'Computational domain data bounds : '
+          write(*,*) 'X : ', X(1:5)
+          write(*,*) 'Y : ', Y(1:5)
+        end if
         CALL AREDAM(MAP,X,Y,IC,2,0,1)
         IF(.NOT.COLPRT.OR..NOT.CONTPLOT) CALL CURVED(X,Y,IC)
         
@@ -1095,7 +1122,7 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
         NNX=NX+2
         NNY=NY+2
         IF(IC.NE.NNX*NNY) WRITE(*,*) 'ic <> nnx*nny',IC,NNX,NNY
-C	  WRITE(*,*) 'NX,NY,NNX,NNY',NX,NY,NNX,NNY
+	IF (b2plot_debug.ge.8) WRITE(*,*) 'NX,NY,NNX,NNY',NX,NY,NNX,NNY
 C	  CALL CPCNRC(z,NNX,NNX,NNY,ZLO,ZHI,0.0,1,0,0)
         CALL CPSETI('SET - DO-SET-CALL FLAG',0)
         CALL CPRECT(z, nnx, nnx, nny, RWRK, LRWK, IWRK, LIWK)
