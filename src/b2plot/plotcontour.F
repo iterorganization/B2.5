@@ -4,8 +4,8 @@ C =====================================================================
      . CR,CZ,FIELD,ZLOD,ZHID,PHYSICAL,LINLOG)
 C =====================================================================
       use b2mod_types
+      use b2mod_b2plot_values
       use b2mod_b2plot_debug
-cxpb      use b2mod_b2plot_cuts
       use b2mod_b2plot_xy
       use b2mod_indirect
       use b2mod_boundary_namelist
@@ -30,7 +30,8 @@ cxpb  INTEGER NNCUT_L
       CHARACTER*20 LBLS(100)
       
       integer irold,nerrf,nerro,nfmtz,noz,nozm,
-     .        i,ic,iiso,ix,ixl,iy,iyt,k,kreg,l
+     .        i,ic,iiso,ix,ixl,iy,iyt,k,kreg,l,
+     .        ixstrt,ixend,iystrt,iyend
       real rlo, rhi, zlo, zhi, zinc, zval, clv, special
       logical iniso
       integer lnblnk, no_available_colors
@@ -241,11 +242,11 @@ c     1	     CALL CPSETI('CLU - CONTOUR LEVEL USE FLAG',3)
       
       SPECIAL=-1E30
       CALL CPSETR('SPV - SPECIAL VALUE',SPECIAL)
-      
+
 C Initialise Areas
       CALL ARINAM(MAP, LMAP)
       CALL GSFAIS(1)
-      
+
       IF(PHYSICAL) THEN	  ! ========== plot physical domain
         IC=1
         X(IC)=XLO
@@ -268,6 +269,7 @@ C Initialise Areas
           write(*,*) 'Y : ', Y(1:5)
         end if
         CALL AREDAM(MAP,X,Y,IC,2,-1,0)
+cxpb Obtaining the outer contour outline of the plasma region to be plotted
         IC=1
         IX=-1
         IY=-1
@@ -463,80 +465,9 @@ C Initialise Areas
             end if
           end do
         end do
-cxpb        nxend(1)=nx-1
-cxpb	if (nncut_l.eq.0) nxend(1)=nx-1
-cxpb	IF (NNCUT_L.EQ.2) NXEND(1)=NX-1
-cxpb	IF (NNCUT_L.EQ.4) NXEND(1)=NXISO1(1)
-cxpb	DO IX=1,NXEND(1)
-cxpb	  IC=IC+1
-cxpb	  X(IC)=CR(IX,NY-1)
-cxpb	  Y(IC)=CZ(IX,NY-1)
-cxpb	ENDDO
-cxpb	DO IY=NY-1,0,-1
-cxpb	  IC=IC+1
-cxpb	  X(IC)=CR(NXEND(1),IY)
-cxpb	  Y(IC)=CZ(NXEND(1),IY)
-cxpb	ENDDO
-cxpb	if(nncut_l.eq.0) then
-cxpb	  DO IX=NXEND(1)-1,0,-1
-cxpb	    IC=IC+1
-cxpb	    X(IC)=CR(IX,-1)
-cxpb	    Y(IC)=CZ(IX,-1)
-cxpb	  ENDDO
-cxpb	else
-cxpb	  DO IX=NXEND(1)-1,NXCUT2(NNCUT_L-1),-1
-cxpb	    IC=IC+1
-cxpb	    X(IC)=CR(IX,-1)
-cxpb	    Y(IC)=CZ(IX,-1)
-cxpb	  ENDDO
-cxpb	  IF (NNCUT_L.EQ.2) THEN
-cxpb	    DO IX=NXCUT1(1),0,-1
-cxpb	      IC=IC+1
-cxpb	      X(IC)=CR(IX,-1)
-cxpb	      Y(IC)=CZ(IX,-1)
-cxpb	    ENDDO
-cxpb	  ELSEIF (NNCUT_L.EQ.4) THEN
-cxpb	    DO IX=NXCUT1(3),NXISO2(1),-1
-cxpb	      IC=IC+1
-cxpb	      X(IC)=CR(IX,-1)
-cxpb	      Y(IC)=CZ(IX,-1)
-cxpb	    ENDDO
-cxpb	    DO IY=0,NY-1,-1
-cxpb	      IC=IC+1
-cxpb	      X(IC)=CR(NXISO2(1),IY)
-cxpb	      Y(IC)=CZ(NXISO2(1),IY)
-cxpb	    ENDDO
-cxpb	    DO IX=NXISO2(1),NX
-cxpb	      IC=IC+1
-cxpb	      X(IC)=CR(IX,NY-1)
-cxpb	      Y(IC)=CZ(IX,NY-1)
-cxpb	    ENDDO
-cxpb	    DO IY=NY-1,0,-1
-cxpb	      IC=IC+1
-cxpb	      X(IC)=CR(NX-1,IY)
-cxpb	      Y(IC)=CZ(NX-1,IY)
-cxpb	    ENDDO
-cxpb	    DO IX=NX-1,NXCUT2(1),-1
-cxpb	      IC=IC+1
-cxpb	      X(IC)=CR(IX,-1)
-cxpb	      Y(IC)=CZ(IX,-1)
-cxpb	    ENDDO
-cxpb	    DO IX=NXCUT1(1),0,-1
-cxpb	      IC=IC+1
-cxpb	      X(IC)=CR(IX,-1)
-cxpb	      Y(IC)=CZ(IX,-1)
-cxpb	    ENDDO
-cxpb	  else
-cxpb	    stop 'NOT CODED'
-cxpb	  ENDIF
-cxpb	endif
-        if (b2plot_debug.ge.8) then
-          write(*,*) 'Physical domain data bounds (1) : '
-          write(*,*) 'X : ', X(1:5)
-          write(*,*) 'Y : ', Y(1:5)
-        end if
         CALL AREDAM(MAP,X,Y,IC,2,0,1)
         IF(.NOT.COLPRT.OR..NOT.CONTPLOT) CALL CURVED(X,Y,IC)
+cxpb Obtaining the inner contour outline of the plasma region to be plotted
         if(iyt.eq.ny) then
           iy=-1
           ix=-1
@@ -561,57 +492,16 @@ cxpb	endif
         ic=ic+1
         x(ic)=cr(ixl,iy)
         y(ic)=cz(ixl,iy)
-cxpb        if(nncut_l.ge.2) then
-cxpb	  IC=0
-cxpb	  DO IX=NXCUT1(2),NXCUT2(NNCUT_L),-1
-cxpb	    IC=IC+1
-cxpb	    X(IC)=CR(IX,-1)
-cxpb	    Y(IC)=CZ(IX,-1)
-cxpb	  ENDDO
-cxpb	  IF (NNCUT_L.EQ.4) THEN
-cxpb	    DO IX=NXCUT1(4),NXCUT2(2),-1
-cxpb	      IC=IC+1
-cxpb	      X(IC)=CR(IX,-1)
-cxpb	      Y(IC)=CZ(IX,-1)
-cxpb	    ENDDO
-cxpb	  ENDIF
-cxpb	  IC=IC+1
-cxpb	  X(IC)=CR(NXCUT1(2),-1)
-cxpb	  Y(IC)=CZ(NXCUT1(2),-1)
-        if (b2plot_debug.ge.8) then
-          write(*,*) 'Physical domain data bounds (2) : '
-          write(*,*) 'X : ', X(1:5)
-          write(*,*) 'Y : ', Y(1:5)
-        end if
         CALL AREDAM(MAP,X,Y,IC,2,0,1)
         IF(.NOT.COLPRT.OR..NOT.CONTPLOT) CALL CURVED(X,Y,IC)
-cxpb    endif
         
         IF(DEBUG) THEN
-cxpb	  WRITE (*,*) 'nxcut1(1) =',NXCUT1(1),
-cxpb     1	   'nxcut1(2) =',NXCUT1(2),
-cxpb     2	   'nxcut2(1) =',NXCUT2(1),
-cxpb     3	   'nxcut2(2) =',NXCUT2(2)
-cxpb	  WRITE (*,*) 'nycut1(1) =',NYCUT1(1),
-cxpb     1	   'nycut1(2) =',NYCUT1(2),
-cxpb     2	   'nycut2(1) =',NYCUT2(1),
-cxpb     3	   'nycut2(2) =',NYCUT2(2)
-cxpb	  IF(NNCUT_L.EQ.4) THEN
-cxpb	    WRITE (*,*) 'nxcut1(3) =',NXCUT1(3),
-cxpb     1	     'nxcut1(4) =',NXCUT1(4),
-cxpb     2	     'nxcut2(3) =',NXCUT2(3),
-cxpb     3	     'nxcut2(4) =',NXCUT2(4)
-cxpb	    WRITE (*,*) 'nycut1(3) =',NYCUT1(3),
-cxpb     1	     'nycut1(4) =',NYCUT1(4),
-cxpb     2	     'nycut2(3) =',NYCUT2(3),
-cxpb     3	     'nycut2(4) =',NYCUT2(4)
           do iiso = 1, nniso
             WRITE (*,*) 'nxiso1(',iiso,') =',nxiso1(iiso),
      1                 ' nxiso2(',iiso,') =',nxiso2(iiso)
             WRITE (*,*) 'nyiso1(',iiso,') =',nyiso1(iiso),
      1	               ' nyiso2(',iiso,') =',nyiso2(iiso)
           end do
-cxpb	  ENDIF
         ENDIF
         
         CALL CPSETI('GIC - GROUP IDENTIFIER FOR CONTOURLINES',1)
@@ -622,143 +512,6 @@ cxpb	  ENDIF
         IF(.NOT.CONTPLOT) GOTO 5150  ! skip contourplot
         
 C ========= Initialise Data Array ===========================
-cxpb	if(nncut_l.eq.0) then
-cxpb	  kreg=1
-cxpb	  nxstrt(1)=-1
-cxpb	  nxend(1)=nx-1
-cxpb	  nystrt(1)=-1
-cxpb	  nyend(1)=ny-1
-cxpb	  nperd(1)=-1
-cxpb	elseif (nncut_l.eq.2) then
-cxpb	  kreg=4
-cxpb	  nxstrt(1)=-1
-cxpb	  nxend(1)=nx-1
-cxpb	  nystrt(1)=nycut2(1)
-cxpb	  nyend(1)=ny-1
-cxpb	  nperd(1)=-1
-cxpb	  nxstrt(2)=nxcut2(2)
-cxpb	  nxend(2)=nxcut1(2)
-cxpb	  nystrt(2)=-1
-cxpb	  nyend(2)=nycut2(1)
-cxpb	  nperd(2)=nxcut1(2)
-cxpb	  nxstrt(3)=-1
-cxpb	  nxend(3)=nxcut1(1)
-cxpb	  nystrt(3)=-1
-cxpb	  nyend(3)=nycut2(1)
-cxpb	  nperd(3)=-1
-cxpb	  nxstrt(4)=nxcut2(1)
-cxpb	  nxend(4)=nx-1
-cxpb	  nystrt(4)=-1
-cxpb	  nyend(4)=nycut2(1)
-cxpb	  nperd(4)=nxcut1(1)
-cxpb	elseif (nncut_l.eq.4.and.nycut2(1).eq.nycut2(2)) then
-cxpb	  kreg=8
-cxpb	  nxstrt(1)=-1
-cxpb	  nxend(1)=nxiso1(1)
-cxpb	  nystrt(1)=nycut2(1)
-cxpb	  nyend(1)=ny-1
-cxpb	  nperd(1)=-1
-cxpb	  nxstrt(2)=nxiso2(1)
-cxpb	  nxend(2)=nx-1
-cxpb	  nystrt(2)=nycut2(1)
-cxpb	  nyend(2)=ny-1
-cxpb	  nperd(2)=-1
-cxpb	  nxstrt(3)=nxcut2(4)
-cxpb	  nxend(3)=nxcut1(2)
-cxpb	  nystrt(3)=-1
-cxpb	  nyend(3)=nycut2(1)
-cxpb	  nperd(3)=nxcut1(4)
-cxpb	  nxstrt(4)=nxcut2(2)
-cxpb	  nxend(4)=nxcut1(4)
-cxpb	  nystrt(4)=-1
-cxpb	  nyend(4)=nycut2(1)
-cxpb	  nperd(4)=nxcut1(2)
-cxpb	  nxstrt(5)=-1
-cxpb	  nxend(5)=nxcut1(1)
-cxpb	  nystrt(5)=-1
-cxpb	  nyend(5)=nycut2(1)
-cxpb	  nperd(5)=-1
-cxpb	  nxstrt(6)=nxcut2(1)
-cxpb	  nxend(6)=nx-1
-cxpb	  nystrt(6)=-1
-cxpb	  nyend(6)=nycut2(1)
-cxpb	  nperd(6)=nxcut1(1)
-cxpb	  nxstrt(7)=nxcut2(3)
-cxpb	  nxend(7)=nxiso1(1)
-cxpb	  nystrt(7)=-1
-cxpb	  nyend(7)=nycut2(2)
-cxpb	  nperd(7)=nxcut1(3)
-cxpb	  nxstrt(8)=nxiso2(1)
-cxpb	  nxend(8)=nxcut1(3)
-cxpb	  nystrt(8)=-1
-cxpb	  nyend(8)=nycut2(2)
-cxpb	  nperd(8)=-1
-cxpb	elseif (nncut_l.eq.4) then
-cxpb	  kreg=10
-cxpb	  nxstrt(1)=-1
-cxpb	  nxend(1)=nxiso1(1)
-cxpb	  nystrt(1)=max(nycut2(1),nycut2(2))
-cxpb	  nyend(1)=ny-1
-cxpb	  nperd(1)=-1
-cxpb	  nxstrt(2)=nxiso2(1)
-cxpb	  nxend(2)=nx-1
-cxpb	  nystrt(2)=max(nycut2(1),nycut2(2))
-cxpb	  nyend(2)=ny-1
-cxpb	  nperd(2)=-1
-cxpb	  nxstrt(3)=nxcut2(4)
-cxpb	  nxend(3)=nxcut1(2)
-cxpb	  nystrt(3)=-1
-cxpb	  nyend(3)=min(nycut2(1),nycut2(2))
-cxpb	  nperd(3)=nxcut1(4)
-cxpb	  nxstrt(4)=nxcut2(2)
-cxpb	  nxend(4)=nxcut1(4)
-cxpb	  nystrt(4)=-1
-cxpb	  nyend(4)=min(nycut2(1),nycut2(2))
-cxpb	  nperd(4)=nxcut1(2)
-cxpb	  nystrt(5)=min(nycut2(1),nycut2(2))
-cxpb	  nyend(5)=max(nycut2(1),nycut2(2))
-cxpb	  nystrt(6)=min(nycut2(1),nycut2(2))
-cxpb	  nyend(6)=max(nycut2(1),nycut2(2))
-cxpb	  if (nycut2(1).lt.nycut2(2)) then
-cxpb	    nxstrt(5)=-1
-cxpb	    nxstrt(6)=nxcut2(2)
-cxpb	    nxend(5)=nxcut1(2)
-cxpb	    nxend(6)=nx-1
-cxpb	    nperd(5)=-1
-cxpb	    nperd(6)=nxcut1(2)
-cxpb	  else
-cxpb	    nxstrt(5)=nxcut2(4)
-cxpb	    nxstrt(6)=nxiso2(1)
-cxpb	    nxend(5)=nxiso1(1)
-cxpb	    nxend(6)=nxcut1(4)
-cxpb	    nperd(5)=nxcut1(4)
-cxpb	    nperd(6)=-1
-cxpb	  endif
-cxpb	  nxstrt(7)=-1
-cxpb	  nxend(7)=nxcut1(1)
-cxpb	  nystrt(7)=-1
-cxpb	  nyend(7)=nycut2(1)
-cxpb	  nperd(7)=-1
-cxpb	  nxstrt(8)=nxcut2(1)
-cxpb	  nxend(8)=nx-1
-cxpb	  nystrt(8)=-1
-cxpb	  nyend(8)=nycut2(1)
-cxpb	  nperd(8)=nxcut1(1)
-cxpb	  nxstrt(9)=nxcut2(3)
-cxpb	  nxend(9)=nxiso1(1)
-cxpb	  nystrt(9)=-1
-cxpb	  nyend(9)=nycut2(2)
-cxpb	  nperd(9)=nxcut1(3)
-cxpb	  nxstrt(10)=nxiso2(1)
-cxpb	  nxend(10)=nxcut1(3)
-cxpb	  nystrt(10)=-1
-cxpb	  nyend(10)=nycut2(2)
-cxpb	  if (nxend(10).eq.nxstrt(10)) then
-cxpb	    nperd(10)=nxstrt(10)
-cxpb	  else
-cxpb	    nperd(10)=-1
-cxpb	  endif
-cxpb	endif
 cxpb Region 1 is either the whole plasma (nncut=0 case) or
 cxpb the westernmost private region. 
         kreg=1
@@ -1081,20 +834,20 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
         end if
         CALL AREDAM(MAP,X,Y,IC,2,-1,0)
         IC=1
-        X(IC)=CR(-1,-1)
-        Y(IC)=CZ(-1,-1)
+        X(IC)=max(CR(-1,-1),values(1))
+        Y(IC)=max(CZ(-1,-1),values(3))
         IC=IC+1
-        X(IC)=CR(-1,-1)
-        Y(IC)=CZ(NZ,0)+0.5_R4
+        X(IC)=max(CR(-1,-1),values(1))
+        Y(IC)=min(CZ(NZ,0)+0.5_R4,values(4))
         IC=IC+1
-        X(IC)=CR(NR,0)+0.5_R4
-        Y(IC)=CZ(NZ,0)+0.5_R4
+        X(IC)=min(CR(NR,0)+0.5_R4,values(2))
+        Y(IC)=min(CZ(NZ,0)+0.5_R4,values(4))
         IC=IC+1
-        X(IC)=CR(NR,0)+0.5_R4
-        Y(IC)=CZ(-1,-1)
+        X(IC)=min(CR(NR,0)+0.5_R4,values(2))
+        Y(IC)=min(CZ(-1,-1),values(3))
         IC=IC+1
-        X(IC)=CR(-1,-1)
-        Y(IC)=CZ(-1,-1)
+        X(IC)=min(CR(-1,-1),values(1))
+        Y(IC)=min(CZ(-1,-1),values(3))
         if (b2plot_debug.ge.8) then
           write(*,*) 'Computational domain data bounds : '
           write(*,*) 'X : ', X(1:5)
@@ -1111,20 +864,29 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
         IF(.NOT.CONTPLOT) GOTO 5152
         
         IC=0
-        DO IY=-1,NY
-          DO IX=-1,NX
+        ixstrt=max(-1,min(nx,nint(values(1))))
+        iystrt=max(-1,min(ny,nint(values(3))))
+        ixend =max(-1,min(nx,nint(values(2))))
+        iyend =max(-1,min(ny,nint(values(4))))
+        DO IY=iystrt,iyend
+          DO IX=ixstrt,ixend
             IC=IC+1
             X(IC)=ix    ! was CR(IX,0)
             Y(IC)=iy    ! was CZ(IY,0)
             Z(IC)=FIELD(IX,IY)
           ENDDO
         ENDDO
-        NNX=NX+2
-        NNY=NY+2
+        NNX=ixend-ixstrt+1
+        NNY=iyend-iystrt+1
         IF(IC.NE.NNX*NNY) WRITE(*,*) 'ic <> nnx*nny',IC,NNX,NNY
 	IF (b2plot_debug.ge.8) WRITE(*,*) 'NX,NY,NNX,NNY',NX,NY,NNX,NNY
 C	  CALL CPCNRC(z,NNX,NNX,NNY,ZLO,ZHI,0.0,1,0,0)
         CALL CPSETI('SET - DO-SET-CALL FLAG',0)
+        CALL CPSETI('MAP - MAPPING FLAG',1)
+        CALL CPSETR('XC1 - X COORDINATE AT I=1', real(ixstrt))
+        CALL CPSETR('XCM - X COORDINATE AT I=M', real(ixend))
+        CALL CPSETR('YC1 - Y COORDINATE AT J=1', real(iystrt))
+        CALL CPSETR('YCN - Y COORDINATE AT J=N', real(iyend))
         CALL CPRECT(z, nnx, nnx, nny, RWRK, LRWK, IWRK, LIWK)
 C Add contours to area map
         CALL CPCLAM(z, RWRK, IWRK, MAP)

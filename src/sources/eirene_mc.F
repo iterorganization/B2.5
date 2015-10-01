@@ -1800,7 +1800,7 @@ c   and apply linearisation
             do iy=-1,ny !{
               do ix=-1,nx !{
                 if(leftix(ix,iy).ne.-2 .and.
-     &             rightix(ix,iy).ne.nx+1.and.
+     &             rightix(ix,iy).ne.nx+1 .and.
      &             bottomiy(ix,iy).ne.-2 .and.
      &             topiy(ix,iy).ne.ny+1 .and.
      &             region(ix,iy,0).ne.0) then !{

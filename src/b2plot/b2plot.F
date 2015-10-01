@@ -1003,12 +1003,12 @@ c
       nz=ns
 c
       do ix=-1,nx
-        XX(IX,2) = ix
-        XX(IX,1) = IX-0.5_R8
+        XX(IX,2) = real(ix)
+        XX(IX,1) = real(IX)-0.5_R8
       end do
       do iy=-1,ny
-        YY(IY,2) = IY
-        YY(IY,1) = IY-0.5_R8
+        YY(IY,2) = real(IY)
+        YY(IY,1) = real(IY)-0.5_R8
       end do
       do ibnd=1,nbnd
         targetx(ibnd,2) = real(ibnd)
