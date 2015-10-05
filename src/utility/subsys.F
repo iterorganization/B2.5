@@ -28,6 +28,9 @@
       return
 *     ------------------------------------------------------------------
       entry subini (srname)
+#ifdef PERFMON
+      call perfon (srname)
+#endif
 *   ..test nchs
       if (nchs.eq.nchmx) then
        stop 'subini--error, nchs.eq.nchmx'
@@ -58,6 +61,9 @@ c-dpc      write(*,*) 'subend: ',chstck(nchs)
 *   ..reset base addresses for free workspace
       call lwset (lcr0)
       call lwiset (lci0)
+#ifdef PERFMON
+      call perfoff
+#endif
       return
 *     ------------------------------------------------------------------
       entry subxnd (lbot, srnam1)

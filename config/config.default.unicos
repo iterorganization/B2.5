@@ -27,7 +27,7 @@ BLD = bld rucv
 GRLIBES = $(LD_NCARG)
 LDLIBES = $(LD_NAG)
 ifdef PERFMON
-LDLIBES += -lperf
+LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 LD = f90

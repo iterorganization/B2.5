@@ -10,6 +10,10 @@
       external sysini, subini, prvrt, prvrti
 *     ------------------------------------------------------------------
 *   ..system start-up calls
+#ifdef PERFMON
+      call perfinit
+      call perfon ('whole')
+#endif
       call sysini ()
 *   ..subprogram start-up calls
       call subini (prname)

@@ -22,6 +22,10 @@
       call subend ()
 *   ..system shut-down calls
       call sysend ()
+#ifdef PERFMON
+      call perfoff
+      call perfout ('whole')
+#endif
       return
 *     ------------------------------------------------------------------
       end
@@ -49,6 +53,10 @@
       call subend ()
 *   ..system shut-down calls
       call sysend ()
+#ifdef PERFMON
+      call perfoff
+      call perfout ('whole')
+#endif
       return
 *     ------------------------------------------------------------------
       end

@@ -48,9 +48,9 @@ LDLIBES = ${LD_NAG} ${LD_NETCDF}
 #ifdef USE_EIRENE
 #LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o -lnag
 #endif
-#ifdef PERFMON
-#LDLIBES += -L${SOLPSTOP}/src/lib/${OBJECTCODE} -lperf
-#endif
+ifdef PERFMON
+LDLIBES += -L${SOLPSLIB} -lperf
+endif
 
 LD = ${FC}
 # LDOPTS = -Bstatic
