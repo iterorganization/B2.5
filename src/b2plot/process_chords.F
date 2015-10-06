@@ -174,8 +174,10 @@ c
      2   nxcam,xmin,xmax,nycam,ymin,ymax)
       endif
 
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
       if(moviename .eq. ' ') then
+#endif
 #endif
         do is=0,ndim(3,iwrk)-1
           call calculate_zvalues(maxchords,maxcompile,

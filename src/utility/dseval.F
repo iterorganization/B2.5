@@ -4,28 +4,27 @@
       INTEGER N
       REAL (KIND=R8) :: U,X(N),Y(N),B(N),C(N),D(N), DSEVAL
 C
-C  ÝTA ÏOÄÏPOÃPAMMA BÛ×ÈCËßET ÇHA×EHÈE KÓÁÈ×ECKOÃO
-C  CÏËAÉHA
+C  this subprogramme calculates the value of cubic
+C  spline
 C
 C  DSEVAL=Y(I)+B(I)*(U-X(I))+C(I)*(U-X(I))**2+D(I)*(U-X(I))**3
 C
-C  ÃÄE X(I).LT.U.LT.X(I+1). ÈCÏOËÜÇÓETCß CXEMA ÃOPHEPA
+C  where  X(I).LT.U.LT.X(I+1). Gorner's scheme is used.
 C
-C  ECËÈ U.LT.X(1), TO ÁEPETCß ÇHA×EHÈE I=1.
-C  ECËÈ U.GE.X(N), TO ÁEPETCß ÇHA×EHÈE I=N.
+C  if  U.LT.X(1), then I=1.
+C  if  U.GE.X(N), then I=N.
 C
-C  BXOÄHAß ÈHÔOPMAÖÈß.
+C  Input:
 C
-C     N     -×ÈCËO ÇAÄAHHÛX TO×EK
-C     U     -AÁCÖÈCCA, ÄËß KOTOPOÉ BÛ×ÈCËßETCß ÇHA×EHÈE
-C            CÏËAÉHA
-C     X,Y   -MACCÈBÛ ÇAÄAHHÛX AÁCÖÈCC È OPÄÈHAT
-C     B,C,D -MACCÈBÛ KOÝÔÔÈÖÈEHTOB CÏËAÉHA, BÛ×ÈCËEHHÛE
-C            ÏOÄÏPOÃPAMMOÉ SPLINE
+C     N     -number of given points
+C     U     -abscissa, for which value of spline is calculated
+C     X,Y   -arrays of given abscissa and ordinates
+C     B,C,D -arrays of given spline coefficients, calculated
+C            with subprogramme 'spline'
 C
-C  ECËÈ ÏO CPABHEHÈÞ C ÏPEÄÛÄÓÙÈM BÛÇOBOM U HE
-C  HAXOÄÈTCß B TOM ÆE ÈHTEPBAËE, TO ÄËß PAÇÛCKAHÈß
-C  HÓÆHOÃO ÈHTEPBAËA ÏPÈMEHßETCß ÄBOÈ×HÛÉ ÏOÈCK.
+C  if in comparisson with previous call U isn't
+C  in the same interval, then for determination
+C  proper interval double (binary) search should be used.
 C
       INTEGER I,J,K
       REAL (KIND=R8) :: DX
@@ -35,7 +34,7 @@ C
       IF(U.LT.X(I)) GO TO 10
       IF(U.LE.X(I+1)) GO TO 30
 C
-C  ÄBOÈ×HÛÉ ÏOÈCK
+C  double (binary) search
 C
  10   I=1
       J=N+1
@@ -44,7 +43,7 @@ C
       IF(U.GE.X(K))I=K
       IF(J.GT.I+1)GO TO 20
 C
-C  BÛ×ÈCËÈTÜ CÏËAÉH
+C  calculate spline
 C
  30   DX=U-X(I)
       DSEVAL=Y(I)+DX*(B(I)+DX*(C(I)+DX*D(I)))

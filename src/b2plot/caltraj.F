@@ -140,8 +140,10 @@ c     parameter (destmode=2)               !hardwired to 2
 #endif
 
       oocol=-1
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
       if(moviename .eq. ' ') then
+#endif
 #endif
 c     Getting the values for globaltime and deltat
         globaltime=values(16)
@@ -235,6 +237,7 @@ c     generate beginning positions
 
       np=abs(iarg(5))
       cpu_start=x05baf()
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
       if(moviename .ne. ' ') then
         write(*,*) 'moviename = ',moviename
@@ -248,6 +251,7 @@ c     generate beginning positions
           enddo
         enddo
       endif
+#endif
 #endif
       call allocate_particles(warr,ipx,ipy,ips,p_r,p_z,0,np)
       cpu_end=x05baf()
@@ -293,14 +297,18 @@ c     initialise graphics
       if(iarg(specnum) .eq. 1 .and. iarg(6) .eq. 0) then  ! 1 species and trajectories
         call data_copy(iarg(7))
         call additional_elements(nx,ny,.true.) !draws mesh/separatrix/etc... if wanted
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
         if(moviename .eq. ' ') then
 #endif
+#endif
           call lblbartraj(globaltime*1e-3_R8,globaltime,tlinlog)
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
         else
           call lblbartraj(starttime,globaltime+starttime,1)
         endif
+#endif
 #endif
       else
         call data_copy(0)
@@ -339,8 +347,10 @@ c                         particles than at beginning, it is destroyed.
           call lined_d(p_r(ip),p_z(ip),p_r(ip),p_z(ip))
         enddo
         do counter=2,nplot
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
           if(moviename .eq. ' ') then
+#endif
 #endif
             globaltime=globaltime-deltat
             currtime=currtime+deltat
@@ -409,6 +419,7 @@ c                         particles than at beginning, it is destroyed.
      2      cpu_end-cpu_start,
      3     ' cpu-seconds'
           if(destmode .eq. 2) then
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
             if(moviename .ne. ' ') then
               do is=0,ns-1
@@ -420,6 +431,7 @@ c                         particles than at beginning, it is destroyed.
                 enddo
               enddo
             endif
+#endif
 #endif
             cpu_start=x05baf()
             call allocate_particles(warr,ipx,ipy,ips,p_r,p_z,np,np)
@@ -447,8 +459,10 @@ c     TRAJECTORIES:
         randzaehler=0
         do while ((randzaehler .lt. np) .and. 
      +   (globaltime .gt. 0))
+#ifndef NO_CDF
 #ifdef CDF_MOVIE
           if(moviename .eq. ' ') then
+#endif
 #endif
             globaltime=globaltime-deltat
             currtime=currtime+deltat

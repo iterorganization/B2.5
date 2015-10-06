@@ -1188,7 +1188,7 @@ c   Written by Manoj Warrier on 17-05-96.
 *********************************************************************************
 
 c  This routine takes the temperature of the graphite plate ( tp ), and the
-c  atomic mass (am2 ) of the target as inputs and outputs the flux of carbon
+c  atomic mass ( am2 ) of the target as inputs and outputs the flux of carbon
 c  atoms evaporated from the graphite plate ( flxthev ) per meter**2 per sec.
 c
 c  Table of A and B for some first wall materials in Fusion research:

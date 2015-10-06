@@ -3,7 +3,7 @@
 74                  ! atomic number of the material constituents (must all be on the same line!)
 1                   ! relative abundance of the material constituents (must all be integer)
 0.00                ! chemical sputtering parameter erel
-0.38                ! blackbody emissivity
+0.3                 ! blackbody emissivity
 -44485.0            ! parameter A in the Vapor pressure : 10^(A/T+B)
 12.74               ! parameter B in the Vapor pressure : 10^(A/T+B)
 0.90                ! sticking coefficient for vapor pressure calculation

@@ -47,6 +47,9 @@ c  Tp = Target surface temperature (K).
       real (kind=R8) :: u(7*ndepth_nml), u1(7*ndepth_nml)
       real (kind=R8) :: x(ndepth)
       real (kind=R8) :: x0, xn, t0, tn, dx(ndepth-1)
+      real (kind=R8) :: Cp, Kappa, mass_density
+      external Cp, Kappa, mass_density
+
 #ifdef NO_NAG
       integer ier, iflg, iopt, neq, nmax, nstep
       real (kind=R8) :: hstep, rerr
@@ -157,6 +160,7 @@ cxpb   New NAG solution to replace MSTEP calls
         U_nag(1,i)=Tp(i)
       enddo
       acc = 1.0e-8_R8
+
       call D03PCF(npde, 0, t0, tn, pdedef, 
      &   bndary, U_nag, ndepth_nml, x, acc, w, nw, iw, niw, 
      &   itask, itrace, ind, ifail) 
@@ -332,6 +336,7 @@ c are the outputs from the subroutine.
       logical active
       real (kind=R8) :: a0,b0,c0,an,bn,cn,t,Ts,Td
       real (kind=R8) :: Kappa, Qtot, Tcbc, qevap, qrad
+      external Kappa, qevap, qrad
       common /phyparams/ Qtot,Tcbc,active
 
 c  Coefficients at x=x0
@@ -348,7 +353,7 @@ c  Coefficients at x=xn
       else
         an = 0.0_R8
         bn = 1.0_R8
-        cn = 1.0_R8/Kappa(ibnd,nd,Ts)* ! we assume the contact heat conductivity of 100 W.m-2.K-1
+        cn = 1.0_R8/Kappa(ibnd,nd,Ts)* !xpb we assume the contact heat conductivity of 100 W.m-2.K-1
      .   (-100.0_R8*(Td-Tcbc))
       endif
 
@@ -740,15 +745,16 @@ c  qevap -> Energy lost (Joules / m^2 / s)
 c  Checking inputs
           if (layer_depth(ibnd).eq.0.0_R8 .or. itrack.eq.0) then
             Vapor_temp = matsurf_vapor_temp(ibnd)
-            Tv = min(Vapor_temp, Ts)                                            
+            Tv = min(Vapor_temp, Ts)
           else if (itrack.gt.0 .and. itrack.le.ntrack) then
             Vapor_temp = species_vapor_temp(itrack)
-            Tv = min(Vapor_temp, Ts) 
+            Tv = min(Vapor_temp, Ts)
           else
             Tv = Ts
           endif
-          if (Ts.gt.Vapor_temp) write(*,*) 
-     >     'Input error; Correct so that Ts <= Vapor_temp', Ts  
+          if (Ts.gt.Vapor_temp) write(*,'(a,1p,2e12.5)')
+     >     'Input error; Correct so that Ts <= Vapor_temp',
+     .                                   Ts,   Vapor_temp
           call thermev(ibnd,is,Tv,flxthev,qthev)
           qevap = qthev * therm_evap
         endif
@@ -833,3 +839,21 @@ c  Checking inputs
 
       return
       end subroutine bndary
+
+      function conv_coef(T)
+      use b2mod_types
+      implicit none
+      real(kind=R8) :: conv_coef
+      real(kind=R8) :: T, Tc
+
+      Tc = T - 273.15_R8
+
+!      conv_coef = 1.64908e-8_R8*Tc**6 - 1.24649e-5_R8*Tc**5
+!     @       + 3.4938e-3_R8*Tc**4 - 0.44568_R8*Tc**3 + 25.5532_R8*Tc**2
+!     @       - 502.333_R8*Tc + 77703.2_R8
+!      conv_coef = 1.357954e-3_R8*Tc**3 + 6.616505e-1_R8*Tc**2 - 24.41418_R8*Tc
+!     @       + 7.725710e4_R8
+      conv_coef = 8.0e4_R8
+
+      return
+      end function conv_coef
