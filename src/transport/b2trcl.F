@@ -5,7 +5,7 @@
      &  bb, conn, vol, gs, hx, hy,  !srv 23.11.10
      1  hz, qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,  !srv 09.01.01 01.07.09
      2  chvemx, chvimx, cvsahz,                                          !srv 09.01.01 03.06.03
-     3  cvsa, chce, chve, chci, chvi, csig, calf, csigin,                          !xpb
+     3  cvsa, chce, chve, chci, chvi, csig, calf, csigin,                !xpb
      4  cthe, cthi, cvsa_cl, cvsahz_cl, vsal, fllimvisc)                 !srv 09.01.01
       use b2mod_types
       use b2mod_indirect
@@ -81,7 +81,7 @@
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
      &                 integral_modeling = 1
-      character(3) chns, chns0                                    !srv 17.06.08
+      character(3) chns, chns0                                        !srv 17.06.08
       integer mintopcut                                               !lk 19.09.07  
       integer mode, model
       real (kind=R8) ::
@@ -143,7 +143,7 @@ csw 13mar2012
         call xertst (0.0_R8.le.cthev,
      &   'faulty internal parameter cthev')
         call ipgeti ('b2trcl_conductive_limit', conductive_limit)    !srv 16.06.08
-        call ipgeti ('b2trcl_iout', iout)                            !srv 17.06.08                    
+        call ipgeti ('b2trcl_iout', iout)                            !srv 17.06.08
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
@@ -151,7 +151,7 @@ csw 13mar2012
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
 csw 13mar2012
         call ipgeti ('b2trcl_core_cond_limit', core_cond_limit)
-        call ipgeti ('b2trcl_integral_modeling', integral_modeling)            !srv 01.11.11
+        call ipgeti ('b2trcl_integral_modeling', integral_modeling)  !srv 01.11.11
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then

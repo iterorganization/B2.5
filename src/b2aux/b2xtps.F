@@ -85,7 +85,7 @@
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny1), wrk1(-1:nx1,-1:ny1), na0eps, sum
       save na0eps
-      data na0eps/1.0e-30_R8/
+      data na0eps/1.0e4_R8/
 *   ..procedures
       external subini, subend, xertst, ipgetr, sfill, b2saxpy
       external b2xtvc, b2xtfx, b2xtfy

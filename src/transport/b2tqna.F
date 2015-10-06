@@ -412,8 +412,8 @@ c-wrong(Bonnin,Owen)                dnn=1.0_R8/na(ix,iy,is)/2.0e-19_R8
          if(cfhce(7).ne.0.0_R8)
      &    dfhce=dfhce*cfhce(7)*(hy1(ix,iy)/hy1(ixref,iy))**2
          dfsig = cfsig(0)+cfsig(1)/(ne(ix,iy)/1.0e20_R8)+
-     1    cfsig(3)*6.25e-2_R8*te(ix,iy)/ev/abs(bb(ix,iy,3))
-     2   +cfsig(4)*exp(-cfsig(5)*(lengthy(ix,iy)/lengthy(ix,ny))**2) !srv 26.11.04
+     1    cfsig(3)*6.25e-2_R8*te(ix,iy)/ev/abs(bb(ix,iy,3))+
+     2    cfsig(4)*exp(-cfsig(5)*(lengthy(ix,iy)/lengthy(ix,ny))**2) !srv 26.11.04
          if(cfsig(7).ne.0.0_R8)
      &    dfsig=dfsig*cfsig(7)*(hy1(ix,iy)/hy1(ixref,iy))**2
          dfalf = cfalf(0)+cfalf(1)/(ne(ix,iy)/1.0e20_R8)+

@@ -231,7 +231,7 @@
      1     stim/0.0_R8/, etim/0.0_R8/, ismain/1/, ismain0/0/, 
      2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/, use_astra/0/
       data idout0/'pgnl;pgmm;pzmm'/, idout1/'pzmm'/
-      data na0eps/1.0e-30_R8/, b2mndr_cpu/0.0_R8/, 
+      data na0eps/1.0e4_R8/, b2mndr_cpu/0.0_R8/,
      &     b2mndr_elapsed/0.0_R8/
       data atomic_physics_rescale_flag/0/
       data savefile/'plasmastate.xxxx'/,
@@ -477,15 +477,18 @@
 *      cfsig - (0:7) real*8 array.
 *     cfsig() are the coefficients in the local expression
 *       dfsig(,) = cfsig(0)+cfsig(1)/(ne(,)/1.0e20)+
-*         cfsig(3)*te(,)/ev/abs(bb(,,3))/16
+*         cfsig(3)*te(,)/ev/abs(bb(,,3))/16+
+*         cfsig(4)*exp(-cfsig(5)*(y/L)**2)
 *     that specifies the diffusivity corresponding to the anomalous
 *     electrical conductivity, which is
 *       sig(,) = qe*ne(,)*dfsig(,).
+*     L is the local radial width of the plasma and
+*     y is the radial distance from the inner (South) boundary.
 *     If cfsig(7) is not zero, the sig0 array is flux-scaled with
 *     a scaling factor of cfsig(7)*(hy1(,)/hy1(ixref,))**2
 *     where hy1 is the radial width of the cell and ixref is a reference
 *     poloidal position (usually the outer midplane or 'jxa').
-*     cfsig(2) and (4:6) are not used in the default version of the code.
+*     cfsig(2) and (6) are not used in the default version of the code.
 *      cfalf - (0:7) real*8 array.
 *     cfalf() are the coefficients in the local expression
 *       dfalf(,) = cfalf(0)+cfalf(1)/(ne(,)/1.0e20)+

@@ -75,6 +75,7 @@
       integer ncall, n2, is, ier0, i, ix, iy
       character charns*3, ch*2                                        !srv 30.06.03
       real (kind=R8), save :: BoRiS = 0.0_R8
+      real (kind=R8), save :: na0eps = 1.0e4_R8
       real (kind=R8) :: 
      *  xfm0, xfm1, xfm2, xfm3, rxf0, rxf1, rxf2, rxf3,
      1  t0, vis_per,                                                  !srv 09.07.99 06.07.00
@@ -143,6 +144,9 @@
      &   'faulty internal parameter xfm2')
        call xertst (0.0_R8.le.xfm3.and.xfm3.le.1.0_R8,
      &   'faulty internal parameter xfm3')
+       call ipgetr ('b2mndr_na0eps', na0eps)
+       call xertst (na0eps.gt.0.0_R8,
+     &  'faulty internal parameter na0eps')
 !       call ipgetr ('b2news_facdrift_target', facdrift_target)  !srv 09.07.99
 !       call ipgetr ('b2news_facdrift_start', facdrift_start)    !srv 09.07.99
 !       call ipgetr ('b2news_facdrift_inc', facdrift_inc)        !srv 09.07.99
@@ -438,7 +442,7 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 *    ..DPC
         do iy=-1,ny
           do ix=-1,nx
-            na(ix,iy,is)=max(na(ix,iy,is),1.0e4_R8) ! abs(na(ix,iy,is))   !srv 24.04.09
+            na(ix,iy,is)=max(na(ix,iy,is),na0eps) ! abs(na(ix,iy,is))    !srv 24.04.09
           enddo
         enddo
 *    ..compute partial pressure
@@ -495,16 +499,16 @@ csw 16oct2012 init ier0
               call xertst (ier0.eq.0, 'error return from b2npco')
             endif
           endif
-        endif                                                           !srv 13.10.06 }
+        endif                                                            !srv 13.10.06 }
 
         do iy=-1,ny
           do ix=-1,nx
-            na(ix,iy,is)= max(na(ix,iy,is),1.0e5_R8) !abs(na(ix,iy,is))   !srv 24.04.09
+            na(ix,iy,is)= max(na(ix,iy,is),na0eps) !abs(na(ix,iy,is))    !srv 24.04.09
           enddo
         enddo
 !        if(re_compute_pb.eq.1) then                                     !srv 15.02.10
-!*    ..re-compute partial pressure                                     !srv 01.10.99
-!        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)  !srv 01.10.99
+!*    ..re-compute partial pressure                                      !srv 01.10.99
+!        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)   !srv 01.10.99
 !        endif                                                           !srv 15.02.10
 *    ..re-compute particle flux
         call b2tfnb (nx, ny, is, ismain, 
@@ -523,7 +527,7 @@ csw 16oct2012 init ier0
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
       enddo 
 
-      if(iout.ne.0 .or. iout_b2npco.ne.0 .or. iout_b2npc9.ne.0         !srv 16.07.10
+      if(iout.ne.0 .or. iout_b2npco.ne.0 .or. iout_b2npc9.ne.0           !srv 16.07.10
      &             .or. iout_b2npmo.ne.0 .or. iout_b2npht.ne.0 
      &             .or. iout_b2nph9.ne.0 .or. iout_b2nppo.ne.0
      &             .or. iout_b2npp7.ne.0 ) 
@@ -537,13 +541,13 @@ csw 16oct2012 init ier0
       call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
       call nancheck(nx, ny, ne, 'b2news(ne): after call to b2xpne')
       call b2xpni (nx, ny, ns, na, ni)
-      call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)                 !srv 11.07.99
-      call b2xppz (nx, ny, ns, ne, na, te, ti, pz)                   !srv 18.01.02
+      call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)                    !srv 11.07.99
+      call b2xppz (nx, ny, ns, ne, na, te, ti, pz)                       !srv 18.01.02
 
-*   ..compute ceqp                                                    !srv 03.07.03 {
+*   ..compute ceqp                                                       !srv 03.07.03 {
       call b2xpnm (nx, ny, ns, rz2, am, na, wrk0)
-      call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp)    !srv 03.07.03 }
-      if(iout .ne. 0) then                                          !srv 12.07.05 {
+      call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp)       !srv 03.07.03 }
+      if(iout .ne. 0) then                                               !srv 12.07.05 {
         do is = 0,ns-1
           write(charns,'(i3.3)') is
           call my_out(70,nx,ny,na(-1,-1,is),'b2news__na'//charns)
@@ -553,21 +557,21 @@ csw 16oct2012 init ier0
         call my_out(70,nx,ny,ne,'b2news__ne')
         call my_out(70,nx,ny,pz,'b2news__pz')
         call my_out(70,nx,ny,ceqp,'b2news__ceqp')
-      endif                                                            !srv 12.07.05 }
+      endif                                                              !srv 12.07.05 }
 
 
-      if (pot_eq.eq.0) then                                           !srv 13.07.05 {
+      if (pot_eq.eq.0) then                                              !srv 13.07.05 {
         po   =0.0e0_R8
-      else if (pot_eq.eq.2) then                                      !srv 11.01.12
+      else if (pot_eq.eq.2) then                                         !srv 11.01.12
         po(:,:)=3.1_R8*te(:,:)/qe
-      else                                                            !srv 13.07.05 }
+      else                                                               !srv 13.07.05 }
 *   ..correct po
         if (solving(3)) then
           call b2nxdp (nx, ny, nnreg(0), solvepo, qe, te, nep, ne, wrk0)
           call b2saxpy (n2, 1.0_R8, wrk0, 1, po, 1)
-          if(iout .ne. 0) then                                          !srv 12.07.05 {
+          if(iout .ne. 0) then                                           !srv 12.07.05 {
             call my_out(70,nx,ny,po,'b2nxdp_po')
-          endif                                                            !srv 12.07.05 }
+          endif                                                          !srv 12.07.05 }
         endif
 *   ..iterate several times on the potential equation
         i=0
@@ -588,13 +592,13 @@ csw 16oct2012 init ier0
 *    ..perform iteration
           t0=0
           if (i.eq.0) then
-           if (vis_per.eq.0.0e0_R8) then                                    !srv 06.07.00
+           if (vis_per.eq.0.0e0_R8) then                                 !srv 06.07.00
              call b2nppo (nx, ny, nnreg(0), solvepo, ncall,rxf2,ne,te,
      &        conc, sch, po, fch, respo, corpo, ier0)
            else
 
-            call b2npp7 (nx, ny, nnreg(0), solvepo, ncall,rxf2,ne,te,              !srv 27.01.00
-     &       conc, avisper, bvisper, cvisper,                                  !srv 27.01.00
+            call b2npp7 (nx, ny, nnreg(0), solvepo, ncall,rxf2,ne,te,    !srv 27.01.00
+     &       conc, avisper, bvisper, cvisper,                            !srv 27.01.00
      &       sch, po, fch, respo, corpo, ier0)                           !srv 27.01.00
 
            endif                                                         !srv 06.07.00
@@ -604,11 +608,11 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
             t0 = t0+b2sasum(nx+2,respo(-1,iy),1)
            enddo
           else
-           if (vis_per.eq.0.0e0_R8) then                                    !srv 06.07.00
+           if (vis_per.eq.0.0e0_R8) then                                 !srv 06.07.00
             call b2nppo (nx, ny, nnreg(0), solvepo, ncall,rxf2,ne,te, 
      &       conc, sch, po, fch, wrk0, wrk1, ier0)
            else
-            call b2npp7 (nx, ny, nnreg(0), solvepo, ncall,rxf2,ne,te, !srv 27.01.00
+            call b2npp7 (nx, ny, nnreg(0), solvepo, ncall,rxf2,ne,te,    !srv 27.01.00
      &       conc, avisper, bvisper, cvisper,                            !srv 27.01.00
      &       sch, po, fch, wrk0, wrk1, ier0)                             !srv 27.01.00
            endif                                                         !srv 06.07.00
@@ -622,21 +626,21 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
 *   ..recompute currents
           if((maxval(facdrift).ne.0.0_R8 .or. 
      &        maxval(fac_ExB).ne.0.0_R8)) then
-            call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,   !srv 20.09.06  {
+            call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,     !srv 20.09.06  {
      &                         facdrift, fchvispar)
             call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
             call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                       fchanml)                                     !srv 20.09.06  }
-            if(anomalous_core_only.ne.0) then                          !srv 19.04.07  {
-              do iy = 0, ny                                             !lk 19.09.07
+     &                       fchanml)                                    !srv 20.09.06  }
+            if(anomalous_core_only.ne.0) then                            !srv 19.04.07  {
+              do iy = 0, ny                                              !lk 19.09.07
                 do ix = -1, nx
-                  if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then     !lk 19.09.07
+                  if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then      !lk 19.09.07
                     fchanml(ix,iy,1) = 0.0e0_R8
                   endif 
                 enddo
               enddo
-            endif                                                      !srv 19.04.07  }
+            endif                                                        !srv 19.04.07  }
           else
             fchvispar = 0.0_R8
             fchinert  = 0.0_R8

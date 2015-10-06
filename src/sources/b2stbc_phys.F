@@ -187,7 +187,7 @@
 !     &            hz(topix(ix,iy),topiy(ix,iy))
 *   ..initialisation
       data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
-     1 bc_type16_ref/1/, bc_type20_ref/1/, na0eps/1.0e-30_R8/,
+     1 bc_type16_ref/1/, bc_type20_ref/1/, na0eps/1.0e4_R8/,
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
@@ -243,7 +243,7 @@
         call ipgetr ('b2stbc_type13_norm', bc_type13_norm)
         call ipgetr ('b2stbc_type13_fac', bc_type13_fac)
         call ipgetr ('b2mndr_na0eps', na0eps)
-        call xertst (0.lt.na0eps, 'faulty parameter na0eps')
+        call xertst (0.0_R8.lt.na0eps, 'faulty parameter na0eps')
         call ipgeti ('b2stbc_fix_fch_in_fhe_sheath',
      1   fix_fch_in_fhe_sheath)
         call ipgeti ('b2stbc_fix_sx_in_fhe_sheath',

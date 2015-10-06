@@ -129,7 +129,7 @@
 *    'b2mndr_min_aresco'        '0.0'                  Numerics
 *    'b2mndr_mvinc'             '1'                    Output
 *    'b2mndr_mvnum'             '0'                    Output
-*    'b2mndr_na0eps'            '1.0e-30'              Numerics
+*    'b2mndr_na0eps'            '1.0e4'                Numerics
 *    'b2mndr_na_eps'            '1.0e19'               Output
 *    'b2mndr_ne_wanted'         '0.0'                  Numerics
 *    'b2mndr_ne_wanted_time'    '0.0'                  Numerics
@@ -2032,9 +2032,9 @@
 *    'b2stbc_sna0ep'            '1.0e-36'              Numerics
 *    Small level sources introduced in all cells.
 *
-*    'b2mndr_na0eps'            '1.0e-30'              Numerics
+*    'b2mndr_na0eps'            '1.0e4'                Numerics
 *    Initial density put in all cells for all species if not overwritten by
-*    initial state file.
+*    initial state file, and minimal density maintained.
 *
 *    'b2news_guard_flows'       '2'                    Numerics
 *    If guard_flows.eq.0, flows between neighbouring guard cells are blocked.
