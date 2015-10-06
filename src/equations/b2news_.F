@@ -112,11 +112,12 @@
      1   xfm3/1.0e0_R8/, potit/50/, potok/1e-2_R8/, area_fix/3/,         !srv 09.07.99 09.03.09
      2   vis_per/0.0e0_R8/, no_current/0/                                !srv 06.07.00
 !     2 ,facdrift/0.0e0_R8/, facdrift_target/0.0e0_R8/, facdrift_start/0.0e0_R8/, !srv 09.07.99
-!     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                         !srv 09.07.99
-      integer, save :: no_neutr_scl = 0, no_b2sral_call = 0
-      integer, save :: do_2nd_b2npco_call=0
-      integer, save :: re_eval_prtls_fluxes = 1                      !srv 28.06.13
-      integer, save :: nhist=0, neutr_avg=0, nrelax=0, nstg2=0
+!     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                   !srv 09.07.99
+      integer, save :: no_neutr_scl = 0, no_b2sral_call = 1
+      integer, save :: do_2nd_b2npco_call = 0
+      integer, save :: re_eval_prtls_fluxes = 0                          !srv 28.06.13
+      integer, save :: nhist = 0, neutr_avg = 0, nrelax = 0, nstg2 = 0
+      integer, save :: use_eirene = 0
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -129,7 +130,7 @@
        nsmin=0
        nsmax=ns
        call ipgetr ('b2news_BoRiS', BoRiS)
-       call ipgeti ('b2ux7p_style', style)                          !srv 29.05.02
+       call ipgeti ('b2ux7p_style', style)                               !srv 29.05.02
        call ipgetr ('b2news_xfm0', xfm0)
        call ipgetr ('b2news_xfm1', xfm1)
        call ipgetr ('b2news_xfm2', xfm2)
@@ -196,6 +197,7 @@
        call ipgeti ('b2news_re_eval_prtls_fluxes', re_eval_prtls_fluxes) !srv 28.06.13
 
 csw 26feb2014 some extra variables
+       call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('eirene_neutr_avg', neutr_avg)
        call ipgeti ('eirene_underrelax', nrelax)
        call ipgeti ('b2stbr_eir_src_nhist', nhist)
@@ -323,10 +325,10 @@ csw 01oct2012 initialize potential if necessary
 
 
 *   ..iterate on momentum balance
-!      if (ncall.eq.0) then                                            !srv 01.10.99
+!      if (ncall.eq.0) then                                             !srv 01.10.99
         do is=0,ns-1                                                    !srv 01.10.99
 *    ..compute partial pressure
-          call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)   !srv 01.10.99
+          call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb) !srv 01.10.99
 *    ..compute particle flux
           call b2tfnb (nx, ny, is, ismain, 
      &   guard_flows, facdrift, fac_ExB, am(is)*mp, vol,                !srv 07.06.00 09.01.01 08.09.01 19.05.03 0
@@ -374,30 +376,30 @@ c   extra call at this place within internal iteration)
 *     ..include contributions due to timestep                            !xpb
         call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,           !xpb !srv 09.01.01 01.07.08
      &    vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
-     &    na, ua, te, ti, ne, ni, kinrgy,                         !srv 16.07.10
-     &    sna, smo, she, shi, sch, sne, .false.)                                       !xpb
+     &    na, ua, te, ti, ne, ni, kinrgy,                                !srv 16.07.10
+     &    sna, smo, she, shi, sch, sne, .false.)                         !xpb
 
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,    !xpb !srv 01.07.08
-     &    ni, sna, smo, she, shi, sch, sne)                                   !xpb
+     &    ni, sna, smo, she, shi, sch, sne)                              !xpb
       endif
 
 
 csw 11oct2012 added check on coriolis force (taken from b2news())
-        ier0=0
-        if(coriolis.eq.0) then
-         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1, 
-     &   qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                    !srv 01.07.09
-     &   na, te, ti, po, fna, cvsahz, cvsa, cvsa_cl, cvsahz_cl,         !srv 02.07.08
+      ier0=0
+      if(coriolis.eq.0) then
+        call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,
+     &   qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                     !srv 01.07.09
+     &   na, te, ti, po, fna, cvsahz, cvsa, cvsa_cl, cvsahz_cl,          !srv 02.07.08
      &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
      &   resmt, corua, corut, pcca, pccm, ier0)
-        else
-         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,  
+      else
+        call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,
      &   qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                     !srv 23.07.99 09.01.01 01.07.09
      &   na, te, ti, po, fna_fcor, cvsahz, cvsa, cvsa_cl, cvsahz_cl,     !srv 19.07.02
      &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,     !srv 23.07.99 01.10.99 04.10.99 09.01.01
      &   resmt, corua, corut, pcca, pccm, ier0)                          !srv 23.07.99 10.11.02 23.12.03
-        endif
+      endif
 
       call xertst (ier0.eq.0, 'error return from b2npmo') 
 #ifdef BLOCK
@@ -409,21 +411,21 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 *   ..recompute currents
       if((maxval(facdrift).ne.0.0_R8 .or. 
      &    maxval(fac_ExB).ne.0.0_R8)) then
-        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,   !srv 20.09.06  {
+        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,         !srv 20.09.06  {
      &                       facdrift, fchvispar)
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
         call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                       fchanml)                                     !srv 20.09.06  }
-        if(anomalous_core_only.ne.0) then                          !srv 19.04.07  {
-          do iy = 0, ny                                             !lk 19.09.07
+     &                       fchanml)                                    !srv 20.09.06  }
+        if(anomalous_core_only.ne.0) then                                !srv 19.04.07  {
+          do iy = 0, ny                                                  !lk 19.09.07
             do ix = -1, nx
-              if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then     !lk 19.09.07
+              if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then          !lk 19.09.07
                  fchanml(ix,iy,1) = 0.0e0_R8
               endif 
             enddo
           enddo
-        endif                                                      !srv 19.04.07  }
+        endif                                                            !srv 19.04.07  }
       else
        fchvispar = 0.0_R8
        fchinert  = 0.0_R8
@@ -837,17 +839,17 @@ c   recompute particle fluxes
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
 
 *    ..perform iteration
-        if(mdf_fnb.eq.0) then                                           !srv 13.10.06
+        if(mdf_fnb.eq.0) then                                            !srv 13.10.06
           if (solving(2).and.all(solveco(is,0:nnreg(0)))) then 
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             call b2npco (nx, ny, guard_flows, nnreg(0), solvedum, 
-     &       solving(1), solvedm2, ncall, is, rxf0, vol, pbs,flob,conb,    !srv 22.01.02 01.07.05
+     &       solving(1), solvedm2, ncall, is, rxf0, vol, pbs,flob,conb,  !srv 22.01.02 01.07.05
      &       sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &       ua(-1,-1,is), fna(-1,-1,0,is),
      &       resco(-1,-1,is), corpa(-1,-1,is), ier0)
           endif
-        else                                                            !srv 13.10.06 {
+        else                                                             !srv 13.10.06 {
           if (solving(2).and.all(solveco(is,0:nnreg(0)))) then
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
@@ -865,44 +867,44 @@ c   recompute particle fluxes
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
             endif
           endif
-        endif                                                           !srv 13.10.06 }
+        endif                                                            !srv 13.10.06 }
         call xertst (ier0.eq.0, 'error return from b2npco')
        enddo
       endif ! do_2nd_b2npco
 
 csw 06dec2012 finally re-evaluate particle fluxes
 c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
-      if(re_eval_prtls_fluxes.eq.1) then                                !srv 28.06.13 {
-      do is=0,ns-1
+      if(re_eval_prtls_fluxes.eq.1 .or. use_eirene.ne.0) then            !srv 28.06.13 {
+       do is=0,ns-1
         do iy=-1,ny
           do ix=-1,nx
-            na(ix,iy,is)= max(na(ix,iy,is),1.0e5_R8) !abs(na(ix,iy,is))   !srv 24.04.09
+            na(ix,iy,is)= max(na(ix,iy,is),1.0e5_R8) !abs(na(ix,iy,is))  !srv 24.04.09
           enddo
         enddo
 *    ..compute partial pressure
-        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)   !srv 01.10.99
+        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)    !srv 01.10.99
 *    ..compute particle flux
         call b2tfnb (nx, ny, is, ismain, 
-     &   guard_flows, facdrift, fac_ExB, am(is)*mp, vol,                !srv 07.06.00 09.01.01 08.09.01 19.05.03 0
-     1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),     !srv 09.01.01 20.09.06
+     &   guard_flows, facdrift, fac_ExB, am(is)*mp, vol,                 !srv 07.06.00 09.01.01 08.09.01 19.05.03 0
+     1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),      !srv 09.01.01 20.09.06
      1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),
-     1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,     !srv 19.05.03 08.10.04 04.02.05
+     1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,      !srv 19.05.03 08.10.04 04.02.05
      &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &   cddi(-1,-1,0,is),                                              !srv 13.10.06
-     &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),    !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,              !srv 19.07.02 01.10.99 20.09.06
+     &   cddi(-1,-1,0,is),                                               !srv 13.10.06
+     &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
+     &   cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,               !srv 19.07.02 01.10.99 20.09.06
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
-     &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),  !srv 13.10.06
+     &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
-      enddo                                                           !srv 01.10.99
-      endif                                                             !srv 28.06.13 }
+       enddo                                                             !srv 01.10.99
+      endif                                                              !srv 28.06.13 }
 
 csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)
       if(no_neutr_scl .eq. 0) then
         write(*,*) 'Calling b2stbr_neutr_scl'
-        call b2stbr_neutr_scl(nx, ny, ns)                               !srv 25.10.08
+        call b2stbr_neutr_scl(nx, ny, ns)                                !srv 25.10.08
         write(*,*) 'Called b2stbr_neutr_scl'
       endif
 

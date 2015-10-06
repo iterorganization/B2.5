@@ -214,7 +214,7 @@
 c the main initialisation is in b2news --- unfortunately a few routines
 c that need an initial value get called before the first call to b2news
 c therefore initialise here
-         call b2news_facdrift_fac_ExB_init(nx,ny,ramp_slow)
+        call b2news_facdrift_fac_ExB_init(nx,ny,ramp_slow)
       endif
 *   ..initialise error parameter
       ierr = 0

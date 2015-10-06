@@ -190,6 +190,7 @@
 *    'b2news_guard_flows'       '2'                    Numerics
 *    'b2news_iy_nocoreExB'      '-2'                   Numerics
 *    'b2news_ncallout'          '-1'                   Output
+*    'b2news_no_b2sral_call'    '1'                    Numerics
 *    'b2news_no_solve'          '0'                    Run
 *    'b2news_nsmin'             '0'                    Numerics
 *    'b2news_nsmax'             ns                     Numerics
@@ -199,6 +200,7 @@
 *    'b2news_potok'             '1.0e-2'               Numerics
 *    'b2news_ramp_slow'         '0'                    Numerics
 *    'b2news_recalculate_contributions'  '1'           Numerics
+*    'b2news_re_eval_prtls_fluxes'  '0'                Numerics
 *    'b2news_vis'               '0.0'                  Physics
 *    'b2news_vis_per'           '0.0'                  Numerics
 *    'b2news_xfm0'              '1.0'                  Numerics
@@ -2081,9 +2083,19 @@
 *    If recalculate_contributions.eq.0, turns off recomputation of sources
 *    when wrong_flow flag is active.
 *
+*    'b2news_no_b2sral_call'     '1'           Numerics
+*    If no_b2sral_call.eq.0, add an additional call to recompute the sources
+*    in b2news_ to reproduce the behaviour from SOLPS4.
+*
 *    'b2news_do_2nd_b2npco_call' '0'                   Numerics
 *    If do_2nd_b2npco_call.eq.1, perform a second call to the density
 *    equation solve to improve particle balance, as done in SOLPS4.
+*
+*    'b2news_re_eval_prtls_fluxes' '0'                 Numerics
+*    If re_eval_prtls_fluxes.eq.1, the particle fluxes are recomputed at the
+*    end of b2news_. This is necessary for rescaling of the Eirene sources
+*    during coupled runs, so this switch is superceded by use_eirene, and also
+*    needed to reproduce SOLPS4 runs.
 *
 *    'b2mndt_style'             '0'                    Numerics
 *    When set to '1', all important variables will be calculated for 

@@ -1069,7 +1069,7 @@ csw 09oct2012
       n2 = (nx+2)*(ny+2)
 
 * ..initialisation
-      if(use_eirene.eq.1) then
+      if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
         write(*,*) 'Calling FIND_PARAM'
         CALL EIRENE_FIND_PARAM(0)
