@@ -559,6 +559,9 @@ ${OBJDIR}/eirmod_clogau.${MOD}:
 ${OBJDIR}/eirmod_comusr.${MOD}:
 	touch ${OBJDIR}/eirmod_comusr.${MOD}
 
+${OBJDIR}/eirmod_ctrig.${MOD}:
+	touch ${OBJDIR}/eirmod_ctrig.${MOD}
+
 ${OBJDIR}/eirmod_eirbra.${MOD}:
 	touch ${OBJDIR}/eirmod_eirbra.${MOD}
 
