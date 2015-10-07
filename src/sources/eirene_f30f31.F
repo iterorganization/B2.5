@@ -719,6 +719,9 @@ c
       use b2mod_types
       use b2mod_indirect
       use b2mod_geo
+#ifdef B25_EIRENE
+      use eirmod_ctrig
+#endif
       implicit none
       integer nx,ny
       integer ix,iy,i,nniso
@@ -791,7 +794,7 @@ c
 
 #ifdef B25_EIRENE
 cxpb Deduce from fort.33 triangle vertices files which format precision to use
-      if (open_file(33,'fort.33','')) then
+      if (nrknot.gt.0 .and. open_file(33,'fort.33','')) then
         rewind(33)
         read(33,1028)
         read(33,'(A80)') line

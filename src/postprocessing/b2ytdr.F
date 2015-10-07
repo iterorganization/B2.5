@@ -3572,6 +3572,9 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
               END IF
               WRITE(REAC_LINE(ILINE),66661) IREAC1(I),
      .            FILNAM,H123,REAC,CRC,idum(0:1),rdum(0),RMN,RMX
+            ELSE
+              IF (RMN.GT.0.0_R8) READ (IUNIN,'(A80)') ZEILE ! IFEXMN(IR,J),(FPARM(IR,I,J),I=1,3)
+              IF (RMX.GT.0.0_R8) READ (IUNIN,'(A80)') ZEILE ! IFEXMX(IR,J),(FPARM(IR,I,J),I=4,6)
             END IF
           ELSE
             NREAC1 = NREAC1 + 1
