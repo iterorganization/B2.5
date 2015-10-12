@@ -132,9 +132,9 @@
       integer nscx, iscx(0:nscxmax-1), k
       save nscx, iscx, isfb, 
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
-      integer, save :: background_new=0  !srv 01.03.10 14.07.10
+      integer, save :: background_new = 0                            !srv 01.03.10 14.07.10
       integer, save :: inverse_ua = 0                                !srv 11.01.13
-      integer, save :: pot_eq=1
+      integer, save :: pot_eq = 1
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na0eps, dtim, stim, etim, 
@@ -1660,9 +1660,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &        (aresco(ismain)*min_aresco).le.(min_aresco*min_aresco)     !jwk
        endif                                                             !jwk
        quit=quitexist_.or.quitexist.or.quit_residual.or.                 !jwk !srv 13.04.11
-     1      (cpuval-cpuinit.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0).or.
+     1      (cpuval-cpuinit.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8).or.
      1      (elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
-     &       b2mndr_elapsed.gt.0).or.
+     &       b2mndr_elapsed.gt.0.0_R8).or.
      2      (etim.gt.stim.and.tim.ge.etim.and.etim.ne.0.0_R8).or.
      3      (no_solve.eq.1.and.itim.eq.ntim)
        if(.not.quit.and.
@@ -1730,6 +1730,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      1 write(*,*) 'stopping because tim >= etim: ',tim,etim
       if(etim.eq.stim.and.stim.gt.0.0_R8)
      1 write(*,*) 'stopping because etim = stim: ',etim,stim
+      if(elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
+     &   b2mndr_elapsed.gt.0.0_R8) write(*,*) 
+     1 'stopping because elapsed CPU time > limit: ',
+     .  elapsedval-elapsedinit,b2mndr_elapsed
       if(ierr.ne.0)
      1 write(*,*) 'stopping because ierr <> 0: ',ierr
       if(quit_residual)                                                  !jwk

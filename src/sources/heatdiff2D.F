@@ -114,9 +114,9 @@ c  Tp = Target surface temperature (K).
 
       real (kind=R8) :: 
      *   Cp, Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, 
-     *   qevap, qrad, mass_density
+     *   qevap, qrad, mass_density, cond_coef
       external Cp, Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT,
-     *   qevap, qrad, mass_density
+     *   qevap, qrad, mass_density, cond_coef
       external subini, subend
       external slv5pt, fic
 
