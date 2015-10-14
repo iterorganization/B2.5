@@ -160,6 +160,16 @@ c       function of the position "x" at ndepth_nml grid points.
       aa5(1:nw,1:ndepth_nml,-2:2) = 0.0_R8
       rhs(1:nw,1:ndepth_nml) = 0.0_R8
 
+*   ..rho Cp dT/dt - K d2T/dx2 - d/dx (K dT/dx) = S
+
+*   ..K d2T/dx2 = [ 2 K / (x(i+1)-x(i-1)) ] * [ T(i+1) / (x(i+1)-x(i)) -
+*   ..                T(i) * (1/(x(i-1)-x(i)) + 1/(x(i+1)-x(i))) +
+*   ..                T(i-1) / (x(i-1)-x(i)) ]
+
+*   ..d/dx (K dT/dx) = dK/dt * (dT/dx)**2
+*   ..               = dK/dt * [ T(i+1) * (T(i+1)-T(i-1))/(x(i+1)-x(i-1))**2 -
+*   ..                           T(i-1) * (T(i+1)-T(i-1))/(x(i+1)-x(i-1))**2 ]
+
 *   ..build depth neighbours (i,j-1) and (i,j+1) terms
       do iwall = 1, nw
         x(1:ndepth_nml) = target_depth(bndx(iwall),1:ndepth_nml)
@@ -177,28 +187,45 @@ c       function of the position "x" at ndepth_nml grid points.
           ta = dKappabydT(bndx(iwall),i,Tp(iwall,i)) * 
      1     (Tp(iwall,i+1)-Tp(iwall,i-1)) / 
      2     (x(i+1)-x(i-1))**2
-          tb = 2.0_R8 / (x(i+1)-x(i)) / (x(i+1)-x(i-1))
-          tc = 2.0_R8 / (x(i)-x(i-1)) / (x(i+1)-x(i-1))
+          tb = 2.0_R8 * Kappa(bndx(iwall),i,Tp(iwall,i)) / 
+     .     (x(i+1)-x(i)) / (x(i+1)-x(i-1))
+          tc = 2.0_R8 * Kappa(bndx(iwall),i,Tp(iwall,i)) / 
+     .     (x(i)-x(i-1)) / (x(i+1)-x(i-1))
           aa5(iwall,i,-2) = aa5(iwall,i,-2) + ta      - tc
           aa5(iwall,i, 0) = aa5(iwall,i, 0)      + tb + tc
           aa5(iwall,i, 2) = aa5(iwall,i, 2) - ta - tb
         enddo
 *    ..treat backplate cooling b.c.
         i = ndepth_nml
-        if (inertial_cooling(iwall)) then
-          t0 = Kappa(bndx(iwall),i,Tp(iwall,i)) / (x(i)-x(i-1))
-          aa5(iwall,i,-2) = aa5(iwall,i,-2) - t0
-          aa5(iwall,i, 0) = aa5(iwall,i, 0) + t0
-          aa5(iwall,i, 2) = 0.0_R8
+        t0 = Kappa(bndx(iwall),i,Tp(iwall,i)) / (x(i)-x(i-1))
+        aa5(iwall,i,-2) = aa5(iwall,i,-2) - t0
+        aa5(iwall,i, 0) = aa5(iwall,i, 0) + t0
+        aa5(iwall,i, 2) = 0.0_R8
 !! FIXME : Could also include radiative and evaporative cooling term here !!
-          rhs(iwall,i) = rhs(iwall,i) - 
-     .     100.0_R8*(Tp(iwall,i)-backplate_temp(bndx(iwall))) ! we assume the contact heat conductivity of 100 W.m-2.K-1
-        else
-          aa5(iwall,i,-2) = 0.0_R8
-          aa5(iwall,i, 0) = 1.0_R8
-          aa5(iwall,i, 2) = 0.0_R8
-          rhs(iwall,i) = backplate_temp(bndx(iwall))
-        endif
+!!         But for this need correct properties of back side material
+        rhs(iwall,i) = rhs(iwall,i) -
+     .    cond_coef(inertial_cooling(bndx(iwall)),Tp(iwall,i))*
+     .   (Tp(iwall,i)-backplate_temp(bndx(iwall)))
+cxpb        if (inertial_cooling(bndx(iwall))) then
+cxpb          rhs(iwall,i) = rhs(iwall,i) -
+cxpb     .      qrad(bndx(iwall),Tp(iwall,i),.false.) -
+cxpb     .     qevap(bndx(iwall),ns,Tp(iwall,i))
+cxpb        end if
+c$$$ Old code, which assumed perfect heat contact between material and coolant was:
+c$$$        if (inertial_cooling(iwall)) then
+c$$$          t0 = Kappa(bndx(iwall),i,Tp(iwall,i)) / (x(i)-x(i-1))
+c$$$          aa5(iwall,i,-2) = aa5(iwall,i,-2) - t0
+c$$$          aa5(iwall,i, 0) = aa5(iwall,i, 0) + t0
+c$$$          aa5(iwall,i, 2) = 0.0_R8
+c$$$!! FIXME : Could also include radiative and evaporative cooling term here !!
+c$$$          rhs(iwall,i) = rhs(iwall,i) -
+c$$$     .     100.0_R8*(Tp(iwall,i)-backplate_temp(bndx(iwall))) ! we assume the contact heat conductivity of 100 W.m-2.K-1
+c$$$        else
+c$$$          aa5(iwall,i,-2) = 0.0_R8
+c$$$          aa5(iwall,i, 0) = 1.0_R8
+c$$$          aa5(iwall,i, 2) = 0.0_R8
+c$$$          rhs(iwall,i) = backplate_temp(bndx(iwall))
+c$$$        endif
       enddo
 
 *   ..build side neighbours (i-1,j) and (i+1,j) terms
@@ -208,9 +235,10 @@ c       function of the position "x" at ndepth_nml grid points.
 *    ..treat radiative cooling b.c.
       iwall = 1
       do i = 1, ndepth_nml-1
-!! FIXME: Careful about the area over which the radiative cooloing occurs, it should be here the side area, not the top area !!
-!! Can also include evaporative cooling term !!
+!! FIXME: Careful about the area over which the radiative cooling occurs, it should be here the side area, not the top area !!
+!! Need to make sure the correct side material properties are used !!
         Qtot = -qrad(bndx(iwall),Tp(iwall,i),.false.)
+     1        -qevap(bndx(iwall),ns,Tp(iwall,i))
         t0 = Kappa_perp(bndx(iwall),i,Tp(iwall,i)) /
      2   (0.5_R8*(y(iwall,i)+y(iwall+1,i))) 
         aa5(iwall,i,-1) = 0.0_R8
@@ -225,8 +253,10 @@ c       function of the position "x" at ndepth_nml grid points.
             ta = dKappa_perpbydT(bndx(iwall),i,Tp(iwall,i)) * 
      1       (Tp(iwall+1,i)-Tp(iwall-1,i)) / 
      2       (y(iwall,i)+0.5_R8*(y(iwall-1,i)+y(iwall+1,i)))**2
-            tb = 2.0_R8 / y(iwall,i) / (y(iwall+1,i)+y(iwall,i)) 
-            tc = 2.0_R8 / y(iwall,i) / (y(iwall,i)+y(iwall-1,i))
+            tb = 2.0_R8 * Kappa_perp(bndx(iwall),i,Tp(iwall,i)) /
+     .       y(iwall,i) / (y(iwall+1,i)+y(iwall,i))
+            tc = 2.0_R8 * Kappa_perp(bndx(iwall),i,Tp(iwall,i)) /
+     .       y(iwall,i) / (y(iwall,i)+y(iwall-1,i))
           endif
           aa5(iwall,i,-1) = aa5(iwall,i,-1) + ta      - tc
           aa5(iwall,i, 0) = aa5(iwall,i, 0)      + tb + tc
@@ -236,9 +266,11 @@ c       function of the position "x" at ndepth_nml grid points.
 *    ..treat radiative cooling b.c.
       iwall = nw
       do i = 1, ndepth_nml-1
-!! FIXME: Careful about the area over which the radiative cooloing occurs, it should be here the side area, not the top area !!
+!! FIXME: Careful about the area over which the radiative cooling occurs, it should be here the side area, not the top area !!
 !! Can also include evaporative cooling term !!
+!! Need to make sure the correct side material properties are used !!
         Qtot = -qrad(bndx(iwall),Tp(iwall,i),.false.)
+     1        -qevap(bndx(iwall),ns,Tp(iwall,i))
         t0 = Kappa_perp(bndx(iwall),i,Tp(iwall,i)) /
      2   (0.5_R8*(y(iwall,i)+y(iwall-1,i)))
         aa5(iwall,i,-1) = aa5(iwall,i,-1) - t0

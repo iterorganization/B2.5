@@ -17,3 +17,7 @@ lib/
 #ignore local files and directories
 *.local
 *.local/
+
+#ignore local backup copies
+*.orig
+

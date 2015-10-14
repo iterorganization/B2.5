@@ -4,7 +4,7 @@ c Program to solve the heat diffusion equation
 c  Last modified by Manoj Warrier on (08-02-2004)
 
 c Using the numerical method written by M. Kundu to
-c SOLVE PARABOLIC EQUATIONS USING THE METHOD OF LINES 
+c SOLVE PARABOLIC EQUATIONS USING THE METHOD OF LINES
 
 c.....................................................................
 
@@ -55,7 +55,7 @@ c  Tp = Target surface temperature (K).
       real (kind=R8) :: hstep, rerr
       real (kind=R8) :: du(7*ndepth_nml), yf(ndepth_nml), ut(ndepth_nml)
       real (kind=R8) :: wk(3*ndepth_nml + ndepth_nml*2*ndepth_nml)
-      integer iwk(ndepth_nml) 
+      integer iwk(ndepth_nml)
       external mstep
 #else
       external pdedef, bndary, D03PCF
@@ -70,7 +70,7 @@ c  Tp = Target surface temperature (K).
       integer :: itask, itrace, ind, ifail
       integer, allocatable, save :: iw(:)
       real (kind=R8), allocatable, save :: U_nag(:,:), w(:)
-      real (kind=R8) :: acc 
+      real (kind=R8) :: acc
 
       external xertst, subini, subend
 
@@ -80,7 +80,7 @@ c  Tp = Target surface temperature (K).
         npde = 1
         nw = (10+6*npde)*npde*ndepth_nml+
      .       (21+3*npde)*npde+7*ndepth_nml+56
-        niw = npde*ndepth_nml+25 
+        niw = npde*ndepth_nml+25
         allocate(U_nag(npde,ndepth_nml))
         allocate(iw(niw))
         allocate(w(nw))
@@ -137,10 +137,10 @@ c       function of the position "x" at ndepth_nml grid points.
 c No. of equations to be solved.
 #ifdef NO_NAG
       neq = ndepth_nml - 1   ! since we specify T at one end and grad(T) at the other
-      iflg = 0 
+      iflg = 0
       iopt = 1
       hstep = dt
-      nmax = 100000000 
+      nmax = 100000000
       rerr = 1.0e-8_R8
       call mstep(ibnd,ns,neq,u1,ut,du,lines2c,hstep,t0,tn,yf,
      &  rerr,nstep,nmax,ier,iflg,iopt,wk,iwk)
@@ -161,9 +161,9 @@ cxpb   New NAG solution to replace MSTEP calls
       enddo
       acc = 1.0e-8_R8
 
-      call D03PCF(npde, 0, t0, tn, pdedef, 
-     &   bndary, U_nag, ndepth_nml, x, acc, w, nw, iw, niw, 
-     &   itask, itrace, ind, ifail) 
+      call D03PCF(npde, 0, t0, tn, pdedef,
+     &   bndary, U_nag, ndepth_nml, x, acc, w, nw, iw, niw,
+     &   itask, itrace, ind, ifail)
       if(ifail.ne.0.and.ifail.ne.10) write(*,*) 'D03PCF:ifail',ifail
       call xertst (ifail.eq.0.or.ifail.eq.10,
      & 'Abnormal exit from D03PCF')
@@ -201,7 +201,7 @@ c The above dependence follows the reference
 
       common /zzline/ dx,x0,xn,x
       common /phyparams/ Qtot,Tcbc,active
-      
+
       KAb = matbulk_Kappa_KA(ibnd)
       KBb = matbulk_Kappa_KB(ibnd)
 cxpb  Will need to update this later for a better computation
@@ -217,25 +217,25 @@ cxpb  Will need to update this later for a better computation
       if (coating_thickness(ibnd).gt.0.0_R8) then
         KAc = coating_Kappa_KA(ibnd)
         KBc = coating_Kappa_KB(ibnd)
-        Tc = max(Tcbc, min( matsurf_vapor_temp(ibnd), (Tcbc + KBb/KAb) * 
+        Tc = max(Tcbc, min( matsurf_vapor_temp(ibnd), (Tcbc + KBb/KAb) *
      .       dexp(-KAb*Qtot*(coating_thickness(ibnd)-xn)) - KBb/KAb ))
       endif
       do i = ndepth_nml, 2, -1
         xx(i) = x(i)
         if (target_depth(ibnd,i).ge.coating_thickness(ibnd)) then
-          uu(i) = max(Tcbc, min( matsurf_vapor_temp(ibnd), 
+          uu(i) = max(Tcbc, min( matsurf_vapor_temp(ibnd),
      .     (Tcbc + KBb/KAb) * dexp(-KAb*Qtot*(x(i)-xn)) - KBb/KAb ))
         else
-          uu(i) = max(Tcbc, min( matsurf_vapor_temp(ibnd), 
-     .     (Tc + KBc/KAc) * 
+          uu(i) = max(Tcbc, min( matsurf_vapor_temp(ibnd),
+     .     (Tc + KBc/KAc) *
      .     dexp(-KAc*Qtot*(x(i)-coating_thickness(ibnd))) - KBc/KAc ))
         endif
 c        print*,x(i),' ',uu(i),' ',i,' ',xn,' ',x0
       enddo
       xx(1) = x(1)
       Tl = uu(2)
-      uu(1) = max(Tl, min( matsurf_vapor_temp(ibnd), 
-     .     (Tl + Kbl/KAl) * 
+      uu(1) = max(Tl, min( matsurf_vapor_temp(ibnd),
+     .     (Tl + Kbl/KAl) *
      .     dexp(-KAl*Qtot*(x(1)-x(2))) - KBl/KAl ))
 
       return
@@ -252,9 +252,9 @@ c_______________________________________________________________________
       implicit none
 
       integer ns,n,i,j,ibnd
-      real (kind=R8) :: ux,uxx 
+      real (kind=R8) :: ux,uxx
       real (kind=R8) :: x(ndepth),u(ndepth_nml),uu(ndepth_nml+1),
-     .                  du(ndepth_nml),t 
+     .                  du(ndepth_nml),t
       real (kind=R8) :: a0, b0, c0, an, bn, cn
       real (kind=R8) :: dx(ndepth-1), x0, xn, Ts, Td
       common /zzline/ dx,x0,xn,x
@@ -325,7 +325,7 @@ c general boundary condition.
 c a0*u + b0*du/dx = c0  at the plasma facing surface.
 c an*u + bn*du/dx = cn  at the cooling tube surface.
 
-c t and Ts are inputs to the subroutine and a0, b0, c0, an, bn, and cn
+c t, Ts and Td are inputs to the subroutine and a0, b0, c0, an, bn, and cn
 c are the outputs from the subroutine.
 
       subroutine coefbc(ibnd,nd,ns,t,Ts,Td,a0,b0,c0,an,bn,cn)
@@ -333,11 +333,12 @@ c are the outputs from the subroutine.
 
       implicit none
       integer ibnd, nd, ns
-      logical active
       real (kind=R8) :: a0,b0,c0,an,bn,cn,t,Ts,Td
-      real (kind=R8) :: Kappa, Qtot, Tcbc, qevap, qrad
-      external Kappa, qevap, qrad
+      real (kind=R8) :: Qtot, Tcbc
+      logical active
       common /phyparams/ Qtot,Tcbc,active
+      real (kind=R8) :: Kappa, qevap, qrad, cond_coef
+      external Kappa, qevap, qrad, cond_coef
 
 c  Coefficients at x=x0
       a0 = 0.0_R8
@@ -405,7 +406,7 @@ c Units of Kappa are in "W/m/K"
           Kappa = Kappa+bulk_value*
      .     (target_depth(ibnd,i+1)-layer_depth(ibnd))/
      .     (target_depth(ibnd,i+1)-target_depth(ibnd,i))
-        else 
+        else
           Kappa = Kappa+coating_value*
      .     (target_depth(ibnd,i+1)-layer_depth(ibnd))/
      .     (target_depth(ibnd,i+1)-target_depth(ibnd,i))
@@ -573,10 +574,7 @@ c-xpb  the distinction between perp and parallel directions
 c....................................................................
 c                      function Cp
 c  function Cp(T) gives the specific heat capacity at const pressure
-c  for graphite at temperature T.
-c      ref) R.A. Langley, Evaporation, Data Compendium for Plasma
-c           Surface Interactions, Special Issue, NUCLEAR FUSION,
-c           IAEA, Vienna, (1984) 57.
+c  at temperature T.
 
       function Cp(ibnd,i,T)
       use b2mod_types
@@ -628,7 +626,7 @@ c....................................................................
 c                      function mass_density
 c  function mass_density(ibnd,i) gives the mass density of the target
 c  element ibnd at depth i.
-                                                                                
+
       function mass_density(ibnd,i)
       use b2mod_types
       use b2mod_wall
@@ -652,7 +650,7 @@ c  element ibnd at depth i.
      .      matbulk_target_density(ibnd)*
      .     (target_depth(ibnd,i+1)-layer_depth(ibnd))/
      .     (target_depth(ibnd,i+1)-target_depth(ibnd,i))
-        else 
+        else
           mass_density = mass_density+
      .      coating_target_density(ibnd)*
      .     (target_depth(ibnd,i+1)-layer_depth(ibnd))/
@@ -674,13 +672,13 @@ c....................................................................
 #     include "emissivity.constants"
       real (kind=R8) :: Ts, Tw, SBconst, qrad
       logical top_layer
-      parameter (SBconst = 
+      parameter (SBconst =
      . pi**5 * (4.0_R8/15.0_R8) * (KBolt/const_h)**3
      . * KBolt / c**2)
       real (kind=R8) :: layer_emissivity
       external layer_emissivity
 
-      Tw = backplate_temp(ibnd)      ! Temp of walls around taken = 0
+      Tw = backplate_temp(ibnd)      ! Temperature of surrounding environment
       if (layer_depth(ibnd).eq.0.0_R8 .or. .not.top_layer) then
         qrad = matsurf_blackbody_emiss(ibnd)*SBconst*(Ts**4-Tw**4)
       else
@@ -728,7 +726,7 @@ c     Steel   | -14321.9 | 9.44    |
 
 c  Ts       ->  temperature of the Graphite plate in Kelvin.
 c  flxthev  ->  Flux of target atoms evaporated ( / m^2 /s )
-c  qevap -> Energy lost (Joules / m^2 / s) 
+c  qevap -> Energy lost (Joules / m^2 / s)
 
       call subini ('qevap')
       if (lfirst) then
@@ -738,10 +736,10 @@ c  qevap -> Energy lost (Joules / m^2 / s)
      .    'faulty parameter therm_evap')
         lfirst = .false.
       endif
-                              
+
       do is = 0, ns-1
         itrack = track_index(is)
-        if (is_neutral(is)) then 
+        if (is_neutral(is)) then
 c  Checking inputs
           if (layer_depth(ibnd).eq.0.0_R8 .or. itrack.eq.0) then
             Vapor_temp = matsurf_vapor_temp(ibnd)
@@ -769,7 +767,7 @@ c  Checking inputs
       use b2mod_wall
       implicit none
       integer npde, ires
-      real (kind=R8) :: T, X, U(NPDE), UX(NPDE), 
+      real (kind=R8) :: T, X, U(NPDE), UX(NPDE),
      .  P(NPDE,NPDE), Q(NPDE), R(NPDE)
       integer i, ib, it, ih
 
@@ -816,9 +814,9 @@ c  Checking inputs
       implicit none
       integer npde, iposb, ires
       real (kind=R8) :: T, U(npde), UX(npde), beta(npde), gamma(npde)
-      real (kind=R8) :: Qtot, Tcbc
+      real (kind=R8) :: Qtot, Tcbc, cond_coef
       logical active
- 
+
       real (kind=R8) :: qrad, qevap
       external qrad, qevap
 
@@ -829,27 +827,41 @@ c  Checking inputs
       if (iposb.eq.0) then  ! LHS BC : x=0 : Heat flux imposed
         beta(1)=-1.0_R8
         gamma(1)=Qtot-qrad(iwall,U(1),.true.)-qevap(iwall,ns,U(1))
-      else if (iposb.eq.1.and.active) then ! RHS BC : x=xn : Cooling temperature imposed
-        beta(1)= 0.0_R8
-        gamma(1)= U(1)-Tcbc
-      else if (iposb.eq.1.and..not.active) then ! RHS BC : x=xn : Inertial Cooling
+      else if (iposb.eq.1) then ! RHS BC : Cooling with some contact heat conductivity (low for inertial cooling, high for active cooling)
         beta(1)= 1.0_R8
-        gamma(1)= -100.0_R8*(U(npde)-Tcbc) ! we assume the contact heat conductivity of 100 W.m-2.K-1
+        gamma(1)=-cond_coef(.not.active,U(1))*(U(1)-Tcbc)
+!! FIXME: Could use additionally the code below once we have a way of applying 
+!!        the correct emissivity
+cxpb        if (.not.active) 
+cxpb     >    gamma(1)=gamma(1)-qrad(iwall,U(1),.false.)
+cxpb     .                     -qevap(iwall,ns,U(1))
+c$$$ Old treatment where conductivity to coolant was assumed to be perfect
+c$$$      else if (iposb.eq.1.and.active) then ! RHS BC : x=xn : Cooling temperature imposed
+c$$$        beta(1)= 0.0_R8
+c$$$        gamma(1)= U(1)-Tcbc
+c$$$      else if (iposb.eq.1.and..not.active) then ! RHS BC : x=xn : Inertial Cooling
+c$$$        beta(1)= 1.0_R8
+c$$$        gamma(1)= -100.0_R8*(U(1)-Tcbc) ! we assume the contact heat conductivity of 100 W.m-2.K-1
       end if
 
       return
       end subroutine bndary
 
-      function cond_coef(T)
+      function cond_coef(inertial,T)
       use b2mod_types
       implicit none
       real(kind=R8) :: cond_coef
+      logical inertial
       real(kind=R8) :: T, Tc
 
       Tc = T - 273.15_R8
 
+      if (inertial) then
+! we assume a residual contact heat conductivity of 100 W.m-2.K-1
+        cond_coef = 100.0_R8
+      else
 ! The following are fits to the result obtained by Nukiyama for the heat conduction
-! transfer coefficient between the CuCrZr pipe and the water coolant, 
+! transfer coefficient between the CuCrZr pipe and the water coolant,
 ! applicable to the ITER divertor targets
 ! Full reference can be found at: https://user.iter.org/?uid=35L29Y
 !      cond_coef = 1.64908e-8_R8*Tc**6 - 1.24649e-5_R8*Tc**5
@@ -857,7 +869,8 @@ c  Checking inputs
 !     @       - 502.333_R8*Tc + 77703.2_R8
 !      cond_coef = 1.357954e-3_R8*Tc**3 + 6.616505e-1_R8*Tc**2 - 24.41418_R8*Tc
 !     @       + 7.725710e4_R8
-      cond_coef = 8.0e4_R8
+        cond_coef = 8.0e4_R8
+      end if
 
       return
       end function cond_coef

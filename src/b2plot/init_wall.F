@@ -442,7 +442,7 @@ c-xpb  i.e. minimum depth over which material mixing occurs
 c-xpb  Figure out where to put the coating-bulk boundary
           if (hd_linlog.eq.1) then
             icoat = int(ndepth_nml*coating_thickness(ibnd)/
-     .                       plate_thickness(ibnd) + onemeps)+1
+     .                       plate_thickness(ibnd) + onemeps)
           else
             icoat = int( (ndepth_nml-1)*
      .       log(coating_thickness(ibnd)*(hd_ratio-1.0_R8)/

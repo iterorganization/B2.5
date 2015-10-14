@@ -2,7 +2,7 @@
       use b2mod_types
       use b2mod_layer
       implicit none
-      
+
       integer ndepth, nwall_segments, nsegments, nline
       integer, save :: ntargsp
       parameter(
@@ -43,7 +43,7 @@ cxpb Data file material properties
      *  surface_material_name(:),
      *  coating_material_name(:),
      *  bulk_material_name(:)
-      
+
       integer, allocatable, save ::
      *  xymap(:,:)
 
@@ -94,7 +94,7 @@ cxpb Data file material properties
       integer, save :: track_index(0:DEF_NSD-1)
 #endif
 
-      integer, allocatable, save :: imapw(:), 
+      integer, allocatable, save :: imapw(:),
      *  imapreg(:), wall_begin(:), wall_end(:)
 
 cxpb Data file material properties
@@ -112,7 +112,7 @@ cxpb Data file material properties
      *  matsurf_stick_coef(:),
      *  matsurf_vapor_temp(:),
      *  matsurf_heat_sublim(:)
-      
+
       character*32, allocatable, save :: coating_long_name(:)
       real (kind=R8), allocatable, save ::
      *  coating_target_density(:),
@@ -160,13 +160,13 @@ cxpb Data file material properties
       real (kind=R8), allocatable :: r1(:), r2(:), z1(:), z2(:)
 
       namelist /wall_save/ ndepth_nml, track_species,
-     *  imapx, imapy, xymap, surface_material_name, bulk_material_name, 
+     *  imapx, imapy, xymap, surface_material_name, bulk_material_name,
      *  target_temp, backplate_temp, plate_thickness, plate_time_factor,
      *  deposition, erosion, chemical_sputtering, physical_sputtering,
      *  physical_sputtering_energy, RES_sputtering, thermal_evaporation,
      *  backscattering, backscattering_energy, plate_time, plate_area,
-     *  monolayer_deposition, monolayer_erosion, 
-     *  layer_nconstituents, layer_nzconstituents, 
+     *  monolayer_deposition, monolayer_erosion,
+     *  layer_nconstituents, layer_nzconstituents,
      *  layer_nrelconstituents, layer_thermal_contact,
      *  coating_thickness, coating_material_name,
      *  layer_alloys, inertial_cooling
@@ -177,8 +177,8 @@ cxpb   ( imapx(iwall) , imapy(iwall) )
 cxpb Reversely, the B2 boundary cell ( ix, iy ) corresponds to the boundary
 cxpb element: xymap(ix,iy)
 
-      data plate_model/0/, plate_option/3/, 
-     .     plate_temp/300.0_R8/, plate_thick/0.00_R8/ 
+      data plate_model/0/, plate_option/3/,
+     .     plate_temp/300.0_R8/, plate_thick/0.00_R8/
 
       contains
 
@@ -190,7 +190,7 @@ cxpb element: xymap(ix,iy)
       external xertst
 #endif
       external subini, subend
-  
+
       call subini('b2mod_wall_init')
 cxpb  Geometric information
 #ifdef ALLOCATE_AND_NAMELIST
@@ -362,8 +362,8 @@ cxpb Data file material properties
       else
         write(6,*) 'No ',trim(filename)
       endif
-      found = 
-     .  layer_thermal_contact.ne.1.0_R8 .or. 
+      found =
+     .  layer_thermal_contact.ne.1.0_R8 .or.
      .  maxval(target_temp).gt.plate_temp .or.
      .  maxval(thermal_evaporation).gt.0.0_R8 .or.
      .  maxval(physical_sputtering).gt.0.0_R8 .or.
@@ -393,25 +393,25 @@ cxpb Data file material properties
       open(nwrite,file=trim(filename))
       write(nwrite,'(a10)') '&WALL_SAVE'
       do itrack=1,nalloys
-        if(layer_alloys(itrack).ne.' ') 
+        if(layer_alloys(itrack).ne.' ')
      .    write(nwrite,'(a13,i1,a4,a6,a2)')
      .    'LAYER_ALLOYS(',itrack,')= ''',
      .     layer_alloys(itrack),''','
       enddo
       write(nwrite,'(a11,i4,a1)') 'NDEPTH_NML=',ndepth_nml,','
       do itrack=1,ntargsp
-        write(nwrite,'(a14,i2,a3,a2,a2)') 
+        write(nwrite,'(a14,i2,a3,a2,a2)')
      .   'TRACK_SPECIES(',itrack,')=''',track_species(itrack),''','
       enddo
-      if (layer_thermal_contact.ne.1.0_R8) 
-     > write(nwrite,'(a22,1es15.8,a1)') 
+      if (layer_thermal_contact.ne.1.0_R8)
+     > write(nwrite,'(a22,1es15.8,a1)')
      > 'LAYER_THERMAL_CONTACT=',layer_thermal_contact,','
       if (.not.(plate_model.ge.1.and.ndepth_nml.gt.1)) then
-	do ibnd = 1, nbnd
-	  if (target_temp(ibnd,1).gt.plate_temp) 
-     >	   write(nwrite,'(a12,i4,a4,1x,1es15.8,a1)') 
-     .	   'TARGET_TEMP(',ibnd,',1)=',target_temp(ibnd,1),','
-	enddo
+        do ibnd = 1, nbnd
+          if (target_temp(ibnd,1).gt.plate_temp)
+     >     write(nwrite,'(a12,i4,a4,1x,1es15.8,a1)')
+     .     'TARGET_TEMP(',ibnd,',1)=',target_temp(ibnd,1),','
+        enddo
       endif
       do is = 0, ns-1
         if (maxval(thermal_evaporation(1:nbnd,is)).gt.0.0_R8) then
@@ -422,7 +422,7 @@ cxpb Data file material properties
               line = ''
             endif
             do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1es15.8,a1)') 
+              write(numstr,'(1x,1es15.8,a1)')
      .         thermal_evaporation(ibnd,is),','
               line = trim(line)//numstr
             enddo
@@ -437,7 +437,7 @@ cxpb Data file material properties
               line = ''
             endif
             do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1e15.8,a1)') 
+              write(numstr,'(1x,1e15.8,a1)')
      .         physical_sputtering(ibnd,is),','
               line = trim(line)//numstr
              enddo
@@ -445,13 +445,13 @@ cxpb Data file material properties
           enddo
           do i = 1, (nbnd-1)/nline+1
             if (i.eq.1) then
-              write(line,'(a29,i3,a2)') 
+              write(line,'(a29,i3,a2)')
      .         'PHYSICAL_SPUTTERING_ENERGY(1,',is,')='
             else
               line = ''
             endif
             do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1es15.8,a1)') 
+              write(numstr,'(1x,1es15.8,a1)')
      .         physical_sputtering_energy(ibnd,is),','
               line = trim(line)//numstr
             enddo
@@ -461,13 +461,13 @@ cxpb Data file material properties
         if (maxval(chemical_sputtering(1:nbnd,is)).gt.0.0_R8) then
           do i = 1, (nbnd-1)/nline+1
             if (i.eq.1) then
-              write(line,'(a22,i3,a2)') 
+              write(line,'(a22,i3,a2)')
      .         'CHEMICAL_SPUTTERING(1,',is,')='
             else
               line = ''
             endif
             do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1es15.8,a1)') 
+              write(numstr,'(1x,1es15.8,a1)')
      .         chemical_sputtering(ibnd,is),','
               line = trim(line)//numstr
              enddo
@@ -477,13 +477,13 @@ cxpb Data file material properties
         if (maxval(RES_sputtering(1:nbnd,is)).gt.0.0_R8) then
           do i = 1, (nbnd-1)/nline+1
             if (i.eq.1) then
-              write(line,'(a17,i3,a2)') 
+              write(line,'(a17,i3,a2)')
      .         'RES_SPUTTERING(1,',is,')='
             else
               line = ''
             endif
             do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1es15.8,a1)') 
+              write(numstr,'(1x,1es15.8,a1)')
      .         RES_sputtering(ibnd,is),','
               line = trim(line)//numstr
             enddo
@@ -493,13 +493,13 @@ cxpb Data file material properties
         if (maxval(backscattering(1:nbnd,is)).gt.0.0_R8) then
           do i = 1, (nbnd-1)/nline+1
             if (i.eq.1) then
-              write(line,'(a17,i3,a2)') 
+              write(line,'(a17,i3,a2)')
      .         'BACKSCATTERING(1,',is,')='
             else
               line = ''
             endif
             do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1es15.8,a1)') 
+              write(numstr,'(1x,1es15.8,a1)')
      .         backscattering(ibnd,is),','
               line = trim(line)//numstr
             enddo
@@ -507,13 +507,13 @@ cxpb Data file material properties
           enddo
           do i = 1, (nbnd-1)/nline+1
             if (i.eq.1) then
-              write(line,'(a24,i3,a2)') 
+              write(line,'(a24,i3,a2)')
      .         'BACKSCATTERING_ENERGY(1,',is,')='
             else
               line = ''
             endif
             do ibnd = (i-1)*nline+1, min(i*nline,nbnd)
-              write(numstr,'(1x,1es15.8,a1)') 
+              write(numstr,'(1x,1es15.8,a1)')
      .         backscattering_energy(ibnd,is),','
               line = trim(line)//numstr
             enddo
@@ -525,48 +525,48 @@ cxpb Data file material properties
 cxpb  Use explicit writing of non-default elements only
         do ix = -1, nx
           do iy = -1, ny
-            if (xymap(ix,iy).ne.0) 
+            if (xymap(ix,iy).ne.0)
      .       write(nwrite,'(a6,i4,a1,i4,a2,i4,a1)')
-     .       'XYMAP(',ix,',',iy,')=',xymap(ix,iy),','     
+     .       'XYMAP(',ix,',',iy,')=',xymap(ix,iy),','
           end do
         end do
         do ibnd = 1, nbnd
-          write(nwrite,'(a6,i4,a2,i4,a1,1x,a6,i4,a2,i4,a1)') 
+          write(nwrite,'(a6,i4,a2,i4,a1,1x,a6,i4,a2,i4,a1)')
      .     'IMAPX(',ibnd,')=',imapx(ibnd),',',
      .     'IMAPY(',ibnd,')=',imapy(ibnd),','
-          if (inertial_cooling(ibnd)) 
+          if (inertial_cooling(ibnd))
      .     write(nwrite,'(a17,i4,a2,l1,a1)')
      .     'INERTIAL_COOLING(',ibnd,')=',inertial_cooling(ibnd),','
           if (backplate_temp(ibnd).ne.plate_temp .and.
-     .        backplate_temp(ibnd).ne.0.0_R8) 
-     .     write(nwrite,'(a15,i4,a2,1es15.8,a1)') 
+     .        backplate_temp(ibnd).ne.0.0_R8)
+     .     write(nwrite,'(a15,i4,a2,1es15.8,a1)')
      .     'BACKPLATE_TEMP(',ibnd,')=',backplate_temp(ibnd),','
           if (plate_thickness(ibnd).ne.plate_thick .and.
      .        plate_thickness(ibnd).ne.0.0_R8)
-     .     write(nwrite,'(a16,i4,a2,1es15.8,a1)') 
+     .     write(nwrite,'(a16,i4,a2,1es15.8,a1)')
      .     'PLATE_THICKNESS(',ibnd,')=',plate_thickness(ibnd),','
           if (coating_thickness(ibnd).gt.0.0_R8)
-     .     write(nwrite,'(a18,i4,a2,1es15.8,a1)') 
+     .     write(nwrite,'(a18,i4,a2,1es15.8,a1)')
      .     'COATING_THICKNESS(',ibnd,')=',coating_thickness(ibnd),','
           if (plate_time_factor(ibnd).ne.1.0_R8 .and.
      .        plate_time_factor(ibnd).ne.0.0_R8)
-     .     write(nwrite,'(a18,i4,a2,1es15.8,a1)') 
+     .     write(nwrite,'(a18,i4,a2,1es15.8,a1)')
      .     'PLATE_TIME_FACTOR(',ibnd,')=',plate_time_factor(ibnd),','
           if (trim(surface_material_name(ibnd)).ne.'C' .and.
      .             surface_material_name(ibnd).ne.' ')
-     .     write(nwrite,'(a22,i4,a4,a6,a2)') 
+     .     write(nwrite,'(a22,i4,a4,a6,a2)')
      .     'SURFACE_MATERIAL_NAME(',ibnd,')= ''',
      .      surface_material_name(ibnd),''','
-          if (coating_thickness(ibnd).gt.0.0_R8) 
-     .     write(nwrite,'(a22,i4,a4,a6,a2)') 
+          if (coating_thickness(ibnd).gt.0.0_R8)
+     .     write(nwrite,'(a22,i4,a4,a6,a2)')
      .     'COATING_MATERIAL_NAME(',ibnd,')= ''',
      .      coating_material_name(ibnd),''','
           if (trim(bulk_material_name(ibnd)).ne.'C' .and.
-     .             bulk_material_name(ibnd).ne.' ') 
-     .     write(nwrite,'(a19,i4,a4,a6,a2)') 
+     .             bulk_material_name(ibnd).ne.' ')
+     .     write(nwrite,'(a19,i4,a4,a6,a2)')
      .     'BULK_MATERIAL_NAME(',ibnd,')= ''',
      .      bulk_material_name(ibnd),''','
-          todo = 
+          todo =
      .     layer_nconstituents(ibnd).ne.matsurf_nconstituents(ibnd)
           do i = 1, layer_nconstituents(ibnd)
             found = .false.
@@ -599,7 +599,7 @@ cxpb  Use explicit writing of non-default elements only
      .        'DEPOSITION(',ibnd,',',itrack,')=',
      1         deposition(ibnd,itrack),','
             if (monolayer_deposition(ibnd,itrack).ne.0.0_R8)
-     .       write(nwrite,'(a,i4,a,i1,a,1es15.8,a)') 
+     .       write(nwrite,'(a,i4,a,i1,a,1es15.8,a)')
      .        'MONOLAYER_DEPOSITION(',ibnd,',',itrack,')=',
      1         monolayer_deposition(ibnd,itrack),','
             if (erosion(ibnd,itrack).ne.0.0_R8)
@@ -607,7 +607,7 @@ cxpb  Use explicit writing of non-default elements only
      .        'EROSION(',ibnd,',',itrack,')=',
      1         erosion(ibnd,itrack),','
             if (monolayer_erosion(ibnd,itrack).ne.0.0_R8)
-     .       write(nwrite,'(a,i4,a,i1,a,1es15.8,a)') 
+     .       write(nwrite,'(a,i4,a,i1,a,1es15.8,a)')
      .        'MONOLAYER_EROSION(',ibnd,',',itrack,')=',
      1         monolayer_erosion(ibnd,itrack),','
           enddo
@@ -618,17 +618,17 @@ cxpb  Use explicit writing of non-default elements only
      .     write(nwrite,'(a11,i4,a2,1es15.8,a1)')
      .      'PLATE_AREA(',ibnd,')=',plate_area(ibnd),','
         enddo
-        if (plate_model.ge.1.and.ndepth_nml.gt.1) then 
+        if (plate_model.ge.1.and.ndepth_nml.gt.1) then
           do ibnd = 1, nbnd
             do i = 1, (ndepth_nml-1)/nline+1
               if (i.eq.1) then
-                write(line,'(a12,i4,a3,i4,a2)') 
+                write(line,'(a12,i4,a3,i4,a2)')
      .           'TARGET_TEMP(',ibnd,',1:',ndepth_nml,')='
               else
                 line = ''
               endif
               do is = (i-1)*nline+1, min(i*nline,ndepth_nml)
-                write(numstr,'(1x,1es15.8,a1)') 
+                write(numstr,'(1x,1es15.8,a1)')
      .           target_temp(ibnd,is),','
                 line = trim(line)//numstr
               enddo
@@ -658,7 +658,7 @@ cxpb  Use explicit writing of non-default elements only
 
       if(open_file(98,'incatm','data.local|modules/B2.5/Database')) then
         do ic=1,94
-          read(98,*) adum, idum(0), atomic_mass(idum(0)), 
+          read(98,*) adum, idum(0), atomic_mass(idum(0)),
      1     surface_binding_energy(idum(0)), target_density(idum(0))
         enddo
         close(98)
@@ -731,19 +731,19 @@ cxpb  Use explicit writing of non-default elements only
      .       'data.local|modules/B2.5/Database',filenamecat)) then
             read(99,*) str_dummy
             read(99,*) idum(0)
-            read(99,*) (matsurf_nzconstituents(ibnd,i),i=1,idum(0)) 
-            read(99,*) (matsurf_nrelconstituents(ibnd,i),i=1,idum(0)) 
+            read(99,*) (matsurf_nzconstituents(ibnd,i),i=1,idum(0))
+            read(99,*) (matsurf_nrelconstituents(ibnd,i),i=1,idum(0))
             close(99)
           endif
         else
           matsurf_nzconstituents(ibnd,
      .      1:matsurf_nconstituents(old_file)) =
      .     matsurf_nzconstituents(old_file,
-     .      1:matsurf_nconstituents(old_file)) 
+     .      1:matsurf_nconstituents(old_file))
           matsurf_nrelconstituents(ibnd,
      .      1:matsurf_nconstituents(old_file)) =
      .     matsurf_nrelconstituents(old_file,
-     .      1:matsurf_nconstituents(old_file)) 
+     .      1:matsurf_nconstituents(old_file))
         endif
       enddo
 c-xpb Normalise surface constituents
@@ -753,7 +753,7 @@ c-xpb Normalise surface constituents
           sum = sum + matsurf_nrelconstituents(ibnd,i)
         end do
         do i = 1, matsurf_nconstituents(ibnd)
-          matsurf_nrelconstituents(ibnd,i) = 
+          matsurf_nrelconstituents(ibnd,i) =
      .     matsurf_nrelconstituents(ibnd,i)/sum
         end do
       end do
@@ -918,7 +918,7 @@ c-xpb Normalise surface constituents
             read(99,*) alloy_nzconstituents
      .       (ifile,1:alloy_nconstituents(ifile))
             read(99,*) alloy_nrelconstituents
-     .       (ifile,1:alloy_nconstituents(ifile)) 
+     .       (ifile,1:alloy_nconstituents(ifile))
             read(99,*) alloy_chemsput_erel(ifile)
             read(99,*) alloy_blackbody_emiss(ifile)
             read(99,*) alloy_vapprs_A(ifile)
