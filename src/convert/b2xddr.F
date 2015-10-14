@@ -52,7 +52,8 @@
 *   ..read plasma state file
       call cfruch (ninp(3), 120, lblmn, 'label')
 *   ..read species data
-      call b2ruzd (ninp(3), b2fstate_version, ns, zamin, zamax, zn, am)
+      call b2ruzd (ninp(3), b2fstate_version,
+     &  ns, zamin, zamax, zn, am, .true.)
       do is = 0, ns-1
         za(is) = (zamin(is) + zamax(is))/2.0_R8
       end do
@@ -61,7 +62,7 @@
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &	b2fstate_version)
 *   ..test plasma state and fluxes
-      call b2xvps (nx, ny, ns, 
+      call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *   ..process
       call process(nx,ny,ns,

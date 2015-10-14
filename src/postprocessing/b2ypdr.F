@@ -80,15 +80,15 @@
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120, idout*80,
-     &  id*8, cnamip*80, cvalip*80
+     &  id*8, cnamip*80, cvalip*80, line*80
 *   ..initialisation
       save ismain
       data ismain/1/
 *   ..procedures
       intrinsic abs
-      logical streql, ltst
+      logical streql, ltst, is_comment
       external subini, subend, xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruch, cfruin, lbfilx, ipsetc, ipgeti
+     &  gdawk, cfruch, cfruin, lbfilx, ipsetc, ipgeti, is_comment
       external b2rugm, b2rups, b2rucp, b2wfgm, b2wfcp, b2wfps, b2xvps,
      &  b2wggm, b2wgps, b2wscp, b2wsps, b2ruzd, b2rurc, b2spel, b2sqel,
      &  b2xvcp, b2rfcp, b2rflb, b2xxid
@@ -614,8 +614,11 @@
       call b2rfcp (ninp(5), ns)
 *   ..read and echo code internal parameters
     1 continue
-       read (ninp(5),*,end=2,err=97) cnamip, cvalip
-       if (cnamip(1:1).ne.'*') call ipsetc (cnamip, cvalip)
+       read (ninp(5),'(a80)',end=2,err=97) line
+       if (.not.is_comment(line)) then
+         read (line,*) cnamip, cvalip
+         call ipsetc (cnamip, cvalip)
+       end if
        goto 1
     2 continue
 *   ..read geometry
@@ -628,7 +631,8 @@
       call b2rucp (ninp(2), b2fparam_version, nx, ns)
 *   ..read state
       call cfruch (ninp(3), 120, lblmn, 'label')
-      call b2ruzd (ninp(3), b2fstate_version, ns, zamin, zamax, zn, am)
+      call b2ruzd (ninp(3), b2fstate_version, 
+     &  ns, zamin, zamax, zn, am, .true.)
       call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,		 !xpb
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      1	b2fstate_version)

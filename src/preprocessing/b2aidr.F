@@ -65,28 +65,32 @@
 
 *   ..common blocks
 *   ..local variables
-      integer n2, is, i, is0, idum(0:9)
+      integer n2, is, js, i, is0, idum(0:9)
       integer, save :: read_b2fstate = 0                              !srv 22.12.09
       real (kind=R8) :: t0, t1                                        !srv 22.12.09
-      real (kind=R8), allocatable :: zcdum(:,:), 
-     &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:), 
+      real (kind=R8), allocatable :: zcdum(:,:),
+     &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:),
      &  te1(:,:), ti1(:,:), po1(:,:), fna1(:,:,:,:), fhe1(:,:,:),
      &  fhi1(:,:,:), fch1(:,:,:), fch_321(:,:,:), fch_521(:,:,:),
-     &  fch_p1(:,:,:), kinrgy1(:,:,:)   
+     &  fch_p1(:,:,:), kinrgy1(:,:,:)
       real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
-      character lblps*120, lblgm*120, id*8, id0*8
+      character lblps*120, lblgm*120, id*8, id0*8, line*80
       character idout*80, cnamip*80, cvalip*80                        !srv 22.12.09
       real (kind=R8) ::
-     *  naini(0:ns-1), ttini
-      logical oldversion
+     *  amtol, naini(0:ns-1), ttini
+      parameter (amtol=1.0e-2_R8)
+      logical oldversion, ex
 *   ..procedures
-      logical streql
+      logical streql, is_comment
       logical ltst                                                    !srv 22.12.09
+      logical lnext
       external subini, subend, xertst, xerrab, sfill, streql,
-     &  cfwuch, cfwuin
+     &  cfwuch, cfwuin, is_comment
       external b2xvsg, b2xxid, b2rflb, b2wups, b2rugm, b2xpne, b2wuzd,
      &  b2ruzd, b2rups
       ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))         !srv 22.12.09
+      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
+     &  abs(am(is)-am(js)).lt.amtol
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -124,7 +128,7 @@
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
-*     the kinetic energy of a particle of species (is) in cell (ix,iy). 
+*     the kinetic energy of a particle of species (is) in cell (ix,iy).
 *     The velocity used includes the parallel velocity as well
 *     as the total diamagnetic and ExB drift velocities in both the radial
 *     and diamagnetic directions.
@@ -217,7 +221,7 @@
        read (ninp(1),*,err=92) id0, (zpdum(is,i),i=0,3)
        read (id0,'(i8)',err=93) is0
        call xertst (is0.eq.is, 'faulty input under *specs')
-       oldversion = oldversion .and. 
+       oldversion = oldversion .and.
      &   nint(zpdum(is,0)**2).eq.nint(zpdum(is,3)) .and.
      &   zpdum(is,1) .gt. 0.0_R8
       enddo
@@ -238,19 +242,31 @@
         am(is) = zpdum(is,3)
        enddo
       endif
+      nspecies = 1
+      is = 0
+      partition_number(is) = 0
+      do while (is.lt.ns-1)
+        if (lnext(is,is+1)) then
+          partition_number(is+1) = partition_number(is)+1
+        else
+          partition_number(is+1) = 0
+          nspecies = nspecies + 1
+        endif
+        is = is + 1
+      end do
       do is = 0, ns-1
         call xertst (0.0_R8.le.zamin(is).and.zamin(is).le.zamax(is),
      .    'faulty input range zamin, zamax')
         call xertst (0.0_R8.lt.zn(is), 'faulty input zn')
-        call xertst (zamin(is).eq.nint(zamin(is)), 
+        call xertst (zamin(is).eq.nint(zamin(is)),
      .    'faulty input zamin; not integer')
-        call xertst (zamax(is).eq.nint(zamax(is)), 
+        call xertst (zamax(is).eq.nint(zamax(is)),
      .    'faulty input zamax; not integer')
-        call xertst (zn(is).eq.nint(zn(is)), 
+        call xertst (zn(is).eq.nint(zn(is)),
      .    'faulty input zn; not integer')
         call xertst (0.0_R8.lt.am(is), 'faulty input am')
         if (is_neutral(is)) then
-          call xertst (0.0_R8.eq.zamax(is), 
+          call xertst (0.0_R8.eq.zamax(is),
      .      'no bundling of neutral species allowed')
         endif
       enddo
@@ -270,8 +286,9 @@
 *   ..read and echo code internal parameters                      !srv 22.12.09 {
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
-       read (ninp(1),*,end=2,err=94) cnamip, cvalip
-       if (cnamip(1:1).ne.'*') then
+       read (ninp(1),'(a80)',end=2,err=94) line
+       if (.not.is_comment(line)) then
+         read (line,*) cnamip, cvalip
          write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
          call ipsetc (cnamip, cvalip)
        endif
@@ -281,11 +298,21 @@
       call ipgeti ('b2aidr_read_b2fstate', read_b2fstate)
 
       if(read_b2fstate.ne.0) then
-*  .. copy the data of first n=min(ns0,ns1) species 
+*  .. copy the data of first n=min(ns0,ns1) species
 *     from the plasma state file b2fstate for ns0 species
-*     into the initial plasma state file b2fstati for ns1 species 
+*     into the initial plasma state file b2fstati for ns1 species
        write(*,*) ' Opening b2fstate'
-       call cfopen (ninp(3),'b2fstate','old','un*formatted')
+       inquire(file='b2fstate',exist=ex)
+       if (ex) then
+         call cfopen (ninp(3),'b2fstate','old','un*formatted')
+       else
+         inquire(file='../b2fstate',exist=ex)
+         if (ex) then
+           call cfopen (ninp(3),'../b2fstate','old','un*formatted')
+         else
+           call xerrab ('Could not find old b2fstate file')
+         end if
+       end if
 *   ..obtain version number
        call cfverr (ninp(3), b2fstate_version)
 *   ..obtain nx0, ny0, ns0 from plasma state file
@@ -300,40 +327,40 @@
 *     already read in)
        allocate(zcdum(0:idum(2)-1,0:4))
        call cfruch (ninp(3), 120, lblps, 'label')
-       call b2ruzd (ninp(3), b2fstate_version, idum(2), 
-     &  zcdum(0,1), zcdum(0,2), zcdum(0,3), zcdum(0,4))
+       call b2ruzd (ninp(3), b2fstate_version, idum(2),
+     &  zcdum(0,1), zcdum(0,2), zcdum(0,3), zcdum(0,4), .false.)
        do is = 0, min(ns,idum(2))-1
-        call xertst (ltst(zcdum(is,1),zamin(is)), 
+        call xertst (ltst(zcdum(is,1),zamin(is)),
      &  'faulty data for zamin')
-        call xertst (ltst(zcdum(is,2),zamax(is)), 
+        call xertst (ltst(zcdum(is,2),zamax(is)),
      &  'faulty data for zamax')
         call xertst (ltst(zcdum(is,3),zn(is)), 'faulty data for zn')
         call xertst (ltst(zcdum(is,4),am(is)), 'faulty data for am')
        enddo
        allocate(
      *  na1(-1:nx,-1:ny,0:idum(2)-1), ua1(-1:nx,-1:ny,0:idum(2)-1),
-     &  ne1(-1:nx,-1:ny), uadia1(-1:nx,-1:ny,0:1,0:idum(2)-1), 
+     &  ne1(-1:nx,-1:ny), uadia1(-1:nx,-1:ny,0:1,0:idum(2)-1),
      &  te1(-1:nx,-1:ny), ti1(-1:nx,-1:ny), po1(-1:nx,-1:ny),
      &  fna1(-1:nx,-1:ny,0:1,0:idum(2)-1), fhe1(-1:nx,-1:ny,0:1),
      &  fhi1(-1:nx,-1:ny,0:1), fch1(-1:nx,-1:ny,0:1),
      1  fch_321(-1:nx,-1:ny,0:1), fch_521(-1:nx,-1:ny,0:1),
      2  fch_p1(-1:nx,-1:ny,0:1), kinrgy1(-1:nx,-1:ny,0:idum(2)-1) )
 *   ..read initial state from the file
-       call b2rups (ninp(3), idum(0), idum(1), idum(2), ne1, na1, ua1, 
-     &  uadia1, te1, ti1, po1, fna1, fhe1, fhi1, fch1, fch_321, fch_521,  
+       call b2rups (ninp(3), idum(0), idum(1), idum(2), ne1, na1, ua1,
+     &  uadia1, te1, ti1, po1, fna1, fhe1, fhi1, fch1, fch_321, fch_521,
      &  fch_p1, kinrgy1, b2fstate_version)
        close(ninp(3))
        write(*,*) ' Closed b2fstate'
 *   ..test plasma state and fluxes
-       call b2xvps (idum(0), idum(1), idum(2), 
+       call b2xvps (idum(0), idum(1), idum(2),
      &  ne1, na1, ua1, te1, ti1, po1, fna1, fhe1, fhi1, fch1)
        call b2xvsg (n2*idum(2), kinrgy1, 1, 'kinrgy', '.ge.')
 *   ..initialise na, ua, kinrgy, uadia, ne
        do is = 0, min(ns,idum(2))-1
-	  na(:,:,is)     = na1(:,:,is)
-	  ua(:,:,is)     = ua1(:,:,is)
-	  kinrgy(:,:,is) = kinrgy1(:,:,is)
-	  uadia(:,:,:,is)  = uadia1(:,:,:,is)
+         na(:,:,is)     = na1(:,:,is)
+         ua(:,:,is)     = ua1(:,:,is)
+         kinrgy(:,:,is) = kinrgy1(:,:,is)
+         uadia(:,:,:,is)  = uadia1(:,:,:,is)
        enddo
        do is = min(ns,idum(2)), ns-1
         call sfill (n2, naini(is), na(-1,-1,is), 1)
@@ -351,18 +378,18 @@
        po = po1
 *   ..initialise fluxes
        do is = 0, min(ns,idum(2))-1
-	  fna(:,:,:,is)     = fna1(:,:,:,is)
+         fna(:,:,:,is)     = fna1(:,:,:,is)
        enddo
        do is = min(ns,idum(2)), ns-1
         call sfill (n2*2, 0.0_R8, fna(-1,-1,0,is), 1)
        enddo
-	 fhe    = fhe1
-	 fhi    = fhi1
-	 fch    = fch1
-	 fch_32 = fch_321
-	 fch_52 = fch_521
-	 fch_p  = fch_p1
-         deallocate( zcdum, na1, ua1, ne1, uadia1, te1, ti1, po1,
+       fhe    = fhe1
+       fhi    = fhi1
+       fch    = fch1
+       fch_32 = fch_321
+       fch_52 = fch_521
+       fch_p  = fch_p1
+       deallocate( zcdum, na1, ua1, ne1, uadia1, te1, ti1, po1,
      &    fna1, fhe1, fhi1, fch1, fch_321, fch_521, fch_p1, kinrgy1)
       else                                                           !srv 22.12.09 }
 *   ..initialise na, ua, kinrgy, uadia, ne
@@ -389,8 +416,8 @@
       endif                                                          !srv 22.12.09
 *   ..initialise time
       tim = 0.0_R8
-*   ..obtain version number						 !xpb
-      call cfverr (ninp(2), b2fgmtry_version)				 !xpb
+*   ..obtain version number                                          !xpb
+      call cfverr (ninp(2), b2fgmtry_version)                        !xpb
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(2), 2, idum, 'nx,ny')
       call xertst (idum(0).eq.nx.and.idum(1).eq.ny,
@@ -424,21 +451,21 @@
       write (nout(0),'(6x,a3,2x,1pe11.2)') 'ti:', ttini
       write (nout(0),'(6x,a3,2x,1pe11.2)') 'po:', 3.1_R8*ttini
 *   ..test plasma state
-      call b2xvps (nx, ny, ns, 
+      call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 *   ..save dimensions
       idum(0) = nx
       idum(1) = ny
       idum(2) = ns
-      call cfverw (nout(1), newversion)					 !xpb
+      call cfverw (nout(1), newversion)                                 !xpb
       call cfwuin (nout(1), 3, idum, 'nx,ny,ns')
 *   ..save label
       call cfwuch (nout(1), 120, lblps, 'label')
 *   ..save /b2cmpa/
       call b2wuzd (nout(1), newversion, ns, zamin, zamax, zn, am)
 *   ..save state
-      call b2wups (nout(1), nx, ny, ns, ne, na, ua, uadia, te,		 !xpb
+      call b2wups (nout(1), nx, ny, ns, ne, na, ua, uadia, te,          !xpb
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
 
 * ..return

@@ -28,7 +28,7 @@
 *   ..common blocks
 #ifdef MDSPLUS
 #     include "mdslib.inc"
-      character :: tcl*80, shottmp*12, line*256, caseline*32
+      character :: tcl*80, shottmp*12, caseline*32
       integer :: status, shotnumber, status2, pos_index,
      1 in_jxi, in_jxa, in_jsep, retlen, svn_revision
       character :: mds_server*(128)
@@ -43,14 +43,15 @@
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1), rcx(-1:nx,-1:ny,0:ns-1)
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
-      character cnamip*80, cvalip*80
+      character cnamip*80, cvalip*80, line*256
 *   ..initialisation
       save BoRiS, ismain, external_species
       data BoRiS/0.0_R8/, ismain/1/, external_species/0/
 *   ..procedures
       intrinsic abs
-      logical ltst
+      logical ltst, is_comment
       ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
+      external is_comment
       external subini, subend, xertst, xerrab, cfruch, cfruin
       external b2rups, b2rugm, b2rucp, b2mds, ipsetc, ipgetr
       external b2rurc, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps
@@ -86,8 +87,9 @@
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
-       read (ninp(5),*,end=2,err=91) cnamip, cvalip
-       if (cnamip(1:1).ne.'*') then
+       read (ninp(5),'(a80)',end=2,err=91) line
+       if (.not.is_comment(line)) then
+         read (line,*) cnamip, cvalip
          write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
          call ipsetc (cnamip, cvalip)
        endif
@@ -107,17 +109,18 @@
 *   ..read plasma state file label
       call cfruch (ninp(3), 120, lblmn, 'label')
 *   ..read species data
-      call b2ruzd (ninp(3), b2fstate_version, ns, zamin, zamax, zn, am)
+      call b2ruzd (ninp(3), b2fstate_version,
+     &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
       call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, 
+     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p,
      1	kinrgy, b2fstate_version)
 *   ..test plasma state and fluxes
-      call b2xvps (nx, ny, ns, 
+      call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *   ..read atomic rate data
       call cfruch (ninp(6), 120, lblrc, 'label')
-      adpak_used = index(lblrc,'ADPAK').gt.0 
+      adpak_used = index(lblrc,'ADPAK').gt.0
       call read_b2mod_ppout('rates', ninp(6), lblrc)
       call b2rurc (ninp(6), b2frates_version)
 *   ..test rtns, rtzmin, rtzmax, rtzn
@@ -135,11 +138,11 @@
      &  rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
 *   ..compute electron rate coefficients
       call ipgeti ('b2mndr_ismain', ismain)
-      call xertst (0.le.ismain.and.ismain.lt.ns, 
+      call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
       call xertst (.not.is_neutral(ismain),
      . 'invalid main plasma species ismain; must not be neutral')
-      call b2sqel (nx, ny, ns, ismain, ev, te, 
+      call b2sqel (nx, ny, ns, ismain, ev, te,
      &  rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 *   ..find nscx, iscx
@@ -147,7 +150,7 @@
       nscx = 0
       do is = 0, ns-1
         if (is_neutral(is).and.zn(is).eq.1.0_R8) then
-          call xertst (nscx.lt.nscxmax, 
+          call xertst (nscx.lt.nscxmax,
      1     'too many neutral hydrogen species')
           iscx(nscx) = is
           nscx = nscx+1

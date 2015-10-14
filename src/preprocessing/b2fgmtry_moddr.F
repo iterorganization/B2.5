@@ -35,7 +35,7 @@
 *   ..local variables
       integer idum(0:9), ix, iy, i, ix1
       integer nxiso1, nxiso2, nyiso1, nyiso2
-      character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
+      character lblgm*120, idout*80
       real (kind=R8) ::
      *   parg(0:99)
       integer istyle

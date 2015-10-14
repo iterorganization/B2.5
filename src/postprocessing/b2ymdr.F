@@ -104,7 +104,7 @@
 *     It will hold that 0.le.zamin(is).le.zamax(is), 0.lt.zn(is) and
 *     0.lt.am(is). It is required that neutral species not be bundled
 *     with charged species.
-*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is) 
+*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is)
 *     are undefined.
 *
 *     Description of some local variables (including arrays in w(0:*):
@@ -139,7 +139,8 @@
       read (ninp(0),*,err=92) iftp, idout
 *   ..read parameters
       call cfruch (ninp(1), 120, lblmn, 'label')
-      call b2ruzd (ninp(1), b2fmovie_version, ns, zamin, zamax, zn, am)
+      call b2ruzd (ninp(1), b2fmovie_version,
+     &  ns, zamin, zamax, zn, am, .true.)
 *   ..write label
       write (nout(0),'(/2x,a)') 'label for this calculation:'
       write (nout(0),'(/4x,a/4x,a)') lblmn(1:60), lblmn(61:120)
@@ -172,7 +173,7 @@
        call cfrure (ninp(1), n2, delti, 'delti')
        call cfrure (ninp(1), n2, delpo, 'delpo')
 *    ..plot change in state
-       call b2wgdt (nout(0), idout, nx, ny, ns, 
+       call b2wgdt (nout(0), idout, nx, ny, ns,
      &   delne, delni, delna, delua, delte, delti, delpo)
 *    ..loop
        goto 1

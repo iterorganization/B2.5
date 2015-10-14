@@ -90,16 +90,17 @@
 *   ..local variables
       integer is, idum(0:9)
       character lblgm*120, lblcp*120, lblps*120, lblrc*120, lblsr*120,
-     &  lblmn*120, cnamip*80, cvalip*80
+     &  lblmn*120, cnamip*80, cvalip*80, line*80
       real (kind=R8) ::
      *   zpdum(0:nsdecl-1,4), t0, t1
 *   ..procedures
       intrinsic abs
-      logical ltst
+      logical ltst, is_comment
       external subini, subend, xertst, xerrab, ipsetc, cfruch, cfruin,
      &  cfwuch, cfwuin
       external b2rucp, b2rurc, b2rusr, b2rflb, b2rfcp, b2xxid, b2mwq0,
      &  b2wfcp, b2wucp, b2ruzd, b2wuzd, b2xvcp
+      external is_comment
       ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *-----------------------------------------------------------------------
@@ -174,7 +175,7 @@
 *     already read in)
       call cfruch (ninp(3), 120, lblps, 'label')
       call b2ruzd (ninp(3), b2fstati_version, ns0, 
-     & zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4))
+     & zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
       do is = 0, ns0-1
        call xertst (ltst(zpdum(is,1),zamin(is)), 
      &  'faulty data for zamin')
@@ -225,8 +226,9 @@
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
-       read (ninp(0),*,end=2,err=91) cnamip, cvalip
-       if (cnamip(1:1).ne.'*') then
+       read (ninp(0),'(a80)',end=2,err=91) line
+       if (.not.is_comment(line)) then
+         read (line,*) cnamip, cvalip
          write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
          call ipsetc (cnamip, cvalip)
        endif

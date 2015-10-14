@@ -293,7 +293,7 @@
 
 * ..read common blocks
 *   ..read /b2cmpa/
-      call b2ruzd (nget, version, ns, zamin, zamax, zn, am)
+      call b2ruzd (nget, version, ns, zamin, zamax, zn, am, .true.)
 *   ..read /b2cmpb/
       call cfruin (nget, 8, idum, 'cbir,cbnr')
       cbirso = idum(0)

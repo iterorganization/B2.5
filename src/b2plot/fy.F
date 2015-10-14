@@ -425,7 +425,8 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
       character*256 line, title
       real (kind=R8) ::
      *   xmin,xmax,ymin,ymax
-      logical open_file
+      logical open_file, is_comment
+      external is_comment
       integer lngarr,lnblnk,i,inc
       parameter (lngarr=100 000)
       real (kind=R8) ::
@@ -439,7 +440,7 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
       else
         title = ''
    10   read(99,'(a)',end=40) line
-        if(line(1:1) .eq. '#') then
+        if(is_comment(line)) then
           title = line(1:lnblnk(line))
           write(*,*) line(1:lnblnk(line))
           goto 10
@@ -571,7 +572,8 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
       character*256 line, title
       real (kind=R8) ::
      *   xmin,xmax,ymin,ymax
-      logical open_file
+      logical open_file, is_comment
+      external is_comment
       integer lngarr,lnblnk,i,inc
       parameter (lngarr=100 000)
       real (kind=R8) ::
@@ -597,7 +599,7 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
           ecol=ecol-1
         endif
    10   read(99,'(a)',end=40) line
-        if(line(1:1) .eq. '#') then
+        if(is_comment(line)) then
           title = line(1:lnblnk(line))
           write(*,*) line(1:lnblnk(line))
           goto 10

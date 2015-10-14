@@ -79,15 +79,15 @@
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
       character lblmn*120, lblrc*120, lblgm*120, idout*80, id*8
-      character cnamip*80, cvalip*80
+      character cnamip*80, cvalip*80, line*80
 *   ..initialisation
       save ismain
       data ismain/1/
 *   ..procedures
       intrinsic abs
-      logical streql, ltst
+      logical streql, ltst, is_comment
       external subini, subend, xertst, xerrab, streql, gacwk,
-     &  gdawk, cfruch, lbfilx, cfruin
+     &  gdawk, cfruch, lbfilx, cfruin, is_comment
       external b2rups, b2ruzd, b2wfpi, b2wgpi, b2sqel, b2spel,
      &  b2rurc, b2rugm, b2xvps
       external ipsetc, ipgeti, b2rfcp, b2rflb, b2xxid
@@ -230,8 +230,11 @@
       call b2rfcp (ninp(4), ns)
 *   ..read and echo code internal parameters
     1 continue
-       read (ninp(4),*,end=2,err=93) cnamip, cvalip
-       if (cnamip(1:1).ne.'*') call ipsetc (cnamip, cvalip)
+       read (ninp(4),'(a80)',end=2,err=93) line
+       if (.not.is_comment(line)) then
+         read (line,*) cnamip, cvalip
+         call ipsetc (cnamip, cvalip)
+       end if
        goto 1
     2 continue
 *   ..read output control
@@ -249,7 +252,8 @@
 *   ..read plasma state file
       call cfruch (ninp(1), 120, lblmn, 'label')
 *   ..read species data
-      call b2ruzd (ninp(1), b2fstate_version, ns, zamin, zamax, zn, am)
+      call b2ruzd (ninp(1), b2fstate_version, 
+     &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
       call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,

@@ -91,6 +91,7 @@
 *    'b2agmt_1d_width'          '1.0'                  Geometry
 *    'b2agmx_pbs_from_basis_mesh' '1'                  Geometry
 *    'b2agsi_isymm'             '1'                    Geometry
+*    'b2aidr_read_b2fstate'     '0'                    Run
 *    'b2ardr_fix_cx'            '1'                    Atomic Physics
 *    'b2ardr_fix_recomb'        '0'                    Atomic Physics
 *    'b2ardr_no_weisheit'       '0'                    Atomic Physics
@@ -715,6 +716,11 @@
 *    Neighbourhood arrays and region indices are automatically adjusted.
 *
 *   1.2. Run switches
+*
+*    'b2aidr_read_b2fstate'     '0'                    Run
+*    If read_b2fstate.ne.0, b2aidr will read an existing b2fstate file
+*    and append to it a flat state description for additional new species
+*    being introduced in the run.
 *
 *    'b2mndr_ntim'              '1'                    Run
 *    Number of timesteps desired in this run. If ntim.eq.0, the code simply

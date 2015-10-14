@@ -90,16 +90,16 @@
 *   ..local variables
       integer idum(0:9), ix, iy
       integer nxiso1, nxiso2, nyiso1, nyiso2
-      character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
+      character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80, line*80
       real (kind=R8) ::
      *   parg(0:99)
       integer istyle
 *   ..initialisation
       data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
 *   ..procedures
-      logical streql
+      logical streql, is_comment
       external xertst, xerrab, streql, cfwuin, cfwuch, cfwure
-      external ipgeti, intfaceh1, intfacer1, intfacev1
+      external ipgeti, intfaceh1, intfacer1, intfacev1, is_comment
       external b2xxid, b2agsi, b2agfs, b2agcf, b2agmt, b2agmx, b2agbb,
      &  b2xgbs1, b2wfgm, b2wugm
 
@@ -297,8 +297,9 @@
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
-       read (ninp(0),*,end=2,err=93) cnamip, cvalip
-       if (cnamip(1:1).ne.'*') then
+       read (ninp(0),'(a80)',end=2,err=93) line
+       if (.not.is_comment(line)) then
+         read (line,*) cnamip, cvalip
          write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
          call ipsetc (cnamip, cvalip)
        endif

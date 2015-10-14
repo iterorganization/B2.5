@@ -29,7 +29,7 @@
 *   ..local variables
       integer ix, iy, is, idum(0:9), k, nscx, iscx(0:nscxmax-1), ismain
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
-      character cnamip*80, cvalip*80
+      character cnamip*80, cvalip*80, line*80
       real (kind=R8) :: t0, t1
       real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
@@ -39,9 +39,9 @@
       save ismain
       data ismain/1/
 *   ..procedures
-      logical ltst
+      logical ltst, is_comment
       intrinsic sqrt
-      external subini, subend, xertst, xerrab
+      external subini, subend, xertst, xerrab, is_comment
       external cfruch, cfruin, cfverr, b2rfcp, ipgeti
       external b2rups, b2rugm, b2rucp, b2plot, b2xxid, b2rflb, b2rurc
       external b2ruzd, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps, b2xvcp
@@ -81,20 +81,24 @@
       call b2xvcp (nx, ns)
 *   ..read and echo code internal parameters
     1 continue
-       read (ninp(0),*,end=2,err=91) cnamip, cvalip
-       if (cnamip(1:1).ne.'*') call ipsetc (cnamip, cvalip)
+       read (ninp(0),'(a80)',end=2,err=91) line
+       if (.not.is_comment(line)) then
+         read (line,*) cnamip, cvalip
+         call ipsetc (cnamip, cvalip)
+       end if
        goto 1
     2 continue
 *   ..read plasma state file
       call cfruch (ninp(3), 120, lblmn, 'label')
 *   ..read species data
-      call b2ruzd (ninp(3), b2fstate_version, ns, zamin, zamax, zn, am)
+      call b2ruzd (ninp(3), b2fstate_version,
+     &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
       call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,		 !xpb
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &	b2fstate_version)
 *   ..test plasma state and fluxes
-      call b2xvps (nx, ny, ns, 
+      call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *   ..read atomic rate data
       call cfverr (ninp(5), b2frates_version)
@@ -120,7 +124,7 @@
      &         'faulty b2mndr_ismain')
       call xertst (.not.is_neutral(ismain),
      &         'ismain cannot refer to a neutral species')
-      call b2sqel (nx, ny, ns, ismain, ev, te, 
+      call b2sqel (nx, ny, ns, ismain, ev, te,
      &     rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 *   ..find nscx, iscx
@@ -128,7 +132,7 @@
       nscx = 0
       do is = 0, ns-1
         if (is_neutral(is).and.zn(is).eq.1.0_R8) then
-          call xertst (nscx.lt.nscxmax, 
+          call xertst (nscx.lt.nscxmax,
      1     'too many neutral hydrogen species')
           iscx(nscx) = is
           nscx = nscx+1
