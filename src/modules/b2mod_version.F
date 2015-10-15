@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10 :: newversion ='03.000.003'
+      character*10 :: newversion ='03.000.004'
 
       character*10, save ::
      1 b2fstati_version = '00.000.000',
@@ -13,17 +13,17 @@
      6 b2fparam_version = '00.000.000',
      7 boundary_version = '00.000.000',
      8 neutrals_version = '00.000.000'
-      
-      end module b2mod_version 
+
+      end module b2mod_version
 cxpb Version 1.1 corresponds to adding a version number and the UADIA array
 cxpb to the 'b2fstat*' files. Implemented 20.01.2000.
 cxpb Version 1.1 also adds the 'periodic_bc' variable to the geometry file.
 cxpb Finalised 14.07.2000.
 cdpc Version 01.001.001 corresponds to adding b2stbr_sna,smo,she,shi,sch to
 cdpc b2mod_sources
-cdpc Version 01.001.002 corresponds to adding the anomalous transport 
+cdpc Version 01.001.002 corresponds to adding the anomalous transport
 cdpc (D,chi...) quantities to b2fplasma [2001.07.18]
-cdpc Version 01.001.003 corresponds to adding the heat sources  
+cdpc Version 01.001.003 corresponds to adding the heat sources
 cdpc from b2sihs to b2fplasma [2002.08.07]
 cxpb Version 01.001.004 corresponds to adding the parallel momentum sources
 cxpb from atomic processes and the total energy flows to b2fplasma [2002.08.13]
@@ -66,24 +66,24 @@ cxpb
 
 csrv                     B2solps5.2 starts 2008
 csrv Version 01.001.025  fch_p(:,:) replaced by fch_p(:,:,0:1) and many otheres
-c                        changes have been made. Sorry for absence of details. 
-csrv Version 01.001.026  from 28.02.2009. 
+c                        changes have been made. Sorry for absence of details.
+csrv Version 01.001.026  from 28.02.2009.
 csrv Version 01.001.027  09.03.09 inserted area_fix=3 in b2news_
 c                                 corrected b2stbc_bas and b2stbc_phys
-c                        11.03.09 corrected boundary conditions bceni=15 in b2stbc_phys 
-c    Version 01.001.028  05.05.09 corrected boundary conditions bcene=15 in b2stbc_phys 
-c    Version 01.001.029  07.05.09 modified boundary conditions bcmom=13 in b2stbc_phys 
-c                                 and sings of coefficients in b2.transport.parameters 
+c                        11.03.09 corrected boundary conditions bceni=15 in b2stbc_phys
+c    Version 01.001.028  05.05.09 corrected boundary conditions bcene=15 in b2stbc_phys
+c    Version 01.001.029  07.05.09 modified boundary conditions bcmom=13 in b2stbc_phys
+c                                 and sings of coefficients in b2.transport.parameters
 c                                 for bcmom=13
-c    Version 01.001.030  08.05.09 corrected boundary conditions bcene=3 in b2stbc_phys 
-c    Version 01.001.031  11.05.09 introduced subroutine b2tinnt for calculating 
-c                                 ion-neutrals current 
-c    Version 01.001.032  15.05.09 exchanged subroutine set_transport_srv for case(5) 
-c    Version 01.001.033  22.05.09 introduced case(9) instaed of case(5) with new barier 
+c    Version 01.001.030  08.05.09 corrected boundary conditions bcene=3 in b2stbc_phys
+c    Version 01.001.031  11.05.09 introduced subroutine b2tinnt for calculating
+c                                 ion-neutrals current
+c    Version 01.001.032  15.05.09 exchanged subroutine set_transport_srv for case(5)
+c    Version 01.001.033  22.05.09 introduced case(9) instaed of case(5) with new barier
 c                                 function for h-regime
-c    Version 01.001.034  10.06.09 exchanged definition of sig0(ix,iy) in b2tqna 
-c    Version 01.001.035  16.06.09 corrected definition of alfe0(ix,iy,0) in b2tfhe_ 
-c                                 deleted SPb style for csigin in b2trcl.F 
+c    Version 01.001.034  10.06.09 exchanged definition of sig0(ix,iy) in b2tqna
+c    Version 01.001.035  16.06.09 corrected definition of alfe0(ix,iy,0) in b2tfhe_
+c                                 deleted SPb style for csigin in b2trcl.F
 c                                 added factor hz for b2sigp_style=0
 c                                 exchanged the interface of b2tinnt.F
 c    Version 01.001.036  01.07.09 introduced b2tlnl.F for the Coulomb logarithm
@@ -93,12 +93,12 @@ c    Version 01.001.038  08.07.09 re-writed b2tinnt.F and changed b2tqin.F
 c    Version 01.001.039  15.07.09 b2agmx.F replaced by b2agmx.F from B2solps5.0
 c                                 modified subroutine open_file.F
 c    Version 01.001.040  11.09.09 done new diagnostics output, introduced new arrays for
-c                                 storing physical sources in r.h.s. 
+c                                 storing physical sources in r.h.s.
 c                        18.09.09 cleared quard cells for shei in b2nph9.F and b2npht.F
 c    Version 01.001.041  22.09.09 changed the calculating of uesx in b2sihs_.F
 c    Version 01.001.042  25.09.09 added bccon=16 in b2stbc_phys.F
 c    Version 01.001.043  07.10.09 deleted bccon=15 in b2stbc_phys.F. Use bccon=5.
-c    Version 01.001.044  14.10.09 changed status of the following files b2mn.prt, b2fparam, 
+c    Version 01.001.044  14.10.09 changed status of the following files b2mn.prt, b2fparam,
 c                                 b2fstate, b2fmovie, b2ftrace, b2ftrack.
 c    Version 01.001.045  20.10.09 changed logical condition in b2tral
 c                                 added term in flo_nodrift and flo2dia in b2tfnb
@@ -112,26 +112,26 @@ c    Version 01.001.048  23.11.09 updated module b2mod_constants and subroutines
 c                        03.12.09 inserted internal key 'b2trcl_lluciani'
 c    Version 01.001.049  22.12.09 in order to copy the data of first n=min(ns0,ns1) species
 c                                 from the plasma state file b2fstate for ns0 species
-c                                 into the initial plasma state file b2fstati for ns1 species 
-c                                 the special internal key 'b2aidr_read_b2fstate' 
-c                                 has been added in b2aidr.F 
-c                                 Grid size, nuclear and atom charge must be the same 
+c                                 into the initial plasma state file b2fstati for ns1 species
+c                                 the special internal key 'b2aidr_read_b2fstate'
+c                                 has been added in b2aidr.F
+c                                 Grid size, nuclear and atom charge must be the same
 c                                 in both files.
 c    Version 01.001.050  30.12.09 modified term in the electron heat equation b2tfhe_.F
 c                                 deleted statement use b2mod_ma28 in b2co.F and b2fu.F
-c    Version 01.001.051  30.01.10 changed value of internal key b2tfnb_xfrhiehz, 
+c    Version 01.001.051  30.01.10 changed value of internal key b2tfnb_xfrhiehz,
 c                                 b2nph9_style_shei by default. The name of key b2tfhe_no_alfTeEh
 c                                 replaced by the name b2tfhe_alfTeEh
 c                                 corrected the long line in b2tfnb which produced small errors
 c                                 for working in B2solps5.0 style
-c    Version 01.001.052  15.02.10 corrected the name of key in ipgetiin b2npht.F 
+c    Version 01.001.052  15.02.10 corrected the name of key in ipgetiin b2npht.F
 c                                 uncommented the lines in b2npc9.F for guard_flows.eq.2
 c                                 introduced key 'b2news_re_compute_pb'
-c    Version 01.001.053  24.02.10 added output fmo in b2wdat.F 
+c    Version 01.001.053  24.02.10 added output fmo in b2wdat.F
 c                                 added the diagnostic output in b2stbc_phys.F
 c                        01.03.10 added in b2mndr.F the output of fort.30 and fort.31 for Eirene
 c                                 correcred the diagnostic output of fhe and fhi
-c    Version 01.001.054  12.04.10 corrected the calculation of thermal force in b2sifr_.F 
+c    Version 01.001.054  12.04.10 corrected the calculation of thermal force in b2sifr_.F
 c    Version 01.001.055  19.04.10 added the calculation of anomalous velocity for H-regime in b2tqna.F
 c                                 added additional diagnostic into b2stbr.F for B2-Eirene case
 c                                 correctet output of dab2, dmb2 and tab2,tmb2 in b2wdat.F
@@ -139,12 +139,12 @@ c    Version 01.001.056  06.07.10 modified the condition of solving of equations
 c                        12.07.10 corrected the calculation of transport parameters for H-regime
 c                                 for UDND and LDND cases in b2tqna.F
 c                        14.07.10 added b2tfrn.F for evaluating of special fluxes for B2-Eirene coupling
-c                                 changed copy_background.F for passing new special fluxes to Eirene 
+c                                 changed copy_background.F for passing new special fluxes to Eirene
 c                        16.07.10 corrected diagnostic output for b2srdt.F
-c                        23.07.10 Corrected diagnostic calculation of total energy, total current, 
+c                        23.07.10 Corrected diagnostic calculation of total energy, total current,
 c                                 total momentum and power.
 c                                 Changed numerical realization of bccon=16.
-c                                 Implemented the modified decay length boundary condition 
+c                                 Implemented the modified decay length boundary condition
 c                                 for the electron temperature bcene=22.
 c                                 Implemented the modified decay length boundary condition
 c                                 for the ion temperature bceni=22.
@@ -152,39 +152,39 @@ c    Version 01.001.057  28.07.10 Corrected my_intcor.F
 c                                 Corrected b2tqna.F by adding of attribute save for variable mintopcut
 c                                 Corrected default value of eirene_fixmap in the eirene_f30f31.F
 c    Version 01.001.058  21.10.10 Released pressure correction procedure for cases without and with drifts
-c                                 with modificated particle anf heating fluxes. 
+c                                 with modificated particle anf heating fluxes.
 c                        27.10.10 commented parts which use files b2fstati_add and b2fstate_add
 c                                 commented key 'b2news_re_compute_pb'
 c    Version 01.001.059  18.11.10 replaced b2ardr.F by new from xpb
 c                        02.12.10 introduced Zdanov's expression for fke(z) in b2tqce.F
-c    Version 01.001.060  20.01.11 inserted factor 5/3 before cvla into fna_he 
-c    Version 01.001.061  27.01.11 changed the applying of correction for boundary cells. See b2npmo.F 
-c    Version 01.001.062  02.02.11 corrected boundary condition BCENI==22 at 'N' 
-c    Version 01.001.063  15.02.11 updated some common subroutines which are used B2solps5.0 (release 3066 
+c    Version 01.001.060  20.01.11 inserted factor 5/3 before cvla into fna_he
+c    Version 01.001.061  27.01.11 changed the applying of correction for boundary cells. See b2npmo.F
+c    Version 01.001.062  02.02.11 corrected boundary condition BCENI==22 at 'N'
+c    Version 01.001.063  15.02.11 updated some common subroutines which are used B2solps5.0 (release 3066
 c                                 and B2solps5.2
 c                                 removed the heat terms into b2stel.F, b2stcx.F, b2sihs_.F which were added in 07.07.09
 c                                 corrected the coefficient before csigin(,,0,,) in b2tfhe_.F from x-component of ion-neutral current
 c                                 added calculation ion-neutral current in b2tinnt.F for B2-Eirene case.
-c    Version 01.001.064  05.03.11 changed calculation of ue in b2sihs_.F 
+c    Version 01.001.064  05.03.11 changed calculation of ue in b2sihs_.F
 c                                 changed condition of stopping B2mn using ether file .quit or _quit 13.04.11
 c                                 is = 1 has been replaced by is = ismain   12.05.11
-c    Version 01.001.065  24.05.11 changed case of lluciani=3 in b2trcl.F 
-c    Version 01.001.066  30.05.11 added currents in radial part of ion heat flux in b2tfhi_.F 
+c    Version 01.001.065  24.05.11 changed case of lluciani=3 in b2trcl.F
+c    Version 01.001.066  30.05.11 added currents in radial part of ion heat flux in b2tfhi_.F
 c                                 corrected output in b2urmo.F and its interface too.
 c                                 replaced default value area_fix=0 by area_fix=3
 c    Version 01.001.067  02.06.11 introduced restriction of diamagnetic velocities of impurity ions in b2tfnb.F
 c                        09.06.11 introduced new numerical manner of calculation fnbPSch(ix,iy,0) and fnbPSch(ix,iy,1)
-c                        15.07.11 replaced 1.e-3 by 3.e-3 in Eirene's sputer.F There was very strange "access violation" in this place  
+c                        15.07.11 replaced 1.e-3 by 3.e-3 in Eirene's sputer.F There was very strange "access violation" in this place
 c                        22.07.11 corrected grlib.F (dummy) and masr3.F
-c    Version 01.001.068  28.07.11 added coupling B2 and ASTRA. For coupling it is necessary to use pre-processor variable ASTRA  
-c    Version 01.001.069  09.09.11 changed output in b2fstate, b2fplasma and input from b2fstati fch_p. In both cases it is used array fch_p(:,:)  
+c    Version 01.001.068  28.07.11 added coupling B2 and ASTRA. For coupling it is necessary to use pre-processor variable ASTRA
+c    Version 01.001.069  09.09.11 changed output in b2fstate, b2fplasma and input from b2fstati fch_p. In both cases it is used array fch_p(:,:)
 c                        20.09.11 modyfied b2tlnl.F
 c                        21.09.11 introduced nwtf in b2plot.F instead of 97
 c    Version 01.001.070  17.10.11 modyfied Braginsky formula in b2tlnl.F Introduced restriction lnlam >= 5
 c                        03.11.11 changed calculation of chci_koeff in b2trcl.F
 c                                 added the usage of -1 cell in b2mod_astra_to_b2.F
-c                        15.11.11 changed b2mwti.F and b2mndr.F in according to request of Bonnin 
-c                        29.11.11 introduced BCCON=18 for B2-ASTRA coupling  
+c                        15.11.11 changed b2mwti.F and b2mndr.F in according to request of Bonnin
+c                        29.11.11 introduced BCCON=18 for B2-ASTRA coupling
 c    Version 01.001.071  11.01.12 inserted call b2stbr_neutr_scl(nx, ny, ns) into b2news_.F
 c                                 corrected the contribution from friction between charged species in b2sihs_.F
 c                        17.01.12 added internal key 'b2trcl_conductive_limit' in b2tfhe_.F and b2tfhi_.F
@@ -201,7 +201,7 @@ c                                 heat flux with constant electron temperature
 c                        16.02.12 added another style of BCENI=16 feedback boundary condition for given integrated ion heat
 c                                 flux with constant ion temperature
 c                        20.02.12 added the contribution to the integrated source se from Eirene
-c                        12.03.12 added check that we have some particle diffusion in b2tral.F 
+c                        12.03.12 added check that we have some particle diffusion in b2tral.F
 c                        14.03.12 added diagnostic output in subroutine write_b2_to_astra
 c                        23.03.12 added diagnostic output in subroutine b2stbr.F
 c                        26.03.12 introduced restriction for argument of exp in subroutine recycle from file b2stbr_phys.F
@@ -210,33 +210,33 @@ c                        12.04.12 added additional diagnostics for particles of 
 c    Version 01.001.073  12.04.12 deleted the modified fluxes from recycling boundary conditions
 c                        21.05.12 modified the algotithm of searching radial midpalne coordinates in module b2mod_b2_to_astra
 c                        14.06.12 added setting constatnt electron and ion temperature from ASTRA
-c                        15.06.12 replaced natm by nnatmi in b2stbr.F 
+c                        15.06.12 replaced natm by nnatmi in b2stbr.F
 c                        20.06.12 added restriction of usage BCCON=8 in case of coupling B2-ASTRA
 c                        21.06.12 added NB sources in case of coupling B2-ASTRA
 c                        16.07.12 added test of correct using boundary conditions BCENE=9, BCENI=9, BCMOM=10 along with BCCON=9
-c                                 ehxp is set up zero subroutine b2nxfx when electrical potential is zero (pot_eq=0) 
+c                                 ehxp is set up zero subroutine b2nxfx when electrical potential is zero (pot_eq=0)
 c                        26.07.12 corrected contribution of source's ASTRA in b2sral
 c                        21.09.12 test of correct using boundary conditions BCENE=9, BCENI=9, BCMOM=10 along with BCCON=9
-c                                 has been replaced by warning message. 
-c                        26.09.12 introduced the freezing of na, te, ti when 'b2tfhe_mdf','b2tfhi_mdf' and 'b2tfnb_mdf' are '1' 
+c                                 has been replaced by warning message.
+c                        26.09.12 introduced the freezing of na, te, ti when 'b2tfhe_mdf','b2tfhi_mdf' and 'b2tfnb_mdf' are '1'
 c                        10.10.12 for compatibility with gfortran 'binary' has been replaced by 'unformatted' in open statement
 c                        23.10.12 corrected contribution of PeNB_astra and PiNB_astra to she and shi
 c                        01.11.12 corrected boundary condition bccon=19
-c    Version 01.001.074  07.11.12 corrected boundary condition bcene=15 
+c    Version 01.001.074  07.11.12 corrected boundary condition bcene=15
 c    Version 01.001.075  22.11.12 corrected multiplication of fchvispar by factdrift in b2tfhe_.F
-c                                 replaced lines of calculation fchinert in b2tfhe_.F by calling b2tiner.F  
+c                                 replaced lines of calculation fchinert in b2tfhe_.F by calling b2tiner.F
 c                        20.12.12 redone calculating intergated fluxes for B2-ASTRA case.
 c    Version 01.001.076  11.01.13 deleted factor signmf in drifts terms in b2tfnb.F
-c                                 replaced bb(:,:,3) by bb(:,:,2) in b2sihs_.F and b2tinnt.F 
-c    Version 01.001.077  11.01.13 changes in subroutines have been done in order to change sign of Bx and/or Bz automatically 
+c                                 replaced bb(:,:,3) by bb(:,:,2) in b2sihs_.F and b2tinnt.F
+c    Version 01.001.077  11.01.13 changes in subroutines have been done in order to change sign of Bx and/or Bz automatically
 c                        27.02.13 eliminated influence of Ehx, Ehy and currents when pot_eq = 2
 c                        11.03.13 changes in subroutines have been done in order to have compatibility with gfortran
 c                        13.04.13 changes in subroutine b2wdat.F have been done in order to have compatibility with gfortran
 c    Version 01.001.078  11.04.13 modified bcene=16 and bceni=16 for B2-ASTRA case
 c                        18.04.13 corrected bcene=15 and made two variants of implementation.
-c                        19.04.13 changed the applying of alfa3 to anomalous transport coefficients in H-regime and introduced alfa4 
+c                        19.04.13 changed the applying of alfa3 to anomalous transport coefficients in H-regime and introduced alfa4
 c                                 corrected calculation of qe at the plates and modified output for B2-ASTRA case
-c                                 implemented option in b2tqce.F in order to set sigx=0 and alfx=0 in guard cells at north and south except of core region 
+c                                 implemented option in b2tqce.F in order to set sigx=0 and alfx=0 in guard cells at north and south except of core region
 c                                 implemented option in b2tiner.F in order to calculate inerthia current using different approximation
 c                                 inserted boundary conditions BCCON = 21, 22, 23 suggested by L. Kaveeva and I. Senichenkov
 c                                 inserted boundary conditions BCMOM = 16 suggested by L. Kaveeva and I. Senichenkov
@@ -257,4 +257,5 @@ c                                 Changed default value of sheath_drift_fix to 1
 c    Version 03.000.003  13.07.15 Added modified and Pfirsch-Schlueter fluxes to b2fplasma
 c                                 Added fna_fcor, fna_he, fchvisq, fchinert to b2fplasma
 c    Version 03.000.004  16.10.15 Changed to default BCPOT=12 amd 13 for free boundaries with currents
+c                                 Changed format and fitting formulae for bulk material properties files
 c

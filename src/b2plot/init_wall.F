@@ -1226,9 +1226,13 @@ c-xpb  Must check if Z of deposited material already exists in bulk
       use b2mod_sputter
       implicit none
       integer ibnd
+      real (kind=R8) :: T, layer_Kappa
       integer nz, itrack
-      real (kind=R8) :: T, layer_Kappa, a(4)
+      real (kind=R8) :: Tcels, Teff, a(5)
       real (kind=R8) :: bulk_value, coating_value, layer_value, frac
+      external xerrab
+
+      Tcels = T - 273.15_R8
 
 c-xpb First count the bulk contribution
       frac=layer_nrelconstituents(ibnd,1)/
@@ -1241,14 +1245,32 @@ c-xpb The bulk or coating surface parameters
         a(2) = coating_Kappa_A2(ibnd)
         a(3) = coating_Kappa_A3(ibnd)
         a(4) = coating_Kappa_A4(ibnd)
-        coating_value = a(1) + a(2) * T + a(3) * T**2 + a(4) * T**3
+        a(5) = coating_Kappa_A5(ibnd)
+        if (coating_temp_unit(ibnd).eq.'K') then
+          Teff = T
+        else if (coating_temp_unit(ibnd).eq.'C') then
+          Teff = Tcels
+        else
+          call xerrab ('Unrecognized temperature units (coat Kappa) !')
+        endif
+        coating_value = a(1) +
+     .   (a(2) + (a(3) + (a(4) +  a(5) * Teff) * Teff) * Teff) * Teff
         layer_Kappa = coating_value*frac
       else
         a(1) = matbulk_Kappa_A1(ibnd)
         a(2) = matbulk_Kappa_A2(ibnd)
         a(3) = matbulk_Kappa_A3(ibnd)
         a(4) = matbulk_Kappa_A4(ibnd)
-        bulk_value = a(1) + a(2) * T + a(3) * T**2 + a(4) * T**3
+        a(5) = matbulk_Kappa_A5(ibnd)
+        if (bulk_temp_unit(ibnd).eq.'K') then
+          Teff = T
+        else if (bulk_temp_unit(ibnd).eq.'C') then
+          Teff = Tcels
+        else
+          call xerrab ('Unrecognized temperature units (bulk Kappa) !')
+        endif
+        bulk_value = a(1) +
+     .   (a(2) + (a(3) + (a(4) +  a(5) * Teff) * Teff) * Teff) * Teff
         layer_Kappa = bulk_value*frac
       end if
       if (layer_nconstituents(ibnd).eq.nz) return
@@ -1259,7 +1281,17 @@ c-xpb Loop over deposited species contributions
         a(2) = species_Kappa_A2(itrack)
         a(3) = species_Kappa_A3(itrack)
         a(4) = species_Kappa_A4(itrack)
-        layer_value = a(1) + a(2) * T + a(3) * T**2 + a(4) * T**3
+        a(5) = species_Kappa_A5(itrack)
+        if (species_temp_unit(ibnd).eq.'K') then
+          Teff = T
+        else if (species_temp_unit(ibnd).eq.'C') then
+          Teff = Tcels
+        else
+          call xerrab
+     .     ('Unrecognized temperature units (species Kappa) !')
+        endif
+        layer_value = a(1) +
+     .   (a(2) + (a(3) + (a(4) +  a(5) * Teff) * Teff) * Teff) * Teff
         layer_Kappa = layer_Kappa + layer_value*frac
       end do
 
@@ -1273,9 +1305,12 @@ c-xpb Loop over deposited species contributions
       use b2mod_sputter
       implicit none
       integer ibnd
+      real (kind=R8) :: T, dlayer_KappabydT
       integer nz, itrack
-      real (kind=R8) :: T, dlayer_KappabydT, a(2:4)
+      real (kind=R8) :: Tcels, Teff, a(2:5)
       real (kind=R8) :: bulk_value, coating_value, layer_value, frac
+
+      Tcels = T - 273.15_R8
 
 c-xpb First count the bulk contribution
       frac=layer_nrelconstituents(ibnd,1)/
@@ -1287,13 +1322,35 @@ c-xpb The bulk or coating surface parameters
         a(2) = coating_Kappa_A2(ibnd)
         a(3) = coating_Kappa_A3(ibnd)
         a(4) = coating_Kappa_A4(ibnd)
-        coating_value = a(2) + 2.0_R8 * a(3) * T + 3.0_R8 * a(4) * T**2
+        a(5) = coating_Kappa_A5(ibnd)
+        if (coating_temp_unit(ibnd).eq.'K') then
+          Teff = T
+        else if (coating_temp_unit(ibnd).eq.'C') then
+          Teff = Tcels
+        else
+          call xerrab
+     .     ('Unrecognized temperature units (coat dKappadT) !')
+        endif
+        coating_value = a(2) +
+     .   (2.0_R8*a(3) + (3.0_R8*a(4) +
+     .                   4.0_R8*a(5) * Teff) * Teff) * Teff
         dlayer_KappabydT = coating_value*frac
       else
         a(2) = matbulk_Kappa_A2(ibnd)
         a(3) = matbulk_Kappa_A3(ibnd)
         a(4) = matbulk_Kappa_A4(ibnd)
-        bulk_value = a(2) + 2.0_R8 * a(3) * T + 3.0_R8 * a(4) * T**2
+        a(5) = matbulk_Kappa_A5(ibnd)
+        if (bulk_temp_unit(ibnd).eq.'K') then
+          Teff = T
+        else if (bulk_temp_unit(ibnd).eq.'C') then
+          Teff = Tcels
+        else
+          call xerrab
+     .     ('Unrecognized temperature units (bulk dKappadT) !')
+        endif
+        bulk_value = a(2) +
+     .   (2.0_R8*a(3) + (3.0_R8*a(4) +
+     .                   4.0_R8*a(5) * Teff) * Teff) * Teff
         dlayer_KappabydT = bulk_value*frac
       end if
       if (layer_nconstituents(ibnd).eq.nz) return
@@ -1303,7 +1360,18 @@ c-xpb Loop over deposited species contributions
         a(2) = species_Kappa_A2(itrack)
         a(3) = species_Kappa_A3(itrack)
         a(4) = species_Kappa_A4(itrack)
-        layer_value = a(2) + 2.0_R8 * a(3) * T + 3.0_R8 * a(4) * T**2
+        a(5) = species_Kappa_A5(itrack)
+        if (species_temp_unit(ibnd).eq.'K') then
+          Teff = T
+        else if (species_temp_unit(ibnd).eq.'C') then
+          Teff = Tcels
+        else
+          call xerrab
+     .     ('Unrecognized temperature units (species dKappadT) !')
+        endif
+        layer_value = a(2) +
+     .   (2.0_R8*a(3) + (3.0_R8*a(4) +
+     .                   4.0_R8*a(5) * Teff) * Teff) * Teff
         dlayer_KappabydT = dlayer_KappabydT + layer_value*frac
       end do
 
@@ -1317,10 +1385,14 @@ c-xpb Loop over deposited species contributions
       use b2mod_sputter
       implicit none
       integer ibnd
-      integer nz, itrack
       real (kind=R8) :: T, layer_Cp
-      real (kind=R8) :: b(3)
+      integer nz, itrack, mf, cf, sf
+      real (kind=R8) :: Tcels, Teff
+      real (kind=R8) :: b(4)
       real (kind=R8) :: bulk_value, coating_value, layer_value, frac
+      external xerrab
+
+      Tcels = T - 273.15_R8
 
 c-xpb First count the bulk contribution
       frac=layer_nrelconstituents(ibnd,1)/
@@ -1332,13 +1404,43 @@ c-xpb The bulk or coating surface parameters
         b(1) = coating_Cp_B1(ibnd)
         b(2) = coating_Cp_B2(ibnd)
         b(3) = coating_Cp_B3(ibnd)
-        coating_value = b(1) + b(2) * T - b(3) / T**2
+        b(4) = coating_Cp_B4(ibnd)
+        cf = coating_format(ibnd)
+        if (coating_temp_unit(ibnd).eq.'K') then
+          Teff = T
+        else if (coating_temp_unit(ibnd).eq.'C') then
+          Teff = Tcels
+        else
+          call xerrab
+     .     ('Unrecognized temperature units (coat Cp) !')
+        endif
+        if (cf.eq.1) then
+          coating_value = b(1) +
+     .     ( b(2) + ( b(3) + b(4) * Teff) * Teff ) * Teff
+        else
+          coating_value = b(1) + b(2) * Teff - b(3)/Teff**2
+        end if
         layer_Cp = coating_value * frac
       else
         b(1) = matbulk_Cp_B1(ibnd)
         b(2) = matbulk_Cp_B2(ibnd)
         b(3) = matbulk_Cp_B3(ibnd)
-        bulk_value = b(1) + b(2) * T - b(3) / T**2
+        b(4) = matbulk_Cp_B4(ibnd)
+        mf = matbulk_format(ibnd)
+        if (bulk_temp_unit(ibnd).eq.'K') then
+          Teff = T
+        else if (bulk_temp_unit(ibnd).eq.'C') then
+          Teff = Tcels
+        else
+          call xerrab
+     .     ('Unrecognized temperature units (bulk Cp) !')
+        endif
+        if (mf.eq.1) then
+          bulk_value = b(1) +
+     .     ( b(2) + ( b(3) + b(4) * Teff) * Teff ) * Teff
+        else
+          bulk_value = b(1) + b(2) * Teff - b(3)/Teff**2
+        end if
         layer_Cp = bulk_value * frac
       end if
 c-xpb Loop over deposited species contributions
@@ -1348,13 +1450,25 @@ c-xpb Loop over deposited species contributions
           b(1) = species_Cp_B1(itrack)
           b(2) = species_Cp_B2(itrack)
           b(3) = species_Cp_B3(itrack)
-          layer_value = b(1) + b(2) * T - b(3) / T**2
+          b(4) = species_Cp_B4(itrack)
+          sf = species_cp_format(itrack)
+          if (species_temp_unit(ibnd).eq.'K') then
+            Teff = T
+          else if (species_temp_unit(ibnd).eq.'C') then
+            Teff = Tcels
+          else
+            call xerrab
+     .       ('Unrecognized temperature units (species Cp) !')
+          endif
+          if (sf.eq.1) then
+            layer_value = b(1) +
+     .     ( b(2) + ( b(3) + b(4) * Teff) * Teff ) * Teff
+          else
+            layer_value = b(1) + b(2) * T - b(3)/T**2
+          end if
           layer_Cp = layer_Cp + layer_value * frac
         end do
       end if
-
-c Converting from "Joules/gram/K" to "Joules/kg/K"
-      layer_Cp = layer_Cp * 1.0e3_R8
 
       return
       end function layer_Cp

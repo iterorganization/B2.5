@@ -382,7 +382,8 @@ c  at temperature T.
       use b2mod_layer
       implicit none
       integer ibnd, i
-      real (kind=R8) :: a(4), Kappa, T
+      real (kind=R8) :: Kappa, T
+      real (kind=R8) :: a(5), Tcels, Teff
       real (kind=R8) :: bulk_value, coating_value
       real (kind=R8) :: layer_Kappa
       external layer_Kappa, xerrab
@@ -392,13 +393,32 @@ c Units of Kappa are in "W/m/K"
       a(2) = matbulk_Kappa_A2(ibnd)
       a(3) = matbulk_Kappa_A3(ibnd)
       a(4) = matbulk_Kappa_A4(ibnd)
-      bulk_value = a(1) + a(2) * T + a(3) * T**2 + a(4) * T**3
+      a(5) = matbulk_Kappa_A5(ibnd)
+      Tcels = T - 273.15_R8
+      if (bulk_temp_unit(ibnd).eq.'K') then
+        Teff = T
+      else if (bulk_temp_unit(ibnd).eq.'C') then
+        Teff = Tcels
+      else
+        call xerrab ('Unrecognized temperature units (bulk Kappa) !')
+      endif
+      bulk_value = a(1) +
+     . (a(2) + (a(3) + (a(4) +  a(5) * Teff) * Teff) * Teff) * Teff
       if (coating_thickness(ibnd).gt.0.0_R8) then
         a(1) = coating_Kappa_A1(ibnd)
         a(2) = coating_Kappa_A2(ibnd)
         a(3) = coating_Kappa_A3(ibnd)
         a(4) = coating_Kappa_A4(ibnd)
-        coating_value = a(1) + a(2) * T + a(3) * T**2 + a(4) * T**3
+        a(5) = coating_Kappa_A5(ibnd)
+        if (coating_temp_unit(ibnd).eq.'K') then
+          Teff = T
+        else if (coating_temp_unit(ibnd).eq.'C') then
+          Teff = Tcels
+        else
+          call xerrab ('Unrecognized temperature units (coat Kappa) !')
+        endif
+        coating_value = a(1) +
+     .   (a(2) + (a(3) + (a(4) +  a(5) * Teff) * Teff) * Teff) * Teff
       end if
       if (target_depth(ibnd,i).ge.coating_thickness(ibnd).and.
      .    target_depth(ibnd,i).ge.layer_depth(ibnd)) then
@@ -425,29 +445,51 @@ c Units of Kappa are in "W/m/K"
 
 c.................................................................
 c                      function dKappabydT
-c  function Kappa(T) gives the coefficient of thermal conductivity of
-c  graphite at temperature T. We use the analytical expression resulting
+c  function Kappa(T) gives the coefficient of thermal conductivity
+c  at temperature T. We use the analytical expression resulting
 c  from the first derivative of Kappa above.
-                                                                                
+
       function dKappabydT(ibnd,i,T)
       use b2mod_types
       use b2mod_wall
       implicit none
       integer ibnd, i
-      real (kind=R8) :: a(3), dKappabydT, T
+      real (kind=R8) :: dKappabydT, T
+      real (kind=R8) :: a(4), Tcels, Teff
       real (kind=R8) :: bulk_value, coating_value
       real (kind=R8) :: dlayer_KappabydT
-      external dlayer_KappabydT
+      external dlayer_KappabydT, xerrab
 
       a(1) = matbulk_Kappa_A2(ibnd)
       a(2) = matbulk_Kappa_A3(ibnd)
       a(3) = matbulk_Kappa_A4(ibnd)
-      bulk_value = a(1) + 2.0_R8*a(2)*T + 3.0_R8*a(3)*T**2
+      a(4) = matbulk_Kappa_A5(ibnd)
+      Tcels = T - 273.15_R8
+      if (bulk_temp_unit(ibnd).eq.'K') then
+        Teff = T
+      else if (bulk_temp_unit(ibnd).eq.'C') then
+        Teff = Tcels
+      else
+        call xerrab ('Unrecognized temperature units (bulk dKappadT) !')
+      endif
+      bulk_value = a(1) +
+     . (2.0_R8*a(2) + (3.0_R8*a(3) + 4.0_R8*a(4) * Teff) * Teff) * Teff
       if (coating_thickness(ibnd).gt.0.0_R8) then
         a(1) = coating_Kappa_A2(ibnd)
         a(2) = coating_Kappa_A3(ibnd)
         a(3) = coating_Kappa_A4(ibnd)
-        coating_value = a(1) + 2.0_R8*a(2)*T + 3.0_R8*a(3)*T**2
+        a(4) = coating_Kappa_A5(ibnd)
+        if (coating_temp_unit(ibnd).eq.'K') then
+          Teff = T
+        else if (coating_temp_unit(ibnd).eq.'C') then
+          Teff = Tcels
+        else
+          call xerrab
+     .     ('Unrecognized temperature units (coat dKappadT) !')
+        endif
+        coating_value = a(1) +
+     .   (2.0_R8*a(2) + (3.0_R8*a(3) +
+     .                   4.0_R8*a(4) * Teff) * Teff) * Teff
       end if
       if (target_depth(ibnd,i).ge.coating_thickness(ibnd).and.
      .    target_depth(ibnd,i).ge.layer_depth(ibnd)) then
@@ -474,32 +516,53 @@ c  from the first derivative of Kappa above.
 
 c.................................................................
 c                      function Kappa_perp
-c  function Kappa_perp(T) gives the coefficient of perpendicular 
-c  thermal conductivity of CFC at temperature T.
-                                                                                
+c  function Kappa_perp(T) gives the coefficient of perpendicular
+c  thermal conductivity at temperature T.
+
       function Kappa_perp(ibnd,i,T)
       use b2mod_types
       use b2mod_wall
       use b2mod_layer
       implicit none
       integer ibnd, i
-      real (kind=R8) :: a(4), Kappa_perp, T
+      real (kind=R8) :: Kappa_perp, T
+      real (kind=R8) :: a(5), Tcels, Teff
       real (kind=R8) :: bulk_value, coating_value
       real (kind=R8) :: layer_Kappa
-      external layer_Kappa
+      external layer_Kappa, xerrab
 
 c Units are in "W/m/K"
       a(1) = matbulk_Kappa_perp_A1(ibnd)
       a(2) = matbulk_Kappa_perp_A2(ibnd)
       a(3) = matbulk_Kappa_perp_A3(ibnd)
       a(4) = matbulk_Kappa_perp_A4(ibnd)
-      bulk_value = a(1) + a(2) * T + a(3) * T**2 + a(4) * T**3
+      a(5) = matbulk_Kappa_perp_A5(ibnd)
+      Tcels = T - 273.15_R8
+      if (bulk_temp_unit(ibnd).eq.'K') then
+        Teff = T
+      else if (bulk_temp_unit(ibnd).eq.'C') then
+        Teff = Tcels
+      else
+        call xerrab ('Unrecognized temperature units (bulk Kappa) !')
+      endif
+      bulk_value = a(1) +
+     . (a(2) + (a(3) + (a(4) +  a(5) * Teff) * Teff) * Teff) * Teff
       if (coating_thickness(ibnd).gt.0.0_R8) then
         a(1) = coating_Kappa_perp_A1(ibnd)
         a(2) = coating_Kappa_perp_A2(ibnd)
         a(3) = coating_Kappa_perp_A3(ibnd)
         a(4) = coating_Kappa_perp_A4(ibnd)
-        coating_value = a(1) + a(2) * T + a(3) * T**2 + a(4) * T**3
+        a(5) = coating_Kappa_perp_A5(ibnd)
+        if (coating_temp_unit(ibnd).eq.'K') then
+          Teff = T
+        else if (coating_temp_unit(ibnd).eq.'C') then
+          Teff = Tcels
+        else
+          call xerrab
+     .     ('Unrecognized temperature units (coat Kappa) !')
+        endif
+        coating_value = a(1) +
+     .   (a(2) + (a(3) + (a(4) +  a(5) * Teff) * Teff) * Teff) * Teff
       end if
       if (target_depth(ibnd,i).ge.coating_thickness(ibnd).and.
      .    target_depth(ibnd,i).ge.layer_depth(ibnd)) then
@@ -528,30 +591,52 @@ c-xpb  the distinction between perp and parallel directions
 
 c.................................................................
 c                      function dKappa_perpbydT
-c  function Kappa_perp(T) gives the coefficient of thermal conductivity of CFC
-c  at temperature T in the perpendicular direction. We use the analytical 
+c  function Kappa_perp(T) gives the coefficient of thermal conductivity
+c  at temperature T in the perpendicular direction. We use the analytical
 c  expression resulting from the first derivative of Kappa_perp above.
-                                                                                
+
       function dKappa_perpbydT(ibnd,i,T)
       use b2mod_types
       use b2mod_wall
       use b2mod_layer
       implicit none
       integer ibnd, i
-      real (kind=R8) :: a(3), dKappa_perpbydT, T
+      real (kind=R8) :: dKappa_perpbydT, T
+      real (kind=R8) :: a(4), Tcels, Teff
       real (kind=R8) :: bulk_value, coating_value
       real (kind=R8) :: dlayer_KappabydT
-      external dlayer_KappabydT
+      external dlayer_KappabydT, xerrab
 
       a(1) = matbulk_Kappa_perp_A2(ibnd)
       a(2) = matbulk_Kappa_perp_A3(ibnd)
       a(3) = matbulk_Kappa_perp_A4(ibnd)
-      bulk_value = a(1) + 2.0_R8*a(2)*T + 3.0_R8*a(3)*T**2
+      a(4) = matbulk_Kappa_perp_A5(ibnd)
+      Tcels = T - 273.15_R8
+      if (bulk_temp_unit(ibnd).eq.'K') then
+        Teff = T
+      else if (bulk_temp_unit(ibnd).eq.'C') then
+        Teff = Tcels
+      else
+        call xerrab ('Unrecognized temperature units (bulk dKappadT) !')
+      endif
+      bulk_value = a(1) +
+     . (2.0_R8*a(2) + (3.0_R8*a(3) + 4.0_R8*a(4) * Teff) * Teff) * Teff
       if (coating_thickness(ibnd).gt.0.0_R8) then
         a(1) = coating_Kappa_perp_A2(ibnd)
         a(2) = coating_Kappa_perp_A3(ibnd)
         a(3) = coating_Kappa_perp_A4(ibnd)
-        coating_value = a(1) + 2.0_R8*a(2)*T + 3.0_R8*a(3)*T**2
+        a(4) = coating_Kappa_perp_A5(ibnd)
+        if (coating_temp_unit(ibnd).eq.'K') then
+          Teff = T
+        else if (coating_temp_unit(ibnd).eq.'C') then
+          Teff = Tcels
+        else
+          call xerrab
+     .     ('Unrecognized temperature units (coat dKappadT) !')
+        endif
+        coating_value = a(1) +
+     .   (2.0_R8*a(2) + (3.0_R8*a(3) +
+     .                   4.0_R8*a(4) * Teff) * Teff) * Teff
       end if
       if (target_depth(ibnd,i).ge.coating_thickness(ibnd).and.
      .    target_depth(ibnd,i).ge.layer_depth(ibnd)) then
@@ -589,27 +674,59 @@ c  at temperature T.
       use b2mod_layer
       implicit none
       integer ibnd, i
-      real (kind=R8) :: b(3), Cp, T, layer_Cp
+      real (kind=R8) :: Cp, T
+      integer mf, cf
+      real (kind=R8) :: b(4), Tcels, Teff
       real (kind=R8) :: Cp_bulk, Cp_coating
-      external layer_Cp
+      real (kind=R8) :: layer_Cp
+      external layer_Cp, xerrab
 
+      Tcels = T - 273.15_R8
       b(1) = matbulk_Cp_B1(ibnd)
       b(2) = matbulk_Cp_B2(ibnd)
       b(3) = matbulk_Cp_B3(ibnd)
-      Cp_bulk = b(1) + b(2) * T - b(3) / T**2
+      b(4) = matbulk_Cp_B4(ibnd)
+      mf = matbulk_format(ibnd)
+      if (bulk_temp_unit(ibnd).eq.'K') then
+        Teff = T
+      else if (bulk_temp_unit(ibnd).eq.'C') then
+        Teff = Tcels
+      else
+        call xerrab ('Unrecognized temperature units (bulk Cp) !')
+      endif
+      if (mf.eq.1) then
+        Cp_bulk = b(1) + ( b(2) + ( b(3) + b(4) * Teff) * Teff ) * Teff
+      else
+        Cp_bulk = b(1) + b(2) * Teff - b(3)/Teff**2
+      end if
+
       if (coating_thickness(ibnd).gt.0.0_R8) then
         b(1) = coating_Cp_B1(ibnd)
         b(2) = coating_Cp_B2(ibnd)
         b(3) = coating_Cp_B3(ibnd)
-        Cp_coating = b(1) + b(2) * T - b(3) / T**2
-      end if        
+        b(4) = coating_Cp_B4(ibnd)
+        cf = coating_format(ibnd)
+        if (bulk_temp_unit(ibnd).eq.'K') then
+          Teff = T
+        else if (bulk_temp_unit(ibnd).eq.'C') then
+          Teff = Tcels
+        else
+          call xerrab ('Unrecognized temperature units (coat Cp) !')
+        endif
+        if (cf.eq.1) then
+          Cp_coating =
+     .     b(1) + ( b(2) + ( b(3) + b(4) * Teff) * Teff ) * Teff
+        else
+          Cp_coating = b(1) + b(2) * Teff - b(3)/Teff**2
+        end if
+      end if
       if (target_depth(ibnd,i).ge.coating_thickness(ibnd).and.
      .    target_depth(ibnd,i).ge.layer_depth(ibnd)) then
         Cp = Cp_bulk
       else if (target_depth(ibnd,i).ge.layer_depth(ibnd)) then
         Cp = Cp_coating
       else
-        Cp = (layer_Cp(ibnd,T)/1.0e3_R8)*     ! conversion from layer_Cp must be undone
+        Cp = (layer_Cp(ibnd,T))*
      .   (layer_depth(ibnd)-target_depth(ibnd,i))/
      .   (target_depth(ibnd,i+1)-target_depth(ibnd,i))
         if (layer_depth(ibnd).ge.coating_thickness(ibnd)) then
@@ -622,9 +739,6 @@ c  at temperature T.
      .     (target_depth(ibnd,i+1)-target_depth(ibnd,i))
         end if
       end if
-
-c Converting from "Joules/gram/K" to "Joules/kg/K"
-      Cp = Cp * 1.0e3_R8
 
       return
       end function Cp

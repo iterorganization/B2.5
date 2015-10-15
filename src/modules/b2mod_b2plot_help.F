@@ -5,7 +5,7 @@
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nwfns,ntrgfns
       parameter(nlabels=331,nfns=197,nsparameters=29,
-     *     nconstants=10,nwfns=62,nwlabels=89,ntrgfns=88)
+     *     nconstants=10,nwfns=62,nwlabels=95,ntrgfns=88)
 
       integer, save ::
      * dimensions(nlabels), wdimensions(nwlabels) 
@@ -594,7 +594,8 @@
      5 'ckapppa2', 'ckapppa3', 'ckapppa4', 'ctgdns'  , 'c_cp_b1' , 
      6 'c_cp_b2' , 'c_cp_b3' , 'coathick', 'lkappa'  , 'lrho'    ,
      7 'lcp'     , 'lemis'   , 'sputfrac', 'lthick'  , 'ldepth'  ,
-     8 'iwle'    , 'iwge'    , 'iswle'   , 'iswge'   / 
+     8 'iwle'    , 'iwge'    , 'iswle'   , 'iswge'   , 'c_cp_b4' ,
+     9 'cp_b4'   , 'kappa_a5', 'kappapa5', 'ckappaa5', 'ckapppa5'/
       data wdimensions /
      1 1,       2,      2,      1,      1,
      2 1,       1,      1,      1,      1,
@@ -613,7 +614,8 @@
      5 1,       1,      1,      1,      1,
      6 1,       1,      1,      1,      1,
      7 1,       1,      2,      1,      1,
-     8 1,       1,      2,      2/
+     8 1,       1,      2,      2,      1,
+     9 1,       1,      1,      1,      1/
       data wdescriptions(1:10) /
      1 'Wall area (m^{2})',
      2 'Incident energy (eV)',
@@ -671,9 +673,9 @@
      * 'Kappa_perp A4 polynomial factor (W/m/K^{4})'/
       data wdescriptions(51:60) /
      1 'Bulk mass density (kg/m^{3})',
-     2 'Heat capacity B1 factor (J/g/K)',
-     3 'Heat capacity B2 factor (J/g/K^{2})',
-     4 'Heat capacity B3 factor (J.K/g)',
+     2 'Heat capacity B1 factor (J/kg/K)',
+     3 'Heat capacity B2 factor (J/kg/K^{2})',
+     4 'Heat capacity B3 factor',
      5 'Chemical sputtering factor erel',
      6 'Blackbody emissivity',
      7 'Vapor pressure A factor (K)',
@@ -695,13 +697,13 @@
      2 'Coating Kappa_perp A3 polynomial factor (W/m/K^{3})',
      3 'Coating Kappa_perp A4 polynomial factor (W/m/K^{4})',
      4 'Coating mass density (kg/m^{3})',
-     5 'Coating heat capacity B1 factor (J/g/K)',
-     6 'Coating heat capacity B2 factor (J/g/K^{2})',
-     7 'Coating heat capacity B3 factor (J.K/g)',
+     5 'Coating heat capacity B1 factor (J/kg/K)',
+     6 'Coating heat capacity B2 factor (J/kg/K^{2})',
+     7 'Coating heat capacity B3 factor',
      8 'Coating thickness (m)',
      9 'Layer heat conductivity (W/m/K)',
      * 'Layer mass density (kg/m^{3})'/
-      data wdescriptions(81:89) /
+      data wdescriptions(81:90) /
      1 'Layer heat capacity (J/kg/K)',
      2 'Layer blackbody emissivity',
      3 'Layer fraction',
@@ -710,7 +712,14 @@
      6 'iwle',
      7 'iwge',
      8 'iswle',
-     9 'iswge'/
+     9 'iswge',
+     * 'Coating heat capacity B4 factor (J/kg/K^{4})'/
+      data wdescriptions(91:95) /
+     1 'Bulk heat capacity B4 factor (J/kg/K^{4})',
+     2 'Bulk Kappa A5 polynomial factor (W/m/K^{5})',
+     3 'Bulk Kappa_perp A5 polynomial factor (W/m/K^{5})',
+     4 'Coating Kappa A5 polynomial factor (W/m/K^{5})',
+     5 'Coating Kappa_perp A5 polynomial factor (W/m/K^{5})'/
       data wfns /
      1 'wall' , 'wall_ank', 'logw', 'linw', 'logxw', 'linxw', 'plwl', 
      2 'sumw' , 'intw','intw*', 'pswa','wclvs','wclvd','wclvn', 'wclvp',

@@ -6290,6 +6290,10 @@ c-dpc still in testing phase
           description='Bulk Kappa A4 polynomial factor (W/m/K^{4})'
           nz=1
           call wall_copy(matbulk_Kappa_A4,1.0_R8,nz,textbl)
+        case('kappa_a5')
+          description='Bulk Kappa A5 polynomial factor (W/m/K^{5})'
+          nz=1
+          call wall_copy(matbulk_Kappa_A5,1.0_R8,nz,textbl)
         case('kappapa1')
           description='Bulk Kappa_perp A1 polynomial factor (W/m/K)'
           nz=1
@@ -6306,22 +6310,37 @@ c-dpc still in testing phase
           description='Bulk Kappa_perp A4 polynomial factor (W/m/K^{4})'
           nz=1
           call wall_copy(matbulk_Kappa_perp_A4,1.0_R8,nz,textbl)
+        case('kappapa5')
+          description='Bulk Kappa_perp A5 polynomial factor (W/m/K^{5})'
+          nz=1
+          call wall_copy(matbulk_Kappa_perp_A5,1.0_R8,nz,textbl)
         case('tgdns')
           description='Bulk mass density (kg/m^{3})'
           nz=1
           call wall_copy(matbulk_target_density,1.0_R8,nz,textbl)
         case('cp_b1')
-          description='Bulk heat capacity B1 factor (J/g/K)'
+          description='Bulk heat capacity B1 factor (J/kg/K)'
           nz=1
           call wall_copy(matbulk_Cp_B1,1.0_R8,nz,textbl)
         case('cp_b2')
-          description='Bulk heat capacity B2 factor (J/g/K^{2})'
+          description='Bulk heat capacity B2 factor (J/kg/K^{2})'
           nz=1
           call wall_copy(matbulk_Cp_B2,1.0_R8,nz,textbl)
         case('cp_b3')
-          description='Bulk heat capacity B3 factor (J.K/g)'
+          description='Bulk heat capacity B3 factor'
+          if (maxval(matbulk_format(1:nbnd)).eq.0) then
+            description=trim(description)//' (J.K/kg)'
+          else if (minval(matbulk_format(1:nbnd)).eq.1) then
+            description=trim(description)//' (J/kg/K^{3})'
+          else
+            write(*,*) 'Warning: inconsistent units for cp_b3 !'
+          endif
           nz=1
           call wall_copy(matbulk_Cp_B3,1.0_R8,nz,textbl)
+        case('cp_b4')
+          description='Bulk heat capacity B4 factor (J/kg/K^{4})'
+          nz=1
+          call wall_copy(matbulk_Cp_B4,1.0_R8,nz,textbl)
         case('ckappa_a')
           description='Coating Kappa A factor (1/AT+B) (m/W)'
           nz=1
@@ -6346,6 +6365,10 @@ c-dpc still in testing phase
           description='Coating Kappa A4 polynomial factor (W/m/K^{4})'
           nz=1
           call wall_copy(coating_Kappa_A4,1.0_R8,nz,textbl)
+        case('ckappaa5')
+          description='Coating Kappa A5 polynomial factor (W/m/K^{5})'
+          nz=1
+          call wall_copy(coating_Kappa_A5,1.0_R8,nz,textbl)
         case('ckapppa1')
           description=
      .     'Coating Kappa_perp A1 polynomial factor (W/m/K)'
@@ -6366,22 +6389,38 @@ c-dpc still in testing phase
      .     'Coating Kappa_perp A4 polynomial factor (W/m/K^{4})'
           nz=1
           call wall_copy(coating_Kappa_perp_A4,1.0_R8,nz,textbl)
+        case('ckapppa5')
+          description=
+     .     'Coating Kappa_perp A5 polynomial factor (W/m/K^{5})'
+          nz=1
+          call wall_copy(coating_Kappa_perp_A5,1.0_R8,nz,textbl)
         case('ctgdns')
           description='Coating mass density (kg/m^{3})'
           nz=1
           call wall_copy(coating_target_density,1.0_R8,nz,textbl)
         case('c_cp_b1')
-          description='Coating heat capacity B1 factor (J/g/K)'
+          description='Coating heat capacity B1 factor (J/kg/K)'
           nz=1
           call wall_copy(coating_Cp_B1,1.0_R8,nz,textbl)
         case('c_cp_b2')
-          description='Coating heat capacity B2 factor (J/g/K^{2})'
+          description='Coating heat capacity B2 factor (J/kg/K^{2})'
           nz=1
           call wall_copy(coating_Cp_B2,1.0_R8,nz,textbl)
         case('c_cp_b3')
-          description='Coating heat capacity B3 factor (J.K/g)'
+          description='Coating heat capacity B3 factor'
+          if (maxval(coating_format(1:nbnd)).eq.0) then
+            description=trim(description)//' (J.K/kg)'
+          else if (minval(coating_format(1:nbnd)).eq.1) then
+            description=trim(description)//' (J/kg/K^{3})'
+          else
+            write(*,*) 'Warning: inconsistent units for c_cp_b3 !'
+          endif
           nz=1
           call wall_copy(coating_Cp_B3,1.0_R8,nz,textbl)
+        case('c_cp_b4')
+          description='Coating heat capacity B4 factor (J/kg/K^{4})'
+          nz=1
+          call wall_copy(coating_Cp_B4,1.0_R8,nz,textbl)
         case('erel')
           description='Chemical sputtering factor erel'
           nz=1

@@ -28,8 +28,10 @@
       character*6 layer_alloys(nalloys)
       integer alloy_composition(nalloys,ntrack)
       character*32, save :: alloy_long_name(nalloys)
+      character*1, save :: alloy_temp_unit(nalloys)
       integer, save :: alloy_nconstituents(nalloys)
       integer, save ::
+     *  alloy_format(nalloys),
      *  alloy_nzconstituents(nalloys,ntrack),
      *  alloy_nrelconstituents(nalloys,ntrack)
       real (kind=R8), save ::
@@ -48,11 +50,15 @@
      *  alloy_Kappa_A2(nalloys),
      *  alloy_Kappa_A3(nalloys),
      *  alloy_Kappa_A4(nalloys),
+     *  alloy_Kappa_A5(nalloys),
      *  alloy_Cp_B1(nalloys),
      *  alloy_Cp_B2(nalloys),
-     *  alloy_Cp_B3(nalloys)
+     *  alloy_Cp_B3(nalloys),
+     *  alloy_Cp_B4(nalloys)
 
       character*32, save :: species_long_name(ntrack)
+      character*1, save :: species_temp_unit(ntrack)
+      integer, save :: species_cp_format(ntrack)
       real (kind=R8), save ::
      *  species_target_density(ntrack),
      *  species_Kappa_KA(ntrack),
@@ -61,9 +67,11 @@
      *  species_Kappa_A2(ntrack),
      *  species_Kappa_A3(ntrack),
      *  species_Kappa_A4(ntrack),
+     *  species_Kappa_A5(ntrack),
      *  species_Cp_B1(ntrack),
      *  species_Cp_B2(ntrack),
      *  species_Cp_B3(ntrack),
+     *  species_Cp_B4(ntrack),
      *  species_blackbody_emiss(ntrack),
      *  species_vapprs_A(ntrack),
      *  species_vapprs_B(ntrack),

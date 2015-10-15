@@ -1,0 +1,23 @@
+'Type 316 Stainless Steel' ! material long name (*32)
+'C'                 ! temperature units (may be 'K' or 'C')
+1                   ! new(1) or old(0) format of input;
+8.0e3               ! mass density (kg/m3)
+-2.58344e-05        ! parameter KA for fit of thermal conductivity (W/m/K) : 1/(KA*T+KB)
+0.0701286           ! parameter KB for fit of thermal conductivity (W/m/K) : 1/(KA*T+KB)
+13.28571            ! parameter A1 for fit of thermal conductivity (W/m/K) : A1 + A2*T + A3*T**2 + A4*T**3 + A5*T**4
+1.756205e-2         ! parameter A2 for fit of thermal conductivity (W/m/K) : A1 + A2*T + A3*T**2 + A4*T**3 + A5*T**4
+-5.378788e-6        ! parameter A3 for fit of thermal conductivity (W/m/K) : A1 + A2*T + A3*T**2 + A4*T**3 + A5*T**4
+4.292929e-9         ! parameter A4 for fit of thermal conductivity (W/m/K) : A1 + A2*T + A3*T**2 + A4*T**3 + A5*T**4
+0.00                ! parameter A5 for fit of thermal conductivity (W/m/K) : A1 + A2*T + A3*T**2 + A4*T**3 + A5*T**4
+456.2817            ! parameter B1 for fit of heat capacity (J/kg/K) : B1 + B2*T + B3*T**2 + B4*T**3
+0.4337              ! parameter B2 for fit of heat capacity (J/kg/K) : B1 + B2*T + B3*T**2 + B4*T**3
+-5.7714e-4          ! parameter B3 for fit of heat capacity (J/kg/K) : B1 + B2*T + B3*T**2 + B4*T**3
+3.5074e-7           ! parameter B4 for fit of heat capacity (J/kg/K) : B1 + B2*T + B3*T**2 + B4*T**3
+
+!
+! Difference between old and new heat capacity format:
+! Old format (v3.0.3 and older): Cp = B1 + B2*T - B3/T**2
+! New format (supported as of v3.0.4): Cp = B1 + B2*T + B3*T**2 + B4*T**3
+!
+! Ref: IDM - ITER-AL02-3112, ITER-AL02-3108
+! ITER Database for all materials and properties: https://user.iter.org/?uid=29J3QH

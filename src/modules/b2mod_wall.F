@@ -114,6 +114,8 @@ cxpb Data file material properties
      *  matsurf_heat_sublim(:)
 
       character*32, allocatable, save :: coating_long_name(:)
+      character*32, allocatable, save :: coating_temp_unit(:)
+      integer, allocatable, save :: coating_format(:)
       real (kind=R8), allocatable, save ::
      *  coating_target_density(:),
      *  coating_Kappa_KA(:),
@@ -122,15 +124,20 @@ cxpb Data file material properties
      *  coating_Kappa_A2(:),
      *  coating_Kappa_A3(:),
      *  coating_Kappa_A4(:),
+     *  coating_Kappa_A5(:),
      *  coating_Kappa_perp_A1(:),
      *  coating_Kappa_perp_A2(:),
      *  coating_Kappa_perp_A3(:),
      *  coating_Kappa_perp_A4(:),
+     *  coating_Kappa_perp_A5(:),
      *  coating_Cp_B1(:),
      *  coating_Cp_B2(:),
-     *  coating_Cp_B3(:)
+     *  coating_Cp_B3(:),
+     *  coating_Cp_B4(:)
 
       character*32, allocatable, save :: bulk_long_name(:)
+      character*1, allocatable, save :: bulk_temp_unit(:)
+      integer, allocatable, save :: matbulk_format(:)
       real (kind=R8), allocatable, save ::
      *  matbulk_target_density(:),
      *  matbulk_Kappa_KA(:),
@@ -139,13 +146,16 @@ cxpb Data file material properties
      *  matbulk_Kappa_A2(:),
      *  matbulk_Kappa_A3(:),
      *  matbulk_Kappa_A4(:),
+     *  matbulk_Kappa_A5(:),
      *  matbulk_Kappa_perp_A1(:),
      *  matbulk_Kappa_perp_A2(:),
      *  matbulk_Kappa_perp_A3(:),
      *  matbulk_Kappa_perp_A4(:),
+     *  matbulk_Kappa_perp_A5(:),
      *  matbulk_Cp_B1(:),
      *  matbulk_Cp_B2(:),
-     *  matbulk_Cp_B3(:)
+     *  matbulk_Cp_B3(:),
+     *  matbulk_Cp_B4(:)
 
       real(kind=R8), save ::         ! data from incatm file
      *  atomic_mass(92),             ! in amu
@@ -271,9 +281,11 @@ cxpb Data file material properties
      *  matsurf_stick_coef(nwall),
      *  matsurf_vapor_temp(nwall),
      *  matsurf_heat_sublim(nwall))
-      
-      allocate (coating_long_name(nwall))
+
+      allocate(coating_long_name(nwall))
+      allocate(coating_temp_unit(nwall))
       allocate(
+     *  coating_format(nwall),
      *  coating_target_density(nwall),
      *  coating_Kappa_KA(nwall),
      *  coating_Kappa_KB(nwall),
@@ -281,16 +293,21 @@ cxpb Data file material properties
      *  coating_Kappa_A2(nwall),
      *  coating_Kappa_A3(nwall),
      *  coating_Kappa_A4(nwall),
+     *  coating_Kappa_A5(nwall),
      *  coating_Kappa_perp_A1(nwall),
      *  coating_Kappa_perp_A2(nwall),
      *  coating_Kappa_perp_A3(nwall),
      *  coating_Kappa_perp_A4(nwall),
+     *  coating_Kappa_perp_A5(nwall),
      *  coating_Cp_B1(nwall),
      *  coating_Cp_B2(nwall),
-     *  coating_Cp_B3(nwall))
+     *  coating_Cp_B3(nwall),
+     *  coating_Cp_B4(nwall))
 
       allocate(bulk_long_name(nwall))
+      allocate(bulk_temp_unit(nwall))
       allocate(
+     *  matbulk_format(nwall),
      *  matbulk_target_density(nwall),
      *  matbulk_Kappa_KA(nwall),
      *  matbulk_Kappa_KB(nwall),
@@ -298,13 +315,16 @@ cxpb Data file material properties
      *  matbulk_Kappa_A2(nwall),
      *  matbulk_Kappa_A3(nwall),
      *  matbulk_Kappa_A4(nwall),
+     *  matbulk_Kappa_A5(nwall),
      *  matbulk_Kappa_perp_A1(nwall),
      *  matbulk_Kappa_perp_A2(nwall),
      *  matbulk_Kappa_perp_A3(nwall),
      *  matbulk_Kappa_perp_A4(nwall),
+     *  matbulk_Kappa_perp_A5(nwall),
      *  matbulk_Cp_B1(nwall),
      *  matbulk_Cp_B2(nwall),
-     *  matbulk_Cp_B3(nwall))
+     *  matbulk_Cp_B3(nwall),
+     *  matbulk_Cp_B4(nwall))
 
       call xertst(1.le.ndepth .and. ndepth.le.1001,
      . 'invalid dimension ndepth')
@@ -765,6 +785,7 @@ c-xpb Normalise surface constituents
         matbulk_Kappa_perp_A2(ibnd) = 0.0_R8
         matbulk_Kappa_perp_A3(ibnd) = 0.0_R8
         matbulk_Kappa_perp_A4(ibnd) = 0.0_R8
+        matbulk_Kappa_perp_A5(ibnd) = 0.0_R8
         filename='Bulk_properties/'//trim(bulk_material_name(ibnd))
         name(ifile+1) = filename
         idone(ifile+1) = ibnd
@@ -780,6 +801,8 @@ c-xpb Normalise surface constituents
           if(open_file(99,filename,
      .       'data.local|modules/B2.5/Database')) then
             read(99,*) bulk_long_name(ibnd)
+            read(99,*) bulk_temp_unit(ibnd)
+            read(99,*) matbulk_format(ibnd)
             read(99,*) matbulk_target_density(ibnd)
             read(99,*) matbulk_Kappa_KA(ibnd)
             read(99,*) matbulk_Kappa_KB(ibnd)
@@ -787,38 +810,47 @@ c-xpb Normalise surface constituents
             read(99,*) matbulk_Kappa_A2(ibnd)
             read(99,*) matbulk_Kappa_A3(ibnd)
             read(99,*) matbulk_Kappa_A4(ibnd)
+            read(99,*) matbulk_Kappa_A5(ibnd)
             read(99,*) matbulk_Cp_B1(ibnd)
             read(99,*) matbulk_Cp_B2(ibnd)
             read(99,*) matbulk_Cp_B3(ibnd)
+            read(99,*) matbulk_Cp_B4(ibnd)
             read(99,*,err=98,end=98) matbulk_Kappa_perp_A1(ibnd)
             read(99,*) matbulk_Kappa_perp_A2(ibnd)
             read(99,*) matbulk_Kappa_perp_A3(ibnd)
             read(99,*) matbulk_Kappa_perp_A4(ibnd)
+            read(99,*) matbulk_Kappa_perp_A5(ibnd)
 98          close(99)
             if (matbulk_Kappa_perp_A1(ibnd).eq.0.0_R8) then
               matbulk_Kappa_perp_A1(ibnd) = matbulk_Kappa_A1(ibnd)
               matbulk_Kappa_perp_A2(ibnd) = matbulk_Kappa_A2(ibnd)
               matbulk_Kappa_perp_A3(ibnd) = matbulk_Kappa_A3(ibnd)
               matbulk_Kappa_perp_A4(ibnd) = matbulk_Kappa_A4(ibnd)
+              matbulk_Kappa_perp_A5(ibnd) = matbulk_Kappa_A5(ibnd)
             endif
           endif
         else
           bulk_long_name(ibnd) = bulk_long_name(old_file)
-          matbulk_target_density(ibnd) = 
-     .     matbulk_target_density(old_file) 
+          bulk_temp_unit(ibnd) = bulk_temp_unit(old_file)
+          matbulk_format(ibnd) = matbulk_format(old_file)
+          matbulk_target_density(ibnd) =
+     .     matbulk_target_density(old_file)
           matbulk_Kappa_KA(ibnd) = matbulk_Kappa_KA(old_file)
           matbulk_Kappa_KB(ibnd) = matbulk_Kappa_KB(old_file)
           matbulk_Kappa_A1(ibnd) = matbulk_Kappa_A1(old_file)
           matbulk_Kappa_A2(ibnd) = matbulk_Kappa_A2(old_file)
           matbulk_Kappa_A3(ibnd) = matbulk_Kappa_A3(old_file)
           matbulk_Kappa_A4(ibnd) = matbulk_Kappa_A4(old_file)
+          matbulk_Kappa_A5(ibnd) = matbulk_Kappa_A5(old_file)
           matbulk_Kappa_perp_A1(ibnd) = matbulk_Kappa_perp_A1(old_file)
           matbulk_Kappa_perp_A2(ibnd) = matbulk_Kappa_perp_A2(old_file)
           matbulk_Kappa_perp_A3(ibnd) = matbulk_Kappa_perp_A3(old_file)
           matbulk_Kappa_perp_A4(ibnd) = matbulk_Kappa_perp_A4(old_file)
+          matbulk_Kappa_perp_A5(ibnd) = matbulk_Kappa_perp_A5(old_file)
           matbulk_Cp_B1(ibnd) = matbulk_Cp_B1(old_file)
           matbulk_Cp_B2(ibnd) = matbulk_Cp_B2(old_file)
           matbulk_Cp_B3(ibnd) = matbulk_Cp_B3(old_file)
+          matbulk_Cp_B4(ibnd) = matbulk_Cp_B4(old_file)
         endif
       enddo
 
@@ -830,6 +862,7 @@ c-xpb Normalise surface constituents
           coating_Kappa_perp_A2(ibnd) = 0.0_R8
           coating_Kappa_perp_A3(ibnd) = 0.0_R8
           coating_Kappa_perp_A4(ibnd) = 0.0_R8
+          coating_Kappa_perp_A5(ibnd) = 0.0_R8
           filename='Bulk_properties/'//trim(coating_material_name(ibnd))
           name(ifile+1) = filename
           idone(ifile+1) = ibnd
@@ -845,6 +878,8 @@ c-xpb Normalise surface constituents
             if(open_file(99,filename,
      .         'data.local|modules/B2.5/Database')) then
               read(99,*) coating_long_name(ibnd)
+              read(99,*) coating_temp_unit(ibnd)
+              read(99,*) coating_format(ibnd)
               read(99,*) coating_target_density(ibnd)
               read(99,*) coating_Kappa_KA(ibnd)
               read(99,*) coating_Kappa_KB(ibnd)
@@ -852,42 +887,52 @@ c-xpb Normalise surface constituents
               read(99,*) coating_Kappa_A2(ibnd)
               read(99,*) coating_Kappa_A3(ibnd)
               read(99,*) coating_Kappa_A4(ibnd)
+              read(99,*) coating_Kappa_A5(ibnd)
               read(99,*) coating_Cp_B1(ibnd)
               read(99,*) coating_Cp_B2(ibnd)
               read(99,*) coating_Cp_B3(ibnd)
+              read(99,*) coating_Cp_B4(ibnd)
               read(99,*,err=97,end=97) coating_Kappa_perp_A1(ibnd)
               read(99,*) coating_Kappa_perp_A2(ibnd)
               read(99,*) coating_Kappa_perp_A3(ibnd)
               read(99,*) coating_Kappa_perp_A4(ibnd)
+              read(99,*) coating_Kappa_perp_A5(ibnd)
 97            close(99)
               if (coating_Kappa_perp_A1(ibnd).eq.0.0_R8) then
                 coating_Kappa_perp_A1(ibnd) = coating_Kappa_A1(ibnd)
                 coating_Kappa_perp_A2(ibnd) = coating_Kappa_A2(ibnd)
                 coating_Kappa_perp_A3(ibnd) = coating_Kappa_A3(ibnd)
                 coating_Kappa_perp_A4(ibnd) = coating_Kappa_A4(ibnd)
+                coating_Kappa_perp_A5(ibnd) = coating_Kappa_A5(ibnd)
               endif
             endif
           else
             coating_long_name(ibnd) = coating_long_name(old_file)
-            coating_target_density(ibnd) = 
-     .       coating_target_density(old_file) 
+            coating_temp_unit(ibnd) = coating_temp_unit(ibnd)
+            coating_format(ibnd) = coating_format(old_file)
+            coating_target_density(ibnd) =
+     .       coating_target_density(old_file)
             coating_Kappa_KA(ibnd) = coating_Kappa_KA(old_file)
             coating_Kappa_KB(ibnd) = coating_Kappa_KB(old_file)
             coating_Kappa_A1(ibnd) = coating_Kappa_A1(old_file)
             coating_Kappa_A2(ibnd) = coating_Kappa_A2(old_file)
             coating_Kappa_A3(ibnd) = coating_Kappa_A3(old_file)
             coating_Kappa_A4(ibnd) = coating_Kappa_A4(old_file)
-            coating_Kappa_perp_A1(ibnd) = 
+            coating_Kappa_A5(ibnd) = coating_Kappa_A5(old_file)
+            coating_Kappa_perp_A1(ibnd) =
      .       coating_Kappa_perp_A1(old_file)
-            coating_Kappa_perp_A2(ibnd) = 
+            coating_Kappa_perp_A2(ibnd) =
      .       coating_Kappa_perp_A2(old_file)
-            coating_Kappa_perp_A3(ibnd) = 
+            coating_Kappa_perp_A3(ibnd) =
      .       coating_Kappa_perp_A3(old_file)
-            coating_Kappa_perp_A4(ibnd) = 
+            coating_Kappa_perp_A4(ibnd) =
      .       coating_Kappa_perp_A4(old_file)
+            coating_Kappa_perp_A5(ibnd) =
+     .       coating_Kappa_perp_A5(old_file)
             coating_Cp_B1(ibnd) = coating_Cp_B1(old_file)
             coating_Cp_B2(ibnd) = coating_Cp_B2(old_file)
             coating_Cp_B3(ibnd) = coating_Cp_B3(old_file)
+            coating_Cp_B4(ibnd) = coating_Cp_B4(old_file)
           endif
         endif
       enddo
@@ -899,15 +944,19 @@ c-xpb Normalise surface constituents
           if(open_file(99,filename,
      .       'data.local|modules/B2.5/Database')) then
             read(99,*) alloy_long_name(ifile)
+            read(99,*) alloy_temp_unit(ifile)
+            read(99,*) alloy_format(ifile)
             read(99,*) alloy_Kappa_KA(ifile)
             read(99,*) alloy_Kappa_KB(ifile)
             read(99,*) alloy_Kappa_A1(ifile)
             read(99,*) alloy_Kappa_A2(ifile)
             read(99,*) alloy_Kappa_A3(ifile)
             read(99,*) alloy_Kappa_A4(ifile)
+            read(99,*) alloy_Kappa_A5(ifile)
             read(99,*) alloy_Cp_B1(ifile)
             read(99,*) alloy_Cp_B2(ifile)
             read(99,*) alloy_Cp_B3(ifile)
+            read(99,*) alloy_Cp_B4(ifile)
 96          close(99)
           endif
           filename='Surface_properties/'//trim(layer_alloys(ifile))
@@ -933,12 +982,14 @@ c-xpb Normalise surface constituents
 
       do itrack = 1, ntargsp
         if (track_species(itrack).ne.'  ') then
-          if (itrack.eq.1) 
+          if (itrack.eq.1)
      >     write(*,*) 'Obtaining tracked species properties'
           filename='Bulk_properties/'//trim(track_species(itrack))
           if(open_file(99,filename,
      .       'data.local|modules/B2.5/Database')) then
             read(99,*) species_long_name(itrack)
+            read(99,*) species_temp_unit(itrack)
+            read(99,*) species_cp_format(itrack)
             read(99,*) species_target_density(itrack)
             read(99,*) species_Kappa_KA(itrack)
             read(99,*) species_Kappa_KB(itrack)
@@ -946,9 +997,11 @@ c-xpb Normalise surface constituents
             read(99,*) species_Kappa_A2(itrack)
             read(99,*) species_Kappa_A3(itrack)
             read(99,*) species_Kappa_A4(itrack)
+            read(99,*) species_Kappa_A5(itrack)
             read(99,*) species_Cp_B1(itrack)
             read(99,*) species_Cp_B2(itrack)
             read(99,*) species_Cp_B3(itrack)
+            read(99,*) species_Cp_B4(itrack)
             close(99)
           endif
           filename='Surface_properties/'//trim(track_species(itrack))
