@@ -1,11 +1,12 @@
 c
-      subroutine pltoutline
+      subroutine pltoutline(physical)
       use b2mod_types
       use b2mod_geo
       use b2mod_b2plot
       use b2mod_indirect
       implicit none
       integer ix,iy
+      logical physical
 
 c       call gslwsc_d(1.0_R8)
 #ifndef PLPLOT
@@ -13,21 +14,46 @@ c       call gslwsc_d(1.0_R8)
       if(ocol .gt. 1) call gsplci(ocol)
       call gslwsc_d(owidth)
 #endif
-      if(mod(typeofplot,2) .eq. 1) then ! mesh physical domain
+      if(physical) then ! mesh physical domain
         do ix=-1,nx
           do iy=-1,ny
-            if(leftix(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0)
+            if(leftix(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0 .and.
+     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
+     >       call lined_d(crx(ix,iy,1),cry(ix,iy,1),
+     1                    crx(ix,iy,3),cry(ix,iy,3))
+            if(topiy(ix,iy).eq.ny+1 .and. region(ix,iy,0).ne.0 .and.
+     &         leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
+     >       call lined_d(crx(ix,iy,0),cry(ix,iy,0),
+     1                    crx(ix,iy,1),cry(ix,iy,1))
+            if(rightix(ix,iy).eq.nx+1 .and. region(ix,iy,0).ne.0 .and.
+     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
      >       call lined_d(crx(ix,iy,0),cry(ix,iy,0),
      1                    crx(ix,iy,2),cry(ix,iy,2))
-            if(topiy(ix,iy).eq.ny+1 .and. region(ix,iy,0).ne.0)
+            if(bottomiy(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0 .and.
+     &         leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
      >       call lined_d(crx(ix,iy,2),cry(ix,iy,2),
      1                    crx(ix,iy,3),cry(ix,iy,3))
-            if(rightix(ix,iy).eq.nx+1 .and. region(ix,iy,0).ne.0) 
-     >       call lined_d(crx(ix,iy,3),cry(ix,iy,3),
-     1                    crx(ix,iy,1),cry(ix,iy,1))
-            if(bottomiy(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0)
-     >       call lined_d(crx(ix,iy,1),cry(ix,iy,1),
-     1                    crx(ix,iy,0),cry(ix,iy,0))
+          enddo
+        enddo
+      else
+        do ix=-1,nx
+          do iy=-1,ny
+            if(leftix(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0 .and.
+     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
+     >       call lined_d(xx(ix,1)+1.0_R8,yy(iy,1),
+     1                    xx(ix,1)+1.0_R8,yy(iy,1)+1.0_R8)
+            if(topiy(ix,iy).eq.ny+1 .and. region(ix,iy,0).ne.0 .and.
+     &         leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
+     >       call lined_d(xx(ix,1)       ,yy(iy,1),
+     1                    xx(ix,1)+1.0_R8,yy(iy,1))
+            if(rightix(ix,iy).eq.nx+1 .and. region(ix,iy,0).ne.0 .and.
+     &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
+     >       call lined_d(xx(ix,1),yy(iy,1),
+     1                    xx(ix,1),yy(iy,1)+1.0_R8)
+            if(bottomiy(ix,iy).eq.-2 .and. region(ix,iy,0).ne.0 .and.
+     &         leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
+     >       call lined_d(xx(ix,1)       ,yy(iy,1)+1.0_R8,
+     1                    xx(ix,1)+1.0_R8,yy(iy,1)+1.0_R8)
           enddo
         enddo
       endif
@@ -37,12 +63,13 @@ c       call gslwsc_d(1.0_R8)
       call gslwsc_d(lwidth)
 #endif
       return
-      end
+      end subroutine pltoutline
 c
       subroutine plot_arrows(is)
       use b2mod_types
       use b2mod_geo
       use b2mod_b2plot
+      use b2mod_b2plot_debug
       use b2mod_indirect
       implicit none
       integer is,ix,iy
@@ -68,7 +95,7 @@ c
         write(*,*) 'Cannot plot arrows for a zero field'
         return
       endif
-      write (*,*) 'drawing arrows'
+      if (b2plot_debug.ge.2) write (*,*) 'drawing arrows'
 #ifndef PLPLOT
       call lastd
       call gslwsc_d(arroww) ! increase arrow line width
@@ -119,6 +146,6 @@ c           call lined_d(brx+uu1,bzy+vv1,brx+uu2,bzy+vv2)
         call gsplci(1)
       endif
 #endif
-      write (*,*) 'finished drawing arrows'
+      if (b2plot_debug.ge.2) write (*,*) 'finished drawing arrows'
       return
-      end
+      end subroutine plot_arrows
