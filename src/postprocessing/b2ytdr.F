@@ -3578,9 +3578,6 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
               END IF
               WRITE(REAC_LINE(ILINE),66661) IREAC1(I),
      .            FILNAM,H123,REAC,CRC,idum(0:1),rdum(0),RMN,RMX
-            ELSE
-              IF (RMN.GT.0.0_R8) READ (IUNIN,'(A80)') ZEILE ! IFEXMN(IR,J),(FPARM(IR,I,J),I=1,3)
-              IF (RMX.GT.0.0_R8) READ (IUNIN,'(A80)') ZEILE ! IFEXMX(IR,J),(FPARM(IR,I,J),I=4,6)
             END IF
           ELSE
             NREAC1 = NREAC1 + 1
@@ -3622,14 +3619,18 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
           ENDIF
           IF (INDEX(H123,'P.').EQ.0) THEN  !PVK
             IF (RMN.GT.0.0_R8) THEN
-              ILINE = ILINE+1
               READ (IUNIN,66664) idum(0),(rdum(I),I=1,3) ! IFEXMN(IR,J),(FPARM(IR,I,J),I=1,3)
-              WRITE(REAC_LINE(ILINE),66664) idum(0),(rdum(I),I=1,3)
+              if (.not.skip_reac) then
+                ILINE = ILINE+1
+                WRITE(REAC_LINE(ILINE),66664) idum(0),(rdum(I),I=1,3)
+              end if
             ENDIF
             IF (RMX.GT.0.0_R8) THEN
-              ILINE = ILINE+1
               READ (IUNIN,66664) idum(0),(rdum(I),I=4,6) ! IFEXMN(IR,J),(FPARM(IR,I,J),I=4,6)
-              WRITE(REAC_LINE(ILINE),66664) idum(0),(rdum(I),I=4,6)
+              if (.not.skip_reac) then
+                ILINE = ILINE+1
+                WRITE(REAC_LINE(ILINE),66664) idum(0),(rdum(I),I=4,6)
+              end if
             ENDIF
           ENDIF
           IF (INDEX(ZEILE,'CONST') .NE. 0) THEN
