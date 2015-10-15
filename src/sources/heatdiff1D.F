@@ -347,28 +347,35 @@ c  Coefficients at x=x0
      . (-Qtot+qevap(ibnd,ns,Ts)+qrad(ibnd,Ts,.true.))
 
 c  Coefficients at x=xn
-      if (active) then
-        an = 1.0_R8
-        bn = 0.0_R8
-        cn = Tcbc
-      else
-        an = 0.0_R8
-        bn = 1.0_R8
-        cn = 1.0_R8/Kappa(ibnd,nd,Ts)* !xpb we assume the contact heat conductivity of 100 W.m-2.K-1
-     .   (-100.0_R8*(Td-Tcbc))
-      endif
+      an = 0.0_R8
+      bn = 1.0_R8
+      cn = 1.0_R8/Kappa(ibnd,nd,Td)*
+     . (-cond_coef(.not.active,Td)*(Td-Tcbc))
+!! FIXME: Could use additionally the code below once we have a way of applying
+!!        the correct emissivity
+cxpb        if (.not.active)
+cxpb     >    cn=cn-qrad(ibnd,Td,.false.)
+cxpb     .        -qevap(ibnd,ns,Td)
+c$$$ Old treatment where conductivity to coolant was assumed to be perfect
+c$$$      if (active) then
+c$$$        an = 1.0_R8
+c$$$        bn = 0.0_R8
+c$$$        cn = Tcbc
+c$$$      else
+c$$$        an = 0.0_R8
+c$$$        bn = 1.0_R8
+c$$$        cn = 1.0_R8/Kappa(ibnd,nd,Td)* !xpb we assume the contact heat conductivity of 100 W.m-2.K-1
+c$$$     .   (-100.0_R8*(Td-Tcbc))
+c$$$      endif
 
       return
       end subroutine coefbc
 
 c.................................................................
 c                      function Kappa
-c  function Kappa(T) gives the coefficient of thermal conductivity of
-c  graphite at temperature T.
-c      ref) R.A. Langley, Evaporation, Data Compendium for Plasma
-c           Surface Interactions, Special Issue, NUCLEAR FUSION,
-c           IAEA, Vienna, (1984) 57.
-                                                                                
+c  function Kappa(T) gives the coefficient of thermal conductivity
+c  at temperature T.
+
       function Kappa(ibnd,i,T)
       use b2mod_types
       use b2mod_wall
@@ -378,7 +385,7 @@ c           IAEA, Vienna, (1984) 57.
       real (kind=R8) :: a(4), Kappa, T
       real (kind=R8) :: bulk_value, coating_value
       real (kind=R8) :: layer_Kappa
-      external layer_Kappa
+      external layer_Kappa, xerrab
 
 c Units of Kappa are in "W/m/K"
       a(1) = matbulk_Kappa_A1(ibnd)
