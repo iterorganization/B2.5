@@ -408,7 +408,7 @@ c 2002-09-11: logic revised
       character*3, allocatable :: TDMCR(:,:), TDMCR1(:,:)
 #endif
       character*10, allocatable :: species_name(:)
-      logical ldum(0:60), found, ex, l_chem_sput
+      logical ldum(0:60), found, ex, l_chem_sput, is_core_boundary
       logical chemsp1(nstraid), savestratum(0:nstraid)
       logical, allocatable :: is_neutral1(:)
       logical, allocatable :: savesigv(:), savesigs(:), savesigc(:)
@@ -1420,7 +1420,7 @@ c 2002-09-11: logic revised
             if (ib2.gt.ib1 .and. bcpos1(ib).ne.-2) then  ! must duplicate the X b.c.
               nbc1 = nbc1 + ib2-ib1
               if(nbc1.gt.nbcd) stop 'increase size in b2ytdr for nbcd'
-              do is = 1, ib2-ib1
+              do is = nbc1-(ib2-ib1), nbc1
                 bcchar(is) = bcchar(ib)
                 bcpos1(is) = bcpos(ib)+is
                 bcstart1(is) = bcstart(ib)
@@ -1435,7 +1435,7 @@ c 2002-09-11: logic revised
                 potpar(is,:) = potpar(ib,:)
                 conpar(:,is,:) = conpar(:,ib,:)
                 mompar(:,is,:) = mompar(:,ib,:)
-                lcbs(is) = lcbs(ib)
+                lcbs(is) = 0
               end do
             else if (bcpos1(ib).eq.-2) then
               bc_list_size1(ib) = 0
@@ -1544,7 +1544,7 @@ c 2002-09-11: logic revised
             if (ib2.gt.ib1) then  ! must duplicate the Y b.c.
               nbc1 = nbc1 + ib2-ib1
               if(nbc1.gt.nbcd) stop 'increase size in b2ytdr for nbcd'
-              do is = 1, ib2-ib1
+              do is = nbc1-(ib2-ib1), nbc1
                 bcchar(is) = bcchar(ib)
                 bcpos1(is) = bcpos(ib)+is
                 bcstart1(is) = bcstart(ib)
@@ -1559,7 +1559,7 @@ c 2002-09-11: logic revised
                 potpar(is,:) = potpar(ib,:)
                 conpar(:,is,:) = conpar(:,ib,:)
                 mompar(:,is,:) = mompar(:,ib,:)
-                lcbs(is) = lcbs(ib)
+                lcbs(is) = 0
               end do
             else if (bcpos1(ib).eq.-2) then
               bc_list_size1(ib) = 0
@@ -1602,6 +1602,37 @@ c 2002-09-11: logic revised
           nyiso4(ib) = conformal_convert(non_commensurate,
      .       2,nxiso2(ib),nyiso2(ib),nx,ny,nx1,ny1,2)
         enddo
+        do ib = 1, nbc1
+          is_core_boundary = .false.
+          ib1 = 1
+          do while (ib1.le.nbc1 .and. lcbs(ib1).gt.0)
+            is_core_boundary = is_core_boundary .or. ib.eq.lcbs(ib1)
+            ib1 = ib1+1
+          end do
+          do is = 0, ns1-1
+            if (bccon(ib,is).eq.1 .and. bcene(ib).eq.9) bcene(ib)=19
+            if (bccon(ib,is).eq.1 .and. bceni(ib).eq.9) bceni(ib)=19
+            if (bccon(ib,is).eq.21 .and. 
+     .          (streql(solps_version,'5.0') .or. 
+     .           streql(solps_version,'5.1'))) then
+              bccon(ib,is) = 24  ! must move number because of clash in numbering
+            end if
+          end do
+          if (bceni(ib).eq.21 .and.
+     .        (streql(solps_version,'5.0') .or. 
+     .         streql(solps_version,'5.1'))) then
+            bceni(ib) = 25  ! must move number because of clash in numbering
+          end if
+          if (bcpot(ib).eq.0) then
+            if (bcchar(ib).eq.'N') then
+              bcpot(ib) = 13 ! new treatment for automatic drift current contribution
+            else if (bcchar(ib).eq.'S' .and. .not.is_core_boundary) then 
+              bcpot(ib) = 13 ! new treatment for automatic drift current contribution
+            else if (bcchar(ib).eq.'S' .and. is_core_boundary) then 
+              bcpot(ib) = 12 ! new treatment for automatic drift current contribution
+            end if
+          end if  
+        end do
         write(*,*) 'Writing ',trim(new_filename)
         open(35,file=new_filename)
         write(35,'(a)') '&BOUNDARY'

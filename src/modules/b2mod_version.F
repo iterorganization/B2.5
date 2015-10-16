@@ -238,9 +238,9 @@ c                        19.04.13 changed the applying of alfa3 to anomalous tra
 c                                 corrected calculation of qe at the plates and modified output for B2-ASTRA case
 c                                 implemented option in b2tqce.F in order to set sigx=0 and alfx=0 in guard cells at north and south except of core region 
 c                                 implemented option in b2tiner.F in order to calculate inerthia current using different approximation
-c                                 inserted boundary conditions BCCON = 21, 22, 23 suggested by L.Kaveeva and I.Senichenkov
-c                                 inserted boundary conditions BCMOM = 16 suggested by L.Kaveeva and I.Senichenkov
-c                                 inserted boundary conditions BCENI = 23 and 24 (with modified flux) suggested by L.Kaveeva and I.Senichenkov
+c                                 inserted boundary conditions BCCON = 21, 22, 23 suggested by L. Kaveeva and I. Senichenkov
+c                                 inserted boundary conditions BCMOM = 16 suggested by L. Kaveeva and I. Senichenkov
+c                                 inserted boundary conditions BCENI = 23 and 24 (with modified flux) suggested by L. Kaveeva and I. Senichenkov
 c                                 changed subroutine intcor.F Complicated operator IF was splitted by two in order that debugger not complain about index
 c                        11.06.13 added calculation of integrated electron and ion heat sources due to atomic processes for B2-ASTRA coupling
 c
@@ -256,4 +256,5 @@ c                                 Brings in neutral radiation from Eirene comput
 c                                 Changed default value of sheath_drift_fix to 1
 c    Version 03.000.003  13.07.15 Added modified and Pfirsch-Schlueter fluxes to b2fplasma
 c                                 Added fna_fcor, fna_he, fchvisq, fchinert to b2fplasma
-c  
+c    Version 03.000.004  16.10.15 Changed to default BCPOT=12 amd 13 for free boundaries with currents
+c

@@ -289,7 +289,7 @@
 *    'b2stbc_fnaycore_alpha'    '0.1'                  Numerics
 *    'b2stbc_integral_current'  '0.0'                  Numerics
 *    'b2stbc_isfeedback'        '0'                    Physics
-*    'b2stbc_istyle_cur_contr_on_S_and_N'   '1'        Numerics
+*    'b2stbc_istyle_cur_contr_on_S_and_N'   '2'        Numerics
 *    'b2stbc_istyle_fchi'       '0'                    Numerics
 *    'b2stbc_iyped'             jsep/2                 Physics
 *    'b2stbc_ncallfeedback'     '0'                    Run
@@ -2076,9 +2076,14 @@
 *    For consistency with the boundary condition treatment, the value
 *    iy_nocoreExB.eq.-1 is NOT recommended!
 *
-*    'b2stbc_istyle_cur_contr_on_S_and_N'   '1'        Numerics
-*    When set to '1', SPb's form of adding of fchy_dia contributions
-*    on South and North boundaries is used. It is recommended '1'.
+*    'b2stbc_istyle_cur_contr_on_S_and_N'   '2'        Numerics
+*    When set to '2', SPB's form of adding currents on the South core
+*    boundary is included by using BCPOT=12, and on the SOuth PFR and
+*    North boundaries by using BCPOT=13. It is recommended '2', in 
+*    conjunction with the BCPOT=12 and BCPOT=13 settings, respectively.
+*    When set to '1', SPb's form of adding currents on South and North 
+*    boundaries is done explicitly in addition to other existing boundary
+*    conditions for the potential equation. 
 *    The old 5.0 calculation is recovered by using the value '0'.
 *
 *    'b2stbc_istyle_fchi'       '0'                    Numerics

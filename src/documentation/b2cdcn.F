@@ -464,6 +464,7 @@
 *     $s^{-1}$
 *     9 : prescribe the decay length for the density,
 *     CONPAR(,,1) specifies the gradient length in $m$
+*     (should use type 15 instead when drifts are turned on)
 *     10 : leakage option for density, CONPAR(,,1) specifies
 *     the leakage factor, $\alpha$ in $\Gamma_{\mbox{loss}} = \alpha C_s n_a$
 *     11 : particle flux feedback boundary condition,
@@ -483,9 +484,39 @@
 *     type13_norm and type13_fac. See code for details.
 *     14 : sound speed velocity flux,
 *     CONPAR(,,1) is a multiplier to the outgoing sound speed $C_s$.
+*     15 : prescribe the decay length for the density with drifts switched on,
+*     CONPAR(,,1) specifies the gradient length in $m$
+*     16 : particle density to achieve specified total flux, used with ASTRA 
+*     coupling. The total desired flux is summed over all BCCON=16 core boundaries.
+*     CONPAR(,,1) specifies the desired particle flux in $s^{-1}$.
+*     18 : prescribe total main ion particle flux, used with ASTRA coupling.
+*     19 : particle flux feedback boundary condition, flux is summed over neutrals
+*     and ions, for coupling with ASTRA. The total desired flux is summed over all 
+*     BCCON=19 core boundaries.
+*     CONPAR(,,1) specifies the desired particle flux in $s^{-1}$.
 *     20 : constant density feedback condition.
 *     CONPAR(,,1) specifies the desired density in $m^{-3}$.
-*     21 : constant density feedback scaled by density on the ring bc_type21_ref away
+*     21 : prescribe the value of the density and add a density perturbation 
+*     to get a solution which is as close as possible to neoclassical theory.
+*     It is recommended to use this boundary condition together with
+*     corresponding condition on ion temperature (BCENI=24). 
+*     The total desired density is summed over all BCCON=21 core boundaries.
+*     CONPAR(,,1) specifies the desired density in $m^{-3}$.
+*     22 : Feedback boundary condition: given total particle flux with constant
+*     average density. The poloidal density variation is added to make the solution
+*     as close as possible to the neoclassical value. It is recommended to use this
+*     boundary condition with corresponding boundary condition on ion temperature
+*     (BCENI=24). The total desired flux is summed over all 
+*     BCCON=22 core boundaries.
+*     CONPAR(,,1) specifies the desired particle flux in $s^{-1}$.
+*     23 : Feedback boundary condition: given total particle flux with constant
+*     average density. The poloidal density variation is added to make the solution
+*     as close as possible to the neoclassical value. It is recommended to use this 
+*     boundary condition with corresponding boundary condition on ion temperature 
+*     (BCENI=24). The total desired flux is summed over all 
+*     BCCON=23 core boundaries.
+*     CONPAR(,,1) specifies the desired particle flux in $s^{-1}$.
+*     24 : constant density feedback scaled by density on the ring bc_type21_ref away
 *     CONPAR(,,1) specifies the desired density in $m^{-3}$.
 *     CONPAR(,,2) is the strength of the feedback
 *  BCMOM - integer array, length NS * NBC, specifying
@@ -521,7 +552,14 @@
 *     MOMPAR(,,1) specifies the decay length in $m$
 *     11 : Rozhansky viscosity condition for the parallel momentum,
 *     MOMPAR(,,1) is not used
-*  BCENE - integer array, length NBC, specifying
+*     12 : Condition from b2stbc_spb for the parallel momentum
+*     13 : Condition from b2stbc_spb for the parallel momentum
+*     14 : Condition from b2stbc_spb for the parallel momentum
+*     15 : Prescribe the value of the parallel velocity as a function of poloidal 
+*     coordinate
+*     16 : Prescribe the average value of the parallel velocity
+*     MOMPAR(,,1) specifies the parallelv elocity in $m.s^{-1}$
+*     BCENE - integer array, length NBC, specifying
 *     the type of electron energy or temperature boundary condition for
 *     each segment; makes use of ENEPAR to specify additional
 *     information, as indicated
@@ -550,7 +588,7 @@
 *     density, ENEPAR(,1) specifies the energy flux in $W$
 *     9 : prescribe the decay length for the electron temperature,
 *     ENEPAR(,1) specifies the decay length in $m$ (can also use type [19] 
-*         instead)
+*     instead)
 *     10 : feedback option for core, ENEPAR(,1) not used,
 *     derived from CBSHE(0,coreregno)
 *     11 : not used
@@ -568,7 +606,9 @@
 *     ENEPAR(,1) specifies the power flux in $W$ across the flux surface
 *     with index 'b2stbc_type16_ref' (default=-1), ENEPAR(,2)
 *     should be something like 0.1 and specifies the strength of the
-*     feedback. Also see type [17] below.
+*     feedback. Also see type [17] below. Available if bcene_16_style.eq.0 (default).
+*     If bcene_16_style.eq.1, integrated electron heat flux with constant Te,
+*     summed over all core boundaries with BCENE=16.
 *     17 : Feedback boundary condition with constant shared temperature
 *     for both electrons and ions, with ENEPAR(,1) + ENIPAR(,1) giving 
 *     the total power flux in $W$ across the flux surface
@@ -578,13 +618,15 @@
 *     'b2stbc_type16_ref'.
 *     18 : Fractional drop condition. Not yet working.
 *     19 : same as [9] but to be used when simultaneously setting BCCON=1 on 
-*          the same boundary.
+*     the same boundary.
 *     20 : Feedback boundary condition with constant temperature,
-*          as per type [16] but with type20_ switches and a different
-*          feedback scheme.      
-*     21 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away
-*          ENEPAR(,,1) specifies the desired electron temperature in $eV$.
-*          ENEPAR(,,2) is the strength of the feedback
+*     as per type [16] but with type20_ switches and a different
+*     feedback scheme.      
+*     21 : constant temperature feedback scaled by temperature on the ring 
+*     bc_type21_ref away
+*     ENEPAR(,,1) specifies the desired electron temperature in $eV$.
+*     ENEPAR(,,2) is the strength of the feedback
+*     22 : modified decay length for the electron temperature
 *  BCENI - integer array, length NBC, specifying the
 *     type of ion energy or temperature boundary condition for each
 *     segment; makes use of ENIPAR to specify additional
@@ -613,7 +655,7 @@
 *     density, ENIPAR(,1) specifies the energy flux in $W$
 *     9 : prescribe the decay length for the ion temperature,
 *     ENIPAR(,1) specifies the decay length in $m$ (can also use type [19] 
-*         instead)
+*     instead)
 *     10 : feedback option for core, ENIPAR(,1) not used,
 *     derived from CBSHI(0,ISMAIN,coreregno)
 *     11 : sheath conditions, ion energy transmission coefficient,
@@ -627,23 +669,41 @@
 *     per temperature in $W.m^{-2}.J^{-1}$ (the temperature here in $J$)
 *     14 : leakage option for ion energy, ENIPAR(,1) specifies
 *     the leakage factor, $\alpha$ in $\Gamma_{\mbox{loss}} = \alpha C_s n_a$
-*     15 : not used
+*     15 : from b2stbc_spb
 *     16 : Feedback boundary condition with constant temperature,
 *     ENIPAR(,1) specifies the power flux in $W$ across the flux surface
 *     with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2)
 *     should be something like 0.1 and specifies the strength of the
-*     feedback. Also see type [17] below.
+*     feedback. Also see type [17] below. Available if bceni_16_style.eq.0 (default).
+*     If bceni_16_style.eq.1, integrated ion heat flux with constant Ti,
+*     summed over all core boundaries with BCENI=16.
+*     ENIPAR(,1) specifies the power flux in $W$
 *     17 : Feedback boundary condition with constant shared temperature
 *     for both electrons and ions, see BCENE=17 above for description.
 *     18 : Fractional drop condition. Not yet working.
 *     19 : same as [9] but to be used when simultaneously setting BCCON=1 on 
-*          the same boundary.
+*     the same boundary.
 *     20 : Feedback boundary condition with constant temperature,
-*          as per type [16] but with type20_ switches and a different
-*          feedback scheme.      
-*     21 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away
-*          ENIPAR(,,1) specifies the desired ion temperature in $eV$.
-*          ENIPAR(,,2) is the strength of the feedback
+*     as per type [16] but with type20_ switches and a different
+*     feedback scheme.      
+*     21 : from b2stbc_spb
+*     22 : modified decay length for the ion temperature
+*     23 : Prescribe the poloidally averaged value of the ion temperature
+*     and introduce a poloidal variation as close as possible to neoclassical 
+*     solution. It is recommended to use this boundary condition together with
+*     corresponding condition on ion density (BCCON=21,22,23).
+*     The average is taken over all core boundaries with BCENI=23.
+*     ENIPAR(,1) specifies the temperature in $eV$
+*     24 : Feedback boundary condition with prescribed total ion flux,
+*     constant poloidally averaged ion temperature and a
+*     poloidal variation as close as possible to neoclassical solution.
+*     It is recommended to use this boundary condition together with corresponding
+*     condition on ion density (BCCON=21,22,23).
+*     The flux is summed over all core boundaries with BCENI=24.
+*     ENIPAR(,1) specifies the energy flux in $W$
+*     25 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away
+*     ENIPAR(,,1) specifies the desired ion temperature in $eV$.
+*     ENIPAR(,,2) is the strength of the feedback
 *  BCPOT - integer array, length NBC, specifying the
 *     type of electric potential or current boundary condition for each
 *     segment; makes use of POTPAR to specify additional
@@ -672,9 +732,16 @@
 *     POTPAR(,1) specifies the decay length in $m$
 *     10 : feedback option for core [not yet tested!!!!!!!!!] (based
 *     on using CBSCH(0,coreregno))
+*     11 : sheath conditions, electron energy transmission from b2stbc_spb
+*     POTPAR(,2) specifies the bias potential in $V$
+*     12 : Imposes the currents due to drifts for the South core boundary.
+*     Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
+*     13 : Imposes the currents due to drifts for the South private flux and North
+*     boundaries.
+*     Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
 *     21 : constant potential feedback scaled by potential on the ring bc_type21_ref away
-*          POTPAR(,,1) specifies the desired potential in $V$.
-*          POTPAR(,,2) is the strength of the feedback
+*     POTPAR(,,1) specifies the desired potential in $V$.
+*     POTPAR(,,2) is the strength of the feedback
 *  GAMMAI - real*8. Ratio of specific heats (adiabatic coefficient).
 *     Defaults to 5/3.
 *  GAMMAE - real*8. Secondary electron emission coefficient. Defaults to 0.5.
