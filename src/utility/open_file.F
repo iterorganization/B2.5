@@ -36,23 +36,23 @@ c
 #endif
 #endif
         if(solpstop.eq.' ') then
-          write(*,*) 'open_file: no SOLPSTOP set '
+          write(*,'(a)') 'open_file: no SOLPSTOP set '
         else
-          write(*,*) 'open_file: SOLPSTOP = : ',
+          write(*,'(a,a)') 'open_file: SOLPSTOP = : ',
      1	   solpstop(1:lnblnk(solpstop))
         endif
         first=.false.
       endif
       open_file=.true.
       close(lu)
-      write(*,*) 'Trying ',filename(1:lnblnk(filename))
+      write(*,'(a,a)') 'Trying ',filename(1:lnblnk(filename))
       open(lu,file=filename(1:lnblnk(filename)),
      1 status='old',err=10,recl=1000010)
       return
  10   continue
       close(lu)
       filenamecat='../'//filename(1:lnblnk(filename))
-      write(*,*) 'Trying ',filenamecat(1:lnblnk(filenamecat))
+      write(*,'(a,a)') 'Trying ',filenamecat(1:lnblnk(filenamecat))
       open(lu,file=filenamecat(1:lnblnk(filenamecat)),
      1 status='old',err=12,recl=1000010)             !srv 12.05.08 {
       return
@@ -78,13 +78,13 @@ c
      1   '/'//
      2   filename(1:lnblnk(filename))
       endif
-      write(*,*) 'Trying ',filenamecat(1:lnblnk(filenamecat))
+      write(*,'(a,a)') 'Trying ',filenamecat(1:lnblnk(filenamecat))
       open(lu,file=filenamecat(1:lnblnk(filenamecat)),
      3 status='old',err=20)
       return
  20   continue
       if(iend.gt.0) goto 17
-      write(*,*) 'Error in opening ',filename(1:lnblnk(filename))
+      write(*,'(a,a)') 'Error in opening ',filename(1:lnblnk(filename))
       open_file=.false.
       return
 c

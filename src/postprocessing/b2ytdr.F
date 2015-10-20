@@ -249,7 +249,7 @@ c 2002-09-11: logic revised
       integer NPLIN2, NPLOT2, NPLDL2
       integer NCHORI, LNTSPEC, LNTSPUT, NLSTADDS, NGWTIES, NSNVI, NPWIN
       integer iside, numpairs
-      integer NTL
+      integer NTL, NFR
       integer IPOS0, IPOS1, IPOS2
       integer NPRCSF, IPRCSF
       integer MAXPOL, MAXTOR, MAXADD
@@ -393,6 +393,7 @@ c 2002-09-11: logic revised
       character*24 TXTSPC, TXTUNT, TEXTLA
       character*72 TXTMOL, TXTION, TXTPLS, TXTPHOT, TXTCRM
       character*72 TITLE5, CHRTAL
+      character*74 PATH, FILE, RFILNM
       character HANDLE*6
       character FILNAM*8,H123*4,REAC*9,REAC2*50,CRC*3
       character ELNAME*2,REACSTR*11
@@ -1610,12 +1611,12 @@ c 2002-09-11: logic revised
             ib1 = ib1+1
           end do
           do is = 0, ns1-1
-            if (bccon(ib,is).eq.1 .and. bcene(ib).eq.9) bcene(ib)=19
-            if (bccon(ib,is).eq.1 .and. bceni(ib).eq.9) bceni(ib)=19
-            if (bccon(ib,is).eq.21 .and. 
+            if (bccon(is,ib).eq.1 .and. bcene(ib).eq.9) bcene(ib)=19
+            if (bccon(is,ib).eq.1 .and. bceni(ib).eq.9) bceni(ib)=19
+            if (bccon(is,ib).eq.21 .and.
      .          (streql(solps_version,'5.0') .or. 
      .           streql(solps_version,'5.1'))) then
-              bccon(ib,is) = 24  ! must move number because of clash in numbering
+              bccon(is,ib) = 24  ! must move number because of clash in numbering
             end if
           end do
           if (bceni(ib).eq.21 .and.
@@ -3040,14 +3041,16 @@ c   cfile card found. Is this one of the permitted external files?
             READ (IUNIN,'(A80)') ZEILE
             I1 = INDEX(ZEILE,'CFILE')
           END DO
-          IREAD=1
+          IREAD=2
         END IF
 
 *** 2. DATA FOR STANDARD MESH
         IF (IREAD.EQ.0) THEN
           READ (IUNIN,'(A80)') ZEILE
+          WRITE(IUNOT,'(A80)') ZEILE
+        ELSE IF (IREAD.EQ.2) THEN
+          WRITE(IUNOT,'(A80)') ZEILE
         ENDIF
-        WRITE(IUNOT,'(A80)') ZEILE
   201   READ (IUNIN,'(A80)') ZEILE
         WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:1) .EQ. '*') GOTO 201
@@ -5552,13 +5555,35 @@ cxpb We now rewrite the modified block 4
               GOTO 615
             ENDIF
           ELSE
-            WRITE(IUNOT,'(A80)') ZEILE
+            READ (ZEILE(7:lnblnk(ZEILE)),'(A74)') PATH
+            I=INDEX(PATH,ACHAR(13)) !VK
+            IF(I.GT.0.AND.I.LE.LEN_TRIM(PATH)) PATH(I:I)=' ' !VK TO REMOVE \r
+            PATH=ADJUSTL(PATH)
+            I2=INDEX(PATH,' ')
+            FILE=REPEAT(' ',74)
+            FILE(1:)=PATH(1:I2-1)
+!            WRITE(IUNOT,'(A80)') ZEILE ! this writes the path
             READ (IUNIN,'(A80)') ZEILE
             IREAD=1
+            NFR=0
   625       IF (INDEX(ZEILE,'ON')+INDEX(ZEILE,'on').EQ.0) THEN
               GOTO 620
             ELSE
-              WRITE(IUNOT,'(A80)') ZEILE
+              NFR=NFR+1
+              READ (ZEILE,'(A74)') RFILNM
+              I=INDEX(RFILNM,ACHAR(13)) !VK
+              IF(I.GT.0.AND.I.LE.LEN_TRIM(RFILNM)) RFILNM(I:I)=' ' !VK TO REMOVE \r
+              FILE(I2:)=RFILNM
+              IF (NFR.EQ.1) THEN
+                IF (open_file(29,FILE,
+     .           'modules/Eirene/Database/Surfacedata/TRIM')) THEN  ! Path is valid, write it
+                  WRITE(IUNOT,'(A6,A74)') 'cpath ',PATH
+                  close(29)
+                END IF
+                WRITE(IUNOT,'(A74)') RFILNM
+              ELSE
+                WRITE(IUNOT,'(A74)') RFILNM
+              END IF
               READ (IUNIN,'(A80)') ZEILE
               IREAD=1
               GOTO 625

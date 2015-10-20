@@ -734,6 +734,7 @@ c
       character*54 format_string(2)
       character*80 line
       integer, save :: new_format
+      logical ex
 
 #ifdef B25_EIRENE
       integer, save :: exp_location, dot_location
@@ -745,6 +746,12 @@ c
 #endif
       data format_string/ '(4E15.7)', '(4E16.8)' /
 
+      inquire(file='fort.30',exist=ex)
+      if (ex) then
+        write(*,*)
+     .   'Skipping writing fort.30 because file already present'
+        return
+      endif
       nniso=nncut-1
       if(nncut.eq.1) then
         if (nnreg(0).eq.1) then
