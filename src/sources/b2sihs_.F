@@ -6,6 +6,8 @@
      &  cvsa, fchdia, uadia, vadia, vaecrb, she0, shi0, vti32)        !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
+      use b2mod_sources
+      use b2mod_tallies
       use b2mod_indirect
       use b2mod_geo_corner
       use b2mod_anomalous_transport
@@ -244,6 +246,8 @@
 	  endif
        enddo
       enddo                                                          !srv 05.03.11 }
+      b2divue=0.0_R8
+      b2sihs_divue=0.0_R8
       do iy = 0, ny-1
        do ix = 0, nx-1
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
@@ -252,11 +256,16 @@
          shedu(ix,iy,0) = shedu(ix,iy,0)+
      &    (max(0.0e0_R8,t0)+rf0*abs(t0))*ne(ix,iy)*te(ix,iy)
          shedu(ix,iy,3) = shedu(ix,iy,3)+min(0.0e0_R8,t0)-rf0*abs(t0)
-	  endif                                                         !srv 26.11.02
+         b2divue(region(ix,iy,0))=b2divue(region(ix,iy,0))+
+     1     t0*ne(ix,iy)*te(ix,iy)
+         b2sihs_divue(ix,iy)=t0*ne(ix,iy)*te(ix,iy)
+	endif                                                         !srv 26.11.02
        enddo
       enddo
-      call b2saxpy (n2*4, 1.0e0_R8, shedu, 1, she0, 1)                 !srv 11.09.09
+      call b2saxpy (n2*4, 1.0e0_R8, shedu, 1, she0, 1)                !srv 11.09.09
 *   ..contribution from divergence ua
+      b2divua=0.0_R8
+      b2sihs_divua=0.0_R8
       do is = 0, ns-1
        do iy = 0, ny-1                                                !srv 21.07.05 {
         do ix = 0, nx
@@ -282,7 +291,7 @@
        do iy = 0, ny-1
         do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
-	    t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*                       !srv 21.07.05 {
+	  t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*                       !srv 21.07.05 {
      &            ( wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))   !srv 21.07.05 }
 !          t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*(                      !srv 31.05.99
 !     &        pbs(rightix(ix,iy),rightiy(ix,iy),0)*                    !srv 28.06.03 { 
@@ -295,7 +304,11 @@
           shidu(ix,iy,0) = shidu(ix,iy,0)+
      &      (max(0.0e0_R8,t0)+rf1*abs(t0))*ni(ix,iy,0)*ti(ix,iy)
           shidu(ix,iy,3) = shidu(ix,iy,3)+min(0.0e0_R8,t0)-rf1*abs(t0)
-	   endif                                                         !srv 26.11.02
+          b2divua(region(ix,iy,0))=b2divua(region(ix,iy,0))
+     1         +t0*ni(ix,iy,0)*ti(ix,iy)
+          b2sihs_divua(ix,iy)=b2sihs_divua(ix,iy)+
+     1         t0*ni(ix,iy,0)*ti(ix,iy)
+	 endif                                                         !srv 26.11.02
         enddo
        enddo
       enddo
@@ -327,6 +340,8 @@
 	 enddo
 	enddo
 
+      b2exbe=0.0_R8
+      b2sihs_exbe=0.0_R8
       do iy = 0, ny-1
        do ix = 0, nx-1
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
@@ -340,24 +355,29 @@
 !     &     *(OnedBsq(topix(ix,iy),topiy(ix,iy))-
 !     &       OnedBsq(bottomix(ix,iy),bottomiy(ix,iy)))
 !     &                                                )*0.25e0_R8*signmf !srv 21.04.00
-         wrk0(ix,iy) = bb(ix,iy,2)*vol(ix,iy)*                         !srv 11.01.13
+         wrk0(ix,iy) = bb(ix,iy,2)*vol(ix,iy)*                        !srv 11.01.13
      &   ((dpo(ix,iy,1)+dpo(topix(ix,iy),topiy(ix,iy),1))*
      &   (dOnedBsq(ix,iy,0)+dOnedBsq(rightix(ix,iy),rightiy(ix,iy),0)) -
      &    (dpo(ix,iy,0)+dpo(rightix(ix,iy),rightiy(ix,iy),0))*
      &   (dOnedBsq(ix,iy,1)+dOnedBsq(topix(ix,iy),topiy(ix,iy),1)))
-     &    *0.25e0_R8 ! *signmf                                         !srv 11.01.13 03.04.07 }     
-         t0 = phm5*fac_ExB(ix,iy)*wrk0(ix,iy)                          !srv 07.06.00 02.06.99
+     &    *0.25e0_R8 ! *signmf                                        !srv 11.01.13 03.04.07 }
+         t0 = phm5*fac_ExB(ix,iy)*wrk0(ix,iy)                         !srv 07.06.00 02.06.99
          shedd(ix,iy,0) = shedd(ix,iy,0)+
      &     (max(0.0e0_R8,t0)+rf0*abs(t0))*ne(ix,iy)*te(ix,iy)
          shedd(ix,iy,3) = shedd(ix,iy,3)+min(0.0e0_R8,t0)-rf0*abs(t0)
-	  endif                                                         !srv 26.11.02
+         b2exbe(region(ix,iy,0))=b2exbe(region(ix,iy,0))+
+     1       t0*ne(ix,iy)*te(ix,iy)
+         b2sihs_exbe(ix,iy)=t0*ne(ix,iy)*te(ix,iy)
+	endif                                                         !srv 26.11.02
        enddo
       enddo
-      call b2saxpy (n2*4, 1.0e0_R8, shedd, 1, she0, 1)                 !srv 11.09.09
+      call b2saxpy (n2*4, 1.0e0_R8, shedd, 1, she0, 1)                !srv 11.09.09
 
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99                                               !srv 02.06.99
+      b2exba=0.0_R8
+      b2sihs_exba=0.0_R8
       do is = 0, ns-1
-	 if(.not.is_neutral(is)) then
+       if(.not.is_neutral(is)) then
        do iy = 0, ny-1
         do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
@@ -368,13 +388,19 @@
 !     &      (max(0.0e0_R8,t0)+rf1*abs(t0))*ni(ix,iy,0)*ti(ix,iy)
           shidd(ix,iy,3) = shidd(ix,iy,3)+min(0.0e0_R8,t0)-rf1*abs(t0)
 !          shi0(ix,iy,3) = shi0(ix,iy,3)+min(0.0e0_R8,t0)-rf1*abs(t0)
-	   endif                                                         !srv 26.11.02
+          b2exba(region(ix,iy,0))=b2exba(region(ix,iy,0))+
+     1          t0*ni(ix,iy,0)*ti(ix,iy)
+          b2sihs_exba(ix,iy)=b2sihs_exba(ix,iy)+
+     1          t0*ni(ix,iy,0)*ti(ix,iy)
+	 endif                                                         !srv 26.11.02
         enddo
        enddo
        endif
       enddo
       call b2saxpy (n2*4, 1.0e0_R8, shidd, 1, shi0, 1)                  !srv 11.09.09
 *   ..contribution from viscous heating
+      b2visa=0.0_R8
+      b2sihs_visa=0.0_R8
       do is = 0, ns-1
 	 if(.not.is_neutral(is)) then                          !srv 29.08.02
 	  wrk0 = 0.0e0_R8                                     !srv 28.08.02  21.07.05 {
@@ -416,15 +442,19 @@
            shiva(ix,iy,0) = shiva(ix,iy,0)+(1.0e0_R8+rf2)*t1
            shiva(ix,iy,3) = shiva(ix,iy,3)-
      &                        rf2*t1/(ni(ix,iy,0)*ti(ix,iy))
-	    endif                                                         !srv 26.11.02
+           b2visa(region(ix,iy,0))=b2visa(region(ix,iy,0))+t0+t1
+           b2sihs_visa(ix,iy)=b2sihs_visa(ix,iy)+t0+t1
+	  endif                                                         !srv 26.11.02
          enddo
         enddo
-	 endif                                   !srv 29.08.02
+       endif                                   !srv 29.08.02
       enddo
       call b2saxpy (n2*4, 1.0e0_R8, shivc, 1, shi0, 1)                  !srv 11.09.09
       call b2saxpy (n2*4, 1.0e0_R8, shiva, 1, shi0, 1)                  !srv 11.09.09
 *   ..contribution from electron-atom friction
 *     (a.k.a. Joule heating)
+      b2joule=0.0_R8
+      b2sihs_joule=0.0_R8
       do iy = 0, ny-1
        do ix = 0, nx-1
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
@@ -442,11 +472,15 @@
          shefr(ix,iy,0) = shefr(ix,iy,0)+max(0.0e0_R8,t0)+rf3*abs(t0)
          shefr(ix,iy,3) = shefr(ix,iy,3)+
      &    (min(0.0e0_R8,t0)-rf3*abs(t0))/(ne(ix,iy)*te(ix,iy))
-	  endif                                                         !srv 26.11.02
+         b2joule(region(ix,iy,0))=b2joule(region(ix,iy,0))+t0
+         b2sihs_joule(ix,iy)=t0
+	endif                                                          !srv 26.11.02
        enddo
       enddo
       call b2saxpy (n2*4, 1.0e0_R8, shefr, 1, she0, 1)                 !srv 11.09.09
 *   ..contribution from atom-atom friction
+      b2fraa=0.0_R8
+      b2sihs_fraa=0.0_R8
       do isb = 0, ns-1
        do is = isb+1, ns-1
 *     ..consider distinct cases
@@ -462,7 +496,9 @@
             shifr(ix,iy,0) = shifr(ix,iy,0)+(2.5e0_R8+rf4)*t0
             shifr(ix,iy,3) = shifr(ix,iy,3)-
      &       (1.5e0_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
-	     endif                                                         !srv 26.11.02
+            b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+t0
+            b2sihs_fraa(ix,iy)=b2sihs_fraa(ix,iy)+t0
+	   endif                                                         !srv 26.11.02
           enddo
          enddo
         else
@@ -474,6 +510,8 @@
        enddo
       enddo
       call b2saxpy (n2*4, 1.0e0_R8, shifr, 1, shi0, 1)                 !srv 11.09.09
+      b2str=0.0_R8
+      b2sihs_str=0.0_R8
 !      if (style.eq.-1) then                                             !srv 28.06.03 {
 !*    ..strange term, version -1
 !       do is = 0, ns-1
@@ -496,7 +534,9 @@
 !           shi0(ix,iy,0) = shi0(ix,iy,0)+max(0.0e0_R8,-t0)
 !           shi0(ix,iy,3) = shi0(ix,iy,3)+
 !     &      min(0.0e0_R8,-t0)/(ni(ix,iy,0)*ti(ix,iy))
-!	    endif                                                         !srv 26.11.02
+!           b2str(region(ix,iy,0))=b2str(region(ix,iy,0))+t0
+!           b2sihs_str(ix,iy)=b2sihs_str(ix,iy)+t0
+!	   endif                                                         !srv 26.11.02
 !         enddo
 !        enddo
 !       enddo
@@ -525,12 +565,15 @@
 !           shi0(ix,iy,0) = shi0(ix,iy,0)+max(0.0e0_R8,t0)
 !           shi0(ix,iy,3) = shi0(ix,iy,3)+
 !     &      min(0.0e0_R8,t0)/(ni(ix,iy,0)*ti(ix,iy))
-!	    endif                                                         !srv 26.11.02
+!           b2str(region(ix,iy,0))=b2str(region(ix,iy,0))+t0
+!           b2sihs_str(ix,iy)=b2sihs_str(ix,iy)+t0
+!	   endif                                                         !srv 26.11.02
 !         enddo
 !        enddo
 !       enddo
 !      endif                                                           !srv 28.06.03 }
 !* ..drift                                                             !srv 11.07.99
+      b2wrong1=0.0_R8
 !      do is = 0, ns-1                                                 
 !        do iy = 0, ny-1         ! was ny DPC 970415
 !         do ix = 0, nx-1        ! was nx DPC 970415
@@ -547,6 +590,7 @@
 !	   shi0(ix,iy,0) = shi0(ix,iy,0)+max(0.0e0_R8,-t0)
 !	   shi0(ix,iy,3) = shi0(ix,iy,3)+
 !     &	    min(0.0e0_R8,-t0)/(ni(ix,iy,0)*ti(ix,iy))
+!          b2wrong1(region(ix,iy,0))=b2wrong1(region(ix,iy,0))+t0
 !	 enddo
 !       enddo
 !      enddo                                                        !srv 11.07.99                                                        

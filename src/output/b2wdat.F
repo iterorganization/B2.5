@@ -958,8 +958,8 @@
 	  endif
 	enddo
 
-! next part is copied from b2usrtrc                                                      
-!________________________________________________________________	        
+! next part is copied from b2usrtrc
+!________________________________________________________________
 
       hlp_s=0.0_R8
       do iy=0,ny-1 !{

@@ -828,18 +828,18 @@ c     with diamagnetic drift part                                        !xpb
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
               ue(ix,iy)=-(
-     1           fch_p(ix,iy,0)/pbs(ix,iy,0)+               !srv 10.06.08
+     1           fch_p(ix,iy,0)/pbs(ix,iy,0)+                        !srv 10.06.08
      1           fch_p(rightix(ix,iy),rightiy(ix,iy),0)/             !srv 10.06.08
      2             pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
             elseif(leftix(ix,iy).eq.-2 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
-              ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/   !srv 10.06.08
+              ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/     !srv 10.06.08
      2           pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
             elseif(rightix(ix,iy).eq.nx+1 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
-              ue(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe   !srv 10.06.08
+              ue(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe              !srv 10.06.08
             endif
           end do
         end do

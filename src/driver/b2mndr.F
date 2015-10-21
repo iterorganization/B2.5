@@ -37,6 +37,8 @@
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25
+      use b2mod_b2plot
+     , ,only: wklng, alloc_b2mod_b2plot
 #endif
       use b2mod_b2_to_astra
 #ifdef JET
@@ -1108,16 +1110,7 @@ csw 09oct2012
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
-      if (ntim.eq.0) then
-#ifndef HPUX
-        inquire(file='fort.44',exist=ex)
-#else
-        inquire(file='ftn44',exist=ex)
-#endif
-        CALL EIRENE_SETCON
-        CALL EIRENE_EXTRAB25_WNEUINIT
-        if (ex) call ngread(ismain,iflag)
-      endif
+      CALL EIRENE_ALLOC_CCOUPL(1)
 #endif
       
 *   ..read geometry and metric
@@ -1425,6 +1418,23 @@ c   --> better way doing this is necessary)
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (nx, ny, ns, BoRiS)
+cxpb read the Eirene output for 0-timestep runs
+#ifdef B25_EIRENE
+      if (ntim.eq.0) then
+#ifndef HPUX
+        inquire(file='fort.44',exist=ex)
+#else
+        inquire(file='ftn44',exist=ex)
+#endif
+        CALL EIRENE_SETCON
+        CALL EIRENE_EXTRAB25_WNEUINIT
+        if (ex) then
+          call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
+     .                            natm,nmol,nion,nlimps)
+          call ngread(ismain,iflag)
+        end if
+      endif
+#endif
 c new CDF movie option (1st frame at t=0)
       if(tim.ge.save_cdfmovie_time.and.
      1 delta_cdfmovie_time.gt.0.0_R8) then
@@ -1453,7 +1463,7 @@ c new CDF movie option (1st frame at t=0)
     1 continue
       write(*,'(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') 
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
-     1 itim,dtim,ntim,stack_ptr,quit
+     1            itim,dtim,ntim,stack_ptr,quit
 
       cpustart=x05baf()
       elapsedstart=epoch_seconds()
@@ -1487,200 +1497,200 @@ c new CDF movie option (1st frame at t=0)
 !!!
 
 *    ..guess the next state
-       call b2mxnp (n2*ns, nap, na0, na)
-       call b2mxnu (n2*ns, uap, ua0, ua)
-       call b2mxnp (n2, nep, ne0, ne)
-       call b2mxnp (n2, tep, te0, te)
-       call b2mxnp (n2, tip, ti0, ti)
-       call b2mxnp (n2, kinrgyp, kinrgy0, kinrgy)
-       call b2mxnu (n2, pop, po0, po)
-       call b2mxnu (n2*2*ns, fnap, fna0, fna)
-       call b2mxnu (n2*2, fhep, fhe0, fhe)
-       call b2mxnu (n2*2, fhip, fhi0, fhi)
-       call b2mxnu (n2*2, fchp, fch0, fch)
-       call b2trcs (nx, ny, ns, ismain, dtim, BoRiS)
+        call b2mxnp (n2*ns, nap, na0, na)
+        call b2mxnu (n2*ns, uap, ua0, ua)
+        call b2mxnp (n2, nep, ne0, ne)
+        call b2mxnp (n2, tep, te0, te)
+        call b2mxnp (n2, tip, ti0, ti)
+        call b2mxnp (n2, kinrgyp, kinrgy0, kinrgy)
+        call b2mxnu (n2, pop, po0, po)
+        call b2mxnu (n2*2*ns, fnap, fna0, fna)
+        call b2mxnu (n2*2, fhep, fhe0, fhe)
+        call b2mxnu (n2*2, fhip, fhi0, fhi)
+        call b2mxnu (n2*2, fchp, fch0, fch)
+        call b2trcs (nx, ny, ns, ismain, dtim, BoRiS)
 csw 09oct2012 set default potential already at this point (BCs)
-       if (pot_eq.eq.0) then                                           !srv 13.07.05 {
-         po   =0.0e0_R8
-       else if (pot_eq.eq.2) then
-         po(:,:)=3.1_R8*te(:,:)/qe
-       endif
+        if (pot_eq.eq.0) then                                          !srv 13.07.05 {
+          po   =0.0e0_R8
+        else if (pot_eq.eq.2) then
+          po(:,:)=3.1_R8*te(:,:)/qe
+        endif
 
 *    ..perform one time step
-       ok=.false.
-       do while(.not.ok)
-         write(*,'(1x,a,i9,1p,g14.7,i9,i3)')
-     .    'b2mndr_ok:itim,dtim,ntim,stack_ptr', 
-     1               itim,dtim,ntim,stack_ptr
+        ok=.false.
+        do while(.not.ok)
+          write(*,'(1x,a,i9,1p,g14.7,i9,i3)')
+     .     'b2mndr_ok:itim,dtim,ntim,stack_ptr',
+     1                itim,dtim,ntim,stack_ptr
           call b2mndt (nout, nx, ny, ns, ismain, ismain0, nscx, iscx,
      &     itim, dtim, ntim, ierr)
 
           if(ierr.eq.10) then
-             stack_ptr=stack_ptr+1
-             if(stack_ptr.gt.20) then
-                write(*,*) 'Too deep in b2mndr'
-                stop
-             endif
-             stack_ntim(stack_ptr)=ntim-itim     ! dpc 2000.06.24 was ntim+10
-             stack_dtim(stack_ptr)=dtim
-             dtim=dtim/10.0_R8
-             ntim=itim+10
-             na=na0
-             ne=ne0
-             ua=ua0
-             te=te0
-             ti=ti0
-             po=po0
-             fna=fna0
-             fhe=fhe0
-             fhi=fhi0
-             fch=fch0
-             kinrgy=kinrgy0
+            stack_ptr=stack_ptr+1
+            if(stack_ptr.gt.20) then
+              write(*,*) 'Too deep in b2mndr'
+              stop
+            endif
+            stack_ntim(stack_ptr)=ntim-itim     ! dpc 2000.06.24 was ntim+10
+            stack_dtim(stack_ptr)=dtim
+            dtim=dtim/10.0_R8
+            ntim=itim+10
+            na=na0
+            ne=ne0
+            ua=ua0
+            te=te0
+            ti=ti0
+            po=po0
+            fna=fna0
+            fhe=fhe0
+            fhi=fhi0
+            fch=fch0
+            kinrgy=kinrgy0
           else
-             ok=ierr.eq.0
+            ok=ierr.eq.0
           endif
-       enddo
+        enddo
 *    ..produce data for movie
-       if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
-        call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
-       endif
+        if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
+          call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
+        endif
 *    ..increment
-       itim = itim+1
-       if (no_solve.le.0) then
-         tim = tim+dtim
-       endif
-       write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
-     &     ' TIME ',tim, ' NTIM ', ntim,' DTIM ',dtim
-       write(*,*) 'delta na ',maxval(abs((na-na0)/(na+na_eps)))
-       write(*,*) 'delta te ',maxval(abs((te-te0)/(te+te_eps*ev)))
-       write(*,*) 'delta ti ',maxval(abs((ti-ti0)/(ti+ti_eps*ev)))
-       write(*,*) 'delta po ',maxval(abs((po-po0)/(abs(po)+po_eps)))
-       write(*,*) 'delta ua ',
+        itim = itim+1
+        if (no_solve.le.0) then
+          tim = tim+dtim
+        endif
+        write(*,"(1x,a,i9,a,es14.6,a,i9,a,es10.2)") 'ITER ',itim,
+     &    ' TIME ',tim, ' NTIM ', ntim,' DTIM ',dtim
+        write(*,*) 'delta na ',maxval(abs((na-na0)/(na+na_eps)))
+        write(*,*) 'delta te ',maxval(abs((te-te0)/(te+te_eps*ev)))
+        write(*,*) 'delta ti ',maxval(abs((ti-ti0)/(ti+ti_eps*ev)))
+        write(*,*) 'delta po ',maxval(abs((po-po0)/(abs(po)+po_eps)))
+        write(*,*) 'delta ua ',
      *   maxval(abs((na*ua-na0*ua0)/(abs(na*ua)+na_eps*ua_eps)))
-       if(delta_min.gt.0.0_R8.and.delta_max.gt.0.0_R8) then
-         max_delta=max(
-     1    maxval(abs((na-na0)/(na+na_eps))),
-     2    maxval(abs((te-te0)/(te+te_eps*ev))),
-     3    maxval(abs((ti-ti0)/(ti+ti_eps*ev))),
-     4    maxval(abs((po-po0)/(abs(po)+po_eps))),
-     5    maxval(abs((na*ua-na0*ua0)/(abs(na*ua)+na_eps*ua_eps))))
-         if(max_delta.gt.delta_max) then
-           write(*,*) 'b2mndr_delta: max_delta > delta_max'
-           dtim=max(dt_min,dtim*dt_change_dec)
-           write(*,*) 'b2mndr_dtim: dtim ',dtim
-         elseif(max_delta.lt.delta_min) then
-           write(*,*) 'b2mndr_delta: max_delta < delta_min'
-           dtim=min(dt_max,dtim*dt_change_inc)
-           write(*,*) 'b2mndr_dtim: dtim ',dtim
-         else
-           write(*,*) 'b2mndr_delta: max_delta OK'
-           write(*,*) 'b2mndr_dtim: dtim ',dtim
-         endif
-       endif
-       do while(itim.eq.ntim.and.stack_ptr.gt.0)
-	 write(*,'(a,i8,1p,g14.7,i8,i3)') 
-     .	  'b2mndr_01:itim,dtim,ntim,stack_ptr',
-     1	  itim,dtim,ntim,stack_ptr
-	 ntim=stack_ntim(stack_ptr)+itim-1     ! dpc 2000.06.24 was stack_ntim(stack_ptr)
-	 dtim=stack_dtim(stack_ptr)
-	 stack_ptr=stack_ptr-1
-	 write(*,'(a,i8,1p,g14.7,i8,i3)') 
-     .	  'b2mndr_02:itim,dtim,ntim,stack_ptr',
-     1	  itim,dtim,ntim,stack_ptr
-       end do
+        if(delta_min.gt.0.0_R8.and.delta_max.gt.0.0_R8) then
+          max_delta=max(
+     1     maxval(abs((na-na0)/(na+na_eps))),
+     2     maxval(abs((te-te0)/(te+te_eps*ev))),
+     3     maxval(abs((ti-ti0)/(ti+ti_eps*ev))),
+     4     maxval(abs((po-po0)/(abs(po)+po_eps))),
+     5     maxval(abs((na*ua-na0*ua0)/(abs(na*ua)+na_eps*ua_eps))))
+          if(max_delta.gt.delta_max) then
+            write(*,*) 'b2mndr_delta: max_delta > delta_max'
+            dtim=max(dt_min,dtim*dt_change_dec)
+            write(*,*) 'b2mndr_dtim: dtim ',dtim
+          elseif(max_delta.lt.delta_min) then
+            write(*,*) 'b2mndr_delta: max_delta < delta_min'
+            dtim=min(dt_max,dtim*dt_change_inc)
+            write(*,*) 'b2mndr_dtim: dtim ',dtim
+          else
+            write(*,*) 'b2mndr_delta: max_delta OK'
+            write(*,*) 'b2mndr_dtim: dtim ',dtim
+          endif
+        endif
+        do while(itim.eq.ntim.and.stack_ptr.gt.0)
+	  write(*,'(a,i8,1p,g14.7,i8,i3)')
+     .	   'b2mndr_01:itim,dtim,ntim,stack_ptr',
+     1	              itim,dtim,ntim,stack_ptr
+	  ntim=stack_ntim(stack_ptr)+itim-1     ! dpc 2000.06.24 was stack_ntim(stack_ptr)
+	  dtim=stack_dtim(stack_ptr)
+	  stack_ptr=stack_ptr-1
+	  write(*,'(a,i8,1p,g14.7,i8,i3)')
+     .	   'b2mndr_02:itim,dtim,ntim,stack_ptr',
+     1	              itim,dtim,ntim,stack_ptr
+        end do
 *    ..produce time dependent file
-       if (save_f31.lt.0) then
-	 write(fort31name,'(a,i8.8)') 'fort.31.', itim
-	 write(*,*) 'Saving ', fort31name, ' at time ', tim
-	 open(31,file=fort31name)
-	 call copy_background(nx, ny, ns, BoRiS)
-	 call write_f31(nx, ny)
-	 close(31)
-       end if
+        if (save_f31.lt.0) then
+	  write(fort31name,'(a,i8.8)') 'fort.31.', itim
+	  write(*,*) 'Saving ', fort31name, ' at time ', tim
+	  open(31,file=fort31name)
+	  call copy_background(nx, ny, ns, BoRiS)
+	  call write_f31(nx, ny)
+	  close(31)
+        end if
 
 #ifdef JET
-       if(tim.ge.save_tran_time.and.delta_tran_time.gt.0.0_R8) then
-         tran_num=tran_num+1
-         if(tran_num.le.99) then
-           write(tran_file_name,'(a4,i2)') 'tran',tran_num
-           if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
-           call cfopen (nout(9),tran_file_name,'new','unformatted')
-           call set_b2mod_ppout
-           call write_b2mod_ppout(nout(9))
-           close(nout(9))
-           write(*,*) 'Saved ',tran_file_name
-         else
-           write(*,*) 'More than 99 tran files --- no more saved'
-         endif
-         save_tran_time=save_tran_time+delta_tran_time
-       endif
+        if(tim.ge.save_tran_time.and.delta_tran_time.gt.0.0_R8) then
+          tran_num=tran_num+1
+          if(tran_num.le.99) then
+            write(tran_file_name,'(a4,i2)') 'tran',tran_num
+            if(tran_file_name(5:5).eq.' ') tran_file_name(5:5)='0'
+            call cfopen (nout(9),tran_file_name,'new','unformatted')
+            call set_b2mod_ppout
+            call write_b2mod_ppout(nout(9))
+            close(nout(9))
+            write(*,*) 'Saved ',tran_file_name
+          else
+            write(*,*) 'More than 99 tran files --- no more saved'
+          endif
+          save_tran_time=save_tran_time+delta_tran_time
+        endif
 #endif
 c new CDF movie option
-       if(tim.ge.save_cdfmovie_time.and.
-     1  delta_cdfmovie_time.gt.0.0_R8) then
+        if(tim.ge.save_cdfmovie_time.and.
+     1    delta_cdfmovie_time.gt.0.0_R8) then
 #ifndef NO_CDF
-         call cdfmovie(nx,ny,ns)
+          call cdfmovie(nx,ny,ns)
 #else
-         write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
+          write(*,*) 'Compile b2mndr without NO_CDF option for movies!'
 #endif
-         save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
-       endif
-       if(b2time.gt.0) then
+          save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
+        endif
+        if(b2time.gt.0) then
           if(mod(itim,b2time).eq.0.or.itim.eq.1) then
-             call b2mwti(itim,tim,nx,ny,ns,ismain,ismain0,BoRiS)
+            call b2mwti(itim,tim,nx,ny,ns,ismain,ismain0,BoRiS)
           endif
-       endif
+        endif
 *    ..tallies
-       if(tally.gt.0) then
-         if(mod(itim,tally).eq.0.or.itim.eq.1) then
+        if(tally.gt.0) then
+          if(mod(itim,tally).eq.0.or.itim.eq.1) then
             call tallies(nx,ny,ns,BoRiS)
-         endif
-       endif
-       if (first_time_step) call b2trci(nx,ny,ns,ismain,dtim,BoRiS)
-       if (ank_tracing.ne.0) then
-         if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1) 
-     >    call b2trace(nx,ny,ns,ismain,dtim,BoRiS)
-       endif
+          endif
+        endif
+        if (first_time_step) call b2trci(nx,ny,ns,ismain,dtim,BoRiS)
+        if (ank_tracing.ne.0) then
+          if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
+     >     call b2trace(nx,ny,ns,ismain,dtim,BoRiS)
+        endif
 c-rfs       write(*,*) 'fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)',
 c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *    ..loop
-       inquire(file='_quit',exist=quitexist_)                            !srv 18.05.09 13.04.11
-       inquire(file='.quit',exist=quitexist)
-       cpuval=x05baf()
-       elapsedval=epoch_seconds()
-       write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
-     & ' elapsed ', elapsedval-elapsedstart, 
-     & ' remaining time (s) =',
+        inquire(file='_quit',exist=quitexist_)                            !srv 18.05.09 13.04.11
+        inquire(file='.quit',exist=quitexist)
+        cpuval=x05baf()
+        elapsedval=epoch_seconds()
+        write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+     &   ' elapsed ', elapsedval-elapsedstart,
+     &   ' remaining time (s) =',
      &            min((ntim-itim)*(cpuval-cpustart),
      &                b2mndr_cpu-itim*(cpuval-cpustart))                 !srv 18.05.09
-       if(test_residual.and.mod(itim,10).eq.0.and.no_solve.le.0) then    !jwk
+        if(test_residual.and.mod(itim,10).eq.0.and.no_solve.le.0) then   !jwk
           quit_residual=                                                 !jwk
      &        (areshe*min_areshe).le.(min_areshe*min_areshe).and.        !jwk
      &        (areshi*min_areshi).le.(min_areshi*min_areshi).and.        !jwk
      &        (aresco(ismain)*min_aresco).le.(min_aresco*min_aresco)     !jwk
-       endif                                                             !jwk
-       quit=quitexist_.or.quitexist.or.quit_residual.or.                 !jwk !srv 13.04.11
+        endif                                                            !jwk
+        quit=quitexist_.or.quitexist.or.quit_residual.or.                !jwk !srv 13.04.11
      1      (cpuval-cpuinit.gt.b2mndr_cpu.and.b2mndr_cpu.gt.0.0_R8).or.
      1      (elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
      &       b2mndr_elapsed.gt.0.0_R8).or.
      2      (etim.gt.stim.and.tim.ge.etim.and.etim.ne.0.0_R8).or.
      3      (no_solve.eq.1.and.itim.eq.ntim)
-       if(.not.quit.and.
+        if(.not.quit.and.
      .   ((cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8).or.
      .    (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8))) 
      >   then
           write(savefile(13:16),'(i4)') edition
           edition=edition+1
           if(cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8) 
-     .      cputarget=cputarget+cpuincrement
+     .     cputarget=cputarget+cpuincrement
           if(tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8) 
-     .      save_plasma_time=save_plasma_time+delta_plasma_time
+     .     save_plasma_time=save_plasma_time+delta_plasma_time
           if(edition.gt.9999) then
-             edition=0
-             savefilestatus='old'
+            edition=0
+            savefilestatus='old'
           endif
           do i=13,16
-             if(savefile(i:i).eq.' ') savefile(i:i)='0'
+            if(savefile(i:i).eq.' ') savefile(i:i)='0'
           enddo
           call cfopen (nout(6), savefile, savefilestatus, 'unformatted')
           call cfverw (nout(6), newversion)                          !xpb/dpc
@@ -1704,18 +1714,18 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           if (found) call write_b2mod_wall_namelist(99,nx,ny,ns,
      >     savefile(13:16))
           if (ank_tracing.ne.0) call b2filef(ns)
-          close(nout(6))
+           close(nout(6))
           write(*,*) 'Plasmastate savefile ',savefile,' saved'
 !          open (70, file='b2fstate_add.'//savefile(13:16),           !srv 14.07.08 {
 !     &             form='unformatted')
-!	     write(70) vaecrb, vadia, floe_noc, floi_noc, fna, fna_fcor,
+!	 write(70) vaecrb, vadia, floe_noc, floi_noc, fna, fna_fcor,
 !     &     fna_nodrift, fna_he, fhe, fhi, fch,
 !     &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,fchinert,
 !     &     fnaPSch, fna_mdf, fhePSch, fhiPSch, fhe_mdf, fhi_mdf      !srv 29.10.09
 !	    close(70)                                                  !srv 14.07.08 }
-       endif
-       first_time_step=.false.
-       goto 1
+        endif
+        first_time_step=.false.
+        goto 1
 *   ..end loop
       endif  !}
 

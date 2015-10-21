@@ -202,14 +202,14 @@
      *  uadia, vadia, vaecrb, she0, shi0, wrk0)                         !srv 07.06.00 02.06.99 07.07.09
       endif
 csw 21feb2014 remove sources in ghostcells (SOLPS4)
-       do ix=-1,nx
-        do iy=-1,ny
-         if(ifenebound(ix,iy) .ne. 0) then
-          she0(ix,iy,:) = 0.0_R8
-          shi0(ix,iy,:) = 0.0_R8
-         endif
-        enddo
+      do ix=-1,nx
+       do iy=-1,ny
+        if(ifenebound(ix,iy) .ne. 0) then
+         she0(ix,iy,:) = 0.0_R8
+         shi0(ix,iy,:) = 0.0_R8
+        endif
        enddo
+      enddo
 
 * ..diagnostic of sources (b2sihs)
       b2she0=0.0_R8

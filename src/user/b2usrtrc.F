@@ -185,8 +185,9 @@ c*** Assume the same order of species in B2 and Eirene
           end if !}
         end do !}
 
-        print *,'%% b2usrtr: j_he_at,j_h_at,j_he_i,double_null = ', !###
-     ,                       j_he_at,j_h_at,j_he_i,double_null      !###
+        print '(a,3(i3,1x),l1)',
+     ,          '%% b2usrtrc: j_he_at,j_h_at,j_he_i,double_null = ', !###
+     ,                        j_he_at,j_h_at,j_he_i,double_null      !###
 
         first=.false.
       end if !}

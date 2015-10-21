@@ -28,14 +28,14 @@ c
         ipos=ipos+1
         icnt=1
     2   do while(ipos.lt.500 .and. textline(ipos:ipos).ne.c)
-          if(icnt .lt. len(sval)) sval(icnt:icnt)=textline(ipos:ipos)
+          if(icnt.lt.len(sval)) sval(icnt:icnt)=textline(ipos:ipos)
           icnt=icnt+1
           ipos=ipos+1
         enddo
-        if(textline(ipos:ipos) .eq. c) then
+        if(textline(ipos:ipos).eq.c) then
           ipos=ipos+1
-          if(ipos .le. 500.and.textline(ipos:ipos).eq.c) then
-            if(icnt .lt. len(sval)) sval(icnt:icnt)=textline(ipos:ipos)
+          if(ipos.le.500 .and. textline(ipos:ipos).eq.c) then
+            if(icnt.lt.len(sval)) sval(icnt:icnt)=textline(ipos:ipos)
             icnt=icnt+1
             ipos=ipos+1
             goto 2
