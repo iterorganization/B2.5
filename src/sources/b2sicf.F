@@ -71,95 +71,96 @@
 
 * ..compute centrifugal force
       smbcf = 0.0e0_R8
-	ctcf = 0.0e0_R8                                                 !srv 06.04.07
+      ctcf = 0.0e0_R8                                                 !srv 06.04.07
       if (style.eq.0) then
-	 do iy = 0, ny-1
-        do ix = 0, nx
-	   if(leftix(ix,iy).eq.-2) then
-	    wrk0(ix,iy) = 0.0e0_R8
-	   else
-	    wrk0(ix,iy) = (hz(ix,iy)-hz(leftix(ix,iy),leftiy(ix,iy)))/
-     &      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8      !srv 05.04.07
-	   endif
+        do iy = 0, ny-1
+          do ix = 0, nx
+            if(leftix(ix,iy).eq.-2) then
+             wrk0(ix,iy) = 0.0e0_R8
+            else
+             wrk0(ix,iy) = (hz(ix,iy)-hz(leftix(ix,iy),leftiy(ix,iy)))/
+     &       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8      !srv 05.04.07
+            endif
+          enddo
         enddo
-       enddo
 
 *   .. compute smbcf
-       do iy = 0, ny-1
-        do ix = 0, nx-1                                               !srv 26.11.02 {
-	    if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 22.07.05 {
-           smbcf(ix,iy,0) = phm0*vol(ix,iy)*               !srv factor hz/hz=1  
-     &       (bb(ix,iy,0)/bb(ix,iy,3))*mb*ub(ix,iy)**2                !srv 05.04.07
-     &       *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
+        do iy = 0, ny-1
+          do ix = 0, nx-1                                               !srv 26.11.02 {
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 22.07.05 {
+              smbcf(ix,iy,0) = phm0*vol(ix,iy)*               !srv factor hz/hz=1
+     &         (bb(ix,iy,0)/bb(ix,iy,3))*mb*ub(ix,iy)**2                !srv 05.04.07
+     &          *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
      &                            wrk0(rightix(ix,iy),leftiy(ix,iy))) !srv 22.07.05 {
-           smbcf(ix,iy,1) = 0.0e0_R8
-           smbcf(ix,iy,2) = 0.0e0_R8
-           smbcf(ix,iy,3) = 0.0e0_R8
-	     ctcf(ix,iy) = phm0*phm1*vol(ix,iy)*                        !srv 06.04.07 {
-     &       (bb(ix,iy,0)/bb(ix,iy,3))*mb*2.0e0_R8*ub(ix,iy)
-     &       *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
+              smbcf(ix,iy,1) = 0.0e0_R8
+              smbcf(ix,iy,2) = 0.0e0_R8
+              smbcf(ix,iy,3) = 0.0e0_R8
+              ctcf(ix,iy) = phm0*phm1*vol(ix,iy)*                        !srv 06.04.07 {
+     &         (bb(ix,iy,0)/bb(ix,iy,3))*mb*2.0e0_R8*ub(ix,iy)
+     &         *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
      &                            wrk0(rightix(ix,iy),leftiy(ix,iy))) !srv 06.04.07 }
 
-	    else                                                        !srv 26.11.02 }
-           smbcf(ix,iy,0) = 0.0e0_R8
-           smbcf(ix,iy,1) = 0.0e0_R8
-           smbcf(ix,iy,2) = 0.0e0_R8
-           smbcf(ix,iy,3) = 0.0e0_R8
-	     ctcf(ix,iy) = 0.0e0_R8                                     !srv 06.04.07
-	    endif                                                       !srv 26.11.02
+            else                                                        !srv 26.11.02 }
+              smbcf(ix,iy,0) = 0.0e0_R8
+              smbcf(ix,iy,1) = 0.0e0_R8
+              smbcf(ix,iy,2) = 0.0e0_R8
+              smbcf(ix,iy,3) = 0.0e0_R8
+              ctcf(ix,iy) = 0.0e0_R8                                     !srv 06.04.07
+            endif                                                       !srv 26.11.02
+          enddo
         enddo
-       enddo
 
       else if (style.eq.1) then
 
-	 do iy = 0, ny-1
-        do ix = 0, nx
-	   if(leftix(ix,iy).eq.-2) then
-	    wrk0(ix,iy) = 0.0e0_R8
-	   else
-	    wrk0(ix,iy) = hz(ix,iy)-hz(leftix(ix,iy),leftiy(ix,iy))
-	   endif
+        do iy = 0, ny-1
+          do ix = 0, nx
+            if(leftix(ix,iy).eq.-2) then
+              wrk0(ix,iy) = 0.0e0_R8
+            else
+              wrk0(ix,iy) = hz(ix,iy)-hz(leftix(ix,iy),leftiy(ix,iy))
+            endif
+          enddo
         enddo
-       enddo
 
 *   .. compute smbcf
-       do iy = 0, ny-1
-        do ix = 0, nx-1                                               !srv 26.11.02 {
-	 if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   !srv 22.07.05 {
-           smbcf(ix,iy,0) = phm0*vol(ix,iy)*               !srv factor hz/hz=1  
-     &       (bb(ix,iy,0)/bb(ix,iy,3))/hx(ix,iy)*mb*ub(ix,iy)**2
-     &       *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
-     &                            wrk0(rightix(ix,iy),leftiy(ix,iy))) !srv 22.07.05 {
-           smbcf(ix,iy,1) = 0.0e0_R8
-           smbcf(ix,iy,2) = 0.0e0_R8
-           smbcf(ix,iy,3) = 0.0e0_R8
-	     ctcf(ix,iy) = phm0*phm1*vol(ix,iy)*                        !srv 06.04.07 {
-     &       (bb(ix,iy,0)/bb(ix,iy,3))/hx(ix,iy)*mb*2.0e0_R8*ub(ix,iy)
-     &       *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
-     &                            wrk0(rightix(ix,iy),leftiy(ix,iy))) !srv 06.04.07 }
+        do iy = 0, ny-1
+          do ix = 0, nx-1                                                !srv 26.11.02 {
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then    !srv 22.07.05 {
+              smbcf(ix,iy,0) = phm0*vol(ix,iy)*                          !srv factor hz/hz=1
+     &         (bb(ix,iy,0)/bb(ix,iy,3))/hx(ix,iy)*mb*ub(ix,iy)**2
+     &         *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
+     &                            wrk0(rightix(ix,iy),leftiy(ix,iy)))    !srv 22.07.05 {
+              smbcf(ix,iy,1) = 0.0e0_R8
+              smbcf(ix,iy,2) = 0.0e0_R8
+              smbcf(ix,iy,3) = 0.0e0_R8
+              ctcf(ix,iy) = phm0*phm1*vol(ix,iy)*                        !srv 06.04.07 {
+     &         (bb(ix,iy,0)/bb(ix,iy,3))/hx(ix,iy)*mb*2.0e0_R8*ub(ix,iy)
+     &          *nb(ix,iy)*0.5e0_R8*(wrk0(ix,iy)+
+     &                            wrk0(rightix(ix,iy),leftiy(ix,iy)))    !srv 06.04.07 }
 
-	 else                                                        !srv 26.11.02 }
-           smbcf(ix,iy,0) = 0.0e0_R8
-           smbcf(ix,iy,1) = 0.0e0_R8
-           smbcf(ix,iy,2) = 0.0e0_R8
-           smbcf(ix,iy,3) = 0.0e0_R8
-	     ctcf(ix,iy) = 0.0e0_R8                                     !srv 06.04.07
-	 endif
-         smbcb(ix,iy) =  smbcf(ix,iy,0)
+            else                                                         !srv 26.11.02 }
+              smbcf(ix,iy,0) = 0.0e0_R8
+              smbcf(ix,iy,1) = 0.0e0_R8
+              smbcf(ix,iy,2) = 0.0e0_R8
+              smbcf(ix,iy,3) = 0.0e0_R8
+              ctcf(ix,iy) = 0.0e0_R8                                     !srv 06.04.07
+            endif
+            smbcb(ix,iy) =  smbcf(ix,iy,0)
+          enddo
         enddo
-       enddo
       endif
-	if (iout.ne.0) then                                            !srv 17.06.02 {
-	 write (chns,'(i3.3)') isb    
-	 do k=0,3
-	  write (chark,'(i1)') k  
-	  call my_out(70,nx,ny,smbcf(-1,-1,k),'b2sicf_smbcf'//chark//chns)
-	 enddo
-	 call my_out(70,nx,ny,smbcf(:,:,0)+smbcf(:,:,1)*ub(:,:)+
-     &        smbcf(:,:,2)*nb(:,:)*mb+smbcf(:,:,3)*ub(:,:)*nb(:,:)*mb,
-     &        'b2sicf_smocf'//chns)
-	 call my_out(70,nx,ny,ctcf,'b2sicf_ctcf'//chns)
-	endif                                                           !srv 17.06.02 }
+      if (iout.ne.0) then                                                !srv 17.06.02 {
+        write (chns,'(i3.3)') isb
+        do k=0,3
+          write (chark,'(i1)') k
+          call my_out(70,nx,ny,smbcf(-1,-1,k),
+     .                         'b2sicf_smbcf'//chark//chns)
+        enddo
+        call my_out(70,nx,ny,smbcf(:,:,0)+smbcf(:,:,1)*ub(:,:)+
+     &       smbcf(:,:,2)*nb(:,:)*mb+smbcf(:,:,3)*ub(:,:)*nb(:,:)*mb,
+     &       'b2sicf_smocf'//chns)
+        call my_out(70,nx,ny,ctcf,'b2sicf_ctcf'//chns)
+      endif                                                              !srv 17.06.02 }
 
 * ..return
       ncall = ncall+1

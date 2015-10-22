@@ -23,7 +23,6 @@
       real (kind=R8), allocatable :: layer_composition(:,:)
       real (kind=R8), allocatable :: particle_inventory(:,:)
       real (kind=R8), save :: layer_thermal_contact
-      data layer_thermal_contact/1.0_R8/
 
       character*6 layer_alloys(nalloys)
       integer alloy_composition(nalloys,ntrack)

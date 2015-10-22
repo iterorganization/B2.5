@@ -78,6 +78,7 @@
      *  textsp(0:DEF_NATM-1),
      *  textwl(0:DEF_NSD-1+DEF_NATM+DEF_NMOL+DEF_NION),
      *  textwk(0:(DEF_NSD+1)*(DEF_NSD+1),wklng),
+     *  textwwk(0:DEF_NSD-1+DEF_NATM+DEF_NMOL+DEF_NION,wklng),
      *  textbl(0:0),
      *  textni(0:1),
      *  textcomponents(0:3),
@@ -173,6 +174,7 @@ cank
       allocate(textsp(0:natmd-1))
       allocate(textwl(0:nsd-1+natmd+nmold+niond))
       allocate(textwk(0:nsw,wklngd))
+      allocate(textwwk(0:nsd-1+natmd+nmold+niond,wklngd))
       allocate(textbl(0:0))
       allocate(textni(0:1))
       allocate(textcomponents(0:3))
@@ -187,7 +189,6 @@ cank
       call xertst(nsd   .le.DEF_NPLS,'increase size of textpl array')
       call xertst(wklngd.le.wklng   ,'increase size of textwk array')
 #endif
-      allocate(textwwk(0:nsd-1+natmd+nmold+niond,wklngd))
 
       return
       end subroutine alloc_b2mod_b2plot

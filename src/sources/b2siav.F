@@ -106,7 +106,8 @@
 	      if(mod(region(ix,iy,0),4).eq.1) then
 	        tt0(iy) = tt0(iy) +bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
 	        tt1(iy) = tt1(iy) +vol(ix,iy)
-	        conn(iy) = conn(iy)+hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))   !srv 11.01.13
+                conn(iy) = conn(iy) +
+     .                     hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))   !srv 11.01.13
                 tt2(iy) = tt2(iy) +hx(ix,iy)
 	        tt3(iy) = tt3(iy) +vol(ix,iy)/hy1(ix,iy)
 	      endif

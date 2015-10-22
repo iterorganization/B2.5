@@ -21,7 +21,7 @@
      *  cvsa(:,:,:,:),
      *  cthe(:,:,:),
      *  cthi(:,:,:),
-     *  csigin(:,:,:,:,:),						 !xpb
+     *  csigin(:,:,:,:,:),                                                 !xpb
      *  cvlahz(:,:,:,:),                                              !srv 09.01.01
      *  cvmahz(:,:,:,:),                                              !srv 15.12.05
      *  cvsahz(:,:,:,:),                                              !srv 09.01.01
@@ -57,7 +57,7 @@
       allocate(cvsa(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(cthe(-1:nxd,-1:nyd,0:nsd-1))
       allocate(cthi(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(csigin(-1:nxd,-1:nyd,0:1,0:nsd-1,0:nsd-1))	      !xpb
+      allocate(csigin(-1:nxd,-1:nyd,0:1,0:nsd-1,0:nsd-1))             !xpb
       allocate(cvlahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
       allocate(cvmahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 15.12.05
       allocate(cvsahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
@@ -97,30 +97,30 @@
       call cfrure (nread, size(cthe), cthe, 'cthe')
       call cfrure (nread, size(cthi), cthi, 'cthi')
       if(b2fplasma_version.ge.'01.001.007') then
-	call cfrure (nread, size(csigin), csigin, 'csigin')
-	call cfrure (nread, size(cvsa_cl), cvsa_cl, 'cvsa_cl')
+        call cfrure (nread, size(csigin), csigin, 'csigin')
+        call cfrure (nread, size(cvsa_cl), cvsa_cl, 'cvsa_cl')
       else
-	csigin=0.0_R8
-	cvsa_cl=0.0_R8
+        csigin=0.0_R8
+        cvsa_cl=0.0_R8
       endif
       if(b2fplasma_version.ge.'01.001.021') then
-	call cfrure (nread, size(fllime), fllime, 'fllime')
-	call cfrure (nread, size(fllimi), fllimi, 'fllimi')
+        call cfrure (nread, size(fllime), fllime, 'fllime')
+        call cfrure (nread, size(fllimi), fllimi, 'fllimi')
       else
-	fllime=0.0_R8
-	fllimi=0.0_R8
+        fllime=0.0_R8
+        fllimi=0.0_R8
       endif
       if(b2fplasma_version.ge.'01.001.017') then
-	call cfrure (nread, size(fllim0fna), fllim0fna, 'fllim0fna')
-	call cfrure (nread, size(fllim0fhi), fllim0fhi, 'fllim0fhi')
+        call cfrure (nread, size(fllim0fna), fllim0fna, 'fllim0fna')
+        call cfrure (nread, size(fllim0fhi), fllim0fhi, 'fllim0fhi')
       else
-	fllim0fna=0.0_R8
-	fllim0fhi=0.0_R8
+        fllim0fna=0.0_R8
+        fllim0fhi=0.0_R8
       endif
       if(b2fplasma_version.ge.'01.001.020') then
-	call cfrure (nread, size(fllimvisc), fllimvisc, 'fllimvisc')
+        call cfrure (nread, size(fllimvisc), fllimvisc, 'fllimvisc')
       else
-	fllimvisc=0.0_R8
+        fllimvisc=0.0_R8
       endif
 
       return
@@ -146,19 +146,19 @@
       call cfwure (nwrite, size(cthe), cthe, 'cthe')
       call cfwure (nwrite, size(cthi), cthi, 'cthi')
       if(newversion.ge.'01.001.007') then
-	call cfwure (nwrite, size(csigin), csigin, 'csigin')
-	call cfwure (nwrite, size(cvsa_cl), cvsa_cl, 'cvsa_cl')
+        call cfwure (nwrite, size(csigin), csigin, 'csigin')
+        call cfwure (nwrite, size(cvsa_cl), cvsa_cl, 'cvsa_cl')
       endif
       if(newversion.ge.'01.001.021') then
-	call cfwure (nwrite, size(fllime), fllime, 'fllime')
-	call cfwure (nwrite, size(fllimi), fllimi, 'fllimi')
+        call cfwure (nwrite, size(fllime), fllime, 'fllime')
+        call cfwure (nwrite, size(fllimi), fllimi, 'fllimi')
       endif
       if(newversion.ge.'01.001.017') then
-	call cfwure (nwrite, size(fllim0fna), fllim0fna, 'fllim0fna')
-	call cfwure (nwrite, size(fllim0fhi), fllim0fhi, 'fllim0fhi')
+        call cfwure (nwrite, size(fllim0fna), fllim0fna, 'fllim0fna')
+        call cfwure (nwrite, size(fllim0fhi), fllim0fhi, 'fllim0fhi')
       endif
       if(newversion.ge.'01.001.020') then
-	call cfwure (nwrite, size(fllimvisc), fllimvisc, 'fllimvisc')
+        call cfwure (nwrite, size(fllimvisc), fllimvisc, 'fllimvisc')
       endif
 
       return

@@ -27,7 +27,7 @@
 *
 *  2. specification
 *
-*     
+*
 *
 *
 *  3. description (see also routine b2cdca)
@@ -125,7 +125,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       open(70,file='b2fparop.dat',form='unformatted')
       write(70) par_opt_phys
       close(70)
-      
+
       cpu_s = x05baf()
 
 #ifdef WINDOWS
@@ -151,7 +151,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        call system('cp b2fstate_add b2fstati_add')
        call system('rm b2fstate b2fstate_add')
       endif
-#endif	 
+#endif
       cpu_f= x05baf()
       write(71,"(' b2obfn takes ',es10.2,' sec')") cpu_f-cpu_s
 * read the results of modelling
@@ -160,120 +160,120 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       func = 0.0_R8
       npoint=0
 *   .. for inner lower
-      call treat_exp_res(l_ne_inner_lower, fnm_ne_inner_lower,   
+      call treat_exp_res(l_ne_inner_lower, fnm_ne_inner_lower,
      & ny, cy_ne_inner_lower, ne_inner_lower_mod, b_ne_inner_lower_mod,
      & c_ne_inner_lower_mod, d_ne_inner_lower_mod,
      & ndat_ne_inner_lower_exp, cy_ne_inner_lower_exp+shift,
      & ne_inner_lower_exp, npoint, func)
 
-      call treat_exp_res(l_te_inner_lower, fnm_te_inner_lower,   
+      call treat_exp_res(l_te_inner_lower, fnm_te_inner_lower,
      & ny, cy_te_inner_lower, te_inner_lower_mod,
      & b_te_inner_lower_mod, c_te_inner_lower_mod, d_te_inner_lower_mod,
-     & ndat_te_inner_lower_exp, cy_te_inner_lower_exp+shift, 
+     & ndat_te_inner_lower_exp, cy_te_inner_lower_exp+shift,
      & te_inner_lower_exp, npoint, func)
-      
-      call treat_exp_res(l_ti_inner_lower, fnm_ti_inner_lower,   
+
+      call treat_exp_res(l_ti_inner_lower, fnm_ti_inner_lower,
      & ny, cy_ti_inner_lower, ti_inner_lower_mod,
      & b_ti_inner_lower_mod, c_ti_inner_lower_mod, d_ti_inner_lower_mod,
      & ndat_ti_inner_lower_exp, cy_ti_inner_lower_exp+shift,
      & ti_inner_lower_exp, npoint, func)
-      
-      call treat_exp_res(l_js_inner_lower, fnm_js_inner_lower,   
+
+      call treat_exp_res(l_js_inner_lower, fnm_js_inner_lower,
      & ny, cy_js_inner_lower, js_inner_lower_mod,
      & b_js_inner_lower_mod, c_js_inner_lower_mod, d_js_inner_lower_mod,
-     & ndat_js_inner_lower_exp, 
+     & ndat_js_inner_lower_exp,
      & cy_js_inner_lower_exp(1:ndat_js_inner_lower_exp)+shift,
      & js_inner_lower_exp, npoint, func)
 
 *   .. for inner upper
-      call treat_exp_res(l_ne_inner_upper, fnm_ne_inner_upper,   
+      call treat_exp_res(l_ne_inner_upper, fnm_ne_inner_upper,
      & ny, cy_ne_inner_upper, ne_inner_upper_mod, b_ne_inner_upper_mod,
      & c_ne_inner_upper_mod, d_ne_inner_upper_mod,
      & ndat_ne_inner_upper_exp, cy_ne_inner_upper_exp+shift,
      & ne_inner_upper_exp, npoint, func)
 
-      call treat_exp_res(l_te_inner_upper, fnm_te_inner_upper,   
+      call treat_exp_res(l_te_inner_upper, fnm_te_inner_upper,
      & ny, cy_te_inner_upper, te_inner_upper_mod,
      & b_te_inner_upper_mod, c_te_inner_upper_mod, d_te_inner_upper_mod,
-     & ndat_te_inner_upper_exp, cy_te_inner_upper_exp+shift, 
+     & ndat_te_inner_upper_exp, cy_te_inner_upper_exp+shift,
      & te_inner_upper_exp, npoint, func)
-      
-      call treat_exp_res(l_ti_inner_upper, fnm_ti_inner_upper,   
+
+      call treat_exp_res(l_ti_inner_upper, fnm_ti_inner_upper,
      & ny, cy_ti_inner_upper, ti_inner_upper_mod,
      & b_ti_inner_upper_mod, c_ti_inner_upper_mod, d_ti_inner_upper_mod,
      & ndat_ti_inner_upper_exp, cy_ti_inner_upper_exp+shift,
      & ti_inner_upper_exp, npoint, func)
-      
-      call treat_exp_res(l_js_inner_upper, fnm_js_inner_upper,   
+
+      call treat_exp_res(l_js_inner_upper, fnm_js_inner_upper,
      & ny, cy_js_inner_upper, js_inner_upper_mod,
      & b_js_inner_upper_mod, c_js_inner_upper_mod, d_js_inner_upper_mod,
      & ndat_js_inner_upper_exp, cy_js_inner_upper_exp+shift,
      & js_inner_upper_exp, npoint, func)
 
 *   .. for outer midplane
-      call treat_exp_res(l_ne_outer_mdpl, fnm_ne_outer_mdpl,   
+      call treat_exp_res(l_ne_outer_mdpl, fnm_ne_outer_mdpl,
      & ny, cy_ne_outer_mdpl, ne_outer_mdpl_mod,
      & b_ne_outer_mdpl_mod, c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod,
-     & ndat_ne_outer_mdpl_exp, cy_ne_outer_mdpl_exp-shift, 
+     & ndat_ne_outer_mdpl_exp, cy_ne_outer_mdpl_exp-shift,
      & ne_outer_mdpl_exp, npoint, func)
 
-      call treat_exp_res(l_te_outer_mdpl, fnm_te_outer_mdpl,   
+      call treat_exp_res(l_te_outer_mdpl, fnm_te_outer_mdpl,
      & ny, cy_te_outer_mdpl, te_outer_mdpl_mod,
      & b_te_outer_mdpl_mod, c_te_outer_mdpl_mod, d_te_outer_mdpl_mod,
-     & ndat_te_outer_mdpl_exp, cy_te_outer_mdpl_exp-shift, 
+     & ndat_te_outer_mdpl_exp, cy_te_outer_mdpl_exp-shift,
      & te_outer_mdpl_exp, npoint, func)
-      
-      call treat_exp_res(l_ti_outer_mdpl, fnm_ti_outer_mdpl,   
+
+      call treat_exp_res(l_ti_outer_mdpl, fnm_ti_outer_mdpl,
      & ny, cy_ti_outer_mdpl, ti_outer_mdpl_mod,
      & b_ti_outer_mdpl_mod, c_ti_outer_mdpl_mod, d_ti_outer_mdpl_mod,
-     & ndat_ti_outer_mdpl_exp, cy_ti_outer_mdpl_exp-shift, 
+     & ndat_ti_outer_mdpl_exp, cy_ti_outer_mdpl_exp-shift,
      & ti_outer_mdpl_exp, npoint, func)
 
 *   .. for outer lower
-      call treat_exp_res(l_ne_outer_lower, fnm_ne_outer_lower,   
+      call treat_exp_res(l_ne_outer_lower, fnm_ne_outer_lower,
      & ny, cy_ne_outer_lower, ne_outer_lower_mod, b_ne_outer_lower_mod,
      & c_ne_outer_lower_mod, d_ne_outer_lower_mod,
      & ndat_ne_outer_lower_exp, cy_ne_outer_lower_exp-shift,
      & ne_outer_lower_exp, npoint, func)
 
-      call treat_exp_res(l_te_outer_lower, fnm_te_outer_lower,   
+      call treat_exp_res(l_te_outer_lower, fnm_te_outer_lower,
      & ny, cy_te_outer_lower, te_outer_lower_mod,
      & b_te_outer_lower_mod, c_te_outer_lower_mod, d_te_outer_lower_mod,
-     & ndat_te_outer_lower_exp, cy_te_outer_lower_exp-shift, 
+     & ndat_te_outer_lower_exp, cy_te_outer_lower_exp-shift,
      & te_outer_lower_exp, npoint, func)
-      
-      call treat_exp_res(l_ti_outer_lower, fnm_ti_outer_lower,   
+
+      call treat_exp_res(l_ti_outer_lower, fnm_ti_outer_lower,
      & ny, cy_ti_outer_lower, ti_outer_lower_mod,
      & b_ti_outer_lower_mod, c_ti_outer_lower_mod, d_ti_outer_lower_mod,
      & ndat_ti_outer_lower_exp, cy_ti_outer_lower_exp-shift,
      & ti_outer_lower_exp, npoint, func)
-      
-      call treat_exp_res(l_js_outer_lower, fnm_js_outer_lower,   
+
+      call treat_exp_res(l_js_outer_lower, fnm_js_outer_lower,
      & ny, cy_js_outer_lower, js_outer_lower_mod,
      & b_js_outer_lower_mod, c_js_outer_lower_mod, d_js_outer_lower_mod,
      & ndat_js_outer_lower_exp, cy_js_outer_lower_exp-shift,
      & js_outer_lower_exp, npoint, func)
 
 *   .. for outer upper
-      call treat_exp_res(l_ne_outer_upper, fnm_ne_outer_upper,   
+      call treat_exp_res(l_ne_outer_upper, fnm_ne_outer_upper,
      & ny, cy_ne_outer_upper, ne_outer_upper_mod, b_ne_outer_upper_mod,
      & c_ne_outer_upper_mod, d_ne_outer_upper_mod,
      & ndat_ne_outer_upper_exp, cy_ne_outer_upper_exp-shift,
      & ne_outer_upper_exp, npoint, func)
 
-      call treat_exp_res(l_te_outer_upper, fnm_te_outer_upper,   
+      call treat_exp_res(l_te_outer_upper, fnm_te_outer_upper,
      & ny, cy_te_outer_upper, te_outer_upper_mod,
      & b_te_outer_upper_mod, c_te_outer_upper_mod, d_te_outer_upper_mod,
-     & ndat_te_outer_upper_exp, cy_te_outer_upper_exp-shift, 
+     & ndat_te_outer_upper_exp, cy_te_outer_upper_exp-shift,
      & te_outer_upper_exp, npoint, func)
-      
-      call treat_exp_res(l_ti_outer_upper, fnm_ti_outer_upper,   
+
+      call treat_exp_res(l_ti_outer_upper, fnm_ti_outer_upper,
      & ny, cy_ti_outer_upper, ti_outer_upper_mod,
      & b_ti_outer_upper_mod, c_ti_outer_upper_mod, d_ti_outer_upper_mod,
      & ndat_ti_outer_upper_exp, cy_ti_outer_upper_exp-shift,
      & ti_outer_upper_exp, npoint, func)
-      
-      call treat_exp_res(l_js_outer_upper, fnm_js_outer_upper,   
+
+      call treat_exp_res(l_js_outer_upper, fnm_js_outer_upper,
      & ny, cy_js_outer_upper, js_outer_upper_mod,
      & b_js_outer_upper_mod, c_js_outer_upper_mod, d_js_outer_upper_mod,
      & ndat_js_outer_upper_exp, cy_js_outer_upper_exp-shift,
@@ -284,7 +284,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        func = func + dif**2
        npoint=npoint+1
 
-       write(71,"(5x,'pw_mod',5x,'pw_exp',5x,'dif')") 
+       write(71,"(5x,'pw_mod',5x,'pw_exp',5x,'dif')")
        write(71,"(1x,3(es14.6))") power_mod, power_exp, dif
       endif
 
@@ -310,21 +310,21 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         case(0)
 !         x = z
           fab = z
-	case(1)
+        case(1)
 !         x = b + (a-b)*exp(z)/(1+exp(z))
           if(z .le. 0.0_R8) then
-	    fab = b + (a-b)*exp(z)/(1.0_R8+exp(z))
-	  else
-	    fab = b + (a-b)/(1.0_R8+exp(-z))
-	  endif
-	case(2)
+            fab = b + (a-b)*exp(z)/(1.0_R8+exp(z))
+          else
+            fab = b + (a-b)/(1.0_R8+exp(-z))
+          endif
+        case(2)
 !         x = (a+b)/2 + (b-a)/2*sin(z)
-	  fab = 0.5_R8*(a+b) + 0.5_R8*(b-a)*sin(z)
-	case default
-	  write(71,*) ' fab: Incorrect istyle'
-	  stop
+          fab = 0.5_R8*(a+b) + 0.5_R8*(b-a)*sin(z)
+        case default
+          write(71,*) ' fab: Incorrect istyle'
+          stop
       end select
-	    
+     
       end function fab
 
       function fcain(a, z, istyle)
@@ -333,61 +333,62 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       integer istyle
       real (kind=R8) :: a, z, fcain
       select case (istyle)
-	case(0)
+        case(0)
 !         x = z
-	  fcain = z
-	case(1)
+          fcain = z
+        case(1)
 !         x = a + exp(z)
-	  fcain = a + exp(z) 
-	case(2)
+          fcain = a + exp(z)
+        case(2)
 !         x = a + z**2
-	  fcain = a + z**2 
-	case default
-	  write(71,*) ' fab: Incorrect istyle'
-	  stop
-	end select
+          fcain = a + z**2
+        case default
+          write(71,*) ' fab: Incorrect istyle'
+          stop
+        end select
       end function fcain
 
-      subroutine treat_exp_res(l_ne_outer_mdpl, fnm_ne_outer_mdpl,   
+      subroutine treat_exp_res(l_ne_outer_mdpl, fnm_ne_outer_mdpl,
      &  ny, cy_ne_outer_mdpl, ne_outer_mdpl_mod,
      &  b_ne_outer_mdpl_mod, c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod,
      &  ndat_ne, cy_ne_outer_mdpl_exp, ne_outer_mdpl_exp, npoint, func)
-	use b2mod_types
-	implicit none
-	logical(1) :: l_ne_outer_mdpl
-	character(*) :: fnm_ne_outer_mdpl
-	integer :: ny, npoint, ndat_ne
-	real (kind=R8) ::  func, 
-     &   cy_ne_outer_mdpl(-1:ny), 
+      use b2mod_types
+      implicit none
+      logical(1) :: l_ne_outer_mdpl
+      character(*) :: fnm_ne_outer_mdpl
+      integer :: ny, npoint, ndat_ne
+      real (kind=R8) ::  func,
+     &   cy_ne_outer_mdpl(-1:ny),
      &   ne_outer_mdpl_mod(-1:ny), b_ne_outer_mdpl_mod(-1:ny),
      & c_ne_outer_mdpl_mod(-1:ny), d_ne_outer_mdpl_mod(-1:ny),
-     & cy_ne_outer_mdpl_exp(1:ndat_ne), ne_outer_mdpl_exp(1:ndat_ne)  
-      
+     & cy_ne_outer_mdpl_exp(1:ndat_ne), ne_outer_mdpl_exp(1:ndat_ne)
+
       integer ::  iy
       real (kind=R8) ::  dif, nemod, dseval
-      character(128) :: fmt 
+      character(128) :: fmt
 
       fmt="(8x,'y',7x,1x,'"//trim(fnm_ne_outer_mdpl)//"_exp'"//
      &  ",4x,'"//trim(fnm_ne_outer_mdpl)//"_mod',8x,'dif')"
       if(l_ne_outer_mdpl) then
-        call approx_profile_mod(ny+2,   
+        call approx_profile_mod(ny+2,
      &                 cy_ne_outer_mdpl, ne_outer_mdpl_mod,
      &   b_ne_outer_mdpl_mod, c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod)
-!	 write(71,"(7x,'y',7x,5x,'ne_outer_mdpl_exp',8x,
-!     &   'ne_outer_mdpl_mod',8x,'dif')") 
-	write(71,trim(fmt)) 
-	do iy=1,ndat_ne
-	  if(cy_ne_outer_mdpl(-1)*1.0001.le.cy_ne_outer_mdpl_exp(iy) .and. 
+!         write(71,"(7x,'y',7x,5x,'ne_outer_mdpl_exp',8x,
+!     &   'ne_outer_mdpl_mod',8x,'dif')")
+        write(71,trim(fmt))
+        do iy=1,ndat_ne
+          if(cy_ne_outer_mdpl(-1)*1.0001.le.cy_ne_outer_mdpl_exp(iy)
+     &        .and.
      &     cy_ne_outer_mdpl_exp(iy).le.cy_ne_outer_mdpl(ny)*1.0001) then
-	    nemod = dseval(ny+2, cy_ne_outer_mdpl_exp(iy), 
+            nemod = dseval(ny+2, cy_ne_outer_mdpl_exp(iy),
      &         cy_ne_outer_mdpl, ne_outer_mdpl_mod, b_ne_outer_mdpl_mod,
      *         c_ne_outer_mdpl_mod, d_ne_outer_mdpl_mod)
-	    dif = (nemod-ne_outer_mdpl_exp(iy))/ne_outer_mdpl_exp(iy)
-	    func = func + dif**2
+            dif = (nemod-ne_outer_mdpl_exp(iy))/ne_outer_mdpl_exp(iy)
+            func = func + dif**2
             npoint=npoint+1
-	    write(71,"(1x,4(es14.6))") cy_ne_outer_mdpl_exp(iy),
+            write(71,"(1x,4(es14.6))") cy_ne_outer_mdpl_exp(iy),
      &              ne_outer_mdpl_exp(iy), nemod, dif
-	  endif
+          endif
         enddo
       endif
       end subroutine treat_exp_res

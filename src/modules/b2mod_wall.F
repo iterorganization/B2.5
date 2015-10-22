@@ -351,6 +351,7 @@ cxpb Data file material properties
       monolayer_erosion = 0.0_R8
       target_temp = 0.0_R8
       plate_time = 0.0_R8
+      layer_thermal_contact = 1.0_R8
 
       call subend()
       return
