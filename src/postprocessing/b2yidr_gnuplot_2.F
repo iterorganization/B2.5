@@ -84,7 +84,7 @@
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
       character lblmn*120, lblrc*120, lblgm*120
-      character cnamip*80, cvalip*80, line*80
+      character cnamip*80, cvalip*80, line*500
 *   ..initialisation
       save ismain
       data ismain/1/
@@ -232,7 +232,7 @@
       call b2rfcp (ninp(4), ns)
 *   ..read and echo code internal parameters
     1 continue
-       read (ninp(4),'(a80)',end=2,err=91) line
+       read (ninp(4),'(a)',end=2,err=91) line
        if (.not.is_comment(line)) then
          read (line,*) cnamip, cvalip
          call ipsetc (cnamip, cvalip)

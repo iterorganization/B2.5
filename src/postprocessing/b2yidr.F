@@ -79,7 +79,7 @@
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1)
       character lblmn*120, lblrc*120, lblgm*120, idout*80, id*8
-      character cnamip*80, cvalip*80, line*80
+      character cnamip*80, cvalip*80, line*500
 *   ..initialisation
       save ismain
       data ismain/1/

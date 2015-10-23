@@ -112,8 +112,8 @@
       endif
 
       fhiPSch = 0.0e0_R8                                              !sv 13.10.06
-	coni    = 0.0e0_R8                                              !sv 02.01.07
-	if(maxval(facdrift).ne.0.0e0_R8) then
+      coni    = 0.0e0_R8                                              !sv 02.01.07
+      if(maxval(facdrift).ne.0.0e0_R8) then
 *   ..compute P.Sch heat x-flux                                 !sv 13.10.06 {
 !      iy = -1
 !       do ix = -1, nx

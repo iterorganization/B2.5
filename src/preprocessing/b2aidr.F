@@ -74,7 +74,7 @@
      &  fhi1(:,:,:), fch1(:,:,:), fch_321(:,:,:), fch_521(:,:,:),
      &  fch_p1(:,:,:), kinrgy1(:,:,:)
       real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
-      character lblps*120, lblgm*120, id*8, id0*8, line*80
+      character lblps*120, lblgm*120, id*8, id0*8, line*500
       character idout*80, cnamip*80, cvalip*80                        !srv 22.12.09
       real (kind=R8) ::
      *  amtol, naini(0:ns-1), ttini
@@ -286,7 +286,7 @@
 *   ..read and echo code internal parameters                      !srv 22.12.09 {
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
-       read (ninp(1),'(a80)',end=2,err=94) line
+       read (ninp(1),'(a)',end=2,err=94) line
        if (.not.is_comment(line)) then
          read (line,*) cnamip, cvalip
          write (nout(0),'(4x,a,2x,a)') cnamip, cvalip

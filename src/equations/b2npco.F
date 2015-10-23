@@ -147,14 +147,13 @@
 csw 11dec2012, check for solv flags
       if(all(solvcreg(0:nnreg(0)))) then
 *   ..compute correction
-       write (chns,'(i3.3)') isb
        call b2usco (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1, 
      &  vol, pbs, nb, pb, snb(-1,-1,1),flob,
      &  conb, pccb(-1,-1,1), rescb, corpb, aa5, 'b2usco_')              !srv 18.05.02 26.09.12
 *   ..apply correction
        call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0, 
      &  vol, corpb, pccb(-1,-1,0), pb, nb, ub)
-       if(guard_flows.eq.2) then                                         !srv 06.07.08 {
+       if(guard_flows.eq.2) then                                        !srv 06.07.08 {
 *   ..replace the incorrect corner values by the interpolated values
         iy=-1                                                           !srv 27.06.08 {
         do ix = -1, nx

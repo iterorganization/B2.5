@@ -29,7 +29,7 @@
 *   ..local variables
       integer ix, iy, is, idum(0:9), k, nscx, iscx(0:nscxmax-1), ismain
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
-      character cnamip*80, cvalip*80, line*80
+      character cnamip*80, cvalip*80, line*500
       real (kind=R8) :: t0, t1
       real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
@@ -81,7 +81,7 @@
       call b2xvcp (nx, ns)
 *   ..read and echo code internal parameters
     1 continue
-       read (ninp(0),'(a80)',end=2,err=91) line
+       read (ninp(0),'(a)',end=2,err=91) line
        if (.not.is_comment(line)) then
          read (line,*) cnamip, cvalip
          call ipsetc (cnamip, cvalip)

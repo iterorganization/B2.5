@@ -46,8 +46,8 @@
 *   ..local variables
       integer ncall, n2, ix, iy, ireg, ileft, ibot, itop, k
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !sv 06.07.06
-      integer, save :: iout = 0                                   !srv 17.06.02
-      character chns*3, chk*1                                   !srv 17.06.02
+      integer, save :: iout = 0                                       !srv 17.06.02
+      character chns*3                                                !srv 17.06.02
       real (kind=R8) ::
      *  cfc0, t0, t1, flo, dif, csb, csb1
       save ncall, cfc0
@@ -226,14 +226,11 @@ cxpb
 *   ..contribution from linearization of centifugal force
       aa5(:,:,0) = aa5(:,:,0) - min(0.0e0_R8,ctcfb)                   !srv 06.04.07
 *   ..solve the correction equation
-      write(*,*) 'Calling b2ux5p from b2usmo'
+      write(*,'(a,a)') 'Calling b2ux5p from ', name
       call b2ux5p (nx, ny, aa5, itcnt, resmb, corub, name)            !srv 18.03.10
 
       if (iout.ne.0) then                                             !srv 17.06.02 {
        write (chns,'(i3.3)') isb    
-       do k=0,3
-        write (chk,'(i1)') k  
-       enddo
        call my_out(70,nx,ny,aa5(-1,-1,-2),name//'_aa5m2'//chns)
        call my_out(70,nx,ny,aa5(-1,-1,-1),name//'_aa5m1'//chns)
        call my_out(70,nx,ny,aa5(-1,-1, 0),name//'_aa5m0'//chns)

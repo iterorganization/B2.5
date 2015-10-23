@@ -65,7 +65,7 @@ c 2002-09-11: logic revised
 #endif
 
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:8), nout(0:4), nx1, ny1
+      integer ninp(0:8), nout(0:5), nx1, ny1
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -104,13 +104,14 @@ c 2002-09-11: logic revised
 *     ninp(7): formatted; provides the (old) geometry.
 *     ninp(8): un*formatted; provides default physics parameters.
 *
-*     nout - (0:4) integer array, input.
+*     nout - (0:5) integer array, input.
 *     nout specifies the output unit numbers, as follows.
 *     nout(0): formatted; provides printed output.
 *     nout(1): graphical; provides the transferred plasma state.
 *     nout(2): formatted; provides modified run switches.
 *     nout(3): formatted; provides modified transport parameters.
 *     nout(4): formatted; provides modified initial state.
+*     nout(5): formatted; provides the list of new modified files.
 *
 *     nx, ny - integer, input.
 *     nx and ny specify the number of interior cells along the first
@@ -386,7 +387,7 @@ c 2002-09-11: logic revised
       character*36 hlp_frm, hlp_frp, hlp_frb
       character*42 fmt0
       parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
-      character*134 line
+      character*500 line
 #ifdef B25_EIRENE
       character*80 ZEILE, ZEILEN(100)
       character*80, allocatable :: REAC_LINE(:)
@@ -606,7 +607,7 @@ c 2002-09-11: logic revised
      &             1.le.ninp(6).and.1.le.ninp(7).and.1.le.ninp(8),
      &             'faulty argument ninp')
       call xertst (1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2).and.
-     &             1.le.nout(3).and.1.le.nout(4),
+     &             1.le.nout(3).and.1.le.nout(4).and.1.le.nout(5),
      &             'faulty argument nout')
 *   ..test dimensions
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -636,7 +637,7 @@ c 2002-09-11: logic revised
       write (nout(0),'(/2x,a)')
      . 'non-default internal parameters from b2yt.dat:'
     3 continue
-       read (ninp(0),'(a80)',end=4,err=91) line
+       read (ninp(0),'(a)',end=4,err=91) line
        if (.not.is_comment(line)) then
          read (line,*) cnamip, cvalip
          write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
@@ -960,7 +961,7 @@ c 2002-09-11: logic revised
       write (nout(0),'(/2x,a)')
      . 'non-default internal parameters from b2mn.dat:'
     1 continue
-       read (ninp(2),'(a80)',end=2,err=91) line
+       read (ninp(2),'(a)',end=2,err=91) line
        if (.not.is_comment(line)) then
          read (line,*) cnamip, cvalip
          write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
@@ -1635,6 +1636,7 @@ c 2002-09-11: logic revised
           end if  
         end do
         write(*,*) 'Writing ',trim(new_filename)
+        write(nout(5),'(a)') trim(new_filename)
         open(35,file=new_filename)
         write(35,'(a)') '&BOUNDARY'
         write(35,'(1x,a,i2,a)') 'NBC=', nbc1,','
@@ -1772,6 +1774,7 @@ c 2002-09-11: logic revised
         write(*,*) 'Writing ',trim(new_filename)
         write(hlp_frm,'(a,i3,a)')
      .   '(1x,a,i2,a,a,1p,',ns1,'(g10.3,'','',1x))'
+        write(nout(5),'(a)') trim(new_filename)
         open(99,file=trim(new_filename))
         write(99,'(a10)') '&TRANSPORT'
         if(flag_dna.ne.0) then
@@ -1911,6 +1914,7 @@ c 2002-09-11: logic revised
         read(99,transport)
         close(99)
         write(*,*) 'Writing b2.transport.inputfile.2'
+        write(nout(5),'(a)') 'b2.transport.inputfile.2'
         open(99,file='../b2.transport.inputfile.2')
         write(99,'(a10)') '&TRANSPORT'
         do j = 1, nkind_coeff
@@ -2136,6 +2140,7 @@ cxpb We must ensure we have not already listed this additional species
         if (maxval(eta_hce_mult1).ne.1.0_R8 .or.
      .      minval(eta_hce_mult1).ne.1.0_R8) then
           write(*,*) 'Writing b2.transport_models_save.parameters.2'
+          write(nout(5),'(a)') 'b2.transport_models_save.parameters.2'
           open(99,file='../b2.transport_models_save.parameters.2')
           write(99,'(a9)') '&TRANSPORT_MODELS'
           write(hlp_frm,'(a,i4,a)')
@@ -2177,6 +2182,7 @@ cxpb We must ensure we have not already listed this additional species
         read(92,profile)
         close(92)
         write(*,*) 'Writing ',trim(new_filename)
+        write(nout(5),'(a)') trim(new_filename)
         open(99,file=new_filename)
         write(99,'(a9)') '&PROFILE'
         do ikind = 1, nkind_data
@@ -2692,6 +2698,7 @@ cxpb This will need to be checked !!!
         call read_b2mod_numerics_namelist(nx,ny)
         write(*,*) 'Writing ',trim(new_filename)
         open(99,file=new_filename)
+        write(nout(5),'(a)') trim(new_filename)
         write(99,'(a9)') '&NUMERICS'
         write(hlp_frm,'(a,i3,a)')
      .   '(1x,a,i2,a,1p,',ns1,'(1x,g10.3,'',''))'
@@ -2822,6 +2829,7 @@ cxpb This will need to be checked !!!
      4   .gt.0.0_R8,
      4   'faulty value set in b2.atomic_physics_rescale.parameters')
         write(*,*) 'Writing b2.atomic_physics_rescale.parameters.2'
+        write(nout(5),'(a)') 'b2.atomic_physics_rescale.parameters.2'
         write(hlp_frm,'(a,i3,a)') '(1x,a,1p,',ns1,'(1x,g10.3,'',''))'
         open(99,file='../b2.atomic_physics_rescale.parameters.2')
         write(99,'(a23)') '&ATOMIC_PHYSICS_RESCALE'
@@ -2922,6 +2930,7 @@ cxpb start by identifying the correspondence with the new run species
 cxpb  Start reading input.dat file
         read(IUNIN,'(A72)',end=8687) ZEILE   ! TXTRUN
         open(unit=IUNOT,file='input.dat.2',status='unknown')
+        write(nout(5),'(a)') 'input.dat.2'
         write(*,*) 'Writing input.dat.2'
         write(IUNOT,'(A72)') ZEILE
 *** 1. DATA FOR OPERATING MODE
@@ -7398,6 +7407,7 @@ cxpb as they no longer necessarily point to the same species
           enddo
         enddo
         write(*,*) 'Writing ',trim(new_filename)
+        write(nout(5),'(a)') trim(new_filename)
         open(34,file=new_filename)
         write(34,'(a)') '&NEUTRALS'
         write(34,'(a,i2,a)') 'NSTRAI=', nstrai1,','
@@ -7812,6 +7822,7 @@ cxpb as they no longer necessarily point to the same species
           if(maxval(sputter_yield_yt).gt.0.0_R8.or.
      .       maxval(sputter_yield2_yt).gt.0.0_R8) then
             open(99,file='../b2.sputter_save.parameters.2')
+            write(nout(5),'(a)') 'b2.sputter_save.parameters.2'
             write(6,*) 'Writing ../b2.sputter_save.parameters.2'
             write(99,'(a13)') '&SPUTTER_SAVE'
             write(99,'(a8,i4,a1)') 'NX_SP = ', nx1, ','
@@ -7871,6 +7882,7 @@ cxpb as they no longer necessarily point to the same species
      .          saved_na_feedback_actuator(is-1)
             end do
             write(*,*) 'Writing b2.feedback_save.parameters.2'
+            write(nout(5),'(a)') trim(new_filename)
             open(99,file=new_filename)
             write(99,'(a9)') '&FEEDBACK'
             if (saved_cbshe_core.ne.0.0_R8)
@@ -7921,6 +7933,7 @@ cxpb as they no longer necessarily point to the same species
         call read_b2mod_feedback_control(99)
         write(*,*) 'Writing b2.feedback_control.parameters.2'
         open(99,file=new_filename)
+        write(nout(5),'(a)') trim(new_filename)
         write(99,'(a17)') '&FEEDBACK_CONTROL'
         if (vacuum_communication.ne.0) write(99,'(a,i2,a)')
      .   'VACUUM_COMMUNICATION=',vacuum_communication,','
@@ -8094,6 +8107,7 @@ cxpb as they no longer necessarily point to the same species
       if (.not.same_bundling.or.non_commensurate.eq.1) then
         write(*,*) 'Writing b2ah.dat.2'
         call cfopen (nout(3),'b2ah.dat.2','new','formatted')
+        write(nout(5),'(a)') 'b2ah.dat.2'
         call b2ahx0 (ninp(5), idum(0))
         call xertst (idum(0).eq.ns,
      .   'incorrect species number in b2ah.dat')
@@ -8179,6 +8193,7 @@ cxpb as they no longer necessarily point to the same species
       if (.not.same_bundling) then
         call cfopen (nout(4),'b2ai.dat.2','new','formatted')
         write(*,*) 'Writing b2ai.dat.2'
+        write(nout(5),'(a)') 'b2ai.dat.2'
         call b2aix0 (ninp(7:6:-1), idum(0), idum(1), idum(2))
         call xertst (idum(2).eq.ns,
      .   'incorrect species number in b2ai.dat')
@@ -8226,6 +8241,7 @@ cxpb as they no longer necessarily point to the same species
           call species(is,species_name(is),.false.)
         enddo
         write(hlp_frm,'(a1,i3,a7)') '(',ns1,'(a,1x))'
+        write(nout(5),'(a)') 'SOLPS_FLUIDS.2'
         open(unit=99,file='../SOLPS_FLUIDS.2')
         write(99,hlp_frm) (trim(species_name(is)),is=0,ns1-1)
         close(99)

@@ -226,7 +226,7 @@
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
-       read (ninp(0),'(a80)',end=2,err=91) line
+       read (ninp(0),'(a)',end=2,err=91) line
        if (.not.is_comment(line)) then
          read (line,*) cnamip, cvalip
          write (nout(0),'(4x,a,2x,a)') cnamip, cvalip

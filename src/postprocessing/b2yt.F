@@ -78,14 +78,14 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:8), nout(0:4), nx1, ny1, idum(0:9)
+      integer ninp(0:8), nout(0:5), nx1, ny1, idum(0:9)
       integer io
 *   ..procedures
       external prgini, prgfin, xerset, xertst, cfopen, cfruin
       external b2ytdr, b2ytx0, ipsetc, ipgeti
 *   ..initialise input/output units
       data ninp/50,51,52,53,54,55,56,57,58/
-      data nout/60,61,62,63,64/
+      data nout/60,61,62,63,64,65/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -98,7 +98,7 @@
 *     ninp - (0:8) integer array.
 *     ninp specifies the input unit numbers.
 *
-*     nout - (0:4) integer array.
+*     nout - (0:5) integer array.
 *     nout specifies the output unit numbers.
 *
 *     nx, ny - integers.
@@ -134,6 +134,7 @@
       call cfopen (nout(0),'b2yt.prt','new','formatted')
       call cfopen (nout(1),'b2fstatt','new','un*formatted')
       call cfopen (nout(2),'b2mn.dat.2','new','formatted')
+      call cfopen (nout(5),'b2yt.files','new','formatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers						 !xpb
@@ -162,6 +163,9 @@
       call cfruin (ninp(8), 1, idum, 'ns')
       call xertst (idum(0).eq.ns, 
      & 'faulty input ns from parameters file')
+*   ..populate the first elements of b2yt.files
+      write(nout(5),'(a)') 'b2fstatt'
+      write(nout(5),'(a)') 'b2mn.dat.2'
 *   ..call principal driver routine
       call alloc_b2mod_plasma(nx,ny,ns)
       call alloc_b2mod_geo(nx,ny)

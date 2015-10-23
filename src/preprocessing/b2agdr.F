@@ -90,7 +90,8 @@
 *   ..local variables
       integer idum(0:9), ix, iy
       integer nxiso1, nxiso2, nyiso1, nyiso2
-      character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80, line*80
+      character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
+      character line*500
       real (kind=R8) ::
      *   parg(0:99)
       integer istyle
@@ -297,7 +298,7 @@
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
-       read (ninp(0),'(a80)',end=2,err=93) line
+       read (ninp(0),'(a)',end=2,err=93) line
        if (.not.is_comment(line)) then
          read (line,*) cnamip, cvalip
          write (nout(0),'(4x,a,2x,a)') cnamip, cvalip

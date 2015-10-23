@@ -117,7 +117,7 @@
       integer idum(0:9)
 	integer, save :: no_smoothing = 0                        !srv 02.07.12
       character lblrc*120, lblcp*120, lblgm*120, cnamip*80, cvalip*80
-      character line*80
+      character line*500
       real (kind=R8) ::
      *  lnzero, tailep, tlo, thi, nlo, nhi, cxcoef
       real (kind=R8), allocatable ::
@@ -339,7 +339,7 @@
 *   ..read and echo code internal parameters
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
-       read (ninp(0),'(a80)',end=2,err=93) line
+       read (ninp(0),'(a)',end=2,err=93) line
        if (.not.is_comment(line)) then
          read (line,*) cnamip, cvalip
          write (nout(0),'(4x,a,2x,a)') cnamip, cvalip

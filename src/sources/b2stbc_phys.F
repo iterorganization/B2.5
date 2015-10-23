@@ -2077,7 +2077,7 @@ c dpc
 cxpb Careful here because of BC number clash
 * From 5.0: starting at version 01.001.030
 * -- BCCON=21 -- constant density scaled by density on the ring bc_type21_ref away
-* has be moved up to next available number (BCCON=24)
+* has been moved up to next available number (BCCON=24)
 
 * From 5.2, after version number 01.001.078:
 * -- BCCON=21 -- PRESCRIBE THE VALUE OF THE DENSITY  !lk and IYS 01.03.2013{
@@ -7202,7 +7202,7 @@ c see label 2980
 cxpb Careful here because of BC number clash
 * From 5.0: starting at version 01.001.030
 * -- BCCON=21 -- constant ion temperature scaled by ion temperature on the ring bc_type21_ref away
-* has be moved up to next available number (BCENI=25)
+* has been moved up to next available number (BCENI=25)
 
 * From 5.2, after version number 01.001.078:
 * -- BCENI=21 -- from b2stbc_spb                                     !srv 01.02.09 {
