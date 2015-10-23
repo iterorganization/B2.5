@@ -308,12 +308,12 @@ cxpb Have to do this here already in case the namelist is not used
       iffboundx=0
       iffboundy=0
       if(l_fbound .ne. 0) then
-       do ix=-1,nx
-        do iy=-1,ny
-          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+       do ix=-1,nxd
+        do iy=-1,nyd
+          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nxd+1) then
             iffboundy(ix,iy)=1
           endif
-          if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
+          if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.nyd+1) then
             iffboundx(ix,iy)=1
           endif
         enddo
@@ -322,14 +322,14 @@ cxpb Have to do this here already in case the namelist is not used
 
       ifenebound=0
       if(l_enebound .ne. 0) then
-       do ix=-1,nx
-        do iy=-1,ny
-          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+       do ix=-1,nxd
+        do iy=-1,nyd
+          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nxd+1) then
             ifenebound(ix,iy)=1
           endif
         enddo
        enddo
-       do iy=-1,ny,ny+1
+       do iy=-1,nyd,nyd+1
          ifenebound(:,iy)=1
        enddo
       endif
