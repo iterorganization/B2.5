@@ -121,6 +121,23 @@
       endif
       return
 *     ------------------------------------------------------------------
+!srv 15.09.15 {
+      entry ipprhp ()
+      do ip = 0, iptbmx-1
+        if (ipnam(ip).eq.'b2trcl_conductive limit') then
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Use b2trcl_conductive_limit'
+          stop
+        endif
+        if (ipnam(ip).eq.'b2mndr_na0eps') then
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &      trim(ipnam(ip)),'Use b2mndr_na_min and b2mndr_na_new'
+          stop
+        endif
+      enddo
+      return
+!srv 15.09.15 }
+*     ------------------------------------------------------------------
       entry ipfini ()
       do ip = 0, iptbmx-1
        if (ipstat(ip).eq.0) then

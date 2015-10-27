@@ -54,7 +54,7 @@
       integer ncall, n2
       integer, save :: style = 1, iout = 0
       real (kind=R8) ::
-     *   aa7(-1:nx,-1:ny,-3:3)                                 !srv 11.01.00
+     *   aa7(-1:nx,-1:ny,-3:3), wrk0(-1:nx,-1:ny)              !srv 11.01.00
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -125,8 +125,9 @@
 !	 call my_out(70,nx,ny,sch(-1,-1,1),'b2npp7_sch1')
 !	 call my_out(70,nx,ny,sch(-1,-1,2),'b2npp7_sch2')
 !	 call my_out(70,nx,ny,sch(-1,-1,3),'b2npp7_sch3')
-	 call my_out(70,nx,ny,sch(:,:,0)+sch(:,:,1)*po+sch(:,:,2)*ne+
-     &             sch(:,:,3)*ne*po,'b2npp7_sch')
+         wrk0=sch(:,:,0)+sch(:,:,1)*po+sch(:,:,2)*ne+
+     &        sch(:,:,3)*ne*po
+	 call my_out(70,nx,ny,wrk0,'b2npp7_sch')
 	endif                                                       !srv 11.09.09 }
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xertst)

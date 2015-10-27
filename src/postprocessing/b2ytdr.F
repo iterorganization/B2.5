@@ -197,7 +197,7 @@ c 2002-09-11: logic revised
      5 na_feedback_alpha1(:), na_feedback_beta1(:),
      6 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
      7 na_feedback_overshoot1(:)
-      real (kind=R8) :: ds_offset, l_total, l_ref
+      real (kind=R8) :: ds_offset, l_total, l_ref, na0eps
       integer ns1, nsm, nym, natmm, nwallm
       integer i, j, k, ix, iy, is, ib, ireg, len, nsns
       integer ib1, ib2, ifl, js, ks, kmod, kint, itrack
@@ -371,7 +371,7 @@ c 2002-09-11: logic revised
       real (kind=R8), allocatable :: XTRIAN(:), YTRIAN(:)
 #endif
       real (kind=R8) ::
-     *  neutral_rescale, BoRiS, divheat,
+     *  neutral_rescale, BoRiS, divheat, rswitch,
      .  scaling_width, scaling_strength, ixfb, iyfb, ixfb1, iyfb1,
      .  elm_time_begin, elm_time_end, elm_time_period,
      .  sources_time_mod, sources_time_switch,
@@ -462,7 +462,7 @@ c 2002-09-11: logic revised
       data mw_jxa/-1/, mw_jsep/-1/
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
-      data BoRiS/0.0_R8/
+      data BoRiS/0.0_R8/, na0eps/0.0_R8/
 *  ..namelists
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
      . sources_time_mod, sources_time_switch, sources_filename
@@ -981,6 +981,7 @@ c 2002-09-11: logic revised
       call ipgeti ('b2mndr_atomic_physics_rescale',
      .              atomic_physics_rescale_flag)
       call ipgeti ('b2mndr_eirene', use_eirene)
+      call ipgetr ('b2mndr_na0eps', na0eps)
       call ipgeti ('b2mndr_ismain', ismain)
       call ipgeti ('b2mwti_ismain0', ismain0)
       call ipgeti ('b2news_nsmin', nsmin)
@@ -1289,6 +1290,9 @@ c 2002-09-11: logic revised
           iswitch = ns1max
         case('b2mndr_isfb')
           iswitch = isfb
+        case('b2trcl_conductive limit')
+          cnamip = 'b2trcl_conductive_limit'
+          todo = .false.
         case default ISWITCHES
           todo = .false.
       end select ISWITCHES
@@ -1300,13 +1304,20 @@ c 2002-09-11: logic revised
       todo = .true.
       RSWITCHES: select case (cnamip)
         case('b2mndr_ixfb')
-          iswitch = ixfb1
+          rswitch = ixfb1
         case('b2mndr_iyfb')
-          iswitch = iyfb1
+          rswitch = iyfb1
+        case('b2mndr_na0eps')
+          if (na0eps.lt.1.0e8_R8) then
+            cnamip = 'b2mndr_na_min'
+          else
+            cnamip = 'b2mndr_na_new'
+          end if
+          todo = .false.
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
-      if (todo) write(cvalip,'(1p,e10.3)')
+      if (todo) write(cvalip,'(1p,e10.3)') rswitch
       if (.not.is_comment(line)) then
         write(nout(2),'(a1,a,a,a,a1)')
      .   '''',trim(cnamip),''''//tab//'''',trim(cvalip),''''

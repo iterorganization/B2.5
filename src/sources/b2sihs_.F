@@ -65,7 +65,8 @@
      *  shidu(-1:nx,-1:ny,0:3), shidd(-1:nx,-1:ny,0:3),                !srv 11.09.09 {
      *  shiva(-1:nx,-1:ny,0:3), shivc(-1:nx,-1:ny,0:3),
      *  shifr(-1:nx,-1:ny,0:3), shedu(-1:nx,-1:ny,0:3),
-     *  shedd(-1:nx,-1:ny,0:3), shefr(-1:nx,-1:ny,0:3)
+     *  shedd(-1:nx,-1:ny,0:3), shefr(-1:nx,-1:ny,0:3),
+     *  wrks(-1:nx,-1:ny)
       character chns*3, chk*1                                            !srv 11.09.09 }
       save ncall, style, rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2,
      &  phm3, phm4, phm5, phm6, phm7, phm8                            !srv 02.06.99 27.12.01 28.08.02
@@ -612,34 +613,37 @@
 	 enddo
 	endif
       if(iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) then
+         wrks=she0(:,:,0)+she0(:,:,1)*te+
+     &        she0(:,:,2)*ne + she0(:,:,3)*te*ne
+	 call my_out(70,nx,ny,wrks,'b2sihs__she')
+         wrks=shedu(:,:,0)+shedu(:,:,1)*te+
+     &        shedu(:,:,2)*ne + shedu(:,:,3)*te*ne
+	 call my_out(70,nx,ny,wrks,'b2sihs__shedu')
+         wrks=shedd(:,:,0)+shedd(:,:,1)*te+
+     &        shedd(:,:,2)*ne + shedd(:,:,3)*te*ne
+	 call my_out(70,nx,ny,wrks,'b2sihs__shedd')
+         wrks=shefr(:,:,0)+shefr(:,:,1)*te+
+     &   shefr(:,:,2)*ne + shefr(:,:,3)*te*ne
+	 call my_out(70,nx,ny,wrks,'b2sihs__shefr')
 
-	 call my_out(70,nx,ny,she0(:,:,0)+she0(:,:,1)*te+
-     &   she0(:,:,2)*ne + she0(:,:,3)*te*ne,'b2sihs__she')
-	 call my_out(70,nx,ny,shedu(:,:,0)+shedu(:,:,1)*te+
-     &   shedu(:,:,2)*ne + shedu(:,:,3)*te*ne,'b2sihs__shedu')
-	 call my_out(70,nx,ny,shedd(:,:,0)+shedd(:,:,1)*te+
-     &   shedd(:,:,2)*ne + shedd(:,:,3)*te*ne,'b2sihs__shedd')
-	 call my_out(70,nx,ny,shefr(:,:,0)+shefr(:,:,1)*te+
-     &   shefr(:,:,2)*ne + shefr(:,:,3)*te*ne,'b2sihs__shefr')
-
-	 call my_out(70,nx,ny,shi0(:,:,0)+shi0(:,:,1)*ti+
-     &   shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0),
-     &   'b2sihs__shi')
-	 call my_out(70,nx,ny,shidu(:,:,0)+shidu(:,:,1)*ti+
-     &   shidu(:,:,2)*ni(:,:,0)+shidu(:,:,3)*ti*ni(:,:,0),
-     &   'b2sihs__shidu')
-	 call my_out(70,nx,ny,shidd(:,:,0)+shidd(:,:,1)*ti+
-     &   shidd(:,:,2)*ni(:,:,0)+shidd(:,:,3)*ti*ni(:,:,0),
-     &   'b2sihs__shidd')
-	 call my_out(70,nx,ny,shifr(:,:,0)+shifr(:,:,1)*ti+
-     &   shifr(:,:,2)*ni(:,:,0)+shifr(:,:,3)*ti*ni(:,:,0),
-     &   'b2sihs__shifr')
-	 call my_out(70,nx,ny,shiva(:,:,0)+shiva(:,:,1)*ti+
-     &   shiva(:,:,2)*ni(:,:,0)+shiva(:,:,3)*ti*ni(:,:,0),
-     &   'b2sihs__shiva')
-	 call my_out(70,nx,ny,shivc(:,:,0)+shivc(:,:,1)*ti+
-     &   shivc(:,:,2)*ni(:,:,0)+shivc(:,:,3)*ti*ni(:,:,0),
-     &   'b2sihs__shivc')
+         wrks=shi0(:,:,0)+shi0(:,:,1)*ti+
+     &        shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
+	 call my_out(70,nx,ny,wrks,'b2sihs__shi')
+         wrks=shidu(:,:,0)+shidu(:,:,1)*ti+
+     &        shidu(:,:,2)*ni(:,:,0)+shidu(:,:,3)*ti*ni(:,:,0)
+	 call my_out(70,nx,ny,wrks,'b2sihs__shidu')
+         wrks=shidd(:,:,0)+shidd(:,:,1)*ti+
+     &        shidd(:,:,2)*ni(:,:,0)+shidd(:,:,3)*ti*ni(:,:,0)
+	 call my_out(70,nx,ny,wrks,'b2sihs__shidd')
+         wrks=shifr(:,:,0)+shifr(:,:,1)*ti+
+     &        shifr(:,:,2)*ni(:,:,0)+shifr(:,:,3)*ti*ni(:,:,0)
+	 call my_out(70,nx,ny,wrks,'b2sihs__shifr')
+         wrks=shiva(:,:,0)+shiva(:,:,1)*ti+
+     &        shiva(:,:,2)*ni(:,:,0)+shiva(:,:,3)*ti*ni(:,:,0)
+	 call my_out(70,nx,ny,wrks,'b2sihs__shiva')
+         wrks=shivc(:,:,0)+shivc(:,:,1)*ti+
+     &        shivc(:,:,2)*ni(:,:,0)+shivc(:,:,3)*ti*ni(:,:,0)
+	 call my_out(70,nx,ny,wrks,'b2sihs__shivc')
 	endif
       ncall = ncall+1
       call subend ()

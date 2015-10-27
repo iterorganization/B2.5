@@ -287,8 +287,9 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        call my_out(70,nx,ny,she0(-1,-1,1),'b2npht_she1')
        call my_out(70,nx,ny,she0(-1,-1,2),'b2npht_she2')
        call my_out(70,nx,ny,she0(-1,-1,3),'b2npht_she3')
-       call my_out(70,nx,ny,she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
-     &                      she0(:,:,3)*te*ne,'b2npht_she')
+       wrk0=she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
+     &                  she0(:,:,3)*te*ne
+       call my_out(70,nx,ny,wrk0,'b2npht_she')
        call my_out(70,nx,ny,reshi,'b2npht_reshi')
        call my_out(70,nx,ny,fhi(-1,-1,0),'b2npht_fhix')               !srv 10.03.10
        call my_out(70,nx,ny,fhi(-1,-1,1),'b2npht_fhiy')               !srv 10.03.10
@@ -296,8 +297,9 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        call my_out(70,nx,ny,shi0(-1,-1,1),'b2npht_shi1')
        call my_out(70,nx,ny,shi0(-1,-1,2),'b2npht_shi2')
        call my_out(70,nx,ny,shi0(-1,-1,3),'b2npht_shi3')
-       call my_out(70,nx,ny,shi0(:,:,0)+shi0(:,:,1)*ti+
-     &     shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0),'b2npht_shi')
+       wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+shi0(:,:,2)*ni(:,:,0)+
+     &                  shi0(:,:,3)*ti*ni(:,:,0)
+       call my_out(70,nx,ny,wrk0,'b2npht_shi')
       endif                                                            !srv 17.07.05 }
       if (solving) then
 *   ..compute correction

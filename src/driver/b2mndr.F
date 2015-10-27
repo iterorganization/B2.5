@@ -139,7 +139,7 @@
       integer, save :: pot_eq = 1
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
-     *  na0eps, dtim, stim, etim, 
+     *  na_min, na_new, dtim, stim, etim,
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,
      &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
      &  density_rescale, BoRiS, ne_wanted, 
@@ -212,10 +212,11 @@
      &  abs(am(is)-am(js)).lt.amtol
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
-     1  na0eps, b2mndr_cpu, edition, cputarget, cpuincrement, ismain,
-     2  ismain0, savefilestatus, b2time, coronal, use_eirene, natmi, 
-     3  neutral_rescale, neutral_sources_rescale, tally, use_astra,
-     4  BoRiS, density_rescale, na_eps, te_eps, ti_eps, po_eps, ua_eps, 
+     1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
+     2  ismain, ismain0, savefilestatus, b2time, coronal, use_eirene,
+     3  natmi, neutral_rescale, neutral_sources_rescale, tally,
+     4  use_astra, BoRiS, density_rescale,
+     .  na_eps, te_eps, ti_eps, po_eps, ua_eps,
      5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max, 
      6  dt_change_dec, no_solve, dt_min, dt_max, no_current,
      7  save_f30, save_f31, te_hot, ne_hot_frac, external_species,
@@ -233,7 +234,7 @@
      1     stim/0.0_R8/, etim/0.0_R8/, ismain/1/, ismain0/0/, 
      2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/, use_astra/0/
       data idout0/'pgnl;pgmm;pzmm'/, idout1/'pzmm'/
-      data na0eps/1.0e4_R8/, b2mndr_cpu/0.0_R8/,
+      data na_new/1.0e14_R8/, na_min/1.0e4_R8/, b2mndr_cpu/0.0_R8/,
      &     b2mndr_elapsed/0.0_R8/
       data atomic_physics_rescale_flag/0/
       data savefile/'plasmastate.xxxx'/,
@@ -868,9 +869,14 @@
      &   'faulty internal parameter mvinc, mvnum')
        call ipgetc ('b2mndr_idout0', idout0)
        call ipgetc ('b2mndr_idout1', idout1)
-       call ipgetr ('b2mndr_na0eps', na0eps)
-       call xertst (na0eps.gt.0.0_R8,
-     &  'faulty internal parameter na0eps')
+       call ipgetr ('b2mndr_na_min', na_min)
+       call ipgetr ('b2mndr_na_new', na_new)
+       call xertst (na_min.gt.0.0_R8,
+     &  'faulty internal parameter na_min')
+       call xertst (na_new.gt.0.0_R8,
+     &  'faulty internal parameter na_new')
+       call xertst (na_new.gt.na_min,
+     &  'na_new must be larger than na_min!')
        call ipgetr ('b2mndr_cpu', b2mndr_cpu)
        call xertst (b2mndr_cpu.ge.0.0_R8,
      1  'faulty internal parameter cpu')
@@ -1280,7 +1286,7 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
      &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 *   ..extend initial state to species (ns0:ns-1)
       if (ns0.lt.ns) then
-       call sfill (n2*(ns-ns0), na0eps, na(-1,-1,ns0), 1)
+       call sfill (n2*(ns-ns0), na_new, na(-1,-1,ns0), 1)
        call sfill (n2*(ns-ns0), 0.0_R8, ua(-1,-1,ns0), 1)
        call sfill (n2*(ns-ns0), 0.0_R8, kinrgy(-1,-1,ns0), 1)            !xpb
        call sfill (n2*2*(ns-ns0), 0.0_R8, uadia(-1,-1,0,ns0), 1)         !xpb

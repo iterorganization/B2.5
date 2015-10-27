@@ -236,6 +236,8 @@
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
       write (nout(0),'()')
+*   ..check for prohibited switches
+      call ipprhp ()
 *   ..test /b2cmpa/, /b2cmpb/, /b2cmpt/
       call b2xvcp (nx, ns)
 *   ..write physics parameters

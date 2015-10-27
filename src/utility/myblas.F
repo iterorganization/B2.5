@@ -187,11 +187,11 @@
       return
 *     ------------------------------------------------------------------
       end subroutine b2saxpy
-      function s2min (n1, n2, sx, inc1x, inc2x)
+      function b2s2min (n1, n2, sx, inc1x, inc2x)
       use b2mod_types
       implicit none
       real (kind=R8) ::
-     *   s2min
+     *   b2s2min
       integer n1, n2, inc1x, inc2x
       real (kind=R8) ::
      *   sx(*)
@@ -208,10 +208,10 @@
       ibase(n1, inc1x) = max(1, 1+(1-n1)*inc1x)
 *     ------------------------------------------------------------------
       if (n1 .lt. 1 .or. n2 .lt. 1) then
-         stop 's2min'
+         stop 'b2s2min'
 *        - - - - - - -
       else if (n1*inc1x .eq. inc2x) then
-         s2min = smin (n1*n2, sx, inc1x)
+         b2s2min = smin (n1*n2, sx, inc1x)
          return
 *        - - - - - - -
       else
@@ -222,9 +222,9 @@
             t = min (t, smin (n1, sx(i2), inc1x))
             i2 = i2 + inc2x
     1    continue
-         s2min = t
+         b2s2min = t
          return
 *        - - - - - - -
       end if
 *     ---------------------------------------------------BJB-83/04/06---
-      end function s2min
+      end function b2s2min

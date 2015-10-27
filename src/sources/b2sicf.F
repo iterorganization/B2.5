@@ -35,6 +35,7 @@
       character chns*3, chark*1                                     !srv 17.06.02
       real (kind=R8) ::
      *    phm0, phm1, t0
+      real (kind=R8) :: wrks(-1:nx,-1:ny)
       save ncall, style, phm0, phm1
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr
@@ -156,9 +157,9 @@
           call my_out(70,nx,ny,smbcf(-1,-1,k),
      .                         'b2sicf_smbcf'//chark//chns)
         enddo
-        call my_out(70,nx,ny,smbcf(:,:,0)+smbcf(:,:,1)*ub(:,:)+
-     &       smbcf(:,:,2)*nb(:,:)*mb+smbcf(:,:,3)*ub(:,:)*nb(:,:)*mb,
-     &       'b2sicf_smocf'//chns)
+        wrks=smbcf(:,:,0)+smbcf(:,:,1)*ub(:,:)+
+     &       smbcf(:,:,2)*nb(:,:)*mb+smbcf(:,:,3)*ub(:,:)*nb(:,:)*mb
+        call my_out(70,nx,ny,wrks,'b2sicf_smocf'//chns)
         call my_out(70,nx,ny,ctcf,'b2sicf_ctcf'//chns)
       endif                                                              !srv 17.06.02 }
 

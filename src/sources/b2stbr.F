@@ -110,7 +110,7 @@
      *  start_time,end_time,pfrpuff,mainpuff,corepuff,
      *  sum_start,sum_end,neutral_rescale,neutral_sources_rescale,
      *  sum_strti,sum_ndi,sum_nde,core_sources_rescale,
-     *  shi0_ff(-1:nx,-1:ny,0:nscx-1),
+     *  shi0_ff(-1:nx,-1:ny,0:nscx-1), wrk0(-1:nx,-1:ny),
      *  work(-1:nx,-1:ny,0:1), wrk2(-1:nx,-1:ny), wrk3(-1:nx,-1:ny),
      *  f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8), allocatable, save ::
@@ -794,11 +794,11 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
             call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
      *              'b2stbr_smo_eir'//chk//chns)
           enddo
-          call my_out(70,nx,ny,smo0_eir(:,:,0,is)+
-     &        smo0_eir(:,:,1,is)*ua(:,:,is)+
-     &        smo0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &        smo0_eir(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2stbr_smo_eir'//chns)
+          wrk0=smo0_eir(:,:,0,is)+
+     &         smo0_eir(:,:,1,is)*ua(:,:,is)+
+     &         smo0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
+     &         smo0_eir(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+          call my_out(70,nx,ny,wrk0,'b2stbr_smo_eir'//chns)
          endif
         else
 !	  do k=0,3
@@ -822,8 +822,8 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
            call my_out(70,nx,ny,sna0_eir(-1,-1,k,is),
      *               'b2stbr_sna_eir'//chk//chns)
           enddo
-          call my_out(70,nx,ny,sna0_eir(:,:,0,is)+ 
-     &             sna0_eir(:,:,1,is)*na(:,:,is),'b2stbr_sna_eir'//chns)
+          wrk0=sna0_eir(:,:,0,is)+sna0_eir(:,:,1,is)*na(:,:,is)
+          call my_out(70,nx,ny,wrk0,'b2stbr_sna_eir'//chns)
          endif
         else
 !	  do k=0,1
@@ -861,11 +861,12 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
          call my_out(70,nx,ny,she0_eir(-1,-1,k),'b2stbr_she_eir'//chk)
          call my_out(70,nx,ny,shi0_eir(-1,-1,k),'b2stbr_shi_eir'//chk)
         enddo
-        call my_out(70,nx,ny,she0_eir(:,:,0)+she0_eir(:,:,1)*ti+
-     &     she0_eir(:,:,2)*ne+she0_eir(:,:,3)*ti*ne,'b2stbr_she_eir')
-        call my_out(70,nx,ny,shi0_eir(:,:,0)+shi0_eir(:,:,1)*ti+
-     &     shi0_eir(:,:,2)*ni(:,:,0)+shi0_eir(:,:,3)*ti*ni(:,:,0),
-     &     'b2stbr_shi_eir')
+        wrk0=she0_eir(:,:,0)+she0_eir(:,:,1)*ti+
+     &       she0_eir(:,:,2)*ne+she0_eir(:,:,3)*ti*ne
+        call my_out(70,nx,ny,wrk0,'b2stbr_she_eir')
+        wrk0=shi0_eir(:,:,0)+shi0_eir(:,:,1)*ti+
+     &       shi0_eir(:,:,2)*ni(:,:,0)+shi0_eir(:,:,3)*ti*ni(:,:,0)
+        call my_out(70,nx,ny,wrk0,'b2stbr_shi_eir')
        endif
 !	 do k=0,3
 !	  write (chk,'(i1)') k

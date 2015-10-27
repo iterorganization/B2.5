@@ -40,7 +40,8 @@
       real (kind=R8) ::
      *  snast(-1:nx,-1:ny,0:1,0:ns-1), smost(-1:nx,-1:ny,0:3,0:ns-1), 
      &  shest(-1:nx,-1:ny,0:3), shist(-1:nx,-1:ny,0:3),
-     &  schst(-1:nx,-1:ny,0:3), snest(-1:nx,-1:ny,0:1)
+     &  schst(-1:nx,-1:ny,0:3), snest(-1:nx,-1:ny,0:1),
+     &  wrk0(-1:nx,-1:ny)
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *   rf0, rf1, rf2, rf3, t0
@@ -203,11 +204,12 @@
 	 enddo
 	endif
 	if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) then
-	 call my_out(70,nx,ny,shest(:,:,0)+shest(:,:,1)*te+  !srv 07.10.09
-     &   shest(:,:,2)*ne + shest(:,:,3)*te*ne,'b2srst_shest')
-	 call my_out(70,nx,ny,shist(:,:,0)+shist(:,:,1)*ti+
-     &   shist(:,:,2)*ni(:,:,0)+shist(:,:,3)*ti*ni(:,:,0),
-     &   'b2srst_shist')
+         wrk0=shest(:,:,0)+shest(:,:,1)*te+  !srv 07.10.09
+     &        shest(:,:,2)*ne + shest(:,:,3)*te*ne
+	 call my_out(70,nx,ny,wrk0,'b2srst_shest')
+         wrk0=shist(:,:,0)+shist(:,:,1)*ti+
+     &        shist(:,:,2)*ni(:,:,0)+shist(:,:,3)*ti*ni(:,:,0)
+	 call my_out(70,nx,ny,wrk0,'b2srst_shist')
 	endif
 	if (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1) then
 !	 call my_out(70,nx,ny,schst(:,:,0)+schst(:,:,1)*po+  !srv 07.10.09
@@ -231,7 +233,7 @@
 	 do k=0,3
 	  write (chk,'(i1)') k
 	  call my_out(70,nx,ny,shest(-1,-1,k),'b2srst_shest'//chk)
-        call my_out(70,nx,ny,shist(-1,-1,k),'b2srst_shist'//chk)
+          call my_out(70,nx,ny,shist(-1,-1,k),'b2srst_shist'//chk)
 	  call my_out(70,nx,ny,schst(-1,-1,k),'b2srst_schst'//chk)
 	 enddo
 	endif                                                 !srv 11.09.09 }

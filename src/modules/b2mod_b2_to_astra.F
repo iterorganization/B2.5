@@ -515,34 +515,59 @@ csw 09jan2014 add extra allocates
          call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_sy')
          do isa = 1,nnatmi
           write (chns,'(i3.3)') isa
-          call my_out(70,nxd,nyd,dab2(0:nxd+1,0:nyd+1,isa,1),
-     &     'write_b2_to_astra_dab2'//chns)
-          call my_out(70,nxd,nyd,tab2(0:nxd+1,0:nyd+1,isa,1),
-     &     'write_b2_to_astra_tab2'//chns)
-          call my_out(70,nxd,nyd,rfluxa(0:nxd+1,0:nyd+1,isa,1),
-     &    'write_b2_to_astra_rfluxa'//chns)
-          do iy = -1,nyd 
+          do iy = -1,nyd
+           do ix = -1,nxd
+            wrk0(ix,iy) = dab2(ix+1,iy+1,isa,1)
+           enddo
+          enddo
+          call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_dab2'//chns)
+          do iy = -1,nyd
+           do ix = -1,nxd
+            wrk0(ix,iy) = tab2(ix+1,iy+1,isa,1)
+           enddo
+          enddo
+          call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_tab2'//chns)
+          do iy = -1,nyd
+           do ix = -1,nxd
+            wrk0(ix,iy) = rfluxa(ix+1,iy+1,isa,1)
+           enddo
+          enddo
+          call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_rfluxa'//chns)
+          do iy = -1,nyd
            do ix = -1,nxd
             wrk0(ix,iy) = rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
            enddo
           enddo
-         call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_rfluxasy'//chns)
+          call my_out(70,nxd,nyd,wrk0,
+     .     'write_b2_to_astra_rfluxasy'//chns)
 !         call my_out(70,nxd,nyd,refluxa(0:nxd+1,0:nyd+1,is,1),
 !     &   'write_b2_to_astra_refluxa'//chns)
 !         call my_out(70,nxd,nyd,pfluxa(0:nxd+1,0:nyd+1,is,1),
 !     &   'write_b2_to_astra_pfluxa'//chns)
 !         call my_out(70,nxd,nyd,pefluxa(0:nxd+1,0:nyd+1,is,1),
 !     &   'write_b2_to_astra_pefluxa'//chns)
-        enddo
-        do ism = 1,nnmoli
-         write (chns,'(i3.3)') ism
-         call my_out(70,nxd,nyd,dmb2(0:nxd+1,0:nyd+1,ism,1),
-     &   'write_b2_to_astra_dmb2'//chns)
-         call my_out(70,nxd,nyd,tmb2(0:nxd+1,0:nyd+1,ism,1),
-     &  'write_b2_to_astra_tmb2'//chns)
-         call my_out(70,nxd,nyd,rfluxm(0:nxd+1,0:nyd+1,ism,1),
-     &   'write_b2_to_astra_rfluxm'//chns)
-          do iy = -1,nyd 
+         enddo
+         do ism = 1,nnmoli
+          write (chns,'(i3.3)') ism
+          do iy = -1,nyd
+           do ix = -1,nxd
+            wrk0(ix,iy) = dmb2(ix+1,iy+1,ism,1)
+           enddo
+          enddo
+          call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_dmb2'//chns)
+          do iy = -1,nyd
+           do ix = -1,nxd
+            wrk0(ix,iy) = tmb2(ix+1,iy+1,ism,1)
+           enddo
+          enddo
+          call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_tmb2'//chns)
+          do iy = -1,nyd
+           do ix = -1,nxd
+            wrk0(ix,iy) = rfluxm(ix+1,iy+1,ism,1)
+           enddo
+          enddo
+          call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_rfluxm'//chns)
+          do iy = -1,nyd
            do ix = -1,nxd
             wrk0(ix,iy) = rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
            enddo

@@ -96,7 +96,7 @@
      6  pr(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
      7  ni(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
      8  ehxp(-1:nx,-1:ny), smt(-1:nx,-1:ny,0:3),
-     9  flct(-1:nx,-1:ny,0:1), wrk1(-1:nx,-1:ny),
+     9  flct(-1:nx,-1:ny,0:1), wrk1(-1:nx,-1:ny), wrks(-1:nx,-1:ny),
      1  smqdu(-1:nx,-1:ny), wrk0(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      2  ctcfb(-1:nx,-1:ny), ctcft(-1:nx,-1:ny)                         !srv 06.04.07
       logical solvedum(0:NNREGMAX)
@@ -281,38 +281,38 @@
 !	    write (chk,'(i1)') k  
 !	    call my_out(70,nx,ny,smb(-1,-1,k),'b2npmo_smo'//chk//chns)
 !	   enddo
-        call my_out(70,nx,ny,smb(:,:,0)+smb(:,:,1)*ua(:,:,is)+
-     &        smb(:,:,2)*na(:,:,is)*mp*am(is)+
-     &        smb(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2npmo_smo'//chns)
-        call my_out(70,nx,ny,smo(:,:,0,is)+smo(:,:,1,is)*ua(:,:,is)+
-     &        smo(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &        smo(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2npmo_smb'//chns)
-        call my_out(70,nx,ny,smbch(:,:,0)+smbch(:,:,1)*ua(:,:,is)+
-     &        smbch(:,:,2)*na(:,:,is)*mp*am(is)+
-     &        smbch(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2npmo_smoch'//chns)
-        call my_out(70,nx,ny,smbtf(:,:,0)+smbtf(:,:,1)*ua(:,:,is)+
+        wrks=smb(:,:,0)+smb(:,:,1)*ua(:,:,is)+
+     &       smb(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smb(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+        call my_out(70,nx,ny,wrks,'b2npmo_smo'//chns)
+        wrks=smo(:,:,0,is)+smo(:,:,1,is)*ua(:,:,is)+
+     &       smo(:,:,2,is)*na(:,:,is)*mp*am(is)+
+     &       smo(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+        call my_out(70,nx,ny,wrks,'b2npmo_smb'//chns)
+        wrks=smbch(:,:,0)+smbch(:,:,1)*ua(:,:,is)+
+     &       smbch(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbch(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+        call my_out(70,nx,ny,wrks,'b2npmo_smoch'//chns)
+        wrks=smbtf(:,:,0)+smbtf(:,:,1)*ua(:,:,is)+
      &        smbtf(:,:,2)*na(:,:,is)*mp*am(is)+
-     &        smbtf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2npmo_smotf'//chns)
-        call my_out(70,nx,ny,smbgp(:,:,0)+smbgp(:,:,1)*ua(:,:,is)+
-     &        smbgp(:,:,2)*na(:,:,is)*mp*am(is)+
-     &        smbgp(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2npmo_smogp'//chns)
-        call my_out(70,nx,ny,smbvv(:,:,0)+smbvv(:,:,1)*ua(:,:,is)+
-     &        smbvv(:,:,2)*na(:,:,is)*mp*am(is)+
-     &        smbvv(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2npmo_smovv'//chns)
-        call my_out(70,nx,ny,smbvh(:,:,0)+smbvh(:,:,1)*ua(:,:,is)+
-     &        smbvh(:,:,2)*na(:,:,is)*mp*am(is)+
-     &        smbvh(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2npmo_smovh'//chns)
-        call my_out(70,nx,ny,smbcf(:,:,0)+smbcf(:,:,1)*ua(:,:,is)+
+     &        smbtf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+        call my_out(70,nx,ny,wrks,'b2npmo_smotf'//chns)
+        wrks=smbgp(:,:,0)+smbgp(:,:,1)*ua(:,:,is)+
+     &       smbgp(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbgp(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+        call my_out(70,nx,ny,wrks,'b2npmo_smogp'//chns)
+        wrks=smbvv(:,:,0)+smbvv(:,:,1)*ua(:,:,is)+
+     &       smbvv(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbvv(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+        call my_out(70,nx,ny,wrks,'b2npmo_smovv'//chns)
+        wrks=smbvh(:,:,0)+smbvh(:,:,1)*ua(:,:,is)+
+     &       smbvh(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbvh(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+        call my_out(70,nx,ny,wrks,'b2npmo_smovh'//chns)
+        wrks=smbcf(:,:,0)+smbcf(:,:,1)*ua(:,:,is)+
      &        smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
-     &        smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2npmo_smocf'//chns)
+     &        smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+        call my_out(70,nx,ny,wrks,'b2npmo_smocf'//chns)
        endif                                                           !srv 12.07.02 }
 !! FIXME: Do we really want this all(solvemo) condition ?
        if (solving.and.all(solvemo(is,0:nnreg(0)))) then                !srv 06.07.10

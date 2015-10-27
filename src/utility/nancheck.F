@@ -29,15 +29,15 @@
       integer ix, iy
 
       do iy = -1, ny
-       do ix = -1, nx
+        do ix = -1, nx
 #ifndef NO_IEEE
-        if(ieee_is_nan(data(ix,iy))) then
+          if(ieee_is_nan(data(ix,iy))) then
 #else
-        if(my_isnan(data(ix,iy))) then
+          if(my_isnan(data(ix,iy))) then
 #endif
-           write(*,*) label, ' NaN found at ', ix,iy
-        endif
-       enddo
+            write(*,*) label, ' NaN found at ', ix,iy
+          endif
+        enddo
       enddo
 
       return

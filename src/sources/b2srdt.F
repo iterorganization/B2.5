@@ -50,6 +50,7 @@
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *   phm0, phm1, phm3, phm4, phm5, t0, ttim, ttf
+      real (kind=R8) :: wrk0(-1:nx,-1:ny)
       save ncall, phm0, phm1, phm3, phm4, phm5                       !xpb
 *   ..procedures
       external subini, subend, xertst, ipgetr
@@ -204,26 +205,28 @@ cxpb  This treatment added as a fix to get the ExB runs going
       if (iout_b2npmo.eq.1 .and. lout) then                                     !srv 11.09.09 {
        do is = 0, ns-1 
          write (chns,'(i3.3)') is
-         call my_out(70,nx,ny,smodt(:,:,0,is)+
+         wrk0=smodt(:,:,0,is)+
      &        smodt(:,:,1,is)*ua(:,:,is)+
      &        smodt(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &        smodt(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2srdt_smodt'//chns)
+     &        smodt(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+         call my_out(70,nx,ny,wrk0,'b2srdt_smodt'//chns)
        enddo
       endif
       if ((iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) .and. lout) then
-       do is = 0, ns-1
+        do is = 0, ns-1
           write (chns,'(i3.3)') is
-          call my_out(70,nx,ny,snadt(:,:,0,is)+
-     &             snadt(:,:,1,is)*na(:,:,is),'b2srdt_snadt'//chns)
-       enddo
+          wrk0=snadt(:,:,0,is)+snadt(:,:,1,is)*na(:,:,is)
+          call my_out(70,nx,ny,wrk0,'b2srdt_snadt'//chns)
+        enddo
       endif
       if ((iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) .and. lout) then
-        call my_out(70,nx,ny,shedt(:,:,0)+shedt(:,:,1)*te+
-     &   shedt(:,:,2)*ne + shedt(:,:,3)*te*ne,'b2srdt_shedt')
-        call my_out(70,nx,ny,shidt(:,:,0)+shidt(:,:,1)*ti+
-     &   shidt(:,:,2)*ni(:,:,0) + 
-     &   shidt(:,:,3)*ti*ni(:,:,0),'b2srdt_shidt')
+        wrk0=shedt(:,:,0)+shedt(:,:,1)*te+
+     &       shedt(:,:,2)*ne + shedt(:,:,3)*te*ne
+        call my_out(70,nx,ny,wrk0,'b2srdt_shedt')
+        wrk0=shidt(:,:,0)+shidt(:,:,1)*ti+
+     &       shidt(:,:,2)*ni(:,:,0)+
+     &       shidt(:,:,3)*ti*ni(:,:,0)
+        call my_out(70,nx,ny,wrk0,'b2srdt_shidt')
       endif
 
       if (iout.eq.1 .and. lout) then

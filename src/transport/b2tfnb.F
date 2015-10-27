@@ -1455,7 +1455,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
 
       if (alpha.gt.0.0_R8 .and. maxval(zb).eq.0.0_R8 .and. ncall.lt.100) 
      > then
-        write(*,*) 'b2tfnb: maxfluxlimit for zb = ',maxval(zb),
+        write(*,'(a,1p,e12.5,a,e12.5,a,2e12.5)') 
+     .   'b2tfnb: maxfluxlimit for zb = ',maxval(zb),
      1   ' mb = ',mb/mp,' are ',maxfluxlimit
       endif
 

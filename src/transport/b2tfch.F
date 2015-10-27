@@ -896,17 +896,17 @@ cxpb turn off current terms if requested
        call my_out(70,nx,ny,fchdia(-1,-1,1),'b2tfch_chdiay')
 !       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfch_chanmlx')
 !       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfch_chanmly')
-	 call my_out(70,nx,ny,conc(-1,-1,0),'b2tfch_concx')
-	 call my_out(70,nx,ny,conc(-1,-1,1),'b2tfch_concy')
-	 call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfch_ch_px')
-	 call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch_ch_py')
-	 call my_out(70,nx,ny,avisper(-1,-1,0),'b2tfch_avisperx')
-	 call my_out(70,nx,ny,avisper(-1,-1,1),'b2tfch_avispery')
-	 call my_out(70,nx,ny,bvisper(-1,-1,0),'b2tfch_bvisperx')
-	 call my_out(70,nx,ny,bvisper(-1,-1,1),'b2tfch_bvispery')
-	 call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch_cvisperx')
-	 call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch_cvispery')
-	endif                                                          !srv 18.06.08 }
+       call my_out(70,nx,ny,conc(-1,-1,0),'b2tfch_concx')
+       call my_out(70,nx,ny,conc(-1,-1,1),'b2tfch_concy')
+       call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfch_ch_px')
+       call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch_ch_py')
+       call my_out(70,nx,ny,avisper(-1,-1,0),'b2tfch_avisperx')
+       call my_out(70,nx,ny,avisper(-1,-1,1),'b2tfch_avispery')
+       call my_out(70,nx,ny,bvisper(-1,-1,0),'b2tfch_bvisperx')
+       call my_out(70,nx,ny,bvisper(-1,-1,1),'b2tfch_bvispery')
+       call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch_cvisperx')
+       call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch_cvispery')
+      endif                                                          !srv 18.06.08 }
 
 * ..return
       ncall = ncall+1

@@ -77,7 +77,7 @@
       character lblps*120, lblgm*120, id*8, id0*8, line*500
       character idout*80, cnamip*80, cvalip*80                        !srv 22.12.09
       real (kind=R8) ::
-     *  amtol, naini(0:ns-1), ttini
+     *  amtol, naini(0:ns-1), ttini, na_min
       parameter (amtol=1.0e-2_R8)
       logical oldversion, ex
 *   ..procedures
@@ -91,6 +91,9 @@
       ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))         !srv 22.12.09
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
+*  ..initialisation
+      save na_min
+      data na_min/1.0e4_R8/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -296,6 +299,13 @@
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
       call ipgeti ('b2aidr_read_b2fstate', read_b2fstate)
+      call ipgetr ('b2mndr_na_min', na_min)
+      call xertst (na_min.gt.0.0_R8,
+     & 'faulty internal parameter na_min')
+      do is=0,ns-1
+        call xertst (naini(is).gt.na_min,
+     &   'Initial densities must be larger than na_min!')
+      end do
 
       if(read_b2fstate.ne.0) then
 *  .. copy the data of first n=min(ns0,ns1) species

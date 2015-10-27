@@ -68,7 +68,7 @@
       integer, save :: anomalous_core_only = 0                       !srv 19.04.07
       integer, save :: use_b2npc9 = 1, use_b2nph9 = 1, coriolis = 0  !srv 06.11.08 11.08.08
       real (kind=R8) ::
-     *  potok, mach10, BoRiS, vis_per, na0eps
+     *  potok, mach10, BoRiS, vis_per, na_min, na_new
       integer ncall, n2, is, ier0, i, ix, iy, ncallout, ixmax, iymax,    !xpb
      1  guard_flows, ramp_slow, no_solve, ireg
       real (kind=R8) ::
@@ -87,7 +87,7 @@
       logical, allocatable :: solvemt(:,:)
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok, pot_eq,
      1  recalculate_contributions, ramp_slow, guard_flows,
-     3  potitmin, BoRiS, vis_per, no_solve, solving, na0eps,
+     3  potitmin, BoRiS, vis_per, no_solve, solving, na_min, na_new,
      *  nsmin, nsmax, no_current
 *   ..procedures
       intrinsic abs, min, mod
@@ -106,7 +106,8 @@
      1  xfm3/1.0_R8/, potit/50/, potok/1.0e-2_R8/, pot_eq/1/,
      2  ncallout/-1/, guard_flows/2/, no_solve/0/,
      5  recalculate_contributions/1/, ramp_slow/0/, no_current/0/,       !dpc
-     6  potitmin/0/, BoRiS/0.0_R8/, vis_per/0.0_R8/, na0eps/1.0e4_R8/
+     6  potitmin/0/, BoRiS/0.0_R8/, vis_per/0.0_R8/, na_min/1.0e4_R8/,
+     7  na_new/1.0e14_R8/
 *
 *-----------------------------------------------------------------------
 *.computation
@@ -136,9 +137,14 @@
 !       call ipgetr ('b2tfhe_vis_per', vis_per)                           !xpb
 !       call xertst (0.0_R8.le.vis_per .and. 1.0_R8.ge.vis_per,           !xpb
 !     &  'faulty argument vis_per')                                       !xpb
-       call ipgetr ('b2mndr_na0eps', na0eps)
-       call xertst (na0eps.gt.0.0_R8,
-     &  'faulty internal parameter na0eps')
+       call ipgetr ('b2mndr_na_min', na_min)
+       call ipgetr ('b2mndr_na_new', na_new)
+       call xertst (na_min.gt.0.0_R8,
+     &  'faulty internal parameter na_min')
+       call xertst (na_new.gt.0.0_R8,
+     &  'faulty internal parameter na_new')
+       call xertst (na_new.gt.na_min,
+     &  'na_new must be larger than na_min!')
        call ipgeti ('b2news_ramp_slow', ramp_slow)
        call ipgeti ('b2news_guard_flows', guard_flows)                   !xpb
        call ipgeti ('b2news_ncallout', ncallout)
@@ -439,10 +445,10 @@ cxpb
 *    ..DPC
          do iy=-1,ny
            do ix=-1,nx
+              na(ix,iy,is)=max(na(ix,iy,is),na_min)
              if(region(ix,iy,0).ne.0 .and.
      &        leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &        bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
-              na(ix,iy,is)=max(na(ix,iy,is),na0eps)
               mach10=10.0_R8*
      &         sqrt((rza(ix,iy,is)*te(ix,iy)+ti(ix,iy))/(am(is)*mp))
               if(ua(ix,iy,is).gt.mach10.and.(.not.is_neutral(is))) then

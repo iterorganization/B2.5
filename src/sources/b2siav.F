@@ -58,7 +58,7 @@
      &   conn(-1:ny), tt2(-1:ny), tt3(-1:ny), eps1(-1:ny)
 	real (kind=R8) :: qip0a(-1:nx,-1:ny), qip0b(-1:nx,-1:ny)
      &                  , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
-     &                  , nu1(-1:nx,-1:ny)  	                            !lk
+     &                  , nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny)  	          !lk
       integer mintopcut                                                   !lk 23.05.06 05.07.07 }  
       save ncall
       data ncall/0/
@@ -362,12 +362,12 @@
 	  call my_out(70,nx,ny,smbvv(-1,-1,k),'b2siav_smbvv'//chk//chns)
 	  call my_out(70,nx,ny,smbvh(-1,-1,k),'b2siav_smbvh'//chk//chns)
         enddo
-        call my_out(70,nx,ny,smbvv(:,:,0)+smbvv(:,:,1)*ub(:,:)+
-     &        smbvv(:,:,2)*nb(:,:)*mb+smbvv(:,:,3)*ub(:,:)*nb(:,:)*mb,
-     &        'b2siav_smovv'//chns)
-        call my_out(70,nx,ny,smbvh(:,:,0)+smbvh(:,:,1)*ub(:,:)+
-     &        smbvh(:,:,2)*nb(:,:)*mb+smbvh(:,:,3)*ub(:,:)*nb(:,:)*mb,
-     &        'b2siav_smovh'//chns)
+        wrks=smbvv(:,:,0)+smbvv(:,:,1)*ub(:,:)+
+     &       smbvv(:,:,2)*nb(:,:)*mb+smbvv(:,:,3)*ub(:,:)*nb(:,:)*mb
+        call my_out(70,nx,ny,wrks,'b2siav_smovv'//chns)
+        wrks=smbvh(:,:,0)+smbvh(:,:,1)*ub(:,:)+
+     &       smbvh(:,:,2)*nb(:,:)*mb+smbvh(:,:,3)*ub(:,:)*nb(:,:)*mb
+        call my_out(70,nx,ny,wrks,'b2siav_smovh'//chns)
         call my_out(70,nx,ny,cvsbhz(-1,-1,0),'b2siav_cvsbhzx'//chns)
         call my_out(70,nx,ny,cvsbhz(-1,-1,1),'b2siav_cvsbhzy'//chns)
       endif                                                            !srv 17.06.02 }

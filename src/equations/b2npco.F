@@ -58,7 +58,7 @@
       real (kind=R8) ::
      *  rxg, pcm0, pcm1
       real (kind=R8) ::
-     *  aa5(-1:nx,-1:ny,-2:2)
+     *  aa5(-1:nx,-1:ny,-2:2), wrk0(-1:nx,-1:ny)
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       external subini, subend, xertst, ipgetr
@@ -184,8 +184,8 @@ csw 11dec2012, check for solv flags
         call my_out(70,nx,ny,rescb,'b2npco_resco'//chns)
         call my_out(70,nx,ny,snb(-1,-1,0),'b2npco_sna0'//chns)
         call my_out(70,nx,ny,snb(-1,-1,1),'b2npco_sna1'//chns)
-        call my_out(70,nx,ny,snb(:,:,0)+nb*snb(:,:,1),
-     &              'b2npco_sna'//chns)
+        wrk0=snb(:,:,0)+nb*snb(:,:,1)
+        call my_out(70,nx,ny,wrk0,'b2npco_sna'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,0),'b2npco_fnax'//chns)
         call my_out(70,nx,ny,fnb(-1,-1,1),'b2npco_fnay'//chns)
       endif                                                          !srv 12.07.02 }

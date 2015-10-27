@@ -167,64 +167,64 @@
       call my_out(70,nx,ny,ni(-1,-1,0),'ni0')                      !srv
       call my_out(70,nx,ny,ni(-1,-1,1),'ni1')                      !srv
       wrk0=0.0e0_R8
-	do iy=0,ny
-	 do ix=-1,nx
-	   wrk0(ix,iy)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))/
+      do iy=0,ny
+	do ix=-1,nx
+	  wrk0(ix,iy)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))/
      *                (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy))) !srv 08.05.07
      *                *2.0e0_R8
-	 enddo
 	enddo
+      enddo
       call my_out(70,nx,ny,wrk0,'Eyf')                              !srv 15.06.04 }
 
-	wrk0=0.0e0_R8                                                !iyv 15.10.09 {
-	do iy=0,ny
-	 do ix=-1,nx
-         if(topiy(ix,iy).ne.ny+1) then
-         wrk0(ix,iy)=-(po(topix(ix,iy),topiy(ix,iy))-
+      wrk0=0.0e0_R8                                                !iyv 15.10.09 {
+      do iy=0,ny
+	do ix=-1,nx
+          if(topiy(ix,iy).ne.ny+1) then
+            wrk0(ix,iy)=-(po(topix(ix,iy),topiy(ix,iy))-
      *                  po(bottomix(ix,iy),bottomiy(ix,iy)))/
      *                (hy1(ix,iy)+0.5e0_R8*
      *                (hy1(bottomix(ix,iy),bottomiy(ix,iy))) +
      *                 hy1(topix(ix,iy),topiy(ix,iy))) 
-         else
-	   wrk0(ix,iy)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))/
+          else
+	    wrk0(ix,iy)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))/
      *                (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy))) !
      *                *2.0e0_R8
-         endif	                     
-	 enddo
-	enddo
+          endif
+        enddo
+      enddo
       call my_out(70,nx,ny,wrk0,'Eyc')                              
 
-	wrk1=0.0e0_R8
-	do iy=-1,ny
-	 do ix=-1,nx
-         wrk1(ix,iy)= wrk0(ix,iy)/(hz(ix,iy)*bb(ix,iy,0))     
-	 enddo
-	enddo
+      wrk1=0.0e0_R8
+      do iy=-1,ny
+	do ix=-1,nx
+          wrk1(ix,iy)= wrk0(ix,iy)/(hz(ix,iy)*bb(ix,iy,0))
+        enddo
+      enddo
 
       wrk0=0.0e0_R8
-	do iy=-1,ny
-	 do ix=-1,nx
-         if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
-     *   wrk0(ix,iy)=abs(hz(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)* 
+      do iy=-1,ny
+	do ix=-1,nx
+          if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
+     *      wrk0(ix,iy)=abs(hz(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)*
      *              (wrk1(topix(ix,iy),topiy(ix,iy))-
      *               wrk1(bottomix(ix,iy),bottomiy(ix,iy)))/
      *                (hy1(ix,iy)+0.5e0_R8*
      *                (hy1(bottomix(ix,iy),bottomiy(ix,iy))) +
      *                 hy1(topix(ix,iy),topiy(ix,iy)))) 
-	  enddo
+	enddo
       enddo
       call my_out(70,nx,ny,wrk0,'Wsh')                              !iyv 15.10.09 }
 
       do is = 0,ns-1
-	 write (chns,'(i3.3)') is
+       write (chns,'(i3.3)') is
        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, wrk0)
        call my_out(70,nx,ny,wrk0,'pb'//chns)
        call my_out(70,nx,ny,na(-1,-1,is),'na'//chns)             !srv
        call my_out(70,nx,ny,ua(-1,-1,is),'ua'//chns)             !srv
        call my_out(70,nx,ny,ua(-1,-1,is),'ua'//chns)             !srv
-	 wrk0 = sqrt((rza(:,:,is)*te+ti)/(mp*am(is)))              !srv 24.03.10 {
+       wrk0 = sqrt((rza(:,:,is)*te+ti)/(mp*am(is)))              !srv 24.03.10 {
        call my_out(70,nx,ny,wrk0,'usound'//chns)
-	 wrk1 = ua(:,:,is)/wrk0
+       wrk1 = ua(:,:,is)/wrk0
        call my_out(70,nx,ny,wrk1,'ua_M_'//chns)                  !srv 24.03.10 }
        call my_out(70,nx,ny,uadia(-1,-1,0,is),'uadiax'//chns)    !srv
        call my_out(70,nx,ny,uadia(-1,-1,1,is),'uadiay'//chns)    !srv

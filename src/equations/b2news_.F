@@ -75,7 +75,7 @@
       integer ncall, n2, is, ier0, i, ix, iy
       character charns*3, ch*2                                        !srv 30.06.03
       real (kind=R8), save :: BoRiS = 0.0_R8
-      real (kind=R8), save :: na0eps = 1.0e4_R8
+      real (kind=R8), save :: na_min = 1.0e4_R8, na_new = 1.0e14_R8
       real (kind=R8) :: 
      *  xfm0, xfm1, xfm2, xfm3, rxf0, rxf1, rxf2, rxf3,
      1  t0, vis_per,                                                  !srv 09.07.99 06.07.00
@@ -144,9 +144,14 @@
      &   'faulty internal parameter xfm2')
        call xertst (0.0_R8.le.xfm3.and.xfm3.le.1.0_R8,
      &   'faulty internal parameter xfm3')
-       call ipgetr ('b2mndr_na0eps', na0eps)
-       call xertst (na0eps.gt.0.0_R8,
-     &  'faulty internal parameter na0eps')
+       call ipgetr ('b2mndr_na_min', na_min)
+       call ipgetr ('b2mndr_na_new', na_new)
+       call xertst (na_min.gt.0.0_R8,
+     &  'faulty internal parameter na_min')
+       call xertst (na_new.gt.0.0_R8,
+     &  'faulty internal parameter na_new')
+       call xertst (na_new.gt.na_min,
+     &  'na_new must be larger than na_min!')
 !       call ipgetr ('b2news_facdrift_target', facdrift_target)  !srv 09.07.99
 !       call ipgetr ('b2news_facdrift_start', facdrift_start)    !srv 09.07.99
 !       call ipgetr ('b2news_facdrift_inc', facdrift_inc)        !srv 09.07.99
@@ -442,7 +447,7 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 *    ..DPC
         do iy=-1,ny
           do ix=-1,nx
-            na(ix,iy,is)=max(na(ix,iy,is),na0eps) ! abs(na(ix,iy,is))    !srv 24.04.09
+            na(ix,iy,is)=max(na(ix,iy,is),na_min) ! abs(na(ix,iy,is))    !srv 24.04.09
           enddo
         enddo
 *    ..compute partial pressure
@@ -503,7 +508,7 @@ csw 16oct2012 init ier0
 
         do iy=-1,ny
           do ix=-1,nx
-            na(ix,iy,is)= max(na(ix,iy,is),na0eps) !abs(na(ix,iy,is))    !srv 24.04.09
+            na(ix,iy,is)= max(na(ix,iy,is),na_min) !abs(na(ix,iy,is))    !srv 24.04.09
           enddo
         enddo
 !        if(re_compute_pb.eq.1) then                                     !srv 15.02.10

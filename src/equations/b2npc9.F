@@ -57,7 +57,7 @@
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
       real (kind=R8) ::
-     *   aa9(-1:nx,-1:ny,-6:6)
+     *   aa9(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       external subini, subend, xertst, ipgetr, lwget
@@ -176,8 +176,8 @@
 	  call my_out(70,nx,ny,rescb,'b2npc9_resco'//chns)
 	  call my_out(70,nx,ny,snb(-1,-1,0),'b2npc9_sna0'//chns)
 	  call my_out(70,nx,ny,snb(-1,-1,1),'b2npc9_sna1'//chns)
-	  call my_out(70,nx,ny,snb(:,:,0)+nb*snb(:,:,1),
-     &              'b2npc9_sna'//chns)
+          wrk0=snb(:,:,0)+nb*snb(:,:,1)
+	  call my_out(70,nx,ny,wrk0,'b2npc9_sna'//chns)
 	  call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc9_fnax'//chns)
 	  call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc9_fnay'//chns)
 	endif                                                          !srv 12.07.02 }

@@ -231,8 +231,9 @@ c-dpc
         call ma28ad
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0)
-     1   write(*,*) 'iflag,minirn/dim,minicn/dim ',
-     2   iflag,minirn,' /',solvdim1,minicn,' /',solvdim
+     1   write(*,'(a,i6,i8,a,i8,i8,a,i8)') 
+     .    'iflag,minirn/dim,minicn/dim ',
+     2     iflag,minirn,' /',solvdim1,minicn,' /',solvdim
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
         enddo

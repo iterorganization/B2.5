@@ -51,7 +51,7 @@
       integer ncall, n2
 	integer, save :: iout = 0
       real (kind=R8) ::
-     *  aa5(-1:nx,-1:ny,-2:2)
+     *  aa5(-1:nx,-1:ny,-2:2), wrk0(-1:nx,-1:ny)
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -121,8 +121,9 @@ c-rfs     .  fch(21,0,1), respo(21,-1)
 !	 call my_out(70,nx,ny,sch(-1,-1,1),'b2nppo_sch1')
 !	 call my_out(70,nx,ny,sch(-1,-1,2),'b2nppo_sch2')
 !	 call my_out(70,nx,ny,sch(-1,-1,3),'b2nppo_sch3')
-	 call my_out(70,nx,ny,sch(:,:,0)+sch(:,:,1)*po+sch(:,:,2)*ne+
-     &             sch(:,:,3)*ne*po,'b2nppo_sch')
+         wrk0=sch(:,:,0)+sch(:,:,1)*po+sch(:,:,2)*ne+
+     &        sch(:,:,3)*ne*po
+	 call my_out(70,nx,ny,wrk0,'b2nppo_sch')
 	endif                                                       !srv 11.09.09 }
 
 *   ..set error parameter and return

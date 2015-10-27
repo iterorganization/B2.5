@@ -75,6 +75,7 @@
      *  fix_recomb_energy
       real (kind=R8) ::
      *  rf0, t0, t1
+      real (kind=R8) :: wrk0(-1:nx,-1:ny)
 *   ..procedures
       intrinsic abs, max
       logical lnext
@@ -434,29 +435,32 @@ c accounted for)
 
 #ifdef ASTRA
       do is = 0, ns-1                                                 !srv 28.07.11 {
-	 if(is.eq.ismain) then
-        call b2_to_astra_src(nx, ny, vol, sna0_ion(:,:,0,is)+
-     &   sna0_ion(:,:,1,is)*na(:,:,is), svol, se)
-        call b2_to_astra_src(nx, ny, vol, sna0_rec(:,:,0,is)+
-     &   sna0_rec(:,:,1,is)*na(:,:,is), svol, se)
-	 endif
-	enddo                                                           !srv 28.07.11 }
+	if(is.eq.ismain) then
+          wrk0=sna0_ion(:,:,0,is)+sna0_ion(:,:,1,is)*na(:,:,is)
+          call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
+          wrk0=sna0_rec(:,:,0,is)+sna0_rec(:,:,1,is)*na(:,:,is)
+          call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
+	endif
+      enddo                                                           !srv 28.07.11 }
 
-      call b2_to_astra_src(nx, ny, vol, she0(:,:,0)+
-     &   she0(:,:,1)*te(:,:)+she0(:,:,2)*ne+
-     &   she0(:,:,3)*ne*te, svol, seh)                            !srv 11.06.13
+      wrk0=she0(:,:,0)+
+     &     she0(:,:,1)*te(:,:)+she0(:,:,2)*ne+
+     &     she0(:,:,3)*ne*te
+      call b2_to_astra_src(nx, ny, vol, wrk0, svol, seh)              !srv 11.06.13
 
-      call b2_to_astra_src(nx, ny, vol, shi0_ion(:,:,0)+
-     &   shi0_ion(:,:,1)*ti+shi0_ion(:,:,2)*ni(:,:,0)+
-     &   shi0_ion(:,:,3)*ni(:,:,0)*ti, svol, sih)                     !srv 11.06.13
+      wrk0=shi0_ion(:,:,0)+
+     &     shi0_ion(:,:,1)*ti+shi0_ion(:,:,2)*ni(:,:,0)+
+     &     shi0_ion(:,:,3)*ni(:,:,0)*ti
+      call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
 
-      call b2_to_astra_src(nx, ny, vol, shi0_rec(:,:,0)+
-     &   shi0_rec(:,:,1)*ti+shi0_rec(:,:,2)*ni(:,:,0)+
-     &   shi0_rec(:,:,3)*ni(:,:,0)*ti, svol, sih)                     !srv 11.06.13
+      wrk0=shi0_rec(:,:,0)+
+     &     shi0_rec(:,:,1)*ti+shi0_rec(:,:,2)*ni(:,:,0)+
+     &     shi0_rec(:,:,3)*ni(:,:,0)*ti
+      call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
 #endif	                       
 
-	if (iout.eq.1 .or. iout_b2npmo.eq.1) then                       !srv 30.06.08 11.09.09 {
-       do is = 0, ns-1
+      if (iout.eq.1 .or. iout_b2npmo.eq.1) then                       !srv 30.06.08 11.09.09 {
+        do is = 0, ns-1
 	  write (chns,'(i3.3)') is
 !	  do k=0,3
 !	   write (chk,'(i1)') k
@@ -465,20 +469,20 @@ c accounted for)
 !	   call my_out(70,nx,ny,smq0_rec(-1,-1,k,is),
 !     &                       'b2stel_smq_rec'//chk//chns)
 !	  enddo
-	 call my_out(70,nx,ny,smq0_ion(:,:,0,is)+
-     &        smq0_ion(:,:,1,is)*ua(:,:,is)+
-     &        smq0_ion(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &        smq0_ion(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2stel_smq_ion'//chns)
-	 call my_out(70,nx,ny,smq0_rec(:,:,0,is)+
-     &        smq0_rec(:,:,1,is)*ua(:,:,is)+
-     &        smq0_rec(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &        smq0_rec(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2stel_smq_rec'//chns)
-	 enddo
-	endif
-	if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
-       do is = 0, ns-1
+          wrk0=smq0_ion(:,:,0,is)+
+     &         smq0_ion(:,:,1,is)*ua(:,:,is)+
+     &         smq0_ion(:,:,2,is)*na(:,:,is)*mp*am(is)+
+     &         smq0_ion(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+	  call my_out(70,nx,ny,wrk0,'b2stel_smq_ion'//chns)
+          wrk0=smq0_rec(:,:,0,is)+
+     &         smq0_rec(:,:,1,is)*ua(:,:,is)+
+     &         smq0_rec(:,:,2,is)*na(:,:,is)*mp*am(is)+
+     &         smq0_rec(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+	  call my_out(70,nx,ny,wrk0,'b2stel_smq_rec'//chns)
+	enddo
+      endif
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
+        do is = 0, ns-1
 	  write (chns,'(i3.3)') is
 !	  do k=0,1
 !	   write (chk,'(i1)') k
@@ -487,35 +491,36 @@ c accounted for)
 !	   call my_out(70,nx,ny,sna0_rec(-1,-1,k,is),
 !     &                       'b2stel_sna_rec'//chk//chns)
 !	  enddo
-	  call my_out(70,nx,ny,sna0_ion(:,:,0,is)+
-     &             sna0_ion(:,:,1,is)*na(:,:,is),'b2stel_sna_ion'//chns)
-	  call my_out(70,nx,ny,sna0_rec(:,:,0,is)+
-     &             sna0_rec(:,:,1,is)*na(:,:,is),'b2stel_sna_rec'//chns)
+          wrk0=sna0_ion(:,:,0,is)+sna0_ion(:,:,1,is)*na(:,:,is)
+	  call my_out(70,nx,ny,wrk0,'b2stel_sna_ion'//chns)
+          wrk0=sna0_rec(:,:,0,is)+sna0_rec(:,:,1,is)*na(:,:,is)
+	  call my_out(70,nx,ny,wrk0,'b2stel_sna_rec'//chns)
 
-	 enddo
-	endif
-	if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
+	enddo
+      endif
+      if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
 !	 do k=0,3
 !	  write (chk,'(i1)') k
 !	  call my_out(70,nx,ny,shi0_ion(-1,-1,k),'b2stel_shi_ion'//chk)
 !	  call my_out(70,nx,ny,shi0_rec(-1,-1,k),'b2stel_shi_rec'//chk)
 !	 enddo
 !      call my_out(70,nx,ny,she0(-1,-1,k),'b2stel_she')
-	 call my_out(70,nx,ny,she0(:,:,0)+she0(:,:,1)*te+
-     &   she0(:,:,2)*ne + she0(:,:,3)*te*ne,'b2stel_she_rad')
-	 call my_out(70,nx,ny,shi0_ion(:,:,0)+shi0_ion(:,:,1)*ti+
-     &   shi0_ion(:,:,2)*ni(:,:,0)+shi0_ion(:,:,3)*ti*ni(:,:,0),
-     &   'b2stel_shi_ion')                                            !srv 01.11.10
-	 call my_out(70,nx,ny,shi0_rec(:,:,0)+shi0_rec(:,:,1)*ti+
-     &   shi0_rec(:,:,2)*ni(:,:,0)+shi0_rec(:,:,3)*ti*ni(:,:,0),
-     &   'b2stel_shi_rec')                                            !srv 01.11.10
+        wrk0=she0(:,:,0)+she0(:,:,1)*te+
+     &       she0(:,:,2)*ne + she0(:,:,3)*te*ne
+	call my_out(70,nx,ny,wrk0,'b2stel_she_rad')
+        wrk0=shi0_ion(:,:,0)+shi0_ion(:,:,1)*ti+
+     &       shi0_ion(:,:,2)*ni(:,:,0)+shi0_ion(:,:,3)*ti*ni(:,:,0)
+	call my_out(70,nx,ny,wrk0,'b2stel_shi_ion')                  !srv 01.11.10
+        wrk0=shi0_rec(:,:,0)+shi0_rec(:,:,1)*ti+
+     &       shi0_rec(:,:,2)*ni(:,:,0)+shi0_rec(:,:,3)*ti*ni(:,:,0)
+	call my_out(70,nx,ny,wrk0,'b2stel_shi_rec')                  !srv 01.11.10
 
-       do is=0,ns-1                                                !srv 03.02.12 {
-        write(chns,'(i3.3)') is
+        do is=0,ns-1                                                 !srv 03.02.12 {
+          write(chns,'(i3.3)') is
 	  call my_out(70,nx,ny,rqrad(-1,-1,is),'b2stel_rqrad'//chns)
 	  call my_out(70,nx,ny,rqbrm(-1,-1,is),'b2stel_rqbrm'//chns)
-       enddo                                                       !srv 03.02.12 }
-	endif                                                           !srv 30.06.08 11.09.09 }
+        enddo                                                        !srv 03.02.12 }
+      endif                                                          !srv 30.06.08 11.09.09 }
 
 * ..return
       ncall = ncall+1

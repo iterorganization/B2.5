@@ -59,6 +59,7 @@
      *   phm0, phm1, phm2, phm3, ctaup, coef, t0, t1
       real (kind=R8) ::
      1 delti, delte, zlamii, zlamee, dtiapr, dteapr, limthii, limthee
+      real (kind=R8) :: wrk0(-1:nx,-1:ny)
 *   ..procedures
       intrinsic sqrt, log, sign, max, abs
       real (kind=R8) ::
@@ -284,30 +285,30 @@ c     1      write(*,*) ix,iy,isb,cthi(ix,iy,isb)
           enddo
         endif
       enddo
-	if (iout.ne.0) then                        !srv 17.06.02 {
-	   write (chns,'(i3.3)') isb    
-	   call my_out(70,nx,ny,ehxp,'b2sifr_ehxp'//chns)
-	   call my_out(70,nx,ny,cthe(-1,-1,isb),'b2sifr_cthe'//chns)
-	   call my_out(70,nx,ny,cthi(-1,-1,isb),'b2sifr_cthi'//chns)
-	   do k=0,3
-	    write (chk,'(i1)') k  
-	    call my_out(70,nx,ny,smbtf(-1,-1,k),
+      if (iout.ne.0) then                        !srv 17.06.02 {
+	write (chns,'(i3.3)') isb
+	call my_out(70,nx,ny,ehxp,'b2sifr_ehxp'//chns)
+	call my_out(70,nx,ny,cthe(-1,-1,isb),'b2sifr_cthe'//chns)
+	call my_out(70,nx,ny,cthi(-1,-1,isb),'b2sifr_cthi'//chns)
+	do k=0,3
+	  write (chk,'(i1)') k
+	  call my_out(70,nx,ny,smbtf(-1,-1,k),
      *                'b2sifr_smotf'//chk)
-	    call my_out(70,nx,ny,smbch(-1,-1,k),
+	  call my_out(70,nx,ny,smbch(-1,-1,k),
      *                'b2sifr_smoch'//chk)
-	   enddo
-       do is=0,ns-1
-	  write (chns,'(i3.3)') is    
-	  call my_out(70,nx,ny,smbtf(:,:,0)+smbtf(:,:,1)*ua(:,:,is)+
-     &     smbtf(:,:,2)*na(:,:,is)*mp*am(is)+
-     &     smbtf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2sifr_smotf'//chns)
-	  call my_out(70,nx,ny,smbch(:,:,0)+smbch(:,:,1)*ua(:,:,is)+
-     &     smbch(:,:,2)*na(:,:,is)*mp*am(is)+
-     &     smbch(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2sifr_smoch'//chns)
-	 enddo
-	endif                                                            !srv 17.06.02 }
+	enddo
+        do is=0,ns-1
+	  write (chns,'(i3.3)') is
+          wrk0=smbtf(:,:,0)+smbtf(:,:,1)*ua(:,:,is)+
+     &         smbtf(:,:,2)*na(:,:,is)*mp*am(is)+
+     &         smbtf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+	  call my_out(70,nx,ny,wrk0,'b2sifr_smotf'//chns)
+          wrk0=smbch(:,:,0)+smbch(:,:,1)*ua(:,:,is)+
+     &         smbch(:,:,2)*na(:,:,is)*mp*am(is)+
+     &         smbch(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+	  call my_out(70,nx,ny,wrk0,'b2sifr_smoch'//chns)
+	enddo
+      endif                                                            !srv 17.06.02 }
 * ..return
       ncall = ncall+1
       call subend ()

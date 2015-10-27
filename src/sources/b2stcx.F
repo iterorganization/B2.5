@@ -47,6 +47,7 @@
       character chns*3, chk*1                                     !srv 11.09.09
       real (kind=R8) ::
      *  rg0, t0, t1, t2, du0, du1
+      real (kind=R8) :: wrk0(-1:nx,-1:ny)
       save ncall, styl0, rg0
 *   ..procedures
       intrinsic abs
@@ -275,50 +276,51 @@ ctmp.dpc
 
 #ifdef ASTRA
       do is = 0, ns-1                     !srv 28.07.11 {
-	 if(is.eq.ismain) then
-        call b2_to_astra_src(nx, ny, vol, sna0(:,:,0,is)+
-     &   sna0(:,:,1,is)*na(:,:,is), svol, se)
-	 endif
-	enddo
-      call b2_to_astra_src(nx, ny, vol, shi0(:,:,0)+
-     &   shi0(:,:,1)*ti+shi0(:,:,2)*ni(:,:,0)+
-     &   shi0(:,:,3)*ni(:,:,0)*ti, svol, sih)                     !srv 11.06.13
+	if(is.eq.ismain) then
+          wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
+          call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
+	endif
+      enddo
+      wrk0=shi0(:,:,0)+
+     &     shi0(:,:,1)*ti+shi0(:,:,2)*ni(:,:,0)+
+     &     shi0(:,:,3)*ni(:,:,0)*ti
+      call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)                 !srv 11.06.13
 #endif	                       
 
-	if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
-       do is = 0, ns-1
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
+        do is = 0, ns-1
 	  write (chns,'(i3.3)') is
 !	  do k=0,1
 !	   write (chk,'(i1)') k
 !	   call my_out(70,nx,ny,sna0(-1,-1,k,is),'b2stcx_sna'//chk//chns)
 !	  enddo
-	 call my_out(70,nx,ny,sna0(:,:,0,is)+
-     &             sna0(:,:,1,is)*na(:,:,is),'b2stcx_sna'//chns)
-	 enddo
-	endif
-	if (iout.eq.1 .or. iout_b2npmo.eq.1) then
-       do is = 0, ns-1
+          wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
+	  call my_out(70,nx,ny,wrk0,'b2stcx_sna'//chns)
+	enddo
+      endif
+      if (iout.eq.1 .or. iout_b2npmo.eq.1) then
+        do is = 0, ns-1
 	  write (chns,'(i3.3)') is
 !	  do k=0,1
 !	   write (chk,'(i1)') k
 !	   call my_out(70,nx,ny,smq0(-1,-1,k,is),'b2stcx_smq'//chk//chns)
 !	  enddo
-	 call my_out(70,nx,ny,smq(:,:,0,is)+
-     &        smq(:,:,1,is)*ua(:,:,is)+
-     &        smq(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &        smq(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2stcx_smq'//chns)
-	 enddo
-	endif
-	if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
+          wrk0=smq(:,:,0,is)+
+     &         smq(:,:,1,is)*ua(:,:,is)+
+     &         smq(:,:,2,is)*na(:,:,is)*mp*am(is)+
+     &         smq(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+	  call my_out(70,nx,ny,wrk0,'b2stcx_smq'//chns)
+        enddo
+      endif
+      if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
 !	 do k=0,1
 !	  write (chk,'(i1)') k
 !	  call my_out(70,nx,ny,shi0(-1,-1,k),'b2stcx_shi'//chk)
 !	 enddo
-	 call my_out(70,nx,ny,shi0(:,:,0)+shi0(:,:,1)*ti+
-     &   shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0),
-     &   'b2stcx_shi')
-	endif
+        wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
+     &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
+	call my_out(70,nx,ny,wrk0,'b2stcx_shi')
+      endif
 
 * ..return
       ncall = ncall+1

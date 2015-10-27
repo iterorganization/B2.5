@@ -143,7 +143,7 @@
      &  ,nasum, naaverage(0:ns-1), bbsum, bbaverage                     !srv 22.01.02 18.10.04
       real (kind=R8) :: bzhzsum, bzhzaverage                            !lk 20.11.07
       real (kind=R8) ::
-     *  pr(-1:nx,-1:ny), wdia(-1:nx,-1:ny),
+     *  pr(-1:nx,-1:ny), wdia(-1:nx,-1:ny), wrk0(-1:nx,-1:ny),
      *  uu(-1:nx,-1:ny,0:ns+ns_ext-1),
      *  sx(-1:nx,-1:ny), ud(-1:nx,-1:ny,0:ns-1),
      *  sxhz(-1:nx,-1:ny), pz(-1:nx,-1:ny),                             !srv 24.08.08
@@ -163,13 +163,13 @@
       integer, save :: fix_sx_in_fhe_sheath = 1                       !srv 08.05.09
       integer, save :: use_eirene, no_current 
       real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
-     1 bc_type13_norm, bc_type13_fac, na0eps
+     1 bc_type13_norm, bc_type13_fac, na_min, na_new
       real (kind=R8) :: fch_anomalous
       character*26 boundary_location(nbcd)
       character*24 hlp_frm
       save ncall, coreregno, coreregn2,  bc_type13_ref,
      1  bc_type16_ref, bc_type20_ref, bc_type13_norm, bc_type13_fac,
-     2  na0eps, fch_anomalous, bc_type21_ref, ndes_sol,
+     2  na_min, na_new, fch_anomalous, bc_type21_ref, ndes_sol,
      *  isfeedback, nesepm, nesepm_overshoot, fix_fch_in_fhe_sheath
 *   ..procedures
       intrinsic min, max, abs, sqrt, exp, log, dim, mod
@@ -187,7 +187,8 @@
 !     &            hz(topix(ix,iy),topiy(ix,iy))
 *   ..initialisation
       data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
-     1 bc_type16_ref/1/, bc_type20_ref/1/, na0eps/1.0e4_R8/,
+     1 bc_type16_ref/1/, bc_type20_ref/1/, 
+     2 na_min/1.0e4_R8/, na_new/1.0e14_R8/,
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
@@ -238,8 +239,12 @@
         call ipgeti ('b2stbc_type21_ref', bc_type21_ref)
         call ipgetr ('b2stbc_type13_norm', bc_type13_norm)
         call ipgetr ('b2stbc_type13_fac', bc_type13_fac)
-        call ipgetr ('b2mndr_na0eps', na0eps)
-        call xertst (0.0_R8.lt.na0eps, 'faulty parameter na0eps')
+        call ipgetr ('b2mndr_na_min', na_min)
+        call ipgetr ('b2mndr_na_new', na_new)
+        call xertst (0.0_R8.lt.na_min, 'faulty parameter na_min')
+        call xertst (na_new.gt.0.0_R8, 'faulty parameter na_new')
+        call xertst (na_new.gt.na_min,
+     &  'na_new must be larger than na_min!')
         call ipgeti ('b2stbc_fix_fch_in_fhe_sheath',
      1   fix_fch_in_fhe_sheath)
         call ipgeti ('b2stbc_fix_sx_in_fhe_sheath',
@@ -533,9 +538,9 @@ cxpb  should only include ExB and not diamagnetic contribution
             endif
             ENDIF
             if (CONPAR(IS,IB,1).eq.0.0_R8) then
-              CONPAR(IS,IB,1) = na0eps
+              CONPAR(IS,IB,1) = na_min
               write(*,*) 'Zero density B.C. no longer allowed!'
-              write(*,*) 'Changed to na0eps.'
+              write(*,*) 'Changed to na_min.'
             endif
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'constant density ',CONPAR(IS,IB,1),' on ',
@@ -8986,11 +8991,11 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 !         call my_out(70,nx,ny,smo0(-1,-1,k,is),
 !     &               'b2stbc_phys_smo'//chk//chns)
 !        enddo
-       call my_out(70,nx,ny,smo0(:,:,0,is)+
-     &        smo0(:,:,1,is)*ua(:,:,is)+
-     &        smo0(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &        smo0(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2stbc_phys_smo'//chns)
+        wrk0=smo0(:,:,0,is)+
+     &       smo0(:,:,1,is)*ua(:,:,is)+
+     &       smo0(:,:,2,is)*na(:,:,is)*mp*am(is)+
+     &       smo0(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+        call my_out(70,nx,ny,wrk0,'b2stbc_phys_smo'//chns)
        enddo
       endif
       if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
@@ -9001,8 +9006,8 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 !         call my_out(70,nx,ny,sna0(-1,-1,k,is),
 !     &               'b2stbc_phys_sna'//chk//chns)
 !        enddo
-       call my_out(70,nx,ny,sna0(:,:,0,is)+
-     &             sna0(:,:,1,is)*na(:,:,is),'b2stbc_phys_sna'//chns)
+        wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
+        call my_out(70,nx,ny,wrk0,'b2stbc_phys_sna'//chns)
        enddo
       endif
       if (iout.eq.1 .or. (iout_b2npht.eq.1 .or. iout_b2nph9.eq.1)) then
@@ -9011,11 +9016,12 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 !        call my_out(70,nx,ny,she0(-1,-1,k),'b2stbc_phys_she'//chk)
 !        call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbc_phys_shi'//chk)
 !       enddo
-       call my_out(70,nx,ny,she0(:,:,0)+she0(:,:,1)*te+
-     &   she0(:,:,2)*ne + she0(:,:,3)*te*ne,'b2stbc_phys_she')
-       call my_out(70,nx,ny,shi0(:,:,0)+shi0(:,:,1)*ti+
-     &   shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0),
-     &   'b2stbc_phys_shi')
+       wrk0=she0(:,:,0)+she0(:,:,1)*te+
+     &      she0(:,:,2)*ne + she0(:,:,3)*te*ne
+       call my_out(70,nx,ny,wrk0,'b2stbc_phys_she')
+       wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
+     &      shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
+       call my_out(70,nx,ny,wrk0,'b2stbc_phys_shi')
       endif
       if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)) then
        do k=0,3

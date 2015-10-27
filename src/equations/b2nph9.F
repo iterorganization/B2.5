@@ -248,8 +248,9 @@
 !	 call my_out(70,nx,ny,she0(-1,-1,1),'b2nph9_she1')
 !	 call my_out(70,nx,ny,she0(-1,-1,2),'b2nph9_she2')
 !	 call my_out(70,nx,ny,she0(-1,-1,3),'b2nph9_she3')
-	 call my_out(70,nx,ny,she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
-     &                      she0(:,:,3)*te*ne,'b2nph9_she')
+         wrk0=she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
+     &                    she0(:,:,3)*te*ne
+	 call my_out(70,nx,ny,wrk0,'b2nph9_she')
 	 call my_out(70,nx,ny,reshi,'b2nph9_reshi')
 	 call my_out(70,nx,ny,fhi(-1,-1,0),'b2nph9_fhix')
 	 call my_out(70,nx,ny,fhi(-1,-1,1),'b2nph9_fhiy')
@@ -257,8 +258,9 @@
 !	 call my_out(70,nx,ny,shi0(-1,-1,1),'b2nph9_shi1')
 !	 call my_out(70,nx,ny,shi0(-1,-1,2),'b2nph9_shi2')
 !	 call my_out(70,nx,ny,shi0(-1,-1,3),'b2nph9_shi3')
-	 call my_out(70,nx,ny,shi0(:,:,0)+shi0(:,:,1)*ti+
-     &     shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0),'b2nph9_shi')
+         wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
+     &        shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
+	 call my_out(70,nx,ny,wrk0,'b2nph9_shi')
 	endif                                                           !srv 17.07.05 01.11.10 }
 *   ..compute correction
       if (solving) then                                               !srv 11.01.13

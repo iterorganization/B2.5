@@ -83,9 +83,9 @@
 *   ..local variables
       integer is, is1, n2
       real (kind=R8) ::
-     *   wrk0(-1:nx,-1:ny1), wrk1(-1:nx1,-1:ny1), na0eps, sum
-      save na0eps
-      data na0eps/1.0e4_R8/
+     *   wrk0(-1:nx,-1:ny1), wrk1(-1:nx1,-1:ny1), na_new, na_min, sum
+      save na_new, na_min
+      data na_new/1.0e14_R8/, na_min/1.0e4_R8/
 *   ..procedures
       external subini, subend, xertst, ipgetr, sfill, b2saxpy
       external b2xtvc, b2xtfx, b2xtfy
@@ -102,9 +102,14 @@
       call xertst (0.le.nx1.and.0.le.ny1, 'faulty argument nx1, ny1')
       call xertst (1.le.ns1, 'faulty argument ns1')
 *   ..read input parameters
-      call ipgetr ('b2mndr_na0eps', na0eps)
-      call xertst (na0eps.gt.0.0_R8,
-     & 'faulty internal parameter na0eps')
+      call ipgetr ('b2mndr_na_min', na_min)
+      call ipgetr ('b2mndr_na_new', na_new)
+      call xertst (na_min.gt.0.0_R8,
+     & 'faulty internal parameter na_min')
+      call xertst (na_new.gt.0.0_R8,
+     & 'faulty internal parameter na_new')
+      call xertst (na_new.gt.na_min,
+     & 'na_new must be larger than na_min!')
 * ..transform state
       n2 = (nx1+2)*(ny1+2)
       call sfill (n2*ns1, 0.0_R8, na1, 1) 
@@ -186,7 +191,7 @@
           endif
         enddo
         if (sum.eq.0.0_R8) then  ! this is a new species 
-          call sfill (n2, na0eps, na1(-1,-1,is1), 1) 
+          call sfill (n2, na_new, na1(-1,-1,is1), 1)
         endif
       enddo
       call b2xtvc (nx, ny, nx1, ny1, ne, ne1,

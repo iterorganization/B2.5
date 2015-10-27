@@ -409,29 +409,29 @@ c
         call ipgeti('b2tfnb_drift_style', drift_style)                 !srv 21.06.08
         call ipgeti('copy_background_iout', iout)                      !srv 14.07.10
       endif
-	if(iout.ne.0) then                                             !srv 18.06.08 {
-	 do is = 0,ns-1
+      if(iout.ne.0) then                                             !srv 18.06.08 {
+	do is = 0,ns-1
 	 write (chns,'(i3.3)') is
-       call my_out(70,nx,ny,fna_eir(-1,-1,0,is),'copy_fna_eirx'//chns)
-       call my_out(70,nx,ny,fna_eir(-1,-1,1,is),'copy_fna_eiry'//chns)
+         call my_out(70,nx,ny,fna_eir(-1,-1,0,is),'copy_fna_eirx'//chns)
+         call my_out(70,nx,ny,fna_eir(-1,-1,1,is),'copy_fna_eiry'//chns)
 	 call my_out(70,nx,ny,vaecrb(-1,-1,0,is),'copy_vecrbx'//chns)
 	 call my_out(70,nx,ny,vaecrb(-1,-1,1,is),'copy_vecrby'//chns)
 	 call my_out(70,nx,ny,wadia(-1,-1,0,is),'copy_wadiax'//chns)
 	 call my_out(70,nx,ny,wadia(-1,-1,1,is),'copy_wadiay'//chns)
 	 call my_out(70,nx,ny,ua(-1,-1,is),'copy_ua'//chns)
 	 call my_out(70,nx,ny,na(-1,-1,is),'copy_na'//chns)
-	 enddo
-       call my_out(70,nx,ny,fne_eir(-1,-1,0),'copy_fne_eirx')
-       call my_out(70,nx,ny,fne_eir(-1,-1,1),'copy_fne_eiry')
-       call my_out(70,nx,ny,fhe_eir(-1,-1,0),'copy_fhe_eirx')
-       call my_out(70,nx,ny,fhe_eir(-1,-1,1),'copy_fhe_eiry')
-       call my_out(70,nx,ny,fhi_eir(-1,-1,0),'copy_fhi_eirx')
-       call my_out(70,nx,ny,fhi_eir(-1,-1,1),'copy_fhi_eiry')
-	 call my_out(70,nx,ny,ne,'copy_ne')
-	 call my_out(70,nx,ny,te,'copy_te')
-	 call my_out(70,nx,ny,ti,'copy_ti')
-	 call my_out(70,nx,ny,po,'copy_po')
-	endif                                                          !srv 18.06.08 }
+        enddo
+        call my_out(70,nx,ny,fne_eir(-1,-1,0),'copy_fne_eirx')
+        call my_out(70,nx,ny,fne_eir(-1,-1,1),'copy_fne_eiry')
+        call my_out(70,nx,ny,fhe_eir(-1,-1,0),'copy_fhe_eirx')
+        call my_out(70,nx,ny,fhe_eir(-1,-1,1),'copy_fhe_eiry')
+        call my_out(70,nx,ny,fhi_eir(-1,-1,0),'copy_fhi_eirx')
+        call my_out(70,nx,ny,fhi_eir(-1,-1,1),'copy_fhi_eiry')
+	call my_out(70,nx,ny,ne,'copy_ne')
+	call my_out(70,nx,ny,te,'copy_te')
+	call my_out(70,nx,ny,ti,'copy_ti')
+	call my_out(70,nx,ny,po,'copy_po')
+      endif                                                          !srv 18.06.08 }
 
       if(nx.ge.NDXP) call xerrab('eirene_mc: increase size of ndxp')
       if(ny.ge.NDYP) call xerrab('eirene_mc: increase size of ndyp')

@@ -527,22 +527,22 @@ cxpb turn off poloidal flows in core boundary
         end do
       end do
 
-	if(iout.ne.0) then                                             !srv 18.06.08 {
-	 call my_out(70,nx,ny,floi(-1,-1,0),'b2tfhi_floix')
-	 call my_out(70,nx,ny,floi(-1,-1,1),'b2tfhi_floiy')
-	 call my_out(70,nx,ny,coni(-1,-1,0,0),'b2tfhi_conix0')
-	 call my_out(70,nx,ny,coni(-1,-1,0,1),'b2tfhi_conix1')
-	 call my_out(70,nx,ny,coni(-1,-1,0,2),'b2tfhi_conix2')
-	 call my_out(70,nx,ny,coni(-1,-1,1,0),'b2tfhi_coniy0')
-	 call my_out(70,nx,ny,coni(-1,-1,1,1),'b2tfhi_coniy1')
-	 call my_out(70,nx,ny,coni(-1,-1,1,2),'b2tfhi_coniy2')
-       call my_out(70,nx,ny,fhi(-1,-1,0),'b2tfhi_fhix')
-       call my_out(70,nx,ny,fhi(-1,-1,1),'b2tfhi_fhiy')
-       call my_out(70,nx,ny,fhi_mdf(-1,-1,0),'b2tfhi_fhi_mdfx')
-       call my_out(70,nx,ny,fhi_mdf(-1,-1,1),'b2tfhi_fhi_mdfy')
-       call my_out(70,nx,ny,fhiPSch(-1,-1,0),'b2tfhi_fhiPSchx')
-       call my_out(70,nx,ny,fhiPSch(-1,-1,1),'b2tfhi_fhiPSchy')
-	endif                                                          !srv 18.06.08 }
+      if(iout.ne.0) then                                             !srv 18.06.08 {
+        call my_out(70,nx,ny,floi(-1,-1,0),'b2tfhi_floix')
+        call my_out(70,nx,ny,floi(-1,-1,1),'b2tfhi_floiy')
+        call my_out(70,nx,ny,coni(-1,-1,0,0),'b2tfhi_conix0')
+        call my_out(70,nx,ny,coni(-1,-1,0,1),'b2tfhi_conix1')
+        call my_out(70,nx,ny,coni(-1,-1,0,2),'b2tfhi_conix2')
+        call my_out(70,nx,ny,coni(-1,-1,1,0),'b2tfhi_coniy0')
+        call my_out(70,nx,ny,coni(-1,-1,1,1),'b2tfhi_coniy1')
+        call my_out(70,nx,ny,coni(-1,-1,1,2),'b2tfhi_coniy2')
+        call my_out(70,nx,ny,fhi(-1,-1,0),'b2tfhi_fhix')
+        call my_out(70,nx,ny,fhi(-1,-1,1),'b2tfhi_fhiy')
+        call my_out(70,nx,ny,fhi_mdf(-1,-1,0),'b2tfhi_fhi_mdfx')
+        call my_out(70,nx,ny,fhi_mdf(-1,-1,1),'b2tfhi_fhi_mdfy')
+        call my_out(70,nx,ny,fhiPSch(-1,-1,0),'b2tfhi_fhiPSchx')
+        call my_out(70,nx,ny,fhiPSch(-1,-1,1),'b2tfhi_fhiPSchy')
+      endif                                                          !srv 18.06.08 }
 
 * ..return
       ncall = ncall+1
