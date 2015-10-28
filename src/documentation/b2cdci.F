@@ -2054,8 +2054,8 @@
 *    If guard_flows.eq.0, flows between neighbouring guard cells are blocked.
 *    If guard_flows.eq.1, flows between neighbouring guard cells are kept.
 *    If guard_flows.eq.2, particle flows between neighbouring guard cells 
-*    are blocked for density equation and replace the incorrect corner values
-*    by the interpolated values. It is recommended 2.
+*    are blocked for density equation and the incorrect corner values
+*    are replaced by interpolated values. It is recommended 2.
 *
 *    'b2news_fac_ref'           See description (integer) Numerics
 *    'b2news_facdrift_tanh_a'   '0.0'                  Numerics

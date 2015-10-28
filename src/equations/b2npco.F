@@ -157,22 +157,34 @@ csw 11dec2012, check for solv flags
 *   ..replace the incorrect corner values by the interpolated values
         iy=-1                                                           !srv 27.06.08 {
         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2 ) 
-     &     nb(ix,iy) = nb(rightix(ix,iy),iy) + nb(ix,topiy(ix,iy)) - 
-     &                 nb(rightix(ix,iy),topiy(ix,iy))
-          if(rightix(ix,iy).eq.nx+1 )
-     &     nb(ix,iy) = nb(leftix(ix,iy),iy) + nb(ix,topiy(ix,iy)) - 
-     &                 nb(leftix(ix,iy),topiy(ix,iy))
-        enddo
+	  if(leftix(ix,iy).eq.-2 ) 
+     &     nb(ix,iy) = exp(
+     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
+     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
+     &      log(nb(topix(rightix(ix,iy),rightiy(ix,iy)),
+     &             topiy(rightix(ix,iy),rightiy(ix,iy)))))
+	  if(rightix(ix,iy).eq.nx+1 )
+     &     nb(ix,iy) = exp(
+     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
+     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
+     &      log(nb(topix(leftix(ix,iy),leftiy(ix,iy)),
+     &             topiy(leftix(ix,iy),leftiy(ix,iy)))))
+	enddo
         iy=ny
         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2 ) 
-     &     nb(ix,iy) = nb(rightix(ix,iy),iy) + nb(ix,bottomiy(ix,iy)) - 
-     &                 nb(rightix(ix,iy),bottomiy(ix,iy))
-          if(rightix(ix,iy).eq.nx+1 )
-     &     nb(ix,iy) = nb(leftix(ix,iy),iy) + nb(ix,bottomiy(ix,iy)) - 
-     &                 nb(leftix(ix,iy),bottomiy(ix,iy))
-        enddo                                                          !srv 27.06.08 }
+	  if(leftix(ix,iy).eq.-2 ) 
+     &     nb(ix,iy) = exp(
+     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
+     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
+     &      log(nb(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
+	  if(rightix(ix,iy).eq.nx+1 )
+     &     nb(ix,iy) = exp(
+     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
+     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
+     &      log(nb(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
+	enddo                                                           !srv 27.06.08 }
        endif                                                            !srv 06.07.08 }
       endif
 

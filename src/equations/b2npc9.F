@@ -146,41 +146,53 @@
      &   corpb, aa9, 'b2usc9_')                                       !srv 18.05.02
 *   ..apply correction
       call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0, 
-     &  vol, corpb, pccb(-1,-1,0), pb, nb, ub)
-	if(guard_flows.eq.2) then                                       !srv 06.07.08 { this part should be re-written
+     & vol, corpb, pccb(-1,-1,0), pb, nb, ub)
+      if(guard_flows.eq.2) then                                       !srv 06.07.08 {
 *   ..replace the incorrect corner values by the interpolated values  !srv 30.04.08 {
-       iy=-1                                                          !srv 27.06.08 {
-       do ix = -1, nx
+        iy=-1                                                          !srv 27.06.08 {
+        do ix = -1, nx
 	  if(leftix(ix,iy).eq.-2 ) 
-     &   nb(ix,iy) = nb(rightix(ix,iy),iy) + nb(ix,topiy(ix,iy)) - 
-     &               nb(rightix(ix,iy),topiy(ix,iy))
+     &     nb(ix,iy) = exp(
+     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
+     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
+     &      log(nb(topix(rightix(ix,iy),rightiy(ix,iy)),
+     &             topiy(rightix(ix,iy),rightiy(ix,iy)))))
 	  if(rightix(ix,iy).eq.nx+1 )
-     &   nb(ix,iy) = nb(leftix(ix,iy),iy) + nb(ix,topiy(ix,iy)) - 
-     &               nb(leftix(ix,iy),topiy(ix,iy))
-	 enddo
-       iy=ny
-       do ix = -1, nx
+     &     nb(ix,iy) = exp(
+     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
+     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
+     &      log(nb(topix(leftix(ix,iy),leftiy(ix,iy)),
+     &             topiy(leftix(ix,iy),leftiy(ix,iy)))))
+	enddo
+        iy=ny
+        do ix = -1, nx
 	  if(leftix(ix,iy).eq.-2 ) 
-     &   nb(ix,iy) = nb(rightix(ix,iy),iy) + nb(ix,bottomiy(ix,iy)) - 
-     &               nb(rightix(ix,iy),bottomiy(ix,iy))
+     &     nb(ix,iy) = exp(
+     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
+     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
+     &      log(nb(bottomix(rightix(ix,iy),rightiy(ix,iy)),
+     &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
 	  if(rightix(ix,iy).eq.nx+1 )
-     &   nb(ix,iy) = nb(leftix(ix,iy),iy) + nb(ix,bottomiy(ix,iy)) - 
-     &               nb(leftix(ix,iy),bottomiy(ix,iy))
-	 enddo                                                           !srv 27.06.08 }
+     &     nb(ix,iy) = exp(
+     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
+     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
+     &      log(nb(bottomix(leftix(ix,iy),leftiy(ix,iy)),
+     &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
+	enddo                                                           !srv 27.06.08 }
       endif                                                            !srv 06.07.08 }
-	if (iout.ne.0) then                                            !srv 12.07.02 {
-	  write (chns,'(i3.3)') isb
-	  call my_out(70,nx,ny,pb,'b2npc9_pa'//chns)
-	  call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
-	  call my_out(70,nx,ny,ub,'b2npc9_ua'//chns)
-	  call my_out(70,nx,ny,rescb,'b2npc9_resco'//chns)
-	  call my_out(70,nx,ny,snb(-1,-1,0),'b2npc9_sna0'//chns)
-	  call my_out(70,nx,ny,snb(-1,-1,1),'b2npc9_sna1'//chns)
-          wrk0=snb(:,:,0)+nb*snb(:,:,1)
-	  call my_out(70,nx,ny,wrk0,'b2npc9_sna'//chns)
-	  call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc9_fnax'//chns)
-	  call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc9_fnay'//chns)
-	endif                                                          !srv 12.07.02 }
+      if (iout.ne.0) then                                            !srv 12.07.02 {
+        write (chns,'(i3.3)') isb
+	call my_out(70,nx,ny,pb,'b2npc9_pa'//chns)
+	call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
+	call my_out(70,nx,ny,ub,'b2npc9_ua'//chns)
+	call my_out(70,nx,ny,rescb,'b2npc9_resco'//chns)
+	call my_out(70,nx,ny,snb(-1,-1,0),'b2npc9_sna0'//chns)
+	call my_out(70,nx,ny,snb(-1,-1,1),'b2npc9_sna1'//chns)
+        wrk0=snb(:,:,0)+nb*snb(:,:,1)
+	call my_out(70,nx,ny,wrk0,'b2npc9_sna'//chns)
+	call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc9_fnax'//chns)
+	call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc9_fnay'//chns)
+      endif                                                          !srv 12.07.02 }
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
       ierr = 0
