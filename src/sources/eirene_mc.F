@@ -965,12 +965,14 @@ c*** species to be scaled with themselves (recycling species)
               end if !}
             end do !}
 c!###{
-            write(*,hlp_frm1) ' @@@ istrai,pi: ',
+            if(dbg_eir_mc.gt.0) then
+              write(*,hlp_frm1) ' @@@ istrai,pi: ',
      ,                            istrai,(hlp_pi(ls),ls=1,nnatmi)
-            write(*,hlp_frm1) ' @@@       tfl: ',
+              write(*,hlp_frm1) ' @@@       tfl: ',
      ,                        istrai,(tfl(istrai,ls),ls=1,nnatmi)
-            write(*,hlp_frm1) ' @@@       scl: ',
+              write(*,hlp_frm1) ' @@@       scl: ',
      ,                           istrai,(hlp_scl(ls),ls=1,nnatmi)
+            endif
 c!###}
 
             do ix=1,nx !{
@@ -1075,13 +1077,15 @@ c!###}
               end do !}
             end do !}
 c!###{
-            do ls=1,nnatmi !{
-              s=hlp_po(ls)+hlp_no(ls)-hlp_s(ls)-hlp_ni(ls)
-              print '(i6,2i8,3x,1p,8e13.5)',istrai,ls,
+            if(dbg_eir_mc.gt.0) then
+              do ls=1,nnatmi !{
+                s=hlp_po(ls)+hlp_no(ls)-hlp_s(ls)-hlp_ni(ls)
+                print '(i6,2i8,3x,1p,8e13.5)',istrai,ls,
      ,                    lstrascl(istrai,ls),tfl(istrai,ls),
      ,                    hlp_pi(ls),hlp_po(ls),hlp_ni(ls),
      ,                    hlp_no(ls),hlp_s(ls),hlp_scl(ls),s
-            end do !}
+              end do !}
+            endif
 c!###}
 
 c*** Now rectify the Eirene particle balance for each species -
@@ -1089,8 +1093,10 @@ c*** simply correcting the neutral sources and sinks
 
             do ls=1,nnatmi !{
 c<<<
-             print *,'@@@ istrai,ls,lstrascl: ',
+              if(dbg_eir_mc.gt.0) then
+                print *,'@@@ istrai,ls,lstrascl: ',
      ,                            istrai,ls,lstrascl(istrai,ls)
+              endif
 c>>>
               hlp_scl(ls)=1.0_R8
               if(lstrascl(istrai,ls).eq.ls) then !{
@@ -1112,8 +1118,10 @@ c*** terms in balance.
      .            sign(1.0_R8,s).eq.sign(1.0_R8,hlp_s(ls)))
      >               hlp_scl(ls)=hlp_s(ls)/s
 c<<<
-               print '(1x,a,1p,5e13.5)','@@@ scl,s,po,no,ni,t: ',
+               if(dbg_eir_mc.gt.0) then
+                 print '(1x,a,1p,5e13.5)','@@@ scl,s,po,no,ni,t: ',
      ,          hlp_scl(ls),s,hlp_po(ls),hlp_no(ls),hlp_ni(ls),hlp_t(ls)
+               endif
 c>>>
 
               end if !}
@@ -1332,10 +1340,12 @@ c*** Here only the second pass of correction
               end do !}
             end do !}
 c!###{
-            print '(i6,2i8,3x,1p,7e13.5)',istrai,ls,
+            if(dbg_eir_mc.gt.0) then
+              print '(i6,2i8,3x,1p,7e13.5)',istrai,ls,
      ,                  lstrascl(istrai,ls),tfl(istrai,ls),
      ,                  hlp_pi(ls),hlp_po(ls),
      ,                  hlp_ni(ls),hlp_no(ls),hlp_s(ls),hlp_scl(ls)
+            endif
 c!###}
           end if !}
         end do !}
@@ -1525,6 +1535,7 @@ c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
         if (ihist.eq.nhist) full_history = .true.
         if (ihist.eq.nhist+1) ihist = 1
         write(*,*) 'eirene_mc: EIRENE source averaging ', nhist, ihist
+     &      ,full_history
         sni_h(:,:,:,:,ihist) = sni
         smo_h(:,:,:,:,ihist) = smo
         see_h(:,:,:,ihist) = see
@@ -2447,17 +2458,20 @@ c            sclstra(0,istrai)=sclstra(0,istrai)+hlp_st*recyctmp
           end do !}
         end do !}
 c!###{
-      print *,'@@=============== before correction factors =========='
-      print '(a16,20(4x,a7,2x))',' Stratum Species','sclbase','sclstra',
-     ,                                    'sclrtio','sclalph','sclsrcn'
-      do istrai=1, nstrat !{
-        do j=0,nnatmi !{
-          print '(i6,i8,2x,1p,20e13.5)',istrai,j,sclbase(j,istrai),
-     ,           sclstra(j,istrai),sclrtio(j,istrai),sclalph(j,istrai),
-     ,                                                sclsrcn(j,istrai)
+      if (dbg_eir_mc.gt.0) then
+        print *,'@@=============== before correction factors =========='
+        print '(a16,20(4x,a7,2x))',
+     ,   ' Stratum Species','sclbase','sclstra',
+     ,                      'sclrtio','sclalph','sclsrcn'
+        do istrai=1, nstrat !{
+          do j=0,nnatmi !{
+            print '(i6,i8,2x,1p,20e13.5)',istrai,j,sclbase(j,istrai),
+     ,         sclstra(j,istrai),sclrtio(j,istrai),sclalph(j,istrai),
+     ,                                             sclsrcn(j,istrai)
+          end do !}
         end do !}
-      end do !}
-      print *,'@@===================================================='
+        print *,'@@===================================================='
+      endif
 c!###}
 
 c*** Finally, calculate the scaling factors for the plasma sources and
@@ -2539,17 +2553,20 @@ c*** A primitive iteration scheme - to be modified later if necessary
         end do !}
 
 c!###{
-      print *,'@@=============== after correction factors ==========='
-      print '(a16,20(4x,a7,2x))',' Stratum Species','sclbase','sclstra',
-     ,                                    'sclrtio','sclalph','sclsrcn'
-      do istrai=1, nstrat !{
-        do j=0,nnatmi !{
-          print '(i6,i8,2x,1p,20e13.5)',istrai,j,sclbase(j,istrai),
-     ,           sclstra(j,istrai),sclrtio(j,istrai),sclalph(j,istrai),
-     ,                                                sclsrcn(j,istrai)
+      if (dbg_eir_mc.gt.0) then
+        print *,'@@=============== after correction factors ==========='
+        print '(a16,20(4x,a7,2x))',
+     ,   ' Stratum Species','sclbase','sclstra',
+     ,                      'sclrtio','sclalph','sclsrcn'
+        do istrai=1, nstrat !{
+          do j=0,nnatmi !{
+            print '(i6,i8,2x,1p,20e13.5)',istrai,j,sclbase(j,istrai),
+     ,         sclstra(j,istrai),sclrtio(j,istrai),sclalph(j,istrai),
+     ,                                             sclsrcn(j,istrai)
+          end do !}
         end do !}
-      end do !}
-      print *,'@@===================================================='
+        print *,'@@===================================================='
+      endif
 c!###}
 
       endif ! ank_mods
@@ -2569,10 +2586,14 @@ c!###}
 #endif
 
 ! to store the time history of sources from EIRENE
-      allocate(sni_h(0:ndxp,0:ndyp,nfl,nstra,nhistd))
-      allocate(smo_h(0:ndxp,0:ndyp,nfl,nstra,nhistd))
-      allocate(see_h(0:ndxp,0:ndyp,nstra,nhistd))
-      allocate(sei_h(0:ndxp,0:ndyp,nstra,nhistd))
+      allocate(sni_h(0:(size(sni,1)-1), 0:(size(sni,2)-1),
+     .                    size(sni,3), size(sni,4), nhistd))
+      allocate(smo_h(0:(size(smo,1)-1), 0:(size(smo,2)-1),
+     .                    size(smo,3), size(smo,4), nhistd))
+      allocate(see_h(0:(size(see,1)-1), 0:(size(see,2)-1),
+     .                    size(see,3), nhistd))
+      allocate(sei_h(0:(size(sei,1)-1), 0:(size(sei,2)-1),
+     .                    size(sei,3), nhistd))
       allocate(pfluxa_h(0:ndxp,0:ndyp,natm,1,nhistd))
       allocate(pfluxm_h(0:ndxp,0:ndyp,nmol,1,nhistd))
       allocate(rfluxa_h(0:ndxp,0:ndyp,natm,1,nhistd))
@@ -2603,10 +2624,14 @@ c!###}
 #ifndef B25_EIRENE
 #include "COUPLE/KOPPLDIM.F"
 #endif
-      allocate(sni_s(0:ndxp,0:ndyp,nfl,nstra))
-      allocate(smo_s(0:ndxp,0:ndyp,nfl,nstra))
-      allocate(see_s(0:ndxp,0:ndyp,nstra))
-      allocate(sei_s(0:ndxp,0:ndyp,nstra))
+      allocate(sni_s(0:(size(sni,1)-1), 0:(size(sni,2)-1),
+     .                    size(sni,3), size(sni,4)))
+      allocate(smo_s(0:(size(smo,1)-1), 0:(size(smo,2)-1),
+     .                    size(smo,3), size(smo,4)))
+      allocate(see_s(0:(size(see,1)-1), 0:(size(see,2)-1),
+     .                    size(see,3)))
+      allocate(sei_s(0:(size(sei,1)-1), 0:(size(sei,2)-1),
+     .                    size(sei,3)))
       allocate(pfluxa_s(0:ndxp,0:ndyp,natm,1))
       allocate(pfluxm_s(0:ndxp,0:ndyp,nmol,1))
       allocate(rfluxa_s(0:ndxp,0:ndyp,natm,1))
@@ -2629,4 +2654,3 @@ c!###}
       end subroutine clear_sum_arrays                            !IYS 28.03.12 }
 
       end subroutine eirene_mc
-
