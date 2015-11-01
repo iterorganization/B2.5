@@ -2425,7 +2425,6 @@
 *    When set to 1, disables the tail smoothing for of rate coefficients 
 *    to represent the effect of a power-law tail on the distribution
 *    function. It has been added for compatibility with SOLPS4.3 
-
 *    
 *    'b2ardr_fix_recomb'        '0'                    Atomic Physics 
 *    When changed from 0, and if the ADAS option is in use, then uses the 
