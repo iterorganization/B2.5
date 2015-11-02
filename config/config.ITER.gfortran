@@ -41,6 +41,6 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD = $(FC)
-# LDOPTS = -Bstatic
+LDOPTS = -limf # -Bstatic
 
 #LCPP = ${LD_SONNET} /usr/lib/libstdc++.so.2.9 -lblas
