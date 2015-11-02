@@ -54,6 +54,7 @@
 #ifdef JET
       use b2mod_ppout
 #endif
+      use b2mod_impgyro !yamoto
       implicit none
 *   ..input arguments (unchanged on exit)
 #ifdef JET
@@ -1473,7 +1474,8 @@ c   --> better way doing this is necessary)
 *   ..write summary of initial state
       call b2wfpi (nout(0), idout0, nx, ny, ns, ne, na, ua,
      &  te, ti, po, fna, fhe, fhi, fch)
-
+*   ..IMPGYRO
+      call impgyro_init (nx, ny, ns, ismain) !yamoto
 * ..main loop
 *   ..initialise counters
       itim = 0
@@ -1799,6 +1801,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         goto 1
 *   ..end loop
       endif  !}
+      call impgyro_last !yamoto
 
       if(quitexist)
      1 write(*,*) 'stopping because .quit seen'

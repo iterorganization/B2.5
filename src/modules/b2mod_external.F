@@ -152,7 +152,7 @@ cpxb
         read(74,*) nx, ny, ikmn, ikmx
         call xertst(nx.eq.nxd.and.ny.eq.nyd,
      .   'Dimension mismatch in W.nut!')
-        ns_ext = ikmx - ikmn + 1 
+        ns_ext = ikmx - ikmn + 1
       else
         read(74,*)
       endif
@@ -179,9 +179,9 @@ cxpb   Species data
 cxpb    za_ext, pt_ext, am_ext, text_ext
           do is = 0, ns_ext-1
             toread = is.eq.0
-            if (.not.toread) 
-     >       toread = nint(zn_ext(is)).ne.nint(zn_ext(is-1))     
-            if (toread) is1 = ikmn      
+            if (.not.toread)
+     >       toread = nint(zn_ext(is)).ne.nint(zn_ext(is-1))
+            if (toread) is1 = ikmn
             zn_ext(is) = 74.0_R8
             za_ext(:,:,is) = real(is1)
             am_ext(is) = 3.07832E-25_R8/mp
@@ -219,7 +219,7 @@ cxpb    za_ext, pt_ext, am_ext, text_ext
             else
               pot(is) = pot(is-1) + pdum(is1)
               pt_ext(:,:,is) = pot(is)
-            endif  
+            endif
             is1 = is1 + 1
           end do
           deallocate(pot,pdum)
@@ -239,7 +239,7 @@ cxpb
           read(74,*) dext
           ta_ext(0:nxd-1,0:nyd-1,is) = dext(:,:) ! tungsten ik-th charge state temperature
         enddo
-        read(74,*) dext(:,:)     ! electron particle source 
+        read(74,*) dext(:,:)     ! electron particle source
      &                           !    by ionization/recombination == ep_ir
         sne_ext(0:nxd-1,0:nyd-1) = dext(:,:)
         read(74,*) dext(:,:)     ! ion momentum source by Coulomb collision == im_cc
@@ -267,7 +267,7 @@ cxpb
      .     za2_ext(-1:nxd,-1:nyd,is) * na_ext(-1:nxd,-1:nyd,is)
           ni_ext(-1:nxd,-1:nyd,0) = ni_ext(-1:nxd,-1:nyd,0) +
      .     na_ext(-1:nxd,-1:nyd,is)
-          if (.not.is_ext_neutral(is)) ni_ext(-1:nxd,-1:nyd,1) = 
+          if (.not.is_ext_neutral(is)) ni_ext(-1:nxd,-1:nyd,1) =
      .     ni_ext(-1:nxd,-1:nyd,1) + na_ext(-1:nxd,-1:nyd,is)
 cxpb Computing ua from fa is what we really want to do
         if (.false.) then
@@ -333,8 +333,8 @@ cxpb
       initialised_externals=.true.
       return
  974  continue
-      if (.not.initialised_externals) 
-     > call alloc_b2mod_external_dummy(nxd,nyd) 
+      if (.not.initialised_externals)
+     > call alloc_b2mod_external_dummy(nxd,nyd)
       initialised_externals=.true.
       return
 

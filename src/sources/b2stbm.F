@@ -11,6 +11,7 @@
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_external
+      use b2mod_impgyro
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
       use b2mod_sources
@@ -243,17 +244,106 @@ cxpb Must convert fluxes to flux densities
         end do
       end do
 
-      if (ncall.eq.0 .or. 
+      if (ncall.eq.0 .or.
      & (main_call .and. mod(ncall,impgyro_mod).eq.0)) then
 cxpb The call below obtains the following quantities from IMPGYRO
 cxpb Main W data: na_ext, ua_ext, ta_ext
 cxpb Sources due to W: sne_ext, smo_ext, she_ext, shi_ext
 cxpb Derived quantities: ne_ext, ne2_ext, ni_ext, fa_ext, fhi_ext, ue_ext
-        call read_b2mod_external(nx,ny,ns,ismain)
+c        call read_b2mod_external(nx,ny,ns,ismain)
 cxpb In the current arrangement, IMPGYRO provides: na_ext, ua_ext, ta_ext
 cxpb It would be best to have instead as primary quantities:
 cxpb na_ext, fa_ext, ta_ext, fhi_ext
 cxpb And then derive: ua_ext
+        na_ext = 0.0_R8
+        ua_ext = 0.0_R8
+        ta_ext = 0.0_R8
+        sna_ext = 0.0_R8
+        sne_ext = 0.0_R8
+        smo_ext = 0.0_R8
+        she_ext = 0.0_R8
+        shi_ext = 0.0_R8
+        sch_ext = 0.0_R8
+
+      call impgyro_main(
+     *  nx, ny, ns, ns_ext,
+     *  na0, ne, ua0, te, ti0, po,
+     *  fna0, fhe0, fhi0, fch0,
+     *  sna_ext, sne_ext, smo_ext,
+     *  she_ext, shi_ext, sch_ext,
+     *  na_ext, ua_ext, ta_ext)
+
+         call extend(na_ext,nx,ny,ns_ext,nx,ny,ns_ext)
+         call extend(ua_ext,nx,ny,ns_ext,nx,ny,ns_ext)
+         call extend(ta_ext,nx,ny,ns_ext,nx,ny,ns_ext)
+        
+        ne_ext = 0.0_R8
+        ni_ext = 0.0_R8
+        ue_ext = 0.0_R8
+        ne2_ext = 0.0_R8
+        do is = 0, ns_ext-1
+          ne_ext(-1:nx,-1:ny) = ne_ext(-1:nx,-1:ny) +
+     .     za_ext(-1:nx,-1:ny,is) * na_ext(-1:nx,-1:ny,is)
+          ne2_ext(-1:nx,-1:ny) = ne2_ext(-1:nx,-1:ny) +
+     .     za2_ext(-1:nx,-1:ny,is) * na_ext(-1:nx,-1:ny,is)
+          ni_ext(-1:nx,-1:ny,0) = ni_ext(-1:nx,-1:ny,0) +
+     .     na_ext(-1:nx,-1:ny,is)
+          if (.not.is_ext_neutral(is)) ni_ext(-1:nx,-1:ny,1) =
+     .     ni_ext(-1:nx,-1:ny,1) + na_ext(-1:nx,-1:ny,is)
+cxpb Computing ua from fa is what we really want to do
+        if (.false.) then
+          do iy=-1,ny
+            do ix=-1,nx
+              if (leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then
+                ua_ext(ix,iy,is) = 0.5_R8*
+     .           (fa_ext(ix,iy,0,is)/pbs(ix,iy,0)+
+     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,is)/
+     .            pbs(rightix(ix,iy),rightiy(ix,iy),0))/
+     .           na_ext(ix,iy,is)
+              else if (leftix(ix,iy).eq.-2) then
+                ua_ext(ix,iy,is) =
+     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,is)/
+     .            pbs(rightix(ix,iy),rightiy(ix,iy),0)/
+     .            na_ext(ix,iy,is)
+              else if (rightix(ix,iy).eq.nx+1) then
+                ua_ext(ix,iy,is) =
+     .           fa_ext(ix,iy,0,is)/pbs(ix,iy,0)/na_ext(ix,iy,is)
+              end if
+            end do
+          end do
+        else
+          do iy=-1,ny
+            do ix=-1,nx
+              if(leftix(ix,iy).ne.-2) then
+                fa_ext(ix,iy,0,is)=((ua_ext(ix,iy,is)+
+     .           ua_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8)*
+     .           ((na_ext(ix,iy,is)+
+     .           na_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8)*
+     .           pbs(ix,iy,0)
+                 fhi_ext(ix,iy,0) = fhi_ext(ix,iy,0) +
+     .            1.5_R8*fa_ext(ix,iy,0,is)*(ta_ext(ix,iy,is)+
+     .            ta_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
+               else
+                 fa_ext(ix,iy,0,is)=0.0_R8
+               endif
+            enddo
+          enddo
+          fa_ext(:,:,1,:) = 0.0_R8
+        endif
+cxpb
+          ue_ext(-1:nx,-1:ny) = ue_ext(-1:nx,-1:ny) +
+     .     za_ext(-1:nx,-1:ny,is) * ua_ext(-1:nx,-1:ny,is) *
+     .     na_ext(-1:nx,-1:ny,is)
+        end do
+        do ix = -1, nx
+          do iy = -1, ny
+            if (ne_ext(ix,iy).gt.0.0_R8) then
+              ue_ext(ix,iy) = ue_ext(ix,iy)/ne_ext(ix,iy)
+            else
+              ue_ext(ix,iy) = 0.0_R8
+            endif
+          enddo
+        enddo
       end if
 
 * ..linearise external sources
