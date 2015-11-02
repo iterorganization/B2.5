@@ -739,6 +739,10 @@
 *     13 : Imposes the currents due to drifts for the South private flux and North
 *     boundaries.
 *     Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
+*     16 : Constant electric potential feedback on imposed total current
+*     The current prescribed is given by the sum of the POTPAR(IB,1) (in A)
+*     over all the BCPOT=16 boundaries. 
+*     Still experimental, will not work for drift cases.
 *     21 : constant potential feedback scaled by potential on the ring bc_type21_ref away
 *     POTPAR(,,1) specifies the desired potential in $V$.
 *     POTPAR(,,2) is the strength of the feedback

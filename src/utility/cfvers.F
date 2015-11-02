@@ -28,11 +28,11 @@
       entry cfverw(nput, newversion)
       inquire (nput,form=chf,err=20)
       if (streql(chf,'formatted')) then
-        write(nput,'(a,a,1x,a)') 'VERSION',newversion,gitversion
+        write(nput,'(a,a,1x,a)') 'VERSION',newversion,git_version
       else
-        write(nput) 'VERSION',newversion,' ',gitversion
+        write(nput) 'VERSION',newversion,' ',git_version
       endif
-      write(*,'(4a)') 'VERSION: ',newversion,' GIT hash: ',gitversion
+      write(*,'(4a)') 'VERSION: ',newversion,' GIT hash: ',git_version
    20 continue
       return
 

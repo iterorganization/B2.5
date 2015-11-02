@@ -127,10 +127,14 @@
       integer, save :: pot_eq = 1                                       !srv 27.02.13
       integer, save :: use_astra
       integer, save :: drift_style
-      logical once_bccon(0:ns-1), once_bcene, once_bceni                !srv 16.02.12 12.02.15 29.09.15
+      logical once_bccon(0:ns-1), once_bcene, once_bceni, once_bcpot    !srv 16.02.12 12.02.15 29.09.15
       real (kind=R8) , save :: cbc = 1.0e0_R8, bc_ref = 0.01            !srv 14.10.99
       real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
-      real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1)   !srv 16.02.12 29.09.15
+      real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1),  !srv 16.02.12 29.09.15
+     &                         scurpar
+      real (kind=R8), save :: prev_cur_delta, cur_delta, po_step,       ! Solovyev 01.05.14
+     * po_prev, po_curr, coeff_16                                       ! Solovyev 01.05.14, 24.05.14
+      integer, save :: bcpot_16_step = 50                               ! Solovyev 23.05.14 !srv 29.09.15 }
       real (kind=R8) ::
      *  cutll, cutlo, vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2,  !srv 15.11.07
      1  t3, totflux, weight,
@@ -150,17 +154,17 @@
      &  sna0_no_mdf(-1:nx,-1:ny,0:1,0:ns-1)                             !srv 23.09.08
       real (kind=R8), save ::                                           !srv 16.02.12
      *  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
-     *  NAS, TES, TIS, NIVS, FFAC, DFS
+     *  NAS, TES, TIS, NIVS, FFAC, DFS, POS                             !srv 29.09.15
       real (kind=R8) , save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
      &                         phm2 = 1.0e0_R8,
-     &                         corr_flux   = 0.0e0_R8                 !srv 25.07.05
-      character chns*3, chk*1                                        !srv 11.07.05
+     &                         corr_flux   = 0.0e0_R8                   !srv 25.07.05
+      character chns*3, chk*1                                           !srv 11.07.05
       logical done, decay_length_ok
       real (kind=R8) ::
-     *  ro(-1:nx,-1:ny), cs, csb, uuout, upout, zbar, zarg, uutest,  !srv 01.02.09
-     *  fchy_dia, fchy_inertia, seec                                 !srv 07.04.00
+     *  ro(-1:nx,-1:ny), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
+     *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
       integer isfeedback, fix_fch_in_fhe_sheath
-      integer, save :: fix_sx_in_fhe_sheath = 1                       !srv 08.05.09
+      integer, save :: fix_sx_in_fhe_sheath = 1                         !srv 08.05.09
       integer, save :: use_eirene, no_current 
       real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
      1 bc_type13_norm, bc_type13_fac, na_min, na_new
@@ -280,6 +284,7 @@
         call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &   'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
         call ipgetr ('b2tfhe_anomalous', fch_anomalous)
+        call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 23.05.14 !srv 29.09.15
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -467,6 +472,7 @@ cxpb  should only include ExB and not diamagnetic contribution
       once_bccon = .false.                                             !srv 16.02.12 {
       once_bcene = .false.
       once_bceni = .false.                                             !srv 16.02.12 }
+      once_bcpot = .false.                                             !Solovyev 13.05.14 !srv 29.09.15
 
 * -- LOOP OVER ALL BOUNDARIES
       DO IB=1, NBC
@@ -7543,8 +7549,8 @@ cxpb Careful here because of BC number clash
             totflux = 0.0_R8
             t0=0.0e0_R8   ! Volume                                              !lk 12.12.12 {
             t1=0.0e0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
-            t2=0.0e0_R8   ! Poloidally volume-averaged electrons density in the cell next to boundary
-            t3=0.0e0_R8   ! Poloidally volume-averaged electrons density in the boundary cell
+            t2=0.0e0_R8   ! Poloidally volume-averaged electron density in the cell next to boundary
+            t3=0.0e0_R8   ! Poloidally volume-averaged electron density in the boundary cell
             DO IBW=IB,NBC
               IF(BCCHAR(IBW).EQ.'S'.AND.BCENI(IBW).EQ.BCENI(IB)) THEN
                 if(mdf_fhi.ne.0) then
@@ -8562,11 +8568,106 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
         CALL XERRAB ('B2STBC -- BCPOT=15, NOT AVAILABLE FOR S,N,W,E')
         GOTO 50000
 
-* -- BCPOT=16 -- Nothing implemented
+* -- BCPOT=16 -- Feedback boundary condition with constant potential    !Solovyev 22.03.14 !srv 29.09.15
 
-41600   CONTINUE
-        CALL XERRAB ('B2STBC -- BCPOT=16, NOT AVAILABLE FOR S,N,W,E')
-        GOTO 50000
+41600   continue
+        if (ncall.eq.0) then
+          write(*,'(a,a,a)')
+     .     'electric potential feedback by current on ',
+     1     BCCHAR(IB),boundary_location(ib)
+! add smth about #ifdef ASTRA here
+          scurpar = 0.0_R8
+c Init variables for BCPOT=16                                  { Solovyev 01.05.14
+          cur_delta = 0.0_R8              ! square of delta between desired and calculated current
+          prev_cur_delta = 0.0_R8         ! previous value of upper value
+          po_step = 0.0_R8                ! step of approximation (set after 1st iteration)
+          coeff_16 = 1.0_R8
+c************************************************************* } Solovyev 01.05.14
+          do ibw=ib,nbc
+            if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
+              scurpar = scurpar + potpar(ibw,1)
+            endif
+          enddo
+          write (*,*) 'SCURPAR = ', scurpar
+          POS = 0.0_R8                                                  !srv 29.09.15
+          VS  = 0.0_R8
+          DO IBW=IB,NBC
+            if(BCCHAR(IBW).EQ.'S'.and.BCPOT(IBW).EQ.BCPOT(IB))THEN
+              DO IX=1, BC_LIST_SIZE(IBW)	       
+                POS = POS + PO(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
+     *                     VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+              ENDDO
+	    endif
+	  ENDDO
+          POS=POS/VS                                                    !srv 29.09.15 }
+          po_prev = POS
+          write (*,*) 'POS at 0 = ', POS
+        endif
+        if (.not.once_bcpot) then
+          if (BCCHAR(ib).eq.'S') then
+            totflux = 0.0_R8
+            do ibw=ib,nbc
+              if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
+                do ix=1, bc_list_size(ibw)
+                  totflux = totflux + 
+     &              fch(topix(bc_list_x(ix,ibw),bc_list_y(ix,ibw)),
+     &                  topiy(bc_list_x(ix,ibw),bc_list_y(ix,ibw)),1)
+                enddo
+              endif
+            enddo
+c The implementation is based on one step of Newton's method
+            cur_delta = totflux-scurpar                                 ! { Solovyev 03.05.14
+            if (ncall.eq.0) then
+              write (72, *) '# Newton'
+              prev_cur_delta = cur_delta
+            else
+              if (ncall.eq.1) then                                      ! Solovyev 23.05.14
+                po_curr = 0.0_R8                                        !srv 29.09.15
+                VS  = 0.0_R8
+                DO IBW=IB,NBC
+                  if(BCCHAR(IBW).EQ.'S'.and.BCENE(IBW).EQ.BCENE(IB))THEN
+                    DO IX=1, BC_LIST_SIZE(IBW)	       
+                      po_curr=po_curr+
+     &                   PO(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+     &                 *VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                      VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                    ENDDO
+	          endif
+	        ENDDO
+                po_curr=po_curr/VS                                      !srv 29.09.15 }
+              endif                                                     !Solovyev 23.05.14
+              if (mod(ncall,bcpot_16_step).eq.0) then                   !Solovyev 23.05.14
+                if (abs(cur_delta-prev_cur_delta).gt.1.0e-20_R8) then   !{ Solovyev 24.05.14
+                  coeff_16 = (po_prev - po_curr)/
+     &              (cur_delta - prev_cur_delta)
+                endif
+                po_step = coeff_16*cur_delta                            !} Solovyev 24.05.14
+                POS = po_curr + po_step
+                prev_cur_delta = cur_delta
+                po_prev = po_curr
+                po_curr = POS
+                write (72, *) ncall, totflux, POS   ! Solovyev 29.04.14 - test output to b2fdebug
+              endif                                                             ! Solovyev 23.05.14
+            endif                                                               ! } Solovyev 03.05.14
+c end of implementation
+            write (*, *) 'ncall, totflux, POS', ncall,totflux, POS   !Solovyev 29.04.14 - test output to b2fdebug
+            do ibw=ib,nbc
+              if (BCCHAR(ibw).eq.'S'.and.BCPOT(ibw).eq.BCPOT(ib)) then
+                do ix=1, BC_LIST_SIZE(IBW)
+                  sch0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0) = 
+     &                  PBIG*POS*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))    !Solovyev 27.04.14
+                  sch0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1) = 
+     &                 -PBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))        !Solovyev 27.04.14
+                enddo
+              endif
+            enddo
+            once_bcpot = .true.
+          else
+            call xerrab('B2STBC -- BCPOT=16, NOT AVAILABLE FOR N,W,E')
+          endif
+        endif
+        goto 50000                                                          !srv 29.09.15 }
 
 * -- BCPOT=17 -- Nothing implemented
 

@@ -269,6 +269,7 @@
 *    'b2srst_rf1'               '1.0'                  Numerics
 *    'b2srst_rf2'               '1.0'                  Numerics
 *    'b2srst_rf3'               '1.0'                  Numerics
+*    'b2stbc_bcpot_16_step'     '50'                   Numerics
 *    'b2stbc_boundary_namelist' '0'                    Run
 *    'b2stbc_cbc'               '1.0'                  Run
 *    'b2stbc_cbsnafac'          '0.01'                 Numerics
@@ -1509,11 +1510,6 @@
 *    'b2treq_phm0'              '1.0'                  Physics
 *    Multiplier to the temperature equipartition term.
 *
-*    'b2tlh0_flux_limit_style'  '1'                    Numerics
-*    If '1', Spb's form to calculate parallel and perpendicular  
-*    neutral heat conductivity flux limit.
-*    It is recommended '1'.
-*
 *    'b2tqca_phm0'              '1.0'                  Physics
 *    Multiplier for the classical parallel viscosity.
 *
@@ -1938,6 +1934,11 @@
 *    If core_cond_limit.eq.0, then the heat flux limit due to chvemx
 *    is not applied in the core.
 *
+*    'b2tlh0_flux_limit_style'  '1'                    Numerics
+*    If '1', Spb's form to calculate parallel and perpendicular  
+*    neutral heat conductivity flux limit.
+*    It is recommended '1'.
+*
 *    'b2tral_mode'              '1'                    Numerics
 *    Switch to choose between various interpolation schemes for transport
 *    coefficients (Does not apply to pinch velocities vla or to the
@@ -2038,6 +2039,11 @@
 *    'b2stbc_shi0ep'            '1.0e-36'              Numerics
 *    'b2stbc_sna0ep'            '1.0e-36'              Numerics
 *    Small level sources introduced in all cells.
+*
+*    'b2stbc_bcpot_16_step'     '50'                   Numerics
+*    Frequency (in number of calls to b2stbc_phys) at which the
+*    constant value of the potential at the boundaries where BCPOT=16
+*    is applied will be recomputed.
 *
 *    'b2mndr_na_min'            '1.0e4'                Numerics
 *    Minimal density maintained in all cells for all species.

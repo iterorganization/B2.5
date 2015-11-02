@@ -618,7 +618,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
 
         call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
      *   b2brem,b2rad,b2qie(0),b2vdp,
-     1   eirene_step_cpu,5)
+     1   eirene_step_cpu)
         eircount=1
         if(ncall.eq.0) then 
           write(*,*) 'Calling post_couple'
@@ -634,7 +634,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
            my_ltime=.false.
            call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
      *       b2brem,b2rad,b2qie(0),b2vdp,
-     1       eirene_step_cpu,5)
+     1       eirene_step_cpu)
            eircount=eircount+1
           enddo
         endif
