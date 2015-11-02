@@ -42,7 +42,7 @@ c-------------------------------------------------------------------
       stop
 
  2    continue
-      write(*,*)'sorry, you can not run the code for rho = 0.'
+      write(*,*)'sorry, you cannot run the code for rho = 0.'
       stop
 
  3    continue 

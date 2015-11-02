@@ -230,7 +230,7 @@
         else
           lt0 = .not.lnext(k,k+1)
         endif
-*      (the meaning of lt0 is 'species k can not ionise to k+1')
+*      (the meaning of lt0 is 'species k cannot ionise to k+1')
         if (lt0) then
 *       (ionisation rate must be 0)
           t0 = smax((rtnt+1)*(rtnn+1),rtlsa(0,0,k),1)
@@ -244,7 +244,7 @@
         else
           lt0 = .not.lnext(k-1,k)
         endif
-*      (the meaning of lt0 is 'species k can not recombine to k-1')
+*      (the meaning of lt0 is 'species k cannot recombine to k-1')
         if (lt0) then
 *       (recombination rate must be 0)
           t0 = smax((rtnt+1)*(rtnn+1),rtlra(0,0,k),1)
@@ -258,7 +258,7 @@
         else
           lt0 = .not.lnext(k-1,k)
         endif
-*      (the meaning of lt0 is 'species k can not recombine to k-1')
+*      (the meaning of lt0 is 'species k cannot recombine to k-1')
         if (lt0) then
 *       (charge exchange rate must be 0)
           t0 = smax((rtnt+1)*(rtnn+1),rtlcx(0,0,k),1)

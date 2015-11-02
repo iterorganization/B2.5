@@ -105,7 +105,7 @@
        else
         lt0 = .not.lnext(k-1,k)
        endif
-*      (the meaning of lt0 is 'species k can not recombine to k-1')
+*      (the meaning of lt0 is 'species k cannot recombine to k-1')
        if (lt0) then
 *       (recombination rate coefficient must be 0)
         t0 = smax((rtnt+1)*(rtnn+1),rtlra(0,0,k),1)
@@ -119,7 +119,7 @@
        else
         lt0 = .not.lnext(k-1,k)
        endif
-*      (the meaning of lt0 is 'species k can not recombine to k-1')
+*      (the meaning of lt0 is 'species k cannot recombine to k-1')
        if (lt0) then
 *       (charge exchange rate coefficient must be 0)
         t0 = smax((rtnt+1)*(rtnn+1),rtlcx(0,0,k),1)

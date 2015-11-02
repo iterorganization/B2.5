@@ -590,13 +590,13 @@ DEFAULT: ${MDEXE}
 ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
 	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${LD_MDSPLUS} ${LDOPTSend}
 
-${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version.h
+${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h
 	@${BLD} $@ ${LIBOBJS}
 
 # target 'clean' cleans up the directory.
 clean : 
 	-mkdir ${OBJDIR}/.delete
-	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version.h ${OBJDIR}/LISTOBJ ${OBJDIR}/dependencies ${OBJDIR}/.delete
+	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version_B25.h ${OBJDIR}/LISTOBJ ${OBJDIR}/dependencies ${OBJDIR}/.delete
 ifneq (${MOD},o)
 	-mv -i ${OBJDIR}/*.${MOD} ${OBJDIR}/.delete
 endif
@@ -670,11 +670,11 @@ endif
 
 ${OBJDIR}/LISTOBJ: listobj
 
-VERSION: ${SRCDIR}/include/git_version.h
+VERSION: ${SRCDIR}/include/git_version_B25.h
 
-${SRCDIR}/include/git_version.h: force
-	@echo "      character*27 :: git_version ='`git describe --dirty --always`'" > ${SRCDIR}/include/git_version_new.h
-	@if cmp -s ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version.h; then rm ${SRCDIR}/include/git_version_new.h; else mv ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version.h; fi
+${SRCDIR}/include/git_version_B25.h: force
+	@echo "      character*27 :: git_version_B25 ='`git describe --dirty --always`'" > ${SRCDIR}/include/git_version_new.h
+	@if cmp -s ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version_B25.h; then rm ${SRCDIR}/include/git_version_new.h; else mv ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version_B25.h; fi
 
 ${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
 ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)

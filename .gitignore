@@ -5,6 +5,7 @@
 TAGS
 LISTOBJ
 git_version.h
+git_version_*.h
 mpif.h
 !src/include/mpif.h
 

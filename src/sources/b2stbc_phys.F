@@ -8448,7 +8448,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
      &     'on ',BCCHAR(IB),boundary_location(ib)
           if(istyle_cur_contr_on_S_and_N.eq.0 .or.
      &       istyle_cur_contr_on_S_and_N.eq.1) then
-            write(*,*) ' BCPOT=12 can not be used when ',
+            write(*,*) ' BCPOT=12 cannot be used when ',
      &                 'istyle_cur_contr_on_S_and_N  = 0 or 1'
             call xerrab
      .       ('faulty parameter istyle_cur_contr_on_S_and_N !')
@@ -8512,7 +8512,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
      &     'on ',BCCHAR(IB),boundary_location(ib)
           if(istyle_cur_contr_on_S_and_N.eq.0 .or.
      &       istyle_cur_contr_on_S_and_N.eq.1) then
-            write(*,*) ' BCPOT=13 can not be used when ',
+            write(*,*) ' BCPOT=13 cannot be used when ',
      &                 'istyle_cur_contr_on_S_and_N  = 0 or 1'
             call xerrab
      .       ('faulty parameter istyle_cur_contr_on_S_and_N !')
