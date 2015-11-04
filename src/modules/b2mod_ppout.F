@@ -467,9 +467,7 @@ c   ..B-tor
 c   ..Pitch angle
       do ix = -1 , nxpp
          do iy = -1 , nypp
-            sh(ix,iy) = sqrt( bb(ix,iy,0) * bb(ix,iy,0) +
-     *                        bb(ix,iy,1) * bb(ix,iy,1) ) /
-     *                  bb(ix,iy,3)
+            sh(ix,iy) = bb(ix,iy,0) / bb(ix,iy,3)
          enddo
       enddo
 

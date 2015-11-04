@@ -739,16 +739,16 @@ cxpb
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
           print *
           print *,'%%% Eirene data in B2 %%%',nlimps
-          print *,'nnatmi,nnmoli,nnplsi,nnstsi,nnlimi = ',
+          print '(a,5(i3,1x))','nnatmi,nnmoli,nnplsi,nnstsi,nnlimi = ',
      ,       nnatmi,nnmoli,nnplsi,nnstsi,nnlimi
           write(hlp_frm1,'(a,i2,a)')
      ,     '(1x,',2*nnatmi+2*nnmoli,'(6x,a2,i3.2))'
           write(hlp_frm2,'(a,i2,a)')
      ,     '(1p,i4,',2*nnatmi+2*nnmoli,'e11.4)'
           write(hlp_frm3,'(a,i2,a)')
-     ,     '(1p,i4,',nnplsi,'e9.2)'
+     ,     '(1p,i4,',nnplsi,'e11.4)'
           write(hlp_frm4,'(a,i2,a)')
-     ,     '(1p,i4,',1+nnatmi+nnmoli,'e9.2)'
+     ,     '(1p,i4,',1+nnatmi+nnmoli,'e11.4)'
           do k=0,nstrat !{
             print *
             print *,'wldna, wldnm, wldra, wldrm:',k
@@ -806,8 +806,9 @@ cxpb
         if(dbg_eir_mc.gt.0 .and.
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
 c*** Print the particle fluxes for each stratum and species
-          print *,'%%%=============== total fluxes by stratum and ',
-     ,       'species before correction ===============%%%'
+          print '(a)',
+     ,     '%%%=============== total fluxes by stratum and '//
+     ,     'species before correction ===============%%%'
           print '(a25,20(4x,a5,4x))',' Stratum Species lstrascl',
      ,       ' tfl ','wldpi','wldpo','wldni','wldno',
      ,       'Srcpl','puff ','d/dt ','crsrc','error'
@@ -906,8 +907,9 @@ c*** Print the particle fluxes for each stratum and species
      ,           hlp_s(ls),hlp_g(ls),hlp_t(ls),t0,s
             end do !}
           end do !}
-          print *,'%%%============================================',
-     ,       '=========================================%%%'
+          print '(a)',
+     ,     '%%%============================================'//
+     ,     '=========================================%%%'
         end if !}
       endif
 
@@ -1254,9 +1256,10 @@ c*** Here only the second pass of correction
                     hlp_scl(ls)=(hlp_ni(ls)-hlp_no(ls))/hlp_g(ls)
                   else !}{
                     if(hlp_ni(ls)-hlp_no(ls).ne.0.0_R8)
-     -               write(*,*) 'eirene_mc: error in scaling - no ',
-     ,               'sources and non-zero wall flux. ',
-     ,               'stratum, species =',istrai,ls
+     -               write(*,'(a,a,a,i3,1x,i3)')
+     ,                'eirene_mc: error in scaling - no ',
+     ,                'sources and non-zero wall flux. ',
+     ,                'stratum, species = ',istrai,ls
                   end if !}
                 else !}{
                   s=hlp_g(ls)**2-4.0_R8*(hlp_ni(ls)-hlp_no(ls))*s
@@ -1275,26 +1278,30 @@ c*** Here only the second pass of correction
                         hlp_scl(ls)=x2
                       end if !}
                     end if !}
-                    print*,'ank+xpb: ls,s,g,t,ni,no,x1,x2,scl',ls,
+                    print '(a,i3,1p,8(1x,e12.5))',
+     .                'ank+xpb: ls,s,g,t,ni,no,x1,x2,scl',ls,
      1                 hlp_s(ls),hlp_g(ls),hlp_t(ls),
      .                 hlp_ni(ls),hlp_no(ls),
      2                 x1,x2,hlp_scl(ls)
                   else !}{
-                    write(*,*) 'eirene_mc: error in scaling - zero ',
-     ,               'discriminant.  stratum, species =',istrai,ls
+                    write(*,'(a,a,i3,1x,i3)')
+     ,               'eirene_mc: error in scaling - zero ',
+     ,               'discriminant.  stratum, species = ',istrai,ls
                   end if !}
                 end if !}
               end if !}
               if(hlp_scl(ls).le.0.0_R8) then !{
-                write(*,*) 'eirene_mc: error in scaling - non-',
+                write(*,'(a,a,a,i3,1x,i3,1x,1p,e11.4)')
+     ,           'eirene_mc: error in scaling - non-',
      ,           'positive scaling factor. stratum, species, ',
-     ,           'factor =',istrai,ls,hlp_scl(ls)
+     ,           'factor = ',istrai,ls,hlp_scl(ls)
                 hlp_scl(ls)=1.0_R8
               else if(abs(log(hlp_scl(ls))).gt.
      1         abs(log(neut_scl_lim))) then !}{
-                write(*,*) 'eirene_mc: error in scaling - too ',
+                write(*,'(a,a,a,i3,1x,i3,1x,1p,e11.4)')
+     ,           'eirene_mc: error in scaling - too ',
      ,           'strong variation. stratum, species, ',
-     ,           'factor =',istrai,ls,hlp_scl(ls)
+     ,           'factor = ',istrai,ls,hlp_scl(ls)
                 hlp_scl(ls)=1.0_R8
               end if !}
               hlp_scp(ls,istrai)=hlp_scl(ls)
@@ -1353,8 +1360,9 @@ c!###}
         if(dbg_eir_mc.gt.0 .and. 
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
 c*** Print the particle fluxes for each stratum and species
-          print *,'%%%=============== total fluxes by stratum and ',
-     ,       'species after correction ================%%%'
+          print '(a)',
+     ,     '%%%=============== total fluxes by stratum and '//
+     ,     'species after correction ================%%%'
           print '(a25,10(4x,a5,4x))',' Stratum Species lstrascl',
      ,       ' tfl ','wldpi','wldpo','wldni','wldno',
      ,       'Srcpl','puff ',' d/dt','crsrc','error'
@@ -1452,8 +1460,9 @@ c*** Print the particle fluxes for each stratum and species
      ,         hlp_s(ls),hlp_g(ls),hlp_t(ls),t0,s
               end do !}
           end do !}
-          print *,'%%%============================================',
-     ,       '=========================================%%%'
+          print '(a)',
+     ,     '%%%============================================'//
+     ,     '=========================================%%%'
         end if !}
 
 c!###{

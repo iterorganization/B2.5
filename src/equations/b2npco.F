@@ -61,7 +61,7 @@
      *  aa5(-1:nx,-1:ny,-2:2), wrk0(-1:nx,-1:ny)
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
-      external subini, subend, xertst, ipgetr
+      external subini, subend, xertst, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2ursc, b2usco, b2upco
 *   ..initialisation
       data ncall/0/, rxg/1.0_R8/, pcm0/1.0_R8/, pcm1/1.0_R8/
@@ -138,7 +138,7 @@
       if(guard_flows.eq.2) then
        do iy = -1, ny, ny+1                                             !srv 27.06.08 {
         do ix = -1, nx
-         if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
+         if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
           rescb(ix,iy) = 0.0_R8
          endif
         enddo 
@@ -147,38 +147,38 @@
 csw 11dec2012, check for solv flags
       if(all(solvcreg(0:nnreg(0)))) then
 *   ..compute correction
-       call b2usco (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1, 
+       call b2usco (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1,
      &  vol, pbs, nb, pb, snb(-1,-1,1),flob,
-     &  conb, pccb(-1,-1,1), rescb, corpb, aa5, 'b2usco_')              !srv 18.05.02 26.09.12
+     &  conb, pccb(-1,-1,1), rescb, corpb, aa5, 'b2usco')               !srv 18.05.02 26.09.12
 *   ..apply correction
-       call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0, 
+       call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
      &  vol, corpb, pccb(-1,-1,0), pb, nb, ub)
        if(guard_flows.eq.2) then                                        !srv 06.07.08 {
 *   ..replace the incorrect corner values by the interpolated values
         iy=-1                                                           !srv 27.06.08 {
         do ix = -1, nx
-	  if(leftix(ix,iy).eq.-2 ) 
+	  if(leftix(ix,iy).eq.-2)
      &     nb(ix,iy) = exp(
-     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
-     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
+     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) +
+     .      log(nb(topix(ix,iy),topiy(ix,iy))) -
      &      log(nb(topix(rightix(ix,iy),rightiy(ix,iy)),
      &             topiy(rightix(ix,iy),rightiy(ix,iy)))))
-	  if(rightix(ix,iy).eq.nx+1 )
+	  if(rightix(ix,iy).eq.nx+1)
      &     nb(ix,iy) = exp(
-     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
-     .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
+     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) +
+     .      log(nb(topix(ix,iy),topiy(ix,iy))) -
      &      log(nb(topix(leftix(ix,iy),leftiy(ix,iy)),
      &             topiy(leftix(ix,iy),leftiy(ix,iy)))))
 	enddo
         iy=ny
         do ix = -1, nx
-	  if(leftix(ix,iy).eq.-2 ) 
+	  if(leftix(ix,iy).eq.-2)
      &     nb(ix,iy) = exp(
      .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
      .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
      &      log(nb(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
-	  if(rightix(ix,iy).eq.nx+1 )
+	  if(rightix(ix,iy).eq.nx+1)
      &     nb(ix,iy) = exp(
      .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
      .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 

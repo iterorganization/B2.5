@@ -473,31 +473,33 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 
 csw 16oct2012 init ier0
         ier0=0
-
-        if(mdf_fnb.eq.0) then                                           !srv 13.10.06
+        if(mdf_fnb.eq.0) then                                            !srv 13.10.06
           if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv 26.09.12
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             call b2npco (nx, ny, guard_flows, nnreg(0), solvedum, 
-     &       solving(1), solvedm2, ncall, is, rxf0, vol, pbs,flob,conb,    !srv 22.01.02 01.07.05
+     &       solving(1), solvedm2, ncall, is, rxf0, vol,
+     &       pbs, flob, conb,                                            !srv 22.01.02 01.07.05
      &       sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &       ua(-1,-1,is), fna(-1,-1,0,is),
      &       resco(-1,-1,is), corpa(-1,-1,is), ier0)
           endif
-        else                                                            !srv 13.10.06 {
+        else                                                             !srv 13.10.06 {
           if (solving(2).and.all(solveco(is,0:nnreg(0)))) then           !srv 26.09.12
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             if(.not.is_neutral(is)) then
               call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
-     &         solving(1), solvedm2, ncall, is, rxf0,vol,pbs,flob,conb,
+     &         solving(1), solvedm2, ncall, is, rxf0,
+     &         vol, pbs, flob, conb,
      &         sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &         ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npc9')
             else
               call b2npco (nx, ny, guard_flows, nnreg(0), solvedum,  
-     &         solving(1), solvedm2, ncall, is, rxf0,vol,pbs,flob,conb,
+     &         solving(1), solvedm2, ncall, is, rxf0,
+     &         vol, pbs, flob, conb,
      &         sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &         ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)

@@ -1325,12 +1325,7 @@ c
           nz=1
           do ix = -1, nx
             do iy = -1, ny
-              if(bb(ix,iy,2).ne.0.0_R8) then
-                mach(ix,iy,0)=
-     .           sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/abs(bb(ix,iy,2))
-              else
-                mach(ix,iy,0)=1.0_R8
-              endif
+              mach(ix,iy,0)=bb(ix,iy,0)/bb(ix,iy,3)
             enddo
           enddo
           call copy(mach,1.0_R8,nz,textbl)

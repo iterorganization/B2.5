@@ -86,7 +86,7 @@
      *   ssum, pit, hy1, zeff, uax, uay, uaz, crxc, cryc
       external subini, subend, xertst, ssum
       external b2xvsg, b2xvgm, b2xvps, b2xgxy
-      pit(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
+      pit(ix,iy) = bb(ix,iy,0)/bb(ix,iy,3)
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       zeff(ix,iy) = ne2(ix,iy)/ne(ix,iy)
       uax(ix,iy,is) = fna(ix,iy,0,is)*

@@ -151,7 +151,7 @@ c cell centred quantities
           cz(ix,iy)=0.25*
      1     (bz(ix,iy,1)+bz(ix,iy,2)+bz(ix,iy,3)+bz(ix,iy,4))
           bb(ix,iy)=in_bb(ix,iy,3)
-          pit(ix,iy)=abs(in_bb(ix,iy,0)/in_bb(ix,iy,3))
+          pit(ix,iy)=in_bb(ix,iy,0)/in_bb(ix,iy,3)
           vol(ix,iy)=in_vol(ix,iy)
           dx(ix,iy)=in_hx(ix,iy)
           dy(ix,iy)=in_hy(ix,iy)

@@ -132,9 +132,9 @@
       real (kind=R8) , save :: bc_ref_te = 0.01, bc_ref_ti=0.01         !IYS 07.03.2013 11.04.13
       real (kind=R8) , save :: senepar, senipar, sconpar(0:DEF_NSD-1),  !srv 16.02.12 29.09.15
      &                         scurpar
-      real (kind=R8), save :: prev_cur_delta, cur_delta, po_step,       ! Solovyev 01.05.14
-     * po_prev, po_curr, coeff_16                                       ! Solovyev 01.05.14, 24.05.14
-      integer, save :: bcpot_16_step = 50                               ! Solovyev 23.05.14 !srv 29.09.15 }
+      real (kind=R8), save :: prev_cur_delta, cur_delta, po_step,       !Solovyev 01.05.14
+     * po_prev, po_curr, coeff_16                                       !Solovyev 01.05.14, 24.05.14
+      integer, save :: bcpot_16_step = 50                               !Solovyev 23.05.14 !srv 29.09.15 }
       real (kind=R8) ::
      *  cutll, cutlo, vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2,  !srv 15.11.07
      1  t3, totflux, weight,
@@ -3225,7 +3225,7 @@ cxpb  and max(,,) statement for stability
                 smo0(bc_list_x(ix,ib),bc_list_y(ix,ib),0,is)=
      1           vsa0(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
      .           na(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*am(is)*
-     2           sqrt(1-pit(bc_list_x(ix,ib),bc_list_y(ix,ib))**2)*
+     2           sqrt(1.0_R8-pit(bc_list_x(ix,ib),bc_list_y(ix,ib))**2)*
      .           ua(bc_list_x(ix,ib),bc_list_y(ix,ib),is)
                 smo0(bc_list_x(ix,ib),bc_list_y(ix,ib),1,is)=
      1           -dna0(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*am(is)*
@@ -3236,7 +3236,7 @@ cxpb  and max(,,) statement for stability
      3           vsa0(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
      .           na(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
      4           am(is)*
-     .           sqrt(1-pit(bc_list_x(ix,ib),bc_list_y(ix,ib))**2)/
+     .           sqrt(1.0_R8-pit(bc_list_x(ix,ib),bc_list_y(ix,ib))**2)/
      .           hy1(bc_list_x(ix,ib),bc_list_y(ix,ib))
               end if
             end do
@@ -4573,8 +4573,8 @@ cghgh
 21100   CONTINUE
         if(ncall.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
-     .     ' FROM B2STBC_SPB with enepar1 =',ENEPAR(IB,1),
-     1     ' and enepar2 =',ENEPAR(IB,2),
+     .     ' from b2stbc_spb with ENEPAR(,1) =',ENEPAR(IB,1),
+     1     ' and ENEPAR(,2) =',ENEPAR(IB,2),
      2     ' on ',BCCHAR(IB),boundary_location(ib)
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
@@ -4720,7 +4720,7 @@ cghgh
 21400   CONTINUE
         if(ncall.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
-     .     'electron energy leakage',ENEPAR(IB,1),' on ',
+     .     'electron energy leakage ',ENEPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
@@ -4913,7 +4913,7 @@ cghgh
 
           if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
-     .       'electron temperature feedback by flux',
+     .       'electron temperature feedback by flux ',
      1       ENEPAR(IB,1),' with ',ENEPAR(IB,2),' on ',
      1       BCCHAR(IB),boundary_location(ib)
             call xertst(enepar(ib,1).ne.0, 'faulty parameter enepar1')
@@ -4966,19 +4966,20 @@ cghgh
         elseif(bcene_16_style.eq.1)then
 
           if(ncall.eq.0) then
-          write(*,*)
+            write(*,*)
      &       'Given integrated electron heat flux with constant Te '
 !          write all boundaries with this type of boundary condition
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCENE(IBW).EQ.BCENE(IB))THEN
-            write(*,'(a,a,a)') ' on ',BCCHAR(IBW),boundary_location(ibw)
+                write(*,'(a,a,a)') ' on ',BCCHAR(IBW),
+     .                                    boundary_location(ibw)
                 call xertst(
      .         mod(region(BC_LIST_X(1,IBW),BC_LIST_Y(1,IBW),0),4).eq.1,
      .           'BCENE = 16 only applicable to core boundaries !')
                 call xertst(enepar(ibw,1).ne.0.0_R8,
      .           'faulty parameter enepar1')
-            endif
-          END DO
+              endif
+            END DO
             if (use_astra.ne.0) then
 #ifdef ASTRA
               SENEPAR = fheb_astra
@@ -4989,14 +4990,14 @@ cghgh
             else
               SENEPAR = 0.0_R8
               DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCENE(IBW).EQ.BCENE(IB))THEN
+                if(BCCHAR(IBW).EQ.'S'.and.BCENE(IBW).EQ.BCENE(IB))THEN
                   SENEPAR = SENEPAR + ENEPAR(IBW,1)
-              endif
-            END DO
+                endif
+              END DO
             endif
           write(*,*) ' Summed value is ', SENEPAR
           endif
-        if(.not.once_bcene) then
+          if(.not.once_bcene) then
             TES = 0.0_R8
             volsum = 0.0_R8
             DO IBW=IB,NBC
@@ -5011,8 +5012,8 @@ cghgh
               endif
             END DO
             TES=TES/VOLSUM
-          IF(BCCHAR(IB).EQ.'S') THEN
-            totflux = 0.0_R8
+            IF(BCCHAR(IB).EQ.'S') THEN
+              totflux = 0.0_R8
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
                 if(mdf_fhe.ne.0) then
@@ -5693,8 +5694,8 @@ cghgh
      .     'sheath ion with MOMPAR(ismain,IB,2) =',
      1     MOMPAR(ismain,IB,2),' and MOMPAR(ismain,IB,1) =',
      2     MOMPAR(ismain,IB,1),
-     .     ' and enipar(ib,1) =',enipar(ib,1),               !srv 24.02.10 {
-     1     ' and enipar(ib,2) =',enipar(ib,2),
+     .     ' and ENIPAR(IB,1) =',enipar(ib,1),               !srv 24.02.10 {
+     1     ' and ENIPAR(IB,2) =',enipar(ib,2),
      2     ' on ',BCCHAR(IB),boundary_location(ib)           !srv 24.02.10 }
         endif
         IF(BCCHAR(IB).EQ.'W') THEN
@@ -6742,8 +6743,8 @@ cxpb          endif
 31500   CONTINUE
         if(ncall.eq.0) then
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
-     &     'from b2stbc_spb for BCENI with enipar1 =',
-     &     ENIPAR(IB,1),' and enipar2 =', ENIPAR(IB,2),' on ',
+     &     'from b2stbc_spb for ion temperature with ENIPAR(IB,1) =',
+     &     ENIPAR(IB,1),' and ENIPAR(IB,2) =', ENIPAR(IB,2),' on ',
      &     BCCHAR(IB),boundary_location(ib)
         endif
         IF(BCCHAR(IB).EQ.'W') THEN
@@ -6801,7 +6802,7 @@ cxpb          endif
         if(bceni_16_style.eq.0) then
          if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
-     .       'ion temperature feedback by flux',
+     .       'ion temperature feedback by flux ',
      1       ENIPAR(IB,1),' with ',ENIPAR(IB,2),' on ',
      1       BCCHAR(IB),boundary_location(ib)
            call xertst(enipar(ib,1).ne.0, 'faulty parameter enipar1')
@@ -7066,7 +7067,7 @@ c see label 2980
 31900   CONTINUE
         if(ncall.eq.0) then
           write(*,'(a,1p,g14.7,a,a,a)')
-     .     'ion temperature decay length (new)',ENIPAR(IB,1),' on ',
+     .     'ion temperature decay length (new) ',ENIPAR(IB,1),' on ',
      1     BCCHAR(IB),boundary_location(ib)
           call xertst(ENIPAR(IB,1).ne.0.0_R8,
      1     'BCENI = 19, ENIPAR(,1) = 0')
@@ -7228,8 +7229,8 @@ cxpb Careful here because of BC number clash
             call xerrab('B2STBC -- BCENI=25, DISPLACED')
           endif
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
-     &     'from b2stbc_spb for BCENI with enipar1 =',
-     &     ENIPAR(IB,1),' and enipar2 =', ENIPAR(IB,2),' on ',
+     &     'from b2stbc_spb for BCENI with ENIPAR(IB,1) =',
+     &     ENIPAR(IB,1),' and ENIPAR(IB,2) =', ENIPAR(IB,2),' on ',
      &     BCCHAR(IB),boundary_location(ib)
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
@@ -8443,7 +8444,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 
 41200   continue
         if(ncall.eq.0) then
-          write(*,'(a,a,a,a,a)') 'BCPOT=12. Adding contributions ',
+          write(*,'(a,a,a,a,a)') 'Adding contributions ',
      &     'from diamagnetic and inertial currents ',
      &     'on ',BCCHAR(IB),boundary_location(ib)
           if(istyle_cur_contr_on_S_and_N.eq.0 .or.
@@ -8507,7 +8508,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
 
 41300   continue
         if(ncall.eq.0) then
-          write(*,'(a,a,a,a,a)') 'BCPOT=13. Adding contributions ',
+          write(*,'(a,a,a,a,a)') 'Adding contributions ',
      &     'from all currents ',
      &     'on ',BCCHAR(IB),boundary_location(ib)
           if(istyle_cur_contr_on_S_and_N.eq.0 .or.

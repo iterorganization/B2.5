@@ -51,8 +51,8 @@
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2xxgs, b2ux5p
 ! if uncomment rscal(t0) = t0 then uncomment nb(ix,iy) = nb(ix,iy)+rxf*corpb(ix,iy)/pb(ix,iy) in b2upco
-      rscal(t0) = t0                                                 !srv 13.10.06
-!      rscal(t0) = 1.0e0_R8                                            !srv 13.10.06
+      rscal(t0) = t0                                                  !srv 13.10.06
+!      rscal(t0) = 1.0e0_R8                                           !srv 13.10.06
 *   ..initialisation
       data ncall/0/
 
@@ -63,11 +63,11 @@
 *   ..subprogram start-up calls
       call subini ('b2usco')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then                                               !srv 06.07.08 {
+      if (ncall.eq.0) then                                            !srv 06.07.08 {
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)
-       call ipgeti ('b2usco_iout', iout)                                 !srv 17.06.02
-      endif                                                              !srv 06.07.08 }
+       call ipgeti ('b2usco_iout', iout)                              !srv 17.06.02
+      endif                                                           !srv 06.07.08 }
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -84,14 +84,14 @@
        call b2xvsg (n2, pb, 1, 'pb', '.gt.')
 *    ..test sign of snbv, conb
        call b2xvsg (n2, snbv, 1, 'snbv', '.le.')
-       if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then         !srv 06.07.06 {
-        call b2xvsg (n2*2*3, conb, 1, 'conb', '.ge.')               !srv 18.11.05 13.10.06
-       endif                                                        !srv 06.07.06 }
+       if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then           !srv 06.07.06 {
+        call b2xvsg (n2*2*3, conb, 1, 'conb', '.ge.')                 !srv 18.11.05 13.10.06
+       endif                                                          !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
-       call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')                !srv 13.10.06 {
+       call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')                 !srv 13.10.06 {
        call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb0')
-       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb0')                !srv 13.10.06 }
+       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb0')                 !srv 13.10.06 }
       endif
 
 * ..compute the correction
