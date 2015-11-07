@@ -1,9 +1,10 @@
       module b2mod_b2cmpa
       use b2mod_types
+#include "DIMENSIONS.F"
 *     (/b2cmpa/ contains basic physics parameters)
 * DPC: constant declaration now in b2mod_constants
       integer nsdecl
-      parameter (nsdecl=45)
+      parameter (nsdecl=DEF_NSD)
       integer nspecies
       integer partition_number(0:nsdecl-1)
       real (kind=R8), save ::

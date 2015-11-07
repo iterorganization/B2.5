@@ -29,7 +29,7 @@ cxpb
       call xertst(1.le.ny1, 'faulty input ny1')
       do i = 1, nx1
         call xertst(xx1(i).ge.xx(1).and.xx1(i).le.xx(nx),
-     .   'interp2d nor meant for X extrapolation!')
+     .   'interp2d not meant for X extrapolation!')
         ib=1
         it=nx
         do while (it-ib.gt.1)
@@ -49,7 +49,7 @@ cxpb
         fx=(xx1(i)-xx(ib))/(xx(it)-xx(ib))
         do j = 1, ny1
           call xertst(yy1(j).ge.yy(1).and.yy1(j).le.yy(ny),
-     .     'interp2d nor meant for Y extrapolation!')
+     .     'interp2d not meant for Y extrapolation!')
           jb=1
           jt=ny
           do while (jt-jb.gt.1)

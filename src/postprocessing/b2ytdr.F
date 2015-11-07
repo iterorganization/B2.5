@@ -1894,9 +1894,14 @@ c 2002-09-11: logic revised
       enddo
 
 *  ..write new b2.transport.inputfile
-      allocate(px(1:ny1+2),pf(1:ny1+2))
-      inquire(file='../b2.transport.inputfile',exist=todo)
-      if(transport_inputfile.eq.1.or.todo) then
+      filename='../b2.transport.inputfile'
+      inquire(file=trim(filename),exist=todo)
+      new_filename='../b2.transport.inputfile.2'
+      inquire(file=trim(new_filename),exist=found)
+      if (found) write(6,*) trim(new_filename), ' already present!'
+      do while(.not.(same_bundling.and.nx.eq.nx1.and.ny.eq.ny1).and.
+     .   (transport_inputfile.eq.1.or.todo).and..not.found)
+        allocate(px(1:ny1+2),pf(1:ny1+2))
         ndata(:,:,:)=0
         tdata(:,:,:,:)=0.0_R8
         addspec(:,:,:)=-5
@@ -1912,6 +1917,7 @@ c 2002-09-11: logic revised
         elm_time_period=0.0_R8
         elm_ix_begin=-2
         elm_ix_end=-2
+        transport_filename='b2.transport.inputfile'
         transport_time_mod=0.0_R8
         transport_time_switch=0.0_R8
         allocate(n1data(1:nkind_data,1:nkind_coeff,0:nsm-1))
@@ -1921,12 +1927,12 @@ c 2002-09-11: logic revised
         n1data(:,:,:)=0
         t1data(:,:,:,:)=0.0_R8
         ad1spec(:,:,:)=-5
-        open(99,file='../b2.transport.inputfile')
+        open(99,file=trim(filename))
         read(99,transport)
         close(99)
-        write(*,*) 'Writing b2.transport.inputfile.2'
-        write(nout(5),'(a)') 'b2.transport.inputfile.2'
-        open(99,file='../b2.transport.inputfile.2')
+        write(*,*) 'Writing ',trim(new_filename)
+        write(nout(5),'(a)') trim(new_filename)
+        open(99,file=trim(new_filename))
         write(99,'(a10)') '&TRANSPORT'
         do j = 1, nkind_coeff
           do i = 1, nkind_data
@@ -2108,7 +2114,22 @@ cxpb We must ensure we have not already listed this additional species
         deallocate(n1data)
         deallocate(ad1spec)
         deallocate(pelm)
-      endif
+        deallocate(px)
+        deallocate(pf)
+        if (.not.streql(transport_filename,'b2.transport.inputfile'))
+     >  then
+          new_filename =
+     .     '../'//transport_filename(1:lnblnk(transport_filename))//'.2'
+          filename='../'//transport_filename
+          inquire(file=trim(filename),exist=todo)
+          inquire(file=trim(new_filename),exist=found)
+          if (found) write(6,*) trim(new_filename), ' already present!'
+        else
+          todo = .false.
+          found = .true.
+        endif
+        transport_inputfile = 0
+      enddo
 
 *  ..write new b2.transport_models_save.parameters
       inquire(file='../b2.transport_models_save.parameters',exist=todo)
@@ -2179,6 +2200,7 @@ cxpb We must ensure we have not already listed this additional species
       allocate(s1data(2,1:DEF_NYD+2,1:nkind_source,0:nsm-1))
       allocate(nx1data(1:nkind_data,1:nkind_source,0:nsm-1))
       allocate(x1data(2,1:DEF_NXD+2,1:nkind_source,0:nsm-1))
+      allocate(px(1:ny1+2),pf(1:ny1+2))
       ns1data(:,:,:)=0
       s1data(:,:,:,:)=0.0_R8
       nx1data(:,:,:)=0
@@ -2353,7 +2375,6 @@ cxpb Calculate radial locations of combined profile spr(1:ndim)
                         allocate(prdsa(1:ny1+2),pra(1:ny1+2))
                         allocate(r(1:ny+2),f(1:ny+2))
                         allocate(ds(1:ny+2))
-                        allocate(px(1:ny1+2),pf(1:ny1+2))
                         prdsa(1)=sqrt((cr1(ixref1,-1)-
      1                   0.5_R8*(crx1(ixref1,-1,0)+
      .                           crx1(ixref1,-1,1)))**2+
@@ -2647,7 +2668,7 @@ cxpb This will need to be checked !!!
                       x1data(1,1:ndat,j,is1(is)) = x1d(1,1:ndat,j,is)  ! profile position
                       x1data(2,1:ndat,j,is1(is)) = x1d(2,1:ndat,j,is)  ! profile value
                     endif
-                    if (axdone) deallocate(pxa,x,fx,dx,px,pf)
+                    if (axdone) deallocate(pxa,x,fx,dx)
                   endif
                 enddo
                 deallocate(x1d)
@@ -2697,6 +2718,7 @@ cxpb This will need to be checked !!!
       deallocate(ns1data)
       deallocate(x1data)
       deallocate(nx1data)
+      deallocate(px,pf)
 
 *  ..write new b2.numerics.parameters
       inquire(file='../b2.numerics.parameters',exist=todo)

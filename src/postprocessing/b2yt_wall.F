@@ -274,7 +274,7 @@ cxpb lb and ub and lower and upper interval bounds
       logical is_neutral1(0:ns1-1), l_chem_sput
 
       integer ix, iy, iz, is, ibnd, ibnd1, imax, i, i1, itrack
-      integer ibegin, iend, iw, iw1
+      integer ibegin, iend, iw, iw1, ifail
       integer ixa, ixb, iya, iyb, iza, ndepth1
       integer nsm, natmm, nbndm, nwallm
       real (kind=R8) :: sum
@@ -283,8 +283,8 @@ cxpb lb and ub and lower and upper interval bounds
       real (kind=R8) :: xx(nwall+2), xx1(nwall+2) 
       real (kind=R8) :: track_data(nwall), track_source(nwall)
       real (kind=R8), allocatable :: yy(:), yy1(:)
-      real (kind=R8), allocatable :: fa(:,:)
-      real (kind=R8) :: fb(3,ndepth)
+      real (kind=R8), allocatable :: fa(:,:), fx(:), d(:)
+      real (kind=R8) :: fb(3,ndepth), fc(3)
       logical wall_namelist_used, layer_model
       save layer_model
       data layer_model/.false./
@@ -295,6 +295,7 @@ cxpb lb and ub and lower and upper interval bounds
       intrinsic mod, max, min, sqrt
       external xertst, subini, subend
       external convert_bundle_r
+      external E01BEF, E01BFF
 
       call subini('b2yt_wall')
       call alloc_b2mod_wall(ns,natm,nmol,nion)
@@ -376,7 +377,7 @@ cxpb Fill up the new wall arrays
       allocate(data_tmp(nwallm))
 cxpb We map per segment
 cxpb We interpolate according to the area along the segment
-      allocate(yy(ndepth_nml),yy1(ndepth1))
+      if (ndepth_nml.gt.1) allocate(yy(ndepth_nml),yy1(ndepth1))
 cxpb For string-valued quantities, we choose to inherit from
 cxpb the old element with the largest areal contribution
       do is = 1, nsegments
@@ -579,7 +580,7 @@ cxpb Copy data arrays into new geometry
      . wall_data(1:nbnd1,0:ns1-1+natm1+nmol+nion)
       do is = 1, nsegments
         do ibnd1 = wall_begin1(is), wall_end1(is)
-cxpb We do a simple 2d interpolation of the target temperature,
+cxpb We do a simple interpolation of the target temperature,
 cxpb but in computational space
           ibegin = wall_begin(is)
           found = .false.
@@ -601,28 +602,56 @@ cxpb but in computational space
             write(line,'(a,i5,a)') 'Wall element ',ibnd1,' not found!'
             call xerrab (trim(line))
           end if
-          allocate(fa(1:iend-ibegin+3,1:ndepth_nml))
-          fa = 0.0_R8
-          fb = 0.0_R8
+          if (ndepth_nml.gt.1) then
+            allocate(fa(1:iend-ibegin+3,1:ndepth_nml))
+            fa = 0.0_R8
+            fb = 0.0_R8
+          else
+            allocate(fx(1:iend-ibegin+3))
+            allocate(d(1:iend-ibegin+3))
+            ifail = 0
+            fx = 0.0_R8
+          end if
           if (ibegin.eq.wall_begin(is)) then
             xx(1) = 0.0_R8
-            fa(1,1:ndepth_nml) = target_temp(1,1:ndepth_nml)
+            if (ndepth_nml.gt.1) then
+              fa(1,1:ndepth_nml) = target_temp(1,1:ndepth_nml)
+            else
+              fx(1) = target_temp(1,1)
+            end if
           else
             xx(1) = acc_area(ibegin-1)
-            fa(1,1:ndepth_nml) = target_temp(ibegin-1,1:ndepth_nml)
+            if (ndepth_nml.gt.1) then
+              fa(1,1:ndepth_nml) = target_temp(ibegin-1,1:ndepth_nml)
+            else
+              fx(1) = target_temp(ibegin-1,1)
+            end if
           endif
           do iw = ibegin, iend
             xx(iw+2-ibegin) = (acc_area(iw)+xx(iw+1-ibegin))/2.0_R8
-            fa(iw+2-ibegin,1:ndepth_nml) = target_temp(iw,1:ndepth_nml)
+            if (ndepth_nml.gt.1) then
+              fa(iw+2-ibegin,1:ndepth_nml) = 
+     .         target_temp(iw,1:ndepth_nml)
+            else
+              fx(iw+1-ibegin) = target_temp(iw,1)
+            end if
           end do
           if (iend.eq.wall_end(is)) then
             xx(iend+3-ibegin) = 1.0_R8
-            fa(iend+3-ibegin,1:ndepth_nml) = 
-     .       target_temp(iend,1:ndepth_nml)
+            if (ndepth_nml.gt.1) then
+              fa(iend+3-ibegin,1:ndepth_nml) = 
+     .         target_temp(iend,1:ndepth_nml)
+            else
+              fx(iend+3-ibegin) = target_temp(iend,1)
+            endif
           else
             xx(iend+3-ibegin) = acc_area(iend+1)
-            fa(iend+3-ibegin,1:ndepth_nml) = 
-     .       target_temp(iend+1,1:ndepth_nml)
+            if (ndepth_nml.gt.1) then
+              fa(iend+3-ibegin,1:ndepth_nml) = 
+     .         target_temp(iend+1,1:ndepth_nml)
+            else
+              fx(iend+3-ibegin) = target_temp(iend+1,1)
+            endif
           endif
           if (ibnd1.eq.wall_begin1(is)) then
             xx1(1) = 0.0_R8
@@ -631,23 +660,30 @@ cxpb but in computational space
           endif
           xx1(2) = (acc_area1(ibnd1)+xx1(1))/2.0_R8
           xx1(3) = acc_area1(ibnd1)
-          yy(1) = 0.0_R8
-          do iz = 2, ndepth_nml
-            yy(iz) = (real(iz)-1.0_R8)/(real(ndepth_nml)-1.0_R8)
-          end do
-          yy1(1) = 0.0_R8
-          do iz = 2, ndepth1
-            yy1(iz) = (real(iz)-1.0_R8)/(real(ndepth1)-1.0_R8)
-          end do
-          call interp2d(iend-ibegin+3,ndepth_nml,3,ndepth1,
-     .     xx(1:iend-ibegin+3),yy(1:ndepth_nml),
-     .     xx1(1:3),yy1(1:ndepth1),fa,fb(1:3,1:ndepth1))
-          target_temp1(ibnd1,1:ndepth1) = fb(2,1:ndepth1)
-          deallocate(fa)
+          if (ndepth_nml.gt.1) then
+            yy(1) = 0.0_R8
+            do iz = 2, ndepth_nml
+              yy(iz) = (real(iz)-1.0_R8)/(real(ndepth_nml)-1.0_R8)
+            end do
+            yy1(1) = 0.0_R8
+            do iz = 2, ndepth1
+              yy1(iz) = (real(iz)-1.0_R8)/(real(ndepth1)-1.0_R8)
+            end do
+            call interp2d(iend-ibegin+3,ndepth_nml,3,ndepth1,
+     .       xx(1:iend-ibegin+3),yy(1:ndepth_nml),
+     .       xx1(1:3),yy1(1:ndepth1),fa,fb(1:3,1:ndepth1))
+            target_temp1(ibnd1,1:ndepth1) = fb(2,1:ndepth1)
+            deallocate(fa)
+          else
+            call E01BEF(iend-ibegin+3,xx,fx,d,ifail)
+            call E01BFF(iend-ibegin+3,xx,fx,d,3,xx1,fc,ifail)
+            target_temp1(ibnd1,1) = fc(2)
+            deallocate(d,fx)
+          end if   
         end do          
       end do
 
-      deallocate(yy,yy1)
+      if (ndepth_nml.gt.1) deallocate(yy,yy1)
       deallocate(wall_data)
       call subend()
       return
@@ -978,7 +1014,7 @@ cxpb Now for each new species, we do the space mapping
       integer nwall,nwall1,nwallm
       real (kind=R8) contr_area(nwall,nwall1)
       real (kind=R8) wall_data(nwallm)
-      real (kind=R8) wall_source(nwall1)
+      real (kind=R8) wall_source(nwall)
       real (kind=R8) wall_map(nwall1)
       integer iw, iw1
       
