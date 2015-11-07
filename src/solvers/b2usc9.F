@@ -177,6 +177,13 @@
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, itcnt, conb(-1,-1,0,3), aa9, name)   !srv 02.01.07
       endif
+
+      do iy=-1,ny
+       do ix=-1,nx
+        if (aa9(ix,iy,0).eq.0.0_R8) aa9(ix,iy,0) = rscal(pb(ix,iy))
+       enddo
+      enddo
+
 *   ..solve the correction equation
        call b2ux9p (nx, ny, aa9, itcnt, rescb, corpb, name) !srv 18.05.02
 *   ..redo the scaling

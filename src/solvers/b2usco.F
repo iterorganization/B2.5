@@ -216,8 +216,8 @@ cxpb
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        if (.not.solvereg(ireg)) 
-     >   rescb(ix,iy) = 0.0_R8
+        if (aa5(ix,iy,0).eq.0.0_R8) aa5(ix,iy,0) = rscal(pb(ix,iy))
+        if (.not.solvereg(ireg)) rescb(ix,iy) = 0.0_R8
        enddo
       enddo
       

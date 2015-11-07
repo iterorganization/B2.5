@@ -223,8 +223,13 @@ cxpb
         endif
        enddo
       enddo
-*   ..contribution from linearization of centifugal force
+*   ..contribution from linearization of centrifugal force
       aa5(:,:,0) = aa5(:,:,0) - min(0.0e0_R8,ctcfb)                   !srv 06.04.07
+      do iy=-1,ny
+       do ix=-1,nx
+        if (aa5(ix,iy,0).eq.0.0_R8) aa5(ix,iy,0) = 1.0_R8
+       enddo
+      enddo
 *   ..solve the correction equation
       write(*,'(a,a)') 'Calling b2ux5p from ', name
       call b2ux5p (nx, ny, aa5, itcnt, resmb, corub, name)            !srv 18.03.10

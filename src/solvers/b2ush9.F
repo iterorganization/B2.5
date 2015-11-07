@@ -212,6 +212,11 @@
        call b2uxm9 (nx, ny, itcnt, coni(-1,-1,0,1), aa9,
      &                                               'b2ush9_totali')   !srv 02.01.07
       endif
+      do iy=-1,ny
+       do ix=-1,nx
+        if (aa9(ix,iy,0).eq.0.0_R8) aa9(ix,iy,0) = 1.0_R8
+       enddo
+      enddo
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total')   !srv 18.05.02
 
@@ -287,6 +292,11 @@
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, itcnt, cone(-1,-1,0,1), aa9, 'b2ush9_Te')     !srv 02.01.07
       endif
+      do iy=-1,ny
+       do ix=-1,nx
+        if (aa9(ix,iy,0).eq.0.0_R8) aa9(ix,iy,0) = 1.0_R8
+       enddo
+      enddo
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, reshe, corte, 'b2ush9_Te')     !srv 18.05.02
 
@@ -364,6 +374,11 @@
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, itcnt, coni(-1,-1,0,1), aa9, 'b2ush9_Ti')   !srv 02.01.07
       endif
+      do iy=-1,ny
+       do ix=-1,nx
+        if (aa9(ix,iy,0).eq.0.0_R8) aa9(ix,iy,0) = 1.0_R8
+       enddo
+      enddo
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, reshi, corti, 'b2ush9_Ti')
       do iy = -1, ny

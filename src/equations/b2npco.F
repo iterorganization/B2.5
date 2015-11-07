@@ -6,6 +6,7 @@
      &  vol, pbs, flob, conb, snb,
      &  pccb, pb, nb, ub, fnb, rescb, corpb, ierr)
       use b2mod_types
+      use b2mod_b2cmpa
       use b2mod_indirect
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -51,20 +52,21 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ireg, ii
-      integer, save :: iout = 0                                      !srv 04.07.08
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
+      integer ncall, n2, ix, iy, ireg, ii, use_eirene
+      integer, save :: iout = 0                                    !srv 04.07.08
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0        !srv 06.07.06
       character chns*3, chark*1                                    !srv 04.07.08
       real (kind=R8) ::
      *  rxg, pcm0, pcm1
       real (kind=R8) ::
      *  aa5(-1:nx,-1:ny,-2:2), wrk0(-1:nx,-1:ny)
-      save ncall, rxg, pcm0, pcm1
+      save ncall, rxg, pcm0, pcm1, use_eirene
 *   ..procedures
       external subini, subend, xertst, ipgetr, ipgeti
       external b2xvsg, b2xvff, b2ursc, b2usco, b2upco
 *   ..initialisation
-      data ncall/0/, rxg/1.0_R8/, pcm0/1.0_R8/, pcm1/1.0_R8/
+      data ncall/0/, rxg/1.0_R8/, pcm0/1.0_R8/, pcm1/1.0_R8/,
+     * use_eirene/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -100,6 +102,7 @@
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
        call ipgeti ('b2npco_iout', iout)                              !srv 04.07.08
+       call ipgeti ('b2mndr_eirene', use_eirene)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -147,13 +150,14 @@
 csw 11dec2012, check for solv flags
       if(all(solvcreg(0:nnreg(0)))) then
 *   ..compute correction
-       call b2usco (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1,
-     &  vol, pbs, nb, pb, snb(-1,-1,1),flob,
+       call b2usco (nx, ny, isb, nregionv, solvcreg, itcnt, rxg,
+     &  pcm1, vol, pbs, nb, pb, snb(-1,-1,1), flob,
      &  conb, pccb(-1,-1,1), rescb, corpb, aa5, 'b2usco')               !srv 18.05.02 26.09.12
 *   ..apply correction
        call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
      &  vol, corpb, pccb(-1,-1,0), pb, nb, ub)
-       if(guard_flows.eq.2) then                                        !srv 06.07.08 {
+       if(guard_flows.eq.2 .or.                                         !srv 06.07.08 {
+     &    (is_neutral(isb) .and. use_eirene.ne.0)) then
 *   ..replace the incorrect corner values by the interpolated values
         iy=-1                                                           !srv 27.06.08 {
         do ix = -1, nx

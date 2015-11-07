@@ -1,5 +1,5 @@
       SUBROUTINE ILUTERN(N1, N2, N1D, ASO, AWE, ACP, AEA, ANO,
-     .      RHS, SOL, NAME)                 !srv 18.03.10
+     .      RHS, SOL, NAME)                                          !srv 18.03.10
       use b2mod_types
       use b2mod_ma28
       use b2mod_indirect
@@ -185,7 +185,7 @@ c-dpc
           do i=1,n
             iy = (i-1)/n1+1
             ix = i-(iy-1)*n1
-            write(79,'(i4,1p,6(1x,e15.8))') i, 
+            write(79,'(3(i4,1x),1p,6(e15.8,1x))') i, ix-2, iy-2,
      .       aso(ix,iy), awe(ix,iy), acp(ix,iy), aea(ix,iy), ano(ix,iy),
      .       rhs(ix,iy)
           enddo
