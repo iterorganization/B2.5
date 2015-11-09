@@ -1716,22 +1716,21 @@ c dpc
      &       ' density for ion is =', is
 !           write all boundaries with this type of boundary condition
             DO IBW=IB,NBC
-            if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))THEN
+              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+     >         THEN
                 write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
      1           boundary_location(ibw),' for species ',IS
                 call xertst(
      .         mod(region(BC_LIST_X(1,IBW),BC_LIST_Y(1,IBW),0),4).eq.1,
      .           'BCCON = 16 only applicable to core boundaries !')
-                call xertst(CONPAR(IS,IBW,1).ge.0.0_R8,
-     1           'BCCON = 16, CONPAR(,,1) !> 0')
               endif
               if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.19.or.
      1            BCCON(IS,IBW).EQ.21.or.BCCON(IS,IBW).EQ.22.or.
      1            BCCON(IS,IBW).EQ.23)) then
                 call xerrab
      .           ('BCCON types 16, 19, 21, 22 and 23 cannot be mixed!')
-            endif
-          ENDDO
+              endif
+            ENDDO
             if (use_astra.ne.0) then
 #ifdef ASTRA
               SCONPAR(IS) = fneb_astra
@@ -1753,36 +1752,36 @@ c dpc
           NAS = 0.0_R8
           VS = 0.0_R8
           DO IBW=IB,NBC
-          if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))THEN
-               DO IX = 1, BC_LIST_SIZE(IBW)
-               NAS = NAS+NA(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),is)*
-     .                     VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                 VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-               END DO
-             endif
+            if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))THEN
+              DO IX = 1, BC_LIST_SIZE(IBW)
+                NAS = NAS+NA(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),is)*
+     .                   VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+              END DO
+            endif
           END DO
           NAS=NAS/VS
           if(.not.once_bccon(is)) then
             IF(BCCHAR(IB).EQ.'S') THEN
-            totflux = 0.0_R8
+              totflux = 0.0_R8
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
-                if(mdf_fnb.ne.0) then
+                  if(mdf_fnb.ne.0) then
                     DO IX = 1, BC_LIST_SIZE(IBW)
-                    totflux = totflux +
+                      totflux = totflux +
      &         fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                 topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,is)
                     ENDDO
-                else
+                  else
                     DO IX = 1, BC_LIST_SIZE(IBW)
-                    totflux = totflux +
+                      totflux = totflux +
      &            fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,is)
                     ENDDO
-                endif
-              ENDIF
-            ENDDO
+                  endif
+                ENDIF
+              ENDDO
               NAS = NAS *
      &         (1.0_R8-bc_ref*(totflux-SCONPAR(IS))/
      &                 max(abs(totflux),SCONPAR(IS)))
@@ -1806,9 +1805,9 @@ c dpc
      .                          BC_LIST_Y(IX,IBW),:,IS)=
      .               SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)
                   END DO                                              !srv 23.09.08 }
-              END IF
-            END DO
-            once_bccon(is) = .true.
+                END IF
+              END DO
+              once_bccon(is) = .true.
             ELSE                                                       !srv 16.02.12 }
               CALL XERRAB
      1         ('B2STBC -- BCCON=16, NOT AVAILABLE FOR N,W,E')
