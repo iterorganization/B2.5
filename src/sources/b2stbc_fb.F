@@ -73,6 +73,7 @@
       logical zeroslope
       real (kind=R8) ::
      1  private_flux_area, target_flux
+      character*72 message
       save ncall,
      &  fnaycore, fnaycore_alpha, fhiycore_kinetic_energy,
      1  fheycore, fhiycore, fchycore, nesepm_sol, solregno,
@@ -311,8 +312,14 @@
            do istrai = 1, nstrat
              if (crcstra(istrai).eq.'C') icount = icount+1
            end do
-           call xertst (icount.eq.1,
-     .      'Multiple definitions of puff strata, use nesepm_istra')
+           if (icount.eq.0) then
+             message =
+     .        'No puff stratum found for feedback scheme!'
+           else if (icount.gt.1) then
+             message =
+     .        'Multiple definitions of puff strata, use nesepm_istra'
+           end if
+           call xertst (icount.eq.1, trim(message))
          endif
        endif
        if (ndes.gt.0.0_R8.or.nesepm_pfr.gt.0.0_R8.or.

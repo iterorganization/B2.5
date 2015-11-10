@@ -355,8 +355,8 @@ cxpb Have to do this here already in case the namelist is not used
      4 bcchar,
      5 boundary_filename,boundary_time_mod,boundary_time_switch,
      6 lcbs
-      logical :: file_ok
-      logical, allocatable :: old_style(:)
+      logical :: file_ok, todo, assigned
+      logical, allocatable :: old_style(:), done(:)
       character*260 filename
 
       filename='../' // boundary_filename
@@ -393,6 +393,91 @@ cxpb Have to do this here already in case the namelist is not used
             old_style(ib) = .false.
           end if
         end do
+c.. Make a list of core boundaries
+        todo=maxval(lcbs).gt.0
+        if (.not.todo) then
+          ncbs=0
+        else
+          ncbs=1
+          do while (lcbs(ncbs+1).gt.0 .and. ncbs.lt.nbc)
+            ncbs=ncbs+1
+          end do
+        end if
+        allocate(done(nbc))
+        done=.false.
+        do ib=1,nbc
+          if(bcchar(ib).eq.'S') then
+            if(old_style(ib)) then
+              if(mod(region(bcstart(ib),bcpos(ib),0),4).eq.1 .and.
+     .           mod(region(bcend(ib),bcpos(ib),0),4).eq.1) then
+                if (.not.todo) then
+                  ncbs=ncbs+1
+                  lcbs(ncbs)=ib
+                  done(ncbs)=.true.
+                else
+                  ic = 1
+                  assigned = .false.
+                  do while (ic.le.ncbs)
+                    if (lcbs(ic).eq.ib) then
+                      call xertst(done(ic),
+     .                 'Core boundary already done!')
+                      assigned = .true.
+                      done(ic) = .true.
+                    end if
+                    ic = ic + 1
+                  end do
+                  if (.not.assigned) then
+                    ncbs = ncbs + 1
+                    done(ncbs) = .true.
+                    lcbs(ncbs) = ib
+                    write(*,*) 'Added boundary ',ib,
+     .               ' to list of core boundaries'
+                  end if
+                end if
+              endif
+            else
+              found = .true.
+              do ix = 1, bc_list_size(ib)
+                found = found .and.
+     .           mod(region(bc_list_x(ix,ib),bc_list_y(ix,ib),0),4).eq.1
+              end do
+              if (found) then
+                if (.not.todo) then
+                  ncbs=ncbs+1
+                  lcbs(ncbs)=ib
+                  done(ncbs)=.true.
+                else
+                  ic = 1
+                  assigned = .false.
+                  do while (ic.le.ncbs)
+                    if (lcbs(ic).eq.ib) then
+                      call xertst(done(ic),
+     .                 'Core boundary already done!')
+                      assigned = .true.
+                      done(ic) = .true.
+                    end if
+                    ic = ic + 1
+                  end do
+                  if (.not.assigned) then
+                    ncbs = ncbs + 1
+                    done(ncbs) = .true.
+                    lcbs(ncbs) = ib
+                    write(*,*) 'Added boundary ',ib,
+     .               ' to list of core boundaries'
+                  end if
+                endif
+              endif
+            endif
+          endif
+        enddo
+        call xertst (1.le.ncbs.or.ny.eq.1, 'faulty parameter ncbs')
+        do ib = 1, ncbs
+          call xertst (done(ib), 
+     .     'Did not find all declared core boundaries!')
+          call xertst (1.le.lcbs(ib).and.lcbs(ib).le.nbc,
+     .     'faulty parameter lcbs')
+        enddo
+        deallocate(done)
       endif
       if ((.not.file_ok).or.(.not.dotest)) then
         if (.not.file_ok) write(*,*) 'No ',trim(filename)
@@ -718,35 +803,6 @@ c.. Test consistency with region boundaries
         call xertst (found, 
      .   'Mismatch (4) with region boundaries (South) !')
       end do
-c.. Make a list of core boundaries
-      ncbs=0
-      lcbs=0
-      do ib=1,nbc
-        if(bcchar(ib).eq.'S') then
-          if(old_style(ib)) then
-            if(mod(region(bcstart(ib),bcpos(ib),0),4).eq.1 .and.
-     .         mod(region(bcend(ib),bcpos(ib),0),4).eq.1) then
-              ncbs=ncbs+1
-              lcbs(ncbs)=ib
-            endif
-          else
-            found = .true.
-            do ix = 1, bc_list_size(ib)
-              found = found .and. 
-     .         mod(region(bc_list_x(ix,ib),bc_list_y(ix,ib),0),4).eq.1
-            end do
-            if (found) then
-              ncbs=ncbs+1
-              lcbs(ncbs)=ib              
-            endif
-          endif
-        endif
-      enddo
-      call xertst (1.le.ncbs.or.ny.eq.1, 'faulty parameter ncbs')
-      do ib = 1, ncbs
-        call xertst (1.le.lcbs(ib).and.lcbs(ib).le.nbc, 
-     .   'faulty parameter lcbs')
-      enddo
       return
 
       end subroutine read_b2mod_boundary_namelist

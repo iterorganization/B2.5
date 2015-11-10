@@ -180,7 +180,16 @@
 
       do iy=-1,ny
        do ix=-1,nx
-        if (aa9(ix,iy,0).eq.0.0_R8) aa9(ix,iy,0) = rscal(pb(ix,iy))
+        if (aa9(ix,iy,0).eq.0.0_R8 .and.
+     &      aa9(ix,iy,1).eq.0.0_R8 .and. aa9(ix,iy,-1).eq.0.0_R8 .and.
+     &      aa9(ix,iy,2).eq.0.0_R8 .and. aa9(ix,iy,-2).eq.0.0_R8 .and.
+     &      aa9(ix,iy,3).eq.0.0_R8 .and. aa9(ix,iy,-3).eq.0.0_R8 .and.
+     &      aa9(ix,iy,4).eq.0.0_R8 .and. aa9(ix,iy,-4).eq.0.0_R8 .and.
+     &      aa9(ix,iy,5).eq.0.0_R8 .and. aa9(ix,iy,-5).eq.0.0_R8 .and.
+     &      aa9(ix,iy,6).eq.0.0_R8 .and. aa9(ix,iy,-6).eq.0.0_R8) then
+          aa9(ix,iy,0) = rscal(pb(ix,iy))
+          rescb(ix,iy) = 0.0_R8
+        end if
        enddo
       enddo
 

@@ -147,7 +147,12 @@ cxpb
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        if (aa5(ix,iy,0).eq.0.0_R8) aa5(ix,iy,0) = 1.0_R8
+        if (aa5(ix,iy,0).eq.0.0_R8 .and.
+     &      aa5(ix,iy,1).eq.0.0_R8 .and. aa5(ix,iy,-1).eq.0.0_R8 .and.
+     &      aa5(ix,iy,2).eq.0.0_R8 .and. aa5(ix,iy,-2).eq.0.0_R8) then
+          aa5(ix,iy,0) = 1.0_R8
+          respo(ix,iy) = 0.0_R8
+        end if
         if (.not.solvereg(ireg)) respo(ix,iy) = 0.0_R8
        enddo
       enddo

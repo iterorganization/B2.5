@@ -20,6 +20,8 @@ c
 c
       character*256 solpstop,filenamecat,localarea,copyarea
       integer lnblnk, iend
+      logical streql
+      external streql
       logical first
 c
       save first, solpstop
@@ -67,7 +69,7 @@ c
          copyarea(1:256)=copyarea(iend+1:256)
       endif
       close(lu)
-      if (lnblnk(localarea).gt.0) then
+      if (.not.streql(localarea,' ')) then
         filenamecat=solpstop(1:lnblnk(solpstop))//
      1   '/'//
      2   localarea(1:lnblnk(localarea))//

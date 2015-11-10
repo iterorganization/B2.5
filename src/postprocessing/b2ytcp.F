@@ -287,7 +287,7 @@
       integer is, is0, i, ir0, ireg, mode, nsm
       real (kind=R8) :: zpdum(0:ns-1,0:3)
       real (kind=R8) :: cftmp(0:nsdecl-1)
-      character id*8, id0*8
+      character id*8, id0*8, id1*72
       character*(*) fmt0, fmt1
       parameter (fmt0='(0p,2x,'''''''',i2,'''''''',1x,4f9.3)')
       parameter (fmt1='(1p,2x,'''''''',i2,'''''''',1x,8e9.2)')
@@ -448,27 +448,27 @@
 *    ..test mode
        call xertst (mode.eq.1, 'unexpected header '//id)
 *    ..read ireg
-       read (nget,*,err=92) ireg, id0
+       read (nget,*,err=92) ireg, id1
        if (cbirso.le.ireg.and.ireg.lt.cbirso+cbnrso) then
-        call xertst (streql(id0(1:5),'south'),
-     &    'faulty input under *region: '//id0)
+        call xertst (streql(id1(1:5),'south'),
+     &    'faulty input under *region: '//trim(id1))
         write (nput,'(a/2x,i2,2x,a)') '*region', ireg, 
-     &    ''''//trim(id0)//''''
+     &    ''''//trim(id1)//''''
        else if (cbirno.le.ireg.and.ireg.lt.cbirno+cbnrno) then
-        call xertst (streql(id0(1:5),'north'),
-     &    'faulty input under *region: '//id0)
+        call xertst (streql(id1(1:5),'north'),
+     &    'faulty input under *region: '//trim(id1))
         write (nput,'(a/2x,i2,2x,a)') '*region', ireg, 
-     &    ''''//trim(id0)//''''
+     &    ''''//trim(id1)//''''
        else if (cbirwe.le.ireg.and.ireg.lt.cbirwe+cbnrwe) then
-        call xertst (streql(id0(1:4),'west'),
-     &    'faulty input under *region: '//id0)
+        call xertst (streql(id1(1:4),'west'),
+     &    'faulty input under *region: '//trim(id1))
         write (nput,'(a/2x,i2,2x,a)') '*region', ireg,
-     &    ''''//trim(id0)//''''
+     &    ''''//trim(id1)//''''
        else if (cbirea.le.ireg.and.ireg.lt.cbirea+cbnrea) then
-        call xertst (streql(id0(1:4),'east'),
-     &    'faulty input under *region: '//id0)
+        call xertst (streql(id1(1:4),'east'),
+     &    'faulty input under *region: '//trim(id1))
         write (nput,'(a/2x,i2,2x,a)') '*region', ireg,
-     &    ''''//trim(id0)//''''
+     &    ''''//trim(id1)//''''
        else
         call xerrab ('faulty input under *region: out-of-range')
        endif
