@@ -8,7 +8,7 @@
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
      &  fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,        !srv 13.10.06 25.12.06 23.10.09
-     &  fhe, fhi, fnaPSch,fhePSch, fhiPSch, fch, 
+     &  fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
      &  fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir, 
      &  cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
@@ -432,6 +432,8 @@ csw 30sep2013, added cdpa in call, uadia
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      2  cdna, chce, chve, chci, chvi, calf,				!xpb
      &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)		!xpb
+       if(wrong_flow) write(*,*)
+     &  'b2sral [1]: wrong_flow returned from b2stbc'
       elseif(style.eq.1) then                                           !srv 28.07.08 {
 !! FIXME : Need to add sne in argument list here ???
        if(ncall.eq.0) write(*,*) ' style=',style,' b2stbc_spb called'
@@ -441,6 +443,8 @@ csw 30sep2013, added cdpa in call, uadia
      &  fhePSch, fhiPSch, fne, fni, fch,                                !srv 25.02.00 21.10.02
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &  sna, smo, she, shi, sch, wrong_flow)                            !srv 09.07.99 01.07.05
+       if(wrong_flow) write(*,*)
+     &  'b2sral [2]: wrong_flow returned from b2stbc_spb'
        call b2xpfe (nx, ny, ns, ns_ext, qe, rza, za_ext, 
      &  fna, fa_ext, fch_p, fne)                                        !srv 25.12.06
       else
@@ -451,30 +455,32 @@ csw 30sep2013, added cdpa in call, uadia
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb, 
      .  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,
      1  fna, fna_mdf, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
-     &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,             !srv 16.02.12
-     &  fnaPSch, fhePSch, fhiPSch,                                       !srv 25.02.00 13.10.06
-     &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
-     2  cdna, chce, chve, chci, chvi, calf,					             !xpb
-     &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)			 !xpb
+     &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,            !srv 16.02.12
+     &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
+     &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
+     2  cdna, chce, chve, chci, chvi, calf,				!xpb
+     &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)		!xpb
+       if(wrong_flow) write(*,*)
+     &  'b2sral [3]: wrong_flow returned from b2stbc'
        call b2xpfe (nx, ny, ns, ns_ext, qe, rza, za_ext, 
-     &  fna, fa_ext, fch_p, fne)                            !srv 25.12.06
-      endif                                                 !srv 28.07.08 }
+     &  fna, fa_ext, fch_p, fne)                                        !srv 25.12.06
+      endif                                                             !srv 28.07.08 }
       if (use_astra.ne.0) then
-        se  =0.0_R8                                         !srv 28.07.11
-        seh =0.0_R8                                         !srv 11.06.13
-        sih =0.0_R8                                         !srv 11.06.13
-	sheNB_astra=0.0_R8                                  !srv 21.06.12 {
+        se  =0.0_R8                                                     !srv 28.07.11
+        seh =0.0_R8                                                     !srv 11.06.13
+        sih =0.0_R8                                                     !srv 11.06.13
+	sheNB_astra=0.0_R8                                              !srv 21.06.12 {
 	shiNB_astra=0.0_R8
         do iy = -1,ny
 	  do ix = -1,nx
-            if(mod(region(ix,iy,0),4).eq.1) then                            !srv 23.10.12
+            if(mod(region(ix,iy,0),4).eq.1) then                        !srv 23.10.12
 	      sheNb_astra(ix,iy,0)=vol(ix,iy)*PeNB_astra(iy)*1.0e6_R8
 	      shiNb_astra(ix,iy,0)=vol(ix,iy)*PiNB_astra(iy)*1.0e6_R8
 	    endif
 	  enddo
 	enddo
         call b2saxpy (n2*4, 1.0_R8, sheNb_astra, 1, she, 1)
-        call b2saxpy (n2*4, 1.0_R8, shiNb_astra, 1, shi, 1)  !srv 21.06.12 }
+        call b2saxpy (n2*4, 1.0_R8, shiNb_astra, 1, shi, 1)             !srv 21.06.12 }
       endif	                       
 *   ..initialise smq to 0
       call sfill (n2*4*ns, 0.0_R8, smq, 1)

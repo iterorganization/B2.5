@@ -376,7 +376,7 @@ c   extra call at this place within internal iteration)
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &    wrong_flow, .false.)
         if(wrong_flow) write(*,*) 
-     &       'b2news: wrong_flow returned from b2sral'
+     &       'b2news_: wrong_flow returned from b2sral'
 
 *     ..smooth out sources
         call b2srsm (nx, ny, ns, dtim, 
