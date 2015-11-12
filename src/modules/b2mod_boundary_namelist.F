@@ -419,7 +419,7 @@ c.. Make a list of core boundaries
                   assigned = .false.
                   do while (ic.le.ncbs)
                     if (lcbs(ic).eq.ib) then
-                      call xertst(done(ic),
+                      call xertst(.not.done(ic),
      .                 'Core boundary already done!')
                       assigned = .true.
                       done(ic) = .true.
@@ -451,7 +451,7 @@ c.. Make a list of core boundaries
                   assigned = .false.
                   do while (ic.le.ncbs)
                     if (lcbs(ic).eq.ib) then
-                      call xertst(done(ic),
+                      call xertst(.not.done(ic),
      .                 'Core boundary already done!')
                       assigned = .true.
                       done(ic) = .true.

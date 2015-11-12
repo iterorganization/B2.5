@@ -807,6 +807,72 @@
 *     feedback in the SOL. Corresponds to 'isfeedback' B2 species. Defaults 
 *     to 0.0.
 *
+*  NAMELIST /FEEDBACK_CONTROL/
+*   Found in b2.feedback_control.parameters.
+*   Allows for more complex feedback schemes.
+*  VACUUM_COMMUNICATION - Integer. Defaults to 0. If >0, allows for a communication
+*   of particle fluxes across vacuum regions. This option only applies to neutrals.
+*   The density boundary condition is based on the difference between the average
+*   pressure and the local pressure.
+*  VACUUM_COMMUNICATION_NREG - Integer array of size (NVAC). Defaults to 0.
+*   Number of communicating vacuum regions .
+*  VACUUM_COMMUNICATION_METHOD - Integer array of size (NVAC). Defaults to 0.
+*   Option for resorbing the pressure difference.
+*   1: Try to set a flux. Corr = (beta*ave_pressure - pressure)/temp * alpha
+*   2: Try to set a density based on pressure equality. Corr = alpha * beta * pressure / Ti
+*  VACUUM_COMMUNICATION_IY - Integer array of size (NVACREG,NVAC). Defaults to -2.
+*   Radial index of the ring on which the neutral pressure is computed for region IREG.
+*  VACUUM_COMMUNICATION_IX1 - Integer array of size (NVACREG,NVAC). Defaults to -2.
+*   Poloidal lower bound of the range over which the neutral pressure is computed for region IREG.
+*  VACUUM_COMMUNICATION_IX2 - Integer array of size (NVACREG,NVAC). Defaults to -2.
+*   Poloidal upper bound of the range over which the neutral pressure is computed for region IREG.
+*  VACUUM_COMMUNICATION_ALPHA - Real*8 array of size (0:NSPECIES-1,NVAC). Defaults to 0.0.
+*    Parameter for setting the pressure correction. See above.
+*  VACUUM_COMMINICATION_BETA - Real*8 array of size (0:NSPECIES-1,NVAC). Defaults to 1.0.
+*    Parameter for setting the pressure correction. See above.
+*  NA_FEEDBACK_TARGET - Real*8 array of size (0:NSPECIES-1). Sets the target density
+*    of species (ISPECIES) for the feedback scheme. Defaults to 0.0.
+*  NA_FEEDBACK_CHOICE - Integer array of size (0:NSPECIES-1). Defaults to 0.
+*    Choice of quantity on which the feedback is computed:
+*    0: no action
+*    1: local species density (averaged over the rectangle of cells [IX1:IX2,IY1:IY2]).
+*       Summed over all charge states of that species.
+*    2: local electron density (averaged over the rectangle of cells [IX1:IX2,IY1:IY2]).
+*    3: outer midplane separatrix electron density.
+*  NA_FEEDBACK_OPTION - Integer array of size (0:NSPECIES-1). Defaults to 0.
+*    Option for computing the new fedback quantity.
+*    0: no action
+*    1: rescale slowed by na_feedback_alpha
+*    2: pure rescale
+*    3: rescaling slowed by tanh_log
+*  NA_FEEDBACK_ACTUATOR - Integer array of size (0:NSPECIES-1). Defaults to 0.
+*    Choice for the actuator used for the feedback.
+*    0: no action
+*    1: gas puff via boundary condition
+*    2: rescale na
+*  NA_FEEDBACK_ALPHA - Real*8 array of size (0:NSPECIES-1). Defaults to 0.001.
+*    Factor by which the rescaling is slowed. Rescaling factor is :
+*    Option 1: (1 + alpha*target/current) / (1 + alpha)
+*    Option 3: 2**(tanh(log(x)/beta)*log(alpha)/log(2))
+*  NA_FEEDBACK_BETA - Real*8 array of size (0:NSPECIES-1). Defaults to 1.0.
+*    Factor by which the rescaling is slowed. See above.
+*  NA_FEEDBACK_IX1 - Integer array of size (0:NSPECIES-1). Lower poloidal bound for
+*    the region of which the density is being averaged. Defaults to -2.
+*  NA_FEEDBACK_IX2 - Integer array of size (0:NSPECIES-1). Upper poloidal bound for
+*    the region of which the density is being averaged. Defaults to -2.
+*  NA_FEEDBACK_IY1 - Integer array of size (0:NSPECIES-1). Lower radial bound for
+*    the region of which the density is being averaged. Defaults to -2.
+*  NA_FEEDBACK_IY2 - Integer array of size (0:NSPECIES-1). Upper poloidal bound for
+*    the region of which the density is being averaged. Defaults to -2.
+*  NA_FEEDBACK_IB - Integer array of size (0:NSPECIES-1). Defaults to -1.
+*    Index of boundary condition through which the feedback is being applied.
+*  NA_FEEDBACK_PUFF_MIN - Real*8 array of size (0:NSPECIES-1). Defaults to 0.0.
+*    Minimum gas puff being applied.
+*  NA_FEEDBACK_PUFF_MAX - Real*8 array of size (0:NSPECIES-1). Defaults to 0.0.
+*    Maximum gas puff being applied.
+*  NA_FEEDBACK_OVERSHOOT - Real*8 array of size (0:NSPECIES-1). Defaults to 0.0.
+*    If the density is larger than target*overshoot, the gas puff is turned off.
+*
 *  NAMELIST /PROFILE/
 *   Found in b2.sources.profile.
 *   Allows the user to set external sources to use within the code.

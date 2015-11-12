@@ -1017,7 +1017,7 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
 	      do ireg=1, vacuum_communication_nreg(ivac)
 		iy=vacuum_communication_iy(ireg, ivac)
 		do ix=vacuum_communication_ix1(ireg, ivac),
-     1		 vacuum_communication_ix2(ireg, ivac)
+     1		      vacuum_communication_ix2(ireg, ivac)
 		  cum_pressure = cum_pressure +
      1		   ti(ix,iy)*na(ix,iy,is)*gs(ix,iy,2)
 		  cum_density = cum_density +
@@ -1287,8 +1287,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
       if(maxval(na_feedback_target(0:nspecies-1)).gt.0.0_R8) then
 ! we have a request for feedback control of na
 ! my idea here is to break the actions into 3 phases
-! 1/ calculate something based on the present state of the plasma depending on a species block
-!    based on "na_feedback_choice"
+! 1/ calculate something based on the present state of the plasma depending on a
+!    species block based on "na_feedback_choice"
 ! 2/ compare this with the reference value and calculate a change
 ! 3/ apply this in some way to the species block based on "na_feedback_actuator"
 
@@ -1322,9 +1322,9 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                      if(b2espcr(is).eq.ispecies+1) then
                         if(is_start.eq.-1) is_start=is
                         do iy = na_feedback_iy1(ispecies), 
-     &                       na_feedback_iy2(ispecies)
+     &                          na_feedback_iy2(ispecies)
                            do ix = na_feedback_ix1(ispecies), 
-     &                          na_feedback_ix2(ispecies)
+     &                             na_feedback_ix2(ispecies)
                               na_feedback_current = 
      &                             na_feedback_current + 
      &                             na(ix,iy,is) * vol(ix, iy)
@@ -1360,9 +1360,9 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                      endif
                   enddo
                   do iy = na_feedback_iy1(ispecies), 
-     &                 na_feedback_iy2(ispecies)
+     &                    na_feedback_iy2(ispecies)
                      do ix = na_feedback_ix1(ispecies), 
-     &                    na_feedback_ix2(ispecies)
+     &                       na_feedback_ix2(ispecies)
                         na_feedback_current = na_feedback_current + 
      &                    ne(ix, iy) * vol(ix, iy)
                         vol_feedback = vol_feedback + vol(ix, iy)

@@ -204,7 +204,7 @@ c 2002-09-11: logic revised
       integer natm1, nspecies1, iss
       integer itrack1, itrack2, itrack3
       integer non_commensurate
-      integer is0(0:100), is1(0:ns-1)
+      integer is0(0:DEF_NSD-1), is1(0:ns-1)
       integer is1beginrange, is1endrange, iatmbeginrange, iatmendrange
       integer, allocatable :: iatm1(:), ipls1(:), istra1(:)
       integer, allocatable :: istmp(:), ns1data(:,:,:), nx1data(:,:,:)
@@ -375,7 +375,8 @@ c 2002-09-11: logic revised
      .  scaling_width, scaling_strength, ixfb, iyfb, ixfb1, iyfb1,
      .  elm_time_begin, elm_time_end, elm_time_period,
      .  sources_time_mod, sources_time_switch,
-     1  zamin0(0:100), zamax0(0:100), zn0(0:100), am0(0:100),
+     1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
+     2  zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
      4  rescale_ra(0:nsdecl-1), rescale_sa(0:nsdecl-1),
      5  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
      6  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
@@ -818,7 +819,7 @@ c 2002-09-11: logic revised
       allocate(sputter_yield_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(sputter_yield2_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(bundle_frac(0:ns1-1,0:ns-1))
-      allocate(bundle_contr(0:ns-1,0:100))
+      allocate(bundle_contr(0:ns-1,0:DEF_NSD-1))
       allocate(b2espcr1(0:ns1-1))
       allocate(eb2ibcr(npls))
       allocate(ispecies1(natm))
@@ -1746,7 +1747,7 @@ c 2002-09-11: logic revised
      >   'BOUNDARY_TIME_MOD=', boundary_time_mod,','
         if (boundary_time_switch.ne.0.0_R8) write(35,'(1x,a,f10.7,a)')
      >   'BOUNDARY_TIME_SWITCH=', boundary_time_switch,','
-        if (boundary_time_mod.ne.0.0_R8) write(34,'(a,a,a)')
+        if (boundary_time_mod.ne.0.0_R8) write(35,'(a,a,a)')
      >   'BOUNDARY_FILENAME=''', trim(boundary_filename),''','
         if (maxval(lcbs).gt.0) then
           ncbs = 1
@@ -6706,7 +6707,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
  1225   CONTINUE
         IF (lntspec.GT.0) THEN
           READ (IUNIN,'(2e12.0,4i6)') rdum(0:1), idum(0:3) ! emnspc,emxspc,
-                                                          ! npspcen,iatspec,npspctt,npspcfi
+                                                           ! npspcen,iatspec,npspctt,npspcfi
           WRITE(IUNOT,'(2e12.0,4i6)') rdum(0:1), idum(0:3)
         END IF
         DO I=1,LNTSPUT !{
@@ -8220,6 +8221,7 @@ cxpb as they no longer necessarily point to the same species
           cfhci(i,0:ns1-1) = cftmp(0:ns1-1)
         enddo
         call b2wfcp (nout(3), 0, ns1)
+        close(nout(3))
       endif
 
 *   ..we now do b2ai.dat, using the data computed for b2ah.dat
@@ -8262,6 +8264,7 @@ cxpb as they no longer necessarily point to the same species
         write(nout(4),'(a)') trim(ligne)
         read (ninp(6),*) ligne
         write(nout(4),'(a)') trim(ligne)
+        close(nout(4))
         deallocate(nbini)
       endif
       deallocate(idum)
@@ -8749,10 +8752,11 @@ c       = 4 : center
       real (kind=R8) ::
      *   zn(0:ns-1), am(0:ns-1), zamin(0:ns-1), zamax(0:ns-1)
 *   ..arguments for de-bundled data (unspecified upon entry)
-      integer is0(0:100)
+      integer is0(0:DEF_NSD-1)
       real (kind=R8) ::
-     *   zn0(0:100), am0(0:100), zamin0(0:100), zamax0(0:100),
-     *   bundle_contr(0:ns-1,0:100)
+     *   zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
+     *   zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
+     *   bundle_contr(0:ns-1,0:DEF_NSD-1)
 *   ..local variables
       integer i, is, ic
 *   ..procedures
@@ -8786,10 +8790,11 @@ cxpb basic species 'ic'
       implicit none
 *   ..arguments for input de-bundled data (unchanged upon exit)
       integer ns
-      integer is0(0:100)
+      integer is0(0:DEF_NSD-1)
       real (kind=R8) ::
-     *   zn0(0:100), am0(0:100), zamin0(0:100), zamax0(0:100),
-     *   bundle_contr(0:ns-1,0:100)
+     *   zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
+     *   zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
+     *   bundle_contr(0:ns-1,0:DEF_NSD-1)
 *   ..arguments for re-bundled data (unchanged upon entry)
       integer ns1
       real (kind=R8) ::
@@ -8800,7 +8805,7 @@ cxpb basic species 'ic'
      *   am1(0:ns1-1), bundle_frac(0:ns1-1,0:ns-1)
 *   ..local variables
       integer ic, iss, nz, ii(1)
-      logical found, unused(0:100)
+      logical found, unused(0:DEF_NSD-1)
 *   ..procedures
       intrinsic nint
       external xerrab

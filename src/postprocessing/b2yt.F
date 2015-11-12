@@ -177,9 +177,10 @@
       do io = 0, size(ninp)-1
         close(ninp(io))
       enddo
-      do io = 0, size(nout)-1
-        close(nout(io))
-      enddo
+      close(nout(0))
+      close(nout(1))
+      close(nout(2))
+      close(nout(5))
 
 * ..end of computation
       call prgfin ()
