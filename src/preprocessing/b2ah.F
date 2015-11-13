@@ -123,6 +123,8 @@
 *     (none)
 
 * ..end of computation
+      call dealloc_b2mod_geo
+      call dealloc_b2mod_indirect
       call prgend ()
       stop 'b2ah'
 

@@ -40,6 +40,21 @@ c     ,	 sclsrcn(0:nsd,nstra),sclbase(0:nsd,nstra),sclrtio(0:nsd,nstra)
       return
       end subroutine alloc_b2mod_neutr_src_scaling
 
+      subroutine dealloc_b2mod_neutr_src_scaling
+      implicit none
+
+      if (.not.allocated(sclstra)) return
+      deallocate(sclstra)
+      deallocate(sclalph)
+      deallocate(sclsrcn)
+      deallocate(sclbase)
+      deallocate(sclrtio)
+      deallocate(tflux)
+      deallocate(flux_scale)
+
+      return
+      end subroutine dealloc_b2mod_neutr_src_scaling
+
       subroutine read_b2mod_neutr_src_scaling(nread,ns,nstra)
       implicit none
 #     include "DIMENSIONS.F"

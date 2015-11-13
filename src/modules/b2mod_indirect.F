@@ -52,4 +52,25 @@
       return
       end subroutine alloc_b2mod_indirect
 
+      subroutine dealloc_b2mod_indirect
+      implicit none
+
+      deallocate(leftix)
+      deallocate(leftiy)
+      deallocate(rightix)
+      deallocate(rightiy)
+      deallocate(topix)
+      deallocate(topiy)
+      deallocate(bottomix)
+      deallocate(bottomiy)
+      deallocate(region)
+      deallocate(resignore)
+      deallocate(leftcut)
+      deallocate(rightcut)
+      deallocate(topcut)
+      deallocate(bottomcut)
+
+      return
+      end subroutine dealloc_b2mod_indirect
+
       end module b2mod_indirect

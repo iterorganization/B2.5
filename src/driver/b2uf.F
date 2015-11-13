@@ -102,6 +102,16 @@
       call write_b2mod_anomalous_transport(nout(7))
       call write_b2mod_neutr_src_scaling(nout(7),nstrai)
 * ..end of computation
+      call dealloc_b2mod_geo
+      call dealloc_b2mod_work
+      call dealloc_b2mod_rates
+      call dealloc_b2mod_plasma
+      call dealloc_b2mod_sources
+      call dealloc_b2mod_indirect
+      call dealloc_b2mod_residuals
+      call dealloc_b2mod_transport
+      call dealloc_anomalous_transport
+      call dealloc_b2mod_neutr_src_scaling
       call prgend ()
       stop 'b2uf'
 

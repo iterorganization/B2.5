@@ -114,6 +114,16 @@ cxpb  Allocate dummy arrays needed by b2xpfe
       return
       end subroutine dealloc_b2mod_external
 
+      subroutine dealloc_b2mod_external_dummy
+
+      if (initialised_externals) return
+      deallocate(za_ext)
+      deallocate(fa_ext)
+      initialised_externals = .false.
+
+      return
+      end subroutine dealloc_b2mod_external_dummy
+
       subroutine read_b2mod_external(nxd,nyd,nsd,ismain)
       use b2mod_geo
       use b2mod_constants

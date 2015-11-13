@@ -44,7 +44,7 @@ c 2002-09-11: logic revised
      ,        ixref, iyref,
      ,        jsep, jxa, jxi, nxtl, nxtr,
      ,        nstsi, nlimi, natmi, nmoli, nioni,
-     ,        alloc_b2mod_b2plot
+     ,        alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_external
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -55,7 +55,8 @@ c 2002-09-11: logic revised
       use eirmod_eirbra
       use eirmod_extrab25
      , ,only: msrfclsx, mgwtiesx, lkindp, lkindm, lkindi, texta,
-     ,        eirene_extrab25_eirpbls_init, eirene_extrab25_wneuinit
+     ,        eirene_extrab25_eirpbls_init, eirene_extrab25_wneuinit,
+     ,        eirene_extrab25_cleanup
       use eirmod_clogau
 #endif
       implicit none
@@ -1030,7 +1031,7 @@ c 2002-09-11: logic revised
      1 exist=wall_namelist_used)
       if (sputter_namelist_used.or.wall_namelist_used)
      > call alloc_b2mod_sputter(nx,ny,ns)
-      if (transport_namelist.ge.1) call alloc_b2mod_transport(ns)
+      if (transport_namelist.ge.1) call alloc_transport_namelist(ns)
       if (numerics_namelist.ge.1) call alloc_b2mod_numerics(nx, ny, ns)
       inquire(file='../b2.neutrals.parameters',exist=todo)
       inquire(file='../b2.feedback_save.parameters',exist=found)
@@ -1781,7 +1782,7 @@ c 2002-09-11: logic revised
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while(.not.same_bundling.and.(transport_namelist.eq.1.or.todo)
      & .and..not.found)
-        if (transport_namelist.eq.0) call alloc_b2mod_transport(ns)
+        if (transport_namelist.eq.0) call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
         write(*,*) 'Writing ',trim(new_filename)
         write(hlp_frm,'(a,i3,a)')
@@ -8284,6 +8285,53 @@ cxpb as they no longer necessarily point to the same species
         deallocate(species_name)
       endif
 
+      call dealloc_b2mod_diag
+      call dealloc_b2mod_wall
+      call dealloc_b2mod_wall2
+      call dealloc_b2mod_layer
+      call dealloc_b2mod_ppout
+      call dealloc_b2mod_b2plot
+      call dealloc_b2mod_b2cmrc
+      call dealloc_sputter_data
+      call dealloc_b2mod_sputter
+      call dealloc_input_profile
+      call dealloc_b2mod_elements
+      call dealloc_b2mod_boundary
+      call dealloc_b2mod_neutrals
+      call dealloc_b2mod_numerics
+      call dealloc_b2mod_wall_init
+      call dealloc_b2mod_wall2_init
+      call dealloc_transport_namelist
+      call dealloc_b2mod_transport_models
+      deallocate(am1)
+      deallocate(zn1)
+      deallocate(zamin1)
+      deallocate(zamax1)
+      deallocate(is_neutral1)
+      deallocate(na1)
+      deallocate(ua1)
+      deallocate(kinrgy1)
+      deallocate(fna1)
+      deallocate(uadia1)
+      deallocate(sputter_yield_yt)
+      deallocate(sputter_yield2_yt)
+      deallocate(bundle_frac)
+      deallocate(bundle_contr)
+      deallocate(b2espcr1)
+      deallocate(eb2ibcr)
+      deallocate(ispecies1)
+      deallocate(ifl1)
+      deallocate(cftmp)
+      deallocate(istmp)
+      deallocate(iatm1)
+      deallocate(ipls1)
+#ifdef B25_EIRENE
+      CALL EIRENE_DEALLOC_BRAEIR
+      CALL EIRENE_DEALLOC_EIRBRA
+      CALL EIRENE_DEALLOC_CCOUPL
+      CALL EIRENE_EXTRAB25_CLEANUP
+#endif
+      
 * ..return
       call subend ()
       return

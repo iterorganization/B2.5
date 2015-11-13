@@ -77,6 +77,43 @@
       return
       end subroutine alloc_b2mod_transport
 
+      subroutine dealloc_b2mod_transport
+      implicit none
+
+      if (.not.allocated(calf)) return
+      deallocate(calf)
+      deallocate(cdna)
+      deallocate(cdpa)
+      deallocate(cddi)
+      deallocate(cdnahz)
+      deallocate(cdpahz)
+      deallocate(ceqp)
+      deallocate(chce)
+      deallocate(chci)
+      deallocate(chve)
+      deallocate(chvemx)
+      deallocate(chvi)
+      deallocate(chvimx)
+      deallocate(csig)
+      deallocate(cvla)
+      deallocate(cvsa)
+      deallocate(cthe)
+      deallocate(cthi)
+      deallocate(csigin)
+      deallocate(cvlahz)
+      deallocate(cvmahz)
+      deallocate(cvsahz)
+      deallocate(cvsa_cl)
+      deallocate(cvsahz_cl)
+      deallocate(fllime)
+      deallocate(fllimi)
+      deallocate(fllim0fna)
+      deallocate(fllim0fhi)
+      deallocate(fllimvisc)
+
+      return
+      end subroutine dealloc_b2mod_transport
+
       subroutine read_b2mod_transport(nread)
       implicit none
       integer nread

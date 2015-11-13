@@ -43,4 +43,25 @@
       return
       end subroutine alloc_b2mod_rates
 
+      subroutine dealloc_b2mod_rates
+      implicit none
+
+      deallocate(rlcx)
+      deallocate(rlqa)
+      deallocate(rlrd)
+      deallocate(rlbr)
+      deallocate(rlra)
+      deallocate(rlsa)
+      deallocate(rlza)
+      deallocate(rlz2)
+      deallocate(rlpt)
+      deallocate(rlpi)
+      deallocate(rza)
+      deallocate(rz2)
+      deallocate(rpt)
+      deallocate(rpi)
+
+      return
+      end subroutine dealloc_b2mod_rates
+
       end module b2mod_rates

@@ -522,6 +522,10 @@
       enddo
 
 * ..end of computation
+      deallocate(idummy)
+      call dealloc_b2mod_geo
+      call dealloc_b2mod_plasma
+      call dealloc_b2mod_indirect
 #else
       call xerrab('b2rd: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')

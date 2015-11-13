@@ -548,6 +548,9 @@ c-dpc        endif
       call xerrab('b2mddr: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
 #endif
+      call dealloc_b2mod_b2cmrc
+      call dealloc_b2mod_external
+      call dealloc_b2mod_external_dummy
       call subend ()
       return
 

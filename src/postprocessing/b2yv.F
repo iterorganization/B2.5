@@ -248,6 +248,15 @@
 	case default
       end select
 
+      call dealloc_b2mod_geo
+      call dealloc_b2mod_work
+      call dealloc_b2mod_rates
+      call dealloc_b2mod_plasma
+      call dealloc_b2mod_sources
+      call dealloc_b2mod_elements
+      call dealloc_b2mod_indirect
+      call dealloc_b2mod_residuals
+      call dealloc_b2mod_transport
       deallocate (M)
 * ..end of computation
       call prgend ()

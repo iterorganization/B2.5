@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_version
       use b2mod_geo
+      use b2mod_ma28
       use b2mod_plasma
       use b2mod_rates
       use b2mod_residuals
@@ -19,10 +20,18 @@
       use b2mod_elements
       use b2mod_feedback
       use b2mod_sputter
+      use b2mod_ysmp_sdrv
+      use b2mod_neoclassical
+      use b2mod_first_flight
+      use b2mod_input_profile
+      use b2mod_ma28_for_7diag
+      use b2mod_ma28_for_9diag
       use b2mod_transport_models
+      use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
-      use b2mod_neutr_src_scaling
+      use b2mod_transport_namelist
+      use b2mod_transport_disruption
       use b2mod_b2cmfs
       use b2mod_b2cmgs
       use b2mod_b2cmpa
@@ -38,7 +47,7 @@
       use eirmod_eirbra
       use eirmod_extrab25
       use b2mod_b2plot
-     , ,only: wklng, alloc_b2mod_b2plot
+     , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 #endif
       use b2mod_b2_to_astra
 #ifdef JET
@@ -1853,6 +1862,37 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 
 * ..return
       ncall = ncall+1
+      call dealloc_b2mod_diag
+      call dealloc_b2mod_ma28
+      call dealloc_b2mod_wall
+      call dealloc_b2mod_layer
+      call dealloc_b2mod_b2cmrc
+      call dealloc_sputter_data
+      call dealloc_b2mod_sputter
+      call dealloc_b2mod_tallies
+      call dealloc_input_profile
+      call dealloc_b2mod_elements
+      call dealloc_b2mod_boundary
+      call dealloc_b2mod_neutrals
+      call dealloc_b2mod_numerics
+      call dealloc_b2mod_external
+      call dealloc_b2mod_wall_init
+      call dealloc_b2mod_ysmp_sdrv
+      call dealloc_transport_namelist
+      call dealloc_b2mod_first_flight
+      call dealloc_b2mod_neoclassical
+      call dealloc_b2mod_ma28_for_7diag
+      call dealloc_b2mod_ma28_for_9diag
+      call dealloc_b2mod_external_dummy
+      call dealloc_b2mod_transport_models
+      call dealloc_b2mod_neutr_src_scaling
+      call dealloc_b2mod_transport_disruption
+#ifdef B25_EIRENE
+      call dealloc_b2mod_b2plot
+      CALL EIRENE_DEALLOC_BRAEIR
+      CALL EIRENE_DEALLOC_EIRBRA
+      CALL EIRENE_DEALLOC_CCOUPL
+#endif
       call subend ()
       return
 

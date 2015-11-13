@@ -46,4 +46,22 @@
 
       end subroutine alloc_b2mod_ysmp_sdrv
 
+      subroutine dealloc_b2mod_ysmp_sdrv
+
+      if (.not.allocated(r1)) return
+      deallocate(r1)
+      deallocate(s1)
+      deallocate(a)
+      deallocate(rsp)
+      deallocate(ia)
+      deallocate(ja)
+      deallocate(p)
+      deallocate(ip)
+      deallocate(isp)
+      deallocate(indexes)
+      deallocate(iasave)
+      deallocate(jasave)
+
+      end subroutine dealloc_b2mod_ysmp_sdrv
+
       end module b2mod_ysmp_sdrv                                 !sv 29.05.02

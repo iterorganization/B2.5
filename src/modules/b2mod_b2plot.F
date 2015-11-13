@@ -217,6 +217,70 @@ cank
       return
       end subroutine alloc_b2mod_b2plot_wall
 
+      subroutine dealloc_b2mod_b2plot
+      implicit none
+
+      if (.not.allocated(work)) return
+      deallocate(work)
+      deallocate(wrk)
+      deallocate(wrk_hlp)
+      deallocate(ind_hlp)
+      deallocate(arrowx)
+      deallocate(arrowy)
+      deallocate(p1)
+      deallocate(p2)
+      deallocate(xx)
+      deallocate(yy)     
+      deallocate(cr)
+      deallocate(cz)
+      deallocate(nh)
+      deallocate(uutraj)
+      deallocate(vvtraj)
+#ifndef PSR
+      deallocate(textan)
+      deallocate(textmn)
+      deallocate(textin)
+      deallocate(textpl)
+      deallocate(textplel)
+      deallocate(textplel2)
+      deallocate(textsp)
+      deallocate(textwl)
+      deallocate(textwk)
+      deallocate(textwwk)
+      deallocate(textbl)
+      deallocate(textni)
+      deallocate(textcomponents)
+      deallocate(text0123)
+      deallocate(textcorner)
+      deallocate(texttrack)
+      deallocate(texttargsp)
+#endif
+
+      return
+      end subroutine dealloc_b2mod_b2plot
+
+      subroutine dealloc_b2mod_b2plot_wall
+      implicit none
+
+      deallocate(wwrk_hlp)
+      deallocate(twrk_hlp)
+      deallocate(indt_hlp)
+      deallocate(wall_stack)
+      deallocate(wall_flux)
+      deallocate(wall_area)
+      deallocate(incident_energy)
+      deallocate(wall_heatflux)
+      deallocate(wall_temp)
+      deallocate(targetx)
+      deallocate(targety)
+      deallocate(targetr)
+      deallocate(targetz)
+      deallocate(wwrk)
+      deallocate(target_stack)
+
+      return
+      end subroutine dealloc_b2mod_b2plot_wall
+
       subroutine read_b2mod_b2plot(nread)
       implicit none
       integer nread

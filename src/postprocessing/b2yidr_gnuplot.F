@@ -289,6 +289,7 @@
      &  gs, qc, ni)
 
 * ..return
+      call dealloc_b2mod_b2cmrc
       call subend ()
       return
 

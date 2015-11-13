@@ -69,4 +69,37 @@
       allocate(resignore1(-1:nxd,-1:nyd,1:2))
       end subroutine alloc_b2mod_geo2
 
+      subroutine dealloc_b2mod_geo2
+      deallocate(bb1)
+      deallocate(crx1)
+      deallocate(cry1)
+      deallocate(ffbz1)
+      deallocate(fpsi1)
+      deallocate(gs1)
+      deallocate(hx1)
+      deallocate(hy1)
+      deallocate(qz1)
+      deallocate(qc1)
+      deallocate(pbs1)
+      deallocate(wbbl1)
+      deallocate(wbbr1)
+      deallocate(wbbv1)
+      deallocate(vol1)
+      deallocate(leftix1)
+      deallocate(leftiy1)
+      deallocate(rightix1)
+      deallocate(rightiy1)
+      deallocate(topix1)
+      deallocate(topiy1)
+      deallocate(bottomix1)
+      deallocate(bottomiy1)
+      deallocate(leftcut1)
+      deallocate(rightcut1)
+      deallocate(topcut1)
+      deallocate(bottomcut1)
+      deallocate(region1)
+      deallocate(resignore1)
+      return
+      end subroutine dealloc_b2mod_geo2
+
       end module b2mod_geo2

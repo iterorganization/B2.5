@@ -71,4 +71,16 @@ c======================================================================
       return
       end subroutine alloc_b2plot_wall_loading
 
+      subroutine dealloc_b2plot_wall_loading
+      implicit none
+      
+      deallocate(indwll, luwrk, lwldrad)
+      deallocate(lwldlis)
+      deallocate(leirlis)
+      deallocate(lpumplis)
+      deallocate(segm_area, segm_len, wldrfdst, wldrdld, co_data)
+
+      return
+      end subroutine dealloc_b2plot_wall_loading
+
       end module b2mod_b2plot_wall_loading

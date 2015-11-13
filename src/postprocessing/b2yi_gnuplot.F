@@ -136,6 +136,12 @@
       call b2yidr_gnuplot (ninp, nout, nx, ny, ns)
 
 * ..end of computation
+      call dealloc_b2mod_geo
+      call dealloc_b2mod_work
+      call dealloc_b2mod_rates
+      call dealloc_b2mod_ppout
+      call dealloc_b2mod_plasma
+      call dealloc_b2mod_indirect
       call prgfin ()
       stop 'b2yi_gnuplot'
 

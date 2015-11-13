@@ -320,6 +320,56 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       return
       end subroutine alloc_b2mod_neutrals_save
 
+      subroutine dealloc_b2mod_neutrals
+      implicit none
+
+#ifdef ALLOCATE_AND_NAMELIST
+      if (.not.allocated(recyc)) return
+      deallocate(RECYC)
+      deallocate(ERECYC)
+      deallocate(RCION)
+      deallocate(recyceir)
+      deallocate(USERFLUXPARM)
+      deallocate(volrecstart)
+      deallocate(chem_sput)
+      deallocate(phys_sput)
+      deallocate(RCPOS)
+      deallocate(RCSTART)
+      deallocate(RCEND)
+      deallocate(RC_LIST_SIZE)
+      deallocate(RC_LIST_X)
+      deallocate(RC_LIST_Y)
+      deallocate(TARGSP)
+      deallocate(CHEMSP)
+      deallocate(CRCSTRA)
+      deallocate(species_start)
+      deallocate(species_end)
+      deallocate(b2espcr)
+      deallocate(eb2spcr)
+      deallocate(lstrascl)
+      deallocate(lmolscl)
+      deallocate(lionscl)
+      deallocate(gpfc)
+      deallocate(mlcmp)
+      deallocate(lcns)
+      deallocate(ltns)
+      deallocate(lsns)
+      deallocate(ksns)
+      deallocate(msns)
+#ifndef NO_B2_CHEM_SPUT
+      deallocate(chemical_sputter_yield)
+#endif
+#endif
+      return
+      end subroutine dealloc_b2mod_neutrals
+
+      subroutine dealloc_b2mod_neutrals_save
+#ifdef ALLOCATE_AND_NAMELIST
+      deallocate(saved_volrec)
+#endif
+      return
+      end subroutine dealloc_b2mod_neutrals_save
+
       subroutine read_neutrals_namelist(nx, ny, ns, dotest)
       use b2mod_wall
      & ,only : track_index, ntrack, track_species, track_chem_sput

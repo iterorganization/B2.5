@@ -95,4 +95,42 @@
 
       end subroutine alloc_b2mod_work
 
+      subroutine dealloc_b2mod_work
+
+      deallocate(conb)
+      deallocate(conc)
+      deallocate(cone)
+      deallocate(coni)
+      deallocate(corpa)
+      deallocate(corpo)
+      deallocate(corte)
+      deallocate(corti)
+      deallocate(corua)
+      deallocate(corut)
+      deallocate(delne)
+      deallocate(delni)
+      deallocate(delna)
+      deallocate(delpo)
+      deallocate(delte)
+      deallocate(delti)
+      deallocate(delua)
+      deallocate(flob)
+      deallocate(floe)
+      deallocate(floi)
+      deallocate(floe_noc)
+      deallocate(floi_noc)
+      deallocate(pcca)
+      deallocate(pccm)
+      deallocate(avisper)
+      deallocate(bvisper)
+      deallocate(cvisper)
+      deallocate(wrk0)
+      deallocate(wrk1)
+      deallocate(facdrift_profile)
+      deallocate(fac_ExB_profile)
+      deallocate(fac_vis_profile)
+      deallocate(ds)
+      return
+      end subroutine dealloc_b2mod_work
+
       end module b2mod_work

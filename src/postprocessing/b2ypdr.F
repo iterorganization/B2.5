@@ -702,6 +702,7 @@
      &  te, ti, po, fna, fhe, fhi, fch)
 
 * ..return
+      call dealloc_b2mod_b2cmrc
       call subend ()
       return
 

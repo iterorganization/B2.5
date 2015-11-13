@@ -47,7 +47,7 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
 
       contains
 
-      subroutine alloc_b2mod_transport(nsd)
+      subroutine alloc_transport_namelist(nsd)
       implicit none
       integer nsd
 #ifdef ALLOCATE_AND_NAMELIST
@@ -76,7 +76,19 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       pw1_cnv=5.0_R8 
       pw2_cnv=2.0_R8 
       return
-      end subroutine alloc_b2mod_transport
+      end subroutine alloc_transport_namelist
+
+      subroutine dealloc_transport_namelist
+      implicit none
+#ifdef ALLOCATE_AND_NAMELIST
+      deallocate(parm_dna)
+      deallocate(parm_dpa)
+      deallocate(parm_vla)
+      deallocate(parm_vsa)
+      deallocate(parm_hci)
+#endif
+      return
+      end subroutine dealloc_transport_namelist
 
       subroutine read_b2mod_transport_namelist
 

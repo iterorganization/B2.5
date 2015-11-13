@@ -134,6 +134,57 @@ c   ..allocate
       end subroutine alloc_b2mod_ppout
 c
 c=======================================================================
+      subroutine dealloc_b2mod_ppout
+      implicit none
+
+      deallocate(isyear)
+
+#ifdef JET
+c   ..deallocate
+      deallocate(xnorm)
+      deallocate(crxe)
+      deallocate(crye)
+
+      deallocate(cxpp)
+      deallocate(cypp)
+      deallocate(psi)
+
+      deallocate(rho)
+      deallocate(hrho)
+      deallocate(theta)
+      deallocate(htheta)
+
+      deallocate(bfi)
+      deallocate(sh)
+
+      deallocate(dm)
+
+      deallocate(rsepx)
+      deallocate(zsepx)
+
+      deallocate(rbcore)
+      deallocate(zbcore)
+      deallocate(rbwall)
+      deallocate(zbwall)
+
+      deallocate(zmass)
+      deallocate(izch)
+      deallocate(izs2is)
+      deallocate(sqezrad)
+      deallocate(ro)
+      deallocate(pr)
+      deallocate(pmach)
+
+      deallocate(itagdv)
+
+      deallocate(rtemp)
+      deallocate(itemp)
+#endif
+
+      return
+      end subroutine dealloc_b2mod_ppout
+c
+c=======================================================================
 #ifdef JET
       subroutine set_b2mod_ppout
 

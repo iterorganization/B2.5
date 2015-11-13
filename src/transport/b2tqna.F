@@ -158,7 +158,7 @@
      1   'faulty argument b2tqna_ixref')
         call ipgeti ('b2tqna_transport_namelist', transport_namelist)
         if(transport_namelist.eq.1) then
-          call alloc_b2mod_transport(ns)
+          call alloc_transport_namelist(ns)
           call read_b2mod_transport_namelist
           call write_b2mod_transport_namelist
           if(transport_time_mod.gt.0.0_R8) then

@@ -83,6 +83,25 @@
       return
       end subroutine alloc_b2mod_numerics
 
+      subroutine dealloc_b2mod_numerics
+      implicit none
+
+      if (.not.allocated(time_factor)) return
+      deallocate(time_factor)
+#ifdef ALLOCATE_AND_NAMELIST
+      deallocate(dtco)
+      deallocate(dtmo)
+      deallocate(dtee)
+      deallocate(dtei)
+      deallocate(solveco)
+      deallocate(solvemo)
+      deallocate(solvepo)
+      deallocate(solveee)
+      deallocate(solveei)
+#endif
+      return
+      end subroutine dealloc_b2mod_numerics
+
       subroutine read_b2mod_numerics_namelist(nx,ny)
       implicit none
 

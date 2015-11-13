@@ -27,6 +27,7 @@ c 2002-09-11: logic revised
       use b2mod_residuals
       use b2mod_transport
       use b2mod_geo_corner
+      use b2mod_b2plot_xy
       use b2mod_b2plot_ank
       use b2mod_b2plot_help
       use b2mod_b2plot_debug
@@ -1262,6 +1263,26 @@ c
             write(*,'(a,6i4)') 'STACK i,r,s,m,w,t = ',
      .       iistack,irstack,isstack,iwrk,iwwrk,itwrk
             deallocate(mach)
+            call dealloc_b2mod_diag
+            call dealloc_b2mod_wall
+            call dealloc_b2mod_layer
+            call dealloc_b2mod_b2plot
+            call dealloc_sputter_data
+            call dealloc_b2mod_sputter
+            call dealloc_b2mod_neutrals
+            call dealloc_b2mod_elements
+            call dealloc_b2mod_boundary
+            call dealloc_b2mod_wall_init
+            call dealloc_b2mod_b2plot_xy
+            call dealloc_b2mod_b2plot_ank
+            call dealloc_b2mod_b2plot_wall
+            call dealloc_b2mod_neoclassical
+            call dealloc_b2plot_wall_loading
+#ifdef B25_EIRENE
+            CALL EIRENE_DEALLOC_BRAEIR
+            CALL EIRENE_DEALLOC_EIRBRA
+            CALL EIRENE_EXTRAB25_CLEANUP
+#endif
             call subend ()
             return
           end if
@@ -1306,6 +1327,26 @@ c
           write(*,'(a,6i4)') 'STACK i,r,s,m,w,t = ',
      .     iistack,irstack,isstack,iwrk,iwwrk,itwrk
           deallocate(mach)
+          call dealloc_b2mod_diag
+          call dealloc_b2mod_wall
+          call dealloc_b2mod_layer
+          call dealloc_b2mod_b2plot
+          call dealloc_sputter_data
+          call dealloc_b2mod_sputter
+          call dealloc_b2mod_elements
+          call dealloc_b2mod_boundary
+          call dealloc_b2mod_neutrals
+          call dealloc_b2mod_wall_init
+          call dealloc_b2mod_b2plot_xy
+          call dealloc_b2mod_b2plot_ank
+          call dealloc_b2mod_b2plot_wall
+          call dealloc_b2mod_neoclassical
+          call dealloc_b2plot_wall_loading
+#ifdef B25_EIRENE
+          CALL EIRENE_DEALLOC_BRAEIR
+          CALL EIRENE_DEALLOC_EIRBRA
+          CALL EIRENE_EXTRAB25_CLEANUP
+#endif
           call subend ()
           return
         else

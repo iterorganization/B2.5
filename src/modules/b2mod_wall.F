@@ -358,6 +358,116 @@ cxpb Data file material properties
 
       end subroutine alloc_b2mod_wall
 
+      subroutine dealloc_b2mod_wall_init
+      implicit none
+
+      if(.not.allocated(imapw)) return
+#ifdef ALLOCATE_AND_NAMELIST
+      deallocate(imapx, imapy)
+      deallocate(plate_area)
+      deallocate(xymap)
+#endif
+      deallocate(imapw, imapreg, wall_begin, wall_end)
+      deallocate(r1, r2, z1, z2)
+      deallocate(itrack_0)
+
+      return
+      end subroutine dealloc_b2mod_wall_init
+
+      subroutine dealloc_b2mod_wall
+      implicit none
+
+      if(.not.allocated(surface_long_name)) return
+#ifdef ALLOCATE_AND_NAMELIST
+      deallocate(inertial_cooling)
+      deallocate(
+     *  target_temp,
+     *  target_depth,
+     *  target_width,
+     *  target_vol,
+     *  targetcr,
+     *  targetcz,
+     *  backplate_temp,
+     *  plate_thickness,
+     *  plate_time_factor,
+     *  coating_thickness,
+     *  deposition,
+     *  monolayer_deposition,
+     *  erosion,
+     *  monolayer_erosion,
+     *  plate_time,
+     *  chemical_sputtering,
+     *  physical_sputtering,
+     *  physical_sputtering_energy,
+     *  RES_sputtering,
+     *  thermal_evaporation,
+     *  backscattering,
+     *  backscattering_energy)
+
+      deallocate(
+     *  surface_material_name,
+     *  coating_material_name,
+     *  bulk_material_name)
+
+      deallocate(track_index)
+#endif
+
+      deallocate(surface_long_name)
+      deallocate(matsurf_nconstituents)
+      deallocate(matsurf_chemsput_erel,
+     *  matsurf_blackbody_emiss,
+     *  matsurf_vapprs_A,
+     *  matsurf_vapprs_B,
+     *  matsurf_stick_coef,
+     *  matsurf_vapor_temp,
+     *  matsurf_heat_sublim)
+
+      deallocate(coating_long_name)
+      deallocate(coating_temp_unit)
+      deallocate(
+     *  coating_format,
+     *  coating_target_density,
+     *  coating_Kappa_KA,
+     *  coating_Kappa_KB,
+     *  coating_Kappa_A1,
+     *  coating_Kappa_A2,
+     *  coating_Kappa_A3,
+     *  coating_Kappa_A4,
+     *  coating_Kappa_A5,
+     *  coating_Kappa_perp_A1,
+     *  coating_Kappa_perp_A2,
+     *  coating_Kappa_perp_A3,
+     *  coating_Kappa_perp_A4,
+     *  coating_Kappa_perp_A5,
+     *  coating_Cp_B1,
+     *  coating_Cp_B2,
+     *  coating_Cp_B3,
+     *  coating_Cp_B4)
+
+      deallocate(bulk_long_name)
+      deallocate(bulk_temp_unit)
+      deallocate(
+     *  matbulk_format,
+     *  matbulk_target_density,
+     *  matbulk_Kappa_KA,
+     *  matbulk_Kappa_KB,
+     *  matbulk_Kappa_A1,
+     *  matbulk_Kappa_A2,
+     *  matbulk_Kappa_A3,
+     *  matbulk_Kappa_A4,
+     *  matbulk_Kappa_A5,
+     *  matbulk_Kappa_perp_A1,
+     *  matbulk_Kappa_perp_A2,
+     *  matbulk_Kappa_perp_A3,
+     *  matbulk_Kappa_perp_A4,
+     *  matbulk_Kappa_perp_A5,
+     *  matbulk_Cp_B1,
+     *  matbulk_Cp_B2,
+     *  matbulk_Cp_B3,
+     *  matbulk_Cp_B4)
+
+      end subroutine dealloc_b2mod_wall
+
       subroutine read_b2mod_wall_namelist(nread,ns,edition,found)
       implicit none
       integer nread, ns

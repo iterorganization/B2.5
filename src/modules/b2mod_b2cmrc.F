@@ -53,4 +53,29 @@
       return
       end subroutine alloc_b2mod_b2cmrc
 
+      subroutine dealloc_b2mod_b2cmrc
+      implicit none
+
+      deallocate(rtzmin)
+      deallocate(rtzmax)
+      deallocate(rtzn)
+      deallocate(rtt)
+      deallocate(rtn)
+      deallocate(rtlt)
+      deallocate(rtln)
+      deallocate(rtlsa)
+      deallocate(rtlra)
+      deallocate(rtlqa)
+      deallocate(rtlrd)
+      deallocate(rtlbr)
+      deallocate(rtlcx)
+      deallocate(rtlza)
+      deallocate(rtlz2)
+      deallocate(rtlpt)
+      deallocate(rtlpi)
+      deallocate(rtyr)
+      
+      return
+      end subroutine dealloc_b2mod_b2cmrc
+
       end module b2mod_b2cmrc

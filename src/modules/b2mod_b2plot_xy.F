@@ -18,6 +18,15 @@
 
       end subroutine alloc_b2mod_b2plot_xy
 
+      subroutine dealloc_b2mod_b2plot_xy
+
+      if (allocated(X)) then
+        deallocate(X)
+        deallocate(Y)
+      end if
+
+      end subroutine dealloc_b2mod_b2plot_xy
+
       subroutine read_b2mod_b2plot_xy(nread)
       integer nread
 

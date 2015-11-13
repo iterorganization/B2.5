@@ -13,11 +13,12 @@
      * , only : textan, textmn, textin, textpl, textwl, textsp, textbl,
      * textcomponents, text0123, nx, ny, ns, jxa, jxi, jsep,
      * cr, cz, natmi, nmoli, nioni, wklng,
-     * solpstop, alloc_b2mod_b2plot
+     * solpstop, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_wall
       use b2mod_eirene_globals
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
+      use b2mod_transport_namelist
 !      use b2mod_b2plot_debug
       use b2mod_elements
       use b2mod_sputter
@@ -34,7 +35,7 @@
       use eirmod_clogau
       use eirmod_braeir
       use eirmod_eirbra
-     * , only : eirene_alloc_eirbra
+     * , only : eirene_alloc_eirbra, eirene_dealloc_eirbra
       use eirmod_extrab25
 #endif
       use b2mod_b2cmpa
@@ -1306,6 +1307,20 @@ c
 #else
       call xerrab('b2mds: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
+#endif
+      call dealloc_b2mod_wall
+      call dealloc_b2mod_layer
+      call dealloc_b2mod_b2plot
+      call dealloc_sputter_data
+      call dealloc_b2mod_sputter
+      call dealloc_b2mod_elements
+      call dealloc_b2mod_boundary
+      call dealloc_b2mod_neutrals
+      call dealloc_b2mod_wall_init
+#ifdef B25_EIRENE
+      CALL EIRENE_DEALLOC_BRAEIR
+      CALL EIRENE_DEALLOC_EIRBRA
+      CALL EIRENE_EXTRAB25_CLEANUP
 #endif
       call subend()
       return

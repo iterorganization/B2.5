@@ -335,6 +335,8 @@
       deallocate(vldiff)
       deallocate(qcdiff)
       deallocate(sxdiff)
+      call dealloc_b2mod_geo
+      call dealloc_b2mod_indirect
 * ..return
       call subend ()
       return

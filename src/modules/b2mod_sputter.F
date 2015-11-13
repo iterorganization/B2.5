@@ -103,6 +103,17 @@
       return
       end subroutine alloc_b2mod_sputter
 
+      subroutine dealloc_b2mod_sputter
+      implicit none
+      if(.not.allocated(monolayer_l)) return
+#ifdef ALLOCATE_AND_NAMELIST
+      deallocate(sputter_yield)
+      deallocate(sputter_yield2)
+#endif
+      deallocate(monolayer_l)
+      return
+      end subroutine dealloc_b2mod_sputter
+
       subroutine read_b2mod_sputter_namelist(nread,edition,found)
       implicit none
       integer nread
@@ -491,8 +502,8 @@ c     2    i=1,reflect_length(is,itargsp))
 
       end subroutine read_sputter_data
 
-      subroutine dealloc_b2mod_sputter
-      sputter_initialised=.false.
+      subroutine dealloc_sputter_data
+      if(.not.sputter_initialised) return
       deallocate(sputter_index)
       deallocate(sputter_coefficient, sputter_energy, sputter_length)
       deallocate(sputter_coefficient2, sputter_energy2, sputter_length2)
@@ -501,7 +512,8 @@ c     2    i=1,reflect_length(is,itargsp))
 #ifdef ALLOCATE_AND_NAMELIST
       deallocate(sputter_yield, sputter_yield2)
 #endif
-      end subroutine dealloc_b2mod_sputter
+      sputter_initialised=.false.
+      end subroutine dealloc_sputter_data
 
       function sputter(is,zb,issput,te)
       use b2mod_b2cmpa

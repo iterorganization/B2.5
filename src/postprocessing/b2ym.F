@@ -130,6 +130,8 @@
       call gclks ()
 
 * ..end of computation
+      call dealloc_b2mod_geo
+      call dealloc_b2mod_plasma
       call prgend ()
       stop 'b2ym'
 

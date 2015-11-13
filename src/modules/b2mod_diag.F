@@ -223,4 +223,39 @@ c>>>
 
       end subroutine alloc_b2mod_diag
 
+      subroutine dealloc_b2mod_diag
+      implicit none
+
+      if (.not.allocated(IZ)) return
+      deallocate(IZ)
+      deallocate(RESHLP)
+      deallocate(rad_imp)
+      deallocate(rdneureg,
+     2  b2radirreg, b2radlrreg,
+     3  recycereg, recycireg,
+     4  sseereg, sseireg, ssnireg)
+      deallocate( 
+     .      FEEXGT, FEEYGT,
+     .      FEIXGT, FEIYGT)
+      deallocate(RADARR)
+      deallocate(atoms_list)
+      deallocate(ions_list)
+      deallocate(fluids_list)
+      deallocate(nfluids)
+      deallocate(
+     ,     src_ee, src_ei,
+     ,     src_es, src_ms,
+     ,     src_ni, src_mo,
+     ,     src_ne)
+      deallocate(
+     ,     cor_ee, cor_ei,
+     ,     cor_ni, cor_mo,
+     ,     cor_ne)
+      deallocate(
+     ,     rescoreg, resmoreg,
+     ,     reshereg, reshireg)
+
+      return
+      end subroutine dealloc_b2mod_diag
+
       end module b2mod_diag

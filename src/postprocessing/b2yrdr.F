@@ -346,6 +346,8 @@
       call gdawk (nout(1))
 
 * ..return
+      call dealloc_b2mod_ppout
+      call dealloc_b2mod_b2cmrc
       call subend ()
       return
 

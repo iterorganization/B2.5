@@ -17,6 +17,14 @@
       
       end subroutine alloc_b2mod_transport_disruption
 
+      subroutine dealloc_b2mod_transport_disruption
+
+      if(.not.allocated(rho_)) return
+      deallocate(rho_)
+      deallocate(f_quench)
+      
+      end subroutine dealloc_b2mod_transport_disruption
+
       end module b2mod_transport_disruption
 
 

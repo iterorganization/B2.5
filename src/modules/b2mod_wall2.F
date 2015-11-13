@@ -147,4 +147,54 @@ cxpb Data file material properties
 
       end subroutine alloc_b2mod_wall2
 
+      subroutine dealloc_b2mod_wall2_init
+      implicit none
+
+      if (.not.allocated(xymap1)) return
+      deallocate(xymap1)
+      deallocate(imapx1, imapy1)
+      deallocate(acc_area, acc_area1)
+      deallocate(contr_area)
+      deallocate(plate_area1)
+      deallocate(wall_begin1)
+      deallocate(wall_end1)
+      return
+      end subroutine dealloc_b2mod_wall2_init
+
+      subroutine dealloc_b2mod_wall2
+      implicit none
+
+      if (.not.allocated(inertial_cooling1)) return
+      deallocate(inertial_cooling1)
+      deallocate(
+     *  target_temp1,
+     *  backplate_temp1,
+     *  plate_thickness1,
+     *  plate_time_factor1,
+     *  coating_thickness1,
+     *  deposition1,
+     *  monolayer_deposition1,
+     *  erosion1,
+     *  monolayer_erosion1,
+     *  plate_time1,
+     *  chemical_sputtering1,
+     *  physical_sputtering1,
+     *  physical_sputtering_energy1,
+     *  RES_sputtering1,
+     *  thermal_evaporation1,
+     *  backscattering1,
+     *  backscattering_energy1)
+      deallocate(
+     *  surface_material_name1,
+     *  coating_material_name1,
+     *  bulk_material_name1)
+      deallocate(
+     *  layer_nconstituents1,
+     *  layer_nzconstituents1)
+      deallocate(
+     *  layer_nrelconstituents1)
+      
+      return
+      end subroutine dealloc_b2mod_wall2
+
       end module b2mod_wall2

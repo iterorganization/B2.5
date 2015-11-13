@@ -147,6 +147,11 @@
       call gclks ()
 
 * ..end of computation
+      call dealloc_b2mod_geo
+      call dealloc_b2mod_work
+      call dealloc_b2mod_rates
+      call dealloc_b2mod_ppout
+      call dealloc_b2mod_plasma
       call prgfin ()
       stop 'b2yn'
 

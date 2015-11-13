@@ -54,6 +54,24 @@
       return
       end subroutine alloc_input_profile
 
+      subroutine dealloc_input_profile
+      implicit none
+
+#ifdef ALLOCATE_AND_NAMELIST
+      if (allocated(nsdata)) then
+        deallocate(nsdata)
+        deallocate(nxdata)
+        deallocate(sdata)
+        deallocate(xdata)
+        deallocate(ndata)
+        deallocate(tdata)
+        deallocate(addspec)
+      endif
+#endif
+
+      return
+      end subroutine dealloc_input_profile
+
       subroutine source_input(nx,ny,ns,
      &  sna0,smo0,she0,shi0,sch0,sne0,vol,nc)
 !**************************************************************************

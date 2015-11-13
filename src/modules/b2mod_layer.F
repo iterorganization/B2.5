@@ -106,6 +106,7 @@
       end subroutine alloc_b2mod_layer
 
       subroutine dealloc_b2mod_layer
+      if (.not.allocated(layer_thickness)) return
 #ifdef ALLOCATE_AND_NAMELIST
       deallocate(layer_nconstituents)
       deallocate(layer_nzconstituents)

@@ -698,6 +698,19 @@ cxpb  We must account for the case when the user does not want all bundles
       endif
       call b2wurc (nout(1), newversion)
 
+*   ..deallocate arrays
+      call dealloc_b2mod_b2cmrc
+      deallocate(rtsa)
+      deallocate(rtra)
+      deallocate(rtqa)
+      deallocate(rtcx)
+      deallocate(rtrd)
+      deallocate(rtbr)
+      deallocate(rtzz)
+      deallocate(rtz2)
+      deallocate(rtpi)
+      deallocate(rtpt)
+      deallocate(wrk)
 * ..return
       call subend ()
       return

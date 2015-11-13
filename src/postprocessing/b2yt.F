@@ -183,6 +183,11 @@
       close(nout(5))
 
 * ..end of computation
+      call dealloc_b2mod_geo
+      call dealloc_b2mod_geo2
+      call dealloc_b2mod_rates
+      call dealloc_b2mod_plasma
+      call dealloc_b2mod_indirect
       call prgfin ()
       stop 'b2yt'
 

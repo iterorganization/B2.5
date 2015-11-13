@@ -52,6 +52,18 @@
       dl=in_dl
       end subroutine alloc_b2mod_first_flight
 
+      subroutine dealloc_b2mod_first_flight
+      implicit none
+      if(.not.allocated(angle)) return
+      deallocate(angle)
+      deallocate(cell)
+      deallocate(cellx)
+      deallocate(celly)
+      deallocate(table)
+      deallocate(index)
+      return
+      end subroutine dealloc_b2mod_first_flight
+
       subroutine setup_b2mod_first_flight
      * (ix0,iy0,nx,ny,orientation,output)
       use b2mod_geo

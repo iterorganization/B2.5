@@ -2331,7 +2331,10 @@ C           stop
 
 * ..finalise save
       entry eirene_mc_final(nx,ny,ns,BoRiS)
-      if(saved_volrec_used) call write_b2mod_neutrals_save(99,'    ')
+      if(saved_volrec_used) then
+        call write_b2mod_neutrals_save(99,'    ')
+        call dealloc_b2mod_neutrals_save
+      end if
       if(background_new.eq.0) call copy_background(nx, ny, ns, BoRiS)  !srv 14.07.10
       if(background_new.ne.0) call copy_background_(nx, ny, ns, BoRiS) !srv 14.07.10
       call write_f30(nx, ny)
@@ -2345,6 +2348,8 @@ csw 26feb2014
        deallocate(see_av)
        deallocate(sei_av)
       endif
+      call dealloc_sum_arrays
+      call dealloc_hist_arrays
 
       return
 
@@ -2611,6 +2616,22 @@ c!###}
       call clear_hist_arrays
       end subroutine alloc_hist_arrays
 
+      subroutine dealloc_hist_arrays
+      implicit none
+
+      if (.not.allocated(sni_h)) return
+      deallocate(sni_h)
+      deallocate(smo_h)
+      deallocate(see_h)
+      deallocate(sei_h)
+      deallocate(pfluxa_h)
+      deallocate(pfluxm_h)
+      deallocate(rfluxa_h)
+      deallocate(rfluxm_h)
+      deallocate(dab2_h)
+      return
+      end subroutine dealloc_hist_arrays
+
       subroutine clear_hist_arrays                                !csw 24feb2014
       implicit none
       sni_h = 0.0_R8
@@ -2648,6 +2669,20 @@ c!###}
       allocate(dab2_s(0:ndxp,0:ndyp,natm,1))
       call clear_sum_arrays
       end subroutine alloc_sum_arrays
+
+      subroutine dealloc_sum_arrays
+      implicit none
+      deallocate(sni_s)
+      deallocate(smo_s)
+      deallocate(see_s)
+      deallocate(sei_s)
+      deallocate(pfluxa_s)
+      deallocate(pfluxm_s)
+      deallocate(rfluxa_s)
+      deallocate(rfluxm_s)
+      deallocate(dab2_s)
+      return
+      end subroutine dealloc_sum_arrays
 
       subroutine clear_sum_arrays                                !csw 24feb2014
       implicit none

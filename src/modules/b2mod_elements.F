@@ -57,4 +57,14 @@
       return
       end subroutine alloc_b2mod_elements
 
+      subroutine dealloc_b2mod_elements
+      implicit none
+
+#ifndef PSR
+      deallocate(is_codes)
+#endif
+      
+      return
+      end subroutine dealloc_b2mod_elements
+
       end module b2mod_elements

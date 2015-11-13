@@ -48,6 +48,34 @@
 
       end subroutine alloc_b2mod_neoclassical
 
+      subroutine dealloc_b2mod_neoclassical
+
+      if (.not.allocated(ncl)) return
+      deallocate(ncl)
+      deallocate(isort)
+      deallocate(m)
+      deallocate(zsp)
+      deallocate(theta)
+      deallocate(bav_)
+      deallocate(b2av_)
+      deallocate(bi2a_)
+      deallocate(rbt_)
+      deallocate(bgradp_)
+      deallocate(dpsidr_)
+      deallocate(rnq_)
+      deallocate(fc_)
+      deallocate(gclass_)
+      deallocate(fm_)
+      deallocate(r2i_)
+      deallocate(rho_)
+      deallocate(dd)
+      deallocate(vvn)
+      deallocate(totchi)
+      deallocate(totkappa)
+
+      return
+      end subroutine dealloc_b2mod_neoclassical
+
       end module b2mod_neoclassical
 
 

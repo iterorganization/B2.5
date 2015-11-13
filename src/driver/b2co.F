@@ -154,6 +154,15 @@ c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
 
       write(nout(0),*) 'Converted ',savefile,' to b2fstate'
 * ..end of computation
+      call dealloc_b2mod_geo
+      call dealloc_b2mod_work
+      call dealloc_b2mod_rates
+      call dealloc_b2mod_plasma
+      call dealloc_b2mod_sources
+      call dealloc_b2mod_indirect
+      call dealloc_b2mod_residuals
+      call dealloc_b2mod_transport
+      call dealloc_anomalous_transport
       call prgend ()
       stop 'b2co'
 

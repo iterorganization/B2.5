@@ -25,6 +25,15 @@
 #endif
       end subroutine alloc_b2mod_transport_models
 
+      subroutine dealloc_b2mod_transport_models
+      implicit none
+      if (.not.transport_models_allocated) return
+#ifdef ALLOCATE_AND_NAMELIST
+      deallocate(eta_hce_mult)
+#endif
+      transport_models_allocated=.false.
+      end subroutine dealloc_b2mod_transport_models
+
       subroutine read_b2mod_transport_models(nread,edition,found)
       implicit none
       integer nread

@@ -14,7 +14,14 @@
       allocate(data(nwall))
 
       return
-
       end subroutine alloc_b2mod_b2plot_ank
+
+      subroutine dealloc_b2mod_b2plot_ank
+      implicit none
+
+      deallocate(data)
+
+      return
+      end subroutine dealloc_b2mod_b2plot_ank
 
       end module b2mod_b2plot_ank

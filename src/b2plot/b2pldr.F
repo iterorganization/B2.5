@@ -160,6 +160,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       call b2plot(nx,ny,ns)
 
 * ..return
+      call dealloc_b2mod_b2cmrc
       call subend ()
       return
 

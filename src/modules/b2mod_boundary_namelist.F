@@ -340,6 +340,42 @@ cxpb Have to do this here already in case the namelist is not used
       return
       end subroutine alloc_b2mod_boundary
 
+      subroutine dealloc_b2mod_boundary
+
+      if (.not.allocated(iffboundx)) return
+#ifdef ALLOCATE_AND_NAMELIST
+      deallocate(CONPAR)
+      deallocate(MOMPAR)
+      deallocate(ENEPAR)
+      deallocate(ENIPAR)
+      deallocate(POTPAR)
+      deallocate(BCPOS)
+      deallocate(BCSTART)
+      deallocate(BCEND)
+      deallocate(BC_LIST_SIZE)
+      deallocate(BC_LIST_X)
+      deallocate(BC_LIST_Y)
+      deallocate(BCCON)
+      deallocate(BCMOM)
+      deallocate(BCENE)
+      deallocate(BCENI)
+      deallocate(BCPOT)
+      deallocate(BCCHAR)
+      deallocate(NXISO1)
+      deallocate(NXISO2)
+      deallocate(NYISO1)
+      deallocate(NYISO2)
+      deallocate(NIISO)
+      deallocate(LCBS)
+#endif
+      deallocate(iffboundx)
+      deallocate(iffboundy)
+      deallocate(ifenebound)
+      deallocate(iftimbound)
+
+      return
+      end subroutine dealloc_b2mod_boundary
+
       subroutine read_b2mod_boundary_namelist(nx, ny, ns, dotest)
       integer nx, ny, ns
       logical dotest

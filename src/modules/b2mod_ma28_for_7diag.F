@@ -58,4 +58,28 @@
 
       end subroutine alloc_b2mod_ma28_for_7diag                       !sv 11.01.00
 
+      subroutine dealloc_b2mod_ma28_for_7diag
+
+      if (.not.allocated(r1)) return
+      deallocate(r1)
+      deallocate(s1)
+      deallocate(a1h)
+      deallocate(w)
+      deallocate(res)
+      deallocate(a1h_save)
+      deallocate(irn)
+      deallocate(icn)
+      deallocate(ish)
+      deallocate(jsh)
+      deallocate(ijsh)
+      deallocate(irnh)
+      deallocate(icnh)
+      deallocate(icnhkeep)
+      deallocate(ikeep)
+      deallocate(iw28)
+      deallocate(irnh_save)
+      deallocate(icnh_save)
+
+      end subroutine dealloc_b2mod_ma28_for_7diag                       !sv 11.01.00
+
       end module b2mod_ma28_for_7diag                                 !sv 11.01.00
