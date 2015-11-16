@@ -1474,7 +1474,7 @@ c   --> better way doing this is necessary)
 *   ..write summary of initial state
       call b2wfpi (nout(0), idout0, nx, ny, ns, ne, na, ua,
      &  te, ti, po, fna, fhe, fhi, fch)
-*   ..IMPGYRO
+*   ..call IMPGYRO
       call impgyro_init (nx, ny, ns, ismain) !yamoto
 * ..main loop
 *   ..initialise counters
@@ -1801,7 +1801,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         goto 1
 *   ..end loop
       endif  !}
-      call impgyro_last !yamoto
 
       if(quitexist)
      1 write(*,*) 'stopping because .quit seen'
@@ -1823,6 +1822,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       if(quit_residual)                                                  !jwk
      1 write(*,*) 'stopping because min_residual criteria satisfied'     !jwk
 
+* finalise impgyro !yamoto
+      call impgyro_last !yamoto
 * finalise feedback in b2stbc
       call b2stbc_fb_final
 * finalise transport_models
