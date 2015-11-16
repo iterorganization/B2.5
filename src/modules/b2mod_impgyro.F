@@ -57,13 +57,18 @@
       call mpi_comm_size (mpi_comm_world, mpi_size, mpi_err)
       call mpi_comm_rank (mpi_comm_world, mpi_rank, mpi_err)
       call mpi_comm_split (mpi_comm_world, mpi_undefined,
-     &  mpi_dum, mpi_local, mpi_err)
+     &  1, mpi_local, mpi_err)
       call mpi_bcast (ismain, 1, mpi_integer4, 0, mpi_comm_world,
      &  mpi_err)
+
+      if(mpi_rank.eq.0) then
       call mpi_recv (ikmn, 1, mpi_integer4, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
       call mpi_recv (ikmx, 1, mpi_integer4, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
+      end if
+
+      write (*,*) 'b2ig: mpi_size =', mpi_size
       write (*,*) 'b2ig: ikmn, ikmx obtained from IMPGYRO', ikmn, ikmx
 #else
       ikmn = 0
@@ -317,6 +322,7 @@ cxpb
       write (*,*) 'b2ig: running impgyro ...'
 
 #ifdef USE_MPI
+      if (mpi_rank.eq.0)then
       call mpi_recv (ep_ir, size(ep_ir), mpi_real8, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
       call mpi_recv (im_cc, size(im_cc), mpi_real8, 1, 0,
@@ -331,6 +337,7 @@ cxpb
      &  mpi_comm_world, mpi_stat, mpi_err)
       call mpi_recv (b2ztw, size(b2ztw), mpi_real8, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
+      end if
 #else
       ep_ir = 0
       im_cc = 0
@@ -342,6 +349,8 @@ cxpb
       write (*,*) 'b2ig: IMPGYRO run failed!' 
       write (*,*) 'b2ig: Every external specie information set to zero.'
 #endif
+
+
 
       sna_ext = 0
 
@@ -394,6 +403,8 @@ cxpb
      &     mpi_comm_world , mpi_err )
 #endif
 
+
+
       call my_open_file ( fd , 'restart_ext' )
       write (fd) na_ext
       write (fd) ua_ext
@@ -414,7 +425,7 @@ cxpb
       deallocate (b2zfw)
       deallocate (b2ztw)
 
-      write (*,*) 'b2ig: Restart files for IMPGYRO written'
+      write (*,*) 'b2ig: IMPGYRO restart files written'
       write (*,*) 'b2ig: Leaving impgyro_last'
 
       end subroutine impgyro_last
