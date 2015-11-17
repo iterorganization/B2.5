@@ -29,17 +29,20 @@ endif
 ifdef USE_MPI
 EXT_MPI = .mpi
 endif
+ifdef USE_IMPGYRO
+EXT_IMPGYRO = .ig
+endif
 ifdef SOLPS_DEBUG
 EXT_DEBUG = .debug
 endif
 
 # Directory where objectcode/binaries will be created
-OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_DEBUG}
+OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_IMPGYRO}${EXT_DEBUG}
 
 # If compiling with Eirene, look in default place for Eirene sources/lib
 ifdef USE_EIRENE
   SRCEIR = ${SOLPSTOP}/modules/Eirene/src
-  EIRDIR = ${SOLPSTOP}/modules/Eirene/builds/couple_SOLPS-ITER.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_DEBUG}
+  EIRDIR = ${SOLPSTOP}/modules/Eirene/builds/couple_SOLPS-ITER.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_IMPGYRO}${EXT_DEBUG}
 endif
 
 ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
@@ -59,6 +62,9 @@ ifdef NCDIR
 INCLUDE += -I${NCDIR}/include
 endif
 
+ifdef USE_IMPGYRO
+INCLUDE += ${MPI_CPP}
+endif
 ifdef USE_MPI
 INCLUDE += ${MPI_CPP}
 else
@@ -100,6 +106,9 @@ ifdef USE_MPI
 DEFINES += ${USE_MPI}
 else
 SOLPS4INCLUDE += -I${SOLPSTOP}/modules/solps4-5/src/Eirene_commons
+endif
+ifdef USE_IMPGYRO
+DEFINES += ${USE_IMPGYRO}
 endif
 ifdef PERFMON
 DEFINES += ${PERFMON}
