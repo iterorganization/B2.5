@@ -273,6 +273,7 @@ csw
       call dealloc_b2mod_astra_to_b2
       call dealloc_b2mod_b2_to_astra
       call dealloc_anomalous_transport
+      call dealloc_b2mod_neutr_src_scaling
       call prgend ()
 csw 28feb2011 mpi
 #ifdef USE_MPI

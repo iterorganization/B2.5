@@ -1885,7 +1885,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call dealloc_b2mod_ma28_for_9diag
       call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models
-      call dealloc_b2mod_neutr_src_scaling
       call dealloc_b2mod_transport_disruption
 #ifdef B25_EIRENE
       call dealloc_b2mod_b2plot

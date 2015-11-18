@@ -252,7 +252,9 @@ c not sure this is the right place
      &     'No "C" stratum for feedback scheme specified !')
           icount = 0
           do istrai = 1, nstrat
-            if (crcstra(istrai).eq.'C') icount = icount+1
+            if (crcstra(istrai).eq.'C' .and.
+     .          species_start(istrai).le.isfeedback .and.
+     .          species_end(istrai).ge.isfeedback) icount = icount+1
           end do
           call xertst (icount.eq.1 .or. nesepm_istra.gt.0,
      .     'Multiple definitions of puff strata, use nesepm_istra') 
@@ -324,7 +326,7 @@ csw 26feb2013
      .    (nrelax.gt.1 .and. (neutr_avg.gt.1 .or. nhist.gt.1))),
      .   'Cannot have simultaneous multiple Eirene averaging schemes!')
         if(nhist.gt.1) call alloc_hist_arrays(nhist)
-        if(nrelax.gt.1 . or. nhist.gt.1) call alloc_sum_arrays
+        if(nrelax.gt.1 .or. nhist.gt.1) call alloc_sum_arrays
         if(lhalpha) then
           itmp=1
         else
@@ -2348,8 +2350,8 @@ csw 26feb2014
        deallocate(see_av)
        deallocate(sei_av)
       endif
-      call dealloc_sum_arrays
-      call dealloc_hist_arrays
+      if(nhist.gt.1) call dealloc_sum_arrays
+      if(nrelax.gt.1 .or. nhist.gt.1) call dealloc_hist_arrays
 
       return
 

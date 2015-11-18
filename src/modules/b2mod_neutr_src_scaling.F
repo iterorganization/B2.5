@@ -84,7 +84,7 @@ c     ,	 sclsrcn(0:nsd,nstra),sclbase(0:nsd,nstra),sclrtio(0:nsd,nstra)
         call cfwuin (nwrite, 1, idum, 'nstra') 
       endif
       if(newversion.ge.'01.001.023' .and. nstra.gt.0) then
-	write(*,*) newversion,'sclstra, sclrtio'
+        write(*,*) newversion,'sclstra, sclrtio'
         call cfwure (nwrite, size(sclstra), sclstra, 'sclstra')
         call cfwure (nwrite, size(sclrtio), sclrtio, 'sclrtio')
       endif

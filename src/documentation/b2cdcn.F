@@ -555,8 +555,8 @@
 *     12 : Condition from b2stbc_spb for the parallel momentum
 *     13 : Condition from b2stbc_spb for the parallel momentum
 *     14 : Condition from b2stbc_spb for the parallel momentum
-*     15 : Prescribe the value of the parallel velocity as a function of poloidal 
-*     coordinate
+*     15 : Prescribe the value of the parallel velocity as a function of
+*     poloidal coordinate
 *     16 : Prescribe the average value of the parallel velocity
 *     MOMPAR(,,1) specifies the parallelv elocity in $m.s^{-1}$
 *     BCENE - integer array, length NBC, specifying
@@ -606,7 +606,8 @@
 *     ENEPAR(,1) specifies the power flux in $W$ across the flux surface
 *     with index 'b2stbc_type16_ref' (default=-1), ENEPAR(,2)
 *     should be something like 0.1 and specifies the strength of the
-*     feedback. Also see type [17] below. Available if bcene_16_style.eq.0 (default).
+*     feedback. Also see type [17] below.
+*     Available if bcene_16_style.eq.0 (default).
 *     If bcene_16_style.eq.1, integrated electron heat flux with constant Te,
 *     summed over all core boundaries with BCENE=16.
 *     17 : Feedback boundary condition with constant shared temperature
@@ -674,7 +675,8 @@
 *     ENIPAR(,1) specifies the power flux in $W$ across the flux surface
 *     with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2)
 *     should be something like 0.1 and specifies the strength of the
-*     feedback. Also see type [17] below. Available if bceni_16_style.eq.0 (default).
+*     feedback. Also see type [17] below.
+*     Available if bceni_16_style.eq.0 (default).
 *     If bceni_16_style.eq.1, integrated ion heat flux with constant Ti,
 *     summed over all core boundaries with BCENI=16.
 *     ENIPAR(,1) specifies the power flux in $W$
@@ -697,11 +699,12 @@
 *     24 : Feedback boundary condition with prescribed total ion flux,
 *     constant poloidally averaged ion temperature and a
 *     poloidal variation as close as possible to neoclassical solution.
-*     It is recommended to use this boundary condition together with corresponding
-*     condition on ion density (BCCON=21,22,23).
+*     It is recommended to use this boundary condition together with
+*     corresponding condition on ion density (BCCON=21,22,23).
 *     The flux is summed over all core boundaries with BCENI=24.
 *     ENIPAR(,1) specifies the energy flux in $W$
-*     25 : constant temperature feedback scaled by temperature on the ring bc_type21_ref away
+*     25 : constant temperature feedback scaled by temperature on
+*     the ring bc_type21_ref away
 *     ENIPAR(,,1) specifies the desired ion temperature in $eV$.
 *     ENIPAR(,,2) is the strength of the feedback
 *  BCPOT - integer array, length NBC, specifying the
@@ -736,14 +739,15 @@
 *     POTPAR(,2) specifies the bias potential in $V$
 *     12 : Imposes the currents due to drifts for the South core boundary.
 *     Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
-*     13 : Imposes the currents due to drifts for the South private flux and North
-*     boundaries.
+*     13 : Imposes the currents due to drifts for the South private flux
+*     and North boundaries.
 *     Must be used in conjunction with istyle_cur_contr_on_S_and_N.eq.2
 *     16 : Constant electric potential feedback on imposed total current
 *     The current prescribed is given by the sum of the POTPAR(IB,1) (in A)
 *     over all the BCPOT=16 boundaries. 
 *     Still experimental, will not work for drift cases.
-*     21 : constant potential feedback scaled by potential on the ring bc_type21_ref away
+*     21 : constant potential feedback scaled by potential on
+*     the ring bc_type21_ref away.
 *     POTPAR(,,1) specifies the desired potential in $V$.
 *     POTPAR(,,2) is the strength of the feedback
 *  GAMMAI - real*8. Ratio of specific heats (adiabatic coefficient).
@@ -776,13 +780,13 @@
 *     a new /BOUNDARY/ namelist. Defaults to 'b2.boundary.parameters'.
 *  BOUNDARY_TIME_MOD - real*8. When the B2 run simulation time, in seconds,
 *     modulo(BOUNDARY_TIME_MOD), exceeds BOUNDARY_TIME_SWITCH, reads the new 
-*     namelist from BOUNDARY_FILENAME. Also switches to the new namelist as the
-*     ELM count (here time/BOUNDARY_TIME_MOD) changes.
+*     namelist from BOUNDARY_FILENAME. Also switches to the new namelist as
+*     the ELM count (here time/BOUNDARY_TIME_MOD) changes.
 *     Only active if BOUNDARY_TIME_MOD is greater than 0. Defaults to 0.0.
 *  BOUNDARY_TIME_SWITCH - real*8. Time (in seconds) within an ELM cycle after 
 *     which a new /BOUNDARY/ namelist is read. Defaults to 0.0.
-*  LCBS - integer array of size (NBC). Indices of the core boundary segments in
-*     B2 for passing to EIRENE. Defaults to the list of 'S' boundaries in
+*  LCBS - integer array of size (NBC). Indices of the core boundary segments
+*     in B2 for passing to EIRENE. Defaults to the list of 'S' boundaries in
 *     regions 1 and 5.
 *
 *  NAMELIST /FEEDBACK/ 
@@ -810,68 +814,100 @@
 *  NAMELIST /FEEDBACK_CONTROL/
 *   Found in b2.feedback_control.parameters.
 *   Allows for more complex feedback schemes.
-*  VACUUM_COMMUNICATION - Integer. Defaults to 0. If >0, allows for a communication
-*   of particle fluxes across vacuum regions. This option only applies to neutrals.
-*   The density boundary condition is based on the difference between the average
-*   pressure and the local pressure.
+*  VACUUM_COMMUNICATION - Integer. Defaults to 0. If >0, allows for a
+*   communication of particle fluxes across vacuum regions. This option only
+*   applies to neutrals. The density boundary condition is based on the
+*   difference between the average pressure and the local pressure.
 *  VACUUM_COMMUNICATION_NREG - Integer array of size (NVAC). Defaults to 0.
 *   Number of communicating vacuum regions .
 *  VACUUM_COMMUNICATION_METHOD - Integer array of size (NVAC). Defaults to 0.
 *   Option for resorbing the pressure difference.
 *   1: Try to set a flux. Corr = (beta*ave_pressure - pressure)/temp * alpha
-*   2: Try to set a density based on pressure equality. Corr = alpha * beta * pressure / Ti
-*  VACUUM_COMMUNICATION_IY - Integer array of size (NVACREG,NVAC). Defaults to -2.
-*   Radial index of the ring on which the neutral pressure is computed for region IREG.
-*  VACUUM_COMMUNICATION_IX1 - Integer array of size (NVACREG,NVAC). Defaults to -2.
-*   Poloidal lower bound of the range over which the neutral pressure is computed for region IREG.
-*  VACUUM_COMMUNICATION_IX2 - Integer array of size (NVACREG,NVAC). Defaults to -2.
-*   Poloidal upper bound of the range over which the neutral pressure is computed for region IREG.
-*  VACUUM_COMMUNICATION_ALPHA - Real*8 array of size (0:NSPECIES-1,NVAC). Defaults to 0.0.
-*    Parameter for setting the pressure correction. See above.
-*  VACUUM_COMMINICATION_BETA - Real*8 array of size (0:NSPECIES-1,NVAC). Defaults to 1.0.
-*    Parameter for setting the pressure correction. See above.
-*  NA_FEEDBACK_TARGET - Real*8 array of size (0:NSPECIES-1). Sets the target density
-*    of species (ISPECIES) for the feedback scheme. Defaults to 0.0.
+*   2: Try to set a density based on pressure equality.
+*      Corr = alpha * beta * pressure / Ti
+*  VACUUM_COMMUNICATION_IY - Integer array of size (NVACREG,NVAC).
+*   Radial index of the ring on which the neutral pressure is computed for
+*   region IREG. Defaults to -2.
+*  VACUUM_COMMUNICATION_IX1 - Integer array of size (NVACREG,NVAC).
+*   Poloidal lower bound of the range over which the neutral pressure is
+*   computed for region IREG. Defaults to -2.
+*  VACUUM_COMMUNICATION_IX2 - Integer array of size (NVACREG,NVAC).
+*   Poloidal upper bound of the range over which the neutral pressure is
+*   computed for region IREG. Defaults to -2.
+*  VACUUM_COMMUNICATION_ALPHA - Real*8 array of size (0:NSPECIES-1,NVAC).
+*    Parameter for setting the pressure correction. See above. Defaults to 0.0.
+*  VACUUM_COMMINICATION_BETA - Real*8 array of size (0:NSPECIES-1,NVAC).
+*    Parameter for setting the pressure correction. See above. Defaults to 1.0.
+*  NA_FEEDBACK_TARGET - Real*8 array of size (0:NSPECIES-1). Sets the target
+*    density of species (ISPECIES) for the feedback scheme. Defaults to 0.0.
+*  NA_FEEDBACK_TIME - Real*8 array of size (0:NSPECIES-1). Sets the time
+*    of reference (in s) for the feedback of species (ISPECIES).
+*    Defaults to 0.0.
 *  NA_FEEDBACK_CHOICE - Integer array of size (0:NSPECIES-1). Defaults to 0.
 *    Choice of quantity on which the feedback is computed:
 *    0: no action
-*    1: local species density (averaged over the rectangle of cells [IX1:IX2,IY1:IY2]).
-*       Summed over all charge states of that species.
-*    2: local electron density (averaged over the rectangle of cells [IX1:IX2,IY1:IY2]).
+*    1: local species density (averaged over the rectangle of cells
+*       [IX1:IX2,IY1:IY2]). Summed over all charge states of that species.
+*    2: local electron density (averaged over the rectangle of cells
+*       [IX1:IX2,IY1:IY2]).
 *    3: outer midplane separatrix electron density.
+*    4: total particle content for that species.
+*    5: total ion content for that species (not including neutrals).
+*    6: neutral particle flux through the core boundary.
+*    7: relative average concentration of this species at the separatrix.
 *  NA_FEEDBACK_OPTION - Integer array of size (0:NSPECIES-1). Defaults to 0.
 *    Option for computing the new fedback quantity.
 *    0: no action
 *    1: rescale slowed by na_feedback_alpha
 *    2: pure rescale
 *    3: rescaling slowed by tanh_log
+*    4: rescale done according to SOLPS4 formula
+*       The target waveform for the particle content is
+*        N = C + V*(time-T)
+*       and the current puffing rate S is adjusted
+*        S --> max(0, min(X,S + D)), where
+*        D = F*((N - <N>)/dt + (<N>_prev - <N>)/dt_prev)
+*    5: rescale done according to SOLPS4 formula: N = C*exp((time-T)*V)
+*    6: rescale slowed by na_feedback_alpha (SOLPS4 style)
 *  NA_FEEDBACK_ACTUATOR - Integer array of size (0:NSPECIES-1). Defaults to 0.
 *    Choice for the actuator used for the feedback.
 *    0: no action
 *    1: gas puff via boundary condition
 *    2: rescale na
+*    3: core boundary flux condition
 *  NA_FEEDBACK_ALPHA - Real*8 array of size (0:NSPECIES-1). Defaults to 0.001.
 *    Factor by which the rescaling is slowed. Rescaling factor is :
 *    Option 1: (1 + alpha*target/current) / (1 + alpha)
 *    Option 3: 2**(tanh(log(x)/beta)*log(alpha)/log(2))
+*    Options 4 & 5: Corresponds to parameter F
 *  NA_FEEDBACK_BETA - Real*8 array of size (0:NSPECIES-1). Defaults to 1.0.
 *    Factor by which the rescaling is slowed. See above.
-*  NA_FEEDBACK_IX1 - Integer array of size (0:NSPECIES-1). Lower poloidal bound for
-*    the region of which the density is being averaged. Defaults to -2.
-*  NA_FEEDBACK_IX2 - Integer array of size (0:NSPECIES-1). Upper poloidal bound for
-*    the region of which the density is being averaged. Defaults to -2.
-*  NA_FEEDBACK_IY1 - Integer array of size (0:NSPECIES-1). Lower radial bound for
-*    the region of which the density is being averaged. Defaults to -2.
-*  NA_FEEDBACK_IY2 - Integer array of size (0:NSPECIES-1). Upper poloidal bound for
-*    the region of which the density is being averaged. Defaults to -2.
+*    Options 4 & 5: Corresponds to parameter V (ffb_rtvn)
+*  NA_FEEDBACK_CONST - Real*8 array of size (0:NSPECIES-1). Defaults to 0.0.
+*    Options 4 & 5: Corresponds to parameter C. If negative, C is
+*                   computed as the initial total particle content of the
+*                   sequence.
+*  NA_FEEDBACK_IX1 - Integer array of size (0:NSPECIES-1). Lower poloidal
+*    bound for the region of which the density is being averaged.
+*    Defaults to -2.
+*  NA_FEEDBACK_IX2 - Integer array of size (0:NSPECIES-1). Upper poloidal
+*    bound for the region of which the density is being averaged.
+*    Defaults to -2.
+*  NA_FEEDBACK_IY1 - Integer array of size (0:NSPECIES-1). Lower radial
+*    bound for the region of which the density is being averaged.
+*    Defaults to -2.
+*  NA_FEEDBACK_IY2 - Integer array of size (0:NSPECIES-1). Upper poloidal
+*    bound for the region of which the density is being averaged.
+*    Defaults to -2.
 *  NA_FEEDBACK_IB - Integer array of size (0:NSPECIES-1). Defaults to -1.
 *    Index of boundary condition through which the feedback is being applied.
 *  NA_FEEDBACK_PUFF_MIN - Real*8 array of size (0:NSPECIES-1). Defaults to 0.0.
 *    Minimum gas puff being applied.
 *  NA_FEEDBACK_PUFF_MAX - Real*8 array of size (0:NSPECIES-1). Defaults to 0.0.
 *    Maximum gas puff being applied.
-*  NA_FEEDBACK_OVERSHOOT - Real*8 array of size (0:NSPECIES-1). Defaults to 0.0.
-*    If the density is larger than target*overshoot, the gas puff is turned off.
+*  NA_FEEDBACK_OVERSHOOT - Real*8 array of size (0:NSPECIES-1).
+*    If the density is larger than target*overshoot, the gas puff is
+*    turned off. Defaults to 0.0.
 *
 *  NAMELIST /PROFILE/
 *   Found in b2.sources.profile.

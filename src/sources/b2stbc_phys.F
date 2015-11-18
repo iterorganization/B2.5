@@ -1952,25 +1952,25 @@ c dpc
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
-                  DO IX = 1, BC_LIST_SIZE(IBW)
 #ifdef B25_EIRENE
-                    isa = b2espcr(ismain0)
-                    if (isa.ne.-1) then
-                      totfluxn = totfluxn + rfluxa(
-     &             topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+1,
-     &             topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+1,isa,1)*
-     &                    sy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                      do ism = 1,nnmoli
-                        if (mlcmp(isa,ism).ne.0) then
-                    totfluxn = totfluxn + mlcmp(isa,ism)*rfluxm(
-     &             topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+1,
-     &             topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+1,ism,1)*
-     &                sy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                        endif
-                      enddo
-                    endif
+cxpb  Add contribution from Eirene core boundary fluxes
+                  isa = b2espcr(ismain0)
+                  if (isa.ne.-1) then
+                    do k = 1, ncns
+                      ix = nlim + lcns(k)
+                      totfluxn = totfluxn +
+     &                           wldna(ix,isa,0) - wldra(ix,isa,0)
+                      do ism = 1, nnmoli
+                        if (mlcmp(isa,ism).gt.0) then
+                          totfluxn = totfluxn +
+     &                               mlcmp(isa,ism) * wldnm(ix,isa,0)
+                        end if
+                      end do
+                    end do
+                  end if
 #endif
-                   isb = ismain0
+                  isb = ismain0
+                  DO IX = 1, BC_LIST_SIZE(IBW)
                    if (is_neutral(isb))
      >              totfluxn = totfluxn + fna(
      &             topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
@@ -2407,25 +2407,25 @@ cxpb Careful here because of BC number clash
              DO IBW=IB,NBC
                IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >          THEN
-                 DO IX = 1, BC_LIST_SIZE(IBW)
 #ifdef B25_EIRENE
-                  isa = b2espcr(ismain0)
-                  if (isa.ne.-1) then
-                    totfluxn = totfluxn + rfluxa(
-     &             topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+1,
-     &             topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+1,isa,1)
-     &               *sy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                    do ism = 1,nnmoli
-                      if (mlcmp(isa,ism).ne.0) then
-                  totfluxn = totfluxn + mlcmp(isa,ism)*rfluxm(
-     &             topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+1,
-     &             topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+1,ism,1)*
-     &                sy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                      endif
-                    enddo
-                  endif
+cxpb  Add contribution from Eirene core boundary fluxes
+                 isa = b2espcr(ismain0)
+                 if (isa.ne.-1) then
+                   do k = 1, ncns
+                     ix = nlim + lcns(k)
+                     totfluxn = totfluxn +
+     &                          wldna(ix,isa,0) - wldra(ix,isa,0)
+                     do ism = 1, nnmoli
+                       if (mlcmp(isa,ism).gt.0) then
+                         totfluxn = totfluxn +
+     &                              mlcmp(isa,ism) * wldnm(ix,isa,0)
+                       end if
+                     end do
+                   end do
+                 end if
 #endif
-                  isb = ismain0
+                 isb = ismain0
+                 DO IX = 1, BC_LIST_SIZE(IBW)
                   if (is_neutral(isb))
      >             totfluxn = totfluxn +
      &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),

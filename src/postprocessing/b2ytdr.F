@@ -197,7 +197,8 @@ c 2002-09-11: logic revised
      4 saved_na_feedback_actuator1(:), na_feedback_target1(:),
      5 na_feedback_alpha1(:), na_feedback_beta1(:),
      6 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
-     7 na_feedback_overshoot1(:)
+     7 na_feedback_const1(:), na_feedback_overshoot1(:),
+     8 na_feedback_time1(:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps
       integer ns1, nsm, nym, natmm, nwallm
       integer i, j, k, ix, iy, is, ib, ireg, len, nsns
@@ -7950,7 +7951,8 @@ cxpb as they no longer necessarily point to the same species
       new_filename='../b2.feedback_control.parameters.2'
       inquire(file=new_filename,exist=found)
       if (found) write(6,*) trim(new_filename),' already present!'
-      if (todo.and..not.found) then
+      if (todo.and..not.found.and.
+     .   (.not.same_bundling.or.nx.ne.nx1.or.ny.ne.ny1)) then
         allocate(na_feedback_target1(0:natm-1))
         allocate(na_feedback_choice1(0:natm-1))
         allocate(na_feedback_option1(0:natm-1))
@@ -7962,6 +7964,8 @@ cxpb as they no longer necessarily point to the same species
         allocate(na_feedback_ib1(0:natm-1))
         allocate(na_feedback_alpha1(0:natm-1))
         allocate(na_feedback_beta1(0:natm-1))
+        allocate(na_feedback_const1(0:natm-1))
+        allocate(na_feedback_time1(0:natm-1))
         allocate(na_feedback_puff_min1(0:natm-1))
         allocate(na_feedback_puff_max1(0:natm-1))
         allocate(na_feedback_overshoot1(0:natm-1))
@@ -8060,29 +8064,32 @@ cxpb as they no longer necessarily point to the same species
             na_feedback_ib1(ispecies1(is)-1) =
      .       na_feedback_ib(is-1)
             na_feedback_alpha1(ispecies1(is)-1) =
+     .       na_feedback_alpha(is-1)
+            na_feedback_beta1(ispecies1(is)-1) =
      .       na_feedback_beta(is-1)
+            na_feedback_const1(ispecies1(is)-1) =
+     .       na_feedback_const(is-1)
             na_feedback_puff_min1(ispecies1(is)-1) =
      .       na_feedback_puff_min(is-1)
             na_feedback_puff_max1(ispecies1(is)-1) =
      .       na_feedback_puff_max(is-1)
             na_feedback_overshoot1(ispecies1(is)-1) =
      .       na_feedback_overshoot(is-1)
+            na_feedback_time1(ispecies1(is)-1) =
+     .       na_feedback_time(is-1)
           end if
         end do
         write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i2,'',''))'
-        if (maxval(na_feedback_choice1(0:nspecies1-1)).ne.0 .or.
-     &      minval(na_feedback_choice1(0:nspecies1-1)).ne.0)
+        if (maxval(na_feedback_choice1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_CHOICE=',na_feedback_choice1(0:nspecies1-1)
-        if (maxval(na_feedback_option1(0:nspecies1-1)).ne.0 .or.
-     &      minval(na_feedback_option1(0:nspecies1-1)).ne.0)
+        if (maxval(na_feedback_option1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_OPTION=',na_feedback_option1(0:nspecies1-1)
-        if (maxval(na_feedback_actuator1(0:nspecies1-1)).ne.0 .or.
-     &      minval(na_feedback_actuator1(0:nspecies1-1)).ne.0)
+        if (maxval(na_feedback_actuator1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_ACTUATOR=',na_feedback_actuator1(0:nspecies1-1)
-        if (maxval(na_feedback_ib1(0:nspecies1-1)).ge.0)
+        if (maxval(na_feedback_ib1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_IB=',na_feedback_ib1(0:nspecies1-1)
         write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i4,'',''))'
@@ -8111,6 +8118,10 @@ cxpb as they no longer necessarily point to the same species
      &      minval(na_feedback_beta1(0:nspecies1-1)).ne.1.0_R8)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_BETA=',na_feedback_beta1(0:nspecies1-1)
+        if (maxval(na_feedback_const1(0:nspecies1-1)).ne.0.0_R8 .or.
+     &      minval(na_feedback_const1(0:nspecies1-1)).ne.0.0_R8)
+     >   write(99,hlp_frm)
+     .     'NA_FEEDBACK_CONST=',na_feedback_const1(0:nspecies1-1)
         if (maxval(na_feedback_puff_min1(0:nspecies1-1)).gt.0.0_R8)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_PUFF_MIN=',na_feedback_puff_min1(0:nspecies1-1)
@@ -8120,6 +8131,9 @@ cxpb as they no longer necessarily point to the same species
         if (maxval(na_feedback_overshoot1(0:nspecies1-1)).gt.0.0_R8)
      >   write(99,hlp_frm) 'NA_FEEDBACK_OVERSHOOT=',
      .     na_feedback_overshoot1(0:nspecies1-1)
+        if (maxval(na_feedback_time1(0:nspecies1-1)).gt.0.0_R8)
+     >   write(99,hlp_frm)
+     .     'NA_FEEDBACK_TIME=',na_feedback_time1(0:nspecies1-1)
         write(99,'(a1)') '/'
         close(99)
         deallocate(na_feedback_target1)
@@ -8133,9 +8147,11 @@ cxpb as they no longer necessarily point to the same species
         deallocate(na_feedback_ib1)
         deallocate(na_feedback_alpha1)
         deallocate(na_feedback_beta1)
+        deallocate(na_feedback_const1)
         deallocate(na_feedback_puff_min1)
         deallocate(na_feedback_puff_max1)
         deallocate(na_feedback_overshoot1)
+        deallocate(na_feedback_time1)
       end if
 
 *   ..we now do b2ah.dat, last because we need to overwrite zn, etc...
