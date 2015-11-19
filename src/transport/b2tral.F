@@ -1,13 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain, !srv 23.11.10
-     1 bb, conn, vol, gs, hx, hy, hz, qz, qc, pbs, crx, cry, bzb, lnlam,  !srv 09.01.01 01.07.09
-     1 fch_p, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,    !srv 03.06.03
-     2 cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,            !srv 13.10.06
+      subroutine b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,       !srv 23.11.10
+     1 bb, conn, vol, gs, hx, hy, hz, qz, qc, pbs, crx, cry, bzb,       !srv 09.01.01 01.07.09
+     1 lnlam, fch_p, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,   !srv 03.06.03
+     2 cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,                  !srv 13.10.06
      3 chvi, csig, csigin, calf, cthe, cthi, 
-     4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,   !srv 09.01.01 15.12.05
-     4 vsal, fllim0fhi, fllimvisc)
+     4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,      !srv 09.01.01 15.12.05
+     4 vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -19,28 +19,28 @@
       use b2mod_neoclassical
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain    !srv 23.11.10
+      integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain      !srv 23.11.10
       real (kind=R8) ::
      *  bb(-1:nx,-1:ny,0:3), 
      &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),        !srv 09.01.01
-     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), bzb(-1:nx,-1:ny),  !srv 13.10.06
-     &  lnlam(-1:nx,-1:ny),                                       !srv 01.07.09
+     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),              !srv 09.01.01
+     &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), bzb(-1:nx,-1:ny),    !srv 13.10.06
+     &  lnlam(-1:nx,-1:ny),                                             !srv 01.07.09
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne2(-1:nx,-1:ny),
-     &  fch_p(-1:nx,-1:ny,0:1), conn(-1:ny), qc(-1:nx,-1:ny),     !srv 10.06.08
+     &  fch_p(-1:nx,-1:ny,0:1), conn(-1:ny), qc(-1:nx,-1:ny),           !srv 10.06.08
      &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
-     &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)                  !srv 03.06.03
+     &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)                        !srv 03.06.03
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  cdna(-1:nx,-1:ny,0:1,0:ns-1), cdpa(-1:nx,-1:ny,0:1,0:ns-1),
-     *  cddi(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 13.10.06
+     *  cddi(-1:nx,-1:ny,0:1,0:ns-1),                                   !srv 13.10.06
      &  cvla(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      &  cdnahz(-1:nx,-1:ny,0:1,0:ns-1), cdpahz(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
      &  cvlahz(-1:nx,-1:ny,0:1,0:ns-1), cvsahz(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
-     &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                        !srv 09.01.01
-     &  cvmahz(-1:nx,-1:ny,0:1,0:ns-1),                           !srv 15.12.05
+     &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 09.01.01
+     &  cvmahz(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 15.12.05
      &  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      &  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
      &  csig(-1:nx,-1:ny,0:1), csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), 	!xpb
@@ -48,7 +48,8 @@
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      1	cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), vsal(-1:nx,-1:ny,0:1,0:ns-1), 
      1	fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1), 
-     2  fllimvisc(-1:nx,-1:ny,0:ns-1)
+     2  fllimvisc(-1:nx,-1:ny,0:ns-1),
+     3  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -85,11 +86,11 @@
 
 *   ..local variables
       integer ix, iy, is, n2, ncall, pot_eq, no_current, no_solve, is0
-      integer, save :: iout = 0, model = 3,                       !srv 17.06.08
+      integer, save :: iout = 0, model = 3,                             !srv 17.06.08
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
-      character(3) chns, chns0                                    !srv 17.06.08
+      character(3) chns, chns0                                          !srv 17.06.08
       real (kind=R8) ::
      1  chvi0(-1:nx,-1:ny,0:1), csig0(-1:nx,-1:ny,0:1),
      2  calf0(-1:nx,-1:ny,0:1), chci0(-1:nx,-1:ny,0:1),
@@ -99,7 +100,7 @@
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
       logical solving(4)
-      real (kind=R8), save :: addvis1=0.0_R8                      !srv 31.07.02
+      real (kind=R8), save :: addvis1=0.0_R8                            !srv 31.07.02
       save ncall, pol_anom_scale, pot_eq, no_solve, solving, 
      .  fch_anomalous, no_current
 *   ..procedures
@@ -124,6 +125,8 @@
       if (ncall.eq.0) then
         call ipgetr ('b2trno_pol_anom_scale', pol_anom_scale)
         call ipgetr ('b2tfhe_anomalous', fch_anomalous)
+        if (fch_anomalous.eq.1.0_R8)
+     >   call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
         call ipgeti ('b2tfhe_no_current', no_current)
         call ipgeti ('b2news_poteq', pot_eq)
         call xertst (pot_eq.eq.1.or.no_current.eq.1,
@@ -162,7 +165,8 @@
      1  qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,   !srv 01.07.09
      2  chvemx, chvimx, cvsahz0,                                  !srv 09.01.01 03.06.03
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, csigin,
-     4  cthe, cthi, cvsa_cl, cvsahz_cl, vsal, fllimvisc)          !srv 09.01.01
+     4  cthe, cthi, cvsa_cl, cvsahz_cl, vsal, fllimvisc,          !srv 09.01.01
+     5  csig_cl, calf_cl)
 *   ..add to previous contributions
       call b2saxpy (n2*2*ns, 1.0_R8, cvsahz0, 1, cvsahz, 1)       !srv 09.01.01
       call b2saxpy (n2*2*ns, 1.0_R8, cvsa0, 1, cvsa, 1)
@@ -177,6 +181,12 @@
         call b2saxpy
      &       (n2, 1.0_R8, vsa0(-1,-1,is), 1, vsal(-1,-1,1,is), 1)
       end do
+      if (fch_anomalous.ne.1.0_R8) then
+        csig = csig * fch_anomalous
+        calf = calf * fch_anomalous
+        csig_an = csig_an * fch_anomalous
+        calf_an = calf_an * fch_anomalous
+      end if
       call b2saxpy (n2*2, 1.0_R8, chce0, 1, chce, 1)
       call b2saxpy (n2*2, 1.0_R8, chve0, 1, chve, 1)
       call b2saxpy (n2*2, 1.0_R8, chci0, 1, chci, 1)

@@ -85,7 +85,7 @@
      &   poleldr = 1.0_R8, radeldr = 1.0_R8,                            !srv 25.04.00
      &   poldidr = 1.0_R8, raddidr = 1.0_R8,                            !srv 25.04.00
      &   vis_par = 1.0_R8, fch_inert = 1.0_R8,                          !srv 20.09.06
-     &   fch_anomalous = 1.0_R8, vis_per = 0.0_R8, PSch = 1.0_R8        !srv 17.01.07
+     &   vis_per = 0.0_R8, PSch = 1.0_R8                                !srv 17.01.07
       real (kind=R8), save :: xfrhie_no_drift = 1.0_R8                  !srv 20.11.09
       real (kind=R8), save :: xfrhiehz = 1.0_R8                         !srv 05.11.09 30.01.10
       real (kind=R8) ::

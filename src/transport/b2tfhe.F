@@ -4,7 +4,7 @@
       subroutine b2tfhe (nx, ny, ns, guard_flows, facdrift,
      1  BoRiS, vol, hx, hy, qz, te, po, ne, vedia, veecrb,
      2  fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,           !xpb
-     &  cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime)   !srv 13.10.06
+     &  cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime)           !srv 13.10.06
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -24,7 +24,7 @@
      1 csig(-1:nx,-1:ny,0:1), 
      & chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
-     & cddi(-1:nx,-1:ny,0:1,0:ns-1),                               !srv 13.10.06
+     & cddi(-1:nx,-1:ny,0:1,0:ns-1),                                     !srv 13.10.06
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      * vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
      2 BoRiS
@@ -32,7 +32,7 @@
       real (kind=R8) ::
      *  fhe(-1:nx,-1:ny,0:1),
      &  fhet(-1:nx,-1:ny,0:1), 
-     &  fhe_mdf(-1:nx,-1:ny,0:1), fhePSch(-1:nx,-1:ny,0:1),          !srv 13.10.06
+     &  fhe_mdf(-1:nx,-1:ny,0:1), fhePSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
      1  floe(-1:nx,-1:ny,0:1), cone(-1:nx,-1:ny,0:1,0:2),            !srv 02.01.07
      2  fllime(-1:nx,-1:ny)
 *   ..common blocks
@@ -64,7 +64,7 @@
       real (kind=R8), save :: fch_pTe = 0.0_R8                          !srv 30.12.09
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, alfe0, t0, t1, 
-     &   tex, tex0, cutlo, fch_anomalous,
+     &   tex, tex0, cutlo,
      1   flo_vedia, flo_veecrb, prefactor,
      &   floe0_mdf, cone0_mdf, alfe0_mdf, t0_mdf, tex0_mdf              !srv 22.11.99 13.10.06
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
@@ -74,8 +74,7 @@
      *   gampvd(-1:nx,-1:ny), gamrvd(-1:nx,-1:ny),
      *   gampvdc(-1:nx,-1:ny)
 #endif
-      save ncall, no_current, conduction_only, no_hybr, model, pot_eq,
-     *   fch_anomalous
+      save ncall, no_current, conduction_only, no_hybr, model, pot_eq
 *   ..procedures
       intrinsic dim, min, max, abs, sqrt, log, mod
       real (kind=R8) ::
@@ -88,7 +87,7 @@
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, no_current/0/, conduction_only/0/, no_hybr/0/, 
-     *  model/1/, pot_eq/1/, fch_anomalous/1.0_R8/
+     *  model/1/, pot_eq/1/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -103,7 +102,6 @@
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2tfhe_conduction_only', conduction_only)           !xpb
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                           !xpb
-       call ipgetr ('b2tfhe_anomalous', fch_anomalous)
        call ipgeti ('b2tqce_model', model)
        call ipgeti ('b2tfhe_mdf', mdf_fhe)                               !srv 13.10.06
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
@@ -137,10 +135,10 @@
        call b2xvff (nx, ny, calf_an, 'calf_an')
       endif
 
-      fhePSch = 0.0e0_R8                                              !sv 13.10.06
-      cone    = 0.0e0_R8                                              !sv 02.01.07
+      fhePSch = 0.0e0_R8                                                 !sv 13.10.06
+      cone    = 0.0e0_R8                                                 !sv 02.01.07
       if(maxval(facdrift).ne.0.0e0_R8) then
-*   ..compute P.Sch heat x-flux                                 !sv 13.10.06 {
+*   ..compute P.Sch heat x-flux                                          !sv 13.10.06 {
        do is = 0,ns 
 	if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
 !        iy = -1
@@ -348,11 +346,8 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
                alfe0 = 0.0_R8
                alfe0_mdf = 0.0_R8                                      !srv 18.08.08
             else
-              alfe0 = (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*
-     &         cone0/chce(ix,iy,0)
-              alfe0_mdf = 
-     &        (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*
-     &         cone0_mdf/chce(ix,iy,0)
+              alfe0 = calf(ix,iy,0)*cone0/chce(ix,iy,0)
+              alfe0_mdf = calf(ix,iy,0)*cone0_mdf/chce(ix,iy,0)
             endif
             if (model.eq.1.or.model.eq.3) then   ! SOLPS5.0 treatments
               flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
@@ -470,14 +465,12 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
               fhe(ix,iy,1) = floe(ix,iy,1)*
      &          (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8-
      &           cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &          +alfTeEh*
-     &           (calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
+     &          +alfTeEh*calf(ix,iy,1)*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
               fhe_mdf(ix,iy,1) = floe(ix,iy,1)*
      &          (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8-
      &           cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &          +alfTeEh*
-     &           (calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
+     &          +alfTeEh*calf(ix,iy,1)*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
      &            -fhePSch(ix,iy,1)                                     !srv 13.10.06
             else
@@ -492,8 +485,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      .         upwind(floe(ix,iy,1), 
      .                te(bottomix(ix,iy),bottomiy(ix,iy)), te(ix,iy))
      .          - t1 * (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &          +alfTeEh*
-     &           (calf(ix,iy,1)+fch_anomalous*calf_an(ix,iy,1))*
+     &          +alfTeEh*calf(ix,iy,1)*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
             endif
             fhet(ix,iy,1) = fhe(ix,iy,1)+

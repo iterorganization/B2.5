@@ -6,7 +6,8 @@
      1  hz, qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,  !srv 09.01.01 01.07.09
      2  chvemx, chvimx, cvsahz,                                          !srv 09.01.01 03.06.03
      3  cvsa, chce, chve, chci, chvi, csig, calf, csigin,                !xpb
-     4  cthe, cthi, cvsa_cl, cvsahz_cl, vsal, fllimvisc)                 !srv 09.01.01
+     4  cthe, cthi, cvsa_cl, cvsahz_cl, vsal, fllimvisc,                 !srv 09.01.01
+     5  csig_cl, calf_cl)                                                !xpb
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -40,8 +41,9 @@
      &  csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),				 !xpb
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      &  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                            !srv 09.01.01
-     &  fllimvisc(-1:nx,-1:ny,0:ns-1), cvsahz(-1:nx,-1:ny,0:1,0:ns-1) !srv 09.01.01
+     &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                               !srv 09.01.01
+     &  fllimvisc(-1:nx,-1:ny,0:ns-1), cvsahz(-1:nx,-1:ny,0:1,0:ns-1),   !srv 09.01.01
+     &  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -325,102 +327,102 @@ csw 13mar2012
         enddo
       else if (lluciani.eq.3) then  ! new formulation
 *   .. plateau and banana correction for ion heat conduction              !lk 19.09.07 {
-        call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)                 !srv 01.07.09
+        call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)                   !srv 01.07.09
 *   .. calculate inverse aspect ratio and collisionality parameter nu_star   
-       tt0 = 0.0e0_R8                                                 
-       tt1 = 0.0e0_R8
-       eps1 = 1.0e0_R8
+        tt0 = 0.0e0_R8
+        tt1 = 0.0e0_R8
+        eps1 = 1.0e0_R8
 
-       mintopcut = minval(topcut(1:nncut))                           
+        mintopcut = minval(topcut(1:nncut))
 
-       do iy = -1,mintopcut    ! for inner surfaces and first open surface                                                                                             
-        do ix=0,nx                                                  
-         if(mod(region(ix,iy,0),4).eq.1) then                         
-          tt0(iy) = tt0(iy) +hx(ix,iy)
-          tt1(iy) = tt1(iy) +vol(ix,iy)/hy(ix,iy)
-         endif
+        do iy = -1,mintopcut    ! for inner surfaces and first open surface
+         do ix=0,nx
+          if(mod(region(ix,iy,0),4).eq.1) then
+           tt0(iy) = tt0(iy) +hx(ix,iy)
+           tt1(iy) = tt1(iy) +vol(ix,iy)/hy(ix,iy)
+          endif
+         enddo
         enddo
-       enddo
 
-       do iy = -1,mintopcut                                                       
-        eps1(iy) = tt0(iy)**2/tt1(iy)
-       enddo
+        do iy = -1,mintopcut
+         eps1(iy) = tt0(iy)**2/tt1(iy)
+        enddo
 
-       nu1 = 0.0e0_R8                                 !lk 12.05.11{
-       k1 = 0.58e0_R8
-       nu2 = 0.0e0_R8
-       k2 = 1.6e0_R8
-       t1 = (4.0_R8*pi*eps0/qe)/qe
-       t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
+        nu1 = 0.0e0_R8                                 !lk 12.05.11{
+        k1 = 0.58e0_R8
+        nu2 = 0.0e0_R8
+        k2 = 1.6e0_R8
+        t1 = (4.0_R8*pi*eps0/qe)/qe
+        t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
      
-       do iy = -1,mintopcut                                                        
-        do ix=0,nx
-         if(mod(region(ix,iy,0),4).eq.1) then                       
-          tau(ix,iy) = t2/lnlam(ix,iy)*te(ix,iy)/ev
-     &     *sqrt(te(ix,iy)/ev)/ne2(ix,iy)     
-          nu1(ix,iy) = conn(iy)/(tau(ix,iy)                 
-     &     *sqrt(te(ix,iy)/me)                           
-     &     *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
+        do iy = -1,mintopcut
+         do ix=0,nx
+          if(mod(region(ix,iy,0),4).eq.1) then
+           tau(ix,iy) = t2/lnlam(ix,iy)*te(ix,iy)/ev
+     &      *sqrt(te(ix,iy)/ev)/ne2(ix,iy)
+           nu1(ix,iy) = conn(iy)/(tau(ix,iy)
+     &      *sqrt(te(ix,iy)/me)
+     &      *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
 
-          k1(ix,iy) = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*sqrt(nu1(ix,iy))
-     &     +1.53e0_R8*nu1(ix,iy))
-     &     +0.52e0_R8*(eps1(iy)**3)*nu1(ix,iy)
-     &     /(1.0e0_R8+0.89e0_R8*sqrt(eps1(iy)**3)*nu1(ix,iy))
+           k1(ix,iy) = 1.0e0_R8/(1.0e0_R8+2.01e0_R8*sqrt(nu1(ix,iy))
+     &      +1.53e0_R8*nu1(ix,iy))
+     &      +0.52e0_R8*(eps1(iy)**3)*nu1(ix,iy)
+     &      /(1.0e0_R8+0.89e0_R8*sqrt(eps1(iy)**3)*nu1(ix,iy))
           
-          nu2(ix,iy) = conn(iy)/(tauia(ix,iy,ismain)                 
-     &     *sqrt(ti(ix,iy)/(mp*am(ismain)))                           
-     &     *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)                   
+           nu2(ix,iy) = conn(iy)/(tauia(ix,iy,ismain)
+     &      *sqrt(ti(ix,iy)/(mp*am(ismain)))
+     &      *2.0e0_R8*pi*eps1(iy)**1.5e0_R8)
   
-          k2(ix,iy) = (0.66e0_R8+1.88e0_R8*sqrt(eps1(iy))
-     &     -1.54e0_R8*eps1(iy))
-     &     /(1.0e0_R8+1.03e0_R8*sqrt(nu2(ix,iy))+0.31e0_R8*nu2(ix,iy))
-     &     +1.17e0_R8*(eps1(iy)**3)*nu2(ix,iy)
-     &     /(1.0e0_R8+0.74e0_R8*sqrt(eps1(iy)**3)*nu2(ix,iy))      
-         endif    
+           k2(ix,iy) = (0.66e0_R8+1.88e0_R8*sqrt(eps1(iy))
+     &      -1.54e0_R8*eps1(iy))
+     &      /(1.0e0_R8+1.03e0_R8*sqrt(nu2(ix,iy))+0.31e0_R8*nu2(ix,iy))
+     &      +1.17e0_R8*(eps1(iy)**3)*nu2(ix,iy)
+     &      /(1.0e0_R8+0.74e0_R8*sqrt(eps1(iy)**3)*nu2(ix,iy))
+          endif
+         enddo
+        enddo                                                             !lk 19.09.07 }
+        do iy= -1,mintopcut
+         do ix=0,nx
+          if(mod(region(ix,iy,0),4).eq.1) then                            !srv 26.11.02
+           do is=0,ns-1
+            if(.not.is_neutral(is)) then                                  !srv 10.07.02
+             cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)/
+     1        (1.0e0_R8+15.12e16_R8/conn(iy)/2.0e0_R8*
+     2        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
+     3        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
+     4        /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
+     5        /conn(iy)/2.0e0_R8*
+     6        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
+     7        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
+             cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)/                       !srv 09.01.01
+     1        (1.0e0_R8+15.12e16_R8/conn(iy)/2.0e0_R8*
+     2        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
+     3        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
+     4        /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
+     5        /conn(iy)/2.0e0_R8*
+     6        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
+     7        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
+            endif                                                         !srv 10.07.02
+           enddo
+           chce(ix,iy,0)=chce(ix,iy,0)/k1(ix,iy)
+     &      *0.58e0_R8*sqrt(eps1(iy)**3)
+           csig(ix,iy,0)=csig(ix,iy,0)/k1(ix,iy)
+     &      *0.58e0_R8*sqrt(eps1(iy)**3)
+           calf(ix,iy,0)=calf(ix,iy,0)/k1(ix,iy)
+     &      *0.58e0_R8*sqrt(eps1(iy)**3)
+           chci(ix,iy,0)=chci(ix,iy,0)/k2(ix,iy)
+     &      *1.6e0_R8*sqrt(eps1(iy)**3)                                   !lk 20.11.07
+          endif                                                           !lk 12.05.11}
+         enddo
         enddo
-       enddo                                                             !lk 19.09.07 } 
-       do iy= -1,mintopcut
-        do ix=0,nx
-         if(mod(region(ix,iy,0),4).eq.1) then                       !srv 26.11.02
-          do is=0,ns-1
-           if(.not.is_neutral(is)) then                            !srv 10.07.02
-            cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)/
-     1       (1.0e0_R8+15.12e16_R8/conn(iy)/2.0e0_R8*
-     2       ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     3       (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-     4       /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
-     5       /conn(iy)/2.0e0_R8*
-     6       ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     7       (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-            cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)/                 !srv 09.01.01
-     1       (1.0e0_R8+15.12e16_R8/conn(iy)/2.0e0_R8*
-     2       ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     3       (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-     4       /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
-     5       /conn(iy)/2.0e0_R8*
-     6       ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     7       (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-           endif                                                   !srv 10.07.02
-          enddo
-          chce(ix,iy,0)=chce(ix,iy,0)/k1(ix,iy)
-     &     *0.58e0_R8*sqrt(eps1(iy)**3)                         
-          csig(ix,iy,0)=csig(ix,iy,0)/k1(ix,iy)
-     &     *0.58e0_R8*sqrt(eps1(iy)**3)
-          calf(ix,iy,0)=calf(ix,iy,0)/k1(ix,iy)
-     &     *0.58e0_R8*sqrt(eps1(iy)**3)
-          chci(ix,iy,0)=chci(ix,iy,0)/k2(ix,iy)
-     &     *1.6e0_R8*sqrt(eps1(iy)**3)                         !lk 20.11.07 
-         endif                                                            !lk 12.05.11}
-        enddo
-       enddo
       endif
 #ifdef ASTRA
-      bbaverage2 = 0.0e0_R8                                   !srv 28.07.11 {
+      bbaverage2 = 0.0e0_R8                                               !srv 28.07.11 {
       chci_koeff = 0.0e0_R8
       tt0 = 0.0e0_R8
       tt1 = 0.0e0_R8
       if(integral_modeling.ne.0) then
-       do iy = 0,mintopcut-1    ! for inner surfaces                                                                                          
+       do iy = 0,mintopcut-1    ! for inner surfaces
         inv_hi_astra(iy) =  -(Ti_astra(iy)-Ti_astra(iy-1))*1.0e3_R8/
      &   (qi_neo_astra(iy)*1.0e6_R8)/(Rmajc_astra(iy)-Rmajc_astra(iy-1))  
         do ix=0,nx                                                  
@@ -534,6 +536,9 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                      !lk 06.05.0
      &   ti, ua(-1,-1,is), cvsa(-1,-1,0,is), cvsahz(-1,-1,0,is),
      &   fllimvisc(-1,-1,is))
       enddo
+*   .. save the classical transport coefficients
+      csig_cl = csig
+      calf_cl = calf
       cvsa_cl=cvsa
       cvsahz_cl=cvsahz                                               !srv 09.01.01 
 

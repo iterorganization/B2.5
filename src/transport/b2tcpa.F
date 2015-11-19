@@ -16,8 +16,6 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &     fch_p(-1:nx,-1:ny,0:1)
-*   ..local variables
-      real (kind=R8), save :: fch_anomalous = 1.0e0_R8
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -57,7 +55,6 @@
        call ipgeti ('b2tfhe_no_current',no_current)                      !srv 27.02.13
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-       call ipgetr ('b2tfhe_anomalous', fch_anomalous)                   !srv
       endif                                                              !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -73,36 +70,34 @@
        call b2xvff (nx, ny, csig, 'csig')
        call b2xvff (nx, ny, calf, 'calf')
       endif
-
  
 * ..compute parallel current
       if(pot_eq.eq.1 .and. no_current.eq.0) then                       !srv 26.07.06 27.02.13
 *   ..compute fch_p
         do iy = -1, ny
-	  do ix = -1, nx                                                  !srv 26.11.02 {
-	    if(leftix(ix,iy).eq.-2)then                                    !srv 26.11.02
+	  do ix = -1, nx                                               !srv 26.11.02 {
+	    if(leftix(ix,iy).eq.-2)then                                !srv 26.11.02
 	      fch_p(ix,iy,0)  = 0.0e0_R8
-	    else                                                           !srv 26.11.02 }
+	    else                                                       !srv 26.11.02 }
 	      ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
-     &	   (ne(ix,iy)*te(ix,iy)                                      !srv .98
-     &	   -ne(leftix(ix,iy),leftiy(ix,iy))*                         !srv
-     &	   te(leftix(ix,iy),leftiy(ix,iy)))*                         !srv
-     &	   (2/qe)/(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))        !srv
-!     &   (                                                             !srv .98
-!     &    te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+                   !srv
-!     &    (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5e0_R8*      !srv
-!     &    (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy))))        !srv 
-!     &   )/qe                                                          !srv .98 
+     &	   (ne(ix,iy)*te(ix,iy)                                        !srv .98
+     &	   -ne(leftix(ix,iy),leftiy(ix,iy))*                           !srv
+     &	   te(leftix(ix,iy),leftiy(ix,iy)))*                           !srv
+     &	   (2/qe)/(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))          !srv
+!     &   (                                                            !srv .98
+!     &    te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+                  !srv
+!     &    (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5e0_R8*       !srv
+!     &    (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy))))       !srv
+!     &   )/qe                                                         !srv .98
 	      tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-              fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-
-     &      (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*tex 
-	    endif                                                         !srv 26.11.02
+              fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex
+	    endif                                                      !srv 26.11.02
 	  enddo
         enddo
         fch_p(:,:,1) = 0.0e0_R8
-      else                                                            !srv 26.07.06 {
+      else                                                             !srv 26.07.06 {
 	fch_p = 0.0e0_R8
-      endif                                                           !srv 26.07.06 }
+      endif                                                            !srv 26.07.06 }
 
 * ..return
       ncall = ncall+1

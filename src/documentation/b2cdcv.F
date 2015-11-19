@@ -439,11 +439,11 @@
 *       fni(,,) = (sum is :: fna(,,,is))
 *
 *     fchvispar - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchvisparx(,)=fch(,,0) and fchvispary(,)=fch(,,1).)
+*     (Let fchvisparx(,)=fchvispar(,,0) and fchvispary(,)=fchvispar(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchvisparx(ix,iy) specifies the
 *     electric current driven by parallel viscosity through the face
 *     between the (ix-1,iy) and (ix,iy) cells.
-*     For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
+*     For ix.eq.-1, fchvisparx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchvispary(ix,iy) specifies the
 *     electric current driven by parallel viscosity through the face
 *     between the (ix,iy-1) and (ix,iy) cells.
@@ -452,53 +452,53 @@
 *     fchvisq - (-1:nx,-1:ny,0:1) real*8 array.
 *     fchvisq specifies the electric current produced by the components
 *     of the viscosity tensor which is connected with the heat fluxes.
-*     (Let fchvisqx(,)=fch(,,0) and fchvisqy(,)=fch(,,1).)
+*     (Let fchvisqx(,)=fchvisq(,,0) and fchvisqy(,)=fchvisq(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchvisqx(ix,iy) specifies the current
 *     through the face between the (ix-1,iy) and (ix,iy) cells.
-*     For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
+*     For ix.eq.-1, fchvisqx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchvisqy(ix,iy) specifies the current
 *     through the face between the (ix,iy-1) and (ix,iy) cells.
 *     For iy.eq.-1, fchvisqy(-1:nx,iy) will hold 0.
 *
 *     fchinert - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchinertx(,)=fch(,,0) and fchinerty(,)=fch(,,1).)
+*     (Let fchinertx(,)=fchinert(,,0) and fchinerty(,)=fchinert(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchinertx(ix,iy) specifies the
 *     contributions from inertia and gyroviscosity current through
 *     the face between the (ix-1,iy) and (ix,iy) cells.
-*     For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
+*     For ix.eq.-1, fchinertx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchinerty(ix,iy) specifies the
 *     contributions from inertia and gyroviscosity current through
 *     the face between the (ix,iy-1) and (ix,iy) cells.
 *     For iy.eq.-1, fchinerty(-1:nx,iy) will hold 0.
 *
 *     fchanml - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchanmlx(,)=fch(,,0) and fchanmly(,)=fch(,,1).)
+*     (Let fchanmlx(,)=fchanml(,,0) and fchanmly(,)=fchanml(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchanmlx(ix,iy) specifies the
 *     anomalous current through the face between the (ix-1,iy)
 *     and (ix,iy) cells.
-*     For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
+*     For ix.eq.-1, fchanmlx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchanmly(ix,iy) specifies the
 *     amomalous current through the face between the (ix,iy-1)
 *     and (ix,iy) cells.
 *     For iy.eq.-1, fchanmly(-1:nx,iy) will hold 0.
 *
 *     fchdia - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchdiax(,)=fch(,,0) and fchdiay(,)=fch(,,1).)
+*     (Let fchdiax(,)=fchdia(,,0) and fchdiay(,)=fchdia(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchdiax(ix,iy) specifies the
 *     modified diamagnetic current through the face between 
 *     the (ix-1,iy) and (ix,iy) cells.
-*     For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
+*     For ix.eq.-1, fchdiax(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchdiay(ix,iy) specifies the
 *     modified diamagnetic current through the face between
 *     the (ix,iy-1) and (ix,iy) cells.
 *     For iy.eq.-1, fchdiay(-1:nx,iy) will hold 0.
 *
 *     fchin - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchinx(,)=fch(,,0) and fchiny(,)=fch(,,1).)
+*     (Let fchinx(,)=fchin(,,0) and fchiny(,)=fchin(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchinx(ix,iy) specifies the
 *     contribution from ion-neutral friction through the face between 
 *     the (ix-1,iy) and (ix,iy) cells.
-*     For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
+*     For ix.eq.-1, fchinx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchiny(ix,iy) specifies the
 *     contribution from ion-neutral friction through the face between
 *     the (ix,iy-1) and (ix,iy) cells.
@@ -512,7 +512,7 @@
 *     fch_p(-1:nx,-1:ny,1) = 0
 *
 *     fchvisper - (-1:nx,-1:ny,0:1) real*8 array.
-*     (Let fchvisperx(,)=fch(,,0) and fchvispery(,)=fch(,,1).)
+*     (Let fchvisperx(,)=fchvisper(,,0) and fchvispery(,)=fchvisper(,,1).)
 *     For (ix,iy) in (-1:nx,-1:ny), fchvisperx(ix,iy) = 0.
 *     For (ix,iy) in (-1:nx, 0:ny), fchvispery(ix,iy) specifies the
 *     electric current connected with contribution from
@@ -1508,6 +1508,26 @@
 *     When is is a neutral species or is0 is an ionised species,
 *     csigin(,,,is,is0) will be zero.
 *
+*     csig_cl - (-1:nx,-1:ny,0:1) real*8 array.				 !xpb
+*     (Let csig_clx=csig_cl(,,0) and csig_cly=csig_cl(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), csig_clx(ix,iy) specifies the classical
+*     conductivity between the (ix-1,iy) and the (ix,iy) cell.
+*     For ix.eq.-1, csig_clx(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), csig_cly(ix,iy) specifies the classical
+*     conductivity between the (ix,iy-1) and the (ix,iy) cell.
+*     For iy.eq.-1, csig_clx(-1:nx,iy) will hold 0.
+*
+*     calf_cl - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let calf_clx=calf_cl(,,0) and calf_cly=calf_cl(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), calf_clx(ix,iy) specifies the 
+*     classical part of the thermo-electric coefficient 
+*     between the (ix-1,iy) and the (ix,iy) cell.
+*     For ix.eq.-1, calf_clx(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), calf_cly(ix,iy) specifies the 
+*     classical part of the thermo-electric coefficient 
+*     between the (ix,iy-1) and the (ix,iy) cell.
+*     For iy.eq.-1, calf_cly(-1:nx,iy) will hold 0.
+*
 *     csig_an - (-1:nx,-1:ny,0:1) real*8 array.				 !xpb
 *     (Let csig_anx=csig_an(,,0) and csig_any=csig_an(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), csig_anx(ix,iy) specifies the anomalous
@@ -1522,7 +1542,7 @@
 *     For (ix,iy) in (0:nx,-1:ny), calf_anx(ix,iy) specifies the 
 *     anomalous part of the thermo-electric coefficient 
 *     between the (ix-1,iy) and the (ix,iy) cell.
-*     For ix.eq.-1, calfx(ix,-1:ny) will hold 0.
+*     For ix.eq.-1, calf_anx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), calf_any(ix,iy) specifies the 
 *     anomalous part of the thermo-electric coefficient 
 *     between the (ix,iy-1) and the (ix,iy) cell.

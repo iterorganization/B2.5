@@ -56,7 +56,7 @@
      *   nal(-1:nx,-1:ny,0:ns-1), nab(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
      &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny), csigia(-1:nx,-1:ny,0:1),  !srv 15.02.11
-     &   sigi(-1:nx,-1:ny), csigi(-1:nx,-1:ny,0:1) !, dab2_(-1:nx,-1:ny)
+     &   sigi(-1:nx,-1:ny) !, dab2_(-1:nx,-1:ny)
 *   ..procedures
       real (kind=R8) ::
      *   hy1                                                         !srv 07.07.14

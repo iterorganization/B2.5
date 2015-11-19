@@ -61,12 +61,12 @@
 *.declarations
 
 *   ..local variables
-      integer potit, ipass, recalculate_contributions, pot_eq,       !xpb,dpc
+      integer potit, ipass, recalculate_contributions, pot_eq,           !xpb,dpc
      *  potitmin, nsmin, nsmax, no_current
-      integer, save :: style = 2                                     !srv 29.05.02
-      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0         !srv 13.10.06
-      integer, save :: anomalous_core_only = 0                       !srv 19.04.07
-      integer, save :: use_b2npc9 = 1, use_b2nph9 = 1, coriolis = 0  !srv 06.11.08 11.08.08
+      integer, save :: style = 2                                         !srv 29.05.02
+      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0             !srv 13.10.06
+      integer, save :: anomalous_core_only = 0                           !srv 19.04.07
+      integer, save :: use_b2npc9 = 1, use_b2nph9 = 1, coriolis = 0      !srv 06.11.08 11.08.08
       real (kind=R8) ::
      *  potok, mach10, BoRiS, vis_per, na_min, na_new
       integer ncall, n2, is, ier0, i, ix, iy, ncallout, ixmax, iymax,    !xpb
@@ -177,8 +177,8 @@
      >   write(*,*) 'Not solving potential equation!'
        if(.not.solving(4))
      >   write(*,*) 'Not solving heat equations!'
-       call ipgeti ('b2news_recalculate_contributions',                  !dpc
-     1  recalculate_contributions)                                       !dpc
+       call ipgeti ('b2news_recalculate_contributions',               !dpc
+     1  recalculate_contributions)                                    !dpc
        call b2news_facdrift_fac_ExB_init(nx, ny, ramp_slow)
        call ipgeti ('b2tfnb_mdf', mdf_fnb)                            !srv 13.10.06 {
        call ipgeti ('b2tfhe_mdf', mdf_fhe)
@@ -287,7 +287,7 @@
      2   cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,                 !srv 13.10.06
      3   chvi, csig, csigin, calf, cthe, cthi,
      4   cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,     !srv 09.01.01 15.12.05
-     5   vsal, fllim0fhi, fllimvisc)
+     5   vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
         if (ncall.eq.ncallout) then
           write(*,*) 'ncall,ipass',ncall,ipass
           call hbout('../b2ne_npmo',nx,ny,ns,te,'te',ti,'ti',
@@ -326,28 +326,29 @@
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
         endif                                                            !xpb
         if((maxval(facdrift).ne.0.0_R8 .or.
-     &    maxval(fac_ExB).ne.0.0_R8)) then                           !srv 25.11.08 {
+     &    maxval(fac_ExB).ne.0.0_R8)) then                               !srv 25.11.08 {
 
-          call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,   !srv 20.09.06  {
+          call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,       !srv 20.09.06  {
      &                       facdrift, fchvispar)
           call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
           call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                       fchanml)                                     !srv 20.09.06  }
-          if(anomalous_core_only.ne.0) then                          !srv 19.04.07  {
-            do iy = 0, ny                                             !lk 19.09.07
+     &                       fchanml)                                    !srv 20.09.06  }
+          if(anomalous_core_only.ne.0) then                              !srv 19.04.07  {
+            do iy = 0, ny                                                !lk 19.09.07
               do ix = -1, nx
-                if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then     !lk 19.09.07
+                if(mod(region(bottomix(ix,iy),
+     &                        bottomiy(ix,iy),0),4).ne.1) then           !lk 19.09.07
                   fchanml(ix,iy,1) = 0.0e0_R8
                 endif
               enddo
             enddo
-          endif                                                      !srv 19.04.07  }
+          endif                                                          !srv 19.04.07  }
         else
          fchvispar = 0.0_R8
          fchinert  = 0.0_R8
          fchanml   = 0.0_R8
-        endif                                                         !srv 25.11.08 }
+        endif                                                            !srv 25.11.08 }
 !        do is = 0, ns-1
         do is = nsmin, nsmax-1
 *    ..compute partial pressure
@@ -380,7 +381,7 @@
      &    fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
      &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
+     &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,                !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &    wrong_flow, .false.)
@@ -421,28 +422,29 @@ cxpb
 *     (= ne before continuity update)
         call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
-        if((maxval(facdrift).ne.0.0_R8 .or.                            !srv 25.11.08 {
+        if((maxval(facdrift).ne.0.0_R8 .or.                              !srv 25.11.08 {
      &    maxval(fac_ExB).ne.0.0_R8)) then
-          call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,     !srv 20.09.06  {
+          call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,       !srv 20.09.06  {
      &                       facdrift, fchvispar)
           call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
           call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                       fchanml)                                !srv 20.09.06  }
-          if(anomalous_core_only.ne.0) then                            !srv 19.04.07  {
-            do iy = 0, ny                                             !lk 19.09.07
+     &                       fchanml)                                    !srv 20.09.06  }
+          if(anomalous_core_only.ne.0) then                              !srv 19.04.07  {
+            do iy = 0, ny                                                !lk 19.09.07
               do ix = -1, nx
-                if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then     !lk 19.09.07
+                if(mod(region(bottomix(ix,iy),
+     &                        bottomiy(ix,iy),0),4).ne.1) then           !lk 19.09.07
                   fchanml(ix,iy,1) = 0.0e0_R8
                 endif
               enddo
             enddo
-          endif                                                        !srv 19.04.07  }
+          endif                                                          !srv 19.04.07  }
         else
           fchvispar = 0.0_R8
           fchinert  = 0.0_R8
           fchanml   = 0.0_R8
-        endif                                                          !srv 25.11.08 }
+        endif                                                            !srv 25.11.08 }
 *     ..iterate on particle balance
 !        do is = 0, ns-1
        do is = nsmin, nsmax-1

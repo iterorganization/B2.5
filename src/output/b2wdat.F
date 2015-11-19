@@ -395,6 +395,8 @@
       call my_out(70,-1,ny,conn,'conn')                            !srv
       call my_out(70,nx,ny,csig(-1,-1,0),'csig_x')                 !srv
       call my_out(70,nx,ny,csig(-1,-1,1),'csig_y')                 !srv
+      call my_out(70,nx,ny,csig_cl(-1,-1,0),'csig_clx')            !srv
+      call my_out(70,nx,ny,csig_cl(-1,-1,1),'csig_cly')            !srv
       call my_out(70,nx,ny,csig_an(-1,-1,0),'csig_anx')            !srv
       call my_out(70,nx,ny,csig_an(-1,-1,1),'csig_any')            !srv
       if (ismain0.ne.ismain) then
@@ -405,27 +407,31 @@
       call my_out(70,nx,ny,vsa0(-1,-1,1),'vsa1')                   !srv
       call my_out(70,nx,ny,cvsa(-1,-1,0,ismain),'cvsa')            !srv
       call my_out(70,nx,ny,cvsa_cl(-1,-1,0,ismain),'cvsa_cl')      !srv
-      call my_out(70,nx,ny,calf(-1,-1,0),'calfx')                 !srv
-      call my_out(70,nx,ny,calf(-1,-1,1),'calfy')                 !srv
-      call my_out(70,nx,ny,chce(-1,-1,0),'chcex')                 !srv
-      call my_out(70,nx,ny,chce(-1,-1,1),'chcey')                 !srv
-      call my_out(70,nx,ny,chci(-1,-1,0),'chcix')                 !srv
-      call my_out(70,nx,ny,chci(-1,-1,1),'chciy')                 !srv
+      call my_out(70,nx,ny,calf(-1,-1,0),'calfx')                  !srv
+      call my_out(70,nx,ny,calf(-1,-1,1),'calfy')                  !srv
+      call my_out(70,nx,ny,calf_cl(-1,-1,0),'calf_clx')            !srv
+      call my_out(70,nx,ny,calf_cl(-1,-1,1),'calf_cly')            !srv
+      call my_out(70,nx,ny,calf_an(-1,-1,0),'calf_anx')            !srv
+      call my_out(70,nx,ny,calf_an(-1,-1,1),'calf_any')            !srv
+      call my_out(70,nx,ny,chce(-1,-1,0),'chcex')                  !srv
+      call my_out(70,nx,ny,chce(-1,-1,1),'chcey')                  !srv
+      call my_out(70,nx,ny,chci(-1,-1,0),'chcix')                  !srv
+      call my_out(70,nx,ny,chci(-1,-1,1),'chciy')                  !srv
 
       call my_out(70,nx,ny,lengthy,'lengthy')                      !srv
-	wrk0=0.0d0                                                   !srv 18.03.09 26.04.09 {
+	wrk0=0.0d0                                                 !srv 18.03.09 26.04.09 {
 	do ix=-1,nx
 	 wrk0(ix,-1)=hy1(ix,-1)
 	 do iy=0,ny
 	  wrk0(ix,iy)=wrk0(ix,iy-1)+hy1(ix,iy)
 	 enddo
 	enddo
-      call my_out(70,nx,ny,wrk0,'lengthy1')                              !srv
+      call my_out(70,nx,ny,wrk0,'lengthy1')                        !srv
 
       call my_out(70,nx,ny,len_surf,'len_surf')
 
       call my_out(70,nx,ny,crdy_surf,'crdy_surf')
-      call my_out(70,nx,ny,crdy_c_cell,'crdy_c_cell')             !srv 18.03.09 26.04.09}
+      call my_out(70,nx,ny,crdy_c_cell,'crdy_c_cell')              !srv 18.03.09 26.04.09}
 
        call my_out(70,nx,ny,gs(-1,-1,0),'gsx')
        call my_out(70,nx,ny,gs(-1,-1,1),'gsy')
@@ -479,7 +485,7 @@
           Total_current(iy) = 0.0_R8
           Total_abscurrent(iy) = 0.0_R8
           do ix = -1, nx 
-	     if(mod(region(ix,iy,0),4).eq.1) then                ! for CORE
+	     if(mod(region(ix,iy,0),4).eq.1) then                  ! for CORE
             Total_current(iy) = Total_current(iy) + fch(ix,iy,1)
             Total_abscurrent(iy)=Total_current(iy)+abs(fch(ix,iy,1))
 	     endif

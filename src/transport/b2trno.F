@@ -115,7 +115,7 @@
         call ipgeti ('b2trno_hcimx_flag', hcimx_flag)
         call ipgeti ('b2tral_mode', mode)
         call ipgeti ('b2trno_flux_limit_to_dpa', flux_limit_to_dpa)
-	call ipgeti ('b2trno_csig_an_style', csig_an_style)          !srv 15.06.08
+        call ipgeti ('b2trno_csig_an_style', csig_an_style)          !srv 15.06.08
         call ipgeti ('b2trno_iout', iout)                            !srv 17.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 19.05.10 {
         call ipgeti ('b2npco_iout', iout_b2npco)
@@ -231,7 +231,7 @@
        call b2txcy (nx, ny, mode, work, gs, hy, qz, vsa0(-1,-1,is),
      &   cvsahz(-1,-1,1,is))                                        !srv 01.07.05 }
       enddo                                                         !srv 09.01.01
-*   ..save the anomalous transport coefficients 					  !srv 04.10.99
+*   ..save the anomalous transport coefficients                     !srv 04.10.99
       cvsa_an = cvsa                                                !srv 04.10.99
       call b2txsx (nx, ny, vol, hx, qz, hvi0(-1,-1,0), chvi(-1,-1,0))
       call b2txsy (nx, ny, vol, hy, qz, hvi0(-1,-1,1), chvi(-1,-1,1))
@@ -240,8 +240,10 @@
 
       call b2txcx (nx, ny, mode, vol, gs, hx, qz, hce0, chce(-1,-1,0))
       call b2txcy (nx, ny, mode, vol, gs, hy, qz, hce0, chce(-1,-1,1))
-      call b2txcx (nx, ny, -1, vol, gs, hx, qz, alf0, calf_an(-1,-1,0))
-      call b2txcy (nx, ny, -1, vol, gs, hy, qz, alf0, calf_an(-1,-1,1))
+      call b2txcx (nx, ny, mode, vol, gs, hx, qz, sig0, csig(-1,-1,0))
+      call b2txcy (nx, ny, mode, vol, gs, hy, qz, sig0, csig(-1,-1,1))
+      call b2txcx (nx, ny, -1, vol, gs, hx, qz, alf0, calf(-1,-1,0))
+      call b2txcy (nx, ny, -1, vol, gs, hy, qz, alf0, calf(-1,-1,1))
 
 csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
       if(hcimx_flag .eq. 0) then
@@ -254,26 +256,11 @@ csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
      & chci(-1,-1,1))
       endif
 
-      call b2txcx (nx, ny, -1, vol, gs, hx, qz, alf0, calf(-1,-1,0))
-      call b2txcy (nx, ny, -1, vol, gs, hy, qz, alf0, calf(-1,-1,1))
-      if(csig_an_style. eq.0) then                                !srv 15.06.08
-       call b2txcx (nx, ny, mode, vol, gs, hx, qz, sig0, 
-     &      csig_an(-1,-1,0))
-       call b2txcy (nx, ny, mode, vol, gs, hy, qz, sig0, 
-     &      csig_an(-1,-1,1))
-*   .. set unused contribution to the electrical conductivity and 
-*   .. thermo-electric coefficient to zero
-       call sfill (n2*2, 0.0_R8, csig, 1)
-       call sfill (n2*2, 0.0_R8, calf, 1)
-      else 					                                     !srv
-       call b2txcx (nx, ny, mode, vol, gs, hx, qz, sig0, csig(-1,-1,0))
-       call b2txcy (nx, ny, mode, vol, gs, hy, qz, sig0, csig(-1,-1,1))
-*   .. save the anomalous transport coefficients
-       csig_an = csig 
 *   .. set csigx = 0 and calfx = 0
-       call sfill (n2, 0.0e0_R8, csig(-1,-1,0), 1)
-       call sfill (n2, 0.0e0_R8, calf(-1,-1,0), 1)
-      endif					                                     !srv
+      if (csig_an_style.eq.1) then
+        call sfill (n2, 0.0e0_R8, csig(-1,-1,0), 1)
+        call sfill (n2, 0.0e0_R8, calf(-1,-1,0), 1)
+      end if
 *   ..set strange velocities chve, chvi
 c      call sfill (n2*2, 0.0_R8, chve, 1)
 c      call sfill (n2*2, 0.0_R8, chvi, 1)
@@ -289,19 +276,20 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
         end do
         chce(:,:,0) = chce(:,:,0) * pol_anom_scale
         chci(:,:,0) = chci(:,:,0) * pol_anom_scale
-        calf_an(:,:,0) = calf_an(:,:,0) * pol_anom_scale
-        csig_an(:,:,0) = csig_an(:,:,0) * pol_anom_scale
+        calf(:,:,0) = calf(:,:,0) * pol_anom_scale
+        csig(:,:,0) = csig(:,:,0) * pol_anom_scale
       end if
-
+*   .. save the anomalous transport coefficients
+      csig_an = csig
+      calf_an = calf
 
 *    ..test sign of chce, chci
-       call b2xvsg (n2*2, chce, 1, 'chce', '.ge.')
-       call b2xvsg (n2*2, chci, 1, 'chci', '.ge.')
-
+      call b2xvsg (n2*2, chce, 1, 'chce', '.ge.')
+      call b2xvsg (n2*2, chci, 1, 'chci', '.ge.')
 
       if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0) then                !srv 19.05.10 {
        do is = 0, ns-1
-	  write (chns,'(i3.3)') is 
+	write (chns,'(i3.3)') is
         call my_out(70,nx,ny,cdna(-1,-1,0,is),'b2trno_cdnax'//chns)
         call my_out(70,nx,ny,cdna(-1,-1,1,is),'b2trno_cdnay'//chns)
         call my_out(70,nx,ny,cdpa(-1,-1,0,is),'b2trno_cdpax'//chns)
@@ -309,17 +297,17 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
 !        call my_out(70,nx,ny,cvla(-1,-1,0,is),'b2trno_cvlax'//chns)
 !        call my_out(70,nx,ny,cvla(-1,-1,1,is),'b2trno_cvlay'//chns)
        enddo
-	endif
-	if(iout_b2npmo.ne.0) then
+      endif
+      if(iout_b2npmo.ne.0) then
        do is = 0, ns-1
-	  write (chns,'(i3.3)') is 
+	write (chns,'(i3.3)') is
         call my_out(70,nx,ny,cvsa(-1,-1,0,is),'b2trno_cvsax'//chns)
         call my_out(70,nx,ny,cvsa(-1,-1,1,is),'b2trno_cvsay'//chns)
         call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2trno_cvsahzx'//chns)
         call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2trno_cvsahzy'//chns)
        enddo
-	endif
-	if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+      endif
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
         call my_out(70,nx,ny,chce(-1,-1,0),'b2trno_chcex')
         call my_out(70,nx,ny,chce(-1,-1,1),'b2trno_chcey')
         call my_out(70,nx,ny,chci(-1,-1,0),'b2trno_chcix')
@@ -328,14 +316,14 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
 !        call my_out(70,nx,ny,chve(-1,-1,1),'b2trno_chvey')
 !        call my_out(70,nx,ny,chvi(-1,-1,0),'b2trno_chvix')
 !        call my_out(70,nx,ny,chvi(-1,-1,1),'b2trno_chviy')
-	endif
-	if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0) then
+      endif
+      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0) then
         call my_out(70,nx,ny,csig(-1,-1,0),'b2trno_csigx')
         call my_out(70,nx,ny,csig(-1,-1,1),'b2trno_csigy')
-	endif                                                          !srv 19.05.10 }
-      if(iout.ne.0) then                                        !srv 17.06.08 {
+      endif                                                          !srv 19.05.10 }
+      if(iout.ne.0) then                                             !srv 17.06.08 {
        do is = 0, ns-1
-	  write (chns,'(i3.3)') is 
+	write (chns,'(i3.3)') is
         call my_out(70,nx,ny,cdna(-1,-1,0,is),'b2trno_cdnax'//chns)
         call my_out(70,nx,ny,cdna(-1,-1,1,is),'b2trno_cdnay'//chns)
         call my_out(70,nx,ny,cdpa(-1,-1,0,is),'b2trno_cdpax'//chns)
@@ -354,22 +342,22 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
         call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2trno_cvsahzy'//chns)
         call my_out(70,nx,ny,cvmahz(-1,-1,0,is),'b2trno_cvmahzx'//chns)
         call my_out(70,nx,ny,cvmahz(-1,-1,1,is),'b2trno_cvmahzy'//chns)
-      enddo
-        call my_out(70,nx,ny,chce(-1,-1,0),'b2trno_chcex')
-        call my_out(70,nx,ny,chce(-1,-1,1),'b2trno_chcey')
-        call my_out(70,nx,ny,chci(-1,-1,0),'b2trno_chcix')
-        call my_out(70,nx,ny,chci(-1,-1,1),'b2trno_chciy')
-        call my_out(70,nx,ny,chve(-1,-1,0),'b2trno_chvex')
-        call my_out(70,nx,ny,chve(-1,-1,1),'b2trno_chvey')
-        call my_out(70,nx,ny,chvi(-1,-1,0),'b2trno_chvix')
-        call my_out(70,nx,ny,chvi(-1,-1,1),'b2trno_chviy')
-        call my_out(70,nx,ny,csig(-1,-1,0),'b2trno_csigx')
-        call my_out(70,nx,ny,csig(-1,-1,1),'b2trno_csigy')
-        call my_out(70,nx,ny,calf_an(-1,-1,0),'b2trno_calf_anx')
-        call my_out(70,nx,ny,calf_an(-1,-1,1),'b2trno_calf_any')
-        call my_out(70,nx,ny,csig_an(-1,-1,0),'b2trno_csig_anx')
-        call my_out(70,nx,ny,csig_an(-1,-1,1),'b2trno_csig_any')
-	endif                                                          !srv 17.06.08 }
+       enddo
+       call my_out(70,nx,ny,chce(-1,-1,0),'b2trno_chcex')
+       call my_out(70,nx,ny,chce(-1,-1,1),'b2trno_chcey')
+       call my_out(70,nx,ny,chci(-1,-1,0),'b2trno_chcix')
+       call my_out(70,nx,ny,chci(-1,-1,1),'b2trno_chciy')
+       call my_out(70,nx,ny,chve(-1,-1,0),'b2trno_chvex')
+       call my_out(70,nx,ny,chve(-1,-1,1),'b2trno_chvey')
+       call my_out(70,nx,ny,chvi(-1,-1,0),'b2trno_chvix')
+       call my_out(70,nx,ny,chvi(-1,-1,1),'b2trno_chviy')
+       call my_out(70,nx,ny,csig(-1,-1,0),'b2trno_csigx')
+       call my_out(70,nx,ny,csig(-1,-1,1),'b2trno_csigy')
+       call my_out(70,nx,ny,calf_an(-1,-1,0),'b2trno_calf_anx')
+       call my_out(70,nx,ny,calf_an(-1,-1,1),'b2trno_calf_any')
+       call my_out(70,nx,ny,csig_an(-1,-1,0),'b2trno_csig_anx')
+       call my_out(70,nx,ny,csig_an(-1,-1,1),'b2trno_csig_any')
+      endif                                                          !srv 17.06.08 }
 
 * ..return
       ncall = ncall+1

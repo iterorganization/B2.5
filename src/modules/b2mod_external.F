@@ -97,6 +97,7 @@ cxpb  Allocate dummy arrays needed by b2xpfe
           deallocate(text_ext)
           deallocate(is_ext_neutral)
         endif
+        initialised_externals = .false.
       endif
       if (allocated_externals) then
         deallocate(ne_ext)
@@ -110,13 +111,14 @@ cxpb  Allocate dummy arrays needed by b2xpfe
         deallocate(she_ext)
         deallocate(shi_ext)
         deallocate(sch_ext)
+        allocated_externals = .false.
       endif
       return
       end subroutine dealloc_b2mod_external
 
       subroutine dealloc_b2mod_external_dummy
 
-      if (initialised_externals) return
+      if (.not.initialised_externals) return
       deallocate(za_ext)
       deallocate(fa_ext)
       initialised_externals = .false.

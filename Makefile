@@ -149,7 +149,7 @@ OTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OT}}
 OPEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OP}}
 MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
 
-.PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags force
+.PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags echo local force
 
 ifdef MDSPLUS_DIR
 ifdef PAR_OPT
@@ -737,7 +737,9 @@ echo:
 	@echo OTEXE=${OTEXE}
 #	@echo ${SRCF}
 
-local: 
+local: ${SRCLOCAL}/b2local.F ${MODLOCAL}/b2mod_local.F ${INCLOCAL}/b2local.h
+
+${SRCLOCAL}/b2local.F:
 	mkdir -p ${SRCLOCAL}
 	echo "      subroutine b2local" > ${SRCLOCAL}/b2local.F
 	echo "c" >> ${SRCLOCAL}/b2local.F
@@ -748,6 +750,8 @@ local:
 	echo "c" >> ${SRCLOCAL}/b2local.F
 	echo "      end" >> ${SRCLOCAL}/b2local.F
 	ln -sf ${SRCLOCAL} ../solps4-5/src/local_5
+
+${MODLOCAL}/b2mod_local.F: 
 	mkdir -p ${MODLOCAL}
 	echo "      module b2mod_local" > ${MODLOCAL}/b2mod_local.F
 	echo "c" >> ${MODLOCAL}/b2mod_local.F
@@ -755,6 +759,8 @@ local:
 	echo "c" >> ${MODLOCAL}/b2mod_local.F
 	echo "      end" >> ${MODLOCAL}/b2mod_local.F 
 	ln -sf ${MODLOCAL} ../solps4-5/src/B2.5_modules.local
+
+${INCLOCAL}/b2local.h:
 	mkdir -p ${INCLOCAL}
 	echo "c" > ${INCLOCAL}/b2local.h
 	echo "c store local or locally modified include files in this directory" >> ${INCLOCAL}/b2local.h

@@ -64,10 +64,10 @@
      &  fne_52(-1:nx,-1:ny,0:1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fhe_mdf(-1:nx,-1:ny,0:1),
      &  fhi_mdf(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     &  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),           !srv 11.10.02 21.10.02 {
+     &  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),          !srv 11.10.02 21.10.02 {
      &  fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
      &  fchvisq(-1:nx,-1:ny,0:1), fchdia(-1:nx,-1:ny,0:1),
-     &  fchinert(-1:nx,-1:ny,0:1),                                    !srv 21.10.02 }
+     &  fchinert(-1:nx,-1:ny,0:1),                                   !srv 21.10.02 }
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),                            !srv 25.02.00
      &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1),        !srv 28.10.02
@@ -79,7 +79,7 @@
      3  calf(-1:nx,-1:ny,0:1), cdna(-1:nx,-1:ny,0:1,0:ns-1)          !srv 25.09.09
       real (kind=R8) ::
      &  b2stbc_fchy_dia, b2stbc_neoclassical, praverage(2)
-      logical main_call                                                  !xpb
+      logical main_call                                              !xpb
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -87,7 +87,7 @@
      &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
       integer b2stbc_fchy_dia_coreonly, secmodel, area_fix,
      &  sheath_drift_fix
-      logical wrong_flow                                                 !xpb
+      logical wrong_flow                                             !xpb
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -168,12 +168,11 @@
       integer, save :: use_eirene, no_current 
       real (kind=R8) :: nesepm, nesepm_overshoot, ndes_sol,
      1 bc_type13_norm, bc_type13_fac, na_min, na_new
-      real (kind=R8) :: fch_anomalous
       character*26 boundary_location(nbcd)
       character*24 hlp_frm
       save ncall, coreregno, coreregn2,  bc_type13_ref,
      1  bc_type16_ref, bc_type20_ref, bc_type13_norm, bc_type13_fac,
-     2  na_min, na_new, fch_anomalous, bc_type21_ref, ndes_sol,
+     2  na_min, na_new, bc_type21_ref, ndes_sol,
      *  isfeedback, nesepm, nesepm_overshoot, fix_fch_in_fhe_sheath
 *   ..procedures
       intrinsic min, max, abs, sqrt, exp, log, dim, mod
@@ -196,7 +195,7 @@
      * isfeedback/0/, nesepm/0.0_R8/, nesepm_overshoot/0.0_R8/,
      5 fix_fch_in_fhe_sheath/2/, bc_type16_kinetic_energy/0/,
      & bc_type13_norm/1.0e15_R8/, bc_type13_fac/1.0_R8/,
-     & fch_anomalous/1.0_R8/, bc_type21_ref/1/, no_current/0/, 
+     & bc_type21_ref/1/, no_current/0/,
      & use_astra/0/, use_eirene/0/, drift_style/1/, ndes_sol/0.0_R8/
       real (kind=R8) ::
      .  Tguess, fy, ehy, fylimt, prefactor,
@@ -283,7 +282,6 @@
         call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
         call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &   'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-        call ipgetr ('b2tfhe_anomalous', fch_anomalous)
         call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 23.05.14 !srv 29.09.15
       endif
 *   ..set n2
@@ -4106,11 +4104,6 @@ cxpb code segment analog to b2tfhe
      &         harm(te(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                 bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
      &         Tguess)
-              if (fch_anomalous.ne.0.0_R8) fy = fy + fch_anomalous*
-     &         calf_an(bc_list_x(ix,ib),bc_list_y(ix,ib),1)*ehy*
-     &         harm(te(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                 bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
-     &         Tguess)
             else
               cone0 = chce(bc_list_x(ix,ib),bc_list_y(ix,ib),1)
               t2 = dim ( cone0,
@@ -4132,11 +4125,6 @@ cxpb code segment analog to b2tfhe
      .                           bottomiy(bc_list_x(ix,ib),
      .                                    bc_list_y(ix,ib)))) +
      &         calf(bc_list_x(ix,ib),bc_list_y(ix,ib),1)*
-     .         harm(te(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     &                 bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
-     &                            Tguess)*ehy
-              if (fch_anomalous.ne.0.0_R8) fy = fy + fch_anomalous*
-     &         calf_an(bc_list_x(ix,ib),bc_list_y(ix,ib),1)*
      .         harm(te(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      &                 bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
      &                            Tguess)*ehy
@@ -4279,11 +4267,6 @@ cxpb code segment analog to b2tfhe
      .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)*ehy*
      &         harm(te(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                 topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),Tguess)
-              if (fch_anomalous.ne.0.0_R8) fy = fy + fch_anomalous*
-     &         calf_an(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                 topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)*ehy*
-     &         harm(te(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                 topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),Tguess)
             else
               cone0 = chce(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                     topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)
@@ -4305,12 +4288,6 @@ cxpb code segment analog to b2tfhe
      .                 Tguess) +
      &         calf(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)*
-     &         harm(te(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                 topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
-     &              Tguess)*ehy
-              if (fch_anomalous.ne.0.0_R8) fy = fy + fch_anomalous*
-     &         calf_an(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     &                 topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)*
      &         harm(te(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                 topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
      &              Tguess)*ehy

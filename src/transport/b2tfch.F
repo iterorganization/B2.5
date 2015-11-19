@@ -105,9 +105,11 @@
       if (ncall.eq.0) then                                      	 !xpb
        call ipgetr ('b2tfhe_neutral', fch_ion_neutral)          	 !xpb
        call ipgetr ('b2tfhe_anomalous', fch_anomalous)          	 !xpb
+       if (fch_anomalous.eq.1.0_R8)
+     >  call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
        call ipgetr ('b2tfhe_vis_par', vis_par)                  	 !xpb
        call ipgetr ('b2tfhe_vis_per', vis_per)                  	 !xpb
-       call xertst (fch_ion_neutral.ne.0.0_R8 .or.  vis_par.ne.0.0_R8 	 !xpb
+       call xertst (fch_ion_neutral.ne.0.0_R8 .or. vis_par.ne.0.0_R8 	 !xpb
      &           .or. fch_anomalous.ne.0.0_R8 
      &           .or. maxval(facdrift).ne.0.0_R8
      &           .or. vis_per.ne.0.0_R8,
@@ -724,20 +726,9 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &       +fchvisper(ix,iy,0)
             fch_52(ix,iy,0) = -calf(ix,iy,0)*tex0_nd
             if (no_current.ne.1) then
-              fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-
-     &         (calf(ix,iy,0)+fch_anomalous*calf_an(ix,iy,0))*tex0      !srv 10.06.08
+              fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex0      !srv 10.06.08
             endif
-            if(fch_anomalous.ne.0.0_R8) then                    	 !xpb
-              fch(ix,iy,0) = fch(ix,iy,0) + (csig_an(ix,iy,0)*ehx_po     !xpb
-     &         - calf_an(ix,iy,0)*tex0) * fch_anomalous
-              fch_52(ix,iy,0) = fch_52(ix,iy,0) + fch_anomalous *
-     &         (csig_an(ix,iy,0)*ehx_po  - calf_an(ix,iy,0)*tex0_nd) 
-            endif                                               	 !xpb
             conc(ix,iy,0) = csig(ix,iy,0)
-            if(fch_anomalous.ne.0.0_R8) then                    	 !xpb
-              conc(ix,iy,0) = conc(ix,iy,0) + 
-     &         fch_anomalous * csig_an(ix,iy,0)
-            endif                                               	 !xpb
             if(fch_ion_neutral.ne.0.0_R8) then                  	 !xpb
               do is = 0, ns-1
                 if (.not.is_neutral(is)) then
@@ -776,24 +767,13 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))             !xpb
      .       +fchdia(ix,iy,1)+fchin(ix,iy,1)+fchvispar(ix,iy,1)          !xpb
      &       +fchvisper(ix,iy,1)
-            fch_p(ix,iy,1)= 0.0_R8                                   !srv 10.06.08
+            fch_p(ix,iy,1)= 0.0_R8                                       !srv 10.06.08
             fch_32(ix,iy,1)= csig(ix,iy,1)*ehy
-     .       +fchin(ix,iy,1)+fchvispar(ix,iy,1)           !xpb
+     .       +fchin(ix,iy,1)+fchvispar(ix,iy,1)                          !xpb
      &       +fchvisper(ix,iy,1)
             fch_52(ix,iy,1)= -calf(ix,iy,1)*
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy))) 
             conc(ix,iy,1) = csig(ix,iy,1)
-            if(fch_anomalous .ne. 0.0_R8) then                  	 !xpb
-              fch(ix,iy,1) = fch(ix,iy,1) + (csig_an(ix,iy,1)*ehy_po   	 !xpb
-     .         -calf_an(ix,iy,1)*                                  	 !xpb
-     .          (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))) *	 !xpb
-     .         fch_anomalous 
-              fch_52(ix,iy,1) = fch_52(ix,iy,1)+ fch_anomalous * 
-     .         (csig_an(ix,iy,1)*ehy_po - calf_an(ix,iy,1)*
-     .          (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))) 	 !xpb
-              conc(ix,iy,1) = conc(ix,iy,1) + csig_an(ix,iy,1) *         !xpb
-     .         fch_anomalous
-            endif                                               	 !xpb
             if(fch_ion_neutral .ne. 0.0_R8) then                	 !xpb
               do is = 0, ns-1
                 if (.not.is_neutral(is)) then

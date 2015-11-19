@@ -27,6 +27,8 @@
      *  cvsahz(:,:,:,:),                                              !srv 09.01.01
      *  cvsa_cl(:,:,:,:),                                             !srv 04.10.99
      *  cvsahz_cl(:,:,:,:),                                           !srv 09.01.01
+     *  csig_cl(:,:,:),
+     *  calf_cl(:,:,:),
      *  fllime(:,:),
      *  fllimi(:,:),
      *  fllim0fna(:,:,:,:),
@@ -63,6 +65,8 @@
       allocate(cvsahz(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !srv 09.01.01
       allocate(cvsa_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !srv 04.10.99
       allocate(cvsahz_cl(-1:nxd,-1:nyd,0:1,0:nsd-1))                  !srv 09.01.01
+      allocate(csig_cl(-1:nxd,-1:nyd,0:1))
+      allocate(calf_cl(-1:nxd,-1:nyd,0:1))
       allocate(fllime(-1:nxd,-1:nyd))
       fllime=0.0_R8
       allocate(fllimi(-1:nxd,-1:nyd))
@@ -105,6 +109,8 @@
       deallocate(cvsahz)
       deallocate(cvsa_cl)
       deallocate(cvsahz_cl)
+      deallocate(csig_cl)
+      deallocate(calf_cl)
       deallocate(fllime)
       deallocate(fllimi)
       deallocate(fllim0fna)

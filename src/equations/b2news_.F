@@ -68,7 +68,7 @@
 !      integer, save :: re_compute_pb = 1                              !srv 15.02.10
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,    !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0                                
+     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
       integer, save :: coriolis = 0
       real (kind=R8) ::
      *   potok
@@ -290,9 +290,9 @@ csw 01oct2012 initialize potential if necessary
       call b2xpni (nx, ny, ns, na, ni)
       call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
       call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
-!*   ..compute ceqp                                            !srv 03.07.03 {
+!*   ..compute ceqp                                                 !srv 03.07.03 {
 !      call b2xpnm (nx, ny, ns, rz2, am, na, wrk0)
-!      call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp)       !srv 03.07.03 }
+!      call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp) !srv 03.07.03 }
 *   ..compute flux limit coefficients
       call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs, na, ua,   !srv 03.06.03
      &  te, ti, po, ne, ni, ne2, chvemx, chvimx)
@@ -303,10 +303,7 @@ csw 01oct2012 initialize potential if necessary
      3 cdpa, cddi, cvla, cvsa, chce, chve, chci,                    !srv 04.10.99 23.12.03 13.10.06
      5 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
-     5 vsal, fllim0fhi, fllimvisc)                                  !srv 09.01.01 15.12.05
-
-
-
+     5 vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)                !srv 09.01.01 15.12.05
       if((maxval(facdrift).ne.0.0_R8 .or. 
      &    maxval(fac_ExB).ne.0.0_R8)) then
 
@@ -319,7 +316,8 @@ csw 01oct2012 initialize potential if necessary
         if(anomalous_core_only.ne.0) then                           !srv 19.04.07  {
           do iy = 0, ny                                             !lk 19.09.07
             do ix = -1, nx
-              if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then     !lk 19.09.07
+              if(mod(region(bottomix(ix,iy),
+     &                      bottomiy(ix,iy),0),4).ne.1) then        !lk 19.09.07
                 fchanml(ix,iy,1) = 0.0e0_R8
               endif 
             enddo
@@ -353,25 +351,25 @@ csw 01oct2012 initialize potential if necessary
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
-        enddo                                                           !srv 01.10.99
-!      end if                                                           !srv 01.10.99
+        enddo                                                            !srv 01.10.99
+!      end if                                                            !srv 01.10.99
 
 csw 10dec2012: added extra call if wanted/not-wanted (SOLPS4 has an
 c   extra call at this place within internal iteration)
       if(no_b2sral_call .eq. 0) then
         write(*,*) ' re-compute source '
-*     ..re-compute source linearisation                                    !xpb
-        call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain, ismain0,     !xpb
-     &    dtim, BoRiS, facdrift, fac_ExB,                                  !xpb
-     &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !srv 09.01.01
+*     ..re-compute source linearisation                                  !xpb
+        call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain, ismain0,   !xpb
+     &    dtim, BoRiS, facdrift, fac_ExB,                                !xpb
+     &    vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,              !srv 09.01.01
      &    na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
-     &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
+     &    te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                !srv 28.10.02
      &    fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52, 
-     &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,        !srv 13.10.06 25.12.06 23.10.09
+     &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,      !srv 13.10.06 25.12.06 23.10.09
      &    fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch, 
-     &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
+     &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir, 
-     &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
+     &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,                !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &    wrong_flow, .false.)
@@ -429,7 +427,8 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
         if(anomalous_core_only.ne.0) then                                !srv 19.04.07  {
           do iy = 0, ny                                                  !lk 19.09.07
             do ix = -1, nx
-              if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then          !lk 19.09.07
+              if(mod(region(bottomix(ix,iy),
+     &                      bottomiy(ix,iy),0),4).ne.1) then             !lk 19.09.07
                  fchanml(ix,iy,1) = 0.0e0_R8
               endif 
             enddo
@@ -642,7 +641,8 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
             if(anomalous_core_only.ne.0) then                            !srv 19.04.07  {
               do iy = 0, ny                                              !lk 19.09.07
                 do ix = -1, nx
-                  if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then      !lk 19.09.07
+                  if(mod(region(bottomix(ix,iy),
+     &                          bottomiy(ix,iy),0),4).ne.1) then         !lk 19.09.07
                     fchanml(ix,iy,1) = 0.0e0_R8
                   endif 
                 enddo
@@ -687,22 +687,22 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
             write (charns,'(i3.3)') i
             call my_out(70,nx,ny,respo,'b2news__respo'//charns)
             call my_out(70,nx,ny,po,'b2news__po'//charns)
-          endif                                                            !srv 12.07.05 }
-          if(t0.gt.potok.and.(i.eq.potit/3.or.i.eq.potit*2/3)) then      !srv 06.07.00
+          endif                                                         !srv 12.07.05 }
+          if(t0.gt.potok.and.(i.eq.potit/3.or.i.eq.potit*2/3)) then     !srv 06.07.00
             if (vis_per.eq.0.0e0_R8) then
               call restart_ma28
             else
-              if (style.eq.2) call restart_ma28_for_7                     !srv 11.01.00 29.05.02
-              if (style.eq.3) call restart_sdrv_for_7                     !srv 29.05.02
+              if (style.eq.2) call restart_ma28_for_7                   !srv 11.01.00 29.05.02
+              if (style.eq.3) call restart_sdrv_for_7                   !srv 29.05.02
             endif
-          endif                                                          !srv 06.07.00
+          endif                                                         !srv 06.07.00
           i=i+1
         enddo
 
         if(i.gt.potit) then
           ierr=10
-!          write(*,*) 'Potential equation not converging'                    !srv 09.07.99
-!          facdrift=max(facdrift*facdrift_dec,facdrift_start)                !srv 09.07.99
+!          write(*,*) 'Potential equation not converging'               !srv 09.07.99
+!          facdrift=max(facdrift*facdrift_dec,facdrift_start)           !srv 09.07.99
           goto 99999
         endif
       endif           ! if pot_eq                                       !srv 13.07.05
@@ -710,7 +710,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
 *   ..compute fne, fni
 c      with diamagnetic drift part                                      !srv 13.05.99
       call b2xpfe (nx, ny, ns, ns_ext, qe, 
-     . rza, za_ext, fna_he, fa_ext, fch_p, fne)             !srv 13.05.99 21.01.00 11.10.02
+     . rza, za_ext, fna_he, fa_ext, fch_p, fne)                         !srv 13.05.99 21.01.00 11.10.02
       call b2xpfi (nx, ny, ns, fna_he, fni)                             !srv 13.05.99 21.01.00
 *   ..compute heat fluxes
       call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,
@@ -737,7 +737,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 *   ..re-compute fne, fni
 *      without diamagnetic drift part                                   !srv 31.05.99
       call b2xpfe (nx, ny, ns, ns_ext, qe, 
-     & rza, za_ext, fna_nodrift, fa_ext, fch_p, fne_)       !srv 31.05.99 11.10.02 30.06.03
+     & rza, za_ext, fna_nodrift, fa_ext, fch_p, fne_)                   !srv 31.05.99 11.10.02 30.06.03
 *   ..compute ue, electron parallel velocity                            !srv 05.03.11 {
       do iy=-1,ny
         do ix=-1,nx

@@ -11,7 +11,7 @@
      &  fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
      &  fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir, 
-     &  cdna, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
+     &  cdna, cvsa, cvla, chce, chve, chci, chvi, calf,                  !xpb
      &  rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rza, rz2, rpt, rpi,
      &  sna, smo, smq, she, shi, sch, sne,
@@ -68,14 +68,14 @@
      & fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
      & fnaPSch(-1:nx,-1:ny,0:1,0:ns-1), fna_mdf(-1:nx,-1:ny,0:1,0:ns-1), !srv 13.10.06 25.12.06
      & fhePSch(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),               !srv 13.10.06
-     & fhe_mdf(-1:nx,-1:ny,0:1), fhi_mdf(-1:nx,-1:ny,0:1),                !srv 23.10.09
+     & fhe_mdf(-1:nx,-1:ny,0:1), fhi_mdf(-1:nx,-1:ny,0:1),               !srv 23.10.09
      & fna_eir(-1:nx,-1:ny,0:1, 0:ns-1), fne_eir(-1:nx,-1:ny,0:1),
      & fhe_eir(-1:nx,-1:ny,0:1), fhi_eir(-1:nx,-1:ny,0:1)
 *     (transport coefficients)						 !xpb
       real (kind=R8) ::							 !xpb
      1  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),			 !xpb
      2  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),			 !xpb
-     3  calf(-1:nx,-1:ny,0:1), cdna(-1:nx,-1:ny,0:1,0:ns-1),         !xpb
+     3  calf(-1:nx,-1:ny,0:1), cdna(-1:nx,-1:ny,0:1,0:ns-1),             !xpb
      4  cvsa(-1:nx,-1:ny,0:1,0:ns-1), cvla(-1:nx,-1:ny,0:1,0:ns-1),
      5  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *     (log-log rate coefficients)
@@ -116,14 +116,14 @@
       integer guard_flows, numerics_namelist
       integer use_astra
       integer, save :: elm_count
-      integer, save :: style = 2                                 !srv 28.06.08
-      integer, save :: iout = 0                                  !srv 30.06.08
-      integer, save :: use_eirene =0, save_f30 = 0, save_f31 = 0 !srv 14.07.10
-      integer, save :: anomalous_core_only = 0                   !srv 19.04.07
+      integer, save :: style = 2                                        !srv 28.06.08
+      integer, save :: iout = 0                                         !srv 30.06.08
+      integer, save :: use_eirene =0, save_f30 = 0, save_f31 = 0        !srv 14.07.10
+      integer, save :: anomalous_core_only = 0                          !srv 19.04.07
       integer, save :: no_fluid_neutral_sources = 0
-      character chns*3, chk*1                                    !srv 30.06.08
+      character chns*3, chk*1                                           !srv 30.06.08
       real (kind=R8) ::
-     *  snatot(0:ns-1),                                         !srv 18.05.09
+     *  snatot(0:ns-1),                                                 !srv 18.05.09
      1  rsa(-1:nx,-1:ny,0:ns-1),
      2  rra(-1:nx,-1:ny,0:ns-1),
      3  rcx(-1:nx,-1:ny,0:ns-1),
@@ -388,9 +388,10 @@ cxpb turn off poloidal flows in core boundary
         call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
      &                       fchanml)                                   !srv 20.09.06  }
 	if(anomalous_core_only.ne.0) then                               !srv 19.04.07  {
-	  do iy = 0, ny                                                !lk 19.09.07
+	  do iy = 0, ny                                                 !lk 19.09.07
             do ix = -1, nx
-     	      if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then    !lk 19.09.07
+              if(mod(region(bottomix(ix,iy),
+     .                      bottomiy(ix,iy),0),4).ne.1) then            !lk 19.09.07
                 fchanml(ix,iy,1) = 0.0e0_R8
               endif 
 	    enddo

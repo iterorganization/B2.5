@@ -73,7 +73,7 @@
       integer, save :: style = 0, guard_flows = 2                        !srv 18.06.08
       integer, save :: anomalous_core_only = 0                           !srv 19.04.07
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
-      integer, save :: use_b2srst = 1                                    !srv 13.07.12                                 
+      integer, save :: use_b2srst = 1                                    !srv 13.07.12
       real (kind=R8) ::
      *  rxf, BoRiS
       real (kind=R8) ::
@@ -296,7 +296,7 @@ ctmp.dpc
      2       cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,           !srv 13.10.06
      3       chvi, csig, csigin, calf, cthe, cthi, 
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
-     5       vsal, fllim0fhi, fllimvisc)
+     5       vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
             newneo=.true.
             if(style.ne.0) then                                          !srv 18.06.08 {
 !             INQUIRE (FILE = 'b2fstati_add', EXIST = b2fstati_addexists) !srv 15.07.08
@@ -313,21 +313,22 @@ ctmp.dpc
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
                call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
      &                        fchanml)                                     !srv 20.09.06  }
-               if(anomalous_core_only.ne.0) then                          !srv 19.04.07  {
+               if(anomalous_core_only.ne.0) then                           !srv 19.04.07  {
                  do iy = 0, ny                                             !lk 19.09.07
                    do ix = -1, nx
-                     if(mod(region(ix,bottomiy(ix,iy),0),4).ne.1) then     !lk 19.09.07
+                     if(mod(region(bottomix(ix,iy),
+     &                             bottomiy(ix,iy),0),4).ne.1) then        !lk 19.09.07
                        fchanml(ix,iy,1) = 0.0e0_R8
                      endif 
                    enddo
                  enddo
-               endif                                                      !srv 19.04.07  }
+               endif                                                       !srv 19.04.07  }
               else
                fchvispar = 0.0_R8
                fchinert  = 0.0_R8
                fchanml   = 0.0_R8
               endif
-              do is=0,ns-1                                               !srv 01.10.99 25.02.00
+              do is=0,ns-1                                                 !srv 01.10.99 25.02.00
 *   ..         compute partial pressure
                call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), 
      &                      te, ti, pb)                                  !srv 01.10.99

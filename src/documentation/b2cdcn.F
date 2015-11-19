@@ -553,7 +553,7 @@
 *     11 : Rozhansky viscosity condition for the parallel momentum,
 *     MOMPAR(,,1) is not used
 *     12 : Condition from b2stbc_spb for the parallel momentum
-*     13 : Condition from b2stbc_spb for the parallel momentum
+*     13 : sheath boundary condition from b2stbc_spb for the parallel momentum
 *     14 : Condition from b2stbc_spb for the parallel momentum
 *     15 : Prescribe the value of the parallel velocity as a function of
 *     poloidal coordinate

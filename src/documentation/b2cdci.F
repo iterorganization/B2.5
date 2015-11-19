@@ -380,6 +380,7 @@
 *    'b2stel_rxm3'              '0.0'                  Numerics
 *    'b2stel_rxm4'              '0.0'                  Numerics
 *    'b2stel_styl0'             '0'                    Numerics
+*    'b2tanml_anomalous'	'1.0'                  Physics
 *    'b2tfcc_xfac'              '1.0'                  Numerics
 *    'b2tfhe_alfTeEh'           '1.0'                  Physics
 *    'b2tfhe_anomalous'		'1.0'                  Physics
@@ -951,8 +952,13 @@
 *    The value '0.0' corresponds to the old SOLPS5.0 treatment.
 *
 *    'b2tfhe_anomalous'		'1.0'                  Physics
+*    'b2tanml_anomalous'        '1.0'                  Physics
 *    'b2tfnb_anomalous_core_only' '0'                  Physics
 *    real parameter which determines anomalous current.
+*    Both b2tfhe_anomalous and b2tanml_anomalous point to the same 
+*    switch (backward compatibility with SOLPS5.2): b2tfhe_anomalous
+*    is checked first and only if it is not found is b2tanml_anomalous
+*    looked for.
 *    If b2tfhe_anomalous is 0 then anomalous current is
 *    switched off otherwise anomalous current is switched on,
 *    and the numerical value of b2tfhe_anomalous acts as a multiplier
@@ -1534,7 +1540,9 @@
 *    If '0', use sig0=dfsig*qe*ne(x,y)
 *    
 *    'b2trno_csig_an_style'     '1'                    Physics
-*    If '1', new computation for anomalous electrical conductivity.
+*    If '1', the anomalous contributions in the parallel direction
+*    to the electrical conductivity csig and the thermo-electric 
+*    coefficient calf are zeroed out.
 *
 *    'b2trno_pol_anom_scale'    '1.0'                  Physics
 *    If pol_anom_scale.ne.1, the poloidal anomalous transport coefficients
@@ -2016,6 +2024,10 @@
 *    component of the current is given by the neoclassical value.
 *    b2stbc_neoclassical is superseded if facdrift.ne.0.
 *    This cannot be used in conjunction with b2stbc_integral_current below.
+*
+*    'b2stbc_cbc'               '1.0'                  Run
+*    Multiplier to the ExB velocity for sheath boundary conditions in
+*    b2stbc_spb and BCMOM=13 case of b2stbc_phys.
 *
 *    'b2stbc_integral_current'  '0.0'                  Numerics
 *    If integral_current.gt.0, corrects current sources so that there be no
