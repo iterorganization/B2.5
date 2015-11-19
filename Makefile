@@ -64,11 +64,12 @@ endif
 
 ifdef USE_IMPGYRO
 INCLUDE += ${MPI_CPP}
-endif
+else
 ifdef USE_MPI
 INCLUDE += ${MPI_CPP}
 else
 INCLUDE += -I${SRCDIR}/mpi_dummy
+endif
 endif
 
 ifdef MDSPLUS_DIR

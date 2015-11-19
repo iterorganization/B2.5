@@ -23,6 +23,7 @@ else
 FC         = ifort
 endif
 
+
 ifdef SOLPS_DEBUG
 ifdef USE_MPI
 FCOPTS     = -g -C -traceback ${MPI_CPP}
@@ -35,6 +36,15 @@ FCOPTS     = -O2 -vec_report0 ${MPI_CPP}
 else
 FCOPTS     = -O2 -vec_report0
 endif
+endif
+
+ifdef USE_IMPGYRO
+FC         = mpif90
+MPI_CPP   ?= `pkg-config mpich --cflags`
+LD_MPI    ?= `pkg-config mpich --libs`
+FCOPTS     = -O2 -vec_report0 ${MPI_CPP}
+else
+FC         = ifort
 endif
 
 DBLFC      = ${FC}
@@ -60,6 +70,11 @@ endif
 
 LD         = ${FC}
 ifdef USE_MPI
+LDOPTS     = -i_dynamic ${LD_MPI}
+else
+LDOPTS     = -i_dynamic
+endif
+ifdef USE_IMPGYRO
 LDOPTS     = -i_dynamic ${LD_MPI}
 else
 LDOPTS     = -i_dynamic
