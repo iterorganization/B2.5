@@ -54,7 +54,9 @@
 #ifdef JET
       use b2mod_ppout
 #endif
+#ifdef USE_IMPGYRO
       use b2mod_impgyro !yamoto
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
 #ifdef JET
@@ -1095,6 +1097,10 @@ csw 09oct2012
       n2 = (nx+2)*(ny+2)
 
 * ..initialisation
+#ifdef USE_IMPGYRO
+*   ..call IMPGYRO
+      call impgyro_init (nx, ny, ns, ismain) !yamoto
+#endif
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
         write(*,*) 'Calling FIND_PARAM'
@@ -1474,8 +1480,7 @@ c   --> better way doing this is necessary)
 *   ..write summary of initial state
       call b2wfpi (nout(0), idout0, nx, ny, ns, ne, na, ua,
      &  te, ti, po, fna, fhe, fhi, fch)
-*   ..call IMPGYRO
-      call impgyro_init (nx, ny, ns, ismain) !yamoto
+
 * ..main loop
 *   ..initialise counters
       itim = 0
@@ -1821,9 +1826,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      1 write(*,*) 'stopping because ierr <> 0: ',ierr
       if(quit_residual)                                                  !jwk
      1 write(*,*) 'stopping because min_residual criteria satisfied'     !jwk
-
+#ifdef USE_IMPGYRO
 * finalise impgyro !yamoto
       call impgyro_last !yamoto
+#endif
 * finalise feedback in b2stbc
       call b2stbc_fb_final
 * finalise transport_models

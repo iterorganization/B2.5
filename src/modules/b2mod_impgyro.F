@@ -11,6 +11,12 @@
       integer::mpi_err,mpi_stat,mpi_dum
       integer::mpi_rank,mpi_size,mpi_local
 #endif
+#ifdef USE_IMPGYRO
+      include 'mpif.h'
+
+      integer::mpi_err,mpi_stat,mpi_dum
+      integer::mpi_rank,mpi_size,mpi_local
+#endif
 
       logical :: last
       real(kind=R8) , allocatable ::
@@ -54,6 +60,7 @@
       last = .false.
 
 #ifdef USE_MPI
+      write (*,*) 'b2ig: Calling MPI COMM FLAG=MPI'
       call mpi_comm_size (mpi_comm_world, mpi_size, mpi_err)
       call mpi_comm_rank (mpi_comm_world, mpi_rank, mpi_err)
       call mpi_comm_split (mpi_comm_world, mpi_undefined,
@@ -69,6 +76,29 @@
       end if
 
       write (*,*) 'b2ig: mpi_size =', mpi_size
+      write (*,*) 'b2ig: ikmn, ikmx obtained from IMPGYRO', ikmn, ikmx
+#endif
+#ifdef USE_IMPGYRO
+      write (*,*) 'b2ig: Calling MPI COMM FLAG=IG'
+      write (*,*) 'b2ig: obtaining size'
+      call mpi_comm_size (mpi_comm_world, mpi_size, mpi_err)
+      write (*,*) 'b2ig: mpi_size =', mpi_size
+      call mpi_comm_rank (mpi_comm_world, mpi_rank, mpi_err)
+      write (*,*) 'b2ig: mpi_rank =', mpi_rank
+      write (*,*) 'b2ig: spliting'
+      call mpi_comm_split (mpi_comm_world, mpi_undefined,
+     &  1, mpi_local, mpi_err)
+      write (*,*) 'b2ig: broadcastiong'
+      call mpi_bcast (ismain, 1, mpi_integer4, 0, mpi_comm_world,
+     &  mpi_err)
+
+      if(mpi_rank.eq.0) then
+      call mpi_recv (ikmn, 1, mpi_integer4, 1, 0,
+     &  mpi_comm_world, mpi_stat, mpi_err)
+      call mpi_recv (ikmx, 1, mpi_integer4, 1, 0,
+     &  mpi_comm_world, mpi_stat, mpi_err)
+      end if
+
       write (*,*) 'b2ig: ikmn, ikmx obtained from IMPGYRO', ikmn, ikmx
 #else
       ikmn = 0
@@ -319,9 +349,55 @@ cxpb
      &  mpi_comm_world, mpi_err)
 #endif
 
+#ifdef USE_IMPGYRO
+      call mpi_bcast (last, 1, mpi_logical , 0,
+     &  mpi_comm_world, mpi_err)
+      write(*,*) 'last broadcasted'
+      call mpi_bcast (na, size(na), mpi_real8, 0,
+     &  mpi_comm_world, mpi_err)
+      write(*,*) 'na broadcasted'
+      call mpi_bcast (ne, size(ne), mpi_real8, 0,
+     &  mpi_comm_world, mpi_err)
+      write(*,*) 'ne broadcasted'
+      call mpi_bcast (ua, size(ua), mpi_real8, 0,
+     &  mpi_comm_world, mpi_err)
+      write(*,*) 'ua broadcasted'
+      call mpi_bcast (te, size (te), mpi_real8, 0,
+     &  mpi_comm_world, mpi_err)
+      write(*,*) 'te broadcasted'
+      call mpi_bcast (ti, size (ti), mpi_real8, 0,
+     &  mpi_comm_world, mpi_err)
+      write(*,*) 'ti broadcasted'
+      call mpi_bcast (po, size (po), mpi_real8, 0,
+     &  mpi_comm_world, mpi_err)
+      write(*,*) 'po broadcasted'
+      call mpi_bcast (fna, size (fna), mpi_real8, 0,
+     &  mpi_comm_world, mpi_err)
+      write(*,*) 'fna broadcasted'
+#endif
+
       write (*,*) 'b2ig: running impgyro ...'
 
 #ifdef USE_MPI
+      if (mpi_rank.eq.0)then
+      call mpi_recv (ep_ir, size(ep_ir), mpi_real8, 1, 0,
+     &  mpi_comm_world, mpi_stat, mpi_err)
+      call mpi_recv (im_cc, size(im_cc), mpi_real8, 1, 0,
+     &  mpi_comm_world, mpi_stat, mpi_err)
+      call mpi_recv (ie_cc, size(ie_cc), mpi_real8, 1, 0,
+     &  mpi_comm_world, mpi_stat, mpi_err)
+      call mpi_recv (ee_rd, size(ee_rd), mpi_real8, 1, 0,
+     &  mpi_comm_world, mpi_stat, mpi_err)
+      call mpi_recv (b2znw, size(b2znw), mpi_real8, 1, 0,
+     &  mpi_comm_world, mpi_stat, mpi_err)
+      call mpi_recv (b2zfw, size(b2zfw), mpi_real8, 1, 0,
+     &  mpi_comm_world, mpi_stat, mpi_err)
+      call mpi_recv (b2ztw, size(b2ztw), mpi_real8, 1, 0,
+     &  mpi_comm_world, mpi_stat, mpi_err)
+      end if
+#endif
+
+#ifdef USE_IMPGYRO
       if (mpi_rank.eq.0)then
       call mpi_recv (ep_ir, size(ep_ir), mpi_real8, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
@@ -349,8 +425,6 @@ cxpb
       write (*,*) 'b2ig: IMPGYRO run failed!' 
       write (*,*) 'b2ig: Every external specie information set to zero.'
 #endif
-
-
 
       sna_ext = 0
 
@@ -399,6 +473,10 @@ cxpb
       last = .true.
 
 #ifdef USE_MPI
+      call mpi_bcast ( last , 1 , mpi_logical , 0 ,
+     &     mpi_comm_world , mpi_err )
+#endif
+#ifdef USE_IMPGYRO
       call mpi_bcast ( last , 1 , mpi_logical , 0 ,
      &     mpi_comm_world , mpi_err )
 #endif

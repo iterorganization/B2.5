@@ -25,6 +25,10 @@
 csw 28feb2011 mpi
 #ifdef USE_MPI
       include 'mpif.h'
+#else
+#ifdef USE_IMPGYRO
+      include 'mpif.h'
+#endif
 #endif
 csw
 
@@ -140,6 +144,10 @@ csw
       real (kind=R8) :: dumarr(100)
       logical ltrigger
 #endif
+#else
+#ifdef USE_IMPGYRO
+      integer rank_mpi,size_mpi,ierr_mpi
+#endif
 #endif
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin
@@ -151,6 +159,7 @@ csw
 #else
       data nout/60,61,62,63,64,65,66,67,68/
 #endif
+
 *-----------------------------------------------------------------------
 *.computation
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -182,7 +191,16 @@ csw
         call mpi_finalize(ierr_mpi)
         stop 'b2mn_mpi_child'
       endif
+#else
+#ifdef USE_IMPGYRO
+      write(*,*) 'b2ig: running B25EIRENE'
+      call mpi_init(ierr_mpi)
+      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
+      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
+      write(*,*) 'b2ig: b2mn size_mpi =', size_mpi
 #endif
+#endif
+
       call prgini ('b2mn')
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
@@ -291,6 +309,15 @@ csw 28feb2011 mpi
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
       call mpi_finalize(ierr_mpi)
 csw
+#else
+#ifdef USE_IMPGYRO
+      ltrigger=.false.
+      call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,
+     .                   MPI_COMM_WORLD,ierr_mpi)
+      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+      call mpi_finalize(ierr_mpi)
+csw
+#endif
 #endif
       stop 'b2mn'
 
