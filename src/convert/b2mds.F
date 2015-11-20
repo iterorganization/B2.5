@@ -63,18 +63,18 @@ c
      3   particle_balance(-1:nxd,-1:nyd,0:nsd_local-1), pb0,
      4   bas_vis_piece(-1:nxd,-1:nyd,0:nsd_local-1),
      5   cr_x(0:nxd,-1:nyd), cz_x(0:nxd,-1:nyd),
-     6   cr_y(-1:nxd,0:nyd), cz_y(-1:nxd,0:nyd), 
+     6   cr_y(-1:nxd,0:nyd), cz_y(-1:nxd,0:nyd),
      7   za(0:nsd_local-1), pot(0:nsd_local-1), poti(0:nsd_local-1)
       real (kind=R8) ::
-     3   div_fna(-1:nxd,-1:nyd,0:nsd_local-1), 
+     3   div_fna(-1:nxd,-1:nyd,0:nsd_local-1),
      3   div_fmo(-1:nxd,-1:nyd,0:nsd_local-1),
-     3   div_fhm(-1:nxd,-1:nyd,0:nsd_local-1), 
+     3   div_fhm(-1:nxd,-1:nyd,0:nsd_local-1),
      3   div_fhp(-1:nxd,-1:nyd,0:nsd_local-1),
      3   div_fhe(-1:nxd,-1:nyd), div_fhi(-1:nxd,-1:nyd),
      3   div_fhet(-1:nxd,-1:nyd), div_fhit(-1:nxd,-1:nyd),
      4   div_fch(-1:nxd,-1:nyd), div_fhj(-1:nxd,-1:nyd)
 
-	integer, save :: background_new=0                              !srv 14.07.10
+      integer, save :: background_new=0                              !srv 14.07.10
       integer ispecies(0:nsd_local-1)
 
       integer is,iss,isp,nfla
@@ -101,7 +101,7 @@ c
       integer nsw, ismain, refl_model, sput_phys_model, use_eirene,
      . sput_phys_col, boundary_namelist, neutrals_namelist
       data ismain/1/, refl_model/1/, sput_phys_col/3/, use_eirene/0/,
-     3     sput_phys_model/1/, boundary_namelist/0/, 
+     3     sput_phys_model/1/, boundary_namelist/0/,
      4     neutrals_namelist/0/
       save ismain, refl_model, sput_phys_model,
      2     sput_phys_col, boundary_namelist, neutrals_namelist,
@@ -126,7 +126,7 @@ c
       if (ex) then
         open(unit=45,file='input.dat')
         read(45,'(A72)',END=6999) ZEILE
-        rewind(45)         
+        rewind(45)
         CALL EIRENE_FIND_PARAM(45)
         close(45)
         CALL EIRENE_SET_PARMMOD(1)
@@ -236,7 +236,7 @@ c
       textdrift(1)='Radial'
 
       call ipgeti ('eirene_background_new', background_new)        !srv 14.07.10
-cxpb  This call is moved up from 'f31' so that we use the original cell-faced 
+cxpb  This call is moved up from 'f31' so that we use the original cell-faced
 cxpb  quantities before their mapping to cell centers
       call b2xpni (nx, ny, ns, na, ni)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
@@ -455,7 +455,7 @@ c charge exchange for H+/D+/T+
               endif
             enddo
           else
-            energy_balance2(ix,iy)=0.0_R8  
+            energy_balance2(ix,iy)=0.0_R8
           endif
         enddo
       enddo
@@ -481,7 +481,7 @@ c particle balance
               endif
               if(is.lt.ns-1) then
                 pb0=pb0+rrana(ix,iy,is+1)
-                if(.not.is_neutral(is+1)) then 
+                if(.not.is_neutral(is+1)) then
                   pb0=pb0+rcxna(ix,iy,is+1)
                 endif
               endif
@@ -528,7 +528,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call ipgeti ('b2stbr_refl_model', refl_model)
       call ipgeti ('b2stbr_plate_model', plate_model)
       if (plate_model.eq.0) then
-        write(*,*) 
+        write(*,*)
      .   'Using O-D time-independent plate temperature model'
       else if (plate_model.eq.1) then
         write(*,*) 'Using 1-D time-dependent plate temperature model'
@@ -578,7 +578,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call alloc_b2mod_wall(ns,natm,nmol,nion)
       call init_wall(nx,ny)
       call read_b2mod_wall_namelist(99,ns,'    ',ex)
-      call xertst (ndepth_nml.gt.1.or.plate_model.eq.0, 
+      call xertst (ndepth_nml.gt.1.or.plate_model.eq.0,
      .  'Inconsistent values of ndepth_nml and plate_model')
       call get_wall_data(nx,ny,ns,BoRiS,ex)
 
@@ -765,7 +765,7 @@ c 5: changed hcib and hci0 to include the radial neutral convective flux limits
 c 6: added sxperp and qz
 c 7: added new fields to identify b2f* file versions and svn version
 c 8: changed from hy to hy1 in dsrad calculation
-c 9: changed definition of za, pot and poti 
+c 9: changed definition of za, pot and poti
 c    added zamin, zamax, rza, rz2, rpt and rpi
 c 10: added uadia, fch{xy}_{35}2, fch_p and kinrgy for recovery purposes
 c 11: added fllimi & fllime
@@ -1090,9 +1090,9 @@ c
       do iy=-1,ny
         do ix=0,nx
           flux_x(ix,iy,0)=gs(ix,iy,0)*
-     1	   (vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),1)+
-     2	   vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,1))/
-     3	   (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
+     1     (vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),1)+
+     2     vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,1))/
+     3     (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
         enddo
       enddo
       call mds_put_double_rz('\TOP.SNAPSHOT:SXPERP','m^2',
@@ -1274,7 +1274,7 @@ c
       rtmp=cz_y(jxa,jsep+1)
       call mds_put_double('\top.ident.ompsep:cz',rtmp)
       dbompsep_cz=rtmp
-      
+
       fhesep=0.0_R8
       fhisep=0.0_R8
       fnesep=0.0_R8

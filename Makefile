@@ -12,7 +12,7 @@ ifdef USE_EIRENE
 endif
 ifdef SOLPS_MPI
   ifndef USE_MPI
-	  USE_MPI = -DUSE_MPI
+    USE_MPI = -DUSE_MPI
   endif
 endif
 

@@ -83,7 +83,6 @@
       integer ninp(0:1), nout(0:1)
 *   ..procedures
       external prgini, prgend, xerset, cfopen
-      external b2agdr_mod
 *   ..initialise input/output units
       data ninp/50,51/
       data nout/60,61/

@@ -63,11 +63,11 @@
 	integer, save :: icase = 0                                      !srv 20.09.11
 	integer, save :: iout = 0,                                      !srv 16.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0, fke_Zhdanov = 1
-      integer, save :: style_guard_cells = 0                          !srv 19.04.13
-      character(23) hlp_frm                                           !srv 11.03.13
-	real (kind=R8), save :: fch_pTe = 0.0_R8                        !srv 30.12.09
+      integer, save :: style_guard_cells = 0                            !srv 19.04.13
+      character(23) hlp_frm                                             !srv 11.03.13
+	real (kind=R8), save :: fch_pTe = 1.0_R8                        !srv 30.12.09
       real (kind=R8) ::
-     *  ctaue, ce, t0, t1, z, tau(-1:nx,-1:ny), tnp                   !srv 11.09.09
+     *  ctaue, ce, t0, t1, z, tau(-1:nx,-1:ny), tnp                     !srv 11.09.09
 !xpb      parameter (lnlam=12.0_R8)
       parameter (ce = 3.16e0_R8)
       save ncall, model
@@ -141,7 +141,7 @@
 *   ..read input data
       if (ncall.eq.0) then
         call ipgeti ('b2tqce_model', model)
-        call ipgeti ('b2tqce_iout', iout)                            !srv 16.06.08                       
+        call ipgeti ('b2tqce_iout', iout)                                 !srv 16.06.08                       
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
         call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                           !srv 30.12.09

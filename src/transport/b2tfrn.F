@@ -65,7 +65,7 @@
      &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
       real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
       character chns*3                                                   !srv 16.09.02
-      real (kind=R8), save :: fch_pTe = 0.0_R8                           !srv 30.12.09
+      real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
       real (kind=R8), save :: xfrhie = 1.0_R8                            !srv 05.11.09 30.01.10
       real (kind=R8) ::
      *   dif, flo, cutlo, fle_eir, cone_eir, floe_eir, chce_eir,          !srv 14.07.10

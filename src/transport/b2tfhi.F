@@ -433,7 +433,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      .          max(cutlo, 
      .                 ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy))))
                w1 = w1 +
-     .          upwind(floi(ix,iy,1), 
+     .          upwind(floi0, 
      .                ti(bottomix(ix,iy),bottomiy(ix,iy)), ti(ix,iy))
      .           - t1 * (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
              enddo

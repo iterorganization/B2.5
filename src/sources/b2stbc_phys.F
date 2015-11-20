@@ -158,6 +158,7 @@
       real (kind=R8) , save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
      &                         phm2 = 1.0e0_R8,
      &                         corr_flux   = 0.0e0_R8                   !srv 25.07.05
+      real (kind=R8), save :: alfTeEh = 0.0_R8
       character chns*3, chk*1                                           !srv 11.07.05
       logical done, decay_length_ok
       real (kind=R8) ::
@@ -198,7 +199,7 @@
      & bc_type21_ref/1/, no_current/0/,
      & use_astra/0/, use_eirene/0/, drift_style/1/, ndes_sol/0.0_R8/
       real (kind=R8) ::
-     .  Tguess, fy, ehy, fylimt, prefactor,
+     .  Tguess, fy, ehy, fylimt, prefactor, w1,
      .  fyt, gam0, gam1, tlimit, cone0, coni0, flo, a,
      .  cum_flo_vadia, cum_flo_vaecrb, flo_vedia, flo_veecrb
       real (kind=R8) :: hybr, harm, pit, upwind
@@ -263,6 +264,7 @@
         call ipgeti ('b2tfnb_mdf', mdf_fnb)                          !srv 13.10.06
         call ipgeti ('b2tfhe_mdf', mdf_fhe)                          !srv 13.10.06
         call ipgeti ('b2tfhi_mdf', mdf_fhi)                          !srv 13.10.06
+        call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                      !srv 28.04.08
         call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
      &                       istyle_cur_contr_on_S_and_N)            !srv 01.02.09
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
@@ -4089,8 +4091,12 @@ cxpb code segment analog to b2tfhe
      &       chve(bc_list_x(ix,ib),bc_list_y(ix,ib),1)*
      .       (ne(bc_list_x(ix,ib),bc_list_y(ix,ib))+
      &       ne(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .          bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))/2.0_R8+
-     &         2.5_R8*flo_vedia+1.5_R8*flo_veecrb
+     .          bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))/2.0_R8
+              if(mdf_fhe.eq.0) then
+                flo = flo+2.5_R8*flo_vedia+1.5_R8*flo_veecrb
+              else
+                flo = flo+1.5_R8*flo_veecrb
+              endif
             endif
             if (no_hybr_e.eq.0) then
               cone0 =
@@ -4100,7 +4106,7 @@ cxpb code segment analog to b2tfhe
      &         Tguess)/2.0_R8-cone0*(Tguess-
      &         te(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .            bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))+
-     &         calf(bc_list_x(ix,ib),bc_list_y(ix,ib),1)*ehy*
+     &         alfTeEh*calf(bc_list_x(ix,ib),bc_list_y(ix,ib),1)*ehy*
      &         harm(te(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                 bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
      &         Tguess)
@@ -4124,7 +4130,7 @@ cxpb code segment analog to b2tfhe
      .                                    bc_list_y(ix,ib)),
      .                           bottomiy(bc_list_x(ix,ib),
      .                                    bc_list_y(ix,ib)))) +
-     &         calf(bc_list_x(ix,ib),bc_list_y(ix,ib),1)*
+     &         alfTeEh*calf(bc_list_x(ix,ib),bc_list_y(ix,ib),1)*
      .         harm(te(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      &                 bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
      &                            Tguess)*ehy
@@ -4251,8 +4257,12 @@ cxpb code segment analog to b2tfhe
      .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)*
      &        (ne(bc_list_x(ix,ib),bc_list_y(ix,ib))+
      &         ne(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .            topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))/2.0_R8+
-     &         2.5_R8*flo_vedia+1.5_R8*flo_veecrb
+     .            topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))/2.0_R8
+              if(mdf_fhe.eq.0) then
+                flo = flo+2.5_R8*flo_vedia+1.5_R8*flo_veecrb
+              else
+                flo = flo+1.5_R8*flo_veecrb
+              endif
             endif
             if (no_hybr_e.eq.0) then
               cone0 = hybr(flo,
@@ -4263,7 +4273,7 @@ cxpb code segment analog to b2tfhe
      &         Tguess)/2.0_R8-cone0*
      &         (te(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .             topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))-Tguess)+
-     &         calf(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     &         alfTeEh*calf(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)*ehy*
      &         harm(te(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                 topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),Tguess)
@@ -4285,7 +4295,7 @@ cxpb code segment analog to b2tfhe
      .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))
      .         - t2 * (te(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                    topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))-
-     .                 Tguess) +
+     .                 Tguess) + alfTeEh *
      &         calf(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)*
      &         harm(te(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
@@ -6026,13 +6036,41 @@ cxpb code segment analog to b2tfhi
      &         chvi(bc_list_x(ix,ib),bc_list_y(ix,ib),1)*
      &         (ni(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .             bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),0)+
-     &          ni(bc_list_x(ix,ib),bc_list_y(ix,ib),0))/2.0_R8+
-     1         2.5_R8*cum_flo_vadia+1.5_R8*cum_flo_vaecrb
+     &          ni(bc_list_x(ix,ib),bc_list_y(ix,ib),0))/2.0_R8
+              if (mdf_fhi.eq.0) then
+                flo = flo + 2.5_R8*cum_flo_vadia+1.5_R8*cum_flo_vaecrb
+              else
+                flo = flo + 1.5_R8*cum_flo_vaecrb
+              endif
             endif
+            w1 = 0.0_R8
+            if (BoRiS.eq.1.0_R8) then
+              do is = 0, ns-1
+                t2 = dim ( coni0, 
+     .           abs(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
+     .                  fna(bc_list_x(ix,ib),bc_list_y(ix,ib),1,is))*
+     .           max(0.0_R8,
+     .            min(ti(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                   bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))))/
+     .           max(cutlo,ti(bc_list_x(ix,ib),bc_list_y(ix,ib))+
+     .                ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                   bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))))
+                w1 = w1 +
+     .            upwind(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
+     .                   fna(bc_list_x(ix,ib),bc_list_y(ix,ib),1,is),
+     .             ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
+     .             ti(bc_list_x(ix,ib),bc_list_y(ix,ib))) - t2 *
+     .            (ti(bc_list_x(ix,ib),bc_list_y(ix,ib)) -
+     .             ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))     
+              end do
+            end if
             if (no_hybr_i.eq.0) then
               coni0 = hybr(flo,
      .         chci(bc_list_x(ix,ib),bc_list_y(ix,ib),1))
-              fy = flo*
+              fy = w1 + flo*
      .         (ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .             bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
      &         +Tguess)/2.0_R8-coni0*
@@ -6052,7 +6090,7 @@ cxpb code segment analog to b2tfhi
      .                                    bc_list_y(ix,ib)),
      .                           bottomiy(bc_list_x(ix,ib),
      .                                    bc_list_y(ix,ib)))) )
-              fy =
+              fy = w1 +
      .         upwind(flo,
      .                ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                   bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))),
@@ -6185,14 +6223,46 @@ cxpb code segment analog to b2tfhi
      .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1)*
      &         (ni(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .             topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),0)+
-     &          ni(bc_list_x(ix,ib),bc_list_y(ix,ib),0))/2.0_R8+
-     1         2.5_R8*cum_flo_vadia+1.5_R8*cum_flo_vaecrb
+     &          ni(bc_list_x(ix,ib),bc_list_y(ix,ib),0))/2.0_R8
+              if (mdf_fhi.eq.0) then
+                flo = flo + 2.5_R8*cum_flo_vadia+1.5_R8*cum_flo_vaecrb
+              else
+                flo = flo + 1.5_R8*cum_flo_vaecrb
+              endif
             endif
+            w1 = 0.0_R8
+            if (BoRiS.eq.1.0_R8) then
+              do is = 0, ns-1
+                t2 = dim ( coni0, 
+     .           abs(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
+     .            fna(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1,is))*
+     .           max(0.0_R8,
+     .            min(ti(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))))/
+     .           max(cutlo,ti(bc_list_x(ix,ib),bc_list_y(ix,ib))+
+     .                ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))))
+                w1 = w1 +
+     .            upwind(kinrgy(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
+     .                fna(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                    topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                    1,is),
+     .             ti(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .             ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))) - t2 *
+     .            (ti(bc_list_x(ix,ib),bc_list_y(ix,ib)) -
+     .             ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+     .                bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))))
+              end do
+            end if
             if (no_hybr_i.eq.0) then
               coni0 = hybr(flo,
      &         chci(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),1))
-              fy = flo*(ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
+              fy = w1 +
+     .          flo*(ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                     topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
      &                 +Tguess)/2.0_R8-coni0*
      1         (ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
@@ -6212,7 +6282,7 @@ cxpb code segment analog to b2tfhi
      .                                 bc_list_y(ix,ib)),
      .                           topiy(bc_list_x(ix,ib),
      .                                 bc_list_y(ix,ib)))) )
-              fy =
+              fy = w1 +
      .         upwind(flo, Tguess,
      .                ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))

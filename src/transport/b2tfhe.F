@@ -60,8 +60,8 @@
      *   no_current, conduction_only, no_hybr, model, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
       integer, save :: lim_flux = 0, mdf_fhe = 0                        !srv 04.02.03 13.10.06
-      real (kind=R8), save :: alfTeEh = 1.0_R8                          !srv 28.04.08 30.05.08
-      real (kind=R8), save :: fch_pTe = 0.0_R8                          !srv 30.12.09
+      real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
+      real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, alfe0, t0, t1, 
      &   tex, tex0, cutlo,
@@ -333,18 +333,18 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
               flo_vedia=prefactor*vedia(ix,iy,0)
               flo_veecrb=prefactor*veecrb(ix,iy,0)
             endif
-            floe0_mdf=floe0+1.5_R8*flo_veecrb                         !srv 18.08.08
+            floe0_mdf=floe0+1.5_R8*flo_veecrb                            !srv 18.08.08
             floe0=floe0+2.5_R8*flo_vedia+1.5_R8*flo_veecrb
             if (no_hybr.eq.0) then
               cone0 = hybr(floe0,chce(ix,iy,0))-abs(floe0/2.0_R8)
               cone0_mdf = hybr(floe0_mdf,chce(ix,iy,0))-
-     &                    abs(floe0_mdf/2.0_R8)                         !srv 18.08.08
+     &                    abs(floe0_mdf/2.0_R8)                          !srv 18.08.08
             else
               cone0 = chce(ix,iy,0)
             endif
             if (chce(ix,iy,0).eq.0.0_R8) then
                alfe0 = 0.0_R8
-               alfe0_mdf = 0.0_R8                                      !srv 18.08.08
+               alfe0_mdf = 0.0_R8                                        !srv 18.08.08
             else
               alfe0 = calf(ix,iy,0)*cone0/chce(ix,iy,0)
               alfe0_mdf = calf(ix,iy,0)*cone0_mdf/chce(ix,iy,0)

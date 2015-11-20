@@ -382,10 +382,10 @@
 *    'b2stel_styl0'             '0'                    Numerics
 *    'b2tanml_anomalous'	'1.0'                  Physics
 *    'b2tfcc_xfac'              '1.0'                  Numerics
-*    'b2tfhe_alfTeEh'           '1.0'                  Physics
+*    'b2tfhe_alfTeEh'           '0.0'                  Physics
 *    'b2tfhe_anomalous'		'1.0'                  Physics
 *    'b2tfhe_conduction_only'   '0'                    Physics
-*    'b2tfhe_fch_pTe'           '0.0'                  Physics 
+*    'b2tfhe_fch_pTe'           '1.0'                  Physics 
 *    'b2tfhe_hybr2'             '0'                    Numerics
 *    'b2tfhe_lim_flux'          '1'                    Physics      
 *    'b2tfhe_mdf'               '0'                    Numerics
@@ -1252,12 +1252,12 @@
 *    'b2stbr_bas_recycled_neutrals_contr' '1.0'        Physics       !srv 12.04.08
 *    introduced for nulling recycling energy when it is zero.
 *
-*    'b2tfhe_alfTeEh'           '1.0'                  Physics
+*    'b2tfhe_alfTeEh'           '0.0'                  Physics
 *    When set to '0.0', the old form of the electron heat flux calculation
 *    is used.
 *    It is recommended to use 1.0.
 *
-*    'b2tfhe_fch_pTe'           '0.0'                  Physics         
+*    'b2tfhe_fch_pTe'           '1.0'                  Physics         
 *    When set to '1.0', the new form of the electron heat flux calculation
 *    is used.
 *    It is recommended to use 1.0.
