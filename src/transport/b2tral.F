@@ -193,13 +193,13 @@
       call b2saxpy (n2*2, 1.0_R8, chvi0, 1, chvi, 1)
       call b2saxpy (n2*2, 1.0_R8, csig0, 1, csig, 1)
       call b2saxpy (n2*2, 1.0_R8, calf0, 1, calf, 1)
-*   ..multiply x-component cvsahz by 4/3 only for base ion        !srv 31.07.02 {
-!      if (addvis1.ne.0.0_R8.and.model.eq.3) then 
-!      if (addvis1.ne.0.0_R8) then 
+*   ..multiply x-component cvsahz by 4/3 for all ions             !srv 31.07.02 {
+!      if (addvis1.ne.0.0_R8.and.model.eq.3) then
+!      if (addvis1.ne.0.0_R8) then
       if (model.eq.3) then                                        !srv 20.10.09
         do is = 0, ns-1
           if (.not.is_neutral(is)) then
-            call b2sscal (n2, 4.0e0_R8/3.0e0_R8, cvsahz(-1,-1,0,is), 1) !for all ions
+            call b2sscal (n2, 4.0e0_R8/3.0e0_R8, cvsahz(-1,-1,0,is), 1)
           end if
         end do
       endif                                                       !srv 31.07.02 }

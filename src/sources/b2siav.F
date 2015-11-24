@@ -221,7 +221,7 @@
      &           nu1(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)*0.533e0_R8        !lk 20.11.07 }
               endif    
 	    enddo
-	  enddo														  
+	  enddo
 
 	  qip1 = 0.0e0_R8
           do iy=0,ny-1                                                 
@@ -263,8 +263,8 @@
 	    enddo
 	  enddo
 
-* finally calculate the r.h.s. contribution to the parallel balance corresponding to 
-* parallel viscosity connected with heat flow	 
+* finally calculate the r.h.s. contribution to the parallel balance
+* corresponding to parallel viscosity connected with heat flow
 	  do iy=0,ny-1
 	    do ix=0,nx-1                                                 
 	      if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then   
@@ -305,7 +305,7 @@
      &             bottomiy(ix,iy).ne.-2 .and.
      &             topiy(ix,iy).ne.ny+1 .and.
      &             region(ix,iy,0).ne.0) then
-! 4/3 pieces is in cvsb_cl
+! 4/3 piece is in cvsb_cl
                   smbvv(ix,iy,0)=(
      1               vol(ix,iy)*bb(ix,iy,0)*sqrt(bb(ix,iy,3))/hx(ix,iy)*
      1               (wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy)) -
@@ -321,7 +321,7 @@
 	  if (modvis.eq.1) then                                         !srv 19.01.05 {
 	    wrk2 = sqrt(bb(:,:,3))     ! wrk2 is used below twice
 	    wrk1=log(hz*wrk2)
-	    do iy = 0,ny-1                                               !srv 01.07.05 {
+	    do iy = 0,ny-1                                              !srv 01.07.05 {
 	      do ix = 0,nx
 	        if(leftix(ix,iy).eq.-2) then
 	          wrk0(ix,iy)=0.0e0_R8

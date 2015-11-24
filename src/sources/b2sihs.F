@@ -49,6 +49,7 @@
 *   ..local variables
       integer ncall, style, n2, ix, iy, is, isb
       integer, save :: icase = 0
+      integer, save :: istyle_Joule_heating = 1                       !srv 17.01.14
       real (kind=R8) ::
      *  rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2, phm3,
      &  phm4, phm5, phm6, phm7, work(-1:nx,-1:ny), 
@@ -130,6 +131,7 @@
        call ipgeti ('b2tlnl_ii', icase)
        call xertst (0.eq.icase .or. 1.eq.icase, 
      &               'faulty input b2tlnl_ii')
+       call ipgeti ('b2sihs_istyle_Joule_heating', istyle_Joule_heating)  !srv 17.01.14
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -312,20 +314,21 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &     bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &     region(ix,iy,0).ne.0) then
-         t0 = phm3*vol(ix,iy)*
-     &    (fch(ix,iy,0)*ehx(ix,iy)/
+         t0 = fch(ix,iy,0)*ehx(ix,iy)/
      &     (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
-     &     fch(rightix(ix,iy),rightiy(ix,iy),0)*
-     &     ehx(rightix(ix,iy),rightiy(ix,iy))/
-     &     (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))+
-     &     fch(ix,iy,1)*ehy(ix,iy)/
+     &      fch(rightix(ix,iy),rightiy(ix,iy),0)*
+     &      ehx(rightix(ix,iy),rightiy(ix,iy))/
+     &     (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
+         if (istyle_Joule_heating.eq.0) t0 = t0 +
+     &      fch(ix,iy,1)*ehy(ix,iy)/
      &     (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))+
-     &     fch(topix(ix,iy),topiy(ix,iy),1)*
-     &     ehy(topix(ix,iy),topiy(ix,iy))/
-     &     (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy))))
+     &      fch(topix(ix,iy),topiy(ix,iy),1)*
+     &      ehy(topix(ix,iy),topiy(ix,iy))/
+     &     (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
+         t0 = phm3*vol(ix,iy)*t0
          she0(ix,iy,0) = she0(ix,iy,0)+max(0.0_R8,t0)+rf3*abs(t0)
          she0(ix,iy,3) = she0(ix,iy,3)+
-     &    (min(0.0_R8,t0)-rf3*abs(t0))/(ne(ix,iy)*te(ix,iy))
+     &     (min(0.0_R8,t0)-rf3*abs(t0))/(ne(ix,iy)*te(ix,iy))
          b2joule(region(ix,iy,0))=b2joule(region(ix,iy,0))+t0
          b2sihs_joule(ix,iy)=t0
         endif

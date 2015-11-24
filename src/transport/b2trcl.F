@@ -179,8 +179,8 @@ csw 13mar2012
 * ..compute transport coefficients
 *   ..compute differential classical transport coefficients
       call b2tqca (nx, ny, ns, lnlam, bb, na, te, ti, ne, ne2, vsa, hci)  !srv 01.07.09 20.09.11
-      call b2tqce (nx, ny, lnlam, bb, te, ti, ne, ne2, hce, sig, alf)     !srv 01.07.09 20.09.11
-      call b2tqin (nx, ny, ns, nscx, iscx, bb, ti, na, sigin)             !xpb
+      call b2tqce (nx, ny, lnlam, bb, te, ti, ne, ne2, hce, sig, alf) !srv 01.07.09 20.09.11
+      call b2tqin (nx, ny, ns, nscx, iscx, bb, ti, na, sigin)         !xpb
       call sfill (n2*ns, cthev, cthe,1)
       call sfill (n2*ns, cthiv, cthi,1)
 *   ..incorporate geometry with hz                                    !srv 09.01.01
@@ -488,14 +488,14 @@ csw 13mar2012
 !        call my_out(70,nx,ny,csig(-1,-1,1),'b2trcl_luciani_csigy')
       endif
 
-      if(conductive_limit.ne.0) then                                 !srv 16.06.08 {
-*   .. apply the conductive limit of parallel electron heat flux    !srv 03.06.03 {
+      if(conductive_limit.ne.0) then                                      !srv 16.06.08 {
+*   .. apply the conductive limit of parallel electron heat flux          !srv 03.06.03 {
        if(cflim(0).ne.0.0e0_R8) then
         do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
-c            if(mod(region(ix,iy,0),4).ne.1) then                      !lk 06.05.07
+c            if(mod(region(ix,iy,0),4).ne.1) then                         !lk 06.05.07
            if(core_cond_limit.ne.0.or.mod(region(ix,iy,0),4).ne.1) then
             dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
             flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
@@ -515,7 +515,7 @@ c            if(mod(region(ix,iy,0),4).ne.1) then                      !lk 06.05
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
-c          if(mod(region(ix,iy,0),4).ne.1) then                      !lk 06.05.07
+c          if(mod(region(ix,iy,0),4).ne.1) then                           !lk 06.05.07
            if(core_cond_limit.ne.0.or.mod(region(ix,iy,0),4).ne.1) then
             dti = ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
             flomx = chvimx(ix,iy)*(ni(leftix(ix,iy),leftiy(ix,iy),0)
@@ -528,11 +528,11 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                      !lk 06.05.0
          enddo
         enddo
        endif
-      endif                                                          !srv 16.06.08 }
+      endif                                                               !srv 16.06.08 }
 *   ..apply flux limit to cvsa
       cflmv = cflim(2)
       do is = 0, ns-1
-       call b2tlmv (nx, ny, is, cflmv, pbs(-1,-1,0), qc, na(-1,-1,is),  !srv 12.04.08
+       call b2tlmv (nx, ny, is, cflmv, pbs(-1,-1,0), qc, na(-1,-1,is),    !srv 12.04.08
      &   ti, ua(-1,-1,is), cvsa(-1,-1,0,is), cvsahz(-1,-1,0,is),
      &   fllimvisc(-1,-1,is))
       enddo
@@ -540,7 +540,7 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                      !lk 06.05.0
       csig_cl = csig
       calf_cl = calf
       cvsa_cl=cvsa
-      cvsahz_cl=cvsahz                                               !srv 09.01.01 
+      cvsahz_cl=cvsahz                                                    !srv 09.01.01
 
       if(iout_b2npmo.ne.0) then
        do is = 0, ns-1

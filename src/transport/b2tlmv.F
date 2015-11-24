@@ -8,7 +8,7 @@
       real (kind=R8) ::
      *  cflmv, pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny), 
      &  nb(-1:nx,-1:ny), tb(-1:nx,-1:ny),
-     &  ub(-1:nx,-1:ny), cvsbx(-1:nx,-1:ny), cvsbxhz(-1:nx,-1:ny),    !srv 09.01.01
+     &  ub(-1:nx,-1:ny), cvsbx(-1:nx,-1:ny), cvsbxhz(-1:nx,-1:ny),   !srv 09.01.01
      &  fl(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
 *     B2TLMV applies a flux limit to the viscosity.
@@ -102,10 +102,10 @@ c       fl(ix,iy)=1.0d0
        enddo
       endif                                                          !srv 30.05.08
 
-      if(iout.ne.0) then                                    !srv 12.04.04 {
+      if(iout.ne.0) then                                             !srv 12.04.04 {
        write (charns,'(i3.3)') isb  
        call my_out(70,nx,ny,fl,'cflmv-1'//charns)
-      endif                                                 !srv 12.04.04 }
+      endif                                                          !srv 12.04.04 }
 
       ncall = ncall+1
       call subend ()

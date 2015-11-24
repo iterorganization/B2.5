@@ -188,10 +188,10 @@ cxpb            ctaui = ctaup*sqrt(2.0_R8)/lnlam/rz2(ix,iy,is)  ! lower precisio
           endif
          enddo
         enddo
-	  if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
-	   write (chns,'(i3.3)') is 
-           call my_out(70,nx,ny,tau,'b2tqca_taua'//chns)
-	  endif
+	if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+         write (chns,'(i3.3)') is
+         call my_out(70,nx,ny,tau,'b2tqca_taua'//chns)
+	endif
        endif
       enddo
 *   ..compute vsay, hciy

@@ -235,6 +235,7 @@
 *    'b2sifr_styl0'             '0'                    Numerics
 *    'b2sifr_styl1'             '0'                    Numerics
 *    'b2sigp_style'             '1'                    Numerics
+*    'b2sihs_istyle_Joule_heating'  '1'                Physics
 *    'b2sihs_phm0'              '1.0'                  Physics
 *    'b2sihs_phm1'              '1.0'                  Physics
 *    'b2sihs_phm2'              '1.0'                  Physics
@@ -939,6 +940,12 @@
 *
 *    'b2npmo_b2sifr_'           '1'                    Physics
 *    When set to '1', the new correct form of the friction force is used.
+*    The value '0' corresponds to the old SOLPS5.0 treatment.
+*
+*    'b2sihs_istyle_Joule_heating'  '1'                Physics
+*    When set to '1', there is no radial contribution in Joule 
+*    heating because there are no physical reasons to take it into 
+*    account.
 *    The value '0' corresponds to the old SOLPS5.0 treatment.
 *
 *    'b2sicf_phm0'              '1.0'                  Physics

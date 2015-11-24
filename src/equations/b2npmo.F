@@ -336,9 +336,9 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
         call b2saxpy (n2*4, 1.0_R8, smbgp, 1, smb, 1)
         call b2saxpy (n2*4, 1.0_R8, smbvh, 1, smb, 1)
-        call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)                     !srv 03.07.08
-        call b2saxpy (n2*4, 1.0_R8, smbcf, 1, smb, 1)                     !srv 09.07.01
-        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,                !srv 09.01.01
+        call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)                  !srv 03.07.08
+        call b2saxpy (n2*4, 1.0_R8, smbcf, 1, smb, 1)                  !srv 09.07.01
+        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,               !srv 09.01.01
      &   flub, cvsahz(-1,-1,0,is), wrk0, wrkf)
 *    ..accumulate residual
         call b2saxpy (n2, 1.0_R8, wrk0, 1, resmt, 1)
