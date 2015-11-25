@@ -653,11 +653,11 @@ c Drift terms
         do iy = -1, ny
          do ix = -1, nx
           fchdia(ix,iy,:) = fchdia(ix,iy,:)*facdrift(ix,iy)
-!          fchvispar(ix,iy,:) = fchvispar(ix,iy,:)*facdrift(ix,iy)           !srv 25.04.00 { 22.11.12 multyplied in b2tvspa.F
+!          fchvispar(ix,iy,:) = fchvispar(ix,iy,:)*facdrift(ix,iy)           !srv 25.04.00 { 22.11.12 multiplied in b2tvspa.F
           fchvisper(ix,iy,:) = fchvisper(ix,iy,:) !*facdrift(ix,iy)          !srv 22.11.99 07.02.03
           fchvisq(ix,iy,:)   = fchvisq(ix,iy,:)*facdrift(ix,iy)              !srv 11.07.99
 !          fchin(ix,iy,:)     = fchin(ix,iy,:) !*facdrift(ix,iy)             !srv 09.07.99 07.02.03
-!          fchinert(ix,iy,:)  = fchinert(ix,iy,:)*facdrift(ix,iy)            !srv 09.07.99 25.04.00 } 22.11.12 multyplied in b2tiner.F
+!          fchinert(ix,iy,:)  = fchinert(ix,iy,:)*facdrift(ix,iy)            !srv 09.07.99 25.04.00 } 22.11.12 multiplied in b2tiner.F
          enddo
         enddo
       endif !facdriftm!

@@ -45,11 +45,11 @@
      &  conc(-1:nx,-1:ny,0:1),
      *  vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
      2  fchdia(-1:nx,-1:ny,0:1), 
-     3  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),                !xpb srv 10.06.08
+     3  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),              !xpb srv 10.06.08
      4  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
      5  avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
      6  cvisper(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1),
-     7  fchvisq(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1)                   !srv 25.11.08
+     7  fchvisq(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1)                 !srv 25.11.08
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -71,9 +71,9 @@
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, t0, 
      &   tex, tex0, ehx_po, ehy_po,
      1   flo_vedia, prefactor, floe0_nd, cone0_nd, t0_nd, tex0_nd
-      real (kind=R8) ::                                                  !xpb
-     * fch_ion_neutral, fch_anomalous, vis_par,                          !xpb
-     * dvpar(-1:nx,-1:ny), vis_per,                                      !xpb
+      real (kind=R8) ::                                                 !xpb
+     * fch_ion_neutral, fch_anomalous, vis_par,                         !xpb
+     * dvpar(-1:nx,-1:ny), vis_per,                                     !xpb
      * va(-1:nx,-1:ny), dva(-1:nx,-1:ny), wpo(-1:nx,-1:ny),  
      * fnadspl(-1:nx,-1:ny,0:1,0:ns-1)                     
       character*1 charnc
@@ -401,10 +401,10 @@ cxpb  Island X-point cells
                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &            bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &            region(ix,iy,0).ne.0) then
-                dvpar(ix,iy)=dvpar(ix,iy)                        !srv 24.06.99
+                 dvpar(ix,iy)=dvpar(ix,iy)                       !srv 24.06.99
      &             +wbbl(ix,iy,3)**2/sqrt(wbbl(ix,iy,3))/wbbl(ix,iy,0)   !srv
      &             *cvsa(ix,iy,0,is)*                                    !xpb
-     &             ((ua(ix,iy,is)+bb(ix,iy,3)/bb(ix,iy,0)*             !srv 11.01.13
+     &             ((ua(ix,iy,is)+bb(ix,iy,3)/bb(ix,iy,0)*       !srv 11.01.13
      &              (wadia(ix,iy,0,is)+vaecrb(ix,iy,0,is)))
      &              *sqrt(bb(ix,iy,3))             
      &             -(ua(leftix(ix,iy),leftiy(ix,iy),is)       

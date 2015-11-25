@@ -216,7 +216,7 @@ csw 09jan2014 add extra allocates
           endif
          enddo
 
-         do iy = mintopcut+1, maxtopcut  ! for opened surfaces of DDN geometry  !srv 20.12.12 {
+         do iy = mintopcut+1, maxtopcut  ! for open surfaces of DDN geometry  !srv 20.12.12 {
           sfna(iy,is)     = 0.0_R8
           sfna_mdf(iy,is) = 0.0_R8
           do ix=-1,nxd 
@@ -234,7 +234,7 @@ csw 09jan2014 add extra allocates
           enddo
          enddo
 
-         do iy = maxtopcut+1, nyd        ! for opened surfaces
+         do iy = maxtopcut+1, nyd        ! for open surfaces
           sfna(iy,is)     = 0.0_R8
           sfna_mdf(iy,is) = 0.0_R8
           do ix=-1,nxd 
@@ -272,7 +272,7 @@ csw 09jan2014 add extra allocates
            enddo
           enddo
 
-          do iy = mintopcut+1, maxtopcut  ! for opened surfaces of DDN geometry  !srv 20.12.12 {
+          do iy = mintopcut+1, maxtopcut  ! for open surfaces of DDN geometry  !srv 20.12.12 {
            do ix=-1,nxd 
             if((topcut(1).lt.topcut(2) .and.                    ! DDN Bottom X-point is active 
      &         (region(ix,iy,0).eq.3 .or. region(ix,iy,0).eq.2 .or. 
@@ -301,7 +301,7 @@ csw 09jan2014 add extra allocates
            enddo
           enddo
 
-          do iy = maxtopcut+1, nyd        ! for opened surfaces
+          do iy = maxtopcut+1, nyd        ! for open surfaces
            do ix=-1,nxd 
             if(nncut.eq.1 .or. 
      &        (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.  
@@ -355,7 +355,7 @@ csw 09jan2014 add extra allocates
           enddo
         enddo
 
-        do iy = mintopcut+1, maxtopcut  ! for opened surfaces of DDN geometry  !srv 20.12.12 {
+        do iy = mintopcut+1, maxtopcut  ! for open surfaces of DDN geometry  !srv 20.12.12 {
           sfhe_mdf(iy) = 0.0_R8
           sfhi_mdf(iy) = 0.0_R8
           sfne(iy) = 0.0_R8
@@ -391,7 +391,7 @@ csw 09jan2014 add extra allocates
           enddo
         enddo
 
-        do iy = maxtopcut+1, nyd        ! for opened surfaces
+        do iy = maxtopcut+1, nyd        ! for open surfaces
           sfhe_mdf(iy) = 0.0_R8
           sfhi_mdf(iy) = 0.0_R8
           sfne(iy) = 0.0_R8
@@ -627,7 +627,7 @@ csw 09jan2014 add 'fun' function
            endif
           enddo
          enddo
-         do iy = mintopcut,nyd    ! opened surfaces
+         do iy = mintopcut,nyd    ! open surfaces
           svol(iy) = 0.0_R8
           do ix = -1, nxd
             svol(iy) = svol(iy) + vol(ix,iy)
@@ -641,14 +641,14 @@ csw 09jan2014 add 'fun' function
          do ix = -1, nxd
           if(mod(region(ix,iy,0),4).eq.1) then   ! closed surfaces
 !          src(iy) = src(iy) + vol(ix,iy)*source(ix,iy)
-           src(iy) = src(iy) + source(ix,iy)   ! source has been multyplied by vol
+           src(iy) = src(iy) + source(ix,iy)   ! source has been multiplied by vol
           endif
          enddo
         enddo
-        do iy = mintopcut,nyd-1   ! opened surfaces
+        do iy = mintopcut,nyd-1   ! open surfaces
          do ix = 0,nxd-1          !   -1, nxd
 !          src(iy) = src(iy) + vol(ix,iy)*source(ix,iy)
-           src(iy) = src(iy) + source(ix,iy)   ! source has been multyplied by vol
+           src(iy) = src(iy) + source(ix,iy)   ! source has been multiplied by vol
          enddo
         enddo
 !         write (*,"(a, i5)") '       src         svol      ncall=', ncall

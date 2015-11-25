@@ -388,15 +388,15 @@
      &     sna0(ix,-1,0,is) = sna0(ix,-1,0,is) - fnaPSch(ix,0,1,is)
 	   endif                                                      !sv 09.11.06 }
 	   if(is.eq.1) then                                              !sv 08.02.02
-          sna0(ix,-1,0,is) = sna0(ix,-1,0,is)                          !sv 08.02.02
-     &    +cbsna(6,is,ireg)*(                                          !sv 08.02.02
+          sna0(ix,-1,0,is) = sna0(ix,-1,0,is)                         !sv 08.02.02
+     &    +cbsna(6,is,ireg)*(                                         !sv 08.02.02
 !     &     cvla(ix,iy,1)+   ! remember if you need
      &     uadia(ix,iy,1,is)*                                         !sv 08.02.02
      &    (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/          !sv 01.03.00
      &     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))          !sv 01.03.00 07.05.08
      &                      )                                         !sv 08.02.02
      &    *(na(bottomix(ix,iy),bottomiy(ix,iy),is) + na(ix,iy,is))/2  !sv 23.04.01
-	   endif                                                         !sv 08.02.02
+	 endif                                                        !sv 08.02.02
          sna0(ix,-1,1,is) = sna0(ix,-1,1,is)+
      &    cbsna(1,is,ireg)*s0+
      &    cbsna(2,is,ireg)*csb*s0+
@@ -404,26 +404,26 @@
      &    cbsna(4,is,ireg)*cst*s0+
      &    cbsna(5,is,ireg)*cst*s1
 *    ..drifts to the wall                                             !sv 02.03.05 {
-	   if(idrifts_to_the_wall .ne. 0) then
-	    if(.not.is_neutral(is) .and. 
+	 if(idrifts_to_the_wall .ne. 0) then
+	   if(.not.is_neutral(is) .and. 
      &        cbsna(2,is,ireg).ne.0.0e0_R8) then
 	     if(mdf_fnb.eq.0) then
-            sna0(ix,-1,1,is) = sna0(ix,-1,1,is)+
-     *       min(0.0e0_R8,s0*(vadia(ix,0,1,is)+vaecrb(ix,0,1,is)))
+               sna0(ix,-1,1,is) = sna0(ix,-1,1,is)+
+     *          min(0.0e0_R8,s0*(vadia(ix,0,1,is)+vaecrb(ix,0,1,is)))
 	     else
-            sna0(ix,-1,1,is) = sna0(ix,-1,1,is)+
-     *       min(0.0e0_R8,s0*vaecrb(ix,0,1,is))
+               sna0(ix,-1,1,is) = sna0(ix,-1,1,is)+
+     *          min(0.0e0_R8,s0*vaecrb(ix,0,1,is))
 	     endif
-	    endif
-	   endif                                                          !sv 02.03.05 }
+	   endif
+	 endif                                                        !sv 02.03.05 }
 *     ..compute momentum source
          if (mod(region(ix,-1,0),4).eq.1) then ! only core reqion and drifts !sv 27.07.05
-          if (.not.is_neutral(is)) then                                      !sv 15.02.02 {
-	     select case (iform_corr_dia)                                   !sv 25.07.05
+           if (.not.is_neutral(is)) then                              !sv 15.02.02 {
+	     select case (iform_corr_dia)                             !sv 25.07.05
 	      case (0)
-             iy = -1                                                      !sv 15.02.02
-             smo0(ix,-1,0,is) = smo0(ix,-1,0,is)+                         !sv 09.01.01 01.07.05
-     &       s0hz*(am(is)*mp)*naaverage(is)                               !sv 15.02.02
+             iy = -1                                                  !sv 15.02.02
+             smo0(ix,-1,0,is) = smo0(ix,-1,0,is)+                     !sv 09.01.01 01.07.05
+     &       s0hz*(am(is)*mp)*naaverage(is)                           !sv 15.02.02
 !     &     *(2.0e0_R8*vadia(ix,iy,1,is))
      &        *(-2.0e0_R8*facdrift(ix,iy)*phm2*       ! *signmf   !sv 07.06.00 17.05.99 25.04.00 15.02.02 11.01.13
      &           tiaverage*bb(ix,iy,2)/(qe*rza(ix,iy,is)*hx(ix,iy))       !sv 15.02.02
