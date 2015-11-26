@@ -71,7 +71,7 @@
      6	vacuum_corr
 
       integer jsep, jxa, jxi, ib, ncall_old, ncall_gap, n_flux_zero
-      logical consistent_core, consistent_sol, consistent_pfr1, 
+      logical consistent_core, consistent_sol, consistent_pfr1,
      .        consistent_pfr2
       integer, save :: b2sral_style = 2
       integer, save :: boundary_namelist = 0
@@ -351,15 +351,15 @@
          if (bcchar(ib).eq.'N') then
            if(nesepm_sol.gt.0.0_R8 .or. nepedm_sol.gt.0.0_R8 .or.
      .        volrec_sol.gt.0.0_R8) then
-             consistent_sol = consistent_sol .or. 
+             consistent_sol = consistent_sol .or.
      .        bccon(ib,isfeedback).eq.11
            end if
            if(ndes_sol.gt.0.0_R8) then
-             consistent_sol = consistent_sol .or. 
+             consistent_sol = consistent_sol .or.
      .        bccon(ib,isfeedback).eq.12
            end if
          else if (bcchar(ib).eq.'S') then
-           if (mod(region(bc_list_x(1,ib),bc_list_y(1,ib),0),4).eq.1) 
+           if (mod(region(bc_list_x(1,ib),bc_list_y(1,ib),0),4).eq.1)
      >      then
              if (fnaycore.ne.-1.0e30_R8 .or. nesepm.gt.0.0_R8) then
                consistent_core = consistent_core .or.
@@ -397,7 +397,7 @@
      &              consistent_pfr1 .and. consistent_pfr2
        consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
      &  boundary_namelist.lt.1
-       call xertst (consistent, 
+       call xertst (consistent,
      .  'feedback scheme not consistent with B.C.''s!')
       endif
 *   ..set n2
@@ -1355,7 +1355,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
          is0 = eb2spcr(ispecies+1)
          is_start = eb2spcr(ispecies+1)+1
          is_end = eb2spcr(ispecies+1)+nfluids(ispecies+1)
-         consistent = consistent .and. 
+         consistent = consistent .and.
      &    ((na_feedback_target(ispecies) .eq. 0.0_R8 .or.
      &      na_feedback_choice(ispecies) .eq. 0 .or.
      &      na_feedback_option(ispecies) .eq. 0 .or.
@@ -1371,7 +1371,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
        end do
        consistent = consistent .or. lbndusr .or. b2sral_style.eq.1 .or.
      &  boundary_namelist.lt.1
-       call xertst (consistent, 
+       call xertst (consistent,
      .  'feedback scheme not consistent with B.C.''s!')
       endif
 *   ..set n2
@@ -1829,10 +1829,6 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
 ! phase 3:
 
                select case(na_feedback_actuator(ispecies))
-
-!! FIXME: Add a check here and in b2stbc_fb about consistency between those switches
-!! FIXME: and setting a feedback boundary condition in b2stbc_phys
-!! FIXME: If user is using b2stbc_spb of b2stbc_bas, then OK.
 
                case (0) ! no action
 

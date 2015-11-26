@@ -405,7 +405,7 @@
      &    cbsna(5,is,ireg)*cst*s1
 *    ..drifts to the wall                                             !sv 02.03.05 {
 	 if(idrifts_to_the_wall .ne. 0) then
-	   if(.not.is_neutral(is) .and. 
+	   if(.not.is_neutral(is) .and.
      &        cbsna(2,is,ireg).ne.0.0e0_R8) then
 	     if(mdf_fnb.eq.0) then
                sna0(ix,-1,1,is) = sna0(ix,-1,1,is)+

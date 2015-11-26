@@ -314,13 +314,12 @@
      &        smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
         call my_out(70,nx,ny,wrks,'b2npmo_smocf'//chns)
        endif                                                           !srv 12.07.02 }
-!! FIXME: Do we really want this all(solvemo) condition ?
-       if (solving.and.all(solvemo(is,0:nnreg(0)))) then                !srv 06.07.10
+       if (solving) then                                               !srv 06.07.10
          solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
 *    ..compute correction
-         call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,        !srv 04.07.08
-     &   vol, hx, hz, bb, rob, pb, ua(-1,-1,is),                        !srv 09.01.01
-     &   smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),      !srv 06.04.07
+         call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,      !srv 04.07.08
+     &   vol, hx, hz, bb, rob, pb, ua(-1,-1,is),                       !srv 09.01.01
+     &   smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
      &   pcca(-1,-1,0,is), aa5, wrk1, 'b2usmo_'//chns)
 csw 21feb2014 added this else branch
        else

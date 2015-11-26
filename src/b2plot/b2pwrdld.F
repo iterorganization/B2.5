@@ -33,6 +33,7 @@ c*** and the target list referring to the segments of this polygon.
 c
       nplg=nwldlis(1)
       nbndry=nplg
+      luwrk=0
       do i=1,nplg
         l=iabs(lwldlis(i,1))
         luwrk(l)=i

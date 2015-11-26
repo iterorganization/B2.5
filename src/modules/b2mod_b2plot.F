@@ -184,7 +184,7 @@ cank
       allocate(texttargsp(ntrack))
 #else
       call xertst(natmd .le.DEF_NATM,'increase size of textam array')
-      call xertst(nmold .le.DEF_NMOL,'increase size of textml array')
+      call xertst(nmold .le.DEF_NMOL,'increase size of textmn array')
       call xertst(niond .le.DEF_NION,'increase size of textin array')
       call xertst(nsd   .le.DEF_NPLS,'increase size of textpl array')
       call xertst(wklngd.le.wklng   ,'increase size of textwk array')

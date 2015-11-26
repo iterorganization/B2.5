@@ -85,7 +85,7 @@
       save ncall, fch_ion_neutral, fch_anomalous, vis_par, pot_eq,
      *   no_current, conduction_only, no_hybr, vis_per, model
 *   ..procedures
-      intrinsic max, abs, sqrt, log, mod                        	 !xpb
+      intrinsic max, abs, sqrt, log, mod                        	!xpb
       real (kind=R8) ::
      *   hybr, hy1
       external subini, subend, xertst, ipgetr, ipgeti
@@ -93,7 +93,7 @@
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
 *   ..initialisation
-      data ncall/0/, fch_ion_neutral/0.0_R8/, fch_anomalous/1.0_R8/,  	 !xpb
+      data ncall/0/, fch_ion_neutral/0.0_R8/, fch_anomalous/1.0_R8/,  	!xpb
      * vis_par/0.0_R8/, no_current/0/, conduction_only/0/, model/1/,
      1 vis_per/0.0_R8/, no_hybr/0/, pot_eq/1/
 
@@ -103,33 +103,33 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tfch')
-      if (ncall.eq.0) then                                      	 !xpb
-       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)          	 !xpb
-       call ipgetr ('b2tfhe_anomalous', fch_anomalous)          	 !xpb
+      if (ncall.eq.0) then                                      	!xpb
+       call ipgetr ('b2tfhe_neutral', fch_ion_neutral)          	!xpb
+       call ipgetr ('b2tfhe_anomalous', fch_anomalous)          	!xpb
        if (fch_anomalous.eq.1.0_R8)
      >  call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
-       call ipgetr ('b2tfhe_vis_par', vis_par)                  	 !xpb
-       call ipgetr ('b2tfhe_vis_per', vis_per)                  	 !xpb
-       call xertst (fch_ion_neutral.ne.0.0_R8 .or. vis_par.ne.0.0_R8 	 !xpb
+       call ipgetr ('b2tfhe_vis_par', vis_par)                  	!xpb
+       call ipgetr ('b2tfhe_vis_per', vis_per)                  	!xpb
+       call xertst (fch_ion_neutral.ne.0.0_R8 .or. vis_par.ne.0.0_R8 	!xpb
      &           .or. fch_anomalous.ne.0.0_R8 
      &           .or. maxval(facdrift).ne.0.0_R8
      &           .or. vis_per.ne.0.0_R8,
      & 'faulty argument fch_ion_neutral/fch_anomalous/facdrift/vis_p.r') !xpb
-       call xertst (0.0_R8.le.vis_par .and. 1.0_R8.ge.vis_par,           !xpb
-     &  'faulty argument vis_par')                                       !xpb
-       call xertst (0.0_R8.le.vis_per .and. 1.0_R8.ge.vis_per,           !xpb
-     &  'faulty argument vis_per')                                       !xpb
-       call xertst (0.0_R8.le.fch_ion_neutral .and.                      !xpb
-     &  1.0_R8.ge.fch_ion_neutral, 'faulty argument fch_ion_neutral')    !xpb
-       call ipgeti ('b2tfhe_no_current', no_current)                     !xpb
-       call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
+       call xertst (0.0_R8.le.vis_par .and. 1.0_R8.ge.vis_par,          !xpb
+     &  'faulty argument vis_par')                                      !xpb
+       call xertst (0.0_R8.le.vis_per .and. 1.0_R8.ge.vis_per,          !xpb
+     &  'faulty argument vis_per')                                      !xpb
+       call xertst (0.0_R8.le.fch_ion_neutral .and.                     !xpb
+     &  1.0_R8.ge.fch_ion_neutral, 'faulty argument fch_ion_neutral')   !xpb
+       call ipgeti ('b2tfhe_no_current', no_current)                    !xpb
+       call ipgeti ('b2news_poteq', pot_eq)                             !srv 27.02.13
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-       call ipgeti ('b2tfhe_conduction_only', conduction_only)           !xpb
-       call ipgeti ('b2tfhe_no_hybr', no_hybr)                           !xpb
+       call ipgeti ('b2tfhe_conduction_only', conduction_only)          !xpb
+       call ipgeti ('b2tfhe_no_hybr', no_hybr)                          !xpb
        call ipgeti ('b2tqce_model', model)
-       call ipgeti ('b2tfch_iout', iout)                                 !srv 18.06.08
-      endif                                                              !xpb
+       call ipgeti ('b2tfch_iout', iout)                                !srv 18.06.08
+      endif                                                             !xpb
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny

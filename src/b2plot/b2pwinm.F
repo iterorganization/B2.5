@@ -18,23 +18,26 @@ c======================================================================
 #include "COUPLE/KOPPLDIM.F"
 #endif
       integer nnns
-      parameter (nnns=17)
+      parameter (nnns=19)
       character*8 unm,unms(nnns),u
-      integer ll, lt, luswch
-      integer i
+      integer ll, lt, luswch, luskel
+      integer i, j
+      logical streql
+      external streql
       data unms /
      1        'starting','segmlist','plotzone','shdw_str','p1      ',
      2        'p2      ','rad_srcs','radpower','sources ','jedgi1  ',
      3        'jedgi2  ','jedgo1  ','jedgo2  ','elemlist','sol_edge',
-     4        'pfr_edge','trg_spcf'/
-      data ll / 0 /, luswch / 0 /, lt / 0 /
+     4        'pfr_edge','trg_spcf','misselem','skipelem'/
+      data ll / 0 /, luswch / 0 /, lt / 0 /, luskel / 0 /
 c======================================================================
 c
 c      print *,'b2pwinm >> ',unm
       call locase(unm,u,8)
       do i=1,nnns
-        if(u.eq.unms(i)) go to (10,20,30,40,50,60,70,80,90,100,
-     ,                          110,120,130,140,150,160,170),i
+        if(streql(u,unms(i))) go to (10,20,30,40,50,60,70,80,90,100,
+     ,                               110,120,130,140,150,160,170,180,
+     ,                               180),i
       end do
       ll=0
       call scipit
@@ -161,6 +164,14 @@ c*** Target specifications
       if(lt.lt.0 .or. lt.gt.2)
      >   write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
      ,                            '.  Must be positive and =< 2'
+      return
+c----------------------------------------------------------------------
+c*** Elements not for Eirene
+ 180  call rearri(luwrk(luskel+1),nlim-luskel,i)
+      do j = luskel+1, luskel+i
+        lskip(luwrk(j)) = .true.
+      end do
+      luskel=i+luskel
       return
 c======================================================================
       end subroutine b2pwinm

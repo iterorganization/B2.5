@@ -16,11 +16,13 @@ c
      ,	nadsrc, nwldrad, npumplis 
       integer, allocatable :: indwll(:), luwrk(:), lwldrad(:),
      ,  lwldlis(:,:), leirlis(:,:), lpumplis(:)
-      logical l2rdldw, l2rdldt, l2pwinp, lwlddir(nwldprtx)
+      logical l2rdldw, l2rdldt, l2pwinp, lwlddir(nwldprtx),
+     ,  lskip(DEF_NLIM)
       real (kind=R4) :: ppp1(3,DEF_NLIM), ppp2(3,DEF_NLIM)
       real (kind=R4) :: addsrc_xy(2,nadsrcm), add_rad
       real (kind=R8), allocatable :: segm_area(:), segm_len(:),
      ,	wldrfdst(:,:), wldrdld(:), co_data(:)
+      character*8 :: pltzlbl(nwldprtx)
 c======================================================================
 c*** nwldprtx : max. number of the "plot zones" + 1 for shadowing
 c*** nsgmx    : max. number of the wall segments + refined targets
@@ -28,10 +30,12 @@ c*** nadsrcm  : max. number of additional radiation sources
 c*** lppp     : actual number of the wall segments read from DG
 c*** nwldprt  : actual number of the "plot zones" + 1 for shadowing
 c*** lwldstrt : list of starting segments for the "plot zones"
+c*** pltzlbl  : list of labels for the "plot zones"
 c*** nwldlis  : list of lengths of the "plot zones"
 c*** lwlddir  : orientation of the "plot zones" (true = CCW)
 c*** lwldlis  : list of segments belonging to the "plot zones" (DG numbering)
 c*** leirlis  : list of segments belonging to the "plot zones" (Eirene numbering)
+c*** lskip    : list of DG segments not for Eirene
 c*** nwldrad  : number of segments where rad. load is to be calculated
 c*** lwldrad  : list of segments where rad. load is to be calculated
 c*** jedgi1   : inner edge of inner target => jedge(1)
@@ -67,6 +71,7 @@ c======================================================================
       allocate(lpumplis(nlim))
       allocate(segm_area(nsgmx), segm_len(nsgmx),
      ,	wldrfdst(nsgmx,nwldprtx), wldrdld(nsgmx), co_data(nsgmx))
+      lskip = .false.
 
       return
       end subroutine alloc_b2plot_wall_loading

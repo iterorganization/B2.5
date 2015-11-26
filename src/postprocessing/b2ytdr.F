@@ -7143,6 +7143,7 @@ cxpb  Convert fort.44 file if needed
         inquire(file='fort.44',exist=todo)
         if (todo.and..not.streql(solps_version,'iter')) then
           call b2yt_ngread(solps_version,eirene_format)
+          write(nout(5),'(a)') 'fort.44.2'
         endif
       else
         iatm1(1:natm) = 0

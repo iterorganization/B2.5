@@ -1185,9 +1185,9 @@ c
 #ifdef B25_EIRENE
       if(nioni.gt.0) then
         call mds_put_double_rzns('\TOP.SNAPSHOT:DIB2','/m^3',nx+2,
-     1   ny+2,nioni,dib2(0:nx+1,0:ny+1,1:nioni,1),'TEXTMN','')
+     1   ny+2,nioni,dib2(0:nx+1,0:ny+1,1:nioni,1),'TEXTIN','')
         call mds_put_double_rzns('\TOP.SNAPSHOT:TIB2','eV',nx+2,
-     1   ny+2,nioni,tib2(0:nx+1,0:ny+1,1:nioni,1)/ev,'TEXTMN','')
+     1   ny+2,nioni,tib2(0:nx+1,0:ny+1,1:nioni,1)/ev,'TEXTIN','')
       endif
 #endif
 

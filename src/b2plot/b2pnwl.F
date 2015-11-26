@@ -33,7 +33,7 @@ c*** and for the power flux.
      *   flxctff,enrctff,pwrctff
       parameter (flxctff=0.1e0_R8, enrctff=1.e-8_R8, pwrctff=1.e-8_R8)
       integer il,is,i,ii,ia,ib,k,ic
-      character*68 hlp_frm
+      character*74 hlp_frm
       real (kind=R8) ::
      *   x,dist,h,a,aa,hlpx,hlpw,wwt,wwk,wwp,wwyn,wwyg,
      ,     wwj(natm+nmol),wwe(natm+nmol)
@@ -102,11 +102,11 @@ c*** ... and produce the output file
       end do
       open (lun,file='wlld.dat')
       write (hlp_frm,'(a,i2,a)')
-     .      '(2x,a4,5x,a3,6(5x,a2,3x),4(5x,a4,3x),',
+     .      '(2x,a4,5x,a3,1x,a4,6(5x,a2,3x),4(5x,a4,3x),',
      .      2*natmi+2*nmoli,
      .      '(3x,a4,a4,1x),4(5x,a4,3x))'
       write(lun,hlp_frm)
-     -     'zone','elm',
+     -     'zone','DG#','EIR#',
      ,     'R1','Z1','R2','Z2',' X','Xr',
      ,     'area','Wtot','Wkin','Wpot',
      ,     ('flx_',text_an(i),'Eav_',text_an(i),i=1,natmi),
@@ -197,12 +197,12 @@ c*** (temporary solution, no molecules involved)
                 wwe(ii)=enrctff
               end do
             end if
-            write (lun,'(1x,a5,i3.3,2i5,5f10.4,1p,24e12.4)') 'zone#',
-     ,                il,ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
+            write (lun,'(1x,a8,2i5,5f10.4,1p,24e12.4)') pltzlbl(il),
+     ,                ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
      ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k),
      ,                wwyn,wwyg
           end do
-          write(*,*) 'Neutral power to wall: ',il,hlpw
+          write(*,*) 'Neutral power to wall: ',pltzlbl(il),il,hlpw
         end if
       end do
       close(lun)
@@ -424,6 +424,7 @@ c*** No connection found
             end if
             do ii=1,nwldlis(il)
               j = lwsrtwrk(ii)
+              if (lskip(j)) cycle
               if (no_fort44) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
@@ -486,7 +487,7 @@ c*** No connection found
                     k = k + 1
                   end if
                 end do
-                if (.not.found) write(*,*)
+                if (.not.found) write(*,'(a,i4,a)')
      .             'Found no correspondence (1) between DG wall # ', j ,
      .             ' and Eirene wall list'
               else
@@ -507,7 +508,7 @@ c*** No connection found
                   end if
                   k = k + 1
                 end do
-                if (.not.found) write(*,*)
+                if (.not.found) write(*,'(a,i4,a)')
      .           'Found no correspondence (2) between DG wall # ', j ,
      .           ' and Eirene wall list'
               end if
