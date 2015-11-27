@@ -627,7 +627,8 @@ cxpb
      &         veecrb, ua, fne_32, fne_52,
      &         csig, csigin, chce, chve, calf, chvemx, cvsa,
      &         fch, conc, fchdia, fch_p, fchvispar, fchvisq, fchin,      !srv 25.11.08
-     1         fch_32, fch_52, avisper, bvisper, cvisper, fchvisper)
+     1         fch_32, fch_52, avisper, bvisper, cvisper, fchvisper,
+     2         csig_cl, calf_cl)
               call b2tfhe (nx, ny, ns, guard_flows, facdrift,
      1         BoRiS, vol, hx, hy, qz, te, po, ne, vedia, veecrb,        !xpb
      &         fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,    !xpb
@@ -815,7 +816,7 @@ c     with diamagnetic drift part                                        !xpb
      &   ua, fne_32, fne_52, csig, csigin, chce,                         !xpb
      &   chve, calf, chvemx, cvsa, fch, conc,
      &   fchdia, fch_p, fchvispar, fchvisq, fchin, fch_32, fch_52,       !srv 25.11.08
-     1   avisper, bvisper, cvisper, fchvisper)
+     1   avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
         call b2tfhe (nx, ny, ns, guard_flows, facdrift, BoRiS,           !xpb
      1   vol, hx, hy, qz, te, po, ne, vedia, veecrb,
      1   fne_32, fne_52, fch_p,

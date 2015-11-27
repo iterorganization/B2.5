@@ -3,7 +3,8 @@
 
       subroutine b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,         !srv 23.11.10
      1 vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,          !srv 11.07.99 18.01.02 01.07.09
-     1 ti, ni, na, fna, vadia, ua, fne, csig, csigin, chce, chve, chci,  !srv 17.05.99 11.07.99
+     1 ti, ni, na, fna, vadia, ua, fne,
+     2 csig, csig_cl, csigin, chce, chve, chci,                          !srv 17.05.99 11.07.99
      & calf, chvemx, cvsa, cdna, cdpa, cddi, fch, fhe, fhe_mdf, fhePSch, !srv 27.01.00 13.10.06
      & conc, avisper, bvisper, cvisper, floe, cone, fchdia, fchin,       !srv 27.01.00 30.09.02
      & fch_p, fchvispar, fchvisper, fchvisq, fchinert, fchanml)          !srv 07.07.99 11.07.99 22.11.99 24.03.07
@@ -33,7 +34,8 @@
      & cddi(-1:nx,-1:ny,0:1,0:ns-1), lnlam(-1:nx,-1:ny),           !srv 13.10.06 01.07.09
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny),
-     2 facdrift(-1:nx,-1:ny), qc(-1:nx,-1:ny)
+     2 facdrift(-1:nx,-1:ny), qc(-1:nx,-1:ny),
+     3 csig_cl(-1:nx,-1:ny,0:1)
       real (kind=R8) :: cutlo
       parameter (cutlo = 1.0e-60_R8)
 *   ..output arguments (unspecified on entry)
@@ -901,7 +903,7 @@ c  ..set null flux in guard cells  ?
      &    )/qe                                                         !srv .98
          endif
          tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-         fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex          !srv 30.12.09 }
+         fch_p(ix,iy,0) = csig_cl(ix,iy,0)*ehx-calf(ix,iy,0)*tex       !srv 30.12.09 }
          if(pot_eq.ne.1 .and. no_current.ne.0) then                    !srv 27.02.13
           fch_p = 0.0e0_R8
           ehx = 0.0_R8                                                 !srv 27.02.13
@@ -1046,7 +1048,7 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
      &      w4(ix,iy)=-0.71e0_R8*fch_p(ix,iy,0)/qe*
      *       (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
            endif                                                         !srv 16.09.02 }
-           fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex0         !srv 30.12.09 }
+           fch_p(ix,iy,0) = csig_cl(ix,iy,0)*ehx-calf(ix,iy,0)*tex0      !srv 30.12.09 }
            if(pot_eq.ne.1 .and. no_current.ne.0) then                    !srv 27.02.13
             fch_p = 0.0e0_R8
             ehx = 0.0_R8                                                 !srv 27.02.13

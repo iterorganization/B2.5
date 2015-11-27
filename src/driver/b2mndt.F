@@ -351,7 +351,7 @@ ctmp.dpc
      &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
                enddo                                                     !srv 01.10.99 25.02.00 13.10.06
 *    ..get current fch_p                                                 !srv 11.10.02 {
-              call b2tcpa (nx, ny, te, po, ne, csig, calf, fch_p)
+              call b2tcpa (nx, ny, te, po, ne, csig_cl, calf_cl, fch_p)
               call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
 
               call b2xpfe (nx, ny, ns, ns_ext, qe, 
@@ -360,7 +360,8 @@ ctmp.dpc
               call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,        
      1         vol, gs, hx, hy, qz, qc, bb, 
      1         te, po, ne, ne2, lnlam, pz, ti,                           !srv 01.07.09
-     1         ni(-1,-1,1), na, fna, vadia, ua, fne, csig, csigin, chce, 
+     1         ni(-1,-1,1), na, fna, vadia, ua, fne,
+     2         csig, csig_cl, csigin, chce,
      &         chve, chci, calf, chvemx, cvsa, cdna, cdpa, cddi, fch,
      &         fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,   !srv 13.10.06
      &         floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,

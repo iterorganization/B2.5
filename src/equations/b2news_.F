@@ -584,13 +584,13 @@ csw 16oct2012 init ier0
         t0=1.0e40_R8
         do while(i.le.potit.and.t0.gt.potok)
 *    ..compute current
-!          call b2tcpa (nx, ny, te, po, ne, csig, calf, fch_p)  !!!???
+!          call b2tcpa (nx, ny, te, po, ne, csig_cl, calf_cl, fch_p)  !!!???
           call b2xpfe (nx, ny, ns, ns_ext, qe, 
      &     rza, za_ext, fna_he, fa_ext, fch_p, fne)                      !srv 21.01.00 11.10.02
           call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,
      1     vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,      !srv 11.07.99 18.01.02 01.07.09
      1     ti, ni(-1,-1,1), na, fna, vadia,                              !srv 17.05.99 25.01.02
-     &     ua, fne, csig, csigin, chce,                                  !srv 17.05.99
+     &     ua, fne, csig, csig_cl, csigin, chce,                         !srv 17.05.99
      &     chve, chci, calf, chvemx, cvsa, cdna, cdpa, cddi,             !srv 05.07.00 11.07.99
      &     fch, fhe, fhe_mdf, fhePSch, conc,  avisper, bvisper, cvisper, !srv 05.07.00 13.10.06
      &     floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,       !srv 30.09.02
@@ -716,7 +716,7 @@ c      with diamagnetic drift part                                      !srv 13.
       call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,
      1  vol, gs, hx, hy, qz, qc, bb, te, po, ne, ne2, lnlam, pz,        !srv 11.07.99 18.01.02 01.07.09
      1  ti, ni(-1,-1,1), na, fna, vadia,                                !srv 17.05.99 25.01.02
-     &  ua, fne, csig, csigin, chce,                                    !srv
+     &  ua, fne, csig, csig_cl, csigin, chce,                           !srv
      &  chve, chci, calf, chvemx, cvsa, cdna, cdpa, cddi,               !srv 05.07.00 11.07.99
      &  fch, fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,    !srv 05.07.00 11.07.99 13.10.06
      &  floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,         !srv 30.09.02

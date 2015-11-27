@@ -8,7 +8,7 @@
      2  fne_32, fne_52, csig, csigin, chce, chve,               	 !xpb
      &  calf, chvemx, cvsa, fch, conc, fchdia,
      &  fch_p, fchvispar, fchvisq, fchin, fch_32, fch_52,                !srv 25.11.08
-     1  avisper, bvisper, cvisper, fchvisper)
+     1  avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
       use b2mod_types
       use b2mod_rates
       use b2mod_boundary_namelist
@@ -37,7 +37,8 @@
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), 
      2 facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny), BoRiS,
-     3 fac_vis(-1:nx,-1:ny)
+     3 fac_vis(-1:nx,-1:ny),
+     4 csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  fch(-1:nx,-1:ny,0:1), 
@@ -718,15 +719,18 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
             endif
             tex0 = tex/(1.0_R8+t0)
             tex0_nd = tex/(1.0_R8+t0_nd)
-            fch(ix,iy,0) = csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex0 	 !xpb
+            fch(ix,iy,0) = csig_cl(ix,iy,0)*ehx+csig_an(ix,iy,0)*ehx_po
+     &       -calf(ix,iy,0)*tex0 	                                 !xpb
      &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0) 	 !xpb
      &       +fchvisper(ix,iy,0)
-            fch_32(ix,iy,0) = csig(ix,iy,0)*ehx
+            fch_32(ix,iy,0) = csig_cl(ix,iy,0)*ehx
      1       +fchin(ix,iy,0)+fchvispar(ix,iy,0)
      &       +fchvisper(ix,iy,0)
-            fch_52(ix,iy,0) = -calf(ix,iy,0)*tex0_nd
+            fch_52(ix,iy,0) = csig_an(ix,iy,0)*ehx_po
+     &                       -calf(ix,iy,0)*tex0_nd
             if (no_current.ne.1) then
-              fch_p(ix,iy,0) = csig(ix,iy,0)*ehx-calf(ix,iy,0)*tex0      !srv 10.06.08
+              fch_p(ix,iy,0) = csig_cl(ix,iy,0)*ehx
+     &                        -calf(ix,iy,0)*tex0                        !srv 10.06.08
             endif
             conc(ix,iy,0) = csig(ix,iy,0)
             if(fch_ion_neutral.ne.0.0_R8) then                  	 !xpb
@@ -763,15 +767,16 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &         )/qe    
               ehy_po = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))  !xpb
             endif
-            fch(ix,iy,1)= csig(ix,iy,1)*ehy-calf(ix,iy,1)*
+            fch(ix,iy,1)= csig_cl(ix,iy,1)*ehy+csig_an(ix,iy,1)*ehy_po
+     .       -calf(ix,iy,1)*
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))             !xpb
      .       +fchdia(ix,iy,1)+fchin(ix,iy,1)+fchvispar(ix,iy,1)          !xpb
      &       +fchvisper(ix,iy,1)
             fch_p(ix,iy,1)= 0.0_R8                                       !srv 10.06.08
-            fch_32(ix,iy,1)= csig(ix,iy,1)*ehy
+            fch_32(ix,iy,1)= csig_cl(ix,iy,1)*ehy
      .       +fchin(ix,iy,1)+fchvispar(ix,iy,1)                          !xpb
      &       +fchvisper(ix,iy,1)
-            fch_52(ix,iy,1)= -calf(ix,iy,1)*
+            fch_52(ix,iy,1)= csig_an(ix,iy,1)*ehy_po-calf(ix,iy,1)*
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy))) 
             conc(ix,iy,1) = csig(ix,iy,1)
             if(fch_ion_neutral .ne. 0.0_R8) then                	 !xpb
