@@ -342,7 +342,7 @@
        call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
        consistent_core = fnaycore.eq.-1.0e30_R8 .and. fheycore.eq.0.0_R8
      &             .and. fhiycore.eq.0.0_R8 .and. nesepm.eq.0.0_R8
-       consistent_pfr1 = ndes.eq.0.0_R8 .and. nesepm_pfr.gt.0.0_R8
+       consistent_pfr1 = ndes.eq.0.0_R8 .and. nesepm_pfr.eq.0.0_R8
      &             .and. private_flux_puff.eq.0.0_R8
        consistent_pfr2 = consistent_pfr1 .or. pfrregno1.eq.pfrregno2
        consistent_sol = nesepm_sol.eq.0.0_R8 .and. nepedm_sol.eq.0.0_R8
