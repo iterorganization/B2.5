@@ -1806,6 +1806,41 @@ c   and apply linearisation
       src_ei(:,3)=0.0_R8
       src_es(:,3)=0.0_R8
       src_ne(:,3)=0.0_R8
+      smo_tot=0.0_R8
+      sni_tot=0.0_R8
+      do is = 0, ns-1 !{
+        if(.not.is_neutral(is)) then !{
+          j=b2espcr(is)
+          ifl=fluids_list(is)
+          do istrai=1,nstrat !{
+            if(use_recyceir.gt.0) then !{
+              recyctmp=recyceir(istrai)
+            else !}{
+              recyctmp=recyc(is,istrai)
+            endif !}
+            do iy = -1, ny !{
+              do ix = -1, nx !{
+                smo_tot(ix+1,iy+1,ifl)=smo_tot(ix+1,iy+1,ifl)+
+     .           smo_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+     *           recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
+     *           dble(ih_end)
+                t00 =
+     .           sni_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
+     *           recyctmp*flux_scale(istrai)/dble(ih_end)
+                if(crcstra(istrai).ne.'V' .or. t00.gt.0.0_R8) then
+                  if (iscltst.eq.0) then
+                    t00=t00*sclalph(j,istrai)
+                  else
+                    t00=t00*sclstra(j,istrai)
+                  endif
+                endif
+                sni_tot(ix+1,iy+1,ifl)=sni_tot(ix+1,iy+1,ifl)+t00
+              enddo !}
+            enddo !}
+          enddo !}
+        endif !}
+      enddo !}
+
       do istrai=1,nstrat !{
 * by ns
         recyc_hlp=0.0_R8

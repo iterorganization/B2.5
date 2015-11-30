@@ -52,6 +52,7 @@ c----------------------------------------------------------------------
 #ifndef B25_EIRENE
 #include "COUPLE/KOPPLDIM.F"
 #endif
+#include "impcon.inc"
       integer nnns
       parameter (nnns=19)
       character*8 unm,unms(nnns),u
@@ -171,7 +172,10 @@ c*** Target specifications
       return
 c----------------------------------------------------------------------
 c*** Plotzone label
- 170  call resima(pltzlbl(ll))
+ 170  i=lena
+      lena=8
+      call resima(pltzlbl(ll))
+      lena=i
       return
 c----------------------------------------------------------------------
 c*** Elements not for Eirene
