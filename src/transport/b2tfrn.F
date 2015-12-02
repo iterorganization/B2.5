@@ -171,7 +171,7 @@
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
-          fna_eir(ix,iy,0,is)     = 0.0_R8                              !srv 14.07.10 
+          fna_eir(ix,iy,0,is)     = 0.0_R8                            !srv 14.07.10
          else
 
 csw 30sep2013, added check for no_hybr
@@ -209,8 +209,8 @@ csw 30sep2013, added check for no_hybr
      &      term(ix,iy) +
      4    (vaecrb(ix,iy,0,is)*xvecrb+wadia(ix,iy,0,is)*xwdia)*
      5    (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
-     6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 14.07.10 }
-          if(no_Ptncr_x_co.eq.0) then                                   !sv 13.10.06 {
+     6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))               !srv 14.07.10 }
+          if(no_Ptncr_x_co.eq.0) then                                 !srv 13.10.06 {
             con_eir = hybr(flo_eir,cdna(ix,iy,0,is))
           else
             con_eir = cdna(ix,iy,0,is)

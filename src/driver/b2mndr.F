@@ -1203,14 +1203,14 @@ c      wrk0 = hz*vol
 c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
       do iy=-1,ny                                                    !srv 11.03.08 {
         do ix=-1,nx
-	   if(leftix(ix,iy).ne.-2) then
-          pbshz(ix,iy,0)=pbs(ix,iy,0)*
-     &      (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))
-     &      +hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))
-     &      /(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy)) 
-         else
+	  if(leftix(ix,iy).ne.-2) then
+            pbshz(ix,iy,0)=pbs(ix,iy,0)*
+     &       (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))
+     &       +hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))
+     &       /(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy)) 
+          else
 	    pbshz(ix,iy,0)=0.0e0_R8 
-	   endif             
+	  endif             
         enddo 
       enddo    
       do iy=-1,ny
@@ -1243,17 +1243,17 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
 	  if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix  !srv 11.01.13
 	enddo
       endif 
-      write(*,"(' Number of midplane cell =',i4)") nmdpl          !srv 22.05.09 }
-*   ..compute length along y-direction                               !srv 24.04.02 {
+      write(*,"(' Number of midplane cell =',i4)") nmdpl            !srv 22.05.09 }
+*   ..compute length along y-direction                              !srv 24.04.02 {
       lengthy(:,-1) = hy(:,-1)*0.5e0_R8
       do iy = 0, ny
        do ix = -1, nx
         lengthy(ix,iy) = lengthy(ix,bottomiy(ix,iy)) + 
      *      (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))*0.5e0_R8
        enddo
-      enddo                                                          !srv 24.04.02 }
+      enddo                                                         !srv 24.04.02 }
 *
-      len_surf=0.0d0                                                 !srv 02.05.09 {
+      len_surf=0.0d0                                                !srv 02.05.09 {
       do ix=-1,nx
 	do iy=1,ny
 	  len_surf(ix,iy)=len_surf(ix,iy-1)+hy(ix,iy-1)

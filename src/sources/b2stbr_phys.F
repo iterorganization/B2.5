@@ -272,11 +272,13 @@
      &         'No bulk material sputtering specified for stratum ',
      &          istra
             else if(sput_frac_flag.eq.0) then
-              write(*,*) 'Sputtering ',is_codes(sput_dst_bulk), 
+              write(*,'(a,a2,a,i2,a,l1)') 
+     &         'Sputtering ',is_codes(sput_dst_bulk), 
      &         ' for stratum ',istra,
      &         ' ; chemical sputtering is ',l_chem_sput
             else
-              write(*,*) 'Bulk material for stratum ',istra,
+              write(*,'(a,i2,a,a2,a,l1)') 
+     &         'Bulk material for stratum ',istra,
      &         ' is ',is_codes(sput_dst_bulk), 
      &         ' ; chemical sputtering is ',l_chem_sput
               do i = 1, rc_list_size(istra)

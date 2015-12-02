@@ -29,6 +29,7 @@
      *  xap, yap, xaq, yaq, xbp, ybp, xbq, ybq, xbm, ybm, xint, yint,
      *  dist, distp, dint, sum,
      *  sput_frac(0:ntrack), wrk(ndepth_nml)
+      character*16 hlp_frm
       logical wall_namelist_used, default_cooling, correct_quadrant
       logical todo, found, error
 
@@ -344,7 +345,8 @@ cxpb Recopy geometrical arrays into namelist defaults
       entry get_wall_data(nx,ny,ns,BoRiS,wall_namelist_used)
       call subini('get_wall_data')
 cxp   Test namelist input
-      write(*,*) 'track_species : Bulk ', track_species(1:ntargsp)
+      write(hlp_frm,'(a,i2,a)') '(a,',ntargsp,'(a2,1x))'
+      write(*,hlp_frm) 'track_species : Bulk ', track_species(1:ntargsp)
       if (wall_namelist_used) then
         do is = 1, ntrack
           call xertst(track_species_save(is).eq.track_species(is),

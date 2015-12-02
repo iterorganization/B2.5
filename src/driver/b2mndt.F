@@ -268,7 +268,7 @@ ctmp.dpc
            do is=0, ns-1
              write(*,'(a,2i4,1p,2g14.7)') 'is0,is,rlcx_0,rlcx_1 ',
      1            k,is,samax(n2,rlcx(-1,-1,0,is,k),1),
-     2            samax(n2,rlcx(-1,-1,1,is,k),1)
+     2                 samax(n2,rlcx(-1,-1,1,is,k),1)
            enddo
          enddo
         else
@@ -322,13 +322,13 @@ ctmp.dpc
                      endif 
                    enddo
                  enddo
-               endif                                                       !srv 19.04.07  }
+               endif                                                     !srv 19.04.07  }
               else
                fchvispar = 0.0_R8
                fchinert  = 0.0_R8
                fchanml   = 0.0_R8
               endif
-              do is=0,ns-1                                                 !srv 01.10.99 25.02.00
+              do is=0,ns-1                                               !srv 01.10.99 25.02.00
 *   ..         compute partial pressure
                call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), 
      &                      te, ti, pb)                                  !srv 01.10.99

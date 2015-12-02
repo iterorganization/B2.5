@@ -45,11 +45,14 @@ c***		  grid edge
 c*** pw0_cnv   :  exponent in a radial profile of the "blob" velocity
 c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
 
+      logical, save :: allocated_transport_namelist = .false.
+
       contains
 
       subroutine alloc_transport_namelist(nsd)
       implicit none
       integer nsd
+      if (allocated_transport_namelist) return
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(parm_dna(0:nsd-1))
       allocate(parm_dpa(0:nsd-1))
@@ -74,12 +77,14 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       vout_cnv=0.0_R8 
       pw0_cnv=1.0_R8 
       pw1_cnv=5.0_R8 
-      pw2_cnv=2.0_R8 
+      pw2_cnv=2.0_R8
+      allocated_transport_namelist = .true. 
       return
       end subroutine alloc_transport_namelist
 
       subroutine dealloc_transport_namelist
       implicit none
+      if (.not.allocated_transport_namelist) return
 #ifdef ALLOCATE_AND_NAMELIST
       deallocate(parm_dna)
       deallocate(parm_dpa)
@@ -87,6 +92,7 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       deallocate(parm_vsa)
       deallocate(parm_hci)
 #endif
+      allocated_transport_namelist = .false.
       return
       end subroutine dealloc_transport_namelist
 

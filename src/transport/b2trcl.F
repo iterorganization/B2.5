@@ -219,11 +219,11 @@ csw 13mar2012
      &   cvsa(-1,-1,1,is))
        do k = 0, nscx-1
          is0 = iscx(k)
-         if (.not.is_neutral(is)) then
+         if (.not.is_neutral(is).and.nint(zn(is)).eq.1) then
            call b2txcx (nx, ny, mode, vol, gs, hx, qz,                !sv
-     &       sigin(-1,-1,0,is,is0), csigin(-1,-1,0,is,is0))           !sv 01.07.99
+     &       sigin(-1,-1,0,is,k), csigin(-1,-1,0,is,is0))             !sv 01.07.99
            call b2txcy (nx, ny, mode, vol, gs, hy, qz,                !sv
-     &       sigin(-1,-1,1,is,is0), csigin(-1,-1,1,is,is0))           !sv
+     &       sigin(-1,-1,1,is,k), csigin(-1,-1,1,is,is0))             !sv
         endif
        enddo
       enddo

@@ -637,23 +637,23 @@ c if we want the integral current to be 0
 * ..return
       if((ncall.eq.0 .and. diagno.ge.2) .or. diagno.ge.3) then
         do ix=-1,nx
-          write(*,*) 'S:ix,ti,ni,shi0 ',
+          write(*,'(a,i4,1p,6(1x,e14.7))') 'S:ix,ti,ni,shi0 ',
      1     ix,ti(ix,-1)/ev,ni(ix,-1,0),(shi0(ix,-1,is),is=0,3)
-          write(*,*) 'S:ix,te,ne,she0 ',
+          write(*,'(a,i4,1p,6(1x,e14.7))') 'S:ix,te,ne,she0 ',
      1     ix,te(ix,-1)/ev,ne(ix,-1),(she0(ix,-1,is),is=0,3)
-          write(*,*) 'N:ix,ti,ni,shi0 ',
+          write(*,'(a,i4,1p,6(1x,e14.7))') 'N:ix,ti,ni,shi0 ',
      1     ix,ti(ix,ny)/ev,ni(ix,ny,0),(shi0(ix,ny,is),is=0,3)
-          write(*,*) 'N:ix,te,ne,she0 ',
+          write(*,'(a,i4,1p,6(1x,e14.7))') 'N:ix,te,ne,she0 ',
      1     ix,te(ix,ny)/ev,ne(ix,ny),(she0(ix,ny,is),is=0,3)
         enddo
         do iy=-1,ny
-          write(*,*) 'W:iy,ti,ni,shi0 ',
+          write(*,'(a,i4,1p,6(1x,e14.7))') 'W:iy,ti,ni,shi0 ',
      1     iy,ti(-1,iy)/ev,ni(-1,iy,0),(shi0(-1,iy,is),is=0,3)
-          write(*,*) 'W:iy,te,ne,she0 ',
+          write(*,'(a,i4,1p,6(1x,e14.7))') 'W:iy,te,ne,she0 ',
      1     iy,te(-1,iy)/ev,ne(-1,iy),(she0(-1,iy,is),is=0,3)
-          write(*,*) 'E:iy,ti,ni,shi0 ',
+          write(*,'(a,i4,1p,6(1x,e14.7))') 'E:iy,ti,ni,shi0 ',
      1     iy,ti(nx,iy)/ev,ni(nx,iy,0),(shi0(nx,iy,is),is=0,3)
-          write(*,*) 'E:iy,te,ne,she0 ',
+          write(*,'(a,i4,1p,6(1x,e14.7))') 'E:iy,te,ne,she0 ',
      1     iy,te(nx,iy)/ev,ne(nx,iy),(she0(nx,iy,is),is=0,3)
         enddo
       endif

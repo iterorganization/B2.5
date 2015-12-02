@@ -104,21 +104,21 @@
        call b2xvsg (n2, te, 1, 'te', '.gt.')
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
 *    ..test sign of cone, coni
-       if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then         !srv 06.07.06 {
-        call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')               !srv 02.01.07
+       if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then           !srv 06.07.06 {
+        call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')                   !srv 02.01.07
 	 endif                                                        !srv 06.07.06 }
-       if(no_Ptncr_x_hi.eq.0 .and. no_Ptncr_y_hi.eq.0) then         !srv 06.07.06 {
-        call b2xvsg (n2*2, coni, 1, 'coni', '.ge.')               !srv 02.01.07
+       if(no_Ptncr_x_hi.eq.0 .and. no_Ptncr_y_hi.eq.0) then           !srv 06.07.06 {
+        call b2xvsg (n2*2, coni, 1, 'coni', '.ge.')                   !srv 02.01.07
 	 endif                                                        !srv 06.07.06 }
 *    ..test edge values of floe, floi, cone, coni
        call b2xvff (nx, ny, floe, 'floe')
        call b2xvff (nx, ny, floi, 'floi')
-       call b2xvff (nx, ny, cone(-1,-1,0,0), 'cone0')               !srv 02.01.07 {
+       call b2xvff (nx, ny, cone(-1,-1,0,0), 'cone0')                 !srv 02.01.07 {
        call b2xvff (nx, ny, cone(-1,-1,0,1), 'cone1')
        call b2xvff (nx, ny, cone(-1,-1,0,2), 'cone2')
        call b2xvff (nx, ny, coni(-1,-1,0,0), 'coni0')
        call b2xvff (nx, ny, coni(-1,-1,0,1), 'coni1')
-       call b2xvff (nx, ny, coni(-1,-1,0,2), 'coni2')               !srv 02.01.07 }
+       call b2xvff (nx, ny, coni(-1,-1,0,2), 'coni2')                 !srv 02.01.07 }
 *    ..test sign of she, shi, ceqp
        call b2xvsg (n2, she(-1,-1,0), 1, 'she0', '.ge.')
        call b2xvsg (n2, she(-1,-1,1), 1, 'she1', '.le.')
@@ -134,7 +134,7 @@
 * ..total heat correction equation
 *   ..compute flo0x, con0x
       do iy = -1, ny
-       do ix = -1, nx                                                 !srv 26.11.02 {
+       do ix = -1, nx                                                  !srv 26.11.02 {
         if(leftix(ix,iy).eq.-2) then
          flo0(ix,iy,0) = 0.0e0_R8
          con0(ix,iy,0,:) = 0.0e0_R8                                    !srv 02.01.07
@@ -143,25 +143,25 @@
      &    (ne(leftix(ix,iy),leftiy(ix,iy))*
      &     te(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy)*te(ix,iy)+
      &     ni(leftix(ix,iy),leftiy(ix,iy),0)*
-     &     ti(leftix(ix,iy),leftiy(ix,iy))+ni(ix,iy,0)*ti(ix,iy))/2   !srv 02.01.07 }
+     &     ti(leftix(ix,iy),leftiy(ix,iy))+ni(ix,iy,0)*ti(ix,iy))/2    !srv 02.01.07 }
          flo0(ix,iy,0) = floe(ix,iy,0)+floi(ix,iy,0)
-     &    -t0*(ne(ix,iy)+ni(ix,iy,0)-ne(leftix(ix,iy),leftiy(ix,iy))  !srv 02.01.07 {
-     &             -ni(leftix(ix,iy),leftiy(ix,iy),0))                !srv 02.01.07 }
-         con0(ix,iy,0,0) = cone(ix,iy,0,0)+coni(ix,iy,0,0)               !srv 02.01.07
-     &    +(t0/2)*(ne(leftix(ix,iy),leftiy(ix,iy))                    !srv 02.01.07 {
-     &     +ne(ix,iy)+ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))  !srv 02.01.07 }
-	  endif                                                         !srv 26.11.02 {
+     &    -t0*(ne(ix,iy)+ni(ix,iy,0)-ne(leftix(ix,iy),leftiy(ix,iy))   !srv 02.01.07 {
+     &             -ni(leftix(ix,iy),leftiy(ix,iy),0))                 !srv 02.01.07 }
+         con0(ix,iy,0,0) = cone(ix,iy,0,0)+coni(ix,iy,0,0)             !srv 02.01.07
+     &    +(t0/2)*(ne(leftix(ix,iy),leftiy(ix,iy))                     !srv 02.01.07 {
+     &     +ne(ix,iy)+ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))   !srv 02.01.07 }
+	  endif                                                        !srv 26.11.02 {
        enddo
       enddo
 *   ..compute flo0y, con0y
       do ix = -1, nx
        flo0(ix,-1,1) = 0
-       con0(ix,-1,1,:) = 0                                            !srv 02.01.07
+       con0(ix,-1,1,:) = 0                                             !srv 02.01.07
       enddo
       do iy = 0, ny
        do ix = -1, nx
         flo0(ix,iy,1) = floe(ix,iy,1)+floi(ix,iy,1)
-        con0(ix,iy,1,0) = cone(ix,iy,1,0)+coni(ix,iy,1,0)     !srv 02.01.07
+        con0(ix,iy,1,0) = cone(ix,iy,1,0)+coni(ix,iy,1,0)              !srv 02.01.07
        enddo
       enddo
 	aa9 = 0.0e0_R8
@@ -232,19 +232,19 @@
 * ..electron temperature correction equation
 *   ..compute flo0x, con0x
       do iy = -1, ny
-       do ix = -1, nx                                                 !srv 26.11.02 {
+       do ix = -1, nx                                               !srv 26.11.02 {
         if(leftix(ix,iy).eq.-2) then
          flo0(ix,iy,0) = 0.0e0_R8
-         con0(ix,iy,0,:) = 0.0e0_R8     !srv 02.01.07
+         con0(ix,iy,0,:) = 0.0e0_R8                                 !srv 02.01.07
         else
          t0 = 2.5_R8*pbs(ix,iy,0)*pcm1*pccm1(ix,iy)*                !srv 02.01.07 {
      &    (ne(leftix(ix,iy),leftiy(ix,iy))*
      &     te(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy)*te(ix,iy))/2   !srv 02.01.07 }
          flo0(ix,iy,0) = floe(ix,iy,0)
      &     -t0*(ne(ix,iy)-ne(leftix(ix,iy),leftiy(ix,iy)))          !srv 02.01.07
-         con0(ix,iy,0,0) = cone(ix,iy,0,0)     !srv 02.01.07
+         con0(ix,iy,0,0) = cone(ix,iy,0,0)                          !srv 02.01.07
      &     +(t0/2)*(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))      !srv 02.01.07
-	  endif                                                         !srv 26.11.02 {
+	  endif                                                     !srv 26.11.02 {
        enddo
       enddo
 *   ..compute flo0y, con0y

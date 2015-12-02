@@ -237,9 +237,9 @@
 !          uesx(ix,iy)=fne(ix,iy,0)/nel(ix,iy)
 !         endif
 !        enddo
-!	enddo                                                           !srv 22.09.09 }
+!	enddo                                                         !srv 22.09.09 }
 *   ..contribution from divergence ue
-      do iy = 0, ny-1                                                !srv 05.03.11 {
+      do iy = 0, ny-1                                                 !srv 05.03.11 {
        do ix = 0, nx
 	  if(leftix(ix,iy).eq.-2) then
 	    wrk0(ix,iy) = 0.0e0_R8
@@ -249,7 +249,7 @@
      2       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
 	  endif
        enddo
-      enddo                                                          !srv 05.03.11 }
+      enddo                                                           !srv 05.03.11 }
       b2divue=0.0_R8
       b2sihs_divue=0.0_R8
       do iy = 0, ny-1
@@ -273,7 +273,7 @@
       do is = 0, ns-1
        do iy = 0, ny-1                                                !srv 21.07.05 {
         do ix = 0, nx
-	   if(leftix(ix,iy).eq.-2) then
+	  if(leftix(ix,iy).eq.-2) then
 	    wrk0(ix,iy) = 0.0e0_R8
 	   else
           wrk0(ix,iy)=(hx(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+

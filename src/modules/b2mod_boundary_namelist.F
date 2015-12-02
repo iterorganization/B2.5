@@ -202,7 +202,8 @@ cxpb overwrite the defaults with the namelist data
       real (kind=R8) :: tim
 
       if(boundary_time_mod.gt.0.0_R8) then
-         write(*,*) 'ELM: ', tim, mod(tim,boundary_time_mod),
+         write(*,'(a,1p,3(1x,e14.7),2i4)') 
+     .       'ELM: ', tim, mod(tim,boundary_time_mod),
      1        boundary_time_switch,
      2        int(tim/boundary_time_mod),
      3        bc_elm_count

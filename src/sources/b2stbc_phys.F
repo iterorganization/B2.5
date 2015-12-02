@@ -2132,7 +2132,7 @@ cxpb Careful here because of BC number clash
      &    'Should use BCCON(IS,IB).EQ.21 together with BCENI=23 or 24'
                 write(*,*)
      &    'Should use BCCON(IS,IB).EQ.21 together with BCENI=23 or 24'
-                write(*,*)
+                write(*,'(a)')
      &           'Please ensure that this boundary condition '//
      &           'is consistent with '//
      &           'ion energy boundary condition'  !srv 21.09.12
@@ -2240,7 +2240,7 @@ cxpb Careful here because of BC number clash
      &    'Should use BCCON(IS,IB).EQ.22 together with BCENI=23 or 24'
                 write(*,*)
      &    'Should use BCCON(IS,IB).EQ.22 together with BCENI=23 or 24'
-                write(*,*)
+                write(*,'(a)')
      &           'Please ensure that this boundary condition '//
      &           'is consistent with '//
      &           'ion energy boundary condition'  !srv 21.09.12
@@ -2373,7 +2373,7 @@ cxpb Careful here because of BC number clash
      &     'Should use BCCON(IS,IB).EQ.23 together with BCENI=23 or 24'
                write(*,*)
      &     'Should use BCCON(IS,IB).EQ.23 together with BCENI=23 or 24'
-               write(*,*)
+               write(*,'(a)')
      &          'Please ensure that this boundary condition '//
      &          'is consistent with '//
      &          'ion energy boundary condition'  !srv 21.09.12
@@ -3172,7 +3172,8 @@ cxpb  and max(,,) statement for stability
      &         'Should use BCCON(IS,IB).EQ.9 together with BCMOM=10'
               write(*,*)
      &         'Should use BCCON(IS,IB).EQ.9 together with BCMOM=10'
-              write(*,*) 'Please ensure that this boundary condition '//
+              write(*,'(a)')
+     &                   'Please ensure that this boundary condition '//
      &                   'is consistent with density boundary condition'  !srv 21.09.12
             endif
           endif
@@ -4454,7 +4455,7 @@ cghgh
      &         'Should use BCENE=19 in conjunction with BCCON=1'
             end if
             if (ism.gt.0) then
-              write(*,*)
+              write(*,'(a)')
      &         'Please ensure that this boundary condition '//
      &         'is consistent with density boundary conditions'  !srv 21.09.12
             end if
@@ -6446,7 +6447,8 @@ cghgh
      &       'Should use BCENI.EQ.9 together with BCCON=9'
             write(*,*)
      &       'Should use BCENI.EQ.9 together with BCCON=9'
-            write(*,*) 'Please ensure that this boundary condition '//
+            write(*,'(a)')
+     &                 'Please ensure that this boundary condition '//
      &                 'is consistent with density boundary condition'  !srv 21.09.12
           endif
         endif
@@ -7425,7 +7427,7 @@ cxpb Careful here because of BC number clash
      &             ',',IB,').EQ.21,22,23 together with BCENI=23'
                 write(*,'(a,i3,a,i2,a)') 'Should use BCCON(',ismain,
      &             ',',IB,').EQ.21,22,23 together with BCENI=23'
-                write(*,*)
+                write(*,'(a)')
      &           'Please ensure that this boundary condition '//
      &           'is consistent with '//
      &           'ion density boundary condition'  !srv 21.09.12
@@ -7536,10 +7538,10 @@ cxpb Careful here because of BC number clash
      &             ',',IB,').EQ.21,22,23 together with BCENI=24'
                   write(*,'(a,i3,a,i2,a)') 'Should use BCCON(',ismain,
      &             ',',IB,').EQ.21,22,23 together with BCENI=24'
-                  write(*,*)
-     &           'Please ensure that this boundary condition '//
-     &           'is consistent with '//
-     &           'ion density boundary condition'  !srv 21.09.12
+                  write(*,'(a)')
+     &             'Please ensure that this boundary condition '//
+     &             'is consistent with '//
+     &             'ion density boundary condition'  !srv 21.09.12
               end if
               if (ns.gt.1) then
                write(0,*) 

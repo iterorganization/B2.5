@@ -342,6 +342,7 @@
        call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
        consistent_core = fnaycore.eq.-1.0e30_R8 .and. fheycore.eq.0.0_R8
      &             .and. fhiycore.eq.0.0_R8 .and. nesepm.eq.0.0_R8
+     &             .and. fchycore.eq.-1.0e30_R8
        consistent_pfr1 = ndes.eq.0.0_R8 .and. nesepm_pfr.eq.0.0_R8
      &             .and. private_flux_puff.eq.0.0_R8
        consistent_pfr2 = consistent_pfr1 .or. pfrregno1.eq.pfrregno2
@@ -352,18 +353,18 @@
            if(nesepm_sol.gt.0.0_R8 .or. nepedm_sol.gt.0.0_R8 .or.
      .        volrec_sol.gt.0.0_R8) then
              consistent_sol = consistent_sol .or.
-     .        bccon(ib,isfeedback).eq.11
+     .        bccon(isfeedback,ib).eq.11
            end if
            if(ndes_sol.gt.0.0_R8) then
              consistent_sol = consistent_sol .or.
-     .        bccon(ib,isfeedback).eq.12
+     .        bccon(isfeedback,ib).eq.12
            end if
          else if (bcchar(ib).eq.'S') then
            if (mod(region(bc_list_x(1,ib),bc_list_y(1,ib),0),4).eq.1)
      >      then
              if (fnaycore.ne.-1.0e30_R8 .or. nesepm.gt.0.0_R8) then
                consistent_core = consistent_core .or.
-     .          bccon(ib,isfeedback).eq.11
+     .          bccon(isfeedback,ib).eq.11
              end if
              if(fheycore.gt.0.0_R8) then
                consistent_core = consistent_core .or. bcene(ib).eq.10
@@ -374,20 +375,26 @@
              if(fchycore.ne.-1.0e30_R8) then
                consistent_core = consistent_core .or. bcpot(ib).eq.10
              end if
-             if(ndes.gt.0.0_R8) then
-               consistent_core = consistent_core .or.
-     .          bccon(ib,isfeedback).eq.12
-             end if
            else
+             if(ndes.gt.0.0_R8) then
+               if (mod(region(bc_list_x(1,ib),
+     >                        bc_list_y(1,ib),0),4).eq.3) then
+                 consistent_pfr1 = consistent_pfr1 .or.
+     .            bccon(isfeedback,ib).eq.12
+               else
+                 consistent_pfr2 = consistent_pfr2 .or.
+     .            bccon(isfeedback,ib).eq.12
+               end if
+             end if
              if(nesepm_pfr.gt.0.0_R8 .or. private_flux_puff.gt.0.0_R8) 
      >        then
                if (mod(region(bc_list_x(1,ib),
      >                        bc_list_y(1,ib),0),4).eq.3) then
                  consistent_pfr1 = consistent_pfr1 .or.
-     .            bccon(ib,isfeedback).eq.11
+     .            bccon(isfeedback,ib).eq.11
                else
                  consistent_pfr2 = consistent_pfr2 .or.
-     .            bccon(ib,isfeedback).eq.11
+     .            bccon(isfeedback,ib).eq.11
                end if
              end if
            end if
@@ -818,7 +825,8 @@ c new attempt
             nesepm_integral_error = 
      1       nesepm_gamma * nesepm_integral_error + 
      1       (1-nesepm_gamma)* nesepm_error
-            write(*,*) 'nesepm_error,nesepm_integral_error= ',
+            write(*,'(a,1p,2e15.7)') 
+     .       'nesepm_error, nesepm_integral_error= ',
      1        nesepm_error, nesepm_integral_error
             cbsna(0,isfeedback,solregno) = 
      .       cbsna(0,isfeedback,solregno)*
@@ -1199,8 +1207,9 @@ c new attempt
           nesepm_integral_error = 
      1     nesepm_gamma * nesepm_integral_error + 
      1      (1-nesepm_gamma)* nesepm_error
-          write(*,*) 'nesepm_error,nesepm_integral_error= ',
-     1     nesepm_error, nesepm_integral_error
+          write(*,'(a,1p,2e14.7)') 
+     .     'nesepm_error, nesepm_integral_error= ',
+     1      nesepm_error, nesepm_integral_error
           cbsna(0,isfeedback,solregno) = 
      .     cbsna(0,isfeedback,solregno)*
      *      (1.0_R8 + nesepm_alpha*nesepm_error + 
@@ -1351,7 +1360,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
        call ipgeti ('b2sral_style', b2sral_style)
        call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
        consistent = .true.
-       do ispecies = 1, nspecies
+       do ispecies = 0, nspecies-1
+         if (na_feedback_ib(ispecies).le.0) cycle
          is0 = eb2spcr(ispecies+1)
          is_start = eb2spcr(ispecies+1)+1
          is_end = eb2spcr(ispecies+1)+nfluids(ispecies+1)

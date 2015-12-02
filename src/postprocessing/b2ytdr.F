@@ -432,7 +432,7 @@ c 2002-09-11: logic revised
       logical LRPSCUT
       logical in_bundle, charges_match, skip_reac
 #endif
-      logical todo, same_bundling
+      logical todo, same_bundling, first_pass
       logical wall_namelist_used
       logical region_flags(NNREGMAX,nkind_coeff), no_pflux
       logical poloidal_scaling, prdone, axdone
@@ -1777,112 +1777,120 @@ c 2002-09-11: logic revised
       enddo
 
 *  ..write new b2.transport.parameters
+      first_pass = .true.
       inquire(file='../b2.transport.parameters',exist=todo)
       new_filename = '../b2.transport.parameters.2'
       inquire(file=trim(new_filename),exist=found)
       if (found) write(6,*) trim(new_filename), ' already present!'
-      do while(.not.same_bundling.and.(transport_namelist.eq.1.or.todo)
-     & .and..not.found)
+      do while((transport_namelist.eq.1.or.todo).and..not.found)
         if (transport_namelist.eq.0) call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
-        write(*,*) 'Writing ',trim(new_filename)
-        write(hlp_frm,'(a,i3,a)')
-     .   '(1x,a,i2,a,a,1p,',ns1,'(g10.3,'','',1x))'
-        write(nout(5),'(a)') trim(new_filename)
-        open(99,file=trim(new_filename))
-        write(99,'(a10)') '&TRANSPORT'
-        if(flag_dna.ne.0) then
-          cftmp(0:ns-1)=parm_dna(0:ns-1)
-          call convert_bundle_r
-     .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-          parm_dna(0:ns1-1)=cftmp(0:ns1-1)
-          write(99,hlp_frm)
-     .     'FLAG_DNA=',flag_dna,',',' PARM_DNA=',parm_dna(0:ns1-1)
-        endif
-        if(flag_dpa.ne.0) then
-          cftmp(0:ns-1)=parm_dpa(0:ns-1)
-          call convert_bundle_r
-     .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+        if (same_bundling) then
+          if (first_pass) 
+     >     write(nout(5),'(a)') 'b2.transport.parameters'
+          if (.not.streql(transport_filename,'b2.transport.parameters'))
+     >     write(nout(5),'(a)') trim(transport_filename)
+        else
+          write(nout(5),'(a)') trim(new_filename)
+          write(*,*) 'Writing ',trim(new_filename)
+          write(hlp_frm,'(a,i3,a)')
+     .     '(1x,a,i2,a,a,1p,',ns1,'(g10.3,'','',1x))'
+          open(99,file=trim(new_filename))
+          write(99,'(a10)') '&TRANSPORT'
+          if(flag_dna.ne.0) then
+            cftmp(0:ns-1)=parm_dna(0:ns-1)
+            call convert_bundle_r
+     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+            parm_dna(0:ns1-1)=cftmp(0:ns1-1)
+            write(99,hlp_frm)
+     .       'FLAG_DNA=',flag_dna,',',' PARM_DNA=',parm_dna(0:ns1-1)
+          endif
+          if(flag_dpa.ne.0) then
+            cftmp(0:ns-1)=parm_dpa(0:ns-1)
+            call convert_bundle_r
+     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
           parm_dpa(0:ns1-1)=cftmp(0:ns1-1)
           write(99,hlp_frm)
      .     'FLAG_DPA=',flag_dpa,',',' PARM_DPA=',parm_dpa(0:ns1-1)
-        endif
-        if(flag_vla.ne.0) then
-          cftmp(0:ns-1)=parm_vla(0:ns-1)
-          call convert_bundle_r
-     .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-          parm_vla(0:ns1-1)=cftmp(0:ns1-1)
-          write(99,hlp_frm)
-     .     'FLAG_VLA=',flag_vla,',',' PARM_VLA=',parm_vla(0:ns1-1)
-        endif
-        if(flag_vsa.ne.0) then
-          cftmp(0:ns-1)=parm_vsa(0:ns-1)
-          call convert_bundle_r
-     .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-          parm_vsa(0:ns1-1)=cftmp(0:ns1-1)
-          write(99,hlp_frm)
-     .     'FLAG_VSA=',flag_vsa,',',' PARM_VSA=',parm_vsa(0:ns1-1)
-        endif
-        if(flag_hci.ne.0) then
-          cftmp(0:ns-1)=parm_hci(0:ns-1)
-          call convert_bundle_r
-     .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-          parm_hci(0:ns1-1)=cftmp(0:ns1-1)
-          write(99,hlp_frm)
-     .     'FLAG_HCI=',flag_hci,',',' PARM_HCI=',parm_hci(0:ns1-1)
-        endif
-        if(flag_hce.ne.0) write(99,'(1x,a,i2,a,a,1p,1g10.3,a)')
+          endif
+          if(flag_vla.ne.0) then
+            cftmp(0:ns-1)=parm_vla(0:ns-1)
+            call convert_bundle_r
+     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+            parm_vla(0:ns1-1)=cftmp(0:ns1-1)
+            write(99,hlp_frm)
+     .       'FLAG_VLA=',flag_vla,',',' PARM_VLA=',parm_vla(0:ns1-1)
+          endif
+          if(flag_vsa.ne.0) then
+            cftmp(0:ns-1)=parm_vsa(0:ns-1)
+            call convert_bundle_r
+     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+            parm_vsa(0:ns1-1)=cftmp(0:ns1-1)
+            write(99,hlp_frm)
+     .       'FLAG_VSA=',flag_vsa,',',' PARM_VSA=',parm_vsa(0:ns1-1)
+          endif
+          if(flag_hci.ne.0) then
+            cftmp(0:ns-1)=parm_hci(0:ns-1)
+            call convert_bundle_r
+     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+            parm_hci(0:ns1-1)=cftmp(0:ns1-1)
+            write(99,hlp_frm)
+     .       'FLAG_HCI=',flag_hci,',',' PARM_HCI=',parm_hci(0:ns1-1)
+          endif
+          if(flag_hce.ne.0) write(99,'(1x,a,i2,a,a,1p,1g10.3,a)')
      .     'FLAG_HCE=',flag_hce,',',' PARM_HCE=',parm_hce,','
-        if(flag_sig.ne.0) write(99,'(1x,a,i2,a,a,1p,1g10.3,a)')
+          if(flag_sig.ne.0) write(99,'(1x,a,i2,a,a,1p,1g10.3,a)')
      .     'FLAG_SIG=',flag_sig,',',' PARM_SIG=',parm_sig,','
-        if(flag_alf.ne.0) write(99,'(1x,a,i2,a,a,1p,1g10.3,a)')
+          if(flag_alf.ne.0) write(99,'(1x,a,i2,a,a,1p,1g10.3,a)')
      .     'FLAG_ALF=',flag_alf,',',' PARM_ALF=',parm_alf,','
-        if(transport_time_mod.gt.0.0_R8) then
-          write(99,'(1x,a,a,a)')
-     .     'TRANSPORT_FILENAME=''',trim(transport_filename),''','
-          write(99,'(1x,a,1p,1g10.3,a)')
-     .     'TRANSPORT_TIME_MOD=',transport_time_mod,','
-          write(99,'(1x,a,1p,1g10.3,a)')
-     .     'TRANSPORT_TIME_SWITCH=',transport_time_switch,','
-        endif
-        if(cflme.ge.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
-     .   'CFLME=',cflme,','
-        if(cflmi.ge.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
-     .   'CFLMI=',cflmi,','
-        if(cflmv.ge.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
-     .   'CFLMV=',cflmv,','
-        write(99,'(a1)') '/'
-        if(abs(maxval(vout_cnv(0:ns-1))).gt.0.0_R8) then
-          write(hlp_frm,'(a,i3,a)')
-     .     '(1x,a,1p,',ns1,'(1x,g10.3,'',''))'
-          cftmp(0:ns-1)=vout_cnv(0:ns-1)
-          call convert_bundle_r
-     .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-          vout_cnv(0:ns1-1)=cftmp(0:ns1-1)
-          write(99,hlp_frm)
-     .     'VOUT_CNV=',vout_cnv(0:ns1-1)
-          cftmp(0:ns-1)=pw0_cnv(0:ns-1)
-          call convert_bundle_r
-     .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-          pw0_cnv(0:ns1-1)=cftmp(0:ns1-1)
-          write(99,hlp_frm)
-     .     'PW0_CNV=',pw0_cnv(0:ns1-1)
-          cftmp(0:ns-1)=pw1_cnv(0:ns-1)
-          call convert_bundle_r
-     .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-          pw1_cnv(0:ns1-1)=cftmp(0:ns1-1)
-          write(99,hlp_frm)
-     .     'PW1_CNV=',pw1_cnv(0:ns1-1)
-          cftmp(0:ns-1)=pw2_cnv(0:ns-1)
-          call convert_bundle_r
-     .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-          pw2_cnv(0:ns1-1)=cftmp(0:ns1-1)
-          write(99,hlp_frm)
-     .     'PW2_CNV=',pw2_cnv(0:ns1-1)
-        endif
-        close(99)
+          if(cflme.ge.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLME=',cflme,','
+          if(cflmi.ge.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMI=',cflmi,','
+          if(cflmv.ge.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLMV=',cflmv,','
+          if(transport_time_mod.gt.0.0_R8) then
+            write(99,'(1x,a,a,a)')
+     .       'TRANSPORT_FILENAME=''',trim(transport_filename),''','
+            write(99,'(1x,a,1p,1g10.3,a)')
+     .       'TRANSPORT_TIME_MOD=',transport_time_mod,','
+            write(99,'(1x,a,1p,1g10.3,a)')
+     .       'TRANSPORT_TIME_SWITCH=',transport_time_switch,','
+          endif
+          if(abs(maxval(vout_cnv(0:ns-1))).gt.0.0_R8) then
+            write(hlp_frm,'(a,i3,a)')
+     .       '(1x,a,1p,',ns1,'(1x,g10.3,'',''))'
+            cftmp(0:ns-1)=vout_cnv(0:ns-1)
+            call convert_bundle_r
+     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+            vout_cnv(0:ns1-1)=cftmp(0:ns1-1)
+            write(99,hlp_frm)
+     .       'VOUT_CNV=',vout_cnv(0:ns1-1)
+            cftmp(0:ns-1)=pw0_cnv(0:ns-1)
+            call convert_bundle_r
+     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+            pw0_cnv(0:ns1-1)=cftmp(0:ns1-1)
+            write(99,hlp_frm)
+     .       'PW0_CNV=',pw0_cnv(0:ns1-1)
+            cftmp(0:ns-1)=pw1_cnv(0:ns-1)
+            call convert_bundle_r
+     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+            pw1_cnv(0:ns1-1)=cftmp(0:ns1-1)
+            write(99,hlp_frm)
+     .       'PW1_CNV=',pw1_cnv(0:ns1-1)
+            cftmp(0:ns-1)=pw2_cnv(0:ns-1)
+            call convert_bundle_r
+     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+            pw2_cnv(0:ns1-1)=cftmp(0:ns1-1)
+            write(99,hlp_frm)
+     .       'PW2_CNV=',pw2_cnv(0:ns1-1)
+          endif
+          write(99,'(a1)') '/'
+          close(99)
+        end if
         if (.not.streql(transport_filename,'b2.transport.parameters'))
      >  then
+          first_pass = .false.
           new_filename =
      .     '../'//transport_filename(1:lnblnk(transport_filename))//'.2'
           filename='../'//transport_filename
@@ -1897,230 +1905,234 @@ c 2002-09-11: logic revised
       enddo
 
 *  ..write new b2.transport.inputfile
+      first_pass = .true.
       filename='../b2.transport.inputfile'
       inquire(file=trim(filename),exist=todo)
       new_filename='../b2.transport.inputfile.2'
       inquire(file=trim(new_filename),exist=found)
       if (found) write(6,*) trim(new_filename), ' already present!'
-      do while(.not.(same_bundling.and.nx.eq.nx1.and.ny.eq.ny1).and.
-     .   (transport_inputfile.eq.1.or.todo).and..not.found)
-        allocate(px(1:ny1+2),pf(1:ny1+2))
-        ndata(:,:,:)=0
-        tdata(:,:,:,:)=0.0_R8
-        addspec(:,:,:)=-5
-        region_flags=.true.
-        no_pflux=.false.
-        poloidal_scaling=.false.
-        scaling_strength=0.0_R8
-        scaling_width=0.0_R8
-        scaling_ix_begin=-2
-        scaling_ix_end=-2
-        elm_time_begin=0.0_R8
-        elm_time_end=0.0_R8
-        elm_time_period=0.0_R8
-        elm_ix_begin=-2
-        elm_ix_end=-2
-        transport_filename='b2.transport.inputfile'
-        transport_time_mod=0.0_R8
-        transport_time_switch=0.0_R8
-        allocate(n1data(1:nkind_data,1:nkind_coeff,0:nsm-1))
-        allocate(t1data(3,1:nym+2,1:nkind_coeff,0:nsm-1))
-        allocate(ad1spec(ns1,1:nkind_coeff,0:ns1-1))
-        allocate(pelm(1:ny1+2))
-        n1data(:,:,:)=0
-        t1data(:,:,:,:)=0.0_R8
-        ad1spec(:,:,:)=-5
+      do while((transport_inputfile.eq.1.or.todo).and..not.found)
+        if (.not.allocated(px)) then
+          allocate(px(1:ny1+2),pf(1:ny1+2))
+          ndata(:,:,:)=0
+          tdata(:,:,:,:)=0.0_R8
+          addspec(:,:,:)=-5
+          region_flags=.true.
+          no_pflux=.false.
+          poloidal_scaling=.false.
+          scaling_strength=0.0_R8
+          scaling_width=0.0_R8
+          scaling_ix_begin=-2
+          scaling_ix_end=-2
+          elm_time_begin=0.0_R8
+          elm_time_end=0.0_R8
+          elm_time_period=0.0_R8
+          elm_ix_begin=-2
+          elm_ix_end=-2
+          transport_filename='b2.transport.inputfile'
+          transport_time_mod=0.0_R8
+          transport_time_switch=0.0_R8
+          allocate(n1data(1:nkind_data,1:nkind_coeff,0:nsm-1))
+          allocate(t1data(3,1:nym+2,1:nkind_coeff,0:nsm-1))
+          allocate(ad1spec(ns1,1:nkind_coeff,0:ns1-1))
+          allocate(pelm(1:ny1+2))
+          n1data(:,:,:)=0
+          t1data(:,:,:,:)=0.0_R8
+          ad1spec(:,:,:)=-5
+        end if
         open(99,file=trim(filename))
         read(99,transport)
         close(99)
-        write(*,*) 'Writing ',trim(new_filename)
-        write(nout(5),'(a)') trim(new_filename)
-        open(99,file=trim(new_filename))
-        write(99,'(a10)') '&TRANSPORT'
-        do j = 1, nkind_coeff
-          do i = 1, nkind_data
+        if(same_bundling.and.nx.eq.nx1.and.ny.eq.ny1) then
+          if (first_pass) write(nout(5),'(a)') 'b2.transport.inputfile'
+          if (.not.streql(transport_filename,'b2.transport.inputfile'))
+     >     write(nout(5),'(a)') trim(transport_filename)
+        else
+          write(nout(5),'(a)') trim(new_filename)
+          write(*,*) 'Writing ',trim(new_filename)
+          open(99,file=trim(new_filename))
+          write(99,'(a10)') '&TRANSPORT'
+          do j = 1, nkind_coeff
+            do i = 1, nkind_data
 cxpb  We do the mesh size transformation first
-            do is = 0, ns-1
-              prdone = .false.
-              ndat = ndata(i,j,is)
-              if (ndat.gt.0 .and. is1(is).ge.0 .and. is1(is).lt.ns1)
-     .         then
-                if (ndat.gt.ny1+2) then  ! need to coarsen the profile according to the new grid
-                  if (.not.prdone) then
-                    allocate(prdsa(1:ny1+2),pra(1:ny1+2))
-                    allocate(r(1:ny+2),f(1:ny+2),felm(1:ny+2))
-                    allocate(dprof(1:ny+2),delm(1:ny+2))
-                    prdsa(1)=sqrt((cr1(jxa1,-1)-
-     1               0.5_R8*(crx1(jxa1,-1,0)+crx1(jxa1,-1,1)))**2+
-     2                (cz1(jxa1,-1)-
-     3               0.5_R8*(cry1(jxa1,-1,0)+cry1(jxa1,-1,1)))**2)
-                    do iy = 0, ny1
-                      prdsa(iy+2)=prdsa(iy+1)+
-     1                 sqrt((cr1(jxa1,iy)-cr1(jxa1,iy-1))**2+
-     2                      (cz1(jxa1,iy)-cz1(jxa1,iy-1))**2)
-                    enddo
-                    ds_offset=(prdsa(jsep1+2)+prdsa(jsep1+3))/2.0_R8
-                    do iy = 1, ny1+2
-                      prdsa(iy) = prdsa(iy) - ds_offset
-                    enddo
-                    prdone = .true.
-                  endif
-                  r(1:ndat) = tdata(1,1:ndat,j,is)
-                  f(1:ndat) = tdata(2,1:ndat,j,is)
-                  felm(1:ndat) = tdata(3,1:ndat,j,is)
-                  call E01BEF(ndat,r,f,dprof,ifail)
-                  call E01BEF(ndat,r,felm,delm,ifail)
-                  nfitanf=1
-                  do iy=1,ny1+2
-                    pra(iy)=prdsa(iy)
-                    if(pra(iy).lt.r(1)) nfitanf=nfitanf+1
-                    nfitend=iy-1
-                    if (pra(iy).GT.r(ndat)) exit
-                    nfitend=iy
-                  enddo
-                  call xertst(nfitanf.lt.nfitend,
-     .             'Could not complete transport profile!')
-                  ndim=nfitend+1-nfitanf
-                  do iy = 1, ndim
-                    px(i) = pra(nfitanf-1+iy)
-                  end do
-                  call E01BFF(ndat,r,f,dprof,ndim,px,pf,ifail)
-                  call E01BFF(ndat,r,felm,delm,ndim,px,pelm,ifail)
-                else  ! simple case
-                  ndim = ndat
-                  px(1:ndim) = tdata(1,1:ndim,j,is)
-                  pf(1:ndim) = tdata(2,1:ndim,j,is)
-                  pelm(1:ndim) = tdata(3,1:ndim,j,is)
-                endif
-                n1data(i,j,is1(is))=ndim
-                t1data(1,1:ndim,j,is1(is))=px(1:ndim)   ! profile position
-                t1data(2,1:ndim,j,is1(is))=pf(1:ndim)   ! profile value
-                t1data(3,1:ndim,j,is1(is))=pelm(1:ndim) ! ELM value
-                write(99,'(1x,a,i1,a,i1,a,i3,a,i3,a)')
-     .           'NDATA(',i,',',j,',',is1(is),')=',
-     .            n1data(i,j,is1(is)),','
-                iy = 0
-cxpb Check if we need to include new additional species because of de-bundling of is
-                if (bundle_frac(is1(is),is).lt.1.0_R8) then
-                  do js = 0, ns1-1
-                    if (js.ne.is1(is) .and.
-     &                  bundle_frac(js,is).ne.0.0_R8) then
-                      iy = iy + 1
-                      ad1spec(iy,j,is1(is)) = js
-                      write(99,'(1x,a,i3,a,i1,a,i3,a,i3,a)')
-     .                 'ADDSPEC(',iy,',',j,',',is1(is),')=',
-     .                  ad1spec(iy,j,is1(is)),','
+              do is = 0, ns-1
+                prdone = .false.
+                ndat = ndata(i,j,is)
+                if (ndat.gt.0 .and. is1(is).ge.0 .and. is1(is).lt.ns1)
+     .           then
+                  if (ndat.gt.ny1+2) then  ! need to coarsen the profile according to the new grid
+                    if (.not.prdone) then
+                      allocate(prdsa(1:ny1+2),pra(1:ny1+2))
+                      allocate(r(1:ny+2),f(1:ny+2),felm(1:ny+2))
+                      allocate(dprof(1:ny+2),delm(1:ny+2))
+                      prdsa(1)=sqrt((cr1(jxa1,-1)-
+     1                 0.5_R8*(crx1(jxa1,-1,0)+crx1(jxa1,-1,1)))**2+
+     2                  (cz1(jxa1,-1)-
+     3                 0.5_R8*(cry1(jxa1,-1,0)+cry1(jxa1,-1,1)))**2)
+                      do iy = 0, ny1
+                        prdsa(iy+2)=prdsa(iy+1)+
+     1                   sqrt((cr1(jxa1,iy)-cr1(jxa1,iy-1))**2+
+     2                        (cz1(jxa1,iy)-cz1(jxa1,iy-1))**2)
+                      enddo
+                      ds_offset=(prdsa(jsep1+2)+prdsa(jsep1+3))/2.0_R8
+                      do iy = 1, ny1+2
+                        prdsa(iy) = prdsa(iy) - ds_offset
+                      enddo
+                      prdone = .true.
                     endif
-                  enddo
-                endif
-                do ix = 1, ns
-cxpb Convert old additional species
-                  if (addspec(ix,j,is).ge.0) then
-                    todo = .true.
-                    ib = 1
-                    do while (ib.le.ns1)
-                      if (ad1spec(ib,j,is1(is)).ne.-5) then
-                        ib = ib + 1
-                      else
-                        iy = 1
-                        do while (iy.lt.ns1)
-cxpb We must ensure we have not already listed this additional species
-                          found = .false.
-                          iss = 1
-                          do while (.not.found .and. iss.lt.ib)
-                            found = ad1spec(iss,j,is1(is)).eq.iy
-                            iss = iss + 1
-                          end do
-                          if(bundle_frac(iy,addspec(ix,j,is)).gt.0.0_R8
-     .                       .and. .not.found) then
-                            ad1spec(ib,j,is1(is)) = iy
-                            write(99,'(1x,a,i3,a,i1,a,i3,a,i3,a)')
-     .                       'ADDSPEC(',ib,',',j,',',is1(is),')=',
-     .                        ad1spec(ib,j,is1(is)),','
-                            ib = ib + 1
-                          endif
-                          iy = iy + 1
-                        enddo
-                        ib = ns1 + 1
+                    r(1:ndat) = tdata(1,1:ndat,j,is)
+                    f(1:ndat) = tdata(2,1:ndat,j,is)
+                    felm(1:ndat) = tdata(3,1:ndat,j,is)
+                    call E01BEF(ndat,r,f,dprof,ifail)
+                    call E01BEF(ndat,r,felm,delm,ifail)
+                    nfitanf=1
+                    do iy=1,ny1+2
+                      pra(iy)=prdsa(iy)
+                      if(pra(iy).lt.r(1)) nfitanf=nfitanf+1
+                      nfitend=iy-1
+                      if (pra(iy).GT.r(ndat)) exit
+                      nfitend=iy
+                    enddo
+                    call xertst(nfitanf.lt.nfitend,
+     .               'Could not complete transport profile!')
+                    ndim=nfitend+1-nfitanf
+                    do iy = 1, ndim
+                      px(i) = pra(nfitanf-1+iy)
+                    end do
+                    call E01BFF(ndat,r,f,dprof,ndim,px,pf,ifail)
+                    call E01BFF(ndat,r,felm,delm,ndim,px,pelm,ifail)
+                  else  ! simple case
+                    ndim = ndat
+                    px(1:ndim) = tdata(1,1:ndim,j,is)
+                    pf(1:ndim) = tdata(2,1:ndim,j,is)
+                    pelm(1:ndim) = tdata(3,1:ndim,j,is)
+                  endif
+                  n1data(i,j,is1(is))=ndim
+                  t1data(1,1:ndim,j,is1(is))=px(1:ndim)   ! profile position
+                  t1data(2,1:ndim,j,is1(is))=pf(1:ndim)   ! profile value
+                  t1data(3,1:ndim,j,is1(is))=pelm(1:ndim) ! ELM value
+                  write(99,'(1x,a,i1,a,i1,a,i3,a,i3,a)')
+     .             'NDATA(',i,',',j,',',is1(is),')=',
+     .              n1data(i,j,is1(is)),','
+                  iy = 0
+cxpb Check if we need to include new additional species because of de-bundling of is
+                  if (bundle_frac(is1(is),is).lt.1.0_R8) then
+                    do js = 0, ns1-1
+                      if (js.ne.is1(is) .and.
+     &                    bundle_frac(js,is).ne.0.0_R8) then
+                        iy = iy + 1
+                        ad1spec(iy,j,is1(is)) = js
+                        write(99,'(1x,a,i3,a,i1,a,i3,a,i3,a)')
+     .                   'ADDSPEC(',iy,',',j,',',is1(is),')=',
+     .                    ad1spec(iy,j,is1(is)),','
                       endif
                     enddo
                   endif
-                enddo
-                do ix = 1, ndim
-                  write(99,'(1x,a,i3,a,i1,a,i3,a,1p,3(g10.3,a))')
-     .             'TDATA(1,',ix,',',j,',',is1(is),')=',
-     .              t1data(1,ix,j,is1(is)),',',
-     .              t1data(2,ix,j,is1(is)),',',
-     .              t1data(3,ix,j,is1(is)),','
-                enddo
-              endif
-              if (prdone) deallocate(felm,delm,prdsa,r,f,pra,dprof)
+                  do ix = 1, ns
+cxpb Convert old additional species
+                    if (addspec(ix,j,is).ge.0) then
+                      todo = .true.
+                      ib = 1
+                      do while (ib.le.ns1)
+                        if (ad1spec(ib,j,is1(is)).ne.-5) then
+                          ib = ib + 1
+                        else
+                          iy = 1
+                          do while (iy.lt.ns1)
+cxpb We must ensure we have not already listed this additional species
+                            found = .false.
+                            iss = 1
+                            do while (.not.found .and. iss.lt.ib)
+                              found = ad1spec(iss,j,is1(is)).eq.iy
+                              iss = iss + 1
+                            end do
+                            if(
+     .                       bundle_frac(iy,addspec(ix,j,is)).gt.0.0_R8
+     .                       .and. .not.found) then
+                              ad1spec(ib,j,is1(is)) = iy
+                              write(99,'(1x,a,i3,a,i1,a,i3,a,i3,a)')
+     .                         'ADDSPEC(',ib,',',j,',',is1(is),')=',
+     .                          ad1spec(ib,j,is1(is)),','
+                              ib = ib + 1
+                            endif
+                            iy = iy + 1
+                          enddo
+                          ib = ns1 + 1
+                        endif
+                      enddo
+                    endif
+                  enddo
+                  do ix = 1, ndim
+                    write(99,'(1x,a,i3,a,i1,a,i3,a,1p,3(g10.3,a))')
+     .               'TDATA(1,',ix,',',j,',',is1(is),')=',
+     .               t1data(1,ix,j,is1(is)),',',
+     .               t1data(2,ix,j,is1(is)),',',
+     .               t1data(3,ix,j,is1(is)),','
+                  enddo
+                endif
+                if (prdone) deallocate(felm,delm,prdsa,r,f,pra,dprof)
+              enddo
             enddo
+            todo = .false.
+            do ireg = 1, nnreg(0)
+              todo = todo .or. .not.region_flags(ireg,j)
+            enddo
+            write(hlp_frm, '(a,i1,a)') '(1x,a,i1,a,',nnreg(0),'l1,a)'
+            if (todo) write(99,hlp_frm)
+     .       'REGION_FLAGS(1,',j,')=',
+     .       (region_flags(ireg,j),ireg=1,nnreg(0)),','
           enddo
-          todo = .false.
-          do ireg = 1, nnreg(0)
-            todo = todo .or. .not.region_flags(ireg,j)
-          enddo
-          write(hlp_frm, '(a,i1,a)') '(1x,a,i1,a,',nnreg(0),'l1,a)'
-          if (todo) write(99,hlp_frm)
-     .     'REGION_FLAGS(1,',j,')=',
-     .     (region_flags(ireg,j),ireg=1,nnreg(0)),','
-        enddo
-        write(99,'(1x,a,l1,a)') 'NO_PFLUX=',no_pflux,','
-        if(transport_time_mod.gt.0.0_R8) then
-          write(99,'(1x,a,a,a)')
-     .     'TRANSPORT_FILENAME=''',trim(transport_filename),''','
-          write(99,'(1x,a,1p,1g10.3,a)')
-     .     'TRANSPORT_TIME_MOD=',transport_time_mod,','
-          write(99,'(1x,a,1p,1g10.3,a)')
-     .     'TRANSPORT_TIME_SWITCH=',transport_time_switch,','
-        endif
-        if (poloidal_scaling) write(99,'(1x,a,l1,a)')
-     .   'POLOIDAL_SCALING=',poloidal_scaling,','
-        if (scaling_ix_begin.ne.-2) then
-          scaling_ix_begin = conformal_convert(non_commensurate,1,
-     .     scaling_ix_begin,jsep,nx,ny,nx1,ny1,1)
-          write(99,'(1x,a,i4,a)')
-     .     'SCALING_IX_BEGIN=',scaling_ix_begin,','
-        endif
-        if (scaling_ix_end.ne.-2) then
-          scaling_ix_end = conformal_convert(non_commensurate,1,
-     .     scaling_ix_end,jsep,nx,ny,nx1,ny1,3)
-          write(99,'(1x,a,i4,a)')
-     .     'SCALING_IX_END=',scaling_ix_end,','
-        endif
-        if (scaling_strength.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
+          write(99,'(1x,a,l1,a)') 'NO_PFLUX=',no_pflux,','
+          if(transport_time_mod.gt.0.0_R8) then
+            write(99,'(1x,a,a,a)')
+     .       'TRANSPORT_FILENAME=''',trim(transport_filename),''','
+            write(99,'(1x,a,1p,1g10.3,a)')
+     .       'TRANSPORT_TIME_MOD=',transport_time_mod,','
+            write(99,'(1x,a,1p,1g10.3,a)')
+     .       'TRANSPORT_TIME_SWITCH=',transport_time_switch,','
+          endif
+          if (poloidal_scaling) write(99,'(1x,a,l1,a)')
+     .     'POLOIDAL_SCALING=',poloidal_scaling,','
+          if (scaling_ix_begin.ne.-2) then
+            scaling_ix_begin = conformal_convert(non_commensurate,1,
+     .       scaling_ix_begin,jsep,nx,ny,nx1,ny1,1)
+            write(99,'(1x,a,i4,a)')
+     .       'SCALING_IX_BEGIN=',scaling_ix_begin,','
+          endif
+          if (scaling_ix_end.ne.-2) then
+            scaling_ix_end = conformal_convert(non_commensurate,1,
+     .       scaling_ix_end,jsep,nx,ny,nx1,ny1,3)
+            write(99,'(1x,a,i4,a)')
+     .       'SCALING_IX_END=',scaling_ix_end,','
+          endif
+          if (scaling_strength.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
      .     'SCALING_STRENGTH=',scaling_strength,','
-        if (scaling_width.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
+          if (scaling_width.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
      .     'SCALING_WIDTH=',scaling_width,','
-        if (elm_time_begin.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
+          if (elm_time_begin.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
      .     'ELM_TIME_BEGIN=',elm_time_begin,','
-        if (elm_time_end.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
+          if (elm_time_end.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
      .     'ELM_TIME_END=',elm_time_end,','
-        if (elm_time_period.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
+          if (elm_time_period.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
      .     'ELM_TIME_PERIOD=',elm_time_period,','
-        if (elm_ix_begin.ne.-2) then
-          elm_ix_begin = conformal_convert(non_commensurate,1,
-     .     elm_ix_begin,jsep,nx,ny,nx1,ny1,1)
-          write(99,'(1x,a,i4,a)')
-     .     'ELM_IX_BEGIN=',elm_ix_begin,','
-        endif
-        if (elm_ix_end.ne.-2) then
-          elm_ix_end = conformal_convert(non_commensurate,1,
-     .     elm_ix_end,jsep,nx,ny,nx1,ny1,3)
-          write(99,'(1x,a,i4,a)')
-     .     'ELM_IX_END=',elm_ix_end,','
-        endif
-        write(99,'(a1)') '/'
-        close(99)
-        deallocate(t1data)
-        deallocate(n1data)
-        deallocate(ad1spec)
-        deallocate(pelm)
-        deallocate(px)
-        deallocate(pf)
+          if (elm_ix_begin.ne.-2) then
+            elm_ix_begin = conformal_convert(non_commensurate,1,
+     .       elm_ix_begin,jsep,nx,ny,nx1,ny1,1)
+            write(99,'(1x,a,i4,a)')
+     .       'ELM_IX_BEGIN=',elm_ix_begin,','
+          endif
+          if (elm_ix_end.ne.-2) then
+            elm_ix_end = conformal_convert(non_commensurate,1,
+     .       elm_ix_end,jsep,nx,ny,nx1,ny1,3)
+            write(99,'(1x,a,i4,a)')
+     .       'ELM_IX_END=',elm_ix_end,','
+          endif
+          write(99,'(a1)') '/'
+          close(99)
+        end if
         if (.not.streql(transport_filename,'b2.transport.inputfile'))
-     >  then
+     >   then
+          first_pass = .false.
           new_filename =
      .     '../'//transport_filename(1:lnblnk(transport_filename))//'.2'
           filename='../'//transport_filename
@@ -2132,6 +2144,12 @@ cxpb We must ensure we have not already listed this additional species
           found = .true.
         endif
         transport_inputfile = 0
+        deallocate(t1data)
+        deallocate(n1data)
+        deallocate(ad1spec)
+        deallocate(pelm)
+        deallocate(px)
+        deallocate(pf)
       enddo
 
 *  ..write new b2.transport_models_save.parameters
@@ -2724,113 +2742,122 @@ cxpb This will need to be checked !!!
       deallocate(px,pf)
 
 *  ..write new b2.numerics.parameters
+      first_pass = .true.
       inquire(file='../b2.numerics.parameters',exist=todo)
       new_filename = '../b2.numerics.parameters.2'
       inquire(file=new_filename,exist=found)
       if (found) write(6,*) trim(new_filename), ' already present!'
-      do while(.not.same_bundling.and.(numerics_namelist.ge.1.or.todo)
-     & .and..not.found)
+      do while((numerics_namelist.ge.1.or.todo).and..not.found)
         if (numerics_namelist.eq.0) call alloc_b2mod_numerics(nx,ny,ns)
         call read_b2mod_numerics_namelist(nx,ny)
-        write(*,*) 'Writing ',trim(new_filename)
-        open(99,file=new_filename)
-        write(nout(5),'(a)') trim(new_filename)
-        write(99,'(a9)') '&NUMERICS'
-        write(hlp_frm,'(a,i3,a)')
-     .   '(1x,a,i2,a,1p,',ns1,'(1x,g10.3,'',''))'
-        if(minval(dtco(0:ns-1,0:nnreg(0))).ne.1.0_R8 .or.
-     &     maxval(dtco(0:ns-1,0:nnreg(0))).ne.1.0_R8) then
-          do ireg = 0, nnreg(0)
-            cftmp(0:ns-1)=dtco(0:ns-1,ireg)
-            call convert_bundle_r
-     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-            dtco(0:ns1-1,ireg)=cftmp(0:ns1-1)
-            write(99,hlp_frm)
-     .       'DTCO(0,',ireg,')=',(dtco(is,ireg),is=0,ns1-1)
-          enddo
-        endif
-        if(minval(dtmo(0:ns-1,0:nnreg(0))).ne.1.0_R8 .or.
-     &     maxval(dtmo(0:ns-1,0:nnreg(0))).ne.1.0_R8) then
-          do ireg = 0, nnreg(0)
-            cftmp(0:ns-1)=dtmo(0:ns-1,ireg)
-            call convert_bundle_r
-     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-            dtmo(0:ns1-1,ireg)=cftmp(0:ns1-1)
-            write(99,hlp_frm)
-     .       'DTMO(0,',ireg,')=',(dtmo(is,ireg),is=0,ns1-1)
-          enddo
-        endif
-        write(hlp_frm,'(a,i2,a)')
-     .   '(1x,a,1p,',nnreg(0)+1,'(1x,g10.3,'',''))'
-        if(minval(dtee(0:nnreg(0))).ne.1.0_R8 .or.
-     &     maxval(dtee(0:nnreg(0))).ne.1.0_R8) write(99,hlp_frm)
-     .   'DTEE=',(dtee(ireg),ireg=0,nnreg(0))
-        if(minval(dtei(0:nnreg(0))).ne.1.0_R8 .or.
-     &     maxval(dtei(0:nnreg(0))).ne.1.0_R8) write(99,hlp_frm)
-     .   'DTEI=',(dtei(ireg),ireg=0,nnreg(0))
-        write(hlp_frm,'(a,i3,a)') '(1x,a,i2,a,',ns1,'l1,a)'
-        do ireg = 0, nnreg(0)
-          todo = .false.
-          do is = 0, ns-1
-            todo = todo .or. .not.solveco(is,ireg)
-          enddo
-          if (todo) then
-            call convert_bundle_l(ns1,ns,nsm,is_neutral1,bundle_frac,
-     .       solveco(0,ireg))
-            write(99,hlp_frm)
-     .       'SOLVECO(0,',ireg,')=',(solveco(is,ireg),is=0,ns1-1)
+        if (same_bundling) then
+          if (first_pass) 
+     >     write(nout(5),'(a)') 'b2.numerics.parameters'
+          if (.not.streql(numerics_filename,'b2.numerics.parameters'))
+     >     write(nout(5),'(a)') trim(numerics_filename)
+        else
+          write(*,*) 'Writing ',trim(new_filename)
+          open(99,file=new_filename)
+          write(nout(5),'(a)') trim(new_filename)
+          write(99,'(a9)') '&NUMERICS'
+          write(hlp_frm,'(a,i3,a)')
+     .     '(1x,a,i2,a,1p,',ns1,'(1x,g10.3,'',''))'
+          if(minval(dtco(0:ns-1,0:nnreg(0))).ne.1.0_R8 .or.
+     &       maxval(dtco(0:ns-1,0:nnreg(0))).ne.1.0_R8) then
+            do ireg = 0, nnreg(0)
+              cftmp(0:ns-1)=dtco(0:ns-1,ireg)
+              call convert_bundle_r
+     .         (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+              dtco(0:ns1-1,ireg)=cftmp(0:ns1-1)
+              write(99,hlp_frm)
+     .         'DTCO(0,',ireg,')=',(dtco(is,ireg),is=0,ns1-1)
+            enddo
           endif
-        enddo
-        do ireg = 0, nnreg(0)
-          todo = .false.
-          do is = 0, ns-1
-            todo = todo .or. .not.solvemo(is,ireg)
-          enddo
-          if (todo) then
-            call convert_bundle_l(ns1,ns,nsm,is_neutral1,bundle_frac,
-     .       solvemo(0,ireg))
-            write(99,hlp_frm)
-     .       'SOLVEMO(0,',ireg,')=',(solvemo(is,ireg),is=0,ns1-1)
+          if(minval(dtmo(0:ns-1,0:nnreg(0))).ne.1.0_R8 .or.
+     &       maxval(dtmo(0:ns-1,0:nnreg(0))).ne.1.0_R8) then
+            do ireg = 0, nnreg(0)
+              cftmp(0:ns-1)=dtmo(0:ns-1,ireg)
+              call convert_bundle_r
+     .         (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+              dtmo(0:ns1-1,ireg)=cftmp(0:ns1-1)
+              write(99,hlp_frm)
+     .         'DTMO(0,',ireg,')=',(dtmo(is,ireg),is=0,ns1-1)
+            enddo
           endif
-        enddo
-        write(hlp_frm,'(a,i2,a)') '(1x,a,',nnreg(0)+1,'l1,a)'
-        todo = .false.
-        do ireg = 0, nnreg(0)
-          todo = todo .or. .not.solvepo(ireg)
-        enddo
-        if (todo) write(99,hlp_frm)
-     .    'SOLVEPO=',(solvepo(ireg),is=0,nnreg(0))
-        todo = .false.
-        do ireg = 0, nnreg(0)
-          todo = todo .or. .not.solveee(ireg)
-        enddo
-        if (todo) write(99,hlp_frm)
-     .    'SOLVEEE=',(solveee(ireg),is=0,nnreg(0))
-        todo = .false.
-        do ireg = 0, nnreg(0)
-          todo = todo .or. .not.solveei(ireg)
-        enddo
-        if (todo) write(99,hlp_frm)
-     .    'SOLVEEI=',(solveei(ireg),is=0,nnreg(0))
-        if(numerics_time_mod.gt.0.0_R8) then
-          write(99,'(1x,a,a,a)')
-     .     'NUMERICS_FILENAME=''',trim(numerics_filename),''','
-          write(99,'(1x,a,1p,1g10.3,a)')
-     .     'NUMERICS_TIME_MOD=',numerics_time_mod,','
-          write(99,'(1x,a,1p,1g10.3,a)')
-     .     'NUMERICS_TIME_SWITCH=',numerics_time_switch,','
+          write(hlp_frm,'(a,i2,a)')
+     .     '(1x,a,1p,',nnreg(0)+1,'(1x,g10.3,'',''))'
+          if(minval(dtee(0:nnreg(0))).ne.1.0_R8 .or.
+     &       maxval(dtee(0:nnreg(0))).ne.1.0_R8) write(99,hlp_frm)
+     .     'DTEE=',(dtee(ireg),ireg=0,nnreg(0))
+          if(minval(dtei(0:nnreg(0))).ne.1.0_R8 .or.
+     &       maxval(dtei(0:nnreg(0))).ne.1.0_R8) write(99,hlp_frm)
+     .     'DTEI=',(dtei(ireg),ireg=0,nnreg(0))
+          write(hlp_frm,'(a,i3,a)') '(1x,a,i2,a,',ns1,'l1,a)'
+          do ireg = 0, nnreg(0)
+            todo = .false.
+            do is = 0, ns-1
+              todo = todo .or. .not.solveco(is,ireg)
+            enddo
+            if (todo) then
+              call convert_bundle_l(ns1,ns,nsm,is_neutral1,bundle_frac,
+     .         solveco(0,ireg))
+              write(99,hlp_frm)
+     .         'SOLVECO(0,',ireg,')=',(solveco(is,ireg),is=0,ns1-1)
+            endif
+          enddo
+          do ireg = 0, nnreg(0)
+            todo = .false.
+            do is = 0, ns-1
+              todo = todo .or. .not.solvemo(is,ireg)
+            enddo
+            if (todo) then
+              call convert_bundle_l(ns1,ns,nsm,is_neutral1,bundle_frac,
+     .         solvemo(0,ireg))
+              write(99,hlp_frm)
+     .         'SOLVEMO(0,',ireg,')=',(solvemo(is,ireg),is=0,ns1-1)
+            endif
+          enddo
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nnreg(0)+1,'l1,a)'
+          todo = .false.
+          do ireg = 0, nnreg(0)
+            todo = todo .or. .not.solvepo(ireg)
+          enddo
+          if (todo) write(99,hlp_frm)
+     .      'SOLVEPO=',(solvepo(ireg),is=0,nnreg(0))
+          todo = .false.
+          do ireg = 0, nnreg(0)
+            todo = todo .or. .not.solveee(ireg)
+          enddo
+          if (todo) write(99,hlp_frm)
+     .     'SOLVEEE=',(solveee(ireg),is=0,nnreg(0))
+          todo = .false.
+          do ireg = 0, nnreg(0)
+            todo = todo .or. .not.solveei(ireg)
+          enddo
+          if (todo) write(99,hlp_frm)
+     .     'SOLVEEI=',(solveei(ireg),is=0,nnreg(0))
+          if(numerics_time_mod.gt.0.0_R8) then
+            write(99,'(1x,a,a,a)')
+     .       'NUMERICS_FILENAME=''',trim(numerics_filename),''','
+            write(99,'(1x,a,1p,1g10.3,a)')
+     .       'NUMERICS_TIME_MOD=',numerics_time_mod,','
+            write(99,'(1x,a,1p,1g10.3,a)')
+     .       'NUMERICS_TIME_SWITCH=',numerics_time_switch,','
+          endif
+          if(core_dt_factor.ne.1.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CORE_DT_FACTOR=',core_dt_factor,','
+          if(core_dt_suppression.ne.1.0_R8) 
+     .     write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CORE_DT_SUPPRESSION=',core_dt_suppression,','
+          if(time_factor_required.ne.0.1_R8)
+     .     write(99,'(1x,a,1p,1g10.3,a)')
+     .     'TIME_FACTOR_REQUIRED=',time_factor_required,','
+          write(99,'(a1)') '/'
+          close(99)
         endif
-        if(core_dt_factor.ne.1.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
-     .   'CORE_DT_FACTOR=',core_dt_factor,','
-        if(core_dt_suppression.ne.1.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
-     .   'CORE_DT_SUPPRESSION=',core_dt_suppression,','
-        if(time_factor_required.ne.0.1_R8)
-     .   write(99,'(1x,a,1p,1g10.3,a)')
-     .   'TIME_FACTOR_REQUIRED=',time_factor_required,','
-        write(99,'(a1)') '/'
-        close(99)
         if (.not.streql(numerics_filename,'b2.numerics.parameters'))
      >   then
+          first_pass = .false.
           new_filename =
      .     '../'//numerics_filename(1:lnblnk(numerics_filename))//'.2'
           inquire(file=trim(numerics_filename),exist=todo)

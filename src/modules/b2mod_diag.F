@@ -94,7 +94,7 @@ c
       implicit none
       integer nxd,nyd,nsd,nregionv,nstra,natm
       integer i, is, iss
-      character*12 hlp_frm
+      character*18 hlp_frm
 
       call xertst(1.le.nxd, 'faulty input nxd')
       call xertst(1.le.nyd, 'faulty input nyd')
@@ -161,9 +161,10 @@ c
       write(*,'(1x,a,3i3)') 'natm, nsd, nstages ', natm, nsd, nstages
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nsd,'i3)'
       write(*,hlp_frm) 'b2espcr : ', b2espcr(0:nsd-1)
-      write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nsd,'a2)'
+      write(hlp_frm,'(a6,i3,a8)') '(1x,a,',nsd,'(a2,1x))'
       write(*,hlp_frm) 'is_codes : ', is_codes
-      write(*,*) 'atoms_list : ', atoms_list(1:nspecies)
+      write(hlp_frm,'(a6,i3,a8)') '(1x,a,',nspecies,'(a2,1x))'
+      write(*,hlp_frm) 'atoms_list : ', atoms_list(1:nspecies)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',i,'i4)'
       write(*,hlp_frm) 'ions_list : ', ions_list(1:i)
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nspecies,'i4)'

@@ -255,34 +255,34 @@
                 endif
               endif
               if (nc.eq.0 .and. iy.eq.1. .or. debug) then
-                if (kind_source.eq.1) write(*,*) 'AXIAL-SOURCES: sna ',
-     &           spec,xr(ix),xf(ix)
-                if (kind_source.eq.2) write(*,*) 'AXIAL-SOURCES: smo ',
-     &           spec,xr(ix),xf(ix)
-                if (kind_source.eq.3) write(*,*) 'AXIAL-SOURCES: she ',
-     &           xr(ix),xf(ix)
-                if (kind_source.eq.4) write(*,*) 'AXIAL-SOURCES: shi ',
-     &           xr(ix),xf(ix)
-                if (kind_source.eq.5) write(*,*) 'AXIAL-SOURCES: sch ',
-     &           xr(ix),xf(ix)
-                if (kind_source.eq.6) write(*,*) 'AXIAL-SOURCES: sne ',
-     &           xr(ix),xf(ix)
+                if (kind_source.eq.1) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &           'AXIAL-SOURCES: sna ',spec,xr(ix),xf(ix)
+                if (kind_source.eq.2) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &           'AXIAL-SOURCES: smo ',spec,xr(ix),xf(ix)
+                if (kind_source.eq.3) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &           'AXIAL-SOURCES: she ',xr(ix),xf(ix)
+                if (kind_source.eq.4) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &           'AXIAL-SOURCES: shi ',xr(ix),xf(ix)
+                if (kind_source.eq.5) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &           'AXIAL-SOURCES: sch ',xr(ix),xf(ix)
+                if (kind_source.eq.6) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &           'AXIAL-SOURCES: sne ',xr(ix),xf(ix)
               endif
               if (nc.eq.0) write (96,*) xr(ix),xf(ix)
             enddo
             if (nc.eq.0 .or. debug) then
-              if (kind_source.eq.1) write(*,*) 'PROFILE-SOURCES: sna ',
-     &         spec,pr(iy),pf(iy)
-              if (kind_source.eq.2) write(*,*) 'PROFILE-SOURCES: smo ',
-     &         spec,pr(iy),pf(iy)
-              if (kind_source.eq.3) write(*,*) 'PROFILE-SOURCES: she ',
-     &         pr(iy),pf(iy)
-              if (kind_source.eq.4) write(*,*) 'PROFILE-SOURCES: shi ',
-     &         pr(iy),pf(iy)
-              if (kind_source.eq.5) write(*,*) 'PROFILE-SOURCES: sch ',
-     &         pr(iy),pf(iy)
-              if (kind_source.eq.6) write(*,*) 'PROFILE-SOURCES: sne ',
-     &         pr(iy),pf(iy)
+              if (kind_source.eq.1) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &         'PROFILE-SOURCES: sna ',spec,pr(iy),pf(iy)
+              if (kind_source.eq.2) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &         'PROFILE-SOURCES: smo ',spec,pr(iy),pf(iy)
+              if (kind_source.eq.3) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &         'PROFILE-SOURCES: she ',pr(iy),pf(iy)
+              if (kind_source.eq.4) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &         'PROFILE-SOURCES: shi ',pr(iy),pf(iy)
+              if (kind_source.eq.5) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &         'PROFILE-SOURCES: sch ',pr(iy),pf(iy)
+              if (kind_source.eq.6) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &         'PROFILE-SOURCES: sne ',pr(iy),pf(iy)
             endif
             if (nc.eq.0) write (94,*) pr(iy),pf(iy)
           enddo
@@ -458,7 +458,8 @@
         enddo
       else
         if(transport_time_mod.gt.0.0_R8) then
-          write(*,*) 'ELM: ',tim,mod(tim,transport_time_mod),
+          write(*,'(a,1p,3(1x,e14.7),2i4)')
+     .     'ELM: ',tim,mod(tim,transport_time_mod),
      1     transport_time_switch,int(tim/transport_time_mod),elm_count
           if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
      1     int(tim/transport_time_mod).gt.elm_count) then

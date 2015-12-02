@@ -855,7 +855,7 @@ c   recompute particle fluxes
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             call b2npco (nx, ny, guard_flows, nnreg(0), solvedum, 
-     &       solving(1), solvedm2, ncall, is, rxf0, vol, pbs,flob,conb,  !srv 22.01.02 01.07.05
+     &       solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob,conb, !srv 22.01.02 01.07.05
      &       sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &       ua(-1,-1,is), fna(-1,-1,0,is),
      &       resco(-1,-1,is), corpa(-1,-1,is), ier0)
@@ -866,13 +866,15 @@ c   recompute particle fluxes
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             if(.not.is_neutral(is)) then
               call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
-     &         solving(1), solvedm2, ncall, is, rxf0,vol,pbs,flob,conb,
+     &         solving(1), solvedm2, ncall, is, rxf0,
+     &         vol, pbs, flob, conb,
      &         sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &         ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
             else
               call b2npco (nx, ny, guard_flows, nnreg(0), solvedum,  
-     &         solving(1), solvedm2, ncall, is, rxf0,vol,pbs,flob,conb,
+     &         solving(1), solvedm2, ncall, is, rxf0,
+     &         vol, pbs, flob, conb,
      &         sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
      &         ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
