@@ -120,7 +120,7 @@
 *    'b2mndr_hz'                '0.0'                  Physics
 *    'b2mndr_idout0'            'pgnl;pgmm;pzmm'       Output
 *    'b2mndr_idout1'            'pzmm'                 Output
-*    'b2mndr_inverse_ua'        '0'                    Numerics
+*    'b2mndr_inverse_ua'        '0'                    Output
 *    'b2mndr_isfb'              ismain                 Numerics
 *    'b2mndr_ismain'            '1'                    Run
 *    'b2mndr_ixfb'              5*nx/8                 Numerics
@@ -1725,6 +1725,12 @@
 *    file is produced after every B2.5 time step. Additionally, if 
 *    savef31.ne.0, the fort.31 file will be updated before every Eirene call 
 *    for coupled runs.
+*
+*    'b2mndr_inverse_ua'        '0'                    Output
+*    If inverse_ua.eq.1, the code will produce a 'b2fstati_with-ua' file that
+*    contains the same plasma information, but with the opposite sign convention
+*    for the parallel velocity. The run will then proceed with the new velocities
+*    with their sign inverted.
 *
 *    'b2yrdr_ns'                ns                     Output
 *    New number of species desired when reading a new atomic rates file

@@ -1,4 +1,5 @@
-      subroutine b2tlc0 (nx, ny, ns, hx, hy, na, te, ti, dpa0, dpa0mx)
+      subroutine b2tlc0 (nx, ny, ns, hx, hy, vol, qz, na, te, ti, cdpa,  !srv 30.11.15 {
+     &                   flc)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -8,12 +9,15 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     *  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny), 
-     1  dpa0(-1:nx,-1:ny,0:ns-1)
+     *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny),
+     *  qz(-1:nx,-1:ny,0:1),
+     *  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny)
+*   ..input and output arguments
+      real (kind=R8) ::
+     *  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  dpa0mx(-1:nx,-1:ny,0:1,0:ns-1)
+     *  flc(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..common blocks
 *     ------------------------------------------------------------------
 *     B2TLC0 computes the neutral diffusion flux limit.              !srv 09.07.03
@@ -28,7 +32,10 @@
       data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/
 *   ..procedures
       intrinsic max, abs, sqrt
+      real (kind=R8) ::
+     *   hy1
       external subini, subend, xertst, ipgetr
+      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlc0')
@@ -45,65 +52,59 @@
         call xertst (0.lt.gamma, 'invalid input parameter gamma')
       endif
 
-      call sfill(n2*2*ns, 0.0_R8, dpa0mx, 1)
+      call sfill(n2*2*ns, 1.0_R8, flc, 1)
+      call sfill(2, 1.0_R8, maxfluxlimit, 1)
 *   ..nothing done if alpha.eq.0
-      if (alpha.eq.0.0_R8) then
-        dpa0mx(:,:,0,:) = dpa0(:,:,:)
-        dpa0mx(:,:,1,:) = dpa0(:,:,:)
-        goto 100
-      endif 
-
-      maxfluxlimit=0
-
-      do is = 0, ns-1
-       if (is_neutral(is)) then
+      if (alpha.ne.0.0_R8) then
+       do is = 0, ns-1
+        if (is_neutral(is)) then
 *    ..compute partial pressure
-        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
-        do ix = -1, nx
-         do iy = -1, ny
+         call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
+         do ix = -1, nx
+          do iy = -1, ny
 *   ..compute parallel neutral difusion flux limit
-          if (leftix(ix,iy).ne.-2) then
-           t0 = max(ti(ix,iy), ti(leftix(ix,iy),leftiy(ix,iy)))
-           t1 = (na(ix,iy,is) + na(leftix(ix,iy),leftiy(ix,iy),is))
-     .          /2.0_R8
-           dpb = abs(pb(leftix(ix,iy),leftiy(ix,iy)) - pb(ix,iy))
-     .           /(0.5_R8*(hx(ix,iy)+
-     .                     hx(leftix(ix,iy),leftiy(ix,iy))))
-           vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
-           t2 = (1.0_R8 + ((dpa0(ix,iy,is)*dpb)/
-     .          (alpha*vbar/4.0e0_R8*t1))**gamma)**(1.0_R8/gamma)
-           dpa0mx(ix,iy,0,is) = dpa0(ix,iy,is)/t2
-           maxfluxlimit(0)=max(maxfluxlimit(0),t2)
-          endif
-	   enddo
-	  enddo
-*   ..compute perpendicular neutral difusion flux limit
-        do ix = -1, nx
-         do iy = -1, ny
-          if (bottomiy(ix,iy).ne.-2) then
-            t0 = max(ti(ix,iy), ti(bottomix(ix,iy),bottomiy(ix,iy)))
-            t1 = (na(ix,iy,is) + 
-     .            na(bottomix(ix,iy),bottomiy(ix,iy),is))/2.0_R8
-            dpb = abs(pb(bottomix(ix,iy),bottomiy(ix,iy))-pb(ix,iy))
-     .           /(0.5_R8*(hy(ix,iy)+
-     .                     hy(bottomix(ix,iy),bottomiy(ix,iy))))
+           if (leftix(ix,iy).ne.-2) then
+            t0 = (ti(ix,iy) + ti(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
+            t1 = (na(ix,iy,is) + na(leftix(ix,iy),leftiy(ix,iy),is))
+     &          /2.0_R8
+            dpb = cdpa(ix,iy,0,is)*
+     &            abs(pb(leftix(ix,iy),leftiy(ix,iy)) - pb(ix,iy))
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
-            t2 = (1.0_R8 + ((dpa0(ix,iy,is)*dpb)/
-     .            (alpha*vbar/4.0e0_R8*t1))**gamma)**(1.0_R8/gamma)
-            dpa0mx(ix,iy,1,is) = dpa0(ix,iy,is)/t2
-            maxfluxlimit(1)=max(maxfluxlimit(1),t2)
-	    endif
-	   enddo
+     &            *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+     &            /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
+            t2 = 1.0_R8/(1.0_R8 + (dpb/(alpha*vbar/4.0e0_R8*t1))**gamma)
+     &                                                 **(1.0_R8/gamma)
+            cdpa(ix,iy,0,is) = cdpa(ix,iy,0,is)*t2
+            flc(ix,iy,0,is) = t2
+            maxfluxlimit(0)=max(maxfluxlimit(0),t2)
+           endif
 	  enddo
-       else
-        dpa0mx(:,:,0,is) = dpa0(:,:,is)
-        dpa0mx(:,:,1,is) = dpa0(:,:,is)
-       endif
-      enddo
+	 enddo
+*   ..compute perpendicular neutral difusion flux limit
+         do ix = -1, nx
+          do iy = -1, ny
+           if (bottomiy(ix,iy).ne.-2) then
+            t0 = (ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
+            t1 = (na(ix,iy,is) + 
+     &            na(bottomix(ix,iy),bottomiy(ix,iy),is))/2.0_R8
+            dpb = cdpa(ix,iy,1,is)*
+     &            abs(pb(bottomix(ix,iy),bottomiy(ix,iy))-pb(ix,iy))
+            vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
+     &           *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
+     &           /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+            t2 = 1.0_R8/(1.0_R8 + (dpb/(alpha*vbar/4.0e0_R8*t1))**gamma)
+     &                                                  **(1.0_R8/gamma)
+            cdpa(ix,iy,1,is) = cdpa(ix,iy,1,is)*t2
+            flc(ix,iy,1,is) = t2
+            maxfluxlimit(1)=max(maxfluxlimit(1),t2)
+	   endif
+	  enddo
+	 enddo
+        endif
+       enddo
+      endif
 
-!      write(*,"(1x,a,1p,2e10.2)") 'b2tlc0: maxfluxlimit = ',maxfluxlimit
-
- 100  continue
+!      write(*,'(1x,a,1p,2e10.2)') 'b2tlc0: maxfluxlimit = ',maxfluxlimit
 
 *   ..return
       ncall = ncall + 1

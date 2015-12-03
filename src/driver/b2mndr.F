@@ -140,7 +140,7 @@
 *   ..local variables
       integer ncall, ntim, mvinc, mvnum, ix, iy, is, js, jsep, jxi, jxa,
      &  ib, isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
-      integer nscx, iscx(0:nscxmax-1), k
+      integer nscx, iscx(0:nscxmax-1), k, idum(0:9)
       save nscx, iscx, isfb, 
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       integer, save :: background_new = 0                            !srv 01.03.10 14.07.10
@@ -823,11 +823,11 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
-       call ipgeti ('b2mndr_inverse_ua', inverse_ua)                 !srv 11.01.13
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
        call xertst (0.le.ntim.and.0.0_R8.lt.dtim,
      &   'faulty internal parameter ntim, dtim')
+       call ipgeti ('b2mndr_inverse_ua', inverse_ua)                 !srv 11.01.13
        call ipgetr ('b2mndr_stim', stim)
        call ipgetr ('b2mndr_etim', etim)
        call ipgetr ('b2news_BoRiS', BoRiS)
@@ -1378,6 +1378,22 @@ c   --> better way doing this is necessary)
           write (*,*) 'Convergence of bundled rates = ',is,max_delta
         enddo
       endif
+*   ..rewrite input file with inverted velocity
+      if(inverse_ua.ne.0) then                                           !srv 04.02.15 {
+        call cfopen (70,'b2fstati_with-ua','new','un*formatted')
+        idum(0) = nx
+        idum(1) = ny
+        idum(2) = ns
+        call cfverw (70, newversion)
+        call cfwuin (70, 3, idum, 'nx,ny,ns')
+        label = trim(label)//' Inverted velocities'
+        call cfwuch (70, 120, label, 'label')
+        call b2wuzd (70, newversion, ns, zamin, zamax, zn, am)
+        ua=-ua
+        call b2wups (70, nx, ny, ns, ne, na, ua, uadia, te,
+     &   ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
+        close(70)
+      endif                                                              !srv 04.02.15 }
 *   ..initialise previous state and fluxes
       call b2scopy (n2*ns, na, 1, na0, 1)
       call b2scopy (n2, ne, 1, ne0, 1)

@@ -380,7 +380,7 @@
         nesum=nesum + ne(ix,iy)*vol(ix,iy)                        !srv 15.12.00 25.01.02
         tisum=tisum + ti(ix,iy)*vol(ix,iy)                        !srv 15.12.00
         tesum=tesum + te(ix,iy)*vol(ix,iy)                        !srv 15.12.00
-        bzhzsum = bzhzsum+abs(bb(ix,iy,2))*vol(ix,iy)**2/gs(ix,iy,2)   !lk 20.11.07 !srv 07.05.13
+        bzhzsum = bzhzsum+bb(ix,iy,2)*vol(ix,iy)**2/gs(ix,iy,2)   !lk 20.11.07 !srv 07.05.13
        endif                                                      !srv 26.11.02
       enddo                                                       !srv 15.12.00
       bbaverage=bbsum/volsum                                      !srv 18.10.04

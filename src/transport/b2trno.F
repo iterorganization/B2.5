@@ -86,7 +86,8 @@
       real (kind=R8) ::
      *  wrk(-1:nx,-1:ny), hcimx(-1:nx,-1:ny,0:1,0:ns-1),
      1  hvi0(-1:nx,-1:ny,0:1), hve0(-1:nx,-1:ny,0:1),
-     2  work(-1:nx,-1:ny), dpa0mx(-1:nx,-1:ny,0:1,0:ns-1),         !srv 09.07.03
+     2  hzvol(-1:nx,-1:ny), flc(-1:nx,-1:ny,0:1,0:ns-1),           !srv 09.07.03 30.11.15
+     3  flchz(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 09.07.03 30.11.15
      1	pol_anom_scale
       save ncall, pol_anom_scale, hcimx_flag, mode
 *   ..procedures
@@ -153,7 +154,7 @@
 * ..compute transport coefficients
 *   ..compute differential anomalous transport coefficients
       call b2tqna (nx, ny, ns, nscx, iscx, bb, na, te, ti, 
-     & ni, ne, ne2, hx, hy, vol, crx, cry, conn, qz,             !srv 15.12.05
+     & ni, ne, ne2, hx, hy, vol, crx, cry, conn, qz,                 !srv 15.12.05
      & dna0, dpa0, vla0, vma0, vsa0, hci0, hcib, hce0, sig0, alf0, 
      & hvi0, hve0, wrk)
 *   ..apply flux limit to neutrals contribution to hci
@@ -169,27 +170,16 @@
           enddo
         enddo
       endif
-      if(flux_limit_to_dpa .ne. 0) then                              !srv 15.06.08 {
-*   .. apply flux limit to neutrals contribution to dpa0
-        call b2tlc0 (nx, ny, ns, hx, hy, na, te, ti, dpa0, dpa0mx)   !srv 09.07.03 
-      endif                                                          !srv 15.06.08 }
 *   ..incorporate geometry
       do is = 0, ns-1
         call b2txcx (nx, ny, mode, vol, gs, hx, qz, dna0(-1,-1,is),
      &   cdna(-1,-1,0,is))
         call b2txcy (nx, ny, mode, vol, gs, hy, qz, dna0(-1,-1,is),
      &   cdna(-1,-1,1,is))
-        if(flux_limit_to_dpa .ne. 0) then                             !srv 15.06.08
-          call b2txcx (nx, ny, mode, vol, gs, hx, qz, 
-     &     dpa0mx(-1,-1,0,is), cdpa(-1,-1,0,is))
-          call b2txcy (nx, ny, mode, vol, gs, hy, qz, 
-     &     dpa0mx(-1,-1,1,is), cdpa(-1,-1,1,is))
-        else                                                          !srv 15.06.08 {
-          call b2txcx (nx, ny, mode, vol, gs, hx, qz, dpa0(-1,-1,is),
-     &     cdpa(-1,-1,0,is))
-          call b2txcy (nx, ny, mode, vol, gs, hy, qz, dpa0(-1,-1,is),
-     &     cdpa(-1,-1,1,is))
-        endif                                                         !srv 15.06.08 }
+        call b2txcx (nx, ny, mode, vol, gs, hx, qz, dpa0(-1,-1,is),
+     &   cdpa(-1,-1,0,is))
+        call b2txcy (nx, ny, mode, vol, gs, hy, qz, dpa0(-1,-1,is),
+     &   cdpa(-1,-1,1,is))
         call b2txsx (nx, ny, vol, hx, qz, vla0(-1,-1,0,is),
      &   cvla(-1,-1,0,is))
         call b2txsy (nx, ny, vol, hy, qz, vla0(-1,-1,1,is),
@@ -201,38 +191,31 @@
       enddo
 
 *   ..incorporate geometry and hz                                     !srv 09.01.01
-      work = hz*vol
+      hzvol = hz*vol
       do is = 0, ns-1
-       call b2txcx (nx, ny, mode, work, gs, hx, qz, dna0(-1,-1,is),
+       call b2txcx (nx, ny, mode, hzvol, gs, hx, qz, dna0(-1,-1,is),
      &   cdnahz(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, work, gs, hy, qz, dna0(-1,-1,is),
+       call b2txcy (nx, ny, mode, hzvol, gs, hy, qz, dna0(-1,-1,is),
      &   cdnahz(-1,-1,1,is))
-       if(flux_limit_to_dpa .ne. 0) then                             !srv 15.06.08
-        call b2txcx (nx, ny, mode, work, gs, hx, qz, dpa0mx(-1,-1,0,is),
-     &   cdpahz(-1,-1,0,is))                                         !srv 09.07.03 {
-        call b2txcy (nx, ny, mode, work, gs, hy, qz, dpa0mx(-1,-1,1,is),
-     &   cdpahz(-1,-1,1,is))                                         !srv 09.07.03 }
-       else                                                          !srv 15.06.08 {
-        call b2txcx (nx, ny, mode, work, gs, hx, qz, dpa0(-1,-1,is),
+       call b2txcx (nx, ny, mode, hzvol, gs, hx, qz, dpa0(-1,-1,is),
      &   cdpahz(-1,-1,0,is))
-        call b2txcy (nx, ny, mode, work, gs, hy, qz, dpa0(-1,-1,is),
+       call b2txcy (nx, ny, mode, hzvol, gs, hy, qz, dpa0(-1,-1,is),
      &   cdpahz(-1,-1,1,is))
-       endif                                                         !srv 15.06.08 }
-       call b2txsx (nx, ny, work, hx, qz, vla0(-1,-1,0,is),
+       call b2txsx (nx, ny, hzvol, hx, qz, vla0(-1,-1,0,is),
      &   cvlahz(-1,-1,0,is))
-       call b2txsy (nx, ny, work, hy, qz, vla0(-1,-1,1,is),
+       call b2txsy (nx, ny, hzvol, hy, qz, vla0(-1,-1,1,is),
      &   cvlahz(-1,-1,1,is))
-       call b2txsx (nx, ny, work, hx, qz, vma0(-1,-1,0,is),         !srv 15.12.05
+       call b2txsx (nx, ny, hzvol, hx, qz, vma0(-1,-1,0,is),          !srv 15.12.05
      &   cvmahz(-1,-1,0,is))
-       call b2txsy (nx, ny, work, hy, qz, vma0(-1,-1,1,is),         !srv 15.12.05
+       call b2txsy (nx, ny, hzvol, hy, qz, vma0(-1,-1,1,is),          !srv 15.12.05
      &   cvmahz(-1,-1,1,is))
-       call b2txcx (nx, ny, mode, work, gs, hx, qz, vsa0(-1,-1,is), !srv 01.07.05 {
+       call b2txcx (nx, ny, mode, hzvol, gs, hx, qz, vsa0(-1,-1,is),  !srv 01.07.05 {
      &   cvsahz(-1,-1,0,is))
-       call b2txcy (nx, ny, mode, work, gs, hy, qz, vsa0(-1,-1,is),
-     &   cvsahz(-1,-1,1,is))                                        !srv 01.07.05 }
-      enddo                                                         !srv 09.01.01
-*   ..save the anomalous transport coefficients                     !srv 04.10.99
-      cvsa_an = cvsa                                                !srv 04.10.99
+       call b2txcy (nx, ny, mode, hzvol, gs, hy, qz, vsa0(-1,-1,is),
+     &   cvsahz(-1,-1,1,is))                                          !srv 01.07.05 }
+      enddo                                                           !srv 09.01.01
+*   ..save the anomalous transport coefficients                       !srv 04.10.99
+      cvsa_an = cvsa                                                  !srv 04.10.99
       call b2txsx (nx, ny, vol, hx, qz, hvi0(-1,-1,0), chvi(-1,-1,0))
       call b2txsy (nx, ny, vol, hy, qz, hvi0(-1,-1,1), chvi(-1,-1,1))
       call b2txsx (nx, ny, vol, hx, qz, hve0(-1,-1,0), chve(-1,-1,0))
@@ -282,6 +265,13 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
 *   .. save the anomalous transport coefficients
       csig_an = csig
       calf_an = calf
+
+      if(flux_limit_to_dpa .ne. 0) then                              !srv 15.06.08 {
+*   .. apply flux limit to neutrals contribution to cdpa
+        call b2tlc0 (nx, ny, ns, hx, hy, vol, qz, na, te, ti, cdpa, flc) !srv 09.07.03 30.11.15
+        call b2tlc0 (nx, ny, ns, hx, hy, hzvol, qz, na, te, ti, cdpahz,  !srv 30.11.15
+     &               flchz) 
+      endif                                                          !srv 15.06.08 }
 
 *    ..test sign of chce, chci
       call b2xvsg (n2*2, chce, 1, 'chce', '.ge.')
