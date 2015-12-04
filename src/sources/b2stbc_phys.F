@@ -1741,11 +1741,11 @@ c dpc
             else
               SCONPAR(IS) = 0.0_R8
               DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
-     >         THEN
-                SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
-              endif
-            ENDDO
+                if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+     >           THEN
+                  SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
+                endif
+              ENDDO
             endif
             write(*,*) ' Summed value is ', SCONPAR(IS)
           endif
@@ -1812,7 +1812,7 @@ c dpc
               CALL XERRAB
      1         ('B2STBC -- BCCON=16, NOT AVAILABLE FOR N,W,E')
             ENDIF
-        endif                                                          !srv 16.02.12 }
+          endif                                                        !srv 16.02.12 }
           GOTO 10000
 
 * -- BCCON=17 -- FILLER
@@ -1896,11 +1896,12 @@ c dpc
           if(ncall.eq.0) then
             call xertst(is.eq.ismain,
      1       'BCCON = 19 is applied for main ion only ')
-          write(*,*) 'given sum of integrated neutrals and main ',
+            write(*,*) 'given sum of integrated neutrals and main ',
      &                 'ion particle flux with constant ion density '
 !           write all boundaries with this type of boundary condition
             DO IBW=IB,NBC
-            if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))THEN
+              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+     >         THEN
                 write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
      1           boundary_location(ibw),' for species ',IS
                 call xertst(
@@ -1908,14 +1909,14 @@ c dpc
      .            'BCCON = 19 only applicable to core boundaries !')
                 call xertst(CONPAR(IS,IBW,1).gt.0.0_R8,
      1           'BCCON = 19, CONPAR(,,1) !> 0')
-            endif
+              endif
               if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.16.or.
      1            BCCON(IS,IBW).EQ.21.or.BCCON(IS,IBW).EQ.22.or.
      1            BCCON(IS,IBW).EQ.23)) then
                 call xerrab
      .           ('BCCON types 16, 19, 21, 22 and 23 cannot be mixed!')
               endif
-          ENDDO
+            ENDDO
             if (use_astra.ne.0) then
 #ifdef ASTRA
               SCONPAR(IS) = fSeNBI_astra
@@ -1929,26 +1930,28 @@ c dpc
                 if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
-              endif
-            ENDDO
+                endif
+              ENDDO
             endif
-          write(*,*) ' Summed value is ', SCONPAR(IS)
-            NAS = 0.0_R8
-            VS = 0.0_R8
-            DO IBW=IB,NBC
-              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
-     >         THEN
-              NAS = NAS+NA(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),is)*
+            write(*,*) ' Summed value is ', SCONPAR(IS)
+          endif
+          NAS = 0.0_R8
+          VS = 0.0_R8
+          DO IBW=IB,NBC
+            if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+     >       THEN
+              DO IX = 1, BC_LIST_SIZE(IBW)
+                NAS = NAS+NA(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),is)*
      .                   VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                 VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-              endif
-            ENDDO
-            NAS = NAS/VS
-          endif
-        if(.not.once_bccon(is)) then
+              END DO
+            endif
+          ENDDO
+          NAS = NAS/VS
+          if(.not.once_bccon(is)) then
             IF(BCCHAR(IB).EQ.'S') THEN
-            totfluxn = 0.0_R8
-            totfluxi = 0.0_R8
+              totfluxn = 0.0_R8
+              totfluxi = 0.0_R8
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -2012,11 +2015,11 @@ cxpb  Add contribution from Eirene core boundary fluxes
               ENDIF
             ENDDO
             once_bccon(is) = .true.
-            ELSE                                                       !srv 16.02.12 }
+            ELSE                                                     !srv 16.02.12 }
               CALL XERRAB
      1         ('B2STBC -- BCCON=19, NOT AVAILABLE FOR N,W,E')
             ENDIF
-        endif                                                          !srv 16.02.12 }
+          endif                                                      !srv 16.02.12 }
           GOTO 10000
 
 * -- BCCON=20 -- constant density feedback condition

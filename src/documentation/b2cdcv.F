@@ -80,7 +80,7 @@
 *     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
 *     x-diameter, the y-diameter and z-diameter respectively, of the 
 *     (ix,iy) cell.
-*     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
+*     It will hold that 0.lt.hx(,) and 0.lt.hy(,) and 0.lt.hz(,).
 *
 *     qz - (-1:nx,-1:ny,0:1) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
@@ -179,7 +179,7 @@
 *     bzb - (-1:nx,-1:ny) real*8 array contains Bz/B**2 - Bz/<B**2> !srv 09.06.08
 *     on the cell centre.
 *
-*     OnedBsq - (-1:nx,-1:ny) real*8 array.                       !sv
+*     OnedBsq - (-1:nx,-1:ny) real*8 array.                         !srv
 *     For (ix,iy) in (-1:nx,-1:ny), OnedBsq(ix,iy) specifies the
 *     1/bb(,,3)**2 on the cell centre
 *
@@ -223,6 +223,8 @@
 *     ua - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), ua(ix,iy,is) specifies
 *     the parallel velocity of atomic species (is) on the (ix,iy) cell.
+*     The sign of the parallel velocity indicates whether it is flowing
+*     in the same direction as the local poloidal magnetic field.
 *
 *     te - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
@@ -235,6 +237,12 @@
 *     po - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), po(ix,iy) specifies the electric
 *     potential on the (ix,iy) cell.
+*
+*     For all the fluxes below, the sign convention is as follows.
+*     Fluxes between poloidal neighbors are positive if directed in the
+*     direction of increasing poloidal (ix) index.
+*     Fluxes between radial neighbors are positive if directed in the
+*     direction of increasing radial (iy) index.
 *
 *     fna - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
@@ -328,8 +336,16 @@
 *     ub - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), ub(ix,iy) specifies the parallel
 *     velocity of one selected atomic species on the (ix,iy) cell.
+*     The sign of the parallel velocity indicates whether it is flowing
+*     in the same direction as the local poloidal magnetic field.
 *
-*     fnb - (-1:nx,-1:ny,0:1) real*8 array.
+*     For all the fluxes below, the sign convention is as follows.
+*     Fluxes between poloidal neighbors are positive if directed in the
+*     direction of increasing poloidal (ix) index.
+*     Fluxes between radial neighbors are positive if directed in the
+*     direction of increasing radial (iy) index.
+*
+*     fnb - (-1:nx,-1:ny,0:1)d real*8 array.
 *     fnb specifies the flux of one selected atomic species.
 *     If that species has index (is) then fnb(,,)=fna(,,,is).
 *     precisely: (Let fnbx(,)=fnb(,,0) and fnby(,)=fnb(,,1).)
@@ -505,9 +521,9 @@
 *     For iy.eq.-1, fchiny(-1:nx,iy) will hold 0.
 *
 *     fch_p - (-1:nx,-1:ny,0:1) real*8 array.
-*     For (ix,iy) in (0:nx,-1:ny), fch_p(ix,iy,0) specifies the parallel 
-*     electric current along the magnetic field through the face between 
-*     the (ix-1,iy) and (ix,iy) cells.
+*     For (ix,iy) in (0:nx,-1:ny), fch_p(ix,iy,0) specifies the product of
+*     the parallel electric current and the poloidal magnetic field component
+*     sign through the face between the (ix-1,iy) and (ix,iy) cells.
 *     For ix.eq.-1, fch_p(ix,-1:ny,0) will hold 0. 
 *     fch_p(-1:nx,-1:ny,1) = 0
 *
@@ -516,7 +532,7 @@
 *     For (ix,iy) in (-1:nx,-1:ny), fchvisperx(ix,iy) = 0.
 *     For (ix,iy) in (-1:nx, 0:ny), fchvispery(ix,iy) specifies the
 *     electric current connected with contribution from
-*     the perpendicular viscositythrough the face between the (ix,iy-1) 
+*     the perpendicular viscosity through the face between the (ix,iy-1) 
 *     and (ix,iy) cells.
 *     For iy.eq.-1, fchvispery(-1:nx,iy) will hold 0.
 *
@@ -530,7 +546,7 @@
 *     the total effective drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
 *     uadia refers to cell center if 'b2tfnb_drift_style' has '0'
-*     uadia refers to cell faces if 'b2tfnb_drift_style' has '1'
+*     uadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
 *
 *     vadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vadiax(,,)=vadia(,,0,) and vadiay(,)=vadia(,,1,).)
@@ -542,7 +558,7 @@
 *     the effective diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
 *     vadia refers to cell center if 'b2tfnb_drift_style' has '0'
-*     vadia refers to cell faces if 'b2tfnb_drift_style' has '1'
+*     vadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
 *
 *     vedia - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let vediax(,)=vedia(,,0) and vediay(,)=vedia(,,1).)
@@ -564,7 +580,7 @@
 *     the total diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
 *     wadia refers to cell center if 'b2tfnb_drift_style' has '0'
-*     wadia refers to cell faces if 'b2tfnb_drift_style' has '1'
+*     wadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
 *
 *     vaecrb - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vaecrbx(,,)=vaecrb(,,0,) and vaecrby(,)=vaecrb(,,1,).)
@@ -576,7 +592,7 @@
 *     the ExB drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
 *     vaecrb refers to cell center if 'b2tfnb_drift_style' has '0'
-*     vaecrb refers to cell faces if 'b2tfnb_drift_style' has '1'
+*     vaecrb refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
