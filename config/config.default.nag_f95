@@ -33,7 +33,7 @@ MOD = mod
 BLD = ar rucv
 
 GRLIBES = ${LD_NCARG} ${LD_MSCL}
-LDLIBES = -L${SOLPSMASTER}/@sys/lib ${LD_NAG} ${LD_NETCDF}
+LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 LD = f95n
 LDOPTS = 

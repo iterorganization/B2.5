@@ -41,7 +41,7 @@ MOD = mod
 
 BLD = ar rucv
 
-GRLIBES = ${NCARG} -lmscl
+GRLIBES = ${NCARG} ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 LDLIBES = ${LD_NAG} ${LD_NETCDF} -L/afs/efda-itm.eu/project/switm/netcdf/amd64_pgi/lib -lnetcdff -lnetcdf \
 	-L${AMNS} -lamns -L/usr/lib64/mysql -lmysqlclient \

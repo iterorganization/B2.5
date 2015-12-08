@@ -36,8 +36,7 @@ OBJDEST = -o ${OBJDIR}/$*.o
 BLD = ar rucv
 
 GRLIBES = ${LD_NCARG} ${LD_MSCL}
-LDLIBES = -lblas ${LD_NAG} -L${SOLPSMASTER}/@sys/lib ${LD_NETCDF}
-LDLIBES = -L${SOLPSMASTER}/@sys/lib ${LD_NAG} ${LD_NETCDF}
+LDLIBES = ${LD_NAG} ${LD_NETCDF}
 # LDLIBES = -lblas ${LD_NAG} -lmass
 
 LD = f90

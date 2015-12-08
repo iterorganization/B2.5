@@ -12,7 +12,7 @@ ifndef LD_NAG
   $(error LD_NAG not defined)
 endif
 
-EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH # -DNO_CDF -DNO_PROCESS 
+EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH # -DNO_CDF -DNO_PROCESS
 
 CPP      = /lib/cpp -traditional
 CPPOPTS  = -P -I${srcdir} ${EQUIVS}
@@ -51,7 +51,7 @@ OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 BLD      = ar rucv
 
 GRLIBES  = ${LD_NCARG} ${LD_MSCL}
-LDLIBES  = ${LD_NETCDF} ${LD_NAG} # -lblas
+LDLIBES  = ${LD_NETCDF} ${LD_NAG}
 
 #wd: removed; seems to be unused
 #ifdef B25_EIRENE

@@ -29,7 +29,7 @@ FCOPTS = -O3
 endif
 
 DBLFC=${FC}
-DDBLOPTION=-Ad # ???
+DDBLOPTION=
 DBLSED = sed -e s:\#PREC\#:d:g
 DBLSED = 
 
@@ -40,7 +40,7 @@ OBJDEST = -o ${OBJDIR}/$*.o
 
 BLD = ar rucv
 
-GRLIBES = ${LD_NCARG} -lcgm -lngmath 
+GRLIBES = ${LD_NCARG} ${LD_MSCL} -lcgm -lngmath 
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 ifdef USE_EIRENE

@@ -24,7 +24,7 @@ MOD = o
 
 BLD = bld rucv
 
-GRLIBES = $(LD_NCARG)
+GRLIBES = $(LD_NCARG) $(LD_MSCL)
 LDLIBES = $(LD_NAG)
 ifdef PERFMON
 LDLIBES += -L${SOLPSLIB} -lperf
