@@ -55,4 +55,4 @@ LD = xlf90
 LDOPTS = -bloadmap:${OBJDIR}/loadmap -bmap:${OBJDIR}/map -pg
 LDOPTS = -bloadmap:${OBJDIR}/loadmap -bmap:${OBJDIR}/map
 
-#LCPP = ${LD_SONNET}
+LCPP = ${LD_SONNET}

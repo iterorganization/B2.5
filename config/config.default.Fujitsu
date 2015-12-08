@@ -57,4 +57,4 @@ LD = /opt/Fujitsu/bin/f90
 LD = f95f
 # LDOPTS = -Bstatic
 
-#LCPP = ${LD_SONNET} /usr/lib/libstdc++.so.2.9 -lblas
+LCPP = ${LD_SONNET}

@@ -61,4 +61,4 @@ else
 LDOPTS = -Kieee -tp px # "-tp px" to fix a compiler bug at JET
 endif
 
-#LCPP = -L${SOLPSLIB} -lsonnet -lstdc++ -lblas
+LCPP = ${LD_SONNET}

@@ -55,7 +55,7 @@ OBJDEST  = -module ${OBJDIR} -o ${OBJDIR}/$*.o
 BLD      = ar rucv
 
 GRLIBES  = ${LD_NCARG} ${LD_MSCL}
-LDLIBES  = ${LD_NETCDF} ${LD_NAG} # -lblas
+LDLIBES  = ${LD_NETCDF} ${LD_NAG}
 
 #wd: removed; seems to be unused
 #ifdef B25_EIRENE
@@ -68,5 +68,5 @@ endif
 LD       = ${FC}
 LDOPTS   = -i_dynamic
 
-LCPP     = -L${SOLPSLIB} -lsonnet -lstdc++ -lblas
+LCPP     = ${LD_SONNET}
 

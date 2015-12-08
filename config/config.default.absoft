@@ -51,4 +51,4 @@ LD = f95
 LDOPTS = -lU77
 LDOPTSend = -lU77
 
-#LCPP = ${LD_SONNET} /usr/lib/libstdc++.so.2.9 -lblas
+LCPP = ${LD_SONNET}

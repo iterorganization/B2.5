@@ -64,5 +64,5 @@ else
 LDOPTS     = -i_dynamic
 endif
 
-LCPP       = -L${SOLPSLIB} -lsonnet -lstdc++ -lblas
+LCPP       = ${LD_SONNET}
 

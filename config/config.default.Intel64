@@ -52,4 +52,4 @@ endif
 LD = f95i -v 9.1
 # LDOPTS = -Bstatic
 
-#LCPP = ${LD_SONNET} /usr/lib/libstdc++.so.2.9 -lblas
+LCPP = ${LD_SONNET}

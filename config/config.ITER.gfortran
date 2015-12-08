@@ -23,7 +23,7 @@ FCOPTS = -O2 -fno-second-underscore -fno-unsafe-math-optimizations -frounding-ma
 endif
 
 DBLFC = ${FC}
-DDBLOPTION = -Ad # ???
+DDBLOPTION =
 DBLSED = sed -e s:\#PREC\#:d:g
 DBLSED =
 
@@ -43,4 +43,4 @@ endif
 LD = $(FC)
 LDOPTS = -limf # -Bstatic
 
-#LCPP = ${LD_SONNET} /usr/lib/libstdc++.so.2.9 -lblas
+LCPP = ${LD_SONNET}

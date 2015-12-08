@@ -64,5 +64,5 @@ endif
 LD       = ${FC}
 LDOPTS   = -i_dynamic
 
-LCPP     = -L${SOLPSLIB} -lsonnet -lstdc++ -lblas
+LCPP     = ${LD_SONNET}
 

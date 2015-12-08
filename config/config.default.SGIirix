@@ -43,4 +43,4 @@ LDLIBES = -${LD_NAG} ${LD_NETCDF}
 
 LD = f90
 
-#LCPP = ${LD_SONNET} -L/usr/lpp/xlC/lib -lCns
+LCPP = ${LD_SONNET} -L/usr/lpp/xlC/lib -lCns

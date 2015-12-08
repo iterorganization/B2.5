@@ -31,12 +31,12 @@ else
 FCOPTS  	= -O -xavx -traceback -fpconstant -save -ftz -vec-report0
 endif
 
-DBLFC		= ${FC}
+DBLFC		  = ${FC}
 DBLOPTION	=
 
 COMPILE  	= ${FC} -c ${FCOPTS}
 
-BLD 		= ar rucv
+BLD 		  = ar rucv
 
 GRLIBES 	= ${LD_NCARG} ${LD_MSCL}
 LDLIBES 	= ${LD_NAG} ${LD_NETCDF}
@@ -45,12 +45,12 @@ ifdef USE_EIRENE
 LDLIBESEXTRA 	= ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
-LD		= ${FC}
+LD		    = ${FC}
 #LDFLAGS   	= -lslap -lma28 -lmach -lblas -lxersla -lmscl -lsonnet -lnetcdf -lnag /usr/lib/libstdc++.so.2.9 # -lw -lnsl /usr/lib/libC.so.5 ${SOLPS_LIBS}
-LDFLAGS   	= -lslap -lma28 -lmach -lblas -lxersla -lmscl -lsonnet -lnetcdf -lnag -lstdc++
+LDFLAGS  	= -lslap -lma28 -lmach -lblas -lxersla -lmscl -lsonnet -lnetcdf -lnag -lstdc++
 LDOPTSend	= -Wl,-Map,${OBJDIR}/loadmap
 LDEXTRA		= -lblas -lsonnet -lstdc++
 
 INCMOD 		= -I
-MOD 		= mod
+MOD 		  = mod
 OBJDEST 	= -o ${OBJDIR}/$*.o
