@@ -435,7 +435,15 @@ cxpb  On the B2 side, use nstrat as nstrai + the time stratum
         elseif (crcstra(nstrai+1).eq.'T') then
           nstrat=nstrai+1
         else
+#ifdef B25_EIRENE
+          nstrat=nstrai+1
+          crcstra(nstrat)='T'
+          rcpos(nstrat)=0
+          rcstart(nstrat)=0
+          rcend(nstrat)=0
+#else
           nstrat=nstrai
+#endif
         endif
         allocate(old_style(nstrat))
         do is = 1, nstrat

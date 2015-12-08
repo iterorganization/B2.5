@@ -6972,6 +6972,12 @@ C  NUMBER OF TARGETS ON B2 SURFACES: NTARGI
      .                          NTIN(I,J),NTEN(I,J),NIFLG(I,J),
      .                          NPTC(I,J),NPTCM(I,J),
      .                          NSPZI(I,J),NSPZE(I,J),idum(10)
+              NSPZI(I,J)=MAX0(1,NSPZI(I,J))
+              NSPZE(I,J)=MIN0(NS-NATMI,NSPZE(I,J))
+              IF (NSPZE(I,J).LT.NSPZI(I,J)) THEN
+                NSPZI(I,J)=1
+                NSPZE(I,J)=NS-NATMI
+              ENDIF
               idum(8) = is1beginrange(NSPZI(I,J),NSPZE(I,J),ns,ns1,is1)
               idum(9) = is1endrange(NSPZI(I,J),NSPZE(I,J),ns,ns1,is1)
               IF (NIXY(I,J).EQ.1) THEN  ! target runs radially
