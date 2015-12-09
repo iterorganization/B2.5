@@ -646,7 +646,10 @@
 *    pit_rescale, while the toroidal field component is left unchanged.
 *    To reverse the plasma current direction, set pit_rescale to -1.0.
 *    The sign convention used is that a positive poloidal field points
-*    in the direction of increasing <ix>.
+*    in the direction of increasing <ix>. Be mindful however that, when
+*    inverting the sign of the poloidal magnetic field, you are also
+*    inverting the direction of the parallel velocity. You will then
+*    need to use the 'b2mndr_inverse_ua' switch to correct for that.
 *    To be used in b2ag.dat.
 *
 *    'b2agfs_Bt_reversal'       '0'                    Geometry

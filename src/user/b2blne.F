@@ -368,6 +368,7 @@ c>>>
           hlp=0.0_R8
           do i=l,l+m-1 !{
             k=lsns(i)
+            if(k.lt.0) k=nnlimi-k
             if(k.gt.0) hlp=hlp+wldpeb(k,ic)
           end do !}
           k=0

@@ -182,8 +182,6 @@ c
               gpfc(i,j)=0.0_R8
             end do
           end if
-        end do
-        do j=1,nnstsi
           if(lsns(j).lt.0) lsns(j)=nnlimi-lsns(j)
         end do
         first=.false.
@@ -193,7 +191,7 @@ c*** Re-scale the neutral fluxes
 
 csw 2012 correct nlimps --> nnstsi+nnlimi (known after 1st eirene call)
 c      do i=1,nlimps
-        do i=1,nnstsi+nnlimi
+      do i=1,nnstsi+nnlimi
         do j=1,nnatmi
           wldna(i,j,0)=0.0_R8
           wldra(i,j,0)=0.0_R8
@@ -504,6 +502,7 @@ c<<<
 c>>>
               do i=l,l+m-1
                 k=lsns(i)
+                if(k.lt.0) k=nnlimi-k
                 if(k.gt.0) then
 c<<<
                   if(hlp_tt) then

@@ -814,7 +814,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          con_he(ix,iy)        = 0.0_R8
          con_mdf(ix,iy)       = 0.0_R8
         else
-         term(ix,iy) = xfrhie*wrk2(ix,iy)*0.5_R8*abs(pbs(ix,iy,0))*    !iyv 19.04.07 11.01.13
+         term(ix,iy) = xfrhie*wrk2(ix,iy)*0.5_R8*abs(pbs(ix,iy,0))*       !iyv 19.04.07 11.01.13
      &    sqrt((pb(leftix(ix,iy),leftiy(ix,iy))+pb(ix,iy))/
      &    (mb*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))))*
      &    min(vol(leftix(ix,iy),leftiy(ix,iy)),vol(ix,iy))/
@@ -824,18 +824,18 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &    (mb*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))))*
      &    min(vol(leftix(ix,iy),leftiy(ix,iy)),vol(ix,iy))/
      &    (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-         if(drift_style.eq.0)then                                     !srv 21.06.08
-          flo = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy)+   !srv 20.06.08
-     1     (bb(ix,iy,2)/bb(ix,iy,3)+                                  !srv 11.01.13
+         if(drift_style.eq.0)then                                         !srv 21.06.08
+          flo = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy)+       !srv 20.06.08
+     1     (bb(ix,iy,2)/bb(ix,iy,3)+                                      !srv 11.01.13
      2     bb(leftix(ix,iy),leftiy(ix,iy),2)/
      3     bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0_R8
      4     *(ubdia(ix,iy,0)+ubdia(leftix(ix,iy),leftiy(ix,iy),0))/
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
      7     hx(leftix(ix,iy),leftiy(ix,iy)))
-          flo_mdf = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+           !srv 17.07.08 {
-     &      term(ix,iy) +                                                    !iyv 19.04.07
-     1     (bb(ix,iy,2)/bb(ix,iy,3)+                                   !srv 11.0113
+          flo_mdf = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+               !srv 17.07.08 {
+     &      term(ix,iy) +                                                 !iyv 19.04.07
+     1     (bb(ix,iy,2)/bb(ix,iy,3)+                                      !srv 11.0113
      2     bb(leftix(ix,iy),leftiy(ix,iy),2)/
      3     bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0_R8
      4     *(vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/

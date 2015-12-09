@@ -171,11 +171,10 @@
 *  LTNS - integer array of size (NSTS). Contains the indices of Eirene 
 *    non-standard surfaces (block 3A in input.dat) corresponding to target 
 *    boundaries. Defaults to 0.
-*  LSNS - integer array of size (NLIMPS). Contains the indices of Eirene 
-*    surfaces. Only override the default setting if you know what you're doing!
-*  KSNS - integer array of size (NSTRAT). Contains the indices of Eirene 
-*    targets. (?) Only override the default setting if you know what you're 
-*    doing!
+*  LSNS - integer array of size (NSTRAT). Contains the indices of Eirene 
+*    surfaces related to the recycling sources. Defaults to 0.
+*  KSNS - integer array of size (NSTRAT). Contains the number of parts
+*    for each Eirene recycling stratum. Defaults to 0. 
 *  GPFC - real*8 array of size (NATM,NSTRAT). Specifies the fraction of Eirene 
 *    atomic species (iatm) in one particle puffed from stratum (istra).
 *    Defaults to 0.0.
@@ -194,7 +193,7 @@
 *    sput_dst, and 0 for others.
 *  TRACK_CHEM_SPUT - logical array of size (NTRACK). Indicates whether mixed 
 *    material species (itrack) participates in chemical sputtering.
-*    Defaults to .true. for first tracked species if sput_dst is activated,
+*    Defaults to .true. for first tracked species if sput_dst is carbon,
 *    and to .false. for all other cases. 
 *  CHEMICAL_EROSION_REDEP_FAC - real*8. Multiplier to the chemical sputtering 
 *    coefficient of carbon for computing the rate used for redeposited carbon. 

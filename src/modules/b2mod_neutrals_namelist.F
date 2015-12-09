@@ -101,7 +101,7 @@ cank }
       character*1, save :: CRCSTRA(NSTRAID)
       integer, save :: lmolscl(nmolid), mlcmp(natmid,nmolid),
      ,  lionscl(nionid),
-     ,  lcns(nstsid), ltns(nstsid), lsns(nlimpsd), ksns(NSTRAID), 
+     ,  lcns(nstsid), ltns(nstsid), lsns(nstraid), ksns(NSTRAID), 
      ,  msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
 #endif
@@ -185,7 +185,7 @@ csw 21feb2012
       allocate(mlcmp(natmid,nmolid))
       allocate(lcns(nstsid))
       allocate(ltns(nstsid))
-      allocate(lsns(nlimps))
+      allocate(lsns(nstraid))
       allocate(ksns(NSTRAID))
       allocate(msns(2,NSTRAID))
 #ifndef NO_B2_CHEM_SPUT
@@ -280,7 +280,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       if (sput_dst.ge.0 .and. sput_dst.lt.nsd) then
         track_index(sput_dst)=1
         track_species(1)=is_codes(sput_dst)
-        track_chem_sput(1)=.true.
+        if (nint(zn(sput_dst)).eq.6) track_chem_sput(1)=.true.
       endif
 
       is0 = 0
@@ -692,9 +692,10 @@ c
      &   'faulty input lcns')
         call xertst (0.le.ltns(is).and.ltns(is).le.nsts, 
      &   'faulty input ltns')
-        call xertst (lsns(is).le.nlim+nsts, 'faulty input lsns')
       enddo
       do is = 1, nstraid
+        call xertst (lsns(is).le.nlim+nsts, 'faulty input lsns')
+        call xertst (lsns(is).ge.-nsts, 'faulty input lsns')
         call xertst (0.le.ksns(is), 'faulty input ksns')
       enddo
       
@@ -713,8 +714,8 @@ c
       call xertst (0.le.ncns, 'faulty input ncns')
       call xertst (0.le.ntns, 'faulty input ntns')
 
-      do j=1,nstsid !{
-        if(lsns(j).gt.0 .and. lsns(j).le.nlim) lsns(j)=-lsns(j)
+      do j=1,nstrai !{
+        if(lsns(j).gt.0 .and. lsns(j).le.nsts) lsns(j)=-lsns(j)
       end do !}
       n=0
       do j=1,nstrai !{
