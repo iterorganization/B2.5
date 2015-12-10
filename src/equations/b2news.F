@@ -565,7 +565,7 @@ cxpb
      &     cddi(-1,-1,0,is),                                           !srv 13.10.06
      &     cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is), !srv 09.01.01 15.12.05
      &     cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,           !srv 20.09.06
-     1     fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),        !xpb
+     1     fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),                   !xpb
      &     fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),                   !srv 01.10.99 21.01.00
      &     fnaPSch(-1,-1,0,is),fna_mdf(-1,-1,0,is),                    !srv 13.10.06
      1     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
@@ -573,7 +573,7 @@ cxpb
      1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
          endif
         enddo
-        if(wrong_flow .or. ipass.ne.0) then                              !xpb
+        if(wrong_flow .or. ipass.ne.0) then                            !xpb
            call print_wrong_flows(
      &          'Before potential loop: fna(ions) at plates')
         endif
@@ -929,29 +929,47 @@ c        write(*,*) 'Called b2stbr_neutr_scl'
       subroutine print_wrong_flows(label)
       implicit none
       character (len=*) :: label
+      logical inverted_ua
 
+      inverted_ua = .true.
       write(*,*) label
       do iy = -1,ny
-         if(mod(region(-1,iy,0),4).eq.3)
+        if(topiy(-1,iy).eq.ny+1) cycle
+        if(bottomiy(-1,iy).eq.-2) cycle
+        if(mod(region(-1,iy,0),4).eq.3)
      >        write(*,*) iy,'west =',
      >        fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)
+        inverted_ua = inverted_ua .and. 
+     .   ua(-1,iy,ismain)*pbs(rightix(-1,iy),rightiy(-1,iy),0).gt.0.0_R8
       enddo
       do iy = -1,ny
-         if(mod(region(nx,iy,0),4).eq.0 .and. region(nx,iy,0).ne.0)
+        if(topiy(nx,iy).eq.ny+1) cycle
+        if(bottomiy(nx,iy).eq.-2) cycle
+        if(mod(region(nx,iy,0),4).eq.0 .and. region(nx,iy,0).ne.0)
      >        write(*,*) iy,'east =',fna(nx,iy,0,ismain)
+        inverted_ua = inverted_ua .and. 
+     .   ua(nx,iy,ismain)*pbs(nx,iy,0).lt.0.0_R8
       enddo
       if(nnreg(0).eq.1.and.ny.le.1.and.nx.gt.1) then
 ! 1d linear device
-         do iy = -1,ny
-            write(*,*) iy,'west =',
+        do iy = -1,ny
+          if(topiy(-1,iy).eq.ny+1) cycle
+          if(bottomiy(-1,iy).eq.-2) cycle
+          write(*,*) iy,'west =',
      >           fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)
-         enddo
-         do iy = -1,ny
-            write(*,*) iy,'east =',fna(nx,iy,0,ismain)
-         enddo
+        enddo
+        do iy = -1,ny
+          if(topiy(nx,iy).eq.ny+1) cycle
+          if(bottomiy(nx,iy).eq.-2) cycle
+          write(*,*) iy,'east =',fna(nx,iy,0,ismain)
+        enddo
       endif
+      if (inverted_ua) then
+        write(*,*) 'All target velocities have the wrong sign'
+        write(*,*) 'Please consider using the b2mndr_inverse_ua switch'
+        call xerrab ('Inverted velocity field!')
+      end if
       end subroutine print_wrong_flows
-
 
       end subroutine b2news
 c

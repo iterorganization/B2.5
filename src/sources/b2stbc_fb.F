@@ -1431,8 +1431,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   if(ncall.eq.0) then
                      write(*,*) 
      &                    'b2stbc_fb_pre_choice: using ',
-     &                    'local_density ',
-     &                    ispecies
+     &                    'local_density for sequence ',
+     &                    ispecies+1
                   endif
 
                   na_feedback_current = 0.0_R8
@@ -1466,8 +1466,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   if(ncall.eq.0) then
                      write(*,*) 
      &                    'b2stbc_fb_pre_choice: using ',
-     &                    'local_electron_density ',
-     &                    ispecies
+     &                    'local_electron_density for sequence ',
+     &                    ispecies+1
                   endif
 
                   na_feedback_current = 0.0
@@ -1497,8 +1497,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   if(ncall.eq.0) then
                      write(*,*) 
      &                    'b2stbc_fb_pre_choice: using ',
-     &                    'nesepm_electron_density ',
-     &                    ispecies
+     &                    'nesepm_electron_density for sequence ',
+     &                    ispecies+1
                   endif
 
                   na_feedback_current = 0.5_R8 *
@@ -1519,7 +1519,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                      write(*,*)
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'total particle content for sequence ',
-     &                    ispecies
+     &                    ispecies+1
                   endif
                   na_feedback_current = 0.0_R8
                   is_start=-1
@@ -1552,7 +1552,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                      write(*,*)
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'total ion content for sequence ',
-     &                    ispecies
+     &                    ispecies+1
                   endif
                   na_feedback_current = 0.0_R8
                   is_start=-1
@@ -1586,7 +1586,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                      write(*,*)
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'core boundary flux for sequence ',
-     &                    ispecies
+     &                    ispecies+1
                   endif
                   na_feedback_current = na_feedback_const(ispecies)
 #ifdef B25_EIRENE
@@ -1628,7 +1628,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                      write(*,*)
      &                 'b2stbc_fb_pre_choice: using ',
      &                 'average separatrix concentration for sequence ',
-     &                  ispecies
+     &                  ispecies+1
                   endif
                   na_feedback_current = 0.0_R8
                   sum_e = 0.0_R8
@@ -1677,8 +1677,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   if(ncall.eq.0) then
                      write(*,*) 
      &                    'b2stbc_fb_pre_option: using ',
-     &                    'slowed_rescale ',
-     &                    ispecies
+     &                    'slowed_rescale for sequence ',
+     &                    ispecies+1
                   endif
 
                   na_feedback_rescale = 
@@ -1692,8 +1692,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   if(ncall.eq.0) then
                      write(*,*) 
      &                    'b2stbc_fb_pre_option: using ',
-     &                    'rescale ',
-     &                    ispecies
+     &                    'rescale for sequence ',
+     &                    ispecies+1
                   endif
 
                   na_feedback_rescale = na_feedback_target(ispecies) /
@@ -1704,8 +1704,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   if(ncall.eq.0) then
                      write(*,*) 
      &                    'b2stbc_fb_pre_option: using ',
-     &                    'tanh_log_rescale ',
-     &                    ispecies
+     &                    'tanh_log_rescale for sequence ',
+     &                    ispecies+1
                   endif
 
 ! 2**(tanh(log(x)/b)*log(a)/log(2))
@@ -1721,8 +1721,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   if(ncall.eq.0) then
                      write(*,*)
      &                    'b2stbc_fb_pre_option: using ',
-     &                    'SOLPS4 linear increase ',
-     &                    ispecies
+     &                    'SOLPS4 linear increase for sequence ',
+     &                    ispecies+1
                      if(na_feedback_alpha(ispecies).lt.0.0_R8) then
                        na_feedback_alpha(ispecies) = 0.0_R8
                        is_start=-1
@@ -1754,7 +1754,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   endif
 
                   na_feedback_target(ispecies) =
-     .               na_feedback_alpha(ispecies) +
+     .               na_feedback_const(ispecies) +
      .               na_feedback_beta(ispecies)*
      .               (tim-na_feedback_time(ispecies))
                   na_feedback_rescale =
@@ -1774,8 +1774,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   if(ncall.eq.0) then
                      write(*,*)
      &                    'b2stbc_fb_pre_option: using ',
-     &                    'SOLPS4 exponential decay ',
-     &                    ispecies
+     &                    'SOLPS4 exponential decay for sequence ',
+     &                    ispecies+1
                      if(na_feedback_alpha(ispecies).lt.0.0_R8) then
                        na_feedback_alpha(ispecies) = 0.0_R8
                        is_start=-1
@@ -1809,7 +1809,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
      .               exp(na_feedback_beta(ispecies)*
      .                   (tim-na_feedback_time(ispecies)))
                   na_feedback_rescale =
-     .               na_feedback_alpha(ispecies) *
+     .               na_feedback_const(ispecies) *
      .              (na_feedback_target(ispecies) -
      .               na_feedback_current)/dtim +
      .              (na_feedback_prev(ispecies) -
@@ -1830,8 +1830,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
 
                end select
 
-               write(*,'(a,1p,i3,3g15.6)') 
-     &              'na_feedback_rescale ', ispecies, 
+               write(*,'(a,1x,1p,i3,3g15.6)') 
+     &              'na_feedback_rescale ', ispecies+1, 
      &              na_feedback_current,
      &              na_feedback_target(ispecies),
      &              na_feedback_rescale
@@ -1847,8 +1847,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   if(ncall.eq.0) then
                      write(*,*) 
      &                    'b2stbc_fb_pre_actuator: using ',
-     &                    'gas_puff ',
-     &                    ispecies
+     &                    'gas_puff for sequence ',
+     &                    ispecies+1
                   endif
 
                   if(feedback_namelist_used .and. 
@@ -1863,7 +1863,6 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
      &                 na_feedback_rescale
                   else
                     saved_na_feedback_actuator(ispecies) =
-     &                 saved_na_feedback_actuator(ispecies) +
      &                 na_feedback_rescale
                   end if
                   if(na_feedback_puff_min(ispecies) .gt. 0.0_R8) 
@@ -1891,8 +1890,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   if(ncall.eq.0) then
                      write(*,*) 
      &                    'b2stbc_fb_pre_actuator: using ',
-     &                    'rescale ',
-     &                    ispecies
+     &                    'rescale for sequence ',
+     &                    ispecies+1
                   endif
 
                   na(:,:,is_start:is_end) = na(:,:,is_start:is_end) * 
@@ -1903,8 +1902,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                  if(ncall.eq.0) then
                      write(*,*)
      &                    'b2stbc_fb_pre_actuator: using ',
-     &                    'core boundary flux condition ',
-     &                    ispecies
+     &                    'core boundary flux condition for sequence ',
+     &                    ispecies+1
                   endif
 
                   is_start = eb2spcr(ispecies+1)+1
@@ -1952,7 +1951,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                end select
 
                write(*,'(a,1p,i3,g15.6)') 'na_feedback_actuator ', 
-     &              ispecies, saved_na_feedback_actuator(ispecies)
+     &              ispecies+1, saved_na_feedback_actuator(ispecies)
 
             endif
 

@@ -91,6 +91,7 @@
      3  ue(-1:nx,-1:ny), vsal(-1:nx,-1:ny,0:1,0:ns-1),lnlam(-1:nx,-1:ny)
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical, allocatable :: solvemt(:,:)
+      logical inverted_ua
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok                !srv 09.07.99
      &     , vis_per, solving, area_fix, no_current                   !srv 06.07.00
      &     , nsmin, nsmax
@@ -373,8 +374,38 @@ c   extra call at this place within internal iteration)
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &    wrong_flow, .false.)
-        if(wrong_flow) write(*,*) 
-     &       'b2news_: wrong_flow returned from b2sral'
+        if(wrong_flow) then
+          inverted_ua = .true.
+          write(*,*) 'b2news_: wrong_flow returned from b2sral'
+          do iy = -1,ny
+            if(topiy(-1,iy).eq.ny+1) cycle
+            if(bottomiy(-1,iy).eq.-2) cycle
+            if(mod(region(-1,iy,0),4).eq.3 .or. 
+     &        (nnreg(0).eq.1.and.nx.gt.1)) then
+              write(*,*) iy,'west =',
+     >           fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)
+              inverted_ua = inverted_ua .and. 
+     .         ua(-1,iy,ismain)*
+     .         pbs(rightix(-1,iy),rightiy(-1,iy),0).gt.0.0_R8
+            end if
+          end do
+          do iy = -1,ny
+            if(topiy(nx,iy).eq.ny+1) cycle
+            if(bottomiy(nx,iy).eq.-2) cycle
+            if((mod(region(nx,iy,0),4).eq.0 .and. region(nx,iy,0).ne.0)
+     .       .or. (nnreg(0).eq.1.and.nx.gt.1)) then
+              write(*,*) iy,'east =',fna(nx,iy,0,ismain)
+              inverted_ua = inverted_ua .and. 
+     .         ua(nx,iy,ismain)*pbs(nx,iy,0).lt.0.0_R8
+            end if
+          end do
+          if (inverted_ua) then
+            write(*,*) 'All target velocities have the wrong sign'
+            write(*,*) 
+     .       'Please consider using the b2mndr_inverse_ua switch'
+            call xerrab ('Inverted velocity field!')
+          end if
+        end if
 
 *     ..smooth out sources
         call b2srsm (nx, ny, ns, dtim, 

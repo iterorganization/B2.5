@@ -215,7 +215,7 @@ c     reading in filename and mass
         else
           uidin=trim(solpstop()) // '/' // trim(uidin(10:))
         endif
-        write(*,*) 'ADAS UIDIN changed to ',trim(UIDIN)
+        write(*,'(a,a)') 'ADAS UIDIN changed to ',trim(UIDIN)
       endif
       read(99,*) maxne
       if (nc.gt.maxne) then
@@ -379,9 +379,9 @@ c     reading in data, recombination
         DREC=-74.0_R8
       else 
      . if(silent_open(99,fnrec,'data.local|modules',actual_file)) then
-        write(*,*) 'Used ',trim(actual_file),
+        write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for recombination'
-        write(nput,*) 'Used ',trim(actual_file),
+        write(nput,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for recombination'
         call xxdata_11(99,1,
      *           isdimd,iddimd,itdimd,ndptnl,ndptn,ndptnc,ndcnct,
@@ -419,9 +419,9 @@ c     reading in data, ionisation
         DION=-74.0_R8
       else 
      . if(silent_open(99,fnion,'data.local|modules',actual_file)) then
-        write(*,*) 'Used ',trim(actual_file),
+        write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for ionisation'
-        write(nput,*) 'Used ',trim(actual_file),
+        write(nput,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for ionisation'
         call xxdata_11(99,2,
      *           isdimd,iddimd,itdimd,ndptnl,ndptn,ndptnc,ndcnct,
@@ -459,9 +459,9 @@ c     reading in data, charge exchange
         DCEX=-74.0_R8
       else 
      . if(silent_open(99,fncex,'data.local|modules',actual_file)) then
-        write(*,*) 'Used ',trim(actual_file),
+        write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for charge exchange'
-        write(nput,*) 'Used ',trim(actual_file),
+        write(nput,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for charge exchange'
         call xxdata_11(99,3,
      *           isdimd,iddimd,itdimd,ndptnl,ndptn,ndptnc,ndcnct,
@@ -499,9 +499,9 @@ c     reading in data, bremsstrahlung + radiative recombination contribution
         DPRB=-74.0_R8
       else 
      . if(silent_open(99,fnprb,'data.local|modules',actual_file)) then
-        write(*,*) 'Used ',trim(actual_file),
+        write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for bremsstrahlung'
-        write(nput,*) 'Used ',trim(actual_file),
+        write(nput,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for bremsstrahlung'
         call xxdata_11(99,4,
      *           isdimd,iddimd,itdimd,ndptnl,ndptn,ndptnc,ndcnct,
@@ -539,9 +539,9 @@ c     reading in data, line radiation
         DPLT=-74.0_R8
       else 
      . if(silent_open(99,fnplt,'data.local|modules',actual_file)) then
-        write(*,*) 'Used ',trim(actual_file),
+        write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for line radiation'
-        write(nput,*) 'Used ',trim(actual_file),
+        write(nput,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for line radiation'
         call xxdata_11(99,8,
      *           isdimd,iddimd,itdimd,ndptnl,ndptn,ndptnc,ndcnct,
@@ -584,9 +584,9 @@ c     reading in data, effective charge
         enddo
       else 
      . if(silent_open(99,fnzav,'data.local|modules',actual_file)) then
-        write(*,*) 'Used ',trim(actual_file),
+        write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for effective charge'
-        write(nput,*) 'Used ',trim(actual_file),
+        write(nput,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for effective charge'
         call xxdata_11(99,10,
      *           isdimd,iddimd,itdimd,ndptnl,ndptn,ndptnc,ndcnct,
@@ -641,9 +641,9 @@ c     reading in data, effective square charge
         DZA2=-1.0_R8
       else 
      . if(silent_open(99,fnza2,'data.local|modules',actual_file)) then
-        write(*,*) 'Used ',trim(actual_file),
+        write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for effective square charge'
-        write(nput,*) 'Used ',trim(actual_file),
+        write(nput,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for effective square charge'
         call xxdata_11(99,11,
      *           isdimd,iddimd,itdimd,ndptnl,ndptn,ndptnc,ndcnct,
@@ -689,9 +689,9 @@ c     reading in data, effective ionisation potential
         DPOT=-1.0_R8
       else 
      . if(silent_open(99,fnpot,'data.local|modules',actual_file)) then
-        write(*,*) 'Used ',trim(actual_file),
+        write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for effective ionisation potential'
-        write(nput,*) 'Used ',trim(actual_file),
+        write(nput,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for effective ionisation potential'
         call xxdata_11(99,12,
      *           isdimd,iddimd,itdimd,ndptnl,ndptn,ndptnc,ndcnct,
@@ -728,9 +728,9 @@ c     reading in data, ionisation potentials
       if(.not.silent_open(99,'ionization_potentials',
      1 'data.local|modules/B2.5/Database',actual_file))
      1 stop 'missing file'
-      write(*,*) 'Used ',trim(actual_file),
+      write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for ionisation potentials table'
-      write(nput,*) 'Used ',trim(actual_file),
+      write(nput,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for ionisation potentials table'
       do ic=1,nc-1
          read(99,*)

@@ -7968,7 +7968,7 @@ cxpb as they no longer necessarily point to the same species
             if (saved_cbsna_pfr2.ne.0.0_R8)
      >       write(99,*) 'SAVED_CBSNA_PFR2=',saved_cbsna_pfr2,','
             if (saved_cbsna_sol.ne.0.0_R8)
-     >       write(99,*) 'SAVED_CBSNA_SOL=',saved_cbsna_sol,','
+     >       write(99,*) 'SAVED_CBSNA_SOL= ',saved_cbsna_sol,','
             write(hlp_frm,'(a,i2,a)')
      >       '(a,1p,',nspecies1,'(1x,1e15.8,'',''))'
             write(99,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
@@ -8116,17 +8116,17 @@ cxpb as they no longer necessarily point to the same species
         write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i2,'',''))'
         if (maxval(na_feedback_choice1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_CHOICE=',na_feedback_choice1(0:nspecies1-1)
+     .     'NA_FEEDBACK_CHOICE=  ',na_feedback_choice1(0:nspecies1-1)
         if (maxval(na_feedback_option1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_OPTION=',na_feedback_option1(0:nspecies1-1)
+     .     'NA_FEEDBACK_OPTION=  ',na_feedback_option1(0:nspecies1-1)
         if (maxval(na_feedback_actuator1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_ACTUATOR=',na_feedback_actuator1(0:nspecies1-1)
+        write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i4,'',''))'
         if (maxval(na_feedback_ib1(0:nspecies1-1)).gt.0)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_IB=',na_feedback_ib1(0:nspecies1-1)
-        write(hlp_frm,'(a,i2,a)') '(1x,a,',nspecies1,'(1x,i4,'',''))'
+     .     'NA_FEEDBACK_IB= ',na_feedback_ib1(0:nspecies1-1)
         if (maxval(na_feedback_ix11(0:nspecies1-1)).gt.-2)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_IX1=',na_feedback_ix11(0:nspecies1-1)
@@ -8143,19 +8143,19 @@ cxpb as they no longer necessarily point to the same species
      .   '(1x,a,1p,',nspecies1,'(1x,g10.3,'',''))'
         if (maxval(na_feedback_target1(0:nspecies1-1)).gt.0.0_R8)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_TARGET=',na_feedback_target1(0:nspecies1-1)
+     .     'NA_FEEDBACK_TARGET=  ',na_feedback_target1(0:nspecies1-1)
         if (maxval(na_feedback_alpha1(0:nspecies1-1)).ne.0.001_R8 .or.
      &      minval(na_feedback_alpha1(0:nspecies1-1)).ne.0.001_R8)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_ALPHA=',na_feedback_alpha1(0:nspecies1-1)
+     .     'NA_FEEDBACK_ALPHA=   ',na_feedback_alpha1(0:nspecies1-1)
         if (maxval(na_feedback_beta1(0:nspecies1-1)).ne.1.0_R8 .or.
      &      minval(na_feedback_beta1(0:nspecies1-1)).ne.1.0_R8)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_BETA=',na_feedback_beta1(0:nspecies1-1)
+     .     'NA_FEEDBACK_BETA=    ',na_feedback_beta1(0:nspecies1-1)
         if (maxval(na_feedback_const1(0:nspecies1-1)).ne.0.0_R8 .or.
      &      minval(na_feedback_const1(0:nspecies1-1)).ne.0.0_R8)
      >   write(99,hlp_frm)
-     .     'NA_FEEDBACK_CONST=',na_feedback_const1(0:nspecies1-1)
+     .     'NA_FEEDBACK_CONST=   ',na_feedback_const1(0:nspecies1-1)
         if (maxval(na_feedback_puff_min1(0:nspecies1-1)).gt.0.0_R8)
      >   write(99,hlp_frm)
      .     'NA_FEEDBACK_PUFF_MIN=',na_feedback_puff_min1(0:nspecies1-1)

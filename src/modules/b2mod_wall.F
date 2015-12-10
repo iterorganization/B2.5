@@ -514,7 +514,8 @@ cxpb Data file material properties
       character*256 filename
       character*400 line
       character*17 numstr
-      logical found, todo
+      logical found, todo, streql
+      external streql
 
       if (edition.eq.'    ') then
         filename = '../b2.wall_save.parameters'
@@ -652,6 +653,40 @@ cxpb Data file material properties
           enddo
         endif
       enddo
+      do ibnd = 1, nbnd
+        if (.not.streql(surface_material_name(ibnd),'C') .and.
+     .      .not.streql(surface_material_name(ibnd),' '))
+     .   write(nwrite,'(a22,i4,a4,a6,a2)')
+     .     'SURFACE_MATERIAL_NAME(',ibnd,')= ''',
+     .      surface_material_name(ibnd),''','
+        if (coating_thickness(ibnd).gt.0.0_R8)
+     .   write(nwrite,'(a22,i4,a4,a6,a2)')
+     .     'COATING_MATERIAL_NAME(',ibnd,')= ''',
+     .      coating_material_name(ibnd),''','
+        if (.not.streql(bulk_material_name(ibnd),'C') .and.
+     .      .not.streql(bulk_material_name(ibnd),' '))
+     .   write(nwrite,'(a19,i4,a4,a6,a2)')
+     .     'BULK_MATERIAL_NAME(',ibnd,')= ''',
+     .      bulk_material_name(ibnd),''','
+        if (plate_thickness(ibnd).ne.plate_thick .and.
+     .      plate_thickness(ibnd).ne.0.0_R8)
+     .   write(nwrite,'(a16,i4,a2,1es15.8,a1)')
+     .     'PLATE_THICKNESS(',ibnd,')=',plate_thickness(ibnd),','
+        if (coating_thickness(ibnd).gt.0.0_R8)
+     .   write(nwrite,'(a18,i4,a2,1es15.8,a1)')
+     .     'COATING_THICKNESS(',ibnd,')=',coating_thickness(ibnd),','
+        if (backplate_temp(ibnd).ne.plate_temp .and.
+     .      backplate_temp(ibnd).ne.0.0_R8)
+     .   write(nwrite,'(a15,i4,a2,1es15.8,a1)')
+     .     'BACKPLATE_TEMP(',ibnd,')=',backplate_temp(ibnd),','
+        if (inertial_cooling(ibnd))
+     .   write(nwrite,'(a17,i4,a2,l1,a1)')
+     .     'INERTIAL_COOLING(',ibnd,')=',inertial_cooling(ibnd),','
+        if (plate_time_factor(ibnd).ne.1.0_R8 .and.
+     .      plate_time_factor(ibnd).ne.0.0_R8)
+     .   write(nwrite,'(a18,i4,a2,1es15.8,a1)')
+     .     'PLATE_TIME_FACTOR(',ibnd,')=',plate_time_factor(ibnd),','
+      end do
       if (plate_model.ge.1) then
 cxpb  Use explicit writing of non-default elements only
         do ix = -1, nx
@@ -665,108 +700,78 @@ cxpb  Use explicit writing of non-default elements only
           write(nwrite,'(a6,i4,a2,i4,a1,1x,a6,i4,a2,i4,a1)')
      .     'IMAPX(',ibnd,')=',imapx(ibnd),',',
      .     'IMAPY(',ibnd,')=',imapy(ibnd),','
-          if (inertial_cooling(ibnd))
-     .     write(nwrite,'(a17,i4,a2,l1,a1)')
-     .     'INERTIAL_COOLING(',ibnd,')=',inertial_cooling(ibnd),','
-          if (backplate_temp(ibnd).ne.plate_temp .and.
-     .        backplate_temp(ibnd).ne.0.0_R8)
-     .     write(nwrite,'(a15,i4,a2,1es15.8,a1)')
-     .     'BACKPLATE_TEMP(',ibnd,')=',backplate_temp(ibnd),','
-          if (plate_thickness(ibnd).ne.plate_thick .and.
-     .        plate_thickness(ibnd).ne.0.0_R8)
-     .     write(nwrite,'(a16,i4,a2,1es15.8,a1)')
-     .     'PLATE_THICKNESS(',ibnd,')=',plate_thickness(ibnd),','
-          if (coating_thickness(ibnd).gt.0.0_R8)
-     .     write(nwrite,'(a18,i4,a2,1es15.8,a1)')
-     .     'COATING_THICKNESS(',ibnd,')=',coating_thickness(ibnd),','
-          if (plate_time_factor(ibnd).ne.1.0_R8 .and.
-     .        plate_time_factor(ibnd).ne.0.0_R8)
-     .     write(nwrite,'(a18,i4,a2,1es15.8,a1)')
-     .     'PLATE_TIME_FACTOR(',ibnd,')=',plate_time_factor(ibnd),','
-          if (trim(surface_material_name(ibnd)).ne.'C' .and.
-     .             surface_material_name(ibnd).ne.' ')
-     .     write(nwrite,'(a22,i4,a4,a6,a2)')
-     .     'SURFACE_MATERIAL_NAME(',ibnd,')= ''',
-     .      surface_material_name(ibnd),''','
-          if (coating_thickness(ibnd).gt.0.0_R8)
-     .     write(nwrite,'(a22,i4,a4,a6,a2)')
-     .     'COATING_MATERIAL_NAME(',ibnd,')= ''',
-     .      coating_material_name(ibnd),''','
-          if (trim(bulk_material_name(ibnd)).ne.'C' .and.
-     .             bulk_material_name(ibnd).ne.' ')
-     .     write(nwrite,'(a19,i4,a4,a6,a2)')
-     .     'BULK_MATERIAL_NAME(',ibnd,')= ''',
-     .      bulk_material_name(ibnd),''','
-          todo =
-     .     layer_nconstituents(ibnd).ne.matsurf_nconstituents(ibnd)
-          do i = 1, layer_nconstituents(ibnd)
-            found = .false.
-            j = 1
-            do while (.not.found .and. j.le.matsurf_nconstituents(ibnd))
-              found = layer_nzconstituents(ibnd,i).eq.
-     .              matsurf_nzconstituents(ibnd,j)
-              if (.not.found) j = j + 1
-            enddo
-            if (found) todo = todo.or.
-     .          layer_nrelconstituents(ibnd,i).ne.
-     .        matsurf_nrelconstituents(ibnd,j)
-          end do
-          if (todo) then
-            write(nwrite,'(a20,i4,a2,i2,a1)')
-     .       'LAYER_NCONSTITUENTS(',ibnd,')=',
-     .        layer_nconstituents(ibnd),','
-            do i = 1, layer_nconstituents(ibnd)
-              write(nwrite,'(a21,i4,a1,i2,a4,i2,a1)')
-     .         'LAYER_NZCONSTITUENTS(',ibnd,',',i,')=  ',
-     .          layer_nzconstituents(ibnd,i),','
-              write(nwrite,'(a23,i4,a1,i2,a2,1es15.8,a1)')
-     .         'LAYER_NRELCONSTITUENTS(',ibnd,',',i,')=',
-     .          layer_nrelconstituents(ibnd,i),','
-            end do
-          end if
-          do itrack=1,ntargsp
-            if (deposition(ibnd,itrack).ne.0.0_R8)
-     .       write(nwrite,'(a11,i4,a1,i1,a2,1es15.8,a1)')
-     .        'DEPOSITION(',ibnd,',',itrack,')=',
-     1         deposition(ibnd,itrack),','
-            if (monolayer_deposition(ibnd,itrack).ne.0.0_R8)
-     .       write(nwrite,'(a,i4,a,i1,a,1es15.8,a)')
-     .        'MONOLAYER_DEPOSITION(',ibnd,',',itrack,')=',
-     1         monolayer_deposition(ibnd,itrack),','
-            if (erosion(ibnd,itrack).ne.0.0_R8)
-     .       write(nwrite,'(a8,i4,a1,i1,a2,1es15.8,a1)')
-     .        'EROSION(',ibnd,',',itrack,')=',
-     1         erosion(ibnd,itrack),','
-            if (monolayer_erosion(ibnd,itrack).ne.0.0_R8)
-     .       write(nwrite,'(a,i4,a,i1,a,1es15.8,a)')
-     .        'MONOLAYER_EROSION(',ibnd,',',itrack,')=',
-     1         monolayer_erosion(ibnd,itrack),','
-          enddo
           if (plate_time(ibnd).ne.0.0_R8)
      .     write(nwrite,'(a11,i4,a2,1es15.8,a1)')
      .      'PLATE_TIME(',ibnd,')=',plate_time(ibnd),','
           if (plate_area(ibnd).ne.0.0_R8)
      .     write(nwrite,'(a11,i4,a2,1es15.8,a1)')
      .      'PLATE_AREA(',ibnd,')=',plate_area(ibnd),','
-        enddo
-        if (plate_model.ge.1.and.ndepth_nml.gt.1) then
-          do ibnd = 1, nbnd
-            do i = 1, (ndepth_nml-1)/nline+1
-              if (i.eq.1) then
-                write(line,'(a12,i4,a3,i4,a2)')
-     .           'TARGET_TEMP(',ibnd,',1:',ndepth_nml,')='
-              else
-                line = ''
-              endif
-              do is = (i-1)*nline+1, min(i*nline,ndepth_nml)
-                write(numstr,'(1x,1es15.8,a1)')
-     .           target_temp(ibnd,is),','
-                line = trim(line)//numstr
-              enddo
-              write(nwrite,'(a)') trim(line)
-            enddo
+        end do
+      end if
+      do ibnd = 1, nbnd
+        todo =
+     .     layer_nconstituents(ibnd).ne.matsurf_nconstituents(ibnd)
+        do i = 1, layer_nconstituents(ibnd)
+          found = .false.
+          j = 1
+          do while (.not.found .and. j.le.matsurf_nconstituents(ibnd))
+            found = layer_nzconstituents(ibnd,i).eq.
+     .              matsurf_nzconstituents(ibnd,j)
+            if (.not.found) j = j + 1
           enddo
-        endif
+          if (found) todo = todo.or.
+     .        layer_nrelconstituents(ibnd,i).ne.
+     .        matsurf_nrelconstituents(ibnd,j)
+        end do
+        if (todo) then
+          write(nwrite,'(a20,i4,a2,i2,a1)')
+     .       'LAYER_NCONSTITUENTS(',ibnd,')=',
+     .        layer_nconstituents(ibnd),','
+          do i = 1, layer_nconstituents(ibnd)
+            write(nwrite,'(a21,i4,a1,i2,a4,i2,a1)')
+     .         'LAYER_NZCONSTITUENTS(',ibnd,',',i,')=  ',
+     .          layer_nzconstituents(ibnd,i),','
+            write(nwrite,'(a23,i4,a1,i2,a2,1es15.8,a1)')
+     .         'LAYER_NRELCONSTITUENTS(',ibnd,',',i,')=',
+     .          layer_nrelconstituents(ibnd,i),','
+          end do
+        end if
+        do itrack=1,ntargsp
+          if (deposition(ibnd,itrack).ne.0.0_R8)
+     .       write(nwrite,'(a11,i4,a1,i1,a2,1es15.8,a1)')
+     .        'DEPOSITION(',ibnd,',',itrack,')=',
+     1         deposition(ibnd,itrack),','
+          if (monolayer_deposition(ibnd,itrack).ne.0.0_R8)
+     .       write(nwrite,'(a,i4,a,i1,a,1es15.8,a)')
+     .        'MONOLAYER_DEPOSITION(',ibnd,',',itrack,')=',
+     1         monolayer_deposition(ibnd,itrack),','
+          if (erosion(ibnd,itrack).ne.0.0_R8)
+     .       write(nwrite,'(a8,i4,a1,i1,a2,1es15.8,a1)')
+     .        'EROSION(',ibnd,',',itrack,')=',
+     1         erosion(ibnd,itrack),','
+          if (monolayer_erosion(ibnd,itrack).ne.0.0_R8)
+     .       write(nwrite,'(a,i4,a,i1,a,1es15.8,a)')
+     .        'MONOLAYER_EROSION(',ibnd,',',itrack,')=',
+     1         monolayer_erosion(ibnd,itrack),','
+        enddo
+      enddo
+      if (plate_model.ge.1.and.ndepth_nml.gt.1) then
+        do ibnd = 1, nbnd
+          do i = 1, (ndepth_nml-1)/nline+1
+            if (i.eq.1) then
+              write(line,'(a12,i4,a3,i4,a2)')
+     .           'TARGET_TEMP(',ibnd,',1:',ndepth_nml,')='
+            else
+              line = ''
+            endif
+            do is = (i-1)*nline+1, min(i*nline,ndepth_nml)
+              write(numstr,'(1x,1es15.8,a1)')
+     .           target_temp(ibnd,is),','
+              line = trim(line)//numstr
+            enddo
+            write(nwrite,'(a)') trim(line)
+          enddo
+        enddo
       endif
       write(nwrite,'(a1)') '/'
       close(nwrite)
