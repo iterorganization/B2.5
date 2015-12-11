@@ -1046,7 +1046,7 @@
 *     Defaults to 0.0.
 *
 *  NAMELIST /NUMERICS/ 
-*    Found in b2.numerics.parametes.
+*    Found in b2.numerics.parameters.
 *    Used to specifiy time multipliers per equation and per region
 *    for the B2 solver.
 *    Active is 'b2srdt_numerics_namelist' is set to 1 or greater.
@@ -1176,7 +1176,7 @@
 *    species (is).
 *
 *  NAMELIST /USER/
-*    Found in b2.user.namelist.
+*    Found in b2.user.parameters.
 *    Contains additional data for user-specific diagnostics. 
 *    This version provided by Andrei Kukushkin for ITER cases.
 *  LHETRGTS - integer array of size (NLIM). List of surface indices (EIRENE 
