@@ -503,12 +503,32 @@ c-dpc-debug
       write(*,*) '"b2agfs_Bt_reversal" to "1" in "b2ag.dat" and rerun.'
       write(*,*) 'If already set to "1", set to "0" instead.'
       write(*,'()')
+      if (bb(nx,ny,0).gt.0.0_R8) then
+        write(*,*) 'This case has POSITIVE poloidal magnetic field.'
+        write(*,*) 'This means the poloidal field points in the '//
+     .             'direction of INCREASING poloidal index ix.'
+        write(*,*) 'The parallel velocities ua and ue will be '//
+     .             'positive when pointing in the direction of '//
+     .             'INCREASING poloidal index ix.'
+        write(*,*) 'This is the SAME convention as for poloidal '//
+     .             'quantities.'
+      else
+        write(*,*) 'This case has NEGATIVE poloidal magnetic field.'
+        write(*,*) 'This means the poloidal field points in the '//
+     .             'direction of DECREASING poloidal index ix.'
+        write(*,*) 'The parallel velocities ua and ue will be '//
+     .             'positive when pointing in the direction of '//
+     .             'DECREASING poloidal index ix.'
+        write(*,*) 'This is the OPPOSITE convention as for '//
+     .             'poloidal quantities.'
+      end if
       if (bb(nx,ny,0)*bb(nx,ny,2).lt.0.0_R8) then
         write(*,*) 
-     .   'This case has CO-directed plasma current and toroidal field.'
+     .   'This case has COUNTER-directed plasma current and '//
+     .   'toroidal field.'
       else
         write(*,*) 
-     .   'This case has COUNTER-directed plasma current and '//
+     .   'This case has CO-directed plasma current and '//
      .   'toroidal field.'
       endif
       write(*,*) 'If this is not correct, please set :'

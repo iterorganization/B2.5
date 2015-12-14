@@ -142,6 +142,8 @@
 *     ua - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), ua(ix,iy,is) specifies
 *     the parallel velocity of atomic species (is) on the (ix,iy) cell.
+*     The sign of the parallel velocity indicates whether it is flowing
+*     in the same direction as the local poloidal magnetic field.
 *
 *     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies

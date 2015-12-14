@@ -55,15 +55,14 @@
 *     the residual of the continuity equation on the (ix,iy) cell for
 *     species (is).
 *
+*     resmo - (-1:nx,-1:ny,0:ns-1) real*8 array, input.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), resmo(ix,iy,is) specifies
 *     the residual of the momentum equation on the (ix,iy) cell for
 *     species (is).
 *
-*
 *     resmt - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), resmt(ix,iy) specifies the residual
 *     of the total momentum equation on the (ix,iy) cell.
-*
 *
 *     reshe - (-1:nx,-1:ny) real*8 array, input.
 *     For (ix,iy) in (-1:nx,-1:ny), reshe(ix,iy) specifies the residual
@@ -84,7 +83,6 @@
 *     has resco as its right hand side. It is not necessarily the same
 *     as the pressure correction over one complete iteration.
 *
-*
 *     corua - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), corua(ix,iy,is) specifies
 *     the last computed correction to the parallel velocity ua of
@@ -93,8 +91,6 @@
 *     right hand side. It is not necessarily the same as the change in
 *     the parallel velocity over one complete iteration.
 *
-*
-*
 *     corut - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (0:nx,-1:ny), corut(ix,iy) specifies the last
 *     computed correction to the parallel velocity ua of all species
@@ -102,7 +98,6 @@
 *     corut is computed by solving an equation that has resmt as its
 *     right hand side. It is not necessarily the same as the change in
 *     the parallel velocity over one complete iteration.
-*
 *
 *     corte - (-1:nx,-1:ny) real*8 array, input.
 *     For (ix,iy) in (-1:nx,-1:ny), corte(ix,iy) specifies the last
