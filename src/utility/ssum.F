@@ -17,11 +17,12 @@
       real (kind=R8) ::
      *   t
       intrinsic max
+      external xerrab
       integer ibase
       ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (incx.eq.0) then
-       stop 'ssum--error, incx.eq.0'
+       call xerrab ('ssum--error, incx.eq.0')
       else if (incx.eq.1) then
        t = 0
        do i = 0, n-1

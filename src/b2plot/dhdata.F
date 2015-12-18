@@ -157,7 +157,7 @@ C
       character*256 solpstop
       real (kind=R8) :: R8FUN1
       EXTERNAL  R8FUN1
-      external lnblnk
+      external lnblnk, subini, subend
 #ifdef USE_PXFGETENV
       integer lenval, ierror
 #endif
@@ -175,8 +175,12 @@ C
 C
 C-----------------------------------------------------------------------
 C
+      call subini ('dhdata')
       IFAIL = 0
-      if(iz0.le.0) return
+      if(iz0.le.0) then
+        call subend ()
+        return
+      endif
 C
 C-----PARAMETRIC DIMENSIONS CHECKED-------------------------------------
 C
@@ -342,10 +346,12 @@ C
       if(indxz1.le.0.0) then
         write(*,*) 'DHDATA: indxz1 = ',indxz1,' <= 0'
         ifail=1
+        call subend ()
         return
       elseif(indxz1.gt.IZMAXD) then
         write(*,*) 'DHDATA: indxz1 = ',indxz1,' > izmaxd = ',izmaxd
         ifail=1
+        call subend ()
         return
       endif
 C
@@ -398,7 +404,8 @@ C
 C
 C-----------------------------------------------------------------------
 C
- 9999 RETURN
+ 9999 call subend ()
+      RETURN
       END SUBROUTINE DHDATA
 *COPY R8FUN1
       FUNCTION R8FUN1 ( Z )
@@ -641,6 +648,8 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
       LOGICAL    LUVAL(0:NIOPT)
 C-----------------------------------------------------------------------
+      EXTERNAL   SUBINI, SUBEND, XERTST
+C-----------------------------------------------------------------------
       SAVE QVAL , D2VAL , D3VAL , UVAL , LUVAL
       SAVE NOPT , NIN0
       SAVE X    , H     , Q     , D1   , D2   , D3
@@ -653,10 +662,11 @@ C-----------------------------------------------------------------------
       DATA  NOPT / -1     /
 C-----------------------------------------------------------------------
 C***********************************************************************
-      IF (NKNOTS.LT.NIN)
-     &                 STOP ' XXSPLN ERROR: TOO MANY KNOTS REQUESTED'
-      IF (IOPT.GT.NIOPT)
-     &                 STOP ' XXSPLN ERROR: INVALID IOPT VALUE ENTERED'
+      CALL SUBINI ('xxspln')
+      CALL XERTST (NKNOTS.GE.NIN,
+     &                 ' XXSPLN ERROR: TOO MANY KNOTS REQUESTED')
+      CALL XERTST (IOPT.LE.NIOPT,
+     &                 ' XXSPLN ERROR: INVALID IOPT VALUE ENTERED')
 C-----------------------------------------------------------------------
       IF (IOPT.LT.0) THEN
          LEXTRP = .FALSE.
@@ -789,6 +799,7 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
     5    CONTINUE
 C***********************************************************************
+      CALL SUBEND ()
       RETURN
       END SUBROUTINE XXSPLN
 c

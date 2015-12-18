@@ -217,8 +217,10 @@ cxpb  Replaced with explicit writing of non-zero elements only
 #else
       character*2 sputter_codes(0:100)
 #endif
+      external subini, subend, xertst
 
       if(sputter_initialised) return
+      call subini ('read_sputter_data')
       allocate(sputter_index(0:nsd-1))
       isp=-1
       do is=0,nsd-1
@@ -325,7 +327,7 @@ cxpb  Replaced with explicit writing of non-zero elements only
             sputter_energy(ic+1,is,itargsp)=
      1       sputter_energy(ic+1,is,itargsp)*ev
             ic=ic+1
-            if(ic.eq.30) stop 'increase 30 in alloc_b2mod_sputter'
+            call xertst (ic.lt.30, 'increase 30 in alloc_b2mod_sputter')
             goto 10
    20       continue
             close(99)
@@ -346,7 +348,8 @@ cxpb  Replaced with explicit writing of non-zero elements only
               sputter_energy2(ic+1,is,itargsp)=
      1         sputter_energy2(ic+1,is,itargsp)*ev
               ic=ic+1
-              if(ic.eq.30) stop 'increase 30 in alloc_b2mod_sputter'
+              call xertst (ic.lt.30,
+     .         'increase 30 in alloc_b2mod_sputter')
               goto 30
    40         continue
               close(nfile)
@@ -441,7 +444,7 @@ c     2    i=1,sputter_length(is,itargsp))
             reflect_energy(ic+1,is,itargsp)=
      1       reflect_energy(ic+1,is,itargsp)*ev
             ic=ic+1
-            if(ic.eq.30) stop 'increase 30 in alloc_b2mod_sputter'
+            call xertst (ic.lt.30, 'increase 30 in alloc_b2mod_sputter')
             goto 50
    60       continue
             close(96)
@@ -462,7 +465,8 @@ c     2    i=1,sputter_length(is,itargsp))
               reflect_energy2(ic+1,is,itargsp)=
      1         reflect_energy2(ic+1,is,itargsp)*ev
               ic=ic+1
-              if(ic.eq.30) stop 'increase 30 in alloc_b2mod_sputter'
+              call xertst (ic.lt.30,
+     .         'increase 30 in alloc_b2mod_sputter')
               goto 70
    80         continue
               close(95)
@@ -498,6 +502,7 @@ c     2    i=1,reflect_length(is,itargsp))
       enddo      ! itargsp
       if (ntargsp.eq.0) write(*,*) 'Sputtering models turned off!'
       sputter_initialised=.true.
+      call subend ()
       return
 
       end subroutine read_sputter_data

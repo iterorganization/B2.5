@@ -568,7 +568,7 @@ c       call my_out(70,nx,ny,avisper(:,:,1),'avispery'//charnc)
 c       call my_out(70,nx,ny,bvisper(:,:,1),'bvispery'//charnc)
 c       call my_out(70,nx,ny,cvisper(:,:,1),'cvispery'//charnc)
 c       call my_out(70,nx,ny,fchvisper(:,:,1),'fchvispery'//charnc)
-c       stop
+c       call xerrab (' ')
       endif
 
 * ..calculate the parallel viscosity current connected with the heat flux 

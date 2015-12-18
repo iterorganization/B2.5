@@ -80,6 +80,7 @@
 * dimensions and variables
       integer iret
       integer z_xyst_id
+      external xerrab
 * define variable
       dims(1) = nxdim
       dims(2) = nydim
@@ -92,7 +93,7 @@
         dims(3) = nmoldim
       case default type
         write(*,*) 'Undefined "itype" in create_cdf_field3 ',itype
-        stop
+        call xerrab ('Undefined itype value')
       end select type
       dims(4) = timedim
       iret = nf_def_var (ncid, name, NF_DOUBLE, 4, dims, z_xyst_id)

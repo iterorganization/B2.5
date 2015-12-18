@@ -177,7 +177,7 @@
 !        call cpu_time(cpu_end)
 !	  write (*,"(' Time of transform is',1pd9.2)") cpu_end-cpu_start
 !	  write(*,*) 'STORAGE_7: nz = ',nz 
-	  if(nz.gt.N_NZ_SDRV) stop ' nz.gt.N_NZ_SDRV'
+	  call xertst (nz.le.N_NZ_SDRV, ' nz.gt.N_NZ_SDRV')
 *    ..use sdrv from YSMP
 !	  call cpu_time(cpu_start)
 	  call illtern_7(NX+2, NY+2, NX+2, NZ, resfun, corfun)         !srv 29.05.02 }

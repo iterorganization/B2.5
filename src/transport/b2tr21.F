@@ -841,10 +841,11 @@ C       gt:	                                temperature gradient
       integer   i, j, k, l
       real (kind=R8) ::
      *          i1, i2, h1, hh1, const, cii
+      external subini, subend, xertst
 
-
-      if( nz(1) .ne. 1 )  stop
-     *    'thermf:  nz(1) != 1 --> electron var. not first element'
+      call subini ('thermf')
+      call xertst( nz(1) .eq. 1 ,
+     *    'thermf:  nz(1) != 1 --> electron var. not first element')
 
 *=======================================================================
 *//COMPUTATION//
@@ -960,7 +961,10 @@ c  ---------------------------------------------------------------------
 #endif
       cond=condval(a,2*ns,ifail)
 
-      if( ifail .ne. 0 )   return
+      if( ifail .ne. 0 ) then
+        call subend ()
+        return
+      end if
         
       do i=1,ns
         b(i) = p(i)*gt(i)

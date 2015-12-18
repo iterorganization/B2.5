@@ -52,8 +52,8 @@ c
       EXTERNAL XERRAB, b2sasum, x05baf
 
       logical lfirst
-      integer ncall, nwrite
-      save lfirst, ncall, nwrite
+      integer ncall, nwrite, maxsize
+      save lfirst, ncall, nwrite, maxsize
       data lfirst /.true./, ncall /0/, nwrite /0/
 
 *=======================================================================
@@ -175,7 +175,7 @@ c-dpc
       endif
       if(lfirst) then
          write(*,*) 'ilutern_7: nz = ',nz                       !sv 11.01.00
-         if(nz.gt.N_NONZEROS) stop 'Increase N_NONZEROS'
+         call xertst(nz.le.N_NONZEROS, 'Increase N_NONZEROS')
          iflag=0
       endif
       do i=1,nz

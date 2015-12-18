@@ -723,13 +723,14 @@ c
       call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
       if (boundary_namelist.eq.1)
      > call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
-      if(nbc.gt.nbcd) stop 'increase size in b2plot for nbcd'
-      if(nniso.gt.nnisod) stop 'increase size in b2plot for nnisod'
+      call xertst(nbc.le.nbcd, 'increase size in b2plot for nbcd')
+      call xertst(nniso.le.nnisod, 'increase size in b2plot for nnisod')
       call alloc_b2mod_neutrals
      . (nx, ny, ns, natm, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
      > call read_neutrals_namelist(nx, ny, ns, .false.)
-      if(nstrat.gt.nstraid) stop 'Increase DEF_NSTRA in DIMENSIONS.F'
+      call xertst(nstrat.le.nstraid, 
+     . 'Increase DEF_NSTRA in DIMENSIONS.F')
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)
@@ -5292,7 +5293,7 @@ c
           lu_pos=lu_pos+1
           if(lu_pos .gt. 10) then
             write(*,*) 'More than 10 nested files  --- infinite loop?'
-            stop
+            call xerrab ('Infinite loop command file')
           endif
           save_textline(lu_pos)=textline
           save_ipos(lu_pos)=ipos
@@ -5316,7 +5317,7 @@ c
           lu_pos=lu_pos+1
           if(lu_pos .gt. 10) then
             write(*,*) 'More than 10 nested files  --- infinite loop?'
-            stop
+            call xerrab ('Infinite loop in cmdcdf')
           endif
           save_textline(lu_pos)=textline
           save_ipos(lu_pos)=ipos

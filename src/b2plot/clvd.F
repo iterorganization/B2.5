@@ -3,10 +3,13 @@ c
       use b2mod_types
 #include "graphics_vars.h"
       real (kind=R8) :: clvmin,clvmax,delta
-      if(delta.eq.0) stop 'division by 0 in clvd'
+      external subini, subend, xertst, xerrab
+
+      call subini ('clvd')
+      call xertst(delta.ne.0.0_R8, 'division by 0 in clvd')
       nofcls=(clvmax-clvmin)/delta
       if(nofcls.eq.0) then
-        stop 'Contour Level Max == Contour Level Min'
+        call xerrab ('Contour Level Max == Contour Level Min')
       else
         nofcls=nofcls+1
         write (*,*) 'User specified',nofcls,'contour levels for range'
@@ -16,6 +19,7 @@ c
           write (*,*) 'contour level',iclv,'at',clval(iclv)
         enddo
       endif
+      call subend ()
       return
       end subroutine clvd
 c
@@ -23,10 +27,13 @@ c
       use b2mod_types
 #include "graphics_vars.h"
       real (kind=R8) :: clvmin,clvmax,delta
-      if(delta.eq.0) stop 'division by 0 in wclvd'
+      external subini, subend, xertst, xerrab
+
+      call subini ('wclvd')
+      call xertst (delta.ne.0.0_R8, 'division by 0 in wclvd')
       nofwcls=(clvmax-clvmin)/delta
       if(nofwcls.eq.0) then
-        stop 'Wall Contour Level Max == Wall Contour Level Min'
+        call xerrab ('Wall Contour Level Max == Wall Contour Level Min')
       else
         nofwcls=nofwcls+1
         write (*,*) 'User specified',nofwcls,
@@ -37,6 +44,7 @@ c
           write (*,*) 'wall contour level',iclv,'at',wclval(iclv)
         enddo
       endif
+      call subend ()
       return
       end subroutine wclvd
 c
@@ -44,10 +52,14 @@ c
       use b2mod_types
 #include "graphics_vars.h"
       real (kind=R8) :: clvmin,clvmax,delta
-      if(delta.eq.0) stop 'division by 0 in tclvd'
+      external subini, subend, xertst, xerrab
+
+      call subini ('tcvld')
+      call xertst(delta.ne.0.0_R8, 'division by 0 in tclvd')
       noftcls=(clvmax-clvmin)/delta
       if(noftcls.eq.0) then
-        stop 'Target Contour Level Max == Target Contour Level Min'
+        call xerrab 
+     .   ('Target Contour Level Max == Target Contour Level Min')
       else
         noftcls=noftcls+1
         write (*,*) 'User specified',noftcls,
@@ -58,6 +70,7 @@ c
           write (*,*) 'target contour level',iclv,'at',tclval(iclv)
         enddo
       endif
+      call subend ()
       return
       end subroutine tclvd
  

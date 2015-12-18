@@ -16,11 +16,15 @@ c
      *   xvalues(lngarr),yvalues(lngarr),chord_value,
      1   xmin,xmax,ymin,ymax,x1,y1,z1,dx1,dy1,dz1
       integer inpts,i,is,npoints,lnblnk
-      external lnblnk,chord_value
+      external lnblnk,chord_value,subini,subend,xerrab
 
+      call subini ('process_chord_slice')
       do is=0,ndim(3,iwrk)-1
         if(.not.open_file(99,filename,
-     1   'data.local/chords|data/chords')) return
+     1   'data.local/chords|data/chords')) then
+          call subend ()
+          return
+        end if
         read(99,*,err=30,end=30) dataname,npoints
         vector=npoints .lt. 0
         dx1=0
@@ -38,8 +42,9 @@ c
      2   x1,y1,z1,
      3   dx1,dy1,dz1,vector)
         if(inpts .lt. lngarr) goto 10
-        stop 'increase array size in process_chord_slice'
+        call xerrab ('increase array size in process_chord_slice')
    30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+        call subend ()
         return
    40   continue
         close(99)
@@ -89,6 +94,7 @@ c
         call end_page
         close(99)
       enddo
+      call subend ()
       return
       end subroutine process_chord_slice
 c

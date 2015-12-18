@@ -1560,10 +1560,7 @@ csw 09oct2012 set default potential already at this point (BCs)
 
           if(ierr.eq.10) then
             stack_ptr=stack_ptr+1
-            if(stack_ptr.gt.20) then
-              write(*,*) 'Too deep in b2mndr'
-              stop
-            endif
+            call xertst(stack_ptr.le.20, 'Too deep in b2mndr')
             stack_ntim(stack_ptr)=ntim-itim     ! dpc 2000.06.24 was ntim+10
             stack_dtim(stack_ptr)=dtim
             dtim=dtim/10.0_R8

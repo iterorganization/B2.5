@@ -77,10 +77,12 @@
      *    t1,x,y,dx,dy
       logical inside
       character*1 orientation
+      external subini, subend, xertst, xerrab
 
+      call subini ('setup_b2mod_first_flight')
       ptr_index=ptr_index+1
-      if(ptr_index.gt.no_of_start_points) 
-     *     stop 'b2mod_first_flight: increase no_of_start_points'
+      call xertst(ptr_index.le.no_of_start_points,
+     * 'b2mod_first_flight: increase no_of_start_points')
       write(6,'(a,2i4,1x,a1,1x,2i6)') 'setup_b2mod_first_flight: ',
      *     ix0,iy0,orientation,ptr_index,ptr_table
       do ia=1,no_of_slices
@@ -117,7 +119,7 @@
             y=0.5_R8*(cry(ix,iy,1)+cry(ix,iy,0))
          else
             write(*,*) 'Unknown orientation ',orientation,' at ',ix0,iy0
-            stop
+            call xerrab ('Unknown orientation')
          endif
          inside=.true.
          if (output.ge.1) write(88,*) x,y,ia,ix,iy
@@ -136,8 +138,8 @@
                      index(ptr_index,ia,0)=ptr_table+1
                   else
                      ptr_table=ptr_table+1
-                     if(ptr_table.gt.size_of_table) 
-     *        stop 'b2mod_first_flight: increase size_of_table'
+                     call xertst(ptr_table.le.size_of_table,
+     *                'b2mod_first_flight: increase size_of_table')
                      table(ptr_table,0)=curr
                      table(ptr_table,1)=cnt
                   endif
@@ -157,6 +159,7 @@
          enddo
          if (output.ge.1) write(88,'()')
       enddo
+      call subend ()
       return
       end subroutine setup_b2mod_first_flight
 

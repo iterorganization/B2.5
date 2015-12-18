@@ -1045,7 +1045,8 @@ c 2002-09-11: logic revised
         call alloc_b2mod_neutrals
      .   (nx, ny, ns, natm, nstraid, nsts, sput_dst)
         call read_neutrals_namelist(nx, ny, ns, .false.)
-        if (nstrat.gt.nstraid) stop 'Increase DEF_NSTRA in DIMENSIONS.F'
+        call xertst (nstrat.le.nstraid,
+     .   'Increase DEF_NSTRA in DIMENSIONS.F')
         call alloc_b2mod_diag(nx1,ny1,ns,nnreg(0),nstrat,natm)
       endif
 *   ..modify b2mn.dat parameters
@@ -1342,8 +1343,9 @@ c 2002-09-11: logic revised
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((boundary_namelist.eq.1.or.todo).and..not.found)
         call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
-        if(nbc.gt.nbcd) stop 'increase size in b2ytdr for nbcd'
-        if(nniso.gt.nnisod) stop 'increase size in b2ytdr for nnisod'
+        call xertst (nbc.le.nbcd, 'increase size in b2ytdr for nbcd')
+        call xertst (nniso.le.nnisod,
+     .   'increase size in b2ytdr for nnisod')
         nbc1 = nbc
         do ib = 1, nbc
           call convert_bundle_i
@@ -1437,7 +1439,8 @@ c 2002-09-11: logic revised
      .       2,bcstart(ib),bcend(ib),nx,ny,nx1,ny1,2)
             if (ib2.gt.ib1 .and. bcpos1(ib).ne.-2) then  ! must duplicate the X b.c.
               nbc1 = nbc1 + ib2-ib1
-              if(nbc1.gt.nbcd) stop 'increase size in b2ytdr for nbcd'
+              call xertst (nbc1.le.nbcd,
+     .         'increase size in b2ytdr for nbcd')
               do is = nbc1-(ib2-ib1), nbc1
                 bcchar(is) = bcchar(ib)
                 bcpos1(is) = bcpos(ib)+is
@@ -1561,7 +1564,8 @@ c 2002-09-11: logic revised
      .       1,bcpos(ib),bcend(ib),nx,ny,nx1,ny1,3)
             if (ib2.gt.ib1) then  ! must duplicate the Y b.c.
               nbc1 = nbc1 + ib2-ib1
-              if(nbc1.gt.nbcd) stop 'increase size in b2ytdr for nbcd'
+              call xertst (nbc1.le.nbcd,
+     .         'increase size in b2ytdr for nbcd')
               do is = nbc1-(ib2-ib1), nbc1
                 bcchar(is) = bcchar(ib)
                 bcpos1(is) = bcpos(ib)+is
@@ -7780,8 +7784,8 @@ cxpb as they no longer necessarily point to the same species
      .     '../'//neutrals_filename(1:lnblnk(neutrals_filename))//'.2'
           inquire(file=trim(neutrals_filename),exist=todo)
           call read_neutrals_namelist(nx, ny, ns, .false.)
-          if (nstrai.gt.nstraid)
-     >     stop 'Increase DEF_NSTRA in DIMENSIONS.F'
+          call xertst (nstrai.le.nstraid,
+     >      'Increase DEF_NSTRA in DIMENSIONS.F')
           inquire(file=trim(new_filename),exist=found)
           if (found) write(6,*) trim(new_filename), ' already present!'
         else

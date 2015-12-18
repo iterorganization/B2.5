@@ -13,23 +13,29 @@ c--------------------------------------------------------------------
      *        n,ifile, iwarn1, iwarn2, iwarn3, iwarn4, iwarn5, 
      +        iwarn6, iwarn7
       logical nlwarn
+      external subini, subend, xerrab
       
       data ifile / 0 /
       data iwarn1, iwarn2, iwarn3, iwarn4, iwarn5, iwarn6, iwarn7
      +    /     0,      0,      0,      0,      0,      0,      0/
       
+      call subini ('perr')
       nlwarn = .false. 
       if (n.le.10) then
         goto (1,2,3,4,5) n
       else
 c       to switch off all warnings activate the line below
-        if (.not.nlwarn) return
+        if (.not.nlwarn) then
+          call subend ()
+          return
+        end if
         if (ifile.eq.0) then
           open(11,file = 'neowarn.txt')
           ifile = 1
         endif
         goto (100,101,102,103,104,105,106)n-10
       endif
+      call subend ()
       return
 
 c-------------------------------------------------------------------
@@ -39,25 +45,25 @@ c-------------------------------------------------------------------
       write(*,*)'the parameters nsm and/or ncm are not consistently'
       write(*,*)'set throughout the code. they appear in different'
       write(*,*)'subroutines but must all have the same value'
-      stop
+      call xerrab ('Inconsistent parameters nsm and/or ncm')
 
  2    continue
       write(*,*)'sorry, you cannot run the code for rho = 0.'
-      stop
+      call xerrab ('Rho = 0 not allowed')
 
  3    continue 
       write(*,*)'the parameter nmaxgr is not consistently'
       write(*,*)'set throughout the code. they appear in different'
       write(*,*)'subroutines but must have the same value'
-      stop
+      call xerrab ('Inconsistent parameter nmaxgr')
 
  4    continue
       write(*,*)'unable to reach convergence in viscos'
-      stop
+      call xerrab ('No convergence in viscos')
 
  5    continue
       write(*,*)'unable to reach convergence in the routine geom'
-      stop
+      call xerrab ('No convergence in geom')
       
 c-------------------------------------------------------------------
 c     the warning messages
@@ -71,7 +77,8 @@ c-------------------------------------------------------------------
      +            'wrong'
         write(11,*)
         iwarn1 = 1
-      endif 
+      endif
+      call subend ()
       return
 
  101  continue
@@ -84,6 +91,7 @@ c-------------------------------------------------------------------
         write(11,*)
         iwarn2 = 1
       endif
+      call subend ()
       return
 
  102  continue
@@ -96,6 +104,7 @@ c-------------------------------------------------------------------
         write(11,*)
         iwarn3 = 1
       endif
+      call subend ()
       return
 
  103  continue
@@ -107,6 +116,7 @@ c-------------------------------------------------------------------
         write(11,*)
         iwarn4 = 1
       endif
+      call subend ()
       return
 
  104  continue
@@ -120,6 +130,7 @@ c-------------------------------------------------------------------
         write(11,*)
         iwarn5 = 1
       endif
+      call subend ()
       return
 
  105  continue
@@ -133,6 +144,7 @@ c-------------------------------------------------------------------
         write(11,*)
         iwarn6 = 1
       endif
+      call subend ()
       return
  
  106  continue
@@ -146,6 +158,7 @@ c-------------------------------------------------------------------
         write(11,*)
         iwarn7 = 1
       endif
+      call subend ()
       return
   
       end

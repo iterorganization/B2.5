@@ -14,7 +14,7 @@ C ===================================================================
       character*256 tmp,customlabel
       integer elength,count,i,j,ijpos,icpos,jcpos,istart,iend
       integer lnblnk
-      external lnblnk
+      external lnblnk, subini, subend, xertst, xerrab
       character var*256,envvar*256,systemarg*256
       character*1 backslash
 #ifdef USE_PXFGETENV
@@ -26,6 +26,7 @@ C ===================================================================
 *     external on AIX or HP-UX it returns some non-printing garbage,
 *     without error message (AIX/XLF Version 2.2, HP-UX Release 9.0))
 *     ------------------------------------------------------------------
+      call subini ('customise_label')
       backslash='\\'
       icpos=1
       jcpos=1
@@ -114,7 +115,8 @@ C ===================================================================
             jcpos=jcpos+1
           endif
         enddo
-        if(j.eq.elength) stop 'You did not close superscript braces'
+        call xertst (j.lt.elength,
+     .   'You did not close superscript braces')
       endif
       goto 10
   90  continue ! found subscript
@@ -136,7 +138,7 @@ C ===================================================================
             jcpos=jcpos+1
           endif
         enddo
-        if(j.eq.elength) stop 'You did not close subscript braces'
+        call xertst(j.lt.elength, 'You did not close subscript braces')
       endif
       goto 10
   100 continue ! found locallabel
@@ -145,8 +147,8 @@ C ===================================================================
       do while (iend.lt.elength.and.locallabel(iend:iend).ne.'}')
         iend=iend+1
       enddo
-      if(iend.eq.elength.and.locallabel(iend:iend).ne.'}')
-     1   stop 'You did not close environment braces'
+      call xertst(iend.lt.elength.or.locallabel(iend:iend).eq.'}',
+     . 'You did not close environment braces')
       var=locallabel(icpos:iend-1)
       if(var.eq.'time'.or.var.eq.'TIME') then
         if((runtime.lt.1e-6.and.runtime.ne.0).or.(runtime.ge.100)) then
@@ -179,8 +181,8 @@ C ===================================================================
       do while (iend.lt.elength.and.locallabel(iend:iend).ne.'`')
         iend=iend+1
       enddo
-      if(iend.eq.elength.and.locallabel(iend:iend).ne.'`')
-     1   stop 'You did not close `'
+      call xertst(iend.lt.elength.or.locallabel(iend:iend).eq.'`',
+     1 'You did not close `')
       systemarg='echo `'//locallabel(icpos:iend-1)//'` > /tmp/tmp.xxx'
       call system(systemarg)
       open(99,file='/tmp/tmp.xxx')
@@ -200,7 +202,7 @@ C ===================================================================
       else
         write(*,*) 'jcpos = ',jcpos
         write(*,*) 'tmp = ',tmp
-!        stop 'extralabel too long'
+!        call xerrab ('extralabel too long')
         jcpos=256
       endif
       count=0
@@ -219,6 +221,7 @@ C ===================================================================
       if(b2plot_debug.ge.4)
      1 write (*,*) 'parsed extralabel to:   ',trim(tmp)
       customlabel=tmp
+      call subend ()
       return
       end subroutine customise_label
 c

@@ -12,10 +12,9 @@
 *     ------------------------------------------------------------------
       integer m0, n0, k
       intrinsic max, abs, mod, real
+      external xertst
 *     ------------------------------------------------------------------
-      if (n.eq.0) then
-       stop 'ratio--error, n.eq.0'
-      endif
+      call xertst (n.ne.0, 'ratio--error, n.eq.0')
 *     (compute  k = gcd(abs(m),abs(n)))
       m0 = abs(m)
       n0 = abs(n)

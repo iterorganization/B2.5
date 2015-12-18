@@ -489,52 +489,111 @@ c-dpc-debug
       write(*,*) 'b2agdr2: bb(nx,ny,0) ',bb(nx,ny,0)
       write(*,'()')
       if (bb(nx,ny,2).gt.0.0_R8) then
-        write(*,*) 'This case has POSITIVE toroidal magnetic field.'
-        write(*,*) 
+        write(*,'(a)')
+     .   'This case has POSITIVE toroidal magnetic field.'
+        write(*,'(a)')
      .   'This means that the Bx(grad B) direction points DOWN.'
-        write(*,*) 'Bz is out of the page towards you.'
+        write(*,'(a)')
+     .   'Bz is out of the page towards you.'
+        write(nout(0),'(/2x,a)')
+     .   'This case has POSITIVE toroidal magnetic field.'
+        write(nout(0),'(2x,a)')
+     .   'This means that the Bx(grad B) direction points DOWN.'
+        write(nout(0),'(2x,a)')
+     .   'Bz is out of the page towards you.'
       else
-        write(*,*) 'This case has NEGATIVE toroidal magnetic field.'
-        write(*,*) 
+        write(*,'(a)')
+     .   'This case has NEGATIVE toroidal magnetic field.'
+        write(*,'(a)')
      .   'This means that the Bx(grad B) direction points UP.'
-        write(*,*) 'Bz is into the page away from you.'
+        write(*,'(a)')
+     .   'Bz is into the page away from you.'
+        write(nout(0),'(/2x,a)')
+     .   'This case has NEGATIVE toroidal magnetic field.'
+        write(nout(0),'(2x,a)')
+     .   'This means that the Bx(grad B) direction points UP.'
+        write(nout(0),'(2x,a)')
+     .   'Bz is into the page away from you.'
       endif
-      write(*,*) 'If this is not correct, please set :'
-      write(*,*) '"b2agfs_Bt_reversal" to "1" in "b2ag.dat" and rerun.'
-      write(*,*) 'If already set to "1", set to "0" instead.'
+      write(*,'(a)')
+     . 'If this is not correct, please set :'
+      write(*,'(a)')
+     . '"b2agfs_Bt_reversal" to "1" in "b2ag.dat" and rerun.'
+      write(*,'(a)')
+     . 'If already set to "1", set to "0" instead.'
       write(*,'()')
       if (bb(nx,ny,0).gt.0.0_R8) then
-        write(*,*) 'This case has POSITIVE poloidal magnetic field.'
-        write(*,*) 'This means the poloidal field points in the '//
-     .             'direction of INCREASING poloidal index ix.'
-        write(*,*) 'The parallel velocities ua and ue will be '//
-     .             'positive when pointing in the direction of '//
-     .             'INCREASING poloidal index ix.'
-        write(*,*) 'This is the SAME convention as for poloidal '//
-     .             'quantities.'
+        write(*,'(a)')
+     .   'This case has POSITIVE poloidal magnetic field.'
+        write(*,'(a)')
+     .   'This means the poloidal field points in the '//
+     .   'direction of INCREASING poloidal index ix.'
+        write(*,'(a)')
+     .   'The parallel velocities ua and ue will be '//
+     .   'positive when pointing in the direction of '//
+     .   'INCREASING poloidal index ix.'
+        write(*,'(a)')
+     .   'This is the SAME convention as for poloidal '//
+     .   'quantities.'
+        write(nout(0),'(2x,a)')
+     .   'This case has POSITIVE poloidal magnetic field.'
+        write(nout(0),'(2x,a)')
+     .   'This means the poloidal field points in the '//
+     .   'direction of INCREASING poloidal index ix.'
+        write(nout(0),'(2x,a)')
+     .   'The parallel velocities ua and ue will be '//
+     .   'positive when pointing in the direction of '//
+     .   'INCREASING poloidal index ix.'
+        write(nout(0),'(2x,a)')
+     .   'This is the SAME convention as for poloidal '//
+     .   'quantities.'
       else
-        write(*,*) 'This case has NEGATIVE poloidal magnetic field.'
-        write(*,*) 'This means the poloidal field points in the '//
-     .             'direction of DECREASING poloidal index ix.'
-        write(*,*) 'The parallel velocities ua and ue will be '//
-     .             'positive when pointing in the direction of '//
-     .             'DECREASING poloidal index ix.'
-        write(*,*) 'This is the OPPOSITE convention as for '//
-     .             'poloidal quantities.'
+        write(*,'(a)')
+     .   'This case has NEGATIVE poloidal magnetic field.'
+        write(*,'(a)')
+     .   'This means the poloidal field points in the '//
+     .   'direction of DECREASING poloidal index ix.'
+        write(*,'(a)')
+     .   'The parallel velocities ua and ue will be '//
+     .   'positive when pointing in the direction of '//
+     .   'DECREASING poloidal index ix.'
+        write(*,'(a)')
+     .   'This is the OPPOSITE convention as for '//
+     .   'poloidal quantities.'
+        write(nout(0),'(2x,a)')
+     .   'This case has NEGATIVE poloidal magnetic field.'
+        write(nout(0),'(2x,a)')
+     .   'This means the poloidal field points in the '//
+     .   'direction of DECREASING poloidal index ix.'
+        write(nout(0),'(2x,a)')
+     .   'The parallel velocities ua and ue will be '//
+     .   'positive when pointing in the direction of '//
+     .   'DECREASING poloidal index ix.'
+        write(nout(0),'(2x,a)')
+     .   'This is the OPPOSITE convention as for '//
+     .   'poloidal quantities.'
       end if
       if (bb(nx,ny,0)*bb(nx,ny,2).lt.0.0_R8) then
-        write(*,*) 
-     .   'This case has COUNTER-directed plasma current and '//
-     .   'toroidal field.'
-      else
-        write(*,*) 
+        write(*,'(a)')
      .   'This case has CO-directed plasma current and '//
      .   'toroidal field.'
+        write(nout(0),'(2x,a)')
+     .   'This case has CO-directed plasma current and '//
+     .   'toroidal field.'
+      else
+        write(*,'(a)')
+     .   'This case has COUNTER-directed plasma current and '//
+     .   'toroidal field.'
+        write(nout(0),'(2x,a)')
+     .   'This case has COUNTER-directed plasma current and '//
+     .   'toroidal field.'
       endif
-      write(*,*) 'If this is not correct, please set :'
-      write(*,*) '"b2agfs_pit_rescale" to "-1.0" in "b2ag.dat" '//
-     .   'and rerun.'
-      write(*,*) 'If already set to "-1.0", set to "1.0" instead.'
+      write(*,'(a)')
+     . 'If this is not correct, please set :'
+      write(*,'(a)')
+     . '"b2agfs_pit_rescale" to "-1.0" in "b2ag.dat" and rerun.'
+      write(*,'(a)')
+     . 'If already set to "-1.0", set to "1.0" instead.'
       write(*,'()')
 
 * ..output

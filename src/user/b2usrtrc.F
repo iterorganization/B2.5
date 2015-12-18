@@ -604,8 +604,9 @@ c*** Calculate the neutral flows in PFR
             m=lpfrgrp(i)
             if(m.lt.0) m=nnlimi-m
             if(isrftype(m).ne.-3) then !{
-              write (*,*) '#b2usrtrc: wrong type of diagnostic ',
-     ,                  'surface. Surface:',m,',  type: ',isrftype(m)
+              write (*,'(a,i4,a,i4)') 
+     .         '#b2usrtrc: wrong type of diagnostic surface. Surface:',
+     .          m,',  type: ',isrftype(m)
               write (*,*) 'Check the DG model!!!'
               hlp_pfrf(k,j,1)=0.0_R8
               go to 30

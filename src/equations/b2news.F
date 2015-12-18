@@ -416,7 +416,7 @@ cxpb
         endif                                                            !srv 19.10.08 }
         call xertst (ier0.eq.0, 'error return from b2npmo')
 !#ifdef BLOCK
-!      if(ncall.eq.1) stop
+!      call xertst (ncall.eq.0, 'BLOCK called')
 !#endif
 *   ..set nep
 *     (= ne before continuity update)

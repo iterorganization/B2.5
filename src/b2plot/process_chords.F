@@ -23,11 +23,15 @@ c
       integer lnblnk
       real (kind=R8) ::
      * chord_integral
-      external lnblnk, chord_integral, open_file
+      external lnblnk, chord_integral, open_file, xerrab, subini, subend
 
+      call subini ('process_chords')
       do is=0,ndim(3,iwrk)-1
         if(.not.open_file(99,filename,
-     1   'data.local/chords|data/chords')) return
+     1   'data.local/chords|data/chords')) then
+          call subend ()
+          return
+        end if
         read(99,*,err=30,end=30) dataname,npoints
         vector=npoints .lt. 0
         if(vector) 
@@ -41,8 +45,9 @@ c
         if(mod(inpts,1000) .eq. 0) 
      >   write(*,*) 'Processed ',inpts,' chords'
         if(inpts .lt. maxchords) goto 10
-        stop 'increase array size in process_chords'
+        call xerrab ('increase array size in process_chords')
    30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+        call subend ()
         return
    40   continue
         close(99)
@@ -117,6 +122,7 @@ c
         call end_page
         close(99)
       enddo
+      call subend ()
       return
       end subroutine process_chords
 c
@@ -275,12 +281,16 @@ c
 
       logical open_file,vector
       integer ind,indold,npoints,lnblnk
-      external lnblnk
+      external lnblnk, subini, subend, xertst
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2
 
+      call subini ('compile_chords')
       if(.not.open_file(99,filename,
-     1 'data.local/chords|data/chords')) return
+     1 'data.local/chords|data/chords')) then
+        call subend ()
+        return
+      end if
       read(99,*,err=30,end=30) dataname,npoints,
      1 nxcam,xmin,xmax,nycam,ymin,ymax
       vector=npoints .lt. 0
@@ -296,14 +306,15 @@ c
      1 indchd(inpts),indix(ind),indiy(ind),indscl(ind))
       indold=ind
       ind=ind+indchd(inpts)
-      if(ind .gt. maxcompile)
-     1 stop 'increase maxcompile in process_camera'
+      call xertst(ind .le. maxcompile,
+     1  'increase maxcompile in process_camera')
       indchd(inpts)=indold
       if(mod(inpts,1000) .eq. 0) 
      > write(*,*) 'Processed ',inpts,' chords'
       if(inpts .lt. maxchords) goto 10
-      stop 'increase array size in process_chords'
+      call xerrab ('increase array size in process_chords')
    30 write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+      call subend ()
       return
    40 continue
       indchd(inpts+1)=ind
@@ -312,8 +323,10 @@ c
       if(inpts .ne. nxcam*nycam) then
         write(*,*) 'Problem with chords, ',nxcam*nycam,
      1   ' expected, ',inpts,' read in'
+        call subend ()
         return
       endif
+      call subend ()
       return
       end subroutine compile_chords
 c
@@ -344,8 +357,9 @@ c
       integer npoints,lnblnk,i,j
       real (kind=R8) ::
      *   x1,x2,y1,y2,z1,z2,chord_integral
-      external lnblnk,chord_integral
+      external lnblnk,chord_integral, subini, subend, xerrab
 
+      call subini ('calculate_zvalues')
       if(use_compile) then
         do i=1,inpts
           zvalues(i)=0.0_R8
@@ -356,7 +370,10 @@ c
         enddo
       else
         if(.not.open_file(99,filename,
-     1   'data.local/chords|data/chords')) return
+     1   'data.local/chords|data/chords')) then
+          call subend ()
+          return
+        end if
         read(99,*,err=30,end=30) dataname,npoints,
      1   nxcam,xmin,xmax,nycam,ymin,ymax
         vector=npoints .lt. 0
@@ -371,16 +388,19 @@ c
         if(mod(inpts,1000) .eq. 0)
      >   write(*,*) 'Processed ',inpts,' chords'
         if(inpts .lt. maxchords) goto 10
-        stop 'increase array size in process_chords'
+        call xerrab ('increase array size in process_chords')
    30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+        call subend ()
         return
    40   continue
         close(99)
         if(inpts .ne. nxcam*nycam) then
           write(*,*) 'Problem with chords, ',nxcam*nycam,
      1     ' expected, ',inpts,' read in'
+          call subend ()
           return
         endif
       endif
+      call subend ()
       return
       end subroutine calculate_zvalues

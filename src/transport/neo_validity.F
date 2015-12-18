@@ -163,10 +163,7 @@ c      call alloc_b2mod_neoclassical(nx,ny,ns,nstages,mmx)
 *   ..calculate major radius of closed flux surfaces
       do iy=-1,jsep
 	ix=jxa
-	if(mod(region(ix,iy,0),4).ne.1) then
-	  write(*,*) 'Not in core!'
-	  stop
-	endif
+	call xertst (mod(region(ix,iy,0),4).eq.1, 'Not in core!')
 	irmin=jxa
 	irmax=jxa
 	crmin=cr(ix,iy)
@@ -179,10 +176,7 @@ c      call alloc_b2mod_neoclassical(nx,ny,ns,nstages,mmx)
 	  crmax=max(crmax,cr(ix,iy))
 	  ix=rightix(ix,iy)
 	enddo
-	if(ix.ne.jxa) then
-	  write(*,*) 'Core not continuous!'
-	  stop
-	endif
+	call xertst (ix.eq.jxa, 'Core not continuous!')
         rmaj_(iy)=0.5_R8*(crmin+crmax)
       enddo
 
@@ -473,15 +467,14 @@ c#     include "b2cmpa.h"
      2 bave,epsilon,lnlam,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi,
      2 bracket1, bracket2, ammin
+      external subini, subend, xertst
 
+      call subini ('chang_hinton')
       transport=0
       do iy=-1,jsep
 	if (b2plot_debug.ge.8) write(*,*) 'iy: ',iy
 	ix=jxa
-	if(mod(region(ix,iy,0),4).ne.1) then
-	  write(*,*) 'We have a problem: not in core!'
-	  stop
-	endif
+	call xertst (mod(region(ix,iy,0),4).eq.1, 'Not in core')
 	irmin=jxa
 	irmax=jxa
 	crmin=cr(ix,iy)
@@ -498,10 +491,7 @@ c#     include "b2cmpa.h"
 	  czmax=max(czmax,cz(ix,iy))
 	  ix=rightix(ix,iy)
 	enddo
-	if(ix.ne.jxa) then
-	  write(*,*) 'We have a problem: core not continuous!'
-	  stop
-	endif
+	call xertst (ix.eq.jxa, 'Core not continuous')
 	if (b2plot_debug.ge.8) 
      >   write(*,*) 'crmin,crmax,czmin,czmax',
      1	 crmin,crmax,czmin,czmax
@@ -604,6 +594,8 @@ c#     include "b2cmpa.h"
 	  endif
 	enddo
       enddo
+      call subend ()
+      return
       end
 
 

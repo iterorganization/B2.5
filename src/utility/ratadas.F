@@ -178,7 +178,7 @@ c     ionisation potentials
      *   ip(0:nc-1)
 
       logical silent_open
-      external silent_open
+      external silent_open, xertst
 
 *   ..subprogram start-up calls
       call subini ('ratadas')
@@ -203,9 +203,8 @@ c     ionisation potentials
       enddo
 
 c     reading in filename and mass
-      if(.not.silent_open(99,'ratadas.filelist',
-     1 'data.local|modules/B2.5/Database',actual_file))
-     1 stop 'missing file'
+      call xertst(silent_open(99,'ratadas.filelist',
+     1 'data.local|modules/B2.5/Database',actual_file), 'missing file')
       write(*,*) 'Getting ADAS file list from ',trim(actual_file)
       write(nput,*) 'Getting ADAS file list from ',trim(actual_file)
       read(99,*) UIDIN
@@ -725,9 +724,8 @@ c     reading in data, effective ionisation potential
         DPOT=-1.0_R8
       endif
 c     reading in data, ionisation potentials
-      if(.not.silent_open(99,'ionization_potentials',
-     1 'data.local|modules/B2.5/Database',actual_file))
-     1 stop 'missing file'
+      call xertst (silent_open(99,'ionization_potentials',
+     1 'data.local|modules/B2.5/Database',actual_file), 'missing file')
       write(*,'(a,a,a)') 'Used ',trim(actual_file),
      .   ' for ionisation potentials table'
       write(nput,'(a,a,a)') 'Used ',trim(actual_file),

@@ -11,11 +11,12 @@
 *     ------------------------------------------------------------------
       integer i, ix
       intrinsic max
+      external xerrab
       integer ibase
       ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (incx.eq.0) then
-       stop 'ifill--error, incx.eq.0'
+       call xerrab ('ifill--error, incx.eq.0')
       else if (incx.eq.1) then
        do i = 0, n-1
         kx(i) = ka

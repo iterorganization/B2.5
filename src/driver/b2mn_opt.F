@@ -21,6 +21,9 @@
       use b2mod_par_opt
       use b2mod_exp_file_names
       implicit none
+#ifdef USE_MPI
+      include 'mpif.h'
+#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -129,6 +132,9 @@
 #else
       integer ninp(0:6), nout(0:8), nx, ny, ns, ns0, idum(0:9), io   !srv 02.05.07
 #endif
+#ifdef USE_MPI
+      integer rank_mpi,size_mpi,ierr_mpi
+#endif
       real (kind=R8) :: cpu_s, cpu_f, x05baf
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin
@@ -149,6 +155,16 @@ crfs  parameters), b2ai (prepares an initial plasma state),
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 *   ..program start-up calls
+#ifdef USE_MPI
+      call mpi_init(ierr_mpi)
+      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
+      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
+      if(rank_mpi .ne. 0) then
+        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+        call mpi_finalize(ierr_mpi)
+        stop 'b2mn_opt_mpi_child'
+      endif
+#endif
       call prgini ('b2mn_opt')
       cpu_s = x05baf()
 *   ..open files
@@ -254,7 +270,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call dealloc_b2mod_transport
       call dealloc_anomalous_transport
       call prgend ()
-      stop
+#ifdef USE_MPI
+      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+      call mpi_finalize(ierr_mpi)
+#endif
+      stop 'b2mn_opt'
 
 *-----------------------------------------------------------------------
 *.end b2mn_opt

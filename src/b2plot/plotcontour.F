@@ -36,7 +36,7 @@ cxpb  INTEGER NNCUT_L
       logical iniso
       integer lnblnk, no_available_colors
       real ceil
-      external lnblnk, no_available_colors, ceil
+      external lnblnk, no_available_colors, ceil, xertst, subini, subend
       intrinsic mod
       
       EXTERNAL FILL,CPDRPL
@@ -49,6 +49,7 @@ cxpb  INTEGER NNCUT_L
       PARAMETER(LNGDEC=200*200)
       REAL (KIND=R4) :: Z(LNGDEC)
 
+      call subini ('plotcontour')
       if(first) then
         call alloc_b2mod_b2plot_xy(LNGDEC)
         first=.false.
@@ -765,7 +766,7 @@ C =============================== Setup individual zones
             nny=nyend(k)-nystrt(k)+1
             if (b2plot_debug.eq.8) write(*,*) 'k, nnx, nny : ',
      .                                         k, nnx, nny
-            if(ic.ne.nnx*nny) stop 'ic.ne.nnx*nny'
+            call xertst (ic.eq.nnx*nny, 'ic.ne.nnx*nny')
             CALL CPSETI('SET - DO-SET-CALL FLAG',0)
             CALL CPRECT(z, NNX, NNX, NNY, RWRK, LRWK, IWRK, LIWK)
             IF(L.EQ.1) THEN
@@ -801,6 +802,7 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
                 call eprin
                 call errof
                 call retsr(irold)
+                call subend ()
                 return
               endif
               call retsr(irold)
@@ -902,6 +904,7 @@ C Set fill style to solid, and fill contours if COLPRT==TRUE
             call eprin
             call errof
             call retsr(irold)
+            call subend ()
             return
           endif
           call retsr(irold)
@@ -989,5 +992,6 @@ C Draw Mesh/Separatrix if wanted
       if(wall) call data_copy(is)
       call additional_elements(nx,ny,physical)
       
+      call subend ()
       RETURN
       END SUBROUTINE PLOTCONTOUR

@@ -41,6 +41,7 @@ c======================================================================
       real (kind=R8) :: flin
       flin(x,y)=(x-xc)*(ys-yc)-(y-yc)*(xs-xc)
       intrinsic min, max, mod, sign
+      external subini, subend, xertst
 c======================================================================
 c*** Initialise the code. The base segment is at the position jb
 c*** in the structure list, we need its endpoints (xb,yb,uxe,uye).
@@ -48,6 +49,7 @@ c*** jm and jsc are set to 1 because we start from the base endpoint.
 c*** jcb is the segment counter for the structure, we set it thus to
 c*** mod(jb,nbndry)+1 to specify the segment next to the base.
 c
+      call subini('rlshdw')
 c      jm=1
 c      jsc=1
 c      jcb=mod(jb,nbndry)+1
@@ -81,6 +83,7 @@ c*** The base is turned its back to the source - no irradiation!
 c
         se=0.0_R8
         sb=1.0_R8
+        call subend ()
         return
       end if
 c
@@ -229,6 +232,7 @@ c*** ... the sector 2. Check the history
 c***        the structure crosses sight completely: total shading
               se=0.0_R8
               sb=1.0_R8
+              call subend ()
               return
             end if
 c***        no shading in sector 2
@@ -244,6 +248,7 @@ c>>>
 c***        the structure crosses sight completely: total shading
                 se=0.0_R8
                 sb=1.0_R8
+                call subend ()
                 return
               end if
 c***        no shading
@@ -257,6 +262,7 @@ c>>>
 c***        the structure crosses sight completely: total shading
                 se=0.0_R8
                 sb=1.0_R8
+                call subend ()
                 return
               end if
 c***        no shading
@@ -268,6 +274,7 @@ c*** ... the sector 4. Check the history
 c***     the structure crosses sight completely: total shading
               se=0.0_R8
               sb=1.0_R8
+              call subend ()
               return
             end if
 c***        no shading
@@ -294,6 +301,7 @@ c>>>
 c***        the structure crosses sight completely: total shading
               se=0.0_R8
               sb=1.0_R8
+              call subend ()
               return
             end if
             jm=0
@@ -346,12 +354,13 @@ c>>>
 c***        the structure crosses sight completely: total shading
               se=0.0_R8
               sb=1.0_R8
+              call subend ()
               return
             end if
           end if
         else
           write(*,*) 'Unexpected error in rlshdw: jsc =',jsc
-          stop
+          call xerrab ('Unexpected error in rlshdw')
         end if
 c<<<
 c      print *,'Before correction. jm, jj, sb, se, utb:',jm,jj,sb,se,utb
@@ -363,10 +372,16 @@ c
         if(jj .eq. 1) then
           if(jm .eq. 1) then
             se=min(se,utb)
-            if(se .le. sb) return
+            if(se .le. sb) then
+              call subend ()
+              return
+            end if
           else if(jm .eq. 2) then
             sb=max(sb,utb)
-            if(sb .ge. se) return
+            if(sb .ge. se) then
+              call subend ()
+              return
+            end if
           end if
         end if
         jsc=jj
@@ -374,6 +389,7 @@ c
         xc=xs
         yc=ys
       end do
+      call subend ()
 c======================================================================
       return
       end subroutine rlshdw

@@ -25,8 +25,6 @@ csw 28feb2011 mpi
 #ifdef USE_MPI
       include 'mpif.h'
 #endif
-      real*8 dumarr(100)
-      logical ltrigger
 csw
 
 *-----------------------------------------------------------------------
@@ -135,7 +133,13 @@ csw
 #else
       integer ninp(0:5), nout(0:8), nx, ny, ns, ns0, idum(0:9), io
 #endif
-      integer process_id
+#ifdef USE_MPI
+      integer rank_mpi,size_mpi,ierr_mpi
+#ifdef B25_EIRENE
+      real (kind=R8) :: dumarr(100)
+      logical ltrigger
+#endif
+#endif
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin
       external b2mndr
@@ -153,14 +157,14 @@ crfs put here the other main programs b2ag (prepares geometry and
 crfs  magnetic field), b2ah (prepares tables of default physics
 crfs  parameters), b2ai (prepares an initial plasma state),
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+*   ..program start-up calls
 #ifdef USE_MPI
 csw 28feb2011 mpi
-      integer rank_mpi,size_mpi,ierr_mpi
       call mpi_init(ierr_mpi)
       call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
       call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
-#ifdef B25_EIRENE
       if(rank_mpi .ne. 0) then
+#ifdef B25_EIRENE
         call eirene_find_param(0)
         do
           call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,
@@ -171,14 +175,13 @@ csw 28feb2011 mpi
             exit
           endif
         enddo
+csw
+#endif
         call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
         call mpi_finalize(ierr_mpi)
         stop 'b2mn_mpi_child'
       endif
-csw
 #endif
-#endif
-*   ..program start-up calls
       call prgini ('b2mn')
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
@@ -277,9 +280,11 @@ csw
       call prgend ()
 csw 28feb2011 mpi
 #ifdef USE_MPI
+#ifdef B25_EIRENE
       ltrigger=.false.
       call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,
      .                   MPI_COMM_WORLD,ierr_mpi)
+#endif
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
       call mpi_finalize(ierr_mpi)
 csw

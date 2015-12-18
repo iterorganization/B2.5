@@ -16,6 +16,7 @@
       character chwc, ch0, ch1
       parameter (chwc='.')
       intrinsic len, ichar
+      external xertst
       logical upcase, cmatch
       upcase(ch0,ch1) =
      &  ichar('a').le.ichar(ch0).and.ichar(ch0).le.ichar('z').and.
@@ -25,9 +26,8 @@
 *     ------------------------------------------------------------------
 *   ..test installation
 *     (protection against errors of case conversion.)
-      if (ichar('a').eq.ichar('A')) then
-       stop 'strmas--installation error'
-      endif
+      call xertst (ichar('a').ne.ichar('A'),
+     . 'strmas--installation error')
 *   ..preliminaries
       len0 = len(str0)
       len1 = len(str1)

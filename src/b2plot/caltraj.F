@@ -1125,7 +1125,7 @@ c find particles that need to be killed
      .       (warr(ix,iy,is)/swarr*np-iwarr(ix,iy,is) .le. killval)
               ipt=index_arr(ix,iy,is)
               if(ipt .eq. 0) then
-                write(*,*) 'ERROR: shouldn''t reach here'
+                write(*,*) 'ERROR: should not reach here'
               endif
               ipto=0
               do while(ipt .ne. 0)

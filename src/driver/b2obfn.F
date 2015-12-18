@@ -80,7 +80,7 @@
      & nemod, temod, timod, dif, fcain, fab, shift(1:2)
       character*12 hlp_frm
 *   ..procedures
-!      external xerset, xertst
+      external subini, subend
 *-----------------------------------------------------------------------
 *.computation
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -90,6 +90,7 @@ crfs  parameters), b2ai (prepares an initial plasma state),
 crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 *   ..program start-up calls
+      call subini ('b2obfn')
 
 *   ..calculate physical values of the optimization parameters
 !      par_opt_phys(1) = 0.3_R8 + par_opt(1)**2     ! hce
@@ -294,6 +295,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       write(71,*) ' b2obfn: nfunc, func, npoint ', nfunc, func, npoint
 
 * ..end of computation
+      call subend ()
       return
 
 *-----------------------------------------------------------------------
@@ -306,6 +308,9 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       implicit none
       integer istyle
       real (kind=R8) :: a, b, z, fab
+      external subini, subend, xerrab
+
+      call subini ('fab')
       select case (istyle)
         case(0)
 !         x = z
@@ -322,9 +327,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           fab = 0.5_R8*(a+b) + 0.5_R8*(b-a)*sin(z)
         case default
           write(71,*) ' fab: Incorrect istyle'
-          stop
+          call xerrab ('Incorrect istyle')
       end select
      
+      call subend ()
+      return
       end function fab
 
       function fcain(a, z, istyle)
@@ -332,6 +339,9 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       implicit none
       integer istyle
       real (kind=R8) :: a, z, fcain
+      external subini, subend, xerrab
+
+      call subini ('fcain')
       select case (istyle)
         case(0)
 !         x = z
@@ -343,9 +353,11 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !         x = a + z**2
           fcain = a + z**2
         case default
-          write(71,*) ' fab: Incorrect istyle'
-          stop
-        end select
+          write(71,*) ' fcain: Incorrect istyle'
+          call xerrab ('Incorrect istyle')
+      end select
+      call subend ()
+      return
       end function fcain
 
       subroutine treat_exp_res(l_ne_outer_mdpl, fnm_ne_outer_mdpl,

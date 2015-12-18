@@ -192,6 +192,7 @@
      &  qz(0:nzm-1), ze(0:nzm-1)
 *   ..procedures
       intrinsic real, sqrt, log, exp, min
+      external subini, subend, xertst, xerrab
       real (kind=R8) ::
      *  sei1, hydfud
       sei1(zz) = log(1.0_R8+1.0_R8/zz)-0.4_R8/(1.0_R8+zz)**2
@@ -209,21 +210,17 @@
 *   ..subprogram start-up calls
       call subini ('ratstr')
 *   ..test nz, nt, nn
-      if (.not.(0.lt.nz.and.nz.le.nzm)) then
-       stop 'ratstr--faulty argument nz'
-      else if (.not.(0.le.nt.and.0.le.nn)) then
-       stop 'ratstr--faulty argument nt or nn'
-      endif
+      call xertst (0.lt.nz.and.nz.le.nzm, 'ratstr--faulty argument nz')
+      call xertst (0.le.nt.and.0.le.nn,
+     . 'ratstr--faulty argument nt or nn')
 *   ..test rtt, rtn
       do i = 0, nt
-       if (.not.0.0_R8.lt.rtt(i)) then
-        stop 'ratstr--faulty argument array rtt'
-       endif
+       call xertst (0.0_R8.lt.rtt(i),
+     .  'ratstr--faulty argument array rtt')
       enddo
       do i = 0, nn
-       if (.not.0.0_R8.lt.rtn(i)) then
-        stop 'ratstr--faulty argument array rtn'
-       endif
+       call xertst (0.0_R8.lt.rtn(i),
+     .  'ratstr--faulty argument array rtn')
       enddo
 *   ..position the input file
       rewind (nrid)
@@ -233,7 +230,7 @@
        read (nrid,'(///1x)',end=82)
       enddo
       goto 81
-   82 stop 'ratstr--unexpected end of input'
+   82 call xerrab ('ratstr--unexpected end of input')
    83 continue
 *   ..read data for computation of the rate coefficients
       do k = 0, nz-1

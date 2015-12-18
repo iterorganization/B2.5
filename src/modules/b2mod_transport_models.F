@@ -17,11 +17,12 @@
       subroutine alloc_b2mod_transport_models(nxd,nyd,nsd)
       implicit none
       integer nxd,nyd,nsd
+      external xertst
       transport_models_allocated=.true.
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(eta_hce_mult(-1:nyd))
 #else
-      if(nyd.gt.DEF_NYD) stop 'Increase DEF_NYD in DIMENSIONS.F'
+      call xertst (nyd.le.DEF_NYD, 'Increase DEF_NYD in DIMENSIONS.F')
 #endif
       end subroutine alloc_b2mod_transport_models
 
@@ -41,11 +42,10 @@
       logical found
       logical :: file_ok
       character*260 filename
+      external xertst
 
-      if(.not.transport_models_allocated) then
-	write(*,*) 'Error: transport_models not yet allocated'
-	stop
-      endif
+      call xertst (transport_models_allocated,
+     .	'Error: transport_models not yet allocated')
       if (edition.eq.'    ') then
         filename = '../b2.transport_models_save.parameters'
       else

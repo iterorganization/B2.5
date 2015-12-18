@@ -106,10 +106,9 @@
 *   ..neoclassical transport only valid for single charge states
 *     bundled charge states yet to be implemented
       do is=0,ns-1
-        if (zamax(is).ne.zamin(is)) then
-          stop 'ERROR: neoclassical transport cannot be calculated'
+        call xertst (zamax(is).eq.zamin(is),
+     &   'ERROR: neoclassical transport cannot be calculated')
 c     1     // ' with bundled charge states'
-        end if
       enddo
       call alloc_b2mod_neoclassical(nx,ny,ns,nstages,mmx)
       if(nnreg(0).gt.1 .and. nnreg(0).le.5) then

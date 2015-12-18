@@ -4,9 +4,12 @@ c
 #include "graphics_vars.h"
       real (kind=R8) ::
      * clvmin,clvmax,delta
+      external subini, subend, xerrab
+
+      call subini ('clvn')
       nofcls=ncls
       if(nofcls.eq.0) then
-        stop 'You set number of contour levels to 0'
+        call xerrab ('You set number of contour levels to 0')
       elseif(nofcls.eq.1) then
         clval(1)=(clvmax+clvmin)*0.5_R8
         write (*,*) 'You specified 1 contour level at',clval(1)
@@ -19,6 +22,7 @@ c
           write (*,*) 'contour level',iclv,'at',clval(iclv)
         enddo
       endif
+      call subend ()
       return
       end subroutine clvn
 c
@@ -27,9 +31,12 @@ c
 #include "graphics_vars.h"
       real (kind=R8) ::
      * clvmin,clvmax,delta
+      external subini, subend, xerrab
+
+      call subini ('wclvn')
       nofwcls=ncls
       if(nofwcls.eq.0) then
-        stop 'You set number of wall contour levels to 0'
+        call xerrab ('You set number of wall contour levels to 0')
       elseif(nofwcls.eq.1) then
         wclval(1)=(clvmax+clvmin)*0.5_R8
         write (*,*) 'You specified 1 wall contour level at',wclval(1)
@@ -42,6 +49,7 @@ c
           write (*,*) 'wall contour level',iclv,'at',wclval(iclv)
         enddo
       endif
+      call subend ()
       return
       end subroutine wclvn
 c
@@ -50,9 +58,12 @@ c
 #include "graphics_vars.h"
       real (kind=R8) ::
      * clvmin,clvmax,delta
+      external subini, subend, xerrab
+
+      call subini ('wclvn')
       noftcls=ncls
       if(noftcls.eq.0) then
-        stop 'You set number of target contour levels to 0'
+        call xerrab ('You set number of target contour levels to 0')
       elseif(noftcls.eq.1) then
         tclval(1)=(clvmax+clvmin)*0.5_R8
         write (*,*) 'You specified 1 target contour level at',tclval(1)
@@ -65,5 +76,6 @@ c
           write (*,*) 'target contour level',iclv,'at',tclval(iclv)
         enddo
       endif
+      call subend ()
       return
       end subroutine tclvn

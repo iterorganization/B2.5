@@ -42,7 +42,7 @@ c
 *  -- PROCEDURES --
       logical streql
       EXTERNAL GFSUB2
-      external subini, subend, ipgeti, streql
+      external subini, subend, ipgeti, streql, xertst
 
 *=======================================================================
 *//COMPUTATION//
@@ -82,11 +82,11 @@ C
       write(*,'(a,5i4)') 
      . ' Dimensions in fort.44 = ',nnx,nny,natmi,nmoli,nioni
       write(*,'(a,2i4)') ' Array inner dimensions = ', ndx , ndy
-      if(natmi .gt. natm) stop 'NGREAD: NATMI > NATM'
-      if(nmoli .gt. nmol) stop 'NGREAD: NMOLI > NMOL'
-      if(nioni .gt. nion) stop 'NGREAD: NIONI > NION'
-      if(nnx   .gt. ndx ) stop 'NGREAD:   NNX > NDX '
-      if(nny   .gt. ndy ) stop 'NGREAD:   NNY > NDY '
+      call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
+      call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
+      call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
+      call xertst(nnx   .le. ndx , 'NGREAD:   NNX > NDX ')
+      call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
 c
 * labels

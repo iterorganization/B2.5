@@ -165,6 +165,7 @@ C
      &                  FNM(100,5,10), FNN(100), ENN(100)
       INTEGER           LADEN, LADTIP, LTIPOK, LECI, LECIOK, 
      &                  NUCZ, NSPC, NVALNC(100)
+      external subini, subend, xertst
 C
       COMMON / ADSDAT / NUCZ, NSPC, APN, AQN,
      &                  NVALNC, SIGMA, QN,
@@ -173,20 +174,24 @@ C
 C
       COMMON / ADPARM / LADEN, LADTIP, LTIPOK, LECI, LECIOK
 C
+      call subini ('adset')
       NUCZ = KNUCZ
 C
       CALL ADAPN
 C
-      IF(LADEN .NE. 0 .AND. LADEN .NE. 1) STOP
+      CALL XERTST (LADEN .EQ. 0 .OR. LADEN .EQ. 1, 
+     . 'Invalid LADEN value')
       IF(LADEN .EQ. 0) CALL ADMAYR
       IF(LADEN .EQ. 1) CALL ADMORE
 C
-      IF(LADTIP .NE. 0 .AND. LADTIP .NE. 1) STOP
+      CALL XERTST (LADTIP .EQ. 0 .OR. LADTIP .EQ. 1,
+     . 'Invalid LADTIP value')
       LTIPOK = 0
       IF(LADTIP .EQ. 1) CALL ADTIP(LTIPOK)
 C
       CALL ADFNM
 C
+      call subend ()
       RETURN
       END SUBROUTINE ADSET
       SUBROUTINE ADAPN

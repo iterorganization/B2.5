@@ -1935,20 +1935,20 @@ c dpc
             endif
             write(*,*) ' Summed value is ', SCONPAR(IS)
           endif
-          NAS = 0.0_R8
-          VS = 0.0_R8
-          DO IBW=IB,NBC
-            if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
-     >       THEN
-              DO IX = 1, BC_LIST_SIZE(IBW)
-                NAS = NAS+NA(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),is)*
-     .                   VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-              END DO
-            endif
-          ENDDO
-          NAS = NAS/VS
           if(.not.once_bccon(is)) then
+            NAS = 0.0_R8
+            VS = 0.0_R8
+            DO IBW=IB,NBC
+              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+     >         THEN
+                DO IX = 1, BC_LIST_SIZE(IBW)
+                  NAS = NAS+NA(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),is)*
+     .                     VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                  VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                END DO
+              endif
+            ENDDO
+            NAS = NAS/VS
             IF(BCCHAR(IB).EQ.'S') THEN
               totfluxn = 0.0_R8
               totfluxi = 0.0_R8

@@ -441,7 +441,7 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 
       call xertst (ier0.eq.0, 'error return from b2npmo') 
 #ifdef BLOCK
-!       if(ncall.eq.1) stop
+!       call xertst (ncall.eq.0, 'BLOCK called')
 #endif
 *   ..set nep
 *     (= ne before continuity update)
@@ -842,7 +842,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  reshe, reshi, wrk0, corte, corti, ier0)                         !srv 31.05.99 10.11.02
       endif                                                             !srv 13.10.06 }
 #ifdef BLOCK
-!      stop
+!      call xerrab ('BLOCK called')
 #endif
       deallocate(solvemt)
 

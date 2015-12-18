@@ -298,7 +298,7 @@
                   if(.not.match(ixr-1,iy,ixr,iy).and.ixr.ne.ix+1) exit
                 enddo
                 rightix1(ix,iy)=ixr
-                write(*,*) 'iy,ix,ixr',iy,ix,ixr
+                write(*,'(a,3i4)') 'iy,ix,ixr',iy,ix,ixr
                 if(ic.eq.0) then
                   found=.false.
                 else
@@ -319,7 +319,7 @@
                 topcut1(i)=max(iy+1,topcut1(i))
                 leftcut1(i)=min(ixr,leftcut1(i))
               else
-                write(*,*) 'iy,ix,ixr',iy,ix,ixr
+                write(*,'(a,3i4)') 'iy,ix,ixr',iy,ix,ixr
                 if(ic.eq.0) then
                   found=.false.
                 else
@@ -459,7 +459,7 @@ cxpb tranverse physics
             
 
       write(*,*) 'istyle',istyle,'nncut',nncut
-      if(nncut.eq.0) write(*,*) 'No cuts found'
+      if(nncut.eq.0) write(*,'(a)') 'No cuts found'
       if(nncut.ge.1) write(*,'(a,4i4)')
      1 'Calculated leftcut1, rightcut1, topcut1, bottomcut1 = ',
      1 leftcut1(1), rightcut1(1), topcut1(1), bottomcut1(1)
@@ -1025,7 +1025,7 @@ c
           if(nnx.ne.nx.or.nny.ne.ny) then
             write(*,*) 'b2gxdr_dummy: nx,ny code and data disagree',
      1       nx,ny,nnx,nny
-            stop
+            call xerrab ('Mismatch nx/ny and nnx/nny')
           endif
           do iy=0,ny+1
             do ix=0,nx+1
@@ -1061,7 +1061,7 @@ c----------------------------------------------------------------------
             write(*,*) 'b2gxdr_dummy: the value of R*Btor undefined.'
             write(*,*)
      1       'It must be defined in the header of the grid file '
-            stop 'b2gxdr_dummy: the value of R*Btor undefined'
+            call xerrab ('b2gxdr_dummy: the value of R*Btor undefined')
           end if
 c----------------------------------------------------------------------
 c*** Start reading the grid data
@@ -1084,10 +1084,10 @@ c
             if (new_format.le.4) then
               go to 30
             else
-              stop "Unrecognized format in geometry file"
+              call xerrab ('Unrecognized format in geometry file')
             end if
           else
-            stop "Unrecognized format in geometry file"
+            call xerrab ('Unrecognized format in geometry file')
           end if
    32     continue
           first_read = .false.
@@ -1100,14 +1100,14 @@ c
             mx=i
             if(mx.gt.nx+1) then
               write(*,*) ' mx = ',mx,' nx = ',nx
-              stop 'b2gxdr_dummy: mx > nx+1'
+              call xerrab ('b2gxdr_dummy: mx > nx+1')
             endif
           end if
           if(j.gt.my) then
             my=j
             if(my.gt.ny+1) then
               write(*,*) ' my = ',my,' ny = ',ny
-              stop 'b2gxdr_dummy: my > ny+1'
+              call xerrab ('b2gxdr_dummy: my > ny+1')
             endif
           end if
           read (lun,710,end=990) upsi,crxs(i,j,0),crys(i,j,0)
@@ -1161,11 +1161,13 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
           my=my-1
           if(nx.ne.mx) then
             write(*,*) 'b2gxdr_dummy: mx.ne.nx:  ',mx,nx
-            stop 'b2gxdr_dummy: Sonnet file inconsistent with the grid'
+            call xerrab
+     .       ('b2gxdr_dummy: Sonnet file inconsistent with the grid')
           end if
           if(ny.ne.my) then
             write(*,*) 'b2gxdr_dummy: my.ne.ny:  ',my,ny
-            stop 'b2gxdr_dummy: Sonnet file inconsistent with the grid'
+            call xerrab
+     .       ('b2gxdr_dummy: Sonnet file inconsistent with the grid')
           end if
           close(lun)
         else
@@ -1179,7 +1181,7 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
    10 continue
       write(*,*) 'Error ',iostat,' in reading ',local_sonnet
       write(*,*) 'ix=',ix,' iy=',iy,' ixd=',ixd,' iyd=',iyd
-      stop
+      call xerrab ('Error in reading grid file')
 
   700 format(19x,i3,1x,i3,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
   701 format(19x,i4,1x,i4,4x,e17.0,1x,e17.0,8x,e17.0,1x,e17.0)
@@ -1189,7 +1191,7 @@ c      print *,'Finished reading. nx,ny,mx,my = ',nx,ny,mx,my
 
   990 continue
       write(*,*) 'Error: i,j ',i,j
-      stop 'b2gxdr_dummy: Premature end in the grid file'
+      call xerrab ('b2gxdr_dummy: Premature end in the grid file')
 
       end subroutine b2gxdr_dummy
 c

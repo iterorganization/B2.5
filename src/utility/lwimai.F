@@ -14,7 +14,7 @@
       integer lwrki, lwrkimx
       save lwrki, lwrkimx
       intrinsic max
-      external prvrti
+      external prvrti, xertst
       data lwrki/0/, lwrkimx/0/
 *     Invariant: 0.le.lwrki.le.lwrkimx.le.nstcwi
 *     ------------------------------------------------------------------
@@ -23,8 +23,9 @@
       entry lwiset (lwi0)
 *     (revert base address to lwi0)
       if (lwi0.lt.0.or.lwrki.lt.lwi0) then
-       stop 'lwiset--faulty argument lwi0'
-      endif
+        write (0,*) 'lwiset--faulty argument lwi0'
+        call b25_mpi_stop
+      end if
 *     (set newly-free space to 'not-a-number')
       call prvrti (lwrki-lwi0, wi(lwi0), 1)
       lwrki = lwi0
@@ -32,14 +33,16 @@
 *     ------------------------------------------------------------------
       entry lwiget (nwi, lwi1)
       if (nwi.lt.0) then
-       stop 'lwiget--faulty argument nwi'
-      endif
+        write (0,*) 'lwiget--faulty argument nwi'
+        call b25_mpi_stop
+      end if
       lwi1 = lwrki
       lwrki = lwrki+nwi
       lwrkimx = max(lwrki,lwrkimx)
       if (nstcwi.lt.lwrki) then
-       stop 'lwiget--insufficient workspace stackw%wi(0:*)'
-      endif
+        write (0,*) 'lwiget--insufficient workspace stackw%wi(0:*)'
+        call b25_mpi_stop
+      end if
       return
 *     ------------------------------------------------------------------
       entry lwimax (lwi1)

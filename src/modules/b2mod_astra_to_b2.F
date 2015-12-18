@@ -151,7 +151,9 @@
         character(6)  :: chname
         real (kind=R8) :: value
         real (kind=R8) :: b(1:nyd+2),c(1:nyd+2),d(1:nyd+2), dseval
+        external subini, subend, xerrab
 
+        call subini ('read_astra_to_b2')
 #ifndef ASTRA
         call xerrab ('Compile with -DASTRA option to couple to ASTRA!')
 #else
@@ -222,7 +224,7 @@
          else
           write(*,*) 'RTOR has not been read from file ',
      &                trim(fname)
-          stop
+          call xerrab ('RTOR not read')
          endif
            if(LZRD45) then
           write(*,*) 'ZRD45 has been read from file ',
@@ -230,13 +232,13 @@
          else
           write(*,*) 'ZRD45 has not been read from file ',
      &                trim(fname)
-          stop
+          call xerrab ('ZRD45 not read')
          endif
 
            close(70)
         else
          write(*,*) ' There is no file ', trim(fname)
-         stop
+         call xerrab ('No file found')
         endif
 
         crb_astra=dseval(ny_astra, ZRD45, a_astra, Rmaj_astra, b, c, d)
@@ -247,6 +249,8 @@ c   20   format(117x,e13.5,130x,2e13.5)
    30   format(a6,10x,f6.4)
 #endif
 
+       call subend ()
+       return
        end subroutine read_astra_to_b2
 
        subroutine write_to_check_astra_to_b2(nyd, nwrite)

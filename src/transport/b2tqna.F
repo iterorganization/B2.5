@@ -505,7 +505,7 @@ c ank added blobby transport
         call set_transport_blob(nx, ny, ns, jsep, jxa, vla0)
       else
         write(*,*) 'user_transport = ',user_transport,' not coded'
-        stop
+        call xerrab ('user_transport value not coded')
       endif
 ccc-dpc
       if(ballooning.ne.0.0_R8) then
@@ -1136,7 +1136,7 @@ c
             enddo
            else
             write(*,*) ' b2tqna: nncut not equal 1 or 2'
-            stop
+            call xerrab ('Not available outside SN and DN geometries')
            endif
            write(*,"(/' Parameters of H-regime')")
            write(*,"(' Number of midplane cell =',i4)") nmdpl
@@ -2232,7 +2232,7 @@ C This is the one really used...
 c MW working end 3
             else
               write(*,*) 'mw_interpol = ',mw_interpol,' not coded'
-              stop
+              call xerrab ('mw_interpol value not coded')
             endif
           endif
           else

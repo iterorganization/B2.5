@@ -371,15 +371,15 @@ c---DPC problematic
      &  'where nx =',i4,' and ny =',i4,'.'/
      &  '  With boundary cells included the size is (nx+2)*(ny+2).')
   102 format (/'  Locations of 5*5 corners:'/
-     &  t4,'ix  iy',t15,'crx(--)    cry(--)',6x,'crx(+-)    cry(+-)',
+     &  t5,'ix   iy',t17,'crx(--)    cry(--)',6x,'crx(+-)    cry(+-)',
      &  6x,'crx(-+)    cry(-+)',6x,'crx(++)    cry(++)')
   103 format (/'  The grid metric parameters reduced to a function',
      &  ' of ix only are:'/
-     &  t4,'ix',t12,'xc0',t23,'xc1',t32,'vol(ix)',t44,'hy(ix)',
+     &  t5,'ix',t12,'xc0',t23,'xc1',t33,'vol(ix)',t44,'hy(ix)',
      &  t55,'sx(ix)',t65,'qmin(ix)',t76,'qmax(ix)')
   104 format (/'  The grid metric parameters reduced to a function',
      &  ' of iy only are:'/
-     &  t4,'iy',t12,'yc0',t23,'yc1',t32,'vol(iy)',t44,'hx(iy)',
+     &  t5,'iy',t12,'yc0',t23,'yc1',t33,'vol(iy)',t44,'hx(iy)',
      &  t55,'sy(iy)',t65,'qmin(iy)',t76,'qmax(iy)')
   111 format (/'  Geometry on the south boundary:'/
      &  t4,'ix',t12,'crx',t23,'cry',t37,'bx',t48,'by',t59,'bz',

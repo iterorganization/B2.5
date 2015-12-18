@@ -52,6 +52,7 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       subroutine alloc_transport_namelist(nsd)
       implicit none
       integer nsd
+      external xertst
       if (allocated_transport_namelist) return
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(parm_dna(0:nsd-1))
@@ -60,8 +61,8 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       allocate(parm_vsa(0:nsd-1))
       allocate(parm_hci(0:nsd-1))
 #else
-      if(nsd.gt.nsdmax)
-     1 stop 'increase NSDMAX in b2mod_transport_namelist'
+      call xertst (nsd.le.nsdmax,
+     1  'increase NSDMAX in b2mod_transport_namelist')
 #endif
       flag_dna=0
       flag_dpa=0

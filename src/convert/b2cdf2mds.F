@@ -41,7 +41,9 @@
       data mds_zone /'TARGET1','IMP','OMP','TARGET4',
      1 'TARGET2','TARGET3'/
 #endif
+      external subini, subend, xerrab, xertst
 
+      call subini ('b2cdf2mds')
       write(*,*) 'b2cdf2mds ...'
 
       want_transpose=.false.
@@ -56,7 +58,7 @@ c first handle x-coordinate of profiles (and areas)
           do il=1,2048
             read(1,*,end=100) ds(il)
           enddo
-          stop 'Increase length of ds in b2cdf2mds'
+          call xerrab ('Increase length of ds in b2cdf2mds')
   100     continue
           close(1)
           il=il-1
@@ -112,7 +114,7 @@ c loop over all variables in the file
               status=nf_get_att_text(ncid,ivar,attname,units)
               call check_cdf_status(status)
             else
-              stop 'increase size of units'
+              call xerrab ('increase size of units')
             endif
           endif
           if(attname.eq.'scale') then
@@ -120,7 +122,7 @@ c loop over all variables in the file
               status=nf_get_att_double(ncid,ivar,attname,scale)
               call check_cdf_status(status)
             else
-              stop 'increase size of scale'
+              call xerrab ('increase size of scale')
             endif
           endif
         enddo
@@ -185,7 +187,7 @@ c conceptually two types of traces, f(t) and g(t,x); here handle g(t,x)
                 exit
               endif
             enddo
-            if(index.eq.0) stop '3d-suffix not found'
+            call xertst (index.gt.0, '3d-suffix not found')
             mds_signal_name='\TOP.TIMEDEP.' //
      1       trim(mds_zone(index)) // ':'
             write(*,*) 'We need to save ',trim(varname),
@@ -195,12 +197,12 @@ c conceptually two types of traces, f(t) and g(t,x); here handle g(t,x)
             call check_cdf_status(status)
             data2=data2*scale
             if(varname(1:1).eq.'f') then
-              if(index.eq.2.or.index.eq.3)
-     1         stop 'Invalid fluxes at midplane'
+              call xertst (index.ne.2.and.index.ne.3,
+     1         'Invalid fluxes at midplane')
               if(index.gt.3) index=index-2
               index=index+6
-              if(dimsize(1).ne.len_da(index))
-     1         stop 'dimsize/len_da mismatch'
+              call xertst(dimsize(1).eq.len_da(index),
+     1         'dimsize/len_da mismatch')
               forall (i1=1:dimsize(1),i2=1:dimsize(2))
      1         data2(i1,i2)=data2(i1,i2)/
      1         da(i1,index)
@@ -374,4 +376,6 @@ c and now for f(t)
       call xerrab('b2cdf2mds: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
 #endif
+      call subend ()
+      return
       end subroutine b2cdf2mds

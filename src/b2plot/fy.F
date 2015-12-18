@@ -16,12 +16,13 @@ c
       integer ixx
       logical iniso
       intrinsic min,max,sqrt
-      external xertst, lnblnk
+      external subini, subend, xertst, lnblnk
       dist(x1,y1,x2,y2)=sqrt((x1-x2)**2+(y1-y2)**2)
 c     the line format common
       character*10 linefmt
       common /line_format/ linefmt
 
+      call subini ('fy')
 c      if(nidim .ne. 2) call line(2)
       iystart=-1
       do while (region(ix,iystart,0).eq.0 .and. iystart.le.ny)
@@ -334,6 +335,7 @@ c      if(nidim .ne. 2) call line(2)
           call end_page
         endif
       enddo
+      call subend ()
       return
       end subroutine fy
 c
@@ -349,15 +351,15 @@ c
       integer n1,n2,i1,i2
       real (kind=R8) ::
      *   x, r0r
+      external subini, subend, xertst
       save z1,s1,z2,s2,n1,n2,first
       data first /.true./
 
+      call subini('y_transform')
       write(*,*) 'y_transform'
       if(first) then
-        if(.not.open_file(99,'n.s.r.z.a_inner',
-     1   'data.local|data')) then
-          stop 'Couldn''t open n.s.r.z.a_inner'
-        endif
+        call xertst(open_file(99,'n.s.r.z.a_inner',
+     1   'data.local|data'), 'Could not open n.s.r.z.a_inner')
         n1=0
         read(99,*)
    10   read(99,*,end=20) x,s1(n1+1),x,z1(n1+1)
@@ -366,10 +368,8 @@ c
    20   continue
         write(*,*) 'Read n.s.r.z.a_inner',n1
         close(99)
-        if(.not.open_file(99,'n.s.r.z.a_outer',
-     1   'data.local|data')) then
-          stop 'Couldn''t open n.s.r.z.a_outer'
-        endif
+        call xertst(open_file(99,'n.s.r.z.a_outer',
+     1   'data.local|data'), 'Could not open n.s.r.z.a_outer')
         n2=0
         read(99,*)
    30   read(99,*,end=40) x,s2(n2+1),x,z2(n2+1)
@@ -413,6 +413,7 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
      1   (s2(i2+1)-s2(i2))+s2(i2)
       endif
 
+      call subend ()
       return
       end function y_transform
 
@@ -436,7 +437,7 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
 
       if(.not.open_file(99,expfile,
      1 'data.local/exp|data/exp')) then
-        write(*,*) 'Couldn''t open ',trim(expfile)
+        write(*,*) 'Could not open ',trim(expfile)
       else
         title = ''
    10   read(99,'(a)',end=40) line
@@ -583,7 +584,7 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
 
       if(.not.open_file(99,wallfile,
      1 'data.local/exp|data/exp')) then
-        write(*,*) 'Couldn''t open ',trim(wallfile)
+        write(*,*) 'Could not open ',trim(wallfile)
       else
         title = ''
         if(ecol .gt. 1) then

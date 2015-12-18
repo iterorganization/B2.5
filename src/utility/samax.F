@@ -21,7 +21,7 @@
       ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (n.lt.1.or.incx.eq.0) then
-       stop 'samax--error, n.lt.1.or.incx.eq.0'
+       call xerrab ('samax--error, n.lt.1.or.incx.eq.0')
       else if (incx.eq.1) then
        t = abs(sx(0))
        do i = 1, n-1

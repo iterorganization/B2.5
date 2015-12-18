@@ -32,6 +32,9 @@ c therefore: shift of neighbourindices necessary: i,j gets i-2,j-2
       INTEGER I1H(12),IS(12),JS(12), IJS(12)                       !sv 26.01.00
       INTEGER HOLD,HOLDI,HOLDJ, HOLDIJ
 
+      external subini, subend, xertst
+
+      call subini ('iniilu_7_w')
       n= n1*n2
       i1=0
       j1=0
@@ -169,8 +172,9 @@ C   END SORT
         enddo
       enddo
       nc0=nz
-      if(nz.gt.N_NONZEROS) stop 'Increase N_NONZEROS in inilu_7'   !sv 26.01.00
+      call xertst (nz.le.N_NONZEROS, 'Increase N_NONZEROS in b2ux7p')   !sv 26.01.00
 
+      call subend ()
       return
       end subroutine iniilu_7_w
 

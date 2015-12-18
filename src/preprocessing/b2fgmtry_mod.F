@@ -7,14 +7,17 @@
       use b2mod_geo2
       use b2mod_indirect
       implicit none
+#ifdef USE_MPI
+      include 'mpif.h'
+#endif
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2FGMTRY_MOD (main program) modifies a geometry saved in b2fgmtry and creates a new file b2fgmtry_mod for
-*     b2. 
+*     B2FGMTRY_MOD (main program) modifies a geometry saved in b2fgmtry
+*     and creates a new file b2fgmtry_mod for b2. 
 *
 *
 *  2. specification
@@ -81,6 +84,9 @@
 
 *   ..local variables
       integer ninp(0:1), nout(0:1)
+#ifdef USE_MPI
+      integer rank_mpi,size_mpi,ierr_mpi
+#endif
 *   ..procedures
       external prgini, prgend, xerset, cfopen
 *   ..initialise input/output units
@@ -105,7 +111,17 @@
 *.computation
 
 *   ..program start-up calls
-      call prgini ('b2ag')
+#ifdef USE_MPI
+      call mpi_init(ierr_mpi)
+      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
+      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
+      if(rank_mpi .ne. 0) then
+        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+        call mpi_finalize(ierr_mpi)
+        stop 'b2fgmtry_mod_mpi_child'
+      endif
+#endif
+      call prgini ('b2fgmtry_mod')
 *   ..open files
       call cfopen (ninp(0),'b2fgmtry_mod.dat','old','formatted')
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
@@ -123,9 +139,13 @@ c     call alloc_b2mod_geo2(nx1,ny1,nncutmax)
 
 * ..end of computation
       call prgend ()
-      stop 'b2ag'
+#ifdef USE_MPI
+      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+      call mpi_finalize(ierr_mpi)
+#endif
+      stop 'b2fgmtry_mod'
 
 *-----------------------------------------------------------------------
-*.end b2ag
+*.end b2fgmtry_mod
 
       end program b2fgmtry_mod

@@ -127,12 +127,12 @@
         if (ipnam(ip).eq.'b2trcl_conductive limit') then
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Use b2trcl_conductive_limit'
-          stop
+          call xerrab ('Prohibited switch usage!')
         endif
         if (ipnam(ip).eq.'b2mndr_na0eps') then
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &      trim(ipnam(ip)),'Use b2mndr_na_min and b2mndr_na_new'
-          stop
+          call xerrab ('Prohibited switch usage!')
         endif
       enddo
       return

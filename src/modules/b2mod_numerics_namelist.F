@@ -43,6 +43,7 @@
       subroutine alloc_b2mod_numerics(nxd,nyd,nsd)
       implicit none
       integer nxd,nyd,nsd
+      external xertst
 
       if (b2mod_numerics_allocated) return
       write(*,*) 'Allocating space for b2mod_numerics'                !srv 25.02.06 11.06.08
@@ -59,10 +60,10 @@
       allocate(solveee(0:nnreg(0)))
       allocate(solveei(0:nnreg(0)))
 #else
-      if(nsd.gt.nsdmax)
-     1 stop 'increase NSDMAX in b2mod_numerics_namelist'
-      if(nnreg(0).gt.nnregmax)
-     1 stop 'increase NNREGMAX in b2mod_numerics_namelist'
+      call xertst (nsd.le.nsdmax,
+     1 'increase NSDMAX in b2mod_numerics_namelist')
+      call xertst (nnreg(0).le.nnregmax,
+     1 'increase NNREGMAX in b2mod_numerics_namelist')
 #endif
       dtco=1.0_R8
       dtmo=1.0_R8

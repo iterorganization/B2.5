@@ -7,7 +7,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     *   vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), fpsi(-1:nx,-1:ny,0:3),
      &  ffbz(-1:nx,-1:ny,0:3)
 *   ..output arguments (unspecified on entry)

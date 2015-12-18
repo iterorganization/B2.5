@@ -21,7 +21,9 @@
       character :: mds_signal_name*(64), units*(24),
      1 tdi*(128)
 #endif
+      external subini, subend, xerrab
 
+      call subini ('b2cdfmovies2mds')
       write(*,*) 'b2cdfmovies2mds ...'
 
       want_transpose=.false.
@@ -66,7 +68,7 @@ c loop over all variables in the file
      1           units(length:length)=' '
               endif
             else
-              stop 'increase size of units'
+              call xerrab ('increase size of units')
             endif
           endif
         enddo
@@ -284,5 +286,6 @@ c first deal with the time vector
       call xerrab('b2cdfmovies2mds: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
 #endif
+      call subend ()
       return
       end subroutine b2cdfmovies2mds

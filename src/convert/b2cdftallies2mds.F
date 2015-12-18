@@ -27,7 +27,9 @@
       character :: mds_signal_name*(64), units*(24),
      1 tdi*(128)
 #endif
+      external subini, subend, xerrab
 
+      call subini ('b2cdftallies2mds')
       write(*,*) 'b2cdftallies2mds ...'
 
       want_transpose=.false.
@@ -68,7 +70,7 @@ c loop over all variables in the file
               status=nf_get_att_text(ncid,ivar,attname,units)
               call check_cdf_status(status)
             else
-              stop 'increase size of units'
+              call xerrab ('increase size of units')
             endif
           endif
         enddo
@@ -263,4 +265,6 @@ c first deal with the time vector
       call xerrab('b2cdftallies2mds: ' //
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
 #endif
+      call subend ()
+      return
       end subroutine b2cdftallies2mds

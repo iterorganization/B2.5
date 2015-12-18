@@ -153,20 +153,19 @@
 *   ..local variables
       integer i, j, k, ind
 *   ..procedures
-*     (none)
+      external subini, subend xertst
 
 *-----------------------------------------------------------------------
 *.computation
 
 * ..preliminaries
+      call subini ('ratprt')
 *   ..test nz, nt, nn
-      if (.not.1.le.nz) then
-       stop 'ratprt--faulty argument nz'
-      else if (.not.(1.le.npart.and.npart.le.nz+1)) then
-       stop 'ratprt--faulty argument npart'
-      else if (.not.(0.le.nt.and.0.le.nn)) then
-       stop 'ratprt--faulty argument nt or nn'
-      endif
+      call xertst (1.le.nz, 'ratprt--faulty argument nz')
+      call xertst (1.le.npart.and.npart.le.nz+1,
+     . 'ratprt--faulty argument npart')
+      call xertst (0.le.nt.and.0.le.nn,
+     . 'ratprt--faulty argument nt or nn')
 
 * ..write summary of table
 *   ..write basic data
@@ -336,6 +335,7 @@
       enddo
 
 * ..return
+      call subend ()
       return
 
 *-----------------------------------------------------------------------

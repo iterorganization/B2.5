@@ -14,7 +14,7 @@
       integer lwrk, lwrkmx
       save lwrk, lwrkmx
       intrinsic max
-      external prvrt
+      external prvrt, b25_mpi_stop
       data lwrk/0/, lwrkmx/0/
 *     Invariant: 0.le.lwrk.le.lwrkmx.le.nstckw
 *     ------------------------------------------------------------------
@@ -23,8 +23,9 @@
       entry lwset (lw0)
 *     (revert base address to lw0)
       if (lw0.lt.0.or.lwrk.lt.lw0) then
-       stop 'lwset--faulty argument lw0'
-      endif
+        write (0,*) 'lwset--faulty argument lw0'
+        call b25_mpi_stop
+      end if
 *     (set newly-free space to 'not-a-number')
       call prvrt (lwrk-lw0, w(lw0), 1)
       lwrk = lw0
@@ -32,14 +33,16 @@
 *     ------------------------------------------------------------------
       entry lwget (nw, lw1)
       if (nw.lt.0) then
-       stop 'lwget--faulty argument nw'
-      endif
+        write (0,*) 'lwget--faulty argument nw'
+        call b25_mpi_stop
+      end if
       lw1 = lwrk
       lwrk = lwrk+nw
       lwrkmx = max(lwrk,lwrkmx)
       if (nstckw.lt.lwrk) then
-       stop 'lwget--insufficient workspace stackw%w(0:*)'
-      endif
+        write(0,*) 'lwget--insufficient workspace stackw%w(0:*)'
+        call b25_mpi_stop
+      end if
       return
 *     ------------------------------------------------------------------
       entry lwmax (lw1)

@@ -10,6 +10,7 @@
       integer len0, len1, k
       character ch0, ch1
       intrinsic len, ichar
+      external b25_mpi_stop
       logical upcase, chreql
       upcase(ch0,ch1) =
      &  ichar('a').le.ichar(ch0).and.ichar(ch0).le.ichar('z').and.
@@ -19,7 +20,8 @@
 *   ..test installation
 *     (protection against errors of case conversion.)
       if (ichar('a').eq.ichar('A')) then
-       stop 'streql--installation error'
+       write (0,*) 'streql--installation error'
+       call b25_mpi_stop
       endif
 *   ..preliminaries
       len0 = len(str0)

@@ -63,7 +63,7 @@ c
       real (kind=R8) :: BoRiS
       integer ix,iy,is,ncall,eirene_extrap,in,eirene_fixmap,
      1 eirene_fixuub, print_minmax
-      external ipgetr, ipgeti
+      external ipgetr, ipgeti, subini, subend, xerrab
       real (kind=R8) ::
      * te_min, te_max, ti_min, ti_max, na_min, na_max, ua_min, ua_max,
      * te_min_val, te_max_val, ti_min_val, ti_max_val,
@@ -80,6 +80,7 @@ c
       real (kind=R8) :: hy1
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 
+      call subini ('copy_background')
       if(ncall.eq.0) then
         ua_min = -c
         ua_max = +c
@@ -97,8 +98,8 @@ c
         call ipgeti('eirene_print_minmax',print_minmax)
       endif
 
-      if(nx.ge.NDXP) call xerrab('eirene_mc: increase size of ndxp')
-      if(ny.ge.NDYP) call xerrab('eirene_mc: increase size of ndyp')
+      call xertst (nx.lt.NDXP, 'eirene_mc: increase size of ndxp')
+      call xertst (ny.lt.NDYP, 'eirene_mc: increase size of ndyp')
       if(print_minmax.ne.0) then
          te_min_val=minval(te(-1:nx,-1:ny))/ev
          te_max_val=maxval(te(-1:nx,-1:ny))/ev
@@ -191,7 +192,7 @@ c
       do is=0,ns-1
         if(.not.is_neutral(is)) then
           nflai=nflai+1
-          if(nflai.gt.NFL) stop 'eirene_mc: increase size of nfl'
+          call xertst (nflai.le.NFL, 'eirene_mc: increase size of nfl')
 * cell centred
           do iy=-1,ny
             do ix=-1,nx
@@ -354,6 +355,7 @@ c declared -1:nx,-1:ny
      &     na_min_val, na_max_val, ua_min_val, ua_max_val
       endif
       ncall=ncall+1
+      call subend ()
       return
       end subroutine copy_background
 c
@@ -542,7 +544,7 @@ c
       do is=0,ns-1
         if(.not.is_neutral(is)) then
           nflai=nflai+1
-          if(nflai.gt.NFL) stop 'eirene_mc: increase size of nfl'
+          call xertst (nflai.le.NFL, 'eirene_mc: increase size of nfl')
 * cell centred
           do iy=-1,ny
             do ix=-1,nx
@@ -841,10 +843,10 @@ cxpb Deduce from fort.33 triangle vertices files which format precision to use
           else if (exp_location-dot_location.eq.9) then
             new_format = 2
           else
-            stop "Unrecognized format (1) in fort.33 file"
+            call xerrab ('Unrecognized format (1) in fort.33 file')
           end if
         else
-          stop "Unrecognized format (2) in fort.33 file"
+          call xerrab ('Unrecognized format (2) in fort.33 file')
         end if
         close(33)
       else

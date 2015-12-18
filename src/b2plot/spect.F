@@ -340,9 +340,10 @@ cc    -------------------------------------------------------------------------
       real (kind=R8) ::
      *   f
       integer index
-
       integer count,cc
+      external subini, subend
 
+      call subini ('GetEmissivity')
       do count=1,dim
          NE(count)=cNE(count)
          NI(count)=cNI(count)
@@ -420,6 +421,7 @@ c         enddo
          cPP(cc)=PE(cc)+PR(cc)+PC(cc)
       enddo
 
+      call subend ()
       return
       end subroutine GetEmissivity
 c     -------------------------------------------------------------------------
@@ -463,8 +465,10 @@ c     -------------------------------------------------------------------------
       character CINDM(NSTORE)*2
       character DSNREQ*256
       character ESYM*2
+      external subini, subend
 
 c     initialising
+      call subini ('GetInfo')
       IUNIT=4950
       
 c     reading data
@@ -484,6 +488,7 @@ c     reading data
          T(c)=TETA(1,c)
       enddo
 
+      call subend ()
       return
       end subroutine GetInfo
 C  UNIX PORT - SCCS Info : Module @(#)e3spln.for        1.3  Date 4/22/96
@@ -665,15 +670,17 @@ C-----------------------------------------------------------------------
       LOGICAL    LTRNG(ITVAL)          , LDRNG(ITVAL)
 C-----------------------------------------------------------------------
       EXTERNAL   R8FUN1
+      external   subini, subend, xertst
 C-----------------------------------------------------------------------
 C
 C-----------------------------------------------------------------------
-      IF (NIN .LT. IDA)
-     &             STOP ' E1SPLN ERROR: NIN < IDA - INCREASE NIN'
-      IF (NIN .LT. ITA)
-     &             STOP ' E1SPLN ERROR: NIN < ITA - INCREASE NIN'
-      IF (NOUT .LT. ITVAL)
-     &             STOP ' E1SPLN ERROR: NOUT < ITVAL - INCREASE NTOUT'
+      call subini ('e3spln')
+      call xertst (NIN .ge. IDA,
+     &             ' E1SPLN ERROR: NIN < IDA - INCREASE NIN')
+      call xertst (NIN .ge. ITA,
+     &             ' E1SPLN ERROR: NIN < ITA - INCREASE NIN')
+      call xertst (NOUT .ge. ITVAL,
+     &             ' E1SPLN ERROR: NOUT < ITVAL - INCREASE NTOUT')
 C
 C-----------------------------------------------------------------------
 C SET UP FIRST SPLINE BOUNDARY CONDITIONS - SWITCH ON EXTRAPOLATION.
@@ -763,6 +770,7 @@ C
 C
 C-----------------------------------------------------------------------
 C
+      call subend ()
       RETURN
       END SUBROUTINE E3SPLN
 CX UNIX PORT - SCCS info: Module @(#)spec.for   1.2 Date 4/22/96
@@ -1027,9 +1035,10 @@ C-----------------------------------------------------------------------
      &            EXTLST /' '/   , IZ0LST /0/   , IZLAST /0/       ,
      &            IUNIT  /15/
 C-----------------------------------------------------------------------
-C
+      external subini, subend
 C-----------------------------------------------------------------------
 C
+      call subini ('spec')
       IRCODE = 0
       LOPEN  = .FALSE.
 C
@@ -1138,6 +1147,7 @@ C
 C
 C-----------------------------------------------------------------------
 C
+      call subend ()
       RETURN
       END SUBROUTINE SPEC
 CX UNIX PORT - SCCS info: Module @(#)e3file.for 1.2 Date 5/25/95
@@ -1742,6 +1752,7 @@ C-----------------------------------------------------------------------
       SAVE       CSLASH                ,
      &           CKEY1                 , CKEY2                ,
      &           CKEY3                 , CKEY4
+      EXTERNAL   SUBINI, SUBEND, XERRAB
 C
 C-----------------------------------------------------------------------
 C
@@ -1751,6 +1762,7 @@ C
 C
 C **********************************************************************
 C
+      CALL SUBINI ('E3DATA')
       LBEND = .FALSE.
 C
 C-----------------------------------------------------------------------
@@ -1826,14 +1838,14 @@ C
                             WRITE(I4UNIT(-1),2001) DSNAME , IBLK  ,
      &                                            'TEMPERATURES'  ,
      &                                            NTDIM   , NTNUM
-                            STOP
+                            CALL XERRAB ('NTNUM .GT. NTDIM')
                          ENDIF
 C
                          IF (NDNUM .GT. NDDIM) THEN
                             WRITE(I4UNIT(-1),2001) DSNAME , IBLK   ,
      &                                            'DENSITIES'      ,
      &                                            NDDIM   , NDNUM
-                            STOP
+                            CALL XERRAB ('NDNUM .GT. NDDIM')
                          ENDIF
 C
 C-----------------------------------------------------------------------
@@ -1891,6 +1903,7 @@ C
 C
 C-----------------------------------------------------------------------
 C
+      CALL SUBEND ()
       RETURN
       END SUBROUTINE E3DATA
 CX UNIX PORT - SCCS info: Module @(#)xxspec.for 1.1 Date 5/25/95
@@ -2399,11 +2412,13 @@ C-----------------------------------------------------------------------
       SAVE NOPT
       SAVE X    , H     , Q     , D1   , D2   , D3
 C-----------------------------------------------------------------------
+      EXTERNAL SUBINI, SUBEND, XERTST
 C***********************************************************************
-      IF (NKNOTS .LT. NIN)
-     &                 STOP ' XXSPLE ERROR: TOO MANY KNOTS REQUESTED'
-      IF (IOPT .GT. NIOPT)
-     &                 STOP ' XXSPLE ERROR: INVALID IOPT VALUE ENTERED'
+      CALL SUBINI ('xxsple')
+      CALL XERTST (NKNOTS .GE. NIN,
+     &                 ' XXSPLE ERROR: TOO MANY KNOTS REQUESTED')
+      CALL XERTST (IOPT .LE. NIOPT,
+     &                 ' XXSPLE ERROR: INVALID IOPT VALUE ENTERED')
 C-----------------------------------------------------------------------
       IF (IOPT .LT. 0) THEN
          LEXTRP = .FALSE.
@@ -2540,6 +2555,7 @@ C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------
     5    CONTINUE
 C***********************************************************************
+      CALL SUBEND ()
       RETURN
       END SUBROUTINE XXSPLE
 CX ULTRIX PORT - SCCS info: Module @(#)xxfchr.for       1.2 Date 4/24/95

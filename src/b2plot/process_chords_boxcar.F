@@ -16,11 +16,15 @@ c
      *   xvalues(lngarr),yvalue(lngarr),yvalues(lngarr),
      1   xmin,xmax,ymin,ymax,x1,y1,z1,x2,y2,z2,chord_integral
       integer inpts,i,is,npoints,lnblnk
-      external lnblnk,chord_integral
+      external lnblnk,chord_integral,xerrab,subini,subend
 
+      call subini('process_chords_boxcar')
       do is=0,ndim(3,iwrk)-1
         if(.not.open_file(99,filename,
-     1   'data.local/chords|data/chords')) return
+     1   'data.local/chords|data/chords')) then
+          call subend ()
+          return
+        endif
         read(99,*,err=30,end=30) dataname,npoints
         vector=npoints .lt. 0
         if(vector) dataname=dataname(1:lnblnk(dataname)) // ' (vector)'
@@ -31,8 +35,9 @@ c
         yvalue(inpts)=chord_integral(nx,ny,work(-1,-1,is,iwrk),
      1   crx,cry,bb,npoints,x1,y1,z1,x2,y2,z2,vector)
         if(inpts .lt. lngarr) goto 10
-        stop 'increase array size in process_chord'
+        call xerrab ('increase array size in process_chord')
    30   write(*,*) 'Error in reading ',filename(1:lnblnk(filename))
+        call subend ()
         return
    40   continue
         close(99)
@@ -80,5 +85,6 @@ c
         call end_page
         close(99)
       enddo
+      call subend ()
       return
       end subroutine process_chords_boxcar

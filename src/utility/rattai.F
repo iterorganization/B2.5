@@ -66,30 +66,26 @@
      *   t0, t1, ds
 *   ..procedures
       intrinsic log
+      external subini, subend, xertst
 
 *-----------------------------------------------------------------------
 *.computation
 
 * ..preliminaries
+      call subini ('rattai')
 *   ..test nt, ndum, tailep
-      if (.not.(0.le.nt)) then
-       stop 'rattai--faulty argument nt'
-      else if (.not.(1.le.ndum)) then
-       stop 'rattai--faulty argument ndum'
-      else if (.not.(0.0_R8.le.tailep)) then
-       stop 'rattai--faulty argument tailep'
-      endif
+      call xertst (0.le.nt, 'rattai--faulty argument nt')
+      call xertst (1.le.ndum, 'rattai--faulty argument ndum')
+      call xertst (0.0_R8.le.tailep, 'rattai--faulty argument tailep')
 *   ..test rtt, rtorg
       do i = 0, nt
-       if (.not.0.0_R8.lt.rtt(i)) then
-        stop 'rattai--faulty argument array rtt'
-       endif
+       call xertst (0.0_R8.lt.rtt(i),
+     .  'rattai--faulty argument array rtt')
       enddo
       do k = 0, ndum-1
        do i = 0, nt
-        if (.not.0.0_R8.le.rtorg(i,k)) then
-         stop 'rattai--faulty argument array rtorg'
-        endif
+        call xertst (0.0_R8.le.rtorg(i,k),
+     .   'rattai--faulty argument array rtorg')
        enddo
       enddo
 
@@ -114,6 +110,7 @@
       enddo
 
 * ..return
+      call subend ()
       return
 
 *-----------------------------------------------------------------------

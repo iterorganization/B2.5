@@ -185,10 +185,8 @@
          enddo
         enddo
       else                                                             !srv 23.03.10 {
-	if(pot_eq.ne.1) then
-	  write(*,*) ' This case works when potential equation is solved'
-	  stop
-	endif
+	call xertst (pot_eq.eq.1,
+     &   'This case works when potential equation is solved')
         do iy = -1, ny
           do ix = -1, nx
 	     if(leftix(ix,iy).eq.-2) then

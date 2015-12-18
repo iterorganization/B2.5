@@ -131,12 +131,12 @@ C
 !        call cpu_time(time_end)
 !	  write (*,"(' Time for ODRV is',1pd9.2)") time_end - time_begin
 	if(IFLAG.ne.0) then                                             !sv 13.02.03 {
-       write(*,"(' ODRV ',': iflag =',i9,'  NSP =',I9)") iflag, NSP
-	 stop
+         write(*,"(' ODRV ',': iflag =',i9,'  NSP =',I9)") iflag, NSP
+	 call xerrab ('IFLAG <> 0')
 	endif                                                           !sv 13.02.03 }
 C
-	if(nltrsol.gt.0)                                                   !sv 09.07.02
-     *    write(*,"(' ODRV ',': iflag =',i9,'  NSP =',I9)") iflag, NSP   !sv 09.07.02
+	if(nltrsol.gt.0)                                                !sv 09.07.02
+     *    write(*,"(' ODRV ',': iflag =',i9,'  NSP =',I9)") iflag, NSP  !sv 09.07.02
 C
         PATH = 4
 !	  call cpu_time(time_begin)
@@ -148,15 +148,15 @@ C
 
 !	write (*,"(' Time for SDRV (SSF) is',1pd9.2)") time_end-time_begin
 	if(IFLAG.ne.0) then                                             !sv 13.02.03 {
-       write (*,"(' SDRV (SSF): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
+         write (*,"(' SDRV (SSF): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
      *       ESP, Iflag, NSP
-	 stop
+	 call xerrab ('IFLAG <> 0')
 	endif                                                           !sv 13.02.03 }
-	if(nltrsol.gt.0)                                                   !sv 09.07.02
-     * write (*,"(' SDRV (SSF): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
+	if(nltrsol.gt.0)                                                !sv 09.07.02
+     *   write (*,"(' SDRV (SSF): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
      *       ESP, Iflag, NSP
 	  lfirst=.false.
-	 endif
+	endif
 C
        if(.not.lfirst) then
 C
@@ -178,12 +178,12 @@ C
 
 !	write (6,"(' Time for SDRV (SNF) is',1pd9.2)") time_end-time_begin
 	if(IFLAG.ne.0) then                                             !sv 13.02.03 {
-       write (*,"(' SDRV (SNF): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
+         write (*,"(' SDRV (SNF): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
      *       ESP, Iflag, NSP
-	 stop
+	 call xerrab ('IFLAG <> 0')
 	endif                                                           !sv 13.02.03 }
 	if(nltrsol.gt.0)                                                !sv 09.07.02
-     * write (*,"(' SDRV (SNF): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
+     *   write (*,"(' SDRV (SNF): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
      *       ESP, Iflag, NSP
 C
         PATH = 3
@@ -196,12 +196,12 @@ C
 
 !	write (6,"(' Time for SDRV (SNS) is',1pd9.2)") time_end-time_begin
 	if(iflag.ne.0) then                                             !sv 13.02.03 {
-       write (*,"(' SDRV (SNS): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
+         write (*,"(' SDRV (SNS): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
      *       ESP, Iflag, NSP
-	 stop
+	 call xerrab ('IFLAG <> 0')
 	endif                                                           !sv 13.02.03 }
-	if(nltrsol.gt.0)                                                   !sv 09.07.02
-     * write (*,"(' SDRV (SNS): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
+	if(nltrsol.gt.0)                                                !sv 09.07.02
+     *   write (*,"(' SDRV (SNS): ESP =',I9,' FLAG =',I9,'  NSP =',I9)")
      *       ESP, Iflag, NSP
 C
        endif

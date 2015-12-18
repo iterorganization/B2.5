@@ -173,10 +173,9 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        call ipgetr ('b2tfhe_inert', fch_inert)                           !srv 07.07.99
        call ipgeti ('b2tfhe_lim_flux', lim_flux)                         !srv 04.02.03
        call ipgetr ('b2tfhe_stochastic', fch_stochastic)                 !lk 31.01.08
-       if(fch_ion_neutral .eq. 0.0e0_R8 .and.                            !srv
-     *      fch_anomalous .eq. 0.0e0_R8) then                            !srv
-         stop 'fch_ion_neutral .eq. 0.0 .and. fch_anomalous .eq. 0.0'    !srv
-       endif                                                             !srv
+       call xertst(fch_ion_neutral .ne. 0.0e0_R8 .or.                    !srv
+     *             fch_anomalous .eq. 0.0e0_R8,                          !srv
+     *    'fch_ion_neutral .eq. 0.0 .and. fch_anomalous .eq. 0.0')       !srv
        call ipgeti ('b2tfhe_iout', iout)                                 !srv 16.09.02
        call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)                  !srv 06.07.06
        call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                  !srv 06.07.06

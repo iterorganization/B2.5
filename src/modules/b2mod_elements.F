@@ -37,8 +37,8 @@
 #ifndef PSR
       allocate(is_codes(0:nsd-1))
 #else
-      if(nsd.gt.100) 
-     *  stop 'alloc_b2mod_elements: increase size of is_codes'
+      call xertst(nsd.le.100, 
+     *  'alloc_b2mod_elements: increase size of is_codes')
 #endif
       
       do is=0,nsd-1

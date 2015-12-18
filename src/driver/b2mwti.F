@@ -2261,14 +2261,15 @@ c
       data one /maxvdims*1/
 c
       integer lnblnk
-      external lnblnk
+      external lnblnk, subini, subend, xerrab
       integer data_id
 c
+      call subini ('rwcdf')
 c     write(*,*) 'Processing ',data_name,' with ncid ',ncid
       data_id=ncvid(ncid,data_name,iret)
       if(iret.ne.0) then
         write(*,*) data_name,' not declared'
-        stop
+        call xerrab ('Data name not declared')
       else
         call ncvinq(ncid,data_id,varnam,vartyp,nvdims,vdims,
      1   nvatts,rcode)
@@ -2282,7 +2283,7 @@ c     write(*,*) 'Processing ',data_name,' with ncid ',ncid
           noofbytes=8
         else
           write(*,*) 'Unknown data type ',vartyp,' for ',data_name
-          stop
+          call xerrab ('Unknown data type')
         endif
         do i=1,nvdims
           call ncdinq(ncid,vdims(i),dimnam,count(i),iret)
@@ -2313,15 +2314,17 @@ c         write(*,*) 'data_set :', data_set(1:nvdims)
      1     rw
         endif
       endif
+      call subend ()
       return
 c
       entry rwcdfc(rw,ncid,data_name,imap,datac,iret)
 c
+      call subini ('rwcdfc')
 c      write(*,*) 'Processing ',data_name,' (char)'
       data_id=ncvid(ncid,data_name,iret)
       if(iret.ne.0) then
         write(*,*) data_name,' not declared'
-        stop
+        call xerrab ('Data name not declared')
       else
         call ncvinq(ncid,data_id,varnam,vartyp,nvdims,vdims,
      1   nvatts,rcode)
@@ -2335,7 +2338,7 @@ c      write(*,*) 'Processing ',data_name,' (char)'
           noofbytes=8
         else
           write(*,*) 'Unknown data type ',vartyp,' for ',data_name
-          stop
+          call xerrab ('Unknown data type')
         endif
         do i=1,nvdims
           call ncdinq(ncid,vdims(i),dimnam,count(i),iret)
@@ -2359,6 +2362,7 @@ c           write(*,*) 'TIME dimension'
      1     rw
         endif
       endif
+      call subend ()
       return
 c
       entry rwcdf_settime(timnam,ntstep)

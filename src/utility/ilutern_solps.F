@@ -207,7 +207,7 @@ c-dpc
       endif
       if(lfirst) then
         write(*,*) 'ilutern: nz = ',nz
-        if(nz.gt.N_NONZEROS) stop 'Increase N_NONZEROS'
+        call xertst (nz.le.N_NONZEROS, 'Increase N_NONZEROS')
         iflag=0
       endif
       do i=1,nz

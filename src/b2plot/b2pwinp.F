@@ -15,12 +15,13 @@ c======================================================================
       integer i
       logical open_file
       character*16 ufile
-      external b2pwinm, open_file
+      external b2pwinm, open_file, subini, subend, xerrab
 c======================================================================
 c*** This routine works once
 c
       if(l2pwinp) return
 c======================================================================
+      call subini ('b2pwinp')
       l2pwinp=.true.
 c
 c*** Set the default values
@@ -44,6 +45,7 @@ c      open(lun,file=ufile,status='old',err=998)
       if(.not.open_file(lun,ufile,'/modules/Uinp/')) then
         l2pwinp=.false.
         write(*,*) 'b2pwinp: unable to open param.dg'
+        call subend ()
         return
       end if
 c
@@ -56,9 +58,10 @@ c*** ... and prepare the target and shadowing lists
 c
       call b2pwlprp
 c
+      call subend ()
       return
 c======================================================================
  998  write(*,*) 'Error opening the file ',ufile
-      stop
+      call xerrab ('Error opening file in b2pwinp')
 c======================================================================
       end subroutine b2pwinp

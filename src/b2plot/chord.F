@@ -32,10 +32,11 @@ c
       
       real (kind=R8) :: pit
       intrinsic sqrt,sin,cos,abs,atan2
-      external chord_find
+      external chord_find, subini, subend, xertst
 
       pit(ix,iy)=sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
 
+      call subini ('chord_value')
       x=xp
       y=yp
       z=zp
@@ -81,7 +82,7 @@ c assert
         endif
 c end-assertion
         dl=sqrt(dx**2+dy**2+dz**2)
-        if(dl.eq.0) stop 'dl in chord.F == 0'
+        call xertst(dl.ne.0., 'dl in chord.F == 0')
         dx=dx/dl
         dy=dy/dl
         dz=dz/dl
@@ -96,6 +97,7 @@ c       write(*,*) 'dl.bl = ',dotprod
       else
         chord_value=tt(ix,iy)
       endif
+      call subend ()
       return
       end function chord_value
 c
@@ -271,6 +273,7 @@ c
      *   rshift, zshift, r0, z0, a0, b0, tt0
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 
+      external subini, subend, xerrab
       save covered,rmin,rmax,zmin,zmax,first,xcov,ycov,icov,ix,iy
 
       data first/.true./
@@ -280,6 +283,7 @@ c
       rpos(ir)=rmin+real(ir-1)*(rmax-rmin)/(real(lngcov)*0.999999_R8)
       zpos(iz)=zmin+real(iz-1)*(zmax-zmin)/(real(lngcov)*0.999999_R8)
 
+      call subini ('chord_find')
       if(first) then
         first=.false.
         rmin=crx(0,0,0)
@@ -333,7 +337,7 @@ c
                   ipos=ipos+1
                   if(ipos.gt.lngind) then
                     write(*,*) ix,iy,ipos
-                    stop 'increase size of {xyi}cov'
+                    call xerrab ('increase size of {xyi}cov')
                   endif
                   xcov(ipos)=ix
                   ycov(ipos)=iy
@@ -415,7 +419,7 @@ c       write(*,*) 'xmax ',xmax
                   ipos=ipos+1
                   if(ipos.gt.lngind) then
                     write(*,*) 'ix,iy ',ix,iy
-                    stop 'increase lngind'
+                    call xerrab ('increase lngind')
                   endif
                   xcov(ipos)=ix
                   ycov(ipos)=iy
@@ -462,7 +466,10 @@ c       write(*,*) 'xmax ',xmax
       y=yp
       z=zp+zshift
       r=sqrt(x**2+y**2)+rshift
-      if(r.lt.rmin.or.r.gt.rmax.or.z.lt.zmin.or.z.gt.zmax) return
+      if(r.lt.rmin.or.r.gt.rmax.or.z.lt.zmin.or.z.gt.zmax) then
+        call subend ()
+        return
+      end if
       jpos=covered(irpos(r),izpos(z))
       if(jpos.ne.0) then
         if(inside_rectangle(r,z,

@@ -420,8 +420,8 @@ c   same Eirene stratum
               end if !}
             end if !}
           end do !}
-          if(hlp_bad_isp)
-     1     stop 'eirene_mc: error in recyceir specification'
+          call xertst(.not.hlp_bad_isp,
+     1     'eirene_mc: error in recyceir specification')
 
 csw 08feb2011 l_ddt definition moved down after eirene call when it's
 c             defined
@@ -733,8 +733,8 @@ cxpb
             if(hlp_tt) write (0,*) 'is,b2espcr,nnatmi: ',
      ,         i,b2espcr(i),nnatmi
           end do !}
-          if(hlp_bad_isp)
-     1       stop 'eirene_mc: wrong value found in b2espcr'
+          call xertst (.not.hlp_bad_isp,
+     1       'eirene_mc: wrong value found in b2espcr')
         end if !}
 
         if(dbg_eir_mc.gt.9 .and. 
@@ -1880,7 +1880,7 @@ c     *             recyctmp*flux_scale(istrai)
      2               'in "b2mn.dat" to "0"'
                     call xertst(dpc_fix.ge.0,
      1               'Invalid setting of "eirene_dpc_fix"')
-                    stop 'Error in value of eirene_dpc_fix!'
+                    call xerrab ('Error in value of eirene_dpc_fix!')
                   else if(dpc_fix.eq.0) then
                                                   ! original wrong code
                   else if(dpc_fix.eq.1) then
@@ -2318,7 +2318,7 @@ cxpb  core recycling into ions of the highest ionisation stage
           if(bccon(is,ib).ne.13) then
             write(*,*) 'eirene_mc: bccon for is,ib= ',is,ib,
      1       ' <> 13, current value = ',bccon(is,ib)
-C           stop
+C           call xerrab ('eirene_mc: bccon <> 13')
           else
             conpar(is,ib,3)=core_flux(j)
             if(output_style.gt.2)

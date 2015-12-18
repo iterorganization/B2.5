@@ -306,6 +306,7 @@ c-----------------------------------------------------------------------
       data      cdonors/'HYDROGEN    ','DEUTERIUM   ','TRITIUM     ',
      &                  'HELIUM      '/  
 c-----------------------------------------------------------------------
+      external  subini, subend, xerrab
 c
 c-----------------------------------------------------------------------
 c  search for 'prnt' and count number of dash delimiters
@@ -359,11 +360,11 @@ c-----------------------------------------------------------------------
 		elseif ((ndash_line.eq.3).and.(.not.lptn))then
 		    write(i4unit(-1),2002) 'header lines faulty'
 		    write(i4unit(-1),2003)
-		    stop
+		    call xerrab ('Faulty header lines')
 		elseif (ndash_line.gt.3) then
 		    write(i4unit(-1),2002) 'header lines faulty'
 		    write(i4unit(-1),2003)
-		    stop
+		    call xerrab ('Faulty header lines')
 		endif
             elseif((iclass.eq.2).or.(iclass.eq.8).or.
      &             (iclass.eq.9).or.(iclass.eq.10).or.
@@ -379,11 +380,11 @@ c-----------------------------------------------------------------------
 		elseif ((ndash_line.eq.3).and.(.not.lptn))then
 		    write(i4unit(-1),2002) 'header lines faulty'
 		    write(i4unit(-1),2003)
-		    stop
+		    call xerrab ('Faulty header lines')
 		elseif (ndash_line.gt.3) then
 		    write(i4unit(-1),2002) 'header lines faulty'
 		    write(i4unit(-1),2003)
-		    stop
+		    call xerrab ('Faulty header lines')
 		endif
 	    endif
        endif
@@ -421,7 +422,7 @@ c-----------------------------------------------------------------------
        if(iabt.gt.0) then
             write(i4unit(-1),2002) 'faulty nuclear charge'
             write(i4unit(-1),2003)
-            stop
+            call xerrab ('Faulty nuclear charge')
        endif
        str12=xfelem(iz0)
        call xxslen(str12,ifirst,ilast)
@@ -434,10 +435,10 @@ c-----------------------------------------------------------------------
        iabt = 0
        idmax = i4fctn(cstrg(6:10),iabt)
        if(iabt.gt.0.or.idmax.le.0.or.idmax.gt.iddimd) then
-              write(i4unit(-1),2002) 'invalid number of densities',
+              write(i4unit(-1),2002) 'invalid number of ','densities',
      &                                idmax,' = 0 or > ',iddimd
               write(i4unit(-1),2003)
-            stop
+            call xerrab ('Invalid number of densities')
        endif
        iabt = 0
        itmax = i4fctn(cstrg(11:15),iabt)
@@ -445,7 +446,7 @@ c-----------------------------------------------------------------------
             write(i4unit(-1),2002) 'invalid number of ','temperatures',
      &                              itmax,' = 0 or > ',itdimd
             write(i4unit(-1),2003)
-            stop
+            call xerrab ('Invalid number of temperatures')
        endif
        iabt1 = 0
        is1min = i4fctn(cstrg(16:20),iabt1)
@@ -467,7 +468,7 @@ c-----------------------------------------------------------------------
      &                              cclass(iclass_file), 
      &                             ' does not match iclass = ',iclass	    
             write(i4unit(-1),2003)
-	    stop
+	    call xerrab ('File class name does not match')
        endif
 
 c-----------------------------------------------------------------------
@@ -554,7 +555,7 @@ c------- now check is1min and is1max
      &         .or.(is1max.gt.iz0)) then
              write(i4unit(-1),2002) 'incorrect ion or partition limits'
              write(i4unit(-1),2003)
-             stop
+             call xerrab ('Incorrect ion or partition limits')
            endif
 	   
        elseif(lstan.and.lptn) then
@@ -563,7 +564,7 @@ c------- now check is1min and is1max
      &         .or.(is1max.ne.nptn(1)-1)) then
              write(i4unit(-1),2002) 'incorrect ion or partition limits'
              write(i4unit(-1),2003)
-             stop
+             call xerrab ('Incorrect ion or partition limits')
            endif
 
        elseif(lres.and.lptn) then
@@ -572,7 +573,7 @@ c------- now check is1min and is1max
      &         .or.(is1max.ne.ncnct-1)) then
              write(i4unit(-1),2002) 'incorrect ion or partition limits'
              write(i4unit(-1),2003)
-             stop
+             call xerrab ('Incorrect ion or partition limits')
            endif
        
        endif
@@ -641,7 +642,7 @@ c           if(lptn) then
      &                                     cstrgl(24:27), 
      &                                   ', expected = ',chindi
                   write(i4unit(-1),2003)
-		  stop
+		  call xerrab ('Incorrect pointer code')
               endif
            else
               iblmx = iblmx + 1
@@ -736,7 +737,7 @@ c
           else
                 write(i4unit(-1),2002) 'inconsistent s1 set in file'
                 write(i4unit(-1),2003)
-                stop
+                call xerrab ('Inconsistent s1 set')
            endif
        endif
 c
@@ -1363,15 +1364,17 @@ c-----------------------------------------------------------------------
       character cptna(idptnl)*1024 
       character cptn_stack(ndstack)*80 
 c-----------------------------------------------------------------------
+      external  subini, subend, xerrab
 c
 c-----------------------------------------------------------------------
 c  read partition data if present
 c-----------------------------------------------------------------------
 
+       call subini ('xxrptn')
        if(idptnl.ne.ndptnl) then 
          write(i4unit(-1),1001) 'mismatch of internal dimensions'
          write(i4unit(-1),1002)
-         stop
+         call xerrab ('Internal dimensions mismatch')
        endif
       
        do i=1,ndptnl
@@ -1415,7 +1418,7 @@ c
        else
            write(i4unit(-1),1001)
 	   write(i4unit(-1),1002)
-	   stop
+	   call xerrab ('Faulty string')
        endif
        go to 10
    15  continue
@@ -1433,7 +1436,7 @@ c             write(i4unit(-1),*) 'xxrptn: i,iptnla=',i,iptnla(i)
 	   if((iptnla(1).gt.2).and.(nptnl.eq.1).and.(.not.lresol)) then
                write(i4unit(-1),1001) 'partition level',i,' in error'
 	       write(i4unit(-1),1002)
-	       stop
+	       call xerrab ('Error in partition level')
 	   endif
 	   do i = 1,nptnl
 	     call xxslen(cptna(i),ifirst,ilast)
@@ -1441,7 +1444,7 @@ c             write(i4unit(-1),*) 'xxrptn: i,iptnla=',i,iptnla(i)
                  write(i4unit(-1),1001) 'partition level',i,
      &                                  ' not terminated'
 	         write(i4unit(-1),1002)
-	       stop
+	         call xerrab ('Partition level not terminated')
 	     endif
 	   enddo  
 	     
@@ -1463,7 +1466,7 @@ c
                  write(i4unit(-1),1001) 'partition level',i,
      &                                  ' partition count wrong'
 	         write(i4unit(-1),1002)
-		 stop
+		 call xerrab ('Wrong partition count')
            endif
 	   
            nptn(i)=nwords/2
@@ -1504,7 +1507,7 @@ c-------------------------------------------------
 		     write(i4unit(-1),1001) 'partition count',ic,
      &                                      ' out of sequence'
 	             write(i4unit(-1),1002)
-		     stop
+		     call xerrab ('Partition count out of sequence')
 		else
 		     ic=ic+1
 		endif
@@ -1528,11 +1531,12 @@ c
 	         write(i4unit(-1),1001) 'partition level',i,
      &                                  ' count incorrect'
 	         write(i4unit(-1),1002)
-		 stop
+		 call xerrab ('Incorrect partition count')
              endif
 	   enddo
        endif  
    
+       call subend ()
        return
 c
 c-----------------------------------------------------------------------

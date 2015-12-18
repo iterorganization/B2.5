@@ -42,8 +42,9 @@ c     log10 of rate coefficient (in cm3/s)
       CHARACTER*200 DSN
 *..   procedures
       logical, external :: open_file, streql
-      external lower_case, xxdata_11
+      external lower_case, xxdata_11, xerrab, subini, subend
 
+      call subini ('get_adas_data')
       is = 0
       DREAC = 6.0_R8
       do while (is.le.ns-1)
@@ -90,6 +91,7 @@ cxpb The number 2 is dependent on the type of data being read
           last_stage = .true.
         else
           write(6,*) 'ADAS data type ',trim(REAC),' not recognized!'
+          call subend ()
           return
         endif
         call xxdata_11(29,id,
@@ -103,13 +105,13 @@ cxpb The number 2 is dependent on the type of data being read
         if (IZMAX.ne.nint(zn(is))) then
           write(*,*) 'ADAS tables: wrong element.'
           write(*,*) 'reading file: ',DSN
-          stop
+          call xerrab ('Wrong element in ADAS file')
         endif
         if ((IDMAXD.gt.iddimd).or.(ITMAXD.gt.itdimd)) then
           write(*,*) 'ADAS tables: dimensions too big.'
           write(*,*) 'Change iddimd and itdimd in source code.'
           write(*,*) 'reading file: ',DSN
-          stop
+          call xerrab ('Too big dimensions in ADAS tables')
         endif
 c     filling array and computing rate
         do ic=0,ncnct-1
@@ -144,6 +146,7 @@ c     filling array and computing rate
         is = is + ncnct
         close(29)
       enddo
+      call subend ()
       return
       end subroutine get_adas_data
 
@@ -186,7 +189,7 @@ c     filling array and computing rate
      1     h123.eq.'H.12') then
             D11(J-1,I-1)=CREAC(J,I,IR)
           else
-            write(*,*) 'Don''t yet know about ',h123
+            write(*,*) 'Do not yet know about ',h123
             D11(J-1,I-1)=CREAC(J,I,IR)
           endif
         enddo
@@ -221,7 +224,7 @@ c     filling array and computing rate
                 DNNN=DNNN+D11(I,J)*TEI*DEJ
               enddo
             else
-c             write(*,*) 'Don''t yet know about ',h123
+c             write(*,*) 'Do not yet know about ',h123
             endif
           enddo
           if(dnnn.gt.log(1.0e30)) then
@@ -302,9 +305,10 @@ C
       CHARACTER*3 CHRL,CHRR
       LOGICAL LCONST,LGEMIN,LGEMAX
       logical open_file
-      external open_file
+      external open_file, subini, subend, xerrab, xertst
 C
-      if(ir.gt.nreac) stop 'SLREAC_b2plot: IR > NREAC'
+      call subini('slreac_b2plot')
+      call xertst(ir.le.nreac, 'SLREAC_b2plot: IR > NREAC')
       LGEMIN=.FALSE.
       LGEMAX=.FALSE.
       ISWR(IR)=0
@@ -322,16 +326,16 @@ C
 C
       IF (INDEX(FILNAM,'AMJUEL').NE.0) THEN
         LCONST=.FALSE.
-        if(.not.open_file(29,'AMJUEL',
-     1   'data.local|modules/Eirene/Database')) stop 'No AMJUEL found'
+        call xertst(open_file(29,'AMJUEL',
+     1   'data.local|modules/Eirene/Database'), 'No AMJUEL found')
       ELSEIF (INDEX(FILNAM,'METHAN').NE.0) THEN
         LCONST=.FALSE.
-        if(.not.open_file(29,'METHANE',
-     1   'data.local|modules/Eirene/Database')) stop 'No METHANE found'
+        call xertst(open_file(29,'METHANE',
+     1   'data.local|modules/Eirene/Database'), 'No METHANE found')
       ELSEIF (INDEX(FILNAM,'HYDHEL').NE.0) THEN
         LCONST=.FALSE.
-        if(.not.open_file(29,'HYDHEL',
-     1   'data.local|modules/Eirene/Database')) stop 'No HYDHEL found'
+        call xertst(open_file(29,'HYDHEL',
+     1   'data.local|modules/Eirene/Database'), 'No HYDHEL found')
       ELSE
         LCONST=.TRUE.
         READ (REAC(1:9),'(E9.2)') CONST
@@ -480,16 +484,18 @@ C
 C
       CLOSE (UNIT=29)
 C
+      call subend ()
       RETURN
 C
 990   WRITE (6,*) ' NO DATA FOUND FOR REACTION ',H123,' ',REAC,
      .            ' IN DATA SET ',FILNAM
       WRITE (6,*) ' IR,MODCLF(IR) ',IR,MODCLF(IR)
       CLOSE (UNIT=29)
+      call subend ()
       RETURN
 991   WRITE (6,*) ' INVALID CONSTANT IN SLREAC. CONST= ',CONST
       WRITE (6,*) ' CHECK "REACTION CARDS" FOR REACTION NO. ',IR
-      STOP
+      CALL XERRAB ('Invalid constant in reaction card')
       END SUBROUTINE SLREAC_b2plot
 !#endif
 
@@ -514,14 +520,16 @@ C
      1 cr2max,cr2min,cr1max,cr1min,
      2 bave,epsilon,lnlam,vthi,omegaci,
      1 rhoi,alpha,deltap,f1,f2,taui,nui,nustari,mustari,chi
+      external subini,subend,xerrab
 
+      call subini('old_chang_hinton')
       transport=0
       do iy=-1,jsep
         write(*,*) 'iy: ',iy
         ix=jxa
         if(mod(region(ix,iy,0),4).ne.1) then
           write(*,*) 'We have a problem: not in core!'
-          stop
+          call xerrab ('Chang-Hinton: Not in core!')
         endif
         irmin=jxa
         irmax=jxa
@@ -542,10 +550,11 @@ C
         if(ix.ne.jxa) then
           if(nnreg(0).ge.2) then
             write(*,*) 'We have a problem: core not continuous!'
-            stop
+            call xerrab ('Chang-Hinton: core not continuous!')
           else
             write(*,*) 
      . 'Chang-Hinton calculation only available for closed field lines!'
+            call subend ()
             return
           endif
         endif
@@ -623,5 +632,6 @@ cxpb    Coulomb logarithm formula from Wesson for ion-ion collisions
           endif
         enddo
       enddo
+      call subend ()
       return
       end subroutine old_chang_hinton

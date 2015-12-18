@@ -66,7 +66,7 @@
       intrinsic sqrt
       real (kind=R8) ::
      *   roxa
-      external subini, subend, xertst, ipgeti, ipgetr, sfill
+      external subini, subend, xertst, xerrab, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvsg
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)                          !srv 01.07.05
 *   ..initialisation
@@ -82,7 +82,7 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2sifr')
+      call subini ('b2sifr_')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2sifr_styl0', styl0)
@@ -240,12 +240,12 @@ c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
      &         +phm3*cthi(ix,iy,isb)*delti*(ne(ix,iy)-ne_ext(ix,iy)))*
      1         (vol(ix,iy)/hx(ix,iy))*bb(ix,iy,0)/bb(ix,iy,3)
          else if (styl1.eq.1) then
-          stop 'b2sifr: option removed'
-         endif                                                         !srv 26.11.02
+           call xerrab ('b2sifr_: option styl1.eq.1 removed')
+         endif                                                      !srv 26.11.02
         enddo
        endif
       enddo
-      if (iout.ne.0) then                                            !srv 17.06.02 {
+      if (iout.ne.0) then                                           !srv 17.06.02 {
          write (chns,'(i3.3)') isb    
          call my_out(70,nx,ny,ehxp,'b2sifr_ehxp'//chns)
          call my_out(70,nx,ny,cthe(-1,-1,isb),'b2sifr_cthe'//chns)
@@ -253,7 +253,7 @@ c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
          do k=0,3
           write (chk,'(i1)') k  
           call my_out(70,nx,ny,smbtf(-1,-1,k),
-     *                'b2sifr_smotf'//chk//chns)                       !srv 07.02.12
+     *                'b2sifr_smotf'//chk//chns)                    !srv 07.02.12
           call my_out(70,nx,ny,smbch(-1,-1,k),
      *                'b2sifr_smoch'//chk//chns)                       !srv 07.02.12
          enddo

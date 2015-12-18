@@ -17,11 +17,12 @@
       real (kind=R8) ::
      *   t
       intrinsic abs, max
+      external xerrab
       integer ibase
       ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (incx.eq.0) then
-       stop 'b2sasum--error, incx.eq.0'
+       call xerrab ('b2sasum--error, incx.eq.0')
       else if (incx.eq.1) then
        t = 0
        do i = 0, n-1
@@ -95,11 +96,12 @@
 *     ------------------------------------------------------------------
       integer i, ix
       intrinsic max
+      external xerrab
       integer ibase
       ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (incx.eq.0) then
-       stop 'b2sscal--error, incx.eq.0'
+       call xerrab ('b2sscal--error, incx.eq.0')
       else if (sa.eq.1) then
       else if (incx.eq.1) then
        do i = 0, n-1
@@ -129,11 +131,12 @@
 *     ------------------------------------------------------------------
       integer i, ix, iy
       intrinsic max
+      external xerrab
       integer ibase
       ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (incy.eq.0) then
-       stop 'b2scopy--error, incy.eq.0'
+       call xerrab ('b2scopy--error, incy.eq.0')
       else if (incx.eq.1.and.incy.eq.1) then
        do i = 0, n-1
         sy(i) = sx(i)
@@ -165,11 +168,12 @@
 *     ------------------------------------------------------------------
       integer i, ix, iy
       intrinsic max
+      external xerrab
       integer ibase
       ibase(n,incx) = max(0,(1-n)*incx)
 *     ------------------------------------------------------------------
       if (incy.eq.0) then
-       stop 'b2saxpy--error, incy.eq.0'
+       call xerrab ('b2saxpy--error, incy.eq.0')
       else if (sa.eq.0) then
       else if (incx.eq.1.and.incy.eq.1) then
        do i = 0, n-1
@@ -204,11 +208,11 @@
       real (kind=R8) ::
      *   t, smin
       intrinsic max, min
-      external smin
+      external smin, xerrab
       ibase(n1, inc1x) = max(1, 1+(1-n1)*inc1x)
 *     ------------------------------------------------------------------
       if (n1 .lt. 1 .or. n2 .lt. 1) then
-         stop 'b2s2min'
+         call xerrab ('b2s2min: invalid n1/n2 values')
 *        - - - - - - -
       else if (n1*inc1x .eq. inc2x) then
          b2s2min = smin (n1*n2, sx, inc1x)

@@ -18,6 +18,9 @@
       use b2mod_ppout
       use b2mod_external
       implicit none
+#ifdef USE_MPI
+      include 'mpif.h'
+#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -74,6 +77,9 @@
 
 *   ..local variables
       integer ninp(0:5), nout(0:2), nx, ny, ns, idum(0:9), io
+#ifdef USE_MPI
+      integer rank_mpi,size_mpi,ierr_mpi
+#endif
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin
       external b2pldr
@@ -110,6 +116,16 @@
 *.computation
 
 *   ..program start-up calls
+#ifdef USE_MPI
+      call mpi_init(ierr_mpi)
+      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
+      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
+      if(rank_mpi .ne. 0) then
+        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+        call mpi_finalize(ierr_mpi)
+        stop 'b2pl_mpi_child'
+      endif
+#endif
       call prgini ('b2pl')
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
@@ -181,6 +197,10 @@
       call dealloc_anomalous_transport
       call dealloc_b2mod_neutr_src_scaling
       call prgfin ()
+#ifdef USE_MPI
+      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+      call mpi_finalize(ierr_mpi)
+#endif
       stop 'b2pl'
 
 *-----------------------------------------------------------------------

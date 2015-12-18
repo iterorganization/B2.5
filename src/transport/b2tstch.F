@@ -41,7 +41,7 @@
      &  bottomdelta1, ixout
 *   ..procedures
       intrinsic max, abs
-      external subini, subend, xertst
+      external subini, subend, xertst, xerrab
       external b2xvsg, b2xvff, b2xvfx
 *   ..initialization
       data ncall/0/, delta_stoch/0.0e0_R8/, sig_stoch/0.0e0_R8/ 
@@ -68,7 +68,7 @@
 	    enddo
 	  else
 	    write(*,*) ' b2tqna: nncut not equal 1 or 2'
-	    stop
+	    call xerrab ('Not available outside SN and DN geometries')
 	  endif 
 
        bottomdelta1 = topcut(1)

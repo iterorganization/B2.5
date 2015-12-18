@@ -21,8 +21,10 @@
       use AVVIEWER ! IGNORE
       use DFLIB    ! IGNORE
 #endif
-
       implicit none
+#ifdef USE_MPI
+      include 'mpif.h'
+#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -53,10 +55,13 @@
 #endif
 
       integer ninp(0:5), nout(0:7), nx, ny, ns, ns0, idum(0:9)
+#ifdef USE_MPI
+      integer rank_mpi,size_mpi,ierr_mpi
+#endif
       character savefile*16, arg*256, lblmn*120, lblcp*120, title*64
       character hlp_frm*22
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
+      external prgini, prgend, xerset, xertst, xerrab, cfopen, cfruin
 *   ..initialize input/output unit numbers
       data ninp/50,51,52,53,54,55/
       data nout/60,61,62,63,64,65,66,67/
@@ -65,6 +70,16 @@
 *.computation
 
 *   ..program start-up calls
+#ifdef USE_MPI
+      call mpi_init(ierr_mpi)
+      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
+      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
+      if(rank_mpi .ne. 0) then
+        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+        call mpi_finalize(ierr_mpi)
+        stop 'b2yv_mpi_child'
+      endif
+#endif
       call prgini ('b2yv')
 *   ..open files
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
@@ -210,7 +225,7 @@
 	  enddo
 	enddo
       else
-        stop
+        call xerrab ('Wrong icase value')
       endif
 
 #ifdef WINDOWS
@@ -260,6 +275,10 @@
       deallocate (M)
 * ..end of computation
       call prgend ()
+#ifdef USE_MPI
+      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+      call mpi_finalize(ierr_mpi)
+#endif
       stop 'b2yv'
 
 *-----------------------------------------------------------------------

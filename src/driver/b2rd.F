@@ -11,6 +11,9 @@
       use b2mod_b2cmpa
       use b2mod_b2cmgs
       implicit none
+#ifdef USE_MPI
+      include 'mpif.h'
+#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -64,6 +67,9 @@
 
 *   ..local variables
       integer ninp(0:0), nout(0:2), ishot, idum(0:9), nx, ny, ns, n2, io
+#ifdef USE_MPI
+      integer rank_mpi,size_mpi,ierr_mpi
+#endif
       real (kind=R8), allocatable :: za(:)
       character*120 lblmn, lblgm
 #ifdef MDSPLUS
@@ -122,6 +128,16 @@
 *.computation
 
 *   ..program start-up calls
+#ifdef USE_MPI
+      call mpi_init(ierr_mpi)
+      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
+      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
+      if(rank_mpi .ne. 0) then
+        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+        call mpi_finalize(ierr_mpi)
+        stop 'b2rd_mpi_child'
+      endif
+#endif
       call prgini ('b2rd')
 *   ..open files
       call cfopen (nout(0),'b2rd.prt','new','formatted')
@@ -531,6 +547,10 @@
      1 'MDSPLUS routine called when not compiled with MDSPLUS')
 #endif
       call prgend ()
+#ifdef USE_MPI
+      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+      call mpi_finalize(ierr_mpi)
+#endif
       stop 'b2rd'
 
 *-----------------------------------------------------------------------

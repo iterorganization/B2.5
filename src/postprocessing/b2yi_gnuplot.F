@@ -11,6 +11,9 @@
       use b2mod_indirect
       use b2mod_ppout
       implicit none
+#ifdef USE_MPI
+      include 'mpif.h'
+#endif
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -67,6 +70,9 @@
 
 *   ..local variables
       integer ninp(0:4), nout(0:1), nx, ny, ns, idum(0:9)
+#ifdef USE_MPI
+      integer rank_mpi,size_mpi,ierr_mpi
+#endif
 *   ..procedures
       external prgini, prgfin, xerset, xertst, cfopen, cfruin
       external b2yidr_gnuplot
@@ -103,7 +109,17 @@
 *.computation
 
 *   ..program start-up calls
-      call prgini ('b2yi')
+#ifdef USE_MPI
+      call mpi_init(ierr_mpi)
+      call mpi_comm_rank(MPI_COMM_WORLD,rank_mpi,ierr_mpi)
+      call mpi_comm_size(MPI_COMM_WORLD,size_mpi,ierr_mpi)
+      if(rank_mpi .ne. 0) then
+        call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+        call mpi_finalize(ierr_mpi)
+        stop 'b2yi_gnuplot_mpi_child'
+      endif
+#endif
+      call prgini ('b2yi_gnuplot')
 *   ..open files
       call cfopen (ninp(1),'b2fstate','old','un*formatted')
       call cfopen (ninp(2),'b2frates','old','un*formatted')
@@ -143,6 +159,10 @@
       call dealloc_b2mod_plasma
       call dealloc_b2mod_indirect
       call prgfin ()
+#ifdef USE_MPI
+      call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
+      call mpi_finalize(ierr_mpi)
+#endif
       stop 'b2yi_gnuplot'
 
 *-----------------------------------------------------------------------

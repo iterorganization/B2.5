@@ -206,7 +206,7 @@ c first time column has ocurred in current row.
           ikeep(j,2) = i
           ikeep(j,3) = jj - move - newj1
           if (move.eq.0) go to 120
-c shift necessary because of  previous duplicate element.
+c shift necessary because of previous duplicate element.
           newpos = jj - move
           a(newpos) = a(jj)
           icn(newpos) = icn(jj)

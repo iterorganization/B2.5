@@ -97,7 +97,7 @@
      &     ' ix   iy   ne(ix,iy)      te(ix,iy)  lnlam(ix,iy)'
 	     write(*,"(2i5,3es13.4)")
      &       ix,iy,ne(ix,iy),te(ix,iy),lnlam(ix,iy)
-	     stop
+	     call xertst ('Negative Coulomb logarithm')
 	    endif
          enddo
         enddo
@@ -128,7 +128,7 @@
         enddo
 	 case default
 	  write(*,*) ' b2tlnl: incorrect value icase =',icase
-	  stop
+	  call xerrab ('Incorrect icase value in b2tlnl')
 	 end select
       else
         lnlam = lambda

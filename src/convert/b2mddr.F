@@ -194,7 +194,7 @@
       read(*,'(a120)') mds_server
       if(mds_server(1:10).ne.'MDSSERVER:') then
         write(*,*) 'Invalid server label from "mds_id"'
-        stop
+        call xerrab ('Invalid server label')
       else
         mds_server(1:128)=mds_server(11:128)
       endif
@@ -220,13 +220,11 @@
         if(mod(status,2).eq.1) then
           write(*,*) 'old shotnumber: ',shotnumber
           write(nout(0),'(a,i8)') 'The previous shot was # ',shotnumber
-          if(shotnumber.eq.0) then
-            write(*,*) 'Stopping because previous shotnumber = 0'
-            stop
-          endif
+          call xertst (shotnumber.ne.0,
+     *     'Stopping because previous shotnumber = 0')
         else
           call mds_err_msg(status)
-          stop
+          call xerrab ('Invalid status value')
         endif
 
         status=mdsvalue2(
@@ -238,14 +236,12 @@
           call mds_err_msg(status)
           write(*,*) 'new shotnumber: ',shotnumber
           write(nout(0),'(a,i8)') 'The new shot was # ',shotnumber
-          if(shotnumber.eq.0) then
-            write(*,*) 'Stopping because shotnumber = 0'
-            stop
-          endif
+          call xertst (shotnumber.ne.0,
+     *     'Stopping because shotnumber = 0')
           dbsolpsindex=shotnumber
         else
           call mds_err_msg(status)
-          stop
+          call xerrab ('Invalid status value')
         endif
 
         tcl='TCL("set tree solps")'
@@ -273,7 +269,7 @@ c-dpc        if(mod(status,2).eq.1) then
 c-dpc          write(*,*) 'current shotnumber: ',shotnumber
 c-dpc        else
 c-dpc          call mds_err_msg(status)
-c-dpc          stop
+c-dpc          call xerrab ('Invalid status value')
 c-dpc        endif
 
       else
@@ -281,10 +277,8 @@ c-dpc        endif
         shotnumber=overwrite_shotnumber
         write(*,*) 'Overwriting: ',shotnumber
         write(nout(0),'(a,i8)') 'Overwriting shot # ',shotnumber
-        if(shotnumber.eq.0) then
-          write(*,*) 'Stopping because overwriting shotnumber = 0'
-          stop
-        endif
+        call xertst (shotnumber.ne.0,
+     *   'Stopping because overwriting shotnumber = 0')
         dbsolpsindex=shotnumber
 
         tcl='TCL("set tree solps")'

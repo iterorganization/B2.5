@@ -43,7 +43,9 @@
 #endif
       integer nwrite
       character*16 shotnumber
+      external subini, subend, xerrab
 
+      call subini ('b2mod_mdsplus_write_to_db')
       write(dbline,
      &     '(a,a,i10,a,3a,a,i10,a,a,f20.12,a,9a,3(a,i6,a),3a,
      &     22(a,e30.20,a),19(a,a,a),2(a,i10,a),6a,a,a)')
@@ -117,7 +119,7 @@
          write(*,*) 'shotnumber: ',shotnumber
       else
          call mds_err_msg(status)
-         stop
+         call xerrab ('Invalid status value')
       endif
 #else
       shotnumber = '0'
@@ -197,11 +199,13 @@
           write(*,*) 'shotnumber: ',shotnumber
         else
           call mds_err_msg(status)
-          stop
+          call xerrab ('Invalid status value')
         endif
 #endif
 
       endif
+      call subend ()
+      return
       end subroutine b2mod_mdsplus_write_to_db
 
       end module b2mod_mdsplus

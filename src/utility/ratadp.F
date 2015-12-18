@@ -199,7 +199,7 @@
 *   ..procedures
       real (kind=R8) ::
      *   hydfud
-      external adset, aderc, adbcxr
+      external adset, aderc, adbcxr, subini, subend, xertst
       hydfud(temp,dens) = exp(4.4_R8*(dens/1.0e20_R8)**0.15_R8*
      1 temp**(-0.60_R8))
 *!!   (hydfud is the fudge factor for the density dependence in the
@@ -212,21 +212,17 @@
 *   ..subprogram start-up calls
       call subini ('ratadp')
 *   ..test nz, nt, nn
-      if (.not.(0.lt.nz.and.nz.le.nzm)) then
-       stop 'ratadp--faulty argument nz'
-      else if (.not.(0.le.nt.and.0.le.nn)) then
-       stop 'ratadp--faulty argument nt or nn'
-      endif
+      call xertst (0.lt.nz.and.nz.le.nzm, 'ratadp--faulty argument nz')
+      call xertst (0.le.nt.and.0.le.nn, 
+     . 'ratadp--faulty argument nt or nn')
 *   ..test rtt, rtn
       do i = 0, nt
-       if (.not.0.lt.rtt(i)) then
-        stop 'ratadp--faulty argument array rtt'
-       endif
+       call xertst (0.0_R8.lt.rtt(i),
+     .  'ratadp--faulty argument array rtt')
       enddo
       do i = 0, nn
-       if (.not.0.lt.rtn(i)) then
-        stop 'ratadp--faulty argument array rtn'
-       endif
+       call xertst (0.0_R8.lt.rtn(i),
+     . 'ratadp--faulty argument array rtn')
       enddo
 *   ..set some adpak parameters
 *     (contact R. A. Hulse for advice)
@@ -252,16 +248,13 @@
         anneut(0) = arbn*cm3
         call adbcxr (anneut, vneut, 1, ncxopt, ncxerr, ivunit)
 *     ..test adpak results
-        if (.not.ncxerr.eq.0) then
-         stop 'ratadp--error, ncxerr not 0'
-        else if (.not.rclion(nz+1).eq.0.0_R8) then
-         stop 'ratadp--error, ionisation from z=nz not 0'
-        else if (.not.(rrarec(1).eq.0.0_R8.and.
-     &                 rdirec(1).eq.0.0_R8)) then
-         stop 'ratadp--error, recombination from z=0 not 0'
-        else if (.not.rcxrec(1).eq.0.0_R8) then
-         stop 'ratadp--error, cx-recombin from z=0 not 0'
-        endif
+        call xertst (ncxerr.eq.0, 'ratadp--error, ncxerr not 0')
+        call xertst (rclion(nz+1).eq.0.0_R8,
+     .   'ratadp--error, ionisation from z=nz not 0')
+        call xertst (rrarec(1).eq.0.0_R8.and.rdirec(1).eq.0.0_R8,
+     .   'ratadp--error, recombination from z=0 not 0')
+        call xertst (rcxrec(1).eq.0.0_R8,
+     .   'ratadp--error, cx-recombin from z=0 not 0')
 *     ..compute rate coefficients
         do k = 0, nz
 *        (ionisation rate coefficient; units are m**3/s)

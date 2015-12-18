@@ -79,7 +79,7 @@
       real (kind=R8) ::
      *   x05baf
       external subini, subend, xertst, ipgeti, ipgetr, lwget, lwiget,
-     &  slv5pt, iluter, x05baf
+     &  slv5pt, iluter, x05baf, xerrab
 *   ..initialization
       save ncall, style, acpar, cpu
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
@@ -127,7 +127,7 @@
       if (ncall.eq.0) then
 	 write(*,*) 'Allocating space for solver b2ux9p'
 	 if (style.eq.0) then
-	 stop ' b2ux9p: Style 0 is not emplemented'
+	  call xerrab ('b2ux9p: Style 0 is not emplemented')
 *    ..obtain workspace for iluter
 	  allocate(aaf(1:n2*5))
 	  allocate(wrk0(1:n2))
@@ -135,7 +135,7 @@
 	  allocate(wrk2(1:n2))
 	  allocate(iwrk(1:1))
 	else if (style.eq.1) then
-	 stop ' b2ux9p: Style 1 is not emplemented'
+	  call xerrab ('b2ux9p: Style 1 is not emplemented')
 *    ..obtain workspace for slv5pt
 	  allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
 	  allocate(wrk0(1:n2))
@@ -155,13 +155,13 @@
 *    ..use iluter
        iters = min(itmax,4)
        itpar = itcnt*iters
-	 stop ' b2ux9p: Style 0 is not emplemented'
+       call xerrab ('b2ux9p: Style 0 is not emplemented')
        call iluter (nx+2, ny+2, aa9, resfun, iters, acpar, itpar,
      &   corfun, nrmc, aaf, wrk0, wrk1, wrk2)
       else if (style.eq.1) then
 *    ..use slv5pt
        iters = 1
-	 stop ' b2ux9p: Style 1 is not emplemented'
+       call xerrab ('b2ux9p: Style 1 is not emplemented')
        call slv5pt (nx+2, ny+2, aa9, resfun, iters, corfun, nrmc,
      &   min(nx+2,ny+2), aaf, wrk0, iwrk)
       else if (style.eq.2) then

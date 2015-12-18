@@ -19,7 +19,7 @@
       character chstck(0:nchmx-1)*8
       integer lcstck(0:1,0:nchmx-1)
       save nchs, chstck, lcstck
-      external lwget, lwiget, lwset, lwiset
+      external lwget, lwiget, lwset, lwiset, xertst
       data nchs/0/
 *     ------------------------------------------------------------------
 *!!   Note: nchmx may be changed. nchmx=100 is more than enough to
@@ -32,9 +32,7 @@
       call perfon (srname)
 #endif
 *   ..test nchs
-      if (nchs.eq.nchmx) then
-       stop 'subini--error, nchs.eq.nchmx'
-      endif
+      call xertst (nchs.ne.nchmx, 'subini--error, nchs.eq.nchmx')
 *   ..get base addresses for free workspace
       call lwget (0, lcr0)
       call lwiget (0, lci0)
@@ -48,9 +46,7 @@ c-dpc      write(*,*) 'subini: ',srname,nchs
 *     ------------------------------------------------------------------
       entry subend ()
 *   ..test nchs
-      if (nchs.eq.0) then
-       stop 'subend--error, nchs.eq.0'
-      endif
+      call xertst (nchs.gt.0, 'subend--error, nchs.le.0')
 *   ..pop data from the stack
 *     (lcr0 and lci0 are the base addresses at invocation of the present
 *     subprogram)

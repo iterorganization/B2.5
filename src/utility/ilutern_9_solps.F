@@ -138,7 +138,7 @@ c-dpc
 c-dpc
       if(lfirst) then
 	 write(*,*) 'ilutern_9: nz = ',nz
-	 if(nz.gt.N_NONZEROS) stop 'Increase N_NONZEROS'
+	 call xertst (nz.le.N_NONZEROS, 'Increase N_NONZEROS')
       endif
       do i=1,nz
 	 irnh_save(i)=irnh(i)
@@ -148,7 +148,7 @@ c-dpc
       if(.not.lfirst) then
 	 call ma28bdcopy
      1	 (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
-	 if(nltrsol.gt.0)                                                !srv 09.07.02
+	 if(nltrsol.gt.0)                                             !srv 09.07.02
      *    write(*,"(' ma28bd for ',a9,': iflag =',i9)") name, iflag   !srv 09.07.02
 	 if(iflag.lt.0) then
 	  do i=1,nz

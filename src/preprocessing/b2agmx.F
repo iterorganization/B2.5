@@ -564,12 +564,12 @@ c dpc 2000.06.02 end    xpb 11.08.00
 cxpb  extra test since cases beyond double-null are not yet coded
       call xertst (nncut.le.2, 'faulty argument nncut')
 
-      if(nncut.eq.0) write(*,*) 'No cuts found'
-      if(nncut.ge.1)
-     > write(*,*) 'Using leftcut , rightcut , topcut , bottomcut  = ',
+      if(nncut.eq.0) write(*,'(a)') 'No cuts found'
+      if(nncut.ge.1) write(*,'(a,4i4)') 
+     > 'Using leftcut , rightcut , topcut , bottomcut  = ',
      1 leftcut(1), rightcut(1), topcut(1), bottomcut(1)
-      if(nncut.ge.2)
-     >  write(*,*) 'Using leftcut2, rightcut2, topcut2, bottomcut2 = ',
+      if(nncut.ge.2) write(*,'(a,4i4)') 
+     > 'Using leftcut2, rightcut2, topcut2, bottomcut2 = ',
      1 leftcut(2), rightcut(2), topcut(2), bottomcut(2)
 
       call init_region(nx,ny,nncut,nncutmax,

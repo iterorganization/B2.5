@@ -9,12 +9,13 @@
 *     ------------------------------------------------------------------
       integer k
       intrinsic len, char, ichar
+      external subini, subend, xerrab, xertst
 *     ------------------------------------------------------------------
 *   ..test installation
+      call subini ('chcase')
 *     (protection against errors of case conversion.)
-      if (ichar('a').eq.ichar('A')) then
-       stop 'chcase--installation error'
-      endif
+      call xertst (ichar('a').ne.ichar('A'),
+     . 'chcase--installation error')
 *   ..branch on ind
       if (ind.eq.0) then
 *    ..convert chtxt to lowercase
@@ -33,8 +34,9 @@
         endif
        enddo
       else
-       stop 'chcase--faulty argument ind'
+       call xerrab ('chcase--faulty argument ind')
       endif
+      call subend ()
       return
 *     ------------------------------------------------------------------
       end

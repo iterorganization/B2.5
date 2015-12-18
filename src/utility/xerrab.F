@@ -63,6 +63,7 @@
        call subxnd (lbot, srname)
        goto 3
       endif
+      call b25_mpi_stop
       stop 'xerrab--error'
 *     ------------------------------------------------------------------
       end subroutine xerrab

@@ -54,13 +54,14 @@ c      parameter (lun_w=76)
 c      character tab
 c>>>
       intrinsic mod
-      external ipgeti
+      external ipgeti, subini, subend, xerrab
 c======================================================================
 c<<<
 c      tab=char(9)
 c
 c      print *,'Starting b2pwlprp...',nlim,lppp,DEF_NLIM
 c      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
+      call subini ('b2pwlprp')
       call ipgeti ('b2agmt_1d_width', width)
 c>>>
 c
@@ -71,6 +72,7 @@ c
         write(*,*) 'b2pwlprp: no shadowing structure in the data!'
         call walloff
         l2pwinp=.false.
+        call subend ()
         return
       end if
 c
@@ -149,6 +151,7 @@ c
           write(*,*) 'Ending segment  : ',k,pp2(1,k),pp2(2,k)
           call walloff
           l2pwinp=.false.
+          call subend ()
           return
         end if
       else
@@ -160,6 +163,7 @@ c
           write(*,*) 'Ending segment  : ',k,pp1(1,k),pp1(2,k)
           call walloff
           l2pwinp=.false.
+          call subend ()
           return
         end if
       end if
@@ -308,7 +312,7 @@ c
      ,             'Inner edge not found ',il,i,kb
                   write(*,'(a,5i6)')
      ,             'k,jedgi1,jedgi2,jedgo1,jedgo2 = ',k,jedge(1:4)
-                  stop
+                  call xerrab ('Inner edge not found')
                 end if
               end if
               ib(kb)=is
@@ -328,7 +332,7 @@ c
      ,             'Outer edge not found ',il,i,kb
                   write(*,'(a,5i6)')
      ,             'k,jedgi1,jedgi2,jedgo1,jedgo2 = ',k,jedge(1:4)
-                  stop
+                  call xerrab ('Outer edge not found')
                 end if
               end if
               ie(kb)=is
@@ -490,7 +494,7 @@ c*** entering a target
                   if(kb .ne. 0) then
                     write(*,*) 'Unexpected error in b2pwlprp: ',
      ,               'the target ',kb,'  not closed. Overlap?'
-                    stop
+                    call xerrab ('Target not closed')
                   end if
                   kb=iit(ib(ks))
                   do i=kk,kks
@@ -504,7 +508,7 @@ c*** entering a target
                 else if(kks .eq. kke  .and.  kks .le. n) then
                   write(*,*) 'Unexpected error in b2pwlprp: ',
      ,             'kks = kke = ',kks
-                    stop
+                  call xerrab ('Unexpected error in b2pwlprp')
                 else if(kks .eq. kke .and. kks .eq. nsgmx+5) then
                   kb = 0
                 else
@@ -512,7 +516,7 @@ c*** entering a target
                     if(n_atg .gt. 0) then
                       write(*,*) 'Unexpected error in b2pwlprp: ',
      ,                 'trying to close unopened target ',iit(ie(ke))
-                      stop
+                      call xerrab ('Trying to close unopened target')
                     end if
                     kb=iit(ie(ke))
                     add_trg=kke .gt. 1
@@ -622,5 +626,6 @@ c     ,                                 (wldrfdst(i,il),i=1,nwldlis(il))
 c      end do
 c>>>
 c======================================================================
+      call subend ()
       return
       end subroutine b2pwlprp

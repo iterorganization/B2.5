@@ -31,6 +31,7 @@ c======================================================================
       integer i, j, k
       real (kind=R8) :: x1, x2, y1, y2, angle, anglb, uda, utx, uxx
       intrinsic mod, atan2
+      external subini, subend, xerrab
 c<<<
 c      integer lun_s, lun_t, lun_l
 c      parameter (lun_s=76, lun_t=75, lun_l=74)
@@ -40,6 +41,7 @@ c>>>
 c======================================================================
 c
 c<<<
+       call subini ('rlcomp')
 c      tab=char(9)
 c      uu_dbg=.false.
 c>>>
@@ -88,7 +90,7 @@ c>>>
             end if
           end do
           write(*,*) 'Error in rlcomp: target not in structure',j,jb
-          stop
+          call xerrab ('Target not in structure')
 c
  10       continue
 
@@ -182,5 +184,6 @@ c      close(lun_s)
 c      close(lun_t)
 c      close(lun_l)
 c>>>
+      call subend ()
       return
       end subroutine rlcomp

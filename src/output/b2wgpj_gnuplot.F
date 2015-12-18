@@ -255,7 +255,7 @@ csw 30sep2014 added
             write(*,'()')
          enddo
       else
-         write(*,*) 'Haven''t coded ',want,' yet'
+         write(*,*) 'Have npt coded ',want,' yet'
       endif
 
 * ..return
