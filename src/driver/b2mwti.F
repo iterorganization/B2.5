@@ -1930,8 +1930,8 @@ c inboard divertor quantities
       call ncaptc(ncid, mn3dlid, 'long_name', NCCHAR, 34,
      1'molecule density, inboard divertor', iret)
       call ncaptc(ncid, mn3dlid, 'units', NCCHAR, 4, 'm^-3', iret)
-      call ncaptc(ncid, fn3dlid, 'long_name', NCCHAR, 40,
-     1'poloidal spec one flux, inboard divertor', iret)
+      call ncaptc(ncid, fn3dlid, 'long_name', NCCHAR, 44,
+     1'poloidal main species flux, inboard divertor', iret)
       call ncaptc(ncid, fn3dlid, 'units', NCCHAR, 4, 's^-1', iret)
       doubleval(1) = -1.0_R8
       call ncapt(ncid, fn3dlid, 'scale', NCDOUBLE, 1, doubleval, iret)
@@ -2045,8 +2045,8 @@ c upper inboard divertor quantities
       call ncaptc(ncid, mn3dtlid, 'long_name', NCCHAR, 40,
      1'molecule density, upper inboard divertor', iret)
       call ncaptc(ncid, mn3dtlid, 'units', NCCHAR, 4, 'm^-3', iret)
-      call ncaptc(ncid, fn3dtlid, 'long_name', NCCHAR, 46,
-     1'poloidal spec one flux, upper inboard divertor', iret)
+      call ncaptc(ncid, fn3dtlid, 'long_name', NCCHAR, 50,
+     1'poloidal main species flux, upper inboard divertor', iret)
       call ncaptc(ncid, fn3dtlid, 'units', NCCHAR, 4, 's^-1', iret)
       call ncaptc(ncid, fl3dtlid, 'long_name', NCCHAR, 46,
      1'poloidal electron flux, inboard divertor', iret)
@@ -2144,8 +2144,8 @@ c outboard divertor quantities
       call ncaptc(ncid, mn3drid, 'long_name', NCCHAR, 35,
      1'molecule density, outboard divertor', iret)
       call ncaptc(ncid, mn3drid, 'units', NCCHAR, 4, 'm^-3', iret)
-      call ncaptc(ncid, fn3drid, 'long_name', NCCHAR, 41,
-     1'poloidal spec one flux, outboard divertor', iret)
+      call ncaptc(ncid, fn3drid, 'long_name', NCCHAR, 45,
+     1'poloidal main species flux, outboard divertor', iret)
       call ncaptc(ncid, fn3drid, 'units', NCCHAR, 2, 'W ', iret)
       call ncaptc(ncid, fl3drid, 'long_name', NCCHAR, 41,
      1'poloidal electron flux, outboard divertor', iret)
@@ -2192,8 +2192,8 @@ c upper outboard divertor quantities
       call ncaptc(ncid, mn3dtrid, 'long_name', NCCHAR, 41,
      1'molecule density, upper outboard divertor', iret)
       call ncaptc(ncid, mn3dtrid, 'units', NCCHAR, 4, 'm^-3', iret)
-      call ncaptc(ncid, fn3dtrid, 'long_name', NCCHAR, 47,
-     1'poloidal spec one flux, upper outboard divertor', iret)
+      call ncaptc(ncid, fn3dtrid, 'long_name', NCCHAR, 51,
+     1'poloidal main species flux, upper outboard divertor', iret)
       call ncaptc(ncid, fn3dtrid, 'units', NCCHAR, 2, 'W ', iret)
       doubleval(1) = -1.0_R8
       call ncapt(ncid, fn3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
@@ -2251,14 +2251,18 @@ c
       character*(maxncnam) varnam,dimnam
       integer vartyp,nvdims,vdims(maxvdims),nvatts,
      1 start(maxvdims),count(maxvdims),lmap(maxvdims),
-     2 noofbytes,one(maxvdims)
+     2 noofbytes,stride(maxvdims)
 c
       character*(*) timnam
       character*(maxncnam) timsav
       integer ntsav,ntstep
       save timsav,ntsav
       data timsav /'!!!! INVALID NAME !!!!'/
-      data one /maxvdims*1/
+#ifdef NETCDF4_3
+      data stride /maxvdims*2/
+#else
+      data stride /maxvdims*1/
+#endif
 c
       integer lnblnk
       external lnblnk, subini, subend, xerrab
@@ -2299,16 +2303,18 @@ c           write(*,*) 'TIME dimension'
           lmap(i)=imap(i)*noofbytes
         enddo
         if(rw.eq.'read') then
-          call ncvgtg(ncid,data_id,start,count,one,lmap,data_set,iret)
+          call ncvgtg(ncid,data_id,start,count,stride,lmap,
+     .                     data_set,iret)
         elseif(rw.eq.'write') then
 c         write(*,*) 'ncid : ', ncid
 c         write(*,*) 'data_id :', data_id
 c         write(*,*) 'start :', start(1:nvdims)
 c         write(*,*) 'count :', count(1:nvdims)
-c         write(*,*) 'one :', one(1:nvdims)
+c         write(*,*) 'stride :', stride(1:nvdims)
 c         write(*,*) 'lmap :', lmap(1:nvdims)
 c         write(*,*) 'data_set :', data_set(1:nvdims)
-          call ncvptg(ncid,data_id,start,count,one,lmap,data_set,iret)
+          call ncvptg(ncid,data_id,start,count,stride,lmap,
+     .                     data_set,iret)
         else
           write(*,*) 'Either "read" or "write" must be chosen, not',
      1     rw
@@ -2354,9 +2360,9 @@ c           write(*,*) 'TIME dimension'
           lmap(i)=imap(i)*noofbytes
         enddo
         if(rw.eq.'read') then
-          call ncvggc(ncid,data_id,start,count,one,lmap,datac,iret)
+          call ncvggc(ncid,data_id,start,count,stride,lmap,datac,iret)
         elseif(rw.eq.'write') then
-          call ncvpgc(ncid,data_id,start,count,one,lmap,datac,iret)
+          call ncvpgc(ncid,data_id,start,count,stride,lmap,datac,iret)
         else
           write(*,*) 'Either "read" or "write" must be chosen, not',
      1     rw
