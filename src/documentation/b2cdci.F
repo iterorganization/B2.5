@@ -418,7 +418,7 @@
 *    'b2tlh0_alpha'             '0.0'                  Physics
 *    'b2tlh0_gamma'             '2.0'                  Physics
 *    'b2tlh0_flux_limit_min_ti' '0.0'                  Physics
-*    'b2tlh0_flux_limit_style'  '1'                    Numerics
+*    'b2tlh0_flux_limit_style'  '2'                    Numerics
 *    'b2tlh0_hcimx_flag'        '1'                    Numerics
 *    'b2tlmv_style'             '1'                    Physics      !srv 30.05.08
 *    'b2tlnl_ee'                '0'                    Physics
@@ -447,6 +447,7 @@
 *    'b2trcl_core_cond_limit'   '0'                    Numerics
 *    'b2trcl_cthe'              '0.0'                  Physics
 *    'b2trcl_cthi'              '2.65'                 Physics
+*    'b2trcl_cvsa_mltpl'        '1.0'                  Numerics     !iys 06.12.13
 *    'b2trcl_lambda'            '-5.0'                 Physics
 *    'b2trcl_lluciani'          '3'                    Physics
 *    'b2trcl_lthf21'            '0'                    Physics
@@ -1719,21 +1720,21 @@
 *
 *    'eirene_savef30'           '0'                    Output
 *    'eirene_savef31'           '0'                    Output
-*    For coupled runs, the code will create two files named fort.30 and fort.31,
-*    containing the plasma geometry and plasma state, respectively, for use
-*    by Eirene. This happens irrespective of the setting of the two switches 
-*    above. If however, the user wishes to obtain these files for a non-coupled
-*    run, then these two switches can be set to 1 and the files will then be
-*    produced at the end of the run. If savef31.lt.0, then a fort.31.######
-*    file is produced after every B2.5 time step. Additionally, if 
-*    savef31.ne.0, the fort.31 file will be updated before every Eirene call 
-*    for coupled runs.
+*    For coupled runs, the code will create two files named fort.30 and
+*    fort.31, containing the plasma geometry and plasma state, respectively,
+*    for use by Eirene. This happens irrespective of the setting of the two
+*    switches above. If however, the user wishes to obtain these files for
+*    a non-coupled run, then these two switches can be set to 1 and the
+*    files will then be produced at the end of the run. If savef31.lt.0,
+*    then a fort.31.###### file is produced after every B2.5 time step.
+*    Additionally, if savef31.ne.0, the fort.31 file will be updated before
+*    every Eirene call for coupled runs.
 *
 *    'b2mndr_inverse_ua'        '0'                    Output
 *    If inverse_ua.eq.1, the code will produce a 'b2fstati_with-ua' file that
-*    contains the same plasma information, but with the opposite sign convention
-*    for the parallel velocity. The run will then proceed with the new velocities
-*    with their sign inverted.
+*    contains the same plasma information, but with the opposite sign
+*    convention for the parallel velocity. The run will then proceed with
+*    the new velocities with their sign inverted.
 *
 *    'b2yrdr_ns'                ns                     Output
 *    New number of species desired when reading a new atomic rates file
@@ -1958,10 +1959,15 @@
 *    If core_cond_limit.eq.0, then the heat flux limit due to chvemx
 *    is not applied in the core.
 *
-*    'b2tlh0_flux_limit_style'  '1'                    Numerics
+*    'b2tlh0_flux_limit_style'  '2'                    Numerics
+*    If '0', use the SOLPS5.0 scheme for neutral heat conductivity
+*    flux limits.
 *    If '1', Spb's form to calculate parallel and perpendicular  
-*    neutral heat conductivity flux limit.
-*    It is recommended '1'.
+*    neutral heat conductivity flux limit (does not preserve 
+*    symmetry, kept for backward compatibility reasons).
+*    If '2', modifies the Spb treatment for the flux limits to
+*    be applied on the transport coefficients directly.
+*    It is recommended '2'.
 *
 *    'b2tral_mode'              '1'                    Numerics
 *    Switch to choose between various interpolation schemes for transport
@@ -1988,6 +1994,14 @@
 *    'b2tfhi_upwind'            '0.0'                  Numerics
 *    If upwind.ne.0, then the SOLPS4 upwind scheme in b2tfhe_ and
 *    b2tfhi_ to obtain the heat fluxes.
+*
+*    'b2trcl_cvsa_mltpl'        '1.0'                  Numerics          !iys 06.12.13
+*    Artificial coefficient providing faster convergence to the neoclassical 
+*    electric field but giving a distortion of the flows in the SOL as a
+*    side-effect.
+*    Can be applied >1 during the convergence and turned off for the final
+*    stage of calculations.
+*    Use with caution.
 *
 *    'b2ux5p_mult_nonzero'      '10'                   Numerics
 *    Number of expected non-zero matrix elements per matrix row.

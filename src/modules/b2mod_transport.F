@@ -33,7 +33,8 @@
      *  fllimi(:,:),
      *  fllim0fna(:,:,:,:),
      *  fllim0fhi(:,:,:,:),
-     *  fllimvisc(:,:,:)
+     *  fllimvisc(:,:,:),
+     *  kt_neo(:,:)                                                   !iys 02.12.13 08.10.14
 
       contains
 
@@ -77,6 +78,8 @@
       fllim0fhi=0.0_R8
       allocate(fllimvisc(-1:nxd,-1:nyd,0:nsd-1))
       fllimvisc=0.0_R8
+      allocate(kt_neo(-1:nxd,-1:nyd))                                 !iys 02.12.13 08.10.14
+      kt_neo = 0.0_R8
 
       return
       end subroutine alloc_b2mod_transport
@@ -116,6 +119,7 @@
       deallocate(fllim0fna)
       deallocate(fllim0fhi)
       deallocate(fllimvisc)
+      deallocate(kt_neo)
 
       return
       end subroutine dealloc_b2mod_transport

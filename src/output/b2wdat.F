@@ -55,13 +55,17 @@
      *  Total_energy_flux_i(-1:ny), Total_energy_flux_e(-1:ny), !srv 23.11.00
      *  wrk2(-1:nx,-1:ny), wrk3(-1:nx,-1:ny),                   !srv 23.11.00
      *  Total_energy_flux(-1:ny), power,                        !srv 23.11.00
+     *  Total_energy_flux_mdf(-1:ny),
+     *  Total_energy_flux_i_mdf(-1:ny),
+     *  Total_energy_flux_e_mdf(-1:ny),
      *  kintmp,
      *  sfuadia(-1:ny,0:ns-1), sfvadia(-1:ny,0:ns-1), 
      *  sfvaecrb(-1:ny,0:ns-1), sfna(-1:ny,0:ns-1),
      &  sfna_mdf(-1:ny,0:ns-1), sfn(-1:ny), sfn_mdf(-1:ny),
      &  boundary_flux(1:nbc,0:ns-1), sum_sdiv, sum_ssna,
      &  sdiv(0:ns-1), ssna(0:ns-1),                                !srv 12.04.12
-     &  cutll, cutlo, t0
+     &  cutll, cutlo, t0,
+     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cst(-1:nx,-1:ny)         !srv 30.01.15
       real (kind=R8) ::  bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
      &     cr(4*(ny+1)+1), dseval, wdim(8*ns)                      !srv 03.04.13
       real (kind=R8) ::
@@ -70,7 +74,8 @@
      *   qe_out_sum, qi_out_sum, q_out_sum,                        !iyv 04.02.11
      *   qe_inn_sum, qi_inn_sum, q_inn_sum, 
      *   qe_oup_sum, qi_oup_sum, q_oup_sum, 
-     *   qe_iup_sum, qi_iup_sum, q_iup_sum 
+     *   qe_iup_sum, qi_iup_sum, q_iup_sum, 
+     *   uvbtot, voltot                                            !iyv 29.11.13 
       character chns*3                                             !srv 27.04.01
       character(23) hlp_frm                                        !srv 03.04.13
       character*26 boundary_location(nbcd)
@@ -125,7 +130,7 @@
 	  write(70,"(a/6i5)") 'natmid nmolid ', natmid, nmolid
 	  write(70,"(a/6i5)") 'nnatmi nnmoli ', nnatmi, nnmoli
 	 close(70)
-      do is = 1,nnatmi                                                      !srv 04.06.09 16.02.12{
+      do is = 1,nnatmi                                             !srv 04.06.09 16.02.12{
 	 write (chns,'(i2.2)') is
        call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,is,1),'dab2'//chns)
        call my_out(70,nx,ny,tab2(0:nx+1,0:ny+1,is,1),'tab2'//chns)
@@ -134,15 +139,15 @@
        call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,is,1),'pfluxa'//chns)
        call my_out(70,nx,ny,pefluxa(0:nx+1,0:ny+1,is,1),'pefluxa'//chns)
       enddo
-      do is = 1,nnmoli                                                      !srv 16.02.12
+      do is = 1,nnmoli                                             !srv 16.02.12
 	 write (chns,'(i2.2)') is
-       call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,is,1),'dmb2'//chns)          !srv 29.04.10
-       call my_out(70,nx,ny,tmb2(0:nx+1,0:ny+1,is,1),'tmb2'//chns)          !srv 29.04.10
+       call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,is,1),'dmb2'//chns) !srv 29.04.10
+       call my_out(70,nx,ny,tmb2(0:nx+1,0:ny+1,is,1),'tmb2'//chns) !srv 29.04.10
        call my_out(70,nx,ny,rfluxm(0:nx+1,0:ny+1,is,1),'rfluxm'//chns)
        call my_out(70,nx,ny,refluxm(0:nx+1,0:ny+1,is,1),'refluxm'//chns)
        call my_out(70,nx,ny,pfluxm(0:nx+1,0:ny+1,is,1),'pfluxm'//chns)
        call my_out(70,nx,ny,pefluxm(0:nx+1,0:ny+1,is,1),'pefluxm'//chns)
-      enddo                                                                !srv 04.06.09 }
+      enddo                                                        !srv 04.06.09 }
 #endif
       call get_jsep(nx,ny,jxi,jxa,jsep)
       Total_current=0.0_R8
@@ -150,11 +155,14 @@
       B0out=0.0_R8
       Total_flux=0.0_R8
       Total_absflux=0.0_R8
+      Total_energy_flux=0.0_R8
       Total_energy_flux_i=0.0_R8
       Total_energy_flux_e=0.0_R8
+      Total_energy_flux_mdf=0.0_R8                                 !srv 30.04.15 {
+      Total_energy_flux_i_mdf=0.0_R8
+      Total_energy_flux_e_mdf=0.0_R8                               !srv 30.04.15 }
       wrk2=0.0_R8
       wrk3=0.0_R8
-      Total_energy_flux=0.0_R8
       call my_outi(70,nx,ny,bottomix,'bottomix')
       call my_outi(70,nx,ny,bottomiy,'bottomiy')
       call my_outi(70,nx,ny,topix,'topix')
@@ -163,6 +171,12 @@
       call my_outi(70,nx,ny,leftiy,'leftiy')
       call my_outi(70,nx,ny,rightix,'rightix')
       call my_outi(70,nx,ny,rightiy,'rightiy')
+      call b2xpro (nx, ny, ns, mp, am, na, ro)                     !srv 30.01.15 {
+      call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
+      cst = sqrt(pr/ro)
+      call my_out(70,nx,ny,cst,'usound_cst')
+      call my_out(70,nx,ny,ro,'ro')
+      call my_out(70,nx,ny,pr,'pr')                                !srv 30.01.15 }
       call my_out(70,nx,ny,po,'po')                                !srv
       call my_out(70,nx,ny,ni(-1,-1,0),'ni0')                      !srv
       call my_out(70,nx,ny,ni(-1,-1,1),'ni1')                      !srv
@@ -194,6 +208,7 @@
       enddo
       call my_out(70,nx,ny,wrk0,'Eyc')                              
 
+*     calculate shear
       wrk1=0.0e0_R8
       do iy=-1,ny
 	do ix=-1,nx
@@ -215,6 +230,50 @@
       enddo
       call my_out(70,nx,ny,wrk0,'Wsh')                              !iyv 15.10.09 }
 
+      mintopcut = minval(topcut(1:nncut))                           !iyv 29.11.13 {
+      uvbtot=0.0e0_R8                                      
+      voltot=0.0e0_R8
+      wrk0=0.0e0_R8
+      wrk1=0.0e0_R8
+      wrk2=0.0e0_R8
+      do iy = 0,mintopcut-1	
+	do ix=0,nx
+	  if(mod(region(ix,iy,0),4).eq.1) then
+            uvbtot=uvbtot+
+     &             ua(ix,iy,ismain)*vol(ix,iy)*bb(ix,iy,3)
+	    voltot=voltot+vol(ix,iy)
+            wrk0(ix,iy)=
+     &           (ne(ix,iy)-ne(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &           (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
+            wrk1(ix,iy)=
+     &           (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &           (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
+           endif
+        enddo                           
+      enddo
+      do iy = 0,mintopcut-1	
+	do ix=0,nx
+	  if(mod(region(ix,iy,0),4).eq.1) then
+            wrk2(ix,iy) = -uvbtot/voltot*bb(ix,iy,0)/bb(ix,iy,3)+
+     &           (ti(ix,iy)/ne(ix,iy)*
+     &           (wrk0(ix,iy)+wrk0(topix(ix,iy),topiy(ix,iy)))+
+     &            kt_neo(ix,iy)*
+     &           (wrk1(ix,iy)+wrk1(topix(ix,iy),topiy(ix,iy))))/qe
+          endif
+        enddo
+      enddo
+      call my_out(70,nx,ny,kt_neo,'kt_neo')                              
+      call my_out(70,nx,ny,wrk2,'Ey_neo')                        !iyv 15.10.09 }
+      wrk0=0.0e0_R8                                              !iyv 12.12.13 {
+      do is = 0, ns-1
+	do iy=-1,ny
+	  do ix=-1,nx
+            wrk0(ix,iy)=wrk0(ix,iy)+rz2(ix,iy,is)*na(ix,iy,is)
+	  enddo
+        enddo
+      enddo
+      wrk0(:,:)=wrk0(:,:)/ne(:,:)
+      call my_out(70,nx,ny,wrk0,'Zeff')                          !iyv 12.12.13 }
       do is = 0,ns-1
        write (chns,'(i3.3)') is
        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, wrk0)
@@ -226,6 +285,8 @@
        call my_out(70,nx,ny,wrk0,'usound'//chns)
        wrk1 = ua(:,:,is)/wrk0
        call my_out(70,nx,ny,wrk1,'ua_M_'//chns)                  !srv 24.03.10 }
+       wrk2 = ua(:,:,is)/cst                                     !srv 30.01.15
+       call my_out(70,nx,ny,wrk2,'ua_Mcst_'//chns)               !srv 30.01.15
        call my_out(70,nx,ny,uadia(-1,-1,0,is),'uadiax'//chns)    !srv
        call my_out(70,nx,ny,uadia(-1,-1,1,is),'uadiay'//chns)    !srv
        call my_out(70,nx,ny,vaecrb(-1,-1,0,is),'vaecrbx'//chns)            !srv
@@ -437,6 +498,9 @@
        call my_out(70,nx,ny,gs(-1,-1,1),'gsy')
        call my_out(70,nx,ny,gs(-1,-1,2),'gsz')
 
+       call my_out(70,nx,ny,qz(-1,-1,0),'qz0cost')
+       call my_out(70,nx,ny,qz(-1,-1,1),'qz1sint')
+
        call my_out(70,nx,ny,wbbl(-1,-1,0),'bbxl')
        call my_out(70,nx,ny,wbbl(-1,-1,2),'bbzl')
        call my_out(70,nx,ny,wbbl(-1,-1,3),'bbl')
@@ -454,10 +518,11 @@
       call my_out(70,nx,ny,OnedBsq,'OnedBsq')                      !srv
       call my_out(70,nx+1,ny+1,OnedBsqc,'OnedBsqc')                !srv
 
-      call my_out(70,nx,ny,resco(-1,-1,0),'resco0')                !srv
-      call my_out(70,nx,ny,resco(-1,-1,1),'resco1')                !srv
-      call my_out(70,nx,ny,resmo(-1,-1,0),'resmo0')                !srv
-      call my_out(70,nx,ny,resmo(-1,-1,1),'resmo1')                !srv
+      do is = 0,ns-1                                               !srv 16.11.14 {
+       write (chns,'(i3.3)') is
+       call my_out(70,nx,ny,resco(-1,-1,is),'resco'//chns)
+       call my_out(70,nx,ny,resmo(-1,-1,is),'resmo'//chns)
+      enddo                                                        !srv 16.11.14 }
       call my_out(70,nx,ny,respo,'respo')                          !srv
       call my_out(70,nx,ny,reshe,'reshe')                          !srv
       call my_out(70,nx,ny,reshi,'reshi')                          !srv
@@ -499,14 +564,17 @@
        close (70)
 
        open(70,file='Total_energy_flux_i'//'.dat')
-        write (70,*) '  N      Total_energy_flux_i '
+        write (70,*) ' N  Total_energy_flux_i Total_energy_flux_i_mdf '
 
         do iy = mintopcut,0,-1
           Total_energy_flux_i(iy) = 0.0_R8
+          Total_energy_flux_i_mdf(iy) = 0.0_R8
           do ix = -1, nx
 	     if(mod(region(ix,iy,0),4).eq.1) then                ! for CORE
             Total_energy_flux_i(iy) = 
      &       Total_energy_flux_i(iy) + fhi(ix,iy,1)
+            Total_energy_flux_i_mdf(iy) = 
+     &       Total_energy_flux_i_mdf(iy) + fhi_mdf(ix,iy,1)
 !            do is = 0, ns-1                                       ! ask Rozhansky
 !              kintmp = 
 !     .         (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
@@ -517,32 +585,40 @@
 !            enddo
 	     endif
           enddo
-          write (70,'(1x,i4,2x,es14.7)') iy, Total_energy_flux_i(iy)
+          write (70,'(1x,i4,2es18.7)') 
+     &          iy, Total_energy_flux_i(iy), Total_energy_flux_i_mdf(iy)
         enddo
        close (70)
 
        open(70,file='Total_energy_flux_e'//'.dat')
-        write (70,*) '  N      Total_energy_flux_e '
+        write (70,*) '  N  Total_energy_flux_e Total_energy_flux_e_mdf'
 
         do iy = mintopcut,0,-1
           Total_energy_flux_e(iy) = 0.0_R8
+          Total_energy_flux_e_mdf(iy) = 0.0_R8
           do ix = -1, nx
 	     if(mod(region(ix,iy,0),4).eq.1) then                ! for CORE
             Total_energy_flux_e(iy) = 
      &       Total_energy_flux_e(iy) + fhe(ix,iy,1)
+            Total_energy_flux_e_mdf(iy) = 
+     &       Total_energy_flux_e_mdf(iy) + fhe_mdf(ix,iy,1)
 	     endif
           enddo
-          write (70,'(1x,i4,2x,es14.7)') iy, Total_energy_flux_e(iy)
+          write (70,'(1x,i4,2es18.7)')
+     &          iy, Total_energy_flux_e(iy), Total_energy_flux_e_mdf(iy)
         enddo
        close (70)
 
        open(70,file='Total_energy_flux.dat')
-        write (70,*) '  N      Total_energy_flux '
+        write (70,*) '  N  Total_energy_flux  Total_energy_flux_mdf'
 
         do iy = mintopcut,0,-1
          Total_energy_flux(iy) = Total_energy_flux_e(iy)
      *                          +Total_energy_flux_i(iy)
-          write (70,'(1x,i4,2x,es14.7)') iy, Total_energy_flux(iy)
+         Total_energy_flux_mdf(iy) = Total_energy_flux_e_mdf(iy)
+     *                          +Total_energy_flux_i_mdf(iy)
+          write (70,'(1x,i4,2es18.7)')
+     &          iy, Total_energy_flux(iy), Total_energy_flux_mdf(iy)
         enddo
        close (70)                                                  !srv 31.08.00  23.07.10 }
 
@@ -844,11 +920,54 @@
        call my_out(70,nx,ny,hx,'hx')
        call my_out(70,nx,ny,hy,'hy')
        call my_out(70,nx,ny,hz,'hz')
-	 do iy=-1,ny
-	  do ix=-1,nx
-         wrk0(ix,iy)=hy1(ix,iy)
-	  enddo
+       call my_out(70,nx,ny,qc,'qc')
+c     calculate coordinates of cell centre
+       wrk0=0.25*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))         !srv 18.12.14 {
+       call my_out(70,nx,ny,wrk0,'crc_')
+       open(70,file='crc.dat')   ! R-coordinate of the (ix,iy) cell centre
+       write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'                !srv 07.08.15
+       do iy = -1, ny
+         write(70,hlp_frm) (wrk0(ix,iy),ix = -1, nx)                   !srv 07.08.15
+       enddo
+       close(70)
+       wrk1=0.25*(cry(:,:,0)+cry(:,:,1)+cry(:,:,2)+cry(:,:,3))
+       call my_out(70,nx,ny,wrk1,'czc_')
+       open(70,file='czc.dat')   ! Z-coordinate of the (ix,iy) cell centre
+       write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'               !srv 07.08.15
+       do iy = -1, ny
+         write(70,hlp_frm) (wrk1(ix,iy),ix = -1, nx)               !srv 07.08.15
+       enddo
+       close(70)
+       wrk1=bb(:,:,0)/bb(:,:,3)
+       call my_out(70,nx,ny,wrk1,'bx')                                !srv 18.12.14 }
+
+       if (isymm.eq.1 .or. isymm.eq.2) then
+         do iy=-1,ny
+	   do ix=-1,nx
+             wrk0(ix,iy)=0.5_R8*pi*
+     &        (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
+	   enddo
+         enddo
+         call my_out(70,nx,ny,wrk0,'2piR')                            !srv 15.09.14
+         wrk1=wrk0-hz       
+         call my_out(70,nx,ny,wrk1,'2piRmhz')                         !srv 15.09.14
+       else if (isymm.eq.3 .or. isymm.eq.4) then
+         do iy=-1,ny
+	   do ix=-1,nx
+             wrk0(ix,iy)=0.5_R8*pi*
+     &        (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
+	   enddo
+         enddo
+         call my_out(70,nx,ny,wrk0,'2piZ')                            !srv 15.09.14
+         wrk1=wrk0-hz       
+         call my_out(70,nx,ny,wrk1,'2piZmhz')                         !srv 15.09.14
+       end if
+
+       do iy=-1,ny
+	 do ix=-1,nx
+           wrk0(ix,iy)=hy1(ix,iy)
 	 enddo
+       enddo
        call my_out(70,nx,ny,wrk0,'hy1')                             !srv 07.11.12                            
        call my_out(70,nx,ny,vol,'vol')
        call my_out(70,nx,ny,pbs(-1,-1,0),'pbsx')
@@ -858,9 +977,9 @@
        call my_out(70,nx,ny,gs(-1,-1,1),'gsy')
        call my_out(70,nx,ny,gs(-1,-1,2),'gsz')
 
-!	 call my_outi(70,nx,ny,region(-1,-1,0),'region0')
-!	 call my_outi(70,nx,ny,region(-1,-1,1),'region1')
-!	 call my_outi(70,nx,ny,region(-1,-1,2),'region2')
+       call my_outi(70,nx,ny,region(-1,-1,0),'region0')
+       call my_outi(70,nx,ny,region(-1,-1,1),'region1')
+       call my_outi(70,nx,ny,region(-1,-1,2),'region2')
 
       endif              !srv   endif for iout=1
 
@@ -926,10 +1045,21 @@
          wrk0(3,iy)=2.5e0_R8*
      &               hy1(-1,iy)/hy(-1,iy)*bb(-1,iy,0)/bb(-1,iy,3)*
      &               ti(-1,iy)*wrk0(1,iy)*sqrt(wrk1(-1,iy)/wrk1(1,iy))
+!  IYS added the heat flux carried by recycling neutrals
+     &        - b2stbr_shi(-1,iy)/hy(-1,iy)/hz(-1,iy)                ! IYS 21.11.2012
+!  IYS believes that even if the coupling to EIRENE is active, the EIRENE
+!  does not disturb the guard cells and all the fluid sources related to neutrals
+!  are multiplied by a very small factor (like 1.0e-10) in the coupling mode
+
 ! qi outer
 	   wrk0(4,iy)=2.5e0_R8*
      &               hy1(nx,iy)/hy(nx,iy)*bb(nx,iy,0)/bb(nx,iy,3)*
      &               ti(nx,iy)*wrk0(2,iy)*sqrt(wrk1(0,iy)/wrk1(2,iy))
+!  IYS added the heat flux carried by recycling neutrals
+     &        - b2stbr_shi(nx,iy)/hy(nx,iy)/hz(nx,iy)  ! IYS 21.11.2012
+!  IYS believes that even if the coupling to EIRENE is active, the EIRENE
+!  does not disturb the guard cells and all the fluid sources related to neutrals
+!  are multiplied by a very small factor (like 1.0e-10) in the coupling mode
  
        if(nncut.eq.2) then !{      !iyv 04.02.11
 
@@ -956,10 +1086,21 @@
          wrk0(11,iy)=2.5e0_R8*
      &               hy1(ix1,iy)/hy(ix1,iy)*bb(ix1,iy,0)/bb(ix1,iy,3)*
      &               ti(ix1,iy)*wrk0(9,iy)*sqrt(wrk1(3,iy)/wrk1(5,iy))
+!  IYS added the heat flux carried by recycling neutrals
+     &        - b2stbr_shi(ix1,iy)/hy(ix1,iy)/hz(ix1,iy)  ! IYS 21.11.2012
+!  IYS believes that even if the coupling to EIRENE is active, the EIRENE
+!  does not disturb the guard cells and all the fluid sources related to neutrals
+!  are multiplied by a very small factor (like 1.0e-10) in the coupling mode
+
 ! qi outer upper
 	   wrk0(12,iy)=2.5e0_R8*
      &               hy1(ix2,iy)/hy(ix2,iy)*bb(ix2,iy,0)/bb(ix2,iy,3)*
      &               ti(ix2,iy)*wrk0(10,iy)*sqrt(wrk1(4,iy)/wrk1(6,iy))
+!  IYS added the heat flux carried by recycling neutrals
+     &        - b2stbr_shi(ix2,iy)/hy(ix2,iy)/hz(ix2,iy)  ! IYS 21.11.2012
+!  IYS believes that even if the coupling to EIRENE is active, the EIRENE
+!  does not disturb the guard cells and all the fluid sources related to neutrals
+!  are multiplied by a very small factor (like 1.0e-10) in the coupling mode
        
 	  endif
 	enddo

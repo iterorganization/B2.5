@@ -4,7 +4,8 @@
       subroutine b2npmo (nx, ny, ns, itcnt, solving, rxf, 
      &  qz, vol, hx, hy, hz, bb, pbs, pbshz, 
      &  lnlam, na, te, ti, po, fna_fcor,                             !srv 09.01.01 01.07.09
-     &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, smo, smq, cthe, cthi, chci, 
+     &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,
+     &  smo, smq, cthe, cthi, chci, 
      &  ua, smof, wadia, vaecrb, resmo, resmt, corua, corut,         !srv 10.11.02
      &  pcca, pccm, ierr)
       use b2mod_types
@@ -44,6 +45,7 @@
 *   ..output arguments (unspecified on entry)
       integer ierr
       real (kind=R8) ::
+     *  kt_neo(-1:nx,-1:ny),
      *  resmo(-1:nx,-1:ny,0:ns-1), resmt(-1:nx,-1:ny),
      &  corua(-1:nx,-1:ny,0:ns-1), corut(-1:nx,-1:ny),
      &  pcca(-1:nx,-1:ny,0:1,0:ns-1), pccm(-1:nx,-1:ny,0:1)
@@ -244,7 +246,8 @@
      &   qz, bb, ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),  
      &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,     !srv 01.07.09
      &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is), 
-     &   cvsahz_cl(-1,-1,0,is), smbvh, smbvv, wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
+     &   cvsahz_cl(-1,-1,0,is), smbvh, smbvv, kt_neo, 
+     &   wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
 *    ..compute centrifugal force term                                 !srv 09.07.01
        call b2sicf (nx, ny, is, am(is)*mp, bb, vol, hx, hz, 
      *     na(-1,-1,is), ua(-1,-1,is), smbcf, smcf(-1,-1,is), ctcfb, 

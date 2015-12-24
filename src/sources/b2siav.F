@@ -3,7 +3,8 @@
 
       subroutine b2siav (nx, ny, ns, isb, modvis, mb, hx, hy, hz, vol, 
      & qz, bb, ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam, chci,  !srv 01.07.09
-     & cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, wrk0, wrk1, wrk2) !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05 
+     & cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo, 
+     & wrk0, wrk1, wrk2) !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05 
       use b2mod_types
       use b2mod_constants
       use b2mod_indirect
@@ -24,7 +25,8 @@
      & cvsbhz_cl(-1:nx,-1:ny,0:1)                                     !srv 31.07.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3)
+     *   smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),
+     &   kt_neo(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny)
@@ -52,14 +54,14 @@
      &     addvis=0.0_R8, addvis1=0.0_R8, cqip1 = 0.5e0_R8           !srv 28.03.06 !srv 19.10.08
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 30.01.10
       real (kind=R8) ::
-     *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),                    !srv 23.07.99
-     *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                          !srv 23.07.99 19.01.05
+     *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),               !srv 23.07.99
+     *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                     !srv 23.07.99 19.01.05
      &   tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny),                  !lk 23.05.06 05.07.07 {
      &   conn(-1:ny), tt2(-1:ny), tt3(-1:ny), eps1(-1:ny)
 	real (kind=R8) :: qip0a(-1:nx,-1:ny), qip0b(-1:nx,-1:ny)
      &                  , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
-     &                  , nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny)  	          !lk
-      integer mintopcut                                                   !lk 23.05.06 05.07.07 }  
+     &                  , nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny), s2    !lk !iyv 02.12.13
+      integer mintopcut                                              !lk 23.05.06 05.07.07 }  
       save ncall
       data ncall/0/
 *   ..procedures
@@ -80,11 +82,12 @@
        call ipgeti ('b2siav_iout', iout)                              !lk 23.05.06 05.07.07
        call ipgeti ('b2siav_style_qip', qstyle)                       !lk 23.05.06 05.07.07
        call ipgeti ('b2trcl_lluciani',lluciani)                       !lk 03.12.09 
-       call ipgetr ('b2mndr_hz', fac_hz)				                !srv 30.01.10
+       call ipgetr ('b2mndr_hz', fac_hz)			      !srv 30.01.10
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 
+      s2 = sqrt(2.0_R8)                                               !iyv 02.12.13
       smbvh  = 0.0_R8
       smbvv = 0.0_R8
 
@@ -195,6 +198,7 @@
           tauia1 = 0.0e0_R8
 	  nu1 = 0.0e0_R8
 	  alpha1 = 0.0e0_R8
+	  kt_neo = 0.0e0_R8                                              !iyv 02.12.13
 
           do iy = 0,mintopcut-1		
 	    do ix=0,nx
@@ -218,7 +222,12 @@
 	        alpha1(ix,iy) = ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy))+
      &           2.7e0_R8*nu1(ix,iy)**2*eps1(iy)**3)/(1.0e0_R8+
      &           0.7e0_R8*sqrt(nu1(ix,iy))+
-     &           nu1(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)*0.533e0_R8        !lk 20.11.07 }
+     &           nu1(ix,iy)**2*eps1(iy)**3)-1.0e0_R8)*0.533e0_R8         !lk 20.11.07 }
+                kt_neo(ix,iy) = 
+     &           ((-0.17e0_R8+1.05e0_R8*sqrt(nu1(ix,iy)*s2)              !iyv 02.12.13  
+     &           +2.7e0_R8*(nu1(ix,iy)*s2)**2*eps1(iy)**3)/(1.0e0_R8+
+     &           0.7e0_R8*sqrt(nu1(ix,iy)*s2)+
+     &           (nu1(ix,iy)*s2)**2*eps1(iy)**3))
               endif    
 	    enddo
 	  enddo
@@ -350,12 +359,15 @@
 	      enddo
 	    enddo
 
-	  endif                                                         !srv 19.01.05 }
+	  endif                                                      !srv 19.01.05 }
 
 	endif
       endif                                                          !srv 26.10.08
 
-      if (iout.ne.0) then                        !srv 17.06.02 {
+      if (iout.ne.0) then                                            !srv 17.06.02 {
+        call my_out(70,nx,ny,alpha1,'b2siav_alpha1')
+        call my_out(70,nx,ny,kt_neo,'b2siav_kt_neo')
+        call my_out(70,nx,ny,tauia1,'b2siav_tauia1')
         write (chns,'(i3.3)') isb    
         do k=0,3
 	  write (chk,'(i1)') k  
@@ -370,7 +382,7 @@
         call my_out(70,nx,ny,wrks,'b2siav_smovh'//chns)
         call my_out(70,nx,ny,cvsbhz(-1,-1,0),'b2siav_cvsbhzx'//chns)
         call my_out(70,nx,ny,cvsbhz(-1,-1,1),'b2siav_cvsbhzy'//chns)
-      endif                                                            !srv 17.06.02 }
+      endif                                                          !srv 17.06.02 }
 
 * ..return
       ncall = ncall+1

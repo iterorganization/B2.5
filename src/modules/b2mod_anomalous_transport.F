@@ -8,6 +8,7 @@
      *   alf0(:,:),
      *   hci0(:,:),
      *   hcib(:,:,:),
+     *   chcb(:,:,:,:),
      *   dpa0(:,:,:),
      *   dna0(:,:,:),
      *   vsa0(:,:,:),
@@ -27,6 +28,7 @@
       deallocate(alf0)
       deallocate(hci0)
       deallocate(hcib)
+      deallocate(chcb)
       deallocate(dpa0)
       deallocate(dna0)
       deallocate(vsa0)
@@ -48,6 +50,7 @@
       allocate(alf0(-1:nxd,-1:nyd))
       allocate(hci0(-1:nxd,-1:nyd))
       allocate(hcib(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(chcb(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(dpa0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(dna0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(vsa0(-1:nxd,-1:nyd,0:nsd-1))

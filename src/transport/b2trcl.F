@@ -94,6 +94,7 @@
      &    k2(-1:nx,-1:ny), tt0(-1:ny), tt1(-1:ny), eps1(-1:ny)        !lk 19.09.07
       real (kind=R8) :: tau(-1:nx,-1:ny), nu1(-1:nx,-1:ny),           !lk 12.05.11
      &    k1(-1:nx,-1:ny), t1, t2                                     !lk 12.05.11
+      real (kind=R8), save :: cvsa_mltpl = 1.0_R8                     !iyv 06.12.13
       real (kind=R8) ::
      *  hce(-1:nx,-1:ny,0:1), sig(-1:nx,-1:ny,0:1),
      1  alf(-1:nx,-1:ny,0:1), vsa(-1:nx,-1:ny,0:1,0:ns-1),
@@ -144,6 +145,7 @@ csw 13mar2012
         call ipgetr ('b2trcl_cthe', cthev)
         call xertst (0.0_R8.le.cthev,
      &   'faulty internal parameter cthev')
+        call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                !iyv 06.12.13
         call ipgeti ('b2trcl_conductive_limit', conductive_limit)    !srv 16.06.08
         call ipgeti ('b2trcl_iout', iout)                            !srv 17.06.08
         call ipgeti ('b2npmo_iout', iout_b2npmo)
@@ -386,7 +388,7 @@ csw 13mar2012
           if(mod(region(ix,iy,0),4).eq.1) then                            !srv 26.11.02
            do is=0,ns-1
             if(.not.is_neutral(is)) then                                  !srv 10.07.02
-             cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)/
+             cvsa(ix,iy,0,is)=cvsa_mltpl*cvsa(ix,iy,0,is)/                !iyv 06.12.13 
      1        (1.0e0_R8+15.12e16_R8/conn(iy)/2.0e0_R8*
      2        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
      3        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
@@ -394,7 +396,7 @@ csw 13mar2012
      5        /conn(iy)/2.0e0_R8*
      6        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
      7        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-             cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)/                       !srv 09.01.01
+             cvsahz(ix,iy,0,is)=cvsa_mltpl*cvsahz(ix,iy,0,is)/            !srv 09.01.01
      1        (1.0e0_R8+15.12e16_R8/conn(iy)/2.0e0_R8*
      2        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
      3        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))

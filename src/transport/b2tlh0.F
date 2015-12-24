@@ -1,5 +1,5 @@
-      subroutine b2tlh0 (nx, ny, ns, hx, hy, na, ti, hcib, hcimx,
-     & fllim0fhi)
+      subroutine b2tlh0 (nx, ny, ns, hx, hy, vol, qz, na, ti,
+     & hcib, chcb, hcimx, fllim0fhi)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -9,8 +9,9 @@
       integer nx, ny, ns
       real (kind=R8) ::
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     *  vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      *  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny),
-     1  hcib(-1:nx,-1:ny,0:ns-1)
+     1  hcib(-1:nx,-1:ny,0:ns-1), chcb(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  hcimx(-1:nx,-1:ny,0:1,0:ns-1),
@@ -24,7 +25,7 @@
       integer, save :: iout = 0                                   !srv 13.01.04 {
       real (kind=R8), allocatable :: w1(:,:)
       character charns*3                                          !srv 13.01.04 }
-      integer, save :: flux_limit_style = 1                       !srv 13.06.08
+      integer, save :: flux_limit_style = 2                       !srv 13.06.08
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, t3, dti, vthi, maxfluxlimit(0:1),
      *  flux_limit_min_ti
@@ -34,7 +35,10 @@
      *     flux_limit_min_ti/0.0_R8/, hcimx_flag/1/
 *   ..procedures
       intrinsic max, abs, sqrt
+      real (kind=R8) ::
+     *   hy1
       external subini, subend, xertst, ipgetr, ipgeti
+      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2tlh0')
@@ -46,9 +50,9 @@
 *   ..read input on first call
       if (ncall.eq.0) then
         call ipgetr ('b2tlh0_alpha', alpha)
-        call xertst (0.le.alpha, 'invalid input parameter alpha')
+        call xertst (0.0_R8.le.alpha, 'invalid input parameter alpha')
         call ipgetr ('b2tlh0_gamma', gamma)
-        call xertst (0.lt.gamma, 'invalid input parameter gamma')
+        call xertst (0.0_R8.lt.gamma, 'invalid input parameter gamma')
         call ipgetr ('b2tlh0_flux_limit_min_ti', flux_limit_min_ti)
         flux_limit_min_ti=flux_limit_min_ti*ev
         call ipgeti ('b2tlh0_hcimx_flag', hcimx_flag)
@@ -57,7 +61,9 @@
       endif
 
       call sfill(n2*2*ns, 0.0_R8, hcimx, 1)
-      call sfill(n2*2*ns, 0.0_R8, fllim0fhi, 1)
+      call sfill(n2*2*ns, 1.0_R8, fllim0fhi, 1)
+      maxfluxlimit=0.0_R8
+
 *   ..nothing done if alpha.eq.0
       if (alpha.eq.0.0_R8) then
         hcimx(:,:,0,:) = hcib(:,:,:)
@@ -66,8 +72,6 @@
       endif
 
       if(flux_limit_style.eq.0) then                              !srv 13.06.08
-
-       maxfluxlimit=0
 
        do ix = -1, nx
          do iy = -1, ny
@@ -91,7 +95,7 @@
                  t3=t3+t2
                  c3=c3+1
                endif
-             if (rightix(ix,iy).ne.nx+1.and.
+               if (rightix(ix,iy).ne.nx+1.and.
      1 	          (hcimx_flag.gt.0.or.
      2 	          (leftix(ix,iy).eq.-2.and.hcimx_flag.ge.0))) then
                  t0 = max(flux_limit_min_ti,
@@ -140,7 +144,7 @@
                  t3=t3+t2
                  c3=c3+1
                endif
-             if (topiy(ix,iy).ne.ny+1.and.
+               if (topiy(ix,iy).ne.ny+1.and.
      1 	          (hcimx_flag.gt.0.or.
      2 	          (bottomiy(ix,iy).eq.-2.and.hcimx_flag.ge.0))) then
                  t0 = max(flux_limit_min_ti,
@@ -172,12 +176,7 @@
          enddo
        enddo
 
-       if (ncall.lt.100)
-     .  write(*,*) 'b2tlh0: maxfluxlimit = ',maxfluxlimit
-
-      else                                                           !srv 13.06.08 {
-
-       maxfluxlimit=0
+      else if (flux_limit_style.eq.1) then                    !srv 13.06.08 {
 
        do ix = -1, nx
          do iy = -1, ny
@@ -223,35 +222,88 @@
      .            **(1.0_R8/gamma)
                  hcimx(ix,iy,1,is) = hcib(ix,iy,is)/t2
                  maxfluxlimit(1)=max(maxfluxlimit(1),t2)
-               else
+                else
                  hcimx(ix,iy,1,is) = hcib(ix,iy,is)
-               endif
-             enddo
-           else
-             hcimx(ix,iy,1,:) = hcib(ix,iy,:)
+                endif
+              enddo
+            else
+              hcimx(ix,iy,1,:) = hcib(ix,iy,:)
            endif
          enddo
-        enddo
+       enddo
 
+      else
+! new default treatment applying the flux limit to the transport coefficient directly
+       do is = 0, ns-1
+        if (is_neutral(is)) then
+         do ix = -1, nx
+          do iy = -1, ny
+*   .. compute parallel neutral heat conductivity flux limit
+           if (leftix(ix,iy).ne.-2) then
+            t0 = (ti(ix,iy) + ti(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
+            t1 = (na(ix,iy,is) + na(leftix(ix,iy),leftiy(ix,iy),is))
+     .            /2.0_R8
+            dti = chcb(ix,iy,0,is)*
+     &            abs(ti(leftix(ix,iy),leftiy(ix,iy)) - ti(ix,iy))
+            vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))
+     &            *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+     &            /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
+            t2 = 1.0_R8/(1.0_R8 + (dti/(alpha*vthi*t1*t0))**gamma)
+     .                                           **(1.0_R8/gamma)
+            chcb(ix,iy,0,is) = chcb(ix,iy,0,is)*t2
+	    fllim0fhi(ix,iy,0,is) = t2
+            maxfluxlimit(0)=max(maxfluxlimit(0),t2)
+           end if
+*   .. compute perpendicular neutral heat conductivity flux limit
+           if (bottomiy(ix,iy).ne.-2) then
+            t0 = (ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
+            t1 = (na(ix,iy,is) + na(bottomix(ix,iy),bottomiy(ix,iy),is))
+     &           /2.0_R8
+            dti = chcb(ix,iy,1,is)*
+     &            abs(ti(bottomix(ix,iy),bottomiy(ix,iy))-ti(ix,iy))
+            vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))
+     &           *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
+     &           /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+            t2 = 1.0_R8/(1.0_R8 +(dti/(alpha*vthi*t1*t0))**gamma)
+     .                                          **(1.0_R8/gamma)
+            chcb(ix,iy,1,is) = chcb(ix,iy,1,is)*t2
+	    fllim0fhi(ix,iy,1,is) = t2
+            maxfluxlimit(1)=max(maxfluxlimit(1),t2)
+           end if
+          end do
+         end do
+        end if
+       end do
       endif                                                       !srv 13.06.08 }
 
  100  continue
 
-!      write(*,"(1x,a,1p,2e10.2)") 'b2tlh0: maxfluxlimit = ',maxfluxlimit
+       if (ncall.lt.100) write(*,'(1x,a,1p,2e10.2)')
+     .  'b2tlh0: maxfluxlimit = ',maxfluxlimit
+
        if (iout.ne.0) then
         allocate(w1(-1:nx,-1:ny))
         do is=0,ns-1                                            !srv 13.01.04 {
          write (charns,'(i3.3)') is
-         call my_out(70, nx, ny, hcimx(-1,-1,0,is),'hcimx'//charns)
-         call my_out(70, nx, ny, hcimx(-1,-1,1,is),'hcimy'//charns)
-         w1 = 1.0e0_R8
-         where (hcimx(:,:,0,is) /= 0.0e0_R8) w1 = hcib(:,:,is)
+         if (flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then
+           call my_out(70, nx, ny, hcimx(-1,-1,0,is),'hcimx'//charns)
+           call my_out(70, nx, ny, hcimx(-1,-1,1,is),'hcimy'//charns)
+           w1 = 1.0e0_R8
+           where (hcimx(:,:,0,is) /= 0.0e0_R8) w1 = hcib(:,:,is)
      &                                          /hcimx(:,:,0,is)
-         call my_out(70, nx, ny, w1,'chcimx'//charns)
-         w1 = 1.0e0_R8
-         where (hcimx(:,:,1,is) /= 0.0e0_R8) w1 = hcib(:,:,is)
+           call my_out(70, nx, ny, w1,'chcimx'//charns)
+           w1 = 1.0e0_R8
+           where (hcimx(:,:,1,is) /= 0.0e0_R8) w1 = hcib(:,:,is)
      &                                          /hcimx(:,:,1,is)
-         call my_out(70, nx, ny, w1,'chcimy'//charns)
+           call my_out(70, nx, ny, w1,'chcimy'//charns)
+         else
+           call my_out(70, nx, ny, fllim0fhi(-1,-1,0,is),
+     &                 'fllim0fhix'//charns)
+           call my_out(70, nx, ny, fllim0fhi(-1,-1,1,is),
+     &                 'fllim0fhiy'//charns)
+           call my_out(70, nx, ny, chcb(-1,-1,0,is), 'chcix'//charns)
+           call my_out(70, nx, ny, chcb(-1,-1,1,is), 'chciy'//charns)
+         end if
         enddo                                                   !srv 13.01.04 }
         deallocate(w1)
        endif
