@@ -1451,21 +1451,20 @@ c   --> better way doing this is necessary)
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (nx, ny, ns, BoRiS)
-cxpb read the Eirene output for 0-timestep runs
+cxpb read the Eirene output for 0-timestep runs and 
+cxpb for neutral fluxes used in b2stbc_phys
 #ifdef B25_EIRENE
-      if (ntim.eq.0) then
 #ifndef HPUX
-        inquire(file='fort.44',exist=ex)
+      inquire(file='fort.44',exist=ex)
 #else
-        inquire(file='ftn44',exist=ex)
+      inquire(file='ftn44',exist=ex)
 #endif
-        CALL EIRENE_SETCON
-        CALL EIRENE_EXTRAB25_WNEUINIT
-        if (ex) then
-          call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
-     .                            natm,nmol,nion,nlimps)
-          call ngread(ismain,iflag)
-        end if
+      CALL EIRENE_SETCON
+      CALL EIRENE_EXTRAB25_WNEUINIT
+      if (ex) then
+        call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
+     .                          natm,nmol,nion,nlimps)
+        call ngread(ismain,iflag)
       endif
 #endif
 c new CDF movie option (1st frame at t=0)

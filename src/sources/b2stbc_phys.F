@@ -1961,11 +1961,11 @@ cxpb  Add contribution from Eirene core boundary fluxes
                   if (isa.ne.-1) then
                     do k = 1, ncns
                       ix = nlim + lcns(k)
-                      totfluxn = totfluxn +
-     &                           wldna(ix,isa,0) - wldra(ix,isa,0)
+                      totfluxn = totfluxn -
+     &                           wldna(ix,isa,0) + wldra(ix,isa,0)
                       do ism = 1, nnmoli
                         if (mlcmp(isa,ism).gt.0) then
-                          totfluxn = totfluxn +
+                          totfluxn = totfluxn -
      &                               mlcmp(isa,ism) * wldnm(ix,isa,0)
                         end if
                       end do
@@ -2416,11 +2416,11 @@ cxpb  Add contribution from Eirene core boundary fluxes
                  if (isa.ne.-1) then
                    do k = 1, ncns
                      ix = nlim + lcns(k)
-                     totfluxn = totfluxn +
-     &                          wldna(ix,isa,0) - wldra(ix,isa,0)
+                     totfluxn = totfluxn -
+     &                          wldna(ix,isa,0) + wldra(ix,isa,0)
                      do ism = 1, nnmoli
                        if (mlcmp(isa,ism).gt.0) then
-                         totfluxn = totfluxn +
+                         totfluxn = totfluxn -
      &                              mlcmp(isa,ism) * wldnm(ix,isa,0)
                        end if
                      end do
