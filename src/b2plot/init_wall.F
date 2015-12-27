@@ -345,8 +345,13 @@ cxpb Recopy geometrical arrays into namelist defaults
       entry get_wall_data(nx,ny,ns,BoRiS,wall_namelist_used)
       call subini('get_wall_data')
 cxp   Test namelist input
-      write(hlp_frm,'(a,i2,a)') '(a,',ntargsp,'(a2,1x))'
-      write(*,hlp_frm) 'track_species : Bulk ', track_species(1:ntargsp)
+      if (ntargsp.gt.0) then
+        write(hlp_frm,'(a,i2,a)') '(a,',ntargsp,'(a2,1x))'
+        write(*,hlp_frm) 'track_species : Bulk ', 
+     .   track_species(1:ntargsp)
+      else
+        write(*,'(a)') 'No tracked wall material species '
+      end if
       if (wall_namelist_used) then
         do is = 1, ntrack
           call xertst(track_species_save(is).eq.track_species(is),
