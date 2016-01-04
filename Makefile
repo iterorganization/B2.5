@@ -149,12 +149,14 @@ VHEAD+=${SRCLOCAL}:
 endif
 VPATH+=${VHEAD}${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentation:${SRCDIR}/driver:${SRCDIR}/equations:${SRCDIR}/input:${SRCDIR}/output:${SRCDIR}/postprocessing:${SRCDIR}/preprocessing:${SRCDIR}/solvers:${SRCDIR}/sources:${SRCDIR}/transport:${SRCDIR}/utility:${SRCDIR}/b2plot:${SRCDIR}/user
 FPATH:=${VPATH}
+VPATH+=:${SRCDIR}/ids
+FFPATH=${SRCDIR}/ids
 
 MODLIST  =
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 MODLIST += ${MODLOCAL}/*.F
 endif
-MODLIST += ${SRCDIR}/modules/*.F
+MODLIST += ${SRCDIR}/modules/*.F ${SRCDIR}/ids/*.F90
 ifeq ($(shell [ -d ${SOLPS4} ] && echo yes || echo no ),yes)
 S4LIST = ${SOLPS4}/*.F
 endif
@@ -204,7 +206,7 @@ endif
 MAIN: VERSION ${MNEXE}
 
 ifdef USE_EIRENE
-VPATH=${FPATH}:${SRCEIR}/modules:${SRCEIR}/interfaces/couple_SOLPS-ITER
+VPATH=${FPATH}:${SRCDIR}/ids:${SRCEIR}/modules:${SRCEIR}/interfaces/couple_SOLPS-ITER
 MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
 MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a ${EIRDIR}/ioflush.o
 else
@@ -708,7 +710,7 @@ ifneq (${MOD},o)
 endif
 	-rm -rf ${OBJDIR}/.delete &
 
-depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${EXELIST:.o=.F}
+depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EXELIST:.o=.F}
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} $^ | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
         sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' > ${OBJDIR}/dependencies 
@@ -723,21 +725,29 @@ endif
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${SRCDIR}/modules/*.F -o.${MOD} | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
         sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' >> ${OBJDIR}/dependencies 
-	@echo '# 3' >> ${OBJDIR}/dependencies
+	@echo '# 3a' >> ${OBJDIR}/dependencies
+	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${SRCDIR}/ids/*.F90 -o.${MOD} | \
+	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
+        sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' >> ${OBJDIR}/dependencies
+	@echo '# 3b' >> ${OBJDIR}/dependencies
 endif
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
 	@egrep -aiH '^ {6,}use ' ${SRCLOCAL}/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 4' >> ${OBJDIR}/dependencies
 endif
 	@egrep -aiH '^ {6,}use ' ${SRCDIR}/*/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-	@echo '# 5' >> ${OBJDIR}/dependencies
+	@echo '# 5a' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {0,}use ' ${SRCDIR}/*/*.F90 | grep -v 'IGNORE' | awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 5b' >> ${OBJDIR}/dependencies
 ifneq (${MOD},o)
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 	@egrep -aiH '^ {6,}use ' ${MODLOCAL}/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 6' >> ${OBJDIR}/dependencies
 endif
 	@egrep -aiH '^ {6,}use ' ${SRCDIR}/modules/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-	@echo '# 7' >> ${OBJDIR}/dependencies
+	@echo '# 7a' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {0,}use ' ${SRCDIR}/ids/*.F90 | grep -v 'IGNORE' | awk '{sub("\\.F90:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 7b' >> ${OBJDIR}/dependencies
 endif
 
 tags:
@@ -748,6 +758,9 @@ ifdef USE_EIRENE
 	@rm -f ${OBJDIR}/LISTOBJ; touch ${OBJDIR}/LISTOBJ; l="OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
 		l="$$l `(cd $$d > /dev/null; echo *.F)`"; \
+	done; \
+	for d in `echo "${FFPATH}" | tr : \ `; do \
+		l="$$l `(cd $$d > /dev/null; echo *.F90)`"; \
 	done; \
 	l="$$l `(cd ${SRCEIR}/modules > /dev/null; echo *.f)`"; \
 	l="$$l `(cd ${SRCEIR}/interfaces/couple_SOLPS-ITER > /dev/null; echo *.F90)`"; \
@@ -760,7 +773,10 @@ else
 	for d in `echo "${FPATH}" | tr : \ `; do \
 		l="$$l `(cd $$d > /dev/null; echo *.F)`"; \
 	done; \
-	E="-e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
+	for d in `echo "${FFPATH}" | tr : \ `; do \
+		l="$$l `(cd $$d > /dev/null; echo *.F90)`"; \
+	done; \
+	E="-e 's/\.F90/\.o/g' -e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
 	echo "$$l" | eval sed "$$E" > ${OBJDIR}/LISTOBJ
@@ -769,7 +785,15 @@ endif
 	for d in `echo "${FPATH}" | tr : \ `; do \
 		l="$$l `(cd $$d > /dev/null; echo *.F)`"; \
 	done; \
-	E="-e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
+	E="-e 's/\.F90/\.o/g' -e 's/\.F/\.o/g'" ; for f in ${EXCLUDELIST}; do \
+		E="$$E -e 's/ $$f//'"; \
+	done; \
+	echo "$$l" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
+	@l="B2F90OBJS ="; \
+	for d in `echo "${FFPATH}" | tr : \ `; do \
+		l="$$l `(cd $$d > /dev/null; echo *.F90)`"; \
+	done; \
+	E="-e 's/\.F90/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
 	echo "$$l" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ

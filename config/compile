@@ -1,5 +1,5 @@
 include ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
-INCMODS = ${INCMOD}${OBJDIR}
+INCMODS += ${INCMOD}${OBJDIR}
 ifdef USE_EIRENE
 INCMODS += ${INCMOD}${EIRDIR}
 endif
@@ -19,6 +19,21 @@ endif
 	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBJDIR}/ ; fi
 	@if [ -f $*.${MOD} ] ; then /bin/mv $*.${MOD} ${OBJDIR}/ ; fi
 
+${OBJDIR}/%.o : %.F90
+	@- /bin/rm -f ${OBJDIR}/$*.f90 ${OBJDIR}/$*.o ${OBJDIR}/$*.${MOD}
+ifeq ($(strip $(CPP)),)
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} -c $<
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< ${OBJDIR}/$*.f90
+else
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f90
+endif
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/$*.f90
+endif
+	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBJDIR}/ ; fi
+	@if [ -f $*.${MOD} ] ; then /bin/mv $*.${MOD} ${OBJDIR}/ ; fi
+
 ${OBJDIR}/%.${MOD} : %.F        # ../src/modules/
 	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o ${OBJDIR}/$*.${MOD}
 ifeq ($(strip $(CPP)),)
@@ -30,6 +45,25 @@ else
 	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
 endif
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/$*.f
+endif
+	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBJDIR}/ ; fi
+ifeq ($(strip $(LINK_MOD)),)
+	@if [ -f $*.${MOD} ] ; then /bin/mv $*.${MOD} ${OBJDIR}/ ; fi
+else
+	@[ -f $*.${MOD} ] && [ ! -L $*.${MOD} ] && /bin/mv $*.${MOD} ${OBJDIR}/ && /bin/ln -s ${OBJDIR}/$*.${MOD} .
+endif
+
+${OBJDIR}/%.${MOD} : %.F90        #  F90 modules
+	@- /bin/rm -f ${OBJDIR}/$*.f90 ${OBJDIR}/$*.o ${OBJDIR}/$*.${MOD}
+ifeq ($(strip $(CPP)),)
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} -c $<
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< ${OBJDIR}/$*.f90
+else
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f90
+endif
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/$*.f90
 endif
 	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBJDIR}/ ; fi
 ifeq ($(strip $(LINK_MOD)),)

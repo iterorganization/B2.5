@@ -73,6 +73,10 @@ ifdef PERFMON
 LDLIBES   += -L${SOLPSLIB} -lperf
 endif
 
+ifdef IMAS_PREFIX
+INCMODS   += -I${IMAS_PREFIX}/include/ifort
+endif
+
 LD         = ${FC}
 ifdef USE_MPI
 LDOPTS     = -i_dynamic ${LD_MPI}
