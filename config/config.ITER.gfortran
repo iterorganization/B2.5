@@ -42,6 +42,7 @@ endif
 
 ifdef IMAS_PREFIX
 INCMODS   = -B${IMAS_PREFIX}/include/gfortran
+LDLIBES  += ${LD_UAL}
 endif
 
 LD = $(FC)

@@ -75,6 +75,7 @@ endif
 
 ifdef IMAS_PREFIX
 INCMODS   += -I${IMAS_PREFIX}/include/ifort
+LDLIBES   += ${LD_UAL}
 endif
 
 LD         = ${FC}
