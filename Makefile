@@ -77,6 +77,8 @@ BASEDIR = ${OBJDIR}
 INCLOCAL = ${SRCDIR}/include.local
 MODLOCAL = ${SRCDIR}/modules.local
 SRCLOCAL = ${SRCB2}/src.local
+SOLPS4 = ${SOLPSTOP}/modules/solps4-5/src/solps4_B2
+EIR4 = ${SOLPSTOP}/modules/solps4-5/src/Eirene_modules
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 INCLUDE += -I${MODLOCAL}
 TAGSLIST += ${MODLOCAL}/*.F
@@ -90,11 +92,14 @@ INCLUDE += -I${INCLOCAL}
 TAGSLIST += ${INCLOCAL}/*.*
 endif
 INCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include
+SOLPS4INCLUDE = -I${SOLPSTOP}/modules/solps4-5/src/B2_include
 TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F
 
 DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
 ifdef USE_MPI
 DEFINES += ${USE_MPI}
+else
+SOLPS4INCLUDE += -I${SOLPSTOP}/modules/solps4-5/src/Eirene_commons
 endif
 ifdef PERFMON
 DEFINES += ${PERFMON}
@@ -118,18 +123,10 @@ ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 MODLIST += ${MODLOCAL}/*.F
 endif
 MODLIST += ${SRCDIR}/modules/*.F
+S4LIST = ${SOLPS4}/*.F
+E4LIST = ${EIR4}/*.F
 
 ALLOBJS = ${OBJS:%.o=${OBJDIR}/%.o}
-SOLPS4OBJS = ${SOLPS4}/readwrite.o ${SOLPS4}/b2rw.o ${SOLPS4}/calcalpha.o \
-	${SOLPS4}/calcalphatrigger.o ${SOLPS4}/calcdifpr.o ${SOLPS4}/calcdifpr0.o \
-	${SOLPS4}/calcdifni.o ${SOLPS4}/calcdifni0.o \
-	${SOLPS4}/calcdt.o ${SOLPS4}/calcdrake.o ${SOLPS4}/calcfeqp.o ${SOLPS4}/calckxe.o \
-	${SOLPS4}/calckxi.o ${SOLPS4}/calckye.o ${SOLPS4}/calckyi.o ${SOLPS4}/calclnlam.o \
-	${SOLPS4}/calcparvis.o ${SOLPS4}/calcthc0.o ${SOLPS4}/calctravis.o ${SOLPS4}/calcvconv.o \
-	${SOLPS4}/calcvis0.o ${SOLPS4}/calczeiler.o ${SOLPS4}/userdt.o ${SOLPS4}/userelm.o \
-	${SOLPS4}/userfeqp.o ${SOLPS4}/userkxe.o ${SOLPS4}/userkxi.o ${SOLPS4}/userkye.o \
-	${SOLPS4}/userkyi.o ${SOLPS4}/userni.o ${SOLPS4}/userparvis.o ${SOLPS4}/userpr.o \
-	${SOLPS4}/usertravis.o ${SOLPS4}/uservconv.o ${SOLPS4}/xdr_logical.o 
 SRCF = ${OBJS:%.o=%.F}
 
 PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe b2pl.exe
@@ -151,26 +148,18 @@ MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
 
 .PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags echo local force
 
-ifdef MDSPLUS_DIR
-ifdef PAR_OPT
-DEFAULT: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${MDEXE} ${OPEXE}
-ALL: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE} ${MDEXE} ${OPEXE}
-NOPLOT: VERSION ${MNEXE} ${OTEXE} ${MDEXE} ${OPEXE}
-else
-DEFAULT: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${MDEXE}
-ALL: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE} ${MDEXE}
-NOPLOT: VERSION ${MNEXE} ${OTEXE} ${MDEXE}
-endif
-else
-ifdef PAR_OPT
-DEFAULT: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${OPEXE}
-ALL: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE} ${OPEXE}
-NOPLOT: VERSION ${MNEXE} ${OTEXE} ${OPEXE}
-else
 DEFAULT: VERSION ${MNEXE} ${OTEXE} ${GREXE}
 ALL: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE}
 NOPLOT: VERSION ${MNEXE} ${OTEXE}
+ifdef MDSPLUS_DIR
+DEFAULT: ${MDEXE}
+ALL: ${MDEXE}
+NOPLOT: ${MDEXE}
 endif
+ifdef PAR_OPT
+DEFAULT: ${OPEXE}
+ALL: ${OPEXE}
+NOPLOT: ${OPEXE}
 endif
 MAIN: VERSION ${MNEXE}
 
@@ -186,6 +175,9 @@ endif
 MODULES = ${patsubst %.F %.f %.F90,%.o,${shell echo ${MODLIST} } }
 MODMODS = ${MODULES:%.o=${OBJDIR}/%.${MOD}}
 MODOBJS = ${MODULES:%.o=${OBJDIR}/%.o}
+SOLPS4OBJS = ${patsubst ${SOLPS4}/%.F,${OBJDIR}/%.o,${shell echo ${S4LIST} } }
+EIR4MODS = ${patsubst ${EIR4}/%.F,${OBJDIR}/%.${MOD},${shell echo ${E4LIST} } }
+EIR4OBJS = ${patsubst ${EIR4}/%.F,${OBJDIR}/%.o,${shell echo ${E4LIST} } }
 
 ifeq (${MOD},o)
 LIBOBJS = $(filter-out ${MODOBJS},${ALLOBJS})
@@ -374,6 +366,7 @@ ${OBJDIR}/eirmod_parmmod.${MOD}:
 
 ${OBJDIR}/eirmod_precision.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_precision.${MOD} ${OBJDIR}
+
 endif
 
 ${OBJDIR}/eirmod_extrab25.o:
@@ -570,6 +563,9 @@ ${OBJDIR}/eirmod_extrab25.${MOD}:
 
 ${OBJDIR}/eirmod_parmmod.${MOD}:
 	touch ${OBJDIR}/eirmod_parmmod.${MOD}
+
+${OBJDIR}/eirmod_precision.${MOD}:
+	ln -s ${OBJDIR}/precision.${MOD} ${OBJDIR}/eirmod_precision.${MOD}
 endif
 
 ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
@@ -581,17 +577,73 @@ ${OTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
 ${GREXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
 	${LD} ${LDOPTS} -o $@ $^ ${GRLIBES} ${LDLIBES} ${LDOPTSend}
 
-${XDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${SOLPS4OBJS} ${OBJDIR}/libb2.a ${MNEXTRA}
+${XDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${OBJDIR}/libsolps4.a ${MNEXTRA}
 	${LD} ${LDOPTS} -o $@ $^ ${LCPP} ${GRLIBES} ${LDLIBES} ${LDEXTRA} ${LDOPTSend}
-
-
-DEFAULT: ${MDEXE}
 
 ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
 	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${LD_MDSPLUS} ${LDOPTSend}
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h
 	@${BLD} $@ ${LIBOBJS}
+
+${SOLPS4OBJS}: ${OBJDIR}/%.o: ${SOLPS4}/%.F
+	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o
+ifeq ($(strip $(CPP)),)
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} ${SOLPS4INCLUDE} -c $<
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
+else
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
+endif
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${OBJDEST} ${OBJDIR}/$*.f
+endif
+	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBJDIR}/ ; fi
+
+${EIR4OBJS}: ${OBJDIR}/%.o: ${EIR4}/%.F
+	${FC} ${FCOPTS} ${DEFINES} ${EQUIVS} ${INCLUDE} ${OBJDEST} -c $?
+
+${EIR4MODS}: ${OBJDIR}/%.${MOD}: ${EIR4}/%.F
+	@- /bin/rm -f ${OBJDIR}/$*.f ${OBJDIR}/$*.o
+ifeq ($(strip $(CPP)),)
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} ${SOLPS4INCLUDE} -c $<
+else
+ifeq ($(strip $(SED)),)
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} ${SOLPS4INCLUDE} $< ${OBJDIR}/$*.f
+else
+	-${CPP} ${DEFINES} ${EQUIVS} -P ${INCLUDE} ${SOLPS4INCLUDE} $< | ${SED} > ${OBJDIR}/$*.f
+endif
+	${FC} ${FCOPTS} ${FFLAGSEXTRA} -c ${MODINCLUDE} ${INCMODS} ${SOLPS4INCLUDE} ${OBJDEST} ${OBJDIR}/$*.f
+endif
+
+${OBJDIR}/libsolps4.a: ${SOLPS4OBJS} ${EIR4MODS}
+	${BLD} $@ ${SOLPS4OBJS}
+
+${OBJDIR}/b2rw.o: ${OBJDIR}/eirdiag.${MOD}
+${OBJDIR}/default.o: ${OBJDIR}/ceirsrt.${MOD}
+
+ifneq (${MOD},o)
+${OBJDIR}/adsp.${MOD}: ${OBJDIR}/cadgeo.${MOD} ${OBJDIR}/clogau.${MOD} ${OBJDIR}/comusr.${MOD} ${OBJDIR}/cpes.${MOD} ${OBJDIR}/ctrcei.${MOD} ${OBJDIR}/comprt.${MOD}
+${OBJDIR}/avltree.${MOD}: ${OBJDIR}/ccona.${MOD}
+${OBJDIR}/caprmc.${MOD}: ${OBJDIR}/cgrid.${MOD} ${OBJDIR}/comxs.${MOD} ${OBJDIR}/comsou.${MOD}
+${OBJDIR}/ccflux.${MOD}: ${OBJDIR}/ctrig.${MOD} ${OBJDIR}/cgeom.${MOD}
+${OBJDIR}/ccrm.${MOD}: ${OBJDIR}/cestim.${MOD} ${OBJDIR}/csdvi.${MOD} ${OBJDIR}/czt1.${MOD} ${OBJDIR}/photon.${MOD}
+${OBJDIR}/comxs.${MOD}: ${OBJDIR}/cupd.${MOD}
+${OBJDIR}/cpes.${MOD}: ${OBJDIR}/eirmod_precision.${MOD}
+${OBJDIR}/cupd.${MOD}: ${OBJDIR}/comsig.${MOD}
+${OBJDIR}/eirdiag.${MOD}: ${OBJDIR}/precision.${MOD} ${OBJDIR}/parmmod.${MOD} ${OBJDIR}/braeir.${MOD} ${OBJDIR}/ccoupl.${MOD} ${OBJDIR}/clgin.${MOD}
+${OBJDIR}/eirgrid_lib.${MOD}: ${OBJDIR}/eirmap.${MOD}
+endif
+${OBJDIR}/adsp.o: ${OBJDIR}/cadgeo.o ${OBJDIR}/clogau.o ${OBJDIR}/comusr.o ${OBJDIR}/cpes.o ${OBJDIR}/ctrcei.o ${OBJDIR}/comprt.o
+${OBJDIR}/avltree.o: ${OBJDIR}/ccona.o
+${OBJDIR}/caprmc.o: ${OBJDIR}/cgrid.o ${OBJDIR}/comxs.o ${OBJDIR}/comsou.o
+${OBJDIR}/ccflux.o: ${OBJDIR}/ctrig.o ${OBJDIR}/cgeom.o
+${OBJDIR}/ccrm.o: ${OBJDIR}/cestim.o ${OBJDIR}/csdvi.o ${OBJDIR}/czt1.o ${OBJDIR}/photon.o
+${OBJDIR}/comxs.o: ${OBJDIR}/cupd.o
+${OBJDIR}/cpes.o: ${OBJDIR}/eirmod_precision.o
+${OBJDIR}/cupd.o: ${OBJDIR}/comsig.o
+${OBJDIR}/eirdiag.o: ${OBJDIR}/precision.o ${OBJDIR}/parmmod.o ${OBJDIR}/braeir.o ${OBJDIR}/ccoupl.o ${OBJDIR}/clgin.o
+${OBJDIR}/eirgrid_lib.o: ${OBJDIR}/eirmap.o
 
 # target 'clean' cleans up the directory.
 clean : 
@@ -723,6 +775,9 @@ echo:
 	@echo FPATH=${FPATH}
 	@echo OBJDIR=${OBJDIR}
 #	@echo OBJS=${OBJS}
+	@echo SOLPS4OBJS=${SOLPS4OBJS}
+	@echo EIR4MODS=${EIR4MODS}
+	@echo EIR4OBJS=${EIR4OBJS}
 	@echo MODLIST=${MODLIST}
 	@echo MODULES=${MODULES}
 	@echo MODOBJS=${MODOBJS}

@@ -490,12 +490,15 @@ c next try the chain
      3   crx(ix,iy,2),cry(ix,iy,2),
      4   crx(ix,iy,0),cry(ix,iy,0))) goto 2100
       enddo
+      call subend ()
       return
 
  2100 continue
       ixpos=ix
       iypos=iy
       found=.true.
+      call subend ()
+      return
       end subroutine chord_find
 c
       function inside_rectangle(r,z,x1,y1,x2,y2,x3,y3,x4,y4)

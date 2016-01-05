@@ -350,7 +350,7 @@ cxpb  Test namelist input
         write(*,hlp_frm) 'track_species : Bulk ', 
      .   track_species(1:ntargsp)
       else
-        write(*,'(a)') 'No tracked wall material species'
+        write(*,'(1x,a)') 'No tracked wall material species'
       end if
       if (wall_namelist_used) then
         do is = 1, ntrack
