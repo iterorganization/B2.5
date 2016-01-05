@@ -124,7 +124,11 @@ MODLIST += ${MODLOCAL}/*.F
 endif
 MODLIST += ${SRCDIR}/modules/*.F
 S4LIST = ${SOLPS4}/*.F
+ifdef USE_EIRENE
+E4LIST = ${EIR4}/precision.F ${EIR4}/parmmod.F ${EIR4}/braeir.F ${EIR4}/ccoupl.F ${EIR4}/clgin.F ${EIR4}/eirdiag.F ${EIR4}/ceirsrt.F
+else
 E4LIST = ${EIR4}/*.F
+endif
 
 ALLOBJS = ${OBJS:%.o=${OBJDIR}/%.o}
 SRCF = ${OBJS:%.o=%.F}
