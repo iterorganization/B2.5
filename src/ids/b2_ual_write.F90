@@ -13,12 +13,14 @@ program b2_ual_write
   use b2mod_transport
   use b2mod_anomalous_transport
   use b2mod_work
+  use b2mod_time
   use b2mod_ppout
   use b2mod_tallies
   use b2mod_indirect
   use b2mod_neutrals_namelist
   use b2mod_neutr_src_scaling
   use b2mod_b2cmfs
+  use b2mod_constants
 
   ! UAL Access
   use ids_schemas  ! IGNORE
@@ -90,6 +92,7 @@ program b2_ual_write
   !     ..local variables
   integer ninp(0:6), nout(0:2), nx, ny, ns, idum(0:9), io
   integer :: idx
+  integer :: ix, ixx
 !!$  type (type_edge),pointer :: cpoedge(:) => null()
   type (ids_edge_profiles),pointer :: edge_profiles(:) => null()
   type (ids_core_profiles) :: cp
@@ -97,7 +100,7 @@ program b2_ual_write
   character*120 lblgm
 
   integer :: shot, run, refshot, refrun
-  character(len=10) :: treename
+  character(len=5) :: treename
   character(len=255) :: imas_connect_url
 
   !     ..procedures
@@ -134,7 +137,7 @@ program b2_ual_write
   !-----------------------------------------------------------------------
   !     .computation
 
-  call ids_test_put
+!  call ids_test_put
   !     ..program start-up calls
   call prgini ('b2_ual_write')
   !     ..open files
@@ -161,11 +164,8 @@ program b2_ual_write
   call xertst (0.le.nx.and.0.le.ny.and.1.le.ns, &
        & 'faulty input nx, ny, ns from plasma state file')
   call cfruin (ninp(1), 2, idum(0), 'nx,ny')
-!!  call cfruin (ninp(2), 1, idum(2), 'ns')
   call xertst (idum(0).eq.nx.and.idum(1).eq.ny, &
        & 'faulty input nx, ny from geometry file')
-!!  call xertst (idum(2).eq.ns, &
-!!       & 'faulty input ns from physics parameters file')
 
 !!! moved from read_b2fplasma
   call alloc_b2mod_geo(nx,ny)
@@ -189,7 +189,7 @@ program b2_ual_write
   run = 12
   refshot = 1
   refrun = 0
-  treename = 'solps-iter'
+  treename = 'ids'
 
   call getenv ("imas_connect_url", imas_connect_url)
   if (0.lt.len_trim(imas_connect_url)) then
@@ -199,17 +199,34 @@ program b2_ual_write
   call imas_create(treename,shot,run,refshot,refrun,idx)
   write(*,*) 'After imas_create: idx = ', idx
 
-  allocate(cp%ids_properties%comment(1))
-  cp%ids_properties%homogeneous_time = 0
-  cp%ids_properties%comment(1) = 'Test put (core)'
   allocate(edge_profiles(1)%ids_properties%comment(1))
-  edge_profiles(1)%ids_properties%homogeneous_time = 0
+  edge_profiles(1)%ids_properties%homogeneous_time = 1
   edge_profiles(1)%ids_properties%comment(1) = 'Test put (edge)'
-  call ids_put(idx,"core_profiles",cp)
-  call ids_deallocate(cp)
+  allocate(edge_profiles(1)%time(1))
+  edge_profiles(1)%time(1)=tim
+  write(0,*) 'nx, ny : ', nx, ny
+  allocate(edge_profiles(1)%profiles_1d(1:nx+2))
+  do ixx = 1, nx+2
+    ix = ixx-2
+    allocate(edge_profiles(1)%profiles_1d(ixx)%electrons%temperature(1:ny+2))
+    edge_profiles(1)%profiles_1d(ixx)%electrons%temperature(1:ny+2)=te(ix,-1:ny)/ev
+  end do
   call ids_put(idx,"edge_profiles",edge_profiles(1))
   call ids_deallocate(edge_profiles(1))
   call imas_close(idx)
+
+! trying to re-open and read
+  if (0.lt.len_trim(imas_connect_url)) then
+    call imas_connect(imas_connect_url) ! Use to connect to a remote IMAS database / account
+  endif
+  call ids_get(idx,"edge_profiles",edge_profiles(1))
+  write(*,*) "edge_profiles"
+  write(*,*) "IDS_Properties homogeneous : ", edge_profiles(1)%IDS_Properties%homogeneous_time
+  write(*,'("IDS_Properties comment(1) : ",A)') edge_profiles(1)%IDS_Properties%comment(1)
+  write(*,'("Time : ",a)') edge_profiles(1)%time(1)
+  call ids_deallocate(edge_profiles(1))
+  call imas_close(idx)
+
 
   !     ..close files			 !
   do io=1,size(ninp)-1
@@ -239,8 +256,8 @@ subroutine ids_test_put
 ! This program puts dummy data in the DB entry, just for practicing the PUAL PUT command
 ! It servers also as a nested of 3 level nested AoS (type 3 at the top, type 2 below)
 
-use ids_schemas
-use ids_routines
+use ids_schemas   ! IGNORE
+use ids_routines  ! IGNORE
 
 implicit none
 
@@ -412,6 +429,7 @@ end subroutine
     use b2mod_constants
     use b2mod_geo_corner
     use b2mod_work
+    use b2mod_time
     use b2mod_b2cmfs
     use b2mod_b2cmrc
     use b2mod_b2cmgs
