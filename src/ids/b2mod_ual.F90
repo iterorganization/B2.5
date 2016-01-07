@@ -1,17 +1,24 @@
-module b2mod_ual_ids
+module b2mod_ual
 
   ! Basic UAL routines shared by the entire SOLPS application chain
 
   use b2mod_types
+#ifdef IMAS
   use ids_schemas  ! IGNORE
   use ids_routines ! IGNORE
+#else
+#ifdef ITM
+  use euITM_schemas  ! IGNORE
+  use euITM_routines ! IGNORE
+#endif
+#endif
 
   implicit none
 
   private
 
   public open_ual, close_ual
- 
+
 
 contains
 
@@ -32,7 +39,13 @@ contains
     integer, parameter :: NAMELIST_UNIT = 979
 
     integer :: lRefshot = 0, lRefrun = 0
+#ifdef IMAS
     character(32) :: lTreename = "imas"
+#else
+#ifdef ITM
+    character(32) :: lTreename = "euitm"
+#endif
+#endif
 
     integer :: lShot = 1, lRun = 0
     real(R8) :: lTime = 0.0_R8
@@ -80,7 +93,12 @@ contains
     end if
 
     ! establish UAL access
+<<<<<<< HEAD:src/ids/b2mod_ual_ids.F90
     if (lDoCreate) then
+=======
+    if (lDoCreate) then
+#ifdef IMAS
+>>>>>>> Bringing in some routines towards writing up of grid IDS:src/ids/b2mod_ual.F90
         if (lUseHdf5) then
             call imas_create_hdf5(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
         else
@@ -100,18 +118,47 @@ contains
                 call imas_open(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
             end if
         end if
+#else
+#ifdef ITM
+        if (lUseHdf5) then
+            call euITM_create_hdf5(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+        else
+            if (openEnv) then
+                call euITM_create_env(lTreename, lShot, lRun, lRefshot, lRefrun, idx, lUser, lTokamak, lDataversion)
+            else
+                call euITM_create(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+            end if
+        end if
+    else
+        if (lUseHdf5) then
+            call euITM_open_hdf5(lTreename, lShot, lRun, idx)
+        else
+            if (openEnv) then
+                call euITM_open_env(lTreename, lShot, lRun, idx,  lUser, lTokamak, lDataversion)
+            else
+                call euITM_open(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
+            end if
+        end if
+#endif
+#endif
     end if
 
     ! Return time if requested
     if (present(time)) time = lTime
 
   end subroutine open_ual
-  
+
 
   subroutine close_ual(idx)
     integer, intent(in) :: idx
 
+#ifdef IMAS
     call imas_close(idx)
+#else
+#ifdef ITM
+    call euITM_close(idx)
+#endif
+#endif
   end subroutine close_ual
 
-end module b2mod_ual_ids
+end module b2mod_ual

@@ -23,16 +23,23 @@ program b2_ual_write
   use b2mod_constants
 
   ! UAL Access
+#ifdef IMAS
   use ids_schemas  ! IGNORE
   use ids_routines ! IGNORE
+#else
+#ifdef ITM
+  use euITM_schemas  ! IGNORE
+  use euITM_routines ! IGNORE
+#endif
+#endif
 
   ! B2/CPO Mapping
 !!$  use b2mod_grid_mapping
-!!$  use b2mod_ual_io_grid
-!!$  use b2mod_ual_io_data
+  use b2mod_ual_io_grid
+  use b2mod_ual_io_data
 !!$  use itm_grid ! IGNORE
-  use b2mod_ual_ids
-!!$  use b2mod_ual_io
+  use b2mod_ual
+  use b2mod_ual_io
 
 
   implicit none
@@ -179,6 +186,7 @@ program b2_ual_write
 
   ! Fill IDS
   allocate(edge_profiles(1))
+  call write_ids(edge_profiles(1))
 !!$  call write_cpo(cpoedge(1))
 
   ! Write IDS to UAL
