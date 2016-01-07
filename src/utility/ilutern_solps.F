@@ -180,18 +180,19 @@ c-dpc
             open(79,file='b2_matrix')
           endif
           write(*,*) 'Writing 79'
+          write(79,*) 'Called from '//trim(name)
           write(79,*) n,' n'
           write(79,*) 'ASO AWE ACP AEA ANO RHS'
           do i=1,n
             iy = (i-1)/n1+1
             ix = i-(iy-1)*n1
-            write(79,'(3(i4,1x),1p,6(e15.8,1x))') i, ix-2, iy-2,
+            write(79,'(i6,2(i4,1x),1p,6(e15.8,1x))') i, ix-2, iy-2,
      .       aso(ix,iy), awe(ix,iy), acp(ix,iy), aea(ix,iy), ano(ix,iy),
      .       rhs(ix,iy)
           enddo
           write(79,*) nz,' nz'
           do i=1,nz
-            write(79,'(2(i4,1x),1p,1e15.8)') IRNH(i),ICNH(i),A1H(i)
+            write(79,'(2(i6,1x),1p,1e15.8)') IRNH(i),ICNH(i),A1H(i)
           enddo
         elseif(nwrite.eq.ncall) then
           write(*,*) 'Closing 79'

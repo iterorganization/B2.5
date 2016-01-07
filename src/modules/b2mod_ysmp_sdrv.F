@@ -24,10 +24,10 @@
 
       subroutine alloc_b2mod_ysmp_sdrv
 
-      write(*,*) ' Allocating space for b2mod_ysmp_sdrv'
-      write(*,*) ' nnd_sdrv   = ', nnd_sdrv
-      write(*,*) ' nsp        = ', nsp
-      write(*,*) ' n_nz_sdrv  = ', n_nz_sdrv
+      write(*,*) 'Allocating space for b2mod_ysmp_sdrv'
+      write(*,*) 'nnd_sdrv   = ', nnd_sdrv
+      write(*,*) 'nsp        = ', nsp
+      write(*,*) 'n_nz_sdrv  = ', n_nz_sdrv
 
       allocate(r1(1:nnd_sdrv))
       allocate(s1(1:nnd_sdrv))

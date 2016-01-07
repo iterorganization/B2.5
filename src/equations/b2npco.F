@@ -148,11 +148,12 @@
        enddo                                                            !srv 27.06.08 }
       endif
 csw 11dec2012, check for solv flags
+      write (chns,'(i3.3)') isb
       if(all(solvcreg(0:nnreg(0)))) then
 *   ..compute correction
        call b2usco (nx, ny, isb, nregionv, solvcreg, itcnt, rxg,
      &  pcm1, vol, pbs, nb, pb, snb(-1,-1,1), flob,
-     &  conb, pccb(-1,-1,1), rescb, corpb, aa5, 'b2usco')               !srv 18.05.02 26.09.12
+     &  conb, pccb(-1,-1,1), rescb, corpb, aa5, 'b2usco_'//chns)        !srv 18.05.02 26.09.12
 *   ..apply correction
        call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
      &  vol, corpb, pccb(-1,-1,0), pb, nb, ub)
@@ -193,7 +194,6 @@ csw 11dec2012, check for solv flags
       endif
 
       if (iout.ne.0) then                                            !srv 12.07.02 {
-        write (chns,'(i3.3)') isb
         call my_out(70,nx,ny,pb,'b2npco_pa'//chns)
         call my_out(70,nx,ny,nb,'b2npco_na'//chns)
         call my_out(70,nx,ny,ub,'b2npco_ua'//chns)

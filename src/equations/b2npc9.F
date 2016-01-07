@@ -130,26 +130,26 @@
 * ..particle balance
 *   ..compute residual
       call b2ursc (nx, ny, nb, snb, fnb, rescb)
-	if(guard_flows.eq.2) then                                      !srv 15.02.10 { this part should be re-written
-       do iy=-1, ny, ny+1                                            !srv 27.06.08 {
+	if(guard_flows.eq.2) then                                     !srv 15.02.10 { this part should be re-written
+       do iy=-1, ny, ny+1                                             !srv 27.06.08 {
         do ix = -1, nx
 	    if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
 	     rescb(ix,iy) = 0.0_R8
 	    endif
 	   enddo 
-	  enddo                                                         !srv 27.06.08 }
+	  enddo                                                       !srv 27.06.08 }
       endif                                                           !srv 15.02.10 }
 *   ..compute correction
-	write (chns,'(i3.3)') isb
+      write (chns,'(i3.3)') isb
       call b2usc9 (nx, ny, isb, nregionv, solvcreg, itcnt, rxg, pcm1, !srv 13.10.06 26.09.12
      &   pbs, nb, pb, snb(-1,-1,1), flob, conb, pccb(-1,-1,1), rescb,  
-     &   corpb, aa9, 'b2usc9_')                                       !srv 18.05.02
+     &   corpb, aa9, 'b2usc9_'//chns)                                 !srv 18.05.02
 *   ..apply correction
       call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0, 
      & vol, corpb, pccb(-1,-1,0), pb, nb, ub)
       if(guard_flows.eq.2) then                                       !srv 06.07.08 {
 *   ..replace the incorrect corner values by the interpolated values  !srv 30.04.08 {
-        iy=-1                                                          !srv 27.06.08 {
+        iy=-1                                                         !srv 27.06.08 {
         do ix = -1, nx
 	  if(leftix(ix,iy).eq.-2 ) 
      &     nb(ix,iy) = exp(

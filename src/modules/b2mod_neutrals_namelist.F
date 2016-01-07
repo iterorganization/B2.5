@@ -677,9 +677,35 @@ c
       enddo
       do is = 1, nmolid
         call xertst(0.le.lmolscl(is), 'faulty input lmolscl')
+        if (lmolscl(is).eq.0) then
+          write(6,'(a,i3,a)') 'Molecule ',is,
+     .     ' does not scale with any atom species'
+          write(6,'(a)')
+     .     'Please provide a scaling using the lmolscl array '//
+     .     'in b2.neutral.parameters'
+          write(0,'(a,i3,a)') 'Molecule ',is,
+     .     ' does not scale with any atom species'
+          write(0,'(a)')
+     .     'Please provide a scaling using the lmolscl array '//
+     .     'in b2.neutral.parameters'
+        end if
         do i = 1, nspecies
           call xertst(0.le.mlcmp(i,is), 'faulty input mlcmp')
         enddo
+        if (maxval(mlcmp(1:nspecies,is)).eq.0) then
+          write(6,'(a,i3,a)')
+     .     'Composition of molecule ',is,' is not given'
+          write(6,'(a,i3,a)')
+     .     'If it contains species followed in the plasma, '//
+     .     'please specify them using the mlcmp(:,',is,
+     .     ') array from b2.neutrals.parameters'
+          write(0,'(a,i3,a)')
+     .     'Composition of molecule ',is,' is not given'
+          write(0,'(a,i3,a)')
+     .     'If it contains species followed in the plasma, '//
+     .     'please specify them using the mlcmp(:,',is,
+     .     ') array from b2.neutrals.parameters'
+        end if
         if (hydrogen .and. user_namelist_used) call xertst
      .   (l_h_mol(is).eq.mlcmp(j_h_at,is), 
      .    'faulty inputs l_h_mol, mlcmp')

@@ -122,6 +122,7 @@ c-dpc
 	    open(79,file='b2_9_matrix')
 	  endif
 	  write(*,*) 'Writing 79'
+          write(79,*) 'Called from '//trim(name)
 	  write(79,*) n,' n'
 	  do i=1,n
 	    write(79,*) r1(i)

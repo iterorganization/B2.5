@@ -1770,11 +1770,12 @@ c     .                          .or. crcstra(istrai).eq.'U'
                 core_flux(ls)=core_flux(ls)+
      .           (wldnm(j,is,0)-wldrm(j,is,0))*s
                 if (dbg_eir_mc.ge.12 .and. main_call) then 
-                  write(*,*) 'J, ISTRAI, IATM, IMOL, S', 
+                  write(*,'(a,5i4)') 'J, ISTRAI, IATM, IMOL, S',
      .             j, istrai, ls, is, mlcmp(ls,is)
-                  write(*,*) 'wldna, wldra, wldnm, wldrm, core_flux',
-     .             wldna(j,ls,0), wldra(j,ls,0),
-     .             wldnm(j,is,0), wldrm(j,is,0), core_flux(ls)
+                  write(*,'(a,1p,5(1x,1e14.7))')
+     .             'wldna, wldra, wldnm, wldrm, core_flux',
+     .              wldna(j,ls,0), wldra(j,ls,0),
+     .              wldnm(j,is,0), wldrm(j,is,0), core_flux(ls)
                 endif
               end do !}
             end do !}

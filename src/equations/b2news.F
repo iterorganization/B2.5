@@ -466,11 +466,11 @@ cxpb
                   write(*,*)
      1             'Velocity limit active for ix,iy,is = ',ix,iy,is
                   write(*,'(a,1p,7g14.7)')
-     .             'ua,uadia(x&y),te,ti,mach10,na/ne',
+     .             'ua,uadia(x&y),te,ti,mach10,na/ne ',
      1             ua(ix,iy,is),(uadia(ix,iy,i,is),i=0,1),
      2             te(ix,iy)/ev,ti(ix,iy)/ev,mach10,
      3             na(ix,iy,is)/ne(ix,iy)
-                  write(*,'(a,1p,3g14.7)') 'sources(r,m,ext):',
+                  write(*,'(a,1p,3g14.7)') 'sources(r,m,ext): ',
      1             b2stbr_sna(ix,iy,is),b2stbm_sna(ix,iy,is),
      2             ext_sna(ix,iy,is)
                 endif
@@ -484,11 +484,11 @@ cxpb
                   write(*,*)
      1             'Velocity limit active for ix,iy,is = ',ix,iy,is
                   write(*,'(a,1p,7g14.7)')
-     .             'ua,uadia(x&y),te,ti,mach10,na/ne',
+     .             'ua,uadia(x&y),te,ti,mach10,na/ne ',
      1             ua(ix,iy,is),(uadia(ix,iy,i,is),i=0,1),
      2             te(ix,iy)/ev,ti(ix,iy)/ev,mach10,
      3             na(ix,iy,is)/ne(ix,iy)
-                  write(*,'(a,1p,3g14.7)') 'sources(r,m,ext):',
+                  write(*,'(a,1p,3g14.7)') 'sources(r,m,ext): ',
      1             b2stbr_sna(ix,iy,is),b2stbm_sna(ix,iy,is),
      2             ext_sna(ix,iy,is)
                 endif
