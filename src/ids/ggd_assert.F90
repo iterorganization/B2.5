@@ -52,7 +52,7 @@ contains
     end if
 
     if ( lDoStop ) then
-       stop "assert: an assertion failed, stopping immediately."
+       call xerrab ("assert: an assertion failed, stopping immediately.")
     else
        failCount = failCount + 1
        write(*,*) "assert: an assertion failed, continuing."

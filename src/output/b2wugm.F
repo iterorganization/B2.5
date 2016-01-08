@@ -2,7 +2,8 @@
 *.specification
 
       subroutine b2wugm (nput, nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, gs, pbs)
+     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &  cell_width, cell_height)
       use b2mod_types
       use b2mod_indirect
       use b2mod_version
@@ -15,8 +16,9 @@
      &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), 
-     &  qc(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
-     &  pbs(-1:nx,-1:ny,0:1)
+     &  qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
+     &  pbs(-1:nx,-1:ny,0:1), wbbc(-1:nx+1,-1:ny+1,0:3),
+     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -95,7 +97,8 @@
 *   ..test sign of bb
       call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
 *   ..test geometry
-      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, gs, pbs)
+      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qcb, gs, pbs,
+     &  cell_width, cell_height)
 *   ..obtain isolated region data
       call ipgeti('b2agdr_nxiso1', nxiso1)
       call ipgeti('b2agdr_nxiso2', nxiso2)
@@ -128,8 +131,9 @@ c-dpc
       do iy=-1,ny
 c check right neighbours       
         do ix=-1,nx-1
+          if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
 	  ixr=rightix(ix,iy)
-	  if(ixr.lt.-1.or.ixr.gt.nx) then
+	  if(.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
 	    write(*,*) 'No right neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. ix.eq.nxiso2 .and.
      &     iy.ge.nyiso1 .and. iy.le.nyiso2) then
@@ -156,8 +160,9 @@ c check right neighbours
         enddo
 c check left neighbours       
         do ix=0,nx
+          if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
 	  ixl=leftix(ix,iy)
-          if(ixl.lt.-1.or.ixl.gt.nx) then
+          if(.not.isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
 	    write(*,*) 'No left neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. ix.eq.nxiso1 .and.
      &     iy.ge.nyiso1 .and. iy.le.nyiso2) then
@@ -186,8 +191,9 @@ c check left neighbours
       do ix=-1,nx
 c check top neighbours       
         do iy=-1,ny-1
+          if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
 	  iyt=topiy(ix,iy)
-	  if(iyt.lt.-1.or.iyt.gt.ny) then
+	  if(.not.isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy))) then
 	    write(*,*) 'No top neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. iy.eq.nyiso2 .and.
      &     ix.ge.nxiso1 .and. ix.le.nxiso2) then
@@ -214,8 +220,9 @@ c check top neighbours
         enddo
 c check bottom neighbours       
         do iy=0,ny
+          if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
 	  iyb=bottomiy(ix,iy)
-	  if(iyb.lt.-1.or.iyb.gt.ny) then
+	  if(.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
 	    write(*,*) 'No bottom neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. iy.eq.nyiso1 .and.
      &     ix.ge.nxiso1 .and. ix.le.nxiso2) then
@@ -245,8 +252,9 @@ c check bottom neighbours
       do iy=-1,ny
 c check right neighbours       
         do ix=-1,nx-1
+          if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
           ixr=rightix(ix,iy)
-	  if(ixr.lt.-1.or.ixr.gt.nx) then
+	  if(.not.isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
 	    write(*,*) 'No right neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. ix.eq.nxiso2 .and.
      &     iy.ge.nyiso1 .and. iy.le.nyiso2) then
@@ -273,8 +281,9 @@ c check right neighbours
         enddo
 c check left neighbours       
         do ix=0,nx
+          if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
           ixl=leftix(ix,iy)
-          if(ixl.lt.-1.or.ixl.gt.nx) then
+          if(.not.isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
 	    write(*,*) 'No left neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. ix.eq.nxiso1 .and.
      &     iy.ge.nyiso1 .and. iy.le.nyiso2) then
@@ -303,8 +312,9 @@ c check left neighbours
       do ix=-1,nx
 c check top neighbours       
         do iy=-1,ny-1 
+          if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
 	  iyt=topiy(ix,iy)
-	  if(iyt.lt.-1.or.iyt.gt.ny) then
+	  if(.not.isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy))) then
 	    write(*,*) 'No top neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. iy.eq.nyiso2 .and.
      &     ix.ge.nxiso1 .and. ix.le.nxiso2) then
@@ -331,8 +341,9 @@ c check top neighbours
         enddo
 c check bottom neighbours       
         do iy=0,ny
+          if(isUnusedCell(cflags(ix,iy,CELLFLAG_TYPE))) cycle
 	  iyb=bottomiy(ix,iy)
-	  if(iyb.lt.-1.or.iyb.gt.ny) then
+	  if(.not.isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
 	    write(*,*) 'No bottom neighbour for ',ix,iy
           elseif(region(ix,iy,0).eq.0 .and. iy.eq.nyiso1 .and.
      &     ix.ge.nxiso1 .and. ix.le.nxiso2) then
@@ -367,30 +378,37 @@ cxpb
               write(*,*) 'Checking neighbours of dead cells'
               done = .true.
             endif
-            if(leftix(ix,iy).ne.-2 .and. 
-     &         region(leftix(ix,iy),leftiy(ix,iy),0).ne.0) then
-              errors=errors+1
-              write(*,*) 'Left neighbour of dead cell ',ix,iy,' alive!'
-              write(*,*) 'ixl,iyl',leftix(ix,iy),leftiy(ix,iy)
+            if(isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
+              if (region(leftix(ix,iy),leftiy(ix,iy),0).ne.0) then
+                errors=errors+1
+                write(*,*) 'Left neighbour of dead cell ',ix,iy,
+     $                     ' alive!'
+                write(*,*) 'ixl,iyl',leftix(ix,iy),leftiy(ix,iy)
+              endif
             endif
-            if(rightix(ix,iy).ne.nx+1 .and.
-     &         region(rightix(ix,iy),rightiy(ix,iy),0).ne.0) then
-              errors=errors+1
-              write(*,*) 'Right neighbour of dead cell ',ix,iy,' alive!' 
-              write(*,*) 'ixr,iyr',rightix(ix,iy),rightiy(ix,iy)
+            if(isInDomain(nx,ny,rightix(ix,iy),leftiy(ix,iy))) then
+              if (region(rightix(ix,iy),rightiy(ix,iy),0).ne.0) then
+                errors=errors+1
+                write(*,*) 'Right neighbour of dead cell ',ix,iy,
+     $                     ' alive!'
+                write(*,*) 'ixr,iyr',rightix(ix,iy),rightiy(ix,iy)
+              endif
             endif
-            if(bottomiy(ix,iy).ne.-2 .and. 
-     &         region(bottomix(ix,iy),bottomiy(ix,iy),0).ne.0) then
-              errors=errors+1
-              write(*,*) 'Bottom neighbour of dead cell ',ix,iy,
-     .                   ' alive!'
-              write(*,*) 'ixb,iyb',bottomix(ix,iy),bottomiy(ix,iy)
+            if(isInDomain(nx,ny,bottomix(ix,iy),bottomiy(ix,iy))) then
+              if (region(bottomix(ix,iy),bottomiy(ix,iy),0).ne.0)then
+                errors=errors+1
+                write(*,*) 'Bottom neighbour of dead cell ',ix,iy,
+     .                     ' alive!'
+                write(*,*) 'ixb,iyb',bottomix(ix,iy),bottomiy(ix,iy)
+              endif
             endif
-            if(topiy(ix,iy).ne.ny+1 .and.
-     &         region(topix(ix,iy),topiy(ix,iy),0).ne.0) then
-              errors=errors+1
-              write(*,*) 'Top neighbour of dead cell ',ix,iy,' alive!' 
-              write(*,*) 'ixt,iyt',topix(ix,iy),topiy(ix,iy)
+            if(isInDomain(nx,ny,topix(ix,iy),topiy(ix,iy))) then
+              if (region(topix(ix,iy),topiy(ix,iy),0).ne.0) then
+                errors=errors+1
+                write(*,*) 'Top neighbour of dead cell ',ix,iy,
+     $                     ' alive!'
+                write(*,*) 'ixt,iyt',topix(ix,iy),topiy(ix,iy)
+              endif
             endif
           endif
         enddo

@@ -131,8 +131,9 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       isymm = idum(0)
 *     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
 *   ..read geometry and metric
-      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi,
-     &  ffbz, bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)
+      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
+     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
 *   ..read physics common
       call cfruch (ninp(2), 120, lblcp, 'label')
       call b2rucp (ninp(2), b2fparam_version, nx, ns)

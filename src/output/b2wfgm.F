@@ -96,7 +96,8 @@
       call xertst (1.le.nprt, 'faulty argument nprt')
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test geometry
-      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, gs, pbs)
+      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qcb, gs, pbs,
+     &  cell_width, cell_height)
 
 * ..write the metric data
 *   ..write heading

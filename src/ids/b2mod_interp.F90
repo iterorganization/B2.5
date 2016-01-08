@@ -1213,8 +1213,6 @@ contains
 ! local variables
   integer ix, iy, is
   real (kind=R8) :: area_to_top, area_to_bottom
-! FIXME: To remove later once qcb is defined in b2mod_geo
-  real (kind=R8) :: qcb(-1:nx,-1:ny)
 
   velocity = 0.0_R8
 
@@ -1320,8 +1318,6 @@ contains
 ! local variables
   integer ix, iy, is
   real (kind=R8) :: flux(-1:nx,-1:ny,0:1,0:ns-1)
-! FIXME: To remove later once qcb is defined in b2mod_geo
-  real (kind=R8) :: qcb(-1:nx,-1:ny)
 
   do is = 0, ns-1
     do iy = -1, ny
@@ -1383,8 +1379,6 @@ contains
 ! local variables
   integer ix, iy, is, cgeo
   real (kind=R8) :: den(-1:nx,-1:ny,0:1,0:ns-1), vv(-1:nx,-1:ny,0:1,0:ns-1)
-! FIXME: To remove later once qcb is defined in b2mod_geo
-  real (kind=R8) :: qcb(-1:nx,-1:ny)
 ! procedures
   intrinsic sqrt
   real (kind=R8) :: b2sign

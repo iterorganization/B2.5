@@ -266,10 +266,14 @@ contains
         end do
     end do
     
-    if (count(fcxi(:,:,BOTTOM) == GRID_UNDEFINED) > 0) stop "b2CreateMap: there are unnumbered x-aligned faces"
-    if (count(fcxi(:,:,TOP) == GRID_UNDEFINED) > 0) stop "b2CreateMap: there are unnumbered x-aligned faces"
-    if (count(fcyi(:,:,LEFT) == GRID_UNDEFINED) > 0) stop "b2CreateMap: there are unnumbered y-aligned faces"
-    if (count(fcyi(:,:,RIGHT) == GRID_UNDEFINED) > 0) stop "b2CreateMap: there are unnumbered y-aligned faces"
+    call xertst (count(fcxi(:,:,BOTTOM) == GRID_UNDEFINED) == 0, &
+     &  "b2CreateMap: there are unnumbered x-aligned faces" )
+    call xertst (count(fcxi(:,:,TOP) == GRID_UNDEFINED) == 0, &
+     &  "b2CreateMap: there are unnumbered x-aligned faces" )
+    call xertst (count(fcyi(:,:,LEFT) == GRID_UNDEFINED) == 0, &
+     &   "b2CreateMap: there are unnumbered y-aligned faces" )
+    call xertst (count(fcyi(:,:,RIGHT) == GRID_UNDEFINED) == 0, &
+     &   "b2CreateMap: there are unnumbered y-aligned faces" )
 
     ! Fill in vertex numbers for remaining vertices
     ! A vertex can be shared among 4 cells (possibly more for special vertices, but they are
@@ -290,7 +294,8 @@ contains
         end do
     end do
 
-    if (count(vxi == GRID_UNDEFINED) > 0) stop "b2CreateMap: there are unnumbered vertices"
+    call xertst (count(vxi == GRID_UNDEFINED) == 0, &
+     & "b2CreateMap: there are unnumbered vertices" )
 
     ! Mark which cells, vertices and faces are needed in 1d lists
     cvNeeded = .false.
@@ -399,7 +404,8 @@ contains
         do iy = -1, ny
             if ( cvNeeded( cvi( ix, iy ) ) ) then
                 ic = ic + 1
-                if ( ic > ncv ) stop 'b2CreateMap: found more cells than expected'
+                call xertst ( ic .le. ncv , &
+                 & 'b2CreateMap: found more cells than expected' )
                 ! Map CPO -> B2
                 gd%mapCvix(ic) = ix
                 gd%mapCviy(ic) = iy
@@ -411,7 +417,7 @@ contains
             end if
         end do
     end do
-    if ( ic /= ncv ) stop 'b2CreateMap: found less cells than expected'    
+    call xertst ( ic == ncv , 'b2CreateMap: found less cells than expected' )  
 
     ! ...for x faces
     ! first set up numbering
@@ -420,16 +426,14 @@ contains
     do i1 = 1, size(fcXNeeded)
         if (fcXNeeded(i1)) then
                 ic = ic + 1
-                if ( ic > nfcx ) then
-                    stop 'b2CreateMap: found more x-aligned faces than expected'
-                end if
+                call xertst ( ic .le. nfcx , &
+                 & 'b2CreateMap: found more x-aligned faces than expected' )
             fcxiReduce(i1) = ic
         end if
     end do
     ! sanity check for number of x faces
-    if ( ic /= nfcx ) then
-        stop 'b2CreateMap: found less x-aligned faces than expected'
-    end if
+    call xertst ( ic == nfcx , &
+     & 'b2CreateMap: found less x-aligned faces than expected' )
 
     ! We want a CPO face to point to a LEFT or BOTTOM cell face if possible.
     ! If no LEFT or BOTTOM face exists, alternatively point to a TOP or RIGHT face.
@@ -478,9 +482,8 @@ contains
           fcyiReduce(i1) = ic
        end if
     end do
-    if ( ic /= nfcx + nfcy ) then
-       stop 'b2CreateMap: found less y-aligned faces than expected'
-    end if
+    call xertst ( ic == nfcx + nfcy , &
+     & 'b2CreateMap: found less y-aligned faces than expected' )
 
     do iPass = 1, 2
        do ix = -1, nx
@@ -511,7 +514,7 @@ contains
 
     if ( count( gd%mapFcI == B2_GRID_UNDEFINED) > 0) then
        call logmsg( LOGKNOWNWARNING, "b2CreateMap: have faces with missing mapping data (ignored)" ) 
-!       stop "b2CreateMap: have faces with missing mapping data"
+!       call xerrab ( "b2CreateMap: have faces with missing mapping data" )
       endif
        
     ! vertices
@@ -524,9 +527,8 @@ contains
           vxiReduce(i1) = ic
        end if
     end do
-    if ( ic /= nvx ) then
-       stop 'b2CreateMap: did not find expected number of vertices'
-    end if
+    call xertst ( ic == nvx , &
+     & 'b2CreateMap: did not find expected number of vertices' )
 
     gd%mapVxI = GRID_UNDEFINED
     gd%mapVxix = B2_GRID_UNDEFINED
@@ -544,7 +546,8 @@ contains
                    gd%mapVxIVx(ic) = iCorner
                 end if
                 ! Map B2 -> CPO
-                if (ic == GRID_UNDEFINED) stop "b2CreateMap: found vertex pointing to ic=0"
+                call xertst (ic /= GRID_UNDEFINED, &
+                 & "b2CreateMap: found vertex pointing to ic=0" )
                 gd%mapVxI( ix, iy, iCorner ) = ic
              end if
           end do
@@ -562,8 +565,8 @@ contains
        end if
     end do
 
-    if ( count(gd%mapVxix == B2_GRID_UNDEFINED) > 0 ) &
-         & stop "b2CreateMap: mapVxix broken"
+    call xertst ( count(gd%mapVxix == B2_GRID_UNDEFINED) == 0 , &
+     & "b2CreateMap: mapVxix broken" )
 
     ! After completing the vertex map, we can complete the special vertex (x-point) map
 

@@ -843,8 +843,9 @@ c 2002-09-11: logic revised
         call cfruch (70, 120, lblgm, 'label')
         call cfruin (70, 1, idum, 'isymm')
 *   ..read old geometry and metric
-        call b2rugm (70, nx, ny, crx, cry, fpsi,
-     &   ffbz, bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)
+        call b2rugm (70, nx, ny, crx, cry, fpsi, ffbz,
+     &   bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &   cell_width, cell_height, gmap)
         if (non_commensurate.eq.1) then
         call xertst (nnreg(0).eq.nnreg1(0) .and. nncut.eq.nncut1 .and.
      &   periodic_bc.eq.periodic_bc1,
@@ -867,8 +868,9 @@ c 2002-09-11: logic revised
         call cfruin (ninp(3), 2, idum, 'nx,ny')
         call cfruch (ninp(3), 120, lblgm, 'label')
         call cfruin (ninp(3), 1, idum, 'isymm')
-        call b2rugm (ninp(3), nx, ny, crx, cry, fpsi,
-     &   ffbz, bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)
+        call b2rugm (ninp(3), nx, ny, crx, cry, fpsi, ffbz,
+     &   bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &   cell_width, cell_height, gmap)
       endif
       if (invert_bpol.eq.1) then
         bb(:,:,0) = -bb(:,:,0)

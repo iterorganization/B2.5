@@ -2,11 +2,13 @@
 *.specification
 
       subroutine b2rugm (nget, nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)
+     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
       use b2mod_types
       use b2mod_indirect
       use b2mod_version
       use b2mod_b2cmgs
+      use b2mod_grid_mapping
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nget, nx, ny
@@ -16,9 +18,11 @@
      &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), 
-     &  gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
+     &  qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
      &  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3), 
-     &  wbbv(-1:nx,-1:ny,0:3)
+     &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
+     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
+      type(B2GridMap) :: gmap
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -101,6 +105,11 @@
 *     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
 *     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
 *
+*     cell_width, cell_height - (-1:nx,-1:ny) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), cell_width(ix,iy) and cell_height(ix,iy)
+*     specify the average width and height, respectively, of the (ix,iy) cell.
+*     It will hold that 0.lt.cell_width(,) and 0.lt.cell_height(,).
+*
 *     qz - (-1:nx,-1:ny,0:1) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
 *     qz(ix,iy,1) specifies cos(t), where t is the complementary angle
@@ -117,6 +126,14 @@
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
 *     geometry. 
 *     It will hold that 0.lt.qc(,).le.1.
+*
+*     qcb - (-1:nx,-1:ny) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), qcb(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the y-direction of the
+*     (ix,iy) cell and its bottom face.
+*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
+*     geometry.
+*     It will hold that 0.lt.qcb(,).le.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array, output.
 *     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
@@ -173,6 +190,7 @@
 
 *   ..local variables
       integer n2, ix, iy, idum(0:9)
+      integer iFace, offset
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y
 *   ..procedures
@@ -223,10 +241,30 @@ c-xpb
          qc(ix,iy) = cosang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+     &     crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
          if(qc(ix,iy).le.0.0_R8) then
-          write(*,*) 'Problem in b2rugm: qc(ix,iy) <= 0',
-     1     qc(ix,iy),ix,iy
+          write(*,'(a,1f12.6,2i5)')
+     1     'Problem in b2rugm: qc(ix,iy) <= 0',qc(ix,iy),ix,iy
+          write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
+          write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
+         endif
+        enddo
+       enddo
+      endif
+      qcb = 1.0_R8
+      if(b2fgmtry_version.ge.'01.001.030') then
+	call cfrure_opt (nget, n2, qcb, 'qcb')
+      end if
+      if (maxval(qcb).eq.1.0_R8 .and. minval(qcb).eq.1.0_R8) then
+       do iy = -1, ny
+        do ix = -1, nx
+         qcb(ix,iy) = cosang (
+     &     crx(ix,iy,1)-crx(ix,iy,0),  cry(ix,iy,1)-cry(ix,iy,0),
+     &    (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
+     &    (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
+         if(qcb(ix,iy).le.0.0_R8) then
+          write(*,'(a,1f12.6,2i5)')
+     1     'Problem in b2rugm: qcb(ix,iy) <= 0',qcb(ix,iy),ix,iy
           write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
           write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
          endif
@@ -278,6 +316,7 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)
       call intfacer1(nx,ny,2,rightix,rightiy,vol,bb,wbbr)
       call intfacev1(nx,ny,2,bottomix,bottomiy,vol,bb,wbbv)
+      call my_intcor1(nx,ny,2,vol,bb,wbbc)
 *   ..extrapolate magnetic field to edges
       do iy = -1, ny
         do ix = -1, nx
@@ -314,19 +353,105 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       wbbl(:,:,3)=sqrt(wbbl(:,:,0)**2+wbbl(:,:,1)**2+wbbl(:,:,2)**2)
       wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
       wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
+      wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
 *   ..compute or read pbs (magnetic field pitch * surface area) at cell faces
       if(b2fgmtry_version.ge.'01.001.063') then                      !srv 15.02.11
         call cfrure (nget, n2*2, pbs, 'pbs')
       else
         call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)      
       endif
+*   ..read extended grid cell flags
+      cflags = 0
+      if(b2fgmtry_version.ge.'01.001.028') then
+	call cfruin_opt (nget, n2*GRID_N_CELLFLAGS, cflags, 'cflags')
+      endif
+      if(maxval(cflags).eq.0) then
+        cflags(1:nx-2,1:ny-2,CELLFLAG_TYPE) = GRID_INTERNAL
+        cflags(0,0:ny-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+        cflags(nx-1,0:ny-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+        cflags(0:nx-1,0,CELLFLAG_TYPE) = GRID_BOUNDARY
+        cflags(0:nx-1,ny-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+        cflags(-1,-1:ny,CELLFLAG_TYPE) = GRID_GUARD
+        cflags(nx,-1:ny,CELLFLAG_TYPE) = GRID_GUARD
+        cflags(-1:nx,-1,CELLFLAG_TYPE) = GRID_GUARD
+        cflags(-1:nx,ny,CELLFLAG_TYPE) = GRID_GUARD
+        if (nncut.ge.2) then
+          iy = ny/2
+          do ix = 1, nx-2
+            if (rightix(ix,iy).eq.nx+1) then
+              cflags(ix-1,1:ny-2,CELLFLAG_TYPE) = GRID_BOUNDARY
+              cflags(ix,1:ny-2,CELLFLAG_TYPE) = GRID_GUARD
+            end if
+            if (leftix(ix,iy).eq.-2) then
+              cflags(ix,1:ny-1,CELLFLAG_TYPE) = GRID_GUARD
+              cflags(ix+1,1:ny-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+            end if
+          end do
+        end if
+        do iy=-1,ny
+          do ix=-1,nx
+            if (cflags(ix, iy, CELLFLAG_TYPE) /= GRID_BOUNDARY) cycle
+            if (cflags(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_TYPE) ==
+     .          GRID_GUARD) then
+              iFace = CELLFLAG_LEFTFACE
+              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
+              cflags(ix, iy, iFace) = offset - region(ix, iy, 0)
+              cflags(leftix(ix,iy),leftiy(ix,iy),CELLFLAG_RIGHTFACE) =
+     .         cflags(ix, iy, iFace)
+            end if
+            if (cflags(rightix(ix,iy),rightiy(ix,iy),CELLFLAG_TYPE) ==
+     .          GRID_GUARD) then
+              iFace = CELLFLAG_RIGHTFACE
+              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
+              cflags(ix, iy, iFace) = offset - region(ix, iy, 0)
+              cflags(rightix(ix,iy),rightiy(ix,iy),CELLFLAG_LEFTFACE) =
+     .         cflags(ix, iy, iFace)
+            end if
+            if (cflags(topix(ix,iy),topiy(ix,iy),CELLFLAG_TYPE) ==
+     .          GRID_GUARD) then
+              iFace = CELLFLAG_TOPFACE
+              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
+              cflags(ix, iy, iFace) = offset - region(ix, iy, 0)
+              cflags(topix(ix,iy),topiy(ix,iy),CELLFLAG_BOTTOMFACE) =
+     .         cflags(ix, iy, iFace)
+            end if
+            if (cflags(bottomix(ix,iy),bottomiy(ix,iy),CELLFLAG_TYPE) ==
+     .          GRID_GUARD) then
+              iFace = CELLFLAG_BOTTOMFACE
+              offset = (iFace - CELLFLAG_LEFTFACE + 1) * (-10)
+              cflags(ix, iy, iFace) = offset - region(ix, iy, 0)
+              cflags(bottomix(ix,iy),bottomiy(ix,iy),CELLFLAG_TOPFACE) =
+     .         cflags(ix, iy, iFace)
+            end if
+          end do
+        end do
+      end if
+      cell_width = hx
+      cell_height(:,:) = hy(:,:)*qz(:,:,1)
+      if(b2fgmtry_version.ge.'01.001.033') then
+        call cfrure_opt (nget, n2, cell_width, 'cell_width')
+        call cfrure_opt (nget, n2, cell_height, 'cell_height')
+      endif
 *   ..test sign of bb
       call b2xvsg (n2, bb(-1,-1,3), 1, 'bb3', '.gt.')
       call b2xvsg (n2, wbbl(-1,-1,3), 1, 'wbbl3', '.gt.')
       call b2xvsg (n2, wbbr(-1,-1,3), 1, 'wbbr3', '.gt.')
       call b2xvsg (n2, wbbv(-1,-1,3), 1, 'wbbv3', '.gt.')
+      call b2xvsg ((nx+3)*(ny+3), wbbc(-1,-1,3), 1, 'wbbc3', '.gt.')
 *   ..test geometry
-      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, gs, pbs)
+      call xertst(maxval(region(-1:nx,-1:ny,1)).gt.0 .or.
+     &            minval(region(-1:nx,-1:ny,2)).lt.0,
+     $            'X-regions not set, re-run b2ag!')
+      call xertst(maxval(region(-1:nx,-1:ny,2)).gt.0 .or.
+     &            minval(region(-1:nx,-1:ny,1)).lt.0,
+     $            'Y-regions not set, re-run b2ag!')
+      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qcb, gs, pbs,
+     &     cell_width, cell_height)
+*   ..create B2GridMap data structure
+      call b2CreateMap(nx,ny,crx,cry,cflags,
+     &     leftix,leftiy,rightix,rightiy,
+     &     topix,topiy,bottomix,bottomiy,.true.,gmap)
+      mapInitialized = .true.
 
 * ..return
       call subend ()

@@ -7,10 +7,10 @@ module b2mod_ual
   use ids_schemas  ! IGNORE
   use ids_routines ! IGNORE
 #else
-#ifdef ITM
+# ifdef ITM
   use euITM_schemas  ! IGNORE
   use euITM_routines ! IGNORE
-#endif
+# endif
 #endif
 
   implicit none

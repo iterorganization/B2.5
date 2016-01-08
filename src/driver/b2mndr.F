@@ -1167,8 +1167,9 @@ csw 09oct2012
 #endif
 
 *   ..read geometry and metric
-      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi,
-     &  ffbz, bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)
+      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
+     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
 ! can only be calculated after the indirect arrays have been read
       ix1=int(ixfb)
       call xertst(0.le.ix1.and.ix1.lt.nx, 'faulty ixfb (1)')

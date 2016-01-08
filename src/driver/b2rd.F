@@ -812,8 +812,9 @@
 
 *   ..test geometry and plasma state
       n2 = (nx+2)*(ny+2)
-      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, gs, pbs)
-      call b2xvps (nx, ny, ns,
+      call b2xvgm (nx, ny, vol, hx, hy, qz, qc, qcb, gs, pbs,
+     &  cell_width, cell_height)
+      call b2xvps (nx, ny, ns, 
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 *   ..save final state
@@ -844,8 +845,9 @@
       call cfwuch (nout(2), 120, lblgm, 'label')
       idum(0) = 1
       call cfwuin (nout(2), 1, idum, 'isymm') 
-      call b2wugm (nout(2), nx, ny, crx, cry, fpsi, ffbz, bb,
-     &  vol, hx, hy, qz, qc, gs, pbs)
+      call b2wugm (nout(2), nx, ny, crx, cry, fpsi, ffbz,
+     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &  cell_width, cell_height)
 
       open(91,file='../core_boundary.txt')
       iy=-1

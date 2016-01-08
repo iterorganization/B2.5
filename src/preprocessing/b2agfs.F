@@ -1,8 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2agfs (nrid,nx,ny,nx1,ny1,istyle,crx1,cry1,bb1,
-     1 lblgm,leftix1,leftiy1,rightix1,rightiy1,
+      subroutine b2agfs (nrid,nx,ny,nx1,ny1,istyle,
+     & crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,
+     1 cflag,lblgm,leftix1,leftiy1,rightix1,rightiy1,
      2 topix1,topiy1,bottomix1,bottomiy1,
      3 leftcut1,rightcut1,bottomcut1,topcut1,
      4 periodic_bc,nncut,nncutmax)
@@ -10,13 +11,18 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmfs
+      use b2mod_connectivity
+      use b2mod_indirect
+     . ,only: GRID_N_CELLFLAGS
+      use carre_constants
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nrid, nx, ny, nx1, ny1, istyle, nncutmax
 *   .. output arguments
       real (kind=R8) ::
      * crx1(-1:nx1,-1:ny1,0:3), cry1(-1:nx1,-1:ny1,0:3),
-     1 bb1(-1:nx1,-1:ny1,0:3)
+     1 bb1(-1:nx1,-1:ny1,0:3),fpsi1(-1:nx1,-1:ny1,0:3),
+     2 ffbz1(-1:nx1,-1:ny1,0:3),wbbc1(-1:nx1+1,-1:ny1+1,0:3)
       integer
      *  leftix1(-1:nx1,-1:ny1),leftiy1(-1:nx1,-1:ny1),
      1  rightix1(-1:nx1,-1:ny1),rightiy1(-1:nx1,-1:ny1),
@@ -24,7 +30,7 @@
      3  bottomix1(-1:nx1,-1:ny1),bottomiy1(-1:nx1,-1:ny1),
      4  leftcut1(nncutmax),rightcut1(nncutmax),
      5  bottomcut1(nncutmax),topcut1(nncutmax),
-     6  periodic_bc,nncut
+     6  periodic_bc,nncut,cflag(-1:nx1,-1:ny1,GRID_N_CELLFLAGS)
       character*(*) lblgm
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -473,7 +479,8 @@ cxpb Do not correct corner cells
         do ix = -1, nx1
           do iy = 0, ny1-1
 cxpb Western edge
-            if (leftix1(ix,iy).eq.-2) then
+            if (.not.isInDomain(nx1,ny1,leftix1(ix,iy),leftiy1(ix,iy)))
+     >       then
               r1 = crx1(rightix1(ix,iy),rightiy1(ix,iy),2)
               z1 = cry1(rightix1(ix,iy),rightiy1(ix,iy),2)
               r2 = crx1(rightix1(ix,iy),rightiy1(ix,iy),0)
@@ -541,7 +548,8 @@ cxpb  Copy the changes onto crx1, cry1
 cxpb  ALSO MOVE THE BACK OF THE GUARD CELLS!
                   crx1(ix,iy,2) = r1 + (r1-rf)/1000.0_R8
                   cry1(ix,iy,2) = z1 + (z1-z4)/1000.0_R8
-                  if (topiy1(ix,iy).ne.ny1+1) then
+                  if (isInDomain(nx1,ny1,topix1(ix,iy),
+     .                                   topiy1(ix,iy))) then
                     crx1(topix1(ix,iy),topiy1(ix,iy),1) = r1
                     cry1(topix1(ix,iy),topiy1(ix,iy),1) = z1
                     crx1(topix1(ix,iy),topiy1(ix,iy),0) = 
@@ -584,7 +592,9 @@ cxpb  if just below the top corner, make the corner cell follow
               endif
             endif
 cxpb Eastern edge
-            if (rightix1(ix,iy).eq.nx1+1) then
+            if (
+     .       .not.isInDomain(nx1,ny1,rightix1(ix,iy),rightiy1(ix,iy)))
+     >       then
               rf = crx1(leftix1(ix,iy),leftiy1(ix,iy),2)
               z4 = cry1(leftix1(ix,iy),leftiy1(ix,iy),2)
               r3 = crx1(leftix1(ix,iy),leftiy1(ix,iy),0)
@@ -652,7 +662,8 @@ cxpb  Copy the changes onto crx1, cry1
 cxpb ALSO MOVE THE BACK OF THE GUARD CELLS!
                   crx1(ix,iy,3) = r1 + (r1-rf)/1000.0_R8
                   cry1(ix,iy,3) = z1 + (z1-z4)/1000.0_R8
-                  if (topiy1(ix,iy).ne.ny1+1) then
+                  if (isInDomain(nx1,ny1,topix1(ix,iy),
+     .                                   topiy1(ix,iy))) then
                     crx1(topix1(ix,iy),topiy1(ix,iy),0) = r1
                     cry1(topix1(ix,iy),topiy1(ix,iy),0) = z1
                     crx1(topix1(ix,iy),topiy1(ix,iy),1) = 

@@ -204,8 +204,9 @@
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
       isymm=idum(0)
-      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi,
-     &  ffbz, bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)
+      call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
+     &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
+     &  cell_width, cell_height, gmap)
       call cfrure (ninp(1), 100, parg, 'parg')
 
 * ..set constants
@@ -322,7 +323,8 @@
       call cfwuin (nout(1), 1, idum, 'isymm')
 *   ..save geometry
       call b2wugm (nout(1), nx, ny, crx, cry, fpsi,
-     &  ffbz, bb, vol, hx, hy, qz, qc, gs, pbs)
+     &  ffbz, bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &  cell_width, cell_height)
 *   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')
 

@@ -2,6 +2,8 @@
       use b2mod_types
       use b2mod_version
       use b2mod_geo_corner
+      use b2mod_cellhelper
+      use b2mod_grid_mapping
       implicit none
 
       real (kind=R8), allocatable, save ::
@@ -16,9 +18,16 @@
      *  hz(:,:),                                                     !srv 09.01.01
      *  qz(:,:,:),
      *  qc(:,:),
+     *  qcb(:,:),
      *  vol(:,:),
      *  pbs(:,:,:), pbshz(:,:,:),                                    !srv 09.01.01
-     *  conn(:)
+     *  conn(:),
+     *  cell_width(:,:),
+     *  cell_height(:,:)
+
+      type(B2GridMap), save :: gmap
+
+      logical, save :: b2mod_geo_allocated = .false.
 
       contains
 
@@ -37,10 +46,15 @@
       allocate(hz(-1:nxd,-1:nyd))                                    !srv 09.01.01
       allocate(qz(-1:nxd,-1:nyd,0:1))
       allocate(qc(-1:nxd,-1:nyd))
+      allocate(qcb(-1:nxd,-1:nyd))
       allocate(vol(-1:nxd,-1:nyd))
       allocate(pbs(-1:nxd,-1:nyd,0:1))
       allocate(pbshz(-1:nxd,-1:nyd,0:1))                             !srv 09.01.01
       allocate(conn(-1:nyd))
+      allocate(cell_width(-1:nxd,-1:nyd))
+      allocate(cell_height(-1:nxd,-1:nyd))
+
+      b2mod_geo_allocated = .true.
 
       call alloc_b2mod_geo_corner(nxd,nyd)
 
@@ -50,21 +64,32 @@
       subroutine dealloc_b2mod_geo
       implicit none
 
-      deallocate(bb)
-      deallocate(crx)
-      deallocate(cry)
-      deallocate(ffbz)
-      deallocate(fpsi)
-      deallocate(gs)
-      deallocate(hx)
-      deallocate(hy)
-      deallocate(hz)
-      deallocate(qz)
-      deallocate(qc)
-      deallocate(vol)
-      deallocate(pbs)
-      deallocate(pbshz)                                              !srv 09.01.01
-      deallocate(conn)
+      if(b2mod_geo_allocated) then
+
+        deallocate(bb)
+        deallocate(crx)
+        deallocate(cry)
+        deallocate(ffbz)
+        deallocate(fpsi)
+        deallocate(gs)
+        deallocate(hx)
+        deallocate(hy)
+        deallocate(hz)
+        deallocate(qz)
+        deallocate(qc)
+        deallocate(qcb)
+        deallocate(vol)
+        deallocate(pbs)
+        deallocate(pbshz)                                            !srv 09.01.01
+        deallocate(conn)
+        deallocate(cell_width)
+        deallocate(cell_height)
+
+        b2mod_geo_allocated = .false.
+
+      endif
+
+      if (mapInitialized) call deallocateB2GridMap(gmap)
 
       call dealloc_b2mod_geo_corner
 
@@ -72,6 +97,7 @@
       end subroutine dealloc_b2mod_geo
 
       subroutine read_b2mod_geo(nx,ny,nread)
+      use b2mod_indirect
       implicit none
       integer nread, nx, ny
       integer ix, iy
@@ -103,10 +129,30 @@
          qc(ix,iy) = cosang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
-     &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+     &     crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
          if(qc(ix,iy).le.0.0_R8) then
           write(*,*) 'Problem in b2mod_geo: qc(ix,iy) <= 0',
      1     qc(ix,iy),ix,iy
+          write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
+          write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
+         endif
+        enddo
+       enddo
+      endif
+      qcb = 1.0_R8
+      if (b2fplasma_version.gt.'01.001.030') then
+       call cfrure_opt (nread, size(qcb), qcb, 'qcb')
+      end if
+      if (maxval(qcb).eq.1.0_R8 .and. minval(qcb).eq.1.0_R8) then
+       do iy = -1, ny
+        do ix = -1, nx
+         qcb(ix,iy) = cosang (
+     &     crx(ix,iy,1)-crx(ix,iy,0),  cry(ix,iy,1)-cry(ix,iy,0),
+     &    (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
+     &    (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
+         if(qcb(ix,iy).le.0.0_R8) then
+          write(*,*) 'Problem in b2mod_geo: qcb(ix,iy) <= 0',
+     1     qcb(ix,iy),ix,iy
           write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
           write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
          endif
@@ -117,6 +163,19 @@
 c conn
       if(b2fplasma_version.ge.'01.001.063') then        !srv 15.02.11
         call cfrure (nread, size(pbs), pbs, 'pbs')
+      endif
+      if(b2fplasma_version.ge.'01.001.033') then
+        call cfrure_opt
+     .   (nread, size(cell_width), cell_width, 'cell_width')
+        call cfrure_opt
+     .   (nread, size(cell_height), cell_height, 'cell_height')
+      else
+        if(isClassicalGrid(cflags)) then
+          cell_width = hx
+          cell_height(:,:) = hy(:,:)*qz(:,:,1)
+        else
+          call xerrab ('Cell widths and heights not set: re-run b2ag!')
+        endif
       endif
 
       return

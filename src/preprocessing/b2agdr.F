@@ -9,6 +9,9 @@
       use b2mod_indirect
       use b2mod_b2cmfs
       use b2mod_b2cmgs
+      use b2mod_connectivity
+      use b2mod_interp
+      use b2mod_grid_mapping
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:1), nout(0:1), nx, ny, nx1, ny1
@@ -88,13 +91,14 @@
 
 *   ..common blocks
 *   ..local variables
-      integer idum(0:9), ix, iy
+      integer idum(0:9), ix, iy, geometryType
       integer nxiso1, nxiso2, nyiso1, nyiso2
       character lblgm*120, idout*80, id*8, cnamip*80, cvalip*80
       character line*500
       real (kind=R8) ::
      *   parg(0:99)
       integer istyle
+      logical :: includeGhostCells
 *   ..initialisation
       data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
 *   ..procedures
@@ -193,6 +197,11 @@
 *     For (ix,iy) in (-1:nx,-1:ny), hx(ix,iy) and hy(ix,iy) specify the
 *     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
 *     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
+*
+*     cell_width, cell_height - (-1:nx,-1:ny) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), cell_width(ix,iy) and cell_height(ix,iy)
+*     specify the average width and height, respectively, of the (ix,iy) cell.
+*     It will hold that 0.lt.cell_width(,) and 0.lt.cell_height(,).
 *
 *     qz - (-1:nx,-1:ny,0:1) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
@@ -313,12 +322,13 @@
       call b2agsi (nx, ny, parg, isymm, lblgm(61:120), istyle)
 *!!   Be careful about the use of (nx,ny) in b2agsi: the mesh will also
 *!!   be generated with dimensions (nx1,ny1).
-*   ..obtain mhd equilibrium data
-      call b2agfs (ninp(1),nx,ny,nx1,ny1,istyle,crx1,cry1,bb1,
-     1 lblgm(61:120),leftix1,leftiy1,rightix1,rightiy1,
-     2 topix1,topiy1,bottomix1,bottomiy1,
-     3 leftcut1,rightcut1,bottomcut1,topcut1,
-     4 periodic_bc,nncut,nncutmax)
+*   ..obtain grid and mhd equilibrium data from file
+      call b2agfs (ninp(1),nx,ny,nx1,ny1,istyle,
+     1 crx1,cry1,fpsi1,ffbz1,bb1,wbbc1,cflags1,
+     2 lblgm(61:120),leftix1,leftiy1,rightix1,rightiy1,
+     3 topix1,topiy1,bottomix1,bottomiy1,
+     4 leftcut1,rightcut1,bottomcut1,topcut1,
+     5 periodic_bc,nncut,nncutmax)
       call init_region(nx1,ny1,nncut,nncutmax,
      1 leftcut1,rightcut1,topcut1,bottomcut1,
      1 leftix1,rightix1,rightiy1,topix1,topiy1,bottomiy1,
@@ -384,15 +394,20 @@
       wbbr1(:,:,3)=sqrt(wbbr1(:,:,0)**2+wbbr1(:,:,1)**2+wbbr1(:,:,2)**2)
       wbbv1(:,:,3)=sqrt(wbbv1(:,:,0)**2+wbbv1(:,:,1)**2+wbbv1(:,:,2)**2)
 *    ..compute pbs1 (magnetic field pitch * surface area) at cell faces
+      geometryType = geometryId(nnreg, periodic_bc, topcut1)
       call b2xgbs1 (nx1, ny1, 
      1 bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
 *   ..project metric coefficients to proper mesh
       call b2agmx (nx1, ny1, nx, ny, 
-     & vol1, hx1, hy1, qz1, qc1, gs1, crx1, cry1, bb1, pbs1,
-     & vol, hx, hy, qz, qc, gs, crx, cry, bb, pbs,
+     & vol1, hx1, hy1, qz1, qc1, qcb1,
+     & gs1, crx1, cry1, bb1, pbs1, fpsi1, ffbz1, wbbc1,
+     & cell_width1, cell_height1,
+     & vol, hx, hy, qz, qc, qcb,
+     & gs, crx, cry, bb, pbs, fpsi, ffbz, wbbc,
+     & cell_width, cell_height,
      1 leftix1,leftiy1,rightix1,rightiy1,
      2 topix1,topiy1,bottomix1,bottomiy1,
-     3 leftcut1,rightcut1,bottomcut1,topcut1)
+     3 leftcut1,rightcut1,bottomcut1,topcut1,cflags1)
 *   ..establish an isolated region if needed
       call ipgeti('b2agdr_nxiso1', nxiso1)
       call ipgeti('b2agdr_nxiso2', nxiso2)
@@ -420,23 +435,30 @@
       endif
       if (nxiso1.ne.-2) then
         do iy = nyiso1, nyiso2
-          if (leftix(nxiso1,iy).ne.-2) then
-            rightix(leftix(nxiso1,iy),iy) = nx+1
-            region(leftix(nxiso1,iy),iy,1) = region(nxiso2,iy,1) 
+          if (isInDomain(nx,ny,leftix(nxiso1,iy),
+     .                         leftiy(nxiso1,iy))) then
+            rightix(leftix(nxiso1,iy),leftiy(nxiso1,iy)) = nx+1
+            region(leftix(nxiso1,iy),leftiy(nxiso1,iy),1) =
+     .       region(nxiso2,iy,1)
           end if
-          if (rightix(nxiso2,iy).ne.nx+1) then
-            leftix(rightix(nxiso2,iy),iy) = -2
-            region(rightix(nxiso2,iy),iy,1) = region(nxiso1,iy,1)
+          if (isInDomain(nx,ny,rightix(nxiso2,iy),
+     .                         rightiy(nxiso2,iy))) then
+            leftix(rightix(nxiso2,iy),rightiy(nxiso2,iy)) = -2
+            region(rightix(nxiso2,iy),rightiy(nxiso2,iy),1) =
+     .       region(nxiso1,iy,1)
           end if
         end do
         do ix = nxiso1, nxiso2
-          if (topiy(ix,nyiso2).ne.ny+1) then
-            bottomiy(ix,topiy(ix,nyiso2)) = -2
-            region(ix,topiy(ix,nyiso2),2) = region(ix,nyiso1,2)
+          if (isInDomain(nx,ny,topix(ix,nyiso2),topiy(ix,nyiso2))) then
+            bottomiy(topix(ix,nyiso2),topiy(ix,nyiso2)) = -2
+            region(topix(ix,nyiso2),topiy(ix,nyiso2),2) =
+     .       region(ix,nyiso1,2)
           endif
-          if (bottomiy(ix,nyiso1).ne.-2) then
-            topiy(ix,bottomiy(ix,nyiso1)) = ny+1
-            region(ix,bottomiy(ix,nyiso1),2) = region(ix,nyiso2,2)
+          if (isInDomain(nx,ny,bottomix(ix,nyiso1),
+     .                         bottomiy(ix,nyiso1))) then
+            topiy(bottomix(ix,nyiso1),bottomiy(ix,nyiso1)) = ny+1
+            region(bottomix(ix,nyiso1),bottomiy(ix,nyiso1),2) =
+     .       region(ix,nyiso2,2)
           end if
         end do
         write(*,'()')
@@ -447,12 +469,16 @@
         region(nxiso1:nxiso2,nyiso1:nyiso2,0:2) = 0
         resignore(nxiso1:nxiso2,nyiso1:nyiso2,1:2) = 0
         do iy = nyiso1,nyiso2
-          if (leftix(nxiso1,iy).ne.-2) leftix(nxiso1,iy) = nxiso2
-          if (rightix(nxiso2,iy).ne.nx+1) rightix(nxiso2,iy) = nxiso1
+          if (isInDomain(nx,ny,leftix(nxiso1,iy),leftiy(nxiso1,iy)))
+     >     leftix(nxiso1,iy) = nxiso2
+          if (isInDomain(nx,ny,rightix(nxiso2,iy),rightiy(nxiso2,iy)))
+     >     rightix(nxiso2,iy) = nxiso1
         end do
         do ix = nxiso1,nxiso2
-          if (bottomiy(ix,nyiso1).ne.-2) bottomiy(ix,nyiso1) = nyiso2
-          if (topiy(ix,nyiso2).ne.ny+1) topiy(ix,nyiso2) = nyiso1
+          if (isInDomain(nx,ny,bottomix(ix,nyiso1),bottomiy(ix,nyiso1)))
+     >     bottomiy(ix,nyiso1) = nyiso2
+          if (isInDomain(nx,ny,topix(ix,nyiso2),topiy(ix,nyiso2)))
+     >     topiy(ix,nyiso2) = nyiso1
         end do
       endif
 c-dpc-debug
@@ -467,6 +493,8 @@ c-dpc-debug
      1	 maxval(abs(qz1-qz))
 	write(*,*) 'b2agdr sanity check: qc ',
      1	 maxval(abs(qc1-qc))
+	write(*,*) 'b2agdr sanity check: qcb ',
+     1	 maxval(abs(qcb1-qcb))
 	write(*,*) 'b2agdr sanity check: gs ',
      1	 maxval(abs(gs1-gs))
 	write(*,*) 'b2agdr sanity check: crx ',
@@ -492,26 +520,26 @@ c-dpc-debug
       if (bb(nx,ny,2).gt.0.0_R8) then
         write(*,'(a)')
      .   'This case has POSITIVE toroidal magnetic field.'
-        write(*,'(a)')
+        if (isymm.ne.0) write(*,'(a)')
      .   'This means that the Bx(grad B) direction points DOWN.'
         write(*,'(a)')
      .   'Bz is out of the page towards you.'
         write(nout(0),'(/2x,a)')
      .   'This case has POSITIVE toroidal magnetic field.'
-        write(nout(0),'(2x,a)')
+        if (isymm.ne.0) write(nout(0),'(2x,a)')
      .   'This means that the Bx(grad B) direction points DOWN.'
         write(nout(0),'(2x,a)')
      .   'Bz is out of the page towards you.'
       else
         write(*,'(a)')
      .   'This case has NEGATIVE toroidal magnetic field.'
-        write(*,'(a)')
+        if (isymm.ne.0) write(*,'(a)')
      .   'This means that the Bx(grad B) direction points UP.'
         write(*,'(a)')
      .   'Bz is into the page away from you.'
         write(nout(0),'(/2x,a)')
      .   'This case has NEGATIVE toroidal magnetic field.'
-        write(nout(0),'(2x,a)')
+        if (isymm.ne.0) write(nout(0),'(2x,a)')
      .   'This means that the Bx(grad B) direction points UP.'
         write(nout(0),'(2x,a)')
      .   'Bz is into the page away from you.'
@@ -613,7 +641,8 @@ c-dpc-debug
       call cfwuin (nout(1), 1, idum, 'isymm')
 *   ..save geometry
       call b2wugm (nout(1), nx, ny, crx, cry, fpsi,
-     &  ffbz, bb, vol, hx, hy, qz, qc, gs, pbs)
+     &  ffbz, bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &  cell_width, cell_height)
 *   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')
       write(*,*) 'b2agdr3: bb(nx,ny,0) ',bb(nx,ny,0)
