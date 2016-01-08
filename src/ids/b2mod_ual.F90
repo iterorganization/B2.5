@@ -40,13 +40,13 @@ contains
 
     integer :: lRefshot = 0, lRefrun = 0
 #ifdef IMAS
-    character(32) :: lTreename = "imas"
+    character(32) :: lTreename = "ids"
 #else
-#ifdef ITM
+# ifdef ITM
     character(32) :: lTreename = "euitm"
-else
+# else
     character(32) :: lTreename = "none"
-#endif
+# endif
 #endif
 
     integer :: lShot = 1, lRun = 0

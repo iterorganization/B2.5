@@ -45,23 +45,27 @@ contains
 
 #ifdef IMAS
 
-  subroutine write_ids(edge_ids)
+  subroutine write_ids(edge_ids,sources_ids,transport_ids)
 #     include <git_version_B25.h>
    type (ids_edge_profiles) :: edge_ids
+   type (ids_edge_sources) :: sources_ids
+   type (ids_edge_transport) :: transport_ids
 
     ! allocate and init the IDS
-#ifdef B25_EIRENE
+    allocate(edge_ids%code%name(1))
+# ifdef B25_EIRENE
     edge_ids%code%name = "SOLPS-ITER"
-#else
+# else
     edge_ids%code%name = "B2.5"
-#endif
+# endif
+    allocate(edge_ids%code%version(1))
     edge_ids%code%version = git_version_B25
    
    return
   end subroutine write_ids
 
 #else
-#ifdef ITM
+# ifdef ITM
 
   subroutine write_cpo(edgecpo)
     type (type_edge) :: edgecpo
@@ -441,7 +445,7 @@ contains
     unitV = v / sqrt( sum( v**2 ) )
   end function unitVector
 
-#endif
+# endif
 #endif
  
 end module b2mod_ual_io

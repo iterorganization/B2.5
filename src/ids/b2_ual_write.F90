@@ -33,11 +33,11 @@ program b2_ual_write
 #endif
 #endif
 
-  ! B2/CPO Mapping
-!!$  use b2mod_grid_mapping
+  ! B2/IDS-CPO Mapping
+  use b2mod_grid_mapping
   use b2mod_ual_io_grid
   use b2mod_ual_io_data
-!!$  use itm_grid ! IGNORE
+  use ggd
   use b2mod_ual
   use b2mod_ual_io
 
@@ -100,9 +100,17 @@ program b2_ual_write
   integer ninp(0:6), nout(0:2), nx, ny, ns, idum(0:9), io
   integer :: idx
   integer :: ix, ixx
-!!$  type (type_edge),pointer :: cpoedge(:) => null()
+  type(B2GridMap) :: gmap
+#ifdef IMAS
   type (ids_edge_profiles),pointer :: edge_profiles(:) => null()
+  type (ids_edge_sources),pointer :: edge_sources(:) => null()
+  type (ids_edge_transport),pointer :: edge_transport(:) => null()
   type (ids_core_profiles) :: cp
+#else
+#ifdef ITM
+  type (type_edge),pointer :: cpoedge(:) => null()
+#endif
+#endif
   real(B2R8) :: time
   character*120 lblgm
   logical includeGhostCells
@@ -186,11 +194,12 @@ program b2_ual_write
   call read_additional(ninp, nout, nx, ny, ns)
 
   ! Fill IDS
-  allocate(edge_profiles(1))
 #ifdef IMAS
-  call write_ids(edge_profiles(1))
+  allocate(edge_profiles(1),edge_sources(1),edge_transport(1))
+  call write_ids(edge_profiles(1),edge_sources(1),edge_transport(1))
 #else
 #ifdef ITM
+  allocate(edge_profiles(1))
   call write_cpo(edge_profiles(1))
 #endif
 #endif
@@ -203,7 +212,15 @@ program b2_ual_write
   run = 12
   refshot = 1
   refrun = 0
+#ifdef IMAS
   treename = 'ids'
+#else
+# ifdef ITM
+  treename = 'euitm'
+# else
+  treename = 'none'
+# endif
+#endif
 
   call getenv ("imas_connect_url", imas_connect_url)
   if (0.lt.len_trim(imas_connect_url)) then
@@ -223,12 +240,12 @@ program b2_ual_write
   allocate(edge_profiles(1)%profiles_1d(1)%electrons%temperature(-1:ny))
   edge_profiles(1)%profiles_1d(1)%electrons%temperature(-1:ny)=te(nx/2,-1:ny)/ev
   allocate(edge_profiles(1)%ggd(1))
-  includeGhostCells = .true.
-  call b2IMASFillGridDescription( edge_profiles(1)%ggd(1)%grid, &
-      & nx,ny,crx,cry, &
-      & leftix,leftiy,rightix,rightiy, &
-      & topix,topiy,bottomix,bottomiy,&
-      & nnreg,topcut,region,cflags,includeGhostCells,vol,gs,qc )
+  includeGhostCells = .false.
+!!$  call b2IMASFillGridDescription( gmap,edge_profiles(1)%ggd(1)%grid, &
+!!$      & nx,ny,crx,cry, &
+!!$      & leftix,leftiy,rightix,rightiy, &
+!!$      & topix,topiy,bottomix,bottomiy,&
+!!$      & nnreg,topcut,region,cflags,includeGhostCells,vol,gs,qc )
   call ids_put(idx,"edge_profiles",edge_profiles(1))
   call ids_deallocate(edge_profiles(1))
   call imas_close(idx)
@@ -241,7 +258,7 @@ program b2_ual_write
   write(*,*) "edge_profiles"
   write(*,*) "IDS_Properties homogeneous : ", edge_profiles(1)%IDS_Properties%homogeneous_time
   write(*,'("IDS_Properties comment(1) : ",A)') edge_profiles(1)%IDS_Properties%comment(1)
-  write(*,'("Time : ",a)') edge_profiles(1)%time(1)
+  write(*,'("Time : ",g14.7)') edge_profiles(1)%time(1)
   call ids_deallocate(edge_profiles(1))
   call imas_close(idx)
 

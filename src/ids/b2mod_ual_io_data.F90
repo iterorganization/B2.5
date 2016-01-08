@@ -29,7 +29,7 @@ module b2mod_ual_io_data
   use carre_constants
   use b2mod_cellhelper
 
-!xpb  use b2mod_grid_mapping
+  use b2mod_grid_mapping
   use b2mod_ual_io_grid
 
 #ifdef ITM
