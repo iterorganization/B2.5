@@ -10,17 +10,21 @@ module b2mod_ual_io_data
   ! the form expected CPO data structure.
 
   use b2mod_types , B2_R8 => R8, B2_R4 => R4
+#ifdef IMAS
+  use ids_schemas ! IGNORE
+#else
 #ifdef ITM
   use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
   use euITM_schemas ! IGNORE
-  use itm_grid , ITM_GRID_UNDEFINED => GRID_UNDEFINED ! IGNORE
-  use itm_string ! IGNORE
-  use itm_assert ! IGNORE
-  use itm_grid_structured , only: gridSetupStruct1dSpace ! IGNORE
   use itm_constants , pi => itm_pi ! IGNORE
+#endif
 #endif
   use helper
   use logging , only: logmsg, LOGDEBUG
+  use ggd_assert
+  use string
+  use ggd , GGD_UNDEFINED => GRID_UNDEFINED
+  use ggd_structured , only: gridSetupStruct1dSpace
   use b2mod_connectivity , REMOVED_B2_R8 => R8
   use carre_constants
   use b2mod_cellhelper
@@ -148,3 +152,6 @@ contains
 
 end module b2mod_ual_io_data
 
+!!!Local Variables:
+!!! mode: f90
+!!! End:

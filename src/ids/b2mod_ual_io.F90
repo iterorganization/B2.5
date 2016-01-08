@@ -33,9 +33,9 @@ module b2mod_ual_io
 #ifdef ITM
   use euITM_schemas  ! IGNORE
   use euITM_routines ! IGNORE
-  use itm_grid , ITM_GRID_UNDEFINED => GRID_UNDEFINED ! IGNORE
 #endif
 #endif
+  use ggd , GGD_UNDEFINED => GRID_UNDEFINED
 
   implicit none
 
@@ -446,3 +446,6 @@ contains
  
 end module b2mod_ual_io
 
+!!!Local Variables:
+!!! mode: f90
+!!! End:

@@ -1513,9 +1513,7 @@ contains
 !!$    use b2mod_indirect
 !!$    use b2mod_constants
 !!$    use b2mod_cellhelper
-!!$#ifdef ITM
-!!$    use itm_assert ! IGNORE
-!!$#endif
+!!$    use ggd_assert
 !!$    implicit none
 !!$    integer, intent(in) :: nx, ny, vx_index
 !!$    real (kind=R8), intent(in), dimension(-1:nx,-1:ny) :: cv
@@ -2051,3 +2049,7 @@ contains
   end subroutine value_to_side
 
 end module b2mod_interp
+
+!!!Local Variables:
+!!! mode: f90
+!!! End:

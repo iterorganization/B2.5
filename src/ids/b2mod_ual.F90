@@ -44,6 +44,8 @@ contains
 #else
 #ifdef ITM
     character(32) :: lTreename = "euitm"
+else
+    character(32) :: lTreename = "none"
 #endif
 #endif
 
@@ -139,6 +141,8 @@ contains
                 call euITM_open(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
             end if
         end if
+#else
+        idx = 0
 #endif
 #endif
     end if
@@ -162,3 +166,7 @@ contains
   end subroutine close_ual
 
 end module b2mod_ual
+
+!!!Local Variables:
+!!! mode: f90
+!!! End:

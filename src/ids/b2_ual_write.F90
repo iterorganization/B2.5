@@ -105,6 +105,7 @@ program b2_ual_write
   type (ids_core_profiles) :: cp
   real(B2R8) :: time
   character*120 lblgm
+  logical includeGhostCells
 
   integer :: shot, run, refshot, refrun
   character(len=5) :: treename
@@ -186,8 +187,13 @@ program b2_ual_write
 
   ! Fill IDS
   allocate(edge_profiles(1))
+#ifdef IMAS
   call write_ids(edge_profiles(1))
-!!$  call write_cpo(cpoedge(1))
+#else
+#ifdef ITM
+  call write_cpo(edge_profiles(1))
+#endif
+#endif
 
   ! Write IDS to UAL
 !!$  call open_ual(idx, 15, 1, time=time, doCreate=.true., useHdf5=.false., nmlFile='b2_ual_write.dat')
@@ -213,12 +219,16 @@ program b2_ual_write
   allocate(edge_profiles(1)%time(1))
   edge_profiles(1)%time(1)=tim
   write(0,*) 'nx, ny : ', nx, ny
-  allocate(edge_profiles(1)%profiles_1d(1:nx+2))
-  do ixx = 1, nx+2
-    ix = ixx-2
-    allocate(edge_profiles(1)%profiles_1d(ixx)%electrons%temperature(1:ny+2))
-    edge_profiles(1)%profiles_1d(ixx)%electrons%temperature(1:ny+2)=te(ix,-1:ny)/ev
-  end do
+  allocate(edge_profiles(1)%profiles_1d(1))
+  allocate(edge_profiles(1)%profiles_1d(1)%electrons%temperature(-1:ny))
+  edge_profiles(1)%profiles_1d(1)%electrons%temperature(-1:ny)=te(nx/2,-1:ny)/ev
+  allocate(edge_profiles(1)%ggd(1))
+  includeGhostCells = .true.
+  call b2IMASFillGridDescription( edge_profiles(1)%ggd(1)%grid, &
+      & nx,ny,crx,cry, &
+      & leftix,leftiy,rightix,rightiy, &
+      & topix,topiy,bottomix,bottomiy,&
+      & nnreg,topcut,region,cflags,includeGhostCells,vol,gs,qc )
   call ids_put(idx,"edge_profiles",edge_profiles(1))
   call ids_deallocate(edge_profiles(1))
   call imas_close(idx)
@@ -586,3 +596,7 @@ end subroutine
   end subroutine read_additional
 
 end program b2_ual_write
+
+!!!Local Variables:
+!!! mode: f90
+!!! End:
