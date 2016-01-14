@@ -16,7 +16,12 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      SUBROUTINE b2yt_NGREAD(solps_version,eirene_format)
+      subroutine b2yt_ngread(solps_version, eirene_format,
+     . nx1, ny1, natm1, iatm1, npls1, ipls1, nfla,
+     . savestratum, non_commensurate, e_bundle_contr,
+     . jsep1, region1, leftcut1, rightcut1, bottomcut1, topcut1,
+     . bottomiy1,
+     . hx, hy, qc, hx1, hy1, qc1)
 c
 c  version : 06.11.97 22:11
 c
@@ -32,12 +37,51 @@ c
       implicit none
 
 *  -- INPUT ARGUMENTS --
+      integer nx1,ny1,natm1,npls1,nfla,non_commensurate
+      integer iatm1(natm), ipls1(npls)
+      integer jsep1
+      integer region1(-1:nx1,-1:ny1,0:2)
+      integer leftcut1(nncutmax), rightcut1(nncutmax)
+      integer bottomcut1(nncutmax), topcut1(nncutmax)
+      integer bottomiy1(-1:nx1,-1:ny1)
+      real (kind=R8) :: e_bundle_contr(npls1,nfla)
+      real (kind=R8) ::
+     *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qc(-1:nx,-1:ny),
+     *  hx1(-1:nx1,-1:ny1), hy1(-1:nx1,-1:ny1), qc1(-1:nx1,-1:ny1)
       character*4 solps_version
       character*8 eirene_format
+      logical savestratum(0:nstraid)
 
 *  -- LOCAL SCALARS --
-      INTEGER NNX, NNY, IS, IX, IY, jvft44, istra, nplsi
+      INTEGER NNX, NNY, IS, IX, IY, jvft44, istra, nplsi, nstra1
       integer i, j, k, ncl, jvftnew
+      real (kind=R8) :: wrk0(-1:nx,-1:ny1), field(0:nx+1,0:ny+1)
+      real (kind=R8), allocatable :: dab1(:,:,:), tab1(:,:,:)
+      real (kind=R8), allocatable :: dmb1(:,:,:), tmb1(:,:,:)
+      real (kind=R8), allocatable :: dib1(:,:,:), tib1(:,:,:)
+      real (kind=R8), allocatable :: rfa1(:,:,:), pfa1(:,:,:)
+      real (kind=R8), allocatable :: rfm1(:,:,:), pfm1(:,:,:)
+      real (kind=R8), allocatable :: refa1(:,:,:), pefa1(:,:,:)
+      real (kind=R8), allocatable :: refm1(:,:,:), pefm1(:,:,:)
+      real (kind=R8), allocatable :: emiss1(:,:), emissmol1(:,:)
+      real (kind=R8), allocatable :: srcml1(:,:,:), edissml1(:,:,:,:)
+      real (kind=R8), allocatable :: wldna1(:,:,:), ewlda1(:,:,:)
+      real (kind=R8), allocatable :: wldra1(:,:,:)
+      real (kind=R8), allocatable :: wldpa1(:,:,:)
+      real (kind=R8), allocatable :: wldpp1(:,:,:)
+      real (kind=R8), allocatable :: wlabsrp1(:,:)
+      real (kind=R8), allocatable :: eneutrad1(:,:,:)
+      real (kind=R8), allocatable :: wldna1res(:,:)
+      real (kind=R8), allocatable :: ewlda1res(:,:)
+      real (kind=R8), allocatable :: ewldea1res(:,:)
+      real (kind=R8), allocatable ::
+     *  pdena1int(:,:), pdenm1int(:,:), pdeni1int(:,:),
+     *  pdena1int_b2(:,:), pdenm1int_b2(:,:), pdeni1int_b2(:,:),
+     *  edena1int(:,:), edenm1int(:,:), edeni1int(:,:),
+     *  edena1int_b2(:,:), edenm1int_b2(:,:), edeni1int_b2(:,:)
+      real (kind=R8), allocatable :: wd_old(:), wd_new(:)
+      character*8, allocatable :: textan1(:), eirtxt1(:)
+      logical ex
 
 *  -- PROCEDURES --
       logical streql
@@ -76,11 +120,13 @@ C
       else
         jvftnew = jvft44
       endif
-      WRITE(45,'(I4,2X,I4,2x,i8)')               nnx,nny,jvftnew
+      WRITE(45,'(I4,2X,I4,2x,i8)')               nx1,ny1,jvftnew
       READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
-      WRITE(45,'(I4,2X,I4,2X,i4)')               NATMI,NMOLI,NIONI
+      WRITE(45,'(I4,2X,I4,2X,i4)')               natm1,NMOLI,NIONI
       write(*,'(a,5i4)') 
      . ' Dimensions in fort.44 = ',nnx,nny,natmi,nmoli,nioni
+      write(*,'(a,5i4)')
+     . ' Dimensions in fort.44.2 = ',nx1,ny1,natm1,nmoli,nioni
       write(*,'(a,2i4)') ' Array inner dimensions = ', ndx , ndy
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
@@ -88,14 +134,23 @@ C
       call xertst(nnx   .le. ndx , 'NGREAD:   NNX > NDX ')
       call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
+      inquire(file='input.dat',exist=ex)
+      if (.not.ex) inquire(file='fort.33',exist=nlwrmsh)
 c
 * labels
 * neutral atoms
 C
       do 11 IS = 1, NATMI
         READ (44,'(A8)',END=99,ERR=99) TEXTAN(IS-1)
-        WRITE(45,'(A8)')               TEXTAN(IS-1)
    11 CONTINUE
+      allocate(textan1(0:natm1-1))
+      do is = 1, natmi
+        if (iatm1(is).ne.0) TEXTAN1(iatm1(is)-1) = TEXTAN(is-1)
+      end do
+      do is = 1, natm1
+        WRITE(45,'(A8)') TEXTAN1(IS-1)
+      end do
+      deallocate(textan1)
 C
 * neutral molecules
 C
@@ -117,111 +172,314 @@ C
       do 14 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,dab2(:,:,is,1))
    14 CONTINUE
-      call eirene_neutr(45,nnx,nny,natmi,dab2,ndx,ndy,natm,1,1)
+      allocate (dab1(0:nx1+1,0:ny1+1,natm1))
+      do is = 1, natmi
+        if (iatm1(is).ne.0) then
+          field(0:nx+1,0:ny+1) = dab2(0:nx+1,0:ny+1,is,1)
+          call b2xtvc(nx, ny, nx1, ny1,
+     &        field, dab1(0,0,iatm1(is)),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
+        end if
+      end do
+      call eirene_neutr(45,nx1,ny1,natm1,dab1,nx1,ny1,natm1,1,1)
+      deallocate (dab1)
 
       do 24 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,tab2(:,:,is,1))
    24 CONTINUE
-      call eirene_neutr(45,nnx,nny,natmi,tab2,ndx,ndy,natm,1,1)
+      allocate (tab1(0:nx1+1,0:ny1+1,natm1))
+      do is = 1, natmi
+        if (iatm1(is).ne.0) then
+          field(0:nx+1,0:ny+1) = tab2(0:nx+1,0:ny+1,is,1)
+          call b2xtvc(nx, ny, nx1, ny1,
+     &        field, tab1(0,0,iatm1(is)),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
+        end if
+      end do
+      call eirene_neutr(45,nx1,ny1,natm1,tab1,nx1,ny1,natm1,1,1)
+      deallocate (tab1)
 
 * neutral molecules
 C
+      allocate (dmb1(0:nx1+1,0:ny1+1,nmoli))
       do 15 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,dmb2(:,:,is,1))
+        field(0:nx+1,0:ny+1) = dmb2(0:nx+1,0:ny+1,is,1)
+        call b2xtvc(nx, ny, nx1, ny1,
+     &        field, dmb1(0,0,is),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
    15 CONTINUE
-      call eirene_neutr(45,nnx,nny,nmoli,dmb2,ndx,ndy,nmol,1,1)
+      call eirene_neutr(45,nx1,ny1,nmoli,dmb1,nx1,ny1,nmoli,1,1)
+      deallocate(dmb1)
 
+      allocate (tmb1(0:nx1+1,0:ny1+1,nmoli))
       do 25 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,tmb2(:,:,is,1))
+        field(0:nx+1,0:ny+1) = tmb2(0:nx+1,0:ny+1,is,1)
+        call b2xtvc(nx, ny, nx1, ny1,
+     &        field, tmb1(0,0,is),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
    25 CONTINUE
-      call eirene_neutr(45,nnx,nny,nmoli,tmb2,ndx,ndy,nmol,1,1)
+      call eirene_neutr(45,nx1,ny1,nmoli,tmb1,nx1,ny1,nmoli,1,1)
+      deallocate(tmb1)
 
 * test ions
 C
+      allocate (dib1(0:nx1+1,0:ny1+1,nioni))
       do 16 IS = 1, NIONI
         call gfsub2(44,ndx,ndy,nnx,nny,dib2(:,:,is,1))
+        field(0:nx+1,0:ny+1) = dib2(0:nx+1,0:ny+1,is,1)
+        call b2xtvc(nx, ny, nx1, ny1,
+     &        field, dib1(0,0,is),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
    16 CONTINUE
-      call eirene_neutr(45,nnx,nny,nioni,dib2,ndx,ndy,nion,1,1)
+      call eirene_neutr(45,nx1,ny1,nioni,dib1,nx1,ny1,nioni,1,1)
+      deallocate(dib1)
 
+      allocate (tib1(0:nx1+1,0:ny1+1,nioni))
       do 26 IS = 1, NIONI
         call gfsub2(44,ndx,ndy,nnx,nny,tib2(:,:,is,1))
+        field(0:nx+1,0:ny+1) = tib2(0:nx+1,0:ny+1,is,1)
+        call b2xtvc(nx, ny, nx1, ny1,
+     &        field, tib1(0,0,is),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
    26 CONTINUE
-      call eirene_neutr(45,nnx,nny,nioni,tib2,ndx,ndy,nion,1,1)
+      call eirene_neutr(45,nx1,ny1,nioni,tib1,nx1,ny1,nioni,1,1)
+      deallocate(tib1)
 
 * neutral atom radial particle flux
 C
       do 114 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,rfluxa(:,:,is,1))
  114  CONTINUE
-      call eirene_neutr(45,nnx,nny,natmi,rfluxa,ndx,ndy,natm,1,1)
+      allocate (rfa1(0:nx1+1,0:ny1+1,natm1))
+      do is = 1, natmi
+        if (iatm1(is).ne.0) then
+          field(0:nx+1,0:ny+1) = rfluxa(0:nx+1,0:ny+1,is,1)
+          call b2xtfy (nx, ny, nx1, ny1,
+     &        field, rfa1(0,0,iatm1(is)),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        hx, hx1, bottomiy1)
+        end if
+      end do
+      call eirene_neutr(45,nx1,ny1,natm1,rfa1,nx1,ny1,natm1,1,1)
+      deallocate (rfa1)
 
 * neutral molecules radial particle flux
 C
+      allocate (rfm1(0:nx1+1,0:ny1+1,nmoli))
       do 115 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,rfluxm(:,:,is,1))
+        field(0:nx+1,0:ny+1) = rfluxm(0:nx+1,0:ny+1,is,1)
+        call b2xtfy (nx, ny, nx1, ny1,
+     &        field, rfm1(0,0,is),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        hx, hx1, bottomiy1)
  115  CONTINUE
-      call eirene_neutr(45,nnx,nny,nmoli,rfluxm,ndx,ndy,nmol,1,1)
+      call eirene_neutr(45,nx1,ny1,nmoli,rfm1,nx1,ny1,nmoli,1,1)
+      deallocate (rfm1)
 
 * neutral atom poloidal particle flux
 C
+      allocate (pfa1(0:nx1+1,0:ny1+1,natm1))
       do 214 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,pfluxa(:,:,is,1))
  214  CONTINUE
-      call eirene_neutr(45,nnx,nny,natmi,pfluxa,ndx,ndy,natm,1,1)
+      do is = 1, natmi
+        if (iatm1(is).ne.0) then
+          field(0:nx+1,0:ny+1) = pfluxa(0:nx+1,0:ny+1,is,1)
+          call b2xtfx (nx, ny, nx1, ny1,
+     &        field, pfa1(0,0,iatm1(is)),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        hy, qc, hy1, qc1)
+        end if
+      end do
+      call eirene_neutr(45,nx1,ny1,natm1,pfa1,nx1,ny1,natm1,1,1)
+      deallocate (pfa1)
 
 * neutral molecules poloidal particle flux
 C
+      allocate (pfm1(0:nx1+1,0:ny1+1,nmoli))
       do 215 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,pfluxm(:,:,is,1))
+        field(0:nx+1,0:ny+1) = pfluxm(0:nx+1,0:ny+1,is,1)
+        call b2xtfx (nx, ny, nx1, ny1,
+     &        field, pfm1(0,0,is),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        hy, qc, hy1, qc1)
  215  CONTINUE
-      call eirene_neutr(45,nnx,nny,nmoli,pfluxm,ndx,ndy,nmol,1,1)
+      call eirene_neutr(45,nx1,ny1,nmoli,pfm1,nx1,ny1,nmoli,1,1)
+      deallocate (pfm1)
 
 * neutral atom radial energy flux
 C
       do 314 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,refluxa(:,:,is,1))
  314  CONTINUE
-      call eirene_neutr(45,nnx,nny,natmi,refluxa,ndx,ndy,natm,1,1)
+      allocate (refa1(0:nx1+1,0:ny1+1,natm1))
+      do is = 1, natmi
+        if (iatm1(is).ne.0) then
+          field(0:nx+1,0:ny+1) = refluxa(0:nx+1,0:ny+1,is,1)
+          call b2xtfy (nx, ny, nx1, ny1,
+     &        field, refa1(0,0,iatm1(is)),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        hx, hx1, bottomiy1)
+        end if
+      end do
+      call eirene_neutr(45,nx1,ny1,natm1,refa1,nx1,ny1,natm1,1,1)
+      deallocate (refa1)
 
 * neutral molecules radial energy flux
 C
+      allocate (refm1(0:nx1+1,0:ny1+1,nmoli))
       do 415 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,refluxm(:,:,is,1))
+        field(0:nx+1,0:ny+1) = refluxm(0:nx+1,0:ny+1,is,1)
+        call b2xtfy (nx, ny, nx1, ny1,
+     &        field, refm1(0,0,is),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        hx, hx1, bottomiy1)
  415  CONTINUE
-      call eirene_neutr(45,nnx,nny,nmoli,refluxm,ndx,ndy,nmol,1,1)
+      call eirene_neutr(45,nx1,ny1,nmoli,refm1,nx1,ny1,nmoli,1,1)
+      deallocate (refm1)
 
 * neutral atom poloidal energy flux
 C
+      allocate (pefa1(0:nx1+1,0:ny1+1,natm1))
       do 514 IS = 1, NATMI
         call gfsub2(44,ndx,ndy,nnx,nny,pefluxa(:,:,is,1))
  514  CONTINUE
-      call eirene_neutr(45,nnx,nny,natmi,pefluxa,ndx,ndy,natm,1,1)
+      do is = 1, natmi
+        if (iatm1(is).ne.0) then
+          field(0:nx+1,0:ny+1) = pefluxa(0:nx+1,0:ny+1,is,1)
+          call b2xtfx (nx, ny, nx1, ny1,
+     &        field, pefa1(0,0,iatm1(is)),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        hy, qc, hy1, qc1)
+        end if
+      end do
+      call eirene_neutr(45,nx1,ny1,natm1,pefa1,nx1,ny1,natm1,1,1)
+      deallocate (pefa1)
 
 * neutral molecules poloidal energy flux
 C
+      allocate (pefm1(0:nx1+1,0:ny1+1,nmoli))
       do 515 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,pefluxm(:,:,is,1))
+        field(0:nx+1,0:ny+1) = pefluxm(0:nx+1,0:ny+1,is,1)
+        call b2xtfx (nx, ny, nx1, ny1,
+     &        field, pefm1(0,0,is),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        hy, qc, hy1, qc1)
  515  CONTINUE
-      call eirene_neutr(45,nnx,nny,nmoli,pefluxm,ndx,ndy,nmol,1,1)
+      call eirene_neutr(45,nx1,ny1,nmoli,pefm1,nx1,ny1,nmoli,1,1)
+      deallocate (pefm1)
 
       call gfsub2(44,ndx,ndy,nnx,nny,emiss(:,:,1,1))
       call gfsub2(44,ndx,ndy,nnx,nny,emissmol(:,:,1,1))
-      call eirene_neutr(45,nnx,nny,1,emiss,ndx,ndy,1,1,1)
-      call eirene_neutr(45,nnx,nny,1,emissmol,ndx,ndy,1,1,1)
+      allocate (emiss1(0:nx1+1,0:ny1+1))
+      allocate (emissmol1(0:nx1+1,0:ny1+1))
+      field(0:nx+1,0:ny+1) = emiss(0:nx+1,0:ny+1,1,1)
+      call b2xtvc(nx, ny, nx1, ny1,
+     &        field, emiss1(0,0),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
+      field(0:nx+1,0:ny+1) = emissmol(0:nx+1,0:ny+1,1,1)
+      call b2xtvc(nx, ny, nx1, ny1,
+     &        field, emissmol1(0,0),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
+      call eirene_neutr(45,nx1,ny1,1,emiss1,nx1,ny1,1,1,1)
+      call eirene_neutr(45,nx1,ny1,1,emissmol1,nx1,ny1,1,1,1)
+      deallocate (emiss1)
+      deallocate (emissmol1)
 
+      allocate (srcml1(0:nx1+1,0:ny1+1,nmoli))
+      allocate (edissml1(0:nx1+1,0:ny1+1,nmoli,0:nstra+1))
       if(jvft44 .ge. 960511) then
         do is=1,nmoli
           call gfsub2(44,ndx,ndy,nnx,nny,srcml(:,:,is,1))
+          field(0:nx+1,0:ny+1) = srcml(0:nx+1,0:ny+1,is,1)
+          call b2xtvc(nx, ny, nx1, ny1,
+     &        field, srcml1(0,0,is),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
         end do
         do is=1,nmoli
           call gfsub2(44,ndx,ndy,nnx,nny,edissml(:,:,is,0))
+          field(0:nx+1,0:ny+1) = edissml(0:nx+1,0:ny+1,is,1)
+          call b2xtvc(nx, ny, nx1, ny1,
+     &        field, edissml1(0,0,is,0),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        wrk0)
         end do
       else
-        srcml = 0.0_R8
-        edissml = 0.0_R8
+        srcml1 = 0.0_R8
+        edissml1 = 0.0_R8
       end if
-      call eirene_neutr(45,nnx,nny,nmoli,srcml,ndx,ndy,nmol,1,1)
-      call eirene_neutr(45,nnx,nny,nmoli,edissml,ndx,ndy,nmol,1,1)
+      call eirene_neutr(45,nx1,ny1,nmoli,srcml1,nx1,ny1,nmoli,1,1)
+      call eirene_neutr(45,nx1,ny1,nmoli,edissml1,nx1,ny1,nmoli,1,1)
+      deallocate(srcml1,edissml1)
 
       if ((streql(solps_version,'5.0').or.streql(solps_version,'5.2'))
      &    .and. 
@@ -239,21 +497,33 @@ C
 
       if(jvft44 .ge. 960513) then
         read (44,'(3i6)') nlimi,nstsi,nstrai
-        write(45,'(3i6)') nlimi,nstsi,nstrai
+        nstra1 = 0
+        do istra = 1, nstrai
+          if (savestratum(istra)) nstra1 = nstra1 + 1
+        end do
+        allocate(wldna1(nlmpgs,natm1,0:nstrai+1))
+        allocate(ewlda1(nlmpgs,natm1,0:nstrai+1))
+        write(45,'(3i6)') nlimi,nstsi,nstra1
         nnlimi=nlimi
         nnstsi=nstsi
-        print *,'nlimi,nstsi,nstrai:',nlimi,nstsi,nstrai
+        print *,'nlimi,nstsi,nstrai,nstra1:',nlimi,nstsi,nstrai,nstra1
         call rdneutrs(44,wldnek,1)
-        call wrneutrs(45,wldnek,1)
         call rdneutrs(44,wldnep,1)
-        call wrneutrs(45,wldnep,1)
         call rdneutrs(44,wldna,natmi)
-        call wrneutrs(45,wldna,natmi)
         call rdneutrs(44,ewlda,natmi)
-        call wrneutrs(45,ewlda,natmi)
         call rdneutrs(44,wldnm,nmoli)
-        call wrneutrs(45,wldnm,nmoli)
         call rdneutrs(44,ewldm,nmoli)
+        call wrneutrs(45,wldnek,1)
+        call wrneutrs(45,wldnep,1)
+        do is = 1, natmi
+          if (iatm1(is).ne.0) then
+            wldna1(:,iatm1(is),0) = wldna(:,is,0)
+            ewlda1(:,iatm1(is),0) = ewlda(:,is,0)
+          end if
+        end do
+        call wrneutrs(45,wldna1,natm1)
+        call wrneutrs(45,ewlda1,natm1)
+        call wrneutrs(45,wldnm,nmoli)
         call wrneutrs(45,ewldm,nmoli)
 c*** read the wall geometry
         read (44,'(8f10.4)') (p1(1,ix), p1(2,ix),
@@ -267,8 +537,12 @@ cank-960727
         print *,'natmi,nmoli,nioni,nplsi=',
      .           natmi,nmoli,nioni,nplsi
         call rdneutrs(44,wldra,natmi)
-        call wrneutrs(45,wldra,natmi)
         call rdneutrs(44,wldrm,nmoli)
+        allocate(wldra1(nlmpgs,natm1,0:nstrai+1))
+        do is = 1, natmi
+          if (iatm1(is).ne.0) wldra1(:,iatm1(is),0) = wldra(:,is,0)
+        end do
+        call wrneutrs(45,wldra1,natm1)
         call wrneutrs(45,wldrm,nmoli)
       end if
       if(jvft44 .ge. 960727) then
@@ -284,16 +558,27 @@ cank-960727
             call rdneutrs(44,wldrm(:,:,istra),nmoli)
           end do
           do istra=1,nstrai
+            if (.not.savestratum(istra)) cycle
+            do is = 1, natmi
+              if (iatm1(is).ne.0) then
+                wldna1(:,iatm1(is),istra) = wldna(:,is,istra)
+                ewlda1(:,iatm1(is),istra) = ewlda(:,is,istra)
+                wldra1(:,iatm1(is),istra) = wldra(:,is,istra)
+              end if
+            end do
             call wrneutrs(45,wldnek(1,istra),1)
             call wrneutrs(45,wldnep(1,istra),1)
-            call wrneutrs(45,wldna(1,1,istra),natmi)
-            call wrneutrs(45,ewlda(1,1,istra),natmi)
+            call wrneutrs(45,wldna1(1,1,istra),natm1)
+            call wrneutrs(45,ewlda1(1,1,istra),natm1)
             call wrneutrs(45,wldnm(1,1,istra),nmoli)
             call wrneutrs(45,ewldm(1,1,istra),nmoli)
-            call wrneutrs(45,wldra(1,1,istra),natmi)
+            call wrneutrs(45,wldra1(1,1,istra),natm1)
             call wrneutrs(45,wldrm(1,1,istra),nmoli)
           end do
         end if
+        deallocate(wldna1)
+        deallocate(ewlda1)
+        deallocate(wldra1)
       end if
       if(jvft44 .ge. 961228) then
         call rdneutrs(44,wldpp,nplsi)
@@ -301,8 +586,21 @@ cank-960727
         call rdneutrs(44,wldpm,nmoli)
         call rdneutrs(44,wldpeb,1)
         call rdneutrs(44,wldspt,1)
-        call wrneutrs(45,wldpp,nplsi)
-        call wrneutrs(45,wldpa,natmi)
+        allocate(wldpp1(nlimps,npls1,0:nstrai+1))
+        allocate(wldpa1(nlimps,natm1,0:nstrai+1))
+        allocate(wd_old(nplsi))
+        allocate(wd_new(npls1))
+        do i = 1, nlimps
+          wd_old(1:nplsi)=wldpp(i,1:nplsi,0)
+          call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+     .     wd_old,wd_new,1)
+          wldpp1(i,1:npls1,0)=wd_new(1:npls1)
+        end do
+        do is = 1, natmi
+          if (iatm1(is).ne.0) wldpa1(:,iatm1(is),0) = wldpa(:,is,0)
+        end do
+        call wrneutrs(45,wldpp1,npls1)
+        call wrneutrs(45,wldpa1,natm1)
         call wrneutrs(45,wldpm,nmoli)
         call wrneutrs(45,wldpeb,1)
         call wrneutrs(45,wldspt,1)
@@ -315,13 +613,27 @@ cank-960727
             call rdneutrs(44,wldspt(1,istra),1)
           end do
           do istra=1,nstrai
-            call wrneutrs(45,wldpp(1,1,istra),nplsi)
-            call wrneutrs(45,wldpa(1,1,istra),natmi)
+            if (.not.savestratum(istra)) cycle
+            do i = 1, nlimps
+              wd_old(1:nplsi)=wldpp(i,1:nplsi,istra)
+              call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+     .         wd_old,wd_new,1)
+              wldpp1(i,1:npls1,istra)=wd_new(1:npls1)
+            end do
+            do is = 1, natmi
+              if (iatm1(is).ne.0)
+     >         wldpa1(:,iatm1(is),istra) = wldpa(:,is,istra)
+            end do
+            call wrneutrs(45,wldpp1(1,1,istra),npls1)
+            call wrneutrs(45,wldpa1(1,1,istra),natm1)
             call wrneutrs(45,wldpm(1,1,istra),nmoli)
             call wrneutrs(45,wldpeb(1,istra),1)
             call wrneutrs(45,wldspt(1,istra),1)
           end do
         end if
+        deallocate(wldpp1)
+        deallocate(wldpa1)
+        deallocate(wd_old,wd_new)
       end if
 cank
       if(jvftnew.le.961228) goto 99
@@ -359,26 +671,76 @@ cank
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
      ,                          i=1,nstsi)
+
+          allocate (eirtxt1(natm1+nmoli+nioni+npls1))
+          allocate (wlabsrp1(natm1+nmoli+nioni+npls1,nlimi+nstsi))
+          allocate (wd_old(nplsi))
+          allocate (wd_new(npls1))
+          do k = 1, natmi
+            if (iatm1(k).ne.0) then
+              eirtxt1(iatm1(k)) = eirtxt(k)
+              wlabsrp1(iatm1(k),:) = wlabsrp(k,:)
+            end if
+          end do
+          do k = 1, nmoli
+            eirtxt1(natm1+k) = eirtxt(natmi+k)
+            wlabsrp1(natm1+k,:) = wlabsrp(natmi+k,:)
+          end do
+          do k = 1, nioni
+            eirtxt1(natm1+nmoli+k) = eirtxt(natmi+nmoli+k)
+            wlabsrp1(natm1+nmoli+k,:) = wlabsrp(natmi+nmoli+k,:)
+          end do
+          do k = 1, nplsi
+            if (ipls1(k).ne.0) then
+              eirtxt1(natm1+nmoli+nioni+ipls1(k)) =
+     .         eirtxt(natmi+nmoli+nioni+k)
+              do i = 1, nlimi+nstsi
+              end do
+            end if
+          end do
+          do i = 1, nlimi
+            wd_old(1:nplsi)=wlabsrp(natmi+nmoli+nioni+1:
+     .                              natmi+nmoli+nioni+nplsi,i)
+            call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+     .           wd_old,wd_new,2)
+           wlabsrp1(natm1+nmoli+nioni+1:natm1+nmoli+nioni+npls1,i)=
+     .      wd_new(1:npls1) 
+          end do
+          do i = 1, nstsi
+            wd_old(1:nplsi)=wlabsrp(natmi+nmoli+nioni+1:
+     .                              natmi+nmoli+nioni+nplsi,nlim+i)
+            call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+     .           wd_old,wd_new,2)
+           wlabsrp1(natm1+nmoli+nioni+1:natm1+nmoli+nioni+npls1,nlim+i)=
+     .      wd_new(1:npls1)
+          end do
           k=0
-          write(45,'(6a13)') (eirtxt(j+k),j=1,natmi)
-          write(45,'(6e13.5)') ((wlabsrp(j+k,i),j=1,natmi),i=1,nlimi)
-          write(45,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,natmi),
+          write(45,'(6a13)') (eirtxt1(j+k),j=1,natm1)
+          write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,i),j=1,natm1),
+     ,                                                       i=1,nlimi)
+          write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,nlim+i),j=1,natm1),
      ,                                                       i=1,nstsi)
-          k=k+natmi
-          write(45,'(6a13)') (eirtxt(j+k),j=1,nmoli)
-          write(45,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nmoli),i=1,nlimi)
-          write(45,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nmoli),
+          k=k+natm1
+          write(45,'(6a13)') (eirtxt1(j+k),j=1,nmoli)
+          write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,i),j=1,nmoli),
+     ,                                                       i=1,nlimi)
+          write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,nlim+i),j=1,nmoli),
      ,                                                       i=1,nstsi)
           k=k+nmoli
-          write(45,'(6a13)') (eirtxt(j+k),j=1,nioni)
-          write(45,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nioni),i=1,nlimi)
-          write(45,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nioni),
+          write(45,'(6a13)') (eirtxt1(j+k),j=1,nioni)
+          write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,i),j=1,nioni),
+     ,                                                       i=1,nlimi)
+          write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,nlim+i),j=1,nioni),
      ,                                                       i=1,nstsi)
           k=k+nioni
-          write(45,'(6a13)') (eirtxt(j+k),j=1,nplsi)
-          write(45,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
-          write(45,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
+          write(45,'(6a13)') (eirtxt1(j+k),j=1,npls1)
+          write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,i),j=1,npls1),
+     ,                                                       i=1,nlimi)
+          write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,nlim+i),j=1,npls1),
      ,                          i=1,nstsi)
+          deallocate (eirtxt1)
+          deallocate (wlabsrp1)
+          deallocate (wd_old, wd_new)
         end if
 
         if (jvft44 .ge. 20071209) then
@@ -396,76 +758,148 @@ cank
               call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
             end do
           end if
-          call eirene_neutr(45,nnx,nny,natmi,eneutrad(:,:,:,0),
-     .                         ndx,ndy,natm,1,1)
+          allocate(eneutrad1(0:nx1+1,0:ny1+1,natm1))
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              field(0:nx+1,0:ny+1) = eneutrad(0:nx+1,0:ny+1,is,0)
+              call b2xtvc(nx, ny, nx1, ny1,
+     &         field, eneutrad1(0,0,iatm1(is)),
+     &         nncutmax, non_commensurate,
+     &         nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &         leftcut, leftcut1, rightcut, rightcut1,
+     &         bottomcut, bottomcut1, topcut, topcut1,
+     &         wrk0)
+            end if
+          end do
+          call eirene_neutr(45,nx1,ny1,natm1,eneutrad1,
+     .                         nx1,ny1,natm1,1,1)
+          deallocate(eneutrad1)
         end if
       
         if(jvft44 .ge. 20080706) then
-          READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,NSTS+1)        
-          READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,NSTS)    
-          READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,NSTS)    
-          READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,NSTS)    
-          READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,NSTS) 
-          WRITE(45,'(12i6)') (eirdiag_nds_ind(i),i=1,NSTS+1)        
-          WRITE(45,'(12i6)') (eirdiag_nds_typ(i),i=1,NSTS)    
-          WRITE(45,'(12i6)') (eirdiag_nds_srf(i),i=1,NSTS)    
-          WRITE(45,'(12i6)') (eirdiag_nds_start(i),i=1,NSTS)    
-          WRITE(45,'(12i6)') (eirdiag_nds_end(i),i=1,NSTS) 
+          READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)        
+          READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)    
+          READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)    
+          READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)    
+          READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi) 
+          WRITE(45,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)        
+          WRITE(45,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)    
+          WRITE(45,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)    
+          WRITE(45,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)    
+          WRITE(45,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi) 
       
-          NCL=eirdiag_nds_ind(NSTS+1)
-          IF(.NOT.ALLOCATED(wldna_res)) 
-     >     ALLOCATE(wldna_res(NATM,NCL), wldnm_res(NMOL,NCL),
-     .              ewlda_res(NATM,NCL), ewldm_res(NMOL,NCL), 
-     .              ewldea_res(NATM,NCL), ewldem_res(NMOL,NCL), 
-     .              ewldrp_res(NCL), ewldmr_res(NMOL,NCL),
+          NCL=eirdiag_nds_ind(nstsi+1)
+          IF(.NOT.ALLOCATED(wldna_res))
+     >     ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
+     .              ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL), 
+     .              ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL), 
+     .              ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
      .              sarea_res(NCL) ) 
  
           READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
-          READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natm),i=1,NCL)
-          READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmol),i=1,NCL) 
-          READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natm),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldm_res(j,i),j=1,nmol),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldea_res(j,i),j=1,natm),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldem_res(j,i),j=1,nmol),i=1,NCL)
-          READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL) 
-          READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmol),i=1,NCL) 
+          READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natmi),i=1,NCL)
+          READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
+          READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natmi),i=1,NCL)
+          READ (44,'(6e15.7)') ((ewldm_res(j,i),j=1,nmoli),i=1,NCL)
+          READ (44,'(6e15.7)') ((ewldea_res(j,i),j=1,natmi),i=1,NCL)
+          READ (44,'(6e15.7)') ((ewldem_res(j,i),j=1,nmoli),i=1,NCL)
+          READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
+          READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL)
+          allocate(wldna1res(natm1,NCL), ewlda1res(natm1,NCL),
+     .             ewldea1res(natm1,NCL))
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              wldna1res(iatm1(is),1:NCL) = wldna_res(is,1:NCL)
+              ewlda1res(iatm1(is),1:NCL) = ewlda_res(is,1:NCL)
+              ewldea1res(iatm1(is),1:NCL) = ewldea_res(is,1:NCL)
+            end if
+          end do
           WRITE(45,'(6e15.7)') (sarea_res(i),i=1,NCL)
-          WRITE(45,'(6e15.7)') ((wldna_res(j,i),j=1,natm),i=1,NCL)
-          WRITE(45,'(6e15.7)') ((wldnm_res(j,i),j=1,nmol),i=1,NCL) 
-          WRITE(45,'(6e15.7)') ((ewlda_res(j,i),j=1,natm),i=1,NCL)
-          WRITE(45,'(6e15.7)') ((ewldm_res(j,i),j=1,nmol),i=1,NCL)
-          WRITE(45,'(6e15.7)') ((ewldea_res(j,i),j=1,natm),i=1,NCL)
-          WRITE(45,'(6e15.7)') ((ewldem_res(j,i),j=1,nmol),i=1,NCL)
-          WRITE(45,'(6e15.7)') (ewldrp_res(i),i=1,NCL) 
-          WRITE(45,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmol),i=1,NCL) 
+          WRITE(45,'(6e15.7)') ((wldna1res(j,i),j=1,natm1),i=1,NCL)
+          WRITE(45,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
+          WRITE(45,'(6e15.7)') ((ewlda1res(j,i),j=1,natm1),i=1,NCL)
+          WRITE(45,'(6e15.7)') ((ewldm_res(j,i),j=1,nmoli),i=1,NCL)
+          WRITE(45,'(6e15.7)') ((ewldea1res(j,i),j=1,natm1),i=1,NCL)
+          WRITE(45,'(6e15.7)') ((ewldem_res(j,i),j=1,nmoli),i=1,NCL)
+          WRITE(45,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
+          WRITE(45,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL) 
+          deallocate(wldna1res, ewlda1res, ewldea1res)
         end if
 
         if(streql(solps_version,'4.3')) goto 99
         if(jvft44 .ge. 20081111) then
-          READ (44,'(6e15.7)') ((PDENA_INT(I,J),I=1,NATM),J=0,NSTRAI)
-          READ (44,'(6e15.7)') ((PDENM_INT(I,J),I=1,NMOL),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((PDENI_INT(I,J),I=1,NION),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((PDENA_INT_B2(I,J),I=1,NATM),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((PDENM_INT_B2(I,J),I=1,NMOL),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((PDENI_INT_B2(I,J),I=1,NION),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((EDENA_INT(I,J),I=1,NATM),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((EDENM_INT(I,J),I=1,NMOL),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((EDENI_INT(I,J),I=1,NION),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((EDENA_INT_B2(I,J),I=1,NATM),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((EDENM_INT_B2(I,J),I=1,NMOL),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,NION),J=0,NSTRA)
-          WRITE(45,'(6e15.7)') ((PDENA_INT(I,J),I=1,NATM),J=0,NSTRAI)
-          WRITE(45,'(6e15.7)') ((PDENM_INT(I,J),I=1,NMOL),J=0,NSTRA)
-          WRITE(45,'(6e15.7)') ((PDENI_INT(I,J),I=1,NION),J=0,NSTRA)
-          WRITE(45,'(6e15.7)') ((PDENA_INT_B2(I,J),I=1,NATM),J=0,NSTRA)
-          WRITE(45,'(6e15.7)') ((PDENM_INT_B2(I,J),I=1,NMOL),J=0,NSTRA)
-          WRITE(45,'(6e15.7)') ((PDENI_INT_B2(I,J),I=1,NION),J=0,NSTRA)
-          WRITE(45,'(6e15.7)') ((EDENA_INT(I,J),I=1,NATM),J=0,NSTRA)
-          WRITE(45,'(6e15.7)') ((EDENM_INT(I,J),I=1,NMOL),J=0,NSTRA)
-          WRITE(45,'(6e15.7)') ((EDENI_INT(I,J),I=1,NION),J=0,NSTRA)
-          WRITE(45,'(6e15.7)') ((EDENA_INT_B2(I,J),I=1,NATM),J=0,NSTRA)
-          WRITE(45,'(6e15.7)') ((EDENM_INT_B2(I,J),I=1,NMOL),J=0,NSTRA)
-          WRITE(45,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,NION),J=0,NSTRA)
+          READ (44,'(6e15.7)') ((PDENA_INT(I,J),I=1,natmi),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENM_INT(I,J),I=1,nmoli),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENI_INT(I,J),I=1,nioni),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENA_INT_B2(I,J),I=1,natmi),
+     .                                                     J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENM_INT_B2(I,J),I=1,nmoli),
+     .                                                     J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENI_INT_B2(I,J),I=1,nioni),
+     .                                                     J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENA_INT(I,J),I=1,natmi),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENM_INT(I,J),I=1,nmoli),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENI_INT(I,J),I=1,nioni),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENA_INT_B2(I,J),I=1,natmi),
+     .                                                     J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENM_INT_B2(I,J),I=1,nmoli),
+     .                                                     J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,nioni),
+     .                                                     J=0,NSTRAI)
+          allocate (
+     *     pdena1int(natm1,0:nstrai), pdenm1int(nmoli,0:nstrai),
+     *     pdeni1int(nioni,0:nstrai),
+     *     pdena1int_b2(natm1,0:nstrai), pdenm1int_b2(nmoli,0:nstrai),
+     *     pdeni1int_b2(nioni,0:nstrai),
+     *     edena1int(natm1,0:nstrai), edenm1int(nmoli,0:nstrai),
+     *     edeni1int(nioni,0:nstrai),
+     *     edena1int_b2(natm1,0:nstrai), edenm1int_b2(nmoli,0:nstrai),
+     *     edeni1int_b2(nioni,0:nstrai))
+          istra = -1
+          do j = 0, nstrai
+            if (savestratum(j)) then
+              istra = istra+1
+              do is = 1, natmi
+                if (iatm1(is).ne.0) then
+                  pdena1int(iatm1(is),istra) = pdena_int(is,j)
+                  pdena1int_b2(iatm1(is),istra) = pdena_int_b2(is,j)
+                  edena1int(iatm1(is),istra) = edena_int(is,j)
+                  edena1int_b2(iatm1(is),istra) = edena_int_b2(is,j)
+                end if
+              end do
+              pdenm1int(1:nmoli,istra) = pdenm_int(1:nmoli,j)
+              pdenm1int_b2(1:nmoli,istra) = pdenm_int_b2(1:nmoli,j)
+              edenm1int(1:nmoli,istra) = edenm_int(1:nmoli,j)
+              edenm1int_b2(1:nmoli,istra) = edenm_int_b2(1:nmoli,j)
+              pdeni1int(1:nioni,istra) = pdeni_int(1:nioni,j)
+              pdeni1int_b2(1:nioni,istra) = pdeni_int_b2(1:nioni,j)
+              edeni1int(1:nioni,istra) = edeni_int(1:nioni,j)
+              edeni1int_b2(1:nioni,istra) = edeni_int_b2(1:nioni,j)
+            end if
+          end do
+          WRITE(45,'(6e15.7)') ((PDENA1INT(I,J),I=1,natm1),J=0,NSTRA1)
+          WRITE(45,'(6e15.7)') ((PDENM1INT(I,J),I=1,nmoli),J=0,NSTRA1)
+          WRITE(45,'(6e15.7)') ((PDENI1INT(I,J),I=1,nioni),J=0,NSTRA1)
+          WRITE(45,'(6e15.7)') ((PDENA1INT_B2(I,J),I=1,natm1),
+     .                                                     J=0,NSTRA1)
+          WRITE(45,'(6e15.7)') ((PDENM1INT_B2(I,J),I=1,nmoli),
+     .                                                     J=0,NSTRA1)
+          WRITE(45,'(6e15.7)') ((PDENI1INT_B2(I,J),I=1,nioni),
+     .                                                     J=0,NSTRA1)
+          WRITE(45,'(6e15.7)') ((EDENA1INT(I,J),I=1,natm1),J=0,NSTRA1)
+          WRITE(45,'(6e15.7)') ((EDENM1INT(I,J),I=1,nmoli),J=0,NSTRA1)
+          WRITE(45,'(6e15.7)') ((EDENI1INT(I,J),I=1,nioni),J=0,NSTRA1)
+          WRITE(45,'(6e15.7)') ((EDENA1INT_B2(I,J),I=1,natm1),
+     .                                                     J=0,NSTRA1)
+          WRITE(45,'(6e15.7)') ((EDENM1INT_B2(I,J),I=1,nmoli),
+     .                                                     J=0,NSTRA1)
+          WRITE(45,'(6e15.7)') ((EDENI1INT_B2(I,J),I=1,nioni),
+     .                                                     J=0,NSTRA1)
+          deallocate (
+     *     pdena1int, pdenm1int, pdeni1int,
+     *     pdena1int_b2, pdenm1int_b2, pdeni1int_b2,
+     *     edena1int, edenm1int, edeni1int,
+     *     edena1int_b2, edenm1int_b2, edeni1int_b2)
         end if
       else  ! NLWRMSH
         if(streql(solps_version,'5.1')) then
@@ -476,15 +910,44 @@ cank
             do is = 2, natmi
               eneutrad(:,:,is,0) = 0.0_R8
             end do
-            call eirene_neutr(45,nnx,nny,natmi,eneutrad(:,:,:,0),
-     .                           ndx,ndy,natm,1,1)
+            allocate(eneutrad1(0:nx1+1,0:ny1+1,natm1))
+            do is = 1, natmi
+              if (iatm1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = eneutrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, eneutrad1(0,0,iatm1(is)),
+     &           nncutmax, non_commensurate,
+     &           nnreg, nncut, periodic_bc,
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call eirene_neutr(45,nx1,ny1,natm1,eneutrad1,
+     .                           nx1,ny1,natm1,1,1)
+            deallocate(eneutrad1)
           end if
         elseif(jvft44 .ge. 20071209) then
           do is = 1, natmi
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
           end do
-          call eirene_neutr(45,nnx,nny,natmi,eneutrad(:,:,:,0),
-     .                         ndx,ndy,natm,1,1)
+          allocate(eneutrad1(0:nx1+1,0:ny1+1,natm1))
+          do is = 1, natmi
+            if (iatm1(is).ne.0) then
+              field(0:nx+1,0:ny+1) = eneutrad(0:nx+1,0:ny+1,is,0)
+              call b2xtvc(nx, ny, nx1, ny1,
+     &         field, eneutrad1(0,0,iatm1(is)),
+     &         nncutmax, non_commensurate,
+     &         nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &         leftcut, leftcut1, rightcut, rightcut1,
+     &         bottomcut, bottomcut1, topcut, topcut1,
+     &         wrk0)
+            end if
+          end do
+          call eirene_neutr(45,nx1,ny1,natm1,eneutrad1,
+     .                         nx1,ny1,natm1,1,1)
+          deallocate(eneutrad1)
         end if
       end if
 

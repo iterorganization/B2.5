@@ -180,7 +180,7 @@ c 2002-09-11: logic revised
      2 uadia1(:,:,:,:), fna1(:,:,:,:), ua1(:,:,:), na1(:,:,:),
      3 kinrgy1(:,:,:),
      4 sputter_yield_yt(:,:,:,:), sputter_yield2_yt(:,:,:,:),
-     . sputter_tmp(:,:), cftmp(:), e_bundle_contr(:,:),
+     . sputter_tmp(:,:), cftmp(:), e_bundle_contr(:,:), epls_map(:,:),
      5 bundle_contr(:,:), bundle_frac(:,:), x1data(:,:,:,:),
      6 s1data(:,:,:,:), t1data(:,:,:,:), eta_hce_mult1(:),
      7 recyc1(:,:), erecyc1(:,:), rcion1(:,:),
@@ -713,12 +713,15 @@ c 2002-09-11: logic revised
         nmol=DEF_NMOL
         nion=DEF_NION
         npls=DEF_NPLS
-        nspz=DEF_NATM+DEF_NMOL+DEF_NION+DEF_NPLS
         nlim=DEF_NLIM
         nsts=DEF_NSTS
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
-        nlimps=DEF_NLIM+DEF_NSTS
+        N1ST=DEF_NYD+1
+        N2ND=DEF_NXD+1+DEF_NCUT+DEF_ISOEXTRA
+        N3RD=DEF_NPHID
+        CALL EIRENE_SET_PARMMOD(1)
+        CALL EIRENE_ALLOC_CLOGAU
       endif
       NATMI = NATM
       NPLSI = NPLS
@@ -4442,7 +4445,7 @@ cxpb Now we have read the species data and can identify the bundles
         allocate(ISP(NPLSI1))
         allocate(e_bundle_start(nplsi1))
         allocate(e_bundle_end(nplsi1))
-        allocate(e_bundle_contr(nplsi1,nplsi))
+        allocate(e_bundle_contr(nplsi1,npls))
         ib = 0
         do IATM = 1, NATMI1
           if (IATM.eq.NATMI1) then
@@ -5657,6 +5660,10 @@ cxpb We now rewrite the modified block 4
      .           'modules/Eirene/Database/Surfacedata/TRIM')) THEN  ! Path is valid, write it
                   WRITE(IUNOT,'(A6,A74)') 'cpath ',PATH
                   close(29)
+                ELSE
+                  WRITE(6,*) 
+     .             'Invalid CPATH specification in this environment: '//
+     .             'CPATH line removed'
                 END IF
                 WRITE(IUNOT,'(A74)') RFILNM
               ELSE
@@ -6927,6 +6934,7 @@ C  SKIP READING REST OF THIS BLOCK
             DO I = IS, JS
               IPLS = IPLS + 1
               IFLB1(IPLS) = IPLS
+              LKINDP1(IPLS) = IATM
             ENDDO
           ENDDO
           call e_bundle_transmit_r
@@ -6942,8 +6950,6 @@ C  SKIP READING REST OF THIS BLOCK
             ELSEIF (ipls1(I).GT.0) THEN
               IF (LKINDP(I).GT.0 .AND. LKINDP(I).LE.NATMI) THEN
                 LKINDP1(IPLS1(I))=IATM1(LKINDP(I))
-              ELSE
-                LKINDP1(IPLS1(I))=is1(eb2ibcr(I))
               END IF
             END IF
           END DO
@@ -7181,8 +7187,17 @@ C  HERE: EIRENE SURFACE TALLIES
 cxpb  Convert fort.44 file if needed
         inquire(file='fort.44',exist=todo)
         if (todo.and..not.streql(solps_version,'iter')) then
-          call b2yt_ngread(solps_version,eirene_format)
+          allocate(epls_map(ns1-natmi1,ns-natmi))
+          epls_map(1:ns1-natmi1,1:ns-natmi)=
+     &     e_bundle_contr(1:ns1-natmi1,1:ns-natmi)
+          call b2yt_ngread(solps_version, eirene_format,
+     &     nx1, ny1, natmi1, iatm1, ns1-natmi1, ipls1, ns-natmi,
+     &     savestratum, non_commensurate, epls_map,
+     &     jsep1, region1, leftcut1, rightcut1, bottomcut1, topcut1,
+     &     bottomiy1,
+     &     hx, hy, qc, hx1, hy1, qc1)
           write(nout(5),'(a)') 'fort.44.2'
+          deallocate(epls_map)
         endif
       else
         iatm1(1:natm) = 0

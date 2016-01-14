@@ -43,6 +43,7 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_ccoupl
+      use eirmod_clogau
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25
@@ -1117,7 +1118,11 @@ csw 09oct2012
         nsts=DEF_NSTS
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
-	nlimps=DEF_NLIM+DEF_NSTS
+        N1ST=DEF_NYD+1
+        N2ND=DEF_NXD+1+DEF_NCUT+DEF_ISOEXTRA
+        N3RD=DEF_NPHID
+        CALL EIRENE_SET_PARMMOD(1)
+        CALL EIRENE_ALLOC_CLOGAU
 #else
         call xerrab
      &   ('Compile code with B25_EIRENE option for coupled runs')

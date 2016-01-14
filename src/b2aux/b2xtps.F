@@ -219,13 +219,13 @@
       do is = 0, ns-1
         do is1 = 0, ns1-1
           if (bundle_frac(is1,is).ge.1.0_R8) then  ! simple case
-            call b2xtfx (nx, ny, nx1, ny1, fna(-1,-1,0,is), 
+            call b2xtfx (nx, ny, nx1, ny1, fna(-1,-1,0,is),
      &        fna1(-1,-1,0,is1), nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hy1, qc1)
-            call b2xtfy (nx, ny, nx1, ny1, fna(-1,-1,1,is), 
+            call b2xtfy (nx, ny, nx1, ny1, fna(-1,-1,1,is),
      &        fna1(-1,-1,1,is1), 
      &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,

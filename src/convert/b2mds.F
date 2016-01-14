@@ -156,7 +156,11 @@ c
         nsts=DEF_NSTS
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
-        nlimps=DEF_NLIM+DEF_NSTS
+        N1ST=DEF_NYD+1
+        N2ND=DEF_NXD+1+DEF_NCUT+DEF_ISOEXTRA
+        N3RD=DEF_NPHID
+        CALL EIRENE_SET_PARMMOD(1)
+        CALL EIRENE_ALLOC_CLOGAU
       endif
 #endif
       NFLAI = NFL

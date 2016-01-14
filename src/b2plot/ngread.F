@@ -43,6 +43,7 @@ c
       real (kind=R8) :: recyctmp
       real (kind=R8), allocatable :: ft44data(:,:)
       character charns*3
+      logical ex
       data use_recyceir /1/
 
 *  -- PROCEDURES --
@@ -82,6 +83,8 @@ C
       call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
       allocate(ft44data(0:nx+1,0:ny+1))
+      inquire(file='input.dat',exist=ex)
+      if (.not.ex) inquire(file='fort.33',exist=nlwrmsh)
 c
 * labels
 * neutral atoms
@@ -401,44 +404,51 @@ cank
         end if
       
         if(jvft44 .ge. 20080706) then
-          READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,NSTS+1)        
-          READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,NSTS)    
-          READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,NSTS)    
-          READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,NSTS)    
-          READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,NSTS) 
+          READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)        
+          READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)    
+          READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)    
+          READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)    
+          READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi) 
       
-          NCL=eirdiag_nds_ind(NSTS+1)
+          NCL=eirdiag_nds_ind(nstsi+1)
           IF(.NOT.ALLOCATED(wldna_res)) 
-     >     ALLOCATE(wldna_res(NATM,NCL), wldnm_res(NMOL,NCL),
-     .              ewlda_res(NATM,NCL), ewldm_res(NMOL,NCL), 
-     .              ewldea_res(NATM,NCL), ewldem_res(NMOL,NCL), 
-     .              ewldrp_res(NCL), ewldmr_res(NMOL,NCL),
+! FIXME: replace NATM, etc.. by actual values from file 
+     >     ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
+     .              ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL), 
+     .              ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL), 
+     .              ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
      .              sarea_res(NCL) ) 
  
           READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
-          READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natm),i=1,NCL)
-          READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmol),i=1,NCL) 
-          READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natm),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldm_res(j,i),j=1,nmol),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldea_res(j,i),j=1,natm),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldem_res(j,i),j=1,nmol),i=1,NCL)
-          READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL) 
-          READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmol),i=1,NCL) 
+          READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natmi),i=1,NCL)
+          READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
+          READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natmi),i=1,NCL)
+          READ (44,'(6e15.7)') ((ewldm_res(j,i),j=1,nmoli),i=1,NCL)
+          READ (44,'(6e15.7)') ((ewldea_res(j,i),j=1,natmi),i=1,NCL)
+          READ (44,'(6e15.7)') ((ewldem_res(j,i),j=1,nmoli),i=1,NCL)
+          READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
+          READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL) 
         end if
 
         if(jvft44 .ge. 20081111) then
-          READ (44,'(6e15.7)') ((PDENA_INT(I,J),I=1,NATM),J=0,NSTRAI)
-          READ (44,'(6e15.7)') ((PDENM_INT(I,J),I=1,NMOL),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((PDENI_INT(I,J),I=1,NION),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((PDENA_INT_B2(I,J),I=1,NATM),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((PDENM_INT_B2(I,J),I=1,NMOL),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((PDENI_INT_B2(I,J),I=1,NION),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((EDENA_INT(I,J),I=1,NATM),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((EDENM_INT(I,J),I=1,NMOL),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((EDENI_INT(I,J),I=1,NION),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((EDENA_INT_B2(I,J),I=1,NATM),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((EDENM_INT_B2(I,J),I=1,NMOL),J=0,NSTRA)
-          READ (44,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,NION),J=0,NSTRA)
+          READ (44,'(6e15.7)') ((PDENA_INT(I,J),I=1,natmi),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENM_INT(I,J),I=1,nmoli),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENI_INT(I,J),I=1,nioni),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENA_INT_B2(I,J),I=1,natmi),
+     .                                                     J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENM_INT_B2(I,J),I=1,nmoli),
+     .                                                     J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((PDENI_INT_B2(I,J),I=1,nioni),
+     .                                                     J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENA_INT(I,J),I=1,natmi),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENM_INT(I,J),I=1,nmoli),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENI_INT(I,J),I=1,nioni),J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENA_INT_B2(I,J),I=1,natmi),
+     .                                                     J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENM_INT_B2(I,J),I=1,nmoli),
+     .                                                     J=0,NSTRAI)
+          READ (44,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,nioni),
+     .                                                     J=0,NSTRAI)
         end if
       else  ! NLWRMSH
         if(jvft44 .ge. 20071209) then
