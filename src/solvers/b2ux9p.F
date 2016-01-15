@@ -253,7 +253,7 @@
 	   do ix=-1,nx
 	     ner=0
 	     i=i+1
-*   ..Case (ix-1,iy)
+*   ..Case of left neighbor
 	     jak = 2+leftix(ix,iy)+(2+leftiy(ix,iy)-1)*nxp2
 	     if( aa9(ix,iy,-1) .ne. 0.0e0_R8 ) then
 	       k = k+1
@@ -276,7 +276,7 @@
 	       ja(k) = i
 	       ner = ner+1
 	     endif
-*   ..Case (ix+1,iy)
+*   ..Case of right neighbor
            jak = 2+rightix(ix,iy)+(2+rightiy(ix,iy)-1)*nxp2
 	     if( aa9(ix,iy,1) .ne. 0.0e0_R8 ) then
 	       k = k+1
@@ -288,7 +288,7 @@
              ja(k) = jak
 	       ner = ner+1
 	     endif
-*   ..Case (ix,iy+1)
+*   ..Case of top neighbor
 	     if( aa9(ix,iy,3) .ne. 0.0e0_R8 ) then
 	       k = k+1
 	       a(k) = aa9(ix,iy,3)
@@ -299,7 +299,7 @@
              ja(k) = 2+topix(ix,iy)+(2+topiy(ix,iy)-1)*nxp2
 	       ner = ner+1
 	     endif
-*   ..Case (ix,iy-1)
+*   ..Case of bottom neighbor
 	     if( aa9(ix,iy,-3) .ne. 0.0e0_R8 ) then
 	       k = k+1
 	       a(k) = aa9(ix,iy,-3)

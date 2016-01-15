@@ -1119,22 +1119,26 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
 		    vacuum_corr = (vacuum_communication_beta(is,ivac) *
      1		     ave_pressure - ti(ix,iy)*na(ix,iy,is)) / ave_temp *
      2		     vacuum_communication_alpha(is,ivac)
-		    sna0(ix,iy-1,0,is) = sna0(ix,iy-1,0,is) +
+		    sna0(bottomix(ix,iy),bottomiy(ix,iy),0,is) =
+     .               sna0(bottomix(ix,iy),bottomiy(ix,iy),0,is) +
      1		     vacuum_corr * gs(ix,iy,2)
 		  else if(vacuum_communication_method(ivac).eq.2) then
 ! try to set a density based on pressure equality
 		    vacuum_corr = vacuum_communication_beta(is,ivac) *
      1		     ave_pressure / ti(ix,iy-1)
-		    sna0(ix,iy-1,0,is) = sna0(ix,iy-1,0,is) +
+		    sna0(bottomix(ix,iy),bottomiy(ix,iy),0,is) =
+     .               sna0(bottomix(ix,iy),bottomiy(ix,iy),0,is) +
      1		     vacuum_communication_alpha(is,ivac) *
      2		     vacuum_corr * gs(ix,iy,2)
-		    sna0(ix,iy-1,1,is) = sna0(ix,iy-1,1,is) -
+		    sna0(bottomix(ix,iy),bottomiy(ix,iy),1,is) =
+     .               sna0(bottomix(ix,iy),bottomiy(ix,iy),1,is) -
      1		     vacuum_communication_alpha(is,ivac) * gs(ix,iy,2)
 		  else if(vacuum_communication_method(ivac).eq.3) then
 ! try to set a density based on density equality
 		    vacuum_corr = vacuum_communication_beta(is,ivac) *
      1		     ave_density
-		    sna0(ix,iy-1,0,is) = sna0(ix,iy-1,0,is) +
+		    sna0(bottomix(ix,iy),bottomiy(ix,iy),0,is) =
+     .               sna0(bottomix(ix,iy),bottomiy(ix,iy),0,is) +
      1		     vacuum_communication_alpha(is,ivac) *
      2		     vacuum_corr * gs(ix,iy,2)
 		    sna0(ix,iy-1,1,is) = sna0(ix,iy-1,1,is) -

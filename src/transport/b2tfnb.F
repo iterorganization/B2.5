@@ -44,7 +44,7 @@
      2  fnb_he(-1:nx,-1:ny,0:1),                                     !srv 21.01.00
      &  fnbPSch(-1:nx,-1:ny,0:1), fnb_mdf(-1:nx,-1:ny,0:1),          !srv 13.10.06
      &  conb(-1:nx,-1:ny,0:1,0:4), ubdia(-1:nx,-1:ny,0:1),           !srv 13.10.06          
-     &  vbecrb(-1:nx,-1:ny,0:1), vbdia(-1:nx,-1:ny,0:1),                 !xpb
+     &  vbecrb(-1:nx,-1:ny,0:1), vbdia(-1:nx,-1:ny,0:1),             !xpb
      &  wbdia(-1:nx,-1:ny,0:1), kbnrgy(-1:nx,-1:ny),
      &  fllim0fnb(-1:nx,-1:ny,0:1)
 *   ..common blocks

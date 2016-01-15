@@ -428,16 +428,17 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
       if(coriolis.eq.0) then
         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,
      &   qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                     !srv 01.07.09
-     &   na, te, ti, po, fna, cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,  !srv 02.07.08
-     &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
-     &   resmt, corua, corut, pcca, pccm, ier0)
+     &   na, te, ti, po, fna,
+     &   cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                       !srv 02.07.08
+     &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,
+     &   resmo, resmt, corua, corut, pcca, pccm, ier0)
       else
         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,
      &   qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                     !srv 23.07.99 09.01.01 01.07.09
      &   na, te, ti, po, fna_fcor, 
      &   cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                       !srv 19.07.02
-     &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,     !srv 23.07.99 01.10.99 04.10.99 09.01.01
-     &   resmt, corua, corut, pcca, pccm, ier0)                          !srv 23.07.99 10.11.02 23.12.03
+     &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,            !srv 23.07.99 01.10.99 04.10.99 09.01.01
+     &   resmo, resmt, corua, corut, pcca, pccm, ier0)                   !srv 23.07.99 10.11.02 23.12.03
       endif
 
       call xertst (ier0.eq.0, 'error return from b2npmo') 

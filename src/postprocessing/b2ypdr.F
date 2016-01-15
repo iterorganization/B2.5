@@ -438,10 +438,10 @@
 *     gs - (-1:nx,-1:ny,0:2) real*8 array.
 *     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
 *     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
-*     face between the (ix-1,iy) and the (ix,iy) cell. For ix.eq.-1,
+*     face between the (ix,iy) cell and its left neighbor. For ix.eq.-1,
 *     gsx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), gsy(ix,iy) specifies the area of the
-*     face between the (ix,iy-1) and the (ix,iy) cell. For iy.eq.-1,
+*     face between the (ix,iy) cell and its bottom neighbor. For iy.eq.-1,
 *     gsy(-1:nx,iy) will hold 0.
 *     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
 *     (ix,iy) cell normal to the third (ignorable) coordinate.
@@ -499,39 +499,39 @@
 *     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
 *     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fnax(ix,iy,is) specifies
 *     the flux of atoms of species (is) through the face between the
-*     (ix-1,iy) and (ix,iy) cells.
+*     (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, fnax(ix,-1:ny,0:ns-1) will hold 0.
 *     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fnay(ix,iy,is) specifies
 *     the flux of atoms of species (is) through the face between the
-*     (ix,iy-1) and (ix,iy) cells.
+*     (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fnay(-1:nx,iy,0:ns-1) will hold 0.
 *
 *     fhe - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhex(,)=fhe(,,0) and fhey(,)=fhe(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fhex(ix,iy) specifies the electron
-*     heat flux through the face between the (ix-1,iy) and (ix,iy)
-*     cells. For ix.eq.-1, fhex(ix,-1:ny) will hold 0.
+*     heat flux through the face between the (ix,iy) cell and its
+*     left neighbor. For ix.eq.-1, fhex(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fhey(ix,iy) specifies the electron
-*     heat flux through the face between the (ix,iy-1) and (ix,iy)
-*     cells. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
+*     heat flux through the face between the (ix,iy) cell and its
+*     bottom neighbor. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
 *
 *     fhi - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhix(,)=fhi(,,0) and fhiy(,)=fhi(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fhix(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix-1,iy) and (ix,iy)
-*     cells. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
+*     heat flux through the face between the (ix,iy) cell and its
+*     left neighbor. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fhiy(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix-1,iy) and (ix,iy)
-*     cells. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
+*     heat flux through the face between the (ix,iy) cell and its
+*     bottom neighbor. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
 *
 *     fch - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fchx(,)=fch(,,0) and fchy(,)=fch(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchx(ix,iy) specifies the electric
-*     current through the face between the (ix-1,iy) and (ix,iy) cells.
-*     For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
+*     current through the face between the (ix,iy) cell and its left
+*     neighbor. For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchy(ix,iy) specifies the electric
-*     current through the face between the (ix,iy-1) and (ix,iy) cells.
-*     For iy.eq.-1, fchy(-1:nx,iy) will hold 0.
+*     current through the face between the (ix,iy) cell and its bottom
+*     neighbor. For iy.eq.-1, fchy(-1:nx,iy) will hold 0.
 *
 *     lblgm - character*120
 *     lblgm identifies the instance of the program employed to prepare

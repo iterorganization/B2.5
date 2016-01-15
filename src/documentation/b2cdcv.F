@@ -102,10 +102,10 @@
 *     gs - (-1:nx,-1:ny,0:2) real*8 array.
 *     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
 *     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
-*     face between the (ix-1,iy) and the (ix,iy) cell. For ix.eq.-1,
+*     face between the (ix,iy) cell and its left neighbor. For ix.eq.-1,
 *     gsx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), gsy(ix,iy) specifies the area of the
-*     face between the (ix,iy-1) and the (ix,iy) cell. For iy.eq.-1,
+*     face between the (ix,iy) cell and its bottom neighbor. For iy.eq.-1,
 *     gsy(-1:nx,iy) will hold 0.
 *     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
 *     (ix,iy) cell normal to the third (ignorable) coordinate.
@@ -248,22 +248,22 @@
 *     (Let fnax(,,)=fna(,,0,) and fnay(,,)=fna(,,1,).)
 *     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fnax(ix,iy,is) specifies
 *     the flux of atoms of species (is) through the face between the
-*     (ix-1,iy) and (ix,iy) cells.
+*     (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, fnax(ix,-1:ny,0:ns-1) will hold 0.
 *     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fnay(ix,iy,is) specifies
 *     the flux of atoms of species (is) through the face between the
-*     (ix,iy-1) and (ix,iy) cells.
+*     (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fnay(-1:nx,iy,0:ns-1) will hold 0.
 *
 *     fna_mdf - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let fnax_mdf(,,)=fna_mdf(,,0,) and fnay_mdf(,,)=fna_mdf(,,1,).)
 *     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fnax_mdf(ix,iy,is) specifies
 *     the modified flux of atoms of species (is) through the face between
-*     the (ix-1,iy) and (ix,iy) cells.
+*     the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, fnax_mdf(ix,-1:ny,0:ns-1) will hold 0.
 *     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fnay_mdf(ix,iy,is) specifies
 *     the modified flux of atoms of species (is) through the face between
-*     the (ix,iy-1) and (ix,iy) cells.
+*     the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fnay_mdf(-1:nx,iy,0:ns-1) will hold 0.
 *     fna_mdf is equal fna for runs without drifts. 
 *
@@ -271,11 +271,11 @@
 *     (Let fna_fcorx(,,)=fna_fcor(,,0,) and fna_fcory(,,)=fna_fcor(,,1,).)
 *     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fna_fcorx(ix,iy,is) specifies
 *     the flux of atoms of species (is) for calculating momentum transport
-*     through the face between the (ix-1,iy) and (ix,iy) cells.
+*     through the face between the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, fna_fcorx(ix,-1:ny,0:ns-1) will hold 0.
 *     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fna_fcory(ix,iy,is) specifies
 *     the flux of atoms of species (is) for calculating momentum transport
-*     through the face between the(ix,iy-1) and (ix,iy) cells.
+*     through the face between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fna_fcory(-1:nx,iy,0:ns-1) will hold 0.
 *     fna_fcor takes into account Coriolis force.
 *     fna_fcor is equal fna for runs without drifts. 
@@ -283,48 +283,48 @@
 *     fhe - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhex(,)=fhe(,,0) and fhey(,)=fhe(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fhex(ix,iy) specifies the electron
-*     heat flux through the face between the (ix-1,iy) and (ix,iy)
-*     cells. For ix.eq.-1, fhex(ix,-1:ny) will hold 0.
+*     heat flux through the face between the (ix,iy) cell and
+*     its left neighbor. For ix.eq.-1, fhex(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fhey(ix,iy) specifies the electron
-*     heat flux through the face between the (ix,iy-1) and (ix,iy)
-*     cells. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
+*     heat flux through the face between the (ix,iy) cell and
+*     its bottom neighbor. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
 *
 *     fhe_mdf - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhex_mdf(,)=fhe_mdf(,,0) and fhey_mdf(,)=fhe_mdf(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fhex_mdf(ix,iy) specifies the modified
-*     electron heat flux through the face between the (ix-1,iy) and (ix,iy)
-*     cells. For ix.eq.-1, fhex_mdf(ix,-1:ny) will hold 0.
+*     electron heat flux through the face between the (ix,iy) cell
+*     and its left neighbor. For ix.eq.-1, fhex_mdf(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fhey_mdf(ix,iy) specifies the modified
-*     electron heat flux through the face between the (ix,iy-1) and (ix,iy)
-*     cells. For iy.eq.-1, fhey_mdf(-1:nx,iy) will hold 0.
+*     electron heat flux through the face between the (ix,iy) cell and
+*     its bottom neighbor. For iy.eq.-1, fhey_mdf(-1:nx,iy) will hold 0.
 *     fhe_mdf is equal fhe for runs without drifts. 
 *
 *     fhi - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhix(,)=fhi(,,0) and fhiy(,)=fhi(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fhix(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix-1,iy) and (ix,iy)
-*     cells. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
+*     heat flux through the face between the (ix,iy) cell
+*     and its left neighbor. For ix.eq.-1, fhix(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fhiy(ix,iy) specifies the all atom
-*     heat flux through the face between the (ix,iy-1) and (ix,iy)
-*     cells. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
+*     heat flux through the face between the (ix,iy) cell and its
+*     bottom neighbor. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
 *
 *     fhi_mdf - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhix_mdf(,)=fhi_mdf(,,0) and fhiy_mdf(,)=fhi_mdf(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fhix_mdf(ix,iy) specifies the 
-*     modified all atom heat flux through the face between the (ix-1,iy)
-*      and (ix,iy) cells. For ix.eq.-1, fhix_mdf(ix,-1:ny) will hold 0.
+*     modified all atom heat flux through the face between the (ix,iy) cell
+*     and its left neighbor. For ix.eq.-1, fhix_mdf(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fhiy_mdf(ix,iy) specifies the modified
-*     all atom heat flux through the face between the (ix-1,iy) and (ix,iy)
-*     cells. For iy.eq.-1, fhiy_mdf(-1:nx,iy) will hold 0.
+*     all atom heat flux through the face between the (ix,iy) cell and
+*     its bottom neighbor. For iy.eq.-1, fhiy_mdf(-1:nx,iy) will hold 0.
 *
 *     fch - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fchx(,)=fch(,,0) and fchy(,)=fch(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchx(ix,iy) specifies the electric
-*     current through the face between the (ix-1,iy) and (ix,iy) cells.
-*     For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
+*     current through the face between the (ix,iy) cell and its left
+*     neighbor. For ix.eq.-1, fchx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchy(ix,iy) specifies the electric
-*     current through the face between the (ix,iy-1) and (ix,iy) cells.
-*     For iy.eq.-1, fchy(-1:nx,iy) will hold 0.
+*     current through the face between the (ix,iy) cell and its bottom
+*     neighbor. For iy.eq.-1, fchy(-1:nx,iy) will hold 0.
 *
 *   ..auxiliary variables describing the plasma state
 *
@@ -351,11 +351,11 @@
 *     precisely: (Let fnbx(,)=fnb(,,0) and fnby(,)=fnb(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fnbx(ix,iy) specifies the flux of
 *     the selected atomic species through the face between the
-*     (ix-1,iy) and the (ix,iy) cell.
+*     (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, fnbx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fnby(ix,iy) specifies the flux of
 *     the selected atomic species through the face between the
-*     (ix,iy-1) and the (ix,iy) cell.
+*     (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fnby(-1:nx,iy) will hold 0.
 *     fnb_mdf is equal fnb for runs without drifts. 
 *
@@ -365,11 +365,11 @@
 *     precisely: (Let fnbx_mdf(,)=fnb_mdf(,,0) and fnby_mdf(,)=fnb_mdf(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fnbx_mdf(ix,iy) specifies the modified
 *     flux of the selected atomic species through the face between the
-*     (ix-1,iy) and the (ix,iy) cell.
+*     (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, fnbx_mdf(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fnby_mdf(ix,iy) specifies the modified
 *     flux of the selected atomic species through the face between the
-*     (ix,iy-1) and the (ix,iy) cell.
+*     (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fnby_mdf(-1:nx,iy) will hold 0.
 *
 *     fnb_fcor - (-1:nx,-1:ny,0:1) real*8 array.
@@ -379,11 +379,11 @@
 *     precisely: (Let fnbx_fcor(,)=fnb_fcor(,,0) and fnby_fcor(,)=fnb_fcor(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fnb_fcorx(ix,iy) specifies the flux of
 *     the selected atomic species through the face between the
-*     (ix-1,iy) and the (ix,iy) cell.
+*     (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, fnb_fcorx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fnb_fcory(ix,iy) specifies the flux of
 *     the selected atomic species through the face between the
-*     (ix,iy-1) and the (ix,iy) cell.
+*     (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fnb_fcory(-1:nx,iy) will hold 0.
 *     fnb_fcor is equal fnb for runs without drifts. 
 *
@@ -435,22 +435,22 @@
 *     fne - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fnex(,)=fne(,,0) and fney(,)=fne(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fnex(ix,iy) specifies the flux of
-*     electrons through the face between the (ix-1,iy) and the (ix,iy)
-*     cell. For ix.eq.-1, fnex(ix,-1:ny) will hold 0.
+*     electrons through the face between the (ix,iy) cell and its
+*     left neighbor. For ix.eq.-1, fnex(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fney(ix,iy) specifies the flux of
-*     electrons through the face between the (ix,iy-1) and the (ix,iy)
-*     cell. For iy.eq.-1, fney(-1:nx,iy) will hold 0.
+*     electrons through the face between the (ix,iy) cell and its
+*     bottom neighbor. For iy.eq.-1, fney(-1:nx,iy) will hold 0.
 *     The defining expression for fne is
 *       fne(,,) = (sum is :: rza(,,is)*fna(,,,is))-(1/qe)*fch(,,)
 *
 *     fni - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fnix(,)=fni(,,0) and fniy(,)=fni(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fnix(ix,iy) specifies the flux of
-*     atoms (all species) through the face between the (ix-1,iy) and
-*     the (ix,iy) cell. For ix.eq.-1, fnix(ix,-1:ny) will hold 0.
+*     atoms (all species) through the face between the (ix,iy) cell
+*     and its left neighbor. For ix.eq.-1, fnix(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fniy(ix,iy) specifies the flux of
-*     atoms (all species) through the face between the (ix,iy-1) and
-*     the (ix,iy) cell. For iy.eq.-1, fniy(-1:nx,iy) will hold 0.
+*     atoms (all species) through the face between the (ix,iy) cell
+*     and its bottom neighbor. For iy.eq.-1, fniy(-1:nx,iy) will hold 0.
 *     The defining expression for fni is
 *       fni(,,) = (sum is :: fna(,,,is))
 *
@@ -458,11 +458,11 @@
 *     (Let fchvisparx(,)=fchvispar(,,0) and fchvispary(,)=fchvispar(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchvisparx(ix,iy) specifies the
 *     electric current driven by parallel viscosity through the face
-*     between the (ix-1,iy) and (ix,iy) cells.
+*     between the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, fchvisparx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchvispary(ix,iy) specifies the
 *     electric current driven by parallel viscosity through the face
-*     between the (ix,iy-1) and (ix,iy) cells.
+*     between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fchvispary(-1:nx,iy) will hold 0.
 *
 *     fchvisq - (-1:nx,-1:ny,0:1) real*8 array.
@@ -470,60 +470,60 @@
 *     of the viscosity tensor which is connected with the heat fluxes.
 *     (Let fchvisqx(,)=fchvisq(,,0) and fchvisqy(,)=fchvisq(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchvisqx(ix,iy) specifies the current
-*     through the face between the (ix-1,iy) and (ix,iy) cells.
+*     through the face between the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, fchvisqx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchvisqy(ix,iy) specifies the current
-*     through the face between the (ix,iy-1) and (ix,iy) cells.
+*     through the face between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fchvisqy(-1:nx,iy) will hold 0.
 *
 *     fchinert - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fchinertx(,)=fchinert(,,0) and fchinerty(,)=fchinert(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchinertx(ix,iy) specifies the
 *     contributions from inertia and gyroviscosity current through
-*     the face between the (ix-1,iy) and (ix,iy) cells.
+*     the face between the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, fchinertx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchinerty(ix,iy) specifies the
 *     contributions from inertia and gyroviscosity current through
-*     the face between the (ix,iy-1) and (ix,iy) cells.
+*     the face between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fchinerty(-1:nx,iy) will hold 0.
 *
 *     fchanml - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fchanmlx(,)=fchanml(,,0) and fchanmly(,)=fchanml(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchanmlx(ix,iy) specifies the
-*     anomalous current through the face between the (ix-1,iy)
-*     and (ix,iy) cells.
+*     anomalous current through the face between the (ix,iy) cell
+*     and its left neighbor.
 *     For ix.eq.-1, fchanmlx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchanmly(ix,iy) specifies the
-*     amomalous current through the face between the (ix,iy-1)
-*     and (ix,iy) cells.
+*     amomalous current through the face between the (ix,iy) cell
+*     and its bottom neighbor.
 *     For iy.eq.-1, fchanmly(-1:nx,iy) will hold 0.
 *
 *     fchdia - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fchdiax(,)=fchdia(,,0) and fchdiay(,)=fchdia(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchdiax(ix,iy) specifies the
 *     modified diamagnetic current through the face between 
-*     the (ix-1,iy) and (ix,iy) cells.
+*     the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, fchdiax(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchdiay(ix,iy) specifies the
 *     modified diamagnetic current through the face between
-*     the (ix,iy-1) and (ix,iy) cells.
+*     the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fchdiay(-1:nx,iy) will hold 0.
 *
 *     fchin - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fchinx(,)=fchin(,,0) and fchiny(,)=fchin(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchinx(ix,iy) specifies the
 *     contribution from ion-neutral friction through the face between 
-*     the (ix-1,iy) and (ix,iy) cells.
+*     the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, fchinx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), fchiny(ix,iy) specifies the
 *     contribution from ion-neutral friction through the face between
-*     the (ix,iy-1) and (ix,iy) cells.
+*     the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fchiny(-1:nx,iy) will hold 0.
 *
 *     fch_p - (-1:nx,-1:ny,0:1) real*8 array.
 *     For (ix,iy) in (0:nx,-1:ny), fch_p(ix,iy,0) specifies the product of
 *     the parallel electric current and the poloidal magnetic field component
-*     sign through the face between the (ix-1,iy) and (ix,iy) cells.
+*     sign through the face between the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, fch_p(ix,-1:ny,0) will hold 0. 
 *     fch_p(-1:nx,-1:ny,1) = 0
 *
@@ -532,8 +532,8 @@
 *     For (ix,iy) in (-1:nx,-1:ny), fchvisperx(ix,iy) = 0.
 *     For (ix,iy) in (-1:nx, 0:ny), fchvispery(ix,iy) specifies the
 *     electric current connected with contribution from
-*     the perpendicular viscosity through the face between the (ix,iy-1) 
-*     and (ix,iy) cells.
+*     the perpendicular viscosity through the face between the (ix,iy) cell
+*     and its bottom neighbor.
 *     For iy.eq.-1, fchvispery(-1:nx,iy) will hold 0.
 *
 *     uadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
@@ -1378,44 +1378,44 @@
 *     (Let cdnax=cdna(,,0,) and cdnay=cdna(,,1,).)
 *     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), cdnax(ix,iy,is) specifies
 *     the particle diffusivity w.r.t. grad(na) of species (is) between
-*     the (ix-1,iy) and the (ix,iy) cell. This coefficient enters into
+*     the (ix,iy) cell and its left neighbor. This coefficient enters into
 *     the expression for the particle flux in the form
 *       -cdnax(ix,iy,is)*(na(ix,iy,is)-na(ix-1,iy,is))
 *     For ix.eq.-1, cdnax(ix,-1:ny,0:ns-1) will hold 0.
 *     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), cdnay(ix,iy,is) specifies
 *     the particle diffusivity w.r.t. grad(na) of species (is) between
-*     the (ix,iy-1) and the (ix,iy) cell. This coefficient enters into
+*     the (ix,iy) cell and its bottom neighbor. This coefficient enters into
 *     the expression for the particle flux in the form
-*       -cdnay(ix,iy,is)*(na(ix,iy,is)-na(ix,iy-1,is))
+*       -cdnay(ix,iy,is)*(na(ix,iy,is)-na(bottom(ix,iy),is))
 *     For iy.eq.-1, cdnay(-1:nx,iy,0:ns-1) will hold 0.
 *
 *     cdpa - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let cdpax=cdpa(,,0,) and cdpay=cdpa(,,1,).)
 *     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), cdpax(ix,iy,is) specifies
 *     the particle diffusivity w.r.t. grad(pa) of species (is) between
-*     the (ix-1,iy) and the (ix,iy) cell. This coefficient enters into
+*     the (ix,iy) cell and its left neighbor. This coefficient enters into
 *     the expression for the particle flux in the form
 *       -cdpax(ix,iy,is)*(pa(ix,iy,is)-pa(ix-1,iy,is))
 *     For ix.eq.-1, cdpax(ix,-1:ny,0:ns-1) will hold 0.
 *     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), cdpay(ix,iy,is) specifies
 *     the particle diffusivity w.r.t. grad(pa) of species (is) between
-*     the (ix,iy-1) and the (ix,iy) cell. This coefficient enters into
+*     the (ix,iy) cell and its bottom neighbor. This coefficient enters into
 *     the expression for the particle flux in the form
-*       -cdpay(ix,iy,is)*(pa(ix,iy,is)-pa(ix,iy-1,is))
+*       -cdpay(ix,iy,is)*(pa(ix,iy,is)-pa(bottom(ix,iy),is))
 *     For iy.eq.-1, cdpay(-1:nx,iy,0:ns-1) will hold 0.
 *
 *     cvla - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let cvlax=cvla(,,0,) and cvlay=cvla(,,1,).)
 *     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), cvlax(ix,iy,is) specifies
 *     the surface-integrated anomalous velocity of species (is) between
-*     the (ix-1,iy) and the (ix,iy) cell. This coefficient enters into
+*     the (ix,iy) cell and its left neighbor. This coefficient enters into
 *     the expression for the particle flux in the form
 *       cvlax(ix,iy,is)*(na)
 *     in which (na) involves some interpolation to cell faces.
 *     For ix.eq.-1, cvlax(ix,-1:ny,0:ns-1) will hold 0.
 *     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), cvlay(ix,iy,is) specifies
 *     the surface-integrated anomalous velocity of species (is) between
-*     the (ix,iy-1) and the (ix,iy) cell. This coefficient enters into
+*     the (ix,iy) cell and its bottom neighbor. This coefficient enters into
 *     the expression for the particle flux in the form
 *       cvlay(ix,iy,is)*(na)
 *     in which (na) involves some interpolation to cell faces.
@@ -1424,40 +1424,40 @@
 *     cvsa - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let cvsax=cvsa(,,0,) and cvsay=cvsa(,,1,).)
 *     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), cvsax(ix,iy,is) specifies
-*     the viscous conductance of species (is) between the (ix-1,iy) and
-*     the (ix,iy) cell.
+*     the viscous conductance of species (is) between the (ix,iy) cell
+*     and its left neighbor.
 *     For ix.eq.-1, cvsax(ix,-1:ny,0:ns-1) will hold 0.
 *     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), cvsay(ix,iy,is) specifies
-*     the viscous conductance of species (is) between the (ix,iy-1) and
-*     the (ix,iy) cell.
+*     the viscous conductance of species (is) between the (ix,iy) cell
+*     and its bottom neighbor.
 *     For iy.eq.-1, cvsay(-1:nx,iy,0:ns-1) will hold 0.
 *
 *     chce - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let chcex=chce(,,0) and chcey=chce(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), chcex(ix,iy) specifies the electron
-*     thermal conductance between the (ix-1,iy) and the (ix,iy) cell.
+*     thermal conductance between the (ix,iy) cell and its left neighbor.
 *     This coefficient enters into the expression for the electron
 *     heat flux in the form
-*       -chcex(ix,iy)*(te(ix,iy)-te(ix-1,iy)) .
+*       -chcex(ix,iy)*(te(ix,iy)-te(left(ix,iy))) .
 *     For ix.eq.-1, chcex(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), chcey(ix,iy) specifies the electron
-*     thermal conductance between the (ix,iy-1) and the (ix,iy) cell.
+*     thermal conductance between the (ix,iy) cell and its bottom neighbor.
 *     This coefficient enters into the expression for the electron
 *     heat flux in the form
-*       -chcey(ix,iy)*(te(ix,iy)-te(ix,iy-1)) .
+*       -chcey(ix,iy)*(te(ix,iy)-te(bottom(ix,iy))) .
 *     For iy.eq.-1, chcey(-1:nx,iy) will hold 0.
 *
 *     chve - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let chvex=chve(,,0) and chvey=chve(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), chvex(ix,iy) specifies the electron
-*     thermal strange velocity between the (ix-1,iy) and the (ix,iy)
-*     cell. This coefficient enters into the expression for the
+*     thermal strange velocity between the (ix,iy) cell and its left
+*     neighbor. This coefficient enters into the expression for the
 *     electron heat flux in the form  chvex*ne*te , interpolated to
 *     cell faces in a suitable manner.
 *     For ix.eq.-1, chvex(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), chvey(ix,iy) specifies the electron
-*     thermal strange velocity between the (ix,iy-1) and the (ix,iy)
-*     cell. This coefficient enters into the expression for the
+*     thermal strange velocity between the (ix,iy) cell and its bottom
+*     neighbor. This coefficient enters into the expression for the
 *     electron heat flux in the form  chvey*ne*te , interpolated to
 *     cell faces in a suitable manner.
 *     For iy.eq.-1, chvey(-1:nx,iy) will hold 0.
@@ -1465,29 +1465,29 @@
 *     chci - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let chcix=chci(,,0) and chciy=chci(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), chcix(ix,iy) specifies the all atom
-*     thermal conductance between the (ix-1,iy) and the (ix,iy) cell.
+*     thermal conductance between the (ix,iy) cell and its left neighbor.
 *     This coefficient enters into the expression for the atom heat
 *     flux in the form
-*       -chcix(ix,iy)*(ti(ix,iy)-ti(ix-1,iy)) .
+*       -chcix(ix,iy)*(ti(ix,iy)-ti(left(ix,iy))) .
 *     For ix.eq.-1, chcix(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), chciy(ix,iy) specifies the all atom
-*     thermal conductance between the (ix,iy-1) and the (ix,iy) cell.
+*     thermal conductance between the (ix,iy) cell and its bottom neighbor.
 *     This coefficient enters into the expression for the atom heat
 *     flux in the form
-*       -chciy(ix,iy)*(ti(ix,iy)-ti(ix,iy-1)) .
+*       -chciy(ix,iy)*(ti(ix,iy)-ti(bottom(ix,iy))) .
 *     For iy.eq.-1, chciy(-1:nx,iy) will hold 0.
 *
 *     chvi - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let chvix=chvi(,,0) and chviy=chvi(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), chvix(ix,iy) specifies the all atom
-*     thermal strange velocity between the (ix-1,iy) and the (ix,iy)
-*     cell. This coefficient enters into the expression for the
+*     thermal strange velocity between the (ix,iy) cell and its left
+*     neighbor. This coefficient enters into the expression for the
 *     atom heat flux in the form  chvix*ni*ti , interpolated to cell
 *     faces in a suitable manner.
 *     For ix.eq.-1, chvix(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), chviy(ix,iy) specifies the all atom
-*     thermal strange velocity between the (ix,iy-1) and the (ix,iy)
-*     cell. This coefficient enters into the expression for the
+*     thermal strange velocity between the (ix,iy) cell and its bottom
+*     neighbor. This coefficient enters into the expression for the
 *     atom heat flux in the form  chviy*ni*ti , interpolated to
 *     cell faces in a suitable manner.
 *     For iy.eq.-1, chviy(-1:nx,iy) will hold 0.
@@ -1495,30 +1495,30 @@
 *     csig - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let csigx=csig(,,0) and csigy=csig(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), csigx(ix,iy) specifies the electrical
-*     conductance between the (ix-1,iy) and the (ix,iy) cell.
+*     conductance between the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, csigx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), csigy(ix,iy) specifies the electrical
-*     conductance between the (ix,iy-1) and the (ix,iy) cell.
+*     conductance between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, csigx(-1:nx,iy) will hold 0.
 *
 *     calf - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let calfx=calf(,,0) and calfy=calf(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), calfx(ix,iy) specifies the thermo-
-*     electric coefficient between the (ix-1,iy) and the (ix,iy) cell.
+*     electric coefficient between the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, calfx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), calfy(ix,iy) specifies the thermo-
-*     electric coefficient between the (ix,iy-1) and the (ix,iy) cell.
+*     electric coefficient between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, calfy(-1:nx,iy) will hold 0.
 *
 *     csigin - (-1:nx,-1:ny,0:1,0:ns-1,0:ns-1) real*8 array.		 !xpb
 *     (Let csiginx=csigin(,,0,,) and csiginy=csigin(,,1,,).)
 *     For (ix,iy,is,is0) in (0:nx,-1:ny,0:ns-1,0:ns-1), 
 *     csiginx(ix,iy,is,is0) specifies the ion-neutral
-*     conductivity between the (ix-1,iy) and the (ix,iy) cell, where 
+*     conductivity between the (ix,iy) cell and its left neighbor, where
 *     the ion species is species is and the neutral species is is0.
 *     For ix.eq.-1, csiginx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), csiginy(ix,iy) specifies the ion-neutral
-*     conductivity between the (ix,iy-1) and the (ix,iy) cell, where 
+*     conductivity between the (ix,iy) cell and its bottom neighbor, where
 *     the ion species is species is and the neutral species is is0.
 *     For iy.eq.-1, csiginx(-1:nx,iy) will hold 0.
 *     When is is a neutral species or is0 is an ionised species,
@@ -1527,41 +1527,41 @@
 *     csig_cl - (-1:nx,-1:ny,0:1) real*8 array.				 !xpb
 *     (Let csig_clx=csig_cl(,,0) and csig_cly=csig_cl(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), csig_clx(ix,iy) specifies the classical
-*     conductivity between the (ix-1,iy) and the (ix,iy) cell.
+*     conductivity between the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, csig_clx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), csig_cly(ix,iy) specifies the classical
-*     conductivity between the (ix,iy-1) and the (ix,iy) cell.
+*     conductivity between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, csig_clx(-1:nx,iy) will hold 0.
 *
 *     calf_cl - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let calf_clx=calf_cl(,,0) and calf_cly=calf_cl(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), calf_clx(ix,iy) specifies the 
 *     classical part of the thermo-electric coefficient 
-*     between the (ix-1,iy) and the (ix,iy) cell.
+*     between the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, calf_clx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), calf_cly(ix,iy) specifies the 
 *     classical part of the thermo-electric coefficient 
-*     between the (ix,iy-1) and the (ix,iy) cell.
+*     between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, calf_cly(-1:nx,iy) will hold 0.
 *
 *     csig_an - (-1:nx,-1:ny,0:1) real*8 array.				 !xpb
 *     (Let csig_anx=csig_an(,,0) and csig_any=csig_an(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), csig_anx(ix,iy) specifies the anomalous
-*     conductivity between the (ix-1,iy) and the (ix,iy) cell.
+*     conductivity between the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, csig_anx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), csig_any(ix,iy) specifies the anomalous
-*     conductivity between the (ix,iy-1) and the (ix,iy) cell.
+*     conductivity between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, csig_anx(-1:nx,iy) will hold 0.
 *
 *     calf_an - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let calf_anx=calf_an(,,0) and calf_any=calf_an(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), calf_anx(ix,iy) specifies the 
 *     anomalous part of the thermo-electric coefficient 
-*     between the (ix-1,iy) and the (ix,iy) cell.
+*     between the (ix,iy) cell and its left neighbor.
 *     For ix.eq.-1, calf_anx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), calf_any(ix,iy) specifies the 
 *     anomalous part of the thermo-electric coefficient 
-*     between the (ix,iy-1) and the (ix,iy) cell.
+*     between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, calf_any(-1:nx,iy) will hold 0.
 *
 *   ..parameters for core numerical iteration

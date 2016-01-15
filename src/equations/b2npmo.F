@@ -2,12 +2,11 @@
 *.specification
 
       subroutine b2npmo (nx, ny, ns, itcnt, solving, rxf, 
-     &  qz, vol, hx, hy, hz, bb, pbs, pbshz, 
-     &  lnlam, na, te, ti, po, fna_fcor,                             !srv 09.01.01 01.07.09
+     &  qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,
+     &  na, te, ti, po, fna_fcor,                                    !srv 09.01.01 01.07.09
      &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,
-     &  smo, smq, cthe, cthi, chci, 
-     &  ua, smof, wadia, vaecrb, resmo, resmt, corua, corut,         !srv 10.11.02
-     &  pcca, pccm, ierr)
+     &  smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,
+     &  resmo, resmt, corua, corut, pcca, pccm, ierr)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
@@ -351,7 +350,6 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2*2, 1.0_R8, cvcb, 1, cvct, 1)
         call b2saxpy (n2, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
        endif
-
       enddo
 csw 21feb2014, execute simultaneous corrections always
 c      if (solving.and.all(solvemo(0:ns-1,0:nnreg(0)))) then           !srv 06.07.10

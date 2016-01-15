@@ -3393,37 +3393,37 @@ cxpb  and max(,,) statement for stability
               s0hz = hz(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &              vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      &              hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))              !srv 09.01.01
-              if (.not.is_neutral(is)) then                          !srv 15.02.02 {
-              select case (iform_corr_dia)                          !srv 25.07.05
-              case (0)
+              if (.not.is_neutral(is)) then                             !srv 15.02.02 {
+                select case (iform_corr_dia)                            !srv 25.07.05
+                case (0)
                   smo0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
-     &             smo0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is)+  !srv 09.01.01 01.07.05
-     &             s0hz*(am(is)*mp)*naaverage(is)*                   !srv 15.02.02
+     &             smo0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is)+        !srv 09.01.01 01.07.05
+     &             s0hz*(am(is)*mp)*naaverage(is)*                      !srv 15.02.02
      &            (-2.0e0_R8*
-     &             facdrift(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*phm2*  !srv 07.06.00 17.05.99 25.04.00 15.02.02
+     &             facdrift(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*phm2*    !srv 07.06.00 17.05.99 25.04.00 15.02.02
      &             tiaverage*bb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2)/
      &             (qe*rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
-     &             hx(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))*     !srv 15.02.02
+     &             hx(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))*              !srv 15.02.02
      &            (OnedBsqc(rightix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                      rightiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))-
      &              OnedBsqc(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))        !srv 05.03.99 15.02.02
-     &             )*uaaverage(is) + corr_flux*s0hz                  !srv 15.02.02 08.09.03 25.07.05
+     &             )*uaaverage(is) + corr_flux*s0hz                     !srv 15.02.02 08.09.03 25.07.05
                 case (1)
-                 smo0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
-     &            smo0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is)+  !srv 09.01.01 01.07.05
-     &            s0hz*(am(is)*mp)*naaverage(is)*                   !srv 15.02.02
+                  smo0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
+     &             smo0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is)+        !srv 09.01.01 01.07.05
+     &             s0hz*(am(is)*mp)*naaverage(is)*                      !srv 15.02.02
      &           (-2.0e0_R8*facdrift(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     &            phm2* !srv 07.06.00 17.05.99 25.04.00 15.02.02
-     &            tiaverage*bb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2)/
+     &             phm2*                                                !srv 07.06.00 17.05.99 25.04.00 15.02.02
+     &             tiaverage*bb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2)/
      &            (qe*rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
-     &            hx(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))*               !srv 15.02.02
+     &             hx(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))*              !srv 15.02.02
      &            (OnedBsqc(rightix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                      rightiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))-
-     &             OnedBsqc(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))) !srv 05.03.99 15.02.02
+     &             OnedBsqc(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))         !srv 05.03.99 15.02.02
      &            )*ua(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)+corr_flux
-     &             *s0hz               !srv 08.09.03 25.07.05
-          end select                                           !srv 25.07.05
-        endif                                                 !srv 15.02.02
+     &             *s0hz                                                !srv 08.09.03 25.07.05
+                end select                                              !srv 25.07.05
+              endif                                                     !srv 15.02.02
               SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)= 0.0_R8
               SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),2,IS)= 0.0_R8
               SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3,IS)=

@@ -414,12 +414,12 @@ c-dpc+xpb
       imax=-2
       do ix=-1,nxpp
          if(mod(region(ix,-1,0),4).eq.1) then
-            if(crx(ix,-1,1).lt.rmin) then
-               rmin=crx(ix,-1,1)
+            if(crx(ix,-1,2).lt.rmin) then
+               rmin=crx(ix,-1,2)
                imin=ix
             endif
-            if(crx(ix,-1,1).gt.rmax) then
-               rmax=crx(ix,-1,1)
+            if(crx(ix,-1,2).gt.rmax) then
+               rmax=crx(ix,-1,2)
                imax=ix
             endif
          endif
@@ -476,15 +476,20 @@ c   ..rho
 c   ..hrho
       do iy = -1 , nypp
          do ix = -1 , nxpp
-            if( iy.eq.-1 ) then
+            if( bottomiy(ix,iy).eq.-2 .and. topiy(ix,iy).le.nypp ) then
                 hrho(ix,iy) = hy(ix,iy) * qz(ix,iy,1) /
-     *                          ( rho(ix,iy+1) - rho(ix,iy) )
-            else if( iy.eq.nypp ) then
+     *           ( rho(topix(ix,iy),topiy(ix,iy)) - rho(ix,iy) )
+            else if( topiy(ix,iy).eq.nypp+1 .and.
+     *               bottomiy(ix,iy).ge.-1) then
                 hrho(ix,iy) = hy(ix,iy) * qz(ix,iy,1) /
-     *                          ( rho(ix,iy) - rho(ix,iy-1) )
-            else
+     *           ( rho(ix,iy) - rho(bottomix(ix,iy),bottomiy(ix,iy)) )
+            else if( topiy(ix,iy).le.nypp .and.
+     *               bottomiy(ix,iy).ge.-1) then
                 hrho(ix,iy) = 2.0_R8 * hy(ix,iy) * qz(ix,iy,1) /
-     *                          ( rho(ix,iy+1) - rho(ix,iy-1) )
+     *           ( rho(topix(ix,iy),topiy(ix,iy)) -
+     *             rho(bottomix(ix,iy),bottomiy(ix,iy)) )
+            else
+                hrho(ix,iy) = 0.0_R8
             endif
          enddo
       enddo
@@ -495,15 +500,20 @@ c   ..theta
 c   ..htheta
       do iy = -1 , nypp
          do ix = -1 , nxpp
-            if( ix.eq.-1 ) then
+            if( leftix(ix,iy).eq.-2 .and. rightix(ix,iy).le.nxpp ) then
                 htheta(ix,iy) = hx(ix,iy) /
-     *                            ( theta(ix,iy) - theta(ix+1,iy) )
-            else if( ix.eq.nxpp ) then
+     *           ( theta(ix,iy) - theta(rightix(ix,iy),rightiy(ix,iy)) )
+            else if( rightix(ix,iy).eq.nxpp+1 .and.
+     *               topix(ix,iy).ge.-1 ) then
                 htheta(ix,iy) = hx(ix,iy) /
-     *                            ( theta(ix-1,iy) - theta(ix,iy) )
-            else
+     *           ( theta(leftix(ix,iy),leftiy(ix,iy)) - theta(ix,iy) )
+            else if( rightix(ix,iy).le.nxpp .and.
+     *               topix(ix,iy).ge.-1 ) then
                 htheta(ix,iy) = 2.0_R8 * hx(ix,iy) /
-     *                            ( theta(ix-1,iy) - theta(ix+1,iy) )
+     *           ( theta(leftix(ix,iy) ,leftiy(ix,iy)) -
+     *             theta(rightix(ix,iy),rightiy(ix,iy)) )
+            else
+                htheta(ix,iy) = 0.0_R8
             endif
          enddo
       enddo
@@ -590,7 +600,7 @@ c   ..set up unit normals to field lines
          enddo
       enddo
 
-c   ..copy the grid to start extended the grid
+c   ..copy the grid to start extending the grid
       do iv = 0 , 3
          do ix = -1 , nxpp
             do iy = -1 , nypp
@@ -699,38 +709,46 @@ c     consequently assign theta
 c   ..cater for failed cells by interpolation
       do iy = 0 , nypp - 1
          do ix = -1 , nxpp
-            if( iermat(ix,iy).gt.0 .and. iermat(ix,iy-1).eq.0 .and.
-     &          iermat(ix,iy+1).eq.0 )then
+            if (bottomiy(ix,iy).ne.-2 .and.
+     &          bottomiy(ix,iy).ne.nypp+1) then
+              if( iermat(ix,iy).gt.0 .and.
+     &            iermat(bottomix(ix,iy),bottomiy(ix,iy)).eq.0 .and.
+     &            iermat(topix(ix,iy),topiy(ix,iy)).eq.0 )then
                 xt1(1) = cxpp(ix,iy)
                 xt1(2) = cypp(ix,iy)
-                xt2(1) = cxpp(ix,iy-1)
-                xt2(2) = cypp(ix,iy-1)
+                xt2(1) = cxpp(bottomix(ix,iy),bottomiy(ix,iy))
+                xt2(2) = cypp(bottomix(ix,iy),bottomiy(ix,iy))
                 call vsub(xt1,xt2,xt3)
                 frac   = vlen(xt3)
-                xt1(1) = cxpp(ix,iy+1)
-                xt1(2) = cypp(ix,iy+1)
+                xt1(1) = cxpp(topix(ix,iy),topiy(ix,iy))
+                xt1(2) = cypp(topix(ix,iy),topiy(ix,iy))
                 call vsub(xt1,xt2,xt3)
                 frac   = frac/vlen(xt3)
-                theta(ix,iy) = (1.0_R8-frac)*theta(ix,iy-1) +
-     &                          frac*theta(ix,iy+1)
+                theta(ix,iy) =
+     &           (1.0_R8-frac)*theta(bottomix(ix,iy),bottomiy(ix,iy)) +
+     &                   frac*theta(topix(ix,iy),topiy(ix,iy))
                 iermat(ix,iy) = 0
+              endif
             endif
-            if( iermat(ix,iy).gt.0 .and. iermat(ix-1,iy).eq.0 .and.
-     &          iermat(ix+1,iy).eq.0 .and.
-     &          ix.gt.-1 .and. ix.lt.nxpp )then
+            if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxpp+1) then
+              if( iermat(ix,iy).gt.0 .and.
+     &            iermat(leftix(ix,iy) ,leftiy(ix,iy)).eq.0 .and.
+     &            iermat(rightix(ix,iy),rightiy(ix,iy)).eq.0)then
                 xt1(1) = cxpp(ix,iy)
                 xt1(2) = cypp(ix,iy)
-                xt2(1) = cxpp(ix-1,iy)
-                xt2(2) = cypp(ix-1,iy)
+                xt2(1) = cxpp(leftix(ix,iy),leftiy(ix,iy))
+                xt2(2) = cypp(leftix(ix,iy),leftiy(ix,iy))
                 call vsub(xt1,xt2,xt3)
                 frac   = vlen(xt3)
-                xt1(1) = cxpp(ix+1,iy)
-                xt1(2) = cypp(ix+1,iy)
+                xt1(1) = cxpp(rightix(ix,iy),rightiy(ix,iy))
+                xt1(2) = cypp(rightix(ix,iy),rightiy(ix,iy))
                 call vsub(xt1,xt2,xt3)
                 frac   = frac/vlen(xt3)
-                theta(ix,iy) = (1.0_R8-frac)*theta(ix-1,iy) +
-     &                          frac*theta(ix-1,iy)
+                theta(ix,iy) =
+     .           (1.0_R8-frac)*theta(leftix(ix,iy),leftiy(ix,iy)) +
+     &                   frac*theta(rightix(ix,iy),rightiy(ix,iy))
                 iermat(ix,iy) = 0
+              endif
             endif
          enddo
       enddo
@@ -773,7 +791,7 @@ c     ------------------------------------------------------------------
 
 c   ..locals
       integer iva(0:2) , ivb(0:2) , idir
-      integer ixn , iyn , ixdbg , iydbg , nbnd , n
+      integer ixn , iyn , ixdbg , iydbg , nbnd, n
 
       real (kind=R8) ::
      *  ro(3),
@@ -933,17 +951,19 @@ c      ..right direction
          endif
 
 c      ..update position and cell
-         ral(1) = crxe(ixn,iyn,iva(nbnd))
-         ral(2) = crye(ixn,iyn,iva(nbnd))
-         rbl(1) = crxe(ixn,iyn,ivb(nbnd))
-         rbl(2) = crye(ixn,iyn,ivb(nbnd))
-         ro(1)  = ro(1) + xlambda(1)*s(nbnd)
-         ro(2)  = ro(2) + xlambda(2)*s(nbnd)
-         if( ix.eq.ixdbg .and. iy.eq.iydbg ) then
+         if (nbnd.ge.0 .and. nbnd.le.2) then
+           ral(1) = crxe(ixn,iyn,iva(nbnd))
+           ral(2) = crye(ixn,iyn,iva(nbnd))
+           rbl(1) = crxe(ixn,iyn,ivb(nbnd))
+           rbl(2) = crye(ixn,iyn,ivb(nbnd))
+           ro(1)  = ro(1) + xlambda(1)*s(nbnd)
+           ro(2)  = ro(2) + xlambda(2)*s(nbnd)
+           if( ix.eq.ixdbg .and. iy.eq.iydbg ) then
              call vsub(rbl,ral,rbsubra)
              call vunit(rbsubra,xdelta)
              roalt(1) = ral(1) + xdelta(1)*t(nbnd)
              roalt(2) = ral(2) + xdelta(2)*t(nbnd)
+           endif
          endif
          if( nbnd.eq.0 ) then
              iyn = iyn + idir
@@ -1005,8 +1025,8 @@ c     ------------------------------------------------------------------
 
       if (ix.lt.lbound(leftix,1).or.
      &    ix.gt.ubound(leftix,1).or.
-     &    iy.lt.lbound(leftix,2).or.
-     &    iy.gt.ubound(leftix,2)) then
+     &    iy.lt.lbound(leftiy,2).or.
+     &    iy.gt.ubound(leftiy,2)) then
           write(*,*) 'Trying to access the left neighbour of ',ix,iy
         ixm1 = ix - 1
       else
@@ -1032,8 +1052,8 @@ c     ------------------------------------------------------------------
 
       if (ix.lt.lbound(rightix,1).or.
      &    ix.gt.ubound(rightix,1).or.
-     &    iy.lt.lbound(rightix,2).or.
-     &    iy.gt.ubound(rightix,2)) then
+     &    iy.lt.lbound(rightiy,2).or.
+     &    iy.gt.ubound(rightiy,2)) then
           write(*,*) 'Trying to access the right neighbour of ',ix,iy
         ixp1 = ix + 1
       else
@@ -1795,7 +1815,7 @@ c   ..find first two separators in geometry file name
           endif
       enddo seps
 
-c   ..shot (JET geomtery file is of the form "jet.shot.etc.etc")
+c   ..shot (JET geometry file is of the form "jet.shot.etc.etc")
       tmachid = buffer(1:3)
       call chcase(0,tmachid)
       if( tmachid.ne.'jet' .or. isep1.eq.0 .or. isep2.eq.0 ) then

@@ -505,7 +505,7 @@ cxpb
 *    ..compute partial pressure
          call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute particle flux
-          call b2tfnb (nx, ny, is, ismain,                               !srv 08.09.01
+         call b2tfnb (nx, ny, is, ismain,                               !srv 08.09.01
      1    guard_flows, facdrift, fac_ExB, am(is)*mp, vol,               !xpb
      1    rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
      1    uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),     !xpb
@@ -529,7 +529,7 @@ cxpb
 *    ..perform iteration
           solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
           solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
-          if(mdf_fnb.eq.0) then                                        !srv 13.10.06
+          if(mdf_fnb.eq.0) then                                         !srv 13.10.06
             call b2npco (nx, ny, guard_flows,                           !srv 05.07.08
      &       nnreg(0), solvedum, solving(1), solvedm2, ncall, is, rxf0, !srv 05.07.08
      &       vol, pbs, flob, conb,

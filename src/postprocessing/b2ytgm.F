@@ -113,7 +113,7 @@
 *     gs1 - (-1:nx1,-1:ny1,0:2) real*8 array, output.
 *     (Let gsx(,)=gs1(,,0), gsy(,)=gs1(,,1) and gsz(,)=gs1(,,2).)
 *     For (ix,iy) in (0:nx1,-1:ny1), gsx(ix,iy) specifies the area of the
-*     face between the (ix-1,iy) and the (ix,iy) cell. For ix.eq.-1,
+*     face between the (ix,iy) cell and its left neighbor. For ix.eq.-1,
 *     gsx(ix,-1:ny1) will hold 0.
 *     For (ix,iy) in (-1:nx1,0:ny1), gsy(ix,iy) specifies the area of the
 *     face between the (ix,iy-1) and the (ix,iy) cell. For iy.eq.-1,

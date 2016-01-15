@@ -2965,18 +2965,22 @@ c     assumes that bb is OK for 1d cases
           do iy=-1,ny
             do ix=-1,nx
               if(mod(region(ix,iy,0),4) .ne. 1) then
-                mach(ix,iy,0)=0
+                mach(ix,iy,0)=0.0_R8
               else
-                if (iy.gt.-1) then
+                if (bottomiy(ix,iy).ne.-2) then
                   mach(ix,iy,0)=r0*
-     1             (pr(ix,iy-1)-pr(ix,iy))/(rave(iy-1)-rave(iy))/
+     1             (pr(bottomix(ix,iy),bottomiy(ix,iy))-pr(ix,iy))/
+     .              (rave(bottomiy(ix,iy))-rave(iy))/
+     2             (bb(ix,iy,3)**2/2.0_R8/mu0)/
+     3             (0.0537_R8+0.534_R8*shear(iy)/safetyfactor(iy)**2)
+                else if (topiy(ix,iy).ne.ny+1) then
+                  mach(ix,iy,0)=r0*
+     1             (pr(ix,iy)-pr(topix(ix,iy),topiy(ix,iy)))/
+     .             (rave(iy)-rave(topiy(ix,iy)))/
      2             (bb(ix,iy,3)**2/2.0_R8/mu0)/
      3             (0.0537_R8+0.534_R8*shear(iy)/safetyfactor(iy)**2)
                 else
-                  mach(ix,iy,0)=r0*
-     1             (pr(ix,iy)-pr(ix,iy+1))/(rave(iy)-rave(iy+1))/
-     2             (bb(ix,iy,3)**2/2.0_R8/mu0)/
-     3             (0.0537_R8+0.534_R8*shear(iy)/safetyfactor(iy)**2)
+                  mach(ix,iy,0)=0.0_R8
                 endif
               endif
             enddo
@@ -4622,7 +4626,7 @@ c     assumes that bb is OK for 1d cases
           end do
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
-        case('rmmi')    ! min(r1,m1)
+        case('rmmi','rmmin')    ! min(r1,m1)
           stack_req=(/0,1,0,1,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do is=0,ndim(3,iwrk)-1
@@ -4635,7 +4639,7 @@ c     assumes that bb is OK for 1d cases
           end do
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
-        case('rmma')    ! max(r1,m1)
+        case('rmma','rmmax')    ! max(r1,m1)
           stack_req=(/0,1,0,1,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do is=0,ndim(3,iwrk)-1

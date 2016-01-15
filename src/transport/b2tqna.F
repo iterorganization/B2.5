@@ -2070,43 +2070,54 @@ c         in the SOL
               vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)*
      &         sin(pi/2.0_R8*(ix-xbottom)/(mw_jxa-xbottom))
             elseif(mw_interpol.eq.5.and.ix.le.mw_jxa) then
-              if(iy.lt.ny) then
-                if(ne(ix,iy) < ne(ix,iy+1)) then
-                  vla0(ix,iy,1,1) = 0.9_R8*vla0(ix,iy-1,1,1)
+              if(topiy(ix,iy).le.ny) then
+                if(ne(ix,iy) < ne(topix(ix,iy),topiy(ix,iy))) then
+                  vla0(ix,iy,1,1) =
+     &             0.9_R8*vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1)
                 else
                   vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)*
      &             sin(pi/2.0_R8*(ix-xtop)/(mw_jxa-xtop))
                 endif
               else
-                if(ne(ix,ny).gt.ne(ix,ny-1)) then
-                  vla0(ix,ny-1,1,1) = 0.9_R8*vla0(ix,ny,1,1)
-                  vla0(ix,ny,1,1) = vla0(ix,ny-1,1,1)
+                if(ne(ix,iy).gt.ne(bottomix(ix,iy),bottomiy(ix,iy)))
+     >           then
+                  vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1) =
+     &             0.9_R8*vla0(ix,iy,1,1)
+                  vla0(ix,iy,1,1) =
+     &             vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1)
                 else
-                  vla0(ix,ny,1,1) = mw_flux_wall / ne(ix,ny)*
+                  vla0(ix,iy,1,1) = mw_flux_wall / ne(ix,iy)*
      &             sin(pi/2.0_R8*(ix-xtop)/(mw_jxa-xtop))
                 endif
               endif
             elseif(mw_interpol.eq.5.and.mw_jxa.lt.ix) then
-              if(iy.lt.ny) then
-                if(ne(ix,iy-1).le.ne(ix,iy)) then
-                  vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
+              if(topiy(ix,iy).le.ny) then
+                if(ne(bottomix(ix,iy),bottomiy(ix,iy)).le.ne(ix,iy))
+     >           then
+                  vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1) =
+     &             0.9_R8*vla0(ix,iy,1,1)
                 else
                   vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)*
      &             sin(pi/2.0_R8*(ix-xbottom)/(mw_jxa-xbottom))
                 endif
               else
-                if(ne(ix,ny).gt.ne(ix,ny-1)) then
-                  vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
-                  vla0(ix,iy,1,1) = vla0(ix,iy-1,1,1)
+                if(ne(ix,iy).gt.ne(bottomix(ix,iy),bottomiy(ix,iy)))
+     >           then
+                  vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1) =
+     &             0.9_R8*vla0(ix,iy,1,1)
+                  vla0(ix,iy,1,1) =
+     &             vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1)
                 else
                   vla0(ix,iy,1,1) = mw_flux_wall / ne(ix,iy)*
      &             sin(pi/2.0_R8*(ix-xbottom)/(mw_jxa-xbottom))
                 endif
               endif
             elseif(mw_interpol.eq.6.and.ix.le.mw_jxa) then
-              if(iy.le.ny) then
-                if(ne(ix,iy-1).le.ne(ix,iy)) then
-                  vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
+              if(topiy(ix,iy).le.ny) then
+                if(ne(bottomix(ix,iy),bottomiy(ix,iy)).le.ne(ix,iy))
+     >           then
+                  vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1) =
+     &             0.9_R8*vla0(ix,iy,1,1)
                 else
                   vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)
                 endif
@@ -2114,9 +2125,10 @@ c         in the SOL
                 vla0(ix,iy,1,1) = mw_flux_wall / ne(ix,iy)
               endif
             elseif(mw_interpol.eq.6.and.mw_jxa.lt.ix) then
-              if(iy.lt.ny) then
-                if(ne(ix,iy).lt.ne(ix,iy+1)) then
-                  vla0(ix,iy,1,1) = 0.9_R8*vla0(ix,iy-1,1,1)
+              if(topiy(ix,iy).le.ny) then
+                if(ne(ix,iy).lt.ne(topix(ix,iy),topiy(ix,iy))) then
+                  vla0(ix,iy,1,1) =
+     &             0.9_R8*vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1)
                 else
                   vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)
                 endif
@@ -2125,37 +2137,47 @@ c         in the SOL
               endif
 c MW working
             elseif(mw_interpol.eq.7.and.ix.le.mw_jxa) then
-              if(iy.lt.ny) then
-                if(ne(ix,iy).lt.ne(ix,iy+1)) then
-                  vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
-                  vla0(ix,iy,1,1) = vla0(ix,iy-1,1,1)*ne(ix,iy-1)/
-     &             ne(ix,iy)
+              if(topiy(ix,iy).le.ny) then
+                if(ne(ix,iy).lt.ne(topix(ix,iy),topiy(ix,iy))) then
+                  vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1) =
+     &             0.9_R8*vla0(ix,iy,1,1)
+                  vla0(ix,iy,1,1) =
+     &             vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1)*
+     &             ne(bottomix(ix,iy),bottomiy(ix,iy))/ne(ix,iy)
                 else
                   vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)
                 endif
               else
-                if(ne(ix,ny-1).le.ne(ix,ny)) then
-                  vla0(ix,ny-1,1,1) = 0.9_R8*vla0(ix,ny,1,1)
-                  vla0(ix,ny,1,1) = vla0(ix,ny-1,1,1)*ne(ix,ny-1)/
-     &             ne(ix,ny)
+                if(ne(bottomix(ix,iy),bottomiy(ix,iy)).le.ne(ix,iy))
+     >           then
+                  vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1) =
+     &             0.9_R8*vla0(ix,iy,1,1)
+                  vla0(ix,iy,1,1) =
+     &             vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1)*
+     &             ne(bottomix(ix,iy),bottomiy(ix,iy))/ne(ix,iy)
                 else
-                  vla0(ix,ny,1,1) = mw_flux_wall / ne(ix,ny)
+                  vla0(ix,iy,1,1) = mw_flux_wall / ne(ix,iy)
                 endif
               endif
             elseif(mw_interpol.eq.7.and.mw_jxa.lt.ix) then
-              if(iy.lt.ny) then
-                if(ne(ix,iy).le.ne(ix,iy+1)) then
-                  vla0(ix,iy-1,1,1) = 0.9_R8*vla0(ix,iy,1,1)
-                  vla0(ix,iy,1,1) = vla0(ix,iy-1,1,1)*ne(ix,iy-1)/
-     &             ne(ix,iy)
+              if(topiy(ix,iy).le.ny) then
+                if(ne(ix,iy).le.ne(topix(ix,iy),topiy(ix,iy))) then
+                  vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1) =
+     &             0.9_R8*vla0(ix,iy,1,1)
+                  vla0(ix,iy,1,1) =
+     &             vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1)*
+     &             ne(bottomix(ix,iy),bottomiy(ix,iy))/ne(ix,iy)
                 else
                   vla0(ix,iy,1,1) = mw_flux / ne(ix,iy)
                 endif
               else
-                if(ne(ix,ny-1).le.ne(ix,ny)) then
-                  vla0(ix,ny-1,1,1) = 0.9_R8*vla0(ix,ny,1,1)
-                  vla0(ix,ny,1,1) = vla0(ix,iy-1,1,1)*ne(ix,ny-1)/
-     &             ne(ix,ny)
+                if(ne(bottomix(ix,iy),bottomiy(ix,iy)).le.ne(ix,iy))
+     >           then
+                  vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1) =
+     &             0.9_R8*vla0(ix,iy,1,1)
+                  vla0(ix,iy,1,1) =
+     &             vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1)*
+     &             ne(bottomix(ix,iy),bottomiy(ix,iy))/ne(ix,iy)
                 else
                   vla0(ix,iy,1,1) = mw_flux_wall / ne(ix,iy)
                 endif
@@ -2163,8 +2185,8 @@ c MW working
 c MW working end
 c MW working 2
             elseif(mw_interpol.eq.8) then
-              if(iy.lt.ny) then
-                if(ne(ix,iy).le.ne(ix,iy+1)) then
+              if(topiy(ix,iy).le.ny) then
+                if(ne(ix,iy).le.ne(topix(ix,iy),topiy(ix,iy))) then
                    vold = vla0(ix,iy,1,1)
                    vla0(ix,iy,1,1) = vold - vold * 0.5_R8 * mw_fluxalpha
                  if(vla0(ix,iy,1,1).lt.0.0_R8) then
@@ -2175,15 +2197,16 @@ c MW working 2
      &            vla0(ix,iy,1,1)) * mw_fluxalpha + vla0(ix,iy,1,1)
                 endif
               else
-                if(ne(ix,ny-1).le.ne(ix,ny)) then
-                  vold = vla0(ix,ny,1,1)
-                  vla0(ix,ny,1,1) = vold - vold * 0.5_R8 * mw_fluxalpha
-                  if(vla0(ix,ny,1,1).lt.0.0_R8) then
-                    vla0(ix,ny,1,1) = 0.0_R8
+                if(ne(bottomix(ix,iy),bottomiy(ix,iy)).le.ne(ix,iy))
+     >           then
+                  vold = vla0(ix,iy,1,1)
+                  vla0(ix,iy,1,1) = vold - vold * 0.5_R8 * mw_fluxalpha
+                  if(vla0(ix,iy,1,1).lt.0.0_R8) then
+                    vla0(ix,iy,1,1) = 0.0_R8
                   endif
                 else
-                  vla0(ix,ny,1,1) = (mw_flux_wall / ne(ix,ny) -
-     &            vla0(ix,ny,1,1)) * mw_fluxalpha + vla0(ix,ny,1,1)
+                  vla0(ix,iy,1,1) = (mw_flux_wall / ne(ix,iy) -
+     &            vla0(ix,iy,1,1)) * mw_fluxalpha + vla0(ix,iy,1,1)
                 endif
               endif
 c MW working end 2
@@ -2192,8 +2215,8 @@ c MW same as int8 + mw_flux also for cells at mw_jsep - transport
 c through separatrix
 C This is the one really used...
             elseif(mw_interpol.eq.9) then
-              if(iy.lt.ny) then
-                if(ne(ix,iy).le.ne(ix,iy+1)) then
+              if(topiy(ix,iy).le.ny) then
+                if(ne(ix,iy).le.ne(topix(ix,iy),topiy(ix,iy))) then
                    vold = vla0(ix,iy,1,1)
                    vla0(ix,iy,1,1) = vold - vold * 0.5_R8 * mw_fluxalpha
                   if(vla0(ix,iy,1,1).lt.0.0_R8) then
@@ -2204,29 +2227,34 @@ C This is the one really used...
      &            vla0(ix,iy,1,1)) * mw_fluxalpha + vla0(ix,iy,1,1)
                 endif
                 if(iy.eq.mw_jsep+1) then
-                  if(ne(ix,iy-1).le.ne(ix,iy)) then
-                    vold = vla0(ix,iy-1,1,1)
-                    vla0(ix,iy-1,1,1) =
+                  if(ne(bottomix(ix,iy),bottomiy(ix,iy)).le.ne(ix,iy))
+     &             then
+                    vold = vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1)
+                    vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1) =
      &               vold - vold * 0.5_R8 * mw_fluxalpha
-                    if(vla0(ix,iy-1,1,1).lt.0.0_R8) then
-                      vla0(ix,iy-1,1,1) = 0.0_R8
+                    if(vla0(bottomix(ix,iy),
+     &                      bottomiy(ix,iy),1,1).lt.0.0_R8) then
+                      vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1) = 0.0_R8
                     endif
                   else
-                    vla0(ix,iy-1,1,1) = (mw_flux / ne(ix,iy-1) -
-     &               vla0(ix,iy-1,1,1)) * mw_fluxalpha +
-     &               vla0(ix,iy-1,1,1)
+                    vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1) =
+     &              (mw_flux / ne(bottomix(ix,iy),bottomiy(ix,iy)) -
+     &               vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1)) *
+     &               mw_fluxalpha +
+     &               vla0(bottomix(ix,iy),bottomiy(ix,iy),1,1)
                   endif
                 endif
               else
-                if(ne(ix,ny-1).le.ne(ix,ny)) then
-                 vold = vla0(ix,ny,1,1)
-                 vla0(ix,ny,1,1) = vold - vold * mw_fluxalpha
-                 if(vla0(ix,ny,1,1).lt.0.0_R8) then
-                   vla0(ix,ny,1,1) = 0.0_R8
-                 endif
+                if(ne(bottomix(ix,iy),bottomiy(ix,iy)).le.ne(ix,iy))
+     >           then
+                  vold = vla0(ix,iy,1,1)
+                  vla0(ix,iy,1,1) = vold - vold * mw_fluxalpha
+                  if(vla0(ix,iy,1,1).lt.0.0_R8) then
+                    vla0(ix,iy,1,1) = 0.0_R8
+                  endif
                 else
-                  vla0(ix,ny,1,1) = (mw_flux_wall / ne(ix,ny) -
-     &            vla0(ix,ny,1,1)) * mw_fluxalpha + vla0(ix,ny,1,1)
+                  vla0(ix,iy,1,1) = (mw_flux_wall / ne(ix,iy) -
+     &            vla0(ix,iy,1,1)) * mw_fluxalpha + vla0(ix,iy,1,1)
                 endif
               endif
 c MW working end 3

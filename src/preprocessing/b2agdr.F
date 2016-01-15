@@ -214,10 +214,10 @@
 *     gs - (-1:nx,-1:ny,0:2) real*8 array.
 *     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
 *     For (ix,iy) in (0:nx,-1:ny), gsx(ix,iy) specifies the area of the
-*     face between the (ix-1,iy) and the (ix,iy) cell. For ix.eq.-1,
+*     face between the (ix,iy) cell and its left neighbor. For ix.eq.-1,
 *     gsx(ix,-1:ny) will hold 0.
 *     For (ix,iy) in (-1:nx,0:ny), gsy(ix,iy) specifies the area of the
-*     face between the (ix,iy-1) and the (ix,iy) cell. For iy.eq.-1,
+*     face between the (ix,iy) cell and its bottom neighbor. For iy.eq.-1,
 *     gsy(-1:nx,iy) will hold 0.
 *     For (ix,iy) in (-1:nx,-1:ny), gsz(ix,iy) specifies the area of the
 *     (ix,iy) cell normal to the third (ignorable) coordinate.

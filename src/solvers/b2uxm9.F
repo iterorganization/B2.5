@@ -83,7 +83,7 @@
 *     from P.Sch x-part of nine point stencil
        do iy = -1, ny
         do ix = -1, nx
-*       Case (ix-1,iy) 
+*       Case of left neighbor
          if(leftix(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
           
          else
@@ -92,7 +92,7 @@
           aaf(ix,iy,-1) = conb(ixl,iyl,0,0) -
      &                    conb(topix(ixl,iyl),topiy(ixl,iyl),0,1)
 	   endif
-*       Case (ix+1,iy) 
+*       Case of right neighbor
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1) then
           
          else
@@ -117,7 +117,7 @@
 *     from P.Sch y-part of nine point stencil
        do iy = -1, ny
         do ix = -1, nx
-*       Case (ix,iy-1) 
+*       Case of bottom neighbor
          if(bottomiy(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
           
          else
@@ -126,7 +126,7 @@
           aaf(ix,iy,-2) = - conb(ixb,iyb,1,0) +
      &                      conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1)
 	   endif
-*       Case (ix,iy+1) 
+*       Case of top neighbor
          if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1) then
           
          else
