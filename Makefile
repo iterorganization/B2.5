@@ -123,11 +123,15 @@ ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 MODLIST += ${MODLOCAL}/*.F
 endif
 MODLIST += ${SRCDIR}/modules/*.F
+ifeq ($(shell [ -d ${SOLPS4} ] && echo yes || echo no ),yes)
 S4LIST = ${SOLPS4}/*.F
+endif
+ifeq ($(shell [ -d ${EIR4} ] && echo yes || echo no ),yes)
 ifdef USE_EIRENE
 E4LIST = ${EIR4}/precision.F ${EIR4}/parmmod.F ${EIR4}/braeir.F ${EIR4}/ccoupl.F ${EIR4}/clgin.F ${EIR4}/eirdiag.F ${EIR4}/ceirsrt.F
 else
 E4LIST = ${EIR4}/*.F
+endif
 endif
 
 ALLOBJS = ${OBJS:%.o=${OBJDIR}/%.o}
