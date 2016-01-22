@@ -97,7 +97,8 @@
      &     ' ix   iy   ne(ix,iy)      te(ix,iy)  lnlam(ix,iy)'
 	     write(*,"(2i5,3es13.4)")
      &       ix,iy,ne(ix,iy),te(ix,iy),lnlam(ix,iy)
-	     call xertst ('Negative Coulomb logarithm')
+	     call xertst (lnlam(ix,iy).gt.0.0_R8,
+     &                  'Negative Coulomb logarithm')     !srv 12.01.16
 	    endif
          enddo
         enddo
