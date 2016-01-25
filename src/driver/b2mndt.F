@@ -510,11 +510,13 @@ csw 17oct2012 this is the corrected call
      &      (3.le.moitlv.or.istg(2).eq.0)
 *      ..maybe write quick trace
            if (domoqt) then
-            if (mod(ncall,ntim_step_out) .eq. 0)                         !srv 31.01.07
-     &      call b2mwqt (nout(4), nx, ny, ns, itim, itcnt, vol,
-     &       na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch,
-     &       aresco, aresmo, aresmt, areshe, areshi, arespo,
-     &       acorpa, acorua, acorut, acorte, acorti, acorpo)
+            if (mod(ncall,ntim_step_out) .eq. 0) then                    !srv 31.01.07
+             call b2mwqt (nout(4), nx, ny, ns, itim, itcnt, vol,
+     &        na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch,
+     &        aresco, aresmo, aresmt, areshe, areshi, arespo,
+     &        acorpa, acorua, acorut, acorte, acorti, acorpo)
+             flush(nout(4))
+            endif
            endif
 *      ..maybe detailed monitor
            if (domoit) then
@@ -522,6 +524,7 @@ csw 17oct2012 this is the corrected call
      &        resmo, resmt, reshe, reshi, respo,
      &        corpa, corua, corut, corte, corti,
      &        corpo)
+             flush(nout(5))
            endif
 *      ..write the tracing data
            if (ank_tracing.ne.0) then
