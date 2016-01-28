@@ -8308,7 +8308,7 @@ c              fchi=0.0_R8
         ENDIF
         GOTO 50000
 
-* -- BCPOT=11 -- SHEATH CONDITIONS, ELECTRON ENERGY TRANSMISSION FROM b2stbc_spb !srv 01.02.09 {
+* -- BCPOT=11 -- SHEATH CONDITIONS, CURRENT CONTINUITY; FROM b2stbc_spb !srv 01.02.09 {
 
 41100   CONTINUE
         if(ncall.eq.0) then
