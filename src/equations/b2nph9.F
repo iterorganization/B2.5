@@ -86,7 +86,7 @@
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
       integer, save :: style = 1                                       !srv 09.07.08
       integer, save :: style_shei = 0                                  !srv 18.09.09 30.01.10
-      character charns*3                                               !srv 17.07.05
+      character chns*3                                                 !srv 17.07.05
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       intrinsic sqrt
@@ -232,36 +232,37 @@
        enddo
       enddo                                                           !srv 18.09.09 30.01.09 }
 
-	if(iout .eq. 1) then                                            !srv 17.07.05 01.11.10 {
-	 call my_out(70,nx,ny,shei,'b2nph9_shei')
+      if(iout .eq. 1) then                                            !srv 17.07.05 01.11.10 {
+	call my_out(70,nx,ny,shei,'b2nph9_shei')
 !	 do is = 0,ns-1
-!	  write (charns,'(i3.3)') is
-!	  call my_out(70,nx,ny,na(-1,-1,is),'b2nph9_na'//charns)
-!	  call my_out(70,nx,ny,ua(-1,-1,is),'b2nph9_ua'//charns)
+!	  write (chns,'(i3.3)') is
+!	  call my_out(70,nx,ny,na(-1,-1,is),'b2nph9_na'//chns//'_input')
+!	  call my_out(70,nx,ny,ua(-1,-1,is),'b2nph9_ua'//chns//'_input')
 !	 enddo
-	 call my_out(70,nx,ny,te,'b2nph9_te')
-	 call my_out(70,nx,ny,ti,'b2nph9_ti')
-	 call my_out(70,nx,ny,reshe,'b2nph9_reshe')
-	 call my_out(70,nx,ny,fhe(-1,-1,0),'b2nph9_fhex')
-	 call my_out(70,nx,ny,fhe(-1,-1,1),'b2nph9_fhey')
+!        call my_out(70,nx,ny,te,'b2nph9_te_input')
+!        call my_out(70,nx,ny,ti,'b2nph9_ti_input')
+!        call my_out(70,nx,ny,po,'b2nph9_po_input')
+	call my_out(70,nx,ny,reshe,'b2nph9_reshe')
+	call my_out(70,nx,ny,fhe(-1,-1,0),'b2nph9_fhex')
+	call my_out(70,nx,ny,fhe(-1,-1,1),'b2nph9_fhey')
 !	 call my_out(70,nx,ny,she0(-1,-1,0),'b2nph9_she0')
 !	 call my_out(70,nx,ny,she0(-1,-1,1),'b2nph9_she1')
 !	 call my_out(70,nx,ny,she0(-1,-1,2),'b2nph9_she2')
 !	 call my_out(70,nx,ny,she0(-1,-1,3),'b2nph9_she3')
-         wrk0=she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
-     &                    she0(:,:,3)*te*ne
-	 call my_out(70,nx,ny,wrk0,'b2nph9_she')
-	 call my_out(70,nx,ny,reshi,'b2nph9_reshi')
-	 call my_out(70,nx,ny,fhi(-1,-1,0),'b2nph9_fhix')
-	 call my_out(70,nx,ny,fhi(-1,-1,1),'b2nph9_fhiy')
+        wrk0=she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
+     &                   she0(:,:,3)*te*ne
+	call my_out(70,nx,ny,wrk0,'b2nph9_she')
+	call my_out(70,nx,ny,reshi,'b2nph9_reshi')
+	call my_out(70,nx,ny,fhi(-1,-1,0),'b2nph9_fhix')
+	call my_out(70,nx,ny,fhi(-1,-1,1),'b2nph9_fhiy')
 !	 call my_out(70,nx,ny,shi0(-1,-1,0),'b2nph9_shi0')
 !	 call my_out(70,nx,ny,shi0(-1,-1,1),'b2nph9_shi1')
 !	 call my_out(70,nx,ny,shi0(-1,-1,2),'b2nph9_shi2')
 !	 call my_out(70,nx,ny,shi0(-1,-1,3),'b2nph9_shi3')
-         wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
-     &        shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
-	 call my_out(70,nx,ny,wrk0,'b2nph9_shi')
-	endif                                                           !srv 17.07.05 01.11.10 }
+        wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
+     &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
+	call my_out(70,nx,ny,wrk0,'b2nph9_shi')
+      endif                                                           !srv 17.07.05 01.11.10 }
 *   ..compute correction
       if (solving) then                                               !srv 11.01.13
        call b2ush9 (nx, ny, itcnt, rxg, pcm1, pbs, ne, ni, te, ti,    !srv 02.01.07
@@ -277,6 +278,17 @@
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)
       ierr = 0
+
+      if (iout.eq.1) then
+        do is = 0, ns-1
+          write (chns,'(i3.3)') is
+          call my_out(70,nx,ny,na(-1,-1,is),'b2nph9_na'//chns)
+          call my_out(70,nx,ny,ua(-1,-1,is),'b2nph9_ua'//chns)
+        end do
+        call my_out(70,nx,ny,te,'b2nph9_te')
+        call my_out(70,nx,ny,ti,'b2nph9_ti')
+        call my_out(70,nx,ny,po,'b2nph9_po')
+      end if
 
 * ..return
       ncall = ncall+1
