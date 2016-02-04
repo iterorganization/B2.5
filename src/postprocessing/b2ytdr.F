@@ -5994,6 +5994,11 @@ C  SAME FOR POINT-, LINE-, SURFACE- AND VOLUME SOURCES
      .           INGRDA(J,ISTRA,1),INGRDA(J,ISTRA,2),nx,ny,nx1,ny1,1)
               idum(7) = convert_eirene(non_commensurate,2,
      .           INGRDE(J,ISTRA,1),INGRDE(J,ISTRA,2),nx,ny,nx1,ny1,3)
+            ELSE
+              idum(4) = INGRDA(J,ISTRA,1)
+              idum(5) = INGRDE(J,ISTRA,1)
+              idum(6) = INGRDA(J,ISTRA,2)
+              idum(7) = INGRDE(J,ISTRA,2)
             ENDIF
             WRITE(IUNOT,6666) J,idum(2:9)
             WRITE(IUNOT,6664) SORWGT(J,ISTRA),SORLIM(J,ISTRA),
