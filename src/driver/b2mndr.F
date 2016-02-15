@@ -145,7 +145,7 @@
       save nscx, iscx, isfb, 
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       integer, save :: background_new = 0                            !srv 01.03.10 14.07.10
-      integer, save :: inverse_ua = 0                                !srv 11.01.13
+      integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
       integer, save :: pot_eq = 1
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
@@ -158,6 +158,7 @@
       save ne_wanted, ne_wanted_time, ne_wanted_next_time,
      &  ne_wanted_mod_time, ixfb, iyfb
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
+      character chns*3                                               !srv 25.01.16
       integer n2, itim, ierr, edition, i, b2time, coronal, use_eirene,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current
@@ -826,6 +827,7 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
+       call ipgeti ('b2mndr_iout', iout)                             !srv 25.01.16
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
        call xertst (0.le.ntim.and.0.0_R8.lt.dtim,
@@ -1232,34 +1234,34 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
         enddo 
       enddo                                                          !srv 11.03.08 }
 *   ..find the poloidal number of midplane cell as a number of cell with min Bz                         
-      if(nncut.eq.2) then                                         !srv 22.05.09 {
+      if(nncut.eq.2) then                                            !srv 22.05.09 {
 	nmdpl = rightcut(nncut)
 	do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
-	  if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix  !srv 11.01.13
+	  if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
 	enddo
       elseif(nncut.eq.1) then
 	nmdpl = leftcut(nncut)
 	do ix = leftcut(nncut)+1, rightcut(nncut)-1
-	  if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix  !srv 11.01.13
+	  if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
 	enddo
       else
 	write(*,*) ' b2mndr: nncut = ', nncut
 	nmdpl = (nx+2)/2
 	do ix = -1, nx
-	  if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix  !srv 11.01.13
+	  if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
 	enddo
       endif 
-      write(*,"(' Number of midplane cell =',i4)") nmdpl            !srv 22.05.09 }
-*   ..compute length along y-direction                              !srv 24.04.02 {
+      write(*,"(' Number of midplane cell =',i4)") nmdpl             !srv 22.05.09 }
+*   ..compute length along y-direction                               !srv 24.04.02 {
       lengthy(:,-1) = hy(:,-1)*0.5e0_R8
       do iy = 0, ny
        do ix = -1, nx
         lengthy(ix,iy) = lengthy(ix,iy-1) +
      *      (hy(ix,iy)+hy(ix,iy-1))*0.5e0_R8
        enddo
-      enddo                                                         !srv 24.04.02 }
+      enddo                                                          !srv 24.04.02 }
 *
-      len_surf=0.0d0                                                !srv 02.05.09 {
+      len_surf=0.0d0                                                 !srv 02.05.09 {
       do ix=-1,nx
 	do iy=1,ny
 	  len_surf(ix,iy)=len_surf(ix,iy-1)+hy(ix,iy-1)
@@ -1281,11 +1283,43 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
       enddo                                                          !srv 02.05.09 }
 *
 *   ..compute Bz/B**2 - Bz/<B**2>
-      call b2xbzb (nx, ny, bb, vol, bzb)                          !srv 13.10.06  09.06.08 23.07.10}
+      call b2xbzb (nx, ny, bb, vol, bzb)                             !srv 13.10.06  09.06.08 23.07.10}
 *   ..read initial state
       call b2rups (ninp(3), nx, ny, ns0, ne, na, ua, uadia, te, ti, po,
      & fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy, 
      & b2fstati_version)
+      if(iout.ne.0) then                                             !srv 25.01.16 {
+       call my_out(70,nx,ny,ne,'b2mndr_ne')   
+       do is = 0,ns-1
+        write (chns,'(i3.3)') is
+        call my_out(70,nx,ny,na(-1,-1,is),'b2mndr_na'//chns)
+        call my_out(70,nx,ny,ua(-1,-1,is),'b2mndr_ua'//chns)
+        call my_out(70,nx,ny,uadia(-1,-1,0,is),'b2mndr_uadiax'//chns)
+        call my_out(70,nx,ny,uadia(-1,-1,1,is),'b2mndr_uadiay'//chns)
+        call my_out(70,nx,ny,fna(-1,-1,0,is),'b2mndr_fnax'//chns)
+        call my_out(70,nx,ny,fna(-1,-1,1,is),'b2mndr_fnay'//chns)
+       enddo
+       call my_out(70,nx,ny,te,'b2mndr_te')
+       call my_out(70,nx,ny,te/ev,'b2mndr_te_eV')
+       call my_out(70,nx,ny,ti,'b2mndr_ti')
+       call my_out(70,nx,ny,ti/ev,'b2mndr_ti_eV')
+       call my_out(70,nx,ny,po,'b2mndr_po')
+       call my_out(70,nx,ny,fch(-1,-1,0),'b2mndr_fchx')
+       call my_out(70,nx,ny,fch(-1,-1,1),'b2mndr_fchy')
+       call my_out(70,nx,ny,fch_p(-1,-1,0),'b2mndr_fchx_p')
+       call my_out(70,nx,ny,fch_p(-1,-1,1),'b2mndr_fchy_p')
+       call my_out(70,nx,ny,fhe(-1,-1,0),'b2mndr_fhex')
+       call my_out(70,nx,ny,fhe(-1,-1,1),'b2mndr_fhey')
+       call my_out(70,nx,ny,fhi(-1,-1,0),'b2mndr_fhix')
+       call my_out(70,nx,ny,fhi(-1,-1,1),'b2mndr_fhiy')
+      endif                                                          !srv 25.01.16 }
+      do is = 0,ns-1                                                 !srv 25.01.16 {
+        do iy=-1,ny
+          do ix=-1,nx
+            na(ix,iy,is)= max(na(ix,iy,is),na_min)
+          enddo
+        enddo
+      enddo                                                          !srv 25.01.16 }
 *   ..test plasma state and fluxes
       call b2xvps (nx, ny, ns0, 
      & ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
@@ -1303,8 +1337,8 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
       if (ns0.lt.ns) then
        call sfill (n2*(ns-ns0), na_new, na(-1,-1,ns0), 1)
        call sfill (n2*(ns-ns0), 0.0_R8, ua(-1,-1,ns0), 1)
-       call sfill (n2*(ns-ns0), 0.0_R8, kinrgy(-1,-1,ns0), 1)            !xpb
-       call sfill (n2*2*(ns-ns0), 0.0_R8, uadia(-1,-1,0,ns0), 1)         !xpb
+       call sfill (n2*(ns-ns0), 0.0_R8, kinrgy(-1,-1,ns0), 1)        !xpb
+       call sfill (n2*2*(ns-ns0), 0.0_R8, uadia(-1,-1,0,ns0), 1)     !xpb
        call sfill (n2*2*(ns-ns0), 0.0_R8, fna(-1,-1,0,ns0), 1)
       endif
 *   ..rescale densities and associated fluxes

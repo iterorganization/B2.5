@@ -861,7 +861,7 @@ c   recompute particle fluxes
 *    ..DPC
         do iy=-1,ny
           do ix=-1,nx
-            na(ix,iy,is)=max(na(ix,iy,is),1.0_R8) 
+            na(ix,iy,is)=max(na(ix,iy,is),na_min) 
           enddo
         enddo
 *    ..compute partial pressure
@@ -924,7 +924,7 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
        do is=0,ns-1
         do iy=-1,ny
           do ix=-1,nx
-            na(ix,iy,is)= max(na(ix,iy,is),1.0e5_R8) !abs(na(ix,iy,is))  !srv 24.04.09
+            na(ix,iy,is)= max(na(ix,iy,is),na_min)   !abs(na(ix,iy,is))  !srv 24.04.09
           enddo
         enddo
 *    ..compute partial pressure
