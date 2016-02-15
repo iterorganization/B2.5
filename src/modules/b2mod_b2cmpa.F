@@ -117,7 +117,7 @@ c     It is not allowed to bundle neutral and charged states together.
           end do
         end if
         do is=0,ns-1
-          write(*,'(i3,1x,f5.1,1x,f5.1,1x,f5.1,4f10.3)')
+          write(*,'(i3,1x,f5.1,1x,f5.1,1x,f5.1,4f11.3)')
      1     is,zamin(is),zamax(is),zn(is),
      2     potimin(is),potimax(is),potmin(is),potmax(is)
         end do

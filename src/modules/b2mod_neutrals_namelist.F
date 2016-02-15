@@ -676,6 +676,10 @@ c
      .   'faulty input eb2spcr')
       enddo
       do is = 1, nmolid
+        do i = 1, nspecies
+          call xertst(0.le.mlcmp(i,is), 'faulty input mlcmp')
+        enddo
+#ifdef B25_EIRENE
         call xertst(0.le.lmolscl(is), 'faulty input lmolscl')
         if (lmolscl(is).eq.0) then
           write(6,'(a,i3,a)') 'Molecule ',is,
@@ -689,9 +693,6 @@ c
      .     'Please provide a scaling using the lmolscl array '//
      .     'in b2.neutral.parameters'
         end if
-        do i = 1, nspecies
-          call xertst(0.le.mlcmp(i,is), 'faulty input mlcmp')
-        enddo
         if (maxval(mlcmp(1:nspecies,is)).eq.0) then
           write(6,'(a,i3,a)')
      .     'Composition of molecule ',is,' is not given'
@@ -709,6 +710,7 @@ c
         if (hydrogen .and. user_namelist_used) call xertst
      .   (l_h_mol(is).eq.mlcmp(j_h_at,is), 
      .    'faulty inputs l_h_mol, mlcmp')
+#endif
       enddo
       do is = 1, nionid
         call xertst(0.le.lionscl(is), 'faulty input lionscl')
