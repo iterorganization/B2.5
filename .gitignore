@@ -15,10 +15,13 @@ bin/
 builds/
 lib/
 
-#ignore local files and directories
+# ignore local files and directories
 *.local
 *.local/
 
-#ignore local backup copies
+# ignore local backup copies
 *.orig
+
+# ignore local files created by scripts
+grep.lis
 
