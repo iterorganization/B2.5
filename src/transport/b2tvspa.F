@@ -16,12 +16,12 @@
       real (kind=R8) ::
      & vol(-1:nx,-1:ny), 
      & ua(-1:nx,-1:ny,0:ns-1),
-     & cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),                                  !srv 16.10.17
+     & cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),                              !srv 16.10.17
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1 bb(-1:nx,-1:ny,0:3), fac_vis(-1:nx,-1:ny)                         !srv 22.06.08
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &     fchvispar(-1:nx,-1:ny,0:1)
+     &     fchvispar(-1:nx,-1:ny,0:1,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -71,7 +71,9 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of cvsa_cl
-       call b2xvff (nx, ny, cvsa_cl, 'cvsa_cl')                          !srv 16.10.17
+       do is = 0, ns-1
+        call b2xvff (nx, ny, cvsa_cl(-1,-1,0,0,is), 'cvsa_cl')           !srv 16.10.17
+       enddo
       endif
 
 c Drift terms
@@ -90,12 +92,12 @@ c Drift terms
      &              bb(leftix(ix,iy),leftiy(ix,iy),2)*
      &              sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
      &              bb(leftix(ix,iy),leftiy(ix,iy),0))*0.5e0_R8
-     &		     *cvsa_cl(ix,iy,0,is)*(ua(ix,iy,is)*sqrt(bb(ix,iy,3))  !srv16.10.17
+     &            *cvsa_cl(ix,iy,0,0,is)*(ua(ix,iy,is)*sqrt(bb(ix,iy,3)) !srv16.10.17
      &                             -ua(leftix(ix,iy),leftiy(ix,iy),is)*
      &                        sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3)))   !srv 18.02.00 23.07.05 }
 !              dvpar(ix,iy)=dvpar(ix,iy)                                 !srv 24.06.99
 !     &		   + bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)           !srv
-!     &		   *cvsa_cl(ix,iy,0,is)*                                 !srv 18.02.00
+!     &		   *cvsa_cl(ix,iy,0,0,is)*                               !srv 18.02.00
 !     &        (ua(rightix(ix,iy),rightiy(ix,iy),is)                     !srv
 !     &         *sqrt((bb(rightix(ix,iy),rightiy(ix,iy),3)               !srv 18.02.00
 !     &             +bb(ix,iy,3))*0.5e0_R8)                              !srv 18.02.00
@@ -110,7 +112,7 @@ c Drift terms
 	do iy = 0, ny-1                                                  !srv
 	  do ix = 0, nx                                                  !srv 01.07.99
 	    if(leftix(ix,iy).ne.-2) then                                 !srv 26.11.02
-	      fchvispar(ix,iy,0)= fchvispar(ix,iy,0) -                   !srv 16.10.17
+	      fchvispar(ix,iy,0,0)= fchvispar(ix,iy,0,0) -               !srv 16.10.17
      &        vis_par*fac_vis(ix,iy)*                         !signmf*   !srv 25.04.00 05.02.05 22.06.08 11.01.13
      &        2.0e0_R8*dvpar(ix,iy)                                      !srv 23.07.05
      &       /(hy1(leftix(ix,iy),leftiy(ix,iy))+hy1(ix,iy))              !srv 18.02.00
@@ -136,7 +138,7 @@ c Drift terms
 	do iy = 0, ny                                                    !srv 01.07.99
 	  do ix = 0, nx-1
 	    if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
-	      fchvispar(ix,iy,1)= fchvispar(ix,iy,1) +                   !srv 16.10.17
+	      fchvispar(ix,iy,1,1)= fchvispar(ix,iy,1,1) +               !srv 16.10.17
      &        vis_par*fac_vis(ix,iy)*                       ! signmf*    !srv 25.04.00 21.04.00 22.06.08 11.01.13
      &       (wrk0(ix,iy)+wrk0(bottomix(ix,iy),bottomiy(ix,iy)))         !srv 23.07.05
      &       /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))          !srv 18.02.00
@@ -152,12 +154,12 @@ c Drift terms
       DO IB=1,NNISO
 	DO IX=NXISO1(IB), NXISO2(IB)
 	  DO IY=NYISO1(IB), NYISO2(IB)
-	    fchvispar(ix,iy,0)=0.0e0_R8
+	    fchvispar(ix,iy,0,0)=0.0e0_R8
 	  end do
 	end do
 	DO IX=NXISO1(IB), NXISO2(IB)
 	  DO IY=NYISO1(IB), NYISO2(IB)
-	    fchvispar(ix,iy,1)=0.0e0_R8
+	    fchvispar(ix,iy,1,1)=0.0e0_R8
 	  end do
 	end do
       end do

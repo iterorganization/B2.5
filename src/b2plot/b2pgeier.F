@@ -39,7 +39,7 @@ c     ,         ntrgts,lytg,nytg,lrdlsp                      !###
         k=ltrgpos(j)
         do iy=lytg,ny-1 !{
           do is=0,ns-1 !{
-            hlp_flx(iy,is,j)=fna(k+1-l,iy,0,is)*u
+            hlp_flx(iy,is,j)=fna(k+1-l,iy,0,0,is)*u
           end do !}
         end do !}
         l=1-l

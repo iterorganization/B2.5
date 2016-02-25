@@ -113,14 +113,14 @@ c*** Calculate the balances for each cell in question
           do k=1,nfluids(j) !{
             is=is+1
             s_ni(j)=s_ni(j)+b2stbr_sna(ix(i),iy(i),is)
-            f_nxp(j)=f_nxp(j)+fna(ix(i),iy(i),0,is)
-            f_nxm(j)=f_nxm(j)+fna(ixx(i),iy(i),0,is)
-            f_nyp(j)=f_nyp(j)+fna(ix(i),iy(i),1,is)
-            f_nym(j)=f_nym(j)+fna(ix(i),iy(i)-1,1,is)
-            fl_nx=fl_nx+abs(fna(ix(i),iy(i),0,is))+
-     +                  abs(fna(ixx(i),iy(i),0,is))
-            fl_ny=fl_ny+abs(fna(ix(i),iy(i),1,is))+
-     +                  abs(fna(ix(i),iy(i)-1,1,is))
+            f_nxp(j)=f_nxp(j)+fna(ix(i),iy(i),0,0,is)
+            f_nxm(j)=f_nxm(j)+fna(ixx(i),iy(i),0,0,is)
+            f_nyp(j)=f_nyp(j)+fna(ix(i),iy(i),1,1,is)
+            f_nym(j)=f_nym(j)+fna(ix(i),iy(i)-1,1,1,is)
+            fl_nx=fl_nx+abs(fna(ix(i),iy(i),0,0,is))+
+     +                  abs(fna(ixx(i),iy(i),0,0,is))
+            fl_ny=fl_ny+abs(fna(ix(i),iy(i),1,1,is))+
+     +                  abs(fna(ix(i),iy(i)-1,1,1,is))
             nt(j)=nt(j)+na(ix(i),iy(i),is)
             nt0(j)=nt0(j)+na0(ix(i),iy(i),is)
             s_io(j)=s_io(j)+rsana(ix(i),iy(i),is)

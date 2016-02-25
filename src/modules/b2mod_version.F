@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10 :: newversion ='03.000.006'
+      character*10 :: newversion ='03.001.000'
 
       character*10, save ::
      1 b2fstati_version = '00.000.000',
@@ -273,3 +273,6 @@ c                                 Added cflim(3:4) flux limit factors for
 c                                 thermo-electric coefficient and friction terms
 c                                 Added flux limit coefficients to b2mod_transport
 c
+c    Version 03.001.000  16.12.15 Introduction of 9-point stencil
+c                                 Redimensioning of most flux arrays, to take into account both poloidal and radial flows across each cell face
+c                                 Introduced routines from computation of ue (b2xpue.F)

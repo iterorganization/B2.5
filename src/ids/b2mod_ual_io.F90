@@ -291,7 +291,7 @@ contains
                     &   fluxes = edge_transport%model(1)%ggd( ggd_slice )%      &
                     &   ion( is )%particles%flux,                               &
                     &   value = na(:,:, is - 1 ),                               &
-                    &   flux = fna(:,:,:, is - 1 ),                             &
+                    &   flux = fna(:,:,:,0, is - 1 ) + fna(:,:,:,1, is - 1 ),   &
                     &   ggd_slice = ggd_slice )
                 call write_cell_scalar( scalar = edge_sources%source(1)%        &
                     &   ggd( ggd_slice )%ion( is )%particles,                   &

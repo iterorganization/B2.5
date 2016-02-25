@@ -44,9 +44,9 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
+     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
+     &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1),
      *  f_redep(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
      *  neutral_sources_rescale, core_sources_rescale, 
@@ -161,7 +161,8 @@
 *    ..test sign of pbs
 !       call b2xvsg (n2*2, pbs, 1, 'pbs', '.ge.')         !srv 11.01.13
 *    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test sign of na, ni, ne, te, ti
        call b2xvsg (n2*ns, na, 1, 'na', '.gt.')
        call b2xvsg (n2*2, ni, 1, 'ni', '.gt.')
@@ -171,7 +172,7 @@
       endif
 *   ..test edge values of fluxes
       do is = 0, ns-1
-       call b2xvff (nx, ny, fna(-1,-1,0,is), 'fna')
+       call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')
       enddo
       call b2xvff (nx, ny, fhe, 'fhe')
       call b2xvff (nx, ny, fhi, 'fhi')
@@ -457,10 +458,10 @@ c lcore           is this a core element
      &  (rza(ix,iy,0:ns-1)*hhn+rza(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
       rpf(0:ns-1) = 
      &  (rpt(ix,iy,0:ns-1)*hhn+rpt(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
-      qin = max(0.0_R8,isign*(fhi(ixf,iyf,idir)+
-     &                        fhi_ext(ixf,iyf,idir)))/area
+      qin = max(0.0_R8,isign*(fhi(ixf,iyf,idir,idir)+
+     &                        fhi_ext(ixf,iyf,idir,idir)))/area
       do is=0,ns-1
-         qin=qin+max(0.0_R8,isign*fna(ixf,iyf,idir,is))
+         qin=qin+max(0.0_R8,isign*fna(ixf,iyf,idir,idir,is))
      &        *((kinrgy(ix,iy,is)+tif)*(1.0_R8-BoRiS)
      &        +rpf(is)*ev)/area
       enddo
@@ -469,13 +470,13 @@ c lcore           is this a core element
      &    (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/(hhn+hh)
          taf =
      &    (ta_ext(ix,iy,is)*hhn+ta_ext(ixn,iyn,is)*hh)/(hhn+hh)
-         qin=qin+max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))
+         qin=qin+max(0.0_R8,isign*fa_ext(ixf,iyf,idir,idir,is))
      &        *((0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+
      &           taf)*(1.0_R8-BoRiS)
      &          + ptf*ev)/area
       enddo
-      qel = max(0.0_R8,isign*(fhe(ixf,iyf,idir)+
-     &       fne(ixf,iyf,idir)*tef*(1.0_R8-BoRiS)))/area
+      qel = max(0.0_R8,isign*(fhe(ixf,iyf,idir,idir)+
+     &       fne(ixf,iyf,idir,idir)*tef*(1.0_R8-BoRiS)))/area
       if(lcore) then
          surface_temp = 0.0_R8
       else
@@ -529,7 +530,7 @@ cdpc
 cdpc
 *       (species (is) recycles into is0)
 *       (is0 corresponds to CX species is2)
-         t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is)) *
+         t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,idir,is)) *
      1        neutral_sources_rescale ! dpc: eirene coupling 1999.06.28
          Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))     
                                  ! xpb: Incident energy (eV)
@@ -811,7 +812,7 @@ cxpb
             endif
 cxpb
 *          (species (is) recycles into is0)
-            t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is)) *
+            t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,idir,is)) *
      .           core_sources_rescale ! xpb: 2002.02.01
             if (is.ne.is0) then
                sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+

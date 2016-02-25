@@ -12,10 +12,10 @@
      &  vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2),
      &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      &  pz(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), uadia(-1:nx,-1:ny,0:1,0:ns-1)
+     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), uadia(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  fchdia(-1:nx,-1:ny,0:1)
+     &  fchdia(-1:nx,-1:ny,0:1,0:1)
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -86,7 +86,7 @@
         do iy=0,ny-1
           do ix=0,nx
             if(leftix(ix,iy).ne.-2) then                                 !srv 26.11.02
-             fchdia(ix,iy,0)=fchdia(ix,iy,0)+
+             fchdia(ix,iy,0,0)=fchdia(ix,iy,0,0)+
      &                       dia_cur*facdrift(ix,iy)* ! signmf*          !srv 25.04.00 05.02.05 11.01.13 16.10.17
      &      (pz(ix,iy)*bb(ix,iy,2)+                                      !srv 31.03.00 18.01.02
      &        pz(leftix(ix,iy),leftiy(ix,iy))                            !srv 31.03.00
@@ -112,7 +112,7 @@
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)then     !srv 26.11.02
 !           do ix=-1,nx                                                  !srv
 !             fchdia(ix,iy,1)=fchdia(ix,iy,1) - dia_cur*signmf*          !srv 25.04.00 21.04.00 21.03.02
-             fchdia(ix,iy,1)= - dia_cur*facdrift(ix,iy)* ! signmf*       !srv 25.04.00 21.04.00 21.03.02 11.01.13
+             fchdia(ix,iy,1,1)= - dia_cur*facdrift(ix,iy)* ! signmf*     !srv 25.04.00 21.04.00 21.03.02 11.01.13
 !     &      (vol(bottomix(ix,iy),bottomiy(ix,iy))*pz(ix,iy)*bb(ix,iy,2)+ !srv 31.03.00 18.01.02 { interpolaion for bottom
 !     &       vol(ix,iy)*pz(bottomix(ix,iy),bottomiy(ix,iy))             !srv 31.03.00
 !     &       *bb(bottomix(ix,iy),bottomiy(ix,iy),2))/                   !srv 31.03.00
@@ -151,8 +151,8 @@ crfs inertia terms
      &             bottomiy(ix,iy).ne.-2.and.topiy(ix,iy).ne.ny+1.and.
      &             region(ix,iy,0).ne.0)
      >            gampvd(ix,iy)=gampvd(ix,iy)+am(is)*mp*
-     1            0.5_R8*(fna(ix,iy,0,is)*uadia(ix,iy,0,is)+
-     2            fna(rightix(ix,iy),rightiy(ix,iy),0,is)
+     1            0.5_R8*(fna(ix,iy,0,0,is)*uadia(ix,iy,0,is)+
+     2            fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)
      2            *uadia(rightix(ix,iy),rightiy(ix,iy),0,is))
               enddo
             enddo
@@ -165,14 +165,14 @@ cxpb  Must check for case of the island X-point
                   if(topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then     	 !xpb
 cxpb  Standard case
                     gamrvd(ix,iy)=gamrvd(ix,iy)+am(is)*mp*
-     1               0.5_R8*(fna(ix,iy,1,is)+
-     2               fna(topix(ix,iy),topiy(ix,iy),1,is))*
+     1               0.5_R8*(fna(ix,iy,1,1,is)+
+     2               fna(topix(ix,iy),topiy(ix,iy),1,1,is))*
      1               0.5_R8*(uadia(ix,iy,0,is)+
      2               uadia(rightix(ix,iy),rightiy(ix,iy),0,is))
                   else                                                   !xpb
 cxpb  Island X-point cells
                     gamrvd(ix,iy)=gamrvd(ix,iy)+am(is)*mp*
-     1               fna(ix,iy,1,is)*                                    !xpb
+     1               fna(ix,iy,1,1,is)*                                    !xpb
      2               0.5_R8*(uadia(ix,iy,0,is)+
      2               uadia(rightix(ix,iy),rightiy(ix,iy),0,is))
                   endif
@@ -187,7 +187,7 @@ cxpb  Island X-point cells
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
-              fchdia(ix,iy,1) = fchdia(ix,iy,1)+facdrift(ix,iy)*
+              fchdia(ix,iy,1,1) = fchdia(ix,iy,1,1)+facdrift(ix,iy)*
      1         0.5_R8/wbbv(ix,iy,3)*
      2         ((gampvdc(rightix(ix,iy),rightiy(ix,iy))
      3          -gampvdc(ix,iy))/

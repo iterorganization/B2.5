@@ -9,7 +9,7 @@
       integer nx, ny
       real (kind=R8) ::
      *   den(-1:nx,-1:ny), fun(-1:nx,-1:ny), sdf(-1:nx,-1:ny,0:3),
-     &  fdf(-1:nx,-1:ny,0:1)
+     &  fdf(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   resdf(-1:nx,-1:ny)
@@ -91,12 +91,12 @@
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
          resdf(ix,iy) = resdf(ix,iy)
-     &    -fdf(rightix(ix,iy),rightiy(ix,iy),0)
+     &    -fdf(rightix(ix,iy),rightiy(ix,iy),0,0)
         elseif(rightix(ix,iy).eq.nx+1) then    
-         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,0)
+         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,0,0)
         else
-         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,0)
-     &    -fdf(rightix(ix,iy),rightiy(ix,iy),0)
+         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,0,0)
+     &    -fdf(rightix(ix,iy),rightiy(ix,iy),0,0)
         endif
        enddo
       enddo
@@ -106,24 +106,24 @@
         if (bottomiy(ix,iy).eq.-2) then
 cxpb  cells with no bottom neighbour
          resdf(ix,iy) = resdf(ix,iy)
-     &     -fdf(topix(ix,iy),topiy(ix,iy),1)
+     &     -fdf(topix(ix,iy),topiy(ix,iy),1,1)
         elseif (topiy(ix,iy).eq.ny+1) then
 cxpb  cells with no top neighbour
-          resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,1)
+          resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,1,1)
         elseif (topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then
 cxpb  standard case
-         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,1)
-     &      -fdf(topix(ix,iy),topiy(ix,iy),1)
+         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,1,1)
+     &      -fdf(topix(ix,iy),topiy(ix,iy),1,1)
         elseif (topiy(topix(ix,iy),topiy(ix,iy)).eq.iy .and. ny.gt.1) 
      &   then
 cxpb  diverted island X-point case
-         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,1)
+         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,1,1)
         endif
        enddo
       enddo
       do ix = -1, nx
        if (bottomiy(ix,ny).ne.-2)
-     >  resdf(ix,ny) = resdf(ix,ny)+fdf(ix,ny,1)
+     >  resdf(ix,ny) = resdf(ix,ny)+fdf(ix,ny,1,1)
       enddo
 
 * ..return

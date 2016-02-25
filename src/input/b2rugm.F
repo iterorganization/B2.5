@@ -17,7 +17,7 @@
      *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  fpsi(-1:nx,-1:ny,0:3), ffbz(-1:nx,-1:ny,0:3),
      &  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
-     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), 
+     &  hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), 
      &  qcb(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), pbs(-1:nx,-1:ny,0:1),
      &  wbbl(-1:nx,-1:ny,0:3), wbbr(-1:nx,-1:ny,0:3), 
      &  wbbv(-1:nx,-1:ny,0:3), wbbc(-1:nx+1,-1:ny+1,0:3),
@@ -193,6 +193,8 @@
       integer iFace, offset
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y
+      real (kind=R8) ::
+     *   qc_loc(-1:nx,-1:ny)
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
@@ -233,18 +235,23 @@
 *   ..read qz, qc, gs
       call cfrure (nget, n2*2, qz, 'qz')
 cxpb
-      if(b2fgmtry_version.ge.'01.001.022') then
-	call cfrure (nget, n2, qc, 'qc')
+      if(b2fgmtry_version.ge.'03.001.000') then
+        call cfrure (nget, n2*2, qc, 'qc')
+      elseif(b2fgmtry_version.ge.'01.001.022') then
+        call cfrure (nget, n2, qc_loc, 'qc')
+        qc(:,:,0) = qc_loc
+        qc(:,:,1) = 0.0_R8
       else
        do iy = -1, ny
         do ix = -1, nx
-         qc(ix,iy) = cosang (
+         qc(ix,iy,1) = 0.0_R8
+         qc(ix,iy,0) = cosang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
      &     crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
-         if(qc(ix,iy).le.0.0_R8) then
+         if(qc(ix,iy,0).le.0.0_R8) then
           write(*,'(a,1f12.6,2i5)')
-     1     'Problem in b2rugm: qc(ix,iy) <= 0',qc(ix,iy),ix,iy
+     1     'Problem in b2rugm: qc(ix,iy) <= 0',qc(ix,iy,0),ix,iy
           write(*,'(a,4f12.6)') 'crx = ', crx(ix,iy,0:3)
           write(*,'(a,4f12.6)') 'cry = ', cry(ix,iy,0:3)
          endif

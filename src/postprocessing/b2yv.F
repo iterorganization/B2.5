@@ -144,7 +144,7 @@
       call read_b2mod_plasma(nx, ny, ns, ninp(4))
       call read_b2mod_residuals(ninp(4))
       call read_b2mod_sources(ninp(4))
-      call read_b2mod_transport(ninp(4))
+      call read_b2mod_transport(nx, ny, ns, ninp(4))
       call alloc_b2mod_elements(ns,zn,am)
    10 continue
       write(hlp_frm,'(a,i3,a)') '(a,',ns,'(a2,i1,1x))'

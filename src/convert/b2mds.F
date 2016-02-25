@@ -303,24 +303,24 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
         do iy=-1,ny
           do ix=-1,nx
             if(leftix(ix,iy).ge.-1) then
-              fht(ix,iy,0)=fht(ix,iy,0)+0.5_R8*fa_ext(ix,iy,0,is)*
+              fht(ix,iy,0,0)=fht(ix,iy,0,0)+0.5_R8*fa_ext(ix,iy,0,0,is)*
      .          (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
      .          (ua_ext(leftix(ix,iy),leftiy(ix,iy),is)**2+
      .           ua_ext(ix,iy,is)**2)+
      .          (ta_ext(leftix(ix,iy),leftiy(ix,iy),is)+
      .           ta_ext(ix,iy,is)))
-              fht(ix,iy,0)=fht(ix,iy,0)+0.5_R8*fa_ext(ix,iy,0,is)*
+              fht(ix,iy,0,0)=fht(ix,iy,0,0)+0.5_R8*fa_ext(ix,iy,0,0,is)*
      .         (pt_ext(leftix(ix,iy),leftiy(ix,iy),is)+
      .          pt_ext(ix,iy,is))*ev
             endif
             if(bottomiy(ix,iy).ge.-1) then
-              fht(ix,iy,1)=fht(ix,iy,1)+0.5_R8*fa_ext(ix,iy,1,is)*
+              fht(ix,iy,1,1)=fht(ix,iy,1,1)+0.5_R8*fa_ext(ix,iy,1,1,is)*
      .         (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
      .         (ua_ext(bottomix(ix,iy),bottomiy(ix,iy),is)**2+
      .          ua_ext(ix,iy,is)**2)+
      .         (ta_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
      .          ta_ext(ix,iy,is)))
-              fht(ix,iy,1)=fht(ix,iy,1)+0.5_R8*fa_ext(ix,iy,1,is)*
+              fht(ix,iy,1,1)=fht(ix,iy,1,1)+0.5_R8*fa_ext(ix,iy,1,1,is)*
      .         (pt_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
      .          pt_ext(ix,iy,is))*ev
             endif
@@ -329,53 +329,54 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
       enddo
 c calculate divergences of the various fluxes
       do is=0,ns-1
-        do iy=-1,ny
-          do ix=-1,nx
-            if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *       bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-              div_fna(ix,iy,is)=
-     1         +fna(rightix(ix,iy),rightiy(ix,iy),0,is)-fna(ix,iy,0,is)
-     2         +fna(topix(ix,iy),topiy(ix,iy),1,is)-fna(ix,iy,1,is)
-              div_fmo(ix,iy,is)=
-     1         +fmo(rightix(ix,iy),rightiy(ix,iy),0,is)-fmo(ix,iy,0,is)
-     2         +fmo(topix(ix,iy),topiy(ix,iy),1,is)-fmo(ix,iy,1,is)
-              div_fhm(ix,iy,is)=
-     1         +fhm(rightix(ix,iy),rightiy(ix,iy),0,is)-fhm(ix,iy,0,is)
-     2         +fhm(topix(ix,iy),topiy(ix,iy),1,is)-fhm(ix,iy,1,is)
-              div_fhp(ix,iy,is)=
-     1         +fhp(rightix(ix,iy),rightiy(ix,iy),0,is)-fhp(ix,iy,0,is)
-     2         +fhp(topix(ix,iy),topiy(ix,iy),1,is)-fhp(ix,iy,1,is)
-            else
-              div_fna(ix,iy,is)=0.0_R8
-              div_fmo(ix,iy,is)=0.0_R8
-              div_fhm(ix,iy,is)=0.0_R8
-              div_fhp(ix,iy,is)=0.0_R8
-            endif
-          enddo
+       do iy=-1,ny
+        do ix=-1,nx
+          if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
+     *    bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
+           div_fna(ix,iy,is)=
+     1      +fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)
+     2      -fna(ix,iy,0,0,is)
+     3      +fna(topix(ix,iy),topiy(ix,iy),1,1,is)-fna(ix,iy,1,1,is)
+           div_fmo(ix,iy,is)=
+     1      +fmo(rightix(ix,iy),rightiy(ix,iy),0,0,is)-fmo(ix,iy,0,0,is)
+     2      +fmo(topix(ix,iy),topiy(ix,iy),1,1,is)-fmo(ix,iy,1,1,is)
+           div_fhm(ix,iy,is)=
+     1      +fhm(rightix(ix,iy),rightiy(ix,iy),0,0,is)-fhm(ix,iy,0,0,is)
+     2      +fhm(topix(ix,iy),topiy(ix,iy),1,1,is)-fhm(ix,iy,1,1,is)
+           div_fhp(ix,iy,is)=
+     1      +fhp(rightix(ix,iy),rightiy(ix,iy),0,0,is)-fhp(ix,iy,0,0,is)
+     2      +fhp(topix(ix,iy),topiy(ix,iy),1,1,is)-fhp(ix,iy,1,1,is)
+          else
+           div_fna(ix,iy,is)=0.0_R8
+           div_fmo(ix,iy,is)=0.0_R8
+           div_fhm(ix,iy,is)=0.0_R8
+           div_fhp(ix,iy,is)=0.0_R8
+          endif
         enddo
+       enddo
       enddo
       do iy=-1,ny
         do ix=-1,nx
           if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
      *     bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
             div_fhet(ix,iy)=
-     1       +fhet(rightix(ix,iy),rightiy(ix,iy),0)-fhet(ix,iy,0)
-     2       +fhet(topix(ix,iy),topiy(ix,iy),1)-fhet(ix,iy,1)
+     1       +fhet(rightix(ix,iy),rightiy(ix,iy),0,0)-fhet(ix,iy,0,0)
+     2       +fhet(topix(ix,iy),topiy(ix,iy),1,1)-fhet(ix,iy,1,1)
             div_fhit(ix,iy)=
-     1       +fhit(rightix(ix,iy),rightiy(ix,iy),0)-fhit(ix,iy,0)
-     2       +fhit(topix(ix,iy),topiy(ix,iy),1)-fhit(ix,iy,1)
+     1       +fhit(rightix(ix,iy),rightiy(ix,iy),0,0)-fhit(ix,iy,0,0)
+     2       +fhit(topix(ix,iy),topiy(ix,iy),1,1)-fhit(ix,iy,1,1)
             div_fhe(ix,iy)=
-     1       +fhe(rightix(ix,iy),rightiy(ix,iy),0)-fhe(ix,iy,0)
-     2       +fhe(topix(ix,iy),topiy(ix,iy),1)-fhe(ix,iy,1)
+     1       +fhe(rightix(ix,iy),rightiy(ix,iy),0,0)-fhe(ix,iy,0,0)
+     2       +fhe(topix(ix,iy),topiy(ix,iy),1,1)-fhe(ix,iy,1,1)
             div_fhi(ix,iy)=
-     1       +fhi(rightix(ix,iy),rightiy(ix,iy),0)-fhi(ix,iy,0)
-     2       +fhi(topix(ix,iy),topiy(ix,iy),1)-fhi(ix,iy,1)
+     1       +fhi(rightix(ix,iy),rightiy(ix,iy),0,0)-fhi(ix,iy,0,0)
+     2       +fhi(topix(ix,iy),topiy(ix,iy),1,1)-fhi(ix,iy,1,1)
             div_fch(ix,iy)=
-     1       +fch(rightix(ix,iy),rightiy(ix,iy),0)-fch(ix,iy,0)
-     2       +fch(topix(ix,iy),topiy(ix,iy),1)-fch(ix,iy,1)
+     1       +fch(rightix(ix,iy),rightiy(ix,iy),0,0)-fch(ix,iy,0,0)
+     2       +fch(topix(ix,iy),topiy(ix,iy),1,1)-fch(ix,iy,1,1)
             div_fhj(ix,iy)=0
-     1       +fhj(rightix(ix,iy),rightiy(ix,iy),0)-fhj(ix,iy,0)
-     2       +fhj(topix(ix,iy),topiy(ix,iy),1)-fhj(ix,iy,1)
+     1       +fhj(rightix(ix,iy),rightiy(ix,iy),0,0)-fhj(ix,iy,0,0)
+     2       +fhj(topix(ix,iy),topiy(ix,iy),1,1)-fhj(ix,iy,1,1)
           else
             div_fhet(ix,iy)=0.0_R8
             div_fhit(ix,iy)=0.0_R8
@@ -540,9 +541,9 @@ c alternative (failed) calculation of energy balance (elegant, but flawed)
      &       bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &       region(ix,iy,0).ne.0) then
               bas_vis_piece(ix,iy,is)=ua(ix,iy,is)*
-     2         (cvsa_cl(rightix(ix,iy),rightiy(ix,iy),0,is)*
+     2         (cvsa_cl(rightix(ix,iy),rightiy(ix,iy),0,0,is)*
      4           (ua(rightix(ix,iy),rightiy(ix,iy),is)-ua(ix,iy,is))-
-     5          cvsa_cl(ix,iy,0,is)*
+     5          cvsa_cl(ix,iy,0,0,is)*
      6           (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is)))
             else
               bas_vis_piece(ix,iy,is)=0.0_R8
@@ -1067,235 +1068,235 @@ c
       call mds_put_double_rz('\TOP.SNAPSHOT:ALF','mho.m^-1',
      1 nx+2,ny+2,temp,'')
 
-      flux_x(0:nx,-1:ny,0:ns-1)=fna(0:nx,-1:ny,0,0:ns-1)
+      flux_x(0:nx,-1:ny,0:ns-1)=fna(0:nx,-1:ny,0,0,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX','/s',
      1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna(-1:nx,0:ny,1,0:ns-1)
+      flux_y(-1:nx,0:ny,0:ns-1)=fna(-1:nx,0:ny,1,1,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY','/s',
      1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_32(0:nx,-1:ny,0,0:ns-1)
+      flux_x(0:nx,-1:ny,0:ns-1)=fna_32(0:nx,-1:ny,0,0,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_32','/s',
      1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_32(-1:nx,0:ny,1,0:ns-1)
+      flux_y(-1:nx,0:ny,0:ns-1)=fna_32(-1:nx,0:ny,1,1,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_32','/s',
      1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_52(0:nx,-1:ny,0,0:ns-1)
+      flux_x(0:nx,-1:ny,0:ns-1)=fna_52(0:nx,-1:ny,0,0,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_52','/s',
      1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_52(-1:nx,0:ny,1,0:ns-1)
+      flux_y(-1:nx,0:ny,0:ns-1)=fna_52(-1:nx,0:ny,1,1,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_52','/s',
      1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_mdf(0:nx,-1:ny,0,0:ns-1)
+      flux_x(0:nx,-1:ny,0:ns-1)=fna_mdf(0:nx,-1:ny,0,0,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_MDF','/s',
      1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_mdf(-1:nx,0:ny,1,0:ns-1)
+      flux_y(-1:nx,0:ny,0:ns-1)=fna_mdf(-1:nx,0:ny,1,1,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_MDF','/s',
      1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_fcor(0:nx,-1:ny,0,0:ns-1)
+      flux_x(0:nx,-1:ny,0:ns-1)=fna_fcor(0:nx,-1:ny,0,0,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_FCOR','/s',
      1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_fcor(-1:nx,0:ny,1,0:ns-1)
+      flux_y(-1:nx,0:ny,0:ns-1)=fna_fcor(-1:nx,0:ny,1,1,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_FCOR','/s',
      1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_nodrift(0:nx,-1:ny,0,0:ns-1)
+      flux_x(0:nx,-1:ny,0:ns-1)=fna_nodrift(0:nx,-1:ny,0,0,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_NODRIFT','/s',
      1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_nodrift(-1:nx,0:ny,1,0:ns-1)
+      flux_y(-1:nx,0:ny,0:ns-1)=fna_nodrift(-1:nx,0:ny,1,1,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_NODRIFT','/s',
      1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_he(0:nx,-1:ny,0,0:ns-1)
+      flux_x(0:nx,-1:ny,0:ns-1)=fna_he(0:nx,-1:ny,0,0,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_HE','/s',
      1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_he(-1:nx,0:ny,1,0:ns-1)
+      flux_y(-1:nx,0:ny,0:ns-1)=fna_he(-1:nx,0:ny,1,1,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_HE','/s',
      1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fnaPSch(0:nx,-1:ny,0,0:ns-1)
+      flux_x(0:nx,-1:ny,0:ns-1)=fnaPSch(0:nx,-1:ny,0,0,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAPSCHX','/s',
      1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fnaPSch(-1:nx,0:ny,1,0:ns-1)
+      flux_y(-1:nx,0:ny,0:ns-1)=fnaPSch(-1:nx,0:ny,1,1,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAPSCHY','/s',
      1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fna_eir(0:nx,-1:ny,0,0:ns-1)
+      flux_x(0:nx,-1:ny,0:ns-1)=fna_eir(0:nx,-1:ny,0,0,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAX_EIR','/s',
      1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fna_eir(-1:nx,0:ny,1,0:ns-1)
+      flux_y(-1:nx,0:ny,0:ns-1)=fna_eir(-1:nx,0:ny,1,1,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FNAY_EIR','/s',
      1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fmo(0:nx,-1:ny,0,0:ns-1)
+      flux_x(0:nx,-1:ny,0:ns-1)=fmo(0:nx,-1:ny,0,0,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FMOX','N',
      1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fmo(-1:nx,0:ny,1,0:ns-1)
+      flux_y(-1:nx,0:ny,0:ns-1)=fmo(-1:nx,0:ny,1,1,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FMOY','N',
      1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fhm(0:nx,-1:ny,0,0:ns-1)
+      flux_x(0:nx,-1:ny,0:ns-1)=fhm(0:nx,-1:ny,0,0,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FHMX','W',
      1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fhm(-1:nx,0:ny,1,0:ns-1)
+      flux_y(-1:nx,0:ny,0:ns-1)=fhm(-1:nx,0:ny,1,1,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FHMY','W',
      1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0:ns-1)=fhp(0:nx,-1:ny,0,0:ns-1)
+      flux_x(0:nx,-1:ny,0:ns-1)=fhp(0:nx,-1:ny,0,0,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FHPX','W',
      1 nx+1,ny+2,ns,flux_x,'TEXTPL','_X')
-      flux_y(-1:nx,0:ny,0:ns-1)=fhp(-1:nx,0:ny,1,0:ns-1)
+      flux_y(-1:nx,0:ny,0:ns-1)=fhp(-1:nx,0:ny,1,1,0:ns-1)
       call mds_put_double_rzns('\TOP.SNAPSHOT:FHPY','W',
      1 nx+2,ny+1,ns,flux_y,'TEXTPL','_Y')
-      flux_x(0:nx,-1:ny,0)=fne_eir(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fne_eir(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FNEX_EIR','/s',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fne_eir(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fne_eir(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FNEY_EIR','/s',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fne_32(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fne_32(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FNEX_32','/s',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fne_32(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fne_32(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FNEY_32','/s',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fne_52(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fne_52(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FNEX_52','/s',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fne_52(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fne_52(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FNEY_52','/s',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fni_32(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fni_32(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FNIX_32','/s',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fni_32(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fni_32(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FNIY_32','/s',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fni_52(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fni_52(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FNIX_52','/s',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fni_52(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fni_52(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FNIY_52','/s',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhe(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fhe(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHEX','W',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhe(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fhe(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHEY','W',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhe_mdf(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fhe_mdf(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHEX_MDF','W',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhe_mdf(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fhe_mdf(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHEY_MDF','W',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhePSch(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fhePSch(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHEPSCHX','W',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhePSch(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fhePSch(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHEPSCHY','W',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhe_eir(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fhe_eir(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHEX_EIR','W',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhe_eir(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fhe_eir(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHEY_EIR','W',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhi(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fhi(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHIX','W',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhi(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fhi(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHIY','W',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhi_mdf(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fhi_mdf(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHIX_MDF','W',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhi_mdf(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fhi_mdf(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHIY_MDF','W',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhiPSch(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fhiPSch(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHIPSCHX','W',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhiPSch(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fhiPSch(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHIPSCHY','W',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhi_eir(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fhi_eir(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHIX_EIR','W',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhi_eir(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fhi_eir(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHIY_EIR','W',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fch(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fch(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHX','A',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fch(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fch(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHY','A',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fch_32(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fch_32(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHX_32','A',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fch_32(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fch_32(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHY_32','A',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fch_52(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fch_52(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHX_52','A',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fch_52(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fch_52(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHY_52','A',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fch_p(0:nx,-1:ny,0)             !srv 10.06.09
+      flux_x(0:nx,-1:ny,0)=fch_p(0:nx,-1:ny,0,0)             !srv 10.06.09
       call mds_put_double_rz('\TOP.SNAPSHOT:FCH_P','A',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_x(0:nx,-1:ny,0)=fchdia(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fchdia(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHDIAX','A',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fchdia(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fchdia(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHDIAY','A',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fchin(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fchin(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHINX','A',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fchin(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fchin(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHINY','A',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fchvispar(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fchvispar(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHVISPARX','A',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fchvispar(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fchvispar(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHVISPARY','A',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fchvisper(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fchvisper(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHVISPERX','A',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fchvisper(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fchvisper(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHVISPERY','A',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fchvisq(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fchvisq(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHVISQX','A',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fchvisq(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fchvisq(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHVISQY','A',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fchinert(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fchinert(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHINERTX','A',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fchinert(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fchinert(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FCHINERTY','A',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fht(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fht(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHTX','W',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fht(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fht(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHTY','W',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=fhj(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=fhj(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHJX','W',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=fhj(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=fhj(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FHJY','W',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=floe_noc(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=floe_noc(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FLOEX_NOC','/s',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=floe_noc(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=floe_noc(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FLOEY_NOC','/s',
      1 nx+2,ny+1,flux_y,'_Y')
-      flux_x(0:nx,-1:ny,0)=floi_noc(0:nx,-1:ny,0)
+      flux_x(0:nx,-1:ny,0)=floi_noc(0:nx,-1:ny,0,0)
       call mds_put_double_rz('\TOP.SNAPSHOT:FLOIX_NOC','/s',
      1 nx+1,ny+2,flux_x,'_X')
-      flux_y(-1:nx,0:ny,0)=floi_noc(-1:nx,0:ny,1)
+      flux_y(-1:nx,0:ny,0)=floi_noc(-1:nx,0:ny,1,1)
       call mds_put_double_rz('\TOP.SNAPSHOT:FLOIY_NOC','/s',
      1 nx+2,ny+1,flux_y,'_Y')
 
@@ -1539,10 +1540,10 @@ c
      1     topiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
             if(on_closed_surface(ix,iy).and.
      1         .not.on_closed_surface(topix(ix,iy),topiy(ix,iy))) then
-              fhesep=fhesep+fhe(topix(ix,iy),topiy(ix,iy),1)
-              fhisep=fhisep+fhi(topix(ix,iy),topiy(ix,iy),1)
-              fnesep=fnesep+fne(topix(ix,iy),topiy(ix,iy),1)
-              fnisep=fnisep+fni(topix(ix,iy),topiy(ix,iy),1)
+              fhesep=fhesep+fhe(topix(ix,iy),topiy(ix,iy),1,1)
+              fhisep=fhisep+fhi(topix(ix,iy),topiy(ix,iy),1,1)
+              fnesep=fnesep+fne(topix(ix,iy),topiy(ix,iy),1,1)
+              fnisep=fnisep+fni(topix(ix,iy),topiy(ix,iy),1,1)
             endif
           endif
         enddo

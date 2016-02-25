@@ -36,9 +36,9 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
+     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
+     &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -65,9 +65,9 @@
      *                  pe_tmp, re_tmp
       real (kind=R8) ::
      *  na_tot(-1:nx,-1:ny), na0(-1:nx,-1:ny,0:ns-1),
-     *  ua0(-1:nx,-1:ny,0:ns-1), fna0(-1:nx,-1:ny,0:1,0:ns-1),
-     *  fhi0(-1:nx,-1:ny,0:1), ti0(-1:nx,-1:ny),
-     *  fhe0(-1:nx,-1:ny,0:1), fch0(-1:nx,-1:ny,0:1)
+     *  ua0(-1:nx,-1:ny,0:ns-1), fna0(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     *  fhi0(-1:nx,-1:ny,0:1,0:1), ti0(-1:nx,-1:ny),
+     *  fhe0(-1:nx,-1:ny,0:1,0:1), fch0(-1:nx,-1:ny,0:1,0:1)
       integer, save :: ncall, impgyro_mod
       real (kind=R8), save :: linearisation
       logical, save :: internal_energy_sources
@@ -128,7 +128,7 @@
 
 *   ..test edge values of fluxes
        do is = 0, ns-1
-        call b2xvff (nx, ny, fna(-1,-1,0,is), 'fna')
+        call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')
        enddo
        call b2xvff (nx, ny, fhe, 'fhe')
        call b2xvff (nx, ny, fhi, 'fhi')
@@ -209,18 +209,18 @@ cxpb Must convert fluxes to flux densities
               ti0(ix,iy) = ti0(ix,iy) + nt_tmp
               ua0(ix,iy,is) = (ua(ix,iy,is)*na(ix,iy,is)*
      .         sign(1.0_R8,bb(ix,iy,0)) + ua_tmp*n0_tmp)/na0(ix,iy,is)
-              fna0(ix,iy,0,is) = 
-     .         fna(ix,iy,0,is)/gs(ix,iy,0)/qc(ix,iy) + p0_tmp
-              fna0(ix,iy,1,is) = fna(ix,iy,1,is)/gs(ix,iy,1) + r0_tmp
-              fhi0(ix,iy,0) = fhi0(ix,iy,0) + pe_tmp
-              fhi0(ix,iy,1) = fhi0(ix,iy,1) + re_tmp
+              fna0(ix,iy,0,0,is) = 
+     .         fna(ix,iy,0,0,is)/gs(ix,iy,0)/qc(ix,iy) + p0_tmp
+              fna0(ix,iy,1,1,is) = fna(ix,iy,1,1,is)/gs(ix,iy,1) +r0_tmp
+              fhi0(ix,iy,0,0) = fhi0(ix,iy,0,0) + pe_tmp
+              fhi0(ix,iy,1,1) = fhi0(ix,iy,1,1) + re_tmp
             end do
           end do
         else
           na0(:,:,is) = na(:,:,is)
           ua0(:,:,is) = ua(:,:,is)*sign(1.0_R8,bb(:,:,0))
-          fna0(:,:,0,is) = fna(:,:,0,is)/gs(:,:,0)/qc(:,:)
-          fna0(:,:,1,is) = fna(:,:,1,is)/gs(:,:,1)
+          fna0(:,:,0,0,is) = fna(:,:,0,0,is)/gs(:,:,0)/qc(:,:)
+          fna0(:,:,1,1,is) = fna(:,:,1,1,is)/gs(:,:,1)
         end if
       end do
       do is = 1, nnmoli
@@ -246,14 +246,14 @@ cxpb Must convert fluxes to flux densities
           ti0(ix,iy) = (ti0(ix,iy) + 
      .                  ti(ix,iy)*ni(ix,iy,0)) /
      .                 (na_tot(ix,iy) + ni(ix,iy,0))
-          fhi0(ix,iy,0) = fhi0(ix,iy,0) + 
-     .     fhi(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
-          fhi0(ix,iy,1) = fhi0(ix,iy,1) + 
-     .     fhi(ix,iy,1)/gs(ix,iy,1)
-          fhe0(ix,iy,0) = fhe(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
-          fhe0(ix,iy,1) = fhe(ix,iy,1)/gs(ix,iy,1)
-          fch0(ix,iy,0) = fch(ix,iy,0)/gs(ix,iy,0)/qc(ix,iy)
-          fch0(ix,iy,1) = fch(ix,iy,1)/gs(ix,iy,1)
+          fhi0(ix,iy,0,0) = fhi0(ix,iy,0,0) + 
+     .     fhi(ix,iy,0,0)/gs(ix,iy,0)/qc(ix,iy)
+          fhi0(ix,iy,1,1) = fhi0(ix,iy,1,1) + 
+     .     fhi(ix,iy,1,1)/gs(ix,iy,1)
+          fhe0(ix,iy,0,0) = fhe(ix,iy,0,0)/gs(ix,iy,0)/qc(ix,iy)
+          fhe0(ix,iy,1,1) = fhe(ix,iy,1,1)/gs(ix,iy,1)
+          fch0(ix,iy,0,0) = fch(ix,iy,0,0)/gs(ix,iy,0)/qc(ix,iy)
+          fch0(ix,iy,1,1) = fch(ix,iy,1,1)/gs(ix,iy,1)
         end do
       end do
 
@@ -310,18 +310,18 @@ cxpb Computing ua from fa is what we really want to do
             do ix=-1,nx
               if (leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then
                 ua_ext(ix,iy,is) = 0.5_R8*
-     .           (fa_ext(ix,iy,0,is)/pbs(ix,iy,0)+
-     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,is)/
+     .           (fa_ext(ix,iy,0,0,is)/pbs(ix,iy,0)+
+     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,0,is)/
      .            pbs(rightix(ix,iy),rightiy(ix,iy),0))/
      .           na_ext(ix,iy,is)
               else if (leftix(ix,iy).eq.-2) then
                 ua_ext(ix,iy,is) =
-     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,is)/
+     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,0,is)/
      .            pbs(rightix(ix,iy),rightiy(ix,iy),0)/
      .            na_ext(ix,iy,is)
               else if (rightix(ix,iy).eq.nx+1) then
                 ua_ext(ix,iy,is) =
-     .           fa_ext(ix,iy,0,is)/pbs(ix,iy,0)/na_ext(ix,iy,is)
+     .           fa_ext(ix,iy,0,0,is)/pbs(ix,iy,0)/na_ext(ix,iy,is)
               end if
             end do
           end do
@@ -329,20 +329,20 @@ cxpb Computing ua from fa is what we really want to do
           do iy=-1,ny
             do ix=-1,nx
               if(leftix(ix,iy).ne.-2) then
-                fa_ext(ix,iy,0,is)=((ua_ext(ix,iy,is)+
+                fa_ext(ix,iy,0,0,is)=((ua_ext(ix,iy,is)+
      .           ua_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8)*
      .           ((na_ext(ix,iy,is)+
      .           na_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8)*
      .           pbs(ix,iy,0)
-                 fhi_ext(ix,iy,0) = fhi_ext(ix,iy,0) +
-     .            1.5_R8*fa_ext(ix,iy,0,is)*(ta_ext(ix,iy,is)+
+                 fhi_ext(ix,iy,0,0) = fhi_ext(ix,iy,0,0) +
+     .            1.5_R8*fa_ext(ix,iy,0,0,is)*(ta_ext(ix,iy,is)+
      .            ta_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
                else
-                 fa_ext(ix,iy,0,is)=0.0_R8
+                 fa_ext(ix,iy,0,0,is)=0.0_R8
                endif
             enddo
           enddo
-          fa_ext(:,:,1,:) = 0.0_R8
+          fa_ext(:,:,1,1,:) = 0.0_R8
          endif
 cxpb
          ue_ext(-1:nx,-1:ny) = ue_ext(-1:nx,-1:ny) +

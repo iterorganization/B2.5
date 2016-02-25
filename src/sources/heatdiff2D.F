@@ -31,18 +31,20 @@ c Program to solve the heat diffusion equation in 2 dimensions
       do iwall = 1, isize
         bndx(iwall) = xymap(list_x(iwall),list_y(iwall))
         qin = 
-     .   max(0.0_R8,isign*(fhi(ixf(iwall),iyf(iwall),idir)+
-     .                     fhi_ext(ixf(iwall),iyf(iwall),idir)))/
+     .   max(0.0_R8,isign*(fhi(ixf(iwall),iyf(iwall),idir,idir)+
+     .                     fhi_ext(ixf(iwall),iyf(iwall),idir,idir)))/
      .   area(iwall)
         do is=0,ns-1
-         qin=qin+max(0.0_R8,isign*fna(ixf(iwall),iyf(iwall),idir,is))
+         qin=qin+max(0.0_R8,isign
+     &        *fna(ixf(iwall),iyf(iwall),idir,idir,is))
      &        *((kinrgy(list_x(iwall),list_y(iwall),is)+
      &           ti(list_x(iwall),list_y(iwall)))*(1.0_R8-BoRiS) +
      &          rpt(ixf(iwall),iyf(iwall),is)*ev)
      &        /area(iwall)
         enddo
         do is=0,ns_ext-1
-         qin=qin+max(0.0_R8,isign*fa_ext(ixf(iwall),iyf(iwall),idir,is))
+         qin=qin+max(0.0_R8,isign
+     &    *fa_ext(ixf(iwall),iyf(iwall),idir,idir,is))
      &    *((0.5_R8*am_ext(is)*mp*
      &       ua_ext(list_x(iwall),list_y(iwall),is)**2+
      &       ta_ext(list_x(iwall),list_y(iwall),is))*(1.0_R8-BoRiS) +
@@ -50,8 +52,8 @@ c Program to solve the heat diffusion equation in 2 dimensions
      &    /area(iwall)
         enddo
         qel =
-     .   max(0.0_R8,isign*(fhe(ixf(iwall),iyf(iwall),idir)+
-     .                     fne(ixf(iwall),iyf(iwall),idir)*
+     .   max(0.0_R8,isign*(fhe(ixf(iwall),iyf(iwall),idir,idir)+
+     .                     fne(ixf(iwall),iyf(iwall),idir,idir)*
      .                     te(list_x(iwall),list_y(iwall))*
      .                    (1.0_R8-BoRiS)))/area(iwall)
         Q(iwall)=qin+qel

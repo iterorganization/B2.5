@@ -71,23 +71,23 @@
       real (kind=R8) :: t0, t1                                      !srv 22.12.09
       real (kind=R8), allocatable :: zcdum(:,:),
      &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:),
-     &  te1(:,:), ti1(:,:), po1(:,:), fna1(:,:,:,:), fhe1(:,:,:),
-     &  fhi1(:,:,:), fch1(:,:,:), fch_321(:,:,:), fch_521(:,:,:),
-     &  fch_p1(:,:,:), kinrgy1(:,:,:),
-     &  fna_mdf1(:,:,:,:), fhe_mdf1(:,:,:), fhi_mdf1(:,:,:),
-     &  fna_fcor1(:,:,:,:), fna_nodrift1(:,:,:,:), fna_he1(:,:,:,:),
-     &  fnaPSch1(:,:,:,:), fhePSch1(:,:,:), fhiPSch1(:,:,:),
-     &  fna_eir1(:,:,:,:), fne_eir1(:,:,:),
-     &  fhe_eir1(:,:,:), fhi_eir1(:,:,:),
-     &  fna_321(:,:,:,:), fna_521(:,:,:,:),
-     &  fni_321(:,:,:), fni_521(:,:,:),
-     &  fne_321(:,:,:), fne_521(:,:,:),
-     &  fchdia1(:,:,:), fchin1(:,:,:),
-     &  fchvispar1(:,:,:), fchvisper1(:,:,:),
-     &  fchvisq1(:,:,:), fchinert1(:,:,:),
+     &  te1(:,:), ti1(:,:), po1(:,:), fna1(:,:,:,:,:), fhe1(:,:,:,:),
+     &  fhi1(:,:,:,:), fch1(:,:,:,:), fch_321(:,:,:,:),fch_521(:,:,:,:),
+     &  fch_p1(:,:,:,:), kinrgy1(:,:,:),
+     &  fna_mdf1(:,:,:,:,:), fhe_mdf1(:,:,:,:), fhi_mdf1(:,:,:,:),
+     &  fna_fcor1(:,:,:,:,:),fna_nodrift1(:,:,:,:,:),fna_he1(:,:,:,:,:),
+     &  fnaPSch1(:,:,:,:,:), fhePSch1(:,:,:,:), fhiPSch1(:,:,:,:),
+     &  fna_eir1(:,:,:,:,:), fne_eir1(:,:,:,:),
+     &  fhe_eir1(:,:,:,:), fhi_eir1(:,:,:,:),
+     &  fna_321(:,:,:,:,:), fna_521(:,:,:,:,:),
+     &  fni_321(:,:,:,:), fni_521(:,:,:,:),
+     &  fne_321(:,:,:,:), fne_521(:,:,:,:),
+     &  fchdia1(:,:,:,:), fchin1(:,:,:,:),
+     &  fchvispar1(:,:,:,:), fchvisper1(:,:,:,:),
+     &  fchvisq1(:,:,:,:), fchinert1(:,:,:,:),
      &  vaecrb1(:,:,:,:), vadia1(:,:,:,:), wadia1(:,:,:,:),
      &  veecrb1(:,:,:), vedia1(:,:,:),
-     &  floe_noc1(:,:,:), floi_noc1(:,:,:)
+     &  floe_noc1(:,:,:,:), floi_noc1(:,:,:,:)
       real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
       character lblps*120, lblgm*120, id*8, id0*8, line*500
       character cnamip*80, cvalip*80                                !srv 22.12.09
@@ -566,32 +566,32 @@
      *  na1(-1:nx,-1:ny,0:idum(2)-1), ua1(-1:nx,-1:ny,0:idum(2)-1),
      &  ne1(-1:nx,-1:ny), uadia1(-1:nx,-1:ny,0:1,0:idum(2)-1),
      &  te1(-1:nx,-1:ny), ti1(-1:nx,-1:ny), po1(-1:nx,-1:ny),
-     &  fna1(-1:nx,-1:ny,0:1,0:idum(2)-1), fhe1(-1:nx,-1:ny,0:1),
-     &  fhi1(-1:nx,-1:ny,0:1), fch1(-1:nx,-1:ny,0:1),
-     1  fch_321(-1:nx,-1:ny,0:1), fch_521(-1:nx,-1:ny,0:1),
-     2  fch_p1(-1:nx,-1:ny,0:1), kinrgy1(-1:nx,-1:ny,0:idum(2)-1),
-     &  fna_mdf1(-1:nx,-1:ny,0:1,0:idum(2)-1),
-     &  fhe_mdf1(-1:nx,-1:ny,0:1), fhi_mdf1(-1:nx,-1:ny,0:1),
-     &  fna_fcor1(-1:nx,-1:ny,0:1,0:idum(2)-1),
-     &  fna_nodrift1(-1:nx,-1:ny,0:1,0:idum(2)-1),
-     &  fna_he1(-1:nx,-1:ny,0:1,0:idum(2)-1),
-     &  fnaPSch1(-1:nx,-1:ny,0:1,0:idum(2)-1),
-     &  fhePSch1(-1:nx,-1:ny,0:1), fhiPSch1(-1:nx,-1:ny,0:1),
-     &  fna_eir1(-1:nx,-1:ny,0:1,0:idum(2)-1),
-     &  fne_eir1(-1:nx,-1:ny,0:1), fhe_eir1(-1:nx,-1:ny,0:1),
-     &  fhi_eir1(-1:nx,-1:ny,0:1),
-     &  fna_321(-1:nx,-1:ny,0:1,0:idum(2)-1),
-     &  fna_521(-1:nx,-1:ny,0:1,0:idum(2)-1),
-     &  fni_321(-1:nx,-1:ny,0:1), fni_521(-1:nx,-1:ny,0:1),
-     &  fne_321(-1:nx,-1:ny,0:1), fne_521(-1:nx,-1:ny,0:1),
-     &  fchdia1(-1:nx,-1:ny,0:1), fchin1(-1:nx,-1:ny,0:1),
-     &  fchvispar1(-1:nx,-1:ny,0:1), fchvisper1(-1:nx,-1:ny,0:1),
-     &  fchvisq1(-1:nx,-1:ny,0:1), fchinert1(-1:nx,-1:ny,0:1),
+     &  fna1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),fhe1(-1:nx,-1:ny,0:1,0:1),
+     &  fhi1(-1:nx,-1:ny,0:1,0:1), fch1(-1:nx,-1:ny,0:1,0:1),
+     1  fch_321(-1:nx,-1:ny,0:1,0:1), fch_521(-1:nx,-1:ny,0:1,0:1),
+     2  fch_p1(-1:nx,-1:ny,0:1,0:1), kinrgy1(-1:nx,-1:ny,0:idum(2)-1),
+     &  fna_mdf1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
+     &  fhe_mdf1(-1:nx,-1:ny,0:1,0:1), fhi_mdf1(-1:nx,-1:ny,0:1,0:1),
+     &  fna_fcor1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
+     &  fna_nodrift1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
+     &  fna_he1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
+     &  fnaPSch1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
+     &  fhePSch1(-1:nx,-1:ny,0:1,0:1), fhiPSch1(-1:nx,-1:ny,0:1,0:1),
+     &  fna_eir1(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
+     &  fne_eir1(-1:nx,-1:ny,0:1,0:1), fhe_eir1(-1:nx,-1:ny,0:1,0:1),
+     &  fhi_eir1(-1:nx,-1:ny,0:1,0:1),
+     &  fna_321(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
+     &  fna_521(-1:nx,-1:ny,0:1,0:1,0:idum(2)-1),
+     &  fni_321(-1:nx,-1:ny,0:1,0:1), fni_521(-1:nx,-1:ny,0:1,0:1),
+     &  fne_321(-1:nx,-1:ny,0:1,0:1), fne_521(-1:nx,-1:ny,0:1,0:1),
+     &  fchdia1(-1:nx,-1:ny,0:1,0:1), fchin1(-1:nx,-1:ny,0:1,0:1),
+     &  fchvispar1(-1:nx,-1:ny,0:1,0:1),fchvisper1(-1:nx,-1:ny,0:1,0:1),
+     &  fchvisq1(-1:nx,-1:ny,0:1,0:1), fchinert1(-1:nx,-1:ny,0:1,0:1),
      &  vaecrb1(-1:nx,-1:ny,0:1,0:idum(2)-1),
      &  vadia1(-1:nx,-1:ny,0:1,0:idum(2)-1),
      &  wadia1(-1:nx,-1:ny,0:1,0:idum(2)-1),
      &  veecrb1(-1:nx,-1:ny,0:1), vedia1(-1:nx,-1:ny,0:1),
-     &  floe_noc1(-1:nx,-1:ny,0:1), floi_noc1(-1:nx,-1:ny,0:1) )
+     &  floe_noc1(-1:nx,-1:ny,0:1,0:1), floi_noc1(-1:nx,-1:ny,0:1,0:1) )
 *   ..read initial state from the file
        call b2rups (ninp(3), idum(0), idum(1), idum(2),
      &  ne1, na1, ua1, uadia1, te1, ti1, po1,
@@ -638,26 +638,26 @@
        po = po1
 *   ..initialise fluxes
        do is = 0, min(ns,idum(2))-1
-         fna(:,:,:,is)         = fna1(:,:,:,is)
-         fna_mdf(:,:,:,is)     = fna_mdf1(:,:,:,is)
-         fna_fcor(:,:,:,is)    = fna_fcor1(:,:,:,is)
-         fna_nodrift(:,:,:,is) = fna_nodrift1(:,:,:,is)
-         fna_he(:,:,:,is)      = fna_he(:,:,:,is)
-         fnaPSch(:,:,:,is)     = fnaPSch1(:,:,:,is)
-         fna_eir(:,:,:,is)     = fna_eir1(:,:,:,is)
-         fna_32(:,:,:,is)      = fna_321(:,:,:,is)
-         fna_52(:,:,:,is)      = fna_521(:,:,:,is)
+         fna(:,:,:,:,is)         = fna1(:,:,:,:,is)
+         fna_mdf(:,:,:,:,is)     = fna_mdf1(:,:,:,:,is)
+         fna_fcor(:,:,:,:,is)    = fna_fcor1(:,:,:,:,is)
+         fna_nodrift(:,:,:,:,is) = fna_nodrift1(:,:,:,:,is)
+         fna_he(:,:,:,:,is)      = fna_he(:,:,:,:,is)
+         fnaPSch(:,:,:,:,is)     = fnaPSch1(:,:,:,:,is)
+         fna_eir(:,:,:,:,is)     = fna_eir1(:,:,:,:,is)
+         fna_32(:,:,:,:,is)      = fna_321(:,:,:,:,is)
+         fna_52(:,:,:,:,is)      = fna_521(:,:,:,:,is)
        enddo
        do is = min(ns,idum(2)), ns-1
-         call sfill (n2*2, 0.0_R8, fna(-1,-1,0,is), 1)
-         call sfill (n2*2, 0.0_R8, fna_mdf(-1,-1,0,is), 1)
-         call sfill (n2*2, 0.0_R8, fna_fcor(-1,-1,0,is), 1)
-         call sfill (n2*2, 0.0_R8, fna_nodrift(-1,-1,0,is), 1)
-         call sfill (n2*2, 0.0_R8, fna_he(-1,-1,0,is), 1)
-         call sfill (n2*2, 0.0_R8, fnaPSch(-1,-1,0,is), 1)
-         call sfill (n2*2, 0.0_R8, fna_eir(-1,-1,0,is), 1)
-         call sfill (n2*2, 0.0_R8, fna_32(-1,-1,0,is), 1)
-         call sfill (n2*2, 0.0_R8, fna_52(-1,-1,0,is), 1)
+         call sfill (n2*4, 0.0_R8, fna(-1,-1,0,0,is), 1)
+         call sfill (n2*4, 0.0_R8, fna_mdf(-1,-1,0,0,is), 1)
+         call sfill (n2*4, 0.0_R8, fna_fcor(-1,-1,0,0,is), 1)
+         call sfill (n2*4, 0.0_R8, fna_nodrift(-1,-1,0,0,is), 1)
+         call sfill (n2*4, 0.0_R8, fna_he(-1,-1,0,0,is), 1)
+         call sfill (n2*4, 0.0_R8, fnaPSch(-1,-1,0,0,is), 1)
+         call sfill (n2*4, 0.0_R8, fna_eir(-1,-1,0,0,is), 1)
+         call sfill (n2*4, 0.0_R8, fna_32(-1,-1,0,0,is), 1)
+         call sfill (n2*4, 0.0_R8, fna_52(-1,-1,0,0,is), 1)
        enddo
        fne_eir   = fne_eir1
        fne_32    = fne_321
@@ -712,40 +712,40 @@
        call sfill (n2, ttini*ev, ti, 1)
        call sfill (n2, 3.1_R8*ttini, po, 1)
 *   ..initialise fluxes
-       call sfill (n2*2*ns, 0.0_R8, fna, 1)
-       call sfill (n2*2*ns, 0.0_R8, fna_mdf, 1)
-       call sfill (n2*2*ns, 0.0_R8, fna_fcor, 1)
-       call sfill (n2*2*ns, 0.0_R8, fna_nodrift, 1)
-       call sfill (n2*2*ns, 0.0_R8, fna_he, 1)
-       call sfill (n2*2*ns, 0.0_R8, fnaPSch, 1)
-       call sfill (n2*2*ns, 0.0_R8, fna_eir, 1)
-       call sfill (n2*2*ns, 0.0_R8, fna_32, 1)
-       call sfill (n2*2*ns, 0.0_R8, fna_52, 1)
-       call sfill (n2*2, 0.0_R8, fne_eir, 1)
-       call sfill (n2*2, 0.0_R8, fhe_mdf, 1)
-       call sfill (n2*2, 0.0_R8, fhe_eir, 1)
-       call sfill (n2*2, 0.0_R8, fhePSch, 1)
-       call sfill (n2*2, 0.0_R8, fhi_mdf, 1)
-       call sfill (n2*2, 0.0_R8, fhi_eir, 1)
-       call sfill (n2*2, 0.0_R8, fhiPSch, 1)
-       call sfill (n2*2, 0.0_R8, fhe, 1)
-       call sfill (n2*2, 0.0_R8, fhi, 1)
-       call sfill (n2*2, 0.0_R8, fch, 1)
-       call sfill (n2*2, 0.0_R8, fne_32, 1)
-       call sfill (n2*2, 0.0_R8, fne_52, 1)
-       call sfill (n2*2, 0.0_R8, fni_32, 1)
-       call sfill (n2*2, 0.0_R8, fni_52, 1)
-       call sfill (n2*2, 0.0_R8, fch_32, 1)
-       call sfill (n2*2, 0.0_R8, fch_52, 1)
-       call sfill (n2*2, 0.0_R8, fch_p, 1)                           !srv 10.06.08
-       call sfill (n2*2, 0.0_R8, fchdia, 1)
-       call sfill (n2*2, 0.0_R8, fchin, 1)
-       call sfill (n2*2, 0.0_R8, fchvispar, 1)
-       call sfill (n2*2, 0.0_R8, fchvisper, 1)
-       call sfill (n2*2, 0.0_R8, fchvisq, 1)
-       call sfill (n2*2, 0.0_R8, fchinert, 1)
-       call sfill (n2*2, 0.0_R8, floe_noc, 1)
-       call sfill (n2*2, 0.0_R8, floi_noc, 1)
+       call sfill (n2*4*ns, 0.0_R8, fna, 1)
+       call sfill (n2*4*ns, 0.0_R8, fna_mdf, 1)
+       call sfill (n2*4*ns, 0.0_R8, fna_fcor, 1)
+       call sfill (n2*4*ns, 0.0_R8, fna_nodrift, 1)
+       call sfill (n2*4*ns, 0.0_R8, fna_he, 1)
+       call sfill (n2*4*ns, 0.0_R8, fnaPSch, 1)
+       call sfill (n2*4*ns, 0.0_R8, fna_eir, 1)
+       call sfill (n2*4*ns, 0.0_R8, fna_32, 1)
+       call sfill (n2*4*ns, 0.0_R8, fna_52, 1)
+       call sfill (n2*4, 0.0_R8, fne_eir, 1)
+       call sfill (n2*4, 0.0_R8, fhe_mdf, 1)
+       call sfill (n2*4, 0.0_R8, fhe_eir, 1)
+       call sfill (n2*4, 0.0_R8, fhePSch, 1)
+       call sfill (n2*4, 0.0_R8, fhi_mdf, 1)
+       call sfill (n2*4, 0.0_R8, fhi_eir, 1)
+       call sfill (n2*4, 0.0_R8, fhiPSch, 1)
+       call sfill (n2*4, 0.0_R8, fhe, 1)
+       call sfill (n2*4, 0.0_R8, fhi, 1)
+       call sfill (n2*4, 0.0_R8, fch, 1)
+       call sfill (n2*4, 0.0_R8, fne_32, 1)
+       call sfill (n2*4, 0.0_R8, fne_52, 1)
+       call sfill (n2*4, 0.0_R8, fni_32, 1)
+       call sfill (n2*4, 0.0_R8, fni_52, 1)
+       call sfill (n2*4, 0.0_R8, fch_32, 1)
+       call sfill (n2*4, 0.0_R8, fch_52, 1)
+       call sfill (n2*4, 0.0_R8, fch_p, 1)                           !srv 10.06.08
+       call sfill (n2*4, 0.0_R8, fchdia, 1)
+       call sfill (n2*4, 0.0_R8, fchin, 1)
+       call sfill (n2*4, 0.0_R8, fchvispar, 1)
+       call sfill (n2*4, 0.0_R8, fchvisper, 1)
+       call sfill (n2*4, 0.0_R8, fchvisq, 1)
+       call sfill (n2*4, 0.0_R8, fchinert, 1)
+       call sfill (n2*4, 0.0_R8, floe_noc, 1)
+       call sfill (n2*4, 0.0_R8, floi_noc, 1)
       endif                                                          !srv 22.12.09
 * ..output
 *   ..write label

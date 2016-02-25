@@ -29,7 +29,7 @@ c
       real (kind=R8) :: x, y, z, hlp_q, hlp_qp, hlp_si, hlp_je
       real (kind=R8) :: area, pit
 c----------------------------------------------------------------------
-      area(ix,iy)=gs(ix,iy,0)*qc(ix,iy)
+      area(ix,iy)=gs(ix,iy,0)*qc(ix,iy,0)
       pit(ix,iy)=abs(bb(ix,iy,0))/bb(ix,iy,3)
 c----------------------------------------------------------------------
 c*** Check the ig value
@@ -52,16 +52,16 @@ c
         x=x+0.5_R8*hx(ix,ig)
         y=0.5_R8*hx(ix,ig)/pit(ix,ig)
         z=z+y
-        hlp_q=fhe(ix,ig,0)/area(ix,ig)
+        hlp_q=fhe(ix,ig,0,0)/area(ix,ig)
         hlp_qp=hlp_q/pit(ix,ig)
         hlp_si=0.0_R8
         hlp_je=0.0_R8
         do k=0,ns-1
-          hlp_je=hlp_je+fna(ix,ig,0,k)*rza(ix,ig,k)
+          hlp_je=hlp_je+fna(ix,ig,0,0,k)*rza(ix,ig,k)
           hlp_si=hlp_si+b2stbr_sna(ix,ig,k)
         end do
         do k=0,ns_ext-1
-          hlp_je=hlp_je+fa_ext(ix,ig,0,k)*za_ext(ix,ig,k)
+          hlp_je=hlp_je+fa_ext(ix,ig,0,0,k)*za_ext(ix,ig,k)
         end do
         hlp_je=hlp_je/(area(ix,ig)*pit(ix,ig))
         hlp_si=hlp_si/vol(ix,ig)

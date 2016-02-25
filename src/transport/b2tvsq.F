@@ -13,10 +13,10 @@
      &   fac_vis(-1:nx,-1:ny), vol(-1:nx,-1:ny), hx(-1:nx,-1:ny),
      &   hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3),
      &   ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), te(-1:nx,-1:ny),
-     &   ti(-1:nx,-1:ny), ni(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1) 
+     &   ti(-1:nx,-1:ny), ni(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1,0:1) 
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     $   fchvisq(-1:nx,-1:ny,0:1)                                       !srv 11.07.99
+     $   fchvisq(-1:nx,-1:ny,0:1,0:1)                                   !srv 11.07.99
 *-----------------------------------------------------------------------
 *.declarations
 
@@ -158,7 +158,7 @@
             do iy=0,ny-1
              do ix=-1,nx
               if(leftix(ix,iy).ne.-2) then
-               qip0a(ix,iy)=-chci(ix,iy,0)
+               qip0a(ix,iy)=-chci(ix,iy,0,0)
      &          *(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))
               endif                                                      
              enddo                                                       
@@ -240,7 +240,7 @@
             do ix = 0,nx
              if(on_closed_surface(bottomix(ix,iy),
      .                            bottomiy(ix,iy))) then
-              fchvisq(ix,iy,0) = fchvisq(ix,iy,0)-                      !srv 16.10.17
+              fchvisq(ix,iy,0,0) = fchvisq(ix,iy,0,0)-                  !srv 16.10.17
      &         fac_vis(ix,iy)*0.24e0_R8*vis_q*(             ! signmf*   !srv 11.01.13 16.10.17
      &         vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &         *tauia1(ix,iy)
@@ -270,7 +270,7 @@
              if(on_closed_surface(bottomix(ix,iy),
      .                            bottomiy(ix,iy))) then
               if(rightix(ix,iy).ne.nx+1) then
-               fchvisq(ix,iy,1) = fchvisq(ix,iy,1)+                     !srv 16.10.17 
+               fchvisq(ix,iy,1,1) = fchvisq(ix,iy,1,1)+                 !srv 16.10.17 
      &          fac_vis(ix,iy)*0.24e0_R8*vis_q*(            ! signmf*   !srv 11.01.13 16.10.17
      &          vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &          *tauia1(ix,iy)

@@ -9,10 +9,10 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
       real (kind=R8) ::
-     *   hz(-1:nx,-1:ny), cvsbhz_cl(-1:nx,-1:ny,0:1)                   !srv 16.10.17
+     *   hz(-1:nx,-1:ny), cvsbhz_cl(-1:nx,-1:ny,0:1,0:1)               !srv 16.10.17
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   flubv(-1:nx,-1:ny,0:1)
+     *   flubv(-1:nx,-1:ny,0:1,0:1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -54,6 +54,9 @@
       if (ncall.lt.3) then
       endif
 
+* ..initialize flubv to zero
+      flubv = 0.0_R8
+
 * ..compute convection term
       ft = 4.0_R8/3.0_R8
 *   ..compute flubvx
@@ -61,18 +64,12 @@
        do iy = -1, ny
         do ix = -1, nx
 	   if(leftix(ix,iy).ne.-2) then
-          flubv(ix,iy,0) = ft*cvsbhz_cl(ix,iy,0)*                     !srv 16.10.17
-     &      (log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))
-	   else
-          flubv(ix,iy,0) = 0.0e0_R8
+             flubv(ix,iy,0,0) = ft*cvsbhz_cl(ix,iy,0,0)*              !srv 16.10.17
+     &        (log(hz(ix,iy))-log(hz(leftix(ix,iy),leftiy(ix,iy))))
 	   endif
         enddo
        enddo
-
-	 flubv(:,:,1) = 0.0_R8
-	else
-	 flubv = 0.0_R8
-	endif
+      endif
 
 * ..return
       ncall = ncall+1

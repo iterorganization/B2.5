@@ -14,13 +14,13 @@
       integer nx, ny, ns
       real (kind=R8) ::
      *  lnlam(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny),     !srv 01.07.09
-     &  hx(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1), fch_p(-1:nx,-1:ny,0:1), 
-     &  na(-1:nx,-1:ny,0:ns-1), 
+     &  hx(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1), 
+     &  fch_p(-1:nx,-1:ny,0:1,0:1), na(-1:nx,-1:ny,0:ns-1), 
      &  ua(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny), 
      &  ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  chce(-1:nx,-1:ny,0:1), chci(-1:nx,-1:ny,0:1),
+     *  chce(-1:nx,-1:ny,0:1,0:1), chci(-1:nx,-1:ny,0:1,0:1),
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1)
 
 *   ..common blocks
@@ -186,7 +186,7 @@ c         --------------------------------------
      .        ue_ext(ix,iy)*ne_ext(ix,iy)*
      .        hx(leftix(ix,iy),leftiy(ix,iy)))/
      .       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-            u(1) = u(1) - fch_p(ix,iy,0)/pbs(ix,iy,0)/qe  ! parallel current
+            u(1) = u(1) - fch_p(ix,iy,0,0)/pbs(ix,iy,0)/qe  ! parallel current
 c !? do we need to apply a 21-moment ansatz for 
 c    the electrical conductivities
 c
@@ -218,16 +218,16 @@ c       write(*,*) 'b2t21t:ix,iy,cond,fac',ix,iy,cond,fac
 c            poloidal heat flux and heat conduction coefficient
 c              --------------------------------------------------
 
-c         write(*,*) 'ix,iy,old_chce(ix,iy,0),new_chce(ix,iy,0),ce',
-c     1          ix,iy,chce(ix,iy,0),he/gte*pitface**2,ce*pitface**2
-c         write(*,*) 'ix,iy,old_chci(ix,iy,0),new_chci(ix,iy,0),ci',
-c     1     ix,iy,chci(ix,iy,0),hi/gti*pitface**2,ci*pitface**2
+c         write(*,*) 'ix,iy,old_chce(ix,iy,0,0),new_chce(ix,iy,0,0),ce',
+c     1          ix,iy,chce(ix,iy,0,0),he/gte*pitface**2,ce*pitface**2
+c         write(*,*) 'ix,iy,old_chci(ix,iy,0,0),new_chci(ix,iy,0,0),ci',
+c     1     ix,iy,chci(ix,iy,0,0),hi/gti*pitface**2,ci*pitface**2
 
-            chce(ix,iy,0) = fac*ce*pitface**2 + (1-fac)*chce(ix,iy,0)
-            chci(ix,iy,0) = fac*ci*pitface**2 + (1-fac)*chci(ix,iy,0)
+            chce(ix,iy,0,0) = fac*ce*pitface**2+(1-fac)*chce(ix,iy,0,0)
+            chci(ix,iy,0,0) = fac*ci*pitface**2+(1-fac)*chci(ix,iy,0,0)
 
-c         write(*,*) 'ix,iy,chce(ix,iy,0)',ix,iy,chce(ix,iy,0)
-c         write(*,*) 'ix,iy,chci(ix,iy,0)',ix,iy,chci(ix,iy,0)
+c         write(*,*) 'ix,iy,chce(ix,iy,0,0)',ix,iy,chce(ix,iy,0,0)
+c         write(*,*) 'ix,iy,chci(ix,iy,0,0)',ix,iy,chci(ix,iy,0,0)
 
 c            parallel thermal force with contribution from electron
 c            therm. force (parallel electric field is eliminated)
@@ -334,7 +334,7 @@ c       ( ix )
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  cvsa(-1:nx,-1:ny,0:1,0:ns-1)
+     *  cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -468,7 +468,7 @@ c         write(*,*) 'b2t21v:ix,iy,cond',ix,iy,cond
               do i=0,ns-1
                 if(.not.is_neutral(i)) then
                   ncharged=ncharged+1
-                  cvsa(ix,iy,0,i)=eta(ncharged) * pit**2 * coef 
+                  cvsa(ix,iy,0,0,i)=eta(ncharged) * pit**2 * coef 
                 endif
               end do
 

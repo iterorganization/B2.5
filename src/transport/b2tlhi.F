@@ -8,7 +8,7 @@
       real (kind=R8) ::
      *  mp, cflmi, 
      *  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2),
-     *  pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
+     *  pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny,0:1), ni(-1:nx,-1:ny,0:1),
      *  nirm(-1:nx,-1:ny), ti(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
 *     B2TLHI computes the all atom heat transport flux limit velocity.
@@ -52,7 +52,7 @@ c    because now both options are interchangeable
      &        +nirm(ix,iy))/(ni(leftix(ix,iy),leftiy(ix,iy),0)+
      &                    ni_ext(leftix(ix,iy),leftiy(ix,iy),0)+
      &                    ni(ix,iy,0)+ni_ext(ix,iy,0))
-            if (area_fix.eq.2) chvimx(ix,iy) = chvimx(ix,iy)*qc(ix,iy)
+            if (area_fix.eq.2) chvimx(ix,iy) = chvimx(ix,iy)*qc(ix,iy,0)
           else if (model.eq.2) then  ! SOLPS4.0 treatment
             t0 = ti(ix,iy)
             t1 = ti(leftix(ix,iy),leftiy(ix,iy))
@@ -67,7 +67,7 @@ c           ensures consistency with b2trcl_conductive_limit .ne. 0
      &       ((ni(leftix(ix,iy),leftiy(ix,iy),0)+
      &         ni_ext(leftix(ix,iy),leftiy(ix,iy),0)+
      &         ni(ix,iy,0)+ni_ext(ix,iy,0))*max(t0,t1))
-            if (area_fix.ge.2) chvimx(ix,iy) = chvimx(ix,iy)*qc(ix,iy)
+            if (area_fix.ge.2) chvimx(ix,iy) = chvimx(ix,iy)*qc(ix,iy,0)
           endif
         endif
        enddo

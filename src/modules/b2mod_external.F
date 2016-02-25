@@ -14,9 +14,9 @@
      *  ue_ext(:,:),
      *  ta_ext(:,:,:),
      *  ne_ext(:,:),
-     *  fa_ext(:,:,:,:),
+     *  fa_ext(:,:,:,:,:),
      *  ne2_ext(:,:),
-     *  fhi_ext(:,:,:)
+     *  fhi_ext(:,:,:,:)
       real (kind=R8), allocatable, save ::
      *  sne_ext(:,:),
      *  sna_ext(:,:,:),
@@ -43,7 +43,7 @@
       allocate(ue_ext(-1:nxd,-1:nyd))
       allocate(ne2_ext(-1:nxd,-1:nyd))
       allocate(ni_ext(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_ext(-1:nxd,-1:nyd,0:1))
+      allocate(fhi_ext(-1:nxd,-1:nyd,0:1,0:1))
       ne_ext = 0.0_R8
       ni_ext = 0.0_R8
       ue_ext = 0.0_R8
@@ -73,7 +73,7 @@
       if (initialised_externals) return
 cxpb  Allocate dummy arrays needed by b2xpfe
       allocate(za_ext(-1:nxd,-1:nyd,0))
-      allocate(fa_ext(-1:nxd,-1:nyd,0:1,0))
+      allocate(fa_ext(-1:nxd,-1:nyd,0:1,0:1,0))
       za_ext = 0.0_R8
       fa_ext = 0.0_R8
       initialised_externals = .true.
@@ -169,7 +169,7 @@ cpxb
           allocate(na_ext(-1:nxd,-1:nyd,0:ns_ext-1))
           allocate(ua_ext(-1:nxd,-1:nyd,0:ns_ext-1))
           allocate(ta_ext(-1:nxd,-1:nyd,0:ns_ext-1))
-          allocate(fa_ext(-1:nxd,-1:nyd,0:1,0:ns_ext-1))
+          allocate(fa_ext(-1:nxd,-1:nyd,0:1,0:1,0:ns_ext-1))
           allocate(am_ext(0:ns_ext-1))
           allocate(text_ext(0:ns_ext-1))
           allocate(is_ext_neutral(0:ns_ext-1))
@@ -277,18 +277,18 @@ cxpb Computing ua from fa is what we really want to do
             do ix=-1,nxd
               if (leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nxd+1) then
                 ua_ext(ix,iy,is) = 0.5_R8*
-     .           (fa_ext(ix,iy,0,is)/pbs(ix,iy,0)+
-     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,is)/
+     .           (fa_ext(ix,iy,0,0,is)/pbs(ix,iy,0)+
+     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,0,is)/
      .            pbs(rightix(ix,iy),rightiy(ix,iy),0))/
      .           na_ext(ix,iy,is)
               else if (leftix(ix,iy).eq.-2) then
                 ua_ext(ix,iy,is) = 
-     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,is)/
+     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,0,is)/
      .            pbs(rightix(ix,iy),rightiy(ix,iy),0)/
      .            na_ext(ix,iy,is)
               else if (rightix(ix,iy).eq.nxd+1) then
                 ua_ext(ix,iy,is) = 
-     .            fa_ext(ix,iy,0,is)/pbs(ix,iy,0)/na_ext(ix,iy,is)
+     .           fa_ext(ix,iy,0,0,is)/pbs(ix,iy,0)/na_ext(ix,iy,is)
               end if
             end do
           end do
@@ -296,20 +296,20 @@ cxpb Computing ua from fa is what we really want to do
           do iy=-1,nyd
             do ix=-1,nxd
               if(leftix(ix,iy).ne.-2) then
-                fa_ext(ix,iy,0,is)=((ua_ext(ix,iy,is)+
+                fa_ext(ix,iy,0,0,is)=((ua_ext(ix,iy,is)+
      .           ua_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8)*
      .           ((na_ext(ix,iy,is)+
      .           na_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8)*
      .           pbs(ix,iy,0)
-                 fhi_ext(ix,iy,0) = fhi_ext(ix,iy,0) +
-     .            1.5_R8*fa_ext(ix,iy,0,is)*(ta_ext(ix,iy,is)+
+                 fhi_ext(ix,iy,0,0) = fhi_ext(ix,iy,0,0) +
+     .            1.5_R8*fa_ext(ix,iy,0,0,is)*(ta_ext(ix,iy,is)+
      .            ta_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
                else
-                 fa_ext(ix,iy,0,is)=0.0_R8
+                 fa_ext(ix,iy,0,0,is)=0.0_R8
                endif
             enddo
           enddo
-          fa_ext(:,:,1,:) = 0.0_R8
+          fa_ext(:,:,1,1,:) = 0.0_R8
         endif
 cxpb
           ue_ext(-1:nxd,-1:nyd) = ue_ext(-1:nxd,-1:nyd) +

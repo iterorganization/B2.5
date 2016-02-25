@@ -14,14 +14,14 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, guard_flows, nregionv, itcnt, isb               !srv 05.07.08
       real (kind=R8) ::
-     *  rxf, pbs(-1:nx,-1:ny,0:1), flob(-1:nx,-1:ny,0:1),
-     &  conb(-1:nx,-1:ny,0:1,0:4), snb(-1:nx,-1:ny,0:1),              !srv 13.10.06
-     &  pccb(-1:nx,-1:ny,0:1),vol(-1:nx,-1:ny)
+     *  rxf, pbs(-1:nx,-1:ny,0:1), flob(-1:nx,-1:ny,0:1,0:1),
+     &  conb(-1:nx,-1:ny,0:1,0:1,0:4), snb(-1:nx,-1:ny,0:1),              !srv 13.10.06
+     &  pccb(-1:nx,-1:ny,0:1,0:1),vol(-1:nx,-1:ny)
       logical solvcreg(0:nregionv), ua_solve, solvmreg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
      *  pb(-1:nx,-1:ny), nb(-1:nx,-1:ny), ub(-1:nx,-1:ny),
-     &  fnb(-1:nx,-1:ny,0:1)
+     &  fnb(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       integer ierr
       real (kind=R8) ::
@@ -119,13 +119,13 @@
 
 *    ..test sign of conb
        if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then           !srv 06.07.06 {
-        call b2xvsg (n2*2*3, conb, 1, 'conb', '.ge.')                 !srv 18.11.05 13.10.06
+        call b2xvsg (n2*4*3, conb, 1, 'conb', '.ge.')                 !srv 18.11.05 13.10.06
        endif                                                          !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
-       call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')                 !srv 13.10.06 {
-       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb1')
-       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb2')                 !srv 13.10.06 }
+       call b2xvff (nx, ny, conb(-1,-1,0,0,0), 'conb0')                 !srv 13.10.06 {
+       call b2xvff (nx, ny, conb(-1,-1,0,0,1), 'conb1')
+       call b2xvff (nx, ny, conb(-1,-1,0,0,2), 'conb2')                 !srv 13.10.06 }
 *    ..test sign of snbc, snbv
        call b2xvsg (n2, snb(-1,-1,0), 1, 'snbc', '.ge.')
        call b2xvsg (n2, snb(-1,-1,1), 1, 'snbv', '.le.')
@@ -162,10 +162,10 @@ csw 11dec2012, check for solv flags
 *   ..compute correction
        call b2usco (nx, ny, isb, nregionv, solvcreg, itcnt, rxg,
      &  pcm1, vol, pbs, nb, pb, snb(-1,-1,1), flob,
-     &  conb, pccb(-1,-1,1), rescb, corpb, aa5, 'b2usco_'//chns)        !srv 18.05.02 26.09.12
+     &  conb, pccb(-1,-1,1,1), rescb, corpb, aa5, 'b2usco_'//chns)        !srv 18.05.02 26.09.12
 *   ..apply correction
        call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0,
-     &  vol, corpb, pccb(-1,-1,0), pb, nb, ub)
+     &  vol, corpb, pccb(-1,-1,0,0), pb, nb, ub)
        if(guard_flows.eq.2 .or.                                         !srv 06.07.08 {
      &    (is_neutral(isb) .and. use_eirene.ne.0)) then
 *   ..replace the incorrect corner values by the interpolated values
@@ -211,8 +211,8 @@ csw 11dec2012, check for solv flags
         call my_out(70,nx,ny,snb(-1,-1,1),'b2npco_sna1'//chns)
         wrk0=snb(:,:,0)+nb*snb(:,:,1)
         call my_out(70,nx,ny,wrk0,'b2npco_sna'//chns)
-        call my_out(70,nx,ny,fnb(-1,-1,0),'b2npco_fnax'//chns)
-        call my_out(70,nx,ny,fnb(-1,-1,1),'b2npco_fnay'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,0,0),'b2npco_fnax'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,1,0),'b2npco_fnay'//chns)
       endif                                                          !srv 12.07.02 }
 
       if (iout_b2wdat.eq.4) then
@@ -220,8 +220,8 @@ csw 11dec2012, check for solv flags
         call my_out(70,nx,ny,rescb,'b2npco_resco'//chns)
         wrk0=snb(:,:,0)+nb*snb(:,:,1)
         call my_out(70,nx,ny,wrk0,'b2npco_sna'//chns)
-        call my_out(70,nx,ny,fnb(-1,-1,0),'b2npco_fnax'//chns)
-        call my_out(70,nx,ny,fnb(-1,-1,1),'b2npco_fnay'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,0,0),'b2npco_fnax'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,1,1),'b2npco_fnay'//chns)
       endif
 
 *   ..set error parameter

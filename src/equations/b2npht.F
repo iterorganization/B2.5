@@ -24,14 +24,14 @@
      *  pbs(-1:nx,-1:ny,0:1), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      *  qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)                          !srv 01.07.09
       real (kind=R8) ::
-     *  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
-     &  cone(-1:nx,-1:ny,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:2),            !srv 02.01.07
-     &  ceqp(-1:nx,-1:ny), pccm(-1:nx,-1:ny,0:1),
+     *  floe(-1:nx,-1:ny,0:1,0:1), floi(-1:nx,-1:ny,0:1,0:1),
+     &  cone(-1:nx,-1:ny,0:1,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:1,0:2),            !srv 02.01.07
+     &  ceqp(-1:nx,-1:ny), pccm(-1:nx,-1:ny,0:1,0:1),
      &  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
-     *  fne(-1:nx,-1:ny,0:1),                                            !srv 09.07.08
-     &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
-     1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
+     *  fne(-1:nx,-1:ny,0:1,0:1),                                            !srv 09.07.08
+     &  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     1  fchdia(-1:nx,-1:ny,0:1,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
      3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)    !srv 07.07.09
       logical solving(4),
@@ -41,8 +41,8 @@
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), ue(-1:nx,-1:ny)
+     &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), ue(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       integer ierr
       real (kind=R8) ::
@@ -82,8 +82,8 @@
       real (kind=R8) ::
      *  rxg, pcm0, pcm1
       real (kind=R8) ::
-     *  aa5(-1:nx,-1:ny,-2:2), wrkf(-1:nx,-1:ny,0:1),
-     1  wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                 !srv 25.11.08
+     *  aa5(-1:nx,-1:ny,-2:2), wrkf(-1:nx,-1:ny,0:1,0:1),
+     1  wrkc(-1:nx,-1:ny,0:1,0:1,0:2), cortt(-1:nx,-1:ny),                 !srv 25.11.08
      2  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      3  wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny)                           !srv 18.09.09
       save ncall, rxg, pcm0, pcm1
@@ -140,18 +140,18 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of transport coefficients
-       call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')
-       call b2xvsg (n2*2, coni, 1, 'coni', '.ge.')
+       call b2xvsg (n2*4, cone, 1, 'cone', '.ge.')
+       call b2xvsg (n2*4, coni, 1, 'coni', '.ge.')
        call b2xvsg (n2, ceqp, 1, 'ceqp', '.ge.')
 *    ..test edge values of transport coefficients
        call b2xvff (nx, ny, floe, 'floe')
        call b2xvff (nx, ny, floi, 'floi')
-       call b2xvff (nx, ny, cone(-1,-1,0,0), 'cone0')                 !srv 02.01.07 {
-       call b2xvff (nx, ny, cone(-1,-1,0,1), 'cone1')
-       call b2xvff (nx, ny, cone(-1,-1,0,2), 'cone2')
-       call b2xvff (nx, ny, coni(-1,-1,0,0), 'coni0')
-       call b2xvff (nx, ny, coni(-1,-1,0,1), 'coni1')
-       call b2xvff (nx, ny, coni(-1,-1,0,2), 'coni2')                 !srv 02.01.07 }
+       call b2xvff (nx, ny, cone(-1,-1,0,0,0), 'cone0')                 !srv 02.01.07 {
+       call b2xvff (nx, ny, cone(-1,-1,0,0,1), 'cone1')
+       call b2xvff (nx, ny, cone(-1,-1,0,0,2), 'cone2')
+       call b2xvff (nx, ny, coni(-1,-1,0,0,0), 'coni0')
+       call b2xvff (nx, ny, coni(-1,-1,0,0,1), 'coni1')
+       call b2xvff (nx, ny, coni(-1,-1,0,0,2), 'coni2')                 !srv 02.01.07 }
 *    ..test sign of she, shi
        call b2xvsg (n2, she(-1,-1,0), 1, 'she0', '.ge.')
        call b2xvsg (n2, she(-1,-1,1), 1, 'she1', '.le.')
@@ -282,8 +282,8 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        call my_out(70,nx,ny,te,'b2npht_te')
        call my_out(70,nx,ny,ti,'b2npht_ti')
        call my_out(70,nx,ny,reshe,'b2npht_reshe')
-       call my_out(70,nx,ny,fhe(-1,-1,0),'b2npht_fhex')               !srv 10.03.10
-       call my_out(70,nx,ny,fhe(-1,-1,1),'b2npht_fhey')               !srv 10.03.10
+       call my_out(70,nx,ny,fhe(-1,-1,0,0),'b2npht_fhex')               !srv 10.03.10
+       call my_out(70,nx,ny,fhe(-1,-1,1,1),'b2npht_fhey')               !srv 10.03.10
        call my_out(70,nx,ny,she0(-1,-1,0),'b2npht_she0')
        call my_out(70,nx,ny,she0(-1,-1,1),'b2npht_she1')
        call my_out(70,nx,ny,she0(-1,-1,2),'b2npht_she2')
@@ -292,8 +292,8 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
      &                  she0(:,:,3)*te*ne
        call my_out(70,nx,ny,wrk0,'b2npht_she')
        call my_out(70,nx,ny,reshi,'b2npht_reshi')
-       call my_out(70,nx,ny,fhi(-1,-1,0),'b2npht_fhix')               !srv 10.03.10
-       call my_out(70,nx,ny,fhi(-1,-1,1),'b2npht_fhiy')               !srv 10.03.10
+       call my_out(70,nx,ny,fhi(-1,-1,0,0),'b2npht_fhix')               !srv 10.03.10
+       call my_out(70,nx,ny,fhi(-1,-1,1,1),'b2npht_fhiy')               !srv 10.03.10
        call my_out(70,nx,ny,shi0(-1,-1,0),'b2npht_shi0')
        call my_out(70,nx,ny,shi0(-1,-1,1),'b2npht_shi1')
        call my_out(70,nx,ny,shi0(-1,-1,2),'b2npht_shi2')
@@ -306,14 +306,14 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
 *   ..compute correction
         call b2usht (nx, ny, ns, nregionv, itcnt,
      &   rxg, pcm1, pbs, ne, ni, te, ti,
-     &   floe, cone, floi, coni, pccm(-1,-1,1), she0, shi0,
+     &   floe, cone, floi, coni, pccm(-1,-1,1,1), she0, shi0,
      &   ceqp, resht, reshe, reshi, cortt, corte, corti,
      &   wrkf, wrkc, aa5, 'b2npht_')                                  !srv 18.03.10
 *   ..apply correction
         call b2upht (nx, ny, ns, nregionv, solving(3), solving(1),
      &   solvereg, solvireg, solvpreg, solvmreg,
      &   rxf, pcm0, cortt, corte, corti,
-     &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0, vol)
+     &   pccm(-1,-1,0,0), na, ua, te, ti, po, ne, ni, wrk0, vol)
       endif
       if(iout .eq. 1) then                                            !srv 17.07.05 {
        do is = 0,ns-1

@@ -17,7 +17,7 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),            !srv 27.01.00
-     $   cvisper(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1)
+     $   cvisper(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1,0:1)
 *-----------------------------------------------------------------------
 *.declarations
 
@@ -106,11 +106,11 @@
           do iy=-1,ny
             do ix=-1,nx
               if(bottomiy(ix,iy).eq.-2) then
-                fchvisper(ix,iy,1) = 0.0_R8
+                fchvisper(ix,iy,1,1) = 0.0_R8
               elseif(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1) then
-                fchvisper(ix,iy,1) = 0.0_R8   ! we do not want to have fchvisper(:,:,1) in guard cells on West and East
+                fchvisper(ix,iy,1,1) = 0.0_R8   ! we do not want to have fchvisper(:,:,1) in guard cells on West and East
               else
-                fchvisper(ix,iy,1) = fchvisper(ix,iy,1) -
+                fchvisper(ix,iy,1,1) = fchvisper(ix,iy,1,1) -
      &            avisper(ix,iy,1)*
      &           (dva(ix,iy)-dva(bottomix(ix,iy),bottomiy(ix,iy)))
               endif
@@ -118,14 +118,14 @@
           enddo
 
 *          X-COMPONENT OF VISCOSITY PERPENDICULAR CURRENT               !srv 22.11.99
-          fchvisper(:,:,0)=fchvisper(:,:,0)+0.0e0_R8
+          fchvisper(:,:,0,0)=fchvisper(:,:,0,0)+0.0e0_R8
         endif                                                           !srv 16.10.17
       enddo                                                             !srv 16.10.17
       endif                                                             !srv 22.11.99
 
       if(iout.eq.1) then
-       call my_out(70,nx,ny,fchvisper(-1,-1,0),'b2tvspr_fchvisperx')
-       call my_out(70,nx,ny,fchvisper(-1,-1,1),'b2tvspr_fchvispery')
+       call my_out(70,nx,ny,fchvisper(-1,-1,0,0),'b2tvspr_fchvisperx')
+       call my_out(70,nx,ny,fchvisper(-1,-1,1,1),'b2tvspr_fchvispery')
       endif
 * ..return
       ncall = ncall+1

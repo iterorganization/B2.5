@@ -16,10 +16,10 @@
       real (kind=R8) ::
      & vol(-1:nx,-1:ny), po(-1:nx,-1:ny), 
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     1 csig_an(-1:nx,-1:ny,0:1)
+     1 csig_an(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &    fchanml(-1:nx,-1:ny,0:1)
+     &    fchanml(-1:nx,-1:ny,0:1,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -81,23 +81,23 @@
           do iy = -1, ny
 	    do ix = -1, nx
 	      if(leftix(ix,iy).eq.-2)then
-	        fchanml(ix,iy,0)   = 0.0e0_R8
+	        fchanml(ix,iy,0,0)   = 0.0e0_R8
 	      else
-                fchanml(ix,iy,0) = - csig_an(ix,iy,0)*
+                fchanml(ix,iy,0,0) = - csig_an(ix,iy,0,0)*
      &           (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))
               endif
 	    enddo
 	  enddo
 
           do ix = -1, nx
-	    fchanml(ix,-1,1) = 0.0e0_R8
+	    fchanml(ix,-1,1,1) = 0.0e0_R8
           enddo
           do iy = 0, ny
 	    do ix = -1, nx
 	      if(bottomiy(ix,iy).eq.-2)then
-		fchanml(ix,iy,1) = 0.0e0_R8
+		fchanml(ix,iy,1,1) = 0.0e0_R8
 	      else
-		fchanml(ix,iy,1) = - csig_an(ix,iy,1)*
+		fchanml(ix,iy,1,1) = - csig_an(ix,iy,1,1)*
      &		 (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))
 	      endif
             enddo
@@ -112,7 +112,7 @@ cxpb turn off flows between boundary cells
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-              fchanml(ix,iy,1)=0.0_R8
+              fchanml(ix,iy,1,1)=0.0_R8
             endif
           enddo
         enddo
@@ -120,7 +120,7 @@ cxpb turn off flows between boundary cells
 cxpb turn off poloidal flows in core boundary
         do ix = -1, nx
           if(on_closed_surface(ix,-1)) then
-            fchanml(ix,-1,0) = 0.0_R8
+            fchanml(ix,-1,0,0) = 0.0_R8
           endif
         enddo
       endif
@@ -129,12 +129,12 @@ cxpb turn off poloidal flows in core boundary
       DO IB=1,NNISO
 	DO IX=NXISO1(IB), NXISO2(IB)
 	  DO IY=NYISO1(IB), NYISO2(IB)
-	    fchanml(ix,iy,0)=0.0e0_R8
+	    fchanml(ix,iy,0,0)=0.0e0_R8
 	  end do
 	end do
 	DO IX=NXISO1(IB), NXISO2(IB)
 	  DO IY=NYISO1(IB), NYISO2(IB)
-	    fchanml(ix,iy,1)=0.0e0_R8
+	    fchanml(ix,iy,1,1)=0.0e0_R8
 	  end do
 	end do
       end do

@@ -181,8 +181,8 @@
       call read_b2mod_plasma(nx,ny,ns,ninp(4))
       call read_b2mod_residuals(ninp(4))
       call read_b2mod_sources(ninp(4))
-      call read_b2mod_transport(ninp(4))
-      call read_b2mod_anomalous_transport(ninp(4))
+      call read_b2mod_transport(nx,ny,ns,ninp(4))
+      call read_b2mod_anomalous_transport(nx,ny,ns,ninp(4))
       call read_b2mod_neutr_src_scaling(ninp(4),ns,nstrat)
       call b2pldr (ninp, nout, nx, ny, ns)
 *   ..close files

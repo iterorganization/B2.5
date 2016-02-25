@@ -16,12 +16,12 @@
      *  rxg, bb(-1:nx,-1:ny,0:3), rob(-1:nx,-1:ny),
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hz(-1:nx,-1:ny),          !srv 09.01.01
      &  pb(-1:nx,-1:ny), ub(-1:nx,-1:ny), smb(-1:nx,-1:ny,0:3),
-     &  flcb(-1:nx,-1:ny,0:1), cvsb(-1:nx,-1:ny,0:1),
+     &  flcb(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1),
      &  resmb(-1:nx,-1:ny), ctcfb(-1:nx,-1:ny)                       !srv 06.04.07
       logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  corub(-1:nx,-1:ny), pccb(-1:nx,-1:ny,0:1)
+     *  corub(-1:nx,-1:ny), pccb(-1:nx,-1:ny,0:1,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
      *  aa5(-1:nx,-1:ny,-2:2), aad0(-1:nx,-1:ny)
@@ -88,7 +88,7 @@
        call b2xvsg (n2, pb, 1, 'pb', '.gt.')
        call b2xvsg (n2, smb(-1,-1,1), 1, 'smb1', '.le.')
        call b2xvsg (n2, smb(-1,-1,3), 1, 'smb3', '.le.')
-       call b2xvsg (n2*2, cvsb, 1, 'cvsb', '.ge.')
+       call b2xvsg (n2*4, cvsb, 1, 'cvsb', '.ge.')
 *    ..test edge values of flcb, cvsb
        call b2xvff (nx, ny, flcb, 'flcb')
        call b2xvff (nx, ny, cvsb, 'cvsb')
@@ -128,11 +128,13 @@ csw 18feb2014 corrected BCs (SOLPS4)
          aa5(ix,iy,-1) = 0.0_R8
         else
          if(no_Ptncr_x_co.eq.0) then                                  !sv 06.07.06 {
-          t0 =  flcb(ix,iy,0)/2.0_R8-hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
-          t1 = -flcb(ix,iy,0)/2.0_R8-hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
+          t0 =  flcb(ix,iy,0,0)/2.0_R8-
+     .          hybr(flcb(ix,iy,0,0),cvsb(ix,iy,0,0))
+          t1 = -flcb(ix,iy,0,0)/2.0_R8-
+     .          hybr(flcb(ix,iy,0,0),cvsb(ix,iy,0,0))
          else
-          t0 =  flcb(ix,iy,0)/2.0_R8-cvsb(ix,iy,0)
-          t1 = -flcb(ix,iy,0)/2.0_R8-cvsb(ix,iy,0)
+          t0 =  flcb(ix,iy,0,0)/2.0_R8-cvsb(ix,iy,0,0)
+          t1 = -flcb(ix,iy,0,0)/2.0_R8-cvsb(ix,iy,0,0)
          endif                                                        !sv 06.07.06 }
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
          if (solvereg(ileft))
@@ -163,11 +165,13 @@ csw 18feb2014 corrected BCs (SOLPS4)
          aa5(ix,iy,-2) = 0.0_R8
         else
          if(no_Ptncr_y_co.eq.0) then                                 !srv 06.07.06 {
-          t0 =  flcb(ix,iy,1)/2.0_R8 - hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
-          t1 = -flcb(ix,iy,1)/2.0_R8 - hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
+          t0 =  flcb(ix,iy,1,1)/2.0_R8 - 
+     &          hybr(flcb(ix,iy,1,1),cvsb(ix,iy,1,1))
+          t1 = -flcb(ix,iy,1,1)/2.0_R8 - 
+     &          hybr(flcb(ix,iy,1,1),cvsb(ix,iy,1,1))
          else
-          t0 =  flcb(ix,iy,1)/2.0_R8 - cvsb(ix,iy,1)
-          t1 = -flcb(ix,iy,1)/2.0_R8 - cvsb(ix,iy,1)
+          t0 =  flcb(ix,iy,1,1)/2.0_R8 - cvsb(ix,iy,1,1)
+          t1 = -flcb(ix,iy,1,1)/2.0_R8 - cvsb(ix,iy,1,1)
          endif                                                        !srv 06.07.06 }
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot))
@@ -184,12 +188,12 @@ cxpb
      &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
      &       iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
            if(ncall.lt.3) write(*,*) 'Executing xpb:b2usmo for ',ix,iy
-           t0 =  flcb(topix(ix,iy),topiy(ix,iy),1)/2-
-     &           hybr(flcb(topix(ix,iy),topiy(ix,iy),1),
-     &                cvsb(topix(ix,iy),topiy(ix,iy),1))
-            t1 = -flcb(topix(ix,iy),topiy(ix,iy),1)/2-
-     &            hybr(flcb(topix(ix,iy),topiy(ix,iy),1),
-     &                 cvsb(topix(ix,iy),topiy(ix,iy),1))
+           t0 =  flcb(topix(ix,iy),topiy(ix,iy),1,1)/2.0_R8-
+     &           hybr(flcb(topix(ix,iy),topiy(ix,iy),1,1),
+     &                cvsb(topix(ix,iy),topiy(ix,iy),1,1))
+            t1 = -flcb(topix(ix,iy),topiy(ix,iy),1,1)/2.0_R8-
+     &            hybr(flcb(topix(ix,iy),topiy(ix,iy),1,1),
+     &                 cvsb(topix(ix,iy),topiy(ix,iy),1,1))
             itop = region(topix(ix,iy),topiy(ix,iy),0)
             if (solvereg(ireg))
      >       aa5(ix,iy,2) = t0
@@ -208,17 +212,16 @@ cxpb
        enddo
       enddo
 *   ..compute pccb
+      pccb = 0.0_R8
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
         if (solvereg(ireg)) then
-         pccb(ix,iy,0) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*            !srv 09.01.01
+         pccb(ix,iy,0,0) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*            !srv 09.01.01
      .    bb(ix,iy,0)/bb(ix,iy,3)/aa5(ix,iy,0)                        !srv 11.01.13
-         pccb(ix,iy,1) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*            !srv 09.01.01
+         pccb(ix,iy,1,1) = (vol(ix,iy)*hz(ix,iy)/hx(ix,iy))*            !srv 09.01.01
      .    bb(ix,iy,0)/bb(ix,iy,3)/aad0(ix,iy)                         !srv 11.01.13
         else
-         pccb(ix,iy,0) = 0.0_R8
-         pccb(ix,iy,1) = 0.0_R8
          resmb(ix,iy) = 0.0_R8   ! take opportunity to correct RHS
         endif
        enddo
@@ -247,8 +250,8 @@ cxpb
        call my_out(70,nx,ny,aa5(-1,-1, 2),name//'_aa5p2')
        call my_out(70,nx,ny,resmb,name//'_resmb')
        call my_out(70,nx,ny,corub,name//'_corub')
-       call my_out(70,nx,ny,pccb(-1,-1,0),name//'_pccbx')
-       call my_out(70,nx,ny,pccb(-1,-1,1),name//'_pccby')
+       call my_out(70,nx,ny,pccb(-1,-1,0,0),name//'_pccbx')
+       call my_out(70,nx,ny,pccb(-1,-1,1,1),name//'_pccby')
       endif                                                           !srv 17.06.02 }
 * ..return
       ncall = ncall+1

@@ -239,8 +239,8 @@
       allocate(hydiff(-1:nx, -1:ny))
       do ix=-1,nx
        do iy=-1,ny
-         qcdiff(ix,iy) = qc(ix,iy)
-         sxdiff(ix,iy) = qc(ix,iy)*gs(ix,iy,0)
+         qcdiff(ix,iy) = qc(ix,iy,0)
+         sxdiff(ix,iy) = qc(ix,iy,0)*gs(ix,iy,0)
          vldiff(ix,iy) = vol(ix,iy)
          hxdiff(ix,iy) = hx(ix,iy)
          hydiff(ix,iy) = hy(ix,iy)
@@ -280,12 +280,12 @@
 
 * ..modify gsx (and pbsx) by modifying qc in case of area_fix=3
       do iy=-1,ny
-        qc(nx,iy) = qz(nx,iy,1)
+        qc(nx,iy,0) = qz(nx,iy,1)
         do ix=-1,nx-1
           ix1=ix+1
           t0 = (vol(ix1,iy)*qz(ix1,iy,1)+vol(ix,iy)*qz(ix,iy,1)) /
      .         (vol(ix,iy)+vol(ix1,iy))
-          qc(ix,iy) = t0
+          qc(ix,iy,0) = t0
         enddo
       enddo
 
@@ -295,8 +295,8 @@
      .     form='formatted')
       do ix=-1,nx
         do iy=-1,ny
-          qcdiff(ix,iy) = qcdiff(ix,iy) / qc(ix,iy) - 1.d0
-          sxdiff(ix,iy) = sxdiff(ix,iy) / (qc(ix,iy)*gs(ix,iy,0))-1.d0
+          qcdiff(ix,iy) = qcdiff(ix,iy) / qc(ix,iy,0) - 1.d0
+          sxdiff(ix,iy) = sxdiff(ix,iy) / (qc(ix,iy,0)*gs(ix,iy,0))-1.d0
           vldiff(ix,iy) = vldiff(ix,iy) / vol(ix,iy)-1.d0
           hxdiff(ix,iy) = hxdiff(ix,iy) / hx(ix,iy)-1.d0
           hydiff(ix,iy) = hydiff(ix,iy) / hy(ix,iy)-1.d0

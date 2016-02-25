@@ -494,17 +494,18 @@ ctmp.dpc
      &          pb, ua(-1,-1,is), uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &          vadia(-1,-1,0,is), wadia(-1,-1,0,is), ne, te, ti, bb,
      &          hx, hy, hz, qz, gs, qc, po,                              !srv 19.05.03 08.10.04 04.02.05
-     &          cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &          cddi(-1,-1,0,is), cvlahz(-1,-1,0,is),
-     &          cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),                  !srv 09.01.01 15.12.05 13.10.06
-     &          cdpahz(-1,-1,0,is),
+     &          cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), 
+     &          cdpa(-1,-1,0,0,is),
+     &          cddi(-1,-1,0,0,is), cvlahz(-1,-1,0,0,is),
+     &          cvmahz(-1,-1,0,0,is), cdnahz(-1,-1,0,0,is),              !srv 09.01.01 15.12.05 13.10.06
+     &          cdpahz(-1,-1,0,0,is),
      &          fchvispar, fchvisper, fchinert, fchanml, fchvisq,        !srv 20.09.06
-     &          fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
-     &          fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),
-     &          fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),
-     &          flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
-     &          fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &          fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),
+     &          fna_fcor(-1,-1,0,0,is), fna_he(-1,-1,0,0,is),
+     &          fnaPSch(-1,-1,0,0,is), fna_mdf(-1,-1,0,0,is),
+     &          flob, conb, fna_32(-1,-1,0,0,is), fna_52(-1,-1,0,0,is),
+     &          fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is),
+     &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),
      &          .false.)                                                 !djm Jan2017
            end do
 *      ..compute electron drift velocities
@@ -522,18 +523,18 @@ ctmp.dpc
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
               ue(ix,iy)=-(
-     1           fch_p(ix,iy,0)/pbs(ix,iy,0)+                          !srv 10.06.08
-     1           fch_p(rightix(ix,iy),rightiy(ix,iy),0)/               !srv 10.06.08
+     1           fch_p(ix,iy,0,0)/pbs(ix,iy,0)+                          !srv 10.06.08
+     1           fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/               !srv 10.06.08
      2             pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
              elseif(leftix(ix,iy).eq.-2 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
-              ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/       !srv 10.06.08
+              ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/       !srv 10.06.08
      2           pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
              elseif(rightix(ix,iy).eq.nx+1 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
-              ue(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe                !srv 10.06.08
+              ue(ix,iy)=-fch_p(ix,iy,0,0)/pbs(ix,iy,0)/qe                !srv 10.06.08
              endif
             end do
            end do

@@ -5,10 +5,10 @@
       integer nx, ny
       real (kind=R8) ::
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
-     *  vol(-1:nx,-1:ny), fch_pi_c(-1:nx,-1:ny,0:1)
+     *  vol(-1:nx,-1:ny), fch_pi_c(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  fch_pi_f(-1:nx,-1:ny,0:1)
+     &  fch_pi_f(-1:nx,-1:ny,0:1,0:1)
 *     ------------------------------------------------------------------
 *     B2XPIF computes the ion parallel current on cell faces.
 *     ------------------------------------------------------------------
@@ -22,20 +22,22 @@
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 
-      call intfaceh(nx,ny,leftix,leftiy,vol,fch_pi_c(-1,-1,0),
-     .                                      fch_pi_f(-1,-1,0))
+      call intfaceh(nx,ny,leftix,leftiy,vol,fch_pi_c(-1,-1,0,0),
+     .                                      fch_pi_f(-1,-1,0,0))
 
       do iy = -1, ny
         do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
-            fch_pi_f(ix,iy,0) = fch_pi_f(ix,iy,0)*
+            fch_pi_f(ix,iy,0,0) = fch_pi_f(ix,iy,0,0)*
      &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))/
      &       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*prl_cur
 	  endif
         enddo
       enddo
 
-      fch_pi_f(-1:nx,-1:ny,1) = 0.0_R8
+      fch_pi_f(-1:nx,-1:ny,0,1) = 0.0_R8
+      fch_pi_f(-1:nx,-1:ny,1,0) = 0.0_R8
+      fch_pi_f(-1:nx,-1:ny,1,1) = 0.0_R8
 
       ncall = ncall+1
       return

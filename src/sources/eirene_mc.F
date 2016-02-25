@@ -540,10 +540,10 @@ c*** recyc     : fudge factors for the sources in B2
               do iy=1,rc_list_size(istrai) !{
                 tflux(istrai)=tflux(istrai)-
      1      fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
-     2          rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is)
+     2        rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,0,is)
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
      1      fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
-     2          rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is)
+     2        rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,0,is)
               end do !}
             end if !}
           end do !}
@@ -552,9 +552,9 @@ c*** recyc     : fudge factors for the sources in B2
             if(.not.is_neutral(is)) then !{
               do iy=1,rc_list_size(istrai) !{
                 tflux(istrai)=tflux(istrai)+
-     .           fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,is)
+     .           fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,0,is)
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))+
-     1           fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,is)
+     1           fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,0,is)
               end do !}
             end if !}
           end do !}
@@ -564,10 +564,10 @@ c*** recyc     : fudge factors for the sources in B2
               do ix=1,rc_list_size(istrai) !{
                 tflux(istrai)=tflux(istrai)-
      1      fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
-     2          topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,is)
+     2          topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,1,is)
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))-
      1      fna(topix(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),
-     2          topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,is)
+     2          topiy(rc_list_x(ix,istrai),rc_list_y(ix,istrai)),1,1,is)
               end do !}
             end if !}
           end do !}
@@ -576,9 +576,9 @@ c*** recyc     : fudge factors for the sources in B2
             if(.not.is_neutral(is)) then !{
               do ix=1,rc_list_size(istrai) !{
                 tflux(istrai)=tflux(istrai)+
-     .           fna(rc_list_x(ix,istrai),rc_list_y(ix,istrai),1,is)
+     .           fna(rc_list_x(ix,istrai),rc_list_y(ix,istrai),1,1,is)
                 tfl(istrai,b2eatcr(is))=tfl(istrai,b2eatcr(is))+
-     1           fna(rc_list_x(ix,istrai),rc_list_y(ix,istrai),1,is)
+     1           fna(rc_list_x(ix,istrai),rc_list_y(ix,istrai),1,1,is)
               end do !}
             end if !}
           end do !}
@@ -3492,18 +3492,18 @@ c*** recombination is already evaluated above.
                 do iy=1,rc_list_size(istrai) !{
                   hlp_st=hlp_st-
      .    fna(rightix(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),
-     .        rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,is)
+     .        rightiy(rc_list_x(iy,istrai),rc_list_y(iy,istrai)),0,0,is)
                 end do !}
               else if(crcstra(istrai).eq.'E') then !}{
                 do iy=1,rc_list_size(istrai) !{
                   hlp_st=hlp_st+
-     .             fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,is)
+     .             fna(rc_list_x(iy,istrai),rc_list_y(iy,istrai),0,0,is)
                 end do !}
               else if(crcstra(istrai).eq.'N') then !}{
                 do ix=1,rc_list_size(istrai) !{
                   hlp_st=hlp_st+
      .                 fna(rc_list_x(ix,istrai),
-     .                     rc_list_y(ix,istrai),1,is)
+     .                     rc_list_y(ix,istrai),1,1,is)
                 end do !}
               else if(crcstra(istrai).eq.'S') then !}{
                 do ix=1,rc_list_size(istrai) !{
@@ -3511,7 +3511,7 @@ c*** recombination is already evaluated above.
      .                 fna(topix(rc_list_x(ix,istrai),
      .                           rc_list_y(ix,istrai)),
      .                     topiy(rc_list_x(ix,istrai),
-     .                           rc_list_y(ix,istrai)),1,is)
+     .                           rc_list_y(ix,istrai)),1,1,is)
                 end do !}
               else if(crcstra(istrai).eq.'C') then !}{
                 if(hlp_pff(j,istrai)) then !{

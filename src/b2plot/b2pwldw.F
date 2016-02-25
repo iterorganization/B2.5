@@ -652,33 +652,33 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
               do iy=0,ny-1 !{
                 wo=0.0_R8
                 wnutrg(iy,j)=0.0_R8
-                whtpl(iy,j)=fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0)+
-     .                      fhi_ext(k+1-l,iy,0)
+                whtpl(iy,j)=fhe(k+1-l,iy,0,0)+fhi(k+1-l,iy,0,0)+
+     .                      fhi_ext(k+1-l,iy,0,0)
                 do is=0,ns-1 !{
                   if (.not.is_neutral(is).or.ft44) then
-                    wo=wo+fna(k+1-l,iy,0,is)*rpt(kk,iy,is)*ev
+                    wo=wo+fna(k+1-l,iy,0,0,is)*rpt(kk,iy,is)*ev
                   else
-                    wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,is)
+                    wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,0,is)
      *               *(1.0_R8-BoRiS)*kinrgy(kk,iy,is)
                   end if
-                  whtpl(iy,j)=whtpl(iy,j)+fna(k+1-l,iy,0,is)
+                  whtpl(iy,j)=whtpl(iy,j)+fna(k+1-l,iy,0,0,is)
      *             *(1.0_R8-BoRiS)*(ti(kk,iy)+kinrgy(kk,iy,is))
 c carlis 31jan2017  added ti as suggested by sw in b2blne.
                 end do !}
                 do is=0,ns_ext-1 !{
                   if (.not.is_ext_neutral(is).or.ft44) then
-                    wo=wo+fa_ext(k+1-l,iy,0,is)*pt_ext(kk,iy,is)*ev
+                    wo=wo+fa_ext(k+1-l,iy,0,0,is)*pt_ext(kk,iy,is)*ev
                   else
-                    wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,is)
+                    wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,0,is)
      .               *(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
      .                 ua_ext(kk,iy,is)**2)
                   end if
-                  whtpl(iy,j)=whtpl(iy,j)+fa_ext(k+1-l,iy,0,is)
+                  whtpl(iy,j)=whtpl(iy,j)+fa_ext(k+1-l,iy,0,0,is)
      .             *(1.0_R8-BoRiS)*(ta_ext(kk,iy,is)+0.5_R8*
      .             am_ext(is)*mp*ua_ext(kk,iy,is)**2)
 c carlis 31jan2017  added ta as suggested by sw in b2blne.
                 end do !}
-                whtpl(iy,j)=whtpl(iy,j)+fne(k+1-l,iy,0)
+                whtpl(iy,j)=whtpl(iy,j)+fne(k+1-l,iy,0,0)
      .           *(1.0_R8-BoRiS)*te(kk,iy)
 c carlis 31jan2017  added electron contribution as suggested by sw in b2blne.
                 wptpl(iy,j)=wo/s(iy,j)*u
@@ -808,8 +808,8 @@ c!###}
                   p=(po(ib,iy)-phi_hlp(j))*qe
                   h=ti(ib,iy)*eni_hlp(j)
                   do i=i1,i2 !{
-                    wo=wo+fna(ib,iy,0,i)
-                    wwo=wwo+(h+p*rza(kk,iy,i))*fna(ib,iy,0,i)
+                    wo=wo+fna(ib,iy,0,0,i)
+                    wwo=wwo+(h+p*rza(kk,iy,i))*fna(ib,iy,0,0,i)
                   end do !}
 c                  zz=zz+wwo*u                 !###
                   fiitrg(iy,j,is)=u*wo
@@ -858,7 +858,7 @@ c carlis using values directly from Eirene
                   else
                     naitrg(iy,j,iatm)=na(kk,iy,eb2atcr(iatm))
                     paitrg(iy,j,iatm)=na(kk,iy,eb2atcr(iatm))*ti(kk,iy)
-                    faitrg(iy,j,iatm)=u*fna(ib,iy,0,eb2atcr(iatm))
+                    faitrg(iy,j,iatm)=u*fna(ib,iy,0,0,eb2atcr(iatm))
                     eaitrg(iy,j,iatm)=2.0_R8*ti(kk,iy)
                   end if
 c!###{

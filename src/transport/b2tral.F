@@ -29,27 +29,32 @@
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne2(-1:nx,-1:ny),
-     &  fch_p(-1:nx,-1:ny,0:1), conn(-1:ny), qc(-1:nx,-1:ny),           !srv 10.06.08
+     &  fch_p(-1:nx,-1:ny,0:1,0:1), conn(-1:ny), qc(-1:nx,-1:ny,0:1),           !srv 10.06.08
      &  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny)                        !srv 03.06.03
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  cdna(-1:nx,-1:ny,0:1,0:ns-1), cdpa(-1:nx,-1:ny,0:1,0:ns-1),
-     *  cddi(-1:nx,-1:ny,0:1,0:ns-1),                                   !srv 13.10.06
-     &  cvla(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cdnahz(-1:nx,-1:ny,0:1,0:ns-1), cdpahz(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
-     &  cvlahz(-1:nx,-1:ny,0:1,0:ns-1), cvsahz(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
-     &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                              !srv 09.01.01
-     &  cvmahz(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 15.12.05
-     &  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
-     &  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
-     &  csig(-1:nx,-1:ny,0:1), csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), 	!xpb
-     &  calf(-1:nx,-1:ny,0:1),
+     *  cdna(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     *  cdpa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     *  cddi(-1:nx,-1:ny,0:1,0:1,0:ns-1),                                   !srv 13.10.06
+     &  cvla(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  cdnahz(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  cdpahz(-1:nx,-1:ny,0:1,0:1,0:ns-1), !srv 09.01.01
+     &  cvlahz(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  cvsahz(-1:nx,-1:ny,0:1,0:1,0:ns-1), !srv 09.01.01
+     &  cvsahz_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),                              !srv 09.01.01
+     &  cvmahz(-1:nx,-1:ny,0:1,0:1,0:ns-1),                                 !srv 15.12.05
+     &  chce(-1:nx,-1:ny,0:1,0:1), chve(-1:nx,-1:ny,0:1,0:1),
+     &  chci(-1:nx,-1:ny,0:1,0:1), chvi(-1:nx,-1:ny,0:1,0:1),
+     &  csig(-1:nx,-1:ny,0:1,0:1), 
+     &  csigin(-1:nx,-1:ny,0:1,0:1,0:ns-1,0:ns-1), 	!xpb
+     &  calf(-1:nx,-1:ny,0:1,0:1),
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
-     1	cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
-     1	fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1), 
+     1	cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     1	fllim0fhi(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
      2  fllimvisc(-1:nx,-1:ny,0:ns-1),
-     3  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1)
+     3  csig_cl(-1:nx,-1:ny,0:1,0:1), calf_cl(-1:nx,-1:ny,0:1,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -92,10 +97,11 @@
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
       character(3) chns, chns0                                          !srv 17.06.08
       real (kind=R8) ::
-     1  chvi0(-1:nx,-1:ny,0:1), csig0(-1:nx,-1:ny,0:1),
-     2  calf0(-1:nx,-1:ny,0:1), chci0(-1:nx,-1:ny,0:1),
-     3  cvsa0(-1:nx,-1:ny,0:1,0:ns-1), cvsahz0(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
-     4  chce0(-1:nx,-1:ny,0:1), chve0(-1:nx,-1:ny,0:1),
+     1  chvi0(-1:nx,-1:ny,0:1,0:1), csig0(-1:nx,-1:ny,0:1,0:1),
+     2  calf0(-1:nx,-1:ny,0:1,0:1), chci0(-1:nx,-1:ny,0:1,0:1),
+     3  cvsa0(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     3  cvsahz0(-1:nx,-1:ny,0:1,0:1,0:ns-1), !srv 09.01.01
+     4  chce0(-1:nx,-1:ny,0:1,0:1), chve0(-1:nx,-1:ny,0:1,0:1),
      1	pol_anom_scale, ft,                                             !srv 16.10.17
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
@@ -164,18 +170,18 @@
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, csigin,
      4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                !srv 09.01.01
      5  csig_cl, calf_cl)
-*   ..add to previous contributions
+*   ..add to previous contributions=
       ft = 4.0e0_R8/3.0e0_R8                                      !srv 16.10.17 {
       do is = 0, ns-1
-        if (.not.is_neutral(is)) then
-          cvsa(:,:,0,is)   = ft*cvsa_cl(:,:,0,is)   + cvsa(:,:,0,is)
-          cvsa(:,:,1,is)   =    cvsa_cl(:,:,1,is)   + cvsa(:,:,1,is)
-          cvsahz(:,:,0,is) = ft*cvsahz_cl(:,:,0,is) + cvsahz(:,:,0,is)
-          cvsahz(:,:,1,is) =    cvsahz_cl(:,:,1,is) + cvsahz(:,:,1,is)
-        else
-          cvsa(:,:,:,is)   =    cvsa_cl(:,:,:,is) + cvsa(:,:,:,is)
-          cvsahz(:,:,:,is) =  cvsahz_cl(:,:,:,is) + cvsahz(:,:,:,is)
-        end if
+       if (.not.is_neutral(is)) then
+        cvsa(:,:,0,0,is)   = ft*cvsa_cl(:,:,0,0,is)   + cvsa(:,:,0,0,is)
+        cvsa(:,:,1,1,is)   =    cvsa_cl(:,:,1,1,is)   + cvsa(:,:,1,1,is)
+        cvsahz(:,:,0,0,is) = ft*cvsahz_cl(:,:,0,0,is)+cvsahz(:,:,0,0,is)
+        cvsahz(:,:,1,1,is) =    cvsahz_cl(:,:,1,1,is)+cvsahz(:,:,1,1,is)
+       else
+        cvsa(:,:,:,:,is)   =    cvsa_cl(:,:,:,:,is) + cvsa(:,:,:,:,is)
+        cvsahz(:,:,:,:,is) =  cvsahz_cl(:,:,:,:,is) + cvsahz(:,:,:,:,is)
+       end if
       end do                                                      !srv 16.10.17 }
       if (fch_anomalous.ne.1.0_R8) then
         csig = csig * fch_anomalous
@@ -183,24 +189,20 @@
         csig_an = csig_an * fch_anomalous
         calf_an = calf_an * fch_anomalous
       end if
-      call b2saxpy (n2*2, 1.0_R8, chce0, 1, chce, 1)
-      call b2saxpy (n2*2, 1.0_R8, chve0, 1, chve, 1)
-      call b2saxpy (n2*2, 1.0_R8, chci0, 1, chci, 1)
-      call b2saxpy (n2*2, 1.0_R8, chvi0, 1, chvi, 1)
-      call b2saxpy (n2*2, 1.0_R8, csig0, 1, csig, 1)
-      call b2saxpy (n2*2, 1.0_R8, calf0, 1, calf, 1)
+      call b2saxpy (n2*4, 1.0_R8, chce0, 1, chce, 1)
+      call b2saxpy (n2*4, 1.0_R8, chve0, 1, chve, 1)
+      call b2saxpy (n2*4, 1.0_R8, chci0, 1, chci, 1)
+      call b2saxpy (n2*4, 1.0_R8, chvi0, 1, chvi, 1)
+      call b2saxpy (n2*4, 1.0_R8, csig0, 1, csig, 1)
+      call b2saxpy (n2*4, 1.0_R8, calf0, 1, calf, 1)
 *   ..compute terms from diamagnetic parts                        !srv 13.10.06 {
+      cddi = 0.0_R8
       do is = 0, ns-1
-       if(is_neutral(is)) then
-        cddi(:,:,0,is) = 0.0_R8
-        cddi(:,:,1,is) = 0.0_R8
-       else
+       if(.not.is_neutral(is)) then
         do iy = -1, ny
          do ix = -1, nx
-          if(leftix(ix,iy).eq.-2) then
-           cddi(ix,iy,0,is) = 0.0_R8
-          else
-           cddi(ix,iy,0,is) =
+          if(leftix(ix,iy).ne.-2) then
+           cddi(ix,iy,0,0,is) =
      &      +2.0e0_R8*(vol(leftix(ix,iy),leftiy(ix,iy))*
      &         bzb(leftix(ix,iy),leftiy(ix,iy))
      &         +vol(ix,iy)*bzb(ix,iy))/
@@ -213,10 +215,8 @@
 
         do iy = -1, ny
          do ix = -1, nx
-          if(bottomiy(ix,iy).eq.-2) then
-           cddi(ix,iy,1,is) = 0.0e0_R8
-          else
-           cddi(ix,iy,1,is) =
+          if(bottomiy(ix,iy).ne.-2) then
+           cddi(ix,iy,1,1,is) =
      &       2.0e0_R8*(vol(bottomix(ix,iy),bottomiy(ix,iy))*
      &         bzb(bottomix(ix,iy),bottomiy(ix,iy))
      &         +vol(ix,iy)*bzb(ix,iy))/
@@ -233,7 +233,7 @@
 *  ..check that we have some particle diffusion
       if (ncall.le.3) then                                            !srv 12.03.12 {
         do is = 0, ns-1
-          wrk(:,:) = cdna(:,:,0,is)+cdpa(:,:,0,is)
+          wrk(:,:) = cdna(:,:,0,0,is)+cdpa(:,:,0,0,is)
           wrkmin = huge(1.0_R8)
           do iy = -1, ny
             do ix = -1, nx
@@ -247,7 +247,7 @@
      .     ' in poloidal direction'
           call xertst (wrkmin.gt.0.0_R8 .or. pol_anom_scale.eq.0.0_R8
      .     .or. .not.solving(2),message)
-          wrk(:,:) = cdna(:,:,1,is)+cdpa(:,:,1,is)
+          wrk(:,:) = cdna(:,:,1,1,is)+cdpa(:,:,1,1,is)
           wrkmin = huge(1.0_R8)
           do iy = -1, ny
             do ix = -1, nx
@@ -267,7 +267,7 @@
           call xertst (wrkmin.gt.0.0_R8 .or. .not.solving(4), message)
         enddo
 *  ..check that we have some anomalous perpendicular currents
-        wrk(:,:) = calf_an(:,:,1)+csig_an(:,:,1)
+        wrk(:,:) = calf_an(:,:,1,1)+csig_an(:,:,1,1)
         wrkmin = huge(1.0_R8)
         do iy = -1, ny
           do ix = -1, nx
@@ -284,98 +284,100 @@
       if(iout.ne.0) then                                              !srv 17.06.08 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
-        call my_out(70,nx,ny,cdna(-1,-1,0,is),'cdnax'//chns)
-        call my_out(70,nx,ny,cdna(-1,-1,1,is),'cdnay'//chns)
-        call my_out(70,nx,ny,cdpa(-1,-1,0,is),'cdpax'//chns)
-        call my_out(70,nx,ny,cdpa(-1,-1,1,is),'cdpay'//chns)
-        call my_out(70,nx,ny,cddi(-1,-1,0,is),'cddix'//chns)
-        call my_out(70,nx,ny,cddi(-1,-1,1,is),'cddiy'//chns)
-        call my_out(70,nx,ny,cvla(-1,-1,0,is),'cvlax'//chns)
-        call my_out(70,nx,ny,cvla(-1,-1,1,is),'cvlay'//chns)
-        call my_out(70,nx,ny,cvsa(-1,-1,0,is),'cvsax'//chns)
-        call my_out(70,nx,ny,cvsa(-1,-1,1,is),'cvsay'//chns)
-        call my_out(70,nx,ny,cdnahz(-1,-1,0,is),'cdnahzx'//chns)
-        call my_out(70,nx,ny,cdnahz(-1,-1,1,is),'cdnahzy'//chns)
-        call my_out(70,nx,ny,cdpahz(-1,-1,0,is),'cdpahzx'//chns)
-        call my_out(70,nx,ny,cdpahz(-1,-1,1,is),'cdpahzy'//chns)
-        call my_out(70,nx,ny,cvlahz(-1,-1,0,is),'cvlahzx'//chns)
-        call my_out(70,nx,ny,cvlahz(-1,-1,1,is),'cvlahzy'//chns)
-        call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'cvsahzx'//chns)
-        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'cvsahzy'//chns)
-        call my_out(70,nx,ny,cvmahz(-1,-1,0,is),'cvmahzx'//chns)
-        call my_out(70,nx,ny,cvmahz(-1,-1,1,is),'cvmahzy'//chns)
-        call my_out(70,nx,ny,cvsa_cl(-1,-1,0,is),'cvsa_clx'//chns)
-        call my_out(70,nx,ny,cvsa_cl(-1,-1,1,is),'cvsa_cly'//chns)
-        call my_out(70,nx,ny,cvsahz_cl(-1,-1,0,is),'cvsahz_clx'//chns)
-        call my_out(70,nx,ny,cvsahz_cl(-1,-1,1,is),'cvsahz_cly'//chns)
+        call my_out(70,nx,ny,cdna(-1,-1,0,0,is),'cdnax'//chns)
+        call my_out(70,nx,ny,cdna(-1,-1,1,1,is),'cdnay'//chns)
+        call my_out(70,nx,ny,cdpa(-1,-1,0,0,is),'cdpax'//chns)
+        call my_out(70,nx,ny,cdpa(-1,-1,1,1,is),'cdpay'//chns)
+        call my_out(70,nx,ny,cddi(-1,-1,0,0,is),'cddix'//chns)
+        call my_out(70,nx,ny,cddi(-1,-1,1,1,is),'cddiy'//chns)
+        call my_out(70,nx,ny,cvla(-1,-1,0,0,is),'cvlax'//chns)
+        call my_out(70,nx,ny,cvla(-1,-1,1,1,is),'cvlay'//chns)
+        call my_out(70,nx,ny,cvsa(-1,-1,0,0,is),'cvsax'//chns)
+        call my_out(70,nx,ny,cvsa(-1,-1,1,1,is),'cvsay'//chns)
+        call my_out(70,nx,ny,cdnahz(-1,-1,0,0,is),'cdnahzx'//chns)
+        call my_out(70,nx,ny,cdnahz(-1,-1,1,1,is),'cdnahzy'//chns)
+        call my_out(70,nx,ny,cdpahz(-1,-1,0,0,is),'cdpahzx'//chns)
+        call my_out(70,nx,ny,cdpahz(-1,-1,1,1,is),'cdpahzy'//chns)
+        call my_out(70,nx,ny,cvlahz(-1,-1,0,0,is),'cvlahzx'//chns)
+        call my_out(70,nx,ny,cvlahz(-1,-1,1,1,is),'cvlahzy'//chns)
+        call my_out(70,nx,ny,cvsahz(-1,-1,0,0,is),'cvsahzx'//chns)
+        call my_out(70,nx,ny,cvsahz(-1,-1,1,1,is),'cvsahzy'//chns)
+        call my_out(70,nx,ny,cvmahz(-1,-1,0,0,is),'cvmahzx'//chns)
+        call my_out(70,nx,ny,cvmahz(-1,-1,1,1,is),'cvmahzy'//chns)
+        call my_out(70,nx,ny,cvsa_cl(-1,-1,0,0,is),'cvsa_clx'//chns)
+        call my_out(70,nx,ny,cvsa_cl(-1,-1,1,1,is),'cvsa_cly'//chns)
+        call my_out(70,nx,ny,cvsahz_cl(-1,-1,0,0,is),'cvsahz_clx'//chns)
+        call my_out(70,nx,ny,cvsahz_cl(-1,-1,1,1,is),'cvsahz_cly'//chns)
         call my_out(70,nx,ny,cthe(-1,-1,is),'cthe'//chns)
         call my_out(70,nx,ny,cthi(-1,-1,is),'cthi'//chns)
         do is0=0,ns-1
          write (chns0,'(i3.3)') is0
          if(is0.ne.is .and. .not.is_neutral(is)) then 
-          call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),'csiginx'//chns//
-     &        '_'//chns0)
-          call my_out(70,nx,ny,csigin(-1,-1,1,is,is0),'csiginy'//chns//
-     &        '_'//chns0)
+          call my_out(70,nx,ny,csigin(-1,-1,0,0,is,is0),'csiginx'//
+     &        chns//'_'//chns0)
+          call my_out(70,nx,ny,csigin(-1,-1,1,1,is,is0),'csiginy'//
+     &        chns//'_'//chns0)
          endif
         enddo
        enddo
-       call my_out(70,nx,ny,chce(-1,-1,0),'chcex')
-       call my_out(70,nx,ny,chce(-1,-1,1),'chcey')
-       call my_out(70,nx,ny,chci(-1,-1,0),'chcix')
-       call my_out(70,nx,ny,chci(-1,-1,1),'chciy')
-       call my_out(70,nx,ny,chve(-1,-1,0),'chvex')
-       call my_out(70,nx,ny,chve(-1,-1,1),'chvey')
-       call my_out(70,nx,ny,chvi(-1,-1,0),'chvix')
-       call my_out(70,nx,ny,chvi(-1,-1,1),'chviy')
-       call my_out(70,nx,ny,csig(-1,-1,0),'csigx')
-       call my_out(70,nx,ny,csig(-1,-1,1),'csigy')
-       call my_out(70,nx,ny,calf(-1,-1,0),'calfx')
-       call my_out(70,nx,ny,calf(-1,-1,1),'calfy')
+       call my_out(70,nx,ny,chce(-1,-1,0,0),'chcex')
+       call my_out(70,nx,ny,chce(-1,-1,1,1),'chcey')
+       call my_out(70,nx,ny,chci(-1,-1,0,0),'chcix')
+       call my_out(70,nx,ny,chci(-1,-1,1,1),'chciy')
+       call my_out(70,nx,ny,chve(-1,-1,0,0),'chvex')
+       call my_out(70,nx,ny,chve(-1,-1,1,1),'chvey')
+       call my_out(70,nx,ny,chvi(-1,-1,0,0),'chvix')
+       call my_out(70,nx,ny,chvi(-1,-1,1,1),'chviy')
+       call my_out(70,nx,ny,csig(-1,-1,0,0),'csigx')
+       call my_out(70,nx,ny,csig(-1,-1,1,1),'csigy')
+       call my_out(70,nx,ny,calf(-1,-1,0,0),'calfx')
+       call my_out(70,nx,ny,calf(-1,-1,1,1),'calfy')
       endif                                                          !srv 17.06.08 }
 
       if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0) then                !srv 11.09.09 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
-        call my_out(70,nx,ny,cdna(-1,-1,0,is),'b2tral_cdnax'//chns)
-        call my_out(70,nx,ny,cdna(-1,-1,1,is),'b2tral_cdnay'//chns)
-        call my_out(70,nx,ny,cdpa(-1,-1,0,is),'b2tral_cdpax'//chns)
-        call my_out(70,nx,ny,cdpa(-1,-1,1,is),'b2tral_cdpay'//chns)
+        call my_out(70,nx,ny,cdna(-1,-1,0,0,is),'b2tral_cdnax'//chns)
+        call my_out(70,nx,ny,cdna(-1,-1,1,1,is),'b2tral_cdnay'//chns)
+        call my_out(70,nx,ny,cdpa(-1,-1,0,0,is),'b2tral_cdpax'//chns)
+        call my_out(70,nx,ny,cdpa(-1,-1,1,1,is),'b2tral_cdpay'//chns)
         if(.not.is_neutral(is)) then
-         call my_out(70,nx,ny,cddi(-1,-1,0,is),'b2tral_cddix'//chns)
-         call my_out(70,nx,ny,cddi(-1,-1,1,is),'b2tral_cddiy'//chns)
+         call my_out(70,nx,ny,cddi(-1,-1,0,0,is),'b2tral_cddix'//chns)
+         call my_out(70,nx,ny,cddi(-1,-1,1,1,is),'b2tral_cddiy'//chns)
         endif
-!        call my_out(70,nx,ny,cvla(-1,-1,0,is),'b2tral_cvlax'//chns)
-!        call my_out(70,nx,ny,cvla(-1,-1,1,is),'b2tral_cvlay'//chns)
+!        call my_out(70,nx,ny,cvla(-1,-1,0,0,is),'b2tral_cvlax'//chns)
+!        call my_out(70,nx,ny,cvla(-1,-1,1,1,is),'b2tral_cvlay'//chns)
        enddo
       endif
         
       if(iout_b2npmo.ne.0) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
-        call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2tral_cvsahzx'//chns)
-        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2tral_cvsahzy'//chns)
-!        call my_out(70,nx,ny,cvsa_cl(-1,-1,0,is),'b2tral_cvsa_clx'//
+        call my_out(70,nx,ny,cvsahz(-1,-1,0,0,is),'b2tral_cvsahzx'//
+     &              chns)
+        call my_out(70,nx,ny,cvsahz(-1,-1,1,1,is),'b2tral_cvsahzy'//
+     &              chns)
+!        call my_out(70,nx,ny,cvsa_cl(-1,-1,0,0,is),'b2tral_cvsa_clx'//
 !     &              chns)
-!        call my_out(70,nx,ny,cvsa_cl(-1,-1,1,is),'b2tral_cvsa_cly'//
+!        call my_out(70,nx,ny,cvsa_cl(-1,-1,1,1,is),'b2tral_cvsa_cly'//
 !     &              chns)
-!        call my_out(70,nx,ny,cvsahz_cl(-1,-1,0,is),'b2tral_cvsahz_clx'//
+!        call my_out(70,nx,ny,cvsahz_cl(-1,-1,0,0,is),'b2tral_cvsahz_clx'//
 !     &             chns)
-!        call my_out(70,nx,ny,cvsahz_cl(-1,-1,1,is),'b2tral_cvsahz_cly'//
+!        call my_out(70,nx,ny,cvsahz_cl(-1,-1,1,1,is),'b2tral_cvsahz_cly'//
 !     &             chns)
         call my_out(70,nx,ny,cthe(-1,-1,is),'b2tral_cthe'//chns)
         call my_out(70,nx,ny,cthi(-1,-1,is),'b2tral_cthi'//chns)
        enddo
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
-       call my_out(70,nx,ny,chce(-1,-1,0),'b2tral_chcex')
-       call my_out(70,nx,ny,chce(-1,-1,1),'b2tral_chcey')
-       call my_out(70,nx,ny,chci(-1,-1,0),'b2tral_chcix')
-       call my_out(70,nx,ny,chci(-1,-1,1),'b2tral_chciy')
-!       call my_out(70,nx,ny,chve(-1,-1,0),'b2tral_chvex')
-!       call my_out(70,nx,ny,chve(-1,-1,1),'b2tral_chvey')
-!       call my_out(70,nx,ny,chvi(-1,-1,0),'b2tral_chvix')
-!       call my_out(70,nx,ny,chvi(-1,-1,1),'b2tral_chviy')
+       call my_out(70,nx,ny,chce(-1,-1,0,0),'b2tral_chcex')
+       call my_out(70,nx,ny,chce(-1,-1,1,1),'b2tral_chcey')
+       call my_out(70,nx,ny,chci(-1,-1,0,0),'b2tral_chcix')
+       call my_out(70,nx,ny,chci(-1,-1,1,1),'b2tral_chciy')
+!       call my_out(70,nx,ny,chve(-1,-1,0,0),'b2tral_chvex')
+!       call my_out(70,nx,ny,chve(-1,-1,1,1),'b2tral_chvey')
+!       call my_out(70,nx,ny,chvi(-1,-1,0,0),'b2tral_chvix')
+!       call my_out(70,nx,ny,chvi(-1,-1,1,1),'b2tral_chviy')
       endif
       if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0) then
        do is = 0, ns-1
@@ -383,15 +385,15 @@
         do is0=0,ns-1
          write (chns0,'(i3.3)') is0
          if(is0.ne.is .and. .not.is_neutral(is)) then 
-          call my_out(70,nx,ny,csigin(-1,-1,0,is,is0),'b2tral_csiginx'
+          call my_out(70,nx,ny,csigin(-1,-1,0,0,is,is0),'b2tral_csiginx'
      &        //chns//'_'//chns0)
-          call my_out(70,nx,ny,csigin(-1,-1,1,is,is0),'b2tral_csiginy'
+          call my_out(70,nx,ny,csigin(-1,-1,1,1,is,is0),'b2tral_csiginy'
      &        //chns//'_'//chns0)
          endif
         enddo
        enddo
-       call my_out(70,nx,ny,csig(-1,-1,0),'b2tral_csigx')
-       call my_out(70,nx,ny,csig(-1,-1,1),'b2tral_csigy')
+       call my_out(70,nx,ny,csig(-1,-1,0,0),'b2tral_csigx')
+       call my_out(70,nx,ny,csig(-1,-1,1,1),'b2tral_csigy')
       endif                                                          !srv 11.09.09 }
 
 * ..return

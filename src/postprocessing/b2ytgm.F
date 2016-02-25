@@ -169,6 +169,8 @@
       integer iFace, offset
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y
+      real (kind=R8) ::
+     *   qc1_loc(-1:nx1,-1:ny1)
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
@@ -208,18 +210,23 @@
 *   ..read qz, qc, gs
       call cfrure (nget, n2*2, qz1, 'qz')
 cxpb
-      if(b2fgmtry_version.ge.'01.001.022') then
-        call cfrure (nget, n2, qc1, 'qc')
+      if(b2fgmtry_version.ge.'03.001.000') then
+        call cfrure (nget, n2*2, qc1, 'qc')
+      elseif(b2fgmtry_version.ge.'01.001.022') then
+        call cfrure (nget, n2, qc1_loc, 'qc')
+        qc1(:,:,0) = qc1_loc
+        qc1(:,:,1) = 0.0_R8
       else
        do iy = -1, ny1
         do ix = -1, nx1
-         qc1(ix,iy) = cosang (
+         qc1(ix,iy,1) = 0.0_R8
+         qc1(ix,iy,0) = cosang (
      &    (crx1(ix,iy,1)+crx1(ix,iy,3))-(crx1(ix,iy,0)+crx1(ix,iy,2)),
      &    (cry1(ix,iy,1)+cry1(ix,iy,3))-(cry1(ix,iy,0)+cry1(ix,iy,2)),
      &     crx1(ix,iy,2)-crx1(ix,iy,0),  cry1(ix,iy,2)-cry1(ix,iy,0))
-         if(qc1(ix,iy).le.0.0_R8) then
+         if(qc1(ix,iy,0).le.0.0_R8) then
           write(*,*) 'Problem in b2ytgm: qc1(ix,iy) <= 0',
-     1     qc1(ix,iy),ix,iy
+     1     qc1(ix,iy,0),ix,iy
           write(*,'(a,4f12.6)') 'crx1 = ', crx1(ix,iy,0:3)
           write(*,'(a,4f12.6)') 'cry1 = ', cry1(ix,iy,0:3)
          endif

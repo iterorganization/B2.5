@@ -9,7 +9,7 @@
       integer nx, ny
       real (kind=R8) ::
      *   fun(-1:nx,-1:ny), sfn(-1:nx,-1:ny,0:1), 
-     &  ffn(-1:nx,-1:ny,0:1)
+     &  ffn(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   resfn(-1:nx,-1:ny)
@@ -83,12 +83,12 @@
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
          resfn(ix,iy) = resfn(ix,iy)
-     &                  -ffn(rightix(ix,iy),rightiy(ix,iy),0)
+     &                  -ffn(rightix(ix,iy),rightiy(ix,iy),0,0)
         elseif(rightix(ix,iy).eq.nx+1) then
-         resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,0)
+         resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,0,0)
         else
-         resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,0)
-     &                  -ffn(rightix(ix,iy),rightiy(ix,iy),0)
+         resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,0,0)
+     &                  -ffn(rightix(ix,iy),rightiy(ix,iy),0,0)
         endif
        enddo
       enddo
@@ -98,18 +98,18 @@
         if (bottomiy(ix,iy).eq.-2) then
 cxpb  cells with no bottom neighbour
          resfn(ix,iy) = resfn(ix,iy)
-     &     -ffn(topix(ix,iy),topiy(ix,iy),1)
+     &     -ffn(topix(ix,iy),topiy(ix,iy),1,1)
         elseif (topiy(ix,iy).eq.ny+1) then
 cxpb  cells with no top neighbour
-          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1)
+          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1,1)
         elseif (topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then
 cxpb  standard case
-          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1)
-     &                  -ffn(topix(ix,iy),topiy(ix,iy),1)
+          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1,1)
+     &                  -ffn(topix(ix,iy),topiy(ix,iy),1,1)
          elseif (topiy(topix(ix,iy),topiy(ix,iy)).eq.iy .and. ny.gt.1) 
      &    then
 cxpb  diverted island X-point case
-          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1)
+          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1,1)
         endif
        enddo
       enddo

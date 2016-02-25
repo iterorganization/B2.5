@@ -24,28 +24,33 @@
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
-     &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     1  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
-     2  fch_p(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1),    !srv 10.06.08
-     &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1), fhe_mdf(-1:nx,-1:ny,0:1),
-     &  fhi_mdf(-1:nx,-1:ny,0:1), fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1), fhePSch(-1:nx,-1:ny,0:1),
-     &  fhiPSch(-1:nx,-1:ny,0:1), fna_eir(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fne_eir(-1:nx,-1:ny,0:1), fhe_eir(-1:nx,-1:ny,0:1),
-     &  fhi_eir(-1:nx,-1:ny,0:1),
-     &  fna_32(-1:nx,-1:ny,0:1,0:ns-1), fna_52(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fni_32(-1:nx,-1:ny,0:1), fni_52(-1:nx,-1:ny,0:1),
-     &  fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
-     &  fchdia(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
-     &  fchvispar(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1),
-     &  fchvisq(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),
+     &  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
+     1  fch_32(-1:nx,-1:ny,0:1,0:1), fch_52(-1:nx,-1:ny,0:1,0:1),
+     2  fch_p(-1:nx,-1:ny,0:1,0:1), kinrgy(-1:nx,-1:ny,0:ns-1),    !srv 10.06.08
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fhe_mdf(-1:nx,-1:ny,0:1,0:1),
+     &  fhi_mdf(-1:nx,-1:ny,0:1,0:1),
+     &  fna_fcor(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_he(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fhePSch(-1:nx,-1:ny,0:1,0:1),
+     &  fhiPSch(-1:nx,-1:ny,0:1,0:1), 
+     &  fna_eir(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fne_eir(-1:nx,-1:ny,0:1,0:1), fhe_eir(-1:nx,-1:ny,0:1,0:1),
+     &  fhi_eir(-1:nx,-1:ny,0:1,0:1),
+     &  fna_32(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fna_52(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fni_32(-1:nx,-1:ny,0:1,0:1), fni_52(-1:nx,-1:ny,0:1,0:1),
+     &  fne_32(-1:nx,-1:ny,0:1,0:1), fne_52(-1:nx,-1:ny,0:1,0:1),
+     &  fchdia(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),
+     &  fchvispar(-1:nx,-1:ny,0:1,0:1), fchvisper(-1:nx,-1:ny,0:1,0:1),
+     &  fchvisq(-1:nx,-1:ny,0:1,0:1), fchinert(-1:nx,-1:ny,0:1,0:1),
      &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  veecrb(-1:nx,-1:ny,0:1), vedia(-1:nx,-1:ny,0:1),
-     &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1)
+     &  floe_noc(-1:nx,-1:ny,0:1,0:1), floi_noc(-1:nx,-1:ny,0:1,0:1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -334,7 +339,8 @@
 *   ..common blocks
 *   ..local variables
       integer n2, is
-      real (kind=R8) :: time(1), zero(-1:nx,-1:ny)
+      real (kind=R8) :: time(1), zero(-1:nx,-1:ny),
+     &  floc(-1:nx,-1:ny,0:1), flocs(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..procedures
       external subini, subend, xertst, cfrure
       external b2xvsg, b2xpne
@@ -376,18 +382,45 @@
       call cfrure (nget, n2, ti, 'ti')
       call cfrure (nget, n2, po, 'po')
 *   ..read fluxes
-      call cfrure (nget, n2*2*ns, fna, 'fna')
-      call cfrure (nget, n2*2, fhe, 'fhe')
-      call cfrure (nget, n2*2, fhi, 'fhi')
-      call cfrure (nget, n2*2, fch, 'fch')
-      if(b2fstat_version.ge.'01.001.005') then                  !xpb
-        call cfrure (nget, n2*2, fch_32, 'fch_32')
-        call cfrure (nget, n2*2, fch_52, 'fch_52')
-      else                                                      !dpc
-        fch_32(:,:,0)=fch(:,:,0)
-        fch_32(:,:,1)=0.0_R8
-        fch_52(:,:,0)=0.0_R8
-        fch_52(:,:,1)=fch(:,:,1)
+      if(b2fstat_version.ge.'03.001.000') then
+        call cfrure (nget, n2*4*ns, fna,    'fna')
+        call cfrure (nget, n2*4,    fhe,    'fhe')
+        call cfrure (nget, n2*4,    fhi,    'fhi')
+        call cfrure (nget, n2*4,    fch,    'fch')
+        call cfrure (nget, n2*4,    fch_32, 'fch_32')
+        call cfrure (nget, n2*4,    fch_52, 'fch_52')
+      else
+        call cfrure (nget, n2*2*ns, flocs, 'fna')
+        fna = 0.0_R8
+        fna(:,:,0,0,:) = flocs(:,:,0,:)
+        fna(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nget, n2*2, floc, 'fhe')
+        fhe = 0.0_R8
+        fhe(:,:,0,0) = floc(:,:,0)
+        fhe(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, floc, 'fhi')
+        fhi = 0.0_R8
+        fhi(:,:,0,0) = floc(:,:,0)
+        fhi(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, floc, 'fch')
+        fch = 0.0_R8
+        fch(:,:,0,0) = floc(:,:,0)
+        fch(:,:,1,1) = floc(:,:,1)
+        if(b2fstat_version.ge.'01.001.005') then                 	 !xpb
+          call cfrure (nget, n2*2, floc, 'fch_32')
+          fch_32 = 0.0_R8
+          fch_32(:,:,0,0) = floc(:,:,0)
+          fch_32(:,:,1,1) = floc(:,:,1)
+          call cfrure (nget, n2*2, floc, 'fch_52')
+          fch_52 = 0.0_R8
+          fch_52(:,:,0,0) = floc(:,:,0)
+          fch_52(:,:,1,1) = floc(:,:,1)
+        else                                                     	 !dpc
+          fch_32 = 0.0_R8
+          fch_32(:,:,0,0)=fch(:,:,0,0)
+          fch_52=0.0_R8
+          fch_52(:,:,1,1)=fch(:,:,1,1)
+        endif
       endif
       if(b2fstat_version.ge.'01.001.009') then
         call cfrure (nget, n2*ns, kinrgy, 'kinrgy')
@@ -407,62 +440,184 @@
       tim=time(1)
       call xertst (0.0_R8.le.tim, 'faulty input time')
 *   ..read parallel current
-      if(b2fstat_version.ge.'01.001.069') then                   !srv 09.09.11
-        call cfrure (nget, n2, fch_p(:,:,0), 'fch_p')
-        fch_p(:,:,1)=0.0_R8                                      !srv 19.03.12
+      if(b2fstat_version.ge.'03.001.000') then
+        call cfrure (nget, n2*4, fch_p, 'fch_p')
+      elseif(b2fstat_version.ge.'01.001.069') then               !srv 09.09.11
+        fch_p = 0.0_R8
+	call cfrure (nget, n2, fch_p(:,:,0,0), 'fch_p')
       elseif(b2fstat_version.ge.'01.001.025' .and.
      &       b2fstat_version.le.'01.001.031') then  ! clash between 5.0/1 and 5.2
 ! cxpb This code looks strange but the idea is that cfrure_opt will fail and rewind
 ! cxpb if the size of fch_p is n2 and not n2*2
-        fch_p(:,:,1)=0.0_R8
-        call cfrure_opt (nget, n2*2, fch_p, 'fch_p')
+        fch_p = 0.0_R8
+        floc  = 0.0_R8
+        call cfrure_opt (nget, n2*2, floc, 'fch_p')
+        fch_p(:,:,0,0) = floc(:,:,0)
+        fch_p(:,:,1,1) = floc(:,:,1)
         write(6,*) 'Recovering by reading fch_p with array size ', n2
-        call cfrure (nget, n2, fch_p(:,:,0), 'fch_p')
+        call cfrure (nget, n2, fch_p(:,:,0,0), 'fch_p')
       elseif(b2fstat_version.ge.'01.001.032' .and.
-     &       b2fstat_version.le.'01.001.068') then               !xpb srv 10.06.08 {
-        call cfrure (nget, n2*2, fch_p, 'fch_p')
+     &       b2fstat_version.le.'01.001.068') then                          !xpb srv 10.06.08 {
+        call cfrure (nget, n2*2, floc, 'fch_p')
+        fch_p = 0.0_R8
+        fch_p(:,:,0,0) = floc(:,:,0)
+        fch_p(:,:,1,1) = floc(:,:,1)
       elseif (b2fstat_version.ge.'01.001.022' .and.
-     &        b2fstat_version.ge.'01.001.024') then              !srv 10.06.08 }
-        call cfrure (nget, n2, fch_p(:,:,0), 'fch_p')
-        fch_p(:,:,1)=0.0_R8                                      !srv 19.03.12
+     &        b2fstat_version.ge.'01.001.024') then                          !srv 10.06.08 }
+        fch_p = 0.0_R8
+        call cfrure (nget, n2, fch_p(:,:,0,0), 'fch_p')
       else
-        fch_p(:,:,0) = fch(:,:,0)     ! this ensures the old behaviour is kept
-        fch_p(:,:,1) = 0.0_R8         ! this ensures the old behaviour is kept
-      endif                                                      !srv 10.06.08 }
+        fch_p = 0.0_R8
+        fch_p(:,:,0,0) = fch(:,:,0,0)     ! this ensures the old behaviour is kept
+      endif                                                             !srv 10.06.08 }
 *   ..adding various fluxes and velocities needed by advanced SOLPS-ITER features
-      if(b2fstat_version.ge.'03.000.005') then
-        call cfrure (nget, n2*2*ns, fna_mdf, 'fna_mdf')
-        call cfrure (nget, n2*2, fhe_mdf, 'fhe_mdf')
-        call cfrure (nget, n2*2, fhi_mdf, 'fhi_mdf')
-        call cfrure (nget, n2*2*ns, fna_fcor, 'fna_fcor')
-        call cfrure (nget, n2*2*ns, fna_nodrift, 'fna_nodrift')
-        call cfrure (nget, n2*2*ns, fna_he, 'fna_he')
-        call cfrure (nget, n2*2*ns, fnaPSch, 'fnaPSch')
-        call cfrure (nget, n2*2, fhePSch, 'fhePSch')
-        call cfrure (nget, n2*2, fhiPSch, 'fhiPSch')
-        call cfrure (nget, n2*2*ns, fna_eir, 'fna_eir')
-        call cfrure (nget, n2*2, fne_eir, 'fne_eir')
-        call cfrure (nget, n2*2, fhe_eir, 'fhe_eir')
-        call cfrure (nget, n2*2, fhi_eir, 'fhi_eir')
-        call cfrure (nget, n2*2*ns, fna_32, 'fna_32')
-        call cfrure (nget, n2*2*ns, fna_52, 'fna_52')
-        call cfrure (nget, n2*2, fni_32, 'fni_32')
-        call cfrure (nget, n2*2, fni_52, 'fni_52')
-        call cfrure (nget, n2*2, fne_32, 'fne_32')
-        call cfrure (nget, n2*2, fne_52, 'fne_52')
-        call cfrure (nget, n2*2, fchdia, 'fchdia')
-        call cfrure (nget, n2*2, fchin, 'fchin')
-        call cfrure (nget, n2*2, fchvispar, 'fchvispar')
-        call cfrure (nget, n2*2, fchvisper, 'fchvisper')
-        call cfrure (nget, n2*2, fchvisq, 'fchvisq')
-        call cfrure (nget, n2*2, fchinert, 'fchinert')
+      if(b2fstat_version.ge.'03.001.000') then
+        call cfrure (nget, n2*4*ns, fna_mdf, 'fna_mdf')
+        call cfrure (nget, n2*4, fhe_mdf, 'fhe_mdf')
+        call cfrure (nget, n2*4, fhi_mdf, 'fhi_mdf')
+        call cfrure (nget, n2*4*ns, fna_fcor, 'fna_fcor')
+        call cfrure (nget, n2*4*ns, fna_nodrift, 'fna_nodrift')
+        call cfrure (nget, n2*4*ns, fna_he, 'fna_he')
+        call cfrure (nget, n2*4*ns, fnaPSch, 'fnaPSch')
+        call cfrure (nget, n2*4, fhePSch, 'fhePSch')
+        call cfrure (nget, n2*4, fhiPSch, 'fhiPSch')
+        call cfrure (nget, n2*4*ns, fna_eir, 'fna_eir')
+        call cfrure (nget, n2*4, fne_eir, 'fne_eir')
+        call cfrure (nget, n2*4, fhe_eir, 'fhe_eir')
+        call cfrure (nget, n2*4, fhi_eir, 'fhi_eir')
+        call cfrure (nget, n2*4*ns, fna_32, 'fna_32')
+        call cfrure (nget, n2*4*ns, fna_52, 'fna_52')
+        call cfrure (nget, n2*4, fni_32, 'fni_32')
+        call cfrure (nget, n2*4, fni_52, 'fni_52')
+        call cfrure (nget, n2*4, fne_32, 'fne_32')
+        call cfrure (nget, n2*4, fne_52, 'fne_52')
+        call cfrure (nget, n2*4, fchdia, 'fchdia')
+        call cfrure (nget, n2*4, fchin, 'fchin')
+        call cfrure (nget, n2*4, fchvispar, 'fchvispar')
+        call cfrure (nget, n2*4, fchvisper, 'fchvisper')
+        call cfrure (nget, n2*4, fchvisq, 'fchvisq')
+        call cfrure (nget, n2*4, fchinert, 'fchinert')
         call cfrure (nget, n2*2*ns, vaecrb, 'vaecrb')
         call cfrure (nget, n2*2*ns, vadia, 'vadia')
         call cfrure (nget, n2*2*ns, wadia, 'wadia')
         call cfrure (nget, n2*2, veecrb, 'veecrb')
         call cfrure (nget, n2*2, vedia, 'vedia')
-        call cfrure (nget, n2*2, floe_noc, 'floe_noc')
-        call cfrure (nget, n2*2, floi_noc, 'floi_noc')
+        call cfrure (nget, n2*4, floe_noc, 'floe_noc')
+        call cfrure (nget, n2*4, floi_noc, 'floi_noc')
+      elseif(b2fstat_version.ge.'03.000.005') then
+        call cfrure (nget, n2*2*ns, flocs, 'fna_mdf')
+        fna_mdf = 0.0_R8
+        fna_mdf(:,:,0,0,:) = flocs(:,:,0,:)
+        fna_mdf(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nget, n2*2, floc, 'fhe_mdf')
+        fhe_mdf = 0.0_R8
+        fhe_mdf(:,:,0,0) = floc(:,:,0)
+        fhe_mdf(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, floc, 'fhi_mdf')
+        fhi_mdf = 0.0_R8
+        fhi_mdf(:,:,0,0) = floc(:,:,0)
+        fhi_mdf(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2*ns, flocs, 'fna_fcor')
+        fna_fcor = 0.0_R8
+        fna_fcor(:,:,0,0,:) = flocs(:,:,0,:)
+        fna_fcor(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nget, n2*2*ns, flocs, 'fna_nodrift')
+        fna_nodrift = 0.0_R8
+        fna_nodrift(:,:,0,0,:) = flocs(:,:,0,:)
+        fna_nodrift(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nget, n2*2*ns, flocs, 'fna_he')
+        fna_he = 0.0_R8
+        fna_he(:,:,0,0,:) = flocs(:,:,0,:)
+        fna_he(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nget, n2*2*ns, flocs, 'fnaPSch')
+        fnaPSch = 0.0_R8
+        fnaPSch(:,:,0,0,:) = flocs(:,:,0,:)
+        fnaPSch(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nget, n2*2, floc, 'fhePSch')
+        fhePSch = 0.0_R8
+        fhePSch(:,:,0,0) = floc(:,:,0)
+        fhePSch(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, floc, 'fhiPSch')
+        fhiPSch = 0.0_R8
+        fhiPSch(:,:,0,0) = floc(:,:,0)
+        fhiPSch(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2*ns, flocs, 'fna_eir')
+        fna_eir = 0.0_R8
+        fna_eir(:,:,0,0,:) = flocs(:,:,0,:)
+        fna_eir(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nget, n2*2, floc, 'fne_eir')
+        fne_eir = 0.0_R8
+        fne_eir(:,:,0,0) = floc(:,:,0)
+        fne_eir(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, floc, 'fhe_eir')
+        fhe_eir = 0.0_R8
+        fhe_eir(:,:,0,0) = floc(:,:,0)
+        fhe_eir(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, floc, 'fhi_eir')
+        fhi_eir = 0.0_R8
+        fhi_eir(:,:,0,0) = floc(:,:,0)
+        fhi_eir(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2*ns, flocs, 'fna_32')
+        fna_32 = 0.0_R8
+        fna_32(:,:,0,0,:) = flocs(:,:,0,:)
+        fna_32(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nget, n2*2*ns, flocs, 'fna_52')
+        fna_52 = 0.0_R8
+        fna_52(:,:,0,0,:) = flocs(:,:,0,:)
+        fna_52(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nget, n2*2, floc, 'fni_32')
+        fni_32 = 0.0_R8
+        fni_32(:,:,0,0) = floc(:,:,0)
+        fni_32(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, floc, 'fni_52')
+        fni_52 = 0.0_R8
+        fni_52(:,:,0,0) = floc(:,:,0)
+        fni_52(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, floc, 'fne_32')
+        fne_32 = 0.0_R8
+        fne_32(:,:,0,0) = floc(:,:,0)
+        fne_32(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, floc, 'fne_52')
+        fne_52 = 0.0_R8
+        fne_52(:,:,0,0) = floc(:,:,0)
+        fne_52(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, floc, 'fchdia')
+        fchdia = 0.0_R8
+        fchdia(:,:,0,0) = floc(:,:,0)
+        fchdia(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, fchin, 'fchin')
+        fchin = 0.0_R8
+        fchin(:,:,0,0) = floc(:,:,0)
+        fchin(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, fchvispar, 'fchvispar')
+        fchvispar = 0.0_R8
+        fchvispar(:,:,0,0) = floc(:,:,0)
+        fchvispar(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, fchvisper, 'fchvisper')
+        fchvisper = 0.0_R8
+        fchvisper(:,:,0,0) = floc(:,:,0)
+        fchvisper(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, fchvisq, 'fchvisq')
+        fchvisq = 0.0_R8
+        fchvisq(:,:,0,0) = floc(:,:,0)
+        fchvisq(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, fchinert, 'fchinert')
+        fchinert = 0.0_R8
+        fchinert(:,:,0,0) = floc(:,:,0)
+        fchinert(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2*ns, vaecrb, 'vaecrb')
+        call cfrure (nget, n2*2*ns, vadia, 'vadia')
+        call cfrure (nget, n2*2*ns, wadia, 'wadia')
+        call cfrure (nget, n2*2, veecrb, 'veecrb')
+        call cfrure (nget, n2*2, vedia, 'vedia')
+        call cfrure (nget, n2*2, floc, 'floe_noc')
+        floe_noc = 0.0_R8
+        floe_noc(:,:,0,0) = floc(:,:,0)
+        floe_noc(:,:,1,1) = floc(:,:,1)
+        call cfrure (nget, n2*2, floc, 'floi_noc')
+        floi_noc = 0.0_R8
+        floi_noc(:,:,0,0) = floc(:,:,0)
+        floi_noc(:,:,1,1) = floc(:,:,1)
       else
         fna_mdf = fna
         fhe_mdf = fhe
@@ -476,10 +631,10 @@
         fna_eir = fna
         fhe_eir = fhe
         fhi_eir = fhi
-        fna_32(:,:,:,0)=fna(:,:,:,0)
-        fna_32(:,:,:,1)=0.0_R8
-        fna_52(:,:,:,0)=0.0_R8
-        fna_52(:,:,:,1)=fna(:,:,:,1)
+        fna_32(:,:,:,:,0)=fna(:,:,:,:,0)
+        fna_32(:,:,:,:,1)=0.0_R8
+        fna_52(:,:,:,:,0)=0.0_R8
+        fna_52(:,:,:,:,1)=fna(:,:,:,:,1)
         call b2xpfi (nx, ny, ns, fna_32, fni_32)
         call b2xpfi (nx, ny, ns, fna_52, fni_52)
         call b2xpfe (nx, ny, ns, 0, qe,
@@ -502,7 +657,6 @@
         floe_noc = 0.0_R8
         floi_noc = 0.0_R8
       endif
-
 * ..return
       call subend ()
       return

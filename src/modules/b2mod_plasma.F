@@ -4,15 +4,15 @@
       implicit none
 
       real (kind=R8), allocatable, save ::
-     *  fch(:,:,:),  fch0(:,:,:),  fchp(:,:,:),  fch_32(:,:,:),
-     *  fch_52(:,:,:),
-     *  fna_32(:,:,:,:),  fna_52(:,:,:,:),
-     *  fni_32(:,:,:),  fni_52(:,:,:),
-     *  fne_32(:,:,:),  fne_52(:,:,:),
-     *  fhe(:,:,:),  fhe0(:,:,:),  fhep(:,:,:),  fhet(:,:,:),
-     *  fhi(:,:,:),  fhi0(:,:,:),  fhip(:,:,:),  fhit(:,:,:),
-     *  fna(:,:,:,:),  fna0(:,:,:,:),  fnap(:,:,:,:),
-     *  fne(:,:,:),  fni(:,:,:),
+     *  fch(:,:,:,:),  fch0(:,:,:,:),  fchp(:,:,:,:),  fch_32(:,:,:,:),
+     *  fch_52(:,:,:,:),
+     *  fna_32(:,:,:,:,:),  fna_52(:,:,:,:,:),
+     *  fni_32(:,:,:,:),    fni_52(:,:,:,:),
+     *  fne_32(:,:,:,:),    fne_52(:,:,:,:),
+     *  fhe(:,:,:,:),  fhe0(:,:,:,:),  fhep(:,:,:,:),  fhet(:,:,:,:),
+     *  fhi(:,:,:,:),  fhi0(:,:,:,:),  fhip(:,:,:,:),  fhit(:,:,:,:),
+     *  fna(:,:,:,:,:),  fna0(:,:,:,:,:),  fnap(:,:,:,:,:),
+     *  fne(:,:,:,:),    fni(:,:,:,:),
      *  na(:,:,:),  na0(:,:,:),  nap(:,:,:),
      *  ne(:,:),  ne0(:,:),  ne2(:,:),  nep(:,:),
      *  ni(:,:,:),  ni0(:,:,:),
@@ -21,25 +21,26 @@
      *  te(:,:),  te0(:,:),  tep(:,:),
      *  ti(:,:),  ti0(:,:),  tip(:,:),
      *  ua(:,:,:),  ua0(:,:,:),  uap(:,:,:),
-     *  uadia(:,:,:,:),  fchdia(:,:,:),
-     *  fch_p(:,:,:), fch_pi_c(:,:,:), fch_pi_f(:,:,:),                  !srv 10.06.08 { 13.01.17
-     *  fhm(:,:,:,:), fhp(:,:,:,:), fhj(:,:,:), fht(:,:,:),
-     *  fhe_mdf(:,:,:), fhePSch(:,:,:), fhi_mdf(:,:,:), fhiPSch(:,:,:),  !srv 13.10.06
-     *  fna_mdf(:,:,:,:), fnaPSch(:,:,:,:), 
-     *  fna_fcor(:,:,:,:), fna_he(:,:,:,:),                              !srv 01.10.99 21.01.00
-     *  fna_eir(:,:,:,:), fne_eir(:,:,:), fhe_eir(:,:,:),                !srv 14.07.10
-     *  fhi_eir(:,:,:), 
-     *  fna_32nd(:,:,:,:), fna_52nd(:,:,:,:)                             !srv 18.06.08
+     *  uadia(:,:,:,:),  fchdia(:,:,:,:),
+     *  fch_p(:,:,:,:), fch_pi_c(:,:,:,:), fch_pi_f(:,:,:,:),            !srv 10.06.08 { 13.01.17
+     *  fhm(:,:,:,:,:), fhp(:,:,:,:,:), fhj(:,:,:,:), fht(:,:,:,:),
+     *  fhe_mdf(:,:,:,:), fhePSch(:,:,:,:), 
+     *  fhi_mdf(:,:,:,:), fhiPSch(:,:,:,:),                              !srv 13.10.06
+     *  fna_mdf(:,:,:,:,:), fnaPSch(:,:,:,:,:), 
+     *  fna_fcor(:,:,:,:,:), fna_he(:,:,:,:,:),                          !srv 01.10.99 21.01.00
+     *  fna_eir(:,:,:,:,:), fne_eir(:,:,:,:), fhe_eir(:,:,:,:),          !srv 14.07.10
+     *  fhi_eir(:,:,:,:), 
+     *  fna_32nd(:,:,:,:,:), fna_52nd(:,:,:,:,:)                         !srv 18.06.08
 
       real (kind=R8), allocatable, save ::
-     *  fchvispar(:,:,:), fchvisper(:,:,:), fchvisq(:,:,:),              !srv 11.07.99
-     *  fchinert(:,:,:), fchin(:,:,:), fchanml(:,:,:),                   !srv 07.07.99 24.03.07 10.06.08 }
+     *  fchvispar(:,:,:,:), fchvisper(:,:,:,:), fchvisq(:,:,:,:),        !srv 11.07.99
+     *  fchinert(:,:,:,:), fchin(:,:,:,:), fchanml(:,:,:,:),             !srv 07.07.99 24.03.07 10.06.08 }
      *  vadia(:,:,:,:), vedia(:,:,:), wadia(:,:,:,:),                    !xpb
      *  vaecrb(:,:,:,:), veecrb(:,:,:),
      *  wedia(:,:,:), ve(:,:),                                           !srv 14.07.10
-     *  fna_nodrift(:,:,:,:), 
-     *  kinrgy(:,:,:), kinrgy0(:,:,:), kinrgyp(:,:,:),                   !xpb
-     *  fmo(:,:,:,:)
+     *  fna_nodrift(:,:,:,:,:), 
+     *  kinrgy(:,:,:), kinrgy0(:,:,:), kinrgyp(:,:,:),             !xpb
+     *  fmo(:,:,:,:,:)
       real (kind=R8), allocatable, save ::
      *  facdrift(:,:), fac_ExB(:,:), fac_vis(:,:)
 
@@ -49,39 +50,39 @@
       implicit none
       integer nxd,nyd,nsd
 
-      allocate(fch(-1:nxd,-1:nyd,0:1))
-      allocate(fch0(-1:nxd,-1:nyd,0:1))
-      allocate(fchp(-1:nxd,-1:nyd,0:1))
-      allocate(fch_32(-1:nxd,-1:nyd,0:1))
-      allocate(fch_52(-1:nxd,-1:nyd,0:1))
-      allocate(fna_32(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna_52(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fni_32(-1:nxd,-1:nyd,0:1))
-      allocate(fni_52(-1:nxd,-1:nyd,0:1))
-      allocate(fne_32(-1:nxd,-1:nyd,0:1))
-      allocate(fne_52(-1:nxd,-1:nyd,0:1))
-      allocate(fna_32nd(-1:nxd,-1:nyd,0:1,0:nsd-1))                !srv 18.06.08
-      allocate(fna_52nd(-1:nxd,-1:nyd,0:1,0:nsd-1))                !srv 18.06.08
-      allocate(fhe(-1:nxd,-1:nyd,0:1))
-      allocate(fhe0(-1:nxd,-1:nyd,0:1))
-      allocate(fhep(-1:nxd,-1:nyd,0:1))
-      allocate(fhet(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_mdf(-1:nxd,-1:nyd,0:1))                         !srv 13.10.06
-      allocate(fhePSch(-1:nxd,-1:nyd,0:1))                         !srv 13.10.06
-      allocate(fhi(-1:nxd,-1:nyd,0:1))
-      allocate(fhi0(-1:nxd,-1:nyd,0:1))
-      allocate(fhip(-1:nxd,-1:nyd,0:1))
-      allocate(fhit(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_mdf(-1:nxd,-1:nyd,0:1))                         !srv 13.10.06
-      allocate(fhiPSch(-1:nxd,-1:nyd,0:1))                         !srv 13.10.06
-      allocate(fna_he(-1:nxd,-1:nyd,0:1,0:nsd-1))                  !srv 21.01.00
-      allocate(fna_fcor(-1:nxd,-1:nyd,0:1,0:nsd-1))                !srv 01.10.99
-      allocate(fnaPSch(-1:nxd,-1:nyd,0:1,0:nsd-1))                 !srv 13.10.06
-      allocate(fna_mdf(-1:nxd,-1:nyd,0:1,0:nsd-1))                 !srv 13.10.06
-      allocate(fna_eir(-1:nxd,-1:nyd,0:1,0:nsd-1))                 !srv 14.07.10 {
-      allocate(fne_eir(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_eir(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_eir(-1:nxd,-1:nyd,0:1))
+      allocate(fch(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fch0(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fchp(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fch_32(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fch_52(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fna_32(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna_52(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fni_32(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fni_52(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fne_32(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fne_52(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fna_32nd(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))            !srv 18.06.08
+      allocate(fna_52nd(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))            !srv 18.06.08
+      allocate(fhe(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe0(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhep(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhet(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_mdf(-1:nxd,-1:nyd,0:1,0:1))                     !srv 13.10.06
+      allocate(fhePSch(-1:nxd,-1:nyd,0:1,0:1))                     !srv 13.10.06
+      allocate(fhi(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi0(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhip(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhit(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_mdf(-1:nxd,-1:nyd,0:1,0:1))                     !srv 13.10.06
+      allocate(fhiPSch(-1:nxd,-1:nyd,0:1,0:1))                     !srv 13.10.06
+      allocate(fna_he(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))              !srv 21.01.00
+      allocate(fna_fcor(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))            !srv 01.10.99
+      allocate(fnaPSch(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))             !srv 13.10.06
+      allocate(fna_mdf(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))             !srv 13.10.06
+      allocate(fna_eir(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))             !srv 14.07.10 {
+      allocate(fne_eir(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_eir(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_eir(-1:nxd,-1:nyd,0:1,0:1))
       fna_he = 0.0_R8
       fnaPSch = 0.0_R8
       fhePSch = 0.0_R8
@@ -93,16 +94,16 @@
       fne_eir = 0.0_R8
       fhe_eir = 0.0_R8
       fhi_eir = 0.0_R8  
-      fna_fcor = 0.0_R8                                            !srv 14.07.10 }
-      allocate(fna(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna0(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fnap(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fne(-1:nxd,-1:nyd,0:1))
-      allocate(fni(-1:nxd,-1:nyd,0:1))
-      allocate(fhm(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fhp(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fhj(-1:nxd,-1:nyd,0:1))
-      allocate(fht(-1:nxd,-1:nyd,0:1))
+      fna_fcor = 0.0_R8                                           !srv 14.07.10 }
+      allocate(fna(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna0(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fnap(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fne(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fni(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhm(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fhp(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fhj(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fht(-1:nxd,-1:nyd,0:1,0:1))
       allocate(na(-1:nxd,-1:nyd,0:nsd-1))
       allocate(na0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(nap(-1:nxd,-1:nyd,0:nsd-1))
@@ -126,22 +127,22 @@
       allocate(ua0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(uap(-1:nxd,-1:nyd,0:nsd-1))
       allocate(uadia(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fch_pi_c(-1:nxd,-1:nyd,0:1))                          !srv 13.01.17
-      allocate(fch_pi_f(-1:nxd,-1:nyd,0:1))                          !srv 13.01.17
-      allocate(fchdia(-1:nxd,-1:nyd,0:1))
+      allocate(fch_pi_c(-1:nxd,-1:nyd,0:1,0:1))                      !srv 13.01.17
+      allocate(fch_pi_f(-1:nxd,-1:nyd,0:1,0:1))                      !srv 13.01.17
+      allocate(fchdia(-1:nxd,-1:nyd,0:1,0:1))
       fchdia=0.0_R8
-      allocate(fch_p(-1:nxd,-1:nyd,0:1))                             !xpb srv 10.06.08
-      allocate(fchvispar(-1:nxd,-1:nyd,0:1))                         !xpb
+      allocate(fch_p(-1:nxd,-1:nyd,0:1,0:1))                         !xpb srv 10.06.08
+      allocate(fchvispar(-1:nxd,-1:nyd,0:1,0:1))                     !xpb
       fchvispar=0.0_R8
-      allocate(fchvisper(-1:nxd,-1:nyd,0:1))                         !xpb
+      allocate(fchvisper(-1:nxd,-1:nyd,0:1,0:1))                     !xpb
       fchvisper=0.0_R8
-      allocate(fchvisq(-1:nxd,-1:nyd,0:1))                           !srv 11.07.99
+      allocate(fchvisq(-1:nxd,-1:nyd,0:1,0:1))                       !srv 11.07.99
       fchvisq=0.0_R8
-      allocate(fchinert(-1:nxd,-1:nyd,0:1))                          !srv 07.07.99
+      allocate(fchinert(-1:nxd,-1:nyd,0:1,0:1))                      !srv 07.07.99
       fchinert=0.0_R8
-      allocate(fchin(-1:nxd,-1:nyd,0:1))                             !srv 30.09.02
+      allocate(fchin(-1:nxd,-1:nyd,0:1,0:1))                         !srv 30.09.02
       fchin=0.0_R8
-      allocate(fchanml(-1:nxd,-1:nyd,0:1))                           !srv 24.03.07
+      allocate(fchanml(-1:nxd,-1:nyd,0:1,0:1))                       !srv 24.03.07
       allocate(vadia(-1:nxd,-1:nyd,0:1,0:nsd-1))                     !xpb
       vadia=0.0_R8
       allocate(vedia(-1:nxd,-1:nyd,0:1))                             !xpb
@@ -151,12 +152,12 @@
       allocate(vaecrb(-1:nxd,-1:nyd,0:1,0:nsd-1))                    !xpb
       vaecrb=0.0_R8
       allocate(veecrb(-1:nxd,-1:nyd,0:1))                            !xpb
-      allocate(fna_nodrift(-1:nxd,-1:nyd,0:1,0:nsd-1))               !xpb
+      allocate(fna_nodrift(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))           !xpb
       fna_nodrift=0.0_R8
       allocate(kinrgy(-1:nxd,-1:nyd,0:nsd-1))                        !xpb
       allocate(kinrgy0(-1:nxd,-1:nyd,0:nsd-1))                       !xpb
       allocate(kinrgyp(-1:nxd,-1:nyd,0:nsd-1))                       !xpb
-      allocate(fmo(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fmo(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(facdrift(-1:nxd,-1:nyd))                              !dpc
       facdrift=0.0_R8
       allocate(fac_ExB(-1:nxd,-1:nyd))                               !dpc
@@ -270,31 +271,95 @@
       implicit none
       integer nxd,nyd,nsd,nread
       integer is
+*   ..local arrays for reading fluxes of old dimensions
+      real (kind=R8) :: floc(-1:nxd,-1:nyd,0:1),
+     &  flocs(-1:nxd,-1:nyd,0:1,0:nsd-1)
 
-      call cfrure (nread, size(fch), fch, 'fch')
-      call cfrure (nread, size(fch0), fch0, 'fch0')
-      call cfrure (nread, size(fchp), fchp, 'fchp')
-      call cfrure (nread, size(fhe), fhe, 'fhe')
-      call cfrure (nread, size(fhe0), fhe0, 'fhe0')
-      call cfrure (nread, size(fhep), fhep, 'fhep')
-      if(b2fplasma_version.gt.'01.001.003') then
+      if(b2fplasma_version.ge.'03.001.000') then
+        call cfrure (nread, size(fch),  fch,  'fch')
+        call cfrure (nread, size(fch0), fch0, 'fch0')
+        call cfrure (nread, size(fchp), fchp, 'fchp')
+        call cfrure (nread, size(fhe),  fhe,  'fhe')
+        call cfrure (nread, size(fhe0), fhe0, 'fhe0')
+        call cfrure (nread, size(fhep), fhep, 'fhep')
         call cfrure (nread, size(fhet), fhet, 'fhet')
-      else
-        fhet = fhe
-      endif
-      call cfrure (nread, size(fhi), fhi, 'fhi')
-      call cfrure (nread, size(fhi0), fhi0, 'fhi0')
-      call cfrure (nread, size(fhip), fhip, 'fhip')
-      if(b2fplasma_version.gt.'01.001.003') then
+        call cfrure (nread, size(fhi),  fhi,  'fhi')
+        call cfrure (nread, size(fhi0), fhi0, 'fhi0')
+        call cfrure (nread, size(fhip), fhip, 'fhip')
         call cfrure (nread, size(fhit), fhit, 'fhit')
+        call cfrure (nread, size(fna),  fna,  'fna' )
+        call cfrure (nread, size(fna0), fna0, 'fna0')
+        call cfrure (nread, size(fnap), fnap, 'fnap')
+        call cfrure (nread, size(fne),  fne,  'fne' )
+        call cfrure (nread, size(fni),  fni,  'fni' )
       else
-        fhit = fhi
+        call cfrure (nread, size(floc), floc, 'fch')
+        fch = 0.0_R8
+        fch(:,:,0,0) = floc(:,:,0)
+        fch(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(floc), floc, 'fch0')
+        fch0 = 0.0_R8
+        fch0(:,:,0,0) = floc(:,:,0)
+        fch0(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(floc), floc, 'fchp')
+        fchp = 0.0_R8
+        fchp(:,:,0,0) = floc(:,:,0)
+        fchp(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(floc), floc, 'fhe')
+        fhe = 0.0_R8
+        fhe(:,:,0,0) = floc(:,:,0)
+        fhe(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(floc), floc, 'fhe0')
+        fhe0 = 0.0_R8
+        fhe0(:,:,0,0) = floc(:,:,0)
+        fhe0(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(floc), floc, 'fhep')
+        fhep = 0.0_R8
+        fhep(:,:,0,0) = floc(:,:,0)
+        fhep(:,:,1,1) = floc(:,:,1)
+        if(b2fplasma_version.gt.'01.001.003') then
+          call cfrure (nread, size(fhet), fhet, 'fhet')
+        else
+          fhet = fhe
+        endif
+        call cfrure (nread, size(floc), floc, 'fhi')
+        fhi = 0.0_R8
+        fhi(:,:,0,0) = floc(:,:,0)
+        fhi(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(floc), floc, 'fhi0')
+        fhi0 = 0.0_R8
+        fhi0(:,:,0,0) = floc(:,:,0)
+        fhi0(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(floc), floc, 'fhi')
+        fhi = 0.0_R8
+        fhi(:,:,0,0) = floc(:,:,0)
+        fhi(:,:,1,1) = floc(:,:,1)
+        if(b2fplasma_version.gt.'01.001.003') then
+          call cfrure (nread, size(fhit), fhit, 'fhit')
+        else
+          fhit = fhi
+        endif
+        call cfrure (nread, size(flocs), flocs, 'fna')
+        fna = 0.0_R8
+        fna(:,:,0,0,:) = flocs(:,:,0,:)
+        fna(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nread, size(flocs), flocs, 'fna0')
+        fna0 = 0.0_R8
+        fna0(:,:,0,0,:) = flocs(:,:,0,:)
+        fna0(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nread, size(flocs), flocs, 'fnap')
+        fnap = 0.0_R8
+        fnap(:,:,0,0,:) = flocs(:,:,0,:)
+        fnap(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nread, size(floc), floc, 'fne')
+        fne = 0.0_R8
+        fne(:,:,0,0) = floc(:,:,0)
+        fne(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(floc), floc, 'fni')
+        fni = 0.0_R8
+        fni(:,:,0,0) = floc(:,:,0)
+        fni(:,:,1,1) = floc(:,:,1)
       endif
-      call cfrure (nread, size(fna), fna, 'fna')
-      call cfrure (nread, size(fna0), fna0, 'fna0')
-      call cfrure (nread, size(fnap), fnap, 'fnap')
-      call cfrure (nread, size(fne), fne, 'fne')
-      call cfrure (nread, size(fni), fni, 'fni')
       call cfrure (nread, size(na), na, 'na')
       call cfrure (nread, size(na0), na0, 'na0')
       call cfrure (nread, size(nap), nap, 'nap')
@@ -318,9 +383,9 @@
       call cfrure (nread, size(ua0), ua0, 'ua0')
       call cfrure (nread, size(uap), uap, 'uap')
       call cfrure (nread, size(uadia), uadia, 'uadia')
-      call cfrure (nread, size(fchdia), fchdia, 'fchdia')
-      if(b2fplasma_version.ge.'01.001.008') then
-        call cfrure (nread, size(fmo), fmo, 'fmo')
+      if (b2fplasma_version.ge.'03.001.000') then
+        call cfrure (nread, size(fchdia), fchdia, 'fchdia')
+        call cfrure (nread, size(fmo),    fmo,    'fmo')
         call cfrure (nread, size(fna_32), fna_32, 'fna_32')
         call cfrure (nread, size(fna_52), fna_52, 'fna_52')
         call cfrure (nread, size(fni_32), fni_32, 'fni_32')
@@ -328,18 +393,54 @@
         call cfrure (nread, size(fne_32), fne_32, 'fne_32')
         call cfrure (nread, size(fne_52), fne_52, 'fne_52')
       else
-        do is = 0, nsd-1
-          fmo(-1:nxd,-1:nyd,0,is) = am(is) * mp * ua(-1:nxd,-1:nyd,is) *
-     .     fna(-1:nxd,-1:nyd,0,is)
-          fmo(-1:nxd,-1:nyd,1,is) = am(is) * mp * ua(-1:nxd,-1:nyd,is) *
-     .     fna(-1:nxd,-1:nyd,1,is)
-        enddo
-        fna_32 = fna
-        fna_52 = 0.0_R8
-        fni_32 = fni
-        fni_52 = 0.0_R8
-        fne_32 = fne
-        fne_52 = 0.0_R8
+        call cfrure (nread, size(floc), floc, 'fchdia')
+        fchdia = 0.0_R8
+        fchdia(:,:,0,0) = floc(:,:,0)
+        fchdia(:,:,1,1) = floc(:,:,1)
+        if(b2fplasma_version.ge.'01.001.008') then
+          call cfrure (nread, size(flocs), flocs, 'fmo')
+          fmo = 0.0_R8
+          fmo(:,:,0,0,:) = flocs(:,:,0,:)
+          fmo(:,:,1,1,:) = flocs(:,:,1,:)
+          call cfrure (nread, size(flocs), flocs, 'fna_32')
+          fna_32 = 0.0_R8
+          fna_32(:,:,0,0,:) = flocs(:,:,0,:)
+          fna_32(:,:,1,1,:) = flocs(:,:,1,:)
+          call cfrure (nread, size(flocs), flocs, 'fna_52')
+          fna_52 = 0.0_R8
+          fna_52(:,:,0,0,:) = flocs(:,:,0,:)
+          fna_52(:,:,1,1,:) = flocs(:,:,1,:)
+          call cfrure (nread, size(floc), floc, 'fni_32')
+          fni_32 = 0.0_R8
+          fni_32(:,:,0,0) = floc(:,:,0)
+          fni_32(:,:,1,1) = floc(:,:,1)
+          call cfrure (nread, size(floc), floc, 'fni_52')
+          fni_52 = 0.0_R8
+          fni_52(:,:,0,0) = floc(:,:,0)
+          fni_52(:,:,1,1) = floc(:,:,1)
+          call cfrure (nread, size(floc), floc, 'fne_32')
+          fne_32 = 0.0_R8
+          fne_32(:,:,0,0) = floc(:,:,0)
+          fne_32(:,:,1,1) = floc(:,:,1)
+          call cfrure (nread, size(floc), floc, 'fne_52')
+          fne_52 = 0.0_R8
+          fne_52(:,:,0,0) = floc(:,:,0)
+          fne_52(:,:,1,1) = floc(:,:,1)
+        else
+          do is = 0, nsd-1
+            fmo(-1:nxd,-1:nyd,0,0,is) = am(is)*mp*ua(-1:nxd,-1:nyd,is)*
+     .       fna(-1:nxd,-1:nyd,0,0,is)
+            fmo(-1:nxd,-1:nyd,1,1,is) = am(is)*mp*ua(-1:nxd,-1:nyd,is)*
+     .       fna(-1:nxd,-1:nyd,1,1,is)
+          enddo
+          fna_32(:,:,0,0,:) = fna(:,:,0,0,:)
+          fna_32(:,:,1,1,:) = fna(:,:,1,1,:)
+          fna_52 = 0.0_R8
+          fni_32 = fni
+          fni_52 = 0.0_R8
+          fne_32 = fne
+          fne_52 = 0.0_R8
+        endif
       endif
       if(b2fplasma_version.ge.'01.001.010') then
         call cfrure (nread, size(wadia), wadia, 'wadia')
@@ -355,24 +456,42 @@
         facdrift = 0.0_R8
         fac_ExB = 0.0_R8
       endif
-      if(b2fplasma_version.ge.'01.001.014') then
+      if(b2fplasma_version.ge.'03.001.000') then
         call cfrure (nread, size(fchvispar), fchvispar, 'fchvispar')
         call cfrure (nread, size(fchvisper), fchvisper, 'fchvisper')
         call cfrure (nread, size(fchin), fchin, 'fchin')
         call cfrure (nread, size(fna_nodrift), fna_nodrift,
      1   'fna_nodrift')
+      elseif(b2fplasma_version.ge.'01.001.014') then
+        call cfrure (nread, size(floc), floc, 'fchvispar')
+        fchvispar = 0.0_R8
+        fchvispar(:,:,0,0) = floc(:,:,0)
+        fchvispar(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(floc), floc, 'fchvisper')
+        fchvisper = 0.0_R8
+        fchvisper(:,:,0,0) = floc(:,:,0)
+        fchvisper(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(floc), floc, 'fchin')
+        fchin = 0.0_R8
+        fchin(:,:,0,0) = floc(:,:,0)
+        fchin(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(flocs), flocs,'fna_nodrift')
+        fna_nodrift = 0.0_R8
+        fna_nodrift(:,:,0,0,:) = flocs(:,:,0,:)
+        fna_nodrift(:,:,1,1,:) = flocs(:,:,1,:)
       else
         fchvispar = 0.0_R8
         fchvisper = 0.0_R8
         fchin = 0.0_R8
-        fna_nodrift = fna
+        fna_nodrift(:,:,0,0,:) = fna(:,:,0,0,:)
+        fna_nodrift(:,:,1,1,:) = fna(:,:,1,1,:)
       endif
       if(b2fplasma_version.ge.'01.001.015') then
         call cfrure (nread, size(fac_vis), fac_vis, 'fac_vis')
       else
         fac_vis = 0.0_R8
       endif
-      if(b2fplasma_version.ge.'03.000.003') then
+      if(b2fplasma_version.ge.'03.001.000') then
         call cfrure (nread, size(fna_mdf), fna_mdf, 'fna_mdf')
         call cfrure (nread, size(fhe_mdf), fhe_mdf, 'fhe_mdf')
         call cfrure (nread, size(fhi_mdf), fhi_mdf, 'fhi_mdf')
@@ -383,6 +502,47 @@
         call cfrure (nread, size(fna_he), fna_he, 'fna_he')
         call cfrure (nread, size(fchvisq), fchvisq, 'fchvisq')
         call cfrure (nread, size(fchinert), fchinert, 'fchinert')
+      elseif(b2fplasma_version.ge.'03.000.003') then
+        call cfrure (nread, size(flocs), flocs, 'fna_mdf')
+        fna_mdf = 0.0_R8
+        fna_mdf(:,:,0,0,:) = flocs(:,:,0,:)
+        fna_mdf(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nread, size(floc), floc, 'fhe_mdf')
+        fhe_mdf = 0.0_R8
+        fhe_mdf(:,:,0,0) = floc(:,:,0)
+        fhe_mdf(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(floc), floc, 'fhi_mdf')
+        fhi_mdf = 0.0_R8
+        fhi_mdf(:,:,0,0) = floc(:,:,0)
+        fhi_mdf(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(flocs), flocs, 'fnaPSch')
+        fnaPSch = 0.0_R8
+        fnaPSch(:,:,0,0,:) = flocs(:,:,0,:)
+        fnaPSch(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nread, size(floc), floc, 'fhePSch')
+        fhePSch = 0.0_R8
+        fhePSch(:,:,0,0) = floc(:,:,0)
+        fhePSch(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(floc), floc, 'fhiPSch')
+        fhiPSch = 0.0_R8
+        fhiPSch(:,:,0,0) = floc(:,:,0)
+        fhiPSch(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(flocs), flocs, 'fna_fcor')
+        fna_fcor = 0.0_R8
+        fna_fcor(:,:,0,0,:) = flocs(:,:,0,:)
+        fna_fcor(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nread, size(flocs), flocs, 'fna_he')
+        fna_he = 0.0_R8
+        fna_he(:,:,0,0,:) = flocs(:,:,0,:)
+        fna_he(:,:,1,1,:) = flocs(:,:,1,:)
+        call cfrure (nread, size(floc), floc, 'fchvisq')
+        fchvisq = 0.0_R8
+        fchvisq(:,:,0,0) = floc(:,:,0)
+        fchvisq(:,:,1,1) = floc(:,:,1)
+        call cfrure (nread, size(floc), floc, 'fchinert')
+        fchinert = 0.0_R8
+        fchinert(:,:,0,0) = floc(:,:,0)
+        fchinert(:,:,1,1) = floc(:,:,1)
       endif
 
       return
@@ -392,90 +552,72 @@
       implicit none
       integer nwrite
 
-      call cfwure (nwrite, size(fch), fch, 'fch')
+      call cfwure (nwrite, size(fch),  fch,  'fch')
       call cfwure (nwrite, size(fch0), fch0, 'fch0')
       call cfwure (nwrite, size(fchp), fchp, 'fchp')
-      call cfwure (nwrite, size(fhe), fhe, 'fhe')
+      call cfwure (nwrite, size(fhe),  fhe,  'fhe')
       call cfwure (nwrite, size(fhe0), fhe0, 'fhe0')
       call cfwure (nwrite, size(fhep), fhep, 'fhep')
-      if(newversion.gt.'01.001.003') then
-        write(*,*) newversion,'fhet --- fhit'
-        call cfwure (nwrite, size(fhet), fhet, 'fhet')
-      endif
-      call cfwure (nwrite, size(fhi), fhi, 'fhi')
+      call cfwure (nwrite, size(fhet), fhet, 'fhet')
+      call cfwure (nwrite, size(fhi),  fhi,  'fhi')
       call cfwure (nwrite, size(fhi0), fhi0, 'fhi0')
       call cfwure (nwrite, size(fhip), fhip, 'fhip')
-      if(newversion.gt.'01.001.003') then
-        call cfwure (nwrite, size(fhit), fhit, 'fhit')
-      endif
-      call cfwure (nwrite, size(fna), fna, 'fna')
+      call cfwure (nwrite, size(fhit), fhit, 'fhit')
+      call cfwure (nwrite, size(fna),  fna,  'fna')
       call cfwure (nwrite, size(fna0), fna0, 'fna0')
       call cfwure (nwrite, size(fnap), fnap, 'fnap')
-      call cfwure (nwrite, size(fne), fne, 'fne')
-      call cfwure (nwrite, size(fni), fni, 'fni')
-      call cfwure (nwrite, size(na), na, 'na')
-      call cfwure (nwrite, size(na0), na0, 'na0')
-      call cfwure (nwrite, size(nap), nap, 'nap')
-      call cfwure (nwrite, size(ne), ne, 'ne')
-      call cfwure (nwrite, size(ne0), ne0, 'ne0')
-      call cfwure (nwrite, size(ne2), ne2, 'ne2')
-      call cfwure (nwrite, size(nep), nep, 'nep')
-      call cfwure (nwrite, size(ni), ni, 'ni')
-      call cfwure (nwrite, size(ni0), ni0, 'ni0')
-      call cfwure (nwrite, size(pb), pb, 'pb')
-      call cfwure (nwrite, size(po), po, 'po')
-      call cfwure (nwrite, size(po0), po0, 'po0')
-      call cfwure (nwrite, size(pop), pop, 'pop')
-      call cfwure (nwrite, size(te), te, 'te')
-      call cfwure (nwrite, size(te0), te0, 'te0')
-      call cfwure (nwrite, size(tep), tep, 'tep')
-      call cfwure (nwrite, size(ti), ti, 'ti')
-      call cfwure (nwrite, size(ti0), ti0, 'ti0')
-      call cfwure (nwrite, size(tip), tip, 'tip')
-      call cfwure (nwrite, size(ua), ua, 'ua')
-      call cfwure (nwrite, size(ua0), ua0, 'ua0')
-      call cfwure (nwrite, size(uap), uap, 'uap')
+      call cfwure (nwrite, size(fne),  fne,  'fne')
+      call cfwure (nwrite, size(fni),  fni,  'fni')
+      call cfwure (nwrite, size(na),   na,   'na')
+      call cfwure (nwrite, size(na0),  na0,  'na0')
+      call cfwure (nwrite, size(nap),  nap,  'nap')
+      call cfwure (nwrite, size(ne),   ne,   'ne')
+      call cfwure (nwrite, size(ne0),  ne0,  'ne0')
+      call cfwure (nwrite, size(ne2),  ne2,  'ne2')
+      call cfwure (nwrite, size(nep),  nep,  'nep')
+      call cfwure (nwrite, size(ni),   ni,   'ni')
+      call cfwure (nwrite, size(ni0),  ni0,  'ni0')
+      call cfwure (nwrite, size(pb),   pb,   'pb')
+      call cfwure (nwrite, size(po),   po,   'po')
+      call cfwure (nwrite, size(po0),  po0,  'po0')
+      call cfwure (nwrite, size(pop),  pop,  'pop')
+      call cfwure (nwrite, size(te),   te,   'te')
+      call cfwure (nwrite, size(te0),  te0,  'te0')
+      call cfwure (nwrite, size(tep),  tep,  'tep')
+      call cfwure (nwrite, size(ti),   ti,   'ti')
+      call cfwure (nwrite, size(ti0),  ti0,  'ti0')
+      call cfwure (nwrite, size(tip),  tip,  'tip')
+      call cfwure (nwrite, size(ua),   ua,   'ua')
+      call cfwure (nwrite, size(ua0),  ua0,  'ua0')
+      call cfwure (nwrite, size(uap),  uap,  'uap')
       call cfwure (nwrite, size(uadia), uadia, 'uadia')
       call cfwure (nwrite, size(fchdia), fchdia, 'fchdia')
-      if(newversion.ge.'01.001.008') then
-        call cfwure (nwrite, size(fmo), fmo, 'fmo')
-        call cfwure (nwrite, size(fna_32), fna_32, 'fna_32')
-        call cfwure (nwrite, size(fna_52), fna_52, 'fna_52')
-        call cfwure (nwrite, size(fni_32), fni_32, 'fni_32')
-        call cfwure (nwrite, size(fni_52), fni_52, 'fni_52')
-        call cfwure (nwrite, size(fne_32), fne_32, 'fne_32')
-        call cfwure (nwrite, size(fne_52), fne_52, 'fne_52')
-      endif
-      if(newversion.ge.'01.001.010') then
-        call cfwure (nwrite, size(wadia), wadia, 'wadia')
-        call cfwure (nwrite, size(vaecrb), vaecrb, 'vaecrb')
-      endif
-      if(newversion.ge.'01.001.012') then
-        call cfwure (nwrite, size(facdrift), facdrift, 'facdrift')
-        call cfwure (nwrite, size(fac_ExB), fac_ExB, 'fac_ExB')
-      endif
-      if(newversion.ge.'01.001.014') then
-        call cfwure (nwrite, size(fchvispar), fchvispar, 'fchvispar')
-        call cfwure (nwrite, size(fchvisper), fchvisper, 'fchvisper')
-        call cfwure (nwrite, size(fchin), fchin, 'fchin')
-        call cfwure (nwrite, size(fna_nodrift), fna_nodrift,
-     1   'fna_nodrift')
-      endif
-      if(newversion.ge.'01.001.015') then
-        call cfwure (nwrite, size(fac_vis), fac_vis, 'fac_vis')
-      endif
-      if(newversion.ge.'03.000.003') then
-        call cfwure (nwrite, size(fna_mdf), fna_mdf, 'fna_mdf')
-        call cfwure (nwrite, size(fhe_mdf), fhe_mdf, 'fhe_mdf')
-        call cfwure (nwrite, size(fhi_mdf), fhi_mdf, 'fhi_mdf')
-        call cfwure (nwrite, size(fnaPSch), fnaPSch, 'fnaPSch')
-        call cfwure (nwrite, size(fhePSch), fhePSch, 'fhePSch')
-        call cfwure (nwrite, size(fhiPSch), fhiPSch, 'fhiPSch')
-        call cfwure (nwrite, size(fna_fcor), fna_fcor, 'fna_fcor')
-        call cfwure (nwrite, size(fna_he), fna_he, 'fna_he')
-        call cfwure (nwrite, size(fchvisq), fchvisq, 'fchvisq')
-        call cfwure (nwrite, size(fchinert), fchinert, 'fchinert')
-      endif
+      call cfwure (nwrite, size(fmo), fmo, 'fmo')
+      call cfwure (nwrite, size(fna_32), fna_32, 'fna_32')
+      call cfwure (nwrite, size(fna_52), fna_52, 'fna_52')
+      call cfwure (nwrite, size(fni_32), fni_32, 'fni_32')
+      call cfwure (nwrite, size(fni_52), fni_52, 'fni_52')
+      call cfwure (nwrite, size(fne_32), fne_32, 'fne_32')
+      call cfwure (nwrite, size(fne_52), fne_52, 'fne_52')
+      call cfwure (nwrite, size(wadia),  wadia,  'wadia')
+      call cfwure (nwrite, size(vaecrb), vaecrb, 'vaecrb')
+      call cfwure (nwrite, size(facdrift), facdrift, 'facdrift')
+      call cfwure (nwrite, size(fac_ExB), fac_ExB, 'fac_ExB')
+      call cfwure (nwrite, size(fchvispar), fchvispar, 'fchvispar')
+      call cfwure (nwrite, size(fchvisper), fchvisper, 'fchvisper')
+      call cfwure (nwrite, size(fchin), fchin, 'fchin')
+      call cfwure (nwrite, size(fna_nodrift), fna_nodrift,'fna_nodrift')
+      call cfwure (nwrite, size(fac_vis), fac_vis, 'fac_vis')
+      call cfwure (nwrite, size(fna_mdf), fna_mdf, 'fna_mdf')
+      call cfwure (nwrite, size(fhe_mdf), fhe_mdf, 'fhe_mdf')
+      call cfwure (nwrite, size(fhi_mdf), fhi_mdf, 'fhi_mdf')
+      call cfwure (nwrite, size(fnaPSch), fnaPSch, 'fnaPSch')
+      call cfwure (nwrite, size(fhePSch), fhePSch, 'fhePSch')
+      call cfwure (nwrite, size(fhiPSch), fhiPSch, 'fhiPSch')
+      call cfwure (nwrite, size(fna_fcor), fna_fcor, 'fna_fcor')
+      call cfwure (nwrite, size(fna_he), fna_he, 'fna_he')
+      call cfwure (nwrite, size(fchvisq), fchvisq, 'fchvisq')
+      call cfwure (nwrite, size(fchinert), fchinert, 'fchinert')
 
       return
       end subroutine write_b2mod_plasma

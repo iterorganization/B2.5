@@ -7,10 +7,10 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *   pccm(-1:nx,-1:ny,0:1)
+     *   pccm(-1:nx,-1:ny,0:1,0:1)
 *   ..input/output arguments
       real (kind=R8) ::
-     *   pcca(-1:nx,-1:ny,0:1,0:ns-1)
+     *   pcca(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -49,8 +49,8 @@
       do is = 0, ns-1
         do iy = -1, ny
          do ix = -1, nx
-          pcca(ix,iy,0,is) = uxcm(pccm(ix,iy,0),pcca(ix,iy,0,is))
-          pcca(ix,iy,1,is) = uxcm(pccm(ix,iy,1),pcca(ix,iy,1,is))
+          pcca(ix,iy,0,0,is) = uxcm(pccm(ix,iy,0,0),pcca(ix,iy,0,0,is))
+          pcca(ix,iy,1,1,is) = uxcm(pccm(ix,iy,1,1),pcca(ix,iy,1,1,is))
          enddo
         enddo
       enddo

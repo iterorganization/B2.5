@@ -26,34 +26,35 @@
       real (kind=R8) ::
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny), ni(-1:nx,-1:ny),
      & ne(-1:nx,-1:ny), ne2(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),
-     & pz(-1:nx,-1:ny), vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:ns-1),
-     & gs(-1:nx,-1:ny,0:2), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny),      	 !xpb
+     & pz(-1:nx,-1:ny), vol(-1:nx,-1:ny), 
+     & fna(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     & gs(-1:nx,-1:ny,0:2), qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1),    !xpb
      & uadia(-1:nx,-1:ny,0:1,0:ns-1), 
      & ua(-1:nx,-1:ny,0:ns-1),
      & wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1), 	 !xpb
-     & fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
-     1 csig(-1:nx,-1:ny,0:1), chci(-1:nx,-1:ny,0:1),
-     & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1),                   	 !xpb
-     & chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
-     & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
-     & cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),          !srv 16.10.17
+     & fne_32(-1:nx,-1:ny,0:1,0:1), fne_52(-1:nx,-1:ny,0:1,0:1),
+     1 csig(-1:nx,-1:ny,0:1,0:1), chci(-1:nx,-1:ny,0:1,0:1),
+     & csigin(-1:nx,-1:ny,0:1,0:1,0:ns-1,0:ns-1),                   	 !xpb
+     & chce(-1:nx,-1:ny,0:1,0:1), chve(-1:nx,-1:ny,0:1,0:1),
+     & calf(-1:nx,-1:ny,0:1,0:1), chvemx(-1:nx,-1:ny),
+     & cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),      !srv 16.10.17
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), 
      2 facdrift(-1:nx,-1:ny), BoRiS,
      3 fac_ExB(-1:nx,-1:ny), fac_vis(-1:nx,-1:ny),
-     4 csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1)
+     4 csig_cl(-1:nx,-1:ny,0:1,0:1), calf_cl(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  fch(-1:nx,-1:ny,0:1), 
-     &  conc(-1:nx,-1:ny,0:1),
+     *  fch(-1:nx,-1:ny,0:1,0:1), 
+     &  conc(-1:nx,-1:ny,0:1,0:1),
      *  vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
-     2  fchdia(-1:nx,-1:ny,0:1), 
-     3  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),              !xpb srv 10.06.08
-     4  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
+     2  fchdia(-1:nx,-1:ny,0:1,0:1), 
+     3  fch_p(-1:nx,-1:ny,0:1,0:1), fchvispar(-1:nx,-1:ny,0:1,0:1),              !xpb srv 10.06.08
+     4  fch_32(-1:nx,-1:ny,0:1,0:1), fch_52(-1:nx,-1:ny,0:1,0:1),
      5  avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
-     6  cvisper(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1),
-     7  fchvisq(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),                !srv 25.11.08
-     &  fchstoch(-1:nx,-1:ny), fchinert(-1:nx,-1:ny,0:1)
+     6  cvisper(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1,0:1),
+     7  fchvisq(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),            !srv 25.11.08
+     &  fchstoch(-1:nx,-1:ny), fchinert(-1:nx,-1:ny,0:1,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -166,11 +167,11 @@
 *    ..test sign of ne, te, csig, csig_an, calf_an, csigin, chce
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2*2, csig, 1, 'csig', '.ge.')
-       call b2xvsg (n2*2, csig_an, 1, 'csig_an', '.ge.')
-       call b2xvsg (n2*2, calf_an, 1, 'calf_an', '.ge.')
-       call b2xvsg (n2*2*ns*ns, csigin, 1, 'csigin', '.ge.')
-       call b2xvsg (n2*2, chce, 1, 'chce', '.ge.')
+       call b2xvsg (n2*4, csig, 1, 'csig', '.ge.')
+       call b2xvsg (n2*4, csig_an, 1, 'csig_an', '.ge.')
+       call b2xvsg (n2*4, calf_an, 1, 'calf_an', '.ge.')
+       call b2xvsg (n2*4*ns*ns, csigin, 1, 'csigin', '.ge.')
+       call b2xvsg (n2*4, chce, 1, 'chce', '.ge.')
 *    ..test edge values of csig, calf, csig_an, calf_an, csigin, chce, chve, chvemx
        call b2xvff (nx, ny, csig, 'csig')
        call b2xvff (nx, ny, calf, 'calf')
@@ -178,7 +179,7 @@
        call b2xvff (nx, ny, calf_an, 'calf_an')
        do is = 0, ns-1
          do is0 = 0, ns-1
-           call b2xvff (nx, ny, csigin(-1,-1,0,is,is0), 'csigin')
+           call b2xvff (nx, ny, csigin(-1,-1,0,0,is,is0), 'csigin')
          enddo
        enddo
        call b2xvff (nx, ny, chce, 'chce')
@@ -233,10 +234,10 @@ c Drift terms
       do iy = -1, ny
         do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
-            conc(ix,iy,0) = 0.0_R8
-            fch(ix,iy,0) = 0.0_R8
-            fch_32(ix,iy,0) = 0.0_R8
-            fch_52(ix,iy,0) = 0.0_R8
+            conc(ix,iy,0,0)   = 0.0_R8
+            fch(ix,iy,0,0)    = 0.0_R8
+            fch_32(ix,iy,0,0) = 0.0_R8
+            fch_52(ix,iy,0,0) = 0.0_R8
           else
 !xpb        ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
 !xpb     &         (ne(ix,iy)*te(ix,iy)
@@ -256,9 +257,9 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
               floe0_nd = 0.0_R8
               flo_vedia=0
             else
-              floe0_nd = (1.5_R8+BoRiS)*fne_32(ix,iy,0)+
-     1         2.5_R8*fne_52(ix,iy,0)+
-     &         chve(ix,iy,0)*
+              floe0_nd = (1.5_R8+BoRiS)*fne_32(ix,iy,0,0)+
+     1         2.5_R8*fne_52(ix,iy,0,0)+
+     &         chve(ix,iy,0,0)*
      1         (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8
               prefactor=
      1         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))    	 !xpb
@@ -273,11 +274,11 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
             endif
             floe0=floe0_nd+2.5_R8*flo_vedia
             if (no_hybr.eq.0) then
-              cone0 = hybr(floe0,chce(ix,iy,0))-abs(floe0/2.0_R8)
-              cone0_nd = hybr(floe0_nd,chce(ix,iy,0))-abs(floe0_nd/2)
+              cone0 = hybr(floe0,chce(ix,iy,0,0))-abs(floe0/2.0_R8)
+              cone0_nd = hybr(floe0_nd,chce(ix,iy,0,0))-abs(floe0_nd/2)
             else
-              cone0 = chce(ix,iy,0)
-              cone0_nd = chce(ix,iy,0)
+              cone0 = chce(ix,iy,0,0)
+              cone0_nd = chce(ix,iy,0,0)
             endif
 cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no longer required
             flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
@@ -294,22 +295,22 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             endif
             tex0 = tex/(1.0_R8+t0)
             tex0_nd = tex/(1.0_R8+t0_nd)
-            fch(ix,iy,0) = fch_p(ix,iy,0)                                !srv 13.01.17
-     &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0)          !xpb
-     &       +fchvisper(ix,iy,0)
-            fch_32(ix,iy,0) = csig_cl(ix,iy,0)*ehx
-     1       +fchin(ix,iy,0)+fchvispar(ix,iy,0)
-     &       +fchvisper(ix,iy,0)
-            fch_52(ix,iy,0) = csig_an(ix,iy,0)*ehx_po
-     &                       -calf(ix,iy,0)*tex0_nd
-            conc(ix,iy,0) = csig(ix,iy,0)
+            fch(ix,iy,0,0) = fch_p(ix,iy,0,0)                            !srv 13.01.17
+     &       +fchdia(ix,iy,0,0)+fchin(ix,iy,0,0)+fchvispar(ix,iy,0,0)    !xpb
+     &       +fchvisper(ix,iy,0,0)
+            fch_32(ix,iy,0,0) = csig_cl(ix,iy,0,0)*ehx
+     1       +fchin(ix,iy,0,0)+fchvispar(ix,iy,0,0)
+     &       +fchvisper(ix,iy,0,0)
+            fch_52(ix,iy,0,0) = csig_an(ix,iy,0,0)*ehx_po
+     &                       -calf(ix,iy,0,0)*tex0_nd
+            conc(ix,iy,0,0) = csig(ix,iy,0,0)
             if(fch_ion_neutral.ne.0.0_R8) then                  	     !xpb
               do is = 0, ns-1
                 if (.not.is_neutral(is) .and. nint(zn(is)).eq.1) then
                   do is0 = 0, ns-1
                     if (is_neutral(is0) .and. nint(zn(is0)).eq.1)
-     >               conc(ix,iy,0) =
-     &                conc(ix,iy,0) + csigin(ix,iy,0,is,is0)
+     >               conc(ix,iy,0,0) =
+     &                conc(ix,iy,0,0) + csigin(ix,iy,0,0,is,is0)
                   enddo
                 endif
               enddo
@@ -322,10 +323,10 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then
-            conc(ix,iy,1) = 0.0_R8
-            fch(ix,iy,1) = 0.0_R8
-            fch_32(ix,iy,1) = 0.0_R8
-            fch_52(ix,iy,1) = 0.0_R8
+            conc(ix,iy,1,1)   = 0.0_R8
+            fch(ix,iy,1,1)    = 0.0_R8
+            fch_32(ix,iy,1,1) = 0.0_R8
+            fch_52(ix,iy,1,1) = 0.0_R8
           else
             if (no_current.eq.1) then
               ehy = 0.0_R8
@@ -334,30 +335,31 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               ehy = ehy_(ix,iy)                                          !srv 13.01.17
               ehy_po = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))  !xpb
             endif
-            fch(ix,iy,1)= csig_cl(ix,iy,1)*ehy+csig_an(ix,iy,1)*ehy_po
-     .       -calf(ix,iy,1)*
+            fch(ix,iy,1,1)= csig_cl(ix,iy,1,1)*ehy
+     .       +csig_an(ix,iy,1,1)*ehy_po
+     .       -calf(ix,iy,1,1)*
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))             !xpb
-     .       +fchdia(ix,iy,1)+fchin(ix,iy,1)+fchvispar(ix,iy,1)          !xpb
-     &       +fchvisper(ix,iy,1)
+     .       +fchdia(ix,iy,1,1)+fchin(ix,iy,1,1)+fchvispar(ix,iy,1,1)    !xpb
+     &       +fchvisper(ix,iy,1,1)
      8       +fchstoch(ix,iy)                                            !lk 31.01.08
-            fch_32(ix,iy,1)= csig_cl(ix,iy,1)*ehy
-     .       +fchin(ix,iy,1)+fchvispar(ix,iy,1)                          !xpb
-     &       +fchvisper(ix,iy,1)
-            fch_52(ix,iy,1)= csig_an(ix,iy,1)*ehy_po-calf(ix,iy,1)*
+            fch_32(ix,iy,1,1)= csig_cl(ix,iy,1,1)*ehy
+     .       +fchin(ix,iy,1,1)+fchvispar(ix,iy,1,1)                      !xpb
+     &       +fchvisper(ix,iy,1,1)
+            fch_52(ix,iy,1,1)=csig_an(ix,iy,1,1)*ehy_po-calf(ix,iy,1,1)*
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy))) 
-            conc(ix,iy,1) = csig(ix,iy,1)
+            conc(ix,iy,1,1) = csig(ix,iy,1,1)
             if(fch_ion_neutral .ne. 0.0_R8) then                	 !xpb
               do is = 0, ns-1
                 if (.not.is_neutral(is)) then
                   do is0 = 0, ns-1
-                    if (is_neutral(is0)) conc(ix,iy,1) = conc(ix,iy,1) 
-     .               + csigin(ix,iy,1,is,is0)                     	 !xpb
+                    if (is_neutral(is0)) conc(ix,iy,1,1) = 
+     .               conc(ix,iy,1,1)  + csigin(ix,iy,1,1,is,is0)         !xpb
                   enddo
                 endif
               enddo
             endif
             if(fch_stochastic.ne.0.0e0_R8 ) then                         !lk 31.01.08 {
-              conc(ix,iy,1) = conc(ix,iy,1) + csig_stoch(ix,iy)
+              conc(ix,iy,1,1) = conc(ix,iy,1,1) + csig_stoch(ix,iy)
             endif                                                        !lk 31.01.08 }
           endif                                                 	 !xpb
         enddo
@@ -368,15 +370,15 @@ cxpb turn off flows between boundary cells
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-              conc(ix,iy,1)=0.0_R8
-              fch(ix,iy,1)=0.0_R8
-              fch_32(ix,iy,1)=0.0_R8
-              fch_52(ix,iy,1)=0.0_R8
-              fchdia(ix,iy,1)=0.0_R8
-              fchin(ix,iy,1)=0.0_R8
-              fchvispar(ix,iy,1)=0.0_R8
-              fchvisper(ix,iy,1)=0.0_R8
-              fchvisq(ix,iy,1)=0.0_R8
+              conc(ix,iy,1,1)=0.0_R8
+              fch(ix,iy,1,1)=0.0_R8
+              fch_32(ix,iy,1,1)=0.0_R8
+              fch_52(ix,iy,1,1)=0.0_R8
+              fchdia(ix,iy,1,1)=0.0_R8
+              fchin(ix,iy,1,1)=0.0_R8
+              fchvispar(ix,iy,1,1)=0.0_R8
+              fchvisper(ix,iy,1,1)=0.0_R8
+              fchvisq(ix,iy,1,1)=0.0_R8
             endif
           enddo        
         enddo
@@ -384,16 +386,16 @@ cxpb turn off flows between boundary cells
 cxpb turn off poloidal flows in core boundary
         do ix = -1, nx
           if(on_closed_surface(ix,-1)) then
-            conc(ix,-1,0) = 0.0_R8
-            fch(ix,-1,0) = 0.0_R8
-            fch_32(ix,-1,0) = 0.0_R8
-            fch_52(ix,-1,0) = 0.0_R8
-            fch_p(ix,-1,0) = 0.0_R8                                  !srv 10.06.08
-            fchdia(ix,-1,0) = 0.0_R8
-            fchin(ix,-1,0) = 0.0_R8
-            fchvispar(ix,-1,0) = 0.0_R8
-            fchvisper(ix,-1,0) = 0.0_R8
-            fchvisq(ix,-1,0) = 0.0_R8
+            conc(ix,-1,0,0) = 0.0_R8
+            fch(ix,-1,0,0) = 0.0_R8
+            fch_32(ix,-1,0,0) = 0.0_R8
+            fch_52(ix,-1,0,0) = 0.0_R8
+            fch_p(ix,-1,0,0) = 0.0_R8                                  !srv 10.06.08
+            fchdia(ix,-1,0,0) = 0.0_R8
+            fchin(ix,-1,0,0) = 0.0_R8
+            fchvispar(ix,-1,0,0) = 0.0_R8
+            fchvisper(ix,-1,0,0) = 0.0_R8
+            fchvisq(ix,-1,0,0) = 0.0_R8
           endif
         enddo
       endif                                                     	 !xpb
@@ -416,50 +418,50 @@ cxpb turn off current terms if requested
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            conc(ix,iy,0)=0.0_R8
-            fch(ix,iy,0)=0.0_R8
-            fch_32(ix,iy,0)=0.0_R8
-            fch_52(ix,iy,0)=0.0_R8
-            fchdia(ix,iy,0)=0.0_R8
-            fch_p(ix,iy,:) =0.0_R8
-            fchvispar(ix,iy,0)=0.0_R8
-            fchvisper(ix,iy,0)=0.0_R8
-            fchvisq(ix,iy,0)=0.0_R8
-            fchin(ix,iy,0)=0.0_R8
-            conc(ix,iy,1)=0.0_R8
-            fch(ix,iy,1)=0.0_R8
-            fch_32(ix,iy,1)=0.0_R8
-            fch_52(ix,iy,1)=0.0_R8
-            fchdia(ix,iy,1)=0.0_R8
-            fchin(ix,iy,1)=0.0_R8
-            fchvispar(ix,iy,1)=0.0_R8
-            fchvisper(ix,iy,1)=0.0_R8
-            fchvisq(ix,iy,1)=0.0_R8
+            conc(ix,iy,0,0)=0.0_R8
+            fch(ix,iy,0,0)=0.0_R8
+            fch_32(ix,iy,0,0)=0.0_R8
+            fch_52(ix,iy,0,0)=0.0_R8
+            fchdia(ix,iy,0,0)=0.0_R8
+            fch_p(ix,iy,:,:) =0.0_R8
+            fchvispar(ix,iy,0,0)=0.0_R8
+            fchvisper(ix,iy,0,0)=0.0_R8
+            fchvisq(ix,iy,0,0)=0.0_R8
+            fchin(ix,iy,0,0)=0.0_R8
+            conc(ix,iy,1,1)=0.0_R8
+            fch(ix,iy,1,1)=0.0_R8
+            fch_32(ix,iy,1,1)=0.0_R8
+            fch_52(ix,iy,1,1)=0.0_R8
+            fchdia(ix,iy,1,1)=0.0_R8
+            fchin(ix,iy,1,1)=0.0_R8
+            fchvispar(ix,iy,1,1)=0.0_R8
+            fchvisper(ix,iy,1,1)=0.0_R8
+            fchvisq(ix,iy,1,1)=0.0_R8
           end do
         end do
       end do
 
       if(iout.ne.0) then                                             !srv 18.06.08 {
-       call my_out(70,nx,ny,fch(-1,-1,0),'b2tfch_fchx')
-       call my_out(70,nx,ny,fch(-1,-1,1),'b2tfch_fchy')
-       call my_out(70,nx,ny,fchin(-1,-1,0),'b2tfch_chinx')
-       call my_out(70,nx,ny,fchin(-1,-1,1),'b2tfch_chiny')
-       call my_out(70,nx,ny,fchvispar(-1,-1,0),'b2tfch_chvisparx')
-       call my_out(70,nx,ny,fchvispar(-1,-1,1),'b2tfch_chvispary')
-!       call my_out(70,nx,ny,fchvisq(-1,-1,0),'b2tfch_chvisqx')
-!       call my_out(70,nx,ny,fchvisq(-1,-1,1),'b2tfch_chvisqy')
-       call my_out(70,nx,ny,fchvisper(-1,-1,0),'b2tfch_chvisperx')
-       call my_out(70,nx,ny,fchvisper(-1,-1,1),'b2tfch_chvispery')
-!       call my_out(70,nx,ny,fchinert(-1,-1,0),'b2tfch_chinertx')
-!       call my_out(70,nx,ny,fchinert(-1,-1,1),'b2tfch_chinerty')
-       call my_out(70,nx,ny,fchdia(-1,-1,0),'b2tfch_chdiax')
-       call my_out(70,nx,ny,fchdia(-1,-1,1),'b2tfch_chdiay')
-!       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfch_chanmlx')
-!       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfch_chanmly')
-       call my_out(70,nx,ny,conc(-1,-1,0),'b2tfch_concx')
-       call my_out(70,nx,ny,conc(-1,-1,1),'b2tfch_concy')
-       call my_out(70,nx,ny,fch_p(-1,-1,0),'b2tfch_ch_px')
-       call my_out(70,nx,ny,fch_p(-1,-1,1),'b2tfch_ch_py')
+       call my_out(70,nx,ny,fch(-1,-1,0,0),'b2tfch_fchx')
+       call my_out(70,nx,ny,fch(-1,-1,1,1),'b2tfch_fchy')
+       call my_out(70,nx,ny,fchin(-1,-1,0,0),'b2tfch_chinx')
+       call my_out(70,nx,ny,fchin(-1,-1,1,1),'b2tfch_chiny')
+       call my_out(70,nx,ny,fchvispar(-1,-1,0,0),'b2tfch_chvisparx')
+       call my_out(70,nx,ny,fchvispar(-1,-1,1,1),'b2tfch_chvispary')
+!       call my_out(70,nx,ny,fchvisq(-1,-1,0,0),'b2tfch_chvisqx')
+!       call my_out(70,nx,ny,fchvisq(-1,-1,1,1),'b2tfch_chvisqy')
+       call my_out(70,nx,ny,fchvisper(-1,-1,0,0),'b2tfch_chvisperx')
+       call my_out(70,nx,ny,fchvisper(-1,-1,1,1),'b2tfch_chvispery')
+!       call my_out(70,nx,ny,fchinert(-1,-1,0,0),'b2tfch_chinertx')
+!       call my_out(70,nx,ny,fchinert(-1,-1,1,1),'b2tfch_chinerty')
+       call my_out(70,nx,ny,fchdia(-1,-1,0,0),'b2tfch_chdiax')
+       call my_out(70,nx,ny,fchdia(-1,-1,1,1),'b2tfch_chdiay')
+!       call my_out(70,nx,ny,fchanml(-1,-1,0,0),'b2tfch_chanmlx')
+!       call my_out(70,nx,ny,fchanml(-1,-1,1,1),'b2tfch_chanmly')
+       call my_out(70,nx,ny,conc(-1,-1,0,0),'b2tfch_concx')
+       call my_out(70,nx,ny,conc(-1,-1,1,1),'b2tfch_concy')
+       call my_out(70,nx,ny,fch_p(-1,-1,0,0),'b2tfch_ch_px')
+       call my_out(70,nx,ny,fch_p(-1,-1,1,1),'b2tfch_ch_py')
        call my_out(70,nx,ny,avisper(-1,-1,0),'b2tfch_avisperx')
        call my_out(70,nx,ny,avisper(-1,-1,1),'b2tfch_avispery')
        call my_out(70,nx,ny,bvisper(-1,-1,0),'b2tfch_bvisperx')

@@ -12,10 +12,10 @@
       integer nx, ny, isb
       real (kind=R8) ::
      *   ub(-1:nx,-1:ny), rob(-1:nx,-1:ny), smb(-1:nx,-1:ny,0:3),
-     &  flub(-1:nx,-1:ny,0:1), cvsb(-1:nx,-1:ny,0:1)
+     &  flub(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   resmb(-1:nx,-1:ny), fmb(-1:nx,-1:ny,0:1)
+     *   resmb(-1:nx,-1:ny), fmb(-1:nx,-1:ny,0:1,0:1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -51,12 +51,12 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0       !srv 06.07.06
-      integer, save :: iout_b2npmo = 0, iout_b2wdat = 0           !srv 11.09.09
-      character chns*3                                            !srv 02.06.11
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
+      integer, save :: iout_b2npmo = 0, iout_b2wdat = 0                 !srv 11.09.09
+      character chns*3                                                  !srv 02.06.11
       save ncall
       real (kind=R8) ::
-     *   con(-1:nx,-1:ny,0:1), flv(-1:nx,-1:ny,0:1), flo, dif     !srv 11.09.09
+     *   con(-1:nx,-1:ny,0:1,0:1), flv(-1:nx,-1:ny,0:1,0:1), flo, dif   !srv 11.09.09
 *   ..procedures
       intrinsic max, abs
       real (kind=R8) ::
@@ -91,7 +91,7 @@
        call b2xvsg (n2, smb(-1,-1,1), 1, 'smb1', '.le.')
        call b2xvsg (n2, smb(-1,-1,3), 1, 'smb3', '.le.')
 *    ..test sign of cvsb
-       call b2xvsg (n2*2, cvsb, 1, 'cvsb', '.ge.')
+       call b2xvsg (n2*4, cvsb, 1, 'cvsb', '.ge.')
 *    ..test edge values of flub, cvsb
        call b2xvff (nx, ny, flub, 'flub')
        call b2xvff (nx, ny, cvsb, 'cvsb')
@@ -102,21 +102,21 @@
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
-         fmb(ix,iy,0) = 0.0_R8
-         con(ix,iy,0) = 0.0_R8
-         flv(ix,iy,0) = 0.0_R8
+         fmb(ix,iy,0,0) = 0.0_R8
+         con(ix,iy,0,0) = 0.0_R8
+         flv(ix,iy,0,0) = 0.0_R8
         else
-         flo = flub(ix,iy,0)
+         flo = flub(ix,iy,0,0)
          if(no_Ptncr_x_co.eq.0) then                                  !sv 06.07.06 {
-          con(ix,iy,0) = hybr(flo,cvsb(ix,iy,0))
+          con(ix,iy,0,0) = hybr(flo,cvsb(ix,iy,0,0))
          else
-          con(ix,iy,0) = cvsb(ix,iy,0)
+          con(ix,iy,0,0) = cvsb(ix,iy,0,0)
          endif                                                        !sv 06.07.06 }
-         flv(ix,iy,0) = - con(ix,iy,0)*
+         flv(ix,iy,0,0) = - con(ix,iy,0,0)*
      &         (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))
-         fmb(ix,iy,0) = flo*(ub(ix,iy)
+         fmb(ix,iy,0,0) = flo*(ub(ix,iy)
      &         +ub(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8 
-     &         +flv(ix,iy,0)
+     &         +flv(ix,iy,0,0)
         endif
        enddo
       enddo
@@ -124,33 +124,36 @@
       do iy = -1, ny
        do ix = -1, nx
         if(bottomiy(ix,iy).eq.-2) then
-         fmb(ix,iy,1) = 0.0_R8
-         con(ix,iy,1) = 0.0_R8
-         flv(ix,iy,1) = 0.0_R8
+         fmb(ix,iy,1,1) = 0.0_R8
+         con(ix,iy,1,1) = 0.0_R8
+         flv(ix,iy,1,1) = 0.0_R8
         else
-         flo = flub(ix,iy,1)
+         flo = flub(ix,iy,1,1)
          if(no_Ptncr_y_co.eq.0) then                                  !sv 06.07.06 {
-          con(ix,iy,1) = hybr(flo,cvsb(ix,iy,1))
+          con(ix,iy,1,1) = hybr(flo,cvsb(ix,iy,1,1))
          else
-          con(ix,iy,1) = cvsb(ix,iy,1)
+          con(ix,iy,1,1) = cvsb(ix,iy,1,1)
          endif                                                        !sv 06.07.06 }
-         flv(ix,iy,1) = - con(ix,iy,1)*
+         flv(ix,iy,1,1) = - con(ix,iy,1,1)*
      &            (ub(ix,iy)-ub(bottomix(ix,iy),bottomiy(ix,iy)))
-         fmb(ix,iy,1) = flo*(ub(bottomix(ix,iy),bottomiy(ix,iy))
-     &         +ub(ix,iy))/2.0_R8 + flv(ix,iy,1)
+         fmb(ix,iy,1,1) = flo*(ub(bottomix(ix,iy),bottomiy(ix,iy))
+     &         +ub(ix,iy))/2.0_R8 + flv(ix,iy,1,1)
         endif
        enddo
       enddo
       if (balance_netcdf.ne.0) then !djm Jan2017
-        fmo_cvsa(:,:,:,isb)=flv(-1:nx,-1:ny,0:1)
-        fmo_flua(:,:,:,isb)=fmb(-1:nx,-1:ny,0:1)-flv(-1:nx,-1:ny,0:1)
+        fmo_cvsa(:,:,:,:,isb)=flv(-1:nx,-1:ny,0:1,0:1)
+        fmo_flua(:,:,:,:,isb)=fmb(-1:nx,-1:ny,0:1,0:1)
+     &                       -flv(-1:nx,-1:ny,0:1,0:1)
       endif
       if(iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then
        write (chns,'(i3.3)') isb
-       call my_out(70,nx,ny,flv(-1,-1,0),'b2urmo_etaPat_graduax'//chns)
-       call my_out(70,nx,ny,flv(-1,-1,1),'b2urmo_etaPat_graduay'//chns)
-!       call my_out(70,nx,ny,con(-1,-1,0),'b2urmo_etaPatx')
- !      call my_out(70,nx,ny,con(-1,-1,1),'b2urmo_etaPaty')
+       call my_out(70,nx,ny,flv(-1,-1,0,0),
+     &            'b2urmo_etaPat_graduax'//chns)
+       call my_out(70,nx,ny,flv(-1,-1,1,1),
+     &            'b2urmo_etaPat_graduay'//chns)
+!       call my_out(70,nx,ny,con(-1,-1,0,0),'b2urmo_etaPatx')
+ !      call my_out(70,nx,ny,con(-1,-1,1,1),'b2urmo_etaPaty')
       endif      
 * ..compute residual
 *   ..contribution from right hand side
@@ -167,12 +170,12 @@
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
          resmb(ix,iy) = resmb(ix,iy)
-     &    -fmb(rightix(ix,iy),rightiy(ix,iy),0)
+     &    -fmb(rightix(ix,iy),rightiy(ix,iy),0,0)
         elseif(rightix(ix,iy).eq.nx+1) then
-         resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,0)
+         resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,0,0)
         else
          resmb(ix,iy) = resmb(ix,iy)
-     &    +fmb(ix,iy,0)-fmb(rightix(ix,iy),rightiy(ix,iy),0)
+     &    +fmb(ix,iy,0,0)-fmb(rightix(ix,iy),rightiy(ix,iy),0,0)
         endif
        enddo
       enddo
@@ -182,18 +185,18 @@
         if (bottomiy(ix,iy).eq.-2) then
 cxpb  cells with no bottom neighbour
           resmb(ix,iy) = resmb(ix,iy)
-     &     -fmb(topix(ix,iy),topiy(ix,iy),1)
+     &     -fmb(topix(ix,iy),topiy(ix,iy),1,1)
         elseif (topiy(ix,iy).eq.ny+1) then
 cxpb  cells with no top neighbour
-          resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1)
+          resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1,1)
         elseif (topiy(topix(ix,iy),topiy(ix,iy)).ne.iy)  then
 cxpb  standard case
-         resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1)
-     &     -fmb(topix(ix,iy),topiy(ix,iy),1)
+         resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1,1)
+     &     -fmb(topix(ix,iy),topiy(ix,iy),1,1)
         elseif (topiy(topix(ix,iy),topiy(ix,iy)).eq.iy .and. ny.gt.1)
      &   then
 cxpb  diverted island X-point case
-         resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1)
+         resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1,1)
         endif
        enddo
       enddo

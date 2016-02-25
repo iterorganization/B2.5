@@ -16,8 +16,8 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), vol(-1:nx,-1:ny)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
+     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8) ::
      *  aresco(0:ns-1), aresmo(0:ns-1), aresmt, areshe, areshi,
      &  arespo, acorpa(0:ns-1), acorua(0:ns-1), acorut, acorte,
@@ -308,7 +308,7 @@
           ix = ix0(iix)
           iy = iy0(iiy)
           il = iy0(iiy+1)-iy0(iiy)
-          z(k) = b2ssum(il,fna(ix,iy,0,is),nx+2)
+          z(k) = b2ssum(il,fna(ix,iy,0,0,is),nx+2)
           k = k+1
          enddo
         enddo
@@ -317,7 +317,7 @@
           ix = ix0(iix)
           iy = iy0(iiy)
           il = ix0(iix+1)-ix0(iix)
-          z(k) = b2ssum(il,fna(ix,iy,1,is),1)
+          z(k) = b2ssum(il,fna(ix,iy,1,1,is),1)
           k = k+1
          enddo
         enddo
@@ -327,7 +327,7 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = iy0(iiy+1)-iy0(iiy)
-         z(k) = b2ssum(il,fhe(ix,iy,0),nx+2)
+         z(k) = b2ssum(il,fhe(ix,iy,0,0),nx+2)
          k = k+1
         enddo
        enddo
@@ -336,7 +336,7 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = ix0(iix+1)-ix0(iix)
-         z(k) = b2ssum(il,fhe(ix,iy,1),1)
+         z(k) = b2ssum(il,fhe(ix,iy,1,1),1)
          k = k+1
         enddo
        enddo
@@ -345,7 +345,7 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = iy0(iiy+1)-iy0(iiy)
-         z(k) = b2ssum(il,fhi(ix,iy,0),nx+2)
+         z(k) = b2ssum(il,fhi(ix,iy,0,0),nx+2)
          k = k+1
         enddo
        enddo
@@ -354,7 +354,7 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = ix0(iix+1)-ix0(iix)
-         z(k) = b2ssum(il,fhi(ix,iy,1),1)
+         z(k) = b2ssum(il,fhi(ix,iy,1,1),1)
          k = k+1
         enddo
        enddo
@@ -363,7 +363,7 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = iy0(iiy+1)-iy0(iiy)
-         z(k) = b2ssum(il,fch(ix,iy,0),nx+2)
+         z(k) = b2ssum(il,fch(ix,iy,0,0),nx+2)
          k = k+1
         enddo
        enddo
@@ -372,7 +372,7 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = ix0(iix+1)-ix0(iix)
-         z(k) = b2ssum(il,fch(ix,iy,1),1)
+         z(k) = b2ssum(il,fch(ix,iy,1,1),1)
          k = k+1
         enddo
        enddo

@@ -532,17 +532,21 @@ c calculate divergences of the various fluxes
             if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
      *       bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
               div_fna(ix,iy,is)=
-     1         +fna(rightix(ix,iy),rightiy(ix,iy),0,is)-fna(ix,iy,0,is)
-     2         +fna(topix(ix,iy),topiy(ix,iy),1,is)-fna(ix,iy,1,is)
+     1         +fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)
+     1         -fna(ix,iy,0,0,is)
+     2         +fna(topix(ix,iy),topiy(ix,iy),1,1,is)-fna(ix,iy,1,1,is)
               div_fmo(ix,iy,is)=
-     1         +fmo(rightix(ix,iy),rightiy(ix,iy),0,is)-fmo(ix,iy,0,is)
-     2         +fmo(topix(ix,iy),topiy(ix,iy),1,is)-fmo(ix,iy,1,is)
+     1         +fmo(rightix(ix,iy),rightiy(ix,iy),0,0,is)
+     1         -fmo(ix,iy,0,0,is)
+     2         +fmo(topix(ix,iy),topiy(ix,iy),1,1,is)-fmo(ix,iy,1,1,is)
               div_fhm(ix,iy,is)=
-     1         +fhm(rightix(ix,iy),rightiy(ix,iy),0,is)-fhm(ix,iy,0,is)
-     2         +fhm(topix(ix,iy),topiy(ix,iy),1,is)-fhm(ix,iy,1,is)
+     1         +fhm(rightix(ix,iy),rightiy(ix,iy),0,0,is)
+     1         -fhm(ix,iy,0,0,is)
+     2         +fhm(topix(ix,iy),topiy(ix,iy),1,1,is)-fhm(ix,iy,1,1,is)
               div_fhp(ix,iy,is)=
-     1         +fhp(rightix(ix,iy),rightiy(ix,iy),0,is)-fhp(ix,iy,0,is)
-     2         +fhp(topix(ix,iy),topiy(ix,iy),1,is)-fhp(ix,iy,1,is)
+     1         +fhp(rightix(ix,iy),rightiy(ix,iy),0,0,is)
+     1         -fhp(ix,iy,0,0,is)
+     2         +fhp(topix(ix,iy),topiy(ix,iy),1,1,is)-fhp(ix,iy,1,1,is)
             else
               div_fna(ix,iy,is)=0.0_R8
               div_fmo(ix,iy,is)=0.0_R8
@@ -557,23 +561,23 @@ c calculate divergences of the various fluxes
           if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
      *     bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
             div_fhet(ix,iy)=
-     1       +fhet(rightix(ix,iy),rightiy(ix,iy),0)-fhet(ix,iy,0)
-     2       +fhet(topix(ix,iy),topiy(ix,iy),1)-fhet(ix,iy,1)
+     1       +fhet(rightix(ix,iy),rightiy(ix,iy),0,0)-fhet(ix,iy,0,0)
+     2       +fhet(topix(ix,iy),topiy(ix,iy),1,1)-fhet(ix,iy,1,1)
             div_fhit(ix,iy)=
-     1       +fhit(rightix(ix,iy),rightiy(ix,iy),0)-fhit(ix,iy,0)
-     2       +fhit(topix(ix,iy),topiy(ix,iy),1)-fhit(ix,iy,1)
+     1       +fhit(rightix(ix,iy),rightiy(ix,iy),0,0)-fhit(ix,iy,0,0)
+     2       +fhit(topix(ix,iy),topiy(ix,iy),1,1)-fhit(ix,iy,1,1)
             div_fhe(ix,iy)=
-     1       +fhe(rightix(ix,iy),rightiy(ix,iy),0)-fhe(ix,iy,0)
-     2       +fhe(topix(ix,iy),topiy(ix,iy),1)-fhe(ix,iy,1)
+     1       +fhe(rightix(ix,iy),rightiy(ix,iy),0,0)-fhe(ix,iy,0,0)
+     2       +fhe(topix(ix,iy),topiy(ix,iy),1,1)-fhe(ix,iy,1,1)
             div_fhi(ix,iy)=
-     1       +fhi(rightix(ix,iy),rightiy(ix,iy),0)-fhi(ix,iy,0)
-     2       +fhi(topix(ix,iy),topiy(ix,iy),1)-fhi(ix,iy,1)
+     1       +fhi(rightix(ix,iy),rightiy(ix,iy),0,0)-fhi(ix,iy,0,0)
+     2       +fhi(topix(ix,iy),topiy(ix,iy),1,1)-fhi(ix,iy,1,1)
             div_fch(ix,iy)=
-     1       +fch(rightix(ix,iy),rightiy(ix,iy),0)-fch(ix,iy,0)
-     2       +fch(topix(ix,iy),topiy(ix,iy),1)-fch(ix,iy,1)
+     1       +fch(rightix(ix,iy),rightiy(ix,iy),0,0)-fch(ix,iy,0,0)
+     2       +fch(topix(ix,iy),topiy(ix,iy),1,1)-fch(ix,iy,1,1)
             div_fhj(ix,iy)=0
-     1       +fhj(rightix(ix,iy),rightiy(ix,iy),0)-fhj(ix,iy,0)
-     2       +fhj(topix(ix,iy),topiy(ix,iy),1)-fhj(ix,iy,1)
+     1       +fhj(rightix(ix,iy),rightiy(ix,iy),0,0)-fhj(ix,iy,0,0)
+     2       +fhj(topix(ix,iy),topiy(ix,iy),1,1)-fhj(ix,iy,1,1)
           else
             div_fhet(ix,iy)=0.0_R8
             div_fhit(ix,iy)=0.0_R8
@@ -738,9 +742,9 @@ c alternative (failed) calculation of energy balance (elegant, but flawed)
      &       bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &       region(ix,iy,0).ne.0) then
               bas_vis_piece(ix,iy,is)=ua(ix,iy,is)*
-     2         (cvsa_cl(rightix(ix,iy),rightiy(ix,iy),0,is)*
+     2         (cvsa_cl(rightix(ix,iy),rightiy(ix,iy),0,0,is)*
      4           (ua(rightix(ix,iy),rightiy(ix,iy),is)-ua(ix,iy,is))-
-     5          cvsa_cl(ix,iy,0,is)*
+     5          cvsa_cl(ix,iy,0,0,is)*
      6           (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is)))
             else
               bas_vis_piece(ix,iy,is)=0.0_R8
@@ -834,7 +838,7 @@ cxpb  Western boundary
           hhn = hx(ixn,iyn)
         endif
         wall_heatflux(ibnd)=max(0.0_R8,
-     .    isign*(fht(ixf,iyf,idir)+fhi_ext(ixf,iyf,idir)))/
+     .    isign*(fht(ixf,iyf,idir,idir)+fhi_ext(ixf,iyf,idir,idir)))/
      .                                 gs(ixf,iyf,idir)
 *    ..compute cell-faced quantities
         do is = 0, ns-1
@@ -846,13 +850,14 @@ cxpb  Western boundary
         do is = 0, ns-1
           incident_energy(ibnd,is)=
      .     max(0.0_R8,tif/ev+(po(ix,iy)-Phi_app)*zaf(is)) ! xpb: Incident energy (eV)
-          wall_flux(ibnd,is)=max(0.0_R8,isign*fna(ixf,iyf,idir,is))
+          wall_flux(ibnd,is)=max(0.0_R8,isign*fna(ixf,iyf,idir,idir,is))
         enddo
         do is = 0, ns_ext-1
           pxf = (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/
      &          (hhn+hh)
           wall_heatflux(ibnd)=wall_heatflux(ibnd)+
-     &     max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))/gs(ixf,iyf,idir)*
+     &     max(0.0_R8,isign*fa_ext(ixf,iyf,idir,idir,is))/
+     &         gs(ixf,iyf,idir)*
      &         ((0.5_R8*mp*am_ext(is)*ua_ext(ix,iy,is)**2+
      &           ta_ext(ix,iy,is))*(1.0_R8-BoRiS) + pxf*ev)
         enddo
@@ -873,34 +878,34 @@ c
       call mapy(nx,ny,1,pbs(:,:,1),work)
 !!!      call mapx(nx,ny,ns,ua,work)
       do is=0,ns-1
-        call mapx(nx,ny,1,fna(:,:,0,is),work)
-        call mapy(nx,ny,1,fna(:,:,1,is),work)
-        call mapx(nx,ny,1,fna_32(:,:,0,is),work)
-        call mapy(nx,ny,1,fna_32(:,:,1,is),work)
-        call mapx(nx,ny,1,fna_52(:,:,0,is),work)
-        call mapy(nx,ny,1,fna_52(:,:,1,is),work)
-        call mapx(nx,ny,1,fna_nodrift(:,:,0,is),work)
-        call mapy(nx,ny,1,fna_nodrift(:,:,1,is),work)
-        call mapx(nx,ny,1,fmo(:,:,0,is),work)
-        call mapy(nx,ny,1,fmo(:,:,1,is),work)
-        call mapx(nx,ny,1,cvsa_cl(:,:,0,is),work)
-        call mapy(nx,ny,1,cvsa_cl(:,:,1,is),work)
-        call mapx(nx,ny,1,fllim0fna(:,:,0,is),work)
-        call mapy(nx,ny,1,fllim0fna(:,:,1,is),work)
-        call mapx(nx,ny,1,fllim0fhi(:,:,0,is),work)
-        call mapy(nx,ny,1,fllim0fhi(:,:,1,is),work)
-        call mapx(nx,ny,1,fhm(:,:,0,is),work)
-        call mapy(nx,ny,1,fhm(:,:,1,is),work)
-        call mapx(nx,ny,1,fhp(:,:,0,is),work)
-        call mapy(nx,ny,1,fhp(:,:,1,is),work)
-        call mapx(nx,ny,1,fna_mdf(:,:,0,is),work)
-        call mapy(nx,ny,1,fna_mdf(:,:,1,is),work)
-        call mapx(nx,ny,1,fnaPSch(:,:,0,is),work)
-        call mapy(nx,ny,1,fnaPSch(:,:,1,is),work)
-        call mapx(nx,ny,1,fna_fcor(:,:,0,is),work)
-        call mapy(nx,ny,1,fna_fcor(:,:,1,is),work)
-        call mapx(nx,ny,1,fna_he(:,:,0,is),work)
-        call mapy(nx,ny,1,fna_he(:,:,1,is),work)
+        call mapx(nx,ny,1,fna(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fna(:,:,1,1,is),work)
+        call mapx(nx,ny,1,fna_32(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fna_32(:,:,1,1,is),work)
+        call mapx(nx,ny,1,fna_52(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fna_52(:,:,1,1,is),work)
+        call mapx(nx,ny,1,fna_nodrift(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fna_nodrift(:,:,1,1,is),work)
+        call mapx(nx,ny,1,fmo(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fmo(:,:,1,1,is),work)
+        call mapx(nx,ny,1,cvsa_cl(:,:,0,0,is),work)
+        call mapy(nx,ny,1,cvsa_cl(:,:,1,1,is),work)
+        call mapx(nx,ny,1,fllim0fna(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fllim0fna(:,:,1,1,is),work)
+        call mapx(nx,ny,1,fllim0fhi(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fllim0fhi(:,:,1,1,is),work)
+        call mapx(nx,ny,1,fhm(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fhm(:,:,1,1,is),work)
+        call mapx(nx,ny,1,fhp(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fhp(:,:,1,1,is),work)
+        call mapx(nx,ny,1,fna_mdf(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fna_mdf(:,:,1,1,is),work)
+        call mapx(nx,ny,1,fnaPSch(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fnaPSch(:,:,1,1,is),work)
+        call mapx(nx,ny,1,fna_fcor(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fna_fcor(:,:,1,1,is),work)
+        call mapx(nx,ny,1,fna_he(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fna_he(:,:,1,1,is),work)
         if (drift_style.eq.1) then
           call mapx(nx,ny,1,uadia(:,:,0,is),work)
           call mapy(nx,ny,1,uadia(:,:,1,is),work)
@@ -913,59 +918,59 @@ c
         end if
       enddo
       do is=0,ns_ext-1
-        call mapx(nx,ny,1,fa_ext(:,:,0,is),work)
-        call mapy(nx,ny,1,fa_ext(:,:,1,is),work)
+        call mapx(nx,ny,1,fa_ext(:,:,0,0,is),work)
+        call mapy(nx,ny,1,fa_ext(:,:,1,1,is),work)
       enddo
-      call mapx(nx,ny,1,fhe(:,:,0),work)
-      call mapy(nx,ny,1,fhe(:,:,1),work)
-      call mapx(nx,ny,1,fhi(:,:,0),work)
-      call mapy(nx,ny,1,fhi(:,:,1),work)
-      call mapx(nx,ny,1,fhi_ext(:,:,0),work)
-      call mapy(nx,ny,1,fhi_ext(:,:,1),work)
-      call mapx(nx,ny,1,fhet(:,:,0),work)
-      call mapy(nx,ny,1,fhet(:,:,1),work)
-      call mapx(nx,ny,1,fhit(:,:,0),work)
-      call mapy(nx,ny,1,fhit(:,:,1),work)
-      call mapx(nx,ny,1,fhj(:,:,0),work)
-      call mapy(nx,ny,1,fhj(:,:,1),work)
-      call mapx(nx,ny,1,fht(:,:,0),work)
-      call mapy(nx,ny,1,fht(:,:,1),work)
-      call mapx(nx,ny,1,fch(:,:,0),work)
-      call mapy(nx,ny,1,fch(:,:,1),work)
-      call mapx(nx,ny,1,fchdia(:,:,0),work)      ! cd
-      call mapy(nx,ny,1,fchdia(:,:,1),work)      ! dd
-      call mapx(nx,ny,1,fch_32(:,:,0),work)
-      call mapy(nx,ny,1,fch_32(:,:,1),work)
-      call mapx(nx,ny,1,fch_52(:,:,0),work)
-      call mapy(nx,ny,1,fch_52(:,:,1),work)
-      call mapx(nx,ny,1,fne_32(:,:,0),work)
-      call mapy(nx,ny,1,fne_32(:,:,1),work)
-      call mapx(nx,ny,1,fne_52(:,:,0),work)
-      call mapy(nx,ny,1,fne_52(:,:,1),work)
-      call mapx(nx,ny,1,fni_32(:,:,0),work)
-      call mapy(nx,ny,1,fni_32(:,:,1),work)
-      call mapx(nx,ny,1,fni_52(:,:,0),work)
-      call mapy(nx,ny,1,fni_52(:,:,1),work)
-      call mapx(nx,ny,1,fchvispar(:,:,0),work)
-      call mapy(nx,ny,1,fchvispar(:,:,1),work)
-      call mapx(nx,ny,1,fchvisper(:,:,0),work)
-      call mapy(nx,ny,1,fchvisper(:,:,1),work)
-      call mapx(nx,ny,1,fchin(:,:,0),work)
-      call mapy(nx,ny,1,fchin(:,:,1),work)
-      call mapx(nx,ny,1,fch_p(:,:,0),work)           !srv 10.06.09
-      call mapy(nx,ny,1,fch_p(:,:,1),work)           !srv 10.06.09
-      call mapx(nx,ny,1,fhe_mdf(:,:,0),work)
-      call mapx(nx,ny,1,fhe_mdf(:,:,1),work)
-      call mapx(nx,ny,1,fhi_mdf(:,:,0),work)
-      call mapx(nx,ny,1,fhi_mdf(:,:,1),work)
-      call mapx(nx,ny,1,fhePSch(:,:,0),work)
-      call mapx(nx,ny,1,fhePSch(:,:,1),work)
-      call mapx(nx,ny,1,fhiPSch(:,:,0),work)
-      call mapx(nx,ny,1,fhiPSch(:,:,1),work)
-      call mapx(nx,ny,1,fchvisq(:,:,0),work)
-      call mapx(nx,ny,1,fchvisq(:,:,1),work)
-      call mapx(nx,ny,1,fchinert(:,:,0),work)
-      call mapx(nx,ny,1,fchinert(:,:,1),work)
+      call mapx(nx,ny,1,fhe(:,:,0,0),work)
+      call mapy(nx,ny,1,fhe(:,:,1,1),work)
+      call mapx(nx,ny,1,fhi(:,:,0,0),work)
+      call mapy(nx,ny,1,fhi(:,:,1,1),work)
+      call mapx(nx,ny,1,fhi_ext(:,:,0,0),work)
+      call mapy(nx,ny,1,fhi_ext(:,:,1,1),work)
+      call mapx(nx,ny,1,fhet(:,:,0,0),work)
+      call mapy(nx,ny,1,fhet(:,:,1,1),work)
+      call mapx(nx,ny,1,fhit(:,:,0,0),work)
+      call mapy(nx,ny,1,fhit(:,:,1,1),work)
+      call mapx(nx,ny,1,fhj(:,:,0,0),work)
+      call mapy(nx,ny,1,fhj(:,:,1,1),work)
+      call mapx(nx,ny,1,fht(:,:,0,0),work)
+      call mapy(nx,ny,1,fht(:,:,1,1),work)
+      call mapx(nx,ny,1,fch(:,:,0,0),work)
+      call mapy(nx,ny,1,fch(:,:,1,1),work)
+      call mapx(nx,ny,1,fchdia(:,:,0,0),work)      ! cd
+      call mapy(nx,ny,1,fchdia(:,:,1,1),work)      ! dd
+      call mapx(nx,ny,1,fch_32(:,:,0,0),work)
+      call mapy(nx,ny,1,fch_32(:,:,1,1),work)
+      call mapx(nx,ny,1,fch_52(:,:,0,0),work)
+      call mapy(nx,ny,1,fch_52(:,:,1,1),work)
+      call mapx(nx,ny,1,fne_32(:,:,0,0),work)
+      call mapy(nx,ny,1,fne_32(:,:,1,1),work)
+      call mapx(nx,ny,1,fne_52(:,:,0,0),work)
+      call mapy(nx,ny,1,fne_52(:,:,1,1),work)
+      call mapx(nx,ny,1,fni_32(:,:,0,0),work)
+      call mapy(nx,ny,1,fni_32(:,:,1,1),work)
+      call mapx(nx,ny,1,fni_52(:,:,0,0),work)
+      call mapy(nx,ny,1,fni_52(:,:,1,1),work)
+      call mapx(nx,ny,1,fchvispar(:,:,0,0),work)
+      call mapy(nx,ny,1,fchvispar(:,:,1,1),work)
+      call mapx(nx,ny,1,fchvisper(:,:,0,0),work)
+      call mapy(nx,ny,1,fchvisper(:,:,1,1),work)
+      call mapx(nx,ny,1,fchin(:,:,0,0),work)
+      call mapy(nx,ny,1,fchin(:,:,1,1),work)
+      call mapx(nx,ny,1,fch_p(:,:,0,0),work)           !srv 10.06.09
+      call mapy(nx,ny,1,fch_p(:,:,1,1),work)           !srv 10.06.09
+      call mapx(nx,ny,1,fhe_mdf(:,:,0,0),work)
+      call mapx(nx,ny,1,fhe_mdf(:,:,1,1),work)
+      call mapx(nx,ny,1,fhi_mdf(:,:,0,0),work)
+      call mapx(nx,ny,1,fhi_mdf(:,:,1,1),work)
+      call mapx(nx,ny,1,fhePSch(:,:,0,0),work)
+      call mapx(nx,ny,1,fhePSch(:,:,1,1),work)
+      call mapx(nx,ny,1,fhiPSch(:,:,0,0),work)
+      call mapx(nx,ny,1,fhiPSch(:,:,1,1),work)
+      call mapx(nx,ny,1,fchvisq(:,:,0,0),work)
+      call mapx(nx,ny,1,fchvisq(:,:,1,1),work)
+      call mapx(nx,ny,1,fchinert(:,:,0,0),work)
+      call mapx(nx,ny,1,fchinert(:,:,1,1),work)
       if (drift_style.eq.1) then
         call mapx(nx,ny,1,veecrb(:,:,0),work)
         call mapx(nx,ny,1,veecrb(:,:,1),work)
@@ -1256,32 +1261,32 @@ c
       call xertst (0.le.neo_ic .and. neo_ic.le.4,
      . 'faulty parameter neoclassical_ic')
       set_resignore_regions_to_zero=.false.
-      ue(:,:)=-fch_p(:,:,0)/pbs(:,:,0)/qe       !srv 10.06.09
+      ue(:,:)=-fch_p(:,:,0,0)/pbs(:,:,0)/qe       !srv 10.06.09
       do is=0,ns-1
         do iy=-1,ny
           do ix=-1,nx
-            vv(ix,iy,is)=fna(ix,iy,1,is)/na(ix,iy,is)/gs(ix,iy,1)
+            vv(ix,iy,is)=fna(ix,iy,1,1,is)/na(ix,iy,is)/gs(ix,iy,1)
             up(ix,iy,is)=
-     .       fna(ix,iy,0,is)/na(ix,iy,is)/gs(ix,iy,0)/qz(ix,iy,1)
+     .       fna(ix,iy,0,0,is)/na(ix,iy,is)/gs(ix,iy,0)/qz(ix,iy,1)
             ue(ix,iy)=ue(ix,iy)+rza(ix,iy,is)*ua(ix,iy,is)*na(ix,iy,is)
-            fnax(ix,iy,is)=fna(ix,iy,0,is)
-            fmox(ix,iy,is)=fmo(ix,iy,0,is)
-            fhmx(ix,iy,is)=fhm(ix,iy,0,is)
-            fhpx(ix,iy,is)=fhp(ix,iy,0,is)
+            fnax(ix,iy,is)=fna(ix,iy,0,0,is)
+            fmox(ix,iy,is)=fmo(ix,iy,0,0,is)
+            fhmx(ix,iy,is)=fhm(ix,iy,0,0,is)
+            fhpx(ix,iy,is)=fhp(ix,iy,0,0,is)
             arrowx(ix,iy,is)=up(ix,iy,is)
-            fnay(ix,iy,is)=fna(ix,iy,1,is)
-            fmoy(ix,iy,is)=fmo(ix,iy,1,is)
-            fhmy(ix,iy,is)=fhm(ix,iy,1,is)
-            fhpy(ix,iy,is)=fhp(ix,iy,1,is)
+            fnay(ix,iy,is)=fna(ix,iy,1,1,is)
+            fmoy(ix,iy,is)=fmo(ix,iy,1,1,is)
+            fhmy(ix,iy,is)=fhm(ix,iy,1,1,is)
+            fhpy(ix,iy,is)=fhp(ix,iy,1,1,is)
             arrowy(ix,iy,is)=vv(ix,iy,is)
             uutraj(ix,iy,is)=ua(ix,iy,is)
             vvtraj(ix,iy,is)=vv(ix,iy,is)
-            cvsa_cl_x(ix,iy,is)=cvsa_cl(ix,iy,0,is)
-            cvsa_cl_y(ix,iy,is)=cvsa_cl(ix,iy,1,is)
-            fllim0fna_x(ix,iy,is)=fllim0fna(ix,iy,0,is)
-            fllim0fna_y(ix,iy,is)=fllim0fna(ix,iy,1,is)
-            fllim0fhi_x(ix,iy,is)=fllim0fhi(ix,iy,0,is)
-            fllim0fhi_y(ix,iy,is)=fllim0fhi(ix,iy,1,is)
+            cvsa_cl_x(ix,iy,is)=cvsa_cl(ix,iy,0,0,is)
+            cvsa_cl_y(ix,iy,is)=cvsa_cl(ix,iy,1,1,is)
+            fllim0fna_x(ix,iy,is)=fllim0fna(ix,iy,0,0,is)
+            fllim0fna_y(ix,iy,is)=fllim0fna(ix,iy,1,1,is)
+            fllim0fhi_x(ix,iy,is)=fllim0fhi(ix,iy,0,0,is)
+            fllim0fhi_y(ix,iy,is)=fllim0fhi(ix,iy,1,1,is)
           enddo
         enddo
       enddo
@@ -1675,35 +1680,35 @@ c
         case('fhex')
           description='Poloidal electron energy flux (W)'
           nz=1
-          call copy(fhe(:,:,0),1.0_R8,nz,textbl)
+          call copy(fhe(:,:,0,0),1.0_R8,nz,textbl)
         case('fhey')
           description='Radial electron energy flux (W)'
           nz=1
-          call copy(fhe(:,:,1),1.0_R8,nz,textbl)
+          call copy(fhe(:,:,1,1),1.0_R8,nz,textbl)
         case('fhetx')
           description='Poloidal electron energy flux [fhetx] (W)'
           nz=1
-          call copy(fhet(:,:,0),1.0_R8,nz,textbl)
+          call copy(fhet(:,:,0,0),1.0_R8,nz,textbl)
         case('fhety')
         description='Radial electron energy flux [fhety] (W)'
           nz=1
-          call copy(fhet(:,:,1),1.0_R8,nz,textbl)
+          call copy(fhet(:,:,1,1),1.0_R8,nz,textbl)
         case('fhix')
           description='Poloidal ion energy flux (W)'
           nz=1
-          call copy(fhi(:,:,0),1.0_R8,nz,textbl)
+          call copy(fhi(:,:,0,0),1.0_R8,nz,textbl)
         case('fhiy')
           description='Radial ion energy flux (W)'
           nz=1
-          call copy(fhi(:,:,1),1.0_R8,nz,textbl)
+          call copy(fhi(:,:,1,1),1.0_R8,nz,textbl)
         case('fhitx')
           description='Poloidal ion energy flux [fhitx] (W)'
           nz=1
-          call copy(fhit(:,:,0),1.0_R8,nz,textbl)
+          call copy(fhit(:,:,0,0),1.0_R8,nz,textbl)
         case('fhity')
           description='Radial ion energy flux [fhity] (W)'
           nz=1
-          call copy(fhit(:,:,1),1.0_R8,nz,textbl)
+          call copy(fhit(:,:,1,1),1.0_R8,nz,textbl)
          case('fhmx')
           description='Poloidal parallel kinetic energy flux (W)'
           nz=ns
@@ -1723,17 +1728,17 @@ c
         case('fhjx')
           description='Poloidal electrostatic energy flux (W)'
           nz=1
-          call copy(fhj(:,:,0),1.0_R8,nz,textbl)
+          call copy(fhj(:,:,0,0),1.0_R8,nz,textbl)
         case('fhjy')
           description='Radial electrostatic energy flux (W)'
           nz=1
-          call copy(fhj(:,:,1),1.0_R8,nz,textbl)
+          call copy(fhj(:,:,1,1),1.0_R8,nz,textbl)
          case('fhtx')
           description='Poloidal total energy flux (W)'
           nz=1
-          fhtx(:,:)=fht(:,:,0)+fhi_ext(:,:,0)
+          fhtx(:,:)=fht(:,:,0,0)+fhi_ext(:,:,0,0)
 	  do is=0,ns_ext-1
-	    fhtx(:,:)=fhtx(:,:)+fa_ext(:,:,0,is)*
+	    fhtx(:,:)=fhtx(:,:)+fa_ext(:,:,0,0,is)*
      .	     (pt_ext(:,:,is)*ev+
      .	     (0.5_R8*am_ext(is)*mp*ua_ext(:,:,is)**2+ta_ext(:,:,is))*
      .       (1.0_R8-BoRiS))
@@ -1742,9 +1747,9 @@ c
         case('fhty')
           description='Radial total energy flux (W)'
           nz=1
-          fhty(:,:)=fht(:,:,1)+fhi_ext(:,:,1)
+          fhty(:,:)=fht(:,:,1,1)+fhi_ext(:,:,1,1)
           do is=0,ns_ext-1
-            fhty(:,:)=fhty(:,:)+fa_ext(:,:,1,is)*
+            fhty(:,:)=fhty(:,:)+fa_ext(:,:,1,1,is)*
      .       (pt_ext(:,:,is)*ev+
      .       (0.5_R8*am_ext(is)*mp*ua_ext(:,:,is)**2+ta_ext(:,:,is))*
      .       (1.0_R8-BoRiS))
@@ -2051,17 +2056,18 @@ c
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              fetx(ix,iy)=fhe(ix,iy,0)+fhi(ix,iy,0)+fhi_ext(ix,iy,0)
+              fetx(ix,iy)=fhe(ix,iy,0,0)+fhi(ix,iy,0,0)
+     &                                  +fhi_ext(ix,iy,0,0)
               do is=0,ns-1
                 fetx(ix,iy)=fetx(ix,iy)+
-     .           rpt(ix,iy,is)*ev*fna(ix,iy,0,is)+
-     1           fhm(ix,iy,0,is)*(1.0_R8-BoRiS)
+     .           rpt(ix,iy,is)*ev*fna(ix,iy,0,0,is)+
+     1           fhm(ix,iy,0,0,is)*(1.0_R8-BoRiS)
               end do
               do is=0,ns_ext-1
                 fetx(ix,iy)=fetx(ix,iy)+
-     .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,0,is)+
+     .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,0,0,is)+
      .           0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2*
-     .           fa_ext(ix,iy,0,is)*(1.0_R8-BoRiS)
+     .           fa_ext(ix,iy,0,0,is)*(1.0_R8-BoRiS)
               end do
             end do
           end do
@@ -2071,17 +2077,18 @@ c
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              fety(ix,iy)=fhe(ix,iy,1)+fhi(ix,iy,1)+fhi_ext(ix,iy,1)
+              fety(ix,iy)=fhe(ix,iy,1,1)+fhi(ix,iy,1,1)
+     1                                  +fhi_ext(ix,iy,1,1)
               do is=0,ns-1
                 fety(ix,iy)=fety(ix,iy)+
-     1           rpt(ix,iy,is)*ev*fna(ix,iy,1,is)+
-     1           fhm(ix,iy,1,is)*(1.0_R8-BoRiS)
+     1           rpt(ix,iy,is)*ev*fna(ix,iy,1,1,is)+
+     1           fhm(ix,iy,1,1,is)*(1.0_R8-BoRiS)
               end do
               do is=0,ns_ext-1
                 fety(ix,iy)=fety(ix,iy)+
-     .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,1,is)+
+     .           pt_ext(ix,iy,is)*ev*fa_ext(ix,iy,1,1,is)+
      .           0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2*
-     .           fa_ext(ix,iy,1,is)*(1.0_R8-BoRiS)
+     .           fa_ext(ix,iy,1,1,is)*(1.0_R8-BoRiS)
               end do
             end do
           end do
@@ -2218,7 +2225,7 @@ c
           do is=0,ns-1
             do iy=-1,ny
               do ix=-1,nx
-                mach(ix,iy,is)=fna(ix,iy,0,is)*am(is)*mp
+                mach(ix,iy,is)=fna(ix,iy,0,0,is)*am(is)*mp
               end do
             end do
           end do
@@ -2229,7 +2236,7 @@ c
           do is=0,ns-1
             do iy=-1,ny
               do ix=-1,nx
-                mach(ix,iy,is)=fna(ix,iy,1,is)*am(is)*mp
+                mach(ix,iy,is)=fna(ix,iy,1,1,is)*am(is)*mp
               end do
             end do
           end do
@@ -2531,7 +2538,7 @@ c
                 if (ix1.ne.-2) then
                   mach(ix,iy,is)=-0.5_R8*
      1             abs(wbbl(ix,iy,0))/wbbl(ix,iy,3)*
-     2             (gs(ix1,iy,0)+gs(ix,iy,0))/2.0_R8*qc(ix,iy)*
+     2             (gs(ix1,iy,0)+gs(ix,iy,0))/2.0_R8*qc(ix,iy,0)*
      2             (na(ix1,iy,is)*ti(ix1,iy)-na(ix,iy,is)*ti(ix,iy))
                 else
                   mach(ix,iy,is)=0.0_R8
@@ -3283,15 +3290,15 @@ c     assumes that bb is OK for 1d cases
         case ('fchp')
           description='Parallel current (A)'
           nz=1
-          call copy(fch_p(:,:,0),1.0_R8,nz,textbl)
+          call copy(fch_p(:,:,0,0),1.0_R8,nz,textbl)
         case ('fchx')
           description='Poloidal current (A)'
           nz=1
-          call copy(fch(:,:,0),1.0_R8,nz,textbl)
+          call copy(fch(:,:,0,0),1.0_R8,nz,textbl)
         case ('fchy')
           description='Radial current (A)'
           nz=1
-          call copy(fch(:,:,1),1.0_R8,nz,textbl)
+          call copy(fch(:,:,1,1),1.0_R8,nz,textbl)
         case ('ud')
           description='pol comp of the ' //
      *          'drift velocity [uadia.x] (m.s^{-1})'
@@ -3363,11 +3370,11 @@ c     assumes that bb is OK for 1d cases
         case ('cd')
           description='fchdia.x'
           nz=1
-          call copy(fchdia(:,:,0),1.0_R8,nz,textbl)
+          call copy(fchdia(:,:,0,0),1.0_R8,nz,textbl)
         case ('dd')
           description='fchdia.y'
           nz=1
-          call copy(fchdia(:,:,1),1.0_R8,nz,textbl)
+          call copy(fchdia(:,:,1,1),1.0_R8,nz,textbl)
         case ('niso')
           description='Isolating region'
           nz=1
@@ -3743,205 +3750,205 @@ c     assumes that bb is OK for 1d cases
         case ('fnax32')
           description='Convective poloidal particle flux (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fna_32(:,:,0,0:ns-1)
+          mach(:,:,0:ns-1)=fna_32(:,:,0,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnay32')
           description='Convective radial particle flux (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fna_32(:,:,1,0:ns-1)
+          mach(:,:,0:ns-1)=fna_32(:,:,1,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnax52')
           description='Conductive poloidal particle flux (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fna_52(:,:,0,0:ns-1)
+          mach(:,:,0:ns-1)=fna_52(:,:,0,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnay52')
           description='Conductive radial particle flux (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fna_52(:,:,1,0:ns-1)
+          mach(:,:,0:ns-1)=fna_52(:,:,1,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnaxnodr')
           description='Poloidal particle flux without drifts (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fna_nodrift(:,:,0,0:ns-1)
+          mach(:,:,0:ns-1)=fna_nodrift(:,:,0,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnaynodr')
           description='Radial particle flux without drifts (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fna_nodrift(:,:,1,0:ns-1)
+          mach(:,:,0:ns-1)=fna_nodrift(:,:,1,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnix32')
           description='Convective poloidal total ion flux (s^{-1})'
           nz=1
-          call copy(fni_32(:,:,0),1.0_R8,nz,textbl)
+          call copy(fni_32(:,:,0,0),1.0_R8,nz,textbl)
         case ('fniy32')
           description='Convective radial total ion flux (s^{-1})'
           nz=1
-          call copy(fni_32(:,:,1),1.0_R8,nz,textbl)
+          call copy(fni_32(:,:,1,1),1.0_R8,nz,textbl)
         case ('fnix52')
           description='Conductive poloidal total ion flux (s^{-1})'
           nz=1
-          call copy(fni_52(:,:,0),1.0_R8,nz,textbl)
+          call copy(fni_52(:,:,0,0),1.0_R8,nz,textbl)
         case ('fniy52')
           description='Conductive radial total ion flux (s^{-1})'
           nz=1
-          call copy(fni_52(:,:,1),1.0_R8,nz,textbl)
+          call copy(fni_52(:,:,1,1),1.0_R8,nz,textbl)
         case ('fnex32')
           description='Convective poloidal electron flux (s^{-1})'
           nz=1
-          call copy(fne_32(:,:,0),1.0_R8,nz,textbl)
+          call copy(fne_32(:,:,0,0),1.0_R8,nz,textbl)
         case ('fney32')
           description='Convective radial electron flux (s^{-1})'
           nz=1
-          call copy(fne_32(:,:,1),1.0_R8,nz,textbl)
+          call copy(fne_32(:,:,1,1),1.0_R8,nz,textbl)
         case ('fnex52')
           description='Conductive poloidal electron flux (s^{-1})'
           nz=1
-          call copy(fne_52(:,:,0),1.0_R8,nz,textbl)
+          call copy(fne_52(:,:,0,0),1.0_R8,nz,textbl)
         case ('fney52')
           description='Conductive radial electron flux (s^{-1})'
           nz=1
-          call copy(fne_52(:,:,1),1.0_R8,nz,textbl)
+          call copy(fne_52(:,:,1,1),1.0_R8,nz,textbl)
         case ('fchx32')
           description='Convective poloidal current (A)'
           nz=1
-          call copy(fch_32(:,:,0),1.0_R8,nz,textbl)
+          call copy(fch_32(:,:,0,0),1.0_R8,nz,textbl)
         case ('fchy32')
           description='Convective radial current (A)'
           nz=1
-          call copy(fch_32(:,:,1),1.0_R8,nz,textbl)
+          call copy(fch_32(:,:,1,1),1.0_R8,nz,textbl)
         case ('fchx52')
           description='Conductive poloidal current (A)'
           nz=1
-          call copy(fch_52(:,:,0),1.0_R8,nz,textbl)
+          call copy(fch_52(:,:,0,0),1.0_R8,nz,textbl)
         case ('fchy52')
           description='Conductive radial current (A)'
           nz=1
-          call copy(fch_52(:,:,1),1.0_R8,nz,textbl)
+          call copy(fch_52(:,:,1,1),1.0_R8,nz,textbl)
         case ('fchxvspa')
           description='Pol comp of fchvispar (A)'
           nz=1
-          call copy(fchvispar(:,:,0),1.0_R8,nz,textbl)
+          call copy(fchvispar(:,:,0,0),1.0_R8,nz,textbl)
         case ('fchyvspa')
           description='Rad comp of fchvispar (A)'
           nz=1
-          call copy(fchvispar(:,:,1),1.0_R8,nz,textbl)
+          call copy(fchvispar(:,:,1,1),1.0_R8,nz,textbl)
         case ('fchxvspe')
           description='Pol comp of fchvisper (A)'
           nz=1
-          call copy(fchvisper(:,:,0),1.0_R8,nz,textbl)
+          call copy(fchvisper(:,:,0,0),1.0_R8,nz,textbl)
         case ('fchyvspe')
           description='Rad comp of fchvisper (A)'
           nz=1
-          call copy(fchvisper(:,:,1),1.0_R8,nz,textbl)
+          call copy(fchvisper(:,:,1,1),1.0_R8,nz,textbl)
         case ('fchxn')
           description='Pol comp of fchin (A)'
           nz=1
-          call copy(fchin(:,:,0),1.0_R8,nz,textbl)
+          call copy(fchin(:,:,0,0),1.0_R8,nz,textbl)
         case ('fchyn')
           description='Rad comp of fchin (A)'
           nz=1
-          call copy(fchin(:,:,1),1.0_R8,nz,textbl)
+          call copy(fchin(:,:,1,1),1.0_R8,nz,textbl)
         case ('fnaxmdf')
           description='Modified poloidal particle flux (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fna_mdf(:,:,0,0:ns-1)
+          mach(:,:,0:ns-1)=fna_mdf(:,:,0,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnaymdf')
           description='Modified radial particle flux (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fna_mdf(:,:,1,0:ns-1)
+          mach(:,:,0:ns-1)=fna_mdf(:,:,1,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fhexmdf')
           description='Modified poloidal electron heat flux (W)'
           nz=1
-          call copy(fhe_mdf(:,:,0),1.0_R8,nz,textbl)
+          call copy(fhe_mdf(:,:,0,0),1.0_R8,nz,textbl)
         case ('fheymdf')
           description='Modified radial electron heat flux (W)'
           nz=1
-          call copy(fhe_mdf(:,:,1),1.0_R8,nz,textbl)
+          call copy(fhe_mdf(:,:,1,1),1.0_R8,nz,textbl)
         case ('fhixmdf')
           description='Modified poloidal ion heat flux (W)'
           nz=1
-          call copy(fhi_mdf(:,:,0),1.0_R8,nz,textbl)
+          call copy(fhi_mdf(:,:,0,0),1.0_R8,nz,textbl)
         case ('fhiymdf')
           description='Modified radial ion heat flux (W)'
           nz=1
-          call copy(fhi_mdf(:,:,1),1.0_R8,nz,textbl)
+          call copy(fhi_mdf(:,:,1,1),1.0_R8,nz,textbl)
         case ('fhexps')
           description=
      .     'Pfirsch-Schlueter poloidal electron heat flux (W)'
           nz=1
-          call copy(fhePSch(:,:,0),1.0_R8,nz,textbl)
+          call copy(fhePSch(:,:,0,0),1.0_R8,nz,textbl)
         case ('fheyps')
           description=
      .     'Pfirsch-Schlueter radial electron heat flux (W)'
           nz=1
-          call copy(fhePSch(:,:,1),1.0_R8,nz,textbl)
+          call copy(fhePSch(:,:,1,1),1.0_R8,nz,textbl)
         case ('fhixps')
           description='Pfirsch-Schlueter poloidal ion heat flux (W)'
           nz=1
-          call copy(fhiPSch(:,:,0),1.0_R8,nz,textbl)
+          call copy(fhiPSch(:,:,0,0),1.0_R8,nz,textbl)
         case ('fhiyps')
           description='Pfirsch-Schlueter radial ion heat flux (W)'
           nz=1
-          call copy(fhiPSch(:,:,1),1.0_R8,nz,textbl)
+          call copy(fhiPSch(:,:,1,1),1.0_R8,nz,textbl)
         case ('fnaxps')
           description=
      .     'Pfirsch-Schlueter poloidal particle flux (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fnaPSch(:,:,0,0:ns-1)
+          mach(:,:,0:ns-1)=fnaPSch(:,:,0,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnayps')
           description=
      .     'Pfirsch-Schlueter radial particle flux (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fnaPSch(:,:,1,0:ns-1)
+          mach(:,:,0:ns-1)=fnaPSch(:,:,1,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnaxfcor')
           description=
      .     'Poloidal particle flux with Coriolis term (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fna_fcor(:,:,0,0:ns-1)
+          mach(:,:,0:ns-1)=fna_fcor(:,:,0,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnayfcor')
           description=
      .     'Radial particle flux with Coriolis term (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fna_fcor(:,:,1,0:ns-1)
+          mach(:,:,0:ns-1)=fna_fcor(:,:,1,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnaxhe')
           description=
      .     'Poloidal particle flux for heat equations (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fna_he(:,:,0,0:ns-1)
+          mach(:,:,0:ns-1)=fna_he(:,:,0,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fnayhe')
           description=
      .     'Radial particle flux for heat equations (s^{-1})'
           nz=ns
-          mach(:,:,0:ns-1)=fna_he(:,:,1,0:ns-1)
+          mach(:,:,0:ns-1)=fna_he(:,:,1,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('fchxvisq')
           description=
      .     'Poloidal current due to heat flux viscosity tensor (A)'
           nz=1
-          call copy(fchvisq(:,:,0),1.0_R8,nz,textbl)
+          call copy(fchvisq(:,:,0,0),1.0_R8,nz,textbl)
         case ('fchyvisq')
           description=
      .     'Radial current due to heat flux viscosity tensor (A)'
           nz=1
-          call copy(fchvisq(:,:,1),1.0_R8,nz,textbl)
+          call copy(fchvisq(:,:,1,1),1.0_R8,nz,textbl)
         case ('fchxinrt')
           description=
      .     'Poloidal current due to inertia and gyroviscosity (A)'
           nz=1
-          call copy(fchinert(:,:,0),1.0_R8,nz,textbl)
+          call copy(fchinert(:,:,0,0),1.0_R8,nz,textbl)
         case ('fchyinrt')
           description=
      .     'Radial current due to inertia and gyroviscosity (A)'
           nz=1
-          call copy(fchinert(:,:,1),1.0_R8,nz,textbl)
+          call copy(fchinert(:,:,1,1),1.0_R8,nz,textbl)
 *    neoclassical part                                               !cjk
         case ('dnneo')
           description='Neoclassical particle diffusivity D_{n} ' //
@@ -4125,13 +4132,13 @@ c     assumes that bb is OK for 1d cases
           if(ns_ext.eq.0) return
           description='External species poloidal flux (#.s^{-1})'
           nz=ns_ext
-          mach(:,:,0:ns_ext-1)=fa_ext(:,:,0,0:ns_ext-1)
+          mach(:,:,0:ns_ext-1)=fa_ext(:,:,0,0,0:ns_ext-1)
           call copy(mach,1.0_R8,nz,text_ext)
         case ('fay_ext')
           if(ns_ext.eq.0) return
           description='External species radial flux (#.s^{-1})'
           nz=ns_ext
-          mach(:,:,0:ns_ext-1)=fa_ext(:,:,1,0:ns_ext-1)
+          mach(:,:,0:ns_ext-1)=fa_ext(:,:,1,1,0:ns_ext-1)
           call copy(mach,1.0_R8,nz,text_ext)
         case ('ne_ext')
           description=

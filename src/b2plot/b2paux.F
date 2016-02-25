@@ -184,8 +184,8 @@ c-----------------------------------------------------------------------
         do is=0,ns-1
           k=b2espcr(is)
           do iy=0,ny-1
-            hlp_pi(k)=hlp_pi(k)-fna(0,iy,0,is)
-            hlp_po(k)=hlp_po(k)+fna(nx,iy,0,is)
+            hlp_pi(k)=hlp_pi(k)-fna(0,iy,0,0,is)
+            hlp_po(k)=hlp_po(k)+fna(nx,iy,0,0,is)
           end do
         end do
         n=nspecies+2*(natmi+nmoli)+1

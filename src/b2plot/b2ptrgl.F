@@ -291,18 +291,18 @@ c
         IAS=IND+1
         do iy=lytg,ny-1 !{
           wnutrg(iy,j)=0.0_R8
-          wo=fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0)+fhi_ext(k+1-l,iy,0)
+          wo=fhe(k+1-l,iy,0,0)+fhi(k+1-l,iy,0,0)+fhi_ext(k+1-l,iy,0,0)
           do is=0,ns-1 !{
             if (ft44) then
-              wo=wo+fna(k+1-l,iy,0,is)*(rpt(k+l,iy,is)*ev
+              wo=wo+fna(k+1-l,iy,0,0,is)*(rpt(k+l,iy,is)*ev
      .           +(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(k+l,iy)))
 c carlis 31jan2017  added ti as suggested by sw in b2blne.F
             else
               if (is_neutral(is)) then
-                wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,is)
+                wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,0,is)
      .           *(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(k+l,iy))
               else
-                wo=wo+fna(k+1-l,iy,0,is)*(rpt(k+l,iy,is)*ev
+                wo=wo+fna(k+1-l,iy,0,0,is)*(rpt(k+l,iy,is)*ev
      .           +(1.0_R8-BoRiS)*(kinrgy(k+l,iy,is)+ti(k+l,iy)))
 c carlis 31jan2017  added ti as suggested by sw in b2blne.F
               endif
@@ -310,24 +310,24 @@ c carlis 31jan2017  added ti as suggested by sw in b2blne.F
           end do !}
           do is=0,ns_ext-1 !{
             if (ft44) then
-              wo=wo+fa_ext(k+1-l,iy,0,is)*(pt_ext(k+l,iy,is)*ev
+              wo=wo+fa_ext(k+1-l,iy,0,0,is)*(pt_ext(k+l,iy,is)*ev
      .           +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
      .             ua_ext(k+l,iy,is)**2+ta_ext(k+l,iy,is)))
 c carlis 31jan2017  added ta as suggested by sw in b2blne.F
             else
               if (is_ext_neutral(is)) then
-                wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,is)
+                wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,0,is)
      .           *(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
      .             ua_ext(k+l,iy,is)**2+ta_ext(k+l,iy,is))
               else
-                wo=wo+fa_ext(k+1-l,iy,0,is)*(pt_ext(k+l,iy,is)*ev
+                wo=wo+fa_ext(k+1-l,iy,0,0,is)*(pt_ext(k+l,iy,is)*ev
      .           +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
      .             ua_ext(k+l,iy,is)**2+ta_ext(k+l,iy,is)))
 c carlis 31jan2017  added ta as suggested by sw in b2blne.F
               endif
             end if
           end do !}
-          wo=wo+(1.0_R8-BoRiS)*fne(k+1-l,iy,0)*te(k+l,iy)
+          wo=wo+(1.0_R8-BoRiS)*fne(k+1-l,iy,0,0)*te(k+l,iy)
 c carlis 31jan2017  added electron contribution as suggested by sw in b2blne.
 c        wo=-1.0e-6_R8*wo/s(iy,1)
           wo= wo/s(iy,j)
@@ -805,7 +805,7 @@ c          print *,'j,ltrgpos = ',j,k  !###
               i1=eb2spcr(ia)+1
               i2=eb2spcr(ia)+nfluids(ia)
               do is=i1,i2
-                sjp(iy,j,ia)=sjp(iy,j,ia)+u*fna(k+1-l,iy,0,is)
+                sjp(iy,j,ia)=sjp(iy,j,ia)+u*fna(k+1-l,iy,0,0,is)
               end do
             end do
             if (ft44) then
@@ -815,7 +815,7 @@ c          print *,'j,ltrgpos = ',j,k  !###
               end do
             else
               do is=1,nspecies !loop on species according to B2.5
-                sja(iy,j,is)=u*fna(k+1-l,iy,0,eb2spcr(is))
+                sja(iy,j,is)=u*fna(k+1-l,iy,0,0,eb2spcr(is))
                 spa(iy,j,is)=na(k+l,iy,eb2spcr(is))*ti(k+l,iy)
               end do
             endif

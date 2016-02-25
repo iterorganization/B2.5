@@ -87,7 +87,7 @@
           endif
         enddo
       enddo
-      ve(:,:) = (ve(:,:)+fch_pi_c(:,:,0))/(bb(:,:,0)/bb(:,:,3))/qe      !srv 13.01.17
+      ve(:,:) = (ve(:,:)+fch_pi_c(:,:,0,0))/(bb(:,:,0)/bb(:,:,3))/qe    !srv 13.01.17
      &                                                    *prl_cur      !srv 21.12.15
       do is=0,ns-1
         ve(:,:)=ve(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)

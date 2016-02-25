@@ -6,7 +6,7 @@
       implicit none
       integer nx, ny, isb
       real (kind=R8) ::
-     *  cflmv, pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny), 
+     *  cflmv, pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny,0:1), 
      &  nb(-1:nx,-1:ny), tb(-1:nx,-1:ny),
      &  ub(-1:nx,-1:ny), cvsbx(-1:nx,-1:ny), cvsbxhz(-1:nx,-1:ny),   !srv 09.01.01
      &  fl(-1:nx,-1:ny)
@@ -55,7 +55,7 @@
      &     (nb(leftix(ix,iy),leftiy(ix,iy))*
      &      tb(leftix(ix,iy),leftiy(ix,iy))+
      &      nb(ix,iy)*tb(ix,iy))/2.0_R8  
-          if (area_fix.eq.2) qfl = qfl*qc(ix,iy) 
+          if (area_fix.eq.2) qfl = qfl*qc(ix,iy,0) 
           if (qfl.gt.0.0_R8) then 
             tfl = 1.0_R8 + abs(qcl/qfl)
           else
@@ -85,7 +85,7 @@ c       fl(ix,iy)=1.0d0
      &          (nb(leftix(ix,iy),leftiy(ix,iy))*
      &           tb(leftix(ix,iy),leftiy(ix,iy))+
      &           nb(ix,iy)*tb(ix,iy))/2.0_R8  
-           if (area_fix.eq.2) qfl = qfl*qc(ix,iy) 
+           if (area_fix.eq.2) qfl = qfl*qc(ix,iy,0) 
            if (qfl.gt.0.0_R8) then 
              tfl = 1.0_R8 + abs(qcl/qfl)
            else

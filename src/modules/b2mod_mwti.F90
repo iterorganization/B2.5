@@ -222,23 +222,23 @@ contains
       ! Poloidal contact areas
       open(99,file='dsLP')
       do iy=-1,ny
-        if(region(-1,iy,0).ne.0) write(99,*) gs(rightix(-1,iy),rightiy(-1,iy),0)*qc(rightix(-1,iy),rightiy(-1,iy))
+        if(region(-1,iy,0).ne.0) write(99,*) gs(rightix(-1,iy),rightiy(-1,iy),0)*qc(rightix(-1,iy),rightiy(-1,iy),0)
       enddo
       close(99)
       open(99,file='dsRP')
       do iy=-1,ny
-        if(region(nx,iy,0).ne.0) write(99,*) gs(nx,iy,0)*qc(nx,iy)
+        if(region(nx,iy,0).ne.0) write(99,*) gs(nx,iy,0)*qc(nx,iy,0)
       enddo
       close(99)
       if (nnreg(0).eq.8) then
         open(99,file='dsTLP')
         do iy=iytlstrt,iytlend
-          write(99,*) gs(ixtl,iy,0)*qc(ixtl,iy)
+          write(99,*) gs(ixtl,iy,0)*qc(ixtl,iy,0)
         enddo
         close(99)
         open(99,file='dsTRP')
         do iy=iytrstrt,iytrend
-          write(99,*) gs(rightix(ixtr,iy),rightiy(ixtr,iy),0)*qc(rightix(ixtr,iy),rightiy(ixtr,iy))
+          write(99,*) gs(rightix(ixtr,iy),rightiy(ixtr,iy),0)*qc(rightix(ixtr,iy),rightiy(ixtr,iy),0)
         enddo
         close(99)
       endif
@@ -1024,12 +1024,12 @@ contains
     call rwcdf(rw,ncid,'te3dl',imap,te(-1+target_offset,iylstrt),iret)
     call rwcdf(rw,ncid,'ti3dl',imap,ti(-1+target_offset,iylstrt),iret)
     call rwcdf(rw,ncid,'po3dl',imap,po(-1+target_offset,iylstrt),iret)
-    call rwcdf(rw,ncid,'fn3dl',imap,fna(0,iylstrt,0,ismain),iret)
-    call rwcdf(rw,ncid,'fe3dl',imap,fhe(0,iylstrt,0),iret)
-    call rwcdf(rw,ncid,'fi3dl',imap,fhi(0,iylstrt,0),iret)
-    call rwcdf(rw,ncid,'fc3dl',imap,fch(0,iylstrt,0),iret)
-    call rwcdf(rw,ncid,'fl3dl',imap,fne(0,iylstrt,0),iret)
-    call rwcdf(rw,ncid,'fo3dl',imap,fni(0,iylstrt,0),iret)
+    call rwcdf(rw,ncid,'fn3dl',imap,fna(0,iylstrt,0,0,ismain),iret)
+    call rwcdf(rw,ncid,'fe3dl',imap,fhe(0,iylstrt,0,0),iret)
+    call rwcdf(rw,ncid,'fi3dl',imap,fhi(0,iylstrt,0,0),iret)
+    call rwcdf(rw,ncid,'fc3dl',imap,fch(0,iylstrt,0,0),iret)
+    call rwcdf(rw,ncid,'fl3dl',imap,fne(0,iylstrt,0,0),iret)
+    call rwcdf(rw,ncid,'fo3dl',imap,fni(0,iylstrt,0,0),iret)
     imap(1)=nx+2     ! i
     imap(2)=1
     call rwcdf(rw,ncid,'ne3di',imap,ne(jxi,iyistrt),iret)
@@ -1048,12 +1048,12 @@ contains
     call rwcdf(rw,ncid,'te3dr',imap,te(nx-target_offset,iyrstrt),iret)
     call rwcdf(rw,ncid,'ti3dr',imap,ti(nx-target_offset,iyrstrt),iret)
     call rwcdf(rw,ncid,'po3dr',imap,po(nx-target_offset,iyrstrt),iret)
-    call rwcdf(rw,ncid,'fn3dr',imap,fna(nx,iyrstrt,0,ismain),iret)
-    call rwcdf(rw,ncid,'fe3dr',imap,fhe(nx,iyrstrt,0),iret)
-    call rwcdf(rw,ncid,'fi3dr',imap,fhi(nx,iyrstrt,0),iret)
-    call rwcdf(rw,ncid,'fc3dr',imap,fch(nx,iyrstrt,0),iret)
-    call rwcdf(rw,ncid,'fl3dr',imap,fne(nx,iyrstrt,0),iret)
-    call rwcdf(rw,ncid,'fo3dr',imap,fni(nx,iyrstrt,0),iret)
+    call rwcdf(rw,ncid,'fn3dr',imap,fna(nx,iyrstrt,0,0,ismain),iret)
+    call rwcdf(rw,ncid,'fe3dr',imap,fhe(nx,iyrstrt,0,0),iret)
+    call rwcdf(rw,ncid,'fi3dr',imap,fhi(nx,iyrstrt,0,0),iret)
+    call rwcdf(rw,ncid,'fc3dr',imap,fch(nx,iyrstrt,0,0),iret)
+    call rwcdf(rw,ncid,'fl3dr',imap,fne(nx,iyrstrt,0,0),iret)
+    call rwcdf(rw,ncid,'fo3dr',imap,fni(nx,iyrstrt,0,0),iret)
     if (nnreg(0).ge.8) then
       imap(1)=nx+2     ! tr
       imap(2)=1
@@ -1061,24 +1061,24 @@ contains
       call rwcdf(rw,ncid,'te3dtr',imap,te(ixtr+target_offset,iytrstrt),iret)
       call rwcdf(rw,ncid,'ti3dtr',imap,ti(ixtr+target_offset,iytrstrt),iret)
       call rwcdf(rw,ncid,'po3dtr',imap,po(ixtr+target_offset,iytrstrt),iret)
-      call rwcdf(rw,ncid,'fn3dtr',imap,fna(ixtr+1,iytrstrt,0,ismain),iret)
-      call rwcdf(rw,ncid,'fe3dtr',imap,fhe(ixtr+1,iytrstrt,0),iret)
-      call rwcdf(rw,ncid,'fi3dtr',imap,fhi(ixtr+1,iytrstrt,0),iret)
-      call rwcdf(rw,ncid,'fc3dtr',imap,fch(ixtr+1,iytrstrt,0),iret)
-      call rwcdf(rw,ncid,'fl3dtr',imap,fne(ixtr+1,iytrstrt,0),iret)
-      call rwcdf(rw,ncid,'fo3dtr',imap,fni(ixtr+1,iytrstrt,0),iret)
+      call rwcdf(rw,ncid,'fn3dtr',imap,fna(ixtr+1,iytrstrt,0,0,ismain),iret)
+      call rwcdf(rw,ncid,'fe3dtr',imap,fhe(ixtr+1,iytrstrt,0,0),iret)
+      call rwcdf(rw,ncid,'fi3dtr',imap,fhi(ixtr+1,iytrstrt,0,0),iret)
+      call rwcdf(rw,ncid,'fc3dtr',imap,fch(ixtr+1,iytrstrt,0,0),iret)
+      call rwcdf(rw,ncid,'fl3dtr',imap,fne(ixtr+1,iytrstrt,0,0),iret)
+      call rwcdf(rw,ncid,'fo3dtr',imap,fni(ixtr+1,iytrstrt,0,0),iret)
       imap(1)=nx+2     ! tl
       imap(2)=1
       call rwcdf(rw,ncid,'ne3dtl',imap,ne(ixtl-target_offset,iytlstrt),iret)
       call rwcdf(rw,ncid,'te3dtl',imap,te(ixtl-target_offset,iytlstrt),iret)
       call rwcdf(rw,ncid,'ti3dtl',imap,ti(ixtl-target_offset,iytlstrt),iret)
       call rwcdf(rw,ncid,'po3dtl',imap,po(ixtl-target_offset,iytlstrt),iret)
-      call rwcdf(rw,ncid,'fn3dtl',imap,fna(ixtl,iytlstrt,0,ismain),iret)
-      call rwcdf(rw,ncid,'fe3dtl',imap,fhe(ixtl,iytlstrt,0),iret)
-      call rwcdf(rw,ncid,'fi3dtl',imap,fhi(ixtl,iytlstrt,0),iret)
-      call rwcdf(rw,ncid,'fc3dtl',imap,fch(ixtl,iytlstrt,0),iret)
-      call rwcdf(rw,ncid,'fl3dtl',imap,fne(ixtl,iytlstrt,0),iret)
-      call rwcdf(rw,ncid,'fo3dtl',imap,fni(ixtl,iytlstrt,0),iret)
+      call rwcdf(rw,ncid,'fn3dtl',imap,fna(ixtl,iytlstrt,0,0,ismain),iret)
+      call rwcdf(rw,ncid,'fe3dtl',imap,fhe(ixtl,iytlstrt,0,0),iret)
+      call rwcdf(rw,ncid,'fi3dtl',imap,fhi(ixtl,iytlstrt,0,0),iret)
+      call rwcdf(rw,ncid,'fc3dtl',imap,fch(ixtl,iytlstrt,0,0),iret)
+      call rwcdf(rw,ncid,'fl3dtl',imap,fne(ixtl,iytlstrt,0,0),iret)
+      call rwcdf(rw,ncid,'fo3dtl',imap,fni(ixtl,iytlstrt,0,0),iret)
     endif
     !
     imap(1)=1
@@ -1169,13 +1169,13 @@ contains
     call rwcdf(rw,ncid,'dp3di',imap,slice,iret)
     slice(-1:ny)=dpa0(jxa,-1:ny,ismain0)* (rza(jxa,-1:ny,ismain0)*te(jxa,-1:ny)+ti(jxa,-1:ny))
     call rwcdf(rw,ncid,'dp3da',imap,slice,iret)
-    slice(-1:ny)=fllim0fhi(jxi,-1:ny,1,ismain0)
+    slice(-1:ny)=fllim0fhi(jxi,-1:ny,1,1,ismain0)
     call rwcdf(rw,ncid,'lh3di',imap,slice,iret)
-    slice(-1:ny)=fllim0fhi(jxa,-1:ny,1,ismain0)
+    slice(-1:ny)=fllim0fhi(jxa,-1:ny,1,1,ismain0)
     call rwcdf(rw,ncid,'lh3da',imap,slice,iret)
-    slice(-1:ny)=fllim0fna(jxi,-1:ny,1,ismain0)
+    slice(-1:ny)=fllim0fna(jxi,-1:ny,1,1,ismain0)
     call rwcdf(rw,ncid,'ln3di',imap,slice,iret)
-    slice(-1:ny)=fllim0fna(jxa,-1:ny,1,ismain0)
+    slice(-1:ny)=fllim0fna(jxa,-1:ny,1,1,ismain0)
     call rwcdf(rw,ncid,'ln3da',imap,slice,iret)
     slice(-1:ny)=hce0(jxi,-1:ny)/ne(jxi,-1:ny)
     call rwcdf(rw,ncid,'ke3di',imap,slice,iret)
@@ -3189,23 +3189,23 @@ contains
     case default
       call xerrab('Unknown side in calc_fet')
     end select
-    if (present(fni0)) fni0 = fac_flux*fna(ix_flux,iy_flux,idir,ismain)
-    if (present(fee0)) fee0 = fac_flux*fhe(ix_flux,iy_flux,idir)
-    if (present(fei0)) fei0 = fac_flux*fhi(ix_flux,iy_flux,idir)
-    if (present(fch0)) fch0 = fac_flux*fch(ix_flux,iy_flux,idir)
-    fet = fac_flux*(fhe(ix_flux,iy_flux,idir) + fhi(ix_flux,iy_flux,idir) + fhi_ext(ix_flux,iy_flux,idir))
+    if (present(fni0)) fni0 = fac_flux*fna(ix_flux,iy_flux,idir,idir,ismain)
+    if (present(fee0)) fee0 = fac_flux*fhe(ix_flux,iy_flux,idir,idir)
+    if (present(fei0)) fei0 = fac_flux*fhi(ix_flux,iy_flux,idir,idir)
+    if (present(fch0)) fch0 = fac_flux*fch(ix_flux,iy_flux,idir,idir)
+    fet = fac_flux*(fhe(ix_flux,iy_flux,idir,idir) + fhi(ix_flux,iy_flux,idir,idir) + fhi_ext(ix_flux,iy_flux,idir,idir))
     tef = (te(ix_adj,iy_adj)*h(ix,iy)+te(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
     tif = (ti(ix_adj,iy_adj)*h(ix,iy)+ti(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
-    fet = fet + fac_flux*fne(ix_flux,iy_flux,idir)*tef*(1.0_R8-BoRiS)
+    fet = fet + fac_flux*fne(ix_flux,iy_flux,idir,idir)*tef*(1.0_R8-BoRiS)
     do is=0,ns-1
-      fet = fet + fac_flux*(fhm(ix_flux,iy_flux,idir,is)+tif)*(1.0_R8-BoRiS) + fac_flux*fhp(ix_flux,iy_flux,idir,is)
+      fet = fet + fac_flux*(fhm(ix_flux,iy_flux,idir,idir,is)+tif)*(1.0_R8-BoRiS) + fac_flux*fhp(ix_flux,iy_flux,idir,idir,is)
     enddo
     do is=0,ns_ext-1
       kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+ &
            ua_ext(ix_adj,iy_adj,is)**2*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
       rpttmp = (pt_ext(ix,iy,is)*h(ix_adj,iy_adj)+pt_ext(ix_adj,iy_adj,is)*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
       taf = (ta_ext(ix_adj,iy_adj,is)*h(ix,iy)+ta_ext(ix,iy,is)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
-      fet = fet + fac_flux*(rpttmp*ev + (kintmp+taf)*(1.0_R8-BoRiS))*fa_ext(ix_flux,iy_flux,idir,is)
+      fet = fet + fac_flux*(rpttmp*ev + (kintmp+taf)*(1.0_R8-BoRiS))*fa_ext(ix_flux,iy_flux,idir,idir,is)
     enddo
     if (present(pwr)) pwr = Abs(fet)/gs(ix_flux,iy_flux,idir)
   end subroutine calc_fet

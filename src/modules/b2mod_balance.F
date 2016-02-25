@@ -8,13 +8,13 @@
 *   ..Arrays for particle balance:
 *     Fluxes
       real (kind=R8), allocatable, save ::
-     *  fna_pinch(:,:,:,:),
-     *  fna_pll(:,:,:,:),
-     *  fna_drift(:,:,:,:),
-     *  fna_ch(:,:,:,:),
-     *  fna_nanom(:,:,:,:),
-     *  fna_panom(:,:,:,:),
-     *  fna_pschused(:,:,:,:),
+     *  fna_pinch(:,:,:,:,:),
+     *  fna_pll(:,:,:,:,:),
+     *  fna_drift(:,:,:,:,:),
+     *  fna_ch(:,:,:,:,:),
+     *  fna_nanom(:,:,:,:,:),
+     *  fna_panom(:,:,:,:,:),
+     *  fna_pschused(:,:,:,:,:),
 *     Sources
      *  b2stbr_phys_sna0to1(:,:,:,:),
      *  b2stbr_phys_sna_bal(:,:,:),
@@ -51,13 +51,13 @@
      *  b2srst_sna0to1(:,:,:,:),
      *  b2srst_sna_bal(:,:,:),
 *     Time-averaged quantities
-     *  fna_pinch_av(:,:,:,:),
-     *  fna_pll_av(:,:,:,:),
-     *  fna_drift_av(:,:,:,:),
-     *  fna_ch_av(:,:,:,:),
-     *  fna_nanom_av(:,:,:,:),
-     *  fna_panom_av(:,:,:,:),
-     *  fna_pschused_av(:,:,:,:),
+     *  fna_pinch_av(:,:,:,:,:),
+     *  fna_pll_av(:,:,:,:,:),
+     *  fna_drift_av(:,:,:,:,:),
+     *  fna_ch_av(:,:,:,:,:),
+     *  fna_nanom_av(:,:,:,:,:),
+     *  fna_panom_av(:,:,:,:,:),
+     *  fna_pschused_av(:,:,:,:,:),
      *  b2stbr_phys_sna_bal_av(:,:,:),
      *  b2stbr_bas_sna_bal_av(:,:,:),
      *  b2stbr_first_flight_sna_bal_av(:,:,:),
@@ -78,9 +78,9 @@
      *  resco_av(:,:,:),
 *   ..Arrays for momentum balance:
 *     Fluxes
-     *  fmo_flua(:,:,:,:),
-     *  fmo_cvsa(:,:,:,:),
-     *  fmo_b2nxfv(:,:,:,:),
+     *  fmo_flua(:,:,:,:,:),
+     *  fmo_cvsa(:,:,:,:,:),
+     *  fmo_b2nxfv(:,:,:,:,:),
 *     Sources
      *  b2stbr_phys_smo0to3(:,:,:,:),
      *  b2stbr_phys_smo_bal(:,:,:),
@@ -131,9 +131,9 @@
      *  b2sigp_pstat0to3(:,:,:,:),
      *  b2sigp_pstat_bal(:,:,:),
 *     Time-averaged quantities
-     *  fmo_flua_av(:,:,:,:),
-     *  fmo_cvsa_av(:,:,:,:),
-     *  fmo_b2nxfv_av(:,:,:,:),
+     *  fmo_flua_av(:,:,:,:,:),
+     *  fmo_cvsa_av(:,:,:,:,:),
+     *  fmo_b2nxfv_av(:,:,:,:,:),
      *  b2stbr_phys_smo_bal_av(:,:,:),
      *  b2stbr_bas_smo_bal_av(:,:,:),
      *  b2stbc_smo_bal_av(:,:,:),
@@ -161,14 +161,14 @@
      *  resmo_av(:,:,:),
 *   ..Arrays for electron heat balance:
 *     Fluxes
-     *  fhe_32(:,:,:),
-     *  fhe_52(:,:,:),
-     *  fhe_thermj(:,:,:),
-     *  fhe_cond(:,:,:),
-     *  fhe_dia(:,:,:),
-     *  fhe_ecrb(:,:,:),
-     *  fhe_strange(:,:,:),
-     *  fhe_pschused(:,:,:),
+     *  fhe_32(:,:,:,:),
+     *  fhe_52(:,:,:,:),
+     *  fhe_thermj(:,:,:,:),
+     *  fhe_cond(:,:,:,:),
+     *  fhe_dia(:,:,:,:),
+     *  fhe_ecrb(:,:,:,:),
+     *  fhe_strange(:,:,:,:),
+     *  fhe_pschused(:,:,:,:),
 *     Sources
      *  b2stbr_phys_she0to3(:,:,:),
      *  b2stbr_phys_she_bal(:,:),
@@ -208,14 +208,14 @@
      *  b2sihs_joule_bal(:,:),
      *  b2npht_shei_bal(:,:), !djm equipartition is not linearised
 *     Time-averaged quantities
-     *  fhe_32_av(:,:,:),
-     *  fhe_52_av(:,:,:),
-     *  fhe_thermj_av(:,:,:),
-     *  fhe_cond_av(:,:,:),
-     *  fhe_dia_av(:,:,:),
-     *  fhe_ecrb_av(:,:,:),
-     *  fhe_strange_av(:,:,:),
-     *  fhe_pschused_av(:,:,:),
+     *  fhe_32_av(:,:,:,:),
+     *  fhe_52_av(:,:,:,:),
+     *  fhe_thermj_av(:,:,:,:),
+     *  fhe_cond_av(:,:,:,:),
+     *  fhe_dia_av(:,:,:,:),
+     *  fhe_ecrb_av(:,:,:,:),
+     *  fhe_strange_av(:,:,:,:),
+     *  fhe_pschused_av(:,:,:,:),
      *  b2stbr_phys_she_bal_av(:,:),
      *  b2stbr_bas_she_bal_av(:,:),
      *  b2stbr_first_flight_she_bal_av(:,:),
@@ -238,19 +238,19 @@
      *  reshe_av(:,:),
 *   ..Arrays for ion heat balance:
 *     Fluxes
-     *  fhi_32(:,:,:),
-     *  fhi_52(:,:,:),
-     *  fhi_cond(:,:,:),
-     *  fhi_dia(:,:,:),
-     *  fhi_ecrb(:,:,:),
-     *  fhi_strange(:,:,:),
-     *  fhi_pschused(:,:,:),
-     *  fhi_inert(:,:,:),
-     *  fhi_vispar(:,:,:),
-     *  fhi_visper(:,:,:),
-     *  fhi_visq(:,:,:),
-     *  fhi_anml(:,:,:),
-     *  fhi_kevis(:,:,:),
+     *  fhi_32(:,:,:,:),
+     *  fhi_52(:,:,:,:),
+     *  fhi_cond(:,:,:,:),
+     *  fhi_dia(:,:,:,:),
+     *  fhi_ecrb(:,:,:,:),
+     *  fhi_strange(:,:,:,:),
+     *  fhi_pschused(:,:,:,:),
+     *  fhi_inert(:,:,:,:),
+     *  fhi_vispar(:,:,:,:),
+     *  fhi_visper(:,:,:,:),
+     *  fhi_visq(:,:,:,:),
+     *  fhi_anml(:,:,:,:),
+     *  fhi_kevis(:,:,:,:),
 *     Source
      *  b2stbr_phys_shi0to3(:,:,:),
      *  b2stbr_phys_shi_bal(:,:),
@@ -295,19 +295,19 @@
      *  b2sihs_fraa0to3(:,:,:),
      *  b2sihs_fraa_bal(:,:),
 *     Time-averaged quantities
-     *  fhi_32_av(:,:,:),
-     *  fhi_52_av(:,:,:),
-     *  fhi_cond_av(:,:,:),
-     *  fhi_dia_av(:,:,:),
-     *  fhi_ecrb_av(:,:,:),
-     *  fhi_strange_av(:,:,:),
-     *  fhi_pschused_av(:,:,:),
-     *  fhi_inert_av(:,:,:),
-     *  fhi_vispar_av(:,:,:),
-     *  fhi_visper_av(:,:,:),
-     *  fhi_visq_av(:,:,:),
-     *  fhi_anml_av(:,:,:),
-     *  fhi_kevis_av(:,:,:),
+     *  fhi_32_av(:,:,:,:),
+     *  fhi_52_av(:,:,:,:),
+     *  fhi_cond_av(:,:,:,:),
+     *  fhi_dia_av(:,:,:,:),
+     *  fhi_ecrb_av(:,:,:,:),
+     *  fhi_strange_av(:,:,:,:),
+     *  fhi_pschused_av(:,:,:,:),
+     *  fhi_inert_av(:,:,:,:),
+     *  fhi_vispar_av(:,:,:,:),
+     *  fhi_visper_av(:,:,:,:),
+     *  fhi_visq_av(:,:,:,:),
+     *  fhi_anml_av(:,:,:,:),
+     *  fhi_kevis_av(:,:,:,:),
      *  b2stbr_phys_shi_bal_av(:,:),
      *  b2stbr_bas_shi_bal_av(:,:),
      *  b2stbr_first_flight_shi_bal_av(:,:),
@@ -339,7 +339,7 @@
      *  ti_av(:,:),
      *  rpt_av(:,:,:),
      *  kinrgy_av(:,:,:),
-     *  fne_av(:,:,:),
+     *  fne_av(:,:,:,:),
      *  dab2_av(:,:,:,:),
      *  dmb2_av(:,:,:,:),
      *  tab2_av(:,:,:,:),
@@ -370,13 +370,13 @@
 
 *   ..Arrays for particle balance:
 *     Fluxes:
-      allocate(fna_pinch(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna_pll(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna_drift(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna_ch(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna_nanom(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna_panom(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna_pschused(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fna_pinch(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna_pll(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna_drift(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna_ch(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna_nanom(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna_panom(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna_pschused(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
 *     Sources
       allocate(b2stbr_phys_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(b2stbr_phys_sna_bal(-1:nxd,-1:nyd,0:nsd-1))
@@ -427,13 +427,13 @@
       b2srst_sna0to1=0.0_R8
       b2srst_sna_bal=0.0_R8
 *     Time-averaged quantities
-      allocate(fna_pinch_av(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna_pll_av(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna_drift_av(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna_ch_av(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna_nanom_av(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna_panom_av(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fna_pschused_av(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fna_pinch_av(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna_pll_av(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna_drift_av(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna_ch_av(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna_nanom_av(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna_panom_av(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fna_pschused_av(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(b2stbr_phys_sna_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2stbr_bas_sna_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2stbr_first_flight_sna_bal_av(-1:nxd,-1:nyd,0:nsd-1))
@@ -449,9 +449,9 @@
       allocate(resco_av(-1:nxd,-1:nyd,0:nsd-1))
 *   ..Arrays for momentum balance:
 *     Fluxes
-      allocate(fmo_flua(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fmo_cvsa(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fmo_b2nxfv(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fmo_flua(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fmo_cvsa(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fmo_b2nxfv(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
 *     Sources
       allocate(b2stbr_phys_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(b2stbr_phys_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
@@ -534,9 +534,9 @@
       b2sigp_pstat0to3=0.0_R8
       b2sigp_pstat_bal=0.0_R8
 *     Time-averaged quantities
-      allocate(fmo_flua_av(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fmo_cvsa_av(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(fmo_b2nxfv_av(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fmo_flua_av(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fmo_cvsa_av(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
+      allocate(fmo_b2nxfv_av(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(b2stbr_phys_smo_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2stbr_bas_smo_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2stbc_smo_bal_av(-1:nxd,-1:nyd,0:nsd-1))
@@ -560,14 +560,14 @@
       allocate(resmo_av(-1:nxd,-1:nyd,0:nsd-1))
 *   ..Arrays for electron heat balance:
 *     Fluxes
-      allocate(fhe_32(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_52(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_thermj(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_cond(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_dia(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_ecrb(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_strange(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_pschused(-1:nxd,-1:nyd,0:1))
+      allocate(fhe_32(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_52(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_thermj(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_cond(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_dia(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_ecrb(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_strange(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_pschused(-1:nxd,-1:nyd,0:1,0:1))
 *     Sources
       allocate(b2stbr_phys_she0to3(-1:nxd,-1:nyd,0:3))
       allocate(b2stbr_phys_she_bal(-1:nxd,-1:nyd))
@@ -628,14 +628,14 @@
       b2sihs_joule_bal=0.0_R8
       b2npht_shei_bal=0.0_R8
 *     Time-averaged quantities
-      allocate(fhe_32_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_52_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_thermj_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_cond_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_dia_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_ecrb_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_strange_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhe_pschused_av(-1:nxd,-1:nyd,0:1))
+      allocate(fhe_32_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_52_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_thermj_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_cond_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_dia_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_ecrb_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_strange_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhe_pschused_av(-1:nxd,-1:nyd,0:1,0:1))
       allocate(b2stbr_phys_she_bal_av(-1:nxd,-1:nyd))
       allocate(b2stbr_bas_she_bal_av(-1:nxd,-1:nyd))
       allocate(b2stbr_first_flight_she_bal_av(-1:nxd,-1:nyd))
@@ -654,19 +654,19 @@
       allocate(reshe_av(-1:nxd,-1:nyd))
 *   ..Arrays for ion heat balance:
 *     Fluxes
-      allocate(fhi_32(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_52(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_cond(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_dia(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_ecrb(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_strange(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_pschused(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_inert(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_vispar(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_visper(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_visq(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_anml(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_kevis(-1:nxd,-1:nyd,0:1))
+      allocate(fhi_32(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_52(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_cond(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_dia(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_ecrb(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_strange(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_pschused(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_inert(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_vispar(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_visper(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_visq(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_anml(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_kevis(-1:nxd,-1:nyd,0:1,0:1))
 *     Sources
       allocate(b2stbr_phys_shi0to3(-1:nxd,-1:nyd,0:3))
       allocate(b2stbr_phys_shi_bal(-1:nxd,-1:nyd))
@@ -737,19 +737,19 @@
       b2sihs_fraa0to3=0.0_R8
       b2sihs_fraa_bal=0.0_R8
 *     Time-averaged quantities
-      allocate(fhi_32_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_52_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_cond_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_dia_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_ecrb_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_strange_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_pschused_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_inert_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_vispar_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_visper_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_visq_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_anml_av(-1:nxd,-1:nyd,0:1))
-      allocate(fhi_kevis_av(-1:nxd,-1:nyd,0:1))
+      allocate(fhi_32_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_52_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_cond_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_dia_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_ecrb_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_strange_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_pschused_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_inert_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_vispar_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_visper_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_visq_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_anml_av(-1:nxd,-1:nyd,0:1,0:1))
+      allocate(fhi_kevis_av(-1:nxd,-1:nyd,0:1,0:1))
       allocate(b2stbr_phys_shi_bal_av(-1:nxd,-1:nyd))
       allocate(b2stbr_bas_shi_bal_av(-1:nxd,-1:nyd))
       allocate(b2stbr_first_flight_shi_bal_av(-1:nxd,-1:nyd))
@@ -777,7 +777,7 @@
       allocate(ti_av(-1:nxd,-1:nyd))
       allocate(rpt_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(kinrgy_av(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(fne_av(-1:nxd,-1:nyd,0:1))
+      allocate(fne_av(-1:nxd,-1:nyd,0:1,0:1))
 
       return
       end subroutine alloc_b2mod_balance
@@ -2220,7 +2220,7 @@ cdjm Update ion heat sources
       integer status
       integer ncid,nxid,nyid,n1id,n2id,n3id,n4id,nsid,nstraid,specid,
      .        varid,eirnxid,eirnyid,eirnatmid,eirnmolid
-      integer vdims(4)
+      integer vdims(5)
       integer jxi,jxa,jsep
       integer is
       character*13, allocatable :: species_name(:)
@@ -2329,21 +2329,22 @@ cdjm Update ion heat sources
       vdims(1)=nxid
       vdims(2)=nyid
       vdims(3)=n2id
-      vdims(4)=nsid
+      vdims(4)=n2id
+      vdims(5)=nsid
       call write_cdf_double(ncid,'fna_pinch',
-     &                   fna_pinch_av,vdims,4)
+     &                   fna_pinch_av,vdims,5)
       call write_cdf_double(ncid,'fna_pll',
-     &                   fna_pll_av,vdims,4)
+     &                   fna_pll_av,vdims,5)
       call write_cdf_double(ncid,'fna_drift',
-     &                   fna_drift_av,vdims,4)
+     &                   fna_drift_av,vdims,5)
       call write_cdf_double(ncid,'fna_ch',
-     &                   fna_ch_av,vdims,4)
+     &                   fna_ch_av,vdims,5)
       call write_cdf_double(ncid,'fna_nanom',
-     &                   fna_nanom_av,vdims,4)
+     &                   fna_nanom_av,vdims,5)
       call write_cdf_double(ncid,'fna_panom',
-     &                   fna_panom_av,vdims,4)
+     &                   fna_panom_av,vdims,5)
       call write_cdf_double(ncid,'fna_pschused',
-     &                   fna_pschused_av,vdims,4)
+     &                   fna_pschused_av,vdims,5)
 *     Sources
       vdims(3)=nsid
       call write_cdf_double(ncid,'b2stbr_phys_sna_bal',
@@ -2375,10 +2376,11 @@ cdjm Update ion heat sources
 *   ..Arrays for momentum balance:
 *     Fluxes
       vdims(3)=n2id
-      vdims(4)=nsid
-      call write_cdf_double(ncid,'fmo_flua',fmo_flua_av,vdims,4)
-      call write_cdf_double(ncid,'fmo_cvsa',fmo_cvsa_av,vdims,4)
-      call write_cdf_double(ncid,'fmo_b2nxfv',fmo_b2nxfv_av,vdims,4)
+      vdims(4)=n2id
+      vdims(5)=nsid
+      call write_cdf_double(ncid,'fmo_flua',fmo_flua_av,vdims,5)
+      call write_cdf_double(ncid,'fmo_cvsa',fmo_cvsa_av,vdims,5)
+      call write_cdf_double(ncid,'fmo_b2nxfv',fmo_b2nxfv_av,vdims,5)
 *     Sources
       vdims(3)=nsid
       call write_cdf_double(ncid,'b2stbr_phys_smo_bal',
@@ -2426,22 +2428,23 @@ cdjm Update ion heat sources
 *   ..Arrays for electron heat balance:
 *     Fluxes
       vdims(3)=n2id
+      vdims(4)=n2id
       call write_cdf_double(ncid,'fhe_32',
-     &                   fhe_32_av,vdims,3)
+     &                   fhe_32_av,vdims,4)
       call write_cdf_double(ncid,'fhe_52',
-     &                   fhe_52_av,vdims,3)
+     &                   fhe_52_av,vdims,4)
       call write_cdf_double(ncid,'fhe_thermj',
-     &                   fhe_thermj_av,vdims,3)
+     &                   fhe_thermj_av,vdims,4)
       call write_cdf_double(ncid,'fhe_cond',
-     &                   fhe_cond_av,vdims,3)
+     &                   fhe_cond_av,vdims,4)
       call write_cdf_double(ncid,'fhe_dia',
-     &                   fhe_dia_av,vdims,3)
+     &                   fhe_dia_av,vdims,4)
       call write_cdf_double(ncid,'fhe_ecrb',
-     &                   fhe_ecrb_av,vdims,3)
+     &                   fhe_ecrb_av,vdims,4)
       call write_cdf_double(ncid,'fhe_strange',
-     &                   fhe_strange_av,vdims,3)
+     &                   fhe_strange_av,vdims,4)
       call write_cdf_double(ncid,'fhe_pschused',
-     &                   fhe_pschused_av,vdims,3)
+     &                   fhe_pschused_av,vdims,4)
 *     Sources
       call write_cdf_double(ncid,'b2stbr_phys_she_bal',
      &                   b2stbr_phys_she_bal_av,vdims,2)
@@ -2478,32 +2481,33 @@ cdjm Update ion heat sources
 *   ..Arrays for ion heat balance:
 *     Fluxes
       vdims(3)=n2id
+      vdims(4)=n2id
       call write_cdf_double(ncid,'fhi_32',
-     &                      fhi_32_av,vdims,3)
+     &                      fhi_32_av,vdims,4)
       call write_cdf_double(ncid,'fhi_52',
-     &                      fhi_52_av,vdims,3)
+     &                      fhi_52_av,vdims,4)
       call write_cdf_double(ncid,'fhi_cond',
-     &                      fhi_cond_av,vdims,3)
+     &                      fhi_cond_av,vdims,4)
       call write_cdf_double(ncid,'fhi_dia',
-     &                   fhi_dia_av,vdims,3)
+     &                   fhi_dia_av,vdims,4)
       call write_cdf_double(ncid,'fhi_ecrb',
-     &                   fhi_ecrb_av,vdims,3)
+     &                   fhi_ecrb_av,vdims,4)
       call write_cdf_double(ncid,'fhi_strange',
-     &                   fhi_strange_av,vdims,3)
+     &                   fhi_strange_av,vdims,4)
       call write_cdf_double(ncid,'fhi_pschused',
-     &                   fhi_pschused_av,vdims,3)
+     &                   fhi_pschused_av,vdims,4)
       call write_cdf_double(ncid,'fhi_inert',
-     &                   fhi_inert_av,vdims,3)
+     &                   fhi_inert_av,vdims,4)
       call write_cdf_double(ncid,'fhi_vispar',
-     &                   fhi_vispar_av,vdims,3)
+     &                   fhi_vispar_av,vdims,4)
       call write_cdf_double(ncid,'fhi_visper',
-     &                   fhi_visper_av,vdims,3)
+     &                   fhi_visper_av,vdims,4)
       call write_cdf_double(ncid,'fhi_visq',
-     &                   fhi_visq_av,vdims,3)
+     &                   fhi_visq_av,vdims,4)
       call write_cdf_double(ncid,'fhi_anml',
-     &                   fhi_anml_av,vdims,3)
+     &                   fhi_anml_av,vdims,4)
       call write_cdf_double(ncid,'fhi_kevis',
-     &                   fhi_kevis_av,vdims,3)
+     &                   fhi_kevis_av,vdims,4)
 *     Sources
       call write_cdf_double(ncid,'b2stbr_phys_shi_bal',
      &                      b2stbr_phys_shi_bal_av,vdims,2)

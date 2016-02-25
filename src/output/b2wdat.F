@@ -175,35 +175,35 @@
         call my_out(70,nx,ny,vadia(-1,-1,1,is),'vadiay'//chns)    !srv
         call my_out(70,nx,ny,wadia(-1,-1,0,is),'wadiax'//chns)    !srv
         call my_out(70,nx,ny,wadia(-1,-1,1,is),'wadiay'//chns)    !srv
-        call my_out(70,nx,ny,fna(-1,-1,0,is),'fnax'//chns)        !srv
-        call my_out(70,nx,ny,fna(-1,-1,1,is),'fnay'//chns)        !srv
-        call my_out(70,nx,ny,fna_mdf(-1,-1,0,is),'fnax_mdf'//chns)  !srv 13.10.06
-        call my_out(70,nx,ny,fna_mdf(-1,-1,1,is),'fnay_mdf'//chns)  !srv 13.10.06
-        call my_out(70,nx,ny,fna_eir(-1,-1,0,is),'fna_eirx'//chns)  !srv 14.07.10
-        call my_out(70,nx,ny,fna_eir(-1,-1,1,is),'fna_eiry'//chns)  !srv 13.07.10
-        call my_out(70,nx,ny,fnaPSch(-1,-1,0,is),'fnaPSchx'//chns)  !srv 13.10.06
-        call my_out(70,nx,ny,fnaPSch(-1,-1,1,is),'fnaPSchy'//chns)  !srv 13.10.06
-        call my_out(70,nx,ny,fna_he(-1,-1,0,is),'fna_hex'//chns)
-        call my_out(70,nx,ny,fna_he(-1,-1,1,is),'fna_hey'//chns)
-        call my_out(70,nx,ny,fna_fcor(-1,-1,0,is),'fna_fcorx'//chns)
-        call my_out(70,nx,ny,fna_fcor(-1,-1,1,is),'fna_fcory'//chns)
-        call my_out(70,nx,ny,fna_nodrift(-1,-1,0,is),
+        call my_out(70,nx,ny,fna(-1,-1,0,0,is),'fnax'//chns)      !srv
+        call my_out(70,nx,ny,fna(-1,-1,1,1,is),'fnay'//chns)      !srv
+        call my_out(70,nx,ny,fna_mdf(-1,-1,0,0,is),'fnax_mdf'//chns)  !srv 13.10.06
+        call my_out(70,nx,ny,fna_mdf(-1,-1,1,1,is),'fnay_mdf'//chns)  !srv 13.10.06
+        call my_out(70,nx,ny,fna_eir(-1,-1,0,0,is),'fna_eirx'//chns)  !srv 14.07.10
+        call my_out(70,nx,ny,fna_eir(-1,-1,1,1,is),'fna_eiry'//chns)  !srv 13.07.10
+        call my_out(70,nx,ny,fnaPSch(-1,-1,0,0,is),'fnaPSchx'//chns)  !srv 13.10.06
+        call my_out(70,nx,ny,fnaPSch(-1,-1,1,1,is),'fnaPSchy'//chns)  !srv 13.10.06
+        call my_out(70,nx,ny,fna_he(-1,-1,0,0,is),'fna_hex'//chns)
+        call my_out(70,nx,ny,fna_he(-1,-1,1,1,is),'fna_hey'//chns)
+        call my_out(70,nx,ny,fna_fcor(-1,-1,0,0,is),'fna_fcorx'//chns)
+        call my_out(70,nx,ny,fna_fcor(-1,-1,1,1,is),'fna_fcory'//chns)
+        call my_out(70,nx,ny,fna_nodrift(-1,-1,0,0,is),
      *                      'fna_nodriftx'//chns)
-        call my_out(70,nx,ny,fna_nodrift(-1,-1,1,is),
+        call my_out(70,nx,ny,fna_nodrift(-1,-1,1,1,is),
      *                      'fna_nodrifty'//chns)
         call my_out(70,nx,ny,sna(-1,-1,0,is),'sna0'//chns)        !srv 25.02.16
         call my_out(70,nx,ny,sna(-1,-1,1,is),'sna1'//chns)        !srv 25.02.16
 
-        call my_out(70,nx,ny,cdna(-1,-1,0,is),'cdnax'//chns)      !srv
-        call my_out(70,nx,ny,cdna(-1,-1,1,is),'cdnay'//chns)      !srv
-        call my_out(70,nx,ny,cdpa(-1,-1,0,is),'cdpax'//chns)      !srv
-        call my_out(70,nx,ny,cdpa(-1,-1,1,is),'cdpay'//chns)      !srv
-        call my_out(70,nx,ny,cddi(-1,-1,0,is),'cddix'//chns)      !srv 13.10.06
-        call my_out(70,nx,ny,cddi(-1,-1,1,is),'cddiy'//chns)      !srv 13.10.06
-        call my_out(70,nx,ny,cvsa_an(-1,-1,0,is),'cvsax_an'//chns)
-        call my_out(70,nx,ny,cvsa_cl(-1,-1,0,is),'cvsax_cl'//chns)
-        call my_out(70,nx,ny,cvsa(-1,-1,0,is),'cvsax'//chns)
-        call my_out(70,nx,ny,cvsa(-1,-1,1,is),'cvsay'//chns)
+        call my_out(70,nx,ny,cdna(-1,-1,0,0,is),'cdnax'//chns)      !srv
+        call my_out(70,nx,ny,cdna(-1,-1,1,1,is),'cdnay'//chns)      !srv
+        call my_out(70,nx,ny,cdpa(-1,-1,0,0,is),'cdpax'//chns)      !srv
+        call my_out(70,nx,ny,cdpa(-1,-1,1,1,is),'cdpay'//chns)      !srv
+        call my_out(70,nx,ny,cddi(-1,-1,0,0,is),'cddix'//chns)      !srv 13.10.06
+        call my_out(70,nx,ny,cddi(-1,-1,1,1,is),'cddiy'//chns)      !srv 13.10.06
+        call my_out(70,nx,ny,cvsa_an(-1,-1,0,0,is),'cvsax_an'//chns)
+        call my_out(70,nx,ny,cvsa_cl(-1,-1,0,0,is),'cvsax_cl'//chns)
+        call my_out(70,nx,ny,cvsa(-1,-1,0,0,is),'cvsax'//chns)
+        call my_out(70,nx,ny,cvsa(-1,-1,1,1,is),'cvsay'//chns)
         call my_out(70,nx,ny,kinrgy(-1,-1,is),'kinrgy'//chns)     !srv 08.10.04
         call my_out(70,nx,ny,vsa0(-1,-1,is),'vsaAN'//chns)        !srv 25.02.16
 
@@ -233,7 +233,7 @@
         enddo
         call my_out(70,nx,ny,wrk1,'fvadiax'//chns)                !srv
 
-        wrk0=fna(:,:,0,is)-wrk0-wrk1
+        wrk0=fna(:,:,0,0,is)-wrk0-wrk1
         call my_out(70,nx,ny,wrk0,'fdifx'//chns)                  !srv
 
         wrk0=0.0d0
@@ -258,11 +258,11 @@
           enddo
         enddo
         call my_out(70,nx,ny,wrk1,'fvadiay'//chns)                !srv
-        wrk0=fna(:,:,1,is)-wrk0-wrk1
+        wrk0=fna(:,:,1,1,is)-wrk0-wrk1
         call my_out(70,nx,ny,wrk0,'fdify'//chns)                  !srv
 
-        call my_out(70,nx,ny,fmo(-1,-1,0,is),'fmox'//chns)        !srv 24.02.10
-        call my_out(70,nx,ny,fmo(-1,-1,1,is),'fmoy'//chns)
+        call my_out(70,nx,ny,fmo(-1,-1,0,0,is),'fmox'//chns)      !srv 24.02.10
+        call my_out(70,nx,ny,fmo(-1,-1,1,1,is),'fmoy'//chns)
 
         open(70,file=trim(folder)//'Total_flux_pm'//chns//'.dat') !srv 19.02.02 { 26.09.17
         write (70,*) '  N      Total_flux    Total_|flux| '
@@ -271,8 +271,8 @@
           Total_absflux(iy) = 0.0d0
           do ix=-1,nx
             if(on_closed_surface(ix,iy)) then                  ! for CORE
-              Total_flux(iy) = Total_flux(iy) + fmo(ix,iy,1,is)
-              Total_absflux(iy)=Total_absflux(iy)+abs(fmo(ix,iy,1,is))
+              Total_flux(iy) = Total_flux(iy) + fmo(ix,iy,1,1,is)
+              Total_absflux(iy)=Total_absflux(iy)+abs(fmo(ix,iy,1,1,is))
             endif
           enddo
           write (70,'(1x,i4,2(2x,es14.7))') iy, Total_flux(iy),
@@ -283,47 +283,47 @@
         call my_out(70,nx,ny,rqahe(-1,-1,is),'rqahe'//chns)       !srv
         call my_out(70,nx,ny,rqrad(-1,-1,is),'rqrad'//chns)       !xpb
         call my_out(70,nx,ny,rqbrm(-1,-1,is),'rqbrm'//chns)       !xpb
-        call my_out(70,nx,ny,pcca(-1,-1,0,is),'pccax'//chns)      !srv 11.01.13
-        call my_out(70,nx,ny,pcca(-1,-1,1,is),'pccay'//chns)      !srv 11.01.13
+        call my_out(70,nx,ny,pcca(-1,-1,0,0,is),'pccax'//chns)    !srv 11.01.13
+        call my_out(70,nx,ny,pcca(-1,-1,1,1,is),'pccay'//chns)    !srv 11.01.13
 
       enddo
 
-      call my_out(70,nx,ny,pccm(-1,-1,0),'pccmx')                 !srv 11.01.13
-      call my_out(70,nx,ny,pccm(-1,-1,1),'pccmy')                 !srv 11.01.13
-      call my_out(70,nx,ny,fhe(-1,-1,0),'fhex')                   !srv 23.11.00
-      call my_out(70,nx,ny,fhe(-1,-1,1),'fhey')                   !srv 23.11.00
-      call my_out(70,nx,ny,fhi(-1,-1,0),'fhix')                   !srv 23.11.00
-      call my_out(70,nx,ny,fhi(-1,-1,1),'fhiy')                   !srv 23.11.00
+      call my_out(70,nx,ny,pccm(-1,-1,0,0),'pccmx')                 !srv 11.01.13
+      call my_out(70,nx,ny,pccm(-1,-1,1,1),'pccmy')                 !srv 11.01.13
+      call my_out(70,nx,ny,fhe(-1,-1,0,0),'fhex')                   !srv 23.11.00
+      call my_out(70,nx,ny,fhe(-1,-1,1,1),'fhey')                   !srv 23.11.00
+      call my_out(70,nx,ny,fhi(-1,-1,0,0),'fhix')                   !srv 23.11.00
+      call my_out(70,nx,ny,fhi(-1,-1,1,1),'fhiy')                   !srv 23.11.00
 
-      call my_out(70,nx,ny,fhe_mdf(-1,-1,0),'fhe_mdfx')           !srv 13.10.06 {
-      call my_out(70,nx,ny,fhe_mdf(-1,-1,1),'fhe_mdfy')
-      call my_out(70,nx,ny,fhePSch(-1,-1,0),'fhePSchx')
-      call my_out(70,nx,ny,fhePSch(-1,-1,1),'fhePSchy')
-      call my_out(70,nx,ny,fhi_mdf(-1,-1,0),'fhi_mdfx')
-      call my_out(70,nx,ny,fhi_mdf(-1,-1,1),'fhi_mdfy')
-      call my_out(70,nx,ny,fhiPSch(-1,-1,0),'fhiPSchx')
-      call my_out(70,nx,ny,fhiPSch(-1,-1,1),'fhiPSchy')           !srv 13.10.06 }
+      call my_out(70,nx,ny,fhe_mdf(-1,-1,0,0),'fhe_mdfx')           !srv 13.10.06 {
+      call my_out(70,nx,ny,fhe_mdf(-1,-1,1,1),'fhe_mdfy')
+      call my_out(70,nx,ny,fhePSch(-1,-1,0,0),'fhePSchx')
+      call my_out(70,nx,ny,fhePSch(-1,-1,1,1),'fhePSchy')
+      call my_out(70,nx,ny,fhi_mdf(-1,-1,0,0),'fhi_mdfx')
+      call my_out(70,nx,ny,fhi_mdf(-1,-1,1,1),'fhi_mdfy')
+      call my_out(70,nx,ny,fhiPSch(-1,-1,0,0),'fhiPSchx')
+      call my_out(70,nx,ny,fhiPSch(-1,-1,1,1),'fhiPSchy')           !srv 13.10.06 }
 
       call my_out(70,nx,ny,te,'te')                               !srv
       call my_out(70,nx,ny,ti,'ti')                               !srv
-      call my_out(70,nx,ny,fch(-1,-1,0),'fchx')                   !srv
-      call my_out(70,nx,ny,fch(-1,-1,1),'fchy')                   !srv
-      call my_out(70,nx,ny,fch_p(-1,-1,0),'fchx_p')               !srv 10.06.08
-      call my_out(70,nx,ny,fch_p(-1,-1,1),'fchy_p')               !srv 10.06.08
-      call my_out(70,nx,ny,fchvispar(-1,-1,0),'fchvisparx')
-      call my_out(70,nx,ny,fchvispar(-1,-1,1),'fchvispary')
-      call my_out(70,nx,ny,fchvisper(-1,-1,0),'fchvisperx')
-      call my_out(70,nx,ny,fchvisper(-1,-1,1),'fchvispery')
-      call my_out(70,nx,ny,fchvisq(-1,-1,0),'fchvisqx')
-      call my_out(70,nx,ny,fchvisq(-1,-1,1),'fchvisqy')
-      call my_out(70,nx,ny,fchinert(-1,-1,0),'fchinertx')         !srv 07.07.99
-      call my_out(70,nx,ny,fchinert(-1,-1,1),'fchinerty')         !srv 07.07.99
-      call my_out(70,nx,ny,fchdia(-1,-1,0),'fchdiax')
-      call my_out(70,nx,ny,fchdia(-1,-1,1),'fchdiay')
-      call my_out(70,nx,ny,fchin(-1,-1,0),'fchinx')
-      call my_out(70,nx,ny,fchin(-1,-1,1),'fchiny')
-      call my_out(70,nx,ny,fchanml(-1,-1,0),'fchanmlx')
-      call my_out(70,nx,ny,fchanml(-1,-1,1),'fchanmly')
+      call my_out(70,nx,ny,fch(-1,-1,0,0),'fchx')                   !srv
+      call my_out(70,nx,ny,fch(-1,-1,1,1),'fchy')                   !srv
+      call my_out(70,nx,ny,fch_p(-1,-1,0,0),'fchx_p')               !srv 10.06.08
+      call my_out(70,nx,ny,fch_p(-1,-1,1,1),'fchy_p')               !srv 10.06.08
+      call my_out(70,nx,ny,fchvispar(-1,-1,0,0),'fchvisparx')
+      call my_out(70,nx,ny,fchvispar(-1,-1,1,1),'fchvispary')
+      call my_out(70,nx,ny,fchvisper(-1,-1,0,0),'fchvisperx')
+      call my_out(70,nx,ny,fchvisper(-1,-1,1,1),'fchvispery')
+      call my_out(70,nx,ny,fchvisq(-1,-1,0,0),'fchvisqx')
+      call my_out(70,nx,ny,fchvisq(-1,-1,1,1),'fchvisqy')
+      call my_out(70,nx,ny,fchinert(-1,-1,0,0),'fchinertx')         !srv 07.07.99
+      call my_out(70,nx,ny,fchinert(-1,-1,1,1),'fchinerty')         !srv 07.07.99
+      call my_out(70,nx,ny,fchdia(-1,-1,0,0),'fchdiax')
+      call my_out(70,nx,ny,fchdia(-1,-1,1,1),'fchdiay')
+      call my_out(70,nx,ny,fchin(-1,-1,0,0),'fchinx')
+      call my_out(70,nx,ny,fchin(-1,-1,1,1),'fchiny')
+      call my_out(70,nx,ny,fchanml(-1,-1,0,0),'fchanmlx')
+      call my_out(70,nx,ny,fchanml(-1,-1,1,1),'fchanmly')
       call b2tlnl (nx, ny, 0, te, ti, ne, wrk0)                   !srv 02.07.13 {
       call my_out(70,nx,ny,wrk0,'lnlam_Br')
       call b2tlnl (nx, ny, 1, te, ti, ne, wrk0)
@@ -333,28 +333,32 @@
       call b2tlnl (nx, ny, 3, te, ti, ne, wrk0)                   !srv 02.07.13 }
       call my_out(70,nx,ny,wrk0,'lnlam_We_ei')
       call my_out(70,-1,ny,conn,'conn')                           !srv
-      call my_out(70,nx,ny,csig(-1,-1,0),'csig_x')                !srv
-      call my_out(70,nx,ny,csig(-1,-1,1),'csig_y')                !srv
-      call my_out(70,nx,ny,csig_cl(-1,-1,0),'csig_clx')           !srv
-      call my_out(70,nx,ny,csig_cl(-1,-1,1),'csig_cly')           !srv
-      call my_out(70,nx,ny,csig_an(-1,-1,0),'csig_anx')           !srv
-      call my_out(70,nx,ny,csig_an(-1,-1,1),'csig_any')           !srv
+      call my_out(70,nx,ny,csig(-1,-1,0,0),'csig_x')              !srv
+      call my_out(70,nx,ny,csig(-1,-1,1,1),'csig_y')              !srv
+      call my_out(70,nx,ny,csig_cl(-1,-1,0,0),'csig_clx')         !srv
+      call my_out(70,nx,ny,csig_cl(-1,-1,1,1),'csig_cly')         !srv
+      call my_out(70,nx,ny,csig_an(-1,-1,0,0),'csig_anx')         !srv
+      call my_out(70,nx,ny,csig_an(-1,-1,1,1),'csig_any')         !srv
       if (ismain0.ne.ismain) then
-        call my_out(70,nx,ny,csigin(-1,-1,0,ismain,ismain0),'csig_inx') !srv
-        call my_out(70,nx,ny,csigin(-1,-1,1,ismain,ismain0),'csig_iny') !srv
+        call my_out(70,nx,ny,csigin(-1,-1,0,0,ismain,ismain0),
+     &                      'csig_inx') !srv
+        call my_out(70,nx,ny,csigin(-1,-1,1,1,ismain,ismain0),
+     &                      'csig_iny') !srv
       endif
-      call my_out(70,nx,ny,cvsa(-1,-1,0,ismain),'cvsa')           !srv
-      call my_out(70,nx,ny,cvsa_cl(-1,-1,0,ismain),'cvsa_cl')     !srv
-      call my_out(70,nx,ny,calf(-1,-1,0),'calfx')                 !srv
-      call my_out(70,nx,ny,calf(-1,-1,1),'calfy')                 !srv
-      call my_out(70,nx,ny,calf_cl(-1,-1,0),'calf_clx')           !srv
-      call my_out(70,nx,ny,calf_cl(-1,-1,1),'calf_cly')           !srv
-      call my_out(70,nx,ny,calf_an(-1,-1,0),'calf_anx')           !srv
-      call my_out(70,nx,ny,calf_an(-1,-1,1),'calf_any')           !srv
-      call my_out(70,nx,ny,chce(-1,-1,0),'chcex')                 !srv
-      call my_out(70,nx,ny,chce(-1,-1,1),'chcey')                 !srv
-      call my_out(70,nx,ny,chci(-1,-1,0),'chcix')                 !srv
-      call my_out(70,nx,ny,chci(-1,-1,1),'chciy')                 !srv
+      call my_out(70,nx,ny,vsa0(-1,-1,0),'vsa0')                  !srv
+      call my_out(70,nx,ny,vsa0(-1,-1,1),'vsa1')                  !srv
+      call my_out(70,nx,ny,cvsa(-1,-1,0,0,ismain),'cvsa')         !srv
+      call my_out(70,nx,ny,cvsa_cl(-1,-1,0,0,ismain),'cvsa_cl')   !srv
+      call my_out(70,nx,ny,calf(-1,-1,0,0),'calfx')               !srv
+      call my_out(70,nx,ny,calf(-1,-1,1,1),'calfy')               !srv
+      call my_out(70,nx,ny,calf_cl(-1,-1,0,0),'calf_clx')         !srv
+      call my_out(70,nx,ny,calf_cl(-1,-1,1,1),'calf_cly')         !srv
+      call my_out(70,nx,ny,calf_an(-1,-1,0,0),'calf_anx')         !srv
+      call my_out(70,nx,ny,calf_an(-1,-1,1,1),'calf_any')         !srv
+      call my_out(70,nx,ny,chce(-1,-1,0,0),'chcex')               !srv
+      call my_out(70,nx,ny,chce(-1,-1,1,1),'chcey')               !srv
+      call my_out(70,nx,ny,chci(-1,-1,0,0),'chcix')               !srv
+      call my_out(70,nx,ny,chci(-1,-1,1,1),'chciy')               !srv
 
       call my_out(70,nx,ny,gs(-1,-1,0),'gsx')
       call my_out(70,nx,ny,gs(-1,-1,1),'gsy')
@@ -410,8 +414,8 @@
         Total_abscurrent(iy) = 0.0_R8
         do ix = -1, nx
           if(on_closed_surface(ix,iy)) then                     ! for CORE
-            Total_current(iy) = Total_current(iy) + fch(ix,iy,1)
-            Total_abscurrent(iy)=Total_current(iy)+abs(fch(ix,iy,1))
+            Total_current(iy) = Total_current(iy) + fch(ix,iy,1,1)
+            Total_abscurrent(iy)=Total_current(iy)+abs(fch(ix,iy,1,1))
           endif
         enddo
         write (70,'(1x,i4,2(2x,es14.7))') iy, Total_current(iy),
@@ -481,7 +485,7 @@
       power=0.0_R8
       do ix = -1, nx
         if(on_closed_surface(ix,iy)) then                     ! for CORE
-          power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
+          power = power + (fhe(ix,iy,1,1)+fhi(ix,iy,1,1))
         endif
       enddo
       open(70,file=trim(folder)//'exppw.dat')                   !srv 26.09.17
@@ -518,8 +522,8 @@
      6         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
      &         (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &          na(ix,iy,is))/2.0_R8
-              sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,is)
-              sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,is)
+              sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,1,is)
+              sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,1,is)
             endif
           enddo
           write(70,"(i4,5es15.7)") iy, sfuadia(iy,is), sfvadia(iy,is),
@@ -712,7 +716,7 @@
         s=gs(0,iy,0)
         hlp=0.0_R8
         do is=0,ns-1 !{
-          hlp=hlp+abs(fna(0,iy,0,is)*(
+          hlp=hlp+abs(fna(0,iy,0,0,is)*(
      .     (rpt(0,iy,is)*hx(-1,iy)+rpt(-1,iy,is)*hx(0,iy))/
      .     (hx(-1,iy)+hx(0,iy))*ev+(1.0_R8-BoRiS)*
      .     (kinrgy(0,iy,is)*hx(-1,iy)+kinrgy(-1,iy,is)*hx(0,iy))/
@@ -734,7 +738,7 @@
         hlp=0.0_R8
         s=gs(nx,iy,0)
         do is=0,ns-1 !{
-          hlp=hlp+abs(fna(nx,iy,0,is)*(
+          hlp=hlp+abs(fna(nx,iy,0,0,is)*(
      .     (rpt(nx,iy,is)*hx(nx-1,iy)+rpt(nx-1,iy,is)*hx(nx,iy))/
      .     (hx(nx-1,iy)+hx(nx,iy))*ev+(1.0_R8-BoRiS)*
      .     (kinrgy(nx,iy,is)*hx(nx-1,iy)+kinrgy(nx-1,iy,is)*hx(nx,iy))/
@@ -762,7 +766,7 @@
           s=gs(ix2,iy,0)
           hlp=0.0_R8
           do is=0,ns-1 !{
-            hlp=hlp+abs(fna(ix2,iy,0,is)*(
+            hlp=hlp+abs(fna(ix2,iy,0,0,is)*(
      .       (rpt(ix2,iy,is)*hx(ix2-1,iy)+
      .        rpt(ix2-1,iy,is)*hx(ix2,iy))/
      .       (hx(ix2-1,iy)+hx(ix2,iy))*ev+(1.0_R8-BoRiS)*
@@ -787,7 +791,7 @@
           hlp=0.0_R8
           s=gs(ix1,iy,0)
           do is=0,ns-1 !{
-            hlp=hlp+abs(fna(ix1,iy,0,is)*(
+            hlp=hlp+abs(fna(ix1,iy,0,0,is)*(
      .       (rpt(ix1,iy,is)*hx(ix1-1,iy)+
      .        rpt(ix1-1,iy,is)*hx(ix1,iy))/
      .       (hx(ix1-1,iy)+hx(ix1,iy))*ev+(1.0_R8-BoRiS)*
@@ -1073,7 +1077,7 @@
        power=0.0_R8
        do ix = -1, nx
          if(on_closed_surface(ix,iy)) then                ! for CORE
-           power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
+           power = power + (fhe(ix,iy,1,1)+fhi(ix,iy,1,1))
          endif
        enddo
        open(70,file=trim(folder)//'power.dat')                    !srv 26.09.17
@@ -1380,9 +1384,9 @@
         do ix = -1, nx
           if(on_closed_surface(ix,iy)) then                     ! for CORE
             Total_energy_flux_i(iy) =
-     &       Total_energy_flux_i(iy) + fhi(ix,iy,1)
+     &       Total_energy_flux_i(iy) + fhi(ix,iy,1,1)
             Total_energy_flux_i_mdf(iy) =
-     &       Total_energy_flux_i_mdf(iy) + fhi_mdf(ix,iy,1)
+     &       Total_energy_flux_i_mdf(iy) + fhi_mdf(ix,iy,1,1)
 !            do is = 0, ns-1                                       ! ask Rozhansky
 !              kintmp =
 !     .         (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
@@ -1407,9 +1411,9 @@
         do ix = -1, nx
           if(on_closed_surface(ix,iy)) then                     ! for CORE
             Total_energy_flux_e(iy) =
-     &       Total_energy_flux_e(iy) + fhe(ix,iy,1)
+     &       Total_energy_flux_e(iy) + fhe(ix,iy,1,1)
             Total_energy_flux_e_mdf(iy) =
-     &       Total_energy_flux_e_mdf(iy) + fhe_mdf(ix,iy,1)
+     &       Total_energy_flux_e_mdf(iy) + fhe_mdf(ix,iy,1,1)
           endif
         enddo
         write (70,'(1x,i4,2es18.7)')
@@ -1467,26 +1471,26 @@
            DO IX = 1, BC_LIST_SIZE(IB)
              boundary_flux(ib,is) = boundary_flux(ib,is) +
      &        fna(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &            TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
+     &            TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)
            end do
            sdiv(is) = sdiv(is) - boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'N') THEN
            DO IX = 1, BC_LIST_SIZE(IB)
             boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
+     &        fna(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)
            end do
            sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'W') THEN
            DO IY = 1, BC_LIST_SIZE(IB)
             boundary_flux(ib,is) = boundary_flux(ib,is) +
      &        fna(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)
+     &            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0,is)
            end do
            sdiv(is) = sdiv(is) - boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'E') THEN
            DO IY = 1, BC_LIST_SIZE(IB)
              boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
+     &        fna(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is)
            end do
            sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).NE.'X' .AND. BCCHAR(IB).NE.'Y') THEN
@@ -1547,26 +1551,26 @@
             DO IX = 1, BC_LIST_SIZE(IB)
               boundary_flux(ib,is) = boundary_flux(ib,is) +
      &         fna_mdf(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                 TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
+     &                 TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,1,is)
             end do
             sdiv(is) = sdiv(is) - boundary_flux(ib,is)
           ELSEIF(BCCHAR(IB).EQ.'N') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
               boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
+     &        fna_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,1,is)
             end do
             sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'W') THEN
            DO IY = 1, BC_LIST_SIZE(IB)
             boundary_flux(ib,is) = boundary_flux(ib,is) +
      &        fna_mdf(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)
+     &                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,0,is)
            end do
            sdiv(is) = sdiv(is) - boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'E') THEN
            DO IY = 1, BC_LIST_SIZE(IB)
              boundary_flux(ib,is) = boundary_flux(ib,is) +
-     &        fna_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
+     &        fna_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,0,is)
            end do
            sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).NE.'X' .AND. BCCHAR(IB).NE.'Y') THEN

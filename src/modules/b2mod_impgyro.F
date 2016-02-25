@@ -132,7 +132,7 @@
       if (allocated(ta_ext)) deallocate(ta_ext)
       allocate(ta_ext(-1:nxd,-1:nyd,0:ns_ext-1))
       if (allocated(fa_ext)) deallocate(fa_ext)
-      allocate(fa_ext(-1:nxd,-1:nyd,0:1,0:ns_ext-1))
+      allocate(fa_ext(-1:nxd,-1:nyd,0:1,0:1,0:ns_ext-1))
       if (allocated(am_ext)) deallocate(am_ext)
       allocate(am_ext(0:ns_ext-1))
       if (allocated(text_ext)) deallocate(text_ext)
@@ -242,18 +242,18 @@ cxpb Computing ua from fa is what we really want to do
             do ix=-1,nxd
               if (leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nxd+1) then
                 ua_ext(ix,iy,is) = 0.5_R8*
-     .           (fa_ext(ix,iy,0,is)/pbs(ix,iy,0)+
-     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,is)/
+     .           (fa_ext(ix,iy,0,0,is)/pbs(ix,iy,0)+
+     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,0,is)/
      .            pbs(rightix(ix,iy),rightiy(ix,iy),0))/
      .           na_ext(ix,iy,is)
               else if (leftix(ix,iy).eq.-2) then
                 ua_ext(ix,iy,is) = 
-     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,is)/
+     .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,0,is)/
      .            pbs(rightix(ix,iy),rightiy(ix,iy),0)/
      .            na_ext(ix,iy,is)
               else if (rightix(ix,iy).eq.nxd+1) then
                 ua_ext(ix,iy,is) = 
-     .           fa_ext(ix,iy,0,is)/pbs(ix,iy,0)/na_ext(ix,iy,is)
+     .           fa_ext(ix,iy,0,0,is)/pbs(ix,iy,0)/na_ext(ix,iy,is)
               end if
             end do
           end do
@@ -261,20 +261,20 @@ cxpb Computing ua from fa is what we really want to do
           do iy=-1,nyd
             do ix=-1,nxd
               if(leftix(ix,iy).ne.-2) then
-                fa_ext(ix,iy,0,is)=((ua_ext(ix,iy,is)+
+                fa_ext(ix,iy,0,0,is)=((ua_ext(ix,iy,is)+
      .           ua_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8)*
      .           ((na_ext(ix,iy,is)+
      .           na_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8)*
      .           pbs(ix,iy,0)
-                fhi_ext(ix,iy,0) = fhi_ext(ix,iy,0) +
-     .           1.5_R8*fa_ext(ix,iy,0,is)*(ta_ext(ix,iy,is)+
+                fhi_ext(ix,iy,0,0) = fhi_ext(ix,iy,0,0) +
+     .           1.5_R8*fa_ext(ix,iy,0,0,is)*(ta_ext(ix,iy,is)+
      .           ta_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
               else
-                fa_ext(ix,iy,0,is)=0.0_R8
+                fa_ext(ix,iy,0,0,is)=0.0_R8
               endif
             enddo
           enddo
-          fa_ext(:,:,1,:) = 0.0_R8
+          fa_ext(:,:,1,1,:) = 0.0_R8
         endif
 cxpb
         ue_ext(-1:nxd,-1:nyd) = ue_ext(-1:nxd,-1:nyd) +

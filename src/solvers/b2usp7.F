@@ -14,7 +14,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, nregionv, itcnt
       real (kind=R8) ::
-     *   ne(-1:nx,-1:ny), te(-1:nx,-1:ny), conc(-1:nx,-1:ny,0:1),
+     *   ne(-1:nx,-1:ny), te(-1:nx,-1:ny), conc(-1:nx,-1:ny,0:1,0:1),
      3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
      4   cvisper(-1:nx,-1:ny,0:1),
      &   sch(-1:nx,-1:ny,0:3), respo(-1:nx,-1:ny)
@@ -73,7 +73,7 @@
 *    ..test sign of ne, te, conc, sch
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2*2, conc, 1, 'conc', '.ge.')
+       call b2xvsg (n2*4, conc, 1, 'conc', '.ge.')
        call b2xvsg (n2, sch(-1,-1,1), 1, 'sch1', '.le.')
        call b2xvsg (n2, sch(-1,-1,3), 1, 'sch3', '.le.')
 *    ..test edge values of conc
@@ -100,14 +100,14 @@
         else
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
          if (solvereg(ileft))
-     >    aa7(leftix(ix,iy),leftiy(ix,iy),1) = -conc(ix,iy,0)
+     >    aa7(leftix(ix,iy),leftiy(ix,iy),1) = -conc(ix,iy,0,0)
          if (solvereg(ireg))
-     >    aa7(ix,iy,0) = aa7(ix,iy,0)+conc(ix,iy,0)
+     >    aa7(ix,iy,0) = aa7(ix,iy,0)+conc(ix,iy,0,0)
          if (solvereg(ileft))
      >    aa7(leftix(ix,iy),leftiy(ix,iy),0) =
-     &       aa7(leftix(ix,iy),leftiy(ix,iy),0)+conc(ix,iy,0)
+     &       aa7(leftix(ix,iy),leftiy(ix,iy),0)+conc(ix,iy,0,0)
          if (solvereg(ireg))
-     >    aa7(ix,iy,-1) = -conc(ix,iy,0)
+     >    aa7(ix,iy,-1) = -conc(ix,iy,0,0)
         endif                                                      !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
      >   aa7(ix,iy,1) = 0.0_R8                                     !srv 26.11.02
@@ -121,14 +121,14 @@
         else
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot))
-     >     aa7(bottomix(ix,iy),bottomiy(ix,iy),2) = -conc(ix,iy,1)
+     >     aa7(bottomix(ix,iy),bottomiy(ix,iy),2) = -conc(ix,iy,1,1)
           if (solvereg(ireg))
-     >     aa7(ix,iy,0) = aa7(ix,iy,0)+conc(ix,iy,1)
+     >     aa7(ix,iy,0) = aa7(ix,iy,0)+conc(ix,iy,1,1)
           if (solvereg(ibot))
      >     aa7(bottomix(ix,iy),bottomiy(ix,iy),0) =
-     &       aa7(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1)
+     &       aa7(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1,1)
           if (solvereg(ireg))
-     >     aa7(ix,iy,-2) = -conc(ix,iy,1)
+     >     aa7(ix,iy,-2) = -conc(ix,iy,1,1)
         endif
         if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg)) then
           aa7(ix,iy,2) = 0.0_R8

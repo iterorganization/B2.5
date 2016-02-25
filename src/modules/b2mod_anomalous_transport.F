@@ -8,14 +8,14 @@
      *   alf0(:,:),
      *   hci0(:,:),
      *   hcib(:,:,:),
-     *   chcb(:,:,:,:),
+     *   chcb(:,:,:,:,:),
      *   dpa0(:,:,:),
      *   dna0(:,:,:),
      *   vsa0(:,:,:),
      *   vla0(:,:,:,:),
-     *   csig_an(:,:,:),                                                 !xpb 
-     *   calf_an(:,:,:),                                                 !xpb 
-     *   cvsa_an(:,:,:,:),                                               !srv 04.10.99 11.06.08
+     *   csig_an(:,:,:,:),                                                 !xpb 
+     *   calf_an(:,:,:,:),                                                 !xpb 
+     *   cvsa_an(:,:,:,:,:),                                               !srv 04.10.99 11.06.08
      *   vma0(:,:,:,:)                                                   !srv 15.12.05 11.06.08
 
       contains
@@ -50,22 +50,23 @@
       allocate(alf0(-1:nxd,-1:nyd))
       allocate(hci0(-1:nxd,-1:nyd))
       allocate(hcib(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(chcb(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(chcb(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))
       allocate(dpa0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(dna0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(vsa0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(vla0(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(csig_an(-1:nxd,-1:nyd,0:1))                               !xpb
-      allocate(calf_an(-1:nxd,-1:nyd,0:1))                               !xpb
-      allocate(cvsa_an(-1:nxd,-1:nyd,0:1,0:nsd-1))                       !srv 04.10.99 11.06.08
+      allocate(csig_an(-1:nxd,-1:nyd,0:1,0:1))                               !xpb
+      allocate(calf_an(-1:nxd,-1:nyd,0:1,0:1))                               !xpb
+      allocate(cvsa_an(-1:nxd,-1:nyd,0:1,0:1,0:nsd-1))                       !srv 04.10.99 11.06.08
       allocate(vma0(-1:nxd,-1:nyd,0:1,0:nsd-1))                          !srv 15.12.05 11.06.08
 
       return
       end subroutine alloc_b2mod_anomalous_transport
 
-      subroutine read_b2mod_anomalous_transport(nread)
+      subroutine read_b2mod_anomalous_transport(nxd,nyd,nsd,nread)
       implicit none
-      integer nread
+      integer        :: nxd,nyd,nsd, nread
+      real (kind=R8) :: cloc(-1:nxd,-1:nyd,0:1)
 
       if(b2fplasma_version.gt.'01.001.001') then
         call cfrure (nread, size(sig0), sig0, 'sig0')
@@ -77,10 +78,22 @@
         call cfrure (nread, size(dna0), dna0, 'dna0')
         call cfrure (nread, size(vsa0), vsa0, 'vsa0')
         call cfrure (nread, size(vla0), vla0, 'vla0')
-        call cfrure (nread, size(csig_an), csig_an, 'csig_an')
+        if(b2fplasma_version.ge.'03.001.000') then
+          call cfrure (nread, size(csig_an), csig_an, 'csig_an')
+        else
+          call cfrure (nread, size(cloc), cloc, 'csig_an')
+          csig_an = 0.0_R8
+          csig_an(:,:,0,0) = cloc(:,:,0)
+          csig_an(:,:,1,1) = cloc(:,:,1)
+        endif
       endif
-      if(b2fplasma_version.ge.'01.001.029') then
+      if(b2fplasma_version.ge.'03.001.000') then
         call cfrure_opt (nread, size(calf_an), calf_an, 'calf_an')
+      elseif(b2fplasma_version.ge.'01.001.029') then
+        call cfrure_opt (nread, size(cloc), cloc, 'calf_an')
+        calf_an = 0.0_R8
+        calf_an(:,:,0,0) = cloc(:,:,0)
+        calf_an(:,:,1,1) = cloc(:,:,1)
       endif
 
       return

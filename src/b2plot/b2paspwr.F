@@ -63,7 +63,7 @@ c*** Calculate the input power for each divertor
           else
             ixx=ix
           end if
-          hlp_pwr_in(l)=hlp_pwr_in(l)+fhe(ixx,j,0)+fhi(ixx,j,0)
+          hlp_pwr_in(l)=hlp_pwr_in(l)+fhe(ixx,j,0,0)+fhi(ixx,j,0,0)
         end do
         hlp_pwr_in(l)=hlp_pwr_in(l)*s
         hlp_tot=hlp_tot+hlp_pwr_in(l)

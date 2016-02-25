@@ -328,16 +328,16 @@ c      print *,hlp_frmr               !###
           do j=0,ns-1 !{
             if(ld_hlp(m).eq.1) then !{                            === S:
               hlp_area=gs(jx(l,m),jy(l,m),1)
-              hlp_flx(j)=-fna(jx(l,m),jy(l,m),1,j)/hlp_area
+              hlp_flx(j)=-fna(jx(l,m),jy(l,m),1,1,j)/hlp_area
             else if(ld_hlp(m).eq.2) then !}{                      === W:
               hlp_area=gs(jx(l,m),jy(l,m),0)
-              hlp_flx(j)=-fna(jx(l,m),jy(l,m),0,j)/hlp_area
+              hlp_flx(j)=-fna(jx(l,m),jy(l,m),0,0,j)/hlp_area
             else if(ld_hlp(m).eq.3) then !}{                      === N:
               hlp_area=gs(jx(l,m),jy(l,m),1)
-              hlp_flx(j)=fna(jx(l,m),jy(l,m),1,j)/hlp_area
+              hlp_flx(j)=fna(jx(l,m),jy(l,m),1,1,j)/hlp_area
             else if(ld_hlp(m).eq.4) then !}{                      === E:
               hlp_area=gs(jx(l,m),jy(l,m),0)
-              hlp_flx(j)=fna(jx(l,m),jy(l,m),0,j)/hlp_area
+              hlp_flx(j)=fna(jx(l,m),jy(l,m),0,0,j)/hlp_area
             else !}{
               write(0,*) 'b2pedges: internal error. m,l,k,ld_hlp(m)= ',
      ,                                                   m,l,k,ld_hlp(m)

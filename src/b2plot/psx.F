@@ -37,13 +37,13 @@ c
       intrinsic min,max
       external lnblnk
 
-      values(9)=work(-1,-1,0,iwrk)/gs(-1,-1,0)/qc(-1,-1)
-      values(10)=work(-1,-1,0,iwrk)/gs(-1,-1,0)/qc(-1,-1)
+      values(9)=work(-1,-1,0,iwrk)/gs(-1,-1,0)/qc(-1,-1,0)
+      values(10)=work(-1,-1,0,iwrk)/gs(-1,-1,0)/qc(-1,-1,0)
       do is=0,ndim(3,iwrk)-1
         do iy=-1,ny
           do ix=-1,nx
 	    work(ix,iy,is,iwrk)=work(ix,iy,is,iwrk)/
-     1	     gs(ix,iy,0)/qc(ix,iy)
+     1	     gs(ix,iy,0)/qc(ix,iy,0)
             values(9)=min(values(9),work(ix,iy,is,iwrk))
             values(10)=max(values(10),work(ix,iy,is,iwrk))
           enddo

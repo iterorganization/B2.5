@@ -13,8 +13,8 @@
       integer nx, ny, isb, nregionv, itcnt
       real (kind=R8) ::
      *  rxg, pcm1, pbs(-1:nx,-1:ny,0:1), nb(-1:nx,-1:ny),
-     &  pb(-1:nx,-1:ny), snbv(-1:nx,-1:ny), flob(-1:nx,-1:ny,0:1),
-     &  conb(-1:nx,-1:ny,0:1,0:4), pccb1(-1:nx,-1:ny),                !srv 13.10.06
+     &  pb(-1:nx,-1:ny), snbv(-1:nx,-1:ny), flob(-1:nx,-1:ny,0:1,0:1),
+     &  conb(-1:nx,-1:ny,0:1,0:1,0:4), pccb1(-1:nx,-1:ny),            !srv 13.10.06
      &  rescb(-1:nx,-1:ny), vol(-1:nx,-1:ny)
       logical solvereg(0:nregionv)      
       character*(*) name                                              !srv 18.03.10
@@ -85,13 +85,13 @@
 *    ..test sign of snbv, conb
        call b2xvsg (n2, snbv, 1, 'snbv', '.le.')
        if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then           !srv 06.07.06 {
-        call b2xvsg (n2*2*3, conb, 1, 'conb', '.ge.')                 !srv 18.11.05 13.10.06
+        call b2xvsg (n2*4*3, conb, 1, 'conb', '.ge.')                 !srv 18.11.05 13.10.06
        endif                                                          !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
-       call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')                 !srv 13.10.06 {
-       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb0')
-       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb0')                 !srv 13.10.06 }
+       call b2xvff (nx, ny, conb(-1,-1,0,0,0), 'conb0')               !srv 13.10.06 {
+       call b2xvff (nx, ny, conb(-1,-1,0,0,1), 'conb1')
+       call b2xvff (nx, ny, conb(-1,-1,0,0,2), 'conb2')               !srv 13.10.06 }
       endif
 
 * ..compute the correction
@@ -137,10 +137,10 @@ csw 18feb2014 corrected BCs (SOLPS4)
         if(leftix(ix,iy).eq.-2) then
           aa5(ix,iy,-1) = 0.0_R8
         else
-          t0 =  flob(ix,iy,0)/2.0_R8-(conb(ix,iy,0,0)+pcm1*wrk0(ix,iy)) !srv 13.10.06
-     &                               - conb(ix,iy,0,1)
-          t1 = -flob(ix,iy,0)/2.0_R8-(conb(ix,iy,0,0)+pcm1*wrk0(ix,iy)) !srv 13.10.06
-     &                               - conb(ix,iy,0,2)
+          t0 =  flob(ix,iy,0,0)/2.0_R8 - 
+     &         (conb(ix,iy,0,0,0)+pcm1*wrk0(ix,iy)) - conb(ix,iy,0,0,1) !srv 13.10.06
+          t1 = -flob(ix,iy,0,0)/2.0_R8 - 
+     &         (conb(ix,iy,0,0,0)+pcm1*wrk0(ix,iy)) - conb(ix,iy,0,0,2) !srv 13.10.06
           ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
           if (solvereg(ileft))
      >     aa5(leftix(ix,iy),leftiy(ix,iy),1) = t0*rscal(pb(ix,iy))
@@ -170,8 +170,10 @@ csw 18feb2014 corrected BCs (SOLPS4)
         if(bottomiy(ix,iy).eq.-2) then
           aa5(ix,iy,-2) = 0.0_R8
         else
-          t0 =  flob(ix,iy,1)/2.0_R8 - conb(ix,iy,1,0) - conb(ix,iy,1,1) !srv 13.10.06
-          t1 = -flob(ix,iy,1)/2.0_R8 - conb(ix,iy,1,0) - conb(ix,iy,1,2) !srv 13.10.06
+          t0 =  flob(ix,iy,1,1)/2.0_R8 - conb(ix,iy,1,1,0) 
+     &                                 - conb(ix,iy,1,1,1) !srv 13.10.06
+          t1 = -flob(ix,iy,1,1)/2.0_R8 - conb(ix,iy,1,1,0) 
+     &                                 - conb(ix,iy,1,1,2) !srv 13.10.06
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot))
      >     aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0*rscal(pb(ix,iy))
@@ -188,12 +190,12 @@ cxpb
      &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
      &       iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
             if(ncall.lt.3) write(*,*) 'Executing xpb:b2usco for ',ix,iy
-            t0 = flob(topix(ix,iy),topiy(ix,iy),1)/2-
-     &           conb(topix(ix,iy),topiy(ix,iy),1,0)-                !srv 13.10.06
-     &           conb(topix(ix,iy),topiy(ix,iy),1,1)                 !srv 13.10.06
-            t1 = -flob(topix(ix,iy),topiy(ix,iy),1)/2-
-     &           conb(topix(ix,iy),topiy(ix,iy),1,0)-                !srv 13.10.06
-     &           conb(topix(ix,iy),topiy(ix,iy),1,2)                 !srv 13.10.06
+            t0 = flob(topix(ix,iy),topiy(ix,iy),1,1)/2-
+     &           conb(topix(ix,iy),topiy(ix,iy),1,1,0)-                !srv 13.10.06
+     &           conb(topix(ix,iy),topiy(ix,iy),1,1,1)                 !srv 13.10.06
+            t1 = -flob(topix(ix,iy),topiy(ix,iy),1,1)/2-
+     &           conb(topix(ix,iy),topiy(ix,iy),1,1,0)-                !srv 13.10.06
+     &           conb(topix(ix,iy),topiy(ix,iy),1,1,2)                 !srv 13.10.06
             itop = region(topix(ix,iy),topiy(ix,iy),0)
             if (solvereg(ireg))
      >       aa5(ix,iy,2) = t0*rscal(pb(topix(ix,iy),topiy(ix,iy)))

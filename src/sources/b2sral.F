@@ -43,8 +43,8 @@
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny),
      &  hy(-1:nx,-1:ny), hz(-1:nx,-1:ny), pbshz(-1:nx,-1:ny,0:1),        !srv 09.01.01
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
-     1  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2)
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
+     &	bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2)
 *     (state)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1), ve(-1:nx,-1:ny),
@@ -56,32 +56,35 @@
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
 *     (fluxes)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_32(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fna_52(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     &  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),              !srv 11.10.02 21.10.02 {
-     &  fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
-     &  fchvisq(-1:nx,-1:ny,0:1), fchdia(-1:nx,-1:ny,0:1),
-     &  fchinert(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1),             !srv 21.10.02 }
-     *  fni_32(-1:nx,-1:ny,0:1), fni_52(-1:nx,-1:ny,0:1),
-     *  fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
-     &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1),            !srv 28.10.02
-     &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),                                  !srv 25.02.00 24.10.02
-     &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 13.10.06 25.12.06
-     &  fhePSch(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
-     &  fhe_mdf(-1:nx,-1:ny,0:1), fhi_mdf(-1:nx,-1:ny,0:1),              !srv 23.10.09
-     &  fna_eir(-1:nx,-1:ny,0:1, 0:ns-1), fne_eir(-1:nx,-1:ny,0:1),
-     &  fhe_eir(-1:nx,-1:ny,0:1), fhi_eir(-1:nx,-1:ny,0:1)
+     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fna_32(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_52(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1),
+     &  fch_p(-1:nx,-1:ny,0:1,0:1), fchvispar(-1:nx,-1:ny,0:1,0:1),      !srv 11.10.02 21.10.02 {
+     &  fchvisper(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),
+     &  fchvisq(-1:nx,-1:ny,0:1,0:1), fchdia(-1:nx,-1:ny,0:1,0:1),
+     &  fchinert(-1:nx,-1:ny,0:1,0:1), fchanml(-1:nx,-1:ny,0:1,0:1),     !srv 21.10.02 }
+     *  fni_32(-1:nx,-1:ny,0:1,0:1), fni_52(-1:nx,-1:ny,0:1,0:1),
+     *  fne_32(-1:nx,-1:ny,0:1,0:1), fne_52(-1:nx,-1:ny,0:1,0:1),
+     &  floe_noc(-1:nx,-1:ny,0:1,0:1), floi_noc(-1:nx,-1:ny,0:1,0:1),    !srv 28.10.02
+     &  fna_fcor(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_he(-1:nx,-1:ny,0:1,0:1,0:ns-1),                              !srv 25.02.00 24.10.02
+     &  fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1),                             !srv 13.10.06 25.12.06
+     &  fhePSch(-1:nx,-1:ny,0:1,0:1), fhiPSch(-1:nx,-1:ny,0:1,0:1),      !srv 13.10.06
+     &  fhe_mdf(-1:nx,-1:ny,0:1,0:1), fhi_mdf(-1:nx,-1:ny,0:1,0:1),      !srv 23.10.09
+     &  fna_eir(-1:nx,-1:ny,0:1,0:1, 0:ns-1), 
+     &  fne_eir(-1:nx,-1:ny,0:1,0:1),
+     &  fhe_eir(-1:nx,-1:ny,0:1,0:1), fhi_eir(-1:nx,-1:ny,0:1,0:1)
 *     (transport coefficients)                                           !xpb
       real (kind=R8) ::                                                  !xpb
-     1  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),                    !xpb
-     2  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),                    !xpb
-     3  calf(-1:nx,-1:ny,0:1), cdna(-1:nx,-1:ny,0:1,0:ns-1),             !xpb
-     4  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), cvla(-1:nx,-1:ny,0:1,0:ns-1),
-     5  cdpa(-1:nx,-1:ny,0:1,0:ns-1)
+     1  chce(-1:nx,-1:ny,0:1,0:1), chve(-1:nx,-1:ny,0:1,0:1),            !xpb
+     2  chci(-1:nx,-1:ny,0:1,0:1), chvi(-1:nx,-1:ny,0:1,0:1),            !xpb
+     3  calf(-1:nx,-1:ny,0:1,0:1), cdna(-1:nx,-1:ny,0:1,0:1,0:ns-1),     !xpb
+     4  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     5  cvla(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     6  cdpa(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 *     (log-log rate coefficients)
       real (kind=R8) ::
      *  rlsa(-1:nx,-1:ny,0:1,0:ns-1), rlra(-1:nx,-1:ny,0:1,0:ns-1),
@@ -133,8 +136,8 @@
      4  smq0(-1:nx,-1:ny,0:3,0:ns-1), smq0_ion(-1:nx,-1:ny,0:3,0:ns-1), !srv 11.09.09
      4  smq0_rec(-1:nx,-1:ny,0:3,0:ns-1), wrk(-1:nx,-1:ny),
      5  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-     6  rbr(-1:nx,-1:ny,0:ns-1), fni(-1:nx,-1:ny,0:1),
-     7  fne(-1:nx,-1:ny,0:1),
+     6  rbr(-1:nx,-1:ny,0:ns-1), fni(-1:nx,-1:ny,0:1,0:1),
+     7  fne(-1:nx,-1:ny,0:1,0:1),
      8  sna0(-1:nx,-1:ny,0:1,0:ns-1), sna0_ion(-1:nx,-1:ny,0:1,0:ns-1), !srv 11.09.09
      8  sna0_rec(-1:nx,-1:ny,0:1,0:ns-1), sne0(-1:nx,-1:ny,0:1),
      9  shi0(-1:nx,-1:ny,0:3), shi0_ion(-1:nx,-1:ny,0:3),

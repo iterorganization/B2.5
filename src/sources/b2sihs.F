@@ -31,8 +31,8 @@
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      1  ue(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)         !srv 01.07.09
       real (kind=R8) ::
-     *  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
-     2  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
+     *  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     2  fchdia(-1:nx,-1:ny,0:1,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      3  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
      4  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
@@ -188,7 +188,7 @@
        call b2xvff (nx, ny, fch, 'fch')
 *    ..test edge values of cvsa
        do is = 0, ns-1
-        call b2xvff (nx, ny, cvsa(-1,-1,0,is), 'cvsa')
+        call b2xvff (nx, ny, cvsa(-1,-1,0,0,is), 'cvsa')
        enddo
 *    ..test fac_ExB
        call xertst (0.0_R8.le.minval(fac_ExB) .and.
@@ -376,10 +376,10 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &       bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &       region(ix,iy,0).ne.0) then
            t0 = phm2*vol(ix,iy)*(1.0_R8-BoRiS)*     ! 4.0e0_R8/3.0e0_R8* cvsa already has 4/3 !srv 16.10.17
-     &      (cvsa(ix,iy,0,is)*(ua(ix,iy,is)-
+     &      (cvsa(ix,iy,0,0,is)*(ua(ix,iy,is)-
      &          ua(leftix(ix,iy),leftiy(ix,iy),is))**2/
      &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
-     &       cvsa(rightix(ix,iy),rightiy(ix,iy),0,is)*
+     &       cvsa(rightix(ix,iy),rightiy(ix,iy),0,0,is)*
      &  (ua(rightix(ix,iy),rightiy(ix,iy),is)-ua(ix,iy,is))**2/
      &       (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy))))
            shi0(ix,iy,0) = shi0(ix,iy,0)+(1.0_R8+rf2)*t0
@@ -512,15 +512,15 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &     bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &     region(ix,iy,0).ne.0) then
-          t0 = fch(ix,iy,0)*ehx(ix,iy)/
+          t0 = fch(ix,iy,0,0)*ehx(ix,iy)/
      &     (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
-     &      fch(rightix(ix,iy),rightiy(ix,iy),0)*
+     &      fch(rightix(ix,iy),rightiy(ix,iy),0,0)*
      &      ehx(rightix(ix,iy),rightiy(ix,iy))/
      &     (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
           if (istyle_Joule_heating.eq.0) t0 = t0 +
-     &      fch(ix,iy,1)*ehy(ix,iy)/
+     &      fch(ix,iy,1,1)*ehy(ix,iy)/
      &     (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))+
-     &      fch(topix(ix,iy),topiy(ix,iy),1)*
+     &      fch(topix(ix,iy),topiy(ix,iy),1,1)*
      &      ehy(topix(ix,iy),topiy(ix,iy))/
      &     (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
           t0 = phm3*vol(ix,iy)*t0
@@ -713,15 +713,15 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
               if(periodic_bc.ne.1 .or. rightix(ix,iy).eq.ix+1 .or.
      &           region(ix,iy,0).ne.1 .or. nncut.eq.0) then
                 t0=phm7*0.5_R8*bb(ix,iy,3)*(
-     1           (fchdia(rightix(ix,iy),rightiy(ix,iy),0)+
-     1            fchdia(ix,iy,0))*uadia(ix,iy,1,is)-
-     1           (fchdia(topix(ix,iy),topiy(ix,iy),1)+
-     2            fchdia(ix,iy,1))*uadia(ix,iy,0,is))
+     1           (fchdia(rightix(ix,iy),rightiy(ix,iy),0,0)+
+     1            fchdia(ix,iy,0,0))*uadia(ix,iy,1,is)-
+     1           (fchdia(topix(ix,iy),topiy(ix,iy),1,1)+
+     2            fchdia(ix,iy,1,1))*uadia(ix,iy,0,is))
 *   ..case where the mesh is discontinuous
               else
-                t0=phm7*bb(ix,iy,3)*(fchdia(ix,iy,0)*uadia(ix,iy,1,is)-
-     1           0.5_R8*(fchdia(topix(ix,iy),topiy(ix,iy),1)+
-     2                   fchdia(ix,iy,1))*uadia(ix,iy,0,is))
+                t0=phm7*bb(ix,iy,3)*(fchdia(ix,iy,0,0)*uadia(ix,iy,1,is)
+     1           -0.5_R8*(fchdia(topix(ix,iy),topiy(ix,iy),1,1)+
+     2                    fchdia(ix,iy,1,1))*uadia(ix,iy,0,is))
               endif
               she0(ix,iy,0) = she0(ix,iy,0)+max(0.0_R8,t0)
               she0(ix,iy,3) = she0(ix,iy,3)+

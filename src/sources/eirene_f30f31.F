@@ -140,10 +140,10 @@ c
       if(iout.ne.0) then                                               !srv 18.06.08 {
         do is = 0,ns-1
          write (chns,'(i3.3)') is
-         call my_out(70,nx,ny,fna(-1,-1,0,is),'copy_fnax'//chns)
-         call my_out(70,nx,ny,fna(-1,-1,1,is),'copy_fnay'//chns)
-         call my_out(70,nx,ny,fna_eir(-1,-1,0,is),'copy_fna_eirx'//chns)
-         call my_out(70,nx,ny,fna_eir(-1,-1,1,is),'copy_fna_eiry'//chns)
+         call my_out(70,nx,ny,fna(-1,-1,0,0,is),'copy_fnax'//chns)
+         call my_out(70,nx,ny,fna(-1,-1,1,1,is),'copy_fnay'//chns)
+       call my_out(70,nx,ny,fna_eir(-1,-1,0,0,is),'copy_fna_eirx'//chns)
+       call my_out(70,nx,ny,fna_eir(-1,-1,1,1,is),'copy_fna_eiry'//chns)
          call my_out(70,nx,ny,vaecrb(-1,-1,0,is),'copy_vecrbx'//chns)
          call my_out(70,nx,ny,vaecrb(-1,-1,1,is),'copy_vecrby'//chns)
          call my_out(70,nx,ny,wadia(-1,-1,0,is),'copy_wadiax'//chns)
@@ -159,12 +159,12 @@ c
          call my_out(70,nx,ny,ua(-1,-1,is),'copy_ua'//chns)
          call my_out(70,nx,ny,na(-1,-1,is),'copy_na'//chns)
         enddo
-        call my_out(70,nx,ny,fne_eir(-1,-1,0),'copy_fne_eirx')
-        call my_out(70,nx,ny,fne_eir(-1,-1,1),'copy_fne_eiry')
-        call my_out(70,nx,ny,fhe_eir(-1,-1,0),'copy_fhe_eirx')
-        call my_out(70,nx,ny,fhe_eir(-1,-1,1),'copy_fhe_eiry')
-        call my_out(70,nx,ny,fhi_eir(-1,-1,0),'copy_fhi_eirx')
-        call my_out(70,nx,ny,fhi_eir(-1,-1,1),'copy_fhi_eiry')
+        call my_out(70,nx,ny,fne_eir(-1,-1,0,0),'copy_fne_eirx')
+        call my_out(70,nx,ny,fne_eir(-1,-1,1,1),'copy_fne_eiry')
+        call my_out(70,nx,ny,fhe_eir(-1,-1,0,0),'copy_fhe_eirx')
+        call my_out(70,nx,ny,fhe_eir(-1,-1,1,1),'copy_fhe_eiry')
+        call my_out(70,nx,ny,fhi_eir(-1,-1,0,0),'copy_fhi_eirx')
+        call my_out(70,nx,ny,fhi_eir(-1,-1,1,1),'copy_fhi_eiry')
         call my_out(70,nx,ny,ne,'copy_ne')
         call my_out(70,nx,ny,te,'copy_te')
         call my_out(70,nx,ny,ti,'copy_ti')
@@ -191,7 +191,7 @@ c
       do iy=-1,ny
         do ix=0,nx
           if(rightix(ix-1,iy).ne.nx+1) then
-            feixb(ix,iy+1)=fhi(rightix(ix-1,iy),rightiy(ix-1,iy),0)
+            feixb(ix,iy+1)=fhi(rightix(ix-1,iy),rightiy(ix-1,iy),0,0)
             do is=0,ns-1
               kintmp =
      .         (kinrgy(rightix(ix-1,iy),rightiy(ix-1,iy),is)*
@@ -200,9 +200,9 @@ c
      .          hx(rightix(ix-1,iy),rightiy(ix-1,iy)))/
      .         (hx(ix-1,iy)+hx(rightix(ix-1,iy),rightiy(ix-1,iy)))
               feixb(ix,iy+1)=feixb(ix,iy+1)+kintmp*(1.0_R8-BoRiS)
-     .         *fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,is)
+     .         *fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,0,is)
             enddo
-            feexb(ix,iy+1)=fhe(rightix(ix-1,iy),rightiy(ix-1,iy),0)
+            feexb(ix,iy+1)=fhe(rightix(ix-1,iy),rightiy(ix-1,iy),0,0)
           else
             feixb(ix,iy+1)=0.0_R8
             feexb(ix,iy+1)=0.0_R8
@@ -214,7 +214,7 @@ c
 * cell face y
       do iy=0,ny
         do ix=-1,nx
-          feiyb(ix+1,iy)=fhi(ix,iy,1)
+          feiyb(ix+1,iy)=fhi(ix,iy,1,1)
           do is=0,ns-1
             if (bottomiy(ix,iy).ne.-2) then
               kintmp =
@@ -225,9 +225,9 @@ c
               kintmp = kinrgy(ix,iy,is)
             endif
             feiyb(ix+1,iy)=feiyb(ix+1,iy)+kintmp*(1.0_R8-BoRiS)
-     .       *fna(ix,iy,1,is)
+     .       *fna(ix,iy,1,1,is)
           enddo
-          feeyb(ix+1,iy)=fhe(ix,iy,1)
+          feeyb(ix+1,iy)=fhe(ix,iy,1,1)
         enddo
       enddo
       feiyb(:,ny+1)=0.0_R8
@@ -292,22 +292,22 @@ c     in these cells!
 c     guard cell -> use grad-B drift only (fna)
                  if (leftix(ix,iy).eq.-2) then
                    uub(ix+1,iy+1,nflai)=max(min(
-     1               fna(rightix(ix,iy),rightiy(ix,iy),0,is)/(
+     1               fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)/(
      3               gs(rightix(ix,iy),rightiy(ix,iy),0)*
-     4               na(ix,iy,is)*qc(rightix(ix,iy),rightiy(ix,iy))),
+     4               na(ix,iy,is)*qc(rightix(ix,iy),rightiy(ix,iy),0)),
      5               ua_max),ua_min)
                  elseif (rightix(ix,iy).eq.nx+1) then
                    uub(ix+1,iy+1,nflai)=max(min(
-     1               fna(ix,iy,0,is)/(gs(ix,iy,0)*
-     4               na(ix,iy,is)*qc(ix,iy)),
+     1               fna(ix,iy,0,0,is)/(gs(ix,iy,0)*
+     4               na(ix,iy,is)*qc(ix,iy,0)),
      5               ua_max),ua_min)
                  else
                   uub(ix+1,iy+1,nflai)=max(min(
-     1             fna(ix,iy,0,is)/(gs(ix,iy,0)*qc(ix,iy)*
+     1             fna(ix,iy,0,0,is)/(gs(ix,iy,0)*qc(ix,iy,0)*
      2             (na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is)))+
-     3             fna(rightix(ix,iy),rightiy(ix,iy),0,is)/(
+     3             fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)/(
      4             gs(rightix(ix,iy),rightiy(ix,iy),0)*
-     5             qc(rightix(ix,iy),rightiy(ix,iy))*
+     5             qc(rightix(ix,iy),rightiy(ix,iy),0)*
      6             (na(ix,iy,is)+na(rightix(ix,iy),rightiy(ix,iy),is))),
      7             ua_max),ua_min)
                  endif
@@ -315,21 +315,21 @@ c     guard cell -> use grad-B drift only (fna)
                  if (eirene_background.eq.0) then
 c     internal cell, old treatment -> grad-B drift only (fna)
                   uub(ix+1,iy+1,nflai)=max(min(
-     1              fna(ix,iy,0,is)/(gs(ix,iy,0)*qc(ix,iy)*
+     1              fna(ix,iy,0,0,is)/(gs(ix,iy,0)*qc(ix,iy,0)*
      2              (na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is)))+
-     3              fna(rightix(ix,iy),rightiy(ix,iy),0,is)/(
+     3              fna(rightix(ix,iy),rightiy(ix,iy),0,0,is)/(
      4              gs(rightix(ix,iy),rightiy(ix,iy),0)*
-     5              qc(rightix(ix,iy),rightiy(ix,iy))*
+     5              qc(rightix(ix,iy),rightiy(ix,iy),0)*
      6             (na(ix,iy,is)+na(rightix(ix,iy),rightiy(ix,iy),is))),
      7              ua_max),ua_min)
                  else
 c     internal cell -> full diamagnetic drift (fna_eir)
                   uub(ix+1,iy+1,nflai)=max(min(
-     1              fna_eir(ix,iy,0,is)/(gs(ix,iy,0)*qc(ix,iy)*
+     1              fna_eir(ix,iy,0,0,is)/(gs(ix,iy,0)*qc(ix,iy,0)*
      2              (na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is)))+
-     3              fna_eir(rightix(ix,iy),rightiy(ix,iy),0,is)/(
+     3              fna_eir(rightix(ix,iy),rightiy(ix,iy),0,0,is)/(
      4              gs(rightix(ix,iy),rightiy(ix,iy),0)*
-     5              qc(rightix(ix,iy),rightiy(ix,iy))*
+     5              qc(rightix(ix,iy),rightiy(ix,iy),0)*
      6             (na(ix,iy,is)+na(rightix(ix,iy),rightiy(ix,iy),is))),
      7              ua_max),ua_min)
                  endif
@@ -345,19 +345,19 @@ c     in fna may have been set 0.
 c     guard cell -> use grad-B drift only (fna)
                 if (bottomiy(ix,iy).eq.-2) then
                   vvb(ix+1,iy+1,nflai)=max(min(
-     1              fna(topix(ix,iy),topiy(ix,iy),1,is)/(
+     1              fna(topix(ix,iy),topiy(ix,iy),1,1,is)/(
      2              gs(topix(ix,iy),topiy(ix,iy),1)*na(ix,iy,is)),
      3              ua_max),ua_min)
                 elseif (topiy(ix,iy).eq.ny+1) then
                   vvb(ix+1,iy+1,nflai)=max(min(
-     1              fna(ix,iy,1,is)/(gs(ix,iy,1)*na(ix,iy,is)),
+     1              fna(ix,iy,1,1,is)/(gs(ix,iy,1)*na(ix,iy,is)),
      5              ua_max),ua_min)
                 else
                   vvb(ix+1,iy+1,nflai)=max(min(
-     1              fna(ix,iy,1,is)/(gs(ix,iy,1)*
+     1              fna(ix,iy,1,1,is)/(gs(ix,iy,1)*
      2              (na(ix,iy,is)+
      3               na(bottomix(ix,iy),bottomiy(ix,iy),is)))+
-     4              fna(topix(ix,iy),topiy(ix,iy),1,is)/
+     4              fna(topix(ix,iy),topiy(ix,iy),1,1,is)/
      5              (gs(topix(ix,iy),topiy(ix,iy),1)*
      6              (na(ix,iy,is)+na(topix(ix,iy),topiy(ix,iy),is))),
      7              ua_max),ua_min)
@@ -366,20 +366,20 @@ c     guard cell -> use grad-B drift only (fna)
                 if (eirene_background.eq.0) then
 c     internal cell, old treatment -> grad-B drift only (fna)
                   vvb(ix+1,iy+1,nflai)=max(min(
-     1              fna(ix,iy,1,is)/(gs(ix,iy,1)*
+     1              fna(ix,iy,1,1,is)/(gs(ix,iy,1)*
      2              (na(ix,iy,is)+
      3              na(bottomix(ix,iy),bottomiy(ix,iy),is)))+
-     4              fna(topix(ix,iy),topiy(ix,iy),1,is)/
+     4              fna(topix(ix,iy),topiy(ix,iy),1,1,is)/
      5              (gs(topix(ix,iy),topiy(ix,iy),1)*
      6              (na(ix,iy,is)+na(topix(ix,iy),topiy(ix,iy),is))),
      7              ua_max),ua_min)
                 else
 c     internal cell -> full diamagnetic drift (fna_eir)
                   vvb(ix+1,iy+1,nflai)=max(min(
-     1              fna_eir(ix,iy,1,is)/(gs(ix,iy,1)*
+     1              fna_eir(ix,iy,1,1,is)/(gs(ix,iy,1)*
      2              (na(ix,iy,is)+
      3              na(bottomix(ix,iy),bottomiy(ix,iy),is)))+
-     4              fna_eir(topix(ix,iy),topiy(ix,iy),1,is)/
+     4              fna_eir(topix(ix,iy),topiy(ix,iy),1,1,is)/
      5              (gs(topix(ix,iy),topiy(ix,iy),1)*
      6              (na(ix,iy,is)+na(topix(ix,iy),topiy(ix,iy),is))),
      7              ua_max),ua_min)
@@ -423,7 +423,7 @@ c     internal cell -> full diamagnetic drift
               if(rightix(ix-1,iy).ne.nx+1) then
                if(leftix(ix,iy).ne.-2) then
                   fnixb(ix,iy+1,nflai)=
-     1             fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,is)
+     1             fna(rightix(ix-1,iy),rightiy(ix-1,iy),0,0,is)
                else
                  fnixb(ix,iy+1,nflai)=0.0_R8
                endif
@@ -437,7 +437,7 @@ c     internal cell -> full diamagnetic drift
           do iy=0,ny
             do ix=-1,nx
               if(bottomiy(ix,iy).ne.-2) then
-                fniyb(ix+1,iy,nflai)=fna(ix,iy,1,is)
+                fniyb(ix+1,iy,nflai)=fna(ix,iy,1,1,is)
               else
                 fniyb(ix+1,iy,nflai)=0.0_R8
               endif

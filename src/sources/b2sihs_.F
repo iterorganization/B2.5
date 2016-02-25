@@ -34,8 +34,8 @@
      &  po(-1:nx,-1:ny), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)                       !srv 07.05.08 01.07.09
       real (kind=R8) ::
-     *  fne(-1:nx,-1:ny,0:1),
-     &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
+     *  fne(-1:nx,-1:ny,0:1,0:1),
+     &  fch(-1:nx,-1:ny,0:1,0:1), cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1)                     !srv 28.06.03
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -175,14 +175,14 @@
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, ni, 1, 'ni', '.gt.')
 *    ..test edge values of fna, fne, fch
-!       do is = 0, ns-1                                            !srv 28.06.03 {
-!        call b2xvff (nx, ny, fna(-1,-1,0,is), 'fna')
-!       enddo                                                      !srv 28.06.03 }
+!       do is = 0, ns-1                               !srv 28.06.03 {
+!        call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')
+!       enddo                                         !srv 28.06.03 }
        call b2xvff (nx, ny, fne, 'fne')
        call b2xvff (nx, ny, fch, 'fch')
 *    ..test edge values of cvsa
        do is = 0, ns-1
-        call b2xvff (nx, ny, cvsa(-1,-1,0,is), 'cvsa') !srv 01.07.05
+        call b2xvff (nx, ny, cvsa(-1,-1,0,0,is), 'cvsa') !srv 01.07.05
        enddo
       endif
 *   ..compute ctaup
@@ -430,7 +430,7 @@
           if(leftix(ix,iy).eq.-2) then
             wrk0(ix,iy)=0.0e0_R8
           else
-            wrk0(ix,iy) = cvsa(ix,iy,0,is)*                           !srv 16.10.17
+            wrk0(ix,iy) = cvsa(ix,iy,0,0,is)*                         !srv 16.10.17
      &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
           endif
          enddo
@@ -440,7 +440,7 @@
           if(bottomiy(ix,iy).eq.-2) then
             wrk1(ix,iy) = 0.0e0_R8
           else
-            wrk1(ix,iy) = cvsa(ix,iy,1,is)*                             !srv 16.10.17
+            wrk1(ix,iy) = cvsa(ix,iy,1,1,is)*                         !srv 16.10.17
      *      (ua(ix,iy,is)-ua(bottomix(ix,iy),bottomiy(ix,iy),is))**2
           endif
          enddo
@@ -587,15 +587,15 @@
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &     bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &     region(ix,iy,0).ne.0) then
-           t0 = fch(ix,iy,0)*ehx(ix,iy)/
+           t0 = fch(ix,iy,0,0)*ehx(ix,iy)/
      &     (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
-     &      fch(rightix(ix,iy),rightiy(ix,iy),0)*
+     &      fch(rightix(ix,iy),rightiy(ix,iy),0,0)*
      &      ehx(rightix(ix,iy),rightiy(ix,iy))/
      &     (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
           if (istyle_Joule_heating.eq.0) t0 = t0 +
-     &      fch(ix,iy,1)*ehy(ix,iy)/
+     &      fch(ix,iy,1,1)*ehy(ix,iy)/
      &     (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))+
-     &      fch(topix(ix,iy),topiy(ix,iy),1)*
+     &      fch(topix(ix,iy),topiy(ix,iy),1,1)*
      &      ehy(topix(ix,iy),topiy(ix,iy))/
      &     (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
           t0 = phm3*vol(ix,iy)*t0

@@ -54,7 +54,7 @@ else
 ifdef USE_IMPGYRO
 FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all ${MPI_CPP}
 else
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all
+FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all -check bounds -warn interfaces
 endif
 endif
 else

@@ -100,7 +100,7 @@
      &     , nsmin, nsmax
 !     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
 !      real (kind=R8) ::                                                 !srv 04.06.99
-!     *   fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1)                            !srv 04.06.99
+!     *   fna_nodrift(-1:nx,-1:ny,0:1,0:1,0:ns-1)                        !srv 04.06.99
 *   ..procedures
       intrinsic mod
       real (kind=R8) ::
@@ -337,20 +337,22 @@ csw 01oct2012 initialize potential if necessary
           call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)  !srv 01.10.99
 *    ..compute particle flux
           call b2tfnb (nx, ny, is, ismain, 
-     &   guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,          !srv 07.06.00 09.01.01 08.09.01 19.05.03 !iyv 06.02.14
+     &   guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,           !srv 07.06.00 09.01.01 08.09.01 19.05.03 !iyv 06.02.14
      1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),      !srv 09.01.01 20.09.06
      1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),
      1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,      !srv 19.05.03 08.10.04 04.02.05
-     &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &   cddi(-1,-1,0,is),                                               !srv 13.10.06
-     &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is),
+     &   po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), cdpa(-1,-1,0,0,is),
+     &   cddi(-1,-1,0,0,is),                                             !srv 13.10.06
+     &   cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),                     !srv 09.01.01 15.12.05
+     &   cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),
      &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
-     &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
-     &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
-     &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
-     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
-     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &   fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is), 
+     &   fna_fcor(-1,-1,0,0,is),
+     &   fna_he(-1,-1,0,0,is), fnaPSch(-1,-1,0,0,is), 
+     &   fna_mdf(-1,-1,0,0,is),                                          !srv 13.10.06
+     &   flob, conb, fna_32(-1,-1,0,0,is), fna_52(-1,-1,0,0,is), 
+     &   fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is), 
+     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),
      &   .true.)                                                         !djm Jan2017
         enddo                                                            !srv 01.10.99
 *      ..compute electron drift velocities
@@ -387,7 +389,7 @@ c   extra call at this place within internal iteration)
             if(region(-1,iy,0).eq.0) cycle
             if(.not.on_closed_surface(-1,iy)) then
               write(*,*) iy,'west =',
-     >           fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)
+     >           fna(rightix(-1,iy),rightiy(-1,iy),0,0,ismain)
               inverted_ua = inverted_ua .and. 
      .         ua(-1,iy,ismain)*
      .         pbs(rightix(-1,iy),rightiy(-1,iy),0).gt.0.0_R8
@@ -398,7 +400,7 @@ c   extra call at this place within internal iteration)
             if(bottomiy(nx,iy).eq.-2) cycle
             if(region(nx,iy,0).eq.0) cycle
             if(.not.on_closed_surface(nx,iy)) then
-              write(*,*) iy,'east =',fna(nx,iy,0,ismain)
+              write(*,*) iy,'east =',fna(nx,iy,0,0,ismain)
               inverted_ua = inverted_ua .and. 
      .         ua(nx,iy,ismain)*pbs(nx,iy,0).lt.0.0_R8
             end if
@@ -434,14 +436,14 @@ c   extra call at this place within internal iteration)
         do iy=-1,ny
           do ix=-1,nx
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-              wrk0(ix,iy)=-(fch_p(ix,iy,0)/pbs(ix,iy,0)+
-     &          fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+              wrk0(ix,iy)=-(fch_p(ix,iy,0,0)/pbs(ix,iy,0)+
+     &          fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/
      &          pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
             elseif(leftix(ix,iy).eq.-2) then
-              wrk0(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+              wrk0(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/
      &         pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
             elseif(rightix(ix,iy).eq.nx+1) then
-              wrk0(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe
+              wrk0(ix,iy)=-fch_p(ix,iy,0,0)/pbs(ix,iy,0)/qe
             endif
 !           wrk0(ix,iy)=wrk0(ix,iy)*prl_cur                              !srv 03.04.15
           enddo
@@ -471,6 +473,7 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
      &   cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                       !srv 19.07.02
      &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,            !srv 23.07.99 01.10.99 04.10.99 09.01.01
      &   resmo, resmt, corua, corut, pcca, pccm, ier0)                   !srv 23.07.99 10.11.02 23.12.03
+
 
       call xertst (ier0.eq.0, 'error return from b2npmo') 
 *   ..set nep
@@ -504,21 +507,22 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
      1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),      !srv 09.01.01 20.09.06
      1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),       !srv 17.05.99
      1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,      !srv 19.05.03 08.10.04  04.02.05
-     &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &   cddi(-1,-1,0,is),                                               !srv 13.10.06
-     &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is),
+     &   po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), cdpa(-1,-1,0,0,is),
+     &   cddi(-1,-1,0,0,is),                                             !srv 13.10.06
+     &   cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),                     !srv 09.01.01 15.12.05
+     &   cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),
      &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
-     &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
-     &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
-     &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
-     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
-     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &   fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is), 
+     &   fna_fcor(-1,-1,0,0,is),
+     &   fna_he(-1,-1,0,0,is), fnaPSch(-1,-1,0,0,is),
+     &   fna_mdf(-1,-1,0,0,is),                                          !srv 13.10.06
+     &   flob, conb, fna_32(-1,-1,0,0,is), fna_52(-1,-1,0,0,is), 
+     &   fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is), 
+     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),
      &   .true.)                                                         !djm Jan2017
 !        call b2tfco (nx, ny, is, na(-1,-1,is), te, ti, pb, 
-!     &      cdpa(-1,-1,0,is), flob, conb)
+!     &      cdpa(-1,-1,0,0,is), flob, conb)
 *    ..perform iteration
-
 csw 16oct2012 init ier0
         ier0=0
         if (solving(2).and.all(solveco(is,0:nnreg(0)))) then             !srv 26.09.12
@@ -534,8 +538,8 @@ csw 16oct2012 init ier0
             call b2npco (nx, ny, guard_flows, nnreg(0), solvedum, 
      &       solving(1), solvedm2, ncall, is, rxf0, vol,
      &       pbs, flob, conb,                                            !srv 22.01.02 01.07.05
-     &       sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
-     &       ua(-1,-1,is), fna(-1,-1,0,is),
+     &       sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
+     &       ua(-1,-1,is), fna(-1,-1,0,0,is),
      &       resco(-1,-1,is), corpa(-1,-1,is), ier0)
             last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
           else                                                           !srv 13.10.06 {
@@ -548,8 +552,8 @@ csw 16oct2012 init ier0
               call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
      &         solving(1), solvedm2, ncall, is, rxf0,
      &         vol, pbs, flob, conb,
-     &         sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
-     &         ua(-1,-1,is), fna_mdf(-1,-1,0,is),
+     &         sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
+     &         ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npc9')
               last_solve_9(0:nnreg(0))=solveco(is,0:nnreg(0))
@@ -562,8 +566,8 @@ csw 16oct2012 init ier0
               call b2npco (nx, ny, guard_flows, nnreg(0), solvedum,  
      &         solving(1), solvedm2, ncall, is, rxf0,
      &         vol, pbs, flob, conb,
-     &         sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
-     &         ua(-1,-1,is), fna_mdf(-1,-1,0,is),
+     &         sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
+     &         ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npco')
               last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
@@ -586,16 +590,18 @@ csw 16oct2012 init ier0
      1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),      !srv 09.01.01 20.09.06
      1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),       !srv 17.05.99
      1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,      !srv 19.05.03 08.10.04 04.02.05
-     &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &   cddi(-1,-1,0,is),                                               !srv 13.10.06
-     &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is),
+     &   po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), cdpa(-1,-1,0,0,is),
+     &   cddi(-1,-1,0,0,is),                                             !srv 13.10.06
+     &   cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),                     !srv 09.01.01 15.12.05
+     &   cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),
      &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 20.09.06
-     1   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
-     &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
-     &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
-     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
-     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     1   fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is), 
+     &   fna_fcor(-1,-1,0,0,is),
+     &   fna_he(-1,-1,0,0,is), fnaPSch(-1,-1,0,0,is), 
+     &   fna_mdf(-1,-1,0,0,is),                                          !srv 13.10.06
+     &   flob, conb, fna_32(-1,-1,0,0,is), fna_52(-1,-1,0,0,is), 
+     &   fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is), 
+     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),
      &   .false.)                                                        !djm Jan2017
       enddo 
 *      ..compute electron drift velocities
@@ -742,18 +748,18 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      1       rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),  !srv 09.01.01 20.09.06
      1       uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),   !srv 17.05.99
      1       wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,  !srv 19.05.03 08.10.04 04.02.05
-     &       po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &       cddi(-1,-1,0,is),                                           !srv 13.10.06
-     &       cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is),cdnahz(-1,-1,0,is),  !srv 09.01.01 15.12.05
-     &       cdpahz(-1,-1,0,is),
+     &       po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is),
+     &       cdpa(-1,-1,0,0,is), cddi(-1,-1,0,0,is),                     !srv 13.10.06
+     &       cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),                 !srv 09.01.01 15.12.05
+     &       cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),
      &       fchvispar, fchvisper, fchinert, fchanml, fchvisq,           !srv 19.07.02 01.10.99 20.09.06
-     &       fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
-     &       fna_fcor(-1,-1,0,is),
-     &       fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
-     &       fna_mdf(-1,-1,0,is),                                        !srv 13.10.06
-     &       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
-     &       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
-     &       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &       fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),
+     &       fna_fcor(-1,-1,0,0,is),
+     &       fna_he(-1,-1,0,0,is), fnaPSch(-1,-1,0,0,is),
+     &       fna_mdf(-1,-1,0,0,is),                                      !srv 13.10.06
+     &       flob, conb, fna_32(-1,-1,0,0,is), fna_52(-1,-1,0,0,is), 
+     &       fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is), 
+     &       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),
      &       .false.)                                                    !djm Jan2017
           enddo
 *      ..compute electron drift velocities
@@ -827,14 +833,14 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        do iy=-1,ny
          do ix=-1,nx
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-             ue(ix,iy)=-(fch_p(ix,iy,0)/pbs(ix,iy,0)+
-     &        fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+             ue(ix,iy)=-(fch_p(ix,iy,0,0)/pbs(ix,iy,0)+
+     &        fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/
      &          pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
            elseif(leftix(ix,iy).eq.-2) then
-             ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+             ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/
      &         pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
            elseif(rightix(ix,iy).eq.nx+1) then
-             ue(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe
+             ue(ix,iy)=-fch_p(ix,iy,0,0)/pbs(ix,iy,0)/qe
            endif
 	 enddo
        enddo
@@ -911,16 +917,18 @@ c   recompute particle fluxes
      1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),      !srv 09.01.01 20.09.06
      1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),       !srv 17.05.99
      1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,      !srv 19.05.03 08.10.04  04.02.05
-     &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &   cddi(-1,-1,0,is),                                               !srv 13.10.06
-     &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is),
+     &   po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), cdpa(-1,-1,0,0,is),
+     &   cddi(-1,-1,0,0,is),                                             !srv 13.10.06
+     &   cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),                     !srv 09.01.01 15.12.05
+     &   cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),
      &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
-     &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
-     &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
-     &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
-     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
-     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &   fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is), 
+     &   fna_fcor(-1,-1,0,0,is),
+     &   fna_he(-1,-1,0,0,is), fnaPSch(-1,-1,0,0,is), 
+     &   fna_mdf(-1,-1,0,0,is),                                          !srv 13.10.06
+     &   flob, conb, fna_32(-1,-1,0,0,is), fna_52(-1,-1,0,0,is), 
+     &   fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is), 
+     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),
      &   .false.)                                                        !djm Jan2017
 
 *    ..perform iteration
@@ -936,8 +944,8 @@ c   recompute particle fluxes
             if(new_matrix) call restart_ma28
             call b2npco (nx, ny, guard_flows, nnreg(0), solvedum, 
      &       solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob,conb, !srv 22.01.02 01.07.05
-     &       sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
-     &       ua(-1,-1,is), fna(-1,-1,0,is),
+     &       sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
+     &       ua(-1,-1,is), fna(-1,-1,0,0,is),
      &       resco(-1,-1,is), corpa(-1,-1,is), ier0)
             last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
           endif
@@ -954,8 +962,8 @@ c   recompute particle fluxes
               call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
      &         solving(1), solvedm2, ncall, is, rxf0,
      &         vol, pbs, flob, conb,
-     &         sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
-     &         ua(-1,-1,is), fna_mdf(-1,-1,0,is),
+     &         sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
+     &         ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               last_solve_9(0:nnreg(0))=solveco(is,0:nnreg(0))
             else
@@ -967,8 +975,8 @@ c   recompute particle fluxes
               call b2npco (nx, ny, guard_flows, nnreg(0), solvedum,  
      &         solving(1), solvedm2, ncall, is, rxf0,
      &         vol, pbs, flob, conb,
-     &         sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
-     &         ua(-1,-1,is), fna_mdf(-1,-1,0,is),
+     &         sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
+     &         ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
      &         resco(-1,-1,is), corpa(-1,-1,is), ier0)
               last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
             endif
@@ -998,16 +1006,18 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      1   rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),      !srv 09.01.01 20.09.06
      1   uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),
      1   wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,      !srv 19.05.03 08.10.04 04.02.05
-     &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &   cddi(-1,-1,0,is),                                               !srv 13.10.06
-     &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is),
+     &   po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), cdpa(-1,-1,0,0,is),
+     &   cddi(-1,-1,0,0,is),                                             !srv 13.10.06
+     &   cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),                     !srv 09.01.01 15.12.05
+     &   cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),
      &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
-     &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
-     &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
-     &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
-     &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
-     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &   fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is), 
+     &   fna_fcor(-1,-1,0,0,is),
+     &   fna_he(-1,-1,0,0,is), fnaPSch(-1,-1,0,0,is), 
+     &   fna_mdf(-1,-1,0,0,is),                                          !srv 13.10.06
+     &   flob, conb, fna_32(-1,-1,0,0,is), fna_52(-1,-1,0,0,is), 
+     &   fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is), 
+     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),
      &   .false.)                                                        !djm Jan2017
        enddo                                                             !srv 01.10.99
 *      ..compute electron drift velocities

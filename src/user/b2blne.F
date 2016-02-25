@@ -278,84 +278,84 @@ c
             iyf= iyr
           endif
           if (lcross_hlp) then !{
-            hlp_h=fhe(ixf,iyf,1)+fhi(ixf,iyf,1)+fhi_ext(ixf,iyf,1)
+            hlp_h=fhe(ixf,iyf,1,1)+fhi(ixf,iyf,1,1)+fhi_ext(ixf,iyf,1,1)
             hlp_p=0.0_R8
             do is=0,ns-1 !{
-              hlp_p=hlp_p+fna(ixf,iyf,1,is)*ev*
+              hlp_p=hlp_p+fna(ixf,iyf,1,1,is)*ev*
      .         (rpt(ix,iy,is)*hy1(ixr,iyr)+rpt(ixr,iyr,is)*hy1(ix,iy))/
      .         (hy1(ixr,iyr)+hy1(ix,iy))
-              hlp_h=hlp_h+fna(ixf,iyf,1,is)*(1.0_R8-BoRiS)*
+              hlp_h=hlp_h+fna(ixf,iyf,1,1,is)*(1.0_R8-BoRiS)*
      .         (kinrgy(ix,iy,is)*hy1(ixr,iyr)+
      .          kinrgy(ixr,iyr,is)*hy1(ix,iy))/
      .         (hy1(ixr,iyr)+hy1(ix,iy))
 csw 03jan2017 re-implemeted fix to allow 3/2*flux*T --> 5/2*flux*T
 c             was fixed already on 04mar2013
 c             (possible caveat: viscous part missing?)
-              hlp_h=hlp_h+fna(ixf,iyf,1,is)*
+              hlp_h=hlp_h+fna(ixf,iyf,1,1,is)*
      .         (ti(ix,iy)*hy1(ixr,iyr)+ti(ixr,iyr)*hy1(ix,iy))/
      .         (hy1(ix,iy)+hy1(ixr,iyr))
 c
             end do !}
             do is=0,ns_ext-1 !{
-              hlp_p=hlp_p+fa_ext(ixf,iyf,1,is)*ev*
+              hlp_p=hlp_p+fa_ext(ixf,iyf,1,1,is)*ev*
      .         (pt_ext(ix,iy,is)*hy1(ixr,iyr)+
      .          pt_ext(ixr,iyr,is)*hy1(ix,iy))/
      .         (hy1(ixr,iyr)+hy1(ix,iy))
-              hlp_h=hlp_h+fa_ext(ixf,iyf,1,is)*(1.0_R8-BoRiS)*
+              hlp_h=hlp_h+fa_ext(ixf,iyf,1,1,is)*(1.0_R8-BoRiS)*
      .          0.5_R8*am_ext(is)*mp*
      .         (ua_ext(ix,iy,is)**2*hy1(ixr,iyr)+
      .          ua_ext(ixr,iyr,is)**2*hy1(ix,iy))/
      .         (hy1(ixr,iyr)+hy1(ix,iy))
 csw c.f. above
-              hlp_h=hlp_h+fa_ext(ixf,iyf,1,is)*
+              hlp_h=hlp_h+fa_ext(ixf,iyf,1,1,is)*
      .         (ta_ext(ix,iy,is)*hy1(ixr,iyr)+
      .          ta_ext(ixr,iyr,is)*hy1(ix,iy))/
      .         (hy1(ix,iy)+hy1(ixr,iyr))
 c
             end do !}
 csw 03jan2017 c.f. above, adding electron part (fne includes fa_ext part, c.f. b2xpfe.f)
-            hlp_h=hlp_h+fne(ixf,iyf,1)*
+            hlp_h=hlp_h+fne(ixf,iyf,1,1)*
      .       (te(ix,iy)*hy1(ixr,iyr)+te(ixr,iyr)*hy1(ix,iy))/
      .       (hy1(ix,iy)+hy1(ixr,iyr))
 c
           else if (lbound_hlp) then !}{
-            hlp_h=fhe(ixf,iyf,0)+fhi(ixf,iyf,0)+fhi_ext(ixf,iyf,0)
+            hlp_h=fhe(ixf,iyf,0,0)+fhi(ixf,iyf,0,0)+fhi_ext(ixf,iyf,0,0)
             hlp_p=0.0_R8
             do is=0,ns-1 !{
-              hlp_p=hlp_p+fna(ixf,iyf,0,is)*ev*
+              hlp_p=hlp_p+fna(ixf,iyf,0,0,is)*ev*
      .         (rpt(ix,iy,is)*hx(ixr,iyr)+rpt(ixr,iyr,is)*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
-              hlp_h=hlp_h+fna(ixf,iyf,0,is)*(1.0_R8-BoRiS)*
+              hlp_h=hlp_h+fna(ixf,iyf,0,0,is)*(1.0_R8-BoRiS)*
      .         (kinrgy(ix,iy,is)*hx(ixr,iyr)+
      .          kinrgy(ixr,iyr,is)*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
 csw 03jan2017 re-implemeted fix to allow 3/2*flux*T --> 5/2*flux*T
 c             was fixed already on 04mar2013
 c             (possible caveat: viscous part missing?)
-              hlp_h=hlp_h+fna(ixf,iyf,0,is)*
+              hlp_h=hlp_h+fna(ixf,iyf,0,0,is)*
      .         (ti(ix,iy)*hx(ixr,iyr)+ti(ixr,iyr)*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
 c
             end do !}
             do is=0,ns_ext-1 !{
-              hlp_p=hlp_p+fa_ext(ixf,iyf,0,is)*ev*
+              hlp_p=hlp_p+fa_ext(ixf,iyf,0,0,is)*ev*
      .         (pt_ext(ix,iy,is)*hx(ixr,iyr)+
      .          pt_ext(ixr,iyr,is)*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
-              hlp_h=hlp_h+fa_ext(ixf,iyf,0,is)*(1.0_R8-BoRiS)*
+              hlp_h=hlp_h+fa_ext(ixf,iyf,0,0,is)*(1.0_R8-BoRiS)*
      .          0.5_R8*am_ext(is)*mp*
      .         (ua_ext(ix,iy,is)**2*hx(ixr,iyr)+
      .          ua_ext(ixr,iyr,is)**2*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
 csw 03jan2017 c.f. above
-              hlp_h=hlp_h+fa_ext(ixf,iyf,0,is)*
+              hlp_h=hlp_h+fa_ext(ixf,iyf,0,0,is)*
      .         (ta_ext(ix,iy,is)*hx(ixr,iyr)+
      .          ta_ext(ixr,iyr,is)*hx(ix,iy))/
      .         (hx(ix,iy)+hx(ixr,iyr))
 c
             end do !}
 csw 03jan2017 c.f. above, adding electron part (fne includes fa_ext part, c.f. b2xpfe.f)
-            hlp_h=hlp_h+fne(ixf,iyf,0)*
+            hlp_h=hlp_h+fne(ixf,iyf,0,0)*
      .       (te(ix,iy)*hx(ixr,iyr)+te(ixr,iyr)*hx(ix,iy))/
      .       (hx(ix,iy)+hx(ixr,iyr))
 c

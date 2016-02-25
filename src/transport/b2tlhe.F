@@ -7,7 +7,7 @@
       real (kind=R8) ::
      *  me, cflme, 
      &  bb(-1:nx,-1:ny,0:3), gs(-1:nx,-1:ny,0:2),
-     &  pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny), ne(-1:nx,-1:ny),
+     &  pbsx(-1:nx,-1:ny), qc(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
      &  te(-1:nx,-1:ny), chvemx(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
 *     B2TLHE computes the electron heat transport flux limit velocity.
@@ -57,7 +57,7 @@ c    because now both options are interchangeable
           if (model.eq.1.or.model.eq.3) then  ! SOLPS5.0 treatments
             t0 = max(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))
             chvemx(ix,iy) = cflme*sqrt(t0/me)*abs(pbsx(ix,iy))        !srv 11.01.13
-            if (area_fix.eq.2) chvemx(ix,iy) = chvemx(ix,iy)*qc(ix,iy)
+            if (area_fix.eq.2) chvemx(ix,iy) = chvemx(ix,iy)*qc(ix,iy,0)
           else if (model.eq.2) then  ! SOLPS4.0 treatment
             t0 = te(ix,iy)
             t1 = te(leftix(ix,iy),leftiy(ix,iy))
@@ -70,7 +70,7 @@ c           ensures consistency with b2trcl_conductive_limit .ne. 0
      .	      ne(leftix(ix,iy),leftiy(ix,iy))*
      .        pit(leftix(ix,iy),leftiy(ix,iy))*sqrt(t1/me)*t1)/
      .       ((ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*max(t0,t1))  
-            if (area_fix.ge.2) chvemx(ix,iy) = chvemx(ix,iy)*qc(ix,iy)
+            if (area_fix.ge.2) chvemx(ix,iy) = chvemx(ix,iy)*qc(ix,iy,0)
           endif
         endif
        enddo

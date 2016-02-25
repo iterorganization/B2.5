@@ -22,9 +22,9 @@
      2 ub(-1:nx,-1:ny), wbdia(-1:nx,-1:ny,0:1), vbecrb(-1:nx,-1:ny,0:1),
      & te(-1:nx,-1:ny), ti(-1:nx,-1:ny), nb(-1:nx,-1:ny),
      & po(-1:nx,-1:ny), ni(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
-     & chci(-1:nx,-1:ny,0:1), cvsb(-1:nx,-1:ny,0:1),                  !srv 23.07.99
-     & cvsb_cl(-1:nx,-1:ny,0:1), cvsbhz(-1:nx,-1:ny,0:1),             !srv 04.10.99 09.01.01
-     & cvsbhz_cl(-1:nx,-1:ny,0:1)                                     !srv 31.07.02
+     & chci(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1),                  !srv 23.07.99
+     & cvsb_cl(-1:nx,-1:ny,0:1,0:1), cvsbhz(-1:nx,-1:ny,0:1,0:1),             !srv 04.10.99 09.01.01
+     & cvsbhz_cl(-1:nx,-1:ny,0:1,0:1)                                     !srv 31.07.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),
@@ -173,11 +173,11 @@
 
           if (qstyle.eq.1) then
 
-            wrk0 = 0.0e0_R8
-            do iy=0,ny-1
-              do ix=-1,nx
-                if(leftix(ix,iy).ne.-2) then                        !srv 26.11.02
-                  wrk0(ix,iy)=-chci(ix,iy,0)
+	    wrk0 = 0.0e0_R8
+            do iy=0,ny-1                                                 
+	      do ix=-1,nx                                                 
+	        if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02  
+	          wrk0(ix,iy)=-chci(ix,iy,0,0)
      &             *(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))
                 endif
               enddo
@@ -306,7 +306,7 @@
               if(leftix(ix,iy).eq.-2) then
                 wrk0(ix,iy)=0.0e0_R8
               else
-                wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz_cl(ix,iy,0)/         !srv 16.10.17
+                wrk0(ix,iy)=2.0e0_R8*ft*cvsbhz_cl(ix,iy,0,0)/       !srv 16.10.17
      &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*
      &            (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
               endif
@@ -349,9 +349,9 @@
         wrks=smbvh(:,:,0)+smbvh(:,:,1)*ub(:,:)+
      &       smbvh(:,:,2)*nb(:,:)*mb+smbvh(:,:,3)*ub(:,:)*nb(:,:)*mb
         call my_out(70,nx,ny,wrks,'b2siav_smovh'//chns)
-        call my_out(70,nx,ny,cvsbhz(-1,-1,0),'b2siav_cvsbhzx'//chns)
-        call my_out(70,nx,ny,cvsbhz(-1,-1,1),'b2siav_cvsbhzy'//chns)
-      endif                                                         !srv 17.06.02 }
+        call my_out(70,nx,ny,cvsbhz(-1,-1,0,0),'b2siav_cvsbhzx'//chns)
+        call my_out(70,nx,ny,cvsbhz(-1,-1,1,1),'b2siav_cvsbhzy'//chns)
+      endif                                                          !srv 17.06.02 }
 
 cdjm Jan2017 Store linearised sources for balance
       if (balance_netcdf.ne.0) then

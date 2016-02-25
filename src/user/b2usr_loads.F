@@ -80,13 +80,13 @@ C AREAS OF THE SURFACE ELEMENTS
         call b2neut_eng(wnutrg(0,j),wnutpr(0,j),ny,shift(j))
         wtarg_max(j)=0.0_R8
         do iy=0,ny-1
-          hlp=abs(fhe(k+l,iy,0)+fhi(k+l,iy,0)+fhi_ext(k+l,iy,0))
+          hlp=abs(fhe(k+l,iy,0,0)+fhi(k+l,iy,0,0)+fhi_ext(k+l,iy,0,0))
           do is=0,ns-1
-            hlp=hlp+abs(fna(k+l,iy,0,is)*(rpt(k,iy,is)*ev+
+            hlp=hlp+abs(fna(k+l,iy,0,0,is)*(rpt(k,iy,is)*ev+
      .                 (1.0_R8-BoRiS)*kinrgy(k,iy,is)))
           end do
           do is=0,ns_ext-1
-            hlp=hlp+abs(fa_ext(k+l,iy,0,is)*(pt_ext(k,iy,is)*ev+
+            hlp=hlp+abs(fa_ext(k+l,iy,0,0,is)*(pt_ext(k,iy,is)*ev+
      .                 (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
      .                  ua_ext(k,iy,is)**2))
           end do

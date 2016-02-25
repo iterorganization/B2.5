@@ -12,8 +12,8 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
+     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -69,7 +69,7 @@
 
 *   ..test edge values of fna, fhe, fhi, fch
       do is = 0, ns-1
-       call b2xvff (nx, ny, fna(-1,-1,0,is), 'fna')
+       call b2xvff (nx, ny, fna(-1,-1,0,0,is), 'fna')
       enddo
       call b2xvff (nx, ny, fhe, 'fhe')
       call b2xvff (nx, ny, fhi, 'fhi')

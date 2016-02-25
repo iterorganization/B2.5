@@ -11,11 +11,11 @@
      *  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      *  vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      *  na(-1:nx,-1:ny,0:ns-1), ti(-1:nx,-1:ny),
-     1  hcib(-1:nx,-1:ny,0:ns-1), chcb(-1:nx,-1:ny,0:1,0:ns-1)
+     1  hcib(-1:nx,-1:ny,0:ns-1), chcb(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  hcimx(-1:nx,-1:ny,0:1,0:ns-1),
-     &	fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1)
+     &	fllim0fhi(-1:nx,-1:ny,0:1,0:1,0:ns-1)
 *   ..common blocks
 *     ------------------------------------------------------------------
 *     B2TLH0 computes the conductive neutral heat transport flux limit.
@@ -61,7 +61,7 @@
       endif
 
       call sfill(n2*2*ns, 0.0_R8, hcimx, 1)
-      call sfill(n2*2*ns, 1.0_R8, fllim0fhi, 1)
+      call sfill(n2*4*ns, 1.0_R8, fllim0fhi, 1)
       maxfluxlimit=0.0_R8
 
 *   ..nothing done if alpha.eq.0
@@ -117,7 +117,7 @@
                  t3=t3/c3
                  hcimx(ix,iy,0,is) = hcib(ix,iy,is)/t3
                  maxfluxlimit(0)=max(maxfluxlimit(0),t3)
-                 fllim0fhi(ix,iy,0,is) = t3
+                 fllim0fhi(ix,iy,0,0,is) = t3
                else
                  hcimx(ix,iy,0,is) = hcib(ix,iy,is)
                endif
@@ -165,7 +165,7 @@
                  t3=t3/c3
                  hcimx(ix,iy,1,is) = hcib(ix,iy,is)/t3
                  maxfluxlimit(1)=max(maxfluxlimit(1),t3)
-                 fllim0fhi(ix,iy,1,is) = t3
+                 fllim0fhi(ix,iy,1,1,is) = t3
                else
                  hcimx(ix,iy,1,is) = hcib(ix,iy,is)
                endif
@@ -243,15 +243,15 @@
             t0 = (ti(ix,iy) + ti(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
             t1 = (na(ix,iy,is) + na(leftix(ix,iy),leftiy(ix,iy),is))
      .            /2.0_R8
-            dti = chcb(ix,iy,0,is)*
+            dti = chcb(ix,iy,0,0,is)*
      &            abs(ti(leftix(ix,iy),leftiy(ix,iy)) - ti(ix,iy))
             vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))
      &            *(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
      &            /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
             t2 = 1.0_R8/(1.0_R8 + (dti/(alpha*vthi*t1*t0))**gamma)
      .                                           **(1.0_R8/gamma)
-            chcb(ix,iy,0,is) = chcb(ix,iy,0,is)*t2
-	    fllim0fhi(ix,iy,0,is) = t2
+            chcb(ix,iy,0,0,is) = chcb(ix,iy,0,0,is)*t2
+	    fllim0fhi(ix,iy,0,0,is) = t2
             maxfluxlimit(0)=max(maxfluxlimit(0),t2)
            end if
 *   .. compute perpendicular neutral heat conductivity flux limit
@@ -259,15 +259,15 @@
             t0 = (ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
             t1 = (na(ix,iy,is) + na(bottomix(ix,iy),bottomiy(ix,iy),is))
      &           /2.0_R8
-            dti = chcb(ix,iy,1,is)*
+            dti = chcb(ix,iy,1,1,is)*
      &            abs(ti(bottomix(ix,iy),bottomiy(ix,iy))-ti(ix,iy))
             vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))
      &           *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
      &           /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
             t2 = 1.0_R8/(1.0_R8 +(dti/(alpha*vthi*t1*t0))**gamma)
      .                                          **(1.0_R8/gamma)
-            chcb(ix,iy,1,is) = chcb(ix,iy,1,is)*t2
-	    fllim0fhi(ix,iy,1,is) = t2
+            chcb(ix,iy,1,1,is) = chcb(ix,iy,1,1,is)*t2
+	    fllim0fhi(ix,iy,1,1,is) = t2
             maxfluxlimit(1)=max(maxfluxlimit(1),t2)
            end if
           end do
@@ -297,12 +297,12 @@
      &                                          /hcimx(:,:,1,is)
            call my_out(70, nx, ny, w1,'chcimy'//charns)
          else
-           call my_out(70, nx, ny, fllim0fhi(-1,-1,0,is),
+           call my_out(70, nx, ny, fllim0fhi(-1,-1,0,0,is),
      &                 'fllim0fhix'//charns)
-           call my_out(70, nx, ny, fllim0fhi(-1,-1,1,is),
+           call my_out(70, nx, ny, fllim0fhi(-1,-1,1,1,is),
      &                 'fllim0fhiy'//charns)
-           call my_out(70, nx, ny, chcb(-1,-1,0,is), 'chcix'//charns)
-           call my_out(70, nx, ny, chcb(-1,-1,1,is), 'chciy'//charns)
+           call my_out(70, nx, ny, chcb(-1,-1,0,0,is), 'chcix'//charns)
+           call my_out(70, nx, ny, chcb(-1,-1,1,1,is), 'chciy'//charns)
          end if
         enddo                                                   !srv 13.01.04 }
         deallocate(w1)

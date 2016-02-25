@@ -956,16 +956,16 @@ c inner target
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
           s=gs(0,iy,0)
-          hlp=abs(fhe(0,iy,0)+fhi(0,iy,0))
+          hlp=abs(fhe(0,iy,0,0)+fhi(0,iy,0,0))
           do is=0,ns-1 !{
-            hlp=hlp+abs(fna(0,iy,0,is)*(
+            hlp=hlp+abs(fna(0,iy,0,0,is)*(
      .       (rpt(0,iy,is)*hx(-1,iy)+rpt(-1,iy,is)*hx(0,iy))/
      .       (hx(-1,iy)+hx(0,iy))*ev+(1.0_R8-BoRiS)*
      .       (kinrgy(0,iy,is)*hx(-1,iy)+kinrgy(-1,iy,is)*hx(0,iy))/
      .       (hx(-1,iy)+hx(0,iy))))
           end do !}
           do is=0,ns_ext-1 !{
-            hlp=hlp+abs(fa_ext(0,iy,0,is)*(
+            hlp=hlp+abs(fa_ext(0,iy,0,0,is)*(
      .       (pt_ext(0,iy,is)*hx(-1,iy)+pt_ext(-1,iy,is)*hx(0,iy))/
      .       (hx(-1,iy)+hx(0,iy))*ev+
      .       (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
@@ -983,10 +983,10 @@ c outer target
         hlp_ppwo=0.0_R8
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
-          hlp=abs(fhe(nx,iy,0)+fhi(nx,iy,0))
+          hlp=abs(fhe(nx,iy,0,0)+fhi(nx,iy,0,0))
           s=gs(nx,iy,0)
           do is=0,ns-1 !{
-            hlp=hlp+abs(fna(nx,iy,0,is)*(
+            hlp=hlp+abs(fna(nx,iy,0,0,is)*(
      .       (rpt(nx,iy,is)*hx(nx-1,iy)+rpt(nx-1,iy,is)*hx(nx,iy))/
      .       (hx(nx-1,iy)+hx(nx,iy))*ev+(1.0_R8-BoRiS)*
      .       (kinrgy(nx,iy,is)*hx(nx-1,iy)+
@@ -994,7 +994,7 @@ c outer target
      .       (hx(nx-1,iy)+hx(nx,iy))))
           end do !}
           do is=0,ns_ext-1 !{
-            hlp=hlp+abs(fa_ext(nx,iy,0,is)*(
+            hlp=hlp+abs(fa_ext(nx,iy,0,0,is)*(
      .       (pt_ext(nx,iy,is)*hx(nx-1,iy)+
      .        pt_ext(nx-1,iy,is)*hx(nx,iy))/
      .       (hx(nx-1,iy)+hx(nx,iy))*ev+
@@ -1017,9 +1017,9 @@ c outer target
           hlp_s=0.0_R8
           do iy=0,ny-1 !{
             s=gs(ix,iy,0)
-            hlp=abs(fhe(ix,iy,0)+fhi(ix,iy,0))
+            hlp=abs(fhe(ix,iy,0,0)+fhi(ix,iy,0,0))
             do is=0,ns-1 !{
-              hlp=hlp+abs(fna(ix,iy,0,is)*(
+              hlp=hlp+abs(fna(ix,iy,0,0,is)*(
      .         (rpt(ix,iy,is)*hx(ix-1,iy)+
      .          rpt(ix-1,iy,is)*hx(ix,iy))/
      .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
@@ -1028,7 +1028,7 @@ c outer target
      .         (hx(ix-1,iy)+hx(ix,iy))))
             end do !}
             do is=0,ns_ext-1 !{
-              hlp=hlp+abs(fa_ext(ix,iy,0,is)*(
+              hlp=hlp+abs(fa_ext(ix,iy,0,0,is)*(
      .         (pt_ext(ix,iy,is)*hx(ix-1,iy)+
      .          pt_ext(ix-1,iy,is)*hx(ix,iy))/
      .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
@@ -1049,10 +1049,10 @@ c outer target
           ix=nxtl
           hlp_s=0.0_R8
           do iy=1,ny !{
-            hlp=abs(fhe(ix,iy,0)+fhi(ix,iy,0))
+            hlp=abs(fhe(ix,iy,0,0)+fhi(ix,iy,0,0))
             s=gs(ix,iy,0)
             do is=0,ns-1 !{
-              hlp=hlp+abs(fna(ix,iy,0,is)*(
+              hlp=hlp+abs(fna(ix,iy,0,0,is)*(
      .         (rpt(ix,iy,is)*hx(ix-1,iy)+
      .          rpt(ix-1,iy,is)*hx(ix,iy))/
      .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
@@ -1061,7 +1061,7 @@ c outer target
      .         (hx(ix-1,iy)+hx(ix,iy))))
             end do !}
             do is=0,ns_ext-1 !{
-              hlp=hlp+abs(fa_ext(ix,iy,0,is)*(
+              hlp=hlp+abs(fa_ext(ix,iy,0,0,is)*(
      .         (pt_ext(ix,iy,is)*hx(ix-1,iy)+
      .          pt_ext(ix-1,iy,is)*hx(ix,iy))/
      .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
@@ -1255,7 +1255,7 @@ csw           exclude neutrals from isat calculation
               if(.not.is_neutral(is)) then !{
                 do iy=0,ny-1 !{
                   hlp_isat(mgl3_tmp)=hlp_isat(mgl3_tmp)+
-     +                      fna(itg_tmp(k)+kgl3_tmp(k)+1,iy,0,is)*
+     +                      fna(itg_tmp(k)+kgl3_tmp(k)+1,iy,0,0,is)*
      *                      rza(itg_tmp(k),iy,is)
                 end do !}
               end if !}

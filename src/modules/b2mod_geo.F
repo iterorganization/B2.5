@@ -17,7 +17,7 @@
      *  hy(:,:),
      *  hz(:,:),                                                     !srv 09.01.01
      *  qz(:,:,:),
-     *  qc(:,:),
+     *  qc(:,:,:),
      *  qcb(:,:),
      *  vol(:,:),
      *  pbs(:,:,:), pbshz(:,:,:),                                    !srv 09.01.01
@@ -45,7 +45,7 @@
       allocate(hy(-1:nxd,-1:nyd))
       allocate(hz(-1:nxd,-1:nyd))                                    !srv 09.01.01
       allocate(qz(-1:nxd,-1:nyd,0:1))
-      allocate(qc(-1:nxd,-1:nyd))
+      allocate(qc(-1:nxd,-1:nyd,0:1))
       allocate(qcb(-1:nxd,-1:nyd))
       allocate(vol(-1:nxd,-1:nyd))
       allocate(pbs(-1:nxd,-1:nyd,0:1))
@@ -103,6 +103,8 @@
       integer ix, iy
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y
+      real (kind=R8) ::
+     *   qc_loc(-1:nx,-1:ny)
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
@@ -121,18 +123,23 @@
       call cfrure (nread, size(hx), hx, 'hx')
       call cfrure (nread, size(hy), hy, 'hy')
       call cfrure (nread, size(qz), qz, 'qz')
-      if (b2fplasma_version.gt.'01.001.021') then
-       call cfrure (nread, size(qc), qc, 'qc')
+      if (b2fplasma_version.ge.'03.001.000') then
+        call cfrure (nread, size(qc), qc, 'qc')
+      elseif (b2fplasma_version.gt.'01.001.021') then
+       call cfrure (nread, size(qc_loc), qc_loc, 'qc')
+       qc(:,:,0) = qc_loc
+       qc(:,:,1) = 0.0_R8
       else
        do iy = -1, ny
         do ix = -1, nx
-         qc(ix,iy) = cosang (
+         qc(ix,iy,1) = 0.0_R8
+         qc(ix,iy,0) = cosang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
      &     crx(ix,iy,2)-crx(ix,iy,0),  cry(ix,iy,2)-cry(ix,iy,0))
-         if(qc(ix,iy).le.0.0_R8) then
+         if(qc(ix,iy,0).le.0.0_R8) then
           write(*,*) 'Problem in b2mod_geo: qc(ix,iy) <= 0',
-     1     qc(ix,iy),ix,iy
+     1     qc(ix,iy,0),ix,iy
           write(*,'(a,4f12.6)') 'crx = ',crx(ix,iy,0:3)
           write(*,'(a,4f12.6)') 'cry = ',cry(ix,iy,0:3)
          endif

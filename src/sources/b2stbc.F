@@ -46,30 +46,33 @@
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_32(-1:nx,-1:ny,0:1,0:ns-1), 
-     &  fna_52(-1:nx,-1:ny,0:1,0:ns-1), fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
-     &  fni_32(-1:nx,-1:ny,0:1), fni_52(-1:nx,-1:ny,0:1),
-     &  fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
-     &  fhe(-1:nx,-1:ny,0:1), fhe_mdf(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fhi_mdf(-1:nx,-1:ny,0:1),
-     &  fch(-1:nx,-1:ny,0:1),
-     &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
-     &  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),              !srv 11.10.02 21.10.02 {
-     &  fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
-     &  fchvisq(-1:nx,-1:ny,0:1), fchdia(-1:nx,-1:ny,0:1),
-     &  fchinert(-1:nx,-1:ny,0:1),                                       !srv 21.10.02 }
-     &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 25.02.00
-     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1), fchanml(-1:nx,-1:ny,0:1),       !srv 13.10.06
-     &  fhePSch(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
-     &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1)             !srv 28.10.02
+     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fna_32(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fna_52(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  fni_32(-1:nx,-1:ny,0:1,0:1), fni_52(-1:nx,-1:ny,0:1,0:1),
+     &  fne_32(-1:nx,-1:ny,0:1,0:1), fne_52(-1:nx,-1:ny,0:1,0:1),
+     &  fhe(-1:nx,-1:ny,0:1,0:1), fhe_mdf(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fhi_mdf(-1:nx,-1:ny,0:1,0:1),
+     &  fch(-1:nx,-1:ny,0:1,0:1),
+     &  fne(-1:nx,-1:ny,0:1,0:1), fni(-1:nx,-1:ny,0:1,0:1),
+     &  fch_p(-1:nx,-1:ny,0:1,0:1), fchvispar(-1:nx,-1:ny,0:1,0:1),          !srv 11.10.02 21.10.02 {
+     &  fchvisper(-1:nx,-1:ny,0:1,0:1), fchin(-1:nx,-1:ny,0:1,0:1),
+     &  fchvisq(-1:nx,-1:ny,0:1,0:1), fchdia(-1:nx,-1:ny,0:1,0:1),
+     &  fchinert(-1:nx,-1:ny,0:1,0:1),                                       !srv 21.10.02 }
+     &  fna_fcor(-1:nx,-1:ny,0:1,0:1,0:ns-1),                                !srv 25.02.00
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:1,0:ns-1),                                 !srv 13.10.06
+     &  fchanml(-1:nx,-1:ny,0:1,0:1),
+     &  fhePSch(-1:nx,-1:ny,0:1,0:1), fhiPSch(-1:nx,-1:ny,0:1,0:1),          !srv 13.10.06
+     &  floe_noc(-1:nx,-1:ny,0:1,0:1), floi_noc(-1:nx,-1:ny,0:1,0:1)             !srv 28.10.02
       real (kind=R8) ::
-     1  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
-     2  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
-     3  calf(-1:nx,-1:ny,0:1), cdna(-1:nx,-1:ny,0:1,0:ns-1)
+     1  chce(-1:nx,-1:ny,0:1,0:1), chve(-1:nx,-1:ny,0:1,0:1),
+     2  chci(-1:nx,-1:ny,0:1,0:1), chvi(-1:nx,-1:ny,0:1,0:1),
+     3  calf(-1:nx,-1:ny,0:1,0:1), cdna(-1:nx,-1:ny,0:1,0:1,0:ns-1)
       logical main_call                                                  !xpb
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
+     *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
       logical wrong_flow                                                 !xpb
@@ -192,8 +195,8 @@
        call b2xvff (nx, ny, chvi, 'chvi')
        call b2xvff (nx, ny, calf, 'calf')
 *    ..test sign of chce, chci
-       call b2xvsg (n2*2, chce, 1, 'chce', '.ge.')
-       call b2xvsg (n2*2, chci, 1, 'chci', '.ge.')
+       call b2xvsg (n2*4, chce, 1, 'chce', '.ge.')
+       call b2xvsg (n2*4, chci, 1, 'chci', '.ge.')
       endif
 *   ..test facdrift           !xpb
       call xertst (0.0_R8.le.minval(facdrift) .and. 

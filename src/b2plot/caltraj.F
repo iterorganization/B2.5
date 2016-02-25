@@ -384,7 +384,7 @@ c                         particles than at beginning, it is destroyed.
               do ix=-1,nx
                 do iy=-1,ny
                   uutraj(ix,iy,is)=ua(ix,iy,is)
-                  vvtraj(ix,iy,is)=fna(ix,iy,1,is)
+                  vvtraj(ix,iy,is)=fna(ix,iy,1,1,is)
      .             /na(ix,iy,is)/gs(ix,iy,1)
                 end do
               end do
@@ -498,7 +498,7 @@ c     TRAJECTORIES:
               do ix=-1,nx
                 do iy=-1,ny
                   uutraj(ix,iy,is)=ua(ix,iy,is)
-                  vvtraj(ix,iy,is)=fna(ix,iy,1,is)
+                  vvtraj(ix,iy,is)=fna(ix,iy,1,1,is)
      .             /na(ix,iy,is)/gs(ix,iy,1)
                 end do
               end do

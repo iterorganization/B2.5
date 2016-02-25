@@ -33,12 +33,13 @@
      &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
      &  pbshz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny),   !srv 01.07.09 05.07.17
      &  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
-     &  po(-1:nx,-1:ny), fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
-     &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
-     1  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), 
-     &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 09.01.01
-     2  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
-     &  chci(-1:nx,-1:ny,0:1),                                         !srv 10.11.02
+     &  po(-1:nx,-1:ny), fna_fcor(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  cvsahz(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  cvsa(-1:nx,-1:ny,0:1,0:1,0:ns-1),
+     &  cvsa_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     &  cvsahz_cl(-1:nx,-1:ny,0:1,0:1,0:ns-1),                         !srv 09.01.01
+     &  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
+     &  chci(-1:nx,-1:ny,0:1,0:1),                                     !srv 10.11.02
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
       logical solving
@@ -51,7 +52,7 @@
      *  kt_neo(-1:nx,-1:ny),
      *  resmo(-1:nx,-1:ny,0:ns-1), resmt(-1:nx,-1:ny),
      &  corua(-1:nx,-1:ny,0:ns-1), corut(-1:nx,-1:ny),
-     &  pcca(-1:nx,-1:ny,0:1,0:ns-1), pccm(-1:nx,-1:ny,0:1),
+     &  pcca(-1:nx,-1:ny,0:1,0:1,0:ns-1), pccm(-1:nx,-1:ny,0:1,0:1),
      &  smof(-1:nx,-1:ny,0:3,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -98,16 +99,16 @@
      *  smbgp(-1:nx,-1:ny,0:3),
      *  smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),                !srv 23.07.99 04.10.99
      *  smbcf(-1:nx,-1:ny,0:3), smban(-1:nx,-1:ny,0:3),                !srv 09.07.01 25.09.17
-     1  pb(-1:nx,-1:ny), cvct(-1:nx,-1:ny,0:1),
-     2  rob(-1:nx,-1:ny), flub(-1:nx,-1:ny,0:1),
-     *  flubv(-1:nx,-1:ny,0:1),                                        !srv 11.09.09
-     3  wrkf(-1:nx,-1:ny,0:1), aa5(-1:nx,-1:ny,-2:2),
-     4  smb(-1:nx,-1:ny,0:3), flcb(-1:nx,-1:ny,0:1),
-     5  cvcb(-1:nx,-1:ny,0:1), ro(-1:nx,-1:ny),
+     1  pb(-1:nx,-1:ny), cvct(-1:nx,-1:ny,0:1,0:1),
+     2  rob(-1:nx,-1:ny), flub(-1:nx,-1:ny,0:1,0:1),
+     *  flubv(-1:nx,-1:ny,0:1,0:1),                                    !srv 11.09.09
+     3  wrkf(-1:nx,-1:ny,0:1,0:1), aa5(-1:nx,-1:ny,-2:2),
+     4  smb(-1:nx,-1:ny,0:3), flcb(-1:nx,-1:ny,0:1,0:1),
+     5  cvcb(-1:nx,-1:ny,0:1,0:1), ro(-1:nx,-1:ny),
      6  pr(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
      7  ni(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
      8  ehxp(-1:nx,-1:ny), smt(-1:nx,-1:ny,0:3), cst,                  !srv 17.01.14
-     9  flct(-1:nx,-1:ny,0:1), wrk1(-1:nx,-1:ny), wrks(-1:nx,-1:ny),
+     9  flct(-1:nx,-1:ny,0:1,0:1), wrk1(-1:nx,-1:ny), wrks(-1:nx,-1:ny),
      1  smqdu(-1:nx,-1:ny), wrk0(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      2  ctcfb(-1:nx,-1:ny), ctcft(-1:nx,-1:ny),                        !srv 06.04.07
      3  zeff(-1:nx,-1:ny), zmff(-1:nx,-1:ny),                          !srv 13.01.17 {
@@ -197,13 +198,13 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
 *    ..test edge values of fna_fcor
        do is = 0, ns-1
-        call b2xvff (nx, ny, fna_fcor(-1,-1,0,is), 'fna_fcor')
+        call b2xvff (nx, ny, fna_fcor(-1,-1,0,0,is), 'fna_fcor')
        enddo
 *    ..test sign of cvsa
-       call b2xvsg (n2*2*ns, cvsa, 1, 'cvsa', '.ge.')
+       call b2xvsg (n2*4*ns, cvsa, 1, 'cvsa', '.ge.')
 *    ..test edge values of cvsa
        do is = 0, ns-1
-        call b2xvff (nx, ny, cvsa(-1,-1,0,is), 'cvsa')
+        call b2xvff (nx, ny, cvsa(-1,-1,0,0,is), 'cvsa')
        enddo
 *    ..test sign of smo, smq
        do is = 0, ns-1
@@ -264,8 +265,8 @@
       endif
 *   ..initialise
       call sfill (n2*4, 0.0_R8, smt, 1)
-      call sfill (n2*2, 0.0_R8, flct, 1)
-      call sfill (n2*2, 0.0_R8, cvct, 1)
+      call sfill (n2*4, 0.0_R8, flct, 1)
+      call sfill (n2*4, 0.0_R8, cvct, 1)
       call sfill (n2, 0.0_R8, resmt, 1)
       call sfill (n2, 0.0e0_R8, ctcft, 1)                              !srv 06.04.07
 
@@ -308,25 +309,26 @@
        call b2sigp (nx, ny, is, rza(-1,-1,is), vol, hx, hz, bb,  
      &   na(-1,-1,is), ti, ne, te, po, smbgp, wrk0, wrk1, wrk2)        !srv 02.07.08
 *    ..compute flub
-       call b2scopy (n2*2, fna_fcor(-1,-1,0,is), 1, flub, 1)
-       call b2sscal (n2*2, am(is)*mp, flub, 1)
-!       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,is), flub)
+       call b2scopy (n2*4, fna_fcor(-1,-1,0,0,is), 1, flub, 1)
+       call b2sscal (n2*4, am(is)*mp, flub, 1)
+!       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,0,is), flub)
 *    ..add convective term due to new form of ion viscosity term only
-       call b2nxfv (nx, ny, is, hz, cvsahz_cl(-1,-1,0,is), flubv)      !srv 01.07.05 11.09.09 16.10.17
+       call b2nxfv (nx, ny, is, hz, cvsahz_cl(-1,-1,0,0,is), flubv)    !srv 01.07.05 11.09.09 16.10.17
        if (balance_netcdf.ne.0) then
-         fmo_b2nxfv(:,:,:,is)=flubv !djm Jan2017
+         fmo_b2nxfv(:,:,:,:,is)=flubv !djm Jan2017
        endif
-       call b2saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                  !srv 11.09.09
+       call b2saxpy (n2*4, 1.0_R8, flubv, 1, flub, 1)                  !srv 11.09.09
 *    ..compute flcb, cvcb
        call b2nxfc (nx, ny, is, vol, pbshz, rob, 
-     &   ua(-1,-1,is), flub, cvsahz(-1,-1,0,is), flcb, cvcb, wrk0)     !srv 09.01.01
+     &   ua(-1,-1,is), flub, cvsahz(-1,-1,0,0,is), flcb, cvcb, wrk0)   !srv 09.01.01
 
 *    ..compute additional viscosity term
        call b2siav (nx, ny, ns, is, am(is)*mp, hx, hy, hz, vol, 
      &   qz, bb, ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),  
      &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,      !srv 01.07.09
-     &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is), 
-     &   cvsahz_cl(-1,-1,0,is), smbvh, smbvv, kt_neo, 
+     &   cvsa(-1,-1,0,0,is), cvsa_cl(-1,-1,0,0,is), 
+     &   cvsahz(-1,-1,0,0,is), 
+     &   cvsahz_cl(-1,-1,0,0,is), smbvh, smbvv, kt_neo, 
      &   wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
 *    ..compute centrifugal force term                                  !srv 09.07.01
        call b2sicf (nx, ny, is, am(is)*mp, bb, vol, hx, hz, 
@@ -359,17 +361,17 @@ cdjm Jan2017 update momentum source components for balance
 
 *    ..compute residual
        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
-     &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
-       fmo(:,:,:,is)=wrkf
+     &   flub, cvsahz(-1,-1,0,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
+       fmo(:,:,:,:,is)=wrkf
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10
 
        if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                     !srv 12.07.02 {
          call my_out(70,nx,ny,resmo(-1,-1,is),'b2npmo_resmo'//chns)
-         call my_out(70,nx,ny,fmo(-1,-1,0,is),'b2npmo_fmox'//chns)
-         call my_out(70,nx,ny,fmo(-1,-1,1,is),'b2npmo_fmoy'//chns)
+         call my_out(70,nx,ny,fmo(-1,-1,0,0,is),'b2npmo_fmox'//chns)
+         call my_out(70,nx,ny,fmo(-1,-1,1,1,is),'b2npmo_fmoy'//chns)
          if(.not. is_neutral(is)) then
-            call my_out(70,nx,ny,flubv(-1,-1,0),'b2npmo_flubvx'//chns)
+            call my_out(70,nx,ny,flubv(-1,-1,0,0),'b2npmo_flubvx'//chns)
             wrks=smbvv(:,:,0)+smbvv(:,:,1)*ua(:,:,is)+
      &         smbvv(:,:,2)*na(:,:,is)*mp*am(is)+
      &         smbvv(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
@@ -438,11 +440,11 @@ c    ..compare 5-pt stencil matrices
         call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
      &   vol, hx, hz, bb, rob, pb, ua(-1,-1,is),                       !srv 09.01.01
      &   smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
-     &   pcca(-1,-1,0,is), aa5, wrk1, 'b2usmo_'//chns)
+     &   pcca(-1,-1,0,0,is), aa5, wrk1, 'b2usmo_'//chns)
         last_solve_5(0:nnreg(0)) = solvemo(is,0:nnreg(0))
 csw 21feb2014 added this else branch
        else
-         pcca(:,:,:,is)  = 0.0_R8
+         pcca(:,:,:,:,is)  = 0.0_R8
          resmo(:,:,is) = 0.0_R8
          corua(:,:,is) = 0.0_R8
        endif
@@ -464,14 +466,14 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2*4, 1.0_R8, smbcf, 1, smb, 1)                  !srv 09.07.01
         call b2saxpy (n2*4, 1.0_R8, smban, 1, smb, 1)                  !srv 25.09.17
         call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,               !srv 09.01.01
-     &   flub, cvsahz(-1,-1,0,is), wrk0, wrkf)
+     &   flub, cvsahz(-1,-1,0,0,is), wrk0, wrkf)
 *    ..accumulate residual
         call b2saxpy (n2, 1.0_R8, wrk0, 1, resmt, 1)
 *    ..accumulate smb
         call b2nxst (nx, ny, rob, smb, ro, smt)
 *    ..accumulate transport coefficients
-        call b2saxpy (n2*2, 1.0_R8, flcb, 1, flct, 1)
-        call b2saxpy (n2*2, 1.0_R8, cvcb, 1, cvct, 1)
+        call b2saxpy (n2*4, 1.0_R8, flcb, 1, flct, 1)
+        call b2saxpy (n2*4, 1.0_R8, cvcb, 1, cvct, 1)
         call b2saxpy (n2, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
        endif
       enddo
@@ -566,8 +568,8 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.0
        enddo
       endif                                                            !srv 12.07.02 }
       if (iout.ne.0) then
-       call my_out(70,nx,ny,pccm(-1,-1,0),'b2npmo_pccmx')              !srv 11.01.13
-       call my_out(70,nx,ny,pccm(-1,-1,1),'b2npmo_pccmy')              !srv 11.01.13
+       call my_out(70,nx,ny,pccm(-1,-1,0,0),'b2npmo_pccmx')            !srv 11.01.13
+       call my_out(70,nx,ny,pccm(-1,-1,1,1),'b2npmo_pccmy')            !srv 11.01.13
       endif                                                            !srv 12.07.02 }
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)

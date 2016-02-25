@@ -10,7 +10,7 @@
      *  bb(-1:nx,-1:ny,0:3), zeff(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &  fch_pi_c(-1:nx,-1:ny,0:1)
+     &  fch_pi_c(-1:nx,-1:ny,0:1,0:1)
 *     ------------------------------------------------------------------
 *     B2XPIC computes the poloidal projection of the ion parallel
 *     current on cell centers.
@@ -23,23 +23,25 @@
 *     ------------------------------------------------------------------
 *   ..set n2
       n2 = (nx+2)*(ny+2)
-      fch_pi_c(-1:nx,-1:ny,0) = 0.0_R8
+      fch_pi_c(-1:nx,-1:ny,0,0) = 0.0_R8
       do is = 0, ns-1
-       fch_pi_c(-1:nx,-1:ny,0) = fch_pi_c(-1:nx,-1:ny,0) +
+       fch_pi_c(-1:nx,-1:ny,0,0) = fch_pi_c(-1:nx,-1:ny,0,0) +
      &  rza(-1:nx,-1:ny,is)*(rza(-1:nx,-1:ny,is)-zeff(-1:nx,-1:ny))*
      &  na(-1:nx,-1:ny,is)*ua(-1:nx,-1:ny,is)
       enddo
       do is = 0, ns_ext-1
-       fch_pi_c(-1:nx,-1:ny,0) = fch_pi_c(-1:nx,-1:ny,0) +
+       fch_pi_c(-1:nx,-1:ny,0,0) = fch_pi_c(-1:nx,-1:ny,0,0) +
      &  za_ext(-1:nx,-1:ny,is)*
      & (za_ext(-1:nx,-1:ny,is)-zeff(-1:nx,-1:ny))*
      &  na_ext(-1:nx,-1:ny,is)*ua_ext(-1:nx,-1:ny,is)
       enddo
-      fch_pi_c(-1:nx,-1:ny,0) = fch_pi_c(-1:nx,-1:ny,0)*qe*
+      fch_pi_c(-1:nx,-1:ny,0,0) = fch_pi_c(-1:nx,-1:ny,0,0)*qe*
      & (bb(-1:nx,-1:ny,0)/bb(-1:nx,-1:ny,3))/zeff(-1:nx,-1:ny)
 
-      fch_pi_c(-1:nx,-1:ny,1) = 0.0_R8
-
+      fch_pi_c(-1:nx,-1:ny,0,1) = 0.0_R8
+      fch_pi_c(-1:nx,-1:ny,1,0) = 0.0_R8
+      fch_pi_c(-1:nx,-1:ny,1,1) = 0.0_R8
+      
       ncall = ncall+1
       return
 *     ------------------------------------------------------------------

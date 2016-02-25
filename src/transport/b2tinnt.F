@@ -23,11 +23,11 @@
      * vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hx(-1:nx,-1:ny),
      1 hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), 
      1 te(-1:nx,-1:ny), po(-1:nx,-1:ny), ti(-1:nx,-1:ny),
-     & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:ns-1), 
-     & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), qc(-1:nx,-1:ny)
+     & na(-1:nx,-1:ny,0:ns-1), fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), 
+     & csigin(-1:nx,-1:ny,0:1,0:1,0:ns-1,0:ns-1), qc(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   fchin(-1:nx,-1:ny,0:1)
+     &   fchin(-1:nx,-1:ny,0:1,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -59,7 +59,8 @@
      *   fnan(-1:nx,-1:ny,0:1,0:ns-1), work(-1:nx,-1:ny,0:1,0:ns-1),
      *   nal(-1:nx,-1:ny,0:ns-1), nab(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) ::
-     &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny), csigia(-1:nx,-1:ny,0:1),   !srv 15.02.11
+     &   sec(-1:nx,-1:ny), sigia(-1:nx,-1:ny), 
+     &   csigia(-1:nx,-1:ny,0:1,0:1),                                     !srv 15.02.11
      &   sigi(-1:nx,-1:ny), facdriftm, fac_ExBm                           !srv 20.10.17
 *   ..procedures
       real (kind=R8) ::
@@ -148,13 +149,13 @@
 !      sigia(:,:) = sigi(:,:)*dab2_(:,:)
           sigia(:,:) = sigi(:,:)*dab2(0:nx+1,0:ny+1,iamain,1)
           call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigi,
-     &                                             csigia(-1,-1,0))
+     &                                             csigia(-1,-1,0,0))
           call b2txcy (nx, ny, mode, vol, gs, hy, qz, sigi,
-     &                                             csigia(-1,-1,1))
+     &                                             csigia(-1,-1,1,1))
           call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigia,
-     &                                 csigin(-1,-1,0,ismain,ismain0))
+     &                                 csigin(-1,-1,0,0,ismain,ismain0))
           call b2txcy (nx, ny, mode, vol, gs, hy, qz, sigia,
-     &                                 csigin(-1,-1,1,ismain,ismain0))
+     &                                 csigin(-1,-1,1,1,ismain,ismain0))
           if(style.eq.0) then
 *   ..interpolate ti in the left and bottom cell face
             call intfaceh(nx, ny, leftix, leftiy, vol, ti, til)
@@ -204,17 +205,17 @@
             do iy=0,ny-1
               do ix=-1,nx
                 if(leftix(ix,iy).ne.-2) then
-                  fchin(ix,iy,0)=fchin(ix,iy,0)+
-     &              csigin(ix,iy,0,ismain,ismain0)*(
+                  fchin(ix,iy,0,0)=fchin(ix,iy,0,0)+
+     &              csigin(ix,iy,0,0,ismain,ismain0)*(
      &            ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))
      &              -(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
      &               +til(ix,iy)*(log(na(ix,iy,ismain))-
      &                    log(na(leftix(ix,iy),leftiy(ix,iy),ismain))))/
      &                     (qe*rza(ix,iy,ismain)) )*
      &                        (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2 )
-     &             +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
+     &           +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
-!     &           +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)* 
+!     &           +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*vntrl(ix,iy)* 
 !     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
              enddo
@@ -223,8 +224,8 @@
             do iy=0,ny-1
               do ix=-1,nx
                 if(leftix(ix,iy).ne.-2) then
-                  fchin(ix,iy,0)=fchin(ix,iy,0)+
-     &              csigin(ix,iy,0,ismain,ismain0)*(
+                  fchin(ix,iy,0,0)=fchin(ix,iy,0,0)+
+     &              csigin(ix,iy,0,0,ismain,ismain0)*(
      &             ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))
      &               -(na(ix,iy,ismain)*ti(ix,iy)-
      &              na(leftix(ix,iy),leftiy(ix,iy),ismain)*
@@ -232,9 +233,9 @@
      &              (nal(ix,iy,ismain)*qe*rza(ix,iy,ismain)) )*
      &              (wbbl(ix,iy,2)/wbbl(ix,iy,3))**2
      &                                                      )
-     &             +csigia(ix,iy,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
+     &           +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*fnan(ix,iy,0,ismain0)*
      &              (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
-!     &           +csigia(ix,iy,0)*wbbl(ix,iy,2)*vntrl(ix,iy)* 
+!     &           +csigia(ix,iy,0,0)*wbbl(ix,iy,2)*vntrl(ix,iy)* 
 !     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5_R8
                 endif
               enddo
@@ -253,17 +254,17 @@
             do iy=0,ny
               do ix=-1,nx
                 if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then
-                  fchin(ix,iy,1)=fchin(ix,iy,1)+
-     &              csigin(ix,iy,1,ismain,ismain0)*(
+                  fchin(ix,iy,1,1)=fchin(ix,iy,1,1)+
+     &              csigin(ix,iy,1,1,ismain,ismain0)*(
      &            -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
      &            -(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy))+
      &              tib(ix,iy)*(log(na(ix,iy,ismain))-
      &                  log(na(bottomix(ix,iy),bottomiy(ix,iy),ismain)))
      &              )/(qe*rza(ix,iy,ismain))
      &                                                      )
-     &            - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
+     &          - csigia(ix,iy,1,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
-!     &       - csigia(ix,iy,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
+!     &       - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &        (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
                 endif
               enddo
@@ -272,17 +273,17 @@
             do iy=0,ny
               do ix=-1,nx
                 if(leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nx+1) then
-                  fchin(ix,iy,1)=fchin(ix,iy,1)+
-     &              csigin(ix,iy,1,ismain,ismain0)*(  ! csigia(ix,iy,1)*(
+                  fchin(ix,iy,1,1)=fchin(ix,iy,1,1)+
+     &              csigin(ix,iy,1,1,ismain,ismain0)*(  ! csigia(ix,iy,1,1)*(
      &            -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
      &            -(na(ix,iy,ismain)*ti(ix,iy)-
      &                      na(bottomix(ix,iy),bottomiy(ix,iy),ismain)*
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy)))/
      &             (nab(ix,iy,ismain)*qe*rza(ix,iy,ismain))
      &                                                      )
-     &            - csigia(ix,iy,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
+     &          - csigia(ix,iy,1,1)*wbbv(ix,iy,2)*fnan(ix,iy,1,ismain0)*  !srv 11.01.13
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
-!     &        - csigia(ix,iy,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
+!     &        - csigia(ix,iy,1,1)*wbbv(ix,iy,3)*vntrb(ix,iy)*
 !     &         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*0.5_R8
                 endif
               enddo
@@ -293,7 +294,7 @@
             do iy=-1,ny
               do ix=-1,nx
                 if(on_closed_surface(ix,iy)) then
-                  fchin(ix,iy,:) = 0.0_R8
+                  fchin(ix,iy,:,:) = 0.0_R8
                 endif
               enddo
             enddo
@@ -304,11 +305,11 @@
           if (ncall.lt.3) then
 *    ..test sign of ne, te, csigin, chce
             call b2xvsg (n2, te, 1, 'te', '.gt.')
-            call b2xvsg (n2*2*ns*ns, csigin, 1, 'csigin', '.ge.')
+            call b2xvsg (n2*4*ns*ns, csigin, 1, 'csigin', '.ge.')
 *    ..test edge values of csigin
             do is = 0, ns-1
               do is0 = 0, ns-1
-                call b2xvff (nx, ny, csigin(-1,-1,0,is,is0), 'csigin')
+                call b2xvff (nx, ny, csigin(-1,-1,0,0,is,is0), 'csigin')
               enddo
             enddo
           endif
@@ -335,14 +336,14 @@
               do iy=-1,ny
                 do ix=-1,nx
                   if(leftix(ix,iy).ne.-2) then
-                    fnan(ix,iy,0,is0)=fna(ix,iy,0,is0)/gs(ix,iy,0)
+                    fnan(ix,iy,0,is0)=fna(ix,iy,0,0,is0)/gs(ix,iy,0)
                     if (area_fix.ge.1)
-     >               fnan(ix,iy,0,is0)=fna(ix,iy,0,is0)/qc(ix,iy)
+     >               fnan(ix,iy,0,is0)=fna(ix,iy,0,0,is0)/qc(ix,iy,0)
                   else
                     fnan(ix,iy,0,is0)=0.0_R8
                   endif
                   if(bottomiy(ix,iy).ne.-2) then
-                    fnan(ix,iy,1,is0)=fna(ix,iy,1,is0)/gs(ix,iy,1)
+                    fnan(ix,iy,1,is0)=fna(ix,iy,1,1,is0)/gs(ix,iy,1)
                   else
                     fnan(ix,iy,1,is0)=0.0_R8
                   endif
@@ -365,8 +366,8 @@
                     do iy=0,ny-1
                       do ix=-1,nx
                         if(leftix(ix,iy).ne.-2) then
-                          fchin(ix,iy,0)=fchin(ix,iy,0)+
-     &                        csigin(ix,iy,0,is,is0)*(                    !srv 24.06.08
+                          fchin(ix,iy,0,0)=fchin(ix,iy,0,0)+
+     &                        csigin(ix,iy,0,0,is,is0)*(                    !srv 24.06.08
      &                    ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))
      &                       -(ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
      &                      +til(ix,iy)*(log(na(ix,iy,is))-
@@ -382,8 +383,8 @@
                     do iy=0,ny-1
                       do ix=-1,nx
                         if(leftix(ix,iy).ne.-2) then
-                          fchin(ix,iy,0)=fchin(ix,iy,0)+
-     &                        csigin(ix,iy,0,is,is0)*(                    !srv 24.06.08
+                          fchin(ix,iy,0,0)=fchin(ix,iy,0,0)+
+     &                        csigin(ix,iy,0,0,is,is0)*(                    !srv 24.06.08
      &                    ( -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))
      &                      -(na(ix,iy,is)*ti(ix,iy)-
      &                        na(leftix(ix,iy),leftiy(ix,iy),is)*
@@ -410,8 +411,8 @@
                       do ix=-1,nx
                         if(leftix(ix,iy).ne.-2 .and.
      &                     rightix(ix,iy).ne.nx+1) then
-                          fchin(ix,iy,1)=fchin(ix,iy,1)+
-     &                      csigin(ix,iy,1,is,is0)*(
+                          fchin(ix,iy,1,1)=fchin(ix,iy,1,1)+
+     &                      csigin(ix,iy,1,1,is,is0)*(
      &                  -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
      &                  -(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy))+
      &                    tib(ix,iy)*(log(na(ix,iy,is))-
@@ -427,8 +428,8 @@
                       do ix=-1,nx
                         if(leftix(ix,iy).ne.-2 .and.
      &                     rightix(ix,iy).ne.nx+1) then
-                          fchin(ix,iy,1)=fchin(ix,iy,1)+
-     &                   csigin(ix,iy,1,is,is0)*(
+                          fchin(ix,iy,1,1)=fchin(ix,iy,1,1)+
+     &                   csigin(ix,iy,1,1,is,is0)*(
      &                  -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))
      &                  -(na(ix,iy,is)*ti(ix,iy)-
      &                      na(bottomix(ix,iy),bottomiy(ix,iy),is)*
@@ -468,16 +469,16 @@
        enddo
 !       call my_out(70,nx,ny,dab2_,'b2tinnt_dab2_01')
        call my_out(70,nx,ny,sigia,'b2tinnt_sigia')
-       call my_out(70,nx,ny,csigia(-1,-1,0),'b2tinnt_csigiax')
-       call my_out(70,nx,ny,csigia(-1,-1,1),'b2tinnt_csigiay')
-       call my_out(70,nx,ny,csigin(-1,-1,0,ismain,ismain0),
+       call my_out(70,nx,ny,csigia(-1,-1,0,0),'b2tinnt_csigiax')
+       call my_out(70,nx,ny,csigia(-1,-1,1,1),'b2tinnt_csigiay')
+       call my_out(70,nx,ny,csigin(-1,-1,0,0,ismain,ismain0),
      &                                      'b2tinnt_csiginx')
-       call my_out(70,nx,ny,csigin(-1,-1,1,ismain,ismain0),
+       call my_out(70,nx,ny,csigin(-1,-1,1,1,ismain,ismain0),
      &                                      'b2tinnt_csiginy')
        call my_out(70,nx,ny,fnan(-1,-1,0,ismain0),'b2tinnt_fnanx')
        call my_out(70,nx,ny,fnan(-1,-1,1,ismain0),'b2tinnt_fnany')
-       call my_out(70,nx,ny,fchin(-1,-1,0),'b2tinnt_fchinx')
-       call my_out(70,nx,ny,fchin(-1,-1,1),'b2tinnt_fchiny')
+       call my_out(70,nx,ny,fchin(-1,-1,0,0),'b2tinnt_fchinx')
+       call my_out(70,nx,ny,fchin(-1,-1,1,1),'b2tinnt_fchiny')
 !       call my_out(70,nx,ny,vntrc(-1,-1,0),'b2tinnt_vntrcx')
 !       call my_out(70,nx,ny,vntrc(-1,-1,1),'b2tinnt_vntrcy')
       endif

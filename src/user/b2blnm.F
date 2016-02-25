@@ -93,9 +93,9 @@ c----------------------------------------------------------------------
       real (kind=R8) ::
      *     sx, pit      
 csw 29sep2014: xpb fix on sx calculation
-      sx(ix,iy)=0.5_R8*(gs(ix,iy,0)*qc(ix,iy)+
+      sx(ix,iy)=0.5_R8*(gs(ix,iy,0)*qc(ix,iy,0)+
      .  gs(rightix(ix,iy),rightiy(ix,iy),0)*
-     .  qc(rightix(ix,iy),rightiy(ix,iy)))
+     .  qc(rightix(ix,iy),rightiy(ix,iy),0))
       pit(ix,iy)=abs(bb(ix,iy,0)/bb(ix,iy,3))
 c*** to be moved to init.F:
 c
@@ -155,14 +155,14 @@ c
         do is=0,ns-1
           if (.not.is_neutral(is)) then
             hlp_fi=hlp_fi+
-     .       fmo(rightix(ix,iy),rightiy(ix,iy),0,is)
+     .       fmo(rightix(ix,iy),rightiy(ix,iy),0,0,is)
           end if
         end do
         hlp_pi=hlp_pi+pr(ix,iy)*sx(ix,iy)*pit(ix,iy)
         ix=rightcut(1)
         do is=0,ns-1
           if (.not.is_neutral(is)) then
-            hlp_fo=hlp_fo+fmo(ix,iy,0,is)
+            hlp_fo=hlp_fo+fmo(ix,iy,0,0,is)
            end if
         end do
         hlp_po=hlp_po+
@@ -181,8 +181,8 @@ c
         hlp_po=hlp_po+pr(nx-1,iy)*sx(nx-1,iy)*pit(nx-1,iy)
         do is=0,ns-1
           if (.not.is_neutral(is)) then
-            hlp_fi=hlp_fi+fmo(0,iy,0,is)
-            hlp_fo=hlp_fo+fmo(nx,iy,0,is)
+            hlp_fi=hlp_fi+fmo(0,iy,0,0,is)
+            hlp_fo=hlp_fo+fmo(nx,iy,0,0,is)
           end if
        end do
       end do

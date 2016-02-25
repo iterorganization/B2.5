@@ -22,8 +22,8 @@
      *  na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  te(-1:nx, -1:ny), ti(-1:nx, -1:ny)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
+     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8) ::
      *  kinrgy(-1:nx,-1:ny,0:ns-1)
       logical main_call                                                  !xpb
@@ -220,8 +220,8 @@
      *  na(-1:nx,-1:ny,0:ns-1), ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  te(-1:nx, -1:ny), ti(-1:nx, -1:ny)
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
-     &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
+     *  fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1,0:1),
+     &  fhi(-1:nx,-1:ny,0:1,0:1), fch(-1:nx,-1:ny,0:1,0:1)
       real (kind=R8) ::
      *  kinrgy(-1:nx,-1:ny,0:ns-1)
       logical main_call                                                  !xpb
@@ -1231,7 +1231,7 @@
         do ix=-1,nx
           if(on_closed_surface(ix,-1)) then
             fnaycurr=fnaycurr+
-     1       fna(topix(ix,-1),topiy(ix,-1),1,isfeedback)
+     1       fna(topix(ix,-1),topiy(ix,-1),1,1,isfeedback)
           endif
         enddo
         if(ncall.eq.0) then
@@ -1281,7 +1281,7 @@
             neave2=neave2+ne(topix(ix,-1),topiy(ix,-1))*
      .                   vol(topix(ix,-1),topiy(ix,-1))
 #endif
-            fheycurr=fheycurr+fhe(topix(ix,-1),topiy(ix,-1),1)
+            fheycurr=fheycurr+fhe(topix(ix,-1),topiy(ix,-1),1,1)
           endif
         enddo
 #ifdef COMPLICATED
@@ -1345,11 +1345,11 @@
             niave2=niave2+ni(topix(ix,-1),topiy(ix,-1),0)*
      .                   vol(topix(ix,-1),topiy(ix,-1))
 #endif
-            fhiycurr=fhiycurr+fhi(topix(ix,-1),topiy(ix,-1),1)
+            fhiycurr=fhiycurr+fhi(topix(ix,-1),topiy(ix,-1),1,1)
             if (fhiycore_kinetic_energy.eq.1) then
               do is = 0, ns-1
                 fhiycurr=fhiycurr+(1.0_R8-BoRiS)*
-     .           fna(topix(ix,-1),topiy(ix,-1),1,is)*0.5_R8*
+     .           fna(topix(ix,-1),topiy(ix,-1),1,1,is)*0.5_R8*
      .           (kinrgy(topix(ix,-1),topiy(ix,-1),is)+
      .            kinrgy(ix,-1,is))
               enddo
@@ -1407,7 +1407,7 @@ cxpb current feedback not yet tested!
         fchycurr=0.0_R8
         do ix=-1,nx
           if(on_closed_surface(ix,-1))
-     >     fchycurr=fchycurr+fch(topix(ix,-1),topiy(ix,-1),1)
+     >     fchycurr=fchycurr+fch(topix(ix,-1),topiy(ix,-1),1,1)
         enddo
         if(ncall.eq.0) then
           if(saved_cbsch_core.ne.0.0_R8) then
@@ -1809,14 +1809,14 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
               do iy=-1,ny
                 target_flux=target_flux
      1           -rza(rightix(ix,iy),rightiy(ix,iy),ismain)
-     2           *fna(rightix(ix,iy),rightiy(ix,iy),0,ismain)
+     2           *fna(rightix(ix,iy),rightiy(ix,iy),0,0,ismain)
               enddo
             elseif (rightix(ix,-1).eq.nx+1.and.
      &            ((ix.ge.ixl1 .and. ix.le.ixr1) .or.
      &             (ix.ge.ixl2 .and. ix.le.ixr2))) then
               do iy=-1,ny
                 target_flux=target_flux
-     1           +rza(ix,iy,ismain)*fna(ix,iy,0,ismain)
+     1           +rza(ix,iy,ismain)*fna(ix,iy,0,0,ismain)
               enddo
             endif
           enddo

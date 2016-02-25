@@ -124,17 +124,17 @@
         do ix=-1,nx
           do is=0,ns-1
             fnaxreg(region(ix,iy,1),is)=fnaxreg(region(ix,iy,1),is)+
-     1       fna(ix,iy,0,is)
+     1       fna(ix,iy,0,0,is)
             fnayreg(region(ix,iy,2),is)=fnayreg(region(ix,iy,2),is)+
-     1       fna(ix,iy,1,is)
+     1       fna(ix,iy,1,1,is)
             fhmxreg(region(ix,iy,1),is)=fhmxreg(region(ix,iy,1),is)+
-     1	     fhm(ix,iy,0,is)
+     1	     fhm(ix,iy,0,0,is)
             fhmyreg(region(ix,iy,2),is)=fhmyreg(region(ix,iy,2),is)+
-     1	     fhm(ix,iy,1,is)
+     1	     fhm(ix,iy,1,1,is)
             fhpxreg(region(ix,iy,1),is)=fhpxreg(region(ix,iy,1),is)+
-     1	     fhp(ix,iy,0,is)
+     1	     fhp(ix,iy,0,0,is)
             fhpyreg(region(ix,iy,2),is)=fhpyreg(region(ix,iy,2),is)+
-     1	     fhp(ix,iy,1,is)
+     1	     fhp(ix,iy,1,1,is)
             nareg(region(ix,iy,0),is)=nareg(region(ix,iy,0),is)+
      1       na(ix,iy,is)*vol(ix,iy)
             b2stbr_sna_reg(region(ix,iy,0),is)=
@@ -169,12 +169,12 @@
               qconvixreg(region(ix,iy,1),is)=                   	 !cjk
      1         qconvixreg(region(ix,iy,1),is)+
      1         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8*
-     1         (1.5_R8*fna_32(ix,iy,0,is)+2.5_R8*fna_52(ix,iy,0,is))         
+     1         (1.5_R8*fna_32(ix,iy,0,0,is)+2.5_R8*fna_52(ix,iy,0,0,is))         
               qconvexreg(region(ix,iy,1))=                      	 !cjk
      1         qconvexreg(region(ix,iy,1))+
      1         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8*
-     1         (1.5_R8*fna_32(ix,iy,0,is)+
-     1          2.5_R8*fna_52(ix,iy,0,is))*
+     1         (1.5_R8*fna_32(ix,iy,0,0,is)+
+     1          2.5_R8*fna_52(ix,iy,0,0,is))*
      2         (rza(leftix(ix,iy),leftiy(ix,iy),is)+
      2          rza(ix,iy,is))/2.0_R8         
             endif
@@ -182,36 +182,36 @@
               qconviyreg(region(ix,iy,2),is)=
      1         qconviyreg(region(ix,iy,2),is)+
      1         (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8*
-     1         (1.5_R8*fna_32(ix,iy,1,is)+2.5_R8*fna_52(ix,iy,1,is))         
+     1         (1.5_R8*fna_32(ix,iy,1,1,is)+2.5_R8*fna_52(ix,iy,1,1,is))         
               qconveyreg(region(ix,iy,2))=
      1         qconveyreg(region(ix,iy,2))+
      1         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8*
-     1         (1.5_R8*fna_32(ix,iy,1,is)+
-     1          2.5_R8*fna_52(ix,iy,1,is))*
+     1         (1.5_R8*fna_32(ix,iy,1,1,is)+
+     1          2.5_R8*fna_52(ix,iy,1,1,is))*
      2         (rza(bottomix(ix,iy),bottomiy(ix,iy),is)+rza(ix,iy,is))
      2         /2.0_R8                  
             endif
           enddo
           fhixreg(region(ix,iy,1))=fhixreg(region(ix,iy,1))+
-     1     fhi(ix,iy,0)
+     1     fhi(ix,iy,0,0)
           fhiyreg(region(ix,iy,2))=fhiyreg(region(ix,iy,2))+
-     1     fhi(ix,iy,1)
+     1     fhi(ix,iy,1,1)
           fhexreg(region(ix,iy,1))=fhexreg(region(ix,iy,1))+
-     1     fhe(ix,iy,0)
+     1     fhe(ix,iy,0,0)
           fheyreg(region(ix,iy,2))=fheyreg(region(ix,iy,2))+
-     1     fhe(ix,iy,1)
+     1     fhe(ix,iy,1,1)
           fchxreg(region(ix,iy,1))=fchxreg(region(ix,iy,1))+
-     1     fch(ix,iy,0)
+     1     fch(ix,iy,0,0)
           fchyreg(region(ix,iy,2))=fchyreg(region(ix,iy,2))+
-     1     fch(ix,iy,1)
+     1     fch(ix,iy,1,1)
           fhjxreg(region(ix,iy,1))=fhjxreg(region(ix,iy,1))+
-     1     fhj(ix,iy,0)
+     1     fhj(ix,iy,0,0)
           fhjyreg(region(ix,iy,2))=fhjyreg(region(ix,iy,2))+
-     1     fhj(ix,iy,1)
+     1     fhj(ix,iy,1,1)
           fhtxreg(region(ix,iy,1))=fhtxreg(region(ix,iy,1))+
-     1     fht(ix,iy,0)+fhi_ext(ix,iy,0)
+     1     fht(ix,iy,0,0)+fhi_ext(ix,iy,0,0)
           fhtyreg(region(ix,iy,2))=fhtyreg(region(ix,iy,2))+
-     1     fht(ix,iy,1)+fhi_ext(ix,iy,1)
+     1     fht(ix,iy,1,1)+fhi_ext(ix,iy,1,1)
           do is=0,ns_ext-1
             if (leftix(ix,iy).ne.-2) then
               fhtxreg(region(ix,iy,1))=fhtxreg(region(ix,iy,1))+	 !cjk
@@ -219,9 +219,9 @@
      .         0.5_R8*(ua_ext(leftix(ix,iy),leftiy(ix,iy),is)**2+
      2                 ua_ext(ix,iy,is)**2)+
      3         0.5_R8*(ta_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     4                 ta_ext(ix,iy,is)))*fa_ext(ix,iy,0,is)+
+     4                 ta_ext(ix,iy,is)))*fa_ext(ix,iy,0,0,is)+
      1         0.5_R8*(pt_ext(leftix(ix,iy),leftiy(ix,iy),is)+
-     2                 pt_ext(ix,iy,is))*fa_ext(ix,iy,0,is)*ev
+     2                 pt_ext(ix,iy,is))*fa_ext(ix,iy,0,0,is)*ev
             endif
             if (bottomiy(ix,iy).ne.-2) then
               fhtyreg(region(ix,iy,2))=fhtyreg(region(ix,iy,2))+	 !cjk
@@ -229,9 +229,9 @@
      .         0.5_R8*(ua_ext(bottomix(ix,iy),bottomiy(ix,iy),is)**2+
      2                 ua_ext(ix,iy,is)**2)+
      3         0.5_R8*(ta_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     4                 ta_ext(ix,iy,is)))*fa_ext(ix,iy,1,is)+
+     4                 ta_ext(ix,iy,is)))*fa_ext(ix,iy,1,1,is)+
      1         0.5_R8*(pt_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     2                 pt_ext(ix,iy,is))*fa_ext(ix,iy,1,is)*ev
+     2                 pt_ext(ix,iy,is))*fa_ext(ix,iy,1,1,is)*ev
             endif
           enddo
           tereg(region(ix,iy,0))=tereg(region(ix,iy,0))+

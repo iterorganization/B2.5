@@ -795,13 +795,13 @@ contains
         area_to_bottom = 0.0_R8
       endif
       if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
-        area_to_left = gs(ix,iy,0) * qc(ix,iy)
+        area_to_left = gs(ix,iy,0) * qc(ix,iy,0)
       else
         area_to_left = 0.0_R8
       endif
       if (isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
         area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0) * &
-                      & qc(rightix(ix,iy),rightiy(ix,iy))
+                      & qc(rightix(ix,iy),rightiy(ix,iy),0)
       else
         area_to_right = 0.0_R8
       endif
@@ -980,13 +980,13 @@ contains
         area_to_bottom = 0.0_R8
       endif
       if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
-        area_to_left = gs(ix,iy,0) * sqrt(1.0_R8 - qc(ix,iy)**2 )
+        area_to_left = gs(ix,iy,0) * sqrt(1.0_R8 - qc(ix,iy,0)**2 )
       else
         area_to_left = 0.0_R8
       endif
       if (isInDomain(nx,ny,rightix(ix,iy),rightiy(ix,iy))) then
         area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0) * &
-                      & sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2 )
+                      & sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2 )
       else
         area_to_right = 0.0_R8
       endif
@@ -1311,7 +1311,7 @@ contains
         if (density(ix,iy,1,is).eq.0.0_R8) cycle
 	if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
           velocity(ix,iy,0,is) = flow(ix,iy,0,is)/ &
-           & (gs(ix,iy,0)*qc(ix,iy))/density(ix,iy,0,is)
+           & (gs(ix,iy,0)*qc(ix,iy,0))/density(ix,iy,0,is)
         elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
               &  isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
               &  cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
@@ -1354,32 +1354,32 @@ contains
                & isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
                & cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
                & cflags(ix,iy,CELLFLAG_RIGHTFACE) == GRID_UNDEFINED) then
-          if (qc(ix,iy).ne.1.0_R8) &
+          if (qc(ix,iy,0).ne.1.0_R8) &
            & velocity(ix,iy,1,is) = flow(ix,iy,0,is)/density(ix,iy,0,is) &
-               & /(gs(ix,iy,0)*sqrt(1.0_R8-qc(ix,iy)**2))
+               & /(gs(ix,iy,0)*sqrt(1.0_R8-qc(ix,iy,0)**2))
         elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
                & isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
                & cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED .and. &
                & cflags(ix,iy,CELLFLAG_LEFTFACE) == GRID_UNDEFINED) then
-          if (qc(rightix(ix,iy),rightiy(ix,iy)).ne.1.0_R8) &
+          if (qc(rightix(ix,iy),rightiy(ix,iy),0).ne.1.0_R8) &
            & velocity(ix,iy,1,is) = &
                & flow(rightix(ix,iy),rightiy(ix,iy),0,is)/ &
                & density(rightix(ix,iy),rightiy(ix,iy),0,is)/ &
                & (gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-               & sqrt(1.0_R8-qc(rightix(ix,iy),rightiy(ix,iy))**2))
+               & sqrt(1.0_R8-qc(rightix(ix,iy),rightiy(ix,iy),0)**2))
         elseif ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
                & isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
                & cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED .and. &
                & cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) then
-          if (qc(ix,iy).ne.1.0_R8) &
+          if (qc(ix,iy,0).ne.1.0_R8) &
            & velocity(ix,iy,1,is) = flow(ix,iy,0,is)/density(ix,iy,0,is) &
-               & /(gs(ix,iy,0)*sqrt(1.0_R8-qc(ix,iy)**2))
-          if (qc(rightix(ix,iy),rightiy(ix,iy)).ne.1.0_R8) &
+               & /(gs(ix,iy,0)*sqrt(1.0_R8-qc(ix,iy,0)**2))
+          if (qc(rightix(ix,iy),rightiy(ix,iy),0).ne.1.0_R8) &
            & velocity(ix,iy,1,is) = velocity(ix,iy,1,is) + &
                & flow(rightix(ix,iy),rightiy(ix,iy),0,is)/ &
                & density(rightix(ix,iy),rightiy(ix,iy),0,is)/ &
                & (gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-               & sqrt(1.0_R8-qc(rightix(ix,iy),rightiy(ix,iy))**2))
+               & sqrt(1.0_R8-qc(rightix(ix,iy),rightiy(ix,iy),0)**2))
         endif
       end do
     end do
@@ -1410,7 +1410,7 @@ contains
     do iy = -1, ny
       do ix = -1, nx
         if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
-          flux(ix,iy,0,is) = flow(ix,iy,0,is)/gs(ix,iy,0)/qc(ix,iy)
+          flux(ix,iy,0,is) = flow(ix,iy,0,is)/gs(ix,iy,0)/qc(ix,iy,0)
         else
           flux(ix,iy,0,is) = 0.0_R8
         end if
@@ -1483,7 +1483,7 @@ contains
 !! poloidal contributions
   	if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) &
              & flow(ix,iy,0,is) = flow(ix,iy,0,is) + &
-             & vv(ix,iy,0,is)*den(ix,iy,0,is)*gs(ix,iy,0)*qc(ix,iy)
+             & vv(ix,iy,0,is)*den(ix,iy,0,is)*gs(ix,iy,0)*qc(ix,iy,0)
         if ((isBoundaryCell(cflags(ix,iy,CELLFLAG_TYPE)) .or. &
              &  isGhostCell(cflags(ix,iy,CELLFLAG_TYPE))) .and. &
              &  cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED .and. &
@@ -1521,47 +1521,47 @@ contains
              & flow(rightix(ix,iy),rightiy(ix,iy),0,is) + &
              & vv(ix,iy,1,is)*den(ix,iy,1,is)* &
              & gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-             & sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
+             & sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2)
           if (cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED .and. &
             & cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED ) &
              & flow(rightix(ix,iy),rightiy(ix,iy),0,is) = &
              & flow(rightix(ix,iy),rightiy(ix,iy),0,is) - &
              & vv(ix,iy,1,is)*den(ix,iy,1,is)* &
              & gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-             & sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
+             & sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2)
         else if (cgeo == CGEO_TRIA_NORIGHT) then
           if (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
             & cflags(ix,iy,CELLFLAG_TOPFACE) /= GRID_UNDEFINED) &
              & flow(ix,iy,0,is) = flow(ix,iy,0,is) - &
              & vv(ix,iy,1,is)*den(ix,iy,1,is)* &
-             & gs(ix,iy,0)* sqrt(1.0_R8 - qc(ix,iy)**2)
+             & gs(ix,iy,0)* sqrt(1.0_R8 - qc(ix,iy,0)**2)
           if (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
             & cflags(ix,iy,CELLFLAG_BOTTOMFACE) /= GRID_UNDEFINED ) &
              & flow(ix,iy,0,is) = flow(ix,iy,0,is) + &
              & vv(ix,iy,1,is)*den(ix,iy,1,is)* &
-             & gs(ix,iy,0)* sqrt(1.0_R8 - qc(ix,iy)**2)
+             & gs(ix,iy,0)* sqrt(1.0_R8 - qc(ix,iy,0)**2)
         else if (cgeo == CGEO_TRIA_NOBOT) then
           if (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) &
              & flow(ix,iy,0,is) = flow(ix,iy,0,is) + &
              & vv(ix,iy,1,is)*den(ix,iy,1,is)* &
-             & gs(ix,iy,0)* sqrt(1.0_R8 - qc(ix,iy)**2)
+             & gs(ix,iy,0)* sqrt(1.0_R8 - qc(ix,iy,0)**2)
           if (cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) &
              & flow(rightix(ix,iy),rightiy(ix,iy),0,is) = &
              & flow(rightix(ix,iy),rightiy(ix,iy),0,is) - &
              & vv(ix,iy,1,is)*den(ix,iy,1,is)* &
              & gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-             & sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
+             & sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2)
         else if (cgeo == CGEO_TRIA_NOTOP) then
           if (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED) &
              & flow(ix,iy,0,is) = flow(ix,iy,0,is) - &
              & vv(ix,iy,1,is)*den(ix,iy,1,is)* &
-             & gs(ix,iy,0)* sqrt(1.0_R8 - qc(ix,iy)**2)
+             & gs(ix,iy,0)* sqrt(1.0_R8 - qc(ix,iy,0)**2)
           if (cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) &
              & flow(rightix(ix,iy),rightiy(ix,iy),0,is) = &
              & flow(rightix(ix,iy),rightiy(ix,iy),0,is) + &
              & vv(ix,iy,1,is)*den(ix,iy,1,is)* &
              & gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-             & sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
+             & sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2)
         end if
       end do
     end do
@@ -1728,7 +1728,7 @@ contains
         cgeo = cellGeoType( crx(ix,iy,:), cry(ix,iy,:) )
 !! Do left side first
         if (isInDomain(nx,ny,leftix(ix,iy),leftiy(ix,iy))) then
-          area_to_left = gs(ix,iy,0) * qc(ix,iy)
+          area_to_left = gs(ix,iy,0) * qc(ix,iy,0)
         else
           area_to_left = 0.0_R8
         endif
@@ -1832,11 +1832,11 @@ contains
         end if
 !! Do bottom side second
         area_to_bottom = gs(ix,iy,1) * qcb(ix,iy)
-        area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy)**2)
+        area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy,0)**2)
         if (cgeo == CGEO_TRIA_NOBOT) then
 !! Triangles with no bottom face
           area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-                 &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
+                 &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2)
           if (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
            &  cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
             side(ix,iy,TO_BOTTOM) = &
@@ -1876,7 +1876,7 @@ contains
         else
 !! Other trapezoids
           area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-                 &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
+                 &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2)
           if (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
            &  cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
             side(ix,iy,TO_BOTTOM) = &
@@ -1971,7 +1971,7 @@ contains
         else
 !! Other trapezoids
           area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0) * &
-                        & qc(rightix(ix,iy),rightiy(ix,iy))
+                        & qc(rightix(ix,iy),rightiy(ix,iy),0)
           area_to_bottom = gs(ix,iy,1)*sqrt(1.0_R8 - qcb(ix,iy)**2)
           area_to_top = gs(topix(ix,iy),topiy(ix,iy),1)* &
                  &  sqrt(1.0_R8 - qcb(topix(ix,iy),topiy(ix,iy))**2)
@@ -2027,9 +2027,9 @@ contains
 !! Do top side fourth
         if (cgeo == CGEO_TRIA_NOTOP) then
 !! Triangles with no top face
-          area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy)**2)
+          area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy,0)**2)
           area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-                 &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
+                 &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2)
           if (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
            &  cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
             side(ix,iy,TO_TOP) = &
@@ -2070,9 +2070,9 @@ contains
 !! Other trapezoids
           area_to_top = gs(topix(ix,iy),topiy(ix,iy),1) * &
                      & qcb(topix(ix,iy),topiy(ix,iy))
-          area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy)**2)
+          area_to_left = gs(ix,iy,0)*sqrt(1.0_R8 - qc(ix,iy,0)**2)
           area_to_right = gs(rightix(ix,iy),rightiy(ix,iy),0)* &
-                 &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy))**2)
+                 &  sqrt(1.0_R8 - qc(rightix(ix,iy),rightiy(ix,iy),0)**2)
           if (cflags(ix,iy,CELLFLAG_LEFTFACE) /= GRID_UNDEFINED .and. &
            &  cflags(ix,iy,CELLFLAG_RIGHTFACE) /= GRID_UNDEFINED) then
             side(ix,iy,TO_TOP) = &

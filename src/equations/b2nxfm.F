@@ -8,10 +8,10 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny
       real (kind=R8) ::
-     *   mb, fnb(-1:nx,-1:ny,0:1)
+     *   mb, fnb(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   flub(-1:nx,-1:ny,0:1)
+     *   flub(-1:nx,-1:ny,0:1,0:1)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -66,30 +66,25 @@
        call b2xvff (nx, ny, fnb, 'fnb')
       endif
 
+* ..initialize flub to zero
+      flub = 0.0_R8
+
 * ..compute convection factors
 *   ..compute flubx
       do iy = -1, ny
        do ix = -1, nx
-        if(leftix(ix,iy).eq.-2) then
-         flub(ix,iy,0) = 0
-        elseif(rightix(ix,iy).eq.nx+1) then
-         flub(ix,iy,0) = 0
-        else
-         flub(ix,iy,0) = (mb/2)*
-     1	  (fnb(ix,iy,0)+fnb(rightix(ix,iy),rightiy(ix,iy),0))
+        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+         flub(ix,iy,0,0) = (mb/2)*
+     1	  (fnb(ix,iy,0,0)+fnb(rightix(ix,iy),rightiy(ix,iy),0,0))
         endif
        enddo
       enddo
 *   ..compute fluby
       do iy = -1, ny
        do ix = -1, nx
-        if(bottomiy(ix,iy).eq.-2) then
-         flub(ix,iy,1) = 0
-        elseif(topiy(ix,iy).eq.ny+1) then
-         flub(ix,iy,1) = 0
-        else
-         flub(ix,iy,1) = (mb/2)*
-     1	  (fnb(topix(ix,iy),topiy(ix,iy),1)+fnb(ix,iy,1))
+        if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
+         flub(ix,iy,1,1) = (mb/2)*
+     1	  (fnb(topix(ix,iy),topiy(ix,iy),1,1)+fnb(ix,iy,1,1))
         endif
        enddo
       enddo

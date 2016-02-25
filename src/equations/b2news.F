@@ -357,17 +357,17 @@
      1    rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
      1    uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),      !xpb
      &    wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,     !srv 09.01.01
-     &    po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &    cddi(-1,-1,0,is),                                              !srv 13.10.06
-     &    cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is),  cdnahz(-1,-1,0,is),   !srv 09.01.01 15.12.05
-     &    cdpahz(-1,-1,0,is),
+     &    po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is),
+     &    cdpa(-1,-1,0,0,is), cddi(-1,-1,0,0,is),                        !srv 13.10.06
+     &    cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),
+     &    cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),                    !srv 09.01.01 15.12.05
      &    fchvispar, fchvisper, fchinert, fchanml, fchvisq,              !srv 20.09.06
-     &    fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
-     &    fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),                      !srv 01.10.99 21.01.00
-     &    fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                      !srv 13.10.06
-     1    flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
-     1    fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.true.)                !djm Jan2017
+     &    fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),
+     &    fna_fcor(-1,-1,0,0,is), fna_he(-1,-1,0,0,is),                  !srv 01.10.99 21.01.00
+     &    fnaPSch(-1,-1,0,0,is), fna_mdf(-1,-1,0,0,is),                  !srv 13.10.06
+     1    flob, conb, fna_32(-1,-1,0,0,is), fna_52(-1,-1,0,0,is),
+     1    fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is),
+     2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),.true.)              !djm Jan2017
         enddo
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
@@ -411,14 +411,14 @@
           do iy=-1,ny
             do ix=-1,nx
               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-                wrk0(ix,iy)=-(fch_p(ix,iy,0)/pbs(ix,iy,0)+
-     &           fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+                wrk0(ix,iy)=-(fch_p(ix,iy,0,0)/pbs(ix,iy,0)+
+     &           fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/
      &           pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
               elseif(leftix(ix,iy).eq.-2) then
-                wrk0(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+                wrk0(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/
      &           pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
               elseif(rightix(ix,iy).eq.nx+1) then
-                wrk0(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe
+                wrk0(ix,iy)=-fch_p(ix,iy,0,0)/pbs(ix,iy,0)/qe
               endif
 !             wrk0(ix,iy)=wrk0(ix,iy)*prl_cur                            !srv 03.04.15
             enddo
@@ -528,17 +528,17 @@ cxpb
      1     rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
      1     uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),     !xpb
      &     wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,    !srv 09.01.01
-     &     po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &     cddi(-1,-1,0,is),                                             !srv 13.10.06
-     &     cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),   !srv 09.01.01 15.12.05
-     &     cdpahz(-1,-1,0,is),
-     &     fchvispar, fchvisper, fchinert, fchanml, fchvisq,             !srv 20.09.06
-     1     fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),                     !xpb
-     &     fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),                     !srv 01.10.99 21.01.00
-     &     fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                     !srv 13.10.06
-     1     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
-     1     fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.true.)               !djm Jan2017
+     &     po, cvla(-1,-1,0,0,is),cdna(-1,-1,0,0,is),cdpa(-1,-1,0,0,is),
+     &     cddi(-1,-1,0,0,is),                                           !srv 13.10.06
+     &     cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is),  
+     &     cdnahz(-1,-1,0,0,is),                                         !srv 09.01.01 15.12.05
+     &     cdpahz(-1,-1,0,0,is), fchvispar, fchinert, fchanml,           !srv 20.09.06
+     &     fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),
+     &     fna_fcor(-1,-1,0,0,is), fna_he(-1,-1,0,0,is),                 !srv 01.10.99 21.01.00
+     &     fnaPSch(-1,-1,0,0,is), fna_mdf(-1,-1,0,0,is),                 !srv 13.10.06
+     1     flob, conb, fna_32(-1,-1,0,0,is), fna_52(-1,-1,0,0,is),
+     1     fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is),
+     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is))
           if (ncall.eq.ncallout) then
             write(*,*) 'ncall,is',ncall,is
             call hbout('b2ne_npco   ',nx,ny,ns,te,'te',ti,'ti',
@@ -558,8 +558,8 @@ cxpb
               call b2npco (nx, ny, guard_flows,                          !srv 05.07.08
      &         nnreg(0), solvedum, solving(1), solvedm2,
      &         ncall, is, rxf0, vol, pbs, flob, conb,
-     &         sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
-     &         ua(-1,-1,is), fna(-1,-1,0,is), resco(-1,-1,is),
+     &         sna(-1,-1,0,is), pcca(-1,-1,0,0,is), pb, na(-1,-1,is),
+     &         ua(-1,-1,is), fna(-1,-1,0,0,is), resco(-1,-1,is),
      &         corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npco')
               last_solve_5(0:nnreg(0)) = solveco(is,0:nnreg(0))
@@ -572,8 +572,8 @@ cxpb
                 if(new_matrix) call restart_ma28_for_9
                 call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
      &           solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob,
-     &           conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
-     &           pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,is),
+     &           conb, sna(-1,-1,0,is), pcca(-1,-1,0,0,is),
+     &           pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npc9')
                 last_solve_9(0:nnreg(0)) = solveco(is,0:nnreg(0))
@@ -585,8 +585,8 @@ cxpb
                 if(new_matrix) call restart_ma28
                 call b2npco (nx, ny, guard_flows, nnreg(0), solvedum,
      &           solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob,
-     &           conb, sna(-1,-1,0,is), pcca(-1,-1,0,is),
-     &           pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,is),
+     &           conb, sna(-1,-1,0,is), pcca(-1,-1,0,0,is),
+     &           pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npco')
                 last_solve_5(0:nnreg(0)) = solveco(is,0:nnreg(0))
@@ -601,17 +601,17 @@ cxpb
      1       rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
      1       uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),   !xpb
      &       wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,  !srv 09.01.01
-     &       po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),   !xpb
-     &       cddi(-1,-1,0,is),                                           !srv 13.10.06
-     &       cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is), !srv 09.01.01 15.12.05
-     &       cdpahz(-1,-1,0,is),
+     &       po, cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), 
+     &       cdpa(-1,-1,0,0,is), cddi(-1,-1,0,0,is),                     !srv 13.10.06
+     &       cvlahz(-1,-1,0,0,is), cvmahz(-1,-1,0,0,is), 
+     &       cdnahz(-1,-1,0,0,is), cdpahz(-1,-1,0,0,is),                 !srv 09.01.01 15.12.05
      &       fchvispar, fchvisper, fchinert, fchanml, fchvisq,           !srv 20.09.06
-     1       fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),                   !xpb
-     &       fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),                   !srv 01.10.99 21.01.00
-     &       fnaPSch(-1,-1,0,is),fna_mdf(-1,-1,0,is),                    !srv 13.10.06
-     1       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
-     1       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.false.)            !djm Jan2017
+     1       fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),               !xpb
+     &       fna_fcor(-1,-1,0,0,is), fna_he(-1,-1,0,0,is),               !srv 01.10.99 21.01.00
+     &       fnaPSch(-1,-1,0,0,is),fna_mdf(-1,-1,0,0,is),                !srv 13.10.06
+     1       flob, conb, fna_32(-1,-1,0,0,is), fna_52(-1,-1,0,0,is),
+     1       fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is),
+     1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),.false.)          !djm Jan2017
           endif
         enddo
         if(wrong_flow .or. ipass.ne.0) then                              !xpb
@@ -814,17 +814,19 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      1             ua(-1,-1,is), uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),  !xpb
      &             vadia(-1,-1,0,is), wadia(-1,-1,0,is),
      &             ne, te, ti, bb, hx, hy, hz, qz, gs, qc, po,           !srv 09.01.01
-     &             cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &             cddi(-1,-1,0,is), cvlahz(-1,-1,0,is),                 !srv 09.01.01 13.10.06
-     &             cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),               !srv 15.12.05
-     &             cdpahz(-1,-1,0,is),
+     &             cvla(-1,-1,0,0,is), cdna(-1,-1,0,0,is), 
+     &             cdpa(-1,-1,0,0,is),
+     &             cddi(-1,-1,0,0,is), cvlahz(-1,-1,0,0,is),             !srv 09.01.01 13.10.06
+     &             cvmahz(-1,-1,0,0,is), cdnahz(-1,-1,0,0,is),           !srv 15.12.05
+     &             cdpahz(-1,-1,0,0,is),
      &             fchvispar, fchvisper, fchinert, fchanml, fchvisq,     !srv 20.09.06
-     &             fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
-     &             fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),             !srv 01.10.99 21.01.00
-     &             fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),             !srv 13.10.06
-     1             flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
-     1             fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.false.)      !djm Jan2017
+     &             fna(-1,-1,0,0,is), fna_nodrift(-1,-1,0,0,is),
+     &             fna_fcor(-1,-1,0,0,is), fna_he(-1,-1,0,0,is),         !srv 01.10.99 21.01.00
+     &             fnaPSch(-1,-1,0,0,is), fna_mdf(-1,-1,0,0,is),         !srv 13.10.06
+     1             flob, conb, fna_32(-1,-1,0,0,is), 
+     &             fna_52(-1,-1,0,0,is),
+     1             fna_32nd(-1,-1,0,0,is), fna_52nd(-1,-1,0,0,is),
+     &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,0,is),.false.)    !djm Jan2017
                 enddo
                 if(wrong_flow .or. ipass.ne.0) then                      !xpb
                    call print_wrong_flows(
@@ -919,14 +921,14 @@ c     with diamagnetic drift part                                        !xpb
          do iy=-1,ny
            do ix=-1,nx
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-               ue(ix,iy)=-(fch_p(ix,iy,0)/pbs(ix,iy,0)+
-     &          fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+               ue(ix,iy)=-(fch_p(ix,iy,0,0)/pbs(ix,iy,0)+
+     &          fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/
      &          pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
              elseif(leftix(ix,iy).eq.-2) then
-               ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+               ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0,0)/
      &         pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
              elseif(rightix(ix,iy).eq.nx+1) then
-               ue(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe
+               ue(ix,iy)=-fch_p(ix,iy,0,0)/pbs(ix,iy,0)/qe
              endif
            end do
          end do
@@ -1008,7 +1010,7 @@ c        write(*,*) 'Called b2stbr_neutr_scl'
         if(region(-1,iy,0).eq.0) cycle
         if(.not.on_closed_surface(-1,iy))
      >        write(*,*) iy,'west =',
-     >        fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)
+     >        fna(rightix(-1,iy),rightiy(-1,iy),0,0,ismain)
         inverted_ua = inverted_ua .and.
      .   ua(-1,iy,ismain)*pbs(rightix(-1,iy),rightiy(-1,iy),0).gt.0.0_R8
       enddo
@@ -1017,7 +1019,7 @@ c        write(*,*) 'Called b2stbr_neutr_scl'
         if(bottomiy(nx,iy).eq.-2) cycle
         if(region(nx,iy,0).eq.0) cycle
         if(.not.on_closed_surface(nx,iy))
-     >        write(*,*) iy,'east =',fna(nx,iy,0,ismain)
+     >        write(*,*) iy,'east =',fna(nx,iy,0,0,ismain)
         inverted_ua = inverted_ua .and.
      .   ua(nx,iy,ismain)*pbs(nx,iy,0).lt.0.0_R8
       enddo

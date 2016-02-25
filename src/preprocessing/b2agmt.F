@@ -15,7 +15,7 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny),
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny,0:1), qcb(-1:nx,-1:ny),
      &  gs(-1:nx,-1:ny,0:2),
      &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 
@@ -184,7 +184,7 @@
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
      &    (crx(ix,iy,2)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,1)),
      &    (cry(ix,iy,2)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,1)))
-        qc(ix,iy) = cosang (
+        qc(ix,iy,0) = cosang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
      &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
@@ -195,9 +195,9 @@
           write(*,'(a,1p,4g13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
           write(*,'(a,1p,4g13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
         endif
-        if(qc(ix,iy).le.0.0_R8) then
+        if(qc(ix,iy,0).le.0.0_R8) then
           write(*,'(a,1x,1f9.6,2i4)')
-     1     'Problem in b2agmt: qc(ix,iy) <= 0',qc(ix,iy),ix,iy
+     1     'Problem in b2agmt: qc(ix,iy) <= 0',qc(ix,iy,0),ix,iy
           write(*,'(a,1p,4g13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
           write(*,'(a,1p,4g13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
         endif

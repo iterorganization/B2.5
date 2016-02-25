@@ -222,8 +222,8 @@ csw 09jan2014 add extra allocates
            do ix=-1,nxd                                                  
             if(mod(region(ix,iy,0),4).eq.1 .or. 
      &         mod(region(ix,iy,0),4).eq.2) then
-              sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,is) 
-              sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,is) 
+              sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,1,is) 
+              sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,1,is) 
             endif
            enddo
           endif
@@ -240,8 +240,8 @@ csw 09jan2014 add extra allocates
      &         (region(ix,iy,0).eq.2 .or. region(ix,iy,0).eq.4 .or.
      &          region(ix,iy,0).eq.7 .or. region(ix,iy,0).eq.6))) then
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
-               sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,is) 
-               sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,is) 
+               sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,1,is) 
+               sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,1,is) 
              endif
             endif
           enddo
@@ -255,8 +255,8 @@ csw 09jan2014 add extra allocates
      &       (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.  
      &        region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
-             sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,is) 
-             sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,is) 
+             sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,1,is) 
+             sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,1,is) 
             endif
            endif
           enddo                                                                   !srv 20.12.12 }
@@ -343,7 +343,7 @@ csw 09jan2014 add extra allocates
           do ix=-1,nxd                                                  
             if(mod(region(ix,iy,0),4).eq.1 .or. 
      &         mod(region(ix,iy,0),4).eq.2) then
-             sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1) 
+             sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1,1) 
      &       +fac_ExB(ix,iy)*                                    !srv 11.04.13 {
      &      ((po(ix,iy)-po(leftix(ix,iy),iy))/
      &       (hx(ix,iy)+hx(leftix(ix,iy),iy))+
@@ -352,7 +352,7 @@ csw 09jan2014 add extra allocates
      &        ne(ix,iy)*te(ix,iy)*sy(ix,iy)*
      &        bb(ix,iy,2)/bb(ix,iy,3)**2                         !srv 11.04.13 }
 
-             sfhi_mdf(iy) = sfhi_mdf(iy) + fhi_mdf(ix,iy,1)
+             sfhi_mdf(iy) = sfhi_mdf(iy) + fhi_mdf(ix,iy,1,1)
      &       +fac_ExB(ix,iy)*                                    !srv 11.04.13 {
      &      ((po(ix,iy)-po(leftix(ix,iy),iy))/
      &       (hx(ix,iy)+hx(leftix(ix,iy),iy))+
@@ -361,7 +361,7 @@ csw 09jan2014 add extra allocates
      &        ni(ix,iy,1)*ti(ix,iy)*sy(ix,iy)*
      &        bb(ix,iy,2)/bb(ix,iy,3)**2                         !srv 11.04.13 }
 
-             sfne(iy) = sfne(iy) + fne(ix,iy,1) 
+             sfne(iy) = sfne(iy) + fne(ix,iy,1,1) 
             endif
           enddo
         enddo
@@ -378,7 +378,7 @@ csw 09jan2014 add extra allocates
      &         (region(ix,iy,0).eq.2 .or. region(ix,iy,0).eq.4 .or.
      &          region(ix,iy,0).eq.7 .or. region(ix,iy,0).eq.6))) then
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
-              sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1) 
+              sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1,1) 
      &       +fac_ExB(ix,iy)*                                    !srv 11.04.13 {
      &      ((po(ix,iy)-po(leftix(ix,iy),iy))/
      &       (hx(ix,iy)+hx(leftix(ix,iy),iy))+
@@ -387,7 +387,7 @@ csw 09jan2014 add extra allocates
      &        ne(ix,iy)*te(ix,iy)*sy(ix,iy)*
      &        bb(ix,iy,2)/bb(ix,iy,3)**2                         !srv 11.04.13 }
 
-              sfhi_mdf(iy) = sfhi_mdf(iy) + fhi_mdf(ix,iy,1)
+              sfhi_mdf(iy) = sfhi_mdf(iy) + fhi_mdf(ix,iy,1,1)
      &       +fac_ExB(ix,iy)*                                    !srv 11.04.13 {
      &      ((po(ix,iy)-po(leftix(ix,iy),iy))/
      &       (hx(ix,iy)+hx(leftix(ix,iy),iy))+
@@ -396,7 +396,7 @@ csw 09jan2014 add extra allocates
      &        ni(ix,iy,1)*ti(ix,iy)*sy(ix,iy)*
      &        bb(ix,iy,2)/bb(ix,iy,3)**2                         !srv 11.04.13 }
 
-              sfne(iy) = sfne(iy) + fne(ix,iy,1) 
+              sfne(iy) = sfne(iy) + fne(ix,iy,1,1) 
              endif
             endif
           enddo
@@ -411,7 +411,7 @@ csw 09jan2014 add extra allocates
      &         (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.  
      &            region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
-              sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1)
+              sfhe_mdf(iy) = sfhe_mdf(iy) + fhe_mdf(ix,iy,1,1)
      &       +fac_ExB(ix,iy)*                                    !srv 11.04.13 {
      &      ((po(ix,iy)-po(leftix(ix,iy),iy))/
      &       (hx(ix,iy)+hx(leftix(ix,iy),iy))+
@@ -420,7 +420,7 @@ csw 09jan2014 add extra allocates
      &        ne(ix,iy)*te(ix,iy)*sy(ix,iy)*
      &        bb(ix,iy,2)/bb(ix,iy,3)**2                         !srv 11.04.13 }
 
-              sfhi_mdf(iy) = sfhi_mdf(iy) + fhi_mdf(ix,iy,1)
+              sfhi_mdf(iy) = sfhi_mdf(iy) + fhi_mdf(ix,iy,1,1)
      &       +fac_ExB(ix,iy)*                                    !srv 11.04.13 {
      &      ((po(ix,iy)-po(leftix(ix,iy),iy))/
      &       (hx(ix,iy)+hx(leftix(ix,iy),iy))+
@@ -429,7 +429,7 @@ csw 09jan2014 add extra allocates
      &        ni(ix,iy,1)*ti(ix,iy)*sy(ix,iy)*
      &        bb(ix,iy,2)/bb(ix,iy,3)**2                         !srv 11.04.13 }
 
-              sfne(iy) = sfne(iy) + fne(ix,iy,1) 
+              sfne(iy) = sfne(iy) + fne(ix,iy,1,1) 
              endif
             endif
           enddo

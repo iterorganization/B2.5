@@ -12,8 +12,8 @@
       logical solvereg(0:nregionv)      
       real (kind=R8) ::
      *   rxg, pcm1, pbs(-1:nx,-1:ny,0:1), nb(-1:nx,-1:ny),
-     &  pb(-1:nx,-1:ny), snbv(-1:nx,-1:ny), flob(-1:nx,-1:ny,0:1),
-     &  conb(-1:nx,-1:ny,0:1,0:4), pccb1(-1:nx,-1:ny),
+     &  pb(-1:nx,-1:ny), snbv(-1:nx,-1:ny), flob(-1:nx,-1:ny,0:1,0:1),
+     &  conb(-1:nx,-1:ny,0:1,0:1,0:4), pccb1(-1:nx,-1:ny),
      &  rescb(-1:nx,-1:ny)
       character*(*) name
 *   ..output arguments (unspecified on entry)
@@ -94,20 +94,21 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test edge values of pbs
-       call b2xvff (nx, ny, pbs, 'pbs')
+       call b2xvfx (nx, ny, pbs(-1,-1,0), 'pbs')
+       call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test sign of nb, pb
        call b2xvsg (n2, nb, 1, 'nb', '.gt.')
        call b2xvsg (n2, pb, 1, 'pb', '.gt.')
 *    ..test sign of snbv, conb
        call b2xvsg (n2, snbv, 1, 'snbv', '.le.')
        if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then         !srv 06.07.06 {
-        call b2xvsg (n2*2*3, conb, 1, 'conb', '.ge.')               !srv 18.11.05 13.10.06
+        call b2xvsg (n2*4*3, conb, 1, 'conb', '.ge.')               !srv 18.11.05 13.10.06
        endif                                                        !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
-       call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')               !srv 13.10.06 {
-       call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb0')
-       call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb0')               !srv 13.10.06 }
+       call b2xvff (nx, ny, conb(-1,-1,0,0,0), 'conb0')               !srv 13.10.06 {
+       call b2xvff (nx, ny, conb(-1,-1,0,0,1), 'conb0')
+       call b2xvff (nx, ny, conb(-1,-1,0,0,2), 'conb0')               !srv 13.10.06 }
 !*    ..test edge values of pccb1                                   !srv 15.04.05
 !       call b2xvfx (nx, ny, pccb1, 'pccb1')                        !srv 15.04.05
       endif
@@ -148,11 +149,11 @@
         ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
           aa9(ix,iy,-1) = 0.0e0_R8
-        else                                                           !srv 26.11.02 }
-          t0 =  flob(ix,iy,0)/2 - (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy))
-     &        - conb(ix,iy,0,1)                                        !srv 13.10.06
-          t1 = -flob(ix,iy,0)/2 - (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy))
-     &        - conb(ix,iy,0,2)                                        !srv 13.10.06
+        else                                                            !srv 26.11.02 }
+          t0 =  flob(ix,iy,0,0)/2 - (conb(ix,iy,0,0,0)+pcm1*wrk0(ix,iy))
+     &        - conb(ix,iy,0,0,1)                                       !srv 13.10.06 
+          t1 = -flob(ix,iy,0,0)/2 - (conb(ix,iy,0,0,0)+pcm1*wrk0(ix,iy))
+     &        - conb(ix,iy,0,0,2)                                       !srv 13.10.06
           ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
           if (solvereg(ileft))
      >     aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0*rscal(pb(ix,iy))
@@ -177,8 +178,8 @@
          if(bottomiy(ix,iy).eq.-2) then
           aa9(ix,iy,-3) = 0.0_R8
          else
-          t0 =  flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,1)     !srv 13.10.06
-          t1 = -flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,2)     !srv 13.10.06
+          t0 = flob(ix,iy,1,1)/2 - conb(ix,iy,1,1,0) - conb(ix,iy,1,1,1)     !srv 13.10.06
+          t1 =-flob(ix,iy,1,1)/2 - conb(ix,iy,1,1,0) - conb(ix,iy,1,1,2)     !srv 13.10.06
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot))
      >     aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0*rscal(pb(ix,iy))
@@ -197,8 +198,8 @@
 
 *   ..add matrix from contribution nine point stencil
       if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, nnreg(0), itcnt, solvereg, conb(-1,-1,0,3),
-     &  aa9, name)                                                      !srv 02.01.07
+       call b2uxm9 (nx, ny, nnreg(0), itcnt, solvereg,
+     &   conb(-1,-1,0,0,3), aa9, name)                             !srv 02.01.07
       endif
 
       do iy=-1,ny

@@ -1475,22 +1475,22 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
         call my_out(70,nx,ny,ua(-1,-1,is),'b2mndr_ua'//chns)
         call my_out(70,nx,ny,uadia(-1,-1,0,is),'b2mndr_uadiax'//chns)
         call my_out(70,nx,ny,uadia(-1,-1,1,is),'b2mndr_uadiay'//chns)
-        call my_out(70,nx,ny,fna(-1,-1,0,is),'b2mndr_fnax'//chns)
-        call my_out(70,nx,ny,fna(-1,-1,1,is),'b2mndr_fnay'//chns)
+        call my_out(70,nx,ny,fna(-1,-1,0,0,is),'b2mndr_fnax'//chns)
+        call my_out(70,nx,ny,fna(-1,-1,1,1,is),'b2mndr_fnay'//chns)
        enddo
        call my_out(70,nx,ny,te,'b2mndr_te')
        call my_out(70,nx,ny,te/ev,'b2mndr_te_eV')
        call my_out(70,nx,ny,ti,'b2mndr_ti')
        call my_out(70,nx,ny,ti/ev,'b2mndr_ti_eV')
        call my_out(70,nx,ny,po,'b2mndr_po')
-       call my_out(70,nx,ny,fch(-1,-1,0),'b2mndr_fchx')
-       call my_out(70,nx,ny,fch(-1,-1,1),'b2mndr_fchy')
-       call my_out(70,nx,ny,fch_p(-1,-1,0),'b2mndr_fchx_p')
-       call my_out(70,nx,ny,fch_p(-1,-1,1),'b2mndr_fchy_p')
-       call my_out(70,nx,ny,fhe(-1,-1,0),'b2mndr_fhex')
-       call my_out(70,nx,ny,fhe(-1,-1,1),'b2mndr_fhey')
-       call my_out(70,nx,ny,fhi(-1,-1,0),'b2mndr_fhix')
-       call my_out(70,nx,ny,fhi(-1,-1,1),'b2mndr_fhiy')
+       call my_out(70,nx,ny,fch(-1,-1,0,0),'b2mndr_fchx')
+       call my_out(70,nx,ny,fch(-1,-1,1,1),'b2mndr_fchy')
+       call my_out(70,nx,ny,fch_p(-1,-1,0,0),'b2mndr_fchx_p')
+       call my_out(70,nx,ny,fch_p(-1,-1,1,1),'b2mndr_fchy_p')
+       call my_out(70,nx,ny,fhe(-1,-1,0,0),'b2mndr_fhex')
+       call my_out(70,nx,ny,fhe(-1,-1,1,1),'b2mndr_fhey')
+       call my_out(70,nx,ny,fhi(-1,-1,0,0),'b2mndr_fhix')
+       call my_out(70,nx,ny,fhi(-1,-1,1,1),'b2mndr_fhiy')
       endif                                                          !srv 25.01.16 }
       do is = 0,ns-1                                                 !srv 25.01.16 {
         do iy=-1,ny
@@ -1521,15 +1521,15 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
        call sfill (n2*2*(ns-ns0), 0.0_R8, vadia(-1,-1,0,ns0), 1)
        call sfill (n2*2*(ns-ns0), 0.0_R8, wadia(-1,-1,0,ns0), 1)
        call sfill (n2*2*(ns-ns0), 0.0_R8, vaecrb(-1,-1,0,ns0), 1)
-       call sfill (n2*2*(ns-ns0), 0.0_R8, fna(-1,-1,0,ns0), 1)
-       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_mdf(-1,-1,0,ns0), 1)
-       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_fcor(-1,-1,0,ns0), 1)
-       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_nodrift(-1,-1,0,ns0), 1)
-       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_he(-1,-1,0,ns0), 1)
-       call sfill (n2*2*(ns-ns0), 0.0_R8, fnaPSch(-1,-1,0,ns0), 1)
-       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_eir(-1,-1,0,ns0), 1)
-       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_32(-1,-1,0,ns0), 1)
-       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_52(-1,-1,0,ns0), 1)
+       call sfill (n2*4*(ns-ns0), 0.0_R8, fna(-1,-1,0,0,ns0), 1)
+       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_mdf(-1,-1,0,0,ns0), 1)
+       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_fcor(-1,-1,0,0,ns0), 1)
+       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_nodrift(-1,-1,0,0,ns0), 1)
+       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_he(-1,-1,0,0,ns0), 1)
+       call sfill (n2*4*(ns-ns0), 0.0_R8, fnaPSch(-1,-1,0,0,ns0), 1)
+       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_eir(-1,-1,0,0,ns0), 1)
+       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_32(-1,-1,0,0,ns0), 1)
+       call sfill (n2*4*(ns-ns0), 0.0_R8, fna_52(-1,-1,0,0,ns0), 1)
       endif
 *   ..rescale densities and associated fluxes
       if (density_rescale.ne.1.0_R8) then
@@ -1540,17 +1540,17 @@ c   --> better way doing this is necessary)
            if (is_neutral(is).or.nint(zn(is)).ne.2) cycle
            na(:,:,is)=na(:,:,is)*(-density_rescale)
            ne(:,:)=ne(:,:)+na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0)
-           fna(:,:,0:1,is) = fna(:,:,0:1,is)*(-density_rescale)
-           fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*(-density_rescale)
-           fna_fcor(:,:,0:1,is) =
-     .      fna_fcor(:,:,0:1,is)*(-density_rescale)
-           fna_nodrift(:,:,0:1,is) =
-     .      fna_nodrift(:,:,0:1,is)*(-density_rescale)
-           fna_he(:,:,0:1,is) = fna_he(:,:,0:1,is)*(-density_rescale)
-           fnaPSch(:,:,0:1,is) = fnaPSch(:,:,0:1,is)*(-density_rescale)
-           fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*(-density_rescale)
-           fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*(-density_rescale)
-           fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*(-density_rescale)
+           fna(:,:,:,:,is) = fna(:,:,:,:,is)*(-density_rescale)
+           fna_mdf(:,:,:,:,is) = fna_mdf(:,:,:,:,is)*(-density_rescale)
+           fna_fcor(:,:,:,:,is) =
+     .      fna_fcor(:,:,:,:,is)*(-density_rescale)
+           fna_nodrift(:,:,:,:,is) =
+     .      fna_nodrift(:,:,:,:,is)*(-density_rescale)
+           fna_he(:,:,:,:,is) = fna_he(:,:,:,:,is)*(-density_rescale)
+           fnaPSch(:,:,:,:,is) = fnaPSch(:,:,:,:,is)*(-density_rescale)
+           fna_eir(:,:,:,:,is) = fna_eir(:,:,:,:,is)*(-density_rescale)
+           fna_32(:,:,:,:,is) = fna_32(:,:,:,:,is)*(-density_rescale)
+           fna_52(:,:,:,:,is) = fna_52(:,:,:,:,is)*(-density_rescale)
            kinrgy(:,:,is)=kinrgy(:,:,is)*(-density_rescale)
            write(*,*) 'Density ',is,' rescaled by ',-density_rescale
           enddo
@@ -1601,16 +1601,16 @@ c   --> better way doing this is necessary)
         do is=0,ns-1
           if(is_neutral(is)) then
             na(:,:,is)=na(:,:,is)*neutral_rescale
-            fna(:,:,0:1,is)=fna(:,:,0:1,is)*neutral_rescale
-            fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*neutral_rescale
-            fna_fcor(:,:,0:1,is) = fna_fcor(:,:,0:1,is)*neutral_rescale
-            fna_nodrift(:,:,0:1,is) =
-     .       fna_nodrift(:,:,0:1,is)*neutral_rescale
-            fna_he(:,:,0:1,is) = fna_he(:,:,0:1,is)*neutral_rescale
-            fnaPSch(:,:,0:1,is) = fnaPSch(:,:,0:1,is)*neutral_rescale
-            fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*neutral_rescale
-            fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*neutral_rescale
-            fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*neutral_rescale
+            fna(:,:,:,:,is)=fna(:,:,:,:,is)*neutral_rescale
+            fna_mdf(:,:,:,:,is) = fna_mdf(:,:,:,:,is)*neutral_rescale
+            fna_fcor(:,:,:,:,is) = fna_fcor(:,:,:,:,is)*neutral_rescale
+            fna_nodrift(:,:,:,:,is) =
+     .       fna_nodrift(:,:,:,:,is)*neutral_rescale
+            fna_he(:,:,:,:,is) = fna_he(:,:,:,:,is)*neutral_rescale
+            fnaPSch(:,:,:,:,is) = fnaPSch(:,:,:,:,is)*neutral_rescale
+            fna_eir(:,:,:,:,is) = fna_eir(:,:,:,:,is)*neutral_rescale
+            fna_32(:,:,:,:,is) = fna_32(:,:,:,:,is)*neutral_rescale
+            fna_52(:,:,:,:,is) = fna_52(:,:,:,:,is)*neutral_rescale
             kinrgy(:,:,is)=kinrgy(:,:,is)*neutral_rescale
           endif
         enddo
@@ -1682,10 +1682,10 @@ c   --> better way doing this is necessary)
       call b2scopy (n2, te, 1, te0, 1)
       call b2scopy (n2, ti, 1, ti0, 1)
       call b2scopy (n2, po, 1, po0, 1)
-      call b2scopy (n2*2*ns, fna, 1, fna0, 1)
-      call b2scopy (n2*2, fhe, 1, fhe0, 1)
-      call b2scopy (n2*2, fhi, 1, fhi0, 1)
-      call b2scopy (n2*2, fch, 1, fch0, 1)
+      call b2scopy (n2*4*ns, fna, 1, fna0, 1)
+      call b2scopy (n2*4, fhe, 1, fhe0, 1)
+      call b2scopy (n2*4, fhi, 1, fhi0, 1)
+      call b2scopy (n2*4, fch, 1, fch0, 1)
       call b2scopy (n2*ns, kinrgy, 1, kinrgy0, 1)
       call b2scopy (n2*ns, na, 1, nap, 1)
       call b2scopy (n2, ne, 1, nep, 1)
@@ -1693,10 +1693,10 @@ c   --> better way doing this is necessary)
       call b2scopy (n2, te, 1, tep, 1)
       call b2scopy (n2, ti, 1, tip, 1)
       call b2scopy (n2, po, 1, pop, 1)
-      call b2scopy (n2*2*ns, fna, 1, fnap, 1)
-      call b2scopy (n2*2, fhe, 1, fhep, 1)
-      call b2scopy (n2*2, fhi, 1, fhip, 1)
-      call b2scopy (n2*2, fch, 1, fchp, 1)
+      call b2scopy (n2*4*ns, fna, 1, fnap, 1)
+      call b2scopy (n2*4, fhe, 1, fhep, 1)
+      call b2scopy (n2*4, fhi, 1, fhip, 1)
+      call b2scopy (n2*4, fch, 1, fchp, 1)
       call b2scopy (n2*ns, kinrgy, 1, kinrgyp, 1)
 *   ..compute initial ni
       call b2xpni (nx, ny, ns, na, ni)
@@ -1850,10 +1850,10 @@ c new CDF movie option (1st frame at t=0)
         call b2mxnp (n2, tip, ti0, ti)
         call b2mxnp (n2, kinrgyp, kinrgy0, kinrgy)
         call b2mxnu (n2, pop, po0, po)
-        call b2mxnu (n2*2*ns, fnap, fna0, fna)
-        call b2mxnu (n2*2, fhep, fhe0, fhe)
-        call b2mxnu (n2*2, fhip, fhi0, fhi)
-        call b2mxnu (n2*2, fchp, fch0, fch)
+        call b2mxnu (n2*4*ns, fnap, fna0, fna)
+        call b2mxnu (n2*4, fhep, fhe0, fhe)
+        call b2mxnu (n2*4, fhip, fhi0, fhi)
+        call b2mxnu (n2*4, fchp, fch0, fch)
         call b2trcs (70, nout, nx, ny, ns, nxtl, nxtr,
      .    ismain, dtim, BoRiS)
 csw 09oct2012 set default potential already at this point (BCs)

@@ -182,21 +182,21 @@ c          v=vol(ix,iy)
           end do
           hlp_tisp=hlp_tisp+v*hlp_i*ti(ix,iy)
           hlp_zesp=hlp_zesp+v*ne(ix,iy)*zeff(ix,iy)
-          hlp_qesp=hlp_qesp+fhe(ix,iy,1)
-          hlp_qisp=hlp_qisp+fhi(ix,iy,1)
+          hlp_qesp=hlp_qesp+fhe(ix,iy,1,1)
+          hlp_qisp=hlp_qisp+fhi(ix,iy,1,1)
           do is=0,ns-1
             kintmp =
      .       (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      .        kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
      .       (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-            hlp_qisp=hlp_qisp+kintmp*(1.0_R8-BoRiS)*fna(ix,iy,1,is)
+            hlp_qisp=hlp_qisp+kintmp*(1.0_R8-BoRiS)*fna(ix,iy,1,1,is)
           enddo
           is=0
           do j=1,nspecies !{
             do k=1,nfluids(j) !{
               is=is+1
               nisi_tmp(is)=nisi_tmp(is)+v*na(ix,iy,ions_list(is))
-              gisi_tmp(is)=gisi_tmp(is)+fna(ix,iy,1,ions_list(is))
+              gisi_tmp(is)=gisi_tmp(is)+fna(ix,iy,1,1,ions_list(is))
               nisp_tmp(j)=nisp_tmp(j)+v*na(ix,iy,ions_list(is))
               prsr_tmp(j)=prsr_tmp(j)+v*na(ix,iy,ions_list(is))*
      *            (ti(ix,iy)+rza(ix,iy,ions_list(is))*te(ix,iy))
@@ -204,7 +204,7 @@ c          v=vol(ix,iy)
      *             v*na(ix,iy,ions_list(is))*rza(ix,iy,ions_list(is))
               zesp_tmp(j)=zesp_tmp(j)+
      *             v*na(ix,iy,ions_list(is))*rz2(ix,iy,ions_list(is))
-              gisp_tmp(j)=gisp_tmp(j)+fna(ix,iy,1,ions_list(is))
+              gisp_tmp(j)=gisp_tmp(j)+fna(ix,iy,1,1,ions_list(is))
               do i=0,jsep !{
                 gasp_tmp(j)=gasp_tmp(j)+
      1               sna(ix,i,0,ions_list(is))+

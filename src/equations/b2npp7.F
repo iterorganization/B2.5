@@ -13,13 +13,13 @@
       integer nx, ny, nregionv, itcnt
       real (kind=R8) ::
      *   rxf, ne(-1:nx,-1:ny), te(-1:nx,-1:ny),
-     &   conc(-1:nx,-1:ny,0:1), sch(-1:nx,-1:ny,0:3)
-     3  ,avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),      !srv 27.01.00
+     &   conc(-1:nx,-1:ny,0:1,0:1), sch(-1:nx,-1:ny,0:3),
+     3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),      !srv 27.01.00
      4   cvisper(-1:nx,-1:ny,0:1)                                 !srv 27.01.00
       logical solvereg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
-     *   po(-1:nx,-1:ny), fch(-1:nx,-1:ny,0:1)
+     *   po(-1:nx,-1:ny), fch(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
       integer ierr
       real (kind=R8) ::
@@ -86,7 +86,7 @@
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
 *    ..test sign of conc, avisper, bvisper, cvisper                !srv 27.01.00
-       call b2xvsg (n2*2, conc, 1, 'conc', '.ge.')
+       call b2xvsg (n2*4, conc, 1, 'conc', '.ge.')
        call b2xvsg (n2*2, avisper, 1, 'avisper', '.ge.')           !srv 27.01.00
        call b2xvsg (n2*2, bvisper, 1, 'bvisper', '.ge.')           !srv 27.01.00
        call b2xvsg (n2*2, cvisper, 1, 'cvisper', '.ge.')           !srv 27.01.00
@@ -113,9 +113,9 @@
 !       call my_out(70,nx,ny,te,'b2npp7_te')
 !       call my_out(70,nx,ny,ne,'b2npp7_ne')
         call my_out(70,nx,ny,po,'b2npp7_po')
-	    call my_out(70,nx,ny,respo,'b2npp7_respo')
-        call my_out(70,nx,ny,fch(-1,-1,0),'b2npp7_fchx')
-	    call my_out(70,nx,ny,fch(-1,-1,1),'b2npp7_fchy')
+        call my_out(70,nx,ny,respo,'b2npp7_respo')
+        call my_out(70,nx,ny,fch(-1,-1,0,0),'b2npp7_fchx')
+        call my_out(70,nx,ny,fch(-1,-1,1,1),'b2npp7_fchy')
 !       call my_out(70,nx,ny,sch(-1,-1,0),'b2npp7_sch0')
 !       call my_out(70,nx,ny,sch(-1,-1,1),'b2npp7_sch1')
 !       call my_out(70,nx,ny,sch(-1,-1,2),'b2npp7_sch2')
