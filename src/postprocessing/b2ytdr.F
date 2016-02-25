@@ -206,6 +206,7 @@ c 2002-09-11: logic revised
       integer natm1, nspecies1, iss
       integer itrack1, itrack2, itrack3
       integer non_commensurate
+      integer istyle_cur_contr_on_S_and_N
       integer is0(0:DEF_NSD-1), is1(0:ns-1)
       integer is1beginrange, is1endrange, iatmbeginrange, iatmendrange
       integer, allocatable :: iatm1(:), ipls1(:), istra1(:)
@@ -432,7 +433,7 @@ c 2002-09-11: logic revised
       logical LRPSCUT
       logical in_bundle, charges_match, skip_reac
 #endif
-      logical todo, same_bundling, first_pass
+      logical todo, wait, same_bundling, first_pass
       logical wall_namelist_used
       logical region_flags(NNREGMAX,nkind_coeff), no_pflux
       logical poloidal_scaling, prdone, axdone
@@ -454,6 +455,7 @@ c 2002-09-11: logic revised
       intrinsic nint, mod, min0, max, index, iabs, sqrt
 *   ..initialisation
       data non_commensurate/0/
+      data istyle_cur_contr_on_S_and_N/2/
       data boundary_namelist/0/, neutrals_namelist/0/, use_eirene/0/
       data numerics_namelist/0/, sources_inputfile/0/
       data transport_namelist/0/, transport_inputfile/0/
@@ -1025,6 +1027,8 @@ c 2002-09-11: logic revised
       call ipgeti ('b2tqna_mw_ix2', mw_ix2)
       call ipgeti ('b2tqna_mw_jxa', mw_jxa)
       call ipgeti ('b2tqna_mw_jsep', mw_jsep)
+      call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N', 
+     .                     istyle_cur_contr_on_S_and_N)
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1246,6 +1250,7 @@ c 2002-09-11: logic revised
       endif
 *   ..integer switches
       todo = .true.
+      wait = .false.
       ISWITCHES: select case (cnamip)
         case('b2mndr_ismain')
           iswitch = ismain
@@ -1302,6 +1307,10 @@ c 2002-09-11: logic revised
         case('b2trcl_conductive limit')
           cnamip = 'b2trcl_conductive_limit'
           todo = .false.
+        case('b2stbc_istyle_cur_contr_on_S_and_N')
+          todo = .false.
+          wait = .true.  ! we wait till we have read b2.boundary.parameters
+                         ! to choose the new value to be written
         case default ISWITCHES
           todo = .false.
       end select ISWITCHES
@@ -1327,13 +1336,13 @@ c 2002-09-11: logic revised
           todo = .false.
       end select RSWITCHES
       if (todo) write(cvalip,'(1p,e10.3)') rswitch
-      if (.not.is_comment(line)) then
+      if (.not.is_comment(line) .and. .not.wait) then
         write(nout(2),'(a1,a,a,a,a1)')
      .   '''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
-      else if (.not.streql(line,' ')) then
+      else if (.not.streql(line,' ') .and. .not.wait) then
         write(nout(2),'(a,a2,a,a,a,a1)') line(1:1),
      .   ' ''',trim(cnamip),''''//tab//'''',trim(cvalip),''''
-      else
+      else if (.not.wait) then
         write(nout(2),1028)
       endif
       goto 5
@@ -1651,10 +1660,13 @@ c 2002-09-11: logic revised
           if (bcpot(ib).eq.0) then
             if (bcchar(ib).eq.'N') then
               bcpot(ib) = 13 ! new treatment for automatic drift current contribution
+              istyle_cur_contr_on_S_and_N = 2
             else if (bcchar(ib).eq.'S' .and. .not.is_core_boundary) then 
               bcpot(ib) = 13 ! new treatment for automatic drift current contribution
+              istyle_cur_contr_on_S_and_N = 2
             else if (bcchar(ib).eq.'S' .and. is_core_boundary) then 
               bcpot(ib) = 12 ! new treatment for automatic drift current contribution
+              istyle_cur_contr_on_S_and_N = 2
             end if
           end if  
         end do
@@ -1784,6 +1796,9 @@ c 2002-09-11: logic revised
         endif
         boundary_namelist = 0
       enddo
+      if (istyle_cur_contr_on_S_and_N.ne.2) write(nout(2),'(a,i1,a1)')
+     >   '''b2stbc_istyle_cur_contr_on_S_and_N'''//tab//'''',
+     &             istyle_cur_contr_on_S_and_N,         ''''
 
 *  ..write new b2.transport.parameters
       first_pass = .true.

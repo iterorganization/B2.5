@@ -643,7 +643,7 @@ cank
         write(45,'(18i4)') (isrftype(i),i=1,nlimi)
         write(45,'(18i4)') (isrftype(nlim+i),i=1,nstsi)
       end if
-      if (NLWRMSH) then
+      if (NLWRMSH .and. streql(solps_version,'4.3')) then
         if(jvft44 .ge. 20051115) then
           read (44,'(6e13.5)') (wlarea(i),i=1,nlimi)
           read (44,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
@@ -928,26 +928,29 @@ cank
      .                           nx1,ny1,natm1,1,1)
             deallocate(eneutrad1)
           end if
-        elseif(jvft44 .ge. 20071209) then
-          do is = 1, natmi
-            call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
-          end do
-          allocate(eneutrad1(0:nx1+1,0:ny1+1,natm1))
-          do is = 1, natmi
-            if (iatm1(is).ne.0) then
-              field(0:nx+1,0:ny+1) = eneutrad(0:nx+1,0:ny+1,is,0)
-              call b2xtvc(nx, ny, nx1, ny1,
-     &         field, eneutrad1(0,0,iatm1(is)),
-     &         nncutmax, non_commensurate,
-     &         nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
-     &         leftcut, leftcut1, rightcut, rightcut1,
-     &         bottomcut, bottomcut1, topcut, topcut1,
-     &         wrk0)
-            end if
-          end do
-          call eirene_neutr(45,nx1,ny1,natm1,eneutrad1,
-     .                         nx1,ny1,natm1,1,1)
-          deallocate(eneutrad1)
+        elseif(streql(solps_version,'4.3')) then
+          if (jvft44.ge.20071209) then
+            do is = 1, natmi
+              call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
+            end do
+            allocate(eneutrad1(0:nx1+1,0:ny1+1,natm1))
+            do is = 1, natmi
+              if (iatm1(is).ne.0) then
+                field(0:nx+1,0:ny+1) = eneutrad(0:nx+1,0:ny+1,is,0)
+                call b2xtvc(nx, ny, nx1, ny1,
+     &           field, eneutrad1(0,0,iatm1(is)),
+     &           nncutmax, non_commensurate,
+     &           nnreg, nncut, periodic_bc, 
+     &           jsep, jsep1, region, region1,
+     &           leftcut, leftcut1, rightcut, rightcut1,
+     &           bottomcut, bottomcut1, topcut, topcut1,
+     &           wrk0)
+              end if
+            end do
+            call eirene_neutr(45,nx1,ny1,natm1,eneutrad1,
+     .                           nx1,ny1,natm1,1,1)
+            deallocate(eneutrad1)
+          end if
         end if
       end if
 

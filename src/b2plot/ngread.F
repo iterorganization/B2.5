@@ -371,7 +371,7 @@ cank
       end if
       if (NLWRMSH) then
         if(jvft44 .ge. 20051115) then
-          read (44,'(6e13.5)') (wlarea(i),i=1,nlimi)
+          read (44,'(6e13.5)',end=999) (wlarea(i),i=1,nlimi)
           read (44,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
         end if
         if(jvft44 .ge. 20060206) then
@@ -450,6 +450,7 @@ cank
           READ (44,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,nioni),
      .                                                     J=0,NSTRAI)
         end if
+ 999    continue
       else  ! NLWRMSH
         if(jvft44 .ge. 20071209) then
           do is = 1, natmi

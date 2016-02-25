@@ -209,7 +209,7 @@ cxpb Must convert fluxes to flux densities
           na0(:,:,is) = na(:,:,is)
           ua0(:,:,is) = ua(:,:,is)
           fna0(:,:,0,is) = fna(:,:,0,is)/gs(:,:,0)/qc(:,:)
-          fna0(:,:,1,is) = fna(:,:,0,is)/gs(:,:,1)
+          fna0(:,:,1,is) = fna(:,:,1,is)/gs(:,:,1)
         end if
       end do
       do is = 1, nnmoli
