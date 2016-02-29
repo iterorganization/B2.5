@@ -16,9 +16,6 @@
       use eirmod_extrab25
 #endif
       implicit none
-#ifndef B25_EIRENE
-#     include <COUPLE/EIRDIAG.F>
-#endif
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
       real (kind=R8) ::

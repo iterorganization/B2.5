@@ -10,12 +10,19 @@ csw 09jan2014 extra module to define some arrays
       use b2mod_types
       use b2mod_astra_to_b2
       use b2mod_neutrals_namelist
+     , ,only: b2espcr, mlcmp
 #ifdef B25_EIRENE
+#ifndef SOLPS4_3
       use eirmod_extrab25
+#else
+      use eirdiag ! IGNORE
+     , ,only: nnatmi, nnmoli, dab2, dmb2, tab2, tmb2, rfluxa, rfluxm
+#endif
 #endif
       implicit none
 
 #ifndef B25_EIRENE
+#     include "COUPLE/KOPPLDIM.F"
 #     include "COUPLE/EIRDIAG.F"
 #endif
 

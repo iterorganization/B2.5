@@ -43,9 +43,6 @@
       use b2mod_external
       implicit none
 #     include <DIMENSIONS.F>
-#ifndef B25_EIRENE
-#     include <COUPLE/EIRDIAG.F>
-#endif
 #ifdef MDSPLUS
 #     include "mdslib.inc"
 #endif

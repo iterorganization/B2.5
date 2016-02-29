@@ -29,7 +29,6 @@
       use b2mod_transport_models
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
-      use b2mod_numerics_namelist
       use b2mod_transport_namelist
       use b2mod_transport_disruption
       use b2mod_b2cmfs
@@ -51,6 +50,7 @@
      , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
 #endif
       use b2mod_b2_to_astra
+     , ,only: write_b2_to_astra
 #ifdef JET
       use b2mod_ppout
 #endif

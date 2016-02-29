@@ -30,15 +30,19 @@ cank }
       use b2mod_user_namelist
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
+      use eirmod_extrab25
       use eirmod_parmmod
 #else
       use parmmod   ! IGNORE
+      use braeir    ! IGNORE
+      use eirdiag   ! IGNORE
 #endif
 #endif
       implicit none
 #     include "DIMENSIONS.F"
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
+#     include "COUPLE/EIRDIAG.F"
 #endif
 #     include "COUPLE/EIRSRT.F"
       integer nstraid, nsdmax, natmid, nmolid, nionid, nstsid, nlimpsd
@@ -54,8 +58,10 @@ cank }
      *   phys_sput(:,:), chem_sput(:,:),
      1   gpfc(:,:)
 #ifndef NO_B2_CHEM_SPUT
+#ifndef SOLPS4_3
       real (kind=R8), allocatable, save :: 
      *   chemical_sputter_yield(:)
+#endif
 #endif
       integer, allocatable, save ::
      *   RCPOS(:), 
@@ -83,8 +89,10 @@ cank }
       real (kind=R8), save :: chem_sput(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: phys_sput(0:nsdmax-1,NSTRAID)
 #ifndef NO_B2_CHEM_SPUT
+#ifndef SOLPS4_3
       real (kind=R8), save :: 
      ,  chemical_sputter_yield(0:DEF_NLIM+DEF_NSTS)
+#endif
 #endif
       integer, save :: RCPOS(NSTRAID)
       integer, save :: RCSTART(NSTRAID)
@@ -116,9 +124,11 @@ cank }
       real (kind=R8), save :: neutrals_time_switch
       real (kind=R8), save :: neut_scl_lim
 
+#ifndef B25_EIRENE
 #ifndef NO_B2_CHEM_SPUT
       real (kind=R8), save :: fchar_chemical
       integer, save :: igass_chemical, itsput_chemical, issput_chemical
+#endif
 #endif
 
       real(kind=R8), save ::

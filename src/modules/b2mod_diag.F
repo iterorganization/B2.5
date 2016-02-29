@@ -5,15 +5,14 @@
       use b2mod_eirene_globals
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
-#ifndef B25_EIRENE
-#     include <COUPLE/EIRDIAG.F>
-#endif
-c*** Must be preceded by KOPPLDIM.F of EIRDIAG.F - nstra is used here
 c
 c  version : 27.04.2005
 c
       real (kind=R8) :: 
-     1 totaddee, totaddei, totaddni, rad_neutr, b2brem, b2rad
+     1 totaddee, totaddei, totaddni, rad_neutr
+#ifndef SOLPS4_3
+      real (kind=R8) :: b2brem, b2rad
+#endif
       real (kind=R8), allocatable :: rad_imp(:)
       REAL (kind=R8), allocatable :: RESHLP(:,:)
       real (kind=R8), allocatable :: rdneureg(:),

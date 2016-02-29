@@ -17,9 +17,6 @@ c======================================================================
 #endif
       implicit none
 #include <DIMENSIONS.F>
-#ifndef B25_EIRENE
-#     include <COUPLE/EIRDIAG.F>
-#endif
 c*** Local variables
 c
       integer lun

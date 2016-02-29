@@ -36,9 +36,6 @@
       use b2mod_astra_to_b2                                          !srv 28.07.11
       implicit none
 #     include "DIMENSIONS.F"
-#ifndef B25_EIRENE
-#     include "COUPLE/EIRDIAG.F"
-#endif
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0, diagno
       real (kind=R8) ::
