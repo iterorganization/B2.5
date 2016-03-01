@@ -306,7 +306,7 @@
      &     fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch, fchdia, fchin,
      &     fch_p, fchvispar, fchvisper, fchvisq, fchinert,               !srv 21.10.02
      &     fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &     cdna, cvsa, cvla, chce, chve, chci, chvi, calf,               !xpb
+     &     cdna, cdpa, cvsa, cvla, chce, chve, chci, chvi, calf,         !xpb
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &     wrong_flow, .false.)
@@ -381,7 +381,7 @@
      &    fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
      &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,                !xpb
+     &    cdna, cdpa, cvsa, cvla, chce, chve, chci, chvi, calf,          !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &    wrong_flow, .false.)
@@ -655,7 +655,7 @@ cxpb
      &           fna_he, fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
      &           fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,    !srv 21.10.02
      &           fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &           cdna, cvsa, cvla, chce, chve, chci, chvi, calf,         !xpb
+     &           cdna, cdpa, cvsa, cvla, chce, chve, chci, chvi, calf,   !xpb
      &           rlsa, rlra, rlqa, rlcx, rlrd,
      &           rlbr, rlza, rlz2, rlpt, rlpi,
      &           rza, rz2, rpt, rpi,

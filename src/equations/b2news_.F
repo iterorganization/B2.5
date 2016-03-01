@@ -370,7 +370,7 @@ c   extra call at this place within internal iteration)
      &    fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch, 
      &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert, !srv 21.10.02
      &    fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir, 
-     &    cdna, cvsa, cvla, chce, chve, chci, chvi, calf,                !xpb
+     &    cdna, cdpa, cvsa, cvla, chce, chve, chci, chvi, calf,          !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &    wrong_flow, .false.)
@@ -632,12 +632,11 @@ csw 16oct2012 init ier0
           t0=0
           if (i.eq.0) then
            if (vis_per.eq.0.0e0_R8) then                                 !srv 06.07.00
-             call b2nppo (nx, ny, nnreg(0), solvepo, ncall,rxf2,ne,te,
-     &        conc, sch, po, fch, respo, corpo, ier0)
+             call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
+     &        ne, te, conc, sch, po, fch, respo, corpo, ier0)
            else
-
-            call b2npp7 (nx, ny, nnreg(0), solvepo, ncall,rxf2,ne,te,    !srv 27.01.00
-     &       conc, avisper, bvisper, cvisper,                            !srv 27.01.00
+            call b2npp7 (nx, ny, nnreg(0), solvepo, ncall, rxf2,         !srv 27.01.00
+     &       ne, te, conc, avisper, bvisper, cvisper,                    !srv 27.01.00
      &       sch, po, fch, respo, corpo, ier0)                           !srv 27.01.00
 
            endif                                                         !srv 06.07.00
@@ -648,11 +647,11 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
            enddo
           else
            if (vis_per.eq.0.0e0_R8) then                                 !srv 06.07.00
-            call b2nppo (nx, ny, nnreg(0), solvepo, ncall,rxf2,ne,te, 
-     &       conc, sch, po, fch, wrk0, wrk1, ier0)
+            call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
+     &       ne, te, conc, sch, po, fch, wrk0, wrk1, ier0)
            else
-            call b2npp7 (nx, ny, nnreg(0), solvepo, ncall,rxf2,ne,te,    !srv 27.01.00
-     &       conc, avisper, bvisper, cvisper,                            !srv 27.01.00
+            call b2npp7 (nx, ny, nnreg(0), solvepo, ncall, rxf2,         !srv 27.01.00
+     &       ne, te, conc, avisper, bvisper, cvisper,                    !srv 27.01.00
      &       sch, po, fch, wrk0, wrk1, ier0)                             !srv 27.01.00
            endif                                                         !srv 06.07.00
 crfs       do iy = 0, ny-1
