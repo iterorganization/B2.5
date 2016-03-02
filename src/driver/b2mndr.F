@@ -1100,6 +1100,7 @@ csw 09oct2012
 #ifdef USE_IMPGYRO
 *   ..call IMPGYRO
       call impgyro_init (nx, ny, ns, ismain) !yamoto
+      write(*,*) 'b2ig: set ns_ext', ns_ext 
 #endif
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE

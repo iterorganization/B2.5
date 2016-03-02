@@ -80,15 +80,10 @@
 #endif
 #ifdef USE_IMPGYRO
       write (*,*) 'b2ig: Calling MPI COMM FLAG=IG'
-      write (*,*) 'b2ig: obtaining size'
       call mpi_comm_size (mpi_comm_world, mpi_size, mpi_err)
-      write (*,*) 'b2ig: mpi_size =', mpi_size
       call mpi_comm_rank (mpi_comm_world, mpi_rank, mpi_err)
-      write (*,*) 'b2ig: mpi_rank =', mpi_rank
-      write (*,*) 'b2ig: spliting'
       call mpi_comm_split (mpi_comm_world, mpi_undefined,
      &  1, mpi_local, mpi_err)
-      write (*,*) 'b2ig: broadcastiong'
       call mpi_bcast (ismain, 1, mpi_integer4, 0, mpi_comm_world,
      &  mpi_err)
 
@@ -104,6 +99,7 @@
       ikmn = 0
       ikmx = 74
       write (*,*) 'b2ig: WARNING YOU ARE RUNNING NON-MPI IMPGYRO case'
+      write (*,*) 'b2ig: You may have forgotten set_ig option!'
       write (*,*) 'b2ig: Setting default ikmn, ikmx', ikmn, ikmx
 #endif
 
@@ -331,6 +327,7 @@ cxpb
       write (*,*) 'b2ig: Entering impgyro_main'
 
 #ifdef USE_MPI
+      write (*,*) 'b2ig: impgyro_main...flag=MPI'
       call mpi_bcast (last, 1, mpi_logical , 0,
      &  mpi_comm_world, mpi_err)
       call mpi_bcast (na, size(na), mpi_real8, 0,
@@ -350,33 +347,27 @@ cxpb
 #endif
 
 #ifdef USE_IMPGYRO
+      write (*,*) 'b2ig: impgyro_main...flag=IG'
       call mpi_bcast (last, 1, mpi_logical , 0,
      &  mpi_comm_world, mpi_err)
-      write(*,*) 'last broadcasted'
       call mpi_bcast (na, size(na), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)
-      write(*,*) 'na broadcasted'
       call mpi_bcast (ne, size(ne), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)
-      write(*,*) 'ne broadcasted'
       call mpi_bcast (ua, size(ua), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)
-      write(*,*) 'ua broadcasted'
       call mpi_bcast (te, size (te), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)
-      write(*,*) 'te broadcasted'
       call mpi_bcast (ti, size (ti), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)
-      write(*,*) 'ti broadcasted'
       call mpi_bcast (po, size (po), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)
-      write(*,*) 'po broadcasted'
       call mpi_bcast (fna, size (fna), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)
-      write(*,*) 'fna broadcasted'
 #endif
 
       write (*,*) 'b2ig: running impgyro ...'
+
 
 #ifdef USE_MPI
       if (mpi_rank.eq.0)then
@@ -424,6 +415,7 @@ cxpb
       b2ztw = 0
       write (*,*) 'b2ig: IMPGYRO run failed!' 
       write (*,*) 'b2ig: Every external specie information set to zero.'
+      write (*,*) 'b2ig: You may have forgotten set_ig option!'
 #endif
 
       sna_ext = 0
@@ -456,6 +448,14 @@ cxpb
         end do
       end do
 
+      !yamoto check whether the B2 receives na,ua,ta_ext properly or not. 
+      !yamoto these summation have no physical meanings.
+
+      write(*,*) 'b2ig: total impurity density in the system'
+      write(*,*) 'b2ig: sum na_ext = ', sum(na_ext(:,:,:))
+      write(*,*) 'b2ig: sum ua_ext = ', sum(ua_ext(:,:,:))
+      write(*,*) 'b2ig: sum ta_ext = ', sum(ta_ext(:,:,:))
+
       write (*,*) 'b2ig: Leaving impgyro_main'
 
       end subroutine impgyro_main
@@ -480,8 +480,6 @@ cxpb
       call mpi_bcast ( last , 1 , mpi_logical , 0 ,
      &     mpi_comm_world , mpi_err )
 #endif
-
-
 
       call my_open_file ( fd , 'restart_ext' )
       write (fd) na_ext
