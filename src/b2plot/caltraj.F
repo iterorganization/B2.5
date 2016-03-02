@@ -135,7 +135,7 @@ c     parameter (destmode=2)               !hardwired to 2
       integer itstep,ntstep,ix,iy
       real (kind=R8) ::
      *   lwarr(-1:nx,-1:ny,0:ns-1),
-     1   starttime
+     1   starttime, tstepn(1), dumarr(1)
 #endif
 #endif
 
@@ -156,15 +156,18 @@ c     Getting the values for globaltime and deltat
         ncid=ncopn(moviename,ncnowrit,iret)
         imap(1)=1
         imap(2)=nx+2
-        call rwcdf(rw,ncid,'ntstep',imap,ntstep,iret)
+        tstepn(1) = ntstep
+        call rwcdf (rw, ncid, 'ntstep', imap, tstepn, iret)
         nplot=ntstep+1
         itstep=0
+        dumarr(1)=starttime
         call rwcdf_settime('time',1)
-        call rwcdf(rw,ncid,'time',imap,starttime,iret)
+        call rwcdf(rw,ncid,'time',imap,dumarr,iret)
         call rwcdf(rw,ncid,'na',imap,lwarr,iret)
         currtime=starttime
+        dumarr(1)=globaltime
         call rwcdf_settime('time',ntstep)
-        call rwcdf(rw,ncid,'time',imap,globaltime,iret)
+        call rwcdf(rw,ncid,'time',imap,dumarr,iret)
         globaltime=globaltime-starttime
       endif
 #endif
@@ -358,8 +361,10 @@ c                         particles than at beginning, it is destroyed.
 #ifdef CDF_MOVIE
           else
             itstep=counter-1
+            imap(1)=1
+            dumarr(1)=currtime
             call rwcdf_settime('time',itstep)
-            call rwcdf(rw,ncid,'time',imap,currtime,iret)
+            call rwcdf(rw,ncid,'time',imap,dumarr,iret)
             if (b2plot_debug.ge.2) 
      .       write(*,*) 'Processing from ',starttime,' to ',currtime
             deltat=currtime-starttime
@@ -392,7 +397,7 @@ c                         particles than at beginning, it is destroyed.
           call end_page
           call lastd
           call gsplci(1)
-          write(argstring,'(f10.3,a)') currtime*1e6,' us'
+          write(argstring,'(f10.3,a)') currtime*1.0e6_R8,' us'
           call init_page('Trajectories ' //
      2     argstring(1:lnblnk(argstring)),values(5),values(6),
      +     values(7),values(8),1,.true.,.true.,.true.)
@@ -458,7 +463,7 @@ c     TRAJECTORIES:
       else                      ! Draw Lines
         randzaehler=0
         do while ((randzaehler .lt. np) .and. 
-     +   (globaltime .gt. 0))
+     +   (globaltime .gt. 0.0_R8))
 #ifndef NO_CDF
 #ifdef CDF_MOVIE
           if(moviename .eq. ' ') then
@@ -470,8 +475,10 @@ c     TRAJECTORIES:
 #ifdef CDF_MOVIE
           else
             itstep=itstep+1
+            imap(1)=1
+            dumarr(1)=currtime
             call rwcdf_settime('time',itstep)
-            call rwcdf(rw,ncid,'time',imap,currtime,iret)
+            call rwcdf(rw,ncid,'time',imap,dumarr,iret)
             if (b2plot_debug.ge.2) 
      .       write(*,*) 'Processing from ',starttime,' to ',currtime
             deltat=currtime-starttime

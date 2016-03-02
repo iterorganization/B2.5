@@ -43,7 +43,7 @@ c*** and for the power flux.
       external streql, ipgeti
 c----------------------------------------------------------------------
       print *,'Starting b2pnwl...',nlim,DEF_NLIM
-      call ipgeti ('b2agmt_1d_width', width)
+      call ipgetr ('b2agmt_1d_width', width)
 c*** Set the default values
       npumplis=0
       nwldprt=0

@@ -43,6 +43,7 @@
 *     ninp(2): un*formatted; provides the physics parameters.
 *     ninp(3): un*formatted; provides the plasma state.
 *     ninp(4): un*formatted; provides atomic rate data.
+*     ninp(5): formatted; provides run switches.
 *
 *     The output units are:
 *     nout(0): formatted; provides printed output.
@@ -69,7 +70,7 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:4), nout(0:2), nx, ny, ns, idum(0:9)
+      integer ninp(0:5), nout(0:2), nx, ny, ns, idum(0:9)
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
@@ -78,7 +79,7 @@
      &  gopks, gclks, gclwk
       external b2ypdr
 *   ..initialise input/output units
-      data ninp/50,51,52,53,54/
+      data ninp/50,51,52,53,54,55/
       data nout/60,61,62/
 
 *-----------------------------------------------------------------------
@@ -89,7 +90,7 @@
 *
 *     Description of some local variables:
 *
-*     ninp - (0:4) integer array.
+*     ninp - (0:5) integer array.
 *     ninp specifies the input unit numbers.
 *
 *     nout - (0:2) integer array.
@@ -129,6 +130,7 @@
       call cfopen (ninp(2),'b2fparam','old','un*formatted')
       call cfopen (ninp(3),'b2fstate','old','un*formatted')
       call cfopen (ninp(4),'b2frates','old','un*formatted')
+      call cfopen (ninp(5),'b2mn.dat','old','formatted')
       call cfopen (nout(0),'b2yp.prt','new','formatted')
       call gnopen (nout(1),'b2yp.plt')
       call cfopen (nout(2),'b2specp','new','formatted')

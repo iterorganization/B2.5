@@ -98,7 +98,7 @@ c
 c      print *,'Starting b2ptrgl...'
 c      print *,'ers_factor= ',ers_factor
       tab=char(9)
-      call ipgeti ('b2agmt_1d_width', width)
+      call ipgetr ('b2agmt_1d_width', width)
 c
 c*** Target geometry
 c

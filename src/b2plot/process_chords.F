@@ -164,7 +164,7 @@ c
       character*5 rw
       integer ncid,imap(maxvdims),iret
       real (kind=R8) ::
-     *   htime
+     *   htime,dumarr(1),tstepn(1)
       integer itstep,ntstep,dtstep
 #endif
 #endif
@@ -218,10 +218,12 @@ c
         rw='read'
         ncid=ncopn(moviename,ncnowrit,iret)
         imap(1)=1
-        call rwcdf(rw,ncid,'ntstep',imap,ntstep,iret)
+        tstepn(1)=ntstep
+        call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
         do itstep=1,ntstep,movie_skip
+          dumarr(1)=htime
           call rwcdf_settime('time',itstep)
-          call rwcdf(rw,ncid,'time',imap,htime,iret)
+          call rwcdf(rw,ncid,'time',imap,dumarr,iret)
           imap(1)=1
           imap(2)=nx+2
           call rwcdf(rw,ncid,'ahal',imap,work(-1,-1,0,iwrk),iret)

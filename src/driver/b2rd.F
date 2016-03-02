@@ -461,9 +461,7 @@
       wbbl(:,:,3)=sqrt(wbbl(:,:,0)**2+wbbl(:,:,1)**2+wbbl(:,:,2)**2)
       wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
       wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
-      call b2xgbs (nx, ny, region,
-     & leftix, leftiy, rightix, rightiy, topix, topiy,
-     & wbbl, wbbv, gs, qc, crx, cry, pbs)      
+      call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)
       
 *   ..test geometry and plasma state
       n2 = (nx+2)*(ny+2)

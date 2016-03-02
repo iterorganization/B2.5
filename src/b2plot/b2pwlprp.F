@@ -62,7 +62,7 @@ c
 c      print *,'Starting b2pwlprp...',nlim,lppp,DEF_NLIM
 c      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
       call subini ('b2pwlprp')
-      call ipgeti ('b2agmt_1d_width', width)
+      call ipgetr ('b2agmt_1d_width', width)
 c>>>
 c
 c*** Check the presence of the shadowing structure
