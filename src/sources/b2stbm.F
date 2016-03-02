@@ -255,15 +255,16 @@ cxpb In the current arrangement, IMPGYRO provides: na_ext, ua_ext, ta_ext
 cxpb It would be best to have instead as primary quantities:
 cxpb na_ext, fa_ext, ta_ext, fhi_ext
 cxpb And then derive: ua_ext
-        na_ext = 0.0_R8
-        ua_ext = 0.0_R8
-        ta_ext = 0.0_R8
-        sna_ext = 0.0_R8
-        sne_ext = 0.0_R8
-        smo_ext = 0.0_R8
-        she_ext = 0.0_R8
-        shi_ext = 0.0_R8
-        sch_ext = 0.0_R8
+
+       sna_ext = 0.0_R8
+       sne_ext = 0.0_R8
+       smo_ext = 0.0_R8
+       she_ext = 0.0_R8
+       shi_ext = 0.0_R8
+       sch_ext = 0.0_R8
+       na_ext = 0.0_R8
+       ua_ext = 0.0_R8
+       ta_ext = 0.0_R8
 
       call impgyro_main(
      *  nx, ny, ns, ns_ext,
