@@ -1120,6 +1120,9 @@ c
       call set_square            ! square plot
       writing_to_file=.false.
       call initialise_plotting_0
+      call linewidth(lwidth)
+      call axislinewidth(zwidth)
+      call set_line_font_size(lfsz)
       moviename=' '
       movie_skip=1
       average=1
