@@ -178,6 +178,8 @@
      *  cm3, rydbrg, zlradf, bremsf, zexp1, zexp2, zexp3,
      &  mass, val, zy1, zy2, zy1c, zy2c, zs1, zs2, zs3, zs4, zs5, zs6,
      &  zs7, zz, zzz, cxcoef, temp, dens
+      real (kind=R8) ::
+     *   cutlo, cutll, t0
       parameter (nzm=99)
       parameter (cm3=1.0e-6_R8, 
      &  zlradf=2.6e-30_R8/ev, bremsf=1.69e-38_R8/ev, 
@@ -191,13 +193,14 @@
      &  x1(0:nzm-1), x2(0:nzm-1), z1(0:nzm-1), z2(0:nzm-1),
      &  qz(0:nzm-1), ze(0:nzm-1)
 *   ..procedures
-      intrinsic real, sqrt, log, exp, min
+      intrinsic real, sqrt, log, exp, min, dim, max
       external subini, subend, xertst, xerrab
       real (kind=R8) ::
-     *  sei1, hydfud
+     *  sei1, hydfud, expu, machsfr
       sei1(zz) = log(1.0_R8+1.0_R8/zz)-0.4_R8/(1.0_R8+zz)**2
 *     (sei1(z) is an approximation to the scaled exponential integral
 *     exp(z)*E1(z))
+      expu(t0) = dim(exp(max(t0,cutll)),cutlo)
       hydfud(temp,dens) = exp(4.4_R8*(dens/1.0e20_R8)**0.15_R8*
      1 temp**(-0.60_R8))
 *!!   (hydfud is the fudge factor for the density dependence in the
@@ -209,6 +212,9 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('ratstr')
+*   ..set cutll, cutlo
+      cutll = log(machsfr())
+      cutlo = max(machsfr(),exp(cutll))
 *   ..test nz, nt, nn
       call xertst (0.lt.nz.and.nz.le.nzm, 'ratstr--faulty argument nz')
       call xertst (0.le.nt.and.0.le.nn,
@@ -253,9 +259,9 @@
         zy2 = x2(k)/rtt(i)
         zy1c = zy1+c1(k)
         zy2c = zy2+c2(k)
-        zs1 = a1(k)*z1(k)*exp(-zy1)*
+        zs1 = a1(k)*z1(k)*expu(-zy1)*
      &    (sei1(zy1)/zy1-b1(k)*sei1(zy1c)/zy1c)
-        zs2 = a2(k)*z2(k)*exp(-zy2)*
+        zs2 = a2(k)*z2(k)*expu(-zy2)*
      &    (sei1(zy2)/zy2-b2(k)*sei1(zy2c)/zy2c)
         val = 6.7e-07_R8*(zs1+zs2)/rtt(i)**1.5_R8
         do j = 0, nn
@@ -349,7 +355,7 @@
           zs7 = zs2/(1.0_R8+666.7_R8/((k+1)*zz)**2)
          endif
          rtra(i,j,k) = rtra(i,j,k)+cm3*(zs3/sqrt(rtt(i)**3))*
-     &     (zs6*exp(-d1(k)/(rtt(i)*zzz))+zs7*exp(-d2(k)/(rtt(i)*zzz)))
+     &     (zs6*expu(-d1(k)/(rtt(i)*zzz))+zs7*expu(-d2(k)/(rtt(i)*zzz)))
         enddo
        enddo
       enddo
@@ -365,8 +371,8 @@
       do k = 0, nz
        do i = 0, nt
         if (k.lt.nz) then
-         zs1 = f1(k)*abs(g1(k))*exp(-d1(k)/rtt(i))
-         zs2 = f2(k)*abs(g2(k))*exp(-d2(k)/rtt(i))
+         zs1 = f1(k)*abs(g1(k))*expu(-d1(k)/rtt(i))
+         zs2 = f2(k)*abs(g2(k))*expu(-d2(k)/rtt(i))
          val = zlradf*(zs1+zs2)/sqrt(rtt(i))+
      &     bremsf*k**2*sqrt(rtt(i))
          do j = 0, nn
