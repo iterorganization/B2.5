@@ -1054,6 +1054,7 @@ c
         ftic = 1.0e0_R8                                           !srv 17.04.06 }
         fvlc = 1.0e0_R8                                           !srv 19.04.10 }
 
+       if(nncut > 0) then                                         !srv 25.02.16
         select case (itype)
          case(9)                                                !srv 22.05.09 {
           mintopcut=minval(topcut(1:nncut))
@@ -1493,6 +1494,7 @@ c
 
           fdnc = 1.0e0_R8
         end select
+       endif                                                !srv 25.02.16
 
         ncall = ncall + 1
 

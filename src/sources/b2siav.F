@@ -103,7 +103,8 @@
 	  conn = 0.0e0_R8
 	  bbaverage2 = 0.0e0_R8
 	  eps1 = 0.0e0_R8
-	  mintopcut = minval(topcut(1:nncut))                           
+          mintopcut = ny
+	  if (nncut > 0) mintopcut = minval(topcut(1:nncut))
 	  do iy = 0,mintopcut-1    ! for inner surfaces		
 	    do ix=0,nx                                                  
 	      if(mod(region(ix,iy,0),4).eq.1) then
@@ -130,7 +131,7 @@
 
             do iy = 0,mintopcut-1    ! for inner surfaces
 	      do ix = 0,nx                                                  
-	        if(mod(region(ix,iy,0),4).eq.1) then                         
+	        if(mod(region(ix,iy,0),4).eq.1) then
 	          qip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      &             /bb(ix,iy,0)/bbaverage2(iy))
      &             *(ni(ix,iy)*ti(ix,iy)/qe)*
@@ -142,26 +143,28 @@
 	      enddo
 	    enddo
 	 
-            do iy = 0,mintopcut-1    												
-	      do ix = 0,nx                                                  
-	        if(mod(region(ix,iy,0),4).eq.1) then                         
-	          qip0b(ix,iy) = 0.25e0_R8*(qip0a(ix,iy)*2.0e0_R8
-     &	             +qip0a(leftix(ix,iy),leftiy(ix,iy))
-     &               +qip0a(rightix(ix,iy),rightiy(ix,iy)))
+            do iy = 0,mintopcut-1
+	      do ix = -1,nx
+	        if(mod(region(ix,iy,0),4).eq.1) then
+                  if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
+     >             qip0b(ix,iy) = 0.25e0_R8*(qip0a(ix,iy)*2.0e0_R8
+     &	            +qip0a(leftix(ix,iy),leftiy(ix,iy))
+     &              +qip0a(rightix(ix,iy),rightiy(ix,iy)))
 	        endif
 	      enddo
 	    enddo
-	            
-            do iy = 0,mintopcut-1		
-	      do ix = 0,nx                                                  
-	        if(mod(region(ix,iy,0),4).eq.1) then                         
-	          qip0(ix,iy) = 0.25e0_R8*(qip0b(ix,iy)*2.0e0_R8
-     &	           +qip0b(leftix(ix,iy),leftiy(ix,iy))
-     &             +qip0b(rightix(ix,iy),rightiy(ix,iy)))
+
+            do iy = 0,mintopcut-1
+	      do ix = -1,nx
+	        if(mod(region(ix,iy,0),4).eq.1) then
+                  if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
+     >             qip0(ix,iy) = 0.25e0_R8*(qip0b(ix,iy)*2.0e0_R8
+     &	            +qip0b(leftix(ix,iy),leftiy(ix,iy))
+     &              +qip0b(rightix(ix,iy),rightiy(ix,iy)))
 	        endif
 	      enddo
 	    enddo
-	 
+
 	  endif
 	 	  
           if (qstyle.eq.1) then
@@ -176,19 +179,22 @@
 	      enddo                                                       
 	    enddo 
 	   
-            do iy=0,ny-1                                                 
-	      do ix=-1,nx-1                                                
+            do iy=-1,ny
+	      do ix=-1,nx-1
 	        if(mod(region(ix,iy,0),4).eq.1) then
-	          qip0(ix,iy)=0.5e0_R8*(wrk0(ix,iy)+
-     &             wrk0(rightix(ix,iy),rightiy(ix,iy)))
-     &             *hx(ix,iy)*bb(ix,iy,3)/bb(ix,iy,0)/vol(ix,iy)
-     &             -2.5e0_R8*bb(ix,iy,2)
-     &             /bb(ix,iy,0)/bb(ix,iy,3)
-     &             *(ni(ix,iy)*ti(ix,iy)/qe)*
-     &              (ti(topix(ix,iy),topiy(ix,iy))
-     &              -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &              (hy1(ix,iy)+0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
-     &              0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy))) 
+                  if(rightix(ix,iy).ne.nx+1 .and.
+     &               topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2)
+     >             qip0(ix,iy)=0.5e0_R8*(wrk0(ix,iy)+
+     &               wrk0(rightix(ix,iy),rightiy(ix,iy)))
+     &               *hx(ix,iy)*bb(ix,iy,3)/bb(ix,iy,0)/vol(ix,iy)
+     &               -2.5e0_R8*bb(ix,iy,2)
+     &               /bb(ix,iy,0)/bb(ix,iy,3)
+     &               *(ni(ix,iy)*ti(ix,iy)/qe)*
+     &                (ti(topix(ix,iy),topiy(ix,iy))
+     &                -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &                (hy1(ix,iy)+
+     &                 0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
+     &                 0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      	        endif                                                      
 	      enddo                                                       
 	    enddo 
@@ -199,7 +205,6 @@
 	  nu1 = 0.0e0_R8
 	  alpha1 = 0.0e0_R8
 	  kt_neo = 0.0e0_R8                                              !iyv 02.12.13
-
           do iy = 0,mintopcut-1		
 	    do ix=0,nx
 	      if(mod(region(ix,iy,0),4).eq.1) then
@@ -242,7 +247,6 @@
 	  enddo                                                        
 
           qipgen = 0.0e0_R8
-
           do iy=0,ny-1                                                 
 	    do ix=0,nx-1                                                
               qipgen(ix,iy)=qip1(ix,iy)*datan(qip0(ix,iy)/qip1(ix,iy))
@@ -253,11 +257,12 @@
 * ..calculate the difference from parallel heat flux of ion
 *   at the face of cell                                               
 
-          wrk1=0.0e0_R8                                                
+          wrk1=0.0e0_R8
           do iy=0,ny-1
-	    do ix=-1,nx                                                 
-	      if(mod(region(ix,iy,0),4).eq.1) then                         
-                wrk1(ix,iy) = 2.0e0_R8*(qipgen(ix,iy) - 
+	    do ix=-1,nx
+	      if(mod(region(ix,iy,0),4).eq.1) then
+                if(leftix(ix,iy).ne.-2) then
+                  wrk1(ix,iy) = 2.0e0_R8*(qipgen(ix,iy) -
      &		   qipgen(leftix(ix,iy),leftiy(ix,iy)))*
      &             (bb(ix,iy,0)/bb(ix,iy,3)**3
      &             *tauia1(ix,iy)*alpha1(ix,iy)
@@ -267,7 +272,8 @@
      &             *tauia1(leftix(ix,iy),leftiy(ix,iy))
      &             *alpha1(leftix(ix,iy),leftiy(ix,iy))
      &             *hx(ix,iy))/
-     &             (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))**2  
+     &             (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))**2
+                endif
 	      endif                                                     
 	    enddo
 	  enddo

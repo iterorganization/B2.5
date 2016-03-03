@@ -1268,10 +1268,14 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
 	enddo
       enddo
 *
-      do ix=-1,nx
-        crdy_surf(ix,-1:ny) = len_surf(ix,-1:ny) - 
-     .                        len_surf(ix,topcut(1))
-      enddo
+      if (nncut.gt.0) then
+        do ix=-1,nx
+          crdy_surf(ix,-1:ny) = len_surf(ix,-1:ny) -
+     .                          len_surf(ix,jsep+1)
+        enddo
+      else
+        crdy_surf = len_surf
+      end if
 *
       do ix=-1,nx
         do iy = -1, ny-1

@@ -335,7 +335,8 @@ csw 13mar2012
         tt1 = 0.0e0_R8
         eps1 = 1.0e0_R8
 
-        mintopcut = minval(topcut(1:nncut))
+        mintopcut = ny
+        if (nncut > 0) mintopcut = minval(topcut(1:nncut))
 
         do iy = -1,mintopcut    ! for inner surfaces and first open surface
          do ix=0,nx

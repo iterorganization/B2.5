@@ -442,8 +442,9 @@ c Drift terms
            bbaverage2 = 0.0e0_R8
            eps1 = 0.0e0_R8
 
-           bbaverage2 = 0.0e0_R8                                         
-           mintopcut = minval(topcut(1:nncut))                           
+           bbaverage2 = 0.0e0_R8
+           mintopcut = ny
+           if (nncut > 0) mintopcut = minval(topcut(1:nncut))
         
            do iy = 0,mintopcut    ! for inner surfaces and first open surface
             do ix=0,nx                                                  
@@ -484,9 +485,11 @@ c Drift terms
              do ix = 0,nx                                                  
               if(mod(region(bottomix(ix,iy),
      .                      bottomiy(ix,iy),0),4).eq.1) then
-               qip0b(ix,iy) = 0.25e0_R8*(qip0a(ix,iy)*2.0e0_R8
-     &          +qip0a(leftix(ix,iy),leftiy(ix,iy))
-     &          +qip0a(rightix(ix,iy),rightiy(ix,iy)))
+               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+                 qip0b(ix,iy) = 0.25e0_R8*(qip0a(ix,iy)*2.0e0_R8
+     &            +qip0a(leftix(ix,iy),leftiy(ix,iy))
+     &            +qip0a(rightix(ix,iy),rightiy(ix,iy)))
+               endif
               endif
              enddo
             enddo
@@ -495,9 +498,11 @@ c Drift terms
              do ix = 0,nx
               if(mod(region(bottomix(ix,iy),
      .                      bottomiy(ix,iy),0),4).eq.1) then
-               qip0(ix,iy) = 0.25e0_R8*(qip0b(ix,iy)*2.0e0_R8
-     &          +qip0b(leftix(ix,iy),leftiy(ix,iy))
-     &          +qip0b(rightix(ix,iy),rightiy(ix,iy)))
+               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+                 qip0(ix,iy) = 0.25e0_R8*(qip0b(ix,iy)*2.0e0_R8
+     &            +qip0b(leftix(ix,iy),leftiy(ix,iy))
+     &            +qip0b(rightix(ix,iy),rightiy(ix,iy)))
+               endif
               endif
              enddo
             enddo
@@ -620,29 +625,31 @@ c Drift terms
             do ix = 0,nx
              if(mod(region(bottomix(ix,iy),
      .                     bottomiy(ix,iy),0),4).eq.1) then
-              fchvisq(ix,iy,1)=0.24e0_R8*vis_q*(             ! signmf*       !srv 11.01.13
-     &         vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
-     &         *tauia1(ix,iy)
-     &         *alpha1(ix,iy)
-     &         *bb(ix,iy,2)/bb(ix,iy,3)
-     &         *bb(ix,iy,0)/sqrt(bb(ix,iy,3))
-     &         +vol(bottomix(ix,iy),bottomiy(ix,iy))
-     &         /hx(bottomix(ix,iy),bottomiy(ix,iy))**2
-     &         /hy1(bottomix(ix,iy),bottomiy(ix,iy))
-     &         *tauia1(bottomix(ix,iy),bottomiy(ix,iy))
-     &         *alpha1(bottomix(ix,iy),bottomiy(ix,iy))
-     &         *bb(bottomix(ix,iy),bottomiy(ix,iy),2)
-     &         /bb(bottomix(ix,iy),bottomiy(ix,iy),3)
-     &         *bb(bottomix(ix,iy),bottomiy(ix,iy),0)
-     &         /sqrt(bb(bottomix(ix,iy),bottomiy(ix,iy),3))
+              if(rightix(ix,iy).ne.nx+1) then
+               fchvisq(ix,iy,1)=0.24e0_R8*vis_q*(             ! signmf*       !srv 11.01.13
+     &          vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
+     &          *tauia1(ix,iy)
+     &          *alpha1(ix,iy)
+     &          *bb(ix,iy,2)/bb(ix,iy,3)
+     &          *bb(ix,iy,0)/sqrt(bb(ix,iy,3))
+     &          +vol(bottomix(ix,iy),bottomiy(ix,iy))
+     &          /hx(bottomix(ix,iy),bottomiy(ix,iy))**2
+     &          /hy1(bottomix(ix,iy),bottomiy(ix,iy))
+     &          *tauia1(bottomix(ix,iy),bottomiy(ix,iy))
+     &          *alpha1(bottomix(ix,iy),bottomiy(ix,iy))
+     &          *bb(bottomix(ix,iy),bottomiy(ix,iy),2)
+     &          /bb(bottomix(ix,iy),bottomiy(ix,iy),3)
+     &          *bb(bottomix(ix,iy),bottomiy(ix,iy),0)
+     &          /sqrt(bb(bottomix(ix,iy),bottomiy(ix,iy),3))
      &                      )*0.5e0_R8
-     &         *(qipgen(rightix(ix,iy),rightiy(ix,iy))
-     &         +qipgen(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
+     &          *(qipgen(rightix(ix,iy),rightiy(ix,iy))
+     &          +qipgen(rightix(bottomix(ix,iy),bottomiy(ix,iy)),
      &             rightiy(bottomix(ix,iy),bottomiy(ix,iy)))
-     &         -qipgen(ix,iy)-qipgen(bottomix(ix,iy),bottomiy(ix,iy))
+     &          -qipgen(ix,iy)-qipgen(bottomix(ix,iy),bottomiy(ix,iy))
      &            )*0.5e0_R8
-     &         *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))
-     &         -OnedBsqc(ix,iy))
+     &          *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))
+     &          -OnedBsqc(ix,iy))
+              endif
              endif                                                           !lk 23.05.06 05.07.07 }
             enddo
            enddo

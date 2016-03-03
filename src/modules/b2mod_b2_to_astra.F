@@ -171,9 +171,11 @@ csw 09jan2014 add extra allocates
      &            ' Z_midpl=',es12.6)") arg, R_midpl(iy), Z_midpl(iy)
         enddo                                                        !srv 21.05.12 }
 
-        maxtopcut = maxval(topcut(1:nncut))
+        maxtopcut = nyd                                              !srv 25.02.16 {
+        if (nncut > 0) maxtopcut = maxval(topcut(1:nncut))
 
-        mintopcut = minval(topcut(1:nncut))
+        mintopcut = nyd
+        if (nncut > 0) mintopcut = minval(topcut(1:nncut))           !srv 25.02.16 }
         iy_Ratb = -1
         do iy = -1,nyd ! was mintopcut    ! for inner surfaces + one open surface
 !         R_midpl(iy) = crx(nmdpl,iy,1)
@@ -625,7 +627,8 @@ csw 09jan2014 add 'fun' function
 
 
         if(ncall.eq.0) then
-         mintopcut = minval(topcut(1:nncut))
+         mintopcut = nyd                                    !srv 25.02.16
+         if (nncut > 0) mintopcut = minval(topcut(1:nncut)) !srv 25.02.16
          do iy = 0, mintopcut-1    ! closed surfaces
           svol(iy) = 0.0_R8
           do ix = -1, nxd
