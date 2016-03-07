@@ -295,7 +295,9 @@ csw 13mar2012
                   if(.not.is_neutral(is)) then
                     cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_ti
                     cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)*f_luc_ti        !srv 02.07.08
-                    vsal(ix,iy,0,is)= vsa(ix,iy,0,is)*f_luc_ti
+                    vsal(ix,iy,0,is)= vsa(ix,iy,0,is)/
+     1               (1.0_R8+7.5e16_R8/conn(iy)*
+     2               (ti(ix,iy)/ev)**2/ne2(ix,iy))
                   endif
                 enddo
                 chce(ix,iy,0)=chce(ix,iy,0)*f_luc_te
@@ -308,16 +310,23 @@ csw 13mar2012
         enddo
       else if (lluciani.eq.2) then  ! SOLPS4.0 formulation
         do iy=-1,ny
-          do ix=-1,nx
+          do ix=0,nx
             if (mod(region(ix,iy,0),4).eq.1) then
               f_luc_te=1.0_R8/
-     1             (1.0_R8+0.3e16_R8*(te(ix,iy)/ev)**2/ne2(ix,iy))
+     1             (1.0_R8+0.3e16_R8/2.0_R8*
+     2           ((te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
+     3           (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
               f_luc_ti=1.0_R8/
-     1             (1.0_R8+0.3e16_R8*(ti(ix,iy)/ev)**2/ne2(ix,iy))
+     1             (1.0_R8+0.3e16_R8/2.0_R8*
+     2           ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
+     3           (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
               do is=0,ns-1
                 if(.not.is_neutral(is)) then
                   cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_ti
-                  vsal(ix,iy,0,is)= vsa(ix,iy,0,is)*f_luc_ti
+                  cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)*f_luc_ti
+                  vsal(ix,iy,0,is)= vsa(ix,iy,0,is)/
+     1             (1.0_R8+0.3e16_R8*(ti(ix,iy)/ev)**2/
+     3              ne2(ix,iy))
                 endif
               enddo
               chce(ix,iy,0)=chce(ix,iy,0)*f_luc_te
@@ -405,6 +414,11 @@ csw 13mar2012
      5        /conn(iy)/2.0e0_R8*
      6        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
      7        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
+             vsal(ix,iy,0,is)=cvsa_mltpl* vsa(ix,iy,0,is)/              !srv 09.01.01
+     1        (1.0e0_R8+15.12e16_R8/conn(iy)*
+     2        (ti(ix,iy)/ev)**2/ne2(ix,iy))
+     4        /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
+     5        /conn(iy)*(ti(ix,iy)/ev)**2/ne2(ix,iy))
             endif                                                         !srv 10.07.02
            enddo
            chce(ix,iy,0)=chce(ix,iy,0)/k1(ix,iy)
