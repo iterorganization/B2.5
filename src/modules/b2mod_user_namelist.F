@@ -20,6 +20,7 @@
      ,  nntrgrp,intrgrp(nntrgrpd),jntrgrp(nntrgrpd)
       character*8 gpfrgrp(npfrgrpd), gntrgrp(nntrgrpd)
       character*80 user_filename
+      logical scale_He, print_isat
       logical user_namelist_used
 
 c----------------------------------------------------------------------
@@ -87,6 +88,8 @@ c***  Standard setup:
       lhetrgts(2)=-3
       gpfrgrp=' '
       gntrgrp=' '
+      scale_He=.false.
+      print_isat=.false.
       user_filename='b2.user.parameters'
 
       return
@@ -110,7 +113,7 @@ c***  Standard setup:
      ,  l_h_mol,fusion_power,Spmp_He_to_D,lpfrs_pmp,
      ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
      ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
-     ,  Spmp_nom,
+     ,  Spmp_nom,scale_He,print_isat,
      ,  user_filename
       logical :: file_ok
       character*260 filename

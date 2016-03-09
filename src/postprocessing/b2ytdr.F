@@ -7712,6 +7712,8 @@ cxpb as they no longer necessarily point to the same species
         endif
         if (l_neutrad.ne.0)
      >   write(34,'(a,i2,a)') 'L_NEUTRAD=',l_neutrad,','
+        if (l_neutflux.ne.-1)
+     >   write(34,'(a,i2,a)') 'L_NEUTFLUX=',l_neutflux,','
         write(hlp_frm,'(a,i2,a)') '(a,',nmol,'(1x,i2,'',''))'
         if (maxval(lmolscl).gt.0)
      >   write(34,hlp_frm) 'LMOLSCL=',(lmolscl(is),is=1,nmol)

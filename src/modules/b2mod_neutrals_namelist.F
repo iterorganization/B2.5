@@ -19,6 +19,8 @@ c*  ncns          : number of these surfaces
 c*  ltns          : Eirene 'non-default surfaces' for the targets
 c*  ntns          : number of these surfaces
 c*  l_neutrad     : if >=0, import radiation losses due to neutrals from Eirene
+c*  l_neutflux    : if >=0, then correct treatment of the incident fluxes in
+c*                  B2 and b2plot; if <0, then old (approximate) treatment
 c*  dbg_eir_mc    : control of debugging output for eirene_mc
 c*  neut_scl_lim  : maximum variation of neutral sources allowed during
 c*                  source correction in eirene_mc
@@ -143,7 +145,7 @@ cank }
 
 csw 21feb2012
       integer, save ::
-     . l_neutrad=0
+     . l_neutrad=0, l_neutflux=-1
 
       contains
 
@@ -409,7 +411,8 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
      .  volrecstart, volrecinc, volrecwt,
      .  species_start, species_end,
      5  neutrals_filename, neutrals_time_mod, neutrals_time_switch,
-     ,  lstrascl, l_neutrad, b2espcr, eb2spcr, lmolscl, mlcmp, lionscl,
+     ,  lstrascl, l_neutrad, l_neutflux,
+     ,  b2espcr, eb2spcr, lmolscl, mlcmp, lionscl,
      ,  lcns, ltns, lsns, ksns, gpfc, dbg_eir_mc, debug_flags,
      ,  neut_scl_lim, track_index, track_chem_sput,
      *  chemical_erosion_redep_fac,

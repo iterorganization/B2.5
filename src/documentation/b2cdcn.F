@@ -147,6 +147,8 @@
 *  L_NEUTRAD - integer. If l_neutrad >= 0, then the radiated power due to the
 *     neutrals atoms is taken directly from the Eirene calculation, instead
 *     of being recomputed by B2. Defaults to 0.
+*  L_NEUTFLUX - integer. If l_neutflux >=0, then correct treatment of the
+*     incident fluxes in B2 and b2plot; if <0, then old (approximate) treatment
 *  LSTRASCL - integer array of size (NSTRAT,0:natm). Indicates with which 
 *    Eirene atomic species to scale the Eirene stratum (istra) 
 *    (0 means no scaling, default). Atomic species 0 stands for electrons.

@@ -1,0 +1,123 @@
+C
+CVK CORRECT CALCULATION OF THE HEAT LOADS IN B2
+C
+      subroutine b2usr_loads(nx,ny,ns,BoRiS,wtarg_max)
+      use b2mod_types
+      use b2mod_geo
+      use b2mod_rates
+      use b2mod_plasma
+      use b2mod_indirect
+      use b2mod_external
+      use b2mod_constants
+      use b2mod_boundary_namelist
+      use b2mod_neutrals_namelist
+
+      IMPLICIT NONE
+#     include <DIMENSIONS.F>
+
+      integer nx, ny, ns
+      real (kind=R8) :: BoRiS
+
+      INTEGER,PARAMETER :: NTRGM=DEF_NCUT
+
+      REAL,INTENT(OUT) :: wtarg_max(NTRGM)
+
+      REAL,SAVE :: STRG(NYDD,NTRGM), !AREAS OF SURFACE ELEMENTS
+     r             LTRGPOS(NTRGM)    !POLOIDAL INDEX FOR EACH TARGET
+      INTEGER,SAVE :: NTRGS,         !NUMBER OF TARGETS
+     i                SHIFT(NTRGM)
+      REAL :: WTARG(NYDD,NTRGM),wnutrg(NYDD,NTRGM),wnutpr(NYDD,NTRGM)
+      INTEGER :: K,J,I,IY,IS
+      REAL :: HLP
+      CHARACTER*32 :: FRM
+
+      LOGICAL :: IFIRST
+      DATA IFIRST /.TRUE./
+
+      if(ifirst) then
+C PREPARING GEOMETRY DATA
+       if(nncut.le.1) then
+        NTRGS=2
+       else
+        NTRGS=4
+       end if
+C A PEACE OF CODE FROM B2PLOT
+       ltrgpos(1)=0
+       k=2
+       if(ntrgs.eq.4) then
+         ltrgpos(2)=nxiso1(1)-1
+         ltrgpos(3)=ltrgpos(2)+2
+         k=4
+       end if !}
+       ltrgpos(k)=nx
+C AREAS OF THE SURFACE ELEMENTS
+       do j=1,nncut*2
+        k=ltrgpos(j)
+        wtarg_max(j)=0.0_R8
+        do iy=0,ny-1
+         strg(iy,j)=gs(k,iy,0)
+        end do
+        call b2neut_ind(2,k,1,ny,shift(j)) !index range in the eirene's arrays
+        if(shift(j).lt.0) then
+           write(*,*) "error in b2usr_loads: the EIRENE's data on ",
+     w                "neutral fluxes is incorrect. ",
+     w                "No neutral fluxes will be calculated."
+        else
+         call b2neut_surfcheck(strg(1,j),j,ny,shift(j))
+        end if
+       end do
+       ifirst=.false.
+      end if
+
+      write(*,*) "calculating incident power flux in b2usr_loads"
+
+      do j=1,ntrgs
+        k=ltrgpos(j)
+        call b2neut_eng(wnutrg(1,j),wnutpr(1,j),ny,shift(j))
+        wtarg_max(j)=0.0_R8
+        do iy=0,ny-1
+         hlp=abs(fhe(k,iy,0)+fhi(k,iy,0)+fhi_ext(k,iy,0))
+         do is=0,ns-1
+           hlp=hlp+abs(fna(k,iy,0,is)*(rpt(k,iy,is)*ev+
+     .                 (1.0_R8-BoRiS)*kinrgy(k,iy,is)))
+         end do
+         do is=0,ns_ext-1
+           hlp=hlp+abs(fa_ext(k,iy,0,is)*(pt_ext(k,iy,is)*ev+
+     .                 (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
+     .                  ua_ext(k,iy,is)**2))
+         end do
+         hlp=hlp/strg(iy,j)
+         wtarg(iy,j)=hlp+wnutrg(iy,j)-wnutpr(iy,j)
+         if(wtarg(iy,j).gt.wtarg_max(j)) wtarg_max(j)=wtarg(iy,j)
+        end do
+      end do
+
+      if(debug_flags(81).gt.0) then
+       write(frm,700) ntrgs,char(9) !format string
+700    format('((',i3,'(1h',a1,',e15.7)))')
+C total power
+       open(3,file='targb2.datv')
+       do iy=0,ny-1
+        write(3,frm) (wtarg(iy,j),j=1,ntrgs)
+       end do
+       close(3)
+C neutrals
+       open(3,file='targb2n.datv')
+       do iy=0,ny-1
+        write(3,frm) (wnutrg(iy,j),j=1,ntrgs)
+       end do
+       close(3)
+C plasma
+       do j=1,ntrgs
+        do iy=0,ny-1
+         wtarg(iy,j)=wtarg(iy,j)-wnutrg(iy,j)
+        end do
+       end do
+       open(3,file='targb2pl.datv')
+       do iy=0,ny-1
+        write(3,frm) (wtarg(iy,j),j=1,ntrgs)
+       end do
+       close(3)
+      end if
+
+      end subroutine b2usr_loads

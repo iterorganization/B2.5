@@ -2284,6 +2284,19 @@ c
      -      'recycicore,recycisol,recycidivin,recycidivout= ',recycireg
       end if
 
+C CORRECTING THE POTENTIAL ENERGY SPENT FOR RECOMBINATION OF ATOMS INTO MOLECULES
+      IF(L_NEUTFLUX.GE.0) THEN
+        DO I=1,NNSTSI
+          k=eirdiag_nds_ind(I)
+          if(k.lt.0) cycle
+          IS=I+nlim
+          wldnep(IS,0)=0.0_R8
+          DO J=1,NNMOLI
+            wldnep(IS,0)=wldnep(IS,0)+ewldmr_res(j,k)
+          END DO
+        END DO
+      END IF
+
 cxpb  core recycling into ions of the highest ionisation stage
       if (ionising_core.gt.0) then
         rf0=RF_NEUT(1)

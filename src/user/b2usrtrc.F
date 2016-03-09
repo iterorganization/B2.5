@@ -10,6 +10,7 @@
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_boundary_namelist
+      use b2mod_numerics_namelist
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
@@ -40,33 +41,54 @@ c*** lvmj  :  version number referring to the last major change
 c-----------------------------------------------------------------------
 c*** User-specific data:
 c***
-c***      header     var       Legend
-c***                                                           (global)
-c***     Pneu_PFR  hlp_ppfr   neutral pressure in PFR - mean
-c***     Pneu_PFi  hlp_ppfi   neutral pressure in PFR - inner
-c***     Pneu_PFo  hlp_ppfo   neutral pressure in PFR - outer
-c***     He_fract  hlp_hefr   helium fraction in the pump
-c***     He_enrch  hlp_henr   helium "enrichment"
-c***     He_p_prs  hlp_hepr   helium partial pressure in PFR
-c***     pk_pwr_i  hlp_ppwi   peak power load onto the inner target
-c***     pk_pwr_o  hlp_ppwo   peak power load onto the outer target
-c***     pk_pw_iu  hlp_pwiu   peak power load on the inner upper target
-c***     pk_pw_ou  hlp_pwou   peak power load on the outer upper target
-c***                          (the peaks do not include radiation load)
-c***     Sp_DT     hlp_spdt   effective pumping speed for DT
-c***     Sp_He     hlp_sphe   effective pumping speed for He
-c***     Sp_He_sc  hlp_sshe   re-scaled pumping speed for He
-c***     He_src    hlp_hesr   helium source
-c***     He_sc_cr  hlp_hesc   rescaled average nHe/ne at the CEI
-c***     He_sc_sp  hlp_hess   rescaled average nHe/ne at the separatrix
-c***     He_og_cr  hlp_heoc   original average nHe/ne at the CEI
-c***     He_og_sp  hlp_heos   original average nHe/ne at the separatrix
-c***     He_enrcs  hlp_hens   helium enrichment to ns from throughputs
-c***     He_enrcc  hlp_henc   helium enrichment to nc from throughputs
-c***     DT_thrpt  hlp_dttp   DT throughput
-c***     He_thrpt  hlp_hetp   He throughput
-c***                                        (PFR - by group and species)
-c***     PFRflx    hlp_pfrf   net nuclei flux through each surface group
+c***     header     var       Legend
+c***                                                          (global)
+c***    Pneu_PFR  hlp_ppfr   neutral pressure in PFR - mean
+c***    Pneu_PFi  hlp_ppfi   neutral pressure in PFR - inner
+c***    Pneu_PFo  hlp_ppfo   neutral pressure in PFR - outer
+c***    He_fract  hlp_hefr   helium fraction in the pump
+c***    He_enrch  hlp_henr   helium "enrichment"
+c***    He_p_prs  hlp_hepr   helium partial pressure in PFR
+c***    pk_pwr_i  hlp_ppwi   peak power load onto the inner target
+c***    pk_pwr_o  hlp_ppwo   peak power load onto the outer target
+c***    pk_pw_iu  hlp_pwiu   peak power load on the inner upper target
+c***    pk_pw_ou  hlp_pwou   peak power load on the outer upper target
+c***                         (the peaks do not include radiation load)
+c***    Sp_DT     hlp_spdt   effective pumping speed for DT
+c***    Sp_He     hlp_sphe   effective pumping speed for He
+c***    Sp_He_sc  hlp_sshe   re-scaled pumping speed for He
+c***    He_src    hlp_hesr   helium source
+c***    He_sc_cr  hlp_hesc   rescaled average nHe/ne at the CEI
+c***    He_sc_sp  hlp_hess   rescaled average nHe/ne at the separatrix
+c***    He_og_cr  hlp_heoc   original average nHe/ne at the CEI
+c***    He_og_sp  hlp_heos   original average nHe/ne at the separatrix
+c***    He_enrcs  hlp_hens   helium enrichment to ns from throughputs
+c***    He_enrcc  hlp_henc   helium enrichment to nc from throughputs
+c***    DT_thrpt  hlp_dttp   DT throughput
+c***    He_thrpt  hlp_hetp   He throughput
+c***                                       (PFR - by group and species)
+c***    PFRflx    hlp_pfrf   net nuclei flux through each surface group
+c***                              (neutral data - by group and species)
+c***    n_        hlp_dndts  neutral density                    [1/m**3]
+c***    P_        hlp_prdts  neutral pressure                   [Pa]
+c***    T_        hlp_tmdts  neutral temperature                [eV]
+c***    j_        hlp_fxdts  impinging neutral flux           [1/m**2/s]
+c***    G_        hlp_fldts  neutral flux pumped out            [1/s]
+c***    S_        hlp_stdts  technical pumping speed (albedo)   [m**3/s]
+c***    s_        hlp_sedts  effective pumping speed (G/n)      [m**3/s]
+c***                              (PFR interface - by side and species)
+c***    PFRi_area hlp_w      PFR interface area, inner          [m**2]
+c***    PFRi_n_   hlp_dnpfs  average neutral density, inner     [1/m**3]
+c***    PFRi_T_   hlp_tmpfs  average neutral temperature, inner [eV]
+c***    PFRi_v_   hlp_vlpfs  average neutral flow velocity, inner [m/s]
+c***    PFRo_area hlp_w      PFR interface area, outer          [m**2]
+c***    PFRo_n_   hlp_dnpfs  average neutral density, outer     [1/m**3]
+c***    PFRo_T_   hlp_tmpfs  average neutral temperature, outer [eV]
+c***    PFRo_v_   hlp_vlpfs  average neutral flow velocity, outer [m/s]
+c***    DoD_il    hlp_dodil  min. DoD, inner lower divertor
+c***    DoD_ol    hlp_dodol  min. DoD, outer lower divertor
+c***    DoD_iu    hlp_dodiu  min. DoD, inner upper divertor
+c***    DoD_ou    hlp_dodou  min. DoD, outer upper divertor
 c-----------------------------------------------------------------------
 
 c*** Global values
@@ -92,30 +114,143 @@ c*** Global values
      ,     (equg_tmp(19), hlp_hens), (equg_tmp(20), hlp_henc),
      ,     (equg_tmp(21), hlp_dttp), (equg_tmp(22), hlp_hetp)
       character hlp_hg(nglb_tmp)*8
+      integer ngl2_tmp
+      parameter (ngl2_tmp=4)
+      real (kind=R8) ::
+     *     equg2_tmp(ngl2_tmp)
+      real (kind=R8) ::
+     *     hlp_dod(4), hlp_dodil, hlp_dodol,hlp_dodiu, hlp_dodou
+      equivalence (equg2_tmp(1), hlp_dod),
+     ,     (equg2_tmp(1),  hlp_dodil), (equg2_tmp(2),  hlp_dodol),
+     ,     (equg2_tmp(3),  hlp_dodiu), (equg2_tmp(4),  hlp_dodou)
+      character hlp_hg2(ngl2_tmp)*8
+      integer ngl3_tmp, mgl3_tmp
+      parameter (ngl3_tmp=4)
+      integer kgl3_tmp(ngl3_tmp) / -1, 0, 0, -1 /
+      real (kind=R8) ::
+     *     equg3_tmp(ngl3_tmp)
+      real (kind=R8) ::
+     *     hlp_isat(4), hlp_istil, hlp_istol, hlp_istiu, hlp_istou
+      equivalence (equg3_tmp(1), hlp_isat),
+     ,     (equg3_tmp(1),  hlp_istil), (equg3_tmp(2),  hlp_istol),
+     ,     (equg3_tmp(3),  hlp_istiu), (equg3_tmp(4),  hlp_istou)
+      character hlp_hg3(ngl3_tmp)*10
+      integer ngl4_tmp
+      parameter (ngl4_tmp=3)
+      integer kgl4_tmp(2)
+      real (kind=R8) ::
+     *     equg4_tmp(ngl4_tmp)
+      real (kind=R8) ::
+     *     hlp_albll(ngl4_tmp),al_bll_mx,al_bll_ix,al_bll_iy
+      equivalence (equg4_tmp(1), hlp_albll),
+     ,     (equg4_tmp(1),  al_bll_mx), (equg4_tmp(2),  al_bll_ix),
+     ,     (equg4_tmp(3),  al_bll_iy)
+      character hlp_hg4(ngl4_tmp)*10
+
 c*** PFR flow values
-      integer npff_tmp, np_tmp, ns_tmp, na_tmp, lnh_tmp, i0
+      integer npff_tmp, np_tmp, ns_tmp, na_tmp, lnh_tmp
       parameter (npff_tmp=1, lnh_tmp=20)
       real (kind=R8) ::
      *     equp_tmp(0:npfrgrpd,DEF_NATM,npff_tmp)
       real (kind=R8) ::
      *     hlp_pfrf(0:npfrgrpd,DEF_NATM,npff_tmp)
+      real (kind=R8) ::
+     *     wtarg_max(DEF_NCUT) !vk, max target heat flux density
       equivalence (equp_tmp(0,1,1), hlp_pfrf)
       character hlp_hp(npff_tmp)*8,hlp_hb*8,
      ,  hlp_ha(0:npfrgrpd,ns,npff_tmp)*(lnh_tmp)
+
+c*** Neutral-related data on surfaces
+c***                          - by diagnostic surface groups and species
+c***    max. and min. number of tallies, number of species
+      integer ndtk_tmp, nmnt_tmp, ndts_tmp
+      parameter (ndtk_tmp=7, nmnt_tmp=4)
+c***    number of tallies, particle index (<0 - mol.), species index
+      integer ndta_tmp(nntrgrpd,DEF_NATM+DEF_NMOL),
+     *        ndtm_tmp(DEF_NATM+DEF_NMOL), ndtx_tmp(DEF_NATM+DEF_NMOL)
+c***    atomic/molecular weight, group area, absorption
+      real (kind=R8) ::
+     *  hlp_awdts(DEF_NATM+DEF_NMOL),hlp_ardts(nntrgrpd),
+     ,  hlp_ksdts(nntrgrpd,DEF_NATM+DEF_NMOL)
+      real (kind=R8) ::
+     *   equn_tmp(nntrgrpd,DEF_NATM+DEF_NMOL,ndtk_tmp),
+     ,  hlp_dndts(nntrgrpd,DEF_NATM+DEF_NMOL),
+     ,  hlp_prdts(nntrgrpd,DEF_NATM+DEF_NMOL),
+     ,  hlp_tmdts(nntrgrpd,DEF_NATM+DEF_NMOL),
+     ,  hlp_fxdts(nntrgrpd,DEF_NATM+DEF_NMOL),
+     ,  hlp_fldts(nntrgrpd,DEF_NATM+DEF_NMOL),
+     ,  hlp_stdts(nntrgrpd,DEF_NATM+DEF_NMOL),
+     ,  hlp_sedts(nntrgrpd,DEF_NATM+DEF_NMOL)
+      equivalence
+     ,  (equn_tmp(1,1,1),hlp_dndts), (equn_tmp(1,1,2),hlp_prdts),
+     ,  (equn_tmp(1,1,3),hlp_tmdts), (equn_tmp(1,1,4),hlp_fxdts),
+     ,  (equn_tmp(1,1,5),hlp_fldts), (equn_tmp(1,1,6),hlp_stdts),
+     ,  (equn_tmp(1,1,7),hlp_sedts)
+      character hlp_hn(ndtk_tmp), hlp_m*16
+
+c*** Neutral-related data on PFR interfaces
+c***                                       - by side and neutral species
+c***    number of PFR interfaces and of tallies
+      integer npfi_tmp, npft_tmp
+      parameter (npfi_tmp=2, npft_tmp=3)
+c***    number of Eirene surfaces per interface, list of these surfaces,
+c***    starting and ending B2 cell for interface
+      integer npfs_tmp(npfi_tmp),lpfs_tmp(nstra,npfi_tmp),
+     ,  ipfc_tmp(npfi_tmp),jpfc_tmp(npfi_tmp)
+c***    surface area,cell interface areas
+      real (kind=R8) ::
+     *     hlp_arpfs(npfi_tmp),hlp_acpfs(0:nx,npfi_tmp)
+      real (kind=R8) ::
+     *     hlp_w(npfi_tmp)
+      real (kind=R8) ::
+     *  equr_tmp(npfi_tmp,DEF_NATM+DEF_NMOL,npft_tmp),
+     ,  hlp_dnpfs(npfi_tmp,DEF_NATM+DEF_NMOL),
+     ,  hlp_tmpfs(npfi_tmp,DEF_NATM+DEF_NMOL),
+     ,  hlp_vlpfs(npfi_tmp,DEF_NATM+DEF_NMOL)
+      equivalence
+     ,  (equr_tmp(1,1,1),hlp_dnpfs), (equr_tmp(1,1,2),hlp_tmpfs),
+     ,  (equr_tmp(1,1,3),hlp_vlpfs)
+      character hlp_hr(npft_tmp),hlp_hs(npfi_tmp)
+      data hlp_hr / 'n', 'T', 'v' /
+      data hlp_hs / 'i', 'o' /
+c-----------------------------------------------------------------------
+c*** Number of positions in the output line and temporary arrays for
+c*** the data and header lines
+      integer ntrc_tmp,mhdr
+      parameter (mhdr=24)
+      real (kind=R8), allocatable :: hlp_out(:)
+      character*(mhdr),allocatable :: hlp_hdr(:)
 c-----------------------------------------------------------------------
 
       integer lun, ltrc
       parameter (ltrc=ntrc_usr)
       real (kind=R8) ::
      *     hlp, hlp_p, hlp_s, hlp_pi, hlp_si, hlp_po, hlp_so, hlp_tot,
-     ,     hlp_he, hlp_hep, hlp_h, hlp_neu_peak, s, hlpnw,
+     ,     hlp_he, hlp_hep, hlp_h, hlp_neu_peak, hlpnw,
      ,     hlp_ne_he_c, hlp_ne_he_s
-      integer i, j, k, l, m, n, im, is, ix, iy, iyp, js, ls, nv, j_he_i
+      real (kind=R8) ::
+     *     a, d, e, g, h, s, t, u, v, x, e0
+      real (kind=R8) :: pr(-1:nx,-1:ny)
+      integer i, j, k, l, m, n, i0, im, is, ix, iy, js, ls, nv, irt,
+     ,     iyp, j_he_i, l_pad_str,n_pad_str
+c*** radial position of the separatrix and poloidal positions of
+c*** targets and mid-plane for DoD calculation for each target
+      integer isp_tmp(4),itg_tmp(4),imp_tmp(4)
+c*** File markers: routine version, number of global values, number of
+c***               PFR values, number of species, number of PFR surface
+c***               groups, number of diagnostic surface groups
+      integer nrkn_hlp
+      parameter(nrkn_hlp=7)
+      integer mrkn_hlp(nrkn_hlp),mrks_hlp(nrkn_hlp)
       integer jxi, jxa, jsep
-      logical ex, warn_tmp, first, double_null
-      character tab, hlp_c, f*40, hlp_frm*120, hlp_frf*240, hlp_tpl*2
+      logical ex, warn_tmp, first, first_out, double_null
+      integer lenfnm
+      parameter (lenfnm=120)
+      character tab, hlp_c, f*(lenfnm)
+      character hlp_frm*120, hlp_frf*240, hlp_tpl*2
+      character hlp_fnam*(lenfnm)  !###
       data hlp_neu_peak / 5.0_R8 /
-      data first / .true. /, double_null / .false. /
+      data first,first_out / 2*.true. /, double_null / .false. /
 c-----------------------------------------------------------------------
 c*** Column headers:
       data hlp_hg /
@@ -124,19 +259,45 @@ c*** Column headers:
      3      'Sp_DT   ', 'Sp_He   ', 'Sp_He_sc', 'He_src  ', 'He_sc_cr',
      4      'He_sc_sp', 'He_og_cr', 'He_og_sp', 'He_enrcs', 'He_enrcc',
      4      'DT_thrpt', 'He_thrpt'/
+      data hlp_hg2 /
+     1      'DoD_il', 'DoD_ol', 'DoD_iu', 'DoD_ou'/
+      data hlp_hg3 /
+     1      'isat_tt_il', 'isat_tt_ol', 'isat_tt_iu', 'isat_tt_ou'/
+      data hlp_hg4 /
+     1      'al_bll_max', 'al_bll_ix', 'al_bll_iy'/
       data hlp_hp /'PFR_flow'/
+      data hlp_hn /'n','p','T','j','G','S','s'/
+
+      external fix_user
 c-----------------------------------------------------------------------
 
       save
-     l   first, double_null, lun,
-     i   j_he_i, nv, jsep, ng_tmp,
-     c   hlp_tpl, hlp_hb, hlp_frm
 c=======================================================================
+      if(first_time_step) return
       if(.not.filedata(ltrc)) return
 c=======================================================================
 
       if (first) then !{
 
+c!###{
+c        print *
+c        print *,'b2usrtrc: before initialisation. ',
+c     ,    'natm,nmol,nnatmi,nnmoli,nntrgrp=',
+c     ,     natm,nmol,nnatmi,nnmoli,nntrgrp
+c        if(nntrgrp.gt.0) then !{
+c          print '(1x,a9,2x,20i4/(12x,20i4))','lntrgrp:',
+c     ,                                (lntrgrp(i),i=1,jntrgrp(nntrgrp))
+c          print '(1x,a9,2x,16a9)','gntrgrp:',
+c     ,                                (gntrgrp(i),i=1,nntrgrp)
+c          print '(1x,a9,1x,i4,15i9)','intrgrp:',
+c     ,                                (intrgrp(i),i=1,nntrgrp)
+c          print '(1x,a9,1x,i4,15i9)','jntrgrp:',
+c     ,                                (jntrgrp(i),i=1,nntrgrp)
+c          print *
+c        end if !}
+c!###}
+        tab=char(9)
+c-----------------------------------------------------------------------
 c*** Check the topology
 
         hlp_tpl='UD'
@@ -189,6 +350,244 @@ c*** Assume the same order of species in B2 and Eirene
      ,          '%% b2usrtrc: j_he_at,j_h_at,j_he_i,double_null = ', !###
      ,                        j_he_at,j_h_at,j_he_i,double_null      !###
 
+c*** Prepare for neutral data evaluation at diagnostic surfaces
+
+c*** Check whether the specified surfaces are real
+
+c*** Calculate the basic quantities for each surface/species
+
+        ndts_tmp=nnatmi+nnmoli
+        j=0
+        do i=1,ndts_tmp !{
+          if(i.le.nnatmi) then !{
+            ndtm_tmp(i)=i
+            hlp_awdts(i)=am(j+1)
+            j=j+nfluids(i)
+          else !}{
+            ndtm_tmp(i)=nnatmi-i
+            hlp_awdts(i)=0.
+            do j=1,nnatmi !{
+              hlp_awdts(i)=hlp_awdts(i)+
+     +                                mlcmp(j,-ndtm_tmp(i))*hlp_awdts(j)
+            end do !}
+          end if !}
+        end do !}
+
+        do j=1,ndts_tmp !{
+          if(ndtm_tmp(j).gt.0) then !{
+            m=ndtm_tmp(j)
+          else !}{
+            m=natm-ndtm_tmp(j)
+          end if !}
+          ndtx_tmp(j)=m
+        end do !}
+
+        hlp_ardts=0.
+        ndta_tmp=nmnt_tmp
+        do k=1,nntrgrp !{
+          do i=intrgrp(k),jntrgrp(k) !{
+            l=lntrgrp(i)
+            hlp_ardts(k)=hlp_ardts(k)+wlarea(l)
+            do j=1,ndts_tmp !{
+              m=ndtx_tmp(j)
+              if(i.eq.intrgrp(k)) then !{
+                x=wlabsrp(m,l)
+                if(x.gt.0.) ndta_tmp(k,j)=ndtk_tmp
+                hlp_ksdts(k,j)=x
+              else !}{
+                if(x.ge.0. .and. wlabsrp(m,l).ne.x) then !{
+                  ndta_tmp(k,j)=nmnt_tmp
+                  print *,'b2usrtrc: different absorption coefficients',
+     ,                 ' for diagnostic surface group ',gntrgrp(k),
+     ,                 ', species ',j
+                  hlp_ksdts(k,j)=0.
+                  exit
+                end if !}
+              end if !}
+            end do !}
+          end do !}
+        end do !}
+c!###{
+c        print *
+c        print *,'b2usrtrc: after initialisation. ',
+c     ,           'nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp=',
+c     ,            nntrgrp,ndtk_tmp,nmnt_tmp,ndts_tmp
+c        write(f,'(10h(1x,a9,2x,,i2,3hi3))') ndts_tmp
+c        print *,'tallies (ndta_tmp):'
+c        print f,(gntrgrp(i),(ndta_tmp(i,j),j=1,ndts_tmp),i=1,nntrgrp)
+c        print *
+c        print f,'ndtm_tmp',(ndtm_tmp(j),j=1,ndts_tmp)
+c        print f,'ndtx_tmp',(ndtx_tmp(j),j=1,ndts_tmp)
+c        write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp
+c        print f,'hlp_awdts',(hlp_awdts(j),j=1,ndts_tmp)
+c        print *,'area/absorption:'
+c        write(f,'(13h(1x,a9,2x,1p,,i2,6he10.2))') ndts_tmp+1
+c        print f,(gntrgrp(i),hlp_ardts(i),
+c     ,                       (hlp_ksdts(i,j),j=1,ndts_tmp),i=1,nntrgrp)
+c        print *
+c!###}
+
+c*** Find the Eirene surfaces corresponding to PFR interfaces
+c***  (npfs_tmp, lpfs_tmp, hlp_arpfs)
+
+        npfs_tmp=0
+        lpfs_tmp=0
+        hlp_arpfs=0
+        do i=1,nstrai !{
+          k=0
+          if(crcstra(i).eq.'S') then !{
+            if(rcend(i).le.leftcut(1)-1) then !{
+              k=1
+            else if(rcstart(i).gt.leftcut(nncut)-1) then !}{
+              k=2
+            end if !}
+            if(k.gt.0) then !{
+c              print *,'i,k,msns=',i,k,msns(1,i),msns(2,i) !###
+              do j=msns(1,i),msns(1,i)+msns(2,i)-1 !{
+                npfs_tmp(k)=npfs_tmp(k)+1
+                lpfs_tmp(npfs_tmp(k),k)=lsns(j)
+                hlp_arpfs(k)=hlp_arpfs(k)+wlarea(lsns(j))
+              end do !}
+            end if !}
+          end if !}
+        end do !}
+
+c*** Find the B2 cell ranges corresponding to PFR interfaces
+c***  (ipfc_tmp, jpfc_tmp, hlp_acpfs)
+
+        hlp_acpfs=0
+        hlp_w=0
+        if(lpfrs_pmp.ne.2) then !{
+
+c*** Inner divertor
+
+          m=lpfrb_i
+          if(m.le.0) then !{
+            if(lpfrs_pmp.eq.1) then !{
+              m=1-m
+            else !}{
+              m=nxiso1(1)-1+m
+            end if !}
+          end if !}
+          n=lpfrt_i
+          if(n.le.0) then !{
+            if(lpfrs_pmp.eq.1) then !{
+              n=leftcut(1)-1+n
+            else !}{
+              n=rightcut(1)-1+n
+            end if !}
+          end if !}
+          ipfc_tmp(1)=m
+          jpfc_tmp(1)=n
+        else !}{
+          ipfc_tmp(1)=1
+          jpfc_tmp(1)=0
+        end if !}
+
+c*** Outer divertor
+
+        m=lpfrt_o
+        if(m.le.0) then !{
+          if(lpfrs_pmp.eq.1) then !{
+            m=leftcut(2)-1-m
+          else if(lpfrs_pmp.eq.2) then !}{
+            m=nx+m
+          else !}{
+            m=rightcut(2)-1-m
+          end if !}
+        end if !}
+        n=lpfrb_o
+        if(n.le.0) then !{
+          if(lpfrs_pmp.eq.1) then !{
+            n=nx+n
+          else if(lpfrs_pmp.eq.2) then !}{
+            n=nx+n
+          else !}{
+            n=nxiso1(1)+2+m
+          end if !}
+        end if !}
+        ipfc_tmp(2)=m
+        jpfc_tmp(2)=n
+
+        iy=0
+        if(lpfrs_pmp.eq.2) iy=ny+1
+        do k=1,npfi_tmp !{
+          do i=ipfc_tmp(k),jpfc_tmp(k) !{
+            hlp_acpfs(i,k)=gs(i,iy-1,1)
+            hlp_w(k)=hlp_w(k)+gs(i,iy-1,1)
+          end do !}
+        end do !}
+c!###{
+c        print *
+c        print *,'b2usrtrc: PFR initialisation. npfi=',npfi_tmp
+c        do k=1,npfi_tmp !{
+c          print *,'PFR areaEir, areaB2 ',k,hlp_arpfs(k),hlp_w(k)
+c          print *,'npfs,lpfs=',npfs_tmp(k),
+c     ,                                  (lpfs_tmp(i,k),i=1,npfs_tmp(k))
+c          print *,'ipfc,jpfc=',ipfc_tmp(k),jpfc_tmp(k)
+c        end do !}
+c        print *,'nlim,lsns: ',nlim,lsns
+c        print *
+c!###}
+c-----------------------------------------------------------------------
+c*** Prepare constants for DoD calculation
+
+        isp_tmp(1)=topcut(1)
+        isp_tmp(2)=isp_tmp(1)
+        itg_tmp(1)=1
+        itg_tmp(2)=nx
+        imp_tmp(1)=jxa
+        imp_tmp(2)=jxa
+        if(double_null) then !{
+          isp_tmp(3)=topcut(2)
+          isp_tmp(4)=isp_tmp(3)
+          itg_tmp(3)=nxiso1(1)-1
+          itg_tmp(4)=nxiso1(1)+2
+          imp_tmp(1)=jxi
+          imp_tmp(3)=jxi
+          imp_tmp(4)=jxa
+        end if !}
+c!###{
+c        print '(10x,4i6)',1,2,3,4
+c        print '(2x,a8,4i6)','isp_tmp',(isp_tmp(i),i=1,4)
+c        print '(2x,a8,4i6)','itg_tmp',(itg_tmp(i),i=1,4)
+c        print '(2x,a8,4i6)','imp_tmp',(imp_tmp(i),i=1,4)
+c!###}
+c-----------------------------------------------------------------------
+c*** Allocate the buffer arrays for header and table lines
+
+        ntrc_tmp=1+nglb_tmp+nntrgrp+
+     +    npfi_tmp*(1+npft_tmp*ndts_tmp)+ngl2_tmp+ngl4_tmp
+        k=1+npfrgrp
+        if(npfrgrp.le.1) k=max(0,npfrgrp)
+        ntrc_tmp=ntrc_tmp+nspecies*npff_tmp*k
+        do k=1,nntrgrp !{
+          do j=1,ndts_tmp !{
+            ntrc_tmp=ntrc_tmp+ndta_tmp(k,j)
+c!###{
+c            print '(a,4i6)','ntrc_tmp,k,j,ndta_tmp(k,j):',
+c     ,        ntrc_tmp,k,j,ndta_tmp(k,j)
+c!###}
+          end do !}
+        end do !}
+        if(print_isat) then !{
+          ntrc_tmp=ntrc_tmp+2
+          if(double_null) ntrc_tmp=ntrc_tmp+2
+        end if !}
+
+!###{
+        print '(2x,11a10)','ntrc_tmp','nglb_tmp','nspecies','npff_tmp',
+     ,    'npfrgrp','nntrgrp','npfi_tmp','npft_tmp','ndts_tmp',
+     ,    'ngl2_tmp','ngl4_tmp'
+        print '(11i10)',ntrc_tmp,nglb_tmp,nspecies,npff_tmp,
+     ,    npfrgrp,nntrgrp,npfi_tmp,npft_tmp,ndts_tmp,
+     ,    ngl2_tmp,ngl4_tmp
+!###}
+        if(.not.allocated(hlp_out)) then !{
+          allocate(hlp_out(ntrc_tmp), hlp_hdr(ntrc_tmp))
+c          print *,'b2usrtrc: allocated hlp_out,hlp_hdr:',ntrc_tmp !###
+        end if !}
+
         first=.false.
       end if !}
 c=======================================================================
@@ -196,6 +595,8 @@ c*** Initialise the arrays
 
       equg_tmp=0.0_R8
       equp_tmp=0.0_R8
+      equn_tmp=0.0_R8
+      equr_tmp=0.0_R8
 
 c*** Re-scale the neutral fluxes
 
@@ -423,7 +824,7 @@ c*** Calculate throughputs, pumping speed, and re-scale He if necessary
 
         ls=j_h_at
         do l=1,2 !{
-          if(ls.gt.0) then !{
+          if(ls.gt.0 .and. ls.le.nnatmi) then !{
 
 c*** Neutral flux across the side walls
 
@@ -442,7 +843,11 @@ c*** Neutral flux across the side walls
         hlp_dttp=0.5_R8*hlp_dttp     ! assume molecular DT pumping
         if(hlp_ppfr.gt.0.0_R8) hlp_spdt=hlp_dttp/hlp_ppfr
         if(hlp_hepr.gt.0.0_R8) hlp_sphe=hlp_hetp/hlp_hepr
-        hlp_sshe=spmp_he_to_d*hlp_spdt
+        if(scale_he) then !{
+          hlp_sshe=spmp_he_to_d*hlp_spdt
+        else !}{
+          hlp_sshe=hlp_spdt
+        end if !}
 
 c*** Calculate the helium-related data
 
@@ -488,8 +893,8 @@ c*** Helium fraction and related data - flux estimation
           k=lhetrgts(i)
           if(k.eq.0) go to 10
           if(k.lt.0) k=nnlimi-k
-          hlp_he=hlp_he+wldna(k,j_he_at,0)
-          hlp_h=hlp_h+wldna(k,j_h_at,0)
+          if(j_he_at.lt.nnatmi) hlp_he=hlp_he+wldna(k,j_he_at,0)
+          if(j_h_at.lt.nnatmi) hlp_h=hlp_h+wldna(k,j_h_at,0)
           do j=1,nnatmi !{
             hlp_tot=hlp_tot+wldna(k,j,0)
           end do !}
@@ -505,95 +910,107 @@ c*** Helium fraction and related data - flux estimation
 c*** Calculate the peak powers to the targets
 c***  (assuming a peaking factor of hlp_neu_peak for neutrals)
 
-      hlp_ppwi=0.0_R8
-      hlp_s=0.0_R8
-      do iy=0,ny-1 !{
-        s=gs(0,iy,0)
-        hlp=abs(fhe(0,iy,0)+fhi(0,iy,0))
-        do is=0,ns-1 !{
-          hlp=hlp+abs(fna(0,iy,0,is)*(
-     .     (rpt(0,iy,is)*hx(-1,iy)+rpt(-1,iy,is)*hx(0,iy))/
-     .     (hx(-1,iy)+hx(0,iy))*ev+(1.0_R8-BoRiS)*
-     .     (kinrgy(0,iy,is)*hx(-1,iy)+kinrgy(-1,iy,is)*hx(0,iy))/
-     .     (hx(-1,iy)+hx(0,iy))))
-        end do !}
-        hlp=hlp/s
-        hlp_ppwi=max(hlp_ppwi,hlp)
-        hlp_s=hlp_s+s
-      end do !}
-      js=ltns(1)+nnlimi
-      hlp_ppwi=hlp_ppwi+(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
-
-      hlp_ppwo=0.0_R8
-      hlp_s=0.0_R8
-      do iy=0,ny-1 !{
-        hlp=abs(fhe(nx,iy,0)+fhi(nx,iy,0))
-        s=gs(nx,iy,0)
-        do is=0,ns-1 !{
-          hlp=hlp+abs(fna(nx,iy,0,is)*(
-     .     (rpt(nx,iy,is)*hx(nx-1,iy)+rpt(nx-1,iy,is)*hx(nx,iy))/
-     .     (hx(nx-1,iy)+hx(nx,iy))*ev+(1.0_R8-BoRiS)*
-     .     (kinrgy(nx,iy,is)*hx(nx-1,iy)+kinrgy(nx-1,iy,is)*hx(nx,iy))/
-     .     (hx(nx-1,iy)+hx(nx,iy))))
-        end do !}
-        hlp=hlp/s
-        hlp_ppwo=max(hlp_ppwo,hlp)
-        hlp_s=hlp_s+s
-      end do !}
-      js=ltns(nncut)+nnlimi
-      hlp=(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
-      hlp_ppwo=hlp_ppwo+(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
-
-      if(double_null) then !{
-        hlp_pwou=0.0_R8
-        ix=nxiso2(1)+1
+      if(l_neutflux.lt.0) then !{ VK
+c inner target
+        hlp_ppwi=0.0_R8
         hlp_s=0.0_R8
         do iy=0,ny-1 !{
-          s=gs(ix,iy,0)
-          hlp=abs(fhe(ix,iy,0)+fhi(ix,iy,0))
+          s=gs(0,iy,0)
+          hlp=abs(fhe(0,iy,0)+fhi(0,iy,0))
           do is=0,ns-1 !{
-            hlp=hlp+abs(fna(ix,iy,0,is)*(
-     .       (rpt(ix,iy,is)*hx(ix-1,iy)+
-     .        rpt(ix-1,iy,is)*hx(ix,iy))/
-     .       (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
-     .       (kinrgy(ix,iy,is)*hx(ix-1,iy)+
-     .        kinrgy(ix-1,iy,is)*hx(ix,iy))/
-     .       (hx(ix-1,iy)+hx(ix,iy))))
+            hlp=hlp+abs(fna(0,iy,0,is)*(
+     .       (rpt(0,iy,is)*hx(-1,iy)+rpt(-1,iy,is)*hx(0,iy))/
+     .       (hx(-1,iy)+hx(0,iy))*ev+(1.0_R8-BoRiS)*
+     .       (kinrgy(0,iy,is)*hx(-1,iy)+kinrgy(-1,iy,is)*hx(0,iy))/
+     .       (hx(-1,iy)+hx(0,iy))))
           end do !}
           hlp=hlp/s
-          hlp_pwou=max(hlp_pwou,hlp)
+          hlp_ppwi=max(hlp_ppwi,hlp)
           hlp_s=hlp_s+s
         end do !}
-        js=ltns(3)+nnlimi
-        hlp_pwou=hlp_pwou+(wldnek(js,0)+
+        js=ltns(1)+nnlimi
+        hlp_ppwi=hlp_ppwi+(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
+c outer target
+        hlp_ppwo=0.0_R8
+        hlp_s=0.0_R8
+        do iy=0,ny-1 !{
+          hlp=abs(fhe(nx,iy,0)+fhi(nx,iy,0))
+          s=gs(nx,iy,0)
+          do is=0,ns-1 !{
+            hlp=hlp+abs(fna(nx,iy,0,is)*(
+     .       (rpt(nx,iy,is)*hx(nx-1,iy)+rpt(nx-1,iy,is)*hx(nx,iy))/
+     .       (hx(nx-1,iy)+hx(nx,iy))*ev+(1.0_R8-BoRiS)*
+     .       (kinrgy(nx,iy,is)*hx(nx-1,iy)+
+     .        kinrgy(nx-1,iy,is)*hx(nx,iy))/
+     .       (hx(nx-1,iy)+hx(nx,iy))))
+          end do !}
+          hlp=hlp/s
+          hlp_ppwo=max(hlp_ppwo,hlp)
+          hlp_s=hlp_s+s
+        end do !}
+        js=ltns(nncut)+nnlimi
+        hlp=(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
+        hlp_ppwo=hlp_ppwo+(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
+
+        if(double_null) then !{
+          hlp_pwou=0.0_R8
+          ix=nxiso2(1)+1
+          hlp_s=0.0_R8
+          do iy=0,ny-1 !{
+            s=gs(ix,iy,0)
+            hlp=abs(fhe(ix,iy,0)+fhi(ix,iy,0))
+            do is=0,ns-1 !{
+              hlp=hlp+abs(fna(ix,iy,0,is)*(
+     .         (rpt(ix,iy,is)*hx(ix-1,iy)+
+     .          rpt(ix-1,iy,is)*hx(ix,iy))/
+     .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
+     .         (kinrgy(ix,iy,is)*hx(ix-1,iy)+
+     .          kinrgy(ix-1,iy,is)*hx(ix,iy))/
+     .         (hx(ix-1,iy)+hx(ix,iy))))
+            end do !}
+            hlp=hlp/s
+            hlp_pwou=max(hlp_pwou,hlp)
+            hlp_s=hlp_s+s
+          end do !}
+          js=ltns(3)+nnlimi
+          hlp_pwou=hlp_pwou+(wldnek(js,0)+
      +                                 wldnep(js,0))*hlp_neu_peak/hlp_s
 
-        hlp_pwiu=0.0_R8
-        ix=nxiso1(1)
-        hlp_s=0.0_R8
-        do iy=1,ny !{
-          hlp=abs(fhe(ix,iy,0)+fhi(ix,iy,0))
-          s=gs(ix,iy,0)
-          do is=0,ns-1 !{
-            hlp=hlp+abs(fna(ix,iy,0,is)*(
-     .       (rpt(ix,iy,is)*hx(ix-1,iy)+
-     .        rpt(ix-1,iy,is)*hx(ix,iy))/
-     .       (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
-     .       (kinrgy(ix,iy,is)*hx(ix-1,iy)+
-     .        kinrgy(ix-1,iy,is)*hx(ix,iy))/
-     .       (hx(ix-1,iy)+hx(ix,iy))))
+          hlp_pwiu=0.0_R8
+          ix=nxiso1(1)
+          hlp_s=0.0_R8
+          do iy=1,ny !{
+            hlp=abs(fhe(ix,iy,0)+fhi(ix,iy,0))
+            s=gs(ix,iy,0)
+            do is=0,ns-1 !{
+              hlp=hlp+abs(fna(ix,iy,0,is)*(
+     .         (rpt(ix,iy,is)*hx(ix-1,iy)+
+     .          rpt(ix-1,iy,is)*hx(ix,iy))/
+     .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
+     .         (kinrgy(ix,iy,is)*hx(ix-1,iy)+
+     .          kinrgy(ix-1,iy,is)*hx(ix,iy))/
+     .         (hx(ix-1,iy)+hx(ix,iy))))
+            end do !}
+            hlp=hlp/s
+            hlp_pwiu=max(hlp_pwiu,hlp)
+            hlp_s=hlp_s+s
           end do !}
-          hlp=hlp/s
-          hlp_pwiu=max(hlp_pwiu,hlp)
-          hlp_s=hlp_s+s
-        end do !}
-        js=ltns(2)+nnlimi
-        hlp=(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
-        hlp_pwiu=hlp_pwiu+(wldnek(js,0)+
+          js=ltns(2)+nnlimi
+          hlp=(wldnek(js,0)+wldnep(js,0))*hlp_neu_peak/hlp_s
+          hlp_pwiu=hlp_pwiu+(wldnek(js,0)+
      +                                 wldnep(js,0))*hlp_neu_peak/hlp_s
+        end if !}
+      else !}{VK
+        call b2usr_loads(nx,ny,ns,BoRiS,wtarg_max)
+        hlp_ppwi=wtarg_max(1)
+        hlp_ppwo=wtarg_max(nncut)
+        if(double_null) then
+          hlp_pwou=wtarg_max(2)
+          hlp_pwiu=wtarg_max(3)
+        end if
       end if !}
 
-c*** Calculate the neutral flows in PFR 
+c*** Calculate the neutral flows in PFR
 
       do k=1,npfrgrp !{
         do j=1,nspecies !{
@@ -604,7 +1021,7 @@ c*** Calculate the neutral flows in PFR
             m=lpfrgrp(i)
             if(m.lt.0) m=nnlimi-m
             if(isrftype(m).ne.-3) then !{
-              write (*,'(a,i4,a,i4)') 
+              write (*,'(a,i4,a,i4)')
      .         '#b2usrtrc: wrong type of diagnostic surface. Surface:',
      .          m,',  type: ',isrftype(m)
               write (*,*) 'Check the DG model!!!'
@@ -625,7 +1042,319 @@ c*** Calculate the neutral flows in PFR
           hlp_pfrf(0,j,1)=hlp_pfrf(0,j,1)+hlp_pfrf(k,j,1)
         end do !}
       end do !}
+c-----------------------------------------------------------------------
+c*** Evaluate the neutral data at diagnostic surface groups
+c*** Here s is the total area of a diagnostic surface group,
+c*** g total flux of particles of a certain sort hitting these surfaces,
+c*** e average energy of these particles,
+c*** a their atomic mass in AMU, x the absorption probability.
+
+      n=nnatmi+nnmoli
+      do k=1,nntrgrp !{
+        s=hlp_ardts(k)
+        do j=1,n !{
+          e=0.0_R8
+          g=0.0_R8
+          do i=intrgrp(k),jntrgrp(k) !{
+            l=lntrgrp(i)
+            if(j.le.nnatmi) then !{
+              g=g+wldna(l,j,0)
+              e=e+wldna(l,j,0)*ewlda(l,j,0)
+            else !}{
+              m=j-nnatmi
+              g=g+wldnm(l,m,0)
+              e=e+wldnm(l,m,0)*ewldm(l,m,0)
+            end if !}
+          end do !}
+          if(g.gt.0.0_R8) e=e/g
+          if(e.le.0.0_R8) e=1.0_R8
+          a=hlp_awdts(j)
+          x=hlp_ksdts(k,j)
+          hlp_tmdts(k,j)=0.5_R8*e
+          hlp_dndts(k,j)=3.6e-4_R8*g*sqrt(a/(e*s*s))
+          hlp_prdts(k,j)=ev*hlp_tmdts(k,j)*hlp_dndts(k,j)
+          hlp_fxdts(k,j)=g/s
+          if(ndta_tmp(k,j).gt.nmnt_tmp) then !{
+c            e0=0.03_R8 ! room temperature in eV ==> 0.025
+            x=hlp_ksdts(k,j)
+            hlp_fldts(k,j)=x*g
+            hlp_stdts(k,j)=622._R8*x*s/sqrt(a)
+            hlp_sedts(k,j)=hlp_fldts(k,j)/max(hlp_dndts(k,j),1.)
+          end if !}
+        end do !}
+      end do !}
+c-----------------------------------------------------------------------
+c*** evaluate neutral data on PFR interface surfaces
+
+      iy=1
+      is=0
+      if(lpfrs_pmp.eq.2) then !{
+        iy=ny
+        is=ny+1
+      end if !}
+      n=nnatmi+nnmoli
+      do k=1,npfi_tmp !{
+        do j=1,n !{
+c*** here s accumulates the area, d the density*area,
+c*** e the temperature*density*area, v the flux*area
+          s=0.0_R8
+          d=0.0_R8
+          e=0.0_R8
+          v=0.0_R8
+          do i=ipfc_tmp(k),jpfc_tmp(k) !{
+            s=s+gs(topix(i,is),topiy(i,is),1)
+            if(ndtm_tmp(j).gt.0) then !{
+              g=dab2(i,iy,ndtm_tmp(j),1)
+              t=tab2(i,iy,ndtm_tmp(j),1)/ev
+            else !}{
+              g=dmb2(i,iy,-ndtm_tmp(j),1)
+              t=tmb2(i,iy,-ndtm_tmp(j),1)/ev
+            end if !}
+            d=d+gs(topix(i,is),topiy(i,is),1)*g
+            e=e+gs(topix(i,is),topiy(i,is),1)*g*t
+            v=v+gs(topix(i,is),topiy(i,is),1)*g*sqrt(max(t,0.0_R8))
+          end do !}
+          if(s.gt.0.0_R8 .and. g.gt.0.0_R8) then !{
+            e=e/d
+            v=v/d
+            d=d/s
+          else !}{
+            e=0.0_R8
+            v=0.0_R8
+            d=0.0_R8
+          end if !}
+          hlp_dnpfs(k,j)=d
+          hlp_tmpfs(k,j)=e
+          hlp_vlpfs(k,j)=v*0.39e4_R8/sqrt(hlp_awdts(j))
+        end do !}
+      end do !}
+c!###{
+c      d=0.0_R8
+c      e=0.0_R8
+c      do j=1,n !{
+c        d=d+hlp_dnpfs(1,j)*hlp_tmpfs(1,j)
+c        e=e+hlp_dnpfs(2,j)*hlp_tmpfs(2,j)
+c      end do !}
+c      print *,'prfi,prfo=',ev*d,ev*e
+c!###}
+c-----------------------------------------------------------------------
+c*** evaluate "Degree of detachment" and Isat for each divertor
+
+      hlp_dod=0
+      hlp_isat=0
+      mgl3_tmp=0
+      call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
+c      print *,'### print_isat=',print_isat    !###
+      do k=1,4 !{
+        if(itg_tmp(k).gt.0) then !{
+c          print * !###
+          d=1.e18_R8
+          do iy=isp_tmp(k),ny !{
+            e=2.0_R8*pr(itg_tmp(k),iy)
+            if(e.gt.0.0_R8) d=min(d,pr(imp_tmp(k),iy)/e)
+c            print *,'e,d=',e,d  !###
+          end do !}
+          hlp_dod(k)=d
+c          print *, k,hlp_dod(k) !###
+c          print * !###
+          if(print_isat) then !{
+            mgl3_tmp=mgl3_tmp+1
+            do is=1,ns !{
+              do iy=1,ny !{
+                hlp_isat(mgl3_tmp)=hlp_isat(mgl3_tmp)+
+     +                      fna(itg_tmp(k)+kgl3_tmp(k),iy,0,is)*
+     *                      rza(itg_tmp(k)+kgl3_tmp(k),iy,is)
+              end do !}
+            end do !}
+            hlp_isat(mgl3_tmp)=hlp_isat(mgl3_tmp)*
+     *                      qe*(2.0_R8*kgl3_tmp(k)+1)
+c            print *,'### mgl3_tmp=',mgl3_tmp  !###
+          end if !}
+        end if !}
+      end do !}
+c-----------------------------------------------------------------------
+c*  Find the maximum ballooning factor and its location
+
+c$$$      m=topcut(1)
+c$$$      n=ny
+c$$$      k=0
+c$$$      if(nncut.eq.2) then !{
+c$$$        if(topcut(2).gt.topcut(1)) then !{
+c$$$          n=topcut(2)-1
+c$$$        else if(topcut(2).eq.topcut(1)) then !}{
+c$$$          k=leftcut(2)-1
+c$$$        else !}{
+c$$$          n=m-1
+c$$$          m=topcut(2)
+c$$$        end if !}
+c$$$      end if !}
+c$$$c      print *,'b2usrtrc: m,n,k=',m,n,k  !###
+c$$$      if(k.eq.0) then !{
+c$$$        al_bll_mx=maxval(aalbll(leftcut(1):leftcut(nncut),m:n))
+c$$$        kgl4_tmp=maxloc(aalbll(leftcut(1):leftcut(nncut),m:n))
+c$$$        al_bll_ix=kgl4_tmp(1)+leftcut(1)-1
+c$$$        al_bll_iy=kgl4_tmp(2)+m-1
+c$$$      else !}{
+c$$$        al_bll_mx=maxval(aalbll(rightcut(2):leftcut(nncut),m:n))
+c$$$        kgl4_tmp=maxloc(aalbll(rightcut(2):leftcut(nncut),m:n))
+c$$$        al_bll_ix=kgl4_tmp(1)+rightcut(1)-1
+c$$$        al_bll_iy=kgl4_tmp(2)+m-1
+c$$$        t=maxval(aalbll(leftcut(1):rightcut(1),m:n))
+c$$$        if(t.gt.al_bll_mx) then !{
+c$$$          al_bll_mx=t
+c$$$          kgl4_tmp=maxloc(aalbll(leftcut(1):rightcut(1),m:n))
+c$$$          al_bll_ix=kgl4_tmp(1)+leftcut(1)-1
+c$$$          al_bll_iy=kgl4_tmp(2)+m-1
+c$$$        end if !}
+c$$$      end if !}
+c!###{
+c      i=al_bll_ix
+c      j=al_bll_iy
+c      print '(2a,1p,4i5,2e12.3)','al_bll_ix,al_bll_iy,',
+c     ,  'kgl4_tmp,al_bll_mx,aalbll',i,j,
+c     ,  kgl4_tmp,al_bll_mx,aalbll(i,j)
+c!###}
 c=======================================================================
+      if(first_out .and. filedata(ltrc)) then !{
+
+c*** Prepare the headers, markers, and padding data for the output file
+
+        ex=nglb_tmp.lt.ntrc_tmp
+        if(ex) hlp_hdr(1)='time'
+        if(ex) hlp_hdr(2:nglb_tmp+1)=hlp_hg
+        n=nglb_tmp+1
+        i0=0
+        if(npfrgrp.le.1) i0=1
+        do i=i0,npfrgrp !{
+          hlp_hb='total'
+          if(i.gt.0) hlp_hb=gpfrgrp(i)
+          do j=1,nspecies !{
+            do k=1,npff_tmp !{
+              ex = ex .and. n.lt.ntrc_tmp
+              n=n+1
+              if(ex) hlp_hdr(n)=adjustl(trim(hlp_hp(k))//'_'//
+     /                                 trim(hlp_hb)//'_'//atoms_list(j))
+            end do !}
+          end do !}
+        end do !}
+
+        n_pad_str=0
+        l_pad_str=n+1
+
+        do k=1,nntrgrp !{
+          n=n+1
+          hlp_hdr(n)='Area_'//gntrgrp(k)
+          do j=1,ndts_tmp !{
+            ex = ex .and. n+ndta_tmp(k,j).le.ntrc_tmp
+            do i=1,ndta_tmp(k,j) !{
+              if(ndtm_tmp(j).gt.0) then !{
+                hlp_m=adjustl(eirtxt(ndtm_tmp(j)))
+              else !}{
+                hlp_m=adjustl(eirtxt(nnatmi-ndtm_tmp(j)))
+              end if !}
+              if(ex) hlp_hdr(n+i)=adjustl(trim(hlp_hn(i))//'_'//
+     /                                     trim(hlp_m)//'_'//gntrgrp(k))
+            end do !}
+            n=n+ndta_tmp(k,j)
+          end do !}
+        end do !}
+        do k=1,npfi_tmp !{
+          n=n+1
+          hlp_hdr(n)='PFR'//trim(hlp_hs(k))//'_area'
+          do j=1,ndts_tmp !{
+            ex = ex .and. n+npft_tmp.le.ntrc_tmp
+            do i=1,npft_tmp !{
+              if(ndtm_tmp(j).gt.0) then !{
+                hlp_m=adjustl(eirtxt(ndtm_tmp(j)))
+              else !}{
+                hlp_m=adjustl(eirtxt(nnatmi-ndtm_tmp(j)))
+              end if !}
+              if(ex) hlp_hdr(n+i)='PFR'//trim(hlp_hs(k))//'_'//
+     /                                 trim(hlp_hr(i))//'_'//trim(hlp_m)
+            end do !}
+            n=n+npft_tmp
+          end do !}
+        end do !}
+        ex=ex .and. n+ngl2_tmp.le.ntrc_tmp
+        if(ex) hlp_hdr(n+1:n+ngl2_tmp)=hlp_hg2
+        n=n+ngl2_tmp
+        ex=ex .and. n+mgl3_tmp.le.ntrc_tmp
+c        print *,'###b ex,mgl3_tmp,n,ntrc_tmp=',ex,mgl3_tmp,n,ntrc_tmp !###
+        if(ex .and. mgl3_tmp.gt.0) then !{
+          i=0
+          do k=1,4 !{
+            if(itg_tmp(k).gt.0) then !{
+              n=n+1
+              i=i+1
+              hlp_hdr(n)=hlp_hg3(k)
+            end if !}
+          end do !}
+          if(i.ne.mgl3_tmp) then !{
+            print *,'### b2usrtrc: i.ne.mgl3_tmp: ',i,mgl3_tmp,
+     ,         '  ==> no Isat data in the file'
+            print_isat=.false.
+            mgl3_tmp=0
+            n=n-i
+            ntrc_tmp=n
+          end if !}
+        end if !}
+        if(ex .and. ngl4_tmp.gt.0) then !{
+          ex=ex .and. n+ngl4_tmp.le.ntrc_tmp
+          hlp_hdr(n+1:n+ngl4_tmp)=hlp_hg4
+          n=n+ngl4_tmp
+        end if !}
+
+        n_pad_str=n-l_pad_str+1
+        if(n_pad_str.eq.0) l_pad_str=1
+
+c        print *,'n,hlp_hdr= ',n,('  ',trim(hlp_hdr(i)),i=1,n) !###
+
+        if(.not.ex .or. n.ne.ntrc_tmp) go to 98
+
+        mrks_hlp(1)=lv
+        mrks_hlp(2)=nglb_tmp
+        mrks_hlp(3)=npff_tmp
+        mrks_hlp(4)=nspecies
+        mrks_hlp(5)=npfrgrp
+        mrks_hlp(6)=nntrgrp
+        mrks_hlp(7)=ngl2_tmp
+        mrkn_hlp=mrks_hlp
+
+c*** Initialize the file for tracing data.
+
+c*** Moved here from b2usrtri to ensure being called after the first
+c*** call to Eirene.
+
+c*** lun   :  logical unit number for the output file (=ntrc(ltrc))
+c*** f     :  the associated file name
+
+        lun=ntrc(ltrc)
+        f=fn_ntrc(ltrc)
+
+        n=nrkn_hlp
+        m=0
+        call combfile(lun,f,lenfnm,hlp_hdr,mhdr,ntrc_tmp,label,.false.,
+     ,                fix_user,hlp_hdr(l_pad_str),hlp_out(l_pad_str),
+     ,                n_pad_str,7,3,tab,mrks_hlp,n,x,m,hlp_frm,irt)
+
+c        print *,'b2usrtrc: after combfile. irt,m,f=',             !###
+c     ,                                        irt,m,'  ',trim(f)  !###
+        if(irt.lt.0) then !{
+          go to 92
+        else if(irt.gt.0) then !}{
+          if(irt.ge.8) then !{
+            if(mrks_hlp(4).ne.mrkn_hlp(4)) go to 93
+          end if !}
+          if(irt.ge.16) then !{
+            print *,'b2usrtrc: new output file opened - ',trim(f)
+          end if !}
+          fn_ntrc(ltrc)=f
+        end if !}
+c        print *,'hlp_frm=',trim(hlp_frm)  !###
+        first_out=.false.
+      end if !}
+c=======================================================================
+
       if(ank_tracing.eq.0) return
       if(filedata(ltrc)) then !{
 
@@ -766,7 +1495,17 @@ c=======================================================================
       filedata(ltrc)=.false.
       return
 
+ 93   write(*,*) 'b2usrtrc: number of species changed - remove the ',
+     ,                                             'tracing file first!'
+      filedata(ltrc)=.false.
+      return
+
  94   write(*,*) 'b2usrtrc: cannot write in the file ',f
+      filedata(ltrc)=.false.
+      return
+
+ 98   write(*,'(2a,2i8)') 'b2usrtrc: internal error. ',
+     ,  'Number of columns in the header - ',ntrc_tmp,n
       filedata(ltrc)=.false.
       return
 c=======================================================================
