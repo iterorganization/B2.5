@@ -18,12 +18,14 @@
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
+      use b2mod_feedback
       use b2mod_anomalous_transport
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_constants
       use b2mod_geo_corner
       use b2mod_time
+      use b2mod_diag
       use b2mod_b2cmpa
       use b2mod_b2cmpb
       use b2mod_external
@@ -157,7 +159,7 @@
      &                         corr_flux   = 0.0e0_R8                   !srv 25.07.05
       real (kind=R8), save :: alfTeEh = 0.0_R8
       character chns*3, chk*1                                           !srv 11.07.05
-      logical done, decay_length_ok
+      logical done, decay_length_ok, fedback_species
       real (kind=R8) ::
      *  ro(-1:nx,-1:ny), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
@@ -1353,8 +1355,16 @@ cghgh
            call ipgeti ('b2stbc_isfeedback', isfeedback)
            call xertst (0.le.isfeedback.and.isfeedback.lt.ns,
      1      'faulty internal parameter isfeedback')
-           call xertst(is.eq.isfeedback,
-     1       'BCCON(,IS,1) = 11 for IS <> ISFEEDBACK!')
+           fedback_species = is.eq.isfeedback
+           do isa = 1, nspecies
+             if (na_feedback_ib(isa).eq.ib) then
+               fedback_species = fedback_species .or.
+     .                          (is.ge.eb2spcr(isa+1)+1 .and.
+     .                           is.le.eb2spcr(isa+1)+nfluids(isa+1))
+             end if
+           end do
+           call xertst(fedback_species,
+     1       'BCCON(,IS,1) = 11 for non-feedback species!')
            call xertst(lfeedback, 'LFEEDBACK must be turned on!')
           endif
           IF (BCCHAR(IB).EQ.'S') THEN
