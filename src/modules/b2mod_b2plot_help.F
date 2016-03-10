@@ -396,7 +396,7 @@
      3    'Ratio of banana width to temperature gradient length',
      4    'Gyro-frequency (rad.s^{-1})',
      5    'Ratio of collision frequency to gyro-frequency',
-     6    'Ratio of perpendicular to parallel dynamics',
+     6    'Ratio of radial to parallel dynamics',
      7    'Chang-Hinton \Gv\R_{i} (m^{2}/s)',
      8    'ne at previous time step (m^{-3})',
      9    'ni at previous time step (m^{-3})',

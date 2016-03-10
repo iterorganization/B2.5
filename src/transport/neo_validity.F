@@ -77,13 +77,13 @@ c     conversion of constants to CGS units
 *     - omega  : the cyclotron frequency
 *     - deltab : nua/omega
 *     - deltapar: ft^4*nustar*wb*R*nua/(min{lnn,ltt}^2*omega)
-*                 (a messure for the density perturbations along a flux
+*                 (a measure for the density perturbations along a flux
 *                  surface, should be << 1 for neoclassical theory)
 *     all of the above parameters are calculated for the charged particles
 *     only and set to zero for all neutrals
 *     wb is valid only in the Banana regime (nustar<1)
 *     deltapar is important only in the PS regime (nustar>eps^-3/2)
-*     all ratios delta are only sensible in the outboard midplane due
+*     all delta ratios are only sensible in the outboard midplane due
 *     to the one-dimensional nature of the implemented neoclassical model
 *-----------------------------------------------------------------------
 *   ..local variables

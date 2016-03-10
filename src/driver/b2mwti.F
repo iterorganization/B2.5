@@ -1992,11 +1992,11 @@ c inboard midplane quantities
       call ncaptc(ncid, dp3diid, 'long_name', NCCHAR, 48,
      1'pressure diffusion coefficient, inboard midplane', iret)
       call ncaptc(ncid, dp3diid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-      call ncaptc(ncid, lh3diid, 'long_name', NCCHAR, 48,
-     1'perp neutral heat flux limiter, inboard midplane', iret)
+      call ncaptc(ncid, lh3diid, 'long_name', NCCHAR, 50,
+     1'radial neutral heat flux limiter, inboard midplane', iret)
       call ncaptc(ncid, lh3diid, 'units', NCCHAR, 1, ' ', iret)
-      call ncaptc(ncid, ln3diid, 'long_name', NCCHAR, 48,
-     1'perp neutral part flux limiter, inboard midplane', iret)
+      call ncaptc(ncid, ln3diid, 'long_name', NCCHAR, 50,
+     1'radial neutral part flux limiter, inboard midplane', iret)
       call ncaptc(ncid, ln3diid, 'units', NCCHAR, 1, ' ', iret)
       call ncaptc(ncid, ke3diid, 'long_name', NCCHAR, 46,
      1'electron thermal diffusivity, inboard midplane', iret)
@@ -2093,11 +2093,11 @@ c outboard midplane quantities
       call ncaptc(ncid, dp3daid, 'long_name', NCCHAR, 49,
      1'pressure diffusion coefficient, outboard midplane', iret)
       call ncaptc(ncid, dp3daid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-      call ncaptc(ncid, lh3daid, 'long_name', NCCHAR, 49,
-     1'perp neutral heat flux limiter, outboard midplane', iret)
+      call ncaptc(ncid, lh3daid, 'long_name', NCCHAR, 51,
+     1'radial neutral heat flux limiter, outboard midplane', iret)
       call ncaptc(ncid, lh3daid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-      call ncaptc(ncid, ln3daid, 'long_name', NCCHAR, 49,
-     1'perp neutral part flux limiter, outboard midplane', iret)
+      call ncaptc(ncid, ln3daid, 'long_name', NCCHAR, 51,
+     1'radial neutral part flux limiter, outboard midplane', iret)
       call ncaptc(ncid, ln3daid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
       call ncaptc(ncid, ke3daid, 'long_name', NCCHAR, 47,
      1'electron thermal diffusivity, outboard midplane', iret)

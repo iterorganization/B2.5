@@ -3810,7 +3810,7 @@ c     assumes that bb is OK for 1d cases
 	  if(first_neoclassical) call initialize_neoclassical(neo_ic)
           call copy(deltab,1.0_R8,nz,textplel)
         case ('deltapar')
-          description='Ratio of perpendicular to parallel dynamics'
+          description='Ratio of radial to parallel dynamics'
           nz=ns+1
 	  if(first_neoclassical) call initialize_neoclassical(neo_ic)
           call copy(deltapar,1.0_R8,nz,textplel)
