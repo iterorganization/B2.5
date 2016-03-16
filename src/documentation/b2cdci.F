@@ -1170,7 +1170,10 @@
 *    Sput_src is the atomic number of the plasma species which causes chemical
 *    sputtering.
 *    Sput_dst (when .ge.0) is the species index of the destination species 
-*    produced by chemical sputtering or RES. This should be a Carbon species.
+*    produced by physical sputtering, chemical sputtering and/or RES. If
+*    either of the latter two processes are included, the production chemical
+*    sputtering and RES rate calculations provided in the code assume that
+*    sput_dst points to a Carbon species.
 *    Sput_dst2 and sput_dst3 (when .ge.0) represent other species produced by
 *    wall interactions for mixed materials scenarios.
 *    Sput_frac_flag is the switch to turn on mixed materials scenarios (when
