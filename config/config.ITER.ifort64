@@ -20,7 +20,13 @@ FC         = mpif90
 MPI_CPP   ?= `pkg-config mpich2-ch3 --cflags`
 LD_MPI    ?= `pkg-config mpich2-ch3 --libs`
 else
-FC         = ifort
+ifdef USE_IMPGYRO
+FC 		= mpif90
+MPI_CPP        ?= `pkg-config mpich2-ch3 --cflags`
+LD_MPI         ?= `pkg-config mpich2-ch3 --libs`
+else
+FC              = ifort
+endif
 endif
 
 
@@ -28,23 +34,22 @@ ifdef SOLPS_DEBUG
 ifdef USE_MPI
 FCOPTS     = -g -C -traceback ${MPI_CPP}
 else
+ifdef USE_IMPGYRO
+FCOPTS     = -g -C -traceback ${MPI_CPP}
+else
 FCOPTS     = -g -C -debug all -traceback -check all
+endif
 endif
 else
 ifdef USE_MPI
 FCOPTS     = -O2 -vec_report0 ${MPI_CPP}
 else
+ifdef USE_IMPGYRO
+FCOPTS     = -O2 -vec_report0 ${MPI_CPP}
+else
 FCOPTS     = -O2 -vec_report0
 endif
 endif
-
-ifdef USE_IMPGYRO
-FC         = mpif90
-MPI_CPP   ?= `pkg-config mpich --cflags`
-LD_MPI    ?= `pkg-config mpich --libs`
-FCOPTS     = -O2 -vec_report0 ${MPI_CPP}
-else
-FC         = ifort
 endif
 
 DBLFC      = ${FC}
@@ -72,12 +77,11 @@ LD         = ${FC}
 ifdef USE_MPI
 LDOPTS     = -i_dynamic ${LD_MPI}
 else
-LDOPTS     = -i_dynamic
-endif
 ifdef USE_IMPGYRO
 LDOPTS     = -i_dynamic ${LD_MPI}
 else
 LDOPTS     = -i_dynamic
+endif
 endif
 
 LCPP       = ${LD_SONNET}
