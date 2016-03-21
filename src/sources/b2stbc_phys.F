@@ -2781,7 +2781,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
           IF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               IF(MOMPAR(IS,IB,2).LT.0.5_R8) THEN
-                CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))  !srv 01.02.09
+                CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)) !srv 01.02.09
                 UUOUT=MOMPAR(IS,IB,1)*CS*
      .           abs(wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
      .               wbbr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3))
@@ -2805,7 +2806,8 @@ cxpb  and max(,,) statement for stability
                 ZARG=(GAMMAI*bcint(ti,nx,ny,iy,ib)
      .           +bcint(rz2(-1,-1,is),nx,ny,iy,ib)*ZBAR
      .           *bcint(TE,nx,ny,IY,IB))/(AM(IS)*mp)
-                CS=SQRT(ZARG)
+                CS=SQRT(ZARG)*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
                 UUTEST=
      .           ua(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .              RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),IS)*
@@ -2851,7 +2853,8 @@ cxpb  and max(,,) statement for stability
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
               IF(MOMPAR(IS,IB,2).LT.0.5_R8) THEN
-                CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB)) !srv 01.02.09
+                CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)) !srv 01.02.09
                 UUOUT=MOMPAR(IS,IB,1)*CS*
      .           abs(wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/
      .               wbbl(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),3))
@@ -2875,7 +2878,8 @@ cxpb  and max(,,) statement for stability
                 ZARG=(GAMMAI*bcint(ti,nx,ny,iy,ib)
      .           +bcint(rz2(-1,-1,is),nx,ny,iy,ib)*ZBAR
      .           *bcint(TE,nx,ny,IY,IB))/(AM(IS)*mp)
-                CS=SQRT(ZARG)
+                CS=SQRT(ZARG)*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
                 UUTEST=
      .           ua(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .              LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),IS)*
@@ -3697,7 +3701,8 @@ cxpb  and max(,,) statement for stability
               CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))  !srv 01.02.09
               UUOUT=abs(wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .                  wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),3))*
-     .         MOMPAR(ismain,IB,1)*CS
+     .         MOMPAR(ismain,IB,1)*CS*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))
               if(fix_fch_in_fhe_sheath.eq.0) then
                 NUEOUT=MIN(0.0_R8,-UUOUT*bcint(NE,nx,ny,IY,IB) -
      .           fch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/QE)
@@ -3744,6 +3749,7 @@ cxpb  and max(,,) statement for stability
      .         RIGHTIY(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .                 RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
                   UUOUT=MAX( MOMPAR(IS,IB,1)*CS*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      .             abs(wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .                 wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),3)),
      .             -UUTEST)
@@ -3804,6 +3810,7 @@ cxpb  and max(,,) statement for stability
             IF(MOMPAR(ismain,IB,2).LT.0.5_R8) THEN
               CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))  !srv 01.02.09
               UUOUT=MOMPAR(ismain,IB,1)*CS*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      .         abs(wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .             wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),3))
               if(fix_fch_in_fhe_sheath.eq.0) then
@@ -3852,6 +3859,7 @@ cxpb  and max(,,) statement for stability
      .          LEFTIY(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
                   UUOUT=MAX( MOMPAR(IS,IB,1)*CS*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      .             abs(wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .                 wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),3)),
      .             +UUTEST)
@@ -5700,6 +5708,7 @@ cghgh
             IF(MOMPAR(ismain,IB,2).LT.0.5_R8) THEN
               CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))  !srv 01.02.09
               UUOUT=MOMPAR(ismain,IB,1)*CS*
+     .         SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      .         abs(wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .             wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),3))
               DO IS=0,NS-1
@@ -5748,6 +5757,7 @@ cghgh
      .         RIGHTIY(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .                 RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
                   UUOUT=MAX(MOMPAR(IS,IB,1)*CS*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      .             abs(wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .                 wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),3)),
      .             -UUTEST)
@@ -5778,6 +5788,7 @@ cghgh
             IF(MOMPAR(ismain,IB,2).LT.0.5_R8) THEN
               CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))  !srv 01.02.09
               UUOUT=MOMPAR(ismain,IB,1)*CS*
+     .         SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      .         abs(wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .             wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),3))
               DO IS=0,NS-1
@@ -5828,6 +5839,7 @@ cghgh
      .          LEFTIY(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .                 LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
                   UUOUT=MAX(MOMPAR(IS,IB,1)*CS*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      .             abs(wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .                 wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),3)),
      .             UUTEST)
@@ -6613,6 +6625,7 @@ cxpb          endif
      .       RIGHTIY(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
                 UUOUT=MAX(MOMPAR(IS,IB,1)*CS*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      .           abs(wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .               wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),3)),
      .           -UUTEST)
@@ -6652,6 +6665,7 @@ cxpb          endif
      .            LEFTIY(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .                   LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
                 UUOUT=MAX(MOMPAR(IS,IB,1)*CS*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      .           abs(wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .               wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),3)),
      .           UUTEST)
@@ -7364,43 +7378,43 @@ cxpb Careful here because of BC number clash
         endif
         IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
-          t0 = 0.0_R8
+            t0 = 0.0_R8
             do is = 0, ns-1
-            if(.not.is_neutral(is)) then                            !srv 19.03.09 {
+              if(.not.is_neutral(is)) then                            !srv 19.03.09 {
                 csb = sqrt((rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
      &                       te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
      &                       ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
      &                     (am(is)*mp))
-              t0 = t0 + csb*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
+                t0 = t0 + csb*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
               endif                                                   !srv 19.03.09 }
             enddo
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=VBIG*NE00*EV*
+            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= VBIG*NE00*EV*
      &       CHCI(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &            TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)*
      &         TI(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &            TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=- VBIG*NE00*EV*
+            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-VBIG*NE00*EV*
      &       (CHCI(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &             TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)-
      &       ENIPAR(IB,1)*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*T0)
           ENDDO
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
-          t0 = 0.0_R8
+            t0 = 0.0_R8
             do is = 0, ns-1
-            if(.not.is_neutral(is)) then                            !srv 19.03.09 {
+              if(.not.is_neutral(is)) then                            !srv 19.03.09 {
                 csb = sqrt((rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
      &                       te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
      &                       ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
      &                     (am(is)*mp))
-              t0 = t0 + csb*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
+                t0 = t0 + csb*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
               endif                                                   !srv 19.03.09 }
             enddo
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=VBIG*NE00*EV*
+            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= VBIG*NE00*EV*
      &       CHCI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)*
      &       TI(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=- VBIG*NE00*EV*
+            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-VBIG*NE00*EV*
      &       (CHCI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-ENIPAR(IB,1)*   !srv 02.02.11
      &        SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &           BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))*T0)
@@ -8339,6 +8353,7 @@ c              fchi=0.0_R8
               if(istyle_fchi.eq.1 .and. BCCON(IS,IB).eq.14) then        !srv 14.02.05 {
                 t0 = t0-rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
      *           CONPAR(IS,IB,1)*cs*s1*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      *           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
               else
                 t0 = t0-rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
@@ -8451,6 +8466,7 @@ c              fchi=0.0_R8
 *    ..set boundary condition in explicit form (the same form as fna)
                 t0 = t0-rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
      &           CONPAR(IS,IB,1)*cs*s1*
+     .           SIGN(1.0_R8,PBS(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      &           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
               else                                                      !srv 14.02.05 {
                 t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*

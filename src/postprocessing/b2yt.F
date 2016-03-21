@@ -60,6 +60,8 @@
 *     nout(2): formatted; provides modified run switches.
 *     nout(3): formatted; provides modified transport parameters.
 *     nout(4): formatted; provides modified initial state.
+*     nout(5): formatted; provides list of modified files.
+*     nout(6): formatted; provides modified (inverted field) geometry.
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -81,7 +83,7 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:8), nout(0:5), nx1, ny1, idum(0:9)
+      integer ninp(0:8), nout(0:6), nx1, ny1, idum(0:9)
       integer io
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
@@ -91,7 +93,7 @@
       external b2ytdr, b2ytx0, ipsetc, ipgeti
 *   ..initialise input/output units
       data ninp/50,51,52,53,54,55,56,57,58/
-      data nout/60,61,62,63,64,65/
+      data nout/60,61,62,63,64,65,66/
 
 *-----------------------------------------------------------------------
 *.documentation-internal

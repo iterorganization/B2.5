@@ -820,7 +820,7 @@
 *   applies to neutrals. The density boundary condition is based on the
 *   difference between the average pressure and the local pressure.
 *  VACUUM_COMMUNICATION_NREG - Integer array of size (NVAC). Defaults to 0.
-*   Number of communicating vacuum regions .
+*   Number of communicating vacuum regions.
 *  VACUUM_COMMUNICATION_METHOD - Integer array of size (NVAC). Defaults to 0.
 *   Option for resorbing the pressure difference.
 *   1: Try to set a flux. Corr = (beta*ave_pressure - pressure)/temp * alpha

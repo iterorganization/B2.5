@@ -66,7 +66,7 @@ c 2002-09-11: logic revised
 #endif
 
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:8), nout(0:5), nx1, ny1
+      integer ninp(0:8), nout(0:6), nx1, ny1
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
@@ -113,6 +113,7 @@ c 2002-09-11: logic revised
 *     nout(3): formatted; provides modified transport parameters.
 *     nout(4): formatted; provides modified initial state.
 *     nout(5): formatted; provides the list of new modified files.
+*     nout(6): formatted; provides modified (inverted field) geometry.
 *
 *     nx, ny - integer, input.
 *     nx and ny specify the number of interior cells along the first
@@ -159,12 +160,14 @@ c 2002-09-11: logic revised
       integer scaling_ix_begin, scaling_ix_end
       integer elm_ix_begin, elm_ix_end
       integer ndim, ndm2, nfitanf, nfitend, ifail
+      integer invert_bpol, invert_btor
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120,
      .          ligne*120
       character id0*8
       character*8 eirene_format
       character*4 solps_version
       data eirene_format / 'iter' /, solps_version / 'iter' /
+      data invert_bpol/0/, invert_btor/0/
       character*10 :: b2fgmtry_oldversion, b2fgmtry_newversion
       data b2fgmtry_oldversion / '00.000.000' /
       character tab
@@ -614,7 +617,8 @@ c 2002-09-11: logic revised
      &             1.le.ninp(6).and.1.le.ninp(7).and.1.le.ninp(8),
      &             'faulty argument ninp')
       call xertst (1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2).and.
-     &             1.le.nout(3).and.1.le.nout(4).and.1.le.nout(5),
+     &             1.le.nout(3).and.1.le.nout(4).and.1.le.nout(5).and.
+     &             1.le.nout(6),
      &             'faulty argument nout')
 *   ..test dimensions
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -653,6 +657,12 @@ c 2002-09-11: logic revised
        goto 3
     4  continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
+      call ipgeti ('invert_bpol', invert_bpol)
+      call ipgeti ('invert_btor', invert_btor)
+      if (invert_bpol.eq.1)
+     > write(*,*) 'Inverting the poloidal field component'
+      if (invert_btor.eq.1)
+     > write(*,*) 'Inverting the toroidal field component'
 #ifdef B25_EIRENE
       call ipgetc ('eirene_format', eirene_format)
       write(*,*) 'Eirene input.dat format entered : ', eirene_format
@@ -749,6 +759,7 @@ c 2002-09-11: logic revised
       call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      1  b2fstate_version)
+      if (invert_bpol) ua = -ua
 *   ..write label
       write (nout(0),'(/2x,a)') 'label for this calculation:'
       write (nout(0),'(/4x,a/4x,a)') lblmn(1:60), lblmn(61:120)
@@ -807,6 +818,28 @@ c 2002-09-11: logic revised
         call cfruin (ninp(3), 1, idum, 'isymm')
         call b2rugm (ninp(3), nx, ny, crx, cry, fpsi,
      &   ffbz, bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)
+      endif
+      if (invert_bpol.eq.1) then
+        bb(:,:,0) = -bb(:,:,0)
+        pbs(:,:,0) = -pbs(:,:,0)
+        wbbl(:,:,0) = -wbbl(:,:,0)
+        wbbr(:,:,0) = -wbbr(:,:,0)
+        wbbv(:,:,0) = -wbbv(:,:,0)
+        fpsi = -fpsi
+      end if
+      if (invert_btor.eq.1) then
+        bb(:,:,2) = -bb(:,:,2)
+        wbbl(:,:,2) = -wbbl(:,:,2)
+        wbbr(:,:,2) = -wbbr(:,:,2)
+        wbbv(:,:,2) = -wbbv(:,:,2)
+        ffbz = -ffbz
+      end if
+      if (invert_bpol.eq.1 .or. invert_btor.eq.1) then
+        write(nout(5),'(a)') 'b2fgmtry.2'
+        call cfopen (nout(6),'b2fgmtry.2','new','formatted')
+        call b2wugm (nout(6), nx, ny, crx, cry, fpsi,
+     &   ffbz, bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)
+        close(nout(6))
       endif
       call get_jsep(nx,ny,jxi,jxa,jsep)
       call get_nxt(nx,nxtl,nxtr)
@@ -909,6 +942,7 @@ c 2002-09-11: logic revised
       eb2spcr1=-1
       b2espcr1=-1
 *   ..compute new state
+      if (invert_bpol.eq.1) ua = -ua
       call b2xtps (nx, ny, ns, nx1, ny1, ns1, nncutmax,
      &    non_commensurate,
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
@@ -1644,6 +1678,15 @@ c 2002-09-11: logic revised
             ib1 = ib1+1
           end do
           do is = 0, ns1-1
+            if (invert_bpol.eq.1) then
+              if (bcmom(is,ib).eq. 1) mompar(is,ib,1)=-mompar(is,ib,1)
+              if (bcmom(is,ib).eq. 2) mompar(is,ib,1)=-mompar(is,ib,1)
+              if (bcmom(is,ib).eq. 4) mompar(is,ib,1)=-mompar(is,ib,1)
+              if (bcmom(is,ib).eq. 5) mompar(is,ib,1)=-mompar(is,ib,1)
+              if (bcmom(is,ib).eq. 9) mompar(is,ib,1)=-mompar(is,ib,1)
+              if (bcmom(is,ib).eq.15) mompar(is,ib,1)=-mompar(is,ib,1)
+              if (bcmom(is,ib).eq.16) mompar(is,ib,1)=-mompar(is,ib,1)
+            end if
             if (bccon(is,ib).eq.1 .and. bcene(ib).eq.9) bcene(ib)=19
             if (bccon(is,ib).eq.1 .and. bceni(ib).eq.9) bceni(ib)=19
             if (bccon(is,ib).eq.21 .and.
@@ -6936,6 +6979,8 @@ C  SKIP READING REST OF THIS BLOCK
           if (idum(6).eq.0) idum(6)=1
           if (idum(7).eq.0) idum(7)=1
           if (idum(8).eq.0) idum(8)=1
+          if (invert_bpol.eq.1) idum(7)=-1
+          if (invert_btor.eq.1) idum(8)=-1
           WRITE(IUNOT,'(9I6)') idum(0:8)
           allocate(IFLB1(NPLSI1),FCTE1(NPLSI1),BMASS1(NPLSI1),
      .             LKINDP1(NPLSI1))
