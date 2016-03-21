@@ -299,8 +299,9 @@ csw
       call dealloc_anomalous_transport
       call dealloc_b2mod_neutr_src_scaling
       call prgend ()
-csw 28feb2011 mpi
+
 #ifdef USE_MPI
+csw 28feb2011 mpi
 #ifdef B25_EIRENE
       ltrigger=.false.
       call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,
@@ -311,12 +312,8 @@ csw 28feb2011 mpi
 csw
 #else
 #ifdef USE_IMPGYRO
-      ltrigger=.false.
-      call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,
-     .                   MPI_COMM_WORLD,ierr_mpi)
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)
       call mpi_finalize(ierr_mpi)
-csw
 #endif
 #endif
       stop 'b2mn'
