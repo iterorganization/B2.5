@@ -190,7 +190,8 @@ cxpb Must convert fluxes to flux densities
               na0(ix,iy,is) = na(ix,iy,is) + dab2(ix+1,iy+1,is0,1)
               ti0(ix,iy) = ti0(ix,iy) + 
      .         dab2(ix+1,iy+1,is0,1)*tab2(ix+1,iy+1,is0,1)
-              ua0(ix,iy,is) = (ua(ix,iy,is)*na(ix,iy,is) + 
+              ua0(ix,iy,is) = (ua(ix,iy,is)*na(ix,iy,is)*
+     .         sign(1.0_R8,pbs(ix,iy,0)) + 
      .         ua_tmp*dab2(ix+1,iy+1,is0,1))/
      .         na0(ix,iy,is)
               fna0(ix,iy,0,is) = 
@@ -205,7 +206,7 @@ cxpb Must convert fluxes to flux densities
           end do
         else
           na0(:,:,is) = na(:,:,is)
-          ua0(:,:,is) = ua(:,:,is)
+          ua0(:,:,is) = ua(:,:,is)*sign(1.0_R8,pbs(:,:,0))
           fna0(:,:,0,is) = fna(:,:,0,is)/gs(:,:,0)/qc(:,:)
           fna0(:,:,1,is) = fna(:,:,1,is)/gs(:,:,1)
         end if
@@ -334,7 +335,8 @@ cxpb Computing ua from fa is what we really want to do
 cxpb
           ue_ext(-1:nx,-1:ny) = ue_ext(-1:nx,-1:ny) +
      .     za_ext(-1:nx,-1:ny,is) * ua_ext(-1:nx,-1:ny,is) *
-     .     na_ext(-1:nx,-1:ny,is)
+     .     na_ext(-1:nx,-1:ny,is) *
+     .     sign(1.0_R8,pbs(-1:nx,-1:ny,0))
         end do
         do ix = -1, nx
           do iy = -1, ny
@@ -376,7 +378,8 @@ cxpb
 *  ...parallel momentum sources
               vthe=sqrt(te(ix,iy)/me)
               vthe=vthe/sqrt(am(is)*mp/me)
-              t0 = smo_ext(ix,iy,is)
+              t0 = smo_ext(ix,iy,is)*
+     .         sign(1.0_R8,pbs(ix,iy,0))
               smo0(ix,iy,0,is) = smo0(ix,iy,0,is)+
      .         t0+linearisation*abs(t0)*ua(ix,iy,is)/vthe
               smo0(ix,iy,1,is) = smo0(ix,iy,1,is)-
@@ -431,7 +434,8 @@ cxpb
 *  ...raw sources: no linearisation
             sne0(ix,iy,0) = sne_ext(ix,iy)
             sna0(ix,iy,0,0:ns-1) = sna_ext(ix,iy,0:ns-1)
-            smo0(ix,iy,0,0:ns-1) = smo_ext(ix,iy,0:ns-1)
+            smo0(ix,iy,0,0:ns-1) = smo_ext(ix,iy,0:ns-1)*
+     .         sign(1.0_R8,pbs(ix,iy,0))
             she0(ix,iy,0) = she_ext(ix,iy)
             sch0(ix,iy,0) = sch_ext(ix,iy)
             shi0(ix,iy,0) = shi_ext(ix,iy)
