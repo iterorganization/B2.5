@@ -275,20 +275,17 @@ cxpb Computing ua from fa is what we really want to do
             do ix=-1,nxd
               if (leftix(ix,iy).ne.-2.and.rightix(ix,iy).ne.nxd+1) then
                 ua_ext(ix,iy,is) = 0.5_R8*
-     .            sign(1.0_R8,pbs(ix,iy,0))*
      .           (fa_ext(ix,iy,0,is)/pbs(ix,iy,0)+
      .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,is)/
      .            pbs(rightix(ix,iy),rightiy(ix,iy),0))/
      .           na_ext(ix,iy,is)
               else if (leftix(ix,iy).eq.-2) then
                 ua_ext(ix,iy,is) = 
-     .            sign(1.0_R8,pbs(ix,iy,0))*
      .            fa_ext(rightix(ix,iy),rightiy(ix,iy),0,is)/
      .            pbs(rightix(ix,iy),rightiy(ix,iy),0)/
      .            na_ext(ix,iy,is)
               else if (rightix(ix,iy).eq.nxd+1) then
                 ua_ext(ix,iy,is) = 
-     .            sign(1.0_R8,pbs(ix,iy,0))*
      .            fa_ext(ix,iy,0,is)/pbs(ix,iy,0)/na_ext(ix,iy,is)
               end if
             end do

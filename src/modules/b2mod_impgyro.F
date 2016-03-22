@@ -264,18 +264,18 @@ cxpb Computing ua from fa is what we really want to do
      .           ((na_ext(ix,iy,is)+
      .           na_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8)*
      .           pbs(ix,iy,0)
-                 fhi_ext(ix,iy,0) = fhi_ext(ix,iy,0) +
-     .            1.5_R8*fa_ext(ix,iy,0,is)*(ta_ext(ix,iy,is)+
-     .            ta_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
-               else
-                 fa_ext(ix,iy,0,is)=0.0_R8
-               endif
+                fhi_ext(ix,iy,0) = fhi_ext(ix,iy,0) +
+     .           1.5_R8*fa_ext(ix,iy,0,is)*(ta_ext(ix,iy,is)+
+     .           ta_ext(leftix(ix,iy),leftiy(ix,iy),is))/2.0_R8
+              else
+                fa_ext(ix,iy,0,is)=0.0_R8
+              endif
             enddo
           enddo
           fa_ext(:,:,1,:) = 0.0_R8
         endif
 cxpb
-          ue_ext(-1:nxd,-1:nyd) = ue_ext(-1:nxd,-1:nyd) +
+        ue_ext(-1:nxd,-1:nyd) = ue_ext(-1:nxd,-1:nyd) +
      .     za_ext(-1:nxd,-1:nyd,is) * ua_ext(-1:nxd,-1:nyd,is) *
      .     na_ext(-1:nxd,-1:nyd,is)
         end do
@@ -294,7 +294,7 @@ cxpb
       end subroutine impgyro_init
 
       subroutine impgyro_main (nx,ny,ns,ns_ext,
-     &  na,ne,ua,te,ti,po,
+     &  pbs,na,ne,ua,te,ti,po,
      &  fna,fhe,fhi,fch,
      &  sna_ext,sne_ext,smo_ext,she_ext,shi_ext,sch_ext,
      &  na_ext,ua_ext,ta_ext)
@@ -302,6 +302,7 @@ cxpb
       integer,intent(in)::nx,ny,ns,ns_ext
 
       real(8),intent(in)::
+     &  pbs(-1:nx,-1:ny,0:1),
      &  na (-1:nx,-1:ny,0:ns-1),
      &  ne (-1:nx,-1:ny),
      &  ua (-1:nx,-1:ny,0:ns-1),
@@ -346,8 +347,7 @@ cxpb
      &  mpi_comm_world, mpi_err)
       call mpi_bcast (fna, size (fna), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)
-#endif
-
+#else
 #ifdef USE_IMPGYRO
       write (*,*) 'b2ig: impgyro_main...flag=IG'
       call mpi_bcast (last, 1, mpi_logical , 0,
@@ -367,9 +367,9 @@ cxpb
       call mpi_bcast (fna, size (fna), mpi_real8, 0,
      &  mpi_comm_world, mpi_err)
 #endif
+#endif
 
       write (*,*) 'b2ig: running impgyro ...'
-
 
 #ifdef USE_MPI
       if (mpi_rank.eq.0)then
@@ -388,8 +388,7 @@ cxpb
       call mpi_recv (b2ztw, size(b2ztw), mpi_real8, 1, 0,
      &  mpi_comm_world, mpi_stat, mpi_err)
       end if
-#endif
-
+#else
 #ifdef USE_IMPGYRO
       if (mpi_rank.eq.0)then
       call mpi_recv (ep_ir, size(ep_ir), mpi_real8, 1, 0,
@@ -419,13 +418,15 @@ cxpb
       write (*,*) 'b2ig: Every external specie information set to zero.'
       write (*,*) 'b2ig: You may have forgotten set_ig option!'
 #endif
+#endif
 
       sna_ext = 0
 
       do is =0,ns-1
         do iy =0,ny-1
           do ix =0,nx-1
-            smo_ext (ix,iy,is) = im_cc (ix,iy,is)
+            smo_ext (ix,iy,is) = im_cc (ix,iy,is)*
+     .       sign(1.0_R8,pbs(ix,iy,0))
           end do
         end do
       end do
@@ -444,7 +445,8 @@ cxpb
         do iy = 0 , ny - 1
           do ix = 0 , nx - 1
             na_ext (ix,iy,is) = b2znw (is,ix,iy)
-            ua_ext (ix,iy,is) = b2zfw (is,ix,iy)
+            ua_ext (ix,iy,is) = b2zfw (is,ix,iy)*
+     .       sign(1.0_R8,pbs(ix,iy,0))
             ta_ext (ix,iy,is) = b2ztw (is,ix,iy)
           end do
         end do
@@ -477,10 +479,11 @@ cxpb
 #ifdef USE_MPI
       call mpi_bcast ( last , 1 , mpi_logical , 0 ,
      &     mpi_comm_world , mpi_err )
-#endif
+#else
 #ifdef USE_IMPGYRO
       call mpi_bcast ( last , 1 , mpi_logical , 0 ,
      &     mpi_comm_world , mpi_err )
+#endif
 #endif
 
       call my_open_file ( fd , 'restart_ext' )

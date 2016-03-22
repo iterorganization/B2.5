@@ -21,11 +21,11 @@ MPI_CPP   ?= `pkg-config mpich2-ch3 --cflags`
 LD_MPI    ?= `pkg-config mpich2-ch3 --libs`
 else
 ifdef USE_IMPGYRO
-FC 		= mpif90
-MPI_CPP        ?= `pkg-config mpich2-ch3 --cflags`
-LD_MPI         ?= `pkg-config mpich2-ch3 --libs`
+FC 	   = mpif90
+MPI_CPP   ?= `pkg-config mpich2-ch3 --cflags`
+LD_MPI    ?= `pkg-config mpich2-ch3 --libs`
 else
-FC              = ifort
+FC         = ifort
 endif
 endif
 
