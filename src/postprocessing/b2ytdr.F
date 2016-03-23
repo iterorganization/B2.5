@@ -3103,7 +3103,7 @@ cxpb  Start reading input.dat file
             ldum(13) = .true.
           ELSE
             READ (IUNIN,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,NLIDENT,NLONE,LTSTV,NLDFST,
+                                         ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
                                          ! NLOLDRAN,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
                                          ! NLTRIMESH
             IF (streql(eirene_format,'old') .or.
@@ -3125,7 +3125,7 @@ cxpb  Start reading input.dat file
             ldum(13) = .false.
           ELSE
             READ (ZEILE,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
-                                         ! NLERG,NLIDENT,NLONE,LTSTV,NLDFST,
+                                         ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
                                          ! NLOLDRAN,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
                                          ! NLTRIMESH
             IF (streql(eirene_format,'old') .or.
@@ -3267,11 +3267,20 @@ C  RADIAL MESH
 213           CONTINUE
             ENDIF
           ELSEIF (INDGRD(1).EQ.6) THEN
+C  IS THERE ONE MORE LINE, OR IS NLPOL THE NEXT VARIABLE
             READ (IUNIN,'(A80)') ZEILE
             WRITE(IUNOT,'(A80)') ZEILE
+            do while (zeile(1:1) == '*')
+              READ (IUNIN,'(A80)') ZEILE
+              WRITE(IUNOT,'(A80)') ZEILE
+            end do
+            IREAD = 1
             IPOS1=INDEX(ZEILE,'T')
             IPOS2=INDEX(ZEILE,'F')
-            IF (IPOS1.GT.0.OR.IPOS2.GT.0) GOTO 222
+            IF (IPOS1.GT.0.OR.IPOS2.GT.0) THEN
+              IREAD = 0
+              GOTO 222
+            ENDIF
           ENDIF
         ENDIF
 C  POLOIDAL MESH
@@ -3290,7 +3299,7 @@ C  POLOIDAL MESH
         ELSEIF (INDGRD(2).EQ.6) THEN
         ENDIF
 C  TOROIDAL MESH
-  230   READ (IUNIN,'(A80)') ZEILE
+  230   READ (IUNIN,'(A80)') ZEILE  ! NLTOR
         WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:1) .EQ. '*') GOTO 230
         READ (IUNIN,6665) ldum(0:2) ! NLTRZ,NLTRA,NLTRT
