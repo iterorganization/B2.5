@@ -657,13 +657,13 @@ c.. Make a list of core boundaries
         call xertst (0.le.bcpot(ib), 'faulty input bcpot')
       enddo
       do ib = 1, nniso
-        call xertst (-1.le.nxiso1(ib).and.nxiso1(ib).le.nx+1,
+        call xertst (-1.le.nxiso1(ib).and.nxiso1(ib).le.nx,
      .   'faulty input nxiso1')
-        call xertst (-1.le.nxiso2(ib).and.nxiso2(ib).le.nx+1,
+        call xertst (-1.le.nxiso2(ib).and.nxiso2(ib).le.nx,
      .   'faulty input nxiso2')
-        call xertst (-1.le.nyiso1(ib).and.nyiso1(ib).le.ny+1,
+        call xertst (-1.le.nyiso1(ib).and.nyiso1(ib).le.ny,
      .   'faulty input nyiso1')
-        call xertst (-1.le.nyiso2(ib).and.nyiso2(ib).le.ny+1,
+        call xertst (-1.le.nyiso2(ib).and.nyiso2(ib).le.ny,
      .   'faulty input nyiso2')
         do ix = nxiso1(ib), nxiso2(ib)
           do iy = nyiso1(ib), nyiso2(ib)
