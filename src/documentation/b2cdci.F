@@ -504,6 +504,8 @@
 *    'eirene_ua_min'            '-c'                   Numerics
 *    'eirene_underrelax'        '0'                    Numerics
 *    'eirene_use_recyceir'      '1'                    Physics
+*    'eirene_uub_style'         '0'                    Numerics
+*    'eirene_background'        '1'                    Physics
 *    'heatdiff1D_linlog'        '1'                    Numerics
 *    'heatdiff1D_ratio'         '100.0'                Numerics
 *    'ma28_nwrite'              '0'                    Output
@@ -1598,6 +1600,16 @@
 *    in b2.boundary.parameters is to be used.  This will only work for the
 *    new type 13 boundary condition.
 *
+*    'eirene_background'        '1'                    Physics
+*    If eirene_background.eq.0, the ion velocities passed to Eirene to be used
+*    for the collisions are based on grad-B and ExB drifts (vadia + vaecrb).
+*    If eirene_background.eq.1, these velocities contain the full diamagnetic
+*    and ExB drifts (wadia + vaecrb).
+*    Note: recycling fluxes are always computed based on grad-B and ExB drifts only
+*    (and are not affected by this switch), ecause diagmagnetic drift flows largely 
+*    close within the sheath.
+*    
+*
 *    'b2stel_fix_recomb_energy' '0'                    Physics 
 *    If changed to 1, then the recombination energy (rpi) is added 
 *    to the electron energy for each recombination. This should only 
@@ -1925,6 +1937,11 @@
 *    1/eirene_underrelax. 
 *    Note that only one of b2stbr_eir_src_nhist,
 *    eirene_neutr_avg, or eirene_underrelax may be nonzero.
+*
+*    'eirene_uub_style'         '0'                    Numerics
+*    If eirene_uub_style.eq.0, compute poloidal velocities passed to Eirene 
+*    from ua, vadia, wadia, vaecrb arrays. If eirene_uub_style.eq.1, compute
+*    poloidal velocities passed to Eirene from fna and fna_eir fluxes.
 *
 *    'b2news_area_fix'          '3'                    Numerics
 *    When area_fix.eq.0, recovers old SOLPS5.0 behaviour.

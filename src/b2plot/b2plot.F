@@ -188,7 +188,6 @@ c
       external ipop, rpop, spop
       real (kind=R8) ::
      *   t1,t2
-      integer, save :: background_new=0                              !srv 14.07.10
       integer it1,it2
       integer stack_req(6)
       character*256 arg
@@ -374,7 +373,6 @@ c
 
 !!!      if(safetyfactor(-1) .eq. 0.0_R8) call init_q
 
-      call ipgeti ('eirene_background_new', background_new)        !srv 14.07.10
 cxpb  This call is moved up from 'f31' so that we used the original cell-faced 
 cxpb  quantities before their mapping to cell centers
       call ipgeti ('b2tfnb_drift_style', drift_style)
@@ -392,8 +390,7 @@ cxpb  quantities before their mapping to cell centers
      1   'copy_background not called because NX>=NDXP or NY>=NDYP',
      1   nx,ndxp,ny,ndyp
       else
-        if(background_new.eq.0) call copy_background(nx, ny, ns, BoRiS)  !srv 14.07.10
-        if(background_new.ne.0) call copy_background_(nx, ny, ns, BoRiS) !srv 14.07.10
+        call copy_background(nx, ny, ns, BoRiS)
       endif
 c
       call ipgetr ('b2trcl_lambda', lambda)
@@ -1442,8 +1439,9 @@ c
           do is=0,ns-1
             do ix=-1,nx
               do iy=-1,ny
-                ww(ix,iy,is)=ua(ix,iy,is)*bb(ix,iy,2)/bb(ix,iy,3)-
-     .                  uadia(ix,iy,0,is)*bb(ix,iy,0)/bb(ix,iy,3)
+                ww(ix,iy,is)= ua(ix,iy,is)*bb(ix,iy,2)/bb(ix,iy,3) -
+     .             (vaecrb(ix,iy,0,is)+wadia(ix,iy,0,is))*
+     .             bb(ix,iy,0)/bb(ix,iy,2)
               end do
             end do
           end do

@@ -41,7 +41,6 @@ c  version : 26.07.2002 23:39
 csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
-      integer, save :: background_new=0                              !srv 14.07.10
       integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir
@@ -348,15 +347,13 @@ csw 26feb2013
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
         call ipgeti ('eirene_no_sseicorr', no_sseicorr)
-        call ipgeti ('eirene_background_new', background_new)        !srv 14.07.10
       end if !}
 
       if(ncall.eq.0) then
         call write_f30(nx, ny)
       endif
       if(ncall.eq.0.or.(main_call.and.mod(ncall,eirene_mod).eq.0)) then
-        if(background_new.eq.0) call copy_background(nx,ny,ns,BoRiS)  !srv 14.07.10
-        if(background_new.ne.0) call copy_background_(nx,ny,ns,BoRiS) !srv 14.07.10
+        call copy_background(nx,ny,ns,BoRiS)
         if(ncall.eq.0.or.save_f31.ne.0) then
           call write_f31(nx, ny)
         endif
@@ -679,9 +676,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         eircount=1
         if(ncall.eq.0.and.repeat_first_call.gt.0) then
           do while (eircount.le.repeat_first_call)
-           if(background_new.eq.0) call copy_background(nx,ny,ns,BoRiS)  !srv 14.07.10
-           if(background_new.ne.0) call copy_background_(nx,ny,ns,BoRiS) !srv 14.07.10
-
+           call copy_background(nx,ny,ns,BoRiS)
 csw 25jan2011 LTIME=.false. in eirsrt call
            my_ltime=.false.
            call eirene_eirsrt(last,my_ltime,eirene_step_dt,tflux,
@@ -2450,8 +2445,7 @@ C           call xerrab ('eirene_mc: bccon <> 13')
         call write_b2mod_neutrals_save(99,'    ')
         call dealloc_b2mod_neutrals_save
       end if
-      if(background_new.eq.0) call copy_background(nx, ny, ns, BoRiS)  !srv 14.07.10
-      if(background_new.ne.0) call copy_background_(nx, ny, ns, BoRiS) !srv 14.07.10
+      call copy_background(nx, ny, ns, BoRiS)
       call write_f30(nx, ny)
       call write_f31(nx, ny)
 csw 26jan2011

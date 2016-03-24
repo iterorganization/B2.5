@@ -150,7 +150,6 @@
       integer nscx, iscx(0:nscxmax-1), k, idum(0:9)
       save nscx, iscx, isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
-      integer, save :: background_new = 0                            !srv 01.03.10 14.07.10
       integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
       integer, save :: pot_eq = 1
       integer, save :: guard_flows = 2
@@ -1044,7 +1043,6 @@ c     &   'faulty internal parameter density_rescale')
        call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('eirene_savef30', save_f30)                    !srv 01.03.10
        call ipgeti ('eirene_savef31', save_f31)                    !srv 01.03.10
-       call ipgeti ('eirene_background_new', background_new)       !srv 14.07.10
        call ipgetr ('b2mndr_rescale_neutrals',neutral_rescale)
        call ipgetr ('b2mndr_rescale_neutrals_sources',
      *       neutral_sources_rescale)
@@ -2008,8 +2006,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       if (use_eirene.eq.0) then
        if (save_f30.ne.0) call write_f30(nx, ny)
        if (save_f31.ne.0) then
-        if(background_new.eq.0) call copy_background(nx, ny, ns, BoRiS)
-        if(background_new.ne.0) call copy_background_(nx, ny, ns, BoRiS)
+        call copy_background(nx, ny, ns, BoRiS)
         call write_f31(nx, ny)
        end if
       end if

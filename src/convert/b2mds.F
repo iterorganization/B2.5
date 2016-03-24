@@ -76,7 +76,6 @@ c
      3   div_fhet(-1:nxd,-1:nyd), div_fhit(-1:nxd,-1:nyd),
      4   div_fch(-1:nxd,-1:nyd), div_fhj(-1:nxd,-1:nyd)
 
-      integer, save :: background_new=0                              !srv 14.07.10
       integer ispecies(0:nsd_local-1)
 
       integer is,iss,isp,nfla
@@ -243,7 +242,6 @@ c
       textdrift(0)='Diamagnetic'
       textdrift(1)='Radial'
 
-      call ipgeti ('eirene_background_new', background_new)        !srv 14.07.10
 cxpb  This call is moved up from 'f31' so that we use the original cell-faced
 cxpb  quantities before their mapping to cell centers
       call b2xpni (nx, ny, ns, na, ni)
@@ -260,8 +258,7 @@ cxpb  quantities before their mapping to cell centers
      1   'copy_background not called because NX>=NDXP or NY>=NDYP',
      1   nx,ndxp,ny,ndyp
       else
-        if(background_new.eq.0) call copy_background(nx,ny,ns,BoRiS)  !srv 14.07.10
-        if(background_new.ne.0) call copy_background_(nx,ny,ns,BoRiS) !srv 14.07.10
+        call copy_background(nx,ny,ns,BoRiS)
       endif
 c
       call initialise_potentials(ns)
