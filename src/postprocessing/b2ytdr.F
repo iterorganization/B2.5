@@ -759,7 +759,7 @@ c 2002-09-11: logic revised
       call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      1  b2fstate_version)
-      if (invert_bpol) ua = -ua
+      if (invert_bpol .eq. 1) ua = -ua
 *   ..write label
       write (nout(0),'(/2x,a)') 'label for this calculation:'
       write (nout(0),'(/4x,a/4x,a)') lblmn(1:60), lblmn(61:120)
