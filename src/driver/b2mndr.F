@@ -17,6 +17,7 @@
       use b2mod_geo_corner
       use b2mod_time
       use b2mod_diag
+      use b2mod_work
       use b2mod_elements
       use b2mod_feedback
       use b2mod_sputter
