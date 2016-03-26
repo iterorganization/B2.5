@@ -31,6 +31,7 @@
       use b2mod_neutr_src_scaling
       use b2mod_neutrals_namelist
       use b2mod_transport_namelist
+      use b2mod_anomalous_transport
       use b2mod_transport_disruption
       use b2mod_b2cmfs
       use b2mod_b2cmgs
@@ -146,17 +147,19 @@
       integer ncall, ntim, mvinc, mvnum, ix, iy, is, js, jsep, jxi, jxa,
      &  ib, isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       integer nscx, iscx(0:nscxmax-1), k, idum(0:9)
-      save nscx, iscx, isfb, 
+      save nscx, iscx, isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       integer, save :: background_new = 0                            !srv 01.03.10 14.07.10
       integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
       integer, save :: pot_eq = 1
+      integer, save :: guard_flows = 2
+      integer, save :: anomalous_core_only = 0
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
      &  b2mndr_cpu, cpuval, cpustart, cpuinit,
      &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
-     &  density_rescale, BoRiS, ne_wanted, 
+     &  density_rescale, BoRiS, ne_wanted,
      &  ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, factor,
      &  ixfb, iyfb, ax, ay
       save ne_wanted, ne_wanted_time, ne_wanted_next_time,
@@ -167,7 +170,7 @@
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current
       real (kind=R8) ::
-     *  cputarget, cpuincrement, neutral_rescale, 
+     *  cputarget, cpuincrement, neutral_rescale,
      *  neutral_sources_rescale,
      1  na_eps, te_eps, ti_eps, po_eps, ua_eps, sput_frc, sput_phys,
      2  delta_min, dt_change_inc, delta_max, dt_change_dec,
@@ -201,7 +204,7 @@
       logical quit_residual, test_residual
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
-      real (kind=R8) :: 
+      real (kind=R8) ::
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1),
@@ -209,19 +212,21 @@
      *  rpt0(-1:nx,-1:ny,0:ns-1), rpi0(-1:nx,-1:ny,0:ns-1),
      1  rescale_sa(0:nsdecl-1), rescale_ra(0:nsdecl-1),
      2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
-     3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
+     3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1),
+     *  pz(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),
+     *  vsal(-1:nx,-1:ny,0:1,0:ns-1)
       integer atomic_physics_rescale_flag
-      real (kind=R8) :: hzconst                                      !srv 30.01.10 
+      real (kind=R8) :: hzconst                                      !srv 30.01.10
 *   ..procedures
       logical lnext
       real (kind=R8) ::
      *  x05baf, epoch_seconds, rratio
       external x05baf, epoch_seconds, rratio
       intrinsic mod, abs, sqrt
-      external subini, subend, xertst, xerrab, ipgeti, ipgetr, 
+      external subini, subend, xertst, xerrab, ipgeti, ipgetr,
      &  cfrure, cfwure, b2scopy
       external b2rugm, b2rups, b2wfgm, b2wfpi, b2wups, b2mnds, b2mndt,
-     &  b2mwmv, b2mxnp, b2mxnu, 
+     &  b2mwmv, b2mxnp, b2mxnu,
      &  my_intcor, b2stbc_fb_final, b2spel, b2sqel, b2xvps, b2xvsg
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
@@ -232,7 +237,7 @@
      3  natmi, neutral_rescale, neutral_sources_rescale, tally,
      4  use_astra, BoRiS, density_rescale,
      .  na_eps, te_eps, ti_eps, po_eps, ua_eps,
-     5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max, 
+     5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
      6  dt_change_dec, no_solve, dt_min, dt_max, no_current,
      7  save_f30, save_f31, te_hot, ne_hot_frac, external_species,
      8  b2mndr_elapsed
@@ -246,7 +251,7 @@
      & rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      & rescale_rd, rescale_br
       data ncall/0/, ntim/1/, mvinc/1/, mvnum/0/, dtim/1.0_R8/,
-     1     stim/0.0_R8/, etim/0.0_R8/, ismain/1/, ismain0/0/, 
+     1     stim/0.0_R8/, etim/0.0_R8/, ismain/1/, ismain0/0/,
      2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/, use_astra/0/
       data idout0/'pgnl;pgmm;pzmm'/, idout1/'pzmm'/
       data na_new/1.0e14_R8/, na_min/1.0e4_R8/, b2mndr_cpu/0.0_R8/,
@@ -255,7 +260,7 @@
       data savefile/'plasmastate.xxxx'/,
      1     cpuincrement/3600.0_R8/, savefilestatus/'new'/, b2time/1/,
      2     coronal/0/, use_eirene/0/, neutral_rescale/1.0_R8/,
-     *     neutral_sources_rescale/1.0_R8/, tally/1/, 
+     *     neutral_sources_rescale/1.0_R8/, tally/1/,
      1     density_rescale/1.0_R8/, sput_frc/0.0_R8/, sput_phys/0.0_R8/,
      *     no_solve/0/, no_current/0/,
      2     na_eps/1.0e19_R8/,
@@ -263,9 +268,9 @@
      4     ti_eps/1.0e+1_R8/,
      5     po_eps/1.0e+1_R8/,
      6     ua_eps/1.0e+4_R8/,
-     7     delta_min/0.0_R8/, 
-     8     dt_change_inc/1.0_R8/, 
-     9     delta_max/0.0_R8/, 
+     7     delta_min/0.0_R8/,
+     8     dt_change_inc/1.0_R8/,
+     9     delta_max/0.0_R8/,
      1     dt_change_dec/1.0_R8/,
      2     dt_min/1.0e-30_R8/,
      3     dt_max/1.0e+01_R8/,
@@ -278,7 +283,7 @@
       data delta_cdfmovie_time/0.0_R8/, save_cdfmovie_time/0.0_R8/
       data delta_plasma_time/0.0_R8/, save_plasma_time/0.0_R8/
       data min_areshe/0.0_R8/, min_areshi/0.0_R8/, min_aresco/0.0_R8/
-      data ne_wanted/0.0_R8/, ne_wanted_time/0.0_R8/, 
+      data ne_wanted/0.0_R8/, ne_wanted_time/0.0_R8/,
      &     ne_wanted_mod_time/0.0_R8/
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -332,7 +337,7 @@
 *     It will hold that 0.le.zamin(is).le.zamax(is), 0.lt.zn(is) and
 *     0.lt.am(is). It is required that neutral species not be bundled
 *     with charged species.
-*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is) 
+*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is)
 *     undefined.
 *
 *     /b2cmpb/ specifies physics parameters for boundary conditions.
@@ -548,13 +553,13 @@
 *     rtdumm is a dummy integer variable, introduced in order to obtain
 *     an even-length sequence of integer variables in the common block.
 *      rtzmin, rtzmax, rtzn - (0:rtns-1) real*8 array.
-*     For 0.le.is.lt.rtns, rtzmin(is) and rtzmax(is) specify the atomic 
+*     For 0.le.is.lt.rtns, rtzmin(is) and rtzmax(is) specify the atomic
 *     charge range, and rtzn(is) specifies the nuclear charge
-*     of atomic species (is). 
+*     of atomic species (is).
 *     The izhi(inuc)-izlo(inuc)+1 charge states for each nuclear
 *     species are taken in natural order, starting at izlo(inuc); the
 *     highest state of nuclear species (inuc) is followed by the lowest
-*     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays 
+*     state of (inuc+1). rtzmin, rtzmax and rtzn are equal to the arrays
 *     zamin, zamax and zn used elsewhere in b2.
 *      rtt - (0:rtnt) real*8 array.
 *     rtt(0:rtnt) specifies the sequence of values of the temperature
@@ -600,17 +605,17 @@
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlz2(i,j,k) specifies
 *     the effective squared charge at
 *     electron temperature rtt(i), electron density rtn(j), for the
-*     superstage k. rtlz2 has dimension e**2. 
+*     superstage k. rtlz2 has dimension e**2.
 *      rtlpt - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlpt(i,j,k) specifies
 *     the cumulative ionisation potential at
-*     electron temperature rtt(i), electron density rtn(j), 
-*     to reach superstage k. rtlpt has dimension eV. 
+*     electron temperature rtt(i), electron density rtn(j),
+*     to reach superstage k. rtlpt has dimension eV.
 *      rtlpi - (0:rtnt,0:rtnn,0:rtns-1) real*8 array.
 *     For (i,j,k) in (0:rtnt,0:rtnn,0:rtns-1), rtlpi(i,j,k) specifies
 *     the effective ionisation potential at
-*     electron temperature rtt(i), electron density rtn(j), 
-*     to reach superstage k from superstage k-1. rtlpi has dimension eV. 
+*     electron temperature rtt(i), electron density rtn(j),
+*     to reach superstage k from superstage k-1. rtlpi has dimension eV.
 *
 *     /b2cmsr/ specifies source terms from neutral gas model.
 *     (Presently empty--to be used in conjunction with a Monte Carlo
@@ -662,11 +667,11 @@
 *     It will hold that -1.lt.qz(,,0).lt.1 and 0.lt.qz(,,1).le.1.
 *
 *     qc - (-1:nx,-1:ny) real*8 array, output.
-*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where 
-*     t is the complementary angle between the x-direction of the 
+*     For (ix,iy) in (-1:nx,-1:ny), qc(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the x-direction of the
 *     (ix,iy) cell and its left face.
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
-*     geometry. 
+*     geometry.
 *     It will hold that 0.lt.qc(,).le.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array.
@@ -683,12 +688,12 @@
 *     pbs - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let pbsx(,)=pbs(,,0) and pbsy(,)=pbs(,,1).)
 *     For (ix,iy) in (-1:nx,-1:ny), pbsx(ix,iy) specifies the product
-*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic 
-*     field pitch)*(surface area), namely the parallel contact area, 
-*     on the (ix,iy) cell left and bottom faces respectively.  
-*     In the case where the grid covers the full vacuum vessel, 
+*     (bx/bb)*sx and pbsy(ix,iy) specifies (by/bb)*sy, or (magnetic
+*     field pitch)*(surface area), namely the parallel contact area,
+*     on the (ix,iy) cell left and bottom faces respectively.
+*     In the case where the grid covers the full vacuum vessel,
 *     pbsy also contains a contribution from the narrowing of the
-*     flux tube when impacting the wall structures.  
+*     flux tube when impacting the wall structures.
 *     See routine b2xgbs for the form of interpolation employed.
 *
 *     na - (-1:nx,-1:ny,0:ns-1) real*8 array.
@@ -706,7 +711,7 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadia(ix,iy,0,is) specifies
 *     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
 *     uadia(ix,iy,1,is) the radial drift velocity.
-* 
+*
 *     te - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
 *     temperature on the (ix,iy) cell. It will hold that 0.lt.te(,).
@@ -776,7 +781,7 @@
 *
 *     stim - real.
 *     stim specifies the initial time --- default 0.
-*     If set to a positive or zero value, this overwrites the time 
+*     If set to a positive or zero value, this overwrites the time
 *     value read from b2fstati.
 *     If set to a negative value, the run continues from the time
 *     read in b2fstati.
@@ -840,13 +845,15 @@
        call ipgetr ('b2mndr_stim', stim)
        call ipgetr ('b2mndr_etim', etim)
        call ipgetr ('b2news_BoRiS', BoRiS)
+       call ipgeti ('b2news_guard_flows', guard_flows)
+       call ipgeti ('b2tfnb_anomalous_core_only', anomalous_core_only)
        call ipgeti ('b2news_no_solve', no_solve)
        call xertst (-15.le.no_solve.and.no_solve.le.1,
      &   'faulty input no_solve')
-       if (no_solve.eq.1) 
+       if (no_solve.eq.1)
      >  write(6,*) 'No_solve switch activated. This is a dummy run!'
        call ipgeti ('b2mndr_ismain', ismain)
-       call xertst (0.le.ismain.and.ismain.lt.ns, 
+       call xertst (0.le.ismain.and.ismain.lt.ns,
      .  'invalid main plasma species index ismain')
        call xertst (.not.is_neutral(ismain),
      .  'invalid main plasma species ismain; must not be neutral')
@@ -862,7 +869,7 @@
        end do
        if (.not.found.and.ismain.ne.1) ismain0 = ismain
        call ipgeti ('b2mwti_ismain0', ismain0)
-       call xertst (0.le.ismain0.and.ismain0.lt.ns, 
+       call xertst (0.le.ismain0.and.ismain0.lt.ns,
      .   'invalid main neutral species index ismain0')
        call xertst (is_neutral(ismain0).or.ismain.eq.ismain0,
      .   'invalid main neutral species index ismain0')
@@ -907,7 +914,7 @@
        cputarget=cpuincrement
 #ifdef JET
        call ipgetr ('b2mndr_trantim', delta_tran_time)
-       if (delta_tran_time.gt.0.0_R8) 
+       if (delta_tran_time.gt.0.0_R8)
      >  write(*,*) 'Saving tran files every ',delta_tran_time,' seconds'
 #endif
        call ipgetr ('b2mndr_cdfmovietim', delta_cdfmovie_time)
@@ -986,7 +993,7 @@ c     &   'faulty internal parameter density_rescale')
           rescale_rd=1.0_R8
           rescale_br=1.0_R8
           open(99,file='../b2.atomic_physics_rescale.parameters')
-          write(*,*) 
+          write(*,*)
      &         'Reading ../b2.atomic_physics_rescale.parameters'
           read(99,atomic_physics_rescale)
           write(*,atomic_physics_rescale)
@@ -1048,7 +1055,7 @@ c-dpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        endif
        call ipgetr ('b2mndr_dpc_mod_rates_te_hot',te_hot)
        call ipgetr ('b2mndr_dpc_mod_rates_ne_hot_frac',ne_hot_frac)
-       if(te_hot.gt.0.0_R8.and.ne_hot_frac.gt.0.0_R8) 
+       if(te_hot.gt.0.0_R8.and.ne_hot_frac.gt.0.0_R8)
      &  call dpc_mod_rates(te_hot, ne_hot_frac)
        call ipgeti ('b2mndr_external_species', external_species)
        if (external_species.ne.0) then
@@ -1061,7 +1068,7 @@ c-dpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        nscx = 0
        do is = 0, ns-1
         if (is_neutral(is).and.nint(zn(is)).eq.1) then
-         call xertst (nscx.lt.nscxmax, 
+         call xertst (nscx.lt.nscxmax,
      1    'too many neutral hydrogen species')
          iscx(nscx) = is
          nscx = nscx+1
@@ -1082,11 +1089,11 @@ c-dpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        call ipgetr ('b2mndr_ne_wanted_mod_time', ne_wanted_mod_time)
        call xertst (0.le.isfb.and.isfb.lt.ns,
      &   'faulty internal parameter isfb')
-       call ipgetr ('b2mndr_hz', fac_hz)				               !srv 09.01.01 09.06.08 {
+       call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
        call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
-     &  'faulty parameter b2mndr_hz')					               !srv 09.01.01 09.06.08 }
+     &  'faulty parameter b2mndr_hz')                        !srv 09.01.01 09.06.08 }
 csw 09oct2012
-       call ipgeti ('b2news_poteq', pot_eq) 
+       call ipgeti ('b2news_poteq', pot_eq)
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
@@ -1101,7 +1108,7 @@ csw 09oct2012
 #ifdef USE_IMPGYRO
 *   ..call IMPGYRO
       call impgyro_init (nx, ny, ns, ismain) !yamoto
-      write(*,*) 'b2ig: set ns_ext', ns_ext 
+      write(*,*) 'b2ig: set ns_ext', ns_ext
 #endif
       if(use_eirene.ne.0) then
 #ifdef B25_EIRENE
@@ -1122,8 +1129,8 @@ csw 09oct2012
         ndy=DEF_NYD
         nfl=DEF_NFL
         natm=DEF_NATM
-	nmol=DEF_NMOL
-	nion=DEF_NION
+        nmol=DEF_NMOL
+        nion=DEF_NION
         npls=DEF_NPLS
         nlim=DEF_NLIM
         nsts=DEF_NSTS
@@ -1145,7 +1152,7 @@ csw 09oct2012
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
       CALL EIRENE_ALLOC_CCOUPL(1)
 #endif
-      
+
 *   ..read geometry and metric
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi,
      &  ffbz, bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)
@@ -1198,8 +1205,8 @@ csw 09oct2012
 *  .. calculate 1/B/B                                                    !sv
       do iy=-1,ny                                                        !sv
         do ix=-1,nx                                                      !sv
-          OnedBsq(ix,iy)=1.0_R8/bb(ix,iy,3)**2                           !sv 
-        enddo                                                            !sv 
+          OnedBsq(ix,iy)=1.0_R8/bb(ix,iy,3)**2                           !sv
+        enddo                                                            !sv
       enddo                                                              !sv
 *  .. interpolate OnedBsq for corners of cell                            !sv
       call my_intcor (nx,ny,vol,OnedBsq,OnedBsqc)                        !sv
@@ -1220,46 +1227,46 @@ c      wrk0 = hz*vol
 c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
       do iy=-1,ny                                                    !srv 11.03.08 {
         do ix=-1,nx
-	  if(leftix(ix,iy).ne.-2) then
+          if(leftix(ix,iy).ne.-2) then
             pbshz(ix,iy,0)=pbs(ix,iy,0)*
      &       (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))
      &       +hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))
-     &       /(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy)) 
+     &       /(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
           else
-	    pbshz(ix,iy,0)=0.0e0_R8 
-	  endif             
-        enddo 
-      enddo    
+            pbshz(ix,iy,0)=0.0e0_R8
+          endif
+        enddo
+      enddo
       do iy=-1,ny
         do ix=-1,nx
-	  if(bottomiy(ix,iy).ne.-2) then
+          if(bottomiy(ix,iy).ne.-2) then
             pbshz(ix,iy,1)=pbs(ix,iy,1)*
      &       (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))
      &       +hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))
-     &       /(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy)) 
+     &       /(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
           else
-	    pbshz(ix,iy,1)=0.0e0_R8 
-	  endif             
-        enddo 
+            pbshz(ix,iy,1)=0.0e0_R8
+          endif
+        enddo
       enddo                                                          !srv 11.03.08 }
-*   ..find the poloidal number of midplane cell as a number of cell with min Bz                         
+*   ..find the poloidal number of midplane cell as a number of cell with min Bz
       if(nncut.eq.2) then                                            !srv 22.05.09 {
-	nmdpl = rightcut(nncut)
-	do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
-	  if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
-	enddo
+        nmdpl = rightcut(nncut)
+        do ix = rightcut(nncut)+1, rightcut(nncut-1)-1
+          if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
+        enddo
       elseif(nncut.eq.1) then
-	nmdpl = leftcut(nncut)
-	do ix = leftcut(nncut)+1, rightcut(nncut)-1
-	  if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
-	enddo
+        nmdpl = leftcut(nncut)
+        do ix = leftcut(nncut)+1, rightcut(nncut)-1
+          if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
+        enddo
       else
-	write(*,*) ' b2mndr: nncut = ', nncut
-	nmdpl = (nx+2)/2
-	do ix = -1, nx
-	  if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
-	enddo
-      endif 
+        write(*,*) ' b2mndr: nncut = ', nncut
+        nmdpl = (nx+2)/2
+        do ix = -1, nx
+          if(abs(bb(ix,ny,2)) .lt. abs(bb(nmdpl,ny,2))) nmdpl = ix   !srv 11.01.13
+        enddo
+      endif
       write(*,"(' Number of midplane cell =',i4)") nmdpl             !srv 22.05.09 }
 *   ..compute length along y-direction                               !srv 24.04.02 {
       lengthy(:,-1) = hy(:,-1)*0.5e0_R8
@@ -1272,9 +1279,9 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
 *
       len_surf=0.0d0                                                 !srv 02.05.09 {
       do ix=-1,nx
-	do iy=1,ny
-	  len_surf(ix,iy)=len_surf(ix,iy-1)+hy(ix,iy-1)
-	enddo
+        do iy=1,ny
+          len_surf(ix,iy)=len_surf(ix,iy-1)+hy(ix,iy-1)
+        enddo
       enddo
 *
       if (nncut.gt.0) then
@@ -1288,9 +1295,9 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
 *
       do ix=-1,nx
         do iy = -1, ny-1
-          crdy_c_cell(ix,iy) = (crdy_surf(ix,iy) + 
+          crdy_c_cell(ix,iy) = (crdy_surf(ix,iy) +
      &                          crdy_surf(ix,iy+1))/2
-	enddo 
+        enddo
         iy = ny
         crdy_c_cell(ix,iy) = crdy_surf(ix,iy)
       enddo                                                          !srv 02.05.09 }
@@ -1299,10 +1306,10 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
       call b2xbzb (nx, ny, bb, vol, bzb)                             !srv 13.10.06  09.06.08 23.07.10}
 *   ..read initial state
       call b2rups (ninp(3), nx, ny, ns0, ne, na, ua, uadia, te, ti, po,
-     & fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy, 
+     & fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      & b2fstati_version)
       if(iout.ne.0) then                                             !srv 25.01.16 {
-       call my_out(70,nx,ny,ne,'b2mndr_ne')   
+       call my_out(70,nx,ny,ne,'b2mndr_ne')
        do is = 0,ns-1
         write (chns,'(i3.3)') is
         call my_out(70,nx,ny,na(-1,-1,is),'b2mndr_na'//chns)
@@ -1334,16 +1341,16 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
         enddo
       enddo                                                          !srv 25.01.16 }
 *   ..test plasma state and fluxes
-      call b2xvps (nx, ny, ns0, 
+      call b2xvps (nx, ny, ns0,
      & ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvsg (n2*ns0, kinrgy, 1, 'kinrgy', '.ge.')
 *   ..compute log-log electron rate coefficients
-      call b2spel (nx, ny, ns0, ev, te, ne, 
+      call b2spel (nx, ny, ns0, ev, te, ne,
      &     rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
 *   ..compute electron rate coefficients
-      call xertst (0.le.ismain.and.ismain.lt.ns0, 
+      call xertst (0.le.ismain.and.ismain.lt.ns0,
      . 'invalid main plasma species index ismain')
-      call b2sqel (nx, ny, ns0, ismain, ev, te, 
+      call b2sqel (nx, ny, ns0, ismain, ev, te,
      &    rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 *   ..extend initial state to species (ns0:ns-1)
@@ -1415,10 +1422,10 @@ c   --> better way doing this is necessary)
           call b2scopy (n2*ns, rpi, 1, rpi0, 1)
           call b2scopy (n2, ne, 1, ne0, 1)
 *    ..compute log-log electron rate coefficients
-          call b2spel (nx, ny, ns, ev, te, ne, 
+          call b2spel (nx, ny, ns, ev, te, ne,
      &     rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
 *   ..compute electron rate coefficients
-          call b2sqel (nx, ny, ns, ismain, ev, te, 
+          call b2sqel (nx, ny, ns, ismain, ev, te,
      &     rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
           call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
@@ -1502,7 +1509,7 @@ c   --> better way doing this is necessary)
      .  'Increase DEF_NATM in DIMENSIONS.F and recompile !')
 cxpb initialize the data necessary for boundary conditions
       call b2stbr_init (nx, ny, ns, BoRiS)
-cxpb read the Eirene output for 0-timestep runs and 
+cxpb read the Eirene output for 0-timestep runs and
 cxpb for neutral fluxes used in b2stbc_phys
 #ifdef B25_EIRENE
 #ifndef HPUX
@@ -1544,7 +1551,7 @@ c new CDF movie option (1st frame at t=0)
       cpuinit=x05baf()
       elapsedinit=epoch_seconds()
     1 continue
-      write(*,'(1x,a,i9,1p,g14.7,i9,i3,1x,l1)') 
+      write(*,'(1x,a,i9,1p,g14.7,i9,i3,1x,l1)')
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
      1            itim,dtim,ntim,stack_ptr,quit
 
@@ -1563,15 +1570,15 @@ c new CDF movie option (1st frame at t=0)
      &        tim .ge. ne_wanted_next_time) then
            ne_wanted_next_time = ne_wanted_next_time +
      &          ne_wanted_mod_time
-           factor=ne_wanted / 
+           factor=ne_wanted /
      &          (  ax*ay*ne(ix1,iy1) +
      &             (1.0_R8-ax)*ay*ne(ix2,iy2) +
      &             ax*(1.0_R8-ay)*ne(ix3,iy3) +
      &             (1.0_R8-ax)*(1.0_R8-ay)*ne(ix4,iy4) )
-           write(*,'(a,1p,3g15.7)') 
-     &          'time, factor, created_electrons = ', tim, factor, 
+           write(*,'(a,1p,3g15.7)')
+     &          'time, factor, created_electrons = ', tim, factor,
      &          sum(ne*vol)*(factor-1.0)/dtim
-           na(:,:,isfb) = na(:,:,isfb) + 
+           na(:,:,isfb) = na(:,:,isfb) +
      &          ne(:,:) * (factor-1) / rza(:,:,isfb)
            ne(:,:) = ne(:,:) * factor
         endif
@@ -1668,24 +1675,24 @@ csw 09oct2012 set default potential already at this point (BCs)
           endif
         endif
         do while(itim.eq.ntim.and.stack_ptr.gt.0)
-	  write(*,'(a,i8,1p,g14.7,i8,i3)')
-     .	   'b2mndr_01:itim,dtim,ntim,stack_ptr',
-     1	              itim,dtim,ntim,stack_ptr
-	  ntim=stack_ntim(stack_ptr)+itim-1     ! dpc 2000.06.24 was stack_ntim(stack_ptr)
-	  dtim=stack_dtim(stack_ptr)
-	  stack_ptr=stack_ptr-1
-	  write(*,'(a,i8,1p,g14.7,i8,i3)')
-     .	   'b2mndr_02:itim,dtim,ntim,stack_ptr',
-     1	              itim,dtim,ntim,stack_ptr
+          write(*,'(a,i8,1p,g14.7,i8,i3)')
+     .     'b2mndr_01:itim,dtim,ntim,stack_ptr',
+     1                itim,dtim,ntim,stack_ptr
+          ntim=stack_ntim(stack_ptr)+itim-1     ! dpc 2000.06.24 was stack_ntim(stack_ptr)
+          dtim=stack_dtim(stack_ptr)
+          stack_ptr=stack_ptr-1
+          write(*,'(a,i8,1p,g14.7,i8,i3)')
+     .     'b2mndr_02:itim,dtim,ntim,stack_ptr',
+     1                itim,dtim,ntim,stack_ptr
         end do
 *    ..produce time dependent file
         if (save_f31.lt.0) then
-	  write(fort31name,'(a,i8.8)') 'fort.31.', itim
-	  write(*,*) 'Saving ', fort31name, ' at time ', tim
-	  open(31,file=fort31name)
-	  call copy_background(nx, ny, ns, BoRiS)
-	  call write_f31(nx, ny)
-	  close(31)
+          write(fort31name,'(a,i8.8)') 'fort.31.', itim
+          write(*,*) 'Saving ', fort31name, ' at time ', tim
+          open(31,file=fort31name)
+          call copy_background(nx, ny, ns, BoRiS)
+          call write_f31(nx, ny)
+          close(31)
         end if
 
 #ifdef JET
@@ -1757,13 +1764,93 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      3      (no_solve.eq.1.and.itim.eq.ntim)
         if(.not.quit.and.
      .   ((cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8).or.
-     .    (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8))) 
+     .    (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)))
      >   then
+cxpb We need to synchronize the fluxes with the solved quantities before
+cxpb writing them out
+*   ..one-off calculation of transport coefficients
+          call b2xpni (nx, ny, ns, na, ni)
+          call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
+          call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
+*   ..compute flux limit coefficients
+          call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
+     &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)
+          call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,
+     1       bb, conn, vol, gs, hx, hy, hz, qz, qc,
+     1       pbs, crx, cry, bzb, lnlam,
+     1       fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,
+     2       cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,
+     3       chvi, csig, csigin, calf, cthe, cthi,
+     4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
+     5       vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
+          if((maxval(facdrift).ne.0.0_R8 .or.
+     &        maxval(fac_ExB).ne.0.0_R8)) then
+            call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,
+     &                    facdrift, fchvispar)
+            call b2tiner (nx, ny, ns, vol,
+     &                    gs, hx, hy, bb, na, ua, facdrift, fchinert)
+            call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
+     &                        fchanml)
+            if(anomalous_core_only.ne.0) then
+              do iy = 0, ny
+                do ix = -1, nx
+                  if(mod(region(bottomix(ix,iy),
+     &                          bottomiy(ix,iy),0),4).ne.1) then
+                    fchanml(ix,iy,1) = 0.0e0_R8
+                  endif
+                enddo
+              enddo
+            endif
+          endif
+          do is=0,ns-1
+*    ..compute partial pressure
+            call b2xppb
+     &       (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
+*    ..compute particle flux
+            call b2tfnb (nx, ny, is, ismain,
+     &       guard_flows, facdrift, fac_ExB, am(is)*mp, vol,
+     1       rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
+     1       uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),
+     1       wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,
+     &       po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
+     &       cddi(-1,-1,0,is),
+     &       cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),
+     &       cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,
+     &       fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
+     &       fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),
+     &       fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),
+     &       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
+     &       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+          enddo
+          call b2tcpa (nx, ny, te, po, ne, csig_cl, calf_cl, fch_p)
+          call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+          call b2xpfe (nx, ny, ns, ns_ext, qe,
+     &         rza, za_ext, fna_he, fa_ext, fch_p, fne)
+          call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,
+     1         vol, gs, hx, hy, qz, qc, bb,
+     1         te, po, ne, ne2, lnlam, pz, ti,
+     1         ni(-1,-1,1), na, fna, vadia, ua, fne,
+     2         csig, csig_cl, csigin, chce,
+     &         chve, chci, calf, chvemx, cvsa, cdna, cdpa, cddi, fch,
+     &         fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,
+     &         floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,
+     &         fchvisq, fchinert, fchanml)
+          floe_noc = floe
+          call b2xpfi (nx, ny, ns, fna_he, fni)
+csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
+          call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb,
+     &         ti, ni, na, fni, fna_he, ua,
+     &         chci, cddi, chvi, chvimx, cvsa, vadia,
+     &         fchvispar, fchvisq, fchinert, fchanml,
+     &         fhi, fhi_mdf, fhiPSch, floi, coni)
+          floi_noc = floi
+cxpb
           write(savefile(13:16),'(i4)') edition
           edition=edition+1
-          if(cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8) 
+          if(cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8)
      .     cputarget=cputarget+cpuincrement
-          if(tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8) 
+          if(tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
      .     save_plasma_time=save_plasma_time+delta_plasma_time
           if(edition.gt.9999) then
             edition=0
@@ -1775,7 +1862,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call cfopen (nout(6), savefile, savefilestatus, 'unformatted')
           call cfverw (nout(6), newversion)                          !xpb/dpc
 *       ..test plasma state
-          call b2xvps (nx, ny, ns, 
+          call b2xvps (nx, ny, ns,
      .     ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
           call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 *       ..write plasma state
@@ -1785,7 +1872,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           inquire(file='../b2.feedback_save.parameters',exist=found)
           if (found) call write_b2mod_feedback(99,savefile(13:16))
           inquire(file='../b2.neutrals_save.parameters',exist=found)
-          if (found) 
+          if (found)
      >     call write_b2mod_neutrals_save(99,savefile(13:16))
           inquire(file='../b2.sputter_save.parameters',exist=found)
           if (found) call write_b2mod_sputter_namelist(99,nx,ny,ns,
@@ -1796,13 +1883,13 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           if (ank_tracing.ne.0) call b2filef(ns)
            close(nout(6))
           write(*,*) 'Plasmastate savefile ',savefile,' saved'
-!          open (70, file='b2fstate_add.'//savefile(13:16),           !srv 14.07.08 {
-!     &             form='unformatted')
-!	 write(70) vaecrb, vadia, floe_noc, floi_noc, fna, fna_fcor,
-!     &     fna_nodrift, fna_he, fhe, fhi, fch,
-!     &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,fchinert,
-!     &     fnaPSch, fna_mdf, fhePSch, fhiPSch, fhe_mdf, fhi_mdf      !srv 29.10.09
-!	    close(70)                                                  !srv 14.07.08 }
+          open (70, file='b2fstate_add.'//savefile(13:16),           !srv 14.07.08 {
+     &             form='unformatted')
+         write(70) vaecrb, vadia, floe_noc, floi_noc, fna, fna_fcor,
+     &     fna_nodrift, fna_he, fhe, fhi, fch,
+     &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,fchinert,
+     &     fnaPSch, fna_mdf, fhePSch, fhiPSch, fhe_mdf, fhi_mdf      !srv 29.10.09
+            close(70)                                                  !srv 14.07.08 }
         endif
         first_time_step=.false.
         goto 1
@@ -1821,13 +1908,93 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       if(etim.eq.stim.and.stim.gt.0.0_R8)
      1 write(*,*) 'stopping because etim = stim: ',etim,stim
       if(elapsedval-elapsedinit.gt.b2mndr_elapsed.and.
-     &   b2mndr_elapsed.gt.0.0_R8) write(*,*) 
+     &   b2mndr_elapsed.gt.0.0_R8) write(*,*)
      1 'stopping because elapsed CPU time > limit: ',
      .  elapsedval-elapsedinit,b2mndr_elapsed
       if(ierr.ne.0)
      1 write(*,*) 'stopping because ierr <> 0: ',ierr
       if(quit_residual)                                                  !jwk
      1 write(*,*) 'stopping because min_residual criteria satisfied'     !jwk
+
+cxpb We need to synchronize the fluxes with the solved quantities before
+cxpb writing them out
+*   ..one-off calculation of transport coefficients
+      call b2xpni (nx, ny, ns, na, ni)
+      call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
+      call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
+*   ..compute flux limit coefficients
+      call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
+     &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)
+      call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,
+     1       bb, conn, vol, gs, hx, hy, hz, qz, qc,
+     1       pbs, crx, cry, bzb, lnlam,
+     1       fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,
+     2       cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,
+     3       chvi, csig, csigin, calf, cthe, cthi,
+     4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
+     5       vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
+      if((maxval(facdrift).ne.0.0_R8 .or.
+     &    maxval(fac_ExB).ne.0.0_R8)) then
+        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,
+     &                facdrift, fchvispar)
+        call b2tiner (nx, ny, ns, vol,
+     &                gs, hx, hy, bb, na, ua, facdrift, fchinert)
+        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
+     &                fchanml)
+        if(anomalous_core_only.ne.0) then
+          do iy = 0, ny
+            do ix = -1, nx
+              if(mod(region(bottomix(ix,iy),
+     &                      bottomiy(ix,iy),0),4).ne.1) then
+                fchanml(ix,iy,1) = 0.0e0_R8
+              endif
+            enddo
+          enddo
+        endif
+      endif
+      do is=0,ns-1
+*    ..compute partial pressure
+        call b2xppb
+     &       (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
+*    ..compute particle flux
+        call b2tfnb (nx, ny, is, ismain,
+     &       guard_flows, facdrift, fac_ExB, am(is)*mp, vol,
+     1       rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
+     1       uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),
+     1       wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,
+     &       po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
+     &       cddi(-1,-1,0,is),
+     &       cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),
+     &       cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,
+     &       fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
+     &       fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),
+     &       fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),
+     &       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
+     &       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
+     &       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+      enddo
+      call b2tcpa (nx, ny, te, po, ne, csig_cl, calf_cl, fch_p)
+      call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
+      call b2xpfe (nx, ny, ns, ns_ext, qe,
+     &         rza, za_ext, fna_he, fa_ext, fch_p, fne)
+      call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,
+     1         vol, gs, hx, hy, qz, qc, bb,
+     1         te, po, ne, ne2, lnlam, pz, ti,
+     1         ni(-1,-1,1), na, fna, vadia, ua, fne,
+     2         csig, csig_cl, csigin, chce,
+     &         chve, chci, calf, chvemx, cvsa, cdna, cdpa, cddi, fch,
+     &         fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,
+     &         floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,
+     &         fchvisq, fchinert, fchanml)
+      floe_noc = floe
+      call b2xpfi (nx, ny, ns, fna_he, fni)
+csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
+      call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb,
+     &         ti, ni, na, fni, fna_he, ua,
+     &         chci, cddi, chvi, chvimx, cvsa, vadia,
+     &         fchvispar, fchvisq, fchinert, fchanml,
+     &         fhi, fhi_mdf, fhiPSch, floi, coni)
+      floi_noc = floi
 #ifdef USE_IMPGYRO
 * finalise impgyro !yamoto
       call impgyro_last !yamoto
@@ -1836,7 +2003,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call b2stbc_fb_final
 * finalise transport_models
       call write_b2mod_transport_models(99,'    ')
-* finalise sputtering 
+* finalise sputtering
       call write_b2mod_sputter_namelist(99, nx, ny, ns, '    ')
 * finalise time-dependent wall data
       inquire(file='../b2.wall_save.parameters',exist=found)
@@ -1847,14 +2014,14 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call b2wfpi (nout(0), idout1, nx, ny, ns, ne, na, ua,
      &  te, ti, po, fna, fhe, fhi, fch)
 *   ..test plasma state
-      call b2xvps (nx, ny, ns, 
+      call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 *   ..save final state
       call b2wups (nout(2), nx, ny, ns, ne, na, ua, uadia, te,           !xpb
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
       call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                   !srv 05.10.01
-      if (use_astra.ne.0) 
+      if (use_astra.ne.0)
      > call write_b2_to_astra(nx, ny, ns, ismain, ismain0, nout(8))      !srv 28.07.11 19.09.11
 *   ..write out fort.30 and fort.31 files if not yet done
       if (use_eirene.eq.0) then
@@ -1907,7 +2074,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         if(mod(itim,tally).ne.0.and.itim.gt.1) then
           call tallies(nx,ny,ns,BoRiS)
         endif
-      endif     
+      endif
 
 * finalise eirene_mc
       if(use_eirene.ne.0.and.itim.gt.0) then
@@ -1918,12 +2085,12 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
       endif
 
-!      open (70, file='b2fstate_add',form='unformatted')                   !srv 11.10.02 {
-!	 write(70) vaecrb, vadia, floe_noc, floi_noc, fna, fna_fcor,
-!     &    fna_nodrift, fna_he, fhe, fhi, fch,
-!     &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,fchinert,
-!     &    fnaPSch, fna_mdf, fhePSch, fhiPSch, fhe_mdf, fhi_mdf       !srv 13.10.06 !srv 29.10.09  
-!	close(70)                                                      !srv 11.10.02 }
+      open (70, file='b2fstate_add',form='unformatted')                   !srv 11.10.02 {
+      write(70) vaecrb, vadia, floe_noc, floi_noc, fna, fna_fcor,
+     &    fna_nodrift, fna_he, fhe, fhi, fch,
+     &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,fchinert,
+     &    fnaPSch, fna_mdf, fhePSch, fhiPSch, fhe_mdf, fhi_mdf       !srv 13.10.06 !srv 29.10.09
+      close(70)                                                      !srv 11.10.02 }
 
 *  .. finalize tracing routines
       call b2trcf(nx,ny,ns,ismain,dtim,BoRiS)
@@ -1977,7 +2144,7 @@ c
       real (R8) :: te_hot
       real (R8) :: ne_hot_frac
       real (R8) :: rlte, fxte
-      real (R8) :: rate_sa, rate_ra, rate_qa, rate_rd, rate_br, 
+      real (R8) :: rate_sa, rate_ra, rate_qa, rate_rd, rate_br,
      * rate_cx,  rate_za, rate_z2, rate_pt, rate_pi
       integer ite, ine, ise, ixte
 
@@ -2031,23 +2198,23 @@ c
             do ite= 0, rtnt
               rtlsa(ite,ine,ise) =
      1         log(exp(rtlsa(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_sa)
-              rtlra(ite,ine,ise) = 
+              rtlra(ite,ine,ise) =
      1         log(exp(rtlra(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_ra)
-              rtlqa(ite,ine,ise) = 
+              rtlqa(ite,ine,ise) =
      1         log(exp(rtlqa(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_qa)
-              rtlrd(ite,ine,ise) = 
+              rtlrd(ite,ine,ise) =
      1         log(exp(rtlrd(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_rd)
-              rtlbr(ite,ine,ise) = 
+              rtlbr(ite,ine,ise) =
      1         log(exp(rtlbr(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_br)
-!!            rtlcx(ite,ine,ise) =       
+!!            rtlcx(ite,ine,ise) =
 !!   1         log(exp(rtlcx(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_cx)
-              rtlza(ite,ine,ise) = 
+              rtlza(ite,ine,ise) =
      1         rtlza(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_za
               rtlz2(ite,ine,ise) =
      1         rtlz2(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_z2
-              rtlpt(ite,ine,ise) = 
+              rtlpt(ite,ine,ise) =
      1         rtlpt(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_pt
-              rtlpi(ite,ine,ise) = 
+              rtlpi(ite,ine,ise) =
      1         rtlpi(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_pi
             enddo
           enddo

@@ -1298,6 +1298,12 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &      con(ix,iy)*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &      cdpb(ix,iy,1)*(pb(ix,iy)
      &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
+          if (ix.eq.12 .and. iy.eq.12) then
+            write(6,*) 'fnb : ', fnb(ix,iy,1)
+            write(6,*) 'flo, con, cdpb : ', flo, con(ix,iy), 
+     &                                           cdpb(ix,iy,1)
+            write(6,*) 'nb, pb : ', nb(ix,iy), pb(ix,iy)
+          end if
 *      fnb_he will be used only for heat equations                       !srv 21.01.00 {     
           fnb_he(ix,iy,1) = flo_he*(nb(bottomix(ix,iy),bottomiy(ix,iy))  !srv 13.09.02 {
      &          +nb(ix,iy))/2.0_R8-
@@ -1353,7 +1359,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      2      (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &      cdpb(ix,iy,1)*(pb(ix,iy)
      &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
-          if(mdf_fnb.eq.0) then                                          !srv 13.10.06  {
+          if(mdf_fnb.eq.0) then                                          !srv 13.10.06 {
            flob(ix,iy,1) = flo*(kmpr(bottomix(ix,iy),bottomiy(ix,iy))
      &        +kmpr(ix,iy))/2.0_R8-
      &        con(ix,iy)*(kmpr(ix,iy)-
@@ -1438,6 +1444,9 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       alpha*vbar/4.0_R8*gs(ix,iy,1)))**gamma)**(1.0_R8/gamma)
           maxfluxlimit(1)=max(maxfluxlimit(1),t0)
           fnb(ix,iy,1) = fnb(ix,iy,1) / t0
+          if (ix.eq.12 .and. iy.eq.12) then
+            write(6,*) 't0 : ', t0
+          end if
           fnb_32(ix,iy,1) = fnb_32(ix,iy,1) / t0
           fnb_52(ix,iy,1) = fnb_52(ix,iy,1) / t0
           fnb_nodrift(ix,iy,1) = fnb_nodrift(ix,iy,1) / t0

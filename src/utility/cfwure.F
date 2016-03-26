@@ -11,7 +11,7 @@
 *     representable using three digits in the exponent.
 *     ------------------------------------------------------------------
       integer ifmt, i
-      parameter (ifmt=1)
+      parameter (ifmt=0)
       character fmt(0:5)*32, chf*12, idcod*8, idtyp*8, id0*32
       save fmt
       logical streql

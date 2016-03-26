@@ -81,7 +81,7 @@
       save ncall, nstg, moqtlv, moitlv, rxf, itcnt,                      !xpb
      *  density_control, ramp_slow, BoRiS, no_solve,
      *  nstg_areshe, nstg_areshi, nstg_aresco, boundary_namelist
-      logical domoqt, domoit, wrong_flow, ramp_call !, b2fstati_addexists !xpb !srv 15.07.08
+      logical domoqt, domoit, wrong_flow, ramp_call, b2fstati_addexists !xpb !srv 15.07.08
       logical test_residual, quit_residual, main_call
       save test_residual
       integer n2, istg(0:2), is, k
@@ -299,14 +299,13 @@ ctmp.dpc
      5       vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
             newneo=.true.
             if(style.ne.0) then                                          !srv 18.06.08 {
-!             INQUIRE (FILE = 'b2fstati_add', EXIST = b2fstati_addexists) !srv 15.07.08
+             INQUIRE (FILE = 'b2fstati_add', EXIST = b2fstati_addexists) !srv 15.07.08
 !             IF (.NOT. b2fstati_addexists) THEN
 !              WRITE (*,'(/2A/)') '  Cannot find file ', 'b2fstati_add'
-!	        ! if there is no the file b2fstati_add then it is possible
-!	        ! a jump of residuals when continuing of the run  
+	        ! if there is no the file b2fstati_add then it is possible
+	        ! a jump of residuals when continuing of the run  
               if((maxval(facdrift).ne.0.0_R8 .or. 
      &            maxval(fac_ExB).ne.0.0_R8)) then
-
                call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,   !srv 20.09.06  {
      &                        facdrift, fchvispar)
                call b2tiner (nx, ny, ns, vol,
@@ -375,19 +374,86 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &         fchvispar, fchvisq, fchinert, fchanml,
      &         fhi, fhi_mdf, fhiPSch, floi, coni)
               floi_noc = floi                                            !srv 24.10.02
+              write(6,*) 'Recomputed values'
+              write(6,*) 'vaecrbx : ', vaecrb(12,12,0,:)
+              write(6,*) 'vaecrby : ', vaecrb(12,12,1,:)
+              write(6,*) 'vadiax : ', vadia(12,12,0,:)
+              write(6,*) 'vadiay : ', vadia(12,12,1,:)
+              write(6,*) 'floe_noc : ', floe_noc(12,12,0:1)
+              write(6,*) 'floi_noc : ', floi_noc(12,12,0:1)
+              write(6,*) 'fnax : ', fna(12,12,0,:)
+              write(6,*) 'fnay : ', fna(12,12,1,:)
+              write(6,*) 'fna_fcorx : ', fna_fcor(12,12,0,:)
+              write(6,*) 'fna_fcory : ', fna_fcor(12,12,1,:)
+              write(6,*) 'fna_nodriftx : ', fna_nodrift(12,12,0,:)
+              write(6,*) 'fna_nodrifty : ', fna_nodrift(12,12,1,:)
+              write(6,*) 'fna_hex : ', fna_he(12,12,0,:)
+              write(6,*) 'fna_hey : ', fna_he(12,12,1,:)
+              write(6,*) 'fhe : ', fhe(12,12,:)
+              write(6,*) 'fhi : ', fhi(12,12,:)
+              write(6,*) 'fch : ', fch(12,12,:)
+              write(6,*) 'fchdia : ', fchdia(12,12,:)
+              write(6,*) 'fchin : ', fchin(12,12,:)
+              write(6,*) 'fch_p : ', fch_p(12,12,:)
+              write(6,*) 'fchvispar : ', fchvispar(12,12,:)
+              write(6,*) 'fchvisper : ', fchvisper(12,12,:)
+              write(6,*) 'fchvisq : ', fchvisq(12,12,:)
+              write(6,*) 'fchinert : ', fchinert(12,12,:)
+              write(6,*) 'fnaPSchx : ', fnaPSch(12,12,0,:)
+              write(6,*) 'fnaPSchy : ', fnaPSch(12,12,1,:)
+              write(6,*) 'fna_mdfx : ', fna_mdf(12,12,0,:)
+              write(6,*) 'fna_mdfy : ', fna_mdf(12,12,1,:)
+              write(6,*) 'fhePSch : ', fhePSch(12,12,:)
+              write(6,*) 'fhiPSch : ', fhiPSch(12,12,:)
+              write(6,*) 'fhe_mdf : ', fhe_mdf(12,12,:)
+              write(6,*) 'fhi_mdf : ', fhi_mdf(12,12,:)
 !	       ELSE
-!              open (70, file='b2fstati_add',form='unformatted')
-!	          read(70,end=10) vaecrb, vadia, floe_noc, floi_noc, fna, 
-!     &          fna_fcor, fna_nodrift, fna_he, fhe, fhi, fch,
-!     &          fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,
-!     &          fchinert, fnaPSch, fna_mdf, fhePSch, fhiPSch,           !srv 13.10.06
-!     &          fhe_mdf, fhi_mdf                                        !srv 29.10.09 {
-!	          goto 20
-!   10	          write(*,*) ' File b2fstati_add is old. '
-!   	          write(*,*) ' fhe_mdf = fhe and fhi_mdf = fhi'
-!                fhe_mdf = fhe
-!	          fhi_mdf = fhi
-!   20	        close(70)                                                !srv 29.10.09 }
+              open (70, file='b2fstati_add',form='unformatted')
+	          read(70,end=10) 
+     &          vaecrb, vadia, floe_noc, floi_noc, fna, 
+     &          fna_fcor, fna_nodrift, fna_he, fhe, fhi, fch,
+     &          fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,
+     &          fchinert, fnaPSch, fna_mdf, fhePSch, fhiPSch,           !srv 13.10.06
+     &          fhe_mdf, fhi_mdf                                        !srv 29.10.09 {
+	          goto 20
+   10	          write(*,*) ' File b2fstati_add is old. '
+   	          write(*,*) ' fhe_mdf = fhe and fhi_mdf = fhi'
+                fhe_mdf = fhe
+	          fhi_mdf = fhi
+   20	        close(70)                                                !srv 29.10.09 }
+              write(6,*) 'Saved values'
+              write(6,*) 'vaecrbx : ', vaecrb(12,12,0,:)
+              write(6,*) 'vaecrby : ', vaecrb(12,12,1,:)
+              write(6,*) 'vadiax : ', vadia(12,12,0,:)
+              write(6,*) 'vadiay : ', vadia(12,12,1,:)
+              write(6,*) 'floe_noc : ', floe_noc(12,12,0:1)
+              write(6,*) 'floi_noc : ', floi_noc(12,12,0:1)
+              write(6,*) 'fnax : ', fna(12,12,0,:)
+              write(6,*) 'fnay : ', fna(12,12,1,:)
+              write(6,*) 'fna_fcorx : ', fna_fcor(12,12,0,:)
+              write(6,*) 'fna_fcory : ', fna_fcor(12,12,1,:)
+              write(6,*) 'fna_nodriftx : ', fna_nodrift(12,12,0,:)
+              write(6,*) 'fna_nodrifty : ', fna_nodrift(12,12,1,:)
+              write(6,*) 'fna_hex : ', fna_he(12,12,0,:)
+              write(6,*) 'fna_hey : ', fna_he(12,12,1,:)
+              write(6,*) 'fhe : ', fhe(12,12,:)
+              write(6,*) 'fhi : ', fhi(12,12,:)
+              write(6,*) 'fch : ', fch(12,12,:)
+              write(6,*) 'fchdia : ', fchdia(12,12,:)
+              write(6,*) 'fchin : ', fchin(12,12,:)
+              write(6,*) 'fch_p : ', fch_p(12,12,:)
+              write(6,*) 'fchvispar : ', fchvispar(12,12,:)
+              write(6,*) 'fchvisper : ', fchvisper(12,12,:)
+              write(6,*) 'fchvisq : ', fchvisq(12,12,:)
+              write(6,*) 'fchinert : ', fchinert(12,12,:)
+              write(6,*) 'fnaPSchx : ', fnaPSch(12,12,0,:)
+              write(6,*) 'fnaPSchy : ', fnaPSch(12,12,1,:)
+              write(6,*) 'fna_mdfx : ', fna_mdf(12,12,0,:)
+              write(6,*) 'fna_mdfy : ', fna_mdf(12,12,1,:)
+              write(6,*) 'fhePSch : ', fhePSch(12,12,:)
+              write(6,*) 'fhiPSch : ', fhiPSch(12,12,:)
+              write(6,*) 'fhe_mdf : ', fhe_mdf(12,12,:)
+              write(6,*) 'fhi_mdf : ', fhi_mdf(12,12,:)
 !	       ENDIF
             endif                                                        !srv 18.06.08 }
           endif
