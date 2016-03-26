@@ -10,12 +10,13 @@
 
       integer::mpi_err,mpi_stat,mpi_dum
       integer::mpi_rank,mpi_size,mpi_local
-#endif
+#else
 #ifdef USE_IMPGYRO
       include 'mpif.h'
 
       integer::mpi_err,mpi_stat,mpi_dum
       integer::mpi_rank,mpi_size,mpi_local
+#endif
 #endif
 
       logical :: last
@@ -77,7 +78,7 @@
 
       write (*,*) 'b2ig: mpi_size =', mpi_size
       write (*,*) 'b2ig: ikmn, ikmx obtained from IMPGYRO', ikmn, ikmx
-#endif
+#else
 #ifdef USE_IMPGYRO
       write (*,*) 'b2ig: Calling MPI COMM FLAG=IG'
       call mpi_comm_size (mpi_comm_world, mpi_size, mpi_err)
@@ -101,6 +102,7 @@
       write (*,*) 'b2ig: WARNING YOU ARE RUNNING NON-MPI IMPGYRO case'
       write (*,*) 'b2ig: You may have forgotten set_ig option!'
       write (*,*) 'b2ig: Setting default ikmn, ikmx', ikmn, ikmx
+#endif
 #endif
 
       allocate(ep_ir(0:nxd-1,0:nyd-1))
