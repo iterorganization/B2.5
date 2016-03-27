@@ -753,6 +753,7 @@ endif
 	touch ${OBJDIR}/dependencies
 	${MAKE} tags
 	${MAKE} VERSION
+	${MAKE} local
 	${MAKE} listobj
 	${MAKE} depend
 
