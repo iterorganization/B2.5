@@ -32,6 +32,7 @@
       use b2mod_external
 #ifdef B25_EIRENE
       use eirmod_extrab25
+      use eirmod_braeir
 #endif
 #ifdef PAR_OPT
       use b2mod_par_opt
@@ -135,6 +136,7 @@
       real (kind=R8), save :: prev_cur_delta, cur_delta, po_step,       !Solovyev 01.05.14
      * po_prev, po_curr, coeff_16                                       !Solovyev 01.05.14, 24.05.14
       integer, save :: bcpot_16_step = 50                               !Solovyev 23.05.14 !srv 29.09.15 }
+      integer, save :: eirene_sheath_pot = 1
       real (kind=R8) ::
      *  cutll, cutlo, vte, s0, s1, s0hz, s1hz, fche, fchi, t0, t1, t2,  !srv 15.11.07
      1  t3, totflux, weight,
@@ -292,6 +294,7 @@
      &   'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
         call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 23.05.14 !srv 29.09.15
         call ipgetr ('b2tfhi_ycur', ycur)
+        call ipgeti ('eirene_sheath_pot',eirene_sheath_pot)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -8719,6 +8722,15 @@ c              fchi=0.0_R8
      .       t0*po(bc_list_x(iy,ib),bc_list_y(iy,ib))
             sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) =
      .      sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1)-t0
+#ifdef B25_EIRENE
+*     ..set sheath potential drop for Eirene
+            if (eirene_sheath_pot.eq.1) then
+              ! B2 indexing for delta_sheathxb
+              delta_sheathxb(BC_LIST_X(IY,IB)+1,BC_LIST_Y(IY,IB)+1) = 
+     .          qe*(bcint(po,nx,ny,iy,ib)-potpar(ib,2))/
+     .          bcint(te,nx,ny,iy,ib)
+            endif
+#endif
           end do
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
@@ -8785,6 +8797,15 @@ c              fchi=0.0_R8
      .       t0*po(bc_list_x(iy,ib),bc_list_y(iy,ib))
             sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1) =
      .      sch0(bc_list_x(iy,ib),bc_list_y(iy,ib),1)-t0
+#ifdef B25_EIRENE
+*     ..set sheath potential drop for Eirene
+            if (eirene_sheath_pot.eq.1) then
+              ! B2 indexing for delta_sheathxb
+              delta_sheathxb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)+1) = 
+     .          qe*(bcint(po,nx,ny,iy,ib)-potpar(ib,2))/
+     .          bcint(te,nx,ny,iy,ib)
+            endif
+#endif
           end do
         ELSE
           CALL XERRAB ('B2STBC -- BCPOT=3, NO SHEATH IN RADIAL DIR.')
@@ -9112,6 +9133,15 @@ c              fchi=0.0_R8
      &       t0*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
             sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &       sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-t0
+#ifdef B25_EIRENE
+*     ..set sheath potential drop for Eirene
+            if (eirene_sheath_pot.eq.1) then
+              ! B2 indexing for delta_sheathxb
+              delta_sheathxb(BC_LIST_X(IY,IB)+1,BC_LIST_Y(IY,IB)+1) = 
+     &          qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
+     &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            endif
+#endif
           end do
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
@@ -9194,6 +9224,15 @@ c              fchi=0.0_R8
      &       t0*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
             sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
      &       sch0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-t0
+#ifdef B25_EIRENE
+*     ..set sheath potential drop for Eirene
+            if (eirene_sheath_pot.eq.1) then
+              ! B2 indexing for delta_sheathxb
+              delta_sheathxb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)+1) = 
+     &          qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
+     &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+            endif
+#endif
           end do
         ELSE
           CALL XERRAB ('B2STBC -- BCPOT=11, NO SHEATH IN RADIAL DIR.')

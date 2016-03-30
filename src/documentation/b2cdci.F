@@ -506,6 +506,7 @@
 *    'eirene_use_recyceir'      '1'                    Physics
 *    'eirene_uub_style'         '0'                    Numerics
 *    'eirene_background'        '1'                    Physics
+*    'eirene_sheath_pot'        '1'                    Physics
 *    'heatdiff1D_linlog'        '1'                    Numerics
 *    'heatdiff1D_ratio'         '100.0'                Numerics
 *    'ma28_nwrite'              '0'                    Output
@@ -1607,8 +1608,14 @@
 *    and ExB drifts (wadia + vaecrb).
 *    Note: recycling fluxes are always computed based on grad-B and ExB drifts only
 *    (and are not affected by this switch), ecause diagmagnetic drift flows largely 
-*    close within the sheath.
-*    
+*    close within the sheath.    
+*
+*    'eirene_sheath_pot'        '1'                    Physics
+*    If eirene_sheath_pot.eq.1, the sheath potential drop as computed by B2.5 (i.e.
+*    including effects of parallel currents, secondary electron emission, etc.) is 
+*    passed to EIRENE to compute ion acceleration in the sheath. 
+*    If eirene_sheath_pot.eq.0, the sheath potential drop is 
+*    recomputed by EIRENE, usually assuming zero current and secondary electron emission.
 *
 *    'b2stel_fix_recomb_energy' '0'                    Physics 
 *    If changed to 1, then the recombination energy (rpi) is added 
