@@ -942,7 +942,6 @@ c 2002-09-11: logic revised
       eb2spcr1=-1
       b2espcr1=-1
 *   ..compute new state
-      if (invert_bpol.eq.1) ua = -ua
       call b2xtps (nx, ny, ns, nx1, ny1, ns1, nncutmax,
      &    non_commensurate,
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
