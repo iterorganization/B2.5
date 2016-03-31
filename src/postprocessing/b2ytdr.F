@@ -157,7 +157,7 @@ c 2002-09-11: logic revised
       integer mw_jxa1, mw_jsep1
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch
       integer nncut1, nnreg1(0:2), periodic_bc1
-      integer scaling_ix_begin, scaling_ix_end
+      integer scaling_ix_begin(nscale), scaling_ix_end(nscale)
       integer elm_ix_begin, elm_ix_end
       integer ndim, ndm2, nfitanf, nfitend, ifail
       integer invert_bpol, invert_btor
@@ -378,7 +378,8 @@ c 2002-09-11: logic revised
 #endif
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat, rswitch,
-     .  scaling_width, scaling_strength, ixfb, iyfb, ixfb1, iyfb1,
+     .  scaling_width(nscale), scaling_strength(nscale),
+     .  ixfb, iyfb, ixfb1, iyfb1,
      .  elm_time_begin, elm_time_end, elm_time_period,
      .  sources_time_mod, sources_time_switch,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
@@ -436,10 +437,10 @@ c 2002-09-11: logic revised
       logical LRPSCUT
       logical in_bundle, charges_match, skip_reac
 #endif
-      logical todo, wait, same_bundling, first_pass
+      logical todo, wait, same_bundling, first_pass, do_scale
       logical wall_namelist_used
       logical region_flags(NNREGMAX,nkind_coeff), no_pflux
-      logical poloidal_scaling, prdone, axdone
+      logical poloidal_scaling(nscale), prdone, axdone, spdone
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
@@ -2097,7 +2098,6 @@ cxpb Check if we need to include new additional species because of de-bundling o
                   do ix = 1, ns
 cxpb Convert old additional species
                     if (addspec(ix,j,is).ge.0) then
-                      todo = .true.
                       ib = 1
                       do while (ib.le.ns1)
                         if (ad1spec(ib,j,is1(is)).ne.-5) then
@@ -2106,15 +2106,15 @@ cxpb Convert old additional species
                           iy = 1
                           do while (iy.lt.ns1)
 cxpb We must ensure we have not already listed this additional species
-                            found = .false.
+                            spdone = .false.
                             iss = 1
-                            do while (.not.found .and. iss.lt.ib)
-                              found = ad1spec(iss,j,is1(is)).eq.iy
+                            do while (.not.spdone .and. iss.lt.ib)
+                              spdone = ad1spec(iss,j,is1(is)).eq.iy
                               iss = iss + 1
                             end do
                             if(
      .                       bundle_frac(iy,addspec(ix,j,is)).gt.0.0_R8
-     .                       .and. .not.found) then
+     .                       .and. .not.spdone) then
                               ad1spec(ib,j,is1(is)) = iy
                               write(99,'(1x,a,i3,a,i1,a,i3,a,i3,a)')
      .                         'ADDSPEC(',ib,',',j,',',is1(is),')=',
@@ -2139,12 +2139,12 @@ cxpb We must ensure we have not already listed this additional species
                 if (prdone) deallocate(felm,delm,prdsa,r,f,pra,dprof)
               enddo
             enddo
-            todo = .false.
+            do_scale = .false.
             do ireg = 1, nnreg(0)
-              todo = todo .or. .not.region_flags(ireg,j)
+              do_scale = do_scale .or. .not.region_flags(ireg,j)
             enddo
             write(hlp_frm, '(a,i1,a)') '(1x,a,i1,a,',nnreg(0),'l1,a)'
-            if (todo) write(99,hlp_frm)
+            if (do_scale) write(99,hlp_frm)
      .       'REGION_FLAGS(1,',j,')=',
      .       (region_flags(ireg,j),ireg=1,nnreg(0)),','
           enddo
@@ -2157,24 +2157,38 @@ cxpb We must ensure we have not already listed this additional species
             write(99,'(1x,a,1p,1g10.3,a)')
      .       'TRANSPORT_TIME_SWITCH=',transport_time_switch,','
           endif
-          if (poloidal_scaling) write(99,'(1x,a,l1,a)')
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nscale,'l1,a)'
+          do_scale = .false.
+          do ix = 1, nscale
+            do_scale = do_scale .or. poloidal_scaling(ix)
+          end do
+          if (do_scale) write(99,hlp_frm)
      .     'POLOIDAL_SCALING=',poloidal_scaling,','
-          if (scaling_ix_begin.ne.-2) then
-            scaling_ix_begin = conformal_convert(non_commensurate,1,
-     .       scaling_ix_begin,jsep,nx,ny,nx1,ny1,1)
-            write(99,'(1x,a,i4,a)')
-     .       'SCALING_IX_BEGIN=',scaling_ix_begin,','
-          endif
-          if (scaling_ix_end.ne.-2) then
-            scaling_ix_end = conformal_convert(non_commensurate,1,
-     .       scaling_ix_end,jsep,nx,ny,nx1,ny1,3)
-            write(99,'(1x,a,i4,a)')
-     .       'SCALING_IX_END=',scaling_ix_end,','
-          endif
-          if (scaling_strength.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
-     .     'SCALING_STRENGTH=',scaling_strength,','
-          if (scaling_width.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
-     .     'SCALING_WIDTH=',scaling_width,','
+          do ix = 1, nscale
+            if (scaling_ix_begin(ix).ne.-2) then
+              scaling_ix_begin(ix) = 
+     .         conformal_convert(non_commensurate,1,
+     .         scaling_ix_begin(ix),jsep,nx,ny,nx1,ny1,1)
+            endif
+            if (scaling_ix_end(ix).ne.-2) then
+              scaling_ix_end(ix) = 
+     .         conformal_convert(non_commensurate,1,
+     .         scaling_ix_end(ix),jsep,nx,ny,nx1,ny1,3)
+            endif
+          end do
+          write(hlp_frm,'(a,i2,a)') '(1x,a,',nscale,'(1x,i4,'','')'
+          if (maxval(scaling_ix_begin(1:nscale)).gt.-2)
+     .     write(99,hlp_frm) 'SCALING_IX_BEGIN=',scaling_ix_begin
+          if (maxval(scaling_ix_end(1:nscale)).gt.-2)
+     .     write(99,hlp_frm) 'SCALING_IX_END=',scaling_ix_end
+          write(hlp_frm,'(a,i2,a)')
+     &     '(1x,a,1p,',nscale,'(1x,g10.3,'','')'
+          if (maxval(scaling_strength(1:nscale)).gt.0.0_R8)
+     >       write(99,hlp_frm)
+     .       'SCALING_STRENGTH=',scaling_strength(1:nscale)
+          if (maxval(scaling_width(1:nscale)).gt.0.0_R8)
+     >       write(99,hlp_frm)
+     .       'SCALING_WIDTH=',scaling_width(1:nscale)
           if (elm_time_begin.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
      .     'ELM_TIME_BEGIN=',elm_time_begin,','
           if (elm_time_end.ne.0.0_R8) write(99,'(1x,a,1p,g10.3,a)')
