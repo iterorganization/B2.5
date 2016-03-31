@@ -77,7 +77,7 @@
 c Drift terms
       fchvispar =0.0e0_R8
       dvpar=0.0e0_R8                                                     !srv 24.06.99
-      if (vis_par.ne.0.0e0_R8) then                                      !srv
+      if (vis_par.ne.0.0e0_R8.and.maxval(facdrift).ne.0.0_R8) then       !srv
         do is = 0, ns-1                                                  !srv 24.06.99
           if (nint(zn(is)).eq.1 .and. nint(zamax(is)).eq.1 .and.
      &        .not.is_neutral(is)) then                                  !srv 24.06.99

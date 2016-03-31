@@ -63,7 +63,6 @@
       integer, save :: style = 2, pot_eq = 1                          !srv 29.05.02 13.07.05
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0          !srv 13.10.06
       integer, save :: guard_flows = 2   
-      integer, save :: anomalous_core_only = 0                        !srv 19.04.07
       integer, save :: no_solve = 0                                   !srv 02.07.08
 !      integer, save :: re_compute_pb = 1                              !srv 15.02.10
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,    !srv 11.09.09 {
@@ -182,7 +181,6 @@
        call ipgeti ('b2npht_iout', iout_b2npht)                  !srv 16.07.10 }
 !       call ipgeti ('b2news_re_compute_pb', re_compute_pb)      !srv 15.02.10
        call ipgeti ('b2news_guard_flows', guard_flows)           !xpb
-       call ipgeti ('b2tfnb_anomalous_core_only', anomalous_core_only) !srv 19.04.07
        call ipgeti ('b2news_coriolis', coriolis)
        call ipgeti ('b2news_area_fix', area_fix)                 !srv 09.03.09
        call ipgeti ('b2news_no_solve', no_solve)                 !srv 02.07.08 {
@@ -305,32 +303,11 @@ csw 01oct2012 initialize potential if necessary
      5 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      5 vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)                !srv 09.01.01 15.12.05
-      if((maxval(facdrift).ne.0.0_R8 .or. 
-     &    maxval(fac_ExB).ne.0.0_R8)) then
-
-        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,    !srv 20.09.06  {
+      call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)  !srv 20.09.06  }
+      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,      !srv 20.09.06  {
      &                       facdrift, fchvispar)
-        call b2tiner (nx, ny, ns, vol,
+      call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                       fchanml)                               !srv 20.09.06  }
-        if(anomalous_core_only.ne.0) then                           !srv 19.04.07  {
-          do iy = 0, ny                                             !lk 19.09.07
-            do ix = -1, nx
-              if(mod(region(bottomix(ix,iy),
-     &                      bottomiy(ix,iy),0),4).ne.1) then        !lk 19.09.07
-                fchanml(ix,iy,1) = 0.0e0_R8
-              endif 
-            enddo
-          enddo
-        endif                                                       !srv 19.04.07  }
-      else
-       fchvispar = 0.0_R8
-       fchinert  = 0.0_R8
-       fchanml   = 0.0_R8
-      endif
-
-
 
 *   ..iterate on momentum balance
 !      if (ncall.eq.0) then                                             !srv 01.10.99
@@ -449,29 +426,11 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 *     (= ne before continuity update)
       call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
-      if((maxval(facdrift).ne.0.0_R8 .or. 
-     &    maxval(fac_ExB).ne.0.0_R8)) then
-        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,         !srv 20.09.06  {
+      call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)       !srv 20.09.06  }
+      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,         !srv 20.09.06  {
      &                       facdrift, fchvispar)
-        call b2tiner (nx, ny, ns, vol,
+      call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                       fchanml)                                    !srv 20.09.06  }
-        if(anomalous_core_only.ne.0) then                                !srv 19.04.07  {
-          do iy = 0, ny                                                  !lk 19.09.07
-            do ix = -1, nx
-              if(mod(region(bottomix(ix,iy),
-     &                      bottomiy(ix,iy),0),4).ne.1) then             !lk 19.09.07
-                 fchanml(ix,iy,1) = 0.0e0_R8
-              endif 
-            enddo
-          enddo
-        endif                                                            !srv 19.04.07  }
-      else
-       fchvispar = 0.0_R8
-       fchinert  = 0.0_R8
-       fchanml   = 0.0_R8
-      endif
 
 *     ..iterate on particle balance
 !      do is = 0, ns-1
@@ -662,30 +621,11 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
           endif
 
 *   ..recompute currents
-          if((maxval(facdrift).ne.0.0_R8 .or. 
-     &        maxval(fac_ExB).ne.0.0_R8)) then
-            call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,     !srv 20.09.06  {
+          call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)   !srv 20.09.06  }
+          call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,       !srv 20.09.06  {
      &                         facdrift, fchvispar)
-            call b2tiner (nx, ny, ns, vol,
+          call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-            call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                       fchanml)                                    !srv 20.09.06  }
-            if(anomalous_core_only.ne.0) then                            !srv 19.04.07  {
-              do iy = 0, ny                                              !lk 19.09.07
-                do ix = -1, nx
-                  if(mod(region(bottomix(ix,iy),
-     &                          bottomiy(ix,iy),0),4).ne.1) then         !lk 19.09.07
-                    fchanml(ix,iy,1) = 0.0e0_R8
-                  endif 
-                enddo
-              enddo
-            endif                                                        !srv 19.04.07  }
-          else
-            fchvispar = 0.0_R8
-            fchinert  = 0.0_R8
-            fchanml   = 0.0_R8
-          endif
-
 
           do is = 0, ns-1
 *    ..compute partial pressure

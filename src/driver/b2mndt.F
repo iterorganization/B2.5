@@ -71,7 +71,6 @@
       integer ncall, nstg(0:2), moqtlv, moitlv, itcnt, density_control,  !xpb
      *  ramp_slow, ier0, no_solve, ix, iy, boundary_namelist
       integer, save :: style = 0, guard_flows = 2                        !srv 18.06.08
-      integer, save :: anomalous_core_only = 0                           !srv 19.04.07
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       real (kind=R8) ::
@@ -114,7 +113,6 @@
       if (ncall.eq.0) then
        call ipgeti ('b2mndt_style', style)                             !srv 18.06.08
        call ipgeti ('b2news_guard_flows', guard_flows)                 !srv 18.06.08
-       call ipgeti ('b2tfnb_anomalous_core_only', anomalous_core_only) !srv 19.04.07
        if (ntim.ne.0) then
          call ipgeti ('b2mndt_nstg0', nstg(0))
          call ipgeti ('b2mndt_nstg1', nstg(1))
@@ -286,14 +284,14 @@ ctmp.dpc
             call b2xpni (nx, ny, ns, na, ni)
             call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
             call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
-*   ..compute flux limit coefficients                                  !srv 11.10.02 03.06.03 {
+*   ..compute flux limit coefficients                                    !srv 11.10.02 03.06.03 {
             call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs, 
-     &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)         !srv 11.10.02 03.06.03 }
-            call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,      !srv 23.11.10 
+     &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)           !srv 11.10.02 03.06.03 }
+            call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,        !srv 23.11.10
      1       bb, conn, vol, gs, hx, hy, hz, qz, qc, 
-     1       pbs, crx, cry, bzb, lnlam,                                !srv 13.10.06 01.07.09
-     1       fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,     !srv 03.06.03
-     2       cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,           !srv 13.10.06
+     1       pbs, crx, cry, bzb, lnlam,                                  !srv 13.10.06 01.07.09
+     1       fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,       !srv 03.06.03
+     2       cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,             !srv 13.10.06
      3       chvi, csig, csigin, calf, cthe, cthi, 
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
      5       vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
@@ -304,30 +302,14 @@ ctmp.dpc
 !              WRITE (*,'(/2A/)') '  Cannot find file ', 'b2fstati_add'
 	        ! if there is no the file b2fstati_add then it is possible
 	        ! a jump of residuals when continuing of the run  
-              if((maxval(facdrift).ne.0.0_R8 .or. 
-     &            maxval(fac_ExB).ne.0.0_R8)) then
-               call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,   !srv 20.09.06  {
-     &                        facdrift, fchvispar)
-               call b2tiner (nx, ny, ns, vol,
-     &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-               call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                        fchanml)                                     !srv 20.09.06  }
-               if(anomalous_core_only.ne.0) then                           !srv 19.04.07  {
-                 do iy = 0, ny                                             !lk 19.09.07
-                   do ix = -1, nx
-                     if(mod(region(bottomix(ix,iy),
-     &                             bottomiy(ix,iy),0),4).ne.1) then        !lk 19.09.07
-                       fchanml(ix,iy,1) = 0.0e0_R8
-                     endif 
-                   enddo
-                 enddo
-               endif                                                     !srv 19.04.07  }
-              else
-               fchvispar = 0.0_R8
-               fchinert  = 0.0_R8
-               fchanml   = 0.0_R8
-              endif
-              do is=0,ns-1                                               !srv 01.10.99 25.02.00
+             call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
+     &                     fchanml)                                     !srv 20.09.06  }
+             call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,   !srv 20.09.06  {
+     &                     facdrift, fchvispar)
+             call b2tiner (nx, ny, ns, vol,
+     &                     gs, hx, hy, bb, na, ua, facdrift, fchinert)
+
+             do is=0,ns-1                                                !srv 01.10.99 25.02.00
 *   ..         compute partial pressure
                call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), 
      &                      te, ti, pb)                                  !srv 01.10.99
@@ -335,11 +317,11 @@ ctmp.dpc
                call b2tfnb (nx, ny, is, ismain, 
      &          guard_flows, facdrift, fac_ExB,  !srv 07.06.00 09.01.01 08.09.01 19.05.03 04.02.05
      &          am(is)*mp, vol, rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), !srv 09.01.01 20.09.06
-     &          pb, ua(-1,-1,is), uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),   
-     &          vadia(-1,-1,0,is), wadia(-1,-1,0,is), ne, te, ti, bb, 
+     &          pb, ua(-1,-1,is), uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
+     &          vadia(-1,-1,0,is), wadia(-1,-1,0,is), ne, te, ti, bb,
      &          hx, hy, hz, qz, gs, qc, po,                              !srv 19.05.03 08.10.04 04.02.05
      &          cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &          cddi(-1,-1,0,is), cvlahz(-1,-1,0,is), 
+     &          cddi(-1,-1,0,is), cvlahz(-1,-1,0,is),
      &          cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),                  !srv 09.01.01 15.12.05 13.10.06
      &          cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,        !srv 20.09.06
      &          fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), 
@@ -348,7 +330,7 @@ ctmp.dpc
      &          flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
      &          fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
      &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
-               enddo                                                     !srv 01.10.99 25.02.00 13.10.06
+              enddo                                                      !srv 01.10.99 25.02.00 13.10.06
 *    ..get current fch_p                                                 !srv 11.10.02 {
               call b2tcpa (nx, ny, te, po, ne, csig_cl, calf_cl, fch_p)
               call b2xppz (nx, ny, ns, ne, na, te, ti, pz)

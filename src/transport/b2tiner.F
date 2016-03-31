@@ -68,8 +68,8 @@
       if (ncall.lt.3) then
       endif
 c Drift terms
-	fchinert =0.0e0_R8
-	 if(fch_inert.ne.0.0e0_R8)then                                    !srv 07.07.99
+      fchinert =0.0e0_R8
+      if(fch_inert.ne.0.0e0_R8.and.maxval(facdrift).ne.0.0_R8)then         !srv 07.07.99
         if(fch_inert_style.eq.0) then	
 	   do is = 0, ns-1                                                 !srv 07.07.99
 	    if (.not.is_neutral(is)) then                                  !srv 07.07.99

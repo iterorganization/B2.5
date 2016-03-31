@@ -38,7 +38,8 @@
       
 *   ..local variables
       integer ncall, n2, ix, iy, ib, is
-      integer, save :: no_current=0                          !srv 27.02.13
+      integer, save :: no_current = 0                          !srv 27.02.13
+      integer, save :: anomalous_core_only = 0                 !srv 19.04.07
       integer, save :: pot_eq
       real (kind=R8) :: fch_anomalous
       save ncall, fch_anomalous
@@ -57,6 +58,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgetr ('b2tfhe_anomalous', fch_anomalous)
+       call ipgeti ('b2tfnb_anomalous_core_only', anomalous_core_only) !srv 19.04.07
        if (fch_anomalous.eq.1.0_R8) 
      >  call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
        call ipgeti ('b2tfhe_no_current',no_current)                 !srv 27.02.13
@@ -92,8 +94,14 @@
           enddo
           do iy = 0, ny
 	    do ix = -1, nx
-              fchanml(ix,iy,1) = - csig_an(ix,iy,1)*
+              if (anomalous_core_only.ne.0 .and.
+     &            mod(region(bottomix(ix,iy),
+     &                       bottomiy(ix,iy),0),4).ne.1) then
+                fchanml(ix,iy,1) = 0.0_R8
+              else
+                fchanml(ix,iy,1) = - csig_an(ix,iy,1)*
      &           (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))
+              endif
 	    enddo
 	  enddo
         else

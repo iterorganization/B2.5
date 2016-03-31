@@ -153,7 +153,6 @@
       integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
       integer, save :: pot_eq = 1
       integer, save :: guard_flows = 2
-      integer, save :: anomalous_core_only = 0
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
@@ -846,7 +845,6 @@
        call ipgetr ('b2mndr_etim', etim)
        call ipgetr ('b2news_BoRiS', BoRiS)
        call ipgeti ('b2news_guard_flows', guard_flows)
-       call ipgeti ('b2tfnb_anomalous_core_only', anomalous_core_only)
        call ipgeti ('b2news_no_solve', no_solve)
        call xertst (-15.le.no_solve.and.no_solve.le.1,
      &   'faulty input no_solve')
@@ -1783,25 +1781,12 @@ cxpb writing them out
      3       chvi, csig, csigin, calf, cthe, cthi,
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      5       vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
-          if((maxval(facdrift).ne.0.0_R8 .or.
-     &        maxval(fac_ExB).ne.0.0_R8)) then
-            call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,
-     &                    facdrift, fchvispar)
-            call b2tiner (nx, ny, ns, vol,
-     &                    gs, hx, hy, bb, na, ua, facdrift, fchinert)
-            call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                        fchanml)
-            if(anomalous_core_only.ne.0) then
-              do iy = 0, ny
-                do ix = -1, nx
-                  if(mod(region(bottomix(ix,iy),
-     &                          bottomiy(ix,iy),0),4).ne.1) then
-                    fchanml(ix,iy,1) = 0.0e0_R8
-                  endif
-                enddo
-              enddo
-            endif
-          endif
+          call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)
+          call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,
+     &                  facdrift, fchvispar)
+          call b2tiner (nx, ny, ns, vol,
+     &                  gs, hx, hy, bb, na, ua, facdrift, fchinert)
+
           do is=0,ns-1
 *    ..compute partial pressure
             call b2xppb
@@ -1888,7 +1873,7 @@ cxpb
          write(70) vaecrb, vadia, floe_noc, floi_noc, fna, fna_fcor,
      &     fna_nodrift, fna_he, fhe, fhi, fch,
      &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,fchinert,
-     &     fnaPSch, fna_mdf, fhePSch, fhiPSch, fhe_mdf, fhi_mdf      !srv 29.10.09
+     &     fnaPSch, fna_mdf, fhePSch, fhiPSch, fhe_mdf, fhi_mdf       !srv 29.10.09
             close(70)                                                  !srv 14.07.08 }
         endif
         first_time_step=.false.
@@ -1933,25 +1918,12 @@ cxpb writing them out
      3       chvi, csig, csigin, calf, cthe, cthi,
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      5       vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
-      if((maxval(facdrift).ne.0.0_R8 .or.
-     &    maxval(fac_ExB).ne.0.0_R8)) then
-        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,
-     &                facdrift, fchvispar)
-        call b2tiner (nx, ny, ns, vol,
-     &                gs, hx, hy, bb, na, ua, facdrift, fchinert)
-        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                fchanml)
-        if(anomalous_core_only.ne.0) then
-          do iy = 0, ny
-            do ix = -1, nx
-              if(mod(region(bottomix(ix,iy),
-     &                      bottomiy(ix,iy),0),4).ne.1) then
-                fchanml(ix,iy,1) = 0.0e0_R8
-              endif
-            enddo
-          enddo
-        endif
-      endif
+      call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)
+      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,
+     &              facdrift, fchvispar)
+      call b2tiner (nx, ny, ns, vol,
+     &              gs, hx, hy, bb, na, ua, facdrift, fchinert)
+
       do is=0,ns-1
 *    ..compute partial pressure
         call b2xppb

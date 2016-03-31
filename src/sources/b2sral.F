@@ -119,7 +119,6 @@
       integer, save :: style = 2                                        !srv 28.06.08
       integer, save :: iout = 0                                         !srv 30.06.08
       integer, save :: use_eirene =0, save_f30 = 0, save_f31 = 0        !srv 14.07.10
-      integer, save :: anomalous_core_only = 0                          !srv 19.04.07
       integer, save :: no_fluid_neutral_sources = 0
       character chns*3, chk*1                                           !srv 30.06.08
       real (kind=R8) ::
@@ -185,7 +184,6 @@
         call alloc_input_profile(ny,ns)
         call ipgeti ('b2sral_style', style)                              !srv 28.07.08
         call ipgeti ('b2sral_iout', iout)                                !srv 30.06.08
-        call ipgeti ('b2tfnb_anomalous_core_only', anomalous_core_only)  !srv 19.04.07
         call ipgeti ('b2mndr_astra', use_astra)
         call ipgeti ('b2mndr_eirene', use_eirene)                        !srv 14.07.10 {
         call ipgeti ('eirene_savef30', save_f30)
@@ -379,29 +377,11 @@ cxpb turn off poloidal flows in core boundary
       endif                                                             !srv 28.07.08
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
-       if((maxval(facdrift).ne.0.0_R8 .or.
-     &     maxval(fac_ExB).ne.0.0_R8)) then
-        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,        !srv 20.09.06 {
+       call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06 }
+       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,         !srv 20.09.06 {
      &                       facdrift, fchvispar)
-        call b2tiner (nx, ny, ns, vol,
+       call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
-        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                       fchanml)                                   !srv 20.09.06 }
-        if(anomalous_core_only.ne.0) then                               !srv 19.04.07 {
-          do iy = 0, ny                                                 !lk 19.09.07
-            do ix = -1, nx
-              if(mod(region(bottomix(ix,iy),
-     .                      bottomiy(ix,iy),0),4).ne.1) then            !lk 19.09.07
-                fchanml(ix,iy,1) = 0.0e0_R8
-              endif
-            enddo
-          enddo
-        endif                                                           !srv 19.04.07 }
-       else
-        fchvispar = 0.0_R8
-        fchinert  = 0.0_R8
-        fchanml   = 0.0_R8
-       endif
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, guard_flows,
      &  facdrift, fac_ExB, rza,

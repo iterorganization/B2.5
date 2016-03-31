@@ -308,13 +308,12 @@ c Drift terms
 
         endif
 *  ..calculate  X,Y-COMPONENTS OF VISCOSITY PARALLEL CURRENT
-        if(vis_par .ne. 0.0e0_R8) 
-     &   call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, 
-     &       cvsa, facdrift, fchvispar) !srv 20.09.06
+        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua,
+     &       cvsa, facdrift, fchvispar)                                 !srv 20.09.06
  
 * ..calculate the contribution of viscosity perpendicular current       !srv 22.11.99 
         va=0.0e0_R8
-         dva=0.0e0_R8
+        dva=0.0e0_R8
 
         if(vis_per.ne.0.0e0_R8) then                                    !srv 22.11.99
 
@@ -672,9 +671,7 @@ c Drift terms
         enddo
       endif !facdriftm!
 
-      if(fch_anomalous.ne.0.0e0_R8 ) then                                    !srv 23.03.07 {
-       call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)
-      endif                                                                  !srv 23.03.07 }
+      call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)
 
       if(fch_stochastic.ne.0.0e0_R8 ) then                                   !lk 31.01.08 {
        call b2tstch (nx, ny, vol, hy, bb, po, te, ne, csig_stoch, 

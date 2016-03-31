@@ -137,9 +137,9 @@
 *   ..subprogram start-up calls
       call subini ('b2stbr_phys')
 *   ..set internal parameters on first call
-      if (ncall.eq.0) then                                           !srv 22.08.08 {
+      if (ncall.eq.0) then                                          !srv 22.08.08 {
        write(*,*) ' First call of b2stbr_phys' 
-       call ipgeti ('b2stbr_phys_iout', iout)                         !srv 11.07.05
+       call ipgeti ('b2stbr_phys_iout', iout)                       !srv 11.07.05
        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
        call ipgeti ('b2npmo_iout', iout_b2npmo)
@@ -147,7 +147,7 @@
        call ipgeti ('b2nppo_iout', iout_b2nppo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2nphe_iout', iout_b2npht)                     !srv 11.09.09 }
-      endif                                                          !srv 22.08.08 }
+      endif                                                         !srv 22.08.08 }
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny, ns
@@ -854,7 +854,7 @@ c-dpc
              is2 = k
            end if
            k = k + 1
-        enddo
+         enddo
 c-dpc 
 *       (species (is) recycles into is0)
 *       (is0 corresponds to CX species is2)
