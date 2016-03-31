@@ -5,10 +5,13 @@
       use b2mod_time
       use b2mod_sources 
      &     , only: ext_sna, ext_smo, ext_she, ext_shi, ext_sch, ext_sne
+      use b2mod_geo_corner
+     &     , only: nmdpl
       implicit none
       integer nrr, nxx, nss
-      integer, parameter :: nkind_source=4,nkind_data=2
+      integer, parameter :: nkind_source=4,nkind_data=2,nscale=10
       integer, parameter :: nkind_coeff=9
+      integer, save :: csig_an_style=1
 #ifdef ALLOCATE_AND_NAMELIST
       integer, allocatable, save :: nsdata(:,:,:)
       integer, allocatable, save :: nxdata(:,:,:)
@@ -393,15 +396,15 @@
       integer :: nx,ny,ns
       integer :: iy,ix,i,ifail,spec,nspec,iiy,iir,
      &      nfitanf,ndim,is,nsp(1:ns+1),iloop,ncall,ifa,ndat,
-     &      kind_coeff,kind_data
-      integer ixwidth, ixmean
+     &      kind_coeff,kind_data,isc
+      integer :: ixwidth(nscale), ixmean(nscale)
 
       real(kind=R8), dimension(-1:nx,-1:ny,0:ns-1) :: 
      &    rza,dna0,dpa0,vsa0,na
       real(kind=R8), dimension(-1:nx,-1:ny) :: 
      &    hci0,hce0,sig0,alf0,ne,te,ti
        
-      real(kind=R8) :: scaling_width, scaling_strength
+      real(kind=R8) :: scaling_width(nscale), scaling_strength(nscale)
       real(kind=R8) :: f(nrr),r(nrr),pr(nrr),pf(nrr),d(nrr),
      &    pelm(nrr),felm(nrr),delm(nrr),prof(nrr),
      &    vla0(-1:nx,-1:ny,0:1,0:ns-1),hcib(-1:nx,-1:ny,0:ns-1)
@@ -411,10 +414,10 @@
       real (kind=R8), save :: elm_time_begin, elm_time_end
       real (kind=R8), save :: elm_time_period
       real (kind=R8) :: poloidal_scale_factor
-      integer, save :: scaling_ix_begin, scaling_ix_end
+      integer, save :: scaling_ix_begin(nscale), scaling_ix_end(nscale)
       integer, save :: elm_ix_begin, elm_ix_end
-      logical, save :: region_flags(NNREGMAX,nkind_coeff),
-     1 no_pflux, poloidal_scaling, elm_time, elm_region, elm_data
+      logical, save :: region_flags(NNREGMAX,nkind_coeff), no_pflux,
+     1 poloidal_scaling(nscale), elm_time, elm_region, elm_data
       character*260 filename
       character*26 hlp_frm
       integer, save :: elm_count
@@ -469,11 +472,13 @@
           endif
         endif
       endif
-      ixwidth = scaling_ix_end - scaling_ix_begin + 1
-      ixmean = (scaling_ix_end + scaling_ix_begin) / 2
-      if (scaling_width.eq.0.0_R8 .and. ixwidth.gt.1)
-     > scaling_width = 
-     .  0.5_R8*sqrt((ixwidth+1.0_R8)*(ixwidth-1.0_R8)/3.0_R8) 
+      do isc=1,nscale
+        ixwidth(isc) = scaling_ix_end(isc) - scaling_ix_begin(isc) + 1
+        ixmean(isc) = (scaling_ix_end(isc) + scaling_ix_begin(isc)) / 2
+        if (scaling_width(isc).eq.0.0_R8 .and. ixwidth(isc).gt.1)
+     $    scaling_width(isc) = 0.5_R8*
+     $      sqrt((ixwidth(isc)+1.0_R8)*(ixwidth(isc)-1.0_R8)/3.0_R8)
+      enddo
       if (elm_time_period.gt.0.)then
         elm_time=mod(tim,elm_time_period).ge.elm_time_begin.and.
      &           mod(tim,elm_time_period).le.elm_time_end
@@ -559,16 +564,18 @@
      3               iiy.lt.topcut(1)).or.(nnreg(0).eq.8.and.
      4               ix.ge.leftcut(2).and.ix.lt.rightcut(2).and.
      5               iiy.lt.topcut(2)))
-                  if (poloidal_scaling .and.
-     &                ix.ge.scaling_ix_begin .and. ix.le.scaling_ix_end) 
-     &              then
-                    poloidal_scale_factor = 1.0_R8 + scaling_strength/
-     &                    (sqrt(2.0_R8*pi)*scaling_width)*
-     &                    exp(-(ix-ixmean)*(ix-ixmean)/
-     &                         (2.0_R8*(scaling_width**2)))
-                  else
-                    poloidal_scale_factor = 1.0_R8
-                  endif
+                  poloidal_scale_factor = 1.0_R8
+                  do isc=1,nscale
+                    if (poloidal_scaling(isc) .and.
+     $                ix.ge.scaling_ix_begin(isc) .and. 
+     $                    ix.le.scaling_ix_end(isc)) then
+                      poloidal_scale_factor = poloidal_scale_factor*
+     $                    (1.0_R8 + scaling_strength(isc)/
+     $                    (sqrt(2.0_R8*pi)*scaling_width(isc))*
+     $                    exp(-(ix-ixmean(isc))*(ix-ixmean(isc))/
+     $                         (2.0_R8*scaling_width(isc)**2)))
+                    endif
+                  enddo
                   elm_region=elm_time.and.elm_data.and.
      &                     ix.ge.elm_ix_begin.and.ix.le.elm_ix_end
 
@@ -612,8 +619,13 @@
      1                 prof(iy)*mp*am(nsp(is))*na(ix,iiy,nsp(is))
                  
                     elseif (kind_coeff.eq.8) then
-                      sig0(ix,iiy)=prof(iy)*qe*ne(ix,iiy)*
-     1                 poloidal_scale_factor
+                      if (csig_an_style.eq.0) then
+                        sig0(ix,iiy)=prof(iy)*qe*ne(ix,iiy)*
+     1                   poloidal_scale_factor
+                      elseif(csig_an_style.eq.1) then
+                        sig0(ix,iiy)=prof(iy)*qe*ne(nmdpl,-1)*
+     1                   poloidal_scale_factor
+                      endif
                 
                     elseif (kind_coeff.eq.9) then
                       alf0(ix,iiy)=poloidal_scale_factor*
@@ -791,6 +803,7 @@ c*** Clear data to forget previous profiles
      1   'faulty argument set_transport_iyref')
         call output_ds(crx,cry,nx,ny,ixref,0,
      1   iyref,iyastrt,iyaend,'../dsp')
+        call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
 
       open (91,file='../dsp')

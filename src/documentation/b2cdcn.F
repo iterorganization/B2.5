@@ -820,7 +820,7 @@
 *   applies to neutrals. The density boundary condition is based on the
 *   difference between the average pressure and the local pressure.
 *  VACUUM_COMMUNICATION_NREG - Integer array of size (NVAC). Defaults to 0.
-*   Number of communicating vacuum regions.
+*   Number of communicating vacuum regions .
 *  VACUUM_COMMUNICATION_METHOD - Integer array of size (NVAC). Defaults to 0.
 *   Option for resorbing the pressure difference.
 *   1: Try to set a flux. Corr = (beta*ave_pressure - pressure)/temp * alpha
@@ -1010,18 +1010,19 @@
 *     parameters profiles for region (ireg) and kind (ikind) are used.
 *  NO_PFLUX - logical. If .true., transport coefficients profiles are not 
 *     implemented in the private flux regions. Defaults to .false..
-*  POLOIDAL_SCALING - logical. If .true., then the transport coefficients
-*     profiles from the current b2.transport.inputfile are increased by a
-*     factor of 1.0+Gaussian where Gaussian is a Gaussian profile in the
-*     poloidal direction of amplitude SCALING_STRENGTH extending from
-*     SCALING_IX_BEGIN to SCALING_IX_END inclusively. Defaults to .false..
-*     The profile has a decay length of SCALING_WIDTH (in units of the 
-*     number of poloidal cells).
-*  SCALING_STRENGTH - real*8. See above. Defaults to zero.
-*  SCALING_WIDTH - real*8. See above. Defaults to about 1/3 of the interval
-*     over which the scaling is to be done.
-*  SCALING_IX_BEGIN - integer. See above. Defaults to -2.
-*  SCALING_IX_END - integer. See above. Defaults to -2.
+*  POLOIDAL_SCALING - logical array of size (10).  If .true., then the 
+*     transport coefficients profiles from the current
+*     b2.transport.inputfile are increased by a factor of 1.0+Gaussian
+*     where Gaussian is a Gaussian profile in the poloidal direction of
+*     amplitude SCALING_STRENGTH extending from SCALING_IX_BEGIN to 
+*     SCALING_IX_END inclusively. Defaults to .false..  The profile has
+*     a decay length of SCALING_WIDTH (in units of the number of poloidal
+*     cells).
+*  SCALING_STRENGTH - real*8 array of size 10. See above. Defaults to zero.
+*  SCALING_WIDTH - real*8 array of size 10. See above. Defaults to about
+*     1/3 of the interval over which the scaling is to be done.
+*  SCALING_IX_BEGIN - integer array of size 10. See above. Defaults to -2.
+*  SCALING_IX_END - integer array of size 10. See above. Defaults to -2.
 *  ELM_TIME_BEGIN - real*8. Time (in seconds) modulo ELM_TIME_PERIOD at
 *     which the ELM phase begins and the ELM data must be used.
 *     Defaults to 0.0.
