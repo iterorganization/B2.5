@@ -124,8 +124,11 @@
         if (solvereg(ireg)) te(ix,iy) = max(1.0e-5_R8*ev,te(ix,iy)+dte)	 !xpb
         if ((solvpreg(ireg).and.po_solve).and.pot_eq.eq.1.and.
      &      leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
-     >                      po(ix,iy) = po(ix,iy)+dte/qe
+     &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
+                            po(ix,iy) = po(ix,iy)+dte/qe
+        else if (pot_eq.eq.2) then
+          po(ix,iy) = 3.1_R8*te(ix,iy)/qe
+        end if
         if (solvireg(ireg)) ti(ix,iy) = max(1.0e-5_R8*ev,ti(ix,iy)+dti)	 !xpb
        enddo
       enddo

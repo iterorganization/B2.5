@@ -356,7 +356,11 @@ c      if (solving.and.all(solvemo(0:ns-1,0:nnreg(0)))) then           !srv 06.0
       if (solving) then    
 *   ..compute simultaneous correction
        call sfill (n2, 0.0_R8, wrk0, 1)
-       solvedum(0:nnreg(0))=.true.
+       solvedum(0:nnreg(0))=.false.
+       do is = 0, ns-1
+         solvedum(0:nnreg(0)) =
+     .    solvedum(0:nnreg(0)) .or. solvemo(is,0:nnreg(0))
+       end do
        call b2usmo (nx, ny, ns, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
      &  vol, hx, hz, bb, ro, pr, wrk0, smt, flct, cvct,               !srv 09.01.01
      &  resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')         !srv 06.04.07
