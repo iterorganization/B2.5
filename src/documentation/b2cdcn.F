@@ -505,17 +505,18 @@
 *     CONPAR(,,1) specifies the desired density in $m^{-3}$.
 *     22 : Feedback boundary condition: given total particle flux with constant
 *     average density. The poloidal density variation is added to make the solution
-*     as close as possible to the neoclassical value. It is recommended to use this
-*     boundary condition with corresponding boundary condition on ion temperature
-*     (BCENI=24). The total desired flux is summed over all 
-*     BCCON=22 core boundaries.
+*     as close as possible to the neoclassical value derived for pure H/D/T plasma.
+*     It is recommended to use this boundary condition with corresponding boundary
+*     condition on ion temperature (BCENI=23,24).
+*     The total desired flux is summed over all BCCON=22 core boundaries.
 *     CONPAR(,,1) specifies the desired particle flux in $s^{-1}$.
-*     23 : Feedback boundary condition: given total particle flux with constant
-*     average density. The poloidal density variation is added to make the solution
-*     as close as possible to the neoclassical value. It is recommended to use this 
-*     boundary condition with corresponding boundary condition on ion temperature 
-*     (BCENI=24). The total desired flux is summed over all 
-*     BCCON=23 core boundaries.
+*     23 : Feedback boundary condition: given sum of integrated neutrals and
+*     main ion particle fluxes with constant average density.
+*     The poloidal density variation is added to make the solution
+*     as close as possible to the neoclassical value derived for pure H/D/T plasma.
+*     It is recommended to use this boundary condition with corresponding
+*     boundary condition on ion temperature (BCENI=23,24).
+*     The total desired flux is summed over all BCCON=23 core boundaries.
 *     CONPAR(,,1) specifies the desired particle flux in $s^{-1}$.
 *     24 : constant density feedback scaled by density on the ring bc_type21_ref away
 *     CONPAR(,,1) specifies the desired density in $m^{-3}$.

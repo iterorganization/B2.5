@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npc9 (nx, ny, guard_flows,                         !srv 05.07.08
+      subroutine b2npc9 (nx, ny, guard_flows,                        !srv 05.07.08
      &  nregionv, solvcreg, ua_solve, solvmreg, itcnt, isb, rxf,
-     &  vol, pbs, flob, conb, snb,                                    !srv 22.01.02 13.10.06
+     &  vol, pbs, flob, conb, snb,                                   !srv 22.01.02 13.10.06
      &  pccb, pb, nb, ub, fnb, rescb, corpb, ierr)
       use b2mod_types
       use b2mod_indirect
@@ -51,7 +51,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !sv 06.07.06
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0          !srv 06.07.06
       integer, save :: iout = 0                                      !srv 04.07.08    
       character chns*3                                               !srv 04.07.08
       real (kind=R8) ::
@@ -97,8 +97,8 @@
        call xertst (0.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
        call ipgeti ('b2npc9_iout', iout)                              !srv 13.07.05
-       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !sv 06.07.06
-       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !sv 06.07.06
+       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
+       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -109,16 +109,16 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of conb
-       if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then           !sv 06.07.06 {
-        call b2xvsg (n2*2*3, conb, 1, 'conb', '.ge.')                 !sv 18.11.05 13.10.06
-	 endif                                                          !sv 06.07.06 }
+       if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then           !srv 06.07.06 {
+        call b2xvsg (n2*2*3, conb, 1, 'conb', '.ge.')                 !srv 18.11.05 13.10.06
+	 endif                                                        !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
        call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')                 !srv 13.10.06 {
        call b2xvff (nx, ny, conb(-1,-1,0,1), 'conb1')
        call b2xvff (nx, ny, conb(-1,-1,0,2), 'conb2')                 !srv 13.10.06 }
 *    ..test sign of snbc, snbv
-!       call b2xvsg (n2, snb(-1,-1,0), 1, 'snbc', '.ge.')  !srv 23.05.08 permit because of adding fnaPSch in boundary conditijns
+       call b2xvsg (n2, snb(-1,-1,0), 1, 'snbc', '.ge.')
        call b2xvsg (n2, snb(-1,-1,1), 1, 'snbv', '.le.')
 *    ..test sign of pb, nb
        call b2xvsg (n2, pb, 1, 'pb', '.gt.')
@@ -130,14 +130,14 @@
 * ..particle balance
 *   ..compute residual
       call b2ursc (nx, ny, nb, snb, fnb, rescb)
-	if(guard_flows.eq.2) then                                     !srv 15.02.10 { this part should be re-written
+      if(guard_flows.eq.2) then                                       !srv 15.02.10 { this part should be re-written
        do iy=-1, ny, ny+1                                             !srv 27.06.08 {
         do ix = -1, nx
-	    if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
-	     rescb(ix,iy) = 0.0_R8
-	    endif
-	   enddo 
-	  enddo                                                       !srv 27.06.08 }
+	 if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
+	  rescb(ix,iy) = 0.0_R8
+	 endif
+	enddo
+       enddo                                                          !srv 27.06.08 }
       endif                                                           !srv 15.02.10 }
 *   ..compute correction
       write (chns,'(i3.3)') isb
@@ -178,9 +178,9 @@
      .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
      &      log(nb(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
-	enddo                                                           !srv 27.06.08 }
-      endif                                                            !srv 06.07.08 }
-      if (iout.ne.0) then                                            !srv 12.07.02 {
+	enddo                                                         !srv 27.06.08 }
+      endif                                                           !srv 06.07.08 }
+      if (iout.ne.0) then                                             !srv 12.07.02 {
         write (chns,'(i3.3)') isb
 	call my_out(70,nx,ny,pb,'b2npc9_pa'//chns)
 	call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
@@ -192,7 +192,7 @@
 	call my_out(70,nx,ny,wrk0,'b2npc9_sna'//chns)
 	call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc9_fnax'//chns)
 	call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc9_fnay'//chns)
-      endif                                                          !srv 12.07.02 }
+      endif                                                           !srv 12.07.02 }
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
       ierr = 0

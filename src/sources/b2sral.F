@@ -95,7 +95,7 @@
      &  smq(-1:nx,-1:ny,0:3,0:ns-1), she(-1:nx,-1:ny,0:3),
      &  shi(-1:nx,-1:ny,0:3), sch(-1:nx,-1:ny,0:3), sne(-1:nx,-1:ny,0:1)
       logical wrong_flow                                                 !xpb
-      logical main_call                                            !dpc
+      logical main_call                                                  !dpc
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -215,13 +215,13 @@
      &  rza, za_ext, fna, fa_ext, fch, fne)
       else
        call b2xpfe (nx, ny, ns, ns_ext, qe,
-     &  rza, za_ext, fna_nodrift, fa_ext, fch_p, fne)       !srv 11.10.02
+     &  rza, za_ext, fna_nodrift, fa_ext, fch_p, fne)                   !srv 11.10.02
       endif
       call b2xpfi (nx, ny, ns, fna, fni)
 
 *   ..test facdrift and fac_ExB
-      if (ncall.eq.0) then                                         !xpb
-        call ipgeti ('b2news_guard_flows', guard_flows)            !xpb
+      if (ncall.eq.0) then                                              !xpb
+        call ipgeti ('b2news_guard_flows', guard_flows)                 !xpb
         call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
         call alloc_b2mod_numerics(nx,ny,ns)
         if(numerics_namelist.ge.1) then
@@ -257,7 +257,7 @@
             call write_b2mod_numerics_namelist
           endif
         endif
-      endif                                                        !xpb
+      endif                                                             !xpb
       call xertst (0.0_R8.le.minval(facdrift) .and.
      &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
       call xertst (0.0_R8.le.minval(fac_ExB) .and.
@@ -265,7 +265,7 @@
 
       if (ncall.eq.0) then
 *   ..compute temporary drift velocities on first call
-        if(style.eq.0) then                                              !srv 28.07.08
+        if(style.eq.0) then                                             !srv 28.07.08
          call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpo)
          do is = 0, ns-1
            pb(-1:nx,-1:ny,is) = na(-1:nx,-1:ny,is)*ti(-1:nx,-1:ny)
@@ -277,7 +277,7 @@
      &            topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
      &            region(ix,iy,0).ne.0 .and. .not.is_neutral(is)) then
 !! FIXME : Ask Serguey about this change
-                vaecrb(ix,iy,0,is) = - 1.0_R8/hy1(ix,iy)*  ! signmf !srv 11.01.13
+                vaecrb(ix,iy,0,is) = - 1.0_R8/hy1(ix,iy)*  ! signmf     !srv 11.01.13
      1            1.0_R8/bb(ix,iy,3)*
      2            (wpo(topix(ix,iy),topiy(ix,iy))-wpo(ix,iy))*
      &            fac_ExB(ix,iy)

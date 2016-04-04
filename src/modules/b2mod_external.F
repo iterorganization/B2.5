@@ -92,7 +92,6 @@ cxpb  Allocate dummy arrays needed by b2xpfe
           deallocate(na_ext)
           deallocate(ua_ext)
           deallocate(ta_ext)
-          deallocate(fa_ext)
           deallocate(am_ext)
           deallocate(text_ext)
           deallocate(is_ext_neutral)
