@@ -2,9 +2,9 @@
 *.specification
 
       subroutine b2trno (nx, ny, ns, nscx, nscxmax, iscx, 
-     &  bb, vol, gs, hx, hy, hz, qz, pbs, crx, cry, conn,            !srv 09.01.01
+     &  bb, vol, gs, hx, hy, hz, qz, pbs, crx, cry, conn,               !srv 09.01.01
      &  na, ua, te, ti, po, ne, ni, ne2, cdna, cdpa, cvla, cvsa,
-     &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                      !srv 09.01.01 15.12.05
+     &  cdnahz, cdpahz, cvlahz, cvmahz, cvsahz,                         !srv 09.01.01 15.12.05
      &  chce, chve, chci, chvi, csig, calf,
      4	fllim0fhi)
       use b2mod_types
@@ -20,7 +20,7 @@
       real (kind=R8) ::
      *  bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), 
-     &  pbs(-1:nx,-1:ny,0:1), hz(-1:nx,-1:ny),                       !srv 09.01.01
+     &  pbs(-1:nx,-1:ny,0:1), hz(-1:nx,-1:ny),                          !srv 09.01.01
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne2(-1:nx,-1:ny),

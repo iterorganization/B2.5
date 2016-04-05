@@ -40,11 +40,11 @@
      *  fnb(-1:nx,-1:ny,0:1), fnb_32(-1:nx,-1:ny,0:1),
      1  fnb_52(-1:nx,-1:ny,0:1), fnb_nodrift(-1:nx,-1:ny,0:1),
      1  fnb_32nd(-1:nx,-1:ny,0:1), fnb_52nd(-1:nx,-1:ny,0:1), 
-     1  flob(-1:nx,-1:ny,0:1),  fnb_fcor(-1:nx,-1:ny,0:1),           !srv 01.10.99
-     2  fnb_he(-1:nx,-1:ny,0:1),                                     !srv 21.01.00
-     &  fnbPSch(-1:nx,-1:ny,0:1), fnb_mdf(-1:nx,-1:ny,0:1),          !srv 13.10.06
-     &  conb(-1:nx,-1:ny,0:1,0:4), ubdia(-1:nx,-1:ny,0:1),           !srv 13.10.06          
-     &  vbecrb(-1:nx,-1:ny,0:1), vbdia(-1:nx,-1:ny,0:1),             !xpb
+     1  flob(-1:nx,-1:ny,0:1),  fnb_fcor(-1:nx,-1:ny,0:1),               !srv 01.10.99
+     2  fnb_he(-1:nx,-1:ny,0:1),                                         !srv 21.01.00
+     &  fnbPSch(-1:nx,-1:ny,0:1), fnb_mdf(-1:nx,-1:ny,0:1),              !srv 13.10.06
+     &  conb(-1:nx,-1:ny,0:1,0:4), ubdia(-1:nx,-1:ny,0:1),               !srv 13.10.06
+     &  vbecrb(-1:nx,-1:ny,0:1), vbdia(-1:nx,-1:ny,0:1),                 !xpb
      &  wbdia(-1:nx,-1:ny,0:1), kbnrgy(-1:nx,-1:ny),
      &  fllim0fnb(-1:nx,-1:ny,0:1)
 *   ..common blocks
@@ -198,7 +198,7 @@
       endif
 
       write(chns,'(i3.3)') isb
-      if(mdf_fnb.eq.0) then                                     !srv 21.10.10 {
+      if(mdf_fnb.eq.0) then                                             !srv 21.10.10 {
        kmprti  = 0.0_R8
        dkmprti = 0.0_R8
       else
@@ -265,47 +265,47 @@
         kmprti  = 0.0_R8
         dkmprti = 0.0_R8
        endif
-      endif                                                        !srv 21.10.10 }
+      endif                                                             !srv 21.10.10 }
 
 c Drift terms
       maxfluxlimit=0.0_R8
       ubdia =0.0_R8
-      ub2dia=0.0_R8                                                 !srv 01.10.99
+      ub2dia=0.0_R8                                                     !srv 01.10.99
       vbdia =0.0_R8
       wbdia =0.0_R8
       wedia =0.0_R8
       wedia_=0.0_R8
       vbecrb=0.0_R8
-      fnbPSch   = 0.0_R8                                              !srv 13.10.06
-      fnb_mdf = 0.0_R8                                                !srv 19.11.09
-      conb  = 0.0e0_R8                                                !srv 13.10.06
+      fnbPSch   = 0.0_R8                                                !srv 13.10.06
+      fnb_mdf = 0.0_R8                                                  !srv 19.11.09
+      conb  = 0.0e0_R8                                                  !srv 13.10.06
       if((maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8)
      &    .and. minval(zb).gt.0.0_R8) then
-       if(drift_style.eq.0) then                                      !srv 21.06.08
+       if(drift_style.eq.0) then                                        !srv 21.06.08
         call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpo)
         call intfacev(nx,ny,bottomix,bottomiy,vol,nb*ti,wpb)
         do iy = -1, ny
-          do ix = -1, nx                                                 !xpb
+          do ix = -1, nx                                                !xpb
 cxpb  Must check that we are not at the island X-point or at the mesh edge !xpb
             if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).ne.iy .and.
      &         topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
      &         rightix(ix,iy).ne.nx+1 .and. leftiy(ix,iy).ne.-2 .and.
-     &         region(ix,iy,0).ne.0) then                                !xpb
+     &         region(ix,iy,0).ne.0) then                               !xpb
 cxpb  Standard case
-              vbecrb(ix,iy,0) = - signmf/hy1(ix,iy)*                     !xpb
-     1         1.0_R8/bb(ix,iy,3)*                                       !xpb
+              vbecrb(ix,iy,0) = - signmf/hy1(ix,iy)*                    !xpb
+     1         1.0_R8/bb(ix,iy,3)*                                      !xpb
      2         (wpo(topix(ix,iy),topiy(ix,iy))-wpo(ix,iy))*
-     &         fac_ExB(ix,iy)                                            !xpb
-              vbdia(ix,iy,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)*     !xpb
-     1         1.0_R8/bb(ix,iy,3)*                                       !xpb
-     2         2.0_R8*ti(ix,iy)/bb(ix,iy,3)/qe/zb(ix,iy)*                !xpb
+     &         fac_ExB(ix,iy)                                           !xpb
+              vbdia(ix,iy,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)*    !xpb
+     1         1.0_R8/bb(ix,iy,3)*                                      !xpb
+     2         2.0_R8*ti(ix,iy)/bb(ix,iy,3)/qe/zb(ix,iy)*               !xpb
      3        (wbbv(topix(ix,iy),topiy(ix,iy),3)-wbbv(ix,iy,3))*
-     &        facdrift(ix,iy)                                            !xpb
+     &        facdrift(ix,iy)                                           !xpb
               wbdia(ix,iy,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)
      1         /bb(ix,iy,3)/qe/zb(ix,iy)/nb(ix,iy)*
      2         (wpb(topix(ix,iy),topiy(ix,iy))-wpb(ix,iy))*
      &         facdrift(ix,iy)
-            else                                                         !xpb
+            else                                                        !xpb
 cxpb  Case of the island X-point cells
 cxpb          vbecrb(ix,iy,0) = - signmf/hy1(ix,iy)*fac_ExB(ix,iy)*      !xpb
 cxpb     1             1.0_R8/bb(ix,iy,3)*                               !xpb
@@ -1231,13 +1231,13 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/           !srv 01.03.00
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+           !srv 01.03.00
      &      (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+ ! fchvisper(ix,iy,1)+
-     &      fchanml(ix,iy,1))/
+     &       fchanml(ix,iy,1))/
      &      (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2) !srv 20.09.06
            flo_mdf = cvlb(ix,iy,1)+vbecrb(ix,iy,1)*                      !srv 01.06.06 {
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
      &      (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+ ! fchvisper(ix,iy,1)+
-     &      fchanml(ix,iy,1))/
+     &       fchanml(ix,iy,1))/
      &      (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)       !srv 20.09.06
            if(cfvma .eq. 0.0_R8) then                                    !srv 15.12.05
             flo2dia = cvlbhz(ix,iy,1)+ub2dia(ix,iy,1)*                   !srv 01.10.99 09.01.01
@@ -1298,12 +1298,6 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &      con(ix,iy)*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &      cdpb(ix,iy,1)*(pb(ix,iy)
      &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
-          if (ix.eq.12 .and. iy.eq.12) then
-            write(6,*) 'fnb : ', fnb(ix,iy,1)
-            write(6,*) 'flo, con, cdpb : ', flo, con(ix,iy), 
-     &                                           cdpb(ix,iy,1)
-            write(6,*) 'nb, pb : ', nb(ix,iy), pb(ix,iy)
-          end if
 *      fnb_he will be used only for heat equations                       !srv 21.01.00 {     
           fnb_he(ix,iy,1) = flo_he*(nb(bottomix(ix,iy),bottomiy(ix,iy))  !srv 13.09.02 {
      &          +nb(ix,iy))/2.0_R8-
@@ -1444,9 +1438,6 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       alpha*vbar/4.0_R8*gs(ix,iy,1)))**gamma)**(1.0_R8/gamma)
           maxfluxlimit(1)=max(maxfluxlimit(1),t0)
           fnb(ix,iy,1) = fnb(ix,iy,1) / t0
-          if (ix.eq.12 .and. iy.eq.12) then
-            write(6,*) 't0 : ', t0
-          end if
           fnb_32(ix,iy,1) = fnb_32(ix,iy,1) / t0
           fnb_52(ix,iy,1) = fnb_52(ix,iy,1) / t0
           fnb_nodrift(ix,iy,1) = fnb_nodrift(ix,iy,1) / t0

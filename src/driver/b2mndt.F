@@ -80,7 +80,7 @@
       save ncall, nstg, moqtlv, moitlv, rxf, itcnt,                      !xpb
      *  density_control, ramp_slow, BoRiS, no_solve,
      *  nstg_areshe, nstg_areshi, nstg_aresco, boundary_namelist
-      logical domoqt, domoit, wrong_flow, ramp_call, b2fstati_addexists !xpb !srv 15.07.08
+      logical domoqt, domoit, wrong_flow, ramp_call                      !xpb
       logical test_residual, quit_residual, main_call
       save test_residual
       integer n2, istg(0:2), is, k
@@ -279,15 +279,14 @@ ctmp.dpc
 *   ..calculate neoclassical transport only in intermediate loop
           newneo=.true.
 
-          if(itcnt.eq.0) then
 *   ..one-off calculation of transport coefficients
-            call b2xpni (nx, ny, ns, na, ni)
-            call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
-            call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
+          call b2xpni (nx, ny, ns, na, ni)
+          call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
+          call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
 *   ..compute flux limit coefficients                                    !srv 11.10.02 03.06.03 {
-            call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs, 
+          call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
      &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)           !srv 11.10.02 03.06.03 }
-            call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,        !srv 23.11.10
+          call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,          !srv 23.11.10
      1       bb, conn, vol, gs, hx, hy, hz, qz, qc, 
      1       pbs, crx, cry, bzb, lnlam,                                  !srv 13.10.06 01.07.09
      1       fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,       !srv 03.06.03
@@ -295,150 +294,15 @@ ctmp.dpc
      3       chvi, csig, csigin, calf, cthe, cthi, 
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
      5       vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
-            newneo=.true.
-            if(style.ne.0) then                                          !srv 18.06.08 {
-             INQUIRE (FILE = 'b2fstati_add', EXIST = b2fstati_addexists) !srv 15.07.08
-!             IF (.NOT. b2fstati_addexists) THEN
-!              WRITE (*,'(/2A/)') '  Cannot find file ', 'b2fstati_add'
-	        ! if there is no the file b2fstati_add then it is possible
-	        ! a jump of residuals when continuing of the run  
-             call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
-     &                     fchanml)                                     !srv 20.09.06  }
-             call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,   !srv 20.09.06  {
-     &                     facdrift, fchvispar)
-             call b2tiner (nx, ny, ns, vol,
-     &                     gs, hx, hy, bb, na, ua, facdrift, fchinert)
-
-             do is=0,ns-1                                                !srv 01.10.99 25.02.00
-*   ..         compute partial pressure
-               call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), 
-     &                      te, ti, pb)                                  !srv 01.10.99
-*   ..         compute particle flux
-               call b2tfnb (nx, ny, is, ismain, 
-     &          guard_flows, facdrift, fac_ExB,  !srv 07.06.00 09.01.01 08.09.01 19.05.03 04.02.05
-     &          am(is)*mp, vol, rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), !srv 09.01.01 20.09.06
-     &          pb, ua(-1,-1,is), uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
-     &          vadia(-1,-1,0,is), wadia(-1,-1,0,is), ne, te, ti, bb,
-     &          hx, hy, hz, qz, gs, qc, po,                              !srv 19.05.03 08.10.04 04.02.05
-     &          cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &          cddi(-1,-1,0,is), cvlahz(-1,-1,0,is),
-     &          cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),                  !srv 09.01.01 15.12.05 13.10.06
-     &          cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,        !srv 20.09.06
-     &          fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), 
-     &          fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is), 
-     &          fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is), 
-     &          flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
-     &          fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
-     &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
-              enddo                                                      !srv 01.10.99 25.02.00 13.10.06
-*    ..get current fch_p                                                 !srv 11.10.02 {
-              call b2tcpa (nx, ny, te, po, ne, csig_cl, calf_cl, fch_p)
-              call b2xppz (nx, ny, ns, ne, na, te, ti, pz)
-
-              call b2xpfe (nx, ny, ns, ns_ext, qe, 
-     &         rza, za_ext, fna_he, fa_ext, fch_p, fne)
-           
-              call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,        
-     1         vol, gs, hx, hy, qz, qc, bb, 
-     1         te, po, ne, ne2, lnlam, pz, ti,                           !srv 01.07.09
-     1         ni(-1,-1,1), na, fna, vadia, ua, fne,
-     2         csig, csig_cl, csigin, chce,
-     &         chve, chci, calf, chvemx, cvsa, cdna, cdpa, cddi, fch,
-     &         fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,   !srv 13.10.06
-     &         floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,
-     &         fchvisq, fchinert, fchanml)                               !srv 24.03.07
-              floe_noc = floe                                
-              call b2xpfi (nx, ny, ns, fna_he, fni)                      !srv 28.10.02 {
-csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
-              call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb,   
-     &         ti, ni, na, fni, fna_he, ua, 
-     &         chci, cddi, chvi, chvimx, cvsa, vadia,                    !srv 13.10.06
-     &         fchvispar, fchvisq, fchinert, fchanml,
-     &         fhi, fhi_mdf, fhiPSch, floi, coni)
-              floi_noc = floi                                            !srv 24.10.02
-              write(6,*) 'Recomputed values'
-              write(6,*) 'vaecrbx : ', vaecrb(12,12,0,:)
-              write(6,*) 'vaecrby : ', vaecrb(12,12,1,:)
-              write(6,*) 'vadiax : ', vadia(12,12,0,:)
-              write(6,*) 'vadiay : ', vadia(12,12,1,:)
-              write(6,*) 'floe_noc : ', floe_noc(12,12,0:1)
-              write(6,*) 'floi_noc : ', floi_noc(12,12,0:1)
-              write(6,*) 'fnax : ', fna(12,12,0,:)
-              write(6,*) 'fnay : ', fna(12,12,1,:)
-              write(6,*) 'fna_fcorx : ', fna_fcor(12,12,0,:)
-              write(6,*) 'fna_fcory : ', fna_fcor(12,12,1,:)
-              write(6,*) 'fna_nodriftx : ', fna_nodrift(12,12,0,:)
-              write(6,*) 'fna_nodrifty : ', fna_nodrift(12,12,1,:)
-              write(6,*) 'fna_hex : ', fna_he(12,12,0,:)
-              write(6,*) 'fna_hey : ', fna_he(12,12,1,:)
-              write(6,*) 'fhe : ', fhe(12,12,:)
-              write(6,*) 'fhi : ', fhi(12,12,:)
-              write(6,*) 'fch : ', fch(12,12,:)
-              write(6,*) 'fchdia : ', fchdia(12,12,:)
-              write(6,*) 'fchin : ', fchin(12,12,:)
-              write(6,*) 'fch_p : ', fch_p(12,12,:)
-              write(6,*) 'fchvispar : ', fchvispar(12,12,:)
-              write(6,*) 'fchvisper : ', fchvisper(12,12,:)
-              write(6,*) 'fchvisq : ', fchvisq(12,12,:)
-              write(6,*) 'fchinert : ', fchinert(12,12,:)
-              write(6,*) 'fnaPSchx : ', fnaPSch(12,12,0,:)
-              write(6,*) 'fnaPSchy : ', fnaPSch(12,12,1,:)
-              write(6,*) 'fna_mdfx : ', fna_mdf(12,12,0,:)
-              write(6,*) 'fna_mdfy : ', fna_mdf(12,12,1,:)
-              write(6,*) 'fhePSch : ', fhePSch(12,12,:)
-              write(6,*) 'fhiPSch : ', fhiPSch(12,12,:)
-              write(6,*) 'fhe_mdf : ', fhe_mdf(12,12,:)
-              write(6,*) 'fhi_mdf : ', fhi_mdf(12,12,:)
-!	       ELSE
-              open (70, file='b2fstati_add',form='unformatted')
-	          read(70,end=10) 
-     &          vaecrb, vadia, floe_noc, floi_noc, fna, 
-     &          fna_fcor, fna_nodrift, fna_he, fhe, fhi, fch,
-     &          fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,
-     &          fchinert, fnaPSch, fna_mdf, fhePSch, fhiPSch,           !srv 13.10.06
-     &          fhe_mdf, fhi_mdf                                        !srv 29.10.09 {
-	          goto 20
-   10	          write(*,*) ' File b2fstati_add is old. '
-   	          write(*,*) ' fhe_mdf = fhe and fhi_mdf = fhi'
-                fhe_mdf = fhe
-	          fhi_mdf = fhi
-   20	        close(70)                                                !srv 29.10.09 }
-              write(6,*) 'Saved values'
-              write(6,*) 'vaecrbx : ', vaecrb(12,12,0,:)
-              write(6,*) 'vaecrby : ', vaecrb(12,12,1,:)
-              write(6,*) 'vadiax : ', vadia(12,12,0,:)
-              write(6,*) 'vadiay : ', vadia(12,12,1,:)
-              write(6,*) 'floe_noc : ', floe_noc(12,12,0:1)
-              write(6,*) 'floi_noc : ', floi_noc(12,12,0:1)
-              write(6,*) 'fnax : ', fna(12,12,0,:)
-              write(6,*) 'fnay : ', fna(12,12,1,:)
-              write(6,*) 'fna_fcorx : ', fna_fcor(12,12,0,:)
-              write(6,*) 'fna_fcory : ', fna_fcor(12,12,1,:)
-              write(6,*) 'fna_nodriftx : ', fna_nodrift(12,12,0,:)
-              write(6,*) 'fna_nodrifty : ', fna_nodrift(12,12,1,:)
-              write(6,*) 'fna_hex : ', fna_he(12,12,0,:)
-              write(6,*) 'fna_hey : ', fna_he(12,12,1,:)
-              write(6,*) 'fhe : ', fhe(12,12,:)
-              write(6,*) 'fhi : ', fhi(12,12,:)
-              write(6,*) 'fch : ', fch(12,12,:)
-              write(6,*) 'fchdia : ', fchdia(12,12,:)
-              write(6,*) 'fchin : ', fchin(12,12,:)
-              write(6,*) 'fch_p : ', fch_p(12,12,:)
-              write(6,*) 'fchvispar : ', fchvispar(12,12,:)
-              write(6,*) 'fchvisper : ', fchvisper(12,12,:)
-              write(6,*) 'fchvisq : ', fchvisq(12,12,:)
-              write(6,*) 'fchinert : ', fchinert(12,12,:)
-              write(6,*) 'fnaPSchx : ', fnaPSch(12,12,0,:)
-              write(6,*) 'fnaPSchy : ', fnaPSch(12,12,1,:)
-              write(6,*) 'fna_mdfx : ', fna_mdf(12,12,0,:)
-              write(6,*) 'fna_mdfy : ', fna_mdf(12,12,1,:)
-              write(6,*) 'fhePSch : ', fhePSch(12,12,:)
-              write(6,*) 'fhiPSch : ', fhiPSch(12,12,:)
-              write(6,*) 'fhe_mdf : ', fhe_mdf(12,12,:)
-              write(6,*) 'fhi_mdf : ', fhi_mdf(12,12,:)
-!	       ENDIF
-            endif                                                        !srv 18.06.08 }
-          endif
+          newneo=.true.
+          if(style.ne.0) then                                            !srv 18.06.08 {
+            call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
+     &                    fchanml)                                       !srv 20.09.06 }
+            call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,     !srv 20.09.06 {
+     &                    facdrift, fchvispar)
+            call b2tiner (nx, ny, ns, vol,
+     &                    gs, hx, hy, bb, na, ua, facdrift, fchinert)
+          endif                                                          !srv 18.06.08 }
           src_ni=0.0_R8
           src_ne=0.0_R8
           src_mo=0.0_R8
@@ -455,47 +319,37 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
           main_call = ntim.ne.0
           call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain, ismain0,
      &     dtim, BoRiS, facdrift, fac_ExB,
-     &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !srv 09.01.01
+     &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,             !srv 09.01.01
      &     na, ua,
      &     uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
-     &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02
+     &     te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,               !srv 28.10.02
      &     fna, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
-     &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,        !srv 13.10.06 25.12.06 23.10.09
+     &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,     !srv 13.10.06 25.12.06 23.10.09
      &     fhe, fhi, fnaPSch, fhePSch, fhiPSch, fch,
-     &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,             !srv 21.10.02
+     &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,          !srv 21.10.02
      &     fchinert, fchanml, fna_eir, fne_eir, fhe_eir, fhi_eir,
-     &     cdna, cdpa, cvsa, cvla, chce, chve, chci, chvi, calf,            !xpb
+     &     cdna, cdpa, cvsa, cvla, chce, chve, chci, chvi, calf,         !xpb
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &     wrong_flow, main_call)
           if(wrong_flow) write(*,*) 
      &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources
-csw 17oct2012 incorrect call to b2srsm !
-c          call b2srsm (nx, ny, ns, dtim, vol, na, ua, te, ti, ne, ni,
-c     &     snasm, smosm, shesm, shism, snesm, .true.)                       !srv 11.09.09 {
-c*   ..add to previous contributions
-c          call b2saxpy (n2*2*ns, 1.0_R8, snasm, 1, sna, 1)
-c          call b2saxpy (n2*4*ns, 1.0_R8, smosm, 1, smo, 1)
-c          call b2saxpy (n2*4, 1.0_R8, shesm, 1, she, 1)
-c          call b2saxpy (n2*4, 1.0_R8, shism, 1, shi, 1)                   !srv 11.09.09 }
-csw 17oct2012 this is the corrected call
           call b2srsm (nx, ny, ns, 
      &     dtim, vol, na, ua, te, ti, ne, ni,
-     &     sna, smo, she, shi, sne, .true.)                       !srv 11.09.09 {
-
+     &     sna, smo, she, shi, sne, .true.)                              !srv 11.09.09 {
 *     ..include contributions due to timestep
           call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !srv 09.01.01 01.07.08
      &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
-     &     na, ua, te, ti, ne, ni, kinrgy,                          !srv 16.07.10
-     &     snadt, smodt, shedt, shidt, schdt, snedt, .false.)                       !srv 11.09.09
+     &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
+     &     snadt, smodt, shedt, shidt, schdt, snedt, .false.)            !srv 11.09.09
 *   ..add to previous contributions
           call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
           call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
           call b2saxpy (n2*2, 1.0_R8, snedt, 1, sne, 1)
           call b2saxpy (n2*4, 1.0_R8, shedt, 1, she, 1)
           call b2saxpy (n2*4, 1.0_R8, shidt, 1, shi, 1)
-          call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                   !srv 11.09.09 }
+          call b2saxpy (n2*4, 1.0_R8, schdt, 1, sch, 1)                  !srv 11.09.09 }
 *     ..stabilise the source coefficients
           if(use_b2srst.eq.1)
      &     call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne, !srv 01.07.08
@@ -505,16 +359,16 @@ csw 17oct2012 this is the corrected call
           istg(2) = 0
     3     if (istg(2).lt.nstg(2) .and. .not.quit_residual) then
 *      ..basic iterative step
-           if(style.eq.0) then                                          !srv 01.07.08
+           if(style.eq.0) then                                           !srv 01.07.08
             ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
             call b2news (nx, ny, ns, nscx, iscx, ismain, ismain0,
      &       natm, nmol, nion, nlim, nsts, itim,
-     &       dtim, rxf, ier0, wrong_flow, ramp_call)                    !xpb
-           else                                                         !srv 01.07.08 {
+     &       dtim, rxf, ier0, wrong_flow, ramp_call)                     !xpb
+           else                                                          !srv 01.07.08 {
             call b2news_(nx, ny, ns, nscx, iscx, ismain, ismain0,
      &       natm, nmol, nion, nlim, nsts, itim,
-     &       dtim, rxf, ier0)                                           !srv 16.07.10 23.11.10
-	   endif                                                        !srv 01.07.08 )
+     &       dtim, rxf, ier0)                                            !srv 16.07.10 23.11.10
+	   endif                                                         !srv 01.07.08 )
            if(ier0.eq.10) then
              ierr=ier0
              goto 99999

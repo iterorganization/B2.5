@@ -35,8 +35,8 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain,
      *  ismain0
-      real (kind=R8) ::                                            !xpb
-     *  dtim, BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny)   !xpb
+      real (kind=R8) ::                                                  !xpb
+     *  dtim, BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny)         !xpb
 *     (geometry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), crx(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny),

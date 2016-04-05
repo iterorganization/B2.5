@@ -107,14 +107,14 @@
        call b2usp7 (nx, ny, nregionv, solvereg, itcnt,            !srv 06.07.00 27.01.00
      &    ne, te, conc, avisper, bvisper, cvisper,                !srv 27.01.00
      &    sch, respo, corpo, aa7)                                 !srv 27.01.00
-	else                                                        !srv 08.07.08 {
+	else                                                      !srv 08.07.08 {
        call b2usp7_ (nx, ny, itcnt, ne, te, conc,
      &    avisper, bvisper, cvisper, sch, respo, corpo, aa7)
       endif                                                       !srv 08.07.08 }
 *   ..apply correction
       call b2uppo (nx, ny, rxf, corpo, po)
 
-	if(iout .eq. 1) then                                        !srv 11.09.09 {
+	if(iout .eq. 1) then                                      !srv 11.09.09 {
 !	 call my_out(70,nx,ny,te,'b2npp7_te')
 !	 call my_out(70,nx,ny,ne,'b2npp7_ne')
 	 call my_out(70,nx,ny,po,'b2npp7_po')
@@ -128,7 +128,7 @@
          wrk0=sch(:,:,0)+sch(:,:,1)*po+sch(:,:,2)*ne+
      &        sch(:,:,3)*ne*po
 	 call my_out(70,nx,ny,wrk0,'b2npp7_sch')
-	endif                                                       !srv 11.09.09 }
+	endif                                                     !srv 11.09.09 }
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xertst)
       ierr = 0

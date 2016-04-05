@@ -165,11 +165,11 @@
        call slv5pt (nx+2, ny+2, aa9, resfun, iters, corfun, nrmc,
      &   min(nx+2,ny+2), aaf, wrk0, iwrk)
       else if (style.eq.2) then
-	  call cpu_time(c_start)        
-	  call storage_9 (nx, ny, aa9, n_nonzeros, irnh, icnh, a1h, nz,
+       call cpu_time(c_start)
+       call storage_9 (nx, ny, aa9, n_nonzeros, irnh, icnh, a1h, nz,
      *                 indexes, iasave, jasave, name)       
-        call cpu_time(c_end)
-        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_9 ',
+       call cpu_time(c_end)
+       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_9 ',
      &               c_end-c_start
 *    ..use ma28
        cpu_start=x05baf()
@@ -195,19 +195,19 @@
 
       end
 
-	subroutine storage_9 (nx, ny, aa9, nnz, ia, ja, a, k,            !sv 22.11.06
+      subroutine storage_9 (nx, ny, aa9, nnz, ia, ja, a, k,            !sv 22.11.06
      *                      indexes, iasave, jasave, name)
       use b2mod_types
       use b2mod_indirect
-	implicit none
+      implicit none
 *  ..input
-	integer nx, ny, nnz
-	real (kind=R8) :: aa9(-1:nx,-1:ny,-6:6)
+      integer nx, ny, nnz
+      real (kind=R8) :: aa9(-1:nx,-1:ny,-6:6)
       character*(*) name
 *  ..output
-	integer ia(nnz), ja(nnz), k,
+      integer ia(nnz), ja(nnz), k,
      *        indexes(1:3,nnz), iasave(nnz), jasave(nnz)
-	real (kind=R8) :: a(nnz)
+      real (kind=R8) :: a(nnz)
 !                 2_____3_____4                     5___________6
 !                 |     |     |                     |     |     |
 !                 |     |     |                     |     |     |
@@ -226,235 +226,235 @@
 !                     |              |              |
 !                (ix-1,iy-1)______(ix,iy-1)____(ix+1,iy-1)
 *  ..locals
-	logical :: lord
-	logical, save :: lfirst=.true.
-	integer :: i, j, ix, iy, ner, jak, jtemp, ipt, nxp2, n
-	integer :: ixl, iyl, ixr, iyr, ixb, iyb, ixt, iyt
-	integer :: ip(1:(nx+2)*(ny+2)+1)
-	real (kind=R8) :: temp
-	integer, save :: ncall = 0
-	integer, save :: kwrite_fmt = -1
-	integer, save :: kwrite_bnr = -1
+      logical :: lord
+      logical, save :: lfirst=.true.
+      integer :: i, j, ix, iy, ner, jak, jtemp, ipt, nxp2, n
+      integer :: ixl, iyl, ixr, iyr, ixb, iyb, ixt, iyt
+      integer :: ip(1:(nx+2)*(ny+2)+1)
+      real (kind=R8) :: temp
+      integer, save :: ncall = 0
+      integer, save :: kwrite_fmt = -1
+      integer, save :: kwrite_bnr = -1
 
       if(ncall.eq.0) then
-	 call ipgeti ('storage_9_kwrite_fmt', kwrite_fmt)
-	 call ipgeti ('storage_9_kwrite_bnr', kwrite_bnr)
+        call ipgeti ('storage_9_kwrite_fmt', kwrite_fmt)
+        call ipgeti ('storage_9_kwrite_bnr', kwrite_bnr)
       endif
 
       n = (nx+2)*(ny+2)
 
-	if (lfirst) then
-	 indexes=0
-	 nxp2=nx+2
-	 k=0
-	 ip(1)=1
-	 i=0
-	 do iy=-1,ny
-	   do ix=-1,nx
-	     ner=0
-	     i=i+1
+      if (lfirst) then
+        indexes=0
+        nxp2=nx+2
+        k=0
+        ip(1)=1
+        i=0
+        do iy=-1,ny
+          do ix=-1,nx
+            ner=0
+            i=i+1
 *   ..Case of left neighbor
-	     jak = 2+leftix(ix,iy)+(2+leftiy(ix,iy)-1)*nxp2
-	     if( aa9(ix,iy,-1) .ne. 0.0e0_R8 ) then
-	       k = k+1
-	       a(k) = aa9(ix,iy,-1)
-	       indexes(1,k)=ix
-	       indexes(2,k)=iy
-	       indexes(3,k)=-1
-	       ia(k) = i
-	       ja(k) = jak
-	       ner = ner+1
-	     endif
+            jak = 2+leftix(ix,iy)+(2+leftiy(ix,iy)-1)*nxp2
+            if( aa9(ix,iy,-1) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa9(ix,iy,-1)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=-1
+              ia(k) = i
+              ja(k) = jak
+              ner = ner+1
+            endif
 *   ..Case (ix,iy)
-	     if( aa9(ix,iy,0) .ne. 0.0e0_R8 ) then
-	       k = k+1
-	       a(k) = aa9(ix,iy,0)
-	       indexes(1,k)=ix
-	       indexes(2,k)=iy
-	       indexes(3,k)=0
-	       ia(k) = i
-	       ja(k) = i
-	       ner = ner+1
-	     endif
+            if( aa9(ix,iy,0) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa9(ix,iy,0)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=0
+              ia(k) = i
+              ja(k) = i
+              ner = ner+1
+            endif
 *   ..Case of right neighbor
-           jak = 2+rightix(ix,iy)+(2+rightiy(ix,iy)-1)*nxp2
-	     if( aa9(ix,iy,1) .ne. 0.0e0_R8 ) then
-	       k = k+1
-	       a(k) = aa9(ix,iy,1)
-	       indexes(1,k)=ix
-	       indexes(2,k)=iy
-	       indexes(3,k)=1
-	       ia(k) = i
-             ja(k) = jak
-	       ner = ner+1
-	     endif
+            jak = 2+rightix(ix,iy)+(2+rightiy(ix,iy)-1)*nxp2
+	    if( aa9(ix,iy,1) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa9(ix,iy,1)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=1
+              ia(k) = i
+              ja(k) = jak
+              ner = ner+1
+            endif
 *   ..Case of top neighbor
-	     if( aa9(ix,iy,3) .ne. 0.0e0_R8 ) then
-	       k = k+1
-	       a(k) = aa9(ix,iy,3)
-	       indexes(1,k)=ix
-	       indexes(2,k)=iy
-	       indexes(3,k)=3
-	       ia(k) = i
-             ja(k) = 2+topix(ix,iy)+(2+topiy(ix,iy)-1)*nxp2
-	       ner = ner+1
-	     endif
+            if( aa9(ix,iy,3) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa9(ix,iy,3)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=3
+              ia(k) = i
+              ja(k) = 2+topix(ix,iy)+(2+topiy(ix,iy)-1)*nxp2
+              ner = ner+1
+            endif
 *   ..Case of bottom neighbor
-	     if( aa9(ix,iy,-3) .ne. 0.0e0_R8 ) then
-	       k = k+1
-	       a(k) = aa9(ix,iy,-3)
-	       indexes(1,k)=ix
-	       indexes(2,k)=iy
-	       indexes(3,k)=-3
-	       ia(k) = i
-             ja(k) = 2+bottomix(ix,iy)+(2+bottomiy(ix,iy)-1)*nxp2
-	       ner = ner+1
-	     endif
+            if( aa9(ix,iy,-3) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa9(ix,iy,-3)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=-3
+              ia(k) = i
+              ja(k) = 2+bottomix(ix,iy)+(2+bottomiy(ix,iy)-1)*nxp2
+              ner = ner+1
+            endif
 *   ..Case (ix-1,iy-1)
-	     ixl = leftix(ix,iy)
-	     iyl = leftiy(ix,iy)
-	     ixb = bottomix(ix,iy)
-	     iyb = bottomiy(ix,iy)
-	     if( aa9(ix,iy,-4) .ne. 0.0e0_R8 ) then
-	        k = k+1
-	        a(k) = aa9(ix,iy,-4)
-	        indexes(1,k)=ix
-	        indexes(2,k)=iy
-	        indexes(3,k)=-4
-	        ia(k) = i
+            ixl = leftix(ix,iy)
+            iyl = leftiy(ix,iy)
+            ixb = bottomix(ix,iy)
+            iyb = bottomiy(ix,iy)
+            if( aa9(ix,iy,-4) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa9(ix,iy,-4)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)=-4
+              ia(k) = i
               ja(k) = 2+bottomix(ixl,iyl)+(2+bottomiy(ixl,iyl)-1)*nxp2
-	        ner = ner+1
-	     endif
-           if( aa9(ix,iy,-6) .ne. 0.0e0_R8 ) then
-	       k = k+1
-	       a(k) = aa9(ix,iy,-6)
-	       indexes(1,k)=ix
-	       indexes(2,k)=iy
-	       indexes(3,k)= -6
-	       ia(k) = i
-             ja(k) = 2+leftix(ixb,iyb)+(2+leftiy(ixb,iyb)-1)*nxp2
-	       ner = ner+1
-	     endif
+              ner = ner+1
+            endif
+            if( aa9(ix,iy,-6) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa9(ix,iy,-6)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)= -6
+              ia(k) = i
+              ja(k) = 2+leftix(ixb,iyb)+(2+leftiy(ixb,iyb)-1)*nxp2
+              ner = ner+1
+            endif
 *   ..Case (ix-1,iy+1)
-	     ixl = leftix(ix,iy)
-	     iyl = leftiy(ix,iy)
-	     ixt = topix(ix,iy)
-	     iyt = topiy(ix,iy)
-	     if( aa9(ix,iy,2) .ne. 0.0e0_R8 ) then
-	       k = k+1
-	       a(k) = aa9(ix,iy,2)
-	       indexes(1,k)=ix
-	       indexes(2,k)=iy
-	       indexes(3,k)= 2
-	       ia(k) = i
-             ja(k) =2+topix(ixl,iyl)+(2+topiy(ixl,iyl)-1)*nxp2
-	       ner = ner+1
-	     endif
-	     if( aa9(ix,iy,5) .ne. 0.0e0_R8 ) then
-	       k = k+1
-	       a(k) = aa9(ix,iy,5)
-	       indexes(1,k)=ix
-	       indexes(2,k)=iy
-	       indexes(3,k)= 5
-	       ia(k) = i
-             ja(k) =2+leftix(ixt,iyt)+(2+leftiy(ixt,iyt)-1)*nxp2
-	       ner = ner+1
-	     endif
+            ixl = leftix(ix,iy)
+            iyl = leftiy(ix,iy)
+            ixt = topix(ix,iy)
+            iyt = topiy(ix,iy)
+            if( aa9(ix,iy,2) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa9(ix,iy,2)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)= 2
+              ia(k) = i
+              ja(k) =2+topix(ixl,iyl)+(2+topiy(ixl,iyl)-1)*nxp2
+              ner = ner+1
+            endif
+            if( aa9(ix,iy,5) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa9(ix,iy,5)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)= 5
+              ia(k) = i
+              ja(k) =2+leftix(ixt,iyt)+(2+leftiy(ixt,iyt)-1)*nxp2
+              ner = ner+1
+            endif
 *       Case (ix+1,iy-1) 
-	     ixr = rightix(ix,iy)
-	     iyr = rightiy(ix,iy)
-	     ixb = bottomix(ix,iy)
-	     iyb = bottomiy(ix,iy)
-	     if( aa9(ix,iy,-2) .ne. 0.0e0_R8 ) then
-	       k = k+1
-	       a(k) = aa9(ix,iy,-2)
-	       indexes(1,k)=ix
-	       indexes(2,k)=iy
-	       indexes(3,k)= -2
-	       ia(k) = i
-             ja(k) =2+bottomix(ixr,iyr)+(2+bottomiy(ixr,iyr)-1)*nxp2
-	       ner = ner+1
-	     endif
-	     if( aa9(ix,iy,-5) .ne. 0.0e0_R8 ) then
-	       k = k+1
-	       a(k) = aa9(ix,iy,-5)
-	       indexes(1,k)=ix
-	       indexes(2,k)=iy
-	       indexes(3,k)= -5
-	       ia(k) = i
-             ja(k) =2+rightix(ixb,iyb)+(2+rightiy(ixb,iyb)-1)*nxp2
-	       ner = ner+1
-	     endif
+            ixr = rightix(ix,iy)
+            iyr = rightiy(ix,iy)
+            ixb = bottomix(ix,iy)
+            iyb = bottomiy(ix,iy)
+            if( aa9(ix,iy,-2) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa9(ix,iy,-2)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)= -2
+              ia(k) = i
+              ja(k) =2+bottomix(ixr,iyr)+(2+bottomiy(ixr,iyr)-1)*nxp2
+              ner = ner+1
+            endif
+            if( aa9(ix,iy,-5) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa9(ix,iy,-5)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)= -5
+              ia(k) = i
+              ja(k) =2+rightix(ixb,iyb)+(2+rightiy(ixb,iyb)-1)*nxp2
+              ner = ner+1
+            endif
 *       Case (ix+1,iy+1) 
-	     ixr = rightix(ix,iy)
-	     iyr = rightiy(ix,iy)
-	     ixt = topix(ix,iy)
-	     iyt = topiy(ix,iy)
-	     if( aa9(ix,iy,4) .ne. 0.0e0_R8 ) then
-	       k = k+1
-	       a(k) = aa9(ix,iy,4)
-	       indexes(1,k)=ix
-	       indexes(2,k)=iy
-	       indexes(3,k)= 4
-	       ia(k) = i
-             ja(k) =2+topix(ixr,iyr)+(2+topiy(ixr,iyr)-1)*nxp2
-	       ner = ner+1
-	     endif
-	     if( aa9(ix,iy,6) .ne. 0.0e0_R8 ) then
-	       k = k+1
-	       a(k) = aa9(ix,iy,6)
-	       indexes(1,k)=ix
-	       indexes(2,k)=iy
-	       indexes(3,k)= 6
-	       ia(k) = i
-             ja(k) =2+rightix(ixt,iyt)+(2+rightiy(ixt,iyt)-1)*nxp2
-	       ner = ner+1
-	     endif
-     	     ip(i+1)=ip(i) + ner
+            ixr = rightix(ix,iy)
+            iyr = rightiy(ix,iy)
+            ixt = topix(ix,iy)
+            iyt = topiy(ix,iy)
+            if( aa9(ix,iy,4) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa9(ix,iy,4)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)= 4
+              ia(k) = i
+              ja(k) =2+topix(ixr,iyr)+(2+topiy(ixr,iyr)-1)*nxp2
+              ner = ner+1
+            endif
+            if( aa9(ix,iy,6) .ne. 0.0e0_R8 ) then
+              k = k+1
+              a(k) = aa9(ix,iy,6)
+              indexes(1,k)=ix
+              indexes(2,k)=iy
+              indexes(3,k)= 6
+              ia(k) = i
+              ja(k) =2+rightix(ixt,iyt)+(2+rightiy(ixt,iyt)-1)*nxp2
+              ner = ner+1
+            endif
+            ip(i+1)=ip(i) + ner
 
-     	     do
+            do
 	      lord=.true.
 	      do ipt=ip(i),ip(i+1)-2
-	       if(ja(ipt).gt.ja(ipt+1)) then
-	         jtemp  = ja(ipt)
-               ja(ipt)  = ja(ipt+1)
-               ja(ipt+1)= jtemp
-	         temp   = a(ipt)
-               a(ipt)   = a(ipt+1)
-               a(ipt+1) = temp
-	         do j=1,3
-	           jtemp=indexes(j,ipt)
-                 indexes(j,ipt)=indexes(j,ipt+1)
-                 indexes(j,ipt+1)=jtemp
-	         enddo 
-	         lord=.false.
-	       endif
+	        if(ja(ipt).gt.ja(ipt+1)) then
+	          jtemp  = ja(ipt)
+                  ja(ipt)  = ja(ipt+1)
+                  ja(ipt+1)= jtemp
+	          temp   = a(ipt)
+                  a(ipt)   = a(ipt+1)
+                  a(ipt+1) = temp
+	          do j=1,3
+	            jtemp=indexes(j,ipt)
+                    indexes(j,ipt)=indexes(j,ipt+1)
+                    indexes(j,ipt+1)=jtemp
+	          enddo
+	          lord=.false.
+	        endif
 	      enddo
 	      if (lord) exit
-	     enddo
+	    enddo
 
-     	   enddo
-	 enddo
+          enddo
+        enddo
 
 !      iasave=ia                                          !sv 15.05.07 {
 !	 jasave=ja
-       do  i=1,k
-        iasave(i)=ia(i)
-	  jasave(i)=ja(i)
-	 enddo                                              !sv 15.05.07 }
-       lfirst=.false.  
+        do  i=1,k
+          iasave(i)=ia(i)
+          jasave(i)=ja(i)
+        enddo                                              !sv 15.05.07 }
+        lfirst=.false.
 
-	else
+      else
 !      ia=iasave                                          !sv 15.05.07 {
 !	 ja=jasave
-       do i=1,k
-        ia(i)=iasave(i)                                   !sv 15.05.07 }
-        ja(i)=jasave(i)
+        do i=1,k
+          ia(i)=iasave(i)                                   !sv 15.05.07 }
+          ja(i)=jasave(i)
 	  a(i)=aa9(indexes(1,i), indexes(2,i), indexes(3,i))
-	 enddo
-	endif
+	enddo
+      endif
 
-	if(kwrite_bnr.eq.ncall) then
+      if(kwrite_bnr.eq.ncall) then
 !	  write(*,*) 'Opening 76'
 !	  open(76,file=
 !     &   'st_9_rhs_binary_'//trim(name)//'.dat',form='unformatted')
@@ -463,16 +463,16 @@
 !	    write(76) r1(i)
 !	   enddo
 !	  close(76)
-	  write(*,*) 'Opening 77'
-	  open(77,file=
+	write(*,*) 'Opening 77'
+	open(77,file=
      &   'st_9_matrix_binary_'//trim(name)//'.dat',form='unformatted') !srv 11.03.13
-	   write(77) n, k
-	   do i=1,k
-	    write(77) ia(i), ja(i), a(i)
-	   enddo
-	  close(77)
+	write(77) n, k
+	do i=1,k
+	  write(77) ia(i), ja(i), a(i)
+	enddo
+	close(77)
       endif
-	if(kwrite_fmt.eq.ncall) then
+      if(kwrite_fmt.eq.ncall) then
 !	  write(*,*) 'Opening 76'
 !	  open(76,file='st_9_rhs_'//trim(name)//'.dat')
 !	   write(76,*) n
@@ -480,15 +480,15 @@
 !	    write(76,*) r1(i)
 !	   enddo
 !	  close(76)
-	  open(77,file='st_9_matrix_'//trim(name)//'.dat')
-	   write(77,*) n, k
-	   do i=1,k
-	    write(77,*) ia(i), ja(i), a(i)
-	   enddo
-	  close(77)
+        open(77,file='st_9_matrix_'//trim(name)//'.dat')
+	write(77,*) n, k
+	do i=1,k
+	  write(77,*) ia(i), ja(i), a(i)
+	enddo
+	close(77)
       endif
 
       ncall = ncall + 1
 
-	end                                                             !sv 22.11.06
+      end                                                             !sv 22.11.06
 

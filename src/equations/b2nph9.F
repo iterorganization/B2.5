@@ -147,11 +147,11 @@
        call b2xvff (nx, ny, pbs, 'pbs')
 *    ..test sign of transport coefficients
        if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then         !srv 06.07.06 {
-        call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')               !srv 02.01.07
-	 endif                                                        !srv 06.07.06 }
-       if(no_Ptncr_x_hi.eq.0 .and. no_Ptncr_y_hi.eq.0) then                                       !srv 06.07.06 {
-        call b2xvsg (n2*2, coni, 1, 'coni', '.ge.')               !srv 02.01.07
-	 endif                                                        !srv 06.07.06 }
+        call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')                 !srv 02.01.07
+       endif                                                        !srv 06.07.06 }
+       if(no_Ptncr_x_hi.eq.0 .and. no_Ptncr_y_hi.eq.0) then         !srv 06.07.06 {
+        call b2xvsg (n2*2, coni, 1, 'coni', '.ge.')                 !srv 02.01.07
+       endif                                                        !srv 06.07.06 }
        call b2xvsg (n2, ceqp, 1, 'ceqp', '.ge.')
 *    ..test edge values of transport coefficients
        call b2xvff (nx, ny, floe, 'floe')
@@ -162,8 +162,8 @@
        call b2xvff (nx, ny, coni(-1,-1,0,0), 'coni0')
        call b2xvff (nx, ny, coni(-1,-1,0,1), 'coni1')
        call b2xvff (nx, ny, coni(-1,-1,0,2), 'coni2')               !srv 02.01.07 }
-!       call b2xvfx (nx, ny, pccm(-1,-1,0), 'pccm0')                        !srv 15.04.05 {
-!       call b2xvfx (nx, ny, pccm(-1,-1,1), 'pccm1')                        !srv 15.04.05 }
+!       call b2xvfx (nx, ny, pccm(-1,-1,0), 'pccm0')                !srv 15.04.05 {
+!       call b2xvfx (nx, ny, pccm(-1,-1,1), 'pccm1')                !srv 15.04.05 }
 *    ..test sign of she, shi
        call b2xvsg (n2, she(-1,-1,0), 1, 'she0', '.ge.')
        call b2xvsg (n2, she(-1,-1,1), 1, 'she1', '.le.')
@@ -188,7 +188,7 @@
      &  bb, pbs, lnlam, na, ua, ue,                                     !srv 01.07.09
      &  te, ti, po, ne, ni, fch, cvsa, fchdia, uadia, wadia, vaecrb,    !xpb
      &  she0, shi0, wrk0)                                               !xpb
-	else
+      else
        call b2sihs_ (nx, ny, ns, fac_ExB, hx, hy, qz, vol, bb, pbs,     !srv 07.06.00 02.06.99 28.06.03
      *  lnlam, na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa, fchdia,  !srv 28.06.03 01.07.09 05.03.11
      *  uadia, vadia, vaecrb, she0, shi0, wrk0)                         !srv 07.06.00 02.06.99 07.07.09
@@ -197,32 +197,32 @@
       call b2saxpy (n2*4, 1.0e0_R8, shi, 1, shi0, 1)
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
-*   ..save final electron heat source ignoring equipartition  !srv 10.11.02 {
-        shef = she0
+*   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
+      shef = she0
 *   ..save final ion heat source igniting equipartition
-        shif = shi0                                           !srv 10.11.02 }
+      shif = shi0                                                       !srv 10.11.02 }
       call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
       call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
-      if(style_shei.eq.0) then                                 !srv 18.09.09 30.01.10 {
+      if(style_shei.eq.0) then                                          !srv 18.09.09 30.01.10 {
        do iy = -1, ny
         do ix = -1, nx
            shei(ix,iy) = ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
      &                (te(ix,iy)*sqrt(te(ix,iy)))*(te(ix,iy)-ti(ix,iy))
         enddo
        enddo
-	else
+      else
        do iy = -1, ny
         do ix = -1, nx
-	   if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
-     &               bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
-	     shei(ix,iy) = 0.0_R8
-	   else
-           shei(ix,iy) = ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
+	 if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
+     &      bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
+	  shei(ix,iy) = 0.0_R8
+	 else
+          shei(ix,iy) = ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
      &                 (te(ix,iy)*sqrt(te(ix,iy)))*(te(ix,iy)-ti(ix,iy))
-	   endif
+	 endif
         enddo
        enddo
-	endif                                                    !srv 18.09.09 30.01.10 }
+      endif                                                    !srv 18.09.09 30.01.10 }
 *   ..compute final resht, reshe, reshi
       do iy = -1, ny
        do ix = -1, nx

@@ -516,28 +516,28 @@ cxpb
      &       resco(-1,-1,is), corpa(-1,-1,is), ier0)
              call xertst (ier0.eq.0, 'error return from b2npco')
            endif
-          endif                                                         !srv 13.10.06 }
+          endif                                                          !srv 13.10.06 }
 !*    ..re-compute partial pressure                                       !srv 01.10.99
 !           call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb) !srv 01.10.99  srv 12.11.08
 *    ..re-compute particle flux
-          call b2tfnb (nx, ny, is, ismain,                             !srv 08.09.01
-     1     guard_flows, facdrift, fac_ExB, am(is)*mp, vol,             !xpb
+          call b2tfnb (nx, ny, is, ismain,                               !srv 08.09.01
+     1     guard_flows, facdrift, fac_ExB, am(is)*mp, vol,               !xpb
      1     rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
-     1     uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),   !xpb
-     &     wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,  !srv 09.01.01
-     &     po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),   !xpb
-     &     cddi(-1,-1,0,is),                                           !srv 13.10.06
-     &     cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is), !srv 09.01.01 15.12.05
-     &     cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,           !srv 20.09.06
-     1     fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),                   !xpb
-     &     fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),                   !srv 01.10.99 21.01.00
-     &     fnaPSch(-1,-1,0,is),fna_mdf(-1,-1,0,is),                    !srv 13.10.06
+     1     uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),     !xpb
+     &     wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,    !srv 09.01.01
+     &     po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),     !xpb
+     &     cddi(-1,-1,0,is),                                             !srv 13.10.06
+     &     cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),   !srv 09.01.01 15.12.05
+     &     cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,             !srv 20.09.06
+     1     fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),                     !xpb
+     &     fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),                     !srv 01.10.99 21.01.00
+     &     fnaPSch(-1,-1,0,is),fna_mdf(-1,-1,0,is),                      !srv 13.10.06
      1     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1     fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
          endif
         enddo
-        if(wrong_flow .or. ipass.ne.0) then                            !xpb
+        if(wrong_flow .or. ipass.ne.0) then                              !xpb
            call print_wrong_flows(
      &          'Before potential loop: fna(ions) at plates')
         endif
@@ -735,12 +735,12 @@ cxpb &         te, ne, fna, fch, wrk0, po)                               !xpb
                   if(vis_per.eq.0.0_R8) then
                     call restart_ma28
                   else
-	             if (style.eq.2) call restart_ma28_for_7               !srv 11.01.00 29.05.02
-	             if (style.eq.3) call restart_sdrv_for_7               !srv 29.05.02
+	             if (style.eq.2) call restart_ma28_for_7             !srv 11.01.00 29.05.02
+	             if (style.eq.3) call restart_sdrv_for_7             !srv 29.05.02
                   endif
                 endif
                 i=i+1
-              endif                                         !xpb - wrong_flow
+              endif                                                      !xpb - wrong_flow
 *   ..end of potential equation loop                                     !xpb
             enddo
             if(wrong_flow .or. ipass.ne.0) then                          !xpb
@@ -761,7 +761,7 @@ cxpb
 *   ..compute fne, fni
 c     with diamagnetic drift part                                        !xpb
         call b2xpfe (nx, ny, ns, ns_ext, qe,
-     .   rza, za_ext, fna, fa_ext, fch, fne)                 !xpb
+     .   rza, za_ext, fna, fa_ext, fch, fne)                             !xpb
         call b2xpfe (nx, ny, ns, ns_ext, qe,
      .   rza, za_ext, fna_32nd, fa_ext, fch_32, fne_32)
         call b2xpfe (nx, ny, ns, 0, qe,

@@ -57,9 +57,9 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-	integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
-	integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
-	integer, save :: iadd_9 = 1                                      !srv 02.01.07
+      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
+      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
+      integer, save :: iadd_9 = 1                                      !srv 02.01.07
       save ncall
       real (kind=R8) ::
      *   t0, t1
@@ -164,7 +164,7 @@
         con0(ix,iy,1,0) = cone(ix,iy,1,0)+coni(ix,iy,1,0)              !srv 02.01.07
        enddo
       enddo
-	aa9 = 0.0e0_R8
+      aa9 = 0.0e0_R8
 *   ..compute the nine-point matrix
       do iy = -1, ny
        do ix = -1, nx
@@ -250,45 +250,45 @@
 *   ..compute flo0y, con0y
       do ix = -1, nx
        flo0(ix,-1,1) = 0
-       con0(ix,-1,1,:) = 0     !srv 02.01.07
+       con0(ix,-1,1,:) = 0                                          !srv 02.01.07
       enddo
       do iy = 0, ny
        do ix = -1, nx
         flo0(ix,iy,1) = floe(ix,iy,1)
-        con0(ix,iy,1,0) = cone(ix,iy,1,0)     !srv 02.01.07
+        con0(ix,iy,1,0) = cone(ix,iy,1,0)                           !srv 02.01.07
        enddo
       enddo
 *   ..compute the nine-point matrix
-	aa9 = 0.0e0_R8                                                 !srv 28.05.08
+	aa9 = 0.0e0_R8                                              !srv 28.05.08
       do iy = -1, ny
        do ix = -1, nx
         aa9(ix,iy,0) = -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)+
-     &    dim(1.0_R8,1.5_R8*(te(ix,iy)-ti(ix,iy))/te(ix,iy))*        !srv 02.01.07
+     &    dim(1.0_R8,1.5_R8*(te(ix,iy)-ti(ix,iy))/te(ix,iy))*       !srv 02.01.07
      &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))
-     &    +abs(reshe(ix,iy))/(rxg*te(ix,iy))                         !srv 02.01.07
+     &    +abs(reshe(ix,iy))/(rxg*te(ix,iy))                        !srv 02.01.07
        enddo
       enddo
       do iy = -1, ny
-       do ix = -1, nx                                                 !srv 26.11.02 {
+       do ix = -1, nx                                               !srv 26.11.02 {
         if(leftix(ix,iy).eq.-2) then
          aa9(ix,iy,-1) = 0.0e0_R8
-        else                                                          !srv 26.11.02 }
-         t0 =  flo0(ix,iy,0)/2-con0(ix,iy,0,0)     !srv 02.01.07
-         t1 = -flo0(ix,iy,0)/2-con0(ix,iy,0,0)     !srv 02.01.07
+        else                                                        !srv 26.11.02 }
+         t0 =  flo0(ix,iy,0)/2-con0(ix,iy,0,0)                      !srv 02.01.07
+         t1 = -flo0(ix,iy,0)/2-con0(ix,iy,0,0)                      !srv 02.01.07
          aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0
          aa9(ix,iy,0) = aa9(ix,iy,0)-t0
          aa9(leftix(ix,iy),leftiy(ix,iy),0) = 
      &       aa9(leftix(ix,iy),leftiy(ix,iy),0)-t1
          aa9(ix,iy,-1) = t1
-	  endif                                                         !srv 26.11.02 {
-        if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8            !srv 26.11.02
+	  endif                                                     !srv 26.11.02 {
+        if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8          !srv 26.11.02
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,-1,-3), 1)
       do iy = 0, ny
        do ix = -1, nx
-        t0 =  flo0(ix,iy,1)/2-con0(ix,iy,1,0)     !srv 02.01.07
-        t1 = -flo0(ix,iy,1)/2-con0(ix,iy,1,0)     !srv 02.01.07
+        t0 =  flo0(ix,iy,1)/2-con0(ix,iy,1,0)                       !srv 02.01.07
+        t1 = -flo0(ix,iy,1)/2-con0(ix,iy,1,0)                       !srv 02.01.07
         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0
         aa9(ix,iy,0) = aa9(ix,iy,0)-t0
         aa9(bottomix(ix,iy),bottomiy(ix,iy),0) = 
