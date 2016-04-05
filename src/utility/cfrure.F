@@ -8,7 +8,7 @@
 csw 04dec2014 added fmt data (as in cfwure) to avoid problems with
 c             pgf90 compiler , see below
       integer ifmt
-      parameter (ifmt=0)  ! must match the definition in cfwure !
+      parameter (ifmt=1)  ! must match the definition in cfwure !
       character fmt(0:5)*32
       save fmt
       data fmt /'(1p,5(1x,e25.17e3))', '(1p,6(1x,e21.13e3))',
