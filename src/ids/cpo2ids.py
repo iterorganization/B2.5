@@ -99,7 +99,7 @@ def read_ids():
     created, as in this example.
 
     """
-    #my_ids_obj = ual.ids(8148, 12, 8148, 12)
+    # my_ids_obj = ual.ids(8148, 12, 8148, 12)
     my_ids_obj = imas.ids(13, 1, 13, 1)
 
     my_ids_obj.open()  # Open the database
@@ -113,21 +113,21 @@ def read_ids():
     my_ids_obj.edge_profiles.get()
 
     print '   my_ids_obj = '
-    print my_ids_obj.edge_profiles
-
-
-
+    print my_ids_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0]#.geometry
+    print my_ids_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry.size
+    # print my_ids_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry
+    print my_ids_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0]
 
     my_ids_obj.close()
 
-#read_ids()
+
 
 def write_ids():
     shot = 13
     time = 1
     interp = 1
 
-    imas_obj = imas.ids(1314,1,1314,1)
+    imas_obj = imas.ids(13,1,13,1)
 
     imas_obj.create() #Create the data entry
 
@@ -140,67 +140,72 @@ def write_ids():
     imas_obj.edge_profiles.ggd.resize(1)
     imas_obj.edge_profiles.ggd[0].grid.space.resize(1)
     imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension.resize(1)
-    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object.resize(1)
-
-    #----test
+    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object.resize(3)
 
     imas_obj.edge_profiles.ids_properties.homogeneous_time = 1 # Mandatory to define this property
     imas_obj.edge_profiles.ids_properties.comment = 'This is a test ids put using put_slice'
     imas_obj.edge_profiles.putNonTimed()
-    imas_obj.edge_profiles.time.resize(1)
 
 
-    imas_obj.edge_profiles.profiles_1d.resize(1)
 
-    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry.resize(1, 2)
-    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[0,0]= edge.grid.spaces[0].objects[0].geo[0,0]
-    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[0,1] = edge.grid.spaces[0].objects[0].geo[0,1]
+    imas_obj.edge_profiles.profiles_1d.resize(2)
+    imas_obj.edge_profiles.ggd[0].grid.space[0].coordinates_type.resize(2)
 
+    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry.resize(num_nodes) #it should create (x,y) -> x*y elements = size
+    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].nodes.resize(num_nodes/2)
+
+    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[1].boundary.resize(1)
+    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[1].boundary[0].neighbours.resize(num_edges)
+    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary.resize(1)
+    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours.resize(num_cells)
+
+    # print 'CHECKPOINT 3'
+    # imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[0].data[0] = '1'
+    # print imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[0].data
+
+    print 'CPO num_nodes:', num_nodes
+    print 'CPO num_edges:', num_edges
+    print 'CPO num_cells:', num_cells
     print imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry.size
-    print imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[0, 0], \
-    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[0, 1]
-    imas_obj.edge_profiles.time[0] = 1.2
 
-    print imas_obj.edge_profiles.time[0]
-    imas_obj.edge_profiles.putSlice()
-
-    #---
-
-
-    # imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry.resize(num_nodes/2,2) #it creates (x,y) -> x*y elements = size
-    #
-    # print num_nodes
-    # print imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry.size
-    #
-    #
-    # imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[0,0]= edge.grid.spaces[0].objects[0].geo[0,0]
-    # imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[0,1] = edge.grid.spaces[0].objects[0].geo[0,1]
-    #
-    # #ggd(:)/grid/space(:)/objects_per_dimension(1)/object(:)/geometry(x,y,z)
-    #
-    #
-    # imas_obj.edge_profiles.time.resize(num_nodes/2);
+    imas_obj.edge_profiles.time.resize(num_nodes);
     # print "time_size: ", imas_obj.edge_profiles.time.size
-    #
-    # imas_obj.edge_profiles.putNonTimed();
-    #
-    # for i in range (num_nodes/2): #3588 ok, 3589 not ok, 14352/4=3588
-    #     imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[i, 0] = edge.grid.spaces[0].objects[0].geo[i,0]
-    #     imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[i, 1] = edge.grid.spaces[0].objects[0].geo[i,1]
-    #
-    #     imas_obj.edge_profiles.time[i] = 0;
-    #
-    # imas_obj.edge_profiles.putSlice();
-    #
-    #
-    # print imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry
-    # print imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[0,0], imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[0,1]
 
 
+    for i in range (num_nodes/2): #There are num_nodes = 7176 geometry entries. [x1, y1, x2, y2, ..., xn, yn]
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[i*2] = \
+        edge.grid.spaces[0].objects[0].geo[i, 0]
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[(i*2)+1] = \
+        edge.grid.spaces[0].objects[0].geo[i, 1]
+
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].nodes[i] = i
+
+        imas_obj.edge_profiles.time[i] = time;
+
+
+
+
+    for i in range(num_edges/2):
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[1].boundary[0].neighbours[i*2] = \
+            edge.grid.spaces[0].objects[1].boundary[i,0]
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[1].boundary[0].neighbours[(i * 2)+1] = \
+            edge.grid.spaces[0].objects[1].boundary[i, 1]
+
+    for i in range(num_cells/4):
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours[i * 4] = \
+            edge.grid.spaces[0].objects[2].boundary[i, 0]
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours[(i * 4) + 1] = \
+            edge.grid.spaces[0].objects[2].boundary[i, 1]
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours[(i * 4) + 2] = \
+            edge.grid.spaces[0].objects[2].boundary[i, 2]
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours[(i * 4) + 3] = \
+            edge.grid.spaces[0].objects[2].boundary[i, 3]
+
+    imas_obj.edge_profiles.putSlice();
+
+    # print imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0]#.geometry
 
     imas_obj.close()
-
-
 
 
 def read_edge_cpo():
@@ -222,24 +227,25 @@ def read_edge_cpo():
 if __name__ == '__main__':        
     edge = read_edge_cpo()
 
-    #NODES: edge::grid::spaces::objects(1) -> ggd(:)/grid/space(:)/objects_per_dimension(1)/object(:)
-      #x: edge/grid/spaces/objects(1)/nodes/geo(i,0) 	) 
-      #y: edge/grid/spaces/objects(1)/nodes/geo(i,1)	)-> ggd(:)/grid/space(:)/objects_per_dimension(1)/object(:)/geometry(x,y,z)
-      #z: 0.0					 	)
-    
     num_nodes = edge.grid.spaces[0].objects[0].geo.size #it reads number of all elements, not nodes. NUmber of elements = number of nodes * 2
-    # for i in range (num_nodes/2):
-    #    #print x, y
-    #    print edge.grid.spaces[0].objects[0].geo[i,0], edge.grid.spaces[0].objects[0].geo[i,1]
+    num_edges = edge.grid.spaces[0].objects[1].boundary.size
+    num_cells = edge.grid.spaces[0].objects[2].boundary.size
 
-    # print edge.grid.spaces[0].objects[0].geo
-    # print edge.grid.spaces[0].objects[0].geo[0, 0], edge.grid.spaces[0].objects[0].geo[0, 1]
-    # print edge.grid.spaces[0].objects[0].geo[1, 0], edge.grid.spaces[0].objects[0].geo[1, 1]
-    # print edge.grid.spaces[0].objects[0].geo[3587, 0], edge.grid.spaces[0].objects[0].geo[3587, 1]
-    # print edge.grid.spaces[0].objects[0].geo[3588, 0], edge.grid.spaces[0].objects[0].geo[3588, 1]
+    # print edge.grid.spaces[0].objects[1]
     write_ids()
-    #read_ids()
-    
+
+    read_ids()
+
+    print 'CHECKPOINT 1'
+    print edge.grid.spaces[0].objects[1]
+
+    print 'CHECKPOINT 2'
+    print edge.grid.spaces[0].objects[2]
+
+
+
+
+
     
       
 
