@@ -9579,10 +9579,13 @@ C
      &      itally.eq.16 .or. itally.eq.22 .or. itally.eq.28 .or.
      &      itally.eq.63 .or. itally.eq.67 .or. itally.eq.71 .or.
      &      itally.eq.75 .or. itally.eq.85 .or. itally.eq.89 .or.
-     &      itally.eq.93 .or. itally.eq.97) THEN ! these are NATM volume tallies
+     &      itally.eq.93) THEN ! these are NATM volume tallies
           transform_tally = iatm1(ispc)
         ELSE IF (itally.eq.14 .or. itally.eq.20 .or. itally.eq.26
-     &      .or. itally.eq.32 .or. itally.eq.79 .or. itally.eq.-2
+     &      .or. itally.eq.32 .or. itally.eq.38 .or. itally.eq.44
+     &      .or. itally.eq.50 .or. itally.eq.56 .or. itally.eq.79
+     &      .or. itally.eq.84 .or. itally.eq.97 .or. itally.eq.98
+     &      .or. itally.eq.99 .or. itally.eq.100.or. itally.eq.-2
      &      .or. itally.eq.-4 .or. itally.eq.-5 .or. itally.eq.-6
      &      .or. itally.eq.-7 .or. itally.eq.-13) THEN ! these are NPLS volume tallies
           transform_tally = ipls1(ispc)
