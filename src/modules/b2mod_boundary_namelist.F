@@ -670,6 +670,36 @@ c.. Make a list of core boundaries
             region(ix,iy,0) = 0
             resignore(ix,iy,1)=0
             resignore(ix,iy,2)=0
+            do ixx = -1, nx
+              do iyy = -1, ny
+                if(region(ixx, iyy, 0) .ne. 0) then
+                  if(leftix(ixx, iyy) .eq. ix .and.
+     &               leftiy(ixx, iyy) .eq. iy) then
+                    write(*,*) 'updated left neighbour of ', ixx, iyy
+                    leftix(ixx, iyy) = -2
+                    leftiy(ixx, iyy) = -2
+                  endif
+                  if(rightix(ixx, iyy) .eq. ix .and.
+     &               rightiy(ixx, iyy) .eq. iy) then
+                    write(*,*) 'updated right neighbour of ', ixx, iyy
+                    rightix(ixx, iyy) = nx+1
+                    rightiy(ixx, iyy) = ny+1
+                  endif
+                  if(bottomix(ixx, iyy) .eq. ix .and.
+     &               bottomiy(ixx, iyy) .eq. iy) then
+                    write(*,*) 'updated bottom neighbour of ', ixx, iyy
+                    bottomix(ixx, iyy) = -2
+                    bottomiy(ixx, iyy) = -2
+                  endif
+                  if(topix(ixx, iyy) .eq. ix .and.
+     &               topiy(ixx, iyy) .eq. iy) then
+                    write(*,*) 'updated top neighbour of ', ixx, iyy
+                    topix(ixx, iyy) = nx+1
+                    topiy(ixx, iyy) = ny+1
+                  endif
+                endif
+              enddo
+            enddo
           enddo
         enddo
       enddo
