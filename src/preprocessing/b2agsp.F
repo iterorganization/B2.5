@@ -334,7 +334,7 @@
       else
        w0y = wid*f0yb(ay)
       endif
-      w0 = cmplx(w0x,w0y)
+      w0 = cmplx(w0x,w0y,R8)
 *   ..compute type
       if ((.not.iscut0.and.axm.lt.0.25_R8).or.
      1 (iscut0.and.kx.eq.-1)) then
@@ -403,8 +403,8 @@
 *   ..w5->w6
 *     linear map that sends ii to the upper saddle point and -ii to the
 *     lower saddle point.
-      w6 = cmplx(xshi-xslo,yshi-yslo)*w5/(2.0_R8*ii)+
-     &  cmplx(xslo+xshi,yslo+yshi)/2.0_R8
+      w6 = cmplx(xshi-xslo,yshi-yslo,R8)*w5/(2.0_R8*ii)+
+     &  cmplx(xslo+xshi,yslo+yshi,R8)/2.0_R8
 *   ..poloidal coordinates
       crx0 = real(w6)
       cry0 = aimag(w6)

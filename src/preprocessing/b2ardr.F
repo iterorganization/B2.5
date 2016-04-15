@@ -414,7 +414,7 @@
 
 * ..compute abscissae
 *   ..set rtns, rtdumm, rtzmin, rtzmax, rtzn
-      rtdumm = 0.0_R8
+      rtdumm = 0
 *   ..compute rtlt(0:rtnt) and rtt(0:rtnt)
       do i = 0, rtnt
        rtlt(i) = ((rtnt-i)*log(tlo)+i*log(thi))/rtnt

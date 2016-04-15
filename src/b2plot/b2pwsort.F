@@ -60,7 +60,7 @@ cc%%%
         is=lwldstrt(il)
         if(is .gt. lppp  .or.  is .le. 0) then
           write (*,*) 'Starting segment outside the limits',is,il
-          nwldlis(il)=0.0_R8
+          nwldlis(il)=0
         else
           goup=.false.
           do ii=1,nwldlis(il)
@@ -72,7 +72,7 @@ cc%%%
           end do
           if(.not.goup) then
             write (*,*) 'Starting segment outside the list',is,il
-            nwldlis(il)=0.0_R8
+            nwldlis(il)=0
           else
 c*** initialise the chain counter and the chain list
             nwsrtwrk=1
