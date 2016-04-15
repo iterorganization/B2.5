@@ -404,7 +404,7 @@
 *     linear map that sends ii to the upper saddle point and -ii to the
 *     lower saddle point.
       w6 = cmplx(xshi-xslo,yshi-yslo,R8)*w5/(2.0_R8*ii)+
-     &  cmplx(xslo+xshi,yslo+yshi,R8)/2.0_R8
+     &     cmplx(xslo+xshi,yslo+yshi,R8)/2.0_R8
 *   ..poloidal coordinates
       crx0 = real(w6)
       cry0 = aimag(w6)

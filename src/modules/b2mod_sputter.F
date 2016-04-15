@@ -1592,7 +1592,8 @@ c  energy backscattering coefficient of light ions
       if (nz1.eq.2) go to 4
       if (nz1.gt.2) go to 5
  2    write(6,600)
-      return  !JDL output is undefined here
+      reion = 0.0_R8
+      return
  3    if (m1.lt.1.or.m1.gt.3) go to 2
       a1 = a1t(m1)
       go to 6
