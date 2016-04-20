@@ -46,7 +46,18 @@ c*** pw0_cnv   :  exponent in a radial profile of the "blob" velocity
 c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
 
       logical, save :: allocated_transport_namelist = .false.
+      Private :: transport
+      Logical, Private, save :: write_nml = .true.
+      namelist /transport/ 
+     1   flag_dna,flag_dpa,flag_vla,flag_vsa,flag_hci,
+     2   flag_hce,flag_sig,flag_alf,
+     3   parm_dna,parm_dpa,parm_vla,parm_vsa,parm_hci,
+     4   parm_hce,parm_sig,parm_alf,
+     5   transport_filename,transport_time_mod,transport_time_switch,
+     6   cflme,cflmi,cflmv,
+     7   vout_cnv,pw0_cnv,pw1_cnv,pw2_cnv, write_nml
 
+      
       contains
 
       subroutine alloc_transport_namelist(nsd)
@@ -103,14 +114,6 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       use b2mod_b2cmpt
       implicit none
 
-      namelist /transport/ 
-     1   flag_dna,flag_dpa,flag_vla,flag_vsa,flag_hci,
-     2   flag_hce,flag_sig,flag_alf,
-     3   parm_dna,parm_dpa,parm_vla,parm_vsa,parm_hci,
-     4   parm_hce,parm_sig,parm_alf,
-     5   transport_filename,transport_time_mod,transport_time_switch,
-     6   cflme,cflmi,cflmv,
-     7   vout_cnv,pw0_cnv,pw1_cnv,pw2_cnv
       logical :: file_ok
       character*260 filename
 
@@ -142,19 +145,11 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       use b2mod_b2cmpa
       use b2mod_b2cmpt
       implicit none 
-      namelist /transport/
-     1   flag_dna,flag_dpa,flag_vla,flag_vsa,flag_hci,
-     2   flag_hce,flag_sig,flag_alf,
-     3   parm_dna,parm_dpa,parm_vla,parm_vsa,parm_hci,
-     4   parm_hce,parm_sig,parm_alf,
-     5   transport_filename,transport_time_mod,transport_time_switch,
-     6   cflme,cflmi,cflmv,
-     7   vout_cnv,pw0_cnv,pw1_cnv,pw2_cnv
 
       cflme=cflim(0)
       cflmi=cflim(1)
       cflmv=cflim(2)
-      write(*,transport)
+      If (write_nml) write(*,transport)
 
       return
       end subroutine write_b2mod_transport_namelist

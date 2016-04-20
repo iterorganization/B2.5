@@ -142,6 +142,35 @@ cank }
      1 chemical_erosion_be_fac
 
       namelist /neutrals_save/ saved_volrec
+      
+      Private :: neutrals
+      namelist /neutrals/ nstrai, rcpos, rcstart, rcend, targsp, chemsp,
+     1  rc_list_size, rc_list_x, rc_list_y,
+     4  recyc, erecyc, rcion, recyceir, userfluxparm, crcstra, rf_neut,
+     .  phys_sput, chem_sput,
+#ifndef NO_B2_CHEM_SPUT
+     .  chemical_sputter_yield, fchar_chemical, igass_chemical,
+     .  itsput_chemical, issput_chemical,
+#endif
+     .  eirene_step_cpu, eirene_step_dt, eirene_mod,
+     .  volrecstart, volrecinc, volrecwt,
+     .  species_start, species_end,
+     5  neutrals_filename, neutrals_time_mod, neutrals_time_switch,
+     ,  lstrascl, l_neutrad, l_neutflux,
+     ,  b2espcr, eb2spcr, lmolscl, mlcmp, lionscl,
+     ,  lcns, ltns, lsns, ksns, gpfc, dbg_eir_mc, debug_flags,
+     ,  neut_scl_lim, track_index, track_chem_sput,
+     *  chemical_erosion_redep_fac,
+     *  chemical_erosion_be_fac,
+     *  chemical_erosion_be_fac_a,
+     *  chemical_erosion_be_fac_b,
+     *  chemical_erosion_be_fac_c,
+     6  n_spcsrf, l_spcsrf, sps_id, i_spcsrf, j_spcsrf, 
+     7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr, 
+     8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
+     .  msns, write_nml
+      Logical, save, private :: write_nml = .true.
+      
 
 csw 21feb2012
       integer, save ::
@@ -398,33 +427,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       logical hydrogen, helium, neon, found, side
       intrinsic mod
       real (kind=R8) hlp
-
-      namelist /neutrals/ nstrai, rcpos, rcstart, rcend, targsp, chemsp,
-     1  rc_list_size, rc_list_x, rc_list_y,
-     4  recyc, erecyc, rcion, recyceir, userfluxparm, crcstra, rf_neut,
-     .  phys_sput, chem_sput,
-#ifndef NO_B2_CHEM_SPUT
-     .  chemical_sputter_yield, fchar_chemical, igass_chemical,
-     .  itsput_chemical, issput_chemical,
-#endif
-     .  eirene_step_cpu, eirene_step_dt, eirene_mod,
-     .  volrecstart, volrecinc, volrecwt,
-     .  species_start, species_end,
-     5  neutrals_filename, neutrals_time_mod, neutrals_time_switch,
-     ,  lstrascl, l_neutrad, l_neutflux,
-     ,  b2espcr, eb2spcr, lmolscl, mlcmp, lionscl,
-     ,  lcns, ltns, lsns, ksns, gpfc, dbg_eir_mc, debug_flags,
-     ,  neut_scl_lim, track_index, track_chem_sput,
-     *  chemical_erosion_redep_fac,
-     *  chemical_erosion_be_fac,
-     *  chemical_erosion_be_fac_a,
-     *  chemical_erosion_be_fac_b,
-     *  chemical_erosion_be_fac_c,
-     6  n_spcsrf, l_spcsrf, sps_id, i_spcsrf, j_spcsrf, 
-     7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr, 
-     8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
-     .  msns
-      logical :: file_ok
+      logical :: file_ok      
       logical, allocatable :: old_style(:)
       character*260 filename
 
@@ -975,14 +978,12 @@ c.. Test consistency with physical edges within the computational domain
         endif
       enddo
     
-      return
-      
-      entry write_b2mod_neutrals_namelist
-
-      write(*,neutrals)
-      return
-
       end subroutine read_neutrals_namelist
+
+      Subroutine write_b2mod_neutrals_namelist
+      Implicit None
+      if (write_nml) write(*,neutrals)
+      End Subroutine write_b2mod_neutrals_namelist
 
       subroutine read_b2mod_neutrals_save(nread,edition,found)
       implicit none

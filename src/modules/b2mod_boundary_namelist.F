@@ -73,11 +73,23 @@ csw 18feb2014 added for correct implementation of boundary conditions
       integer, save :: NBC, NNISO, ncbs
       real (kind=R8) , save :: gammai, gammae, TEISO, TIISO, PHIISO
       logical, save :: lbndusr,lfeedback
+      logical, private, save :: write_nml = .true.
       character*256, save :: boundary_filename
       real (kind=R8), save :: boundary_time_mod
       real (kind=R8), save :: boundary_time_switch
       integer, save :: bc_elm_count
 
+      private :: boundary
+
+      namelist /boundary/ NBC,CONPAR,MOMPAR,ENEPAR,ENIPAR,POTPAR,
+     1 BCPOS,BCSTART,BCEND,BCCON,BCMOM,BCENE,BCENI,BCPOT,
+     1 BC_LIST_SIZE,BC_LIST_X,BC_LIST_Y,
+     2 gammai,gammae,lbndusr,lfeedback,
+     3 NNISO,NIISO,TEISO,TIISO,PHIISO,NXISO1,NXISO2,NYISO1,NYISO2,
+     4 bcchar,
+     5 boundary_filename,boundary_time_mod,boundary_time_switch,
+     6 lcbs, write_nml
+      
       contains
 
       subroutine initialize_b2mod_boundary(nx,ny,ns,tim)
@@ -378,24 +390,16 @@ cxpb Have to do this here already in case the namelist is not used
       end subroutine dealloc_b2mod_boundary
 
       subroutine read_b2mod_boundary_namelist(nx, ny, ns, dotest)
+      Implicit None
       integer nx, ny, ns
       logical dotest
-      integer is, ib, ic, ix, iy
+      integer is, ib, ic, ix, iy, ixx, iyy
       logical covered, corner, guard_cell, found, side
       external xertst, xerrab
 
-      namelist /boundary/ NBC,CONPAR,MOMPAR,ENEPAR,ENIPAR,POTPAR,
-     1 BCPOS,BCSTART,BCEND,BCCON,BCMOM,BCENE,BCENI,BCPOT,
-     1 BC_LIST_SIZE,BC_LIST_X,BC_LIST_Y,
-     2 gammai,gammae,lbndusr,lfeedback,
-     3 NNISO,NIISO,TEISO,TIISO,PHIISO,NXISO1,NXISO2,NYISO1,NYISO2,
-     4 bcchar,
-     5 boundary_filename,boundary_time_mod,boundary_time_switch,
-     6 lcbs
       logical :: file_ok, todo, assigned
       logical, allocatable :: old_style(:), done(:)
       character*260 filename
-
       filename='../' // boundary_filename
       inquire(file=filename,exist=file_ok)
       if(file_ok) then
@@ -875,17 +879,8 @@ c.. Test consistency with region boundaries
       end subroutine read_b2mod_boundary_namelist
 
       subroutine write_b2mod_boundary_namelist
-
-      namelist /boundary/ NBC,CONPAR,MOMPAR,ENEPAR,ENIPAR,POTPAR,
-     1 BCPOS,BCSTART,BCEND,BCCON,BCMOM,BCENE,BCENI,BCPOT,
-     1 BC_LIST_SIZE,BC_LIST_X,BC_LIST_Y,
-     2 gammai,gammae,lbndusr,lfeedback,
-     3 NNISO,NIISO,TEISO,TIISO,PHIISO,NXISO1,NXISO2,NYISO1,NYISO2,
-     4 bcchar,
-     5 boundary_filename,boundary_time_mod,boundary_time_switch,
-     6 lcbs
-
-      write(*,boundary)
+      Implicit None
+      If (write_nml) write(*,boundary)
       end subroutine write_b2mod_boundary_namelist
 
       function get_phi_applied(boundary_namelist,ix,iy)
