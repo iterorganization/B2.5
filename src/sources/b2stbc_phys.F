@@ -1890,27 +1890,27 @@ c dpc
 
             DO IX = 1, BC_LIST_SIZE(IB)
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     &         SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)+         !srv 01.02.09
+     &         SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)+          !srv 01.02.09
      1          CONPAR(IS,IB,1)/US*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=0.0_R8
               sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
      &         sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is)+
-     &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) !srv 23.09.08
+     &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is)           !srv 23.09.08
               sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
      &         sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
-     &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) !srv 23.09.08
-            if(mdf_fnb.ne.0) then                                    !srv 12.09.08 {
+     &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)           !srv 23.09.08
+              if(mdf_fnb.ne.0) then                                   !srv 12.09.08 {
                 sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
      &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) -
      &           fnaPSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                   topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
-               sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
-     &          sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) +
-     &           vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     &           hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
+                sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
+     &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) +
+     &            vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
+     &            hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
      &           vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
-            endif                                                    !srv 12.09.08 }
+              endif                                                   !srv 12.09.08 }
             ENDDO
           ELSE
             CALL XERRAB ('B2STBC -- BCCON=18, ONLY FOR SOUTH')
@@ -1925,7 +1925,7 @@ c dpc
 #endif
 
 * -- BCCON=19 -- Feedback boundary condition: given sum of integrated neutrals and
-*                main ion particle flux with constant ion density
+*                main ion particle fluxes with constant ion density.
 
  1900     CONTINUE
           if(ncall.eq.0) then
@@ -2009,47 +2009,47 @@ cxpb  Add contribution from Eirene core boundary fluxes
 #endif
                   isb = ismain0
                   DO IX = 1, BC_LIST_SIZE(IBW)
-                   if (is_neutral(isb))
-     >              totfluxn = totfluxn + fna(
+                    if (is_neutral(isb))
+     >               totfluxn = totfluxn + fna(
      &             topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &             topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                  isb = ismain
-                  if(mdf_fnb.ne.0) then
-                    totfluxi = totfluxi + fna_mdf(
+                    isb = ismain
+                    if(mdf_fnb.ne.0) then
+                      totfluxi = totfluxi + fna_mdf(
      &                 topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                 topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                  else
-                    totfluxi = totfluxi + fna(
+                    else
+                      totfluxi = totfluxi + fna(
      &                 topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                 topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                  endif
-                ENDDO
-              ENDIF
-            ENDDO
-            NAS = NAS *
-     &       (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
+                    endif
+                  ENDDO
+                ENDIF
+              ENDDO
+              NAS = NAS *
+     &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           max(abs(totfluxn+totfluxi),SCONPAR(IS)))
-            write(*,"(' BCCON=19: NAS=',es14.7,' totfluxn=',es14.7,
+              write(*,"(' BCCON=19: NAS=',es14.7,' totfluxn=',es14.7,
      &         ' totfluxi=',es14.7,' SCONPAR=',es14.7,
      &         ' totfluxn+totfluxi=',es14.7)")
      *         NAS, totfluxn, totfluxi, SCONPAR(IS), totfluxn+totfluxi
-            DO IBW=IB,NBC
-              IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
-     >         THEN
-                DO IX = 1, BC_LIST_SIZE(IBW)
-                  SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0,IS)=
-     &             VBIG*NAS*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                  SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1,IS)=
-     &            -VBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                ENDDO
-                DO IX = 1, BC_LIST_SIZE(IBW)
-                  SNA0_NO_MDF(BC_LIST_X(IX,IBW),
-     .                        BC_LIST_Y(IX,IBW),:,IS)=
-     &             SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)
-                ENDDO                                                !srv 23.09.08 }
-              ENDIF
-            ENDDO
-            once_bccon(is) = .true.
+              DO IBW=IB,NBC
+                IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+     >           THEN
+                  DO IX = 1, BC_LIST_SIZE(IBW)
+                    SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0,IS)=
+     &               VBIG*NAS*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                    SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1,IS)=
+     &              -VBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                  ENDDO
+                  DO IX = 1, BC_LIST_SIZE(IBW)
+                    SNA0_NO_MDF(BC_LIST_X(IX,IBW),
+     .                          BC_LIST_Y(IX,IBW),:,IS)=
+     &               SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)
+                  ENDDO                                              !srv 23.09.08 }
+                ENDIF
+              ENDDO
+              once_bccon(is) = .true.
             ELSE                                                     !srv 16.02.12 }
               CALL XERRAB
      1         ('B2STBC -- BCCON=19, NOT AVAILABLE FOR N,W,E')
@@ -2074,15 +2074,15 @@ cxpb  Add contribution from Eirene core boundary fluxes
             DO IX = 1, BC_LIST_SIZE(IB)
               bc_type20_ix=bc_list_x(ix,ib)
               bc_type20_iy=bc_list_y(ix,ib)
-              do bc_type20_i=1,bc_type20_ref      ! how many steps away from the boundary?
+              do bc_type20_i=1,bc_type20_ref  ! how many steps away from the boundary?
                 bc_type20_ixx=topix(bc_type20_ix,bc_type20_iy)
                 bc_type20_iy=topiy(bc_type20_ix,bc_type20_iy)
                 bc_type20_ix=bc_type20_ixx
                 call xertst (-2.lt.bc_type20_ix.and.
-     &                       bc_type20_ix.lt.nx+1,
+     &                             bc_type20_ix.lt.nx+1,
      1           'stepped off x-grid in type 20 bc')
                 call xertst (-2.lt.bc_type20_iy.and.
-     &                       bc_type20_iy.lt.ny+1,
+     &                             bc_type20_iy.lt.ny+1,
      1           'stepped off y-grid in type 20 bc')
               enddo
               naave=naave+na(bc_type20_ix,bc_type20_iy,is)*
@@ -2093,15 +2093,15 @@ cxpb  Add contribution from Eirene core boundary fluxes
             DO IX = 1, BC_LIST_SIZE(IB)
               bc_type20_ix=bc_list_x(ix,ib)
               bc_type20_iy=bc_list_y(ix,ib)
-              do bc_type20_i=1,bc_type20_ref      ! how many steps away from the boundary?
+              do bc_type20_i=1,bc_type20_ref  ! how many steps away from the boundary?
                 bc_type20_ixx=topix(bc_type20_ix,bc_type20_iy)
                 bc_type20_iy=topiy(bc_type20_ix,bc_type20_iy)
                 bc_type20_ix=bc_type20_ixx
                 call xertst (-2.lt.bc_type20_ix.and.
-     &                       bc_type20_ix.lt.nx+1,
+     &                             bc_type20_ix.lt.nx+1,
      1           'stepped off x-grid in type 20 bc')
                 call xertst (-2.lt.bc_type20_iy.and.
-     &                       bc_type20_iy.lt.ny+1,
+     &                             bc_type20_iy.lt.ny+1,
      1           'stepped off y-grid in type 20 bc')
               enddo
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
@@ -2121,19 +2121,19 @@ cxpb  Add contribution from Eirene core boundary fluxes
           ENDDO                                                     !srv 23.09.08 }
           GOTO 10000
 
-!! FIXME: Deal with BC number clash here in a better way
 cxpb Careful here because of BC number clash
 * From 5.0: starting at version 01.001.030
 * -- BCCON=21 -- constant density scaled by density on the ring bc_type21_ref away
-* has been moved up to next available number (BCCON=24)
+*                has been moved up to next available number (BCCON=24)
 
-* From 5.2, after version number 01.001.078:
-* -- BCCON=21 -- PRESCRIBE THE VALUE OF THE DENSITY  !lk and IYS 01.03.2013{
-* AND ADD A DENSITY PERTURBATION TO GET A SOLUTION
-* WHICH IS AS CLOSE AS POSSIBLE TO NEOCLASSICAL THEORY
-
+*  From 5.2, after version number 01.001.078:
+*            -- BCCON=21 -- PRESCRIBE THE VALUE OF THE DENSITY !lk and IYS 01.03.2013{
+*                           AND ADD A DENSITY PERTURBATION TO GET A SOLUTION
+*                           WHICH IS AS CLOSE AS POSSIBLE TO NEOCLASSICAL THEORY
+*                           DERIVED FOR PURE H/D/T PLASMA ONLY.
+*
 * IT IS RECOMMENDED TO USE THIS BOUNDARY CONDITION TOGETHER WITH
-* CORRESPONDING CONDITION ON ION TEMPERATURE (BCENI=24)
+* CORRESPONDING CONDITION ON ION TEMPERATURE (BCENI=23,24)
 
  2100     CONTINUE
           if(ncall.eq.0) then
@@ -2149,7 +2149,7 @@ cxpb Careful here because of BC number clash
             call xertst(is.eq.ismain,
      1       'BCCON = 21 is applied for main ion only ')
             DO IBW=IB,NBC
-            if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
                 write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
      .           boundary_location(ibw),' for species ',IS
@@ -2350,7 +2350,7 @@ cxpb Careful here because of BC number clash
 !              NAS = NA((BCEND(IB)+BCSTART(IB))/2,BCPOS(IB),is) *
 !     &         (1.0_R8-max(-bc_ref,min(bc_ref,T0)))
               write(*,"(' BCCON=22: NAS=',es14.7,' totflux=',es14.7,
-     *       '  SCONPAR=',es14.7,' IS=',i3)")NAS,totflux,SCONPAR(IS),IS
+     *        '  SCONPAR=',es14.7,' IS=',i3)")NAS,totflux,SCONPAR(IS),IS
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -2359,23 +2359,23 @@ cxpb Careful here because of BC number clash
      &               VBIG*NAS*t1
      &                   /(ti(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+
      &                 te(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-     &               *SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))  ! lk
-                   SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1,IS)=
+     &               *SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))          ! lk
+                    SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1,IS)=
      &              -VBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                 ENDDO
-                 DO IX = 1, BC_LIST_SIZE(IBW)                           !srv 23.09.08 {
+                  ENDDO
+                  DO IX = 1, BC_LIST_SIZE(IBW)                         !srv 23.09.08 {
                    SNA0_NO_MDF(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)
-     &             =SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)
-                 ENDDO                                                  !srv 23.09.08 }
-             ENDIF
-           ENDDO
-             once_bccon(is) = .true.
-           ELSE                                                       !srv 16.02.12 }
-             CALL XERRAB
-     1        ('B2STBC -- BCCON=22 IS AVAILABLE FOR CORE ONLY')
-           ENDIF
-         endif                                                          !srv 16.02.12 }
-         GOTO 10000                            !IYS 01.03.2013 }
+     &              =SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)
+                  ENDDO                                                !srv 23.09.08 }
+                ENDIF
+              ENDDO
+              once_bccon(is) = .true.
+            endif                                                      !srv 16.02.12 }
+          ELSE                                                         !srv 16.02.12 }
+            CALL XERRAB
+     1       ('B2STBC -- BCCON=22 IS AVAILABLE FOR CORE ONLY')
+          ENDIF
+          GOTO 10000                                                !IYS 01.03.2013 }
 
 * -- BCCON=23 -- Feedback boundary condition: given sum of integrated neutrals and
 *    main ion particle fluxes with constant average density.
@@ -2552,14 +2552,14 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 bc_type21_iy=topiy(bc_type21_ix,bc_type21_iy)
                 bc_type21_ix=bc_type21_ixx
                 call xertst (-2.lt.bc_type21_ix.and.
-     &                       bc_type21_ix.lt.nx+1,
+     &                             bc_type21_ix.lt.nx+1,
      1           'stepped off x-grid in type 24 bc')
                 call xertst (-2.lt.bc_type21_iy.and.
-     &                       bc_type21_iy.lt.ny+1,
+     &                             bc_type21_iy.lt.ny+1,
      1           'stepped off y-grid in type 24 bc')
               enddo
               naave=naave+na(bc_type21_ix,bc_type21_iy,is)*
-     1         vol(bc_type21_ix,bc_type21_iy)
+     1                   vol(bc_type21_ix,bc_type21_iy)
               volave=volave+vol(bc_type21_ix,bc_type21_iy)
             end do
             naave=naave/volave
@@ -2571,10 +2571,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 bc_type21_iy=topiy(bc_type21_ix,bc_type21_iy)
                 bc_type21_ix=bc_type21_ixx
                 call xertst (-2.lt.bc_type21_ix.and.
-     &                       bc_type21_ix.lt.nx+1,
+     &                             bc_type21_ix.lt.nx+1,
      1           'stepped off x-grid in type 24 bc')
                 call xertst (-2.lt.bc_type21_iy.and.
-     &                       bc_type21_iy.lt.ny+1,
+     &                             bc_type21_iy.lt.ny+1,
      1           'stepped off y-grid in type 24 bc')
               enddo
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
@@ -2596,14 +2596,14 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 bc_type21_iy=bottomiy(bc_type21_ix,bc_type21_iy)
                 bc_type21_ix=bc_type21_ixx
                 call xertst (-2.lt.bc_type21_ix.and.
-     &                       bc_type21_ix.lt.nx+1,
+     &                             bc_type21_ix.lt.nx+1,
      1           'stepped off x-grid in type 24 bc')
                 call xertst (-2.lt.bc_type21_iy.and.
-     &                       bc_type21_iy.lt.ny+1,
+     &                             bc_type21_iy.lt.ny+1,
      1           'stepped off y-grid in type 24 bc')
               enddo
               naave=naave+na(bc_type21_ix,bc_type21_iy,is)*
-     1         vol(bc_type21_ix,bc_type21_iy)
+     1                   vol(bc_type21_ix,bc_type21_iy)
               volave=volave+vol(bc_type21_ix,bc_type21_iy)
             end do
             naave=naave/volave
@@ -2615,10 +2615,10 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 bc_type21_iy=bottomiy(bc_type21_ix,bc_type21_iy)
                 bc_type21_ix=bc_type21_ixx
                 call xertst (-2.lt.bc_type21_ix.and.
-     &                       bc_type21_ix.lt.nx+1,
+     &                             bc_type21_ix.lt.nx+1,
      1           'stepped off x-grid in type 24 bc')
                 call xertst (-2.lt.bc_type21_iy.and.
-     &                       bc_type21_iy.lt.ny+1,
+     &                             bc_type21_iy.lt.ny+1,
      1           'stepped off y-grid in type 24 bc')
               enddo
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
@@ -2641,9 +2641,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
 
 10000     CONTINUE
           if(BCMOM(IS,IB).eq.0) goto 20000
-        GOTO(10100,10200,10300,10400,10500,
+          GOTO(10100,10200,10300,10400,10500,
      1         10600,10700,10800,10900,11000,
-     1     11100,11200,11300,11400,11500,11600),BCMOM(IS,IB)      !srv 01.02.09 19.04.13
+     1         11100,11200,11300,11400,11500,11600),BCMOM(IS,IB)      !srv 01.02.09 19.04.13
           write(*,*) BCMOM(IS,IB)
           call xerrab ('BCMOM out of bounds')
 
@@ -4425,7 +4425,7 @@ cghgh
      &         veecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)*
      &                   ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-          endif                                                !srv 12.09.08 }
+            endif                                                !srv 12.09.08 }
           end do
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           US=0.0_R8
@@ -4450,7 +4450,7 @@ cghgh
      &         veecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)*
      &         ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-          endif                                                !srv 12.09.08 }
+            endif                                                !srv 12.09.08 }
           end do
         ELSEIF(BCCHAR(IB).EQ.'W') THEN
           US=0.0_R8
@@ -4629,7 +4629,7 @@ cghgh
      &       she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+ENEPAR(IB,1)*
      &       max(0.0e0_R8,-floe_noc(
      &         topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &         topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1))       !srv 28.10.02
+     &         topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1))          !srv 28.10.02
             she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
      &       she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)+ENEPAR(IB,2)*
      &       vte*s0
@@ -5100,15 +5100,15 @@ cghgh
      .              -VBIG*NE00*
      .               SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                   ENDDO
-              ENDIF
-            END DO
-            once_bcene = .true.
-            ELSE
-              CALL XERRAB
-     1         ('B2STBC -- BCENE=16, NOT AVAILABLE FOR N,W,E')
-            ENDIF
-          endif                                                         !srv 16.02.12 }
-            GOTO 30000
+                ENDIF
+              END DO
+              once_bcene = .true.
+            endif                                                      !srv 16.02.12 }
+          ELSE
+            CALL XERRAB
+     1       ('B2STBC -- BCENE=16, NOT AVAILABLE FOR N,W,E')
+          ENDIF
+          GOTO 30000
         else
           CALL XERRAB
      1       (' Incorrect style of boundary condition')
@@ -5136,7 +5136,7 @@ cghgh
           DO IX = 1, BC_LIST_SIZE(IB)
             bc_type16_ix=bc_list_x(ix,ib)
             bc_type16_iy=bc_list_y(ix,ib)
-            do bc_type16_i=1,bc_type16_ref      ! how many steps away from the boundary?
+            do bc_type16_i=1,bc_type16_ref    ! how many steps away from the boundary?
               bc_type16_ixx=topix(bc_type16_ix,bc_type16_iy)
               bc_type16_iy=topiy(bc_type16_ix,bc_type16_iy)
               bc_type16_ix=bc_type16_ixx
@@ -5363,7 +5363,7 @@ cghgh
           DO IX = 1, BC_LIST_SIZE(IB)
             bc_type16_ix=bc_list_x(ix,ib)
             bc_type16_iy=bc_list_y(ix,ib)
-            do bc_type16_i=1,bc_type16_ref      ! how many steps away from the boundary?
+            do bc_type16_i=1,bc_type16_ref    ! how many steps away from the boundary?
               bc_type16_ixx=topix(bc_type16_ix,bc_type16_iy)
               bc_type16_iy=topiy(bc_type16_ix,bc_type16_iy)
               bc_type16_ix=bc_type16_ixx
@@ -5382,7 +5382,7 @@ cghgh
      .                        ne(bc_list_x(ix,ib),bc_list_y(ix,ib))
             bc_type20_ix=bc_list_x(ix,ib)
             bc_type20_iy=bc_list_y(ix,ib)
-            do bc_type20_i=1,bc_type20_ref      ! how many steps away from the boundary?
+            do bc_type20_i=1,bc_type20_ref    ! how many steps away from the boundary?
               bc_type20_ixx=topix(bc_type20_ix,bc_type20_iy)
               bc_type20_iy=topiy(bc_type20_ix,bc_type20_iy)
               bc_type20_ix=bc_type20_ixx
@@ -5407,7 +5407,7 @@ cghgh
           DO IX = 1, BC_LIST_SIZE(IB)
             bc_type20_ix=bc_list_x(ix,ib)
             bc_type20_iy=bc_list_y(ix,ib)
-            do bc_type20_i=1,bc_type20_ref      ! how many steps away from the boundary?
+            do bc_type20_i=1,bc_type20_ref    ! how many steps away from the boundary?
               bc_type20_ixx=topix(bc_type20_ix,bc_type20_iy)
               bc_type20_iy=topiy(bc_type20_ix,bc_type20_iy)
               bc_type20_ix=bc_type20_ixx
@@ -5446,7 +5446,7 @@ cghgh
           DO IX = 1, BC_LIST_SIZE(IB)
             bc_type21_ix=bc_list_x(ix,ib)
             bc_type21_iy=bc_list_y(ix,ib)
-            do bc_type21_i=1,bc_type21_ref      ! how many steps away from the boundary?
+            do bc_type21_i=1,bc_type21_ref    ! how many steps away from the boundary?
               bc_type21_ixx=topix(bc_type21_ix,bc_type21_iy)
               bc_type21_iy=topiy(bc_type21_ix,bc_type21_iy)
               bc_type21_ix=bc_type21_ixx
@@ -5465,7 +5465,7 @@ cghgh
           DO IX = 1, BC_LIST_SIZE(IB)
             bc_type21_ix=bc_list_x(ix,ib)
             bc_type21_iy=bc_list_y(ix,ib)
-            do bc_type21_i=1,bc_type21_ref      ! how many steps away from the boundary?
+            do bc_type21_i=1,bc_type21_ref    ! how many steps away from the boundary?
               bc_type21_ixx=topix(bc_type21_ix,bc_type21_iy)
               bc_type21_iy=topiy(bc_type21_ix,bc_type21_iy)
               bc_type21_ix=bc_type21_ixx
@@ -5488,7 +5488,7 @@ cghgh
           DO IX = 1, BC_LIST_SIZE(IB)
             bc_type21_ix=bc_list_x(ix,ib)
             bc_type21_iy=bc_list_y(ix,ib)
-            do bc_type21_i=1,bc_type21_ref      ! how many steps away from the boundary?
+            do bc_type21_i=1,bc_type21_ref    ! how many steps away from the boundary?
               bc_type21_ixx=bottomix(bc_type21_ix,bc_type21_iy)
               bc_type21_iy=bottomiy(bc_type21_ix,bc_type21_iy)
               bc_type21_ix=bc_type21_ixx
@@ -5507,7 +5507,7 @@ cghgh
           DO IX = 1, BC_LIST_SIZE(IB)
             bc_type21_ix=bc_list_x(ix,ib)
             bc_type21_iy=bc_list_y(ix,ib)
-            do bc_type21_i=1,bc_type21_ref      ! how many steps away from the boundary?
+            do bc_type21_i=1,bc_type21_ref    ! how many steps away from the boundary?
               bc_type21_ixx=bottomix(bc_type21_ix,bc_type21_iy)
               bc_type21_iy=bottomiy(bc_type21_ix,bc_type21_iy)
               bc_type21_ix=bc_type21_ixx
@@ -5568,7 +5568,7 @@ cghgh
           end do
         ELSE
           CALL XERRAB ('B2STBC -- BCENE=22, NOT AVAILABLE FOR W,E')
-        END IF                                                          !srv 23.07.10 }
+        END IF                                                         !srv 23.07.10 }
         GOTO 30000
 
 * -- BOUNDARY CONDITIONS FOR ION ENERGY EQUATIONS --
@@ -5588,7 +5588,7 @@ cghgh
 30100   CONTINUE
         if(ncall.eq.0) then
           IF(BCCHAR(IB).EQ.'S'.and.use_astra.ne.0) THEN
-            ENIPAR(IB,1) = tib_astra*1.0e3_R8                           !srv 14.06.12
+            ENIPAR(IB,1) = tib_astra*1.0e3_R8                          !srv 14.06.12
           ENDIF
           write(*,'(a,1p,g14.7,a,a,a)')
      .     'specified ion temperature ',ENIPAR(IB,1),' on ',
@@ -7102,7 +7102,7 @@ cxpb          endif
 c already handled when the electron heat bc was handled
 c see label 2980
         ELSE
-          CALL XERRAB ('B2STBC -- BCENI=16, NOT AVAILABLE FOR N,W,E')
+          CALL XERRAB ('B2STBC -- BCENI=17, NOT AVAILABLE FOR N,W,E')
         ENDIF
         GOTO 40000
 
@@ -7345,16 +7345,16 @@ cxpb Careful here because of BC number clash
      &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
      &         fhiPSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                 topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)
-          endif                                                    !srv 21.03.09 }
+          endif                                                      !srv 21.03.09 }
             do is = 0, ns-1
-            if(.not.is_neutral(is)) then                            !srv 19.03.09 {
+              if(.not.is_neutral(is)) then                           !srv 19.03.09 {
                 t0 = na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
                 csb = 
      .           sqrt((rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
      &                  te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
      &                  ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
      &               (am(is)*mp))
-              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
+                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
      &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+ENIPAR(IB,2)*
      &                            t0*csb*s0
 !     &                            t0*csb*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
@@ -7364,7 +7364,7 @@ cxpb Careful here because of BC number clash
      &       SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) -
      &       max(0.0e0_R8,-floi_noc(
      &        topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &        topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)) !srv 28.10.02
+     &        topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1))           !srv 28.10.02
           ENDDO
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
@@ -7374,25 +7374,25 @@ cxpb Careful here because of BC number clash
               shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
      &         fhiPSch(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)
-          endif                                                    !srv 21.03.09 }
+            endif                                                    !srv 21.03.09 }
             do is = 0, ns-1
-            if(.not.is_neutral(is)) then                            !srv 19.03.09 }
+              if(.not.is_neutral(is)) then                           !srv 19.03.09 }
                 t0 = na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
                 csb = sqrt((rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
      &                       te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
      &                       ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
      &                     (am(is)*mp))
-              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
+                shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
      &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+ENIPAR(IB,2)*
      &          t0*csb*s0
 !     &          t0*csb*SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
 !     &                    BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-             endif                                                      !srv 19.03.09 {
+              endif                                                  !srv 19.03.09 {
             enddo
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
      &       SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-
      &       max(0.0e0_R8,
-     &        floi_noc(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1))            !srv 28.10.02
+     &        floi_noc(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1))         !srv 28.10.02
           ENDDO
         ELSE
           CALL XERRAB ('B2STBC -- BCENI=21, NOT AVAILABLE FOR W,E')
@@ -7411,13 +7411,13 @@ cxpb Careful here because of BC number clash
           DO IX = 1, BC_LIST_SIZE(IB)
             t0 = 0.0_R8
             do is = 0, ns-1
-              if(.not.is_neutral(is)) then                            !srv 19.03.09 {
+              if(.not.is_neutral(is)) then                           !srv 19.03.09 {
                 csb = sqrt((rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
      &                       te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
      &                       ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
      &                     (am(is)*mp))
                 t0 = t0 + csb*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
-              endif                                                   !srv 19.03.09 }
+              endif                                                  !srv 19.03.09 }
             enddo
             shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= VBIG*NE00*EV*
      &       CHCI(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
@@ -7433,20 +7433,20 @@ cxpb Careful here because of BC number clash
           DO IX = 1, BC_LIST_SIZE(IB)
             t0 = 0.0_R8
             do is = 0, ns-1
-              if(.not.is_neutral(is)) then                            !srv 19.03.09 {
+              if(.not.is_neutral(is)) then                           !srv 19.03.09 {
                 csb = sqrt((rza(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)*
      &                       te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))+
      &                       ti(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))/
      &                     (am(is)*mp))
                 t0 = t0 + csb*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
-              endif                                                   !srv 19.03.09 }
+              endif                                                  !srv 19.03.09 }
             enddo
             shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= VBIG*NE00*EV*
      &       CHCI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)*
      &       TI(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
             shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-VBIG*NE00*EV*
-     &       (CHCI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-ENIPAR(IB,1)*   !srv 02.02.11
+     &       (CHCI(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-ENIPAR(IB,1)* !srv 02.02.11
      &        SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &           BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))*T0)
           ENDDO
@@ -7458,7 +7458,7 @@ cxpb Careful here because of BC number clash
 * -- BCENI=23 -- PRESCRIBE THE POLOIDALLY AVERAGED VALUE OF THE ION TEMPERATURE
 * AND INTRODUCE A POLOIDAL VARIATION AS CLOSE AS POSSIBLE TO NEOCLASSICAL SOLUTION.
 * IT IS RECOMMENDED TO USE THIS BOUNDARY CONDITION TOGETHER WITH CORRESPONDING
-* CONDITION ON ION DENSITY
+* CONDITION ON ION DENSITY BCCON = 21,22,23
 
 32300   CONTINUE
         if(ncall.eq.0) then
@@ -7488,9 +7488,9 @@ cxpb Careful here because of BC number clash
      &           'ion density boundary condition'  !srv 21.09.12
               end if
               if (ns.gt.1) then
-               write(0,*) 
+                write(0,*)
      &       'Use of BCENI=23 only meant for runs without impurities!'
-               write(6,*) 
+                write(6,*)
      &       'Use of BCENI=23 only meant for runs without impurities!'
               endif
             endif
@@ -7509,7 +7509,7 @@ cxpb Careful here because of BC number clash
 #ifdef ASTRA
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
-                ENIPAR(IBW,1) = tib_astra*1.0e3_R8                          !srv 14.06.12
+                ENIPAR(IBW,1) = tib_astra*1.0e3_R8                     !srv 14.06.12
               endif
             ENDDO
 #else
@@ -7519,7 +7519,7 @@ cxpb Careful here because of BC number clash
           ENDIF
 
           IF(BCCHAR(IB).EQ.'S' .and.
-     $     (mod(region(BC_LIST_X(1,IB),BC_LIST_Y(1,IB),0),4).eq.1)) 
+     $     (mod(region(BC_LIST_X(1,IB),BC_LIST_Y(1,IB),0),4).eq.1))
      >     THEN
 !          DO IX = 1, BC_LIST_SIZE(IB)
 !            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)= VBIG*NE00*ENIPAR(IB,1)
@@ -7527,18 +7527,32 @@ cxpb Careful here because of BC number clash
 !            shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=-VBIG*NE00*
 !     .       SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
 !          end do
-            t0=0.0e0_R8   ! Volume                                              !lk 12.12.12 {
+            t0=0.0e0_R8   ! Volume                                     !lk 12.12.12 {
             t1=0.0e0_R8   ! Poloidally volume-averaged ion temperature in the cell next to boundary
             t2=0.0e0_R8   ! Poloidally volume-averaged electron density in the cell next to boundary
             t3=0.0e0_R8   ! Poloidally volume-averaged electron density in the boundary cell
-            do ix = -1,nx
-              if (mod(region(ix,0,0),4).eq.1) then
-                t0=t0 + vol(ix,0)
-                t1=t1 + ti(ix,0)*vol(ix,0)
-                t2=t2 + ne(ix,0)*vol(ix,0)
-                t3=t3 + ne(ix,-1)*vol(ix,0)
-              endif
-            enddo
+            DO IBW=IB,NBC
+              IF(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
+                DO IX = 1, BC_LIST_SIZE(IBW)
+                  t0=t0 +
+     &              vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                  topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+                  t1=t1 +
+     &               ti(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                  topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))*
+     &              vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                  topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+                  t2=t2 +
+     &               ne(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                  topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))*
+     &              vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                  topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+                  t3=t3 + ne(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
+     &             vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                 topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+                END DO
+              ENDIF
+            ENDDO
             t1=t1/t0
             t2=t2/t0
             t3=t3/t0
@@ -7550,12 +7564,14 @@ cxpb Careful here because of BC number clash
                     shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
      &               shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)
      &                +VBIG*NE00*(ENIPAR(IBW,1)*EV
-     &                +(ti(ix,0)-t1)*t1*t2/t3/ENIPAR(IBW,1)/EV)
+     &                +(ti(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                     topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+     &                  -t1)*t1*t2/t3/ENIPAR(IBW,1)/EV)
      &                *SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                     shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1)=
      &               -VBIG*NE00*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                   endif
-                enddo  
+                enddo
               ENDIF                                                 !lk 12.12.12 }
             ENDDO
             once_bceni = .true.
@@ -7566,11 +7582,11 @@ cxpb Careful here because of BC number clash
         endif
         GOTO 40000
 
-* -- BCENI=24 -- Feedback boundary condition with prescribed total ion flux,
+* -- BCENI=24 -- Feedback boundary condition with prescribed total ion heat flux,
 *                constant poloidally averaged ion temperature and a
 *                poloidal variation as close as possible to neoclassical solution.
 * IT IS RECOMMENDED TO USE THIS BOUNDARY CONDITION TOGETHER WITH CORRESPONDING
-* CONDITION ON ION DENSITY
+* CONDITION ON ION DENSITY BCCON = 21,22,23
 
 32400   CONTINUE
 !IYS 04.03.2013   {
@@ -7715,8 +7731,10 @@ cxpb Careful here because of BC number clash
               IF(BCCHAR(IBW).EQ.'S'.AND.BCENE(IBW).EQ.BCENE(IB)) THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
                   shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0)=
-     .             VBIG*NE00*
-     $             (TIS+(ti(ix,0)-t1)*t1*t2/t3/TIS)*
+     .             VBIG * NE00 * (TIS +
+     .             (ti(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     .                 topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))-t1)*
+     .              t1*t2/t3/TIS)*
      .              SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                   shi0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1)=
      .             -VBIG*NE00*
@@ -9067,6 +9085,7 @@ c end of implementation
          ENDIF
 !xpb
         elseif(istyle_cur_contr_on_S_and_N.eq.1) then                   !srv 01.02.09 { 27.03.14
+
          IF (BCPOT(IB).EQ.1) THEN
           if (ncall.eq.0) write(*,'(a,i2,a)')
      &          'Disabled special treatment of fchy_dia on boundary ',
@@ -9095,8 +9114,8 @@ c end of implementation
                 if(.not.is_neutral(is))then                             !srv 25.06.03
                     fchy_inertia = fchy_inertia                         !srv 07.04.00 25.06.03
      &               -0.5e0_R8*am(is)*mp*
-     &                facdrift(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*phm1  ! *signmf                 !srv 07.04.00 21.04.00 21.10.02
-     &               *naaverage(is)                                     !lk 20.11.07                       !srv 07.04.00
+     &                facdrift(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*phm1  ! *signmf     !srv 07.04.00 21.04.00 21.10.02
+     &               *naaverage(is)                                     !lk 20.11.07  !srv 07.04.00
      &               *ua2average(is)                                    !srv 07.04.00 15.02.02
      &               *bzhzaverage                                       !lk 20.11.07
      &               *(OnedBsqc(
@@ -9162,8 +9181,7 @@ c end of implementation
      &        'Use BCPOT=13 to include it.'                          !srv 03.03.15
            ENDIF
          endif
-	endif                                                        !srv 01.02.09 } 
-
+	endif                                                        !srv 01.02.09 }
       enddo
 
 * ---------------------------------------------------------------------

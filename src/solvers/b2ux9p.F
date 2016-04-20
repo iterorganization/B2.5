@@ -69,9 +69,9 @@
       integer, allocatable, save :: iwrk(:)
 
 !      real (kind=R8), allocatable :: a(:)
-	integer, save :: nz
+      integer, save :: nz
 !      integer, allocatable :: ia(:), ja(:)
-	integer, allocatable, save :: indexes(:,:), iasave(:), jasave(:)
+      integer, allocatable, save :: indexes(:,:), iasave(:), jasave(:)
 
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
@@ -99,23 +99,23 @@
        call xertst (0.lt.acpar, 'faulty internal parameter acpar')
        call ipgeti ('b2ux9p_cpu', cpu)
        if(style.eq.2) then
-	   mult_nonzero=10
-	   mult_solvdim=15
-	   mult_solvdim1=10
-	   call ipgeti ('b2ux9p_mult_nonzero', mult_nonzero)
-	   call ipgeti ('b2ux9p_mult_solvdim', mult_solvdim)
-	   call ipgeti ('b2ux9p_mult_solvdim1', mult_solvdim1)
-	   nnd=(nx+2)*(ny+2)
-	   n_nonzeros=mult_nonzero*nnd
-	   solvdim=mult_solvdim*n_nonzeros
-	   solvdim1=mult_solvdim1*n_nonzeros
-	   call alloc_b2mod_ma28_for_9diag                               !sv 13.10.06
+         mult_nonzero=10
+         mult_solvdim=15
+         mult_solvdim1=10
+         call ipgeti ('b2ux9p_mult_nonzero', mult_nonzero)
+         call ipgeti ('b2ux9p_mult_solvdim', mult_solvdim)
+         call ipgeti ('b2ux9p_mult_solvdim1', mult_solvdim1)
+         nnd=(nx+2)*(ny+2)
+         n_nonzeros=mult_nonzero*nnd
+         solvdim=mult_solvdim*n_nonzeros
+         solvdim1=mult_solvdim1*n_nonzeros
+         call alloc_b2mod_ma28_for_9diag                               !sv 13.10.06
 
-!	   call iniilu_9(nx+2,ny+2)                                      !sv 13.10.06
-	   irnh = 0                                                      !sv 15.05.07
-	   icnh = 0                                                      !sv 15.05.07
-	   nltrsol=2
-	   call ipgeti ('b2ux9p_nltrsol', nltrsol)
+!         call iniilu_9(nx+2,ny+2)                                      !sv 13.10.06
+         irnh = 0                                                      !sv 15.05.07
+         icnh = 0                                                      !sv 15.05.07
+         nltrsol=2
+         call ipgeti ('b2ux9p_nltrsol', nltrsol)
        endif
       endif
 *   ..set n2
@@ -125,28 +125,28 @@
       call xertst (0.le.itcnt, 'faulty argument itcnt')
 *   ..obtain work space
       if (ncall.eq.0) then
-	 write(*,*) 'Allocating space for solver b2ux9p'
-	 if (style.eq.0) then
-	  call xerrab ('b2ux9p: Style 0 is not emplemented')
+       write(*,*) 'Allocating space for solver b2ux9p'
+       if (style.eq.0) then
+        call xerrab ('b2ux9p: Style 0 is not emplemented')
 *    ..obtain workspace for iluter
-	  allocate(aaf(1:n2*5))
-	  allocate(wrk0(1:n2))
-	  allocate(wrk1(1:n2))
-	  allocate(wrk2(1:n2))
-	  allocate(iwrk(1:1))
-	else if (style.eq.1) then
-	  call xerrab ('b2ux9p: Style 1 is not emplemented')
+        allocate(aaf(1:n2*5))
+        allocate(wrk0(1:n2))
+        allocate(wrk1(1:n2))
+        allocate(wrk2(1:n2))
+        allocate(iwrk(1:1))
+      else if (style.eq.1) then
+        call xerrab ('b2ux9p: Style 1 is not emplemented')
 *    ..obtain workspace for slv5pt
-	  allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
-	  allocate(wrk0(1:n2))
-	  allocate(wrk1(1:1))
-	  allocate(wrk2(1:1))
-	  allocate(iwrk(1:n2))
-	else if (style.eq.2) then
-	  allocate(indexes(1:3,1:solvdim))
-	  allocate(iasave(1:solvdim),jasave(1:solvdim))
-	endif
-	write(*,*) 'Allocated  space for solver b2ux9p'
+        allocate(aaf(1:n2*(3*min(nx+2,ny+2)+1)))
+        allocate(wrk0(1:n2))
+        allocate(wrk1(1:1))
+        allocate(wrk2(1:1))
+        allocate(iwrk(1:n2))
+      else if (style.eq.2) then
+        allocate(indexes(1:3,1:solvdim))
+        allocate(iasave(1:solvdim),jasave(1:solvdim))
+      endif
+      write(*,*) 'Allocated  space for solver b2ux9p'
       endif
 
 *   ..solve the correction equation
@@ -173,7 +173,7 @@
      &               c_end-c_start
 *    ..use ma28
        cpu_start=x05baf()
-!	 call ilutern_9(NX+2, NY+2, NX+2,
+!       call ilutern_9(NX+2, NY+2, NX+2,
 !     & aa9(-1,-1,-3,0), aa9(-1,-1,-1,0), aa9(-1,-1,0,0), aa9(-1,-1,1,0), 
 !     & aa9(-1,-1, 3,0), 
 !     & aa9(-1,-1,-4,0), aa9(-1,-1,-2,0), aa9(-1,-1,2,0), aa9(-1,-1,4,0),
@@ -278,7 +278,7 @@
             endif
 *   ..Case of right neighbor
             jak = 2+rightix(ix,iy)+(2+rightiy(ix,iy)-1)*nxp2
-	    if( aa9(ix,iy,1) .ne. 0.0e0_R8 ) then
+          if( aa9(ix,iy,1) .ne. 0.0e0_R8 ) then
               k = k+1
               a(k) = aa9(ix,iy,1)
               indexes(1,k)=ix
@@ -413,31 +413,31 @@
             ip(i+1)=ip(i) + ner
 
             do
-	      lord=.true.
-	      do ipt=ip(i),ip(i+1)-2
-	        if(ja(ipt).gt.ja(ipt+1)) then
-	          jtemp  = ja(ipt)
+              lord=.true.
+              do ipt=ip(i),ip(i+1)-2
+                if(ja(ipt).gt.ja(ipt+1)) then
+                  jtemp  = ja(ipt)
                   ja(ipt)  = ja(ipt+1)
                   ja(ipt+1)= jtemp
-	          temp   = a(ipt)
+                  temp   = a(ipt)
                   a(ipt)   = a(ipt+1)
                   a(ipt+1) = temp
-	          do j=1,3
-	            jtemp=indexes(j,ipt)
+                  do j=1,3
+                    jtemp=indexes(j,ipt)
                     indexes(j,ipt)=indexes(j,ipt+1)
                     indexes(j,ipt+1)=jtemp
-	          enddo
-	          lord=.false.
-	        endif
-	      enddo
-	      if (lord) exit
-	    enddo
+                  enddo
+                  lord=.false.
+                endif
+              enddo
+              if (lord) exit
+            enddo
 
           enddo
         enddo
 
-!      iasave=ia                                          !sv 15.05.07 {
-!	 jasave=ja
+!       iasave=ia                                          !sv 15.05.07 {
+!       jasave=ja
         do  i=1,k
           iasave(i)=ia(i)
           jasave(i)=ja(i)
@@ -445,47 +445,47 @@
         lfirst=.false.
 
       else
-!      ia=iasave                                          !sv 15.05.07 {
-!	 ja=jasave
+!       ia=iasave                                           !sv 15.05.07 {
+!       ja=jasave
         do i=1,k
           ia(i)=iasave(i)                                   !sv 15.05.07 }
           ja(i)=jasave(i)
-	  a(i)=aa9(indexes(1,i), indexes(2,i), indexes(3,i))
-	enddo
+          a(i)=aa9(indexes(1,i), indexes(2,i), indexes(3,i))
+        enddo
       endif
 
       if(kwrite_bnr.eq.ncall) then
-!	  write(*,*) 'Opening 76'
-!	  open(76,file=
+!        write(*,*) 'Opening 76'
+!        open(76,file=
 !     &   'st_9_rhs_binary_'//trim(name)//'.dat',form='unformatted')
-!	   write(76) n
-!	   do i=1,n
-!	    write(76) r1(i)
-!	   enddo
-!	  close(76)
-	write(*,*) 'Opening 77'
-	open(77,file=
+!         write(76) n
+!         do i=1,n
+!          write(76) r1(i)
+!         enddo
+!        close(76)
+        write(*,*) 'Opening 77'
+        open(77,file=
      &   'st_9_matrix_binary_'//trim(name)//'.dat',form='unformatted') !srv 11.03.13
-	write(77) n, k
-	do i=1,k
-	  write(77) ia(i), ja(i), a(i)
-	enddo
-	close(77)
+        write(77) n, k
+        do i=1,k
+          write(77) ia(i), ja(i), a(i)
+        enddo
+        close(77)
       endif
       if(kwrite_fmt.eq.ncall) then
-!	  write(*,*) 'Opening 76'
-!	  open(76,file='st_9_rhs_'//trim(name)//'.dat')
-!	   write(76,*) n
-!	   do i=1,n
-!	    write(76,*) r1(i)
-!	   enddo
-!	  close(76)
+!        write(*,*) 'Opening 76'
+!        open(76,file='st_9_rhs_'//trim(name)//'.dat')
+!         write(76,*) n
+!         do i=1,n
+!          write(76,*) r1(i)
+!         enddo
+!        close(76)
         open(77,file='st_9_matrix_'//trim(name)//'.dat')
-	write(77,*) n, k
-	do i=1,k
-	  write(77,*) ia(i), ja(i), a(i)
-	enddo
-	close(77)
+        write(77,*) n, k
+        do i=1,k
+          write(77,*) ia(i), ja(i), a(i)
+        enddo
+        close(77)
       endif
 
       ncall = ncall + 1
