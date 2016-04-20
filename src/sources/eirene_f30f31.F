@@ -764,7 +764,7 @@ c
 #else
       data new_format/2/
 #endif
-      data format_string/ '(4E15.7)', '(4E16.8)' /
+      data format_string/ '(1P,4E15.7)', '(1P,4E16.8)' /
 
       inquire(file='fort.30',exist=ex)
       if (ex) then
