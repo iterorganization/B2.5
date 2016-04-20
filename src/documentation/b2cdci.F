@@ -427,7 +427,7 @@
 *    'b2tlnl_ee'                '0'                    Physics
 *    'b2tlnl_ei'                '0'                    Physics
 *    'b2tlnl_ii'                '0'                    Physics
-*    'b2tqca_model'             '3'                    Physics
+*    'b2tqca_model'             '1'                    Physics
 *    'b2tqca_phm0'              '1.0'                  Physics
 *    'b2tqce_model'             '1'                    Physics
 *    'b2tqce_fke_Zhdanov'       '1'                    Physics
@@ -483,7 +483,6 @@
 *    'eirene_dpc_fix'           '1'                    Numerics
 *    'eirene_extrap'            '1'                    Numerics
 *    'eirene_ionising_core'     '0'                    Physics
-*    'eirene_fixuub'            '0'                    Numerics
 *    'eirene_format'            'iter'                 Output
 *    'eirene_lhalpha'           '1'                    Physics
 *    'eirene_lvib'              '0'                    Physics
@@ -1534,13 +1533,13 @@
 *    'b2tqca_phm0'              '1.0'                  Physics
 *    Multiplier for the classical parallel viscosity.
 *
-*    'b2tqca_model'             '3'                    Physics
-*    If model.eq.1, use the Balescu formulation from SOLPS5.0 
+*    'b2tqca_model'             '1'                    Physics
+*    If model.eq.1, use the Balescu formulation from SOLPS5.2 
 *    classical parallel ion heat diffusivity.
 *    If model.eq.2, use the older Braginskii SOLPS4.0 model.
-*    If model.eq.3, it is as model.eq.1 but without factor 4/3
-*    which is applied to cvsahz for main ions in b2tral.F.
-*    It is recommended '3'.  
+*    Note: old option model.eq.3 removed, replaced with model.eq.1.,  
+*    but numerical treatment w.r.t. factor 4/3 according to old
+*    model.eq.3.
 *
 *    'b2tqce_model'             '1'                    Physics
 *    If model.eq.1, use the fitted Balescu formulation from SOLPS5.0 
@@ -1895,17 +1894,6 @@
 *    'eirene_print_minmax'      '0'                    Numerics
 *    Print min and max values of te, ti, na & ua
 *
-*    'eirene_fixuub'            '0'                    Numerics
-*    Switch for toggling between conversion rules for velocities
-*    between B2.5 and Eirene.
-*    If fixuub.eq.0, the velocity passed to Eirene is face-centered
-*    and computed from the fluxes at the cell faces.
-*    If fixuub.eq.1, the velocity passed to Eirene is cell-centered
-*    and computed from the fluxes at the cell faces.
-*    If fixuub.eq.2, the velocity passed to Eirene is cell-centered
-*    and computed as the cell-centered parallel velocity from B2.5 
-*    multiplied by the pitch angle.
-*
 *    'eirene_extrap'            '1'                    Numerics
 *    If eirene_extrap.eq.1, then guard cell plasma parameter values are
 *    calculated from the neighbouring real cell values. 
@@ -1980,12 +1968,14 @@
 *    'b2trcl_conductive_limit'  '0'                    Numerics
 *    When set to '1', flux limit of the parallel electron
 *    and ion heat fluxes is applied to transport coefficients.
-*    It is recommended '1'. If 'b2trcl_conductive_limit' '0' then 
-*    the keys 'b2tfhe_lim_flux' and 'b2tfhi_lim_flux' must be '0'.  
+*    It is recommended '1'. If 'b2trcl_conductive_limit' '1' then 
+*    the keys 'b2tfhe_lim_flux' and 'b2tfhi_lim_flux' must be '0',
+*    and also 'b2mndt_style' must be '0'.
 *    
 *    'b2trcl_core_cond_limit'   '0'                    Numerics
-*    If core_cond_limit.eq.0, then the heat flux limit due to chvemx
-*    is not applied in the core.
+*    If core_cond_limit.eq.0, then the heat flux limits due to chvemx
+*    and chvimx are not applied in the core. Switch only active if 
+*    'b2trcl_conductive_limit' .ne. 0.
 *
 *    'b2tlh0_flux_limit_style'  '2'                    Numerics
 *    If '0', use the SOLPS5.0 scheme for neutral heat conductivity

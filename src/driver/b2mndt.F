@@ -88,9 +88,8 @@
       integer n2, istg(0:2), is, k
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
-     &  acorte, acorti, acorpo, nasum, na0sum,
-     &  vsal(-1:nx,-1:ny,0:1,0:ns-1),
-     &  lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny)                              !srv 11.10.02
+     &  acorte, acorti, acorpo, nasum, na0sum, 
+     &  lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny)             !srv 11.10.02
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, b2sasum, samax
@@ -309,7 +308,7 @@ ctmp.dpc
      2       cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,             !srv 13.10.06
      3       chvi, csig, csigin, calf, cthe, cthi,
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
-     5       vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
+     5       fllim0fhi, fllimvisc, csig_cl, calf_cl)
           newneo=.true.
           if(style.ne.0) then                                            !srv 18.06.08 {
             call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,

@@ -79,13 +79,13 @@
      &  pz(-1:nx,-1:ny), fne_(-1:nx,-1:ny,0:1)                           !srv 18.01.02 30.06.03
 !     2 facdrift_target, facdrift_start, facdrift_inc, facdrift_dec      !srv 09.07.99
       real (kind=R8) ::                                                  !xpb
-!     1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                   !xpb
-!     1  sne0(-1:nx,-1:ny,0:1),                                          !xpb
-!     2  shi0(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),                   !xpb
-!     3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                   !xpb
-!     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                   !xpb
-!     5  sch0(-1:nx,-1:ny,0:3),                                          !xpb
-     3  ue(-1:nx,-1:ny), vsal(-1:nx,-1:ny,0:1,0:ns-1),lnlam(-1:nx,-1:ny)
+!     1  sna0(-1:nx,-1:ny,0:1,0:ns-1),                                    !xpb
+!     1  sne0(-1:nx,-1:ny,0:1),                                           !xpb
+!     2  shi0(-1:nx,-1:ny,0:3), she0(-1:nx,-1:ny,0:3),                    !xpb
+!     3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
+!     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
+!     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
+     3  ue(-1:nx,-1:ny), lnlam(-1:nx,-1:ny)
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical inverted_ua, new_matrix
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok                   !srv 09.07.99
@@ -302,9 +302,9 @@ csw 01oct2012 initialize potential if necessary
      3 cdpa, cddi, cvla, cvsa, chce, chve, chci,                         !srv 04.10.99 23.12.03 13.10.06
      5 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
-     5 vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)                     !srv 09.01.01 15.12.05
-      call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)       !srv 20.09.06 }
-      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,           !srv 20.09.06 {
+     5 fllim0fhi, fllimvisc, csig_cl, calf_cl)                           !srv 09.01.01 15.12.05
+      call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)       !srv 20.09.06  }
+      call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,           !srv 20.09.06  {
      &                       facdrift, fchvispar)
       call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)

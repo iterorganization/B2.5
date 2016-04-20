@@ -116,8 +116,8 @@
      &  chvemx)
 *   ..compute all atom heat flux limit velocity
       cflmi = cflim(1)
-      call b2tlhi (nx, ny, mp, cflmi, pbs(-1,-1,0), qc, ni, nirm, ti,
-     &  chvimx)
+      call b2tlhi (nx, ny, mp, cflmi, bb, gs, pbs(-1,-1,0), qc, ni,
+     &  nirm, ti, chvimx)
 
 * ..return
       ncall = ncall+1

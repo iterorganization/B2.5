@@ -7,7 +7,7 @@
      2 cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,                  !srv 13.10.06
      3 chvi, csig, csigin, calf, cthe, cthi, 
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,      !srv 09.01.01 15.12.05
-     4 vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
+     4 fllim0fhi, fllimvisc, csig_cl, calf_cl)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -46,7 +46,7 @@
      &  csig(-1:nx,-1:ny,0:1), csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), 	!xpb
      &  calf(-1:nx,-1:ny,0:1),
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
-     1	cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), vsal(-1:nx,-1:ny,0:1,0:ns-1), 
+     1	cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1),
      1	fllim0fhi(-1:nx,-1:ny,0:1,0:ns-1), 
      2  fllimvisc(-1:nx,-1:ny,0:ns-1),
      3  csig_cl(-1:nx,-1:ny,0:1), calf_cl(-1:nx,-1:ny,0:1)
@@ -86,7 +86,7 @@
 
 *   ..local variables
       integer ix, iy, is, n2, ncall, pot_eq, no_current, no_solve, is0
-      integer, save :: iout = 0, model = 3,                             !srv 17.06.08
+      integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
@@ -96,7 +96,7 @@
      2  calf0(-1:nx,-1:ny,0:1), chci0(-1:nx,-1:ny,0:1),
      3  cvsa0(-1:nx,-1:ny,0:1,0:ns-1), cvsahz0(-1:nx,-1:ny,0:1,0:ns-1), !srv 09.01.01
      4  chce0(-1:nx,-1:ny,0:1), chve0(-1:nx,-1:ny,0:1),
-     1	visc(-1:nx,-1:ny,0:ns-1), pol_anom_scale, 
+     1	pol_anom_scale, 
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
       logical solving(4)
@@ -141,7 +141,6 @@
         enddo
         call ipgetr ('b2siav_addvis1', addvis1)                   !srv 31.07.02
         call ipgeti ('b2tral_iout', iout)                         !srv 17.06.08
-        call ipgeti ('b2tqca_model', model)
         call ipgeti ('b2npc9_iout', iout_b2npc9)                  !srv 11.09.09 {
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npmo_iout', iout_b2npmo)
@@ -165,22 +164,11 @@
      1  qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,   !srv 01.07.09
      2  chvemx, chvimx, cvsahz0,                                  !srv 09.01.01 03.06.03
      3  cvsa0, chce0, chve0, chci0, chvi0, csig0, calf0, csigin,
-     4  cthe, cthi, cvsa_cl, cvsahz_cl, vsal, fllimvisc,          !srv 09.01.01
+     4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,          !srv 09.01.01
      5  csig_cl, calf_cl)
 *   ..add to previous contributions
       call b2saxpy (n2*2*ns, 1.0_R8, cvsahz0, 1, cvsahz, 1)       !srv 09.01.01
       call b2saxpy (n2*2*ns, 1.0_R8, cvsa0, 1, cvsa, 1)
-      do is = 0, ns-1
-        if (is_neutral(is)) then
-          visc(:,:,is)=vsa0(:,:,is)
-        else
-          visc(:,:,is)=vsa0(:,:,is)*pol_anom_scale
-        endif
-        call b2saxpy
-     &       (n2, 1.0_R8, visc(-1,-1,is), 1, vsal(-1,-1,0,is), 1)
-        call b2saxpy
-     &       (n2, 1.0_R8, vsa0(-1,-1,is), 1, vsal(-1,-1,1,is), 1)
-      end do
       if (fch_anomalous.ne.1.0_R8) then
         csig = csig * fch_anomalous
         calf = calf * fch_anomalous
@@ -194,16 +182,12 @@
       call b2saxpy (n2*2, 1.0_R8, csig0, 1, csig, 1)
       call b2saxpy (n2*2, 1.0_R8, calf0, 1, calf, 1)
 *   ..multiply x-component cvsahz by 4/3 for all ions             !srv 31.07.02 {
-!      if (addvis1.ne.0.0_R8.and.model.eq.3) then
-!      if (addvis1.ne.0.0_R8) then
-      if (model.eq.3) then                                        !srv 20.10.09
-        do is = 0, ns-1
-          if (.not.is_neutral(is)) then
-            call b2sscal (n2, 4.0e0_R8/3.0e0_R8, cvsahz(-1,-1,0,is), 1)
-          end if
-        end do
-      endif                                                       !srv 31.07.02 }
-
+cwdk  now unified treatment for all values of b2tqca_model
+      do is = 0, ns-1
+        if (.not.is_neutral(is)) then
+          call b2sscal (n2, 4.0e0_R8/3.0e0_R8, cvsahz(-1,-1,0,is), 1)
+        end if
+      end do
 *   ..compute terms from diamagnetic parts                        !srv 13.10.06 {
       do is = 0, ns-1
        if(is_neutral(is)) then

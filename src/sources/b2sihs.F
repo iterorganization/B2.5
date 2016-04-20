@@ -304,7 +304,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &      bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &      region(ix,iy,0).ne.0) then
-          t0 = phm2*vol(ix,iy)*(1.0_R8-BoRiS)*
+          t0 = phm2*vol(ix,iy)*(1.0_R8-BoRiS)*4.0e0_R8/3.0e0_R8*
      &      (cvsa(ix,iy,0,is)*(ua(ix,iy,is)-
      &          ua(leftix(ix,iy),leftiy(ix,iy),is))**2/
      &       (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+

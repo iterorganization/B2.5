@@ -6,7 +6,7 @@
      1  hz, qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,  !srv 09.01.01 01.07.09
      2  chvemx, chvimx, cvsahz,                                          !srv 09.01.01 03.06.03
      3  cvsa, chce, chve, chci, chvi, csig, calf, csigin,                !xpb
-     4  cthe, cthi, cvsa_cl, cvsahz_cl, vsal, fllimvisc,                 !srv 09.01.01
+     4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                 !srv 09.01.01
      5  csig_cl, calf_cl)                                                !xpb
       use b2mod_types
       use b2mod_indirect
@@ -34,7 +34,7 @@
      &  chvemx(-1:nx,-1:ny), chvimx(-1:nx,-1:ny), lnlam(-1:nx,-1:ny)     !srv 03.06.03 01.07.09
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  cvsa(-1:nx,-1:ny,0:1,0:ns-1), vsal(-1:nx,-1:ny,0:1,0:ns-1), 
+     *  cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      &  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      &  chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
      &  csig(-1:nx,-1:ny,0:1), calf(-1:nx,-1:ny,0:1),
@@ -85,7 +85,7 @@
      &                 integral_modeling = 1
       character(3) chns, chns0                                        !srv 17.06.08
       integer mintopcut                                               !lk 19.09.07  
-      integer mode, model
+      integer mode
       real (kind=R8) ::
      *  cflmv, cthiv, cthev, vis_par, f_luc_te, f_luc_ti
       real (kind=R8) ::                                               !srv 03.06.03
@@ -110,8 +110,8 @@ csw 13mar2012
      &  ipgeti, ipgetr, b2ttia                                        !lk 19.09.07
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                              !srv 22.04.16
 *   ..initialisation
-      save ncall, lthf21, lvis21, cthiv, cthev, lluciani, mode, model
-      data ncall/0/, lthf21/0/, lvis21/0/, mode/1/, model/3/,
+      save ncall, lthf21, lvis21, cthiv, cthev, lluciani, mode
+      data ncall/0/, lthf21/0/, lvis21/0/, mode/1/,
      1  cthiv/2.65_R8/, cthev/0.0_R8/, vis_par/0.0_R8/,
      1  lluciani/3/
 
@@ -129,7 +129,6 @@ csw 13mar2012
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call ipgeti ('b2tral_mode',mode)
-        call ipgeti ('b2tqca_model',model)
         call ipgeti ('b2trcl_lthf21',lthf21)
         call ipgeti ('b2trcl_lvis21',lvis21)
 #ifdef NO_21
@@ -197,27 +196,8 @@ csw 13mar2012
 *   ..incorporate geometry
       call sfill (n2*2*ns*ns, 0.0_R8, csigin(-1,-1,0,0,0), 1)
       do is = 0, ns-1
-       if (model.eq.1 .or. model.eq.3) then                           !srv 16.06.08 see b2tqca
-         call b2txcx (nx, ny, mode, vol, gs, hx, qz, vsa(-1,-1,0,is),
-     &     cvsa(-1,-1,0,is))
-       else if (model.eq.2) then
-         do iy = -1, ny
-           do ix = -1, nx
-             if (leftix(ix,iy).eq.-2) then
-               cvsa(ix,iy,0,is) = 0.0_R8
-             else
-               cvsa(ix,iy,0,is) = 2.0_R8/3.0_R8*
-     &          (vsa(ix,iy,0,is)*hx(leftix(ix,iy),leftiy(ix,iy))+
-     &           vsa(leftix(ix,iy),leftiy(ix,iy),0,is)*hx(ix,iy))/
-     &          (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*
-     &          (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8/
-     &         ((hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8)**2
-             endif
-           enddo
-         enddo
-       else
-         call xerrab ('Viscosity model in b2trcl not available!')
-       endif
+       call b2txcx (nx, ny, mode, vol, gs, hx, qz, vsa(-1,-1,0,is),
+     &   cvsa(-1,-1,0,is))
        call b2txcy (nx, ny, mode, vol, gs, hy, qz, vsa(-1,-1,1,is),
      &   cvsa(-1,-1,1,is))
        do k = 0, nscx-1
@@ -278,7 +258,6 @@ csw 13mar2012
      1 bb, vol, hx, pbs, ne, na, te, ti, ua, cvsa)
 #endif
 *   ..luciani
-      vsal=vsa
       if(lluciani.eq.1) then   ! connection length formulation
         do iy=-1,ny
           if(conn(iy).gt.0.0_R8) then
@@ -296,9 +275,6 @@ csw 13mar2012
                   if(.not.is_neutral(is)) then
                     cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_ti
                     cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)*f_luc_ti        !srv 02.07.08
-                    vsal(ix,iy,0,is)= vsa(ix,iy,0,is)/
-     1               (1.0_R8+7.5e16_R8/conn(iy)*
-     2               (ti(ix,iy)/ev)**2/ne2(ix,iy))
                   endif
                 enddo
                 chce(ix,iy,0)=chce(ix,iy,0)*f_luc_te
@@ -325,9 +301,6 @@ csw 13mar2012
                 if(.not.is_neutral(is)) then
                   cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_ti
                   cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)*f_luc_ti
-                  vsal(ix,iy,0,is)= vsa(ix,iy,0,is)/
-     1             (1.0_R8+0.3e16_R8*(ti(ix,iy)/ev)**2/
-     3              ne2(ix,iy))
                 endif
               enddo
               chce(ix,iy,0)=chce(ix,iy,0)*f_luc_te
@@ -415,11 +388,6 @@ csw 13mar2012
      5        /conn(iy)/2.0e0_R8*
      6        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
      7        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-             vsal(ix,iy,0,is)=cvsa_mltpl* vsa(ix,iy,0,is)/              !srv 09.01.01
-     1        (1.0e0_R8+15.12e16_R8/conn(iy)*
-     2        (ti(ix,iy)/ev)**2/ne2(ix,iy))
-     4        /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
-     5        /conn(iy)*(ti(ix,iy)/ev)**2/ne2(ix,iy))
             endif                                                         !srv 10.07.02
            enddo
            chce(ix,iy,0)=chce(ix,iy,0)/k1(ix,iy)

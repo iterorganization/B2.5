@@ -77,7 +77,7 @@
      3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
      4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
      5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
-     6  ue(-1:nx,-1:ny), vsal(-1:nx,-1:ny,0:1,0:ns-1),
+     6  ue(-1:nx,-1:ny),
      7  lnlam(-1:nx,-1:ny), zero(-1:nx,-1:ny)
       character charnc*6, hlp_frm*4
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
@@ -284,7 +284,7 @@
      2   cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,                 !srv 13.10.06
      3   chvi, csig, csigin, calf, cthe, cthi,
      4   cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,     !srv 09.01.01 15.12.05
-     5   vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
+     5   fllim0fhi, fllimvisc, csig_cl, calf_cl)
         if (ncall.eq.ncallout) then
           write(*,*) 'ncall,ipass',ncall,ipass
           call hbout('../b2ne_npmo',nx,ny,ns,te,'te',ti,'ti',
@@ -621,7 +621,7 @@ cxpb
               call b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,     !xpb
      1         vol, hx, hy, gs, qz, qc, bb, ti, ni, na,
      2         fna, fni_32, fni_52, kinrgy,
-     &         chci, cddi, chvi, chvimx, vsal, vadia, vaecrb,
+     &         chci, cddi, chvi, chvimx, cvsa, vadia, vaecrb,
      &         fchvispar, fchinert, fchanml,                             !lk 30.05.11
      3         fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi)          !srv 13.10.06
               call b2xpen (nx, ny, ns,
@@ -817,7 +817,7 @@ c     with diamagnetic drift part                                        !xpb
         call b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,           !xpb
      1   vol, hx, hy, gs, qz, qc, bb, ti, ni, na,
      2   fna, fni_32, fni_52, kinrgy,
-     &   chci, cddi, chvi, chvimx, vsal, vadia, vaecrb,
+     &   chci, cddi, chvi, chvimx, cvsa, vadia, vaecrb,
      &   fchvispar, fchinert, fchanml,                                   !lk 30.05.11
      3   fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi)                !srv 13.10.06
         call b2xpen (nx, ny, ns,

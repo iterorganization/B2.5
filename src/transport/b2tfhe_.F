@@ -131,7 +131,6 @@ csw 10oct2012
 
       save ncall, fch_ion_neutral, fch_anomalous, dia_cur, fch_inert,    !srv 07.07.99
      &     vis_par, vis_per, vis_q, vdia_par                             !srv 17.05.99 11.07.99 22.11.99
-      integer, save :: model = 1
 *   ..procedures
       intrinsic max, abs
       real (kind=R8) ::
@@ -198,7 +197,6 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        call ipgeti ('b2tfhe_no_current',no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
-       call ipgeti ('b2tqce_model', model)
        call ipgeti ('b2tfhe_upwind', b2_upwind)
        call ipgeti ('b2tfhe_hybr2', b2tfhe_hybr2)
        call ipgeti ('b2tfhe_flo53', flo53)
@@ -936,22 +934,15 @@ c  ..set null flux in guard cells  ?
            alfe0 = calf(ix,iy,0)*cone0/chce(ix,iy,0)
           endif
 
-csw 05oct2012 check for solps4 model
-          if(model.eq.1.or.model.eq.3) then   ! SOLPS5.0 treatments
-           flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
-     &       ne(ix,iy))/2
-           if(flomx.gt.0.0_R8) then
-             t0 = cone0*abs(tex)/(flomx*max(
-     &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
-           else
-             t0=0.0_R8
-           endif
-          else if (model.eq.2) then   ! SOLPS4.x treatments
-csw 2014 changed flux limiting expression (no t0 cutoff for neg. flomx)
-c        i.e.for  model .eq. 2 (SOLPS4)
-           flomx = chvemx(ix,iy)
-           t0 = cone0*abs(tex/(flomx+1.d-60))
-          endif 
+cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no longer required
+          flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
+     &      ne(ix,iy))/2
+          if(flomx.gt.0.0_R8) then
+            t0 = cone0*abs(tex)/(flomx*max(
+     &        te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
+          else
+            t0=0.0_R8
+          endif
 
           tex0 = tex/(1.d0+t0)
 

@@ -64,8 +64,8 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ib, is, is0,
-     *   no_current, conduction_only, no_hybr, model, pot_eq
+      integer ncall, n2, ix, iy, ib, is, is0, 
+     *   no_current, conduction_only, no_hybr, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, t0,
@@ -83,7 +83,7 @@
      *   gampvdc(-1:nx,-1:ny)
 #endif
       save ncall, fch_ion_neutral, fch_anomalous, vis_par, pot_eq,
-     *   no_current, conduction_only, no_hybr, vis_per, model
+     *   no_current, conduction_only, no_hybr, vis_per
 *   ..procedures
       intrinsic max, abs, sqrt, log, mod                        	!xpb
       real (kind=R8) ::
@@ -94,7 +94,7 @@
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
 *   ..initialisation
       data ncall/0/, fch_ion_neutral/0.0_R8/, fch_anomalous/1.0_R8/,  	!xpb
-     * vis_par/0.0_R8/, no_current/0/, conduction_only/0/, model/1/,
+     * vis_par/0.0_R8/, no_current/0/, conduction_only/0/, 
      1 vis_per/0.0_R8/, no_hybr/0/, pot_eq/1/
 
 *-----------------------------------------------------------------------
@@ -127,7 +127,6 @@
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2tfhe_conduction_only', conduction_only)          !xpb
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                          !xpb
-       call ipgeti ('b2tqce_model', model)
        call ipgeti ('b2tfch_iout', iout)                                !srv 18.06.08
       endif                                                             !xpb
 *   ..set n2
@@ -612,27 +611,17 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
               cone0 = chce(ix,iy,0)
               cone0_nd = chce(ix,iy,0)
             endif
-            if (model.eq.1.or.model.eq.3) then  ! SOLPS5.0 treatments
-              flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
-     &          ne(ix,iy))/2.0_R8
-              if (flomx.gt.0.0_R8) then
-                t0 = cone0*abs(tex)/(flomx*max(
-     &           te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
-                t0_nd = cone0_nd*abs(tex)/(flomx*max(
-     &           te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
-              else
-                t0 = 0.0_R8
-                t0_nd = 0.0_R8
-              endif
-            else if (model.eq.2) then   ! SOLPS4.0 treatment (ne*te factor already included)
-              flomx = chvemx(ix,iy)
-              if (flomx.gt.0.0_R8) then
-                t0 = cone0*abs(tex)/flomx
-                t0_nd = cone0_nd*abs(tex)/flomx
-              else
-                t0 = 0.0_R8
-                t0_nd = 0.0_R8
-              endif
+cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no longer required
+            flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
+     &        ne(ix,iy))/2.0_R8
+            if (flomx.gt.0.0_R8) then
+              t0 = cone0*abs(tex)/(flomx*max(
+     &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
+              t0_nd = cone0_nd*abs(tex)/(flomx*max(
+     &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
+            else
+              t0 = 0.0_R8
+              t0_nd = 0.0_R8
             endif
             tex0 = tex/(1.0_R8+t0)
             tex0_nd = tex/(1.0_R8+t0_nd)

@@ -302,12 +302,12 @@
                   wrk0(ix,iy)=cvsb_cl(ix,iy,0)*hx(ix,iy)/
      1              vol(ix,iy)/wbbl(ix,iy,3)/wbbl(ix,iy,0)*
      2              (sqrt(bb(ix,iy,3))*(ub(ix,iy)+
-     .                    bb(ix,iy,0)/bb(ix,iy,3)*                  !srv 11.01.13
+     .                    bb(ix,iy,3)/bb(ix,iy,0)*                  !srv 11.01.13
      &              (wbdia(ix,iy,0)+vbecrb(ix,iy,0)))
      3              -sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))*
      4              (ub(leftix(ix,iy),leftiy(ix,iy))+
-     5               bb(leftix(ix,iy),leftiy(ix,iy),0)/
-     6               bb(leftix(ix,iy),leftiy(ix,iy),3)*             !srv 11.01.13
+     5               bb(leftix(ix,iy),leftiy(ix,iy),3)/
+     6               bb(leftix(ix,iy),leftiy(ix,iy),0)*             !srv 11.01.13
      7              (wbdia(leftix(ix,iy),leftiy(ix,iy),0)+
      8               vbecrb(leftix(ix,iy),leftiy(ix,iy),0))))
                 endif
@@ -320,8 +320,8 @@
      &             bottomiy(ix,iy).ne.-2 .and.
      &             topiy(ix,iy).ne.ny+1 .and.
      &             region(ix,iy,0).ne.0) then
-! 4/3 piece is in cvsb_cl
-                  smbvv(ix,iy,0)=(
+! 4/3 piece is no longer in cvsb_cl
+                  smbvv(ix,iy,0)=4.0_R8/3.0_R8*(
      1               vol(ix,iy)*bb(ix,iy,0)*sqrt(bb(ix,iy,3))/hx(ix,iy)*
      1               (wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy)) -
      2               (cvsb_cl(rightix(ix,iy),rightiy(ix,iy),0)*

@@ -62,7 +62,6 @@ csw 30apr2014 added fna_he, ia
       integer, save :: lim_flux = 1, mdf_fhi = 0                        !srv 04.02.03 13.10.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
       integer, save :: conductive_limit = 0                             !srv 16.06.08 17.01.12
-      integer, save :: model = 3
       integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
       integer, save :: b2kin=0, b2vis=0
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
@@ -108,7 +107,6 @@ cpax
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)
        call ipgeti ('b2trcl_conductive_limit', conductive_limit)        !srv 16.06.08 17.01.12
-       call ipgeti ('b2tqca_model', model)
        call ipgeti ('b2tfhi_upwind', b2_upwind)
        call ipgeti ('b2tfhi_hybr2', b2tfhi_hybr2)
        call ipgeti ('b2tfhi_flo53', flo53)
@@ -371,22 +369,14 @@ csw 17feb2012
             coni0 = chci(ix,iy,0)-abs(floi0/2.e0)
           endif
 
-
-csw 15sep2014 check model for flux limits
-          if(model .eq. 1 .or. model .eq. 3) then ! SOLPS5.0 treatments
-           flomx = chvimx(ix,iy)*(ni(leftix(ix,iy),leftiy(ix,iy),0)
+cwdk 10.03.16 unified treatment of chvimx in b2tlhi.F. Test for b2tqca_model no longer required
+          flomx = chvimx(ix,iy)*(ni(leftix(ix,iy),leftiy(ix,iy),0)
      &                          +ni(ix,iy,0))/2.d0
-           if(flomx.gt.0.0_R8) then
-             t0 =coni0*abs(dti)/(flomx*
-     &               max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
-           else
-             t0 = 0.0_R8
-           endif
+          if(flomx.gt.0.0_R8) then
+            t0 =coni0*abs(dti)/(flomx*
+     &              max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
           else
-csw 2014 SOLPS4 style for flux limits (no cutoff in flomx)
-           flomx = chvimx(ix,iy)*(ni(leftix(ix,iy),leftiy(ix,iy),0)
-     &                          +ni(ix,iy,0))/2.d0
-           t0 = coni0*abs(dti/(flomx+1.d-60))
+            t0 = 0.0_R8
           endif
 
           dti0 = dti/(1.0_R8+t0)

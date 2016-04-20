@@ -94,8 +94,7 @@
      *   term(-1:nx,-1:ny), flo_he, con_he(-1:nx,-1:ny),                 !srv 25.04.00 13.09.02 11.09.09
      &   termhz(-1:nx,-1:ny)                                             !srv 05.11.09
       real (kind=R8) :: 
-     &   vbecrb_(-1:nx,-1:ny,0:1), wbdia_(-1:nx,-1:ny,0:1),              !srv 14.07.10 {
-     &   wedia_(-1:nx,-1:ny,0:1), wedia(-1:nx,-1:ny,0:1),                !srv 14.07.10 }
+     &   vbecrb_(-1:nx,-1:ny,0:1), wbdia_(-1:nx,-1:ny,0:1),
      &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1),              !srv 21.10.10
      &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
      &   rdiv                                                            !srv 05.03.16
@@ -269,8 +268,6 @@ c Drift terms
       ub2dia=0.0_R8                                                      !srv 01.10.99
       vbdia =0.0_R8
       wbdia =0.0_R8
-      wedia =0.0_R8
-      wedia_=0.0_R8
       vbecrb=0.0_R8
       fnbPSch = 0.0_R8                                                   !srv 13.10.06
       fnb_mdf = 0.0_R8                                                   !srv 19.11.09
@@ -288,15 +285,15 @@ cxpb  Must check that we are not at the island X-point or at the mesh edge !xpb
      &         rightix(ix,iy).ne.nx+1 .and. leftiy(ix,iy).ne.-2 .and.
      &         region(ix,iy,0).ne.0) then                                !xpb
 cxpb  Standard case
-              vbecrb(ix,iy,0) = - signmf/hy1(ix,iy)*                     !xpb
-     1         1.0_R8/bb(ix,iy,3)*                                       !xpb
-     2         (wpo(topix(ix,iy),topiy(ix,iy))-wpo(ix,iy))*
-     &         fac_ExB(ix,iy)                                            !xpb
-              vbdia(ix,iy,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)*     !xpb
-     1         1.0_R8/bb(ix,iy,3)*                                       !xpb
-     2         2.0_R8*ti(ix,iy)/bb(ix,iy,3)/qe/zb(ix,iy)*                !xpb
-     3        (wbbv(topix(ix,iy),topiy(ix,iy),3)-wbbv(ix,iy,3))*
-     &        facdrift(ix,iy)                                            !xpb
+cwdk correct computation of drift components to always represent the poloidal
+cwdk projection of the drift
+              vbecrb(ix,iy,0) = - fac_ExB(ix,iy)*poleldr/hy1(ix,iy)*     !xpb
+     1         bb(ix,iy,2)/bb(ix,iy,3)**2*                               !xpb
+     2         (wpo(topix(ix,iy),topiy(ix,iy))-wpo(ix,iy))
+              vbdia(ix,iy,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)/     !xpb
+     1         bb(ix,iy,3)*2.0_R8*ti(ix,iy)/bb(ix,iy,3)/qe/zb(ix,iy)*    !xpb
+     3         (wbbv(topix(ix,iy),topiy(ix,iy),3)-wbbv(ix,iy,3))*
+     &         facdrift(ix,iy)*poldidr                                   !xpb
               wbdia(ix,iy,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)
      1         /bb(ix,iy,3)/qe/zb(ix,iy)/nb(ix,iy)*
      2         (wpb(topix(ix,iy),topiy(ix,iy))-wpb(ix,iy))*
@@ -317,6 +314,7 @@ cxpb     3              (vol(topix(ix,iy),topiy(ix,iy))+vol(ix,iy))-     !xpb
 cxpb     3              wbbv(ix,iy,3))                                   !xpb
               vbecrb(ix,iy,0) = 0.0_R8                                   !xpb
               vbdia(ix,iy,0) = 0.0_R8                                    !xpb
+              wbdia(ix,iy,0) = 0.0_R8
             endif                                                        !xpb
             ubdia(ix,iy,0) = vbecrb(ix,iy,0) + vbdia(ix,iy,0)            !srv 17.05.99
             ub2dia(ix,iy,0) = vbecrb(ix,iy,0) + 2.0_R8*vbdia(ix,iy,0)    !srv 01.10.99
@@ -330,14 +328,13 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
-             vbecrb(ix,iy,1) = 1.0_R8/hx(ix,iy)*                         !xpb
+             vbecrb(ix,iy,1) = fac_ExB(ix,iy)*radeldr/hx(ix,iy)*         !xpb
      1          bb(ix,iy,2)/bb(ix,iy,3)**2*                              !xpb
-     2         (wpo(rightix(ix,iy),rightiy(ix,iy))-wpo(ix,iy))*
-     &         fac_ExB(ix,iy)                                            !xpb
-             vbdia(ix,iy,1) = ti(ix,iy)*bb(ix,iy,2)
-     &         /(qe*zb(ix,iy)*hx(ix,iy))                                 !xpb
+     2         (wpo(rightix(ix,iy),rightiy(ix,iy))-wpo(ix,iy))
+             vbdia(ix,iy,1) = facdrift(ix,iy)*raddidr* 
+     &         ti(ix,iy)*bb(ix,iy,2)/(qe*zb(ix,iy)*hx(ix,iy))            !xpb
      &         *(2.0_R8/bb(ix,iy,3)**3)                                  !xpb
-     &         *(wbbr(ix,iy,3)-wbbl(ix,iy,3))*facdrift(ix,iy)            !xpb
+     &         *(wbbr(ix,iy,3)-wbbl(ix,iy,3))                            !xpb
              wbdia(ix,iy,1) = bb(ix,iy,2)
      &         /(qe*zb(ix,iy)*hx(ix,iy)*nb(ix,iy))                       !xpb
      &         /bb(ix,iy,3)**2*                                          !xpb
@@ -449,64 +446,6 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
           endif                                                          !srv 26.11.02
          enddo
         enddo
-
-        wrk0=0.0_R8  ! compute .... on the cell faces                   !srv 14.07.10 {
-        do iy=0,ny
-         do ix=-1,nx
-          wrk0(ix,iy)=(ne(ix,iy)*te(ix,iy)-
-     &                 ne(bottomix(ix,iy),bottomiy(ix,iy))*
-     &                 te(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &          (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))*2.0_R8
-         enddo
-        enddo
-        do iy=-1,ny  ! compute ... on the cell centers
-         do ix=-1,nx
-          if(bottomiy(ix,iy).eq.-2) then
-           wedia_(ix,iy,0) = wrk0(ix,topiy(ix,iy))/
-     &           (qe*ne(ix,iy)*bb(ix,iy,2)*bb(ix,iy,3)**2)
-          elseif(topiy(ix,iy).eq.ny+1) then
-           wedia_(ix,iy,0) = wrk0(ix,iy)/
-     &           (qe*ne(ix,iy)*bb(ix,iy,2)*bb(ix,iy,3)**2)
-          else
-           wedia_(ix,iy,0) = 0.5_R8*
-     &        (wrk0(topix(ix,iy),topiy(ix,iy))+wrk0(ix,iy))/
-     &           (qe*ne(ix,iy)*bb(ix,iy,2)*bb(ix,iy,3)**2)
-          endif
-         enddo
-        enddo
-        call intfaceh(nx,ny,leftix,leftiy,vol,wedia_(-1,-1,0),
-     &                                        wedia(-1,-1,0))
-
-        wrk0=0.0_R8  ! compute ... on the cell faces
-        do iy=-1,ny
-         do ix=-1,nx
-          if(leftix(ix,iy).ne.-2) then
-           wrk0(ix,iy)=(ne(ix,iy)*te(ix,iy)-
-     &         ne(leftix(ix,iy),leftiy(ix,iy))*
-     &         te(leftix(ix,iy),leftiy(ix,iy)))/
-     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8
-          endif
-         end do
-        end do
-        do iy=-1,ny  ! compute .... on the cell centers
-         do ix=-1,nx
-          if(leftix(ix,iy).eq.-2) then
-           wedia_(ix,iy,1)=-wrk0(rightix(ix,iy),iy)/
-     &         (qe*ne(ix,iy)*bb(ix,iy,2)*bb(ix,iy,3)**2)
-          elseif(rightix(ix,iy).eq.nx+1) then
-           wedia_(ix,iy,1)=-wrk0(ix,iy)/
-     &         (qe*ne(ix,iy)*bb(ix,iy,2)*bb(ix,iy,3)**2)
-          else
-           wedia_(ix,iy,1)=-0.5_R8*
-     &        (wrk0(rightix(ix,iy),rightiy(ix,iy))+
-     &         wrk0(ix,iy))/
-     &        (qe*ne(ix,iy)*bb(ix,iy,2)*bb(ix,iy,3)**2)
-          endif
-         enddo
-        enddo
-        call intfacev(nx,ny,bottomix,bottomiy,vol,wedia_(-1,-1,1),
-     &                                             wedia(-1,-1,1))       !srv 14.07.10 }
-
 
         do iy = 0, ny
          do ix = 0, nx-1
@@ -760,19 +699,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 
 * ..compute fluxes
 *   ..compute wrk0
-      do iy = -1, ny
-       do ix = -1, nx
-        if(leftix(ix,iy).eq.-2) then
-          wrk0(ix,iy) = 0.0_R8
-        else
-          wrk0(ix,iy) = !pbs(ix,iy,0)*                                  !srv 20.06.08
-     &     (vol(ix,iy)*ub(leftix(ix,iy),leftiy(ix,iy))+
-     &      vol(leftix(ix,iy),leftiy(ix,iy))*ub(ix,iy))/
-     &     (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-        endif
-       enddo
-      enddo
-      call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
+      call intfaceh(nx,ny,leftix,leftiy,vol,ub,wrk0)
 *   ..compute wrk1
       do iy = -1, ny
        do ix = -1, nx
@@ -837,37 +764,25 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &    (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
          if(drift_style.eq.0)then                                       !srv 21.06.08
           flo = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy)+     !srv 20.06.08
-     1     (bb(ix,iy,2)/bb(ix,iy,3)+                                    !srv 11.01.13
-     2     bb(leftix(ix,iy),leftiy(ix,iy),2)/
-     3     bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0_R8
-     4     *(ubdia(ix,iy,0)+ubdia(leftix(ix,iy),leftiy(ix,iy),0))/
+     1     (ubdia(ix,iy,0)+ubdia(leftix(ix,iy),leftiy(ix,iy),0))/
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
      7     hx(leftix(ix,iy),leftiy(ix,iy)))
           flo_mdf = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+             !srv 17.07.08 {
      &      term(ix,iy) +                                               !iyv 19.04.07
-     1     (bb(ix,iy,2)/bb(ix,iy,3)+                                    !srv 11.0113
-     2     bb(leftix(ix,iy),leftiy(ix,iy),2)/
-     3     bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0_R8
-     4     *(vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
+     1     (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
      7     hx(leftix(ix,iy),leftiy(ix,iy)))                             !srv 17.07.08 }
           flo_he = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+              !srv 13.09.02 { 01.07.05 20.01.11
      &     term(ix,iy) +                                                !iyv 30.05.08 !srv 03.10.08
-     1     (bb(ix,iy,2)/bb(ix,iy,3)+                                    !srv 11.01.13
-     2     bb(leftix(ix,iy),leftiy(ix,iy),2)/
-     3     bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0_R8
-     4     *(vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
+     1     (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
      7     hx(leftix(ix,iy),leftiy(ix,iy)))                             !srv 17.07.08 }
           flo2dia = cvlbhz(ix,iy,0)+pbshz(ix,iy,0)*wrk0(ix,iy)+         !srv 01.10.99 01.07.05
      &     termhz(ix,iy)+                                               !srv 05.11.09
-     1     (bb(ix,iy,2)/bb(ix,iy,3)+                                    !srv 11.01.13
-     2     bb(leftix(ix,iy),leftiy(ix,iy),2)/
-     3     bb(leftix(ix,iy),leftiy(ix,iy),3))/2.0_R8
-     4     *(ub2dia(ix,iy,0)+ub2dia(leftix(ix,iy),leftiy(ix,iy),0))/
+     1     (ub2dia(ix,iy,0)+ub2dia(leftix(ix,iy),leftiy(ix,iy),0))/
      5     2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hx(ix,iy)
      6     +hz(leftix(ix,iy),leftiy(ix,iy))*
      7     vol(leftix(ix,iy),leftiy(ix,iy))/
@@ -1714,13 +1629,11 @@ csw 18feb2014 remove fluxes between guard cells
 
 * ..compute kinetic energy of species
       if(drift_style.eq.0) then                                         !srv 14.07.10 {
-       do ix=-1,nx
-        do iy=-1,ny
-          kbnrgy(ix,iy) = 0.5_R8*mb*(ub(ix,iy)**2+  !all values are calculated in the cell center
-     .     (wbdia(ix,iy,0)+vbecrb(ix,iy,0))**2+
-     .     (wbdia(ix,iy,1)+vbecrb(ix,iy,1))**2)
-        end do
-       end do
+cwdk for computation of kinetic energy, need true diamagnetic components
+        vbecrb_(:,:,0) = vbecrb(:,:,0)*bb(:,:,3)/bb(:,:,2)
+        wbdia_(:,:,0)  = wbdia(:,:,0)*bb(:,:,3)/bb(:,:,2)
+        vbecrb_(:,:,1) = vbecrb(:,:,1)
+        wbdia_(:,:,1)  = wbdia(:,:,1)
       else
        if((maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8)
      &    .and. minval(zb).gt.0.0_R8) then
@@ -1741,8 +1654,9 @@ csw 18feb2014 remove fluxes between guard cells
            vbecrb_(ix,iy,0) = 0.5_R8*
      &        (wrk0(topix(ix,iy),topiy(ix,iy))+wrk0(ix,iy))
           endif
-            vbecrb_(ix,iy,0)=-vbecrb_(ix,iy,0)*
-     &       bb(ix,iy,2)/bb(ix,iy,3)**2
+cwdk need full diamagnetic component for energy
+           vbecrb_(ix,iy,0)=-vbecrb_(ix,iy,0)/
+     &       bb(ix,iy,3)
          enddo
         enddo
         wrk0=0.0_R8  ! compute .... on the cell faces
@@ -1754,7 +1668,7 @@ csw 18feb2014 remove fluxes between guard cells
      &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0_R8
          end do
         end do
-        do iy=-1,ny  ! compute perpendicular projection V_ExB on the cell centers
+        do iy=-1,ny  ! compute perpendicular projection V_dia on the cell centers
          do ix=-1,nx
           if(bottomiy(ix,iy).eq.-2) then
            wbdia_(ix,iy,0)=wrk0(ix,topiy(ix,iy))
@@ -1765,8 +1679,9 @@ csw 18feb2014 remove fluxes between guard cells
      &        (wrk0(topix(ix,iy),topiy(ix,iy))+
      &         wrk0(ix,iy))
           endif
-            wbdia_(ix,iy,0)=-wbdia_(ix,iy,0)/
-     &         (zb(ix,iy)*qe*nb(ix,iy))*bb(ix,iy,2)/bb(ix,iy,3)**2
+cwdk need full diamagnetic component for energy
+           wbdia_(ix,iy,0)=-wbdia_(ix,iy,0)/
+     &         (zb(ix,iy)*qe*nb(ix,iy)*bb(ix,iy,3))
          enddo
         enddo
 
@@ -1824,15 +1739,15 @@ csw 18feb2014 remove fluxes between guard cells
         vbecrb_= 0.0_R8
        endif
 
-       do ix=-1,nx
-        do iy=-1,ny
-          kbnrgy(ix,iy) = 0.5_R8*mb*(ub(ix,iy)**2+   ! ua is a value in the cell center
-     .      (xwdia*wbdia_(ix,iy,0)+xvecrb*vbecrb_(ix,iy,0))**2+   ! wbdia_ is a value in the cell center
-     .      (xwdia*wbdia_(ix,iy,1)+xvecrb*vbecrb_(ix,iy,1))**2)   ! vbecrb_ is a value in the cell center
-        end do
-       end do
-
       endif                                                             !srv 14.07.10 }
+
+      do ix=-1,nx
+       do iy=-1,ny
+         kbnrgy(ix,iy) = 0.5_R8*mb*(ub(ix,iy)**2+                ! ua is a value in the cell center
+     .     (xwdia*wbdia_(ix,iy,0)+xvecrb*vbecrb_(ix,iy,0))**2+   ! wbdia_ is a value in the cell center
+     .     (xwdia*wbdia_(ix,iy,1)+xvecrb*vbecrb_(ix,iy,1))**2)   ! vbecrb_ is a value in the cell center
+       end do
+      end do
 
 *   ..flux correction
 *   ..we rescale the fnb fluxes to have the same integral over the boundaries

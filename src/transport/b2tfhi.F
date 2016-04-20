@@ -4,7 +4,7 @@
       subroutine b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,
      1  vol, hx, hy, gs, qz, qc, bb, ti, ni, na,
      2  fna, fni_32, fni_52, kinrgy,
-     3  chci, cddi, chvi, chvimx, vsal, vadia, vaecrb,
+     3  chci, cddi, chvi, chvimx, cvsa, vadia, vaecrb,
      &  fchvispar, fchinert, fchanml,                                !lk 30.05.11
      &  fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi)             !srv 13.10.06
       use b2mod_types
@@ -22,10 +22,11 @@
      &  fchvispar(-1:nx,-1:ny,0:1),                                   !lk 30.05.11
      &  fchinert(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1),          !lk 30.05.11
      &  vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
-     &  chvimx(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     &  chvimx(-1:nx,-1:ny), cvsa(-1:nx,-1:ny,0:1,0:nx-1),
+     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny), 
      1  qz(-1:nx,-1:ny,0:1), bb(-1:nx,-1:ny,0:3), 
-     .  na(-1:nx,-1:ny,0:ns-1), vsal(-1:nx,-1:ny,0:1,0:ns-1),
+     .  na(-1:nx,-1:ny,0:ns-1), 
      2  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
      3  facdrift(-1:nx,-1:ny), kinrgy(-1:nx,-1:ny,0:ns-1), BoRiS
 *   ..output arguments (unspecified on entry)
@@ -71,13 +72,12 @@
 *   ..procedures
       intrinsic min, max, dim, abs, sqrt, sign
       real (kind=R8) ::
-     *  hybr, upwind, hy1, ave
+     *  hybr, upwind, hy1
       external subini, subend, xertst, ipgeti
       external b2xvsg, b2xvff
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-      ave(t0,t1) = 2.0_R8*t0*t1 / (cutlo+t0+t1)
 *   ..initialisation
       data ncall/0/, conduction_only/0/, no_hybr/0/
 
@@ -279,6 +279,8 @@ c  ..set null flux in guard cells  ?
 
 * ..compute fluxes and linearisation
       do is = 0, ns-1
+!wdk w0 now contains contributions from drifts, while probably only parallel kinetic energy
+!wdk should be taken into account here !?!
         w0(:,:,is) = kinrgy(:,:,is)/(am(is)*mp)
       end do
 *   ..compute fhix, floix, conix
@@ -303,11 +305,9 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
          else
            if (BoRiS.eq.1.0_R8) then   ! Add the kinetic and viscous terms
              do is = 0, ns-1
+!wdk still need to be carefull with flux limit to cvsa! Now, only ok if conductive_limit.eq.1
                floi0 = am(is)*mp*fna(ix,iy,0,is)
-               coni0 = gs(ix,iy,0)*qc(ix,iy)*
-     .          ave(vsal(ix,iy,0,is)/hx(ix,iy),
-     .              vsal(leftix(ix,iy),leftiy(ix,iy),0,is)/
-     .              hx(leftix(ix,iy),leftiy(ix,iy)))
+               coni0 = 4.0e0_R8/3.0e0_R8*cvsa(ix,iy,0,is)
                t1 = dim ( coni0,
      .          abs(floi0) *
      .          max(0.0_R8, 
@@ -351,11 +351,12 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &                  abs(floi0_mdf/2.0_R8)                   !srv 18.08.08
          else
            coni0 = chci(ix,iy,0)
+           coni0_mdf = chci(ix,iy,0)
          endif
          if (flomx.gt.0.0_R8) then
            t0 = coni0*abs(dti)/
      &      (flomx*max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
-           t0_mdf = coni0*abs(dti)/                             !srv 18.08.08
+           t0_mdf = coni0_mdf*abs(dti)/                             !srv 18.08.08
      &      (flomx*max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
          else
            t0 = 0.0_R8
@@ -444,10 +445,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
            if (BoRiS.eq.1.0_R8) then   ! Add the kinetic and viscous terms
              do is = 0, ns-1
                floi0 = am(is)*mp*fna(ix,iy,1,is)
-               coni0 = gs(ix,iy,1)*
-     .          ave(vsal(ix,iy,1,is)/hy1(ix,iy),
-     .              vsal(bottomix(ix,iy),bottomiy(ix,iy),1,is)/
-     .              hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+               coni0 = cvsa(ix,iy,1,is)
                t1 = dim ( coni0,
      .                   abs(floi0) *
      .          max(0.0_R8, 

@@ -79,7 +79,7 @@
       external b2xvsg
       pitx(ix,iy) = abs(bb(ix,iy,0))/bb(ix,iy,3)
 *   ..initialisation
-      data ncall/0/, phm0/1.0_R8/, model/3/
+      data ncall/0/, phm0/1.0_R8/, model/1/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -163,8 +163,10 @@
             hci(ix,iy,0) = hci(ix,iy,0)+
      &       2.5_R8*(ti(ix,iy)/(mp*am(is)))*fki*tnp
 c DPC/XPB changed to 4/3*  at the strong recommendation of Rozhansky
+c WDK/SRV 21.07.2016 factor 4/3 removed from vsa, but added explicitly to cvsahz (not cvsa),
+c         according to old model.eq.3 treatment
             vsa(ix,iy,0,is) = 
-     &       4.0_R8/3.0_R8*phm0*eta*sqrt(2.0_R8)*ti(ix,iy)*tnp
+     &       phm0*eta*sqrt(2.0_R8)*ti(ix,iy)*tnp
           else if (model.eq.2) then ! old SOLPS4.0 model : Braginskii
             w = 0.0_R8
             t = 0.0_R8
@@ -185,13 +187,12 @@ cxpb            ctaui = ctaup*sqrt(2.0_R8)/lnlam/rz2(ix,iy,is)  ! lower precisio
 	    fxi = ci * ctaui / (ev*sqrt(ev*mp))
             hci(ix,iy,0) = hci(ix,iy,0) + fxi*(na(ix,iy,is)/w)*
      &       pitx(ix,iy)**2*(ti(ix,iy)**2*sqrt(ti(ix,iy)))
+cwdk      no factor 4/3 here, for consistent treatment with model.eq.1
             vsa(ix,iy,0,is) = 
-     &       phm0*2.0_R8*eta*ctaui/(ev*sqrt(ev))*(na(ix,iy,is)/t)*
+     &       phm0*eta*ctaui/(ev*sqrt(ev))*(na(ix,iy,is)/t)*
      &       pitx(ix,iy)**2*(ti(ix,iy)**2*sqrt(ti(ix,iy)))
-          else if (model.eq.3) then ! SOLPS5.0 model : without 4/3     !srv 16.06.08 { see b2trcl
-            hci(ix,iy,0) = hci(ix,iy,0)+
-     &       2.5_R8*(ti(ix,iy)/(mp*am(is)))*fki*tnp
-            vsa(ix,iy,0,is) = phm0*eta*sqrt(2.0_R8)*ti(ix,iy)*tnp      !srv 16.06.08 }
+          else
+            call xerrab ('b2tqca--invalid value b2tqca_model > 2. ')
           endif
          enddo
         enddo
