@@ -124,7 +124,7 @@ C
       READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
       WRITE(45,'(I4,2X,I4,2X,i4)')               natm1,NMOLI,NIONI
       write(*,'(a,5i4)') 
-     . ' Dimensions in fort.44 = ',nnx,nny,natmi,nmoli,nioni
+     . ' Dimensions in fort.44 =   ',nnx,nny,natmi,nmoli,nioni
       write(*,'(a,5i4)')
      . ' Dimensions in fort.44.2 = ',nx1,ny1,natm1,nmoli,nioni
       write(*,'(a,2i4)') ' Array inner dimensions = ', ndx , ndy
