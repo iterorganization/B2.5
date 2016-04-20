@@ -543,6 +543,34 @@
 *     24 : constant density feedback scaled by density on the ring bc_type21_ref away
 *     CONPAR(,,1) specifies the desired density in $m^{-3}$.
 *     CONPAR(,,2) is the strength of the feedback
+*     25 : Feedback boundary condition: prescribe the average value of the density
+*     and add a density perturbation from neighbouring radial cell.
+*     This boundary condition is suitable for any species of a
+*     multispecies plasma (i.e. in the case when the condition used
+*     in BCCON=21 fails).
+*     It is recommended to use this boundary condition together with the
+*     corresponding condition on ion temperature (BCENI=26,27).
+*     CONPAR(,,1) specifies the desired density in $m^{-3}$.
+*     26 : Feedback boundary condition: prescribe the total ion flux and find
+*     the average density.
+*     A density perturbation is taken from the neighbouring radial cell.
+*     This boundary condition is suitable for any species of a
+*     multispecies plasma (i.e. in the case when the condition used
+*     in BCCON=22 fails).
+*     It is recommended to use this boundary condition together with
+*     corresponding condition on ion temperature (BCENI=26,27).
+*     The total desired flux is summed over all BCCON=26 core boundaries.
+*     CONPAR(,,1) specifies the desired particle flux in $s^{-1}$.
+*     27 : Feedback boundary condition: prescribe the sum of integrated neutrals and
+*     main ion particle fluxes and find the average density.
+*     A density perturbation is taken from the neighbouring radial cell.
+*     This boundary condition is valid for the main hydrogenic species in a
+*     multispecies plasma (i.e. in the case when the condition used
+*     in BCCON=23 fails).
+*     It is recommended to use this boundary condition together with
+*     corresponding condition on ion temperature (BCENI=25,26).
+*     The total desired flux is summed over all BCCON=27 core boundaries.
+*     CONPAR(,,1) specifies the desired particle flux in $s^{-1}$.
 *  BCMOM - integer array, length NS * NBC, specifying
 *     the type of parallel momentum or velocity boundary condition for each
 *     segment and species (fastest varying index is species); makes use of
@@ -731,6 +759,23 @@
 *     the ring bc_type21_ref away
 *     ENIPAR(,,1) specifies the desired ion temperature in $eV$.
 *     ENIPAR(,,2) is the strength of the feedback
+*     26 : prescribe the poloidally averaged value of the ion temperature
+*     and introduce a poloidal variation in a simplified manner.
+*     This boundary condition is suitable for any plasma composition
+*     (i.e. when BCENI=23 fails).
+*     It is recommended to use this boundary condition together with corresponding
+*     condition on ion density (BCCON = 25,26,27).
+*     The average is taken over all core boundaries with BCENI=26.
+*     ENIPAR(,1) specifies the temperature in $eV$
+*     27 : Feedback boundary condition with prescribed total ion heat flux,
+*     constant poloidally averaged ion temperature and a
+*     poloidal variation in a simplified manner.
+*     This boundary condition is suitable for any plasma composition
+*     (i.e. when BCENI=24 fails).
+*     It is recommended to use this boundary condition together with corresponding
+*     condition on ion density (BCCON = 25,26,27).
+*     The flux is summed over all core boundaries with BCENI=27.
+*     ENIPAR(,1) specifies the energy flux in $W$
 *  BCPOT - integer array, length NBC, specifying the
 *     type of electric potential or current boundary condition for each
 *     segment; makes use of POTPAR to specify additional
