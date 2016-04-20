@@ -211,7 +211,9 @@ cxpb overwrite the defaults with the namelist data
       end subroutine initialize_b2mod_boundary
 
       subroutine catchup_b2mod_boundary(tim)
+      Implicit None
       real (kind=R8) :: tim
+      Integer :: nx, ny, ns
 
       if(boundary_time_mod.gt.0.0_R8) then
          write(*,'(a,1p,3(1x,e14.7),2i4)') 
@@ -234,7 +236,8 @@ cxpb overwrite the defaults with the namelist data
       end subroutine catchup_b2mod_boundary
 
       subroutine alloc_b2mod_boundary(nxd,nyd,nsd,nbcd_in,nnisod_in)
-      integer nxd, nyd, nsd, nbcd_in, nnisod_in
+      Implicit None
+      integer nxd, nyd, nsd, nbcd_in, nnisod_in, ix, iy
 #ifndef ALLOCATE_AND_NAMELIST
       external xertst
 #endif

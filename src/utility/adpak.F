@@ -1822,7 +1822,7 @@ CBJB &          CA(3), CB(3), CC(3), CD(3)
       SAVE EIONFE, EIONSC, NSS, CA, CB, CC, CD
 C
       REAL (kind=R8) :: TEV, CHI, A, B, CH, D
-      INTEGER ICS, JSS, JBE
+      INTEGER ICS, JSS, JBE, J
       REAL (kind=R8) :: FCHI
       EXTERNAL FCHI
 C

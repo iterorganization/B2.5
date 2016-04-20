@@ -1,8 +1,10 @@
 c
       subroutine clvd(clvmin,clvmax,delta)
       use b2mod_types
+      Implicit None
 #include "graphics_vars.h"
       real (kind=R8) :: clvmin,clvmax,delta
+      Integer :: iclv
       external subini, subend, xertst, xerrab
 
       call subini ('clvd')
@@ -25,8 +27,10 @@ c
 c
       subroutine wclvd(clvmin,clvmax,delta)
       use b2mod_types
+      Implicit None
 #include "graphics_vars.h"
       real (kind=R8) :: clvmin,clvmax,delta
+      Integer :: iclv
       external subini, subend, xertst, xerrab
 
       call subini ('wclvd')
@@ -50,8 +54,10 @@ c
 c
       subroutine tclvd(clvmin,clvmax,delta)
       use b2mod_types
+      Implicit None
 #include "graphics_vars.h"
       real (kind=R8) :: clvmin,clvmax,delta
+      Integer :: iclv
       external subini, subend, xertst, xerrab
 
       call subini ('tcvld')

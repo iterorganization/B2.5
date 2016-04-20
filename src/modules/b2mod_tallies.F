@@ -1,5 +1,6 @@
       module b2mod_tallies
       use b2mod_types
+      Implicit None
       real (kind=R8), allocatable, save ::
      *  rsanareg(:,:),
      *  rsahireg(:,:),
@@ -368,7 +369,7 @@
 #include <netcdf.inc>
       integer :: status, varid, ndims, dimids(NF_MAX_VAR_DIMS),
      1 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS),
-     2 time_dep
+     2 time_dep, i
 
       if(ntstep.ge.0) then
         time_dep=1

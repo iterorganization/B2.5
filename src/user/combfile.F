@@ -540,8 +540,10 @@ c*** Dummy data transformation routine
 
       subroutine xtrn_dum(data,chdr,mhdr,nhdr,mrks,nmrk,first)
       use b2mod_types
+      Implicit None
       real (kind=R8) :: data(nhdr)
-      integer mrks(nmrk)
+      integer :: nmrk, nhdr, mhdr
+      integer :: mrks(nmrk)
       character*(mhdr) chdr(nhdr)
       logical first
       return

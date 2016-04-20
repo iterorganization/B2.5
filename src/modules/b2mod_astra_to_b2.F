@@ -1,6 +1,7 @@
       module b2mod_astra_to_b2                              !srv 28.07.11 {
        use b2mod_types
- 
+       Implicit None
+       
        integer, save :: ny_astra = 0                          ! number data points from ASTRA
        real (kind=R8), save :: Ratb   = 0.0_R8                ! ASTRA transport barrier        [m]
        real (kind=R8), save :: RTOR                           ! ASTRA                          [m]
@@ -47,7 +48,8 @@
        contains
 
        subroutine alloc_b2mod_astra_to_b2(nxd, nyd)
-        integer nyd 
+        Implicit None
+        integer nyd, nxd
 
         allocate (Rmaj_astra(-1:nyd))
         allocate (Rmajc_astra(-1:nyd))

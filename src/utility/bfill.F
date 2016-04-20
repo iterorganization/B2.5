@@ -1,9 +1,11 @@
       subroutine bfill(a,n,f)
+      Implicit None
 c
 c  version : 15.01.87
 c
 c=====================================================
       character a(*),f
+      integer :: i,n
 c=====================================================
 c
       do 100 i=1,n

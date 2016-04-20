@@ -1,5 +1,6 @@
       subroutine strip_spaces(string)
-      use b2mod_types
+      Implicit None
+      integer :: i,j,n
       character*(*) string
       j=0
       n=len(string)

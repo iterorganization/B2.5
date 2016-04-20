@@ -17,7 +17,7 @@
 #define DEF_NPHID 1
 #define DEF_NSTRA 20
 #define DEF_NFL 9
-#define DEF_NPLS 9
+#define DEF_NPLS 12
 #define DEF_NATM 3
 #define DEF_NMOL 1
 #define DEF_NION 1

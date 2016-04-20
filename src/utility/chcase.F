@@ -1,6 +1,7 @@
       subroutine chcase (ind, chtxt)
       use b2mod_types
-      integer ind
+      Implicit None
+      integer ind, ichr
       character chtxt*(*)
 *     ------------------------------------------------------------------
 *     CHCASE converts a character variable to either all uppercase or
