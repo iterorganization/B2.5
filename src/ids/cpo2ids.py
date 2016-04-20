@@ -1,11 +1,19 @@
 #! /usr/bin/env python
+# This utility converts edge CPO to IMAS edge_profiles IDS
+#
+# Quick start:
 # cd /pfs/work/kosl/solps-iter-ids/modules/B2.5/src/ids
-# Definition of the class structures in file imas.py
+# Definition of the class structures is in file imas.py!
+# To run this converter use:
 # module use -a ~dkaljun/imas/etc/modulefiles
 # module avail imas
 # module load imas/develop/3/ual/develop
 # module display imas/develop/3/ual/develop
 # imasdb solps-iter
+# python cpo2ids.py
+# Resulting files are strored under $HOME/public/imasdb/solps-iter/3/0
+# as ids_161511000.*
+# Further documentation and notes:
 # dd_doc
 # imasdb -l # should show solps-iter with asterisk
 # ls $UAL/pythonExamples
@@ -14,59 +22,13 @@
 # less $UAL/python_pk/python2.6/ual/edge.py
 # /pfs/work/kosl/bin/pycharm.sh &
 
-#CPO -> IDS/IMAS
-#edge
-    #datainfo
-	#dataprovider	-> /
-	#putdate	-> /
-	#source		-> /
-	#comment	-> ids_properties/comment
-	#cocos		-> /
-	#id		-> /
-	#isref		-> /
-	#whatref	-> /
-	    #user		-> /
-	    #machine		-> /
-	    #shot		-> /
-	    #run		-> /
-	    #occurence		-> /
-	#putinfo	-> /
-	    #putmethod		-> /
-	    #putaccess		-> /
-	    #putlocation	-> /
-	    #rights		-> /
-    #grid	-> ggd(:)/grid
-	#uid		-> /
-	#id		-> ggd(:)/grid/identifier/index
-	#spaces	-> ggd(:)/grid/space(:)
-	    #geotype	-> ggd(:)/grid/space(:)/geometry_type
-	    #geotypeid	-> ggd(:)/grid/space(:)/geometry_type/index
-	    #coordtype	-> ggd(:)/grid/space(:)/coordinates_type
-	    #objects	-> ggd(:)/grid/space(:)/objects_per_dimension(:)/object(:)
-		#boundary	-> ggd(:)/grid/space(:)/objects_per_dimension(:)/object(:)/boundary(:)
-		#neighbour	-> ggd(:)/grid/space(:)/objects_per_dimension(:)/object(:)/boundary(:)/neighbours
-		#geo		-> ggd(:)/grid/space(:)/objects_per_dimension(:)/object(:)/geometry
-		#measure 	-> ggd(:)/grid/space(:)/objects_per_dimension(:)/object(:)/measure
-	    #xpoints 	-> ggd(:)/grid/space(:)/objects_per_dimension(:)/object(:)/nodes  (??????)
-	#subgrids-> ggd(:)/grid/grid_subset(:)
-	    #id 	-> ggd(:)/grid/grid_subset(:)/identifier/index
-	    #list 	-> ggd(:)/grid/grid_subset(:)/element(:)/object(:)	(??????)
-		#cls		-> /
-		#indset		-> /
-		#ind		-> /
-	#metric	-> ...
-
-
 #NODES: edge::grid::spaces::objects(1) -> ggd(:)/grid/space(:)/objects_per_dimension(1)/object(:)
-  #x: edge/grid/spaces/objects(1)/nodes/geo(i,0) 	) 
-  #y: edge/grid/spaces/objects(1)/nodes/geo(i,1)	)-> ggd(:)/grid/space(:)/objects_per_dimension(1)/object(:)/geometry(x,y,z)
+  #x: edge/grid/spaces/objects(0)/nodes/geo(i,0) 	)
+  #y: edge/grid/spaces/objects(0)/nodes/geo(i,1)	)-> ggd(:)/grid/space(:)/objects_per_dimension(0)/object(0)/geometry(:)
   #z: 0.0					 	)
 
-#EDGES: edge::grid::spaces::objects(2) -> ggd(:)/grid/space(:)/objects_per_dimension(2)/object(:)
-#CELLS: edge::grid::spaces::objects(3) -> ggd(:)/grid/space(:)/objects_per_dimension(3)/object(:)
-
-
-
+#EDGES: edge::grid::spaces::objects(1) -> ggd(:)/grid/space(:)/objects_per_dimension(0)/object(1)
+#FACES: edge::grid::spaces::objects(2) -> ggd(:)/grid/space(:)/objects_per_dimension(0)/object(2)
 
 import ual 
 import imas
@@ -74,7 +36,7 @@ import numpy
 import sys
 
 '''
-This sample program will open an existing pulse file (shot 8148, run 12) and will
+This sample program will open an existing pulse file (shot 16151, run 1000) and will
 read the stored edge_profiles IDSs.
 
 It will then output the content of some fields of the edge_profiles IDSs.
@@ -100,7 +62,7 @@ def read_ids():
 
     """
     # my_ids_obj = ual.ids(8148, 12, 8148, 12)
-    my_ids_obj = imas.ids(13, 1, 13, 1)
+    my_ids_obj = imas.ids(16151, 1000, 16151, 1000)
 
     my_ids_obj.open()  # Open the database
 
@@ -112,22 +74,21 @@ def read_ids():
 
     my_ids_obj.edge_profiles.get()
 
-    print '   my_ids_obj = '
-    print my_ids_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0]#.geometry
-    print my_ids_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry.size
-    # print my_ids_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry
-    print my_ids_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0]
+    # Example for reading data from IDS and CPO
+    # print 'IDS'
+    # print my_ids_obj.edge_profiles.ggd[0].electrons.temperature[4]
+    # print 'CPO'
+    # print edge.fluid.te.value[4]
 
     my_ids_obj.close()
 
 
 
 def write_ids():
-    shot = 13
     time = 1
     interp = 1
 
-    imas_obj = imas.ids(13,1,13,1)
+    imas_obj = imas.ids(16151, 1000, 16151, 1000)
 
     imas_obj.create() #Create the data entry
 
@@ -137,73 +98,120 @@ def write_ids():
         print 'Creation of data entry FAILED!'
         sys.exit()
 
+    imas_obj.edge_profiles.profiles_1d.resize(1)
     imas_obj.edge_profiles.ggd.resize(1)
+    imas_obj.edge_profiles.putNonTimed()
+
+    # ----Allocating space for Nodes, faces, faces---- #
     imas_obj.edge_profiles.ggd[0].grid.space.resize(1)
     imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension.resize(1)
     imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object.resize(3)
-
     imas_obj.edge_profiles.ids_properties.homogeneous_time = 1 # Mandatory to define this property
-    imas_obj.edge_profiles.ids_properties.comment = 'This is a test ids put using put_slice'
-    imas_obj.edge_profiles.putNonTimed()
 
+    imas_obj.edge_profiles.ggd[0].grid.space[0].coordinates_type.resize(1)
 
-
-    imas_obj.edge_profiles.profiles_1d.resize(2)
-    imas_obj.edge_profiles.ggd[0].grid.space[0].coordinates_type.resize(2)
-
-    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry.resize(num_nodes) #it should create (x,y) -> x*y elements = size
-    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].nodes.resize(num_nodes/2)
-
-    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[1].boundary.resize(1)
-    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[1].boundary[0].neighbours.resize(num_edges)
-    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary.resize(1)
-    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours.resize(num_cells)
-
-    # print 'CHECKPOINT 3'
-    # imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[0].data[0] = '1'
-    # print imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[0].data
-
+    # ----Allocating space and writing to IDS: Geometry and Nodes---- #
+    num_nodes = len(edge.grid.spaces[0].objects[0].geo)
     print 'CPO num_nodes:', num_nodes
-    print 'CPO num_edges:', num_edges
-    print 'CPO num_cells:', num_cells
-    print imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry.size
+    imas_obj.edge_profiles.time.resize(num_nodes*2);
+    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry.resize(num_nodes*2) #it should create (x,y) -> x*y elements = size
+    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].nodes.resize(num_nodes)
 
-    imas_obj.edge_profiles.time.resize(num_nodes);
-    # print "time_size: ", imas_obj.edge_profiles.time.size
-
-
-    for i in range (num_nodes/2): #There are num_nodes = 7176 geometry entries. [x1, y1, x2, y2, ..., xn, yn]
-        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[i*2] = \
-        edge.grid.spaces[0].objects[0].geo[i, 0]
-        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[(i*2)+1] = \
-        edge.grid.spaces[0].objects[0].geo[i, 1]
+    for i in range(num_nodes):  # There are num_nodes*2 = 7176 geometry entries. [x1, y1, x2, y2, ..., xn, yn]
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[i * 2] = \
+            edge.grid.spaces[0].objects[0].geo[i, 0]
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].geometry[(i * 2) + 1] = \
+            edge.grid.spaces[0].objects[0].geo[i, 1]
 
         imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0].nodes[i] = i
 
         imas_obj.edge_profiles.time[i] = time;
 
+    # ----Allocating space and writing to IDS: Edges---- #
+    num_edges = len(edge.grid.spaces[0].objects[1].boundary)
+    print 'CPO num_edges:', num_edges
+    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[1].boundary.resize(1)
+    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[1].boundary[0].neighbours.resize(num_edges*2)
 
-
-
-    for i in range(num_edges/2):
-        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[1].boundary[0].neighbours[i*2] = \
-            edge.grid.spaces[0].objects[1].boundary[i,0]
-        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[1].boundary[0].neighbours[(i * 2)+1] = \
+    for i in range(num_edges):
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[1].boundary[0].neighbours[i * 2] = \
+            edge.grid.spaces[0].objects[1].boundary[i, 0]
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[1].boundary[0].neighbours[
+            (i * 2) + 1] = \
             edge.grid.spaces[0].objects[1].boundary[i, 1]
 
-    for i in range(num_cells/4):
+    # ----Allocating space and writing to IDS: Faces---- #
+    num_faces = len(edge.grid.spaces[0].objects[2].boundary)
+    print 'CPO num_faces:', num_faces
+    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary.resize(1)
+    imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours.resize(num_faces*4)
+
+    for i in range(num_faces):
         imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours[i * 4] = \
             edge.grid.spaces[0].objects[2].boundary[i, 0]
-        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours[(i * 4) + 1] = \
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours[
+            (i * 4) + 1] = \
             edge.grid.spaces[0].objects[2].boundary[i, 1]
-        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours[(i * 4) + 2] = \
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours[
+            (i * 4) + 2] = \
             edge.grid.spaces[0].objects[2].boundary[i, 2]
-        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours[(i * 4) + 3] = \
+        imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[2].boundary[0].neighbours[
+            (i * 4) + 3] = \
             edge.grid.spaces[0].objects[2].boundary[i, 3]
 
-    imas_obj.edge_profiles.putSlice();
+    # ----Allocating space and writing to IDS: Electron density---- #
+    num_ne_subset = len(edge.fluid.ne.value)
+    imas_obj.edge_profiles.ggd[0].electrons.density.resize(num_ne_subset)
 
-    # print imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object[0]#.geometry
+    for i in range(num_ne_subset):
+        num_ne_scalars = edge.fluid.ne.value[i].scalar.size
+        imas_obj.edge_profiles.ggd[0].electrons.density[i].values.resize(num_ne_scalars)
+        imas_obj.edge_profiles.ggd[0].electrons.density[i].grid_subset_index = edge.fluid.ne.value[i].subgrid
+        for j in range(num_ne_scalars):
+            imas_obj.edge_profiles.ggd[0].electrons.density[i].values[j] = edge.fluid.ne.value[i].scalar[j]
+
+    # ----Allocating space and writing to IDS: Electron temperature---- #
+    num_te_subset = len(edge.fluid.te.value)
+    imas_obj.edge_profiles.ggd[0].electrons.temperature.resize(num_te_subset)
+    for i in range(num_te_subset):
+        num_te_scalars = edge.fluid.te.value[i].scalar.size
+        imas_obj.edge_profiles.ggd[0].electrons.temperature[i].values.resize(num_te_scalars)
+        imas_obj.edge_profiles.ggd[0].electrons.temperature[i].grid_subset_index = edge.fluid.te.value[i].subgrid
+
+        for j in range(num_te_scalars):
+            imas_obj.edge_profiles.ggd[0].electrons.temperature[i].values[j] = edge.fluid.te.value[i].scalar[j]
+
+    # ----Allocating space and writing to IDS: Ion density ---- #
+    num_ni_species = len(edge.fluid.ni)
+    imas_obj.edge_profiles.ggd[0].ion.resize(num_ni_species)
+    print 'num_ni_species:', num_ni_species
+    for k in range(num_ni_species):
+        num_ni_subset = len(edge.fluid.ni[k].value)
+        imas_obj.edge_profiles.ggd[0].ion[k].density.resize(num_ni_subset)
+        for i in range(num_ni_subset):
+            num_ni_scalars = edge.fluid.ni[k].value[i].scalar.size
+            imas_obj.edge_profiles.ggd[0].ion[k].density[i].values.resize(num_ni_scalars)
+            imas_obj.edge_profiles.ggd[0].ion[k].density[i].grid_subset_index = edge.fluid.ni[k].value[i].subgrid
+
+            for j in range(num_ni_scalars):
+                imas_obj.edge_profiles.ggd[0].ion[k].density[i].values[j] = edge.fluid.ni[k].value[i].scalar[j]
+
+    # ----Allocating space and writing to IDS: Ion temperature ---- #
+    num_ti_species = len(edge.fluid.ti)
+    # imas_obj.edge_profiles.ggd[0].ion.resize(num_ti_species) #It was already allocated in Ion density num_ni_species == num_ti_species
+    for k in range(num_ti_species):
+        num_ti_subset = len(edge.fluid.ti[k].value)
+        imas_obj.edge_profiles.ggd[0].ion[k].temperature.resize(num_ti_subset)
+        for i in range(num_ti_subset):
+            num_ti_scalars = edge.fluid.ti[k].value[i].scalar.size
+            imas_obj.edge_profiles.ggd[0].ion[k].temperature[i].values.resize(num_ti_scalars)
+            imas_obj.edge_profiles.ggd[0].ion[k].temperature[i].grid_subset_index = edge.fluid.ti[k].value[i].subgrid
+
+            for j in range(num_ti_scalars):
+                imas_obj.edge_profiles.ggd[0].ion[k].temperature[i].values[j] = edge.fluid.ti[k].value[i].scalar[j]
+
+
+    imas_obj.edge_profiles.putSlice();
 
     imas_obj.close()
 
@@ -227,20 +235,11 @@ def read_edge_cpo():
 if __name__ == '__main__':        
     edge = read_edge_cpo()
 
-    num_nodes = edge.grid.spaces[0].objects[0].geo.size #it reads number of all elements, not nodes. NUmber of elements = number of nodes * 2
-    num_edges = edge.grid.spaces[0].objects[1].boundary.size
-    num_cells = edge.grid.spaces[0].objects[2].boundary.size
-
-    # print edge.grid.spaces[0].objects[1]
     write_ids()
 
     read_ids()
 
-    print 'CHECKPOINT 1'
-    print edge.grid.spaces[0].objects[1]
 
-    print 'CHECKPOINT 2'
-    print edge.grid.spaces[0].objects[2]
 
 
 
