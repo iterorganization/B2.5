@@ -3130,7 +3130,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
           if(BCMOM(IS,IB).eq.0) goto 20000
           GOTO(10100,10200,10300,10400,10500,
      1         10600,10700,10800,10900,11000,
-     1         11100,11200,11300,11400,11500,11600),BCMOM(IS,IB)      !srv 01.02.09 19.04.13
+     1         11100,11200,11300,11400,11500,11600,11700),BCMOM(IS,IB)      !srv 01.02.09 19.04.13
           write(*,*) BCMOM(IS,IB)
           call xerrab ('BCMOM out of bounds')
 
@@ -4036,6 +4036,64 @@ cxpb  and max(,,) statement for stability
             CALL XERRAB ('B2STBC -- BCMOM=16, IS VALID FOR CORE ONLY')
           ENDIF
           GOTO 20000
+
+* -- BCMOM=17 -- leakage option for parallel momentum
+
+11700     CONTINUE
+          if(ncall.eq.0) then
+            write(*,'(a,1p,g14.7,a,a,a,a,i3)')
+     .       'parallel momentum leakage ',MOMPAR(IS,IB,1),
+     1       ' on ',BCCHAR(IB),boundary_location(ib),' for species ',IS
+          endif
+          IF(BCCHAR(IB).EQ.'S') THEN
+            DO IX = 1, BC_LIST_SIZE(IB)
+              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=0.0_R8
+              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
+     1         SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
+     2         sqrt((rza(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
+     .                te(bc_list_x(ix,ib),bc_list_y(ix,ib))+
+     .                ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))/
+     3         (am(is)*mp))*MOMPAR(IS,IB,1)*(am(is)*mp)*
+     4         NA(bc_list_x(ix,ib),bc_list_y(ix,ib),is)
+            ENDDO
+          ELSEIF(BCCHAR(IB).EQ.'N') THEN
+            DO IX = 1, BC_LIST_SIZE(IB)
+              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=0.0_R8
+              SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
+     1         SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
+     2         sqrt((rza(bc_list_x(ix,ib),bc_list_y(ix,ib),is)*
+     .                te(bc_list_x(ix,ib),bc_list_y(ix,ib))+
+     .                ti(bc_list_x(ix,ib),bc_list_y(ix,ib)))/
+     3         (am(is)*mp))*MOMPAR(IS,IB,1)*(am(is)*mp)*
+     4         NA(bc_list_x(ix,ib),bc_list_y(ix,ib),is)
+            ENDDO
+          ELSEIF(BCCHAR(IB).EQ.'W') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     1         SXHZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
+     2         sqrt((rza(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
+     .                te(bc_list_x(iy,ib),bc_list_y(iy,ib))+
+     .                ti(bc_list_x(iy,ib),bc_list_y(iy,ib)))/
+     3         (am(is)*mp))*MOMPAR(IS,IB,1)*(am(is)*mp)*
+     4         NA(bc_list_x(iy,ib),bc_list_y(iy,ib),is)
+            ENDDO
+          ELSEIF(BCCHAR(IB).EQ.'E') THEN
+            DO IY = 1, BC_LIST_SIZE(IB)
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
+              SMO0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
+     1         SXHZ(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
+     2         sqrt((rza(bc_list_x(iy,ib),bc_list_y(iy,ib),is)*
+     .                te(bc_list_x(iy,ib),bc_list_y(iy,ib))+
+     .                ti(bc_list_x(iy,ib),bc_list_y(iy,ib)))/
+     3         (am(is)*mp))*MOMPAR(IS,IB,1)*(am(is)*mp)*
+     4         NA(bc_list_x(iy,ib),bc_list_y(iy,ib),is)
+            ENDDO
+          ELSE
+            CALL XERRAB ('B2STBC -- BCMOM=17, NOT AVAILABLE')
+          ENDIF
+          GOTO 20000
+
 
 * -- END LOOP OVER SPECIES
 20000     continue
@@ -5186,7 +5244,7 @@ cghgh
           DO IX = 1, BC_LIST_SIZE(IB)
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
             CS=SQRT(bcint(PR,nx,ny,IX,IB)/bcint(RO,nx,ny,IX,IB))   !srv 01.02.09
-            SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
+            SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
      1       vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      2       hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*cs*ENEPAR(IB,1)
           ENDDO
@@ -5194,7 +5252,7 @@ cghgh
           DO IX = 1, BC_LIST_SIZE(IB)
             SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
             CS=SQRT(bcint(PR,nx,ny,IX,IB)/bcint(RO,nx,ny,IX,IB))   !srv 01.02.09
-            SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
+            SHE0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
      1       vol(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
      2       hy1(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*cs*ENEPAR(IB,1)
           ENDDO
@@ -7180,7 +7238,7 @@ cxpb          endif
           DO IX = 1, BC_LIST_SIZE(IB)
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
             CS=SQRT(bcint(PR,nx,ny,IX,IB)/bcint(RO,nx,ny,IX,IB))  !srv 01.02.09
-            SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
+            SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
      1       vol(bc_list_x(ix,ib),bc_list_y(ix,ib))/
      .       hy1(bc_list_x(ix,ib),bc_list_y(ix,ib))*cs*ENIPAR(IB,1)
           ENDDO
@@ -7188,7 +7246,7 @@ cxpb          endif
           DO IX = 1, BC_LIST_SIZE(IB)
             SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=0.0_R8
             CS=SQRT(bcint(PR,nx,ny,IX,IB)/bcint(RO,nx,ny,IX,IB))  !srv 01.02.09
-            SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=
+            SHI0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),3)=
      1       vol(bc_list_x(ix,ib),bc_list_y(ix,ib))/
      .       hy1(bc_list_x(ix,ib),bc_list_y(ix,ib))*cs*ENIPAR(IB,1)
           ENDDO
