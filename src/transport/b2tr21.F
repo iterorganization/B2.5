@@ -439,7 +439,7 @@ c        coef=4/3, if div u = grad_|| up)
                 ncharged=ncharged+1
                 n(ncharged) = na(ix,iy,i)
 C                       parallel strain (velocity gradient)
-                wwpp(ncharged) = coef*
+                wwpp(ncharged) = coef*sign(1.0_R8,pbs(ix,iy,0))*
      1           (ua(rightix(ix,iy),rightiy(ix,iy),i)-ua(ix,iy,i))/
      2           (0.5_R8*(hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy)))
               endif

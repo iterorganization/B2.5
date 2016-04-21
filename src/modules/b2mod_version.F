@@ -214,7 +214,7 @@ c                        15.06.12 replaced natm by nnatmi in b2stbr.F
 c                        20.06.12 added restriction of usage BCCON=8 in case of coupling B2-ASTRA
 c                        21.06.12 added NB sources in case of coupling B2-ASTRA
 c                        16.07.12 added test of correct using boundary conditions BCENE=9, BCENI=9, BCMOM=10 along with BCCON=9
-c                                 ehxp is set up zero subroutine b2nxfx when electrical potential is zero (pot_eq=0)
+c                                 ehxp is set up zero subroutine b2nxfx when electric potential is zero (pot_eq=0)
 c                        26.07.12 corrected contribution of source's ASTRA in b2sral
 c                        21.09.12 test of correct using boundary conditions BCENE=9, BCENI=9, BCMOM=10 along with BCCON=9
 c                                 has been replaced by warning message.

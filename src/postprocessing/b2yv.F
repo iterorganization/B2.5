@@ -164,10 +164,10 @@
       write(*,"(a,a,(1x,I2,1x))") 'To look at ion tempetature     ',
      &        '       - input a number', ns+ns+1
 
-      write(*,"(a,a,(1x,I2,1x))") 'To look at electrical potential',
+      write(*,"(a,a,(1x,I2,1x))") 'To look at electric potential',
      &        '       - input a number', ns+ns+2
 
-      write(*,"(a,a,(1x,I2,1x))") 'To look at radial electrical field',
+      write(*,"(a,a,(1x,I2,1x))") 'To look at radial electric field',
      &        '    - input a number', ns+ns+3
 
       read (*,*) icase 
@@ -209,14 +209,14 @@
 	  enddo
 	enddo
       elseif(icase .eq. ns+ns+2 )then
-	write(title,"('Electrical potential')") 
+	write(title,"('Electric potential')") 
         do iy = -1,ny
           do ix = -1,nx
 	    M(iy,ix) = po(ix,iy)
 	  enddo
 	enddo
       elseif(icase .eq. ns+ns+3 )then
-	write(title,"('Radial electrical field')") 
+	write(title,"('Radial electric field')") 
         M=0.0d0
 	do iy=0,ny
 	  do ix=-1,nx

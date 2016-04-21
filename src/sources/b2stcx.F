@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stcx (nx, ny, ns, is0, ismain, hz, BoRiS, vol, na,     !srv 09.01.01
+      subroutine b2stcx (nx, ny, ns, is0, ismain, hz, BoRiS, vol, na,    !srv 09.01.01
      &  ua, wadia, vadia, vaecrb, ti, ni, rcx, sna0, smq0, shi0)         !srv 07.07.09
       use b2mod_types
       use b2mod_indirect
@@ -16,7 +16,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, is0, ismain
       real (kind=R8) ::
-     *  hz(-1:nx,-1:ny), BoRiS, vol(-1:nx,-1:ny),                    !srv 09.01.01
+     *  hz(-1:nx,-1:ny), BoRiS, vol(-1:nx,-1:ny),                        !srv 09.01.01
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1), 
      &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), rcx(-1:nx,-1:ny,0:ns-1),  
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),

@@ -392,32 +392,32 @@ cxpb  Island X-point cells
       endif                                                              !xpb
 
       fchvispar=0.0_R8                                                   !xpb
-      dvpar=0.0_R8                                               !srv 24.06.99 
+      dvpar=0.0_R8                                                       !srv 24.06.99 
       if (vis_par.ne.0.0_R8) then                                        !srv
-        do is = 0, ns-1                                          !srv 24.06.99
-          if (.not.is_neutral(is)) then                          !srv 24.06.99
-            do iy= -1, ny                               !xpb     !srv 18.02.00
+        do is = 0, ns-1                                                  !srv 24.06.99
+          if (.not.is_neutral(is)) then                                  !srv 24.06.99
+            do iy= -1, ny                                       !xpb     !srv 18.02.00
               do ix= -1, nx                                              !srv
                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &            bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &            region(ix,iy,0).ne.0) then
-                 dvpar(ix,iy)=dvpar(ix,iy)                       !srv 24.06.99
+                 dvpar(ix,iy)=dvpar(ix,iy)                               !srv 24.06.99
      &             +wbbl(ix,iy,3)**2/sqrt(wbbl(ix,iy,3))/wbbl(ix,iy,0)   !srv
      &             *cvsa(ix,iy,0,is)*                                    !xpb
-     &             ((ua(ix,iy,is)+bb(ix,iy,3)/bb(ix,iy,0)*       !srv 11.01.13
+     &             ((ua(ix,iy,is)+bb(ix,iy,3)/bb(ix,iy,0)*               !srv 11.01.13
      &              (wadia(ix,iy,0,is)+vaecrb(ix,iy,0,is)))
      &              *sqrt(bb(ix,iy,3))             
      &             -(ua(leftix(ix,iy),leftiy(ix,iy),is)       
-     &              +abs(bb(leftix(ix,iy),leftiy(ix,iy),3)/
-     &                   bb(leftix(ix,iy),leftiy(ix,iy),0))*
+     &              +bb(leftix(ix,iy),leftiy(ix,iy),3)/
+     &               bb(leftix(ix,iy),leftiy(ix,iy),0)*
      &              (wadia(leftix(ix,iy),leftiy(ix,iy),0,is)+
      &               vaecrb(leftix(ix,iy),leftiy(ix,iy),0,is)))*
      &               sqrt(wbbl(ix,iy,3)))
                endif
               enddo                                                      !srv
             enddo                                                        !srv
-          endif                                                  !srv 24.06.99
-        enddo                                                    !srv 24.06.99
+          endif                                                          !srv 24.06.99
+        enddo                                                            !srv 24.06.99
         do iy = -1, ny
           do ix = -1, nx
             if(bottomiy(ix,iy).eq.-2)

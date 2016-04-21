@@ -335,7 +335,7 @@
 
 	  if (modvis.eq.1) then                                         !srv 19.01.05 {
 	    wrk2 = sqrt(bb(:,:,3))     ! wrk2 is used below twice
-	    wrk1=log(hz*wrk2)
+	    wrk1 = log(hz*wrk2)
 	    do iy = 0,ny-1                                              !srv 01.07.05 {
 	      do ix = 0,nx
 	        if(leftix(ix,iy).eq.-2) then
@@ -352,7 +352,7 @@
 	      do ix= 0,nx-1
 	        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
 	          t0=(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
-     *               *wrk2(ix,iy)                                           !srv 01.07.05 } 
+     *               *wrk2(ix,iy)                                    !srv 01.07.05 } 
 	          if (t0.gt.0.0e0) then 
                     smbvv(ix,iy,0)=t0*ub(ix,iy)
 	          else

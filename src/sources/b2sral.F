@@ -438,8 +438,8 @@ csw 30sep2013, added cdpa in call, uadia
      &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,            !srv 16.02.12
      &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
-     2  cdna, chce, chve, chci, chvi, calf,                                !xpb
-     &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)                !xpb
+     2  cdna, chce, chve, chci, chvi, calf,                             !xpb
+     &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)            !xpb
        if(wrong_flow) write(*,*)
      &  'b2sral [3]: wrong_flow returned from b2stbc'
        call b2xpfe (nx, ny, ns, ns_ext, qe, rza, za_ext,
@@ -486,7 +486,7 @@ csw 30sep2013, added cdpa in call, uadia
       call b2saxpy (n2*4, 1.0_R8, she0, 1, she, 1)
       call b2saxpy (n2*4, 1.0_R8, shi0, 1, shi, 1)
       call b2saxpy (n2*4, 1.0_R8, sch0, 1, sch, 1)
-      do is=0,ns-1                                                          !srv 18.05.09 {
+      do is=0,ns-1                                                      !srv 18.05.09 {
         snatot(is)=0.0_R8
         do ix=-1,nx
           do iy=-1,ny
@@ -496,7 +496,7 @@ csw 30sep2013, added cdpa in call, uadia
         enddo
       enddo
       write(hlp_frm,'(a,i3,a)') '(a,1p,',ns,'(1x,1e14.7))'
-      if(main_call.or.wrong_flow)                                       !xpb !srv 18.05.09 }
+      if(main_call.or.wrong_flow)                                  !xpb !srv 18.05.09 }
      > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
 *   ..compute more special contributions
       call b2stbm (nx, ny, ns, ismain, dtim,
@@ -564,7 +564,7 @@ csw 30sep2013, added cdpa in call, uadia
       call b2saxpy (n2*4*ns, 1.0_R8, smq0_rec, 1, smq, 1)
       call b2saxpy (n2*4, 1.0_R8, she0, 1, she, 1)
       call b2saxpy (n2*4, 1.0_R8, shi0_ion, 1, shi, 1)
-      call b2saxpy (n2*4, 1.0_R8, shi0_rec, 1, shi, 1)                     !srv 11.09.09 }
+      call b2saxpy (n2*4, 1.0_R8, shi0_rec, 1, shi, 1)                   !srv 11.09.09 }
 *     (no contribution to sch or sne)
 *   ..compute sources due to charge exchange
       rcxnareg=0.0_R8
@@ -579,7 +579,7 @@ csw 30sep2013, added cdpa in call, uadia
      &   rlcx(-1,-1,0,0,k), rcx)
 *    ..compute sources due to charge exchange
 *      (parallel momentum source must be pure friction)
-        call b2stcx (nx, ny, ns, iscx(k), ismain, hz, BoRiS, vol, na,     !srv 09.01.01
+        call b2stcx (nx, ny, ns, iscx(k), ismain, hz, BoRiS, vol, na,    !srv 09.01.01
      &    ua, wadia, vadia, vaecrb, ti, ni, rcx, sna0, smq0, shi0)       !srv 07.07.09
 *   ..zero out contributions in dead cells and core boundary
         do is = 0, ns-1
@@ -594,7 +594,7 @@ csw 30sep2013, added cdpa in call, uadia
 *      (no contribution to she, sne or sch)
       enddo
 
-      if(iout.ne.0) then                                            !srv 30.06.08 {
+      if(iout.ne.0) then                                                 !srv 30.06.08 {
        do is = 0,ns-1
            write (chns,'(i3.3)') is
            do k=0,1
@@ -623,7 +623,7 @@ csw 30sep2013, added cdpa in call, uadia
            write (chk,'(i1)') k
            call my_out(70,nx,ny,sne(-1,-1,k),'b2sral_sne'//chk)
          enddo
-        endif                                                         !srv 30.06.08 }
+        endif                                                            !srv 30.06.08 }
 
 csw 17oct2012, erase sna, smo, smq, (she, shi, sch) for fluid neutrals
       if(no_fluid_neutral_sources .eq. 1) then

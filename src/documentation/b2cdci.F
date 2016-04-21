@@ -1924,7 +1924,7 @@
 *    parallel contact areas.
 *
 *    'b2news_vis_per'           '0.0'                  Numerics
-*    If '1.0', the electrical potential equation is solved by the
+*    If '1.0', the electric potential equation is solved by the
 *    subroutine b2npp7 using a 7-point stencil. 
 *    The value '1.0' is recommended for runs with drifts when 
 *    perpendicular viscosity and corresponding perpendicular 

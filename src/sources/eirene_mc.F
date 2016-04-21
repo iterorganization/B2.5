@@ -2131,7 +2131,6 @@ c     1               kinrgy(ix,iy,is)*
 c     2               sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
 
-! FIXME: Check here that the sign convention of smo and ua match
                     j=b2espcr(is)
                     uatmp = (ua(ix,iy,is)*na(ix,iy,is) + 
      .                       smo_tot(ix+1,iy+1,ifl)*
@@ -2139,7 +2138,6 @@ c     *               recyctmp*flux_scale(istrai)
      .                      (na(ix,iy,is)+sni_tot(ix+1,iy+1,ifl)*
      .                       dtim*dtco(is,region(ix,iy,0)))
                     dua = uatmp - ua(ix,iy,is)
-! FIXME
 
 csw 06mar2012 momentum source
 csw 26feb2014 averaging

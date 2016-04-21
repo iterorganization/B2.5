@@ -3,8 +3,8 @@
 csw 2013 added fna_he, cvsa, vadia into argument list
       subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ti,  
      1  ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa, vadia, !srv 17.05.99 27.12.01
-     &  fchvispar, fchvisq, fchinert, fchanml,                        !lk 30.05.11
-     &  fhi, fhi_mdf, fhiPSch, floi, coni)                            !srv 13.10.06
+     &  fchvispar, fchvisq, fchinert, fchanml,                          !lk 30.05.11
+     &  fhi, fhi_mdf, fhiPSch, floi, coni)                              !srv 13.10.06
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -19,13 +19,13 @@ csw 2013 added fna_he, cvsa, vadia into argument list
      *   ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      & vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
      & cvsa(-1:nx,-1:ny,0:1,0:ns-1),
-     & cddi(-1:nx,-1:ny,0:1,0:ns-1), qz(-1:nx,-1:ny,0:1),             !srv 13.10.06
+     & cddi(-1:nx,-1:ny,0:1,0:ns-1), qz(-1:nx,-1:ny,0:1),               !srv 13.10.06
      & chvimx(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      & facdrift(-1:nx,-1:ny),
-     & vadia(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 17.05.99 27.12.01 25.01.02
-     & fchvispar(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),          !lk 30.05.11
-     & fchinert(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1),            !lk 30.05.11
+     & vadia(-1:nx,-1:ny,0:1,0:ns-1),                                   !srv 17.05.99 27.12.01 25.01.02
+     & fchvispar(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),            !lk 30.05.11
+     & fchinert(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1),             !lk 30.05.11
 csw 30apr2014 added fna_he, ia
      . fna_he(-1:nx, -1:ny, 0:1, 0:ns-1),
      . ua(-1:nx,-1:ny,0:ns-1)
@@ -34,7 +34,7 @@ csw 30apr2014 added fna_he, ia
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   fhi(-1:nx,-1:ny,0:1),
-     &   fhi_mdf(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),          !srv 13.10.06
+     &   fhi_mdf(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),            !srv 13.10.06
      1   floi(-1:nx,-1:ny,0:1), coni(-1:nx,-1:ny,0:1,0:2)
 *   ..common blocks
 *-----------------------------------------------------------------------
@@ -57,26 +57,26 @@ csw 30apr2014 added fna_he, ia
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, ib, ixl, iyl, ixb, iyb
-      integer, save :: iout = 0,                                       !srv 16.09.02
+      integer, save :: iout = 0,                                        !srv 16.09.02
      &                 iout_b2nph9 = 0, iout_b2npht = 0
-      integer, save :: lim_flux = 1, mdf_fhi = 0                       !srv 04.02.03 13.10.06
-      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
-      integer, save :: conductive_limit = 0                            !srv 16.06.08 17.01.12
+      integer, save :: lim_flux = 1, mdf_fhi = 0                        !srv 04.02.03 13.10.06
+      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
+      integer, save :: conductive_limit = 0                             !srv 16.06.08 17.01.12
       integer, save :: model = 3
       integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
       integer, save :: b2kin=0, b2vis=0
-      real (kind=R8), save :: PSch=1.0e0_R8                            !srv 17.01.07
+      real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8) ::
-     *   flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0, vdia_par,   !srv 17.05.99
-     *   iner_par,                                                     !srv 27.12.01
-     &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf, dti0_mdf                !srv 13.10.06 17.06.09
+     *   flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0, vdia_par,    !srv 17.05.99
+     *   iner_par,                                                      !srv 27.12.01
+     &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf, dti0_mdf                 !srv 13.10.06 17.06.09
 cpax      
       real (kind=R8) ::
-     *   flidia(-1:nx,-1:ny,0:1), facdriftm                            !srv 25.01.02
+     *   flidia(-1:nx,-1:ny,0:1), facdriftm                             !srv 25.01.02
       real (kind=R8), allocatable ::
-     *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)         !srv 16.09.02
-      save ncall, vdia_par                                             !srv 17.05.99
-      save iner_par                                                    !srv 27.12.01
+     *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
+      save ncall, vdia_par                                              !srv 17.05.99
+      save iner_par                                                     !srv 27.12.01
 *   ..procedures
       intrinsic max, abs
 cpax      
@@ -84,12 +84,12 @@ cpax
      *   hybr, hy1, upwind
       external subini, subend, xertst
       external b2xvsg, b2xvff
-      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                               !srv 07.05.08
+      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                                !srv 07.05.08
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
 *   ..initialization
-      data ncall/0/, vdia_par/1.0e0_R8/                                    !srv 17.05.99
-      data iner_par/0.0e0_R8/                                              !srv 27.12.01
+      data ncall/0/, vdia_par/1.0e0_R8/                                 !srv 17.05.99
+      data iner_par/0.0e0_R8/                                           !srv 27.12.01
 
 *-----------------------------------------------------------------------
 *.computation
@@ -97,26 +97,26 @@ cpax
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tfhi_')
-*   ..set internal parameters on first call                              !srv 17.05.99
-      if (ncall.eq.0) then                                               !srv
-       call ipgetr ('b2tfhi_vdia_par', vdia_par)                         !srv 17.05.99
-       call ipgetr ('b2tfhi_iner_par', iner_par)                         !srv 27.12.01
-       call ipgeti ('b2tfhi_iout', iout)                                 !srv 16.09.02
-       call ipgeti ('b2tfhi_lim_flux', lim_flux)                         !srv 04.02.03
-       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)                  !srv 06.07.06
-       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)                  !srv 06.07.06
-       call ipgeti ('b2tfhi_mdf', mdf_fhi)                               !srv 13.10.06
-       call ipgetr ('b2tfhi_PSch', PSch)                                 !srv 17.01.07
+*   ..set internal parameters on first call                             !srv 17.05.99
+      if (ncall.eq.0) then                                              !srv
+       call ipgetr ('b2tfhi_vdia_par', vdia_par)                        !srv 17.05.99
+       call ipgetr ('b2tfhi_iner_par', iner_par)                        !srv 27.12.01
+       call ipgeti ('b2tfhi_iout', iout)                                !srv 16.09.02
+       call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04.02.03
+       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)                 !srv 06.07.06
+       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)                 !srv 06.07.06
+       call ipgeti ('b2tfhi_mdf', mdf_fhi)                              !srv 13.10.06
+       call ipgetr ('b2tfhi_PSch', PSch)                                !srv 17.01.07
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)
-       call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 16.06.08 17.01.12
+       call ipgeti ('b2trcl_conductive_limit', conductive_limit)        !srv 16.06.08 17.01.12
        call ipgeti ('b2tqca_model', model)
        call ipgeti ('b2tfhi_upwind', b2_upwind)
        call ipgeti ('b2tfhi_hybr2', b2tfhi_hybr2)
        call ipgeti ('b2tfhi_flo53', flo53)
        call ipgeti ('b2tfhi_b2kin', b2kin)
        call ipgeti ('b2tfhi_b2vis', b2vis)
-      endif                                                              !srv
+      endif                                                             !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny
@@ -137,10 +137,10 @@ c-rfs     1 minval(fni(-1,:,0)),maxval(fni(-1,:,0))
       endif
 
       facdriftm = maxval(facdrift)
-      fhiPSch = 0.0e0_R8                                              !srv 13.10.06
-      coni    = 0.0e0_R8                                              !srv 02.01.07
+      fhiPSch = 0.0e0_R8                                                !srv 13.10.06
+      coni    = 0.0e0_R8                                                !srv 02.01.07
       if(facdriftm.ne.0.0e0_R8) then
-*   ..compute P.Sch heat x-flux                                 !srv 13.10.06 {
+*   ..compute P.Sch heat x-flux                                         !srv 13.10.06 {
 !      iy = -1
 !       do ix = -1, nx
 !         if(leftix(ix,iy).eq.-2) then
@@ -440,7 +440,6 @@ c     (ONLY FOR TESTING w/ SOLPS4 discretization)
      .          +cvsa(leftix(ix,iy),leftiy(ix,iy),0,is))/2.d0
      .
      .        *2.d0*
-     .
      .        (ua(ix,iy,is) 
      .        +ua(leftix(ix,iy),leftiy(ix,iy),is))/2.d0 *
      .
@@ -694,7 +693,7 @@ csw 2014 add viscous term   (ONLY FOR TESTING w/ SOLPS4 discretization)
            do is=0,ns-1
              fhi(ix,iy,1) = fhi(ix,iy,1) - 
      .          cvsa(ix,iy,1,is)
-     .          *ua(ix,iy,is) 
+     .          *ua(ix,iy,is)
      .        *2.d0
      .        *(ua(ix,iy,is) 
      .        -ua(bottomix(ix,iy),bottomiy(ix,iy),is))

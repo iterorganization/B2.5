@@ -23,7 +23,7 @@
      &  te(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),             !srv 11.09.09
+     *   smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),              !srv 11.09.09
      &   smprb(-1:nx,-1:ny), smptb(-1:nx,-1:ny), smfrb(-1:nx,-1:ny)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::

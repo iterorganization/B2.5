@@ -83,9 +83,9 @@ c Drift terms
      &        .not.is_neutral(is)) then                                  !srv 24.06.99
 	    do iy = -1, ny						 !srv 18.02.00
               do ix = 0, nx
-	        if(leftix(ix,iy).ne.-2) then                              !srv 26.11.02 23.07.05 {
+	        if(leftix(ix,iy).ne.-2) then                             !srv 26.11.02 23.07.05 {
 !             it has been considered that cvsa was multiplied by bx**2
-                  dvpar(ix,iy)=dvpar(ix,iy) +                             !srv 24.06.99
+                  dvpar(ix,iy)=dvpar(ix,iy) +                            !srv 24.06.99
      &		     (bb(ix,iy,2)*sqrt(bb(ix,iy,3))/bb(ix,iy,0)+ 
      &              bb(leftix(ix,iy),leftiy(ix,iy),2)*
      &              sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))/
