@@ -1,6 +1,6 @@
       subroutine chcase (ind, chtxt)
       use b2mod_types
-      Implicit None
+      implicit none
       integer ind, ichr
       character chtxt*(*)
 *     ------------------------------------------------------------------

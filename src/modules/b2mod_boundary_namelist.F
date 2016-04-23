@@ -73,7 +73,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
       integer, save :: NBC, NNISO, ncbs
       real (kind=R8) , save :: gammai, gammae, TEISO, TIISO, PHIISO
       logical, save :: lbndusr,lfeedback
-      logical, private, save :: write_nml = .true.
+      logical, save :: write_nml_bnd = .true.
       character*256, save :: boundary_filename
       real (kind=R8), save :: boundary_time_mod
       real (kind=R8), save :: boundary_time_switch
@@ -88,7 +88,7 @@ csw 18feb2014 added for correct implementation of boundary conditions
      3 NNISO,NIISO,TEISO,TIISO,PHIISO,NXISO1,NXISO2,NYISO1,NYISO2,
      4 bcchar,
      5 boundary_filename,boundary_time_mod,boundary_time_switch,
-     6 lcbs, write_nml
+     6 lcbs, write_nml_bnd
       
       contains
 
@@ -211,9 +211,9 @@ cxpb overwrite the defaults with the namelist data
       end subroutine initialize_b2mod_boundary
 
       subroutine catchup_b2mod_boundary(tim)
-      Implicit None
+      implicit none
       real (kind=R8) :: tim
-      Integer :: nx, ny, ns
+      integer :: nx, ny, ns
 
       if(boundary_time_mod.gt.0.0_R8) then
          write(*,'(a,1p,3(1x,e14.7),2i4)') 
@@ -236,7 +236,7 @@ cxpb overwrite the defaults with the namelist data
       end subroutine catchup_b2mod_boundary
 
       subroutine alloc_b2mod_boundary(nxd,nyd,nsd,nbcd_in,nnisod_in)
-      Implicit None
+      implicit none
       integer nxd, nyd, nsd, nbcd_in, nnisod_in, ix, iy
 #ifndef ALLOCATE_AND_NAMELIST
       external xertst
@@ -882,8 +882,8 @@ c.. Test consistency with region boundaries
       end subroutine read_b2mod_boundary_namelist
 
       subroutine write_b2mod_boundary_namelist
-      Implicit None
-      If (write_nml) write(*,boundary)
+      implicit none
+      if (write_nml_bnd) write(*,boundary)
       end subroutine write_b2mod_boundary_namelist
 
       function get_phi_applied(boundary_namelist,ix,iy)

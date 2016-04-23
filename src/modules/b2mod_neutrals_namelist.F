@@ -143,7 +143,7 @@ cank }
 
       namelist /neutrals_save/ saved_volrec
       
-      Private :: neutrals
+      private :: neutrals
       namelist /neutrals/ nstrai, rcpos, rcstart, rcend, targsp, chemsp,
      1  rc_list_size, rc_list_x, rc_list_y,
      4  recyc, erecyc, rcion, recyceir, userfluxparm, crcstra, rf_neut,
@@ -168,8 +168,8 @@ cank }
      6  n_spcsrf, l_spcsrf, sps_id, i_spcsrf, j_spcsrf, 
      7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr, 
      8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
-     .  msns, write_nml
-      Logical, save, private :: write_nml = .true.
+     .  msns, write_nml_neut
+      logical, save :: write_nml_neut = .true.
       
 
 csw 21feb2012
@@ -980,10 +980,10 @@ c.. Test consistency with physical edges within the computational domain
     
       end subroutine read_neutrals_namelist
 
-      Subroutine write_b2mod_neutrals_namelist
-      Implicit None
-      if (write_nml) write(*,neutrals)
-      End Subroutine write_b2mod_neutrals_namelist
+      subroutine write_b2mod_neutrals_namelist
+      implicit none
+      if (write_nml_neut) write(*,neutrals)
+      end subroutine write_b2mod_neutrals_namelist
 
       subroutine read_b2mod_neutrals_save(nread,edition,found)
       implicit none

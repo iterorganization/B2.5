@@ -1823,6 +1823,8 @@ c 2002-09-11: logic revised
           write(hlp_frm,'(a,i2,a)') '(1x,a,',ncbs,'(1x,i2,'',''))'
           write(35, hlp_frm) 'LCBS=',lcbs(1:ncbs)
         endif
+        if (.not.write_nml_bnd) write(35, '(a,l1,a)')
+     >   'WRITE_NML_BND=',write_nml_bnd,','
         write(35,'(a)') '/'
         close(35)
         if (.not.streql(boundary_filename,'b2.boundary.parameters'))
@@ -1952,6 +1954,8 @@ c 2002-09-11: logic revised
             write(99,hlp_frm)
      .       'PW2_CNV=',pw2_cnv(0:ns1-1)
           endif
+          if (.not.write_nml_transp) write(99, '(a,l1,a)')
+     >     'WRITE_NML_TRANSP=',write_nml_transp,','
           write(99,'(a1)') '/'
           close(99)
         end if
@@ -2932,6 +2936,8 @@ cxpb This will need to be checked !!!
           if(time_factor_required.ne.0.1_R8)
      .     write(99,'(1x,a,1p,1g10.3,a)')
      .     'TIME_FACTOR_REQUIRED=',time_factor_required,','
+          if (.not.write_nml_num) write(99, '(a,l1,a)')
+     >     'WRITE_NML_NUM=',write_nml_num,','
           write(99,'(a1)') '/'
           close(99)
         endif
@@ -7881,6 +7887,8 @@ cxpb as they no longer necessarily point to the same species
         end do
         if (dbg_eir_mc.ne.0) write(34,'(a,i3,a)')
      .   'DBG_EIR_MC=',dbg_eir_mc,','
+        if (.not.write_nml_neut) write(34, '(a,l1,a)')
+     >   'WRITE_NML_NEUT=',write_nml_neut,','
         write(34,'(a)') '/'
         close(34)
         if (.not.streql(neutrals_filename,'b2.neutrals.parameters'))

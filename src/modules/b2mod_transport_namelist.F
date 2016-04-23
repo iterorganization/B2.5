@@ -46,8 +46,8 @@ c*** pw0_cnv   :  exponent in a radial profile of the "blob" velocity
 c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
 
       logical, save :: allocated_transport_namelist = .false.
-      Private :: transport
-      Logical, Private, save :: write_nml = .true.
+      private :: transport
+      logical, save :: write_nml_transp = .true.
       namelist /transport/ 
      1   flag_dna,flag_dpa,flag_vla,flag_vsa,flag_hci,
      2   flag_hce,flag_sig,flag_alf,
@@ -55,7 +55,7 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
      4   parm_hce,parm_sig,parm_alf,
      5   transport_filename,transport_time_mod,transport_time_switch,
      6   cflme,cflmi,cflmv,
-     7   vout_cnv,pw0_cnv,pw1_cnv,pw2_cnv, write_nml
+     7   vout_cnv,pw0_cnv,pw1_cnv,pw2_cnv, write_nml_transp
 
       
       contains
@@ -149,7 +149,7 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       cflme=cflim(0)
       cflmi=cflim(1)
       cflmv=cflim(2)
-      If (write_nml) write(*,transport)
+      if (write_nml_transp) write(*,transport)
 
       return
       end subroutine write_b2mod_transport_namelist

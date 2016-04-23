@@ -1,5 +1,5 @@
       subroutine strip_spaces(string)
-      Implicit None
+      implicit none
       integer :: i,j,n
       character*(*) string
       j=0

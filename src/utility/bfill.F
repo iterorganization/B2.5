@@ -1,5 +1,5 @@
       subroutine bfill(a,n,f)
-      Implicit None
+      implicit none
 c
 c  version : 15.01.87
 c

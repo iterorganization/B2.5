@@ -1,6 +1,6 @@
       module b2mod_tallies
       use b2mod_types
-      Implicit None
+      implicit none
       real (kind=R8), allocatable, save ::
      *  rsanareg(:,:),
      *  rsahireg(:,:),

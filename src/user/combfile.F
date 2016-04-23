@@ -540,7 +540,7 @@ c*** Dummy data transformation routine
 
       subroutine xtrn_dum(data,chdr,mhdr,nhdr,mrks,nmrk,first)
       use b2mod_types
-      Implicit None
+      implicit none
       real (kind=R8) :: data(nhdr)
       integer :: nmrk, nhdr, mhdr
       integer :: mrks(nmrk)

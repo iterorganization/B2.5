@@ -38,11 +38,11 @@
       logical :: first_time_step
       logical, save :: b2mod_numerics_allocated = .false.
 
-      Private :: numerics
-      Logical, Private, Save :: write_nml = .true.
+      private :: numerics
+      logical, save :: write_nml_num = .true.
       namelist /numerics/ dtco,dtmo,dtee,dtei,time_factor_required,
      1 core_dt_suppression,core_dt_factor,
-     2 solveco,solvemo,solvepo,solveee,solveei,write_nml,
+     2 solveco,solvemo,solvepo,solveee,solveei,write_nml_num,
      3 numerics_filename,numerics_time_mod,numerics_time_switch
       
       
@@ -173,7 +173,7 @@ c additional time-modification factor
       subroutine write_b2mod_numerics_namelist
       implicit none
 
-      If (write_nml) write(*,numerics)
+      if (write_nml_num) write(*,numerics)
 
       return
       end subroutine write_b2mod_numerics_namelist

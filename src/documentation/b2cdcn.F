@@ -237,6 +237,8 @@
 *    sputtering.
 *  SPS_SGRP - integer array of length (N_SPCSRF). Surface group for chemical 
 *    sputtering.
+*  WRITE_NML_NEUT - logical. If .true. (default), writes the content of the
+*    namelist to stdout after it has been read.
 *
 * The following are active only if NO_B2_CHEM_SPUT is not defined among the 
 * compiler options and are used to override the Eirene chemical sputtering
@@ -790,6 +792,8 @@
 *  LCBS - integer array of size (NBC). Indices of the core boundary segments
 *     in B2 for passing to EIRENE. Defaults to the list of 'S' boundaries in
 *     regions 1 and 5.
+*  WRITE_NML_BND - logical. If .true. (default), writes the content of the
+*    namelist to stdout after it has been read.
 *
 *  NAMELIST /FEEDBACK/ 
 *   Found in b2.feedback_save.parameters.
@@ -1103,6 +1107,8 @@
 *     Only active if NUMERICS_TIME_MOD is greater than 0.
 *  NUMERICS_TIME_SWITCH - real*8. Time (in seconds) within an ELM cycle after 
 *     which a new /NUMERICS/ namelist is read. Defaults to 0.0.
+*  WRITE_NML_NUM - logical. If .true. (default), writes the content of the
+*    namelist to stdout after it has been read.
 *
 *  NAMELIST /TRANSPORT_MODELS/
 *    Found in b2.transport_models_save.parameters.
@@ -1165,6 +1171,8 @@
 *     inherited from b2mn.dat.
 *    For all flux limit multipliers, setting them to zero turns off the 
 *    corresponding flux limiter.
+*  WRITE_NML_TRANSP - logical. If .true. (default), writes the content of the
+*    namelist to stdout after it has been read.
 *  The following four parameters are only activated if 'b2tqna_user_transport'
 *     is set to '6'.
 *  VOUT_CNV  - real*8 array of size (0:NS-1).

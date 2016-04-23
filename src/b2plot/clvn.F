@@ -1,11 +1,11 @@
 c
       subroutine clvn(clvmin,clvmax,ncls)
       use b2mod_types
-      Implicit None
+      implicit none
 #include "graphics_vars.h"
       real (kind=R8) ::
      * clvmin,clvmax,delta
-      Integer :: iclv, ncls
+      integer :: iclv, ncls
       external subini, subend, xerrab
 
       call subini ('clvn')
@@ -30,11 +30,11 @@ c
 c
       subroutine wclvn(clvmin,clvmax,ncls)
       use b2mod_types
-      Implicit None
+      implicit none
 #include "graphics_vars.h"
       real (kind=R8) ::
      * clvmin,clvmax,delta
-      Integer :: iclv, ncls
+      integer :: iclv, ncls
       external subini, subend, xerrab
 
       call subini ('wclvn')
@@ -59,11 +59,11 @@ c
 c
       subroutine tclvn(clvmin,clvmax,ncls)
       use b2mod_types
-      Implicit None
+      implicit none
 #include "graphics_vars.h"
       real (kind=R8) ::
      * clvmin,clvmax,delta
-      Integer :: iclv, ncls
+      integer :: iclv, ncls
       external subini, subend, xerrab
 
       call subini ('wclvn')

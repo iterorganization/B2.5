@@ -1,5 +1,5 @@
       subroutine lefta(c,n,m)
-      Implicit None
+      implicit none
 c
 c  version : 05.07.89
 c
