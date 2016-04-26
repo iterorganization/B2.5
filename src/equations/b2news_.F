@@ -23,7 +23,7 @@
       integer nx, ny, ns, nscx, iscx(0: nscxmax-1), ismain, ismain0
       real (kind=R8) ::
      *   dtim, rxf
-*   ..output arguments                                                   !xpb
+*   ..output arguments                                                    !xpb
       integer ierr
       logical wrong_flow
 *   ..common blocks
@@ -104,16 +104,16 @@
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
      &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb, b2tfhe, b2tfhi,
-     &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2npp7, b2xppz !srv 06.07.00 18.01.02
+     &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2npp7, b2xppz  !srv 06.07.00 18.01.02
 *   ..initialization
       data ncall/0/, xfm0/1.0e0_R8/, xfm1/1.0e0_R8/, xfm2/1.0e0_R8/,
-     1   xfm3/1.0e0_R8/, potit/50/, potok/1e-2_R8/, area_fix/3/,      !srv 09.07.99 09.03.09
-     2   vis_per/0.0e0_R8/, no_current/0/                             !srv 06.07.00
+     1   xfm3/1.0e0_R8/, potit/50/, potok/1e-2_R8/, area_fix/3/,       !srv 09.07.99 09.03.09
+     2   vis_per/0.0e0_R8/, no_current/0/                              !srv 06.07.00
 !     2 ,facdrift/0.0e0_R8/, facdrift_target/0.0e0_R8/, facdrift_start/0.0e0_R8/, !srv 09.07.99
 !     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                 !srv 09.07.99
       integer, save :: no_neutr_scl = 0, no_b2sral_call = 1
       integer, save :: do_2nd_b2npco_call = 0
-      integer, save :: re_eval_prtls_fluxes = 0                       !srv 28.06.13
+      integer, save :: re_eval_prtls_fluxes = 0                        !srv 28.06.13
       integer, save :: nhist = 0, neutr_avg = 0, nrelax = 0, nstg2 = 0
       integer, save :: use_eirene = 0
 *
@@ -128,7 +128,7 @@
        nsmin=0
        nsmax=ns
        call ipgetr ('b2news_BoRiS', BoRiS)
-       call ipgeti ('b2ux7p_style', style)                            !srv 29.05.02
+       call ipgeti ('b2ux7p_style', style)                             !srv 29.05.02
        call ipgetr ('b2news_xfm0', xfm0)
        call ipgetr ('b2news_xfm1', xfm1)
        call ipgetr ('b2news_xfm2', xfm2)
@@ -231,7 +231,7 @@ csw 26feb2014 some extra variables
           nsmax=0
        endif
        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
-      endif                                                          !srv 02.07.08 
+      endif                                                           !srv 02.07.08 
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny, ns

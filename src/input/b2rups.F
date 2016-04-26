@@ -407,7 +407,7 @@
       tim=time(1)
       call xertst (0.0_R8.le.tim, 'faulty input time')
 *   ..read parallel current
-      if(b2fstat_version.ge.'01.001.069') then                  !srv 09.09.11
+      if(b2fstat_version.ge.'01.001.069') then                   !srv 09.09.11
         call cfrure (nget, n2, fch_p(:,:,0), 'fch_p')
         fch_p(:,:,1)=0.0_R8                                      !srv 19.03.12
       elseif(b2fstat_version.ge.'01.001.025' .and.

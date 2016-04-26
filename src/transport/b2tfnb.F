@@ -1,13 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tfnb (nx, ny, isb, ismain,                           !srv 08.09.01 !lk 02.06.11
-     &  guard_flows, facdrift, fac_ExB, mb, vol, zb,                    !xpb
-     &  pbs, pbshz, nb, pb, ub, ubdia, vbecrb, vbdia, wbdia, ne,        !xpb !srv 09.01.01
-     &  te, ti, bb, hx, hy, hz, qz, gs, qc, po, cvlb, cdnb, cdpb, cddb, !srv 09.01.01 13.10.06
-     &  cvlbhz, cvmbhz, cdnbhz, cdpbhz,                                 !srv 09.01.01
-     &  fchvispar, fchinert, fchanml,                                   !srv 20.09.06
-     &  fnb, fnb_nodrift, fnb_fcor, fnb_he, fnbPSch, fnb_mdf,           !srv 13.10.06
+      subroutine b2tfnb (nx, ny, isb, ismain,                            !srv 08.09.01 !lk 02.06.11
+     &  guard_flows, facdrift, fac_ExB, mb, vol, zb,                     !xpb
+     &  pbs, pbshz, nb, pb, ub, ubdia, vbecrb, vbdia, wbdia, ne,         !xpb !srv 09.01.01
+     &  te, ti, bb, hx, hy, hz, qz, gs, qc, po, cvlb, cdnb, cdpb, cddb,  !srv 09.01.01 13.10.06
+     &  cvlbhz, cvmbhz, cdnbhz, cdpbhz,                                  !srv 09.01.01
+     &  fchvispar, fchinert, fchanml,                                    !srv 20.09.06
+     &  fnb, fnb_nodrift, fnb_fcor, fnb_he, fnbPSch, fnb_mdf,            !srv 13.10.06
      &  flob, conb, fnb_32, fnb_52, fnb_32nd,  
      &  fnb_52nd,kbnrgy, fllim0fnb)
       use b2mod_types
@@ -68,50 +68,50 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ib, area_fix, no_hybr,
-     &        ixl, iyl, ixb, iyb                                        !srv 13.10.06
-      integer, save :: iout = 0,                                        !srv 16.09.02
+     &        ixl, iyl, ixb, iyb                                         !srv 13.10.06
+      integer, save :: iout = 0,                                         !srv 16.09.02
      &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
-      integer, save :: mdf_fnb = 0                                      !srv 13.10.06
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0             !srv 06.07.06
-      integer, save :: PSch_style = 1                                   !srv 12.11.08
-      character chns*3                                                  !srv 16.09.02
-      integer, save :: fnb_nodrift_style = 1                            !srv 20.06.08
-      integer, save :: drift_style = 1                                  !srv 21.06.08
-      real (kind=R8), save :: cfvma = 0.0_R8                            !srv 15.12.05
-      real (kind=R8), save :: alpha_ = 0.0_R8                           !srv 09.07.03
-      real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
-      real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8           !srv 27.01.12
+      integer, save :: mdf_fnb = 0                                       !srv 13.10.06
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
+      integer, save :: PSch_style = 1                                    !srv 12.11.08
+      character chns*3                                                   !srv 16.09.02
+      integer, save :: fnb_nodrift_style = 1                             !srv 20.06.08
+      integer, save :: drift_style = 1                                   !srv 21.06.08
+      real (kind=R8), save :: cfvma = 0.0_R8                             !srv 15.12.05
+      real (kind=R8), save :: alpha_ = 0.0_R8                            !srv 09.07.03
+      real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
+      real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
       real (kind=R8), save ::  
-     &   poleldr = 1.0_R8, radeldr = 1.0_R8,                            !srv 25.04.00
-     &   poldidr = 1.0_R8, raddidr = 1.0_R8,                            !srv 25.04.00
-     &   PSch = 1.0_R8                                                  !srv 17.01.07
+     &   poleldr = 1.0_R8, radeldr = 1.0_R8,                             !srv 25.04.00
+     &   poldidr = 1.0_R8, raddidr = 1.0_R8,                             !srv 25.04.00
+     &   PSch = 1.0_R8                                                   !srv 17.01.07
       real (kind=R8) ::
      *   con(-1:nx,-1:ny), dif, flo, con_nodrift, flo_nodrift, xfrhie, 
      *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
      *   flux_limit_min_ti,
-     *   flo2dia, con_2dia(-1:nx,-1:ny), flo_mdf, con_mdf(-1:nx,-1:ny), !srv 01.10.99 21.01.00 22.05.03 04.02.05 13.10.06
-     *   term(-1:nx,-1:ny), flo_he, con_he(-1:nx,-1:ny),                !srv 25.04.00 13.09.02 11.09.09
-     &   termhz(-1:nx,-1:ny)                                            !srv 05.11.09
+     *   flo2dia, con_2dia(-1:nx,-1:ny), flo_mdf, con_mdf(-1:nx,-1:ny),  !srv 01.10.99 21.01.00 22.05.03 04.02.05 13.10.06
+     *   term(-1:nx,-1:ny), flo_he, con_he(-1:nx,-1:ny),                 !srv 25.04.00 13.09.02 11.09.09
+     &   termhz(-1:nx,-1:ny)                                             !srv 05.11.09
       real (kind=R8) :: 
-     &   vbecrb_(-1:nx,-1:ny,0:1), wbdia_(-1:nx,-1:ny,0:1),             !srv 14.07.10 {
-     &   wedia_(-1:nx,-1:ny,0:1), wedia(-1:nx,-1:ny,0:1),               !srv 14.07.10 }
-     &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1)              !srv 21.10.10
+     &   vbecrb_(-1:nx,-1:ny,0:1), wbdia_(-1:nx,-1:ny,0:1),              !srv 14.07.10 {
+     &   wedia_(-1:nx,-1:ny,0:1), wedia(-1:nx,-1:ny,0:1),                !srv 14.07.10 }
+     &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1)               !srv 21.10.10
       parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
-     *   wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny), wrk5(-1:nx,-1:ny),       !srv 11.09.09
-     *   wrk6(-1:nx,-1:ny), wrk7(-1:nx,-1:ny), wrk8(-1:nx,-1:ny),       !srv 11.09.09 !iys 17.04.12
+     *   wrk3(-1:nx,-1:ny), wrk4(-1:nx,-1:ny), wrk5(-1:nx,-1:ny),        !srv 11.09.09
+     *   wrk6(-1:nx,-1:ny), wrk7(-1:nx,-1:ny), wrk8(-1:nx,-1:ny),        !srv 11.09.09 !iys 17.04.12
      &   wpo(-1:nx,-1:ny), wpb(-1:nx,-1:ny)
       real (kind=R8) ::
-     *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1), nbcor(-1:nx,-1:ny), !srv 01.10.99 !lk 09.06.11
-     *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny),                         !srv 08.10.04
-     *   nbzb(-1:nx,-1:ny), nbzbc(-1:nx,-1:ny)                          !srv 13.05.16
-      real (kind=R8) :: weight(-1:nx,-1:ny)                             !lk
+     *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1), nbcor(-1:nx,-1:ny),  !srv 01.10.99 !lk 09.06.11
+     *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny),                          !srv 08.10.04
+     *   nbzb(-1:nx,-1:ny), nbzbc(-1:nx,-1:ny)                           !srv 13.05.16
+      real (kind=R8) :: weight(-1:nx,-1:ny)                              !lk
       save ncall, alpha, gamma, flux_limit_min_ti, area_fix, no_hybr
 *   ..procedures
       real (kind=R8) ::
      *   kmpr, hybr, kap, cvmgp, hy1
-      external subini, subend, xertst, ipgeti, ipgetr                   !xpb
+      external subini, subend, xertst, ipgeti, ipgetr                    !xpb
       external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
       intrinsic abs, max, min, mod, sqrt
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
@@ -149,31 +149,31 @@
      &   'faulty internal parameter flux_limit_min_ti')
         call ipgeti ('b2news_area_fix', area_fix)
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
-        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                !srv 06.07.06
-        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                !srv 06.07.06
-        call ipgetr ('b2tfnb_poleldr', poleldr)                         !srv 25.04.00 {
+        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)                 !srv 06.07.06
+        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)                 !srv 06.07.06
+        call ipgetr ('b2tfnb_poleldr', poleldr)                          !srv 25.04.00 {
         call ipgetr ('b2tfnb_radeldr', radeldr)
         call ipgetr ('b2tfnb_poldidr', poldidr)
-        call ipgetr ('b2tfnb_raddidr', raddidr)                         !srv 25.04.00 }
-        call ipgeti ('b2tfnb_iout', iout)                               !srv 16.09.02
-        call ipgetr ('b2tlc0_alpha', alpha_)                            !srv 09.07.03 {
+        call ipgetr ('b2tfnb_raddidr', raddidr)                          !srv 25.04.00 }
+        call ipgeti ('b2tfnb_iout', iout)                                !srv 16.09.02
+        call ipgetr ('b2tlc0_alpha', alpha_)                             !srv 09.07.03 {
         call xertst (0.0_R8.le.alpha_,
      &   'faulty internal parameter alpha')
-        call xertst (.not.(0.0_R8.ne.alpha .and. 0.0_R8.ne.alpha_),     !srv 14.10.09
+        call xertst (.not.(0.0_R8.ne.alpha .and. 0.0_R8.ne.alpha_),      !srv 14.10.09
      &   'b2tfnb_alpha and b2tlc0_alpha cannot be both different '//
-     &   'from zero ')                                                  !srv 09.07.03 }
-        call ipgetr ('b2tqna_cfvma', cfvma)                             !srv 15.12.05
-        call ipgeti ('b2tfnb_mdf', mdf_fnb)                             !srv 13.10.06
-        call ipgetr ('b2tfnb_PSch', PSch)                               !srv 17.01.07
-        call ipgeti ('b2tfnb_PSch_style', PSch_style)                   !srv 12.11.08
-        call ipgeti ('b2tfnb_fnb_nodrift_style', fnb_nodrift_style)     !srv 20.06.08
-        call ipgeti ('b2tfnb_drift_style', drift_style)                 !srv 21.06.08
-        call ipgetr ('b2tfnb_ycur', ycur)                               !srv 17.07.08
-        call ipgeti ('b2npc9_iout', iout_b2npc9)                        !srv 11.09.09
+     &   'from zero ')                                                   !srv 09.07.03 }
+        call ipgetr ('b2tqna_cfvma', cfvma)                              !srv 15.12.05
+        call ipgeti ('b2tfnb_mdf', mdf_fnb)                              !srv 13.10.06
+        call ipgetr ('b2tfnb_PSch', PSch)                                !srv 17.01.07
+        call ipgeti ('b2tfnb_PSch_style', PSch_style)                    !srv 12.11.08
+        call ipgeti ('b2tfnb_fnb_nodrift_style', fnb_nodrift_style)      !srv 20.06.08
+        call ipgeti ('b2tfnb_drift_style', drift_style)                  !srv 21.06.08
+        call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
+        call ipgeti ('b2npc9_iout', iout_b2npc9)                         !srv 11.09.09
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npmo_iout', iout_b2npmo)
-        call ipgetr ('b2tfrn_xvecrb', xvecrb)                           !srv 27.01.12
-        call ipgetr ('b2tfrn_xwdia', xwdia)                             !srv 27.01.12
+        call ipgetr ('b2tfrn_xvecrb', xvecrb)                            !srv 27.01.12
+        call ipgetr ('b2tfrn_xwdia', xwdia)                              !srv 27.01.12
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -190,7 +190,7 @@
       endif
 
       write(chns,'(i3.3)') isb
-      if(mdf_fnb.eq.0) then                                             !srv 21.10.10 {
+      if(mdf_fnb.eq.0) then                                              !srv 21.10.10 {
        kmprti  = 0.0_R8
        dkmprti = 0.0_R8
       else
@@ -257,152 +257,152 @@
         kmprti  = 0.0_R8
         dkmprti = 0.0_R8
        endif
-      endif                                                             !srv 21.10.10 }
+      endif                                                              !srv 21.10.10 }
 
 c Drift terms
       maxfluxlimit=0.0_R8
       ubdia =0.0_R8
-      ub2dia=0.0_R8                                                     !srv 01.10.99
+      ub2dia=0.0_R8                                                      !srv 01.10.99
       vbdia =0.0_R8
       wbdia =0.0_R8
       wedia =0.0_R8
       wedia_=0.0_R8
       vbecrb=0.0_R8
-      fnbPSch = 0.0_R8                                                  !srv 13.10.06
-      fnb_mdf = 0.0_R8                                                  !srv 19.11.09
-      conb  = 0.0e0_R8                                                  !srv 13.10.06
+      fnbPSch = 0.0_R8                                                   !srv 13.10.06
+      fnb_mdf = 0.0_R8                                                   !srv 19.11.09
+      conb  = 0.0e0_R8                                                   !srv 13.10.06
       if((maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8)
      &    .and. minval(zb).gt.0.0_R8) then
-       if(drift_style.eq.0) then                                        !srv 21.06.08
+       if(drift_style.eq.0) then                                         !srv 21.06.08
         call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpo)
         call intfacev(nx,ny,bottomix,bottomiy,vol,nb*ti,wpb)
         do iy = -1, ny
-          do ix = -1, nx                                                !xpb
+          do ix = -1, nx                                                 !xpb
 cxpb  Must check that we are not at the island X-point or at the mesh edge !xpb
             if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).ne.iy .and.
      &         topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
      &         rightix(ix,iy).ne.nx+1 .and. leftiy(ix,iy).ne.-2 .and.
-     &         region(ix,iy,0).ne.0) then                               !xpb
+     &         region(ix,iy,0).ne.0) then                                !xpb
 cxpb  Standard case
-              vbecrb(ix,iy,0) = - signmf/hy1(ix,iy)*                    !xpb
-     1         1.0_R8/bb(ix,iy,3)*                                      !xpb
+              vbecrb(ix,iy,0) = - signmf/hy1(ix,iy)*                     !xpb
+     1         1.0_R8/bb(ix,iy,3)*                                       !xpb
      2         (wpo(topix(ix,iy),topiy(ix,iy))-wpo(ix,iy))*
-     &         fac_ExB(ix,iy)                                           !xpb
-              vbdia(ix,iy,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)*    !xpb
-     1         1.0_R8/bb(ix,iy,3)*                                      !xpb
-     2         2.0_R8*ti(ix,iy)/bb(ix,iy,3)/qe/zb(ix,iy)*               !xpb
+     &         fac_ExB(ix,iy)                                            !xpb
+              vbdia(ix,iy,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)*     !xpb
+     1         1.0_R8/bb(ix,iy,3)*                                       !xpb
+     2         2.0_R8*ti(ix,iy)/bb(ix,iy,3)/qe/zb(ix,iy)*                !xpb
      3        (wbbv(topix(ix,iy),topiy(ix,iy),3)-wbbv(ix,iy,3))*
-     &        facdrift(ix,iy)                                           !xpb
+     &        facdrift(ix,iy)                                            !xpb
               wbdia(ix,iy,0) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)
      1         /bb(ix,iy,3)/qe/zb(ix,iy)/nb(ix,iy)*
      2         (wpb(topix(ix,iy),topiy(ix,iy))-wpb(ix,iy))*
      &         facdrift(ix,iy)
-            else                                                        !xpb
+            else                                                         !xpb
 cxpb  Case of the island X-point cells
-cxpb          vbecrb(ix,iy,0) = - signmf/hy1(ix,iy)*fac_ExB(ix,iy)*     !xpb
-cxpb     1             1.0_R8/bb(ix,iy,3)*                              !xpb
-cxpb     2             ((po(topix(ix,iy),topiy(ix,iy))*vol(ix,iy)+      !xpb
-cxpb     2               po(ix,iy)*vol(topix(ix,iy),topiy(ix,iy)))/     !xpb
+cxpb          vbecrb(ix,iy,0) = - signmf/hy1(ix,iy)*fac_ExB(ix,iy)*      !xpb
+cxpb     1             1.0_R8/bb(ix,iy,3)*                               !xpb
+cxpb     2             ((po(topix(ix,iy),topiy(ix,iy))*vol(ix,iy)+       !xpb
+cxpb     2               po(ix,iy)*vol(topix(ix,iy),topiy(ix,iy)))/      !xpb
 cxpb     2          (vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))-wpo(ix,iy)) !xpb
-cxpb          vbdia(ix,iy,0) = - signmf/hy1(ix,iy)*facdrift(ix,iy)*     !xpb
-cxpb     1             1.0_R8/bb(ix,iy,3)*                              !xpb
-cxpb     2             2.0_R8*ti(ix,iy)/bb(ix,iy,3)/qe/zb(ix,iy)*       !xpb
-cxpb     3         ((vol(ix,iy)*bb(topix(ix,iy),topiy(ix,iy),3)+        !xpb
-cxpb     3           vol(topix(ix,iy),topiy(ix,iy))*bb(ix,iy,3))/       !xpb
-cxpb     3              (vol(topix(ix,iy),topiy(ix,iy))+vol(ix,iy))-    !xpb
-cxpb     3              wbbv(ix,iy,3))                                  !xpb
-              vbecrb(ix,iy,0) = 0.0_R8                                  !xpb
-              vbdia(ix,iy,0) = 0.0_R8                                   !xpb
-            endif                                                       !xpb
-            ubdia(ix,iy,0) = vbecrb(ix,iy,0) + vbdia(ix,iy,0)           !srv 17.05.99
-            ub2dia(ix,iy,0) = vbecrb(ix,iy,0) + 2.0_R8*vbdia(ix,iy,0)   !srv 01.10.99
+cxpb          vbdia(ix,iy,0) = - signmf/hy1(ix,iy)*facdrift(ix,iy)*      !xpb
+cxpb     1             1.0_R8/bb(ix,iy,3)*                               !xpb
+cxpb     2             2.0_R8*ti(ix,iy)/bb(ix,iy,3)/qe/zb(ix,iy)*        !xpb
+cxpb     3         ((vol(ix,iy)*bb(topix(ix,iy),topiy(ix,iy),3)+         !xpb
+cxpb     3           vol(topix(ix,iy),topiy(ix,iy))*bb(ix,iy,3))/        !xpb
+cxpb     3              (vol(topix(ix,iy),topiy(ix,iy))+vol(ix,iy))-     !xpb
+cxpb     3              wbbv(ix,iy,3))                                   !xpb
+              vbecrb(ix,iy,0) = 0.0_R8                                   !xpb
+              vbdia(ix,iy,0) = 0.0_R8                                    !xpb
+            endif                                                        !xpb
+            ubdia(ix,iy,0) = vbecrb(ix,iy,0) + vbdia(ix,iy,0)            !srv 17.05.99
+            ub2dia(ix,iy,0) = vbecrb(ix,iy,0) + 2.0_R8*vbdia(ix,iy,0)    !srv 01.10.99
           enddo
         enddo
         
         call intfaceh(nx,ny,leftix,leftiy,vol,po,wpo)
         call intfaceh(nx,ny,leftix,leftiy,vol,nb*ti,wpb)
-        do iy = -1, ny                                                  !xpb
+        do iy = -1, ny                                                   !xpb
           do ix = -1, nx
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &         bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &         region(ix,iy,0).ne.0) then
-             vbecrb(ix,iy,1) = 1.0_R8/hx(ix,iy)*                        !xpb
-     1          bb(ix,iy,2)/bb(ix,iy,3)**2*                             !xpb
+             vbecrb(ix,iy,1) = 1.0_R8/hx(ix,iy)*                         !xpb
+     1          bb(ix,iy,2)/bb(ix,iy,3)**2*                              !xpb
      2         (wpo(rightix(ix,iy),rightiy(ix,iy))-wpo(ix,iy))*
-     &         fac_ExB(ix,iy)                                           !xpb
+     &         fac_ExB(ix,iy)                                            !xpb
              vbdia(ix,iy,1) = ti(ix,iy)*bb(ix,iy,2)
-     &         /(qe*zb(ix,iy)*hx(ix,iy))                                !xpb
-     &         *(2.0_R8/bb(ix,iy,3)**3)                                 !xpb
-     &         *(wbbr(ix,iy,3)-wbbl(ix,iy,3))*facdrift(ix,iy)           !xpb
+     &         /(qe*zb(ix,iy)*hx(ix,iy))                                 !xpb
+     &         *(2.0_R8/bb(ix,iy,3)**3)                                  !xpb
+     &         *(wbbr(ix,iy,3)-wbbl(ix,iy,3))*facdrift(ix,iy)            !xpb
              wbdia(ix,iy,1) = bb(ix,iy,2)
-     &         /(qe*zb(ix,iy)*hx(ix,iy)*nb(ix,iy))                      !xpb
-     &         /bb(ix,iy,3)**2*                                         !xpb
+     &         /(qe*zb(ix,iy)*hx(ix,iy)*nb(ix,iy))                       !xpb
+     &         /bb(ix,iy,3)**2*                                          !xpb
      2         (wpb(rightix(ix,iy),rightiy(ix,iy))-wpb(ix,iy))*
      &         facdrift(ix,iy)
-             ubdia(ix,iy,1) = vbecrb(ix,iy,1) + vbdia(ix,iy,1)          !srv 17.05.99
-             ub2dia(ix,iy,1) = vbecrb(ix,iy,1) + 2.0_R8*vbdia(ix,iy,1)  !srv 01.10.99
+             ubdia(ix,iy,1) = vbecrb(ix,iy,1) + vbdia(ix,iy,1)           !srv 17.05.99
+             ub2dia(ix,iy,1) = vbecrb(ix,iy,1) + 2.0_R8*vbdia(ix,iy,1)   !srv 01.10.99
             endif
           enddo
         enddo
 
 * drift velocities at walls are extrapolated from those at neighbouring cells
-* drift velocities at iy=ny are extrapolated from those at iy=ny-1      !xpb
-* drift velocities at iy=-1 are extrapolated from those at iy=0         !xpb
-        do ix = -1, nx                                                  !xpb
-          do iy = -1, ny                                                !xpb
+* drift velocities at iy=ny are extrapolated from those at iy=ny-1       !xpb
+* drift velocities at iy=-1 are extrapolated from those at iy=0          !xpb
+        do ix = -1, nx                                                   !xpb
+          do iy = -1, ny                                                 !xpb
             if(leftix(ix,iy).eq.-2) then
-              vbecrb(ix,iy,:) = vbecrb(rightix(ix,iy),rightiy(ix,iy),:) !xpb
-              vbdia(ix,iy,:) = vbdia(rightix(ix,iy),rightiy(ix,iy),:)   !xpb
-              wbdia(ix,iy,:) = wbdia(rightix(ix,iy),rightiy(ix,iy),:)   !xpb
+              vbecrb(ix,iy,:) = vbecrb(rightix(ix,iy),rightiy(ix,iy),:)  !xpb
+              vbdia(ix,iy,:) = vbdia(rightix(ix,iy),rightiy(ix,iy),:)    !xpb
+              wbdia(ix,iy,:) = wbdia(rightix(ix,iy),rightiy(ix,iy),:)    !xpb
               ubdia(ix,iy,:) = vbecrb(ix,iy,:) + vbdia(ix,iy,:) 
-              ub2dia(ix,iy,:) = vbecrb(ix,iy,:) + 2.0_R8*vbdia(ix,iy,:) !srv 17.07.08
-            elseif(rightix(ix,iy).eq.nx+1) then                         !xpb
-              vbecrb(ix,iy,:) = vbecrb(leftix(ix,iy),leftiy(ix,iy),:)   !xpb
-              vbdia(ix,iy,:) = vbdia(leftix(ix,iy),leftiy(ix,iy),:)     !xpb
-              wbdia(ix,iy,:) = wbdia(leftix(ix,iy),leftiy(ix,iy),:)     !xpb
+              ub2dia(ix,iy,:) = vbecrb(ix,iy,:) + 2.0_R8*vbdia(ix,iy,:)  !srv 17.07.08
+            elseif(rightix(ix,iy).eq.nx+1) then                          !xpb
+              vbecrb(ix,iy,:) = vbecrb(leftix(ix,iy),leftiy(ix,iy),:)    !xpb
+              vbdia(ix,iy,:) = vbdia(leftix(ix,iy),leftiy(ix,iy),:)      !xpb
+              wbdia(ix,iy,:) = wbdia(leftix(ix,iy),leftiy(ix,iy),:)      !xpb
               ubdia(ix,iy,:) = vbecrb(ix,iy,:) + vbdia(ix,iy,:) 
-              ub2dia(ix,iy,:) = vbecrb(ix,iy,:) + 2.0_R8*vbdia(ix,iy,:) !srv 17.07.08
+              ub2dia(ix,iy,:) = vbecrb(ix,iy,:) + 2.0_R8*vbdia(ix,iy,:)  !srv 17.07.08
             endif
-            if(topiy(ix,iy).eq.ny+1) then                               !xpb
+            if(topiy(ix,iy).eq.ny+1) then                                !xpb
               vbecrb(ix,iy,:) = 
-     .         vbecrb(bottomix(ix,iy),bottomiy(ix,iy),:)                !xpb
-              vbdia(ix,iy,:) = vbdia(bottomix(ix,iy),bottomiy(ix,iy),:) !xpb
-              wbdia(ix,iy,:) = wbdia(bottomix(ix,iy),bottomiy(ix,iy),:) !xpb
+     .         vbecrb(bottomix(ix,iy),bottomiy(ix,iy),:)                 !xpb
+              vbdia(ix,iy,:) = vbdia(bottomix(ix,iy),bottomiy(ix,iy),:)  !xpb
+              wbdia(ix,iy,:) = wbdia(bottomix(ix,iy),bottomiy(ix,iy),:)  !xpb
               ubdia(ix,iy,:) = vbecrb(ix,iy,:) + vbdia(ix,iy,:) 
-              ub2dia(ix,iy,:) = vbecrb(ix,iy,:) + 2.0_R8*vbdia(ix,iy,:) !srv 17.07.08
+              ub2dia(ix,iy,:) = vbecrb(ix,iy,:) + 2.0_R8*vbdia(ix,iy,:)  !srv 17.07.08
             elseif(bottomiy(ix,iy).eq.-2) then
-              vbecrb(ix,iy,:) = vbecrb(topix(ix,iy),topiy(ix,iy),:)     !xpb
-              vbdia(ix,iy,:) = vbdia(topix(ix,iy),topiy(ix,iy),:)       !xpb
-              wbdia(ix,iy,:) = wbdia(topix(ix,iy),topiy(ix,iy),:)       !xpb
+              vbecrb(ix,iy,:) = vbecrb(topix(ix,iy),topiy(ix,iy),:)      !xpb
+              vbdia(ix,iy,:) = vbdia(topix(ix,iy),topiy(ix,iy),:)        !xpb
+              wbdia(ix,iy,:) = wbdia(topix(ix,iy),topiy(ix,iy),:)        !xpb
               ubdia(ix,iy,:) = vbecrb(ix,iy,:) + vbdia(ix,iy,:) 
-              ub2dia(ix,iy,:) = vbecrb(ix,iy,:) + 2.0_R8*vbdia(ix,iy,:) !srv 17.07.08
+              ub2dia(ix,iy,:) = vbecrb(ix,iy,:) + 2.0_R8*vbdia(ix,iy,:)  !srv 17.07.08
             endif
           enddo
         enddo
 
-* turn off side drift flows in guard cells                              !xpb
-        do iy = -1, ny                                                  !xpb
+* turn off side drift flows in guard cells                               !xpb
+        do iy = -1, ny                                                   !xpb
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-           vbecrb(ix,iy,1) = 0.0_R8                                     !xpb
-           vbdia(ix,iy,1) = 0.0_R8                                      !xpb
-           wbdia(ix,iy,1) = 0.0_R8                                      !xpb
-           ubdia(ix,iy,1) = 0.0_R8                                      !xpb
-           ub2dia(ix,iy,1) = 0.0_R8                                     !srv 17.07.08
+           vbecrb(ix,iy,1) = 0.0_R8                                      !xpb
+           vbdia(ix,iy,1) = 0.0_R8                                       !xpb
+           wbdia(ix,iy,1) = 0.0_R8                                       !xpb
+           ubdia(ix,iy,1) = 0.0_R8                                       !xpb
+           ub2dia(ix,iy,1) = 0.0_R8                                      !srv 17.07.08
           endif
           if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
-           vbecrb(ix,iy,0) = 0.0_R8                                     !xpb
-           vbdia(ix,iy,0) = 0.0_R8                                      !xpb
-           wbdia(ix,iy,0) = 0.0_R8                                      !xpb
-           ubdia(ix,iy,0) = 0.0_R8                                      !xpb
-           ub2dia(ix,iy,0) = 0.0_R8                                     !srv 17.07.08
+           vbecrb(ix,iy,0) = 0.0_R8                                      !xpb
+           vbdia(ix,iy,0) = 0.0_R8                                       !xpb
+           wbdia(ix,iy,0) = 0.0_R8                                       !xpb
+           ubdia(ix,iy,0) = 0.0_R8                                       !xpb
+           ub2dia(ix,iy,0) = 0.0_R8                                      !srv 17.07.08
           endif
          enddo
-        enddo                                                           !xpb
-       else                                                             !srv 21.06.08 {
-        weight = 1.0e0_R8                                               !lk
+        enddo                                                            !xpb
+       else                                                              !srv 21.06.08 {
+        weight = 1.0e0_R8                                                !lk
 !lk       call intcor(nx,ny,vol,po,poc)
-        call intcor(nx,ny,weight,po,poc)                                !lk 12.12.07
+        call intcor(nx,ny,weight,po,poc)                                 !lk 12.12.07
         nbti=nb*ti
 !lk       call intcor(nx,ny,vol,nbti,nbtic)                              !srv 08.10.04
         call intcor(nx,ny,weight,nbti,nbtic)                             !lk 12.12.07
@@ -501,7 +501,7 @@ cxpb     3              wbbv(ix,iy,3))                                  !xpb
          enddo
         enddo
         call intfacev(nx,ny,bottomix,bottomiy,vol,wedia_(-1,-1,1),
-     &                                             wedia(-1,-1,1))      !srv 14.07.10 }
+     &                                             wedia(-1,-1,1))       !srv 14.07.10 }
 
 
         do iy = 0, ny
@@ -529,7 +529,7 @@ cxpb     3              wbbv(ix,iy,3))                                  !xpb
      &           /(qe*zb(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy)))     !srv
      &           +ti(ix,iy)*bb(ix,iy,2)/(qe*zb(ix,iy)*hx(ix,iy)))*0.5_R8 !srv
      &        *(OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-OnedBsqc(ix,iy)) !srv 05.03.99
-           wbdia(ix,iy,1) = facdrift(ix,iy)/                           !srv 13.05.16 {
+           wbdia(ix,iy,1) = facdrift(ix,iy)/                             !srv 13.05.16 {
      1      (hx(ix,iy)+hx(bottomix(ix,iy),bottomiy(ix,iy)))*
      2      (bb(ix,iy,2)/bb(ix,iy,3)**2
      2       +bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
@@ -543,19 +543,19 @@ cxpb     3              wbbv(ix,iy,3))                                  !xpb
          enddo
         enddo
 
-       endif                                                            !srv 21.06.08 {
+       endif                                                             !srv 21.06.08 {
 
-*   ..compute P.Sch x-flux                                              !srv 13.10.06 {
-       if(PSch_style.eq.0) then                                         !srv 12.11.08
+*   ..compute P.Sch x-flux                                               !srv 13.10.06 {
+       if(PSch_style.eq.0) then                                          !srv 12.11.08
         call intcor(nx,ny,vol,po,poc)
         nbti=nb*ti
-        call intcor(nx,ny,vol,nbti,nbtic)                               !srv 08.10.04
+        call intcor(nx,ny,vol,nbti,nbtic)                                !srv 08.10.04
         do iy = 0, ny-1
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or. 
-     &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then       !srv 26.05.08
+     &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then        !srv 26.05.08
            fnbPSch(ix,iy,0)=0.0e0_R8
-           conb(ix,iy,0,3) = 0.0e0_R8                                   !srv 26.05.08
+           conb(ix,iy,0,3) = 0.0e0_R8                                    !srv 26.05.08
            conb(ix,iy,0,4) = 0.0e0_R8
           else
            ixl = leftix(ix,iy)

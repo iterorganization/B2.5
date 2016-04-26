@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbc (nx, ny, ns, ismain, ismain0, 
-     &  BoRiS, facdrift, fac_ExB,   !xpb
+     &  BoRiS, facdrift, fac_ExB,                                        !xpb
      &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !xpb !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, veecrb, vaecrb,
      &  te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc,                  !srv 28.10.02

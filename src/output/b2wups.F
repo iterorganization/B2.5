@@ -17,12 +17,12 @@
       integer nput, nx, ny, ns
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
-     &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:ns-1),			 !xpb
+     &  ne(-1:nx,-1:ny), uadia(-1:nx,-1:ny,0:1,0:ns-1),                  !xpb
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     1	fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
+     1  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
      2  fch_p(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1),              !srv 10.06.08
      &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1), fhe_mdf(-1:nx,-1:ny,0:1),
      &  fhi_mdf(-1:nx,-1:ny,0:1), fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
@@ -129,7 +129,7 @@
      > call cfwure (nput, 1, time, 'time')
 *   ..save parallel current
       if(newversion.ge.'01.001.069') then                       !srv 09.09.11
-	 call cfwure (nput, n2, fch_p(:,:,0), 'fch_p')
+        call cfwure (nput, n2, fch_p(:,:,0), 'fch_p')
       elseif(newversion.ge.'01.001.025' .and.
      &   newversion.le.'01.001.068') then                       !srv 10.06.08 {
         call cfwure (nput, n2*2, fch_p, 'fch_p')
