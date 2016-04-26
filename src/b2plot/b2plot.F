@@ -936,6 +936,12 @@ c
       call mapx(nx,ny,1,fchvisq(:,:,1),work)
       call mapx(nx,ny,1,fchinert(:,:,0),work)
       call mapx(nx,ny,1,fchinert(:,:,1),work)
+      if (drift_style.eq.1) then
+        call mapx(nx,ny,1,veecrb(:,:,0),work)
+        call mapx(nx,ny,1,veecrb(:,:,1),work)
+        call mapx(nx,ny,1,vedia(:,:,0),work)
+        call mapx(nx,ny,1,vedia(:,:,1),work)
+      end if
 c
       inquire(file='B2SDIAG',exist=ex)
 #ifdef B25_EIRENE
@@ -3147,40 +3153,60 @@ c     assumes that bb is OK for 1d cases
           call copy(mach,1.0_R8,nz,textpl)
         case ('vadia.x')
           description='pol comp of the divergent ' //
-     *          'part of the diamagnetic velocity [vadia.x] (m.s^{-1})'
+     *     'part of the ion diamagnetic velocity [vadia.x] (m.s^{-1})'
           nz=ns
           mach(:,:,0:ns-1)=uadia(:,:,0,0:ns-1)-vaecrb(:,:,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('vadia.y')
           description='rad comp of the divergent ' //
-     *          'part of the diamagnetic velocity [vadia.y] (m.s^{-1})'
+     *     'part of the ion diamagnetic velocity [vadia.y] (m.s^{-1})'
           nz=ns
           mach(:,:,0:ns-1)=uadia(:,:,1,0:ns-1)-vaecrb(:,:,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('wadia.x')
           description='pol comp of the total ' //
-     *          'diamagnetic velocity [wadia.x] (m.s^{-1})'
+     *          'ion diamagnetic velocity [wadia.x] (m.s^{-1})'
           nz=ns
           mach(:,:,0:ns-1)=wadia(:,:,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('wadia.y')
           description='rad comp of the total ' //
-     *          'diamagnetic velocity [wadia.y] (m.s^{-1})'
+     *          'ion diamagnetic velocity [wadia.y] (m.s^{-1})'
           nz=ns
           mach(:,:,0:ns-1)=wadia(:,:,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('vexb.x')
           description='pol comp of the ' //
-     *          'ExB velocity [vaecrb.x] (m.s^{-1})'
+     *          'ion ExB velocity [vaecrb.x] (m.s^{-1})'
           nz=ns
           mach(:,:,0:ns-1)=vaecrb(:,:,0,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
         case ('vexb.y')
           description='rad comp of the ' //
-     *          'ExB velocity [vaecrb.y] (m.s^{-1})'
+     *          'ion ExB velocity [vaecrb.y] (m.s^{-1})'
           nz=ns
           mach(:,:,0:ns-1)=vaecrb(:,:,1,0:ns-1)
           call copy(mach,1.0_R8,nz,textpl)
+        case ('vedia.x')
+          description='pol comp of the divergent part of ' //
+     *     'the electron diamagnetic velocity [vedia.x] (m.s^{-1})'
+          nz=1
+          call copy(vedia(:,:,0),1.0_R8,nz,textbl)
+        case ('vedia.y')
+          description='rad comp of the divergent part of ' //
+     *          'the electron diamagnetic velocity [vedia.y] (m.s^{-1})'
+          nz=1
+          call copy(vedia(:,:,1),1.0_R8,nz,textbl)
+        case ('veexb.x')
+          description='pol comp of the ' //
+     *          'electron ExB velocity [veecrb.x] (m.s^{-1})'
+          nz=1
+          call copy(veecrb(:,:,0),1.0_R8,nz,textbl)
+        case ('veexb.y')
+          description='rad comp of the ' //
+     *          'electron ExB velocity [veecrb.y] (m.s^{-1})'
+          nz=1
+          call copy(veecrb(:,:,1),1.0_R8,nz,textbl)
         case ('cd')
           description='fchdia.x'
           nz=1

@@ -13,7 +13,7 @@
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, floe_noc, floi_noc,
+     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      &  ne1, na1, ua1, uadia1, te1, ti1, po1, fna1, fhe1, fhi1, fch1, 
      &  fch1_32, fch1_52, fch1_p, kinrgy1,
      &  fna_mdf1, fhe_mdf1, fhi_mdf1, fna_fcor1, fna_nodrift1, fna_he1,
@@ -21,7 +21,7 @@
      &  fna_eir1, fne_eir1, fhe_eir1, fhi_eir1,
      &  fna_321, fna_521, fni_321, fni_521, fne_321, fne_521,
      &  fchdia1, fchin1, fchvispar1, fchvisper1, fchvisq1, fchinert1,
-     &  vaecrb1, vadia1, wadia1, floe_noc1, floi_noc1)
+     &  vaecrb1, vadia1, wadia1, veecrb1, vedia1, floe_noc1, floi_noc1)
       use b2mod_types
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -43,7 +43,8 @@
      &  uadia(-1:nx,-1:ny,0:1,0:ns-1), ne(-1:nx,-1:ny),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
-     &  vadia(-1:nx,-1:ny,0:1,0:ns-1), wadia(-1:nx,-1:ny,0:1,0:ns-1)
+     &  vadia(-1:nx,-1:ny,0:1,0:ns-1), wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  veecrb(-1:nx,-1:ny,0:1), vedia(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
@@ -74,7 +75,8 @@
      &  te1(-1:nx1,-1:ny1), ti1(-1:nx1,-1:ny1), po1(-1:nx1,-1:ny1),
      &  vaecrb1(-1:nx1,-1:ny1,0:1,0:ns1-1),
      &  vadia1(-1:nx1,-1:ny1,0:1,0:ns1-1),
-     &  wadia1(-1:nx1,-1:ny1,0:1,0:ns1-1)
+     &  wadia1(-1:nx1,-1:ny1,0:1,0:ns1-1),
+     &  vedia1(-1:nx1,-1:ny1,0:1), veecrb1(-1:nx1,-1:ny1,0:1)
       real (kind=R8) ::
      *  fna1(-1:nx1,-1:ny1,0:1,0:ns1-1), fhe1(-1:nx1,-1:ny1,0:1),
      &  fhi1(-1:nx1,-1:ny1,0:1), fch1(-1:nx1,-1:ny1,0:1),
@@ -334,25 +336,37 @@
         endif
       enddo
       call b2xtvc (nx, ny, nx1, ny1, ne, ne1,
-     &        nncutmax, non_commensurate, 
+     &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
       call b2xtvc (nx, ny, nx1, ny1, te, te1,
-     &        nncutmax, non_commensurate, 
+     &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
       call b2xtvc (nx, ny, nx1, ny1, ti, ti1,
-     &        nncutmax, non_commensurate, 
+     &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
       call b2xtvc (nx, ny, nx1, ny1, po, po1,
-     &        nncutmax, non_commensurate, 
+     &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
+      if (drift_style.eq.0) then
+        call b2xtvc (nx, ny, nx1, ny1, veecrb, veecrb1,
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
+        call b2xtvc (nx, ny, nx1, ny1, vedia, vedia1,
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
+      end if
 *   ..transform fluxes and cell-faced velocities
       call sfill (n2*ns1*2, 0.0_R8, fna1, 1)
       call sfill (n2*ns1*2, 0.0_R8, fna_mdf1, 1)
@@ -1057,6 +1071,22 @@
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      .        hx, hx1, bottomiy1)
+      if (drift_style.eq.1) then
+        call b2xtfx (nx, ny, nx1, ny1,
+     &        veecrb(-1,-1,0), veecrb1(-1,-1,0),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        hy, qc, hy1, qc1)
+        call b2xtfx (nx, ny, nx1, ny1,
+     &        vedia(-1,-1,0), vedia1(-1,-1,0),
+     &        nncutmax, non_commensurate,
+     &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &        leftcut, leftcut1, rightcut, rightcut1,
+     &        bottomcut, bottomcut1, topcut, topcut1,
+     &        hy, qc, hy1, qc1)
+      end if
       call b2xtfx (nx, ny, nx1, ny1,
      &        floe_noc(-1,-1,0), floe_noc1(-1,-1,0),
      &        nncutmax, non_commensurate,

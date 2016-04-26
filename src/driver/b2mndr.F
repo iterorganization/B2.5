@@ -1318,7 +1318,7 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, floe_noc, floi_noc,
+     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      &  b2fstati_version)
       if(iout.ne.0) then                                             !srv 25.01.16 {
        call my_out(70,nx,ny,ne,'b2mndr_ne')
@@ -1525,7 +1525,7 @@ c   --> better way doing this is necessary)
      &   fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &   fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &   fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &   vaecrb, vadia, wadia, floe_noc, floi_noc)
+     &   vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
         close(70)
       endif                                                              !srv 04.02.15 }
 *   ..initialise previous state and fluxes
@@ -1886,7 +1886,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &     fna_eir, fne_eir, fhe_eir, fhi_eir,
      &     fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &     vaecrb, vadia, wadia, floe_noc, floi_noc)
+     &     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
 *       ..write additional save namelist data
           inquire(file='../b2.feedback_save.parameters',exist=found)
           if (found) call write_b2mod_feedback(99,savefile(13:16))
@@ -1960,7 +1960,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, floe_noc, floi_noc)
+     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
       call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                   !srv 05.10.01
       if (use_astra.ne.0) then
        call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')

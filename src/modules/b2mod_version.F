@@ -266,5 +266,5 @@ c                                 fnaPSch, fhePSch, fhiPSch,
 c                                 fna_eir, fne_eir, fhe_eir, fhi_eir,
 c                                 fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
 c                                 fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-c                                 vaecrb, vadia, wadia, floe_noc, floi_noc
+c                                 vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
 c

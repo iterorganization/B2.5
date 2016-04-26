@@ -8,7 +8,7 @@
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, floe_noc, floi_noc)
+     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
       use b2mod_types
       use b2mod_time
       use b2mod_version
@@ -40,6 +40,7 @@
      &  fchvisq(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),
      &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  veecrb(-1:nx,-1:ny,0:1), vedia(-1:nx,-1:ny,0:1),
      &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
 *     (none)
@@ -166,6 +167,8 @@
         call cfwure (nput, n2*2*ns, vaecrb, 'vaecrb')
         call cfwure (nput, n2*2*ns, vadia, 'vadia')
         call cfwure (nput, n2*2*ns, wadia, 'wadia')
+        call cfwure (nput, n2*2, veecrb, 'veecrb')
+        call cfwure (nput, n2*2, vedia, 'vedia')
         call cfwure (nput, n2*2, floe_noc, 'floe_noc')
         call cfwure (nput, n2*2, floi_noc, 'floi_noc')
       endif

@@ -264,7 +264,7 @@
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, floe_noc, floi_noc,
+     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      1	b2fstate_version)
 *   ..test plasma state and fluxes
       call b2xvps (nx, ny, ns, 

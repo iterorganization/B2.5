@@ -594,13 +594,6 @@
 *     vaecrb refers to cell centers if 'b2tfnb_drift_style' has '0'
 *     vaecrb refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
 *
-*     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
-*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
-*     the kinetic energy of a particle of species (is) in cell (ix,iy). 
-*     The velocity used includes the parallel velocity as well
-*     as the total diamagnetic and ExB drift velocities in both the radial
-*     and diamagnetic directions.
-*
 *     veecrb - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let veecrbx(,)=veecrb(,,0) and veecrby(,)=veecrb(,,1).)
 *     For (ix,iy) in (-1:nx,-1:ny), veecrbx(ix,iy) specifies
@@ -610,6 +603,13 @@
 *     For (ix,iy) in (-1:nx,-1:ny), veecrby(ix,iy) specifies
 *     the ExB drift velocity of electrons in cell (ix,iy)
 *     in the radial direction.
+*
+*     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
+*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
+*     the kinetic energy of a particle of species (is) in cell (ix,iy).
+*     The velocity used includes the parallel velocity as well
+*     as the total diamagnetic and ExB drift velocities in both the radial
+*     and diamagnetic directions.
 *
 *
 *   ..residuals and corrections

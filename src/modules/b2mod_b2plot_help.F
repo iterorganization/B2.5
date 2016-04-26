@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nwfns,ntrgfns
-      parameter(nlabels=335,nfns=197,nsparameters=29,
+      parameter(nlabels=339,nfns=197,nsparameters=29,
      *     nconstants=10,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -85,14 +85,15 @@
      8  'ne_ext'  , 'bmna'    , 'bmne'    , 'bmmo'    , 'bmhe'    ,
      9  'bmhi'    , 'bmch'    , 'fax_ext' , 'fay_ext' , 'lnlam'   ,
      *  'zn_ext'  , 'rc'      , 'srcml'   , 'edissml' , 'neutrad' /
-      data labels(301:335) /
+      data labels(301:339) /
      1  'fnaxnodr', 'fnaynodr', 'ne2'     , 'smth'    , 'ixle'    ,
      2  'ixge'    , 'iyle'    , 'iyge'    , 'isle'    , 'isge'    ,
      3  'smcf'    , 'fnaxmdf' , 'fnaymdf' , 'fhexmdf' , 'fheymdf' ,
      4  'fhixmdf' , 'fhiymdf' , 'fhexps'  , 'fheyps'  , 'fhixps'  ,
      5  'fhiyps'  , 'fnaxps'  , 'fnayps'  , 'fnaxfcor', 'fnayfcor',
      6  'fnaxhe'  , 'fnayhe'  , 'fchxvisq', 'fchyvisq', 'fchxinrt',
-     7  'fchyinrt', 'ixne'    , 'iyne'    , 'isne'    , 'ni'      /
+     7  'fchyinrt', 'vedia.x' , 'vedia.y' , 'veexb.x' , 'veexb.y' ,
+     8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -265,13 +266,13 @@
      4   'Radial current (A)',
      5   'pol comp of the drift velocity [uadia.x] (m.s^{-1})',
      6   'rad comp of the drift velocity [uadia.y] (m.s^{-1})',
-     7   'pol comp of div part of diamag velocity [vadia.x] (m.s^{-1})',
-     8   'rad comp of div part of diamag velocity [vadia.y] (m.s^{-1})',
-     9   'pol comp of the total diamag velocity [wadia.x] (m.s^{-1})',
-     *   'rad comp of the total diamag velocity [wadia.y] (m.s^{-1})'/
+     7   'pol comp of div part of ion diamag vel [vadia.x] (m.s^{-1})',
+     8   'rad comp of div part of ion diamag vel [vadia.y] (m.s^{-1})',
+     9   'pol comp of the total ion diamag vel [wadia.x] (m.s^{-1})',
+     *   'rad comp of the total ion diamag vel [wadia.y] (m.s^{-1})'/
       data descriptions(161:170) /
-     1    'pol comp of the ExB velocity [vaecrb.x] (m.s^{-1})',
-     2    'rad comp of the ExB velocity [vaecrb.y] (m.s^{-1})',
+     1    'pol comp of the ion ExB vel [vaecrb.x] (m.s^{-1})',
+     2    'rad comp of the ion ExB vel [vaecrb.y] (m.s^{-1})',
      3    'fchdia.x',
      4    'fchdia.y',
      5    'Isolating region',
@@ -456,12 +457,16 @@
      8    'Poloidal current due to heat flux viscosity tensor (A)',
      9    'Radial current due to heat flux viscosity tensor (A)',
      *    'Poloidal current due to inertia and gyroviscosity (A)'/
-      data descriptions(331:335) /
+      data descriptions(331:339) /
      1    'Radial current due to inertia and gyroviscosity (A)',
-     2    'ixne',
-     3    'iyne',
-     4    'isne',
-     5     'Total density (m^{-3})'/
+     2    'pol comp of div part of el diamag vel [vedia.x] (m.s^{-1})',
+     3    'rad comp of div part of el diamag vel [vedia.y] (m.s^{-1})',
+     4    'pol comp of the electron ExB vel [veecrb.x] (m.s^{-1})',
+     5    'rad comp of the electron ExB vel [veecrb.y] (m.s^{-1})',
+     6    'ixne',
+     7    'iyne',
+     8    'isne',
+     9     'Total density (m^{-3})'/
       data dimensions(1:50) /
      1    2,      2,      2,      2,      2,
      2    3,      3,      3,      3,      3,
@@ -528,14 +533,15 @@
      8    2,      3,      2,      3,      2,
      9    2,      2,      3,      3,      2,
      *    3,      2,      3,      3,      3/  
-      data dimensions(301:335) /
+      data dimensions(301:339) /
      1    3,      3,      2,      3,      2,
      2    2,      2,      2,      3,      3,
      3    3,      3,      3,      2,      2,
      4    2,      2,      2,      2,      2,
      5    2,      3,      3,      3,      3,
      6    3,      3,      2,      2,      2,
-     7    2,      2,      2,      3,      3/
+     7    2,      2,      2,      2,      2,
+     8    2,      2,      3,      3/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',

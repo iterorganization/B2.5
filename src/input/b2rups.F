@@ -8,7 +8,7 @@
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, floe_noc, floi_noc,
+     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      &  b2fstat_version)
       use b2mod_types
       use b2mod_rates
@@ -44,6 +44,7 @@
      &  fchvisq(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),
      &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  veecrb(-1:nx,-1:ny,0:1), vedia(-1:nx,-1:ny,0:1),
      &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1)
 
 *-----------------------------------------------------------------------
@@ -115,6 +116,16 @@
 *     wadia refers to cell centers if 'b2tfnb_drift_style' has '0'
 *     wadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
 *
+*     vedia - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let vediax(,)=vedia(,,0) and vediay(,)=vedia(,,1).)
+*     For (ix,iy) in (-1:nx,-1:ny), vediax(ix,iy) specifies
+*     the effective diamagnetic drift velocity of electrons in cell (ix,iy)
+*     in the diamagnetic direction (i.e. within the flux surface but
+*     perpendicular to the magnetic field).
+*     For (ix,iy) in (-1:nx,-1:ny), vediay(ix,iy) specifies
+*     the effective diamagnetic drift velocity of electrons in cell (ix,iy)
+*     in the radial direction.
+*
 *     vaecrb - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vaecrbx(,,)=vaecrb(,,0,) and vaecrby(,)=vaecrb(,,1,).)
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vaecrbx(ix,iy,is) specifies
@@ -126,6 +137,16 @@
 *     in the radial direction.
 *     vaecrb refers to cell centers if 'b2tfnb_drift_style' has '0'
 *     vaecrb refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*
+*     veecrb - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let veecrbx(,)=veecrb(,,0) and veecrby(,)=veecrb(,,1).)
+*     For (ix,iy) in (-1:nx,-1:ny), veecrbx(ix,iy) specifies
+*     the ExB drift velocity of electrons in cell (ix,iy)
+*     in the diamagnetic direction (i.e. within the flux surface but
+*     perpendicular to the magnetic field).
+*     For (ix,iy) in (-1:nx,-1:ny), veecrby(ix,iy) specifies
+*     the ExB drift velocity of electrons in cell (ix,iy)
+*     in the radial direction.
 *
 *     te - (-1:nx,-1:ny) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), te(ix,iy) specifies the electron
@@ -438,6 +459,8 @@
         call cfrure (nget, n2*2*ns, vaecrb, 'vaecrb')
         call cfrure (nget, n2*2*ns, vadia, 'vadia')
         call cfrure (nget, n2*2*ns, wadia, 'wadia')
+        call cfrure (nget, n2*2, veecrb, 'veecrb')
+        call cfrure (nget, n2*2, vedia, 'vedia')
         call cfrure (nget, n2*2, floe_noc, 'floe_noc')
         call cfrure (nget, n2*2, floi_noc, 'floi_noc')
       else
@@ -474,6 +497,8 @@
         vaecrb = 0.0_R8
         vadia = 0.0_R8
         wadia = 0.0_R8
+        veecrb = 0.0_R8
+        vedia = 0.0_R8
         floe_noc = 0.0_R8
         floi_noc = 0.0_R8
       endif

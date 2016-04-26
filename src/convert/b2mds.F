@@ -795,7 +795,7 @@ c     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
 c     fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
 c     fni_32, fni_52, fne_32, fne_52,
 c     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-c     vaecrb, vadia, wadia, floe_noc, floi_noc
+c     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
 
       dbversion=22
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
@@ -968,6 +968,10 @@ c
      1 nx+2,ny+2,2,ns,wadia,'TEXTDRIFT','TEXTPL','')
       call mds_put_double_rzdns('\TOP.SNAPSHOT:VAECRB','m/s',
      1 nx+2,ny+2,2,ns,vaecrb,'TEXTDRIFT','TEXTPL','')
+      call mds_put_double_rzns('\TOP.SNAPSHOT:VEDIA','m/s',
+     1 nx+2,ny+2,2,vedia,'TEXTDRIFT','')
+      call mds_put_double_rzns('\TOP.SNAPSHOT:VEECRB','m/s',
+     1 nx+2,ny+2,2,veecrb,'TEXTDRIFT','')
       call mds_put_double_rzns('\TOP.SNAPSHOT:KINRGY','J',
      1 nx+2,ny+2,ns,kinrgy,'TEXTPL','')
       call mds_put_double_rzns('\TOP.SNAPSHOT:B','T',

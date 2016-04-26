@@ -600,6 +600,12 @@
         status=mdsvalue2('_s=\TOP.SNAPSHOT:VAECRB'//char(0),
      1   descr2(idtype_double,NX+2,NY+2,2,NS,0),vaecrb,0,retlen)
         call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:VEDIA'//char(0),
+     1   descr2(idtype_double,NX+2,NY+2,2,0),vedia,0,retlen)
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:VEECRB'//char(0),
+     1   descr2(idtype_double,NX+2,NY+2,2,0),veecrb,0,retlen)
+        call mds_err_msg(status)
         status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOEX_NOC'//char(0),
      1   descr2(idtype_double,NX+1,NY+2,0),
      2   floe_noc(0:nx,-1:ny,0),0,retlen)
@@ -650,6 +656,8 @@
         vaecrb = 0.0_R8
         vadia = 0.0_R8
         wadia = 0.0_R8
+        veecrb = 0.0_R8
+        vedia = 0.0_R8
         floe_noc = 0.0_R8
         floi_noc = 0.0_R8
       endif
@@ -813,7 +821,7 @@
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, floe_noc, floi_noc)
+     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
       write(nout(0),*) 'Converted run number ',ishot,' to b2fstate'
 *   ..save geometry
       write(lblgm,*) 'Recovered geometry from run number ',ishot

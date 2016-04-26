@@ -188,7 +188,8 @@ c 2002-09-11: logic revised
      4 fchdia1(-1:nx1,-1:ny1,0:1), fchin1(-1:nx1,-1:ny1,0:1),
      5 fchvispar1(-1:nx1,-1:ny1,0:1), fchvisper1(-1:nx1,-1:ny1,0:1),
      6 fchvisq1(-1:nx1,-1:ny1,0:1), fchinert1(-1:nx1,-1:ny1,0:1),
-     7 floe_noc1(-1:nx1,-1:ny1,0:1), floi_noc1(-1:nx1,-1:ny1,0:1)
+     7 floe_noc1(-1:nx1,-1:ny1,0:1), floi_noc1(-1:nx1,-1:ny1,0:1),
+     8 veecrb1(-1:nx1,-1:ny1,0:1), vedia1(-1:nx1,-1:ny1,0:1)
       real (kind=R8), allocatable ::
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
      2 uadia1(:,:,:,:), fna1(:,:,:,:), ua1(:,:,:), na1(:,:,:),
@@ -780,7 +781,7 @@ c 2002-09-11: logic revised
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, floe_noc, floi_noc,
+     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      1  b2fstate_version)
       if (invert_bpol .eq. 1) ua = -ua
 *   ..write label
@@ -1002,7 +1003,7 @@ c 2002-09-11: logic revised
      &    fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &    fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &    fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &    vaecrb, vadia, wadia, floe_noc, floi_noc,
+     &    vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      &    ne1, na1, ua1, uadia1, te1, ti1, po1, fna1, fhe1, fhi1,
      &    fch1, fch1_32, fch1_52, fch1_p, kinrgy1,
      &    fna_mdf1, fhe_mdf1, fhi_mdf1,
@@ -1011,7 +1012,8 @@ c 2002-09-11: logic revised
      &    fna_eir1, fne_eir1, fhe_eir1, fhi_eir1,
      &    fna_321, fna_521, fni_321, fni_521, fne_321, fne_521,
      &    fchdia1, fchin1, fchvispar1, fchvisper1, fchvisq1, fchinert1,
-     &    vaecrb1, vadia1, wadia1, floe_noc1, floi_noc1)
+     &    vaecrb1, vadia1, wadia1, veecrb1, vedia1,
+     &    floe_noc1, floi_noc1)
 *   ..rescale transformed state (if necessary)
       neutral_rescale=1.0_R8
       call ipgetr ('b2ytdr_rescale_neutrals', neutral_rescale)
@@ -1059,7 +1061,7 @@ c 2002-09-11: logic revised
      &  fna_eir1, fne_eir1, fhe_eir1, fhi_eir1,
      &  fna_321, fna_521, fni_321, fni_521, fne_321, fne_521,
      &  fchdia1, fchin1, fchvispar1, fchvisper1, fchvisq1, fchinert1,
-     &  vaecrb1, vadia1, wadia1, floe_noc1, floi_noc1)
+     &  vaecrb1, vadia1, wadia1, veecrb1, vedia1, floe_noc1, floi_noc1)
 
 * ..check for need to transform other input files:
 * ..b2mn.dat, b2.*.parameters, input.dat, b2ah.dat, b2ai.dat

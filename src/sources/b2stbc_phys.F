@@ -4144,35 +4144,6 @@ cghgh
           fyt=0.0_R8
           DO IX = 1, BC_LIST_SIZE(IB)
 cxpb code segment analog to b2tfhe
-            if(ncall.eq.0) then
-             vedia(bc_list_x(ix,ib),bc_list_y(ix,ib),1) =
-     .        ti(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .           bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))*
-     &        bb(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .           bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),2)       !xpb
-     &        /(qe*hx(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .                bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))   !xpb
-     &        *(2.0_R8/
-     &          bb(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .             bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),3)**3) !xpb
-     &        *(wbbr(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .               bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),3)-
-     &          wbbl(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .               bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),3))
-     &        *facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))                                   !xpb
-             veecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1) =
-     .         1.0_R8/hx(bc_list_x(ix,ib),bc_list_y(ix,ib))*          !xpb
-     1          bb(bc_list_x(ix,ib),bc_list_y(ix,ib),2)/
-     .          bb(bc_list_x(ix,ib),bc_list_y(ix,ib),3)**2*               !xpb
-     2         (po(rightix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .             rightiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))-
-     3          po(leftix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .             leftiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))*0.5_R8*
-     &         fac_ExB(bc_list_x(ix,ib),bc_list_y(ix,ib))                                    !xpb
-            endif
-!xpb            if(no_current.eq.1) then
-!xpb              ehy = 0.0_R8
-!xpb            else
             ehy = -(po(bc_list_x(ix,ib),bc_list_y(ix,ib))-
      &     po(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .        bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))+
@@ -4184,7 +4155,6 @@ cxpb code segment analog to b2tfhe
      &    (2.0_R8/qe)/(ne(bottomix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                    bottomiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
      &                +ne(bc_list_x(ix,ib),bc_list_y(ix,ib)))
-!xpb            endif
             if (conduction_only.eq.1) then
               flo = 0.0_R8
             else
@@ -4308,34 +4278,6 @@ cxpb code segment analog to b2tfhe
           fyt=0.0_R8
           DO IX = 1, BC_LIST_SIZE(IB)
 cxpb code segment analog to b2tfhe
-            if(ncall.eq.0) then
-             vedia(bc_list_x(ix,ib),bc_list_y(ix,ib),1) =                 !xpb
-     &        ti(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .           topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))*               !xpb
-     &        bb(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .           topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),2)/             !xpb
-     &        (qe*hx(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))           !xpb
-     &        *(2.0_R8/bb(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .          topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),3)**3) !xpb
-     &        *(wbbr(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),3)-         !xpb
-     &          wbbl(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .               topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)),3))         !xpb
-     &        *facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))                                    !xpb
-             veecrb(bc_list_x(ix,ib),bc_list_y(ix,ib),1) =
-     .         1.0_R8/hx(bc_list_x(ix,ib),bc_list_y(ix,ib))*           !xpb
-     1          bb(bc_list_x(ix,ib),bc_list_y(ix,ib),2)/
-     .          bb(bc_list_x(ix,ib),bc_list_y(ix,ib),3)**2*                !xpb
-     2         (po(rightix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .             rightiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))-
-     3          po(leftix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
-     .             leftiy(bc_list_x(ix,ib),bc_list_y(ix,ib))))*0.5_R8*
-     &         fac_ExB(bc_list_x(ix,ib),bc_list_y(ix,ib))                                     !xpb
-            endif
-!xpb            if(no_current.eq.1) then
-!xpb               ehy = 0.0_R8
-!xpb            else
             ehy = -(po(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                 topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))-
      &                po(bc_list_x(ix,ib),bc_list_y(ix,ib)))+
@@ -4347,7 +4289,6 @@ cxpb code segment analog to b2tfhe
      &         (2.0_R8/qe)/(ne(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                         topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))
      &                     +ne(bc_list_x(ix,ib),bc_list_y(ix,ib)))
-!xpb            endif
             if (conduction_only.eq.1) then
               flo = 0.0_R8
             else
@@ -4360,7 +4301,7 @@ cxpb code segment analog to b2tfhe
      &           hy1(bc_list_x(ix,ib),bc_list_y(ix,ib)))
      &         *(ne(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .              topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))                    !xpb
-     &          +ne(bc_list_x(ix,ib),bc_list_y(ix,ib)))/2.0_R8                                       !xpb
+     &          +ne(bc_list_x(ix,ib),bc_list_y(ix,ib)))/2.0_R8                   !xpb
               flo_vedia=prefactor*
      .         vedia(bc_list_x(ix,ib),bc_list_y(ix,ib),1)
               flo_veecrb=prefactor*

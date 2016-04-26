@@ -86,6 +86,7 @@
      &  fchvispar1(:,:,:), fchvisper1(:,:,:),
      &  fchvisq1(:,:,:), fchinert1(:,:,:),
      &  vaecrb1(:,:,:,:), vadia1(:,:,:,:), wadia1(:,:,:,:),
+     &  veecrb1(:,:,:), vedia1(:,:,:),
      &  floe_noc1(:,:,:), floi_noc1(:,:,:)
       real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
       character lblps*120, lblgm*120, id*8, id0*8, line*500
@@ -169,6 +170,16 @@
 *     wadia refers to cell centers if 'b2tfnb_drift_style' has '0'
 *     wadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
 *
+*     vedia - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let vediax(,)=vedia(,,0) and vediay(,)=vedia(,,1).)
+*     For (ix,iy) in (-1:nx,-1:ny), vediax(ix,iy) specifies
+*     the effective diamagnetic drift velocity of electrons in cell (ix,iy)
+*     in the diamagnetic direction (i.e. within the flux surface but
+*     perpendicular to the magnetic field).
+*     For (ix,iy) in (-1:nx,-1:ny), vediay(ix,iy) specifies
+*     the effective diamagnetic drift velocity of electrons in cell (ix,iy)
+*     in the radial direction.
+*
 *     vaecrb - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
 *     (Let vaecrbx(,,)=vaecrb(,,0,) and vaecrby(,)=vaecrb(,,1,).)
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vaecrbx(ix,iy,is) specifies
@@ -180,6 +191,16 @@
 *     in the radial direction.
 *     vaecrb refers to cell centers if 'b2tfnb_drift_style' has '0'
 *     vaecrb refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*
+*     veecrb - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let veecrbx(,)=veecrb(,,0) and veecrby(,)=veecrb(,,1).)
+*     For (ix,iy) in (-1:nx,-1:ny), veecrbx(ix,iy) specifies
+*     the ExB drift velocity of electrons in cell (ix,iy)
+*     in the diamagnetic direction (i.e. within the flux surface but
+*     perpendicular to the magnetic field).
+*     For (ix,iy) in (-1:nx,-1:ny), veecrby(ix,iy) specifies
+*     the ExB drift velocity of electrons in cell (ix,iy)
+*     in the radial direction.
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
@@ -542,6 +563,7 @@
      &  vaecrb1(-1:nx,-1:ny,0:1,0:idum(2)-1),
      &  vadia1(-1:nx,-1:ny,0:1,0:idum(2)-1),
      &  wadia1(-1:nx,-1:ny,0:1,0:idum(2)-1),
+     &  veecrb1(-1:nx,-1:ny,0:1), vedia1(-1:nx,-1:ny,0:1),
      &  floe_noc1(-1:nx,-1:ny,0:1), floi_noc1(-1:nx,-1:ny,0:1) )
 *   ..read initial state from the file
        call b2rups (ninp(3), idum(0), idum(1), idum(2),
@@ -552,7 +574,7 @@
      &  fna_eir1, fne_eir1, fhe_eir1, fhi_eir1,
      &  fna_321, fna_521, fni_321, fni_521, fne_321, fne_521,
      &  fchdia1, fchin1, fchvispar1, fchvisper1, fchvisq1, fchinert1,
-     &  vaecrb1, vadia1, wadia1, floe_noc1, floi_noc1,
+     &  vaecrb1, vadia1, wadia1, veecrb1, vedia1, floe_noc1, floi_noc1,
      &  b2fstate_version)
        close(ninp(3))
        write(*,*) ' Closed b2fstate'
@@ -643,7 +665,8 @@
      &    fna_eir1, fne_eir1, fhe_eir1, fhi_eir1,
      &    fna_321, fna_521, fni_321, fni_521, fne_321, fne_521,
      &    fchdia1, fchin1, fchvispar1, fchvisper1, fchvisq1, fchinert1,
-     &    vaecrb1, vadia1, wadia1, floe_noc1, floi_noc1)
+     &    vaecrb1, vadia1, wadia1, veecrb1, vedia1,
+     &    floe_noc1, floi_noc1)
       else                                                           !srv 22.12.09 }
 *   ..initialise na, ua, kinrgy, uadia, ne
        do is = 0, ns-1
@@ -754,7 +777,7 @@
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
-     &  vaecrb, vadia, wadia, floe_noc, floi_noc)
+     &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
 
 * ..return
       call subend ()
