@@ -16,12 +16,12 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt
       real (kind=R8) ::
-     *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),           !srv 07.06.00 02.06.99
+     *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),            !srv 07.06.00 02.06.99
      *  pbs(-1:nx,-1:ny,0:1),hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
-     &  qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)                       !srv 07.05.08 01.07.09
+     &  qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)                        !srv 07.05.08 01.07.09
       real (kind=R8) ::
-     *  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
-     &  cone(-1:nx,-1:ny,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:2),         !srv 02.01.07
+     *   floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
+     &  cone(-1:nx,-1:ny,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:2),          !srv 02.01.07
      &  ceqp(-1:nx,-1:ny), pccm(-1:nx,-1:ny,0:1),
      &  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3),
      &  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1),
@@ -31,7 +31,7 @@
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
-     3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1) !srv 07.07.09
+     3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)  !srv 07.07.09
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
@@ -44,7 +44,7 @@
       real (kind=R8) ::
      *   reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny), resht(-1:nx,-1:ny),
      &  corte(-1:nx,-1:ny), corti(-1:nx,-1:ny),
-     &  shef(-1:nx,-1:ny,0:3), shif(-1:nx,-1:ny,0:3)                  !srv 10.11.02
+     &  shef(-1:nx,-1:ny,0:3), shif(-1:nx,-1:ny,0:3)                   !srv 10.11.02
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation

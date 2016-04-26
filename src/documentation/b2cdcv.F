@@ -545,7 +545,7 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), uadiay(ix,iy,is) specifies
 *     the total effective drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     uadia refers to cell center if 'b2tfnb_drift_style' has '0'
+*     uadia refers to cell centers if 'b2tfnb_drift_style' has '0'
 *     uadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
 *
 *     vadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
@@ -557,7 +557,7 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiay(ix,iy,is) specifies
 *     the effective diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     vadia refers to cell center if 'b2tfnb_drift_style' has '0'
+*     vadia refers to cell centers if 'b2tfnb_drift_style' has '0'
 *     vadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
 *
 *     vedia - (-1:nx,-1:ny,0:1) real*8 array.
@@ -579,7 +579,7 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), wadiay(ix,iy,is) specifies
 *     the total diamagnetic drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     wadia refers to cell center if 'b2tfnb_drift_style' has '0'
+*     wadia refers to cell centers if 'b2tfnb_drift_style' has '0'
 *     wadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
 *
 *     vaecrb - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
@@ -591,7 +591,7 @@
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vaecrby(ix,iy,is) specifies
 *     the ExB drift velocity of species (is) in cell (ix,iy)
 *     in the radial direction.
-*     vaecrb refers to cell center if 'b2tfnb_drift_style' has '0'
+*     vaecrb refers to cell centers if 'b2tfnb_drift_style' has '0'
 *     vaecrb refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
 *
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.

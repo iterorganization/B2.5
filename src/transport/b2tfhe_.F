@@ -22,27 +22,27 @@
       integer nx, ny, ns, ismain, ismain0
       real (kind=R8) ::
      *   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
-     & vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:ns-1), 
-     & gs(-1:nx,-1:ny,0:2), ne2(-1:nx,-1:ny), pz(-1:nx,-1:ny),     !srv 11.07.99 18.01.02
-     & vadia(-1:nx,-1:ny,0:1,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),      !srv 17.05.99 25.01.02
-     & fne(-1:nx,-1:ny,0:1), csig(-1:nx,-1:ny,0:1),
-     & csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), chci(-1:nx,-1:ny,0:1), !srv 11.07.99 24.06.08
-     & chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
-     & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
-     & cvsa(-1:nx,-1:ny,0:1,0:ns-1),na(-1:nx,-1:ny,0:ns-1),
-     & cdna(-1:nx,-1:ny,0:1,0:ns-1), cdpa(-1:nx,-1:ny,0:1,0:ns-1), !srv 27.01.00
-     & cddi(-1:nx,-1:ny,0:1,0:ns-1), lnlam(-1:nx,-1:ny),           !srv 13.10.06 01.07.09
-     1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
-     1 bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny),
-     2 facdrift(-1:nx,-1:ny), qc(-1:nx,-1:ny),
-     3 csig_cl(-1:nx,-1:ny,0:1)
+     &   vol(-1:nx,-1:ny), fna(-1:nx,-1:ny,0:1,0:ns-1),
+     &   gs(-1:nx,-1:ny,0:2), ne2(-1:nx,-1:ny), pz(-1:nx,-1:ny),       !srv 11.07.99 18.01.02
+     &   vadia(-1:nx,-1:ny,0:1,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),        !srv 17.05.99 25.01.02
+     &   fne(-1:nx,-1:ny,0:1), csig(-1:nx,-1:ny,0:1),
+     &   csigin(-1:nx,-1:ny,0:1,0:ns-1,0:ns-1), chci(-1:nx,-1:ny,0:1), !srv 11.07.99 24.06.08
+     &   chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
+     &   calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
+     &   cvsa(-1:nx,-1:ny,0:1,0:ns-1), na(-1:nx,-1:ny,0:ns-1),
+     &   cdna(-1:nx,-1:ny,0:1,0:ns-1), cdpa(-1:nx,-1:ny,0:1,0:ns-1),   !srv 27.01.00
+     &   cddi(-1:nx,-1:ny,0:1,0:ns-1), lnlam(-1:nx,-1:ny),             !srv 13.10.06 01.07.09
+     1   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     1   bb(-1:nx,-1:ny,0:3), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny),
+     2   facdrift(-1:nx,-1:ny), qc(-1:nx,-1:ny),
+     3   csig_cl(-1:nx,-1:ny,0:1)
       real (kind=R8) :: cutlo
       parameter (cutlo = 1.0e-60_R8)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   fch(-1:nx,-1:ny,0:1), fhe(-1:nx,-1:ny,0:1),
      &   fhe_mdf(-1:nx,-1:ny,0:1), fhePSch(-1:nx,-1:ny,0:1),      !srv 13.10.06
-     &   fch_p(-1:nx,-1:ny,0:1),fchvispar(-1:nx,-1:ny,0:1),       !srv
+     &   fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),      !srv
      &   fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),      !srv 22.11.99 30.09.02
      &   conc(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),         !srv 11.07.99
      1   floe(-1:nx,-1:ny,0:1), cone(-1:nx,-1:ny,0:1,0:2),        !srv 02.01.07
@@ -734,7 +734,7 @@ c Drift terms
       cone    = 0.0e0_R8                                                     !srv 02.01.07
       if(facdriftm.ne.0.0e0_R8) then
 *   ..compute P.Sch heat x-flux                                              !srv 13.10.06 {
-       do is = 0,ns-1                                                        !srv 12.05.11
+        do is = 0,ns-1                                                       !srv 12.05.11
         if(nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then                  !srv 12.05.11
 !        is = ismain !  1                                                    !srv 12.05.11
 !        iy = -1

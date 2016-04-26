@@ -276,7 +276,7 @@
 *    'b2stbc_coreregno'         '1'                    Geometry
 *    'b2stbc_coreregn2'         '4'                    Geometry
 *    'b2stbc_diagno'            '0'                    Output
-*    'b2stbc_fchy_dia'          '1.0'                  Numerics
+*    'b2stbc_fchy_dia'          '0.0'                  Numerics
 *    'b2stbc_fchy_dia_coreonly' '1'                    Numerics
 *    'b2stbc_fchycore'          '-1.0e30'              Physics
 *    'b2stbc_fchycore_alpha'    '0.1'                  Numerics
@@ -2035,9 +2035,12 @@
 *    'b2ux5p_acpar'             '8.0'                  Numerics
 *    Paremeter needed for iluter matrix solver.
 *
-*    'b2stbc_fchy_dia'          '1.0'                  Numerics
+*    'b2stbc_fchy_dia'          '0.0'                  Numerics
 *    Multiplier to the neoclassical current and diamagnetic heat flux
 *    convective boundary conditions, also multiplied by facdrift.
+*    Adds a poloidal variation consistent with neoclassics and
+*    diamagnetic contributions to the heat flux boundary conditions.
+*    Should only be used with the 5.0 model and heat flux boundaries.
 *    Allows use b2stbc_integral_current if fchy_dia.eq.0, forbids it
 *    otherwise.
 *

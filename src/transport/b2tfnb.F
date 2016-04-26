@@ -40,7 +40,7 @@
      *  fnb(-1:nx,-1:ny,0:1), fnb_32(-1:nx,-1:ny,0:1),
      1  fnb_52(-1:nx,-1:ny,0:1), fnb_nodrift(-1:nx,-1:ny,0:1),
      1  fnb_32nd(-1:nx,-1:ny,0:1), fnb_52nd(-1:nx,-1:ny,0:1), 
-     1  flob(-1:nx,-1:ny,0:1),  fnb_fcor(-1:nx,-1:ny,0:1),               !srv 01.10.99
+     1  flob(-1:nx,-1:ny,0:1), fnb_fcor(-1:nx,-1:ny,0:1),                !srv 01.10.99
      2  fnb_he(-1:nx,-1:ny,0:1),                                         !srv 21.01.00
      &  fnbPSch(-1:nx,-1:ny,0:1), fnb_mdf(-1:nx,-1:ny,0:1),              !srv 13.10.06
      &  conb(-1:nx,-1:ny,0:1,0:4), ubdia(-1:nx,-1:ny,0:1),               !srv 13.10.06
@@ -277,7 +277,7 @@ c Drift terms
       wedia =0.0_R8
       wedia_=0.0_R8
       vbecrb=0.0_R8
-      fnbPSch   = 0.0_R8                                                !srv 13.10.06
+      fnbPSch = 0.0_R8                                                  !srv 13.10.06
       fnb_mdf = 0.0_R8                                                  !srv 19.11.09
       conb  = 0.0e0_R8                                                  !srv 13.10.06
       if((maxval(facdrift).ne.0.0_R8 .or. maxval(fac_ExB).ne.0.0_R8)
@@ -563,7 +563,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or. 
      &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 ) then        !srv 26.05.08
-           fnbPSch(ix,iy,0)=0.0e0_R8
+           fnbPSch(ix,iy,0)= 0.0e0_R8
            conb(ix,iy,0,3) = 0.0e0_R8                                    !srv 26.05.08
            conb(ix,iy,0,4) = 0.0e0_R8
           else

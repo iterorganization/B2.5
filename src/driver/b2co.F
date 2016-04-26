@@ -140,6 +140,11 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       call cfverr (ninp(4), plasmastate_version)                        !xpb
       call b2rups (ninp(4), nx, ny, ns, ne, na, ua, uadia, te, ti,      !xpb
      &  po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &  vaecrb, vadia, wadia, floe_noc, floi_noc,
      1  plasmastate_version)
 *   ..test plasma state and fluxes
       call b2xvps (nx, ny, ns,
@@ -156,7 +161,12 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       call b2wuzd (nout(2), plasmastate_version, ns,
      &  zamin, zamax, zn, am)
       call b2wups (nout(2), nx, ny, ns, ne, na, ua, uadia, te,          !xpb
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
+     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &  vaecrb, vadia, wadia, floe_noc, floi_noc)
 *   ..close graphics files
 *     (none)
 *   ..write plasma state

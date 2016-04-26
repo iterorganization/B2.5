@@ -73,8 +73,7 @@
       integer(2) ::  iresult
       logical(4) ::  lresult
 #endif
-      logical(4) ::  b2fstate_exist, b2fstate_add_exist,
-     &               b2fstati_add_exist
+      logical(4) ::  b2fstate_exist
       integer iy, npoint
       real (kind=R8) :: cpu_s, cpu_f, x05baf, dseval,                 !srv 26.04.09
      & nemod, temod, timod, dif, fcain, fab, shift(1:2)
@@ -132,25 +131,16 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #ifdef WINDOWS
       iresult = RUNQQ ('B2mnOpt','')
       inquire(file='b2fstate',exist=b2fstate_exist)
-      inquire(file='b2fstate_add',exist=b2fstate_add_exist)
-      inquire(file='b2fstati_add',exist=b2fstati_add_exist)
-      if(b2fstate_exist.and.b2fstate_add_exist) then
-       if(b2fstati_add_exist) lresult = SYSTEMQQ('del b2fstati_add')
+      if(b2fstate_exist) then
        lresult = SYSTEMQQ('del b2fstati')
        lresult = SYSTEMQQ('ren b2fstate b2fstati')
-       lresult = SYSTEMQQ('ren b2fstate_add b2fstati_add')
       endif
 #else
       call system('./B2mnOpt.exe')
       inquire(file='b2fstate',exist=b2fstate_exist)
-      inquire(file='b2fstate_add',exist=b2fstate_add_exist)
-      inquire(file='b2fstati_add',exist=b2fstati_add_exist)
-      if(b2fstate_exist.and.b2fstate_add_exist) then
-       if(b2fstati_add_exist) call system('rm b2fstati_add')
+      if(b2fstate_exist) then
        call system('rm b2fstati')
        call system('cp b2fstate b2fstati')
-       call system('cp b2fstate_add b2fstati_add')
-       call system('rm b2fstate b2fstate_add')
       endif
 #endif
       cpu_f= x05baf()

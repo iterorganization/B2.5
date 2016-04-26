@@ -114,7 +114,7 @@
 *   ..initialisation
       data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,
      1   shi0ep/1.0e-36_R8/, boundary_namelist/0/,diagno/0/,
-     2   b2stbc_neoclassical/0.0_R8/, b2stbc_fchy_dia/1.0_R8/,
+     2   b2stbc_neoclassical/0.0_R8/, b2stbc_fchy_dia/0.0_R8/,
      3   integral_current/0.0_R8/, b2stbc_feedback/0/, area_fix/3/,
      4   b2stbc_fchy_dia_coreonly/1/, secmodel/0/, 
      5   sheath_drift_fix/1/
@@ -477,10 +477,6 @@ c from diamagnetic drifts
      &       b2stbc_fchy_dia_coreonly.eq.0) then  ! code for private flux 
             do is=0,ns-1
               if(.not.is_neutral(is)) then
-                if(ncall.eq.0)
-     >           vadia(ix,iy,1,is) = ti(ix,iy)*bb(ix,iy,2)/            !xpb
-     &            (qe*rza(ix,iy,is)*hx(ix,iy))*(2.0_R8/bb(ix,iy,3)**3) !xpb
-     &            *(wbbr(ix,iy,3)-wbbl(ix,iy,3))*facdrift(ix,iy)       !xpb
                 t0 = 
      &           -2.5_R8*
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))
@@ -547,16 +543,6 @@ c from diamagnetic drifts
      &           b2stbc_fchy_dia_coreonly.eq.0) then  ! North boundary
             do is = 0, ns-1
               if (.not.is_neutral(is)) then
-                if(ncall.eq.0)
-     >           vadia(ix,iy,1,is) = 
-     .            ti(bottomix(ix,iy),bottomiy(ix,iy))*
-     &            bb(bottomix(ix,iy),bottomiy(ix,iy),2)                  !xpb
-     &            /(qe*rza(bottomix(ix,iy),bottomiy(ix,iy),is)*
-     &              hx(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &             (2.0_R8/bb(bottomix(ix,iy),bottomiy(ix,iy),3)**3)     !xpb
-     &            *(wbbr(bottomix(ix,iy),bottomiy(ix,iy),3)-
-     &              wbbl(bottomix(ix,iy),bottomiy(ix,iy),3))*
-     &              facdrift(ix,iy)                                      !xpb
                 t0 = 
      &           +2.5_R8*
      &            (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))

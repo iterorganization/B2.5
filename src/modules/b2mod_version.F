@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10 :: newversion ='03.000.004'
+      character*10 :: newversion ='03.000.005'
 
       character*10, save ::
      1 b2fstati_version = '00.000.000',
@@ -258,4 +258,13 @@ c    Version 03.000.003  13.07.15 Added modified and Pfirsch-Schlueter fluxes to
 c                                 Added fna_fcor, fna_he, fchvisq, fchinert to b2fplasma
 c    Version 03.000.004  16.10.15 Changed to default BCPOT=12 amd 13 for free boundaries with currents
 c                                 Changed format and fitting formulae for bulk material properties files
+c    Version 03.000.005  25.04.16 Added various quantities to b2fstati/e to avoid restart
+c                                 effects when using various advanced features:
+c                                 fna_mdf, fhe_mdf, fhi_mdf,
+c                                 fna_fcor, fna_nodrift, fna_he,
+c                                 fnaPSch, fhePSch, fhiPSch,
+c                                 fna_eir, fne_eir, fhe_eir, fhi_eir,
+c                                 fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+c                                 fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+c                                 vaecrb, vadia, wadia, floe_noc, floi_noc
 c

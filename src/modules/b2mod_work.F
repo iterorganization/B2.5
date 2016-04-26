@@ -57,7 +57,7 @@
       allocate(facdrift_profile(-1:nxd,-1:nyd))
       allocate(fac_ExB_profile(-1:nxd,-1:nyd))
       allocate(fac_vis_profile(-1:nxd,-1:nyd))
-      allocate(ds(-1:nyd))
+      allocate(ds(-1:nyd+2))
 
       avisper=0.0_R8                                              !srv 05.07.00
       bvisper=0.0_R8                                              !srv 05.07.00

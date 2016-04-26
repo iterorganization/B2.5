@@ -57,20 +57,22 @@
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fna_32(-1:nx,-1:ny,0:1,0:ns-1),
      &  fna_52(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     & fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),               !srv 11.10.02 21.10.02 {
-     & fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
-     & fchvisq(-1:nx,-1:ny,0:1), fchdia(-1:nx,-1:ny,0:1),
-     & fchinert(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1),              !srv 21.10.02 }
+     &  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),              !srv 11.10.02 21.10.02 {
+     &  fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
+     &  fchvisq(-1:nx,-1:ny,0:1), fchdia(-1:nx,-1:ny,0:1),
+     &  fchinert(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1),             !srv 21.10.02 }
      *  fni_32(-1:nx,-1:ny,0:1), fni_52(-1:nx,-1:ny,0:1),
      *  fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
      &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1),            !srv 28.10.02
-     & fna_fcor(-1:nx,-1:ny,0:1,0:ns-1), fna_he(-1:nx,-1:ny,0:1,0:ns-1), !srv 25.02.00 24.10.02
-     & fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
-     & fnaPSch(-1:nx,-1:ny,0:1,0:ns-1), fna_mdf(-1:nx,-1:ny,0:1,0:ns-1), !srv 13.10.06 25.12.06
-     & fhePSch(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),               !srv 13.10.06
-     & fhe_mdf(-1:nx,-1:ny,0:1), fhi_mdf(-1:nx,-1:ny,0:1),               !srv 23.10.09
-     & fna_eir(-1:nx,-1:ny,0:1, 0:ns-1), fne_eir(-1:nx,-1:ny,0:1),
-     & fhe_eir(-1:nx,-1:ny,0:1), fhi_eir(-1:nx,-1:ny,0:1)
+     &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),                                  !srv 25.02.00 24.10.02
+     &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 13.10.06 25.12.06
+     &  fhePSch(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
+     &  fhe_mdf(-1:nx,-1:ny,0:1), fhi_mdf(-1:nx,-1:ny,0:1),              !srv 23.10.09
+     &  fna_eir(-1:nx,-1:ny,0:1, 0:ns-1), fne_eir(-1:nx,-1:ny,0:1),
+     &  fhe_eir(-1:nx,-1:ny,0:1), fhi_eir(-1:nx,-1:ny,0:1)
 *     (transport coefficients)                                           !xpb
       real (kind=R8) ::                                                  !xpb
      1  chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),                    !xpb
@@ -263,118 +265,6 @@
       call xertst (0.0_R8.le.minval(fac_ExB) .and.
      &     1.0_R8.ge.maxval(fac_ExB), 'faulty argument fac_ExB')
 
-      if (ncall.eq.0) then
-*   ..compute temporary drift velocities on first call
-        if(style.eq.0) then                                             !srv 28.07.08
-         call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpo)
-         do is = 0, ns-1
-           pb(-1:nx,-1:ny,is) = na(-1:nx,-1:ny,is)*ti(-1:nx,-1:ny)
-           call intfacev(nx,ny,bottomix,bottomiy,vol,pb(-1,-1,is),wpb)
-           do ix = -1, nx
-             do iy = -1, ny
-               if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).ne.iy .and.
-     &            rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
-     &            topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2 .and.
-     &            region(ix,iy,0).ne.0 .and. .not.is_neutral(is)) then
-!! FIXME : Ask Serguey about this change
-                vaecrb(ix,iy,0,is) = - 1.0_R8/hy1(ix,iy)*  ! signmf     !srv 11.01.13
-     1            1.0_R8/bb(ix,iy,3)*
-     2            (wpo(topix(ix,iy),topiy(ix,iy))-wpo(ix,iy))*
-     &            fac_ExB(ix,iy)
-                wadia(ix,iy,0,is) = - bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)
-     1            /bb(ix,iy,3)/qe/rza(ix,iy,is)/na(ix,iy,is)*
-     2            (wpb(topix(ix,iy),topiy(ix,iy))-wpb(ix,iy))*
-     3            facdrift(ix,iy)
-               else
-                vaecrb(ix,iy,0,is) = 0.0_R8
-                wadia(ix,iy,0,is) = 0.0_R8
-               endif
-             enddo
-           enddo
-         enddo
-         call intfaceh(nx,ny,leftix,leftiy,vol,po,wpo)
-         do is = 0, ns-1
-           call intfaceh(nx,ny,leftix,leftiy,vol,pb(-1,-1,is),wpb)
-           do ix = -1, nx
-             do iy = -1, ny                                               !xpb
-               if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &            bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &            region(ix,iy,0).ne.0 .and. .not.is_neutral(is)) then
-                 vaecrb(ix,iy,1,is) = 1.0_R8/hx(ix,iy)*                   !xpb
-     1             bb(ix,iy,2)/bb(ix,iy,3)**2*                            !xpb
-     2            (wpo(rightix(ix,iy),rightiy(ix,iy))-wpo(ix,iy))*
-     &            fac_ExB(ix,iy)
-                 wadia(ix,iy,1,is) = bb(ix,iy,2)/
-     &            (qe*rza(ix,iy,is)*hx(ix,iy)*na(ix,iy,is))/
-     1             bb(ix,iy,3)**2*
-     2            (wpb(rightix(ix,iy),rightiy(ix,iy))-wpb(ix,iy))*
-     3             facdrift(ix,iy)
-               else
-                 vaecrb(ix,iy,1,is) = 0.0_R8
-                 wadia(ix,iy,1,is) = 0.0_R8
-               endif
-             enddo
-           enddo
-         enddo
-* drift velocities at walls are extrapolated from those at neighbouring cells
-* drift velocities at iy=ny are extrapolated from those at iy=ny-1      !xpb
-* drift velocities at iy=-1 are extrapolated from those at iy=0         !xpb
-         do ix = -1, nx                                                 !xpb
-           do iy = -1, ny                                               !xpb
-             if(leftix(ix,iy).eq.-2) then
-               vaecrb(ix,iy,:,:) =
-     .          vaecrb(rightix(ix,iy),rightiy(ix,iy),:,:)               !xpb
-               wadia(ix,iy,:,:) =
-     .          wadia(rightix(ix,iy),rightiy(ix,iy),:,:)                !xpb
-             elseif(rightix(ix,iy).eq.nx+1) then                        !xpb
-               vaecrb(ix,iy,:,:) =
-     .          vaecrb(leftix(ix,iy),leftiy(ix,iy),:,:)                 !xpb
-               wadia(ix,iy,:,:) = wadia(leftix(ix,iy),leftiy(ix,iy),:,:) !xpb
-             endif
-             if(topiy(ix,iy).eq.ny+1) then                              !xpb
-               vaecrb(ix,iy,:,:) =
-     .          vaecrb(bottomix(ix,iy),bottomiy(ix,iy),:,:)             !xpb
-               wadia(ix,iy,:,:) =
-     .          wadia(bottomix(ix,iy),bottomiy(ix,iy),:,:)              !xpb
-             elseif(bottomiy(ix,iy).eq.-2) then
-               vaecrb(ix,iy,:,:) = vaecrb(topix(ix,iy),topiy(ix,iy),:,:) !xpb
-               wadia(ix,iy,:,:) = wadia(topix(ix,iy),topiy(ix,iy),:,:)   !xpb
-             endif
-           enddo
-         enddo
-* turn off side drift flows in guard cells                              !xpb
-         do iy = -1, ny                                                 !xpb
-          do ix = -1, nx
-           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-            vaecrb(ix,iy,1,:) = 0.0_R8                                  !xpb
-            wadia(ix,iy,1,:) = 0.0_R8                                   !xpb
-           endif
-           if(bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
-            vaecrb(ix,iy,0,:) = 0.0_R8                                  !xpb
-            wadia(ix,iy,0,:) = 0.0_R8                                   !xpb
-           endif
-          enddo
-         enddo                                                          !xpb
-         if(guard_flows.eq.0) then                                      !xpb
-cxpb turn off flows between boundary cells
-           do iy = -1, ny
-            do ix = -1, nx
-             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-              vaecrb(ix,iy,1,:)=0.0_R8
-              wadia(ix,iy,1,:)=0.0_R8
-             endif
-            enddo
-           enddo
-cxpb turn off poloidal flows in core boundary
-           do ix = -1, nx
-            if(mod(region(ix,-1,0),4).eq.1) then
-             vaecrb(ix,-1,0,:) = 0.0_R8
-             wadia(ix,-1,0,:) = 0.0_R8
-            endif
-           enddo
-         endif                                                          !xpb
-        endif   ! style.eq.0
-      endif                                                             !srv 28.07.08
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06 }

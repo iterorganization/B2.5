@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_rates
       use b2mod_geo
+      use b2mod_work
       use b2mod_plasma
       use b2mod_indirect
       implicit none
@@ -140,6 +141,7 @@
       call b2aix0 (ninp, nx, ny, ns)
 *   ..call principal driver routine
       call alloc_b2mod_geo(nx,ny)
+      call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_plasma(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)
@@ -158,6 +160,7 @@
 
 * ..end of computation
       call dealloc_b2mod_geo
+      call dealloc_b2mod_work
       call dealloc_b2mod_rates
       call dealloc_b2mod_plasma
       call dealloc_b2mod_indirect

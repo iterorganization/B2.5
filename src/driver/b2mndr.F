@@ -1310,11 +1310,16 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
       enddo                                                          !srv 02.05.09 }
 *
 *   ..compute Bz/B**2 - Bz/<B**2>
-      call b2xbzb (nx, ny, bb, vol, bzb)                             !srv 13.10.06  09.06.08 23.07.10}
+      call b2xbzb (nx, ny, bb, vol, bzb)                             !srv 13.10.06 09.06.08 23.07.10}
 *   ..read initial state
       call b2rups (ninp(3), nx, ny, ns0, ne, na, ua, uadia, te, ti, po,
-     & fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
-     & b2fstati_version)
+     &  fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &  vaecrb, vadia, wadia, floe_noc, floi_noc,
+     &  b2fstati_version)
       if(iout.ne.0) then                                             !srv 25.01.16 {
        call my_out(70,nx,ny,ne,'b2mndr_ne')
        do is = 0,ns-1
@@ -1366,7 +1371,18 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
        call sfill (n2*(ns-ns0), 0.0_R8, ua(-1,-1,ns0), 1)
        call sfill (n2*(ns-ns0), 0.0_R8, kinrgy(-1,-1,ns0), 1)        !xpb
        call sfill (n2*2*(ns-ns0), 0.0_R8, uadia(-1,-1,0,ns0), 1)     !xpb
+       call sfill (n2*2*(ns-ns0), 0.0_R8, vadia(-1,-1,0,is), 1)
+       call sfill (n2*2*(ns-ns0), 0.0_R8, wadia(-1,-1,0,is), 1)
+       call sfill (n2*2*(ns-ns0), 0.0_R8, vaecrb(-1,-1,0,is), 1)
        call sfill (n2*2*(ns-ns0), 0.0_R8, fna(-1,-1,0,ns0), 1)
+       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_mdf(-1,-1,0,ns0), 1)
+       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_fcor(-1,-1,0,ns0), 1)
+       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_nodrift(-1,-1,0,ns0), 1)
+       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_he(-1,-1,0,ns0), 1)
+       call sfill (n2*2*(ns-ns0), 0.0_R8, fnaPSch(-1,-1,0,ns0), 1)
+       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_eir(-1,-1,0,ns0), 1)
+       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_32(-1,-1,0,ns0), 1)
+       call sfill (n2*2*(ns-ns0), 0.0_R8, fna_52(-1,-1,0,ns0), 1)
       endif
 *   ..rescale densities and associated fluxes
       if (density_rescale.ne.1.0_R8) then
@@ -1378,6 +1394,16 @@ c   --> better way doing this is necessary)
            na(:,:,is)=na(:,:,is)*(-density_rescale)
            ne(:,:)=ne(:,:)+na(:,:,is)*rza(:,:,is)*(-density_rescale-1.0)
            fna(:,:,0:1,is) = fna(:,:,0:1,is)*(-density_rescale)
+           fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*(-density_rescale)
+           fna_fcor(:,:,0:1,is) =
+     .      fna_fcor(:,:,0:1,is)*(-density_rescale)
+           fna_nodrift(:,:,0:1,is) =
+     .      fna_nodrift(:,:,0:1,is)*(-density_rescale)
+           fna_he(:,:,0:1,is) = fna_he(:,:,0:1,is)*(-density_rescale)
+           fnaPSch(:,:,0:1,is) = fnaPSch(:,:,0:1,is)*(-density_rescale)
+           fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*(-density_rescale)
+           fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*(-density_rescale)
+           fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*(-density_rescale)
            kinrgy(:,:,is)=kinrgy(:,:,is)*(-density_rescale)
            write(*,*) 'Density ',is,' rescaled by ',-density_rescale
           enddo
@@ -1385,12 +1411,39 @@ c   --> better way doing this is necessary)
          na = na * density_rescale
          ne = (ne-ne_ext) * density_rescale + ne_ext
          fna = fna * density_rescale
+         fna_mdf = fna_mdf * density_rescale
+         fna_fcor = fna_fcor * density_rescale
+         fna_nodrift = fna_nodrift * density_rescale
+         fna_he = fna_he * density_rescale
+         fnaPSch = fnaPSch * density_rescale
+         fna_eir = fna_eir * density_rescale
+         fna_32 = fna_32 * density_rescale
+         fna_52 = fna_52 * density_rescale
+         fne_eir = fne_eir * density_rescale
+         fne_32 = fne_32 * density_rescale
+         fne_52 = fne_52 * density_rescale
+         fni_32 = fni_32 * density_rescale
+         fni_52 = fni_52 * density_rescale
          fhe = fhe * density_rescale
+         fhe_mdf = fhe_mdf * density_rescale
+         fhePSch = fhePSch * density_rescale
+         fhe_eir = fhe_eir * density_rescale
          fhi = fhi * density_rescale
+         fhi_mdf = fhi_mdf * density_rescale
+         fhiPSch = fhiPSch * density_rescale
+         fhi_eir = fhi_eir * density_rescale
          fch = fch * density_rescale
          fch_32 = fch_32 * density_rescale
          fch_52 = fch_52 * density_rescale
          fch_p = fch_p * density_rescale
+         fchdia = fchdia * density_rescale
+         fchin = fchin * density_rescale
+         fchvispar = fchvispar * density_rescale
+         fchvisper = fchvisper * density_rescale
+         fchvisq = fchvisq * density_rescale
+         fchinert = fchinert * density_rescale
+         floe_noc = floe_noc * density_rescale
+         floi_noc = floi_noc * density_rescale
          kinrgy = kinrgy * density_rescale
          write(*,*) 'All densities and fluxes rescaled by ',
      .    density_rescale
@@ -1402,6 +1455,15 @@ c   --> better way doing this is necessary)
           if(is_neutral(is)) then
             na(:,:,is)=na(:,:,is)*neutral_rescale
             fna(:,:,0:1,is)=fna(:,:,0:1,is)*neutral_rescale
+            fna_mdf(:,:,0:1,is) = fna_mdf(:,:,0:1,is)*neutral_rescale
+            fna_fcor(:,:,0:1,is) = fna_fcor(:,:,0:1,is)*neutral_rescale
+            fna_nodrift(:,:,0:1,is) =
+     .       fna_nodrift(:,:,0:1,is)*neutral_rescale
+            fna_he(:,:,0:1,is) = fna_he(:,:,0:1,is)*neutral_rescale
+            fnaPSch(:,:,0:1,is) = fnaPSch(:,:,0:1,is)*neutral_rescale
+            fna_eir(:,:,0:1,is) = fna_eir(:,:,0:1,is)*neutral_rescale
+            fna_32(:,:,0:1,is) = fna_32(:,:,0:1,is)*neutral_rescale
+            fna_52(:,:,0:1,is) = fna_52(:,:,0:1,is)*neutral_rescale
             kinrgy(:,:,is)=kinrgy(:,:,is)*neutral_rescale
           endif
         enddo
@@ -1458,7 +1520,12 @@ c   --> better way doing this is necessary)
         call b2wuzd (70, newversion, ns, zamin, zamax, zn, am)
         ua=-ua
         call b2wups (70, nx, ny, ns, ne, na, ua, uadia, te,
-     &   ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
+     &   ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &   fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &   fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &   fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &   fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &   vaecrb, vadia, wadia, floe_noc, floi_noc)
         close(70)
       endif                                                              !srv 04.02.15 }
 *   ..initialise previous state and fluxes
@@ -1813,7 +1880,13 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 *       ..write plasma state
           call b2wups (nout(6), nx, ny, ns, ne, na, ua, uadia, te,   !xpb
-     &     ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
+     &     ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &     fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &     fnaPSch, fhePSch, fhiPSch,
+     &     fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &     fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &     vaecrb, vadia, wadia, floe_noc, floi_noc)
 *       ..write additional save namelist data
           inquire(file='../b2.feedback_save.parameters',exist=found)
           if (found) call write_b2mod_feedback(99,savefile(13:16))
@@ -1832,13 +1905,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
           close(nout(6))
           write(*,*) 'Plasmastate savefile ',savefile,' saved'
-          open (70, file='b2fstate_add.'//savefile(13:16),           !srv 14.07.08 {
-     &             form='unformatted')
-         write(70) vaecrb, vadia, floe_noc, floi_noc, fna, fna_fcor,
-     &     fna_nodrift, fna_he, fhe, fhi, fch,
-     &     fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,fchinert,
-     &     fnaPSch, fna_mdf, fhePSch, fhiPSch, fhe_mdf, fhi_mdf       !srv 29.10.09
-            close(70)                                                  !srv 14.07.08 }
         endif
         first_time_step=.false.
         goto 1
@@ -1889,7 +1955,12 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 *   ..save final state
       call b2wups (nout(2), nx, ny, ns, ne, na, ua, uadia, te,           !xpb
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
+     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &  vaecrb, vadia, wadia, floe_noc, floi_noc)
       call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                   !srv 05.10.01
       if (use_astra.ne.0) then
        call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')
@@ -1957,13 +2028,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
          call xerrab ('b2mndr not compiled with the B25_EIRENE option')
 #endif
       endif
-
-      open (70, file='b2fstate_add',form='unformatted')                   !srv 11.10.02 {
-      write(70) vaecrb, vadia, floe_noc, floi_noc, fna, fna_fcor,
-     &    fna_nodrift, fna_he, fhe, fhi, fch,
-     &    fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq,fchinert,
-     &    fnaPSch, fna_mdf, fhePSch, fhiPSch, fhe_mdf, fhi_mdf       !srv 13.10.06 !srv 29.10.09
-      close(70)                                                      !srv 11.10.02 }
 
 *  .. finalize tracing routines
       call b2trcf(nx,ny,ns,ismain,dtim,BoRiS)

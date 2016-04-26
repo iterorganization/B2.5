@@ -336,18 +336,18 @@
 *    ..compute partial pressure
          call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute particle flux
-         call b2tfnb (nx, ny, is, ismain,                               !srv 08.09.01
+         call b2tfnb (nx, ny, is, ismain,                                !srv 08.09.01
      1    guard_flows, facdrift, fac_ExB, am(is)*mp, vol,
      1    rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
-     1    uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),     !xpb
-     &    wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,    !srv 09.01.01
+     1    uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),      !xpb
+     &    wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,     !srv 09.01.01
      &    po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
-     &    cddi(-1,-1,0,is),                                             !srv 13.10.06
-     &    cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is),  cdnahz(-1,-1,0,is),  !srv 09.01.01 15.12.05
-     &    cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,             !srv 20.09.06
+     &    cddi(-1,-1,0,is),                                              !srv 13.10.06
+     &    cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is),  cdnahz(-1,-1,0,is),   !srv 09.01.01 15.12.05
+     &    cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,              !srv 20.09.06
      &    fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
-     &    fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),                     !srv 01.10.99 21.01.00
-     &    fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                     !srv 13.10.06
+     &    fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),                      !srv 01.10.99 21.01.00
+     &    fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                      !srv 13.10.06
      1    flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1    fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
@@ -756,9 +756,6 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      1             fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
                 enddo
-*    ..adjust sheath currents when residuals are too high !DOES NOT WORK!!xpb
-cxpb          call b2nxpo (nx, ny, ns, hx, pbs,                          !xpb
-cxpb &         te, ne, fna, fch, wrk0, po)                               !xpb
                 if(wrong_flow .or. ipass.ne.0) then                      !xpb
                    call print_wrong_flows(
      &                  'In potential loop: fna(ions) at plates')

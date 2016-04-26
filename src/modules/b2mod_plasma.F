@@ -93,7 +93,7 @@
       fne_eir = 0.0_R8
       fhe_eir = 0.0_R8
       fhi_eir = 0.0_R8  
-      fna_fcor = 0.0_R8                                           !srv 14.07.10 }
+      fna_fcor = 0.0_R8                                            !srv 14.07.10 }
       allocate(fna(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(fna0(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(fnap(-1:nxd,-1:nyd,0:1,0:nsd-1))
@@ -128,7 +128,7 @@
       allocate(uadia(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(uahel(-1:nxd,-1:nyd,0:nsd-1))                         !srv 23.12.03
       allocate(fchdia(-1:nxd,-1:nyd,0:1))
-      fchdia=0.0_R8;
+      fchdia=0.0_R8
       allocate(fch_p(-1:nxd,-1:nyd,0:1))                             !xpb srv 10.06.08
       allocate(fchvispar(-1:nxd,-1:nyd,0:1))                         !xpb
       fchvispar=0.0_R8
@@ -243,21 +243,21 @@
       deallocate(facdrift)
       deallocate(fac_ExB)
       deallocate(fac_vis)
-      deallocate(fhe_mdf)                         !srv 13.10.06
-      deallocate(fhePSch)                         !srv 13.10.06
-      deallocate(fhi_mdf)                         !srv 13.10.06
-      deallocate(fhiPSch)                         !srv 13.10.06
-      deallocate(fna_he)                          !srv 21.01.00
-      deallocate(fna_fcor)                        !srv 01.10.99
-      deallocate(fnaPSch)                         !srv 13.10.06
-      deallocate(fna_mdf)                         !srv 13.10.06
-      deallocate(uahel  )                         !srv 23.12.03
-      deallocate(fna_eir)                         !srv 14.07.10 {
+      deallocate(fhe_mdf)                           !srv 13.10.06
+      deallocate(fhePSch)                           !srv 13.10.06
+      deallocate(fhi_mdf)                           !srv 13.10.06
+      deallocate(fhiPSch)                           !srv 13.10.06
+      deallocate(fna_he)                            !srv 21.01.00
+      deallocate(fna_fcor)                          !srv 01.10.99
+      deallocate(fnaPSch)                           !srv 13.10.06
+      deallocate(fna_mdf)                           !srv 13.10.06
+      deallocate(uahel  )                           !srv 23.12.03
+      deallocate(fna_eir)                           !srv 14.07.10 {
       deallocate(fne_eir)
       deallocate(fhe_eir)
       deallocate(fhi_eir)
       deallocate(wedia)
-      deallocate(ve)                              !srv 14.07.10 }
+      deallocate(ve)                                !srv 14.07.10 }
 
       return
       end subroutine dealloc_b2mod_plasma

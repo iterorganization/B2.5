@@ -6,6 +6,8 @@
       use b2mod_version
       use b2mod_plasma
       use b2mod_geo
+      use b2mod_work
+      use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
@@ -70,7 +72,7 @@
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
-      real (kind=R8), allocatable :: za(:)
+      real (kind=R8), allocatable :: za(:), zero(:,:)
       character*120 lblmn, lblgm
 #ifdef MDSPLUS
 #     include "mdslib.inc"
@@ -141,6 +143,7 @@
 #endif
       call prgini ('b2rd')
 *   ..open files
+      zero = 0.0_R8
       call cfopen (nout(0),'b2rd.prt','new','formatted')
       call cfopen (nout(1),'b2fstate','new','un*formatted')
       call cfopen (nout(2),'b2fgmtrt','new','un*formatted')
@@ -194,9 +197,12 @@
 
 *   ..allocate arrays
       call alloc_b2mod_geo(nx,ny)
+      call alloc_b2mod_work(nx,ny,ns)
+      call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_plasma(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)
       allocate(idummy(-1:nx,-1:ny))
+      allocate(zero(-1:nx,-1:ny))
 
 *   ..read species data
       if (dbversion.ge.9) then
@@ -206,6 +212,9 @@
         status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZAMAX'//char(0),
      1   descr2(idtype_double,NS,0),zamax(0:ns-1),0,retlen)
         call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:RZA'//char(0),
+     1   descr2(idtype_double,NX+2,NY+2,NS,0),rza,0,retlen)
+        call mds_err_msg(status)
       else
         allocate(za(0:ns-1))
         status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZA'//char(0),
@@ -213,6 +222,10 @@
         call mds_err_msg(status)
         zamin(0:ns-1)=za(0:ns-1)
         zamax(0:ns-1)=za(0:ns-1)
+        do is = 0, ns-1
+          rza(-1:nx,-1:ny,is) = za(is)
+        end do
+        deallocate(za)
       endif
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:ZN'//char(0),
      1 descr2(idtype_double,NS,0),zn(0:ns-1),0,retlen)
@@ -251,6 +264,26 @@
      1 descr2(idtype_double,NX+2,NY+1,NS,0),
      2 fna(-1:nx,0:ny,1,0:ns-1),0,retlen)
       fna(:,-1,1,:)=0.0_R8
+      call mds_err_msg(status)
+      status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_32'//char(0),
+     1 descr2(idtype_double,NX+1,NY+2,NS,0),
+     2 fna_32(0:nx,-1:ny,0,0:ns-1),0,retlen)
+      fna_32(-1,:,0,:)=0.0_R8
+      call mds_err_msg(status)
+      status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_32'//char(0),
+     1 descr2(idtype_double,NX+2,NY+1,NS,0),
+     2 fna_32(-1:nx,0:ny,1,0:ns-1),0,retlen)
+      fna_32(:,-1,1,:)=0.0_R8
+      call mds_err_msg(status)
+      status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_52'//char(0),
+     1 descr2(idtype_double,NX+1,NY+2,NS,0),
+     2 fna_52(0:nx,-1:ny,0,0:ns-1),0,retlen)
+      fna_52(-1,:,0,:)=0.0_R8
+      call mds_err_msg(status)
+      status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_52'//char(0),
+     1 descr2(idtype_double,NX+2,NY+1,NS,0),
+     2 fna_52(-1:nx,0:ny,1,0:ns-1),0,retlen)
+      fna_52(:,-1,1,:)=0.0_R8
       call mds_err_msg(status)
       status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEX'//char(0),
      1 descr2(idtype_double,NX+1,NY+2,0),
@@ -326,6 +359,299 @@
         status=mdsvalue2('_s=\TOP.SNAPSHOT:KINRGY'//char(0),
      1   descr2(idtype_double,NX+2,NY+2,NS,0),kinrgy,0,retlen)
         call mds_err_msg(status)
+      endif
+      if (dbversion.ge.22) then
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_MDF'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,NS,0),
+     2   fna_mdf(0:nx,-1:ny,0,0:ns-1),0,retlen)
+        fna_mdf(-1,:,0,:)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_MDF'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,NS,0),
+     2   fna_mdf(-1:nx,0:ny,1,0:ns-1),0,retlen)
+        fna_mdf(:,-1,1,:)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEX_MDF'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fhe_mdf(0:nx,-1:ny,0),0,retlen)
+        fhe_mdf(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEY_MDF'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fhe_mdf(-1:nx,0:ny,1),0,retlen)
+        fhe_mdf(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIX_MDF'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fhi_mdf(0:nx,-1:ny,0),0,retlen)
+        fhi_mdf(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIY_MDF'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fhi_mdf(-1:nx,0:ny,1),0,retlen)
+        fhi_mdf(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_FCOR'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,NS,0),
+     2   fna_fcor(0:nx,-1:ny,0,0:ns-1),0,retlen)
+        fna_fcor(-1,:,0,:)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_FCOR'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,NS,0),
+     2   fna_fcor(-1:nx,0:ny,1,0:ns-1),0,retlen)
+        fna_fcor(:,-1,1,:)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_NODRIFT'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,NS,0),
+     2   fna_nodrift(0:nx,-1:ny,0,0:ns-1),0,retlen)
+        fna_nodrift(-1,:,0,:)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_NODRIFT'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,NS,0),
+     2   fna_nodrift(-1:nx,0:ny,1,0:ns-1),0,retlen)
+        fna_nodrift(:,-1,1,:)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_HE'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,NS,0),
+     2   fna_he(0:nx,-1:ny,0,0:ns-1),0,retlen)
+        fna_he(-1,:,0,:)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_HE'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,NS,0),
+     2   fna_he(-1:nx,0:ny,1,0:ns-1),0,retlen)
+        fna_he(:,-1,1,:)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAPSCHX'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,NS,0),
+     2   fnaPSch(0:nx,-1:ny,0,0:ns-1),0,retlen)
+        fnaPSch(-1,:,0,:)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAPSCHY'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,NS,0),
+     2   fnaPSch(-1:nx,0:ny,1,0:ns-1),0,retlen)
+        fnaPSch(:,-1,1,:)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEPSCHX'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fhePSch(0:nx,-1:ny,0),0,retlen)
+        fhePSch(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEPSCHY'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fhePSch(-1:nx,0:ny,1),0,retlen)
+        fhePSch(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIPSCHX'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fhiPSch(0:nx,-1:ny,0),0,retlen)
+        fhiPSch(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIPSCHY'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fhiPSch(-1:nx,0:ny,1),0,retlen)
+        fhiPSch(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAX_EIR'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,NS,0),
+     2   fna_eir(0:nx,-1:ny,0,0:ns-1),0,retlen)
+        fna_eir(-1,:,0,:)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNAY_EIR'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,NS,0),
+     2   fna_eir(-1:nx,0:ny,1,0:ns-1),0,retlen)
+        fna_eir(:,-1,1,:)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEX_EIR'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fne_eir(0:nx,-1:ny,0),0,retlen)
+        fne_eir(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEY_EIR'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fne_eir(-1:nx,0:ny,1),0,retlen)
+        fne_eir(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEX_EIR'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fhe_eir(0:nx,-1:ny,0),0,retlen)
+        fhe_eir(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHEY_EIR'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fhe_eir(-1:nx,0:ny,1),0,retlen)
+        fhe_eir(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIX_EIR'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fhi_eir(0:nx,-1:ny,0),0,retlen)
+        fhi_eir(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FHIY_EIR'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fhi_eir(-1:nx,0:ny,1),0,retlen)
+        fhi_eir(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIX_32'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fni_32(0:nx,-1:ny,0),0,retlen)
+        fni_32(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIY_32'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fni_32(-1:nx,0:ny,1),0,retlen)
+        fni_32(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIX_52'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fni_52(0:nx,-1:ny,0),0,retlen)
+        fni_52(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNIY_52'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fni_52(-1:nx,0:ny,1),0,retlen)
+        fni_52(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEX_32'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fne_32(0:nx,-1:ny,0),0,retlen)
+        fne_32(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEY_32'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fne_32(-1:nx,0:ny,1),0,retlen)
+        fne_32(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEX_52'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fne_52(0:nx,-1:ny,0),0,retlen)
+        fne_52(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FNEY_52'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fne_52(-1:nx,0:ny,1),0,retlen)
+        fne_52(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHDIAX'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fchdia(0:nx,-1:ny,0),0,retlen)
+        fchdia(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHDIAY'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fchdia(-1:nx,0:ny,1),0,retlen)
+        fchdia(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINX'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fchin(0:nx,-1:ny,0),0,retlen)
+        fchin(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINY'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fchin(-1:nx,0:ny,1),0,retlen)
+        fchin(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPARX'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fchvispar(0:nx,-1:ny,0),0,retlen)
+        fchvispar(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPARY'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fchvispar(-1:nx,0:ny,1),0,retlen)
+        fchvispar(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPERX'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fchvisper(0:nx,-1:ny,0),0,retlen)
+        fchvisper(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISPERY'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fchvisper(-1:nx,0:ny,1),0,retlen)
+        fchvisper(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISQX'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fchvisq(0:nx,-1:ny,0),0,retlen)
+        fchvisq(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHVISQY'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fchvisq(-1:nx,0:ny,1),0,retlen)
+        fchvisq(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINERTX'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   fchinert(0:nx,-1:ny,0),0,retlen)
+        fchinert(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FCHINERTY'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   fchinert(-1:nx,0:ny,1),0,retlen)
+        fchinert(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:VADIA'//char(0),
+     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),vadia,0,retlen)
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:WADIA'//char(0),
+     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),wadia,0,retlen)
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:VAECRB'//char(0),
+     1   descr2(idtype_double,NX+2,NY+2,2,NS,0),vaecrb,0,retlen)
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOEX_NOC'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   floe_noc(0:nx,-1:ny,0),0,retlen)
+        floe_noc(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOEY_NOC'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   floe_noc(-1:nx,0:ny,1),0,retlen)
+        floe_noc(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOIX_NOC'//char(0),
+     1   descr2(idtype_double,NX+1,NY+2,0),
+     2   floi_noc(0:nx,-1:ny,0),0,retlen)
+        floi_noc(-1,:,0)=0.0_R8
+        call mds_err_msg(status)
+        status=mdsvalue2('_s=\TOP.SNAPSHOT:FLOIY_NOC'//char(0),
+     1   descr2(idtype_double,NX+2,NY+1,0),
+     2   floi_noc(-1:nx,0:ny,1),0,retlen)
+        floi_noc(:,-1,1)=0.0_R8
+        call mds_err_msg(status)
+      else
+        fna_mdf = fna
+        fhe_mdf = fhe
+        fhi_mdf = fhi
+        fna_fcor = fna
+        fna_nodrift = fna
+        fna_he = fna
+        fnaPSch = 0.0_R8
+        fhePSch = 0.0_R8
+        fhiPSch = 0.0_R8
+        fna_eir = fna
+        fhe_eir = fhe
+        fhi_eir = fhi
+        call b2xpfi (nx, ny, ns, fna_32, fni_32)
+        call b2xpfi (nx, ny, ns, fna_52, fni_52)
+        call b2xpfe (nx, ny, ns, 0, qe,
+     1     rza, zero, fna_32, zero, fch_32, fne_32)
+        call b2xpfe (nx, ny, ns, 0, qe,
+     1     rza, zero, fna_52, zero, fch_52, fne_52)
+        call b2xpfe (nx, ny, ns, 0, qe,
+     1     rza, zero, fna_eir, zero, fch, fne_eir)
+        fchdia = 0.0_R8
+        fchin = 0.0_R8
+        fchvispar = 0.0_R8
+        fchvisper = 0.0_R8
+        fchvisq = 0.0_R8
+        fchinert = 0.0_R8
+        vaecrb = 0.0_R8
+        vadia = 0.0_R8
+        wadia = 0.0_R8
+        floe_noc = 0.0_R8
+        floi_noc = 0.0_R8
       endif
 
 *   ..read geometry data
@@ -482,7 +808,12 @@
       call b2wuzd (nout(1), plasmastate_version, ns, 
      &  zamin, zamax, zn, am)
       call b2wups (nout(1), nx, ny, ns, ne, na, ua, uadia, te,		 !xpb
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
+     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &  vaecrb, vadia, wadia, floe_noc, floi_noc)
       write(nout(0),*) 'Converted run number ',ishot,' to b2fstate'
 *   ..save geometry
       write(lblgm,*) 'Recovered geometry from run number ',ishot
@@ -540,7 +871,10 @@
 
 * ..end of computation
       deallocate(idummy)
+      deallocate(zero)
       call dealloc_b2mod_geo
+      call dealloc_b2mod_work
+      call dealloc_b2mod_rates
       call dealloc_b2mod_plasma
       call dealloc_b2mod_indirect
 #else

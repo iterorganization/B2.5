@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_geo
       use b2mod_geo2
+      use b2mod_work
       use b2mod_rates
       use b2mod_plasma
       use b2mod_b2plot
@@ -189,6 +190,7 @@
       call alloc_b2mod_plasma(nx,ny,ns)
       call alloc_b2mod_geo(nx,ny)
       call alloc_b2mod_geo2(nx1,ny1,10)
+      call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_rates(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)
       call b2ytdr (ninp, nout, nx1, ny1)
@@ -205,6 +207,7 @@
 * ..end of computation
       call dealloc_b2mod_geo
       call dealloc_b2mod_geo2
+      call dealloc_b2mod_work
       call dealloc_b2mod_rates
       call dealloc_b2mod_plasma
       call dealloc_b2mod_indirect

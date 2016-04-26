@@ -2,6 +2,7 @@
       use b2mod_types
       use b2mod_version
       use b2mod_geo
+      use b2mod_work
       use b2mod_plasma
       use b2mod_rates
       use b2mod_residuals
@@ -113,8 +114,13 @@
      &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
       call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p,
-     1	kinrgy, b2fstate_version)
+     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &  vaecrb, vadia, wadia, floe_noc, floi_noc,
+     1	b2fstate_version)
 *   ..test plasma state and fluxes
       call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)

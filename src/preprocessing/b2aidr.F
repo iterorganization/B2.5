@@ -6,6 +6,7 @@
       use b2mod_rates
       use b2mod_geo
       use b2mod_time
+      use b2mod_work
       use b2mod_plasma
       use b2mod_indirect
       use b2mod_constants
@@ -72,7 +73,20 @@
      &  na1(:,:,:), ua1(:,:,:),  ne1(:,:), uadia1(:,:,:,:),
      &  te1(:,:), ti1(:,:), po1(:,:), fna1(:,:,:,:), fhe1(:,:,:),
      &  fhi1(:,:,:), fch1(:,:,:), fch_321(:,:,:), fch_521(:,:,:),
-     &  fch_p1(:,:,:), kinrgy1(:,:,:)
+     &  fch_p1(:,:,:), kinrgy1(:,:,:),
+     &  fna_mdf1(:,:,:,:), fhe_mdf1(:,:,:), fhi_mdf1(:,:,:),
+     &  fna_fcor1(:,:,:,:), fna_nodrift1(:,:,:,:), fna_he1(:,:,:,:),
+     &  fnaPSch1(:,:,:,:), fhePSch1(:,:,:), fhiPSch1(:,:,:),
+     &  fna_eir1(:,:,:,:), fne_eir1(:,:,:),
+     &  fhe_eir1(:,:,:), fhi_eir1(:,:,:),
+     &  fna_321(:,:,:,:), fna_521(:,:,:,:),
+     &  fni_321(:,:,:), fni_521(:,:,:),
+     &  fne_321(:,:,:), fne_521(:,:,:),
+     &  fchdia1(:,:,:), fchin1(:,:,:),
+     &  fchvispar1(:,:,:), fchvisper1(:,:,:),
+     &  fchvisq1(:,:,:), fchinert1(:,:,:),
+     &  vaecrb1(:,:,:,:), vadia1(:,:,:,:), wadia1(:,:,:,:),
+     &  floe_noc1(:,:,:), floi_noc1(:,:,:)
       real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
       character lblps*120, lblgm*120, id*8, id0*8, line*500
       character idout*80, cnamip*80, cvalip*80                        !srv 22.12.09
@@ -131,6 +145,42 @@
 *     the diamagnetic drift velocity of species (is) on the (ix,iy) cell, and
 *     uadia(ix,iy,1,is) the radial drift velocity.
 *
+*     vadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
+*     (Let vadiax(,,)=vadia(,,0,) and vadiay(,)=vadia(,,1,).)
+*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiax(ix,iy,is) specifies
+*     the effective diamagnetic drift velocity of species (is) in cell (ix,iy)
+*     in the diamagnetic direction (i.e. within the flux surface but
+*     perpendicular to the magnetic field).
+*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vadiay(ix,iy,is) specifies
+*     the effective diamagnetic drift velocity of species (is) in cell (ix,iy)
+*     in the radial direction.
+*     vadia refers to cell centers if 'b2tfnb_drift_style' has '0'
+*     vadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*
+*     wadia - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
+*     (Let wadiax(,,)=wadia(,,0,) and wadiay(,)=wadia(,,1,).)
+*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), wadiax(ix,iy,is) specifies
+*     the total diamagnetic drift velocity of species (is) in cell (ix,iy)
+*     in the diamagnetic direction (i.e. within the flux surface but
+*     perpendicular to the magnetic field).
+*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), wadiay(ix,iy,is) specifies
+*     the total diamagnetic drift velocity of species (is) in cell (ix,iy)
+*     in the radial direction.
+*     wadia refers to cell centers if 'b2tfnb_drift_style' has '0'
+*     wadia refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*
+*     vaecrb - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
+*     (Let vaecrbx(,,)=vaecrb(,,0,) and vaecrby(,)=vaecrb(,,1,).)
+*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vaecrbx(ix,iy,is) specifies
+*     the ExB drift velocity of species (is) in cell (ix,iy)
+*     in the diamagnetic direction (i.e. within the flux surface but
+*     perpendicular to the magnetic field).
+*     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), vaecrby(ix,iy,is) specifies
+*     the ExB drift velocity of species (is) in cell (ix,iy)
+*     in the radial direction.
+*     vaecrb refers to cell centers if 'b2tfnb_drift_style' has '0'
+*     vaecrb refers to cell faces if 'b2tfnb_drift_style' has '1' (default)
+*
 *     kinrgy - (-1:nx,-1:ny,0:ns-1) real*8 array.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), kinrgy(ix,iy,is) specifies
 *     the kinetic energy of a particle of species (is) in cell (ix,iy).
@@ -161,6 +211,31 @@
 *     (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fnay(-1:nx,iy,0:ns-1) will hold 0.
 *
+*     fna_mdf - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
+*     (Let fnax_mdf(,,)=fna_mdf(,,0,) and fnay_mdf(,,)=fna_mdf(,,1,).)
+*     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fnax_mdf(ix,iy,is) specifies
+*     the modified flux of atoms of species (is) through the face between
+*     the (ix,iy) cell and its left neighbor.
+*     For ix.eq.-1, fnax_mdf(ix,-1:ny,0:ns-1) will hold 0.
+*     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fnay_mdf(ix,iy,is) specifies
+*     the modified flux of atoms of species (is) through the face between
+*     the (ix,iy) cell and its bottom neighbor.
+*     For iy.eq.-1, fnay_mdf(-1:nx,iy,0:ns-1) will hold 0.
+*     fna_mdf is equal fna for runs without drifts.
+*
+*     fna_fcor - (-1:nx,-1:ny,0:1,0:ns-1) real*8 array.
+*     (Let fna_fcorx(,,)=fna_fcor(,,0,) and fna_fcory(,,)=fna_fcor(,,1,).)
+*     For (ix,iy,is) in (0:nx,-1:ny,0:ns-1), fna_fcorx(ix,iy,is) specifies
+*     the flux of atoms of species (is) for calculating momentum transport
+*     through the face between the (ix,iy) cell and its left neighbor.
+*     For ix.eq.-1, fna_fcorx(ix,-1:ny,0:ns-1) will hold 0.
+*     For (ix,iy,is) in (-1:nx,0:ny,0:ns-1), fna_fcory(ix,iy,is) specifies
+*     the flux of atoms of species (is) for calculating momentum transport
+*     through the face between the (ix,iy) cell and its bottom neighbor.
+*     For iy.eq.-1, fna_fcory(-1:nx,iy,0:ns-1) will hold 0.
+*     fna_fcor takes into account Coriolis force.
+*     fna_fcor is equal fna for runs without drifts.
+*
 *     fhe - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhex(,)=fhe(,,0) and fhey(,)=fhe(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fhex(ix,iy) specifies the electron
@@ -169,6 +244,16 @@
 *     For (ix,iy) in (-1:nx,0:ny), fhey(ix,iy) specifies the electron
 *     heat flux through the face between the (ix,iy) cell and its
 *     bottom neighbor. For iy.eq.-1, fhey(-1:nx,iy) will hold 0.
+*
+*     fhe_mdf - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fhex_mdf(,)=fhe_mdf(,,0) and fhey_mdf(,)=fhe_mdf(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fhex_mdf(ix,iy) specifies the modified
+*     electron heat flux through the face between the (ix,iy) cell
+*     and its left neighbor. For ix.eq.-1, fhex_mdf(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fhey_mdf(ix,iy) specifies the modified
+*     electron heat flux through the face between the (ix,iy) cell and
+*     its bottom neighbor. For iy.eq.-1, fhey_mdf(-1:nx,iy) will hold 0.
+*     fhe_mdf is equal fhe for runs without drifts.
 *
 *     fhi - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhix(,)=fhi(,,0) and fhiy(,)=fhi(,,1).)
@@ -179,6 +264,15 @@
 *     heat flux through the face between the (ix,iy) cell and its
 *     bottom neighbor. For iy.eq.-1, fhiy(-1:nx,iy) will hold 0.
 *
+*     fhi_mdf - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fhix_mdf(,)=fhi_mdf(,,0) and fhiy_mdf(,)=fhi_mdf(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fhix_mdf(ix,iy) specifies the
+*     modified all atom heat flux through the face between the (ix,iy) cell
+*     and its left neighbor. For ix.eq.-1, fhix_mdf(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fhiy_mdf(ix,iy) specifies the modified
+*     all atom heat flux through the face between the (ix,iy) cell and
+*     its bottom neighbor. For iy.eq.-1, fhiy_mdf(-1:nx,iy) will hold 0.
+*
 *     fch - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fchx(,)=fch(,,0) and fchy(,)=fch(,,1).)
 *     For (ix,iy) in (0:nx,-1:ny), fchx(ix,iy) specifies the electric
@@ -187,6 +281,77 @@
 *     For (ix,iy) in (-1:nx,0:ny), fchy(ix,iy) specifies the electric
 *     current through the face between the (ix,iy) cell and its bottom
 *     neighbor. For iy.eq.-1, fchy(-1:nx,iy) will hold 0.
+*
+*     fch_p - (-1:nx,-1:ny,0:1) real*8 array.
+*     For (ix,iy) in (0:nx,-1:ny), fch_p(ix,iy,0) specifies the product of
+*     the parallel electric current and the poloidal magnetic field component
+*     sign through the face between the (ix,iy) cell and its left neighbor.
+*     For ix.eq.-1, fch_p(ix,-1:ny,0) will hold 0.
+*     fch_p(-1:nx,-1:ny,1) = 0
+*
+*     fchdia - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fchdiax(,)=fchdia(,,0) and fchdiay(,)=fchdia(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fchdiax(ix,iy) specifies the
+*     modified diamagnetic current through the face between
+*     the (ix,iy) cell and its left neighbor.
+*     For ix.eq.-1, fchdiax(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fchdiay(ix,iy) specifies the
+*     modified diamagnetic current through the face between
+*     the (ix,iy) cell and its bottom neighbor.
+*     For iy.eq.-1, fchdiay(-1:nx,iy) will hold 0.
+*
+*     fchvispar - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fchvisparx(,)=fchvispar(,,0) and fchvispary(,)=fchvispar(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fchvisparx(ix,iy) specifies the
+*     electric current driven by parallel viscosity through the face
+*     between the (ix,iy) cell and its left neighbor.
+*     For ix.eq.-1, fchvisparx(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fchvispary(ix,iy) specifies the
+*     electric current driven by parallel viscosity through the face
+*     between the (ix,iy) cell and its bottom neighbor.
+*     For iy.eq.-1, fchvispary(-1:nx,iy) will hold 0.
+*
+*     fchvisper - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fchvisperx(,)=fchvisper(,,0) and fchvispery(,)=fchvisper(,,1).)
+*     For (ix,iy) in (-1:nx,-1:ny), fchvisperx(ix,iy) = 0.
+*     For (ix,iy) in (-1:nx, 0:ny), fchvispery(ix,iy) specifies the
+*     electric current connected with contribution from
+*     the perpendicular viscosity through the face between the (ix,iy) cell
+*     and its bottom neighbor.
+*     For iy.eq.-1, fchvispery(-1:nx,iy) will hold 0.
+*
+*     fchvisq - (-1:nx,-1:ny,0:1) real*8 array.
+*     fchvisq specifies the electric current produced by the components
+*     of the viscosity tensor which is connected with the heat fluxes.
+*     (Let fchvisqx(,)=fchvisq(,,0) and fchvisqy(,)=fchvisq(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fchvisqx(ix,iy) specifies the current
+*     through the face between the (ix,iy) cell and its left neighbor.
+*     For ix.eq.-1, fchvisqx(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fchvisqy(ix,iy) specifies the current
+*     through the face between the (ix,iy) cell and its bottom neighbor.
+*     For iy.eq.-1, fchvisqy(-1:nx,iy) will hold 0.
+*
+*     fchinert - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fchinertx(,)=fchinert(,,0) and fchinerty(,)=fchinert(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fchinertx(ix,iy) specifies the
+*     contributions from inertia and gyroviscosity current through
+*     the face between the (ix,iy) cell and its left neighbor.
+*     For ix.eq.-1, fchinertx(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fchinerty(ix,iy) specifies the
+*     contributions from inertia and gyroviscosity current through
+*     the face between the (ix,iy) cell and its bottom neighbor.
+*     For iy.eq.-1, fchinerty(-1:nx,iy) will hold 0.
+*
+*     fchin - (-1:nx,-1:ny,0:1) real*8 array.
+*     (Let fchinx(,)=fchin(,,0) and fchiny(,)=fchin(,,1).)
+*     For (ix,iy) in (0:nx,-1:ny), fchinx(ix,iy) specifies the
+*     contribution from ion-neutral friction through the face between
+*     the (ix,iy) cell and its left neighbor.
+*     For ix.eq.-1, fchinx(ix,-1:ny) will hold 0.
+*     For (ix,iy) in (-1:nx,0:ny), fchiny(ix,iy) specifies the
+*     contribution from ion-neutral friction through the face between
+*     the (ix,iy) cell and its bottom neighbor.
+*     For iy.eq.-1, fchiny(-1:nx,iy) will hold 0.
 *
 *     lblps - character*120.
 *     lblps identifies the instance of the program employed to prepare
@@ -356,11 +521,39 @@
      &  fna1(-1:nx,-1:ny,0:1,0:idum(2)-1), fhe1(-1:nx,-1:ny,0:1),
      &  fhi1(-1:nx,-1:ny,0:1), fch1(-1:nx,-1:ny,0:1),
      1  fch_321(-1:nx,-1:ny,0:1), fch_521(-1:nx,-1:ny,0:1),
-     2  fch_p1(-1:nx,-1:ny,0:1), kinrgy1(-1:nx,-1:ny,0:idum(2)-1) )
+     2  fch_p1(-1:nx,-1:ny,0:1), kinrgy1(-1:nx,-1:ny,0:idum(2)-1),
+     &  fna_mdf1(-1:nx,-1:ny,0:1,0:idum(2)-1),
+     &  fhe_mdf1(-1:nx,-1:ny,0:1), fhi_mdf1(-1:nx,-1:ny,0:1),
+     &  fna_fcor1(-1:nx,-1:ny,0:1,0:idum(2)-1),
+     &  fna_nodrift1(-1:nx,-1:ny,0:1,0:idum(2)-1),
+     &  fna_he1(-1:nx,-1:ny,0:1,0:idum(2)-1),
+     &  fnaPSch1(-1:nx,-1:ny,0:1,0:idum(2)-1),
+     &  fhePSch1(-1:nx,-1:ny,0:1), fhiPSch1(-1:nx,-1:ny,0:1),
+     &  fna_eir1(-1:nx,-1:ny,0:1,0:idum(2)-1),
+     &  fne_eir1(-1:nx,-1:ny,0:1), fhe_eir1(-1:nx,-1:ny,0:1),
+     &  fhi_eir1(-1:nx,-1:ny,0:1),
+     &  fna_321(-1:nx,-1:ny,0:1,0:idum(2)-1),
+     &  fna_521(-1:nx,-1:ny,0:1,0:idum(2)-1),
+     &  fni_321(-1:nx,-1:ny,0:1), fni_521(-1:nx,-1:ny,0:1),
+     &  fne_321(-1:nx,-1:ny,0:1), fne_521(-1:nx,-1:ny,0:1),
+     &  fchdia1(-1:nx,-1:ny,0:1), fchin1(-1:nx,-1:ny,0:1),
+     &  fchvispar1(-1:nx,-1:ny,0:1), fchvisper1(-1:nx,-1:ny,0:1),
+     &  fchvisq1(-1:nx,-1:ny,0:1), fchinert1(-1:nx,-1:ny,0:1),
+     &  vaecrb1(-1:nx,-1:ny,0:1,0:idum(2)-1),
+     &  vadia1(-1:nx,-1:ny,0:1,0:idum(2)-1),
+     &  wadia1(-1:nx,-1:ny,0:1,0:idum(2)-1),
+     &  floe_noc1(-1:nx,-1:ny,0:1), floi_noc1(-1:nx,-1:ny,0:1) )
 *   ..read initial state from the file
-       call b2rups (ninp(3), idum(0), idum(1), idum(2), ne1, na1, ua1,
-     &  uadia1, te1, ti1, po1, fna1, fhe1, fhi1, fch1, fch_321, fch_521,
-     &  fch_p1, kinrgy1, b2fstate_version)
+       call b2rups (ninp(3), idum(0), idum(1), idum(2),
+     &  ne1, na1, ua1, uadia1, te1, ti1, po1,
+     &  fna1, fhe1, fhi1, fch1, fch_321, fch_521, fch_p1, kinrgy1,
+     &  fna_mdf1, fhe_mdf1, fhi_mdf1, fna_fcor1, fna_nodrift1, fna_he1,
+     &  fnaPSch1, fhePSch1, fhiPSch1,
+     &  fna_eir1, fne_eir1, fhe_eir1, fhi_eir1,
+     &  fna_321, fna_521, fni_321, fni_521, fne_321, fne_521,
+     &  fchdia1, fchin1, fchvispar1, fchvisper1, fchvisq1, fchinert1,
+     &  vaecrb1, vadia1, wadia1, floe_noc1, floi_noc1,
+     &  b2fstate_version)
        close(ninp(3))
        write(*,*) ' Closed b2fstate'
 *   ..test plasma state and fluxes
@@ -369,16 +562,22 @@
        call b2xvsg (n2*idum(2), kinrgy1, 1, 'kinrgy', '.ge.')
 *   ..initialise na, ua, kinrgy, uadia, ne
        do is = 0, min(ns,idum(2))-1
-         na(:,:,is)     = na1(:,:,is)
-         ua(:,:,is)     = ua1(:,:,is)
-         kinrgy(:,:,is) = kinrgy1(:,:,is)
+         na(:,:,is)       = na1(:,:,is)
+         ua(:,:,is)       = ua1(:,:,is)
+         kinrgy(:,:,is)   = kinrgy1(:,:,is)
          uadia(:,:,:,is)  = uadia1(:,:,:,is)
+         vadia(:,:,:,is)  = vadia1(:,:,:,is)
+         wadia(:,:,:,is)  = wadia1(:,:,:,is)
+         vaecrb(:,:,:,is) = vaecrb1(:,:,:,is)
        enddo
        do is = min(ns,idum(2)), ns-1
         call sfill (n2, naini(is), na(-1,-1,is), 1)
         call sfill (n2, 0.0_R8, ua(-1,-1,is), 1)
         call sfill (n2, 0.0_R8, kinrgy(-1,-1,is), 1)
         call sfill (n2*2, 0.0_R8, uadia(-1,-1,0,is), 1)
+        call sfill (n2*2, 0.0_R8, vadia(-1,-1,0,is), 1)
+        call sfill (n2*2, 0.0_R8, wadia(-1,-1,0,is), 1)
+        call sfill (n2*2, 0.0_R8, vaecrb(-1,-1,0,is), 1)
        enddo
        do is = 0, ns-1
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
@@ -390,19 +589,61 @@
        po = po1
 *   ..initialise fluxes
        do is = 0, min(ns,idum(2))-1
-         fna(:,:,:,is)     = fna1(:,:,:,is)
+         fna(:,:,:,is)         = fna1(:,:,:,is)
+         fna_mdf(:,:,:,is)     = fna_mdf1(:,:,:,is)
+         fna_fcor(:,:,:,is)    = fna_fcor1(:,:,:,is)
+         fna_nodrift(:,:,:,is) = fna_nodrift1(:,:,:,is)
+         fna_he(:,:,:,is)      = fna_he(:,:,:,is)
+         fnaPSch(:,:,:,is)     = fnaPSch1(:,:,:,is)
+         fna_eir(:,:,:,is)     = fna_eir1(:,:,:,is)
+         fna_32(:,:,:,is)      = fna_321(:,:,:,is)
+         fna_52(:,:,:,is)      = fna_521(:,:,:,is)
        enddo
        do is = min(ns,idum(2)), ns-1
-        call sfill (n2*2, 0.0_R8, fna(-1,-1,0,is), 1)
+         call sfill (n2*2, 0.0_R8, fna(-1,-1,0,is), 1)
+         call sfill (n2*2, 0.0_R8, fna_mdf(-1,-1,0,is), 1)
+         call sfill (n2*2, 0.0_R8, fna_fcor(-1,-1,0,is), 1)
+         call sfill (n2*2, 0.0_R8, fna_nodrift(-1,-1,0,is), 1)
+         call sfill (n2*2, 0.0_R8, fna_he(-1,-1,0,is), 1)
+         call sfill (n2*2, 0.0_R8, fnaPSch(-1,-1,0,is), 1)
+         call sfill (n2*2, 0.0_R8, fna_eir(-1,-1,0,is), 1)
+         call sfill (n2*2, 0.0_R8, fna_32(-1,-1,0,is), 1)
+         call sfill (n2*2, 0.0_R8, fna_52(-1,-1,0,is), 1)
        enddo
-       fhe    = fhe1
-       fhi    = fhi1
-       fch    = fch1
-       fch_32 = fch_321
-       fch_52 = fch_521
-       fch_p  = fch_p1
+       fne_eir   = fne_eir1
+       fne_32    = fne_321
+       fne_52    = fne_521
+       fni_32    = fni_321
+       fni_52    = fni_521
+       fhe       = fhe1
+       fhe_mdf   = fhe_mdf1
+       fhePSch   = fhePSch1
+       fhe_eir   = fhe_eir1
+       fhi       = fhi1
+       fhi_mdf   = fhi_mdf1
+       fhiPSch   = fhiPSch1
+       fhi_eir   = fhi_eir1
+       fch       = fch1
+       fch_32    = fch_321
+       fch_52    = fch_521
+       fch_p     = fch_p1
+       fchdia    = fchdia1
+       fchin     = fchin1
+       fchvispar = fchvispar1
+       fchvisper = fchvisper1
+       fchvisq   = fchvisq1
+       fchinert  = fchinert1
+       floe_noc  = floe_noc1
+       floi_noc  = floi_noc1
        deallocate( zcdum, na1, ua1, ne1, uadia1, te1, ti1, po1,
-     &    fna1, fhe1, fhi1, fch1, fch_321, fch_521, fch_p1, kinrgy1)
+     &    fna1, fhe1, fhi1, fch1, fch_321, fch_521, fch_p1, kinrgy1,
+     &    fna_mdf1, fhe_mdf1, fhi_mdf1,
+     &    fna_fcor1, fna_nodrift1, fna_he1,
+     &    fnaPSch1, fhePSch1, fhiPSch1,
+     &    fna_eir1, fne_eir1, fhe_eir1, fhi_eir1,
+     &    fna_321, fna_521, fni_321, fni_521, fne_321, fne_521,
+     &    fchdia1, fchin1, fchvispar1, fchvisper1, fchvisq1, fchinert1,
+     &    vaecrb1, vadia1, wadia1, floe_noc1, floi_noc1)
       else                                                           !srv 22.12.09 }
 *   ..initialise na, ua, kinrgy, uadia, ne
        do is = 0, ns-1
@@ -410,6 +651,9 @@
         call sfill (n2, 0.0_R8, ua(-1,-1,is), 1)
         call sfill (n2, 0.0_R8, kinrgy(-1,-1,is), 1)
         call sfill (n2*2, 0.0_R8, uadia(-1,-1,0,is), 1)
+        call sfill (n2*2, 0.0_R8, vadia(-1,-1,0,is), 1)
+        call sfill (n2*2, 0.0_R8, wadia(-1,-1,0,is), 1)
+        call sfill (n2*2, 0.0_R8, vaecrb(-1,-1,0,is), 1)
         call sfill (n2, (zamin(is)+zamax(is))/2.0_R8, rza(-1,-1,is), 1)
        enddo
        call b2xpne (nx, ny, ns, rza, na, zero, ne)
@@ -419,12 +663,39 @@
        call sfill (n2, 3.1_R8*ttini, po, 1)
 *   ..initialise fluxes
        call sfill (n2*2*ns, 0.0_R8, fna, 1)
+       call sfill (n2*2*ns, 0.0_R8, fna_mdf(-1,-1,0,is), 1)
+       call sfill (n2*2*ns, 0.0_R8, fna_fcor(-1,-1,0,is), 1)
+       call sfill (n2*2*ns, 0.0_R8, fna_nodrift(-1,-1,0,is), 1)
+       call sfill (n2*2*ns, 0.0_R8, fna_he(-1,-1,0,is), 1)
+       call sfill (n2*2*ns, 0.0_R8, fnaPSch(-1,-1,0,is), 1)
+       call sfill (n2*2*ns, 0.0_R8, fna_eir(-1,-1,0,is), 1)
+       call sfill (n2*2*ns, 0.0_R8, fna_32(-1,-1,0,is), 1)
+       call sfill (n2*2*ns, 0.0_R8, fna_52(-1,-1,0,is), 1)
+       call sfill (n2*2, 0.0_R8, fne_eir, 1)
+       call sfill (n2*2, 0.0_R8, fhe_mdf, 1)
+       call sfill (n2*2, 0.0_R8, fhe_eir, 1)
+       call sfill (n2*2, 0.0_R8, fhePSch, 1)
+       call sfill (n2*2, 0.0_R8, fhi_mdf, 1)
+       call sfill (n2*2, 0.0_R8, fhi_eir, 1)
+       call sfill (n2*2, 0.0_R8, fhiPSch, 1)
        call sfill (n2*2, 0.0_R8, fhe, 1)
        call sfill (n2*2, 0.0_R8, fhi, 1)
        call sfill (n2*2, 0.0_R8, fch, 1)
+       call sfill (n2*2, 0.0_R8, fne_32, 1)
+       call sfill (n2*2, 0.0_R8, fne_52, 1)
+       call sfill (n2*2, 0.0_R8, fni_32, 1)
+       call sfill (n2*2, 0.0_R8, fni_52, 1)
        call sfill (n2*2, 0.0_R8, fch_32, 1)
        call sfill (n2*2, 0.0_R8, fch_52, 1)
        call sfill (n2*2, 0.0_R8, fch_p, 1)                           !srv 10.06.08
+       call sfill (n2*2, 0.0_R8, fchdia, 1)
+       call sfill (n2*2, 0.0_R8, fchin, 1)
+       call sfill (n2*2, 0.0_R8, fchvispar, 1)
+       call sfill (n2*2, 0.0_R8, fchvisper, 1)
+       call sfill (n2*2, 0.0_R8, fchvisq, 1)
+       call sfill (n2*2, 0.0_R8, fchinert, 1)
+       call sfill (n2*2, 0.0_R8, floe_noc, 1)
+       call sfill (n2*2, 0.0_R8, floi_noc, 1)
       endif                                                          !srv 22.12.09
 *   ..initialise time
       tim = 0.0_R8
@@ -478,7 +749,12 @@
       call b2wuzd (nout(1), newversion, ns, zamin, zamax, zn, am)
 *   ..save state
       call b2wups (nout(1), nx, ny, ns, ne, na, ua, uadia, te,          !xpb
-     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
+     &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &  vaecrb, vadia, wadia, floe_noc, floi_noc)
 
 * ..return
       call subend ()

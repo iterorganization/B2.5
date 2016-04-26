@@ -3,7 +3,12 @@
 
       subroutine b2wups (nput, nx, ny, ns, 
      &  ne, na, ua, uadia, te, ti, po,
-     &  fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
+     &  fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &  vaecrb, vadia, wadia, floe_noc, floi_noc)
       use b2mod_types
       use b2mod_time
       use b2mod_version
@@ -18,7 +23,24 @@
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      1	fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
-     2  fch_p(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1)         !srv 10.06.08
+     2  fch_p(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1),              !srv 10.06.08
+     &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1), fhe_mdf(-1:nx,-1:ny,0:1),
+     &  fhi_mdf(-1:nx,-1:ny,0:1), fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_nodrift(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fna_he(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1), fhePSch(-1:nx,-1:ny,0:1),
+     &  fhiPSch(-1:nx,-1:ny,0:1), fna_eir(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fne_eir(-1:nx,-1:ny,0:1), fhe_eir(-1:nx,-1:ny,0:1),
+     &  fhi_eir(-1:nx,-1:ny,0:1),
+     &  fna_32(-1:nx,-1:ny,0:1,0:ns-1), fna_52(-1:nx,-1:ny,0:1,0:ns-1),
+     &  fni_32(-1:nx,-1:ny,0:1), fni_52(-1:nx,-1:ny,0:1),
+     &  fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
+     &  fchdia(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
+     &  fchvispar(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1),
+     &  fchvisq(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),
+     &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
 *     (none)
 
@@ -114,6 +136,39 @@
      &   newversion.ge.'01.001.024') then
         call cfwure (nput, n2, fch_p(:,:,0), 'fch_p')
       endif                                                     !srv 10.06.08 }
+*   ..saving various fluxes and velocities needed by advanced SOLPS-ITER features
+      if (newversion.ge.'03.000.005') then
+        call cfwure (nput, n2*2*ns, fna_mdf, 'fna_mdf')
+        call cfwure (nput, n2*2, fhe_mdf, 'fhe_mdf')
+        call cfwure (nput, n2*2, fhi_mdf, 'fhi_mdf')
+        call cfwure (nput, n2*2*ns, fna_fcor, 'fna_fcor')
+        call cfwure (nput, n2*2*ns, fna_nodrift, 'fna_nodrift')
+        call cfwure (nput, n2*2*ns, fna_he, 'fna_he')
+        call cfwure (nput, n2*2*ns, fnaPSch, 'fnaPSch')
+        call cfwure (nput, n2*2, fhePSch, 'fhePSch')
+        call cfwure (nput, n2*2, fhiPSch, 'fhiPSch')
+        call cfwure (nput, n2*2*ns, fna_eir, 'fna_eir')
+        call cfwure (nput, n2*2*ns, fne_eir, 'fne_eir')
+        call cfwure (nput, n2*2*ns, fhe_eir, 'fhe_eir')
+        call cfwure (nput, n2*2*ns, fhi_eir, 'fhi_eir')
+        call cfwure (nput, n2*2*ns, fna_32, 'fna_32')
+        call cfwure (nput, n2*2*ns, fna_52, 'fna_52')
+        call cfwure (nput, n2*2, fni_32, 'fni_32')
+        call cfwure (nput, n2*2, fni_52, 'fni_52')
+        call cfwure (nput, n2*2, fne_32, 'fne_32')
+        call cfwure (nput, n2*2, fne_52, 'fne_52')
+        call cfwure (nput, n2*2, fchdia, 'fchdia')
+        call cfwure (nput, n2*2, fchin, 'fchin')
+        call cfwure (nput, n2*2, fchvispar, 'fchvispar')
+        call cfwure (nput, n2*2, fchvisper, 'fchvisper')
+        call cfwure (nput, n2*2, fchvisq, 'fchvisq')
+        call cfwure (nput, n2*2, fchinert, 'fchinert')
+        call cfwure (nput, n2*2*ns, vaecrb, 'vaecrb')
+        call cfwure (nput, n2*2*ns, vadia, 'vadia')
+        call cfwure (nput, n2*2*ns, wadia, 'wadia')
+        call cfwure (nput, n2*2, floe_noc, 'floe_noc')
+        call cfwure (nput, n2*2, floi_noc, 'floi_noc')
+      endif
 * ..return
       call subend ()
       return

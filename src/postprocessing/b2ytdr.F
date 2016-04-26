@@ -46,6 +46,7 @@ c 2002-09-11: logic revised
      ,        nstsi, nlimi, natmi, nmoli, nioni,
      ,        alloc_b2mod_b2plot, dealloc_b2mod_b2plot
       use b2mod_external
+      use b2mod_work
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
@@ -177,31 +178,45 @@ c 2002-09-11: logic revised
      3 fhi1(-1:nx1,-1:ny1,0:1), po1(-1:nx1,-1:ny1),
      5 ti1(-1:nx1,-1:ny1), te1(-1:nx1,-1:ny1), ne1(-1:nx1,-1:ny1),
      6 fch1_32(-1:nx1,-1:ny1,0:1), fch1_52(-1:nx1,-1:ny1,0:1),
-     7 fch1_p(-1:nx1,-1:ny1,0:1), w1d(0:ns-1), zpdum(0:ns-1,0:3)
+     7 fch1_p(-1:nx1,-1:ny1,0:1), w1d(0:ns-1), zpdum(0:ns-1,0:3),
+     8 fhe_mdf1(-1:nx1,-1:ny1,0:1), fhi_mdf1(-1:nx1,-1:ny1,0:1),
+     9 fhePSch1(-1:nx1,-1:ny1,0:1), fhiPSch1(-1:nx1,-1:ny1,0:1),
+     * fne_eir1(-1:nx1,-1:ny1,0:1), fhe_eir1(-1:nx1,-1:ny1,0:1),
+     1 fhi_eir1(-1:nx1,-1:ny1,0:1),
+     2 fni_321(-1:nx1,-1:ny1,0:1), fni_521(-1:nx1,-1:ny1,0:1),
+     3 fne_321(-1:nx1,-1:ny1,0:1), fne_521(-1:nx1,-1:ny1,0:1),
+     4 fchdia1(-1:nx1,-1:ny1,0:1), fchin1(-1:nx1,-1:ny1,0:1),
+     5 fchvispar1(-1:nx1,-1:ny1,0:1), fchvisper1(-1:nx1,-1:ny1,0:1),
+     6 fchvisq1(-1:nx1,-1:ny1,0:1), fchinert1(-1:nx1,-1:ny1,0:1),
+     7 floe_noc1(-1:nx1,-1:ny1,0:1), floi_noc1(-1:nx1,-1:ny1,0:1)
       real (kind=R8), allocatable ::
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
      2 uadia1(:,:,:,:), fna1(:,:,:,:), ua1(:,:,:), na1(:,:,:),
-     3 kinrgy1(:,:,:),
-     4 sputter_yield_yt(:,:,:,:), sputter_yield2_yt(:,:,:,:),
-     . sputter_tmp(:,:), cftmp(:), e_bundle_contr(:,:), epls_map(:,:),
-     5 bundle_contr(:,:), bundle_frac(:,:), x1data(:,:,:,:),
-     6 s1data(:,:,:,:), t1data(:,:,:,:), eta_hce_mult1(:),
-     7 recyc1(:,:), erecyc1(:,:), rcion1(:,:),
-     8 phys_sput1(:,:), chem_sput1(:,:),
-     9 r(:), f(:), ds(:), dprof(:), felm(:), delm(:),
-     * px(:), pf(:), pelm(:),
-     * prdsa(:), pra(:), dsa(:), dsa1(:), deta(:),
-     * pxdsa(:), pxa(:), xx(:), xf(:), x(:), fx(:), dx(:),
-     1 sr1(:), sf1(:), sd1(:), sr2(:), sf2(:), sd2(:),
-     2 spr(:), spf1(:), spf2(:), s1d(:,:,:,:),
-     1 xr1(:), xf1(:), xd1(:), xr2(:), xf2(:), xd2(:),
-     2 xpr(:), xpf1(:), xpf2(:), x1d(:,:,:,:),
-     3 l_conn(:), nbini(:),
-     4 saved_na_feedback_actuator1(:), na_feedback_target1(:),
-     5 na_feedback_alpha1(:), na_feedback_beta1(:),
-     6 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
-     7 na_feedback_const1(:), na_feedback_overshoot1(:),
-     8 na_feedback_time1(:), gpdata1(:,:,:)
+     3 kinrgy1(:,:,:), fna_mdf1(:,:,:,:),
+     4 fna_fcor1(:,:,:,:), fna_nodrift1(:,:,:,:), fna_he1(:,:,:,:),
+     5 fnaPSch1(:,:,:,:), fna_eir1(:,:,:,:),
+     6 fna_321(:,:,:,:), fna_521(:,:,:,:),
+     7 vaecrb1(:,:,:,:), vadia1(:,:,:,:), wadia1(:,:,:,:),
+     8 sputter_yield_yt(:,:,:,:), sputter_yield2_yt(:,:,:,:),
+     9 sputter_tmp(:,:), cftmp(:), e_bundle_contr(:,:), epls_map(:,:),
+     . bundle_contr(:,:), bundle_frac(:,:), x1data(:,:,:,:),
+     1 s1data(:,:,:,:), t1data(:,:,:,:), eta_hce_mult1(:),
+     2 recyc1(:,:), erecyc1(:,:), rcion1(:,:),
+     3 phys_sput1(:,:), chem_sput1(:,:),
+     4 r(:), f(:), dprof(:), felm(:), delm(:),
+     5 px(:), pf(:), pelm(:),
+     6 prdsa(:), pra(:), dsa(:), dsa1(:), deta(:),
+     7 pxdsa(:), pxa(:), xx(:), xf(:), x(:), fx(:), dx(:),
+     8 sr1(:), sf1(:), sd1(:), sr2(:), sf2(:), sd2(:),
+     9 spr(:), spf1(:), spf2(:), s1d(:,:,:,:),
+     * xr1(:), xf1(:), xd1(:), xr2(:), xf2(:), xd2(:),
+     1 xpr(:), xpf1(:), xpf2(:), x1d(:,:,:,:),
+     2 l_conn(:), nbini(:),
+     3 saved_na_feedback_actuator1(:), na_feedback_target1(:),
+     4 na_feedback_alpha1(:), na_feedback_beta1(:),
+     5 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
+     6 na_feedback_const1(:), na_feedback_overshoot1(:),
+     7 na_feedback_time1(:), gpdata1(:,:,:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps
       integer ns1, nsm, nym, natmm, nwallm
       integer i, j, k, ix, iy, is, ib, ireg, len, nsns
@@ -761,6 +776,11 @@ c 2002-09-11: logic revised
 *   ..read plasma state
       call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &  vaecrb, vadia, wadia, floe_noc, floi_noc,
      1  b2fstate_version)
       if (invert_bpol .eq. 1) ua = -ua
 *   ..write label
@@ -874,7 +894,18 @@ c 2002-09-11: logic revised
       allocate(ua1(-1:nx1,-1:ny1,0:ns1-1))
       allocate(kinrgy1(-1:nx1,-1:ny1,0:ns1-1))
       allocate(fna1(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(fna_mdf1(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(fna_eir1(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(fna_fcor1(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(fna_nodrift1(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(fna_he1(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(fna_321(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(fna_521(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(fnaPsCh1(-1:nx1,-1:ny1,0:1,0:ns1-1))
       allocate(uadia1(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(vadia1(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(wadia1(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(vaecrb1(-1:nx1,-1:ny1,0:1,0:ns1-1))
       allocate(sputter_yield_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(sputter_yield2_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(bundle_frac(0:ns1-1,0:ns-1))
@@ -967,8 +998,20 @@ c 2002-09-11: logic revised
      &    hx, hy, qc, hx1, hy1, qc1,
      &    bundle_frac, bottomiy1, ne, na, ua, uadia, te, ti,
      &    po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
+     &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
+     &    fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
+     &    fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
+     &    fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
+     &    vaecrb, vadia, wadia, floe_noc, floi_noc,
      &    ne1, na1, ua1, uadia1, te1, ti1, po1, fna1, fhe1, fhi1,
-     &    fch1, fch1_32, fch1_52, fch1_p, kinrgy1)
+     &    fch1, fch1_32, fch1_52, fch1_p, kinrgy1,
+     &    fna_mdf1, fhe_mdf1, fhi_mdf1,
+     &    fna_fcor1, fna_nodrift1, fna_he1,
+     &    fnaPSch1, fhePSch1, fhiPSch1,
+     &    fna_eir1, fne_eir1, fhe_eir1, fhi_eir1,
+     &    fna_321, fna_521, fni_321, fni_521, fne_321, fne_521,
+     &    fchdia1, fchin1, fchvispar1, fchvisper1, fchvisq1, fchinert1,
+     &    vaecrb1, vadia1, wadia1, floe_noc1, floi_noc1)
 *   ..rescale transformed state (if necessary)
       neutral_rescale=1.0_R8
       call ipgetr ('b2ytdr_rescale_neutrals', neutral_rescale)
@@ -981,9 +1024,20 @@ c 2002-09-11: logic revised
           if(is_neutral1(is)) then
             na1(:,:,is)=na1(:,:,is)*neutral_rescale
             fna1(:,:,:,is)=fna1(:,:,:,is)*neutral_rescale
+            fna_mdf1(:,:,:,is)=fna_mdf1(:,:,:,is)*neutral_rescale
+            fna_fcor1(:,:,:,is)=fna_fcor1(:,:,:,is)*neutral_rescale
+            fna_nodrift1(:,:,:,is)=
+     .       fna_nodrift1(:,:,:,is)*neutral_rescale
+            fna_he1(:,:,:,is)=fna_he1(:,:,:,is)*neutral_rescale
+            fnaPSch1(:,:,:,is)=fnaPSch1(:,:,:,is)*neutral_rescale
+            fna_eir1(:,:,:,is)=fna_eir1(:,:,:,is)*neutral_rescale
             kinrgy1(:,:,is)=kinrgy1(:,:,is)*neutral_rescale
+            fna_321(:,:,:,is)=fna_321(:,:,:,is)*neutral_rescale
+            fna_521(:,:,:,is)=fna_521(:,:,:,is)*neutral_rescale
           endif
         enddo
+        call b2xpfi (nx, ny, ns, fna_321, fni_321)
+        call b2xpfi (nx, ny, ns, fna_521, fni_521)
       endif
 
 *   ..write header for transformed state
@@ -999,7 +1053,13 @@ c 2002-09-11: logic revised
 *   ..save transformed state
       call b2wups (nout(1), nx1, ny1, ns1,
      &  ne1, na1, ua1, uadia1, te1, ti1, po1,
-     &  fna1, fhe1, fhi1, fch1, fch1_32, fch1_52, fch1_p, kinrgy1)
+     &  fna1, fhe1, fhi1, fch1, fch1_32, fch1_52, fch1_p, kinrgy1,
+     &  fna_mdf1, fhe_mdf1, fhi_mdf1, fna_fcor1, fna_nodrift1, fna_he1,
+     &  fnaPSch1, fhePSch1, fhiPSch1,
+     &  fna_eir1, fne_eir1, fhe_eir1, fhi_eir1,
+     &  fna_321, fna_521, fni_321, fni_521, fne_321, fne_521,
+     &  fchdia1, fchin1, fchvispar1, fchvisper1, fchvisq1, fchinert1,
+     &  vaecrb1, vadia1, wadia1, floe_noc1, floi_noc1)
 
 * ..check for need to transform other input files:
 * ..b2mn.dat, b2.*.parameters, input.dat, b2ah.dat, b2ai.dat
@@ -2495,7 +2555,6 @@ cxpb Calculate radial locations of combined profile spr(1:ndim)
                       if (.not.prdone) then
                         allocate(prdsa(1:ny1+2),pra(1:ny1+2))
                         allocate(r(1:ny+2),f(1:ny+2))
-                        allocate(ds(1:ny+2))
                         prdsa(1)=sqrt((cr1(ixref1,-1)-
      1                   0.5_R8*(crx1(ixref1,-1,0)+
      .                           crx1(ixref1,-1,1)))**2+
@@ -2543,7 +2602,7 @@ cxpb Calculate radial locations of combined profile spr(1:ndim)
                   endif
                 enddo
                 deallocate(s1d)
-                if (prdone) deallocate(prdsa,pra,r,f,ds)
+                if (prdone) deallocate(prdsa,pra,r,f)
               endif
               if (ns1data(ikind,j,is1(is)).gt.0) then
                 write(99,'(1x,a,i1,a,i1,a,i3,a,i3,a)')
