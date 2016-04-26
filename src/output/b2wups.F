@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2wups (nput, nx, ny, ns, 
+      subroutine b2wups (nput, nx, ny, ns,
      &  ne, na, ua, uadia, te, ti, po,
      &  fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
@@ -104,10 +104,10 @@
 * ..save state and fluxes
 *   ..save plasma state
       call cfwure (nput, n2*ns, na, 'na')
-      if (newversion.ge.'01.001.024') 
+      if (newversion.ge.'01.001.024')
      > call cfwure (nput, n2, ne, 'ne')
       call cfwure (nput, n2*ns, ua, 'ua')
-      if (newversion.ge.'01.001.000')  
+      if (newversion.ge.'01.001.000')
      > call cfwure (nput, n2*2*ns, uadia, 'uadia')
       call cfwure (nput, n2, te, 'te')
       call cfwure (nput, n2, ti, 'ti')
@@ -117,15 +117,15 @@
       call cfwure (nput, n2*2, fhe, 'fhe')
       call cfwure (nput, n2*2, fhi, 'fhi')
       call cfwure (nput, n2*2, fch, 'fch')
-      if (newversion.ge.'01.001.005')  
+      if (newversion.ge.'01.001.005')
      > call cfwure (nput, n2*2, fch_32, 'fch_32')
-      if (newversion.ge.'01.001.005')  
+      if (newversion.ge.'01.001.005')
      > call cfwure (nput, n2*2, fch_52, 'fch_52')
-      if (newversion.ge.'01.001.009')  
+      if (newversion.ge.'01.001.009')
      > call cfwure (nput, n2*ns, kinrgy, 'kinrgy')
 *   ..save time
       time(1)=tim
-      if (newversion.ge.'01.001.018')  
+      if (newversion.ge.'01.001.018')
      > call cfwure (nput, 1, time, 'time')
 *   ..save parallel current
       if(newversion.ge.'01.001.069') then                       !srv 09.09.11

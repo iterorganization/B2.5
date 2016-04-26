@@ -22,9 +22,9 @@
 *
 *  1. purpose
 *
-*     B2RD (main program) is a post-processor for b2. It imports an 
+*     B2RD (main program) is a post-processor for b2. It imports an
 *     archived plasma state from the MDSPlus tree and outputs the
-*     equivalent b2fstate and b2 geometry files. 
+*     equivalent b2fstate and b2 geometry files.
 *
 *
 *  2. specification
@@ -167,7 +167,7 @@
       status=mdsopen('solps'//char(0),ishot)
       write(*,*) 'mdsopen'
       call mds_err_msg(status)
- 
+
       status=mdsvalue2('_s=\TOP.IDENT:NX'//char(0),
      1 descr2(idtype_long,0),nx,0,retlen)
       call mds_err_msg(status)
@@ -233,7 +233,7 @@
       status=mdsvalue2('_s=\TOP.SNAPSHOT.GRID:AM'//char(0),
      1 descr2(idtype_double,NS,0),am(0:ns-1),0,retlen)
       call mds_err_msg(status)
-      
+
 *   ..read plasma data
       status=mdsvalue2('_s=\TOP.SNAPSHOT:NE'//char(0),
      1 descr2(idtype_double,NX+2,NY+2,0),ne,0,retlen)
@@ -736,7 +736,7 @@
       do ix = -1, nx
         if (rightix(ix,iy).ne.ix+1 .and. rightix(ix,iy).ne.nx+2) then
           is = is + 1
-          write(*,*) 
+          write(*,*)
      .     'Found cut number ',is,' at ix location ',ix, rightix(ix,iy)
           leftcut(is) = ix+1
           rightcut(is) = rightix(ix,iy)
@@ -797,9 +797,9 @@
       call intfacev1(nx,ny,2,bottomix,bottomiy,vol,bb,wbbv)
       do iy = -1, ny
         do ix = -1, nx
-          if (leftix(ix,iy).eq.-2) wbbl(ix,iy,0:2) = 
+          if (leftix(ix,iy).eq.-2) wbbl(ix,iy,0:2) =
      &     bb(ix,iy,0:2) - (wbbr(ix,iy,0:2)-bb(ix,iy,0:2))
-          if (rightix(ix,iy).eq.nx+1) wbbr(ix,iy,0:2) = 
+          if (rightix(ix,iy).eq.nx+1) wbbr(ix,iy,0:2) =
      &     bb(ix,iy,0:2) - (wbbl(ix,iy,0:2)-bb(ix,iy,0:2))
           if (bottomiy(ix,iy).eq.-2) wbbv(ix,iy,0:2) = bb(ix,iy,0:2) -
      &     (wbbv(topix(ix,iy),topiy(ix,iy),0:2)-bb(ix,iy,0:2))
@@ -809,11 +809,11 @@
       wbbr(:,:,3)=sqrt(wbbr(:,:,0)**2+wbbr(:,:,1)**2+wbbr(:,:,2)**2)
       wbbv(:,:,3)=sqrt(wbbv(:,:,0)**2+wbbv(:,:,1)**2+wbbv(:,:,2)**2)
       call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)
-      
+
 *   ..test geometry and plasma state
       n2 = (nx+2)*(ny+2)
       call b2xvgm (nx, ny, vol, hx, hy, qz, qc, gs, pbs)
-      call b2xvps (nx, ny, ns, 
+      call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 *   ..save final state
@@ -825,7 +825,7 @@
       call cfverw (nout(1), plasmastate_version)                         !xpb
       call cfwuin (nout(1), 3, idum, 'nx,ny,ns')
       call cfwuch (nout(1), 120, lblmn, 'label')
-      call b2wuzd (nout(1), plasmastate_version, ns, 
+      call b2wuzd (nout(1), plasmastate_version, ns,
      &  zamin, zamax, zn, am)
       call b2wups (nout(1), nx, ny, ns, ne, na, ua, uadia, te,           !xpb
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,

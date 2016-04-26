@@ -120,7 +120,7 @@
 *     It will hold that 0.le.zamin(is).le.zamax(is), 0.lt.zn(is) and
 *     0.lt.am(is). It is required that neutral species not be bundled
 *     with charged species.
-*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is) 
+*     For ns.le.is.lt.nsdecl, zamin(is), zamax(is), zn(is), am(is)
 *     are undefined.
 *
 *     Description of some local variables (including arrays in w(0:*):
@@ -271,7 +271,7 @@
 *   ..read plasma state file label
       call cfruch (ninp(3), 120, lblmn, 'label')
 *   ..read species data
-      call b2ruzd (ninp(3), b2fstate_version, 
+      call b2ruzd (ninp(3), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
       call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,
@@ -283,18 +283,18 @@
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      1  b2fstate_version)
 *   ..test plasma state and fluxes
-      call b2xvps (nx, ny, ns, 
+      call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *    ..compute log-log electron rate coefficients
       call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
      &     rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
 *   ..compute electron rate coefficients
       call ipgeti ('b2mndr_ismain', ismain)
-      call xertst (0.le.ismain.and.ismain.lt.ns, 
+      call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
       call xertst (.not.is_neutral(ismain),
      . 'invalid main plasma species ismain; must not be neutral')
-      call b2sqel (nx, ny, ns, ismain, ev, te, 
+      call b2sqel (nx, ny, ns, ismain, ev, te,
      &    rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
 

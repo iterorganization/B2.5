@@ -1151,7 +1151,7 @@ c 2002-09-11: logic revised
       call ipgeti ('b2tqna_mw_ix2', mw_ix2)
       call ipgeti ('b2tqna_mw_jxa', mw_jxa)
       call ipgeti ('b2tqna_mw_jsep', mw_jsep)
-      call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N', 
+      call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
      .                     istyle_cur_contr_on_S_and_N)
       call ipgeti ('b2news_coriolis', coriolis)
       call ipgetr ('b2tfnb_xfrhie', xfrhie)
@@ -1807,13 +1807,13 @@ c 2002-09-11: logic revised
             if (bccon(is,ib).eq.1 .and. bcene(ib).eq.9) bcene(ib)=19
             if (bccon(is,ib).eq.1 .and. bceni(ib).eq.9) bceni(ib)=19
             if (bccon(is,ib).eq.21 .and.
-     .          (streql(solps_version,'5.0') .or. 
+     .          (streql(solps_version,'5.0') .or.
      .           streql(solps_version,'5.1'))) then
               bccon(is,ib) = 24  ! must move number because of clash in numbering
             end if
           end do
           if (bceni(ib).eq.21 .and.
-     .        (streql(solps_version,'5.0') .or. 
+     .        (streql(solps_version,'5.0') .or.
      .         streql(solps_version,'5.1'))) then
             bceni(ib) = 25  ! must move number because of clash in numbering
           end if
@@ -1821,14 +1821,14 @@ c 2002-09-11: logic revised
             if (bcchar(ib).eq.'N') then
               bcpot(ib) = 13 ! new treatment for automatic drift current contribution
               istyle_cur_contr_on_S_and_N = 2
-            else if (bcchar(ib).eq.'S' .and. .not.is_core_boundary) then 
+            else if (bcchar(ib).eq.'S' .and. .not.is_core_boundary) then
               bcpot(ib) = 13 ! new treatment for automatic drift current contribution
               istyle_cur_contr_on_S_and_N = 2
-            else if (bcchar(ib).eq.'S' .and. is_core_boundary) then 
+            else if (bcchar(ib).eq.'S' .and. is_core_boundary) then
               bcpot(ib) = 12 ! new treatment for automatic drift current contribution
               istyle_cur_contr_on_S_and_N = 2
             end if
-          end if  
+          end if
         end do
         write(*,*) 'Writing ',trim(new_filename)
         write(nout(5),'(a)') trim(new_filename)
@@ -1972,7 +1972,7 @@ c 2002-09-11: logic revised
         if (transport_namelist.eq.0) call alloc_transport_namelist(ns)
         call read_b2mod_transport_namelist
         if (same_bundling) then
-          if (first_pass) 
+          if (first_pass)
      >     write(nout(5),'(a)') 'b2.transport.parameters'
           if (.not.streql(transport_filename,'b2.transport.parameters'))
      >     write(nout(5),'(a)') trim(transport_filename)
@@ -2287,12 +2287,12 @@ cxpb We must ensure we have not already listed this additional species
      .     'POLOIDAL_SCALING=',poloidal_scaling,','
           do ix = 1, nscale
             if (scaling_ix_begin(ix).ne.-2) then
-              scaling_ix_begin(ix) = 
+              scaling_ix_begin(ix) =
      .         conformal_convert(non_commensurate,1,
      .         scaling_ix_begin(ix),jsep,nx,ny,nx1,ny1,1)
             endif
             if (scaling_ix_end(ix).ne.-2) then
-              scaling_ix_end(ix) = 
+              scaling_ix_end(ix) =
      .         conformal_convert(non_commensurate,1,
      .         scaling_ix_end(ix),jsep,nx,ny,nx1,ny1,3)
             endif
@@ -2951,7 +2951,7 @@ cxpb This will need to be checked !!!
         if (numerics_namelist.eq.0) call alloc_b2mod_numerics(nx,ny,ns)
         call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
         if (same_bundling) then
-          if (first_pass) 
+          if (first_pass)
      >     write(nout(5),'(a)') 'b2.numerics.parameters'
           if (.not.streql(numerics_filename,'b2.numerics.parameters'))
      >     write(nout(5),'(a)') trim(numerics_filename)
@@ -3046,7 +3046,7 @@ cxpb This will need to be checked !!!
           endif
           if(core_dt_factor.ne.1.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .     'CORE_DT_FACTOR=',core_dt_factor,','
-          if(core_dt_suppression.ne.1.0_R8) 
+          if(core_dt_suppression.ne.1.0_R8)
      .     write(99,'(1x,a,1p,1g10.3,a)')
      .     'CORE_DT_SUPPRESSION=',core_dt_suppression,','
           if(time_factor_required.ne.0.1_R8)
@@ -5863,7 +5863,7 @@ cxpb We now rewrite the modified block 4
                   WRITE(IUNOT,'(A6,A74)') 'cpath ',PATH
                   close(29)
                 ELSE
-                  WRITE(6,*) 
+                  WRITE(6,*)
      .             'Invalid CPATH specification in this environment: '//
      .             'CPATH line removed'
                 END IF
@@ -8722,7 +8722,7 @@ cxpb as they no longer necessarily point to the same species
       CALL EIRENE_DEALLOC_CCOUPL
       CALL EIRENE_EXTRAB25_CLEANUP
 #endif
-      
+
 * ..return
       call subend ()
       return

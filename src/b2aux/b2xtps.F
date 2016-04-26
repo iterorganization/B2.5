@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2xtps (nx, ny, ns, nx1, ny1, ns1, nncutmax, 
-     &  non_commensurate, nnreg, nncut, periodic_bc, jsep, jsep1, 
+      subroutine b2xtps (nx, ny, ns, nx1, ny1, ns1, nncutmax,
+     &  non_commensurate, nnreg, nncut, periodic_bc, jsep, jsep1,
      &  region, region1,
      &  leftcut, leftcut1, rightcut, rightcut1,
      &  bottomcut, bottomcut1, topcut, topcut1,
@@ -14,7 +14,7 @@
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
-     &  ne1, na1, ua1, uadia1, te1, ti1, po1, fna1, fhe1, fhi1, fch1, 
+     &  ne1, na1, ua1, uadia1, te1, ti1, po1, fna1, fhe1, fhi1, fch1,
      &  fch1_32, fch1_52, fch1_p, kinrgy1,
      &  fna_mdf1, fhe_mdf1, fhi_mdf1, fna_fcor1, fna_nodrift1, fna_he1,
      &  fnaPSch1, fhePSch1, fhiPSch1,
@@ -48,7 +48,7 @@
       real (kind=R8) ::
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
-     6  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1), 
+     6  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
      &  fch_p(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1),
      &  fna_mdf(-1:nx,-1:ny,0:1,0:ns-1),
      &  fhe_mdf(-1:nx,-1:ny,0:1), fhi_mdf(-1:nx,-1:ny,0:1),
@@ -182,13 +182,13 @@
           sum = sum + bundle_frac(is1,is)
           if (bundle_frac(is1,is).ge.1.0_R8) then  ! simple case
             call b2xtvc (nx, ny, nx1, ny1, na(-1,-1,is), na1(-1,-1,is1),
-     &        nncutmax, non_commensurate, 
+     &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
             call b2xtvc (nx, ny, nx1, ny1, ua(-1,-1,is), ua1(-1,-1,is1),
-     &        nncutmax, non_commensurate, 
+     &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
@@ -196,13 +196,13 @@
             if (drift_style.eq.0) then
              call b2xtvc (nx, ny, nx1, ny1, uadia(-1,-1,0,is),
      &        uadia1(-1,-1,0,is1),
-     &        nncutmax, non_commensurate, 
+     &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
              call b2xtvc (nx, ny, nx1, ny1, uadia(-1,-1,1,is),
      &        uadia1(-1,-1,1,is1),
-     &        nncutmax, non_commensurate, 
+     &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
@@ -243,22 +243,22 @@
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
             end if
-            call b2xtvc (nx, ny, nx1, ny1, kinrgy(-1,-1,is), 
+            call b2xtvc (nx, ny, nx1, ny1, kinrgy(-1,-1,is),
      &        kinrgy1(-1,-1,is1),
-     &        nncutmax, non_commensurate, 
+     &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
           else if (bundle_frac(is1,is).gt.0.0_R8) then
             call b2xtvc (nx, ny, nx1, ny1, na(-1,-1,is), wrk1,
-     &        nncutmax, non_commensurate, 
+     &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        na1(-1,-1,is1), 1)
             call b2xtvc (nx, ny, nx1, ny1, ua(-1,-1,is), wrk1,
-     &        nncutmax, non_commensurate, 
+     &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1, wrk0)
@@ -331,7 +331,7 @@
      &        kinrgy1(-1,-1,is1), 1)
           endif
         enddo
-        if (sum.eq.0.0_R8) then  ! this is a new species 
+        if (sum.eq.0.0_R8) then  ! this is a new species
           call sfill (n2, na_new, na1(-1,-1,is1), 1)
         endif
       enddo
@@ -387,11 +387,11 @@
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hy1, qc1)
             call b2xtfy (nx, ny, nx1, ny1, fna(-1,-1,1,is),
-     &        fna1(-1,-1,1,is1), 
+     &        fna1(-1,-1,1,is1),
      &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
-     &        bottomcut, bottomcut1, topcut, topcut1, 
+     &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hx1, bottomiy1)
             call b2xtfx (nx, ny, nx1, ny1, fna_mdf(-1,-1,0,is),
      &        fna_mdf1(-1,-1,0,is1), nncutmax, non_commensurate,
@@ -564,7 +564,7 @@
      &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
-     &        bottomcut, bottomcut1, topcut, topcut1, 
+     &        bottomcut, bottomcut1, topcut, topcut1,
      .        hx, hx1, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna1(-1,-1,1,is1), 1)
@@ -580,7 +580,7 @@
      &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
-     &        bottomcut, bottomcut1, topcut, topcut1, 
+     &        bottomcut, bottomcut1, topcut, topcut1,
      .        hx, hx1, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_mdf1(-1,-1,1,is1), 1)
@@ -596,7 +596,7 @@
      &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
-     &        bottomcut, bottomcut1, topcut, topcut1, 
+     &        bottomcut, bottomcut1, topcut, topcut1,
      .        hx, hx1, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_fcor1(-1,-1,1,is1), 1)
@@ -628,7 +628,7 @@
      &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
-     &        bottomcut, bottomcut1, topcut, topcut1, 
+     &        bottomcut, bottomcut1, topcut, topcut1,
      .        hx, hx1, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_he1(-1,-1,1,is1), 1)
@@ -644,7 +644,7 @@
      &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
-     &        bottomcut, bottomcut1, topcut, topcut1, 
+     &        bottomcut, bottomcut1, topcut, topcut1,
      .        hx, hx1, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fnaPSch1(-1,-1,1,is1), 1)
@@ -660,7 +660,7 @@
      &        nncutmax, non_commensurate,
      &        nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &        leftcut, leftcut1, rightcut, rightcut1,
-     &        bottomcut, bottomcut1, topcut, topcut1, 
+     &        bottomcut, bottomcut1, topcut, topcut1,
      .        hx, hx1, bottomiy1)
             call b2saxpy (n2, bundle_frac(is1,is), wrk1, 1,
      &        fna_eir1(-1,-1,1,is1), 1)
