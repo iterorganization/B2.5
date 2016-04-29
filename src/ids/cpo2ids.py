@@ -11,7 +11,7 @@
 # module display imas/develop/3/ual/develop
 # imasdb solps-iter
 # python cpo2ids.py
-# Resulting files are strored under $HOME/public/imasdb/solps-iter/3/0
+# Resulting files are stored under $HOME/public/imasdb/solps-iter/3/0
 # as ids_161511000.*
 # Further documentation and notes:
 # dd_doc
