@@ -7274,8 +7274,8 @@ C  HERE: EIRENE SURFACE TALLIES
         goto 8688
  8687   continue
         write(*,*) 'Empty input.dat file not converted'
-        savestratum(0:nstrai) = .true.
  8688   continue
+        savestratum(0:nstrai) = .true.
         close(IUNIN)
 cxpb  Convert fort.44 file if needed
         inquire(file='fort.44',exist=todo)
