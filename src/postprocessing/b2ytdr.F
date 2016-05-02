@@ -201,7 +201,7 @@ c 2002-09-11: logic revised
      5 na_feedback_alpha1(:), na_feedback_beta1(:),
      6 na_feedback_puff_min1(:), na_feedback_puff_max1(:),
      7 na_feedback_const1(:), na_feedback_overshoot1(:),
-     8 na_feedback_time1(:)
+     8 na_feedback_time1(:), gpdata1(:,:,:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps
       integer ns1, nsm, nym, natmm, nwallm
       integer i, j, k, ix, iy, is, ib, ireg, len, nsns
@@ -219,6 +219,7 @@ c 2002-09-11: logic revised
       integer, allocatable :: e_bundle_start(:), e_bundle_end(:)
       integer, allocatable :: n1data(:,:,:), ad1spec(:,:,:), isp1(:)
       integer, allocatable :: lstrascl1(:,:)
+      integer, allocatable :: ngpdata1(:)
       integer, allocatable :: na_feedback_actuator1(:),
      1  na_feedback_choice1(:), na_feedback_option1(:),
      2  na_feedback_ix11(:), na_feedback_ix21(:),
@@ -420,6 +421,7 @@ c 2002-09-11: logic revised
       character*10, allocatable :: species_name(:)
       logical ldum(0:60), found, ex, l_chem_sput, is_core_boundary
       logical chemsp1(nstraid), savestratum(0:nstraid)
+      logical time_dep_puff1(nstraid)
       logical, allocatable :: is_neutral1(:)
       logical, allocatable :: savesigv(:), savesigs(:), savesigc(:)
 #ifdef B25_EIRENE
@@ -7366,6 +7368,8 @@ cxpb  Convert fort.44 file if needed
         allocate(phys_sput1(0:ns1-1,nstrat1))
         allocate(chem_sput1(0:ns1-1,nstrat1))
         allocate(lstrascl1(nstrat1,natm))
+        allocate(ngpdata1(nstrat1))
+        allocate(gpdata1(100,2,nstrat1))
         do ib = 1, nstrat
          if (savestratum(ib) .or. crcstra(ib).eq.'T') then
           ib1 = istra1(ib)
@@ -7525,11 +7529,11 @@ cxpb  Convert fort.44 file if needed
      .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
           phys_sput1(0:ns1-1,ib1)=cftmp(0:ns1-1)
           if (l_chem_sput) then
-          cftmp(0:ns-1) = chem_sput(0:ns-1,ib)
-          call convert_bundle_r
-     .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
-          chem_sput1(0:ns1-1,ib1)=cftmp(0:ns1-1)
-          chemsp1(ib1)=chemsp(ib)
+            cftmp(0:ns-1) = chem_sput(0:ns-1,ib)
+            call convert_bundle_r
+     .       (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+            chem_sput1(0:ns1-1,ib1)=cftmp(0:ns1-1)
+            chemsp1(ib1)=chemsp(ib)
           else
             chem_sput1(0:ns1-1,ib1) = 0.0_R8
             chemsp1(ib1) = .false.
@@ -7537,6 +7541,9 @@ cxpb  Convert fort.44 file if needed
           recyceir1(ib1)=recyceir(ib)
           volrecstart1(ib1)=volrecstart(ib)
           userfluxparm1(ib1,1:2)=userfluxparm(ib,1:2)
+          time_dep_puff1(ib1) = time_dep_puff(ib)
+          ngpdata1(ib1) = ngpdata(ib)
+          gpdata1(:,:,ib1) = gpdata(:,:,ib)
          endif
         enddo
 cxpb We modify the values in stored in track_index before re-bundling
@@ -7659,6 +7666,23 @@ cxpb as they no longer necessarily point to the same species
         enddo
         write(hlp_frm,'(a,i2,a)') '(a,',nstrat1,'l1,a)'
         if (todo) write(34,hlp_frm) 'CHEMSP=',chemsp1(1:nstrat1),','
+        todo = .false.
+        do ib = 1, nstrat1
+          todo = todo .or. time_dep_puff1(ib)
+        enddo
+        if (todo) write(34,hlp_frm)
+     .   'TIME_DEP_PUFF=',time_dep_puff1(1:nstrat1),','
+        write(hlp_frm,'(a,i2,a)') '(a,',nstrat1,'(1x,i4,'',''))'
+        if (maxval(ngpdata1).gt.0) then
+          write(34, hlp_frm)
+     .             'NGPDATA=',(ngpdata1(ib),ib=1,nstrat1)
+        end if
+        do ib = 1, nstrat1
+          do ix = 1, ngpdata1(ib)
+            write(34,'(a,i3,a,i2,a,1p,2(1x,g10.3,'',''))')
+     .       'GPDATA(',ix,',1:2,',ib,')=',gpdata1(ix,1:2,ib)
+          end do
+        end do
         write(hlp_frm,'(a,i3,a)') '(a,',ns1,'(1x,i2,'',''))'
         write(34, hlp_frm) 'TRACK_INDEX=',(track_index(is),is=0,ns1-1)
         track_chem_sput1 = .false.
@@ -7907,6 +7931,15 @@ cxpb as they no longer necessarily point to the same species
         endif
         neutrals_namelist = 0
         use_eirene = 0
+        deallocate(istra1)
+        deallocate(recyc1)
+        deallocate(erecyc1)
+        deallocate(rcion1)
+        deallocate(phys_sput1)
+        deallocate(chem_sput1)
+        deallocate(lstrascl1)
+        deallocate(ngpdata1)
+        deallocate(gpdata1)
       enddo
 
 * ..now read and convert the sputtering and wall data if they exist

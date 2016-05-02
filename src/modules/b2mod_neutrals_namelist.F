@@ -58,7 +58,7 @@ cank }
      *   USERFLUXPARM(:,:),
      *   volrecstart(:), saved_volrec(:), 
      *   phys_sput(:,:), chem_sput(:,:),
-     1   gpfc(:,:)
+     1   gpfc(:,:), gpdata(:,:,:)
 #ifndef NO_B2_CHEM_SPUT
 #ifndef SOLPS4_3
       real (kind=R8), allocatable, save :: 
@@ -75,9 +75,10 @@ cank }
      *   TARGSP(:,:),
      *   species_start(:), species_end(:),
      *   b2espcr(:), eb2spcr(:), lstrascl(:,:), lmolscl(:), lionscl(:),
-     1   mlcmp(:,:), lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:)
+     1   mlcmp(:,:), lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
+     2   ngpdata(:)
       logical, allocatable, save ::
-     *   CHEMSP(:)
+     *   CHEMSP(:), TIME_DEP_PUFF(:)
       character*1, allocatable, save ::
      *   CRCSTRA(:)
 #else
@@ -90,6 +91,7 @@ cank }
       real (kind=R8), save :: saved_volrec(NSTRAID)
       real (kind=R8), save :: chem_sput(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: phys_sput(0:nsdmax-1,NSTRAID)
+      real (kind=R8), save :: gpdata(100,2,NSTRAID)
 #ifndef NO_B2_CHEM_SPUT
 #ifndef SOLPS4_3
       real (kind=R8), save :: 
@@ -104,6 +106,8 @@ cank }
       integer, save :: RC_LIST_Y(2*(DEF_NXD+DEF_NYD),NSTRAID)
       integer, save :: TARGSP(NSTRAID,ntrack)
       logical, save :: CHEMSP(NSTRAID)
+      logical, save :: TIME_DEP_PUFF(NSTRAID)
+      integer, save :: ngpdata(NSTRAID)
       integer, save :: species_start(NSTRAID), species_end(NSTRAID)
       integer, save :: b2espcr(0:nsdmax-1)
       integer, save :: eb2spcr(1:natmid)
@@ -168,7 +172,7 @@ cank }
      6  n_spcsrf, l_spcsrf, sps_id, i_spcsrf, j_spcsrf, 
      7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr, 
      8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
-     .  msns, write_nml_neut
+     .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata
       logical, save :: write_nml_neut = .true.
       
 
@@ -214,6 +218,9 @@ csw 21feb2012
       allocate(RC_LIST_Y(2*(NXD+NYD),NSTRAID))
       allocate(TARGSP(NSTRAID,ntrack))
       allocate(CHEMSP(NSTRAID))
+      allocate(TIME_DEP_PUFF(NSTRAID))
+      allocate(NGPDATA(NSTRAID))
+      allocate(GPDATA(100,2,NSTRAID))
       allocate(CRCSTRA(NSTRAID))
       allocate(species_start(NSTRAID))
       allocate(species_end(NSTRAID))
@@ -254,6 +261,9 @@ csw 21feb2012
       TARGSP=-1
       TARGSP(:,1)=sput_dst
       CHEMSP=.false.
+      TIME_DEP_PUFF=.false.
+      NGPDATA=0
+      GPDATA=0.0_R8
 cxpb The default recycling model is 100% particle recycling and 
 cxpb 30% energy recycling for all ionised species except carbon.
       RECYC=0.0_R8
@@ -382,6 +392,9 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(RC_LIST_Y)
       deallocate(TARGSP)
       deallocate(CHEMSP)
+      deallocate(TIME_DEP_PUFF)
+      deallocate(NGPDATA)
+      deallocate(GPDATA)
       deallocate(CRCSTRA)
       deallocate(species_start)
       deallocate(species_end)
@@ -674,6 +687,18 @@ c
      .                lstrascl(istra,is).le.nspecies, 
      .                'faulty input lstrascl')
         enddo
+        if (time_dep_puff(istra)) then
+          call xertst(crcstra(istra).eq.'C',
+     .     'Time_dep_puff set for a non-puff stratum')
+          call xertst(ngpdata(istra).gt.0,
+     .     'Time_dep_puff data list size not declared')
+          call xertst(ngpdata(istra).le.100,
+     .     'Time_dep_puff data list size too large')
+          do ix = 1, ngpdata(istra)
+            call xertst(gpdata(ix,2,istra).ge.0.0_R8,
+     .       'Negative gas puff strength declared!')
+          end do
+        endif
       enddo
       do is = 0, ns-1
         call xertst(1.le.b2espcr(is).and.b2espcr(is).le.nspecies,

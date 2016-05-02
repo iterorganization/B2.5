@@ -17,6 +17,7 @@ c  version : 26.07.2002 23:39
       use b2mod_neutr_src_scaling
       use b2mod_feedback
       use b2mod_diag
+      use b2mod_time
       use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_b2cmpb
@@ -41,11 +42,11 @@ csw 19oct2012, added save attribute!!!
       logical, save :: my_ltime
 
       integer, save :: background_new=0                              !srv 14.07.10
-      integer ix,iy,is,ib,ih,ifl,istrai,ncall,iatm,imol
+      integer ix,iy,is,ib,ih,it,ifl,istrai,ncall,iatm,imol
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir
       real (kind=R8) ::
-     * recyc_hlp,vthe,t0,t1,rf0,uatmp,dua,t2,t3,
+     * recyc_hlp,vthe,t0,t1,rf0,uatmp,dua,t2,t3,f,
      * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
      * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol
       real (kind=R8), save, allocatable ::
@@ -564,6 +565,35 @@ c*** recyc     : fudge factors for the sources in B2
      1       (cbsna(0,isfeedback,solregno))/neutral_sources_rescale
             if(ncall.eq.0)
      1       write(*,*) '"nepedm_sol" feedback on stratum ',istrai
+          else if (time_dep_puff(istrai)) then !}{
+            if (tim.lt.gpdata(1,1,istrai)) then
+              tflux(istrai)=userfluxparm(istrai,1)
+            else if (tim.gt.gpdata(ngpdata(istrai),1,istrai)) then
+              tflux(istrai)=gpdata(ngpdata(istrai),2,istrai)
+            else
+              ib=1
+              it=ngpdata(istrai)
+              do while (it-ib.gt.1)
+                ih=(ib+it)/2
+                if(tim.lt.gpdata(ih,1,istrai)) then
+                  it=ih
+                elseif(tim.gt.gpdata(ih,1,istrai)) then
+                  ib=ih
+                else
+                  it=ih
+                  ib=ih
+                endif
+              enddo
+              if (ib.lt.it) then
+                f=(tim-gpdata(ib,1,istrai))/
+     1                (gpdata(it,1,istrai)-gpdata(ib,1,istrai))
+                tflux(istrai)=f*
+     1                (gpdata(it,2,istrai)-gpdata(ib,2,istrai))+
+     2                 gpdata(ib,2,istrai)
+              else
+                tflux(istrai)=gpdata(ih,2,istrai)
+              endif
+            end if
           else !}{
             tflux(istrai)=userfluxparm(istrai,1)
           end if !}

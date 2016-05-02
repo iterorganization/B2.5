@@ -239,7 +239,25 @@
 *    sputtering.
 *  WRITE_NML_NEUT - logical. If .true. (default), writes the content of the
 *    namelist to stdout after it has been read.
-*
+*  TIME_DEP_PUFF - logical array of length (NSTRAT). Indicates whether a 
+*    stratum is a time-dependent gas puff. Should only be .true. for strata
+*    defined as gas puffs. Defaults to .false. for all strata.
+*  NGPDATA - integer data of size (NSTRAT). Number of points over which the
+*    time profile of the strength of gas puff (istra) is given. Defaults to 0.
+*    Current maximum value is 100.
+*  GPDATA - real*8 data of size (NGPDATA,2,NSTRAT). 
+*     For (i,ik,istra) in (1:NGPDATA(istra),1:2,1:NSTRAT), 
+*     GPDATA(i,1,istra) contains the time point (i) for stratum (istra) (in s).
+*     GPDATA(i,2,istra) contains the gas puff strength of stratum (istra) at
+*       time point (i) (in particles/s).
+*     The gas puff strength before the first time point is given by 
+*       USERFLUXPARM(1,istra).
+*     The gas puff strength after the last time point is given by the
+*       GPDATA value of the last time point.
+*     Otherwise, the gas puff strength is linearly interpolated from the
+*       given data.
+*     Defaults to 0.0.
+*  
 * The following are active only if NO_B2_CHEM_SPUT is not defined among the 
 * compiler options and are used to override the Eirene chemical sputtering
 * settings:
