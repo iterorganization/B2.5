@@ -37,7 +37,7 @@
       integer, save :: style = 1
       integer, save :: iout = 0, iout_b2npmo = 0
       integer, save :: pot_eq = 1, no_current = 0  !srv 17.06.02 11.09.09 23.03.10
-      character chns*3, chk*1, ch*2                                  !srv 17.06.02
+!      character chns*3, chk*1                                        !srv 17.06.02
       real (kind=R8) ::
      *   t0
       save ncall

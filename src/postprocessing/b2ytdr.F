@@ -840,6 +840,20 @@ c 2002-09-11: logic revised
       if (invert_bpol.eq.1 .or. invert_btor.eq.1) then
         write(nout(5),'(a)') 'b2fgmtry.2'
         call cfopen (nout(6),'b2fgmtry.2','new','formatted')
+        call cfverw (nout(6), newversion)
+        idum(0) = nx
+        idum(1) = ny
+        call cfwuin (nout(6), 2, idum, 'nx,ny')
+        if (invert_bpol.eq.1 .and. invert_btor.eq.1) then
+          lblgm = trim(lblgm)//' inverted total field'
+        else if (invert_bpol.eq.1) then
+          lblgm = trim(lblgm)//' inverted poloidal field'
+        else if (invert_btor.eq.1) then
+          lblgm = trim(lblgm)//' inverted toroidal field'
+        end if
+        call cfwuch (nout(6), 120, lblgm, 'label')
+        idum(0) = isymm
+        call cfwuin (nout(6), 1, idum, 'isymm')
         call b2wugm (nout(6), nx, ny, crx, cry, fpsi,
      &   ffbz, bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)
         close(nout(6))
