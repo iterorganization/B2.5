@@ -143,10 +143,11 @@
       save use_astra
 *   ..procedures
       real (kind=R8) ::
-     *  smin, smax
+     *  smin, smax, hy1
       external subini, subend, xertst, sfill, b2saxpy, smin, smax
       external b2xvsg, b2xvff, b2xvps, b2xpfe, b2xpfi, b2sqel, b2sqcx,
      &  b2stbc, b2stbm, b2stbr, b2stel, b2stcx, ipgeti, b2xzdd
+      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, sources_inputfile/0/, guard_flows/2/, use_astra/0/,
      *  numerics_namelist/0/
