@@ -1384,7 +1384,7 @@ cghgh
            call xertst (0.le.isfeedback.and.isfeedback.lt.ns,
      1      'faulty internal parameter isfeedback')
            fedback_species = is.eq.isfeedback
-           do isa = 1, nspecies
+           do isa = 0, nspecies-1
              if (na_feedback_ib(isa).eq.ib) then
                fedback_species = fedback_species .or.
      .                          (is.ge.eb2spcr(isa+1)+1 .and.
