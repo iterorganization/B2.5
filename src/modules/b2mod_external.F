@@ -234,7 +234,7 @@ cxpb
           read(74,*) dext
           na_ext(0:nxd-1,0:nyd-1,is) = dext(:,:) ! tungsten ik-th charge state density
           read(74,*) dext
-          ua_ext(0:nxd-1,0:nyd-1,is) = sign(1.0_R8,pbs(:,:,0))*dext(:,:) ! tungsten ik-th charge state velocity
+          ua_ext(0:nxd-1,0:nyd-1,is) = sign(1.0_R8,bb(:,:,0))*dext(:,:) ! tungsten ik-th charge state velocity
           read(74,*) dext
           ta_ext(0:nxd-1,0:nyd-1,is) = dext(:,:) ! tungsten ik-th charge state temperature
         enddo

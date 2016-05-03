@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbm (nx, ny, ns, ismain, dtim,
-     &  vol, gs, hx, hy, qz, qc, pbs, 
+     &  vol, gs, hx, hy, qz, qc, pbs, bb,
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types
@@ -27,7 +27,7 @@
       real (kind=R8) :: dtim,
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny)
+     &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
@@ -191,7 +191,7 @@ cxpb Must convert fluxes to flux densities
               ti0(ix,iy) = ti0(ix,iy) + 
      .         dab2(ix+1,iy+1,is0,1)*tab2(ix+1,iy+1,is0,1)
               ua0(ix,iy,is) = (ua(ix,iy,is)*na(ix,iy,is)*
-     .         sign(1.0_R8,pbs(ix,iy,0)) + 
+     .         sign(1.0_R8,bb(ix,iy,0)) + 
      .         ua_tmp*dab2(ix+1,iy+1,is0,1))/
      .         na0(ix,iy,is)
               fna0(ix,iy,0,is) = 
@@ -206,7 +206,7 @@ cxpb Must convert fluxes to flux densities
           end do
         else
           na0(:,:,is) = na(:,:,is)
-          ua0(:,:,is) = ua(:,:,is)*sign(1.0_R8,pbs(:,:,0))
+          ua0(:,:,is) = ua(:,:,is)*sign(1.0_R8,bb(:,:,0))
           fna0(:,:,0,is) = fna(:,:,0,is)/gs(:,:,0)/qc(:,:)
           fna0(:,:,1,is) = fna(:,:,1,is)/gs(:,:,1)
         end if
@@ -269,7 +269,7 @@ cxpb And then derive: ua_ext
 
        call impgyro_main(
      *  nx, ny, ns, ns_ext,
-     *  pbs, na0, ne, ua0, te, ti0, po,
+     *  bb, na0, ne, ua0, te, ti0, po,
      *  fna0, fhe0, fhi0, fch0,
      *  sna_ext, sne_ext, smo_ext,
      *  she_ext, shi_ext, sch_ext,
@@ -336,7 +336,7 @@ cxpb
          ue_ext(-1:nx,-1:ny) = ue_ext(-1:nx,-1:ny) +
      .     za_ext(-1:nx,-1:ny,is) * ua_ext(-1:nx,-1:ny,is) *
      .     na_ext(-1:nx,-1:ny,is) *
-     .     sign(1.0_R8,pbs(-1:nx,-1:ny,0))
+     .     sign(1.0_R8,bb(-1:nx,-1:ny,0))
        end do
        do ix = -1, nx
          do iy = -1, ny
@@ -379,7 +379,7 @@ cxpb
               vthe=sqrt(te(ix,iy)/me)
               vthe=vthe/sqrt(am(is)*mp/me)
               t0 = smo_ext(ix,iy,is)*
-     .         sign(1.0_R8,pbs(ix,iy,0))
+     .         sign(1.0_R8,bb(ix,iy,0))
               smo0(ix,iy,0,is) = smo0(ix,iy,0,is)+
      .         t0+linearisation*abs(t0)*ua(ix,iy,is)/vthe
               smo0(ix,iy,1,is) = smo0(ix,iy,1,is)-
@@ -435,7 +435,7 @@ cxpb
             sne0(ix,iy,0) = sne_ext(ix,iy)
             sna0(ix,iy,0,0:ns-1) = sna_ext(ix,iy,0:ns-1)
             smo0(ix,iy,0,0:ns-1) = smo_ext(ix,iy,0:ns-1)*
-     .         sign(1.0_R8,pbs(ix,iy,0))
+     .         sign(1.0_R8,bb(ix,iy,0))
             she0(ix,iy,0) = she_ext(ix,iy)
             sch0(ix,iy,0) = sch_ext(ix,iy)
             shi0(ix,iy,0) = shi_ext(ix,iy)

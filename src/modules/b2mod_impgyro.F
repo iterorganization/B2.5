@@ -294,7 +294,7 @@ cxpb
       end subroutine impgyro_init
 
       subroutine impgyro_main (nx,ny,ns,ns_ext,
-     &  pbs,na,ne,ua,te,ti,po,
+     &  bb,na,ne,ua,te,ti,po,
      &  fna,fhe,fhi,fch,
      &  sna_ext,sne_ext,smo_ext,she_ext,shi_ext,sch_ext,
      &  na_ext,ua_ext,ta_ext)
@@ -302,7 +302,7 @@ cxpb
       integer,intent(in)::nx,ny,ns,ns_ext
 
       real(8),intent(in)::
-     &  pbs(-1:nx,-1:ny,0:1),
+     &  bb (-1:nx,-1:ny,0:3),
      &  na (-1:nx,-1:ny,0:ns-1),
      &  ne (-1:nx,-1:ny),
      &  ua (-1:nx,-1:ny,0:ns-1),
@@ -426,7 +426,7 @@ cxpb
         do iy =0,ny-1
           do ix =0,nx-1
             smo_ext (ix,iy,is) = im_cc (ix,iy,is)*
-     .       sign(1.0_R8,pbs(ix,iy,0))
+     .       sign(1.0_R8,bb(ix,iy,0))
           end do
         end do
       end do
@@ -446,7 +446,7 @@ cxpb
           do ix = 0 , nx - 1
             na_ext (ix,iy,is) = b2znw (is,ix,iy)
             ua_ext (ix,iy,is) = b2zfw (is,ix,iy)*
-     .       sign(1.0_R8,pbs(ix,iy,0))
+     .       sign(1.0_R8,bb(ix,iy,0))
             ta_ext (ix,iy,is) = b2ztw (is,ix,iy)
           end do
         end do

@@ -500,7 +500,7 @@ csw 30sep2013, added cdpa in call, uadia
      > write(*,hlp_frm) 'snatot',(snatot(is),is=0,ns-1)
 *   ..compute more special contributions
       call b2stbm (nx, ny, ns, ismain, dtim,
-     &  vol, gs, hx, hy, qz, qc, pbs,
+     &  vol, gs, hx, hy, qz, qc, pbs, bb,
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
 *   ..zero out contributions in dead cells and core boundary
