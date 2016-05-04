@@ -136,6 +136,7 @@
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
       real (kind=R8) :: cpu_s, cpu_f, x05baf
+      logical file_open
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin
       external b2mndr
@@ -183,7 +184,6 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call cfopen (nout(4),'b2ftrace','replace','un*formatted')
       call cfopen (nout(5),'b2ftrack','replace','un*formatted')
       call cfopen (nout(7),'b2fplasma','replace','unformatted')
-      call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted') !srv 02.05.09 }
 *   ..mark output unit for error messages
       call xerset (0)
 
@@ -247,10 +247,12 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #endif
 *   ..close files
       do io=0,size(ninp)-1
-         close(ninp(io))
+         inquire(unit=ninp(io),opened=file_open)
+         if (file_open) close(ninp(io))
       enddo
       do io=0,size(nout)-1
-         close(nout(io))
+         inquire(unit=nout(io),opened=file_open)
+         if (file_open) close(nout(io))
       enddo
 
       cpu_f= x05baf()

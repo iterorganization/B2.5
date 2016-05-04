@@ -69,10 +69,11 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:4), nout(0:1), nx, ny, ns, idum(0:9)
+      integer ninp(0:4), nout(0:1), nx, ny, ns, idum(0:9), io
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
+      logical file_open
 *   ..procedures
       external prgini, prgfin, xerset, xertst, cfopen, gnopen, cfruin,
      &  gopks, gclks, gclwk
@@ -160,6 +161,15 @@
       call gclwk (nout(1))
 *   ..close gks
       call gclks ()
+*   ..close other files
+      do io=0,size(ninp)-1
+         inquire(unit=ninp(io),opened=file_open)
+         if (file_open) close(ninp(io))
+      enddo
+      do io=0,size(nout)-1
+         inquire(unit=nout(io),opened=file_open)
+         if (file_open) close(nout(io))
+      enddo
 
 * ..end of computation
       call dealloc_b2mod_geo

@@ -62,10 +62,11 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:1), nout(0:1), nscr(0:0)
+      integer ninp(0:1), nout(0:1), nscr(0:0), io
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
+      logical file_open
 *   ..procedures
       external prgini, prgend, xerset, cfopen, gnopen, gopks, gclks,
      &  gclwk
@@ -123,6 +124,19 @@
       call gclwk (nout(1))
 *   ..close gks
       call gclks ()
+*   ..close other files
+      do io=0,size(ninp)-1
+         inquire(unit=ninp(io),opened=file_open)
+         if (file_open) close(ninp(io))
+      enddo
+      do io=0,size(nout)-1
+         inquire(unit=nout(io),opened=file_open)
+         if (file_open) close(nout(io))
+      enddo
+      do io=0,size(nscr)-1
+         inquire(unit=nscr(io),opened=file_open)
+         if (file_open) close(nscr(io))
+      enddo
 
 * ..end of computation
       call prgend ()

@@ -75,6 +75,7 @@
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
+      logical file_open
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin
       external b2xddr
@@ -167,6 +168,15 @@ c      call cfopen (ninp(0),'b2yp.dat','old','formatted')
       call read_b2mod_anomalous_transport(ninp(4))
       call read_b2mod_neutr_src_scaling(ninp(4),ns,nstrai)
       call b2xddr (ninp, nout, nx, ny, ns)
+*   ..close files
+      do io=0,size(ninp)-1
+         inquire(unit=ninp(io),opened=file_open)
+         if (file_open) close(ninp(io))
+      enddo
+      do io=0,size(nout)-1
+         inquire(unit=nout(io),opened=file_open)
+         if (file_open) close(nout(io))
+      enddo
 
 * ..end of computation
       call dealloc_b2mod_geo

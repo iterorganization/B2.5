@@ -88,6 +88,7 @@
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
+      logical file_open
 *   ..procedures
       external prgini, prgfin, xerset, xertst, cfopen, cfruin
       external b2ytdr, b2ytx0, ipsetc, ipgeti
@@ -192,13 +193,14 @@
       call alloc_b2mod_indirect(nx,ny,nncutmax)
       call b2ytdr (ninp, nout, nx1, ny1)
 *   ..close files
-      do io = 0, size(ninp)-1
-        close(ninp(io))
+      do io=0,size(ninp)-1
+         inquire(unit=ninp(io),opened=file_open)
+         if (file_open) close(ninp(io))
       enddo
-      close(nout(0))
-      close(nout(1))
-      close(nout(2))
-      close(nout(5))
+      do io=0,size(nout)-1
+         inquire(unit=nout(io),opened=file_open)
+         if (file_open) close(nout(io))
+      enddo
 
 * ..end of computation
       call dealloc_b2mod_geo

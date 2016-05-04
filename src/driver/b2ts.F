@@ -68,10 +68,11 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:4), nx, ny, ns, idum(0:9)
+      integer ninp(0:4), nx, ny, ns, idum(0:9), io
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
+      logical file_open
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin
 !      external b2tsdr
@@ -167,6 +168,11 @@ c      call cfopen (ninp(0),'b2ts.dat','old','formatted')
       write(*,*) cry(5*nx/8,0,0:3)
       write(*,*) crx(5*nx/8+1,0,0:3)
       write(*,*) cry(5*nx/8+1,0,0:3)
+*   ..close files
+      do io=0,size(ninp)-1
+         inquire(unit=ninp(io),opened=file_open)
+         if (file_open) close(ninp(io))
+      enddo
 
 * ..end of computation
       call dealloc_b2mod_geo

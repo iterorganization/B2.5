@@ -67,11 +67,12 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:2), nout(0:0), nx, ny, ns, idum(0:9)
+      integer ninp(0:2), nout(0:0), nx, ny, ns, idum(0:9), io
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
       character*120 lblgm
+      logical file_open
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin, cfruch
       external b2yhdr, b2rugm
@@ -145,6 +146,15 @@
       call b2yhdr (ninp, nout, nx, ns)
 *   ..close graphics files
 *     (none)
+*   ..close other files
+      do io=0,size(ninp)-1
+         inquire(unit=ninp(io),opened=file_open)
+         if (file_open) close(ninp(io))
+      enddo
+      do io=0,size(nout)-1
+         inquire(unit=nout(io),opened=file_open)
+         if (file_open) close(nout(io))
+      enddo
 
 * ..end of computation
       call dealloc_b2mod_geo

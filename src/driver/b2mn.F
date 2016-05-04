@@ -149,6 +149,7 @@ csw
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
 #endif
+      logical file_open
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin
       external b2mndr
@@ -217,7 +218,6 @@ csw
       call cfopen (nout(4),'b2ftrace','new','un*formatted')
       call cfopen (nout(5),'b2ftrack','new','un*formatted')
       call cfopen (nout(7),'b2fplasma','new','unformatted')
-      call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers						 !xpb
@@ -277,10 +277,12 @@ csw
 #endif
 *   ..close files
       do io=0,size(ninp)-1
-         close(ninp(io))
+         inquire(unit=ninp(io),opened=file_open)
+         if (file_open) close(ninp(io))
       enddo
-      do io=0,5
-         close(nout(io))
+      do io=0,size(nout)-1
+         inquire(unit=nout(io),opened=file_open)
+         if (file_open) close(nout(io))
       enddo
 
 * ..end of computation

@@ -54,12 +54,13 @@
       character*40 :: axis3
 #endif
 
-      integer ninp(0:5), nout(0:7), nx, ny, ns, ns0, idum(0:9)
+      integer ninp(0:5), nout(0:7), nx, ny, ns, ns0, idum(0:9), io
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
       character savefile*16, arg*256, lblmn*120, lblcp*120, title*64
       character hlp_frm*22
+      logical file_open
 *   ..procedures
       external prgini, prgend, xerset, xertst, xerrab, cfopen, cfruin
 *   ..initialize input/output unit numbers
@@ -263,6 +264,16 @@
 	  goto 10
 	case default
       end select
+
+*   ..close files
+      do io=0,size(ninp)-1
+         inquire(unit=ninp(io),opened=file_open)
+         if (file_open) close(ninp(io))
+      enddo
+      do io=0,size(nout)-1
+         inquire(unit=nout(io),opened=file_open)
+         if (file_open) close(nout(io))
+      enddo
 
       call dealloc_b2mod_geo
       call dealloc_b2mod_work

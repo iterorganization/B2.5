@@ -77,6 +77,7 @@
       integer status, retlen, dbversion
       integer ix, iy, i, j, is
       integer, allocatable :: idummy(:,:)
+      logical file_open
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y
 *   ..procedures
@@ -529,10 +530,12 @@
       write(*,*) 'mdsdisconnect'
 
       do io=0,size(ninp)-1
-         close(ninp(io))
+         inquire(unit=ninp(io),opened=file_open)
+         if (file_open) close(ninp(io))
       enddo
       do io=0,size(nout)-1
-         close(nout(io))
+         inquire(unit=nout(io),opened=file_open)
+         if (file_open) close(nout(io))
       enddo
 
 * ..end of computation

@@ -80,6 +80,7 @@
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
+      logical file_open
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin
       external b2mddr
@@ -179,10 +180,12 @@
       call b2mddr (ninp, nout, nx, ny, ns)
 *   ..close files			 !
       do io=0,size(ninp)-1
-         close(ninp(io))
+         inquire(unit=ninp(io),opened=file_open)
+         if (file_open) close(ninp(io))
       enddo
       do io=0,size(nout)-1
-         close(nout(io))
+         inquire(unit=nout(io),opened=file_open)
+         if (file_open) close(nout(io))
       enddo
 
 * ..end of computation

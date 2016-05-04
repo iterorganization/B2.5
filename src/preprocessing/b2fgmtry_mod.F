@@ -83,10 +83,11 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:1), nout(0:1)
+      integer ninp(0:1), nout(0:1), io
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
+      logical file_open
 *   ..procedures
       external prgini, prgend, xerset, cfopen
 *   ..initialise input/output units
@@ -136,6 +137,15 @@ c     call alloc_b2mod_geo2(nx1,ny1,nncutmax)
       call b2fgmtry_moddr (ninp, nout)
 *   ..close graphics files
 *     (none)
+*   ..close other files
+      do io=0,size(ninp)-1
+         inquire(unit=ninp(io),opened=file_open)
+         if (file_open) close(ninp(io))
+      enddo
+      do io=0,size(nout)-1
+         inquire(unit=nout(io),opened=file_open)
+         if (file_open) close(nout(io))
+      enddo
 
 * ..end of computation
       call prgend ()

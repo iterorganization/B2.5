@@ -1860,8 +1860,11 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call b2wups (nout(2), nx, ny, ns, ne, na, ua, uadia, te,           !xpb
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
       call b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)                   !srv 05.10.01
-      if (use_astra.ne.0)
-     > call write_b2_to_astra(nx, ny, ns, ismain, ismain0, nout(8))      !srv 28.07.11 19.09.11
+      if (use_astra.ne.0) then
+       call cfopen (nout(8),'b2_to_astra.dat','replace','un*formatted')
+       call write_b2_to_astra(nx, ny, ns, ismain, ismain0, nout(8))      !srv 28.07.11 19.09.11
+       close(nout(8))
+      end if
 *   ..write out fort.30 and fort.31 files if not yet done
       if (use_eirene.eq.0) then
        if (save_f30.ne.0) call write_f30(nx, ny)
