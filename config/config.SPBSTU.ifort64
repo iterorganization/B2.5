@@ -30,15 +30,15 @@ endif
 
 ifdef SOLPS_DEBUG
 ifdef USE_MPI
-FCOPTS   = -g -C -traceback
+FCOPTS   = -g -C -traceback -fpe0
 else
-FCOPTS   = -g -C -debug all -traceback -check all
+FCOPTS   = -g -C -debug all -traceback -check all -fpe0
 endif
 else
 ifdef USE_MPI
-FCOPTS   = -O2 -vec_report0 -traceback
+FCOPTS   = -O3 -vec_report0 -traceback -fpe0
 else
-FCOPTS   = -O2 -vec_report0 -traceback
+FCOPTS   = -O3 -vec_report0 -traceback
 endif
 endif
 

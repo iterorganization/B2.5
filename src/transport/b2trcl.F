@@ -358,7 +358,7 @@ csw 13mar2012
         enddo
 
         do iy = -1,mintopcut-1                                           !srv 22.04.16
-         eps1(iy) = tt0(iy)**2/tt1(iy)
+         if (tt1(iy) .ne. 0.0_R8) eps1(iy) = tt0(iy)**2/tt1(iy)
         enddo
 
         nu1 = 0.0e0_R8                                 !lk 12.05.11{

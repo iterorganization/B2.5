@@ -363,6 +363,8 @@ c>>>
 c<<<
         if(debug_flags(90).gt.0) then
           print *,'%%# Species # ',ls
+          print *,'%%# eb2spcr(ls) = ',eb2spcr(ls)
+          print *,'%%# nfluids(ls) = ',nfluids(ls)
         end if
 c>>>
 c
