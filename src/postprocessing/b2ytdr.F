@@ -7641,17 +7641,17 @@ cxpb as they no longer necessarily point to the same species
         else
           do ib = 1, nstrat1
             if(rcpos1(ib).gt.-2) then
-              write(35,'(1x,a,i2,a,i4)') 'RCPOS(',ib,')=  ',rcpos1(ib)
-              write(35,'(1x,a,i2,a,i4)') 'RCSTART(',ib,')=',rcstart1(ib)
-              write(35,'(1x,a,i2,a,i4)') 'RCEND(',ib,')=  ',rcend1(ib)
+              write(34,'(1x,a,i2,a,i4)') 'RCPOS(',ib,')=  ',rcpos1(ib)
+              write(34,'(1x,a,i2,a,i4)') 'RCSTART(',ib,')=',rcstart1(ib)
+              write(34,'(1x,a,i2,a,i4)') 'RCEND(',ib,')=  ',rcend1(ib)
             else
-              write(35,'(1x,a,i2,a,i4)') 'RC_LIST_SIZE(',ib,')=',
+              write(34,'(1x,a,i2,a,i4)') 'RC_LIST_SIZE(',ib,')=',
      .                                    rc_list_size1(ib)
               write(hlp_frm,'(a,i4,a)')
      .         '(1x,a,i2,a,',rc_list_size1(ib),'(1x,i4,'',''))'
-              write(35, hlp_frm) 'RC_LIST_X(1,',ib,')=',
+              write(34, hlp_frm) 'RC_LIST_X(1,',ib,')=',
      .         rc_list_x1(1:bc_list_size1(ib),ib)
-              write(35, hlp_frm) 'RC_LIST_Y(1,',ib,')=',
+              write(34, hlp_frm) 'RC_LIST_Y(1,',ib,')=',
      .         rc_list_y1(1:bc_list_size1(ib),ib)
             end if
           end do
@@ -7943,8 +7943,6 @@ cxpb as they no longer necessarily point to the same species
           todo = .false.
           found = .true.
         endif
-        neutrals_namelist = 0
-        use_eirene = 0
         deallocate(istra1)
         deallocate(recyc1)
         deallocate(erecyc1)
