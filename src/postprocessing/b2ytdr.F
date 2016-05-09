@@ -1731,105 +1731,105 @@ c 2002-09-11: logic revised
         end do
         write(*,*) 'Writing ',trim(new_filename)
         write(nout(5),'(a)') trim(new_filename)
-        open(35,file=new_filename)
-        write(35,'(a)') '&BOUNDARY'
-        write(35,'(1x,a,i2,a)') 'NBC=', nbc1,','
+        open(99,file=new_filename)
+        write(99,'(a)') '&BOUNDARY'
+        write(99,'(1x,a,i2,a)') 'NBC=', nbc1,','
         line = 'BCCHAR= '
         len=8
         do ib = 1, nbc1
-          line = line(1:len)//'  '''//bcchar(ib)//''','
+          line(len+1:len+3+1+2) = '  '''//bcchar(ib)//''','
           len=len+3+1+2
         end do
-        write(35,'(1x,a)') line(1:len)
+        write(99,'(1x,a)') line(1:len)
         write(hlp_frm,'(a,i2,a)') '(1x,a,',nbc1,'(1x,i4,'',''))'
         if(minval(bcpos1(1:nbc1)).gt.-2) then
-          write(35, hlp_frm) 'BCPOS=  ',(bcpos1(ib)  ,ib=1,nbc1)
-          write(35, hlp_frm) 'BCSTART=',(bcstart1(ib),ib=1,nbc1)
-          write(35, hlp_frm) 'BCEND=  ',(bcend1(ib)  ,ib=1,nbc1)
+          write(99, hlp_frm) 'BCPOS=  ',(bcpos1(ib)  ,ib=1,nbc1)
+          write(99, hlp_frm) 'BCSTART=',(bcstart1(ib),ib=1,nbc1)
+          write(99, hlp_frm) 'BCEND=  ',(bcend1(ib)  ,ib=1,nbc1)
         else
           do ib = 1, nbc1
             if(bcpos1(ib).gt.-2) then
-              write(35,'(1x,a,i2,a,i4,a1)')
+              write(99,'(1x,a,i2,a,i4,a1)')
      .         'BCPOS(',ib,')=  ',bcpos1(ib),','
-              write(35,'(1x,a,i2,a,i4,a1)')
+              write(99,'(1x,a,i2,a,i4,a1)')
      .         'BCSTART(',ib,')=',bcstart1(ib),','
-              write(35,'(1x,a,i2,a,i4,a1)')
+              write(99,'(1x,a,i2,a,i4,a1)')
      .         'BCEND(',ib,')=  ',bcend1(ib),','
             else
-              write(35,'(1x,a,i2,a,i4,a1)') 'BC_LIST_SIZE(',ib,')=',
+              write(99,'(1x,a,i2,a,i4,a1)') 'BC_LIST_SIZE(',ib,')=',
      .                                       bc_list_size1(ib),','
               write(hlp_frm,'(a,i4,a)')
      .         '(1x,a,i2,a,',bc_list_size1(ib),'(1x,i4,'',''))'
-              write(35, hlp_frm) 'BC_LIST_X(1,',ib,')=',
+              write(99, hlp_frm) 'BC_LIST_X(1,',ib,')=',
      .         bc_list_x1(1:bc_list_size1(ib),ib)
-              write(35, hlp_frm) 'BC_LIST_Y(1,',ib,')=',
+              write(99, hlp_frm) 'BC_LIST_Y(1,',ib,')=',
      .         bc_list_y1(1:bc_list_size1(ib),ib)
             end if
           end do
         endif
         write(hlp_frm,'(a,i2,a)') '(1x,a,',nbc1,'(1x,i4,'',''))'
-        write(35, hlp_frm) 'BCENE=  ',(bcene(ib)  ,ib=1,nbc1)
-        write(35, hlp_frm) 'BCENI=  ',(bceni(ib)  ,ib=1,nbc1)
-        write(35, hlp_frm) 'BCPOT=  ',(bcpot(ib)  ,ib=1,nbc1)
+        write(99, hlp_frm) 'BCENE=  ',(bcene(ib)  ,ib=1,nbc1)
+        write(99, hlp_frm) 'BCENI=  ',(bceni(ib)  ,ib=1,nbc1)
+        write(99, hlp_frm) 'BCPOT=  ',(bcpot(ib)  ,ib=1,nbc1)
         write(hlp_frm,'(a,i2,a)') '(1x,a,1p,',nbc1,'(1x,g10.3,'',''))'
-        write(35, hlp_frm) 'ENEPAR(1,1)=',(enepar(ib,1),ib=1,nbc1)
+        write(99, hlp_frm) 'ENEPAR(1,1)=',(enepar(ib,1),ib=1,nbc1)
         if (maxval(abs(enepar(1:nbc1,2))).gt.0.0_R8)
-     >   write(35, hlp_frm) 'ENEPAR(1,2)=',(enepar(ib,2),ib=1,nbc1)
-        write(35, hlp_frm) 'ENIPAR(1,1)=',(enipar(ib,1),ib=1,nbc1)
+     >   write(99, hlp_frm) 'ENEPAR(1,2)=',(enepar(ib,2),ib=1,nbc1)
+        write(99, hlp_frm) 'ENIPAR(1,1)=',(enipar(ib,1),ib=1,nbc1)
         if (maxval(abs(enipar(1:nbc1,2))).gt.0.0_R8)
-     >   write(35, hlp_frm) 'ENIPAR(1,2)=',(enipar(ib,2),ib=1,nbc1)
-        write(35, hlp_frm) 'POTPAR(1,1)=',(potpar(ib,1),ib=1,nbc1)
+     >   write(99, hlp_frm) 'ENIPAR(1,2)=',(enipar(ib,2),ib=1,nbc1)
+        write(99, hlp_frm) 'POTPAR(1,1)=',(potpar(ib,1),ib=1,nbc1)
         if (maxval(abs(potpar(1:nbc1,2))).gt.0.0_R8)
-     >   write(35, hlp_frm) 'POTPAR(1,2)=',(potpar(ib,2),ib=1,nbc1)
+     >   write(99, hlp_frm) 'POTPAR(1,2)=',(potpar(ib,2),ib=1,nbc1)
         write(hlp_frb,'(a,i3,a)') '(1x,a,i2,a,',ns1,'(1x,i3,'',''))'
         write(hlp_frp,'(a,i3,a)')
      .   '(1x,a,i2,a,1p,',ns1,'(1x,g10.3,'',''))'
         do ib = 1, nbc1
-          write(35, hlp_frb)
+          write(99, hlp_frb)
      .     'BCCON(0,',ib,')=',(bccon(is,ib),is=0,ns1-1)
         end do
         do ib = 1, nbc1
-          write(35, hlp_frp)
+          write(99, hlp_frp)
      .     'CONPAR(0,',ib,',1)=',(conpar(is,ib,1),is=0,ns1-1)
           if (maxval(abs(conpar(0:ns1-1,ib,2))).gt.0.0_R8)
-     >     write(35, hlp_frp)
+     >     write(99, hlp_frp)
      >    'CONPAR(0,',ib,',2)=',(conpar(is,ib,2),is=0,ns1-1)
           if (maxval(abs(conpar(0:ns1-1,ib,3))).gt.0.0_R8)
-     >     write(35, hlp_frp)
+     >     write(99, hlp_frp)
      >    'CONPAR(0,',ib,',3)=',(conpar(is,ib,3),is=0,ns1-1)
         end do
         do ib = 1, nbc1
-          write(35, hlp_frb)
+          write(99, hlp_frb)
      .   'BCMOM(0,',ib,')=',(bcmom(is,ib),is=0,ns1-1)
         end do
         do ib = 1, nbc1
-          write(35, hlp_frp)
+          write(99, hlp_frp)
      .   'MOMPAR(0,',ib,',1)=',(mompar(is,ib,1),is=0,ns1-1)
           if (maxval(abs(mompar(0:ns1-1,ib,2))).gt.0.0_R8)
-     >     write(35, hlp_frp)
+     >     write(99, hlp_frp)
      >    'MOMPAR(0,',ib,',2)=',(mompar(is,ib,2),is=0,ns1-1)
         end do
-        write(35,'(1x,a,f10.7,a,f10.7,a)')
+        write(99,'(1x,a,f10.7,a,f10.7,a)')
      .   'GAMMAI=',gammai,', GAMMAE=',gammae,','
-        write(35,'(1x,a,l1,a,l1,a)')
+        write(99,'(1x,a,l1,a,l1,a)')
      .   'LBNDUSR=',lbndusr,', LFEEDBACK=',lfeedback,','
-        write(35,'(1x,a,i2,a)') 'NNISO=',NNISO,','
+        write(99,'(1x,a,i2,a)') 'NNISO=',NNISO,','
         if (nniso.gt.0) then
           write(hlp_frm,'(a,i2,a)') '(1x,a,',nniso,'(1x,i2,'',''))'
-          write(35, hlp_frm) 'NXISO1=',nxiso3(1:nniso)
-          write(35, hlp_frm) 'NXISO2=',nxiso4(1:nniso)
-          write(35, hlp_frm) 'NYISO1=',nyiso3(1:nniso)
-          write(35, hlp_frm) 'NYISO2=',nyiso4(1:nniso)
+          write(99, hlp_frm) 'NXISO1=',nxiso3(1:nniso)
+          write(99, hlp_frm) 'NXISO2=',nxiso4(1:nniso)
+          write(99, hlp_frm) 'NYISO1=',nyiso3(1:nniso)
+          write(99, hlp_frm) 'NYISO2=',nyiso4(1:nniso)
           write(hlp_frm,'(a,i3,a)') '(1x,a,1p,',ns1,'(1x,g10.3,'',''))'
-          write(35, hlp_frm) 'NIISO=',niiso(0:ns1-1)
-          write(35, '(1x,a,1p,g10.3,a,g10.3,a,g10.3)')
+          write(99, hlp_frm) 'NIISO=',niiso(0:ns1-1)
+          write(99, '(1x,a,1p,g10.3,a,g10.3,a,g10.3)')
      .     'TEISO=',teiso,', TIISO=',tiiso,', PHIISO=',phiiso
         endif
-        if (boundary_time_mod.ne.0.0_R8) write(35,'(1x,a,f10.7,a)')
+        if (boundary_time_mod.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')
      >   'BOUNDARY_TIME_MOD=', boundary_time_mod,','
-        if (boundary_time_switch.ne.0.0_R8) write(35,'(1x,a,f10.7,a)')
+        if (boundary_time_switch.ne.0.0_R8) write(99,'(1x,a,f10.7,a)')
      >   'BOUNDARY_TIME_SWITCH=', boundary_time_switch,','
-        if (boundary_time_mod.ne.0.0_R8) write(35,'(a,a,a)')
+        if (boundary_time_mod.ne.0.0_R8) write(99,'(a,a,a)')
      >   'BOUNDARY_FILENAME=''', trim(boundary_filename),''','
         if (maxval(lcbs).gt.0) then
           ncbs = 1
@@ -1837,12 +1837,12 @@ c 2002-09-11: logic revised
             ncbs = ncbs+1
           end do
           write(hlp_frm,'(a,i2,a)') '(1x,a,',ncbs,'(1x,i2,'',''))'
-          write(35, hlp_frm) 'LCBS=',lcbs(1:ncbs)
+          write(99, hlp_frm) 'LCBS=',lcbs(1:ncbs)
         endif
-        if (.not.write_nml_bnd) write(35, '(a,l1,a)')
+        if (.not.write_nml_bnd) write(99, '(a,l1,a)')
      >   'WRITE_NML_BND=',write_nml_bnd,','
-        write(35,'(a)') '/'
-        close(35)
+        write(99,'(a)') '/'
+        close(99)
         if (.not.streql(boundary_filename,'b2.boundary.parameters'))
      >   then
           new_filename =
@@ -7368,7 +7368,11 @@ cxpb  Convert fort.44 file if needed
         allocate(istra1(nstrat))
         do ib = 1, nstrat
          if (savestratum(ib) .or. crcstra(ib).eq.'T') then
-          ib1 = ib1 + 1
+          if (ib1.eq.0) then ! doing this to avoid an optimization error
+           ib1 = 1
+          else
+           ib1 = ib1 + 1
+          endif
           istra1(ib) = ib1
           nstrat1 = nstrat1 + 1
           if (crcstra(ib).ne.'T') nstrai1 = nstrai1 + 1
@@ -7614,63 +7618,63 @@ cxpb as they no longer necessarily point to the same species
         enddo
         write(*,*) 'Writing ',trim(new_filename)
         write(nout(5),'(a)') trim(new_filename)
-        open(34,file=new_filename)
-        write(34,'(a)') '&NEUTRALS'
-        write(34,'(a,i2,a)') 'NSTRAI=', nstrai1,','
-        if (eirene_step_cpu.gt.0.0_R8) write(34,'(a,1pg10.3,a)')
+        open(99,file=new_filename)
+        write(99,'(a)') '&NEUTRALS'
+        write(99,'(a,i2,a)') 'NSTRAI=', nstrai1,','
+        if (eirene_step_cpu.gt.0.0_R8) write(99,'(a,1pg10.3,a)')
      >   'EIRENE_STEP_CPU=',eirene_step_cpu,','
-        write(34,'(a,1pg10.3,a)')
+        write(99,'(a,1pg10.3,a)')
      >   'EIRENE_STEP_DT= ',eirene_step_dt,','
         if (eirene_mod.gt.1)
-     >   write(34,'(a,i2,a)') 'EIRENE_MOD=', eirene_mod,','
+     >   write(99,'(a,i2,a)') 'EIRENE_MOD=', eirene_mod,','
         line = 'CRCSTRA=      '
         len=14
         do ib = 1, nstrat1
           line = line(1:len)//'  '''//crcstra1(ib)//''','
           len=len+3+1+2
         end do
-        write(34,'(a)') line(1:len)
+        write(99,'(a)') line(1:len)
         write(hlp_frm,'(a,i2,a)') '(a,',nstrat1,'(1x,i4,'',''))'
         if(minval(rcpos1(1:nstrat1)).gt.-2) then
-          write(34, hlp_frm) 'RCPOS=        ',
+          write(99, hlp_frm) 'RCPOS=        ',
      .     (rcpos1(ib)  ,ib=1,nstrat1)
-          write(34, hlp_frm) 'RCSTART=      ',
+          write(99, hlp_frm) 'RCSTART=      ',
      .     (rcstart1(ib),ib=1,nstrat1)
-          write(34, hlp_frm) 'RCEND=        ',
+          write(99, hlp_frm) 'RCEND=        ',
      .     (rcend1(ib)  ,ib=1,nstrat1)
         else
           do ib = 1, nstrat1
             if(rcpos1(ib).gt.-2) then
-              write(34,'(1x,a,i2,a,i4)') 'RCPOS(',ib,')=  ',rcpos1(ib)
-              write(34,'(1x,a,i2,a,i4)') 'RCSTART(',ib,')=',rcstart1(ib)
-              write(34,'(1x,a,i2,a,i4)') 'RCEND(',ib,')=  ',rcend1(ib)
+              write(99,'(1x,a,i2,a,i4)') 'RCPOS(',ib,')=  ',rcpos1(ib)
+              write(99,'(1x,a,i2,a,i4)') 'RCSTART(',ib,')=',rcstart1(ib)
+              write(99,'(1x,a,i2,a,i4)') 'RCEND(',ib,')=  ',rcend1(ib)
             else
-              write(34,'(1x,a,i2,a,i4)') 'RC_LIST_SIZE(',ib,')=',
+              write(99,'(1x,a,i2,a,i4)') 'RC_LIST_SIZE(',ib,')=',
      .                                    rc_list_size1(ib)
               write(hlp_frm,'(a,i4,a)')
      .         '(1x,a,i2,a,',rc_list_size1(ib),'(1x,i4,'',''))'
-              write(34, hlp_frm) 'RC_LIST_X(1,',ib,')=',
+              write(99, hlp_frm) 'RC_LIST_X(1,',ib,')=',
      .         rc_list_x1(1:bc_list_size1(ib),ib)
-              write(34, hlp_frm) 'RC_LIST_Y(1,',ib,')=',
+              write(99, hlp_frm) 'RC_LIST_Y(1,',ib,')=',
      .         rc_list_y1(1:bc_list_size1(ib),ib)
             end if
           end do
         endif
         write(hlp_frm,'(a,i2,a)') '(a,',nstrat1,'(1x,i4,'',''))'
         if (maxval(species_start1(1:nstrat1)).gt.0)
-     >   write(34, hlp_frm)
+     >   write(99, hlp_frm)
      .             'SPECIES_START=',(species_start1(ib),ib=1,nstrat1)
         if (minval(species_end1(1:nstrat1)).lt.ns1-1)
-     >   write(34, hlp_frm)
+     >   write(99, hlp_frm)
      .             'SPECIES_END=  ',(species_end1(ib),ib=1,nstrat1)
         write(hlp_frm,'(a,i3,a)') '(a,i2,a,1p,',ns1,'(1x,g10.3,'',''))'
         do ib = 1, nstrat1
-          write(34, hlp_frm)
+          write(99, hlp_frm)
      .     'RECYC(0,',ib,')= ',(recyc1(is,ib),is=0,ns1-1)
-          write(34, hlp_frm)
+          write(99, hlp_frm)
      .     'ERECYC(0,',ib,')=',(erecyc1(is,ib),is=0,ns1-1)
           if (maxval(rcion1(0:ns1-1,ib)).gt.0.0_R8)
-     >     write(34, hlp_frm)
+     >     write(99, hlp_frm)
      .     'RCION(0,',ib,')= ',(rcion1(is,ib),is=0,ns1-1)
         end do
         write(hlp_frm,'(a,i3,a)') '(a,i2,a,1p,',ns1,'(1x,g10.3,'',''))'
@@ -7679,90 +7683,90 @@ cxpb as they no longer necessarily point to the same species
           todo = todo .or. chemsp1(ib)
         enddo
         write(hlp_frm,'(a,i2,a)') '(a,',nstrat1,'l1,a)'
-        if (todo) write(34,hlp_frm) 'CHEMSP=',chemsp1(1:nstrat1),','
+        if (todo) write(99,hlp_frm) 'CHEMSP=',chemsp1(1:nstrat1),','
         todo = .false.
         do ib = 1, nstrat1
           todo = todo .or. time_dep_puff1(ib)
         enddo
-        if (todo) write(34,hlp_frm)
+        if (todo) write(99,hlp_frm)
      .   'TIME_DEP_PUFF=',time_dep_puff1(1:nstrat1),','
         write(hlp_frm,'(a,i2,a)') '(a,',nstrat1,'(1x,i4,'',''))'
         if (maxval(ngpdata1).gt.0) then
-          write(34, hlp_frm)
+          write(99, hlp_frm)
      .             'NGPDATA=',(ngpdata1(ib),ib=1,nstrat1)
         end if
         do ib = 1, nstrat1
           do ix = 1, ngpdata1(ib)
-            write(34,'(a,i3,a,i2,a,1p,2(1x,g10.3,'',''))')
+            write(99,'(a,i3,a,i2,a,1p,2(1x,g10.3,'',''))')
      .       'GPDATA(',ix,',1:2,',ib,')=',gpdata1(ix,1:2,ib)
           end do
         end do
         write(hlp_frm,'(a,i3,a)') '(a,',ns1,'(1x,i2,'',''))'
-        write(34, hlp_frm) 'TRACK_INDEX=',(track_index(is),is=0,ns1-1)
+        write(99, hlp_frm) 'TRACK_INDEX=',(track_index(is),is=0,ns1-1)
         track_chem_sput1 = .false.
         if (itrack1.gt.0) track_chem_sput1(itrack1) = track_chem_sput(1)
         if (itrack2.gt.0) track_chem_sput1(itrack2) = track_chem_sput(2)
         if (itrack3.gt.0) track_chem_sput1(itrack3) = track_chem_sput(3)
         write(hlp_frm,'(a,i2,a)') '(a,',itrack,'l1,a)'
-        if (itrack.gt.0) write(34, hlp_frm)
+        if (itrack.gt.0) write(99, hlp_frm)
      .   'TRACK_CHEM_SPUT=',track_chem_sput1(1:itrack),','
         write(hlp_frm,'(a,i2,a)') '(a,i2,a,',nstrat1,'(1x,i3,'',''))'
         do is = 1, ntrack
-          if (maxval(targsp1(1:nstrat1,is)).gt.0) write(34, hlp_frm)
+          if (maxval(targsp1(1:nstrat1,is)).gt.0) write(99, hlp_frm)
      .     'TARGSP(1,',is,')=',(targsp1(ib,is),ib=1,nstrat1)
         end do
         write(hlp_frm,'(a,i2,a)') '(a,1p,',nstrat1,'(1x,g10.3,'',''))'
         if (minval(recyceir1(1:nstrat1)).lt.1.0_R8)
-     >   write(34, hlp_frm) 'RECYCEIR=',(recyceir1(1:nstrat1))
+     >   write(99, hlp_frm) 'RECYCEIR=',(recyceir1(1:nstrat1))
         write(hlp_frm,'(a,i3,a)') '(a,i2,a,1p,',ns1,'(1x,g10.3,'',''))'
         do ib = 1, nstrat1
           if (maxval(phys_sput1(0:ns1-1,ib)).gt.0.0_R8)
-     >     write(34, hlp_frm)
+     >     write(99, hlp_frm)
      .     'PHYS_SPUT(0,',ib,')=',(phys_sput1(is,ib),is=0,ns1-1)
           if (maxval(chem_sput1(0:ns1-1,ib)).gt.0.0_R8)
-     >     write(34, hlp_frm)
+     >     write(99, hlp_frm)
      .     'CHEM_SPUT(0,',ib,')=',(chem_sput1(is,ib),is=0,ns1-1)
         end do
         if (chemical_erosion_redep_fac.ne.1.0_R8)
-     >   write(34, '(a,1pg10.3,a)')
+     >   write(99, '(a,1pg10.3,a)')
      .    'CHEMICAL_EROSION_REDEP_FAC=',
      .     chemical_erosion_redep_fac,','
         if (chemical_erosion_be_fac) then
-          write(34, '(a)')
+          write(99, '(a)')
      >     'CHEMICAL_EROSION_BE_FAC=T,'
           if (chemical_erosion_be_fac_a.ne.0.0_R8)
-     >     write(34, '(a,1pg10.3,a)')
+     >     write(99, '(a,1pg10.3,a)')
      .     'CHEMICAL_EROSION_BE_FAC_A=',
      .      chemical_erosion_be_fac_a,','
           if (chemical_erosion_be_fac_b.ne.0.0_R8)
-     >     write(34, '(a,1pg10.3,a)')
+     >     write(99, '(a,1pg10.3,a)')
      .     'CHEMICAL_EROSION_BE_FAC_B=',
      .      chemical_erosion_be_fac_b,','
           if (chemical_erosion_be_fac_c.ne.0.0_R8)
-     >     write(34, '(a,1pg10.3,a)')
+     >     write(99, '(a,1pg10.3,a)')
      .     'CHEMICAL_EROSION_BE_FAC_C=',
      .      chemical_erosion_be_fac_c,','
         endif
         write(hlp_frm,'(a,i2,a)') '(a,1p,',nstrat1,'(1x,g10.3,'',''))'
         do ib = 1, nstrat1
          if (crcstra1(ib).eq.'V' .and. volrecstart1(ib).ne.1.0e21_R8)
-     >    write(34, '(a,i2,a,1pg10.3,a)')
+     >    write(99, '(a,i2,a,1pg10.3,a)')
      .    'VOLRECSTART(',ib,')=',volrecstart1(ib),','
         end do
-        if (volrecinc.ne.0.0_R8) write(34, '(a,1pg10.3,a)')
+        if (volrecinc.ne.0.0_R8) write(99, '(a,1pg10.3,a)')
      .   'VOLRECINC=',volrecinc,','
-        write(34, '(a,1pg10.3,a)')
+        write(99, '(a,1pg10.3,a)')
      .   'VOLRECWT=',volrecwt,','
         do ib = 1, 4
-          if (rf_neut(ib).ne.1.0_R8) write(34,'(a,i1,a,1pg10.3,a)')
+          if (rf_neut(ib).ne.1.0_R8) write(99,'(a,i1,a,1pg10.3,a)')
      .     'RF_NEUT(',ib,')=',rf_neut(ib)
         end do
         do ib = 1, nstrat1
           if (userfluxparm1(ib,1).ne.0.0_R8)
-     >     write(34, '(a,i2,a,1pg10.3,a)')
+     >     write(99, '(a,i2,a,1pg10.3,a)')
      .     'USERFLUXPARM(',ib,',1)=',userfluxparm1(ib,1),','
           if (userfluxparm1(ib,2).ne.0.0_R8)
-     >     write(34, '(a,i2,a,1pg10.3,a)')
+     >     write(99, '(a,i2,a,1pg10.3,a)')
      .     'USERFLUXPARM(',ib,',2)=',userfluxparm1(ib,2),','
         end do
         ib1 = 0
@@ -7771,7 +7775,7 @@ cxpb as they no longer necessarily point to the same species
             ib1 = ib1+1
             do is = 1, nspecies1
               if (isp1(is).ne.0 .and. gpfc(is,ib).ne.0.0_R8)
-     .         write(34,'(a,i3,a,i2,a,f5.2,a)')
+     .         write(99,'(a,i3,a,i2,a,f5.2,a)')
      .          'GPFC(',isp1(is),',',ib1,')=',gpfc(is,ib),','
             end do
           end if
@@ -7780,27 +7784,27 @@ cxpb as they no longer necessarily point to the same species
         if (igass_chemical.ne.0 .and. igass_chemical.lt.ns)
      >   igass_chemical=iatm1(igass_chemical)
         if (igass_chemical.ne.0 .and. igass_chemical.lt.ns) then
-          if (fchar_chemical.ne.0.0_R8) write(34, '(a,1pg10.3,a)')
+          if (fchar_chemical.ne.0.0_R8) write(99, '(a,1pg10.3,a)')
      .     'FCHAR_CHEMICAL=',fchar_chemical,','
-          if (igass_chemical.ne.0) write(34, '(a,i3,a)')
+          if (igass_chemical.ne.0) write(99, '(a,i3,a)')
      .     'IGASS_CHEMICAL=',igass_chemical,','
-          if (itsput_chemical.ne.0) write(34, '(a,i3,a)')
+          if (itsput_chemical.ne.0) write(99, '(a,i3,a)')
      .     'ITSPUT_CHEMICAL=',itsput_chemical,','
-          if (issput_chemical.ne.0) write(34, '(a,i3,a)')
+          if (issput_chemical.ne.0) write(99, '(a,i3,a)')
      .     'ISSPUT_CHEMICAL=',issput_chemical,','
           do ib = 0, nlim+nsts
             if (chemical_sputter_yield(ib).ne.0.0_R8)
-     >       write(34,'(a,i3,a,1pg10.3,a)')
+     >       write(99,'(a,i3,a,1pg10.3,a)')
      .       'CHEMICAL_SPUTTER_YIELD(',ib,')=',
      .       chemical_sputter_yield(ib),','
           end do
         endif
 #endif
-        if (neutrals_time_mod.ne.0.0_R8) write(34,'(a,f10.7,a)')
+        if (neutrals_time_mod.ne.0.0_R8) write(99,'(a,f10.7,a)')
      >   'NEUTRALS_TIME_MOD=', neutrals_time_mod,','
-        if (neutrals_time_switch.ne.0.0_R8) write(34,'(a,f10.7,a)')
+        if (neutrals_time_switch.ne.0.0_R8) write(99,'(a,f10.7,a)')
      >   'NEUTRALS_TIME_SWITCH=', neutrals_time_switch,','
-        if (neutrals_time_mod.ne.0.0_R8) write(34,'(a,a,a)')
+        if (neutrals_time_mod.ne.0.0_R8) write(99,'(a,a,a)')
      >   'NEUTRALS_FILENAME=''', trim(neutrals_filename),''','
         write(hlp_frm,'(a,i2,a)') '(a,i1,a,',nstrat1,'(1x,i3,'',''))'
         if (maxval(lstrascl).gt.0) then
@@ -7817,28 +7821,28 @@ cxpb as they no longer necessarily point to the same species
           enddo
           do is = 1, nspecies1
             if (isp1(is).ne.0) then
-              write(34, hlp_frm) 'LSTRASCL(1,',isp1(is),')=',
+              write(99, hlp_frm) 'LSTRASCL(1,',isp1(is),')=',
      .         (lstrascl1(ib,isp1(is)),ib=1,nstrat1)
             end if
           end do
         endif
         if (l_neutrad.ne.0)
-     >   write(34,'(a,i2,a)') 'L_NEUTRAD=',l_neutrad,','
+     >   write(99,'(a,i2,a)') 'L_NEUTRAD=',l_neutrad,','
         if (l_neutflux.ne.-1)
-     >   write(34,'(a,i2,a)') 'L_NEUTFLUX=',l_neutflux,','
+     >   write(99,'(a,i2,a)') 'L_NEUTFLUX=',l_neutflux,','
         write(hlp_frm,'(a,i2,a)') '(a,',nmol,'(1x,i2,'',''))'
         if (maxval(lmolscl).gt.0)
-     >   write(34,hlp_frm) 'LMOLSCL=',(lmolscl(is),is=1,nmol)
+     >   write(99,hlp_frm) 'LMOLSCL=',(lmolscl(is),is=1,nmol)
         if (maxval(lionscl).gt.0)
-     >   write(34,hlp_frm) 'LIONSCL=',(lionscl(is),is=1,nion)
+     >   write(99,hlp_frm) 'LIONSCL=',(lionscl(is),is=1,nion)
         write(hlp_frm,'(a,i3,a)') '(a,',ns1,'(1x,i3,'',''))'
-        write(34,hlp_frm) 'B2ESPCR=',(b2espcr1(is),is=0,ns1-1)
+        write(99,hlp_frm) 'B2ESPCR=',(b2espcr1(is),is=0,ns1-1)
         write(hlp_frm,'(a,i2,a)') '(a,',nspecies1,'(1x,i3,'',''))'
-        write(34,hlp_frm) 'EB2SPCR=',(eb2spcr1(is),is=1,nspecies1)
+        write(99,hlp_frm) 'EB2SPCR=',(eb2spcr1(is),is=1,nspecies1)
         write(hlp_frm,'(a,i2,a)') '(a,i2,a,',nspecies1,'(1x,i2,'',''))'
         do ib = 1, nmol
           if (maxval(mlcmp1(:,ib)).gt.0) then
-            write(34,hlp_frm)
+            write(99,hlp_frm)
      .       'MLCMP(1,',ib,')=',(mlcmp1(is,ib),is=1,nspecies1)
           endif
         end do
@@ -7856,11 +7860,11 @@ cxpb as they no longer necessarily point to the same species
         end if !}
         if (ncns.gt.0) then
           write(hlp_frm,'(a,i2,a)') '(a,',ncns,'(1x,i3,'',''))'
-          write(34,hlp_frm) 'LCNS=',(lcns(ib),ib=1,ncns)
+          write(99,hlp_frm) 'LCNS=',(lcns(ib),ib=1,ncns)
         endif
         if (ntns.gt.0) then
           write(hlp_frm,'(a,i2,a)') '(a,',ntns,'(1x,i3,'',''))'
-          write(34,hlp_frm) 'LTNS=',(ltns(ib),ib=1,ntns)
+          write(99,hlp_frm) 'LTNS=',(ltns(ib),ib=1,ntns)
         endif
         nsns = 0
         do ib = 1, nstrai
@@ -7885,50 +7889,50 @@ cxpb as they no longer necessarily point to the same species
         if (nsns.gt.0) then
           write(hlp_frm,'(a,i2,a)') '(a,',nsns,'(1x,i3,'',''))'
           if(maxval(lsns(1:nsns)).gt.0.or.minval(lsns(1:nsns)).lt.0)
-     >     write(34,hlp_frm) 'LSNS=',(lsns(ib),ib=1,nsns)
+     >     write(99,hlp_frm) 'LSNS=',(lsns(ib),ib=1,nsns)
           if(maxval(ksns(1:nsns)).gt.0.or.minval(ksns(1:nsns)).lt.0)
-     >     write(34,hlp_frm) 'KSNS=',(ksns(ib),ib=1,nsns)
+     >     write(99,hlp_frm) 'KSNS=',(ksns(ib),ib=1,nsns)
         endif
-        write(34,'(a,1pg10.3,a)') 'NEUT_SCL_LIM=',neut_scl_lim,','
+        write(99,'(a,1pg10.3,a)') 'NEUT_SCL_LIM=',neut_scl_lim,','
         if (n_spcsrf.gt.0) then
-          write(34,'(a,i2,a)') 'N_SPCSRF=',n_spcsrf,','
+          write(99,'(a,i2,a)') 'N_SPCSRF=',n_spcsrf,','
           ii=minloc(l_spcsrf)
           write(hlp_frm,'(a,i3,a)') '(a,',ii(1),'(i3,'',''))'
-          write(34,hlp_frm) 'L_SPCSRF=',(l_spcsrf(ib),ib=1,ii(1))
+          write(99,hlp_frm) 'L_SPCSRF=',(l_spcsrf(ib),ib=1,ii(1))
           line = 'SPS_ID=  '
           len=9
           do ib = 1, n_spcsrf
             line = line(1:len)//''''//sps_id(ib)//''','
             len=len+1+8+2
           end do
-          write(34,'(a)') line
+          write(99,'(a)') line
           write(hlp_frm,'(a,i2,a)') '(a,',n_spcsrf,'(i10,'',''))'
-          write(34, hlp_frm) 'I_SPCSRF=',(i_spcsrf(ib),ib=1,n_spcsrf)
-          write(34, hlp_frm) 'J_SPCSRF=',(j_spcsrf(ib),ib=1,n_spcsrf)
+          write(99, hlp_frm) 'I_SPCSRF=',(i_spcsrf(ib),ib=1,n_spcsrf)
+          write(99, hlp_frm) 'J_SPCSRF=',(j_spcsrf(ib),ib=1,n_spcsrf)
           write(hlp_frm,'(a,i2,a)') '(a,1p,',n_spcsrf,'(g10.3,'',''))'
-          write(34, hlp_frm) 'SPS_ABSR=',(sps_absr(ib),ib=1,n_spcsrf)
-          write(34, hlp_frm) 'SPS_TRNO=',(sps_trno(ib),ib=1,n_spcsrf)
-          write(34, hlp_frm) 'SPS_TRNI=',(sps_trni(ib),ib=1,n_spcsrf)
-          write(34, hlp_frm) 'SPS_MTRI=',(sps_mtri(ib),ib=1,n_spcsrf)
-          write(34, hlp_frm) 'SPS_TMPR=',(sps_tmpr(ib),ib=1,n_spcsrf)
-          write(34, hlp_frm) 'SPS_SPPH=',(sps_spph(ib),ib=1,n_spcsrf)
-          write(34, hlp_frm) 'SPS_SPCH=',(sps_spch(ib),ib=1,n_spcsrf)
+          write(99, hlp_frm) 'SPS_ABSR=',(sps_absr(ib),ib=1,n_spcsrf)
+          write(99, hlp_frm) 'SPS_TRNO=',(sps_trno(ib),ib=1,n_spcsrf)
+          write(99, hlp_frm) 'SPS_TRNI=',(sps_trni(ib),ib=1,n_spcsrf)
+          write(99, hlp_frm) 'SPS_MTRI=',(sps_mtri(ib),ib=1,n_spcsrf)
+          write(99, hlp_frm) 'SPS_TMPR=',(sps_tmpr(ib),ib=1,n_spcsrf)
+          write(99, hlp_frm) 'SPS_SPPH=',(sps_spph(ib),ib=1,n_spcsrf)
+          write(99, hlp_frm) 'SPS_SPCH=',(sps_spch(ib),ib=1,n_spcsrf)
           write(hlp_frm,'(a,i2,a)') '(a,',n_spcsrf,'(i10,'',''))'
-          write(34, hlp_frm) 'SPS_SGRP=',(sps_sgrp(ib),ib=1,n_spcsrf)
+          write(99, hlp_frm) 'SPS_SGRP=',(sps_sgrp(ib),ib=1,n_spcsrf)
           write(hlp_frm,'(a,i2,a)')
      .     '(a,',n_spcsrf,'('''''''',a8,'''''''','',''))'
-          write(34, hlp_frm) 'SPS_MTRL=',(sps_mtrl(ib),ib=1,n_spcsrf)
+          write(99, hlp_frm) 'SPS_MTRL=',(sps_mtrl(ib),ib=1,n_spcsrf)
         endif
         do ib = 1, 100
-          if (debug_flags(ib).ne.0) write(34,'(a,i3,a,i3,a)')
+          if (debug_flags(ib).ne.0) write(99,'(a,i3,a,i3,a)')
      .     'DEBUG_FLAGS(',ib,')=',debug_flags(ib),','
         end do
-        if (dbg_eir_mc.ne.0) write(34,'(a,i3,a)')
+        if (dbg_eir_mc.ne.0) write(99,'(a,i3,a)')
      .   'DBG_EIR_MC=',dbg_eir_mc,','
-        if (.not.write_nml_neut) write(34, '(a,l1,a)')
+        if (.not.write_nml_neut) write(99, '(a,l1,a)')
      >   'WRITE_NML_NEUT=',write_nml_neut,','
-        write(34,'(a)') '/'
-        close(34)
+        write(99,'(a)') '/'
+        close(99)
         if (.not.streql(neutrals_filename,'b2.neutrals.parameters'))
      >   then
           new_filename =
