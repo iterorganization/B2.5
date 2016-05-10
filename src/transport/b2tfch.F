@@ -806,6 +806,7 @@ cxpb turn off flows between boundary cells
               fchin(ix,iy,1)=0.0_R8
               fchvispar(ix,iy,1)=0.0_R8
               fchvisper(ix,iy,1)=0.0_R8
+              fchvisq(ix,iy,1)=0.0_R8
             endif
           enddo        
         enddo
@@ -822,6 +823,7 @@ cxpb turn off poloidal flows in core boundary
             fchin(ix,-1,0) = 0.0_R8
             fchvispar(ix,-1,0) = 0.0_R8
             fchvisper(ix,-1,0) = 0.0_R8
+            fchvisq(ix,-1,0) = 0.0_R8
           endif
         enddo
       endif                                                     	 !xpb
@@ -837,6 +839,7 @@ cxpb turn off current terms if requested
         fchin=0.0_R8
         fchvispar=0.0_R8
         fchvisper=0.0_R8
+        fchvisq=0.0_R8
       endif
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
@@ -851,6 +854,7 @@ cxpb turn off current terms if requested
             fch_p(ix,iy,:) =0.0_R8
             fchvispar(ix,iy,0)=0.0_R8
             fchvisper(ix,iy,0)=0.0_R8
+            fchvisq(ix,iy,0)=0.0_R8
             fchin(ix,iy,0)=0.0_R8
             conc(ix,iy,1)=0.0_R8
             fch(ix,iy,1)=0.0_R8
@@ -860,6 +864,7 @@ cxpb turn off current terms if requested
             fchin(ix,iy,1)=0.0_R8
             fchvispar(ix,iy,1)=0.0_R8
             fchvisper(ix,iy,1)=0.0_R8
+            fchvisq(ix,iy,1)=0.0_R8
           end do
         end do
       end do

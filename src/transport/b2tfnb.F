@@ -862,7 +862,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      7     vol(leftix(ix,iy),leftiy(ix,iy))/
      8     hx(leftix(ix,iy),leftiy(ix,iy)))
           flo_nodrift = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+
-     &                  term(ix,iy)                                      !srv 20.06.08
+     &                  xfrhie_no_drift*term(ix,iy)                                      !srv 20.06.08
          else                                                            !srv 21.06.08 {
           flo = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+                  !srv 01.07.05
      &      term(ix,iy) +                                                !iyv 19.04.07

@@ -41,6 +41,7 @@
       integer, save :: no_current = 0                          !srv 27.02.13
       integer, save :: anomalous_core_only = 0                 !srv 19.04.07
       integer, save :: pot_eq
+      integer, save :: guard_flows
       real (kind=R8) :: fch_anomalous
       save ncall, fch_anomalous
 *   ..procedures
@@ -48,7 +49,7 @@
       external subini, subend, xertst
       external b2xvsg, b2xvff, b2xvfx
 *   ..initialization
-      data ncall/0/, fch_anomalous/1.0e0_R8/, pot_eq/1/
+      data ncall/0/, fch_anomalous/1.0e0_R8/, pot_eq/1/, guard_flows/2/
 *-----------------------------------------------------------------------
 *.computation
 
@@ -61,10 +62,11 @@
        call ipgeti ('b2tfnb_anomalous_core_only', anomalous_core_only) !srv 19.04.07
        if (fch_anomalous.eq.1.0_R8) 
      >  call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
-       call ipgeti ('b2tfhe_no_current',no_current)                 !srv 27.02.13
+       call ipgeti ('b2tfhe_no_current', no_current)                !srv 27.02.13
        call ipgeti ('b2news_poteq', pot_eq)                         !srv 27.02.13
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
+       call ipgeti ('b2news_guard_flows', guard_flows)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -108,6 +110,24 @@
           fchanml = 0.0e0_R8
         endif
       endif                                                   !srv 27.02.13
+
+      if(guard_flows.eq.0) then                                 	 !xpb
+cxpb turn off flows between boundary cells
+        do iy = -1, ny
+          do ix = -1, nx
+            if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+              fchanml(ix,iy,1)=0.0_R8
+            endif
+          enddo
+        enddo
+
+cxpb turn off poloidal flows in core boundary
+        do ix = -1, nx
+          if(mod(region(ix,-1,0),4).eq.1) then
+            fchanml(ix,-1,0) = 0.0_R8
+          endif
+        enddo
+      endif
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO
