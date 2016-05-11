@@ -721,7 +721,7 @@ c 2002-09-11: logic revised
         write(*,*) '  NPLS = ',NPLS
         write(*,*) 'NLIMPS = ',NLIMPS
       else
-        ndx=DEF_NXD
+        ndx=DEF_NXD+DEF_NCUT*5
         ndy=DEF_NYD
         nfl=DEF_NFL
         natm=DEF_NATM

@@ -1123,7 +1123,7 @@ csw 09oct2012
         write(*,*) '  NION = ',NION
         write(*,*) 'NLIMPS = ',NLIMPS
       else
-        ndx=DEF_NXD
+        ndx=DEF_NXD+DEF_NCUT*5
         ndy=DEF_NYD
         nfl=DEF_NFL
         natm=DEF_NATM

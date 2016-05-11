@@ -259,7 +259,7 @@ c
       ex = .false.
  7000 continue
       if (.not.ex) then
-        ndx=DEF_NXD
+        ndx=DEF_NXD+DEF_NCUT*5
         ndy=DEF_NYD
         nfl=DEF_NFL
         natm=DEF_NATM
