@@ -67,8 +67,8 @@ c
 
       real (kind=R8) ::
      *   pr(-1:nxd,-1:nyd),
-     3	 energy_balance(-1:nxd,-1:nyd),energy_balance2(-1:nxd,-1:nyd),
-     4	 hy1(-1:nxd,-1:nyd),
+     3   energy_balance(-1:nxd,-1:nyd),energy_balance2(-1:nxd,-1:nyd),
+     4   hy1(-1:nxd,-1:nyd),
      4   energy_balance_old(-1:nxd,-1:nyd),
      3   particle_balance(-1:nxd,-1:nyd,0:nsd_local-1), pb0,
      4   bas_vis_piece(-1:nxd,-1:nyd,0:nsd_local-1),

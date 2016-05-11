@@ -30,7 +30,7 @@
   110   CONTINUE
   120 CONTINUE
       RETURN
-  910 FORMAT(5(E16.8))
+  910 FORMAT(1P,5(E16.8))
 *=======================================================================
 *//END GFSUB3//
 
@@ -912,8 +912,13 @@ c
 csw 2013 corrected
 c      nxx=nxdd
 c      nyy=nydd
+#ifdef B25_EIRENE
       nxx=nx+2
       nyy=ny
+#else
+      nxx=ndx
+      nyy=ndy
+#endif
 
       write(*,*) 'NX, NY, NFLAI = ',nx,ny,nflai
       rewind(31)
