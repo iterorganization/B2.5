@@ -5,6 +5,7 @@
      1  vol, hx, hy, gs, qz, qc, bb, ti, ni, na,
      2  fna, fni_32, fni_52, kinrgy,
      3  chci, cddi, chvi, chvimx, vsal, vadia, vaecrb,
+     &  fchvispar, fchinert, fchanml,                                !lk 30.05.11
      &  fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi)             !srv 13.10.06
       use b2mod_types
       use b2mod_boundary_namelist
@@ -18,6 +19,8 @@
      *  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
      &  fna(-1:nx,-1:ny,0:1,0:ns-1), cddi(-1:nx,-1:ny,0:1,0:ns-1),    !srv 13.10.06
      1  fni_32(-1:nx,-1:ny,0:1), fni_52(-1:nx,-1:ny,0:1),
+     &  fchvispar(-1:nx,-1:ny,0:1),                                   !lk 30.05.11
+     &  fchinert(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1),          !lk 30.05.11
      &  vol(-1:nx,-1:ny), chci(-1:nx,-1:ny,0:1), chvi(-1:nx,-1:ny,0:1),
      &  chvimx(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  gs(-1:nx,-1:ny,0:2), qc(-1:nx,-1:ny), 
@@ -53,13 +56,14 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, ib, conduction_only, no_hybr, 
      &        ixl, iyl, ixb, iyb
-      integer, save :: iout = 0                                        !sv 16.09.02
-      integer, save :: lim_flux = 0, mdf_fhi = 0                       !srv 04.02.03 13.10.06
-      real (kind=R8), save :: PSch=1.0e0_R8                            !srv 17.01.07
+      integer, save :: iout = 0                                      !sv 16.09.02
+      integer, save :: lim_flux = 0, mdf_fhi = 0                     !srv 04.02.03 13.10.06
+      real (kind=R8), save :: PSch=1.0e0_R8                          !srv 17.01.07
+      real (kind=R8), save :: ycur = 1.0_R8                          !srv 07.07.08
       real (kind=R8) ::
      *  flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0, w1,
      1  cum_flo_vadia, cum_flo_vaecrb, prefactor, cutlo,
-     &   floi0_mdf, coni0_mdf, t0_mdf,dti0_mdf, t1_mdf                  !srv 13.10.06
+     &   floi0_mdf, coni0_mdf, t0_mdf,dti0_mdf, t1_mdf               !srv 13.10.06
       parameter (cutlo=1.0e-60_R8)
       save ncall, conduction_only, no_hybr
 *   ..procedures
@@ -92,9 +96,10 @@
       if (ncall.eq.0) then
         call ipgeti ('b2tfhe_conduction_only', conduction_only)
         call ipgeti ('b2tfhi_no_hybr', no_hybr)
-        call ipgeti ('b2tfhi_mdf', mdf_fhi)                               !srv 13.10.06
-        call ipgetr ('b2tfhi_PSch', PSch)                                 !srv 17.01.07
-        call ipgeti ('b2tfhi_iout', iout)                                 !sv 16.09.02
+        call ipgeti ('b2tfhi_mdf', mdf_fhi)                          !srv 13.10.06
+        call ipgetr ('b2tfhi_PSch', PSch)                            !srv 17.01.07
+        call ipgetr ('b2tfnb_ycur', ycur)                            !srv 17.07.08
+        call ipgeti ('b2tfhi_iout', iout)                            !srv 16.09.02
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then

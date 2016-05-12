@@ -413,6 +413,7 @@
 *    'b2tfnb_PSch'              '1.0'                  Physics
 *    'b2tfnb_xfrhie'            '1.0'                  Numerics
 *    'b2tfnb_xfrhiehz'          '1.0'                  Numerics
+*    'b2tfnb_ycur'              '1.0'                  Physics
 *    'b2tlc0_alpha'             '0.0'                  Phycics
 *    'b2tlc0_gamma'             '2.0'                  Physics
 *    'b2tlh0_alpha'             '0.0'                  Physics
@@ -1275,6 +1276,10 @@
 *    When set to '1.0', the new form of the electron heat flux calculation
 *    is used.
 *    It is recommended to use 1.0.
+*
+*    'b2tfnb_ycur'              '1.0'                  Physics
+*    Ycur is a multiplier to the parallel viscosity, ion inertial and
+*    anomalous currents to the ion radial flows (particle and energy).
 *
 *    'b2tqce_fke_Zhdanov'       '1'                    Physics
 *    When set to '1', Zhdanov's expression is used in the electron thermal 

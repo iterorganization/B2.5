@@ -43,7 +43,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, k
+      integer ncall, n2, ix, iy, is, k, use_eirene
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
@@ -51,13 +51,13 @@
       real (kind=R8) ::
      *   phm0, phm1, phm3, phm4, phm5, t0, ttim, ttf
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
-      save ncall, phm0, phm1, phm3, phm4, phm5                       !xpb
+      save ncall, phm0, phm1, phm3, phm4, phm5, use_eirene           !xpb
 *   ..procedures
       external subini, subend, xertst, ipgetr
       external b2xvsg
 *   ..initialisation
       data ncall/0/, phm0/1.0_R8/, phm1/1.0_R8/, phm3/1.0_R8/,
-     1  phm4/0.0_R8/, phm5/1.0_R8/                     		     !xpb
+     1  phm4/0.0_R8/, phm5/1.0_R8/, use_eirene/0/      		     !xpb
 
 *-----------------------------------------------------------------------
 *.computation
@@ -75,6 +75,7 @@
         call xertst (0.0_R8.le.phm0.and.0.0_R8.le.phm1		     !xpb
      &   .and.0.0_R8.le.phm3.and.0.0_R8.le.phm4.and.0.0_R8.le.phm5,  !xpb
      &	 'faulty internal parameter phm0, phm1, phm3, phm4, phm5')   !xpb
+        call ipgeti ('b2mndr_eirene', use_eirene)
         call ipgeti ('b2srdt_iout', iout)                            !srv 30.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
         call ipgeti ('b2npco_iout', iout_b2npco)
@@ -109,7 +110,8 @@
           do ix = -1, nx
 csw 24feb2014 check for guard cell (SOLPS4)
            if(iftimbound(ix,iy) .ne. 0) cycle
-           if(guard_flows.eq.2 .and. 
+           if((guard_flows.eq.2 .or.
+     &        (is_neutral(is) .and. use_eirene.ne.0)) .and. 
      &       (leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
      &        bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1)) cycle
            ttim=dtim*dtco(is,region(ix,iy,0))*time_factor(ix,iy)

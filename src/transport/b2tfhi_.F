@@ -66,9 +66,9 @@ csw 30apr2014 added fna_he, ia
       integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
       integer, save :: b2kin=0, b2vis=0
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
+      real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
       real (kind=R8) ::
      *   flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0, vdia_par,    !srv 17.05.99
-     *   iner_par,                                                      !srv 27.12.01
      &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf, dti0_mdf                 !srv 13.10.06 17.06.09
 cpax      
       real (kind=R8) ::
@@ -76,7 +76,6 @@ cpax
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
       save ncall, vdia_par                                              !srv 17.05.99
-      save iner_par                                                     !srv 27.12.01
 *   ..procedures
       intrinsic max, abs
 cpax      
@@ -89,7 +88,6 @@ cpax
       upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
 *   ..initialization
       data ncall/0/, vdia_par/1.0e0_R8/                                 !srv 17.05.99
-      data iner_par/0.0e0_R8/                                           !srv 27.12.01
 
 *-----------------------------------------------------------------------
 *.computation
@@ -100,13 +98,13 @@ cpax
 *   ..set internal parameters on first call                             !srv 17.05.99
       if (ncall.eq.0) then                                              !srv
        call ipgetr ('b2tfhi_vdia_par', vdia_par)                        !srv 17.05.99
-       call ipgetr ('b2tfhi_iner_par', iner_par)                        !srv 27.12.01
        call ipgeti ('b2tfhi_iout', iout)                                !srv 16.09.02
        call ipgeti ('b2tfhi_lim_flux', lim_flux)                        !srv 04.02.03
        call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)                 !srv 06.07.06
        call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)                 !srv 06.07.06
        call ipgeti ('b2tfhi_mdf', mdf_fhi)                              !srv 13.10.06
        call ipgetr ('b2tfhi_PSch', PSch)                                !srv 17.01.07
+       call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)
        call ipgeti ('b2trcl_conductive_limit', conductive_limit)        !srv 16.06.08 17.01.12
@@ -594,14 +592,13 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &    chvi(ix,iy,1)*(ni(bottomix(ix,iy),bottomiy(ix,iy),0)
      &                   +ni(ix,iy,0))/2
      &        +flidia(ix,iy,1)                                     !srv 25.01.02 18.01.07
-     &    +1.5e0_R8*fchinert(ix,iy,1)/qe*iner_par                  !srv 27.12.01
      &    +1.5e0_R8/qe*(fchinert(ix,iy,1)+fchvispar(ix,iy,1)       !lk 30.05.11
-     &    +fchanml(ix,iy,1))                                       !lk 30.05.11
+     &    +fchanml(ix,iy,1))*ycur                                  !lk 30.05.11
         floi0_mdf = 1.5e0_R8*fni(ix,iy,1)+                         !srv 11.05.99
      &    chvi(ix,iy,1)*(ni(bottomix(ix,iy),bottomiy(ix,iy),0)
      &                   +ni(ix,iy,0))/2
      &    +1.5e0_R8/qe*(fchinert(ix,iy,1)+fchvispar(ix,iy,1)       !lk 30.05.11
-     &    +fchanml(ix,iy,1))                                       !lk 30.05.11
+     &    +fchanml(ix,iy,1))*ycur                                  !lk 30.05.11
         if(no_Ptncr_y_hi.eq.0) then                                !srv 06.07.06 {
          if(mdf_fhi.eq.0) then                                     !srv 13.10.06 {
           coni0    = hybr(floi0,chci(ix,iy,1))

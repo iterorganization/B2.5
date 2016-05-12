@@ -138,7 +138,8 @@
 * ..particle balance
 *   ..compute residual
       call b2ursc (nx, ny, nb, snb, fnb, rescb)
-      if(guard_flows.eq.2) then
+      if(guard_flows.eq.2 .or.                                          !srv 06.07.08 {
+     &    (is_neutral(isb) .and. use_eirene.ne.0)) then
        do iy = -1, ny, ny+1                                             !srv 27.06.08 {
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then

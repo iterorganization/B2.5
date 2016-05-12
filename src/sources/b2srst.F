@@ -33,7 +33,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, k
+      integer ncall, n2, ix, iy, is, k, use_eirene
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
@@ -45,12 +45,13 @@
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *   rf0, rf1, rf2, rf3, t0
-      save ncall, rf0, rf1, rf2, rf3
+      save ncall, rf0, rf1, rf2, rf3, use_eirene
 *   ..procedures
       intrinsic min, max
       external subini, subend, xertst, ipgetr, b2xvsg
 *   ..initialisation
-      data ncall/0/, rf0/1.0_R8/, rf1/1.0_R8/, rf2/1.0_R8/, rf3/1.0_R8/
+      data ncall/0/, rf0/1.0_R8/, rf1/1.0_R8/, rf2/1.0_R8/, rf3/1.0_R8/,
+     * use_eirene/0/
 *     (rf0/1/2/3 for numerical stabilisation)
 
 *-----------------------------------------------------------------------
@@ -70,6 +71,7 @@
        call xertst (0.0_R8.le.rf0.and.0.0_R8.le.rf1.and.
      &              0.0_R8.le.rf2.and.0.0_R8.le.rf3,
      &              'faulty internal parameter rf0/1/2/3')
+       call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('b2srst_iout', iout)                            !srv 30.06.08
        call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
        call ipgeti ('b2npco_iout', iout_b2npco)
@@ -114,7 +116,8 @@
      &     min(sna(ix,iy,1,is)*na(ix,iy,is),-rf0*t0,(1.0_R8+rf0)*t0)
         enddo
        enddo
-       if(guard_flows.eq.2) then                                     !srv 01.07.08 {
+       if(guard_flows.eq.2 .or.                                      !srv 06.07.08 {
+     &    (is_neutral(is) .and. use_eirene.ne.0)) then               !srv 01.07.08 {
 *     The corner cell value is defined by interpolation in b2npco and b2npc9
 *   ..There is some problem for 9-point stencil case.
         do iy=-1, ny, ny+1                                           !srv 27.06.08  {

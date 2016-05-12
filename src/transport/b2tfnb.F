@@ -79,7 +79,7 @@
       integer, save :: drift_style = 1                                  !srv 21.06.08
       real (kind=R8), save :: cfvma = 0.0_R8                            !srv 15.12.05
       real (kind=R8), save :: alpha_ = 0.0_R8                           !srv 09.07.03
-      real (kind=R8), save :: ycur = 0.0_R8                             !srv 07.07.08
+      real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
       real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8           !srv 27.01.12
       real (kind=R8), save ::  
      &   poleldr = 1.0_R8, radeldr = 1.0_R8,                            !srv 25.04.00
@@ -1231,13 +1231,13 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/           !srv 01.03.00
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+           !srv 01.03.00
      &      (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+ ! fchvisper(ix,iy,1)+
-     &       fchanml(ix,iy,1))/
+     &       fchanml(ix,iy,1))*ycur/
      &      (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2) !srv 20.09.06
            flo_mdf = cvlb(ix,iy,1)+vbecrb(ix,iy,1)*                      !srv 01.06.06 {
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
      &      (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+ ! fchvisper(ix,iy,1)+
-     &       fchanml(ix,iy,1))/
+     &       fchanml(ix,iy,1))*ycur/
      &      (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)       !srv 20.09.06
            if(cfvma .eq. 0.0_R8) then                                    !srv 15.12.05
             flo2dia = cvlbhz(ix,iy,1)+ub2dia(ix,iy,1)*                   !srv 01.10.99 09.01.01
@@ -1246,7 +1246,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+          !srv 01.03.00
      &       (hz(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8*     !srv 18.09.08
      &       (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+ ! fchvisper(ix,iy,1)+
-     &       fchanml(ix,iy,1))/
+     &       fchanml(ix,iy,1))*ycur/
      &       (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)      !srv 20.09.06
            else
             flo2dia = cvmbhz(ix,iy,1)+ub2dia(ix,iy,1)*                   !srv 01.10.99 09.01.01

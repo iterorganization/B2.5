@@ -6,6 +6,7 @@
      &  vol, pbs, flob, conb, snb,                                   !srv 22.01.02 13.10.06
      &  pccb, pb, nb, ub, fnb, rescb, corpb, ierr)
       use b2mod_types
+      use b2mod_b2cmpa
       use b2mod_indirect
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -50,7 +51,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy
+      integer ncall, n2, ix, iy, use_eirene
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0          !srv 06.07.06
       integer, save :: iout = 0                                      !srv 04.07.08    
       character chns*3                                               !srv 04.07.08
@@ -58,12 +59,13 @@
      *   rxg, pcm0, pcm1
       real (kind=R8) ::
      *   aa9(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)
-      save ncall, rxg, pcm0, pcm1
+      save ncall, rxg, pcm0, pcm1, use_eirene
 *   ..procedures
       external subini, subend, xertst, ipgetr, lwget
       external b2xvsg, b2xvff, b2ursc, b2usc9, b2upco
 *   ..initialization
-      data ncall/0/, rxg/1.0_R8/, pcm0/1.0_R8/, pcm1/1.0_R8/
+      data ncall/0/, rxg/1.0_R8/, pcm0/1.0_R8/, pcm1/1.0_R8/,
+     * use_eirene/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -130,7 +132,8 @@
 * ..particle balance
 *   ..compute residual
       call b2ursc (nx, ny, nb, snb, fnb, rescb)
-      if(guard_flows.eq.2) then                                       !srv 15.02.10 { this part should be re-written
+      if(guard_flows.eq.2 .or.                                        !srv 06.07.08 {
+     &    (is_neutral(isb) .and. use_eirene.ne.0)) then               !srv 15.02.10 { this part should be re-written
        do iy=-1, ny, ny+1                                             !srv 27.06.08 {
         do ix = -1, nx
 	 if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
@@ -147,7 +150,8 @@
 *   ..apply correction
       call b2upco (nx, ny, nregionv, ua_solve, solvmreg, rxf, pcm0, 
      & vol, corpb, pccb(-1,-1,0), pb, nb, ub)
-      if(guard_flows.eq.2) then                                       !srv 06.07.08 {
+      if(guard_flows.eq.2 .or.                                        !srv 06.07.08 {
+     &    (is_neutral(isb) .and. use_eirene.ne.0)) then               !srv 06.07.08 {
 *   ..replace the incorrect corner values by the interpolated values  !srv 30.04.08 {
         iy=-1                                                         !srv 27.06.08 {
         do ix = -1, nx

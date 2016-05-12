@@ -67,6 +67,7 @@
       character chns*3                                                   !srv 16.09.02
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
       real (kind=R8), save :: xfrhie = 1.0_R8                            !srv 05.11.09 30.01.10
+      real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
       real (kind=R8) ::
      *   dif, flo, cutlo, fle_eir, cone_eir, floe_eir, chce_eir,         !srv 14.07.10
      &   floi_eir, chci_eir, flo_eir, con_eir, term(-1:nx,-1:ny)
@@ -114,6 +115,7 @@
         call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)                 !srv 06.07.06
         call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)                 !srv 06.07.06
         call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                 !srv 06.07.06
+        call ipgetr ('b2tfnb_ycur', ycur)                               !srv 17.07.08
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
       endif
 *   ..extensive tests on first few calls
@@ -259,7 +261,7 @@ csw 30sep2013, added check for no_hybr
      &        (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      &        (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
      &        (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+ ! fchvisper(ix,iy,1)+
-     &        fchanml(ix,iy,1))/
+     &        fchanml(ix,iy,1))*ycur/
      &        (qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &        na(ix,iy,is))/2)
            else
@@ -422,7 +424,7 @@ c Drift terms
 !     &     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
 !     &      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
 !     &        (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+ ! fchvisper(ix,iy,1)+
-!     &         fchanml(ix,iy,1))/
+!     &         fchanml(ix,iy,1))*ycur/
 !     &        (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)
                 fle_eir = cvla(ix,iy,1,is)+
      &           (wedia(ix,iy,1)+vaecrb(ix,iy,1,is))*xvecrb*             !srv 14.07.10
