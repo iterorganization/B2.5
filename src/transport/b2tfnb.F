@@ -1742,7 +1742,7 @@ csw 18feb2014 remove fluxes between guard cells
      &         wrk0(ix,iy))
           endif
             wbdia_(ix,iy,0)=-wbdia_(ix,iy,0)/
-     &         (zb(ix,iy)*qe*nb(ix,iy))*bb(ix,iy,3)/bb(ix,iy,3)**2
+     &         (zb(ix,iy)*qe*nb(ix,iy))*bb(ix,iy,2)/bb(ix,iy,3)**2
          enddo
         enddo
 
