@@ -1,4 +1,4 @@
-      subroutine b2usrtrc(nx,ny,ns,BoRiS)
+      subroutine b2usrtrc(nx,ny,ns,nxtl,nxtr,BoRiS)
       use b2mod_types
       use b2mod_geo
       use b2mod_diag
@@ -29,7 +29,7 @@ c-----------------------------------------------------------------------
 #     include <COUPLE/EIRBRA.F>
 #endif
 
-      integer nx, ny, ns
+      integer nx, ny, ns, nxtl, nxtr
       real (kind=R8) :: BoRiS
 c-----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
@@ -464,9 +464,9 @@ c*** Inner divertor
           m=lpfrb_i
           if(m.le.0) then !{
             if(lpfrs_pmp.eq.1) then !{
-              m=1-m
+              m=-m
             else !}{
-              m=nxiso1(1)-1+m
+              m=nxtl+m
             end if !}
           end if !}
           n=lpfrt_i
@@ -503,7 +503,7 @@ c*** Outer divertor
           else if(lpfrs_pmp.eq.2) then !}{
             n=nx+n
           else !}{
-            n=nxiso1(1)+2+m
+            n=nxtr-n
           end if !}
         end if !}
         ipfc_tmp(2)=m
@@ -534,15 +534,15 @@ c*** Prepare constants for DoD calculation
 
         isp_tmp(1)=topcut(1)
         isp_tmp(2)=isp_tmp(1)
-        itg_tmp(1)=1
+        itg_tmp(1)=0
         itg_tmp(2)=nx
         imp_tmp(1)=jxa
         imp_tmp(2)=jxa
         if(double_null) then !{
           isp_tmp(3)=topcut(2)
           isp_tmp(4)=isp_tmp(3)
-          itg_tmp(3)=nxiso1(1)-1
-          itg_tmp(4)=nxiso1(1)+2
+          itg_tmp(3)=nxtl
+          itg_tmp(4)=nxtr+1
           imp_tmp(1)=jxi
           imp_tmp(3)=jxi
           imp_tmp(4)=jxa
@@ -731,9 +731,9 @@ c*** Inner divertor
           m=lpfrb_i
           if(m.le.0) then !{
             if(lpfrs_pmp.eq.1) then !{
-              m=1-m
+              m=-m
             else !}{
-              m=nxiso1(1)-1+m
+              m=nxtl+m
             end if !}
           end if !}
           n=lpfrt_i
@@ -784,7 +784,7 @@ c*** Outer divertor
           else if(lpfrs_pmp.eq.2) then !}{
             n=nx+n
           else !}{
-            n=nxiso1(1)+2+m
+            n=nxtr-n
           end if !}
         end if !}
         iy=0
@@ -954,7 +954,7 @@ c outer target
 
         if(double_null) then !{
           hlp_pwou=0.0_R8
-          ix=nxiso2(1)+1
+          ix=nxtr+1
           hlp_s=0.0_R8
           do iy=0,ny-1 !{
             s=gs(ix,iy,0)
@@ -977,7 +977,7 @@ c outer target
      +                                 wldnep(js,0))*hlp_neu_peak/hlp_s
 
           hlp_pwiu=0.0_R8
-          ix=nxiso1(1)
+          ix=nxtl
           hlp_s=0.0_R8
           do iy=1,ny !{
             hlp=abs(fhe(ix,iy,0)+fhi(ix,iy,0))
@@ -1001,7 +1001,7 @@ c outer target
      +                                 wldnep(js,0))*hlp_neu_peak/hlp_s
         end if !}
       else !}{VK
-        call b2usr_loads(nx,ny,ns,BoRiS,wtarg_max)
+        call b2usr_loads(nx,ny,ns,nxtl,nxtr,BoRiS,wtarg_max)
         hlp_ppwi=wtarg_max(1)
         hlp_ppwo=wtarg_max(nncut)
         if(double_null) then

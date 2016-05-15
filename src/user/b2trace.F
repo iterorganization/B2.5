@@ -1,4 +1,4 @@
-      subroutine b2trace(nx,ny,ns,ismain,dtim,BoRiS)
+      subroutine b2trace(nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
       use b2mod_types
       use b2mod_diag
       use b2mod_b2cmpa
@@ -15,7 +15,7 @@ c======================================================================
 c*** Output of tracing information at the end of each outer iteration
 c----------------------------------------------------------------------
       implicit none
-      integer nx, ny, ns, ismain
+      integer nx, ny, ns, nxtl, nxtr, ismain
       real (kind=R8) :: dtim, BoRiS
       integer ix, iy, is, istra
       integer, save :: use_recyceir
@@ -116,7 +116,7 @@ c*** Additional integrals
 c*** Separatrix data
       if(filedata(ntrc_sep)) call b2wrsep(nx,ny,ns,BoRiS)
 c*** User-specific data
-      if(filedata(ntrc_usr)) call b2usrtrc(nx,ny,ns,BoRiS)
+      if(filedata(ntrc_usr)) call b2usrtrc(nx,ny,ns,nxtl,nxtr,BoRiS)
 c
       return
 c======================================================================

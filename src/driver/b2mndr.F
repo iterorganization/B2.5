@@ -145,7 +145,8 @@
 *   ..common blocks
 *   ..local variables
       integer ncall, ntim, mvinc, mvnum, ix, iy, is, js, jsep, jxi, jxa,
-     &  ib, isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
+     &  ib, isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
+     &  nxtl, nxtr
       integer nscx, iscx(0:nscxmax-1), k, idum(0:9)
       save nscx, iscx, isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
@@ -1183,6 +1184,7 @@ csw 09oct2012
 !
       call alloc_b2mod_tallies(nnreg,ns)
       call get_jsep(nx,ny,jxi,jxa,jsep)
+      call get_nxt(nx, nxtl, nxtr)
       if (bb(jxa,jsep,2).ne.0.0_R8) then
         signmf = bb(jxa,jsep,2)/abs(bb(jxa,jsep,2))
       else
@@ -1734,7 +1736,7 @@ c new CDF movie option
         if (first_time_step) call b2trci(nx,ny,ns,ismain,dtim,BoRiS)
         if (ank_tracing.ne.0) then
           if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
-     >     call b2trace(nx,ny,ns,ismain,dtim,BoRiS)
+     >     call b2trace(nx,ny,ns,nxtl,nxtr,ismain,dtim,BoRiS)
         endif
 c-rfs       write(*,*) 'fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)',
 c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)

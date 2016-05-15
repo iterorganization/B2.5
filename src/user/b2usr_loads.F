@@ -1,7 +1,7 @@
 C
 CVK CORRECT CALCULATION OF THE HEAT LOADS IN B2
 C
-      subroutine b2usr_loads(nx,ny,ns,BoRiS,wtarg_max)
+      subroutine b2usr_loads(nx,ny,ns,nxtl,nxtr,BoRiS,wtarg_max)
       use b2mod_types
       use b2mod_geo
       use b2mod_rates
@@ -15,7 +15,7 @@ C
       IMPLICIT NONE
 #     include <DIMENSIONS.F>
 
-      integer nx, ny, ns
+      integer nx, ny, ns, nxtl, nxtr
       real (kind=R8) :: BoRiS
 
       INTEGER,PARAMETER :: NTRGM=DEF_NCUT
@@ -41,12 +41,12 @@ C PREPARING GEOMETRY DATA
        else
         NTRGS=4
        end if
-C A PEACE OF CODE FROM B2PLOT
+C A PIECE OF CODE FROM B2PLOT
        ltrgpos(1)=0
        k=2
        if(ntrgs.eq.4) then
-         ltrgpos(2)=nxiso1(1)-1
-         ltrgpos(3)=ltrgpos(2)+2
+         ltrgpos(2)=nxtl
+         ltrgpos(3)=nxtr+1
          k=4
        end if !}
        ltrgpos(k)=nx
