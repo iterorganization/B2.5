@@ -865,6 +865,8 @@ c
         else
           write(*,*) 'Empty mesh.extra file found !'
         endif
+      else
+        write(*,*) 'No mesh.extra file found !'
       endif
 
       call mds_put_int_rz(
