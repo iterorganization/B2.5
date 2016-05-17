@@ -153,7 +153,7 @@
 *   ..local variables
       integer i, j, k, ind
 *   ..procedures
-      external subini, subend xertst
+      external subini, subend, xertst
 
 *-----------------------------------------------------------------------
 *.computation

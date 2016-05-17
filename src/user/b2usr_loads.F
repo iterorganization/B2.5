@@ -20,15 +20,16 @@ C
 
       INTEGER,PARAMETER :: NTRGM=DEF_NCUT
 
-      REAL,INTENT(OUT) :: wtarg_max(NTRGM)
+      REAL (KIND=R8),INTENT(OUT) :: wtarg_max(NTRGM)
 
-      REAL,SAVE :: STRG(NYDD,NTRGM), !AREAS OF SURFACE ELEMENTS
+      REAL (KIND=R8),SAVE :: STRG(NYDD,NTRGM), !AREAS OF SURFACE ELEMENTS
      r             LTRGPOS(NTRGM)    !POLOIDAL INDEX FOR EACH TARGET
       INTEGER,SAVE :: NTRGS,         !NUMBER OF TARGETS
      i                SHIFT(NTRGM)
-      REAL :: WTARG(NYDD,NTRGM),wnutrg(NYDD,NTRGM),wnutpr(NYDD,NTRGM)
+      REAL (KIND=R8) :: WTARG(NYDD,NTRGM),wnutrg(NYDD,NTRGM),
+     r                  wnutpr(NYDD,NTRGM)
       INTEGER :: K,J,I,IY,IS
-      REAL :: HLP
+      REAL (KIND=R8) :: HLP
       CHARACTER*32 :: FRM
 
       LOGICAL :: IFIRST
