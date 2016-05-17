@@ -62,11 +62,11 @@ c
 #     include "COUPLE/KOPPLDIM.F"
 #     include "COUPLE/EIRDIAG.F"
 #endif
-      real (kind=R8),intent(in) :: s(n)
       integer,intent(in) :: t,n,shift
+      real (kind=R8),intent(in) :: s(n)
       integer :: i,ii
-      real :: ds,s2,sum1,sum2
-      real,parameter :: eps=1e-3
+      real (kind=R8) :: ds,s2,sum1,sum2
+      real (kind=R8),parameter :: eps=1e-3_R8
       logical :: iferr
 
       if(shift.lt.0) return
@@ -118,8 +118,8 @@ c  shift : data offset in the eirene arrays
 #     include "COUPLE/KOPPLDIM.F"
 #     include "COUPLE/EIRDIAG.F"
 #endif
-      real (kind=R8),intent(out) :: wneut(n),wnpr(n)
       integer,intent(in) :: n,shift
+      real (kind=R8),intent(out) :: wneut(n),wnpr(n)
       integer :: j,i,ii
 
       if(shift.lt.0) return
@@ -158,8 +158,8 @@ c
 #     include "COUPLE/KOPPLDIM.F"
 #     include "COUPLE/EIRDIAG.F"
 #endif
-      real (kind=R8),intent(out) :: sfa(n)
       integer,intent(in) :: n,ia,shift
+      real (kind=R8),intent(out) :: sfa(n)
       integer :: j,ia0
 
       if(shift.lt.0) return
@@ -200,8 +200,8 @@ c
 #     include "COUPLE/KOPPLDIM.F"
 #     include "COUPLE/EIRDIAG.F"
 #endif
-      real (kind=R8),intent(out) :: eav(n)
       integer,intent(in) :: n,ia,shift
+      real (kind=R8),intent(out) :: eav(n)
       integer :: j,ia0
 
       if(shift.lt.0) return
