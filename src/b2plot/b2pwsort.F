@@ -35,6 +35,7 @@ c*** nwsrtwrk: a counter for this array
 c*** wsrttol : a tolerance parameter for defining adjacent segments
 c
       logical goup,placed(DEF_NLIM),found,direction_same,no_fort44
+      logical is_target_edge
       integer lwsrtwrk(DEF_NLIM),il,is,ii,jj,js,nwsrtwrk,k,ik,j,ic
       real (kind=R8) ::
      *   wsrttol, d2etol
@@ -149,91 +150,97 @@ c*** No connection found
               if (no_fort44) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
-              else if (j.eq.jedge(1).or.j.eq.jedge(2).or.
-     .                 j.eq.jedge(3).or.j.eq.jedge(4)) then
-                k = 1
-                found = .false.
-                do while (.not.found .and. k.le.nlim)
-                  if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .               abs(p1(2,k)-pp1(2,j)) .le. wsrttol) then
-                    ic = 1
-                    direction_same = abs(
-     .               (((p2(1,k)-p1(1,k))*(pp2(1,j)-pp1(1,j))+
-     .                 (p2(2,k)-p1(2,k))*(pp2(2,j)-pp1(2,j)))/
+              else 
+                is_target_edge = .false.
+                do k=1,ntrgts
+                  is_target_edge = is_target_edge .or.
+     .             j.eq.ltrgedge(1,k) .or. j.eq.ltrgedge(2,k)
+                end do
+                if (is_target_edge) then
+                  k = 1
+                  found = .false.
+                  do while (.not.found .and. k.le.nlim)
+                    if(abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .                 abs(p1(2,k)-pp1(2,j)) .le. wsrttol) then
+                      ic = 1
+                      direction_same = abs(
+     .                 (((p2(1,k)-p1(1,k))*(pp2(1,j)-pp1(1,j))+
+     .                   (p2(2,k)-p1(2,k))*(pp2(2,j)-pp1(2,j)))/
      .                (sqrt(( p2(1,k)- p1(1,k))**2+
      .                      ( p2(2,k)- p1(2,k))**2)*
      .                 sqrt((pp2(1,j)-pp1(1,j))**2+
      .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.d2etol
-                  else
-     .            if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .               abs(p1(2,k)-pp2(2,j)) .le. wsrttol) then
-                    ic = 2
-                    direction_same = abs(
+                    else
+     .               if(abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .                  abs(p1(2,k)-pp2(2,j)) .le. wsrttol) then
+                      ic = 2
+                      direction_same = abs(
      .               (((p2(1,k)-p1(1,k))*(pp1(1,j)-pp2(1,j))+
      .                 (p2(2,k)-p1(2,k))*(pp1(2,j)-pp2(2,j)))/
      .                (sqrt(( p2(1,k)- p1(1,k))**2+
      .                      ( p2(2,k)- p1(2,k))**2)*
      .                 sqrt((pp2(1,j)-pp1(1,j))**2+
      .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.d2etol
-                  else
-     .            if(abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .               abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
-                    ic = 2
-                    direction_same = abs(
+                    else
+     .               if(abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .                  abs(p2(2,k)-pp1(2,j)) .le. wsrttol) then
+                      ic = 2
+                      direction_same = abs(
      .               (((p1(1,k)-p2(1,k))*(pp2(1,j)-pp1(1,j))+
      .                 (p1(2,k)-p2(2,k))*(pp2(2,j)-pp1(2,j)))/
      .                (sqrt(( p2(1,k)- p1(1,k))**2+
      .                      ( p2(2,k)- p1(2,k))**2)*
      .                 sqrt((pp2(1,j)-pp1(1,j))**2+
      .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.d2etol
-                  else
-     .            if(abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .               abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
-                    ic = 1
-                    direction_same = abs(
+                    else
+     .               if(abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .                  abs(p2(2,k)-pp2(2,j)) .le. wsrttol) then
+                      ic = 1
+                      direction_same = abs(
      .               (((p1(1,k)-p2(1,k))*(pp1(1,j)-pp2(1,j))+
      .                 (p1(2,k)-p2(2,k))*(pp1(2,j)-pp2(2,j)))/
      .                (sqrt(( p2(1,k)- p1(1,k))**2+
      .                      ( p2(2,k)- p1(2,k))**2)*
      .                 sqrt((pp2(1,j)-pp1(1,j))**2+
      .                      (pp2(2,j)-pp1(2,j))**2)))-1.0_R8).le.d2etol
-                  else
-                    direction_same = .false.
-                  end if
-                  if (direction_same) then
-                    found = .true.
-                    lwldlis(ii,il)=j
-                    leirlis(ii,il)=k
-                  else
-                    k = k + 1
-                  end if
-                end do
-                if (.not.found) write(*,*)
+                    else
+                      direction_same = .false.
+                    end if
+                    if (direction_same) then
+                      found = .true.
+                      lwldlis(ii,il)=j
+                      leirlis(ii,il)=k
+                    else
+                      k = k + 1
+                    end if
+                  end do
+                  if (.not.found) write(*,'(a,i4,a)')
      .             'Found no correspondence (1) between DG wall # ', j ,
      .             ' and Eirene wall list'
-              else
-                k = 1
-                found = .false.
-                do while (.not.found .and. k.le.nlim)
-                  if((abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .                abs(p1(2,k)-pp1(2,j)) .le. wsrttol  .and.
-     .                abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .                abs(p2(2,k)-pp2(2,j)) .le. wsrttol) .or.
-     .               (abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
-     .                abs(p1(2,k)-pp2(2,j)) .le. wsrttol  .and.
-     .                abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
-     .                abs(p2(2,k)-pp1(2,j)) .le. wsrttol)) then
-                    lwldlis(ii,il)=j
-                    leirlis(ii,il)=k
-                    found = .true.
-                  end if
-                  k = k + 1
-                end do
-                if (.not.found) write(*,*)
-     .           'Found no correspondence (2) between DG wall # ', j ,
-     .           ' and Eirene wall list'
+                else
+                  k = 1
+                  found = .false.
+                  do while (.not.found .and. k.le.nlim)
+                    if((abs(p1(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .                  abs(p1(2,k)-pp1(2,j)) .le. wsrttol  .and.
+     .                  abs(p2(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .                  abs(p2(2,k)-pp2(2,j)) .le. wsrttol) .or.
+     .                 (abs(p1(1,k)-pp2(1,j)) .le. wsrttol  .and.
+     .                  abs(p1(2,k)-pp2(2,j)) .le. wsrttol  .and.
+     .                  abs(p2(1,k)-pp1(1,j)) .le. wsrttol  .and.
+     .                  abs(p2(2,k)-pp1(2,j)) .le. wsrttol)) then
+                      lwldlis(ii,il)=j
+                      leirlis(ii,il)=k
+                      found = .true.
+                    end if
+                    k = k + 1
+                  end do
+                  if (.not.found) write(*,'(a,i4,a)')
+     .             'Found no correspondence (2) between DG wall # ', j ,
+     .             ' and Eirene wall list'
+                end if
               end if
-             end do
+            end do
 c            print '(a,i2/(1x,20i4))','il =',il,
 c     ,                                (lwldlis(ii,il),ii=1,nwldlis(il))
 c            print '(1x,20i4)', (leirlis(ii,il),ii=1,nwldlis(il))

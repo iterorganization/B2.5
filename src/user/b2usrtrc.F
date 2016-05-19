@@ -23,7 +23,6 @@ c*** Puts user-specific quantities on the output file
 c*** "tracing/user.trc"
 c-----------------------------------------------------------------------
       implicit none
-
 #     include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #     include <COUPLE/EIRBRA.F>

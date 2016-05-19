@@ -5,7 +5,7 @@ c*** The common blocks for rdload code.
 c***
 c*** 1. General geometry
 c***  nplgm   the maximum number of segments in the "structure" polygon
-c***  nplg    the actual number of segments in the "structure" polygon
+c***  nplgs   the actual number of segments in the "structure" polygon
 c***  xp,yp   coordinates of the polygon corners (m)
 c***  nbnd    the actual number of segments in the boundary polygon
 c***  lbnd    list of indices of those segments
@@ -46,7 +46,7 @@ c***          segment normalized to its length
 c=====================================================
       integer nplgm, nsrcm, nchrdm
       parameter (nplgm=400, nsrcm=4000, nchrdm=200)
-      integer jb,jc,jm,jsc,jcb,nplg,nbndry,nsrc,nsrcs,ntrg,nchrd,
+      integer jb,jc,jm,jsc,jcb,nplgs,nbndry,nsrc,nsrcs,ntrg,nchrd,
      ,  lbnd(nplgm),ltrg(nplgm)
       real (kind=R8) ::
      *   xsrc,ysrc,ssrc,sb,se,xb,yb,ddx,ddy,xc,yc,xs,ys,
@@ -55,4 +55,4 @@ c=====================================================
       common/shdcom/xsrc,ysrc,ssrc,sb,se,xb,yb,ddx,ddy,xc,yc,xs,ys,
      ,   jb,jc,jm,jsc,jcb
       common/rldcom/ztrg,radld,xp,yp,xysrc,ssrcm,ttsrc,tttrg,chords,
-     i  nplg,nbndry,nsrc,nsrcs,ntrg,nchrd,lbnd,ltrg
+     i  nplgs,nbndry,nsrc,nsrcs,ntrg,nchrd,lbnd,ltrg

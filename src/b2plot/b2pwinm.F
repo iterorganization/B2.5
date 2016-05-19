@@ -1,5 +1,6 @@
       subroutine b2pwinm(unm)
       use b2mod_types
+      use b2mod_b2plot
       use b2mod_b2plot_wall_loading
 c
 c  version : 11.11.97 21:36
@@ -17,27 +18,34 @@ c======================================================================
 #ifndef B25_EIRENE
 #include "COUPLE/KOPPLDIM.F"
 #endif
+#include "impcon.inc"
       integer nnns
-      parameter (nnns=19)
+      real (kind=R4) :: add_rdi, add_srci(2, nadsrcm)
+      parameter (nnns=31)
       character*8 unm,unms(nnns),u
-      integer ll, lt, luswch, luskel
+      integer ll, lutrgt, luswch, luskel
       integer i, j
       logical streql
       external streql
       data unms /
      1        'starting','segmlist','plotzone','shdw_str','p1      ',
      2        'p2      ','rad_srcs','radpower','sources ','jedgi1  ',
-     3        'jedgi2  ','jedgo1  ','jedgo2  ','elemlist','sol_edge',
-     4        'pfr_edge','trg_spcf','misselem','skipelem'/
-      data ll / 0 /, luswch / 0 /, lt / 0 /, luskel / 0 /
+     3        'jedgi2  ','jedgo1  ','jedgo2  ','elemlist','edge_trg',
+     4        'edge_sol','edge_pfr','sol_edge','pfr_edge','trg_spcf',
+     5        'skipelem','misselem','laddsrfs','gleirdat','pltz_lbl',
+     6        'material','made_of' ,'tgspcsw' ,'tgsppsw' ,'jlsptp'  ,
+     7        'jlsptc'  /
+      data ll / 0 /, luswch / 0 /, lutrgt / 0 /, luskel / 0 /
 c======================================================================
 c
 c      print *,'b2pwinm >> ',unm
       call locase(unm,u,8)
       do i=1,nnns
-        if(streql(u,unms(i))) go to (10,20,30,40,50,60,70,80,90,100,
-     ,                               110,120,130,140,150,160,170,180,
-     ,                               180),i
+        if(streql(u,unms(i))) go to
+     ,     ( 10, 20, 30, 40, 50, 60, 70, 80, 90,100,
+     ,      110,120,130,140,150,160,170,180,190,200,
+     ,      210,210,230,240,250,260,270,280,290,300,
+     ,      310),i
       end do
       ll=0
       call scipit
@@ -84,11 +92,19 @@ c----------------------------------------------------------------------
 c*** Starting points of the segments
  50   call rearre(ppp1,3*DEF_NLIM,ll)
       lppp=ll/3
+      do i=1,lppp !{
+        pp1(1,i)=0.001_R8*ppp1(1,i)
+        pp1(2,i)=0.001_R8*ppp1(2,i)
+      end do !}
       return
 c----------------------------------------------------------------------
 c*** Ending points of the segments
  60   call rearre(ppp2,3*DEF_NLIM,ll)
       lppp=ll/3
+      do i=1,lppp !{
+        pp2(1,i)=0.001_R8*ppp2(1,i)
+        pp2(2,i)=0.001_R8*ppp2(2,i)
+      end do !}
       return
 c----------------------------------------------------------------------
 c*** Additional source group (not implemented yet)
@@ -96,15 +112,16 @@ c*** Additional source group (not implemented yet)
       return
 c----------------------------------------------------------------------
 c*** Power radiated from the group of additional sources (single group)
- 80   call resime(add_rad)
+ 80   call resime(add_rdi)
+      add_rad=add_rdi
       return
 c----------------------------------------------------------------------
 c*** Coordinates of the additional source points
- 90   call rearre(addsrc_xy,2*nadsrcm,nadsrc)
+ 90   call rearre(add_srci,2*nadsrcm,nadsrc)
       nadsrc=nadsrc/2
       do i=1,nadsrc
-        addsrc_xy(1,i)=0.001*addsrc_xy(1,i)
-        addsrc_xy(2,i)=0.001*addsrc_xy(2,i)
+        addsrc_xy(1,i)=0.001_R8*add_srci(1,i)
+        addsrc_xy(2,i)=0.001_R8*add_srci(2,i)
       end do
       return
 c----------------------------------------------------------------------
@@ -136,42 +153,146 @@ c*** Values for the target edges
       end if
       luswch=0
       return
-c----------------------------------------------------------------------
-c*** Old style values for the target SOL edges
- 150  if (lt.eq.0) then
+c-----------------------------------------------------------------------
+c*** Target edges
+ 150  call resimi(ll)
+      if(ll.lt.0 .or. ll.gt.ntrgsx) then !{
+        write(*,'(1x,a,i3,a,i3)') 'Wrong target number:',ll,
+     ,                              '.  Must be positive =< ',ntrgsx
+      else !}{
+        ntrgs=max(ntrgs,ll)
+      end if !}
+      return
+c-----------------------------------------------------------------------
+c*** SOL side edge
+ 160  if(ll.eq.0) then          !{
         call scipit
-      else if(lt.lt.0 .or. lt.gt.2) then
-        write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
-     ,                            '.  Must be positive and =< 2'
-      else if (lt.ge.1 .and. lt.le.2) then
-        call resimi(jedge(2+lt))
-      end if
+      else if(ll.lt.0 .or. ll.gt.ntrgsx) then !{
+        write(*,'(1x,a,i3,a,i3)') 'Wrong target number:',ll,
+     ,                              '.  Must be positive =< ',ntrgsx
+      else !}{
+        call resimi(ltrgedge(2,ll))
+      end if !}
       return
-c----------------------------------------------------------------------
-c*** Old style values for the target PFR edges
- 160  if (lt.eq.0) then
+c-----------------------------------------------------------------------
+c*** PFR side edge
+ 170  if(ll.eq.0) then          !{
         call scipit
-      else if(lt.lt.0 .or. lt.gt.2) then
-        write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
-     ,                            '.  Must be positive and =< 2'
-      else if (lt.ge.1 .and. lt.le.2) then
-        call resimi(jedge(lt))
-      end if
+      else if(ll.lt.0 .or. ll.gt.ntrgsx) then !}{
+        write(*,'(1x,a,i3,a,i3)') 'Wrong target number:',ll,
+     ,                              '.  Must be positive =< ',ntrgsx
+      else !}{
+        call resimi(ltrgedge(1,ll))
+      end if !}
+      return
+c-----------------------------------------------------------------------
+c*** SOL side edge
+ 180  if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
+        call scipit
+      else !}{
+        if(mtrgedge(2,lutrgt).gt.0) then !{
+          write(*,*) 'Target',lutrgt,': repeated specification of ',
+     ,                                                          unms(i)
+          write (*,*) '==> corrupted param.dg?'
+        end if !}
+        call resimi(mtrgedge(2,lutrgt))
+      end if !}
+      return
+c-----------------------------------------------------------------------
+c*** PFR side edge
+ 190  if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
+        call scipit
+      else !}{
+        if(mtrgedge(1,lutrgt).gt.0) then !{
+          write(*,*) 'Target',lutrgt,': repeated specification of ',
+     ,                                                          unms(i)
+          write (*,*) '==> corrupted param.dg?'
+        end if !}
+        call resimi(mtrgedge(1,lutrgt))
+      end if !}
       return
 c----------------------------------------------------------------------
-c*** Target specifications
- 170  call resimi(lt)
-      if(lt.lt.0 .or. lt.gt.2)
-     >   write(*,'(1x,a,i4,a)') 'Wrong target number:',lt,
+c*** Target specification
+ 200  call resimi(lutrgt)
+      if(lutrgt.lt.0 .or. lutrgt.gt.2) then !{
+        write(*,'(1x,a,i4,a)') 'Wrong target number:',lutrgt,
      ,                            '.  Must be positive and =< 2'
+        write (*,*) '==> corrupted param.dg?'
+      else !}{
+        ntrgsa=max(ntrgsa,lutrgt)
+      end if !}
       return
-c----------------------------------------------------------------------
-c*** Elements not for Eirene
- 180  call rearri(luwrk(luskel+1),nlim-luskel,i)
-      do j = luskel+1, luskel+i
-        lskip(luwrk(j)) = .true.
-      end do
-      luskel=i+luskel
+c-----------------------------------------------------------------------
+c*** List of segments to be skipped
+ 210  call rearri(lskipel(nskipel+1),mskipel-nskipel,i)
+      nskipel=nskipel+i
+      return
+c-----------------------------------------------------------------------
+c*** Numbering offset
+ 230  call resimi(lnumboff)
+      return
+c-----------------------------------------------------------------------
+c*** DG v. 2.0 or later
+ 240  call resimi(i)
+      lvdg20=.true.
+      return
+c-----------------------------------------------------------------------
+c*** Plot zone label
+ 250  if(ll.eq.0) then          !{
+        call scipit
+      else if(ll.le.0 .or. ll.gt.nwldprtx) then !}{
+        write(*,'(1x,a,i3,a,i3)') 'Wrong wall segment number:',ll,
+     ,                              '.  Must be positive =< ',nwldprtx
+        if(ll.gt.nwldprtx) write (*,*) '==> check nwldprtx in b2pinpc.h'
+      else !}{
+        i=lena
+        lena=mlblprtx
+        lblwldpt(ll)=' '
+        call resima(lblwldpt(ll))
+        lena=i
+      end if !}
+      return
+c-----------------------------------------------------------------------
+c*** Wall material
+ 260  i=lena
+      lena=lnwlmtrl
+      call rearra(mtrwldsg,nsgmx,j)
+      lena=i
+      return
+c-----------------------------------------------------------------------
+c*** Target material
+ 270  if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
+        call scipit
+      else !}{
+        i=lena
+        lena=lnwlmtrl
+        call resima(mtrtrgsg(lutrgt))
+        lena=i
+      end if !}
+      return
+c-----------------------------------------------------------------------
+c*** Target sputtering - chemical
+ 280  if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
+        call scipit
+      else !}{
+        call resimi(lcsptrg(lutrgt))
+      end if !}
+      return
+c-----------------------------------------------------------------------
+c*** Target sputtering - physical
+ 290  if(lutrgt.le.0 .or. lutrgt.gt.ntrgsx) then !{
+        call scipit
+      else !}{
+        call resimi(lpsptrg(lutrgt))
+      end if !}
+      return
+c-----------------------------------------------------------------------
+c*** Wall sputtering - physical
+ 300  call rearri(lpspwll,mskipel,i)
+      return
+c-----------------------------------------------------------------------
+c*** Wall sputtering - chemical
+ 310  call rearri(lcspwll,mskipel,i)
       return
 c======================================================================
       end subroutine b2pwinm

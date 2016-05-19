@@ -11,13 +11,14 @@ c======================================================================
       use b2mod_b2plot
       use b2mod_b2plot_wall_loading
       implicit none
+#     include <DIMENSIONS.F>
       real (kind=R8) ::
-     *   rdl(0:ny-1,2)
-      integer i
+     *   rdl(0:ny-1,ntrgsx,0:DEF_NATM)
+      integer i,j,k,l,m
 c======================================================================
 c*** If the load is already calculated, just fill in the output array
 c
-      if(.not.l2rdldt) then
+      if(.not.l2rdldt) then !{
 c----------------------------------------------------------------------
 c        print *,'b2ptrdl starting...'
 c*** Input the DG data and prepare the geometry
@@ -34,27 +35,43 @@ c     ,                             (pp1(1,lppp+i),pp1(2,lppp+i),i=0,ny-1)
 c        print '(a/(5(2f8.3,1x)))','Outer target',
 c     ,                       (pp1(1,lppp+ny+i),pp1(2,lppp+ny+i),i=0,ny-1)
 c>>>
-        if(.not.l2pwinp) then
+        if(.not.l2pwinp) then !{
           write(*,*) '**** b2ptrdl: error detected in the input data ',
      ,                            '==> no radiation load calculated!!!'
-          do i=0,ny-1
-            rdl(i,1)=0.0_R8
-            rdl(i,2)=0.0_R8
-          end do
+          do j=1,ntrgsx !{
+            do i=0,ny-1 !{
+              do k=0,DEF_NATM !{
+                rdl(i,j,k)=0.0_R8
+              end do !}
+            end do !}
+          end do !}
           return
-        end if
+        end if !}
 c----------------------------------------------------------------------
 c*** Fill in the input arrays for b2pwrdld
 c
-        nwldrad=2*ny
-        do i=0,ny-1
-          lwldrad(i+1)=lppp+i+1
-          lwldrad(i+1+ny)=lppp+ny+i+1
-        end do
-c
+        nwldrad=0
+        do j=1,ntrgts !{
+          do i=0,nytg-1 !{
+            lwldrad(nwldrad+i+1)=lppp+nwldrad+i
+          end do !}
+          nwldrad=nwldrad+nytg
+        end do !}
+c!###{
+c        print *,'%% b2ptrdl: nwldrad,nytg / lwldrad',nwldrad,nytg
+c        k=0
+c        do j=1,ntrgts !{
+c          print '(1x,30i4)',(lwldrad(k+i),i=1,nytg)
+c          k=k+nytg
+c        end do !}
+c        print '(1x,a,i5/(1x,30i4))','nwldlis / lwldlis',nwldlis(1),
+c     ,                                    (lwldlis(i,1),i=1,nwldlis(1))
+c!###}
+
 c*** Calculate the load
-c
+
         call b2pwrdld
+c        print *,'after b2pwrdld: lrdlsp=',lrdlsp !###
         l2rdldt=.true.
 c<<<
 c        print '(a/(1p,5e17.4))','Inner target: load',
@@ -62,16 +79,26 @@ c     ,    (wldrdld(lppp+i+1),i=0,ny-1)
 c        print '(a/(1p,5e17.4))','Outer target: load',
 c     ,    (wldrdld(lppp+ny+i+1),i=0,ny-1)
 c>>>
-      end if
+      end if !}
 c----------------------------------------------------------------------
 c*** Arrange the output data
-c
-      do i=0,ny-1
-c        rdl(i,1)=1.0e-6_R8*wldrdld(lppp+ny-i)
-        rdl(i,1)=wldrdld(lppp+ny-i)
-c        rdl(i,2)=1.0e-6_R8*wldrdld(lppp+ny+i+1)
-        rdl(i,2)=wldrdld(lppp+ny+i+1)
-      end do
+
+      k=nytg
+      l=1
+      do j=1,ntrgts/2 !{
+        do i=lytg,ny-1 !{
+          rdl(i,l,0)=wldrdld(lppp+k+1-i+lytg-1)
+          rdl(i,l+1,0)=wldrdld(lppp+k+i-lytg+1)
+          if(lrdlsp) then !{
+            do m=1,natmi !{
+              rdl(i,l,m)=wldrdlsp(lppp+k+1-i+lytg-1,m)
+              rdl(i,l+1,m)=wldrdlsp(lppp+k+i-lytg+1,m)
+            end do !}
+          end if !}
+        end do !}
+        k=3*nytg
+        l=3
+      end do !}
 c======================================================================
       return
       end subroutine b2ptrdl

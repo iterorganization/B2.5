@@ -15,7 +15,7 @@ c***
 c*** All the data are transferred via the common blocks.
 c***
 c*** Input
-c***  nplg    number of the segments in the structure
+c***  nplgs   number of the segments in the structure
 c***  xp,yp   coordinates of the corners of the structure
 c***  jcb     index of the "base" segment
 c***  [xy]src coordinates of the source

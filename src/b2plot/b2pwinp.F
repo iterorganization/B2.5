@@ -35,6 +35,16 @@ c
       jedge(1:4)=0
       add_rad=0.0_R8
       nadsrc=0
+      do i=1,ntrgsx
+        ltrgedge(1,i)=0
+        ltrgedge(2,i)=0
+        mtrgedge(1,i)=0
+        mtrgedge(2,i)=0
+      end do
+      ntrgsa=0
+      nskipel=0
+      lnumboff=0
+      lvdg20=.false.
 c
 c*** Set up the input routine
 c
