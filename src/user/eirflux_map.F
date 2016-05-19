@@ -10,9 +10,9 @@ c
 c typ    : is the type of the surface which has to match
 c          (for targets 2: radial surface)
 c ind    : index of the radial surface which has to match
-c istart,: starting and ending inices on this surface which have to match
+c istart,: starting and ending indices on this surface which have to match
 c   iend :
-c shift  : resulting shift which has to be used in accesing the arrays
+c shift  : resulting shift which has to be used in accessing the arrays
 c
       subroutine b2neut_ind(typ,ind,istart,iend,shift)
       use b2mod_types

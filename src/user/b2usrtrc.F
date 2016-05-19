@@ -230,7 +230,7 @@ c-----------------------------------------------------------------------
      ,     hlp_ne_he_c, hlp_ne_he_s
       real (kind=R8) ::
      *     a, d, e, g, h, s, t, u, v, x, e0
-      real (kind=R8) :: pr(-1:nx,-1:ny)
+      real (kind=R8) :: pr(-1:nx,-1:ny), xdum(1)
       integer i, j, k, l, m, n, i0, im, is, ix, iy, js, ls, nv, irt,
      ,     iyp, j_he_i, l_pad_str,n_pad_str
 c*** radial position of the separatrix and poloidal positions of
@@ -1333,9 +1333,10 @@ c*** f     :  the associated file name
 
         n=nrkn_hlp
         m=0
+        xdum(1)=0.0_R8
         call combfile(lun,f,lenfnm,hlp_hdr,mhdr,ntrc_tmp,label,.false.,
      ,                fix_user,hlp_hdr(l_pad_str),hlp_out(l_pad_str),
-     ,                n_pad_str,7,3,tab,mrks_hlp,n,x,m,hlp_frm,irt)
+     ,                n_pad_str,7,3,tab,mrks_hlp,n,xdum,m,hlp_frm,irt)
 
 c        print *,'b2usrtrc: after combfile. irt,m,f=',             !###
 c     ,                                        irt,m,'  ',trim(f)  !###

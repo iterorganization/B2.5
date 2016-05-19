@@ -28,7 +28,7 @@ C
      i                SHIFT(NTRGM)
       REAL (KIND=R8) :: WTARG(NYDD,NTRGM),wnutrg(NYDD,NTRGM),
      r                  wnutpr(NYDD,NTRGM)
-      INTEGER :: K,J,I,IY,IS
+      INTEGER :: K,J,I,L,IY,IS
       REAL (KIND=R8) :: HLP
       CHARACTER*32 :: FRM
 
@@ -43,7 +43,7 @@ C PREPARING GEOMETRY DATA
         NTRGS=4
        end if
 C A PIECE OF CODE FROM B2PLOT
-       ltrgpos(1)=0
+       ltrgpos(1)=-1
        k=2
        if(ntrgs.eq.4) then
          ltrgpos(2)=nxtl
@@ -52,11 +52,12 @@ C A PIECE OF CODE FROM B2PLOT
        end if !}
        ltrgpos(k)=nx
 C AREAS OF THE SURFACE ELEMENTS
+       l=1
        do j=1,nncut*2
         k=ltrgpos(j)
         wtarg_max(j)=0.0_R8
         do iy=0,ny-1
-         strg(iy,j)=gs(k,iy,0)
+         strg(iy,j)=gs(k+l,iy,0)
         end do
         call b2neut_ind(2,k,1,ny,shift(j)) !index range in the eirene's arrays
         if(shift(j).lt.0) then
@@ -66,30 +67,33 @@ C AREAS OF THE SURFACE ELEMENTS
         else
          call b2neut_surfcheck(strg(1,j),j,ny,shift(j))
         end if
+        l=1-l
        end do
        ifirst=.false.
       end if
 
       write(*,*) "calculating incident power flux in b2usr_loads"
 
+      l=1
       do j=1,ntrgs
         k=ltrgpos(j)
         call b2neut_eng(wnutrg(1,j),wnutpr(1,j),ny,shift(j))
         wtarg_max(j)=0.0_R8
         do iy=0,ny-1
-         hlp=abs(fhe(k,iy,0)+fhi(k,iy,0)+fhi_ext(k,iy,0))
+         hlp=abs(fhe(k+l,iy,0)+fhi(k+l,iy,0)+fhi_ext(k+l,iy,0))
          do is=0,ns-1
-           hlp=hlp+abs(fna(k,iy,0,is)*(rpt(k,iy,is)*ev+
+           hlp=hlp+abs(fna(k+l,iy,0,is)*(rpt(k,iy,is)*ev+
      .                 (1.0_R8-BoRiS)*kinrgy(k,iy,is)))
          end do
          do is=0,ns_ext-1
-           hlp=hlp+abs(fa_ext(k,iy,0,is)*(pt_ext(k,iy,is)*ev+
+           hlp=hlp+abs(fa_ext(k+l,iy,0,is)*(pt_ext(k,iy,is)*ev+
      .                 (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
      .                  ua_ext(k,iy,is)**2))
          end do
          hlp=hlp/strg(iy,j)
          wtarg(iy,j)=hlp+wnutrg(iy,j)-wnutpr(iy,j)
          if(wtarg(iy,j).gt.wtarg_max(j)) wtarg_max(j)=wtarg(iy,j)
+         l=1-l
         end do
       end do
 

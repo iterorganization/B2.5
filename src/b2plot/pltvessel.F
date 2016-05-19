@@ -21,7 +21,7 @@ c
         inquire(file='../mesh.extra',exist=exist)
         if(exist) then
           open(99,file='../mesh.extra')
-          read(99,*,end=20) r1o,z1o,r2o,z2o
+          read(99,*,end=30) r1o,z1o,r2o,z2o
    10     continue
           read(99,*,end=20) r1,z1,r2,z2
           if(r2o .eq. r1 .and. z2o .eq. z1 .and. 
@@ -39,6 +39,11 @@ c
           goto 10
    20     continue
           call lined_d(r1o,z1o,r2,z2)
+          goto 40
+   30     continue
+          write(*,*) 'Empty mesh.extra file found !'
+          write(*,*) 'Could not plot vessel.'
+   40     continue
           close(99)
           if((icnt.gt.0.and.b2plot_debug.ge.9).or.b2plot_debug.ge.10)
      1     write(*,*) 'Saved plotting ',icnt,' line segments'
