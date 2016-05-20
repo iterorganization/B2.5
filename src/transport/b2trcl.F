@@ -104,10 +104,11 @@ csw 13mar2012
       integer, save :: core_cond_limit=0
 *   ..procedures
       real (kind=R8) ::
-     *  smin, smax
+     *  smin, smax, hy1                                               !srv 22.04.16
       external subini, subend, xertst, xerrab, sfill, smin, smax
       external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,        !xpb
      &  ipgeti, ipgetr, b2ttia                                        !lk 19.09.07
+      hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                              !srv 22.04.16
 *   ..initialisation
       save ncall, lthf21, lvis21, cthiv, cthev, lluciani, mode, model
       data ncall/0/, lthf21/0/, lvis21/0/, mode/1/, model/3/,
@@ -347,16 +348,16 @@ csw 13mar2012
         mintopcut = ny
         if (nncut > 0) mintopcut = minval(topcut(1:nncut))
 
-        do iy = -1,mintopcut    ! for inner surfaces and first open surface
-         do ix=0,nx
+        do iy = -1,mintopcut-1    ! for inner surfaces                    !srv 22.04.16
+         do ix = -1,nx
           if(mod(region(ix,iy,0),4).eq.1) then
            tt0(iy) = tt0(iy) +hx(ix,iy)
-           tt1(iy) = tt1(iy) +vol(ix,iy)/hy(ix,iy)
+           tt1(iy) = tt1(iy) +vol(ix,iy)/hy1(ix,iy)                      !srv 22.04.16
           endif
          enddo
         enddo
 
-        do iy = -1,mintopcut
+        do iy = -1,mintopcut-1                                           !srv 22.04.16
          eps1(iy) = tt0(iy)**2/tt1(iy)
         enddo
 
@@ -367,8 +368,8 @@ csw 13mar2012
         t1 = (4.0_R8*pi*eps0/qe)/qe
         t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
      
-        do iy = -1,mintopcut
-         do ix=0,nx
+        do iy = -1,mintopcut-1                                          !srv 22.04.16
+         do ix = -1,nx
           if(mod(region(ix,iy,0),4).eq.1) then
            tau(ix,iy) = t2/lnlam(ix,iy)*te(ix,iy)/ev
      &      *sqrt(te(ix,iy)/ev)/ne2(ix,iy)
@@ -393,8 +394,8 @@ csw 13mar2012
           endif
          enddo
         enddo                                                             !lk 19.09.07 }
-        do iy= -1,mintopcut
-         do ix=0,nx
+        do iy = -1,mintopcut-1                                            !srv 22.04.16
+         do ix = 0,nx
           if(mod(region(ix,iy,0),4).eq.1) then                            !srv 26.11.02
            do is=0,ns-1
             if(.not.is_neutral(is)) then                                  !srv 10.07.02
@@ -458,10 +459,10 @@ csw 13mar2012
         enddo
         do ix=0,nx                                                  
          if(mod(region(ix,iy,0),4).eq.1) then
-          chci_koeff(ix, iy) = 25.0_R8/4.0_R8*hy(nmdpl,iy)/qe*tt0(iy)*
-     &     0.5_R8*((bb(ix,iy,2)/bb(ix,iy,3)/hy(ix,iy)/hx(ix,iy))**2
+          chci_koeff(ix, iy) = 25.0_R8/4.0_R8*hy1(nmdpl,iy)/qe*tt0(iy)*   !srv 22.04.16
+     &     0.5_R8*((bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)/hx(ix,iy))**2      !srv 22.04.16
      &     *vol(ix,iy)+(bb(leftix(ix,iy),iy,2)/bb(leftix(ix,iy),iy,3)
-     &     /hy(leftix(ix,iy),iy)/hx(leftix(ix,iy),iy))**2
+     &     /hy1(leftix(ix,iy),iy)/hx(leftix(ix,iy),iy))**2                !srv 22.04.16
      &     *vol(leftix(ix,iy),iy))*inv_hi_astra(iy) !     chi_N_astra(iy) 
          endif
         enddo
