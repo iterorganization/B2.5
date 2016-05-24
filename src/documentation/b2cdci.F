@@ -965,7 +965,6 @@
 *
 *    'b2tfhe_anomalous'		'1.0'                  Physics
 *    'b2tanml_anomalous'        '1.0'                  Physics
-*    'b2tfnb_anomalous_core_only' '0'                  Physics
 *    real parameter which determines anomalous current.
 *    Both b2tfhe_anomalous and b2tanml_anomalous point to the same 
 *    switch (backward compatibility with SOLPS5.2): b2tfhe_anomalous
@@ -976,8 +975,6 @@
 *    and the numerical value of b2tfhe_anomalous acts as a multiplier
 *    to the anomalous electrical conductivity and thermo-electric
 *    coefficients provided.
-*    If b2tfnb_anomalous_core_only.eq.1, the anomalous current
-*    is removed outside the core region.
 *
 *    'b2news_ExB'               '0.0'                  Physics
 *    real parameter which multiplies ExB flows.
