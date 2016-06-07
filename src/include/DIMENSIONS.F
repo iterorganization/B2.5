@@ -15,7 +15,7 @@
 #define DEF_ISOEXTRA 0
 #define DEF_NYD 36
 #define DEF_NPHID 1
-#define DEF_NSTRA 20
+#define DEF_NSTRA (5*DEF_NCUT/2+2)*DEF_NATM+1
 #define DEF_NFL 9
 #define DEF_NPLS 12
 #define DEF_NATM 3
