@@ -1942,8 +1942,6 @@ c dpc
                 call xertst(
      .         mod(region(BC_LIST_X(1,IBW),BC_LIST_Y(1,IBW),0),4).eq.1,
      .            'BCCON = 19 only applicable to core boundaries !')
-                call xertst(CONPAR(IS,IBW,1).gt.0.0_R8,
-     1           'BCCON = 19, CONPAR(,,1) !> 0')
               endif
               if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.16.or.
      1            BCCON(IS,IBW).EQ.21.or.BCCON(IS,IBW).EQ.22.or.
@@ -2001,7 +1999,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                       do ism = 1, nnmoli
                         if (mlcmp(isa,ism).gt.0) then
                           totfluxn = totfluxn -
-     &                               mlcmp(isa,ism) * wldnm(ix,isa,0)
+     &                               mlcmp(isa,ism) * wldnm(ix,ism,0)
                         end if
                       end do
                     end do
@@ -2459,7 +2457,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                      do ism = 1, nnmoli
                        if (mlcmp(isa,ism).gt.0) then
                          totfluxn = totfluxn -
-     &                              mlcmp(isa,ism) * wldnm(ix,isa,0)
+     &                              mlcmp(isa,ism) * wldnm(ix,ism,0)
                        end if
                      end do
                    end do
