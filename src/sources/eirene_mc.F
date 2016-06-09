@@ -115,7 +115,7 @@ c      integer lns_hlp
 c      parameter (lns_hlp=4)
 c      integer lis_hlp(lns_hlp) 
 c      data lis_hlp / 110, 111, 112, 49 /
-      logical last, saved_volrec_used
+      logical last, saved_volrec_used, na_feedback_on
 
       integer output_style, linearisation, ank_mods, save_f31,
      1 repeat_first_call, ionising_core, dpc_fix, eircount,
@@ -467,6 +467,19 @@ c*** tfl(i,j)  : the same for species j only
 c*** flux_scale: conversion factor Eirene-B2
 c*** recyc     : fudge factors for the sources in B2
 
+      na_feedback_on = .false.
+      do is = 0, nspecies-1
+        if (na_feedback_on) cycle
+        na_feedback_on = na_feedback_target(is).gt.0.0_R8.and.
+     &                   na_feedback_actuator(is).eq.1.and.
+     &                   nesepm_istra.gt.0
+        if (na_feedback_on) then
+          na_feedback_on = na_feedback_on .and.
+     &      species_start(nesepm_istra).le.eb2spcr(is+1).and.
+     &      species_end(nesepm_istra).ge.eb2spcr(is+1)
+        end if
+      end do
+
       tfl=0.0_R8
       tflux=0.0_R8
       flux_scale=0.0_R8
@@ -594,6 +607,18 @@ c*** recyc     : fudge factors for the sources in B2
                 tflux(istrai)=gpdata(ih,2,istrai)
               endif
             end if
+          else if (ncall.ge.ncallfeedback.and.
+     &             istrai.eq.nesepm_istra.and.na_feedback_on) then !}{
+            do is = 0, nspecies-1 !{
+              if (na_feedback_target(is).gt.0.0_R8.and.
+     &            na_feedback_actuator(is).eq.1.and.
+     &            species_start(nesepm_istra).le.
+     &               eb2spcr(is+1)+nfluids(is+1).and.
+     &            species_end(nesepm_istra).ge.eb2spcr(is+1)) then !{
+                tflux(istrai)=tflux(istrai)+
+     .           conpar(eb2spcr(is+1),na_feedback_ib(is),1)
+              end if !}
+            end do !}
           else !}{
             tflux(istrai)=userfluxparm(istrai,1)
           end if !}

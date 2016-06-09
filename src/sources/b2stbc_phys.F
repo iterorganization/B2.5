@@ -1395,49 +1395,63 @@ cghgh
      1       'BCCON(,IS,1) = 11 for non-feedback species!')
            call xertst(lfeedback, 'LFEEDBACK must be turned on!')
           endif
+          fedback_species = .false.
+          do isa = 0, nspecies-1
+            if (na_feedback_target(isa).gt.0.0_R8 .and.
+     &          na_feedback_ib(isa).eq.ib .and.
+     &          is.ge.eb2spcr(isa+1)+1 .and.
+     .          is.le.eb2spcr(isa+1)+nfluids(isa+1)) then
+              t0 = conpar(is,ib,1)
+              fedback_species = .true.
+            end if
+          end do
           IF (BCCHAR(IB).EQ.'S') THEN
+            if (.not.fedback_species) then
 *   ..initialise ireg
-            ireg = cbirso
+              ireg = cbirso
 *   ..update ireg
- 1101       if (cbrbrk(ireg)*nx.lt.
+ 1101         if (cbrbrk(ireg)*nx.lt.
      .          maxval(bc_list_x(1:bc_list_size(ib),ib))+0.5_R8) then
-              call xertst (ireg.lt.cbirso+cbnrso-1,
-     &         'error in computing region on south boundary')
-              ireg = ireg+1
-              goto 1101
-            endif
-            if (ireg.gt.cbirso) then
-              call xertst (cbrbrk(ireg-1)*nx.lt.
-     &         minval(bc_list_x(1:bc_list_size(ib),ib))+0.5_R8,
-     &         'feedback bc covers more than one region!')
-            endif
+                call xertst (ireg.lt.cbirso+cbnrso-1,
+     &           'error in computing region on south boundary')
+                ireg = ireg+1
+                goto 1101
+              endif
+              if (ireg.gt.cbirso) then
+                call xertst (cbrbrk(ireg-1)*nx.lt.
+     &           minval(bc_list_x(1:bc_list_size(ib),ib))+0.5_R8,
+     &           'feedback bc covers more than one region!')
+              endif
+              t0 = cbsna(0,IS,ireg)
+            end if
             DO IX = 1, BC_LIST_SIZE(IB)
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         cbsna(0,IS,ireg)*
-     .         SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+     .         t0*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=0.0_R8
             ENDDO
           ELSEIF (BCCHAR(IB).EQ.'N') THEN
+            if (.not.fedback_species) then
 *   ..initialise ireg
-            ireg = cbirno
+              ireg = cbirno
 *   ..update ireg
- 1102       if (cbrbrk(ireg)*nx.lt.
+ 1102         if (cbrbrk(ireg)*nx.lt.
      .          maxval(bc_list_x(1:bc_list_size(ib),ib))+0.5_R8) then
-              call xertst (ireg.lt.cbirno+cbnrno-1,
-     &         'error in computing region on north boundary')
-              ireg = ireg+1
-              goto 1102
-            endif
-            if (ireg.gt.cbirno) then
-              call xertst (cbrbrk(ireg-1)*nx.lt.
-     &         minval(bc_list_x(1:bc_list_size(ib),ib))+0.5_R8,
-     &         'feedback bc covers more than one region!')
-            endif
+                call xertst (ireg.lt.cbirno+cbnrno-1,
+     &           'error in computing region on north boundary')
+                ireg = ireg+1
+                goto 1102
+              endif
+              if (ireg.gt.cbirno) then
+                call xertst (cbrbrk(ireg-1)*nx.lt.
+     &           minval(bc_list_x(1:bc_list_size(ib),ib))+0.5_R8,
+     &           'feedback bc covers more than one region!')
+              endif
+              t0 = cbsna(0,IS,ireg)
+            end if
             DO IX = 1, BC_LIST_SIZE(IB)
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         cbsna(0,IS,ireg)*
-     .         SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     .            BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+     .         t0*SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .               BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=0.0_R8
             ENDDO
           ELSE
@@ -1486,11 +1500,12 @@ cghgh
      .          minval(bc_list_x(1:bc_list_size(ib),ib))+0.5_R8,
      &         'feedback bc covers more than one region!')
             endif
-            call xertst (cbsna(0,is,ireg).gt.0.0_R8,
+            t0=cbsna(0,IS,ireg)
+            call xertst (t0.gt.0.0_R8,
      &       'BCCON=12, trying to set a negative density!')
             DO IX = 1, BC_LIST_SIZE(IB)
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         VBIG*cbsna(0,IS,ireg)*
+     .         VBIG*t0*
      .         SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
      .        -VBIG*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
@@ -1511,11 +1526,12 @@ cghgh
      .          minval(bc_list_x(1:bc_list_size(ib),ib))+0.5_R8,
      &         'feedback bc covers more than one region!')
             endif
-            call xertst (cbsna(0,is,ireg).gt.0.0_R8,
+            t0=cbsna(0,IS,ireg)
+            call xertst (t0.gt.0.0_R8,
      &       'BCCON=12, trying to set a negative density!')
             DO IX = 1, BC_LIST_SIZE(IB)
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
-     .         VBIG*cbsna(0,IS,ireg)*
+     .         VBIG*t0*
      .         SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      .            BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
               SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=-VBIG*
