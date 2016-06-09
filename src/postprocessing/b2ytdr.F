@@ -7608,11 +7608,10 @@ cxpb as they no longer necessarily point to the same species
         end do
         targsp1 = 0
         do is = 1, ntrack
-          ib1 = 0
           do ib = 1, nstrat
-            if (savestratum(ib).or.crcstra(ib).eq.'T') then
-              ib1 = ib1+1
-              if (targsp(ib,is).ge.0) targsp1(ib1,is)=is1(targsp(ib,is))
+            if (istra1(ib).gt.0) then
+              if (targsp(ib,is).ge.0)
+     >         targsp1(istra1(ib),is)=is1(targsp(ib,is))
             endif
           enddo
         enddo
@@ -7769,14 +7768,12 @@ cxpb as they no longer necessarily point to the same species
      >     write(99, '(a,i2,a,1pg10.3,a)')
      .     'USERFLUXPARM(',ib,',2)=',userfluxparm1(ib,2),','
         end do
-        ib1 = 0
         do ib = 1, nstrai
-          if (savestratum(ib).or.crcstra(ib).eq.'T') then
-            ib1 = ib1+1
+          if (istra1(ib).gt.0) then
             do is = 1, nspecies1
               if (isp1(is).ne.0 .and. gpfc(is,ib).ne.0.0_R8)
      .         write(99,'(a,i3,a,i2,a,f5.2,a)')
-     .          'GPFC(',isp1(is),',',ib1,')=',gpfc(is,ib),','
+     .          'GPFC(',isp1(is),',',istra1(ib),')=',gpfc(is,ib),','
             end do
           end if
         end do
@@ -7810,11 +7807,9 @@ cxpb as they no longer necessarily point to the same species
         if (maxval(lstrascl).gt.0) then
           do is = 1, nspecies1
             if (isp1(is).ne.0) then
-              ib1 = 0
               do ib = 1, nstrat
-                if (savestratum(ib).or.crcstra(ib).eq.'T') then
-                  ib1 = ib1 + 1
-                  lstrascl1(ib1,isp1(is))=lstrascl(ib,is)
+                if (istra1(ib).gt.0) then
+                  lstrascl1(istra1(ib),isp1(is))=lstrascl(ib,is)
                 endif
               enddo
             endif

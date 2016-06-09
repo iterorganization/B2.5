@@ -4795,13 +4795,13 @@ cghgh
               t0 = max(0.0e0_R8,                                        !srv 05.05.09
      &         (abs(pbs(rightix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                  rightiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),0))*
-     &                       ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*cs +   !srv 25.12.06 11.01.13
-     &          fch_p(rightix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                rightiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),0)/qe))                  !srv 25.12.06 11.03.09 }
+     &                       ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*cs + !srv 25.12.06 11.01.13
+     &         fch_p(rightix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &               rightiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),0)/qe)) !srv 25.12.06 11.03.09 }
               if(pot_eq.eq.1) then                                      !srv 27.02.13 {
                 she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
      &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-             !srv 11.03.09 {
-     &                (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0                !srv 19.04.13
+     &                (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0            !srv 19.04.13
                 she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
      &           qe*po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*t0            !srv 07.11.12
@@ -4828,17 +4828,17 @@ cghgh
      &         (abs(pbs(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0))*
      &               ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*cs -         !srv 25.12.06 11.01.13
      &            fch_p(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)/qe))       !srv 25.12.06 11.03.09 }
-              if(pot_eq.eq.1) then                                        !srv 27.02.13 {
+              if(pot_eq.eq.1) then                                      !srv 27.02.13 {
                 she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
      &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-             !srv 11.03.09 {
      &                (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0            !srv 19.04.13
                 she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
-     &           qe*po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*t0             !srv 07.11.12
+     &           qe*po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*t0            !srv 07.11.12
               else
                 she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
      &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-             !srv 11.03.09 {
-     &               ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+3.1_R8)*t0        !srv 19.04.13
+     &               ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+3.1_R8)*t0    !srv 19.04.13
                 she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)
               endif                                                     !srv 27.02.13 }
@@ -4846,7 +4846,7 @@ cghgh
                 she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
      &           fhePSch(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)
-            endif                                                     !srv 01.06.06 }
+            endif                                                       !srv 01.06.06 }
             end do
           ELSE
             CALL XERRAB 
