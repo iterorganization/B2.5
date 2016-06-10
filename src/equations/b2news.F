@@ -358,7 +358,8 @@
      &    po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &    cddi(-1,-1,0,is),                                              !srv 13.10.06
      &    cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is),  cdnahz(-1,-1,0,is),   !srv 09.01.01 15.12.05
-     &    cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,              !srv 20.09.06
+     &    cdpahz(-1,-1,0,is),
+     &    fchvispar, fchvisper, fchinert, fchanml, fchvisq,              !srv 20.09.06
      &    fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &    fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),                      !srv 01.10.99 21.01.00
      &    fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                      !srv 13.10.06
@@ -522,9 +523,10 @@ cxpb
      &     wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,    !srv 09.01.01
      &     po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &     cddi(-1,-1,0,is),                                             !srv 13.10.06
-     &     cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is),  cdnahz(-1,-1,0,is),  !srv 09.01.01 15.12.05
-     &     cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,             !srv 20.09.06
-     &     fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
+     &     cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),   !srv 09.01.01 15.12.05
+     &     cdpahz(-1,-1,0,is),
+     &     fchvispar, fchvisper, fchinert, fchanml, fchvisq,             !srv 20.09.06
+     1     fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),                     !xpb
      &     fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),                     !srv 01.10.99 21.01.00
      &     fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                     !srv 13.10.06
      1     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
@@ -803,7 +805,8 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      &             cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &             cddi(-1,-1,0,is), cvlahz(-1,-1,0,is),                 !srv 09.01.01 13.10.06
      &             cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),               !srv 15.12.05
-     &             cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,     !srv 20.09.06
+     &             cdpahz(-1,-1,0,is),
+     &             fchvispar, fchvisper, fchinert, fchanml, fchvisq,     !srv 20.09.06
      &             fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &             fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),             !srv 01.10.99 21.01.00
      &             fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),             !srv 13.10.06

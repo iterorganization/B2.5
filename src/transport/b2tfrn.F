@@ -4,9 +4,9 @@
       subroutine b2tfrn (nx, ny, ns, guard_flows,                        !srv 14.07.10 {
      &  facdrift, fac_ExB, rza, rz2,                                     !srv 13.01.17
      &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,   
-     &  fch_p, fchvispar, fchinert, fchanml,                             !srv 20.09.06
-     &  fne, cvla, cdna, cdpa, chce, chci,
-     &  vaecrb, wadia, ve, veecrb, wedia,
+     &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,         !srv 20.09.06
+     &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
+     &  uadia,
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
       use b2mod_types
       use b2mod_boundary_namelist
@@ -22,6 +22,7 @@
      &  rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1),                !srv 13.01.17
      &  pbs(-1:nx,-1:ny,0:1), po(-1:nx,-1:ny), fch_p(-1:nx,-1:ny,0:1),
      &  fchvispar(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),           !srv 20.09.06
+     &  fchvisper(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),
      &  fchanml(-1:nx,-1:ny,0:1),
      &  ua(-1:nx,-1:ny,0:ns-1), na(-1:nx,-1:ny,0:ns-1), 
      &  fne(-1:nx,-1:ny,0:1), 
@@ -207,7 +208,12 @@ csw 30sep2013, added check for no_hybr
      4      (vaecrb(ix,iy,0,is)*xvecrb+wadia(ix,iy,0,is)*xwdia)*
      5      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/               !srv 01.03.00
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
-           endif
+           if (nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then
+             flo_eir = flo_eir +
+     &        (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
+     &         +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*ycur/
+     &        (qe*(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2)
+           end if
            t0 = (na(ix,iy,is) 
      .        + na(leftix(ix,iy),leftiy(ix,iy),is)) / 2.0_R8
            t1 = (2.0_R8 * na(ix,iy,is) 
@@ -316,9 +322,12 @@ csw 30sep2013, added check for no_hybr
      3       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
            end if
            if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
-             flo_eir = flo_eir +
-     &        (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+ ! fchvisper(ix,iy,1)+
-     &        fchanml(ix,iy,1))*ycur/
+             flo_eir = cvla(ix,iy,1,is)+
+     &        (wadia(ix,iy,1,is)*xwdia+vaecrb(ix,iy,1,is)*xvecrb)*       !srv 14.07.10
+     &        (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &        (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
+     &        (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)
+     &         +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
      &        (qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &        na(ix,iy,is))/2.0_R8)
            endif
@@ -497,8 +506,8 @@ c Drift terms
 !             flo_eir = cvlb(ix,iy,1)+(wedia(ix,iy,1)+vbecrb(ix,iy,1))*  !srv 14.07.10
 !     &     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
 !     &      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
-!     &        (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+ ! fchvisper(ix,iy,1)+
-!     &         fchanml(ix,iy,1))*ycur/
+!     &        (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)
+!     &         +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
 !     &        (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)
                 if(drift_style.eq.0) then
                   fle_eir = 0.5_R8*

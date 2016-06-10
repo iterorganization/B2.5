@@ -275,9 +275,9 @@ csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, guard_flows,
      &  facdrift, fac_ExB, rza, rz2,                                    !srv 13.01.17
      &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
-     &  fch_p, fchvispar, fchinert, fchanml,
-     &  fne, cvla, cdna, cdpa, chce, chci,
-     &  vaecrb, wadia, ve, veecrb, wedia,
+     &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,
+     &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
+     &  uadia,
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
       endif                                                             !srv 14.07.10 }
 

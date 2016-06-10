@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 csw 2013 added fna_he, cvsa, vadia into argument list
-      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ti,  
+      subroutine b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ti,
      1  ni, na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa, vadia, !srv 17.05.99 27.12.01
-     &  fchvispar, fchvisq, fchinert, fchanml,                          !lk 30.05.11
+     &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,               !lk 30.05.11
      &  fhi, fhi_mdf, fhiPSch, floi, coni,                              !srv 13.10.06
      &  balance)                                                        !djm Jan2017
       use b2mod_types
@@ -32,7 +32,7 @@ csw 2013 added fna_he, cvsa, vadia into argument list
      & fchvispar(-1:nx,-1:ny,0:1), fchvisq(-1:nx,-1:ny,0:1),            !lk 30.05.11
      & fchinert(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1),             !lk 30.05.11
 csw 30apr2014 added fna_he, ia
-     . fna_he(-1:nx, -1:ny, 0:1, 0:ns-1),
+     . fchvisper(-1:nx,-1:ny,0:1), fna_he(-1:nx, -1:ny, 0:1, 0:ns-1),
      . ua(-1:nx,-1:ny,0:ns-1)
       real (kind=R8) :: cutlo
       parameter (cutlo = 1.0e-60_R8)
@@ -379,8 +379,14 @@ c  ..set null flux in guard cells  ?
          floi0 = 1.5e0_R8*fni(ix,iy,0)+
      &   chvi(ix,iy,0)*(ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2
      &           +flidia(ix,iy,0) ! *signmf                             !srv 25.01.02 18.01.07 11.01.13
+     &    +1.5e0_R8/qe*(fchinert(ix,iy,0)+fchvispar(ix,iy,0)
+     &                  +fchanml(ix,iy,0)+fchvisper(ix,iy,0)
+     &                  +fchvisq(ix,iy,0))*ycur
          floi0_mdf = 1.5e0_R8*fni(ix,iy,0)+                             !srv 13.10.06 {
      &   chvi(ix,iy,0)*(ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2
+     &    +1.5e0_R8/qe*(fchinert(ix,iy,0)+fchvispar(ix,iy,0)
+     &                  +fchanml(ix,iy,0)+fchvisper(ix,iy,0)
+     &                  +fchvisq(ix,iy,0))*ycur
 
          if(lim_flux.eq.1 .and. conductive_limit.eq.0) then             !srv 17.01.12
 
@@ -803,12 +809,14 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &                   +ni(ix,iy,0))/2
      &        +flidia(ix,iy,1)                                          !srv 25.01.02 18.01.07
      &    +1.5e0_R8/qe*(fchinert(ix,iy,1)+fchvispar(ix,iy,1)            !lk 30.05.11
-     &    +fchanml(ix,iy,1))*ycur                                       !lk 30.05.11
+     &                  +fchanml(ix,iy,1)+fchvisper(ix,iy,1)
+     &                  +fchvisq(ix,iy,1))*ycur                         !lk 30.05.11
         floi0_mdf = 1.5e0_R8*fni(ix,iy,1)+                              !srv 11.05.99
      &    chvi(ix,iy,1)*(ni(bottomix(ix,iy),bottomiy(ix,iy),0)
      &                   +ni(ix,iy,0))/2
      &    +1.5e0_R8/qe*(fchinert(ix,iy,1)+fchvispar(ix,iy,1)            !lk 30.05.11
-     &    +fchanml(ix,iy,1))*ycur                                       !lk 30.05.11
+     &                  +fchanml(ix,iy,1)+fchvisper(ix,iy,1)
+     &                  +fchvisq(ix,iy,1))*ycur                         !lk 30.05.11
         if(no_Ptncr_y_hi.eq.0) then                                     !srv 06.07.06 {
          if(mdf_fhi.eq.0) then                                          !srv 13.10.06 {
           coni0    = hybr(floi0,chci(ix,iy,1))

@@ -487,7 +487,8 @@ ctmp.dpc
      &          cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &          cddi(-1,-1,0,is), cvlahz(-1,-1,0,is),
      &          cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),                  !srv 09.01.01 15.12.05 13.10.06
-     &          cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,        !srv 20.09.06
+     &          cdpahz(-1,-1,0,is),
+     &          fchvispar, fchvisper, fchinert, fchanml, fchvisq,        !srv 20.09.06
      &          fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &          fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),
      &          fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),

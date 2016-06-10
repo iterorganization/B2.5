@@ -341,7 +341,8 @@ csw 01oct2012 initialize potential if necessary
      &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
      &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,               !srv 19.07.02 01.10.99 20.09.06
+     &   cdpahz(-1,-1,0,is),
+     &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
@@ -498,7 +499,8 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
      &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
      &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,               !srv 19.07.02 01.10.99 20.09.06
+     &   cdpahz(-1,-1,0,is),
+     &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
@@ -579,7 +581,8 @@ csw 16oct2012 init ier0
      &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
      &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,               !srv 19.07.02 20.09.06
+     &   cdpahz(-1,-1,0,is),
+     &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 20.09.06
      1   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
@@ -729,7 +732,8 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &       po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &       cddi(-1,-1,0,is),                                           !srv 13.10.06
      &       cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is),cdnahz(-1,-1,0,is),  !srv 09.01.01 15.12.05
-     &       cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,           !srv 19.07.02 01.10.99 20.09.06
+     &       cdpahz(-1,-1,0,is),
+     &       fchvispar, fchvisper, fchinert, fchanml, fchvisq,           !srv 19.07.02 01.10.99 20.09.06
      &       fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &       fna_fcor(-1,-1,0,is),
      &       fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is),
@@ -787,7 +791,7 @@ c      with diamagnetic drift part                                       !srv 13
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ti, ni, 
      1  na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa, vadia,      !srv 17.05.99 27.12.01 25.01.02 13.10.06
-     &  fchvispar, fchvisq, fchinert, fchanml,              
+     &  fchvispar, fchvisper, fchvisq, fchinert, fchanml,              
      &  fhi, fhi_mdf, fhiPSch, floi, coni,                               !srv 13.10.06
      &  .true.)                                                          !djm Jan2017
        floi_noc = floi                                                   !srv 24.10.02
@@ -897,7 +901,8 @@ c   recompute particle fluxes
      &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
      &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,               !srv 19.07.02 01.10.99 20.09.06
+     &   cdpahz(-1,-1,0,is),
+     &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
@@ -983,7 +988,8 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      &   po, cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &   cddi(-1,-1,0,is),                                               !srv 13.10.06
      &   cvlahz(-1,-1,0,is), cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),     !srv 09.01.01 15.12.05
-     &   cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,               !srv 19.07.02 01.10.99 20.09.06
+     &   cdpahz(-1,-1,0,is),
+     &   fchvispar, fchvisper, fchinert, fchanml, fchvisq,               !srv 19.07.02 01.10.99 20.09.06
      &   fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is), fna_fcor(-1,-1,0,is),
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
