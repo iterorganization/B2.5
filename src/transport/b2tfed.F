@@ -54,6 +54,10 @@
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2tfed')
+*   ..test nx, ny
+      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
         call ipgeti ('b2tfnb_drift_style', drift_style)
@@ -67,10 +71,6 @@
 *    ..test sign of te
        call b2xvsg (n2, te, 1, 'te', '.gt.')
       endif
-*   ..set n2
-      n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
-      call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test facdrift
       call xertst (0.0_R8.le.minval(facdrift) .and.
      &     1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
