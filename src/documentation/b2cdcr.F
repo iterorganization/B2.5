@@ -317,6 +317,8 @@
 *     B2TFCH computes the electric current between neighboring cells,
 *     and the coefficients that specify its linearisation.
 *
+*     B2TFED computes the electron drift velocities.
+*
 *     B2TFHE computes the electron heat flux between neighboring cells,
 *     and the coefficients that specify its linearisation.
 *

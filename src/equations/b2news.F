@@ -350,6 +350,9 @@
      1    fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
         enddo
+*      ..compute electron drift velocities
+        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
+     &    te, po, vedia, veecrb)
 *     ..re-compute source linearisation                                  !xpb
         call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain, ismain0,   !xpb
      &    dtim, BoRiS, facdrift, fac_ExB,                                !xpb
@@ -541,6 +544,9 @@ cxpb
            call print_wrong_flows(
      &          'Before potential loop: fna(ions) at plates')
         endif
+*      ..compute electron drift velocities
+        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
+     &    te, po, vedia, veecrb)
 *   ..re-compute ne, ni
         call b2xpne (nx, ny, ns, rza, na, ne_ext, ne)
         call nancheck(nx, ny, ne, 'b2news(ne): after call to b2xpne')
@@ -584,8 +590,11 @@ cxpb
               if (ncall.eq.ncallout)
      >         write(*,*) 'b2news [a][32|52] ',
      1         maxval(abs(fna-fna_32-fna_52)), maxval(abs(fna))
+              call b2tfed (nx, ny, facdrift, fac_ExB,
+     &         vol, hx, hy, qz, bb,
+     &         te, po, vedia, veecrb)
               call b2tfch (nx, ny, ns,
-     1         guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,           !xpb
+     1         guard_flows, facdrift, fac_vis, BoRiS,                    !xpb
      1         vol, gs, hx, hy, qz, bb, te, po, ne,                      !xpb
      1         ti, na, fna, uadia, vedia, wadia, vaecrb,                 !xpb
      &         veecrb, ua, fne_32, fne_52,
@@ -774,8 +783,10 @@ c     with diamagnetic drift part                                        !xpb
      >   write(*,*) 'b2news [a][32|52] ',
      1   maxval(abs(fna-fna_32-fna_52)), maxval(abs(fna))
 *   ..compute heat fluxes
+        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
+     &   te, po, vedia, veecrb)
         call b2tfch (nx, ny, ns,
-     1   guard_flows, facdrift, fac_ExB, fac_vis, BoRiS,                 !xpb
+     1   guard_flows, facdrift, fac_vis, BoRiS,                          !xpb
      1   vol, gs, hx, hy, qz, bb, te, po, ne,                            !xpb
      1   ti, na, fna, uadia, vedia, wadia, vaecrb, veecrb,               !xpb
      &   ua, fne_32, fne_52, csig, csigin, chce,                         !xpb

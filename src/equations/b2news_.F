@@ -330,6 +330,9 @@ csw 01oct2012 initialize potential if necessary
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
         enddo                                                            !srv 01.10.99
+*      ..compute electron drift velocities
+        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
+     &   te, po, vedia, veecrb)
 !      end if                                                            !srv 01.10.99
 
 csw 10dec2012: added extra call if wanted/not-wanted (SOLPS4 has an
@@ -434,7 +437,7 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 
 *     ..iterate on particle balance
 !      do is = 0, ns-1
-       do is = nsmin, nsmax-1
+      do is = nsmin, nsmax-1
 *    ..DPC
         do iy=-1,ny
           do ix=-1,nx
@@ -524,6 +527,9 @@ csw 16oct2012 init ier0
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
       enddo 
+*      ..compute electron drift velocities
+      call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
+     &  te, po, vedia, veecrb)
 
       if(iout.ne.0 .or. iout_b2npco.ne.0 .or. iout_b2npc9.ne.0           !srv 16.07.10
      &             .or. iout_b2npmo.ne.0 .or. iout_b2npht.ne.0 
@@ -651,6 +657,9 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
      &       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
           enddo
+*      ..compute electron drift velocities
+          call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
+     &      te, po, vedia, veecrb)
 
           write(*,*) 'i,respo',i,t0
           call xertst (ier0.eq.0, 'error return from b2nppo')
@@ -854,6 +863,9 @@ c   recompute particle fluxes
         endif                                                            !srv 13.10.06 }
         call xertst (ier0.eq.0, 'error return from b2npco')
        enddo
+*      ..compute electron drift velocities
+       call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
+     &  te, po, vedia, veecrb)
       endif ! do_2nd_b2npco
 
 csw 06dec2012 finally re-evaluate particle fluxes
@@ -883,6 +895,9 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
      &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
        enddo                                                             !srv 01.10.99
+*      ..compute electron drift velocities
+       call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
+     &  te, po, vedia, veecrb)
       endif                                                              !srv 28.06.13 }
 
 csw 26oct2011 recalculate rescaling factors sclrtio/sclalph (SOLPS4)

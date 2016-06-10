@@ -351,24 +351,24 @@ csw 13mar2012
         do iy = -1,mintopcut-1    ! for inner surfaces                    !srv 22.04.16
          do ix = -1,nx
           if(mod(region(ix,iy,0),4).eq.1) then
-           tt0(iy) = tt0(iy) +hx(ix,iy)
-           tt1(iy) = tt1(iy) +vol(ix,iy)/hy1(ix,iy)                      !srv 22.04.16
+           tt0(iy) = tt0(iy) + hx(ix,iy)
+           tt1(iy) = tt1(iy) + vol(ix,iy)/hy1(ix,iy)                      !srv 22.04.16
           endif
          enddo
         enddo
 
-        do iy = -1,mintopcut-1                                           !srv 22.04.16
-         if (tt1(iy) .ne. 0.0_R8) eps1(iy) = tt0(iy)**2/tt1(iy)
+        do iy = -1,mintopcut-1                                            !srv 22.04.16
+          eps1(iy) = tt0(iy)**2/tt1(iy)
         enddo
 
-        nu1 = 0.0e0_R8                                 !lk 12.05.11{
+        nu1 = 0.0e0_R8                                                    !lk 12.05.11{
         k1 = 0.58e0_R8
         nu2 = 0.0e0_R8
         k2 = 1.6e0_R8
         t1 = (4.0_R8*pi*eps0/qe)/qe
         t2 = 3.0_R8/(4.0_R8*sqrt(2.0_R8*pi))*t1*t1*ev*sqrt(ev)*sqrt(me)
      
-        do iy = -1,mintopcut-1                                          !srv 22.04.16
+        do iy = -1,mintopcut-1                                            !srv 22.04.16
          do ix = -1,nx
           if(mod(region(ix,iy,0),4).eq.1) then
            tau(ix,iy) = t2/lnlam(ix,iy)*te(ix,iy)/ev

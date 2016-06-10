@@ -462,6 +462,9 @@ ctmp.dpc
      &          fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
            end do
+*      ..compute electron drift velocities
+           call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
+     &      te, po, vedia, veecrb)
 *      ..compute other fluxes
            call b2xpen (nx, ny, ns,
      1      fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
