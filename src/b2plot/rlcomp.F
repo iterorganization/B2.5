@@ -24,6 +24,7 @@ c***  radld   radiation power coming to the segments of T
 c***  ttsrc   the total power radiated from the sources
 c***  tttrg   the total power coming to T
 c======================================================================
+#include "DIMENSIONS.F"
 #include "rdload.inc"
       real (kind=R8) :: upi, udpi, ueps
       parameter (upi=pi)

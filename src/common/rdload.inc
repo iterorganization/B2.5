@@ -45,7 +45,7 @@ c***  sb,se   beginning and end of the visible part of the base
 c***          segment normalized to its length
 c=====================================================
       integer nplgm, nsrcm, nchrdm
-      parameter (nplgm=400, nsrcm=4000, nchrdm=200)
+      parameter (nplgm=400, nsrcm=(DEF_NXD+2)*(DEF_NYD+2), nchrdm=200)
       integer jb,jc,jm,jsc,jcb,nplgs,nbndry,nsrc,nsrcs,ntrg,nchrd,
      ,  lbnd(nplgm),ltrg(nplgm)
       real (kind=R8) ::
