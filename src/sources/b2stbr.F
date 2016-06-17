@@ -842,6 +842,8 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
      &                'b2stbr_pfluxa_eir'//chns)
         call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_dab2_eir'//chns)
+        call my_out(70,nx,ny,tab2(0:nx+1,0:ny+1,ia,1),
+     &                'b2stbr_tab2_eir'//chns)
        enddo
        do im = 1,nmol
         write (chns,'(i3.3)') im
@@ -851,6 +853,8 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
      &              'b2stbr_pfluxm_eir'//chns)
         call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_dmb2_eir'//chns)
+        call my_out(70,nx,ny,tmb2(0:nx+1,0:ny+1,im,1),
+     &              'b2stbr_tmb2_eir'//chns)
        enddo
 #endif
       endif

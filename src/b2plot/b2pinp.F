@@ -54,13 +54,13 @@ c----------------------------------------------------------------------
 #endif
 #include "impcon.inc"
       integer nnns
-      parameter (nnns=19)
+      parameter (nnns=20)
       character*8 unm,unms(nnns),u
       data unms /
      1        'starting','partlist','wlldpart','duct    ','p1      ',
      2        'p2      ','segmlist','plotzone','jedgi1  ','jedgi2  ',
      3        'jedgo1  ','jedgo2  ','elemlist','sol_edge','pfr_edge',
-     4        'trg_spcf','pltz_lbl','misselem','skipelem'/
+     4        'trg_spcf','pltz_lbl','misselem','skipelem','shdw_str'/
       integer i, j
       integer ll, lt, luswch, luskel
       logical streql
@@ -73,7 +73,7 @@ c      print *,'b2prdn >> ',unm
       do 1000 i=1,nnns
           if(streql(u,unms(i))) go to (10,20,30,40,50,60,20,30,90,100,
      ,                                 110,120,130,140,150,160,170,180,
-     ,                                 180),i
+     ,                                 180,200),i
  1000 continue
       call scipit
       return
@@ -184,6 +184,12 @@ c*** Elements not for Eirene
         lskip(luwrk(j)) = .true.
       end do
       luskel=i+luskel
+      return
+c----------------------------------------------------------------------
+c*** Shadowing structure
+ 200  ll=1
+      nwldprt=max(nwldprt,ll)
+      call scipit
       return
 c======================================================================
       end subroutine b2prdn
