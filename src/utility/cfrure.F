@@ -8,7 +8,6 @@
 csw 04dec2014 added fmt data (as in cfwure) to avoid problems with
 c             pgf90 compiler , see below
       integer ifmt
-      parameter (ifmt=1)  ! must match the definition in cfwure !
       character fmt(0:5)*32
       save fmt
       data fmt /'(1p,5(1x,e25.17e3))', '(1p,6(1x,e21.13e3))',
@@ -17,8 +16,8 @@ c             pgf90 compiler , see below
 *     ------------------------------------------------------------------
 *     CFRURE reads a real*8 array from an un*formatted file.
 *     ------------------------------------------------------------------
-      integer n0, i, ios
-      character chf*12, idcod*8, idtyp*8, id0*32, id1*32
+      integer n0, i, ios, iloc, jloc, ndigits
+      character chf*12, idcod*8, idtyp*8, id0*32, id1*32, zeile*80
       logical streql
       external xertst, xerrab, streql
 *     ------------------------------------------------------------------
@@ -35,6 +34,31 @@ c             pgf90 compiler , see below
      &   'cfrure--wrong type: expected real, found '//idtyp)
        call xertst (n.eq.n0, 'cfrure--dimension mismatch at '//id0)
        if (0.lt.n) then
+        read (nget,'(a80)',err=93,iostat=ios) zeile
+        backspace(nget)
+        iloc = index(zeile,'.')
+        jloc = index(zeile,'E')
+        if (jloc.eq.0) jloc = index(zeile,'e')
+        if (jloc.eq.0) jloc = index(zeile,'D')
+        if (jloc.eq.0) jloc = index(zeile,'d')
+        if (iloc.eq.0 .or. jloc.eq.0) goto 93
+        ndigits = jloc-iloc-1
+        select case (ndigits) 
+        case (17)
+          ifmt = 0
+        case (13)
+          ifmt = 1
+        case (9)
+          ifmt = 2
+        case (7)
+          ifmt = 3
+        case (5)
+          ifmt = 4
+        case (4)
+          ifmt = 5
+        case default
+          call xerrab ('Unrecognized data format, id='//id0)
+        end select
 csw 04dec2014 changed * --> fmt(ifmt)
         read (nget,fmt(ifmt),err=93,iostat=ios) (refun(i),i=0,n-1)
        endif
@@ -74,7 +98,6 @@ csw 04dec2014 changed * --> fmt(ifmt)
 csw 04dec2014 added fmt data (as in cfwure) to avoid problems with
 c             pgf90 compiler , see below
       integer ifmt
-      parameter (ifmt=1)  ! must match the definition in cfwure !
       character fmt(0:5)*32
       save fmt
       data fmt /'(1p,5(1x,e25.17e3))', '(1p,6(1x,e21.13e3))',
@@ -86,8 +109,8 @@ c             pgf90 compiler , see below
 *     If the array size is not matching the expected size, skips the
 *     reading and returns a soft error.
 *     ------------------------------------------------------------------
-      integer n0, i, ios
-      character chf*12, idcod*8, idtyp*8, id0*32, id1*32
+      integer n0, i, ios, iloc, jloc, ndigits
+      character chf*12, idcod*8, idtyp*8, id0*32, id1*32, zeile*80
       logical streql
       external xertst, xerrab, streql
 *     ------------------------------------------------------------------
@@ -117,6 +140,31 @@ c             pgf90 compiler , see below
          return
        endif
        if (0.lt.n) then
+        read (nget,'(a80)',err=93,iostat=ios) zeile
+        backspace(nget)
+        iloc = index(zeile,'.')
+        jloc = index(zeile,'E')
+        if (jloc.eq.0) jloc = index(zeile,'e')
+        if (jloc.eq.0) jloc = index(zeile,'D')
+        if (jloc.eq.0) jloc = index(zeile,'d')
+        if (iloc.eq.0 .or. jloc.eq.0) goto 93
+        ndigits = jloc-iloc-1
+        select case (ndigits) 
+        case (17)
+          ifmt = 0
+        case (13)
+          ifmt = 1
+        case (9)
+          ifmt = 2
+        case (7)
+          ifmt = 3
+        case (5)
+          ifmt = 4
+        case (4)
+          ifmt = 5
+        case default
+          call xerrab ('Unrecognized data format, id='//id0)
+        end select
         read (nget,fmt(ifmt),err=93,iostat=ios) (refun(i),i=0,n-1)
        endif
       else if (streql(chf,'unformatted')) then
