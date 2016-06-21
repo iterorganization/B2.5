@@ -410,6 +410,7 @@ csw 30sep2013, added cdpa in call, uadia
      &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,            !srv 16.02.12
      &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
+     &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,                             !xpb
      &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)            !xpb
        if(wrong_flow) write(*,*)
@@ -438,6 +439,7 @@ csw 30sep2013, added cdpa in call, uadia
      &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,            !srv 16.02.12
      &  fnaPSch, fhePSch, fhiPSch,                                      !srv 25.02.00 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
+     &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,                             !xpb
      &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)            !xpb
        if(wrong_flow) write(*,*)

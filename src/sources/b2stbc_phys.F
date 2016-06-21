@@ -9,6 +9,7 @@
      &  fhe, fhi, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch,
      &  fch, fne, fni,                                                !srv 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,!srv 21.10.02
+     &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,                           !srv 25.09.09
      &  sna0, smo0, she0, shi0, sch0, sne0,
      &  wrong_flow, main_call, diagno,
@@ -66,7 +67,7 @@
      &  fch_p(-1:nx,-1:ny,0:1), fchvispar(-1:nx,-1:ny,0:1),          !srv 11.10.02 21.10.02 {
      &  fchvisper(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),
      &  fchvisq(-1:nx,-1:ny,0:1), fchdia(-1:nx,-1:ny,0:1),
-     &  fchinert(-1:nx,-1:ny,0:1),                                   !srv 21.10.02 }
+     &  fchinert(-1:nx,-1:ny,0:1), fchanml(-1:nx,-1:ny,0:1),         !srv 21.10.02 }
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),                            !srv 25.02.00
      &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1),        !srv 28.10.02
@@ -154,9 +155,10 @@
       real (kind=R8), save ::                                           !srv 16.02.12
      *  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
      *  NAS, TES, TIS, NIVS, FFAC, DFS, POS                             !srv 29.09.15
-      real (kind=R8) , save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
-     &                         phm2 = 1.0e0_R8,
-     &                         corr_flux   = 0.0e0_R8                   !srv 25.07.05
+      real (kind=R8), save :: ycur = 1.0e0_R8
+      real (kind=R8), save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
+     &                        phm2 = 1.0e0_R8,
+     &                        corr_flux   = 0.0e0_R8                    !srv 25.07.05
       real (kind=R8), save :: alfTeEh = 0.0_R8
       character chns*3, chk*1                                           !srv 11.07.05
       logical done, decay_length_ok, fedback_species
@@ -284,6 +286,7 @@
         call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &   'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
         call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 23.05.14 !srv 29.09.15
+        call ipgetr ('b2tfhi_ycur', ycur)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -6420,11 +6423,20 @@ cghgh
             shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)=
      .       ENIPAR(IB,1)/US*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
             shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=0.0_R8
-          if(mdf_fhi.ne.0) then                                !srv 12.09.08 {
+            if(mdf_fhi.ne.0) then                                 !srv 12.09.08 {
               shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
      &         fhiPSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                 topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) + 1.5e0_R8/qe*
+     &         (fchinert(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &                   topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)+
+     &          fchvispar(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)+
+     &          fchanml(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1))*
+     &          ycur
               do is=0,ns-1
                 shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
      &           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) +
@@ -6434,7 +6446,7 @@ cghgh
      &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)*
      &           na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
               end do
-          endif                                                !srv 12.09.08 }
+            endif                                                 !srv 12.09.08 }
           end do
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           US=0.0_R8
@@ -6447,10 +6459,15 @@ cghgh
      1       SY(BOTTOMIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      .          BOTTOMIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
             shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)=0.0_R8
-          if(mdf_fhi.ne.0) then                                !srv 12.09.08 {
+            if(mdf_fhi.ne.0) then                                 !srv 12.09.08 {
               shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
      .         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
      &         fhiPSch(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)
+              shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
+     &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) - 1.5e0_R8/qe*
+     &         (fchinert(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+
+     &          fchvispar(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+
+     &          fchanml(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1))*ycur
               do is=0,ns-1
                 shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
      .           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) -
@@ -6459,7 +6476,7 @@ cghgh
      &           vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)*
      &               na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
               end do
-          endif                                                !srv 12.09.08 }
+            endif                                                 !srv 12.09.08 }
           end do
         ELSEIF(BCCHAR(IB).EQ.'W') THEN
           US=0.0_R8

@@ -10,6 +10,7 @@
      &  fhe, fhi, fhe_mdf, fhi_mdf, fch, fne, fni, fna_fcor,             !srv 16.02.12
      &  fnaPSch, fhePSch, fhiPSch,                                       !srv 25.02.00 13.10.06
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
+     &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,
      &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call)       !xpb
       use b2mod_types
@@ -55,7 +56,7 @@
      &  fchvisq(-1:nx,-1:ny,0:1), fchdia(-1:nx,-1:ny,0:1),
      &  fchinert(-1:nx,-1:ny,0:1),                                       !srv 21.10.02 }
      &  fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 25.02.00
-     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1),                                 !srv 13.10.06
+     &  fnaPSch(-1:nx,-1:ny,0:1,0:ns-1), fchanml(-1:nx,-1:ny,0:1),       !srv 13.10.06
      &  fhePSch(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
      &  floe_noc(-1:nx,-1:ny,0:1), floi_noc(-1:nx,-1:ny,0:1)             !srv 28.10.02
       real (kind=R8) ::
@@ -400,14 +401,15 @@
 
         if(ncall.eq.0) write(*,*) ' b2stbc_phys called'
         call b2stbc_phys(nx, ny, ns, ismain, ismain0,
-     1   BoRiS, facdrift, fac_ExB, vol, crx, hx, hy, hz, qz, qc, gs,   !srv 24.08.08
+     1   BoRiS, facdrift, fac_ExB, vol, crx, hx, hy, hz, qz, qc, gs,     !srv 24.08.08
      1   pbs, pbshz, bb, na, ua, uadia, vedia, vadia, veecrb, vaecrb,
-     2   te, ti, po, ne, ni, kinrgy,  floe_noc, floi_noc, fna, fna_mdf, !srv 28.10.02
-     1   fnaPSch, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,      !srv 13.10.06 
-     &   fhe, fhi, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch, fch,  !srv 16.02.12
-     &   fne, fni,                                                     !srv 13.10.06
-     &   fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,!srv 21.10.02
-     &   cdna, chce, chve, chci, chvi, calf,                           !srv 25.09.09
+     2   te, ti, po, ne, ni, kinrgy, floe_noc, floi_noc, fna, fna_mdf,   !srv 28.10.02
+     1   fnaPSch, fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,        !srv 13.10.06
+     &   fhe, fhi, fhe_mdf, fhi_mdf, fna_fcor, fhePSch, fhiPSch, fch,    !srv 16.02.12
+     &   fne, fni,                                                       !srv 13.10.06
+     &   fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
+     &   fchanml,
+     &   cdna, chce, chve, chci, chvi, calf,                             !srv 25.09.09
      &   sna0, smo0, she0, shi0, sch0, sne0, 
      &   wrong_flow, main_call, diagno,
      &   b2stbc_fchy_dia, b2stbc_neoclassical, praverage,
