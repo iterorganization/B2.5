@@ -6942,6 +6942,10 @@ cghgh
      &          fchvispar(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)+
      &          fchanml(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)+
+     &          fchvisper(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)+
+     &          fchvisq(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1))*
      &          ycur
               do is=0,ns-1
@@ -6974,7 +6978,9 @@ cghgh
      &         shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) - 1.5e0_R8/qe*
      &         (fchinert(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+
      &          fchvispar(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+
-     &          fchanml(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1))*ycur
+     &          fchanml(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+
+     &          fchvisper(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+
+     &          fchvisq(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1))*ycur
               do is=0,ns-1
                 shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
      .           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) -
