@@ -1,7 +1,7 @@
       module b2mod_external
       use b2mod_types
 
-      integer ns_ext
+      integer, save :: ns_ext
       real (kind=R8), allocatable, save ::
      *  zn_ext(:),
      *  za_ext(:,:,:),

@@ -1025,9 +1025,9 @@ cghgh
      &           hx(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
      &           vaecrb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &                  rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)
-                sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
-     &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) +
-     &           max(0.0_R8,t0)*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
+                sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
+     &           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) +
+     &           max(0.0_R8,t0)*na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
      &           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) +
      &           min(0.0_R8,t0)
@@ -1058,11 +1058,11 @@ cghgh
      &           vol(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &           hx(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*
      &           vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
-                sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
-     &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) +
-     &           max(0.0_R8,t0)*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
-                sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
-     &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) +
+                sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
+     &           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) +
+     &           max(0.0_R8,t0)*na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+                sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
+     &           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) +
      &           min(0.0_R8,t0)
               endif                                                    !srv 12.09.08 }
             ENDDO
@@ -1147,11 +1147,11 @@ cghgh
      &              rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is))
                 endif                                                  !srv 12.09.08 }
-                sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
-     &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) +
-     &           max(0.0_R8,t0)*na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
-                sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
-     &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) +
+                sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
+     &           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) +
+     &           max(0.0_R8,t0)*na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+                sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
+     &           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) +
      &           min(0.0_R8,t0)
               endif
             ENDDO
