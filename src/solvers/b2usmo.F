@@ -47,7 +47,6 @@
       integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iout = 0                                       !srv 17.06.02
-      character chns*3                                                !srv 17.06.02
       real (kind=R8) ::
      *  cfc0, t0, t1, flo, dif, csb, csb1
       save ncall, cfc0
@@ -57,7 +56,8 @@
      *  hybr
       external subini, subend, xertst, ipgetr, sfill
       external b2xvsg, b2xvff, b2ux5p
-      hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
+      hybr(flo,dif) = max(dif,abs(flo/2.0_R8),
+     .                    sqrt(dif**2+flo**2/4.0_R8))
 *   ..initialisation
       data ncall/0/, cfc0/1.0_R8/
 
@@ -128,11 +128,11 @@ csw 18feb2014 corrected BCs (SOLPS4)
          aa5(ix,iy,-1) = 0.0_R8
         else
          if(no_Ptncr_x_co.eq.0) then                                  !sv 06.07.06 {
-          t0 =  flcb(ix,iy,0)/2-hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
-          t1 = -flcb(ix,iy,0)/2-hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
+          t0 =  flcb(ix,iy,0)/2.0_R8-hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
+          t1 = -flcb(ix,iy,0)/2.0_R8-hybr(flcb(ix,iy,0),cvsb(ix,iy,0))
          else
-          t0 =  flcb(ix,iy,0)/2-cvsb(ix,iy,0)
-          t1 = -flcb(ix,iy,0)/2-cvsb(ix,iy,0)
+          t0 =  flcb(ix,iy,0)/2.0_R8-cvsb(ix,iy,0)
+          t1 = -flcb(ix,iy,0)/2.0_R8-cvsb(ix,iy,0)
          endif                                                        !sv 06.07.06 }
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
          if (solvereg(ileft))
@@ -160,14 +160,14 @@ csw 18feb2014 corrected BCs (SOLPS4)
 
         ireg = region(ix,iy,0)
         if(bottomiy(ix,iy).eq.-2) then
-          aa5(ix,iy,-2) = 0.0_R8
+         aa5(ix,iy,-2) = 0.0_R8
         else
-         if(no_Ptncr_y_co.eq.0) then                                  !srv 06.07.06 {
-          t0 =  flcb(ix,iy,1)/2 - hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
-          t1 = -flcb(ix,iy,1)/2 - hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
+         if(no_Ptncr_y_co.eq.0) then                                 !srv 06.07.06 {
+          t0 =  flcb(ix,iy,1)/2.0_R8 - hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
+          t1 = -flcb(ix,iy,1)/2.0_R8 - hybr(flcb(ix,iy,1),cvsb(ix,iy,1))
          else
-          t0 =  flcb(ix,iy,1)/2 - cvsb(ix,iy,1)
-          t1 = -flcb(ix,iy,1)/2 - cvsb(ix,iy,1)
+          t0 =  flcb(ix,iy,1)/2.0_R8 - cvsb(ix,iy,1)
+          t1 = -flcb(ix,iy,1)/2.0_R8 - cvsb(ix,iy,1)
          endif                                                        !srv 06.07.06 }
           ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
           if (solvereg(ibot))
@@ -184,7 +184,7 @@ cxpb
      &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
      &       iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
            if(ncall.lt.3) write(*,*) 'Executing xpb:b2usmo for ',ix,iy
-            t0 = flcb(topix(ix,iy),topiy(ix,iy),1)/2-
+           t0 =  flcb(topix(ix,iy),topiy(ix,iy),1)/2-
      &           hybr(flcb(topix(ix,iy),topiy(ix,iy),1),
      &                cvsb(topix(ix,iy),topiy(ix,iy),1))
             t1 = -flcb(topix(ix,iy),topiy(ix,iy),1)/2-
@@ -240,16 +240,15 @@ cxpb
       call b2ux5p (nx, ny, aa5, itcnt, resmb, corub, name)            !srv 18.03.10
 
       if (iout.ne.0) then                                             !srv 17.06.02 {
-       write (chns,'(i3.3)') isb    
-       call my_out(70,nx,ny,aa5(-1,-1,-2),name//'_aa5m2'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1,-1),name//'_aa5m1'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1, 0),name//'_aa5m0'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1, 1),name//'_aa5p1'//chns)
-       call my_out(70,nx,ny,aa5(-1,-1, 2),name//'_aa5p2'//chns)
-       call my_out(70,nx,ny,resmb,name//'_resmb'//chns)
-       call my_out(70,nx,ny,corub,name//'_corub'//chns)
-       call my_out(70,nx,ny,pccb(-1,-1,0),name//'_pccbx'//chns)
-       call my_out(70,nx,ny,pccb(-1,-1,1),name//'_pccby'//chns)
+       call my_out(70,nx,ny,aa5(-1,-1,-2),name//'_aa5m2')
+       call my_out(70,nx,ny,aa5(-1,-1,-1),name//'_aa5m1')
+       call my_out(70,nx,ny,aa5(-1,-1, 0),name//'_aa5m0')
+       call my_out(70,nx,ny,aa5(-1,-1, 1),name//'_aa5p1')
+       call my_out(70,nx,ny,aa5(-1,-1, 2),name//'_aa5p2')
+       call my_out(70,nx,ny,resmb,name//'_resmb')
+       call my_out(70,nx,ny,corub,name//'_corub')
+       call my_out(70,nx,ny,pccb(-1,-1,0),name//'_pccbx')
+       call my_out(70,nx,ny,pccb(-1,-1,1),name//'_pccby')
       endif                                                           !srv 17.06.02 }
 * ..return
       ncall = ncall+1

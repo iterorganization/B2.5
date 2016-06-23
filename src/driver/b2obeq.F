@@ -75,9 +75,8 @@
       logical(4) ::  lresult
 #endif
       logical(4) ::  b2fstate_exist
-      integer iy, npoint
-      real (kind=R8) :: cpu_s, cpu_f, x05baf, dseval,                 !srv 26.04.09
-     & nemod, temod, timod, func, fcain, fab, shift
+      integer npoint
+      real (kind=R8) :: cpu_s, cpu_f, x05baf, func, fcain, fab, shift
       character*12 hlp_frm
 *   ..procedures
 !      external xerset, xertst

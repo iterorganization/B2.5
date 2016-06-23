@@ -192,13 +192,16 @@ c
       integer it1,it2
       integer stack_req(6)
       character*256 arg
+#ifdef B25_EIRENE
+      integer iflag
       character*72 zeile
+#endif
 c
       real (kind=R8) ::
      * b0r0,dummy,rval,sumjxa,sumjxi,suml(2),sumr(2),time 
       real (kind=R8) ::
      1 lambda, lnlam, hh, hhn, phi_app 
-      integer i,j,icell,iclv,iflag,iistack,il,imi,irstack,
+      integer i,j,icell,iclv,iistack,il,imi,irstack,
      1 is1,iso,isstack,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
      2 ikind,lnblnk,nz,ixx,iyy,ixl,ixr,iyb,iyt,isel,
      3 i1,ibnd,in,ibc,ixn,iyn,ixf,iyf,idir,isign
@@ -730,7 +733,7 @@ c
       call xertst(nbc.le.nbcd, 'increase size in b2plot for nbcd')
       call xertst(nniso.le.nnisod, 'increase size in b2plot for nnisod')
       call alloc_b2mod_neutrals
-     . (nx, ny, ns, natm, nstraid, nsts, sput_dst)
+     . (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst(nstrat.le.nstraid, 

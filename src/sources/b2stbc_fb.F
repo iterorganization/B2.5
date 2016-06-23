@@ -2,7 +2,7 @@
 *.specification
       subroutine b2stbc_fb (nx, ny, ns, ismain, BoRiS,
      1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
-     &	sna0, smo0, she0, shi0, sch0, sne0, 
+     &  sna0, smo0, she0, shi0, sch0, sne0,
      &  main_call, diagno)
       use b2mod_types
       use b2mod_rates
@@ -47,28 +47,28 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, coreregno, coreregn2, 
-     1  ncallfeedback, pfrregno1, pfrregno2, nesepm_istra, isfeedback, 
+      integer ncall, n2, ix, iy, is, coreregno, coreregn2,
+     1  ncallfeedback, pfrregno1, pfrregno2, nesepm_istra, isfeedback,
      2  ixl1, ixl2, ixr1, ixr2, solregno, iyped, istrai, icount,
-     3  fhiycore_kinetic_energy, ivac, ireg, ispecies
+     3  fhiycore_kinetic_energy, ivac, ireg
       real (kind=R8) ::
      &  fnaycore, fnaycurr, fnaycore_alpha,
      1  fheycore, fheycurr, fhiycore, fhiycurr, fchycore, fchycurr,
      2  ndes, ndes_sol, ntot, cbsnainc, cbsnafac, den(0:1), rcbsna(0:1),
      3  amtol, neutral_sources_rescale, nesepm_sol, nesepm_pfr,
      4  nesepm, nesepm_curr, nesepm_alpha, nesepm_beta, nesepm_gamma,
-     4  nesepm_error, nesepm_error_old, flux_old, 
-     4  fheycore_alpha, fhiycore_alpha, fchycore_alpha, 
+     4  nesepm_error, nesepm_error_old, flux_old,
+     4  fheycore_alpha, fhiycore_alpha, fchycore_alpha,
      5  private_flux_puff,
      6  nesepm_overshoot, save_gas_puff_while_overshot,
      7  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot,
-     8  save_core_flux_while_overshot, volrec_sol, volrec_alpha, 
+     8  save_core_flux_while_overshot, volrec_sol, volrec_alpha,
      9  volrec_beta, volrec_overshoot, volrec_curr,
      9  nesepm_integral_error,
-     1	nesepm_minpuff, nesepm_maxpuff, nepedm_sol,
-     4	cum_pressure, cum_density, cum_area,
-     5	ave_pressure, ave_density, ave_temp,
-     6	vacuum_corr
+     1  nesepm_minpuff, nesepm_maxpuff, nepedm_sol,
+     4  cum_pressure, cum_density, cum_area,
+     5  ave_pressure, ave_density, ave_temp,
+     6  vacuum_corr
 
       integer jsep, jxa, jxi, ib, ncall_old, ncall_gap, n_flux_zero
       logical consistent_core, consistent_sol, consistent_pfr1,
@@ -93,8 +93,8 @@
      1  save_pfr1_puff_while_overshot, save_pfr2_puff_while_overshot,
      1  save_core_flux_while_overshot, nesepm_integral_error,
      1  volrec_sol, volrec_alpha, volrec_beta, volrec_overshoot,
-     1	nesepm_minpuff, nesepm_maxpuff, nepedm_sol, iyped,
-     1	nesepm_error_old,
+     1  nesepm_minpuff, nesepm_maxpuff, nepedm_sol, iyped,
+     1  nesepm_error_old,
      &  ncall_old, ncall_gap, n_flux_zero, flux_old
 *   ..procedures
       intrinsic abs, max, mod, nint
@@ -114,7 +114,7 @@
      3  nesepm/0.0_R8/, nesepm_sol/0.0_R8/, nesepm_alpha/1.0e-3_R8/,
      3  nesepm_beta/0.0_R8/, nesepm_integral_error/0.0_R8/,
      3  nesepm_gamma/0.99_R8/, nesepm_error_old/0.0/,
-     4  private_flux_puff/0.0_R8/, neutral_sources_rescale/1.0_R8/, 
+     4  private_flux_puff/0.0_R8/, neutral_sources_rescale/1.0_R8/,
      2  nesepm_overshoot/0.0_R8/,
      3  save_gas_puff_while_overshot/0.0_R8/,
      4  save_core_flux_while_overshot/0.0_R8/,
@@ -122,7 +122,7 @@
      6  save_pfr2_puff_while_overshot/0.0_R8/,
      7  volrec_sol/0.0_R8/, volrec_alpha/1.0e-3_R8/,
      8  volrec_beta/1.0_R8/, volrec_overshoot/0.0_R8/,
-     1	nesepm_minpuff/0.0_R8/, nesepm_maxpuff/0.0_R8/,
+     1  nesepm_minpuff/0.0_R8/, nesepm_maxpuff/0.0_R8/,
      2  nepedm_sol/0.0_R8/, nesepm_istra/-1/,
      &  ncall_old/0/, ncall_gap /5/, n_flux_zero/0/
 #ifdef COMPLICATED
@@ -145,13 +145,13 @@
        call xertst (0.0_R8.le.fnaycore_alpha,
      1   'faulty internal parameter fnaycore_alpha')
        call ipgetr ('b2stbc_fheycore', fheycore)
-       call xertst (0.0_R8.le.fheycore, 
+       call xertst (0.0_R8.le.fheycore,
      1   'faulty internal parameter fheycore')
        call ipgetr ('b2stbc_fheycore_alpha', fheycore_alpha)
        call xertst (0.0_R8.le.fheycore_alpha,
      1   'faulty internal parameter fheycore_alpha')
        call ipgetr ('b2stbc_fhiycore', fhiycore)
-       call xertst (0.0_R8.le.fhiycore, 
+       call xertst (0.0_R8.le.fhiycore,
      1   'faulty internal parameter fhiycore')
        call ipgetr ('b2stbc_fhiycore_alpha', fhiycore_alpha)
        call xertst (0.0_R8.le.fhiycore_alpha,
@@ -163,19 +163,19 @@
        call xertst (0.0_R8.le.fchycore_alpha,
      1   'faulty internal parameter fchycore_alpha')
        call ipgetr ('b2stbc_nesepm', nesepm)
-       call xertst (0.0_R8.le.nesepm, 
+       call xertst (0.0_R8.le.nesepm,
      1   'faulty internal parameter nesepm')
        call ipgetr ('b2stbc_nesepm_sol', nesepm_sol)
-       call xertst (0.0_R8.le.nesepm_sol, 
+       call xertst (0.0_R8.le.nesepm_sol,
      1   'faulty internal parameter nesepm_sol')
        call ipgetr ('b2stbc_nepedm_sol', nepedm_sol)
-       call xertst (0.0_R8.le.nepedm_sol, 
+       call xertst (0.0_R8.le.nepedm_sol,
      1   'faulty internal parameter nepedm_sol')
        call ipgetr ('b2stbc_nesepm_pfr', nesepm_pfr)
-       call xertst (0.0_R8.le.nesepm_pfr, 
+       call xertst (0.0_R8.le.nesepm_pfr,
      1   'faulty internal parameter nesepm_pfr')
        call ipgetr ('b2stbc_volrec_sol', volrec_sol)
-       call xertst (0.0_R8.le.volrec_sol, 
+       call xertst (0.0_R8.le.volrec_sol,
      1   'faulty internal parameter volrec_sol')
        call ipgetr ('b2stbc_nesepm_alpha', nesepm_alpha)
        call xertst (0.0_R8.le.nesepm_alpha,
@@ -206,7 +206,7 @@
        call ipgeti ('b2stbc_coreregn2', coreregn2)
        call ipgeti ('b2stbc_solregno', solregno)
        call ipgetr ('b2stbc_ndes_sol', ndes_sol)
-       call xertst (0.0_R8.le.ndes_sol, 
+       call xertst (0.0_R8.le.ndes_sol,
      .  'faulty internal parameter ndes_sol')
        if(fnaycore.ne.-1.0e30_R8.or.fheycore.gt.0.0_R8.or.
      &    fhiycore.gt.0.0_R8.or.fchycore.ne.-1.0e30_R8.or.
@@ -225,17 +225,17 @@
      1    solregno.le.cbirno+cbnrno-1,
      2    'faulty internal parameter solregno')
          call xertst(
-     .    (ndes_sol.gt.0.0_R8 .and. volrec_sol.eq.0.0_R8 .and. 
+     .    (ndes_sol.gt.0.0_R8 .and. volrec_sol.eq.0.0_R8 .and.
      .     nesepm_sol.eq.0.0_R8 .and. nepedm_sol.eq.0.0_R8) .or.
-     .    (ndes_sol.eq.0.0_R8 .and. volrec_sol.gt.0.0_R8 .and. 
+     .    (ndes_sol.eq.0.0_R8 .and. volrec_sol.gt.0.0_R8 .and.
      .     nesepm_sol.eq.0.0_R8 .and. nepedm_sol.eq.0.0_R8) .or.
-     .    (ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8 .and. 
+     .    (ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8 .and.
      .     nesepm_sol.gt.0.0_R8 .and. nepedm_sol.eq.0.0_R8) .or.
-     .    (ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8 .and. 
+     .    (ndes_sol.eq.0.0_R8 .and. volrec_sol.eq.0.0_R8 .and.
      .     nesepm_sol.eq.0.0_R8 .and. nepedm_sol.gt.0.0_R8),
      .    'Simultaneous SOL feedback schemes not allowed!')
        endif
-       if(nesepm.gt.0.0_R8 .or. nesepm_sol.gt.0.0_R8 .or. 
+       if(nesepm.gt.0.0_R8 .or. nesepm_sol.gt.0.0_R8 .or.
      &    nesepm_pfr.gt.0.0_R8 .or. nepedm_sol.gt.0.0_R8) then
           call get_jsep(nx,ny,jxi,jxa,jsep)
           iyped = jsep/2
@@ -251,7 +251,7 @@
        call ipgetr ('b2stbc_ndes', ndes)
        call xertst (0.0_R8.le.ndes, 'faulty internal parameter ndes')
        call ipgetr ('b2stbc_cbsnafac', cbsnafac)
-       call xertst (0.0_R8.lt.cbsnafac, 
+       call xertst (0.0_R8.lt.cbsnafac,
      1   'faulty internal parameter cbsnafac')
        call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
        call xertst (0.0_R8.le.private_flux_puff,
@@ -285,11 +285,11 @@
      &    rightix(ixr1,-1).eq.ixl2 .or. rightix(ixr2,-1).eq.ixl1,
      .    'pfrregno1 and pfrregno2 are not connected!')
          call xertst(
-     .    (ndes.gt.0.0_R8 .and. private_flux_puff.eq.0.0_R8 .and. 
+     .    (ndes.gt.0.0_R8 .and. private_flux_puff.eq.0.0_R8 .and.
      .     nesepm_pfr.eq.0.0_R8) .or.
-     .    (ndes.eq.0.0_R8 .and. private_flux_puff.gt.0.0_R8 .and. 
+     .    (ndes.eq.0.0_R8 .and. private_flux_puff.gt.0.0_R8 .and.
      .     nesepm_pfr.eq.0.0_R8) .or.
-     .    (ndes.eq.0.0_R8 .and. private_flux_puff.eq.0.0_R8 .and. 
+     .    (ndes.eq.0.0_R8 .and. private_flux_puff.eq.0.0_R8 .and.
      .     nesepm_pfr.gt.0.0_R8),
      .    'Simultaneous PFR feedback schemes not allowed!')
        endif
@@ -629,7 +629,7 @@ cxpb current feedback not yet tested!
       endif
       if(ndes.gt.0.0_R8) then
         if (ncall.eq.0) then
-          if (saved_cbsna_pfr1.ne.0.0_R8) 
+          if (saved_cbsna_pfr1.ne.0.0_R8)
      >      cbsna(0,isfeedback,pfrregno1)=saved_cbsna_pfr1
      .       *neutral_sources_rescale
           if (saved_cbsna_pfr2.ne.0.0_R8)
@@ -654,12 +654,12 @@ cxpb current feedback not yet tested!
             if (pfrregno1.ne.pfrregno2)
      >       rcbsna(1)=cbsna(0,isfeedback,pfrregno2)
             if (pfrregno1.ne.pfrregno2) then
-              if (diagno.ge.1) write(*,*) 
+              if (diagno.ge.1) write(*,*)
      1         'ZEROSLOPE:ncall,cbsna(0,',isfeedback,',ireg)',ncall,
      1          cbsna(0,isfeedback,pfrregno1),
      1          cbsna(0,isfeedback,pfrregno2)
             else
-              if (diagno.ge.1) write(*,*) 
+              if (diagno.ge.1) write(*,*)
      1         'ZEROSLOPE:ncall,cbsna(0,',isfeedback,',ireg)',ncall,
      1          cbsna(0,isfeedback,pfrregno1)
             endif
@@ -676,7 +676,7 @@ cxpb current feedback not yet tested!
      1         cbsna(0,isfeedback,pfrregno1),
      1         cbsna(0,isfeedback,pfrregno2)
             else
-              if (diagno.ge.1) write(*,*) 
+              if (diagno.ge.1) write(*,*)
      >         'ZEROCROSS:ncall,cbsna(0,',isfeedback,',ireg)',ncall,
      1         cbsna(0,isfeedback,pfrregno1)
             endif
@@ -688,11 +688,11 @@ cxpb current feedback not yet tested!
           if(diagno.ge.1)
      >     write(*,*)
      1     ncall,': PFLUXPUFFFEEDBACK (+)',ntot,ndes,cbsnainc
-          cbsna(0,isfeedback,pfrregno1)= 
+          cbsna(0,isfeedback,pfrregno1)=
      .     max(0.0_R8,cbsna(0,isfeedback,pfrregno1)+
      &     neutral_sources_rescale * cbsnainc)
           if (pfrregno1.ne.pfrregno2)
-     >     cbsna(0,isfeedback,pfrregno2)= 
+     >     cbsna(0,isfeedback,pfrregno2)=
      .     max(0.0_R8,cbsna(0,isfeedback,pfrregno2)+
      &     neutral_sources_rescale * cbsnainc)
         endif
@@ -713,7 +713,7 @@ cxpb current feedback not yet tested!
         if(ncall.eq.0) then
           if(saved_cbsna_core.ne.0.0_R8) then
             cbsna(0,isfeedback,coreregno)=saved_cbsna_core
-            if(nncut.ge.2) 
+            if(nncut.ge.2)
      >      cbsna(0,isfeedback,coreregn2)=saved_cbsna_core
           endif
         endif
@@ -801,14 +801,14 @@ c the current value of the separatrix density
           if(nesepm_beta.ne.0.0_R8) then
 c new attempt
             nesepm_error = (nesepm_sol - nesepm_curr) / nesepm_sol
-            if(nesepm_error * nesepm_error_old .le. 0.0_R8 
+            if(nesepm_error * nesepm_error_old .le. 0.0_R8
      &          .and. ncall .gt. ncall_old+ncall_gap) then
               write(*,*) 'sign change in nesepm_error; ncall, flux = ',
      &          ncall, cbsna(0,isfeedback,solregno)
               if(n_flux_zero .eq. 1) then
                 cbsna(0,isfeedback,solregno) = 0.5_R8 *
      &            (cbsna(0,isfeedback,solregno) + flux_old)
-                write(*,*) 'Reset gas puff to ', 
+                write(*,*) 'Reset gas puff to ',
      &            cbsna(0,isfeedback,solregno)
                 n_flux_zero = 0
                 write(*,*) 'Approximate oscillation period is ',
@@ -822,37 +822,37 @@ c new attempt
               ncall_old = ncall
             endif
             nesepm_error_old = nesepm_error
-            nesepm_integral_error = 
-     1       nesepm_gamma * nesepm_integral_error + 
+            nesepm_integral_error =
+     1       nesepm_gamma * nesepm_integral_error +
      1       (1-nesepm_gamma)* nesepm_error
             write(*,'(a,1p,2e15.7)') 
      .       'nesepm_error, nesepm_integral_error= ',
      1        nesepm_error, nesepm_integral_error
-            cbsna(0,isfeedback,solregno) = 
+            cbsna(0,isfeedback,solregno) =
      .       cbsna(0,isfeedback,solregno)*
-     *        (1.0_R8 + nesepm_alpha*nesepm_error + 
+     *        (1.0_R8 + nesepm_alpha*nesepm_error +
      +         nesepm_beta*nesepm_integral_error)
           else
 c old approach
-            cbsna(0,isfeedback,solregno)= 
+            cbsna(0,isfeedback,solregno)=
      .       cbsna(0,isfeedback,solregno)*
      *        (1.0_R8+nesepm_alpha*nesepm_sol/nesepm_curr)/
      *        (1.0_R8+nesepm_alpha)
           endif
         else if (ndes_sol.gt.0.0_R8) then
-          cbsna(0,isfeedback,solregno)= 
+          cbsna(0,isfeedback,solregno)=
      .     cbsna(0,isfeedback,solregno)*
      *      (1.0_R8+nesepm_alpha*ndes_sol/ntot)/
      *      (1.0_R8+nesepm_alpha)
         endif
-	if(nesepm_minpuff.gt.0.0_R8) then
-	  cbsna(0,isfeedback,solregno)=
-     1	   max(cbsna(0,isfeedback,solregno),nesepm_minpuff)
-	endif
-	if(nesepm_maxpuff.gt.0.0_R8) then
-	  cbsna(0,isfeedback,solregno)=
-     1	   min(cbsna(0,isfeedback,solregno),nesepm_maxpuff)
-	endif
+        if(nesepm_minpuff.gt.0.0_R8) then
+          cbsna(0,isfeedback,solregno)=
+     1     max(cbsna(0,isfeedback,solregno),nesepm_minpuff)
+        endif
+        if(nesepm_maxpuff.gt.0.0_R8) then
+          cbsna(0,isfeedback,solregno)=
+     1     min(cbsna(0,isfeedback,solregno),nesepm_maxpuff)
+        endif
 c the key part: update the gas puff based on the ratio of desired
 c value to the current value; nesepm_alpha is used to stabilise the
 c system and defaults to 1e-3
@@ -860,7 +860,7 @@ c system and defaults to 1e-3
      .   neutral_sources_rescale
 c we save the value
         if (nesepm_overshoot.ge.1.0_R8 .and.
-     1    ((nesepm_sol.gt.0.0_R8 .and. 
+     1    ((nesepm_sol.gt.0.0_R8 .and.
      2      nesepm_curr.gt.nesepm_sol*nesepm_overshoot) .or.
      3     (ndes_sol.gt.0.0_R8 .and.
      4      ntot.gt.ndes_sol*nesepm_overshoot))) then
@@ -868,10 +868,10 @@ c if we have overshot the density by more than
 c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
           save_gas_puff_while_overshot=cbsna(0,isfeedback,solregno)
           cbsna(0,isfeedback,solregno)=0.0_R8
-          if (diagno.ge.1 .and. nesepm_sol.gt.0.0_R8) 
+          if (diagno.ge.1 .and. nesepm_sol.gt.0.0_R8)
      >     write(*,*) 'Overshot density! ',
      1     nesepm_curr,nesepm_sol*nesepm_overshoot
-          if (diagno.ge.1 .and. ndes_sol.gt.0.0_R8) 
+          if (diagno.ge.1 .and. ndes_sol.gt.0.0_R8)
      >     write(*,*) 'Overshot density! ',
      1     ntot,ndes_sol*nesepm_overshoot
         endif
@@ -888,7 +888,7 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
       endif
       if (nesepm_pfr.gt.0.0_R8) then
         if (ncall.eq.0) then
-          if (saved_cbsna_pfr1.ne.0.0_R8) 
+          if (saved_cbsna_pfr1.ne.0.0_R8)
      >      cbsna(0,isfeedback,pfrregno1)=saved_cbsna_pfr1
      .       *neutral_sources_rescale
           if (saved_cbsna_pfr2.ne.0.0_R8)
@@ -945,12 +945,12 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
           if(diagno.ge.1) then
             write(*,*) 'private_flux_area = ',private_flux_area
             if (pfrregno1.ne.pfrregno2) then
-              write(*,'(a,1p,2g14.7)') 
+              write(*,'(a,1p,2g14.7)')
      .        'Original cbsna(0,isfeedback,pfrregno1&2) = ',
      1         cbsna(0,isfeedback,pfrregno1),
      2         cbsna(0,isfeedback,pfrregno2)
             else
-              write(*,'(a,1p,g14.7)') 
+              write(*,'(a,1p,g14.7)')
      .        'Original cbsna(0,isfeedback,pfrregno1) = ',
      1         cbsna(0,isfeedback,pfrregno1)
             endif
@@ -967,14 +967,14 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
             cbsna(0,isfeedback,pfrregno2)=save_pfr2_puff_while_overshot
             save_pfr2_puff_while_overshot=0.0_R8
           endif
-          cbsna(0,isfeedback,pfrregno1)= 
+          cbsna(0,isfeedback,pfrregno1)=
      .     cbsna(0,isfeedback,pfrregno1)*
      *     (1.0_R8+nesepm_alpha*nesepm_pfr/nesepm_curr)/
      *     (1.0_R8+nesepm_alpha)
           saved_cbsna_pfr1=cbsna(0,isfeedback,pfrregno1)/
      .     neutral_sources_rescale
           if (pfrregno1.ne.pfrregno2) then
-            cbsna(0,isfeedback,pfrregno2)= 
+            cbsna(0,isfeedback,pfrregno2)=
      .       cbsna(0,isfeedback,pfrregno2)*
      *       (1.0_R8+nesepm_alpha*nesepm_pfr/nesepm_curr)/
      *       (1.0_R8+nesepm_alpha)
@@ -1024,12 +1024,12 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
      .     target_flux*private_flux_puff/private_flux_area
         endif
         if (pfrregno1.ne.pfrregno2) then
-          if (diagno.ge.1) 
-     >     write(*,'(a,1p,2g14.7)') 
+          if (diagno.ge.1)
+     >     write(*,'(a,1p,2g14.7)')
      .     'cbsna(0,isfeedback,pfrregno1&2) = ',
      1      cbsna(0,isfeedback,pfrregno1),cbsna(0,isfeedback,pfrregno2)
         else
-          if (diagno.ge.1) 
+          if (diagno.ge.1)
      >     write(*,'(a,1p,g14.7)') 'cbsna(0,isfeedback,pfrregno1) = ',
      1     cbsna(0,isfeedback,pfrregno1)
         endif
@@ -1060,7 +1060,7 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
             cbsna(0,isfeedback,solregno)=save_gas_puff_while_overshot
             save_gas_puff_while_overshot=0.0_R8
           endif
-          cbsna(0,isfeedback,solregno)= 
+          cbsna(0,isfeedback,solregno)=
      .     cbsna(0,isfeedback,solregno)*
      *     (1.0_R8+volrec_alpha*(volrec_sol/volrec_curr)**volrec_beta)/
      *     (1.0_R8+volrec_alpha)
@@ -1083,38 +1083,38 @@ c nesepm_sol*nesepm_overshoot then we force the gas puff to 0
 ! process feedbacks in b2.feedback_control.parameters
       if(vacuum_communication.gt.0) then
 ! this allows for a communication of particle fluxes across vacuum regions
-	do ivac=1, vacuum_communication
-	  do is=0, ns-1
+        do ivac=1, vacuum_communication
+          do is=0, ns-1
 ! this option only applies to neutrals
-	    if(is_neutral(is)) then
+            if(is_neutral(is)) then
 ! calculate an average pressure and an average temperature
-	      cum_pressure=0.0_R8
-	      cum_density=0.0_R8
-	      cum_area=0.0_R8
-	      do ireg=1, vacuum_communication_nreg(ivac)
-		iy=vacuum_communication_iy(ireg, ivac)
-		do ix=vacuum_communication_ix1(ireg, ivac),
-     1		      vacuum_communication_ix2(ireg, ivac)
-		  cum_pressure = cum_pressure +
-     1		   ti(ix,iy)*na(ix,iy,is)*gs(ix,iy,2)
-		  cum_density = cum_density +
-     1		   na(ix,iy,is)*gs(ix,iy,2)
-		  cum_area = cum_area + gs(ix,iy,2)
-		enddo
-	      enddo
-	      ave_pressure = cum_pressure / cum_area
-	      ave_density = cum_density / cum_area
-	      ave_temp = ave_pressure / ave_density
-	      write(*,'(a,a,1x,i2,1x,i3,1x,1p,3g12.3)')
-     1	       'Vacuum-Communication: ivac, is, ave_pressure, ',
-     2	       'ave_density, ave_temp ',
-     1	       ivac, is, ave_pressure, ave_density, ave_temp/ev
+              cum_pressure=0.0_R8
+              cum_density=0.0_R8
+              cum_area=0.0_R8
+              do ireg=1, vacuum_communication_nreg(ivac)
+                iy=vacuum_communication_iy(ireg, ivac)
+                do ix=vacuum_communication_ix1(ireg, ivac),
+     1                vacuum_communication_ix2(ireg, ivac)
+                  cum_pressure = cum_pressure +
+     1             ti(ix,iy)*na(ix,iy,is)*gs(ix,iy,2)
+                  cum_density = cum_density +
+     1             na(ix,iy,is)*gs(ix,iy,2)
+                  cum_area = cum_area + gs(ix,iy,2)
+                enddo
+              enddo
+              ave_pressure = cum_pressure / cum_area
+              ave_density = cum_density / cum_area
+              ave_temp = ave_pressure / ave_density
+              write(*,'(a,a,1x,i2,1x,i3,1x,1p,3g12.3)')
+     1         'Vacuum-Communication: ivac, is, ave_pressure, ',
+     2         'ave_density, ave_temp ',
+     1         ivac, is, ave_pressure, ave_density, ave_temp/ev
 ! adjust the density boundary condition based on the difference between the average pressure and the local pressure
-	      do ireg=1, vacuum_communication_nreg(ivac)
-		iy=vacuum_communication_iy(ireg, ivac)
-		do ix=vacuum_communication_ix1(ireg, ivac),
-     1		 vacuum_communication_ix2(ireg, ivac)
-		  if(vacuum_communication_method(ivac).eq.1) then
+              do ireg=1, vacuum_communication_nreg(ivac)
+                iy=vacuum_communication_iy(ireg, ivac)
+                do ix=vacuum_communication_ix1(ireg, ivac),
+     1           vacuum_communication_ix2(ireg, ivac)
+                  if(vacuum_communication_method(ivac).eq.1) then
 ! try to set a flux
 		    vacuum_corr = (vacuum_communication_beta(is,ivac) *
      1		     ave_pressure - ti(ix,iy)*na(ix,iy,is)) / ave_temp *
@@ -1187,14 +1187,14 @@ c the current value of the density at the top of the pedestal
         if(nesepm_beta.ne.0.0_R8) then
 c new attempt
           nesepm_error = (nesepm_sol - nesepm_curr) / nepedm_sol
-          if(nesepm_error * nesepm_error_old .le. 0.0_R8 
+          if(nesepm_error * nesepm_error_old .le. 0.0_R8
      &       .and. ncall .gt. ncall_old+ncall_gap) then
             write(*,*) 'sign change in nesepm_error; ncall, flux = ',
      &       ncall, cbsna(0,isfeedback,solregno)
             if(n_flux_zero .eq. 1) then
               cbsna(0,isfeedback,solregno) = 0.5_R8 *
      &         (cbsna(0,isfeedback,solregno) + flux_old)
-              write(*,*) 'Reset gas puff to ', 
+              write(*,*) 'Reset gas puff to ',
      &         cbsna(0,isfeedback,solregno)
               n_flux_zero = 0
               write(*,*) 'Approximate oscillation period is ',
@@ -1208,15 +1208,15 @@ c new attempt
             ncall_old = ncall
           endif
           nesepm_error_old = nesepm_error
-          nesepm_integral_error = 
-     1     nesepm_gamma * nesepm_integral_error + 
+          nesepm_integral_error =
+     1     nesepm_gamma * nesepm_integral_error +
      1      (1-nesepm_gamma)* nesepm_error
-          write(*,'(a,1p,2e14.7)') 
+          write(*,'(a,1p,2e14.7)')
      .     'nesepm_error, nesepm_integral_error= ',
      1      nesepm_error, nesepm_integral_error
-          cbsna(0,isfeedback,solregno) = 
+          cbsna(0,isfeedback,solregno) =
      .     cbsna(0,isfeedback,solregno)*
-     *      (1.0_R8 + nesepm_alpha*nesepm_error + 
+     *      (1.0_R8 + nesepm_alpha*nesepm_error +
      +       nesepm_beta*nesepm_integral_error)
         else
 c old approach
@@ -1224,10 +1224,10 @@ c old approach
      *     (1.0_R8+nesepm_alpha*nepedm_sol/nesepm_curr)/
      *     (1.0_R8+nesepm_alpha)
         endif
-	if(nesepm_minpuff.gt.0.0_R8) cbsna(0,isfeedback,solregno)=
-     1	 max(cbsna(0,isfeedback,solregno),nesepm_minpuff)
-	if(nesepm_maxpuff.gt.0.0_R8) cbsna(0,isfeedback,solregno)=
-     1	 min(cbsna(0,isfeedback,solregno),nesepm_maxpuff)
+        if(nesepm_minpuff.gt.0.0_R8) cbsna(0,isfeedback,solregno)=
+     1   max(cbsna(0,isfeedback,solregno),nesepm_minpuff)
+        if(nesepm_maxpuff.gt.0.0_R8) cbsna(0,isfeedback,solregno)=
+     1   min(cbsna(0,isfeedback,solregno),nesepm_maxpuff)
 c the key part: update the gas puff based on the ratio of desired
 c value to the current value; nesepm_alpha is used to stabilise the
 c system and defaults to 1e-3
@@ -1240,7 +1240,7 @@ c if we have overshot the density by more than
 c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
           save_gas_puff_while_overshot=cbsna(0,isfeedback,solregno)
           cbsna(0,isfeedback,solregno)=0.0_R8
-          if (diagno.ge.1) 
+          if (diagno.ge.1)
      >     write(*,*) 'Overshot density! ',
      1     nesepm_curr,nepedm_sol*nesepm_overshoot
         endif
@@ -1259,8 +1259,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
 * ..finalise feedback
       entry b2stbc_fb_final
       feedback_namelist_used = feedback_namelist_used .or.
-     .        max(saved_cbshe_core, saved_cbshi_core, 
-     .            saved_cbsna_core, saved_cbsch_core, 
+     .        max(saved_cbshe_core, saved_cbshi_core,
+     .            saved_cbsna_core, saved_cbsch_core,
      .            saved_cbsna_pfr1, saved_cbsna_pfr2,
      .            saved_cbsna_sol, maxval(saved_na_feedback_actuator))
      .            .gt.0.0_R8
@@ -1278,7 +1278,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
 *.specification
       subroutine b2stbc_fb_pre (nx, ny, ns, ismain, BoRiS,
      1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
-     &	sna0, smo0, she0, shi0, sch0, sne0, 
+     &  sna0, smo0, she0, shi0, sch0, sne0,
      &  main_call, diagno)
       use b2mod_types
       use b2mod_rates
@@ -1328,7 +1328,10 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, ispecies, is0, is_start, is_end,
-     &        i, k, l, iss
+#ifdef B25_EIRENE
+     &        i, k, l,
+#endif
+     &        iss
       real (kind=R8) ::
      &  na_feedback_current, na_feedback_rescale, vol_feedback, dtim,
      &  na_feedback_prev(0:DEF_NATM-1), dt_prev, sum_e, sum_s,
@@ -1433,7 +1436,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                case (1) ! local density
 
                   if(ncall.eq.0) then
-                     write(*,*) 
+                     write(*,*)
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'local_density for sequence ',
      &                    ispecies+1
@@ -1446,15 +1449,15 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   do is=0, ns-1
                      if(b2espcr(is).eq.ispecies+1) then
                         if(is_start.eq.-1) is_start=is
-                        do iy = na_feedback_iy1(ispecies), 
+                        do iy = na_feedback_iy1(ispecies),
      &                          na_feedback_iy2(ispecies)
-                           do ix = na_feedback_ix1(ispecies), 
+                           do ix = na_feedback_ix1(ispecies),
      &                             na_feedback_ix2(ispecies)
-                              na_feedback_current = 
-     &                             na_feedback_current + 
+                              na_feedback_current =
+     &                             na_feedback_current +
      &                             na(ix,iy,is) * vol(ix, iy)
                               if(is.eq.is_start) then
-                                 vol_feedback = vol_feedback + 
+                                 vol_feedback = vol_feedback +
      &                                vol(ix, iy)
                               endif
                            enddo
@@ -1462,13 +1465,13 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                         is_end=is
                      endif
                   enddo
-                  na_feedback_current = na_feedback_current / 
+                  na_feedback_current = na_feedback_current /
      &                 vol_feedback
 
                case (2) ! local electron density
 
                   if(ncall.eq.0) then
-                     write(*,*) 
+                     write(*,*)
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'local_electron_density for sequence ',
      &                    ispecies+1
@@ -1484,22 +1487,22 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                         is_end=is
                      endif
                   enddo
-                  do iy = na_feedback_iy1(ispecies), 
+                  do iy = na_feedback_iy1(ispecies),
      &                    na_feedback_iy2(ispecies)
-                     do ix = na_feedback_ix1(ispecies), 
+                     do ix = na_feedback_ix1(ispecies),
      &                       na_feedback_ix2(ispecies)
-                        na_feedback_current = na_feedback_current + 
+                        na_feedback_current = na_feedback_current +
      &                    ne(ix, iy) * vol(ix, iy)
                         vol_feedback = vol_feedback + vol(ix, iy)
                      enddo
                   enddo
-                  na_feedback_current = na_feedback_current / 
+                  na_feedback_current = na_feedback_current /
      &                 vol_feedback
 
                case (3) ! nesepm electron density
 
                   if(ncall.eq.0) then
-                     write(*,*) 
+                     write(*,*)
      &                    'b2stbc_fb_pre_choice: using ',
      &                    'nesepm_electron_density for sequence ',
      &                    ispecies+1
@@ -1665,7 +1668,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   na_feedback_current = na_feedback_current/sum_e
 
                case default
-                  write(*,*) 'na feedback_choice not coded ', 
+                  write(*,*) 'na feedback_choice not coded ',
      &                 na_feedback_choice(ispecies)
 
                end select
@@ -1679,22 +1682,22 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                case (1) ! rescale slowed by na_feedback_alpha
 
                   if(ncall.eq.0) then
-                     write(*,*) 
+                     write(*,*)
      &                    'b2stbc_fb_pre_option: using ',
      &                    'slowed_rescale for sequence ',
      &                    ispecies+1
                   endif
 
-                  na_feedback_rescale = 
-     &                 (1.0_R8 + na_feedback_alpha(ispecies) * 
+                  na_feedback_rescale =
+     &                 (1.0_R8 + na_feedback_alpha(ispecies) *
      &                 na_feedback_target(ispecies) /
-     &                 na_feedback_current) / 
+     &                 na_feedback_current) /
      &                 (1.0_R8 + na_feedback_alpha(ispecies))
 
                case (2) ! pure rescale
 
                   if(ncall.eq.0) then
-                     write(*,*) 
+                     write(*,*)
      &                    'b2stbc_fb_pre_option: using ',
      &                    'rescale for sequence ',
      &                    ispecies+1
@@ -1706,7 +1709,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                case (3) ! rescale slowed by tanh_log
 
                   if(ncall.eq.0) then
-                     write(*,*) 
+                     write(*,*)
      &                    'b2stbc_fb_pre_option: using ',
      &                    'tanh_log_rescale for sequence ',
      &                    ispecies+1
@@ -1829,7 +1832,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
      &               na_feedback_alpha(ispecies) * na_feedback_current
 
                case default
-                  write(*,*) 'na feedback_option not coded ', 
+                  write(*,*) 'na feedback_option not coded ',
      &                 na_feedback_option(ispecies)
 
                end select
@@ -1849,13 +1852,13 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                case (1) ! gas puff via boundary condition
 
                   if(ncall.eq.0) then
-                     write(*,*) 
+                     write(*,*)
      &                    'b2stbc_fb_pre_actuator: using ',
      &                    'gas_puff for sequence ',
      &                    ispecies+1
                   endif
 
-                  if(feedback_namelist_used .and. 
+                  if(feedback_namelist_used .and.
      &                 ncall .eq. 0 .and.
      &                 saved_na_feedback_actuator(ispecies) .eq. 0.0_R8)
      &                 saved_na_feedback_actuator(ispecies) =
@@ -1863,42 +1866,42 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
 
                   if (na_feedback_option(ispecies).lt.4) then
                     saved_na_feedback_actuator(ispecies) =
-     &                 saved_na_feedback_actuator(ispecies) * 
+     &                 saved_na_feedback_actuator(ispecies) *
      &                 na_feedback_rescale
                   else
                     saved_na_feedback_actuator(ispecies) =
      &                 na_feedback_rescale
                   end if
-                  if(na_feedback_puff_min(ispecies) .gt. 0.0_R8) 
+                  if(na_feedback_puff_min(ispecies) .gt. 0.0_R8)
      &                 saved_na_feedback_actuator(ispecies) =
-     &                 max(na_feedback_puff_min(ispecies), 
+     &                 max(na_feedback_puff_min(ispecies),
      &                 saved_na_feedback_actuator(ispecies))
-                  if(na_feedback_puff_max(ispecies) .gt. 0.0_R8) 
+                  if(na_feedback_puff_max(ispecies) .gt. 0.0_R8)
      &                 saved_na_feedback_actuator(ispecies) =
-     &                 min(na_feedback_puff_max(ispecies), 
+     &                 min(na_feedback_puff_max(ispecies),
      &                 saved_na_feedback_actuator(ispecies))
 
                   if(na_feedback_overshoot(ispecies) .gt. 1.0_R8 .and.
-     &                 na_feedback_current .gt. 
-     &                 na_feedback_target(ispecies) * 
+     &                 na_feedback_current .gt.
+     &                 na_feedback_target(ispecies) *
      &                 na_feedback_overshoot(ispecies)) then
-                     conpar(is_start, na_feedback_ib(ispecies), 1) = 
+                     conpar(is_start, na_feedback_ib(ispecies), 1) =
      &                    0.0_R8
                   else
-                     conpar(is_start, na_feedback_ib(ispecies), 1) = 
+                     conpar(is_start, na_feedback_ib(ispecies), 1) =
      &                 saved_na_feedback_actuator(ispecies)
                   endif
 
                case (2) ! rescale na
 
                   if(ncall.eq.0) then
-                     write(*,*) 
+                     write(*,*)
      &                    'b2stbc_fb_pre_actuator: using ',
      &                    'rescale for sequence ',
      &                    ispecies+1
                   endif
 
-                  na(:,:,is_start:is_end) = na(:,:,is_start:is_end) * 
+                  na(:,:,is_start:is_end) = na(:,:,is_start:is_end) *
      &                 na_feedback_rescale
 
                case (3) ! core boundary flux condition
@@ -1949,7 +1952,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
                   end do
 
                case default
-                  write(*,*) 'na feedback_choice not coded ', 
+                  write(*,*) 'na feedback_choice not coded ',
      &                 na_feedback_choice(ispecies)
 
                end select

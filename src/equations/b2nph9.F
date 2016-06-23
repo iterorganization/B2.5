@@ -74,7 +74,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is
       real (kind=R8) ::
-     *   rxg, pcm0, pcm1, t0
+     *   rxg, pcm0, pcm1
       real (kind=R8) ::
      * aa9(-1:nx,-1:ny,-6:6), wrkf(-1:nx,-1:ny,0:1),                   !srv 02.01.07
      1 wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                  !srv 02.01.07
@@ -198,7 +198,7 @@
 *     (first ignore equipartition)
 *   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
       shef = she0
-*   ..save final ion heat source igniting equipartition
+*   ..save final ion heat source ignoring equipartition
       shif = shi0                                                       !srv 10.11.02 }
       call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
       call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)

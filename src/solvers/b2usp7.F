@@ -41,7 +41,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k             !srv 26.01.00
       integer, save :: iout = 0                                    !srv 08.07.08
-      character charns*3, chark*1                                  !srv 08.07.08
+      character chark*1                                            !srv 08.07.08
       integer ireg, ileft, ibot, itop
       real (kind=R8) :: vis_per                                    !srv 27.01.00
       save ncall, vis_per                                          !srv 27.01.00
@@ -230,7 +230,7 @@ cxpb
       enddo
 
 *   ..solve the correction equation
-      call b2ux7p (nx, ny, aa7, itcnt, respo, corpo, 'b2usp7')        !sv 11.01.00
+      call b2ux7p (nx, ny, aa7, itcnt, respo, corpo, 'b2usp7')      !sv 11.01.00
 
       if (iout.ne.0) then                                           !sv 08.07.08 {
         do k=0,3

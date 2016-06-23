@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2news_(nx, ny, ns, nscx, iscx, ismain, ismain0,
-     &  natm, nmol, nion, nlim, nsts, itim, dtim, rxf, ierr) !srv 23.11.10
+     &  dtim, rxf, ierr) !srv 23.11.10
       use b2mod_types
       use b2mod_geo
       use b2mod_plasma
@@ -20,8 +20,7 @@
       use b2mod_time
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nscx, iscx(0: nscxmax-1), ismain, ismain0,
-     *   natm, nmol, nion, nlim, nsts, itim            !srv 09.07.04 23.11.10
+      integer nx, ny, ns, nscx, iscx(0: nscxmax-1), ismain, ismain0
       real (kind=R8) ::
      *   dtim, rxf
 *   ..output arguments                                                   !xpb
@@ -68,7 +67,6 @@
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,       !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
-      integer, save :: coriolis = 0
       real (kind=R8) ::
      *   potok
       integer ncall, n2, is, ier0, i, ix, iy, ireg
@@ -106,16 +104,16 @@
      &  b2scopy, b2saxpy, b2sasum, ipgeti
       external b2xvsg, b2xvps, b2xpne, b2xpni, b2xpfe, b2xpfi, b2xppb,
      &  b2xpnm, b2tral, b2trql, b2treq, b2tfnb, b2tfhe, b2tfhi,
-     &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2npp7, b2xppz   !srv 06.07.00 18.01.02
+     &  b2npmo, b2npco, b2nppo, b2npht, b2nxdp, b2tfcc, b2npp7, b2xppz !srv 06.07.00 18.01.02
 *   ..initialization
       data ncall/0/, xfm0/1.0e0_R8/, xfm1/1.0e0_R8/, xfm2/1.0e0_R8/,
-     1   xfm3/1.0e0_R8/, potit/50/, potok/1e-2_R8/, area_fix/3/,         !srv 09.07.99 09.03.09
-     2   vis_per/0.0e0_R8/, no_current/0/                                !srv 06.07.00
+     1   xfm3/1.0e0_R8/, potit/50/, potok/1e-2_R8/, area_fix/3/,      !srv 09.07.99 09.03.09
+     2   vis_per/0.0e0_R8/, no_current/0/                             !srv 06.07.00
 !     2 ,facdrift/0.0e0_R8/, facdrift_target/0.0e0_R8/, facdrift_start/0.0e0_R8/, !srv 09.07.99
-!     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                   !srv 09.07.99
+!     3 facdrift_inc/0.0e0_R8/, facdrift_dec/0.0e0_R8/                 !srv 09.07.99
       integer, save :: no_neutr_scl = 0, no_b2sral_call = 1
       integer, save :: do_2nd_b2npco_call = 0
-      integer, save :: re_eval_prtls_fluxes = 0                          !srv 28.06.13
+      integer, save :: re_eval_prtls_fluxes = 0                       !srv 28.06.13
       integer, save :: nhist = 0, neutr_avg = 0, nrelax = 0, nstg2 = 0
       integer, save :: use_eirene = 0
 *
@@ -130,7 +128,7 @@
        nsmin=0
        nsmax=ns
        call ipgetr ('b2news_BoRiS', BoRiS)
-       call ipgeti ('b2ux7p_style', style)                               !srv 29.05.02
+       call ipgeti ('b2ux7p_style', style)                            !srv 29.05.02
        call ipgetr ('b2news_xfm0', xfm0)
        call ipgetr ('b2news_xfm1', xfm1)
        call ipgetr ('b2news_xfm2', xfm2)
@@ -184,7 +182,6 @@
        call ipgeti ('b2npht_iout', iout_b2npht)                          !srv 16.07.10 }
 !       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
        call ipgeti ('b2news_guard_flows', guard_flows)                   !xpb
-       call ipgeti ('b2news_coriolis', coriolis)
        call ipgeti ('b2news_area_fix', area_fix)                         !srv 09.03.09
        call ipgeti ('b2news_no_solve', no_solve)                         !srv 02.07.08 {
        call xertst (-15.le.no_solve.and.no_solve.le.1,
@@ -409,21 +406,12 @@ c   extra call at this place within internal iteration)
 
 csw 11oct2012 added check on coriolis force (taken from b2news())
       ier0=0
-      if(coriolis.eq.0) then
-        call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,
-     &   qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                     !srv 01.07.09
-     &   na, te, ti, po, fna,
-     &   cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                       !srv 02.07.08
-     &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,
-     &   resmo, resmt, corua, corut, pcca, pccm, ier0)
-      else
-        call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,
+      call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,
      &   qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                     !srv 23.07.99 09.01.01 01.07.09
      &   na, te, ti, po, fna_fcor, 
      &   cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                       !srv 19.07.02
      &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,            !srv 23.07.99 01.10.99 04.10.99 09.01.01
      &   resmo, resmt, corua, corut, pcca, pccm, ier0)                   !srv 23.07.99 10.11.02 23.12.03
-      endif
 
       call xertst (ier0.eq.0, 'error return from b2npmo') 
 #ifdef BLOCK
@@ -599,7 +587,7 @@ csw 16oct2012 init ier0
 *   ..iterate several times on the potential equation
         i=0
         t0=1.0e40_R8
-        do while(i.le.potit.and.t0.gt.potok)
+        do while(i.le.potit.and.t0.gt.potok.and.solving(3))
 *    ..compute current
 !          call b2tcpa (nx, ny, te, po, ne, csig_cl, calf_cl, fch_p)  !!!???
           call b2xpfe (nx, ny, ns, ns_ext, qe, 
@@ -612,8 +600,11 @@ csw 16oct2012 init ier0
      &     fch, fhe, fhe_mdf, fhePSch, conc,  avisper, bvisper, cvisper, !srv 05.07.00 13.10.06
      &     floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,       !srv 30.09.02
      &     fchvisq, fchinert, fchanml)                                   !srv 07.07.99 11.07.99 22.11.99 24.03.07
+          call b2xpen (nx, ny, ns,
+     1     fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
+     2     fhm, fhp, fhj, fht)
 *    ..perform iteration
-          t0=0
+          t0=0.0_R8
           if (i.eq.0) then
            if (vis_per.eq.0.0e0_R8) then                                 !srv 06.07.00
             new_matrix = .false.
@@ -705,7 +696,7 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
           i=i+1
         enddo
 
-        if(i.gt.potit) then
+        if(i.gt.potit.and.solving(3)) then
           ierr=10
 !          write(*,*) 'Potential equation not converging'                !srv 09.07.99
 !          facdrift=max(facdrift*facdrift_dec,facdrift_start)            !srv 09.07.99
@@ -734,6 +725,9 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  fhi, fhi_mdf, fhiPSch, floi, coni)                               !srv 13.10.06
        floi_noc = floi                                                   !srv 24.10.02
        floe_noc = floe                                                   !srv 24.10.02
+      call b2xpen (nx, ny, ns,
+     1 fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
+     2 fhm, fhp, fhj, fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni
       call b2tfcc (nx, ny, ns, na, te, ti, cdpa, floe, cone,
      &  floi, coni)

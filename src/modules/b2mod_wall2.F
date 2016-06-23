@@ -84,7 +84,6 @@ cxpb element: xymap1(ix,iy)
       subroutine alloc_b2mod_wall2(ns1,natm1,nmol,nion,ndepth1)
       implicit none
       integer ns1, natm1, nmol, nion, ndepth1
-      logical errdim
       external subini, subend, xertst
 
       call subini('b2mod_wall2')

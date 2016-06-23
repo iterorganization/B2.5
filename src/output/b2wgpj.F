@@ -177,7 +177,7 @@
       endif
 *   ..make log-contour plots of electron pressure
       if (strmas(idout,'cppe')) then
-       call b2xppe (nx, ny, ns, ne, te, wrk0)
+       call b2xppe (nx, ny, ne, te, wrk0)
        write (header,fmtl) 'ELECTRON PRESSURE (N/m**2).'
        write (nprt,fmtp) '+cppe', header
        call b2wgxq (nx, ny, header, xc, xf, yc, yf, wrk0, 0, 1.0_R8)

@@ -44,21 +44,21 @@
 
 *   ..common blocks
 *   ..local variables
-      integer ncall, iout, is, ix, iy, ic, ib, iw, iout_iout_ASTRA   !srv 05.10.01 03.04.13 19.04.13
+      integer ncall, iout, is, ix, iy, ib, iw, iout_iout_ASTRA     !srv 05.10.01 03.04.13 19.04.13
       integer n2, jsep, jxi, jxa, ndat, k, mintopcut, ixx,         !srv 12.07.10
-     *        js, nxtl, nxtr, ix1, ix2                             !iyv 04.02.11
+     *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
       integer use_astra
       integer, save :: ishift=0                                    !srv 05.11.09
       real (kind=R8) ::                                            !srv
      *  Total_current(-1:ny), B0out, Total_flux(-1:ny),            !srv 31.08.00 19.02.02
      *  Total_abscurrent(-1:ny), Total_absflux(-1:ny),
-     *  Total_energy_flux_i(-1:ny), Total_energy_flux_e(-1:ny), !srv 23.11.00
-     *  wrk2(-1:nx,-1:ny), wrk3(-1:nx,-1:ny),                   !srv 23.11.00
-     *  Total_energy_flux(-1:ny), power,                        !srv 23.11.00
+     *  Total_energy_flux_i(-1:ny), Total_energy_flux_e(-1:ny),    !srv 23.11.00
+     *  wrk2(-1:nx,-1:ny), wrk3(-1:nx,-1:ny),                      !srv 23.11.00
+     *  Total_energy_flux(-1:ny), power,                           !srv 23.11.00
      *  Total_energy_flux_mdf(-1:ny),
      *  Total_energy_flux_i_mdf(-1:ny),
      *  Total_energy_flux_e_mdf(-1:ny),
-     *  kintmp,
+!     *  kintmp,
      *  sfuadia(-1:ny,0:ns-1), sfvadia(-1:ny,0:ns-1), 
      *  sfvaecrb(-1:ny,0:ns-1), sfna(-1:ny,0:ns-1),
      &  sfna_mdf(-1:ny,0:ns-1), sfn(-1:ny), sfn_mdf(-1:ny),
@@ -69,7 +69,7 @@
       real (kind=R8) ::  bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
      &     cr(4*(ny+1)+1), dseval, wdim(8*ns)                      !srv 03.04.13
       real (kind=R8) ::
-     *     hlp_ppwi, hlp_ppwo, hlp, hlp_s, hlp_neu_peak, s
+     *     hlp, hlp_s, s
       real (kind=R8)  ::                                           !iyv 15.10.09 
      *   qe_out_sum, qi_out_sum, q_out_sum,                        !iyv 04.02.11
      *   qe_inn_sum, qi_inn_sum, q_inn_sum, 
@@ -79,10 +79,13 @@
       character chns*3                                             !srv 27.04.01
       character(23) hlp_frm                                        !srv 03.04.13
       character*26 boundary_location(nbcd)
+#ifdef B25_EIRENE
+      integer js
+      real (kind=R8), save :: hlp_neu_peak
+      data hlp_neu_peak / 5.0_R8 /                                 !iyv 15.10.09
+#endif
 *   ..procedures
       external subini, subend, ipgeti, machsfr
-      real (kind=R8)  ::                                           !srv
-     *   con, flo, dif                                             !srv
 *   ..procedures                                                   !srv
       intrinsic max, abs                                           !srv
       real (kind=R8) ::                                            !srv
@@ -90,9 +93,8 @@
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
 *   ..initialisation
-      save ncall, iout, use_astra, hlp_neu_peak
+      save ncall, iout, use_astra
       data ncall/0/, iout/0/, use_astra/0/
-      data hlp_neu_peak / 5.0_R8 /                                 !iyv 15.10.09
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -1566,10 +1568,10 @@ c     calculate coordinates of cell centre
 
       endif              !srv   endif for iout=2        !srv 06.05.09 }
 
-	if(iout.eq.3) then
+      if(iout.eq.3) then
 
 
-	endif
+      endif
 
 * ..return
       ncall = ncall+1

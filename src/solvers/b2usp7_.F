@@ -120,10 +120,14 @@
 
       do iy = -1, ny
        do ix = -1, nx                                                 !sv 26.11.02
-         ixt = topix(ix,iy)
-         iyt = topiy(ix,iy)
-         ixb = bottomix(ix,iy)
-         iyb = bottomiy(ix,iy)
+        ixt = topix(ix,iy)
+        iyt = topiy(ix,iy)
+        ixb = bottomix(ix,iy)
+        iyb = bottomiy(ix,iy)
+        if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1) then        !sv 26.11.02
+         aa7(ix,iy, 3) = 0.0e0_R8                                     !sv 27.01.00
+         aa7(ix,iy,-3) = 0.0e0_R8                                     !sv 27.01.00
+        else
          if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1.or.
      &      iyt.eq.ny+1 .or. iyb.eq.-2) then                          !sv 26.11.02
            aa7(ix,iy, 3) = 0.0e0_R8                                   !sv 27.01.00
@@ -222,7 +226,7 @@
       endif                                                           !sv 08.07.08 }
 
 *   ..solve the correction equation
-      call b2ux7p (nx, ny, aa7, itcnt, respo, corpo, 'b2usp7_')       !sv 11.01.00
+      call b2ux7p (nx, ny, aa7, itcnt, respo, corpo, 'b2usp7_')        !sv 11.01.00
 
 * ..return
       ncall = ncall+1

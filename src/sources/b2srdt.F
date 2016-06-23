@@ -49,7 +49,7 @@
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
-     *   phm0, phm1, phm3, phm4, phm5, t0, ttim, ttf
+     *   phm0, phm1, phm3, phm4, phm5, t0, ttim
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
       save ncall, phm0, phm1, phm3, phm4, phm5, use_eirene           !xpb
 *   ..procedures

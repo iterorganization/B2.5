@@ -71,20 +71,21 @@
 *.declarations
 
 *   ..local variables
-      integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k, ia, im, iih
+      integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k
       integer, save :: jxi, jxa, jsep
-      integer, save :: ihist = 0                                     !IYS 29.03.2012
       integer, save :: no_b2stbr_phys_call=0
       integer, save :: out_tfiles = 0                                !srv 07.04.09
       integer, save :: iout = 0,        iout_b2npmo = 0,             !srv 11.09.09 {
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
-     &                 ncall_iout = -1,                              !srv 23.03.12
-     &                 nhist = 1                                     !IYS 28.03.12
+     &                 ncall_iout = -1                               !srv 23.03.12
+#ifdef B25_EIRENE
+      integer ia, im
+      character ch3*3
+#endif
       real (kind=R8), save :: recycled_neutrals_contr = 1.0_R8       !srv 12.04.08
-      character chns*3, chk*1, ch3*3                                 !srv 11.09.09 } 23.03.12
-      integer nx_tmp, ny_tmp, ns_tmp
+      character chns*3, chk*1                                        !srv 11.09.09 } 23.03.12
       real (kind=R8) ::
      *  lnorm, tchem(0:ns-1), tchee(0:ns-1), tphys(0:ns-1),
      *  tphye(0:ns-1), thevp(0:ns-1), thvpe(0:ns-1), tresn(0:ns-1),
@@ -117,7 +118,7 @@
      *  old_erosion(:,:), old_deposition(:,:)
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
-      logical catch_up, new_sputter_namelist, wall_namelist_used
+      logical new_sputter_namelist
       logical equilibrium(ntrack), over_erosion
 #ifndef NO_CDF
 #include <netcdf.inc>
@@ -579,8 +580,9 @@ c   --> better solution wanted here..
           write (chns,'(i3.3)') is
           write (ch3 ,'(i3.3)') ncall
           if(.not.is_neutral(is)) then
-           call my_out(70,nx,ny,sna0_eir(:,:,0,is)+sna0_eir(:,:,1,is)* 
-     &                    na(:,:,is),'b2stbr_sna_eir'//chns//'_'//ch3)
+           wrk0=sna0_eir(:,:,0,is)+
+     &          sna0_eir(:,:,1,is)*na(:,:,is)
+           call my_out(70,nx,ny,wrk0,'b2stbr_sna_eir'//chns//'_'//ch3)
           endif
          enddo
         endif
@@ -592,16 +594,19 @@ c   --> better solution wanted here..
         if (use_astra.ne.0) then
           do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {
             if(is.eq.ismain) then
-              call b2_to_astra_src(nx, ny, vol, sna0_eir(:,:,0,is)+
-     &         sna0_eir(:,:,1,is)*na(:,:,is), svol, se)
+              wrk0=sna0_eir(:,:,0,is)+
+     &             sna0_eir(:,:,1,is)*na(:,:,is)
+              call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
             endif
           enddo                                                           !srv 28.07.11 20.02.12 }
-          call b2_to_astra_src(nx, ny, vol, she0_eir(:,:,0)+
+          wrk0=she0_eir(:,:,0)+
      &     she0_eir(:,:,1)*te(:,:)+she0_eir(:,:,2)*ne+
-     &     she0_eir(:,:,3)*ne*te, svol, seh)                            !srv 11.06.13
-          call b2_to_astra_src(nx, ny, vol, shi0_eir(:,:,0)+
+     &     she0_eir(:,:,3)*ne*te
+          call b2_to_astra_src(nx, ny, vol, wrk0, svol, seh)              !srv 11.06.13
+          wrk0=shi0_eir(:,:,0)+
      &     shi0_eir(:,:,1)*ti+shi0_eir(:,:,2)*ni(:,:,0)+
-     &     shi0_eir(:,:,3)*ni(:,:,0)*ti, svol, sih)                     !srv 11.06.13
+     &     shi0_eir(:,:,3)*ni(:,:,0)*ti
+          call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
         endif
 #endif	                       
         do ia = 1, natm
@@ -791,7 +796,7 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
          if(.not.is_neutral(is)) then
           do k=0,1 ! 3                                                  !srv 29.04.10 {
            write (chk,'(i1)') k
-            call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
+           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
      *              'b2stbr_smo_eir'//chk//chns)
           enddo
           wrk0=smo0_eir(:,:,0,is)+
@@ -959,7 +964,7 @@ c        write(*,*) 'Called neutr_scl'
 
 *   ..local variables
       integer nx_tmp, ny_tmp, ns_tmp
-      integer itargsp, is, istra
+      integer is, istra
       integer use_eirene, neutrals_namelist
       integer sput_src, sput_chem_model
       real (kind=R8) :: sput_frc

@@ -27,7 +27,7 @@
 *     (none)
 *   ..common blocks
 *   ..local variables
-      integer ix, iy, is, idum(0:9), k, nscx, iscx(0:nscxmax-1), ismain
+      integer is, idum(0:9), k, nscx, iscx(0:nscxmax-1), ismain
       integer itim, itcnt, n2
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80, line*500
@@ -98,14 +98,14 @@
       call b2ruzd (ninp(3), b2fstate_version,
      &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
-      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,		 !xpb
+      call b2rups (ninp(3), nx, ny, ns, ne, na, ua, uadia, te,         !xpb
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
-     &	b2fstate_version)
+     &  b2fstate_version)
 *   ..test plasma state and fluxes
       call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)

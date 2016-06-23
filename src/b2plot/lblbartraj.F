@@ -12,6 +12,7 @@ C =====================================================================
       INTEGER I, ICOL, NOZ, NOZM, NFMTZ
       REAL CEIL, FLOOR
       EXTERNAL CEIL, FLOOR
+      INTRINSIC LOG10
 
       INTEGER LFIN(100)
       CHARACTER*20 LBLS(100)

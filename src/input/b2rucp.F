@@ -271,7 +271,7 @@
 *.declarations
 
 *   ..local variables
-      integer ireg, is, idum(0:9)
+      integer ireg, idum(0:9)
 *   ..procedures
       external subini, subend, xertst, cfruin, cfrure
       external b2xvcp, b2ruzd

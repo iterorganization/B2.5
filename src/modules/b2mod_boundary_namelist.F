@@ -210,10 +210,10 @@ cxpb overwrite the defaults with the namelist data
       return
       end subroutine initialize_b2mod_boundary
 
-      subroutine catchup_b2mod_boundary(tim)
+      subroutine catchup_b2mod_boundary(nx,ny,ns,tim)
       implicit none
-      real (kind=R8) :: tim
       integer :: nx, ny, ns
+      real (kind=R8) :: tim
 
       if(boundary_time_mod.gt.0.0_R8) then
          write(*,'(a,1p,3(1x,e14.7),2i4)') 
@@ -238,9 +238,6 @@ cxpb overwrite the defaults with the namelist data
       subroutine alloc_b2mod_boundary(nxd,nyd,nsd,nbcd_in,nnisod_in)
       implicit none
       integer nxd, nyd, nsd, nbcd_in, nnisod_in, ix, iy
-#ifndef ALLOCATE_AND_NAMELIST
-      external xertst
-#endif
 
 #ifdef ALLOCATE_AND_NAMELIST
       NBCD=nbcd_in
@@ -393,12 +390,11 @@ cxpb Have to do this here already in case the namelist is not used
       end subroutine dealloc_b2mod_boundary
 
       subroutine read_b2mod_boundary_namelist(nx, ny, ns, dotest)
-      Implicit None
+      implicit none
       integer nx, ny, ns
       logical dotest
       integer is, ib, ic, ix, iy, ixx, iyy
-      logical covered, corner, guard_cell, found, side
-      external xertst, xerrab
+      logical covered, corner, guard_cell, found
 
       logical :: file_ok, todo, assigned
       logical, allocatable :: old_style(:), done(:)

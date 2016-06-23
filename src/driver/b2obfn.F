@@ -74,9 +74,9 @@
       logical(4) ::  lresult
 #endif
       logical(4) ::  b2fstate_exist
-      integer iy, npoint
-      real (kind=R8) :: cpu_s, cpu_f, x05baf, dseval,                 !srv 26.04.09
-     & nemod, temod, timod, dif, fcain, fab, shift(1:2)
+      integer npoint
+      real (kind=R8) :: cpu_s, cpu_f, x05baf,                           !srv 26.04.09
+     & dif, fcain, fab, shift(1:2)
       character*12 hlp_frm
 *   ..procedures
       external subini, subend

@@ -84,17 +84,18 @@
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
-      character chns*3, chk*1, ch*2                               !srv 11.07.05
+      character chns*3, chk*1                                        !srv 11.07.05
       character*15 hlp_frm
       integer, allocatable :: flux_x(:), flux_y(:)
       real (kind=R8), allocatable :: area(:)
+      real (kind=R8) :: wrk0(-1:nx,-1:ny)
       real (kind=R8) ::
      *   amtol, t0, t1, t2, t3, b2stbr_phys_sna(0:ns-1), 
      *   qin, qel, surface_temp,
      *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
      *   lnorm, deposition_error(ntrack), reflection_max, 
      *   redep_max, yself_max
-      logical l_chem_sput, lcore, match, found
+      logical l_chem_sput, lcore, match
       integer sput_dst_bulk
       parameter (amtol=1.0e-2_R8)
 *   ..procedures
@@ -546,65 +547,67 @@
         enddo
       endif
 
-	if (iout.eq.1 .or. iout_b2npmo.eq.1) then                   !srv 11.07.05 11.09.09 {
+      if (iout.eq.1 .or. iout_b2npmo.eq.1) then                   !srv 11.07.05 11.09.09 {
        do is = 0, ns-1
-	  write (chns,'(i3.3)') is
+	write (chns,'(i3.3)') is
 !	  do k=0,3
 !	   write (chk,'(i1)') k
 !	   call my_out(70,nx,ny,smo0(-1,-1,k,is),
 !     &                       'b2stbr_phys_smo'//chk//chns)
 !	  enddo
-	 call my_out(70,nx,ny,smo0(:,:,0,is)+
-     &        smo0(:,:,1,is)*ua(:,:,is)+
-     &        smo0(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &        smo0(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-     &        'b2stbr_phys_smo'//chns)
-	 enddo
-	endif
-	if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
+        wrk0=smo0(:,:,0,is)+
+     &       smo0(:,:,1,is)*ua(:,:,is)+
+     &       smo0(:,:,2,is)*na(:,:,is)*mp*am(is)+
+     &       smo0(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+	call my_out(70,nx,ny,wrk0,'b2stbr_phys_smo'//chns)
+       enddo
+      endif
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
        do is = 0, ns-1
-	  write (chns,'(i3.3)') is
+        write (chns,'(i3.3)') is
 !	  do k=0,1
 !	   write (chk,'(i1)') k
 !	   call my_out(70,nx,ny,sna0(-1,-1,k,is),
 !     &                       'b2stbr_phys_sna'//chk//chns)
 !	  enddo
-	 call my_out(70,nx,ny,sna0(:,:,0,is)+
-     &             sna0(:,:,1,is)*na(:,:,is),'b2stbr_phys_sna'//chns)
-	 enddo
-	endif
-	if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
+        wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
+	call my_out(70,nx,ny,wrk0,'b2stbr_phys_sna'//chns)
+       enddo
+      endif
+      if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
 !	 do k=0,3
 !	  write (chk,'(i1)') k
 !	  call my_out(70,nx,ny,she0(-1,-1,k),'b2stbr_phys_she'//chk)
 !	  call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbr_phys_shi'//chk)
 !	  call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbr_phys_sch'//chk)
 !	 enddo
-	 call my_out(70,nx,ny,she0(:,:,0)+she0(:,:,1)*te+
-     &   she0(:,:,2)*ne + she0(:,:,3)*te*ne,'b2stbr_phys_she')
-	 call my_out(70,nx,ny,shi0(:,:,0)+shi0(:,:,1)*ti+
-     &   shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0),
-     &   'b2stbr_phys_shi')
-	endif
-	if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)) then
-	 call my_out(70,nx,ny,sch0(:,:,0)+sch0(:,:,1)*po+
-     &   sch0(:,:,2)*ne+sch0(:,:,3)*po*ne(:,:),'b2stbr_phys_sch')
-	endif
-	if(iout.eq.1) then
-	 open(70,file='t_files.dat')
-        write (hlp_frm,'(a4,i4,a7)') '(a7,',ns,'es13.5)'              !srv 11.03.13 {  
-	  write(70,hlp_frm) ' tchem=',tchem
-	  write(70,hlp_frm) ' tchee=',tchee
-	  write(70,hlp_frm) ' tphys=',tphys
-	  write(70,hlp_frm) ' tphye=',tphye
-	  write(70,hlp_frm) ' thevp=',thevp
-	  write(70,hlp_frm) ' thvpe=',thvpe
-	  write(70,hlp_frm) ' trese=',trese
-	  write(70,hlp_frm) ' tresn=',tresn
-	  write(70,hlp_frm) ' trfln=',trfln
-	  write(70,hlp_frm) ' trfle=',trfle                             !srv 11.03.13 }  
-	 close(70)
-	endif                                                           !srv 11.07.05 }
+         wrk0=she0(:,:,0)+she0(:,:,1)*te+
+     &        she0(:,:,2)*ne + she0(:,:,3)*te*ne
+	 call my_out(70,nx,ny,wrk0,'b2stbr_phys_she')
+         wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
+     &        shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
+	 call my_out(70,nx,ny,wrk0,'b2stbr_phys_shi')
+      endif
+      if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)) then
+         wrk0=sch0(:,:,0)+sch0(:,:,1)*po+
+     &        sch0(:,:,2)*ne+sch0(:,:,3)*po*ne(:,:)
+	 call my_out(70,nx,ny,wrk0,'b2stbr_phys_sch')
+      endif
+      if(iout.eq.1) then
+        open(70,file='t_files.dat')
+        write (hlp_frm,'(a4,i4,a7)') '(a7,',ns,'es13.5)'               !srv 11.03.13 {
+        write(70,hlp_frm) ' tchem=',tchem
+        write(70,hlp_frm) ' tchee=',tchee
+        write(70,hlp_frm) ' tphys=',tphys
+        write(70,hlp_frm) ' tphye=',tphye
+        write(70,hlp_frm) ' thevp=',thevp
+        write(70,hlp_frm) ' thvpe=',thvpe
+        write(70,hlp_frm) ' trese=',trese
+        write(70,hlp_frm) ' tresn=',tresn
+        write(70,hlp_frm) ' trfln=',trfln
+        write(70,hlp_frm) ' trfle=',trfle                              !srv 11.03.13 }
+        close(70)
+      endif                                                            !srv 11.07.05 }
 
       if(reflection_max.gt.1.0_R8 .or. 
      .  ((main_call.and.output.ge.1).or.output.gt.1))
@@ -775,7 +778,7 @@ c-xpb  (sum of deposition), minimum depth over which material mixing occurs
           layer_depth(iwall)=layer_depth(iwall)+
      &       monolayer_deposition(iwall,itrack)*monolayer_l(itrack)
         enddo
-        call add_layer_thickness(nx,ny,ns,iwall)
+        call add_layer_thickness(ns,iwall)
         call compose_layer(iwall,sput_frac)
 c-xpb  Update layer mass density 
 c-xpb  with bulk and deposited contributions

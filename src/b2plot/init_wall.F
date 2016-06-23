@@ -16,7 +16,7 @@
 #endif
       implicit none
 
-      integer nx, ny, ns, natm, nmol, nion, nlim, nsts
+      integer nx, ny, ns
       real (kind=R8) :: BoRiS
 
       integer ix, iy, is, ixn, iyn, idir, ireg
@@ -31,7 +31,7 @@
      *  sput_frac(0:ntrack), wrk(ndepth_nml)
       character*16 hlp_frm
       logical wall_namelist_used, default_cooling, correct_quadrant
-      logical todo, found, error
+      logical error
 
       integer, save :: hd_linlog, output, sput_frac_flag,
      *  sput_phys_col, sput_phys_model, refl_model
@@ -493,7 +493,7 @@ c mixed materials with layers
             layer_depth(ibnd)=layer_depth(ibnd)+
      &        monolayer_deposition(ibnd,itrack)*monolayer_l(itrack)
           enddo
-          call add_layer_thickness(nx,ny,ns,ibnd)
+          call add_layer_thickness(ns,ibnd)
         else if (sput_frac_flag.eq.0) then
 c no mixed materials
           layer_nconstituents(ibnd)=matsurf_nconstituents(ibnd)
@@ -892,7 +892,7 @@ cxpb Use 1-D equilibrium profile
 
       end subroutine init_wall
 
-      subroutine add_layer_thickness(nx,ny,ns,ibnd)
+      subroutine add_layer_thickness(ns,ibnd)
       use b2mod_types
       use b2mod_wall
       use b2mod_layer
@@ -900,11 +900,9 @@ cxpb Use 1-D equilibrium profile
       use b2mod_sputter
       use b2mod_indirect
       implicit none
-      integer nx, ny, ns, nz, ibnd
-      integer i, is, ix, iy, ibndm, ibndp, iend, itrack, icoat
-      real (kind=R8) :: normal_r, normal_z, dist,
-     .  nhalf_r, nhalf_z, sum,
-     .  sput_frac(0:ntrack)
+      integer ns, nz, ibnd
+      integer i, is, itrack, icoat
+      real (kind=R8) :: sum, sput_frac(0:ntrack)
       logical surface_only, found
       character*24 filename
       integer, save :: ncall, hd_linlog, sput_frac_flag
@@ -1566,7 +1564,6 @@ cxpb We must now test the intersection of side 41 with 5678
       use b2mod_types
       implicit none
       real (kind=R8) :: x1,y1,x2,y2,x3,y3,x4,y4
-      real (kind=R8) :: d2,d3,d4
       intrinsic abs, sqrt
 cxpb We aim to find if segment 12 intersects with segment 34
 

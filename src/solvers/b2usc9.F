@@ -133,27 +133,27 @@
 * ..compute the nine-point matrix
       do iy = -1, ny
        do ix = -1, nx
-        aa9(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+           !srv 13.10.06 {
-     &    abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))        !srv 13.10.06 }
+        aa9(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+              !srv 13.10.06 {
+     &    abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))          !srv 13.10.06 }
        enddo
       enddo
 
       do iy = -1, ny
-       do ix = -1, nx                                                !srv 26.11.02 {
+       do ix = -1, nx                                                  !srv 26.11.02 {
         if(leftix(ix,iy).eq.-2) then
           aa9(ix,iy,-1) = 0.0e0_R8
-        else                                                         !srv 26.11.02 }
+        else                                                           !srv 26.11.02 }
           t0 =  flob(ix,iy,0)/2 - (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy))
-     &        - conb(ix,iy,0,1)                                       !srv 13.10.06 
+     &        - conb(ix,iy,0,1)                                        !srv 13.10.06
           t1 = -flob(ix,iy,0)/2 - (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy))
-     &        - conb(ix,iy,0,2)                                       !srv 13.10.06
+     &        - conb(ix,iy,0,2)                                        !srv 13.10.06
           aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0*rscal(pb(ix,iy))
           aa9(ix,iy,0) = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))
           aa9(leftix(ix,iy),leftiy(ix,iy),0) = 
      &       aa9(leftix(ix,iy),leftiy(ix,iy),0)
      &       -t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
           aa9(ix,iy,-1) = t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
-	  endif                                                         !srv 26.11.02
+	endif                                                         !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8            !srv 26.11.02
        enddo
       enddo
@@ -161,8 +161,8 @@
       call sfill (nx+2, 0.0_R8, aa9(-1,-1,-3), 1)
       do iy = 0, ny
        do ix = -1, nx
-         t0 =  flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,1)     !srv 13.10.06
-         t1 = -flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,2)     !srv 13.10.06
+         t0 =  flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,1)    !srv 13.10.06
+         t1 = -flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,2)    !srv 13.10.06
          aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0*rscal(pb(ix,iy))
          aa9(ix,iy,0) = aa9(ix,iy,0)-t0*rscal(pb(ix,iy))
          aa9(bottomix(ix,iy),bottomiy(ix,iy),0) = 
@@ -194,26 +194,26 @@
       enddo
 
 *   ..solve the correction equation
-       call b2ux9p (nx, ny, aa9, itcnt, rescb, corpb, name) !srv 18.05.02
+      call b2ux9p (nx, ny, aa9, itcnt, rescb, corpb, name)             !srv 18.05.02
 *   ..redo the scaling
       do iy = -1, ny
        do ix = -1, nx
         corpb(ix,iy) = corpb(ix,iy)*rscal(pb(ix,iy))
        enddo
       enddo
-	if (iout.ne.0) then                                              !srv 17.06.02 {
-	 write (chns,'(i3.3)') isb    
-	  call my_out(70,nx,ny,aa9(-1,-1,-3),name//'_aa9m3'//chns)
-	  call my_out(70,nx,ny,aa9(-1,-1,-2),name//'_aa9m2'//chns)
-	  call my_out(70,nx,ny,aa9(-1,-1,-1),name//'_aa9m1'//chns)
-	  call my_out(70,nx,ny,aa9(-1,-1, 0),name//'_aa9cc'//chns)
-	  call my_out(70,nx,ny,aa9(-1,-1, 1),name//'_aa9p1'//chns)
-	  call my_out(70,nx,ny,aa9(-1,-1, 2),name//'_aa9p2'//chns)
-	  call my_out(70,nx,ny,aa9(-1,-1, 3),name//'_aa9p3'//chns)
-	  call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
-	  call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
-	  call my_out(70,nx,ny,nb,name//'_na'//chns)
-	endif                                                            !srv 17.06.02 }
+      if (iout.ne.0) then                                              !srv 17.06.02 {
+        write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,aa9(-1,-1,-3),name//'_aa9m3'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1,-2),name//'_aa9m2'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1,-1),name//'_aa9m1'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1, 0),name//'_aa9cc'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1, 1),name//'_aa9p1'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1, 2),name//'_aa9p2'//chns)
+        call my_out(70,nx,ny,aa9(-1,-1, 3),name//'_aa9p3'//chns)
+        call my_out(70,nx,ny,corpb,name//'_corpb'//chns)
+        call my_out(70,nx,ny,rescb,name//'_rescb'//chns)
+        call my_out(70,nx,ny,nb,name//'_na'//chns)
+      endif                                                            !srv 17.06.02 }
 
 * ..return
       ncall = ncall+1

@@ -33,14 +33,10 @@
 
 *   ..common blocks
 *   ..local variables
-      integer idum(0:9), ix, iy, i, ix1
-      integer nxiso1, nxiso2, nyiso1, nyiso2
+      integer idum(0:9), ix, iy, ix1
       character lblgm*120, idout*80
       real (kind=R8) ::
      *   parg(0:99)
-      integer istyle
-*   ..initialisation
-      data nxiso1/-2/, nxiso2/-2/, nyiso1/-2/, nyiso2/-2/
 *   ..procedures
       logical streql
       external xertst, xerrab, streql, cfwuin, cfwuch, cfwure

@@ -157,6 +157,7 @@ c 2002-09-11: logic revised
       integer mw_ix1, mw_ix2, mw_jxa, mw_jsep
       integer mw_jxa1, mw_jsep1
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch
+      integer coriolis
       integer nncut1, nnreg1(0:2), periodic_bc1
       integer scaling_ix_begin(nscale), scaling_ix_end(nscale)
       integer elm_ix_begin, elm_ix_end
@@ -165,9 +166,8 @@ c 2002-09-11: logic revised
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120,
      .          ligne*120
       character id0*8
-      character*8 eirene_format
       character*4 solps_version
-      data eirene_format / 'iter' /, solps_version / 'iter' /
+      data solps_version / 'iter' /
       data invert_bpol/0/, invert_btor/0/
       character*10 :: b2fgmtry_oldversion, b2fgmtry_newversion
       data b2fgmtry_oldversion / '00.000.000' /
@@ -199,7 +199,7 @@ c 2002-09-11: logic revised
      6 fna_321(:,:,:,:), fna_521(:,:,:,:),
      7 vaecrb1(:,:,:,:), vadia1(:,:,:,:), wadia1(:,:,:,:),
      8 sputter_yield_yt(:,:,:,:), sputter_yield2_yt(:,:,:,:),
-     9 sputter_tmp(:,:), cftmp(:), e_bundle_contr(:,:), epls_map(:,:),
+     9 sputter_tmp(:,:), cftmp(:),
      . bundle_contr(:,:), bundle_frac(:,:), x1data(:,:,:,:),
      1 s1data(:,:,:,:), t1data(:,:,:,:), eta_hce_mult1(:),
      2 recyc1(:,:), erecyc1(:,:), rcion1(:,:),
@@ -207,7 +207,7 @@ c 2002-09-11: logic revised
      4 r(:), f(:), dprof(:), felm(:), delm(:),
      5 px(:), pf(:), pelm(:),
      6 prdsa(:), pra(:), dsa(:), dsa1(:), deta(:),
-     7 pxdsa(:), pxa(:), xx(:), xf(:), x(:), fx(:), dx(:),
+     7 pxdsa(:), pxa(:), xx(:), x(:), fx(:), dx(:),
      8 sr1(:), sf1(:), sd1(:), sr2(:), sf2(:), sd2(:),
      9 spr(:), spf1(:), spf2(:), s1d(:,:,:,:),
      * xr1(:), xf1(:), xd1(:), xr2(:), xf2(:), xd2(:),
@@ -219,20 +219,19 @@ c 2002-09-11: logic revised
      6 na_feedback_const1(:), na_feedback_overshoot1(:),
      7 na_feedback_time1(:), gpdata1(:,:,:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps
-      integer ns1, nsm, nym, natmm, nwallm
+      integer ns1, nsm, nxm, nym, natmm, nwallm
       integer i, j, k, ix, iy, is, ib, ireg, len, nsns
-      integer ib1, ib2, ifl, js, ks, kmod, kint, itrack
+      integer ib1, ib2, ifl, js, ks, itrack
       integer natm1, nspecies1, iss
       integer itrack1, itrack2, itrack3
       integer non_commensurate
       integer istyle_cur_contr_on_S_and_N
       integer is0(0:DEF_NSD-1), is1(0:ns-1)
-      integer is1beginrange, is1endrange, iatmbeginrange, iatmendrange
+      integer is1beginrange, is1endrange
       integer, allocatable :: iatm1(:), ipls1(:), istra1(:)
       integer, allocatable :: istmp(:), ns1data(:,:,:), nx1data(:,:,:)
       integer, allocatable :: mlcmp1(:,:), ifl1(:), ispecies1(:)
       integer, allocatable :: b2espcr1(:), eb2spcr1(:), eb2ibcr(:)
-      integer, allocatable :: e_bundle_start(:), e_bundle_end(:)
       integer, allocatable :: n1data(:,:,:), ad1spec(:,:,:), isp1(:)
       integer, allocatable :: lstrascl1(:,:)
       integer, allocatable :: ngpdata1(:)
@@ -252,7 +251,6 @@ c 2002-09-11: logic revised
       integer targsp1(nstraid,ntrack)
       integer nxiso3(nnisod), nxiso4(nnisod)
       integer nyiso3(nnisod), nyiso4(nnisod)
-      integer ixa, ixb, iya, iyb
       integer nstrai1, nstrat1
 #ifdef B25_EIRENE
       integer IUNIN, IUNOT, INDGRD(3), NR1ST, NP2ND, NT3RD
@@ -272,15 +270,15 @@ c 2002-09-11: logic revised
       integer ISPL, IPROJ, NPLI1, NPLO1, NPLI2, NPLO2
       integer NPLIN2, NPLOT2, NPLDL2
       integer NCHORI, LNTSPEC, LNTSPUT, NLSTADDS, NGWTIES, NSNVI, NPWIN
-      integer iside, numpairs
+      integer kint, kmod, iside
       integer NTL, NFR
       integer IPOS0, IPOS1, IPOS2
       integer NPRCSF, IPRCSF
       integer MAXPOL, MAXTOR, MAXADD
-      integer NSPZ1
       integer NSIGI_BGK, NSIGI_COP, NSIGI_SPC
       integer NADMOD, NASMOD, NORMOD, IGEOUSR
       integer NSSIR, NSSIP, IR, IP
+      integer, allocatable :: e_bundle_start(:), e_bundle_end(:)
       integer, allocatable :: NPOINT(:,:), ILIIN(:), IHELP(:), IGJUM0(:)
       integer, allocatable :: IREAC1(:)
       integer, allocatable :: INDSRC(:)
@@ -345,6 +343,8 @@ c 2002-09-11: logic revised
      .                        ISCLA(:)
       real (kind=R8) :: rdum(0:17), RMN, RMX, ALLOC, MPTS
       real (kind=R8) :: zmin1, zmin2, zmax1, zmax2
+      real (kind=R8), allocatable :: e_bundle_contr(:,:)
+      real (kind=R8), allocatable :: epls_map(:,:)
       real (kind=R8), allocatable :: XPOL(:,:), YPOL(:,:)
       real (kind=R8), allocatable :: VOLCOR(:), VOLADD(:)
       real (kind=R8), allocatable :: RLB(:)
@@ -396,7 +396,7 @@ c 2002-09-11: logic revised
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat, rswitch,
      .  scaling_width(nscale), scaling_strength(nscale),
-     .  ixfb, iyfb, ixfb1, iyfb1,
+     .  ixfb, iyfb, ixfb1, iyfb1, xfrhie, xfrhiehz,
      .  elm_time_begin, elm_time_end, elm_time_period,
      .  sources_time_mod, sources_time_switch,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
@@ -423,7 +423,9 @@ c 2002-09-11: logic revised
       character HANDLE*6
       character FILNAM*8,H123*4,REAC*9,REAC2*50,CRC*3
       character ELNAME*2,REACSTR*11
+      character*8 eirene_format
       character*8 varname
+      data eirene_format / 'iter' /
       character*8, allocatable ::
      .  TEXTM(:), TEXTI(:), TEXTP(:), TEXTPH(:)
       character*8, allocatable :: TEXTP1(:)
@@ -435,12 +437,13 @@ c 2002-09-11: logic revised
       character*3, allocatable :: TDMCR(:,:), TDMCR1(:,:)
 #endif
       character*10, allocatable :: species_name(:)
-      logical ldum(0:60), found, ex, l_chem_sput, is_core_boundary
+      logical found, ex, l_chem_sput, is_core_boundary
       logical chemsp1(nstraid), savestratum(0:nstraid)
       logical time_dep_puff1(nstraid)
       logical, allocatable :: is_neutral1(:)
-      logical, allocatable :: savesigv(:), savesigs(:), savesigc(:)
 #ifdef B25_EIRENE
+      logical ldum(0:60)
+      logical, allocatable :: savesigv(:), savesigs(:), savesigc(:)
       logical, allocatable :: NLAVRP(:), NLAVRT(:), NLSYMP(:), NLSYMT(:)
       logical, allocatable :: NLRAY(:)
       logical, allocatable :: NLATM(:), NLMOL(:), NLION(:), NLPLS(:),
@@ -462,7 +465,10 @@ c 2002-09-11: logic revised
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
-      integer lnblnk, convert_position, len_of_digits, transform_tally
+      integer lnblnk, convert_position, len_of_digits
+#ifdef B25_EIRENE
+      integer transform_tally
+#endif
       integer conformal_convert, convert_eirene, b2idez
       real (kind=R8) :: cr, cz, cr1, cz1, rratio
       logical open_file, streql, is_comment
@@ -490,6 +496,7 @@ c 2002-09-11: logic revised
       data ix1/-1/, ix2/-1/, iy1/-1/, iy2/-1/
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
       data BoRiS/0.0_R8/, na0eps/0.0_R8/
+      data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
 *  ..namelists
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
      . sources_time_mod, sources_time_switch, sources_filename
@@ -884,8 +891,9 @@ c 2002-09-11: logic revised
       call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
       nsm=max(ns,ns1)
+      nxm=max(nx,nx1)
       nym=max(ny,ny1)
-      call alloc_input_profile(nym,nsm)
+      call alloc_input_profile(nxm,nym,nsm)
       allocate(am1(0:ns1-1))
       allocate(zn1(0:ns1-1))
       allocate(zamin1(0:ns1-1))
@@ -1141,6 +1149,9 @@ c 2002-09-11: logic revised
       call ipgeti ('b2tqna_mw_jsep', mw_jsep)
       call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N', 
      .                     istyle_cur_contr_on_S_and_N)
+      call ipgeti ('b2news_coriolis', coriolis)
+      call ipgetr ('b2tfnb_xfrhie', xfrhie)
+      call ipgetr ('b2tfnb_xfrhiehz', xfrhiehz)
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1162,7 +1173,7 @@ c 2002-09-11: logic revised
       todo = todo .or. found
       if (neutrals_namelist.eq.1.or.use_eirene.ne.0.or.todo) then
         call alloc_b2mod_neutrals
-     .   (nx, ny, ns, natm, nstraid, nsts, sput_dst)
+     .   (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
         call read_neutrals_namelist(nx, ny, ns, .false.)
         call xertst (nstrat.le.nstraid,
      .   'Increase DEF_NSTRA in DIMENSIONS.F')
@@ -1419,6 +1430,9 @@ c 2002-09-11: logic revised
         case('b2trcl_conductive limit')
           cnamip = 'b2trcl_conductive_limit'
           todo = .false.
+        case('b2news_coriolis')  ! Now obsolete, needs to be removed from the list
+          todo = .false.
+          wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
           todo = .false.
           wait = .true.  ! we wait till we have read b2.boundary.parameters
@@ -1444,6 +1458,17 @@ c 2002-09-11: logic revised
             cnamip = 'b2mndr_na_new'
           end if
           todo = .false.
+        case('b2tfnb_xfrhie')  ! Needs to be replaced by xfrhiehz value if coriolis=1
+          todo = coriolis.ne.0
+          if (todo) rswitch = xfrhiehz
+        case('b2tfnb_xfrhiehz') ! Needs to be rewritten as xfrhie if coriolis=1
+          todo = coriolis.ne.0
+          if (todo) then
+            rswitch = xfrhiehz
+            cnamip = 'b2tfnb_xfrhie'
+          else
+            wait = .true.
+          endif
         case default RSWITCHES
           todo = .false.
       end select RSWITCHES
@@ -6018,7 +6043,7 @@ cxpb  to see if some strata need to be removed
      .                       ISCLA(ISTRA)
           ISCLS(ISTRA) = transform_tally(IVLSF(ISTRA).eq.1,ISCLT(ISTRA),
      .      ISCLS(ISTRA),iatm1,ipls1,nphoti,natmi,nmoli,nioni,nplsi,
-     .                  natmi1,nplsi1)
+     .                  natmi1)
           READ (IUNIN,6665) NLATM(ISTRA),NLMOL(ISTRA),
      .                      NLION(ISTRA),NLPLS(ISTRA),
      .                      NLPHOT(ISTRA)
@@ -6327,7 +6352,7 @@ cxpb Read first, transform and rewrite
           READ (IUNIN,6666) IGH(J),IIH(J)
           IGH(J) = transform_tally(.true.,IIH(J),IGH(J),iatm1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nplsi1)
+     .                                 natmi1)
           savesigv(J) = IGH(J).NE.0
           if (savesigv(J)) NSIGV1 = NSIGV1 + 1
   913   CONTINUE
@@ -6336,7 +6361,7 @@ cxpb Read first, transform and rewrite
           READ (IUNIN,6666) IGHW(J),IIHW(J)
           IGHW(J) = transform_tally(.false.,IIHW(J),IGHW(J),
      .                              iatm1,ipls1,nphoti,natmi,nmoli,
-     .                              nioni,nplsi,natmi1,nplsi1)
+     .                              nioni,nplsi,natmi1)
           savesigs(J) = IGHW(J).NE.0
           if (savesigs(J)) NSIGS1 = NSIGS1 + 1
   914   CONTINUE
@@ -6345,10 +6370,10 @@ cxpb Read first, transform and rewrite
           READ (IUNIN,6666) IGHC(1,J),IIHC(1,J),IGHC(2,J),IIHC(2,J)
           IGHC(1,J) = transform_tally(.true.,IIHC(1,J),IGHC(1,J),
      .                                 iatm1,ipls1,nphoti,natmi,nmoli,
-     .                                 nioni,nplsi,natmi1,nplsi1)
+     .                                 nioni,nplsi,natmi1)
           IGHC(2,J) = transform_tally(.true.,IIHC(2,J),IGHC(2,J),
      .                                 iatm1,ipls1,nphoti,natmi,nmoli,
-     .                                 nioni,nplsi,natmi1,nplsi1)
+     .                                 nioni,nplsi,natmi1)
           savesigc(J) = IGHC(1,J).NE.0 .AND. IGHC(2,J).NE.0
           if (savesigc(J)) NSIGC1 = NSIGC1 + 1
   915   CONTINUE
@@ -6420,7 +6445,7 @@ cxpb Read first, transform and rewrite
             READ (ZEILE,6666) idum(0:3) ! IADVE(J),IADVS(J),IADVT(J),IADRC(J)
             idum(1) = transform_tally(.true.,idum(2),idum(1),
      .                                iatm1,ipls1,nphoti,natmi,nmoli,
-     .                                nioni,nplsi,natmi1,nplsi1)
+     .                                nioni,nplsi,natmi1)
             WRITE(IUNOT,6666) idum(0:3)
           ENDIF
           READ (IUNIN,'(A72)') ZEILE ! TXTTLA(J)
@@ -6440,7 +6465,7 @@ cxpb Read first, transform and rewrite
             READ (ZEILE,6666) idum(0:3) ! ICLVE(J),ICLVS(J),ICLVT(J),ICLRC(J)
             idum(1) = transform_tally(.true.,idum(2),idum(1),
      .                                iatm1,ipls1,nphoti,natmi,nmoli,
-     .                                nioni,nplsi,natmi1,nplsi1)
+     .                                nioni,nplsi,natmi1)
             WRITE(IUNOT,6666) idum(0:3)
           ENDIF
           READ (IUNIN,'(A72)') ZEILE ! TXTTLC(J)
@@ -6468,7 +6493,7 @@ cxpb Read first, transform and rewrite
 !!! must convert <i,j> : species i of volume tally j !!!
               idum(1) = transform_tally(.true.,idum(2),idum(1),
      .                                 iatm1,ipls1,nphoti,natmi,nmoli,
-     .                                 nioni,nplsi,natmi1,nplsi1)
+     .                                 nioni,nplsi,natmi1)
               IF (idum(1).lt.10) THEN
                 WRITE(CHRTAL(I+1:J-1),'(i1)') idum(1)
               ELSE
@@ -6505,7 +6530,7 @@ cxpb Read first, transform and rewrite
             READ (ZEILE,6666) idum(0:3) ! IADSE(J),IADSS(J),IADST(J),IADSC(J)
             idum(1) = transform_tally(.false.,idum(2),idum(1),
      .                                iatm1,ipls1,nphoti,natmi,nmoli,
-     .                                nioni,nplsi,natmi1,nplsi1)
+     .                                nioni,nplsi,natmi1)
             WRITE(IUNOT,6666) idum(0:3)
           ENDIF
           READ (IUNIN,'(A72)') ZEILE ! TXTTLW(J)
@@ -6533,7 +6558,7 @@ cxpb Read first, transform and rewrite
 !!! must convert <i,j> : species i of surface tally j !!!
               idum(1) = transform_tally(.false.,idum(2),idum(1),
      .                                  iatm1,ipls1,nphoti,natmi,nmoli,
-     .                                  nioni,nplsi,natmi1,nplsi1)
+     .                                  nioni,nplsi,natmi1)
               IF (idum(1).lt.10) THEN
                 WRITE(CHRTAL(I+1:J-1),'(i1)') idum(1)
               ELSE
@@ -6614,10 +6639,10 @@ cxpb Read first, transform and rewrite
           READ (IUNIN,6666) idum(0:4) ! NTLV,NFLGV,NSPZV1,NSPZV2,NTLVF
           idum(2) = transform_tally(.true.,idum(0),idum(2),iatm1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nplsi1)
+     .                                 natmi1)
           idum(3) = transform_tally(.true.,idum(0),idum(3),iatm1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nplsi1)
+     .                                 natmi1)
           WRITE(IUNOT,6666) idum(0:4)
  1120   CONTINUE
         READ (IUNIN,6666) NSURPR
@@ -6626,10 +6651,10 @@ cxpb Read first, transform and rewrite
           READ (IUNIN,6666) idum(0:4) ! NTLS,NFLGS,NSPZS1,NSPZS2,NTLSF
           idum(2) = transform_tally(.false.,idum(0),idum(2),iatm1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nplsi1)
+     .                                 natmi1)
           idum(3) = transform_tally(.false.,idum(0),idum(3),iatm1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nplsi1)
+     .                                 natmi1)
           WRITE(IUNOT,6666) idum(0:4)
  1130   CONTINUE
  1131   READ (IUNIN,'(A80)') ZEILE
@@ -6802,7 +6827,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
               ENDIF
               idum(1) = transform_tally(.true.,NTL,ISPL,iatm1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nplsi1)
+     .                                 natmi1)
               idum(2) = NTL
               idum(3) = convert_eirene
      .         (non_commensurate,2,NR1ST/2,NPLIN2,nx,ny,nx1,ny1,1)
@@ -6848,7 +6873,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
               NPLO2 = MIN(NP2ND,NPLO2)
               idum(1) = transform_tally(.true.,NTL,ISPL,iatm1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nplsi1)
+     .                                 natmi1)
               idum(2) = NTL
               IF (ldum(2)) THEN  ! LPRAD
                 idum(3) = convert_eirene(non_commensurate,
@@ -6961,7 +6986,7 @@ CVK DATA FOR POST-PROCESSING WINDOWS
                KINT = INT(idum(K)/100) ! PWTALLIE
                KMOD = transform_tally(.true.,KINT,KMOD,iatm1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nplsi1)
+     .                                 natmi1)
                idum(K) = kint*100 + kmod
              END DO
              WRITE(IUNOT,6666) (idum(k),k=1,idum(0))
@@ -6975,7 +7000,7 @@ CVK DATA FOR POST-PROCESSING WINDOWS
                  KINT = INT(idum(K)/100) ! PWTALLIE_D
                  KMOD = transform_tally(.false.,KINT,KMOD,iatm1,ipls1,
      .                                  nphoti,natmi,nmoli,nioni,nplsi,
-     .                                  natmi1,nplsi1)
+     .                                  natmi1)
                  idum(K) = kint*100 + kmod
                END DO
                WRITE(IUNOT,6666) (idum(k),k=1,idum(0))
@@ -7022,7 +7047,7 @@ C  SKIP READING REST OF THIS BLOCK
             IREAD=0
             idum(1) = transform_tally(.true.,idum(2),idum(1),
      .                                iatm1,ipls1,nphoti,natmi,nmoli,
-     .                                nioni,nplsi,natmi1,nplsi1)
+     .                                nioni,nplsi,natmi1)
             WRITE(IUNOT,6666) idum(0:3)
             READ (IUNIN,'(A72)') ZEILE ! TXTTAL(J,NTALT)
             WRITE(IUNOT,'(A72)') ZEILE
@@ -7217,7 +7242,7 @@ C  HERE: EIRENE SURFACE TALLIES
             READ (IUNIN,'(6I6)') idum(0:2) ! I,NAOTS(IAOT),NAOTT(IAOT)
             idum(1) = transform_tally(.false.,idum(2),idum(1),
      .                                iatm1,ipls1,nphoti,natmi,nmoli,
-     .                                nioni,nplsi,natmi1,nplsi1)
+     .                                nioni,nplsi,natmi1)
             WRITE(IUNOT,'(6I6)') idum(0:2)
  3050     CONTINUE
         ENDIF
@@ -8028,7 +8053,7 @@ cxpb as they no longer necessarily point to the same species
         call b2yt_wall_init(nncut1,nx1,ny1,nncut,nx,ny,nlim,nsts)
 *  ..convert some wall arrays
         if(wall_namelist_used) then
-          call b2yt_wall(nx1,ny1,nx,ny,ns,ns1,natm,natm1,nmol,nion,
+          call b2yt_wall(nx1,ny1,ns,ns1,natm,natm1,nmol,nion,
      .     is_neutral1,iatm1,bundle_frac,zn1,l_chem_sput,
      .     itrack1,itrack2,itrack3)
 *  ..write new wall namelist
@@ -9454,7 +9479,7 @@ cxpb We assign to the new bundle a weighted sum of the values from the old bundl
      . (npls,npls1,e_bundle_contr,rold,rnew,itype)
       use b2mod_types
       implicit none
-      integer npls, npls1, nplsm, itype
+      integer npls, npls1, itype
       integer ipls, ipls1
       real (kind=R8) :: e_bundle_contr(npls1,npls)
       real (kind=R8) :: rold(npls), rnew(npls1)
@@ -9501,7 +9526,7 @@ cxpb  itype = 3 : Inherit value from first old species
      . (npls,npls1,e_bundle_contr,iold,inew,itype)
       use b2mod_types
       implicit none
-      integer npls, npls1, nplsm, itype
+      integer npls, npls1, itype
       integer ipls, ipls1
       real (kind=R8) :: e_bundle_contr(npls1,npls)
       integer :: iold(npls), inew(npls1)
@@ -9647,7 +9672,7 @@ C
       integer function iatmendrange(ibegin,iend,natmi,natmi1,iatm1)
       implicit none
       integer ibegin, iend, natmi, natmi1
-      integer iatm1(0:natmi1-1)
+      integer iatm1(0:natmi-1)
       integer iatm
       intrinsic max
 
@@ -9662,6 +9687,7 @@ C
             iatmendrange = max(iatmendrange, iatm1(iatm))
           endif
         enddo
+        iatmendrange = min(iatmendrange, natmi1)
       endif
 
       return
@@ -9669,11 +9695,11 @@ C
 
       integer function transform_tally(lvol,itally,ispc,iatm1,ipls1,
      .                                 nphoti,natmi,nmoli,nioni,nplsi,
-     .                                 natmi1,nplsi1)
+     .                                 natmi1)
       implicit none
       logical lvol
       integer itally, ispc
-      integer nphoti,natmi,natmi1,nmoli,nioni,nplsi,nplsi1
+      integer nphoti,natmi,natmi1,nmoli,nioni,nplsi
       integer iatm1(natmi), ipls1(nplsi)
 
       IF (ispc.eq.0) THEN

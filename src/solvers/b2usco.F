@@ -37,7 +37,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop, k
+      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iout = 0                                       !srv 17.06.02
       character chns*3                                                !srv 17.06.02

@@ -55,7 +55,7 @@ c<<<
 c>>>
       data ib,ie,it/ntrgsx*0,ntrgsx*0,ntrgsx*0/
       intrinsic mod
-      external ipgeti, subini, subend, xerrab
+      external ipgetr, subini, subend, xerrab
 c======================================================================
       call subini ('b2pwlprp')
       call ipgetr ('b2agmt_1d_width', width)

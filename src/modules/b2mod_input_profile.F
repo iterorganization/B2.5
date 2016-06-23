@@ -34,9 +34,9 @@
 
       contains
 
-      subroutine alloc_input_profile(ny,ns)
+      subroutine alloc_input_profile(nx,ny,ns)
       implicit none
-      integer ny, ns
+      integer nx, ny, ns
 
 #ifdef ALLOCATE_AND_NAMELIST
       nrr = ny+2
@@ -52,6 +52,10 @@
         allocate(tdata(3,nrr,nkind_coeff,0:nss))
         allocate(addspec(nss,nkind_coeff,0:nss))
       endif
+#else
+      call xertst (nx.le.DEF_NXD, 'faulty input nx')
+      call xertst (ny.le.DEF_NYD, 'faulty input ny')
+      call xertst (ns.le.DEF_NSD, 'faulty input ns')
 #endif
 
       return
@@ -797,8 +801,7 @@ c*** Clear data to forget previous profiles
       real(kind=R8) :: pra(1:ny+2),prdsa(1:ny+2),r(nrr),pr(nrr),prtmp
       integer jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
       integer ixref, iyref
-      logical ex
-      external ipgeti, ipgetr, xertst, subini, subend
+      external ipgetr, subini, subend
       external output_ds, get_jsep
       save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
       data ncall/0/
@@ -878,14 +881,14 @@ c*** Clear data to forget previous profiles
       use b2mod_indirect
       use b2mod_geo
       implicit none
-      integer :: i,nx,ny,ifa,nxm
+      integer :: i,nx,ny,ifa
       integer :: nfitanf,nfitend,ndim,ndat,kind_data
       real(kind=R8) :: x(1:ndat),pr(-1:nxx-2)
       real(kind=R8) :: l_conn(-1:nx), l_total, l_ref
       integer jxi, jxa, jsep, ncall
       integer ixref, iyref
       integer ireg
-      external ipgeti, ipgetr, xertst, subini, subend
+      external ipgetr, subini, subend
       external get_jsep
       save jxi, jxa, jsep, ixref, iyref, ncall
       data ncall/0/

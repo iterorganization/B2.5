@@ -74,7 +74,7 @@
       subroutine read_b2mod_geo(nx,ny,nread)
       implicit none
       integer nread, nx, ny
-      integer ix, iy, i, j
+      integer ix, iy
       real (kind=R8) ::
      *   p0x, p0y, p1x, p1y
 *   ..procedures

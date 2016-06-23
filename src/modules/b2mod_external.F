@@ -34,8 +34,8 @@
       contains
 
       subroutine alloc_b2mod_external(nxd,nyd,nsd)
+      implicit none
       integer nxd,nyd,nsd
-      integer is
 
       if (allocated_externals) return
       ns_ext = 0
@@ -67,7 +67,8 @@
       end subroutine alloc_b2mod_external
 
       subroutine alloc_b2mod_external_dummy(nxd,nyd)
-      integer nxd,nyd,nsd
+      implicit none
+      integer nxd,nyd
 
       if (initialised_externals) return
 cxpb  Allocate dummy arrays needed by b2xpfe

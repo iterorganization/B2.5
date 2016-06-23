@@ -149,7 +149,7 @@
         call ipgeti ('b2npht_iout', iout_b2npht)
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                  !srv 11.09.09 }
-        call alloc_input_profile(ny,ns)
+        call alloc_input_profile(nx,ny,ns)
       end if
 
 * ..compute transport coefficients

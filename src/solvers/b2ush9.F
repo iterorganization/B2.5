@@ -112,10 +112,10 @@
 *    ..test sign of cone, coni
        if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then           !srv 06.07.06 {
         call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')                   !srv 02.01.07
-	 endif                                                        !srv 06.07.06 }
+       endif                                                          !srv 06.07.06 }
        if(no_Ptncr_x_hi.eq.0 .and. no_Ptncr_y_hi.eq.0) then           !srv 06.07.06 {
         call b2xvsg (n2*2, coni, 1, 'coni', '.ge.')                   !srv 02.01.07
-	 endif                                                        !srv 06.07.06 }
+       endif                                                          !srv 06.07.06 }
 *    ..test edge values of floe, floi, cone, coni
        call b2xvff (nx, ny, floe, 'floe')
        call b2xvff (nx, ny, floi, 'floi')
@@ -146,34 +146,34 @@
 * ..total heat correction equation
 *   ..compute flo0x, con0x
       do iy = -1, ny
-       do ix = -1, nx                                                  !srv 26.11.02 {
+       do ix = -1, nx                                                 !srv 26.11.02 {
         if(leftix(ix,iy).eq.-2) then
          flo0(ix,iy,0) = 0.0e0_R8
-         con0(ix,iy,0,:) = 0.0e0_R8                                    !srv 02.01.07
+         con0(ix,iy,0,:) = 0.0e0_R8                                   !srv 02.01.07
         else
          t0 = 2.5_R8*pbs(ix,iy,0)*pcm1*pccm1(ix,iy)*                  !srv 02.01.07 {
      &    (ne(leftix(ix,iy),leftiy(ix,iy))*
      &     te(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy)*te(ix,iy)+
      &     ni(leftix(ix,iy),leftiy(ix,iy),0)*
-     &     ti(leftix(ix,iy),leftiy(ix,iy))+ni(ix,iy,0)*ti(ix,iy))/2    !srv 02.01.07 }
+     &     ti(leftix(ix,iy),leftiy(ix,iy))+ni(ix,iy,0)*ti(ix,iy))/2   !srv 02.01.07 }
          flo0(ix,iy,0) = floe(ix,iy,0)+floi(ix,iy,0)
-     &    -t0*(ne(ix,iy)+ni(ix,iy,0)-ne(leftix(ix,iy),leftiy(ix,iy))   !srv 02.01.07 {
-     &             -ni(leftix(ix,iy),leftiy(ix,iy),0))                 !srv 02.01.07 }
-         con0(ix,iy,0,0) = cone(ix,iy,0,0)+coni(ix,iy,0,0)             !srv 02.01.07
-     &    +(t0/2)*(ne(leftix(ix,iy),leftiy(ix,iy))                     !srv 02.01.07 {
-     &     +ne(ix,iy)+ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))   !srv 02.01.07 }
-	  endif                                                        !srv 26.11.02 {
+     &    -t0*(ne(ix,iy)+ni(ix,iy,0)-ne(leftix(ix,iy),leftiy(ix,iy))  !srv 02.01.07 {
+     &             -ni(leftix(ix,iy),leftiy(ix,iy),0))                !srv 02.01.07 }
+         con0(ix,iy,0,0) = cone(ix,iy,0,0)+coni(ix,iy,0,0)            !srv 02.01.07
+     &    +(t0/2)*(ne(leftix(ix,iy),leftiy(ix,iy))                    !srv 02.01.07 {
+     &     +ne(ix,iy)+ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))  !srv 02.01.07 }
+	  endif                                                       !srv 26.11.02 {
        enddo
       enddo
 *   ..compute flo0y, con0y
       do ix = -1, nx
-       flo0(ix,-1,1) = 0
-       con0(ix,-1,1,:) = 0                                             !srv 02.01.07
+       flo0(ix,-1,1) = 0.0e0_R8
+       con0(ix,-1,1,:) = 0.0e0_R8                                     !srv 02.01.07
       enddo
       do iy = 0, ny
        do ix = -1, nx
         flo0(ix,iy,1) = floe(ix,iy,1)+floi(ix,iy,1)
-        con0(ix,iy,1,0) = cone(ix,iy,1,0)+coni(ix,iy,1,0)              !srv 02.01.07
+        con0(ix,iy,1,0) = cone(ix,iy,1,0)+coni(ix,iy,1,0)             !srv 02.01.07
        enddo
       enddo
       aa9 = 0.0e0_R8
@@ -183,7 +183,7 @@
         aa9(ix,iy,0) =
      &    -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)-
      &     shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)
-     &    +abs(resht(ix,iy))/(rxg*min(te(ix,iy),ti(ix,iy)))          !srv 02.01.07
+     &    +abs(resht(ix,iy))/(rxg*min(te(ix,iy),ti(ix,iy)))           !srv 02.01.07
        enddo
       enddo
       do iy = -1, ny
@@ -191,8 +191,8 @@
         if(leftix(ix,iy).eq.-2) then
          aa9(ix,iy,-1) = 0.0e0_R8
         else                                                          !srv 26.11.02 }
-         t0 =  flo0(ix,iy,0)/2-con0(ix,iy,0,0)     !srv 02.01.07
-         t1 = -flo0(ix,iy,0)/2-con0(ix,iy,0,0)     !srv 02.01.07
+         t0 =  flo0(ix,iy,0)/2-con0(ix,iy,0,0)                        !srv 02.01.07
+         t1 = -flo0(ix,iy,0)/2-con0(ix,iy,0,0)                        !srv 02.01.07
          aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0
          aa9(ix,iy,0) = aa9(ix,iy,0)-t0
          aa9(leftix(ix,iy),leftiy(ix,iy),0) = 
@@ -218,11 +218,11 @@
 *   ..add matrix from contribution nine point stencil
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, itcnt, cone(-1,-1,0,1), aa9,
-     &                                               'b2ush9_totale')   !srv 02.01.07
+     &                                               'b2ush9_totale') !srv 02.01.07
       endif
       if(iadd_9 .eq. 1) then
        call b2uxm9 (nx, ny, itcnt, coni(-1,-1,0,1), aa9,
-     &                                               'b2ush9_totali')   !srv 02.01.07
+     &                                               'b2ush9_totali') !srv 02.01.07
       endif
       do iy=-1,ny
        do ix=-1,nx
@@ -239,7 +239,7 @@
        enddo
       enddo
 *   ..solve the correction equation
-      call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total')   !srv 18.05.02
+      call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total')  !srv 18.05.02
 
 * ..electron temperature correction equation
       new_matrix = .false.
@@ -250,19 +250,19 @@
       if (new_matrix) call restart_ma28_for_9
 *   ..compute flo0x, con0x
       do iy = -1, ny
-       do ix = -1, nx                                               !srv 26.11.02 {
+       do ix = -1, nx                                                 !srv 26.11.02 {
         if(leftix(ix,iy).eq.-2) then
          flo0(ix,iy,0) = 0.0e0_R8
-         con0(ix,iy,0,:) = 0.0e0_R8                                 !srv 02.01.07
+         con0(ix,iy,0,:) = 0.0e0_R8                                   !srv 02.01.07
         else
-         t0 = 2.5_R8*pbs(ix,iy,0)*pcm1*pccm1(ix,iy)*                !srv 02.01.07 {
+         t0 = 2.5_R8*pbs(ix,iy,0)*pcm1*pccm1(ix,iy)*                  !srv 02.01.07 {
      &    (ne(leftix(ix,iy),leftiy(ix,iy))*
-     &     te(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy)*te(ix,iy))/2   !srv 02.01.07 }
+     &     te(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy)*te(ix,iy))/2     !srv 02.01.07 }
          flo0(ix,iy,0) = floe(ix,iy,0)
-     &     -t0*(ne(ix,iy)-ne(leftix(ix,iy),leftiy(ix,iy)))          !srv 02.01.07
-         con0(ix,iy,0,0) = cone(ix,iy,0,0)                          !srv 02.01.07
-     &     +(t0/2)*(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))      !srv 02.01.07
-	  endif                                                     !srv 26.11.02 {
+     &     -t0*(ne(ix,iy)-ne(leftix(ix,iy),leftiy(ix,iy)))            !srv 02.01.07
+         con0(ix,iy,0,0) = cone(ix,iy,0,0)                            !srv 02.01.07
+     &     +(t0/2)*(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))        !srv 02.01.07
+        endif                                                         !srv 26.11.02 {
        enddo
       enddo
 *   ..compute flo0y, con0y
@@ -277,7 +277,7 @@
        enddo
       enddo
 *   ..compute the nine-point matrix
-	aa9 = 0.0e0_R8                                              !srv 28.05.08
+      aa9 = 0.0e0_R8                                                !srv 28.05.08
       do iy = -1, ny
        do ix = -1, nx
         aa9(ix,iy,0) = -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)+
@@ -298,7 +298,7 @@
          aa9(leftix(ix,iy),leftiy(ix,iy),0) = 
      &       aa9(leftix(ix,iy),leftiy(ix,iy),0)-t1
          aa9(ix,iy,-1) = t1
-	  endif                                                     !srv 26.11.02 {
+	endif                                                       !srv 26.11.02 {
         if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8          !srv 26.11.02
        enddo
       enddo
@@ -317,7 +317,8 @@
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
 *   ..add matrix from contribution nine point stencil
       if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, itcnt, cone(-1,-1,0,1), aa9, 'b2ush9_Te')     !srv 02.01.07
+       call b2uxm9 (nx, ny, itcnt, cone(-1,-1,0,1),
+     &  aa9, 'b2ush9_Te')                                           !srv 02.01.07
       endif
       do iy=-1,ny
        do ix=-1,nx
@@ -345,64 +346,64 @@
       if (new_matrix) call restart_ma28_for_9
 *   ..compute flo0x, con0x
       do iy = -1, ny
-       do ix = -1, nx                                                 !srv 26.11.02 {
+       do ix = -1, nx                                                   !srv 26.11.02 {
         if(leftix(ix,iy).eq.-2) then
          flo0(ix,iy,0) = 0.0e0_R8
-         con0(ix,iy,0,:) = 0.0e0_R8     !srv 02.01.07
+         con0(ix,iy,0,:) = 0.0e0_R8                                     !srv 02.01.07
         else
-         t0 = 2.5_R8*pbs(ix,iy,0)*pcm1*pccm1(ix,iy)*                 !srv 02.01.07 {
+         t0 = 2.5_R8*pbs(ix,iy,0)*pcm1*pccm1(ix,iy)*                    !srv 02.01.07 {
      &    (ni(leftix(ix,iy),leftiy(ix,iy),0)*
-     &     ti(leftix(ix,iy),leftiy(ix,iy))+ni(ix,iy,0)*ti(ix,iy))/2  !srv 02.01.07 }
+     &     ti(leftix(ix,iy),leftiy(ix,iy))+ni(ix,iy,0)*ti(ix,iy))/2     !srv 02.01.07 }
          flo0(ix,iy,0) = floi(ix,iy,0)
-     &     -t0*(ni(ix,iy,0)-ni(leftix(ix,iy),leftiy(ix,iy),0))       !srv 02.01.07
-         con0(ix,iy,0,0) = coni(ix,iy,0,0)     !srv 02.01.07
-     &      +(t0/2)*(ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))  !srv 02.01.07
-	  endif                                                         !srv 26.11.02 {
+     &     -t0*(ni(ix,iy,0)-ni(leftix(ix,iy),leftiy(ix,iy),0))          !srv 02.01.07
+         con0(ix,iy,0,0) = coni(ix,iy,0,0)                              !srv 02.01.07
+     &      +(t0/2)*(ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))     !srv 02.01.07
+          endif                                                         !srv 26.11.02 {
        enddo
       enddo
 *   ..compute flo0y, con0y
       do ix = -1, nx
        flo0(ix,-1,1) = 0
-       con0(ix,-1,1,:) = 0     !srv 02.01.07
+       con0(ix,-1,1,:) = 0                                              !srv 02.01.07
       enddo
       do iy = 0, ny
        do ix = -1, nx
         flo0(ix,iy,1) = floi(ix,iy,1)
-        con0(ix,iy,1,0) = coni(ix,iy,1,0)     !srv 02.01.07
+        con0(ix,iy,1,0) = coni(ix,iy,1,0)                               !srv 02.01.07
        enddo
       enddo
 *   ..compute the nine-point matrix
-	aa9 = 0.0e0_R8                                                 !srv 28.05.08
+      aa9 = 0.0e0_R8                                                    !srv 28.05.08
       do iy = -1, ny
        do ix = -1, nx
         aa9(ix,iy,0) = (-shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)+
      &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))
-     &   +abs(reshi(ix,iy))/(rxg*ti(ix,iy)))*scalr(ti(ix,iy))        !srv 02.01.07
-!     &                                      )*scalr(ti(ix,iy))        !srv 02.01.07
+     &   +abs(reshi(ix,iy))/(rxg*ti(ix,iy)))*scalr(ti(ix,iy))           !srv 02.01.07
+!     &                                      )*scalr(ti(ix,iy))         !srv 02.01.07
        enddo
       enddo
       do iy = -1, ny
-       do ix = -1, nx                                                 !srv 26.11.02 {
+       do ix = -1, nx                                                   !srv 26.11.02 {
         if(leftix(ix,iy).eq.-2) then
          aa9(ix,iy,-1) = 0.0e0_R8
-        else                                                          !srv 26.11.02 }
-         t0 =  flo0(ix,iy,0)/2-con0(ix,iy,0,0)     !srv 02.01.07
-         t1 = -flo0(ix,iy,0)/2-con0(ix,iy,0,0)     !srv 02.01.07
+        else                                                            !srv 26.11.02 }
+         t0 =  flo0(ix,iy,0)/2-con0(ix,iy,0,0)                          !srv 02.01.07
+         t1 = -flo0(ix,iy,0)/2-con0(ix,iy,0,0)                          !srv 02.01.07
          aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0*scalr(ti(ix,iy))
          aa9(ix,iy,0) = aa9(ix,iy,0)-t0*scalr(ti(ix,iy))
          aa9(leftix(ix,iy),leftiy(ix,iy),0) = 
      &      aa9(leftix(ix,iy),leftiy(ix,iy),0)
      &     -t1*scalr(ti(leftix(ix,iy),leftiy(ix,iy)))
          aa9(ix,iy,-1) = t1*scalr(ti(leftix(ix,iy),leftiy(ix,iy)))
-	  endif                                                         !srv 26.11.02 {
-        if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8            !srv 26.11.02
+        endif                                                           !srv 26.11.02 {
+        if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8              !srv 26.11.02
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,-1,-3), 1)
       do iy = 0, ny
        do ix = -1, nx
-        t0 =  flo0(ix,iy,1)/2-con0(ix,iy,1,0)     !srv 02.01.07
-        t1 = -flo0(ix,iy,1)/2-con0(ix,iy,1,0)     !srv 02.01.07
+        t0 =  flo0(ix,iy,1)/2-con0(ix,iy,1,0)                           !srv 02.01.07
+        t1 = -flo0(ix,iy,1)/2-con0(ix,iy,1,0)                           !srv 02.01.07
         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0*scalr(ti(ix,iy))
         aa9(ix,iy,0) = aa9(ix,iy,0)-t0*scalr(ti(ix,iy))
         aa9(bottomix(ix,iy),bottomiy(ix,iy),0) = 

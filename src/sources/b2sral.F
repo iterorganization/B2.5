@@ -182,7 +182,7 @@
 *   ..inputfile for profile sources
       if (ncall.eq.0) then
         call ipgeti ('b2sral_inputfile', sources_inputfile)
-        call alloc_input_profile(ny,ns)
+        call alloc_input_profile(nx,ny,ns)
         call ipgeti ('b2sral_style', style)                              !srv 28.07.08
         call ipgeti ('b2sral_iout', iout)                                !srv 30.06.08
         call ipgeti ('b2mndr_astra', use_astra)

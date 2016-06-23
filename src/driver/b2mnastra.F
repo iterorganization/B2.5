@@ -126,7 +126,6 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ix, iy, ic
 #ifdef JET
       integer ninp(0:6), nout(0:9), nx, ny, ns, ns0, idum(0:9), io   !srv 02.05.07
 #else
@@ -223,7 +222,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call alloc_b2mod_b2_to_astra(nx, ny, ns)
       call read_astra_to_b2(ny, ninp(6))
       open(70,file='check_astra_to_b2.prt')
-      call write_to_check_astra_to_b2(ny,70)
+      call write_to_check_astra_to_b2(70)
       close(70)                                                 !srv 28.07.11 }
 
       call b2mndr (ninp, nout, nx, ny, ns, ns0)

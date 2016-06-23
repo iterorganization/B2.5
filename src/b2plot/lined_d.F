@@ -51,7 +51,7 @@ c      write(*,*) 'lined: ',xas,yas,xbs,ybs
 #include <graphics_vars.h>
       real (kind=R8) :: xa,ya
       real (kind=R4) :: xas,yas
-      integer is, ir
+      integer is
 
       xas=min(1e30_R8,max(-1e30_R8,xa))
       yas=min(1e30_R8,max(-1e30_R8,ya))

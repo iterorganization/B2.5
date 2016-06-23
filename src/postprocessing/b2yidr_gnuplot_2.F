@@ -78,16 +78,9 @@
 
 *   ..common blocks
 *   ..local variables
-      integer is, idum(0:9), ismain
-      real (kind=R8) :: 
-     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
-     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-     &  rbr(-1:nx,-1:ny,0:ns-1)
+      integer idum(0:9)
       character lblmn*120, lblrc*120, lblgm*120
       character cnamip*80, cvalip*80, line*500
-*   ..initialisation
-      save ismain
-      data ismain/1/
 *   ..procedures
       intrinsic abs
       logical is_comment
@@ -204,10 +197,6 @@
 *     lblmn identifies the instance of the program employed for the main
 *     calculation.
 *
-*     ismain - integer.
-*     ismain identifies the index of the main plasma species.
-*     This cannot be a neutral species.
-*
 *-----------------------------------------------------------------------
 *.computation
 
@@ -254,14 +243,14 @@
       call b2ruzd (ninp(1), b2fstate_version, 
      &  ns, zamin, zamax, zn, am, .true.)
 *   ..read plasma state
-      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,		 !xpb
+      call b2rups (ninp(1), nx, ny, ns, ne, na, ua, uadia, te,           !xpb
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
-     1	b2fstate_version)
+     1  b2fstate_version)
 *   ..test plasma state and fluxes
       call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)

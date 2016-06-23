@@ -82,7 +82,7 @@
       do iy = -1, ny
        do ix = -1, nx
         if (wrk0(ix,iy).eq.0) then
-         smqdu(ix,iy) = 0
+         smqdu(ix,iy) = 0.0_R8
         else
          smqdu(ix,iy) = wrk1(ix,iy)/wrk0(ix,iy)
         endif

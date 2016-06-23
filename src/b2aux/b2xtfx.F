@@ -22,7 +22,7 @@
 *     B2XTFX transfers an x-face flux to a new mesh.
 *     ------------------------------------------------------------------
       integer ix, iy, ix1, iy1, ixa, ixb, iya, iyb 
-      integer ixc, ixd, iyc, iyd, iyp, iym, ixp, nd, ifail
+      integer ixc, ixd, iyc, iyd, ixp, nd, ifail
       integer inseliy, inseliy1
       real (kind=R8), allocatable :: d(:)
       real (kind=R8) :: xx(-1:nx), xx1(-1:nx1), yy(-1:ny), yy1(-1:ny1) 

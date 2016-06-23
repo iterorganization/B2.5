@@ -90,7 +90,7 @@
      &  floe_noc1(:,:,:), floi_noc1(:,:,:)
       real (kind=R8) :: zpdum(0:ns-1,0:3), zero(-1:nx,-1:ny)
       character lblps*120, lblgm*120, id*8, id0*8, line*500
-      character idout*80, cnamip*80, cvalip*80                        !srv 22.12.09
+      character cnamip*80, cvalip*80                                  !srv 22.12.09
       real (kind=R8) ::
      *  amtol, naini(0:ns-1), ttini, na_min
       parameter (amtol=1.0e-2_R8)

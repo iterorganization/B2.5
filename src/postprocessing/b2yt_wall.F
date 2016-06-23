@@ -254,7 +254,7 @@ cxpb lb and ub and lower and upper interval bounds
       return
       end subroutine b2yt_wall_init
 
-      subroutine b2yt_wall(nx1,ny1,nx,ny,ns,ns1,natm,natm1,nmol,nion,
+      subroutine b2yt_wall(nx1,ny1,ns,ns1,natm,natm1,nmol,nion,
      *   is_neutral1,iatm1,bundle_frac,zn1,l_chem_sput,
      *   itrack1,itrack2,itrack3)
       use b2mod_types
@@ -267,15 +267,15 @@ cxpb lb and ub and lower and upper interval bounds
 #     include "DIMENSIONS.F"
       implicit none
 
-      integer nx1, ny1, nx, ny, ns, ns1, natm, natm1, nmol, nion
+      integer nx1, ny1, ns, ns1, natm, natm1, nmol, nion
       integer itrack1, itrack2, itrack3
       integer iatm1(natm)
       real (kind=R8) :: bundle_frac(0:ns1-1,0:ns-1), zn1(0:ns1-1)
       logical is_neutral1(0:ns1-1), l_chem_sput
 
-      integer ix, iy, iz, is, ibnd, ibnd1, imax, i, i1, itrack
+      integer ix, iy, iz, is, ibnd, ibnd1, imax, i, itrack
       integer ibegin, iend, iw, iw1, ifail
-      integer ixa, ixb, iya, iyb, iza, ndepth1
+      integer ndepth1
       integer nsm, natmm, nbndm, nwallm
       real (kind=R8) :: sum
       real (kind=R8), allocatable :: wall_data(:,:)
@@ -939,7 +939,7 @@ cxpb  Use explicit writing of non-default elements only
       real (kind=R8) contr_area(nwall,nwall1)
       real (kind=R8) plate_area(nwall)
       real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmol+nion)
-      integer iw, iw1, iatm
+      integer iw, iatm
       real (kind=R8) wall_source(0:ns-1+natm+nmol+nion)
       real (kind=R8) wall_map(0:ns1-1+natm1+nmol+nion)
       real (kind=R8) wall_tmp(0:nsm-1)
@@ -1042,7 +1042,7 @@ cxpb Now for each new species, we do the space mapping
       real (kind=R8) bundle_frac(0:ns1-1,0:ns-1)
       real (kind=R8) contr_area(nwall,nwall1)
       real (kind=R8) wall_data(nwall,0:nsm-1+natmm+nmol+nion)
-      integer iw, iw1, iatm
+      integer iw, iatm
       real (kind=R8) wall_source(0:ns-1+natm+nmol+nion)
       real (kind=R8) wall_map(0:ns1-1+natm1+nmol+nion)
       real (kind=R8) wall_tmp(0:nsm-1)

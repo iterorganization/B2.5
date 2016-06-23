@@ -37,7 +37,7 @@
 *   ..global named constants
       
 *   ..local variables
-      integer ncall, n2, ix, iy, ib, is
+      integer ncall, n2, ix, iy, ib
       integer, save :: no_current = 0                          !srv 27.02.13
       integer, save :: pot_eq
       integer, save :: guard_flows

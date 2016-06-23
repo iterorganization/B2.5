@@ -245,8 +245,8 @@
     2 continue
 *   ..read parameters
       call cfruch (ninp(1), 120, lblmn, 'label')
-      call b2ruzd (ninp(1), b2ftrack_version, ns, 
-     &  zamin, zamax, zn, am, .true.)
+      call b2ruzd (ninp(1), b2ftrack_version,
+     & ns, zamin, zamax, zn, am, .true.)
 *   ..write label
       write (nout(0),'(/2x,a)') 'label for this calculation:'
       write (nout(0),'(/4x,a/4x,a)') lblmn(1:60), lblmn(61:120)
@@ -281,7 +281,7 @@
      &  fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
-     1	b2fstate_version)
+     1  b2fstate_version)
 *   ..test plasma state and fluxes
       call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)

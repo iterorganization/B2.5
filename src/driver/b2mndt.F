@@ -89,7 +89,7 @@
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
      &  acorte, acorti, acorpo, nasum, na0sum,
-     &  vsal(-1:nx,-1:ny,0:1,0:ns-1), pz(-1:nx,-1:ny),
+     &  vsal(-1:nx,-1:ny,0:1,0:ns-1),
      &  lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny)                              !srv 11.10.02
 *   ..procedures
       real (kind=R8) ::
@@ -180,7 +180,7 @@
        endif
       else
        if (boundary_namelist.ge.1) then
-         call catchup_b2mod_boundary(tim)
+         call catchup_b2mod_boundary(nx,ny,ns,tim)
        endif
       endif
 *   ..set n2
@@ -378,11 +378,9 @@ ctmp.dpc
            if(style.eq.0) then                                           !srv 01.07.08
             ramp_call = ramp_slow.eq.0.or.(istg(0)+istg(1)+istg(2)).eq.0
             call b2news (nx, ny, ns, nscx, iscx, ismain, ismain0,
-     &       natm, nmol, nion, nlim, nsts, itim,
      &       dtim, rxf, ier0, wrong_flow, ramp_call)                     !xpb
            else                                                          !srv 01.07.08 {
             call b2news_(nx, ny, ns, nscx, iscx, ismain, ismain0,
-     &       natm, nmol, nion, nlim, nsts, itim,
      &       dtim, rxf, ier0)                                            !srv 16.07.10 23.11.10
            endif                                                         !srv 01.07.08 )
            if(ier0.eq.10) then

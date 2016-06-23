@@ -36,8 +36,6 @@ c     log10 of rate coefficient (in cm3/s)
      *   DREAC(isdimd,itdimd,iddimd),DTMP(itdimd,iddimd),ans
 *..   local variables
       integer is, ic, ix, iy
-      real (kind=R8) ::
-     1 rmin,rmax
       CHARACTER*2 ELNAME
       CHARACTER*200 DSN
 *..   procedures
@@ -157,7 +155,7 @@ c     filling array and computing rate
       use b2mod_constants
       IMPLICIT NONE
 #     include <eir_reac.F>
-      integer nsp,nxd,nyd,nx,ny
+      integer nxd,nyd,nx,ny
       real (kind=R8) ::
      1 ne(0:nxd+1,0:nyd+1),te(0:nxd+1,0:nyd+1),
      2 mach(0:nxd+1,0:nyd+1),D11(0:8,0:8)

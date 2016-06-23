@@ -24,17 +24,17 @@
       integer nx, ny, ns, itcnt
       real (kind=R8) ::
      *  rxf, 
-     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),           !srv 09.01.01
+     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),             !srv 09.01.01
      &  qz(-1:nx,-1:ny,0:1),
      &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
-     &  pbshz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny),                  !srv 01.07.09
+     &  pbshz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny),                    !srv 01.07.09
      &  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      1  cvsa_cl(-1:nx,-1:ny,0:1,0:ns-1), 
-     &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                            !srv 09.01.01
+     &  cvsahz_cl(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 09.01.01
      2  smo(-1:nx,-1:ny,0:3,0:ns-1), smq(-1:nx,-1:ny,0:3,0:ns-1),
-     &  smof(-1:nx,-1:ny,0:3,0:ns-1), chci(-1:nx,-1:ny,0:1),          !srv 10.11.02
+     &  chci(-1:nx,-1:ny,0:1),                                         !srv 10.11.02
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
       logical solving
@@ -47,7 +47,8 @@
      *  kt_neo(-1:nx,-1:ny),
      *  resmo(-1:nx,-1:ny,0:ns-1), resmt(-1:nx,-1:ny),
      &  corua(-1:nx,-1:ny,0:ns-1), corut(-1:nx,-1:ny),
-     &  pcca(-1:nx,-1:ny,0:1,0:ns-1), pccm(-1:nx,-1:ny,0:1)
+     &  pcca(-1:nx,-1:ny,0:1,0:ns-1), pccm(-1:nx,-1:ny,0:1),
+     &  smof(-1:nx,-1:ny,0:3,0:ns-1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -219,12 +220,12 @@
         call b2sifr (nx, ny, ns, is, vol, hx, hz, bb, na, ua, te, ti,  !srv 09.01.01
      &   ni, ne, ne2, ehxp, lnlam, cthe, cthi, smbch, smbtf,           !srv 11.09.09
      &   smpr(-1,-1,is), smpt(-1,-1,is), smfr(-1,-1,is), 
-     &   wrk0, wrk1, wrk2)                     !srv 02.07.08 01.07.09
+     &   wrk0, wrk1, wrk2)                                             !srv 02.07.08 01.07.09
        else
         call b2sifr_ (nx, ny, ns, is, hx, hz, vol, bb, na, ua, te, ti, !srv 09.01.01 18.10.02
      &   ni, ne, ne2, ehxp, lnlam, cthe, cthi, smbch, smbtf,           !srv 11.09.09
      &   smpr(-1,-1,is), smpt(-1,-1,is), smfr(-1,-1,is), 
-     &   wrk0, wrk1, wrk2)                    !srv 01.07.09
+     &   wrk0, wrk1, wrk2)                                             !srv 01.07.09
        endif                                                           !srv 26.10.08 }
 *    ..compute pressure gradient term
        call b2sigp (nx, ny, is, rza(-1,-1,is), vol, hx, hz, bb,  
@@ -243,37 +244,37 @@
      &   ua(-1,-1,is), flub, cvsahz(-1,-1,0,is), flcb, cvcb, wrk0)     !srv 09.01.01
 
 *    ..compute additional viscosity term
-        call b2siav (nx, ny, ns, is, modvis, am(is)*mp, hx, hy, hz, vol, 
+       call b2siav (nx, ny, ns, is, modvis, am(is)*mp, hx, hy, hz, vol, 
      &   qz, bb, ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),  
-     &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,     !srv 01.07.09
+     &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,      !srv 01.07.09
      &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is), 
      &   cvsahz_cl(-1,-1,0,is), smbvh, smbvv, kt_neo, 
      &   wrk0, wrk1, wrk2)       !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
-*    ..compute centrifugal force term                                 !srv 09.07.01
+*    ..compute centrifugal force term                                  !srv 09.07.01
        call b2sicf (nx, ny, is, am(is)*mp, bb, vol, hx, hz, 
      *     na(-1,-1,is), ua(-1,-1,is), smbcf, smcf(-1,-1,is), ctcfb, 
-     *     wrk0)              !srv 09.07.01 31.07.02 22.07.05} 06.04.07
+     *     wrk0)                                                       !srv 09.07.01 31.07.02 22.07.05} 06.04.07
 *    ..compute total parallel momentum source
        call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smq(-1,-1,0,is), 1, smb, 1)
-       b2npmo_smaf(:,:,:,is)=smbch(:,:,:)+smbtf(:,:,:)                !srv 11.09.09 {
+       b2npmo_smaf(:,:,:,is)=smbch(:,:,:)+smbtf(:,:,:)                 !srv 11.09.09 {
        call b2saxpy (n2*4, 1.0_R8, smbch, 1, smb, 1)
-       call b2saxpy (n2*4, 1.0_R8, smbtf, 1, smb, 1)                  !srv 11.09.09 }
+       call b2saxpy (n2*4, 1.0_R8, smbtf, 1, smb, 1)                   !srv 11.09.09 }
        b2npmo_smag(:,:,:,is)=smbgp(:,:,:)
        call b2saxpy (n2*4, 1.0_R8, smbgp, 1, smb, 1)
-       b2npmo_smav(:,:,:,is)=smbvh(:,:,:)+smbvv(:,:,:)                !srv 03.07.08 {
+       b2npmo_smav(:,:,:,is)=smbvh(:,:,:)+smbvv(:,:,:)                 !srv 03.07.08 {
        call b2saxpy (n2*4, 1.0_R8, smbvh,  1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)
-       call b2saxpy (n2*4, 1.0_R8, smbcf,  1, smb, 1)                 !srv 03.07.08 }
-       call b2nxdv (nx, ny, rob, smq(-1,-1,0,is), smqdu, smb)         !srv ???
-*    ..save final source for species (is)                             !srv 10.11.02
-       smof(:,:,:,is) = smb                                           !srv 10.11.02
+       call b2saxpy (n2*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08 }
+       call b2nxdv (nx, ny, rob, smq(-1,-1,0,is), smqdu, smb)          !srv ???
+*    ..save final source for species (is)                              !srv 10.11.02
+       smof(:,:,:,is) = smb                                            !srv 10.11.02
 *    ..compute residual
        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
-     &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)             !srv 04.07.08
+     &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
        fmo(:,:,:,is)=wrkf
-       write (chns,'(i3.3)') is                                       !srv 18.03.10
-       if (iout.ne.0) then                                            !srv 12.07.02 {
+       write (chns,'(i3.3)') is                                        !srv 18.03.10
+       if (iout.ne.0) then                                             !srv 12.07.02 {
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua_input'//chns)
         call my_out(70,nx,ny,resmo(-1,-1,is),'b2npmo_resmo'//chns)
         call my_out(70,nx,ny,fmo(-1,-1,0,is),'b2npmo_fmox'//chns)
@@ -282,7 +283,7 @@
      &   call my_out(70,nx,ny,flubv(-1,-1,0),'b2npmo_flubvx'//chns)
 !	   call my_out(70,nx,ny,flubv(-1,-1,1),'b2npmo_flubvy'//chns)
 !	   do k=0,3
-!	    write (chk,'(i1)') k  
+!	    write (chk,'(i1)') k
 !	    call my_out(70,nx,ny,smb(-1,-1,k),'b2npmo_smo'//chk//chns)
 !	   enddo
         wrks=smb(:,:,0)+smb(:,:,1)*ua(:,:,is)+
@@ -298,8 +299,8 @@
      &       smbch(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
         call my_out(70,nx,ny,wrks,'b2npmo_smoch'//chns)
         wrks=smbtf(:,:,0)+smbtf(:,:,1)*ua(:,:,is)+
-     &        smbtf(:,:,2)*na(:,:,is)*mp*am(is)+
-     &        smbtf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+     &       smbtf(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbtf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
         call my_out(70,nx,ny,wrks,'b2npmo_smotf'//chns)
         wrks=smbgp(:,:,0)+smbgp(:,:,1)*ua(:,:,is)+
      &       smbgp(:,:,2)*na(:,:,is)*mp*am(is)+
@@ -314,8 +315,8 @@
      &       smbvh(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
         call my_out(70,nx,ny,wrks,'b2npmo_smovh'//chns)
         wrks=smbcf(:,:,0)+smbcf(:,:,1)*ua(:,:,is)+
-     &        smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
-     &        smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+     &       smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
         call my_out(70,nx,ny,wrks,'b2npmo_smocf'//chns)
        endif                                                           !srv 12.07.02 }
        if (solving) then                                               !srv 06.07.10
@@ -335,9 +336,9 @@ c    ..compare 5-pt stencil matrices
         last_solve_5(0:nnreg(0)) = solvemo(is,0:nnreg(0))
 csw 21feb2014 added this else branch
        else
-        pcca(:,:,:,is)  = 0.0_R8
-        resmo(:,:,is) = 0.0_R8
-        corua(:,:,is) = 0.0_R8
+         pcca(:,:,:,is)  = 0.0_R8
+         resmo(:,:,is) = 0.0_R8
+         corua(:,:,is) = 0.0_R8
        endif
 *    ..compute contribution to total residual
 *      (now the friction cancels out)
@@ -361,6 +362,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2, 1.0_R8, ctcfb, 1, ctcft, 1)                  !srv 06.04.07
        endif
       enddo
+
 csw 21feb2014, execute simultaneous corrections always
 c      if (solving.and.solvemt(0:nnreg(0))) then                        !srv 06.07.10
       if (solving) then
@@ -381,10 +383,11 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                        !srv 06.
        resmt = 0.0_R8
        corut = 0.0_R8
       endif                                                            !srv 06.07.10
+
 *   ..apply correction
-       do is = 0, ns-1
-        do iy = -1, ny
-         do ix = -1, nx
+      do is = 0, ns-1
+       do iy = -1, ny
+        do ix = -1, nx
           ireg = region(ix,iy,0)
           if (solvemo(is,ireg)) then
             if((leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) .or.
@@ -396,15 +399,15 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                        !srv 06.
      &         corua(ix,iy,is)+corut(ix,iy))
             endif
           endif
-         enddo
         enddo
        enddo
+      enddo
 *   ..correct pcca
-       call b2nxcm (nx, ny, ns, pccm, pcca)
-      if (iout.ne.0) then                                          !srv 12.07.02 {
+      call b2nxcm (nx, ny, ns, pccm, pcca)
+      if (iout.ne.0) then                                           !srv 12.07.02 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is                                    !srv 18.05.02
-         call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua'//chns)
+        call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua'//chns)
 !	   call my_out(70,nx,ny,pcca(-1,-1,0,is),'b2npmo_pccax'//chns)
 !	   call my_out(70,nx,ny,pcca(-1,-1,1,is),'b2npmo_pccay'//chns)
 !	   call my_out(70,nx,ny,fna_fcor(-1,-1,0,is),'b2npmo_fna_fcorx'//chns)
@@ -412,7 +415,7 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                        !srv 06.
        enddo
        call my_out(70,nx,ny,pccm(-1,-1,0),'b2npmo_pccmx')          !srv 11.01.13
        call my_out(70,nx,ny,pccm(-1,-1,1),'b2npmo_pccmy')          !srv 11.01.13
-      endif                                                   !srv 12.07.02 }
+      endif                                                        !srv 12.07.02 }
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
       ierr = 0

@@ -161,7 +161,7 @@
      &                        corr_flux   = 0.0e0_R8                    !srv 25.07.05
       real (kind=R8), save :: alfTeEh = 0.0_R8
       character chns*3, chk*1                                           !srv 11.07.05
-      logical done, decay_length_ok, fedback_species
+      logical decay_length_ok, fedback_species
       real (kind=R8) ::
      *  ro(-1:nx,-1:ny), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
@@ -179,7 +179,7 @@
 *   ..procedures
       intrinsic min, max, abs, sqrt, exp, log, dim, mod
       real (kind=R8) ::
-     *  machsfr, expu2, hy1, sy, bcint, syhz                   !srv 24.08.08
+     *  machsfr, expu2, hy1, sy, bcint, syhz                            !srv 24.08.08
       external subini, subend, xertst, ipgeti, machsfr, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps
       expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
@@ -187,7 +187,7 @@
 *     large values limited at a somewhat arbitrary level.)
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       sy(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)
-      syhz(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)*                    !srv 24.08.08
+      syhz(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)*                      !srv 24.08.08
      &            hz(ix,iy)
 !     &            hz(topix(ix,iy),topiy(ix,iy))
 *   ..initialisation
@@ -341,34 +341,34 @@
 
       sna0_no_mdf = 0.0_R8
 
-      call b2xppz (nx, ny, ns, ne, na, te, ti, pz)               !srv 18.01.02
+      call b2xppz (nx, ny, ns, ne, na, te, ti, pz)                !srv 18.01.02
 *   ..find the average pressure for inner flux surface            !srv 24.03.99
-      if (istyle_average_pr .eq.0) then                            !srv 08.08.02
-       iy = -1                                                     !srv 24.03.99
-       pzsum =0.0e0_R8                                             !srv 24.03.99 18.01.02
-       volsum=0.0e0_R8                                             !srv 24.03.99
-       do ix = -1,nx                                               !srv 26.11.02
-        if (mod(region(ix,iy,0),4).eq.1) then                      !srv 26.11.02
-         pzsum=pzsum + pz(ix,iy)*vol(ix,iy)                        !srv 24.03.99 18.01.02
-         volsum=volsum + vol(ix,iy)                                !srv 24.03.99
-        endif                                                      !srv 26.11.02
-       enddo                                                       !srv 24.03.99
-       pzaverage=pzsum/volsum                                      !srv 24.03.99 18.01.02
-      else                                                         !srv 08.08.02
-       iy = 0                                                      !srv 24.03.99  07.06.02 {
-       pzsum =0.0e0_R8                                             !srv 24.03.99 18.01.02
-       volsum=0.0e0_R8                                             !srv 24.03.99
-       num_inner=0                                                 !srv 26.11.02
-       do ix = -1,nx                                               !srv 26.11.02
-        if (mod(region(ix,iy,0),4).eq.1) then                      !srv 26.11.02
+      if (istyle_average_pr .eq.0) then                           !srv 08.08.02
+       iy = -1                                                    !srv 24.03.99
+       pzsum =0.0e0_R8                                            !srv 24.03.99 18.01.02
+       volsum=0.0e0_R8                                            !srv 24.03.99
+       do ix = -1,nx                                              !srv 26.11.02
+        if (mod(region(ix,iy,0),4).eq.1) then                     !srv 26.11.02
+         pzsum=pzsum + pz(ix,iy)*vol(ix,iy)                       !srv 24.03.99 18.01.02
+         volsum=volsum + vol(ix,iy)                               !srv 24.03.99
+        endif                                                     !srv 26.11.02
+       enddo                                                      !srv 24.03.99
+       pzaverage=pzsum/volsum                                     !srv 24.03.99 18.01.02
+      else                                                        !srv 08.08.02
+       iy = 0                                                     !srv 24.03.99  07.06.02 {
+       pzsum =0.0e0_R8                                            !srv 24.03.99 18.01.02
+       volsum=0.0e0_R8                                            !srv 24.03.99
+       num_inner=0                                                !srv 26.11.02
+       do ix = -1,nx                                              !srv 26.11.02
+        if (mod(region(ix,iy,0),4).eq.1) then                     !srv 26.11.02
          pzsum=pzsum
-     *   + (pz(ix,iy)+pz(bottomix(ix,iy),bottomiy(ix,iy)))         !srv 24.03.99 18.01.02
-         volsum=volsum + vol(ix,iy)                                !srv 24.03.99
-         num_inner=num_inner+1                                     !srv 26.11.02
-        endif                                                      !srv 26.11.02
-       enddo                                                       !srv 24.03.99
+     *   + (pz(ix,iy)+pz(bottomix(ix,iy),bottomiy(ix,iy)))        !srv 24.03.99 18.01.02
+         volsum=volsum + vol(ix,iy)                               !srv 24.03.99
+         num_inner=num_inner+1                                    !srv 26.11.02
+        endif                                                     !srv 26.11.02
+       enddo                                                      !srv 24.03.99
        pzaverage=pzsum*0.5e0_R8/num_inner                         !srv 24.03.99 18.01.02 07.06.02 } 26.11.02
-      endif                                                        !srv 08.08.02
+      endif                                                       !srv 08.08.02
 *   ..find the average ne, te, ti, bb for inner flux surface      !srv 15.12.00 18.10.04
       bbsum = 0.0e0_R8                                            !srv 18.10.04
       nesum = 0.0e0_R8                                            !srv 15.12.00 25.01.02
@@ -407,7 +407,7 @@
        naaverage(is) = nasum/volsum
       enddo                                                        !srv 22.01.02 }
 
-      call b2xpro (nx, ny, ns, mp, am, na, ro)                       !srv 01.02.09
+      call b2xpro (nx, ny, ns, mp, am, na, ro)                     !srv 01.02.09
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
       wdia(:,:)=(ne(:,:)*te(:,:)+ni(:,:,1)*ti(:,:))*bb(:,:,2)
       do is = 0, ns_ext-1
@@ -420,14 +420,14 @@
             sx(ix,iy)=gs(rightix(ix,iy),rightiy(ix,iy),0)
             if (area_fix.ge.3)
      >       sx(ix,iy) = sx(ix,iy)*qc(rightix(ix,iy),rightiy(ix,iy))
-            sxhz(ix,iy)=gs(rightix(ix,iy),rightiy(ix,iy),0)*         !srv 24.08.08
+            sxhz(ix,iy)=gs(rightix(ix,iy),rightiy(ix,iy),0)*       !srv 24.08.08
      &                  hz(ix,iy)
 !     &                  hz(rightix(ix,iy),rightiy(ix,iy))
             if (area_fix.ge.3)
      >       sxhz(ix,iy) = sxhz(ix,iy)*qc(rightix(ix,iy),rightiy(ix,iy))
           else
             sx(ix,iy)=0.0_R8
-            sxhz(ix,iy)=0.0_R8                                       !srv 24.08.08
+            sxhz(ix,iy)=0.0_R8                                     !srv 24.08.08
           endif
           if (leftix(ix,iy).ne.-2) then
             do is = 0, ns-1
@@ -2878,7 +2878,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 10300     CONTINUE
           if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
-     .       'sheath velocity ',MOMPAR(IS,IB,2),' on ',
+     .       'sheath velocity bc ',MOMPAR(IS,IB,2),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
           endif
           IF(BCCHAR(IB).EQ.'W') THEN
@@ -6907,7 +6907,7 @@ cxpb          endif
          ENDIF
          GOTO 40000
 
-        elseif(bceni_16_style.eq.1)then                                 !srv 16.02.12   {
+        elseif(bceni_16_style.eq.1)then                                 !srv 16.02.12 {
 
           if(ncall.eq.0) then
           write(*,*) 'Given integrated ion heat flux',
@@ -7533,7 +7533,7 @@ cxpb Careful here because of BC number clash
 * CONDITION ON ION DENSITY BCCON = 21,22,23
 
 32400   CONTINUE
-!IYS 04.03.2013   {
+!IYS 04.03.2013 {
         if(ncall.eq.0) then
           write(*,*) 'Given integrated ion heat flux',
      &               ' with constant Ti '

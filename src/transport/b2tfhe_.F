@@ -110,7 +110,7 @@ csw 10oct2012
      &  vis_per, floe0_mdf, cone0_mdf, alfe0_mdf, t0_mdf, tex0_mdf       !srv 22.11.99 13.10.06 17.06.09
       real (kind=R8) ::
      *    fch_ion_neutral, fch_anomalous                                 !srv 30.09.02
-     *   ,fnadspl(-1:nx,-1:ny,0:1,0:ns-1), tauia(-1:nx,-1:ny,0:ns-1)     !srv 28.03.99 11.07.99
+     *   ,tauia(-1:nx,-1:ny,0:ns-1)                                      !srv 28.03.99 11.07.99
      *   ,fch_inert                                                      !srv 07.07.99
      *   ,va(-1:nx,-1:ny,0:1)                                            !srv 22.11.99
      *   ,dva(-1:nx,-1:ny), fledia(-1:nx,-1:ny,0:1)                      !srv 22.11.99 25.01.02
@@ -123,14 +123,11 @@ csw 10oct2012
 !      real (kind=R8) ::
 !     *   gampvdc(-1:nx,-1:ny)                                           !srv
       real (kind=R8) ::
-     *   dvpar(-1:nx,-1:ny)  !,dvdia(-1:nx,-1:ny)                        !srv
-     *  , wrk0(-1:nx,-1:ny), qip0(-1:nx,-1:ny)                           !srv 11.07.99
+     *    wrk0(-1:nx,-1:ny), qip0(-1:nx,-1:ny)                           !srv 11.07.99
      *  , qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny)                         !srv 20.12.99
       real (kind=R8) :: facdriftm
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
-!      real (kind=R8) ::
-!     *   dvparc(-1:nx,-1:ny),dvdiac(-1:nx,-1:ny)
 
       save ncall, fch_ion_neutral, fch_anomalous, dia_cur, fch_inert,    !srv 07.07.99
      &     vis_par, vis_per, vis_q, vdia_par                             !srv 17.05.99 11.07.99 22.11.99
@@ -1087,7 +1084,7 @@ csw 13mar2013 overwrite cone0/cone0_mdf (SOLPS4 style)
 !          else
 !           alfe0 = calf(ix,iy,0)*cone0_mdf/chce(ix,iy,0)
 !          endif
-!          alfe0 = 0.0e0_R8 ! calf(ix,iy,0)  !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08  }
+!          alfe0 = 0.0e0_R8 ! calf(ix,iy,0)  !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08 }
 
           alfe0 = calf(ix,iy,0)                                          !srv 16.06.07
           tex0  = tex

@@ -68,7 +68,7 @@
      *  shifr(-1:nx,-1:ny,0:3), shedu(-1:nx,-1:ny,0:3),
      *  shedd(-1:nx,-1:ny,0:3), shefr(-1:nx,-1:ny,0:3),
      *  wrks(-1:nx,-1:ny)
-      character chns*3, chk*1                                         !srv 11.09.09 }
+      character chk*1                                                 !srv 11.09.09 }
       save ncall, style, rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2,
      &  phm3, phm4, phm5, phm6, phm7, phm8                            !srv 02.06.99 27.12.01 28.08.02
       real (kind=R8) ::

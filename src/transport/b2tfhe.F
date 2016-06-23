@@ -59,7 +59,7 @@
       integer ncall, n2, ix, iy, ib, is, ixl, iyl, ixb, iyb,
      *   no_current, conduction_only, no_hybr, model, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
-      integer, save :: lim_flux = 0, mdf_fhe = 0                        !srv 04.02.03 13.10.06
+      integer, save :: mdf_fhe = 0                                      !srv 04.02.03 13.10.06
       real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::

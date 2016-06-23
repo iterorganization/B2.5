@@ -17,12 +17,13 @@
       subroutine alloc_b2mod_transport_models(nxd,nyd,nsd)
       implicit none
       integer nxd,nyd,nsd
-      external xertst
       transport_models_allocated=.true.
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(eta_hce_mult(-1:nyd))
 #else
+      call xertst (nxd.le.DEF_NXD, 'Increase DEF_NXD in DIMENSIONS.F')
       call xertst (nyd.le.DEF_NYD, 'Increase DEF_NYD in DIMENSIONS.F')
+      call xertst (nsd.le.DEF_NSD, 'Increase DEF_NSD in DIMENSIONS.F')
 #endif
       end subroutine alloc_b2mod_transport_models
 

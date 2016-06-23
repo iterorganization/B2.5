@@ -20,7 +20,6 @@ csw 09jan2014 extra module to define some arrays
 #endif
 #endif
       implicit none
-
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
 #     include "COUPLE/EIRDIAG.F"
@@ -101,16 +100,19 @@ csw 09jan2014 use extra little module
         use b2mod_b2_to_astra_com ! IGNORE
 
         implicit none
-        integer :: nxd, nyd, nsd, ismain, ismain0, nwrite, isa, ism
-
+        integer :: nxd, nyd, nsd, ismain, ismain0, nwrite, isa
+#ifdef B25_EIRENE
+        integer ism, intrl
         character chns*3
+        real (kind=R8) :: wrk0(-1:nxd,-1:nyd)
+#endif
+
 csw 09jan2014 remove np from declaration here
-c        integer :: mintopcut, ix, iy, is, ixx, intrl, iout, np
-        integer :: mintopcut, ix, iy, is, ixx, intrl, iout
+c        integer :: mintopcut, ix, iy, is, iout, np
+        integer :: mintopcut, ix, iy, is, iout
         integer :: maxtopcut
         integer, save :: ncall = 0
 
-        real (kind=R8) :: wrk0(-1:nxd,-1:nyd)
 csw 09jan2014 remove declaration p,x,cb,cc,cd from here
 c        real (kind=R8) :: p(0:nxd-1), x(0:nxd-1), cb(0:nxd-1),
 c     &  cc(0:nxd-1), cd(0:nxd-1), DSEVAL, DFMIN, arg, y(0:nxd-1)
@@ -163,12 +165,12 @@ csw 09jan2014 add extra allocates
 !        ENDDO
          arg = DFMIN(real(nmdpl-5,R8),real(nmdpl+5,R8),fun,1.0e-7_R8)
          R_midpl(iy) = DSEVAL(np+1,arg,p,x,CB,CC,CD)
-!        write (*,"(' arg=',es12.6,' R_midpl=',es12.6)") arg, R_midpl(iy)
+!        write (*,"(' arg=',es13.6,' R_midpl=',es13.6)") arg, R_midpl(iy)
 
          CALL DSPLINE(np+1, p, y, CB, CC, CD)
          Z_midpl(iy)=DSEVAL(np+1,arg,p,y,CB,CC,CD)
-         write (*,"(' arg=',es12.6,' R_midpl=',es12.6,
-     &            ' Z_midpl=',es12.6)") arg, R_midpl(iy), Z_midpl(iy)
+         write (*,"(' arg=',es13.6,' R_midpl=',es13.6,
+     &            ' Z_midpl=',es13.6)") arg, R_midpl(iy), Z_midpl(iy)
         enddo                                                        !srv 21.05.12 }
 
         maxtopcut = nyd                                              !srv 25.02.16 {

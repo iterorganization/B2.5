@@ -1857,7 +1857,7 @@ cxpb
         call get_jsep(nx,ny,jxi,jxa,jsep)
       endif
 *   ..compute plasma pressure from charged species only
-      call b2xppe (nx, ny, ns, ne, te, pe)
+      call b2xppe (nx, ny, ne, te, pe)
       rzb = 0.0_R8
       call b2xppb (nx, ny, rzb, ni(-1,-1,1), te, ti, pri)
       pp = pe + pri      ! plasma pressure

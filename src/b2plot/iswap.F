@@ -1,6 +1,5 @@
 
       subroutine iswap(i1,i2)
-      use b2mod_types
       implicit none
       integer :: i1, i2, i3
       i3=i1

@@ -165,7 +165,7 @@ c
       integer ncid,imap(maxvdims),iret
       real (kind=R8) ::
      *   htime,dumarr(1),tstepn(1)
-      integer itstep,ntstep,dtstep
+      integer itstep,ntstep
 #endif
 #endif
       integer inpts,is,i,lnblnk,nxcam,nycam
@@ -220,6 +220,7 @@ c
         imap(1)=1
         tstepn(1)=ntstep
         call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
+        ntstep=nint(tstepn(1))
         do itstep=1,ntstep,movie_skip
           dumarr(1)=htime
           call rwcdf_settime('time',itstep)

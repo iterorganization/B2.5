@@ -139,7 +139,7 @@
 *.declarations
 
 *   ..local variables
-      integer nmax, i, j, k, ind, izn0
+      integer i, j, k, ind, izn0
       character header*60, chk*2, chdc*(*), fmtp*(*)
       parameter (chdc='''$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$''',
      &  fmtp='(2x,a6,4x,a)')

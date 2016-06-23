@@ -145,7 +145,7 @@
 *   ..common blocks
 *   ..local variables
       integer ncall, ntim, mvinc, mvnum, ix, iy, is, js, jsep, jxi, jxa,
-     &  ib, isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
+     &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
      &  nxtl, nxtr
       integer nscx, iscx(0:nscxmax-1), k, idum(0:9)
       save nscx, iscx, isfb,
@@ -212,9 +212,7 @@
      *  rpt0(-1:nx,-1:ny,0:ns-1), rpi0(-1:nx,-1:ny,0:ns-1),
      1  rescale_sa(0:nsdecl-1), rescale_ra(0:nsdecl-1),
      2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
-     3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1),
-     *  pz(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),
-     *  vsal(-1:nx,-1:ny,0:1,0:ns-1)
+     3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
       integer atomic_physics_rescale_flag
       real (kind=R8) :: hzconst                                      !srv 30.01.10
 *   ..procedures
@@ -1097,7 +1095,7 @@ c-dpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
      &   'faulty internal parameter isfb')
        call ipgetr ('b2mndr_hz', fac_hz)                       !srv 09.01.01 09.06.08 {
        call xertst (0.0.le.fac_hz .and. 1.0.ge.fac_hz,
-     &  'faulty parameter b2mndr_hz')                        !srv 09.01.01 09.06.08 }
+     &  'faulty parameter b2mndr_hz')                          !srv 09.01.01 09.06.08 }
 csw 09oct2012
        call ipgeti ('b2news_poteq', pot_eq)
        call ipgeti ('b2tfhe_no_current', no_current)
@@ -1222,17 +1220,17 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       call my_intcor1(nx,ny,2,vol,bb,wbbc)                               !xpb
 *   ..compute extrapolated wbbc(:,:,3) component
       wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
-*   ..compute hz                                                     !srv 09.01.01  09.06.08 {
+*   ..compute hz                                                         !srv 09.01.01  09.06.08 {
 c      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/hx/hy
-!      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)           !srv 09.01.01
+!      hz = 1.0e0_R8*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)              !srv 09.01.01
       hzconst = 2.0_R8*pi*6.0_R8   ! for ITER for testing
       hzconst = 2.0_R8*pi*1.6_R8   ! for ASDEX-UPGRADE for testing
-      hzconst = 1.0_R8                                               !srv 30.01.10
-      hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)            !srv 16.06.09
+      hzconst = 1.0_R8                                                   !srv 30.01.10
+      hz = hzconst*(1.0e0_R8-fac_hz)+fac_hz*vol/gs(:,:,2)                !srv 16.06.09
 *   ..compute pbshz (magnetic field pitch * surface area  at cell faces * hz)
 c      wrk0 = hz*vol
 c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
-      do iy=-1,ny                                                    !srv 11.03.08 {
+      do iy=-1,ny                                                        !srv 11.03.08 {
         do ix=-1,nx
           if(leftix(ix,iy).ne.-2) then
             pbshz(ix,iy,0)=pbs(ix,iy,0)*
@@ -1574,7 +1572,8 @@ c   --> better way doing this is necessary)
 *   ..initialise tracing routines
       write(*,*) 'Calling alloc_b2mod_elements'
       call alloc_b2mod_elements(ns,zn,am)
-      call alloc_b2mod_neutrals(nx,ny,ns,natm,nstraid,nsts,sput_dst)
+      call alloc_b2mod_neutrals
+     & (nx,ny,ns,natm,nmol,nion,nstraid,nsts,sput_dst)
       natmi = 0
       do is = 0, ns-1
         if (is_neutral(is)) natmi = natmi+1
@@ -1804,7 +1803,7 @@ c new CDF movie option
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
-            call tallies(nx,ny,ns,BoRiS)
+            call tallies(nx,ny,ns)
           endif
         endif
         if (first_time_step) call b2trci(nx,ny,ns,ismain,dtim,BoRiS)
@@ -2016,7 +2015,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..write out last tallies if not yet done
       if(tally.gt.0) then
         if(mod(itim,tally).ne.0.and.itim.gt.1) then
-          call tallies(nx,ny,ns,BoRiS)
+          call tallies(nx,ny,ns)
         endif
       endif
 

@@ -4,8 +4,7 @@ c
       implicit none
 #include "graphics_vars.h"
       integer :: ncls, irstack, iclv
-      real (kind=R8) ::
-     * rstack(*)
+      real (kind=R8) :: rstack(irstack)
       nofcls=ncls
       if(nofcls.eq.0) then
         write (*,*) 'Using standard contour levels'
@@ -24,10 +23,9 @@ c
       subroutine wclvs(ncls,rstack,irstack)
       use b2mod_types
       implicit none
-      integer :: ncls, irstack, iclv
 #include "graphics_vars.h"
-      real (kind=R8) ::
-     * rstack(*)
+      integer :: ncls, irstack, iclv
+      real (kind=R8) :: rstack(irstack)
       nofwcls=ncls
       if(nofwcls.eq.0) then
         write (*,*) 'Using standard wall contour levels'
@@ -46,10 +44,9 @@ c
       subroutine tclvs(ncls,rstack,irstack)
       use b2mod_types
       implicit none
-      integer :: ncls, irstack, iclv
 #include "graphics_vars.h"
-      real (kind=R8) ::
-     * rstack(*)
+      integer :: ncls, irstack, iclv
+      real (kind=R8) :: rstack(irstack)
       noftcls=ncls
       if(noftcls.eq.0) then
         write (*,*) 'Using standard target contour levels'

@@ -810,12 +810,12 @@
       idum(0) = nx
       idum(1) = ny
       idum(2) = ns
-      call cfverw (nout(1), plasmastate_version)			 !xpb
+      call cfverw (nout(1), plasmastate_version)                         !xpb
       call cfwuin (nout(1), 3, idum, 'nx,ny,ns')
       call cfwuch (nout(1), 120, lblmn, 'label')
       call b2wuzd (nout(1), plasmastate_version, ns, 
      &  zamin, zamax, zn, am)
-      call b2wups (nout(1), nx, ny, ns, ne, na, ua, uadia, te,		 !xpb
+      call b2wups (nout(1), nx, ny, ns, ne, na, ua, uadia, te,           !xpb
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
@@ -832,8 +832,8 @@
       call cfwuch (nout(2), 120, lblgm, 'label')
       idum(0) = 1
       call cfwuin (nout(2), 1, idum, 'isymm') 
-      call b2wugm (nout(2), nx, ny, crx, cry, fpsi, ffbz,
-     &  bb, vol, hx, hy, qz, qc, gs, pbs)
+      call b2wugm (nout(2), nx, ny, crx, cry, fpsi, ffbz, bb,
+     &  vol, hx, hy, qz, qc, gs, pbs)
 
       open(91,file='../core_boundary.txt')
       iy=-1
@@ -861,7 +861,7 @@
       call mds_err_msg(status)
       write(*,*) 'MDSplus database version = ',dbversion
 
-*   ..close files	
+*   ..close files
       status=mdsclose('solps'//char(0),ishot)
       write(*,*) 'mdsclose'
       call mds_err_msg(status)

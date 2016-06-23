@@ -367,11 +367,11 @@
         call b2xpne (nx, ny, ns, rza, na, zero, ne)
       endif
       call cfrure (nget, n2*ns, ua, 'ua')
-      if(b2fstat_version.ge.'01.001.000') then                 	!xpb
-        call cfrure (nget, n2*2*ns, uadia, 'uadia')            	!xpb
-      else                                                     	!dpc
-        uadia=0.0_R8                                           	!dpc
-      endif                                                    	!xpb
+      if(b2fstat_version.ge.'01.001.000') then                  !xpb
+        call cfrure (nget, n2*2*ns, uadia, 'uadia')             !xpb
+      else                                                      !dpc
+        uadia=0.0_R8                                            !dpc
+      endif                                                     !xpb
       call cfrure (nget, n2, te, 'te')
       call cfrure (nget, n2, ti, 'ti')
       call cfrure (nget, n2, po, 'po')
@@ -380,10 +380,10 @@
       call cfrure (nget, n2*2, fhe, 'fhe')
       call cfrure (nget, n2*2, fhi, 'fhi')
       call cfrure (nget, n2*2, fch, 'fch')
-      if(b2fstat_version.ge.'01.001.005') then                 	 !xpb
+      if(b2fstat_version.ge.'01.001.005') then                  !xpb
         call cfrure (nget, n2*2, fch_32, 'fch_32')
         call cfrure (nget, n2*2, fch_52, 'fch_52')
-      else                                                     	 !dpc
+      else                                                      !dpc
         fch_32(:,:,0)=fch(:,:,0)
         fch_32(:,:,1)=0.0_R8
         fch_52(:,:,0)=0.0_R8
@@ -399,7 +399,7 @@
       endif
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 *   ..read time
-      if(b2fstat_version.ge.'01.001.018') then                 	 !xpb
+      if(b2fstat_version.ge.'01.001.018') then                  !xpb
         call cfrure (nget, 1, time, 'time')
       else
         time(1)=0.0_R8
@@ -407,9 +407,9 @@
       tim=time(1)
       call xertst (0.0_R8.le.tim, 'faulty input time')
 *   ..read parallel current
-      if(b2fstat_version.ge.'01.001.069') then                   !srv 09.09.11
-	call cfrure (nget, n2, fch_p(:,:,0), 'fch_p')
-	fch_p(:,:,1)=0.0_R8                                      !srv 19.03.12
+      if(b2fstat_version.ge.'01.001.069') then                  !srv 09.09.11
+        call cfrure (nget, n2, fch_p(:,:,0), 'fch_p')
+        fch_p(:,:,1)=0.0_R8                                      !srv 19.03.12
       elseif(b2fstat_version.ge.'01.001.025' .and.
      &       b2fstat_version.le.'01.001.031') then  ! clash between 5.0/1 and 5.2
 ! cxpb This code looks strange but the idea is that cfrure_opt will fail and rewind
@@ -424,7 +424,7 @@
       elseif (b2fstat_version.ge.'01.001.022' .and.
      &        b2fstat_version.ge.'01.001.024') then              !srv 10.06.08 }
         call cfrure (nget, n2, fch_p(:,:,0), 'fch_p')
-	fch_p(:,:,1)=0.0_R8                                      !srv 19.03.12
+        fch_p(:,:,1)=0.0_R8                                      !srv 19.03.12
       else
         fch_p(:,:,0) = fch(:,:,0)     ! this ensures the old behaviour is kept
         fch_p(:,:,1) = 0.0_R8         ! this ensures the old behaviour is kept

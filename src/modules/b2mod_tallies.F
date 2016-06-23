@@ -363,13 +363,15 @@
       end subroutine write_cdf_variable
 
       subroutine write_cdf_char_variable(ncid,ntstep,varname,var)
+      implicit none
       integer :: ncid, ntstep
       character*(*) :: varname
       character*(*) :: var(*)
 #include <netcdf.inc>
+      integer i
       integer :: status, varid, ndims, dimids(NF_MAX_VAR_DIMS),
      1 start(NF_MAX_VAR_DIMS), count(NF_MAX_VAR_DIMS),
-     2 time_dep, i
+     2 time_dep
 
       if(ntstep.ge.0) then
         time_dep=1

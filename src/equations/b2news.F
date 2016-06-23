@@ -2,8 +2,7 @@
 *.specification
 
       subroutine b2news (nx, ny, ns, nscx, iscx, ismain, ismain0,
-     &  natm, nmol, nion, nlim, nsts, itim, dtim, rxf, ierr,
-     &  wrong_flow, ramp_call)
+     &  dtim, rxf, ierr, wrong_flow, ramp_call)
       use b2mod_types
       use b2mod_geo
       use b2mod_plasma
@@ -22,8 +21,7 @@
       use b2mod_neoclassical
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nscx, iscx(0:nscxmax-1), ismain, ismain0,
-     *   natm, nmol, nion, nlim, nsts, itim
+      integer nx, ny, ns, nscx, iscx(0:nscxmax-1), ismain, ismain0
       real (kind=R8) ::
      *   dtim, rxf
 *   ..output arguments                                                   !xpb
@@ -65,7 +63,7 @@
      *  potitmin, nsmin, nsmax, no_current
       integer, save :: style = 3                                         !srv 29.05.02
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0             !srv 13.10.06
-      integer, save :: use_b2npc9 = 1, use_b2nph9 = 1, coriolis = 0      !srv 06.11.08 11.08.08
+      integer, save :: use_b2npc9 = 1, use_b2nph9 = 1                    !srv 06.11.08 11.08.08
       real (kind=R8) ::
      *  potok, mach10, BoRiS, vis_per, na_min, na_new
       integer ncall, n2, is, ier0, i, ix, iy, ncallout, ixmax, iymax,    !xpb
@@ -189,7 +187,6 @@
      &      .or.(use_b2npc9.eq.1.and. mdf_fnb.ne.0)).and.
      &           vis_per.ne.0.0_R8 .and. style.eq.2),
      &      'Cannot use ma28 for both the 7- and 9-point stencils')
-       call ipgeti ('b2news_coriolis', coriolis)                      !srv 11.11.08
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
          nsmin=ns
@@ -325,8 +322,8 @@
           call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,  !xpb !srv 01.07.08
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
         endif                                                            !xpb
-        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06  }
-        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,       !srv 20.09.06  {
+        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06 }
+        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,         !srv 20.09.06 {
      &                       facdrift, fchvispar)
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
@@ -386,20 +383,12 @@
      &    ni, sna, smo, she, shi, sch, sne)                              !xpb
 cxpb
 *   ..iterate on parallel momentum balance
-        if(coriolis.eq.0) then                                           !srv 19.10.08 {
-         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,
-     &    qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                    !srv 01.07.09
-     &    na, te, ti, po, fna, cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo, !srv 02.07.08
-     &    smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
-     &    resmt, corua, corut, pcca, pccm, ier0)
-        else
-         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,
+        call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,
      &    qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                    !srv 01.07.09
      &    na, te, ti, po, fna_fcor,
      &    cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                      !srv 02.07.08
      &    smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
      &    resmt, corua, corut, pcca, pccm, ier0)
-        endif                                                            !srv 19.10.08 }
         call xertst (ier0.eq.0, 'error return from b2npmo')
 !#ifdef BLOCK
 !        call xertst (ncall.eq.0, 'BLOCK called')
@@ -408,8 +397,8 @@ cxpb
 *     (= ne before continuity update)
         call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
-        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06  }
-        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,         !srv 20.09.06  {
+        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06 }
+        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa,         !srv 20.09.06 {
      &                       facdrift, fchvispar)
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)

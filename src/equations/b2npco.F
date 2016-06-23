@@ -52,10 +52,10 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ireg, ii, use_eirene
+      integer ncall, n2, ix, iy, use_eirene
       integer, save :: iout = 0                                    !srv 04.07.08
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0        !srv 06.07.06
-      character chns*3, chark*1                                    !srv 04.07.08
+      character chns*3                                             !srv 04.07.08
       real (kind=R8) ::
      *  rxg, pcm0, pcm1
       real (kind=R8) ::

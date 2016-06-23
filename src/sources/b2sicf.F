@@ -34,7 +34,7 @@
       integer, save :: iout = 0                                       !srv 17.06.02
       character chns*3, chark*1                                       !srv 17.06.02
       real (kind=R8) ::
-     *    phm0, phm1, t0
+     *    phm0, phm1
       real (kind=R8) :: wrks(-1:nx,-1:ny)
       save ncall, style, phm0, phm1
 *   ..procedures

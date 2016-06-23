@@ -1,14 +1,14 @@
-      subroutine b2xppe (nx, ny, ns, ne, te, pe)
+      subroutine b2xppe (nx, ny, ne, te, pe)
       use b2mod_types
       implicit none
-      integer nx, ny, ns
+      integer nx, ny
       real (kind=R8) ::
      *  ne(-1:nx,-1:ny), 
      &  te(-1:nx,-1:ny), pe(-1:nx,-1:ny)
 *     ------------------------------------------------------------------
 *     B2XPPE computes the electron pressure, pe = ne*te.
 *     ------------------------------------------------------------------
-      integer n2, ix, iy, is
+      integer n2
       external sfill
 *     ------------------------------------------------------------------
 *$$$  call subini ('b2xppe')

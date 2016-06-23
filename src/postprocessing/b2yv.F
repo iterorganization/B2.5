@@ -42,12 +42,12 @@
 *   ..local variables
       integer :: icase, ix, iy, isymm, is
       integer :: lbc, ubc, lbr, ubr   
-      integer :: hv, lbnd(2) = 0
-      integer status
       real(4), allocatable :: M(:,:)
       character(1) :: key
       character lblgm*120
 #ifdef WINDOWS
+      integer :: hv, lbnd(2) = 0
+      integer status
       character(AV_MAX_LABEL_LEN) :: axis1 = 'X', axis2 = 'Y', axis3
 #else
       character*1 :: axis1 = 'X', axis2 = 'Y'
@@ -58,7 +58,7 @@
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
-      character savefile*16, arg*256, lblmn*120, lblcp*120, title*64
+      character lblmn*120, title*64
       character hlp_frm*22
       logical file_open
 *   ..procedures
@@ -118,8 +118,8 @@
 *   ..read plasma state file
       call cfruch (ninp(3), 120, lblmn, 'label')
 *   ..read species data
-      call b2ruzd (ninp(3), b2fstati_version, ns, 
-     &  zamin, zamax, zn, am, .true.)
+      call b2ruzd (ninp(3), b2fstati_version,
+     & ns, zamin, zamax, zn, am, .true.)
       lbc = -1
       lbr = -1
       ubc = ny

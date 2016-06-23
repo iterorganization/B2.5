@@ -120,13 +120,13 @@
      &    (is_neutral(is) .and. use_eirene.ne.0)) then               !srv 01.07.08 {
 *     The corner cell value is defined by interpolation in b2npco and b2npc9
 *   ..There is some problem for 9-point stencil case.
-        do iy=-1, ny, ny+1                                           !srv 27.06.08  {
+        do iy=-1, ny, ny+1                                           !srv 27.06.08 {
          do ix = -1, nx
 	   if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 ) then
 	     if(sna(ix,iy,1,is).eq.0.0_R8) sna(ix,iy,1,is) = -1.0_R8
 	   endif
 	 enddo 
-	enddo                                                        !srv 27.06.08  }
+	enddo                                                        !srv 27.06.08 }
        endif                                                         !srv 01.07.08 }
       enddo
 *   ..modify smo
@@ -189,38 +189,40 @@
       schst = sch - schst
       snest = sne - snest
 
-	if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
+      if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
        do is = 0, ns-1
 	  write (chns,'(i3.3)') is
-!	  call my_out(70,nx,ny,smost(:,:,0,is)+              !srv 07.10.09
+!          wrk0=smost(:,:,0,is)+              !srv 07.10.09
 !     &        smost(:,:,1,is)*ua(:,:,is)+
 !     &        smost(:,:,2,is)*na(:,:,is)*mp*am(is)+
-!     &        smost(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is),
-!     &        'b2srst_smost'//chns)
-	 enddo
-	endif
-	if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) then
+!     &        smost(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+!	  call my_out(70,nx,ny,wrk0,'b2srst_smost'//chns)
+       enddo
+      endif
+      if (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) then
        do is = 0, ns-1
 	  write (chns,'(i3.3)') is
-!	  call my_out(70,nx,ny,snast(:,:,0,is)+              !srv 07.10.09
-!     &             snast(:,:,1,is)*na(:,:,is),'b2srst_snast'//chns)
-	 enddo
-	endif
-	if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) then
-         wrk0=shest(:,:,0)+shest(:,:,1)*te+  !srv 07.10.09
-     &        shest(:,:,2)*ne + shest(:,:,3)*te*ne
-	 call my_out(70,nx,ny,wrk0,'b2srst_shest')
-         wrk0=shist(:,:,0)+shist(:,:,1)*ti+
-     &        shist(:,:,2)*ni(:,:,0)+shist(:,:,3)*ti*ni(:,:,0)
-	 call my_out(70,nx,ny,wrk0,'b2srst_shist')
-	endif
-	if (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1) then
-!	 call my_out(70,nx,ny,schst(:,:,0)+schst(:,:,1)*po+  !srv 07.10.09
-!     &   schst(:,:,2)*ne+schst(:,:,3)*po*ne(:,:),'b2srst_schst')
-	endif          
+!         wrk0=snast(:,:,0,is)+              !srv 07.10.09
+!     &        snast(:,:,1,is)*na(:,:,is)
+!	  call my_out(70,nx,ny,wrk0,'b2srst_snast'//chns)
+       enddo
+      endif
+      if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) then
+        wrk0=shest(:,:,0)+shest(:,:,1)*te+  !srv 07.10.09
+     &       shest(:,:,2)*ne + shest(:,:,3)*te*ne
+	call my_out(70,nx,ny,wrk0,'b2srst_shest')
+        wrk0=shist(:,:,0)+shist(:,:,1)*ti+
+     &       shist(:,:,2)*ni(:,:,0)+shist(:,:,3)*ti*ni(:,:,0)
+	call my_out(70,nx,ny,wrk0,'b2srst_shist')
+      endif
+      if (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1) then
+!        wrk0=schst(:,:,0)+schst(:,:,1)*po+  !srv 07.10.09
+!     &       schst(:,:,2)*ne+schst(:,:,3)*po*ne(:,:)
+!	 call my_out(70,nx,ny,wrk0,'b2srst_schst')
+      endif
 
-	if (iout.eq.1) then                       !srv 11.09.09 {
-       do is = 0, ns-1
+      if (iout.eq.1) then                       !srv 11.09.09 {
+        do is = 0, ns-1
 	  write (chns,'(i3.3)') is
 	  do k=0,3
 	   write (chk,'(i1)') k
@@ -232,14 +234,14 @@
 	   call my_out(70,nx,ny,snast(-1,-1,k,is),
      &                       'b2srst_snast'//chk//chns)
 	  enddo
-	 enddo
-	 do k=0,3
+        enddo
+	do k=0,3
 	  write (chk,'(i1)') k
 	  call my_out(70,nx,ny,shest(-1,-1,k),'b2srst_shest'//chk)
           call my_out(70,nx,ny,shist(-1,-1,k),'b2srst_shist'//chk)
 	  call my_out(70,nx,ny,schst(-1,-1,k),'b2srst_schst'//chk)
-	 enddo
-	endif                                                 !srv 11.09.09 }
+	enddo
+      endif                                                 !srv 11.09.09 }
 
 * ..return
       ncall = ncall+1

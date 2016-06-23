@@ -7,7 +7,7 @@
      &  leftcut, leftcut1, rightcut, rightcut1,
      &  bottomcut, bottomcut1, topcut, topcut1,
      &  hx, hy, qc, hx1, hy1, qc1, 
-     &  bundle_frac, bottomiy1, ne, na, ua, uadia, te, ti,	
+     &  bundle_frac, bottomiy1, ne, na, ua, uadia, te, ti,
      &  po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &  fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &  fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
@@ -80,7 +80,7 @@
       real (kind=R8) ::
      *  fna1(-1:nx1,-1:ny1,0:1,0:ns1-1), fhe1(-1:nx1,-1:ny1,0:1),
      &  fhi1(-1:nx1,-1:ny1,0:1), fch1(-1:nx1,-1:ny1,0:1),
-     1	fch1_32(-1:nx1,-1:ny1,0:1), fch1_52(-1:nx1,-1:ny1,0:1),
+     1  fch1_32(-1:nx1,-1:ny1,0:1), fch1_52(-1:nx1,-1:ny1,0:1),
      2  fch1_p(-1:nx1,-1:ny1,0:1), kinrgy1(-1:nx1,-1:ny1,0:ns1-1),
      &  fna_mdf1(-1:nx1,-1:ny1,0:1,0:ns1-1),
      &  fhe_mdf1(-1:nx1,-1:ny1,0:1), fhi_mdf1(-1:nx1,-1:ny1,0:1),

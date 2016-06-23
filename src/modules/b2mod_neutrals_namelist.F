@@ -183,16 +183,13 @@ csw 21feb2012
       contains
 
       subroutine alloc_b2mod_neutrals(nxd,nyd,nsd,
-     &  natm_in,NSTRAID_in,nsts_in,sput_dst)
+     &  natm_in,nmol_in,nion_in,nstra_in,nsts_in,sput_dst)
       use b2mod_elements
      & ,only : is_codes
       use b2mod_b2cmpa
       implicit none
       integer, intent(in) :: nxd, nyd, nsd, 
-     &  natm_in, nstraid_in, nsts_in, sput_dst
-#ifndef ALLOCATE_AND_NAMELIST
-      external xertst
-#endif
+     &  natm_in, nmol_in, nion_in, nstra_in, nsts_in, sput_dst
       integer is, isstart, isend
       integer is0, ispecies
       character*12 hlp_frm
@@ -225,29 +222,31 @@ csw 21feb2012
       allocate(species_start(NSTRAID))
       allocate(species_end(NSTRAID))
       allocate(b2espcr(0:nsd-1))
-      allocate(eb2spcr(1:natmid))
-      allocate(lstrascl(NSTRAID,0:natmid))
-      allocate(lmolscl(nmolid))
-      allocate(lionscl(nionid))
-      allocate(gpfc(natmid,NSTRAID))
-      allocate(mlcmp(natmid,nmolid))
-      allocate(lcns(nstsid))
-      allocate(ltns(nstsid))
-      allocate(lsns(nstraid))
-      allocate(ksns(NSTRAID))
-      allocate(msns(2,NSTRAID))
+      allocate(eb2spcr(1:natm_in))
+      allocate(lstrascl(nstra_in,0:natm_in))
+      allocate(lmolscl(nmol_in))
+      allocate(lionscl(nion_in))
+      allocate(gpfc(natm_in,nstra_in))
+      allocate(mlcmp(natm_in,nmol_in))
+      allocate(lcns(nsts_in))
+      allocate(ltns(nsts_in))
+      allocate(lsns(nstra_in))
+      allocate(ksns(nstra_in))
+      allocate(msns(2,nstra_in))
 #ifndef NO_B2_CHEM_SPUT
-      allocate(chemical_sputter_yield(0:DEF_NLIM+DEF_NSTS))
+      allocate(chemical_sputter_yield(0:nlimps))
 #endif
 #else
       call xertst (nxd.le.DEF_NXD, 'faulty parameter nxd')
       call xertst (nyd.le.DEF_NYD, 'faulty parameter nyd')
-      call xertst (nsd.le.nsdmax, 'faulty parameter nsd')
-      call xertst (natmid.le.DEF_NATM, 'faulty parameter natmid')
-      call xertst (nmolid.le.DEF_NMOL, 'faulty parameter nmolid')
-      call xertst (nstraid_in.le.nstraid, 'faulty parameter nstraid_in')
+      call xertst (nsd.le.DEF_NSD, 'faulty parameter nsd')
+      call xertst (natm_in.le.NATMID, 'faulty parameter natm_in')
+      call xertst (nmol_in.le.NMOLID, 'faulty parameter nmol_in')
+      call xertst (nion_in.le.NIONID, 'faulty parameter nion_in')
+      call xertst (nsts_in.le.NSTSID, 'faulty parameter nsts_in')
+      call xertst (nstra_in.le.NSTRAID, 'faulty parameter nstraid_in')
 #endif
-      call xertst (natmid.ge.nspecies, 'faulty parameter natmid')
+      call xertst (natm_in.ge.nspecies, 'faulty parameter natm_in')
       CRCSTRA=' '
       SPS_ID=' '
       SPS_MTRL=' '
@@ -358,9 +357,6 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
 
       subroutine alloc_b2mod_neutrals_save(NSTRAID_in)
       integer nstraid_in
-#ifndef ALLOCATE_AND_NAMELIST
-      external xertst
-#endif
 
 #ifdef ALLOCATE_AND_NAMELIST
       NSTRAID=NSTRAID_in
@@ -435,7 +431,6 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       implicit none
       integer nx, ny, ns
       logical dotest
-      external xertst
       integer is, ic, ix, istra, i, j, k, n, ii(1), itrack
       logical hydrogen, helium, neon, found, side
       intrinsic mod
@@ -716,7 +711,7 @@ c
         call xertst(0.le.eb2spcr(is).and.eb2spcr(is).lt.ns,
      .   'faulty input eb2spcr')
       enddo
-      do is = 1, nmolid
+      do is = 1, nnmoli
         do i = 1, nspecies
           call xertst(0.le.mlcmp(i,is), 'faulty input mlcmp')
         enddo
@@ -753,13 +748,13 @@ c
      .    'faulty inputs l_h_mol, mlcmp')
 #endif
       enddo
-      do is = 1, nionid
+      do is = 1, nnioni
         call xertst(0.le.lionscl(is), 'faulty input lionscl')
       end do
-      do is = 1, nstsid
-        call xertst (0.le.lcns(is).and.lcns(is).le.nsts, 
+      do is = 1, nnstsi
+        call xertst (0.le.lcns(is).and.lcns(is).le.nnstsi,
      &   'faulty input lcns')
-        call xertst (0.le.ltns(is).and.ltns(is).le.nsts, 
+        call xertst (0.le.ltns(is).and.ltns(is).le.nnstsi,
      &   'faulty input ltns')
       enddo
       do is = 1, nstrai
@@ -1018,7 +1013,6 @@ c.. Test consistency with physical edges within the computational domain
       character*256 filename
       integer istra
       logical file_ok
-      external xertst
 
       saved_volrec(:)=0.0_R8
 

@@ -79,18 +79,18 @@
 *.declarations
 
 *   ..local variables
-      integer n2, i, ix, iy, is, ib, ireg, ncall, ibegin, iend, isize, k
+      integer n2, i, ix, iy, is, ireg, ncall, ibegin, iend, isize, k
       integer, allocatable :: list_x(:), list_y(:), rix(:), riy(:)
       integer, save :: iout = 0                          !srv 09.07.04
       real (kind=R8), allocatable :: area(:)
-      character charns*3, chark*1, ch*2
+      character charns*3, chark*1
       character*15 hlp_frm
       real (kind=R8) ::
      *   amtol, t0, t1, t2, t3, qin, qel, surface_temp,
      *   Ei, Pflx, vbar, yldchm, yldres, GammaEvap, Phi_app,
      *   redep_max, yself_max
       parameter (amtol=1.0e-2_R8)
-      logical lcore, found
+      logical lcore
 *   ..procedures
       intrinsic abs, max, exp
       external subini, subend, xertst

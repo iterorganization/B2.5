@@ -1,4 +1,4 @@
-      subroutine tallies(nx,ny,ns,BoRiS)
+      subroutine tallies(nx,ny,ns)
       use b2mod_types
       use b2mod_geo
       use b2mod_plasma
@@ -17,7 +17,6 @@
       use b2mod_external
       implicit none
       integer nx,ny,ns
-      real (kind=R8) :: BoRiS
       real (kind=R8), save :: potave(0:nsdecl-1)
 #ifndef NO_CDF
 #     include <netcdf.inc>

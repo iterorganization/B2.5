@@ -78,7 +78,7 @@
       integer, save :: style_shei = 0                                  !srv 18.09.09 30.01.10
       character chns*3                                                 !srv 17.07.05
       real (kind=R8) ::
-     *  rxg, pcm0, pcm1, t0
+     *  rxg, pcm0, pcm1
       real (kind=R8) ::
      *  aa5(-1:nx,-1:ny,-2:2), wrkf(-1:nx,-1:ny,0:1),
      1  wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                 !srv 25.11.08

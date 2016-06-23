@@ -118,7 +118,7 @@ c***  Standard setup:
       logical :: file_ok
       character*260 filename
       integer i
-      external subini, subend, xertst
+      external subini, subend
 
       call subini ('readuser')
 
@@ -152,8 +152,7 @@ c      if (lpfrt_i.ne.-2) call xertst (0.le.lpfrt_i.and.lpfrt_i.lt.nx,
 c     . 'faulty input lpfrt_i')
 c      if (lpfrt_o.ne.-2) call xertst (0.le.lpfrt_o.and.lpfrt_o.lt.nx,
 c     . 'faulty input lpfrt_o')
-      call xertst (0.le.npfrgrp,
-     . 'faulty input npfrgrp')
+      call xertst (0.le.npfrgrp, 'faulty input npfrgrp')
       do i = 1, npfrgrp
         call xertst(1.le.ipfrgrp(i).and.ipfrgrp(i).le.jpfrgrp(i),
      .   'faulty inputs ipfrgrp, jpfrgrp')
