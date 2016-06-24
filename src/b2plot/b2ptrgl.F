@@ -140,7 +140,7 @@ c*** Target geometry
       do j=1,ntrgts !{
         z_hlp(j)=0.0_R8
         k=ltrgpos(j)
-        do iy=1,lseppos(j) !{
+        do iy=0,lseppos(j) !{
           if (mod(j,2).eq.1) then ! West targets
             z_hlp(j)=z_hlp(j) - sqrt((crx(k,iy,3)-crx(k,iy,1))**2+
      +                               (cry(k,iy,3)-cry(k,iy,1))**2)
@@ -174,8 +174,8 @@ c!###{
 c      print *
 c      print *,'ny,xtg_hlp:',ny
 c      do j=1,ntrgts !{
-c        print '(1x,i3,10f9.5/(4x,10f9.6))',lseppos(j),
-c     ,                                            (xtg_hlp(i,j),i=1,ny)
+c        print '(1x,i3,10f9.5/(4x,10f9.6))',lseppos(j)+1,
+c     ,                                         (xtg_hlp(i,j),i=0,ny-1)
 c      end do !}
 c!###}
 
@@ -186,11 +186,11 @@ c*** Mid-plane co-ordinates
       xmc_hlp=0.0_R8
       do j=1,ntrgts !{
         u=0.0_R8
-        k=l
-        n=2*m
+        k=lpfrpos(j)
+        n=1-m
         do i=0,lseppos(j) !{
-          h=0.5_R8*sqrt((crx(k,i,n+1)-crx(k,i,n))**2+
-     +                  (cry(k,i,n+1)-cry(k,i,n))**2)
+          h=0.5_R8*sqrt((crx(k,i,n+2)-crx(k,i,n))**2+
+     +                  (cry(k,i,n+2)-cry(k,i,n))**2)
           u=u+h
           xmp_hlp(i,j)=u
           u=u+h
@@ -199,10 +199,11 @@ c*** Mid-plane co-ordinates
           xmp_hlp(i,j)=xmp_hlp(i,j)-u
         end do !}
         u=0.0_R8
+        k=l
         xmc_hlp(lseppos(j),j)=0.0_R8
         do i=lseppos(j)+1,ny-1 !{
-          h=0.5_R8*sqrt((crx(k,i,n+1)-crx(k,i,n))**2+
-     +                  (cry(k,i,n+1)-cry(k,i,n))**2)
+          h=0.5_R8*sqrt((crx(k,i,3)-crx(k,i,1))**2+
+     +                  (cry(k,i,3)-cry(k,i,1))**2)
           u=u+h
           xmp_hlp(i,j)=u
           u=u+h
@@ -213,12 +214,12 @@ c*** Mid-plane co-ordinates
       end do !}
 
 c!###{
-c      print *
-c      print *,'ny,xmc_hlp:',ny
-c      do j=1,ntrgts !{
-c        print '(1x,i3,10f9.5/(4x,10f9.6))',lseppos(j),
-c     ,                                            (xmc_hlp(i,j),i=0,ny-1)
-c      end do !}
+      print *
+      print *,'ny,xmp_hlp:',ny,jxi,jxa
+      do j=1,ntrgts !{
+        print '(1x,2i3,10f9.5/(4x,10f9.6))',lseppos(j)+1,lpfrpos(j),
+     ,                                         (xmp_hlp(i,j),i=0,ny-1)
+      end do !}
 c!###}
 c-----------------------------------------------------------------------
 c*** Power loading:

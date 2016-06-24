@@ -16,7 +16,8 @@ c
       parameter (nsptmx=3)
       integer ildparm, lppp, nwldprt, 
      ,  lwldstrt(nwldprtx), nwldlis(nwldprtx),
-     ,	jedge(ntrgsx), ltrgpos(ntrgsx), lseppos(ntrgsx), ntrgts, ntrgs,
+     ,	jedge(ntrgsx), ltrgpos(ntrgsx), lseppos(ntrgsx), lpfrpos(ntrgsx),
+     ,  ntrgts, ntrgs,
      ,	nadsrc, nwldrad, npumplis, ntrgsa, lnumboff, nskipel, lytg, nytg
       integer, allocatable :: indwll(:), luwrk(:), lwldrad(:),
      ,  lwldlis(:,:), leirlis(:,:), lpumplis(:)

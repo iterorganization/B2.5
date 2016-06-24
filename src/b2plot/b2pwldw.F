@@ -620,14 +620,14 @@ c*** Sputtering data: zeroes for the time being
             end do !}
           end if !}
           itrg=itg
-          if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
-     .      (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-            iy=ny-1
-            im=-1
-          else !}{
-            iy=0
-            im=1
-          end if !}
+        end if !}
+        if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
+     .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
+          iy=ny-1
+          im=-1
+        else !}{
+          iy=0
+          im=1
         end if !}
       end if !}
 

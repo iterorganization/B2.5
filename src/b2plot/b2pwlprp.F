@@ -196,16 +196,20 @@ c*** Prepare the list of grid indices for the target flux faces
 
       ltrgpos(1)=-1
       lseppos(1)=topcut(1)-1
+      lpfrpos(1)=leftcut(1)-1
       k=2
       if(ntrgts.eq.4) then
         ltrgpos(2)=nxtl
         lseppos(2)=topcut(2)-1
+        lpfrpos(2)=leftcut(2)
         ltrgpos(3)=nxtr+1
         lseppos(3)=topcut(2)-1
+        lpfrpos(3)=rightcut(2)-1
         k=4
       end if !}
       ltrgpos(k)=nx
       lseppos(k)=topcut(nncut)-1
+      lpfrpos(k)=rightcut(1)
 c      print *,'ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts) !###
 c      print *,'%% ltrgpos : ',(ltrgpos(i),i=1,k)              !###
 

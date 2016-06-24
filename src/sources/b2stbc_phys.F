@@ -3522,9 +3522,9 @@ cxpb  and max(,,) statement for stability
           ELSE
             CALL XERRAB ('B2STBC -- BCMOM=15, ONLY FOR S')
           ENDIF
-          GOTO 20000                                                !srv 02.04.09 }
+          GOTO 20000                                                    !srv 02.04.09 }
 
-* -- BCMOM=16 -- PRESCRIBE THE AVERAGE VALUE OF THE PARALLEL VELOCITY !lk 12.12.12 {
+* -- BCMOM=16 -- PRESCRIBE THE AVERAGE VALUE OF THE PARALLEL VELOCITY   !lk 12.12.12 {
 
 11600        CONTINUE
           if(ncall.eq.0) then
@@ -3557,8 +3557,9 @@ cxpb  and max(,,) statement for stability
                 SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)=
      .           SMO0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,IS)+
      .             VBIG*NE00*AM(IS)*
-     .         (UA(IX,TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),IS)-t1)*
-     .           SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
+     .         (UA(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+     .             TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),IS)-t1)*
+     .              SYHZ(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
               endif
             END DO                        !lk 12.12.12 }
           ELSE
