@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2ux7p (nx, ny, aa7, itcnt, resfun, corfun)     !sv 11.01.00
+      subroutine b2ux7p (nx, ny, aa7, itcnt, resfun, corfun, name)  !sv 11.01.00
       use b2mod_types
       use b2mod_ma28_for_7diag
       use b2mod_ysmp_sdrv
@@ -11,7 +11,8 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, itcnt
       real (kind=R8) ::
-     *   aa7(-1:nx,-1:ny,-3:3), resfun(-1:nx,-1:ny)               !sv 11.01.00
+     *   aa7(-1:nx,-1:ny,-3:3), resfun(-1:nx,-1:ny)                 !sv 11.01.00
+      character*(*) name                                            !sv 18.05.02
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corfun(-1:nx,-1:ny)
@@ -77,7 +78,7 @@
      &  slv5pt, iluter, x05baf
 *   ..initialisation
       save ncall, style, acpar, cpu
-      data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
+      data ncall/0/, style/3/, acpar/8.0e0_R8/, cpu/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -169,11 +170,11 @@
         call ilutern_7(NX+2, NY+2, NX+2, aa7(-1,-1,-3),            !sv 11.01.00
      1   aa7(-1,-1,-2), aa7(-1,-1,-1), aa7(-1,-1,0),
      2   aa7(-1,-1,1), aa7(-1,-1,2), aa7(-1,-1,3),                 !sv 11.01.00
-     .   resfun, corfun)
+     .   resfun, corfun, name)
        else if (style.eq.3) then                                     !srv 29.05.02 {
 !        call cpu_time(cpu_start)
         call storage_7 (nx, ny, aa7, n_nz_sdrv, ia, ja, a, nz,
-     *                 indexes, iasave, jasave)       
+     *                 indexes, iasave, jasave, name)
 !        call cpu_time(cpu_end)
 !        write (*,"(' Time of transform is',1pd9.2)") cpu_end-cpu_start
 !        write(*,*) 'STORAGE_7: nz = ',nz
@@ -185,7 +186,8 @@
 !        write (*,"(' Time of illtern_7 is',1pd9.2)") cpu_end-cpu_start
       endif
       cpu_end=x05baf()
-      if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu ',cpu_end-cpu_start
+      if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
+     &                                  cpu_end-cpu_start
 
 * ..return
       ncall = ncall+1
@@ -198,13 +200,14 @@
       end subroutine b2ux7p
 
       subroutine storage_7 (nx, ny, aa7, nnz, ip, ja, a, k,          !srv 29.05.02
-     *                      indexes, ipsave, jasave)
+     *                      indexes, ipsave, jasave, name)
       use b2mod_types
       use b2mod_indirect
       implicit none
 *  ..input
       integer nx, ny, nnz
       real (kind=R8) :: aa7(-1:nx,-1:ny,-3:3)
+      character*(*) name
 *  ..output
       integer ip((nx+2)*(ny+2)+1), ja(nnz), k,
      *        indexes(1:3,nnz), ipsave((nx+2)*(ny+2)+1), jasave(nnz)

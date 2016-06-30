@@ -219,7 +219,7 @@ c-dpc
       if(.not.lfirst) then
         call ma28bd
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
-        if(nltrsol.gt.0) write(*,*) 'iflag ',iflag
+        if(nltrsol.gt.0 .or. iflag.lt.0) write(*,*) 'iflag ',iflag   !srv 28.06.16
         if(iflag.lt.0.and.iflag.ne.-14) then   ! do not do this for duplicate elements
           do i=1,nz
             irnh(i)=irnh_save(i)
@@ -231,7 +231,7 @@ c-dpc
       if(lfirst.or.(iflag.lt.0.and.iflag.ne.-14)) then   ! do not do this for duplicate elements
         call ma28ad
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
-        if(nltrsol.gt.0)
+        if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 28.06.16
      1   write(*,'(a,i6,i8,a,i8,i8,a,i8)') 
      .    'iflag,minirn/dim,minicn/dim ',
      2     iflag,minirn,' /',solvdim1,minicn,' /',solvdim
@@ -243,14 +243,48 @@ c-dpc
       call ma28id
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
      1 r1,s1,res,w,1,1e-10_R8,iflag)
-      if(nltrsol.gt.0) write(*,'(a,i3,1p,2g15.8,i6)')
+      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(a,i3,1p,2g15.8,i6)') !srv 28.06.16
      1 'iflag,errmax,dres,noiter ',iflag,errmax,dres,noiter
-      DO 50,K=1,N
+
+      if(iflag.lt.0) then                                            !srv 28.06.16 {
+
+        do i=1,nz
+          irnh(i) = irnh_save(i)
+          icnh(i) = icnh_save(i)
+          a1h(i)  = a1h_save(i)
+        enddo
+
+        call ma28ad
+     1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
+        if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)
+     1     trim(name), iflag, minirn, solvdim1, minicn, solvdim
+   2    format(' ma28ad for ',a9,': iflag =',i9/,
+     1   ' minirn =',i9,' solvdim1 =',i9,' minicn =',i9,' solvdim =',i9)
+        do i=1,solvdim
+          icnhkeep(i)=icnh(i)
+        enddo
+
+        call ma28id
+     1   (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
+     1    r1,s1,res,w,1,1e-10_R8,iflag)
+
+        if(nltrsol.gt.0 .or. iflag.lt.0)
+     &   write(*,3)  trim(name), iflag, errmax, dres, noiter
+   3    format(' Problem: ma28id for ',a9,' iflag =',i9,
+     2         ' errmax =',es9.1,' dres =',es9.1,' noiter =',i2)
+        if(iflag.lt.0) then
+          call xertst (iflag.ge.0,'Problem with solving '//trim(name))
+        else
+          write(*,"(3a)") ' Problem of ', trim(name), ' has been solved'
+        endif
+
+      endif                                                          !srv 28.06.16 }
+
+      DO K=1,N
         J=(K-1)/N1+1
         I=K-(J-1)*N1
         SOL(I,J)=S1(K)
-  50  CONTINUE
-
+      ENDDO
 
 *  ---------------------------------------------------------------------
       ncall=ncall+1

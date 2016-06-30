@@ -204,7 +204,6 @@
 *    'b2news_recalculate_contributions'  '1'           Numerics
 *    'b2news_re_eval_prtls_fluxes'  '0'                Numerics
 *    'b2news_vis'               '0.0'                  Physics
-*    'b2news_vis_per'           '0.0'                  Numerics
 *    'b2news_xfm0'              '1.0'                  Numerics
 *    'b2news_xfm1'              '1.0'                  Numerics
 *    'b2news_xfm2'              '1.0'                  Numerics
@@ -467,7 +466,7 @@
 *    'b2ux5p_nltrsol'           '2'                    Output
 *    'b2ux5p_style'             '2'                    Numerics
 *    'b2ux7p_nltrsol'           '0'                    Output
-*    'b2ux7p_style'             '2'                    Numerics
+*    'b2ux7p_style'             '3'                    Numerics
 *    'b2ux9p_nltrsol'           '0'                    Output
 *    'b2ux9p_style'             '2'                    Numerics
 *    'b2xzdd_zero_dead_and_core''1'                    Numerics
@@ -1925,12 +1924,12 @@
 *    If area_fix.ge.3, then additionally this treatment is used for all
 *    parallel contact areas.
 *
-*    'b2news_vis_per'           '0.0'                  Numerics
+*    'b2tfhe_vis_per'           '0.0'                  Numerics
 *    If '1.0', the electric potential equation is solved by the
 *    subroutine b2npp7 using a 7-point stencil. 
 *    The value '1.0' is recommended for runs with drifts when 
 *    perpendicular viscosity and corresponding perpendicular 
-*    viscosity current is taken into account, i.e. 'b2tfhe_vis_per' '1.0'.
+*    viscosity current is taken into account.
 *
 *    'b2stbc_sheath_drift_fix'  '1'                    Numerics
 *    If sheath_drift_fix.eq.0, then the drift velocity used in the
@@ -2021,7 +2020,7 @@
 *    stencil, Style.eq.2 = MA28. NOTE: Only style.eq.2 will give good results.
 *    Other values are NOT recommended!
 *
-*    'b2ux7p_style'             '2'                    Numerics
+*    'b2ux7p_style'             '3'                    Numerics
 *    Choose the type of matrix solver. Style.eq.0 = iluter, Style.eq.1 = 5-pt
 *    stencil, Style.eq.2 = MA28copy. Style.eq.3 = SDRV from YSMP
 *    NOTE: Only style.eq.3 will give good results.

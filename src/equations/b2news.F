@@ -63,7 +63,7 @@
 *   ..local variables
       integer potit, ipass, recalculate_contributions, pot_eq,           !xpb,dpc
      *  potitmin, nsmin, nsmax, no_current
-      integer, save :: style = 2                                         !srv 29.05.02
+      integer, save :: style = 3                                         !srv 29.05.02
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0             !srv 13.10.06
       integer, save :: use_b2npc9 = 1, use_b2nph9 = 1, coriolis = 0      !srv 06.11.08 11.08.08
       real (kind=R8) ::
@@ -131,11 +131,8 @@
        call xertst (0.0_R8.le.xfm3.and.xfm3.le.1.0_R8,
      &   'faulty internal parameter xfm3')
        call ipgetr ('b2news_BoRiS', BoRiS)
-       call ipgeti ('b2ux7p_style', style)                          !srv 29.05.02
-       call ipgetr ('b2news_vis_per', vis_per)                            !srv 06.07.00
-!       call ipgetr ('b2tfhe_vis_per', vis_per)                           !xpb
-!       call xertst (0.0_R8.le.vis_per .and. 1.0_R8.ge.vis_per,           !xpb
-!     &  'faulty argument vis_per')                                       !xpb
+       call ipgeti ('b2ux7p_style', style)                                !srv 29.05.02
+       call ipgetr ('b2tfhe_vis_per', vis_per)                            !srv 06.07.00
        call ipgetr ('b2mndr_na_min', na_min)
        call ipgetr ('b2mndr_na_new', na_new)
        call xertst (na_min.gt.0.0_R8,
@@ -187,6 +184,11 @@
      &    or both should be false')
        call ipgeti ('b2news_use_b2npc9', use_b2npc9)                  !srv 06.11.08
        call ipgeti ('b2news_use_b2nph9', use_b2nph9)                  !srv 06.11.08
+       call xertst
+     .  (.not.(((use_b2nph9.eq.1.and.(mdf_fhe.ne.0.or.mdf_fhi.ne.0))
+     &      .or.(use_b2npc9.eq.1.and. mdf_fnb.ne.0)).and.
+     &           vis_per.ne.0.0_R8 .and. style.eq.2),
+     &      'Cannot use ma28 for both the 7- and 9-point stencils')
        call ipgeti ('b2news_coriolis', coriolis)                      !srv 11.11.08
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
@@ -503,8 +505,8 @@ cxpb
      &       ua(-1,-1,is), fna(-1,-1,0,is), resco(-1,-1,is),
      &       corpa(-1,-1,is), ier0)
             call xertst (ier0.eq.0, 'error return from b2npco')
-	    else                                                         !srv 13.10.06 {
-	     if(.not.is_neutral(is) .and. use_b2npc9.eq.1) then          !srv 06.11.08
+	   else                                                         !srv 13.10.06 {
+	    if(.not.is_neutral(is) .and. use_b2npc9.eq.1) then          !srv 06.11.08
              call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
      &       solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob,
      &       conb, sna(-1,-1,0,is), pcca(-1,-1,0,is), pb, na(-1,-1,is),
@@ -519,7 +521,7 @@ cxpb
      &       resco(-1,-1,is), corpa(-1,-1,is), ier0)
              call xertst (ier0.eq.0, 'error return from b2npco')
            endif
-          endif                                                          !srv 13.10.06 }
+          endif                                                         !srv 13.10.06 }
 !*    ..re-compute partial pressure                                       !srv 01.10.99
 !           call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb) !srv 01.10.99  srv 12.11.08
 *    ..re-compute particle flux
@@ -745,8 +747,8 @@ cxpb &         te, ne, fna, fch, wrk0, po)                               !xpb
                   if(vis_per.eq.0.0_R8) then
                     call restart_ma28
                   else
-	             if (style.eq.2) call restart_ma28_for_7             !srv 11.01.00 29.05.02
-	             if (style.eq.3) call restart_sdrv_for_7             !srv 29.05.02
+	            if (style.eq.2) call restart_ma28_for_7              !srv 11.01.00 29.05.02
+	            if (style.eq.3) call restart_sdrv_for_7              !srv 29.05.02
                   endif
                 endif
                 i=i+1

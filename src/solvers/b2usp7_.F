@@ -236,7 +236,7 @@
 	endif                                                         !sv 08.07.08 }
 
 *   ..solve the correction equation
-      call b2ux7p (nx, ny, aa7, itcnt, respo, corpo)                !sv 11.01.00
+      call b2ux7p (nx, ny, aa7, itcnt, respo, corpo, 'b2usp7_')       !sv 11.01.00
 
 * ..return
       ncall = ncall+1
@@ -244,6 +244,6 @@
       return
 
 *-----------------------------------------------------------------------
-*.end b2uspo
+*.end b2usp7_
 
       end

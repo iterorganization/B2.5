@@ -60,7 +60,7 @@
 
 *   ..local variables
       integer potit, area_fix, nsmin, nsmax, no_current
-      integer, save :: style = 2, pot_eq = 1                             !srv 29.05.02 13.07.05
+      integer, save :: style = 3, pot_eq = 1                             !srv 29.05.02 13.07.05
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0             !srv 13.10.06
       integer, save :: guard_flows = 2   
       integer, save :: no_solve = 0                                      !srv 02.07.08
@@ -163,7 +163,7 @@
        call ipgetr ('b2news_potok', potok)
        call xertst (0.0_R8.lt.potok,
      &   'faulty internal parameter potok')
-       call ipgetr ('b2news_vis_per', vis_per)                           !srv 06.07.00
+       call ipgetr ('b2tfhe_vis_per', vis_per)                           !srv 06.07.00
        call ipgeti ('b2news_poteq', pot_eq)                              !srv 13.07.05
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
@@ -171,6 +171,10 @@
        call ipgeti ('b2tfnb_mdf', mdf_fnb)                               !srv 13.10.06 {
        call ipgeti ('b2tfhe_mdf', mdf_fhe)
        call ipgeti ('b2tfhi_mdf', mdf_fhi) 
+       call xertst
+     .  (.not.(((mdf_fhe.ne.0.or.mdf_fhi.ne.0).or.mdf_fnb.ne.0).and.
+     &           vis_per.ne.0.0_R8 .and. style.eq.2),
+     &      'Cannot use ma28 for both the 7- and 9-point stencils')
        call ipgeti ('b2news_iout', iout)
        call ipgeti ('b2npc9_iout', iout_b2npc9)                          !srv 16.07.10 {
        call ipgeti ('b2npco_iout', iout_b2npco)

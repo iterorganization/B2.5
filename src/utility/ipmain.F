@@ -135,6 +135,12 @@
      &      trim(ipnam(ip)),'Use b2mndr_na_min and b2mndr_na_new'
           call xerrab ('Prohibited b2mndr_na0eps switch usage!')
         endif
+        if (ipnam(ip).eq.'b2news_vis_per') then
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Use b2tfhe_vis_per instead'
+          call xerrab
+     &     ('Prohibited "b2news_vis_per" switch usage!')
+        endif
       enddo
       return
 !srv 15.09.15 }

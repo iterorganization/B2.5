@@ -230,24 +230,24 @@ cxpb
       enddo
 
 *   ..solve the correction equation
-      call b2ux7p (nx, ny, aa7, itcnt, respo, corpo)               !sv 11.01.00
+      call b2ux7p (nx, ny, aa7, itcnt, respo, corpo, 'b2usp7')        !sv 11.01.00
 
-	if (iout.ne.0) then                                           !sv 08.07.08 {
-	 do k=0,3
-	  write (chark,'(i1)') k  
-	  call my_out(70,nx,ny,sch(-1,-1,k),'b2usp7_sch'//chark)
-	 enddo
-	  call my_out(70,nx,ny,fac_vis,'fac_vis')
-	  call my_out(70,nx,ny,aa7(-1,-1,-3),'b2usp7_sch_aa7m3')
-	  call my_out(70,nx,ny,aa7(-1,-1,-2),'b2usp7_sch_aa7m2')
-	  call my_out(70,nx,ny,aa7(-1,-1,-1),'b2usp7_sch_aa7m1')
-	  call my_out(70,nx,ny,aa7(-1,-1, 0),'b2usp7_sch_aa7m0')
-	  call my_out(70,nx,ny,aa7(-1,-1, 1),'b2usp7_sch_aa7p1')
-	  call my_out(70,nx,ny,aa7(-1,-1, 2),'b2usp7_sch_aa7p2')
-	  call my_out(70,nx,ny,aa7(-1,-1, 3),'b2usp7_sch_aa7p3')
-	  call my_out(70,nx,ny,respo,'b2usp7_respo')
-	  call my_out(70,nx,ny,corpo,'b2usp7_respo')
-	endif                                                         !sv 08.07.08 }
+      if (iout.ne.0) then                                           !sv 08.07.08 {
+        do k=0,3
+          write (chark,'(i1)') k
+          call my_out(70,nx,ny,sch(-1,-1,k),'b2usp7_sch'//chark)
+        enddo
+        call my_out(70,nx,ny,fac_vis,'fac_vis')
+        call my_out(70,nx,ny,aa7(-1,-1,-3),'b2usp7_sch_aa7m3')
+        call my_out(70,nx,ny,aa7(-1,-1,-2),'b2usp7_sch_aa7m2')
+        call my_out(70,nx,ny,aa7(-1,-1,-1),'b2usp7_sch_aa7m1')
+        call my_out(70,nx,ny,aa7(-1,-1, 0),'b2usp7_sch_aa7m0')
+        call my_out(70,nx,ny,aa7(-1,-1, 1),'b2usp7_sch_aa7p1')
+        call my_out(70,nx,ny,aa7(-1,-1, 2),'b2usp7_sch_aa7p2')
+        call my_out(70,nx,ny,aa7(-1,-1, 3),'b2usp7_sch_aa7p3')
+        call my_out(70,nx,ny,respo,'b2usp7_respo')
+        call my_out(70,nx,ny,corpo,'b2usp7_corpo')
+      endif                                                         !sv 08.07.08 }
 * ..return
       ncall = ncall+1
       call subend ()

@@ -1,5 +1,5 @@
-      SUBROUTINE ILUTERN_7(N1, N2, N1D,                            !sv 11.01.00
-     . ASO1, ASO, AWE, ACP, AEA, ANO, ANO1, RHS, SOL)              !sv 11.01.00
+      SUBROUTINE ILUTERN_7(N1, N2, N1D,                            !srv 11.01.00
+     . ASO1, ASO, AWE, ACP, AEA, ANO, ANO1, RHS, SOL, name)        !srv 11.01.00
       use b2mod_types
       use b2mod_ma28_for_7diag
       use b2mod_indirect
@@ -10,8 +10,9 @@ C
 *  -- INPUT ARGUMENTS --
       INTEGER N1, N2, N1D
       real (kind=R8) ::
-     *   ASO1(N1D,N2), ASO(N1D,N2), AWE(N1D,N2), ACP(N1D,N2),      !sv 11.01.00
-     .   AEA(N1D,N2), ANO(N1D,N2), ANO1(N1D,N2), RHS(N1D,N2)       !sv 11.01.00
+     *   ASO1(N1D,N2), ASO(N1D,N2), AWE(N1D,N2), ACP(N1D,N2),      !srv 11.01.00
+     .   AEA(N1D,N2), ANO(N1D,N2), ANO1(N1D,N2), RHS(N1D,N2)       !srv 11.01.00
+      character*(*) name                                           !srv 18.05.02
 
 *  -- OUTPUT ARGUMENTS --
       real (kind=R8) ::
@@ -52,8 +53,10 @@ c
       EXTERNAL XERRAB, b2sasum, x05baf
 
       logical lfirst
-      integer ncall, nwrite, maxsize
-      save lfirst, ncall, nwrite, maxsize
+      integer ncall, nwrite
+      integer, save :: kwrite_fmt = -1                               !srv 18.05.02
+      integer, save :: kwrite_bnr = -1                               !srv 18.05.02
+      save lfirst, ncall, nwrite
       data lfirst /.true./, ncall /0/, nwrite /0/
 
 *=======================================================================
@@ -65,6 +68,8 @@ c
 
       if(ncall.eq.0) then
          call ipgeti ('ma28_for_7d_nwrite', nwrite)
+	 call ipgeti ('ma28_for_7d_kwrite_fmt', kwrite_fmt)          !srv 18.05.02
+	 call ipgeti ('ma28_for_7d_kwrite_bnr', kwrite_bnr)          !srv 18.05.02
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
@@ -72,7 +77,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
       if(ncall.lt.1000) then
 *  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
          IF (N1 .LT. 2 .OR. N2 .LT. 2 .OR. N1D .LT. N1) THEN
-          CALL XERRAB ('ILUTERN_7 -- FAULTY ARGUMENT N1, N2, N1D') !sv 06.07.00
+           CALL XERRAB ('ILUTERN_7 -- FAULTY ARGUMENT N1, N2, N1D')  !srv 06.07.00
          END IF
 
 *  -- CHECK EDGE VALUES OF ASO, AWE, AEA, ANO --
@@ -114,22 +119,22 @@ C    ZUWEISUNG
       ICNH=0
       IRNH=0
       DO K=1,NC0
-         IF (IJSH(K).EQ.-1) A1HN=ASO1(ISH(K),JSH(K))               !sv 26.01.00
+         IF (IJSH(K).EQ.-1) A1HN=ASO1(ISH(K),JSH(K))                 !srv 26.01.00
          IF (IJSH(K).EQ.0) A1HN=ASO(ISH(K),JSH(K))
          IF (IJSH(K).EQ.1) A1HN=AWE(ISH(K),JSH(K))
          IF (IJSH(K).EQ.2) A1HN=ACP(ISH(K),JSH(K))
          IF (IJSH(K).EQ.3) A1HN=AEA(ISH(K),JSH(K))
          IF (IJSH(K).EQ.4) A1HN=ANO(ISH(K),JSH(K))
-         IF (IJSH(K).EQ.5) A1HN=ANO1(ISH(K),JSH(K))                !sv 26.01.00
+         IF (IJSH(K).EQ.5) A1HN=ANO1(ISH(K),JSH(K))                  !srv 26.01.00
 c       IF (A1HN.EQ.0.0e0_R8) THEN
          if(
-     1   (IJSH(K).EQ.-1.and.jsh(k).eq.1).or.                       !sv 26.01.00
-     1   (IJSH(K).EQ.-1.and.jsh(k).eq.2).or.                       !sv 26.01.00
+     1   (IJSH(K).EQ.-1.and.jsh(k).eq.1).or.                         !srv 26.01.00
+     1   (IJSH(K).EQ.-1.and.jsh(k).eq.2).or.                         !srv 26.01.00
      1   (IJSH(K).EQ.0.and.jsh(k).eq.1).or.
      1   (IJSH(K).EQ.1.and.ish(k).eq.1).or.
      1   (IJSH(K).EQ.3.and.ish(k).eq.n1).or.
-     1   (IJSH(K).EQ.5.and.jsh(k).eq.n2-1).or.                     !sv 26.01.00
-     1   (IJSH(K).EQ.5.and.jsh(k).eq.n2).or.                       !sv 26.01.00
+     1   (IJSH(K).EQ.5.and.jsh(k).eq.n2-1).or.                       !srv 26.01.00
+     1   (IJSH(K).EQ.5.and.jsh(k).eq.n2).or.                         !srv 26.01.00
      1   (IJSH(K).EQ.4.and.jsh(k).eq.n2)) then
          ELSE
           NZ=NZ+1
@@ -145,25 +150,57 @@ c       IF (A1HN.EQ.0.0e0_R8) THEN
           S1(I+(J-1)*N1)=0.0e0_R8
          enddo
       enddo
+      if(kwrite_bnr.eq.ncall) then                                      !srv 18.05.02 {
+        write(*,*) 'Opening 76'
+        open(76,file='b2_7_rhs_binary_'//trim(name),form='unformatted') !srv 11.03.13
+        write(76) n
+        do i=1,n
+          write(76) r1(i)
+        enddo
+        close(76)
+        write(*,*) 'Opening 77'
+        open(77,file='b2_7_matrix_binary_'//trim(name),
+     .       form='unformatted')                                        !srv 11.03.13
+        write(77) n, nz
+        do i=1,nz
+          write(77) IRNH(i),ICNH(i),A1H(i)
+        enddo
+        close(77)
+      endif                                                             !srv 18.05.02 }
+      if(kwrite_fmt.eq.ncall) then                                      !srv 18.05.02 {
+        write(*,*) 'Opening 76'
+        open(76,file='b2_7_rhs_'//trim(name))
+        write(76,*) n
+        do i=1,n
+          write(76,*) r1(i)
+        enddo
+        close(76)
+        open(77,file='b2_7_matrix_'//trim(name))
+        write(77,*) n, nz
+        do i=1,nz
+          write(77,*) IRNH(i),ICNH(i),A1H(i)
+        enddo
+        close(77)
+      endif                                                    !srv 18.05.02 }
 c-dpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
           if(ncall.eq.0) then
-            write(*,*) 'Opening 78'                            !sv 11.01.00
-            open(78,file='b2_7_diagonal_matrix')               !sv 11.01.00
+            write(*,*) 'Opening 78'                            !srv 11.01.00
+            open(78,file='b2_7_diagonal_matrix')               !srv 11.01.00
           endif
-          write(*,*) 'Writing 78'                              !sv 11.01.00
+          write(*,*) 'Writing 78'                              !srv 11.01.00
           write(78,*) n,' n'
           do i=1,n
-            write(78,*) r1(i)                                  !sv 11.01.00
+            write(78,*) r1(i)                                  !srv 11.01.00
           enddo
-          write(78,*) nz,' nz'                                 !sv 11.01.00
+          write(78,*) nz,' nz'                                 !srv 11.01.00
           do i=1,nz
-            write(78,*) IRNH(i),ICNH(i),A1H(i)                 !sv 11.01.00
+            write(78,*) IRNH(i),ICNH(i),A1H(i)                 !srv 11.01.00
           enddo
         elseif(nwrite.eq.ncall) then
-          write(*,*) 'Closing 78'                              !sv 11.01.00
-          close(78)                                            !sv 11.01.00
+          write(*,*) 'Closing 78'                              !srv 11.01.00
+          close(78)                                            !srv 11.01.00
         endif
       endif
 c-dpc
@@ -174,7 +211,7 @@ c-dpc
          WRITE(6,*) 'ILUTERN'
       endif
       if(lfirst) then
-         write(*,*) 'ilutern_7: nz = ',nz                       !sv 11.01.00
+         write(*,*) 'ilutern_7: nz = ',nz                      !srv 11.01.00
          call xertst(nz.le.N_NONZEROS, 'Increase N_NONZEROS')
          iflag=0
       endif
@@ -186,7 +223,7 @@ c-dpc
       if(.not.lfirst) then
          call ma28bdcopy
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
-         if(nltrsol.gt.0) write(*,*) 'iflag ',iflag
+         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,*) 'iflag ',iflag
          if(iflag.lt.0) then
           do i=1,nz
             irnh(i)=irnh_save(i)
@@ -198,7 +235,7 @@ c-dpc
       if(lfirst.or.iflag.lt.0) then
          call ma28adcopy
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
-         if(nltrsol.gt.0)
+         if(nltrsol.gt.0 .or. iflag.lt.0)
      1   write(*,'(a,i6,i8,a,i8,i8,a,i8)') 
      .    'iflag,minirn/dim,minicn/dim ',
      2     iflag,minirn,' /',solvdim1,minicn,' /',solvdim
@@ -210,20 +247,56 @@ c-dpc
       call ma28idcopy
      1 (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
      1 r1,s1,res,w,1,1e-10_R8,iflag)
-      if(nltrsol.gt.0) write(*,'(a,i3,1p,2g15.8,i6)')
+      if(nltrsol.gt.0 .or. iflag.lt.0) write(*,'(a,i3,1p,2g15.8,i6)')
      1 'iflag,errmax,dres,noiter ',iflag,errmax,dres,noiter
-      DO 50,K=1,N
+
+      if(iflag.lt.0) then                                            !srv 28.06.16 {
+
+        do i=1,nz
+          irnh(i) = irnh_save(i)
+          icnh(i) = icnh_save(i)
+          a1h(i)  = a1h_save(i)
+        enddo
+
+        call ma28adcopy
+     1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
+        if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)
+     1     trim(name), iflag, minirn, solvdim1, minicn, solvdim
+   2      format(' ma28ad for ',a9,': iflag =',i9/,
+     1     ' minirn =',i9,' solvdim1 =',i9,
+     2     ' minicn =',i9,' solvdim =',i9)                          !srv 09.07.02
+        do i=1,solvdim
+          icnhkeep(i)=icnh(i)
+        enddo
+
+        call ma28idcopy
+     1   (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
+     1    r1,s1,res,w,1,1e-10_R8,iflag)
+
+        if(nltrsol.gt.0 .or. iflag.lt.0)
+     &   write(*,3)  trim(name), iflag, errmax, dres, noiter
+   3     format(' Problem: ma28id for ',a9,' iflag =',i9,
+     2          ' errmax =',es9.1,' dres =',es9.1,' noiter =',i2)   !srv 09.07.02 28.06.16 }
+        if(iflag.lt.0) then
+          call xertst(iflag.ge.0,'Problem with solving of '//trim(name))
+        else
+         write(*,"(3a)") ' Problem of ', trim(name), ' has been solved'
+        endif
+
+      endif                                                         !srv 28.06.16 }
+
+      DO K=1,N
         J=(K-1)/N1+1
         I=K-(J-1)*N1
         SOL(I,J)=S1(K)
-  50  CONTINUE
+      ENDDO
 
 *  ---------------------------------------------------------------------
       cpu_end=x05baf()
       ncall=ncall+1
       RETURN
 
-      entry restart_ma28_for_7                              !sv 11.01.00
+      entry restart_ma28_for_7                                      !srv 11.01.00
       lfirst=.true.
       write(*,*) 'Restarting ma28'
       return
