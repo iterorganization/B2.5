@@ -37,14 +37,17 @@ c
       INTEGER NFEND
 
 *  -- LOCAL SCALARS --
-      INTEGER NNX, NNY, IS, IX, IY, jvft44, istra, nplsi
+      INTEGER IS, nplsi
+#ifdef B25_EIRENE
+      INTEGER NNX, NNY, IX, IY, jvft44, istra
       integer i, j, k, ncl
-      integer, save :: use_recyceir
       real (kind=R8) :: recyctmp
       real (kind=R8), allocatable :: ft44data(:,:)
       character charns*3
       logical ex
-      data use_recyceir /1/
+#endif
+      integer, save :: use_recyceir, iout
+      data use_recyceir /1/, iout/0/
 
 *  -- PROCEDURES --
       EXTERNAL GFSUB2
@@ -55,6 +58,7 @@ c
 C
       call subini ('ngread')
       call ipgeti ('eirene_use_recyceir', use_recyceir)
+      call ipgeti ('b2stbr_iout', iout)
       NFEND = 0
 
       nplsi = 0
@@ -112,7 +116,7 @@ C
         call gfsub2(44,ndx,ndy,nnx,nny,dab2(:,:,is,1))
         write(charns,'(i3.3)') is
         ft44data = dab2(0:nx+1,0:ny+1,is,1)
-        call my_out(70,nx,ny,ft44data,'dab2_'//charns)
+        if (iout.ne.0) call my_out(70,nx,ny,ft44data,'dab2_'//charns)
    14 CONTINUE
 
       do 24 IS = 1, NATMI
@@ -125,7 +129,7 @@ C
         call gfsub2(44,ndx,ndy,nnx,nny,dmb2(:,:,is,1))
         write(charns,'(i3.3)') is
         ft44data = dmb2(0:nx+1,0:ny+1,is,1)
-        call my_out(70,nx,ny,ft44data,'dmb2_'//charns)       !srv 29.04.10
+        if (iout.ne.0) call my_out(70,nx,ny,ft44data,'dmb2_'//charns)
    15 CONTINUE
 
       do 25 IS = 1, NMOLI

@@ -151,7 +151,7 @@ c             (maybe necessary in case of multi-fluid?)
      .         form='unformatted')                                   !srv 11.03.13
        write(77) n, nz
        do i=1,nz
-        write(77) IRNH(i),ICNH(i),A1H(i)
+        write(77) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
        enddo
        close(77)
       endif
@@ -167,7 +167,7 @@ c             (maybe necessary in case of multi-fluid?)
        open(77,file='b2_5_matrix_'//trim(name)//'.dat')
        write(77,*) n, nz
        do i=1,nz
-        write(77,*) IRNH(i),ICNH(i),A1H(i)
+        write(77,*) IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
        enddo
        close(77)
       endif                                                          !srv 18.03.10 }
@@ -192,7 +192,8 @@ c-dpc
           enddo
           write(79,*) nz,' nz'
           do i=1,nz
-            write(79,'(2(i6,1x),1p,1e15.8)') IRNH(i),ICNH(i),A1H(i)
+            write(79,'(4(i6,1x),1p,1e15.8)')
+     .       IRNH(i),ICNH(i),ISH(i),JSH(i),A1H(i)
           enddo
         elseif(nwrite.eq.ncall) then
           write(*,*) 'Closing 79'

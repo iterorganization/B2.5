@@ -20,6 +20,7 @@
       use b2mod_tallies
       use b2mod_wall
       use b2mod_b2cmpa
+      use b2mod_external
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
@@ -309,22 +310,32 @@ c
         timxip(1) = max (timxip(1), ti(-1+target_offset,iy))
         pomxip(1) = max (pomxip(1), po(-1+target_offset,iy))
         fettmp = fhe(rightix(-1,iy),rightiy(-1,iy),0) +
-     2           fhi(rightix(-1,iy),rightiy(-1,iy),0)
+     2           fhi(rightix(-1,iy),rightiy(-1,iy),0) +
+     1           fhi_ext(rightix(-1,iy),rightiy(-1,iy),0)
         do is=0,ns-1
-          kintmp = (kinrgy(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
-     .              kinrgy(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
+          fettmp = fettmp +
+     1     fhm(rightix(-1,iy),rightiy(-1,iy),0,is)*(1.0_R8-BoRiS) +
+     2     fhp(rightix(-1,iy),rightiy(-1,iy),0,is)
+        enddo
+        do is=0,ns_ext-1
+          kintmp = 0.5_R8*am_ext(is)*mp*
+     .             (ua_ext(-1,iy,is)**2*
+     .              hx(rightix(-1,iy),rightiy(-1,iy))+
+     .              ua_ext(rightix(-1,iy),rightiy(-1,iy),is)**2*
+     .              hx(-1,iy))/
      .             (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
-          rpttmp = (rpt(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
-     .              rpt(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
+          rpttmp = (pt_ext(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
+     .              pt_ext(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
      .             (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
           fettmp = fettmp + (rpttmp*ev + kintmp*(1.0_R8-BoRiS))*
-     .     fna(rightix(-1,iy),rightiy(-1,iy),0,is)
+     .     fa_ext(rightix(-1,iy),rightiy(-1,iy),0,is)
         enddo
         fetxip(1) = fettmp
         pwmxip(1) = max (pwmxip(1),
      1   -fettmp/gs(rightix(-1,iy),rightiy(-1,iy),0))
-        if (bottomiy(-1,iy).ne.-2 .and. topiy(-1,iy).ne.ny+1)
-     >   tpmxip(1) = max (tpmxip(1), target_temp(xymap(-1,iy),1))
+        if (bottomiy(-1,iy).ne.-2 .and. topiy(-1,iy).ne.ny+1 .and.
+     &       xymap(-1,iy).ne.0)
+     >          tpmxip(1) = max (tpmxip(1), target_temp(xymap(-1,iy),1))
       enddo
       do iy=iyrstrt,iyrend
         fnixap(1) = fnixap(1) + fna(nx,iy,0,ismain)
@@ -335,82 +346,106 @@ c
         temxap(1) = max (temxap(1), te(nx-target_offset,iy))
         timxap(1) = max (timxap(1), ti(nx-target_offset,iy))
         pomxap(1) = max (pomxap(1), po(nx-target_offset,iy))
-        fettmp = fhe(nx,iy,0) + fhi(nx,iy,0)
+        fettmp = fhe(nx,iy,0) + fhi(nx,iy,0) + fhi_ext(nx,iy,0)
         do is=0,ns-1
-          kintmp = (kinrgy(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
-     .              kinrgy(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
-     .             (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
-          rpttmp = (rpt(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
-     .              rpt(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
+          fettmp = fettmp + fhm(nx,iy,0,is)*(1.0_R8-BoRiS) +
+     .                      fhp(nx,iy,0,is)
+        enddo
+        do is=0,ns_ext-1
+          kintmp = 0.5_R8*am_ext(is)*mp*
+     .             (ua_ext(nx,iy,is)**2*hx(leftix(nx,iy),leftiy(nx,iy))+
+     .              ua_ext(leftix(nx,iy),leftiy(nx,iy),is)**2*hx(nx,iy))
+     .            /(hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
+          rpttmp = (pt_ext(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
+     .              pt_ext(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
      .             (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
           fettmp = fettmp + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))
-     .     *fna(nx,iy,0,is)
+     .     *fa_ext(nx,iy,0,is)
         enddo
         fetxap(1) = fettmp
         pwmxap(1) = max (pwmxap(1), fettmp/gs(nx,iy,0))
-        if (bottomiy(nx,iy).ne.-2 .and. topiy(nx,iy).ne.ny+1)
-     >   tpmxap(1) = max (tpmxap(1), target_temp(xymap(nx,iy),1))
+        if (bottomiy(nx,iy).ne.-2 .and. topiy(nx,iy).ne.ny+1 .and.
+     &       xymap(nx,iy).ne.0)
+     >          tpmxap(1) = max (tpmxap(1), target_temp(xymap(nx,iy),1))
       enddo
       if(nncut.ge.2) then
         do iy = iytrstrt, iytrend
-          fnixip(2) = fnixip(2) + 
+          fnixap(2) = fnixap(2) +
      .     fna(rightix(ixtr,iy),rightiy(ixtr,iy),0,ismain)
-          feexip(2) = feexip(2) +  
+          feexap(2) = feexap(2) +
      .     fhe(rightix(ixtr,iy),rightiy(ixtr,iy),0)
-          feixip(2) = feixip(2) +  
+          feixap(2) = feixap(2) +
      .     fhi(rightix(ixtr,iy),rightiy(ixtr,iy),0)
-          fchxip(2) = fchxip(2) +  
+          fchxap(2) = fchxap(2) +
      .     fch(rightix(ixtr,iy),rightiy(ixtr,iy),0)
-          nemxip(2) = max (nemxip(2), ne(ixtr+target_offset,iy))
-          temxip(2) = max (temxip(2), te(ixtr+target_offset,iy))
-          timxip(2) = max (timxip(2), ti(ixtr+target_offset,iy))
-          pomxip(2) = max (pomxip(2), po(ixtr+target_offset,iy))
+          nemxap(2) = max (nemxap(2), ne(ixtr+target_offset,iy))
+          temxap(2) = max (temxap(2), te(ixtr+target_offset,iy))
+          timxap(2) = max (timxap(2), ti(ixtr+target_offset,iy))
+          pomxap(2) = max (pomxap(2), po(ixtr+target_offset,iy))
           fettmp = fhe(rightix(ixtr,iy),rightiy(ixtr,iy),0) +
-     .             fhi(rightix(ixtr,iy),rightiy(ixtr,iy),0)
+     .             fhi(rightix(ixtr,iy),rightiy(ixtr,iy),0) +
+     .             fhi_ext(rightix(ixtr,iy),rightiy(ixtr,iy),0)
           do is=0,ns-1
-            kintmp = 
-     .       (kinrgy(ixtr,iy,is)*hx(rightix(ixtr,iy),rightiy(ixtr,iy))+
-     .        kinrgy(rightix(ixtr,iy),rightiy(ixtr,iy),is)*hx(ixtr,iy))/
-     .       (hx(rightix(ixtr,iy),rightiy(ixtr,iy))+hx(ixtr,iy))
-            rpttmp = 
-     .       (rpt(ixtr,iy,is)*hx(rightix(ixtr,iy),rightiy(ixtr,iy))+
-     .        rpt(rightix(ixtr,iy),rightiy(ixtr,iy),is)*hx(ixtr,iy))/
-     .       (hx(rightix(ixtr,iy),rightiy(ixtr,iy))+hx(ixtr,iy))
-            fettmp = fettmp + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .       fna(rightix(ixtr,iy),rightiy(ixtr,iy),0,is)
+            fettmp = fettmp +
+     .       fhm(rightix(ixtr,iy),rightiy(ixtr,iy),0,is)*(1.0_R8-BoRiS)+
+     .       fhp(rightix(ixtr,iy),rightiy(ixtr,iy),0,is)
           enddo
-          fetxip(2) = fettmp
-          pwmxip(2) = max (pwmxip(2),
-     1     -fettmp/gs(rightix(ixtr,iy),rightiy(ixtr,iy),0))
-          if (bottomiy(ixtr,iy).ne.-2 .and. topiy(ixtr,iy).ne.ny+1)
-     >     tpmxip(2) = max (tpmxip(2), target_temp(xymap(ixtr,iy),1))
-        enddo
-        do iy = iytlstrt, iytlend
-          fnixap(2) = fnixap(2) + fna(ixtl,iy,0,ismain)
-          feexap(2) = feexap(2) + fhe(ixtl,iy,0)
-          feixap(2) = feixap(2) + fhi(ixtl,iy,0)
-          fchxap(2) = fchxap(2) + fch(ixtl,iy,0)
-          nemxap(2) = max (nemxap(2), ne(ixtl-target_offset,iy))
-          temxap(2) = max (temxap(2), te(ixtl-target_offset,iy))
-          timxap(2) = max (timxap(2), ti(ixtl-target_offset,iy))
-          pomxap(2) = max (pomxap(2), po(ixtl-target_offset,iy))
-          fettmp = fhe(ixtl,iy,0) + fhi(ixtl,iy,0)
-          do is=0,ns-1
-            kintmp = 
-     .       (kinrgy(ixtl,iy,is)*hx(leftix(ixtl,iy),leftiy(ixtl,iy))+
-     .        kinrgy(leftix(ixtl,iy),leftiy(ixtl,iy),is)*hx(ixtl,iy))/
-     .       (hx(leftix(ixtl,iy),leftiy(ixtl,iy))+hx(ixtl,iy))
+          do is=0,ns_ext-1
+            kintmp = 0.5_R8*am_ext(is)*mp*
+     .       (ua_ext(ixtr,iy,is)**2*
+     .        hx(rightix(ixtr,iy),rightiy(ixtr,iy))+
+     .        ua_ext(rightix(ixtr,iy),rightiy(ixtr,iy),is)**2*
+     .        hx(ixtr,iy))/
+     .       (hx(rightix(ixtr,iy),rightiy(ixtr,iy))+hx(ixtr,iy))
             rpttmp = 
-     .       (rpt(ixtl,iy,is)*hx(leftix(ixtl,iy),leftiy(ixtl,iy))+
-     .        rpt(leftix(ixtl,iy),leftiy(ixtl,iy),is)*hx(ixtl,iy))/
-     .       (hx(leftix(ixtl,iy),leftiy(ixtl,iy))+hx(ixtl,iy))
+     .       (pt_ext(ixtr,iy,is)*hx(rightix(ixtr,iy),rightiy(ixtr,iy))+
+     .        pt_ext(rightix(ixtr,iy),rightiy(ixtr,iy),is)*hx(ixtr,iy))/
+     .       (hx(rightix(ixtr,iy),rightiy(ixtr,iy))+hx(ixtr,iy))
             fettmp = fettmp + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .       fna(ixtl,iy,0,is)
+     .       fa_ext(rightix(ixtr,iy),rightiy(ixtr,iy),0,is)
           enddo
           fetxap(2) = fettmp
-          pwmxap(2) = max (pwmxap(2), fettmp/gs(ixtl,iy,0))
-          if (bottomiy(ixtl,iy).ne.-2 .and. topiy(ixtl,iy).ne.ny+1)
-     >     tpmxap(2) = max (tpmxap(2), target_temp(xymap(ixtl,iy),1))
+          pwmxap(2) = max (pwmxap(2),
+     1     -fettmp/gs(rightix(ixtr,iy),rightiy(ixtr,iy),0))
+          if (bottomiy(ixtr,iy).ne.-2 .and. topiy(ixtr,iy).ne.ny+1. and.
+     &         xymap(ixtr,iy).ne.0)
+     >            tpmxap(2) = max (tpmxap(2),
+     &               target_temp(xymap(ixtr,iy),1))
+        enddo
+        do iy = iytlstrt, iytlend
+          fnixip(2) = fnixip(2) + fna(ixtl,iy,0,ismain)
+          feexip(2) = feexip(2) + fhe(ixtl,iy,0)
+          feixip(2) = feixip(2) + fhi(ixtl,iy,0)
+          fchxip(2) = fchxip(2) + fch(ixtl,iy,0)
+          nemxip(2) = max (nemxip(2), ne(ixtl-target_offset,iy))
+          temxip(2) = max (temxip(2), te(ixtl-target_offset,iy))
+          timxip(2) = max (timxip(2), ti(ixtl-target_offset,iy))
+          pomxip(2) = max (pomxip(2), po(ixtl-target_offset,iy))
+          fettmp = fhe(ixtl,iy,0) + fhi(ixtl,iy,0) + fhi_ext(ixtl,iy,0)
+          do is=0,ns-1
+            fettmp = fettmp + fhm(ixtl,iy,0,is)*(1.0_R8-BoRiS)
+     .                      + fhp(ixtl,iy,0,is)
+          enddo
+          do is=0,ns_ext-1
+            kintmp = 0.5_R8*am_ext(is)*mp*
+     .       (ua_ext(ixtl,iy,is)**2*
+     .        hx(leftix(ixtl,iy),leftiy(ixtl,iy))+
+     .        ua_ext(leftix(ixtl,iy),leftiy(ixtl,iy),is)**2*
+     .        hx(ixtl,iy))/
+     .       (hx(leftix(ixtl,iy),leftiy(ixtl,iy))+hx(ixtl,iy))
+            rpttmp = 
+     .       (pt_ext(ixtl,iy,is)*hx(leftix(ixtl,iy),leftiy(ixtl,iy))+
+     .        pt_ext(leftix(ixtl,iy),leftiy(ixtl,iy),is)*hx(ixtl,iy))/
+     .       (hx(leftix(ixtl,iy),leftiy(ixtl,iy))+hx(ixtl,iy))
+            fettmp = fettmp + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
+     .       fa_ext(ixtl,iy,0,is)
+          enddo
+          fetxip(2) = fettmp
+          pwmxip(2) = max (pwmxip(2), fettmp/gs(ixtl,iy,0))
+          if (bottomiy(ixtl,iy).ne.-2 .and. topiy(ixtl,iy).ne.ny+1 .and.
+     &         xymap(ixtl,iy).ne.0)
+     >            tpmxip(2) = max (tpmxip(2),
+     &               target_temp(xymap(ixtl,iy),1))
         enddo
       endif
       if(nnreg(0).ge.3) then
@@ -421,24 +456,30 @@ c
             feisipp(ic) = feisipp(ic) + fhi(leftcut(ic),iy,0)
             fetsipp(ic) = fetsipp(ic) + fhe(leftcut(ic),iy,0)
      .                                + fhi(leftcut(ic),iy,0)
+     .                                + fhi_ext(leftcut(ic),iy,0)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(leftix(leftcut(ic),iy),
-     .                 leftiy(leftcut(ic),iy),is)*hx(leftcut(ic),iy)+
-     .          kinrgy(leftcut(ic),iy,is)*
+              fetsipp(ic) = fetsipp(ic) +
+     .         fhm(leftcut(ic),iy,0,is)*(1.0_R8-BoRiS) +
+     .         fhp(leftcut(ic),iy,0,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(leftix(leftcut(ic),iy),
+     .                 leftiy(leftcut(ic),iy),is)**2*hx(leftcut(ic),iy)+
+     .          ua_ext(leftcut(ic),iy,is)**2*
      .          hx(leftix(leftcut(ic),iy),leftiy(leftcut(ic),iy)))/
      .         (hx(leftcut(ic),iy)+
      .          hx(leftix(leftcut(ic),iy),leftiy(leftcut(ic),iy)))
               rpttmp = 
-     .         (rpt(leftix(leftcut(ic),iy),
-     .              leftiy(leftcut(ic),iy),is)*hx(leftcut(ic),iy)+
-     .          rpt(leftcut(ic),iy,is)*
+     .         (pt_ext(leftix(leftcut(ic),iy),
+     .                 leftiy(leftcut(ic),iy),is)*hx(leftcut(ic),iy)+
+     .          pt_ext(leftcut(ic),iy,is)*
      .          hx(leftix(leftcut(ic),iy),leftiy(leftcut(ic),iy)))/
      .         (hx(leftcut(ic),iy)+
      .          hx(leftix(leftcut(ic),iy),leftiy(leftcut(ic),iy)))
               fetsipp(ic) = fetsipp(ic) + 
      .         (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .         fna(leftcut(ic),iy,0,is)
+     .         fa_ext(leftcut(ic),iy,0,is)
             enddo
             fchsipp(ic) = fchsipp(ic) + fch(leftcut(ic),iy,0)
             fnisapp(ic) = fnisapp(ic) + fna(rightcut(ic),iy,0,ismain)
@@ -446,24 +487,31 @@ c
             feisapp(ic) = feisapp(ic) + fhi(rightcut(ic),iy,0)
             fetsapp(ic) = fetsapp(ic) + fhe(rightcut(ic),iy,0)
      .                                + fhi(rightcut(ic),iy,0)
+     .                                + fhi_ext(rightcut(ic),iy,0)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(leftix(rightcut(ic),iy),
-     .                 leftiy(rightcut(ic),iy),is)*hx(rightcut(ic),iy)+
-     .          kinrgy(rightcut(ic),iy,is)*
+              fetsapp(ic) = fetsapp(ic)
+     .         + fhm(rightcut(ic),iy,0,is)*(1.0_R8-BoRiS)
+     .         + fhp(rightcut(ic),iy,0,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(leftix(rightcut(ic),iy),
+     .                 leftiy(rightcut(ic),iy),is)**2*
+     .          hx(rightcut(ic),iy)+
+     .          ua_ext(rightcut(ic),iy,is)**2*
      .          hx(leftix(rightcut(ic),iy),leftiy(rightcut(ic),iy)))/
      .         (hx(rightcut(ic),iy)+
      .          hx(leftix(rightcut(ic),iy),leftiy(rightcut(ic),iy)))
               rpttmp = 
-     .         (rpt(leftix(rightcut(ic),iy),
-     .              leftiy(rightcut(ic),iy),is)*hx(rightcut(ic),iy)+
-     .          rpt(rightcut(ic),iy,is)*
+     .         (pt_ext(leftix(rightcut(ic),iy),
+     .                 leftiy(rightcut(ic),iy),is)*hx(rightcut(ic),iy)+
+     .          pt_ext(rightcut(ic),iy,is)*
      .          hx(leftix(rightcut(ic),iy),leftiy(rightcut(ic),iy)))/
      .         (hx(rightcut(ic),iy)+
      .          hx(leftix(rightcut(ic),iy),leftiy(rightcut(ic),iy)))
               fetsapp(ic) = fetsapp(ic) + 
      .         (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .         fna(rightcut(ic),iy,0,is)
+     .         fa_ext(rightcut(ic),iy,0,is)
             enddo
             fchsapp(ic) = fchsapp(ic) + fch(rightcut(ic),iy,0)
           enddo
@@ -475,24 +523,30 @@ c
             feisip(ic) = feisip(ic) + fhi(leftcut(ic),iy,0)
             fetsip(ic) = fetsip(ic) + fhe(leftcut(ic),iy,0)
      .                              + fhi(leftcut(ic),iy,0)
+     .                              + fhi_ext(leftcut(ic),iy,0)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(leftix(leftcut(ic),iy),
-     .                 leftiy(leftcut(ic),iy),is)*hx(leftcut(ic),iy)+
-     .          kinrgy(leftcut(ic),iy,is)*
+              fetsip(ic) = fetsip(ic)
+     .         + fhm(leftcut(ic),iy,0,is)*(1.0_R8-BoRiS)
+     .         + fhp(leftcut(ic),iy,0,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(leftix(leftcut(ic),iy),
+     .                 leftiy(leftcut(ic),iy),is)**2*hx(leftcut(ic),iy)+
+     .          ua_ext(leftcut(ic),iy,is)**2*
      .          hx(leftix(leftcut(ic),iy),leftiy(leftcut(ic),iy)))/
      .         (hx(leftcut(ic),iy)+
      .          hx(leftix(leftcut(ic),iy),leftiy(leftcut(ic),iy)))
               rpttmp = 
-     .         (rpt(leftix(leftcut(ic),iy),
+     .         (pt_ext(leftix(leftcut(ic),iy),
      .              leftiy(leftcut(ic),iy),is)*hx(leftcut(ic),iy)+
-     .          rpt(leftcut(ic),iy,is)*
+     .          pt_ext(leftcut(ic),iy,is)*
      .          hx(leftix(leftcut(ic),iy),leftiy(leftcut(ic),iy)))/
      .         (hx(leftcut(ic),iy)+
      .          hx(leftix(leftcut(ic),iy),leftiy(leftcut(ic),iy)))
               fetsip(ic) = fetsip(ic) + 
      .         (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .         fna(leftcut(ic),iy,0,is)
+     .         fa_ext(leftcut(ic),iy,0,is)
             enddo
             fchsip(ic) = fchsip(ic) + fch(leftcut(ic),iy,0)
             fnisap(ic) = fnisap(ic) + fna(rightcut(ic),iy,0,ismain)
@@ -500,24 +554,31 @@ c
             feisap(ic) = feisap(ic) + fhi(rightcut(ic),iy,0)
             fetsap(ic) = fetsap(ic) + fhe(rightcut(ic),iy,0)
      .                              + fhi(rightcut(ic),iy,0)
+     .                              + fhi_ext(rightcut(ic),iy,0)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(leftix(rightcut(ic),iy),
-     .                 leftiy(rightcut(ic),iy),is)*hx(rightcut(ic),iy)+
-     .          kinrgy(rightcut(ic),iy,is)*
+              fetsap(ic) = fetsap(ic)
+     .         + fhm(rightcut(ic),iy,0,is)*(1.0_R8-BoRiS)
+     .         + fhp(rightcut(ic),iy,0,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(leftix(rightcut(ic),iy),
+     .                 leftiy(rightcut(ic),iy),is)**2*
+     .          hx(rightcut(ic),iy)+
+     .          ua_ext(rightcut(ic),iy,is)**2*
      .          hx(leftix(rightcut(ic),iy),leftiy(rightcut(ic),iy)))/
      .         (hx(rightcut(ic),iy)+
      .          hx(leftix(rightcut(ic),iy),leftiy(rightcut(ic),iy)))
               rpttmp = 
-     .         (rpt(leftix(rightcut(ic),iy),
+     .         (pt_ext(leftix(rightcut(ic),iy),
      .              leftiy(rightcut(ic),iy),is)*hx(rightcut(ic),iy)+
-     .          rpt(rightcut(ic),iy,is)*
+     .          pt_ext(rightcut(ic),iy,is)*
      .          hx(leftix(rightcut(ic),iy),leftiy(rightcut(ic),iy)))/
      .         (hx(rightcut(ic),iy)+
      .          hx(leftix(rightcut(ic),iy),leftiy(rightcut(ic),iy)))
               fetsap(ic) = fetsap(ic) + 
      .         (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .         fna(rightcut(ic),iy,0,is)
+     .         fa_ext(rightcut(ic),iy,0,is)
             enddo
             fchsap(ic) = fchsap(ic) + fch(rightcut(ic),iy,0)
           enddo
@@ -542,18 +603,25 @@ c
             feeyip(1) = feeyip(1) + fhe(ix,ny,1)
             feiyip(1) = feiyip(1) + fhi(ix,ny,1)
             fchyip(1) = fchyip(1) + fch(ix,ny,1)
-            fetyip(1) = fetyip(1) + fhe(ix,ny,1) + fhi(ix,ny,1)
+            fetyip(1) = fetyip(1) + fhe(ix,ny,1) + fhi(ix,ny,1) +
+     .                  fhi_ext(ix,ny,1)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          kinrgy(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+              fetyip(1) = fetyip(1) + fhm(ix,ny,1,is)*(1.0_R8-BoRiS) +
+     .                                fhp(ix,ny,1,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(ix,ny,is)**2*
+     .          hy1(bottomix(ix,ny),bottomiy(ix,ny))
+     .         +ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2*
+     .          hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               rpttmp = 
-     .         (rpt(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          rpt(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+     .         (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .          pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               fetyip(1)=fetyip(1) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .         fna(ix,ny,1,is)
+     .         fa_ext(ix,ny,1,is)
             enddo
           endif
           if(region(ix,ny,0).eq.3.or.region(ix,ny,0).eq.4) then
@@ -561,18 +629,25 @@ c
             feeyap(1) = feeyap(1) + fhe(ix,ny,1)
             feiyap(1) = feiyap(1) + fhi(ix,ny,1)
             fchyap(1) = fchyap(1) + fch(ix,ny,1)
-            fetyap(1) = fetyap(1) + fhe(ix,ny,1) + fhi(ix,ny,1)
+            fetyap(1) = fetyap(1) + fhe(ix,ny,1) + fhi(ix,ny,1) +
+     .                  fhi_ext(ix,ny,1)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          kinrgy(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+              fetyap(1) = fetyap(1) + fhm(ix,ny,1,is)*(1.0_R8-BoRiS) +
+     .                                fhp(ix,ny,1,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(ix,ny,is)**2*
+     .          hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .          ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2*
+     .          hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               rpttmp = 
-     .         (rpt(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          rpt(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+     .         (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .          pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               fetyap(1)=fetyap(1) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .         fna(ix,ny,1,is)
+     .         fa_ext(ix,ny,1,is)
             enddo
           endif
           if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
@@ -583,18 +658,24 @@ c
             fchyap(1) = fchyap(1) - fch(topix(ix,-1),topiy(ix,-1),1)
             fetyap(1) = fetyap(1) -
      1       fhe(topix(ix,-1),topiy(ix,-1),1) -
-     2       fhi(topix(ix,-1),topiy(ix,-1),1)
+     2       fhi(topix(ix,-1),topiy(ix,-1),1) -
+     2       fhi_ext(topix(ix,-1),topiy(ix,-1),1)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
-     .          kinrgy(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
+              fetyap(1) = fetyap(1) -
+     1         fhm(topix(ix,-1),topiy(ix,-1),1,is)*(1.0_R8-BoRiS) -
+     2         fhp(topix(ix,-1),topiy(ix,-1),1,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(ix,-1,is)**2*hy1(topix(ix,-1),topiy(ix,-1))+
+     .          ua_ext(topix(ix,-1),topiy(ix,-1),is)**2*hy1(ix,-1))/
      .         (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
               rpttmp = 
-     .         (rpt(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
-     .          rpt(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
+     .         (pt_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
+     .          pt_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
      .         (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
               fetyap(1)=fetyap(1) - (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     1         fna(topix(ix,-1),topiy(ix,-1),1,is)
+     1         fa_ext(topix(ix,-1),topiy(ix,-1),1,is)
             enddo
           endif
         enddo
@@ -605,18 +686,26 @@ c
             feeyip(1) = feeyip(1) + fhe(ix,ny,1)
             feiyip(1) = feiyip(1) + fhi(ix,ny,1)
             fchyip(1) = fchyip(1) + fch(ix,ny,1)
-            fetyip(1) = fetyip(1) + fhe(ix,ny,1) + fhi(ix,ny,1)
+            fetyip(1) = fetyip(1) + fhe(ix,ny,1) + fhi(ix,ny,1) +
+     .                  fhi_ext(ix,ny,1)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          kinrgy(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+              fetyip(1) = fetyip(1) +
+     1         fhm(ix,ny,1,is)*(1.0_R8-BoRiS) +
+     2         fhp(ix,ny,1,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(ix,ny,is)**2*
+     .          hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .          ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2*
+     .          hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               rpttmp = 
-     .         (rpt(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          rpt(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+     .         (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .          pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               fetyip(1)=fetyip(1) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .         fna(ix,ny,1,is)
+     .         fa_ext(ix,ny,1,is)
             enddo
           endif
           if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
@@ -627,18 +716,24 @@ c
             fchyap(1) = fchyap(1) - fch(topix(ix,-1),topiy(ix,-1),1)
             fetyap(1) = fetyap(1) -
      1       fhe(topix(ix,-1),topiy(ix,-1),1) -
-     2       fhi(topix(ix,-1),topiy(ix,-1),1)
+     2       fhi(topix(ix,-1),topiy(ix,-1),1) -
+     2       fhi_ext(topix(ix,-1),topiy(ix,-1),1)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
-     .          kinrgy(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
+              fetyap(1) = fetyap(1) -
+     1       fhm(topix(ix,-1),topiy(ix,-1),1,is)*(1.0_R8-BoRiS) -
+     2       fhp(topix(ix,-1),topiy(ix,-1),1,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(ix,-1,is)**2*hy1(topix(ix,-1),topiy(ix,-1))+
+     .          ua_ext(topix(ix,-1),topiy(ix,-1),is)**2*hy1(ix,-1))/
      .         (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
               rpttmp = 
-     .         (rpt(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
-     .          rpt(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
+     .         (pt_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
+     .          pt_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
      .         (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
               fetyap(1)=fetyap(1) - (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     1         fna(topix(ix,-1),topiy(ix,-1),1,is)
+     1         fa_ext(topix(ix,-1),topiy(ix,-1),1,is)
             enddo
           endif
         enddo
@@ -654,18 +749,24 @@ c
             fchyip(region(ix,ny,0)/4+1) = fchyip(region(ix,ny,0)/4+1) +
      &       fch(ix,ny,1)
             fetyip(region(ix,ny,0)/4+1) = fetyip(region(ix,ny,0)/4+1) +
-     1       fhe(ix,ny,1) + fhi(ix,ny,1)
+     1       fhe(ix,ny,1) + fhi(ix,ny,1) + fhi_ext(ix,ny,1)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          kinrgy(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+              fetyip(region(ix,ny,0)/4+1) = fetyip(region(ix,ny,0)/4+1)+
+     1         fhm(ix,ny,1,is)*(1.0_R8-BoRiS) + fhp(ix,ny,1,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(ix,ny,is)**2*
+     .          hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .          ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2*
+     .          hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               rpttmp = 
-     .         (rpt(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          rpt(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+     .         (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .          pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               fetyip(region(ix,ny,0)/4+1) = fetyip(region(ix,ny,0)/4+1)+
-     1         (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*fna(ix,ny,1,is)
+     1         (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*fa_ext(ix,ny,1,is)
             enddo
           endif
           if(region(ix,ny,0).eq.3 .or. region(ix,ny,0).eq.8) then
@@ -673,18 +774,25 @@ c
             feeyap(1) = feeyap(1) + fhe(ix,ny,1)
             feiyap(1) = feiyap(1) + fhi(ix,ny,1)
             fchyap(1) = fchyap(1) + fch(ix,ny,1)
-            fetyap(1) = fetyap(1) + fhe(ix,ny,1) + fhi(ix,ny,1)
+            fetyap(1) = fetyap(1) + fhe(ix,ny,1) + fhi(ix,ny,1) +
+     .                  fhi_ext(ix,ny,1)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          kinrgy(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+              fetyap(1) = fetyap(1) + fhm(ix,ny,1,is)*(1.0_R8-BoRiS) +
+     .                                fhp(ix,ny,1,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(ix,ny,is)**2*
+     .          hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .          ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2*
+     .          hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               rpttmp = 
-     .         (rpt(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          rpt(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+     .         (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .          pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               fetyap(1)=fetyap(1) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .         fna(ix,ny,1,is)
+     .         fa_ext(ix,ny,1,is)
             enddo
           endif
           if(region(ix,-1,0).eq.3 .or. region(ix,-1,0).eq.8) then
@@ -695,18 +803,24 @@ c
             fchyap(1) = fchyap(1) - fch(topix(ix,-1),topiy(ix,-1),1)
             fetyap(1) = fetyap(1) -
      1       fhe(topix(ix,-1),topiy(ix,-1),1) -
-     2       fhi(topix(ix,-1),topiy(ix,-1),1)
+     2       fhi(topix(ix,-1),topiy(ix,-1),1) -
+     2       fhi_ext(topix(ix,-1),topiy(ix,-1),1)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
-     .          kinrgy(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
+              fetyap(1)=fetyap(1) -
+     1         fhm(topix(ix,-1),topiy(ix,-1),1,is)*(1.0_R8-BoRiS) -
+     2         fhp(topix(ix,-1),topiy(ix,-1),1,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(ix,-1,is)**2*hy1(topix(ix,-1),topiy(ix,-1))+
+     .          ua_ext(topix(ix,-1),topiy(ix,-1),is)**2*hy1(ix,-1))/
      .         (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
               rpttmp = 
-     .         (rpt(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
-     .          rpt(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
+     .         (pt_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
+     .          pt_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
      .         (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
               fetyap(1)=fetyap(1) - (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     1         fna(topix(ix,-1),topiy(ix,-1),1,is)
+     1         fa_ext(topix(ix,-1),topiy(ix,-1),1,is)
             enddo
           endif
           if(region(ix,ny,0).eq.4 .or. region(ix,ny,0).eq.7) then
@@ -714,18 +828,25 @@ c
             feeyap(2) = feeyap(2) + fhe(ix,ny,1)
             feiyap(2) = feiyap(2) + fhi(ix,ny,1)
             fchyap(2) = fchyap(2) + fch(ix,ny,1)
-            fetyap(2) = fetyap(2) + fhe(ix,ny,1) + fhi(ix,ny,1)
+            fetyap(2) = fetyap(2) + fhe(ix,ny,1) + fhi(ix,ny,1) +
+     .                  fhi_ext(ix,ny,1)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          kinrgy(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+              fetyap(2)=fetyap(2) + fhm(ix,ny,1,is)*(1.0_R8-BoRiS)
+     .                            + fhp(ix,ny,1,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(ix,ny,is)**2*
+     .          hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .          ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2*
+     .          hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               rpttmp = 
-     .         (rpt(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          rpt(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+     .         (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .          pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               fetyap(2)=fetyap(2) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .         fna(ix,ny,1,is)
+     .         fa_ext(ix,ny,1,is)
             enddo
           endif
           if(region(ix,-1,0).eq.4 .or. region(ix,-1,0).eq.7) then
@@ -736,18 +857,24 @@ c
             fchyap(2) = fchyap(2) - fch(topix(ix,-1),topiy(ix,-1),1)
             fetyap(2) = fetyap(2) -
      1       fhe(topix(ix,-1),topiy(ix,-1),1) -
-     2       fhi(topix(ix,-1),topiy(ix,-1),1)
+     2       fhi(topix(ix,-1),topiy(ix,-1),1) -
+     3       fhi_ext(topix(ix,-1),topiy(ix,-1),1)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
-     .          kinrgy(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
+              fetyap(2) = fetyap(2) -
+     1         fhm(topix(ix,-1),topiy(ix,-1),1,is)*(1.0_R8-BoRiS) -
+     2         fhp(topix(ix,-1),topiy(ix,-1),1,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(ix,-1,is)**2*hy1(topix(ix,-1),topiy(ix,-1))+
+     .          ua_ext(topix(ix,-1),topiy(ix,-1),is)**2*hy1(ix,-1))/
      .         (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
               rpttmp = 
-     .         (rpt(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
-     .          rpt(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
+     .         (pt_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+
+     .          pt_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/
      .         (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
               fetyap(2)=fetyap(2) - (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     1         fna(topix(ix,-1),topiy(ix,-1),1,is)
+     1         fa_ext(topix(ix,-1),topiy(ix,-1),1,is)
             enddo
           endif
         enddo
@@ -758,18 +885,25 @@ c
             feeyip(1) = feeyip(1) + fhe(ix,ny,1)
             feiyip(1) = feiyip(1) + fhi(ix,ny,1)
             fchyip(1) = fchyip(1) + fch(ix,ny,1)
-            fetyip(1) = fetyip(1) + fhe(ix,ny,1) + fhi(ix,ny,1)
+            fetyip(1) = fetyip(1) + fhe(ix,ny,1) + fhi(ix,ny,1) +
+     .                  fhi_ext(ix,ny,1)
             do is=0,ns-1
-              kintmp = 
-     .         (kinrgy(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          kinrgy(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+              fetyip(1) = fetyip(1) + fhm(ix,ny,1,is)*(1.0_R8-BoRiS)
+     .                              + fhp(ix,ny,1,is)
+            enddo
+            do is=0,ns_ext-1
+              kintmp = 0.5_R8*am_ext(is)*mp*
+     .         (ua_ext(ix,ny,is)**2*
+     .          hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .          ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2*
+     .          hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               rpttmp = 
-     .         (rpt(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .          rpt(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+     .         (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .          pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
      .         (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
               fetyip(1)=fetyip(1) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .         fna(ix,ny,1,is)
+     .         fa_ext(ix,ny,1,is)
             enddo
           endif
         enddo
@@ -779,18 +913,23 @@ c
           feeyip(1) = feeyip(1) + fhe(ix,ny,1)
           feiyip(1) = feiyip(1) + fhi(ix,ny,1)
           fchyip(1) = fchyip(1) + fch(ix,ny,1)
-          fetyip(1) = fetyip(1) + fhe(ix,ny,1) + fhi(ix,ny,1)
+          fetyip(1) = fetyip(1) + fhe(ix,ny,1) + fhi(ix,ny,1) +
+     .                fhi_ext(ix,ny,1)
           do is=0,ns-1
-            kintmp = 
-     .       (kinrgy(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .        kinrgy(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+            fetyip(1) = fetyip(1) + fhm(ix,ny,1,is)*(1.0_R8-BoRiS)
+     .                            + fhp(ix,ny,1,is)
+          enddo
+          do is=0,ns_ext-1
+            kintmp = 0.5_R8*am_ext(is)*mp*
+     .       (ua_ext(ix,ny,is)**2*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .        ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2*hy1(ix,ny))/
      .       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
             rpttmp = 
-     .       (rpt(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
-     .        rpt(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
+     .       (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+
+     .        pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/
      .       (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
             fetyip(1)=fetyip(1) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .       fna(ix,ny,1,is)
+     .       fa_ext(ix,ny,1,is)
           enddo
         enddo
       endif
@@ -808,9 +947,14 @@ c
         tisepi(1) = 0.5_R8/ev *
      1   (ti(-1+target_offset,jsep)+
      2    ti(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
-        tpsepi(1) = 0.5_R8 *
-     1   (target_temp(xymap(-1,jsep),1)+
-     2    target_temp(xymap(topix(-1,jsep),topiy(-1,jsep)),1))
+        if(xymap(-1,jsep).gt.0 .and.
+     &       xymap(topix(-1,jsep),topiy(-1,jsep)).gt.0) then
+           tpsepi(1) = 0.5_R8 *
+     1          (target_temp(xymap(-1,jsep),1)+
+     2          target_temp(xymap(topix(-1,jsep),topiy(-1,jsep)),1))
+        else
+           tpsepi(1) = 0.0_R8
+        endif
         posepi(1) = 0.5_R8 *
      1   (po(-1+target_offset,jsep)+
      2    po(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
@@ -821,8 +965,12 @@ c
      1   te(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
         tisepi(1) = 1.0_R8/ev *
      1   ti(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
-        tpsepi(1) = 
-     1   target_temp(xymap(topix(-1,jsep),topiy(-1,jsep)),1)
+        if(xymap(topix(-1,jsep),topiy(-1,jsep)).gt.0) then
+           tpsepi(1) =
+     1          target_temp(xymap(topix(-1,jsep),topiy(-1,jsep)),1)
+        else
+           tpsepi(1) = 0.0_R8
+        endif
         posepi(1) = 
      1   po(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
       endif
@@ -867,38 +1015,52 @@ c
         tisepa(1) = 0.5_R8/ev *
      1   (ti(nx-target_offset,jsep)+
      2    ti(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
-        tpsepa(1) = 0.5_R8 *
-     1   (target_temp(xymap(nx,jsep),1)+
-     2    target_temp(xymap(topix(nx,jsep),topiy(nx,jsep)),1))
+        if(xymap(nx,jsep).gt.0 .and.
+     &       xymap(topix(nx,jsep),topiy(nx,jsep)).ge.0) then
+           tpsepa(1) = 0.5_R8 *
+     1          (target_temp(xymap(nx,jsep),1)+
+     2          target_temp(xymap(topix(nx,jsep),topiy(nx,jsep)),1))
+        else
+           tpsepa(1) = 0.0_R8
+        endif
         posepa(1) = 0.5_R8 *
      1   (po(nx-target_offset,jsep)+
      2    po(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
       else
-        nesepa(1) = 
+        nesepa(1) =
      1    ne(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
         tesepa(1) = 1.0_R8/ev *
      1    te(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
         tisepa(1) = 1.0_R8/ev *
      1    ti(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
-        tpsepa(1) = 
-     1   target_temp(xymap(topix(nx,jsep),topiy(nx,jsep)),1)
-        posepa(1) = 
+        if(xymap(topix(nx,jsep),topiy(nx,jsep)).gt.0) then
+           tpsepa(1) =
+     1          target_temp(xymap(topix(nx,jsep),topiy(nx,jsep)),1)
+        else
+           tpsepa(1) = 0.0
+        endif
+        posepa(1) =
      1    po(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
       endif
       if(nncut.eq.2) then
-        nesepi(2) = 0.5_R8 * (ne(ixtr+target_offset,jsep)+
+        nesepa(2) = 0.5_R8 * (ne(ixtr+target_offset,jsep)+
      1   ne(topix(ixtr+target_offset,jsep),
      2      topiy(ixtr+target_offset,jsep)))
-        tesepi(2) = 0.5_R8 * (te(ixtr+target_offset,jsep)+
+        tesepa(2) = 0.5_R8 * (te(ixtr+target_offset,jsep)+
      1   te(topix(ixtr+target_offset,jsep),
      2      topiy(ixtr+target_offset,jsep)))/ev
-        tisepi(2) = 0.5_R8 * (ti(ixtr+target_offset,jsep)+
+        tisepa(2) = 0.5_R8 * (ti(ixtr+target_offset,jsep)+
      1   ti(topix(ixtr+target_offset,jsep),
      2      topiy(ixtr+target_offset,jsep)))/ev
-        tpsepi(2) = 0.5_R8 *
-     1   (target_temp(xymap(ixtr,jsep),1)+
-     2    target_temp(xymap(topix(ixtr,jsep),topiy(ixtr,jsep)),1))
-        posepi(2) = 0.5_R8 * (po(ixtr+target_offset,jsep)+
+        if(xymap(ixtr,jsep).gt.0 .and.
+     &       xymap(topix(ixtr,jsep),topiy(ixtr,jsep)).gt.0) then
+           tpsepa(2) = 0.5_R8 *
+     1          (target_temp(xymap(ixtr,jsep),1)+
+     2          target_temp(xymap(topix(ixtr,jsep),topiy(ixtr,jsep)),1))
+        else
+           tpsepa(2) = 0.0_R8
+        endif
+        posepa(2) = 0.5_R8 * (po(ixtr+target_offset,jsep)+
      1   po(topix(ixtr+target_offset,jsep),
      2      topiy(ixtr+target_offset,jsep)))
         nesepm(2) = 0.5_R8 * (ne(jxi,jsep)+
@@ -932,19 +1094,24 @@ c
      1   vsa0(jxi,jsep,ismain)/(mp*am(ismain)*na(jxi,jsep,ismain))+
      2   vsa0(topix(jxi,jsep),topiy(jxi,jsep),ismain)/
      3   (mp*am(ismain)*na(topix(jxi,jsep),topiy(jxi,jsep),ismain)))
-        nesepa(2) = 0.5_R8 * (ne(ixtl-target_offset,jsep)+
+        nesepi(2) = 0.5_R8 * (ne(ixtl-target_offset,jsep)+
      1   ne(topix(ixtl-target_offset,jsep),
      2      topiy(ixtl-target_offset,jsep)))
-        tesepa(2) = 0.5_R8 * (te(ixtl-target_offset,jsep)+
+        tesepi(2) = 0.5_R8 * (te(ixtl-target_offset,jsep)+
      1   te(topix(ixtl-target_offset,jsep),
      2      topiy(ixtl-target_offset,jsep)))/ev
-        tisepa(2) = 0.5_R8 * (ti(ixtl-target_offset,jsep)+
+        tisepi(2) = 0.5_R8 * (ti(ixtl-target_offset,jsep)+
      1   ti(topix(ixtl-target_offset,jsep),
      2      topiy(ixtl-target_offset,jsep)))/ev
-        tpsepa(2) = 0.5_R8 *
-     1   (target_temp(xymap(ixtl,jsep),1)+
-     2    target_temp(xymap(topix(ixtl,jsep),topiy(ixtl,jsep)),1))
-        posepa(2) = 0.5_R8 * (po(ixtl-target_offset,jsep)+
+        if(xymap(ixtl,jsep).gt.0 .and.
+     &       xymap(topix(ixtl,jsep),topiy(ixtl,jsep)).gt.0) then
+           tpsepi(2) = 0.5_R8 *
+     1          (target_temp(xymap(ixtl,jsep),1)+
+     2          target_temp(xymap(topix(ixtl,jsep),topiy(ixtl,jsep)),1))
+        else
+           tpsepi(2) = 0.0_R8
+        endif
+        posepi(2) = 0.5_R8 * (po(ixtl-target_offset,jsep)+
      1   po(topix(ixtl-target_offset,jsep),
      2      topiy(ixtl-target_offset,jsep)))
       endif
@@ -1010,6 +1177,7 @@ c note no emission in guard cells and offset of array by 1
         enddo
       enddo
 #endif
+
       imap(1)=1
       tstepn(1) = ntstep
       call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
@@ -1183,32 +1351,38 @@ c
       imap(1)=1
       imap(2)=nx+2
       slice=0.0_R8
-      slice(iylstrt:iylend)=na(-1+target_offset,iylstrt:iylend,0)
+      if (ismain0.ne.ismain)
+     > slice(iylstrt:iylend)=na(-1+target_offset,iylstrt:iylend,ismain0)
       slice(0:ny-1)=slice(0:ny-1)+dab2(1,1:ny,1,1)
       call rwcdf(rw,ncid,'an3dl',imap,slice(iylstrt),iret)
       slice=0.0_R8
-      slice(iyistrt:iyiend)=na(jxi,iyistrt:iyiend,0)
+      if (ismain0.ne.ismain)
+     > slice(iyistrt:iyiend)=na(jxi,iyistrt:iyiend,ismain0)
       slice(0:ny-1)=slice(0:ny-1)+dab2(jxi+1,1:ny,1,1)
       call rwcdf(rw,ncid,'an3di',imap,slice(iyistrt),iret)
       slice=0.0_R8
-      slice(iyastrt:iyaend)=na(jxa,iyastrt:iyaend,0)
+      if (ismain0.ne.ismain)
+     > slice(iyastrt:iyaend)=na(jxa,iyastrt:iyaend,ismain0)
       slice(0:ny-1)=slice(0:ny-1)+dab2(jxa+1,1:ny,1,1)
       call rwcdf(rw,ncid,'an3da',imap,slice(iyastrt),iret)
       slice=0.0_R8
-      slice(iyrstrt:iyrend)=na(nx-target_offset,iyrstrt:iyrend,0)
+      if (ismain0.ne.ismain)
+     > slice(iyrstrt:iyrend)=na(nx-target_offset,iyrstrt:iyrend,ismain0)
       slice(0:ny-1)=slice(0:ny-1)+dab2(nx,1:ny,1,1)
       call rwcdf(rw,ncid,'an3dr',imap,slice(iyrstrt),iret)
       if (nnreg(0).ge.8) then
-        slice(iytlstrt:iytlend)=
-     .   na(ixtl-target_offset,iytlstrt:iytlend,0)
+        slice=0.0_R8
+        if (ismain0.ne.ismain) slice(iytlstrt:iytlend)=
+     .   na(ixtl-target_offset,iytlstrt:iytlend,ismain0)
         slice(0:ny-1)=slice(0:ny-1)+dab2(ixtl,1:ny,1,1)
         call rwcdf(rw,ncid,'an3dtl',imap,slice(iytlstrt),iret)
-        slice(iytrstrt:iytrend)=
-     .   na(ixtr+target_offset,iytrstrt:iytrend,0)
+        slice=0.0_R8
+        if (ismain0.ne.ismain) slice(iytrstrt:iytrend)=
+     .   na(ixtr+target_offset,iytrstrt:iytrend,ismain0)
         slice(0:ny-1)=slice(0:ny-1)+dab2(ixtr+1,1:ny,1,1)
         call rwcdf(rw,ncid,'an3dtr',imap,slice(iytrstrt),iret)
       endif
-      slice=0
+      slice=0.0_R8
       slice(0:ny-1)=dmb2(1,1:ny,1,1)
       call rwcdf(rw,ncid,'mn3dl',imap,slice,iret)
       slice(0:ny-1)=dmb2(jxi+1,1:ny,1,1)
@@ -1227,67 +1401,103 @@ c
       do iy = iylstrt, iylend
         slice(iy)=
      .   fhe(rightix(-1,iy),rightiy(-1,iy),0)+
-     .   fhi(rightix(-1,iy),rightiy(-1,iy),0)
+     .   fhi(rightix(-1,iy),rightiy(-1,iy),0)+
+     .   fhi_ext(rightix(-1,iy),rightiy(-1,iy),0)
         do is=0,ns-1
-          kintmp = (kinrgy(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
-     .              kinrgy(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
+          slice(iy)=slice(iy)+
+     .     fhm(rightix(-1,iy),rightiy(-1,iy),0,is)*(1.0_R8-BoRiS)+
+     .     fhp(rightix(-1,iy),rightiy(-1,iy),0,is)
+        enddo
+        do is=0,ns_ext-1
+          kintmp = 0.5_R8*am_ext(is)*mp*
+     .             (ua_ext(-1,iy,is)**2*
+     .              hx(rightix(-1,iy),rightiy(-1,iy))+
+     .              ua_ext(rightix(-1,iy),rightiy(-1,iy),is)**2*
+     .              hx(-1,iy))/
      .             (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
-          rpttmp = (rpt(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
-     .              rpt(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
+          rpttmp = (pt_ext(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
+     .              pt_ext(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
      .             (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
           slice(iy)=slice(iy)+(rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .     fna(rightix(-1,iy),rightiy(-1,iy),0,is)
+     .     fa_ext(rightix(-1,iy),rightiy(-1,iy),0,is)
         enddo
       enddo
       call rwcdf(rw,ncid,'ft3dl',imap,slice(iylstrt),iret)
+      slice=0.0_R8
       slice(iyrstrt:iyrend)=fhe(nx,iyrstrt:iyrend,0)+
-     .                      fhi(nx,iyrstrt:iyrend,0)
+     .                      fhi(nx,iyrstrt:iyrend,0)+
+     .                      fhi_ext(nx,iyrstrt:iyrend,0)
       do iy=iyrstrt,iyrend
         do is=0,ns-1
-          kintmp = (kinrgy(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
-     .              kinrgy(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
+          slice(iy)=slice(iy)+
+     .     fhm(nx,iy,0,is)*(1.0_R8-BoRiS)+
+     .     fhp(nx,iy,0,is)
+        enddo
+        do is=0,ns_ext-1
+          kintmp = 0.5_R8*am_ext(is)*mp*
+     .             (ua_ext(nx,iy,is)**2*
+     .              hx(leftix(nx,iy),leftiy(nx,iy))+
+     .              ua_ext(leftix(nx,iy),leftiy(nx,iy),is)**2*
+     .              hx(nx,iy))/
      .             (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
-          rpttmp = (rpt(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
-     .              rpt(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
+          rpttmp = (pt_ext(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
+     .              pt_ext(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
      .             (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
           slice(iy)=slice(iy)+(rpttmp*ev+kintmp*(1.0_R8-BoRiS))
-     .     *fna(nx,iy,0,is)
+     .     *fa_ext(nx,iy,0,is)
         enddo
       enddo
       call rwcdf(rw,ncid,'ft3dr',imap,slice(iyrstrt),iret)
       if (nnreg(0).ge.8) then
+        slice=0.0_R8
         slice(iytlstrt:iytlend)=fhe(ixtl,iytlstrt:iytlend,0)+
-     .                          fhi(ixtl,iytlstrt:iytlend,0)
+     .                          fhi(ixtl,iytlstrt:iytlend,0)+
+     .                          fhi_ext(ixtl,iytlstrt:iytlend,0)
         do iy=iytlstrt,iytlend
           do is=0,ns-1
-            kintmp = 
-     .       (kinrgy(ixtl,iy,is)*hx(leftix(ixtl,iy),leftiy(ixtl,iy))+
-     .        kinrgy(leftix(ixtl,iy),leftiy(ixtl,iy),is)*hx(ixtl,iy))/
+            slice(iy)=slice(iy)+fhm(ixtl,iy,0,is)*(1.0_R8-BoRiS)+
+     .                          fhp(ixtl,iy,0,is)
+          enddo
+          do is=0,ns_ext-1
+            kintmp = 0.5_R8*am_ext(is)*mp*
+     .       (ua_ext(ixtl,iy,is)**2*
+     .        hx(leftix(ixtl,iy),leftiy(ixtl,iy))+
+     .        ua_ext(leftix(ixtl,iy),leftiy(ixtl,iy),is)**2*
+     .        hx(ixtl,iy))/
      .       (hx(leftix(ixtl,iy),leftiy(ixtl,iy))+hx(ixtl,iy))
             rpttmp = 
-     .       (rpt(ixtl,iy,is)*hx(leftix(ixtl,iy),leftiy(ixtl,iy))+
-     .        rpt(leftix(ixtl,iy),leftiy(ixtl,iy),is)*hx(ixtl,iy))/
+     .       (pt_ext(ixtl,iy,is)*hx(leftix(ixtl,iy),leftiy(ixtl,iy))+
+     .        pt_ext(leftix(ixtl,iy),leftiy(ixtl,iy),is)*hx(ixtl,iy))/
      .       (hx(leftix(ixtl,iy),leftiy(ixtl,iy))+hx(ixtl,iy))
             slice(iy)=slice(iy)+(rpttmp*ev+kintmp*(1.0_R8-BoRiS))
-     .       *fna(ixtl,iy,0,is)
+     .       *fa_ext(ixtl,iy,0,is)
           enddo
         enddo
         call rwcdf(rw,ncid,'ft3dtl',imap,slice(iytlstrt),iret)
+        slice=0.0_R8
         do iy = iytrstrt, iytrend
           slice(iy)=
      .     fhe(rightix(ixtr,iy),rightiy(ixtr,iy),0)+
-     .     fhi(rightix(ixtr,iy),rightiy(ixtr,iy),0)
+     .     fhi(rightix(ixtr,iy),rightiy(ixtr,iy),0)+
+     .     fhi_ext(rightix(ixtr,iy),rightiy(ixtr,iy),0)
           do is=0,ns-1
-            kintmp = 
-     .       (kinrgy(ixtr,iy,is)*hx(rightix(ixtr,iy),rightiy(ixtr,iy))+
-     .        kinrgy(rightix(ixtr,iy),rightiy(ixtr,iy),is)*hx(ixtr,iy))/
+            slice(iy)=slice(iy)+
+     .       fhm(rightix(ixtr,iy),rightiy(ixtr,iy),0,is)*(1.0_R8-BoRiS)+
+     .       fhp(rightix(ixtr,iy),rightiy(ixtr,iy),0,is)
+          enddo
+          do is=0,ns_ext-1
+            kintmp = 0.5_R8*am_ext(is)*mp*
+     .       (ua_ext(ixtr,iy,is)**2*
+     .        hx(rightix(ixtr,iy),rightiy(ixtr,iy))+
+     .        ua_ext(rightix(ixtr,iy),rightiy(ixtr,iy),is)**2*
+     .        hx(ixtr,iy))/
      .       (hx(rightix(ixtr,iy),rightiy(ixtr,iy))+hx(ixtr,iy))
             rpttmp = 
-     .       (rpt(ixtr,iy,is)*hx(rightix(ixtr,iy),rightiy(ixtr,iy))+
-     .        rpt(rightix(ixtr,iy),rightiy(ixtr,iy),is)*hx(ixtr,iy))/
+     .       (pt_ext(ixtr,iy,is)*hx(rightix(ixtr,iy),rightiy(ixtr,iy))+
+     .        pt_ext(rightix(ixtr,iy),rightiy(ixtr,iy),is)*hx(ixtr,iy))/
      .       (hx(rightix(ixtr,iy),rightiy(ixtr,iy))+hx(ixtr,iy))
             slice(iy)=slice(iy)+(rpttmp*ev+kintmp*(1.0_R8-BoRiS))*
-     .       fna(rightix(ixtr,iy),rightiy(ixtr,iy),0,is)
+     .       fa_ext(rightix(ixtr,iy),rightiy(ixtr,iy),0,is)
           enddo
         enddo
         call rwcdf(rw,ncid,'ft3dtr',imap,slice(iytrstrt),iret)
@@ -1342,25 +1552,33 @@ c
       imap(1)=1
       imap(2)=nx+2
       slice=0.0_R8
-      slice(-1)=target_temp(xymap(-1,0),1)
-      slice(0:ny-1)=target_temp(xymap(-1,0:ny-1),1)
-      slice(ny)=target_temp(xymap(-1,ny-1),1)
+      if(minval(xymap(-1,0:ny-1)).gt.0) then
+         slice(-1)=target_temp(xymap(-1,0),1)
+         slice(0:ny-1)=target_temp(xymap(-1,0:ny-1),1)
+         slice(ny)=target_temp(xymap(-1,ny-1),1)
+      endif
       call rwcdf(rw,ncid,'tp3dl',imap,slice,iret)
       slice=0.0_R8
-      slice(-1)=target_temp(xymap(nx,0),1)
-      slice(0:ny-1)=target_temp(xymap(nx,0:ny-1),1)
-      slice(ny)=target_temp(xymap(nx,ny-1),1)
+      if(minval(xymap(nx,0:ny-1)).gt.0) then
+         slice(-1)=target_temp(xymap(nx,0),1)
+         slice(0:ny-1)=target_temp(xymap(nx,0:ny-1),1)
+         slice(ny)=target_temp(xymap(nx,ny-1),1)
+      endif
       call rwcdf(rw,ncid,'tp3dr',imap,slice,iret)
       if (nnreg(0).ge.8) then
         slice=0.0_R8
-        slice(-1)=target_temp(xymap(ixtl,0),1)
-        slice(0:ny-1)=target_temp(xymap(ixtl,0:ny-1),1)
-        slice(ny)=target_temp(xymap(ixtl,ny-1),1)
+        if(minval(xymap(ixtl,0:ny-1)).gt.0) then
+           slice(-1)=target_temp(xymap(ixtl,0),1)
+           slice(0:ny-1)=target_temp(xymap(ixtl,0:ny-1),1)
+           slice(ny)=target_temp(xymap(ixtl,ny-1),1)
+        endif
         call rwcdf(rw,ncid,'tp3dtl',imap,slice,iret)
         slice=0.0_R8
-        slice(-1)=target_temp(xymap(ixtr,0),1)
-        slice(0:ny-1)=target_temp(xymap(ixtr,0:ny-1),1)
-        slice(ny)=target_temp(xymap(ixtr,ny-1),1)
+        if(minval(xymap(ixtr,0:ny-1)).gt.0) then
+           slice(-1)=target_temp(xymap(ixtr,0),1)
+           slice(0:ny-1)=target_temp(xymap(ixtr,0:ny-1),1)
+           slice(ny)=target_temp(xymap(ixtr,ny-1),1)
+        endif
         call rwcdf(rw,ncid,'tp3dtr',imap,slice,iret)
       endif
 c      
@@ -1445,8 +1663,8 @@ c
       nsdim = ncddef(ncid, 'ns', ns, iret)
       timedim = ncddef(ncid, 'time', ncunlim, iret)
 * define variables
-      dims(1) = 1
-      ntstepid = ncvdef (ncid, 'ntstep', NCDOUBLE, 1, dims, iret)
+      dims(1) = 0
+      ntstepid = ncvdef (ncid, 'ntstep', NCDOUBLE, 0, dims, iret)
       dims(1) = timedim
       timesaid = ncvdef (ncid, 'timesa', NCDOUBLE, 1, dims, iret)
       dims(1) = ncdim
@@ -2143,16 +2361,16 @@ c outboard divertor quantities
       call ncaptc(ncid, mn3drid, 'units', NCCHAR, 4, 'm^-3', iret)
       call ncaptc(ncid, fn3drid, 'long_name', NCCHAR, 45,
      1'poloidal main species flux, outboard divertor', iret)
-      call ncaptc(ncid, fn3drid, 'units', NCCHAR, 2, 'W ', iret)
+      call ncaptc(ncid, fn3drid, 'units', NCCHAR, 4, 's^-1', iret)
       call ncaptc(ncid, fl3drid, 'long_name', NCCHAR, 41,
      1'poloidal electron flux, outboard divertor', iret)
-      call ncaptc(ncid, fl3drid, 'units', NCCHAR, 2, 'W ', iret)
+      call ncaptc(ncid, fl3drid, 'units', NCCHAR, 4, 's^-1', iret)
       call ncaptc(ncid, fo3drid, 'long_name', NCCHAR, 36,
      1'poloidal ion flux, outboard divertor', iret)
       call ncaptc(ncid, fo3drid, 'units', NCCHAR, 2, 'W ', iret)
       call ncaptc(ncid, fe3drid, 'long_name', NCCHAR, 48,
      1'poloidal electron energy flux, outboard divertor', iret)
-      call ncaptc(ncid, fe3drid, 'units', NCCHAR, 4, 's^-1', iret)
+      call ncaptc(ncid, fe3drid, 'units', NCCHAR, 2, 'W ', iret)
       call ncaptc(ncid, fi3drid, 'long_name', NCCHAR, 43,
      1'poloidal ion energy flux, outboard divertor', iret)
       call ncaptc(ncid, fi3drid, 'units', NCCHAR, 2, 'W ', iret)
@@ -2191,12 +2409,12 @@ c upper outboard divertor quantities
       call ncaptc(ncid, mn3dtrid, 'units', NCCHAR, 4, 'm^-3', iret)
       call ncaptc(ncid, fn3dtrid, 'long_name', NCCHAR, 51,
      1'poloidal main species flux, upper outboard divertor', iret)
-      call ncaptc(ncid, fn3dtrid, 'units', NCCHAR, 2, 'W ', iret)
+      call ncaptc(ncid, fn3dtrid, 'units', NCCHAR, 4, 's^-1', iret)
       doubleval(1) = -1.0_R8
       call ncapt(ncid, fn3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
       call ncaptc(ncid, fl3dtrid, 'long_name', NCCHAR, 47,
      1'poloidal electron flux, upper outboard divertor', iret)
-      call ncaptc(ncid, fl3dtrid, 'units', NCCHAR, 2, 'W ', iret)
+      call ncaptc(ncid, fl3dtrid, 'units', NCCHAR, 4, 's^-1', iret)
       doubleval(1) = -1.0_R8
       call ncapt(ncid, fl3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
       call ncaptc(ncid, fo3dtrid, 'long_name', NCCHAR, 42,
@@ -2206,7 +2424,7 @@ c upper outboard divertor quantities
       call ncapt(ncid, fo3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
       call ncaptc(ncid, fe3dtrid, 'long_name', NCCHAR, 54,
      1'poloidal electron energy flux, upper outboard divertor', iret)
-      call ncaptc(ncid, fe3dtrid, 'units', NCCHAR, 4, 's^-1', iret)
+      call ncaptc(ncid, fe3dtrid, 'units', NCCHAR, 2, 'W ', iret)
       doubleval(1) = -1.0_R8
       call ncapt(ncid, fe3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
       call ncaptc(ncid, fi3dtrid, 'long_name', NCCHAR, 49,
@@ -2428,7 +2646,15 @@ c
       do while (region(iref,iyend,0).eq.0 .and. iyend.gt.-1)
         iyend=iyend-1
       enddo
-      call xertst(iyend.ge.iystart, 'faulty parameter iyend')
+      call xertst(iyend.ge.-1, 'faulty parameter iyend')
+      if(iystart.eq.ny.and.iyend.eq.-1) then
+! special case [DPC]
+         iystart=-1
+         iyend=ny
+         write(*,*) 'special treatment for iystart, iyend for ',
+     &        trim(filename)
+      endif
+      call xertst(iyend.ge.iystart, 'faulty parameter iystart & iyend')
       ds(iystart)=
      1 sqrt((cr(iref+target_offset,iystart)-
      1          0.5_R8*(crx(iref+target_offset,iystart,0)+

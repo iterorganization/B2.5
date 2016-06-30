@@ -39,8 +39,6 @@ c     conversion of constants to CGS units
       real kB_cgs, eV_cgs, e_cgs, c_cgs
       parameter (kB_cgs=KBolt*erg, eV_cgs=ev*erg,
      &           e_cgs=qe*c*10., c_cgs=c*cm)
-      integer ::
-     *  nar,nzm
       real (kind=R8) ::
      *   bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, gclass,
      &   fm(0:nmaxgr-1), r2i, cosbl(0:nmaxgr-1),

@@ -1,5 +1,6 @@
       subroutine b2ptrg(igm,iig)
-      integer igm, iig
+      implicit none
+      integer igm(1000), iig
 c
 c  version : 06.03.96 11:47
 c

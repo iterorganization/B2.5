@@ -131,7 +131,7 @@ cank
       implicit none
       integer nxd,nyd,nsd,ns_ext,wklngd,natmd,nmold,niond,nlim
       integer nsw
-      external ipgeti, xertst, get_jsep, get_nxt
+      external get_jsep, get_nxt
 
       nx=nxd
       ny=nyd

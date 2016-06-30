@@ -29,6 +29,7 @@
 *.declarations
       use b2mod_types
       use b2mod_indirect
+      implicit none
 
       real (kind=R8) precision, fluxav
       parameter (precision=1e-8)

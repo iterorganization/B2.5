@@ -181,7 +181,8 @@ csw 28feb2011 mpi
           call mpi_bcast(ltrigger,1,MPI_LOGICAL,0,
      .                   MPI_COMM_WORLD,ierr_mpi)
           if(ltrigger) then
-            call eirene_eirsrt(.false.,.false.,0.,dumarr,0,0,0,0,0.)
+            call eirene_eirsrt(.false.,.false.,
+     .       0.0_R8,dumarr,0.0_R8,0.0_R8,0.0_R8,0.0_R8,0.0_R8)
           else
             exit
           endif

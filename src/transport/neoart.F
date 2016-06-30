@@ -124,15 +124,15 @@ c--------------------------------------------------------------------
       logical neogeo, neofrc
 
       integer :: 
-     *       nsl,ncl(0:nsdecl),ikeep,it,i,j,isk,k,l
+     *       nsl,ncl(0:nsdecl),i,j,k,l
       real (kind=R8) ::
      *       m(0:nsdecl),rho,den(0:nsdecl,0:nzdecl-1),t(0:nsdecl),
      &       ntau(0:nsdecl,0:nsdecl),coeff(0:nsdecl,0:nzdecl-1,4),
      &       zsp(0:nsdecl,0:nzdecl-1),eparn,epsn,
-     &       xi(0:nsdecl,0:nzdecl-1),rhok,
+     &       xi(0:nsdecl,0:nzdecl-1),
      &       uai(0:nsdecl,0:nzdecl,3),sigma(4), dum, 
      &       la(3,3,0:nsdecl), lab(3,3,0:nsdecl,0:nsdecl), mm(3,3), 
-     &       nn(3,3),deni(0:nsdecl,0:nzdecl-1),ta,tb,ma,mb,
+     &       nn(3,3),ta,tb,ma,mb,
      &       coeffc(0:nsdecl,0:nzdecl-1,4)
       real (kind=R8) ::
      *   bav, b2av, bi2a, rbt, bgradp, dpsidr, rnq, fc, gclass,

@@ -15,7 +15,7 @@ C
      *   SOL(N1D,N2)
 
 *  -- LOCAL SCALARS --
-      INTEGER N, I, J, K, l, m, IK
+      INTEGER N, I, J, K
       real (kind=R8) ::
      *   x05baf,cpu_start,cpu_end
       integer iflag
@@ -151,9 +151,9 @@ c-dpc
       if(.not.lfirst) then
         call ma28bdcopy
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
-        if(nltrsol.gt.0 .or. iflag.lt.0)                            !srv 09.07.02 28.06.16
+        if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 09.07.02 28.06.16
      *   write(*,"(' ma28bd for ',a13,': iflag =',i9)") 
-     *    trim(name), iflag                                         !srv 09.07.02 28.06.16
+     *    trim(name), iflag                                          !srv 09.07.02 28.06.16
         if(iflag.lt.0) then
           do i=1,nz
             irnh(i)=irnh_save(i)
@@ -174,7 +174,7 @@ c-dpc
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
         enddo
-        lfirst=.false.
+        lfirst=.false. 
       endif
 
       call ma28idcopy

@@ -48,7 +48,7 @@ c--------------------------------------------------------------------
       implicit none
 
       integer :: nsdecl, nzdecl, nsl, ncl(0:nsdecl), nreg, nleg, 
-     +           nenergy, ncof, ic, i, j, k, l, mt, ispecies, istate    !srv 09.02.11
+     +           nenergy, ncof, ic, i, j, k, l, mt                   !srv 09.02.11
       real (kind=R8) :: m(0:nsdecl), t(0:nsdecl), 
      +       den(0:nsdecl,0:nzdecl-1),
      +       ds(0:nsdecl,0:nzdecl-1,2), dsl(0:nsdecl,0:nzdecl-1,2), 

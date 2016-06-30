@@ -1,9 +1,9 @@
       subroutine lefta(c,n,m)
-      implicit none
 c
 c  version : 05.07.89
 c
 c=====================================================
+      implicit none
       character*1 c(*),b
       integer :: i,n,k,m
 c=====================================================

@@ -134,7 +134,7 @@
 cxpb
           if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
      &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
-     &	     iy.ne.ny .and. aa7(ix,iy,2).eq.0.0_R8) then
+     &       iy.ne.ny .and. aa7(ix,iy,2).eq.0.0_R8) then
            if(ncall.lt.3) write(*,*) 'Executing xpb:b2usp7 for ',ix,iy
            itop = region(topix(ix,iy),topiy(ix,iy),0)
            if (solvereg(ireg))
@@ -174,42 +174,42 @@ cxpb
           if (solvereg(ireg))
      >     aa7(ix,iy,-3) = vis_per*fac_vis(ix,iy)*avisper(ix,iy,1)*
      &       bvisper(ixb,iyb,1)*cvisper(ixb,iyb,1)
-	  if (solvereg(ireg))
+          if (solvereg(ireg))
      >     aa7(ix,iy,-2) = aa7(ix,iy,-2) -
-     1	   vis_per*fac_vis(ix,iy)*avisper(ix,iy,1)*
+     1     vis_per*fac_vis(ix,iy)*avisper(ix,iy,1)*
      &     (-bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)  
      &      +bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1)
      &      +bvisper(ixb,iyb,1)*cvisper(ixb,iyb,1))
-	  if (solvereg(ireg))
+          if (solvereg(ireg))
      >     aa7(ix,iy, 0) = aa7(ix,iy, 0) -
-     1	   vis_per*fac_vis(ix,iy)*avisper(ix,iy,1)*
+     1     vis_per*fac_vis(ix,iy)*avisper(ix,iy,1)*
      &     (-bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1) 
      &      -bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1)
      &      -bvisper(ixb,iyb,1)*cvisper(ix ,iy ,1))
-	  if (solvereg(ireg))
+          if (solvereg(ireg))
      >     aa7(ix,iy, 2) = aa7(ix,iy, 2) -
-     1	   vis_per*fac_vis(ix,iy)*avisper(ix,iy,1)*
+     1     vis_per*fac_vis(ix,iy)*avisper(ix,iy,1)*
      &       bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)
-	  if (solvereg(ireg))
+          if (solvereg(ireg))
      >     aa7(ix,iy,-2) = aa7(ix,iy,-2) -
-     1	   vis_per*fac_vis(ix,iy)*avisper(ixt,iyt,1)*
+     1     vis_per*fac_vis(ix,iy)*avisper(ixt,iyt,1)*
      &       bvisper(ix ,iy, 1)*cvisper(ix ,iy ,1)
-	  if (solvereg(ireg))
+          if (solvereg(ireg))
      >     aa7(ix,iy, 0) = aa7(ix,iy, 0) +
-     1	   vis_per*fac_vis(ix,iy)*avisper(ixt,iyt,1)*
+     1     vis_per*fac_vis(ix,iy)*avisper(ixt,iyt,1)*
      &     (-bvisper(ixt,iyt,1)*cvisper(ixt,iyt,1)
      &      +bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1)
      &      +bvisper(ix ,iy ,1)*cvisper(ix ,iy ,1))
-	  if (solvereg(ireg))
+          if (solvereg(ireg))
      >     aa7(ix,iy, 2) = aa7(ix,iy, 2) +
-     1	   vis_per*fac_vis(ix,iy)*avisper(ixt,iyt,1)*
+     1     vis_per*fac_vis(ix,iy)*avisper(ixt,iyt,1)*
      &     (-bvisper(ixt,iyt,1)*
      &       cvisper(topix(ixt,iyt),topiy(ixt,iyt),1)
      &      -bvisper(ixt,iyt,1)*cvisper(ixt,iyt,1)
      &      -bvisper(ix ,iy ,1)*cvisper(ixt,iyt,1))
-	  if (solvereg(ireg))
+          if (solvereg(ireg))
      >     aa7(ix,iy, 3) = vis_per*fac_vis(ix,iy)*
-     1	   avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*
+     1     avisper(ixt,iyt,1)*bvisper(ixt,iyt,1)*
      &       cvisper(topix(ixt,iyt),topiy(ixt,iyt),1)
         endif
        enddo
@@ -238,13 +238,13 @@ cxpb
           call my_out(70,nx,ny,sch(-1,-1,k),'b2usp7_sch'//chark)
         enddo
         call my_out(70,nx,ny,fac_vis,'fac_vis')
-        call my_out(70,nx,ny,aa7(-1,-1,-3),'b2usp7_sch_aa7m3')
-        call my_out(70,nx,ny,aa7(-1,-1,-2),'b2usp7_sch_aa7m2')
-        call my_out(70,nx,ny,aa7(-1,-1,-1),'b2usp7_sch_aa7m1')
-        call my_out(70,nx,ny,aa7(-1,-1, 0),'b2usp7_sch_aa7m0')
-        call my_out(70,nx,ny,aa7(-1,-1, 1),'b2usp7_sch_aa7p1')
-        call my_out(70,nx,ny,aa7(-1,-1, 2),'b2usp7_sch_aa7p2')
-        call my_out(70,nx,ny,aa7(-1,-1, 3),'b2usp7_sch_aa7p3')
+        call my_out(70,nx,ny,aa7(-1,-1,-3),'b2usp7_aa7m3')
+        call my_out(70,nx,ny,aa7(-1,-1,-2),'b2usp7_aa7m2')
+        call my_out(70,nx,ny,aa7(-1,-1,-1),'b2usp7_aa7m1')
+        call my_out(70,nx,ny,aa7(-1,-1, 0),'b2usp7_aa7m0')
+        call my_out(70,nx,ny,aa7(-1,-1, 1),'b2usp7_aa7p1')
+        call my_out(70,nx,ny,aa7(-1,-1, 2),'b2usp7_aa7p2')
+        call my_out(70,nx,ny,aa7(-1,-1, 3),'b2usp7_aa7p3')
         call my_out(70,nx,ny,respo,'b2usp7_respo')
         call my_out(70,nx,ny,corpo,'b2usp7_corpo')
       endif                                                         !sv 08.07.08 }

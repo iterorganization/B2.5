@@ -29,7 +29,8 @@
 *.declarations
       use b2mod_types
       use b2mod_indirect
-
+      implicit none
+      integer nx, ny
       real (kind=R8) precision, sfluxav
       parameter (precision=1e-8)
 *   ..input arguments (unchanged on exit)
@@ -39,7 +40,7 @@
 *   ..local variables
       real (kind=R8) :: 
      *   qsum, qterm, wsum, bface, hxface, hxpface, hxnface
-      integer nx, ny, iy, ix
+      integer iy, ix
 *   ..procedures
       external xertst
 

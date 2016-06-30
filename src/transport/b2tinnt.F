@@ -44,7 +44,7 @@
       integer, save :: use_eirene, area_fix
       integer n2, ix, iy, is, is0, ia, im, iamain
       integer, save :: ncall =0, style = 1
-      character chns*3, chk*1
+      character chns*3
       real (kind=R8) ::
      *   fnac(-1:nx,-1:ny,0:1,0:ns-1), vntrc(-1:nx,-1:ny,0:1),       !srv 08.07.09
      *   vntrl(-1:nx,-1:ny), vntrb(-1:nx,-1:ny),

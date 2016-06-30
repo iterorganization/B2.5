@@ -41,7 +41,7 @@
      .  pw0_cnv(0:NSDMAX-1), pw1_cnv(0:NSDMAX-1), pw2_cnv(0:NSDMAX-1)
 
 c*** vout_cnv  :  value of the "blob" convection velocity at the outer 
-c***		  grid edge
+c***              grid edge
 c*** pw0_cnv   :  exponent in a radial profile of the "blob" velocity
 c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
 
@@ -63,7 +63,6 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       subroutine alloc_transport_namelist(nsd)
       implicit none
       integer nsd
-      external xertst
       if (allocated_transport_namelist) return
 #ifdef ALLOCATE_AND_NAMELIST
       allocate(parm_dna(0:nsd-1))

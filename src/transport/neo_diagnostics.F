@@ -67,7 +67,6 @@
      &   vtn(0:ns,0:nstages-1,-1:ny), 
      &   kappa(0:ns,0:nstages-1,-1:ny),
      &   chi(0:ns,0:nstages-1,-1:ny), vw(0:ns,0:nstages-1,-1:ny),
-     &   xi(0:ns,0:nstages-1), ntau(0:ns,0:ns), 
      &   dfhcb, dfhce, hthet(-1:nx,-1:ny),
      &   cellface(0:ns,0:nstages-1,-1:ny,1:5),
      &   hy1(-1:nx,-1:ny), vwt(0:ns,0:nstages-1,-1:ny)

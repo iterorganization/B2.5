@@ -43,7 +43,7 @@
 #endif
       integer nwrite
       character*16 shotnumber
-      external subini, subend, xerrab
+      external subini, subend
 
       call subini ('b2mod_mdsplus_write_to_db')
       write(dbline,

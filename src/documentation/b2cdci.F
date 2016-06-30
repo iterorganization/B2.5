@@ -167,7 +167,6 @@
 *    'b2mwti_target_offset'     '1'                    Output
 *    'b2news_area_fix'          '3'                    Numerics
 *    'b2news_BoRiS'             '0.0'                  Physics
-*    'b2news_coriolis'          '0'                    Physics
 *    'b2news_do_2nd_b2npco_call' '0'                   Numerics
 *    'b2news_ExB'               '0.0'                  Physics
 *    'b2news_fac_ref'           See description (integer) Numerics
@@ -1255,10 +1254,6 @@
 *    parallel momentum balance equation.
 *    If fac_hz = 0.0 then hz = 1 and old form of equations is used.
 *    If fac_hz = 1.0 then new form of equations is used.
-*
-*    'b2news_coriolis'          '0'                    Physics
-*    If coriolis.ne.0, the Coriolis force terms will be included in the
-*    solution of the momentum equations.
 *
 *    'b2stbr_bas_recycled_neutrals_contr' '1.0'        Physics       !srv 12.04.08
 *    introduced for nulling recycling energy when it is zero.
@@ -2438,10 +2433,6 @@
 *
 *    'b2tfnb_xfrhie'            '1.0'                  Numerics
 *    Multiplier to the Rhie and Chow upwind correction.
-*
-*    'b2tfnb_xfrhiehz'          '1.0'                  Numerics
-*    Multiplier to the Rhie and Chow upwind correction in particle flux 
-*    which is passed to parallel balance momentum equation with drifts.
 *
 *    'b2upht_stylec'            '0'                    Numerics
 *    (stylec is a numerical switch, needs experiments)

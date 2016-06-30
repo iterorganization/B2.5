@@ -67,9 +67,9 @@ c
 *  ---------------------------------------------------------------------
 
       if(ncall.eq.0) then
-         call ipgeti ('ma28_for_7d_nwrite', nwrite)
-	 call ipgeti ('ma28_for_7d_kwrite_fmt', kwrite_fmt)          !srv 18.05.02
-	 call ipgeti ('ma28_for_7d_kwrite_bnr', kwrite_bnr)          !srv 18.05.02
+        call ipgeti ('ma28_for_7d_nwrite', nwrite)
+        call ipgeti ('ma28_for_7d_kwrite_fmt', kwrite_fmt)          !srv 18.05.02
+        call ipgeti ('ma28_for_7d_kwrite_bnr', kwrite_bnr)          !srv 18.05.02
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 

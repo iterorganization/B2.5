@@ -122,7 +122,6 @@ c     helpers for reading in data
       integer icnctv(ndcnct)
       integer iblmx,ismax
       integer isppr(isdimd),ispbr(isdimd),isstgr(isdimd)
-      integer idmax,itmax
       integer IDMAXDrec,ITMAXDrec,IDMAXDion,ITMAXDion,
      &        IDMAXDcex,ITMAXDcex,
      &        IDMAXDprb,ITMAXDprb,

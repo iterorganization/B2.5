@@ -52,7 +52,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy
+      integer ncall, n2, ix, iy, ireg, ileft, ibot
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iadd_9 = 1, iout = 0                           !srv 13.10.06
       real (kind=R8) ::
@@ -102,7 +102,7 @@
        call b2xvsg (n2, snbv, 1, 'snbv', '.le.')
        if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then         !srv 06.07.06 {
         call b2xvsg (n2*2*3, conb, 1, 'conb', '.ge.')               !srv 18.11.05 13.10.06
-	 endif                                                        !srv 06.07.06 }
+       endif                                                        !srv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
        call b2xvff (nx, ny, conb(-1,-1,0,0), 'conb0')               !srv 13.10.06 {
@@ -133,13 +133,19 @@
 * ..compute the nine-point matrix
       do iy = -1, ny
        do ix = -1, nx
-        aa9(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+              !srv 13.10.06 {
-     &    abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))          !srv 13.10.06 }
+        ireg = region(ix,iy,0)
+        if (solvereg(ireg)) then
+          aa9(ix,iy,0) = (-snbv(ix,iy)*nb(ix,iy)/pb(ix,iy)+           !srv 13.10.06 {
+     &     abs(rescb(ix,iy))/(rxg*pb(ix,iy)))*rscal(pb(ix,iy))        !srv 13.10.06 }
+        else
+          aa9(ix,iy,0) = rscal(pb(ix,iy))
+        endif
        enddo
       enddo
 
       do iy = -1, ny
        do ix = -1, nx                                                  !srv 26.11.02 {
+        ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
           aa9(ix,iy,-1) = 0.0e0_R8
         else                                                           !srv 26.11.02 }
@@ -147,39 +153,57 @@
      &        - conb(ix,iy,0,1)                                        !srv 13.10.06
           t1 = -flob(ix,iy,0)/2 - (conb(ix,iy,0,0)+pcm1*wrk0(ix,iy))
      &        - conb(ix,iy,0,2)                                        !srv 13.10.06
-          aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0*rscal(pb(ix,iy))
-          aa9(ix,iy,0) = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))
-          aa9(leftix(ix,iy),leftiy(ix,iy),0) = 
+          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
+          if (solvereg(ileft))
+     >     aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0*rscal(pb(ix,iy))
+          if (solvereg(ireg))
+     >     aa9(ix,iy,0) = aa9(ix,iy,0) - t0*rscal(pb(ix,iy))
+          if (solvereg(ileft))
+     >     aa9(leftix(ix,iy),leftiy(ix,iy),0) =
      &       aa9(leftix(ix,iy),leftiy(ix,iy),0)
      &       -t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
-          aa9(ix,iy,-1) = t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
-	endif                                                         !srv 26.11.02
-        if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8            !srv 26.11.02
+          if (solvereg(ireg))
+     >     aa9(ix,iy,-1) = t1*rscal(pb(leftix(ix,iy),leftiy(ix,iy)))
+          endif                                                        !srv 26.11.02
+        if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
+     >   aa9(ix,iy,1) = 0.0e0_R8                                       !srv 26.11.02
        enddo
       enddo
 
       call sfill (nx+2, 0.0_R8, aa9(-1,-1,-3), 1)
-      do iy = 0, ny
+      do iy = -1, ny
        do ix = -1, nx
-         t0 =  flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,1)    !srv 13.10.06
-         t1 = -flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,2)    !srv 13.10.06
-         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0*rscal(pb(ix,iy))
-         aa9(ix,iy,0) = aa9(ix,iy,0)-t0*rscal(pb(ix,iy))
-         aa9(bottomix(ix,iy),bottomiy(ix,iy),0) = 
+         ireg = region(ix,iy,0)
+         if(bottomiy(ix,iy).eq.-2) then
+          aa9(ix,iy,-3) = 0.0_R8
+         else
+          t0 =  flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,1)     !srv 13.10.06
+          t1 = -flob(ix,iy,1)/2 - conb(ix,iy,1,0) - conb(ix,iy,1,2)     !srv 13.10.06
+          ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
+          if (solvereg(ibot))
+     >     aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0*rscal(pb(ix,iy))
+          if (solvereg(ireg))
+     >     aa9(ix,iy,0) = aa9(ix,iy,0)-t0*rscal(pb(ix,iy))
+          if (solvereg(ibot))
+     >     aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0)
      &      -t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
-         aa9(ix,iy,-3) = t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
+          if (solvereg(ireg))
+     >     aa9(ix,iy,-3) = t1*rscal(pb(bottomix(ix,iy),bottomiy(ix,iy)))
+         endif
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
 
 *   ..add matrix from contribution nine point stencil
       if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, itcnt, conb(-1,-1,0,3), aa9, name)   !srv 02.01.07
+       call b2uxm9 (nx, ny, nnreg(0), itcnt, solvereg, conb(-1,-1,0,3),
+     &  aa9, name)                                                      !srv 02.01.07
       endif
 
       do iy=-1,ny
        do ix=-1,nx
+        ireg = region(ix,iy,0)
         if (aa9(ix,iy,0).eq.0.0_R8 .and.
      &      aa9(ix,iy,1).eq.0.0_R8 .and. aa9(ix,iy,-1).eq.0.0_R8 .and.
      &      aa9(ix,iy,2).eq.0.0_R8 .and. aa9(ix,iy,-2).eq.0.0_R8 .and.
@@ -190,6 +214,7 @@
           aa9(ix,iy,0) = rscal(pb(ix,iy))
           rescb(ix,iy) = 0.0_R8
         end if
+        if (.not.solvereg(ireg)) rescb(ix,iy) = 0.0_R8
        enddo
       enddo
 

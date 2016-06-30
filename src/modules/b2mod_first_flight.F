@@ -77,7 +77,7 @@
      *    t1,x,y,dx,dy
       logical inside
       character*1 orientation
-      external subini, subend, xertst, xerrab
+      external subini, subend, xerrab
 
       call subini ('setup_b2mod_first_flight')
       ptr_index=ptr_index+1

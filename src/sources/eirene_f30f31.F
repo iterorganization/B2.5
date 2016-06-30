@@ -759,6 +759,7 @@ c
       integer, save :: exp_location, dot_location
       character*80 line
       data new_format/1/
+      character*80 line
       logical open_file
       external open_file
 #else

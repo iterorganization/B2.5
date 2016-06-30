@@ -760,7 +760,7 @@ c-xpb     hcib(ix,iy,is)=d_new*na(in,is)
 *   ..local variables
       integer ncall, n2, ix, iy, is
       integer, save :: itype = 0, iout = 0                            !srv 24.04.02 05.11.03 15.04.11
-      real (kind=R8) :: fdnc(-1:nx,-1:ny,0:ns-1), wrk1(-1:nx,-1:ny)   !srv 13.11.02 26.11.04 01.03.07
+      real (kind=R8) :: fdnc(-1:nx,-1:ny,0:ns-1)                      !srv 13.11.02 26.11.04 01.03.07
       real (kind=R8) :: fvsc(-1:nx,-1:ny,0:ns-1),
      &                  ftec(-1:nx,-1:ny), ftic(-1:nx,-1:ny,0:ns-1),  !srv 17.04.06 01.03.07
      &                  fvlc(-1:nx,-1:ny,0:1,0:ns-1)                  !srv 19.04.10
@@ -2586,7 +2586,6 @@ c*** We only apply this in the outer SOL region
      &   vtn(0:ns,0:nz-1,-1:ny),
      &   kappa(0:ns,0:nz-1,-1:ny),
      &   chi(0:ns,0:nz-1,-1:ny), vw(0:ns,0:nz-1,-1:ny),
-     &   xi(0:ns,0:nz-1), ntau(0:ns,0:ns),
      &   dfhcb, dfhce,
      &   hthet(-1:nx,-1:ny), quant(-1:nx,-1:ny),
      &   cellface(0:ns,0:nz-1,-1:ny,1:5),

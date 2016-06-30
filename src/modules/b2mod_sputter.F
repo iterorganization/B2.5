@@ -217,7 +217,7 @@ cxpb  Replaced with explicit writing of non-zero elements only
 #else
       character*2 sputter_codes(0:100)
 #endif
-      external subini, subend, xertst
+      external subini, subend
 
       if(sputter_initialised) return
       call subini ('read_sputter_data')

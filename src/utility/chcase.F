@@ -1,14 +1,14 @@
       subroutine chcase (ind, chtxt)
       use b2mod_types
       implicit none
-      integer ind, ichr
+      integer ind
       character chtxt*(*)
 *     ------------------------------------------------------------------
 *     CHCASE converts a character variable to either all uppercase or
 *     all lowercase.
 *!!   The text of this routine is case-sensitive.
 *     ------------------------------------------------------------------
-      integer k
+      integer k, ichr
       intrinsic len, char, ichar
       external subini, subend, xerrab, xertst
 *     ------------------------------------------------------------------

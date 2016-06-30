@@ -1,14 +1,16 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2uxm9 (nx, ny, itcnt, conb, aa9, name)   !sv 13.10.06
+      subroutine b2uxm9 (nx, ny, nregionv, itcnt, solvereg, conb,
+     . aa9, name)                                                       !sv 13.10.06
       use b2mod_types
       use b2mod_indirect
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, itcnt
+      integer nx, ny, nregionv, itcnt
       real (kind=R8) ::
      *   conb(-1:nx,-1:ny,0:1,0:1)
+      logical solvereg(0:nregionv)
       character*(*) name
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -44,6 +46,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, ixl, iyl, ixr, iyr, ixb, iyb, ixt, iyt
+      integer ireg
       integer, save :: iout = 0                                          !sv 13.10.06
       real (kind=R8) ::
      *   aaf(-1:nx,-1:ny,-2:2)
@@ -83,8 +86,10 @@
 *     from P.Sch x-part of nine point stencil
        do iy = -1, ny
         do ix = -1, nx
+         ireg=region(ix,iy,0)
 *       Case of left neighbor
-         if(leftix(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
+         if(leftix(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 .or.
+     &      .not.solvereg(ireg)) then
           
          else
             ixl = leftix(ix,iy)
@@ -93,7 +98,8 @@
      &                      conb(topix(ixl,iyl),topiy(ixl,iyl),0,1)
          endif
 *       Case of right neighbor
-         if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1) then
+         if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
+     &      .not.solvereg(ireg)) then
           
          else
             ixr = rightix(ix,iy)
@@ -117,8 +123,10 @@
 *     from P.Sch y-part of nine point stencil
        do iy = -1, ny
         do ix = -1, nx
+         ireg=region(ix,iy,0)
 *       Case of bottom neighbor
-         if(bottomiy(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+         if(bottomiy(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
+     &      .not.solvereg(ireg)) then
           
          else
           ixb = bottomix(ix,iy)
@@ -127,7 +135,8 @@
      &                      conb(rightix(ixb,iyb),rightiy(ixb,iyb),1,1)
          endif
 *       Case of top neighbor
-         if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1) then
+         if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
+     &      .not.solvereg(ireg)) then
           
          else
           ixt = topix(ix,iy)
@@ -151,10 +160,12 @@
 *   ..compute additional P.Sch part of nine point matrix. 
        do iy = -1, ny
         do ix = -1, nx
+         ireg=region(ix,iy,0)
 *       Case (ix-1,iy-1) 
-         if(leftix(ix,iy).eq.-2 .or. bottomiy(ix,iy).eq.-2) then
-	    aa9(ix,iy,-4) = 0.0e0_R8        
-	    aa9(ix,iy,-6) = 0.0e0_R8        
+         if(leftix(ix,iy).eq.-2 .or. bottomiy(ix,iy).eq.-2 .or.
+     &      .not.solvereg(ireg)) then
+            aa9(ix,iy,-4) = 0.0e0_R8        
+            aa9(ix,iy,-6) = 0.0e0_R8        
          else
             ixl = leftix(ix,iy)
             iyl = leftiy(ix,iy)
@@ -174,7 +185,8 @@
             endif
          endif
 *       Case (ix-1,iy+1) 
-         if(leftix(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
+         if(leftix(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1 .or.
+     &      .not.solvereg(ireg)) then
           aa9(ix,iy,2) = 0.0e0_R8        
           aa9(ix,iy,5) = 0.0e0_R8        
          else
@@ -196,7 +208,8 @@
             endif
          endif
 *       Case (ix+1,iy-1) 
-         if(rightix(ix,iy).eq.nx+1 .or. bottomiy(ix,iy).eq.-2) then
+         if(rightix(ix,iy).eq.nx+1 .or. bottomiy(ix,iy).eq.-2 .or.
+     &      .not.solvereg(ireg)) then
           aa9(ix,iy,-2) = 0.0e0_R8
           aa9(ix,iy,-5) = 0.0e0_R8
          else
@@ -218,7 +231,8 @@
             endif
          endif
 *       Case (ix+1,iy+1) 
-         if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1) then
+         if(rightix(ix,iy).eq.nx+1 .or. topiy(ix,iy).eq.ny+1 .or.
+     &      .not.solvereg(ireg)) then
            aa9(ix,iy,4) = 0.0e0_R8
            aa9(ix,iy,6) = 0.0e0_R8
          else

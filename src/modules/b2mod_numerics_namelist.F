@@ -59,7 +59,6 @@
       subroutine alloc_b2mod_numerics(nxd,nyd,nsd)
       implicit none
       integer nxd,nyd,nsd
-      external xertst
 
       if (b2mod_numerics_allocated) return
       write(*,*) 'Allocating space for b2mod_numerics'                !srv 25.02.06 11.06.08

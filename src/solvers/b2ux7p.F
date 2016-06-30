@@ -167,7 +167,7 @@
      &   min(nx+2,ny+2), aaf, wrk0, iwrk)
       else if (style.eq.2) then
 *    ..use ma28
-        call ilutern_7(NX+2, NY+2, NX+2, aa7(-1,-1,-3),            !sv 11.01.00
+        call ilutern_7(NX+2, NY+2, NX+2, aa7(-1,-1,-3),              !sv 11.01.00
      1   aa7(-1,-1,-2), aa7(-1,-1,-1), aa7(-1,-1,0),
      2   aa7(-1,-1,1), aa7(-1,-1,2), aa7(-1,-1,3),                 !sv 11.01.00
      .   resfun, corfun, name)

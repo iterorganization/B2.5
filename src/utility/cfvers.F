@@ -4,7 +4,6 @@
       character*10 version_in, newversion
       integer nget, nput
       character chf*12,label*7
-      logical, save :: unread
       logical streql
       external streql
 

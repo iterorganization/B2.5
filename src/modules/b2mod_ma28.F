@@ -18,8 +18,8 @@
      * irnh(:),
      * icnh(:),
      * icnhkeep(:),
-     * ikeep(:),
-     * iw28(:),
+     * ikeep(:,:),
+     * iw28(:,:),
      * irnh_save(:),
      * icnh_save(:)
 
@@ -49,8 +49,8 @@
       allocate(irnh(1:solvdim1))
       allocate(icnh(1:solvdim))
       allocate(icnhkeep(1:solvdim))
-      allocate(ikeep(1:5*nnd))
-      allocate(iw28(1:8*nnd))
+      allocate(ikeep(1:nnd,5))
+      allocate(iw28(1:nnd,8))
       allocate(irnh_save(1:n_nonzeros))
       allocate(icnh_save(1:n_nonzeros))
 

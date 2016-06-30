@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usp7_ (nx, ny, itcnt, ne, te, conc,                !sv 27.01.00
-     &    avisper, bvisper, cvisper,                                  !sv 27.01.00
+      subroutine b2usp7_ (nx, ny, nregionv, solvereg, itcnt,          !sv 27.01.00
+     &    ne, te, conc, avisper, bvisper, cvisper,                    !sv 27.01.00
      &    sch, respo, corpo, aa7)                                     !sv 27.01.00
       use b2mod_types
       use b2mod_indirect
@@ -10,12 +10,13 @@
       use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, itcnt
+      integer nx, ny, nregionv, itcnt
       real (kind=R8) ::
      *   ne(-1:nx,-1:ny), te(-1:nx,-1:ny), conc(-1:nx,-1:ny,0:1),
      3   avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),          !sv 27.01.00
      4   cvisper(-1:nx,-1:ny,0:1),                                    !sv 27.01.00
      &   sch(-1:nx,-1:ny,0:3), respo(-1:nx,-1:ny)
+      logical solvereg(0:nregionv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   corpo(-1:nx,-1:ny)
@@ -38,6 +39,7 @@
       integer ncall, n2, ix, iy, ixb, iyb, ixt, iyt, k                !sv 26.01.00
       integer, save :: iout = 0                                       !sv 08.07.08
       character chark*1                                               !sv 08.07.08
+      integer ireg, ileft, ibot, itop
       real (kind=R8) :: vis_per, aa7p2, aa7m2                         !sv 27.01.00
       save ncall, vis_per                                             !sv 27.01.00
 *   ..procedures
@@ -80,35 +82,53 @@
 *   ..compute the five-point matrix
       do iy = -1, ny
        do ix = -1, nx
-        aa7(ix,iy,0) = -sch(ix,iy,1)-sch(ix,iy,3)*ne(ix,iy)
+        ireg = region(ix,iy,0)
+        if (solvereg(ireg)) then
+         aa7(ix,iy,0) = -sch(ix,iy,1)-sch(ix,iy,3)*ne(ix,iy)
+        else
+         aa7(ix,iy,0) = 1.0_R8
+        endif
        enddo
       enddo
       do iy = -1, ny
        do ix = -1, nx                                                 !sv 26.11.02
+        ireg = region(ix,iy,0)
         if(leftix(ix,iy).eq.-2) then
          aa7(ix,iy,-1) = 0.0e0_R8
         else
-         aa7(leftix(ix,iy),leftiy(ix,iy),1) = -conc(ix,iy,0)
-         aa7(ix,iy,0) = aa7(ix,iy,0)+conc(ix,iy,0)
-         aa7(leftix(ix,iy),leftiy(ix,iy),0) = 
+         ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
+         if (solvereg(ileft))
+     >    aa7(leftix(ix,iy),leftiy(ix,iy),1) = -conc(ix,iy,0)
+         if (solvereg(ireg))
+     >    aa7(ix,iy,0) = aa7(ix,iy,0)+conc(ix,iy,0)
+         if (solvereg(ileft))
+     >    aa7(leftix(ix,iy),leftiy(ix,iy),0) =
      &       aa7(leftix(ix,iy),leftiy(ix,iy),0)+conc(ix,iy,0)
-         aa7(ix,iy,-1) = -conc(ix,iy,0)
+         if (solvereg(ireg))
+     >    aa7(ix,iy,-1) = -conc(ix,iy,0)
         endif                                                         !sv 26.11.02
-        if(rightix(ix,iy).eq.nx+1) aa7(ix,iy,1) = 0.0e0_R8            !sv 26.11.02
+        if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
+     >   aa7(ix,iy,1) = 0.0e0_R8                                      !sv 26.11.02
        enddo
       enddo
       do iy = -1, ny
        do ix = -1, nx
+        ireg = region(ix,iy,0)
         if(bottomiy(ix,iy).eq.-2) then
           aa7(ix,iy,-2) = 0.0_R8
         else
-          aa7(bottomix(ix,iy),bottomiy(ix,iy),2) = -conc(ix,iy,1)
-          aa7(ix,iy,0) = aa7(ix,iy,0)+conc(ix,iy,1)
-          aa7(bottomix(ix,iy),bottomiy(ix,iy),0) = 
+          ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
+          if (solvereg(ibot))
+     >     aa7(bottomix(ix,iy),bottomiy(ix,iy),2) = -conc(ix,iy,1)
+          if (solvereg(ireg))
+     >     aa7(ix,iy,0) = aa7(ix,iy,0)+conc(ix,iy,1)
+          if (solvereg(ibot))
+     >     aa7(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &       aa7(bottomix(ix,iy),bottomiy(ix,iy),0)+conc(ix,iy,1)
-          aa7(ix,iy,-2) = -conc(ix,iy,1)
+          if (solvereg(ireg))
+     >     aa7(ix,iy,-2) = -conc(ix,iy,1)
         endif
-        if(topiy(ix,iy).eq.ny+1) then
+        if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg)) then
           aa7(ix,iy,2) = 0.0_R8
         endif
        enddo
@@ -118,6 +138,7 @@
       aa7(:,:,-3) = 0.0e0_R8
       aa7(:,:, 3) = 0.0e0_R8
 
+<<<<<<< HEAD
       do iy = -1, ny
        do ix = -1, nx                                                 !sv 26.11.02
         ixt = topix(ix,iy)
@@ -129,7 +150,7 @@
          aa7(ix,iy,-3) = 0.0e0_R8                                     !sv 27.01.00
         else
          if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1.or.
-     &      iyt.eq.ny+1 .or. iyb.eq.-2) then                          !sv 26.11.02
+     &      iyt.eq.ny+1 .or. iyb.eq.-2 .or. .not.solvereg(ireg)) then !sv 26.11.02
            aa7(ix,iy, 3) = 0.0e0_R8                                   !sv 27.01.00
            aa7(ix,iy,-3) = 0.0e0_R8                                   !sv 27.01.00
          else if (topiy(ixt,iyt).eq.ny+1) then
@@ -199,6 +220,7 @@
 *   ..correct RHS if not solving
       do iy = -1, ny
        do ix = -1, nx
+        ireg = region(ix,iy,0)
         if (aa7(ix,iy,0).eq.0.0_R8 .and.
      &      aa7(ix,iy,1).eq.0.0_R8 .and. aa7(ix,iy,-1).eq.0.0_R8 .and.
      &      aa7(ix,iy,2).eq.0.0_R8 .and. aa7(ix,iy,-2).eq.0.0_R8 .and.
@@ -206,6 +228,7 @@
           aa7(ix,iy,0) = 1.0_R8
           respo(ix,iy) = 0.0_R8
         end if
+        if (.not.solvereg(ireg)) respo(ix,iy) = 0.0_R8
        enddo
       enddo
 
@@ -226,7 +249,7 @@
       endif                                                           !sv 08.07.08 }
 
 *   ..solve the correction equation
-      call b2ux7p (nx, ny, aa7, itcnt, respo, corpo, 'b2usp7_')        !sv 11.01.00
+      call b2ux7p (nx, ny, aa7, itcnt, respo, corpo, 'b2usp7_')       !sv 11.01.00
 
 * ..return
       ncall = ncall+1
