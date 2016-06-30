@@ -228,7 +228,8 @@ cank 960511
       end if
       if(jvft44 .ge. 960513) then
         read(44,'(3i6)') nlimi,nstsi,nstrai
-        print *,'nlimi,nstsi,nstrai:',nlimi,nstsi,nstrai
+        print *,'nlimi,nstsi,nstrai,nlimps,nlmpgs:',nlimi,nstsi,nstrai,
+     . 	nlimps,nlmpgs
         call rdneutrs(44,wldnek,1)
         call rdneutrs(44,wldnep,1)
         call rdneutrs(44,wldna,natmi)
@@ -308,7 +309,6 @@ cank-960727
      +                             wldra(ix,is,istra)*recyctmp
                 ewlda(ix,is,0)=ewlda(ix,is,0)+
      +                             ewlda(ix,is,istra)*recyctmp
-                iy=iy+nfluids(is)+1
               end do
               do is=1,nmoli
                 if (lmolscl(is).gt.0 .and. lmolscl(is).le.natmi) then

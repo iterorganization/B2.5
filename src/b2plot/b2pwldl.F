@@ -42,7 +42,7 @@ c*** Produce the output files - one for a zone
       print *,'  nwldprt:',nwldprt  !### 
       do 20 il=2,nwldprt !{
         l=len_trim(lblwldpt(il))
-        print *,'il,l,lblwldpt(il)=',il,l,' ',lblwldpt(il)    !###
+c        print *,'il,l,lblwldpt(il)=',il,l,' ',lblwldpt(il)    !###
 c*** create the filename for the output
         if(l.eq.0) then !{
 c*** use the zone index to label the plot zone
@@ -51,7 +51,7 @@ c*** use the zone index to label the plot zone
           fn_hlp='wlld_'//lblwldpt(il)(1:l)//'.dat'
         end if !}
 c*** Open the file and write the heading line
-        print *,'About to open :',fn_hlp,':'
+c        print *,'About to open :',fn_hlp,':'
         open(lun_w,file=fn_hlp,err=20)
         write(lun_w,'(a,i2,2a)') '#Wall loading zone ',il,' : ',label
 

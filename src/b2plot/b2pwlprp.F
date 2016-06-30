@@ -207,7 +207,7 @@ c*** Prepare the list of grid indices for the target flux faces
         lpfrpos(3)=rightcut(2)-1
         k=4
       end if !}
-      ltrgpos(k)=nx
+      ltrgpos(k)=nx-1 !csc
       lseppos(k)=topcut(nncut)-1
       lpfrpos(k)=rightcut(1)
 c      print *,'ltrgedge: ',((ltrgedge(i,j),i=1,2),j=1,ntrgts) !###
@@ -277,30 +277,30 @@ c      print *,'Grid edges'
 c      print '(a4,8a12)','j','r1i','r2i','z1i','z2i',
 c     ,                      'r1o','r2o','z1o','z2o'
 cc>>>
-      do i=0,nytg
+      do i=1,nytg
         j=lytg+i
         k=nytg*(ntrgts-1)
-        pp1(1,i+1+lppp)=crx(0,ny-i,2)
-        pp1(2,i+1+lppp)=cry(0,ny-i,2)
-        pp2(1,i+1+lppp)=crx(0,ny-i,0)
-        pp2(2,i+1+lppp)=cry(0,ny-i,0)
-        pp1(1,i+1+lppp+k)=crx(nx,j,0)
-        pp1(2,i+1+lppp+k)=cry(nx,j,0)
-        pp2(1,i+1+lppp+k)=crx(nx,j,2)
-        pp2(2,i+1+lppp+k)=cry(nx,j,2)
+        pp1(1,i+lppp)=crx(0,ny-i,2)
+        pp1(2,i+lppp)=cry(0,ny-i,2)
+        pp2(1,i+lppp)=crx(0,ny-i,0)
+        pp2(2,i+lppp)=cry(0,ny-i,0)
+        pp1(1,i+lppp+k)=crx(nx,j-1,0)
+        pp1(2,i+lppp+k)=cry(nx,j-1,0)
+        pp2(1,i+lppp+k)=crx(nx,j-1,2)
+        pp2(2,i+lppp+k)=cry(nx,j-1,2)
       end do
       if(ntrgts.eq.4) then !{
         k=nxtl
-        do i=0,nytg !{
+        do i=1,nytg !{
           j=lytg+i
-          pp1(1,i+1+lppp+nytg)=crx(k,j,0)
-          pp1(2,i+1+lppp+nytg)=cry(k,j,0)
-          pp2(1,i+1+lppp+nytg)=crx(k,j,2)
-          pp2(2,i+1+lppp+nytg)=cry(k,j,2)
-          pp1(1,i+1+lppp+2*nytg)=crx(nxtr,ny-i+1,3)
-          pp1(2,i+1+lppp+2*nytg)=cry(nxtr,ny-i+1,3)
-          pp2(1,i+1+lppp+2*nytg)=crx(nxtr,ny-i+1,1)
-          pp2(2,i+1+lppp+2*nytg)=crx(nxtr,ny-i+1,1)
+          pp1(1,i+lppp+nytg)=crx(k,j-1,0)
+          pp1(2,i+lppp+nytg)=cry(k,j-1,0)
+          pp2(1,i+lppp+nytg)=crx(k,j-1,2)
+          pp2(2,i+lppp+nytg)=cry(k,j-1,2)
+          pp1(1,i+lppp+2*nytg)=crx(nxtr,ny-i,3)
+          pp1(2,i+lppp+2*nytg)=cry(nxtr,ny-i,3)
+          pp2(1,i+lppp+2*nytg)=crx(nxtr,ny-i,1)
+          pp2(2,i+lppp+2*nytg)=crx(nxtr,ny-i,1)
         end do !}
       end if !}
 c<<<
@@ -499,8 +499,8 @@ c*** Target still open...
      ,                                  'Missing CCW edge ',il,i,kb
                 write(*,*) 'k,ltrgedge = ',
      ,                         k,((ltrgedge(i1,i2),i1=1,2),i2=1,ntrgts)
-                write(*,*) 'lwldlis :'
-                write(*,*) (lwldlis(i1,il),i1=1,n)
+c                write(*,*) 'lwldlis :'
+c                write(*,*) (lwldlis(i1,il),i1=1,n)
                 call xerrab ('Missing CCW edge in b2pwlprp')
               end if !}
               i1=2
@@ -589,11 +589,11 @@ c*** It is assumed here that CW and CCW edges differ
 c*** CCW target
               do j=1,n !{
                 ke=0
-                do i=1,kk !{
+                do i=1,ntrgts !{
                   if(j.eq.ie(i)) ke=i
                 end do !}
                 kb=0
-                do i=1,kk !{
+                do i=1,ntrgts !{
                   if(j.eq.ib(i)) kb=i
                 end do !}
 c                print '(1x,a,5i5)',':: j,ke,kb,k,kn : ',j,ke,kb,k,kn!###
@@ -617,14 +617,14 @@ c*** The zone starts from a target: reset counters and insert the target
                       kn=0
                       if(lim_cnf) then !{
 c*** Limiter configuration. Add first the CW target face
-                        do i=0,nytg-1 !{
-                          luwrk(i+1)=lppp+i
+                        do i=1,nytg !{
+                          luwrk(i)=lppp+i
                         end do !}
                         kn=kn+nytg
                       end if !}
                       k=it(ke)
-                      do i=0,nytg-1 !{
-                        luwrk(kn+i+1)=lppp+nytg*(k-1)+i
+                      do i=1,nytg !{
+                        luwrk(kn+i)=lppp+nytg*(k-1)+i
                       end do !}
                       kn=kn+nytg
                       kke=-kke
@@ -638,14 +638,14 @@ c*** Limiter configuration. Add first the CW target face
                     k=it(kb)
                     if(k.ne.-kke) then !{
                       if(j.ne.n .or. k.eq.kke) then !{
-                        do i=0,nytg-1 !{
-                          luwrk(kn+i+1)=lppp+nytg*(k-1)+i
+                        do i=1,nytg !{
+                          luwrk(kn+i)=lppp+nytg*(k-1)+i
                         end do !}
                         kn=kn+nytg
                         if(lim_cnf) then !{
 c*** Limiter configuration. Add the CCW target face
-                          do i=0,nytg-1 !{
-                            luwrk(kn+i+1)=lppp+nytg+i
+                          do i=1,nytg !{
+                            luwrk(kn+i)=lppp+nytg+i
                           end do !}
                           kn=kn+nytg
                         end if !}
@@ -783,7 +783,7 @@ c      print *,'Leaving b2pwlprp. lytg,nytg= ',lytg,nytg
 c      print *,'nwldprt, nwldlis, lwlddir = ',nwldprt
 c      print '(16i5)',(nwldlis(i),i=1,nwldprt)
 c      print '(16l5)',(lwlddir(i),i=1,nwldprt)
-c      do il=2,nwldprt
+c      do il=1,nwldprt
 c        print '(a,i5/(1x,8i11))','lwldlis :',il,
 c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
 c        print '(a,i5/(1x,1p,8e11.3))','length  :',il,

@@ -11,6 +11,7 @@
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_extrab25
+	  use eirmod_ccona
 #endif
 c
 c  version : 12.01.2002 01:19
@@ -75,7 +76,10 @@ c***  Net particle flux     /
 c=======================================================================
       implicit none
 #include <DIMENSIONS.F>
-
+#ifndef B25_EIRENE
+      real (kind=R8) :: EionH2
+	  parameter (EionH2=15.4_R8)
+#endif
       integer lun,izn,iln,boundary_namelist
       logical trgl
 
@@ -83,11 +87,12 @@ c*** Local variables
 c***  ils     : the segment index in the whole list
 c***  itrg    : target number itrg prepared
 c***  izns    : plot zone izns started
+c***  iznt    : plot zone of the last done target
 c***  zz      : reference distance
 c***  i_sptmtr: index of sputtered material for the wall segments
 
-      integer i,j,k,l,m,n,i1,i2,i3,ib,is,iy,im,jj,js,kk,ils,itg,jcf,jci,
-     ,  itrg,izns,nclm_ld,nclm_er,nclm_pk,nx_hlp,m_hlp(ntrgsx),
+      integer i,j,k,l,m,n,i1,i2,i3,ib,is,iss,iy,im,jj,js,kk,ils,itg,jcf,
+     ,  jci,itrg,izns,iznt,nclm_ld,nclm_er,nclm_pk,nx_hlp,m_hlp(ntrgsx),
      ,  i_sptmtr(nsgmx),l_sptmtr(0:nsgmx)
 
 c*** Arrays to store the target profiles
@@ -126,7 +131,7 @@ c***  wrd_pk  : radiation at total peak
 c***  wpl_pk  : plasma at total peak
 c***  wnu_pk  : neutrals at total peak
 
-      real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),
+      real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),mion,mmol,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
      ,  s(0:ny-1,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),xtrg(0:ny-1,ntrgsx),  
      ,  netrg(0:ny-1,ntrgsx) , tetrg(0:ny-1,ntrgsx),
@@ -180,7 +185,7 @@ c***  sfpr_m    : list of active materials
       data hdpr_t /'ne', 'Te','Ti','xMP'/
       data hdpr_s /'flxi','Eavi','flxa','Eava'/
       data hdpr_m /'ersne','ersng'/
-      data itrg, izns, n_sfpr_s /3*0/
+      data itrg, izns, iznt, n_sfpr_s /4*0/
       data first /.true./
       data sfpr_s, sfpr_m / DEF_NATM*' ', nsptmx*' ' /
 
@@ -219,7 +224,7 @@ c*** which are calculated in Eirene.
 c-----------------------------------------------------------------------
 
       if(first) then !{
-        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
+c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         tab=char(9)
         do_trg=.true.
         write(frmt_hlp,'(7h(1p,1x,,i5,11h(e12.5,a1)))') n_line_x
@@ -235,9 +240,9 @@ c-----------------------------------------------------------------------
         do is=1,n_sfpr_s !{
           sfpr_s(is)=atoms_list(is)
         end do !}
-        print *,'First call. format:',frmt_hlp,':'                  !###
-        print *,'n_sfpr_s=',n_sfpr_s                                !###
-        if(n_sfpr_s.gt.0) print *,(' ',sfpr_s(i),i=1,n_sfpr_s)      !###
+c        print *,'First call. format:',frmt_hlp,':'                  !###
+c        print *,'n_sfpr_s=',n_sfpr_s                                !###
+c        if(n_sfpr_s.gt.0) print *,(' ',sfpr_s(i),i=1,n_sfpr_s)      !###
         k=0
         do i=1,nbc !{
           l=bcpos(i)
@@ -246,10 +251,10 @@ c-----------------------------------------------------------------------
             iy=(bcstart(i)+bcend(i))/2
             if(l.eq.-1) then !{
               phi_hlp(1)=get_phi_applied(boundary_namelist,l,iy)
-              eni_hlp(1)=enipar(i,1)
+              eni_hlp(1)=enipar(i,1)+2.0_R8-enipar(i,2)
             else !}{
               phi_hlp(3)=get_phi_applied(boundary_namelist,l,iy)
-              eni_hlp(3)=enipar(i,1)
+              eni_hlp(3)=enipar(i,1)+2.0_R8-enipar(i,2)
             end if !}
           else if(bcchar(i).eq.'E') then !}{
             k=k+1
@@ -257,19 +262,19 @@ c-----------------------------------------------------------------------
             if(l.eq.nx) then !{
               if(ntrgts.eq.2) then !{
                 phi_hlp(2)=get_phi_applied(boundary_namelist,l,iy)
-                eni_hlp(2)=enipar(i,1)
+                eni_hlp(2)=enipar(i,1)+2.0_R8-enipar(i,2)
               else !}{
                 phi_hlp(4)=get_phi_applied(boundary_namelist,l,iy)
-                eni_hlp(4)=enipar(i,1)
+                eni_hlp(4)=enipar(i,1)+2.0_R8-enipar(i,2)
               end if !}
             else if(ntrgts.eq.4) then !}{
               phi_hlp(2)=get_phi_applied(boundary_namelist,l,iy)
-              eni_hlp(2)=enipar(i,1)
+              eni_hlp(2)=enipar(i,1)+2.0_R8-enipar(i,2)
             end if !}
           end if !}
         end do !}
-        print '(1x,a,1p,4e12.3)','phi_hlp:',(phi_hlp(i),i=1,ntrgts) !###
-        print '(1x,a,1p,4e12.3)','eni_hlp:',(eni_hlp(i),i=1,ntrgts) !###
+c        print '(1x,a,1p,4e12.3)','phi_hlp:',(phi_hlp(i),i=1,ntrgts) !###
+c        print '(1x,a,1p,4e12.3)','eni_hlp:',(eni_hlp(i),i=1,ntrgts) !###
         if(k.ne.ntrgts) then !{
           write(0,*) 'b2pwldw: inconsistent target specification: ',
      ,                                                         ntrgts,k
@@ -278,10 +283,10 @@ c-----------------------------------------------------------------------
 
 c*** data for sputtering and erosion
 
-        print *,'Input wall materials'                              !###
-        print '((1h:,20(a,1h:)))',(mtrwldsg(i),i=1,lppp)            !###
-        print *,'Input target materials'                            !###
-        print '(1h:,20(a,1h:))',(mtrtrgsg(i),i=1,ntrgts)            !###
+c        print *,'Input wall materials'                              !###
+c        print '((1h:,20(a,1h:)))',(mtrwldsg(i),i=1,lppp)            !###
+c        print *,'Input target materials'                            !###
+c        print '(1h:,20(a,1h:))',(mtrtrgsg(i),i=1,ntrgts)            !###
         k=lppp
         do j=1,ntrgts !{
           do i=k+1,k+ny !{
@@ -289,9 +294,9 @@ c*** data for sputtering and erosion
           end do !}
           k=k+ny
         end do !}
-        print *,'k,lppp,ny,ntrgts=',k,lppp,ny,ntrgts                !###
-        print *,'Target segment materials'                          !###
-        print '((1h:,20(a,1h:)))',(mtrwldsg(i),i=lppp+1,k)          !###
+c        print *,'k,lppp,ny,ntrgts=',k,lppp,ny,ntrgts                !###
+c        print *,'Target segment materials'                          !###
+c        print '((1h:,20(a,1h:)))',(mtrwldsg(i),i=lppp+1,k)          !###
 
         n_sfpr_m=0
         do k=1,lppp+ny*ntrgts !{
@@ -304,14 +309,14 @@ c*** data for sputtering and erosion
               n_sfpr_m=n_sfpr_m+1
               l=n_sfpr_m
               sfpr_m(l)=mtrwldsg(k)
-              print *,'Added :',sfpr_m(l),':',k,l                   !###
+c              print *,'Added :',sfpr_m(l),':',k,l                   !###
             else !}{
             end if !}
           end if !}
           i_sptmtr(k)=l
         end do !}
-        print *,'Input materials: ',n_sfpr_m                        !###
-        if(n_sfpr_m.gt.0) print *,':',(sfpr_m(i),':',i=1,n_sfpr_m)  !###
+c        print *,'Input materials: ',n_sfpr_m                        !###
+c        if(n_sfpr_m.gt.0) print *,':',(sfpr_m(i),':',i=1,n_sfpr_m)  !###
         l_sptmtr(0)=0
         m=0
         do k=1,n_sfpr_m !{
@@ -340,8 +345,8 @@ c*** data for sputtering and erosion
           write(*,'(a,1p,10e10.2)') ' Erosion factors: ',
      ,                                        (wllersf(i),i=1,n_sfpr_m)
         end if !}
-        print *,'i_sptmtr'                                    !###
-        print '(1x,50i2)',(i_sptmtr(i),i=1,lppp+ny*ntrgts)    !###
+c        print *,'i_sptmtr'                                    !###
+c        print '(1x,50i2)',(i_sptmtr(i),i=1,lppp+ny*ntrgts)    !###
         first=.false.
       end if !}
 
@@ -359,7 +364,7 @@ c*** Wall segment. Reset the target pointer
         else !}{
           itg=(ils-lppp-1)/ny+1
         end if !}
-c        print *,'itg,itrg=',itg,itrg  !###
+c        print *,'itg,iznt,itrg=',itg,iznt,itrg  !###
 c*** Check whether this target has been prepared
         if(itg.ne.itrg) then !{
 
@@ -386,24 +391,24 @@ c*** Target geometry
               z_hlp(j)=0.0_R8
               k=ltrgpos(j)
               do iy=0,lseppos(j) !{
-                if (mod(j,2).eq.1) then ! West targets
+ !               if (mod(j,2).eq.1) then ! West targets
                   z_hlp(j)=z_hlp(j) - sqrt((crx(k,iy,3)-crx(k,iy,1))**2+
      +                                     (cry(k,iy,3)-cry(k,iy,1))**2)
-                else ! East targets
-                  z_hlp(j)=z_hlp(j) - sqrt((crx(k,iy,2)-crx(k,iy,0))**2+
-     +                                     (cry(k,iy,2)-cry(k,iy,0))**2)
-                endif
+!                else ! East targets
+!                  z_hlp(j)=z_hlp(j) - sqrt((crx(k,iy,2)-crx(k,iy,0))**2+
+!     +                                     (cry(k,iy,2)-cry(k,iy,0))**2)
+!                endif
               end do !}
               do iy=0,ny-1 !{
-                if (mod(j,2).eq.1) then ! West targets
+!                if (mod(j,2).eq.1) then ! West targets
                   h=sqrt((crx(k,iy,3)-crx(k,iy,1))**2+
      +                   (cry(k,iy,3)-cry(k,iy,1))**2)
-                  s(iy,j)=gs(k,iy,0)
-                else ! East targets
-                  h=sqrt((crx(k,iy,2)-crx(k,iy,0))**2+
-     +                   (cry(k,iy,2)-cry(k,iy,0))**2)
-                  s(iy,j)=gs(k,iy+1,0)
-                endif
+                  s(iy,j)=gs(k+1,iy,0)
+!                else ! East targets
+!                  h=sqrt((crx(k,iy,2)-crx(k,iy,0))**2+
+!     +                   (cry(k,iy,2)-cry(k,iy,0))**2)
+!                  s(iy,j)=gs(k,iy+1,0)
+!                endif
                 z_hlp(j)=z_hlp(j)+0.5_R8*h
                 xtrg(iy,j)=z_hlp(j)
                 z_hlp(j)=z_hlp(j)+0.5_R8*h
@@ -456,10 +461,10 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
               do iy=0,ny-1 !{
                 wo=0.0_R8
                 do is=0,ns-1 !{
-                  wo=wo+rpt(k,iy,is)*ev*fna(k,iy,0,is)
+                  wo=wo+rpt(kk,iy,is)*ev*fna(k+1-l,iy,0,is)
                 end do !}
                 wptpl(iy,j)=wo/s(iy,j)*u
-                whtpl(iy,j)=(fhe(k,iy,0)+fhi(k,iy,0))/s(iy,j)*u
+                whtpl(iy,j)=(fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0))/s(iy,j)*u
                 wpltrg(iy,j)=wptpl(iy,j)+whtpl(iy,j)
                 netrg(iy,j)=ne(kk,iy)
                 tetrg(iy,j)=te(kk,iy)/ev
@@ -471,7 +476,28 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
      *                       dab2(kk+1,iy+1,is,1)*tab2(kk+1,iy+1,is,1)*
      *                       sqrt(max(t/am(eb2spcr(is)),0.0_R8))*
      *                       0.25_R8*2.0e4_R8
-                end do
+				end do
+				do is=1,nmoli
+					mmol=0.0_R8
+					do iss = 1,natmi
+						mmol=mmol+mlcmp(iss,is)*am(eb2spcr(iss))
+					enddo
+					t=tmb2(kk+1,iy+1,is,1)/ev
+					wnutrg(iy,j)=wnutrg(iy,j)+
+     .       		s(iy,j)*dmb2(kk+1,iy+1,is,1)*tmb2(kk+1,iy+1,is,1)*
+     *       		sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
+				enddo
+				do is=1,nioni
+					mion=0.0_R8
+					do iss = 1,natmi
+						mion=mion+mlcmp(iss,is)*am(eb2spcr(iss))
+					enddo
+					t=tib2(kk+1,iy+1,is,1)/ev
+					wnutrg(iy,j)=wnutrg(iy,j)+
+     .       		s(iy,j)*dib2(kk+1,iy+1,is,1)*
+     *       		sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
+     .       		(2.0_R8*tib2(kk+1,iy+1,is,1)+EionH2*ev)
+				enddo
               end do !}
               l=1-l
               u=-u
@@ -543,11 +569,11 @@ c!###}
                 do iy=0,ny-1 !{
                   wo=0.0_R8
                   wwo=0.0_R8
-                  p=(po(kk,iy)-phi_hlp(j))*qe
-                  h=ti(kk,iy)*eni_hlp(j)
+                  p=(po(ib,iy)-phi_hlp(j))*qe
+                  h=ti(ib,iy)*eni_hlp(j)
                   do i=i1,i2 !{
-                    wo=wo+fna(k,iy,0,i)
-                    wwo=wwo+(h+p*rza(kk,iy,i))*fna(k,iy,0,i)
+                    wo=wo+fna(ib,iy,0,i)
+                    wwo=wwo+(h+p*rza(kk,iy,i))*fna(ib,iy,0,i)
                   end do !}
 c                  zz=zz+wwo*u                 !###
                   fiitrg(iy,j,is)=u*wo
@@ -557,16 +583,16 @@ c                  zz=zz+wwo*u                 !###
                     eiitrg(iy,j,is)=0.0_R8
                   end if !}
                   t=tab2(kk+1,iy+1,is,1)/ev
-                  faitrg(iy,j,is)=s(iy,2)*dab2(kk+1,iy+1,is,1)*
+                  faitrg(iy,j,is)=s(iy,j)*dab2(kk+1,iy+1,is,1)*
      *             sqrt(max(t/am(eb2spcr(is)),0.))*0.25_R8*1.0e4_R8
-                  eaitrg(iy,j,is)=s(iy,2)*dab2(kk+1,iy+1,is,1)*
+                  eaitrg(iy,j,is)=s(iy,j)*dab2(kk+1,iy+1,is,1)*
      *             sqrt(max(t/am(eb2spcr(is)),0.0_R8))*
      *             tab2(kk+1,iy+1,is,1)*0.25_R8*2.0e4_R8
 c!###{
 c                  print '(1x,i2,1p,12e10.2)',iy,p/ev,h/ev,t,wo,wwo,
 c     ,              fiitrg(iy,j,is),eiitrg(iy,j,is),
 c     ,              faitrg(iy,j,is),eaitrg(iy,j,is),
-c     ,              dab2(kk+1,iy+1,is,1),tab2(kk+1,iy+1,is,1)/ev,s(iy,2)
+c     ,              dab2(kk+1,iy+1,is,1),tab2(kk+1,iy+1,is,1)/ev,s(iy,j)
 c!###}
                 end do !}
 c                print *,'j,is,zz=',j,is,zz  !###
@@ -601,11 +627,11 @@ c                print *,'wo,wwo=',wo,wwo                   !###
                 l=1-l
                 u=-u
               end do !}
-              write(*,*) 'Species',is
-              write(*,*) 'Flux scaling'
-              write(*,'(1p,12e10.2)') (wi(i),i=1,ntrgts)
-              write(*,*) 'Energy scaling'
-              write(*,'(1p,12e10.2)') (wwi(i),i=1,ntrgts)
+c              write(*,*) 'Species',is
+c              write(*,*) 'Flux scaling'
+c              write(*,'(1p,12e10.2)') (wi(i),i=1,ntrgts)
+c              write(*,*) 'Energy scaling'
+c              write(*,'(1p,12e10.2)') (wwi(i),i=1,ntrgts)
             end do !}
 
 c*** Sputtering data: zeroes for the time being
@@ -620,15 +646,26 @@ c*** Sputtering data: zeroes for the time being
             end do !}
           end if !}
           itrg=itg
-        end if !}
-        if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
+		  iznt=izn
+		  if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-          iy=ny-1
-          im=-1
-        else !}{
-          iy=0
-          im=1
-        end if !}
+			iy=ny-1
+			im=-1
+		  else !}{
+			iy=0
+			im=1
+          end if !}
+        else if (iznt.ne.izn) then !}{
+		  if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
+     .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
+			iy=ny-1
+			im=-1
+		  else !}{
+			iy=0
+			im=1
+          end if !}
+		  iznt=izn
+		end if !}
       end if !}
 
 c      print *,'izns,izn=',izns,izn      !###
@@ -747,6 +784,7 @@ c        print *,'itrg,iy=',itrg,iy                                !###
           w_line(k+4)=xmp_hlp(iy,itrg)
           k=k+n_hdpr_t
         end if !}
+		iy=iy+im
       else !}{
         k=n_hdpr_c+n_sfpr_s+n_sfpr_m
         if(trgl) then !{

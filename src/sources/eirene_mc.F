@@ -730,13 +730,15 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
         write(*,*) 'Eirene output in eirene_mc :'
         sum_wld(1:2,1:2+nspecies)=0.0_R8
         do istrai = 1, nstrat
-          sum_wld(1,1)=sum_wld(1,1)+wldnek(nnlimi+2,istrai)
-          sum_wld(2,1)=sum_wld(2,1)+wldnek(nnlimi+3,istrai)
-          sum_wld(1,2)=sum_wld(1,2)+wldnep(nnlimi+2,istrai)
-          sum_wld(2,2)=sum_wld(2,2)+wldnep(nnlimi+3,istrai)
+          sum_wld(1,1)=sum_wld(1,1)+wldnek(nnlimi+ltns(1),istrai)
+          sum_wld(2,1)=sum_wld(2,1)+wldnek(nnlimi+ltns(2),istrai)
+          sum_wld(1,2)=sum_wld(1,2)+wldnep(nnlimi+ltns(1),istrai)
+          sum_wld(2,2)=sum_wld(2,2)+wldnep(nnlimi+ltns(2),istrai)
           do is = 1, nspecies
-            sum_wld(1,2+is)=sum_wld(1,2+is)+wldna(nnlimi+2,is,istrai)
-            sum_wld(2,2+is)=sum_wld(2,2+is)+wldna(nnlimi+3,is,istrai)
+            sum_wld(1,2+is)=sum_wld(1,2+is)+wldna(nnlimi+ltns(1),
+     .		is,istrai)
+            sum_wld(2,2+is)=sum_wld(2,2+is)+wldna(nnlimi+ltns(2),
+     .		is,istrai)
           end do
         end do
         write(*,*) 'Summed inner target data : '

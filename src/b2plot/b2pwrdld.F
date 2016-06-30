@@ -49,7 +49,15 @@ c
         lbnd(i)=i
         radld(i)=0.0_R8
       end do
-c
+	  
+c      print *,'b2pwrdld: nplgs,nbndry,nwldrad=',nplgs,nbndry,nwldrad
+c      print *,'lwldlis(i,1):'
+c      print '(20i5)',(lwldlis(i,1),i=1,nplgs)
+c      print *,'lbnd(i):'
+c      print '(20i5)',(lbnd(i),i=1,nplgs)
+c      print *,'luwrk:'
+c      print '(20i5)',luwrk
+
       k=0
       do i=1,nwldrad
         l=lwldrad(i)
@@ -96,12 +104,17 @@ c      print *,'!!!! DUMMY b2pwrdld: no radiation from plasma !!!!'
           do is=0,ns-1
             u=u+rqrad(ix,iy,is)+rqbrm(ix,iy,is)
           end do
+		  do is=1,natmi
+			u=u-eneutrad(ix+1,iy+1,is,0)
+		  end do
           k=k+1
           ssrcm(k)=u
           xysrc(1,k)=cr(ix,iy)
           xysrc(2,k)=cz(ix,iy)
         end do
       end do
+c	  print*,ssrcm(1),(rqbrm(0,0,is),rqrad(0,0,is),is=0,ns-1),
+c     .  (eneutrad(1,1,is,0),is=1,natmi)
 
 c<<<
 c      print *,'nadsrc,add_rad = ',nadsrc,add_rad
@@ -129,8 +142,8 @@ c*** Calculate the radiation load
 c
       call rlcomp
 c      write(*,*) 'b2pwrdld: after rlcomp'
-      write(*,*) '  Total radiation      : ',ttsrc
-      write(*,*) '  Reaching the targets : ',tttrg
+c      write(*,*) '  Total radiation      : ',ttsrc
+c      write(*,*) '  Reaching the targets : ',tttrg
       if(n_hlperr.gt.0) then !{
         write(*,*) '*** ',n_hlperr,
      ,                      ' segments outside the shadowing structure'
@@ -172,7 +185,7 @@ c
 c*** Calculate the radiation load split by impurity species from B2
 
         do iatm=1,natmi !{
-          write(*,*) '  Radiation split: ',textan(iatm-1)
+c          write(*,*) '  Radiation split: ',textan(iatm-1)
           do i=1,nplgs !{
             radld(i)=0.0_R8
           end do !}
@@ -180,7 +193,7 @@ c*** Calculate the radiation load split by impurity species from B2
           do ix=0,nx-1 !{
             do iy=0,ny-1 !{
               k=k+1
-              ssrcm(k)=0.0_R8
+              ssrcm(k)=-eneutrad(ix+1,iy+1,iatm,0)
               do is=eb2spcr(iatm),eb2spcr(iatm)+nfluids(iatm)
                 ssrcm(k)=ssrcm(k)+rqrad(ix,iy,is)+rqbrm(ix,iy,is)
               end do
@@ -190,8 +203,9 @@ c*** Calculate the radiation load split by impurity species from B2
           end do !}
           nsrc=k
           call rlcomp
-          write(*,*) '  Total radiation      : ',ttsrc
-          write(*,*) '  Reaching the targets : ',tttrg
+c		  write(*,*) 'b2pwrdld: after rlcomp'
+c          write(*,*) '  Total radiation      : ',ttsrc
+c          write(*,*) '  Reaching the targets : ',tttrg
           k=0
           do i=1,nwldrad !{
             l=lwldrad(i)

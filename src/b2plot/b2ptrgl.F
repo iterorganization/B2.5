@@ -23,6 +23,7 @@ c======================================================================
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_extrab25
+	  use eirmod_ccona
 #endif
       implicit none
 #include <DIMENSIONS.F>
@@ -30,10 +31,14 @@ c======================================================================
       real (kind=R8) :: BoRiS
       integer lun
       parameter (lun=96)
+#ifndef B25_EIRENE
+      real (kind=R8) :: EionH2
+	  parameter (EionH2=15.4_R8)
+#endif
 c
       integer i,j,jj,k,l,m,n,iss,iy,js,nclm_ld,nclm_er,nx_hlp
       integer i1,i2,i3,ia,ib,ic,is
-      integer jcf,jci,jhei,jhef
+      integer jcf,jci,jcp,jhei,jhef,jhep
       integer m_hlp(ntrgsx)
       real (kind=R8) ::
      *  h,t,u,a,b,d,p,wo,wt,mion,mmol,
@@ -141,29 +146,29 @@ c*** Target geometry
         z_hlp(j)=0.0_R8
         k=ltrgpos(j)
         do iy=0,lseppos(j) !{
-          if (mod(j,2).eq.1) then ! West targets
+!          if (mod(j,2).eq.1) then ! West targets
             z_hlp(j)=z_hlp(j) - sqrt((crx(k,iy,3)-crx(k,iy,1))**2+
      +                               (cry(k,iy,3)-cry(k,iy,1))**2)
-          else ! East targets
-            z_hlp(j)=z_hlp(j) - sqrt((crx(k,iy,2)-crx(k,iy,0))**2+
-     +                               (cry(k,iy,2)-cry(k,iy,0))**2)
-          endif
+!          else ! East targets
+!            z_hlp(j)=z_hlp(j) - sqrt((crx(k,iy,2)-crx(k,iy,0))**2+
+!     +                               (cry(k,iy,2)-cry(k,iy,0))**2)
+!          endif
         end do !}
         xtg_hlp(-1,j)=z_hlp(j)
         do iy=0,ny-1 !{
-          if (mod(j,2).eq.1) then ! West targets
+ !         if (mod(j,2).eq.1) then ! West targets
             rctrg(iy,j)=0.5_R8*(crx(k,iy,1)+crx(k,iy,3))
             zctrg(iy,j)=0.5_R8*(cry(k,iy,1)+cry(k,iy,3))
             h=sqrt((crx(k,iy,3)-crx(k,iy,1))**2+
      +             (cry(k,iy,3)-cry(k,iy,1))**2)
-            s(iy,j)=gs(k,iy,0)
-          else ! East targets
-            rctrg(iy,j)=0.5_R8*(crx(k,iy,0)+crx(k,iy,2))
-            zctrg(iy,j)=0.5_R8*(cry(k,iy,0)+cry(k,iy,2))
-            h=sqrt((crx(k,iy,2)-crx(k,iy,0))**2+
-     +             (cry(k,iy,2)-cry(k,iy,0))**2)
-            s(iy,j)=gs(k,iy+1,0)
-          endif
+            s(iy,j)=gs(k+1,iy,0)
+!          else ! East targets
+!            rctrg(iy,j)=0.5_R8*(crx(k,iy,0)+crx(k,iy,2))
+!            zctrg(iy,j)=0.5_R8*(cry(k,iy,0)+cry(k,iy,2))
+!            h=sqrt((crx(k,iy,2)-crx(k,iy,0))**2+
+!     +             (cry(k,iy,2)-cry(k,iy,0))**2)
+!            s(iy,j)=gs(k,iy+1,0)
+!          endif
           z_hlp(j)=z_hlp(j)+0.5_R8*h
           xtrg(iy,j)=z_hlp(j)
           z_hlp(j)=z_hlp(j)+0.5_R8*h
@@ -214,12 +219,12 @@ c*** Mid-plane co-ordinates
       end do !}
 
 c!###{
-      print *
-      print *,'ny,xmp_hlp:',ny,jxi,jxa
-      do j=1,ntrgts !{
-        print '(1x,2i3,10f9.5/(4x,10f9.6))',lseppos(j)+1,lpfrpos(j),
-     ,                                         (xmp_hlp(i,j),i=0,ny-1)
-      end do !}
+c      print *
+c      print *,'ny,xmp_hlp:',ny,jxi,jxa
+c      do j=1,ntrgts !{
+c        print '(1x,2i3,10f9.5/(4x,10f9.6))',lseppos(j)+1,lpfrpos(j),
+c     ,                                         (xmp_hlp(i,j),i=0,ny-1)
+c      end do !}
 c!###}
 c-----------------------------------------------------------------------
 c*** Power loading:
@@ -233,15 +238,15 @@ c
       do j=1,ntrgts !{
         k=ltrgpos(j)
         do iy=lytg,ny-1 !{
-          wo=fhe(k,iy,0)+fhi(k,iy,0)+fhi_ext(k,iy,0)
+          wo=fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0)+fhi_ext(k+1-l,iy,0)
           do is=0,ns-1 !{
-            wo=wo+fna(k,iy,0,is)*rpt(k,iy,is)*ev
-     .           +(1.0_R8-BoRiS)*kinrgy(k,iy,is)
+            wo=wo+fna(k+1-l,iy,0,is)*((rpt(k+l,iy,is)*ev)
+     .           +(1.0_R8-BoRiS)*kinrgy(k+l,iy,is))
           end do !}
           do is=0,ns_ext-1 !{
-            wo=wo+fa_ext(k,iy,0,is)*pt_ext(k,iy,is)*ev
+            wo=wo+fa_ext(k+1-l,iy,0,is)*(pt_ext(k+l,iy,is)*ev
      .           +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
-     .             ua_ext(k,iy,is)**2
+     .             ua_ext(k+l,iy,is)**2)
           end do !}
 c        wo=-1.0e-6_R8*wo/s(iy,1)
           wo= wo/s(iy,j)
@@ -251,7 +256,7 @@ c        wo=-1.0e-6_R8*wo/s(iy,1)
           wnutrg(iy,j)=0.0_R8
           do is=1,natmi
             t=tab2(k+l+1,iy+1,is,1)/ev
-            wnutrg(iy,j)=wnutrg(iy,1)+
+            wnutrg(iy,j)=wnutrg(iy,j)+
      .       s(iy,j)*dab2(k+l+1,iy+1,is,1)*tab2(k+l+1,iy+1,is,1)*
      *       sqrt(max(t/am(eb2spcr(is)),0.0_R8))*0.25_R8*2.0e4_R8
           enddo
@@ -263,7 +268,7 @@ c        wo=-1.0e-6_R8*wo/s(iy,1)
             t=tmb2(k+l+1,iy+1,is,1)/ev
             wnutrg(iy,j)=wnutrg(iy,j)+
      .       s(iy,j)*dmb2(k+l+1,iy+1,is,1)*tmb2(k+l+1,iy+1,is,1)*
-     *       sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
+     * 		 sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
           enddo
           do is=1,nioni
             mion=0.0_R8
@@ -271,13 +276,14 @@ c        wo=-1.0e-6_R8*wo/s(iy,1)
               mion=mion+mlcmp(iss,is)*am(eb2spcr(iss))
             enddo
             t=tib2(k+l+1,iy+1,is,1)/ev
-cxpb  The expression below needs to be corrected and to include recombination energy
             wnutrg(iy,j)=wnutrg(iy,j)+
-     .       s(iy,j)*dib2(k+l+1,iy+1,is,1)*tib2(k+l+1,iy+1,is,1)*
-     *       sqrt(max(t/mion,0.0_R8))*0.25_R8*2.0e4_R8
+     .       s(iy,j)*dib2(k+l+1,iy+1,is,1)*
+     *       sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
+     .       (2.0_R8*tib2(k+l+1,iy+1,is,1)+EionH2*ev)
           enddo
+
         end do !}
-        l=1-l
+		l=1-l
         u=-u
       end do !}
   
@@ -295,7 +301,7 @@ c      print *,'ntrgts, wi: ',ntrgts,wi
         if(ntns .eq. ntrgts) then !{
           js=ltns(j)+nlim
           wo=wldnek(js,0)+wldnep(js,0)
-c          print *,'j,js,wo = ',j,js,wo
+c          print *,'j,js,wldnek,wldnep = ',j,js,wldnek(js,0),wldnep(js,0)
           if(wi(j) .gt. 0.0_R8) then !{
             wi(j)=wo/wi(j)
           else !}{
@@ -315,8 +321,8 @@ c          wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
           wtttrg(iy,j)=wpttrg(iy,j)+wrdtrg(iy,j,0)
         end do !}
       end do !}
-      write(*,'(1x,a,1p,16e12.3)')
-     -                   'Scaling factors for Wn : ',(wi(i),i=1,ntrgts)
+c      write(*,'(1x,a,1p,16e12.3)')
+c     -                   'Scaling factors for Wn : ',(wi(i),i=1,ntrgts)
 c
       nclm_ld=11
       if(lrdlsp) nclm_ld=nclm_ld+natmi
@@ -555,26 +561,32 @@ c*** At present, only for carbon - so determine where it is
 c
       jcf=0
       jci=-1
+	  jcp=0
       jhef=0
       jhei=-1
+	  jhep=0
       if(nspecies .gt. 1) then
         do is=1,nspecies
-          if (is_neutral(jci+1)) jci=jci+1
-          if (is_neutral(jhei+1)) jhei=jhei+1
-          if (nint(zn(jci+1)) .eq. 6) then
-            jcf=is
-          else
-            jci=jci+nfluids(is)
-          end if
-          if (nint(zn(jhei+1)) .eq. 2) then
-            jhef=is
-          else
-            jhei=jhei+nfluids(is)
-          end if
+		  if (nint(zn(eb2spcr(is))).eq.6) jcf = is
+		  if (nint(zn(eb2spcr(is))).eq.2) jhef = is
+		  if (jcf.eq.is) jci = eb2spcr(is)
+		  if (jhef.eq.is) jhei = eb2spcr(is)
         end do
       end if
-c      print *,'jcf,jci = ',jcf,jci
-c      print *,'jhef,jhei = ',jhef,jhei
+	  if (jcf.gt.0) then
+	    jcp=1
+	    do is = 2, jcf
+		  jcp = jcp + nfluids(is-1)
+		end do
+      end if
+	  if (jhef.gt.0) then
+	    jhep=1
+		do is = 2, jhef
+		  jhep = jhep + nfluids(is-1)
+		end do
+      end if
+c      print *,'jcf,jci,jcp = ',jcf,jci,jcp
+c      print *,'jhef,jhei,jhep = ',jhef,jhei,jhep
 c
 c*** Now jcf > 0 shows the isonuclear sequence index for C and jhef > 0 for He
 c*** - assuming the same particle order in B2 and Eirene -
@@ -634,7 +646,7 @@ c          print *,'j,ltrgpos = ',j,k  !###
           sjhep_t(j)=0.0_R8
           sjcp_t(j)=0.0_R8
           do iy=lytg,ny-1 !{
-            sjhp(iy,j)=u*fna(k,iy,0,ismain)
+            sjhp(iy,j)=u*fna(k+1-l,iy,0,ismain)
             t=tab2(k+l+1,iy+1,b2espcr(ismain0),1)/ev
             sjha(iy,j)=s(iy,2)*dab2(k+l+1,iy+1,b2espcr(ismain0),1)*
      *                 sqrt(max(t/am(ismain),0.0_R8))*0.25_R8*1.0e4_R8
@@ -645,8 +657,8 @@ c          print *,'j,ltrgpos = ',j,k  !###
             sjcp(iy,j)=0.0_R8
             sjca(iy,j)=0.0_R8
             if(jcf.gt.0) then !{
-              do is=1,6 !{
-                sjcp(iy,j)=sjcp(iy,j)+fna(k,iy,0,jci-1+is)
+              do is=0,6 !{
+                sjcp(iy,j)=sjcp(iy,j)+fna(k+1-l,iy,0,jci+is)
               end do !}
               sjcp(iy,j)=u*sjcp(iy,j)
               t=tab2(k+l+1,iy+1,jcf,1)/ev
@@ -656,8 +668,8 @@ c          print *,'j,ltrgpos = ',j,k  !###
               sjca_t(j)=sjca_t(j)+sjca(iy,j)
             end if !}
             if(jhef.gt.0) then !{
-              do is=1,2 !{
-                sjhep(iy,j)=sjhep(iy,j)+fna(k,iy,0,jhei-1+is)
+              do is=0,2 !{
+                sjhep(iy,j)=sjhep(iy,j)+fna(k+1-l,iy,0,jhei+is)
               end do !}
               sjhep(iy,j)=u*sjhep(iy,j)
               t=tab2(k+l+1,iy+1,jhef,1)/ev
@@ -678,8 +690,6 @@ c        print '(6(3x,a7,2x)/1p(6e12.4))','sjha_t','sjhea_t',
 c     ,    'sjca_t','sjhp_t','sjhep_t','sjcp_t',
 c     ,    (sjha_t(i),sjhea_t(i),sjca_t(i),sjhp_t(i),
 c     ,                          sjhep_t(i),sjcp_t(i),i=1,ntrgts)
-c          print '(2a5,6(3x,a7,2x))','j','js',                        !###
-c     ,      'sjha_w','sjhea_w','sjca_w','sjhp_w','sjhep_w','sjcp_w'
 c!###}
 c
         do j=1,ntrgts !{
@@ -691,7 +701,7 @@ c
             sjca_w(j)=wldna(js,jcf,0)
             sjcp_w(j)=0
             do is=1,6 !{
-              sjcp_w(j)=sjcp_w(j)+wldpp(js,jci-1+is,0)
+              sjcp_w(j)=sjcp_w(j)+wldpp(js,jcp-1+is,0)
             end do !}
             sjct_w(j)=sjca_w(j)+sjcp_w(j)
           end if !}
@@ -699,11 +709,13 @@ c
             sjhea_w(j)=wldna(js,jhef,0)
             sjhep_w(j)=0
             do is=1,2 !{
-              sjhep_w(j)=sjhep_w(j)+wldpp(js,jhei-1+is,0)
+              sjhep_w(j)=sjhep_w(j)+wldpp(js,jhep-1+is,0)
             end do !}
             sjhet_w(j)=sjhea_w(j)+sjhep_w(j)
           end if !}
 c!###{
+c          print '(2a5,6(3x,a7,2x))','j','js',                        !###
+c     ,      'sjha_w','sjhea_w','sjca_w','sjhp_w','sjhep_w','sjcp_w'
 c          print '(2i5,1p,6e12.4)',j,js,sjha_w(j),sjhea_w(j),
 c     ,      sjca_w(j),sjhp_w(j),sjhep_w(j),sjcp_w(j)
 c!###}
@@ -753,18 +765,18 @@ c!###}
             sjhet(iy,j)=sjhea(iy,j)+sjhep(iy,j)
           end do !}
         end do !}
-        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jD : ',
-     ,                                           (sjha_t(i),i=1,ntrgts)
-        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jD+: ',
-     ,                                           (sjhp_t(i),i=1,ntrgts)
-        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jC : ',
-     ,                                           (sjca_t(i),i=1,ntrgts)
-        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jC+: ',
-     ,                                           (sjcp_t(i),i=1,ntrgts)
-        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jHe : ',
-     ,                                           (sjhea_t(i),i=1,ntrgts)
-        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jHe+: ',
-     ,                                           (sjhep_t(i),i=1,ntrgts)
+c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jD : ',
+c     ,                                           (sjha_t(i),i=1,ntrgts)
+c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jD+: ',
+c     ,                                           (sjhp_t(i),i=1,ntrgts)
+c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jC : ',
+c     ,                                           (sjca_t(i),i=1,ntrgts)
+c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jC+: ',
+c     ,                                           (sjcp_t(i),i=1,ntrgts)
+c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jHe : ',
+c     ,                                           (sjhea_t(i),i=1,ntrgts)
+c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jHe+: ',
+c     ,                                           (sjhep_t(i),i=1,ntrgts)
 
 c*** Calculate sputtering
 
@@ -811,8 +823,9 @@ c     ,                      j,js,sjcs_w(j),sjcb_w(j)  !###
         end if !}
 
         nclm_er=16
+		l=1
         do j=1,ntrgts !{
-          nx_hlp=ltrgpos(j)
+          nx_hlp=ltrgpos(j)+l
           jj=j
           if(j.eq.ntrgts) jj=ntrgsx
           open(lun,file=ftrg(jj,2))
@@ -837,6 +850,7 @@ c     ,                      j,js,sjcs_w(j),sjcb_w(j)  !###
      ,            xmp_hlp(i,k)
           end do !}
           close (lun)
+		  l=1-l
         end do !}
 c----------------------------------------------------------------------
 c*** Produce a summary file for target sputtering
@@ -845,6 +859,9 @@ c
         sjhp_w(0)=0.0_R8
         sjha_w(0)=0.0_R8
         sjht_w(0)=0.0_R8
+		sjhep_w(0)=0.0_R8
+        sjhea_w(0)=0.0_R8
+        sjhet_w(0)=0.0_R8
         sjcp_w(0)=0.0_R8
         sjca_w(0)=0.0_R8
         sjct_w(0)=0.0_R8
@@ -854,6 +871,9 @@ c
           sjhp_w(0)=sjhp_w(0)+sjhp_w(j)
           sjha_w(0)=sjha_w(0)+sjha_w(j)
           sjht_w(0)=sjht_w(0)+sjht_w(j)
+		  sjhep_w(0)=sjhep_w(0)+sjhep_w(j)
+          sjhea_w(0)=sjhea_w(0)+sjhea_w(j)
+          sjhet_w(0)=sjhet_w(0)+sjhet_w(j)
           sjcp_w(0)=sjcp_w(0)+sjcp_w(j)
           sjca_w(0)=sjca_w(0)+sjca_w(j)
           sjct_w(0)=sjct_w(0)+sjct_w(j)
@@ -925,11 +945,15 @@ c
      ,                               'b2.parameters (section NEUTRALS)'
         do j=1,ntrgts !{
           sjha_t(j)=0.0_R8
+		  sjhea_t(j)=0.0_R8
           sjca_t(j)=0.0_R8
           do iy=0,ny-1 !{
             sjha(iy,j)=0.0_R8
             sjhp(iy,j)=0.0_R8
             sjht(iy,j)=0.0_R8
+			sjhea(iy,j)=0.0_R8
+            sjhep(iy,j)=0.0_R8
+            sjhet(iy,j)=0.0_R8
             sjca(iy,j)=0.0_R8
             sjcp(iy,j)=0.0_R8
             sjct(iy,j)=0.0_R8

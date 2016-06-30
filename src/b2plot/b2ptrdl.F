@@ -25,15 +25,16 @@ c*** Input the DG data and prepare the geometry
 c
         call b2pwinp
 c<<<
-c        print '(a/5a10/1p,l10,3i10,e10.2)','After b2pwinp',
-c     ,          'l2pwinp','lppp','nwldprt','nadsrc','add_rad',
-c     ,                              l2pwinp,lppp,nwldprt,nadsrc,add_rad
+c        print '(a/7a10/1p,l10,5i10,e10.2)','After b2pwinp','l2pwinp',
+c     ,             'lppp','nwldprt','lytg','nytg','nadsrc','add_rad',
+c     ,                   l2pwinp,lppp,nwldprt,lytg,nytg,nadsrc,add_rad
 c        print '(a/(16i5))','Shadowing structure',
-c     ,                                     (lwldlis(i,1),i=1,nwldlis(1))
+c     ,                                   (lwldlis(i,1),i=1,nwldlis(1))
 c        print '(a/(5(2f8.3,1x)))','Inner target',
-c     ,                             (pp1(1,lppp+i),pp1(2,lppp+i),i=0,ny-1)
+c     ,                  (pp1(1,lppp+i),pp1(2,lppp+i),i=1,nytg)
 c        print '(a/(5(2f8.3,1x)))','Outer target',
-c     ,                       (pp1(1,lppp+ny+i),pp1(2,lppp+ny+i),i=0,ny-1)
+c     ,                (pp1(1,lppp+nytg+i),pp1(2,lppp+nytg+i),i=1,nytg)
+c
 c>>>
         if(.not.l2pwinp) then !{
           write(*,*) '**** b2ptrdl: error detected in the input data ',
@@ -52,8 +53,8 @@ c*** Fill in the input arrays for b2pwrdld
 c
         nwldrad=0
         do j=1,ntrgts !{
-          do i=0,nytg-1 !{
-            lwldrad(nwldrad+i+1)=lppp+nwldrad+i
+          do i=1,nytg !{
+            lwldrad(nwldrad+i)=lppp+nwldrad+i
           end do !}
           nwldrad=nwldrad+nytg
         end do !}
@@ -87,12 +88,12 @@ c*** Arrange the output data
       l=1
       do j=1,ntrgts/2 !{
         do i=lytg,ny-1 !{
-          rdl(i,l,0)=wldrdld(lppp+k+1-i+lytg-1)
-          rdl(i,l+1,0)=wldrdld(lppp+k+i-lytg+1)
+          rdl(i,l,0)=wldrdld(lppp+k-i+lytg)
+          rdl(i,l+1,0)=wldrdld(lppp+k+1+i-lytg)
           if(lrdlsp) then !{
             do m=1,natmi !{
-              rdl(i,l,m)=wldrdlsp(lppp+k+1-i+lytg-1,m)
-              rdl(i,l+1,m)=wldrdlsp(lppp+k+i-lytg+1,m)
+              rdl(i,l,m)=wldrdlsp(lppp+k-i+lytg,m)
+              rdl(i,l+1,m)=wldrdlsp(lppp+k+1+i-lytg,m)
             end do !}
           end if !}
         end do !}
