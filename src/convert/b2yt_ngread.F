@@ -586,8 +586,6 @@ cank-960727
         call rdneutrs(44,wldpm,nmoli)
         call rdneutrs(44,wldpeb,1)
         call rdneutrs(44,wldspt,1)
-		write(*,*)'wldpp He+',wldpp(182,2,0),wldpp(183,2,0)
-		write(*,*)'wldpp He++',wldpp(182,3,0),wldpp(183,3,0)
         allocate(wldpp1(nlimps,npls1,0:nstrai+1))
         allocate(wldpa1(nlimps,natm1,0:nstrai+1))
         allocate(wd_old(nplsi))
@@ -598,8 +596,6 @@ cank-960727
      .     wd_old,wd_new,1)
           wldpp1(i,1:npls1,0)=wd_new(1:npls1)
         end do
-		write(*,*)'wldpp He+',wldpp(182,2,0),wldpp(183,2,0)
-		write(*,*)'wldpp He++',wldpp(182,3,0),wldpp(183,3,0)
         do is = 1, natmi
           if (iatm1(is).ne.0) wldpa1(:,iatm1(is),0) = wldpa(:,is,0)
         end do

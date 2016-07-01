@@ -32,21 +32,21 @@ c======================================================================
       parameter (udpi=2.0e0_R8*upi, ueps=1.0e-20_R8)
       integer i, j, k
       real (kind=R8) :: x1, x2, y1, y2, angle, anglb, uda, utx, uxx
-	  real (kind=R8) :: uu_xe, uu_ye
       intrinsic mod, atan2
       external subini, subend, xerrab
 c<<<
-      integer lun_s, lun_t, lun_l
-      parameter (lun_s=76, lun_t=75, lun_l=74)
-      logical uu_dbg
-      character tab, uu_file*48
+c      integer lun_s, lun_t, lun_l
+c      parameter (lun_s=76, lun_t=75, lun_l=74)
+c      real (kind=R8) :: uu_xe, uu_ye
+c      logical uu_dbg
+c      character tab, uu_file*48
 c>>>
 c======================================================================
 c
 c<<<
        call subini ('rlcomp')
-      tab=char(9)
-      uu_dbg=.false.
+c      tab=char(9)
+c      uu_dbg=.false.
 c>>>
 c
 c*** Loop over the sources
@@ -64,7 +64,7 @@ c>>>
         xsrc=xysrc(1,i)
         ysrc=xysrc(2,i)
 c<<<
-        uu_dbg= i .eq. 1
+c        uu_dbg= i .eq. 1
 c        print *
 c        print *,'Source number, ssrc, xsrc, ysrc'
 c        print '(1p,2x,i4,3e10.2)',i, ssrc, xsrc, ysrc
@@ -74,15 +74,15 @@ c
 c*** Loop over the target segments
 c
 c<<<
-        if(uu_dbg) then
-          open(lun_t,file='targ-rlc.dat')
-          write(lun_t,'(6a)') '#Target geometry : ',label
-          write(lun_t,'(20a)') '#Rb',tab,'Zb',tab,'Re',tab,'Ze',tab,
-     ,    'ddx',tab,'ddy',tab,'uda',tab,'anglb',tab,'angle',tab,'radld'
+c        if(uu_dbg) then
+c          open(lun_t,file='targ-rlc.dat')
+c          write(lun_t,'(6a)') '#Target geometry : ',label
+c          write(lun_t,'(20a)') '#Rb',tab,'Zb',tab,'Re',tab,'Ze',tab,
+c     ,    'ddx',tab,'ddy',tab,'uda',tab,'anglb',tab,'angle',tab,'radld'
 c          open(lun_l,file='layout-t.dat')
 c          write(lun_l,'(6a)') '#Target layout : ',label
 c          write(lun_l,'(20a)') '#R',tab,'Z'
-        end if
+c        end if
 c>>>
         do j=1,ntrg
           jb=ltrg(j)
@@ -110,8 +110,8 @@ c
           sb=0.0e0_R8
           se=1.0e0_R8
 c<<<
-          uu_xe=xc
-          uu_ye=yc
+c          uu_xe=xc
+c          uu_ye=yc
 c          print *
 c          print *,'Target number',j
 c          print '(2x,4a4,6(3x,a4,4x))',' jb ',' jc ',' jm ',' jsc',
@@ -166,13 +166,13 @@ c>>>
 			angle=0.0e0_R8
           end if
 c<<<
-          if(uu_dbg) then
-            write(lun_t,*) xb,tab,yb,tab,uu_xe,tab,uu_ye,tab,
-     ,        ddx,tab,ddy,tab,uda/udpi,tab,anglb,tab,angle,tab,radld(j)
+c          if(uu_dbg) then
+c            write(lun_t,*) xb,tab,yb,tab,uu_xe,tab,uu_ye,tab,
+c     ,        ddx,tab,ddy,tab,uda/udpi,tab,anglb,tab,angle,tab,radld(j)
 c            write(lun_l,*) xb,tab,yb
 c            write(lun_l,*) uu_xe,tab,uu_ye
 c            write(lun_l,*)
-           end if
+c           end if
 c>>>
         end do
       end do
@@ -186,7 +186,7 @@ c
 c======================================================================
 c<<<
 c      close(lun_s)
-      close(lun_t)
+c      close(lun_t)
 c      close(lun_l)
 c>>>
       call subend ()

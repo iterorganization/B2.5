@@ -499,8 +499,8 @@ c*** Target still open...
      ,                                  'Missing CCW edge ',il,i,kb
                 write(*,*) 'k,ltrgedge = ',
      ,                         k,((ltrgedge(i1,i2),i1=1,2),i2=1,ntrgts)
-c                write(*,*) 'lwldlis :'
-c                write(*,*) (lwldlis(i1,il),i1=1,n)
+                write(*,*) 'lwldlis :'
+                write(*,*) (lwldlis(i1,il),i1=1,n)
                 call xerrab ('Missing CCW edge in b2pwlprp')
               end if !}
               i1=2

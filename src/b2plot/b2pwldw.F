@@ -93,7 +93,7 @@ c***  i_sptmtr: index of sputtered material for the wall segments
 
       integer i,j,k,l,m,n,i1,i2,i3,ib,is,iss,iy,im,jj,js,kk,ils,itg,jcf,
      ,  jci,itrg,izns,iznt,nclm_ld,nclm_er,nclm_pk,nx_hlp,m_hlp(ntrgsx),
-     ,  i_sptmtr(nsgmx),l_sptmtr(0:nsgmx)
+     ,  i_sptmtr(nsgmx),l_sptmtr(0:nsgmx),imol
 
 c*** Arrays to store the target profiles
 c***  xtrg    : co-ordinate along the target
@@ -175,7 +175,7 @@ c***  sfpr_m    : list of active materials
      +         (n_hdpr_s+n_hdpr_m)*DEF_NATM*(m_hdpr+4))
       real (kind=R8) :: w_line(n_line_x)
       real (kind=R8) :: s_hlp
-      logical :: first,do_trg
+      logical :: first,do_trg,match_found
       character*(m_hdpr) tab*1,hdpr_c(n_hdpr_c),hdpr_t(n_hdpr_t),
      ,  hdpr_s(n_hdpr_s),hdpr_m(n_hdpr_m),sfpr_s(DEF_NATM)*2,
      ,  sfpr_m(nsptmx)*(lnwlmtrl),hdr_line*(m_hdln),frmt_hlp*24
@@ -391,24 +391,13 @@ c*** Target geometry
               z_hlp(j)=0.0_R8
               k=ltrgpos(j)
               do iy=0,lseppos(j) !{
- !               if (mod(j,2).eq.1) then ! West targets
-                  z_hlp(j)=z_hlp(j) - sqrt((crx(k,iy,3)-crx(k,iy,1))**2+
-     +                                     (cry(k,iy,3)-cry(k,iy,1))**2)
-!                else ! East targets
-!                  z_hlp(j)=z_hlp(j) - sqrt((crx(k,iy,2)-crx(k,iy,0))**2+
-!     +                                     (cry(k,iy,2)-cry(k,iy,0))**2)
-!                endif
+                z_hlp(j)=z_hlp(j) - sqrt((crx(k,iy,3)-crx(k,iy,1))**2+
+     +                                   (cry(k,iy,3)-cry(k,iy,1))**2)
               end do !}
               do iy=0,ny-1 !{
-!                if (mod(j,2).eq.1) then ! West targets
-                  h=sqrt((crx(k,iy,3)-crx(k,iy,1))**2+
-     +                   (cry(k,iy,3)-cry(k,iy,1))**2)
-                  s(iy,j)=gs(k+1,iy,0)
-!                else ! East targets
-!                  h=sqrt((crx(k,iy,2)-crx(k,iy,0))**2+
-!     +                   (cry(k,iy,2)-cry(k,iy,0))**2)
-!                  s(iy,j)=gs(k,iy+1,0)
-!                endif
+                h=sqrt((crx(k,iy,3)-crx(k,iy,1))**2+
+     +                 (cry(k,iy,3)-cry(k,iy,1))**2)
+                s(iy,j)=gs(k+1,iy,0)
                 z_hlp(j)=z_hlp(j)+0.5_R8*h
                 xtrg(iy,j)=z_hlp(j)
                 z_hlp(j)=z_hlp(j)+0.5_R8*h
@@ -473,31 +462,40 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
                 do is=1,natmi
                   t=tab2(kk+1,iy+1,is,1)/ev
                   wnutrg(iy,j)=wnutrg(iy,j)+s(iy,j)*
-     *                       dab2(kk+1,iy+1,is,1)*tab2(kk+1,iy+1,is,1)*
-     *                       sqrt(max(t/am(eb2spcr(is)),0.0_R8))*
-     *                       0.25_R8*2.0e4_R8
-				end do
-				do is=1,nmoli
-					mmol=0.0_R8
-					do iss = 1,natmi
-						mmol=mmol+mlcmp(iss,is)*am(eb2spcr(iss))
-					enddo
-					t=tmb2(kk+1,iy+1,is,1)/ev
-					wnutrg(iy,j)=wnutrg(iy,j)+
-     .       		s(iy,j)*dmb2(kk+1,iy+1,is,1)*tmb2(kk+1,iy+1,is,1)*
-     *       		sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
-				enddo
-				do is=1,nioni
-					mion=0.0_R8
-					do iss = 1,natmi
-						mion=mion+mlcmp(iss,is)*am(eb2spcr(iss))
-					enddo
-					t=tib2(kk+1,iy+1,is,1)/ev
-					wnutrg(iy,j)=wnutrg(iy,j)+
-     .       		s(iy,j)*dib2(kk+1,iy+1,is,1)*
-     *       		sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
-     .       		(2.0_R8*tib2(kk+1,iy+1,is,1)+EionH2*ev)
-				enddo
+     *             dab2(kk+1,iy+1,is,1)*tab2(kk+1,iy+1,is,1)*
+     *             sqrt(max(t/am(eb2spcr(is)),0.0_R8))*
+     *             0.25_R8*2.0e4_R8
+                 end do
+                 do is=1,nmoli
+                   mmol=0.0_R8
+                   do iss = 1,natmi
+                     mmol=mmol+mlcmp(iss,is)*am(eb2spcr(iss))
+                   enddo
+                   t=tmb2(kk+1,iy+1,is,1)/ev
+                   wnutrg(iy,j)=wnutrg(iy,j)+
+     .       	    s(iy,j)*dmb2(kk+1,iy+1,is,1)*tmb2(kk+1,iy+1,is,1)*
+     *       	    sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
+                 enddo
+                 do is=1,nioni
+                   mion=0.0_R8
+                   imol=1
+                   match_found=.false.
+                   do while (.not.match_found.and.imol.le.nmoli)
+                     if (streql(textin(is-1),textmn(imol-1)//'+')) then
+                       match_found=.true.
+                       do iss = 1,natmi
+                         mion=mion+mlcmp(iss,imol)*am(eb2spcr(iss))
+                       enddo
+                     endif
+                     imol=imol+1
+                   enddo
+                   t=tib2(kk+1,iy+1,is,1)/ev
+                   if (mion.gt.0.0_R8)
+     >              wnutrg(iy,j)=wnutrg(iy,j)+
+     .               s(iy,j)*dib2(kk+1,iy+1,is,1)*
+     *               sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
+     .               (2.0_R8*tib2(kk+1,iy+1,is,1)+EionH2*ev)
+                enddo
               end do !}
               l=1-l
               u=-u

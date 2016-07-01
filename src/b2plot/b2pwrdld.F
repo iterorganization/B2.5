@@ -113,8 +113,6 @@ c      print *,'!!!! DUMMY b2pwrdld: no radiation from plasma !!!!'
           xysrc(2,k)=cz(ix,iy)
         end do
       end do
-c	  print*,ssrcm(1),(rqbrm(0,0,is),rqrad(0,0,is),is=0,ns-1),
-c     .  (eneutrad(1,1,is,0),is=1,natmi)
 
 c<<<
 c      print *,'nadsrc,add_rad = ',nadsrc,add_rad
@@ -142,8 +140,8 @@ c*** Calculate the radiation load
 c
       call rlcomp
 c      write(*,*) 'b2pwrdld: after rlcomp'
-c      write(*,*) '  Total radiation      : ',ttsrc
-c      write(*,*) '  Reaching the targets : ',tttrg
+      write(*,*) '  Total radiation      : ',ttsrc
+      write(*,*) '  Reaching the targets : ',tttrg
       if(n_hlperr.gt.0) then !{
         write(*,*) '*** ',n_hlperr,
      ,                      ' segments outside the shadowing structure'
@@ -185,7 +183,7 @@ c
 c*** Calculate the radiation load split by impurity species from B2
 
         do iatm=1,natmi !{
-c          write(*,*) '  Radiation split: ',textan(iatm-1)
+          write(*,*) '  Radiation split: ',textan(iatm-1)
           do i=1,nplgs !{
             radld(i)=0.0_R8
           end do !}
@@ -203,9 +201,8 @@ c          write(*,*) '  Radiation split: ',textan(iatm-1)
           end do !}
           nsrc=k
           call rlcomp
-c		  write(*,*) 'b2pwrdld: after rlcomp'
-c          write(*,*) '  Total radiation      : ',ttsrc
-c          write(*,*) '  Reaching the targets : ',tttrg
+          write(*,*) '  Total radiation      : ',ttsrc
+          write(*,*) '  Reaching the targets : ',tttrg
           k=0
           do i=1,nwldrad !{
             l=lwldrad(i)

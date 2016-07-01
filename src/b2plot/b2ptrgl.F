@@ -36,10 +36,11 @@ c======================================================================
 	  parameter (EionH2=15.4_R8)
 #endif
 c
-      integer i,j,jj,k,l,m,n,iss,iy,js,nclm_ld,nclm_er,nx_hlp
+      integer i,j,jj,k,l,m,n,iss,imol,iy,js,nclm_ld,nclm_er,nx_hlp
       integer i1,i2,i3,ia,ib,ic,is
       integer jcf,jci,jcp,jhei,jhef,jhep
       integer m_hlp(ntrgsx)
+      logical match_found
       real (kind=R8) ::
      *  h,t,u,a,b,d,p,wo,wt,mion,mmol,
      ,  z_hlp(ntrgsx),xtg_hlp(-1:ny-1,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
@@ -96,6 +97,8 @@ c
       real (kind=R8) ::
      *   ss(ntrgsx),ss_m,ersn_a(ntrgsx),ersn_am,ersn_p(ntrgsx),ersn_pm,
      *   ersn_l(ntrgsx)
+      logical streql
+      external streql
       intrinsic sqrt, max
 c
 c*** Text variables:
@@ -146,29 +149,16 @@ c*** Target geometry
         z_hlp(j)=0.0_R8
         k=ltrgpos(j)
         do iy=0,lseppos(j) !{
-!          if (mod(j,2).eq.1) then ! West targets
-            z_hlp(j)=z_hlp(j) - sqrt((crx(k,iy,3)-crx(k,iy,1))**2+
-     +                               (cry(k,iy,3)-cry(k,iy,1))**2)
-!          else ! East targets
-!            z_hlp(j)=z_hlp(j) - sqrt((crx(k,iy,2)-crx(k,iy,0))**2+
-!     +                               (cry(k,iy,2)-cry(k,iy,0))**2)
-!          endif
+          z_hlp(j)=z_hlp(j) - sqrt((crx(k,iy,3)-crx(k,iy,1))**2+
+     +                             (cry(k,iy,3)-cry(k,iy,1))**2)
         end do !}
         xtg_hlp(-1,j)=z_hlp(j)
         do iy=0,ny-1 !{
- !         if (mod(j,2).eq.1) then ! West targets
-            rctrg(iy,j)=0.5_R8*(crx(k,iy,1)+crx(k,iy,3))
-            zctrg(iy,j)=0.5_R8*(cry(k,iy,1)+cry(k,iy,3))
-            h=sqrt((crx(k,iy,3)-crx(k,iy,1))**2+
-     +             (cry(k,iy,3)-cry(k,iy,1))**2)
-            s(iy,j)=gs(k+1,iy,0)
-!          else ! East targets
-!            rctrg(iy,j)=0.5_R8*(crx(k,iy,0)+crx(k,iy,2))
-!            zctrg(iy,j)=0.5_R8*(cry(k,iy,0)+cry(k,iy,2))
-!            h=sqrt((crx(k,iy,2)-crx(k,iy,0))**2+
-!     +             (cry(k,iy,2)-cry(k,iy,0))**2)
-!            s(iy,j)=gs(k,iy+1,0)
-!          endif
+          rctrg(iy,j)=0.5_R8*(crx(k,iy,1)+crx(k,iy,3))
+          zctrg(iy,j)=0.5_R8*(cry(k,iy,1)+cry(k,iy,3))
+          h=sqrt((crx(k,iy,3)-crx(k,iy,1))**2+
+     +           (cry(k,iy,3)-cry(k,iy,1))**2)
+          s(iy,j)=gs(k+1,iy,0)
           z_hlp(j)=z_hlp(j)+0.5_R8*h
           xtrg(iy,j)=z_hlp(j)
           z_hlp(j)=z_hlp(j)+0.5_R8*h
@@ -272,18 +262,26 @@ c        wo=-1.0e-6_R8*wo/s(iy,1)
           enddo
           do is=1,nioni
             mion=0.0_R8
-            do iss = 1,natmi
-              mion=mion+mlcmp(iss,is)*am(eb2spcr(iss))
+            imol=1
+            match_found=.false.
+            do while (.not.match_found.and.imol.le.nmoli)
+              if (streql(textin(is-1),textmn(imol-1)//'+')) then
+                match_found=.true.
+                do iss = 1,natmi
+                  mion=mion+mlcmp(iss,imol)*am(eb2spcr(iss))
+                enddo
+              endif
+              imol=imol+1
             enddo
             t=tib2(k+l+1,iy+1,is,1)/ev
-            wnutrg(iy,j)=wnutrg(iy,j)+
-     .       s(iy,j)*dib2(k+l+1,iy+1,is,1)*
-     *       sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
-     .       (2.0_R8*tib2(k+l+1,iy+1,is,1)+EionH2*ev)
+            if (mion.gt.0.0_R8)
+     >       wnutrg(iy,j)=wnutrg(iy,j)+
+     .        s(iy,j)*dib2(k+l+1,iy+1,is,1)*
+     *        sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
+     .        (2.0_R8*tib2(k+l+1,iy+1,is,1)+EionH2*ev)
           enddo
-
         end do !}
-		l=1-l
+	l=1-l
         u=-u
       end do !}
   
@@ -690,6 +688,8 @@ c        print '(6(3x,a7,2x)/1p(6e12.4))','sjha_t','sjhea_t',
 c     ,    'sjca_t','sjhp_t','sjhep_t','sjcp_t',
 c     ,    (sjha_t(i),sjhea_t(i),sjca_t(i),sjhp_t(i),
 c     ,                          sjhep_t(i),sjcp_t(i),i=1,ntrgts)
+c          print '(2a5,6(3x,a7,2x))','j','js',                        !###
+c     ,      'sjha_w','sjhea_w','sjca_w','sjhp_w','sjhep_w','sjcp_w'
 c!###}
 c
         do j=1,ntrgts !{
@@ -714,8 +714,6 @@ c
             sjhet_w(j)=sjhea_w(j)+sjhep_w(j)
           end if !}
 c!###{
-c          print '(2a5,6(3x,a7,2x))','j','js',                        !###
-c     ,      'sjha_w','sjhea_w','sjca_w','sjhp_w','sjhep_w','sjcp_w'
 c          print '(2i5,1p,6e12.4)',j,js,sjha_w(j),sjhea_w(j),
 c     ,      sjca_w(j),sjhp_w(j),sjhep_w(j),sjcp_w(j)
 c!###}
