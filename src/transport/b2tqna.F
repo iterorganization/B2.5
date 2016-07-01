@@ -107,7 +107,7 @@
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
      *  ballooning, bb_ref, ballooning_rescale, pfr_rescale,
-     1  divsol_rescale
+     1  divsol_rescale, neutral_sources_rescale
       real (kind=R8) ::
      *  df0, dfvsb, dfhcb, dfhce, dfsig, dfalf,
      1  dcx, dion, vcx, lcx, lion, din, dnn,
@@ -119,7 +119,8 @@
       integer elm_count
       save ncall, new_df0, ixref, transport_namelist, user_transport,
      1  ballooning, bb_ref, ballooning_rescale, elm_count, pfr_rescale,
-     2  divsol_rescale, jxi, jxa, jsep, min_df0, max_df0, diagno
+     2  divsol_rescale, jxi, jxa, jsep, min_df0, max_df0, diagno,
+     3  neutral_sources_rescale
       logical catch_up
 *   ..procedures
       intrinsic sqrt
@@ -131,7 +132,8 @@
      1  user_transport/0/, transport_inputfile/0/,
      2  ballooning/0.0_R8/, bb_ref/0.0_R8/, ballooning_rescale/1.0_R8/,
      3  pfr_rescale/1.0_R8/, divsol_rescale/1.0_R8/,
-     4  min_df0/0.0_R8/, max_df0/1.0e30_R8/
+     4  min_df0/0.0_R8/, max_df0/1.0e30_R8/,
+     5  neutral_sources_rescale/1.0_R8/
 *   ..statement functions
       addup(t0,t1)=t0+t1
       expu(t0) = dim(exp(max(t0,cutll)),cutlo)
@@ -151,6 +153,8 @@
         call xertst (0.0_R8.le.min_df0.and.min_df0.le.max_df0.and.
      &   max_df0.gt.0.0_R8,
      *   'Invalid range for b2tqna_min_df0 and/or b2tqna_max_df0')
+        call ipgetr ('b2mndr_rescale_neutrals_sources',
+     1                neutral_sources_rescale)
         call ipgeti ('b2tqna_user_transport', user_transport)
         call ipgeti ('b2tqna_inputfile', transport_inputfile)
         call ipgeti ('b2tqna_ixref', ixref)
@@ -324,7 +328,8 @@ c               else
 c                 din=sqrt(lcx*lion)*wrk0(ix,iy)/sqrt(am(is))
 c               endif
 c-wrong(Bonnin,Owen)                dnn=1.0_R8/na(ix,iy,is)/2.0e-19_R8
-                dnn=(wrk0(ix,iy)/sqrt(am(is)))/na(ix,iy,is)/2.0e-19_R8
+                dnn=(wrk0(ix,iy)/sqrt(am(is)))/
+     1           (na(ix,iy,is)/neutral_sources_rescale)/2.0e-19_R8
                 if (diagno.gt.1) then
                   write(*,*) 'new_df0',
      1             ix,iy,is,lcx,lion,din,dnn,addup(din,dnn),df0
