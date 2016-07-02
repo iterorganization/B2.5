@@ -273,15 +273,15 @@ c-dpc
      1   (n,nz,a1h_save,irnh_save,icnh_save,solvdim,a1h,icnhkeep,ikeep,
      1    r1,s1,res,w,1,1e-10_R8,iflag)
 
-        if(nltrsol.gt.0 .or. iflag.lt.0)
-     &   write(*,3)  trim(name), iflag, errmax, dres, noiter
-   3     format(' Problem: ma28id for ',a13,' iflag =',i9,
-     2          ' errmax =',es9.1,' dres =',es9.1,' noiter =',i2)   !srv 09.07.02 28.06.16 }
         if(iflag.lt.0) then
-          call xertst(iflag.ge.0,'Problem with solving of '//trim(name))
+         write(*,"(a)") 'Problem with solving of '//trim(name))
         else
          write(*,"(3a)") ' Problem of ', trim(name), ' has been solved'
         endif
+        if(nltrsol.gt.0 .or. iflag.lt.0)
+     &   write(*,3)  trim(name), iflag, errmax, dres, noiter
+   3     format(' ma28id for ',a13,' iflag =',i9,
+     2          ' errmax =',es9.1,' dres =',es9.1,' noiter =',i2)   !srv 09.07.02 28.06.16 }
 
       endif                                                         !srv 28.06.16 }
 

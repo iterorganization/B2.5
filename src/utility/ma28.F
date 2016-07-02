@@ -698,7 +698,7 @@ c iflag is a diagnostic flag which will be set to zero on successful
 c     exit from ma28i/id, otherwise it will have a non-zero value. the
 c     non-zero value iflag can have on exit from ma28i/id are ...
 c     -16    indicating that more than maxit iteartions are required.
-c     -17    indicating that more convergence was too slow.
+c     -17    indicating that convergence was too slow.
 c
       integer n, nz, licn, mtype, iflag
       integer icnorg(nz), irnorg(nz), ikeep(n,5), icn(licn)
