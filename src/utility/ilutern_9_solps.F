@@ -152,7 +152,8 @@ c-dpc
         call ma28bdcopy
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0)                            !srv 09.07.02 28.06.16
-     *   write(*,"(' ma28bd for ',a9,': iflag =',i9)") trim(name), iflag !srv 09.07.02 28.06.16
+     *   write(*,"(' ma28bd for ',a13,': iflag =',i9)") 
+     *    trim(name), iflag                                         !srv 09.07.02 28.06.16
         if(iflag.lt.0) then
           do i=1,nz
             irnh(i)=irnh_save(i)
@@ -166,9 +167,10 @@ c-dpc
         call ma28adcopy
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0) write(*,2)                  !srv 09.07.02 28.06.16
-     1     trim(name), iflag, minirn, solvdim1, minicn, solvdim       !srv 09.07.02 28.06.16
-   2  format(' ma28ad for ',a9,': iflag =',i9/,
-     1 ' minirn =',i9,' solvdim1 =',i9,' minicn =',i9,' solvdim =',i9) !srv 09.07.02
+     1     trim(name), iflag, minirn, solvdim1, minicn, solvdim      !srv 09.07.02 28.06.16
+   2  format(' ma28ad for ',a13,': iflag =',i9/,
+     1 ' minirn =',i9,' solvdim1 =',i9,
+     2 ' minicn =',i9,' solvdim =',i9)                               !srv 09.07.02
         do i=1,solvdim
           icnhkeep(i)=icnh(i)
         enddo
@@ -180,7 +182,8 @@ c-dpc
      1 r1,s1,res,w,1,1e-10_R8,iflag)
       if(nltrsol.gt.0 .or. iflag.lt.0)                               !srv 09.07.02 28.06.16 {
      &   write(*,3)  trim(name), iflag, errmax, dres, noiter
-   3  format(' Problem: ma28id for ',a9,' iflag =',i9,' errmax =',es9.1,
+   3  format(' Problem: ma28id for ',a13,
+     1       ' iflag =',i9,' errmax =',es9.1,
      2       ' dres =',es9.1,' noiter =',i2)                         !srv 09.07.02 28.06.16 }
 
       if(iflag.lt.0) then                                            !srv 28.06.16 {
