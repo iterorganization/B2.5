@@ -126,14 +126,26 @@
       do ip = 0, iptbmx-1
         if (ipnam(ip).eq.'b2trcl_conductive limit') then
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
-     &     trim(ipnam(ip)),'Use b2trcl_conductive_limit'
+     &     trim(ipnam(ip)),'Use b2trcl_conductive_limit instead'
           call xerrab
      &     ('Prohibited "b2trcl_conductive limit" switch usage!')
         endif
         if (ipnam(ip).eq.'b2mndr_na0eps') then
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &      trim(ipnam(ip)),'Use b2mndr_na_min and b2mndr_na_new'
-          call xerrab ('Prohibited b2mndr_na0eps switch usage!')
+          call xerrab ('Prohibited "b2mndr_na0eps" switch usage!')
+        endif
+        if (ipnam(ip).eq.'b2tfnb_xfrhiehz') then
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Use b2tfnb_xfrhie instead'
+          call xerrab
+     &     ('Prohibited "b2tfnb_xfrhiehz" switch usage!')
+        endif
+        if (ipnam(ip).eq.'b2news_coriolis') then
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Now obsolete'
+          call xerrab
+     &     ('Prohibited "b2news_coriolis" switch usage!')
         endif
         if (ipnam(ip).eq.'b2news_vis_per') then
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',

@@ -303,7 +303,7 @@ cxpb lb and ub and lower and upper interval bounds
       inquire(file='../b2.wall_save.parameters',
      1 exist=wall_namelist_used)
       if(wall_namelist_used) then
-        call read_b2mod_wall_namelist(99,ns,'    ',wall_namelist_used)
+        call read_b2mod_wall_namelist(99,'    ',wall_namelist_used)
         call xertst(ndepth_nml.le.ndepth .and. ndepth_nml.ge.1,
      .   'Invalid array size NDEPTH_NML!')
         ndepth1 = ndepth_nml

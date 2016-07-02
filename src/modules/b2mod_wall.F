@@ -468,9 +468,9 @@ cxpb Data file material properties
 
       end subroutine dealloc_b2mod_wall
 
-      subroutine read_b2mod_wall_namelist(nread,ns,edition,found)
+      subroutine read_b2mod_wall_namelist(nread,edition,found)
       implicit none
-      integer nread, ns
+      integer nread
       character*4 edition
       logical found
       character*256 filename

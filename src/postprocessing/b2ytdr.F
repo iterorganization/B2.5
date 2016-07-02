@@ -883,7 +883,7 @@ c 2002-09-11: logic revised
         idum(0) = isymm
         call cfwuin (nout(6), 1, idum, 'isymm')
         call b2wugm (nout(6), nx, ny, crx, cry, fpsi,
-     &   ffbz, bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)
+     &   ffbz, bb, vol, hx, hy, qz, qc, gs, pbs)
         close(nout(6))
       endif
       call get_jsep(nx,ny,jxi,jxa,jsep)

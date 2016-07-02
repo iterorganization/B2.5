@@ -5,7 +5,7 @@
      *   ssum
       integer n, incx
       real (kind=R8) ::
-     *   sx(0:*)
+     *   sx(0:n-1)
 *     ------------------------------------------------------------------
 *     SSUM (BLAS-like routine) sums the elements of a vector.
 *     ssum(n,sx,incx) returns the sum of the elements in the s.p. real
@@ -24,14 +24,14 @@
       if (incx.eq.0) then
        call xerrab ('ssum--error, incx.eq.0')
       else if (incx.eq.1) then
-       t = 0
+       t = 0.0_R8
        do i = 0, n-1
         t = t+sx(i)
        enddo
        ssum = t
       else
        ix = ibase(n,incx)
-       t = 0
+       t = 0.0_R8
        do i = 0, n-1
         t = t+sx(ix)
         ix = ix+incx

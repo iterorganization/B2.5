@@ -277,8 +277,8 @@
 *     the flux of atoms of species (is) for calculating momentum transport
 *     through the face between the (ix,iy) cell and its bottom neighbor.
 *     For iy.eq.-1, fna_fcory(-1:nx,iy,0:ns-1) will hold 0.
-*     fna_fcor takes into account Coriolis force.
-*     fna_fcor is equal fna for runs without drifts. 
+*     fna_fcor takes into account the hz toroidal length derivative and
+*     the Coriolis force.
 *
 *     fhe - (-1:nx,-1:ny,0:1) real*8 array.
 *     (Let fhex(,)=fhe(,,0) and fhey(,)=fhe(,,1).)

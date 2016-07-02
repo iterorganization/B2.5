@@ -465,15 +465,16 @@ c perpendicular viscosity driven current
             do iy= -1, ny
               do ix= -1, nx
                 if(bottomiy(ix,iy).ne.-2.and.
-     1             bottomiy(bottomix(ix,iy),bottomiy(ix,iy)).ne.-2.and.
      2             topiy(ix,iy).ne.ny+1.and.
-     3             bottomiy(bottomix(ix,iy),bottomiy(ix,iy)).ne.iy.and.
-     4             topiy(topix(ix,iy),topiy(ix,iy)).ne.iy.and.
      5             leftix(ix,iy).ne.-2.and.
      6             rightix(ix,iy).ne.nx+1) then
-                  fchvisper(ix,iy,1)=fchvisper(ix,iy,1)-
-     1             avisper(ix,iy,1)*vis_per*fac_vis(ix,iy)*
-     2             (dva(ix,iy)-dva(bottomix(ix,iy),bottomiy(ix,iy)))
+                  if(
+     1             bottomiy(bottomix(ix,iy),bottomiy(ix,iy)).ne.-2.and.
+     3             bottomiy(bottomix(ix,iy),bottomiy(ix,iy)).ne.iy.and.
+     4             topiy(topix(ix,iy),topiy(ix,iy)).ne.iy)
+     >             fchvisper(ix,iy,1)=fchvisper(ix,iy,1)-
+     1              avisper(ix,iy,1)*vis_per*fac_vis(ix,iy)*
+     2              (dva(ix,iy)-dva(bottomix(ix,iy),bottomiy(ix,iy)))
                 endif
               enddo
             enddo
@@ -488,10 +489,10 @@ c       call xerrab (' ')
       endif
 
 * ..calculate the parallel viscosity current connected with the heat flux 
-      fchvisq = 0.0_R8             ! Temporary                   !srv 25.11.08
+      fchvisq = 0.0_R8                     ! Temporary                   !srv 25.11.08
 
       fchin=0.0_R8                                                       !xpb
-      if (fch_ion_neutral .ne. 0.0_R8) then                      !srv 01.07.99
+      if (fch_ion_neutral .ne. 0.0_R8) then                              !srv 01.07.99
         do is0 = 0, ns-1
           if (is_neutral(is0)) then
 *       X-COMPONENT OF ION-NEUTRAL CURRENT                               !srv
@@ -510,14 +511,14 @@ c       call xerrab (' ')
      &        (log(na(ix,iy,is))-
      &         log(na(leftix(ix,iy),leftiy(ix,iy),is)))                  !srv
      &        )/(qe*rza(ix,iy,is)))                                      !srv
-     1       *((bb(ix,iy,2)/bb(ix,iy,3))**2+                     !srv 28.03.99
+     1       *((bb(ix,iy,2)/bb(ix,iy,3))**2+                             !srv 28.03.99
      2         (bb(leftix(ix,iy),leftiy(ix,iy),2)/                       !srv
-     3          bb(leftix(ix,iy),leftiy(ix,iy),3))**2)*0.5_R8    !  *signmf     !srv 11.01.13
-     &        +(bb(ix,iy,2)*gs(ix,iy,2)/vol(ix,iy)               !xpb
-     &                  /na(ix,iy,is0)+                          !srv 28.03.99
+     3          bb(leftix(ix,iy),leftiy(ix,iy),3))**2)*0.5_R8 !  *signmf !srv 11.01.13
+     &        +(bb(ix,iy,2)*gs(ix,iy,2)/vol(ix,iy)                       !xpb
+     &                  /na(ix,iy,is0)+                                  !srv 28.03.99
      &          bb(leftix(ix,iy),leftiy(ix,iy),2)*
-     &          gs(leftix(ix,iy),leftiy(ix,iy),2)                !srv 28.03.99
-     &         /vol(leftix(ix,iy),leftiy(ix,iy))/                !srv 28.03.99
+     &          gs(leftix(ix,iy),leftiy(ix,iy),2)                        !srv 28.03.99
+     &         /vol(leftix(ix,iy),leftiy(ix,iy))/                        !srv 28.03.99
      &          na(leftix(ix,iy),leftiy(ix,iy),is0)
      &         )*0.5_R8*fnadspl(ix,iy,1,is0))*
      1	       fch_ion_neutral*fac_vis(ix,iy)
@@ -538,18 +539,18 @@ c       call xerrab (' ')
      >           fchin(ix,iy,1)=fchin(ix,iy,1)+csigin(ix,iy,1,is,is0)*(  !srv
      &       -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))            !srv
      &       -(                                                          !srv
-     &         ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy))+    !srv 28.03.99
+     &         ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy))+            !srv 28.03.99
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))*0.5_R8*    !srv
      &        (log(na(ix,iy,is))-                                        !srv
      &         log(na(bottomix(ix,iy),bottomiy(ix,iy),is))))/
      &        (qe*rza(ix,iy,is))                                         !srv
-     &       -(bb(ix,iy,3)*gs(ix,iy,2)/vol(ix,iy)                !xpb
-     &        /na(ix,iy,is0)+                                    !srv Vpern=Vxn
-     &         bb(bottomix(ix,iy),bottomiy(ix,iy),3)*            !srv 28.03.99
-     &         gs(bottomix(ix,iy),bottomiy(ix,iy),2)             !srv 28.03.99
-     &        /vol(bottomix(ix,iy),bottomiy(ix,iy))/             !srv 28.03.99
+     &       -(bb(ix,iy,3)*gs(ix,iy,2)/vol(ix,iy)                        !xpb
+     &        /na(ix,iy,is0)+                                            !srv Vpern=Vxn
+     &         bb(bottomix(ix,iy),bottomiy(ix,iy),3)*                    !srv 28.03.99
+     &         gs(bottomix(ix,iy),bottomiy(ix,iy),2)                     !srv 28.03.99
+     &        /vol(bottomix(ix,iy),bottomiy(ix,iy))/                     !srv 28.03.99
      &         na(bottomix(ix,iy),bottomiy(ix,iy),is0)                   !srv
-     &        )*0.5_R8*fnadspl(ix,iy,0,is0))*                             !srv
+     &        )*0.5_R8*fnadspl(ix,iy,0,is0))*                            !srv
      1	       fch_ion_neutral*fac_vis(ix,iy)
                   enddo                                                  !srv
                 enddo                                                    !srv

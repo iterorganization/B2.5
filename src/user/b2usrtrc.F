@@ -229,7 +229,7 @@ c-----------------------------------------------------------------------
      ,     hlp_he, hlp_hep, hlp_h, hlp_neu_peak, hlpnw,
      ,     hlp_ne_he_c, hlp_ne_he_s
       real (kind=R8) ::
-     *     a, d, e, g, h, s, t, u, v, x, e0
+     *     a, d, e, g, s, t, v, x, e0
       real (kind=R8) :: pr(-1:nx,-1:ny), xdum(1)
       integer i, j, k, l, m, n, i0, im, is, ix, iy, js, ls, nv, irt,
      ,     iyp, j_he_i, l_pad_str,n_pad_str
@@ -248,7 +248,6 @@ c***               groups, number of diagnostic surface groups
       parameter (lenfnm=120)
       character tab, hlp_c, f*(lenfnm)
       character hlp_frm*120, hlp_frf*240, hlp_tpl*2
-      character hlp_fnam*(lenfnm)  !###
       data hlp_neu_peak / 5.0_R8 /
       data first,first_out / 2*.true. /, double_null / .false. /
 c-----------------------------------------------------------------------

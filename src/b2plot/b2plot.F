@@ -745,7 +745,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
       call alloc_b2mod_wall_init(nx,ny,nncut)
       call alloc_b2mod_wall(ns,natm,nmol,nion)
       call init_wall(nx,ny)
-      call read_b2mod_wall_namelist(99,ns,'    ',found)
+      call read_b2mod_wall_namelist(99,'    ',found)
       allocate(wall_tmp(1:nwall,0:nsd_local-1), 
      *   trg_tmp(1:nwall,1:ndepth_nml))
       call alloc_b2mod_b2plot_wall(nsd_local,natmi,nmoli,nioni,

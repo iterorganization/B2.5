@@ -46,7 +46,7 @@ c*** csrntr identifiers of the surface groups
       parameter (lvn=20060402)
       integer i,j,k,l,m,ii
       logical ex
-      character*48 frh,frd
+c      character*48 frh,frd
       character*(mhdr) cc
 
       save

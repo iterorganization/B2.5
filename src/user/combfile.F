@@ -97,10 +97,6 @@ c*** nummax: maximum width of a numerical field in the file
       character c,tab,f*(lnfn+3+lsuf),cc*20,frmhdr*12,frmdat*48
       integer i,j,k,l,m,n,ir,iv,kb,kt,lrd,nhd,nmr,ktrl,ltrl,
      ,        lnrw,lvrw,ncln,nrec,ivmax,mrkr(nmrk)
-      integer iseed(2)
-      data iseed/ 1, 1 /
-      real (kind=R8) :: rseed
-      equivalence (rseed,iseed)
       integer lfrmd ! minimum length of the frmd variable
       parameter(lfrmd=36)
       integer ins_hlp(nhdr),ind_hlp(nhdr)

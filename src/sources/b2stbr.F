@@ -1113,7 +1113,7 @@ c-xpb Reading of neutrals namelist moved here as it is needed by init_wall
       call alloc_b2mod_wall_init(nx,ny,nncut)
       call alloc_b2mod_wall(ns,natm,nmol,nion)
       call init_wall(nx,ny)
-      call read_b2mod_wall_namelist(99,ns,'    ',wall_namelist_used)
+      call read_b2mod_wall_namelist(99,'    ',wall_namelist_used)
       call xertst (ndepth_nml.gt.1.or.plate_model.eq.0, 
      .   'Inconsistent values of ndepth_nml and plate_model')
       call get_wall_data (nx,ny,ns,BoRiS,wall_namelist_used)

@@ -28,7 +28,7 @@ C
      i                SHIFT(NTRGM)
       REAL (KIND=R8) :: WTARG(NYDD,NTRGM),wnutrg(NYDD,NTRGM),
      r                  wnutpr(NYDD,NTRGM)
-      INTEGER :: K,J,I,L,IY,IS
+      INTEGER :: K,J,L,IY,IS
       REAL (KIND=R8) :: HLP
       CHARACTER*32 :: FRM
 
