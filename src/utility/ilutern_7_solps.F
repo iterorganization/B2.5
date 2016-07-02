@@ -274,7 +274,7 @@ c-dpc
      1    r1,s1,res,w,1,1e-10_R8,iflag)
 
         if(iflag.lt.0) then
-         write(*,"(a)") 'Problem with solving of '//trim(name))
+         write(*,"(a)") 'Problem with solving of '//trim(name)
         else
          write(*,"(3a)") ' Problem of ', trim(name), ' has been solved'
         endif
