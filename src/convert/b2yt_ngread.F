@@ -29,6 +29,7 @@ c
       use b2mod_diag
       use b2mod_b2plot
       use b2mod_indirect
+      use b2mod_constants
       use b2mod_b2cmpa
 #ifdef B25_EIRENE
       use eirmod_extrab25
@@ -53,8 +54,10 @@ c
       logical savestratum(0:nstraid)
 
 *  -- LOCAL SCALARS --
-      INTEGER NNX, NNY, IS, IX, IY, jvft44, istra, nplsi, nstra1
-      integer i, j, k, ncl, jvftnew
+      integer is, nplsi
+#ifdef B25_EIRENE
+      INTEGER NNX, NNY, IX, IY, jvft44, istra
+      integer i, j, k, ncl, jvftnew, nstra1
       real (kind=R8) :: wrk0(-1:nx,-1:ny1), field(0:nx+1,0:ny+1)
       real (kind=R8), allocatable :: dab1(:,:,:), tab1(:,:,:)
       real (kind=R8), allocatable :: dmb1(:,:,:), tmb1(:,:,:)
@@ -86,7 +89,9 @@ c
 *  -- PROCEDURES --
       logical streql
       EXTERNAL GFSUB2
-      external subini, subend, ipgeti, streql, xertst
+      external ipgeti, streql
+#endif
+      external subini, subend
 
 *=======================================================================
 *//COMPUTATION//
@@ -195,6 +200,15 @@ C
       do is = 1, natmi
         if (iatm1(is).ne.0) then
           field(0:nx+1,0:ny+1) = tab2(0:nx+1,0:ny+1,is,1)
+          if (streql(solps_version,'4.3')) then
+            do iy = 0, ny+1
+              do ix = 0, nx+1
+                if (dab2(ix,iy,is,1).eq.0.0_R8) then
+                  field(ix,iy) = field(ix,iy)*ev
+                end if
+              end do
+            end do
+          end if
           call b2xtvc(nx, ny, nx1, ny1,
      &        field, tab1(0,0,iatm1(is)),
      &        nncutmax, non_commensurate,
@@ -228,6 +242,15 @@ C
       do 25 IS = 1, NMOLI
         call gfsub2(44,ndx,ndy,nnx,nny,tmb2(:,:,is,1))
         field(0:nx+1,0:ny+1) = tmb2(0:nx+1,0:ny+1,is,1)
+        if (streql(solps_version,'4.3')) then
+          do iy = 0, ny+1
+            do ix = 0, nx+1
+              if (dmb2(ix,iy,is,1).eq.0.0_R8) then
+                field(ix,iy) = field(ix,iy)*ev
+              end if
+            end do
+          end do
+        end if
         call b2xtvc(nx, ny, nx1, ny1,
      &        field, tmb1(0,0,is),
      &        nncutmax, non_commensurate,
@@ -260,6 +283,15 @@ C
       do 26 IS = 1, NIONI
         call gfsub2(44,ndx,ndy,nnx,nny,tib2(:,:,is,1))
         field(0:nx+1,0:ny+1) = tib2(0:nx+1,0:ny+1,is,1)
+        if (streql(solps_version,'4.3')) then
+          do iy = 0, ny+1
+            do ix = 0, nx+1
+              if (dib2(ix,iy,is,1).eq.0.0_R8) then
+                field(ix,iy) = field(ix,iy)*ev
+              end if
+            end do
+          end do
+        end if
         call b2xtvc(nx, ny, nx1, ny1,
      &        field, tib1(0,0,is),
      &        nncutmax, non_commensurate,
