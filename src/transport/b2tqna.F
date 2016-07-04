@@ -328,7 +328,10 @@ c               else
 c                 din=sqrt(lcx*lion)*wrk0(ix,iy)/sqrt(am(is))
 c               endif
 c-wrong(Bonnin,Owen)                dnn=1.0_R8/na(ix,iy,is)/2.0e-19_R8
-                dnn=(wrk0(ix,iy)/sqrt(am(is)))/
+c$$$                dnn=(wrk0(ix,iy)/sqrt(am(is)))/
+c$$$     1           (na(ix,iy,is)/neutral_sources_rescale)/2.0e-19_R8
+cxpb Corrected for dimensionality 
+                dnn=1.0_R8/
      1           (na(ix,iy,is)/neutral_sources_rescale)/2.0e-19_R8
                 if (diagno.gt.1) then
                   write(*,*) 'new_df0',
