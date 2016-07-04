@@ -73,10 +73,15 @@ c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
 c      write (6,hlp_frm) 'lwldstrt:',(lwldstrt(i),i=1,nwldprt)
 c      write (6,hlp_frm) 'nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt
-c        print '(a,(20i5))','lwldlis :',il,(lwldlis(i,il),i=1,nwldprt)
+c        print '(a,i5/(5x,15i5))','lwldlis :',il,
+c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
 c      end do
 cc%%%
 c*** Then sort the target lists
+c*** The shadowing structure must be closed, therefore it starts from
+c*** an arbitrary point.
+
+      lwldstrt(1)=iabs(lwldlis(1,1))
       call b2pwsrt(*999)
 cc<<<
 c      print *,'After b2pwsrt',nwldprt
@@ -84,9 +89,9 @@ c      write (hlp_frm,'(a,i2,a)') '(a,',nwldprt,'i5)'
 c      write (6,hlp_frm) 'lwldstrt:',(lwldstrt(i),i=1,nwldprt)
 c      write (6,hlp_frm) 'nwldlis :',(nwldlis(i),i=1,nwldprt)
 c      do il=1,nwldprt
-c        print '(a,(20i5))','lwldlis :',il,
+c        print '(a,i5/(5x,15i5))','lwldlis :',il,
 c     ,                                  (lwldlis(i,il),i=1,nwldlis(il))
-c        print '(a,(20i5))','leirlis :',il,
+c        print '(a,i5/(5x,15i5))','leirlis :',il,
 c     ,                                  (leirlis(i,il),i=1,nwldlis(il))
 c      end do
 cc>>>
@@ -124,7 +129,7 @@ c
         if(streql(text_an(i),'C')) ic=i
       end do
 c
-      do il=1,nwldprt
+      do il=2,nwldprt
         if(nwldlis(il) .gt. 0) then
           write(lun,*)
 c*** calculate the length of the target segment
@@ -132,8 +137,10 @@ c*** calculate the length of the target segment
           do i=1,nwldlis(il)
             ia=lwldlis(i,il)
             is=leirlis(i,il)
-            dist=sqrt((p1(1,is)-p2(1,is))**2+(p1(2,is)-p2(2,is))**2)
-            hlpx=hlpx+dist
+            if (is.gt.0) then
+              dist=sqrt((p1(1,is)-p2(1,is))**2+(p1(2,is)-p2(2,is))**2)
+              hlpx=hlpx+dist
+            end if
           end do
 c
           x=0.e0_R8
@@ -154,7 +161,7 @@ c
             end if
             dist=0.5e0_R8*dist
             x=x+h+dist
-            if(ia .gt. 0) then
+            if(is .gt. 0) then
               aa=1.e-6_R8/a
               hlpw=hlpw+wldnek(is,0)+wldnep(is,0)
               wwk=wldnek(is,0)*aa

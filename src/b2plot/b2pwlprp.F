@@ -64,8 +64,8 @@ c<<<
 c
 c      print *,'Starting b2pwlprp...',nlim,lppp,DEF_NLIM
 c      print '(a,4i6)','jedgi1, jedgi2, jedgo1, jedgo2 =',jedge(1:4)
-c      print *,'ltrgedge = ',ltrgedge
-c      print *,'mtrgedge = ',mtrgedge
+c      print '(a,8i6)','ltrgedge = ',ltrgedge
+c      print '(a,8i6)','mtrgedge = ',mtrgedge
 c
 cc+++ layout-a.dat: wall as read from DG
 c      open(lun_w,file='layout-a.dat')

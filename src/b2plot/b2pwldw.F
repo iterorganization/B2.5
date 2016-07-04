@@ -11,7 +11,7 @@
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_extrab25
-	  use eirmod_ccona
+      use eirmod_ccona
 #endif
 c
 c  version : 12.01.2002 01:19
@@ -78,7 +78,7 @@ c=======================================================================
 #include <DIMENSIONS.F>
 #ifndef B25_EIRENE
       real (kind=R8) :: EionH2
-	  parameter (EionH2=15.4_R8)
+      parameter (EionH2=15.4_R8)
 #endif
       integer lun,izn,iln,boundary_namelist
       logical trgl
@@ -118,19 +118,6 @@ c***  eaitrg  : average energy of atoms
 c***  erntrg  : erosion net
 c***  ergtrg  : erosion gross
 
-c*** Arrays to store the peak values
-c***  wpk_tt  : peak power - total
-c***  wpk_rd  : peak power - radiation
-c***  wpk_pl  : peak power - plasma
-c***  wpk_nu  : peak power - neutrals
-c***  wlc_tt  : location of total peak
-c***  wlc_rd  : location of radiation peak
-c***  wlc_pl  : location of plasma peak
-c***  wlc_nu  : location of neutral peak
-c***  wrd_pk  : radiation at total peak
-c***  wpl_pk  : plasma at total peak
-c***  wnu_pk  : neutrals at total peak
-
       real (kind=R8) :: h,p,t,u,wo,zz,wwo,eni_hlp(ntrgsx),mion,mmol,
      ,  phi_hlp(ntrgsx),wi(ntrgsx),wwi(ntrgsx),z_hlp(ntrgsx),
      ,  s(0:ny-1,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),xtrg(0:ny-1,ntrgsx),  
@@ -144,11 +131,7 @@ c***  wnu_pk  : neutrals at total peak
      ,  wrdtrg(0:ny-1,ntrgsx),
      ,  fiitrg(0:ny-1,ntrgsx,DEF_NATM), eiitrg(0:ny-1,ntrgsx,DEF_NATM),
      ,  faitrg(0:ny-1,ntrgsx,DEF_NATM), eaitrg(0:ny-1,ntrgsx,DEF_NATM),
-     ,  erntrg(0:ny-1,ntrgsx,nsptmx)  , ergtrg(0:ny-1,ntrgsx,nsptmx),
-     ,  wpk_tt(0:ntrgsx),
-     ,  wpk_rd(0:ntrgsx),wpk_pl(0:ntrgsx),wpk_nu(0:ntrgsx),
-     ,  wrd_pk(0:ntrgsx),wpl_pk(0:ntrgsx),wnu_pk(0:ntrgsx),
-     ,  wlc_tt(ntrgsx),wlc_rd(ntrgsx),wlc_pl(ntrgsx),wlc_nu(ntrgsx)
+     ,  erntrg(0:ny-1,ntrgsx,nsptmx)  , ergtrg(0:ny-1,ntrgsx,nsptmx)
 
 c*** Output data headers
 c***  m_hdpr    : max. length of a quantity name
@@ -334,6 +317,8 @@ c        if(n_sfpr_m.gt.0) print *,':',(sfpr_m(i),':',i=1,n_sfpr_m)  !###
             wllersf(m)=3.15e7*1.e-3*srfs_a(l)/(avogr*srfs_d(l))
             l_sptmtr(k)=m
           end if !}
+          ergtrg(:,:,k)=0.0_R8
+          erntrg(:,:,k)=0.0_R8
         end do !}
         n_sfpr_m=m
         do i=1,lppp+ny*ntrgts !{
@@ -473,8 +458,8 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
                    enddo
                    t=tmb2(kk+1,iy+1,is,1)/ev
                    wnutrg(iy,j)=wnutrg(iy,j)+
-     .       	    s(iy,j)*dmb2(kk+1,iy+1,is,1)*tmb2(kk+1,iy+1,is,1)*
-     *       	    sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
+     .              s(iy,j)*dmb2(kk+1,iy+1,is,1)*tmb2(kk+1,iy+1,is,1)*
+     *              sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
                  enddo
                  do is=1,nioni
                    mion=0.0_R8
@@ -644,26 +629,26 @@ c*** Sputtering data: zeroes for the time being
             end do !}
           end if !}
           itrg=itg
-		  iznt=izn
-		  if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
+          iznt=izn
+          if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-			iy=ny-1
-			im=-1
-		  else !}{
-			iy=0
-			im=1
+            iy=ny-1
+            im=-1
+          else !}{
+            iy=0
+            im=1
           end if !}
         else if (iznt.ne.izn) then !}{
-		  if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
+          if((lwlddir(izn) .and. (itg.eq.1 .or. itg.eq.3)) .or.
      .     (.not.lwlddir(izn) .and. (itg.eq.2 .or. itg.eq.4))) then !{
-			iy=ny-1
-			im=-1
-		  else !}{
-			iy=0
-			im=1
+            iy=ny-1
+            im=-1
+          else !}{
+            iy=0
+            im=1
           end if !}
-		  iznt=izn
-		end if !}
+          iznt=izn
+        end if !}
       end if !}
 
 c      print *,'izns,izn=',izns,izn      !###
@@ -693,12 +678,12 @@ c*** Print the column headers
             k=k+l+m+2
           end do !}
         end do !}
-        do j=1,n_hdpr_m !{
-          l=len_trim(hdpr_m(j))
-          do i=1,n_sfpr_m !{
-            m=len_trim(sfpr_m(i))
-            hdr_line=hdr_line(1:k)//hdpr_m(j)(1:l)//'_'//
-     /                              sfpr_m(i)(1:m)//tab
+        do j=1,n_sfpr_m !{
+          m=len_trim(sfpr_m(j))
+          do i=1,n_hdpr_m !{
+            l=len_trim(hdpr_m(i))
+            hdr_line=hdr_line(1:k)//hdpr_m(i)(1:l)//'_'//
+     /                              sfpr_m(j)(1:m)//tab
             k=k+l+m+2
           end do !}
         end do !}
@@ -782,7 +767,7 @@ c        print *,'itrg,iy=',itrg,iy                                !###
           w_line(k+4)=xmp_hlp(iy,itrg)
           k=k+n_hdpr_t
         end if !}
-		iy=iy+im
+        iy=iy+im
       else !}{
         k=n_hdpr_c+n_sfpr_s+n_sfpr_m
         if(trgl) then !{
