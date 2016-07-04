@@ -564,6 +564,9 @@ else
 ${OBJDIR}/eirmod_braeir.${MOD}:
 	touch ${OBJDIR}/eirmod_braeir.${MOD}
 
+${OBJDIR}/eirmod_ccona.${MOD}:
+	touch ${OBJDIR}/eirmod_ccona.${MOD}
+
 ${OBJDIR}/eirmod_ccoupl.${MOD}:
 	touch ${OBJDIR}/eirmod_ccoupl.${MOD}
 
