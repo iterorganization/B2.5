@@ -1042,7 +1042,7 @@ c     &   'faulty internal parameter density_rescale')
 c-dpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        if(use_eirene.eq.0) neutral_sources_rescale=1.0_R8
        if(use_eirene.ne.0) then
-         if (neutral_source_rescale.ne.1.0_R8) then
+         if (neutral_sources_rescale.ne.1.0_R8) then
            write(*,*) 'Adding ',log(neutral_sources_rescale),
      *         ' to relevant rtlra'
            do is=0,ns-2
