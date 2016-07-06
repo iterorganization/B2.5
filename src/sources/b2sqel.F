@@ -112,36 +112,12 @@
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
-csw 10oct2012 check if EIRENE was called -> avoid double counting
-         if(use_eirene.eq.0) then
 *      ..compute ionisation rate coefficient
           rsa(ix,iy,is) = phm0*
      &     expu(rlsa(ix,iy,0,is)+rlsa(ix,iy,1,is)*wrk0(ix,iy))
 *      ..compute recombination rate coefficient
           rra(ix,iy,is) = phm1*
      &     expu(rlra(ix,iy,0,is)+rlra(ix,iy,1,is)*wrk0(ix,iy))
-         else
-*      ..compute ionisation rate coefficient
-          if(.not.is_neutral(is)) then
-           rsa(ix,iy,is) = phm0*
-     &     expu(rlsa(ix,iy,0,is)+rlsa(ix,iy,1,is)*wrk0(ix,iy))
-          else
-           rsa(ix,iy,is) = 0.0_R8
-          endif
-*      ..compute recombination rate coefficient
-cwd break if-test in two pieces to avoid some compilers evaluating is_neutral(is-1) if is=0 
-          if(is.gt.0) then
-           if (.not.is_neutral(is) .and. .not.is_neutral(is-1)) then
-            rra(ix,iy,is) = phm1*
-     &       expu(rlra(ix,iy,0,is)+rlra(ix,iy,1,is)*wrk0(ix,iy))
-           else
-            rra(ix,iy,is) = 0.0_R8
-           endif
-          else
-           rra(ix,iy,is) = 0.0_R8
-          endif
-         endif
-
 *      ..compute heat loss rate coefficient
          rqa(ix,iy,is) = phm2*
      &     ev*expu(rlqa(ix,iy,0,is)+rlqa(ix,iy,1,is)*wrk0(ix,iy))

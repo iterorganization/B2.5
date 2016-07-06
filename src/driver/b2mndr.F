@@ -1042,15 +1042,22 @@ c     &   'faulty internal parameter density_rescale')
 c-dpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        if(use_eirene.eq.0) neutral_sources_rescale=1.0_R8
        if(use_eirene.ne.0) then
-         write(*,*) 'Adding ',log(neutral_sources_rescale),
+         if (neutral_source_rescale.ne.1.0_R8) then
+           write(*,*) 'Adding ',log(neutral_sources_rescale),
      *         ' to relevant rtlra'
-         do is=0,ns-2
-           if(is_neutral(is) .and. lnext(is,is+1)) then
-              rtlra(:,:,is+1)=rtlra(:,:,is+1)+
+           do is=0,ns-2
+             if(is_neutral(is) .and. lnext(is,is+1)) then
+                rtlra(:,:,is+1)=rtlra(:,:,is+1)+
      *             log(neutral_sources_rescale)
-              write(*,*) is,zamax(is),rtlra(0,0,is+1)
-           endif
-         enddo
+                write(*,*) is,zamax(is),rtlra(0,0,is+1)
+             endif
+           enddo
+         else
+           write(*,*) 'Neutral sources rescaling not turned on '//
+     *                'while coupled to Eirene!'
+           write(0,*) 'Neutral sources rescaling not turned on '//
+     *                'while coupled to Eirene!'
+         endif
        endif
        call ipgetr ('b2mndr_dpc_mod_rates_te_hot',te_hot)
        call ipgetr ('b2mndr_dpc_mod_rates_ne_hot_frac',ne_hot_frac)

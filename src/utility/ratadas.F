@@ -205,8 +205,10 @@ c     ionisation potentials
 c     reading in filename and mass
       call xertst(silent_open(99,'ratadas.filelist',
      1 'data.local|modules/B2.5/Database',actual_file), 'missing file')
-      write(*,*) 'Getting ADAS file list from ',trim(actual_file)
-      write(nput,*) 'Getting ADAS file list from ',trim(actual_file)
+      write(*,'(a/a)')
+     1 'Getting ADAS file list from ',trim(actual_file)
+      write(nput,'(a/a)')
+     1 'Getting ADAS file list from ',trim(actual_file)
       read(99,*) UIDIN
       if(uidin(1:8).eq.'SOLPSTOP') then
         if (uidin(9:9).ne.'/') then
@@ -324,42 +326,42 @@ c     ADAS file names
 
       write(*,*) 'Using ADAS files:'
       if (SUBDIRrec.ne.'none') then
-        write(*,*) trim(fnrec)
+        write(*,'(a)') trim(fnrec)
       else
         write(*,*) 'Skipping recombination data'
       endif
       if (SUBDIRion.ne.'none') then
-        write(*,*) trim(fnion)
+        write(*,'(a)') trim(fnion)
       else
         write(*,*) 'Skipping ionisation data'
       endif
       if (SUBDIRcex.ne.'none') then
-        write(*,*) trim(fncex)
+        write(*,'(a)') trim(fncex)
       else
         write(*,*) 'Skipping charge exchange data'
       endif
       if (SUBDIRprb.ne.'none') then
-        write(*,*) trim(fnprb)
+        write(*,'(a)') trim(fnprb)
       else
         write(*,*) 'Skipping continuum radiation data'
       endif
       if (SUBDIRplt.ne.'none') then
-        write(*,*) trim(fnplt)
+        write(*,'(a)') trim(fnplt)
       else
         write(*,*) 'Skipping line radiation data'
       endif
       if (SUBDIRzav.ne.'none') then
-        write(*,*) trim(fnzav)
+        write(*,'(a)') trim(fnzav)
       else
         write(*,*) 'Skipping effective charge data'
       endif
       if (SUBDIRza2.ne.'none') then
-        write(*,*) trim(fnza2)
+        write(*,'(a)') trim(fnza2)
       else
         write(*,*) 'Skipping effective square charge data'
       endif
       if (SUBDIRpot.ne.'none') then
-        write(*,*) trim(fnpot)
+        write(*,'(a)') trim(fnpot)
       else
         write(*,*) 'Skipping effective ionisation potential data'
       endif
