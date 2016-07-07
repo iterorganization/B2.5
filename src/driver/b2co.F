@@ -94,10 +94,10 @@
 c      call cfopen (nout(7),'b2fplasma','new','unformatted')
 *   ..mark output unit for error messages
       call xerset (0)
-*   ..obtain version numbers						 !xpb
-      call cfverr (ninp(1), b2fgmtry_version)				 !xpb
-      call cfverr (ninp(2), b2fparam_version)				 !xpb
-      call cfverr (ninp(3), b2fstati_version)				 !xpb
+*   ..obtain version numbers                                    !xpb
+      call cfverr (ninp(1), b2fgmtry_version)                   !xpb
+      call cfverr (ninp(2), b2fparam_version)                   !xpb
+      call cfverr (ninp(3), b2fstati_version)                   !xpb
 *   ..obtain nx, ny from geometry file
       call cfruin (ninp(1), 2, idum, 'nx,ny')
       nx = idum(0)
@@ -124,7 +124,7 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       call alloc_b2mod_transport(nx,ny,ns)
       call alloc_b2mod_anomalous_transport(nx,ny,ns)
       call alloc_b2mod_work(nx,ny,ns)
-      call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
+      call alloc_b2mod_indirect(nx,ny,nncutmax)                         !xpb
 *   ..read header for geometry
       call cfruch (ninp(1), 120, lblgm, 'label')
       call cfruin (ninp(1), 1, idum, 'isymm')
@@ -137,12 +137,12 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       call cfruch (ninp(2), 120, lblcp, 'label')
       call b2rucp (ninp(2), b2fparam_version, nx, ns)
 *   ..read initial state
-      call cfverr (ninp(4), plasmastate_version)			 !xpb
-      call b2rups (ninp(4), nx, ny, ns0, ne, na, ua, uadia, te, ti,	 !xpb
+      call cfverr (ninp(4), plasmastate_version)                        !xpb
+      call b2rups (ninp(4), nx, ny, ns, ne, na, ua, uadia, te, ti,      !xpb
      &  po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
-     1	plasmastate_version)
+     1  plasmastate_version)
 *   ..test plasma state and fluxes
-      call b2xvps (nx, ny, ns, 
+      call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *   ..save final state
       newversion = plasmastate_version
@@ -150,12 +150,12 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
       idum(0) = nx
       idum(1) = ny
       idum(2) = ns
-      call cfverw (nout(2), plasmastate_version)			 !xpb
+      call cfverw (nout(2), plasmastate_version)                        !xpb
       call cfwuin (nout(2), 3, idum, 'nx,ny,ns')
       call cfwuch (nout(2), 120, lblmn, 'label')
-      call b2wuzd (nout(2), plasmastate_version, ns, 
+      call b2wuzd (nout(2), plasmastate_version, ns,
      &  zamin, zamax, zn, am)
-      call b2wups (nout(2), nx, ny, ns, ne, na, ua, uadia, te,		 !xpb
+      call b2wups (nout(2), nx, ny, ns, ne, na, ua, uadia, te,          !xpb
      &  ti, po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy)
 *   ..close graphics files
 *     (none)
