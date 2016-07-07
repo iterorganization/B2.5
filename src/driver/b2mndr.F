@@ -1369,9 +1369,9 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
        call sfill (n2*(ns-ns0), 0.0_R8, ua(-1,-1,ns0), 1)
        call sfill (n2*(ns-ns0), 0.0_R8, kinrgy(-1,-1,ns0), 1)        !xpb
        call sfill (n2*2*(ns-ns0), 0.0_R8, uadia(-1,-1,0,ns0), 1)     !xpb
-       call sfill (n2*2*(ns-ns0), 0.0_R8, vadia(-1,-1,0,is), 1)
-       call sfill (n2*2*(ns-ns0), 0.0_R8, wadia(-1,-1,0,is), 1)
-       call sfill (n2*2*(ns-ns0), 0.0_R8, vaecrb(-1,-1,0,is), 1)
+       call sfill (n2*2*(ns-ns0), 0.0_R8, vadia(-1,-1,0,ns0), 1)
+       call sfill (n2*2*(ns-ns0), 0.0_R8, wadia(-1,-1,0,ns0), 1)
+       call sfill (n2*2*(ns-ns0), 0.0_R8, vaecrb(-1,-1,0,ns0), 1)
        call sfill (n2*2*(ns-ns0), 0.0_R8, fna(-1,-1,0,ns0), 1)
        call sfill (n2*2*(ns-ns0), 0.0_R8, fna_mdf(-1,-1,0,ns0), 1)
        call sfill (n2*2*(ns-ns0), 0.0_R8, fna_fcor(-1,-1,0,ns0), 1)
