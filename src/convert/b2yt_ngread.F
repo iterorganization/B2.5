@@ -538,7 +538,8 @@ C
         write(45,'(3i6)') nlimi,nstsi,nstra1
         nnlimi=nlimi
         nnstsi=nstsi
-        print *,'nlimi,nstsi,nstrai,nstra1:',nlimi,nstsi,nstrai,nstra1
+        print '(a,4i6)','nlimi,nstsi,nstrai,nstra1:',
+     *                   nlimi,nstsi,nstrai,nstra1
         call rdneutrs(44,wldnek,1)
         call rdneutrs(44,wldnep,1)
         call rdneutrs(44,wldna,natmi)

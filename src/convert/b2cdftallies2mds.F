@@ -25,7 +25,7 @@
       character*(NF_MAX_NAME) ::
      1 varname, dimname(NF_MAX_VAR_DIMS), attname
       character :: mds_signal_name*(64), units*(24),
-     1 tdi*(128)
+     1 tdi*(172)
 #endif
       external subini, subend, xerrab
 
@@ -48,13 +48,14 @@ c loop over all variables in the file
         status=nf_inq_var(ncid,ivar,varname,xtypev,
      1   ndims,dimids,natts)
         call check_cdf_status(status)
-        write(*,*) 'variable: ',trim(varname),' has type ',xtypev,
+        write(*,'(a,a,a,i2,a,i6,a)')
+     *   'variable: ',trim(varname),' has type ',xtypev,
      1   ' and ',ndims,' dimensions'
         do idim=1,ndims
           status=nf_inq_dim(ncid,dimids(idim),dimname(idim),
      1     dimsize(idim))
           call check_cdf_status(status)
-          write(*,*) '    dimension: ',trim(dimname(idim)),
+          write(*,'(a,a,a,i6)') '    dimension: ',trim(dimname(idim)),
      1     ' of length ',dimsize(idim)
         enddo
         units=''
@@ -63,7 +64,7 @@ c loop over all variables in the file
           call check_cdf_status(status)
           status=nf_inq_att(ncid,ivar,attname,xtypeu,length)
           call check_cdf_status(status)
-          write(*,*) '    attribute: ',trim(attname),
+          write(*,'(a,a,a,i2,a,i6)') '    attribute: ',trim(attname),
      1     ' of type ',xtypeu,' and length ',length
           if(attname.eq.'units') then
             if(length.le.24) then
@@ -114,7 +115,7 @@ c first deal with the time vector
             endif
           enddo
           mds_signal_name='\TOP.TALLIES:TIME'
-          write(*,*) 'We need to save ',trim(varname),
+          write(*,'(a,a,a,a)') 'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
           status=mdsput2(
      *     trim(mds_signal_name)//char(0),
@@ -132,7 +133,7 @@ c first deal with the time vector
      1       mds_signal_name(underscore_pos+1:len(mds_signal_name))
             underscore_pos=index(mds_signal_name,'_')
           enddo
-          write(*,*) 'We need to save ',trim(varname),
+          write(*,'(a,a,a,a)') 'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
           allocate(data3(dimsize(1),dimsize(2),dimsize(3)))
           status=nf_get_var_double(ncid,ivar,data3)
@@ -145,7 +146,7 @@ c first deal with the time vector
      *       '\TOP.TALLIES:' // trim(dimname(1)) // ',' //
      *       '\TOP.TALLIES:' // trim(dimname(2)) // ',' //
      *       '\TOP.TALLIES:TIME)'
-            write(*,*) 'Using TDI ',trim(tdi)
+            write(*,'(a,a)') 'Using TDI ',trim(tdi)
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
@@ -163,7 +164,7 @@ c first deal with the time vector
      *       '"),,\TOP.TALLIES:TIME,' //
      *       '\TOP.TALLIES:' // trim(dimname(1)) // ',' //
      *       '\TOP.TALLIES:' // trim(dimname(2)) // ')'
-            write(*,*) 'Using TDI ',trim(tdi)
+            write(*,'(a,a)') 'Using TDI ',trim(tdi)
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
@@ -182,7 +183,7 @@ c first deal with the time vector
      1       mds_signal_name(underscore_pos+1:len(mds_signal_name))
             underscore_pos=index(mds_signal_name,'_')
           enddo
-          write(*,*) 'We need to save ',trim(varname),
+          write(*,'(a,a,a,a)') 'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
 	  if(xtypev.eq.nf_char) then
 ! this is 1 1d array of text strings and not time dependent
@@ -222,7 +223,7 @@ c first deal with the time vector
      *       '"),,' //
      *       '\TOP.TALLIES:' // trim(dimname(1)) //',' //
      *       '\TOP.TALLIES:TIME)'
-            write(*,*) 'Using TDI ',trim(tdi)
+            write(*,'(a,a)') 'Using TDI ',trim(tdi)
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
@@ -237,7 +238,7 @@ c first deal with the time vector
      *       trim(units) //
      *       '"),,\TOP.TALLIES:TIME,' //
      *       '\TOP.TALLIES:' // trim(dimname(1)) // ')'
-            write(*,*) 'Using TDI ',trim(tdi)
+            write(*,'(a,a)') 'Using TDI ',trim(tdi)
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
@@ -248,10 +249,12 @@ c first deal with the time vector
           endif
           deallocate(data2)
 	  else
-	    write(*,*) "Dim 2 case for type ",xtypev," not coded yet"
+	    write(*,'(a,i2,a)')
+     *       "Dim 2 case for type ",xtypev," not coded yet"
 	  endif
         else
-          write(*,*) 'Case for ',ndims,' dimensions not yet coded'
+          write(*,'(a,i2,a)')
+     *     'Case for ',ndims,' dimensions not yet coded'
         endif
       enddo
 

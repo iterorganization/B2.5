@@ -19,7 +19,7 @@
       character*(NF_MAX_NAME) ::
      1 varname, dimname(NF_MAX_VAR_DIMS), attname
       character :: mds_signal_name*(64), units*(24),
-     1 tdi*(128)
+     1 tdi*(172)
 #endif
       external subini, subend, xerrab
 
@@ -42,13 +42,15 @@ c loop over all variables in the file
         status=nf_inq_var(ncid,ivar,varname,xtype,
      1   ndims,dimids,natts)
         call check_cdf_status(status)
-        write(*,*) 'variable: ',trim(varname),' has type ',xtype,
+        write(*,'(a,a,a,i2,a,i2,a)')
+     *   'variable: ',trim(varname),' has type ',xtype,
      1   ' and ',ndims,' dimensions'
         do idim=1,ndims
           status=nf_inq_dim(ncid,dimids(idim),dimname(idim),
      1     dimsize(idim))
           call check_cdf_status(status)
-          write(*,*) '    dimension: ',trim(dimname(idim)),
+          write(*,'(a,a,a,i6)')
+     *     '    dimension: ',trim(dimname(idim)),
      1     ' of length ',dimsize(idim)
         enddo
         units=''
@@ -57,7 +59,8 @@ c loop over all variables in the file
           call check_cdf_status(status)
           status=nf_inq_att(ncid,ivar,attname,xtype,length)
           call check_cdf_status(status)
-          write(*,*) '    attribute: ',trim(attname),
+          write(*,'(a,a,a,i2,a,i6)')
+     *     '    attribute: ',trim(attname),
      1     ' of type ',xtype,' and length ',length
           if(attname.eq.'units') then
             if(length.le.24) then
@@ -112,7 +115,8 @@ c first deal with the time vector
             endif
           enddo
           mds_signal_name='\TOP.MOVIES:TIME'
-          write(*,*) 'We need to save ',trim(varname),
+          write(*,'(a,a,a,a)')
+     *     'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
           status=mdsput2(
      *     trim(mds_signal_name)//char(0),
@@ -130,7 +134,8 @@ c first deal with the time vector
      1       mds_signal_name(underscore_pos+1:len(mds_signal_name))
             underscore_pos=index(mds_signal_name,'_')
           enddo
-          write(*,*) 'We need to save ',trim(varname),
+          write(*,'(a,a,a,a)')
+     *     'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
           allocate(data2(dimsize(1),dimsize(2)))
           status=nf_get_var_double(ncid,ivar,data2)
@@ -142,7 +147,7 @@ c first deal with the time vector
      *       '"),,' //
      *       '\TOP.MOVIES:' // trim(dimname(1)) //',' //
      *       '\TOP.MOVIES:TIME)'
-            write(*,*) 'Using TDI ',trim(tdi)
+            write(*,'(a,a)') 'Using TDI ',trim(tdi)
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
@@ -157,7 +162,7 @@ c first deal with the time vector
      *       trim(units) //
      *       '"),,\TOP.MOVIES:TIME,' //
      *       '\TOP.MOVIES:' // trim(dimname(1)) // ')'
-            write(*,*) 'Using TDI ',trim(tdi)
+            write(*,'(a,a)') 'Using TDI ',trim(tdi)
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
@@ -175,7 +180,7 @@ c first deal with the time vector
      1       mds_signal_name(underscore_pos+1:len(mds_signal_name))
             underscore_pos=index(mds_signal_name,'_')
           enddo
-          write(*,*) 'We need to save ',trim(varname),
+          write(*,'(a,a,a,a)') 'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
           allocate(data3(dimsize(1),dimsize(2),dimsize(3)))
           status=nf_get_var_double(ncid,ivar,data3)
@@ -188,7 +193,7 @@ c first deal with the time vector
      *       '\TOP.MOVIES:' // trim(dimname(1)) // ',' //
      *       '\TOP.MOVIES:' // trim(dimname(2)) // ',' //
      *       '\TOP.MOVIES:TIME)'
-            write(*,*) 'Using TDI ',trim(tdi)
+            write(*,'(a,a)') 'Using TDI ',trim(tdi)
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
@@ -206,7 +211,7 @@ c first deal with the time vector
      *       '"),,\TOP.MOVIES:TIME,' //
      *       '\TOP.MOVIES:' // trim(dimname(1)) // ',' //
      *       '\TOP.MOVIES:' // trim(dimname(2)) // ')'
-            write(*,*) 'Using TDI ',trim(tdi)
+            write(*,'(a,a)') 'Using TDI ',trim(tdi)
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
@@ -225,7 +230,7 @@ c first deal with the time vector
      1       mds_signal_name(underscore_pos+1:len(mds_signal_name))
             underscore_pos=index(mds_signal_name,'_')
           enddo
-          write(*,*) 'We need to save ',trim(varname),
+          write(*,'(a,a,a,a)') 'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
           allocate(data4(dimsize(1),dimsize(2),dimsize(3),dimsize(4)))
           status=nf_get_var_double(ncid,ivar,data4)
@@ -239,7 +244,7 @@ c first deal with the time vector
      *       '\TOP.MOVIES:' // trim(dimname(2)) // ',' //
      *       '\TOP.MOVIES:' // trim(dimname(3)) // ',' //
      *       '\TOP.MOVIES:TIME)'
-            write(*,*) 'Using TDI ',trim(tdi)
+            write(*,'(a,a)') 'Using TDI ',trim(tdi)
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
@@ -260,7 +265,7 @@ c first deal with the time vector
      *       '\TOP.MOVIES:' // trim(dimname(1)) // ',' //
      *       '\TOP.MOVIES:' // trim(dimname(2)) // ',' //
      *       '\TOP.MOVIES:' // trim(dimname(3)) // ')'
-            write(*,*) 'Using TDI ',trim(tdi)
+            write(*,'(a,a)') 'Using TDI ',trim(tdi)
             status=mdsput2(
      *       trim(mds_signal_name)//char(0),
      *       tdi//char(0),
@@ -272,7 +277,8 @@ c first deal with the time vector
           endif
           deallocate(data4)
         else
-          write(*,*) 'Case for ',ndims,' dimensions not yet coded'
+          write(*,'(a,i2,a)')
+     *     'Case for ',ndims,' dimensions not yet coded'
         endif
       enddo
 

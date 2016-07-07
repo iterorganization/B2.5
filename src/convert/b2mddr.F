@@ -445,7 +445,7 @@ c-dpc        endif
       dbexp=exp
       call mds_put_int('\TOP.IDENT:SHOT',shot)
       dbshot=shot
-      call mds_put_double('\TOP.IDENT:TIME',time)
+      call mds_put_double('\TOP.IDENT:TIME','s',time)
       dbtime=time
 
       call mds_put_int('\TOP.IDENT:NX',nx+2)

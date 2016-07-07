@@ -113,10 +113,10 @@
        do iy = -1, ny
         do ix = -1, nx
 *      ..compute ionisation rate coefficient
-          rsa(ix,iy,is) = phm0*
+         rsa(ix,iy,is) = phm0*
      &     expu(rlsa(ix,iy,0,is)+rlsa(ix,iy,1,is)*wrk0(ix,iy))
 *      ..compute recombination rate coefficient
-          rra(ix,iy,is) = phm1*
+         rra(ix,iy,is) = phm1*
      &     expu(rlra(ix,iy,0,is)+rlra(ix,iy,1,is)*wrk0(ix,iy))
 *      ..compute heat loss rate coefficient
          rqa(ix,iy,is) = phm2*

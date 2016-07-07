@@ -228,8 +228,8 @@ cank 960511
       end if
       if(jvft44 .ge. 960513) then
         read(44,'(3i6)') nlimi,nstsi,nstrai
-        print *,'nlimi,nstsi,nstrai,nlimps,nlmpgs:',
-     .           nlimi,nstsi,nstrai,nlimps,nlmpgs
+        print '(a,5i6)','nlimi,nstsi,nstrai,nlimps,nlmpgs:',
+     .                   nlimi,nstsi,nstrai,nlimps,nlmpgs
         call rdneutrs(44,wldnek,1)
         call rdneutrs(44,wldnep,1)
         call rdneutrs(44,wldna,natmi)

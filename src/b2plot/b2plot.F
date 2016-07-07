@@ -491,7 +491,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
         ispecies(is)=isp
       enddo
       do is=0,ns-1
-        write(*,'(i3,1x,i3,1x,f5.1,1x,f5.1,1x,f5.1,4f10.3)')
+        write(*,'(i3,1x,i3,1x,f5.1,1x,f5.1,1x,f5.1,4f11.3)')
      1   is,ispecies(is),zamin(is),zamax(is),zn(is),
      2   potimin(is),potimax(is),potmin(is),potmax(is)
       end do

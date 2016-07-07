@@ -82,7 +82,7 @@ c
 #ifdef MDSPLUS
       character*512 textpl_cat, textwl_cat
       integer :: status
-      character :: mds_signal_name*(64), tdi*(128)
+      character :: mds_signal_name*(64), tdi*(172)
       real (kind=R8), allocatable ::
      *   vesl(:,:)
       integer i, icnt
@@ -268,7 +268,7 @@ c
         ispecies(is)=isp
       enddo
       do is=0,ns-1
-        write(*,'(i3,1x,i3,1x,f5.1,1x,f5.1,1x,f5.1,4f10.3)')
+        write(*,'(i3,1x,i3,1x,f5.1,1x,f5.1,1x,f5.1,4f11.3)')
      1   is,ispecies(is),zamin(is),zamax(is),zn(is),
      2   potimin(is),potimax(is),potmin(is),potmax(is)
       end do
@@ -810,22 +810,22 @@ c
         textwl_cat=trim(textwl_cat) // ' ' // textwl(is)
       enddo
       call mds_put_string_ns('\TOP.SNAPSHOT:TEXTWL',
-     1 ns+natmi+nmoli+nioni-1,textwl)
+     1 ns+natmi+nmoli+nioni,textwl)
       call mds_put_string('\TOP.IDENT:WALL_SPECIES',textwl_cat)
 c
-
-      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:ZAMIN',
+      tdi='$'
+      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:ZAMIN','',
      1 ns,zamin(0:ns-1))
-      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:ZAMAX',
+      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:ZAMAX','',
      1 ns,zamax(0:ns-1))
       za(0:ns-1)=(zamin(0:ns-1)+zamax(0:ns-1))/2.0_R8
-      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:ZA',ns,za(0:ns-1))
-      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:ZN',ns,zn(0:ns-1))
-      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:AM',ns,am(0:ns-1))
+      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:ZA','',ns,za(0:ns-1))
+      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:ZN','',ns,zn(0:ns-1))
+      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:AM','',ns,am(0:ns-1))
       poti(0:ns-1)=(potimin(0:ns-1)+potimax(0:ns-1))/2.0_R8
-      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:POTI',ns,poti)
+      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:POTI','eV',ns,poti)
       pot(0:ns-1)=(potmin(0:ns-1)+potmax(0:ns-1))/2.0_R8
-      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:POT',ns,pot)
+      call mds_put_double_ns('\TOP.SNAPSHOT.GRID:POT','eV',ns,pot)
       if(natmi.gt.0)
      1 call mds_put_string_ns('\TOP.SNAPSHOT:TEXTAN',natmi,textan)
       if(nmoli.gt.0)
@@ -855,8 +855,8 @@ c
           enddo
           close(99)
           tdi='build_with_units($,"m")'
-          write(*,*) 'mdsput2 of ','\TOP.SNAPSHOT.GRID:VESSEL',
-     1     ' with ',trim(tdi)
+          write(*,'(a,a,a,a)')
+     1     'mdsput2 of ','\TOP.SNAPSHOT.GRID:VESSEL',' with ',trim(tdi)
           status=mdsput2(
      *     '\TOP.SNAPSHOT.GRID:VESSEL'//char(0),trim(tdi)//char(0),
      *     descr2(idtype_double,4,icnt,0),vesl,
@@ -936,9 +936,9 @@ c
      1 nx+2,ny+2,ns,rza,'TEXTPL','')
       call mds_put_double_rzns('\TOP.SNAPSHOT:RZ2','',
      1 nx+2,ny+2,ns,rz2,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RPT','',
+      call mds_put_double_rzns('\TOP.SNAPSHOT:RPT','eV',
      1 nx+2,ny+2,ns,rpt,'TEXTPL','')
-      call mds_put_double_rzns('\TOP.SNAPSHOT:RPI','',
+      call mds_put_double_rzns('\TOP.SNAPSHOT:RPI','eV',
      1 nx+2,ny+2,ns,rpi,'TEXTPL','')
       call mds_put_double_rzns('\TOP.SNAPSHOT:NA','/m^3',
      1 nx+2,ny+2,ns,na,'TEXTPL','')
@@ -1254,85 +1254,85 @@ c
       rtmp=(te(jxi,jsep)/qe*vol(jxi,jsep+1)+
      2 te(jxi,jsep+1)/qe*vol(jxi,jsep))/
      3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:te',rtmp)
+      call mds_put_double('\top.ident.impsep:te','eV',rtmp)
       dbimpsep_te=rtmp
       rtmp=(ti(jxi,jsep)/qe*vol(jxi,jsep+1)+
      2 ti(jxi,jsep+1)/qe*vol(jxi,jsep))/
      3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:ti',rtmp)
+      call mds_put_double('\top.ident.impsep:ti','eV',rtmp)
       dbimpsep_ti=rtmp
       rtmp=(ne(jxi,jsep)*vol(jxi,jsep+1)+
      2 ne(jxi,jsep+1)*vol(jxi,jsep))/
      3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:ne',rtmp)
+      call mds_put_double('\top.ident.impsep:ne','m^-3',rtmp)
       dbimpsep_ne=rtmp
       rtmp=(dna0(jxi,jsep,ismain)*vol(jxi,jsep+1)+
      2 dna0(jxi,jsep+1,ismain)*vol(jxi,jsep))/
      3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:d',rtmp)
+      call mds_put_double('\top.ident.impsep:d','m^2/s',rtmp)
       dbimpsep_d=rtmp
       rtmp=(hce0(jxi,jsep)/ne(jxi,jsep)*vol(jxi,jsep+1)+
      2 hce0(jxi,jsep+1)/ne(jxi,jsep+1)*vol(jxi,jsep))/
      3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:kye',rtmp)
+      call mds_put_double('\top.ident.impsep:kye','m^2/s',rtmp)
       dbimpsep_kye=rtmp
       rtmp=(hcib(jxi,jsep,ismain)/na(jxi,jsep,ismain)*vol(jxi,jsep+1)+
      2 hcib(jxi,jsep+1,ismain)/na(jxi,jsep+1,ismain)*vol(jxi,jsep))/
      3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:kyi',rtmp)
+      call mds_put_double('\top.ident.impsep:kyi','m^2/s',rtmp)
       dbimpsep_kyi=rtmp
       rtmp=(hci0(jxi,jsep)/ni(jxi,jsep,0)*vol(jxi,jsep+1)+
      2 hci0(jxi,jsep+1)/ni(jxi,jsep+1,0)*vol(jxi,jsep))/
      3 (vol(jxi,jsep)+vol(jxi,jsep+1))
-      call mds_put_double('\top.ident.impsep:kyi0',rtmp)
+      call mds_put_double('\top.ident.impsep:kyi0','m^2/s',rtmp)
       dbimpsep_kyi0=rtmp
       rtmp=cr_y(jxi,jsep+1)
-      call mds_put_double('\top.ident.impsep:cr',rtmp)
+      call mds_put_double('\top.ident.impsep:cr','m',rtmp)
       dbimpsep_cr=rtmp
       rtmp=cz_y(jxi,jsep+1)
-      call mds_put_double('\top.ident.impsep:cz',rtmp)
+      call mds_put_double('\top.ident.impsep:cz','m',rtmp)
       dbimpsep_cz=rtmp
 
       rtmp=(te(jxa,jsep)/qe*vol(jxa,jsep+1)+
      2 te(jxa,jsep+1)/qe*vol(jxa,jsep))/
      3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:te',rtmp)
+      call mds_put_double('\top.ident.ompsep:te','eV',rtmp)
       dbompsep_te=rtmp
       rtmp=(ti(jxa,jsep)/qe*vol(jxa,jsep+1)+
      2 ti(jxa,jsep+1)/qe*vol(jxa,jsep))/
      3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:ti',rtmp)
+      call mds_put_double('\top.ident.ompsep:ti','eV',rtmp)
       dbompsep_ti=rtmp
       rtmp=(ne(jxa,jsep)*vol(jxa,jsep+1)+
      2 ne(jxa,jsep+1)*vol(jxa,jsep))/
      3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:ne',rtmp)
+      call mds_put_double('\top.ident.ompsep:ne','eV',rtmp)
       dbompsep_ne=rtmp
       rtmp=(dna0(jxa,jsep,ismain)*vol(jxa,jsep+1)+
      2 dna0(jxa,jsep+1,ismain)*vol(jxa,jsep))/
      3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:d',rtmp)
+      call mds_put_double('\top.ident.ompsep:d','m^2/s',rtmp)
       dbompsep_d=rtmp
       rtmp=(hce0(jxa,jsep)/ne(jxa,jsep)*vol(jxa,jsep+1)+
      2 hce0(jxa,jsep+1)/ne(jxa,jsep+1)*vol(jxa,jsep))/
      3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:kye',rtmp)
+      call mds_put_double('\top.ident.ompsep:kye','m^2/s',rtmp)
       dbompsep_kye=rtmp
       rtmp=(hcib(jxa,jsep,ismain)/na(jxa,jsep,ismain)*vol(jxa,jsep+1)+
      2 hcib(jxa,jsep+1,ismain)/na(jxa,jsep+1,ismain)*vol(jxa,jsep))/
      3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:kyi',rtmp)
+      call mds_put_double('\top.ident.ompsep:kyi','m^2/s',rtmp)
       dbompsep_kyi=rtmp
       rtmp=(hci0(jxa,jsep)/ni(jxa,jsep,0)*vol(jxa,jsep+1)+
      2 hci0(jxa,jsep+1)/ni(jxa,jsep+1,0)*vol(jxa,jsep))/
      3 (vol(jxa,jsep)+vol(jxa,jsep+1))
-      call mds_put_double('\top.ident.ompsep:kyi0',rtmp)
+      call mds_put_double('\top.ident.ompsep:kyi0','m^2/s',rtmp)
       dbompsep_kyi0=rtmp
       rtmp=cr_y(jxa,jsep+1)
-      call mds_put_double('\top.ident.ompsep:cr',rtmp)
+      call mds_put_double('\top.ident.ompsep:cr','m',rtmp)
       dbompsep_cr=rtmp
       rtmp=cz_y(jxa,jsep+1)
-      call mds_put_double('\top.ident.ompsep:cz',rtmp)
+      call mds_put_double('\top.ident.ompsep:cz','m',rtmp)
       dbompsep_cz=rtmp
 
       fhesep=0.0_R8
@@ -1353,13 +1353,13 @@ c
           endif
         enddo
       enddo
-      call mds_put_double('\top.ident.sep:fhe',fhesep)
+      call mds_put_double('\top.ident.sep:fhe','W',fhesep)
       dbsep_fhe=fhesep
-      call mds_put_double('\top.ident.sep:fhi',fhisep)
+      call mds_put_double('\top.ident.sep:fhi','W',fhisep)
       dbsep_fhi=fhisep
-      call mds_put_double('\top.ident.sep:fne',fnesep)
+      call mds_put_double('\top.ident.sep:fne','#/s',fnesep)
       dbsep_fne=fnesep
-      call mds_put_double('\top.ident.sep:fni',fnisep)
+      call mds_put_double('\top.ident.sep:fni','#/s',fnisep)
       dbsep_fni=fnisep
 
       write(*,*) '... b2mds'

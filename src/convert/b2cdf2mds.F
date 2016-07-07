@@ -21,7 +21,7 @@
       character*8 :: mds_zone(6)
       character*2 :: cdf_suffix(6)
       character :: mds_signal_name*(64), units*(24),
-     1 tdi*(128), mds_signal_prefix*(8), mds_signal_suffix*(8)
+     1 tdi*(172), mds_signal_prefix*(8), mds_signal_suffix*(8)
 #endif
 
       character*4 :: ds_filename(11)
@@ -63,7 +63,7 @@ c first handle x-coordinate of profiles (and areas)
           close(1)
           il=il-1
 
-          write(*,*) 'Putting ',trim(ds_filename(i)),
+          write(*,'(a,a,a,i6,a,a)') 'Putting ',trim(ds_filename(i)),
      1     ' with length ',il,' to ',trim(ds_mds(i))
           status=mdsput2(
      *     trim(ds_mds(i))//char(0),
@@ -92,13 +92,15 @@ c loop over all variables in the file
         status=nf_inq_var(ncid,ivar,varname,xtype,
      1   ndims,dimids,natts)
         call check_cdf_status(status)
-        write(*,*) 'variable: ',trim(varname),' has type ',xtype,
+        write(*,'(a,a,a,i2,a,i2,a)')
+     .   'variable: ',trim(varname),' has type ',xtype,
      1   ' and ',ndims,' dimensions'
         do idim=1,ndims
           status=nf_inq_dim(ncid,dimids(idim),dimname,len)
           call check_cdf_status(status)
           dimsize(idim)=len
-          write(*,*) '    dimension: ',trim(dimname),' of length ',len
+          write(*,'(a,a,a,i6)')
+     .     '    dimension: ',trim(dimname),' of length ',len
         enddo
         units=''
         scale=1
@@ -107,7 +109,8 @@ c loop over all variables in the file
           call check_cdf_status(status)
           status=nf_inq_att(ncid,ivar,attname,xtype,len)
           call check_cdf_status(status)
-          write(*,*) '    attribute: ',trim(attname),
+          write(*,'(a,a,a,i2,a,i6)')
+     .     '    attribute: ',trim(attname),
      1     ' of type ',xtype,' and length ',len
           if(attname.eq.'units') then
             if(len.le.24) then
@@ -167,7 +170,7 @@ c first deal with the time vector
             endif
           enddo
           mds_signal_name='\TOP.TIMEDEP:TIME'
-          write(*,*) 'We need to save ',trim(varname),
+          write(*,'(a,a,a,a)') 'We need to save ',trim(varname),
      1     ' to ',trim(mds_signal_name)
           status=mdsput2(
      *     trim(mds_signal_name)//char(0),
@@ -190,7 +193,7 @@ c conceptually two types of traces, f(t) and g(t,x); here handle g(t,x)
             call xertst (index.gt.0, '3d-suffix not found')
             mds_signal_name='\TOP.TIMEDEP.' //
      1       trim(mds_zone(index)) // ':'
-            write(*,*) 'We need to save ',trim(varname),
+            write(*,'(a,a,a,a)') 'We need to save ',trim(varname),
      1       ' to ',trim(mds_signal_name) // varname(1:2)
             allocate(data2(dimsize(1),dimsize(2)))
             status=nf_get_var_double(ncid,ivar,data2)
@@ -216,7 +219,7 @@ c conceptually two types of traces, f(t) and g(t,x); here handle g(t,x)
      *         trim(mds_signal_name) //
      *         'DS,' //
      *         '\TOP.TIMEDEP:TIME)'
-              write(*,*) 'Using TDI ',trim(tdi)
+              write(*,'(a,a)') 'Using TDI ',trim(tdi)
               status=mdsput2(
      *         trim(mds_signal_name)//varname(1:2)//char(0),
      *         tdi//char(0),
@@ -233,7 +236,7 @@ c conceptually two types of traces, f(t) and g(t,x); here handle g(t,x)
      *         '"),,\TOP.TIMEDEP:TIME,' //
      *         trim(mds_signal_name) //
      *         'DS)'
-              write(*,*) 'Using TDI ',trim(tdi)
+              write(*,'(a,a)') 'Using TDI ',trim(tdi)
               status=mdsput2(
      *         trim(mds_signal_name)//varname(1:2)//char(0),
      *         tdi//char(0),
@@ -321,13 +324,14 @@ c and now for f(t)
                 call check_cdf_status(status)
                 allocate(data2T(dimsize(2),dimsize(1)))
                 data2T=transpose(data2)
-                write(*,*) 'We need to save ',trim(varname),
+                write(*,'(a,a,a,a)')
+     *           'We need to save ',trim(varname),
      1           ' to ',trim(mds_signal_name)
                 tdi=
      *           'build_signal(build_with_units($,"' //
      *           trim(units) //
      *           '"),,\TOP.TIMEDEP:TIME)'
-                write(*,*) 'Using TDI ',trim(tdi)
+                write(*,'(a,a)') 'Using TDI ',trim(tdi)
                 status=mdsput2(
      *           trim(mds_signal_name)//char(0),
      *           trim(tdi)//char(0),
@@ -342,13 +346,14 @@ c and now for f(t)
                 allocate(data1(dimsize(1)))
                 status=nf_get_var_double(ncid,ivar,data1)
                 call check_cdf_status(status)
-                write(*,*) 'We need to save ',trim(varname),
+                write(*,'(a,a,a,a)')
+     *           'We need to save ',trim(varname),
      1           ' to ',trim(mds_signal_name)
                 tdi=
      *           'build_signal(build_with_units($,"' //
      *           trim(units) //
      *           '"),,\TOP.TIMEDEP:TIME)'
-                write(*,*) 'Using TDI ',trim(tdi)
+                write(*,'(a,a)') 'Using TDI ',trim(tdi)
                 status=mdsput2(
      *           trim(mds_signal_name)//char(0),
      *           trim(tdi)//char(0),
@@ -358,10 +363,12 @@ c and now for f(t)
                 call mds_err_msg(status)
                 deallocate(data1)
               else
-                write(*,*) 'Case for ',ndims,' dimensions not yet coded'
+                write(*,'(a,i2,a)')
+     *           'Case for ',ndims,' dimensions not yet coded'
               endif
             else
-              write(*,*) 'Case for ',trim(varname),' not coded yet'
+              write(*,'(a,a,a)')
+     *         'Case for ',trim(varname),' not coded yet'
             endif
           endif
         endif

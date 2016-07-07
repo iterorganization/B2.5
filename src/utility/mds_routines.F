@@ -6,7 +6,7 @@
       integer :: status
 
       if(len_trim(string).gt.0) then
-        write(*,*) 'mds_put_string to ',trim(node_name),
+        write(*,'(a,a,a,a,a)') 'mds_put_string to ',trim(node_name),
      1   ' of "',trim(string),'"'
         status=mdsput2(trim(node_name)//char(0),'$'//char(0),
      1   descr2(idtype_cstring,0,len_trim(string)),trim(string),0)
@@ -31,9 +31,11 @@
 #     include "mdslib.inc"
       integer is
       integer :: status
+      character*18 hlp_frm
 
-      write(*,*) 'mds_put_string to ',trim(node_name),
-     1 ' of',(' ',trim(string(is)),is=1,ns)
+      write(hlp_frm,'(a,i3,a)') '(a,a,a,',ns,'(a,a),a)'
+      write(*,hlp_frm) 'mds_put_string to ',trim(node_name),
+     1 ' of "',(' ',trim(string(is)),is=1,ns),'"'
       do is=1,ns
         string(is)=trim(string(is)) // char(0)
       enddo
@@ -56,7 +58,7 @@
 #     include "mdslib.inc"
       integer :: status
 
-      write(*,*) 'mds_put_int to ',trim(node_name),
+      write(*,'(a,a,a,i8)') 'mds_put_int to ',trim(node_name),
      1 ' of ',int
       status=mdsput2(trim(node_name)//char(0),'$'//char(0),
      1 descr2(idtype_long,0),int,0)
@@ -78,14 +80,15 @@
 #ifdef MDSPLUS
 #     include "mdslib.inc"
       integer :: status
-      character :: tdi*(128)
+      character :: tdi*(172)
 
       tdi='$'
       
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_long,nx,ny,0),data,0)
-      write(*,*) 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
+      write(*,'(a,a,a,a)')
+     * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       call mds_err_msg(status)
 
 #else
@@ -104,14 +107,15 @@
 #ifdef MDSPLUS
 #     include "mdslib.inc"
       integer :: status
-      character :: tdi*(128)
+      character :: tdi*(172)
 
       tdi='$'
       
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_long,ns,0),data,0)
-      write(*,*) 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
+      write(*,'(a,a,a,a)')
+     * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       call mds_err_msg(status)
 
 #else
@@ -121,18 +125,21 @@
       return
       end subroutine mds_put_int_ns
 
-      subroutine mds_put_double(node_name,value)
+      subroutine mds_put_double(node_name,units,value)
       use b2mod_types
       implicit none
-      character*(*) node_name
+      character*(*) node_name, units
       real (kind=R8) :: value
 #ifdef MDSPLUS
 #     include "mdslib.inc"
       integer :: status
+      character :: tdi*(172)
 
-      write(*,*) 'mds_put_double to ',trim(node_name),
-     1 ' of ',value
-      status=mdsput2(trim(node_name)//char(0),'$'//char(0),
+      tdi='build_with_units($,"'//trim(units)//'")'
+      write(*,'(a,a,a,1p,1e22.15,a,a)')
+     * 'mds_put_double to ',trim(node_name),' of ',value,
+     * ' with ',trim(tdi)
+      status=mdsput2(trim(node_name)//char(0),trim(tdi)//char(0),
      1 descr2(idtype_double,0),value,0)
       call mds_err_msg(status)
 
@@ -143,24 +150,24 @@
       return
       end subroutine mds_put_double
 
-      subroutine mds_put_double_ns(node_name,ns,data)
+      subroutine mds_put_double_ns(node_name,units,ns,data)
       use b2mod_types
       implicit none
-      character*(*) :: node_name
+      character*(*) :: node_name, units
       integer :: ns
       real (kind=R8) :: data(ns)
 
 #ifdef MDSPLUS
 #     include "mdslib.inc"
       integer :: status
-      character :: tdi*(128)
+      character :: tdi*(172)
 
-      tdi='$'
-      
+      tdi='build_with_units($,"'//trim(units)//'")'
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_double,ns,0),data,0)
-      write(*,*) 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
+      write(*,'(a,a,a,a)')
+     * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       call mds_err_msg(status)
 
 #else
@@ -180,7 +187,7 @@
 #ifdef MDSPLUS
 #     include "mdslib.inc"
       integer :: status
-      character :: tdi*(128)
+      character :: tdi*(172)
 
       tdi='build_signal(build_with_units($,"' //
      1 trim(units) //
@@ -191,7 +198,8 @@
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_double,nx,ny,0),data,0)
-      write(*,*) 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
+      write(*,'(a,a,a,a)')
+     * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       call mds_err_msg(status)
 
 #else
@@ -212,7 +220,7 @@
 #ifdef MDSPLUS
 #     include "mdslib.inc"
       integer :: status
-      character :: tdi*(128)
+      character :: tdi*(172)
 
       tdi='build_signal(build_with_units($,"' //
      1 trim(units) //
@@ -221,7 +229,8 @@
      4 ',' //
      5 '\TOP.SNAPSHOT:' // trim(nsindex) // ')'
       
-      write(*,*) 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
+      write(*,'(a,a,a,a)')
+     * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_double,nx,ny,ns,0),data,0)
@@ -245,7 +254,7 @@
 #ifdef MDSPLUS
 #     include "mdslib.inc"
       integer :: status
-      character :: tdi*(128)
+      character :: tdi*(172)
 
       tdi='build_signal(build_with_units($,"' //
      1 trim(units) //
@@ -256,7 +265,8 @@
      6 ',' //
      7 '\TOP.SNAPSHOT:' // trim(nsindex) // ')'
       
-      write(*,*) 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
+      write(*,'(a,a,a,a)')
+     * 'mdsput2 of ',trim(node_name),' with ',trim(tdi)
       status=mdsput2(
      * trim(node_name)//char(0),trim(tdi)//char(0),
      * descr2(idtype_double,nx,ny,nd,ns,0),data,0)
