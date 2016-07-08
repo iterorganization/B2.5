@@ -1808,7 +1808,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           if (found) call write_b2mod_wall_namelist(99,nx,ny,ns,
      >     savefile(13:16))
           if (ank_tracing.ne.0) call b2filef(ns)
-           close(nout(6))
+#ifdef B25_EIRENE
+          if (use_eirene.ne.0) call write_f44(savefile(13:16))
+#endif
+          close(nout(6))
           write(*,*) 'Plasmastate savefile ',savefile,' saved'
           open (70, file='b2fstate_add.'//savefile(13:16),           !srv 14.07.08 {
      &             form='unformatted')
