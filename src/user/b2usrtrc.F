@@ -7,6 +7,7 @@
       use b2mod_b2cmpa
       use b2mod_plasma
       use b2mod_indirect
+      use b2mod_external
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_boundary_namelist
@@ -597,6 +598,7 @@ c*** Initialise the arrays
       equn_tmp=0.0_R8
       equr_tmp=0.0_R8
 
+#ifdef B25_EIRENE
 c*** Re-scale the neutral fluxes
 
       do i=1,nnlimi+nnstsi !{
@@ -628,6 +630,7 @@ c*** Re-scale the neutral fluxes
           end do !}
         end do !}
       end do !}
+#endif
 c=======================================================================
       if(j_he_at.gt.0) then !{
 
@@ -685,6 +688,7 @@ c      print *,'%% b2usrtrc: j_he_i,iy = ',j_he_i,iy !###
         end if !}
       end if !}
 c=======================================================================
+#ifdef B25_EIRENE
       if(lpfrs_pmp.gt.0 .and. lpfrs_pmp.le.3) then !{
 
 c-----------------------------------------------------------------------
@@ -905,6 +909,7 @@ c*** Helium fraction and related data - flux estimation
  10     if(hlp_h.gt.0.0_R8) hlp_hefr=hlp_he/(hlp_h+hlp_he)
         if(hlp_heoc.gt.0.0_R8) hlp_henr=hlp_hefr/hlp_heoc
       end if !}
+#endif
 
 c*** Calculate the peak powers to the targets
 c***  (assuming a peaking factor of hlp_neu_peak for neutrals)
@@ -921,6 +926,15 @@ c inner target
      .       (rpt(0,iy,is)*hx(-1,iy)+rpt(-1,iy,is)*hx(0,iy))/
      .       (hx(-1,iy)+hx(0,iy))*ev+(1.0_R8-BoRiS)*
      .       (kinrgy(0,iy,is)*hx(-1,iy)+kinrgy(-1,iy,is)*hx(0,iy))/
+     .       (hx(-1,iy)+hx(0,iy))))
+          end do !}
+          do is=0,ns_ext-1 !{
+            hlp=hlp+abs(fa_ext(0,iy,0,is)*(
+     .       (pt_ext(0,iy,is)*hx(-1,iy)+pt_ext(-1,iy,is)*hx(0,iy))/
+     .       (hx(-1,iy)+hx(0,iy))*ev+
+     .       (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
+     .       (ua_ext(0,iy,is)**2*hx(-1,iy)+
+     .        ua_ext(-1,iy,is)**2*hx(0,iy))/
      .       (hx(-1,iy)+hx(0,iy))))
           end do !}
           hlp=hlp/s
@@ -941,6 +955,16 @@ c outer target
      .       (hx(nx-1,iy)+hx(nx,iy))*ev+(1.0_R8-BoRiS)*
      .       (kinrgy(nx,iy,is)*hx(nx-1,iy)+
      .        kinrgy(nx-1,iy,is)*hx(nx,iy))/
+     .       (hx(nx-1,iy)+hx(nx,iy))))
+          end do !}
+          do is=0,ns_ext-1 !{
+            hlp=hlp+abs(fa_ext(nx,iy,0,is)*(
+     .       (pt_ext(nx,iy,is)*hx(nx-1,iy)+
+     .        pt_ext(nx-1,iy,is)*hx(nx,iy))/
+     .       (hx(nx-1,iy)+hx(nx,iy))*ev+
+     .       (1.0_R8-BoRiS)*0.5_R8*am_ext(is)*mp*
+     .       (ua(nx,iy,is)**2*hx(nx-1,iy)+
+     .        ua(nx-1,iy,is)**2*hx(nx,iy))/
      .       (hx(nx-1,iy)+hx(nx,iy))))
           end do !}
           hlp=hlp/s
@@ -967,6 +991,16 @@ c outer target
      .          kinrgy(ix-1,iy,is)*hx(ix,iy))/
      .         (hx(ix-1,iy)+hx(ix,iy))))
             end do !}
+            do is=0,ns_ext-1 !{
+              hlp=hlp+abs(fa_ext(ix,iy,0,is)*(
+     .         (pt_ext(ix,iy,is)*hx(ix-1,iy)+
+     .          pt_ext(ix-1,iy,is)*hx(ix,iy))/
+     .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
+     .         (0.5_R8*am_ext(is)*mp)*
+     .         (ua(ix,iy,is)**2*hx(ix-1,iy)+
+     .          ua(ix-1,iy,is)**2*hx(ix,iy))/
+     .         (hx(ix-1,iy)+hx(ix,iy))))
+            end do !}
             hlp=hlp/s
             hlp_pwou=max(hlp_pwou,hlp)
             hlp_s=hlp_s+s
@@ -990,6 +1024,16 @@ c outer target
      .          kinrgy(ix-1,iy,is)*hx(ix,iy))/
      .         (hx(ix-1,iy)+hx(ix,iy))))
             end do !}
+            do is=0,ns_ext-1 !{
+              hlp=hlp+abs(fa_ext(ix,iy,0,is)*(
+     .         (pt_ext(ix,iy,is)*hx(ix-1,iy)+
+     .          pt_ext(ix-1,iy,is)*hx(ix,iy))/
+     .         (hx(ix-1,iy)+hx(ix,iy))*ev+(1.0_R8-BoRiS)*
+     .         (0.5_R8*am_ext(is)*mp)*
+     .         (ua(ix,iy,is)**2*hx(ix-1,iy)+
+     .          ua(ix-1,iy,is)**2*hx(ix,iy))/
+     .         (hx(ix-1,iy)+hx(ix,iy))))
+            end do !}
             hlp=hlp/s
             hlp_pwiu=max(hlp_pwiu,hlp)
             hlp_s=hlp_s+s
@@ -1009,6 +1053,7 @@ c outer target
         end if
       end if !}
 
+#ifdef B25_EIRENE
 c*** Calculate the neutral flows in PFR
 
       do k=1,npfrgrp !{
@@ -1036,11 +1081,14 @@ c*** Calculate the neutral flows in PFR
           hlp_pfrf(k,j,1)=hlp_pfrf(k,j,1)*hlp
         end do !}
       end do !}
+#endif
  30   do k=1,npfrgrp !{
         do j=1,nspecies !{
           hlp_pfrf(0,j,1)=hlp_pfrf(0,j,1)+hlp_pfrf(k,j,1)
         end do !}
       end do !}
+
+#ifdef B25_EIRENE
 c-----------------------------------------------------------------------
 c*** Evaluate the neutral data at diagnostic surface groups
 c*** Here s is the total area of a diagnostic surface group,
@@ -1136,6 +1184,7 @@ c        e=e+hlp_dnpfs(2,j)*hlp_tmpfs(2,j)
 c      end do !}
 c      print *,'prfi,prfo=',ev*d,ev*e
 c!###}
+#endif
 c-----------------------------------------------------------------------
 c*** evaluate "Degree of detachment" and Isat for each divertor
 

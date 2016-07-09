@@ -206,6 +206,7 @@ c*** Initialisation
         end do !}
       end do !}
 
+#ifdef B25_EIRENE
 c*** Correct the neutral fluxes
 
       do j=1,nnlimi+nnstsi !{
@@ -218,6 +219,7 @@ c*** Correct the neutral fluxes
           wldnep(j,0)=wldnep(j,0)+wldnep(j,k)*sclstra(0,k)
         end do !}
       end do !}
+#endif
 
 c*** Plasma flows across the boundaries
 
@@ -360,6 +362,7 @@ c      print '(a,99a4)',' bcchar  : ',bcchar
 c      print '(a,99i4)',' rcpos   : ',rcpos
 c      print '(a,99i4)',' bcpos   : ',bcpos
 c>>>
+#ifdef B25_EIRENE
       do ic=1,nstrat !{
         if(crcstra(ic).eq.'E' .or. crcstra(ic).eq.'W' .or.
      .               crcstra(ic).eq.'N' .or. crcstra(ic).eq.'S') then !{
@@ -401,6 +404,7 @@ c>>>
           if(k.gt.0) pwtpl_tmp(k)=pwtpl_tmp(k)+hlp
         end if !}
       end do !}
+#endif
 c
 c*** Radiation
 c
@@ -410,6 +414,8 @@ c
         radim_tmp(is)=-rad_imp(is)
       end do !}
       if(ni_tmp.le.0) radim_tmp(1)=0.0_R8
+
+#ifdef B25_EIRENE
 c
 c*** Neutral fluxes
 c
@@ -447,6 +453,7 @@ c*** flux across the specified zones
         end do !}
       end do !}
       endif !nnatmi
+#endif
 c
 c*** Energy content
 c

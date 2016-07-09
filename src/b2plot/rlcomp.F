@@ -1,7 +1,7 @@
       subroutine rlcomp
       use b2mod_types
       use b2mod_constants
-	  use b2mod_diag
+      use b2mod_diag
       implicit none
 c
 c  version : 18.02.98 19:00
@@ -58,6 +58,7 @@ c      write(lun_s,'(6a)') '#Radiation sources : ',label
 c      write(lun_s,'(6a)') '#R',tab,'Z',tab,'S'
 c>>>
       ttsrc=0.e0_R8
+      radld=0.e0_R8
       do i=1,nsrc
         ssrc=ssrcm(i)
         ttsrc=ttsrc+ssrc
@@ -162,8 +163,8 @@ c            print *, xb, yb, ddx, ddy, uxx, utx
 c>>>
           else
             uda=0.0e0_R8
-			anglb=0.0e0_R8
-			angle=0.0e0_R8
+            anglb=0.0e0_R8
+            angle=0.0e0_R8
           end if
 c<<<
 c          if(uu_dbg) then

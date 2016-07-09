@@ -8,6 +8,7 @@ c*** The list of the wall segments is to be specified in lwldrad
 c======================================================================
       use b2mod_types
       use b2mod_diag
+      use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_sources
       use b2mod_neutrals_namelist
@@ -79,7 +80,7 @@ c      print '(20i5)',luwrk
 c<<<
 c      print *,'Shadowing structure: ',nplgs,nbndry,nwldlis(1),lwldlis(1,1)
 c      print '(5(1x,2f7.2))',(xp(i),yp(i),i=1,nplgs)
-c      print *,'Radiation target ',ntrg,(nwldlis(i),i=2,nwldprt)
+c      print '(a,12i5)','Radiation target ',ntrg,(nwldlis(i),i=2,nwldprt)
 c      print '(16i5)',(ltrg(i),i=1,ntrg)
 
 c      open(lun_w,file='layout-w.dat')
@@ -96,17 +97,15 @@ c*** sources are in MW !!!)
 c
       k=0
 
-c      print *,'!!!! DUMMY b2pwrdld: no radiation from plasma !!!!'
-
       do ix=0,nx-1
         do iy=0,ny-1
           u = 0.0_R8
           do is=0,ns-1
             u=u+rqrad(ix,iy,is)+rqbrm(ix,iy,is)
           end do
-		  do is=1,natmi
-			u=u-eneutrad(ix+1,iy+1,is,0)
-		  end do
+          do is=1,natmi
+            u=u-eneutrad(ix+1,iy+1,is,0)
+          end do
           k=k+1
           ssrcm(k)=u
           xysrc(1,k)=cr(ix,iy)
@@ -140,8 +139,12 @@ c*** Calculate the radiation load
 c
       call rlcomp
 c      write(*,*) 'b2pwrdld: after rlcomp'
-      write(*,*) '  Total radiation      : ',ttsrc
-      write(*,*) '  Reaching the targets : ',tttrg
+      write(*,*)   '  Total radiation         : ',ttsrc
+      if (irdparm.eq.1) then
+        write(*,*) '  Reaching the targets    : ',tttrg
+      else if (irdparm.eq.2) then
+        write(*,*) '  Reaching the plot zones : ',tttrg
+      end if
       if(n_hlperr.gt.0) then !{
         write(*,*) '*** ',n_hlperr,
      ,                      ' segments outside the shadowing structure'
@@ -182,8 +185,8 @@ c
 
 c*** Calculate the radiation load split by impurity species from B2
 
-        do iatm=1,natmi !{
-          write(*,*) '  Radiation split: ',textan(iatm-1)
+        do iatm=1,nspecies !{
+          write(*,*) '  Radiation split: ',atoms_list(iatm)
           do i=1,nplgs !{
             radld(i)=0.0_R8
           end do !}
@@ -201,8 +204,12 @@ c*** Calculate the radiation load split by impurity species from B2
           end do !}
           nsrc=k
           call rlcomp
-          write(*,*) '  Total radiation      : ',ttsrc
-          write(*,*) '  Reaching the targets : ',tttrg
+          write(*,*)   '  Total radiation         : ',ttsrc
+          if (irdparm.eq.1) then
+            write(*,*) '  Reaching the targets    : ',tttrg
+          else if (irdparm.eq.2) then
+            write(*,*) '  Reaching the plot zones : ',tttrg
+          end if
           k=0
           do i=1,nwldrad !{
             l=lwldrad(i)

@@ -23,7 +23,7 @@ c======================================================================
       use b2mod_b2plot_wall_loading
 #ifdef B25_EIRENE
       use eirmod_extrab25
-	  use eirmod_ccona
+      use eirmod_ccona
 #endif
       implicit none
 #include <DIMENSIONS.F>
@@ -33,7 +33,7 @@ c======================================================================
       parameter (lun=96)
 #ifndef B25_EIRENE
       real (kind=R8) :: EionH2
-	  parameter (EionH2=15.4_R8)
+      parameter (EionH2=15.4_R8)
 #endif
 c
       integer i,j,jj,k,l,m,n,iss,imol,iy,js,nclm_ld,nclm_er,nx_hlp
@@ -82,7 +82,7 @@ c
      *  sjha(0:ny-1,ntrgsx), sjhp(0:ny-1,ntrgsx), sjht(0:ny-1,ntrgsx),
      *  spha(0:ny-1,ntrgsx), thea(0:ny-1,ntrgsx)
       real (kind=R8) ::
-     *   sjca_t(ntrgsx),  sjha_t(ntrgsx),  sjcs_t(ntrgsx), 
+     *   sjca_t(ntrgsx),  sjha_t(ntrgsx),  sjcs_t(ntrgsx),
      ,   sjcp_t(ntrgsx),  sjhp_t(ntrgsx),
      ,  sjhea_t(ntrgsx), sjhep_t(ntrgsx),
      ,   sjca_w(0:ntrgsx),  sjha_w(0:ntrgsx), sjcs_w(0:ntrgsx),
@@ -97,6 +97,7 @@ c
       real (kind=R8) ::
      *   ss(ntrgsx),ss_m,ersn_a(ntrgsx),ersn_am,ersn_p(ntrgsx),ersn_pm,
      *   ersn_l(ntrgsx)
+      logical ft44
       logical streql
       external streql
       intrinsic sqrt, max
@@ -134,6 +135,7 @@ c
 c      print *,'Starting b2ptrgl...'
 c      print *,'ers_factor= ',ers_factor
       tab=char(9)
+      inquire(file='fort.44',exist=ft44)
 
 c----------------------------------------------------------------------
 c*** Power loading:
@@ -228,63 +230,88 @@ c
       do j=1,ntrgts !{
         k=ltrgpos(j)
         do iy=lytg,ny-1 !{
+          wnutrg(iy,j)=0.0_R8
           wo=fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0)+fhi_ext(k+1-l,iy,0)
           do is=0,ns-1 !{
-            wo=wo+fna(k+1-l,iy,0,is)*((rpt(k+l,iy,is)*ev)
+            if (ft44) then
+              wo=wo+fna(k+1-l,iy,0,is)*((rpt(k+l,iy,is)*ev)
      .           +(1.0_R8-BoRiS)*kinrgy(k+l,iy,is))
+            else
+              if (is_neutral(is)) then
+                wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,is)*
+     .            (1.0_R8-BoRiS)*kinrgy(k+l,iy,is)
+              else
+                wo=wo+fna(k+1-l,iy,0,is)*((rpt(k+l,iy,is)*ev)
+     .           +(1.0_R8-BoRiS)*kinrgy(k+l,iy,is))
+              endif
+            endif
           end do !}
           do is=0,ns_ext-1 !{
-            wo=wo+fa_ext(k+1-l,iy,0,is)*(pt_ext(k+l,iy,is)*ev
+            if (ft44) then
+              wo=wo+fa_ext(k+1-l,iy,0,is)*(pt_ext(k+l,iy,is)*ev
      .           +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
      .             ua_ext(k+l,iy,is)**2)
+            else
+              if (is_ext_neutral(is)) then
+                wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,is)*
+     .            (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
+     .             ua_ext(k+l,iy,is)**2
+              else
+                wo=wo+fa_ext(k+1-l,iy,0,is)*(pt_ext(k+l,iy,is)*ev
+     .           +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
+     .             ua_ext(k+l,iy,is)**2)
+              endif
+            end if
           end do !}
 c        wo=-1.0e-6_R8*wo/s(iy,1)
           wo= wo/s(iy,j)
           wpltrg(iy,j)=wo*u
+          if(.not.ft44) wnutrg(iy,j)=wnutrg(iy,j)*u/s(iy,j)
           netrg(iy,j)=ne(k+l,iy)
           tetrg(iy,j)=te(k+l,iy)/ev
-          wnutrg(iy,j)=0.0_R8
-          do is=1,natmi
-            t=tab2(k+l+1,iy+1,is,1)/ev
-            wnutrg(iy,j)=wnutrg(iy,j)+
-     .       s(iy,j)*dab2(k+l+1,iy+1,is,1)*tab2(k+l+1,iy+1,is,1)*
-     *       sqrt(max(t/am(eb2spcr(is)),0.0_R8))*0.25_R8*2.0e4_R8
-          enddo
-          do is=1,nmoli
-            mmol=0.0_R8
-            do iss = 1,natmi
-              mmol=mmol+mlcmp(iss,is)*am(eb2spcr(iss))
+          if (ft44) then
+            do is=1,natmi
+              t=tab2(k+l+1,iy+1,is,1)/ev
+              wnutrg(iy,j)=wnutrg(iy,j)+
+     .         s(iy,j)*dab2(k+l+1,iy+1,is,1)*tab2(k+l+1,iy+1,is,1)*
+     *         sqrt(max(t/am(eb2spcr(is)),0.0_R8))*0.25_R8*2.0e4_R8
             enddo
-            t=tmb2(k+l+1,iy+1,is,1)/ev
-            wnutrg(iy,j)=wnutrg(iy,j)+
-     .       s(iy,j)*dmb2(k+l+1,iy+1,is,1)*tmb2(k+l+1,iy+1,is,1)*
-     * 		 sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
-          enddo
-          do is=1,nioni
-            mion=0.0_R8
-            imol=1
-            match_found=.false.
-            do while (.not.match_found.and.imol.le.nmoli)
-              if (streql(textin(is-1),textmn(imol-1)//'+')) then
-                match_found=.true.
-                do iss = 1,natmi
-                  mion=mion+mlcmp(iss,imol)*am(eb2spcr(iss))
-                enddo
-              endif
-              imol=imol+1
+            do is=1,nmoli
+              mmol=0.0_R8
+              do iss = 1,natmi
+                mmol=mmol+mlcmp(iss,is)*am(eb2spcr(iss))
+              enddo
+              t=tmb2(k+l+1,iy+1,is,1)/ev
+              wnutrg(iy,j)=wnutrg(iy,j)+
+     .         s(iy,j)*dmb2(k+l+1,iy+1,is,1)*tmb2(k+l+1,iy+1,is,1)*
+     *         sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
             enddo
-            t=tib2(k+l+1,iy+1,is,1)/ev
-            if (mion.gt.0.0_R8)
-     >       wnutrg(iy,j)=wnutrg(iy,j)+
-     .        s(iy,j)*dib2(k+l+1,iy+1,is,1)*
-     *        sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
-     .        (2.0_R8*tib2(k+l+1,iy+1,is,1)+EionH2*ev)
-          enddo
+            do is=1,nioni
+              mion=0.0_R8
+              imol=1
+              match_found=.false.
+              do while (.not.match_found.and.imol.le.nmoli)
+                if (streql(textin(is-1),textmn(imol-1)//'+')) then
+                  match_found=.true.
+                  do iss = 1,natmi
+                    mion=mion+mlcmp(iss,imol)*am(eb2spcr(iss))
+                  enddo
+                endif
+                imol=imol+1
+              enddo
+              t=tib2(k+l+1,iy+1,is,1)/ev
+              if (mion.gt.0.0_R8)
+     >         wnutrg(iy,j)=wnutrg(iy,j)+
+     .          s(iy,j)*dib2(k+l+1,iy+1,is,1)*
+     *          sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
+     .          (2.0_R8*tib2(k+l+1,iy+1,is,1)+EionH2*ev)
+            enddo
+          endif
         end do !}
-	l=1-l
+        l=1-l
         u=-u
       end do !}
-  
+
 c
 c*** Re-scale the neutral target loading and calculate the sums
 c
@@ -296,25 +323,27 @@ c
       end do !}
 c      print *,'ntrgts, wi: ',ntrgts,wi
       do j=1,ntrgts !{
-        if(ntns .eq. ntrgts) then !{
-          js=ltns(j)+nlim
-          wo=wldnek(js,0)+wldnep(js,0)
+        if (ft44) then
+          if(ntns .eq. ntrgts) then !{
+            js=ltns(j)+nlim
+            wo=wldnek(js,0)+wldnep(js,0)
 c          print *,'j,js,wldnek,wldnep = ',j,js,wldnek(js,0),wldnep(js,0)
-          if(wi(j) .gt. 0.0_R8) then !{
-            wi(j)=wo/wi(j)
+            if(wi(j) .gt. 0.0_R8) then !{
+              wi(j)=wo/wi(j)
+            else !}{
+              wi(j)=0.0_R8
+            end if !}
           else !}{
+            write(*,*) 'b2ptrgl: ntns.ne.ntrgts (',ntns,' vs.',ntrgts,
+     ,               ' ) - no neutral load onto the targets calculated'
+            write(*,*) '  ==> check specification of ltns in ',
+     ,                               'b2.neutrals.parameters'
             wi(j)=0.0_R8
           end if !}
-        else !}{
-          write(*,*) 'b2ptrgl: ntns.ne.ntrgts (',ntns,' vs.',ntrgts,
-     ,               ' ) - no neutral load onto the targets calculated'
-          write(*,*) '  ==> check specification of ltns in ',
-     ,                               'b2.neutrals.parameters'
-          wi(j)=0.0_R8
-        end if !}
+        endif
         do iy=lytg,ny-1 !{
-c          wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
-          wnutrg(iy,j)=wnutrg(iy,j)*wi(j)/s(iy,j)
+c          if (ft44) wnutrg(iy,j)=1.0e-6_R8*wnutrg(iy,j)*wi(j)/s(iy,j)
+          if (ft44) wnutrg(iy,j)=wnutrg(iy,j)*wi(j)/s(iy,j)
           wpttrg(iy,j)=wnutrg(iy,j)+wpltrg(iy,j)
           wtttrg(iy,j)=wpttrg(iy,j)+wrdtrg(iy,j,0)
         end do !}
@@ -559,29 +588,29 @@ c*** At present, only for carbon - so determine where it is
 c
       jcf=0
       jci=-1
-	  jcp=0
+      jcp=0
       jhef=0
       jhei=-1
-	  jhep=0
+      jhep=0
       if(nspecies .gt. 1) then
         do is=1,nspecies
-		  if (nint(zn(eb2spcr(is))).eq.6) jcf = is
-		  if (nint(zn(eb2spcr(is))).eq.2) jhef = is
-		  if (jcf.eq.is) jci = eb2spcr(is)
-		  if (jhef.eq.is) jhei = eb2spcr(is)
+          if (nint(zn(eb2spcr(is))).eq.6) jcf = is
+          if (nint(zn(eb2spcr(is))).eq.2) jhef = is
+          if (jcf.eq.is) jci = eb2spcr(is)
+          if (jhef.eq.is) jhei = eb2spcr(is)
         end do
       end if
-	  if (jcf.gt.0) then
-	    jcp=1
-	    do is = 2, jcf
-		  jcp = jcp + nfluids(is-1)
-		end do
+      if (jcf.gt.0) then
+        jcp=1
+        do is = 2, jcf
+          jcp = jcp + nfluids(is-1)
+        end do
       end if
-	  if (jhef.gt.0) then
-	    jhep=1
-		do is = 2, jhef
-		  jhep = jhep + nfluids(is-1)
-		end do
+      if (jhef.gt.0) then
+        jhep=1
+        do is = 2, jhef
+          jhep = jhep + nfluids(is-1)
+        end do
       end if
 c      print *,'jcf,jci,jcp = ',jcf,jci,jcp
 c      print *,'jhef,jhei,jhep = ',jhef,jhei,jhep
@@ -645,39 +674,54 @@ c          print *,'j,ltrgpos = ',j,k  !###
           sjcp_t(j)=0.0_R8
           do iy=lytg,ny-1 !{
             sjhp(iy,j)=u*fna(k+1-l,iy,0,ismain)
-            t=tab2(k+l+1,iy+1,b2espcr(ismain0),1)/ev
-            sjha(iy,j)=s(iy,2)*dab2(k+l+1,iy+1,b2espcr(ismain0),1)*
-     *                 sqrt(max(t/am(ismain),0.0_R8))*0.25_R8*1.0e4_R8
-            spha(iy,j)=dab2(k+l+1,iy+1,b2espcr(ismain0),1)*
-     *                 tab2(k+l+1,iy+1,b2espcr(ismain0),1)
+            if (ft44) then
+              t=tab2(k+l+1,iy+1,b2espcr(ismain0),1)/ev
+              sjha(iy,j)=s(iy,2)*dab2(k+l+1,iy+1,b2espcr(ismain0),1)*
+     *                   sqrt(max(t/am(ismain),0.0_R8))*0.25_R8*1.0e4_R8
+              spha(iy,j)=dab2(k+l+1,iy+1,b2espcr(ismain0),1)*
+     *                   tab2(k+l+1,iy+1,b2espcr(ismain0),1)
+            else
+              sjha(iy,j)=u*fna(k+1-l,iy,0,ismain0)
+              spha(iy,j)=na(k+l,iy,ismain0)*ti(k+l,iy)
+            endif
             sjhp_t(j)=sjhp_t(j)+sjhp(iy,j)
             sjha_t(j)=sjha_t(j)+sjha(iy,j)
             sjcp(iy,j)=0.0_R8
             sjca(iy,j)=0.0_R8
             if(jcf.gt.0) then !{
-              do is=0,6 !{
+              do is=1,6 !{
                 sjcp(iy,j)=sjcp(iy,j)+fna(k+1-l,iy,0,jci+is)
               end do !}
               sjcp(iy,j)=u*sjcp(iy,j)
-              t=tab2(k+l+1,iy+1,jcf,1)/ev
-              sjca(iy,j)=s(iy,j)*dab2(k+l+1,iy+1,jcf,1)*
+              if (ft44) then
+                t=tab2(k+l+1,iy+1,jcf,1)/ev
+                sjca(iy,j)=s(iy,j)*dab2(k+l+1,iy+1,jcf,1)*
      *                   sqrt(max(t/am(jci),0.0_R8))*0.25_R8*1.0e4_R8
+              else
+                sjca(iy,j)=u*fna(k+1-l,iy,0,jci)
+              end if
               sjcp_t(j)=sjcp_t(j)+sjcp(iy,j)
               sjca_t(j)=sjca_t(j)+sjca(iy,j)
             end if !}
             if(jhef.gt.0) then !{
-              do is=0,2 !{
+              do is=1,2 !{
                 sjhep(iy,j)=sjhep(iy,j)+fna(k+1-l,iy,0,jhei+is)
               end do !}
               sjhep(iy,j)=u*sjhep(iy,j)
-              t=tab2(k+l+1,iy+1,jhef,1)/ev
-              sjhea(iy,j)=s(iy,j)*dab2(k+l+1,iy+1,jhef,1)*
+              if (ft44) then
+                t=tab2(k+l+1,iy+1,jhef,1)/ev
+                sjhea(iy,j)=s(iy,j)*dab2(k+l+1,iy+1,jhef,1)*
      *                    sqrt(max(t/am(jhei),0.0_R8))*0.25_R8*1.0e4_R8
+                sphea(iy,j)=dab2(k+l+1,iy+1,jhef,1)*
+     *                      tab2(k+l+1,iy+1,jhef,1)
+                thea(iy,j)=tab2(k+l+1,iy+1,jhef,1)/ev
+              else
+                sjhea(iy,j)=u*fna(k+1-l,iy,0,jhei)
+                sphea(iy,j)=na(k+l,iy,jhei)*ti(k+l,iy)
+                thea(iy,j)=ti(k+l,iy)/ev
+              end if
               sjhep_t(j)=sjhep_t(j)+sjhep(iy,j)
               sjhea_t(j)=sjhea_t(j)+sjhea(iy,j)
-              sphea(iy,j)=dab2(k+l+1,iy+1,jhef,1)*
-     *                    tab2(k+l+1,iy+1,jhef,1)
-              thea(iy,j)=tab2(k+l+1,iy+1,jhef,1)/ev
             end if !}
           end do !}
           l=1-l
@@ -692,77 +736,79 @@ c          print '(2a5,6(3x,a7,2x))','j','js',                        !###
 c     ,      'sjha_w','sjhea_w','sjca_w','sjhp_w','sjhep_w','sjcp_w'
 c!###}
 c
-        do j=1,ntrgts !{
-          js=ltns(j)+nlim
-          sjha_w(j)=wldna(js,1,0)
-          sjhp_w(j)=wldpp(js,1,0)
-          sjht_w(j)=sjha_w(j)+sjhp_w(j)
-          if(jcf.gt.0) then !{
-            sjca_w(j)=wldna(js,jcf,0)
-            sjcp_w(j)=0
-            do is=1,6 !{
-              sjcp_w(j)=sjcp_w(j)+wldpp(js,jcp-1+is,0)
-            end do !}
-            sjct_w(j)=sjca_w(j)+sjcp_w(j)
-          end if !}
-          if(jhef.gt.0) then !{
-            sjhea_w(j)=wldna(js,jhef,0)
-            sjhep_w(j)=0
-            do is=1,2 !{
-              sjhep_w(j)=sjhep_w(j)+wldpp(js,jhep-1+is,0)
-            end do !}
-            sjhet_w(j)=sjhea_w(j)+sjhep_w(j)
-          end if !}
+        if (ft44) then
+          do j=1,ntrgts !{
+            js=ltns(j)+nlim
+            sjha_w(j)=wldna(js,1,0)
+            sjhp_w(j)=wldpp(js,1,0)
+            sjht_w(j)=sjha_w(j)+sjhp_w(j)
+            if(jcf.gt.0) then !{
+              sjca_w(j)=wldna(js,jcf,0)
+              sjcp_w(j)=0
+              do is=1,6 !{
+                sjcp_w(j)=sjcp_w(j)+wldpp(js,jcp-1+is,0)
+              end do !}
+              sjct_w(j)=sjca_w(j)+sjcp_w(j)
+            end if !}
+            if(jhef.gt.0) then !{
+              sjhea_w(j)=wldna(js,jhef,0)
+              sjhep_w(j)=0
+              do is=1,2 !{
+                sjhep_w(j)=sjhep_w(j)+wldpp(js,jhep-1+is,0)
+              end do !}
+              sjhet_w(j)=sjhea_w(j)+sjhep_w(j)
+            end if !}
 c!###{
-c          print '(2i5,1p,6e12.4)',j,js,sjha_w(j),sjhea_w(j),
-c     ,      sjca_w(j),sjhp_w(j),sjhep_w(j),sjcp_w(j)
+c            print '(2i5,1p,6e12.4)',j,js,sjha_w(j),sjhea_w(j),
+c     ,       sjca_w(j),sjhp_w(j),sjhep_w(j),sjcp_w(j)
 c!###}
-          if(sjha_t(j).gt.0.0_R8) then !{
-            sjha_t(j)=sjha_w(j)/sjha_t(j)
-          else !}{
-            sjha_t(j)=0.0_R8
-          end if !}
-          if(sjhp_t(j).gt.0.0_R8) then !{
-            sjhp_t(j)=sjhp_w(j)/sjhp_t(j)
-          else !}{
-            sjhp_t(j)=0.0_R8
-          end if !}
-          if(jcf.gt.0) then !{
-            if(sjca_t(j).gt.0.0_R8) then !{
-              sjca_t(j)=sjca_w(j)/sjca_t(j)
+            if(sjha_t(j).gt.0.0_R8) then !{
+              sjha_t(j)=sjha_w(j)/sjha_t(j)
             else !}{
-              sjca_t(j)=0.0_R8
+              sjha_t(j)=0.0_R8
             end if !}
-            if(sjcp_t(j).gt.0.0_R8) then !{
-              sjcp_t(j)=sjcp_w(j)/sjcp_t(j)
+            if(sjhp_t(j).gt.0.0_R8) then !{
+              sjhp_t(j)=sjhp_w(j)/sjhp_t(j)
             else !}{
-              sjcp_t(j)=0.0_R8
+              sjhp_t(j)=0.0_R8
             end if !}
-          end if !}
-          if(jhef.gt.0) then !{
-            if(sjhea_t(j).gt.0.0_R8) then !{
-              sjhea_t(j)=sjhea_w(j)/sjhea_t(j)
-            else !}{
-              sjhea_t(j)=0.
+            if(jcf.gt.0) then !{
+              if(sjca_t(j).gt.0.0_R8) then !{
+                sjca_t(j)=sjca_w(j)/sjca_t(j)
+              else !}{
+                sjca_t(j)=0.0_R8
+              end if !}
+              if(sjcp_t(j).gt.0.0_R8) then !{
+                sjcp_t(j)=sjcp_w(j)/sjcp_t(j)
+              else !}{
+                sjcp_t(j)=0.0_R8
+              end if !}
             end if !}
-            if(sjhep_t(j).gt.0.0_R8) then !{
-              sjhep_t(j)=sjhep_w(j)/sjhep_t(j)
-            else !}{
-              sjhep_t(j)=0.0_R8
+            if(jhef.gt.0) then !{
+              if(sjhea_t(j).gt.0.0_R8) then !{
+                sjhea_t(j)=sjhea_w(j)/sjhea_t(j)
+              else !}{
+                sjhea_t(j)=0.
+              end if !}
+              if(sjhep_t(j).gt.0.0_R8) then !{
+                sjhep_t(j)=sjhep_w(j)/sjhep_t(j)
+              else !}{
+                sjhep_t(j)=0.0_R8
+              end if !}
             end if !}
-          end if !}
-          do iy=lytg,ny-1 !{
-            sjha(iy,j)=sjha(iy,j)*sjha_t(j)
-            sjhp(iy,j)=sjhp(iy,j)*sjhp_t(j)
-            sjht(iy,j)=sjha(iy,j)+sjhp(iy,j)
-            sjca(iy,j)=sjca(iy,j)*sjca_t(j)
-            sjcp(iy,j)=sjcp(iy,j)*sjcp_t(j)
-            sjct(iy,j)=sjca(iy,j)+sjcp(iy,j)
-            sjhea(iy,j)=sjhea(iy,j)*sjhea_t(j)
-            sjhep(iy,j)=sjhep(iy,j)*sjhep_t(j)
-            sjhet(iy,j)=sjhea(iy,j)+sjhep(iy,j)
+            do iy=lytg,ny-1 !{
+              sjha(iy,j)=sjha(iy,j)*sjha_t(j)
+              sjhp(iy,j)=sjhp(iy,j)*sjhp_t(j)
+              sjht(iy,j)=sjha(iy,j)+sjhp(iy,j)
+              sjca(iy,j)=sjca(iy,j)*sjca_t(j)
+              sjcp(iy,j)=sjcp(iy,j)*sjcp_t(j)
+              sjct(iy,j)=sjca(iy,j)+sjcp(iy,j)
+              sjhea(iy,j)=sjhea(iy,j)*sjhea_t(j)
+              sjhep(iy,j)=sjhep(iy,j)*sjhep_t(j)
+              sjhet(iy,j)=sjhea(iy,j)+sjhep(iy,j)
+            end do !}
           end do !}
-        end do !}
+        end if
 c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jD : ',
 c     ,                                           (sjha_t(i),i=1,ntrgts)
 c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jD+: ',
@@ -779,7 +825,7 @@ c     ,                                           (sjhep_t(i),i=1,ntrgts)
 c*** Calculate sputtering
 
 c      print *,'Sputtering...'
-        if(jcf .gt. 0) then !{
+        if(jcf .gt. 0 .and. ft44) then !{
           do j=1,ntrgts !{
             do iy=lytg,ny-1 !{
               sjcs(iy,j)=sjht(iy,j)
@@ -821,7 +867,7 @@ c     ,                      j,js,sjcs_w(j),sjcb_w(j)  !###
         end if !}
 
         nclm_er=16
-		l=1
+        l=1
         do j=1,ntrgts !{
           nx_hlp=ltrgpos(j)+l
           jj=j
@@ -848,7 +894,7 @@ c     ,                      j,js,sjcs_w(j),sjcb_w(j)  !###
      ,            xmp_hlp(i,k)
           end do !}
           close (lun)
-		  l=1-l
+          l=1-l
         end do !}
 c----------------------------------------------------------------------
 c*** Produce a summary file for target sputtering
@@ -857,7 +903,7 @@ c
         sjhp_w(0)=0.0_R8
         sjha_w(0)=0.0_R8
         sjht_w(0)=0.0_R8
-		sjhep_w(0)=0.0_R8
+        sjhep_w(0)=0.0_R8
         sjhea_w(0)=0.0_R8
         sjhet_w(0)=0.0_R8
         sjcp_w(0)=0.0_R8
@@ -869,7 +915,7 @@ c
           sjhp_w(0)=sjhp_w(0)+sjhp_w(j)
           sjha_w(0)=sjha_w(0)+sjha_w(j)
           sjht_w(0)=sjht_w(0)+sjht_w(j)
-		  sjhep_w(0)=sjhep_w(0)+sjhep_w(j)
+          sjhep_w(0)=sjhep_w(0)+sjhep_w(j)
           sjhea_w(0)=sjhea_w(0)+sjhea_w(j)
           sjhet_w(0)=sjhet_w(0)+sjhet_w(j)
           sjcp_w(0)=sjcp_w(0)+sjcp_w(j)
@@ -943,13 +989,13 @@ c
      ,                               'b2.parameters (section NEUTRALS)'
         do j=1,ntrgts !{
           sjha_t(j)=0.0_R8
-		  sjhea_t(j)=0.0_R8
+          sjhea_t(j)=0.0_R8
           sjca_t(j)=0.0_R8
           do iy=0,ny-1 !{
             sjha(iy,j)=0.0_R8
             sjhp(iy,j)=0.0_R8
             sjht(iy,j)=0.0_R8
-			sjhea(iy,j)=0.0_R8
+            sjhea(iy,j)=0.0_R8
             sjhep(iy,j)=0.0_R8
             sjhet(iy,j)=0.0_R8
             sjca(iy,j)=0.0_R8

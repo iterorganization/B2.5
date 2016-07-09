@@ -67,6 +67,9 @@ c
 c
 c*** If requested, calculate the target load
 c
-      if(ltg) call b2pwrldt
+      if(ltg) then
+        irdparm=1
+        call b2pwrldt
+      end if
 c======================================================================
       end

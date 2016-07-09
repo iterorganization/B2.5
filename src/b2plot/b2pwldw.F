@@ -1,10 +1,11 @@
-      subroutine b2pwldw(lun,trgl,izn,iln,boundary_namelist)
+      subroutine b2pwldw(lun,trgl,izn,iln,boundary_namelist,BoRiS)
       use b2mod_geo
       use b2mod_b2cmpa
       use b2mod_b2plot
       use b2mod_plasma
       use b2mod_rates
       use b2mod_diag
+      use b2mod_external
       use b2mod_constants
       use b2mod_neutrals_namelist
       use b2mod_boundary_namelist
@@ -81,7 +82,8 @@ c=======================================================================
       parameter (EionH2=15.4_R8)
 #endif
       integer lun,izn,iln,boundary_namelist
-      logical trgl
+      real (kind=R8) :: BoRiS
+      logical trgl,ft44
 
 c*** Local variables
 c***  ils     : the segment index in the whole list
@@ -209,17 +211,20 @@ c-----------------------------------------------------------------------
       if(first) then !{
 c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         tab=char(9)
+        inquire(file='fort.44',exist=ft44)
         do_trg=.true.
         write(frmt_hlp,'(7h(1p,1x,,i5,11h(e12.5,a1)))') n_line_x
         
         n_sfpr_s=1
         if(nspecies.gt.1) n_sfpr_s=nspecies
+#ifdef B25_EIRENE
         if(n_sfpr_s.ne.natmi) then !{
           write(0,*) '!!! Inconsistency found in b2pwldw: numbers',
      ,      ' of atomic and plasma species differ: ',natmi,n_sfpr_s
           write(0,*) '==> No particle fluxes in the output'
           n_sfpr_s=0
         end if !}
+#endif
         do is=1,n_sfpr_s !{
           sfpr_s(is)=atoms_list(is)
         end do !}
@@ -434,53 +439,73 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
               kk=k+l
               do iy=0,ny-1 !{
                 wo=0.0_R8
+                wnutrg(iy,j)=0.0_R8
                 do is=0,ns-1 !{
-                  wo=wo+rpt(kk,iy,is)*ev*fna(k+1-l,iy,0,is)
+                  if (.not.is_neutral(is).or.ft44) then
+                    wo=wo+fna(k+1-l,iy,0,is)*(rpt(kk,iy,is)*ev+
+     *               (1.0_R8-BoRiS)*kinrgy(kk,iy,is))
+                  else
+                    wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,is)*
+     *               (1.0_R8-BoRiS)*kinrgy(kk,iy,is)
+                  end if
+                end do !}
+                do is=0,ns_ext-1 !{
+                  if (.not.is_ext_neutral(is).or.ft44) then
+                    wo=wo+fa_ext(k+1-l,iy,0,is)*(pt_ext(kk,iy,is)*ev
+     .               +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
+     .                ua_ext(kk,iy,is)**2)
+                  else
+                    wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,is)*
+     .               (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
+     .               ua_ext(kk,iy,is)**2
+                  end if
                 end do !}
                 wptpl(iy,j)=wo/s(iy,j)*u
+                if (.not.ft44) wnutrg(iy,j)=wnutrg(iy,j)*u/s(iy,j)
                 whtpl(iy,j)=(fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0))/s(iy,j)*u
                 wpltrg(iy,j)=wptpl(iy,j)+whtpl(iy,j)
                 netrg(iy,j)=ne(kk,iy)
                 tetrg(iy,j)=te(kk,iy)/ev
                 titrg(iy,j)=ti(kk,iy)/ev
-                wnutrg(iy,j)=0.0_R8
-                do is=1,natmi
-                  t=tab2(kk+1,iy+1,is,1)/ev
-                  wnutrg(iy,j)=wnutrg(iy,j)+s(iy,j)*
-     *             dab2(kk+1,iy+1,is,1)*tab2(kk+1,iy+1,is,1)*
-     *             sqrt(max(t/am(eb2spcr(is)),0.0_R8))*
-     *             0.25_R8*2.0e4_R8
-                 end do
-                 do is=1,nmoli
-                   mmol=0.0_R8
-                   do iss = 1,natmi
-                     mmol=mmol+mlcmp(iss,is)*am(eb2spcr(iss))
-                   enddo
-                   t=tmb2(kk+1,iy+1,is,1)/ev
-                   wnutrg(iy,j)=wnutrg(iy,j)+
-     .              s(iy,j)*dmb2(kk+1,iy+1,is,1)*tmb2(kk+1,iy+1,is,1)*
-     *              sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
-                 enddo
-                 do is=1,nioni
-                   mion=0.0_R8
-                   imol=1
-                   match_found=.false.
-                   do while (.not.match_found.and.imol.le.nmoli)
-                     if (streql(textin(is-1),textmn(imol-1)//'+')) then
-                       match_found=.true.
-                       do iss = 1,natmi
-                         mion=mion+mlcmp(iss,imol)*am(eb2spcr(iss))
-                       enddo
-                     endif
-                     imol=imol+1
-                   enddo
-                   t=tib2(kk+1,iy+1,is,1)/ev
-                   if (mion.gt.0.0_R8)
-     >              wnutrg(iy,j)=wnutrg(iy,j)+
-     .               s(iy,j)*dib2(kk+1,iy+1,is,1)*
-     *               sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
-     .               (2.0_R8*tib2(kk+1,iy+1,is,1)+EionH2*ev)
-                enddo
+                if (ft44) then
+                  do is=1,natmi
+                    t=tab2(kk+1,iy+1,is,1)/ev
+                    wnutrg(iy,j)=wnutrg(iy,j)+s(iy,j)*
+     *               dab2(kk+1,iy+1,is,1)*tab2(kk+1,iy+1,is,1)*
+     *               sqrt(max(t/am(eb2spcr(is)),0.0_R8))*
+     *               0.25_R8*2.0e4_R8
+                  end do
+                  do is=1,nmoli
+                    mmol=0.0_R8
+                    do iss = 1,natmi
+                      mmol=mmol+mlcmp(iss,is)*am(eb2spcr(iss))
+                    enddo
+                    t=tmb2(kk+1,iy+1,is,1)/ev
+                    wnutrg(iy,j)=wnutrg(iy,j)+
+     .               s(iy,j)*dmb2(kk+1,iy+1,is,1)*tmb2(kk+1,iy+1,is,1)*
+     *               sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
+                  enddo
+                  do is=1,nioni
+                    mion=0.0_R8
+                    imol=1
+                    match_found=.false.
+                    do while (.not.match_found.and.imol.le.nmoli)
+                      if (streql(textin(is-1),textmn(imol-1)//'+')) then
+                        match_found=.true.
+                        do iss = 1,natmi
+                          mion=mion+mlcmp(iss,imol)*am(eb2spcr(iss))
+                        enddo
+                      endif
+                      imol=imol+1
+                    enddo
+                    t=tib2(kk+1,iy+1,is,1)/ev
+                    if (mion.gt.0.0_R8)
+     >               wnutrg(iy,j)=wnutrg(iy,j)+
+     .                s(iy,j)*dib2(kk+1,iy+1,is,1)*
+     *                sqrt(max(t/mion,0.0_R8))*0.25_R8*1.0e4_R8*
+     .                (2.0_R8*tib2(kk+1,iy+1,is,1)+EionH2*ev)
+                  enddo
+                end if
               end do !}
               l=1-l
               u=-u
@@ -496,33 +521,36 @@ c*** Re-scale the neutral target loading and calculate the sums
             end do !}
 c            print *,'ntrgts, wi: ',ntrgts,(wi(i),i=1,ntrgts)  !###
             do j=1,ntrgts !{
-              if(ntns.eq.ntrgts) then !{
-                js=ltns(j)+nlim
-                wo=wldnek(js,0)+wldnep(js,0)
-c                print *,'j,js,wo = ',j,js,wo    !###
-                if(wi(j).gt.0.0_R8) then !{
-                  wi(j)=wo/wi(j)
+              if (ft44) then
+                if(ntns.eq.ntrgts) then !{
+                  js=ltns(j)+nlim
+                  wo=wldnek(js,0)+wldnep(js,0)
+c                  print *,'j,js,wo = ',j,js,wo    !###
+                  if(wi(j).gt.0.0_R8) then !{
+                    wi(j)=wo/wi(j)
+                  else !}{
+                    wi(j)=0.0_R8
+                  end if !}
                 else !}{
+                  write(*,*) 'b2pwldw: ntns.ne.ntrgts (',
+     ,              ntns,' vs.',ntrgts,
+     ,              ' ) - no neutral load onto the targets calculated'
+                  write(*,*) '  ==> check specification of ltns in ',
+     ,              'b2.neutrals.parameters'
                   wi(j)=0.0_R8
                 end if !}
-              else !}{
-                write(*,*) 'b2pwldw: ntns.ne.ntrgts (',
-     ,            ntns,' vs.',ntrgts,
-     ,            ' ) - no neutral load onto the targets calculated'
-                write(*,*) '  ==> check specification of ltns in ',
-     ,            'b2.parameters (section NEUTRALS)'
-                wi(j)=0.0_R8
-              end if !}
-
+              endif
               do iy=0,ny-1 !{
-                wnutrg(iy,j)=wnutrg(iy,j)*wi(j)/s(iy,j)
-                if(abs(wo).gt.0.0_R8) then !{
-                  wptnu(iy,j)=wnutrg(iy,j)*wldnep(js,0)/wo
-                  whtnu(iy,j)=wnutrg(iy,j)-wptnu(iy,j)
-                else !}{
-                  wptnu(iy,j)=0.0_R8
-                  whtnu(iy,j)=0.0_R8
-                end if !}
+                if (ft44) then
+                  wnutrg(iy,j)=wnutrg(iy,j)*wi(j)/s(iy,j)
+                  if(abs(wo).gt.0.0_R8) then !{
+                    wptnu(iy,j)=wnutrg(iy,j)*wldnep(js,0)/wo
+                    whtnu(iy,j)=wnutrg(iy,j)-wptnu(iy,j)
+                  else !}{
+                    wptnu(iy,j)=0.0_R8
+                    whtnu(iy,j)=0.0_R8
+                  end if !}
+                end if
                 wpttrg(iy,j)=wnutrg(iy,j)+wpltrg(iy,j)
                 wtttrg(iy,j)=wpttrg(iy,j)+wrdtrg(iy,j)
               end do !}
@@ -565,16 +593,21 @@ c                  zz=zz+wwo*u                 !###
                   else !}{
                     eiitrg(iy,j,is)=0.0_R8
                   end if !}
-                  t=tab2(kk+1,iy+1,is,1)/ev
-                  faitrg(iy,j,is)=s(iy,j)*dab2(kk+1,iy+1,is,1)*
-     *             sqrt(max(t/am(eb2spcr(is)),0.))*0.25_R8*1.0e4_R8
-                  eaitrg(iy,j,is)=s(iy,j)*dab2(kk+1,iy+1,is,1)*
-     *             sqrt(max(t/am(eb2spcr(is)),0.0_R8))*
-     *             tab2(kk+1,iy+1,is,1)*0.25_R8*2.0e4_R8
+                  if (ft44) then
+                    t=tab2(kk+1,iy+1,is,1)/ev
+                    faitrg(iy,j,is)=s(iy,j)*dab2(kk+1,iy+1,is,1)*
+     *               sqrt(max(t/am(eb2spcr(is)),0.))*0.25_R8*1.0e4_R8
+                    eaitrg(iy,j,is)=s(iy,j)*dab2(kk+1,iy+1,is,1)*
+     *               sqrt(max(t/am(eb2spcr(is)),0.0_R8))*
+     *               tab2(kk+1,iy+1,is,1)*0.25_R8*2.0e4_R8
+                  else
+                    faitrg(iy,j,is)=u*fna(ib,iy,0,eb2spcr(is))
+                    eaitrg(iy,j,is)=2.0_R8*ti(kk,iy)
+                  end if
 c!###{
 c                  print '(1x,i2,1p,12e10.2)',iy,p/ev,h/ev,t,wo,wwo,
 c     ,              fiitrg(iy,j,is),eiitrg(iy,j,is),
-c     ,              faitrg(iy,j,is),eaitrg(iy,j,is),
+c     ,              faitrg(iy,j,is),eaitrg(iy,j,is)/ev,
 c     ,              dab2(kk+1,iy+1,is,1),tab2(kk+1,iy+1,is,1)/ev,s(iy,j)
 c!###}
                 end do !}

@@ -14,7 +14,7 @@ c
       parameter (ntrgsx=4,nwldprtx=ntrgsx+12, nadsrcm=400)
       parameter (mskipel=DEF_NLIM,lnwlmtrl=4, mlblprtx=8)
       parameter (nsptmx=3)
-      integer ildparm, lppp, nwldprt, 
+      integer ildparm, irdparm, lppp, nwldprt,
      ,  lwldstrt(nwldprtx), nwldlis(nwldprtx),
      ,	jedge(ntrgsx), ltrgpos(ntrgsx), lseppos(ntrgsx), lpfrpos(ntrgsx),
      ,  ntrgts, ntrgs,

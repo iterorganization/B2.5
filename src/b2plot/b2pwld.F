@@ -17,8 +17,10 @@ c
       ii=ii/10
       if(mod(ii,10) .gt. 0) call b2pnwl(*50)
  50   ii=ii/10
+      irdparm=1
       if(mod(ii,10) .gt. 0) call b2ptrgl(ismain,ismain0,BoRiS)
       ii=ii/10
-      if(mod(ii,10) .gt. 0) call b2pwldl(boundary_namelist)
+      irdparm=2
+      if(mod(ii,10) .gt. 0) call b2pwldl(boundary_namelist,BoRiS)
 c======================================================================
       end

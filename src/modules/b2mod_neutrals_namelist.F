@@ -762,7 +762,7 @@ c
         call xertst (0.le.ltns(is).and.ltns(is).le.nsts, 
      &   'faulty input ltns')
       enddo
-      do is = 1, nstraid
+      do is = 1, nstrai
         call xertst (lsns(is).le.nlim+nsts, 'faulty input lsns')
         call xertst (lsns(is).ge.-nsts, 'faulty input lsns')
         call xertst (0.le.ksns(is), 'faulty input ksns')

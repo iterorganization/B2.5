@@ -27,6 +27,7 @@ c----------------------------------------------------------------------
 c
 c*** Correct the neutral fluxes according to recyc values
 c
+#ifdef B25_EIRENE
       write(*,'(a,6i5)') 'nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi=',
      1 nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi
       if(nspecies.eq.nnatmi) then
@@ -105,6 +106,7 @@ csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
         write (*,"(a,5i4)")
      &  'b2trace: no source rescaling: natmi,nspecies=', nnatmi,nspecies  !srv 18.05.09
       end if
+#endif
 c*** Particle balance
       if(filedata(ntrc_bln)) call b2blnc(nx,ny,ns,dtim)
 c*** Power balance
