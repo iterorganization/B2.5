@@ -19,7 +19,7 @@
       use b2mod_b2cmwg
       use b2mod_ppout
       use b2mod_diag
-!      use b2mod_work
+      use b2mod_work
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:2), nx, ny, ns
