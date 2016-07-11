@@ -76,7 +76,7 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:5), nout(0:2), nx, ny, ns, idum(0:9), io
+      integer ninp(0:6), nout(0:2), nx, ny, ns, idum(0:9), io
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
@@ -85,7 +85,7 @@
       external prgini, prgend, xerset, xertst, cfopen, cfruin
       external b2pldr
 *   ..initialise input/output units
-      data ninp/50,51,52,53,54,55/
+      data ninp/50,51,52,53,54,55,56/
       data nout/60,61,62/
 
 *-----------------------------------------------------------------------
@@ -96,7 +96,7 @@
 *
 *     Description of some local variables:
 *
-*     ninp - (0:5) integer array.
+*     ninp - (0:6) integer array.
 *     ninp specifies the input unit numbers.
 *
 *     nout - (0:2) integer array.
@@ -135,12 +135,14 @@
       call cfopen (ninp(3),'b2fstate','old','un*formatted')
       call cfopen (ninp(4),'b2fplasma','old','unformatted')
       call cfopen (ninp(5),'b2frates','old','un*formatted')
+      call cfopen (ninp(6),'b2ftrack','old','un*formatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers						 !xpb
       call cfverr (ninp(1), b2fgmtry_version)				 !xpb
       call cfverr (ninp(2), b2fparam_version)				 !xpb
       call cfverr (ninp(3), b2fstate_version)				 !xpb
+      call cfverr (ninp(6), b2ftrack_version)				 !xpb
 *   ..obtain nx, ny, ns
       call cfruin (ninp(3), 3, idum, 'nx,ny,ns')
       nx = idum(0)
@@ -154,6 +156,11 @@
      &  'faulty input nx, ny from geometry file')
       call xertst (idum(2).eq.ns,
      &  'faulty input ns from physics parameters file')
+      call cfruin (ninp(6), 3, idum, 'nx,ny,ns')
+      call xertst (idum(0).eq.nx.and.idum(1).eq.ny,
+     &  'faulty input nx, ny from tracing file')
+      call xertst (idum(2).eq.ns,
+     &  'faulty input ns from tracing file')
 *   ..call principal driver routine
       call alloc_b2mod_geo(nx,ny)
       call alloc_b2mod_plasma(nx,ny,ns)

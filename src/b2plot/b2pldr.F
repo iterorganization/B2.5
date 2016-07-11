@@ -22,12 +22,13 @@
 !      use b2mod_work
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer ninp(0:5), nout(0:2), nx, ny, ns
+      integer ninp(0:6), nout(0:2), nx, ny, ns
 *   ..output arguments (unspecified on entry)
 *     (none)
 *   ..common blocks
 *   ..local variables
       integer ix, iy, is, idum(0:9), k, nscx, iscx(0:nscxmax-1), ismain
+      integer itim, itcnt, n2
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80, line*500
       real (kind=R8) :: t0, t1
@@ -39,19 +40,22 @@
       save ismain
       data ismain/1/
 *   ..procedures
-      logical ltst, is_comment
+      logical ltst, is_comment, cfendf
       intrinsic sqrt
       external subini, subend, xertst, xerrab, is_comment
-      external cfruch, cfruin, cfverr, b2rfcp, ipgeti
+      external cfruch, cfruin, cfverr, b2rfcp, ipgeti, cfendf
       external b2rups, b2rugm, b2rucp, b2plot, b2xxid, b2rflb, b2rurc
       external b2ruzd, b2spel, b2sqel, b2sqcx, b2spcx, b2xvps, b2xvcp
       ltst(t0,t1) = abs(t0-t1).le.1.0e-6_R8*(abs(t0)+abs(t1))
 
 *   ..subprogram start-up calls
       call subini ('b2pldr')
+*   ..set n2
+      n2 = (nx+2)*(ny+2)
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.
      &  1.le.ninp(3).and.1.le.ninp(4).and.1.le.ninp(5).and.
+     &  1.le.ninp(6).and.
      &  1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2),
      &  'faulty argument ninp, nout')
 *   ..test dimensions
@@ -115,6 +119,32 @@
        call xertst (ltst(zn(is),rtzn(is)),
      &   'faulty input rtzn--wrong rate table?')
       enddo
+*   ..read parameters from tracing file
+      call cfruch (ninp(6), 120, lblmn, 'label')
+      call b2ruzd (ninp(6), b2ftrack_version,
+     & ns, zamin, zamax, zn, am, .true.)
+*   ..tracing loop
+   10 if (.not.cfendf(ninp(6))) then
+*    ..get itim, itcnt
+       call cfruin (ninp(6), 2, idum, 'itim,itcnt')
+       itim = idum(0)
+       itcnt = idum(1)
+*    ..get residuals and corrections
+       call cfrure (ninp(6), n2*ns, resco, 'resco')
+       call cfrure (ninp(6), n2*ns, corpa, 'corpa')
+       call cfrure (ninp(6), n2*ns, resmo, 'resmo')
+       call cfrure (ninp(6), n2*ns, corua, 'corua')
+       call cfrure (ninp(6), n2, resmt, 'resmt')
+       call cfrure (ninp(6), n2, corut, 'corut')
+       call cfrure (ninp(6), n2, reshe, 'reshe')
+       call cfrure (ninp(6), n2, corte, 'corte')
+       call cfrure (ninp(6), n2, reshi, 'reshi')
+       call cfrure (ninp(6), n2, corti, 'corti')
+       call cfrure (ninp(6), n2, respo, 'respo')
+       call cfrure (ninp(6), n2, corpo, 'corpo')
+*    ..tracing loop
+       goto 10
+      endif
 *    ..compute log-log electron rate coefficients
       call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
      &     rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)

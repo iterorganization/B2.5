@@ -2647,11 +2647,11 @@ c
         case ('cte')
           description='CORTE'
           nz=1
-          call copy(corte,1.0_R8,nz,textbl)
+          call copy(corte,1.0_R8/ev,nz,textbl)
         case ('cti')
           description='CORTI'
           nz=1
-          call copy(corti,1.0_R8,nz,textbl)
+          call copy(corti,1.0_R8/ev,nz,textbl)
         case ('cpo')
           description='CORPO'
           nz=1
