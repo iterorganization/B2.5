@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sigp (nx, ny, isb, rzb, vol, hx, hz, bb, nb, ti,   
+      subroutine b2sigp (nx, ny, isb, rzb, vol, hx, hz, bb, nb, ti,
      &  ne, te, po, smbgp, wrk0, wrk1, wrk2)
       use b2mod_types
       use b2mod_indirect
@@ -10,7 +10,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
       real (kind=R8) ::
-     *  rzb(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), 
+     *  rzb(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3),
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hz(-1:nx,-1:ny),
      &  nb(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), te(-1:nx,-1:ny), po(-1:nx,-1:ny)
@@ -103,12 +103,13 @@
         enddo
         call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
         call b2xxgs (nx, ny, 0.0_R8, wrk1, 1)
+        call b2xxgs (nx, ny, 0.0_R8, wrk2, 1)
 *   ..  compute smbgp
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2) then
               smbgp(ix,iy,0) = -hz(ix,iy)*
-     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*     !srv 16.06.09
+     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
      &          bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                   !srv 11.01.13
      &         (wrk0(rightix(ix,iy),rightiy(ix,iy))+
      &          wrk1(rightix(ix,iy),rightiy(ix,iy))*
@@ -119,7 +120,7 @@
               smbgp(ix,iy,3) = 0.0_R8
             elseif(rightix(ix,iy).eq.nx+1) then
               smbgp(ix,iy,0) = -hz(ix,iy)*
-     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*     !srv 16.06.09
+     &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
      &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
      &         (wrk0(ix,iy)+wrk1(ix,iy)*wrk2(ix,iy))/
      &         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
@@ -141,82 +142,86 @@
             endif
           enddo
         enddo
-      elseif(style.eq.1) then                                           !srv 02.07.08 {
+      elseif(style.eq.1) then                                         !srv 02.07.08 {
         do iy = -1, ny
           do ix = -1, nx
-	     if(leftix(ix,iy).eq.-2) then
-            wrk0(ix,iy) = 0.0e0_R8
-            wrk1(ix,iy) = 0.0e0_R8
-	     else
-            wrk0(ix,iy) = 
+            if(leftix(ix,iy).eq.-2) then
+              wrk0(ix,iy) = 0.0e0_R8
+              wrk1(ix,iy) = 0.0e0_R8
+            else
+              wrk0(ix,iy) =
      &          (nb(ix,iy)*ti(ix,iy)
      &          -nb(leftix(ix,iy),leftiy(ix,iy))*
      &           ti(leftix(ix,iy),leftiy(ix,iy)))
      &         /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-            wrk1(ix,iy) = 
+              wrk1(ix,iy) =
      &          (ne(ix,iy)*te(ix,iy)
      &          -ne(leftix(ix,iy),leftiy(ix,iy))*
      &           te(leftix(ix,iy),leftiy(ix,iy)))
      &         /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-	     endif
+            endif
           enddo
         enddo
+        call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
+        call b2xxgs (nx, ny, 0.0_R8, wrk1, 1)
 * ..compute pressure gradient term
         smbgp = 0.0e0_R8
 *   ..  compute smbgp
         do iy = -1, ny
-         do ix = -1, nx                                                !srv 26.11.02 
-	    if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
-     &       bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then       !srv 26.11.02 {
+         do ix = -1, nx                                               !srv 26.11.02
+          if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
+     &       bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then      !srv 26.11.02 {
             smbgp(ix,iy,0) = 0.0e0_R8
             smbgp(ix,iy,1) = 0.0e0_R8
             smbgp(ix,iy,2) = 0.0e0_R8
             smbgp(ix,iy,3) = 0.0e0_R8
-	    else                                                         !srv 26.11.02 }
-	      t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)            !srv 18.10.02 10.06.05
+          else                                                        !srv 26.11.02 }
+            t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)           !srv 18.10.02 10.06.05
             smbgp(ix,iy,0) =
      &      -t0*(wrk0(ix,iy)+wrk0(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
      &      -t0*rzb(ix,iy)*(nb(ix,iy)/ne(ix,iy))*
-     &       (wrk1(ix,iy)+wrk1(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8  !srv 01.07.05 }
+     &       (wrk1(ix,iy)+wrk1(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8 !srv 01.07.05 }
             smbgp(ix,iy,1) = 0.0e0_R8
             smbgp(ix,iy,2) = 0.0e0_R8
             smbgp(ix,iy,3) = 0.0e0_R8
-	    endif                                                        !srv 26.11.02
+          endif                                                       !srv 26.11.02
          enddo
         enddo
-      else                                                             !srv 23.03.10 {
-	call xertst (pot_eq.eq.1,
+      else                                                            !srv 23.03.10 {
+        call xertst (pot_eq.eq.1,
      &   'This case works when potential equation is solved')
         do iy = -1, ny
           do ix = -1, nx
-	     if(leftix(ix,iy).eq.-2) then
-            wrk0(ix,iy) = 0.0e0_R8
-            wrk1(ix,iy) = 0.0e0_R8
-	     else
-            wrk0(ix,iy) = 
+            if(leftix(ix,iy).eq.-2) then
+              wrk0(ix,iy) = 0.0e0_R8
+              wrk1(ix,iy) = 0.0e0_R8
+            else
+              wrk0(ix,iy) =
      &          (nb(ix,iy)*ti(ix,iy)
      &          -nb(leftix(ix,iy),leftiy(ix,iy))*
      &           ti(leftix(ix,iy),leftiy(ix,iy)))
      &         /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-            wrk1(ix,iy) = 
+              wrk1(ix,iy) =
      &          (po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))
      &         /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-	     endif
+            endif
           enddo
         enddo
+        call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
+        call b2xxgs (nx, ny, 0.0_R8, wrk1, 1)
 * ..compute pressure gradient term
         smbgp = 0.0e0_R8
 *   ..  compute smbgp
         do iy = -1, ny
-         do ix = -1, nx 
-	    if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
+         do ix = -1, nx
+          if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
      &       bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
             smbgp(ix,iy,0) = 0.0e0_R8
             smbgp(ix,iy,1) = 0.0e0_R8
             smbgp(ix,iy,2) = 0.0e0_R8
             smbgp(ix,iy,3) = 0.0e0_R8
-	    else
-	      t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
+          else
+            t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
             smbgp(ix,iy,0) =
      &      -t0*(wrk0(ix,iy)+wrk0(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
      &      -t0*qe*rzb(ix,iy)*nb(ix,iy)*
@@ -224,17 +229,17 @@
             smbgp(ix,iy,1) = 0.0e0_R8
             smbgp(ix,iy,2) = 0.0e0_R8
             smbgp(ix,iy,3) = 0.0e0_R8
-	    endif
+          endif
          enddo
-        enddo                                                          !srv 23.03.10 }
-      endif                                                            !srv 02.07.08 }
-      if (iout.ne.0 .or. iout_b2npmo.eq.1) then                        !srv 17.06.02 {
-!	   write (chns,'(i3.3)') isb    
-!	   do k=0,3
-!	    write (chk,'(i1)') k  
-!	    call my_out(70,nx,ny,smbgp(-1,-1,k),'b2sigp_smbgp'//chk//chns)
-!	   enddo
-      endif                                                            !srv 17.06.02 }
+        enddo                                                         !srv 23.03.10 }
+      endif                                                           !srv 02.07.08 }
+      if (iout.ne.0 .or. iout_b2npmo.eq.1) then                       !srv 17.06.02 {
+!      write (chns,'(i3.3)') isb
+!      do k=0,3
+!        write (chk,'(i1)') k
+!        call my_out(70,nx,ny,smbgp(-1,-1,k),'b2sigp_smbgp'//chk//chns)
+!      enddo
+      endif                                                           !srv 17.06.02 }
 
 * ..return
       ncall = ncall+1

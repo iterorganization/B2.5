@@ -141,6 +141,12 @@
           call xerrab
      &     ('Prohibited "b2tfnb_xfrhiehz" switch usage!')
         endif
+        if (ipnam(ip).eq.'b2tfnb_xfrhie_no_drift') then
+          write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
+     &     trim(ipnam(ip)),'Use b2tfnb_xfrhie instead'
+          call xerrab
+     &     ('Prohibited "b2tfnb_xfrhie_no_drift" switch usage!')
+        endif
         if (ipnam(ip).eq.'b2news_coriolis') then
           write (*,'(/,1x,a,1x,a/1x,a)') 'Prohibited switch',
      &     trim(ipnam(ip)),'Now obsolete'

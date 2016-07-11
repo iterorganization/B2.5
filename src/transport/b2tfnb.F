@@ -85,7 +85,6 @@
      &   poleldr = 1.0_R8, radeldr = 1.0_R8,                            !srv 25.04.00
      &   poldidr = 1.0_R8, raddidr = 1.0_R8,                            !srv 25.04.00
      &   PSch = 1.0_R8                                                  !srv 17.01.07
-      real (kind=R8), save :: xfrhie_no_drift = 1.0_R8                  !srv 20.11.09
       real (kind=R8) ::
      *   con(-1:nx,-1:ny), dif, flo, con_nodrift, flo_nodrift, xfrhie, 
      *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
@@ -138,9 +137,6 @@
         call ipgetr ('b2tfnb_xfrhie', xfrhie)
         call xertst (0.0_R8.le.xfrhie,
      &   'faulty internal parameter xfrhie')
-        call ipgetr ('b2tfnb_xfrhie_no_drift', xfrhie_no_drift)         !srv 20.11.09 } 
-        call xertst (0.0_R8.le.xfrhie_no_drift,
-     &   'faulty internal parameter xfrhie_no_drift')                   !srv 20.11.09 } 
         call ipgetr ('b2tfnb_alpha', alpha)
         call xertst (0.0_R8.le.alpha,
      &   'faulty internal parameter alpha')
@@ -872,7 +868,7 @@ cxpb     3              wbbv(ix,iy,3))                                  !xpb
      7     vol(leftix(ix,iy),leftiy(ix,iy))/
      8     hx(leftix(ix,iy),leftiy(ix,iy)))
           flo_nodrift = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+
-     &                  xfrhie_no_drift*term(ix,iy)                     !srv 20.06.08
+     &                  xfrhie*term(ix,iy)                              !srv 20.06.08
          else                                                           !srv 21.06.08 {
           flo = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+                 !srv 01.07.05
      &      term(ix,iy) +                                               !iyv 19.04.07
@@ -896,7 +892,7 @@ cxpb     3              wbbv(ix,iy,3))                                  !xpb
      5                          *vol(leftix(ix,iy),leftiy(ix,iy)))/     !srv 01.03.00 09.01.01
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 01.03.00
           flo_nodrift = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy) +
-     &                  xfrhie_no_drift*term(ix,iy)                     !srv 20.06.08 20.10.09
+     &                  xfrhie*term(ix,iy)                              !srv 20.06.08 20.10.09
          endif                                                          !srv 21.06.08 }
          if (no_hybr.eq.0) then
            if(no_Ptncr_x_co.eq.0) then                                  !srv 13.10.06 {

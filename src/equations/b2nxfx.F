@@ -77,15 +77,15 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       if(pot_eq.eq.0 .or. pot_eq.eq.2) then                           !srv 16.07.12 27.02.13
-	ehxp = 0.0_R8
+       ehxp = 0.0_R8
       elseif(pot_eq.eq.1) then
        if(style.eq.0) then                                             !srv 26.10.08
 *   ..compute wrk0 and wrk1
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
-          wrk0(ix,iy) = 0
-          wrk1(ix,iy) = 0
+          wrk0(ix,iy) = 0.0_R8
+          wrk1(ix,iy) = 0.0_R8
          else
           wrk0(ix,iy) = ne(ix,iy)*te(ix,iy)-
      &         ne(leftix(ix,iy),leftiy(ix,iy))
@@ -128,10 +128,10 @@
 *   ..compute wrk0 and wrk1
        do iy = -1, ny
         do ix = -1, nx
-	   if(leftix(ix,iy).eq.-2) then
+         if(leftix(ix,iy).eq.-2) then
           wrk0(ix,iy) = 0.0e0_R8
           wrk1(ix,iy) = 0.0e0_R8
-	   else
+         else
           wrk0(ix,iy) = 
      &        (ne(ix,iy)*te(ix,iy)
      &        -ne(leftix(ix,iy),leftiy(ix,iy))*
@@ -140,22 +140,22 @@
           wrk1(ix,iy) = 
      &        (po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))
      &       /(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-	   endif
+         endif
         enddo
        enddo
 *   ..compute ehxp
-	 ehxp = 0.0e0_R8
+       ehxp = 0.0e0_R8
        do iy = 0, ny-1
         do ix = 0, nx-1
-	   if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+         if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
           ehxp(ix,iy) = 0.0e0_R8
-	   else
+         else
           ehxp(ix,iy) = ((wrk0(ix,iy)+wrk0(leftix(ix,iy),leftiy(ix,iy)))
      &                  *0.5e0_R8-
      &                  (wrk1(ix,iy)+wrk1(leftix(ix,iy),leftiy(ix,iy)))
      &                  *0.5e0_R8*qe*ne(ix,iy))
      &                  *bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)
-	   endif
+         endif
         enddo
        enddo
       endif                                               !srv 26.10.08 }

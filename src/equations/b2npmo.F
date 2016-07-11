@@ -3,7 +3,7 @@
 
       subroutine b2npmo (nx, ny, ns, itcnt, solving, rxf, 
      &  qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,
-     &  na, te, ti, po, fna_fcor,                                    !srv 09.01.01 01.07.09
+     &  na, te, ti, po, fna_fcor,                                      !srv 09.01.01 01.07.09
      &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,
      &  smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,
      &  resmo, resmt, corua, corut, pcca, pccm, ierr)
@@ -91,7 +91,8 @@
      *  smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),                !srv 23.07.99 04.10.99
      *  smbcf(-1:nx,-1:ny,0:3),                                        !srv 09.07.01
      1  pb(-1:nx,-1:ny), cvct(-1:nx,-1:ny,0:1),
-     2  rob(-1:nx,-1:ny), flub(-1:nx,-1:ny,0:1), flubv(-1:nx,-1:ny,0:1), !srv 11.09.09
+     2  rob(-1:nx,-1:ny), flub(-1:nx,-1:ny,0:1),
+     *  flubv(-1:nx,-1:ny,0:1),                                        !srv 11.09.09
      3  wrkf(-1:nx,-1:ny,0:1), aa5(-1:nx,-1:ny,-2:2),
      4  smb(-1:nx,-1:ny,0:3), flcb(-1:nx,-1:ny,0:1),
      5  cvcb(-1:nx,-1:ny,0:1), ro(-1:nx,-1:ny),
@@ -394,7 +395,7 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                        !srv 06.
      &       (bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) ) then  !srv 27.01.11
                ua(ix,iy,is) = ua(ix,iy,is) + corua(ix,iy,is)
             else
-               ua(ix,iy,is) = ua(ix,iy,is)+
+              ua(ix,iy,is) = ua(ix,iy,is)+
      &         rxf*med(corua(ix,iy,is),corut(ix,iy),
      &         corua(ix,iy,is)+corut(ix,iy))
             endif
@@ -404,18 +405,18 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                        !srv 06.
       enddo
 *   ..correct pcca
       call b2nxcm (nx, ny, ns, pccm, pcca)
-      if (iout.ne.0) then                                           !srv 12.07.02 {
+      if (iout.ne.0) then                                              !srv 12.07.02 {
        do is = 0, ns-1
-        write (chns,'(i3.3)') is                                    !srv 18.05.02
+        write (chns,'(i3.3)') is                                       !srv 18.05.02
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua'//chns)
 !	   call my_out(70,nx,ny,pcca(-1,-1,0,is),'b2npmo_pccax'//chns)
 !	   call my_out(70,nx,ny,pcca(-1,-1,1,is),'b2npmo_pccay'//chns)
 !	   call my_out(70,nx,ny,fna_fcor(-1,-1,0,is),'b2npmo_fna_fcorx'//chns)
 !	   call my_out(70,nx,ny,fna_fcor(-1,-1,1,is),'b2npmo_fna_fcory'//chns)
        enddo
-       call my_out(70,nx,ny,pccm(-1,-1,0),'b2npmo_pccmx')          !srv 11.01.13
-       call my_out(70,nx,ny,pccm(-1,-1,1),'b2npmo_pccmy')          !srv 11.01.13
-      endif                                                        !srv 12.07.02 }
+       call my_out(70,nx,ny,pccm(-1,-1,0),'b2npmo_pccmx')              !srv 11.01.13
+       call my_out(70,nx,ny,pccm(-1,-1,1),'b2npmo_pccmy')              !srv 11.01.13
+      endif                                                            !srv 12.07.02 }
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
       ierr = 0
