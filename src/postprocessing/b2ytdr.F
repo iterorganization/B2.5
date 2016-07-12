@@ -396,7 +396,8 @@ c 2002-09-11: logic revised
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat, rswitch,
      .  scaling_width(nscale), scaling_strength(nscale),
-     .  ixfb, iyfb, ixfb1, iyfb1, xfrhie, xfrhiehz,
+     .  ixfb, iyfb, ixfb1, iyfb1,
+     .  xfrhie, xfrhiehz, xfrhie_no_drift,
      .  elm_time_begin, elm_time_end, elm_time_period,
      .  sources_time_mod, sources_time_switch,
      1  zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
@@ -497,6 +498,7 @@ c 2002-09-11: logic revised
       data elm_ix1/-1/, elm_ix2/-1/, mw_ix1/-1/, mw_ix2/-1/
       data BoRiS/0.0_R8/, na0eps/0.0_R8/
       data xfrhie/1.0_R8/, xfrhiehz/1.0_R8/, coriolis/0/
+      data xfrhie_no_drift/1.0_R8/
 *  ..namelists
       namelist /profile/ nsdata, nxdata, sdata, xdata, divheat,
      . sources_time_mod, sources_time_switch, sources_filename
@@ -1152,6 +1154,7 @@ c 2002-09-11: logic revised
       call ipgeti ('b2news_coriolis', coriolis)
       call ipgetr ('b2tfnb_xfrhie', xfrhie)
       call ipgetr ('b2tfnb_xfrhiehz', xfrhiehz)
+      call ipgetr ('b2tfnb_xfrhie_no_drift', xfrhie_no_drift)
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
@@ -1465,6 +1468,15 @@ c 2002-09-11: logic revised
           todo = coriolis.ne.0
           if (todo) then
             rswitch = xfrhiehz
+            cnamip = 'b2tfnb_xfrhie'
+          else
+            wait = .true.
+          endif
+        case ('b2tfnb_xfrhie_no_drift') ! Needs to be rewritten as xfrhie
+          todo = xfrhie_no_drift.ne.xfrhie .and.
+     &           xfrhie_no_drift.ne.1.0_R8
+          if (todo) then
+            rswitch = xfrhie_no_drift
             cnamip = 'b2tfnb_xfrhie'
           else
             wait = .true.
