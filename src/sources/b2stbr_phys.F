@@ -349,7 +349,9 @@
               deallocate(flux_x,flux_y,area)
             endif
 
-            call recycle(rc_list_x(i,istra),rc_list_y(i,istra),
+            call recycle(
+     &           species_start(istra), species_end(istra),
+     &           rc_list_x(i,istra),rc_list_y(i,istra),
      &           topix(rc_list_x(i,istra),rc_list_y(i,istra)),
      &           topiy(rc_list_x(i,istra),rc_list_y(i,istra)),-1,
      &           topix(rc_list_x(i,istra),rc_list_y(i,istra)),
@@ -388,7 +390,9 @@
               deallocate(area)
             endif
 
-            call recycle(rc_list_x(i,istra),rc_list_y(i,istra),
+            call recycle(
+     &           species_start(istra),species_end(istra),
+     &           rc_list_x(i,istra),rc_list_y(i,istra),
      &           bottomix(rc_list_x(i,istra),rc_list_y(i,istra)),
      &           bottomiy(rc_list_x(i,istra),rc_list_y(i,istra)),+1,
      &           rc_list_x(i,istra),rc_list_y(i,istra),1,
@@ -430,7 +434,9 @@
               deallocate(flux_x,flux_y,area)
             end if
 
-            call recycle(rc_list_x(i,istra),rc_list_y(i,istra),
+            call recycle(
+     &           species_start(istra),species_end(istra),
+     &           rc_list_x(i,istra),rc_list_y(i,istra),
      &           rightix(rc_list_x(i,istra),rc_list_y(i,istra)),
      &           rightiy(rc_list_x(i,istra),rc_list_y(i,istra)),-1,
      &           rightix(rc_list_x(i,istra),rc_list_y(i,istra)),
@@ -468,7 +474,9 @@
               deallocate(area)
             endif
 
-            call recycle(rc_list_x(i,istra),rc_list_y(i,istra),
+            call recycle(
+     &           species_start(istra), species_end(istra),
+     &           rc_list_x(i,istra),rc_list_y(i,istra),
      &           leftix(rc_list_x(i,istra),rc_list_y(i,istra)),
      &           leftiy(rc_list_x(i,istra),rc_list_y(i,istra)),+1,
      &           rc_list_x(i,istra),rc_list_y(i,istra),0,
@@ -615,7 +623,7 @@
 
       contains
 
-      subroutine recycle(ix,iy,ixn,iyn,
+      subroutine recycle(nsmin,nsmax,ix,iy,ixn,iyn,
      &     isign,ixf,iyf,idir,
      &     hh,hhn,Phi_app,area,
      &     lcore)
@@ -630,7 +638,7 @@ c Phi_app         applied potential
 c area            area element
 c lcore           is this a core element?
       implicit none
-      integer ix, iy, ixn, iyn, isign, ixf, iyf, idir
+      integer nsmin, nsmax, ix, iy, ixn, iyn, isign, ixf, iyf, idir
       real (kind=R8) hh, hhn, Phi_app, area, pof
       logical lcore, found
 
@@ -831,7 +839,7 @@ c-dpc-end
 *    ..loop over species
       is0 = 0
       is1 = 0
-      do is = 0, ns-1
+      do is = nsmin, nsmax
          if (zn(is0).ne.zn(is).or.amtol.lt.abs(am(is0)-am(is))) then
             is0 = is
          endif
@@ -1395,7 +1403,7 @@ c-xpb  as deposition
 *    ..loop over species
          is0 = ns-1
          is1 = ns-1
-         do is = ns-1, 0, -1
+         do is = nsmax, nsmin, -1
             if (zn(is0).ne.zn(is).or.
      &           amtol.lt.abs(am(is0)-am(is))) then
                is0 = is
@@ -1422,7 +1430,7 @@ c-xpb
      .          (1.5_R8+BoRiS)*(zaf(is)*tef+tif)*t0
      &          *recycled_neutrals_contr  !srv          
             endif
-         enddo      ! do is = ns-1, 0, -1
+         enddo      ! do is = nsmax, nsmin, -1
       endif
 
       return
