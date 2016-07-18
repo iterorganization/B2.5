@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mndt (nout, nx, ny, ns, ismain, ismain0, 
+      subroutine b2mndt (nout, nx, ny, ns, ismain, ismain0,
      . nscx, iscx, itim, dtim, ntim, ierr)
       use b2mod_types
       use b2mod_geo
@@ -23,7 +23,7 @@
       use b2mod_numerics_namelist
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nout(0:5), nx, ny, ns, ismain, ismain0,  
+      integer nout(0:5), nx, ny, ns, ismain, ismain0,
      *  nscx, iscx(0:nscxmax-1), itim, ntim
       real (kind=R8) ::
      *  dtim
@@ -69,7 +69,8 @@
 
 *   ..local variables
       integer ncall, nstg(0:2), moqtlv, moitlv, itcnt, density_control,  !xpb
-     *  ramp_slow, ier0, no_solve, ix, iy, boundary_namelist
+     *  ramp_slow, ier0, no_solve, ix, iy, boundary_namelist,
+     *  nsmin, nsmax
       integer, save :: style = 0, guard_flows = 2                        !srv 18.06.08
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
@@ -77,7 +78,7 @@
      *  rxf, BoRiS
       real (kind=R8) ::
      *  nstg_areshe, nstg_areshi, nstg_aresco
-      save ncall, nstg, moqtlv, moitlv, rxf, itcnt,                      !xpb
+      save ncall, nstg, moqtlv, moitlv, rxf, itcnt, nsmin, nsmax,        !xpb
      *  density_control, ramp_slow, BoRiS, no_solve,
      *  nstg_areshe, nstg_areshi, nstg_aresco, boundary_namelist
       logical domoqt, domoit, wrong_flow, ramp_call                      !xpb
@@ -111,6 +112,8 @@
       call subini ('b2mndt')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+       nsmin=0
+       nsmax=ns
        call ipgeti ('b2mndt_style', style)                             !srv 18.06.08
        call ipgeti ('b2news_guard_flows', guard_flows)                 !srv 18.06.08
        if (ntim.ne.0) then
@@ -153,10 +156,22 @@
      &               nstg_aresco.gt.0.0_R8
        call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
        call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)            !srv 31.01.07 {
-       call xertst (1.le.ntim_step_out, 
+       call xertst (1.le.ntim_step_out,
      &   'faulty internal parameter ntim_step_out')                   !srv 31.01.07 }
        call ipgeti ('b2mndt_use_b2srst', use_b2srst)                  !srv 13.07.12
        call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
+       call ipgeti ('b2news_nsmin', nsmin)
+       if(nsmin.gt.ns) then
+         nsmin=ns
+       elseif(nsmin.lt.0) then
+         nsmin=0
+       endif
+       call ipgeti ('b2news_nsmax', nsmax)
+       if(nsmax.gt.ns) then
+         nsmax=ns
+       elseif(nsmax.lt.0) then
+         nsmax=0
+       endif
        if (boundary_namelist.ge.1) then
          call initialize_b2mod_boundary(nx,ny,ns,tim)
        else
@@ -172,7 +187,7 @@
 *   ..test nx, ny, ns, ismain
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
-      call xertst (0.le.ismain.and.ismain.lt.ns, 
+      call xertst (0.le.ismain.and.ismain.lt.ns,
      . 'invalid main plasma species index ismain')
       call xertst (.not.is_neutral(ismain),
      . 'invalid main plasma species ismain; must not be neutral')
@@ -191,17 +206,17 @@
       call b2xvsg (n2, hy, 1, 'hy', '.gt.')
 *   ..test range of qz
       call xertst (-1.0_R8.lt.smin(n2,qz(-1,-1,0),1).and.
-     &             smax(n2,qz(-1,-1,0),1).lt.1.0_R8, 
+     &             smax(n2,qz(-1,-1,0),1).lt.1.0_R8,
      &             'faulty argument range qz(,,0)')
       call xertst (0.0_R8.lt.smin(n2,qz(-1,-1,1),1).and.
-     &             smax(n2,qz(-1,-1,1),1).le.1.0_R8, 
+     &             smax(n2,qz(-1,-1,1),1).le.1.0_R8,
      &             'faulty argument range qz(,,1)')
 *   ..test old state
       call b2xvsg (n2*ns, na0, 1, 'na0', '.gt.')
       call b2xvsg (n2, te0, 1, 'te', '.gt.')
       call b2xvsg (n2, ti0, 1, 'ti', '.gt.')
 *   ..test present state
-      call b2xvps (nx, ny, ns, 
+      call b2xvps (nx, ny, ns,
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
       call b2xvsg (n2*ns, kinrgy, 1, 'kinrgy', '.ge.')
 *   ..test facdrift and fac_ExB (not on first call)                      !xpb
@@ -287,11 +302,11 @@ ctmp.dpc
           call b2trql (nx, ny, ns, bb, gs, vol, hx, hy, qz, qc, pbs,
      &        na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx)           !srv 11.10.02 03.06.03 }
           call b2tral (nx, ny, ns, nscx, nscxmax, iscx, ismain,          !srv 23.11.10
-     1       bb, conn, vol, gs, hx, hy, hz, qz, qc, 
+     1       bb, conn, vol, gs, hx, hy, hz, qz, qc,
      1       pbs, crx, cry, bzb, lnlam,                                  !srv 13.10.06 01.07.09
      1       fch, na, ua, te, ti, po, ne, ni, ne2, chvemx, chvimx,       !srv 03.06.03
      2       cdna, cdpa, cddi, cvla, cvsa, chce, chve, chci,             !srv 13.10.06
-     3       chvi, csig, csigin, calf, cthe, cthi, 
+     3       chvi, csig, csigin, calf, cthe, cthi,
      4       cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl, !srv 09.01.01 15.12.05
      5       vsal, fllim0fhi, fllimvisc, csig_cl, calf_cl)
           newneo=.true.
@@ -317,8 +332,8 @@ ctmp.dpc
           cor_ei=0.0_R8
 *     ..compute source linearisation
           main_call = ntim.ne.0
-          call b2sral (nx, ny, ns, nscx, nscxmax, iscx, ismain, ismain0,
-     &     dtim, BoRiS, facdrift, fac_ExB,
+          call b2sral (nx, ny, ns, nscx, nscxmax, nsmin, nsmax,
+     &     iscx, ismain, ismain0, dtim, BoRiS, facdrift, fac_ExB,
      &     vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,             !srv 09.01.01
      &     na, ua,
      &     uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
@@ -332,10 +347,10 @@ ctmp.dpc
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &     wrong_flow, main_call)
-          if(wrong_flow) write(*,*) 
+          if(wrong_flow) write(*,*)
      &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources
-          call b2srsm (nx, ny, ns, 
+          call b2srsm (nx, ny, ns,
      &     dtim, vol, na, ua, te, ti, ne, ni,
      &     sna, smo, she, shi, sne, .true.)                              !srv 11.09.09 {
 *     ..include contributions due to timestep
@@ -368,11 +383,11 @@ ctmp.dpc
             call b2news_(nx, ny, ns, nscx, iscx, ismain, ismain0,
      &       natm, nmol, nion, nlim, nsts, itim,
      &       dtim, rxf, ier0)                                            !srv 16.07.10 23.11.10
-	   endif                                                         !srv 01.07.08 )
+           endif                                                         !srv 01.07.08 )
            if(ier0.eq.10) then
              ierr=ier0
              goto 99999
-           endif   
+           endif
            call xertst (ier0.eq.0, 'error return from b2news')
 *!!      (should develop other error handling)
            ierr = ier0
@@ -385,8 +400,8 @@ ctmp.dpc
            call b2mxzr (nx, ny, ns, resco, resmo, resmt,
      &      reshe, reshi, respo)
 *      ..compute norms of the residuals
-           call b2mxar (nx, ny, ns, nnreg(0), BoRiS, 
-     &      vol, ne, na, te, ti, 
+           call b2mxar (nx, ny, ns, nnreg(0), BoRiS,
+     &      vol, ne, na, te, ti,
      &      resco, resmo, resmt, reshe, reshi, respo,
      &      rescoreg, resmoreg, reshereg, reshireg,
      &      aresco, aresmo, aresmt, areshe, areshi, arespo)
@@ -398,7 +413,7 @@ ctmp.dpc
      &      ((aresco(ismain)*nstg_aresco).le.(nstg_aresco*nstg_aresco)
      &       .or.nstg_aresco.eq.0.0_R8)
 *      ..compute norms of the corrections
-           call b2mxac (nx, ny, ns, 
+           call b2mxac (nx, ny, ns,
      &      corpa, corua, corut, corte, corti, corpo,
      &      acorpa, acorua, acorut, acorte, acorti, acorpo)
 *      ..decide what output
@@ -431,8 +446,8 @@ ctmp.dpc
 *      ..write the tracing data
            if (ank_tracing.ne.0) then
              if (ncall.eq.0) call b2filei(ns,nnreg)
-             if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1) 
-     >        call b2filew(istg(2),ns,nnreg) 
+             if (mod(itim,ank_tracing).eq.1.or.ank_tracing.eq.1)
+     >        call b2filew(istg(2),ns,nnreg)
            endif
 *      ..update iteration counter
            itcnt = itcnt+1
@@ -503,7 +518,8 @@ ctmp.dpc
 *      ..compute energy sources
            call b2npht  (nx, ny, ns, nnreg(0), ncall,
      &      .false., .false., .false.,
-     &      solveee, solveei, solvepo, solvemo,
+     &      solveee, solveei, solveet, solvepo, solvemt,
+     &      solvemo, solveco,
      &      rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
      &      fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,       !srv 09.07.08 07.07.09

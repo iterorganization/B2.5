@@ -1,14 +1,14 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npht (nx, ny, ns, nregionv, itcnt, 
-     &  solving, po_solve, ua_solve, 
-     &  solvereg, solvireg, solvpreg, solvmreg, rxf,
-     1  BoRiS, fac_ExB, hx, hy, qz, vol, bb, pbs, lnlam, floe, cone,   !srv 01.07.09
-     &  floi, coni, ceqp, pccm, she, shi, fne, fch, cvsa,              !srv 09.07.08
-     1  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,               !srv 07.07.09
-     &  te, ti, po, ne, ni, fhe, fhi, shef, shif, reshe, reshi, resht, !srv 09.07.08
-     &  corte, corti, ierr)
+      subroutine b2npht (nx, ny, ns, nregionv, itcnt, solving,
+     &  solvereg, solvireg, solvtreg, solvpreg, solvmtreg,
+     &  solvmreg, solvcreg,
+     1  rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
+     &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,
+     &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,
+     &  na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                        !srv 09.07.08
+     &  reshe, reshi, resht, corte, corti, ierr)
       use b2mod_types
       use b2mod_indirect
       use b2mod_tallies
@@ -32,9 +32,11 @@
      1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
      3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)    !srv 07.07.09
-      logical solving, po_solve, ua_solve,
+      logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
-     *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
+     *  solvtreg(0:nregionv), solvcreg(0:ns-1,0:nregionv),
+     *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv),
+     *  solvmtreg(0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -300,21 +302,22 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+shi0(:,:,2)*ni(:,:,0)+
      &                  shi0(:,:,3)*ti*ni(:,:,0)
        call my_out(70,nx,ny,wrk0,'b2npht_shi')
-      endif                                                            !srv 17.07.05 }
-      if (solving) then
+      endif                                                           !srv 17.07.05 }
+      if (solving(4)) then
 *   ..compute correction
-        call b2usht (nx, ny, nregionv, itcnt, solvereg, solvireg, 
+        call b2usht (nx, ny, ns, nregionv, itcnt, solving,
+     &   solvereg, solvireg, solvtreg, solvpreg, solvcreg, solvmtreg,
      &   rxg, pcm1, pbs, ne, ni, te, ti,
      &   floe, cone, floi, coni, pccm(-1,-1,1), she0, shi0,
      &   ceqp, resht, reshe, reshi, cortt, corte, corti,
-     &   wrkf, wrkc, aa5, 'b2npht_')                                     !srv 18.03.10
+     &   wrkf, wrkc, aa5, 'b2npht_')                                  !srv 18.03.10
 *   ..apply correction
-        call b2upht (nx, ny, ns, nregionv, po_solve, ua_solve,
+        call b2upht (nx, ny, ns, nregionv, solving(3), solving(1),
      &   solvereg, solvireg, solvpreg, solvmreg,
      &   rxf, pcm0, cortt, corte, corti,
      &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0, vol)
       endif
-      if(iout .eq. 1) then                                          !srv 17.07.05 {
+      if(iout .eq. 1) then                                            !srv 17.07.05 {
        do is = 0,ns-1
         write (chns,'(i3.3)') is
         call my_out(70,nx,ny,na(-1,-1,is),'b2npht_na'//chns)
@@ -323,7 +326,7 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
        call my_out(70,nx,ny,te,'b2npht_te')
        call my_out(70,nx,ny,ti,'b2npht_ti')
        call my_out(70,nx,ny,po,'b2npht_po')
-      endif                                                            !srv 17.07.05 }
+      endif                                                           !srv 17.07.05 }
 *   ..set error parameter and return
 *     (at present all errors cause an abort through xerrab)
       ierr = 0

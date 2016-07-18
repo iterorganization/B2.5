@@ -13,7 +13,7 @@
       integer nx, ny, isb, nregionv, itcnt
       character*(*) name                                             !srv 18.05.02
       real (kind=R8) ::
-     *  rxg, bb(-1:nx,-1:ny,0:3), rob(-1:nx,-1:ny), 
+     *  rxg, bb(-1:nx,-1:ny,0:3), rob(-1:nx,-1:ny),
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hz(-1:nx,-1:ny),          !srv 09.01.01
      &  pb(-1:nx,-1:ny), ub(-1:nx,-1:ny), smb(-1:nx,-1:ny,0:3),
      &  flcb(-1:nx,-1:ny,0:1), cvsb(-1:nx,-1:ny,0:1),
@@ -44,8 +44,8 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop, k
-      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !sv 06.07.06
+      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
+      integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0           !srv 06.07.06
       integer, save :: iout = 0                                       !srv 17.06.02
       character chns*3                                                !srv 17.06.02
       real (kind=R8) ::
@@ -71,9 +71,9 @@
       if (ncall.eq.0) then
        call ipgetr ('b2usmo_cfc0', cfc0)
        call xertst (0.0_R8.le.cfc0, 'faulty internal parameter cfc0')
-       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !sv 06.07.06
-       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !sv 06.07.06
-       call ipgeti ('b2usmo_iout', iout)                             !srv 17.06.02
+       call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
+       call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
+       call ipgeti ('b2usmo_iout', iout)                              !srv 17.06.02
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -135,17 +135,17 @@ csw 18feb2014 corrected BCs (SOLPS4)
           t1 = -flcb(ix,iy,0)/2-cvsb(ix,iy,0)
          endif                                                        !sv 06.07.06 }
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
-         if (solvereg(ileft)) 
+         if (solvereg(ileft))
      >    aa5(leftix(ix,iy),leftiy(ix,iy),1) = t0
          if (solvereg(ireg))
      >    aa5(ix,iy,0) = aa5(ix,iy,0)-t0
          if (solvereg(ileft))
-     >    aa5(leftix(ix,iy),leftiy(ix,iy),0) = 
+     >    aa5(leftix(ix,iy),leftiy(ix,iy),0) =
      &    aa5(leftix(ix,iy),leftiy(ix,iy),0)-t1
          if (solvereg(ireg))
      >    aa5(ix,iy,-1) = t1
         endif
-        if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg)) 
+        if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg))
      >   aa5(ix,iy,1) = 0.0_R8
        enddo
       enddo
@@ -175,18 +175,18 @@ csw 18feb2014 corrected BCs (SOLPS4)
           if (solvereg(ireg))
      >     aa5(ix,iy,0) = aa5(ix,iy,0)-t0
           if (solvereg(ibot))
-     >     aa5(bottomix(ix,iy),bottomiy(ix,iy),0) = 
+     >     aa5(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &              aa5(bottomix(ix,iy),bottomiy(ix,iy),0)-t1
           if (solvereg(ireg))
      >     aa5(ix,iy,-2) = t1
 cxpb
           if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
      &       topix(topix(ix,iy),min(topiy(ix,iy),ny)).eq.ix .and.
-     &	     iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
+     &       iy.ne.ny .and. aa5(ix,iy,2).eq.0.0_R8) then
            if(ncall.lt.3) write(*,*) 'Executing xpb:b2usmo for ',ix,iy
             t0 = flcb(topix(ix,iy),topiy(ix,iy),1)/2-
      &           hybr(flcb(topix(ix,iy),topiy(ix,iy),1),
-     &	              cvsb(topix(ix,iy),topiy(ix,iy),1))
+     &                cvsb(topix(ix,iy),topiy(ix,iy),1))
             t1 = -flcb(topix(ix,iy),topiy(ix,iy),1)/2-
      &            hybr(flcb(topix(ix,iy),topiy(ix,iy),1),
      &                 cvsb(topix(ix,iy),topiy(ix,iy),1))
@@ -195,7 +195,7 @@ cxpb
      >       aa5(ix,iy,2) = t0
             if (solvereg(itop))
      >       aa5(topix(ix,iy),topiy(ix,iy),0) = 
-     &	     aa5(topix(ix,iy),topiy(ix,iy),0)-t0
+     &       aa5(topix(ix,iy),topiy(ix,iy),0)-t0
             if (solvereg(ireg))
      >       aa5(ix,iy,0) = aa5(ix,iy,0)-t1
             if (solvereg(itop))
@@ -203,7 +203,7 @@ cxpb
           endif
 cxpb
         endif
-        if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg)) 
+        if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg))
      >   aa5(ix,iy,2) = 0.0_R8
        enddo
       enddo
@@ -218,7 +218,7 @@ cxpb
      .    bb(ix,iy,0)/bb(ix,iy,3)/aad0(ix,iy)                         !srv 11.01.13
         else
          pccb(ix,iy,0) = 0.0_R8
-         pccb(ix,iy,1) = 0.0_R8   
+         pccb(ix,iy,1) = 0.0_R8
          resmb(ix,iy) = 0.0_R8   ! take opportunity to correct RHS
         endif
        enddo

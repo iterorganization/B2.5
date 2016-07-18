@@ -49,6 +49,9 @@
       integer nxd,nyd,nsd_local,in_jxi,in_jxa,in_jsep
       real (kind=R8) :: BoRiS
       character*12 :: textdrift(0:1)
+      character*24 hlp_frm
+#ifdef B25_EIRENE
+      integer iflag
       character*72 zeile
 c
 c  version : 27.07.96 20:37
@@ -78,7 +81,7 @@ c
 c
       logical ex
 c
-      integer iflag,il,imi,ix,iy
+      integer il,imi,ix,iy
 #ifdef MDSPLUS
       character*512 textpl_cat, textwl_cat
       integer :: status
@@ -199,7 +202,8 @@ c
       enddo
 c
       ns=max(nsd_local,1)
-      write(*,*) 'zn: ',(nint(zn(is)),is=0,ns-1)
+      write(hlp_frm,'(a6,i3,a3)') '(1x,a,',ns,'i3)'
+      write(*,hlp_frm) 'zn: ',(nint(zn(is)),is=0,ns-1)
       do is=0,ns-1
         call species(is,textpl(is),.false.)
         call species(is,textwl(is),.false.)

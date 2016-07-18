@@ -1,24 +1,31 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2ush9 (nx, ny, itcnt, rxg, pcm1, pbs, ne, ni, te, ti,
+      subroutine b2ush9 (nx, ny, ns, nregionv, itcnt, solving,
+     &  solvereg, solvireg, solvtreg, solvpreg, solvmreg, solvcreg,
+     &  rxg, pcm1, pbs, ne, ni, te, ti,
      &  floe, cone, floi, coni, pccm1, she, shi, ceqp,
      &  resht, reshe, reshi, cortt, corte, corti, flo0, con0, aa9)
       use b2mod_types
+      use b2mod_b2cmpa
       use b2mod_indirect
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, itcnt
+      integer nx, ny, ns, nregionv, itcnt
       real (kind=R8) ::
-     *   rxg, pcm1, pbs(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
+     *  rxg, pcm1, pbs(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
      &  ni(-1:nx,-1:ny,0:1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
      &  cone(-1:nx,-1:ny,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:2),         !srv 02.01.07
      &  pccm1(-1:nx,-1:ny)
       real (kind=R8) ::
-     *   she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3),
+     *  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3),
      &  ceqp(-1:nx,-1:ny), resht(-1:nx,-1:ny), reshe(-1:nx,-1:ny),
      &  reshi(-1:nx,-1:ny)
+      logical solving(4)
+      logical solvereg(0:nregionv), solvireg(0:nregionv),
+     *        solvtreg(0:nregionv), solvpreg(0:nregionv),
+     *        solvmreg(0:ns-1,0:nregionv), solvcreg(0:ns-1,0:nregionv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   cortt(-1:nx,-1:ny), corte(-1:nx,-1:ny), corti(-1:nx,-1:ny)
@@ -57,12 +64,18 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
+      integer, save :: nsmin, nsmax
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
       integer, save :: iadd_9 = 1                                      !srv 02.01.07
+      integer, save :: mdf_fnb = 0
+      integer, save :: use_b2npc9 = 1
+      integer, save :: last_ion
+      integer is, ireg, ileft, ibot
       save ncall
       real (kind=R8) ::
      *   t0, t1
+      logical new_matrix
 *   ..procedures
       intrinsic abs, sqrt, dim
       real (kind=R8) ::
@@ -80,16 +93,39 @@
 *   ..subprogram start-up calls
       call subini ('b2ush9')
       if (ncall.eq.0) then
+       nsmin=0
+       nsmax=ns
        call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)               !srv 06.07.06
        call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)               !srv 06.07.06
        call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)               !srv 06.07.06
        call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06
        call ipgeti ('b2ush9_add_9', iadd_9)                           !srv 02.01.07
+       call ipgeti ('b2news_use_b2npc9', use_b2npc9)                  !srv 06.11.08
+       call ipgeti ('b2tfnb_mdf', mdf_fnb)                            !srv 13.10.06
+       call ipgeti ('b2news_nsmin', nsmin)
+       if(nsmin.gt.ns) then
+         nsmin=ns
+       elseif(nsmin.lt.0) then
+         nsmin=0
+       endif
+       call ipgeti ('b2news_nsmax', nsmax)
+       if(nsmax.gt.ns) then
+         nsmax=ns
+       elseif(nsmax.lt.0) then
+         nsmax=0
+       endif
+       last_ion=ns
+       is = nsmax-1
+       do while (last_ion.eq.ns .and. is.gt.nsmin)
+         if (.not.is_neutral(is)) last_ion=is
+         is = is-1
+       enddo
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
-*   ..test nx, ny
+*   ..test nx, ny, ns
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
+      call xertst (1.le.ns, 'faulty argument ns')
 *   ..test itcnt, rxg, pcm1
       call xertst (0.le.itcnt, 'faulty argument itcnt')
       call xertst (0.lt.rxg, 'faulty argument rxg')
@@ -131,6 +167,18 @@
        call b2xvsg (n2, ceqp, 1, 'ceqp', '.ge.')
       endif
 
+      new_matrix = .false.
+      do ireg = 0, nregionv
+        if (solving(2).and.(use_b2npc9.eq.1.and.mdf_fnb.ne.0).and.
+     &      last_ion.lt.ns) then
+          new_matrix = new_matrix.or.
+     &     solvtreg(ireg).neqv.solvcreg(last_ion,ireg)
+        else
+          new_matrix = new_matrix.or.
+     &     solvtreg(ireg).neqv.solvireg(ireg)
+        end if
+      end do
+      if (new_matrix) call restart_ma28_for_9
 * ..total heat correction equation
 *   ..compute flo0x, con0x
       do iy = -1, ny
@@ -230,6 +278,12 @@
       call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total')   !srv 18.05.02
 
 * ..electron temperature correction equation
+      new_matrix = .false.
+      do ireg = 0, nregionv
+        new_matrix = new_matrix.or.
+     &   solvereg(ireg).neqv.solvtreg(ireg)
+      end do
+      if (new_matrix) call restart_ma28_for_9
 *   ..compute flo0x, con0x
       do iy = -1, ny
        do ix = -1, nx                                               !srv 26.11.02 {
@@ -319,6 +373,12 @@
       call b2ux9p (nx, ny, aa9, itcnt, reshe, corte, 'b2ush9_Te')     !srv 18.05.02
 
 * ..atom temperature correction equation
+      new_matrix = .false.
+      do ireg = 0, nregionv
+        new_matrix = new_matrix.or.
+     &   solvireg(ireg).neqv.solvereg(ireg)
+      end do
+      if (new_matrix) call restart_ma28_for_9
 *   ..compute flo0x, con0x
       do iy = -1, ny
        do ix = -1, nx                                                 !srv 26.11.02 {

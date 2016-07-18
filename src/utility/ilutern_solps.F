@@ -68,8 +68,8 @@ c
 
       if(ncall.eq.0) then
        call ipgeti ('ma28_nwrite', nwrite)
-       call ipgeti ('ma28_ilutern_kwrite_fmt', kwrite_fmt)                    !srv 18.05.02
-       call ipgeti ('ma28_ilutern_kwrite_bnr', kwrite_bnr)                    !srv 18.05.02
+       call ipgeti ('ma28_ilutern_kwrite_fmt', kwrite_fmt)            !srv 18.05.02
+       call ipgeti ('ma28_ilutern_kwrite_bnr', kwrite_bnr)            !srv 18.05.02
        call ipgeti ('b2swtest', b2swtest)
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
@@ -117,7 +117,7 @@ c        IF (A1HN.EQ.0.0_R8) THEN
      1   (IJSH(K).EQ.3.and.ish(k).eq.n1).or.
      1   (IJSH(K).EQ.4.and.jsh(k).eq.n2)) then
         ELSE
-         IF(A1HN.NE.0.0_R8) THEN                                !srv 06.07.10 
+         IF(A1HN.NE.0.0_R8) THEN                                !srv 06.07.10
           NZ=NZ+1
           A1H(NZ)=A1HN
           IRNH(NZ)=IRN(K)
@@ -154,9 +154,9 @@ c             (maybe necessary in case of multi-fluid?)
         write(77) IRNH(i),ICNH(i),A1H(i)
        enddo
        close(77)
-      endif                             
+      endif
 
-      if(kwrite_fmt.eq.ncall) then      
+      if(kwrite_fmt.eq.ncall) then
        write(*,*) 'Opening 76'
        open(76,file='b2_5_rhs_'//trim(name)//'.dat')
        write(76,*) n
@@ -219,7 +219,10 @@ c-dpc
       if(.not.lfirst) then
         call ma28bd
      1   (n,nz,a1h,solvdim,irnh,icnh,icnhkeep,ikeep,iw28,w,iflag)
-        if(nltrsol.gt.0 .or. iflag.lt.0) write(*,*) 'iflag ',iflag   !srv 28.06.16
+        if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 28.06.16
+     1   write(*,'(a,i6,i8,a,i8,i8,a,i8)')
+     .    'iflag,minirn/dim,minicn/dim ',
+     2     iflag,minirn,' /',solvdim1,minicn,' /',solvdim
         if(iflag.lt.0.and.iflag.ne.-14) then   ! do not do this for duplicate elements
           do i=1,nz
             irnh(i)=irnh_save(i)
@@ -232,7 +235,7 @@ c-dpc
         call ma28ad
      1   (n,nz,a1h,solvdim,irnh,solvdim1,icnh,u,ikeep,iw28,w,iflag)
         if(nltrsol.gt.0 .or. iflag.lt.0)                             !srv 28.06.16
-     1   write(*,'(a,i6,i8,a,i8,i8,a,i8)') 
+     1   write(*,'(a,i6,i8,a,i8,i8,a,i8)')
      .    'iflag,minirn/dim,minicn/dim ',
      2     iflag,minirn,' /',solvdim1,minicn,' /',solvdim
         do i=1,solvdim

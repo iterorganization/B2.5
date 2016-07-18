@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sral (nx, ny, ns, nscx, nscxmax,
+      subroutine b2sral (nx, ny, ns, nscx, nscxmax, nsmin, nsmax,
      &  iscx, ismain, ismain0, dtim, BoRiS, facdrift, fac_ExB,           !xpb
      &  vol, crx, hx, hy, hz, qz, qc, gs, pbs, pbshz, bb,                !srv 09.01.01
      &  na, ua, uadia, vedia, vadia, wadia, veecrb, vaecrb, ve, wedia,
@@ -34,7 +34,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain,
-     *  ismain0
+     *  ismain0, nsmin, nsmax
       real (kind=R8) ::                                                  !xpb
      *  dtim, BoRiS, facdrift(-1:nx,-1:ny), fac_ExB(-1:nx,-1:ny)         !xpb
 *     (geometry)
@@ -225,7 +225,7 @@
         call ipgeti ('b2srdt_numerics_namelist', numerics_namelist)
         call alloc_b2mod_numerics(nx,ny,ns)
         if(numerics_namelist.ge.1) then
-          call read_b2mod_numerics_namelist(nx,ny)
+          call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
           call write_b2mod_numerics_namelist
         endif
         if(numerics_time_mod.gt.0.0_R8) then
@@ -238,7 +238,7 @@
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch)
      1     then
             write(*,*) 'b2srsm: catching up ...'
-            call read_b2mod_numerics_namelist(nx,ny)
+            call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
             call write_b2mod_numerics_namelist
             catch_up=numerics_time_mod.gt.0.0_R8
           else
@@ -253,7 +253,7 @@
           if(mod(tim,numerics_time_mod).gt.numerics_time_switch.or.
      1     int(tim/numerics_time_mod).gt.elm_count) then
             elm_count=tim/numerics_time_mod
-            call read_b2mod_numerics_namelist(nx,ny)
+            call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
             call write_b2mod_numerics_namelist
           endif
         endif
@@ -597,35 +597,38 @@ csw 30sep2013, added cdpa in call, uadia
       enddo
 
       if(iout.ne.0) then                                                 !srv 30.06.08 {
-       do is = 0,ns-1
-           write (chns,'(i3.3)') is
-           do k=0,1
+        do is = 0,ns-1
+          write (chns,'(i3.3)') is
+          do k=0,1
             write (chk,'(i1)') k
-          call my_out(70,nx,ny,sna(-1,-1,k,is),'b2sral_sna'//chk//chns)
-         enddo
-            do k=0,3
+            call my_out(70,nx,ny,sna(-1,-1,k,is),
+     &       'b2sral_sna'//chk//chns)
+          enddo
+          do k=0,3
             write (chk,'(i1)') k
-          call my_out(70,nx,ny,smo(-1,-1,k,is),'b2sral_smo'//chk//chns)
-          call my_out(70,nx,ny,smq(-1,-1,k,is),'b2sral_smq'//chk//chns)
-           enddo
-         enddo
-           do k=0,3
-           write (chk,'(i1)') k
-           call my_out(70,nx,ny,she(-1,-1,k),'b2sral_she'//chk)
-           call my_out(70,nx,ny,shi(-1,-1,k),'b2sral_shi'//chk)
-           call my_out(70,nx,ny,sch(-1,-1,k),'b2sral_sch'//chk)
-           if (use_astra.ne.0) then
-             call my_out(70,nx,ny,sheNb_astra(-1,-1,k),
-     &        'b2sral_sheNb_astra'//chk)
-             call my_out(70,nx,ny,shiNb_astra(-1,-1,k),
-     &        'b2sral_shiNb_astra'//chk)
-           endif
-         enddo
-           do k=0,1
-           write (chk,'(i1)') k
-           call my_out(70,nx,ny,sne(-1,-1,k),'b2sral_sne'//chk)
-         enddo
-        endif                                                            !srv 30.06.08 }
+            call my_out(70,nx,ny,smo(-1,-1,k,is),
+     &       'b2sral_smo'//chk//chns)
+            call my_out(70,nx,ny,smq(-1,-1,k,is),
+     &       'b2sral_smq'//chk//chns)
+          enddo
+        enddo
+        do k=0,3
+          write (chk,'(i1)') k
+          call my_out(70,nx,ny,she(-1,-1,k),'b2sral_she'//chk)
+          call my_out(70,nx,ny,shi(-1,-1,k),'b2sral_shi'//chk)
+          call my_out(70,nx,ny,sch(-1,-1,k),'b2sral_sch'//chk)
+          if (use_astra.ne.0) then
+            call my_out(70,nx,ny,sheNb_astra(-1,-1,k),
+     &       'b2sral_sheNb_astra'//chk)
+            call my_out(70,nx,ny,shiNb_astra(-1,-1,k),
+     &       'b2sral_shiNb_astra'//chk)
+          endif
+        enddo
+        do k=0,1
+          write (chk,'(i1)') k
+          call my_out(70,nx,ny,sne(-1,-1,k),'b2sral_sne'//chk)
+        enddo
+      endif                                                              !srv 30.06.08 }
 
 csw 17oct2012, erase sna, smo, smq, (she, shi, sch) for fluid neutrals
       if(no_fluid_neutral_sources .eq. 1) then

@@ -2849,7 +2849,7 @@ cxpb This will need to be checked !!!
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
         if (numerics_namelist.eq.0) call alloc_b2mod_numerics(nx,ny,ns)
-        call read_b2mod_numerics_namelist(nx,ny)
+        call read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
         if (same_bundling) then
           if (first_pass) 
      >     write(nout(5),'(a)') 'b2.numerics.parameters'

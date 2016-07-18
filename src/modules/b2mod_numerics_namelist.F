@@ -5,16 +5,18 @@
 
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
-     *   dtco(:,:), 
-     *   dtmo(:,:), 
-     *   dtee(:), 
+     *   dtco(:,:),
+     *   dtmo(:,:),
+     *   dtee(:),
      *   dtei(:)
       logical, allocatable, save ::
-     *   solveco(:,:), 
+     *   solveco(:,:),
      *   solvemo(:,:),
+     *   solvemt(:),
      *   solvepo(:),
      *   solveee(:),
-     *   solveei(:)
+     *   solveei(:),
+     *   solveet(:)
 #else
 #     include "DIMENSIONS.F"
       integer NSDMAX
@@ -25,9 +27,11 @@
       real (kind=R8), save :: dtei(0:NNREGMAX)
       logical, save :: solveco(0:nsdmax-1,0:NNREGMAX)
       logical, save :: solvemo(0:nsdmax-1,0:NNREGMAX)
+      logical, save :: solvemt(0:NNREGMAX)
       logical, save :: solvepo(0:NNREGMAX)
       logical, save :: solveee(0:NNREGMAX)
       logical, save :: solveei(0:NNREGMAX)
+      logical, save :: solveet(0:NNREGMAX)
 #endif
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor
@@ -44,8 +48,8 @@
      1 core_dt_suppression,core_dt_factor,
      2 solveco,solvemo,solvepo,solveee,solveei,write_nml_num,
      3 numerics_filename,numerics_time_mod,numerics_time_switch
-      
-      
+
+
       contains
 
       subroutine alloc_b2mod_numerics(nxd,nyd,nsd)
@@ -64,9 +68,11 @@
       allocate(dtei(0:nnreg(0)))
       allocate(solveco(0:nsd-1,0:nnreg(0)))
       allocate(solvemo(0:nsd-1,0:nnreg(0)))
+      allocate(solvemt(0:nnreg(0)))
       allocate(solvepo(0:nnreg(0)))
       allocate(solveee(0:nnreg(0)))
       allocate(solveei(0:nnreg(0)))
+      allocate(solveet(0:nnreg(0)))
 #else
       call xertst (nsd.le.nsdmax,
      1 'increase NSDMAX in b2mod_numerics_namelist')
@@ -82,9 +88,11 @@
       core_dt_factor=1.0_R8
       solveco=.true.
       solvemo=.true.
+      solvemt=.true.
       solvepo=.true.
       solveee=.true.
       solveei=.true.
+      solveet=.true.
       numerics_filename='b2.numerics.parameters'
       numerics_time_mod=0.0_R8
       numerics_time_switch=0.0_R8
@@ -107,18 +115,20 @@
       deallocate(dtei)
       deallocate(solveco)
       deallocate(solvemo)
+      deallocate(solvemt)
       deallocate(solvepo)
       deallocate(solveee)
       deallocate(solveei)
+      deallocate(solveet)
 #endif
       b2mod_numerics_allocated = .false.
       return
       end subroutine dealloc_b2mod_numerics
 
-      subroutine read_b2mod_numerics_namelist(nx,ny)
+      subroutine read_b2mod_numerics_namelist(nx,ny,nsmin,nsmax)
       implicit none
 
-      integer nx,ny
+      integer nx,ny,nsmin,nsmax
       logical :: file_ok
       integer ix,iy
       real (kind=R8) :: ttf
@@ -131,13 +141,20 @@
         write(*,*) 'Reading namelist numerics from ',trim(filename)
         read(99,numerics)
         write(*,*) 'Read namelist numerics from ',trim(filename)
+        do ix = 0, nnreg(0)
+          solveet(ix) = solveee(ix).or.solveei(ix)
+          solvemt(ix) = .false.
+          do iy = nsmin, nsmax-1
+            solvemt(ix) = solvemt(ix) .or. solvemo(iy,ix)
+          end do
+        end do
       else
         call xerrab ('No '//trim(filename))
       endif
 
-      call xertst (0.0_R8.le.numerics_time_mod, 
+      call xertst (0.0_R8.le.numerics_time_mod,
      . 'faulty input boundary_time_mod')
-      call xertst (0.0_R8.le.numerics_time_switch, 
+      call xertst (0.0_R8.le.numerics_time_switch,
      . 'faulty input boundary_time_switch')
       call xertst (0.0_R8.lt.core_dt_suppression,
      & 'faulty parameter core_dt_suppression')
@@ -157,14 +174,14 @@
 c additional time-modification factor
       ttf=core_dt_suppression
       do iy=-1,ny
-	if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)
-	do ix=-1,nx
-	  if(mod(region(ix,iy,0),4).eq.1) then
-	    time_factor(ix,iy)=ttf
-	  else
-	    time_factor(ix,iy)=1.0_R8
-	  endif
-	enddo
+        if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)
+        do ix=-1,nx
+          if(mod(region(ix,iy,0),4).eq.1) then
+            time_factor(ix,iy)=ttf
+          else
+            time_factor(ix,iy)=1.0_R8
+          endif
+        enddo
       enddo
 
       return

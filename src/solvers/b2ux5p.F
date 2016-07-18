@@ -72,7 +72,7 @@
       intrinsic min
       real (kind=R8) ::
      *   x05baf
-      external subini, subend, xertst, ipgeti, ipgetr, 
+      external subini, subend, xertst, ipgeti, ipgetr,
      &  slv5pt, iluter, x05baf
 *   ..initialisation
       save ncall, style, acpar, cpu
@@ -168,9 +168,9 @@
       else if (style.eq.2) then
 *    ..use ma28
         call ilutern(NX+2, NY+2, NX+2,
-     1	 aa5(-1,-1,-2), aa5(-1,-1,-1), aa5(-1,-1,0),
-     2	 aa5(-1,-1,1), aa5(-1,-1,2),
-     .	 resfun, corfun, name)                   !srv 18.03.10
+     1   aa5(-1,-1,-2), aa5(-1,-1,-1), aa5(-1,-1,0),
+     2   aa5(-1,-1,1), aa5(-1,-1,2),
+     .   resfun, corfun, name)                   !srv 18.03.10
       endif
       cpu_end=x05baf()
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu ',cpu_end-cpu_start

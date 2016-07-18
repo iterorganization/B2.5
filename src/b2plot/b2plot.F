@@ -322,7 +322,7 @@ c
       lucdf=0
 c
       ns=max(nsd_local,1)
-      write(hlp_frm,'(a6,i3,a3)') '(1x,a,',ns,'i2)'
+      write(hlp_frm,'(a6,i3,a3)') '(1x,a,',ns,'i3)'
       write(*,hlp_frm) 'zn: ',(nint(zn(is)),is=0,ns-1)
       do is=0,ns-1
         call species(is,textpl(is),.true.)

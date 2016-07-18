@@ -1,11 +1,10 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nph9 (nx, ny, ns, nregionv, itcnt, 
-     &  solving, po_solve, ua_solve, 
-     &  solvereg, solvireg, solvpreg, solvmreg, rxf,
-     &  BoRiS, fac_ExB, hx, hy, qz, vol, bb, pbs, lnlam, floe, cone,   !srv 01.07.09 07.06.00 02.06.99 02.01.07 { 
-     &  floi, coni, ceqp, pccm, she, shi, fne, fch, cvsa,              !srv 28.06.03
+      subroutine b2nph9 (nx, ny, ns, nregionv, itcnt, solving,
+     &  solvereg, solvireg, solvtreg, solvpreg, solvmreg, solvcreg,
+     &  rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb, pbs, lnlam,
+     &  floe, cone, floi, coni, ceqp, pccm, she, shi, fne, fch, cvsa,  !srv 28.06.03
      1  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,               !srv 07.07.09
      &  te, ti, po, ne, ni, fhe, fhi, shef, shif, reshe, reshi, resht, !srv 10.11.02
      &  corte, corti, ierr)
@@ -21,7 +20,7 @@
      *  pbs(-1:nx,-1:ny,0:1),hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
      &  qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)                       !srv 07.05.08 01.07.09
       real (kind=R8) ::
-     *   floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
+     *  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
      &  cone(-1:nx,-1:ny,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:2),         !srv 02.01.07
      &  ceqp(-1:nx,-1:ny), pccm(-1:nx,-1:ny,0:1),
      &  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3),
@@ -33,8 +32,9 @@
      1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
      3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1) !srv 07.07.09
-      logical solving, po_solve, ua_solve,
+      logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
+     *  solvtreg(0:nregionv), solvcreg(0:ns-1,0:nregionv),
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
@@ -213,16 +213,16 @@
       else
        do iy = -1, ny
         do ix = -1, nx
-	 if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
+         if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
      &      bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
-	  shei(ix,iy) = 0.0_R8
-	 else
+          shei(ix,iy) = 0.0_R8
+         else
           shei(ix,iy) = ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
      &                 (te(ix,iy)*sqrt(te(ix,iy)))*(te(ix,iy)-ti(ix,iy))
-	 endif
+         endif
         enddo
        enddo
-      endif                                                    !srv 18.09.09 30.01.10 }
+      endif                                                             !srv 18.09.09 30.01.10 }
 *   ..compute final resht, reshe, reshi
       do iy = -1, ny
        do ix = -1, nx
@@ -230,47 +230,48 @@
         reshe(ix,iy) = reshe(ix,iy) - shei(ix,iy)
         reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
        enddo
-      enddo                                                           !srv 18.09.09 30.01.09 }
+      enddo                                                             !srv 18.09.09 30.01.09 }
 
-      if(iout .eq. 1) then                                            !srv 17.07.05 01.11.10 {
-	call my_out(70,nx,ny,shei,'b2nph9_shei')
-!	 do is = 0,ns-1
-!	  write (chns,'(i3.3)') is
-!	  call my_out(70,nx,ny,na(-1,-1,is),'b2nph9_na'//chns//'_input')
-!	  call my_out(70,nx,ny,ua(-1,-1,is),'b2nph9_ua'//chns//'_input')
-!	 enddo
+      if(iout .eq. 1) then                                              !srv 17.07.05 01.11.10 {
+        call my_out(70,nx,ny,shei,'b2nph9_shei')
+!        do is = 0,ns-1
+!         write (chns,'(i3.3)') is
+!         call my_out(70,nx,ny,na(-1,-1,is),'b2nph9_na'//chns//'_input')
+!         call my_out(70,nx,ny,ua(-1,-1,is),'b2nph9_ua'//chns//'_input')
+!        enddo
 !        call my_out(70,nx,ny,te,'b2nph9_te_input')
 !        call my_out(70,nx,ny,ti,'b2nph9_ti_input')
 !        call my_out(70,nx,ny,po,'b2nph9_po_input')
-	call my_out(70,nx,ny,reshe,'b2nph9_reshe')
-	call my_out(70,nx,ny,fhe(-1,-1,0),'b2nph9_fhex')
-	call my_out(70,nx,ny,fhe(-1,-1,1),'b2nph9_fhey')
-!	 call my_out(70,nx,ny,she0(-1,-1,0),'b2nph9_she0')
-!	 call my_out(70,nx,ny,she0(-1,-1,1),'b2nph9_she1')
-!	 call my_out(70,nx,ny,she0(-1,-1,2),'b2nph9_she2')
-!	 call my_out(70,nx,ny,she0(-1,-1,3),'b2nph9_she3')
+        call my_out(70,nx,ny,reshe,'b2nph9_reshe')
+        call my_out(70,nx,ny,fhe(-1,-1,0),'b2nph9_fhex')
+        call my_out(70,nx,ny,fhe(-1,-1,1),'b2nph9_fhey')
+!        call my_out(70,nx,ny,she0(-1,-1,0),'b2nph9_she0')
+!        call my_out(70,nx,ny,she0(-1,-1,1),'b2nph9_she1')
+!        call my_out(70,nx,ny,she0(-1,-1,2),'b2nph9_she2')
+!        call my_out(70,nx,ny,she0(-1,-1,3),'b2nph9_she3')
         wrk0=she0(:,:,0)+she0(:,:,1)*te+she0(:,:,2)*ne+
      &                   she0(:,:,3)*te*ne
-	call my_out(70,nx,ny,wrk0,'b2nph9_she')
-	call my_out(70,nx,ny,reshi,'b2nph9_reshi')
-	call my_out(70,nx,ny,fhi(-1,-1,0),'b2nph9_fhix')
-	call my_out(70,nx,ny,fhi(-1,-1,1),'b2nph9_fhiy')
-!	 call my_out(70,nx,ny,shi0(-1,-1,0),'b2nph9_shi0')
-!	 call my_out(70,nx,ny,shi0(-1,-1,1),'b2nph9_shi1')
-!	 call my_out(70,nx,ny,shi0(-1,-1,2),'b2nph9_shi2')
-!	 call my_out(70,nx,ny,shi0(-1,-1,3),'b2nph9_shi3')
+        call my_out(70,nx,ny,wrk0,'b2nph9_she')
+        call my_out(70,nx,ny,reshi,'b2nph9_reshi')
+        call my_out(70,nx,ny,fhi(-1,-1,0),'b2nph9_fhix')
+        call my_out(70,nx,ny,fhi(-1,-1,1),'b2nph9_fhiy')
+!        call my_out(70,nx,ny,shi0(-1,-1,0),'b2nph9_shi0')
+!        call my_out(70,nx,ny,shi0(-1,-1,1),'b2nph9_shi1')
+!        call my_out(70,nx,ny,shi0(-1,-1,2),'b2nph9_shi2')
+!        call my_out(70,nx,ny,shi0(-1,-1,3),'b2nph9_shi3')
         wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
      &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
-	call my_out(70,nx,ny,wrk0,'b2nph9_shi')
-      endif                                                           !srv 17.07.05 01.11.10 }
+        call my_out(70,nx,ny,wrk0,'b2nph9_shi')
+      endif                                                             !srv 17.07.05 01.11.10 }
 *   ..compute correction
-      if (solving) then                                               !srv 11.01.13
-       call b2ush9 (nx, ny, itcnt, rxg, pcm1, pbs, ne, ni, te, ti,    !srv 02.01.07
-     &  floe, cone, floi, coni, pccm(-1,-1,1), she0, shi0,
-     &  ceqp, resht, reshe, reshi, cortt, corte, corti,
-     &  wrkf, wrkc, aa9)
+      if (solving(4)) then                                              !srv 11.01.13
+        call b2ush9 (nx, ny, ns, nregionv, itcnt, solving,
+     &   solvereg, solvireg, solvtreg, solvpreg, solvmreg, solvcreg,
+     &   rxg, pcm1, pbs, ne, ni, te, ti,
+     &   floe, cone, floi, coni, pccm(-1,-1,1), she0, shi0, ceqp,
+     &   resht, reshe, reshi, cortt, corte, corti, wrkf, wrkc, aa9)
 *   ..apply correction
-        call b2upht (nx, ny, ns, nregionv, po_solve, ua_solve,
+        call b2upht (nx, ny, ns, nregionv, solving(3), solving(1),
      &   solvereg, solvireg, solvpreg, solvmreg,
      &   rxf, pcm0, cortt, corte, corti,
      &   pccm(-1,-1,0), na, ua, te, ti, po, ne, ni, wrk0, vol)

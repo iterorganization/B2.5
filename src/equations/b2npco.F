@@ -109,7 +109,7 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test rxf
-      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8, 
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      . 'faulty argument rxf')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -145,7 +145,7 @@
          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
           rescb(ix,iy) = 0.0_R8
          endif
-        enddo 
+        enddo
        enddo                                                            !srv 27.06.08 }
       endif
 csw 11dec2012, check for solv flags
@@ -163,34 +163,34 @@ csw 11dec2012, check for solv flags
 *   ..replace the incorrect corner values by the interpolated values
         iy=-1                                                           !srv 27.06.08 {
         do ix = -1, nx
-	  if(leftix(ix,iy).eq.-2)
+          if(leftix(ix,iy).eq.-2)
      &     nb(ix,iy) = exp(
      .      log(nb(rightix(ix,iy),rightiy(ix,iy))) +
      .      log(nb(topix(ix,iy),topiy(ix,iy))) -
      &      log(nb(topix(rightix(ix,iy),rightiy(ix,iy)),
      &             topiy(rightix(ix,iy),rightiy(ix,iy)))))
-	  if(rightix(ix,iy).eq.nx+1)
+          if(rightix(ix,iy).eq.nx+1)
      &     nb(ix,iy) = exp(
      .      log(nb(leftix(ix,iy),leftiy(ix,iy))) +
      .      log(nb(topix(ix,iy),topiy(ix,iy))) -
      &      log(nb(topix(leftix(ix,iy),leftiy(ix,iy)),
      &             topiy(leftix(ix,iy),leftiy(ix,iy)))))
-	enddo
+        enddo
         iy=ny
         do ix = -1, nx
-	  if(leftix(ix,iy).eq.-2)
+          if(leftix(ix,iy).eq.-2)
      &     nb(ix,iy) = exp(
-     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
-     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
+     .      log(nb(rightix(ix,iy),rightiy(ix,iy))) +
+     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) -
      &      log(nb(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
-	  if(rightix(ix,iy).eq.nx+1)
+          if(rightix(ix,iy).eq.nx+1)
      &     nb(ix,iy) = exp(
-     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
-     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
+     .      log(nb(leftix(ix,iy),leftiy(ix,iy))) +
+     .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) -
      &      log(nb(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
-	enddo                                                           !srv 27.06.08 }
+        enddo                                                           !srv 27.06.08 }
        endif                                                            !srv 06.07.08 }
       endif
 
