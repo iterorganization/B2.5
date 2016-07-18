@@ -20,7 +20,7 @@
      *  pbs(-1:nx,-1:ny,0:1),hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
      &  qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)                        !srv 07.05.08 01.07.09
       real (kind=R8) ::
-     *   floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
+     *  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
      &  cone(-1:nx,-1:ny,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:2),          !srv 02.01.07
      &  ceqp(-1:nx,-1:ny), pccm(-1:nx,-1:ny,0:1),
      &  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3),
