@@ -53,6 +53,7 @@
 #ifdef B25_EIRENE
       integer iflag
       character*72 zeile
+#endif
 c
 c  version : 27.07.96 20:37
 c
