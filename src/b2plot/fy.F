@@ -13,7 +13,7 @@ c
      *   lmin,lmax,x1,x2,y1,y2,dsep,dist,xmin,xmax,
      1   y_transform
       integer ix,ixl,ixr,iy,is,iiso,lnblnk,ysepl,ysepr,iystart,iyend
-      integer ixx
+      integer ixx, ixc
       logical iniso
       intrinsic min,max,sqrt
       external subini, subend, xertst, lnblnk
@@ -34,38 +34,105 @@ c      if(nidim .ne. 2) call line(2)
         iyend=iyend-1
       enddo
       call xertst(iystart.le.iyend, 'faulty parameter iyend')
-      if (b2plot_debug.ge.6) 
+      if (b2plot_debug.ge.6)
      > write(6,*) ' iystart, iyend : ', iystart, iyend
       if (.not.map_to_midplane) then
         ixx = ix
+        ixc = ix
       else
-        if (b2plot_debug.ge.5) 
-     >   write(*,*) 'Mapping to midplane : jxa = ',jxa
-        ixx = jxa
+        if (nnreg(0).ne.8 .or. region(ix,iystart,0).gt.4) then
+          if (b2plot_debug.ge.5)
+     >     write(*,*) 'Mapping to midplane : jxa = ',jxa
+          ixx = jxa
+        else
+          if (b2plot_debug.ge.5)
+     >     write(*,*) 'Mapping to midplane : jxi = ',jxi
+          ixx = jxi
+        end if
+        if (region(ix,iystart,0).eq.5.and.nnreg(0).eq.5) then
+          ixc = jxa
+        else if (nnreg(0).eq.8 .and.
+     .          (region(ix,iystart,0).eq.1 .or.
+     .           region(ix,iystart,0).eq.2)) then
+          ixc = jxi
+        else if (nnreg(0).eq.8 .and.
+     .          (region(ix,iystart,0).eq.5 .or.
+     .           region(ix,iystart,0).eq.6)) then
+          ixc = jxa
+        else if (nnreg(0).eq.4 .and.
+     .          (region(ix,iystart,0).eq.1 .or.
+     .           region(ix,iystart,0).eq.2)) then
+          ixc = jxa
+        else if (nnreg(0).eq.1 .or. nnreg(0).eq.2) then
+          ixc = jxa
+        else if (region(ix,iystart,0).eq.3) then
+          ixc = leftcut(1)-1
+        else if (nnreg(0).eq.8 .and. region(ix,iystart,0).eq.4) then
+          ixc = rightcut(2)
+        else if (nnreg(0).eq.4 .and. region(ix,iystart,0).eq.4) then
+          ixc = rightcut(1)
+        else if (nnreg(0).eq.8 .and. region(ix,iystart,0).eq.7) then
+          ixc = leftcut(2)-1
+        else if (nnreg(0).eq.8 .and. region(ix,iystart,0).eq.8) then
+          ixc = rightcut(1)
+        end if
       endif
       do is=0,ndim(3,iwrk)-1
         tmpstring1=textwk(is,iwrk)
         lmin=work(ix,iystart,is,iwrk)
         lmax=work(ix,iystart,is,iwrk)
         if(y_transform_l .ne. 0) then
-          do iy=iystart,iyend
+          do iy=iystart,jsep
+            wrk(iy)=y_transform(cr(ixc,iy),cz(ixc,iy))
+            write(*,*) wrk(iy),cz(ixc,iy)
+            lmin=min(lmin,work(ix,iy,is,iwrk))
+            lmax=max(lmax,work(ix,iy,is,iwrk))
+          enddo
+          do iy=jsep+1,iyend
             wrk(iy)=y_transform(cr(ixx,iy),cz(ixx,iy))
             write(*,*) wrk(iy),cz(ixx,iy)
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           enddo
         else
-          wrk(iystart)=dist(cr(ixx,iystart),cz(ixx,iystart),
-     1          0.5_R8*(crx(ixx,iystart,0)+crx(ixx,iystart,1)),     
-     2          0.5_R8*(cry(ixx,iystart,0)+cry(ixx,iystart,1)))
-          do iy=iystart+1,iyend
+          if (iystart.le.jsep) then
+            wrk(iystart)=dist(cr(ixc,iystart),cz(ixc,iystart),
+     1            0.5_R8*(crx(ixc,iystart,0)+crx(ixc,iystart,1)),
+     2            0.5_R8*(cry(ixc,iystart,0)+cry(ixc,iystart,1)))
+          else
+            wrk(iystart)=dist(cr(ixx,iystart),cz(ixx,iystart),
+     1            0.5_R8*(crx(ixx,iystart,0)+crx(ixx,iystart,1)),
+     2            0.5_R8*(cry(ixx,iystart,0)+cry(ixx,iystart,1)))
+          end if
+          do iy=iystart+1,jsep
+            wrk(iy)=wrk(iy-1)+dist(cr(ixc,iy-1),cz(ixc,iy-1),
+     1                             cr(ixc,iy),  cz(ixc,iy))
+            lmin=min(lmin,work(ix,iy,is,iwrk))
+            lmax=max(lmax,work(ix,iy,is,iwrk))
+          enddo
+          if (iystart.le.jsep+1.and.iyend.ge.jsep+1) then
+            iy=jsep+1
+            wrk(iy)=wrk(iy-1)+0.5_R8*dist(cr(ixc,iy-1),cz(ixc,iy-1),
+     1                                    cr(ixc,iy),  cz(ixc,iy))
+     2                       +0.5_R8*dist(cr(ixx,iy-1),cz(ixx,iy-1),
+     1                                    cr(ixx,iy),  cz(ixx,iy))
+            lmin=min(lmin,work(ix,iy,is,iwrk))
+            lmax=max(lmax,work(ix,iy,is,iwrk))
+          end if
+          do iy=jsep+2,iyend
             wrk(iy)=wrk(iy-1)+dist(cr(ixx,iy-1),cz(ixx,iy-1),
-     1                             cr(ixx,iy),cz(ixx,iy))
+     1                             cr(ixx,iy),  cz(ixx,iy))
             lmin=min(lmin,work(ix,iy,is,iwrk))
             lmax=max(lmax,work(ix,iy,is,iwrk))
           enddo
           if (iyref.eq.-2) then
-            ixl=ixx
+            if (iystart.le.jsep) then
+              ixl=ixc
+              ixr=ixc
+            else
+              ixl=ixx
+              ixr=ixx
+            end if
             ysepl=iystart
             iy=iystart
             iniso=.false.
@@ -86,7 +153,6 @@ c      if(nidim .ne. 2) call line(2)
               end do
             end if
             if(ysepl.eq.iystart) ysepl=iyend
-            ixr=ixx
             ysepr=iystart
             iniso=.false.
             do while (ixr.lt.nx .and. .not.iniso .and.
@@ -114,10 +180,10 @@ c      if(nidim .ne. 2) call line(2)
      1         dist(
      1          cr(ixx,min(ysepr,ysepl)),cz(ixx,min(ysepr,ysepl)),
      1            0.5_R8*(crx(ixx,min(ysepr,ysepl),0)+
-     1                    crx(ixx,min(ysepr,ysepl),1)),     
+     1                    crx(ixx,min(ysepr,ysepl),1)),
      2            0.5_R8*(cry(ixx,min(ysepr,ysepl),0)+
      2                    cry(ixx,min(ysepr,ysepl),1)))
-              if (b2plot_debug.ge.6) 
+              if (b2plot_debug.ge.6)
      >          write(6,*) ' ysepr, ysepl : ', ysepr, ysepl
             else
               dsep=0.0_R8
@@ -126,7 +192,7 @@ c      if(nidim .ne. 2) call line(2)
             if (iystart.le.iyref .and. iyend.ge.iyref) then
               dsep=wrk(iyref)-
      1         dist(cr(ixx,iyref),cz(ixx,iyref),
-     1            0.5_R8*(crx(ixx,iyref,0)+crx(ixx,iyref,1)),     
+     1            0.5_R8*(crx(ixx,iyref,0)+crx(ixx,iyref,1)),
      2            0.5_R8*(cry(ixx,iyref,0)+cry(ixx,iyref,1)))
             else
               dsep=0.0_R8
@@ -142,7 +208,7 @@ c      if(nidim .ne. 2) call line(2)
           write(tmpstring2,
      .     '('' <ix = '',i4,''> (mapped to midplane)'')') ix
         endif
-        tmpstring = 
+        tmpstring =
      1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//
      2     tmpstring2(1:lnblnk(tmpstring2))//
      3     tmpstring1(1:lnblnk(tmpstring1))
@@ -464,10 +530,10 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
           ymax=max(ymax,yvalues(i))
         enddo
         if(values(11).ne.init_value .and.
-     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) 
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8))
      >   xmin=values(11)
         if(values(12).ne.init_value .and.
-     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) 
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8))
      >   xmax=values(12)
         if(xmin.eq.xmax) then
           xmin=min(xmin*0.9_R8,xmin*1.1_R8)
@@ -623,10 +689,10 @@ c     if(r0r .eq. 0.0_R8) r0r=1.5_R8
           ymax=max(ymax,yvalues(i))
         enddo
         if(values(11).ne.init_value .and.
-     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) 
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8))
      >   xmin=values(11)
         if(values(12).ne.init_value .and.
-     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8)) 
+     &      .not.(values(11).eq.0.0_R8 .and. values(12).eq.0.0_R8))
      >   xmax=values(12)
         if(xmin.eq.xmax) then
           xmin=min(xmin*0.9_R8,xmin*1.1_R8)

@@ -1748,15 +1748,34 @@ c new CDF movie option
 c-rfs       write(*,*) 'fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)',
 c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *    ..loop
-        inquire(file='_quit',exist=quitexist_)                            !srv 18.05.09 13.04.11
+        inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
         cpuval=x05baf()
         elapsedval=epoch_seconds()
-        write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
-     &   ' elapsed ', elapsedval-elapsedstart,
-     &   ' remaining time (s) =',
+        if (b2mndr_cpu.gt.0.0_R8) then
+          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+     &     ' elapsed ', elapsedval-elapsedstart,
+     &     ' estimated remaining CPU time (s) =',
      &            min((ntim-itim)*(cpuval-cpustart),
-     &                b2mndr_cpu-itim*(cpuval-cpustart))                 !srv 18.05.09
+     &      max(0.0_R8,b2mndr_cpu-(cpuval-cpuinit)))                     !srv 18.05.09
+        else if (b2mndr_elapsed.gt.0.0_R8) then
+          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+     &     ' elapsed ', elapsedval-elapsedstart,
+     &     ' estimated remaining elapsed time (s) =',
+     &                min((ntim-itim)*(elapsedval-elapsedstart),
+     &      max(0.0_R8,b2mndr_elapsed-(elapsedval-elapsedinit)))         !srv 18.05.09
+        else if (etim.ne.0.0_R8 .and. etim.gt.stim) then
+          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+     &     ' elapsed ', elapsedval-elapsedstart,
+     &     ' estimated remaining elapsed time (s) =',
+     &                 min((ntim-itim)*(elapsedval-elapsedstart),
+     &      max(0.0_R8,(etim-tim)/dtim-(elapsedval-elapsedstart)))       !srv 18.05.09
+        else
+          write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
+     &     ' elapsed ', elapsedval-elapsedstart,
+     &     ' estimated remaining elapsed time (s) =',
+     &                 (ntim-itim)*(elapsedval-elapsedstart)
+        end if
         if(test_residual.and.mod(itim,10).eq.0.and.no_solve.le.0) then   !jwk
           quit_residual=                                                 !jwk
      &        (areshe*min_areshe).le.(min_areshe*min_areshe).and.        !jwk
