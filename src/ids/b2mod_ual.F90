@@ -95,12 +95,8 @@ contains
     end if
 
     ! establish UAL access
-<<<<<<< HEAD:src/ids/b2mod_ual_ids.F90
-    if (lDoCreate) then
-=======
     if (lDoCreate) then
 #ifdef IMAS
->>>>>>> Bringing in some routines towards writing up of grid IDS:src/ids/b2mod_ual.F90
         if (lUseHdf5) then
             call imas_create_hdf5(lTreename, lShot, lRun, lRefshot, lRefrun, idx)
         else
