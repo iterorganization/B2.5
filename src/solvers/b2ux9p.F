@@ -110,7 +110,6 @@
          solvdim=mult_solvdim*n_nonzeros
          solvdim1=mult_solvdim1*n_nonzeros
          call alloc_b2mod_ma28_for_9diag                               !sv 13.10.06
-
 !         call iniilu_9(nx+2,ny+2)                                      !sv 13.10.06
          irnh = 0                                                      !sv 15.05.07
          icnh = 0                                                      !sv 15.05.07

@@ -1,14 +1,13 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2ush9 (nx, ny, ns, nregionv, itcnt, solving,
-     &  solvereg, solvireg, solvtreg, solvpreg, solvmreg, solvcreg,
+      subroutine b2ush9 (nx, ny, ns, nregionv, itcnt,
      &  rxg, pcm1, pbs, ne, ni, te, ti,
      &  floe, cone, floi, coni, pccm1, she, shi, ceqp,
      &  resht, reshe, reshi, cortt, corte, corti, flo0, con0, aa9)
       use b2mod_types
-      use b2mod_b2cmpa
       use b2mod_indirect
+      use b2mod_numerics_namelist
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt
@@ -22,10 +21,6 @@
      *  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3),
      &  ceqp(-1:nx,-1:ny), resht(-1:nx,-1:ny), reshe(-1:nx,-1:ny),
      &  reshi(-1:nx,-1:ny)
-      logical solving(4)
-      logical solvereg(0:nregionv), solvireg(0:nregionv),
-     *        solvtreg(0:nregionv), solvpreg(0:nregionv),
-     *        solvmreg(0:ns-1,0:nregionv), solvcreg(0:ns-1,0:nregionv)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   cortt(-1:nx,-1:ny), corte(-1:nx,-1:ny), corti(-1:nx,-1:ny)
@@ -64,14 +59,11 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy
-      integer, save :: nsmin, nsmax
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
       integer, save :: iadd_9 = 1                                      !srv 02.01.07
-      integer, save :: mdf_fnb = 0
-      integer, save :: use_b2npc9 = 1
       integer, save :: last_ion
-      integer is, ireg, ileft, ibot
+      integer ireg, ileft, ibot
       save ncall
       real (kind=R8) ::
      *   t0, t1
@@ -93,33 +85,11 @@
 *   ..subprogram start-up calls
       call subini ('b2ush9')
       if (ncall.eq.0) then
-       nsmin=0
-       nsmax=ns
        call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)               !srv 06.07.06
        call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)               !srv 06.07.06
        call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)               !srv 06.07.06
        call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06
        call ipgeti ('b2ush9_add_9', iadd_9)                           !srv 02.01.07
-       call ipgeti ('b2news_use_b2npc9', use_b2npc9)                  !srv 06.11.08
-       call ipgeti ('b2tfnb_mdf', mdf_fnb)                            !srv 13.10.06
-       call ipgeti ('b2news_nsmin', nsmin)
-       if(nsmin.gt.ns) then
-         nsmin=ns
-       elseif(nsmin.lt.0) then
-         nsmin=0
-       endif
-       call ipgeti ('b2news_nsmax', nsmax)
-       if(nsmax.gt.ns) then
-         nsmax=ns
-       elseif(nsmax.lt.0) then
-         nsmax=0
-       endif
-       last_ion=ns
-       is = nsmax-1
-       do while (last_ion.eq.ns .and. is.gt.nsmin)
-         if (.not.is_neutral(is)) last_ion=is
-         is = is-1
-       enddo
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -169,14 +139,8 @@
 
       new_matrix = .false.
       do ireg = 0, nregionv
-        if (solving(2).and.(use_b2npc9.eq.1.and.mdf_fnb.ne.0).and.
-     &      last_ion.lt.ns) then
-          new_matrix = new_matrix.or.
-     &     solvtreg(ireg).neqv.solvcreg(last_ion,ireg)
-        else
-          new_matrix = new_matrix.or.
-     &     solvtreg(ireg).neqv.solvireg(ireg)
-        end if
+        new_matrix = new_matrix.or.
+     &   solveet(ireg).neqv.last_solve_9(ireg)
       end do
       if (new_matrix) call restart_ma28_for_9
 * ..total heat correction equation
@@ -281,7 +245,7 @@
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
-     &   solvereg(ireg).neqv.solvtreg(ireg)
+     &   solveee(ireg).neqv.solveet(ireg)
       end do
       if (new_matrix) call restart_ma28_for_9
 *   ..compute flo0x, con0x
@@ -376,7 +340,7 @@
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
-     &   solvireg(ireg).neqv.solvereg(ireg)
+     &   solveei(ireg).neqv.solveee(ireg)
       end do
       if (new_matrix) call restart_ma28_for_9
 *   ..compute flo0x, con0x
@@ -468,6 +432,7 @@
       enddo
 *   ..solve the correction equation
       call b2ux9p (nx, ny, aa9, itcnt, reshi, corti, 'b2ush9_Ti')
+      last_solve_9(0:nnreg(0)) = solveei(0:nnreg(0))
       do iy = -1, ny
        do ix = -1, nx
         corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))

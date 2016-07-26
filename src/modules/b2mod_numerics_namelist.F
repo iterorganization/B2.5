@@ -16,7 +16,9 @@
      *   solvepo(:),
      *   solveee(:),
      *   solveei(:),
-     *   solveet(:)
+     *   solveet(:),
+     *   last_solve_5(:),
+     *   last_solve_9(:)
 #else
 #     include "DIMENSIONS.F"
       integer NSDMAX
@@ -32,6 +34,8 @@
       logical, save :: solveee(0:NNREGMAX)
       logical, save :: solveei(0:NNREGMAX)
       logical, save :: solveet(0:NNREGMAX)
+      logical, save :: last_solve_5(0:NNREGMAX)
+      logical, save :: last_solve_9(0:NNREGMAX)
 #endif
       real (kind=R8), save :: time_factor_required,
      1 core_dt_suppression, core_dt_factor
@@ -73,6 +77,8 @@
       allocate(solveee(0:nnreg(0)))
       allocate(solveei(0:nnreg(0)))
       allocate(solveet(0:nnreg(0)))
+      allocate(last_solve_5(0:nnreg(0)))
+      allocate(last_solve_9(0:nnreg(0)))
 #else
       call xertst (nsd.le.nsdmax,
      1 'increase NSDMAX in b2mod_numerics_namelist')
@@ -93,6 +99,8 @@
       solveee=.true.
       solveei=.true.
       solveet=.true.
+      last_solve_5=.true.
+      last_solve_9=.true.
       numerics_filename='b2.numerics.parameters'
       numerics_time_mod=0.0_R8
       numerics_time_switch=0.0_R8
@@ -120,6 +128,8 @@
       deallocate(solveee)
       deallocate(solveei)
       deallocate(solveet)
+      deallocate(last_solve_5)
+      deallocate(last_solve_9)
 #endif
       b2mod_numerics_allocated = .false.
       return

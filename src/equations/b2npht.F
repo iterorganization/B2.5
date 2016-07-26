@@ -2,8 +2,7 @@
 *.specification
 
       subroutine b2npht (nx, ny, ns, nregionv, itcnt, solving,
-     &  solvereg, solvireg, solvtreg, solvpreg, solvmtreg,
-     &  solvmreg, solvcreg,
+     &  solvereg, solvireg, solvpreg, solvmreg,
      1  rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,
      &  fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,
@@ -34,9 +33,7 @@
      3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)    !srv 07.07.09
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
-     *  solvtreg(0:nregionv), solvcreg(0:ns-1,0:nregionv),
-     *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv),
-     *  solvmtreg(0:nregionv)
+     *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
 *   ..input/output arguments
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -305,8 +302,7 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
       endif                                                           !srv 17.07.05 }
       if (solving(4)) then
 *   ..compute correction
-        call b2usht (nx, ny, ns, nregionv, itcnt, solving,
-     &   solvereg, solvireg, solvtreg, solvpreg, solvcreg, solvmtreg,
+        call b2usht (nx, ny, ns, nregionv, itcnt,
      &   rxg, pcm1, pbs, ne, ni, te, ti,
      &   floe, cone, floi, coni, pccm(-1,-1,1), she0, shi0,
      &   ceqp, resht, reshe, reshi, cortt, corte, corti,

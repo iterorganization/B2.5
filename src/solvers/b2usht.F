@@ -1,14 +1,14 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2usht (nx, ny, ns, nregionv, itcnt, solving,
-     &  solvereg, solvireg, solvtreg, solvpreg, solvcreg, solvmtreg,
+      subroutine b2usht (nx, ny, ns, nregionv, itcnt,
      &  rxg, pcm1, pbs, ne, ni, te, ti,
      &  floe, cone, floi, coni, pccm1, she, shi, ceqp,
      &  resht, reshe, reshi, cortt, corte, corti, flo0, con0, aa5, name)
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_indirect
+      use b2mod_numerics_namelist
       use b2mod_boundary_namelist
      , , only : iffboundx, iffboundy
       implicit none
@@ -21,10 +21,6 @@
      &  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
      &  cone(-1:nx,-1:ny,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:2),        !srv 02.01.07
      &  pccm1(-1:nx,-1:ny)
-      logical solving(4)
-      logical solvereg(0:nregionv), solvireg(0:nregionv),
-     &        solvtreg(0:nregionv), solvpreg(0:nregionv),
-     &        solvmtreg(0:nregionv), solvcreg(0:ns-1,0:nregionv)
       real (kind=R8) ::
      *  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3),
      &  ceqp(-1:nx,-1:ny), resht(-1:nx,-1:ny), reshe(-1:nx,-1:ny),
@@ -48,15 +44,11 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, ireg, ileft, ibot, itop
-      integer nsmin, nsmax
-      integer last_neutral
-      integer, save :: use_b2npc9 = 1
-      integer, save :: mdf_fnb = 0
+      integer ncall, n2, ix, iy, ireg, ileft, ibot, itop
       logical new_matrix
       save ncall
       real (kind=R8) ::
-     *   t0, t1, vis_per
+     *   t0, t1
 *   ..procedures
       intrinsic abs, sqrt, dim
       real (kind=R8) ::
@@ -65,8 +57,7 @@
       external b2xvsg, b2xvff, b2ux5p
       scalr(t0) = t0
 *   ..initialisation
-      save vis_per, nsmin, nsmax
-      data ncall/0/, vis_per/0.0_R8/
+      data ncall/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -83,30 +74,6 @@
       call xertst (0.le.itcnt, 'faulty argument itcnt')
       call xertst (0.0_R8.lt.rxg, 'faulty argument rxg')
       call xertst (0.0_R8.le.pcm1, 'faulty argument pcm1')
-*   ..set internal parameters on first call
-      if (ncall.eq.0) then
-       nsmin=0
-       nsmax=ns
-       call ipgeti ('b2news_nsmin', nsmin)
-       if(nsmin.gt.ns) then
-         nsmin=ns
-       elseif(nsmin.lt.0) then
-         nsmin=0
-       endif
-       call ipgeti ('b2news_nsmax', nsmax)
-       if(nsmax.gt.ns) then
-         nsmax=ns
-       elseif(nsmax.lt.0) then
-         nsmax=0
-       endif
-       last_neutral=-1
-       do is = nsmin, nsmax-1
-         if (is_neutral(is)) last_neutral=is
-       end do
-       call ipgetr ('b2tfhe_vis_per', vis_per)
-       call ipgeti ('b2news_use_b2npc9', use_b2npc9)
-       call ipgeti ('b2tfnb_mdf', mdf_fnb)
-      end if
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of ne, ni, te, ti
@@ -140,23 +107,8 @@
 
       new_matrix = .false.
       do ireg = 0, nregionv
-        if (solving(3).and.vis_per.eq.0.0_R8) then
-          new_matrix = new_matrix.or.
-     &     solvtreg(ireg).neqv.solvpreg(ireg)
-        else if (solving(2).and.(use_b2npc9.eq.0.or.mdf_fnb.eq.0)) then
-          new_matrix = new_matrix.or.
-     &     solvtreg(ireg).neqv.solvcreg(nsmax-1,ireg)
-        else if (solving(2).and.use_b2npc9.eq.1.and.
-     &           last_neutral.ge.0) then
-          new_matrix = new_matrix.or.
-     &     solvtreg(ireg).neqv.solvcreg(last_neutral,ireg)
-        else if (solving(1)) then
-          new_matrix = new_matrix.or.
-     &     solvtreg(ireg).neqv.solvmtreg(ireg)
-        else
-          new_matrix = new_matrix.or.
-     &     solvtreg(ireg).neqv.solvireg(ireg)
-        end if
+        new_matrix = new_matrix.or.
+     &   solveet(ireg).neqv.last_solve_5(ireg)
       end do
       if (new_matrix) call restart_ma28
 * ..total heat correction equation
@@ -198,7 +150,7 @@
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        if (solvtreg(ireg)) then
+        if (solveet(ireg)) then
          aa5(ix,iy,0) =
      &     -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)-
      &      shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)+
@@ -224,17 +176,17 @@ csw 18feb2014 corrected BCs (SOLPS4)
          t0 =  flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                  !srv 02.01.07
          t1 = -flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                  !srv 02.01.07
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
-         if (solvtreg(ileft))
+         if (solveet(ileft))
      >    aa5(leftix(ix,iy),leftiy(ix,iy),1) = t0
-         if (solvtreg(ireg))
+         if (solveet(ireg))
      >    aa5(ix,iy,0) = aa5(ix,iy,0)-t0
-         if (solvtreg(ileft))
+         if (solveet(ileft))
      >    aa5(leftix(ix,iy),leftiy(ix,iy),0) = 
      &      aa5(leftix(ix,iy),leftiy(ix,iy),0)-t1
-         if (solvtreg(ireg))
+         if (solveet(ireg))
      >    aa5(ix,iy,-1) = t1
         endif
-        if(rightix(ix,iy).eq.nx+1 .or. .not.solvtreg(ireg)) 
+        if(rightix(ix,iy).eq.nx+1 .or. .not.solveet(ireg))
      >   aa5(ix,iy,1) = 0.0_R8
        enddo
       enddo
@@ -254,14 +206,14 @@ csw 18feb2014 corrected BCs (SOLPS4)
          t0 =  flo0(ix,iy,1)/2.0_R8-con0(ix,iy,1,0)                  !srv 02.01.07
          t1 = -flo0(ix,iy,1)/2.0_R8-con0(ix,iy,1,0)                  !srv 02.01.07
          ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-         if (solvtreg(ibot))
+         if (solveet(ibot))
      >    aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0
-         if (solvtreg(ireg))
+         if (solveet(ireg))
      >    aa5(ix,iy,0) = aa5(ix,iy,0)-t0
-         if (solvtreg(ibot))
+         if (solveet(ibot))
      >    aa5(bottomix(ix,iy),bottomiy(ix,iy),0) = 
      &     aa5(bottomix(ix,iy),bottomiy(ix,iy),0)-t1
-         if (solvtreg(ireg))
+         if (solveet(ireg))
      >    aa5(ix,iy,-2) = t1
 cxpb
          if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
@@ -274,19 +226,19 @@ cxpb
      &          -con0(topix(ix,iy),topiy(ix,iy),1,0)                 !srv 02.01.07
            t1 = -flo0(topix(ix,iy),topiy(ix,iy),1)/2.0_R8
      &          -con0(topix(ix,iy),topiy(ix,iy),1,0)                 !srv 02.01.07
-           if (solvtreg(ireg))
+           if (solveet(ireg))
      >      aa5(ix,iy,2) = t0
-           if (solvtreg(itop))
+           if (solveet(itop))
      >      aa5(topix(ix,iy),topiy(ix,iy),0) = 
      &      aa5(topix(ix,iy),topiy(ix,iy),0)-t0
-           if (solvtreg(ireg))
+           if (solveet(ireg))
      >      aa5(ix,iy,0) = aa5(ix,iy,0)-t1
-           if (solvtreg(itop))
+           if (solveet(itop))
      >      aa5(topix(ix,iy),topiy(ix,iy),2) = t1
          endif
 cxpb
         endif
-        if(topiy(ix,iy).eq.ny+1 .or. .not.solvtreg(ireg)) 
+        if(topiy(ix,iy).eq.ny+1 .or. .not.solveet(ireg))
      >   aa5(ix,iy,2) = 0.0_R8
        enddo
       enddo
@@ -300,7 +252,7 @@ cxpb
           aa5(ix,iy,0) = 1.0_R8
           resht(ix,iy) = 0.0_R8
         end if
-        if (.not.solvtreg(ireg)) resht(ix,iy) = 0.0_R8
+        if (.not.solveet(ireg)) resht(ix,iy) = 0.0_R8
        enddo
       enddo
 
@@ -312,7 +264,7 @@ cxpb
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
-     &   solvereg(ireg).neqv.solvtreg(ireg)
+     &   solveee(ireg).neqv.solveet(ireg)
       end do
       if (new_matrix) call restart_ma28
       call sfill (n2*5, 0.0_R8, aa5, 1)
@@ -349,7 +301,7 @@ cxpb
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        if (solvereg(ireg)) then
+        if (solveee(ireg)) then
          aa5(ix,iy,0) = -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)+
      &    dim(1.0_R8,1.5_R8*(te(ix,iy)-ti(ix,iy))/te(ix,iy))*
      &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))+
@@ -375,17 +327,17 @@ csw 18feb2014 corrected BCs (SOLPS4)
          t0 =  flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                  !srv 02.01.07
          t1 = -flo0(ix,iy,0)/2.0_R8-con0(ix,iy,0,0)                  !srv 02.01.07
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
-         if (solvereg(ileft))
+         if (solveee(ileft))
      >    aa5(leftix(ix,iy),leftiy(ix,iy),1) = t0
-         if (solvereg(ireg))
+         if (solveee(ireg))
      >    aa5(ix,iy,0) = aa5(ix,iy,0)-t0
-         if (solvereg(ileft))
+         if (solveee(ileft))
      >    aa5(leftix(ix,iy),leftiy(ix,iy),0) = 
      &       aa5(leftix(ix,iy),leftiy(ix,iy),0)-t1
-         if (solvereg(ireg))
+         if (solveee(ireg))
      >    aa5(ix,iy,-1) = t1
         endif
-        if(rightix(ix,iy).eq.nx+1 .or. .not.solvereg(ireg)) 
+        if(rightix(ix,iy).eq.nx+1 .or. .not.solveee(ireg))
      >   aa5(ix,iy,1) = 0.0_R8
        enddo
       enddo
@@ -405,14 +357,14 @@ csw 18feb2014 corrected BCs (SOLPS4)
          t0 =  flo0(ix,iy,1)/2.0_R8-con0(ix,iy,1,0)                  !srv 02.01.07
          t1 = -flo0(ix,iy,1)/2.0_R8-con0(ix,iy,1,0)                  !srv 02.01.07
          ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-         if (solvereg(ibot))
+         if (solveee(ibot))
      >    aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0
-         if (solvereg(ireg))
+         if (solveee(ireg))
      >    aa5(ix,iy,0) = aa5(ix,iy,0)-t0
-         if (solvereg(ibot))
+         if (solveee(ibot))
      >    aa5(bottomix(ix,iy),bottomiy(ix,iy),0) = 
      &       aa5(bottomix(ix,iy),bottomiy(ix,iy),0)-t1
-         if (solvereg(ireg))
+         if (solveee(ireg))
      >    aa5(ix,iy,-2) = t1
 cxpb
          if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
@@ -425,19 +377,19 @@ cxpb
      &          -con0(topix(ix,iy),topiy(ix,iy),1,0)                 !srv 02.01.07
            t1 = -flo0(topix(ix,iy),topiy(ix,iy),1)/2.0_R8
      &          -con0(topix(ix,iy),topiy(ix,iy),1,0)                 !srv 02.01.07
-           if (solvereg(ireg))
+           if (solveee(ireg))
      >      aa5(ix,iy,2) = t0
-           if (solvereg(ireg))
+           if (solveee(ireg))
      >      aa5(topix(ix,iy),topiy(ix,iy),0) = 
      &      aa5(topix(ix,iy),topiy(ix,iy),0)-t0
-           if (solvereg(ireg))
+           if (solveee(ireg))
      >      aa5(ix,iy,0) = aa5(ix,iy,0)-t1
-           if (solvereg(ireg))
+           if (solveee(ireg))
      >      aa5(topix(ix,iy),topiy(ix,iy),2) = t1
          endif
 cxpb
         endif
-        if(topiy(ix,iy).eq.ny+1 .or. .not.solvereg(ireg)) 
+        if(topiy(ix,iy).eq.ny+1 .or. .not.solveee(ireg))
      >   aa5(ix,iy,2) = 0.0_R8
        enddo
       enddo
@@ -451,7 +403,7 @@ cxpb
           aa5(ix,iy,0) = 1.0_R8
           reshe(ix,iy) = 0.0_R8
         end if
-        if (.not.solvereg(ireg)) reshe(ix,iy) = 0.0_R8
+        if (.not.solveee(ireg)) reshe(ix,iy) = 0.0_R8
        enddo
       enddo
 
@@ -463,7 +415,7 @@ cxpb
       new_matrix = .false.
       do ireg = 0, nregionv
         new_matrix = new_matrix.or.
-     &   solvireg(ireg).neqv.solvereg(ireg)
+     &   solveei(ireg).neqv.solveee(ireg)
       end do
       if (new_matrix) call restart_ma28
       call sfill (n2*5, 0.0_R8, aa5, 1)
@@ -500,7 +452,7 @@ cxpb
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        if (solvireg(ireg)) then
+        if (solveei(ireg)) then
          aa5(ix,iy,0) = (-shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)+
      &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))+
      &    abs(reshi(ix,iy))/(rxg*ti(ix,iy)))*scalr(ti(ix,iy))
@@ -525,18 +477,18 @@ csw 18feb2014 corrected BCs (SOLPS4)
          t0 = flo0(ix,iy,0)/2-con0(ix,iy,0,0)                        !srv 02.01.07
          t1 = -flo0(ix,iy,0)/2-con0(ix,iy,0,0)                       !srv 02.01.07
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
-         if (solvireg(ileft))
+         if (solveei(ileft))
      >    aa5(leftix(ix,iy),leftiy(ix,iy),1) = t0*scalr(ti(ix,iy))
-         if (solvireg(ireg))
+         if (solveei(ireg))
      >    aa5(ix,iy,0) = aa5(ix,iy,0)-t0*scalr(ti(ix,iy))
-         if (solvireg(ileft))
+         if (solveei(ileft))
      >    aa5(leftix(ix,iy),leftiy(ix,iy),0) = 
      &    aa5(leftix(ix,iy),leftiy(ix,iy),0)
      &    -t1*scalr(ti(leftix(ix,iy),leftiy(ix,iy)))
-         if (solvireg(ireg))
+         if (solveei(ireg))
      >    aa5(ix,iy,-1) = t1*scalr(ti(leftix(ix,iy),leftiy(ix,iy)))
         endif
-        if(rightix(ix,iy).eq.nx+1 .or. .not.solvireg(ireg)) 
+        if(rightix(ix,iy).eq.nx+1 .or. .not.solveei(ireg))
      >   aa5(ix,iy,1) = 0.0_R8
        enddo
       enddo
@@ -556,15 +508,15 @@ csw 18feb2014 corrected BCs (SOLPS4)
          t0 =  flo0(ix,iy,1)/2.0_R8-con0(ix,iy,1,0)                  !srv 02.01.07
          t1 = -flo0(ix,iy,1)/2.0_R8-con0(ix,iy,1,0)                  !srv 02.01.07
          ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-         if (solvireg(ibot))
+         if (solveei(ibot))
      >    aa5(bottomix(ix,iy),bottomiy(ix,iy),2) = t0*scalr(ti(ix,iy))
-         if (solvireg(ireg))
+         if (solveei(ireg))
      >    aa5(ix,iy,0) = aa5(ix,iy,0)-t0*scalr(ti(ix,iy))
-         if (solvireg(ibot))
+         if (solveei(ibot))
      >    aa5(bottomix(ix,iy),bottomiy(ix,iy),0) = 
      &    aa5(bottomix(ix,iy),bottomiy(ix,iy),0)
      &    -t1*scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
-         if (solvireg(ireg))
+         if (solveei(ireg))
      >    aa5(ix,iy,-2) = t1*scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
 cxpb
          if(topiy(topix(ix,iy),min(topiy(ix,iy),ny)).eq.iy .and.
@@ -577,20 +529,20 @@ cxpb
      &          -con0(topix(ix,iy),topiy(ix,iy),1,0)                 !srv 02.01.07
            t1 = -flo0(topix(ix,iy),topiy(ix,iy),1)/2.0_R8
      &          -con0(topix(ix,iy),topiy(ix,iy),1,0)                 !srv 02.01.07
-           if (solvireg(ireg))
+           if (solveei(ireg))
      >      aa5(ix,iy,2) = t0*scalr(ti(topix(ix,iy),topiy(ix,iy)))
-           if (solvireg(itop))
+           if (solveei(itop))
      >      aa5(topix(ix,iy),topiy(ix,iy),0) = 
      &      aa5(topix(ix,iy),topiy(ix,iy),0)-
      &      t0*scalr(ti(topix(ix,iy),topiy(ix,iy)))
-           if (solvireg(ireg))
+           if (solveei(ireg))
      >      aa5(ix,iy,0) = aa5(ix,iy,0)-t1*scalr(ti(ix,iy))
-           if (solvireg(itop))
+           if (solveei(itop))
      >      aa5(topix(ix,iy),topiy(ix,iy),2) = t1*scalr(ti(ix,iy))
          endif
 cxpb
         endif
-        if(topiy(ix,iy).eq.ny+1 .or. .not.solvireg(ireg)) 
+        if(topiy(ix,iy).eq.ny+1 .or. .not.solveei(ireg))
      >   aa5(ix,iy,2) = 0.0_R8
        enddo
       enddo
@@ -604,13 +556,14 @@ cxpb
           aa5(ix,iy,0) = 1.0_R8
           reshi(ix,iy) = 0.0_R8
         end if
-        if (.not.solvireg(ireg)) reshi(ix,iy) = 0.0_R8
+        if (.not.solveei(ireg)) reshi(ix,iy) = 0.0_R8
        enddo
       enddo
 
 *   ..solve the correction equation
       write(*,'(a,a)') 'Calling b2ux5p from ', name//'ti'
       call b2ux5p (nx, ny, aa5, itcnt, reshi, corti, name//'ti')    !srv 18.03.10
+      last_solve_5(0:nnreg(0)) = solveei(0:nnreg(0))
       do iy = -1, ny
        do ix = -1, nx
         corti(ix,iy) = corti(ix,iy)*scalr(ti(ix,iy))

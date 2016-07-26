@@ -83,6 +83,7 @@
      *  nstg_areshe, nstg_areshi, nstg_aresco, boundary_namelist
       logical domoqt, domoit, wrong_flow, ramp_call                      !xpb
       logical test_residual, quit_residual, main_call
+      logical solving(4)
       save test_residual
       integer n2, istg(0:2), is, k
       real (kind=R8) ::
@@ -516,10 +517,9 @@ ctmp.dpc
            call b2xpnm (nx, ny, ns, rz2, am, na, wrk0)
            call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp) !srv 01.07.09 20.09.11
 *      ..compute energy sources
-           call b2npht  (nx, ny, ns, nnreg(0), ncall,
-     &      .false., .false., .false.,
-     &      solveee, solveei, solveet, solvepo, solvemt,
-     &      solvemo, solveco,
+           solving = .false.
+           call b2npht (nx, ny, ns, nnreg(0), ncall, solving,
+     &      solveee, solveei, solvepo, solvemo,
      &      rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
      &      fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,       !srv 09.07.08 07.07.09

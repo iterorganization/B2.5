@@ -63,15 +63,13 @@
 *   ..local variables
       integer potit, ipass, recalculate_contributions, pot_eq,           !xpb,dpc
      *  potitmin, nsmin, nsmax, no_current
-      integer, save :: last_neutral, last_ion
       integer, save :: style = 3                                         !srv 29.05.02
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0             !srv 13.10.06
       integer, save :: use_b2npc9 = 1, use_b2nph9 = 1, coriolis = 0      !srv 06.11.08 11.08.08
       real (kind=R8) ::
      *  potok, mach10, BoRiS, vis_per, na_min, na_new
       integer ncall, n2, is, ier0, i, ix, iy, ncallout, ixmax, iymax,    !xpb
-     1  guard_flows, ramp_slow, no_solve, ireg, iss,
-     2  previous_neutral, previous_ion
+     1  guard_flows, ramp_slow, no_solve, ireg
       real (kind=R8) ::
      *  xfm0, xfm1, xfm2, xfm3, rxf0, rxf1, rxf2, rxf3, t0, tmax
       real (kind=R8) ::                                                  !xpb
@@ -205,16 +203,6 @@
          nsmax=0
        endif
        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
-       last_neutral=-1
-       do is = nsmin, nsmax-1
-         if (is_neutral(is)) last_neutral=is
-       end do
-       last_ion=ns
-       is = nsmax-1
-       do while (last_ion.eq.ns .and. is.gt.nsmin)
-         if (.not.is_neutral(is)) last_ion=is
-         is = is-1
-        enddo
       endif
 *   ..set n2, zero
       n2 = (nx+2)*(ny+2)
@@ -399,13 +387,13 @@
 cxpb
 *   ..iterate on parallel momentum balance
         if(coriolis.eq.0) then                                           !srv 19.10.08 {
-         call b2npmo (nx, ny, ns, ncall, solving, rxf1,
+         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,
      &    qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                    !srv 01.07.09
      &    na, te, ti, po, fna, cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo, !srv 02.07.08
      &    smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
      &    resmt, corua, corut, pcca, pccm, ier0)
         else
-         call b2npmo (nx, ny, ns, ncall, solving, rxf1,
+         call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,
      &    qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                    !srv 01.07.09
      &    na, te, ti, po, fna_fcor,
      &    cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                      !srv 02.07.08
@@ -511,75 +499,11 @@ cxpb
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
             new_matrix = .false.
-            if (use_b2npc9.eq.0.or.is_neutral(is).or.mdf_fnb.eq.0) then ! compare 5-pt stencil matrices
-              if (is.eq.nsmin) then
-                do ireg = 0, nnreg(0)
-                  if (solving(1)) then
-                    new_matrix = new_matrix.or.
-     &               solvemt(ireg).neqv.solveco(is,ireg)
-                  else if (solving(4).and.
-     &                    (use_b2nph9.eq.0.or.
-     &                    (mdf_fhe.eq.0.and.mdf_fhi.eq.0))) then
-                    new_matrix = new_matrix.or.
-     &               solveei(ireg).neqv.solveco(is,ireg)
-                  else if (solving(3).and.vis_per.eq.0.0_R8) then
-                    new_matrix = new_matrix.or.
-     &               solvepo(ireg).neqv.solveco(is,ireg)
-                  else if (mdf_fnb.eq.0) then
-                    new_matrix = new_matrix.or.
-     &               solveco(nsmax-1,ireg).neqv.solveco(is,ireg)
-                  else if (use_b2npc9.eq.1.and.last_neutral.ge.0) then
-                    new_matrix = new_matrix.or.
-     &               solveco(last_neutral,ireg).neqv.solveco(is,ireg)
-                  else
-                    new_matrix = new_matrix.or.
-     &               solveco(nsmax-1,ireg).neqv.solveco(is,ireg)
-                  end if
-                end do
-              else
-                previous_neutral = is
-                iss = is
-                do while (iss.gt.nsmin)
-                  iss = iss-1
-                  if (is_neutral(iss)) previous_neutral = iss
-                end do
-                do ireg = 0, nnreg(0)
-                  if (mdf_fnb.eq.0.or.use_b2npc9.eq.0) then
-                    new_matrix = new_matrix.or.
-     &               solveco(is-1,ireg).neqv.solveco(is,ireg)
-                  else
-                    new_matrix = new_matrix.or.
-     &             solveco(previous_neutral,ireg).neqv.solveco(is,ireg)
-                  endif
-                end do
-              endif
-            else ! compare 9-pt stencil matrices
-              if (is.eq.nsmin) then
-                do ireg = 0, nnreg(0)
-                  if (solving(4).and.
-     &                use_b2nph9.eq.1.and.mdf_fhe.ne.0.and.mdf_fhi.ne.0)
-     >             then
-                    new_matrix = new_matrix.or.
-     &               solveei(ireg).neqv.solveco(is,ireg)
-                  else if (last_ion.lt.ns) then
-                    new_matrix = new_matrix.or.
-     &               solveco(last_ion,ireg).neqv.solveco(is,ireg)
-                  endif
-                end do
-              else
-                previous_ion = is
-                iss = is
-                do while (iss.gt.nsmin)
-                  iss = iss-1
-                  if (.not.is_neutral(iss)) previous_ion = iss
-                end do
-                do ireg = 0, nnreg(0)
-                  new_matrix = new_matrix.or.
-     &             solveco(previous_ion,ireg).neqv.solveco(is,ireg)
-                end do
-              endif
-            endif
             if(mdf_fnb.eq.0) then                                        !srv 13.10.06
+              do ireg = 0, nnreg(0)
+                new_matrix = new_matrix.or.
+     &           solveco(is,ireg).neqv.last_solve_5(ireg)
+              end do
               if(new_matrix) call restart_ma28
               call b2npco (nx, ny, guard_flows,                          !srv 05.07.08
      &         nnreg(0), solvedum, solving(1), solvedm2,
@@ -588,8 +512,13 @@ cxpb
      &         ua(-1,-1,is), fna(-1,-1,0,is), resco(-1,-1,is),
      &         corpa(-1,-1,is), ier0)
               call xertst (ier0.eq.0, 'error return from b2npco')
+              last_solve_5(0:nnreg(0)) = solveco(is,0:nnreg(0))
             else                                                         !srv 13.10.06 {
               if(.not.is_neutral(is) .and. use_b2npc9.eq.1) then         !srv 06.11.08
+                do ireg = 0, nnreg(0)
+                  new_matrix = new_matrix.or.
+     &             solveco(is,ireg).neqv.last_solve_9(ireg)
+                end do
                 if(new_matrix) call restart_ma28_for_9
                 call b2npc9 (nx, ny, guard_flows, nnreg(0), solvedum,
      &           solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob,
@@ -597,7 +526,12 @@ cxpb
      &           pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npc9')
+                last_solve_9(0:nnreg(0)) = solveco(is,0:nnreg(0))
               else
+                do ireg = 0, nnreg(0)
+                  new_matrix = new_matrix.or.
+     &             solveco(is,ireg).neqv.last_solve_5(ireg)
+                end do
                 if(new_matrix) call restart_ma28
                 call b2npco (nx, ny, guard_flows, nnreg(0), solvedum,
      &           solving(1), solvedm2, ncall, is, rxf0, vol, pbs, flob,
@@ -605,6 +539,7 @@ cxpb
      &           pb, na(-1,-1,is), ua(-1,-1,is), fna_mdf(-1,-1,0,is),
      &           resco(-1,-1,is), corpa(-1,-1,is), ier0)
                 call xertst (ier0.eq.0, 'error return from b2npco')
+                last_solve_5(0:nnreg(0)) = solveco(is,0:nnreg(0))
               endif
             endif                                                        !srv 13.10.06 }
 !*    ..re-compute partial pressure                                      !srv 01.10.99
@@ -647,29 +582,6 @@ cxpb
         else
 *   ..correct po
           if (solving(3)) then
-            if (vis_per.eq.0.0_R8) then
-              new_matrix = .false.
-              do ireg = 0, nnreg(0)
-                if (solving(2).and.(mdf_fnb.eq.0.or.use_b2npc9.eq.0))
-     >           then
-                  new_matrix = new_matrix.or.
-     &             solvepo(ireg).neqv.solveco(nsmax-1,ireg)
-                else if (solving(2).and.mdf_fnb.ne.0.and.
-     &                   use_b2npc9.eq.1.and.last_neutral.ge.0) then
-                  new_matrix = new_matrix.or.
-     &             solvepo(ireg).neqv.solveco(last_neutral,ireg)
-                else if (solving(1)) then
-                  new_matrix = new_matrix.or.
-     &             solvepo(ireg).neqv.solvemt(ireg)
-                else if (solving(4).and.
-     &                  (use_b2nph9.eq.0.or.
-     &                  (mdf_fhe.eq.0.and.mdf_fhi.eq.0))) then
-                  new_matrix = new_matrix.or.
-     &             solvepo(ireg).neqv.solveei(ireg)
-                end if
-              end do
-              if (new_matrix) call restart_ma28
-            end if
             call b2nxdp (nx, ny, nnreg(0), solvepo,
      .       qe, te, nep, ne, wrk0)
             call b2saxpy (n2, 1.0_R8, wrk0, 1, po, 1)
@@ -772,8 +684,15 @@ cxpb
 *    ..perform iteration
               if(.not.wrong_flow) then                                   !xpb
                 if(vis_per.eq.0.0_R8) then
+                  new_matrix = .false.
+                  do ireg = 0, nnreg(0)
+                    new_matrix = new_matrix.or.
+     &               solvepo(ireg).neqv.last_solve_5(ireg)
+                  end do
+                  if (new_matrix.and.ncall.ne.0) call restart_ma28
                   call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
      &             ne, te, conc, sch, po, fch, wrk0, wrk1, ier0)
+                  last_solve_5(0:nnreg(0)) = solvepo(ireg)
                 else
                   call b2npp7 (nx, ny, nnreg(0), solvepo, ncall, rxf2,
      &             ne, te, conc,
@@ -955,8 +874,7 @@ c     with diamagnetic drift part                                        !xpb
 *   ..iterate on heat balance
         if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                         !srv 13.10.06
           call b2npht (nx, ny, ns, nnreg(0), ncall, solving,
-     &     solveee, solveei, solveet, solvepo, solvemt,
-     &     solvemo, solveco,
+     &     solveee, solveei, solvepo, solvemo,
      &     rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
      &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 01.07.09
      &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 09.07.08 07.07.09
@@ -965,7 +883,7 @@ c     with diamagnetic drift part                                        !xpb
         endif                                                            !srv 13.10.06 }
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.1) then !srv 13.10.06
           call b2nph9 (nx, ny, ns, nnreg(0), ncall, solving,
-     &     solveee, solveei, solveet, solvepo, solvemo, solveco,
+     &     solveee, solveei, solvepo, solvemo,
      &     rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                    !srv 07.06.00 02.06.99
      &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 07.06.00 01.07.09
      &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 27.12.01 28.06.03 30.06.03 07.07.09
@@ -974,8 +892,7 @@ c     with diamagnetic drift part                                        !xpb
         endif                                                            !srv 13.10.06 }
         if((mdf_fhe.ne.0 .and. mdf_fhi.ne.0) .and. use_b2nph9.eq.0) then !srv 13.10.06
           call b2npht (nx, ny, ns, nnreg(0), ncall, solving,
-     &     solveee, solveei, solveet, solvepo, solvemt,
-     &     solvemo, solveco,
+     &     solveee, solveei, solvepo, solvemo,
      &     rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                    !srv 07.06.00 02.06.99
      &     pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,     !srv 07.06.00 01.07.09
      &     fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,          !srv 27.12.01 28.06.03 30.06.03 07.07.09

@@ -51,7 +51,7 @@
 !
 
 #define DEF_NREAC 60
-#define DEF_NRDS 70
+#define DEF_NREI 70
 #define DEF_NREC 5
 #define DEF_NREL 8
 

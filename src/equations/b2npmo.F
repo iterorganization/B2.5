@@ -37,7 +37,7 @@
      &  smof(-1:nx,-1:ny,0:3,0:ns-1), chci(-1:nx,-1:ny,0:1),          !srv 10.11.02
      &  cthe(-1:nx,-1:ny,0:ns-1), cthi(-1:nx,-1:ny,0:ns-1),
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
-      logical solving(4)
+      logical solving
 *   ..input/output arguments
       real (kind=R8) ::
      *  ua(-1:nx,-1:ny,0:ns-1)
@@ -79,11 +79,8 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, diagno, ireg, nsmin, nsmax, k
-      integer, save :: last_neutral
       integer, save :: modvis = 1                                      !srv 19.01.05
       integer, save :: iout = 0, b2sifr_ver=1                          !srv 04.07.08 26.10.08
-      integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0
-      integer, save :: use_b2npc9 = 1, use_b2nph9 = 1
       character chns*3, chk*1                                          !srv 04.07.08
       real (kind=R8) ::
      *  rxg, t0, t1, t2, vis_par, vis_per
@@ -137,15 +134,7 @@
         call ipgeti ('b2npmo_modvis', modvis)                          !srv 19.01.05
         call ipgeti ('b2npmo_iout', iout)                              !srv 04.07.08
         call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.07.08
-        call ipgeti ('b2news_use_b2npc9', use_b2npc9)                  !srv 06.11.08
-        call ipgeti ('b2news_use_b2nph9', use_b2nph9)                  !srv 06.11.08
         call ipgetr ('b2tfhe_vis_per', vis_per)
-        call ipgeti ('b2tfnb_mdf', mdf_fnb)                            !srv 13.10.06 {
-        call ipgeti ('b2tfhe_mdf', mdf_fhe)
-        call ipgeti ('b2tfhi_mdf', mdf_fhi)                            !srv 13.10.06 }
-        call xertst (mdf_fhe.eq.0 .eqv. mdf_fhi.eq.0,
-     &   ' Both mdf_fhe.eq.0 and mdf_fhe.eq.0 should be true,'//
-     &   ' or both should be false')
         call ipgeti ('b2news_nsmin', nsmin)
         if(nsmin.gt.ns) then
            nsmin=ns
@@ -159,10 +148,6 @@
            nsmax=0
         endif
         write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
-        last_neutral=-1
-        do is = nsmin, nsmax-1
-          if (is_neutral(is)) last_neutral=is
-        end do
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -333,47 +318,21 @@
      &        smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
         call my_out(70,nx,ny,wrks,'b2npmo_smocf'//chns)
        endif                                                           !srv 12.07.02 }
-       if (solving(1)) then                                            !srv 06.07.10
-         solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
+       if (solving) then                                               !srv 06.07.10
+        solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
 c    ..compare 5-pt stencil matrices
-         new_matrix = .false.
-         if (is.eq.nsmin) then
-           do ireg = 0, nnreg(0)
-             if (solving(4).and.
-     &          (use_b2nph9.eq.0.or.(mdf_fhe.eq.0.and.mdf_fhi.eq.0)))
-     >        then
-               new_matrix = new_matrix.or.
-     &          solvemo(is,ireg).neqv.solveei(ireg)
-             else if (solving(3).and.vis_per.eq.0.0_R8) then
-               new_matrix = new_matrix.or.
-     &          solvemo(is,ireg).neqv.solvepo(ireg)
-             else if (solving(2).and.mdf_fnb.eq.0) then
-               new_matrix = new_matrix.or.
-     &          solvemo(is,ireg).neqv.solveco(nsmax-1,ireg)
-             else if (solving(2).and.use_b2npc9.eq.0) then
-               new_matrix = new_matrix.or.
-     &          solvemo(is,ireg).neqv.solveco(nsmax-1,ireg)
-             else if (solving(2).and.use_b2npc9.eq.1.and.
-     &                last_neutral.ge.0) then
-               new_matrix = new_matrix.or.
-     &          solvemo(is,ireg).neqv.solveco(last_neutral,ireg)
-             else
-               new_matrix = new_matrix.or.
-     &          solvemo(is,ireg).neqv.solvemt(ireg)
-             end if
-           end do
-         else
-           do ireg = 0, nnreg(0)
-             new_matrix = new_matrix.or.
-     &        solvemo(is,ireg).neqv.solvemo(is-1,ireg)
-           end do
-         end if
-         if (new_matrix) call restart_ma28
+        new_matrix = .false.
+        do ireg = 0, nnreg(0)
+         new_matrix = new_matrix.or.
+     &    solvemo(is,ireg).neqv.last_solve_5(ireg)
+        end do
+        if (new_matrix) call restart_ma28
 *    ..compute correction
-         call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,      !srv 04.07.08
+        call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
      &   vol, hx, hz, bb, rob, pb, ua(-1,-1,is),                       !srv 09.01.01
      &   smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
      &   pcca(-1,-1,0,is), aa5, wrk1, 'b2usmo_'//chns)
+        last_solve_5(0:nnreg(0)) = solvemo(is,0:nnreg(0))
 csw 21feb2014 added this else branch
        else
         pcca(:,:,:,is)  = 0.0_R8
@@ -384,7 +343,7 @@ csw 21feb2014 added this else branch
 *      (now the friction cancels out)
 
 csw 21feb2014 and do this only for the solved species, i.e. added next branch
-       if (solving(1)) then
+       if (solving) then
         call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
         call b2saxpy (n2*4, 1.0_R8, smbgp, 1, smb, 1)
         call b2saxpy (n2*4, 1.0_R8, smbvh, 1, smb, 1)
@@ -403,24 +362,25 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
        endif
       enddo
 csw 21feb2014, execute simultaneous corrections always
-c      if (solving(1).and.all(solvemo(0:ns-1,0:nnreg(0)))) then           !srv 06.07.10
-      if (solving(1)) then
+c      if (solving.and.solvemt(0:nnreg(0))) then                        !srv 06.07.10
+      if (solving) then
 *   ..compute simultaneous correction
        call sfill (n2, 0.0_R8, wrk0, 1)
        new_matrix = .false.
        do ireg = 0, nnreg(0)
          new_matrix = new_matrix.or.
-     &    solvemt(ireg).neqv.solvemo(nsmax-1,ireg)
+     &    solvemt(ireg).neqv.last_solve_5(ireg)
        end do
        if (new_matrix) call restart_ma28
-       call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,       !srv 04.07.08
-     &  vol, hx, hz, bb, ro, pr, wrk0, smt, flct, cvct,               !srv 09.01.01
-     &  resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')         !srv 06.04.07
+       call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,         !srv 04.07.08
+     &  vol, hx, hz, bb, ro, pr, wrk0, smt, flct, cvct,                !srv 09.01.01
+     &  resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')          !srv 06.04.07
+       last_solve_5(0:nnreg(0)) = solvemt(0:nnreg(0))
       else
        pccm  = 0.0_R8
        resmt = 0.0_R8
        corut = 0.0_R8
-      endif                                                           !srv 06.07.10
+      endif                                                            !srv 06.07.10
 *   ..apply correction
        do is = 0, ns-1
         do iy = -1, ny
@@ -428,7 +388,7 @@ c      if (solving(1).and.all(solvemo(0:ns-1,0:nnreg(0)))) then           !srv 0
           ireg = region(ix,iy,0)
           if (solvemo(is,ireg)) then
             if((leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) .or.
-     &       (bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) ) then !srv 27.01.11
+     &       (bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) ) then  !srv 27.01.11
                ua(ix,iy,is) = ua(ix,iy,is) + corua(ix,iy,is)
             else
                ua(ix,iy,is) = ua(ix,iy,is)+
