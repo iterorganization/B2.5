@@ -9,6 +9,7 @@ git_version.h
 git_version_*.h
 mpif.h
 !src/include/mpif.h
+src/catalyst/*.#*
 
 # ignore anything in directories with executables
 Release/
