@@ -33,8 +33,6 @@ extern "C" void creategrid_(double* crx, double* cry, int* ncrx, int* nx, int* n
     }
 
   //create vtk points
-
-  vtkPolyData* grid = vtkPolyData::New();
   vtkPoints* points = vtkPoints::New();
   points->SetNumberOfPoints(*ncrx);
   int numOfCells = (*nx+2)*(*ny+2);
@@ -45,10 +43,9 @@ extern "C" void creategrid_(double* crx, double* cry, int* ncrx, int* nx, int* n
     points->SetPoint(3+id*4, crx[id+3*numOfCells], cry[id+3*numOfCells], 0.0);
 }
 
-  vtkCPPythonAdaptorAPI::GetCoProcessorData()->GetInputDescriptionByName("input")->SetGrid(grid);
-
   //create vtk cells
-
+  vtkPolyData* grid = vtkPolyData::New();
+  vtkCPPythonAdaptorAPI::GetCoProcessorData()->GetInputDescriptionByName("input")->SetGrid(grid);
   grid->SetPoints(points);
   points->Delete();
   grid->allocate(numOfCells);
