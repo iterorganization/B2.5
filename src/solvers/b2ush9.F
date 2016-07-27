@@ -152,7 +152,7 @@
          flo0(ix,iy,0) = 0.0e0_R8
          con0(ix,iy,0,:) = 0.0e0_R8                                   !srv 02.01.07
         else
-         if (solvereg(ireg) .and. solvireg(ireg)) then
+         if (solveee(ireg) .and. solveei(ireg)) then
           t0 = 2.5_R8*pbs(ix,iy,0)*pcm1*pccm1(ix,iy)*                 !srv 02.01.07 {
      &     (ne(leftix(ix,iy),leftiy(ix,iy))*
      &      te(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy)*te(ix,iy)+
@@ -164,7 +164,7 @@
           con0(ix,iy,0,0) = cone(ix,iy,0,0)+coni(ix,iy,0,0)           !srv 02.01.07
      &     +(t0/2)*(ne(leftix(ix,iy),leftiy(ix,iy))                   !srv 02.01.07 {
      &      +ne(ix,iy)+ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0)) !srv 02.01.07 }
-         else if (.not.solvereg(ireg) .and. solvireg(ireg)) then
+         else if (.not.solveee(ireg) .and. solveei(ireg)) then
           t0 = 2.5_R8*pbs(ix,iy,0)*pcm1*pccm1(ix,iy)*                 !srv 02.01.07 {
      &     (ni(leftix(ix,iy),leftiy(ix,iy),0)*
      &      ti(leftix(ix,iy),leftiy(ix,iy))+ni(ix,iy,0)*ti(ix,iy))/2  !srv 02.01.07 }
@@ -172,7 +172,7 @@
      &     -t0*(ni(ix,iy,0)-ni(leftix(ix,iy),leftiy(ix,iy),0))        !srv 02.01.07 }
           con0(ix,iy,0,0) = coni(ix,iy,0,0)                           !srv 02.01.07
      &     +(t0/2)*(ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))    !srv 02.01.07 }
-         else if (solvereg(ireg) .and. .not.solvireg(ireg)) then
+         else if (solveee(ireg) .and. .not.solveei(ireg)) then
           t0 = 2.5_R8*pbs(ix,iy,0)*pcm1*pccm1(ix,iy)*                 !srv 02.01.07 {
      &     (ne(leftix(ix,iy),leftiy(ix,iy))*
      &      te(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy)*te(ix,iy))/2    !srv 02.01.07 }
@@ -192,13 +192,13 @@
       do iy = 0, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        if (solvereg(ireg) .and. solvireg(ireg)) then
+        if (solveee(ireg) .and. solveei(ireg)) then
           flo0(ix,iy,1) = floe(ix,iy,1)+floi(ix,iy,1)
           con0(ix,iy,1,0) = cone(ix,iy,1,0)+coni(ix,iy,1,0)           !srv 02.01.07
-        else if (.not.solvereg(ireg) .and. solvireg(ireg)) then
+        else if (.not.solveee(ireg) .and. solveei(ireg)) then
           flo0(ix,iy,1) = floi(ix,iy,1)
           con0(ix,iy,1,0) = coni(ix,iy,1,0)                           !srv 02.01.07
-        else if (solvereg(ireg) .and. .not.solvireg(ireg)) then
+        else if (solveee(ireg) .and. .not.solveei(ireg)) then
           flo0(ix,iy,1) = floe(ix,iy,1)
           con0(ix,iy,1,0) = cone(ix,iy,1,0)                           !srv 02.01.07
         endif
@@ -209,16 +209,16 @@
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        if (solvereg(ireg) .and. solvireg(ireg)) then
+        if (solveee(ireg) .and. solveei(ireg)) then
           aa9(ix,iy,0) =
      &    -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)-
      &     shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)
      &    +abs(resht(ix,iy))/(rxg*min(te(ix,iy),ti(ix,iy)))           !srv 02.01.07
-        else if (solvereg(ireg) .and. .not.solvireg(ireg)) then
+        else if (solveee(ireg) .and. .not.solveei(ireg)) then
           aa9(ix,iy,0) =
      &    -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)
      &    +abs(resht(ix,iy))/(rxg*te(ix,iy))                          !srv 02.01.07
-        else if (.not.solvereg(ireg) .and. solvireg(ireg)) then
+        else if (.not.solveee(ireg) .and. solveei(ireg)) then
           aa9(ix,iy,0) =
      &    -shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)
      &    +abs(resht(ix,iy))/(rxg*ti(ix,iy))                          !srv 02.01.07
@@ -234,14 +234,14 @@
          t0 =  flo0(ix,iy,0)/2-con0(ix,iy,0,0)                        !srv 02.01.07
          t1 = -flo0(ix,iy,0)/2-con0(ix,iy,0,0)                        !srv 02.01.07
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
-         if (solvereg(ileft) .or. solvireg(ileft))
+         if (solveee(ileft) .or. solveei(ileft))
      >    aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0
-         if (solvereg(ireg) .or. solvireg(ireg))
+         if (solveee(ireg) .or. solveei(ireg))
      >    aa9(ix,iy,0) = aa9(ix,iy,0)-t0
-         if (solvereg(ileft) .or. solvireg(ileft))
+         if (solveee(ileft) .or. solveei(ileft))
      >    aa9(leftix(ix,iy),leftiy(ix,iy),0) =
      &      aa9(leftix(ix,iy),leftiy(ix,iy),0)-t1
-         if (solvereg(ireg) .or. solvireg(ireg))
+         if (solveee(ireg) .or. solveei(ireg))
      >    aa9(ix,iy,-1) = t1
         endif                                                         !srv 26.11.02
         if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8            !srv 26.11.02
@@ -254,25 +254,25 @@
         t0 =  flo0(ix,iy,1)/2-con0(ix,iy,1,0)     !srv 02.01.07
         t1 = -flo0(ix,iy,1)/2-con0(ix,iy,1,0)     !srv 02.01.07
         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-        if (solvereg(ibot) .or. solvireg(ibot))
+        if (solveee(ibot) .or. solveei(ibot))
      >   aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0
-        if (solvereg(ireg) .or. solvireg(ireg))
+        if (solveee(ireg) .or. solveei(ireg))
      >   aa9(ix,iy,0) = aa9(ix,iy,0)-t0
-        if (solvereg(ibot) .or. solvireg(ibot))
+        if (solveee(ibot) .or. solveei(ibot))
      >   aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &      aa9(bottomix(ix,iy),bottomiy(ix,iy),0)-t1
-        if (solvereg(ireg) .or. solvireg(ireg))
+        if (solveee(ireg) .or. solveei(ireg))
      >   aa9(ix,iy,-3) = t1
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
 *   ..add matrix from contribution nine point stencil
       if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, nregionv, itcnt, solvereg, cone(-1,-1,0,1),
+       call b2uxm9 (nx, ny, nregionv, itcnt, solveee, cone(-1,-1,0,1),
      &  aa9, 'b2ush9_totale')                                           !srv 02.01.07
       endif
       if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, nregionv, itcnt, solvireg, coni(-1,-1,0,1),
+       call b2uxm9 (nx, ny, nregionv, itcnt, solveei, coni(-1,-1,0,1),
      &  aa9, 'b2ush9_totali')                                           !srv 02.01.07
       endif
       do iy=-1,ny
@@ -332,7 +332,7 @@
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        if (solvereg(ireg))
+        if (solveee(ireg))
      >   aa9(ix,iy,0) = -she(ix,iy,1)-she(ix,iy,3)*ne(ix,iy)+
      &    dim(1.0_R8,1.5_R8*(te(ix,iy)-ti(ix,iy))/te(ix,iy))*       !srv 02.01.07
      &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))
@@ -347,14 +347,14 @@
         else                                                        !srv 26.11.02 }
          t0 =  flo0(ix,iy,0)/2-con0(ix,iy,0,0)                      !srv 02.01.07
          t1 = -flo0(ix,iy,0)/2-con0(ix,iy,0,0)                      !srv 02.01.07
-         if (solvereg(ileft))
+         if (solveee(ileft))
      >    aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0
-         if (solvereg(ireg))
+         if (solveee(ireg))
      >    aa9(ix,iy,0) = aa9(ix,iy,0)-t0
-         if (solvereg(ileft))
+         if (solveee(ileft))
      >    aa9(leftix(ix,iy),leftiy(ix,iy),0) = 
      &       aa9(leftix(ix,iy),leftiy(ix,iy),0)-t1
-         if (solvereg(ireg))
+         if (solveee(ireg))
      >    aa9(ix,iy,-1) = t1
         endif                                                       !srv 26.11.02 {
         if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8          !srv 26.11.02
@@ -367,21 +367,21 @@
         t0 =  flo0(ix,iy,1)/2-con0(ix,iy,1,0)                       !srv 02.01.07
         t1 = -flo0(ix,iy,1)/2-con0(ix,iy,1,0)                       !srv 02.01.07
         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-        if (solvereg(ibot))
+        if (solveee(ibot))
      >   aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0
-        if (solvereg(ireg))
+        if (solveee(ireg))
      >   aa9(ix,iy,0) = aa9(ix,iy,0)-t0
-        if (solvereg(ibot))
+        if (solveee(ibot))
      >   aa9(bottomix(ix,iy),bottomiy(ix,iy),0) = 
      &       aa9(bottomix(ix,iy),bottomiy(ix,iy),0)-t1
-        if (solvereg(ireg))
+        if (solveee(ireg))
      >    aa9(ix,iy,-3) = t1
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
 *   ..add matrix from contribution nine point stencil
       if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, nregionv, itcnt, solvereg, cone(-1,-1,0,1),
+       call b2uxm9 (nx, ny, nregionv, itcnt, solveee, cone(-1,-1,0,1),
      &  aa9, 'b2ush9_Te')                                               !srv 02.01.07
       endif
       do iy=-1,ny
@@ -441,7 +441,7 @@
       do iy = -1, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        if (solvireg(ireg))
+        if (solveei(ireg))
      >   aa9(ix,iy,0) = (-shi(ix,iy,1)-shi(ix,iy,3)*ni(ix,iy,0)+
      &    ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/(te(ix,iy)*sqrt(te(ix,iy)))
      &   +abs(reshi(ix,iy))/(rxg*ti(ix,iy)))*scalr(ti(ix,iy))           !srv 02.01.07
@@ -457,15 +457,15 @@
          t0 =  flo0(ix,iy,0)/2-con0(ix,iy,0,0)                          !srv 02.01.07
          t1 = -flo0(ix,iy,0)/2-con0(ix,iy,0,0)                          !srv 02.01.07
          ileft = region(leftix(ix,iy),leftiy(ix,iy),0)
-         if (solvireg(ileft))
+         if (solveei(ileft))
      >    aa9(leftix(ix,iy),leftiy(ix,iy),1) = t0*scalr(ti(ix,iy))
-         if (solvireg(ireg))
+         if (solveei(ireg))
      >    aa9(ix,iy,0) = aa9(ix,iy,0)-t0*scalr(ti(ix,iy))
-         if (solvireg(ileft))
+         if (solveei(ileft))
      >    aa9(leftix(ix,iy),leftiy(ix,iy),0) =
      &      aa9(leftix(ix,iy),leftiy(ix,iy),0)
      &     -t1*scalr(ti(leftix(ix,iy),leftiy(ix,iy)))
-         if (solvireg(ireg))
+         if (solveei(ireg))
      >    aa9(ix,iy,-1) = t1*scalr(ti(leftix(ix,iy),leftiy(ix,iy)))
         endif                                                           !srv 26.11.02 {
         if(rightix(ix,iy).eq.nx+1) aa9(ix,iy,1) = 0.0e0_R8              !srv 26.11.02
@@ -478,22 +478,22 @@
         t0 =  flo0(ix,iy,1)/2-con0(ix,iy,1,0)                         !srv 02.01.07
         t1 = -flo0(ix,iy,1)/2-con0(ix,iy,1,0)                         !srv 02.01.07
         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
-        if (solvireg(ibot))
+        if (solveei(ibot))
      >    aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0*scalr(ti(ix,iy))
-        if (solvireg(ireg))
+        if (solveei(ireg))
      >    aa9(ix,iy,0) = aa9(ix,iy,0)-t0*scalr(ti(ix,iy))
-        if (solvireg(ibot))
+        if (solveei(ibot))
      >    aa9(bottomix(ix,iy),bottomiy(ix,iy),0) =
      &    aa9(bottomix(ix,iy),bottomiy(ix,iy),0)
      &    -t1*scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
-        if (solvireg(ireg))
+        if (solveei(ireg))
      >    aa9(ix,iy,-3) = t1*scalr(ti(bottomix(ix,iy),bottomiy(ix,iy)))
        enddo
       enddo
       call sfill (nx+2, 0.0_R8, aa9(-1,ny,3), 1)
 *   ..add matrix from contribution nine point stencil
       if(iadd_9 .eq. 1) then
-       call b2uxm9 (nx, ny, nregionv, itcnt, solvireg, coni(-1,-1,0,1),
+       call b2uxm9 (nx, ny, nregionv, itcnt, solveei, coni(-1,-1,0,1),
      &  aa9, 'b2ush9_Ti')                                               !srv 02.01.07
       endif
       do iy=-1,ny
