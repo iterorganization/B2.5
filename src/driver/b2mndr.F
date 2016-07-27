@@ -41,6 +41,11 @@
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
       use b2mod_external
+
+#ifdef USE_CATALYST
+      !create module
+#endif
+
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_ccoupl
@@ -915,6 +920,11 @@
        call xertst (cpuincrement.ge.0.0_R8,
      1  'faulty internal parameter cpuincrement')
        cputarget=cpuincrement
+
+#ifdef USE_CATALYST
+       call coprocessorinitializewithpython("CoProc.py",9)
+#endif
+
 #ifdef JET
        call ipgetr ('b2mndr_trantim', delta_tran_time)
        if (delta_tran_time.gt.0.0_R8)
@@ -1936,6 +1946,11 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           if (found) call write_b2mod_wall_namelist(99,nx,ny,ns,
      >     savefile(13:16))
           if (ank_tracing.ne.0) call b2filef(ns)
+
+#ifdef USE_CATALYST
+          call coprocessor(crx,cry,4*(nx+2)*(ny+2),nx,ny,itim,tim)
+#endif
+
 #ifdef B25_EIRENE
           if (use_eirene.ne.0) call write_f44(savefile(13:16))
 #endif
@@ -2054,6 +2069,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call tallies(nx,ny,ns)
         endif
       endif
+
+#ifdef USE_CATALYST
+      call coprocessorfinalize()
+#endif
 
 * finalise eirene_mc
       if(use_eirene.ne.0.and.itim.gt.0) then
