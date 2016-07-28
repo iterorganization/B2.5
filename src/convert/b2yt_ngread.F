@@ -822,41 +822,48 @@ cank
           WRITE(45,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi) 
       
           NCL=eirdiag_nds_ind(nstsi+1)
-          IF(.NOT.ALLOCATED(wldna_res))
-     >     ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
-     .              ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL), 
-     .              ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL), 
-     .              ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
-     .              sarea_res(NCL) ) 
+          IF(NCL.GT.0) THEN
+            IF(.NOT.ALLOCATED(wldna_res))
+     >       ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
+     .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL), 
+     .                ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL), 
+     .                ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
+     .                sarea_res(NCL) ) 
  
-          READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
-          READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natmi),i=1,NCL)
-          READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
-          READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natmi),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldm_res(j,i),j=1,nmoli),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldea_res(j,i),j=1,natmi),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldem_res(j,i),j=1,nmoli),i=1,NCL)
-          READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL)
-          allocate(wldna1res(natm1,NCL), ewlda1res(natm1,NCL),
-     .             ewldea1res(natm1,NCL))
-          do is = 1, natmi
-            if (iatm1(is).ne.0) then
-              wldna1res(iatm1(is),1:NCL) = wldna_res(is,1:NCL)
-              ewlda1res(iatm1(is),1:NCL) = ewlda_res(is,1:NCL)
-              ewldea1res(iatm1(is),1:NCL) = ewldea_res(is,1:NCL)
-            end if
-          end do
-          WRITE(45,'(6e15.7)') (sarea_res(i),i=1,NCL)
-          WRITE(45,'(6e15.7)') ((wldna1res(j,i),j=1,natm1),i=1,NCL)
-          WRITE(45,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
-          WRITE(45,'(6e15.7)') ((ewlda1res(j,i),j=1,natm1),i=1,NCL)
-          WRITE(45,'(6e15.7)') ((ewldm_res(j,i),j=1,nmoli),i=1,NCL)
-          WRITE(45,'(6e15.7)') ((ewldea1res(j,i),j=1,natm1),i=1,NCL)
-          WRITE(45,'(6e15.7)') ((ewldem_res(j,i),j=1,nmoli),i=1,NCL)
-          WRITE(45,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
-          WRITE(45,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL) 
-          deallocate(wldna1res, ewlda1res, ewldea1res)
+            READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
+            READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natmi),i=1,NCL)
+            READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
+            READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natmi),i=1,NCL)
+            READ (44,'(6e15.7)') ((ewldm_res(j,i),j=1,nmoli),i=1,NCL)
+            READ (44,'(6e15.7)') ((ewldea_res(j,i),j=1,natmi),i=1,NCL)
+            READ (44,'(6e15.7)') ((ewldem_res(j,i),j=1,nmoli),i=1,NCL)
+            READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
+            READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL)
+            allocate(wldna1res(natm1,NCL), ewlda1res(natm1,NCL),
+     .               ewldea1res(natm1,NCL))
+            do is = 1, natmi
+              if (iatm1(is).ne.0) then
+                wldna1res(iatm1(is),1:NCL) = wldna_res(is,1:NCL)
+                ewlda1res(iatm1(is),1:NCL) = ewlda_res(is,1:NCL)
+                ewldea1res(iatm1(is),1:NCL) = ewldea_res(is,1:NCL)
+              end if
+            end do
+            WRITE(45,'(6e15.7)') (sarea_res(i),i=1,NCL)
+            WRITE(45,'(6e15.7)') ((wldna1res(j,i),j=1,natm1),i=1,NCL)
+            WRITE(45,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
+            WRITE(45,'(6e15.7)') ((ewlda1res(j,i),j=1,natm1),i=1,NCL)
+            WRITE(45,'(6e15.7)') ((ewldm_res(j,i),j=1,nmoli),i=1,NCL)
+            WRITE(45,'(6e15.7)') ((ewldea1res(j,i),j=1,natm1),i=1,NCL)
+            WRITE(45,'(6e15.7)') ((ewldem_res(j,i),j=1,nmoli),i=1,NCL)
+            WRITE(45,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
+            WRITE(45,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL) 
+            deallocate(wldna1res, ewlda1res, ewldea1res)
+          ELSE
+            DO IS = 1, 9
+              READ (44,1028)
+              WRITE(45,1028)
+            END DO
+          END IF
         end if
 
         if(streql(solps_version,'4.3')) goto 99
@@ -993,6 +1000,7 @@ cank
    99 CONTINUE
       close(44)
       close(45)
+ 1028 format()
 C
       call subend ()
       RETURN

@@ -411,23 +411,35 @@ cank
           READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi) 
       
           NCL=eirdiag_nds_ind(nstsi+1)
-          IF(.NOT.ALLOCATED(wldna_res)) 
+          IF (NCL.GT.0) THEN
+            IF(.NOT.ALLOCATED(wldna_res)) 
 ! FIXME: replace NATM, etc.. by actual values from file 
-     >     ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
-     .              ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL), 
-     .              ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL), 
-     .              ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
-     .              sarea_res(NCL) ) 
+     >       ALLOCATE(wldna_res(natmi,NCL), wldnm_res(nmoli,NCL),
+     .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL), 
+     .                ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL), 
+     .                ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
+     .                sarea_res(NCL) ) 
  
-          READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
-          READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natmi),i=1,NCL)
-          READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
-          READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natmi),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldm_res(j,i),j=1,nmoli),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldea_res(j,i),j=1,natmi),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldem_res(j,i),j=1,nmoli),i=1,NCL)
-          READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
-          READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL) 
+            READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
+            READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natmi),i=1,NCL)
+            READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
+            READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natmi),i=1,NCL)
+            READ (44,'(6e15.7)') ((ewldm_res(j,i),j=1,nmoli),i=1,NCL)
+            READ (44,'(6e15.7)') ((ewldea_res(j,i),j=1,natmi),i=1,NCL)
+            READ (44,'(6e15.7)') ((ewldem_res(j,i),j=1,nmoli),i=1,NCL)
+            READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
+            READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL)
+          ELSE
+            READ (44,1028)
+            READ (44,1028)
+            READ (44,1028)
+            READ (44,1028)
+            READ (44,1028)
+            READ (44,1028)
+            READ (44,1028)
+            READ (44,1028)
+            READ (44,1028)
+          END IF
         end if
 
         if(jvft44 .ge. 20081111) then
@@ -491,6 +503,7 @@ cxpb
 
 *  ---------------------------------------------------------------------
    99 CONTINUE
+ 1028 format()
 C
       call subend ()
       RETURN
