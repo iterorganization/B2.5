@@ -212,11 +212,11 @@ cwdk  tmp: needed as long as not all contributions are filled later on
         call b2txcx (nx, ny, mode, vol, gs, hx, qz, dna0(-1,-1,is),
      &   cdna(-1,-1,0,0,is))
         call b2txcy (nx, ny, mode, vol, gs, hy, qz, dna0(-1,-1,is),
-     &   cdna(-1,-1,1,1,is))
+     &   cdna(-1,-1,0,1,is))
         call b2txcx (nx, ny, mode, vol, gs, hx, qz, dpa0(-1,-1,is),
      &   cdpa(-1,-1,0,0,is))
         call b2txcy (nx, ny, mode, vol, gs, hy, qz, dpa0(-1,-1,is),
-     &   cdpa(-1,-1,1,1,is))
+     &   cdpa(-1,-1,0,1,is))
         call b2txsx (nx, ny, vol, hx, qz, vla0(-1,-1,0,is),
      &   cvla(-1,-1,0,0,is))
         call b2txsy (nx, ny, vol, hy, qz, vla0(-1,-1,1,is),
@@ -224,12 +224,12 @@ cwdk  tmp: needed as long as not all contributions are filled later on
         call b2txcx (nx, ny, mode, vol, gs, hx, qz, vsa0(-1,-1,is),
      &   cvsa(-1,-1,0,0,is))
         call b2txcy (nx, ny, mode, vol, gs, hy, qz, vsa0(-1,-1,is),
-     &   cvsa(-1,-1,1,1,is))
+     &   cvsa(-1,-1,0,1,is))
         if(flux_limit_style.eq.2) then                                !srv 07.12.15 {
           call b2txcx (nx, ny, mode, vol, gs, hx, qz, hcib(-1,-1,is),
      &     chcb(-1,-1,0,0,is))
           call b2txcy (nx, ny, mode, vol, gs, hy, qz, hcib(-1,-1,is),
-     &     chcb(-1,-1,1,1,is))
+     &     chcb(-1,-1,0,1,is))
         endif                                                         !srv 07.12.15 }
       enddo
 
@@ -239,11 +239,11 @@ cwdk  tmp: needed as long as not all contributions are filled later on
        call b2txcx (nx, ny, mode, hzvol, gs, hx, qz, dna0(-1,-1,is),
      &   cdnahz(-1,-1,0,0,is))
        call b2txcy (nx, ny, mode, hzvol, gs, hy, qz, dna0(-1,-1,is),
-     &   cdnahz(-1,-1,1,1,is))
+     &   cdnahz(-1,-1,0,1,is))
        call b2txcx (nx, ny, mode, hzvol, gs, hx, qz, dpa0(-1,-1,is),
      &   cdpahz(-1,-1,0,0,is))
        call b2txcy (nx, ny, mode, hzvol, gs, hy, qz, dpa0(-1,-1,is),
-     &   cdpahz(-1,-1,1,1,is))
+     &   cdpahz(-1,-1,0,1,is))
        call b2txsx (nx, ny, hzvol, hx, qz, vla0(-1,-1,0,is),
      &   cvlahz(-1,-1,0,0,is))
        call b2txsy (nx, ny, hzvol, hy, qz, vla0(-1,-1,1,is),
@@ -255,7 +255,7 @@ cwdk  tmp: needed as long as not all contributions are filled later on
        call b2txcx (nx, ny, mode, hzvol, gs, hx, qz, vsa0(-1,-1,is),  !srv 01.07.05 {
      &   cvsahz(-1,-1,0,0,is))
        call b2txcy (nx, ny, mode, hzvol, gs, hy, qz, vsa0(-1,-1,is),
-     &   cvsahz(-1,-1,1,1,is))                                        !srv 01.07.05 }
+     &   cvsahz(-1,-1,0,1,is))                                        !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
 *   ..save the anomalous transport coefficients                       !srv 04.10.99
       cvsa_an = cvsa                                                  !srv 04.10.99
@@ -265,11 +265,11 @@ cwdk  tmp: needed as long as not all contributions are filled later on
       call b2txsy (nx, ny, vol, hy, qz, hve0(-1,-1,1), chve(-1,-1,1,1))
 
       call b2txcx (nx, ny, mode, vol, gs, hx, qz, hce0, chce(-1,-1,0,0))
-      call b2txcy (nx, ny, mode, vol, gs, hy, qz, hce0, chce(-1,-1,1,1))
+      call b2txcy (nx, ny, mode, vol, gs, hy, qz, hce0, chce(-1,-1,0,1))
       call b2txcx (nx, ny, mode, vol, gs, hx, qz, sig0, csig(-1,-1,0,0))
-      call b2txcy (nx, ny, mode, vol, gs, hy, qz, sig0, csig(-1,-1,1,1))
+      call b2txcy (nx, ny, mode, vol, gs, hy, qz, sig0, csig(-1,-1,0,1))
       call b2txcx (nx, ny, -1, vol, gs, hx, qz, alf0, calf(-1,-1,0,0))
-      call b2txcy (nx, ny, -1, vol, gs, hy, qz, alf0, calf(-1,-1,1,1))
+      call b2txcy (nx, ny, -1, vol, gs, hy, qz, alf0, calf(-1,-1,0,1))
 
       if(flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then       !srv 07.12.15
 csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
@@ -277,7 +277,7 @@ csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
           call b2txcx (nx, ny, mode, vol, gs, hx, qz, hci0,
      &     chci(-1,-1,0,0))
           call b2txcy (nx, ny, mode, vol, gs, hy, qz, hci0,
-     &     chci(-1,-1,1,1))
+     &     chci(-1,-1,0,1))
         else
           call b2txfx (nx, ny, ns, mode, vol, gs, hx, qz, hcimx, 
      &     chci(-1,-1,0,0))

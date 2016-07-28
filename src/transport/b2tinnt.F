@@ -151,11 +151,11 @@
           call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigi,
      &                                             csigia(-1,-1,0,0))
           call b2txcy (nx, ny, mode, vol, gs, hy, qz, sigi,
-     &                                             csigia(-1,-1,1,1))
+     &                                             csigia(-1,-1,0,1))
           call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigia,
      &                                 csigin(-1,-1,0,0,ismain,ismain0))
           call b2txcy (nx, ny, mode, vol, gs, hy, qz, sigia,
-     &                                 csigin(-1,-1,1,1,ismain,ismain0))
+     &                                 csigin(-1,-1,0,1,ismain,ismain0))
           if(style.eq.0) then
 *   ..interpolate ti in the left and bottom cell face
             call intfaceh(nx, ny, leftix, leftiy, vol, ti, til)
