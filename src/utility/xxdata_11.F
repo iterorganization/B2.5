@@ -1,15 +1,15 @@
-      subroutine xxdata_11 ( iunit  , iclass , 
-     &                       isdimd , iddimd , itdimd , 
+      subroutine xxdata_11 ( iunit  , iclass ,
+     &                       isdimd , iddimd , itdimd ,
      &                       ndptnl , ndptn  , ndptnc , ndcnct ,
-     &                       iz0    , is1min , is1max , 
-     &                       nptnl  , nptn   , nptnc  ,   
-     &                       iptnla , iptna  , iptnca , 
+     &                       iz0    , is1min , is1max ,
+     &                       nptnl  , nptn   , nptnc  ,
+     &                       iptnla , iptna  , iptnca ,
      &                       ncnct  , icnctv ,
-     &                       iblmx  , ismax  , dnr_ele, dnr_ams, 
+     &                       iblmx  , ismax  , dnr_ele, dnr_ams,
      &                       isppr  , ispbr  , isstgr ,
-     &                       idmax  , itmax  , 
+     &                       idmax  , itmax  ,
      &                       ddens  , dtev   , drcof  ,
-     &                       lres   , lstan  , lptn  
+     &                       lres   , lstan  , lptn
      &                     )
       use b2mod_types
       implicit none
@@ -17,14 +17,14 @@ c-----------------------------------------------------------------------
 c
 c  ****************** fortran77 subroutine: xxdata_11 ******************
 c
-c  purpose: to read a complete  adf11 file, check its class and 
+c  purpose: to read a complete  adf11 file, check its class and
 c           determine its standard, resolved and partition organisation.
 c
 c  calling program: various
 c
-c  notes:    (1) A `standard' adf11 file contains gcr data between one  
-c                whole ionisation stage and another whole ionisation 
-c                stage.  
+c  notes:    (1) A `standard' adf11 file contains gcr data between one
+c                whole ionisation stage and another whole ionisation
+c                stage.
 c                A `resolved' (or partial) adf11 file contains gcr data
 c                between a set of metastables of one ionisation stage
 c                and a set of metastables of another ionisation stage.
@@ -32,49 +32,49 @@ c                A resolved file is distinguished from a standard file
 c                by the presence of a `connection vector' in the adf11
 c                data file header lines.
 c                The connection vector specifies the number of meta-
-c                stables in each ionisation stage which are coupled 
+c                stables in each ionisation stage which are coupled
 c                together by gcr data.
-c            (2) A `partitioned' adf11 file contains gcr data between 
+c            (2) A `partitioned' adf11 file contains gcr data between
 c                clumps of ionisation stages or metastables or comb-
-c                inations of the two called `partitions'.  
-c                A `partition level' is a specification of the 
+c                inations of the two called `partitions'.
+c                A `partition level' is a specification of the
 c                partitions which span all the ionisation stages (and
-c                metastables) of an element.  Successive partition 
-c                levels give a hierarchy corresponding to larger 
-c                partitions and greater clumping. 
+c                metastables) of an element.  Successive partition
+c                levels give a hierarchy corresponding to larger
+c                partitions and greater clumping.
 c                A `superstage' is a set of partitions which are close-
 c                coupled.
 c                There are thus equivalences :
 c                        ionisation stage   -   superstage
 c                        metastable         -   partition
 c                        ion charge         -   superstage index
-c                A partitioned adf11 file may be standard (with each 
+c                A partitioned adf11 file may be standard (with each
 c                superstage comprising only one partition) or resolved.
-c                A partitioned file is distinguished by the presence of 
-c                `partition specification block' in the adf11 data  
+c                A partitioned file is distinguished by the presence of
+c                `partition specification block' in the adf11 data
 c                file header lines.
-c            (3) When a partition specification block is present, it 
-c                should be ordered from the highest partition level  
-c                index to lowest partition level index.  Thus the first 
-c                partition in the partition block has the least number 
+c            (3) When a partition specification block is present, it
+c                should be ordered from the highest partition level
+c                index to lowest partition level index.  Thus the first
+c                partition in the partition block has the least number
 c                of partitions and the last has the greatest number.
 c            (4) Twelve classes of adf11 data file may be read by the
 c                subroutine as follow:
 c
-c            	 class index	type	  GCR data content
-c            	 -----------	----	  ----------------
-c            	     1  	acd	  recombination coeffts
-c            	     2  	scd	  ionisation coeffts
-c            	     3  	ccd	  CX recombination coeffts
-c            	     4  	prb	  recomb/brems power coeffts
-c            	     5  	prc	  CX power coeffts
-c            	     6  	qcd	  base meta. coupl. coeffts 
-c            	     7  	xcd	  parent meta. coupl. coeffts
-c            	     8  	plt	  low level line power coeffts
-c            	     9  	pls	  represent. line power coefft
-c            	    10  	zcd	  effective charge
-c            	    11  	ycd	  effective squared charge
-c            	    12  	ecd	  effective ionisation potential
+c                class index    type      GCR data content
+c                -----------    ----      ----------------
+c                    1          acd       recombination coeffts
+c                    2          scd       ionisation coeffts
+c                    3          ccd       CX recombination coeffts
+c                    4          prb       recomb/brems power coeffts
+c                    5          prc       CX power coeffts
+c                    6          qcd       base meta. coupl. coeffts
+c                    7          xcd       parent meta. coupl. coeffts
+c                    8          plt       low level line power coeffts
+c                    9          pls       represent. line power coefft
+c                   10          zcd       effective charge
+c                   11          ycd       effective squared charge
+c                   12          ecd       effective ionisation potential
 c
 c            (5) A resolved adf11 file, with a connection vector, has a set
 c                of names and pointers at precise positions in the data file
@@ -82,32 +82,32 @@ c                which are recognised.
 c                The names are different for partitioned and unpartitioned
 c                data files as follow:
 c
-c                       file      unpartitioned         partitioned 
-c                       class        names                 names  
-c                       
+c                       file      unpartitioned         partitioned
+c                       class        names                 names
+c
 c                       (all)         z1                   s1
 c
-c                       	 (indices 1 and 2)     (indices 1 and 2)
-c                   	----	   ----     ----         ----	  ----
-c                   	acd        iprt     igrd         ispp	  ispb
-c                   	scd        iprt     igrd         ispp	  ispb
-c                   	ccd        iprt     igrd         ispp	  ispb
-c                   	prb        iprt                  ispp	      
-c                   	prc        iprt                  ispp	      
-c                   	qcd        igrd     jgrd         ispb	  jspb
-c                   	xcd        iprt     jprt         ispp	  jspp
-c                   	plt        igrd 	         ispb
-c                   	pls        igrd 	         ispb
-c                   	zcd        igrd 	         ispb
-c                   	ycd        igrd 	         ispb
-c                   	ecd        igrd 	         ispb
+c                                (indices 1 and 2)     (indices 1 and 2)
+c                       ----       ----     ----         ----     ----
+c                       acd        iprt     igrd         ispp     ispb
+c                       scd        iprt     igrd         ispp     ispb
+c                       ccd        iprt     igrd         ispp     ispb
+c                       prb        iprt                  ispp
+c                       prc        iprt                  ispp
+c                       qcd        igrd     jgrd         ispb     jspb
+c                       xcd        iprt     jprt         ispp     jspp
+c                       plt        igrd                  ispb
+c                       pls        igrd                  ispb
+c                       zcd        igrd                  ispb
+c                       ycd        igrd                  ispb
+c                       ecd        igrd                  ispb
 c
 c             (6) In partitioned nomenclature: s=superstage; p=partition;
 c                 b=base (current superstage), p=parent (next up super-
 c                 stage), c=child (next down superstage). Thus arrays
 c                 `iprtr' and `igrd' in old notation are now substituted
 c                 by `isppr' and `ispbr' respectively internally and in
-c                 external naming. 
+c                 external naming.
 c
 c
 c  subroutine:
@@ -128,36 +128,36 @@ c  input : (i*4)  ndptnl    = maximum level of partitions
 c  input : (i*4)  ndptn     = maximum no. of partitions in one level
 c  input : (i*4)  ndptnc    = maximum no. of components in a partition
 c  input : (i*4)  ndcnct    = maximum number of elements in connection
-c                             vector  
+c                             vector
 c
 c  output: (i*4)  iz0       = nuclear charge
-c  output: (i*4)  is1min    = minimum ion charge + 1 
+c  output: (i*4)  is1min    = minimum ion charge + 1
 c                             (generalised to connection vector index)
-c  output: (i*4)  is1max    = maximum ion charge + 1 
+c  output: (i*4)  is1max    = maximum ion charge + 1
 c                             (note excludes the bare nucleus)
-c                             (generalised to connection vector index 
+c                             (generalised to connection vector index
 c                              and excludes last one which always remains
 c                              the bare nucleus)
-c  output: (i*4)  nptnl     = number of partition levels in block 
+c  output: (i*4)  nptnl     = number of partition levels in block
 c  output: (i*4)  nptn()    = number of partitions in partition level
-c                             1st dim: partition level 
+c                             1st dim: partition level
 c  output: (i*4)  nptnc(,)  = number of components in partition
-c                             1st dim: partition level 
-c                             2nd dim: member partition in partition level 
+c                             1st dim: partition level
+c                             2nd dim: member partition in partition level
 c  output: (i*4)  iptnla()  = partition level label (0=resolved root,1=
 c                                                      unresolved root)
-c                             1st dim: partition level index 
+c                             1st dim: partition level index
 c  output: (i*4)  iptna(,)  = partition member label (labelling starts at 0)
-c                             1st dim: partition level index 
-c                             2nd dim: member partition index in partition 
-c                             level 
+c                             1st dim: partition level index
+c                             2nd dim: member partition index in partition
+c                             level
 c  output: (i*4)  iptnca(,,)= component label (labelling starts at 0)
-c                             1st dim: partition level index 
-c                             2nd dim: member partition index in partition 
+c                             1st dim: partition level index
+c                             2nd dim: member partition index in partition
 c                             level
 c                             3rd dim: component index of member partition
-c  output: (i*4)  ncnct     = number of elements in connection vector 
-c  output: (i*4)  icnctv()  = connection vector of number of partitions 
+c  output: (i*4)  ncnct     = number of elements in connection vector
+c  output: (i*4)  icnctv()  = connection vector of number of partitions
 c                             of each superstage in resolved case
 c                             including the bare nucleus
 c                             1st dim: connection vector index
@@ -172,10 +172,10 @@ c  output: (c*12) dnr_ele   = CX donor element name for iclass = 3 or 5
 c                             (blank if unset)
 c  output: (r*8)  dnr_ams   = CX donor element mass for iclass = 3 or 5
 c                             (0.0d0 if unset)
-c  output: (i*4)  isppr()   = 1st (parent) index for each partition block 
+c  output: (i*4)  isppr()   = 1st (parent) index for each partition block
 c                             1st dim: index of (sstage, parent, base)
 c                                      block in isonuclear master file
-c  output: (i*4)  ispbr()   = 2nd (base) index for each partition block 
+c  output: (i*4)  ispbr()   = 2nd (base) index for each partition block
 c                             1st dim: index of (sstage, parent, base)
 c                                      block in isonuclear master file
 c  output: (i*4)  isstgr()  = s1 for each resolved data block
@@ -187,18 +187,18 @@ c  output: (i*4)  idmax     = number of dens values in
 c                             isonuclear master files
 c  output: (i*4)  itmax     = number of temp values in
 c                             isonuclear master files
-c  output: (r*8)  ddens()   = log10(electron density(cm-3)) from adf11 
+c  output: (r*8)  ddens()   = log10(electron density(cm-3)) from adf11
 c  output: (r*8)  dtev()    = log10(electron temperature (eV) from adf11
 c  output: (r*8)  drcof(,,) = if(iclass <=9):
-c                                log10(coll.-rad. coefft.) from 
+c                                log10(coll.-rad. coefft.) from
 c                                isonuclear master file
 c                             if(iclass >=10):
-c                                coll.-rad. coefft. from 
+c                                coll.-rad. coefft. from
 c                                isonuclear master file
 c                             1st dim: index of (sstage, parent, base)
 c                                      block in isonuclear master file
 c                             2nd dim: electron temperature index
-c                             3rd dim: electron density index 
+c                             3rd dim: electron density index
 
 c  output: (l*4)  lres      = .true.  => partial file
 c                           = .false. => not partial file
@@ -212,11 +212,11 @@ c          routine    source    brief description
 c          -------------------------------------------------------------
 c          i4unit     ADAS      fetch unit number for output of messages
 c          i4fctn     ADAS      convert string to integer form
-c          xfelem     ADAS      return element name given nuclear charge 
+c          xfelem     ADAS      return element name given nuclear charge
 c          xxword     ADAS      extract position of number in buffer
 c          xxslen     ADAS      find string less front and tail blanks
-c          xxcase     ADAS      convert a string to upper or lower case 
-c          xxrptn     ADAS      analyse an adf11 file partition block 
+c          xxcase     ADAS      convert a string to upper or lower case
+c          xxrptn     ADAS      analyse an adf11 file partition block
 c
 c author:  H. P. Summers, University of Strathclyde
 c          ja7.08
@@ -224,47 +224,47 @@ c          tel. +44-(0)141-548-4196
 c
 c date:    04/10/06
 c
-c version: 1.1				date: 04/10/2006
+c version: 1.1                          date: 04/10/2006
 c modified: Hugh Summers
-c		- first edition.
+c               - first edition.
 c
-c version: 1.2				date: 21/01/2007
+c version: 1.2                          date: 21/01/2007
 c modified: Allan Whiteford
-c		- Commented out warning about lack of iclass,
+c               - Commented out warning about lack of iclass,
 c                 all of the present ADAS files do not contain
 c                 this information
 c                 (first commit to CVS)
 c
-c version: 1.3				date: 08/03/2007
+c version: 1.3                          date: 08/03/2007
 c modified: Hugh Summers
-c		- adjustments for revised ecd formats.
+c               - adjustments for revised ecd formats.
 c                 charge exchange donor/donor mass checks and
 c                 dnr_ele, dnr_ams added to parameter return.
 c
 c-----------------------------------------------------------------------
       integer   nddash    , idword      , ndstack  , ndonors
 c-----------------------------------------------------------------------
-      character csrch1*4   , csrch2*4     , csrch3*4     
-      character csrch4*4   , csrch5*4        
-      character cdash*8    , cpart*3 
+      character csrch1*4   , csrch2*4     , csrch3*4
+      character csrch4*4   , csrch5*4
+      character cdash*8    , cpart*3
 c-----------------------------------------------------------------------
       parameter ( nddash = 6  , idword = 256 , ndstack = 40 )
       parameter ( csrch1 = 'iprt' , csrch2 = 'igrd'  ,csrch3 = '---/')
-      parameter ( csrch4 = 'ispp' , csrch5 = 'ispb') 
+      parameter ( csrch4 = 'ispp' , csrch5 = 'ispb')
       parameter ( cdash = '--------' , cpart = '//#' )
       parameter ( ndonors = 4 )
 c-----------------------------------------------------------------------
       integer   iunit     , i4unit   , i4fctn
       integer   iz0       , is1min   , is1max
-      integer   iddimd    , itdimd   , isdimd     
-      integer   ndptnl    , ndptn    , ndptnc   , ndcnct    
+      integer   iddimd    , itdimd   , isdimd
+      integer   ndptnl    , ndptn    , ndptnc   , ndcnct
       integer   iblmx     , ismax    , itmax    , idmax
-      integer   ischk    
+      integer   ischk
       integer   iclass    , iclass_file
-      integer   i         , ic       , it         , id      
+      integer   i         , ic       , it         , id
       integer   icptn     , iabt     , iabt1      , iabt2    ,
      &          j         , ndash_line
-      integer   nptnl     , ncnct    , ncptn_stack        
+      integer   nptnl     , ncnct    , ncptn_stack
       integer   nfirst    , iwords   , nwords   , ifirst     , ilast
 c-----------------------------------------------------------------------
       real*8    dnr_ams   , dmass
@@ -272,12 +272,12 @@ c-----------------------------------------------------------------------
       character cstrg*80  , cstrgl*80, cterm*80   ,  chindi*4
       character xfelem*12 , str12*12 , dnr_ele*12
 c-----------------------------------------------------------------------
-      logical   lres      , lstan     , lptn      , lresol     
-      logical   lptn_old  , lwarn     , ldonor    , ldmass       
+      logical   lres      , lstan     , lptn      , lresol
+      logical   lptn_old  , lwarn     , ldonor    , ldmass
 c-----------------------------------------------------------------------
       integer   idash_linea(nddash)
       integer   nptn(ndptnl)          , nptnc(ndptnl,ndptn)
-      integer   iptnla(ndptnl)        , iptna(ndptnl,ndptn) 
+      integer   iptnla(ndptnl)        , iptna(ndptnl,ndptn)
       integer   iptnca(ndptnl,ndptn,ndptnc)
       integer   icnctv(ndcnct)
       integer   isstgr(isdimd)
@@ -290,7 +290,7 @@ c-----------------------------------------------------------------------
       character cclass(12)*4          , cpatrn(12)*4
       character cptrn1(12)*4          , cptrn2(12)*4
       character cptn_stack(ndstack)*80
-      character cdonors(ndonors)*12 
+      character cdonors(ndonors)*12
 c-----------------------------------------------------------------------
       data      cterm /'------------------------------------------------
      &--------------------------------'/
@@ -304,7 +304,7 @@ c-----------------------------------------------------------------------
      &                 'ispb','ispp','ispb','ispb','ispb',
      &                 'ispb','ispb'/
       data      cdonors/'HYDROGEN    ','DEUTERIUM   ','TRITIUM     ',
-     &                  'HELIUM      '/  
+     &                  'HELIUM      '/
 c-----------------------------------------------------------------------
       external  subini, subend, xerrab
 c
@@ -318,75 +318,75 @@ c-----------------------------------------------------------------------
        ic = 0
        icptn = 0
        ndash_line = 0
-       
+
        lstan  = .false.
        lres = .false.
        lptn   = .false.
        nptnl  = 0
-       
+
    10  read(iunit,'(1a80)') cstrg
        ic = ic + 1
-       
-   
+
+
        call xxcase(cstrg,cstrgl,'lc')
-       
+
        if((index(cstrgl,csrch1).le.0) .and.
      &    (index(cstrgl,csrch2).le.0) .and.
      &    (index(cstrgl,csrch4).le.0) .and.
      &    (index(cstrgl,csrch5).le.0) .and.
      &    (index(cstrgl,csrch3).le.0)) then
-     
+
             if(index(cstrgl,cdash).gt.0) then
-	        ndash_line = ndash_line+1
-		idash_linea(ndash_line)=ic
+                ndash_line = ndash_line+1
+                idash_linea(ndash_line)=ic
             endif
             if((cstrgl(1:3).eq.cpart).and.(.not.lptn)) then
-	        lptn = .true.
-		icptn = ic
-	    endif
-	    go to 10
+                lptn = .true.
+                icptn = ic
+            endif
+            go to 10
        else
             if((iclass.eq.1).or.(iclass.eq.3).or.
      &         (iclass.eq.4).or.(iclass.eq.5).or.
      &         (iclass.eq.6).or.(iclass.eq.7)) then
                 if(ndash_line.eq.1) then
-		    lstan = .true.
-		elseif ((ndash_line.eq.2).and.lptn)then
-		    lstan = .true.
-		elseif ((ndash_line.eq.2).and.(.not.lptn))then
-		    lres = .true.
-		elseif ((ndash_line.eq.3).and.lptn)then
-		    lres = .true.
-		elseif ((ndash_line.eq.3).and.(.not.lptn))then
-		    write(i4unit(-1),2002) 'header lines faulty'
-		    write(i4unit(-1),2003)
-		    call xerrab ('Faulty header lines')
-		elseif (ndash_line.gt.3) then
-		    write(i4unit(-1),2002) 'header lines faulty'
-		    write(i4unit(-1),2003)
-		    call xerrab ('Faulty header lines')
-		endif
+                    lstan = .true.
+                elseif ((ndash_line.eq.2).and.lptn)then
+                    lstan = .true.
+                elseif ((ndash_line.eq.2).and.(.not.lptn))then
+                    lres = .true.
+                elseif ((ndash_line.eq.3).and.lptn)then
+                    lres = .true.
+                elseif ((ndash_line.eq.3).and.(.not.lptn))then
+                    write(i4unit(-1),2002) 'header lines faulty'
+                    write(i4unit(-1),2003)
+                    call xerrab ('Faulty header lines')
+                elseif (ndash_line.gt.3) then
+                    write(i4unit(-1),2002) 'header lines faulty'
+                    write(i4unit(-1),2003)
+                    call xerrab ('Faulty header lines')
+                endif
             elseif((iclass.eq.2).or.(iclass.eq.8).or.
      &             (iclass.eq.9).or.(iclass.eq.10).or.
      &             (iclass.eq.11).or.(iclass.eq.12)) then
                 if(ndash_line.eq.1) then
-		    lstan = .true.
-		elseif ((ndash_line.eq.2).and.lptn)then
-		    lstan = .true.
-		elseif ((ndash_line.eq.2).and.(.not.lptn))then
-		    lres = .true.
-		elseif ((ndash_line.eq.3).and.lptn)then
-		    lres = .true.
-		elseif ((ndash_line.eq.3).and.(.not.lptn))then
-		    write(i4unit(-1),2002) 'header lines faulty'
-		    write(i4unit(-1),2003)
-		    call xerrab ('Faulty header lines')
-		elseif (ndash_line.gt.3) then
-		    write(i4unit(-1),2002) 'header lines faulty'
-		    write(i4unit(-1),2003)
-		    call xerrab ('Faulty header lines')
-		endif
-	    endif
+                    lstan = .true.
+                elseif ((ndash_line.eq.2).and.lptn)then
+                    lstan = .true.
+                elseif ((ndash_line.eq.2).and.(.not.lptn))then
+                    lres = .true.
+                elseif ((ndash_line.eq.3).and.lptn)then
+                    lres = .true.
+                elseif ((ndash_line.eq.3).and.(.not.lptn))then
+                    write(i4unit(-1),2002) 'header lines faulty'
+                    write(i4unit(-1),2003)
+                    call xerrab ('Faulty header lines')
+                elseif (ndash_line.gt.3) then
+                    write(i4unit(-1),2002) 'header lines faulty'
+                    write(i4unit(-1),2003)
+                    call xerrab ('Faulty header lines')
+                endif
+            endif
        endif
 c-----------------------------------------------------------------------
 c  assign look-up names according to partitioning & set warning logical
@@ -395,28 +395,28 @@ c-----------------------------------------------------------------------
        do i=1,12
          if(lptn) then
              cpatrn(i)=cptrn2(i)
-	 else
-	     cpatrn(i)=cptrn1(i)
-	 endif
+         else
+             cpatrn(i)=cptrn1(i)
+         endif
        enddo
-       
+
        lwarn = .false.
-       	         
+
 c-----------------------------------------------------------------------
 c  rewind, separate and analyse header sections according to type
 c-----------------------------------------------------------------------
 
        rewind(iunit)
-       
+
        ic =0
-       
+
 c-----------------------------------------------------------------------
-c  first line 
+c  first line
 c-----------------------------------------------------------------------
        read(iunit,'(a80)') cstrg
        call xxcase(cstrg,cstrgl,'uc')
        ic=ic+1
-       
+
        iabt = 0
        iz0 = i4fctn(cstrg(1:5),iabt)
        if(iabt.gt.0) then
@@ -431,7 +431,7 @@ c-----------------------------------------------------------------------
      &                               'for iz0= ',iz0
               write(i4unit(-1),2001)
        endif
-       
+
        iabt = 0
        idmax = i4fctn(cstrg(6:10),iabt)
        if(iabt.gt.0.or.idmax.le.0.or.idmax.gt.iddimd) then
@@ -453,26 +453,26 @@ c-----------------------------------------------------------------------
        iabt2 = 0
        is1max = i4fctn(cstrg(21:25),iabt2)
        iabt = iabt1 + iabt2
-       
+
        iclass_file = 0
        do i=1,12
          if(index(cstrgl,cclass(i)).gt.0) then
-	    iclass_file=i
-	 endif   
+            iclass_file=i
+         endif
        enddo
        if(iclass_file.le.0) then
-            write(i4unit(-1),2000) 'no class name given in file' 
+            write(i4unit(-1),2000) 'no class name given in file'
             write(i4unit(-1),2001)
-       elseif(iclass_file.ne.iclass) then	    
+       elseif(iclass_file.ne.iclass) then
             write(i4unit(-1),2004) 'file class name ',
-     &                              cclass(iclass_file), 
-     &                             ' does not match iclass = ',iclass	    
+     &                              cclass(iclass_file),
+     &                             ' does not match iclass = ',iclass
             write(i4unit(-1),2003)
-	    call xerrab ('File class name does not match')
+            call xerrab ('File class name does not match')
        endif
 
 c-----------------------------------------------------------------------
-c  check if CX donor is explicitly named in dataset top line 
+c  check if CX donor is explicitly named in dataset top line
 c-----------------------------------------------------------------------
        ldonor  = .false.
        ldmass  = .false.
@@ -480,84 +480,84 @@ c-----------------------------------------------------------------------
        dnr_ams = 0.0_R8
        if((iclass_file.eq.3).or.(iclass_file.eq.5)) then
            do i=1,ndonors
-	     call xxslen(cdonors(i),ifirst,ilast)
-	     if(index(cstrgl,':'//cdonors(i)(ifirst:ilast)).gt.0) then
-	         ldonor=.true.
-		 dnr_ele=cdonors(i)
-	     endif
-	   enddo
-       endif       
-       
+             call xxslen(cdonors(i),ifirst,ilast)
+             if(index(cstrgl,':'//cdonors(i)(ifirst:ilast)).gt.0) then
+                 ldonor=.true.
+                 dnr_ele=cdonors(i)
+             endif
+           enddo
+       endif
+
        write(i4unit(-1),*) 'xxdata_11.for:iz0,is1min,is1max=',
-     &                     iz0,is1min,is1max  
+     &                     iz0,is1min,is1max
 c-----------------------------------------------------------------------
 c  read connection vector if partial file
 c-----------------------------------------------------------------------
 
        if(lres) then
            do i=2,idash_linea(1)
-	     read(iunit,'(1a80)') cstrg
-	   enddo
-	   
-	   ncnct = 0
-	   
-	   do i=idash_linea(1)+1,idash_linea(2)-1
-	     cstrg=' '
-	     read(iunit,'(1a80)') cstrg
+             read(iunit,'(1a80)') cstrg
+           enddo
+
+           ncnct = 0
+
+           do i=idash_linea(1)+1,idash_linea(2)-1
+             cstrg=' '
+             read(iunit,'(1a80)') cstrg
              nfirst = 1
-	     iwords = idword
+             iwords = idword
              call xxword( cstrg , ' '    , nfirst ,
      &                    iwords  ,
      &                    ifirsta , ilasta , nwords
      &                  )
              do j=1,nwords
-	       ncnct = ncnct + 1
-	       read(cstrg(ifirsta(j):ilasta(j)),*) icnctv(ncnct)
-	     enddo
-	   enddo
-	   
+               ncnct = ncnct + 1
+               read(cstrg(ifirsta(j):ilasta(j)),*) icnctv(ncnct)
+             enddo
+           enddo
+
        else
-       
-           ncnct = 0	   
-	   
+
+           ncnct = 0
+
        endif
-       
+
 c
        rewind(iunit)
-      		
+
 c-----------------------------------------------------------------------
 c  read partition data if present
 c-----------------------------------------------------------------------
 c
        lptn_old = lptn
-       if(lptn_old) then 
+       if(lptn_old) then
           do i=1,icptn-1
             read(iunit,'(1a80)') cstrg
           enddo
-		
+
            lresol = .false.
-	   call  xxrptn( iunit  , ndstack, 
+           call  xxrptn( iunit  , ndstack,
      &                   ndptnl , ndptn  , ndptnc ,
      &                   nptnl  , nptn   , nptnc  ,
      &                   iptnla , iptna  , iptnca ,
      &                   lresol , lptn   ,
      &                   cstrg  ,
-     &                   ncptn_stack     , cptn_stack       
+     &                   ncptn_stack     , cptn_stack
      &                 )
 
        endif
-       
-c------- now check is1min and is1max 
+
+c------- now check is1min and is1max
 
        if(.not.lptn) then
-       
+
            if((iabt.gt.0).or.(is1min.gt.is1max).or.(is1min.lt.1)
      &         .or.(is1max.gt.iz0)) then
              write(i4unit(-1),2002) 'incorrect ion or partition limits'
              write(i4unit(-1),2003)
              call xerrab ('Incorrect ion or partition limits')
            endif
-	   
+
        elseif(lstan.and.lptn) then
 
            if((iabt.gt.0).or.(is1min.gt.is1max).or.(is1min.ne.1)
@@ -575,22 +575,22 @@ c------- now check is1min and is1max
              write(i4unit(-1),2003)
              call xerrab ('Incorrect ion or partition limits')
            endif
-       
+
        endif
 
 c-----------------------------------------------------------------------
-c  read temperatures and densities 
+c  read temperatures and densities
 c-----------------------------------------------------------------------
 
        rewind(iunit)
-       
+
        do i=1,idash_linea(ndash_line)
           read(iunit,'(1a80)') cstrg
        enddo
 
        read(iunit,1000) ( ddens(i) , i = 1 , idmax )
        read(iunit,1000) ( dtev(i)  , i = 1 , itmax )
-       
+
 c------------------------------------------
 c  read parent and base metastable indices
 c------------------------------------------
@@ -605,87 +605,87 @@ c           if(lptn) then
            if(lres) then
                if( cstrgl(24:27) .eq. chindi) then
                   iblmx = iblmx  + 1
-		  if((iclass.eq.4).or.(iclass.eq.5).or.
+                  if((iclass.eq.4).or.(iclass.eq.5).or.
      &               (iclass.eq.8).or.(iclass.eq.9).or.
      &               (iclass.eq.10).or.(iclass.eq.11))then
                       read(cstrgl,1003) isppr(iblmx),
      &                                  isstgr(iblmx)
                       ispbr(iblmx)=0
-                  else 
-                      read(cstrgl,1002) isppr(iblmx), ispbr(iblmx), 
+                  else
+                      read(cstrgl,1002) isppr(iblmx), ispbr(iblmx),
      &                                 isstgr(iblmx)
-                  endif 
+                  endif
                elseif(( cstrgl(24:27). eq. cptrn1(iclass)).or.
      &                ( cstrgl(24:27). eq. cptrn2(iclass))) then
                   iblmx = iblmx  + 1
-		  if((iclass.eq.4).or.(iclass.eq.5).or.
+                  if((iclass.eq.4).or.(iclass.eq.5).or.
      &               (iclass.eq.8).or.(iclass.eq.9).or.
      &               (iclass.eq.10).or.(iclass.eq.11))then
                       read(cstrgl,1003) isppr(iblmx),
      &                                  isstgr(iblmx)
                       ispbr(iblmx)=0
-                  else 
-                     read(cstrgl,1002) isppr(iblmx), ispbr(iblmx), 
+                  else
+                     read(cstrgl,1002) isppr(iblmx), ispbr(iblmx),
      &                                 isstgr(iblmx)
-                  endif 
-                  if(.not.lwarn) then 
-                      write(i4unit(-1),2006) 'incorrect pointer code',  
+                  endif
+                  if(.not.lwarn) then
+                      write(i4unit(-1),2006) 'incorrect pointer code',
      &                                       ' for class: actual = ',
-     &                                         cstrgl(24:27), 
+     &                                         cstrgl(24:27),
      &                                       ', expected = ',chindi
                       write(i4unit(-1),2001)
-		      lwarn = .true.
-		  endif    
+                      lwarn = .true.
+                  endif
                else
-                  write(i4unit(-1),2005) 'incorrect pointer code for', 
+                  write(i4unit(-1),2005) 'incorrect pointer code for',
      &                                   ' class: actual = ',
-     &                                     cstrgl(24:27), 
+     &                                     cstrgl(24:27),
      &                                   ', expected = ',chindi
                   write(i4unit(-1),2003)
-		  call xerrab ('Incorrect pointer code')
+                  call xerrab ('Incorrect pointer code')
               endif
            else
               iblmx = iblmx + 1
               read(cstrgl,1001) isstgr(iblmx)
-	      isppr(iblmx) = 1
+              isppr(iblmx) = 1
               if((iclass.eq.4).or.(iclass.eq.5).or.
      &           (iclass.eq.8).or.(iclass.eq.9).or.
      &           (iclass.eq.10).or.(iclass.eq.11))then
                   ispbr(iblmx) = 0
-	      else    
-	          ispbr(iblmx) = 1
-	      endif
+              else
+                  ispbr(iblmx) = 1
+              endif
            endif
 c----------------------------------------------
 c  get the donor mass for classes ccd and prc
 c----------------------------------------------
-	   dmass   = 0.0_R8
+           dmass   = 0.0_R8
            if((iclass.eq.3).or.(iclass.eq.5))then
-	      if((cstrgl(46:47). eq. 'mh').or.
-     &           (cstrgl(46:47). eq. 'md')) then	
+              if((cstrgl(46:47). eq. 'mh').or.
+     &           (cstrgl(46:47). eq. 'md')) then
                       read(cstrgl(49:52),'(f4.2)') dmass
-	      endif
-	      if((dmass.gt.0.0_R8).and.(dnr_ams.eq.0.0_R8))then
-	          dnr_ams=dmass
-		  ldmass = .true.
-	      elseif((dmass.gt.0.0_R8).and.(dmass.eq.dnr_ams))then
-	          continue	  	      
-	      else
-	          ldmass  = .false.
-		  dnr_ams = 0.0_R8
-	      endif
-	   endif   	  
-	         	                                       
+              endif
+              if((dmass.gt.0.0_R8).and.(dnr_ams.eq.0.0_R8))then
+                  dnr_ams=dmass
+                  ldmass = .true.
+              elseif((dmass.gt.0.0_R8).and.(dmass.eq.dnr_ams))then
+                  continue
+              else
+                  ldmass  = .false.
+                  dnr_ams = 0.0_R8
+              endif
+           endif
+
 c--------------------------
 c  read final gcr values
 c--------------------------
-        
+
            do 25 it = 1 , itmax
-	     if(iclass.le.9) then
+             if(iclass.le.9) then
                  read(iunit,1000) ( drcof(iblmx,it,id) , id = 1 , idmax)
-	     else
+             else
                  read(iunit,1004) ( drcof(iblmx,it,id) , id = 1 , idmax)
-	     endif
+             endif
    25      continue
            go to 20
        endif
@@ -697,12 +697,12 @@ c  issue warnings if donor element and/or donor mass is ambiguous
 c-----------------------------------------------------------------------
        if(((iclass.eq.3).or.(iclass.eq.5)).and.(.not.ldonor)) then
            write(i4unit(-1),2000) 'unspecified CX donor element'
-	   write(i4unit(-1),2001)
-       endif	   
-       if(((iclass.eq.3).or.(iclass.eq.5)).and.(.not.ldmass)) then   
+           write(i4unit(-1),2001)
+       endif
+       if(((iclass.eq.3).or.(iclass.eq.5)).and.(.not.ldmass)) then
            write(i4unit(-1),2000) 'unspecified CX donor mass'
-	   write(i4unit(-1),2001)
-       endif   
+           write(i4unit(-1),2001)
+       endif
 c
 c-----------------------------------------------------------------------
 c      verify s1 set in master file consistent with is1min and is1max
@@ -713,17 +713,17 @@ c
            ismax = is1max-is1min+1
        else
            if(iclass.eq.12) then
-	       ischk=is1min-1
-	   else
-	       ischk = is1min
-	   endif
-	       
+               ischk=is1min-1
+           else
+               ischk = is1min
+           endif
+
            do i=1,iblmx
              if(isstgr(i).ne.ischk) then
                  ischk = ischk+1
              endif
           enddo
-	  
+
           if(((iclass.ne.10).and.(iclass.ne.11).and.(iclass.ne.12))
      &        .and.(ischk.eq.is1max)) then
                ismax = is1max-is1min+1
@@ -744,45 +744,45 @@ c
 c-----------------------------------------------------------------------
 c     make up connection vectors and root partitions if appropriate
 c     in the resolved case with 0 root partition level, the sum over
-c     the connection vector gives the number of partitions 
+c     the connection vector gives the number of partitions
 c-----------------------------------------------------------------------
 c
       if ((.not.lres).and.(.not.lptn)) then
           ncnct = iz0+1
-	  do i=1,ncnct
-	     icnctv(i)=1
-	  enddo
+          do i=1,ncnct
+             icnctv(i)=1
+          enddo
       elseif ((.not.lres).and.lptn) then
           ncnct = is1max+1
-	  do i=1,ncnct
-	     icnctv(i)=1
-	  enddo
+          do i=1,ncnct
+             icnctv(i)=1
+          enddo
       endif
-       
+
       if ((.not.lres).and.(.not.lptn)) then
-          nptnl   = 1 
+          nptnl   = 1
           iptnla(nptnl) = 1
-	  nptn(1) =  iz0+1 
+          nptn(1) =  iz0+1
           do i=1,nptn(1)
-	    iptna(nptnl,i) = i-1
-	    nptnc(nptnl,i) = 1
-	    iptnca(1,iptna(nptnl,i)+1,nptnc(nptnl,i))=i-1
-	  enddo
+            iptna(nptnl,i) = i-1
+            nptnc(nptnl,i) = 1
+            iptnca(1,iptna(nptnl,i)+1,nptnc(nptnl,i))=i-1
+          enddo
       elseif (lres.and.(.not.lptn)) then
-      
-          nptnl   = 1 
+
+          nptnl   = 1
           iptnla(nptnl) = 0
-	  nptn(1)=1
-	  do i=1,ncnct
-	    nptn(1)=nptn(1)+icnctv(i)
-	  enddo  
+          nptn(1)=1
+          do i=1,ncnct
+            nptn(1)=nptn(1)+icnctv(i)
+          enddo
           do i=1,nptn(1)
-	    iptna(nptnl,i) = i-1
-	    nptnc(nptnl,i) = 1
-	    iptnca(1,iptna(nptnl,i)+1,nptnc(nptnl,i))=i-1
-	  enddo
-      endif  
-c 
+            iptna(nptnl,i) = i-1
+            nptnc(nptnl,i) = 1
+            iptnca(1,iptna(nptnl,i)+1,nptnc(nptnl,i))=i-1
+          enddo
+      endif
+c
 c-----------------------------------------------------------------------
 c
  1000 format(8f10.5)
@@ -790,7 +790,7 @@ c
  1002 format(28x,i2,9x,i2,16x,i2)
  1003 format(28x,i2,9x,2x,16x,i2)
  1004 format(1p8d10.3)
-c 
+c
  2000 format(1x,30('*'),' xxdata_11 warning ',30('*')//
      &       2x,a,a,i3,a,i3 )
  2001 format(/1x,30('*'),' program continues ',30('*'))
@@ -895,7 +895,7 @@ C                                 WHEN INTERNALLY READING THE INTEGER
 C                                 CREATE THE APPROPRIATE SPECIFIER
 C                                 WITHIN CFORM5 AND USE THIS.
 C
-C VERSION  : 1.3                          
+C VERSION  : 1.3
 C DATE     : 20-12-2001
 C MODIFIED : Martin O'Mullane
 C               - Removed mainframe listing information beyond column 72.
@@ -1202,12 +1202,12 @@ C
 C  AUTHOR   : Allan Whiteford,
 C             University of Strathclyde
 C
-C  VERSION  : 1.1                          
+C  VERSION  : 1.1
 C  DATE     : 05/09/2001
 C  MODIFIED : Allan Whiteford
 C             First version.
 C
-C  VERSION  : 1.2                          
+C  VERSION  : 1.2
 C  DATE     : 05/05/2005
 C  MODIFIED : Martin O'Mullane
 C             The routine converted length-1 rather than the whole
@@ -1249,13 +1249,13 @@ C----------------------------------------------------------------------
 
        return
        end subroutine xxcase
-       subroutine xxrptn( iunit  , ndstack, 
+       subroutine xxrptn( iunit  , ndstack,
      &                    ndptnl , ndptn  , ndptnc ,
      &                    nptnl  , nptn   , nptnc  ,
      &                    iptnla , iptna  , iptnca ,
      &                    lresol , lptn   ,
-     &                    cstrg  , 
-     &                    ncptn_stack     , cptn_stack       
+     &                    cstrg  ,
+     &                    ncptn_stack     , cptn_stack
      &                  )
        implicit none
 c-----------------------------------------------------------------------
@@ -1266,22 +1266,22 @@ c  purpose:  to read and analyse a partition block in a datafile header
 c
 c  calling program: adas416
 c
-c  notes:  (1) partition levels, partitions and partition components are 
+c  notes:  (1) partition levels, partitions and partition components are
 c              labelled starting at 0 (but see (2))
 c          (2) partition level 0 labels the resolved root partition level
 c              partition level 1 labels the unresolved root partition
 c              level.
-c          (3) for an unresolved (standard) file, the partitions are each 
+c          (3) for an unresolved (standard) file, the partitions are each
 c              ionisation stage from the neutral to the bare nucleus and
-c              they are labelled by the ion charge.  Each partition has 
+c              they are labelled by the ion charge.  Each partition has
 c              just the one component
 c          (4) distinguish the indexing (starting at 1) from the label
-c              (starting at 0) 
+c              (starting at 0)
 c
 c  subroutine:
 c
 c  input : (i*4)  iunit     = unit to which input file is allocated
-c  input : (i*4)  ndstack   = maximum no. of text lines in partition block 
+c  input : (i*4)  ndstack   = maximum no. of text lines in partition block
 c
 c  input : (i*4)  ndptnl    = maximum level of partitions
 c  input : (i*4)  ndptn     = maximum no. of partitions in one level
@@ -1289,30 +1289,30 @@ c  input : (i*4)  ndptnc    = maximum no. of components in a partition
 c  input : (l*4)  lresol    = .true.  => resolved root partition
 c                           = .false. => standard root partition
 c
-c  output: (i*4)  nptnl     = number of partition levels in block 
+c  output: (i*4)  nptnl     = number of partition levels in block
 c  output: (i*4)  nptn()    = number of partitions in partition level
-c                             1st dim: partition level 
+c                             1st dim: partition level
 c  output: (i*4)  nptnc(,)  = number of components in partition
-c                             1st dim: partition level 
-c                             2nd dim: member partition in partition level 
+c                             1st dim: partition level
+c                             2nd dim: member partition in partition level
 c  output: (i*4)  iptnla()  = partition level label (0=resolved root,1=
 c                                                      unresolved root)
-c                             1st dim: partition level index 
+c                             1st dim: partition level index
 c  output: (i*4)  iptna(,)  = partition member label (labelling starts at 0)
-c                             1st dim: partition level index 
-c                             2nd dim: member partition index in partition 
-c                             level 
-c  output: (i*4)  iptnca(,,)= component label (labelling starts at 0)
-c                             1st dim: partition level index 
-c                             2nd dim: member partition index in partition 
+c                             1st dim: partition level index
+c                             2nd dim: member partition index in partition
 c                             level
-c                             3rd dim: component index of member partition 
+c  output: (i*4)  iptnca(,,)= component label (labelling starts at 0)
+c                             1st dim: partition level index
+c                             2nd dim: member partition index in partition
+c                             level
+c                             3rd dim: component index of member partition
 c  output: (l*4)  lptn      = .true.  => partition block present
 c                           = .false. => partition block not present
 c  output: (c*80) cstrg     = string marking end of partition block
 c  output: (i*4)  ncptn_stack= number of text lines in partition block
-c  output: (c*80) cptn_stack()=text lines of partition block       
-c                              1st dim: text line pointer 
+c  output: (c*80) cptn_stack()=text lines of partition block
+c                              1st dim: text line pointer
 c
 c
 c  routines:
@@ -1328,41 +1328,41 @@ c          tel. +44-(0)141-548-4196
 c
 c date:    25/08/05
 c
-c version: 1.1				date: 25/08/2005
+c version: 1.1                          date: 25/08/2005
 c modified: Hugh Summers
-c		- first edition.
+c               - first edition.
 c
 c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
-      integer   idptnl   , idword     
+      integer   idptnl   , idword
 c-----------------------------------------------------------------------
       parameter (idptnl = 4  , idword = 256 )
 c-----------------------------------------------------------------------
-      integer   iunit     , i4unit 
+      integer   iunit     , i4unit
       integer   ndptnl    , ndptn      , ndptnc    , ndstack
       integer   nptnl
-      integer   ifirst    , ilast     
+      integer   ifirst    , ilast
       integer   nchari    , ncharf
       integer   nfirst    , iwords     , nwords
       integer   nfirstc   , iwordsc    , nwordsc
       integer   i         , j          , k         , ic
       integer   ncptn_stack
 c-----------------------------------------------------------------------
-      character cstrg*80  
+      character cstrg*80
       character strg*256
 c-----------------------------------------------------------------------
-      logical   lresol    , lptn 
-      logical   lptn_in 
+      logical   lresol    , lptn
+      logical   lptn_in
 c-----------------------------------------------------------------------
       integer   nptn(ndptnl)          , nptnc(ndptnl,ndptn)
-      integer   iptnla(ndptnl)        , iptna(ndptnl,ndptn) 
+      integer   iptnla(ndptnl)        , iptna(ndptnl,ndptn)
       integer   iptnca(ndptnl,ndptn,ndptnc)
       integer   ifirsta(idword)       , ilasta(idword)
       integer   ifirstac(idword)      , ilastac(idword)
       integer   ncpta(idptnl)
 c-----------------------------------------------------------------------
-      character cptna(idptnl)*1024 
-      character cptn_stack(ndstack)*80 
+      character cptna(idptnl)*1024
+      character cptn_stack(ndstack)*80
 c-----------------------------------------------------------------------
       external  subini, subend, xerrab
 c
@@ -1371,58 +1371,58 @@ c  read partition data if present
 c-----------------------------------------------------------------------
 
        call subini ('xxrptn')
-       if(idptnl.ne.ndptnl) then 
+       if(idptnl.ne.ndptnl) then
          write(i4unit(-1),1001) 'mismatch of internal dimensions'
          write(i4unit(-1),1002)
          call xerrab ('Internal dimensions mismatch')
        endif
-      
+
        do i=1,ndptnl
          cptna(i) = ' '
-       enddo	
+       enddo
 c
        lptn   = .false.
        cstrg  = ' '
        nptnl  = 0
        ncptn_stack = 0
-       
+
    10  read(iunit,'(1a80)') cstrg
-   
+
        if(cstrg(1:3).eq.'//#') then
            nchari = 0
            nptnl = nptnl + 1
-	   lptn = .true.
-	   lptn_in  = .true.
-	   call xxslen(cstrg,ifirst,ilast)
-	   
-	   ncptn_stack=ncptn_stack+1
-	   cptn_stack(ncptn_stack)=' '
+           lptn = .true.
+           lptn_in  = .true.
+           call xxslen(cstrg,ifirst,ilast)
+
+           ncptn_stack=ncptn_stack+1
+           cptn_stack(ncptn_stack)=' '
            cptn_stack(ncptn_stack)(1:ilast-ifirst+1)=cstrg(ifirst:ilast)
-	   
-	   ncharf = nchari+ilast-ifirst+1
-	   cptna(nptnl)(nchari+1:ncharf) = cstrg(ifirst:ilast)
-	   nchari=ncharf
+
+           ncharf = nchari+ilast-ifirst+1
+           cptna(nptnl)(nchari+1:ncharf) = cstrg(ifirst:ilast)
+           nchari=ncharf
        elseif((cstrg(1:3).eq.'   ').and.lptn_in) then
            call xxslen(cstrg,ifirst,ilast)
-	   
-	   ncptn_stack=ncptn_stack+1
-	   cptn_stack(ncptn_stack)=' '
-	   cptn_stack(ncptn_stack)(1:ilast-ifirst+7)=
-     &          	   '      '//cstrg(ifirst:ilast)
-	   ncharf=nchari+ilast-ifirst+2	
-	   cptna(nptnl)(nchari+1: ncharf) = ' '//cstrg(ifirst:ilast)
-	   nchari = ncharf
+
+           ncptn_stack=ncptn_stack+1
+           cptn_stack(ncptn_stack)=' '
+           cptn_stack(ncptn_stack)(1:ilast-ifirst+7)=
+     &                     '      '//cstrg(ifirst:ilast)
+           ncharf=nchari+ilast-ifirst+2
+           cptna(nptnl)(nchari+1: ncharf) = ' '//cstrg(ifirst:ilast)
+           nchari = ncharf
        elseif(cstrg(1:3).eq.'---') then
            lptn_in = .false.
-	   go to 15
+           go to 15
        else
            write(i4unit(-1),1001)
-	   write(i4unit(-1),1002)
-	   call xerrab ('Faulty string')
+           write(i4unit(-1),1002)
+           call xerrab ('Faulty string')
        endif
        go to 10
    15  continue
-   
+
 c
 c-----------------------------------------------------------------------
 c  preliminary checks
@@ -1430,25 +1430,25 @@ c-----------------------------------------------------------------------
 c
        if(lptn) then
            do i = 1,nptnl
-	     read(cptna(i)(4:5),'(i2)') iptnla(i)
+             read(cptna(i)(4:5),'(i2)') iptnla(i)
 c             write(i4unit(-1),*) 'xxrptn: i,iptnla=',i,iptnla(i)
-	   enddo
-	   if((iptnla(1).gt.2).and.(nptnl.eq.1).and.(.not.lresol)) then
+           enddo
+           if((iptnla(1).gt.2).and.(nptnl.eq.1).and.(.not.lresol)) then
                write(i4unit(-1),1001) 'partition level',i,' in error'
-	       write(i4unit(-1),1002)
-	       call xerrab ('Error in partition level')
-	   endif
-	   do i = 1,nptnl
-	     call xxslen(cptna(i),ifirst,ilast)
-	     if(cptna(i)(ilast:ilast).ne.'/') then
+               write(i4unit(-1),1002)
+               call xerrab ('Error in partition level')
+           endif
+           do i = 1,nptnl
+             call xxslen(cptna(i),ifirst,ilast)
+             if(cptna(i)(ilast:ilast).ne.'/') then
                  write(i4unit(-1),1001) 'partition level',i,
      &                                  ' not terminated'
-	         write(i4unit(-1),1002)
-	         call xerrab ('Partition level not terminated')
-	     endif
-	   enddo  
-	     
-	endif   
+                 write(i4unit(-1),1002)
+                 call xerrab ('Partition level not terminated')
+             endif
+           enddo
+
+        endif
 c
 c-----------------------------------------------------------------------
 c  analyse partitions
@@ -1456,8 +1456,8 @@ c-----------------------------------------------------------------------
 c
        do i=1,nptnl
            nfirst = 1
-	   iwords = idword
-	   call xxslen(cptna(i),ifirst,ilast)
+           iwords = idword
+           call xxslen(cptna(i),ifirst,ilast)
            call xxword( cptna(i)(ifirst+5:ilast) , '/'    , nfirst ,
      &                   iwords  ,
      &                   ifirsta , ilasta , nwords
@@ -1465,25 +1465,25 @@ c
            if((nwords-2*int(nwords/2)).ne.0) then
                  write(i4unit(-1),1001) 'partition level',i,
      &                                  ' partition count wrong'
-	         write(i4unit(-1),1002)
-		 call xerrab ('Wrong partition count')
+                 write(i4unit(-1),1002)
+                 call xerrab ('Wrong partition count')
            endif
-	   
+
            nptn(i)=nwords/2
-	   ic = 0
+           ic = 0
 c           write(i4unit(-1),*) 'xxrptn: i,nwords,nptn(i)=',
 c     &                                 i,nwords,nptn(i)
-	   do j=1,nptn(i)
-	      strg=' '
-	      strg=cptna(i)(ifirsta(2*j-1)+5:ilasta(2*j-1)+5)
+           do j=1,nptn(i)
+              strg=' '
+              strg=cptna(i)(ifirsta(2*j-1)+5:ilasta(2*j-1)+5)
 c              write(i4unit(-1),*) 'xxrptn-xxslen:strg=',strg
-	      call xxslen(strg,ifirst,ilast)
-	      read(strg(ifirst+1:ilast),'(i2)') iptna(i,j)
-	      strg = ' '
-	      strg=cptna(i)(ifirsta(2*j)+5:ilasta(2*j)+5)
-	      
-	      iwordsc = idword
-	      nfirstc = 1
+              call xxslen(strg,ifirst,ilast)
+              read(strg(ifirst+1:ilast),'(i2)') iptna(i,j)
+              strg = ' '
+              strg=cptna(i)(ifirsta(2*j)+5:ilasta(2*j)+5)
+
+              iwordsc = idword
+              nfirstc = 1
 c              write(i4unit(-1),*) 'xxrptn-xxword:strg=',strg
 c              write(i4unit(-1),*) 'xxrptn-xxword:nfirstc=',nfirstc
               call xxword( strg , ' '    , nfirstc ,
@@ -1497,45 +1497,45 @@ c     &                                     i,j,nptnc(i,j)
 c              write(i4unit(-1),*) 'xxrptn: ifirstac(1),ilastac(1)=',
 c     &                                     ifirstac(1),ilastac(1)
 c            write(i4unit(-1),*) 'xxrptn:',strg(ifirstac(1):ilastac(1))
-	      
-	      do k=1,nptnc(i,j)
-	        read(strg(ifirstac(k):ilastac(k)),*) iptnca(i,j,k)
-c------------------------------------------------
-c  components should be sequential and contiguous. 
-c-------------------------------------------------
-		if(iptnca(i,j,k).ne.ic) then
-		     write(i4unit(-1),1001) 'partition count',ic,
-     &                                      ' out of sequence'
-	             write(i4unit(-1),1002)
-		     call xerrab ('Partition count out of sequence')
-		else
-		     ic=ic+1
-		endif
 
-	      enddo
+              do k=1,nptnc(i,j)
+                read(strg(ifirstac(k):ilastac(k)),*) iptnca(i,j,k)
+c------------------------------------------------
+c  components should be sequential and contiguous.
+c-------------------------------------------------
+                if(iptnca(i,j,k).ne.ic) then
+                     write(i4unit(-1),1001) 'partition count',ic,
+     &                                      ' out of sequence'
+                     write(i4unit(-1),1002)
+                     call xerrab ('Partition count out of sequence')
+                else
+                     ic=ic+1
+                endif
+
+              enddo
            enddo
-	   
-	   ncpta(i)=ic
-c	   write(i4unit(-1),*) 'i,ncpta(i)=',i,ncpta(i)
-	      
+
+           ncpta(i)=ic
+c          write(i4unit(-1),*) 'i,ncpta(i)=',i,ncpta(i)
+
         enddo
 c
 c-----------------------------------------------------------------------
-c  final checks. level i+1 partition components should span 
-c  partition i p-values  
+c  final checks. level i+1 partition components should span
+c  partition i p-values
 c-----------------------------------------------------------------------
 c
        if (nptnl.ge.2)then
            do i=2,nptnl
-	     if(ncpta(i-1).ne.nptn(i))then
-	         write(i4unit(-1),1001) 'partition level',i,
+             if(ncpta(i-1).ne.nptn(i))then
+                 write(i4unit(-1),1001) 'partition level',i,
      &                                  ' count incorrect'
-	         write(i4unit(-1),1002)
-		 call xerrab ('Incorrect partition count')
+                 write(i4unit(-1),1002)
+                 call xerrab ('Incorrect partition count')
              endif
-	   enddo
-       endif  
-   
+           enddo
+       endif
+
        call subend ()
        return
 c
@@ -1544,10 +1544,10 @@ c
  1001  format(1x,32('*'),' xxrptn error ',32('*')//
      &        1x,'fault in input data file: ',a,i3,a)
  1002  format(/1x,29('*'),' program terminated ',29('*'))
- 
+
        end subroutine xxrptn
 CX UNIX PORT - SCCS Info : Module @(#)$Header: /home/adascvs/fortran/adaslib/utility/xxslen.for,v 1.1 2004/07/06 15:39:12 whitefor Exp $ Date $Date: 2004/07/06 15:39:12 $
-CX      
+CX
       SUBROUTINE XXSLEN( CSTRNG , IFIRST , ILAST )
       IMPLICIT NONE
 C-----------------------------------------------------------------------
@@ -1700,20 +1700,20 @@ C
       IINDEX = 0
 C
          DO 2 I = 1,LENTXT
- 
+
             IDELIM = INDEX( CDELIM , CTEXT(I:I) )
- 
+
                IF (LWORD) THEN
- 
+
                   IF (IDELIM.GT.0) THEN
                      LWORD  = .FALSE.
                      IF ((ITOTAL.GE.NFIRST).AND.(ITOTAL.LE.NLAST)) THEN
                         ILAST(IINDEX)  = I - 1
                      ENDIF
                   ENDIF
- 
+
                ELSE
- 
+
                   IF (IDELIM.EQ.0) THEN
                      LWORD  = .TRUE.
                      ITOTAL = ITOTAL + 1
@@ -1723,9 +1723,9 @@ C
                         ILAST(IINDEX)  = LENTXT
                      ENDIF
                   ENDIF
- 
+
                ENDIF
- 
+
     2    CONTINUE
 C
       IWORDS = IINDEX

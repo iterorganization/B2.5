@@ -868,7 +868,7 @@ cxpb     3              wbbv(ix,iy,3))                                  !xpb
      7     vol(leftix(ix,iy),leftiy(ix,iy))/
      8     hx(leftix(ix,iy),leftiy(ix,iy)))
           flo_nodrift = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+
-     &                  xfrhie*term(ix,iy)                              !srv 20.06.08
+     &                  term(ix,iy)                                     !srv 20.06.08
          else                                                           !srv 21.06.08 {
           flo = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+                 !srv 01.07.05
      &      term(ix,iy) +                                               !iyv 19.04.07
@@ -892,7 +892,7 @@ cxpb     3              wbbv(ix,iy,3))                                  !xpb
      5                          *vol(leftix(ix,iy),leftiy(ix,iy)))/     !srv 01.03.00 09.01.01
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 01.03.00
           flo_nodrift = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy) +
-     &                  xfrhie*term(ix,iy)                              !srv 20.06.08 20.10.09
+     &                  term(ix,iy)                                     !srv 20.06.08 20.10.09
          endif                                                          !srv 21.06.08 }
          if (no_hybr.eq.0) then
            if(no_Ptncr_x_co.eq.0) then                                  !srv 13.10.06 {

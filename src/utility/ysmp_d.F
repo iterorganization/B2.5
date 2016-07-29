@@ -132,7 +132,7 @@ C
 C...        REAL  A(1)
         real (kind=R8) ::  A(NNZ)
         LOGICAL  DFLAG
-	INTEGER  MAX, NEXT                                               !sv 11.01.07
+        INTEGER  MAX, NEXT                                               !sv 11.01.07
 C
 C----INITIALIZE ERROR FLAG AND VALIDATE PATH SPECIFICATION
         FLAG = 0
@@ -181,7 +181,7 @@ C***********************************************************************
         SUBROUTINE  MD
      *     (N, NNZ, IA, JA, MAX, V, L, HEAD, LAST, NEXT, MARK, FLAG)
         use b2mod_types
-	IMPLICIT NONE                                                    !sv 11.01.07
+        IMPLICIT NONE                                                    !sv 11.01.07
 C
 C  DESCRIPTION
 C
@@ -264,7 +264,7 @@ C
      *      HEAD(N), LAST(N), NEXT(N), MARK(N),
      *      FLAG, TAG, DMIN, VK, EK, TAIL
         EQUIVALENCE (VK,EK)
-	INTEGER K                                                          !sv 11.01.07
+        INTEGER K                                                          !sv 11.01.07
 C
 C----INITIALIZATION
         TAG = 0
@@ -329,7 +329,7 @@ C***********************************************************************
         INTEGER  N, NNZ, IA(N+1), JA(NNZ), MAX, V(MAX), L(MAX),
      *     HEAD(N), LAST(N), NEXT(N), MARK(N),
      *     TAG, FLAG, SFS, VI, DVI, VJ
-	INTEGER JMIN, JMAX, J                                            !sv 11.01.07
+        INTEGER JMIN, JMAX, J                                            !sv 11.01.07
 C
 C----INITIALIZE DEGREES, ELEMENT LISTS, AND DEGREE LISTS
         DO 1 VI=1,N
@@ -450,7 +450,7 @@ C***********************************************************************
         INTEGER N, MAX, EK, TAIL,
      *     V(MAX), L(MAX), HEAD(N), LAST(N), NEXT(N),
      *     MARK(N), TAG, FREE, LI, VI, LVI, EVI, S, LS, ES, ILP, ILPMAX
-	INTEGER I, K                                                     !sv 11.01.07
+        INTEGER I, K                                                     !sv 11.01.07
 C
 C----INITIALIZE TAG
         TAG = MARK(EK)
@@ -545,7 +545,7 @@ C***********************************************************************
      *     V(MAX), L(MAX), HEAD(N), LAST(N), NEXT(N), MARK(N),
      *     TAG, VI, EVI, DVI, S, VS, ES, B, VB, ILP, ILPMAX,
      *     BLP, BLPMAX
-	INTEGER I                                                        !sv 11.01.07
+        INTEGER I                                                        !sv 11.01.07
         EQUIVALENCE  (VS, ES)
 C
 C----INITIALIZE TAG
@@ -993,7 +993,7 @@ C***********************************************************************
         INTEGER  N, UMAX, JUMAX, P(N),  IJU(N), JU(JUMAX), IU(N+1)
 C        REAL D(N), U(N), Z(N), B(N), TMP(N), TMPK, SUM
         real (kind=R8) ::  D(N), U(UMAX), Z(N), B(N), TMP(N), TMPK, SUM  !sv 11.01.07
-	INTEGER K, JMIN, JMAX, MU, I, J
+        INTEGER K, JMIN, JMAX, MU, I, J
 C
 C  ADDITIONAL PARAMETERS
 C
@@ -1265,7 +1265,7 @@ C
      *     P(N), IP(N), IA(N+1), JA(NNZ), IJU(N), JU(JUMAX), IU(N+1),
      *     Q(N), MARK(N), JL(N), FLAG, TAG, VJ, QM
         LOGICAL  CLIQUE
-	INTEGER JUMIN, JUMAX, JUPTR, I, J, K, M, LUK, JMIN, JMAX, LMAX,  !sv 11.01.07
+        INTEGER JUMIN, JUMAX, JUPTR, I, J, K, M, LUK, JMIN, JMAX, LMAX,  !sv 11.01.07
      *     LUI
 C
 C----INITIALIZATION
