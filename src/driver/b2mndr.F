@@ -42,7 +42,7 @@
       use b2mod_boundary_namelist
       use b2mod_external
 
-#ifdef USE_CATALYST
+#ifdef PARAVIEW_DIR
       !create module
 #endif
 
@@ -921,7 +921,7 @@
      1  'faulty internal parameter cpuincrement')
        cputarget=cpuincrement
 
-#ifdef USE_CATALYST
+#ifdef PARAVIEW_DIR
        call coprocessorinitializewithpython("CoProc.py",9)
 #endif
 
@@ -1947,7 +1947,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      >     savefile(13:16))
           if (ank_tracing.ne.0) call b2filef(ns)
 
-#ifdef USE_CATALYST
+#ifdef PARAVIEW_DIR
           call coprocessor(crx,cry,4*(nx+2)*(ny+2),nx,ny,itim,tim)
 #endif
 
@@ -2070,7 +2070,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         endif
       endif
 
-#ifdef USE_CATALYST
+#ifdef PARAVIEW_DIR
       call coprocessorfinalize()
 #endif
 
