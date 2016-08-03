@@ -101,6 +101,17 @@ endif
 INCLUDE += -I${MDSPLUS_DIR}/include
 endif
 
+# If compiling with Paraview Catalyst
+ifdef PARAVIEW_DIR
+SRCCAT = ${SRCDIR}/catalyst
+INCLUDE += -I${PARAVIEW_DIR}/include/paraview-5.1
+INCLUDE += -I${PARAVIEW_DIR}/lib/paraview-5.1
+#LD_CATALYST = -$(patsubst %, -l%, ${PARAVIEW_DIR}/lib/paraview-5.1/$(wildcard */*))
+LD_CATALYST := $(patsubst %,-L%,  $(shell find ${PARAVIEW_DIR}/lib/paraview-5.1 -type d))
+LD_CATALYST += -L/work/imas/opt/python/2.7/9/lib
+endif
+
+
 # Local includes
 BASEDIR = ${OBJDIR}
 INCLOCAL = ${SRCDIR}/include.local
@@ -139,7 +150,6 @@ endif
 ifdef USE_EIRENE
 DEFINES += ${USE_EIRENE}
 endif
-
 VHEAD =
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 VHEAD+=${MODLOCAL}:
@@ -147,16 +157,33 @@ endif
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
 VHEAD+=${SRCLOCAL}:
 endif
-VPATH+=${VHEAD}${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentation:${SRCDIR}/driver:${SRCDIR}/equations:${SRCDIR}/input:${SRCDIR}/output:${SRCDIR}/postprocessing:${SRCDIR}/preprocessing:${SRCDIR}/solvers:${SRCDIR}/sources:${SRCDIR}/transport:${SRCDIR}/utility:${SRCDIR}/b2plot:${SRCDIR}/user
+# Required spacing variables for substitution
+space := 
+space +=
+empty :=
+#VPATH=$(subst $(space),$(empty),${VHEAD}${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentation:${SRCDIR}/driver:${SRCDIR}/equations:${SRCDIR}/input:${SRCDIR}/output:${SRCDIR}/postprocessing:${SRCDIR}/preprocessing:${SRCDIR}/solvers:${SRCDIR}/sources:${SRCDIR}/transport:${SRCDIR}/utility:${SRCDIR}/b2plot:${SRCDIR}/user)
+VPATH=${VHEAD}${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentation:${SRCDIR}/driver:${SRCDIR}/equations:${SRCDIR}/input:${SRCDIR}/output:${SRCDIR}/postprocessing:${SRCDIR}/preprocessing:${SRCDIR}/solvers:${SRCDIR}/sources:${SRCDIR}/transport:${SRCDIR}/utility:${SRCDIR}/b2plot:${SRCDIR}/user
 FPATH:=${VPATH}
-VPATH+=:${SRCDIR}/ids
-FFPATH=${SRCDIR}/ids
+VPATH += :${SRCDIR}/ids
+FFPATH += :${SRCDIR}/ids
+
+ifdef PARAVIEW_DIR
+VPATH += :${SRCDIR}/catalyst
+FFPATH += :${SRCDIR}/catalyst
+endif
+
 
 MODLIST  =
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 MODLIST += ${MODLOCAL}/*.F
 endif
-MODLIST += ${SRCDIR}/modules/*.F ${SRCDIR}/ids/*.F90
+ifdef PARAVIEW_DIR
+MODLIST+= ${SRCDIR}/catalyst/*.F90
+endif
+ifdef UAL_DIR
+MODLIST += ${SRCDIR}/ids/*.F90
+endif
+MODLIST += ${SRCDIR}/modules/*.F 
 ifeq ($(shell [ -d ${SOLPS4} ] && echo yes || echo no ),yes)
 S4LIST = ${SOLPS4}/*.F
 endif
@@ -168,7 +195,11 @@ E4LIST = ${EIR4}/*.F
 endif
 endif
 
+ifdef PARAVIEW_DIR
+ALLOBJS = ${OBJS:%.o=${OBJDIR}/%.o} ${OBJDIR}/cxxAdaptor.o
+else
 ALLOBJS = ${OBJS:%.o=${OBJDIR}/%.o}
+endif
 SRCF = ${OBJS:%.o=%.F}
 
 PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe b2pl.exe b2ymb.exe b2yrp.exe b2ydm.exe
@@ -633,7 +664,11 @@ ${OBJDIR}/eirmod_precision.${MOD}:
 endif
 
 ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
-	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
+ifdef PARAVIEW_DIR
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+else
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
+endif
 
 ${OTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
@@ -741,6 +776,12 @@ endif
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
         sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' >> ${OBJDIR}/dependencies
 	@echo '# 3b' >> ${OBJDIR}/dependencies
+ifdef PARAVIEW_DIR 
+	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${SRCDIR}/catalyst/*.F90 -o.${MOD} | \
+	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
+        sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' >> ${OBJDIR}/dependencies
+	@echo '# 3c' >> ${OBJDIR}/dependencies
+endif
 endif
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
 	@egrep -aiH '^ {6,}use ' ${SRCLOCAL}/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
@@ -765,6 +806,7 @@ tags:
 	rm -f ${SRCB2}/TAGS ; etags -o ${SRCB2}/TAGS ${TAGSLIST}
 
 listobj: ${OBJDIR}/dependencies
+	@echo "ParaView=${PARAVIEW_DIR}"
 ifdef USE_EIRENE
 	@rm -f ${OBJDIR}/LISTOBJ; touch ${OBJDIR}/LISTOBJ; l="OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
@@ -860,11 +902,18 @@ endif
 	@if [ -f b2stbc.o ] ; then /bin/mv b2stbc.o ${OBJDIR}/ ; fi
 endif
 
+
 echo:
+	@echo LD_CATALYST=${LD_CATALYST}
+	@echo PARAVIEW_DIR=${PARAVIEW_DIR}
+	@echo INCLUDE=${INCLUDE}
+	@echo LDLIBES=${LDLIBES}
+	@echo DEFINES=${DEFINES}
+	@echo EQUIVS=${EQUIVS}
 	@echo VPATH=${VPATH}
 	@echo FPATH=${FPATH}
 	@echo OBJDIR=${OBJDIR}
-#	@echo OBJS=${OBJS}
+	@echo OBJS=${OBJS}
 	@echo SOLPS4OBJS=${SOLPS4OBJS}
 	@echo EIR4MODS=${EIR4MODS}
 	@echo EIR4OBJS=${EIR4OBJS}
@@ -873,7 +922,7 @@ echo:
 	@echo MODOBJS=${MODOBJS}
 	@echo MODMODS=${MODMODS}
 	@echo MODLOCAL=${MODLOCAL}
-#	@echo $(filter-out ${MODOBJS},${ALLOBJS})
+	@echo $(filter-out ${MODOBJS},${ALLOBJS})
 	@echo EXCLUDELIST=${EXCLUDELIST}
 	@echo EXELIST=${EXELIST}
 	@echo EX90LIST=${EX90LIST}
@@ -882,7 +931,7 @@ echo:
 	@echo XDEXE=${XDEXE}
 	@echo OTEXE=${OTEXE}
 	@echo IDEXE=${IDEXE}
-#	@echo ${SRCF}
+	@echo ${SRCF}
 
 local: ${SRCLOCAL}/b2local.F ${MODLOCAL}/b2mod_local.F ${INCLOCAL}/b2local.h
 
