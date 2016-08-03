@@ -1,7 +1,7 @@
 // C++ part of the adaptor for paraview catalyst for b2.5 simulation.
 // Author: Jure Bartol
 // Created on: 22.07.2016
-// Modified on: 22.0touc7.2016
+// Modified on: 03.08.2016
 
 #include "vtkCPDataDescription.h"
 #include "vtkCPInputDataDescription.h"
@@ -32,6 +32,7 @@ extern "C" void creategrid_(double* crx, double* cry, int* ncrx, int* nx, int* n
     return;
     }
 
+
   //create vtk points
   vtkPoints* points = vtkPoints::New();
   points->SetNumberOfPoints(*ncrx);
@@ -48,7 +49,7 @@ extern "C" void creategrid_(double* crx, double* cry, int* ncrx, int* nx, int* n
   vtkCPPythonAdaptorAPI::GetCoProcessorData()->GetInputDescriptionByName("input")->SetGrid(grid);
   grid->SetPoints(points);
   points->Delete();
-  grid->allocate(numOfCells);
+  grid->Allocate(numOfCells);
   vtkIdType ids[4];
   for (int i = 0 ; i < numOfCells ; i++){
     ids[0] = 0+i*4;
@@ -57,9 +58,7 @@ extern "C" void creategrid_(double* crx, double* cry, int* ncrx, int* nx, int* n
     ids[3] = 2+i*4;
     grid->InsertNextCell(9,4,ids);
   }
-  
-
-
+}
 
 extern "C" void adddata_(double* scalars, char* name, int* numCells)
 {
