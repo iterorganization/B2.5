@@ -20,6 +20,7 @@ endif
 	@if [ -f $*.${MOD} ] ; then /bin/mv $*.${MOD} ${OBJDIR}/ ; fi
 
 ${OBJDIR}/%.o : %.F90
+	echo HELLO $(SED) $(CPP)
 	@- /bin/rm -f ${OBJDIR}/$*.f90 ${OBJDIR}/$*.o ${OBJDIR}/$*.${MOD}
 ifeq ($(strip $(CPP)),)
 	${FC} ${FCOPTS} ${FFLAGSEXTRA} ${DEFINES} ${EQUIVS} ${INCLUDE} -c $<
@@ -72,7 +73,14 @@ else
 	@[ -f $*.${MOD} ] && [ ! -L $*.${MOD} ] && /bin/mv $*.${MOD} ${OBJDIR}/ && /bin/ln -s ${OBJDIR}/$*.${MOD} .
 endif
 
-#!!!Local Variables:
-#!!! mode: Makefile
-#!!! End:
+CXXFLAGS = -I${PARAVIEW_DIR}/include/paraview-5.1/
+CXX = g++
+${OBJDIR}/%.o : %.cxx	#cxx source files
+	@- /bin/rm -f ${OBJDIR}/$*.cxx ${OBJDIR}/$*.o
+	@echo "...compiling c++..."
+	${CXX} -c -o  $@ ${CXXFLAGS}  $^
+	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBJDIR}/ ; fi
 
+# Local Variables:
+# mode: Makefile
+# End:
