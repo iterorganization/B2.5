@@ -1,15 +1,15 @@
-      subroutine b2txcx (nx, ny, mode, vol, gs, hx, qz, kapx, conx)
+      subroutine b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, kapx, conx)
       use b2mod_types
       use b2mod_indirect
       implicit none
       integer nx, ny, mode
       real (kind=R8) ::
      *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
-     &   hx(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
+     &   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      &   kapx(-1:nx,-1:ny), conx(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------
 *     B2TXCX computes poloidal conductances between neighbouring cells, 
-*     given the conductivities.
+*     given the poloidal conductivities in cell centers.
 *     conx(:,:,0) contains poloidal conductivities across x-faces
 *     conx(:,:,1) contains poloidal conductivities across y-faces
 *     ------------------------------------------------------------------
@@ -46,6 +46,8 @@
 *   ..initialize conx
       conx = 0.0_R8
 *   ..compute conx
+*     note: conx(:,:,1) = 0 as long as y-faces are aligned with  
+*           magnetic surfaces, so no change needed yet
       if (mode.eq.-1) then
 *    ..use harmonic averaging
 *      (needs somewhat messy code because the harmonic average is only

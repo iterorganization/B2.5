@@ -139,7 +139,8 @@ cpax
 *    ..test sign of ni, ti, chci
        call b2xvsg (n2, ni, 1, 'ni', '.gt.')
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
-       call b2xvsg (n2*4, chci, 1, 'chci', '.ge.')
+       call b2xvsg (n2*2, chci(-1,-1,0,0), 1, 'chci', '.ge.')
+       call b2xvsg (n2*2, chci(-1,-1,1,1), 1, 'chci', '.ge.')
 *    ..test edge values of chci, chvi
        call b2xvff (nx, ny, chci, 'chci')
        call b2xvff (nx, ny, chvi, 'chvi')

@@ -88,7 +88,8 @@
        call b2xvsg (n2, pb, 1, 'pb', '.gt.')
        call b2xvsg (n2, smb(-1,-1,1), 1, 'smb1', '.le.')
        call b2xvsg (n2, smb(-1,-1,3), 1, 'smb3', '.le.')
-       call b2xvsg (n2*4, cvsb, 1, 'cvsb', '.ge.')
+       call b2xvsg (n2*2, cvsb(-1,-1,0,0), 1, 'cvsb', '.ge.')
+       call b2xvsg (n2*2, cvsb(-1,-1,1,1), 1, 'cvsb', '.ge.')
 *    ..test edge values of flcb, cvsb
        call b2xvff (nx, ny, flcb, 'flcb')
        call b2xvff (nx, ny, cvsb, 'cvsb')

@@ -195,8 +195,10 @@
        call b2xvff (nx, ny, chvi, 'chvi')
        call b2xvff (nx, ny, calf, 'calf')
 *    ..test sign of chce, chci
-       call b2xvsg (n2*4, chce, 1, 'chce', '.ge.')
-       call b2xvsg (n2*4, chci, 1, 'chci', '.ge.')
+       call b2xvsg (n2*2, chce(-1,-1,0,0), 1, 'chce', '.ge.')
+       call b2xvsg (n2*2, chce(-1,-1,1,1), 1, 'chce', '.ge.')
+       call b2xvsg (n2*2, chci(-1,-1,0,0), 1, 'chci', '.ge.')
+       call b2xvsg (n2*2, chci(-1,-1,1,1), 1, 'chci', '.ge.')
       endif
 *   ..test facdrift           !xpb
       call xertst (0.0_R8.le.minval(facdrift) .and. 

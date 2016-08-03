@@ -91,7 +91,8 @@
        call b2xvsg (n2, smb(-1,-1,1), 1, 'smb1', '.le.')
        call b2xvsg (n2, smb(-1,-1,3), 1, 'smb3', '.le.')
 *    ..test sign of cvsb
-       call b2xvsg (n2*4, cvsb, 1, 'cvsb', '.ge.')
+       call b2xvsg (n2*2, cvsb(-1,-1,0,0), 1, 'cvsb', '.ge.')
+       call b2xvsg (n2*2, cvsb(-1,-1,1,1), 1, 'cvsb', '.ge.')
 *    ..test edge values of flub, cvsb
        call b2xvff (nx, ny, flub, 'flub')
        call b2xvff (nx, ny, cvsb, 'cvsb')

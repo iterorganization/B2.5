@@ -200,10 +200,10 @@
        do is = 0, ns-1
         call b2xvff (nx, ny, fna_fcor(-1,-1,0,0,is), 'fna_fcor')
        enddo
-*    ..test sign of cvsa
-       call b2xvsg (n2*4*ns, cvsa, 1, 'cvsa', '.ge.')
-*    ..test edge values of cvsa
+*    ..test sign and edge values of cvsa
        do is = 0, ns-1
+        call b2xvsg (n2*2, cvsa(-1,-1,0,0,is), 1, 'cvsa', '.ge.')
+        call b2xvsg (n2*2, cvsa(-1,-1,1,1,is), 1, 'cvsa', '.ge.')
         call b2xvff (nx, ny, cvsa(-1,-1,0,0,is), 'cvsa')
        enddo
 *    ..test sign of smo, smq

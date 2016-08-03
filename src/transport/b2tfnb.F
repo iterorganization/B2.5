@@ -197,8 +197,10 @@
        call b2xvsg (n2, nb, 1, 'nb', '.gt.')
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, pb, 1, 'pb', '.gt.')
-       call b2xvsg (n2*4, cdnb, 1, 'cdnb', '.ge.')
-       call b2xvsg (n2*4, cdpb, 1, 'cdpb', '.ge.')
+       call b2xvsg (n2*2, cdnb(-1,-1,0,0), 1, 'cdnb', '.ge.')
+       call b2xvsg (n2*2, cdnb(-1,-1,1,1), 1, 'cdnb', '.ge.')
+       call b2xvsg (n2*2, cdpb(-1,-1,0,0), 1, 'cdpb', '.ge.')
+       call b2xvsg (n2*2, cdpb(-1,-1,1,1), 1, 'cdpb', '.ge.')
 *    ..test edge values of cvlb, cdnb, cdpb
        call b2xvff (nx, ny, cvlb, 'cvlb')
        call b2xvff (nx, ny, cdnb, 'cdnb')

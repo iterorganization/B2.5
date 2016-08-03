@@ -148,13 +148,13 @@
      .                              (2.0_R8*bb(:,:,3)**2)
 !      sigia(:,:) = sigi(:,:)*dab2_(:,:)
           sigia(:,:) = sigi(:,:)*dab2(0:nx+1,0:ny+1,iamain,1)
-          call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigi,
+          call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, sigi,
      &                                             csigia(-1,-1,0,0))
-          call b2txcy (nx, ny, mode, vol, gs, hy, qz, sigi,
+          call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, sigi,
      &                                             csigia(-1,-1,0,1))
-          call b2txcx (nx, ny, mode, vol, gs, hx, qz, sigia,
+          call b2txcx (nx, ny, mode, vol, gs, hx, hy, qz, sigia,
      &                                 csigin(-1,-1,0,0,ismain,ismain0))
-          call b2txcy (nx, ny, mode, vol, gs, hy, qz, sigia,
+          call b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, sigia,
      &                                 csigin(-1,-1,0,1,ismain,ismain0))
           if(style.eq.0) then
 *   ..interpolate ti in the left and bottom cell face

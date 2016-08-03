@@ -1,14 +1,15 @@
-      subroutine b2txcy (nx, ny, mode, vol, gs, hy, qz, kapy, cony)
+      subroutine b2txcy (nx, ny, mode, vol, gs, hx, hy, qz, kapy, cony)
       use b2mod_types
       use b2mod_indirect
       implicit none
       integer nx, ny, mode
       real (kind=R8) ::
-     *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), hy(-1:nx,-1:ny), 
+     *   vol(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2), 
+     &   hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
      &   qz(-1:nx,-1:ny,0:1), kapy(-1:nx,-1:ny), 
      &   cony(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------
-*     B2TXCY computes radial conductances between neighbouring, 
+*     B2TXCY computes radial conductances between neighbouring cells, 
 *     given the conductivities.
 *     cony(:,:,0) contains radial conductivities across x-faces
 *     cony(:,:,1) contains radial conductivities across y-faces
@@ -32,7 +33,27 @@
 
 *   ..initialize cony
       cony = 0.0_R8
-*   ..compute cony
+*   ..compute cony(:,:,0)
+*   ..use arithmetic averaging (SOLPS4.0 style)
+      do iy = -1, ny
+       do ix = -1, nx
+        if(leftix(ix,iy).ne.-2) then
+cwdk      t0 = sin(gamma), interpolated to face (volume-weighted)
+c         to consider: compute directly at face as qc(ix,ix,1)?
+          t0 = (vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,0) +
+     &          vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),0)) /
+     &         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+cwdk      computation of cony based on gs(:,:,0)*t0, to ensure 'exact' 
+c         face area is use for the flow
+c         to consider: use mode.eq.2 for b2txcx, for consistent computation
+c                      of conductivity there?
+          cony(ix,iy,0) = gs(ix,iy,0)*t0*
+     &       (kapy(leftix(ix,iy),leftiy(ix,iy)) + kapy(ix,iy))/
+     &       (hy1(leftix(ix,iy),leftiy(ix,iy)) + hy1(ix,iy))
+        endif
+       enddo
+      enddo
+*   ..compute cony(:,:,1)
       if (mode.eq.-1) then
 *    ..use harmonic averaging
        do iy = -1, ny
