@@ -37,9 +37,9 @@ FCOPTS = -Mbackslash -C -g -Mchkfpstk -Mchkptr -Mchkstk -Mpgicoff
 endif
 else
 ifdef USE_MPI
-FCOPTS = -fast -Mvect=nofuse -Mbackslash -Kieee
+FCOPTS = -fast -Mbackslash -Kieee
 else
-FCOPTS = -fast -Mvect=nofuse -Mbackslash -Kieee
+FCOPTS = -fast -Mbackslash -Kieee
 endif
 endif
 
