@@ -42,7 +42,7 @@
       use b2mod_boundary_namelist
       use b2mod_external
 
-#ifdef PARAVIEW_DIR
+#ifdef CATALYST
       !create module
 #endif
 
@@ -149,6 +149,10 @@
 
 *   ..common blocks
 *   ..local variables
+
+      character(len=80) :: catalystscript, catalystscriptone, 
+     & catalystscripttwo
+
       integer ncall, ntim, mvinc, mvnum, ix, iy, is, js, jsep, jxi, jxa,
      &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
      &  nxtl, nxtr
@@ -921,8 +925,11 @@
      1  'faulty internal parameter cpuincrement')
        cputarget=cpuincrement
 
-#ifdef PARAVIEW_DIR
-       call coprocessorinitializewithpython("CoProc.py",9)
+#ifdef CATALYST
+      catalystscriptone ='/home/ITER/kosl/solps-iter-ids-jb'
+      catalystscripttwo = '/modules/B2.5/src/catalyst/coproc.py'
+      catalystscript = trim(catalystscriptone)//trim(catalystscripttwo)
+      call coprocessorinitializewithpython(catalystscript,69)
 #endif
 
 #ifdef JET
@@ -1947,10 +1954,6 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      >     savefile(13:16))
           if (ank_tracing.ne.0) call b2filef(ns)
 
-#ifdef PARAVIEW_DIR
-          call coprocessor(crx,cry,4*(nx+2)*(ny+2),nx,ny,itim,tim)
-#endif
-
 #ifdef B25_EIRENE
           if (use_eirene.ne.0) call write_f44(savefile(13:16))
 #endif
@@ -1958,6 +1961,11 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           write(*,*) 'Plasmastate savefile ',savefile,' saved'
         endif
         first_time_step=.false.
+
+#ifdef CATALYST
+        call coprocessor(crx,cry,4*(nx+2)*(ny+2),nx,ny,itim,tim)
+#endif
+
         goto 1
 *   ..end loop
       endif  !}
@@ -2070,7 +2078,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         endif
       endif
 
-#ifdef PARAVIEW_DIR
+#ifdef CATALYST
       call coprocessorfinalize()
 #endif
 
