@@ -104,11 +104,9 @@ endif
 # If compiling with Paraview Catalyst
 ifdef PARAVIEW_DIR
 SRCCAT = ${SRCDIR}/catalyst
-INCLUDE += -I${PARAVIEW_DIR}/include/paraview-5.1
-INCLUDE += -I${PARAVIEW_DIR}/lib/paraview-5.1
-#LD_CATALYST = -$(patsubst %, -l%, ${PARAVIEW_DIR}/lib/paraview-5.1/$(wildcard */*))
-LD_CATALYST := $(patsubst %,-L%,  $(shell find ${PARAVIEW_DIR}/lib/paraview-5.1 -type d))
-LD_CATALYST += -L/work/imas/opt/python/2.7/9/lib
+INCLUDE += -I${PARAVIEW_DIR}/include/paraview-${PARAVIEW_MAJOR_VERSION}
+INCLUDE += -I${PARAVIEW_DIR}/lib/paraview-${PARAVIEW_MAJOR_VERSION}
+LDLIBES += ${LD_CATALYST} ${CATALYST_LIBS} 
 endif
 
 
@@ -906,32 +904,32 @@ endif
 echo:
 	@echo LD_CATALYST=${LD_CATALYST}
 	@echo PARAVIEW_DIR=${PARAVIEW_DIR}
-	@echo INCLUDE=${INCLUDE}
+#	@echo INCLUDE=${INCLUDE}
 	@echo LDLIBES=${LDLIBES}
-	@echo DEFINES=${DEFINES}
-	@echo EQUIVS=${EQUIVS}
-	@echo VPATH=${VPATH}
-	@echo FPATH=${FPATH}
-	@echo OBJDIR=${OBJDIR}
-	@echo OBJS=${OBJS}
-	@echo SOLPS4OBJS=${SOLPS4OBJS}
-	@echo EIR4MODS=${EIR4MODS}
-	@echo EIR4OBJS=${EIR4OBJS}
-	@echo MODLIST=${MODLIST}
-	@echo MODULES=${MODULES}
-	@echo MODOBJS=${MODOBJS}
-	@echo MODMODS=${MODMODS}
-	@echo MODLOCAL=${MODLOCAL}
-	@echo $(filter-out ${MODOBJS},${ALLOBJS})
-	@echo EXCLUDELIST=${EXCLUDELIST}
-	@echo EXELIST=${EXELIST}
-	@echo EX90LIST=${EX90LIST}
-	@echo GREXE=${GREXE}
-	@echo MNEXE=${MNEXE}
-	@echo XDEXE=${XDEXE}
-	@echo OTEXE=${OTEXE}
-	@echo IDEXE=${IDEXE}
-	@echo ${SRCF}
+#	@echo DEFINES=${DEFINES}
+#	@echo EQUIVS=${EQUIVS}
+#	@echo VPATH=${VPATH}
+#	@echo FPATH=${FPATH}
+#	@echo OBJDIR=${OBJDIR}
+#	@echo OBJS=${OBJS}
+#	@echo SOLPS4OBJS=${SOLPS4OBJS}
+#	@echo EIR4MODS=${EIR4MODS}
+#	@echo EIR4OBJS=${EIR4OBJS}
+#	@echo MODLIST=${MODLIST}
+#	@echo MODULES=${MODULES}
+#	@echo MODOBJS=${MODOBJS}
+#	@echo MODMODS=${MODMODS}
+#	@echo MODLOCAL=${MODLOCAL}
+#	@echo $(filter-out ${MODOBJS},${ALLOBJS})
+#	@echo EXCLUDELIST=${EXCLUDELIST}
+#	@echo EXELIST=${EXELIST}
+#	@echo EX90LIST=${EX90LIST}
+#	@echo GREXE=${GREXE}
+#	@echo MNEXE=${MNEXE}
+#	@echo XDEXE=${XDEXE}
+#	@echo OTEXE=${OTEXE}
+#	@echo IDEXE=${IDEXE}
+#	@echo ${SRCF}
 
 local: ${SRCLOCAL}/b2local.F ${MODLOCAL}/b2mod_local.F ${INCLOCAL}/b2local.h
 

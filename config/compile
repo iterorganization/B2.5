@@ -77,8 +77,7 @@ CXXFLAGS = -I${PARAVIEW_DIR}/include/paraview-5.1/
 CXX = g++
 ${OBJDIR}/%.o : %.cxx	#cxx source files
 	@- /bin/rm -f ${OBJDIR}/$*.cxx ${OBJDIR}/$*.o
-	@echo "...compiling c++..."
-	${CXX} -c -o  $@ ${CXXFLAGS}  $^
+	${CXX} -c -o  $@ ${CXXFLAGS} $^
 	@if [ -f $*.o ] ; then /bin/mv $*.o ${OBJDIR}/ ; fi
 
 # Local Variables:
