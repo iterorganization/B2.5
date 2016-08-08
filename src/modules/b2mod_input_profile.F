@@ -99,7 +99,7 @@
       real(kind=R8) :: dhtot
       real(kind=R8) :: fx(nxx),x(nxx),xr(-1:nxx),xf(-1:nxx),dx(nxx)
       integer, save :: elm_count
-      logical catch_up
+      logical, save :: catch_up, new_files
       logical, parameter :: debug = .false.
       intrinsic int, mod
      
@@ -121,10 +121,7 @@
         sources_time_switch=0.0_R8
 ! read profile
         call read_source_profile
-        open (96,file='../dx2')
-        open (95,file='../dx1')
-        open (94,file='../da1')
-        open (93,file='../da2')
+        new_files = .true.
       endif    
    
       if(nc.eq.0) then
@@ -152,10 +149,18 @@
      1     int(tim/sources_time_mod).gt.elm_count) then
             elm_count=tim/sources_time_mod 
             call read_source_profile
+            new_files = .true.
           endif
         endif
       endif
  
+      if (new_files) then
+        open (96,file='../dx2')
+        open (95,file='../dx1')
+        open (94,file='../da1')
+        open (93,file='../da2')
+      end if
+
       do kind_source=1,nkind_source
         do spec=0,ns-1
           kind_data=0
@@ -181,7 +186,7 @@
           do i=1,ndat
             r(i)=sdata(1,i,kind_source,spec)
             f(i)=sdata(2,i,kind_source,spec)
-            if (nc.eq.0) write(93,*) r(i),f(i)
+            if (new_files) write(93,*) r(i),f(i)
           enddo
 !          write(*,*) 'vor region_profile'
           call region_profile
@@ -217,7 +222,7 @@
             do i=1,nxdat
               x(i)=xdata(1,i,kind_source,spec)
               fx(i)=xdata(2,i,kind_source,spec)
-              if (nc.eq.0) write(95,*) x(i),fx(i)
+              if (new_files) write(95,*) x(i),fx(i)
             enddo
 !            write(*,*) 'vor axial_profile'
             call axial_profile
@@ -271,7 +276,7 @@
                 if (kind_source.eq.6) write(*,'(a,i2,1p,2(1x,e14.7))')
      &           'AXIAL-SOURCES: sne ',xr(ix),xf(ix)
               endif
-              if (nc.eq.0) write (96,*) xr(ix),xf(ix)
+              if (new_files) write (96,*) xr(ix),xf(ix)
             enddo
             if (nc.eq.0 .or. debug) then
               if (kind_source.eq.1) write(*,'(a,i2,1p,2(1x,e14.7))')
@@ -287,7 +292,7 @@
               if (kind_source.eq.6) write(*,'(a,i2,1p,2(1x,e14.7))')
      &         'PROFILE-SOURCES: sne ',pr(iy),pf(iy)
             endif
-            if (nc.eq.0) write (94,*) pr(iy),pf(iy)
+            if (new_files) write (94,*) pr(iy),pf(iy)
           enddo
  1        continue
         enddo
@@ -340,10 +345,14 @@
       ext_shi(:,:)=shi0(:,:,0)
       ext_sch(:,:)=sch0(:,:,0)
        
-      close(93)
-      close(94)
-      close(95)
-      close(96)
+      if (new_files) then
+        close(93)
+        close(94)
+        close(95)
+        close(96)
+        new_files = .false.
+      end if
+
       return
 
       contains
@@ -422,6 +431,7 @@
       character*26 hlp_frm
       integer, save :: elm_count
       logical catch_up, lpflux
+      logical, save :: new_files
       intrinsic sqrt
       namelist /transport/ ndata, tdata, addspec,
      1   transport_filename, transport_time_mod, transport_time_switch,
@@ -437,9 +447,7 @@
         call xertst(NNREGMAX.ge.nnreg(0),
      1   'Increase NNREGMAX in b2mod_numerics_namelist')
         filename='../' // transport_filename
-        open (94,file='../da1')
-        open (93,file='../da2')
-!       open (91,file='../dsa')
+        new_files = .true.
         call read_transport_input         
 !  read the profile data
         if(transport_time_mod.gt.0.0_R8) then
@@ -468,10 +476,17 @@
      1     int(tim/transport_time_mod).gt.elm_count) then
             elm_count=tim/transport_time_mod
             filename='../' // transport_filename
+            new_files = .true.
             call read_transport_input
           endif
         endif
       endif
+
+      if (new_files) then
+        open (94,file='../da1')
+        open (93,file='../da2')
+      end if
+
       do isc=1,nscale
         ixwidth(isc) = scaling_ix_end(isc) - scaling_ix_begin(isc) + 1
         ixmean(isc) = (scaling_ix_end(isc) + scaling_ix_begin(isc)) / 2
@@ -509,7 +524,7 @@
               r(i)=tdata(1,i,kind_coeff,spec)
               f(i)=tdata(2,i,kind_coeff,spec)
               if (elm_data) felm(i)=tdata(3,i,kind_coeff,spec)
-!             if (iloop.eq.2) write(93,*) r(i),f(i),felm(i)
+!             if (new_files) write(93,*) r(i),f(i),felm(i)
             enddo
               
             call region_profile(1,ndat,r,ndim,pr,nx,ny,ifa,nfitanf)
@@ -527,7 +542,7 @@
             if (elm_data) 
      >      call E01BFF(ndat,r,felm,delm,ndim,pr,pelm,ifail)
 
-            if (iloop.eq.1) then
+            if (new_files) then
 
               if (elm_data) then
                 do iy=1,ndat
@@ -721,10 +736,12 @@
  99   write (*,*) 'Error in reading the dsa file'
  100  continue
        
-        
-      close(99)
-      close(93)
-      close(94)
+      if (new_files) then
+        close(93)
+        close(94)
+        new_files = .false.
+      end if
+
       return
 
 *-----------------------------------------------------------------------
@@ -758,6 +775,7 @@ c*** Clear data to forget previous profiles
         read(99,transport)
         write(*,*) 'Read namelist transport from ',trim(filename)
         write(*,transport)
+        close(99)
       else
         call xerrab (' No '//trim(filename))
       endif

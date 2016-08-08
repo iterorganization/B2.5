@@ -1253,7 +1253,7 @@ cghgh
      &         sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is)+
      &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is)            !srv 23.09.08
 *    ..drifts to the wall                                              !srv 02.03.05 {
-            if(mdf_fnb.eq.0) then                                      !srv 09.11.06 08.09.08 {
+              if(mdf_fnb.eq.0) then                                    !srv 09.11.06 08.09.08 {
                 sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
      .           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
      *           min(0.0e0_R8,s0*(
@@ -1261,17 +1261,24 @@ cghgh
      .                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)+
      &           vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)))
-            else
-                sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
-     .           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) -
-     &           fnaPSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
+              else
+                t0 =
+     .          -fnaPSch(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      .                   topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
+                if (t0.ge.0.0_R8) then
+                  sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
+     .             sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) + t0
+                else
+                  sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
+     .             sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) + t0/
+     .             na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
+                end if
                 sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
      &           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
      &            s0*min(0.0e0_R8,
      &           vaecrb(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)) !srv 02.03.05 }
-            endif                                                      !srv 09.11.06 08.09.08 }
+              endif                                                     !srv 09.11.06 08.09.08 }
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'N') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
@@ -1288,21 +1295,27 @@ cghgh
      &         sna0_no_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is)+
      &         sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),:,is)            !srv 23.09.08
 *    ..drifts to the wall                                              !srv 02.03.05 {
-            if(mdf_fnb.eq.0) then                                      !srv 09.11.06 08.09.08 {
+              if(mdf_fnb.eq.0) then                                    !srv 09.11.06 08.09.08 {
                 sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
      .           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)-
      *           max(0.0e0_R8,
      .               s0*(vadia(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)+
      *                  vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)))
-            else
-                sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
-     .           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) +
-     &           fnaPSch(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
+              else
+                t0 = fnaPSch(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
+                if (t0.ge.0.0_R8) then
+                  sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) =
+     .             sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0,is) + t0
+                else
+                  sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
+     .             sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) + t0/
+     .             na(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),is)
+                end if
                 sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is) =
      .           sna0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)-
      &           max(0.0e0_R8,
      .               s0*vaecrb(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)) !lk 12.12.07 }
-            endif                                                      !srv 09.11.06 08.09.08 }
+              endif                                                     !srv 09.11.06 08.09.08 }
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'W') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
@@ -1319,7 +1332,7 @@ cghgh
      &         sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,is)+
      &         sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,is)            !srv 23.09.08
 *    ..drifts to the wall                                              !srv 02.03.05 {
-            if(mdf_fnb.eq.0) then                                      !srv 09.11.06 08.09.08 {
+              if(mdf_fnb.eq.0) then                                    !srv 09.11.06 08.09.08 {
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
      .           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)-
      *           max(0.0e0_R8,s0*(vadia(
@@ -1327,18 +1340,24 @@ cghgh
      .            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)+
      *     vaecrb(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)))
-            else
-                sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
-     .           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) +
-     &           fnaPSch(
+              else
+                t0 = -fnaPSch(
      &            rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)
+                if (t0.ge.0.0_R8) then
+                  sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
+     .             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) + t0
+                else
+                  sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
+     .             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) + t0/
+     .             na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+                end if
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
      .           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)-
      &           max(0.0e0_R8,s0*vaecrb(
      .               rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .               rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)) !lk 12.12.07 }
-            endif                                                      !srv 09.11.06 08.09.08 }
+              endif                                                    !srv 09.11.06 08.09.08 }
             ENDDO
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
             DO IY = 1, BC_LIST_SIZE(IB)
@@ -1355,21 +1374,27 @@ cghgh
      &         sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,is)+
      &         sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,is)            !srv 23.09.08
 *    ..drifts to the wall                                              !srv 02.03.05 {
-            if(mdf_fnb.eq.0) then                                      !srv 09.11.06 08.09.08 {
+              if(mdf_fnb.eq.0) then                                    !srv 09.11.06 08.09.08 {
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
      .           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)-
      *           max(0.0e0_R8,
      .               s0*(vadia(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)+
      *                  vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)))
-            else
-                sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
-     .           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) +
-     &           fnaPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
+              else
+                t0 = fnaPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
+                if (t0.ge.0.0_R8) then
+                  sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
+     .             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) + t0
+                else
+                  sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
+     .             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) + t0/
+     .             na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+                endif
                 sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
      .           sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)-
      &           max(0.0e0_R8,
      .               s0*vaecrb(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)) !lk 12.12.07 }
-            endif                                                      !srv 09.11.06 08.09.08 }
+              endif                                                     !srv 09.11.06 08.09.08 }
             ENDDO
           ELSE
             CALL XERRAB ('B2STBC -- BCCON=10, NOT AVAILABLE')
@@ -3502,7 +3527,7 @@ cxpb  and max(,,) statement for stability
 * -- BCMOM=15 -- PRESCRIBE THE VALUE OF THE PARALLEL VELOCITY AS A FUNCTION OF !srv 02.04.09 {
 *                POLOIDAL COORDINATE
 
-11500        CONTINUE
+11500     CONTINUE
           if(ncall.eq.0) then
             write(*,'(a,a,1p,g14.7,a,a,a,a,i3)')
      .       'specified parallel velocity as a function of',

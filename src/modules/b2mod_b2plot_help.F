@@ -4,8 +4,8 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nwfns,ntrgfns
-      parameter(nlabels=331,nfns=197,nsparameters=29,
-     *     nconstants=10,nwfns=62,nwlabels=95,ntrgfns=88)
+      parameter(nlabels=334,nfns=197,nsparameters=29,
+     *     nconstants=10,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
      * dimensions(nlabels), wdimensions(nwlabels) 
@@ -85,14 +85,14 @@
      8  'ne_ext'  , 'bmna'    , 'bmne'    , 'bmmo'    , 'bmhe'    ,
      9  'bmhi'    , 'bmch'    , 'fax_ext' , 'fay_ext' , 'lnlam'   ,
      *  'zn_ext'  , 'rc'      , 'srcml'   , 'edissml' , 'neutrad' /
-      data labels(301:331) /
+      data labels(301:334) /
      1  'fnaxnodr', 'fnaynodr', 'ne2'     , 'smth'    , 'ixle'    ,
      2  'ixge'    , 'iyle'    , 'iyge'    , 'isle'    , 'isge'    ,
      3  'smcf'    , 'fnaxmdf' , 'fnaymdf' , 'fhexmdf' , 'fheymdf' ,
      4  'fhixmdf' , 'fhiymdf' , 'fhexps'  , 'fheyps'  , 'fhixps'  ,
      5  'fhiyps'  , 'fnaxps'  , 'fnayps'  , 'fnaxfcor', 'fnayfcor',
      6  'fnaxhe'  , 'fnayhe'  , 'fchxvisq', 'fchyvisq', 'fchxinrt',
-     7  'fchyinrt'/
+     7  'fchyinrt', 'ixne'    , 'iyne'    , 'isne'    /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -456,8 +456,11 @@
      8    'Poloidal current due to heat flux viscosity tensor (A)',
      9    'Radial current due to heat flux viscosity tensor (A)',
      *    'Poloidal current due to inertia and gyroviscosity (A)'/
-      data descriptions(331:331) /
-     1    'Radial current due to inertia and gyroviscosity (A)'/
+      data descriptions(331:334) /
+     1    'Radial current due to inertia and gyroviscosity (A)',
+     2    'ixne',
+     3    'iyne',
+     4    'isne'/
       data dimensions(1:50) /
      1    2,      2,      2,      2,      2,
      2    3,      3,      3,      3,      3,
@@ -524,14 +527,14 @@
      8    2,      3,      2,      3,      2,
      9    2,      2,      3,      3,      2,
      *    3,      2,      3,      3,      3/  
-      data dimensions(301:331) /
+      data dimensions(301:334) /
      1    3,      3,      2,      3,      2,
      2    2,      2,      2,      3,      3,
      3    3,      3,      3,      2,      2,
      4    2,      2,      2,      2,      2,
      5    2,      3,      3,      3,      3,
      6    3,      3,      2,      2,      2,
-     7    2/
+     7    2,      2,      2,      3/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
@@ -595,7 +598,8 @@
      6 'c_cp_b2' , 'c_cp_b3' , 'coathick', 'lkappa'  , 'lrho'    ,
      7 'lcp'     , 'lemis'   , 'sputfrac', 'lthick'  , 'ldepth'  ,
      8 'iwle'    , 'iwge'    , 'iswle'   , 'iswge'   , 'c_cp_b4' ,
-     9 'cp_b4'   , 'kappa_a5', 'kappapa5', 'ckappaa5', 'ckapppa5'/
+     9 'cp_b4'   , 'kappa_a5', 'kappapa5', 'ckappaa5', 'ckapppa5',
+     * 'iwne'    , 'iswne'   /
       data wdimensions /
      1 1,       2,      2,      1,      1,
      2 1,       1,      1,      1,      1,
@@ -615,7 +619,8 @@
      6 1,       1,      1,      1,      1,
      7 1,       1,      2,      1,      1,
      8 1,       1,      2,      2,      1,
-     9 1,       1,      1,      1,      1/
+     9 1,       1,      1,      1,      1,
+     * 1,       2/
       data wdescriptions(1:10) /
      1 'Wall area (m^{2})',
      2 'Incident energy (eV)',
@@ -714,12 +719,14 @@
      8 'iswle',
      9 'iswge',
      * 'Coating heat capacity B4 factor (J/kg/K^{4})'/
-      data wdescriptions(91:95) /
+      data wdescriptions(91:97) /
      1 'Bulk heat capacity B4 factor (J/kg/K^{4})',
      2 'Bulk Kappa A5 polynomial factor (W/m/K^{5})',
      3 'Bulk Kappa_perp A5 polynomial factor (W/m/K^{5})',
      4 'Coating Kappa A5 polynomial factor (W/m/K^{5})',
-     5 'Coating Kappa_perp A5 polynomial factor (W/m/K^{5})'/
+     5 'Coating Kappa_perp A5 polynomial factor (W/m/K^{5})',
+     6 'iwne',
+     7 'iswne'/
       data wfns /
      1 'wall' , 'wall_ank', 'logw', 'linw', 'logxw', 'linxw', 'plwl', 
      2 'sumw' , 'intw','intw*', 'pswa','wclvs','wclvd','wclvn', 'wclvp',
@@ -750,7 +757,7 @@
      5 'trgvol'  , 'tclvp'   , 'inttrgw*', 'ztrglt'  , 'ztrgeq'  ,
      6 'ztrggt'  , 'trgabs'  , 'trgiz'   , 'logxtrg' , 'linxtrg' ,
      7 'trglist' , 'rho'     , 'trgtab'  , 'trgibnd' , 'itrgle'  ,
-     8 'itrgge'  , 'ztrgle'  , 'ztrgge'  /
+     8 'itrgge'  , 'ztrgle'  , 'ztrgge'  , 'itrgne'  , 'ztrgne'  /
       data sparameters /
      1 'extl', 'cltb', 'chor', 'chpl', 'cmd' ,
      2 'cmdcdf','chbx','chvl', 'flux', 'chmp',
