@@ -6325,7 +6325,7 @@ c-dpc still in testing phase
           description='Physical sputtering energy yield'
           if (sput_frac_flag.eq.0) then
             if (sput_dst.lt.0 .or. sput_dst.ge.ns) return
-            description=trim(desription)//' of' //
+            description=trim(description)//' of' //
      .       trim(textpl(sput_dst)) //' by'
           else
             description=trim(description)//' of wall materials by'
