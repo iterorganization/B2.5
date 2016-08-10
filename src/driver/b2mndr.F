@@ -41,11 +41,6 @@
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
       use b2mod_external
-
-#ifdef CATALYST
-      !create module
-#endif
-
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_ccoupl
@@ -149,9 +144,6 @@
 
 *   ..common blocks
 *   ..local variables
-
-      character(len=80) :: catalystscript, catalystscriptone, 
-     & catalystscripttwo
 
       integer ncall, ntim, mvinc, mvnum, ix, iy, is, js, jsep, jxi, jxa,
      &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
@@ -926,10 +918,7 @@
        cputarget=cpuincrement
 
 #ifdef CATALYST
-      catalystscriptone ='/home/ITER/kosl/solps-iter-ids-jb'
-      catalystscripttwo = '/modules/B2.5/src/catalyst/coproc.py'
-      catalystscript = trim(catalystscriptone)//trim(catalystscripttwo)
-      call coprocessorinitializewithpython(catalystscript,69)
+      call coprocessorinitializewithpython('../coproc.py',12)
 #endif
 
 #ifdef JET
@@ -1963,7 +1952,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         first_time_step=.false.
 
 #ifdef CATALYST
-        call coprocessor(crx,cry,4*(nx+2)*(ny+2),nx,ny,itim,tim)
+        call coprocessor(crx,cry,4*(nx+2)*(ny+2),nx,ny,itim,tim,vol,hx,
+     &    hy,qc,te,ti,po,qz,pbs,na,ua,uadia,fhe,fhi,fch,gs,bb)
 #endif
 
         goto 1
