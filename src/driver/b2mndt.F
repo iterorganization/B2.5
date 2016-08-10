@@ -523,7 +523,7 @@ ctmp.dpc
      &      rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
      &      fne, fch, cvsa, fchdia, uadia, wadia, vadia, vaecrb,       !srv 09.07.08 07.07.09
-     &      na, ua, ue, te, ti, po, ne, ni, fhe, fhi, shef, shif,      !srv 09.07.08
+     &      na, ua, ue, te, ti, po, ne, ni, fhe, fhi,                  !srv 09.07.08
      &      reshe, reshi, wrk0, corte, corti, ier0)
          endif
 *     ..end intermediate iteration

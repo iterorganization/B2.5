@@ -124,17 +124,17 @@ c                                 b2nph9_style_shei by default. The name of key 
 c                                 replaced by the name b2tfhe_alfTeEh
 c                                 corrected the long line in b2tfnb which produced small errors
 c                                 for working in B2solps5.0 style
-c    Version 01.001.052  15.02.10 corrected the name of key in ipgetiin b2npht.F
+c    Version 01.001.052  15.02.10 corrected the name of key in ipgeti in b2npht.F
 c                                 uncommented the lines in b2npc9.F for guard_flows.eq.2
 c                                 introduced key 'b2news_re_compute_pb'
 c    Version 01.001.053  24.02.10 added output fmo in b2wdat.F
 c                                 added the diagnostic output in b2stbc_phys.F
 c                        01.03.10 added in b2mndr.F the output of fort.30 and fort.31 for Eirene
-c                                 correcred the diagnostic output of fhe and fhi
+c                                 corrected the diagnostic output of fhe and fhi
 c    Version 01.001.054  12.04.10 corrected the calculation of thermal force in b2sifr_.F
 c    Version 01.001.055  19.04.10 added the calculation of anomalous velocity for H-regime in b2tqna.F
 c                                 added additional diagnostic into b2stbr.F for B2-Eirene case
-c                                 correctet output of dab2, dmb2 and tab2,tmb2 in b2wdat.F
+c                                 corrected output of dab2, dmb2 and tab2,tmb2 in b2wdat.F
 c    Version 01.001.056  06.07.10 modified the condition of solving of equations for Ua in b2npmo.F
 c                        12.07.10 corrected the calculation of transport parameters for H-regime
 c                                 for UDND and LDND cases in b2tqna.F

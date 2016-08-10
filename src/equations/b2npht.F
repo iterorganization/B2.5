@@ -43,7 +43,6 @@
 *   ..output arguments (unspecified on entry)
       integer ierr
       real (kind=R8) ::
-     *  shef(-1:nx,-1:ny,0:3), shif(-1:nx,-1:ny,0:3),                  !srv 10.11.02
      &  reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny), resht(-1:nx,-1:ny),
      &  corte(-1:nx,-1:ny), corti(-1:nx,-1:ny)
 *   ..common blocks
