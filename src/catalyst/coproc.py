@@ -1,11 +1,12 @@
 
+import socket
 from paraview.simple import *
 from paraview import coprocessing
 
 
 #--------------------------------------------------------------
 # Code generated from cpstate.py to create the CoProcessor.
-# ParaView 5.0.1-RC1-184-g2ddf216 64 bits
+# ParaView 5.1.2 64 bits
 
 
 # ----------------------- CoProcessor definition -----------------------
@@ -13,7 +14,7 @@ from paraview import coprocessing
 def CreateCoProcessor():
   def _CreatePipeline(coprocessor, datadescription):
     class Pipeline:
-      # state file generated using paraview version 5.0.1-RC1-184-g2ddf216
+      # state file generated using paraview version 5.1.2
 
       # ----------------------------------------------------------------
       # setup the data processing pipelines
@@ -22,13 +23,13 @@ def CreateCoProcessor():
       #### disable automatic camera reset on 'Show'
       paraview.simple._DisableFirstRenderCameraReset()
 
-      # create a new 'XML PolyData Reader'
+      # create a new 'PVTrivialProducer'
       # create a producer from a simulation input
-      paraviewFilevtp = coprocessor.CreateProducer(datadescription, 'input')
+      input = coprocessor.CreateProducer(datadescription, 'input')
 
       # ----------------------------------------------------------------
       # finally, restore active source
-      SetActiveSource(paraviewFilevtp)
+      SetActiveSource(input)
       # ----------------------------------------------------------------
     return Pipeline()
 
@@ -88,4 +89,4 @@ def DoCoProcessing(datadescription):
     coprocessor.WriteImages(datadescription, rescale_lookuptable=False)
 
     # Live Visualization, if enabled.
-    coprocessor.DoLiveVisualization(datadescription, "hpc-app1.iter.org", 22222)
+    coprocessor.DoLiveVisualization(datadescription, socket.gethostname(), 22222)

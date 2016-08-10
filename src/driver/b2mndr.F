@@ -178,6 +178,8 @@
      1  na_eps, te_eps, ti_eps, po_eps, ua_eps, sput_frc, sput_phys,
      2  delta_min, dt_change_inc, delta_max, dt_change_dec,
      3  dt_min, dt_max, max_delta
+      character*3 use_catalyst
+      integer catalyst
 #ifdef JET
       real (kind=R8) ::
      *  delta_tran_time, save_tran_time
@@ -918,7 +920,13 @@
        cputarget=cpuincrement
 
 #ifdef CATALYST
-      call coprocessorinitializewithpython('../coproc.py',12)
+       use_catalyst = ''
+       catalyst = 0
+       call get_environment_variable("USE_CATALYST",use_catalyst)
+       if (trim(use_catalyst) == 'yes' ) catalyst = 1
+       if (catalyst.eq.1) then
+          call coprocessorinitializewithpython('../coproc.py',12)
+       endif
 #endif
 
 #ifdef JET
@@ -1952,8 +1960,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         first_time_step=.false.
 
 #ifdef CATALYST
-        call coprocessor(crx,cry,4*(nx+2)*(ny+2),nx,ny,itim,tim,vol,hx,
-     &    hy,qc,te,ti,po,qz,pbs,na,ua,uadia,fhe,fhi,fch,gs,bb)
+        if (catalyst.eq.1) then
+           call coprocessor(crx,cry,4*(nx+2)*(ny+2),nx,ny,itim,tim,vol,
+     &    hx,hy,qc,te,ti,po,qz,pbs,na,ua,uadia,fhe,fhi,fch,gs,bb)
+        endif
 #endif
 
         goto 1
@@ -2069,7 +2079,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       endif
 
 #ifdef CATALYST
-      call coprocessorfinalize()
+      if (catalyst.eq.1) then
+         call coprocessorfinalize()
+      endif
 #endif
 
 * finalise eirene_mc
