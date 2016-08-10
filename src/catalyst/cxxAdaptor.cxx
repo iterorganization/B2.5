@@ -1,7 +1,7 @@
 // C++ part of the adaptor for paraview catalyst for b2.5 simulation.
 // Author: Jure Bartol
 // Created on: 22.07.2016
-// Modified on: 03.08.2016
+// Modified on: 10.08.2016
 
 #include "vtkCPDataDescription.h"
 #include "vtkCPInputDataDescription.h"
@@ -32,7 +32,6 @@ extern "C" void creategrid_(double* crx, double* cry, int* ncrx, int* nx, int* n
     return;
     }
 
-
   //create vtk points
   vtkPoints* points = vtkPoints::New();
   points->SetNumberOfPoints(*ncrx);
@@ -57,13 +56,12 @@ extern "C" void creategrid_(double* crx, double* cry, int* ncrx, int* nx, int* n
     ids[2] = 3+i*4;
     ids[3] = 2+i*4;
     grid->InsertNextCell(9,4,ids);
-  }
+    }
 }
 
-extern "C" void adddata_(double* scalars, char* name, int* numCells)
+extern "C" void adddata_(double* values, char* name, int* numCells, int *dimension)
 {
   vtkCPInputDataDescription* idd = vtkCPPythonAdaptorAPI::GetCoProcessorData()->GetInputDescriptionByName("input");
-
   vtkPolyData* grid = vtkPolyData::SafeDownCast(idd->GetGrid());
 
   if (!grid)
@@ -72,13 +70,33 @@ extern "C" void adddata_(double* scalars, char* name, int* numCells)
     return;
     }
 
-  vtkDoubleArray* cellDataDoubleArray = vtkDoubleArray::New();
-  cellDataDoubleArray->SetName(name);
-  cellDataDoubleArray->SetNumberOfTuples(*numCells);
-  cellDataDoubleArray->SetNumberOfComponents(1);
-  for (vtkIdType i = 0; i < *numCells; ++i){ 
-    cellDataDoubleArray->InsertTuple1(i,scalars[i]);
-  }
-  grid->GetCellData()->AddArray(cellDataDoubleArray);
-  cellDataDoubleArray->Delete();
+  vtkDoubleArray* cellData = vtkDoubleArray::New();
+  cellData->SetName(name);
+  cellData->SetNumberOfComponents(*dimension);
+  cellData->SetNumberOfTuples(*numCells);
+
+  switch (cellData->GetNumberOfComponents()){
+ case 1: { 
+     for (vtkIdType i = 0; i < *numCells; ++i){ 
+       cellData->SetTuple1(i,values[i]);
+     } break;
+}
+ case 2: {
+     for (vtkIdType i = 0; i < *numCells; ++i){ 
+       cellData->SetTuple2(i, values[i], values[i+(*numCells)]);
+     } break;
+}
+ case 3: {
+     for (vtkIdType i = 0; i < *numCells; ++i){ 
+       cellData->SetTuple3(i, values[i], values[i+(*numCells)], values[i+2*(*numCells)]);
+     } break;
+}
+ case 4: {
+     for (vtkIdType i = 0; i < *numCells; ++i){ 
+       cellData->SetTuple4(i, values[i], values[i+(*numCells)], values[i+2*(*numCells)], values[i+3*(*numCells)]);
+     } break;
+}
+}
+  grid->GetCellData()->AddArray(cellData);
+  cellData->Delete();
 }
