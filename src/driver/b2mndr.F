@@ -178,8 +178,9 @@
      1  na_eps, te_eps, ti_eps, po_eps, ua_eps, sput_frc, sput_phys,
      2  delta_min, dt_change_inc, delta_max, dt_change_dec,
      3  dt_min, dt_max, max_delta
-      character*3 use_catalyst
-      integer catalyst
+#ifdef CATALYST
+      logical use_catalyst
+#endif
 #ifdef JET
       real (kind=R8) ::
      *  delta_tran_time, save_tran_time
@@ -920,11 +921,12 @@
        cputarget=cpuincrement
 
 #ifdef CATALYST
-       use_catalyst = ''
-       catalyst = 0
-       call get_environment_variable("USE_CATALYST",use_catalyst)
-       if (trim(use_catalyst) == 'yes' ) catalyst = 1
-       if (catalyst.eq.1) then
+       use_catalyst = .false.
+       inquire(FILE='../coproc.py',EXIST=use_catalyst)
+       if (use_catalyst == .false.)
+     >  write(*,*) 'File coproc.py missing ',
+     > 'from run directory - Catalyst will not start.'
+       if (use_catalyst .eq. .true.) then
           call coprocessorinitializewithpython('../coproc.py',12)
        endif
 #endif
@@ -1960,7 +1962,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         first_time_step=.false.
 
 #ifdef CATALYST
-        if (catalyst.eq.1) then
+        if (use_catalyst .eq. .true.) then
            call coprocessor(crx,cry,4*(nx+2)*(ny+2),nx,ny,itim,tim,vol,
      &    hx,hy,qc,te,ti,po,qz,pbs,na,ua,uadia,fhe,fhi,fch,gs,bb)
         endif
@@ -2079,9 +2081,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       endif
 
 #ifdef CATALYST
-      if (catalyst.eq.1) then
-         call coprocessorfinalize()
-      endif
+      if (use_catalyst .eq. .true.) call coprocessorfinalize()
 #endif
 
 * finalise eirene_mc
