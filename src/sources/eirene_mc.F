@@ -677,11 +677,6 @@ csw 25jan2011 LTIME=.false. in eirsrt call
      *   b2brem,b2rad,b2qie(0),b2vdp,
      1   eirene_step_cpu)
         eircount=1
-        if(ncall.eq.0) then 
-          write(*,*) 'Calling post_couple'
-          call post_couple(nx,ny,ns,nstrai)
-          write(*,*) 'Called post_couple'
-        endif
         if(ncall.eq.0.and.repeat_first_call.gt.0) then
           do while (eircount.le.repeat_first_call)
            if(background_new.eq.0) call copy_background(nx,ny,ns,BoRiS)  !srv 14.07.10
@@ -694,6 +689,11 @@ csw 25jan2011 LTIME=.false. in eirsrt call
      1       eirene_step_cpu)
            eircount=eircount+1
           enddo
+        endif
+        if(ncall.eq.0) then
+          write(*,*) 'Calling post_couple'
+          call post_couple(nx,ny,ns,nstrai)
+          write(*,*) 'Called post_couple'
         endif
       elseif(.not.main_call) then !}{
         if (ncall.lt.3)
