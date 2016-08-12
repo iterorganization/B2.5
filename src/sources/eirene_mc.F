@@ -692,7 +692,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
         endif
         if(ncall.eq.0) then
           write(*,*) 'Calling post_couple'
-          call post_couple(nx,ny,ns,nstrai)
+          call post_couple(nx,ny,ns,nstrat)
           write(*,*) 'Called post_couple'
         endif
       elseif(.not.main_call) then !}{
