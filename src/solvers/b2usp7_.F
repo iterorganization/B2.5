@@ -138,7 +138,6 @@
       aa7(:,:,-3) = 0.0e0_R8
       aa7(:,:, 3) = 0.0e0_R8
 
-<<<<<<< HEAD
       do iy = -1, ny
        do ix = -1, nx                                                 !sv 26.11.02
         ixt = topix(ix,iy)
