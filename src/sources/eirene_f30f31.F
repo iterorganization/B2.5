@@ -384,8 +384,8 @@ c
 #endif
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
-      character chns*3                                                 !srv 16.09.02
-      integer, save :: drift_style = 1, iout = 0                        !srv 21.06.08
+      character chns*3                                                   !srv 16.09.02
+      integer, save :: drift_style = 1, iout = 0                         !srv 21.06.08
       integer ix,iy,is,ncall,eirene_extrap,in,eirene_fixmap,
      1 eirene_fixuub, print_minmax
       external ipgetr, ipgeti
@@ -419,10 +419,10 @@ c
         call ipgeti('eirene_extrap',eirene_extrap)
         call ipgeti('eirene_fixmap',eirene_fixmap)
         call ipgeti('eirene_fixuub',eirene_fixuub)
-        call ipgeti('b2tfnb_drift_style', drift_style)                 !srv 21.06.08
-        call ipgeti('copy_background_iout', iout)                      !srv 14.07.10
+        call ipgeti('b2tfnb_drift_style', drift_style)                   !srv 21.06.08
+        call ipgeti('copy_background_iout', iout)                        !srv 14.07.10
       endif
-      if(iout.ne.0) then                                             !srv 18.06.08 {
+      if(iout.ne.0) then                                                 !srv 18.06.08 {
         do is = 0,ns-1
          write (chns,'(i3.3)') is
          call my_out(70,nx,ny,fna_eir(-1,-1,0,is),'copy_fna_eirx'//chns)
@@ -444,7 +444,7 @@ c
         call my_out(70,nx,ny,te,'copy_te')
         call my_out(70,nx,ny,ti,'copy_ti')
         call my_out(70,nx,ny,po,'copy_po')
-      endif                                                          !srv 18.06.08 }
+      endif                                                              !srv 18.06.08 }
 
       if(nx.ge.NDXP) call xerrab('eirene_mc: increase size of ndxp')
       if(ny.ge.NDYP) call xerrab('eirene_mc: increase size of ndyp')
@@ -480,7 +480,7 @@ c
       do iy=-1,ny
         do ix=0,nx
           if(eirene_fixmap.eq.0) then
-            feixb(ix,iy+1)=fhi_eir(ix,iy,0)                               !srv 14.07.10
+            feixb(ix,iy+1)=fhi_eir(ix,iy,0)                              !srv 14.07.10
             if (leftix(ix,iy).gt.-2) then
               do is=0,ns-1
                 kintmp =
@@ -488,14 +488,14 @@ c
      .            kinrgy(leftix(ix,iy),leftiy(ix,iy),is)*hx(ix,iy))/
      .           (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
                 feixb(ix,iy+1)=feixb(ix,iy+1)+kintmp*(1.0_R8-BoRiS)
-     .           *fna_eir(ix,iy,0,is)                                     !srv 14.07.10
+     .           *fna_eir(ix,iy,0,is)                                    !srv 14.07.10
               enddo
             endif
-            feexb(ix,iy+1)=fhe_eir(ix,iy,0)                               !srv 14.07.10
+            feexb(ix,iy+1)=fhe_eir(ix,iy,0)                              !srv 14.07.10
           else
             if(rightix(ix-1,iy).ne.nx+1) then
               feixb(ix,iy+1)=
-     .         fhi_eir(rightix(ix-1,iy),rightiy(ix-1,iy),0)               !srv 14.07.10
+     .         fhi_eir(rightix(ix-1,iy),rightiy(ix-1,iy),0)              !srv 14.07.10
               do is=0,ns-1
                 kintmp =
      .           (kinrgy(rightix(ix-1,iy),rightiy(ix-1,iy),is)*
@@ -504,10 +504,10 @@ c
      .            hx(rightix(ix-1,iy),rightiy(ix-1,iy)))/
      .           (hx(ix-1,iy)+hx(rightix(ix-1,iy),rightiy(ix-1,iy)))
                 feixb(ix,iy+1)=feixb(ix,iy+1)+kintmp*(1.0_R8-BoRiS)
-     .           *fna_eir(rightix(ix-1,iy),rightiy(ix-1,iy),0,is)       !srv 14.07.10
+     .           *fna_eir(rightix(ix-1,iy),rightiy(ix-1,iy),0,is)        !srv 14.07.10
               enddo
               feexb(ix,iy+1)=
-     .         fhe_eir(rightix(ix-1,iy),rightiy(ix-1,iy),0)             !srv 14.07.10
+     .         fhe_eir(rightix(ix-1,iy),rightiy(ix-1,iy),0)              !srv 14.07.10
             else
               feixb(ix,iy+1)=0.0_R8
               feexb(ix,iy+1)=0.0_R8
@@ -521,7 +521,7 @@ c
 * cell face y
       do iy=0,ny
         do ix=-1,nx
-          feiyb(ix+1,iy)=fhi_eir(ix,iy,1)                               !srv 14.07.10
+          feiyb(ix+1,iy)=fhi_eir(ix,iy,1)                                !srv 14.07.10
           do is=0,ns-1
             if (bottomiy(ix,iy).ne.-2) then
               kintmp =
@@ -532,9 +532,9 @@ c
               kintmp = kinrgy(ix,iy,is)
             endif
             feiyb(ix+1,iy)=feiyb(ix+1,iy)+kintmp*(1.0_R8-BoRiS)
-     .       *fna_eir(ix,iy,1,is)                                       !srv 14.07.10
+     .       *fna_eir(ix,iy,1,is)                                        !srv 14.07.10
           enddo
-          feeyb(ix+1,iy)=fhe_eir(ix,iy,1)                               !srv 14.07.10
+          feeyb(ix+1,iy)=fhe_eir(ix,iy,1)                                !srv 14.07.10
         enddo
       enddo
       feiyb(:,ny+1)=0.0_R8
@@ -591,20 +591,20 @@ c
                 if(gs(ix,iy,0).ne.0_R8.and.rightix(ix,iy).ne.nx+1) then
                   uub(ix+1,iy+1,nflai)=max(min(
      1             (fna_eir(ix,iy,0,is)/gs(ix,iy,0)+
-     2             fna_eir(rightix(ix,iy),rightiy(ix,iy),0,is)/       !srv 14.07.10
+     2             fna_eir(rightix(ix,iy),rightiy(ix,iy),0,is)/          !srv 14.07.10
      3             gs(rightix(ix,iy),rightiy(ix,iy),0))/2.0_R8/
      4             na(ix,iy,is)/qz(ix,iy,1),
      5             ua_max),ua_min)
                 elseif(
      1           gs(ix,iy,0).eq.0_R8.and.rightix(ix,iy).ne.nx+1) then
                   uub(ix+1,iy+1,nflai)=max(min(
-     1             fna_eir(rightix(ix,iy),rightiy(ix,iy),0,is)/       !srv 14.07.10
+     1             fna_eir(rightix(ix,iy),rightiy(ix,iy),0,is)/          !srv 14.07.10
      3             gs(rightix(ix,iy),rightiy(ix,iy),0)/
      4             na(ix,iy,is)/qc(rightix(ix,iy),rightiy(ix,iy)),
      5             ua_max),ua_min)
                 else
                   uub(ix+1,iy+1,nflai)=max(min(
-     1             fna_eir(ix,iy,0,is)/gs(ix,iy,0)/                   !srv 14.07.10
+     1             fna_eir(ix,iy,0,is)/gs(ix,iy,0)/                      !srv 14.07.10
      4             na(ix,iy,is)/qc(ix,iy),
      5             ua_max),ua_min)
                 endif
@@ -624,7 +624,7 @@ c
                   fnixb(ix,iy+1,nflai)=fna_eir(ix,iy,0,is)               !srv 14.07.10
                   if(eirene_fixuub.eq.0) then
                     uub(ix,iy+1,nflai)=max(min(
-     1               fna_eir(ix,iy,0,is)/gs(ix,iy,0)/qc(ix,iy)*2.0_R8/ !srv 14.07.10
+     1               fna_eir(ix,iy,0,is)/gs(ix,iy,0)/qc(ix,iy)*2.0_R8/   !srv 14.07.10
      1               (na(ix,iy,is)+na(leftix(ix,iy),leftiy(ix,iy),is)),
      3               ua_max),ua_min)
                   endif
@@ -636,7 +636,7 @@ c
                 if(rightix(ix-1,iy).ne.nx+1) then
                   if(leftix(ix,iy).ne.-2) then
                     fnixb(ix,iy+1,nflai)=
-     1               fna_eir(rightix(ix-1,iy),rightiy(ix-1,iy),0,is)  !srv 14.07.10
+     1               fna_eir(rightix(ix-1,iy),rightiy(ix-1,iy),0,is)     !srv 14.07.10
                     if(eirene_fixuub.eq.0) then
                       uub(ix,iy+1,nflai)=max(min(
      1                 fna_eir(rightix(ix-1,iy),rightiy(ix-1,iy),0,is)/  !srv 14.07.10
@@ -666,9 +666,9 @@ c
           do iy=0,ny
             do ix=-1,nx
               if(bottomiy(ix,iy).ne.-2) then
-                fniyb(ix+1,iy,nflai)=fna_eir(ix,iy,1,is)               !srv 14.07.10
+                fniyb(ix+1,iy,nflai)=fna_eir(ix,iy,1,is)                 !srv 14.07.10
                 vvb(ix+1,iy,nflai)=max(min(
-     1           fna_eir(ix,iy,1,is)/gs(ix,iy,1)*2.0_R8/               !srv 14.07.10
+     1           fna_eir(ix,iy,1,is)/gs(ix,iy,1)*2.0_R8/                 !srv 14.07.10
      1           (na(ix,iy,is)+na(bottomix(ix,iy),bottomiy(ix,iy),is)),
      3           ua_max),ua_min)
               else
@@ -752,12 +752,12 @@ c
      &        nyiso1(nncutmax),nyiso2(nncutmax)
 
       character*54 format_string(2)
-      character*80 line
       integer, save :: new_format
       logical ex
 
 #ifdef B25_EIRENE
       integer, save :: exp_location, dot_location
+      character*80 line
       data new_format/1/
       logical open_file
       external open_file
