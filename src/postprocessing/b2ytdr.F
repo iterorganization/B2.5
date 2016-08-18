@@ -3127,48 +3127,39 @@ cxpb  Start reading input.dat file
           IF (streql(eirene_format,'facelift')) then
             READ (IUNIN,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,nltrimesh
-            ldum(14) = ldum(8)
-            ldum(15) = ldum(10)
-            ldum(7)  = .false.
-            ldum(8)  = .false.
-            ldum(9)  = .false.
-            ldum(10) = .true.
-            ldum(11) = .false.
-            ldum(12) = .false.
-            ldum(13) = .true.
           ELSE
             READ (IUNIN,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
                                          ! NLOLDRAN,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
                                          ! NLTRIMESH
-            IF (streql(eirene_format,'old') .or.
-     .          streql(eirene_format,'new')) ldum(10) = .true.
           ENDIF
-          WRITE(IUNOT,6665) ldum(0:15)
         ELSE
           IF (streql(eirene_format,'facelift')) then
             READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,nltrimesh
-            ldum(14) = ldum(8)
-            ldum(15) = ldum(10)
-            ldum(7)  = .false.
-            ldum(8)  = .false.
-            ldum(9)  = .false.
-            ldum(10) = .true.
-            ldum(11) = .false.
-            ldum(12) = .false.
-            ldum(13) = .false.
           ELSE
             READ (ZEILE,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
                                          ! NLOLDRAN,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
                                          ! NLTRIMESH
-            IF (streql(eirene_format,'old') .or.
-     .          streql(eirene_format,'new')) ldum(10) = .true.
           ENDIF
-          WRITE(IUNOT,6665) ldum(0:15)
         ENDIF
-        NLWRMSH = ldum(13)
+        IF (streql(eirene_format,'facelift')) then
+          ldum(14) = ldum(8)
+          ldum(15) = ldum(10)
+          ldum(7)  = .false.
+          ldum(8)  = .false.
+          ldum(9)  = .false.
+          ldum(10) = .true.
+          ldum(11) = .false.
+          ldum(12) = .false.
+        ELSEIF (streql(eirene_format,'old') .or.
+     .          streql(eirene_format,'new')) then
+          ldum(10) = .true.
+        END IF
+        inquire(file='fort.33',exist=NLWRMSH)
+        ldum(13)=NLWRMSH
+        WRITE(IUNOT,6665) ldum(0:15)
         READ (IUNIN,'(A80)') ZEILE
         I1 = INDEX(ZEILE,'CFILE')
         IF (I1.EQ.0) THEN
@@ -6087,7 +6078,9 @@ C  SAME FOR POINT-, LINE-, SURFACE- AND VOLUME SOURCES
      .           INGRDE(J,ISTRA,1),INSOR(J,ISTRA),nx,ny,nx1,ny1,2)
               idum(6) = idum(3)
               idum(7) = idum(3)
-            ELSE IF (INDIM(J,ISTRA).EQ.3) THEN
+            ELSE IF (INDIM(J,ISTRA).EQ.3 .OR.
+     .              (INDIM(J,ISTRA).EQ.0 .AND.
+     .               INSOR(J,ISTRA).EQ.0)) THEN
               idum(4) = convert_eirene(non_commensurate,1,
      .           INGRDA(J,ISTRA,1),INGRDA(J,ISTRA,2),nx,ny,nx1,ny1,0)
               idum(5) = convert_eirene(non_commensurate,1,
