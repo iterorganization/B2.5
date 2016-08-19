@@ -213,6 +213,7 @@
            aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7(ix,iy,-3) - aa7m2      !sv 27.01.00
            aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2                 !sv 27.01.00
          endif                                                        !sv 26.11.02
+        endif
        enddo
       enddo
 
