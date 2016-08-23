@@ -1,29 +1,26 @@
-! Fortran part of the adaptor for paraview catalyst for b2.5 simulation.
+! Fortran part of the adaptor for paraview catalyst
+! for b2.5 simulation.
 ! Author: Jure Bartol
 ! Created on: 22.07.2016
-! Modified on: 10.08.2016
+! Modified on: 23.08.2016
 
 
-subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol, hx, hy, qc, te, ti, po, bzb, OnedBsq, qz, pbs, fhe, fhi,fch, pbshz, fhe_mdf, fhi_mdf, fchvispar,fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper, gs, bb,na, ua, kinrgy, rra, rqa,fna, fna_mdf, fna_fcor, uadia, vadia, vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi)
-!Coprocessor is called each time step in b2mndr.F in order to output
+subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,bzb,OnedBsq,qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper,gs,bb,na,ua,kinrgy,rra,rqa,fna,fna_mdf,fna_fcor,uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi)
+!Coprocessor is called each time step in b2mndr to output
 !simulation data to ParaView Catalyst.
 
   implicit none
   integer :: nx, ny, ns, step, flag, numC
   integer, intent(in) :: ncrx
   real(kind=8) :: time
-  real(kind=8), dimension(nx,ny,1) :: vol, hx, hy, qc, te, ti, po, bzb, OnedBsq
-  real(kind=8), dimension(nx,ny,2) :: qz, pbs, fhe, fhi, fch, pbshz, fhe_mdf, fhi_mdf, fchvispar, fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper
+  real(kind=8), dimension(nx,ny,1) :: vol,hx,hy,qc,te,ti,po,bzb,OnedBsq
+  real(kind=8), dimension(nx,ny,2) :: qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper
   real(kind=8), dimension(nx,ny,3) :: gs
-  real(kind=8), dimension(nx,ny,4) :: crx, cry, bb
-  real(kind=8), dimension(nx,ny,ns) :: na, ua, kinrgy, rra, rqa, rsa
-  real(kind=8), dimension(nx,ny,2,ns) :: fna, fna_mdf, fna_fcor, uadia, vadia, vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi
+  real(kind=8), dimension(nx,ny,4) :: crx,cry,bb
+  real(kind=8), dimension(nx,ny,ns) :: na,ua,kinrgy,rra,rqa,rsa
+  real(kind=8), dimension(nx,ny,2,ns) :: fna,fna_mdf,fna_fcor,uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi
 
-!special: fna, fna_mdf, fna_fcor, uadia, vadia, vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi
-
-
-  numC=(nx+2)*(ny+2) !number of cells
-
+! Query Catalyst to see if there is something to do this time step.
   call requestdatadescription(step,time,flag)
   if (flag .ne. 0) then
      call needtocreategrid(flag)
@@ -31,47 +28,38 @@ subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol, hx, hy, qc, te, ti, 
         call creategrid(crx, cry, ncrx, nx, ny)
      end if
 
-!1 component in each cell
-!bzb, OnedBsq, nb, ub, ne, ne2, pr, pe, ro, ne2m, resmb, resmt, reshe, reshi, resht, respo, corut, corte, corti, cortt, corpo, hce0, hci0, sig0, alf0, ceqp,
-     call adddata(vol,"vol: Volume"//char(0),numC,1)
+! Add field data to cells.
+numC=(nx+2)*(ny+2) !number of cells
+! 1 component in each cell
+     call adddata(vol,"vol: Volume of the cell."//char(0),numC,1)
      call adddata(hx,"hx: Diameter of the cell in x-direction."//char(0),numC,1)
      call adddata(hy,"hy: Diameter of the cell in y-direction."//char(0),numC,1)
-     call adddata(qc,"qc: Cos(t), where t is the complementary angle between the x-direction of the cell and its left face. "//char(0),numC,1)
+     call adddata(qc,"qc: Cos(t); t is the complementary angle between the x-direction of the cell and its left face. "//char(0),numC,1)
      call adddata(te,"te: Electron temperature on the cell."//char(0),numC,1)
      call adddata(ti,"ti: All atom temperature on the cell."//char(0),numC,1)
      call adddata(po,"po: Electric potential of the cell."//char(0),numC,1)
      call adddata(bzb,"bzb: Bz/B**2 - Bz/<B**2> on the cell centre."//char(0),numC,1)
      call adddata(OnedBsq,"OnedBsq: 1/bb(,,3)**2 on the cell centre"//char(0),numC,1)
-  
-!2 components in each cell
-!pbs, pbshz, fhe, fhe_mdf, fhi, fhi_mdf, fch, fub, fub_mdf, fub_fcor, ni, fne, fni, fchvispar, fchvisq, fchinert, fchanml, fchdia, fchin, fch_p, fchvisper, vedia, veecrb, sne, sne0,  hce, hci, siq, alf, chce, chve, chci, chvi, csig, calf, csig_cl, calf_cl, csig_an, calf_an
+! 2 components in each cell
      call adddata(qz,"qz: Sin(t) {x} and cos(t) {y}; t is the angle between the x-direction and the y-direction on the cell."//char(0),numC,2)
      call adddata(pbs,"pbs: Parallel contact area, on the cell left{x}/bottom{y} faces."//char(0),numC,2)
      call adddata(fhe,"fhe: Electron heat flux through the face between the cell and left{x}/bottom{y} neighbor."//char(0),numC,2)
      call adddata(fhi,"fhi: All atom heat flux through the face between the cell and left{x}/bottom{y} neighbor."//char(0),numC,2)
      call adddata(fch,"fch: Electric current through the face between the cell and left{x}/bottom{y} neighbor."//char(0),numC,2)
      call adddata(pbshz,"pbshz: Product hz*(bx/bb)*sx {x}  and hz*(by/bb)*sy {y}, or (magnetic field pitch)*(surface area)*hz."//char(0),numC,2)
-     call adddata(fhe_mdf,"fhe_mdf: Modified el. heat flux through the face between the cell and left {x}/bottom{y} neighbor."//char(0),numC,2)
-     call adddata(fhi_mdf,"fhi_mdf: Modified all atom heat flux through the face between the cell and left{x}/bottom{y} neighbor"//char(0),numC,2)
-     call adddata(fchvispar,"fchvispar"//char(0),numC,2)
-     call adddata(fchvisq,"fchvisq: El. current driven by parallel viscosity through the face between the cell and left{x}/bottom{y} neighbor."//char(0),numC,2)
+     call adddata(fhe_mdf,"fhe_mdf: Modified el. heat flux through the face between the cell and left{x}/bottom{y} neighbor."//char(0),numC,2)
+     call adddata(fhi_mdf,"fhi_mdf: Modified all atom heat flux through the face between the cell and left{x}/bottom{y} neighbor."//char(0),numC,2)
+     call adddata(fchvispar,"fchvispar: El. current driven by parallel viscosity through the face between the cell and left{x}/bottom{y} neighbor."//char(0),numC,2)
+     call adddata(fchvisq,"fchvisq: El. current produced by the viscosity tensor through the face between the cell and left{x}/bottom{y} neighbor."//char(0),numC,2)
      call adddata(fchinert,"fchinert: Contributions from inertia and gyroviscosity current through the face between the cell and left{x}/bottom{y} neighbor."//char(0),numC,2)
      call adddata(fchdia,"fchdia: Modified diamagnetic current through the face between the cell and left{x}/bottom{y} neighbor."//char(0),numC,2)
      call adddata(fchin,"fchin: Contribution from ion-neutral friction through the face between the cell and left{x}/bottom{y} neighbor."//char(0),numC,2)
      call adddata(fch_p,"fch_p: Product of the paral. el. current and pol. mag. field component sign through the face between the cell and left neighbor{x}. {y}=0"//char(0),numC,2)
      call adddata(fchvisper,"fchvisper: El. current connected with contribution from the perpend. viscosity through the face between the cell and bottom neighbor{y}. {x}=0"//char(0),numC,2)
-!3 components in each cell
-!gs
+! 3 components in each cell
      call adddata(gs,"gs: Area of the face between the cell and its left{x}/bottom{y}/third (ignorable) coordinate{z} neighbor."//char(0),numC,3) 
-!4 components in each cell
- !bb,she, shi, sch, she0, shi0, sch0
-!bb has 4 components, one of them is magnitude
-!which can be ignored, because paraview calculates it
-!on its own.
      call adddata(bb,"bb: Magnetic field (x,y,z component and magnitude) at the center of the cell."//char(0),numC,3)
-!ns components
-!na, ua, kinrgy, resco, resmo, copra, corua, rra, rqa, rcx, dna0, dpa0, vsa0, rsa
-!fna, fna_mdf, fna_fcor, uadia, vadia, vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi
+! ns components
      call adddata(na,"na: Density of atomic species (each component - one species)."//char(0),numC,ns)
      call adddata(ua,"ua: Parallel velocity of atomic species (each component - one species) on the cell."//char(0),numC,ns)
      call adddata(kinrgy,"kinrgy: Kinetic energy of a particle of species (each component - one species) in the cell."//char(0),numC,ns)
