@@ -13,12 +13,12 @@ subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,bzb
   integer :: nx, ny, ns, step, flag, numC
   integer, intent(in) :: ncrx
   real(kind=8) :: time
-  real(kind=8), dimension(nx,ny,1) :: vol,hx,hy,qc,te,ti,po,bzb,OnedBsq
-  real(kind=8), dimension(nx,ny,2) :: qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper
-  real(kind=8), dimension(nx,ny,3) :: gs
-  real(kind=8), dimension(nx,ny,4) :: crx,cry,bb
-  real(kind=8), dimension(nx,ny,ns) :: na,ua,kinrgy,rra,rqa,rsa
-  real(kind=8), dimension(nx,ny,2,ns) :: fna,fna_mdf,fna_fcor,uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi
+  real(kind=8), dimension(-1:nx,-1:ny,1) :: vol,hx,hy,qc,te,ti,po,bzb,OnedBsq
+  real(kind=8), dimension(-1:nx,-1:ny,2) :: qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper
+  real(kind=8), dimension(-1:nx,-1:ny,3) :: gs
+  real(kind=8), dimension(-1:nx,-1:ny,4) :: crx,cry,bb
+  real(kind=8), dimension(-1:nx,-1:ny,0:ns-1) :: na,ua,kinrgy,rra,rqa,rsa
+  real(kind=8), dimension(-1:nx,-1:ny,0:1,0:ns-1) :: fna,fna_mdf,fna_fcor,uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi
 
 ! Query Catalyst to see if there is something to do this time step.
   call requestdatadescription(step,time,flag)
@@ -68,9 +68,9 @@ numC=(nx+2)*(ny+2) !number of cells
      call adddata(rsa,"rsa: Rate coefficient for ionisation from atomic species (is) to (is+1) (each component - one species)."//char(0),numC,ns)
      call adddata(fna(:,:,0,:),"fnax: Flux of atoms of species through the face between the cell and its left neighbor."//char(0),numC,ns)
      call adddata(fna(:,:,1,:),"fnay: Flux of atoms of species through the face between the cell and its bottom neighbor."//char(0),numC,ns)
-     call adddata(fna_mdf(:,:,0,:),"fna_mdfx: Modified flux of atoms of species through the face between the cell and its left neighbor."//char(0),numC,ns)
-     call adddata(fna_mdf(:,:,1,:),"fna_mdfy: Modified flux of atoms of species through the face between the cell and its bottom neighbor."//char(0),numC,ns)
-     call adddata(fna_fcor(:,:,0,:),"fna_fcorx: Flux of atoms of species for calculating momentum transport through the face between the cell and its left neighbor."//char(0),numC,ns)
+    call adddata(fna_mdf(:,:,0,:),"fna_mdfx: Modified flux of atoms of species through the face between the cell and its left neighbor."//char(0),numC,ns)
+    call adddata(fna_mdf(:,:,1,:),"fna_mdfy: Modified flux of atoms of species through the face between the cell and its bottom neighbor."//char(0),numC,ns)
+    call adddata(fna_fcor(:,:,0,:),"fna_fcorx: Flux of atoms of species for calculating momentum transport through the face between the cell and its left neighbor."//char(0),numC,ns)
      call adddata(fna_fcor(:,:,1,:),"fna_fcory: Flux of atoms of species for calculating momentum transport through the face between the cell and its left neighbor."//char(0),numC,ns)
      call adddata(uadia(:,:,0,:),"uadiax: Total effective drift velocity of species in the cell in the diamagnetic direction."//char(0),numC,ns)
      call adddata(uadia(:,:,1,:),"uadiay: Total effective drift velocity of species in the cell in the radial direction."//char(0),numC,ns)
