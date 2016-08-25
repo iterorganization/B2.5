@@ -251,8 +251,8 @@
       do iy = 0, ny
        do ix = -1, nx
         ireg = region(ix,iy,0)
-        t0 =  flo0(ix,iy,1)/2-con0(ix,iy,1,0)     !srv 02.01.07
-        t1 = -flo0(ix,iy,1)/2-con0(ix,iy,1,0)     !srv 02.01.07
+        t0 =  flo0(ix,iy,1)/2-con0(ix,iy,1,0)                         !srv 02.01.07
+        t1 = -flo0(ix,iy,1)/2-con0(ix,iy,1,0)                         !srv 02.01.07
         ibot = region(bottomix(ix,iy),bottomiy(ix,iy),0)
         if (solveee(ibot) .or. solveei(ibot))
      >   aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0
@@ -290,7 +290,7 @@
        enddo
       enddo
 *   ..solve the correction equation
-      call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total')  !srv 18.05.02
+      call b2ux9p (nx, ny, aa9, itcnt, resht, cortt, 'b2ush9_total')    !srv 18.05.02
 
 * ..electron temperature correction equation
       new_matrix = .false.
