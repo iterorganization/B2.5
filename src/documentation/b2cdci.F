@@ -813,8 +813,8 @@
 *    stops smoothly after it has been running for at least 'cpu' CPU seconds.
 *
 *    'b2mndr_elapsed'           '0.0'                  Run
-*    Elapsed time limit. If elapsed.eq.0.0, no time limit is enforced. 
-*    Otherwise, the code stops smoothly after it has been running for 
+*    Elapsed time limit. If elapsed.eq.0.0, no time limit is enforced.
+*    Otherwise, the code stops smoothly after it has been running for
 *    at least 'elapsed' wall clock seconds.
 *
 *    'b2mndr_savecpu'           '3600.0'               Run
@@ -2038,7 +2038,7 @@
 *    'b2stbc_fchy_dia'          '1.0'                  Numerics
 *    Multiplier to the neoclassical current and diamagnetic heat flux
 *    convective boundary conditions, also multiplied by facdrift.
-*    Allows use b2stbc_integral_current is fchy_dia.eq.0, forbids it
+*    Allows use b2stbc_integral_current if fchy_dia.eq.0, forbids it
 *    otherwise.
 *
 *    'b2stbc_fchy_dia_coreonly' '1'                    Numerics
@@ -2106,7 +2106,7 @@
 *    If guard_flows.eq.0, flows between neighbouring guard cells are blocked.
 *    If guard_flows.eq.1, flows between neighbouring guard cells are kept.
 *    If guard_flows.eq.2, particle flows between neighbouring guard cells 
-*    are blocked for density equation and the incorrect corner values
+*    are blocked for the density equations and the incorrect corner values
 *    are replaced by interpolated values. It is recommended 2.
 *
 *    'b2news_fac_ref'           See description (integer) Numerics
