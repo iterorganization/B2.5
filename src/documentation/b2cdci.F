@@ -809,16 +809,16 @@
 *    The latter are reserved for fine-tuning numerical diagnostics.
 *    
 *    'b2mndr_cpu'               '0.0'                  Run
-*    CPU limit. Is cpu.eq.0.0, no CPU limit is enforced. Otherwise, the code
-*    stops smoothly after is has been running for at least 'cpu' CPU seconds.
+*    CPU limit. If cpu.eq.0.0, no CPU limit is enforced. Otherwise, the code
+*    stops smoothly after it has been running for at least 'cpu' CPU seconds.
 *
 *    'b2mndr_elapsed'           '0.0'                  Run
-*    Elapsed time limit. Is elapsed.eq.0.0, no time limit is enforced. 
-*    Otherwise, the code stops smoothly after is has been running for 
+*    Elapsed time limit. If elapsed.eq.0.0, no time limit is enforced. 
+*    Otherwise, the code stops smoothly after it has been running for 
 *    at least 'elapsed' wall clock seconds.
 *
 *    'b2mndr_savecpu'           '3600.0'               Run
-*    CPU time interval after with save files plasmastate.xxxx are written.
+*    CPU time interval after which save files plasmastate.xxxx are written.
 *    These can be used, in conjunction with the b2co.exe instruction, to
 *    recover a crashed run.
 *
@@ -1826,7 +1826,7 @@
 *    'b2news_potit'             '50'                   Numerics
 *    'b2news_potitmin'          '0'                    Numerics
 *    Maximum and minimum number of iterations in the potential equation.
-*    It must hold that potitmin < potit.
+*    It must hold that potitmin is less than potit.
 * 
 *    'b2news_potok'             '1.0e-2'               Numerics
 *    Target residual for the potential equation.

@@ -2343,7 +2343,7 @@ C CORRECTING THE POTENTIAL ENERGY SPENT FOR RECOMBINATION OF ATOMS INTO MOLECULE
       IF(L_NEUTFLUX.GE.0) THEN
         DO I=1,NNSTSI
           k=eirdiag_nds_ind(I)
-          if(k.lt.0) cycle
+          if(k.le.0) cycle
           IS=I+nlim
           wldnep(IS,0)=0.0_R8
           DO J=1,NNMOLI

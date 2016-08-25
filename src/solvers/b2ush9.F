@@ -205,8 +205,8 @@
       call sfill (nx+2, 0.0_R8, aa9(-1,-1,-3), 1)
       do iy = 0, ny
        do ix = -1, nx
-        t0 =  flo0(ix,iy,1)/2-con0(ix,iy,1,0)     !srv 02.01.07
-        t1 = -flo0(ix,iy,1)/2-con0(ix,iy,1,0)     !srv 02.01.07
+        t0 =  flo0(ix,iy,1)/2-con0(ix,iy,1,0)                         !srv 02.01.07
+        t1 = -flo0(ix,iy,1)/2-con0(ix,iy,1,0)                         !srv 02.01.07
         aa9(bottomix(ix,iy),bottomiy(ix,iy),3) = t0
         aa9(ix,iy,0) = aa9(ix,iy,0)-t0
         aa9(bottomix(ix,iy),bottomiy(ix,iy),0) = 

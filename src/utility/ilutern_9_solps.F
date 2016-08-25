@@ -183,7 +183,7 @@ c-dpc
       if(nltrsol.gt.0 .or. iflag.lt.0)                               !srv 09.07.02 28.06.16 {
      &   write(*,3)  trim(name), iflag, errmax, dres, noiter
    3  format(' ma28id for ',a13,
-     1       ' iflag =',i9,' errmax =',es9.1,
+     1       ': iflag =',i9,' errmax =',es9.1,
      2       ' dres =',es9.1,' noiter =',i2)                         !srv 09.07.02 28.06.16 }
 
       if(iflag.lt.0) then                                            !srv 28.06.16 {

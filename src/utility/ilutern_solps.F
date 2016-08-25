@@ -278,7 +278,7 @@ c-dpc
         endif
         if(nltrsol.gt.0 .or. iflag.lt.0)
      &   write(*,3)  trim(name), iflag, errmax, dres, noiter
-   3    format(' ma28id for ',a13,' iflag =',i9,
+   3    format(' ma28id for ',a13,': iflag =',i9,
      2         ' errmax =',es9.1,' dres =',es9.1,' noiter =',i2)
 
       endif                                                          !srv 28.06.16 }
