@@ -26,7 +26,8 @@
       real (kind=R8), allocatable :: d(:)
       real (kind=R8) :: xx(-1:nx), xx1(-1:nx1), yy(-1:ny), yy1(-1:ny1) 
       real (kind=R8) :: fa(-1:nx,-1:ny), fa1(-1:nx1,-1:ny1)
-      external b2xvfy1, xerrab, subini, subend, interp2d
+      real (kind=R8) :: rratio
+      external b2xvfy1, xerrab, subini, subend, interp2d, rratio
       external E01BEF, E01BFF
       intrinsic min, max
 *     ------------------------------------------------------------------
@@ -65,10 +66,10 @@
 *    .. region 1 : 
        if (nncut.eq.0 .and. nx.eq.1) then  ! 1-D radial case
         do iy = 0, ny
-          yy(iy) = real(iy)/real(ny)
+          yy(iy) = rratio(iy,ny)
         enddo
         do iy1 = 0, ny1
-          yy1(iy1) = real(iy1)/real(ny1)
+          yy1(iy1) = rratio(iy1,ny1)
         enddo
 *     ..region 1 : 1-D radial case : western edge (including top row)
         fa(-1,0:ny) = fy(-1,0:ny)/hx(-1,0:ny)
@@ -133,10 +134,10 @@
           xx1(ix1) = (ix1+0.5_R8)/real(nx1)
         enddo
         do iy = 0, ny
-          yy(iy) = real(iy)/real(ny)
+          yy(iy) = rratio(iy,ny)
         enddo
         do iy1 = 0, ny1
-          yy1(iy1) = real(iy1)/real(ny1)
+          yy1(iy1) = rratio(iy1,ny1)
         enddo
 *     ..region 1 : 2-D slab case : western edge (includes top row)
         call E01BEF(ny+1,yy(0:ny),fy(-1,0:ny),d,ifail)
@@ -158,10 +159,10 @@
         iyc = 0
         iyd = jsep1+1
         do iy = iya, iyb
-          yy(iy) = real(iy-iya)/real(iyb-iya)
+          yy(iy) = rratio(iy-iya,iyb-iya)
         enddo
         do iy1 = iyc, iyd
-          yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+          yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
         enddo
         if (nncut.eq.0 .and. periodic_bc.eq.1) then ! limiter core
           ixa = 0
@@ -266,10 +267,10 @@
           endif
         endif
         do iy = iya, iyb
-          yy(iy) = real(iy-iya)/real(iyb-iya)
+          yy(iy) = rratio(iy-iya,iyb-iya)
         enddo
         do iy1 = iyc, iyd
-          yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+          yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
         enddo
         do ix = ixa-1, ixb+1
           xx(ix) = (ix+0.5_R8-ixa)/real(ixb-ixa+1)
@@ -302,10 +303,10 @@
           iyc = max(topcut1(1),topcut1(2))
           iyd = ny1 
           do iy = iya, iyb
-            yy(iy) = real(iy-iya)/real(iyb-iya)
+            yy(iy) = rratio(iy-iya,iyb-iya)
           enddo
           do iy1 = iyc, iyd
-            yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+            yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
           enddo
 *     ..region 2 : DDN HFS SOL : above second separatrix
           fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
@@ -338,10 +339,10 @@
           xx1(ix1) = (ix1+0.5_R8-ixc)/real(ixd-ixc+1)
          enddo
          do iy = iya, iyb
-          yy(iy) = real(iy-iya)/real(iyb-iya)
+          yy(iy) = rratio(iy-iya,iyb-iya)
          enddo
          do iy1 = iyc, iyd
-          yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+          yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
          enddo
 *     ..region 3 : western PFR : below the first separatrix (western edge)
          call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,ifail)
@@ -364,10 +365,10 @@
          iyc = min(topcut1(1),topcut1(2))
          iyd = max(topcut1(1),topcut1(2))
          do iy = iya, iyb
-          yy(iy) = real(iy-iya)/real(iyb-iya)
+          yy(iy) = rratio(iy-iya,iyb-iya)
          enddo
          do iy1 = iyc, iyd
-          yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+          yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
          enddo
 *     ..region 3 : western divertor : between separatrices (western edge)
          call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,ifail)
@@ -398,10 +399,10 @@
         endif
         if (nncut.ge.1 .and. periodic_bc.eq.0) then
          do iy = iya, iyb
-          yy(iy) = real(iy-iya)/real(iyb-iya)
+          yy(iy) = rratio(iy-iya,iyb-iya)
          enddo
          do iy1 = iyc, iyd
-          yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+          yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
          enddo
 *     ..region 3 : western divertor SOL : above the separatrices (western edge)
          call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,ifail)
@@ -461,10 +462,10 @@
          iyd = min(topcut1(1),topcut1(2))
         endif
         do iy = iya, iyb
-         yy(iy) = real(iy-iya)/real(iyb-iya)
+         yy(iy) = rratio(iy-iya,iyb-iya)
         enddo
         do iy1 = iyc, iyd
-         yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+         yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
         enddo
         fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
         fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
@@ -485,10 +486,10 @@
          iyc = min(topcut1(1),topcut1(2))
          iyd = max(topcut1(1),topcut1(2))
          do iy = iya, iyb
-          yy(iy) = real(iy-iya)/real(iyb-iya)
+          yy(iy) = rratio(iy-iya,iyb-iya)
          enddo
          do iy1 = iyc, iyd
-          yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+          yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
          enddo
          fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
          fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
@@ -515,10 +516,10 @@
          iyb = ny
          iyd = ny1
          do iy = iya, iyb
-          yy(iy) = real(iy-iya)/real(iyb-iya)
+          yy(iy) = rratio(iy-iya,iyb-iya)
          enddo
          do iy1 = iyc, iyd
-          yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+          yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
          enddo
          fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
          fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
@@ -554,10 +555,10 @@
          xx1(ix1) = (ix1+0.5_R8-ixc)/real(ixd-ixc+1)
         enddo
         do iy = iya, iyb
-         yy(iy) = real(iy-iya)/real(iyb-iya)
+         yy(iy) = rratio(iy-iya,iyb-iya)
         enddo
         do iy1 = iyc, iyd
-         yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+         yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
         enddo
 *     ..region 5 : stellarator island : central part
         fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
@@ -587,10 +588,10 @@
          xx1(ix1) = (ix1+0.5_R8-ixc)/real(ixd-ixc+1)
         enddo
         do iy = iya, iyb
-         yy(iy) = real(iy-iya)/real(iyb-iya)
+         yy(iy) = rratio(iy-iya,iyb-iya)
         enddo
         do iy1 = iyc, iyd
-         yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+         yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
         enddo
         fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
         fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
@@ -632,10 +633,10 @@
          xx1(ix1) = (ix1+0.5_R8-ixc)/real(ixd-ixc+1)
         enddo
         do iy = iya, iyb
-         yy(iy) = real(iy-iya)/real(iyb-iya)
+         yy(iy) = rratio(iy-iya,iyb-iya)
         enddo
         do iy1 = iyc, iyd
-         yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+         yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
         enddo
 *     ..region 6 : CDN LFS SOL or DDN LFS SOL between the separatrices
         fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
@@ -655,10 +656,10 @@
          iyc = max(topcut1(1),topcut1(2))
          iyd = ny1
          do iy = iya, iyb
-          yy(iy) = real(iy-iya)/real(iyb-iya)
+          yy(iy) = rratio(iy-iya,iyb-iya)
          enddo
          do iy1 = iyc, iyd
-          yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+          yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
          enddo
          fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
          fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
@@ -698,10 +699,10 @@
         iyc = 0
         iyd = min(topcut1(1),topcut1(2))+1
         do iy = iya, iyb
-         yy(iy) = real(iy-iya)/real(iyb-iya)
+         yy(iy) = rratio(iy-iya,iyb-iya)
         enddo
         do iy1 = iyc, iyd
-         yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+         yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
         enddo
 *     ..region 7 : top LFS PFR : below the first separatrix (western edge)
         call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,ifail)
@@ -724,10 +725,10 @@
          iyc = min(topcut1(1),topcut1(2))
          iyd = max(topcut1(1),topcut1(2))
          do iy = iya, iyb
-          yy(iy) = real(iy-iya)/real(iyb-iya)
+          yy(iy) = rratio(iy-iya,iyb-iya)
          enddo
          do iy1 = iyc, iyd
-          yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+          yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
          enddo
 *     ..region 7 : DDN LFS upper divertor : between separatrices (western edge)
          call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,ifail)
@@ -750,10 +751,10 @@
         iyc = max(topcut1(1),topcut1(2))
         iyd = ny1
         do iy = iya, iyb
-         yy(iy) = real(iy-iya)/real(iyb-iya)
+         yy(iy) = rratio(iy-iya,iyb-iya)
         enddo
         do iy1 = iyc, iyd
-         yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+         yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
         enddo
 *     ..region 7 : DDN LFS upper divertor : above the second separatrix (western edge)
         call E01BEF(iyb-iya+1,yy(iya:iyb),fy(ixa-1,iya:iyb),d,ifail)
@@ -790,10 +791,10 @@
         iyc = 0
         iyb = min(topcut1(1),topcut1(2))
         do iy = iya, iyb
-         yy(iy) = real(iy-iya)/real(iyb-iya)
+         yy(iy) = rratio(iy-iya,iyb-iya)
         enddo
         do iy1 = iyc, iyd
-         yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+         yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
         enddo
         fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
         fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
@@ -815,10 +816,10 @@
          iyc = min(topcut1(1),topcut1(2))
          iyd = max(topcut1(1),topcut1(2))
          do iy = iya, iyb
-          yy(iy) = real(iy-iya)/real(iyb-iya)
+          yy(iy) = rratio(iy-iya,iyb-iya)
          enddo
          do iy1 = iyc, iyd
-          yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+          yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
          enddo
          fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
          fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)
@@ -840,10 +841,10 @@
         iyc = max(topcut1(1),topcut1(2))
         iyd = ny1
         do iy = iya, iyb
-         yy(iy) = real(iy-iya)/real(iyb-iya)
+         yy(iy) = rratio(iy-iya,iyb-iya)
         enddo
         do iy1 = iyc, iyd
-         yy1(iy1) = real(iy1-iyc)/real(iyd-iyc)
+         yy1(iy1) = rratio(iy1-iyc,iyd-iyc)
         enddo
         fa(ixa-1,iya:iyb) = fy(ixm,iya:iyb)/hx(ixm,iya:iyb)
         fa(ixa:ixb,iya:iyb) = fy(ixa:ixb,iya:iyb)/hx(ixa:ixb,iya:iyb)

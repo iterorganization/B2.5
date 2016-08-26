@@ -27,7 +27,8 @@
       real (kind=R8), allocatable :: d(:)
       real (kind=R8) :: xx(-1:nx), xx1(-1:nx1), yy(-1:ny), yy1(-1:ny1) 
       real (kind=R8) :: fa(-1:nx,-1:ny), fa1(-1:nx1,-1:ny1)
-      external b2xvfx, xerrab, subini, subend, interp2d
+      real (kind=R8) :: rratio
+      external b2xvfx, xerrab, subini, subend, interp2d, rratio
       external E01BEF, E01BFF
       intrinsic min, max
 *     ------------------------------------------------------------------
@@ -97,10 +98,10 @@
         fx1(nx1,ny1) = fx(nx,ny) 
        else if (nncut.eq.0 .and. ny.eq.1) then  ! 1-D parallel case
         do ix = 0, nx
-          xx(ix) = real(ix)/real(nx)
+          xx(ix) = rratio(ix,nx)
         enddo
         do ix1 = 0, nx1
-          xx1(ix1) = real(ix1)/real(nx1)
+          xx1(ix1) = rratio(ix1,nx1)
         enddo
 *     ..region 1 : 1-D parallel case : bottom row (including eastern edge)
         call E01BEF(nx+1,xx(0:nx),fx(0:nx,-1),d,ifail)
@@ -119,10 +120,10 @@
      .              nx1+1,xx1(0:nx1),fx1(0:nx1,ny1),ifail)
        else if (nncut.eq.0 .and. periodic_bc.eq.0) then  ! 2-D slab case
         do ix = 0, nx
-          xx(ix) = real(ix)/real(nx)
+          xx(ix) = rratio(ix,nx)
         enddo
         do ix1 = 0, nx1
-          xx1(ix1) = real(ix1)/real(nx1)
+          xx1(ix1) = rratio(ix1,nx1)
         enddo
         yy(-1)=0.0_R8
         do iy = 0, ny-1
@@ -186,11 +187,11 @@
          call xerrab ('Unexpected topology !')
         endif
         do ix = ixa, ixb
-          xx(ix) = real(ix-ixa)/real(ixb-ixa+1)
+          xx(ix) = rratio(ix-ixa,ixb-ixa+1)
         enddo
         xx(ixb+1) = 1.0_R8   ! for periodicity
         do ix1 = ixc, ixd
-          xx1(ix1) = real(ix1-ixc)/real(ixd-ixc+1)
+          xx1(ix1) = rratio(ix1-ixc,ixd-ixc+1)
         enddo
         yy(iya-1)=0.0_R8
         do iy = iya, iyb
@@ -228,10 +229,10 @@
 *    ..region 2 : 
        if (nncut.eq.0 .and. periodic_bc.eq.1) then  ! limiter SOL
         do ix = 0, nx
-          xx(ix) = real(ix)/real(nx)
+          xx(ix) = rratio(ix,nx)
         enddo
         do ix1 = 0, nx1
-          xx1(ix1) = real(ix1)/real(nx1)
+          xx1(ix1) = rratio(ix1,nx1)
         enddo
         yy(topcut(1)-1) = 0.0_R8
         do iy = topcut(1), ny-1
@@ -258,10 +259,10 @@
      .              nx1+1,xx1(0:nx1),fx1(0:nx1,ny1),ifail)
        else if (nncut.eq.1 .and. periodic_bc.eq.1) then  ! stellarator island SOL
         do ix = 0, nx
-          xx(ix) = real(ix)/real(nx)
+          xx(ix) = rratio(ix,nx)
         enddo
         do ix1 = 0, nx1
-          xx1(ix1) = real(ix1)/real(nx1)
+          xx1(ix1) = rratio(ix1,nx1)
         enddo
         iy = topcut(1)
         do while (region(nx/2,iy,0).eq.2)
@@ -313,11 +314,11 @@
           ixd = leftcut1(2)-1
         endif
         do ix = ixa, ixb
-          xx(ix) = real(ix-ixa)/real(ixb-ixa+1)
+          xx(ix) = rratio(ix-ixa,ixb-ixa+1)
         enddo
         xx(ixb+1) = 1.0_R8   ! for continuity
         do ix1 = ixc, ixd
-          xx1(ix1) = real(ix1-ixc)/real(ixd-ixc+1)
+          xx1(ix1) = rratio(ix1-ixc,ixd-ixc+1)
         enddo
         yy(iya-1) = 0.0_R8
         do iy = iya, iyb
@@ -367,11 +368,11 @@
           ixp = leftcut(2)                  ! position past the X-point
         endif
         do ix = ixa, ixb
-          xx(ix) = real(ix-ixa)/real(ixb-ixa+1)
+          xx(ix) = rratio(ix-ixa,ixb-ixa+1)
         enddo
         xx(ixb+1) = 1.0_R8   ! for continuity
         do ix1 = ixc, ixd
-          xx1(ix1) = real(ix1-ixc)/real(ixd-ixc+1)
+          xx1(ix1) = rratio(ix1-ixc,ixd-ixc+1)
         enddo
         yy(iya-1) = 0.0_R8
         do iy = iya, iyb
@@ -428,11 +429,11 @@
         ixc = 0
         ixd = leftcut1(1)-1
         do ix = ixa, ixb
-         xx(ix) = real(ix-ixa)/real(ixb-ixa+1)
+         xx(ix) = rratio(ix-ixa,ixb-ixa+1)
         enddo
         xx(ixb+1) = 1.0_R8   ! for continuity
         do ix1 = ixc, ixd
-         xx1(ix1) = real(ix1-ixc)/real(ixd-ixc+1)
+         xx1(ix1) = rratio(ix1-ixc,ixd-ixc+1)
         enddo
 *     ..region 3 : western PFR : bottom row
         fa(ixa:ixb,-1) = fx(ixa:ixb,-1)
@@ -565,10 +566,10 @@
          enddo
         endif
         do ix = ixa, ixb
-          xx(ix) = real(ix-ixa)/real(ixb-ixa)
+          xx(ix) = rratio(ix-ixa,ixb-ixa)
         enddo
         do ix1 = ixc, ixd
-          xx1(ix1) = real(ix1-ixc)/real(ixd-ixc)
+          xx1(ix1) = rratio(ix1-ixc,ixd-ixc)
         enddo
 *     ..region 4 : eastern SN PFR or HFS top DN PFR : bottom row (including eastern edge)
         call E01BEF(ixb-ixa+1,xx(ixa:ixb),fx(ixa:ixb,-1),d,ifail)
@@ -679,11 +680,11 @@
         iyd = ny1-1
         fx1(nx1,inseliy1:ny1) = 0.0_R8   ! eastern dead cells
         do ix = ixa, ixb
-         xx(ix) = real(ix-ixa)/real(ixb-ixa+1)
+         xx(ix) = rratio(ix-ixa,ixb-ixa+1)
         enddo
         xx(ixb+1) = 1.0_R8   ! for periodicity
         do ix1 = ixc, ixd
-         xx1(ix1) = real(ix1-ixc)/real(ixd-ixc+1)
+         xx1(ix1) = rratio(ix1-ixc,ixd-ixc+1)
         enddo
         yy(iya-1) = 0.0_R8
         do iy = iya, iyb
@@ -724,11 +725,11 @@
         ixc = rightcut1(2)
         ixd = rightcut1(1)-1
         do ix = ixa, ixb
-         xx(ix) = real(ix-ixa)/real(ixb-ixa+1)
+         xx(ix) = rratio(ix-ixa,ixb-ixa+1)
         enddo
         xx(ixb+1) = 1.0_R8   ! for continuity
         do ix1 = ixc, ixd
-         xx1(ix1) = real(ix1-ixc)/real(ixd-ixc+1)
+         xx1(ix1) = rratio(ix1-ixc,ixd-ixc+1)
         enddo
 *     ..region 5 : DN LFS core : bottom row
         fa(ixa:ixb,-1) = fx(ixa:ixb,-1)
@@ -789,11 +790,11 @@
            iyd = max(topcut1(1),topcut1(2))-1
          endif
          do ix = ixa, ixb
-          xx(ix) = real(ix-ixa)/real(ixb-ixa+1)
+          xx(ix) = rratio(ix-ixa,ixb-ixa+1)
          enddo
          xx(ixb+1) = 1.0_R8   ! for periodicity
          do ix1 = ixc, ixd
-          xx1(ix1) = real(ix1-ixc)/real(ixd-ixc+1)
+          xx1(ix1) = rratio(ix1-ixc,ixd-ixc+1)
          enddo
          yy(iya-1) = 0.0_R8
          do iy = iya, iyb
@@ -875,11 +876,11 @@
           ixc = ixc-1
         enddo
         do ix = ixa, ixb
-         xx(ix) = real(ix-ixa)/real(ixb-ixa+1)
+         xx(ix) = rratio(ix-ixa,ixb-ixa+1)
         enddo
         xx(ixb+1) = 1.0_R8   ! for continuity
         do ix1 = ixc, ixd
-         xx1(ix1) = real(ix1-ixc)/real(ixd-ixc+1)
+         xx1(ix1) = rratio(ix1-ixc,ixd-ixc+1)
         enddo
 *     ..region 7 : top LFS PFR : bottom row
         fa(ixa:ixb,-1) = fx(ixa:ixb,-1)
@@ -995,10 +996,10 @@
         ixc = rightcut1(1)
         ixd = nx1
         do ix = ixa, ixb
-          xx(ix) = real(ix-ixa)/real(ixb-ixa)
+          xx(ix) = rratio(ix-ixa,ixb-ixa)
         enddo
         do ix1 = ixc, ixd
-          xx1(ix1) = real(ix1-ixc)/real(ixd-ixc)
+          xx1(ix1) = rratio(ix1-ixc,ixd-ixc)
         enddo
 *     ..region 8 : eastern DN LFS PFR : bottom row (including eastern edge)
         call E01BEF(ixb-ixa+1,xx(ixa:ixb),fx(ixa:ixb,-1),d,ifail)
