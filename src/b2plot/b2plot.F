@@ -149,7 +149,7 @@ c
 #ifndef NO_CDF
       real (kind=R8) ::
      *   movietime(1)
-      integer :: iret, index(1), ncidcdf, varid
+      integer :: iret, frameindex(1), ncidcdf, varid
 #endif
       integer ntstepcdf, istepcdf, lucdf
       integer istack(1000), ipop, itmp, istart, iend, itrack,
@@ -1406,6 +1406,10 @@ c
           description='Hydrogenic atom density (m^{-3})'
           nz=1
           call copy(nh,1.0_R8,nz,textbl)
+        case('ni')
+          description='Total density (m^{-3})'
+          nz=2
+          call copy(ni,1.0_R8,nz,textni)
         case('ua')
           description='Parallel velocity (u_{a}) (m.s^{-1})'
           nz=ns
@@ -4823,8 +4827,15 @@ c     assumes that bb is OK for 1d cases
               end do
             end do
           end do
-          graphlabel(iwrk)=
+          i=index(graphlabel(iwrk),' (CHS)')
+          if (i.eq.0) then
+           graphlabel(iwrk)=
      1      graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//' (CHS)'
+          else
+           write(graphlabel(iwrk),'(a,a)')
+     1      graphlabel(iwrk)(1:i-1),
+     2      graphlabel(iwrk)(i+6:lnblnk(graphlabel(iwrk)))
+          endif
         case('bala')     ! balance ???
           stack_req=(/0,0,0,1,0,0/)
           if(bad_args(stack_req)) return
@@ -5400,8 +5411,8 @@ c
             call check_cdf_status(iret)
             iret=nf_inq_varid(ncidcdf,'ntstep',varid)
             call check_cdf_status(iret)
-            index(1)=1
-            iret=nf_get_var1_int(ncidcdf,varid,index,ntstepcdf)
+            frameindex(1)=1
+            iret=nf_get_var1_int(ncidcdf,varid,frameindex,ntstepcdf)
             call check_cdf_status(iret)
             write(*,*) ntstepcdf,' slices'
             istepcdf=1
