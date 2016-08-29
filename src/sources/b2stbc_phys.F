@@ -1729,10 +1729,17 @@ c dpc
      &           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS) +
      &           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)
               if(mdf_fnb.ne.0) then                                   !srv 13.10.06 {
-                  sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
-     &             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)-
+                t0 = -
      &          fnaPSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &                  rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)
+                if (t0.ge.0.0_R8) then
+                  sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
+     &             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)+t0
+                else
+                  sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
+     &             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)+t0/
+     &               na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+                endif
               endif                                                   !srv 13.10.06 }
               ENDDO
             ELSEIF(BCCHAR(IB).EQ.'E') THEN
@@ -1749,9 +1756,15 @@ c dpc
      &           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS) +
      .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)
               if(mdf_fnb.ne.0) then                                   !srv 13.10.06 {
+                t0 = fnaPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
+                if(t0.ge.0.0_R8) then
                   sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is) =
-     &             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)+
-     &             fnaPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
+     &             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)+t0
+                else
+                  sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is) =
+     &             sna0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,is)+t0/
+     &               na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+                endif
               endif                                                   !srv 13.10.06 }
               ENDDO
             ELSE
