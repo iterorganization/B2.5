@@ -55,7 +55,6 @@ c*** lv_trc  : their versions
 c*** filedata: if true, produce the file, else dump into b2.log
 c*** fn_ntrc :  file names for the tracing data
 c***
-c***  ntrc_mnp  :  B2MNPRT                :  traditional data
 c***  ntrc_tst  :  tracing/test.trc       :  test data (can be absent)
 c***  ntrc_res  :  tracing/residuals.trc  :  residuals by regions
 c***  ntrc_src  :  tracing/sources.trc    :  integral sources
@@ -71,9 +70,9 @@ c***                    tracing
 
       integer len_ntrc, ntrc_used
       parameter (len_ntrc=10)
-      integer ntrc_mnp, ntrc_tst, ntrc_res, ntrc_src, ntrc_bln,
+      integer ntrc_tst, ntrc_res, ntrc_src, ntrc_bln,
      ,        ntrc_ble, ntrc_int, ntrc_usr, ntrc_blm, ntrc_sep
-      parameter (ntrc_mnp=1, ntrc_tst=2, ntrc_res=3, ntrc_src=4,
+      parameter (ntrc_tst=2, ntrc_res=3, ntrc_src=4,
      ,           ntrc_bln=5, ntrc_ble=6, ntrc_int=7, ntrc_usr=8,
      ,           ntrc_blm=9, ntrc_sep=10)
       integer ntrc(len_ntrc), lv_trc(len_ntrc)
@@ -178,8 +177,6 @@ c<<<
       NTRC(ntrc_tst) = 70
       fn_ntrc(ntrc_tst) = 'tracing/test.trc'
 c>>>
-      NTRC(ntrc_mnp) = 71
-      fn_ntrc(ntrc_mnp)='B2MNPRT'
       NTRC(ntrc_res) = 72
       fn_ntrc(ntrc_res) = 'tracing/residuals.trc'
       NTRC(ntrc_src) = 73
