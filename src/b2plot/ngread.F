@@ -241,6 +241,7 @@ cank 960511
         call rdneutrs(44,wldnm,nmoli)
         call rdneutrs(44,ewldm,nmoli)
 c*** read the wall geometry
+        call read_title(44)
         read (44,'(8f10.4)') (p1(1,ix), p1(2,ix),
      ,                        p2(1,ix), p2(2,ix), ix=1,nlimi)
       end if
@@ -370,31 +371,37 @@ cank-960727
       end if
 cank
       if(jvft44 .ge. 20000727) then
+        call read_title(44)
         read (44,'(18i4)') (isrftype(i),i=1,nlimi)
         read (44,'(18i4)') (isrftype(nlim+i),i=1,nstsi)
       end if
       if (NLWRMSH) then
         if(jvft44 .ge. 20051115) then
+          call read_title(44)
           read (44,'(6e13.5)',end=999) (wlarea(i),i=1,nlimi)
           read (44,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
         end if
         if(jvft44 .ge. 20060206) then
           k=0
+          call read_title(44)
           read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,natmi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,natmi),
      ,                                                       i=1,nstsi)
           k=k+natmi
+          call read_title(44)
           read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nmoli),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nmoli),
      ,                                                       i=1,nstsi)
           k=k+nmoli
+          call read_title(44)
           read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nioni),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nioni),
      ,                                                       i=1,nstsi)
           k=k+nioni
+          call read_title(44)
           read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
@@ -408,6 +415,7 @@ cank
         end if
       
         if(jvft44 .ge. 20080706) then
+          call read_title(44)
           READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)        
           READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)    
           READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)    
@@ -424,45 +432,75 @@ cank
      .                ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
      .                sarea_res(NCL) ) 
  
+            call read_title(44)
             READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natmi),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
+            call read_title(44)
             READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natmi),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') ((ewldm_res(j,i),j=1,nmoli),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') ((ewldea_res(j,i),j=1,natmi),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') ((ewldem_res(j,i),j=1,nmoli),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL)
           ELSE
+            call read_title(44)
             READ (44,1028)
+            call read_title(44)
             READ (44,1028)
+            call read_title(44)
             READ (44,1028)
+            call read_title(44)
             READ (44,1028)
+            call read_title(44)
             READ (44,1028)
+            call read_title(44)
             READ (44,1028)
+            call read_title(44)
             READ (44,1028)
+            call read_title(44)
             READ (44,1028)
+            call read_title(44)
             READ (44,1028)
           END IF
         end if
 
         if(jvft44 .ge. 20081111) then
+          call read_title(44)
           READ (44,'(6e15.7)') ((PDENA_INT(I,J),I=1,natmi),J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((PDENM_INT(I,J),I=1,nmoli),J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((PDENI_INT(I,J),I=1,nioni),J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((PDENA_INT_B2(I,J),I=1,natmi),
      .                                                     J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((PDENM_INT_B2(I,J),I=1,nmoli),
      .                                                     J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((PDENI_INT_B2(I,J),I=1,nioni),
      .                                                     J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((EDENA_INT(I,J),I=1,natmi),J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((EDENM_INT(I,J),I=1,nmoli),J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((EDENI_INT(I,J),I=1,nioni),J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((EDENA_INT_B2(I,J),I=1,natmi),
      .                                                     J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((EDENM_INT_B2(I,J),I=1,nmoli),
      .                                                     J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,nioni),
      .                                                     J=0,NSTRAI)
         end if

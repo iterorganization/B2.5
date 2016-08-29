@@ -5,11 +5,18 @@
 *
       SUBROUTINE GFSUB2(KARD,NDIMX,NDIMY,NRDX,NRDY,DUMMY)
       use b2mod_types
+#ifdef B25_EIRENE
+      use eirmod_extrab25
+#endif
       IMPLICIT NONE
       INTEGER KARD,NDIMX,NDIMY,NRDX,NRDY,
      & LIM,IX,IY,III
       real (kind=R8) ::
      * DUMMY(0:NDIMX+1,0:NDIMY+1)
+
+#ifdef B25_EIRENE
+      call read_title(kard)
+#endif
       LIM = (NRDX/5)*5 - 4
       DO 110 IY = 1,NRDY
         DO 100 IX = 1,LIM,5

@@ -57,7 +57,7 @@ c
       integer is, nplsi
 #ifdef B25_EIRENE
       INTEGER NNX, NNY, IX, IY, jvft44, istra
-      integer i, j, k, ncl, jvftnew, nstra1
+      integer i, j, k, ncl, jvftnew, nstra1, n2
       real (kind=R8) :: wrk0(-1:nx,-1:ny1), field(0:nx+1,0:ny+1)
       real (kind=R8), allocatable :: dab1(:,:,:), tab1(:,:,:)
       real (kind=R8), allocatable :: dmb1(:,:,:), tmb1(:,:,:)
@@ -84,6 +84,7 @@ c
      *  edena1int_b2(:,:), edenm1int_b2(:,:), edeni1int_b2(:,:)
       real (kind=R8), allocatable :: wd_old(:), wd_new(:)
       character*8, allocatable :: textan1(:), eirtxt1(:)
+      character*3 stnum
       logical ex
 
 *  -- PROCEDURES --
@@ -123,7 +124,7 @@ C
       else if (streql(solps_version,'4.3')) then
         jvftnew = min(jvft44,20080706)
       else
-        jvftnew = jvft44
+        jvftnew = max(jvft44,20160829)
       endif
       WRITE(45,'(I4,2X,I4,2x,i8)')               nx1,ny1,jvftnew
       READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
@@ -139,6 +140,7 @@ C
       call xertst(nnx   .le. ndx , 'NGREAD:   NNX > NDX ')
       call xertst(nny   .le. ndy , 'NGREAD:   NNY > NDY ')
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
+      n2 = nx1*ny1
       inquire(file='input.dat',exist=ex)
       if (.not.ex) inquire(file='fort.33',exist=nlwrmsh)
 c
@@ -190,6 +192,7 @@ C
      &        wrk0)
         end if
       end do
+      call write_title(45,'dab2',n2*natm1)
       call eirene_neutr(45,nx1,ny1,natm1,dab1,nx1,ny1,natm1,1,1)
       deallocate (dab1)
 
@@ -218,6 +221,7 @@ C
      &        wrk0)
         end if
       end do
+      call write_title(45,'tab2',n2*natm1)
       call eirene_neutr(45,nx1,ny1,natm1,tab1,nx1,ny1,natm1,1,1)
       deallocate (tab1)
 
@@ -235,6 +239,7 @@ C
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
    15 CONTINUE
+      call write_title(45,'dmb2',n2*nmoli)
       call eirene_neutr(45,nx1,ny1,nmoli,dmb1,nx1,ny1,nmoli,1,1)
       deallocate(dmb1)
 
@@ -259,6 +264,7 @@ C
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
    25 CONTINUE
+      call write_title(45,'tmb2',n2*nmoli)
       call eirene_neutr(45,nx1,ny1,nmoli,tmb1,nx1,ny1,nmoli,1,1)
       deallocate(tmb1)
 
@@ -276,6 +282,7 @@ C
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
    16 CONTINUE
+      call write_title(45,'dib2',n2*nioni)
       call eirene_neutr(45,nx1,ny1,nioni,dib1,nx1,ny1,nioni,1,1)
       deallocate(dib1)
 
@@ -300,6 +307,7 @@ C
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
    26 CONTINUE
+      call write_title(45,'tib2',n2*nioni)
       call eirene_neutr(45,nx1,ny1,nioni,tib1,nx1,ny1,nioni,1,1)
       deallocate(tib1)
 
@@ -321,6 +329,7 @@ C
      &        hx, hx1, bottomiy1)
         end if
       end do
+      call write_title(45,'rfluxa',n2*natm1)
       call eirene_neutr(45,nx1,ny1,natm1,rfa1,nx1,ny1,natm1,1,1)
       deallocate (rfa1)
 
@@ -338,6 +347,7 @@ C
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hx1, bottomiy1)
  115  CONTINUE
+      call write_title(45,'rfluxm',n2*nmoli)
       call eirene_neutr(45,nx1,ny1,nmoli,rfm1,nx1,ny1,nmoli,1,1)
       deallocate (rfm1)
 
@@ -359,6 +369,7 @@ C
      &        hy, qc, hy1, qc1)
         end if
       end do
+      call write_title(45,'pfluxa',n2*natm1)
       call eirene_neutr(45,nx1,ny1,natm1,pfa1,nx1,ny1,natm1,1,1)
       deallocate (pfa1)
 
@@ -376,6 +387,7 @@ C
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hy1, qc1)
  215  CONTINUE
+      call write_title(45,'pfluxm',n2*nmoli)
       call eirene_neutr(45,nx1,ny1,nmoli,pfm1,nx1,ny1,nmoli,1,1)
       deallocate (pfm1)
 
@@ -397,6 +409,7 @@ C
      &        hx, hx1, bottomiy1)
         end if
       end do
+      call write_title(45,'refluxa',n2*natm1)
       call eirene_neutr(45,nx1,ny1,natm1,refa1,nx1,ny1,natm1,1,1)
       deallocate (refa1)
 
@@ -414,6 +427,7 @@ C
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hx, hx1, bottomiy1)
  415  CONTINUE
+      call write_title(45,'refluxm',n2*nmoli)
       call eirene_neutr(45,nx1,ny1,nmoli,refm1,nx1,ny1,nmoli,1,1)
       deallocate (refm1)
 
@@ -435,6 +449,7 @@ C
      &        hy, qc, hy1, qc1)
         end if
       end do
+      call write_title(45,'pefluxa',n2*natm1)
       call eirene_neutr(45,nx1,ny1,natm1,pefa1,nx1,ny1,natm1,1,1)
       deallocate (pefa1)
 
@@ -452,6 +467,7 @@ C
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        hy, qc, hy1, qc1)
  515  CONTINUE
+      call write_title(45,'pefluxm',n2*nmoli)
       call eirene_neutr(45,nx1,ny1,nmoli,pefm1,nx1,ny1,nmoli,1,1)
       deallocate (pefm1)
 
@@ -475,7 +491,9 @@ C
      &        leftcut, leftcut1, rightcut, rightcut1,
      &        bottomcut, bottomcut1, topcut, topcut1,
      &        wrk0)
+      call write_title(45,'emiss',n2)
       call eirene_neutr(45,nx1,ny1,1,emiss1,nx1,ny1,1,1,1)
+      call write_title(45,'emissmol',n2)
       call eirene_neutr(45,nx1,ny1,1,emissmol1,nx1,ny1,1,1,1)
       deallocate (emiss1)
       deallocate (emissmol1)
@@ -509,7 +527,9 @@ C
         srcml1 = 0.0_R8
         edissml1 = 0.0_R8
       end if
+      call write_title(45,'srcml',n2*nmoli)
       call eirene_neutr(45,nx1,ny1,nmoli,srcml1,nx1,ny1,nmoli,1,1)
+      call write_title(45,'edissml',n2*nmoli)
       call eirene_neutr(45,nx1,ny1,nmoli,edissml1,nx1,ny1,nmoli,1,1)
       deallocate(srcml1,edissml1)
 
@@ -546,7 +566,9 @@ C
         call rdneutrs(44,ewlda,natmi)
         call rdneutrs(44,wldnm,nmoli)
         call rdneutrs(44,ewldm,nmoli)
+        call write_title(45,'wldnek(0)',nlimps)
         call wrneutrs(45,wldnek,1)
+        call write_title(45,'wldnep(0)',nlimps)
         call wrneutrs(45,wldnep,1)
         do is = 1, natmi
           if (iatm1(is).ne.0) then
@@ -554,13 +576,19 @@ C
             ewlda1(:,iatm1(is),0) = ewlda(:,is,0)
           end if
         end do
+        call write_title(45,'wldna(0)',nlimps*natm1)
         call wrneutrs(45,wldna1,natm1)
+        call write_title(45,'ewlda(0)',nlimps*natm1)
         call wrneutrs(45,ewlda1,natm1)
+        call write_title(45,'wldnm(0)',nlimps*nmoli)
         call wrneutrs(45,wldnm,nmoli)
+        call write_title(45,'ewldm(0)',nlimps*nmoli)
         call wrneutrs(45,ewldm,nmoli)
 c*** read the wall geometry
+        call read_title(44)
         read (44,'(8f10.4)') (p1(1,ix), p1(2,ix),
      ,                        p2(1,ix), p2(2,ix), ix=1,nlimi)
+        call write_title(45,'wall_geometry',4*nnlimi)
         write(45,'(8f10.4)') (p1(1,ix), p1(2,ix),
      ,                        p2(1,ix), p2(2,ix), ix=1,nlimi)
       end if
@@ -575,7 +603,9 @@ cank-960727
         do is = 1, natmi
           if (iatm1(is).ne.0) wldra1(:,iatm1(is),0) = wldra(:,is,0)
         end do
+        call write_title(45,'wldra(0)',nlimps*natm1)
         call wrneutrs(45,wldra1,natm1)
+        call write_title(45,'wldrm(0)',nlimps*nmoli)
         call wrneutrs(45,wldrm,nmoli)
       end if
       if(jvft44 .ge. 960727) then
@@ -599,13 +629,22 @@ cank-960727
                 wldra1(:,iatm1(is),istra) = wldra(:,is,istra)
               end if
             end do
+            write (stnum,'(i3)') istra
+            call write_title(45,'wldnek('//stnum//')',nlimps)
             call wrneutrs(45,wldnek(1,istra),1)
+            call write_title(45,'wldnep('//stnum//')',nlimps)
             call wrneutrs(45,wldnep(1,istra),1)
+            call write_title(45,'wldna('//stnum//')',nlimps*natm1)
             call wrneutrs(45,wldna1(1,1,istra),natm1)
+            call write_title(45,'ewlda('//stnum//')',nlimps*natm1)
             call wrneutrs(45,ewlda1(1,1,istra),natm1)
+            call write_title(45,'wldnm('//stnum//')',nlimps*nmoli)
             call wrneutrs(45,wldnm(1,1,istra),nmoli)
+            call write_title(45,'ewldm('//stnum//')',nlimps*nmoli)
             call wrneutrs(45,ewldm(1,1,istra),nmoli)
+            call write_title(45,'wldra('//stnum//')',nlimps*natm1)
             call wrneutrs(45,wldra1(1,1,istra),natm1)
+            call write_title(45,'wldrm('//stnum//')',nlimps*nmoli)
             call wrneutrs(45,wldrm(1,1,istra),nmoli)
           end do
         end if
@@ -632,10 +671,15 @@ cank-960727
         do is = 1, natmi
           if (iatm1(is).ne.0) wldpa1(:,iatm1(is),0) = wldpa(:,is,0)
         end do
+        call write_title(45,'wldpp(0)',nlimps*npls1)
         call wrneutrs(45,wldpp1,npls1)
+        call write_title(45,'wldpa(0)',nlimps*natm1)
         call wrneutrs(45,wldpa1,natm1)
+        call write_title(45,'wldpm(0)',nlimps*nmoli)
         call wrneutrs(45,wldpm,nmoli)
+        call write_title(45,'wldpeb(0)',nlimps)
         call wrneutrs(45,wldpeb,1)
+        call write_title(45,'wldspt(0)',nlimps)
         call wrneutrs(45,wldspt,1)
         if(nstrai .gt. 1) then
           do istra=1,nstrai
@@ -657,10 +701,16 @@ cank-960727
               if (iatm1(is).ne.0)
      >         wldpa1(:,iatm1(is),istra) = wldpa(:,is,istra)
             end do
+            write (stnum,'(i3)') istra
+            call write_title(45,'wldpp('//stnum//')',nlimps*npls1)
             call wrneutrs(45,wldpp1(1,1,istra),npls1)
+            call write_title(45,'wldpa('//stnum//')',nlimps*natm1)
             call wrneutrs(45,wldpa1(1,1,istra),natm1)
+            call write_title(45,'wldpm('//stnum//')',nlimps*nmoli)
             call wrneutrs(45,wldpm(1,1,istra),nmoli)
+            call write_title(45,'wldpeb('//stnum//')',nlimps)
             call wrneutrs(45,wldpeb(1,istra),1)
+            call write_title(45,'wldspt('//stnum//')',nlimps)
             call wrneutrs(45,wldspt(1,istra),1)
           end do
         end if
@@ -671,35 +721,43 @@ cank-960727
 cank
       if(jvftnew.le.961228) goto 99
       if(jvft44 .ge. 20000727) then
+        call read_title(44)
         read (44,'(18i4)') (isrftype(i),i=1,nlimi)
         read (44,'(18i4)') (isrftype(nlim+i),i=1,nstsi)
+        call write_title(45,'isrftype',nnlimi+nnstsi)
         write(45,'(18i4)') (isrftype(i),i=1,nlimi)
         write(45,'(18i4)') (isrftype(nlim+i),i=1,nstsi)
       end if
       if (NLWRMSH .and. streql(solps_version,'4.3')) then
         if(jvft44 .ge. 20051115) then
+          call read_title(44)
           read (44,'(6e13.5)') (wlarea(i),i=1,nlimi)
           read (44,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
+          call write_title(45,'wlarea',nnlimi+nnstsi)
           write(45,'(6e13.5)') (wlarea(i),i=1,nlimi)
           write(45,'(6e13.5)') (wlarea(nlim+i),i=1,nstsi)
         end if
         if(jvft44 .ge. 20060206) then
           k=0
+          call read_title(44)
           read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,natmi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,natmi),
      ,                                                       i=1,nstsi)
           k=k+natmi
+          call read_title(44)
           read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nmoli),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nmoli),
      ,                                                       i=1,nstsi)
           k=k+nmoli
+          call read_title(44)
           read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nioni),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nioni),
      ,                                                       i=1,nstsi)
           k=k+nioni
+          call read_title(44)
           read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,i),j=1,nplsi),i=1,nlimi)
           read (44,'(6e13.5)') ((wlabsrp(j+k,nlim+i),j=1,nplsi),
@@ -748,24 +806,28 @@ cank
      .      wd_new(1:npls1)
           end do
           k=0
+          call write_title(45,'wlabsrp(A)',(nnlimi+nnstsi)*natm1)
           write(45,'(6a13)') (eirtxt1(j+k),j=1,natm1)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,i),j=1,natm1),
      ,                                                       i=1,nlimi)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,nlim+i),j=1,natm1),
      ,                                                       i=1,nstsi)
           k=k+natm1
+          call write_title(45,'wlabsrp(M)',(nnlimi+nnstsi)*nmoli)
           write(45,'(6a13)') (eirtxt1(j+k),j=1,nmoli)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,i),j=1,nmoli),
      ,                                                       i=1,nlimi)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,nlim+i),j=1,nmoli),
      ,                                                       i=1,nstsi)
           k=k+nmoli
+          call write_title(45,'wlabsrp(I)',(nnlimi+nnstsi)*nioni)
           write(45,'(6a13)') (eirtxt1(j+k),j=1,nioni)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,i),j=1,nioni),
      ,                                                       i=1,nlimi)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,nlim+i),j=1,nioni),
      ,                                                       i=1,nstsi)
           k=k+nioni
+          call write_title(45,'wlabsrp(P)',(nnlimi+nnstsi)*npls1)
           write(45,'(6a13)') (eirtxt1(j+k),j=1,npls1)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,i),j=1,npls1),
      ,                                                       i=1,nlimi)
@@ -804,17 +866,20 @@ cank
      &         wrk0)
             end if
           end do
+          call write_title(45,'eneutrad',n2*natm1)
           call eirene_neutr(45,nx1,ny1,natm1,eneutrad1,
      .                         nx1,ny1,natm1,1,1)
           deallocate(eneutrad1)
         end if
       
         if(jvft44 .ge. 20080706) then
+          call read_title(44)
           READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)        
           READ (44,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)    
           READ (44,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)    
           READ (44,'(12i6)') (eirdiag_nds_start(i),i=1,nstsi)    
           READ (44,'(12i6)') (eirdiag_nds_end(i),i=1,nstsi) 
+          call write_title(45,'eirdiag', 5*nstsi+1)
           WRITE(45,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)        
           WRITE(45,'(12i6)') (eirdiag_nds_typ(i),i=1,nstsi)    
           WRITE(45,'(12i6)') (eirdiag_nds_srf(i),i=1,nstsi)    
@@ -830,14 +895,23 @@ cank
      .                ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
      .                sarea_res(NCL) ) 
  
+            call read_title(44)
             READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') ((wldna_res(j,i),j=1,natmi),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
+            call read_title(44)
             READ (44,'(6e15.7)') ((ewlda_res(j,i),j=1,natmi),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') ((ewldm_res(j,i),j=1,nmoli),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') ((ewldea_res(j,i),j=1,natmi),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') ((ewldem_res(j,i),j=1,nmoli),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
+            call read_title(44)
             READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL)
             allocate(wldna1res(natm1,NCL), ewlda1res(natm1,NCL),
      .               ewldea1res(natm1,NCL))
@@ -848,18 +922,28 @@ cank
                 ewldea1res(iatm1(is),1:NCL) = ewldea_res(is,1:NCL)
               end if
             end do
+            call write_title(45,'sarea_res',ncl)
             WRITE(45,'(6e15.7)') (sarea_res(i),i=1,NCL)
+            call write_title(45,'wldna_res',ncl*natm1)
             WRITE(45,'(6e15.7)') ((wldna1res(j,i),j=1,natm1),i=1,NCL)
+            call write_title(45,'wldnm_res',ncl*nmoli)
             WRITE(45,'(6e15.7)') ((wldnm_res(j,i),j=1,nmoli),i=1,NCL) 
+            call write_title(45,'ewlda_res',ncl*natm1)
             WRITE(45,'(6e15.7)') ((ewlda1res(j,i),j=1,natm1),i=1,NCL)
+            call write_title(45,'ewldm_res',ncl*nmoli)
             WRITE(45,'(6e15.7)') ((ewldm_res(j,i),j=1,nmoli),i=1,NCL)
+            call write_title(45,'ewldea_res',ncl*natm1)
             WRITE(45,'(6e15.7)') ((ewldea1res(j,i),j=1,natm1),i=1,NCL)
+            call write_title(45,'ewldem_res',ncl*nmoli)
             WRITE(45,'(6e15.7)') ((ewldem_res(j,i),j=1,nmoli),i=1,NCL)
+            call write_title(45,'ewldrp_res',ncl)
             WRITE(45,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
+            call write_title(45,'ewldmr_res',ncl*nmoli)
             WRITE(45,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL) 
             deallocate(wldna1res, ewlda1res, ewldea1res)
           ELSE
             DO IS = 1, 9
+              call read_title(44)
               READ (44,1028)
               WRITE(45,1028)
             END DO
@@ -868,22 +952,34 @@ cank
 
         if(streql(solps_version,'4.3')) goto 99
         if(jvft44 .ge. 20081111) then
+          call read_title(44)
           READ (44,'(6e15.7)') ((PDENA_INT(I,J),I=1,natmi),J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((PDENM_INT(I,J),I=1,nmoli),J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((PDENI_INT(I,J),I=1,nioni),J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((PDENA_INT_B2(I,J),I=1,natmi),
      .                                                     J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((PDENM_INT_B2(I,J),I=1,nmoli),
      .                                                     J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((PDENI_INT_B2(I,J),I=1,nioni),
      .                                                     J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((EDENA_INT(I,J),I=1,natmi),J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((EDENM_INT(I,J),I=1,nmoli),J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((EDENI_INT(I,J),I=1,nioni),J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((EDENA_INT_B2(I,J),I=1,natmi),
      .                                                     J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((EDENM_INT_B2(I,J),I=1,nmoli),
      .                                                     J=0,NSTRAI)
+          call read_title(44)
           READ (44,'(6e15.7)') ((EDENI_INT_B2(I,J),I=1,nioni),
      .                                                     J=0,NSTRAI)
           allocate (
@@ -917,22 +1013,34 @@ cank
               edeni1int_b2(1:nioni,istra) = edeni_int_b2(1:nioni,j)
             end if
           end do
+          call write_title(45,'pdena_int',(nstra1+1)*natm1)
           WRITE(45,'(6e15.7)') ((PDENA1INT(I,J),I=1,natm1),J=0,NSTRA1)
+          call write_title(45,'pdenm_int',(nstra1+1)*nmoli)
           WRITE(45,'(6e15.7)') ((PDENM1INT(I,J),I=1,nmoli),J=0,NSTRA1)
+          call write_title(45,'pdeni_int',(nstra1+1)*nioni)
           WRITE(45,'(6e15.7)') ((PDENI1INT(I,J),I=1,nioni),J=0,NSTRA1)
+          call write_title(45,'pdena_int_b2',(nstra1+1)*natm1)
           WRITE(45,'(6e15.7)') ((PDENA1INT_B2(I,J),I=1,natm1),
      .                                                     J=0,NSTRA1)
+          call write_title(45,'pdenm_int_b2',(nstra1+1)*nmoli)
           WRITE(45,'(6e15.7)') ((PDENM1INT_B2(I,J),I=1,nmoli),
      .                                                     J=0,NSTRA1)
+          call write_title(45,'pdeni_int_b2',(nstra1+1)*nioni)
           WRITE(45,'(6e15.7)') ((PDENI1INT_B2(I,J),I=1,nioni),
      .                                                     J=0,NSTRA1)
+          call write_title(45,'edena_int',(nstra1+1)*natm1)
           WRITE(45,'(6e15.7)') ((EDENA1INT(I,J),I=1,natm1),J=0,NSTRA1)
+          call write_title(45,'edenm_int',(nstra1+1)*nmoli)
           WRITE(45,'(6e15.7)') ((EDENM1INT(I,J),I=1,nmoli),J=0,NSTRA1)
+          call write_title(45,'edeni_int',(nstra1+1)*nioni)
           WRITE(45,'(6e15.7)') ((EDENI1INT(I,J),I=1,nioni),J=0,NSTRA1)
+          call write_title(45,'edena_int_b2',(nstra1+1)*natm1)
           WRITE(45,'(6e15.7)') ((EDENA1INT_B2(I,J),I=1,natm1),
      .                                                     J=0,NSTRA1)
+          call write_title(45,'edenm_int_b2',(nstra1+1)*nmoli)
           WRITE(45,'(6e15.7)') ((EDENM1INT_B2(I,J),I=1,nmoli),
      .                                                     J=0,NSTRA1)
+          call write_title(45,'edeni_int_b2',(nstra1+1)*nioni)
           WRITE(45,'(6e15.7)') ((EDENI1INT_B2(I,J),I=1,nioni),
      .                                                     J=0,NSTRA1)
           deallocate (
@@ -964,6 +1072,7 @@ cank
      &           wrk0)
               end if
             end do
+            call write_title(45,'eneutrad',n2*natm1)
             call eirene_neutr(45,nx1,ny1,natm1,eneutrad1,
      .                           nx1,ny1,natm1,1,1)
             deallocate(eneutrad1)
@@ -987,6 +1096,7 @@ cank
      &           wrk0)
               end if
             end do
+            call write_title(45,'eneutrad',n2*natm1)
             call eirene_neutr(45,nx1,ny1,natm1,eneutrad1,
      .                           nx1,ny1,natm1,1,1)
             deallocate(eneutrad1)
