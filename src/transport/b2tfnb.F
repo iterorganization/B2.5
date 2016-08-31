@@ -100,12 +100,15 @@
      *   flux_limit_min_ti,
      *   flo2dia, con_2dia(-1:nx,-1:ny), flo_mdf, con_mdf(-1:nx,-1:ny),  !srv 01.10.99 21.01.00 22.05.03 04.02.05 13.10.06
      *   term(-1:nx,-1:ny), flo_he, con_he(-1:nx,-1:ny),                 !srv 25.04.00 13.09.02 11.09.09
-     &   termhz(-1:nx,-1:ny)                                             !srv 05.11.09
+     *   termhz(-1:nx,-1:ny),                                            !srv 05.11.09
+     *   flo9, flo9_mdf, flo9_2dia, flo9_he, flo9_nodrift,
+     *   con9, con9_mdf, con9_2dia, con9_he, con9_nodrift,
+     *   qzf(-1:nx,-1:ny)
       real (kind=R8) :: 
      &   vbecrb_(-1:nx,-1:ny,0:1), wbdia_(-1:nx,-1:ny,0:1),
      &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1),              !srv 21.10.10
      &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
-     &   rdiv, scur                                                      !srv 05.03.16
+     &   rdiv, scur, scur9                                               !srv 05.03.16
       parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
@@ -115,20 +118,24 @@
       real (kind=R8) ::
      *   poc(-1:nx,-1:ny), ub2dia(-1:nx,-1:ny,0:1), nbcor(-1:nx,-1:ny),  !srv 01.10.99 !lk 09.06.11
      *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny),                          !srv 08.10.04
-     *   nbzb(-1:nx,-1:ny), nbzbc(-1:nx,-1:ny)                           !srv 13.05.16
+     *   nbzb(-1:nx,-1:ny), nbzbc(-1:nx,-1:ny),                          !srv 13.05.16
+     *   dnbr(-1:nx,-1:ny,0:1), dpbr(-1:nx,-1:ny,0:1)
       real (kind=R8) :: weight(-1:nx,-1:ny)                              !lk
       integer :: xcount, ycount
       save ncall, alpha, gamma, flux_limit_min_ti, area_fix, no_hybr
 *   ..procedures
       real (kind=R8) ::
-     *   kmpr, hybr, kap, cvmgp, hy1
+     *   kmpr, hybr, upwind, kap, cvmgp, hy1
       external subini, subend, xertst, ipgeti, ipgetr                    !xpb
-      external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp
-      intrinsic abs, max, min, mod, sqrt
+      external b2xvsg, b2xvff, intfaceh, intfacev, cvmgp, diff_r
+      intrinsic abs, max, min, mod, sqrt, sign
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       kmpr(ix,iy) = nb(ix,iy)/pb(ix,iy)
       kap(ix,iy) = 1.0_R8 / (zb(ix,iy)*te(ix,iy) + ti(ix,iy))
-      hybr(flo,dif) = max(dif,abs(flo/2.),sqrt(dif**2+flo**2/4.)) !!!
+cwdk  although not strictly necessary, abs(dif) is used now because in case
+c     of cross flows across surfaces, dif may be negative
+      hybr(flo,dif) = max(abs(dif),abs(flo/2.),sqrt(dif**2+flo**2/4.)) !!!
+      upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
 *   ..initialisation
       data ncall/0/, xfrhie/1.0_R8/, alpha/0.0_R8/, gamma/2.0_R8/, 
      *     flux_limit_min_ti/0.0_R8/, area_fix/3/, no_hybr/0/
@@ -805,36 +812,43 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
       enddo
       call b2xxgs (nx, ny, 0.0_R8, wrk2, 1)
 
+*   ..compute radial differences of nb and pb, for 9-point terms
+      call diff_r(nx, ny, hx, hy, vol, qz, nb, dnbr)
+      call diff_r(nx, ny, hx, hy, vol, qz, pb, dpbr)
+
+*   ..interpolate qz(:,:,0) to x-faces
+      call intfaceh(nx,ny,leftix,leftiy,vol,qz(:,:,0),qzf)
+
 *   ..compute fnbx, flobx, conbx
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
-         fnb(ix,iy,0,0)         = 0.0_R8
-         fnb_32(ix,iy,0,0)      = 0.0_R8
-         fnb_52(ix,iy,0,0)      = 0.0_R8
-         fnb_nodrift(ix,iy,0,0) = 0.0_R8
-         fnb_32nd(ix,iy,0,0)    = 0.0_R8
-         fnb_52nd(ix,iy,0,0)    = 0.0_R8
-         flob(ix,iy,0,0)        = 0.0_R8
-         fnb_fcor(ix,iy,0,0)    = 0.0_R8                                !srv 01.10.99
-         fnb_he(ix,iy,0,0)      = 0.0_R8                                !srv 21.01.00
-         fnb_mdf(ix,iy,0,0)     = 0.0_R8                                !srv 13.10.06
-         conb(ix,iy,0,0,0:2)    = 0.0_R8                                !srv 13.10.06
-         term(ix,iy)          = 0.0_R8
-         termhz(ix,iy)        = 0.0_R8                                  !srv 05.11.09
-         con(ix,iy)           = 0.0_R8
-         con_2dia(ix,iy)      = 0.0_R8
-         con_he(ix,iy)        = 0.0_R8
-         con_mdf(ix,iy)       = 0.0_R8
-	 fllim0fnb(ix,iy,0,0) = 1.0_R8
+         fnb(ix,iy,0,0:1)         = 0.0_R8
+         fnb_32(ix,iy,0,0:1)      = 0.0_R8
+         fnb_52(ix,iy,0,0:1)      = 0.0_R8
+         fnb_nodrift(ix,iy,0,0:1) = 0.0_R8
+         fnb_32nd(ix,iy,0,0:1)    = 0.0_R8
+         fnb_52nd(ix,iy,0,0:1)    = 0.0_R8
+         flob(ix,iy,0,0:1)        = 0.0_R8
+         fnb_fcor(ix,iy,0,0:1)    = 0.0_R8                              !srv 01.10.99
+         fnb_he(ix,iy,0,0:1)      = 0.0_R8                              !srv 21.01.00
+         fnb_mdf(ix,iy,0,0:1)     = 0.0_R8                              !srv 13.10.06
+         conb(ix,iy,0,0:1,0:2)    = 0.0_R8                              !srv 13.10.06
+         term(ix,iy)            = 0.0_R8
+         termhz(ix,iy)          = 0.0_R8                                !srv 05.11.09
+         con(ix,iy)             = 0.0_R8
+         con_2dia(ix,iy)        = 0.0_R8
+         con_he(ix,iy)          = 0.0_R8
+         con_mdf(ix,iy)         = 0.0_R8
+	 fllim0fnb(ix,iy,0,0:1) = 1.0_R8
          if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-          fna_pinch(ix,iy,0,0,isb)    = 0.0_R8
-          fna_pll(ix,iy,0,0,isb)      = 0.0_R8
-          fna_drift(ix,iy,0,0,isb)    = 0.0_R8
-          fna_nanom(ix,iy,0,0,isb)    = 0.0_R8
-          fna_panom(ix,iy,0,0,isb)    = 0.0_R8
-          fna_ch(ix,iy,0,0,isb)       = 0.0_R8
-          fna_pschused(ix,iy,0,0,isb) = 0.0_R8
+          fna_pinch(ix,iy,0,0:1,isb)    = 0.0_R8
+          fna_pll(ix,iy,0,0:1,isb)      = 0.0_R8
+          fna_drift(ix,iy,0,0:1,isb)    = 0.0_R8
+          fna_nanom(ix,iy,0,0:1,isb)    = 0.0_R8
+          fna_panom(ix,iy,0,0:1,isb)    = 0.0_R8
+          fna_ch(ix,iy,0,0:1,isb)       = 0.0_R8
+          fna_pschused(ix,iy,0,0:1,isb) = 0.0_R8
          endif
         else
          term(ix,iy) = xfrhie*wrk2(ix,iy)*0.5_R8*abs(pbs(ix,iy,0))*     !iyv 19.04.07 11.01.13
@@ -873,15 +887,43 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      7     vol(leftix(ix,iy),leftiy(ix,iy))/
      8     hx(leftix(ix,iy),leftiy(ix,iy)))
           flo_nodrift = cvlb(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)+
-     &                  term(ix,iy)                                      !srv 20.06.08
-         else                                                            !srv 21.06.08 {
-          flo = cvlb(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)+                  !srv 01.07.05
-     &      term(ix,iy) +                                                !iyv 19.04.07
+     &                  term(ix,iy)                                     !srv 20.06.08
+cwdk       add computation of radial flow across (misaligned) x-faces
+cwdk Note: code/control logic here reflects that of radial flow computation on y-faces below!
+cwdk TODO: flo9* arrays should additionally contain radial drift flows across an x-face
+cwdk       increase size of drift arrays to ubdia(:,:,0:1,0:1)... temp: neglect drifts
+cwdk  contributions from radial flow (neglect drifts for now)
+          flo9 = cvlb(ix,iy,0,1) !+
+!     &      0.5_R8*(ubdia(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
+!     &      +ubdia(bottomix(ix,iy),bottomiy(ix,iy),1)*
+!     &       vol(bottomix(ix,iy),bottomiy(ix,iy))
+!     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+          flo9_mdf = cvlb(ix,iy,0,1) !+
+!     &      0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
+!     &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
+!     &       vol(bottomix(ix,iy),bottomiy(ix,iy))
+!     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+          flo9_2dia = cvlbhz(ix,iy,0,1) !+
+!     &       (ub2dia(ix,iy,1)+ub2dia(bottomix(ix,iy),bottomiy(ix,iy),1))
+!     &       /2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hy1(ix,iy)+           !srv 01.10.99 09.01.01
+!     &        hz(bottomix(ix,iy),bottomiy(ix,iy))
+!     5                        *vol(bottomix(ix,iy),bottomiy(ix,iy))/
+!     &        hy1(bottomix(ix,iy),bottomiy(ix,iy)))                     !srv 01.03.00 09.01.01
+          flo9_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0,1)!+                      !srv 13.09.02 ( 20.01.11
+!     &      0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
+!     &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
+!     &       vol(bottomix(ix,iy),bottomiy(ix,iy))
+!     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+          flo9_nodrift = cvlb(ix,iy,0,1)
+cwdk 
+         else                                                           !srv 21.06.08 {
+          flo = cvlb(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)+               !srv 01.07.05
+     &      term(ix,iy) +                                               !iyv 19.04.07
      4      ubdia(ix,iy,0)*
-     5      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/               !srv 01.03.00
-     6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                  !srv 01.03.00
-          flo_mdf = cvlb(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)+              !srv 13.10.06 {
-     &      term(ix,iy) +                                                !iyv 19.04.07
+     5      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/              !srv 01.03.00
+     6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 01.03.00
+          flo_mdf = cvlb(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)+           !srv 13.10.06 {
+     &      term(ix,iy) +                                               !iyv 19.04.07
      &      vbecrb(ix,iy,0)*
      &      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      &      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
@@ -897,6 +939,20 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                  !srv it is correct. Keep in mind hz*vol/hx and interpolation of hz
           flo_nodrift = cvlb(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy) +
      &                  term(ix,iy)                                     !srv 20.06.08 20.10.09
+cwdk       add computation of radial flow across (misaligned) x-faces
+cwdk Note: code/control logic here reflects that of radial flow computation on y-faces below!
+cwdk TODO: flo9* arrays should additionally contain radial drift flows across an x-face
+cwdk       increase size of drift arrays to ubdia(:,:,0:1,0:1)... temp: neglect drifts
+cwdk  contributions from radial flow (neglect drifts for now)
+          flo9      = cvlb(ix,iy,0,1)  ! - ubdia(ix,iy,0,1)*gs(ix,iy,0)*qzf(ix,iy)
+          flo9_mdf  = cvlb(ix,iy,0,1)  ! - vbecrb(ix,iy,0,1)*gs(ix,iy,0)*qzf(ix,iy)
+          flo9_2dia = cvlbhz(ix,iy,0,1)! - ub2dia(ix,iy,0,1)*gs(ix,iy,0)*qzf(ix,iy)*
+!     &    (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
+!     &     hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
+!     &    (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+          flo9_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0,1) ! - vbecrb(ix,iy,0,1)*gs(ix,iy,0)*qzf(ix,iy)
+          flo9_nodrift = cvlb(ix,iy,0,1)
+cwdk
          endif                                                          !srv 21.06.08 }
          if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
            scur =
@@ -904,25 +960,31 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &       +fchvisper(ix,iy,0,0)
      &       +fchanml(ix,iy,0,0)+fchvisq(ix,iy,0,0))*xcur/
      &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)
+           scur9 =
+     &      (fchinert(ix,iy,0,1)+fchvispar(ix,iy,0,1)
+     &       +vis_per*fchvisper(ix,iy,0,1)
+     &       +fchanml(ix,iy,0,1)+vis_q*fchvisq(ix,iy,0,1))*ycur/
+     &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)
          else
-           scur = 0.0_R8
+           scur  = 0.0_R8
+           scur9 = 0.0_R8
          end if
+         t0 = (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
+     &         hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
+     &        (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
          flo = flo + scur
          flo_mdf = flo_mdf + scur
-         flo2dia = flo2dia + scur*
-     &    (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
-     &     hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
-     &    (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+         flo2dia = flo2dia + scur*t0
+         flo9      = flo9 + scur9
+         flo9_mdf  = flo9_mdf  + scur9
+         flo9_2dia = flo9_2dia + scur9*t0
          if (no_hybr.eq.0) then
            if(no_Ptncr_x_co.eq.0) then                                  !srv 13.10.06 {
              con_mdf(ix,iy)  = hybr(flo_mdf,cdnb(ix,iy,0,0))
              con(ix,iy)      = con_mdf(ix,iy)
              con_he(ix,iy)   = con_mdf(ix,iy)
              con_nodrift     = hybr(flo_nodrift,cdnb(ix,iy,0,0))        !did not change
-             con_2dia(ix,iy) = con_mdf(ix,iy)*
-     &        (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
-     &         hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
-     &        (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+             con_2dia(ix,iy) = con_mdf(ix,iy)*t0
            else
              con_mdf(ix,iy)  = cdnb(ix,iy,0,0)
              con_he(ix,iy)   = cdnb(ix,iy,0,0)                          !iyv 30.05.08 !srv 03.10.08
@@ -930,6 +992,24 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
              con_nodrift     = cdnb(ix,iy,0,0)
              con_2dia(ix,iy) = cdnbhz(ix,iy,0,0)                        !srv 09.01.01
            endif                                                        !srv 13.10.06 }
+           if(no_Ptncr_y_co.eq.0) then                                  !srv 06.07.06 {
+cwdk compute strength of 'effective diffusion' in the hybrid scheme
+cwdk keep sign of original cdnb(hz) for correct flow direction across the face
+             con9_mdf     = sign(hybr(flo9_mdf,cdnb(ix,iy,0,1)) -
+     &         0.5_R8*abs(flo9_mdf),cdnb(ix,iy,0,1))
+             con9         = con9_mdf
+             con9_he      = con9_mdf
+             con9_2dia    = con9_mdf*t0
+             con9_nodrift = sign(hybr(flo9_nodrift,cdnb(ix,iy,0,1)) -
+     &         0.5_R8*abs(flo9_nodrift),cdnb(ix,iy,0,1))
+           else
+!             xerrab('b2tfnb - need to check what happens to convection now...')
+             con9_he      = cdnb(ix,iy,0,1)               !iyv 30.05.08 !srv 03.10.08
+             con9_2dia    = cdnbhz(ix,iy,0,1)                           !srv 01.10.99 09.01.01
+             con9_mdf     = cdnb(ix,iy,0,1)                             !srv 13.10.06
+             con9         = cdnb(ix,iy,0,1)
+             con9_nodrift = cdnb(ix,iy,0,1)
+           endif                                                        !srv 06.07.06 }
            fnb_nodrift(ix,iy,0,0) = flo_nodrift*
      1      (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &      con_nodrift*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))-
@@ -948,6 +1028,26 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &      con_mdf(ix,iy)*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))-
      &      cdpb(ix,iy,0,0)*(pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))-
      &      fnbPSch(ix,iy,0,0)                                            !srv 13.10.06 }
+cwdk add computation of radial flow across distorted x-faces
+cwdk to reconsider: compute convective pieces of fnb(_*)(:,:,0,1) flows based on average nbcor
+cwdk and y-differences in nbcor for consistency with effective diffusion coeff. from hybrid
+cwdk scheme
+          fnb_nodrift(ix,iy,0,1) = upwind(
+     &      flo9_nodrift,nb(leftix(ix,iy),leftiy(ix,iy)),nb(ix,iy)) -
+     &      con9_nodrift*dnbr(ix,iy,0) - cdpb(ix,iy,0,1)*dpbr(ix,iy,0)
+          fnb(ix,iy,0,1) = (flo9 - flo9_mdf)*
+     &      (nb(leftix(ix,iy),leftiy(ix,iy)) + nb(ix,iy))/2.0_R8 +
+     &      upwind(flo9_mdf,nb(leftix(ix,iy),leftiy(ix,iy)),nb(ix,iy)) -
+     &      con9*dnbr(ix,iy,0) - cdpb(ix,iy,0,1)*dpbr(ix,iy,0)
+          fnb_fcor(ix,iy,0,1) =  (flo9_2dia - t0*flo9_mdf)*             !srv 01.10.99
+     &      (nb(leftix(ix,iy),leftiy(ix,iy)) + nb(ix,iy))/2.0_R8 + t0*
+     &      upwind(flo9_mdf,nb(leftix(ix,iy),leftiy(ix,iy)),nb(ix,iy)) -
+     &      con9_2dia*dnbr(ix,iy,0) - cdpbhz(ix,iy,0,1)*dpbr(ix,iy,0)
+          fnb_mdf(ix,iy,0,1) =                                          !srv 13.10.06 {
+     &      upwind(flo9_mdf,nb(leftix(ix,iy),leftiy(ix,iy)),nb(ix,iy)) -
+     &      con9_mdf*dnbr(ix,iy,0)-cdpb(ix,iy,0,1)*dpbr(ix,iy,0)-
+     &      fnbPSch(ix,iy,0,1)                                          !srv 13.10.06 }
+cwdk
            if (balance.and.(balance_netcdf.ne.0)) then
 cdjm Jan2017 store components of fnb for balance
              fna_pinch(ix,iy,0,0,isb) = cvlb(ix,iy,0,0)*
@@ -1018,6 +1118,26 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &      (con_nodrift-abs(flo_nodrift/2.0_R8))*
      1      (nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))-
      &      cdpb(ix,iy,0,0)*(pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))
+cwdk add computation of radial flow across distorted x-faces
+cwdk to reconsider: compute convective pieces of fnb(_*)(:,:,0,1) flows based on average nbcor
+cwdk and y-differences in nbcor for consistency with effective diffusion coeff. from hybrid
+cwdk scheme
+*      fnb_he will be used only for heat equations                      !srv 21.01.00 {     
+           fnb_he(ix,iy,0,1) = (flo9_he - (5.0_R8/3.0_R8)*flo9_mdf)*
+     &      (nb(leftix(ix,iy),leftiy(ix,iy)) + nb(ix,iy))/2.0_R8 +
+     &      (5.0_R8/3.0_R8)*(
+     &      upwind(flo9_mdf,nb(leftix(ix,iy),leftiy(ix,iy)),nb(ix,iy)) -
+     &      con9_he*dnbr(ix,iy,0) - cdpb(ix,iy,0,1)*dpbr(ix,iy,0))     !srv 21.01.00 }
+           fnb_32(ix,iy,0,1) =(flo9 - flo9_mdf)*
+     &      (nb(leftix(ix,iy),leftiy(ix,iy)) + nb(ix,iy))/2.0_R8 +
+     &      upwind(flo9_mdf,nb(leftix(ix,iy),leftiy(ix,iy)),nb(ix,iy))
+           fnb_52(ix,iy,0,1) = -
+     &      con9*dnbr(ix,iy,0) - cdpb(ix,iy,0,1)*dpbr(ix,iy,0)
+           fnb_32nd(ix,iy,0,1) = upwind(
+     &      flo9_nodrift,nb(leftix(ix,iy),leftiy(ix,iy)),nb(ix,iy))
+          fnb_52nd(ix,iy,0,1) = -
+     &      con9_nodrift*dnbr(ix,iy,0) - cdpb(ix,iy,0,1)*dpbr(ix,iy,0)
+cwdk end of 9-point flows
            if(mdf_fnb.eq.0) then                                         !srv 13.10.06 {
              flob(ix,iy,0,0) = flo*(kmpr(leftix(ix,iy),leftiy(ix,iy))+
      &        kmpr(ix,iy))/2.0_R8-
@@ -1237,30 +1357,30 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
       do iy = -1, ny
        do ix = -1, nx
         if(bottomiy(ix,iy).eq.-2) then
-         fnb(ix,iy,1,1)         = 0.0_R8
-         fnb_32(ix,iy,1,1)      = 0.0_R8
-         fnb_52(ix,iy,1,1)      = 0.0_R8
-         fnb_nodrift(ix,iy,1,1) = 0.0_R8
-         fnb_32nd(ix,iy,1,1)    = 0.0_R8
-         fnb_52nd(ix,iy,1,1)    = 0.0_R8
-         flob(ix,iy,1,1)        = 0.0_R8
-         fnb_fcor(ix,iy,1,1)    = 0.0_R8                                !srv 01.10.99
-         fnb_he(ix,iy,1,1)      = 0.0_R8                                !srv 21.01.00
-         fnb_mdf(ix,iy,1,1)     = 0.0_R8                                !srv 13.10.06
-         conb(ix,iy,1,1,0:2)    = 0.0_R8                                !srv 13.10.06
-         con(ix,iy)           = 0.0_R8
-         con_2dia(ix,iy)      = 0.0_R8
-         con_he(ix,iy)        = 0.0_R8
-         con_mdf(ix,iy)       = 0.0_R8
-	 fllim0fnb(ix,iy,1,1) = 1.0_R8
+         fnb(ix,iy,1,0:1)         = 0.0_R8
+         fnb_32(ix,iy,1,0:1)      = 0.0_R8
+         fnb_52(ix,iy,1,0:1)      = 0.0_R8
+         fnb_nodrift(ix,iy,1,0:1) = 0.0_R8
+         fnb_32nd(ix,iy,1,0:1)    = 0.0_R8
+         fnb_52nd(ix,iy,1,0:1)    = 0.0_R8
+         flob(ix,iy,1,0:1)        = 0.0_R8
+         fnb_fcor(ix,iy,1,0:1)    = 0.0_R8                              !srv 01.10.99
+         fnb_he(ix,iy,1,0:1)      = 0.0_R8                              !srv 21.01.00
+         fnb_mdf(ix,iy,1,0:1)     = 0.0_R8                              !srv 13.10.06
+         conb(ix,iy,1,0:1,0:2)    = 0.0_R8                              !srv 13.10.06
+         con(ix,iy)             = 0.0_R8
+         con_2dia(ix,iy)        = 0.0_R8
+         con_he(ix,iy)          = 0.0_R8
+         con_mdf(ix,iy)         = 0.0_R8
+	 fllim0fnb(ix,iy,1,0:1) = 1.0_R8
          if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-          fna_pinch(ix,iy,1,1,isb)    = 0.0_R8
-          fna_pll(ix,iy,1,1,isb)      = 0.0_R8
-          fna_drift(ix,iy,1,1,isb)    = 0.0_R8
-          fna_nanom(ix,iy,1,1,isb)    = 0.0_R8
-          fna_panom(ix,iy,1,1,isb)    = 0.0_R8
-          fna_ch(ix,iy,1,1,isb)       = 0.0_R8
-          fna_pschused(ix,iy,1,1,isb) = 0.0_R8
+          fna_pinch(ix,iy,1,0:1,isb)    = 0.0_R8
+          fna_pll(ix,iy,1,0:1,isb)      = 0.0_R8
+          fna_drift(ix,iy,1,0:1,isb)    = 0.0_R8
+          fna_nanom(ix,iy,1,0:1,isb)    = 0.0_R8
+          fna_panom(ix,iy,1,0:1,isb)    = 0.0_R8
+          fna_ch(ix,iy,1,0:1,isb)       = 0.0_R8
+          fna_pschused(ix,iy,1,0:1,isb) = 0.0_R8
          endif
         else
          if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then          !srv 20.09.06
@@ -1321,47 +1441,70 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          endif                                                          !srv 21.06.08 }
          flo_nodrift = cvlb(ix,iy,1,1)
          if (no_hybr.eq.0) then
+          t0 = (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
+     &          hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
+     &         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
           if(no_Ptncr_y_co.eq.0) then                                   !srv 06.07.06 {
             con_mdf(ix,iy)  = hybr(flo_mdf,cdnb(ix,iy,1,1))
             con(ix,iy)      = con_mdf(ix,iy)
             con_he(ix,iy)   = con_mdf(ix,iy)
-            con_2dia(ix,iy) = con_mdf(ix,iy)*
-     &       (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
-     &        hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
-     &       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
+            con_2dia(ix,iy) = con_mdf(ix,iy)*t0
             con_nodrift     = hybr(flo_nodrift,cdnb(ix,iy,1,1))         ! did not change
           else
-           con_he(ix,iy)   = cdnb(ix,iy,1,1)                 !iyv 30.05.08 !srv 03.10.08
-           con_2dia(ix,iy) = cdnbhz(ix,iy,1,1)                             !srv 01.10.99 09.01.01
-           con_mdf(ix,iy)  = cdnb(ix,iy,1,1)                               !srv 13.10.06
+           con_he(ix,iy)   = cdnb(ix,iy,1,1)              !iyv 30.05.08 !srv 03.10.08
+           con_2dia(ix,iy) = cdnbhz(ix,iy,1,1)                          !srv 01.10.99 09.01.01
+           con_mdf(ix,iy)  = cdnb(ix,iy,1,1)                            !srv 13.10.06
            con(ix,iy)      = cdnb(ix,iy,1,1)
            con_nodrift     = cdnb(ix,iy,1,1)
-          endif                                                          !srv 06.07.06 }
+          endif                                                         !srv 06.07.06 }
           fnb(ix,iy,1,1) =
      1      flo*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &      con(ix,iy)*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &      cdpb(ix,iy,1,1)*(pb(ix,iy)
      &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
-*      fnb_he will be used only for heat equations                       !srv 21.01.00 {     
+cwdk      fnb*(ix,iy,1,0) should be zero for now
+c         temporarily use it to store corrected fnb*(:,:,1,1), for comparison...
+          fnb(ix,iy,1,0) =
+     1      flo*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
+     &      con(ix,iy)*dnbr(ix,iy,1) - cdpb(ix,iy,1,0)*dpbr(ix,iy,1)
+*      fnb_he will be used only for heat equations                      !srv 21.01.00 {     
           fnb_he(ix,iy,1,1) = flo_he*
      &      (nb(bottomix(ix,iy),bottomiy(ix,iy)) + nb(ix,iy))/2.0_R8-
 csw 30sep2014 (is this 5/3 factor correct here? I think not...)
-     &    (5.0_R8/3.0_R8)*
-     &    (con_he(ix,iy)*
-     &    (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))               !srv 13.09.02 }
-     &    +cdpb(ix,iy,1,1)*(pb(ix,iy)
+     &      (5.0_R8/3.0_R8)*
+     &      (con_he(ix,iy)*
+     &      (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))             !srv 13.09.02 }
+     &      +cdpb(ix,iy,1,1)*(pb(ix,iy)
      &                   -pb(bottomix(ix,iy),bottomiy(ix,iy))) )        !srv 21.01.00 }
+          fnb_he(ix,iy,1,0) = flo_he*
+     &      (nb(bottomix(ix,iy),bottomiy(ix,iy)) + nb(ix,iy))/2.0_R8 -
+     &      (5.0_R8/3.0_R8)*(0.5_R8*abs(flo_mdf)*
+     &      (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy))) +
+     &      (con_he(ix,iy)-0.5_R8*abs(flo_mdf))*dnbr(ix,iy,1) +        !srv 13.09.02 }
+     &      cdpb(ix,iy,1,0)*dpbr(ix,iy,1))
           fnb_fcor(ix,iy,1,1) = flo2dia*                                !srv 01.10.99
      &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &       con_2dia(ix,iy)*(nb(ix,iy)-
      &                        nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &       cdpbhz(ix,iy,1,1)*(pb(ix,iy)                               !srv 09.01.01
      &                     -pb(bottomix(ix,iy),bottomiy(ix,iy)))        !srv 01.10.99
+          fnb_fcor(ix,iy,1,0) = flo2dia*                                 !srv 01.10.99
+     &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8 -
+     &       0.5_R8*abs(flo_mdf)*t0*
+     &       (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
+     &       (con_2dia(ix,iy)-0.5_R8*abs(flo_mdf)*t0)*dnbr(ix,iy,1)-
+     &       cdpbhz(ix,iy,1,0)*dpbr(ix,iy,1)
           fnb_nodrift(ix,iy,1,1) = flo_nodrift*
      1      (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &       con_nodrift*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))
      &      -cdpb(ix,iy,1,1)*(pb(ix,iy)
      &                     -pb(bottomix(ix,iy),bottomiy(ix,iy)))
+          fnb_nodrift(ix,iy,1,0) = flo_nodrift*
+     1       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
+     &       0.5_R8*abs(flo_nodrift)*
+     &       (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
+     &       (con_nodrift-0.5_R8*abs(flo_nodrift))*dnbr(ix,iy,1)
+     &       -cdpb(ix,iy,1,0)*dpbr(ix,iy,1)
           fnb_mdf(ix,iy,1,1) = flo_mdf*                                 !srv 13.10.06 {
      &     (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &     con_mdf(ix,iy)*(nb(ix,iy)-
@@ -1369,6 +1512,10 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &     cdpb(ix,iy,1,1)*(pb(ix,iy)
      &                   -pb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &                    fnbPSch(ix,iy,1,1)                            !srv 13.10.06 }
+          fnb_mdf(ix,iy,1,0) =                                          !srv 13.10.06 {
+     &     upwind(flo_mdf,nb(bottomix(ix,iy),bottomiy(ix,iy)),nb(ix,iy))
+     &     -(con_mdf(ix,iy)-0.5_R8*abs(flo_mdf))*dnbr(ix,iy,1) 
+     &     -cdpb(ix,iy,1,0)*dpbr(ix,iy,1) - fnbPSch(ix,iy,1,0) 
           if (balance.and.(balance_netcdf.ne.0)) then
 cdjm Jan2017 store components of fnb for balance
             fna_pinch(ix,iy,1,1,isb) = cvlb(ix,iy,1,1)*
@@ -1420,21 +1567,32 @@ cdjm Jan2017 store components of fnb for balance
      1      flo*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &      abs(flo/2.0_R8)*
      1      (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))
+          fnb_32(ix,iy,1,0) =
+     &      flo*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
+     &      0.5_R8*abs(flo_mdf)*
+     &      (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))
           fnb_52(ix,iy,1,1) = -
      1      (con(ix,iy)-abs(flo/2.0_R8))*
      2      (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &      cdpb(ix,iy,1,1)*(pb(ix,iy)
      &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
+          fnb_52(ix,iy,1,0) = -
+     &      (con(ix,iy)-0.5_R8*abs(flo_mdf))*dnbr(ix,iy,1) - 
+     &      cdpb(ix,iy,1,0)*dpbr(ix,iy,1)
           fnb_32nd(ix,iy,1,1) =
      1      flo_nodrift*
      2      (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &      abs(flo_nodrift/2.0_R8)*
      1      (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))
+          fnb_32nd(ix,iy,1,0) = fnb_32nd(ix,iy,1,1)
           fnb_52nd(ix,iy,1,1) = -
      1      (con_nodrift-abs(flo_nodrift/2.0_R8))*
      2      (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &      cdpb(ix,iy,1,1)*(pb(ix,iy)
      &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
+          fnb_52nd(ix,iy,1,0) = -
+     1      (con_nodrift-abs(flo_nodrift/2.0_R8))*dnbr(ix,iy,1)-
+     &      cdpb(ix,iy,1,0)*dpbr(ix,iy,1)
           if(mdf_fnb.eq.0) then                                          !srv 13.10.06  {
            flob(ix,iy,1,1) = flo*(kmpr(bottomix(ix,iy),bottomiy(ix,iy))
      &        +kmpr(ix,iy))/2.0_R8-
@@ -1622,12 +1780,12 @@ cxpb turn off flows between boundary cells
         do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-            fnb(ix,iy,1,1)=0.0_R8
-            fnb_32(ix,iy,1,1)=0.0_R8
-            fnb_52(ix,iy,1,1)=0.0_R8
-            fnb_nodrift(ix,iy,1,1)=0.0_R8
-            fnb_32nd(ix,iy,1,1)=0.0_R8
-            fnb_52nd(ix,iy,1,1)=0.0_R8
+            fnb(ix,iy,1,0:1)=0.0_R8
+            fnb_32(ix,iy,1,0:1)=0.0_R8
+            fnb_52(ix,iy,1,0:1)=0.0_R8
+            fnb_nodrift(ix,iy,1,0:1)=0.0_R8
+            fnb_32nd(ix,iy,1,0:1)=0.0_R8
+            fnb_52nd(ix,iy,1,0:1)=0.0_R8
             flob(ix,iy,1,1)=0.0_R8
             conb(ix,iy,1,1,:)=0.0_R8
 	    fllim0fnb(ix,iy,1,1) = 1.0_R8
@@ -1651,27 +1809,27 @@ cxpb turn off flows between boundary cells
 cxpb turn off poloidal flows in core boundary
         do ix = -1, nx
           if(on_closed_surface(ix,-1)) then
-            fnb(ix,-1,0,0) = 0.0_R8
-            fnb_32(ix,-1,0,0) = 0.0_R8
-            fnb_52(ix,-1,0,0) = 0.0_R8
-            fnb_nodrift(ix,-1,0,0) = 0.0_R8
-            fnb_32nd(ix,-1,0,0) = 0.0_R8
-            fnb_52nd(ix,-1,0,0) = 0.0_R8
+            fnb(ix,-1,0,0:1) = 0.0_R8
+            fnb_32(ix,-1,0,0:1) = 0.0_R8
+            fnb_52(ix,-1,0,0:1) = 0.0_R8
+            fnb_nodrift(ix,-1,0,0:1) = 0.0_R8
+            fnb_32nd(ix,-1,0,0:1) = 0.0_R8
+            fnb_52nd(ix,-1,0,0:1) = 0.0_R8
             flob(ix,-1,0,0) = 0.0_R8
             conb(ix,-1,0,0,:)=0.0_R8
-	    fllim0fnb(ix,-1,0,0) = 1.0_R8
+	    fllim0fnb(ix,-1,0,0:1) = 1.0_R8
             vbecrb(ix,-1,0) = 0.0_R8
             vbdia(ix,-1,0) = 0.0_R8
             wbdia(ix,-1,0) = 0.0_R8
             ubdia(ix,-1,0) = 0.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-               fna_pinch(ix,-1,0,0,isb)=0.0_R8
-               fna_pll(ix,-1,0,0,isb)=0.0_R8
-               fna_drift(ix,-1,0,0,isb)=0.0_R8
-               fna_nanom(ix,-1,0,0,isb)=0.0_R8
-               fna_panom(ix,-1,0,0,isb)=0.0_R8
-               fna_ch(ix,-1,0,0,isb)=0.0_R8
-               fna_pschused(ix,-1,0,0,isb)=0.0_R8
+               fna_pinch(ix,-1,0,0:1,isb)=0.0_R8
+               fna_pll(ix,-1,0,0:1,isb)=0.0_R8
+               fna_drift(ix,-1,0,0:1,isb)=0.0_R8
+               fna_nanom(ix,-1,0,0:1,isb)=0.0_R8
+               fna_panom(ix,-1,0,0:1,isb)=0.0_R8
+               fna_ch(ix,-1,0,0:1,isb)=0.0_R8
+               fna_pschused(ix,-1,0,0:1,isb)=0.0_R8
             endif
           endif
         enddo
@@ -1682,7 +1840,7 @@ cxpb turn off poloidal flows in core boundary
         do iy = -1, ny
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-            fnb(ix,iy,1,1)        = 0.0_R8
+            fnb(ix,iy,1,0:1)        = 0.0_R8
 !            fnb_32(ix,iy,1,1)=0.0_R8
 !            fnb_52(ix,iy,1,1)=0.0_R8
 !            fnb_nodrift(ix,iy,1,1)=0.0_R8
@@ -1693,28 +1851,28 @@ cxpb turn off poloidal flows in core boundary
 !            vbdia(ix,iy,1)=0.0_R8
 !            wbdia(ix,iy,1)=0.0_R8
 !            ubdia(ix,iy,1)=0.0_R8
-            fnb_nodrift(ix,iy,1,1) = 0.0_R8
-            fnb_fcor(ix,iy,1,1)    = 0.0_R8
-            fnb_he(ix,iy,1,1)      = 0.0_R8
-            fnb_mdf(ix,iy,1,1)     = 0.0_R8
-            flob(ix,iy,1,1)        = 0.0_R8
-            conb(ix,iy,1,1,0:2)    = 0.0_R8
-	    fllim0fnb(ix,iy,0,0)   = 1.0_R8
+            fnb_nodrift(ix,iy,1,0:1) = 0.0_R8
+            fnb_fcor(ix,iy,1,0:1)    = 0.0_R8
+            fnb_he(ix,iy,1,0:1)      = 0.0_R8
+            fnb_mdf(ix,iy,1,0:1)     = 0.0_R8
+            flob(ix,iy,1,1)          = 0.0_R8
+            conb(ix,iy,1,1,0:2)      = 0.0_R8
+	    fllim0fnb(ix,iy,0,0:1)   = 1.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-               fna_pinch(ix,iy,1,1,isb)=0.0_R8
-               fna_pll(ix,iy,1,1,isb)=0.0_R8
-               fna_drift(ix,iy,1,1,isb)=0.0_R8
-               fna_nanom(ix,iy,1,1,isb)=0.0_R8
-               fna_panom(ix,iy,1,1,isb)=0.0_R8
-               fna_ch(ix,iy,1,1,isb)=0.0_R8
-               fna_pschused(ix,iy,1,1,isb)=0.0_R8
+               fna_pinch(ix,iy,1,0:1,isb)=0.0_R8
+               fna_pll(ix,iy,1,0:1,isb)=0.0_R8
+               fna_drift(ix,iy,1,0:1,isb)=0.0_R8
+               fna_nanom(ix,iy,1,0:1,isb)=0.0_R8
+               fna_panom(ix,iy,1,0:1,isb)=0.0_R8
+               fna_ch(ix,iy,1,0:1,isb)=0.0_R8
+               fna_pschused(ix,iy,1,0:1,isb)=0.0_R8
             endif
           endif
          enddo
         enddo
 *     turn off flows between boundary cells in south and in north
          do iy = -1, ny, ny+1
-          fnb(:,iy,0,0)         = 0.0_R8
+          fnb(:,iy,0,0:1)       = 0.0_R8
 !          fnb_32(:,iy,0,0) = 0.0_R8
 !          fnb_52(:,iy,0,0) = 0.0_R8
 !          fnb_nodrift(:,iy,0,0) = 0.0_R8
@@ -1725,21 +1883,21 @@ cxpb turn off poloidal flows in core boundary
 !          vbdia(:,iy,0) = 0.0_R8
 !          wbdia(:,iy,0) = 0.0_R8
 !          ubdia(:,iy,0) = 0.0_R8
-          fnb_nodrift(:,iy,0,0) = 0.0_R8
-          fnb_fcor(:,iy,0,0)    = 0.0_R8
-          fnb_he(:,iy,0,0)      = 0.0_R8
-          fnb_mdf(:,iy,0,0)     = 0.0_R8
+          fnb_nodrift(:,iy,0,0:1) = 0.0_R8
+          fnb_fcor(:,iy,0,0:1)    = 0.0_R8
+          fnb_he(:,iy,0,0:1)      = 0.0_R8
+          fnb_mdf(:,iy,0,0:1)     = 0.0_R8
           flob(:,iy,0,0)        = 0.0_R8
           conb(:,iy,0,0,0:2)    = 0.0_R8
-          fllim0fnb(:,iy,0,0)   = 1.0_R8
+          fllim0fnb(:,iy,0,0:1)   = 1.0_R8
           if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-             fna_pinch(:,iy,0,0,isb)=0.0_R8
-             fna_pll(:,iy,0,0,isb)=0.0_R8
-             fna_drift(:,iy,0,0,isb)=0.0_R8
-             fna_nanom(:,iy,0,0,isb)=0.0_R8
-             fna_panom(:,iy,0,0,isb)=0.0_R8
-             fna_ch(:,iy,0,0,isb)=0.0_R8
-             fna_pschused(:,iy,0,0,isb)=0.0_R8
+             fna_pinch(:,iy,0,0:1,isb)=0.0_R8
+             fna_pll(:,iy,0,0:1,isb)=0.0_R8
+             fna_drift(:,iy,0,0:1,isb)=0.0_R8
+             fna_nanom(:,iy,0,0:1,isb)=0.0_R8
+             fna_panom(:,iy,0,0:1,isb)=0.0_R8
+             fna_ch(:,iy,0,0:1,isb)=0.0_R8
+             fna_pschused(:,iy,0,0:1,isb)=0.0_R8
           endif
          enddo                                                          !srv 20.06.08 }
       endif                                                             !xpb
@@ -1748,57 +1906,57 @@ csw 18feb2014 remove fluxes between guard cells
         do ix=-1,nx
          do iy=-1,ny
           if(iffboundx(ix,iy).ne.0) then
-            fnb(ix,iy,0,0)=0.0_R8
-            fnb_32(ix,iy,0,0)=0.0_R8
-            fnb_52(ix,iy,0,0)=0.0_R8
-            fnb_nodrift(ix,iy,0,0)=0.0_R8
-            fnb_32nd(ix,iy,0,0)=0.0_R8
-            fnb_52nd(ix,iy,0,0)=0.0_R8
-            fnb_fcor(ix,iy,0,0)=0.0_R8
-            fnb_he(ix,iy,0,0)=0.0_R8
-            fnb_mdf(ix,iy,0,0)=0.0_R8
+            fnb(ix,iy,0,0:1)=0.0_R8
+            fnb_32(ix,iy,0,0:1)=0.0_R8
+            fnb_52(ix,iy,0,0:1)=0.0_R8
+            fnb_nodrift(ix,iy,0,0:1)=0.0_R8
+            fnb_32nd(ix,iy,0,0:1)=0.0_R8
+            fnb_52nd(ix,iy,0,0:1)=0.0_R8
+            fnb_fcor(ix,iy,0,0:1)=0.0_R8
+            fnb_he(ix,iy,0,0:1)=0.0_R8
+            fnb_mdf(ix,iy,0,0:1)=0.0_R8
             flob(ix,iy,0,0)=0.0_R8
             vbecrb(ix,iy,0)=0.0_R8
             vbdia(ix,iy,0)=0.0_R8
             wbdia(ix,iy,0)=0.0_R8
             ubdia(ix,iy,0)=0.0_R8
             conb(ix,iy,0,0,:)=0.0_R8
-	    fllim0fnb(ix,iy,0,0)=1.0_R8
+	    fllim0fnb(ix,iy,0,0:1)=1.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-               fna_pinch(ix,iy,0,0,isb)=0.0_R8
-               fna_pll(ix,iy,0,0,isb)=0.0_R8
-               fna_drift(ix,iy,0,0,isb)=0.0_R8
-               fna_nanom(ix,iy,0,0,isb)=0.0_R8
-               fna_panom(ix,iy,0,0,isb)=0.0_R8
-               fna_ch(ix,iy,0,0,isb)=0.0_R8
-               fna_pschused(ix,iy,0,0,isb)=0.0_R8
+               fna_pinch(ix,iy,0,0:1,isb)=0.0_R8
+               fna_pll(ix,iy,0,0:1,isb)=0.0_R8
+               fna_drift(ix,iy,0,0:1,isb)=0.0_R8
+               fna_nanom(ix,iy,0,0:1,isb)=0.0_R8
+               fna_panom(ix,iy,0,0:1,isb)=0.0_R8
+               fna_ch(ix,iy,0,0:1,isb)=0.0_R8
+               fna_pschused(ix,iy,0,0:1,isb)=0.0_R8
             endif
           endif
           if(iffboundy(ix,iy).ne.0) then
-            fnb(ix,iy,1,1)=0.0_R8
-            fnb_32(ix,iy,1,1)=0.0_R8
-            fnb_52(ix,iy,1,1)=0.0_R8
-            fnb_nodrift(ix,iy,1,1)=0.0_R8
-            fnb_32nd(ix,iy,1,1)=0.0_R8
-            fnb_52nd(ix,iy,1,1)=0.0_R8
-            fnb_fcor(ix,iy,1,1)=0.0_R8
-            fnb_he(ix,iy,1,1)=0.0_R8
-            fnb_mdf(ix,iy,1,1)=0.0_R8
+            fnb(ix,iy,1,0:1)=0.0_R8
+            fnb_32(ix,iy,1,0:1)=0.0_R8
+            fnb_52(ix,iy,1,0:1)=0.0_R8
+            fnb_nodrift(ix,iy,1,0:1)=0.0_R8
+            fnb_32nd(ix,iy,1,0:1)=0.0_R8
+            fnb_52nd(ix,iy,1,0:1)=0.0_R8
+            fnb_fcor(ix,iy,1,0:1)=0.0_R8
+            fnb_he(ix,iy,1,0:1)=0.0_R8
+            fnb_mdf(ix,iy,1,0:1)=0.0_R8
             flob(ix,iy,1,1)=0.0_R8
             vbecrb(ix,iy,1)=0.0_R8
             vbdia(ix,iy,1)=0.0_R8
             wbdia(ix,iy,1)=0.0_R8
             ubdia(ix,iy,1)=0.0_R8
             conb(ix,iy,1,1,:)=0.0_R8
-	    fllim0fnb(ix,iy,1,1)=1.0_R8
+	    fllim0fnb(ix,iy,1,0:1)=1.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
-               fna_pinch(ix,iy,1,1,isb)=0.0_R8
-               fna_pll(ix,iy,1,1,isb)=0.0_R8
-               fna_drift(ix,iy,1,1,isb)=0.0_R8
-               fna_nanom(ix,iy,1,1,isb)=0.0_R8
-               fna_panom(ix,iy,1,1,isb)=0.0_R8
-               fna_ch(ix,iy,1,1,isb)=0.0_R8
-               fna_pschused(ix,iy,1,1,isb)=0.0_R8
+               fna_pinch(ix,iy,1,0:1,isb)=0.0_R8
+               fna_pll(ix,iy,1,0:1,isb)=0.0_R8
+               fna_drift(ix,iy,1,0:1,isb)=0.0_R8
+               fna_nanom(ix,iy,1,0:1,isb)=0.0_R8
+               fna_panom(ix,iy,1,0:1,isb)=0.0_R8
+               fna_ch(ix,iy,1,0:1,isb)=0.0_R8
+               fna_pschused(ix,iy,1,0:1,isb)=0.0_R8
             endif
           endif
          enddo
@@ -1812,24 +1970,24 @@ csw 18feb2014 remove fluxes between guard cells
             vbdia(ix,iy,0)=0.0_R8
             wbdia(ix,iy,0)=0.0_R8
             ubdia(ix,iy,0)=0.0_R8
-            fnb(ix,iy,0,0)=0.0_R8
-            fnb_32(ix,iy,0,0)=0.0_R8
-            fnb_52(ix,iy,0,0)=0.0_R8
-            fnb_nodrift(ix,iy,0,0)=0.0_R8
-            fnb_32nd(ix,iy,0,0)=0.0_R8
-            fnb_52nd(ix,iy,0,0)=0.0_R8
+            fnb(ix,iy,0,0:1)=0.0_R8
+            fnb_32(ix,iy,0,0:1)=0.0_R8
+            fnb_52(ix,iy,0,0:1)=0.0_R8
+            fnb_nodrift(ix,iy,0,0:1)=0.0_R8
+            fnb_32nd(ix,iy,0,0:1)=0.0_R8
+            fnb_52nd(ix,iy,0,0:1)=0.0_R8
             flob(ix,iy,0,0)=0.0_R8
             conb(ix,iy,0,0,:)=0.0_R8
-	    fllim0fnb(ix,iy,0,0)=1.0_R8
-            fnb(ix,iy,1,1)=0.0_R8
-            fnb_32(ix,iy,1,1)=0.0_R8
-            fnb_52(ix,iy,1,1)=0.0_R8
-            fnb_nodrift(ix,iy,1,1)=0.0_R8
-            fnb_32nd(ix,iy,1,1)=0.0_R8
-            fnb_52nd(ix,iy,1,1)=0.0_R8
+	    fllim0fnb(ix,iy,0,0:1)=1.0_R8
+            fnb(ix,iy,1,0:1)=0.0_R8
+            fnb_32(ix,iy,1,0:1)=0.0_R8
+            fnb_52(ix,iy,1,0:1)=0.0_R8
+            fnb_nodrift(ix,iy,1,0:1)=0.0_R8
+            fnb_32nd(ix,iy,1,0:1)=0.0_R8
+            fnb_52nd(ix,iy,1,0:1)=0.0_R8
             flob(ix,iy,1,1)=0.0_R8
             conb(ix,iy,1,1,:)=0.0_R8
-	    fllim0fnb(ix,iy,1,1) = 1.0_R8
+	    fllim0fnb(ix,iy,1,0:1) = 1.0_R8
             vbecrb(ix,iy,1)=0.0_R8
             vbdia(ix,iy,1)=0.0_R8
             wbdia(ix,iy,1)=0.0_R8

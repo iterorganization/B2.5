@@ -26,7 +26,7 @@
       integer ix, iy, is, n2, ncall
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1),
-     *  pb(-1:nx,-1:ny)
+     *  pb(-1:nx,-1:ny), dpbr(-1:nx,-1:ny,0:1)
       save ncall, alpha, gamma
 *   ..initialization
       data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/
@@ -60,13 +60,16 @@
         if (is_neutral(is)) then
 *    ..compute partial pressure
          call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
+*    ..compute radial differences of partial pressure
+         call diff_r (nx, ny, hx, hy, vol, qz, pb, dpbr)
          do ix = -1, nx
           do iy = -1, ny
-*   ..compute parallel neutral difusion flux limit
+*   ..compute neutral difusion flux limits on x-surfaces
            if (leftix(ix,iy).ne.-2) then
             t0 = (ti(ix,iy) + ti(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
             t1 = (na(ix,iy,is) + na(leftix(ix,iy),leftiy(ix,iy),is))
      &          /2.0_R8
+*    ..parallel
             dpb = cdpa(ix,iy,0,0,is)*
      &            abs(pb(leftix(ix,iy),leftiy(ix,iy)) - pb(ix,iy))
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
@@ -77,13 +80,28 @@
             cdpa(ix,iy,0,0,is) = cdpa(ix,iy,0,0,is)*t2
             flc(ix,iy,0,0,is) = t2
             maxfluxlimit(0)=max(maxfluxlimit(0),t2)
+*    ..perpendicular
+            if (cdpa(ix,iy,0,1,is).ne.0.0_R8) then
+            dpb  = abs(cdpa(ix,iy,0,1,is)*dpbr(ix,iy,0))
+            vbar = abs(sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))*(
+     &        vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),0)/
+     &        qz(leftix(ix,iy),leftiy(ix,iy),1) + 
+     &        vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,0)/qz(ix,iy,1))/
+     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))))
+            t2 = 1.0_R8/(1.0_R8 + (dpb/(alpha*vbar/4.0e0_R8*t1))**gamma)
+     &                                                 **(1.0_R8/gamma)
+            cdpa(ix,iy,0,1,is) = cdpa(ix,iy,0,1,is)*t2
+            flc(ix,iy,0,1,is) = t2
+            endif
            endif
 	  enddo
 	 enddo
-*   ..compute perpendicular neutral difusion flux limit
+*   ..compute neutral difusion flux limits on y-surfaces (perpendicular)
          do ix = -1, nx
           do iy = -1, ny
            if (bottomiy(ix,iy).ne.-2) then
+cwdk for now, cdpa(:,:,1,0) is not in use; test impact of dpbr on flux limit by changing cdpa(:,:,1,0)
+            cdpa(ix,iy,1,0,is) = cdpa(ix,iy,1,1,is)
             t0 = (ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
             t1 = (na(ix,iy,is) + 
      &            na(bottomix(ix,iy),bottomiy(ix,iy),is))/2.0_R8
@@ -97,6 +115,15 @@
             cdpa(ix,iy,1,1,is) = cdpa(ix,iy,1,1,is)*t2
             flc(ix,iy,1,1,is) = t2
             maxfluxlimit(1)=max(maxfluxlimit(1),t2)
+cwdk for now, cdpa(:,:,1,0) is not in use; test impact of dpbr on flux limit by changing cdpa(:,:,1,0)
+            dpb = cdpa(ix,iy,1,0,is)*abs(dpbr(ix,iy,1))
+            vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
+     &           *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
+     &           /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+            t2 = 1.0_R8/(1.0_R8 + (dpb/(alpha*vbar/4.0e0_R8*t1))**gamma)
+     &                                                  **(1.0_R8/gamma)
+            cdpa(ix,iy,1,0,is) = cdpa(ix,iy,1,0,is)*t2
+            flc(ix,iy,1,0,is) = t2
 	   endif
 	  enddo
 	 enddo

@@ -40,9 +40,9 @@
         if(leftix(ix,iy).ne.-2) then
 cwdk      t0 = sin(gamma), interpolated to face (volume-weighted)
 c         to consider: compute directly at face as qc(ix,ix,1)?
-          t0 = (vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,0) +
-     &          vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),0)) /
-     &         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+          t0 = -(vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,0) +
+     &           vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),0)) /
+     &          (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
 cwdk      computation of cony based on gs(:,:,0)*t0, to ensure 'exact' 
 c         face area is use for the flow
 c         to consider: use mode.eq.2 for b2txcx, for consistent computation
