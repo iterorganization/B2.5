@@ -147,7 +147,10 @@ c*** No connection found
             end if
             do ii=1,nwldlis(il)
               j=lwsrtwrk(ii)
-              if (no_fort44) then
+              if (lskip(j)) then
+                lwldlis(ii,il)=j
+                leirlis(ii,il)=0
+              elseif (no_fort44) then
                 lwldlis(ii,il)=j
                 leirlis(ii,il)=j
               else 
@@ -215,7 +218,7 @@ c*** No connection found
                     end if
                   end do
                   if (.not.found) write(*,'(a,i4,a)')
-     .             'Found no correspondence (1) between DG wall # ', j ,
+     .             'Found no correspondence (1B) between DG wall # ', j,
      .             ' and Eirene wall list'
                 else
                   k = 1
@@ -236,7 +239,7 @@ c*** No connection found
                     k = k + 1
                   end do
                   if (.not.found) write(*,'(a,i4,a)')
-     .             'Found no correspondence (2) between DG wall # ', j ,
+     .             'Found no correspondence (2B) between DG wall # ', j,
      .             ' and Eirene wall list'
                 end if
               end if

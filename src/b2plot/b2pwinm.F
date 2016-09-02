@@ -225,6 +225,9 @@ c*** Target specification
 c-----------------------------------------------------------------------
 c*** List of segments to be skipped
  210  call rearri(lskipel(nskipel+1),mskipel-nskipel,i)
+      do j = nskipel+1, nskipel+i
+        lskip(lskipel(j)) = .true.
+      end do
       nskipel=nskipel+i
       return
 c-----------------------------------------------------------------------

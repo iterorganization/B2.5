@@ -495,7 +495,7 @@ c*** CW edge
 c              print *,'CW edge: k=',k                   !###
               if(kb.ne.0) then !{
 c*** Target still open...
-                write(*,*) 'b2pwlprp: unexpected error. ',
+                write(*,'(2a,3i4)') 'b2pwlprp: unexpected error. ',
      ,                                  'Missing CCW edge ',il,i,kb
                 write(*,*) 'k,ltrgedge = ',
      ,                         k,((ltrgedge(i1,i2),i1=1,2),i2=1,ntrgts)

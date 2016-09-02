@@ -18,6 +18,7 @@
       use b2mod_ppout
       use b2mod_external
       implicit none
+#     include <git_version_B25.h>
 #ifdef USE_MPI
       include 'mpif.h'
 #endif
@@ -143,6 +144,7 @@
       call cfverr (ninp(2), b2fparam_version)				 !xpb
       call cfverr (ninp(3), b2fstate_version)				 !xpb
       call cfverr (ninp(6), b2ftrack_version)				 !xpb
+      write(6,*) 'Running with VERSION ',newversion,' ', git_version_B25
 *   ..obtain nx, ny, ns
       call cfruin (ninp(3), 3, idum, 'nx,ny,ns')
       nx = idum(0)
