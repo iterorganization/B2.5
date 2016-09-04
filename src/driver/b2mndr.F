@@ -1964,7 +1964,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #ifdef CATALYST
         if (use_catalyst .eq. .true.) then
            call coprocessor(crx,cry,4*(nx+2)*(ny+2),nx,ny,ns,itim,tim,
-     &   vol, hx, hy, qc, te, ti, po, bzb, OnedBsq, qz, pbs, fhe, fhi,
+     &   vol, hx, hy, qc, te, ti, po, bzb, OnedBsq,ne,qz, pbs, fhe, fhi,
      &   fch, pbshz, fhe_mdf, fhi_mdf, fchvispar,
      &   fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper, gs, bb,
      &   na, ua, kinrgy, rra, rqa,fna, fna_mdf, fna_fcor, uadia, vadia,
