@@ -1,33 +1,25 @@
 // C++ part of the adaptor for paraview catalyst for b2.5 simulation.
 // Author: Jure Bartol
 // Created on: 22.07.2016
-// Modified on: 10.08.2016
+// Modified on: 05.09.2016
 
 #include "vtkCPDataDescription.h"
 #include "vtkCPInputDataDescription.h"
 #include "vtkCPProcessor.h"
 #include "vtkCPPythonScriptPipeline.h"
+#include "vtkCPPythonAdaptorAPI.h"
 #include "vtkSmartPointer.h"
 #include "vtkDoubleArray.h"
 #include "vtkPointData.h"
-#include "vtkImageData.h"
-#include "vtkCPPythonAdaptorAPI.h"
-
-#include <vtkPoints.h>
-#include <vtkVersion.h>
-#include <vtkCellArray.h>
-#include <vtkXMLPolyDataWriter.h>
-#include <vtkDataArray.h>
-#include <vtkCellData.h>
-#include <vtkPolyData.h>
+#include "vtkCellData.h"
+#include "vtkPolyData.h"
 
 
-extern "C" void creategrid_(double* crx, double* cry, int* ncrx, int* nx, int* ny)
+extern "C" void creategrid_(double* crx, double* cry, int* ncrx, int* nx, int* ny) {
 //crx - x coordinate, cry - y coordinate, ncrx - number of points,
 //nx - number of cells in x direction, ny - number of cells in y direction
-{
-  if (!vtkCPPythonAdaptorAPI::GetCoProcessorData())
-    {
+
+  if (!vtkCPPythonAdaptorAPI::GetCoProcessorData()){
     vtkGenericWarningMacro("Unable to access CoProcessorData.");
     return;
     }
@@ -59,44 +51,58 @@ extern "C" void creategrid_(double* crx, double* cry, int* ncrx, int* nx, int* n
     }
 }
 
-extern "C" void adddata_(double* values, char* name, int* numCells, int *dimension)
-{
+extern "C" void adddata_(double* values, char* name, int* numCells, int *dimension) {
+// value - array of field data, name - name of the field, numCells - number of Cells
+// dimension - dimension of field data to attach to cells
+
   vtkCPInputDataDescription* idd = vtkCPPythonAdaptorAPI::GetCoProcessorData()->GetInputDescriptionByName("input");
   vtkPolyData* grid = vtkPolyData::SafeDownCast(idd->GetGrid());
-
   if (!grid)
     {
     vtkGenericWarningMacro("No adaptor grid to attach field data to.");
     return;
     }
 
-  vtkDoubleArray* cellData = vtkDoubleArray::New();
-  cellData->SetName(name);
-  cellData->SetNumberOfComponents(*dimension);
-  cellData->SetNumberOfTuples(*numCells);
-
-  switch (cellData->GetNumberOfComponents()){
- case 1: { 
-     for (vtkIdType i = 0; i < *numCells; ++i){ 
-       cellData->SetTuple1(i,values[i]);
-     } break;
-}
- case 2: {
-     for (vtkIdType i = 0; i < *numCells; ++i){ 
+  if (*dimension <= 3){
+    vtkDoubleArray* cellData = vtkDoubleArray::New();
+    cellData->SetName(name);
+    cellData->SetNumberOfComponents(*dimension);
+    cellData->SetNumberOfTuples(*numCells);
+    switch (*dimension){
+    case 1: { 
+      for (vtkIdType i = 0; i < *numCells; ++i){
+        cellData->SetTuple1(i,values[i]);
+      } break;
+    }
+    case 2: {
+      for (vtkIdType i = 0; i < *numCells; ++i){ 
        cellData->SetTuple2(i, values[i], values[i+(*numCells)]);
-     } break;
-}
- case 3: {
-     for (vtkIdType i = 0; i < *numCells; ++i){ 
-       cellData->SetTuple3(i, values[i], values[i+(*numCells)], values[i+2*(*numCells)]);
-     } break;
-}
- case 4: {
-     for (vtkIdType i = 0; i < *numCells; ++i){ 
-       cellData->SetTuple4(i, values[i], values[i+(*numCells)], values[i+2*(*numCells)], values[i+3*(*numCells)]);
-     } break;
-}
-}
-  grid->GetCellData()->AddArray(cellData);
-  cellData->Delete();
+      } break;
+    }
+    case 3: {
+      for (vtkIdType i = 0; i < *numCells; ++i){ 
+        cellData->SetTuple3(i, values[i], values[i+(*numCells)], values[i+2*(*numCells)]);
+      } break;
+    }
+    }
+    grid->GetCellData()->AddArray(cellData);
+    cellData->Delete();
+    cellData = NULL;
+  }
+  else {
+      char new_name[50];
+      for (int s = 0; s < *dimension; ++s){
+       sprintf(new_name, "%s_%d", name, s);
+       vtkDoubleArray* cellData = vtkDoubleArray::New();
+       cellData->SetName(new_name);
+       cellData->SetNumberOfComponents(1);
+       cellData->SetNumberOfTuples(*numCells);
+       for (vtkIdType i = 0; i < *numCells; ++i){ 
+         cellData->SetTuple1(i, values[i+s*(*numCells)]);
+       }
+       grid->GetCellData()->AddArray(cellData);
+       cellData->Delete();
+       cellData = NULL;
+      } 
+    }
 }
