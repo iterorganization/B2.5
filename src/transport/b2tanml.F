@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,       !srv 20.09.06 {
+      subroutine b2tanml (nx, ny, ns, vol, hx, hy, qz, csig_an, po,       !srv 20.09.06 {
      &                    fchanml)
       use b2mod_types
       use b2mod_boundary_namelist
@@ -14,7 +14,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny), 
+     & vol(-1:nx,-1:ny), po(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      1 csig_an(-1:nx,-1:ny,0:1,0:1)
 *   ..output arguments (unspecified on entry)
@@ -41,7 +41,7 @@
       integer, save :: no_current = 0                          !srv 27.02.13
       integer, save :: pot_eq
       integer, save :: guard_flows
-      real (kind=R8) :: fch_anomalous
+      real (kind=R8) :: fch_anomalous, dpor(-1:nx,-1:ny,0:1)
       save ncall, fch_anomalous
 *   ..procedures
       intrinsic max, abs
@@ -78,13 +78,18 @@
         fchanml = 0.0e0_R8
       else                                                    !srv 27.02.13
 	if(fch_anomalous.ne.0.0e0_R8) then    
+
+*   ..compute radial differences of te and po, for 9-point terms
+          call diff_r(nx, ny, hx, hy, vol, qz, po, dpor)
+
           do iy = -1, ny
 	    do ix = -1, nx
-	      if(leftix(ix,iy).eq.-2)then
+	      if(leftix(ix,iy).eq.-2) then
 	        fchanml(ix,iy,0,0)   = 0.0e0_R8
 	      else
                 fchanml(ix,iy,0,0) = - csig_an(ix,iy,0,0)*
      &           (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))
+                fchanml(ix,iy,0,1) = - csig_an(ix,iy,0,1)*dpor(ix,iy,0)
               endif
 	    enddo
 	  enddo
@@ -95,10 +100,13 @@
           do iy = 0, ny
 	    do ix = -1, nx
 	      if(bottomiy(ix,iy).eq.-2)then
-		fchanml(ix,iy,1,1) = 0.0e0_R8
+		fchanml(ix,iy,1,0:1) = 0.0e0_R8
 	      else
 		fchanml(ix,iy,1,1) = - csig_an(ix,iy,1,1)*
      &		 (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))
+cwdk for now, fchanml(ix,iy,1,0) should be zero; use temporarily for corrected
+cwdk fchanml(ix,iy,1,1)
+                fchanml(ix,iy,1,0) = - csig_an(ix,iy,1,1)*dpor(ix,iy,1)
 	      endif
             enddo
 	  enddo
@@ -112,7 +120,7 @@ cxpb turn off flows between boundary cells
         do iy = -1, ny
           do ix = -1, nx
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
-              fchanml(ix,iy,1,1)=0.0_R8
+              fchanml(ix,iy,1,0:1)=0.0_R8
             endif
           enddo
         enddo
@@ -120,7 +128,7 @@ cxpb turn off flows between boundary cells
 cxpb turn off poloidal flows in core boundary
         do ix = -1, nx
           if(on_closed_surface(ix,-1)) then
-            fchanml(ix,-1,0,0) = 0.0_R8
+            fchanml(ix,-1,0,0:1) = 0.0_R8
           endif
         enddo
       endif
@@ -129,12 +137,12 @@ cxpb turn off poloidal flows in core boundary
       DO IB=1,NNISO
 	DO IX=NXISO1(IB), NXISO2(IB)
 	  DO IY=NYISO1(IB), NYISO2(IB)
-	    fchanml(ix,iy,0,0)=0.0e0_R8
+	    fchanml(ix,iy,0,0:1)=0.0e0_R8
 	  end do
 	end do
 	DO IX=NXISO1(IB), NXISO2(IB)
 	  DO IY=NYISO1(IB), NYISO2(IB)
-	    fchanml(ix,iy,1,1)=0.0e0_R8
+	    fchanml(ix,iy,1,0:1)=0.0e0_R8
 	  end do
 	end do
       end do

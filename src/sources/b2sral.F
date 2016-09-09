@@ -269,7 +269,7 @@
 
       if(use_eirene.ne.0 .or. save_f31.ne.0) then                       !srv 14.07.10 {
 *   ..recompute currents
-       call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06 }
+       call b2tanml (nx, ny, ns, vol, hx, hy, qz, csig_an, po, fchanml) !srv 20.09.06 }
        call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,      !srv 20.09.06 {
      &                       fac_vis, fchvispar)
        call b2tiner (nx, ny, ns, vol,

@@ -28,7 +28,7 @@
       integer, save :: flux_limit_style = 2                       !srv 13.06.08
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, t3, dti, vthi, maxfluxlimit(0:1),
-     *  flux_limit_min_ti
+     *  flux_limit_min_ti, dtir(-1:nx,-1:ny,0:1)
       save ncall, alpha, gamma, flux_limit_min_ti, hcimx_flag
 *   ..initialisation
       data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/,
@@ -70,6 +70,9 @@
         hcimx(:,:,1,:) = hcib(:,:,:)
         goto 100
       endif
+
+*    ..compute radial differences of partial pressure
+      call diff_r (nx, ny, hx, hy, vol, qz, ti, dtir)
 
       if(flux_limit_style.eq.0) then                              !srv 13.06.08
 
@@ -238,8 +241,9 @@
         if (is_neutral(is)) then
          do ix = -1, nx
           do iy = -1, ny
-*   .. compute parallel neutral heat conductivity flux limit
+*   .. compute neutral heat conductivity flux limit on x-surfaces
            if (leftix(ix,iy).ne.-2) then
+*   .. parallel
             t0 = (ti(ix,iy) + ti(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
             t1 = (na(ix,iy,is) + na(leftix(ix,iy),leftiy(ix,iy),is))
      .            /2.0_R8
@@ -253,9 +257,23 @@
             chcb(ix,iy,0,0,is) = chcb(ix,iy,0,0,is)*t2
 	    fllim0fhi(ix,iy,0,0,is) = t2
             maxfluxlimit(0)=max(maxfluxlimit(0),t2)
+*   .. perpendicular
+            if (chcb(ix,iy,0,1,is).ne.0.0_R8) then
+            dti  = abs(chcb(ix,iy,0,1,is)*dtir(ix,iy,0))
+            vthi = abs(sqrt(2.0_R8 * t0 / (am(is)*mp))*(
+     &        vol(ix,iy)*qz(leftix(ix,iy),leftiy(ix,iy),0)/
+     &        qz(leftix(ix,iy),leftiy(ix,iy),1) + 
+     &        vol(leftix(ix,iy),leftiy(ix,iy))*qz(ix,iy,0)/qz(ix,iy,1))/
+     &        (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy))))
+            t2 = 1.0_R8/(1.0_R8 + (dti/(alpha*vthi*t1*t0))**gamma)
+     .                                           **(1.0_R8/gamma)
+            chcb(ix,iy,0,1,is) = chcb(ix,iy,0,1,is)*t2
+            endif
            end if
-*   .. compute perpendicular neutral heat conductivity flux limit
+*   .. compute neutral heat conductivity flux limit on y-surfaces
            if (bottomiy(ix,iy).ne.-2) then
+cwdk for now, chcb(:,:,1,0) is not in use; test impact of dtir on flux limit by changing chcb(:,:,1,0)
+            chcb(ix,iy,1,0,is) = chcb(ix,iy,1,1,is)
             t0 = (ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
             t1 = (na(ix,iy,is) + na(bottomix(ix,iy),bottomiy(ix,iy),is))
      &           /2.0_R8
@@ -269,6 +287,14 @@
             chcb(ix,iy,1,1,is) = chcb(ix,iy,1,1,is)*t2
 	    fllim0fhi(ix,iy,1,1,is) = t2
             maxfluxlimit(1)=max(maxfluxlimit(1),t2)
+cwdk for now, chcb(:,:,1,0) is not in use; test impact of dtir on flux limit by changing chcb(:,:,1,0)
+            dti = chcb(ix,iy,1,0,is)*abs(dtir(ix,iy,1))
+            vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))
+     &           *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
+     &           /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+            t2 = 1.0_R8/(1.0_R8 +(dti/(alpha*vthi*t1*t0))**gamma)
+     .                                          **(1.0_R8/gamma)
+            chcb(ix,iy,1,0,is) = chcb(ix,iy,1,0,is)*t2
            end if
           end do
          end do

@@ -13,14 +13,15 @@
      &   ne(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     &   ehx(-1:nx,-1:ny)
+     &   ehx(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2XEHX computes the modified electrical field on x - cell faces.
+*     B2XEHX computes the modified poloidal electrical field on all cell
+*     faces.
 *
 *  8. further comments
 *
@@ -65,10 +66,10 @@
       do iy = -1, ny
         do ix = -1, nx                                                   !srv 26.11.02 {
           if(leftix(ix,iy).eq.-2) then                                   !srv 26.11.02
-            ehx(ix,iy)  = 0.0e0_R8
+            ehx(ix,iy,0)  = 0.0e0_R8
           else                                                           !srv 26.11.02 }
             if(mode_ehx.eq.0) then                                       !srv 06.04.15 {
-              ehx(ix,iy) =
+              ehx(ix,iy,0) =
      &         -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
      &          (ne(ix,iy)*te(ix,iy)                                     !srv 98
      &          -ne(leftix(ix,iy),leftiy(ix,iy))*                        !srv
@@ -78,12 +79,14 @@
               t0= (ne(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy)+
      &             ne(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy)))/
      &            (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
-              ehx(ix,iy) = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
+              ehx(ix,iy,0) = 
+     &        -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
      &         (ne(ix,iy)*te(ix,iy)
      &         -ne(leftix(ix,iy),leftiy(ix,iy))*
      &          te(leftix(ix,iy),leftiy(ix,iy)))/(qe*t0)
             else
-              ehx(ix,iy) = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
+              ehx(ix,iy,0) =
+     &        -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
      &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+               !srv
      &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5e0_R8*     !srv
      &         (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy)))))/qe !srv .98 
@@ -91,6 +94,8 @@
           endif                                                          !srv 26.11.02 02.04.15
         enddo
       enddo
+* ..for now, zero on y-faces
+      ehx(:,:,1) = 0.0_R8
 
 * ..return
       ncall = ncall+1

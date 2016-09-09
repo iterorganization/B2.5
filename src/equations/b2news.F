@@ -328,7 +328,7 @@
           call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,  !xpb !srv 01.07.08
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
         endif                                                            !xpb
-        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06 }
+        call b2tanml (nx, ny, ns, vol, hx, hy, qz, csig_an, po, fchanml) !srv 20.09.06 }
         call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,      !srv 20.09.06 {
      &                       fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol,
@@ -453,7 +453,7 @@ cxpb
 *     (= ne before continuity update)
         call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
-        call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)     !srv 20.09.06 }
+        call b2tanml (nx, ny, ns, vol, hx, hy, qz, csig_an, po, fchanml) !srv 20.09.06 }
         call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,      !srv 20.09.06 {
      &                       fac_vis, fchvispar)
         call b2tiner (nx, ny, ns, vol,

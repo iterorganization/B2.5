@@ -12,7 +12,7 @@
       real (kind=R8) ::
      *   te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      &   csig(-1:nx,-1:ny,0:1,0:1), calf(-1:nx,-1:ny,0:1,0:1),
-     &   ehx(-1:nx,-1:ny)
+     &   ehx(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      &   fch_p(-1:nx,-1:ny,0:1,0:1)
@@ -86,7 +86,7 @@
               fch_p(ix,iy,0,0)  = 0.0e0_R8
             else                                                       !srv 26.11.02 }
               tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-              fch_p(ix,iy,0,0) = (csig(ix,iy,0,0)*ehx(ix,iy)-
+              fch_p(ix,iy,0,0) = (csig(ix,iy,0,0)*ehx(ix,iy,0)-
      &                 phm2*calf(ix,iy,0,0)*tex)*prl_cur               !srv 03.02.03 08.10.14 
             endif                                                      !srv 26.11.02
           enddo

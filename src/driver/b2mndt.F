@@ -321,7 +321,7 @@ ctmp.dpc
      5       fllim0fhi, fllimvisc, csig_cl, calf_cl)
           newneo=.true.
           if(style.ne.0) then                                            !srv 18.06.08 {
-            call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po,
+            call b2tanml (nx, ny, ns, vol, hx, hy, qz, csig_an, po,
      &                    fchanml)                                       !srv 20.09.06 }
             call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,  !srv 20.09.06 {
      &                    fac_vis, fchvispar)

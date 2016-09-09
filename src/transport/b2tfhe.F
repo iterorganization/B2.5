@@ -82,7 +82,7 @@
      &   floe0_mdf, cone0_mdf, alfe0_mdf, t0_mdf, tex0_mdf              !srv 22.11.99 13.10.06
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8) ::
-     &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny),
+     &    ehx_(-1:nx,-1:ny,0:1), ehy_(-1:nx,-1:ny,0:1),
      &    zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny)                          !srv 13.01.17
       parameter (cutlo = 1.0e-60_R8)
 #ifdef CLASSICAL_CURRENT
@@ -349,7 +349,7 @@ c  ...set null flux in guard cells  ?
             if (no_current.eq.1) then
               ehx = 0.0_R8
             else
-              ehx = ehx_(ix,iy)                                         !srv 13.01.17
+              ehx = ehx_(ix,iy,0)                                       !srv 13.01.17
             endif
             tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
 cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
@@ -566,7 +566,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
         enddo
       enddo
 *   ..compute fhey, floey, coney
-      call b2xehy (nx, ny, hy, qz, te, po, ne, ehy_)                 !srv 13.01.17
+      call b2xehy (nx, ny, hx, hy, qz, te, po, ne, ehy_)               !srv 13.01.17
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then
@@ -589,7 +589,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             if (no_current.eq.1) then
               ehy = 0.0_R8
             else
-              ehy = ehy_(ix,iy)                                      !srv 13.01.17
+              ehy = ehy_(ix,iy,1)                                    !srv 13.01.17
             endif
             if (conduction_only.eq.1) then
               floe0 = 0.0_R8

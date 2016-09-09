@@ -8,7 +8,7 @@
      *   fna(-1:nx,-1:ny,0:1,0:1,0:ns-1), fni(-1:nx,-1:ny,0:1,0:1)
 *     ------------------------------------------------------------------
 *     B2XPFI computes the total atom particle flux, fni:
-*       fni(,,) = (sum is :: fna(,,,is)) .
+*       fni(,,,) = (sum is :: fna(,,,,is)) .
 *     ------------------------------------------------------------------
       integer n2, is
       external sfill, b2saxpy

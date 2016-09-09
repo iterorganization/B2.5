@@ -319,25 +319,25 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
       if (pol_anom_scale.ne.1.0_R8) then
         do is = 0, ns-1
           if (.not.is_neutral(is)) then
-            cdna(:,:,0,0,is) = cdna(:,:,0,0,is) * pol_anom_scale
-            cdpa(:,:,0,0,is) = cdpa(:,:,0,0,is) * pol_anom_scale
-            cvla(:,:,0,0,is) = cvla(:,:,0,0,is) * pol_anom_scale
-            cvsa(:,:,0,0,is) = cvsa(:,:,0,0,is) * pol_anom_scale
-            cdnahz(:,:,0,0,is) = cdnahz(:,:,0,0,is) * pol_anom_scale      !wdk 16.04.14
-            cdpahz(:,:,0,0,is) = cdpahz(:,:,0,0,is) * pol_anom_scale
-            cvlahz(:,:,0,0,is) = cvlahz(:,:,0,0,is) * pol_anom_scale
-            cvsahz(:,:,0,0,is) = cvsahz(:,:,0,0,is) * pol_anom_scale
+            cdna(:,:,:,0,is) = cdna(:,:,:,0,is) * pol_anom_scale
+            cdpa(:,:,:,0,is) = cdpa(:,:,:,0,is) * pol_anom_scale
+            cvla(:,:,:,0,is) = cvla(:,:,:,0,is) * pol_anom_scale
+            cvsa(:,:,:,0,is) = cvsa(:,:,:,0,is) * pol_anom_scale
+            cdnahz(:,:,:,0,is) = cdnahz(:,:,:,0,is) * pol_anom_scale      !wdk 16.04.14
+            cdpahz(:,:,:,0,is) = cdpahz(:,:,:,0,is) * pol_anom_scale
+            cvlahz(:,:,:,0,is) = cvlahz(:,:,:,0,is) * pol_anom_scale
+            cvsahz(:,:,:,0,is) = cvsahz(:,:,:,0,is) * pol_anom_scale
             if (flux_limit_style.eq.2) then                               !srv 07.12.15 {
-              chcb(:,:,0,0,is) = chcb(:,:,0,0,is) * pol_anom_scale
+              chcb(:,:,:,0,is) = chcb(:,:,:,0,is) * pol_anom_scale
             end if                                                        !srv 07.12.15 }
           end if
         end do
-        chce(:,:,0,0) = chce(:,:,0,0) * pol_anom_scale
+        chce(:,:,:,0) = chce(:,:,:,0) * pol_anom_scale
         if (flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then        !srv 07.12.15
-          chci(:,:,0,0) = chci(:,:,0,0) * pol_anom_scale
+          chci(:,:,:,0) = chci(:,:,:,0) * pol_anom_scale
 	endif                                                             !srv 07.12.15
-        calf(:,:,0,0) = calf(:,:,0,0) * pol_anom_scale
-        csig(:,:,0,0) = csig(:,:,0,0) * pol_anom_scale
+        calf(:,:,:,0) = calf(:,:,:,0) * pol_anom_scale
+        csig(:,:,:,0) = csig(:,:,:,0) * pol_anom_scale
       end if
 *   .. save the anomalous transport coefficients
       csig_an = csig
@@ -356,8 +356,7 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
      &              hcimx, fllim0fhi)
      	chci = 0.0_R8
         do is = 0, ns-1
-          chci(:,:,0,0) = chci(:,:,0,0) + chcb(:,:,0,0,is)
-          chci(:,:,1,1) = chci(:,:,1,1) + chcb(:,:,1,1,is)
+          chci(:,:,:,:) = chci(:,:,:,:) + chcb(:,:,:,:,is)
         enddo 
       endif                                                               !srv 07.12.15 }
 

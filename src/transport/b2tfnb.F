@@ -1462,12 +1462,15 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &      con(ix,iy)*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &      cdpb(ix,iy,1,1)*(pb(ix,iy)
      &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
-cwdk      fnb*(ix,iy,1,0) should be zero for now
-c         temporarily use it to store corrected fnb*(:,:,1,1), for comparison...
+cwdk      fnb(ix,iy,1,0) should be zero for now
+c         temporarily use it to store corrected fnb(:,:,1,1), for comparison...
           fnb(ix,iy,1,0) =
      1      flo*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
-     &      con(ix,iy)*dnbr(ix,iy,1) - cdpb(ix,iy,1,0)*dpbr(ix,iy,1)
-*      fnb_he will be used only for heat equations                      !srv 21.01.00 {     
+     &      0.5_R8*abs(flo_mdf)*
+     &      (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
+     &      (con(ix,iy)-0.5_R8*abs(flo_mdf))*dnbr(ix,iy,1)-
+     &      cdpb(ix,iy,1,0)*dpbr(ix,iy,1)
+*      fnb_he will be used only for heat equations                       !srv 21.01.00 {     
           fnb_he(ix,iy,1,1) = flo_he*
      &      (nb(bottomix(ix,iy),bottomiy(ix,iy)) + nb(ix,iy))/2.0_R8-
 csw 30sep2014 (is this 5/3 factor correct here? I think not...)

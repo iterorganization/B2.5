@@ -86,7 +86,7 @@
      1   flo_vedia, prefactor, floe0_nd, cone0_nd, t0_nd, tex0_nd
       real (kind=R8) ::                                                 !xpb
      * fch_ion_neutral, fch_anomalous, vis_par, vis_per, sig_stoch,     !xpb
-     * ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny), zeff(-1:nx,-1:ny)          !srv 13.01.17
+     * ehx_(-1:nx,-1:ny,0:1), ehy_(-1:nx,-1:ny,0:1), zeff(-1:nx,-1:ny)  !srv 13.01.17
       character*1 charnc
       save ncall, fch_ion_neutral, fch_anomalous, vis_par, pot_eq,
      *   no_current, conduction_only, no_hybr, vis_per, sig_stoch
@@ -248,7 +248,7 @@ c Drift terms
               ehx = 0.0_R8
               ehx_po = 0.0_R8
             else
-              ehx = ehx_(ix,iy)                                          !srv 13.01.17
+              ehx = ehx_(ix,iy,0)                                        !srv 13.01.17
               ehx_po = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))   	 !xpb
             endif
             tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
@@ -319,7 +319,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
         enddo
       enddo
 *   ..compute fchy, concy
-      call b2xehy (nx, ny, hy, qz, te, po, ne, ehy_)                     !srv 13.01.17
+      call b2xehy (nx, ny, hx, hy, qz, te, po, ne, ehy_)                  !srv 13.01.17
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then
@@ -332,7 +332,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               ehy = 0.0_R8
               ehy_po = 0.0_R8
             else
-              ehy = ehy_(ix,iy)                                          !srv 13.01.17
+              ehy = ehy_(ix,iy,1)                                        !srv 13.01.17
               ehy_po = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))  !xpb
             endif
             fch(ix,iy,1,1)= csig_cl(ix,iy,1,1)*ehy

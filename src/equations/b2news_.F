@@ -310,7 +310,7 @@ csw 01oct2012 initialize potential if necessary
      5 chvi, csig, csigin, calf, cthe, cthi,
      4 cdnahz, cdpahz, cvlahz, cvmahz, cvsahz, cvsa_cl, cvsahz_cl,
      5 fllim0fhi, fllimvisc, csig_cl, calf_cl)                           !srv 09.01.01 15.12.05
-      call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)       !srv 20.09.06  }
+      call b2tanml (nx, ny, ns, vol, hx, hy, qz, csig_an, po, fchanml)   !srv 20.09.06  }
       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,        !srv 20.09.06  {
      &                       fac_vis, fchvispar)
       call b2tiner (nx, ny, ns, vol,
@@ -480,7 +480,7 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
 *     (= ne before continuity update)
       call b2scopy (n2, ne, 1, nep, 1)
 *   ..recompute currents
-      call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)       !srv 20.09.06 }
+      call b2tanml (nx, ny, ns, vol, hx, hy, qz, csig_an, po, fchanml)   !srv 20.09.06 }
       call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,        !srv 20.09.06 {
      &                       fac_vis, fchvispar)
       call b2tiner (nx, ny, ns, vol,
@@ -715,7 +715,8 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
           endif
 
 *   ..recompute currents
-          call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)   !srv 20.09.06 }
+          call b2tanml (nx, ny, ns, vol, hx, hy, qz, csig_an, po,        !srv 20.09.06 }
+     &                         fchanml)
           call b2tvspa (nx, ny, ns, vol, hx, hy, qz, bb, ua, cvsa_cl,    !srv 20.09.06 {
      &                         fac_vis, fchvispar)
           call b2tiner (nx, ny, ns, vol,
