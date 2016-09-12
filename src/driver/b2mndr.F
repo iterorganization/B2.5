@@ -165,10 +165,13 @@
       save ne_wanted, ne_wanted_time, ne_wanted_next_time,
      &  ne_wanted_mod_time, ixfb, iyfb
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
+      character, save :: savefile_p*14 = 'b2fplasmf.xxxx'
       character chns*3                                               !srv 25.01.16
       integer n2, itim, ierr, edition, i, b2time, coronal, use_eirene,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current
+      integer, save :: edition_p=0, plasinc = 1, plasnum = 0
+      integer, save :: itim_plas = 0, nwrit_plas = 0
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
      *  neutral_sources_rescale,
@@ -885,10 +888,14 @@
        else                                                              !jwk
           test_residual=.false.                                          !jwk
        endif                                                             !jwk
+       call ipgeti ('b2mndr_plasinc', plasinc)
+       call ipgeti ('b2mndr_plasnum', plasnum)
        call ipgeti ('b2mndr_mvinc', mvinc)
        call ipgeti ('b2mndr_mvnum', mvnum)
        call xertst (1.le.mvinc.and.0.le.mvnum,
      &   'faulty internal parameter mvinc, mvnum')
+       call xertst (1.le.plasinc.and.0.le.plasnum,
+     &   'faulty internal parameter plasinc,plasnum')
        call ipgetc ('b2mndr_idout0', idout0)
        call ipgetc ('b2mndr_idout1', idout1)
        call ipgetr ('b2mndr_na_min', na_min)
@@ -1565,6 +1572,7 @@ c   --> better way doing this is necessary)
 * ..main loop
 *   ..initialise counters
       itim = 0
+      itim_plas = 0
       if (stim.ge.0.0_R8) tim = stim
       call xertst (etim.eq.0.0_R8 .or. etim.gt.tim,
      & 'faulty input etim')
@@ -1695,6 +1703,7 @@ csw 09oct2012 set default potential already at this point (BCs)
             stack_dtim(stack_ptr)=dtim
             dtim=dtim/10.0_R8
             ntim=itim+10
+            itim_plas=itim_plas-10
             na=na0
             ne=ne0
             ua=ua0
@@ -1713,9 +1722,33 @@ csw 09oct2012 set default potential already at this point (BCs)
 *    ..produce data for movie
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
           call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
+       endif
+*    ..extra writes of b2fplasmf.xxxx       
+       if (mod(itim_plas,plasinc).eq.0.and.nwrit_plas.le.plasnum
+     &    .and.plasnum.gt.0.and.plasinc.gt.0) then
+          nwrit_plas = nwrit_plas + 1
+          write(savefile_p(11:14),'(i4)') edition_p
+           edition_p=edition_p+1
+           do i=11,14
+              if(savefile_p(i:i).eq.' ') savefile_p(i:i)='0'
+           enddo
+           call cfopen (nout(7),savefile_p,'new','formatted')
+           write(*,*) 'Writing extra b2plasmf:',itim,itim_plas,
+     & plasinc,mod(itim_plas,plasinc),tim
+           write(*,*) savefile_p
+           call cfverw(nout(7), newversion)
+           call write_b2mod_geo(nout(7))
+           call write_b2mod_plasma(nout(7))
+           call write_b2mod_residuals(nout(7))
+           call write_b2mod_sources(nout(7))
+           call write_b2mod_transport(nout(7))
+           call write_b2mod_anomalous_transport(nout(7))
+           call write_b2mod_neutr_src_scaling(nout(7),nstrat)
+           close(nout(7))
         endif
 *    ..increment
         itim = itim+1
+        itim_plas = itim_plas + 1
         if (no_solve.le.0) then
           tim = tim+dtim
         endif

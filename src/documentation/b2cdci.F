@@ -130,6 +130,8 @@
 *    'b2mndr_min_aresco'        '0.0'                  Numerics
 *    'b2mndr_mvinc'             '1'                    Output
 *    'b2mndr_mvnum'             '0'                    Output
+*    'b2mndr_plasinc'           '1'                    Output
+*    'b2mndr_plasnum'           '0'                    Output      
 *    'b2mndr_na_eps'            '1.0e19'               Output
 *    'b2mndr_na_min'            '1.0e4'                Numerics
 *    'b2mndr_na_new'            '1.0e14'               Numerics
@@ -1652,6 +1654,13 @@
 *    If greater than 1 and the last timestep does not correspond to a 
 *    planned frame, an extra endstate frame is added. 
 *
+*    'b2mndr_plasnum'           '0'                    Output
+*    Specifies the maximum number of instances at which extra
+*    writes of b2fplasmf.xxxx will occur.
+*
+*    'b2mndr_plasinc'           '1'	               Output
+*    Specifies the number of timesteps between b2fplasmf.xxxx writes.
+*      
 *    'b2mndr_cdfmovietim'       '0.0'                  Output
 *    Another option for movie output. Give the real-time interval between
 *    movie frames.
