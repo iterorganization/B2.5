@@ -1,22 +1,21 @@
 ! ##########################################################################
-! This program first reads the formatted file 'monoblock_input.dat' and writes the 
-! unformatted file 'mnb_in.dat' that is needed by the FreeFem++ heat 
-! transfer model of the monoblock.
-! Then, it reads the files 'ld_tg_[i-o].dat' produced by
-! b2plot with the "100 wlld" command and writes the unformatted files 
-! 'W_tg[i-o].dat', 'X_tg[i-o].dat' and 'tg[i-o]_size.dat' that are needed 
-! by the FreeFem++ heat transfer model of the monoblock.
-! In 'W_tg[i-o].dat' is stored the value of the heat flux for each tile of
-! the monoblock. 
-! In 'X_tg[i-o].dat' is stored the value of the poloidal coordinate of the
-! center of each tile along the monoblock axis (in [m]). The strike point 
-! is at x=0
-! In 'tg[i-o]_size.dat' is stored the number of points (i.e. tiles) in which
-! the inner/outer monoblocks have been subdivided according to the assigned
-! tile poloidal length, which is read from the 'monoblock_input.dat' file.
+! This program first reads the formatted file 'rps_input.dat' and 
+! writes the unformatted file 'rps_in.dat' that is needed by the FreeFem++
+! heat transfer model of the reflector plates.
+! Then, it reads the files 'wlld_[i-o]rp.dat' produced by
+! b2plot with the "1000 wlld" command and writes the unformatted files 
+! 'W_[i-o]rp.dat', 'X_[i-o]rp.dat' and '[i-o]rp_size.dat' that are needed 
+! by the FreeFem++ heat transfer model of the reflector plates.
+! In 'W_[i-o]rp.dat' is stored the value of the heat flux for each tile of
+! the RP. 
+! In 'X_[i-o]rp.dat' is stored the value of the poloidal coordinate of the
+! center of each tile along the RP axis (in [m]).
+! In '[i-o]rp_size.dat' is stored the number of points (i.e. tiles) in which
+! the inner/outer RPs have been subdivided according to the assigned
+! tile poloidal length, which is read from the 'rps_input.dat' file.
 ! ##########################################################################
 
-      PROGRAM b2mb
+      PROGRAM b2yrp
 
       IMPLICIT NONE
 
@@ -24,16 +23,16 @@
       real :: HEIGTH, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER, W_TH, 
      . P_LENGTH, BETA
       real :: T_COOLANT, M_FLOW, CP_COOLANT
-      real dum(2), DIMENSIONS(3), target_length
+      real DIMENSIONS(3), target_length
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
-      CHARACTER*(30) :: INFILE0= 'monoblock_input.dat', 
-     . OUTFILE0 = 'mnb_in.dat'
-      CHARACTER*(30) :: testo, OUTFILE(3),INFILE
+      CHARACTER*(30) :: INFILE0= 'rps_input.dat', 
+     . OUTFILE0 = 'rps_in.dat'
+      CHARACTER*(30) :: skip, OUTFILE(3),INFILE
       CHARACTER*(1) :: trg(2)
       LOGICAL :: exists
 
 !##########################################################################
-!Read input file 'monoblock_input.dat' and then write 'mnb_in.dat'
+! Read input file 'rps_input.dat' and then write 'rps_in.dat'
 !##########################################################################
       NAMELIST /GEOMETRY/	                
      . HEIGTH, T_LENGTH, CU_TH, CUCRZR_TH, 
@@ -63,20 +62,20 @@
       close(INUNIT);
 
 ! ##########################################################################
-! Read input file 'ld_tg_[i-o].dat' to get heat flux profile on targets and
-! then write the relative output files 'W_tg[i-o].dat', 'X_tg[i-o].dat' and
-! 'tg[i-o]_size.dat'.
+! Read input files 'wlld_[i-o]rp.dat' to get heat flux profile on RPs and
+! then write the relative output files 'W_[i-o]rp.dat', 'X_[i-o]rp.dat', and
+! '[i-o]rp_size.dat'.
 ! ##########################################################################
       trg(1)='i'
       trg(2)='o'
 
-      DO KK=1,2 !First reads inner target, then outer target
-         INFILE='ld_tg_'//trg(KK)//'.dat'
+      DO KK=1,2 !First reads inner RP, then outer RP
+         INFILE='wlld_'//trg(KK)//'rp.dat'
          open(unit=inunit,file=infile,status='old',action='read')
-         READ(INUNIT,*) testo      !First two lines are text lines so must be skipped
-         READ(INUNIT,*) testo
+         READ(INUNIT,*) skip      !First two lines are text lines so must be skipped
+         READ(INUNIT,*) skip
          NLINE=0
- 5       READ(INUNIT,*,END=15) dum !File is of unknown length, so first count the number of lines
+ 5       READ(INUNIT,*,END=15) skip !File is of unknown length, so first count the number of lines
             NLINE = NLINE +1
          GO TO 5
  15      CLOSE(INUNIT)
@@ -86,10 +85,10 @@
          MM=0.0d0
          MM(1,3)=dble(NLINE)
          open(unit=inunit,file=infile,status='old',action='read')
-         READ(INUNIT,*) testo
-         READ(INUNIT,*) testo
+         READ(INUNIT,*) skip
+         READ(INUNIT,*) skip
          DO II=1,NLINE
-            READ(INUNIT,*) MM(II,1),dum,MM(II,2) !The data in the file are x, ne, Te, Wtot, ... so two dummy columns must be read
+            READ(INUNIT,*) MM(II,1:2) !The data in the file are x, Wtot, ...
          ENDDO
          CLOSE(INUNIT)
          !Interpolate the data on a coordinate vector with spatial x coordinates with a distance equal to the tile poloidal length
@@ -112,9 +111,9 @@
          dimensions(3)=1
          
          ! now write the output files, but first check if there are already present. If yes, remove them before writing
-         OUTFILE(1)='X_tg'//trg(KK)//'.dat'
-         OUTFILE(2)='W_tg'//trg(KK)//'.dat'
-         OUTFILE(3)='tg'//trg(KK)//'_size.dat'
+         OUTFILE(1)='X_'//trg(KK)//'rp.dat'
+         OUTFILE(2)='W_'//trg(KK)//'rp.dat'
+         OUTFILE(3)=trg(KK)//'rp_size.dat'
          DO JJ=1,3
             INQUIRE (FILE=outfile(JJ), EXIST=exists)
             if (exists) then 
