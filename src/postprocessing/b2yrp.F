@@ -20,7 +20,7 @@
       IMPLICIT NONE
 
       INTEGER :: NN, NLINE, NTILES, II, JJ, KK, INUNIT=8888
-      real :: HEIGTH, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER, W_TH, 
+      real :: L1, L2, L3, H1, H2, H3 ,H4, H5, H_HOLE, RH, 
      . P_LENGTH, BETA
       real :: T_COOLANT, M_FLOW, CP_COOLANT
       real DIMENSIONS(3), target_length
@@ -35,8 +35,8 @@
 ! Read input file 'b2yrp.dat' and then write 'rps_in.dat'
 !##########################################################################
       NAMELIST /GEOMETRY/	                
-     . HEIGTH, T_LENGTH, CU_TH, CUCRZR_TH, 
-     . DIAMETER, W_TH, P_LENGTH, BETA
+     . L1, L2, L3, H1, H2, H3 ,H4, 
+     . H5, H_HOLE, RH, P_LENGTH, BETA
 
       NAMELIST /MESH/                     
      . NN
@@ -55,8 +55,8 @@
          close (unit=inunit,status='delete')
       endif
       open(unit=inunit,file=outfile0,status='new',action='write')
-      write(inunit,*) HEIGTH, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER,
-     . W_TH, P_LENGTH, BETA
+      write(inunit,*) L1, L2, L3, H1, H2, H3 ,H4,
+     . H5, H_HOLE, RH, P_LENGTH, BETA
       write(inunit,*) T_COOLANT, M_FLOW, CP_COOLANT
       write(inunit,*) NN
       close(INUNIT);
