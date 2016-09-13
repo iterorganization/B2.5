@@ -1,5 +1,5 @@
 ! ##########################################################################
-! This program first reads the formatted file 'rps_input.dat' and 
+! This program first reads the formatted file 'b2yrp.dat' and 
 ! writes the unformatted file 'rps_in.dat' that is needed by the FreeFem++
 ! heat transfer model of the reflector plates.
 ! Then, it reads the files 'wlld_[i-o]rp.dat' produced by
@@ -12,7 +12,7 @@
 ! center of each tile along the RP axis (in [m]).
 ! In '[i-o]rp_size.dat' is stored the number of points (i.e. tiles) in which
 ! the inner/outer RPs have been subdivided according to the assigned
-! tile poloidal length, which is read from the 'rps_input.dat' file.
+! tile poloidal length, which is read from the 'b2yrp.dat' file.
 ! ##########################################################################
 
       PROGRAM b2yrp
@@ -25,14 +25,14 @@
       real :: T_COOLANT, M_FLOW, CP_COOLANT
       real DIMENSIONS(3), target_length
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
-      CHARACTER*(30) :: INFILE0= 'rps_input.dat', 
+      CHARACTER*(30) :: INFILE0= 'b2yrp.dat', 
      . OUTFILE0 = 'rps_in.dat'
       CHARACTER*(30) :: skip, OUTFILE(3),INFILE
       CHARACTER*(1) :: trg(2)
       LOGICAL :: exists
 
 !##########################################################################
-! Read input file 'rps_input.dat' and then write 'rps_in.dat'
+! Read input file 'b2yrp.dat' and then write 'rps_in.dat'
 !##########################################################################
       NAMELIST /GEOMETRY/	                
      . HEIGTH, T_LENGTH, CU_TH, CUCRZR_TH, 

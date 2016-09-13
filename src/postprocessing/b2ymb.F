@@ -1,5 +1,5 @@
 ! ##########################################################################
-! This program first reads the formatted file 'monoblock_input.dat' and writes the 
+! This program first reads the formatted file 'b2ymb.dat' and writes the 
 ! unformatted file 'mnb_in.dat' that is needed by the FreeFem++ heat 
 ! transfer model of the monoblock.
 ! Then, it reads the files 'wlld_trg[i-o].dat' produced by
@@ -13,7 +13,7 @@
 ! is at x=0
 ! In 'tg[i-o]_size.dat' is stored the number of points (i.e. tiles) in which
 ! the inner/outer monoblocks have been subdivided according to the assigned
-! tile poloidal length, which is read from the 'monoblock_input.dat' file.
+! tile poloidal length, which is read from the 'b2ymb.dat' file.
 ! ##########################################################################
 
       PROGRAM b2ymb
@@ -26,14 +26,14 @@
       real :: T_COOLANT, M_FLOW, CP_COOLANT
       real DIMENSIONS(3), target_length
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
-      CHARACTER*(30) :: INFILE0= 'monoblock_input.dat', 
+      CHARACTER*(30) :: INFILE0= 'b2ymb.dat', 
      . OUTFILE0 = 'mnb_in.dat'
       CHARACTER*(30) :: skip, OUTFILE(3),INFILE
       CHARACTER*(1) :: trg(2)
       LOGICAL :: exists
 
 !##########################################################################
-!Read input file 'monoblock_input.dat' and then write 'mnb_in.dat'
+!Read input file 'b2ymb.dat' and then write 'mnb_in.dat'
 !##########################################################################
       NAMELIST /GEOMETRY/	                
      . HEIGTH, T_LENGTH, CU_TH, CUCRZR_TH, 
