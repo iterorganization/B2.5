@@ -183,7 +183,6 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call cfopen (nout(3),'b2fmovie','replace','un*formatted')
       call cfopen (nout(4),'b2ftrace','replace','un*formatted')
       call cfopen (nout(5),'b2ftrack','replace','un*formatted')
-      call cfopen (nout(7),'b2fplasma','replace','unformatted')  !srv 02.05.09 }
 *   ..mark output unit for error messages
       call xerset (0)
 
@@ -229,6 +228,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call alloc_b2mod_ppout(nx,ny,ns)
       call b2mndr (ninp, nout, nx, ny, ns, ns0)
 *   ..write plasma state
+      call cfopen (nout(7),'b2fplasma','replace','unformatted')  !srv 02.05.09 }
       call cfverw(nout(7), newversion)
       call write_b2mod_geo(nout(7))
       call write_b2mod_plasma(nout(7))

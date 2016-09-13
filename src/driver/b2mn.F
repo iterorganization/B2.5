@@ -218,7 +218,6 @@ csw
       call cfopen (nout(3),'b2fmovie','new','un*formatted')
       call cfopen (nout(4),'b2ftrace','new','un*formatted')
       call cfopen (nout(5),'b2ftrack','new','un*formatted')
-      call cfopen (nout(7),'b2fplasma','new','unformatted')
 *   ..mark output unit for error messages
       call xerset (0)
 *   ..obtain version numbers						 !xpb
@@ -260,6 +259,7 @@ csw
       call alloc_b2mod_b2_to_astra(nx, ny, ns)
       call b2mndr (ninp, nout, nx, ny, ns, ns0)
 *   ..write plasma state
+      call cfopen (nout(7),'b2fplasma','new','unformatted')
       call cfverw(nout(7), newversion)
       call write_b2mod_geo(nout(7))
       call write_b2mod_plasma(nout(7))
