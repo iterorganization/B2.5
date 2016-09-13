@@ -387,7 +387,7 @@ c-dpc        endif
               line=line(1:32)
             endif
             call mds_put_string('\TOP.IDENT:B2FPLASMAID',line)
-            write(nout(0),'(a,a)') '   B2FPLASMAID : ',trim(line)
+            write(nout(0),'(a,a)') '  B2FPLASMAID : ',trim(line)
             dbb2fplasmaid=trim(line)
           case('b2fgmtryid')
             if(len_trim(line).eq.0) then

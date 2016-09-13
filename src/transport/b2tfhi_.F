@@ -187,9 +187,9 @@ c-rfs     1 minval(fni(-1,:,0)),maxval(fni(-1,:,0))
      &             -na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &              ti(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                               )
-          coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*       ! 0.25*2  !srv 02.01.07
+          coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
      *               cddi(ix,iy,1,is)*na(ix,iy,is)*ti(ix,iy)
-          coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*       ! 0.25*2  !srv 02.01.07
+          coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*  ! 0.25*2  !srv 02.01.07
      &     cddi(ix,iy,1,is)*na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
           endif
@@ -268,11 +268,11 @@ c-rfs     1 minval(fni(-1,:,0)),maxval(fni(-1,:,0))
      &             -na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &              ti(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                               )
-          coni(ix,iy,1,1) = coni(ix,iy,1,1)+0.5e0_R8*PSch*          ! 0.25*2 !srv 02.01.07 {
+          coni(ix,iy,1,1) = coni(ix,iy,1,1)+0.5e0_R8*PSch*     ! 0.25*2 !srv 02.01.07 {
      &                      cddi(ix,iy,0,is)*na(ix,iy,is)*ti(ix,iy)
-          coni(ix,iy,1,2) = coni(ix,iy,1,2)+0.5e0_R8*PSch*          ! 0.25*2
+          coni(ix,iy,1,2) = coni(ix,iy,1,2)+0.5e0_R8*PSch*     ! 0.25*2
      &       cddi(ix,iy,0,is)*na(leftix(ix,iy),leftiy(ix,iy),is)*
-     &                        ti(leftix(ix,iy),leftiy(ix,iy))       !srv 02.01.07 }
+     &                        ti(leftix(ix,iy),leftiy(ix,iy))           !srv 02.01.07 }
          endif
         enddo
        enddo
@@ -281,7 +281,7 @@ c-rfs     1 minval(fni(-1,:,0)),maxval(fni(-1,:,0))
       do iy = -1, ny
        do ix = 0, nx
         fhiPSch(ix,iy,:) = 2.5e0_R8*fhiPSch(ix,iy,:)*facdrift(ix,iy)
-        coni(ix,iy,:,1:2) = coni(ix,iy,:,1:2)*facdrift(ix,iy)          !srv 02.01.07
+        coni(ix,iy,:,1:2) = coni(ix,iy,:,1:2)*facdrift(ix,iy)           !srv 02.01.07
        enddo
       enddo
 
@@ -294,75 +294,75 @@ c  ..set null flux in guard cells  ?
 
 
       flidia = 0.0_R8                                                   !srv 25.01.02 {
-      if(facdriftm.ne.0.0e0_R8) then                                     !srv 18.01.07
+      if(facdriftm.ne.0.0e0_R8) then                                    !srv 18.01.07
        do is = 0, ns-1
         if ( .not.is_neutral(is) ) then
 * ..compute flidiax
          do iy = -1, ny
          do ix = 0, nx
-          if(leftix(ix,iy).ne.-2)then                                 !srv 26.11.02
+          if(leftix(ix,iy).ne.-2)then                                   !srv 26.11.02
            flidia(ix,iy,0) = flidia(ix,iy,0)
-     &       +(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))           !srv 17.05.99 11.03.00 25.01.02 was 5/2
-     &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))             !srv 17.05.99 11.03.00
-     &       *(na(leftix(ix,iy),leftiy(ix,iy),is)                     !srv 17.05.99 11.03.00
-!     &       *bb(leftix(ix,iy),leftiy(ix,iy),2)                       !srv 17.05.99 11.03.00 05.02.05
-!     &       /bb(leftix(ix,iy),leftiy(ix,iy),3)                       !srv 17.05.99 11.03.00 05.02.05
+     &       +(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))             !srv 17.05.99 11.03.00 25.01.02 was 5/2
+     &       /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))               !srv 17.05.99 11.03.00
+     &       *(na(leftix(ix,iy),leftiy(ix,iy),is)                       !srv 17.05.99 11.03.00
+!     &       *bb(leftix(ix,iy),leftiy(ix,iy),2)                        !srv 17.05.99 11.03.00 05.02.05
+!     &       /bb(leftix(ix,iy),leftiy(ix,iy),3)                        !srv 17.05.99 11.03.00 05.02.05
      &        +na(ix,iy,is)
-!     &        *bb(ix,iy,2)/bb(ix,iy,3)                                !srv 05.02.05
-     &                    )*0.5e0_R8                                  !srv 17.05.99 11.03.00
-     &       *vadia(ix,iy,0,is)*2.5e0_R8*vdia_par                     !srv 17.05.99 11.03.00 21.04.00 13.09.02 18.01.07
-!     &          +(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))           !srv 25.01.02 was 5/2
+!     &        *bb(ix,iy,2)/bb(ix,iy,3)                                 !srv 05.02.05
+     &                    )*0.5e0_R8                                    !srv 17.05.99 11.03.00
+     &       *vadia(ix,iy,0,is)*2.5e0_R8*vdia_par                       !srv 17.05.99 11.03.00 21.04.00 13.09.02 18.01.07
+!     &          +(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))         !srv 25.01.02 was 5/2
 !     &           /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
 !     &           *(bb(leftix(ix,iy),leftiy(ix,iy),2)
 !     &            /bb(leftix(ix,iy),leftiy(ix,iy),3)
 !     &             +bb(ix,iy,2)/bb(ix,iy,3))*0.5e0_R8
 !     &     *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0e0_R8
 !     &     *vadia(ix,iy,0,is)
-          endif                                                        !srv 26.11.02
+          endif                                                         !srv 26.11.02
          enddo
          enddo
 * ..compute flidiay
          do iy = 0, ny
          do ix = -1, nx
           flidia(ix,iy,1) = flidia(ix,iy,1)
-     &        +(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))       !srv 25.01.02 was 5/2
+     &        +(vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))        !srv 25.01.02 was 5/2
      &        /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))         
      &   *(na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/2.0e0_R8 
-     &   *vadia(ix,iy,1,is)*2.5e0_R8*vdia_par                         !srv 13.09.02 18.01.07
+     &   *vadia(ix,iy,1,is)*2.5e0_R8*vdia_par                           !srv 13.09.02 18.01.07
          enddo
          enddo
         endif
-       enddo                                                           !srv 25.01.02 }
-      endif                                                           !srv 18.01.07
+       enddo                                                            !srv 25.01.02 }
+      endif                                                             !srv 18.01.07
 
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                !srv 16.09.02 {
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                   !srv 16.09.02 {
        allocate(
      *    w1(-1:nx,-1:ny), w2(-1:nx,-1:ny), w3(-1:nx,-1:ny)
      *   ,w4(-1:nx,-1:ny), w5(-1:nx,-1:ny), w6(-1:nx,-1:ny)
      *         )
        w1=0.0e0_R8; w2=0.0e0_R8; w3=0.0e0_R8; w4=0.0e0_R8; w5=0.0e0_R8;
        w6=0.0e0_R8;
-      endif                                                          !srv 16.09.02 }
+      endif                                                             !srv 16.09.02 }
 
-      fhi_mdf = 0.0_R8                                       !srv 17.06.09
+      fhi_mdf = 0.0_R8                                                  !srv 17.06.09
 * ..compute fluxes and linearization
 *   ..compute fhix, floix, conix
       do iy = -1, ny
-       do ix = -1, nx                                                 !srv 26.11.02
-        if(leftix(ix,iy).eq.-2)then                                   !srv 26.11.02
+       do ix = -1, nx                                                   !srv 26.11.02
+        if(leftix(ix,iy).eq.-2)then                                     !srv 26.11.02
          floi(ix,iy,0)     = 0.0e0_R8
-         coni(ix,iy,0,0)   = 0.0e0_R8                      !srv 02.01.07
+         coni(ix,iy,0,0)   = 0.0e0_R8                                   !srv 02.01.07
          fhi(ix,iy,0)      = 0.0e0_R8
-         fhi_mdf(ix,iy,0)  = 0.0e0_R8                                 !srv 13.10.06
+         fhi_mdf(ix,iy,0)  = 0.0e0_R8                                   !srv 13.10.06
         else
          dti = ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
          floi0 = 1.5e0_R8*fni(ix,iy,0)+
      &   chvi(ix,iy,0)*(ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2
-     &           +flidia(ix,iy,0) ! *signmf                           !srv 25.01.02 18.01.07 11.01.13
-         floi0_mdf = 1.5e0_R8*fni(ix,iy,0)+                           !srv 13.10.06 {
+     &           +flidia(ix,iy,0) ! *signmf                             !srv 25.01.02 18.01.07 11.01.13
+         floi0_mdf = 1.5e0_R8*fni(ix,iy,0)+                             !srv 13.10.06 {
      &   chvi(ix,iy,0)*(ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2
 
-         if(lim_flux.eq.1 .and. conductive_limit.eq.0) then           !srv 17.01.12
+         if(lim_flux.eq.1 .and. conductive_limit.eq.0) then             !srv 17.01.12
 
 csw 17feb2012
           if(no_Ptncr_x_hi.eq.0) then
@@ -458,14 +458,15 @@ csw 30apr2014 for SOLPS4 style
             floi(ix,iy,0) = floi0-
      &      sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
      &      min(0.0e0_R8,t1)**2
-            coni(ix,iy,0,0) = abs(floi0/2.e0)+coni0/(1+t0)                !srv 02.01.07
+            coni(ix,iy,0,0) = abs(floi0/2.e0)+coni0/(1+t0)              !srv 02.01.07
            endif
 
           else
 
 csw 17feb2012
            if(no_Ptncr_x_hi.eq.0) then
-            coni0_mdf = hybr(floi0_mdf,chci(ix,iy,0))-abs(floi0_mdf/2.0)   !srv 17.06.09 {
+            coni0_mdf =
+     .        hybr(floi0_mdf,chci(ix,iy,0))-abs(floi0_mdf/2.0)          !srv 17.06.09 {
            else
             coni0_mdf = chci(ix,iy,0)-abs(floi0_mdf/2.0)
            endif
@@ -480,37 +481,37 @@ csw 13mar2013 SOLPS4 style (overwrite coni0_mdf)
            t0_mdf =coni0_mdf*abs(dti)/(flomx*
      &                  max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
            dti0_mdf = dti/(1.0_R8+t0_mdf)
-           t1_mdf = t0_mdf/(1.0_R8+t0_mdf)   !srv 17.06.09 {
+           t1_mdf = t0_mdf/(1.0_R8+t0_mdf)                              !srv 17.06.09 {
 
 csw 27nov2012 added check upwind (SOLPS4 style)
            if(b2_upwind .ne. 0) then
              fhi_mdf(ix,iy,0) = upwind(floi0_mdf,
      &           ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)) 
-     &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)     !srv 17.06.09 }
+     &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)                         !srv 17.06.09 }
              floi(ix,iy,0) = floi0_mdf-
      &        sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
      &        min(0.0e0_R8,t1_mdf)**2
-             coni(ix,iy,0,0) = coni0_mdf/(1.0_R8+t0_mdf)  !srv 02.01.07
+             coni(ix,iy,0,0) = coni0_mdf/(1.0_R8+t0_mdf)                !srv 02.01.07
            else
              fhi_mdf(ix,iy,0) = floi0_mdf*
      &           (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0 
-     &       -abs(floi0_mdf/2.0)*dti-coni0_mdf*dti0 - fhiPSch(ix,iy,0)     !srv 17.06.09 }
+     &       -abs(floi0_mdf/2.0)*dti-coni0_mdf*dti0 - fhiPSch(ix,iy,0)  !srv 17.06.09 }
              floi(ix,iy,0) = floi0_mdf-
      &        sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
      &        min(0.0e0_R8,t1_mdf)**2
-             coni(ix,iy,0,0)=abs(floi0_mdf/2)+coni0_mdf/(1.0_R8+t0_mdf)  !srv 02.01.07
+             coni(ix,iy,0,0)=abs(floi0_mdf/2)+coni0_mdf/(1.0_R8+t0_mdf) !srv 02.01.07
            endif
           endif
 
-         else  !lim_flux  check                                                        !srv 04.02.03 {
+         else  !lim_flux  check                                         !srv 04.02.03 {
 
-          if(no_Ptncr_x_hi.eq.0) then                                  !srv 06.07.06 {
+          if(no_Ptncr_x_hi.eq.0) then                                   !srv 06.07.06 {
            coni0     = hybr(floi0,chci(ix,iy,0))
            coni0_mdf = hybr(floi0_mdf,chci(ix,iy,0))
           else
            coni0     = chci(ix,iy,0)
            coni0_mdf = chci(ix,iy,0)
-          endif                                                        !srv 06.07.06 }
+          endif                                                         !srv 06.07.06 }
 
 csw 13mar2013 SOLPS4 style (overwrite coni0/coni0_mdf)
           if(b2tfhi_hybr2 .ne. 0) then
@@ -524,8 +525,8 @@ csw 13mar2013 SOLPS4 style (overwrite coni0/coni0_mdf)
 
           dti0 = dti
 
-          if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then    !srv 16.09.02 {
-           if(mdf_fhi.eq.0) then                                       !srv 13.10.06 {
+          if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then               !srv 16.09.02 {
+           if(mdf_fhi.eq.0) then                                        !srv 13.10.06 {
             w1(ix,iy)=floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
      &                        +ti(ix,iy))/2
             w2(ix,iy)= -coni0*dti0
@@ -544,31 +545,31 @@ csw 27nov2012 added check upwind (SOLPS4 style)
             fhi(ix,iy,0) = upwind(floi0,ti(leftix(ix,iy),leftiy(ix,iy))
      &                                ,ti(ix,iy))
      &           - coni0*dti0
-            fhi_mdf(ix,iy,0) = upwind(floi0_mdf,                   !srv 13.10.06 {
+            fhi_mdf(ix,iy,0) = upwind(floi0_mdf,                        !srv 13.10.06 {
      &           ti(leftix(ix,iy),leftiy(ix,iy)) ,ti(ix,iy)) 
-     &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)                    !srv 13.10.06 }
+     &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)                         !srv 13.10.06 }
           else
             fhi(ix,iy,0) = floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
      &                            +ti(ix,iy))/2.0 
      &      - coni0*dti0
-            fhi_mdf(ix,iy,0) = floi0_mdf*                          !srv 13.10.06 {
+            fhi_mdf(ix,iy,0) = floi0_mdf*                               !srv 13.10.06 {
      &           (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0 
-     &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)                    !srv 13.10.06 }
+     &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)                         !srv 13.10.06 }
           endif
 
-          if(mdf_fhi.eq.0) then                                    !srv 13.10.06 {
+          if(mdf_fhi.eq.0) then                                         !srv 13.10.06 {
            floi(ix,iy,0)   = floi0
-           coni(ix,iy,0,0) = coni0                                 !srv 02.01.07
+           coni(ix,iy,0,0) = coni0                                      !srv 02.01.07
           else
            floi(ix,iy,0)   = floi0_mdf
-           coni(ix,iy,0,0) = coni0_mdf                             !srv 02.01.07
-          endif                                                    !srv 13.10.06 }
-         endif                                                     !srv 04.02.03 }
-        endif                                                      !srv 26.11.02
+           coni(ix,iy,0,0) = coni0_mdf                                  !srv 02.01.07
+          endif                                                         !srv 13.10.06 }
+         endif                                                          !srv 04.02.03 }
+        endif                                                           !srv 26.11.02
        enddo
       enddo
 
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then              !srv 16.09.02 {
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                   !srv 16.09.02 {
        call my_out(70,nx,ny,w1,'b2tfhi__qi_32x')
        call my_out(70,nx,ny,w2,'b2tfhi__qi_ki_gTx')
 !       w3=w1+w2
@@ -577,43 +578,43 @@ csw 27nov2012 added check upwind (SOLPS4 style)
        call my_out(70,nx,ny,fhiPSch(-1,-1,0),'b2tfhi__fhiPSchx')
        w1=0.0e0_R8; w2=0.0e0_R8; w3=0.0e0_R8; w4=0.0e0_R8; w5=0.0e0_R8;
        w6=0.0e0_R8;
-      endif                                                        !srv 16.09.02 }
+      endif                                                             !srv 16.09.02 }
 
 *   ..compute fhiy, floiy, coniy
       do ix = -1, nx
        floi(ix,-1,1)    = 0
-       coni(ix,-1,1,0)  = 0                                        !srv 02.01.07
+       coni(ix,-1,1,0)  = 0                                             !srv 02.01.07
        fhi(ix,-1,1)     = 0.0e0_R8
-       fhi_mdf(ix,-1,1) = 0.0e0_R8                                 !srv 13.10.06
+       fhi_mdf(ix,-1,1) = 0.0e0_R8                                      !srv 13.10.06
       enddo
       do iy = 0, ny
        do ix = -1, nx
-        floi0 = 1.5e0_R8*fni(ix,iy,1)+                             !srv 11.05.99
+        floi0 = 1.5e0_R8*fni(ix,iy,1)+                                  !srv 11.05.99
      &    chvi(ix,iy,1)*(ni(bottomix(ix,iy),bottomiy(ix,iy),0)
      &                   +ni(ix,iy,0))/2
-     &        +flidia(ix,iy,1)                                     !srv 25.01.02 18.01.07
-     &    +1.5e0_R8/qe*(fchinert(ix,iy,1)+fchvispar(ix,iy,1)       !lk 30.05.11
-     &    +fchanml(ix,iy,1))*ycur                                  !lk 30.05.11
-        floi0_mdf = 1.5e0_R8*fni(ix,iy,1)+                         !srv 11.05.99
+     &        +flidia(ix,iy,1)                                          !srv 25.01.02 18.01.07
+     &    +1.5e0_R8/qe*(fchinert(ix,iy,1)+fchvispar(ix,iy,1)            !lk 30.05.11
+     &    +fchanml(ix,iy,1))*ycur                                       !lk 30.05.11
+        floi0_mdf = 1.5e0_R8*fni(ix,iy,1)+                              !srv 11.05.99
      &    chvi(ix,iy,1)*(ni(bottomix(ix,iy),bottomiy(ix,iy),0)
      &                   +ni(ix,iy,0))/2
-     &    +1.5e0_R8/qe*(fchinert(ix,iy,1)+fchvispar(ix,iy,1)       !lk 30.05.11
-     &    +fchanml(ix,iy,1))*ycur                                  !lk 30.05.11
-        if(no_Ptncr_y_hi.eq.0) then                                !srv 06.07.06 {
-         if(mdf_fhi.eq.0) then                                     !srv 13.10.06 {
+     &    +1.5e0_R8/qe*(fchinert(ix,iy,1)+fchvispar(ix,iy,1)            !lk 30.05.11
+     &    +fchanml(ix,iy,1))*ycur                                       !lk 30.05.11
+        if(no_Ptncr_y_hi.eq.0) then                                     !srv 06.07.06 {
+         if(mdf_fhi.eq.0) then                                          !srv 13.10.06 {
           coni0    = hybr(floi0,chci(ix,iy,1))
-         else                                                      !srv 13.10.06 {
+         else                                                           !srv 13.10.06 {
           if(facdriftm.eq.0.0e0_R8) then
            coni0   = hybr(floi0,chci(ix,iy,1))
           else
            coni0   = chci(ix,iy,1)
           endif
-         endif                                                     !srv 13.10.06 }
+         endif                                                          !srv 13.10.06 }
          coni0_mdf = hybr(floi0_mdf,chci(ix,iy,1))
         else
          coni0     = chci(ix,iy,1)
          coni0_mdf = chci(ix,iy,1)
-        endif                                                      !srv 06.07.06 }
+        endif                                                           !srv 06.07.06 }
 
 csw 13mar2013 SOLPS4 hybrid (overwrite coni0/coni0_mdf)
         if(b2tfhi_hybr2 .ne. 0) then
@@ -632,8 +633,8 @@ csw 30apr2014 only for TESTING
         endif
 
 
-        if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then            !srv 16.09.02 {
-         if(mdf_fhi.eq.0) then                                     !srv 13.10.06 {
+        if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                 !srv 16.09.02 {
+         if(mdf_fhi.eq.0) then                                          !srv 13.10.06 {
           w1(ix,iy)=1.5e0_R8*fni(ix,iy,1)*
      1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2
           w2(ix,iy)=flidia(ix,iy,1)*
@@ -651,7 +652,7 @@ csw 30apr2014 only for TESTING
           w4(ix,iy)=0.0e0_R8
           w6(ix,iy)=  coni0_mdf
          endif
-        endif                                                !srv 16.09.02 }
+        endif                                                           !srv 16.09.02 }
 
 csw 13mar2013 added check upwind (SOLPS4)
         if(b2_upwind .ne. 0) then
@@ -661,16 +662,16 @@ csw 13mar2013 added check upwind (SOLPS4)
          fhi_mdf(ix,iy,1) = upwind(floi0_mdf,                           !srv 13.10.06 {
      1    ti(bottomix(ix,iy),bottomiy(ix,iy)) , ti(ix,iy))
      &   -coni0_mdf*(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
-     &    -fhiPSch(ix,iy,1)                                     !srv 13.10.06 }
+     &    -fhiPSch(ix,iy,1)                                             !srv 13.10.06 }
         else
          fhi(ix,iy,1) = floi0*
      1    (ti(bottomix(ix,iy),bottomiy(ix,iy))
      &                               +ti(ix,iy))/2
      &    -coni0*(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
-         fhi_mdf(ix,iy,1) = floi0_mdf*                           !srv 13.10.06 {
+         fhi_mdf(ix,iy,1) = floi0_mdf*                                  !srv 13.10.06 {
      1    (ti(bottomix(ix,iy),bottomiy(ix,iy)) + ti(ix,iy))/2
      &    -coni0_mdf*(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
-     &    -fhiPSch(ix,iy,1)                                     !srv 13.10.06 }
+     &    -fhiPSch(ix,iy,1)                                             !srv 13.10.06 }
         endif
 
 
@@ -697,13 +698,13 @@ csw 2014 add viscous term   (ONLY FOR TESTING w/ SOLPS4 discretization)
            enddo
           endif
 
-         if(mdf_fhi.eq.0) then                                  !srv 13.10.06 {
+         if(mdf_fhi.eq.0) then                                          !srv 13.10.06 {
           floi(ix,iy,1)   = floi0
-          coni(ix,iy,1,0) = coni0                          !srv 02.01.07
+          coni(ix,iy,1,0) = coni0                                       !srv 02.01.07
          else
           floi(ix,iy,1)   = floi0_mdf
-          coni(ix,iy,1,0) = coni0_mdf                      !srv 02.01.07
-         endif                                                  !srv 13.10.06 }
+          coni(ix,iy,1,0) = coni0_mdf                                   !srv 02.01.07
+         endif                                                          !srv 13.10.06 }
 
        enddo
       enddo
@@ -729,14 +730,14 @@ csw 18feb2014 remove fluxes between guard cells
         enddo
 
 
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then  !srv 16.09.02 {
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                   !srv 16.09.02 {
        call my_out(70,nx,ny,w1,'b2tfhi__qi_32y')
 !       call my_out(70,nx,ny,w2,'qiy2')
        call my_out(70,nx,ny,w3,'b2tfhi__qi_ki_gTy')
 !       call my_out(70,nx,ny,w4,'qiy4')
 !       w5=w1+w2+w3+w4
 !       call my_out(70,nx,ny,w5,'qiy5')
-       call my_out(70,nx,ny,w6,'b2tfhi__chciy_Pat')     !srv 16.09.02 }
+       call my_out(70,nx,ny,w6,'b2tfhi__chciy_Pat')                     !srv 16.09.02 }
        call my_out(70,nx,ny,fhiPSch(-1,-1,1),'b2tfhi__fhiPSchy')
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
@@ -749,18 +750,18 @@ csw 18feb2014 remove fluxes between guard cells
         DO IY=NYISO1(IB), NYISO2(IB)
          fhi(ix,iy,0)   =0.0e0_R8
          floi(ix,iy,0)  =0.0e0_R8
-         coni(ix,iy,0,:)=0.0e0_R8                      !srv 02.01.07
+         coni(ix,iy,0,:)=0.0e0_R8                                       !srv 02.01.07
         enddo
        end do
        DO IX=NXISO1(IB), NXISO2(IB)
         DO IY=NYISO1(IB), NYISO2(IB)+1
           fhi(ix,iy,1)   =0.0e0_R8
           floi(ix,iy,1)  =0.0e0_R8
-          coni(ix,iy,1,:)=0.0e0_R8                      !srv 02.01.07
+          coni(ix,iy,1,:)=0.0e0_R8                                      !srv 02.01.07
         enddo
        enddo
       enddo
-      if(iout.ne.0) then                                             !srv 18.06.08 {
+      if(iout.ne.0) then                                                !srv 18.06.08 {
        call my_out(70,nx,ny,floi(-1,-1,0),'floix')
        call my_out(70,nx,ny,floi(-1,-1,1),'floiy')
        call my_out(70,nx,ny,coni(-1,-1,0,0),'conix0')
@@ -775,7 +776,7 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fhi_mdf(-1,-1,1),'fhi_mdfy')
        call my_out(70,nx,ny,fhiPSch(-1,-1,0),'fhiPSchx')
        call my_out(70,nx,ny,fhiPSch(-1,-1,1),'fhiPSchy')
-      endif                                                          !srv 18.06.08 }
+      endif                                                             !srv 18.06.08 }
 * ..return
       ncall = ncall+1
       call subend ()
