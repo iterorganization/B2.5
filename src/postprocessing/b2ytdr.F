@@ -7869,9 +7869,12 @@ cxpb as they no longer necessarily point to the same species
           end if
         end do
 #ifndef NO_B2_CHEM_SPUT
-        if (igass_chemical.ne.0 .and. igass_chemical.lt.ns)
-     >   igass_chemical=iatm1(igass_chemical)
-        if (igass_chemical.ne.0 .and. igass_chemical.lt.ns) then
+        if (igass_chemical.gt.0 .and. igass_chemical.le.natmi) then
+          igass_chemical=iatm1(igass_chemical)
+        else if (igass_chemical.gt.natmi) then
+          igass_chemical=natm1+1
+        end if
+        if (fchar_chemical.gt.0.0_R8) then
           if (fchar_chemical.ne.0.0_R8) write(99, '(a,1pg10.3,a)')
      .     'FCHAR_CHEMICAL=',fchar_chemical,','
           if (igass_chemical.ne.0) write(99, '(a,i3,a)')

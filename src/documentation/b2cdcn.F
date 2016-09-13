@@ -266,9 +266,11 @@
 *    Passed to Eirene. Chemical sputter yield of wall surface (ilim).
 *    Defaults to 0.0.
 *  FCHAR_CHEMICAL - real*8. Passed to Eirene. Nuclear charge of atomic species 
-*    causing the sputtering. Defaults to 0.
+*    causing the sputtering. Defaults to 0 [no chemical sputtering].
 *  IGASS_CHEMICAL - integer. Passed to Eirene. Eirene atomic species index of 
-*    the sputtered particle. Defaults to 0.
+*    the sputtered particle. Defaults to 0. If igass_chemical > natmi, the
+*    data from chemical_sputter_yield is not used and the yield from the Eirene
+*    surface blocks is used instead.
 *  ITSPUT_CHEMICAL - integer. Passed to Eirene. Eirene type index of the 
 *    sputtered particle. Atoms = 1, Ions = 4. Defaults to 0, meaning
 *    1 eV atom chemical sputtering.
