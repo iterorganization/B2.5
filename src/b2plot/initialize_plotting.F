@@ -119,7 +119,8 @@ c      call plinit()
       if(color_file.ne.' ') then
       write(*,*) 'Using ',color_file(1:lnblnk(color_file))
       if(.not.open_file(99,color_file,
-     1 'data.local/palettes|scripts/palettes')) then
+     1 'data.local/palettes|scripts.local/palettes|scripts/palettes'))
+     > then
         call color
         goto 50
       endif
