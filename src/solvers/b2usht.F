@@ -120,11 +120,14 @@
          flo0(ix,iy,0) = 0.0_R8
          con0(ix,iy,0,:) = 0.0_R8                                    !srv 02.01.07
         else
-         t0 = 2.5_R8*pcm1*pccm1(ix,iy)*pbs(ix,iy,0)*
-     &    (ne(leftix(ix,iy),leftiy(ix,iy))*
-     &     te(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy)*te(ix,iy)+
-     &     ni(leftix(ix,iy),leftiy(ix,iy),0)*
-     &     ti(leftix(ix,iy),leftiy(ix,iy))+ni(ix,iy,0)*ti(ix,iy))/2.0_R8
+         t0 = 2.5_R8*pcm1*pbs(ix,iy,0)*
+     &      (pccm1(leftix(ix,iy),leftiy(ix,iy))*
+     &       (ne(leftix(ix,iy),leftiy(ix,iy))*
+     &        te(leftix(ix,iy),leftiy(ix,iy))+
+     &        ni(leftix(ix,iy),leftiy(ix,iy),0)*
+     &        ti(leftix(ix,iy),leftiy(ix,iy)))+
+     &       pccm1(ix,iy)*(ne(ix,iy)*te(ix,iy)+ni(ix,iy,0)*ti(ix,iy)))/
+     &      2.0_R8
          flo0(ix,iy,0) = floe(ix,iy,0)+floi(ix,iy,0)-
      &    t0*(ne(ix,iy)+ni(ix,iy,0)-ne(leftix(ix,iy),leftiy(ix,iy))
      &             -ni(leftix(ix,iy),leftiy(ix,iy),0))
@@ -275,9 +278,11 @@ cxpb
          flo0(ix,iy,0) = 0.0_R8
          con0(ix,iy,0,:) = 0.0_R8                                    !srv 02.01.07
         else
-         t0 = 2.5_R8*pcm1*pccm1(ix,iy)*pbs(ix,iy,0)*
-     &    (ne(leftix(ix,iy),leftiy(ix,iy))*
-     &     te(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy)*te(ix,iy))/2.0_R8
+         t0 = 2.5_R8*pcm1*pbs(ix,iy,0)*
+     &      (pccm1(leftix(ix,iy),leftiy(ix,iy))*
+     &       ne(leftix(ix,iy),leftiy(ix,iy))*
+     &       te(leftix(ix,iy),leftiy(ix,iy))+
+     &       pccm1(ix,iy)*ne(ix,iy)*te(ix,iy))/2.0_R8
          flo0(ix,iy,0) = floe(ix,iy,0)
      &     -t0*(ne(ix,iy)-ne(leftix(ix,iy),leftiy(ix,iy)))
          con0(ix,iy,0,0) = cone(ix,iy,0,0)+(t0/2.0_R8)*              !srv 02.01.07
@@ -426,9 +431,11 @@ cxpb
          flo0(ix,iy,0) = 0.0_R8
          con0(ix,iy,0,:) = 0.0_R8                                    !srv 02.01.07
         else
-         t0 = 2.5_R8*pcm1*pccm1(ix,iy)*pbs(ix,iy,0)*
-     &    (ni(leftix(ix,iy),leftiy(ix,iy),0)*
-     &     ti(leftix(ix,iy),leftiy(ix,iy))+ni(ix,iy,0)*ti(ix,iy))/2.0_R8
+         t0 = 2.5_R8*pcm1*pbs(ix,iy,0)*
+     &      (pccm1(leftix(ix,iy),leftiy(ix,iy))*
+     &       ni(leftix(ix,iy),leftiy(ix,iy),0)*
+     &       ti(leftix(ix,iy),leftiy(ix,iy))+
+     &       pccm1(ix,iy)*ni(ix,iy,0)*ti(ix,iy))/2.0_R8
          flo0(ix,iy,0) = floi(ix,iy,0)-t0*(ni(ix,iy,0)
      &     -ni(leftix(ix,iy),leftiy(ix,iy),0))
          con0(ix,iy,0,0) = coni(ix,iy,0,0)+(t0/2.0_R8)*              !srv 02.01.07

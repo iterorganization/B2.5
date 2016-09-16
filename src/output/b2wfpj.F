@@ -12,7 +12,7 @@
       integer nprt, nx, ny, ns
       character idout*(*)
       real (kind=R8) ::
-     *   na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
+     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
@@ -276,20 +276,20 @@
 *-----------------------------------------------------------------------
 *.formats
 
-  103 format (2x,a2,'(',i2,'):',2x,1pe11.2,' at (',i4,',',i4,');',
+  103 format (2x,a2,'(',i3,'):',2x,1pe11.2,' at (',i4,',',i4,');',
      &  2x,1pe11.2,' at (',i4,',',i4,').')
   104 format (4x,a3,' :',2x,1pe11.2,' at (',i4,',',i4,');',
      &  2x,1pe11.2,' at (',i4,',',i4,').')
   105 format (/'  Flux of particles fnax(ix,,is),',
      &  ' integrated over y as function of x:'/
-     &  t4, 'ix', (t8,10(6x,'is=',i2:)))
+     &  t4, 'ix', (t8,10(6x,'is=',i3:)))
   106 format (/'  Flux of particles, heat, current, and energy',
      &  ' integrated over y as function of x:'/
      &  t4, 'ix', t15, 'fnex', t26, 'fnix', t37, 'fhex', t48, 'fhix',
      &  t59, 'fchx', t70, 'feex', t81, 'feix')
   107 format (/'  Flux of particles fnay(,iy,is),',
      &  ' integrated over x as function of y:'/
-     &  t4, 'iy', (t8,10(6x,'is=',i2:)))
+     &  t4, 'iy', (t8,10(6x,'is=',i3:)))
   108 format (/'  Flux of particles, heat, current, and energy',
      &  ' integrated over x as function of y:'/
      &  t4, 'iy', t15, 'fney', t26, 'fniy', t37, 'fhey', t48, 'fhiy',
@@ -327,8 +327,8 @@
 *.scribbles
 
 *!!   Note: Also write total energy fluxes. Total energy flux has
-*     factor (5/2) in the convective term and includes kinetic energy
-*     and recombination energy.
+*     factor (5/2) in the convective term and includes parallel kinetic
+*     energy and recombination energy.
 
 *-----------------------------------------------------------------------
 *.end b2wfpj

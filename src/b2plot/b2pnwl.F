@@ -117,8 +117,9 @@ c*** ... and produce the output file
 c<<<
 c      print *,'nwldprt,natmi,nmoli',nwldprt,natmi,nmoli
 c      do il=1,nwldprt
-c        print '(1x,20i4)',il,nwldlis(il)
-c        print '(1x,20i4)',(lwldlis(i,il),i=1,nwldlis(il))
+c        write (hlp_frm,'(a,i2,a)') '(1x,',nwldlis(il)+1,'i4)'
+c        print '(1x,2i4)',il,nwldlis(il)
+c        write (6,hlp_frm) (lwldlis(i,il),i=1,nwldlis(il))
 c      end do
 c>>>
 c
@@ -201,7 +202,9 @@ c*** (temporary solution, no molecules involved)
                 wwe(ii)=enrctff
               end do
             end if
-            write (lun,'(1x,a8,2i5,5f10.4,1p,24e12.4)') pltzlbl(il),
+            write (hlp_frm,'(a,i2,a)')
+     ,                 '(1x,a8,2i5,1p,5f10.4,',2*k+12,'e12.4)'
+            write (lun,hlp_frm) pltzlbl(il),
      ,                ib,is,pp1(1,ib),pp1(2,ib),pp2(1,ib),pp2(2,ib),
      ,                x,x/hlpx,a,wwt,wwk,wwp,(wwj(ii),wwe(ii),ii=1,k),
      ,                wwyn,wwyg

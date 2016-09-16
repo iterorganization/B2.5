@@ -427,7 +427,7 @@
 *     The error in this formula can be assessed from Puiatti.
 *     It is quite bad for Z=2.
 *     Note for future reference the work by Janev and Katsonis, in
-*     Nuclear Fusion, vol. 27 (1987) pp. 1493-...
+*     Nuclear Fusion, vol. 27 (1987) pp. 1493ff.
 *!!   Reconsider this code, in particular for Z=1 and Z=2.
 *   ..no charge exchange recombination from state 0
       do i = 0, nt

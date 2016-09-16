@@ -8,12 +8,12 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
       real (kind=R8) ::
-     *   corpa(-1:nx,-1:ny,0:ns-1), corua(-1:nx,-1:ny,0:ns-1),
+     *  corpa(-1:nx,-1:ny,0:ns-1), corua(-1:nx,-1:ny,0:ns-1),
      &  corut(-1:nx,-1:ny), corte(-1:nx,-1:ny), corti(-1:nx,-1:ny),
      &  corpo(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *   acorpa(0:ns-1), acorua(0:ns-1), acorut, acorte, acorti,
+     *  acorpa(0:ns-1), acorua(0:ns-1), acorut, acorte, acorti,
      &  acorpo
 
 *-----------------------------------------------------------------------
@@ -27,9 +27,9 @@
 *  3. description (see also routine b2cdca)
 *
 *     This routine computes maximum-norms of the corrections computed
-*     towards the solution of the equations for continuity, momentum
-*     balance, electron heat balance, atom heat balance, and charge
-*     balance.
+*     towards the solution of the equations for continuity, parallel
+*     momentum balance, electron heat balance, atom heat balance, and
+*     charge balance.
 *
 *
 *-----------------------------------------------------------------------

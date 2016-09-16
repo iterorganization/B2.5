@@ -1,5 +1,5 @@
       subroutine my_out(nwrite, nx, ny, fun, first_name)  !srv 19.12.07
-      use b2mod_indirect
+      use b2mod_types
       integer nwrite, nx, ny
       real (kind=R8) :: fun(-1:nx,-1:ny)
       character *(*) first_name

@@ -99,7 +99,6 @@ c     conversion of constants to CGS units
 
 *   ..subprogram start-up calls
       call subini ('neo_validity')
-c      call alloc_b2mod_neoclassical(nx,ny,ns,nstages,mmx)
       if(nnreg(0).gt.1 .and. nnreg(0).le.5) then
         ixref=rightcut(1)-(rightcut(1)-leftcut(1))/4
         iyref=2*topcut(1)/3
@@ -286,7 +285,7 @@ c      call alloc_b2mod_neoclassical(nx,ny,ns,nstages,mmx)
             lnab=17.3-0.5*log(ne(ix,iy)/1.e20)+1.5*log(ti(ix,iy)*
      &           erg/(eV_cgs*1.e3))
             nuab(ix,iy,is,is2)=16.*sqrt(pi)*na(ix,iy,is2)/1.e6
-     &        *rza(ix,iy,is)**2.*rza(ix,iy,is2)**2.*e_cgs**4./
+     &        *rz2(ix,iy,is)*rz2(ix,iy,is2)*e_cgs**4./
      &        (3.*am(is)*mp*gramm)*lnab*
      &        (1./(am(is)*mp*gramm)+1./(am(is2)*mp*gramm))/
      &        (vtha(ix,iy,is)**2.+vtha(ix,iy,is2)**2.)**1.5
@@ -304,12 +303,12 @@ c      call alloc_b2mod_neoclassical(nx,ny,ns,nstages,mmx)
 *      Coulomb logarithm
           lnab=15.2-0.5*log(ne(ix,iy)/1.e20)+log(te(ix,iy)*
      &         erg/(eV_cgs*1.e3))
-          nuab(ix,iy,is,ns)=16.*sqrt(pi)*ne(ix,iy)/1.e6*rza(ix,iy,is)**2.
+          nuab(ix,iy,is,ns)=16.*sqrt(pi)*ne(ix,iy)/1.e6*rz2(ix,iy,is)
      &      *e_cgs**4./(3.*am(is)*mp*gramm)*lnab*
      &      (1./(am(is)*mp*gramm)+1./(me*gramm))/
      &      (vtha(ix,iy,is)**2.+vtha(ix,iy,ns)**2.)**1.5
           nuab(ix,iy,ns,is)=16.*sqrt(pi)*na(ix,iy,is)/1.e6
-     &      *rza(ix,iy,is)**2.
+     &      *rz2(ix,iy,is)
      &      *e_cgs**4./(3.*me*gramm)*lnab*
      &      (1./(am(is)*mp*gramm)+1./(me*gramm))/
      &      (vtha(ix,iy,is)**2.+vtha(ix,iy,ns)**2.)**1.5
@@ -449,6 +448,7 @@ c      call alloc_b2mod_neoclassical(nx,ny,ns,nstages,mmx)
       use b2mod_rates
       use b2mod_b2cmpa
       use b2mod_b2plot_debug
+      use b2mod_external
       implicit none
 c#     include "b2cmpa.h"
       integer nx,ny,ns,jsep,jxa
@@ -468,7 +468,7 @@ c#     include "b2cmpa.h"
       external subini, subend, xertst
 
       call subini ('chang_hinton')
-      transport=0
+      transport=0.0_R8
       do iy=-1,jsep
 	if (b2plot_debug.ge.8) write(*,*) 'iy: ',iy
 	ix=jxa
@@ -535,10 +535,15 @@ c#     include "b2cmpa.h"
         enddo
         do is=0,ns-1
           if ((.not. is_neutral(is)).and.(is.ne.is_fuel)) then
-            alpha=alpha+na(ix,iy,is)*rza(ix,iy,is)**2
+            alpha=alpha+na(ix,iy,is)*rz2(ix,iy,is)
           endif
         enddo
-        alpha=alpha/(na(ix,iy,is_fuel)*rza(ix,iy,is_fuel)**2)
+        do is=0,ns_ext-1
+          if (.not. is_ext_neutral(is)) then
+            alpha=alpha+na_ext(ix,iy,is)*za2_ext(ix,iy,is)
+          endif
+        enddo
+        alpha=alpha/(na(ix,iy,is_fuel)*rz2(ix,iy,is_fuel))
         if (b2plot_debug.ge.8) write(*,*) 'alpha: ', alpha
 	do is=0,ns-1
 	  if(.not. is_neutral(is)) then
@@ -552,7 +557,7 @@ c#     include "b2cmpa.h"
 	    if (b2plot_debug.ge.8) write(*,*) 'rhoi: ',rhoi
 	    taui=12.0_R8*pi**1.5_R8*eps0**2*
      1	     (am(is)*mp)**0.5_R8*ti(ix,iy)**1.5_R8/
-     2	     (na(ix,iy,is)*rza(ix,iy,is)**4*qe**4*lnlam)
+     2	     (na(ix,iy,is)*rz2(ix,iy,is)**2*qe**4*lnlam)
 	    if (b2plot_debug.ge.8) write(*,*) 'taui: ',taui
 	    nui=1.0_R8/taui
 	    nustari=nui*(crmax+crmin)/2.0_R8*safetyfactor(iy)/

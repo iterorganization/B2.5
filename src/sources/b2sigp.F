@@ -89,9 +89,11 @@
            wrk2(ix,iy) = 0.0_R8
           else
            wrk0(ix,iy) = nb(ix,iy)*ti(ix,iy)-
-     &   nb(leftix(ix,iy),leftiy(ix,iy))*ti(leftix(ix,iy),leftiy(ix,iy))
+     &      nb(leftix(ix,iy),leftiy(ix,iy))*
+     &      ti(leftix(ix,iy),leftiy(ix,iy))
            wrk1(ix,iy) = ne(ix,iy)*te(ix,iy)-
-     &   ne(leftix(ix,iy),leftiy(ix,iy))*te(leftix(ix,iy),leftiy(ix,iy))
+     &      ne(leftix(ix,iy),leftiy(ix,iy))*
+     &      te(leftix(ix,iy),leftiy(ix,iy))
            wrk2(ix,iy) = ((rzb(ix,iy)*nb(ix,iy)/ne(ix,iy))*
      &                  vol(leftix(ix,iy),leftiy(ix,iy))+
      &                  (rzb(leftix(ix,iy),leftiy(ix,iy))*
@@ -249,4 +251,4 @@
 *-----------------------------------------------------------------------
 *.end b2sigp
 
-      end
+      end subroutine b2sigp

@@ -10,10 +10,10 @@ c
 c     input    : nsdecl   the maximum number of species
 c                nzdecl   the maximum number of charge states
 c                nsl    the actual number of species
-c                ncl    array(nsl+1) the number of charges states per
+c                ncl    array(nsl+1) the number of charge states per
 c                       species
 c                zsp   array(nsdecl+1,nzdecl) real. the charge of every
-c                      components (normalized to e)
+c                      component (normalized to e)
 c                ic    the contribution for which the coefficients
 c                      are calculated. 
 c                      0 classical particle flux
@@ -25,7 +25,7 @@ c                m     array(nsdecl+1) the mass of the species in kg
 c                t     array(nsdecl+1) the temperature of the species in
 c                      keV
 c                den   array(nsdecl+1,nzdecl) the density of every component
-c                      in units of 1.10^-19 m^-3
+c                      in units of 1.10^19 m^-3
 c                ds    array(nsdecl+1,nzdecl,2) the thermodynamic forces 
 c                      see the comments of the routine neoart to 
 c                      find the exact definition
@@ -33,7 +33,7 @@ c                rho   the flux surface label
 c                eparr loop voltage 
 c                epsn  the desired accuracy
 c     output     ddn   array(nsdecl+1,nzdecl) the diffusion coefficients 
-c                      of every components in units of rho^2/sec
+c                      of every component in units of rho^2/sec
 c                vvn   array(nsdecl+1,nzdecl) the total pinch coefficients of 
 c                      every component in units of rho/sec
 c                vtn   array(nsdecl+1,nzdecl) temperature dependent pinch  
@@ -47,8 +47,8 @@ c--------------------------------------------------------------------
 
       implicit none
 
-      integer :: nsdecl, nzdecl, nsl, ncl(0:nsdecl), nreg, nleg, 
-     +           nenergy, ncof, ic, i, j, k, l, mt                   !srv 09.02.11
+      integer :: nsl, ncl(0:nsdecl), nreg, nleg, nenergy, ncof, ic,
+     +           i, j, k, l, mt, nsdecl, nzdecl, ispecies, istate
       real (kind=R8) :: m(0:nsdecl), t(0:nsdecl), 
      +       den(0:nsdecl,0:nzdecl-1),
      +       ds(0:nsdecl,0:nzdecl-1,2), dsl(0:nsdecl,0:nzdecl-1,2), 

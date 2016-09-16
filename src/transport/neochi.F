@@ -13,10 +13,10 @@ c                         consistency check)
 c                nzdecl   the maximum number of charge states (used
 c                         for consistency check)
 c                nsl    the actual number of species
-c                ncl    array(nsdecl+1) the number of charges states per
+c                ncl    array(nsdecl+1) the number of charge states per
 c                       species
-c                zsp   array(nsdecl+1,nzdecl) real.  the charge of every
-c                      components (normalized to e)
+c                zsp   array(nsdecl+1,nzdecl) real. the charge of every
+c                      component (normalized to e)
 c                ic    the contribution for which the coefficients
 c                      are calculated 
 c                      0 classical particle flux
@@ -28,7 +28,7 @@ c                m     array(nsdecl+1) the mass of the species in kg
 c                t     array(nsdecl+1) the temperature of the species in
 c                      keV
 c                den   array(nsdecl+1,nzdecl) the density of every component
-c                      in units of 10^-19 m^-3
+c                      in units of 10^19 m^-3
 c                ds    array(nsdecl+1,nzdecl,2) the thermodynamic forces 
 c                      see the comments of the routine neoart to 
 c                      find the exact definition
@@ -55,8 +55,8 @@ c--------------------------------------------------------------------
       real nnorm
       parameter(nnorm = 1e19)
 
-      integer :: nsdecl, nzdecl, nsl, ncl(0:nsdecl), nreg, nleg, 
-     +           nenergy, ncof, ic, i, j, k, l, mt 
+      integer :: nsl, ncl(0:nsdecl), nreg, nleg, nenergy, ncof, ic,
+     +           i, j, k, l, mt, nsdecl, nzdecl
       real (kind=R8) :: m(0:nsdecl), t(0:nsdecl), 
      +       den(0:nsdecl,0:nzdecl-1),
      +       ds(0:nsdecl,0:nzdecl-1,2), dsl(0:nsdecl,0:nzdecl-1,2), 

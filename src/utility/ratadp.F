@@ -71,10 +71,10 @@
 *     /3/ D. E. Post, R. V. Jensen, C. B. Tarter, W. H. Grasberger,
 *     and W. A. Lokke, "Steady-State Radiative Cooling Rates for Low-
 *     Density, High-Temperature Plasma", At. Data Nucl. Data Tables
-*     vol.20 (1977) pp.397-.
+*     vol. 20 (1977) pp. 397ff.
 *     /4/ R. A. Hulse, D. E. Post, and D. R. Mikkelsen, "Charge
 *     Exchange as a Recombination Mechanism in High-Temperature
-*     Plasmas", J. Phys. B, vol.13 (1980) pp.3895-.
+*     Plasmas", J. Phys. B, vol. 13 (1980) pp. 3895ff.
 *     /5/ K. L. Bell, H. B. Gilbody, J. G. Hughes, A. E. Kingston,
 *     and F. J. Smith, "Recommended Data on the Electron Impact
 *     Ionization of Light Atoms and Ions", J. Phys. Chem. Ref. Data,

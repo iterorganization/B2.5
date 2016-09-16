@@ -101,15 +101,15 @@ c     filename ecd (effective ionisation potential)
 c     filename of actual file opened
       character actual_file*256
 c     helpers for composing filenames
-      integer ibundling
-      character UIDIN*80
+      integer ibundling, iquote, quote_count
+      character UIDIN*256, ZEILE*80
       character SUBDIRrec*4,SUBDIRion*4,SUBDIRcex*4
       character SUBDIRprb*4,SUBDIRplt*4,SUBDIRzav*4
       character SUBDIRza2*4,SUBDIRpot*4
       character NEWDIRrec*4,NEWDIRion*4,NEWDIRcex*4
       character NEWDIRprb*4,NEWDIRplt*4,NEWDIRzav*4
       character NEWDIRza2*4,NEWDIRpot*4
-      character ES*2, EB*2
+      character ES*2, EB*2, Bdescr*8
 c     helpers for reading in data
       integer IZMAX,IZ1MIN,IZ1MAX
       integer isdimd,iddimd,itdimd
@@ -134,7 +134,7 @@ c     helpers for reading in data
       character dnr_ele*12
 c     read in data
       integer maxne,ic
-c     log10 of densities(in 1/cm3),temperatures(in eV)
+c     log10 of densities (in 1/cm3), temperatures (in eV)
       real (kind=R8) ::
      *   DDENSDrec(iddimd),DTEVDrec(itdimd)
       real (kind=R8) ::
@@ -153,7 +153,7 @@ c     log10 of densities(in 1/cm3),temperatures(in eV)
      *   DDENSDpot(iddimd),DTEVDpot(itdimd)
       real (kind=R8) ::
      *   Ddummy(iddimd),Tdummy(itdimd)
-c     log10 of rate coefficients(in cm3/s)
+c     log10 of rate coefficients (in cm3/s)
       real (kind=R8) ::
      *   DREC(isdimd,itdimd,iddimd),DION(isdimd,itdimd,iddimd),
      &   DCEX(isdimd,itdimd,iddimd),DPLT(isdimd,itdimd,iddimd),
@@ -177,7 +177,7 @@ c     ionisation potentials
      *   ip(0:nc-1)
 
       logical silent_open
-      external silent_open, xertst
+      external silent_open, subini, subend, xerrab
 
 *   ..subprogram start-up calls
       call subini ('ratadas')
@@ -201,6 +201,10 @@ c     ionisation potentials
         Ddummy(ic) = (12.0_R8+9.0_R8*(ic-1.0_R8)/(iddimd-1.0_R8))
       enddo
 
+      if(fix_recomb.ne.0) then
+         write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb
+      endif
+
 c     reading in filename and mass
       call xertst(silent_open(99,'ratadas.filelist',
      1 'data.local|modules/B2.5/Database',actual_file), 'missing file')
@@ -222,11 +226,33 @@ c     reading in filename and mass
          write(*,*) 'ADAStables: element number',nc,'not supported!'
          return
       endif
-      do cc=1,nc
+c     jump over the preceding lines
+      do cc=1,nc-1
          read(99,*) SUBDIRrec,SUBDIRion,SUBDIRcex,SUBDIRprb,
      &              SUBDIRplt,SUBDIRzav,SUBDIRpot,ES
-         SUBDIRza2=SUBDIRzav
       enddo
+c     now read the relevant line
+      read(99,'(a80)') ZEILE
+      quote_count = 0
+      iquote = index(ZEILE,'''')
+      do while (iquote.gt.0)
+         quote_count=quote_count+1
+         if (index(ZEILE(iquote+1:80),'''').ne.0) then
+            iquote = index(ZEILE(iquote+1:80),'''') + iquote
+         else
+            iquote = 0
+         endif
+      enddo
+      if (quote_count.eq.16) then
+         read(ZEILE,*) SUBDIRrec,SUBDIRion,SUBDIRcex,SUBDIRprb,
+     &                 SUBDIRplt,SUBDIRzav,SUBDIRpot,ES
+      else if (quote_count.eq.18) then
+         read(ZEILE,*) SUBDIRrec,SUBDIRion,SUBDIRcex,SUBDIRprb,
+     &                 SUBDIRplt,SUBDIRzav,SUBDIRpot,ES,Bdescr
+      else
+         call xerrab ('Incomplete line found in ratadas.filelist!')
+      endif
+      SUBDIRza2=SUBDIRzav
       close(99)
 
 c     check ADAS year
@@ -288,7 +314,7 @@ c     ADAS file names
      &      '_'//ES//'.dat'
         fnpot='/adf11/ecd'//NEWDIRpot//'/ecd'//NEWDIRpot//
      &      '_'//ES//'.dat'
-      else
+      else if (quote_count.eq.16) then
         fnrec='/adf11/acd'//NEWDIRrec//'/acd'//NEWDIRrec//
      &      '_'//ES//'_'//EB//'.dat'
         fnion='/adf11/scd'//NEWDIRion//'/scd'//NEWDIRion//
@@ -305,6 +331,23 @@ c     ADAS file names
      &      '_'//ES//'_'//EB//'.dat'
         fnpot='/adf11/ecd'//NEWDIRpot//'/ecd'//NEWDIRpot//
      &      '_'//ES//'_'//EB//'.dat'
+      else if (quote_count.eq.18) then
+        fnrec='/adf11/acd'//NEWDIRrec//'/acd'//NEWDIRrec//
+     &      '_'//ES//'_'//EB//'_'//Bdescr//'.dat'
+        fnion='/adf11/scd'//NEWDIRion//'/scd'//NEWDIRion//
+     &      '_'//ES//'_'//EB//'_'//Bdescr//'.dat'
+        fncex='/adf11/ccd'//NEWDIRcex//'/ccd'//NEWDIRcex//
+     &      '_'//ES//'_'//EB//'_'//Bdescr//'.dat'
+        fnprb='/adf11/prb'//NEWDIRprb//'/prb'//NEWDIRprb//
+     &      '_'//ES//'_'//EB//'_'//Bdescr//'.dat'
+        fnplt='/adf11/plt'//NEWDIRplt//'/plt'//NEWDIRplt//
+     &      '_'//ES//'_'//EB//'_'//Bdescr//'.dat'
+        fnzav='/adf11/zcd'//NEWDIRzav//'/zcd'//NEWDIRzav//
+     &      '_'//ES//'_'//EB//'_'//Bdescr//'.dat'
+        fnza2='/adf11/ycd'//NEWDIRza2//'/ycd'//NEWDIRza2//
+     &      '_'//ES//'_'//EB//'_'//Bdescr//'.dat'
+        fnpot='/adf11/ecd'//NEWDIRpot//'/ecd'//NEWDIRpot//
+     &      '_'//ES//'_'//EB//'_'//Bdescr//'.dat'
       endif
       call strip_spaces(fnrec)
       call strip_spaces(fnion)
@@ -404,7 +447,7 @@ c     reading in data, recombination
         endif
         close(99)
       else
-        return 
+        goto 990
       endif
 c     reading in data, ionisation
       if(SUBDIRion.eq.'none') then
@@ -444,7 +487,7 @@ c     reading in data, ionisation
         endif
         close(99) 
       else
-        return 
+        goto 990
       endif
 c     reading in data, charge exchange
       if(SUBDIRcex.eq.'none') then
@@ -484,7 +527,7 @@ c     reading in data, charge exchange
         endif
         close(99) 
       else
-        return 
+        goto 990
       endif
 c     reading in data, bremsstrahlung + radiative recombination contribution
       if(SUBDIRprb.eq.'none') then
@@ -524,7 +567,7 @@ c     reading in data, bremsstrahlung + radiative recombination contribution
         endif
         close(99) 
       else
-        return 
+        goto 990
       endif
 c     reading in data, line radiation
       if(SUBDIRplt.eq.'none') then
@@ -564,7 +607,7 @@ c     reading in data, line radiation
         endif
         close(99) 
       else
-        return 
+        goto 990
       endif
 c     reading in data, effective charge
       if(SUBDIRzav.eq.'none') then
@@ -899,5 +942,262 @@ c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisati
       
       call subend ()
       return
+
+ 990  continue
+      call xerrab ('Check specifications in ratadas.filelist!')
+
       end subroutine ratadas
 
+#ifdef ITM
+      subroutine ratamns(nput,nc,rtt,rtnt,rtn,rtnn,
+     &                   rtsa,rtra,rtqa,rtcx,rtrd,rtbr,
+     &                   rtzz,rtz2,rtpt,rtpi,
+     &                   iyear,fix_recomb,ncnct,izpmin,izpmax)
+!!      use b2mod_types
+      use b2mod_constants
+     &     , only : qe
+      use b2mod_solpstop
+#ifdef GOT_AMNSPROTO
+      use amns_types       ! IGNORE
+!!      use amns_constants   ! IGNORE
+      use amns_module      ! IGNORE
+      use euitm_routines   ! IGNORE
+#endif
+
+      implicit none
+
+c     INPUT
+      integer nput
+      integer nc
+      integer rtnt
+      integer rtnn
+      integer fix_recomb
+      real (kind=R8) ::
+     *   rtt(0:rtnt)
+      real (kind=R8) ::
+     *   rtn(0:rtnn)
+c     OUTPUT:
+      real (kind=R8) ::
+     *   rtsa(0:rtnt,0:rtnn,0:nc)
+      real (kind=R8) ::
+     *   rtra(0:rtnt,0:rtnn,0:nc)
+      real (kind=R8) ::
+     *   rtqa(0:rtnt,0:rtnn,0:nc)
+      real (kind=R8) ::
+     *   rtcx(0:rtnt,0:rtnn,0:nc)
+      real (kind=R8) ::
+     *   rtrd(0:rtnt,0:rtnn,0:nc)
+      real (kind=R8) ::
+     *   rtbr(0:rtnt,0:rtnn,0:nc)
+      real (kind=R8) ::
+     *   rtzz(0:rtnt,0:rtnn,0:nc)
+      real (kind=R8) ::
+     *   rtz2(0:rtnt,0:rtnn,0:nc)
+      real (kind=R8) ::
+     *   rtpt(0:rtnt,0:rtnn,0:nc)
+      real (kind=R8) ::
+     *   rtpi(0:rtnt,0:rtnn,0:nc)
+      integer iyear, ncnct
+      integer izpmin(0:nc), izpmax(0:nc)
+c     LOCAL VARIABLES:
+      real (kind=R8) ::
+     *   loc_te(0:rtnt,0:rtnn), loc_ne(0:rtnt,0:rtnn)
+c     read in data
+      integer ic, itnt, itnn
+
+
+#ifdef GOT_AMNSPROTO
+      type (amns_handle_type), save :: amns
+      type (amns_handle_rx_type) ::
+     &    amns_rc(0:nc), amns_ei(0:nc), amns_cx(0:nc), amns_br(0:nc),
+     &    amns_lr(0:nc), amns_ze(0:nc), amns_ze2(0:nc), amns_eip(0:nc)
+      type (amns_version_type) :: amns_database
+      type (amns_reaction_type) :: rc_rx, ei_rx, cx_rx, br_rx,
+     &     lr_rx, ze_rx, ze2_rx, eip_rx
+      type (amns_reactants_type) :: species(0:nc)
+      type (amns_query_type) :: query
+      type (amns_answer_type) :: answer
+      type (amns_set_type) :: set
+      character (len=80) :: format
+#endif
+
+
+
+      logical silent_open
+      external silent_open
+
+*   ..subprogram start-up calls
+      call subini ('ratamns')
+
+#ifdef GOT_AMNSPROTO
+      write(*,*) 'ITM AMNSPROTO data used (via UAL)'
+      call ITM_AMNS_SETUP(amns)
+      query%string='version'
+      call ITM_AMNS_QUERY(amns,query,answer)
+      write(*,*) 'AMNS data base version = ',trim(answer%string)
+      rc_rx%string='RC'
+      ei_rx%string='EI'
+      cx_rx%string='CX'
+      br_rx%string='BR'
+      lr_rx%string='LR'
+      ze_rx%string='ZE'
+      ze2_rx%string='ZE2'
+      eip_rx%string='EIP'
+      format=
+     & '(''ZN = '',f5.2,'', IS = '',i3,'', RX = '',a,'', SRC = '',a)'
+      query%string='source'
+      do ic=0, nc
+         allocate(species(ic)%components(1))
+         species(ic)%components(1)%ZN=nc
+         species(ic)%components(1)%ZA=ic
+         species(ic)%components(1)%MI=-1
+      enddo
+      do ic=0, nc-1
+         call ITM_AMNS_SETUP_TABLE(amns, ei_rx,
+     &        species(ic), amns_ei(ic))
+         call ITM_AMNS_QUERY_TABLE(amns_ei(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(ei_rx%string), trim(answer%string)
+         call ITM_AMNS_SETUP_TABLE(amns, lr_rx,
+     &        species(ic), amns_lr(ic))
+         call ITM_AMNS_QUERY_TABLE(amns_lr(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(lr_rx%string), trim(answer%string)
+      enddo
+      do ic=1, nc
+         call ITM_AMNS_SETUP_TABLE(amns, rc_rx,
+     &        species(ic), amns_rc(ic))
+         call ITM_AMNS_QUERY_TABLE(amns_rc(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(rc_rx%string), trim(answer%string)
+         call ITM_AMNS_SETUP_TABLE(amns, br_rx,
+     &        species(ic), amns_br(ic))
+         call ITM_AMNS_QUERY_TABLE(amns_br(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(br_rx%string), trim(answer%string)
+         call ITM_AMNS_SETUP_TABLE(amns, cx_rx,
+     &        species(ic), amns_cx(ic))
+         call ITM_AMNS_QUERY_TABLE(amns_cx(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(cx_rx%string), trim(answer%string)
+      enddo
+      do ic=0, nc
+         call ITM_AMNS_SETUP_TABLE(amns, ze_rx,
+     &        species(ic), amns_ze(ic))
+         call ITM_AMNS_QUERY_TABLE(amns_ze(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(ze_rx%string), trim(answer%string)
+         call ITM_AMNS_SETUP_TABLE(amns, ze2_rx,
+     &        species(ic), amns_ze2(ic))
+         call ITM_AMNS_QUERY_TABLE(amns_ze2(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(ze2_rx%string), trim(answer%string)
+         call ITM_AMNS_SETUP_TABLE(amns, eip_rx,
+     &        species(ic), amns_eip(ic))
+         call ITM_AMNS_QUERY_TABLE(amns_eip(ic),query,answer)
+         write(*,format) species(ic)%components(1)%ZN,
+     &        ic, trim(eip_rx%string), trim(answer%string)
+      enddo
+!!!    stop
+#else
+      write(*,*) 'No ITM-AMNS data available'
+#endif
+      do itnn=0, rtnn
+         do itnt=0, rtnt
+            loc_te(itnt, itnn) = rtt(itnt)
+            loc_ne(itnt, itnn) = rtn(itnn)
+         enddo
+      enddo
+      do ic = 0, nc
+         izpmin(ic) = ic
+         izpmax(ic) = ic
+      enddo
+      ncnct=nc+1
+
+      rtsa=0.0_R8
+      rtra=0.0_R8
+      rtqa=0.0_R8
+      rtcx=0.0_R8
+      rtrd=0.0_R8
+      rtbr=0.0_R8
+      rtzz=-1.0_R8
+      rtz2=-1.0_R8
+      rtpi=-1.0_R8
+      if(fix_recomb.ne.0) then
+        write(*,*) 'RATADAS: FIX_RECOMB <> 0 : ',fix_recomb
+      endif
+
+#ifdef GOT_AMNSPROTO
+c     filling rtsa(ionisation)
+      write(*,*) 'rtsa'
+      do ic=0,nc-1
+         call ITM_AMNS_RX(amns_ei(ic),rtsa(:,:,ic),loc_te,loc_ne)
+         call ITM_AMNS_FINISH_TABLE(amns_ei(ic))
+      enddo
+c     filling rtra(recombination)
+      write(*,*) 'rtra'
+      do ic=1,nc
+         call ITM_AMNS_RX(amns_rc(ic),rtra(:,:,ic),loc_te,loc_ne)
+         call ITM_AMNS_FINISH_TABLE(amns_rc(ic))
+      enddo
+c     filling rtcx(charge exchange)
+      write(*,*) 'rtcx'
+      do ic=1,nc
+         call ITM_AMNS_RX(amns_cx(ic),rtcx(:,:,ic),loc_te,loc_ne)
+         call ITM_AMNS_FINISH_TABLE(amns_cx(ic))
+      enddo
+c     filling rtzz(effective charge)
+      write(*,*) 'rtzz'
+      do ic=0,nc
+         call ITM_AMNS_RX(amns_ze(ic),rtzz(:,:,ic),loc_te,loc_ne)
+         call ITM_AMNS_FINISH_TABLE(amns_ze(ic))
+      enddo
+c     filling rtz2(effective square charge)
+      write(*,*) 'rtz2'
+      do ic=0,nc
+         call ITM_AMNS_RX(amns_ze2(ic),rtz2(:,:,ic),loc_te,loc_ne)
+         call ITM_AMNS_FINISH_TABLE(amns_ze2(ic))
+      enddo
+c     filling rtpt(cumulative ionisation potential), and rtpi(effective ionisation potential)
+      write(*,*) 'rtpt,rtpi'
+      do ic=0,nc
+         call ITM_AMNS_RX(amns_eip(ic),rtpi(:,:,ic),loc_te,loc_ne)
+         call ITM_AMNS_FINISH_TABLE(amns_eip(ic))
+         if (ic.gt.0) then
+            rtpt(0:rtnt,0:rtnn,ic)=
+     1           rtpt(0:rtnt,0:rtnn,ic-1)+rtpi(0:rtnt,0:rtnn,ic)
+         else
+            rtpt(0:rtnt,0:rtnn,ic)=rtpi(0:rtnt,0:rtnn,ic)
+         endif
+      enddo
+c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrahlung)
+      write(*,*) 'rtqa,rtrd,rtbr'
+      do ic=0,nc
+         do itnn=0, rtnn
+            do itnt=0, rtnt
+               rtbr(itnt,itnn,ic) =
+     &              1.69e-38_R8/qe*ic**2*sqrt(rtt(itnt))
+            enddo
+         enddo
+      enddo
+      do ic=0,nc-1
+         call ITM_AMNS_RX(amns_lr(ic),rtrd(:,:,ic),loc_te,loc_ne)
+         call ITM_AMNS_FINISH_TABLE(amns_lr(ic))
+      enddo
+      rtrd=rtrd/qe
+      if(fix_recomb.eq.0) then
+         rtqa(:,:,:)=rtbr(:,:,:)
+      else
+         stop 'Not yet coded'
+      endif
+      rtqa(:,:,:)=rtqa(:,:,:)+rtrd(:,:,:)
+      do ic=0,nc-1
+         rtqa(:,:,ic)=rtqa(:,:,ic)+rtsa(:,:,ic)*rtpi(:,:,ic+1)
+      enddo
+      call ITM_AMNS_FINISH(amns)
+#endif
+
+      call subend ()
+      return
+      end subroutine ratamns
+#endif

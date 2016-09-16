@@ -78,7 +78,7 @@ c--------------------------------------------------------------------
       real (kind=R8) ::
      *       fm(mmx), a(6), muo(3,3)
       real (kind=R8) ::
-     *       xpoints(1:25600), cxi(1:25600)
+     *       xpoints(0:25600), cxi(0:25600)
 
 c     calculate vth
       vth = sqrt(2.*1.6e-16*t(is)/m(is))
@@ -210,7 +210,9 @@ c         frequency.
               if (nv.gt.100) then
                 write(*,*) 'WARNING: refinement for viscosity'//
      +                     ' integral needed'
-                write(*,*) 'mu(',k,',',l,')=',mu(k,l)
+                write(*,'(1x,a8,i1,a1,i1,a4,1p,e15.8)')
+     .		 '%err.mu(',k,',',l,') = ',
+     1		 (mu(k,l)-muo(k,l))/mu(k,l)*100.0_R8
                 write(*,*) 'voorf =',voorf
                 write(*,*) 'nv=',nv
               endif
@@ -228,10 +230,11 @@ c         frequency.
             enddo
           enddo
           nv = nv*2
-          if (nv.gt.4e6) then
-            open(16,file='viscos.dat',form='unformatted')
-            write(16) (xpoints(i),i=1,25600)
-            write(16) (cxi(i),i=1,25600)
+          if (nv.gt.4e8) then
+            open(16,file='viscos.dat',form='formatted')
+	    do i = 0, 25600
+	      write(16,*) xpoints(i), cxi(i)
+	    enddo
             close(16)
             call perr(4)
           endif

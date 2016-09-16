@@ -20,6 +20,7 @@
       use b2mod_ppout
       use b2mod_diag
       use b2mod_work
+      use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:6), nout(0:2), nx, ny, ns
@@ -28,6 +29,7 @@
 *   ..common blocks
 *   ..local variables
       integer is, idum(0:9), k, nscx, iscx(0:nscxmax-1), ismain
+      integer external_species
       integer itim, itcnt, n2
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120
       character cnamip*80, cvalip*80, line*500
@@ -37,8 +39,8 @@
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
      &  rbr(-1:nx,-1:ny,0:ns-1), rcx(-1:nx,-1:ny,0:ns-1)
 *   ..initialisation
-      save ismain
-      data ismain/1/
+      save ismain, external_species
+      data ismain/1/, external_species/0/
 *   ..procedures
       logical ltst, is_comment, cfendf
       intrinsic sqrt
@@ -191,6 +193,13 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       call my_intcor1(nx,ny,2,vol,bb,wbbc)                               !xpb
 *   ..compute extrapolated wbbc(:,:,3) component
       wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
+*   ..obtain external species data if any
+      call ipgeti ('b2mndr_external_species', external_species)
+      if (external_species.ne.0) then
+        call read_b2mod_external(nx,ny,ns,ismain)
+      else
+        call alloc_b2mod_external_dummy(nx,ny)
+      endif
 *   ..process
       call b2plot(nx,ny,ns)
 

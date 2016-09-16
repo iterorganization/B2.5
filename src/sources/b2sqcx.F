@@ -78,7 +78,7 @@
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test ev, amh0
       call xertst (0.0_R8.lt.ev, 'faulty argument ev')
-      call xertst (0.0_R8.lt.amh0.and.amh0.le.3.0_R8,
+      call xertst (1.0_R8.le.amh0.and.amh0.le.3.0_R8,
      &  'faulty argument range amh0')
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then

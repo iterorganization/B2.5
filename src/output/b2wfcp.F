@@ -66,8 +66,8 @@
 *   ..local variables
       integer is, i, ireg
       character*(*) fmt0, fmt1
-      parameter (fmt0='(0p,2x,'''''''',i2,'''''''',1x,4(f9.3,1x))')
-      parameter (fmt1='(1p,2x,'''''''',i2,'''''''',1x,8(g9.2,1x))')
+      parameter (fmt0='(0p,2x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
+      parameter (fmt1='(1p,2x,'''''''',i3,'''''''',1x,8(g9.2,1x))')
 *     (The sequence of eight quotes is not a joke. Because it occurs
 *     inside a character string it represents four quotes, which in
 *     turn represents one quoted quote in the output format.)
@@ -125,50 +125,50 @@
        endif
 *    ..write cbsna
        write (nprt,'(a)')
-     &   '*cbsna     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbsna   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        do is = 0, ns-1
          write (nprt,fmt1) is,(cbsna(i,is,ireg),i=0,7)
        enddo
 *    ..write cbsmo
        write (nprt,'(a)')
-     &   '*cbsmo     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbsmo   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        do is = 0, ns-1
          write (nprt,fmt1) is,(cbsmo(i,is,ireg),i=0,7)
        enddo
 *    ..write cbshi
        write (nprt,'(a)')
-     &   '*cbshi     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbshi   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        do is = 0, ns-1
          write (nprt,fmt1) is,(cbshi(i,is,ireg),i=0,7)
        enddo
 *    ..write cbshe
        write (nprt,'(a)')
-     &   '*cbshe     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbshe   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        write (nprt,fmt1) -1, (cbshe(i,ireg),i=0,7)
 *    ..write cbsch
        write (nprt,'(a)')
-     &   '*cbsch     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbsch   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        write (nprt,fmt1) -1, (cbsch(i,ireg),i=0,7)
 *    ..write cbrec
        write (nprt,'(a)')
-     &   '*cbrec     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbrec   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        do is = 0, ns-1
          write (nprt,fmt1) is,(cbrec(i,is,ireg),i=0,7)
        enddo
 *    ..write cbmsa
        write (nprt,'(a)')
-     &   '*cbmsa     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbmsa   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        write (nprt,fmt1) -1, (cbmsa(i,ireg),i=0,7)
 *    ..write cbmsb
        write (nprt,'(a)')
-     &   '*cbmsb     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbmsb   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        do is = 0, ns-1
          write (nprt,fmt1) is,(cbmsb(i,is,ireg),i=0,7)
@@ -179,64 +179,64 @@
      &  '*b2cmpt         transport coefficients'
 *   ..write cfdf0
       write (nprt,'(a)')
-     &  '*cfdf0     (0)       (1)       (2)       (3)       (4)'//
+     &  '*cfdf0   (0)       (1)       (2)       (3)       (4)'//
      &  '       (5)       (6)       (7)'
       do is = 0, ns-1
         write (nprt,fmt1) is,(cfdf0(i,is),i=0,7)
       enddo
 *   ..write cfdna
       write (nprt,'(a)')
-     &  '*cfdna     (0)       (1)       (2)       (3)       (4)'//
+     &  '*cfdna   (0)       (1)       (2)       (3)       (4)'//
      &  '       (5)       (6)       (7)'
       do is = 0, ns-1
         write (nprt,fmt1) is,(cfdna(i,is),i=0,7)
       enddo
 *   ..write cfdpa
       write (nprt,'(a)')
-     &  '*cfdpa     (0)       (1)       (2)       (3)       (4)'//
+     &  '*cfdpa   (0)       (1)       (2)       (3)       (4)'//
      &  '       (5)       (6)       (7)'
       do is = 0, ns-1
         write (nprt,fmt1) is,(cfdpa(i,is),i=0,7)
       enddo
 *   ..write cfvla
       write (nprt,'(a)')
-     &  '*cfvla     (0)       (1)       (2)       (3)       (4)'//
+     &  '*cfvla   (0)       (1)       (2)       (3)       (4)'//
      &  '       (5)       (6)       (7)'
       do is = 0, ns-1
         write (nprt,fmt1) is,(cfvla(i,is),i=0,7)
       enddo
 *   ..write cfvsa
       write (nprt,'(a)')
-     &  '*cfvsa     (0)       (1)       (2)       (3)       (4)'//
+     &  '*cfvsa   (0)       (1)       (2)       (3)       (4)'//
      &  '       (5)       (6)       (7)'
       do is = 0, ns-1
         write (nprt,fmt1) is,(cfvsa(i,is),i=0,7)
       enddo
 *   ..write cfhci
       write (nprt,'(a)')
-     &  '*cfhci     (0)       (1)       (2)       (3)       (4)'//
+     &  '*cfhci   (0)       (1)       (2)       (3)       (4)'//
      &  '       (5)       (6)       (7)'
       do is = 0, ns-1
         write (nprt,fmt1) is,(cfhci(i,is),i=0,7)
       enddo
 *   ..write cfhce
       write (nprt,'(a)')
-     &  '*cfhce     (0)       (1)       (2)       (3)       (4)'//
+     &  '*cfhce   (0)       (1)       (2)       (3)       (4)'//
      &  '       (5)       (6)       (7)'
       write (nprt,fmt1) -1, (cfhce(i),i=0,7)
 *   ..write cfsig
       write (nprt,'(a)')
-     &  '*cfsig     (0)       (1)       (2)       (3)       (4)'//
+     &  '*cfsig   (0)       (1)       (2)       (3)       (4)'//
      &  '       (5)       (6)       (7)'
       write (nprt,fmt1) -1, (cfsig(i),i=0,7)
 *   ..write cfalf
       write (nprt,'(a)')
-     &  '*cfalf     (0)       (1)       (2)       (3)       (4)'//
+     &  '*cfalf   (0)       (1)       (2)       (3)       (4)'//
      &  '       (5)       (6)       (7)'
       write (nprt,fmt1) -1, (cfalf(i),i=0,7)
 *   ..write cflim
       write (nprt,'(a)')
-     &  '*cflim     (0)       (1)       (2)       (3)       (4)'//
+     &  '*cflim   (0)       (1)       (2)       (3)       (4)'//
      &  '       (5)       (6)       (7)'
       write (nprt,fmt1) -1, (cflim(i),i=0,7)
 *  ..write end label
@@ -274,50 +274,50 @@
        endif
 *    ..write cbsna
        write (nprt,'(a)')
-     &   '*cbsna     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbsna   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        do is = 0, ns-1
          write (nprt,fmt1) is,(cbsna(i,is,ireg),i=0,7)
        enddo
 *    ..write cbsmo
        write (nprt,'(a)')
-     &   '*cbsmo     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbsmo   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        do is = 0, ns-1
          write (nprt,fmt1) is,(cbsmo(i,is,ireg),i=0,7)
        enddo
 *    ..write cbshi
        write (nprt,'(a)')
-     &   '*cbshi     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbshi   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        do is = 0, ns-1
          write (nprt,fmt1) is,(cbshi(i,is,ireg),i=0,7)
        enddo
 *    ..write cbshe
        write (nprt,'(a)')
-     &   '*cbshe     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbshe   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        write (nprt,fmt1) -1, (cbshe(i,ireg),i=0,7)
 *    ..write cbsch
        write (nprt,'(a)')
-     &   '*cbsch     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbsch   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        write (nprt,fmt1) -1, (cbsch(i,ireg),i=0,7)
 *    ..write cbrec
        write (nprt,'(a)')
-     &   '*cbrec     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbrec   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        do is = 0, ns-1
          write (nprt,fmt1) is,(cbrec(i,is,ireg),i=0,7)
        enddo
 *    ..write cbmsa
        write (nprt,'(a)')
-     &   '*cbmsa     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbmsa   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        write (nprt,fmt1) -1, (cbmsa(i,ireg),i=0,7)
 *    ..write cbmsb
        write (nprt,'(a)')
-     &   '*cbmsb     (0)       (1)       (2)       (3)       (4)'//
+     &   '*cbmsb   (0)       (1)       (2)       (3)       (4)'//
      &   '       (5)       (6)       (7)'
        do is = 0, ns-1
          write (nprt,fmt1) is,(cbmsb(i,is,ireg),i=0,7)
@@ -375,7 +375,7 @@
      &  '  parameters for anomalous particle transport:',/
      &  ('  species', i3, ', coeff. for vconv ..    ', 8e11.3))
   114 format (/1p,
-     &  '  parameters for anomalous momentum transport:',/
+     &  '  parameters for anomalous parallel momentum transport:',/
      &  ('  species', i3, ', viscosity coefs ..     ', 8e11.3))
   115 format (/1p,
      &  '  parameters for anomalous atom heat transport:',/

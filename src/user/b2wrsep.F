@@ -12,7 +12,9 @@
       use b2mod_constants
       use b2mod_user_namelist
       use b2mod_neutrals_namelist
+      use b2mod_numerics_namelist
       use b2mod_b2cmpa
+      use b2mod_external
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
@@ -113,10 +115,6 @@ c*** Local variables of general use
       parameter (ltrc=ntrc_sep)
       real (kind=R8) ::
      *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff
-      real (kind=R8), allocatable ::
-     *  hlp_ni(:), hlp_zi(:), hlp_ze(:),
-     ,  hlp_gi(:), hlp_na(:),
-     ,  hlp_ga(:), hlp_nii(:),hlp_gii(:)
       integer i,j,k,l,is,ix,iy,jxi,jxa,jsep,nv
       integer, allocatable :: ii(:)
       logical ex, warn_tmp
@@ -139,6 +137,8 @@ c----------------------------------------------------------------------
       save
 c======================================================================
 
+      if(first_time_step) return
+
 c*** Initialise the arrays
 c
       equg_tmp=0.0_R8
@@ -153,19 +153,11 @@ c
         gpuf_tmp(i)=0.0_R8
         prsr_tmp(i)=0.0_R8
         nrsr_tmp(i)=0.0_R8
-        hlp_ni(i)=0.0_R8
-        hlp_zi(i)=0.0_R8
-        hlp_ze(i)=0.0_R8
-        hlp_gi(i)=0.0_R8
-        hlp_na(i)=0.0_R8
-        hlp_ga(i)=0.0_R8
       end do !}
       do i=1,ns !{
         nisi_tmp(i)=0.0_R8
         gisi_tmp(i)=0.0_R8
       end do !}
-      hlp_nii=0.0_R8
-      hlp_gii=0.0_R8
       hlp_n=0.0_R8
       hlp_p=0.0_R8
       hlp_v=0.0_R8
@@ -183,12 +175,19 @@ c          v=vol(ix,iy)
             if (.not.is_neutral(is)) hlp_i=hlp_i+na(ix,iy,is)
             zeff=zeff+rz2(ix,iy,is)*na(ix,iy,is)            
           end do !}
+          do is=0,ns_ext-1 !{
+            zeff=zeff+za2_ext(ix,iy,is)*na_ext(ix,iy,is)
+          end do !}
           zeff=zeff/ne(ix,iy)
           hlp_v=hlp_v+v
           hlp_n=hlp_n+hlp_i*v
           hlp_nesp=hlp_nesp+v*ne(ix,iy)
           hlp_tesp=hlp_tesp+v*ne(ix,iy)*te(ix,iy)
           hlp_p=hlp_p+v*(ne(ix,iy)*te(ix,iy)+hlp_i*ti(ix,iy))
+          do is = 0, ns_ext-1
+            hlp_p=hlp_p+v*na_ext(ix,iy,is)*ta_ext(ix,iy,is)
+            hlp_tisp=hlp_tisp+v*na_ext(ix,iy,is)*ta_ext(ix,iy,is)
+          end do
           hlp_tisp=hlp_tisp+v*hlp_i*ti(ix,iy)
           hlp_zesp=hlp_zesp+v*ne(ix,iy)*zeff
           hlp_qesp=hlp_qesp+fhe(ix,iy,1)
@@ -198,7 +197,7 @@ c          v=vol(ix,iy)
      .       (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      .        kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
      .       (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
-            hlp_qisp=hlp_qisp+kintmp*(1.0_R8-BoRiS)*fna(ix,ny,1,is)
+            hlp_qisp=hlp_qisp+kintmp*(1.0_R8-BoRiS)*fna(ix,iy,1,is)
           enddo
           is=0
           do j=1,nspecies !{
@@ -295,7 +294,7 @@ c          v=vol(ix,iy)
       hlp_qtsp=hlp_qisp+hlp_qesp
       hlp_spmn=Spmp_nom
       
-      do is=1,nstrai !{
+      do is=1,nstrat !{
         if(crcstra(is).eq.'C') then !{
           v=0.0_R8
           do i=1,nspecies !{
@@ -510,14 +509,6 @@ c>>>
       allocate(equi_tmp(ns,nion_tmp))
       allocate(nisi_tmp(ns))
       allocate(gisi_tmp(ns))
-      allocate(hlp_ni(nspecies))
-      allocate(hlp_zi(nspecies))
-      allocate(hlp_ze(nspecies))
-      allocate(hlp_gi(nspecies))
-      allocate(hlp_na(nspecies))
-      allocate(hlp_ga(nspecies))
-      allocate(hlp_nii(nspecies))
-      allocate(hlp_gii(nspecies))
 c<<<
 c      print *,'hlp_frm:'
 c      print *,hlp_frm
@@ -558,14 +549,6 @@ c     Finalization step
       deallocate(equi_tmp)
       deallocate(nisi_tmp)
       deallocate(gisi_tmp)
-      deallocate(hlp_ni)
-      deallocate(hlp_zi)
-      deallocate(hlp_ze)
-      deallocate(hlp_gi)
-      deallocate(hlp_na)
-      deallocate(hlp_ga)
-      deallocate(hlp_nii)
-      deallocate(hlp_gii)
       deallocate(ii)
       deallocate(hlp_a)
       return

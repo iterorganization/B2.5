@@ -29,7 +29,7 @@
       integer ncall,ntstep
       integer ix,iy,is,ir,tallies_netcdf
       character*256 tally_format, species_format
-      character*10, allocatable, save :: species_name(:)
+      character*13, allocatable, save :: species_name(:)
       save ncall,tallies_netcdf,ntstep
       data ncall/0/,tallies_netcdf/0/
 #ifdef NO_LONG_LINES

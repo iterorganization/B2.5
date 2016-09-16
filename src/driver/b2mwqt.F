@@ -67,11 +67,11 @@
 *
 *     aresmo - (0:ns-1) real*8 array, input.
 *     For (is) in (0:ns-1), aresmo(is) specifies the scaled norm of the
-*     residual of the momentum equation for species (is).
+*     residual of the parallel momentum equation for species (is).
 *
 *     aresmt - real, input.
 *     aresmt specifies the scaled norm of the residual of the total
-*     momentum equation.
+*     parallel momentum equation.
 *
 *     areshe - real, input.
 *     areshe specifies the scaled norm of the residual of the electron
@@ -91,12 +91,12 @@
 *
 *     acorua - (0:ns-1) real*8 array, input.
 *     For (is) in (0:ns-1), acorua(is) specifies the norm of the last
-*     computed correction for the momentum balance equation for
+*     computed correction for the parallel momentum balance equation for
 *     species (is).
 *
 *     acorut - real, input.
 *     acorut specifies the norm of the last computed correction for the
-*     momentum balance equation for all species simultaneously.
+*     parallel momentum balance equation for all species simultaneously.
 *
 *     acorte - real, input.
 *     acorte specifies the norm of the last computed correction for the

@@ -57,12 +57,12 @@
 *
 *     resmo - (-1:nx,-1:ny,0:ns-1) real*8 array, input.
 *     For (ix,iy,is) in (-1:nx,-1:ny,0:ns-1), resmo(ix,iy,is) specifies
-*     the residual of the momentum equation on the (ix,iy) cell for
-*     species (is).
+*     the residual of the parallel momentum equation on the (ix,iy) cell
+*     for species (is).
 *
 *     resmt - (-1:nx,-1:ny) real*8 array.
 *     For (ix,iy) in (-1:nx,-1:ny), resmt(ix,iy) specifies the residual
-*     of the total momentum equation on the (ix,iy) cell.
+*     of the total parallel momentum equation on the (ix,iy) cell.
 *
 *     reshe - (-1:nx,-1:ny) real*8 array, input.
 *     For (ix,iy) in (-1:nx,-1:ny), reshe(ix,iy) specifies the residual

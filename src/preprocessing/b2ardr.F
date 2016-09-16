@@ -368,6 +368,11 @@
       else if (streql(flag,'adas')) then
        lblrc(61:120) = 'ADAS rate coefficients, courtesy of'//
      &   ' H. Summers'
+#ifdef ITM
+      else if (streql(flag,'amns')) then
+       lblrc(61:120) = 'AMNS rate coefficients, courtesy of'//
+     &   ' EFDA-TF-ITM'
+#endif
       else
        call xerrab ('faulty data flag; flag='//flag)
       endif
@@ -414,7 +419,7 @@
 
 * ..compute abscissae
 *   ..set rtns, rtdumm, rtzmin, rtzmax, rtzn
-      rtdumm = 0
+      rtdumm = 0.0_R8
 *   ..compute rtlt(0:rtnt) and rtt(0:rtnt)
       do i = 0, rtnt
        rtlt(i) = ((rtnt-i)*log(tlo)+i*log(thi))/rtnt
@@ -497,6 +502,33 @@ cxpb  We must account for the case when the user does not want all bundles
          rtzn(is+k-kstart) = real(nz(inuc))
         enddo
         rtns = rtns + kend - kstart + 1
+#ifdef ITM
+       else if (streql(flag,'amns')) then
+        call ratamns (nout(0), nz(inuc), rtt, rtnt, rtn, rtnn,
+     &    rtsa, rtra, rtqa, rtcx, rtrd, rtbr, rtzz, rtz2, rtpt, rtpi,
+     &    iyear(inuc), fix_recomb,
+     &    npart(inuc), izpmin(0:nz(inuc)), izpmax(0:nz(inuc)))
+cxpb  We must account for the case when the user does not want all bundles
+        kstart = 0
+        kend = npart(inuc)-1
+        k = kstart
+        do while (izpmax(k).lt.izlo(inuc))
+          k = k + 1
+        end do
+        kstart = k
+        k = kend
+        do while (izpmin(k).gt.izhi(inuc))
+          k = k - 1
+        end do
+        kend = k
+        kpart = kend - kstart + 1
+        do k = kstart, kend
+         rtzmin(is+k-kstart) = izpmin(k)
+         rtzmax(is+k-kstart) = izpmax(k)
+         rtzn(is+k-kstart) = real(nz(inuc))
+        enddo
+        rtns = rtns + kend - kstart + 1
+#endif
        endif
 *    ..correct hydrogen data
        if (nz(inuc).eq.1) then

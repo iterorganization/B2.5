@@ -7,8 +7,8 @@
      *   rob(-1:nx,-1:ny), smqb(-1:nx,-1:ny,0:3), 
      &  smqdu(-1:nx,-1:ny), smb(-1:nx,-1:ny,0:3)
 *     ------------------------------------------------------------------
-*     B2NXDV computes the correction to the momentum source that is
-*     required to make the total friction force cancel.
+*     B2NXDV computes the correction to the parallel momentum source
+*     that is required to make the total friction force cancel.
 *     ------------------------------------------------------------------
       integer ncall, ix, iy
       integer, save :: style = 1                                       !srv 26.10.08

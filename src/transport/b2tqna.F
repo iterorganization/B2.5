@@ -501,11 +501,10 @@ c mw end
      2   na, ne, te, ti, crx, hy1)
       elseif(user_transport.eq.8) then
         if(ncall.eq.0) then
-          call alloc_b2mod_neoclassical(nx,ny,ns,nstages,mmx)
+          call alloc_b2mod_neoclassical(nx,ny,nsdecl,mmx)
         endif
-        call set_transport_neo(nx, ny, ns, nstages,
-     &   hx, hy, vol, crx, cry, conn, qz, bb,
-     &   na, te, ti, ni, ne, dna0, dpa0, vla0, vsa0,
+        call set_transport_neo(nx, ny, ns, hx, hy, vol, crx, cry,
+     &   conn, qz, bb, na, te, ti, ni, ne, dna0, dpa0, vla0, vsa0,
      &   hci0, hcib, hce0, sig0, alf0, hvi0, hve0)
 c ank added blobby transport
 !! FIXME: Was user_transport.eq.6 in 4.x, 5.0/5.1
@@ -2525,7 +2524,7 @@ c*** We only apply this in the outer SOL region
 
       end subroutine set_transport_disruption
 
-      subroutine set_transport_neo(nx, ny, ns, nz, hx, hy, vol,
+      subroutine set_transport_neo(nx, ny, ns, hx, hy, vol,
      &  crx, cry, conn, qz, bb, na, te, ti, ni, ne,
      &  dna0, dpa0, vla0, vsa0, hci0, hcib, hce0, sig0, alf0,
      &  hvi0, hve0)
@@ -2541,7 +2540,7 @@ c*** We only apply this in the outer SOL region
       use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nz
+      integer nx, ny, ns
       real (kind=R8) ::
      *   bb(-1:nx,-1:ny,0:3), na(-1:nx,-1:ny,0:ns-1),
      &   te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1),
@@ -2577,19 +2576,19 @@ c*** We only apply this in the outer SOL region
 *   ..local variables for neoclassical transport
       integer, save :: ic
       integer :: istate,ispecies,ishift
-      integer :: isorth(0:ns,0:nz-1), nclh(0:ns), nslh
+      integer :: isorth(0:nsdecl,0:nzdecl-1), nclh(0:nsdecl), nslh
       real (kind=R8) ::
-     *   zah(0:ns-1), amh(0:ns-1), t(0:ns),
-     &   den(0:ns,0:nz-1), ds(0:ns,0:nz-1,2),
-     &   denl(0:ns,0:nz-1), tl(0:ns),
-     &   denr(0:ns,0:nz-1), tr(0:ns),
-     &   vtn(0:ns,0:nz-1,-1:ny),
-     &   kappa(0:ns,0:nz-1,-1:ny),
-     &   chi(0:ns,0:nz-1,-1:ny), vw(0:ns,0:nz-1,-1:ny),
+     *   zah(0:nsdecl-1), amh(0:nsdecl-1), t(0:nsdecl),
+     &   den(0:nsdecl,0:nzdecl-1), ds(0:nsdecl,0:nzdecl-1,2),
+     &   denl(0:nsdecl,0:nzdecl-1), tl(0:nsdecl),
+     &   denr(0:nsdecl,0:nzdecl-1), tr(0:nsdecl),
+     &   vtn(0:nsdecl,0:nzdecl-1,-1:ny),
+     &   kappa(0:nsdecl,0:nzdecl-1,-1:ny),
+     &   chi(0:nsdecl,0:nzdecl-1,-1:ny), vw(0:nsdecl,0:nzdecl-1,-1:ny),
      &   dfhcb, dfhce,
      &   hthet(-1:nx,-1:ny), quant(-1:nx,-1:ny),
-     &   cellface(0:ns,0:nz-1,-1:ny,1:5),
-     &   vwt(0:ns,0:nz-1,-1:ny)
+     &   cellface(0:nsdecl,0:nzdecl-1,-1:ny,1:5),
+     &   vwt(0:nsdecl,0:nzdecl-1,-1:ny)
       real (kind=R8) ::
      *   zacomp, amcomp, epsn
 *   ..set the accuracy
@@ -2603,9 +2602,9 @@ c*** We only apply this in the outer SOL region
       logical closedf
 *   ..for consistency check
       real (kind=R8) ::
-     *   densav(0:ns,0:nz-1,-1:ny),
-     &   gradnsav(0:ns,0:nz-1,-1:ny),
-     &   tforce(0:ns,0:nz-1,1:2,-1:ny)
+     *   densav(0:nsdecl,0:nzdecl-1,-1:ny),
+     &   gradnsav(0:nsdecl,0:nzdecl-1,-1:ny),
+     &   tforce(0:nsdecl,0:nzdecl-1,1:2,-1:ny)
 
 *   ..procedures
       real (kind=R8) :: hy1
@@ -2645,20 +2644,20 @@ c*** We only apply this in the outer SOL region
         call ipgeti ('set_transport_iyref', iyref)
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
-      call ipgeti ('neoclassical_ic', ic)
+	call ipgeti ('neoclassical_ic', ic)
         call xertst(0.le.ic .and. ic.le.4,
      .   'invalid parameter neoclassical_ic')
-      write(*,*) 'NEOART option ', ic, ' has been used'
-      if(ic.eq.0)
-     1   write(*,*) '  NEOART: classical'
-      if(ic.eq.1)
-     1   write(*,*) '  NEOART: banana plateau'
-      if(ic.eq.2)
-     1   write(*,*) '  NEOART: Pfirsch-Schlueter'
-      if(ic.eq.3)
-     1   write(*,*) '  NEOART: banana plateau + Pfirsch-Schlueter'
-      if(ic.eq.4)
-     1   write(*,*) '  NEOART: all'
+	write(*,*) 'NEOART option ', ic, ' has been used'
+	if(ic.eq.0)
+     1	 write(*,*) '  NEOART: classical'
+	if(ic.eq.1)
+     1	 write(*,*) '  NEOART: banana plateau'
+	if(ic.eq.2)
+     1	 write(*,*) '  NEOART: Pfirsch-Schlueter'
+	if(ic.eq.3)
+     1	 write(*,*) '  NEOART: banana plateau + Pfirsch-Schlueter'
+	if(ic.eq.4)
+     1	 write(*,*) '  NEOART: all'
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -2680,10 +2679,10 @@ c*** We only apply this in the outer SOL region
 *   ..main
 
 *   ..initialize densities and temperatures
-      do is=0,ns
-        t(is)=0.0_R8
-        do istate=0,nz-1
-          den(is,istate)=0.0_R8
+      do ispecies=0,nsdecl
+        t(ispecies)=0.0_R8
+        do istate=0,nzdecl-1
+          den(ispecies,istate)=0.0_R8
         enddo
       enddo
 
@@ -2732,12 +2731,12 @@ c      enddo
       enddo
 
 *   ..split species into species and charge states
-      nar=ns
-      nzm=nz-1
-      do is=0,ns
-        ncl(is)=0
-        do istate=0,nz-1
-          isort(is,istate)=0
+      nar=nsdecl
+      nzm=nzdecl-1
+      do ispecies=0,nsdecl
+        ncl(ispecies)=0
+        do istate=0,nzdecl-1
+          isort(ispecies,istate)=0
         enddo
       enddo
       do is=0,ns-1
@@ -3120,11 +3119,11 @@ c      enddo
           rho=rho_(iy)
 
 *    ..calculate the diffusion coefficients
-          call neodv(ns,nz,nsl,ncl,zsp,ic,m,t,den,ds,rho,eparr,
+          call neodv(nsdecl,nzdecl,nsl,ncl,zsp,ic,m,t,den,ds,rho,eparr,
      &               epsn,dd(:,:,iy),vvn(:,:,iy),vtn(:,:,iy))
 
 *    ..calculate the heat conduction coefficients
-          call neochi(ns,nz,nsl,ncl,zsp,ic,m,t,den,ds,rho,eparr,
+          call neochi(nsdecl,nzdecl,nsl,ncl,zsp,ic,m,t,den,ds,rho,eparr,
      &                epsn,kappa(:,:,iy),chi(:,:,iy),vw(:,:,iy))
 
 *    ..calculate thermal conductivity and heat pinch from

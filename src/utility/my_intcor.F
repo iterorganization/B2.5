@@ -128,47 +128,51 @@ cxpb  DISCONTINUOUS across the cut in the case of diverted island geometries
 c special treatment of standard X-points
       do iy = 0, ny-1                                                    !xpb
         do ix = 0, nx-1                                                  !xpb
-          if(leftix(ix,iy).ne.-2) then                                    !srv 28.07.10
-           if(leftix(bottomix(ix,iy),bottomiy(ix,iy)).ne.                !xpb !srv 28.07.10
-     .       bottomix(leftix(ix,iy),leftiy(ix,iy))) then                 !xpb
-            ix1=ix                                                       !xpb
-            ix2=rightix(topix(leftix(bottomix(ix,iy),bottomiy(ix,iy)),   !xpb
-     1                        leftiy(bottomix(ix,iy),bottomiy(ix,iy))),  !xpb
-     2                  topiy(leftix(bottomix(ix,iy),bottomiy(ix,iy)),   !xpb
-     3                        leftiy(bottomix(ix,iy),bottomiy(ix,iy))))  !xpb
-cxpb Check that this is a standard X-point                               !xpb
-            if(ix2.ge.0 .and. ix2.le.nx-1 .and. periodic_bc.ne.1) then   !xpb
-              corner(ix1,iy)=                                            !xpb
-     1          (centre(ix1,iy)*vol(ix2,iy)+                             !xpb
-     2           centre(bottomix(ix1,iy),bottomiy(ix1,iy))*              !xpb
-     2           vol(bottomix(ix2,iy),bottomiy(ix2,iy))+                 !xpb
-     3           centre(leftix(bottomix(ix1,iy),bottomiy(ix1,iy)),       !xpb
-     3                  leftiy(bottomix(ix1,iy),bottomiy(ix1,iy)))*      !xpb
-     3           vol(leftix(bottomix(ix2,iy),bottomiy(ix2,iy)),          !xpb
-     3               leftiy(bottomix(ix2,iy),bottomiy(ix2,iy)))+         !xpb
-     4           centre(leftix(ix1,iy),leftiy(ix1,iy))*                  !xpb
-     4           vol(leftix(ix2,iy),leftiy(ix2,iy))+                     !xpb
-     5           centre(ix2,iy)*vol(ix1,iy)+                             !xpb
-     6           centre(bottomix(ix2,iy),bottomiy(ix2,iy))*              !xpb
-     6           vol(bottomix(ix1,iy),bottomiy(ix2,iy))+                 !xpb
-     7           centre(leftix(bottomix(ix2,iy),bottomiy(ix2,iy)),       !xpb
-     7                  leftiy(bottomix(ix2,iy),bottomiy(ix2,iy)))*      !xpb
-     7           vol(leftix(bottomix(ix1,iy),bottomiy(ix1,iy)),          !xpb
-     7               leftiy(bottomix(ix1,iy),bottomiy(ix1,iy)))+         !xpb
-     8           centre(leftix(ix2,iy),leftiy(ix2,iy))*                  !xpb
-     8           vol(leftix(ix1,iy),leftiy(ix1,iy)))                     !xpb
-              corner(ix1,iy)=corner(ix1,iy)/                             !xpb
-     1          (vol(ix2,iy)+vol(bottomix(ix2,iy),bottomiy(ix2,iy))+     !xpb
-     2           vol(leftix(bottomix(ix2,iy),bottomiy(ix2,iy)),          !xpb
-     3               leftiy(bottomix(ix2,iy),bottomiy(ix2,iy)))+         !xpb
-     4           vol(leftix(ix2,iy),leftiy(ix2,iy))+                     !xpb
-     5           vol(ix1,iy)+vol(bottomix(ix1,iy),bottomiy(ix1,iy))+     !xpb
-     6           vol(leftix(bottomix(ix1,iy),bottomiy(ix1,iy)),          !xpb
-     7               leftiy(bottomix(ix1,iy),bottomiy(ix1,iy)))+         !xpb
-     8           vol(leftix(ix1,iy),leftiy(ix1,iy)))                     !xpb
-              corner(ix2,iy)=corner(ix1,iy)                              !xpb
-            elseif(ix2.ge.0 .and. ix2.le.nx-1 .and. periodic_bc.eq.1)    !xpb
-     >       then                                                        !xpb
+          if(region(ix,iy,0).eq.0) cycle
+          if(leftix(ix,iy).ne.-2 .and. bottomiy(ix,iy).ne.-2) then       !srv 28.07.10
+            if(leftix(bottomix(ix,iy),bottomiy(ix,iy)).ne.          !xpb !srv 28.07.10
+     .         bottomix(leftix(ix,iy),leftiy(ix,iy)) .and.
+     &         leftix(bottomix(ix,iy),bottomiy(ix,iy)).ne.-2 .and.
+     &         bottomix(leftix(ix,iy),leftiy(ix,iy)).ne.-2) then         !xpb
+              ix1=ix                                              	 !xpb
+              ix2=rightix(
+     .                  topix(leftix(bottomix(ix,iy),bottomiy(ix,iy)), 	 !xpb
+     1                        leftiy(bottomix(ix,iy),bottomiy(ix,iy))),	 !xpb
+     2                  topiy(leftix(bottomix(ix,iy),bottomiy(ix,iy)), 	 !xpb
+     3                        leftiy(bottomix(ix,iy),bottomiy(ix,iy))))	 !xpb
+cxpb Check that this is a standard X-point                      	 !xpb
+              if(ix2.ge.0 .and. ix2.le.nx-1 .and. periodic_bc.ne.1) then !xpb
+                corner(ix1,iy)=                                   	 !xpb
+     1           (centre(ix1,iy)*vol(ix2,iy)+                    	 !xpb
+     2            centre(bottomix(ix1,iy),bottomiy(ix1,iy))*     	 !xpb
+     2            vol(bottomix(ix2,iy),bottomiy(ix2,iy))+        	 !xpb
+     3            centre(leftix(bottomix(ix1,iy),bottomiy(ix1,iy)), 	 !xpb
+     3                   leftiy(bottomix(ix1,iy),bottomiy(ix1,iy)))* 	 !xpb
+     3            vol(leftix(bottomix(ix2,iy),bottomiy(ix2,iy)), 	 !xpb
+     3                leftiy(bottomix(ix2,iy),bottomiy(ix2,iy)))+	 !xpb
+     4            centre(leftix(ix1,iy),leftiy(ix1,iy))*         	 !xpb
+     4            vol(leftix(ix2,iy),leftiy(ix2,iy))+            	 !xpb
+     5            centre(ix2,iy)*vol(ix1,iy)+                    	 !xpb
+     6            centre(bottomix(ix2,iy),bottomiy(ix2,iy))*     	 !xpb
+     6            vol(bottomix(ix1,iy),bottomiy(ix2,iy))+        	 !xpb
+     7            centre(leftix(bottomix(ix2,iy),bottomiy(ix2,iy)), 	 !xpb
+     7                   leftiy(bottomix(ix2,iy),bottomiy(ix2,iy)))* 	 !xpb
+     7            vol(leftix(bottomix(ix1,iy),bottomiy(ix1,iy)), 	 !xpb
+     7                leftiy(bottomix(ix1,iy),bottomiy(ix1,iy)))+	 !xpb
+     8            centre(leftix(ix2,iy),leftiy(ix2,iy))*         	 !xpb
+     8            vol(leftix(ix1,iy),leftiy(ix1,iy)))            	 !xpb
+                corner(ix1,iy)=corner(ix1,iy)/                    	 !xpb
+     1           (vol(ix2,iy)+vol(bottomix(ix2,iy),bottomiy(ix2,iy))+ 	 !xpb
+     2            vol(leftix(bottomix(ix2,iy),bottomiy(ix2,iy)), 	 !xpb
+     3                leftiy(bottomix(ix2,iy),bottomiy(ix2,iy)))+	 !xpb
+     4            vol(leftix(ix2,iy),leftiy(ix2,iy))+            	 !xpb
+     5            vol(ix1,iy)+vol(bottomix(ix1,iy),bottomiy(ix1,iy))+ 	 !xpb
+     6            vol(leftix(bottomix(ix1,iy),bottomiy(ix1,iy)), 	 !xpb
+     7                leftiy(bottomix(ix1,iy),bottomiy(ix1,iy)))+	 !xpb
+     8            vol(leftix(ix1,iy),leftiy(ix1,iy)))            	 !xpb
+                corner(ix2,iy)=corner(ix1,iy)                     	 !xpb
+              elseif(ix2.ge.0 .and. ix2.le.nx-1 .and. periodic_bc.eq.1)  !xpb
+     >         then                                               	 !xpb
 cxpb  Must treat the two sides separately when B is not a periodic variable
       write(*,*) 'my_intcor: special treatment for cell ix,iy = ',ix,iy
               corner(ix1,iy)=                                            !xpb
@@ -199,39 +203,44 @@ cxpb  Must treat the two sides separately when B is not a periodic variable
      4              bottomiy(leftix(ix2,iy),leftiy(ix2,iy))))            !xpb
             endif                                                        !xpb
            endif                                                         !srv 28.07.10
-		endif                                                          !xpb
+	  endif                                                          !xpb
         enddo                                                            !xpb
       enddo                                                              !xpb
 
 c special treatment of diverted island X-points                          !xpb
       do iy = -1, ny-1                                                   !xpb
         do ix = -1, nx-1                                                 !xpb
-          if(topiy(topix(ix,iy),topiy(ix,iy)).eq.iy .and. ny.gt.1) then  !xpb
-            ix1=topix(rightix(ix,iy),rightiy(ix,iy))                     !xpb
-            iy1=topiy(rightix(ix,iy),rightiy(ix,iy))                     !xpb
-            ix2=topix(ix,iy)                                             !xpb
-            corner(ix1,iy1)=(centre(ix1,iy1)*vol(ix2,iy)+                !xpb
-     2        centre(bottomix(ix1,iy1),bottomiy(ix1,iy1))*               !xpb
-     2        vol(leftix(ix2,iy),leftiy(ix2,iy))+                        !xpb
-     3        centre(leftix(ix1,iy),leftiy(ix1,iy))*                     !xpb
-     3        vol(leftix(ix1,iy1),leftiy(ix1,iy1))+                      !xpb
-     4        centre(ix2,iy)*vol(ix1,iy1)+                               !xpb
-     5        centre(leftix(ix2,iy),leftiy(ix2,iy))*                     !xpb
-     5        vol(bottomix(ix1,iy1),bottomiy(ix1,iy1))+                  !xpb
-     6        centre(leftix(ix1,iy1),leftiy(ix1,iy1))*                   !xpb
-     6        vol(leftix(ix1,iy),leftiy(ix1,iy)))/                       !xpb
-     1       (vol(ix2,iy)+vol(leftix(ix2,iy),leftiy(ix2,iy))+            !xpb
-     3        vol(leftix(ix1,iy1),leftiy(ix1,iy1))+vol(ix1,iy1)+         !xpb
-     5        vol(bottomix(ix1,iy1),bottomiy(ix1,iy1))+                  !xpb
-     6        vol(leftix(ix1,iy),leftiy(ix1,iy)))                        !xpb
+          if(region(ix,iy,0).eq.0) cycle
+          if(topiy(ix,iy).ne.ny+1) then                         	 !xpb
+            if(topiy(topix(ix,iy),topiy(ix,iy)).eq.iy .and. ny.gt.1)
+     &          then
+              ix1=topix(rightix(ix,iy),rightiy(ix,iy))          	 !xpb
+              iy1=topiy(rightix(ix,iy),rightiy(ix,iy))          	 !xpb
+              ix2=topix(ix,iy)                                  	 !xpb
+              corner(ix1,iy1)=(centre(ix1,iy1)*vol(ix2,iy)+     	 !xpb
+     2          centre(bottomix(ix1,iy1),bottomiy(ix1,iy1))*    	 !xpb
+     2          vol(leftix(ix2,iy),leftiy(ix2,iy))+             	 !xpb
+     3          centre(leftix(ix1,iy),leftiy(ix1,iy))*          	 !xpb
+     3          vol(leftix(ix1,iy1),leftiy(ix1,iy1))+           	 !xpb
+     4          centre(ix2,iy)*vol(ix1,iy1)+                    	 !xpb
+     5          centre(leftix(ix2,iy),leftiy(ix2,iy))*          	 !xpb
+     5          vol(bottomix(ix1,iy1),bottomiy(ix1,iy1))+       	 !xpb
+     6          centre(leftix(ix1,iy1),leftiy(ix1,iy1))*        	 !xpb
+     6          vol(leftix(ix1,iy),leftiy(ix1,iy)))/            	 !xpb
+     1         (vol(ix2,iy)+vol(leftix(ix2,iy),leftiy(ix2,iy))+ 	 !xpb
+     3          vol(leftix(ix1,iy1),leftiy(ix1,iy1))+vol(ix1,iy1)+ 	 !xpb
+     5          vol(bottomix(ix1,iy1),bottomiy(ix1,iy1))+       	 !xpb
+     6          vol(leftix(ix1,iy),leftiy(ix1,iy)))             	 !xpb
 cxpb No corner(ix2,iy1) is assigned as this would map into a dead cell   !xpb 
-          endif                                                          !xpb
-        enddo                                                            !xpb
-      enddo                                                              !xpb
+            endif
+          endif                                                 	 !xpb
+        enddo                                                   	 !xpb
+      enddo                                                     	 !xpb
 
 c special treatment of limiter tangency X-points
       ix = -1
       do iy = 0, ny
+        if(region(ix,iy,0).eq.0) cycle
         if(bottomiy(ix,iy).eq.-2) then
           ix1=rightix(ix,iy)
           iy1=rightiy(ix,iy)

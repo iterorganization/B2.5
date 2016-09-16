@@ -40,8 +40,8 @@ c-----------------------------------------------------------
       do i = 0, nsl-1
         do j = 0, ncl(i)-1
           
-          coeffc(i,j,1) = 0.
-          coeffc(i,j,2) = 0.
+          coeffc(i,j,1) = 0.0_R8
+          coeffc(i,j,2) = 0.0_R8
  
           do k = 0, nsl-1
             do l = 0, ncl(k)-1

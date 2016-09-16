@@ -153,7 +153,7 @@
       external subini, subend, xertst, b2xvsg
       real (kind=R8) ::
      *   dens, temp, wsven
-      dens(jw) = 10.0_R8**(16+0.5_R8*(jw-1))
+      dens(jw) = 10.0_R8**(16.0_R8+0.5_R8*(jw-1))
       temp(iw) = 10.0_R8**(0.1_R8*(iw-13))
       wsven(iw,jw) = wsveh(iw,jw)*welms(iw,jw)
 

@@ -8,7 +8,9 @@
       use b2mod_sources
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_external
       use b2mod_b2cmpa
+      use b2mod_numerics_namelist
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
@@ -16,8 +18,9 @@ c
 c  version : 03.03.2001 00:37
 c
 c======================================================================
-c*** Computes the momentum balance (forces) in the plasma in the inner
-c*** and outer divertors (only lower divertors for double-null case)
+c*** Computes the parallel momentum balance (forces) in the plasma in
+c*** the inner and outer divertors (only lower divertors for
+c*** double-null case)
 c----------------------------------------------------------------------
       implicit none
 c
@@ -32,22 +35,22 @@ c
       parameter (lvm=970909)
 c
 c----------------------------------------------------------------------
-c*** Momentum balance in the plasma:
+c*** Parallel momentum balance in the plasma:
 c***
 c***      header  var       Legend
 c***                                                        (divertors)
 c***              -- parallel forces on the plasma in the divertor (N):
 c***     prs_xpnt prsup   pressure force upstream
 c***     prs_trgt prstg   pressure force at the targets
-c***     mfl_xpnt flmup   momentum flux integral upstream
-c***     mfl_trgt flmtg   momentum flux integral at the targets
+c***     mfl_xpnt flmup   parallel momentum flux integral upstream
+c***     mfl_trgt flmtg   parallel momentum flux integral at the targets
 c***     fric_neu prsnu   friction with neutrals
 c***     prs_magn prsmf   pressure taken by magnetic field
 c***     res_frce rsfrc   resulting force onto divertor leg
 c***                            -- normalised to the upstream pressure:
 c***     rel_prtg rlptg   pressure force at the targets (relative)
-c***     rel_flxp rlmup   momentum flux integral upstream (relative)
-c***     rel_fltg rlmtg   momentum flux integral at the targets (rel.)
+c***     rel_flxp rlmup   parallel momentum flux integral upstream (relative)
+c***     rel_fltg rlmtg   parallel momentum flux integral at the targets (rel.)
 c***     rel_fneu rlfnu   friction with neutrals (relative)
 c***     rel_fmag rlfmf   pressure taken by magnetic field (relative)
 c***     rel_resf rlres   resulting force onto divertor leg (relative)
@@ -122,6 +125,8 @@ c
      +  hlp_c, tab, f, hlp_frm, hlp_frf
 c======================================================================
 
+      if(first_time_step) return
+
       do i=1,ndivx
         do j=1,nqudiv
           equdiv(i,j)=0.0_R8
@@ -136,11 +141,14 @@ c
       hlp_po=0.0_R8
       hlp_fi=0.0_R8
       hlp_fo=0.0_R8
-      pr=0.0_R8
+      pr=ne*te
       do is = 0, ns-1
         pr(-1:nx,-1:ny)=pr(-1:nx,-1:ny)+
-     .   na(-1:nx,-1:ny,is)*
-     .  (rza(-1:nx,-1:ny,is)*te(-1:nx,-1:ny)+ti(-1:nx,-1:ny))
+     .   na(-1:nx,-1:ny,is)*ti(-1:nx,-1:ny)
+      end do
+      do is = 0, ns_ext-1
+        pr(-1:nx,-1:ny)=pr(-1:nx,-1:ny)+
+     .   na_ext(-1:nx,-1:ny,is)*ta_ext(-1:nx,-1:ny,is)
       end do
       do iy = 0, ny-1
         ix=leftcut(1)-1
@@ -215,8 +223,7 @@ c
             hlp_mf=hlp_mf+pit(ix,iy)*pr(ix,iy)*vol(ix,iy)
           end if
         end do
-c??? not sure with counting here - ank 970911
-        do ix=rightcut(1)+1,nx-1
+        do ix=rightcut(1),nx-1
           if(resignore(ix,iy,2).ne.0) then
             do is=0,ns-1
               if (.not.is_neutral(is)) 
@@ -256,7 +263,7 @@ c
 c
 c*** ... or just print out the data - if not a limiter configuration
 c
-        write(*,*) 'Momentum balance in divertors:'
+        write(*,*) 'Parallel momentum balance in divertors:'
         write(*,hlp_frf) (hlp_hdv(i),i=1,nqudiv)
         write(*,hlp_frm) (hlp_div(i),(equdiv(i,j),j=1,nqudiv),i=1,ndiv)
       end if !}

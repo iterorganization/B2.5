@@ -732,7 +732,7 @@
       call cfruch (ninp(2), 120, lblgm, 'label')
       call cfruin (ninp(2), 1, idum, 'isymm')
       isymm = idum(0)
-*     (isymm is now stored in the b2cmfs common)               ! xpb 10.08.00
+*     (isymm is now stored in the b2cmfs common)                     !xpb 10.08.00
 *   ..read geometry
       call b2rugm (ninp(2), nx, ny, crx, cry, fpsi,
      &  ffbz, bb, vol, hx, hy, qz, qc, gs, pbs, wbbl, wbbr, wbbv)

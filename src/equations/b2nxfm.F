@@ -18,14 +18,14 @@
 *
 *  1. purpose
 *
-*     B2NXFM computes the flow terms in the momentum equation.
+*     B2NXFM computes the flow terms in the parallel momentum equation.
 *
 *
 *  3. description (see also routine b2cdca)
 *
 *     This routine evaluates the coefficients flubx and fluby that
-*     occur in the expression for the transport of momentum for one
-*     selected species; symbolically:
+*     occur in the expression for the transport of parallel momentum
+*     for one selected species; symbolically:
 *       fmbx = flubx*ub-cvsbx*(d/dx)ub
 *       fmby = fluby*ub-cvsby*(d/dy)ub
 *     cvsbx and cvsby are viscosities (not evaluated in this routine),

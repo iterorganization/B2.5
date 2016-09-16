@@ -8,23 +8,24 @@
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
+      use b2mod_external
       use b2mod_b2cmwg
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
       character idout*(*)
       real (kind=R8) ::
-     *   crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
+     *  crx(-1:nx,-1:ny,0:3), cry(-1:nx,-1:ny,0:3),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
-     *   ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), pr(-1:nx,-1:ny),
+     *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), pr(-1:nx,-1:ny),
      &  ro(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   wrk0(-1:nx,-1:ny)
+     *  wrk0(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -113,9 +114,9 @@
      &  header*60
       parameter (
      &  fmth='(a,t44,''inc=(5*)'',1pe9.2)',
-     &  fmth2='(a,t36,''is ='',i2,t44,''inc=(5*)'',1pe9.2)',
+     &  fmth2='(a,t35,''is ='',i3,t44,''inc=(5*)'',1pe9.2)',
      &  fmtl='(a,t44,''logarithmic scale'')',
-     &  fmtl2='(a,t36,''is ='',i2,t44,''logarithmic scale'')',
+     &  fmtl2='(a,t35,''is ='',i3,t44,''logarithmic scale'')',
      &  fmtp='(2x,a6,4x,a)')
       real (kind=R8) ::
      *   wrkx(-1:nx,-1:ny), wrky(-1:nx,-1:ny)
@@ -204,7 +205,7 @@
        do is = 0, ns-1
         do iy = -1, ny
          do ix = -1, nx
-          wrk0(ix,iy) = na(ix,iy,is)/ni(ix,iy,0)
+          wrk0(ix,iy) = na(ix,iy,is)/(ni(ix,iy,0)+ni_ext(ix,iy,0))
          enddo
         enddo
         write (header,fmtl2) 'FRACTIONAL ATOM DENSITY (unit).', is
@@ -361,7 +362,7 @@
         else
          sc = scal10(samax(nx+1,wxf1(0),1))
         endif
-        write (header,'(a,'' ('',i2,'')'',t44,a)')
+        write (header,'(a,'' ('',i3,'')'',t44,a)')
      &    'INTEGRATED PARTICLE FLUX', is, 'AS FUNCTION OF X'
         write (nprt,fmtp) '+fnax', header
 *     ..loop over plot index
@@ -485,7 +486,7 @@
         else
          sc = scal10(samax(ny+1,wyf1(0),1))
         endif
-        write (header,'(a,'' ('',i2,'')'',t44,a)')
+        write (header,'(a,'' ('',i3,'')'',t44,a)')
      &    'INTEGRATED PARTICLE FLUX', is, 'AS FUNCTION OF Y'
         write (nprt,fmtp) '+fnay', header
 *     ..loop over plot index

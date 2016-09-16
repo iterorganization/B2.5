@@ -345,7 +345,7 @@
 *     Fluxes between radial neighbors are positive if directed in the
 *     direction of increasing radial (iy) index.
 *
-*     fnb - (-1:nx,-1:ny,0:1)d real*8 array.
+*     fnb - (-1:nx,-1:ny,0:1) real*8 array.
 *     fnb specifies the flux of one selected atomic species.
 *     If that species has index (is) then fnb(,,)=fna(,,,is).
 *     precisely: (Let fnbx(,)=fnb(,,0) and fnby(,)=fnb(,,1).)

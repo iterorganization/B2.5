@@ -1,9 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr (nx, ny, ns, nscx, nscxmax, iscx, ismain,  
-     &  dtim, BoRiS, 
-     &  vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
+      subroutine b2stbr (nx, ny, ns, nscx, nscxmax, iscx, ismain,
+     &  dtim, BoRiS, vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types

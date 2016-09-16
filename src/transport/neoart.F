@@ -114,6 +114,7 @@ c--------------------------------------------------------------------
  
       use b2mod_types
       use b2mod_ranges
+      use b2mod_constants
 
       implicit none
 
@@ -171,11 +172,11 @@ c     switch off ion - electron collisions?
 c       yes switch off
         j = 0
         do i = 0, nsl-1
-          if (zsp(i,0).lt.0.) j = i
+          if (zsp(i,0).lt.0.0_R8) j = i
         enddo
         if (j.ne.0) then
           do i = 0, nsl-1
-            if (j.ne.i) ntau(i,j) = 0.
+            if (j.ne.i) ntau(i,j) = 0.0_R8
           enddo
         endif
       endif
@@ -184,7 +185,7 @@ c     calculate the friction coefficients
       do i = 0, nsl-1
         do k = 1, 3
           do l = 1, 3
-            la(k,l,i) = 0.
+            la(k,l,i) = 0.0_R8
           enddo
         enddo
         do j = 0, nsl-1
@@ -209,14 +210,14 @@ c     make the coefficients zero
       do i = 0, nsdecl
         do j = 0, nzdecl-1
           do k = 1,4
-            coeff(i,j,k) = 0.
-            coeffc(i,j,k) = 0.
+            coeff(i,j,k) = 0.0_R8
+            coeffc(i,j,k) = 0.0_R8
           enddo
         enddo
       enddo
 
 cc     normalize the eparr  (CHECK !!!)
-      eparn = 1e-3*dpsidr*r2i*eparr 
+      eparn = 1.0e-3_R8*dpsidr*r2i*eparr
 
 c     calculate the classical transport contribution
       if ((ic.eq.0).or.(ic.eq.4)) then
@@ -227,14 +228,14 @@ c       in coeff and clear coeffc
           do j = 0, ncl(i)-1
             do k = 1, 2
               coeff(i,j,k) = coeff(i,j,k)+ coeffc(i,j,k)*
-     +          gclass/(1.6022e-22*zsp(i,j)*dpsidr**2)
-              coeffc(i,j,k) = 0.
+     +          gclass/((ev/1000.0_R8)*zsp(i,j)*dpsidr**2)
+              coeffc(i,j,k) = 0.0_R8
             enddo
           enddo
         enddo
       endif
 
-c     calculate the pfirsch schlueter contribution
+c     calculate the Pfirsch-Schlueter contribution
       if ((ic.eq.2).or.(ic.eq.3).or.(ic.eq.4)) then
         call ps(nsdecl,nzdecl,nsl,ncl,neofrc,ntau,xi,la,lab,m,t,den,
      +           zsp,sigma,ds,rnq,uai,coeffc)
@@ -245,8 +246,8 @@ c       coeff and clear coeffc
             do k = 1, 2
               coeff(i,j,k) = coeff(i,j,k) - coeffc(i,j,k)*
      +          (1.- b2av*bi2a)*(rbt/dpsidr)**2/
-     +          (1.60e-22*zsp(i,j)*b2av)
-              coeffc(i,j,k) = 0.
+     +          ((ev/1000.0_R8)*zsp(i,j)*b2av)
+              coeffc(i,j,k) = 0.0_R8
             enddo
           enddo
         enddo
@@ -262,8 +263,8 @@ c       coeff and clear coeffc
           do j = 0, ncl(i)-1
             do k = 1, 2
               coeff(i,j,k) = coeff(i,j,k) - coeffc(i,j,k)*
-     +          (rbt/dpsidr)**2/(1.60e-22*zsp(i,j)*b2av)
-              coeffc(i,j,k) = 0.
+     +          (rbt/dpsidr)**2/((ev/1000.0_R8)*zsp(i,j)*b2av)
+              coeffc(i,j,k) = 0.0_R8
             enddo
           enddo
         enddo
@@ -271,9 +272,9 @@ c       coeff and clear coeffc
 
       do i = 0, nsl-1
         do j = 0, ncl(i)-1
-          coeff(i,j,3) = coeffc(i,j,3)*1600*den(i,j)*zsp(i,j)*
-     +                   rbt*bav/(dpsidr*b2av)
-          coeff(i,j,4) = 1e3*coeffc(i,j,4)*rbt/(b2av*dpsidr)
+          coeff(i,j,3) = coeffc(i,j,3)*(ev*1000.0_R8*1.0e19_R8)*
+     +                   den(i,j)*zsp(i,j)*rbt*bav/(dpsidr*b2av)
+          coeff(i,j,4) = 1.0e3_R8*coeffc(i,j,4)*rbt/(b2av*dpsidr)
         enddo
       enddo
       

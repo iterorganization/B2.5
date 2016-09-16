@@ -18,7 +18,7 @@
 *  1. purpose
 *
 *     B2NXCM computes the adjustment to the coefficients pcca that
-*     comes from the combined momentum equation solver.
+*     comes from the combined parallel momentum equation solver.
 *
 *-----------------------------------------------------------------------
 *.declarations

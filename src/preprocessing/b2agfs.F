@@ -713,7 +713,7 @@ c check right neighbours
      1       dist(ix,iy,1,ixr,rightiy1(ix,iy),0)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1         'Error with right neighbour of ',
      2         ix,iy,' (lower point), ','dist=',distval
             endif
@@ -721,7 +721,7 @@ c check right neighbours
      1       dist(ix,iy,3,ixr,rightiy1(ix,iy),2)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1         'Error with right neighbour of ',
      2         ix,iy,' (upper point), ','dist=',distval
             endif
@@ -737,7 +737,7 @@ c check left neighbours
      1       dist(ix,iy,0,ixl,leftiy1(ix,iy),1)
             if(distval.ne.0) then
             if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1         'Error with left neighbour of ',ix,iy,' (lower point), ',
      2         'dist=',distval
             endif
@@ -745,7 +745,7 @@ c check left neighbours
      1       dist(ix,iy,2,ixl,leftiy1(ix,iy),3)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1         'Error with left neighbour of ',ix,iy,' (upper point), ',
      2         'dist=',distval
             endif
@@ -763,7 +763,7 @@ c check top neighbours
      1       dist(ix,iy,2,topix1(ix,iy),iyt,0)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1       'Error with top neighbour of ',ix,iy,' (left point), ',
      2       'dist=',distval
             endif
@@ -771,7 +771,7 @@ c check top neighbours
      1       dist(ix,iy,3,topix1(ix,iy),iyt,1)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1       'Error with top neighbour of ',ix,iy,' (right point), ',
      2       'dist=',distval
             endif
@@ -787,7 +787,7 @@ c check bottom neighbours
      1       dist(ix,iy,0,bottomix1(ix,iy),iyb,2)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1       'Error with bottom neighbour of ',ix,iy,' (left point), ',
      2       'dist=',distval
             endif
@@ -795,7 +795,7 @@ c check bottom neighbours
      1       dist(ix,iy,1,bottomix1(ix,iy),iyb,3)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1       'Error with bottom neighbour of ',ix,iy,' (right point), ',
      2       'dist=',distval
             endif
@@ -814,7 +814,7 @@ c check right neighbours
      1       dist(ix,iy,1,ixr,rightiy1(ix,iy),0)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1       'Error with right neighbour of ',ix,iy,' (lower point), ',
      2       'dist=',distval
             endif
@@ -822,7 +822,7 @@ c check right neighbours
      1     dist(ix,iy,3,ixr,rightiy1(ix,iy),2)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1       'Error with right neighbour of ',ix,iy,' (upper point), ',
      2       'dist=',distval
            endif
@@ -838,7 +838,7 @@ c check left neighbours
      1     dist(ix,iy,0,ixl,leftiy1(ix,iy),1)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1       'Error with left neighbour of ',ix,iy,' (lower point), ',
      2       'dist=',distval
             endif
@@ -846,7 +846,7 @@ c check left neighbours
      1       dist(ix,iy,2,ixl,leftiy1(ix,iy),3)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1       'Error with left neighbour of ',ix,iy,' (upper point), ',
      2       'dist=',distval
             endif
@@ -864,7 +864,7 @@ c check top neighbours
      1       dist(ix,iy,2,topix1(ix,iy),iyt,0)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1       'Error with top neighbour of ',ix,iy,' (left point), ',
      2       'dist=',distval
             endif
@@ -872,7 +872,7 @@ c check top neighbours
      1       dist(ix,iy,3,topix1(ix,iy),iyt,1)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1       'Error with top neighbour of ',ix,iy,' (right point), ',
      2       'dist=',distval
             endif
@@ -888,7 +888,7 @@ c check bottom neighbours
      1       dist(ix,iy,0,bottomix1(ix,iy),iyb,2)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1       'Error with bottom neighbour of ',ix,iy,' (left point), ',
      2       'dist=',distval
             endif
@@ -896,7 +896,7 @@ c check bottom neighbours
      1       dist(ix,iy,1,bottomix1(ix,iy),iyb,3)
             if(distval.ne.0) then
               if(distval.gt.geom_match_dist) errors=errors+1
-              write(*,*)
+              write(*,'(a,2i4,a,a,1p,1g12.4)')
      1       'Error with bottom neighbour of ',ix,iy,' (right point), ',
      2       'dist=',distval 
             endif

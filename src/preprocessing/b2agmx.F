@@ -181,7 +181,7 @@
       ixiso(0) = -1
       do ic = 1, isox
         ixiso(ic) = floor(1.0_R8*(ix1iso(ic)-(2*ic-1))*nxeff/nx1eff) 
-     .   + 2*ic
+     .   + 2*ic-1
       enddo
 *   ..for limiter case, identify horizontal inner boundaries
       iy1iso(:) = ny1+1
@@ -424,7 +424,7 @@ c-dpc
           endif
 c-dpc-end
 *     ..project hx to cell (ix,iy)
-          t0 = 0
+          t0 = 0.0_R8
           do jy1 = 0, ky1-1
             t1 = 0.0_R8
             do jx1 = 0, kx1-1

@@ -289,8 +289,8 @@
       real (kind=R8) :: cftmp(0:nsdecl-1)
       character id*8, id0*8, id1*72
       character*(*) fmt0, fmt1
-      parameter (fmt0='(0p,2x,'''''''',i2,'''''''',1x,4f9.3)')
-      parameter (fmt1='(1p,2x,'''''''',i2,'''''''',1x,8e9.2)')
+      parameter (fmt0='(0p,1x,'''''''',i3,'''''''',1x,4(f9.3,1x))')
+      parameter (fmt1='(1p,1x,'''''''',i3,'''''''',1x,8(e9.2,1x))')
 *     (The sequence of eight quotes is not a joke. Because it occurs
 *     inside a character string it represents four quotes, which in
 *     turn represents one quoted quote in the output format.)
@@ -364,7 +364,7 @@
 *    ..The output format is new version only
        oldversion = .true.
        do is = 0, ns-1
-        read (nget,*,err=92) id0, zpdum(is,0:3)
+        read (nget,*,err=92) id0, (zpdum(is,i),i=0,3)
         read (id0,'(i8)',err=93) is0
         call xertst (is0.eq.is, 'faulty input under *specs')
         oldversion = oldversion .and. 

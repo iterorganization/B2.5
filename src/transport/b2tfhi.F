@@ -61,9 +61,11 @@
       real (kind=R8), save :: PSch=1.0e0_R8                          !srv 17.01.07
       real (kind=R8), save :: ycur = 1.0_R8                          !srv 07.07.08
       real (kind=R8) ::
-     *  flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0, w1,
+     *  flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0,
      1  cum_flo_vadia, cum_flo_vaecrb, prefactor, cutlo,
      &   floi0_mdf, coni0_mdf, t0_mdf,dti0_mdf, t1_mdf               !srv 13.10.06
+      real (kind=R8) :: w0(-1:nx,-1:ny,0:ns-1),
+     1  w1(-1:nx,-1:ny,0:ns-1), w2(-1:nx,-1:ny,0:ns-1)
       parameter (cutlo=1.0e-60_R8)
       save ncall, conduction_only, no_hybr
 *   ..procedures
@@ -276,6 +278,9 @@ c  ..set null flux in guard cells  ?
       fhi_mdf = 0.0e0_R8                                              !srv 13.10.06
 
 * ..compute fluxes and linearisation
+      do is = 0, ns-1
+        w0(:,:,is) = kinrgy(:,:,is)/(am(is)*mp)
+      end do
 *   ..compute fhix, floix, conix
       do iy = -1, ny
        do ix = -1, nx
@@ -286,9 +291,10 @@ c  ..set null flux in guard cells  ?
          fhi(ix,iy,0) = 0.0_R8
          fhit(ix,iy,0) = 0.0_R8
          fllimi(ix,iy) = 1.0_R8
+         w1(ix,iy,:) = 0.0_R8
         else
          dti = ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
-         w1 = 0.0_R8
+         w1(ix,iy,:) = 0.0_R8
 cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
          if (conduction_only.eq.1) then
            floi0 = 0.0_R8
@@ -297,7 +303,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
          else
            if (BoRiS.eq.1.0_R8) then   ! Add the kinetic and viscous terms
              do is = 0, ns-1
-               floi0 = kinrgy(ix,iy,is)*fna(ix,iy,0,is)
+               floi0 = am(is)*mp*fna(ix,iy,0,is)
                coni0 = gs(ix,iy,0)*qc(ix,iy)*
      .          ave(vsal(ix,iy,0,is)/hx(ix,iy),
      .              vsal(leftix(ix,iy),leftiy(ix,iy),0,is)/
@@ -305,11 +311,13 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
                t1 = dim ( coni0,
      .          abs(floi0) *
      .          max(0.0_R8, 
-     .             min(ti(ix,iy),ti(leftix(ix,iy),leftiy(ix,iy))))/
-     .          max(cutlo, ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy))) )
-               w1 = w1 +
-     .          upwind(floi0,ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy))
-     .           - t1 * (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))
+     .           min(w0(ix,iy,is),w0(leftix(ix,iy),leftiy(ix,iy),is)))/
+     .          max(cutlo,
+     .              w0(ix,iy,is)+w0(leftix(ix,iy),leftiy(ix,iy),is)) )
+               w1(ix,iy,is) =
+     .          upwind(floi0,
+     .                 w0(leftix(ix,iy),leftiy(ix,iy),is),w0(ix,iy,is))
+     .           - t1*(w0(ix,iy,is)-w0(leftix(ix,iy),leftiy(ix,iy),is))
              enddo
            endif
            floi0 = (1.5_R8+BoRiS)*fni_32(ix,iy,0)+
@@ -363,11 +371,10 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
           fllimi(ix,iy) = 1.0_R8+t0_mdf
 	 endif                                      !srv 18.08.08 }
          if (no_hybr.eq.0) then
-           fhi(ix,iy,0) = w1 +
-     .                    floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
+           fhi(ix,iy,0) = floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
      &                          +ti(ix,iy))/2.0_R8-
      &                  abs(floi0/2.0_R8)*dti-coni0*dti0
-           fhi_mdf(ix,iy,0) = w1 +
+           fhi_mdf(ix,iy,0) =
      .                    floi0_mdf*(ti(leftix(ix,iy),leftiy(ix,iy))
      &                          +ti(ix,iy))/2.0_R8-
      &                  abs(floi0_mdf/2.0_R8)*dti-coni0_mdf*dti0_mdf
@@ -378,10 +385,18 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      .         max(0.0_R8, 
      .             min(ti(ix,iy),ti(leftix(ix,iy),leftiy(ix,iy))))/
      .         max(cutlo, ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy))) )
-           fhi(ix,iy,0) = w1 +
+           fhi(ix,iy,0) =
      .         upwind(floi0, ti(leftix(ix,iy),leftiy(ix,iy)), ti(ix,iy))
      .         - t1 * (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))
+           fhi_mdf(ix,iy,0) =
+     .         upwind(floi0_mdf,
+     .                 ti(leftix(ix,iy),leftiy(ix,iy)), ti(ix,iy))
+     .         - t1 * (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))
          endif
+         do is = 0, ns-1
+           fhi(ix,iy,0) = fhi(ix,iy,0) + w1(ix,iy,is)
+           fhi_mdf(ix,iy,0) = fhi_mdf(ix,iy,0) + w1(ix,iy,is)
+         end do
          fhit(ix,iy,0) = fhi(ix,iy,0) +
      1    ((1.0_R8-BoRiS)*fni_32(ix,iy,0)+cum_flo_vaecrb)*
      &    (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
@@ -407,6 +422,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
         endif
        enddo
       enddo
+
 *   ..compute fhiy, floiy, coniy
       do iy = -1, ny
        do ix = -1, nx
@@ -416,8 +432,9 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
          fhi_mdf(ix,iy,1) = 0.0e0_R8                                 !srv 13.10.06
          fhi(ix,iy,1) = 0.0_R8
          fhit(ix,iy,1) = 0.0_R8
+         w2(ix,iy,:) = 0.0_R8
         else
-         w1 = 0.0_R8
+         w2(ix,iy,:) = 0.0_R8
          if (conduction_only.eq.1) then
            floi0 = 0.0_R8
            floi0_mdf = 0.0_R8
@@ -426,7 +443,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
          else
            if (BoRiS.eq.1.0_R8) then   ! Add the kinetic and viscous terms
              do is = 0, ns-1
-               floi0 = kinrgy(ix,iy,is)*fna(ix,iy,1,is)
+               floi0 = am(is)*mp*fna(ix,iy,1,is)
                coni0 = gs(ix,iy,1)*
      .          ave(vsal(ix,iy,1,is)/hy1(ix,iy),
      .              vsal(bottomix(ix,iy),bottomiy(ix,iy),1,is)/
@@ -434,13 +451,15 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
                t1 = dim ( coni0,
      .                   abs(floi0) *
      .          max(0.0_R8, 
-     .             min(ti(ix,iy),ti(bottomix(ix,iy),bottomiy(ix,iy))))/
+     .             min(w0(ix,iy,is),
+     .                 w0(bottomix(ix,iy),bottomiy(ix,iy),is)))/
      .          max(cutlo, 
-     .                 ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy))))
-               w1 = w1 +
-     .          upwind(floi0, 
-     .                ti(bottomix(ix,iy),bottomiy(ix,iy)), ti(ix,iy))
-     .           - t1 * (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
+     .           w0(ix,iy,is)+w0(bottomix(ix,iy),bottomiy(ix,iy),is)))
+               w2(ix,iy,is) =
+     .          upwind(floi0,
+     .           w0(bottomix(ix,iy),bottomiy(ix,iy),is), w0(ix,iy,is))
+     .           - t1 * (w0(ix,iy,is)-
+     .                   w0(bottomix(ix,iy),bottomiy(ix,iy),is))
              enddo
            endif
            floi0 = (1.5_R8+BoRiS)*fni_32(ix,iy,1)+
@@ -469,12 +488,12 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
 	 endif
          if (no_hybr.eq.0) then
            coni(ix,iy,1,0) = hybr(floi(ix,iy,1),chci(ix,iy,1))    !srv 02.01.07
-           fhi(ix,iy,1) = w1 + floi(ix,iy,1)*
+           fhi(ix,iy,1) = floi(ix,iy,1)*
      1      (ti(bottomix(ix,iy),bottomiy(ix,iy))
      &                                +ti(ix,iy))/2.0_R8-
      &       coni(ix,iy,1,0)*                                     !srv 02.01.07
      1      (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
-           fhi_mdf(ix,iy,1) = w1 + floi(ix,iy,1)*
+           fhi_mdf(ix,iy,1) = floi(ix,iy,1)*
      1      (ti(bottomix(ix,iy),bottomiy(ix,iy))
      &                                +ti(ix,iy))/2.0_R8-
      &       coni(ix,iy,1,0)*                                     !srv 02.01.07
@@ -484,15 +503,23 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
            coni(ix,iy,1,0) = chci(ix,iy,1)                        !srv 02.01.07
            t1 = dim ( coni(ix,iy,1,0),                            !srv 02.01.07
      .         abs(floi(ix,iy,1)) *
-     .         max(0.0_R8, 
+     .         max(0.0_R8,
      .             min(ti(ix,iy),ti(bottomix(ix,iy),bottomiy(ix,iy))))/
      .         max(cutlo, 
      .                 ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy))))
-           fhi(ix,iy,1) = w1 + 
-     .         upwind(floi(ix,iy,1), 
+           fhi(ix,iy,1) =
+     .         upwind(floi(ix,iy,1),
      .                ti(bottomix(ix,iy),bottomiy(ix,iy)), ti(ix,iy))
      .         - t1 * (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
-         endif
+            fhi_mdf(ix,iy,1) =
+     .         upwind(floi(ix,iy,1),
+     .                ti(bottomix(ix,iy),bottomiy(ix,iy)), ti(ix,iy))
+     .         - t1 * (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
+        endif
+         do is = 0, ns-1
+           fhi(ix,iy,1) = fhi(ix,iy,1) + w2(ix,iy,is)
+           fhi_mdf(ix,iy,1) = fhi_mdf(ix,iy,1) + w2(ix,iy,is)
+         end do
          fhit(ix,iy,1) = fhi(ix,iy,1)+
      1    ((1.0_R8-BoRiS)*fni_32(ix,iy,1)+cum_flo_vaecrb)*
      &    (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
@@ -507,6 +534,8 @@ cxpb turn off flows between boundary cells
             if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
               fhi(ix,iy,1)=0.0_R8
               floi(ix,iy,1)=0.0_R8
+              fhit(ix,iy,1)=0.0_R8
+              coni(ix,iy,1,:)=0.0_R8
             endif
           enddo
         enddo
@@ -516,6 +545,9 @@ cxpb turn off poloidal flows in core boundary
           if(mod(region(ix,-1,0),4).eq.1) then
             fhi(ix,-1,0) = 0.0_R8
             floi(ix,-1,0) = 0.0_R8
+            fhit(ix,-1,0) = 0.0_R8
+            coni(ix,-1,0,:) = 0.0_R8
+            fllimi(ix,-1) = 1.0_R8
           endif
         enddo
       endif                                                        !xpb
@@ -526,8 +558,13 @@ cxpb turn off poloidal flows in core boundary
           DO IY=NYISO1(IB), NYISO2(IB)
             fhi(ix,iy,0)=0.0_R8
             floi(ix,iy,0)=0.0_R8
+            fhit(ix,iy,0)=0.0_R8
+            coni(ix,iy,0,:)=0.0_R8
+            fllimi(ix,iy)=1.0_R8
             fhi(ix,iy,1)=0.0_R8
             floi(ix,iy,1)=0.0_R8
+            fhit(ix,iy,1)=0.0_R8
+            coni(ix,iy,1,:)=0.0_R8
           end do
         end do
       end do

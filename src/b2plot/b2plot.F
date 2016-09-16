@@ -9467,7 +9467,7 @@ c     <delta wavelength in A> nspe
       integer neo_ic
       if(first_neoclassical) then
 c calculate neoclassical diagnostics
-	call alloc_b2mod_neoclassical(nx,ny,ns,nstages,mmx)
+	call alloc_b2mod_neoclassical(nx,ny,ns,mmx)
 	first_neoclassical = .false.
       endif
       if(rerun_neoclassical) then

@@ -617,7 +617,7 @@ c*** Re-scale the neutral fluxes
           wldrm(i,j,0)=0.
           wldpm(i,j,0)=0.
           do k=1,nstrai !{
-            if(l.gt.0) then !{
+            if(l.gt.0 .and. l.le.nnatmi) then !{
               wldnm(i,j,0)=wldnm(i,j,0)+wldnm(i,j,k)*sclstra(l,k)
               wldrm(i,j,0)=wldrm(i,j,0)+wldrm(i,j,k)*sclstra(l,k)
               wldpm(i,j,0)=wldpm(i,j,0)+wldpm(i,j,k)*sclstra(l,k)
@@ -895,8 +895,8 @@ c*** Helium fraction and related data - flux estimation
           k=lhetrgts(i)
           if(k.eq.0) go to 10
           if(k.lt.0) k=nnlimi-k
-          if(j_he_at.lt.nnatmi) hlp_he=hlp_he+wldna(k,j_he_at,0)
-          if(j_h_at.lt.nnatmi) hlp_h=hlp_h+wldna(k,j_h_at,0)
+          if(j_he_at.le.nnatmi) hlp_he=hlp_he+wldna(k,j_he_at,0)
+          if(j_h_at.le.nnatmi) hlp_h=hlp_h+wldna(k,j_h_at,0)
           do j=1,nnatmi !{
             hlp_tot=hlp_tot+wldna(k,j,0)
           end do !}

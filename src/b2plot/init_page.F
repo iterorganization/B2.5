@@ -156,6 +156,7 @@ c     the line format common
           iy=iy+1
         endif
       endif
+      if(b2plot_debug.ge.8) write(*,*) xlo,xhi,ylo,yhi
 
       n_page=max(nx_page,ny_page)
       itxtwdth=max(nint(12*lbsz/N_PAGE),4)

@@ -38,7 +38,7 @@
 *   ..local variables
       integer ncall, style, idum(0:9), nfld, k, is, iix, iiy, ll(0:1)
       save ncall, style
-      character chtit*60, chlab*12, id*2, idr*7
+      character chtit*60, chlab*12, id*3, idr*7
 *   ..procedures
       external subini, subend, xertst, ipgeti, cfwuin, cfwuch
 *   ..initialisation
@@ -108,7 +108,7 @@
        k = k+1
 *     ..norms of residuals
        do is = 0, ns-1
-        write (id,'(i2)') is
+        write (id,'(i3)') is
         chtit =
      &    'norm of residual of continuity equation, species '//id
         chlab = 'aresco('//id//')'
@@ -118,16 +118,17 @@
         k = k+1
        enddo
        do is = 0, ns-1
-        write (id,'(i2)') is
+        write (id,'(i3)') is
         chtit =
-     &    'norm of residual of momentum equation, species '//id
+     &    'norm of residual of parallel momentum equation, species '
+     &    //id
         chlab = 'aresmo('//id//')'
         call cfwuin (nput, 1, ll(1), 'linlog')
         call cfwuch (nput, 60, chtit, 'title')
         call cfwuch (nput, 12, chlab, 'label')
         k = k+1
        enddo
-       chtit = 'norm of residual of total momentum equation'
+       chtit = 'norm of residual of total parallel momentum equation'
        chlab = 'aresmt'
        call cfwuin (nput, 1, ll(1), 'linlog')
        call cfwuch (nput, 60, chtit, 'title')
@@ -153,7 +154,7 @@
        k = k+1
 *    ..norms of corrections
        do is = 0, ns-1
-        write (id,'(i2)') is
+        write (id,'(i3)') is
         chtit =
      &    'norm of correction of pressure, species '//id
         chlab = 'acorpa('//id//')'
@@ -163,7 +164,7 @@
         k = k+1
        enddo
        do is = 0, ns-1
-        write (id,'(i2)') is
+        write (id,'(i3)') is
         chtit =
      &    'norm of correction of velocity, species '//id
         chlab = 'acorua('//id//')'
@@ -200,7 +201,7 @@
       if (2.le.style) then
 *    ..total content on regions
        do is = 0, ns-1
-        write (id,'(i2)') is
+        write (id,'(i3)') is
         do iiy = -1, 4
          do iix = -1, 4
           write (idr,'(a,i2,a,i2,a)') '(', iix, ',', iiy, ')'
@@ -251,7 +252,7 @@
       if (3.le.style) then
 *    ..integrated fluxes
        do is = 0, ns-1
-        write (id,'(i2)') is
+        write (id,'(i3)') is
         do iiy = 0, 3
          do iix = 0, 4
           write (idr,'(a,i2,a,i2,a)') '(', iix, ',', iiy, ')'
@@ -347,7 +348,7 @@
       if (4.le.style) then
 *    ..min and max on regions
        do is = 0, ns-1
-        write (id,'(i2)') is
+        write (id,'(i3)') is
         do iiy = -1, 4
          do iix = -1, 4
           write (idr,'(a,i2,a,i2,a)') '(', iix, ',', iiy, ')'

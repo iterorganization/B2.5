@@ -116,15 +116,15 @@
        call xerrab ('slv5pt--faulty argument iters')
       endif
 *   ..test edge values of side-diagonals
-      if (0.lt.samax(m,aa5(0,0,-2),1).or.
-     &  0.lt.samax(m,aa5(0,n-1,2),1)) then
+      if (0.0_R8.lt.samax(m,aa5(0,0,-2),1).or.
+     &    0.0_R8.lt.samax(m,aa5(0,n-1,2),1)) then
        call xerrab ('slv5pt--faulty argument aa5(,,-2), aa5(,,2)')
-      else if (0.lt.samax(n,aa5(0,0,-1),m).or.
-     &   0.lt.samax(n,aa5(m-1,0,1),m)) then
+      else if (0.0_R8.lt.samax(n,aa5(0,0,-1),m).or.
+     &         0.0_R8.lt.samax(n,aa5(m-1,0,1),m)) then
        call xerrab ('slv5pt--faulty argument aa5(,,-1), aa5(,,1)')
       endif
 *   ..test sign of main diagonal
-      if (smin(m*n,aa5(0,0,0),1).lt.0) then
+      if (smin(m*n,aa5(0,0,0),1).lt.0.0_R8) then
        call xerrab ('slv5pt--faulty argument sign aa5(,,0)')
       endif
 

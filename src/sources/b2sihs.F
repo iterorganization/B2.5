@@ -47,7 +47,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, style, n2, ix, iy, is, isb
+      integer ncall, style, n2, ix, iy, is, isb, nsmin, nsmax
       integer, save :: icase = 0
       integer, save :: istyle_Joule_heating = 1                       !srv 17.01.14
       real (kind=R8) ::
@@ -55,7 +55,7 @@
      &  phm4, phm5, phm6, phm7, work(-1:nx,-1:ny), 
      &  wpov(-1:nx,-1:ny), wpoh(-1:nx,-1:ny)
       save ncall, style, rf0, rf1, rf2, rf3, rf4, 
-     &  phm0, phm1, phm2, phm3, phm4, phm5, phm6, phm7
+     &  phm0, phm1, phm2, phm3, phm4, phm5, phm6, phm7, nsmin, nsmax
       real (kind=R8) ::
      *  t0, t1, ctaup, coef
 *   ..procedures
@@ -108,6 +108,8 @@
       call subini ('b2sihs')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
+       nsmin=0
+       nsmax=ns
        call ipgeti ('b2sihs_style', style)
        call ipgetr ('b2sihs_rf0', rf0)
        call ipgetr ('b2sihs_rf1', rf1)
@@ -132,6 +134,19 @@
        call xertst (0.eq.icase .or. 1.eq.icase, 
      &               'faulty input b2tlnl_ii')
        call ipgeti ('b2sihs_istyle_Joule_heating', istyle_Joule_heating)  !srv 17.01.14
+       call ipgeti ('b2news_nsmin', nsmin)
+       if(nsmin.gt.ns) then
+          nsmin=ns
+       elseif(nsmin.lt.0) then
+          nsmin=0
+       endif
+       call ipgeti ('b2news_nsmax', nsmax)
+       if(nsmax.gt.ns) then
+          nsmax=ns
+       elseif(nsmax.lt.0) then
+          nsmax=0
+       endif
+       write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -171,8 +186,8 @@
 !xpb The lnlam term has been removed and is put back in later so it can
 !xpb vary with space and species.
       t1 = (4.0_R8*pi*eps0/qe)/qe
-      t0 = (3.0_R8/(4.0_R8*sqrt(2*pi)))*t1*(t1*ev*sqrt(ev))
-      ctaup = t0*sqrt(mp)                                                !xpb
+      t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
+      ctaup = t0*sqrt(mp)                                       	 !xpb
 *   ..compute vti32
       do iy = -1, ny
        do ix = -1, nx
@@ -246,7 +261,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &       -(wpoh(rightix(ix,iy),rightiy(ix,iy))-wpoh(ix,iy))*
      &       (1.0_R8/wbbv(topix(ix,iy),topiy(ix,iy),3)**2-
      &        1.0_R8/wbbv(ix,iy,3)**2))
-            t0 = phm5*fac_ExB(ix,iy)*work(ix,iy)                           !xpb
+            t0 = phm5*fac_ExB(ix,iy)*work(ix,iy)                  	 !xpb
             she0(ix,iy,0) = she0(ix,iy,0)+
      &       (max(0.0_R8,t0)+rf0*abs(t0))*ne(ix,iy)*te(ix,iy)
             she0(ix,iy,3) = she0(ix,iy,3)+min(0.0_R8,t0)-rf0*abs(t0)
@@ -337,7 +352,8 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
 *   ..contribution from atom-atom friction
       b2fraa=0.0_R8
       b2sihs_fraa=0.0_R8
-      do isb = 0, ns-1
+!      do isb = 0, ns-1
+      do isb = nsmin, nsmax-1
        do is = isb+1, ns-1
 *     ..consider distinct cases
         if (.not.is_neutral(is).and..not.is_neutral(isb)) then
@@ -555,7 +571,7 @@ c
      *  bb(-1:nx,-1:ny,0:3), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1)
       real (kind=R8) ::                                                  !xpb
-     *  facdrift(-1:nx,-1:ny)                                           !xpb
+     *  facdrift(-1:nx,-1:ny)                                            !xpb
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3)
@@ -620,12 +636,16 @@ c
                 if(ixl.ne.-2.and.ixr.ne.nx+1.and.
      &             iyb.ne.-2.and.iyt.ne.ny+1.and.
      &             region(ix,iy,0).ne.0) then
-                  t0=facdrift(ix,iy)*facgt*2.5_R8/(rza(ix,iy,is)*qe)*
-     2             ((vol(ixr,iyr)*ti(ix,iy)**2*na(ix,iy,is)+             !xpb
-     3               vol(ix,iy)*ti(ixr,iyr)**2*na(ixr,iyr,is))/          !xpb
-     4             (vol(ix,iy)+vol(ixr,iyr))-                            !xpb
-     5              (vol(ix,iy)*ti(ixl,iyl)**2*na(ixl,iyl,is)+           !xpb
-     6               vol(ixl,iyl)*ti(ix,iy)**2*na(ix,iy,is))/            !xpb
+                  t0=facdrift(ix,iy)*facgt*2.5_R8/qe*
+     2             ((vol(ixr,iyr)*ti(ix,iy)**2*na(ix,iy,is)/
+     .               rza(ix,iy,is)+
+     3               vol(ix,iy)*ti(ixr,iyr)**2*na(ixr,iyr,is)/
+     .               rza(ixr,iyr,is))/
+     4             (vol(ix,iy)+vol(ixr,iyr))-
+     5              (vol(ix,iy)*ti(ixl,iyl)**2*na(ixl,iyl,is)/
+     .               rza(ixl,iyl,is)+
+     6               vol(ixl,iyl)*ti(ix,iy)**2*na(ix,iy,is)/
+     .               rza(ix,iy,is))/
      7             (vol(ixl,iyl)+vol(ix,iy)))/hx(ix,iy)*vol(ix,iy)*
      8             (1.0_R8/bb(ix,iy,3)**2*
      9             ((vol(ixt,iyt)*bb(ix,iy,2)+vol(ix,iy)*bb(ixt,iyt,2))/ !xpb
@@ -637,12 +657,16 @@ c
      6              (vol(ix,iy)+vol(ixt,iyt))-(vol(ix,iy)*bb(ixb,iyb,3)+ !xpb
      7               vol(ixb,iyb)*bb(ix,iy,3))/                          !xpb
      8              (vol(ixb,iyb)+vol(ix,iy))))/hy1(ix,iy)
-                  t0=t0+facdrift(ix,iy)*facgt*2.5_R8/(rza(ix,iy,is)*qe)*
-     2             ((vol(ixt,iyt)*ti(ix,iy)**2*na(ix,iy,is)+
-     3               vol(ix,iy)*ti(ixt,iyt)**2*na(ixt,iyt,is))/          !xpb
+                  t0=t0+facdrift(ix,iy)*facgt*2.5_R8/qe*
+     2             ((vol(ixt,iyt)*ti(ix,iy)**2*na(ix,iy,is)/
+     .               rza(ix,iy,is)+
+     3               vol(ix,iy)*ti(ixt,iyt)**2*na(ixt,iyt,is)/
+     .               rza(ixt,iyt,is))/
      4             (vol(ix,iy)+vol(ixt,iyt))-
-     5              (vol(ix,iy)*ti(ixb,iyb)**2*na(ixb,iyb,is)+           !xpb
-     6               vol(ixb,iyb)*ti(ix,iy)**2*na(ix,iy,is))/
+     5              (vol(ix,iy)*ti(ixb,iyb)**2*na(ixb,iyb,is)/
+     .               rza(ixb,iyb,is)+
+     6               vol(ixb,iyb)*ti(ix,iy)**2*na(ix,iy,is)/
+     .               rza(ix,iy,is))/
      7             (vol(ixb,iyb)+vol(ix,iy)))/hy1(ix,iy)*vol(ix,iy)*
      8             (-1.0_R8/bb(ix,iy,3)**2*(wbbr(ix,iy,2)-wbbl(ix,iy,2)) !xpb
      4              +2.0_R8*bb(ix,iy,2)/bb(ix,iy,3)**3*

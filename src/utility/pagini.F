@@ -107,32 +107,32 @@
       xmin4=xmin
       ymin4=ymin
       if (style.eq.0) then
-       call gridal (1, 10, 1, 10, 1, 1, 5, xmin4, ymin4)
+       call gridal (5,  2, 5,  2, 1, 1, 5, xmin4, ymin4)
       else if (style.eq.1) then
-       call gridal (1, 10, 1, 11, 1, 1, 5, xmin4, ymin4)
+       call gridal (5,  2, 1, 10, 1, 1, 5, xmin4, ymin4)
        call gsln (2)
-       call gridal (1, 10, 1, 11, -1, 0, 4, xmin4, ymin4)
+       call gridal (5,  2, 1, 10,-1, 0, 4, xmin4, ymin4)
        call gsln (1)
       else if (style.eq.2) then
-       call gridal (1, 11, 1, 10, 1, 1, 5, xmin4, ymin4)
+       call gridal (1, 11, 5,  2, 1, 1, 5, xmin4, ymin4)
        call gsln (2)
-       call gridal (1, 11, 1, 10, 0, -1, 1, xmin4, ymin4)
+       call gridal (1, 11, 5,  2, 0,-1, 1, xmin4, ymin4)
        call gsln (1)
       else if (style.eq.3) then
-       call gridal (1, 11, 1, 11, 1, 1, 5, xmin4, ymin4)
+       call gridal (1, 11, 1, 10, 1, 1, 5, xmin4, ymin4)
        call gsln (2)
-       call gridal (1, 11, 1, 11, 0, 0, 0, xmin4, ymin4)
+       call gridal (1, 11, 1, 10, 0, 0, 0, xmin4, ymin4)
        call gsln (1)
       else if (style.eq.4) then
-       call gridal (1, 10, 1, 10, 1, 1, 5, xmin4, ymin4)
+       call gridal (5,  2, 5,  2, 1, 1, 5, xmin4, ymin4)
       else if (style.eq.5) then
-       call gridal (1, 10, 1, 2, 1, 1, 5, xmin4, ymin4)
+       call gridal (5,  2, 1, 11, 1, 1, 5, xmin4, ymin4)
       else if (style.eq.6) then
-       call gridal (1, 2, 1, 10, 1, 1, 5, xmin4, ymin4)
+       call gridal (1, 11, 5,  2, 1, 1, 5, xmin4, ymin4)
       else if (style.eq.7) then
-       call gridal (1, 2, 1, 2, 1, 1, 5, xmin4, ymin4)
+       call gridal (1, 11, 1, 11, 1, 1, 5, xmin4, ymin4)
       else
-       call gridal (1, 10, 1, 10, 1, 1, 5, xmin4, ymin4)
+       call gridal (1, 11, 1, 11, 1, 1, 5, xmin4, ymin4)
       endif
 *   ..initialise clipping?
 *!!   (clipping should be done by GKS or at the device level?)

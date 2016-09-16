@@ -752,7 +752,19 @@
           iy = iy+1
         enddo
       enddo
-      resignore = 0
+      do iy=-1,ny
+        do ix=-1,nx
+          if(region(ix,iy,0).eq.0 .or.
+     &     leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1 .or.
+     &     bottomiy(ix,iy).eq.-2 .or. topiy(ix,iy).eq.ny+1) then
+            resignore(ix,iy,1)=0
+            resignore(ix,iy,2)=0
+          else
+            resignore(ix,iy,1)=1
+            resignore(ix,iy,2)=1
+          endif
+        enddo
+      enddo
       periodic_bc = 0
       do iy = -1, ny
         do ix = -1, nx

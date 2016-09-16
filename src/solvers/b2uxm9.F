@@ -152,10 +152,10 @@
          call my_out(70,nx,ny,aaf(-1,-1, 2),'aafp2'//trim(name))
        endif
 
-       aa9(:,:,-2) = aa9(:,:,-2) + aaf(:,:,-2) 
+       aa9(:,:,-3) = aa9(:,:,-3) + aaf(:,:,-2)
        aa9(:,:,-1) = aa9(:,:,-1) + aaf(:,:,-1) 
        aa9(:,:, 1) = aa9(:,:, 1) + aaf(:,:, 1) 
-       aa9(:,:, 2) = aa9(:,:, 2) + aaf(:,:, 2) 
+       aa9(:,:, 3) = aa9(:,:, 3) + aaf(:,:, 2)
 
 *   ..compute additional P.Sch part of nine point matrix. 
        do iy = -1, ny

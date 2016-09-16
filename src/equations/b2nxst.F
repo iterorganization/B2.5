@@ -18,8 +18,8 @@
 *
 *  1. purpose
 *
-*     B2NXST accumulates the momentum source linearisation over the
-*     distinct atomic species.
+*     B2NXST accumulates the parallel momentum source linearisation over
+*     the distinct atomic species.
 *
 *-----------------------------------------------------------------------
 *.declarations

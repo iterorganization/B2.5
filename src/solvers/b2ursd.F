@@ -122,7 +122,8 @@ cxpb  diverted island X-point case
        enddo
       enddo
       do ix = -1, nx
-       resdf(ix,ny) = resdf(ix,ny)+fdf(ix,ny,1)
+       if (bottomiy(ix,ny).ne.-2)
+     >  resdf(ix,ny) = resdf(ix,ny)+fdf(ix,ny,1)
       enddo
 
 * ..return

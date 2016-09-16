@@ -7,6 +7,7 @@
       use b2mod_rates
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -34,15 +35,15 @@
 *     - vsa: viscosity.
 *     - hci: atom thermal conductivity.
 *     These coefficients occur in the equations as indicated below.
-*     Momentum transport.
+*     Parallel momentum transport.
 *       momx(is) = -vsax(is)*(d/dx)up(is)
 *       momy(is) = -vsay(is)*(d/dy)up(is)
 *     Atom heat flux.
 *       fhix = -hcix*(d/dx)ti
 *       fhiy = -hciy*(d/dy)ti
-*     The particle and momentum transport is a property of each atomic
-*     species, the other transport laws involve summation over all
-*     atomic species.
+*     The particle and parallel momentum transport is a property of
+*     each atomic species, the other transport laws involve summation
+*     over all atomic species.
 *
 *     The equations indicated above do not describe all the relevant
 *     transport properties of a plasma. The most significant omission
@@ -173,6 +174,12 @@ c DPC/XPB changed to 4/3*  at the strong recommendation of Rozhansky
               t = t + rz2(ix,iy,js) * na(ix,iy,js) / 
      &            sqrt((am(is)+am(js))/2.0_R8) 
             enddo
+            do js = 0, ns_ext-1
+              w = w + za2_ext(ix,iy,js) * na_ext(ix,iy,js) *
+     &            sqrt(2.0_R8*mp*am(is)*am_ext(js)/(am(is)+am_ext(js)))
+              t = t + za2_ext(ix,iy,js) * na_ext(ix,iy,js) /
+     &            sqrt((am(is)+am_ext(js))/2.0_R8)
+            enddo
 cxpb            ctaui = ctaup*sqrt(2.0_R8)/lnlam/rz2(ix,iy,is)  ! lower precision as per 4.0
 	    ctaui = 2.1e13_R8 / (lnlam(ix,iy)*rz2(ix,iy,is))             !srv 01.07.09
 	    fxi = ci * ctaui / (ev*sqrt(ev*mp))
@@ -201,7 +208,7 @@ cxpb            ctaui = ctaup*sqrt(2.0_R8)/lnlam/rz2(ix,iy,is)  ! lower precisio
       enddo
       call sfill (n2, 0.0_R8, hci(-1,-1,1), 1)
 
-      if(iout_b2npmo.ne.0) then                                     !srv 16.06.08 30.01.10 {
+      if(iout_b2npmo.ne.0) then                                        !srv 16.06.08 30.01.10 {
        do is = 0, ns-1
 	  write (chns,'(i3.3)') is 
         call my_out(70,nx,ny,vsa(-1,-1,0,is),'b2tqca_vsax'//chns)

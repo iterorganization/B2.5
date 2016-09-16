@@ -15,7 +15,7 @@
 *   ..input arguments (unchanged on exit)
       integer nprt, nx, ny, ns
       real (kind=R8) ::
-     *   na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
+     *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
@@ -265,4 +265,4 @@ csw 30sep2014 added
 *-----------------------------------------------------------------------
 *.end b2wgpj_gnuplot
 
-      end
+      end subroutine b2wgpj_gnuplot

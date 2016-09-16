@@ -61,6 +61,8 @@ c
 
 *=======================================================================
 *//COMPUTATION//
+*   ..subprogram start-up calls
+      call subini ('ilutern_7')
 
 *  ---------------------------------------------------------------------
 *  TEST INPUTS AND SET AUXILIARIES.
@@ -151,56 +153,56 @@ c       IF (A1HN.EQ.0.0e0_R8) THEN
          enddo
       enddo
       if(kwrite_bnr.eq.ncall) then                                      !srv 18.05.02 {
-        write(*,*) 'Opening 76'
-        open(76,file='b2_7_rhs_binary_'//trim(name),form='unformatted') !srv 11.03.13
-        write(76) n
+        write(*,*) 'Opening 83'
+        open(83,file='b2_7_rhs_binary_'//trim(name),form='unformatted') !srv 11.03.13
+        write(83) n
         do i=1,n
-          write(76) r1(i)
+          write(83) r1(i)
         enddo
-        close(76)
-        write(*,*) 'Opening 77'
-        open(77,file='b2_7_matrix_binary_'//trim(name),
+        close(83)
+        write(*,*) 'Opening 82'
+        open(82,file='b2_7_matrix_binary_'//trim(name),
      .       form='unformatted')                                        !srv 11.03.13
-        write(77) n, nz
+        write(82) n, nz
         do i=1,nz
-          write(77) IRNH(i),ICNH(i),A1H(i)
+          write(82) IRNH(i),ICNH(i),A1H(i)
         enddo
-        close(77)
+        close(82)
       endif                                                             !srv 18.05.02 }
       if(kwrite_fmt.eq.ncall) then                                      !srv 18.05.02 {
-        write(*,*) 'Opening 76'
-        open(76,file='b2_7_rhs_'//trim(name))
-        write(76,*) n
+        write(*,*) 'Opening 83'
+        open(83,file='b2_7_rhs_'//trim(name))
+        write(83,*) n
         do i=1,n
-          write(76,*) r1(i)
+          write(83,*) r1(i)
         enddo
-        close(76)
-        open(77,file='b2_7_matrix_'//trim(name))
-        write(77,*) n, nz
+        close(83)
+        open(82,file='b2_7_matrix_'//trim(name))
+        write(82,*) n, nz
         do i=1,nz
-          write(77,*) IRNH(i),ICNH(i),A1H(i)
+          write(82,*) IRNH(i),ICNH(i),A1H(i)
         enddo
-        close(77)
+        close(82)
       endif                                                    !srv 18.05.02 }
 c-dpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
           if(ncall.eq.0) then
-            write(*,*) 'Opening 78'                            !srv 11.01.00
-            open(78,file='b2_7_diagonal_matrix')               !srv 11.01.00
+            write(*,*) 'Opening 81'                            !srv 11.01.00
+            open(81,file='b2_7_diagonal_matrix')               !srv 11.01.00
           endif
-          write(*,*) 'Writing 78'                              !srv 11.01.00
-          write(78,*) n,' n'
+          write(*,*) 'Writing 81'                              !srv 11.01.00
+          write(81,*) n,' n'
           do i=1,n
-            write(78,*) r1(i)                                  !srv 11.01.00
+            write(81,*) r1(i)                                  !srv 11.01.00
           enddo
-          write(78,*) nz,' nz'                                 !srv 11.01.00
+          write(81,*) nz,' nz'                                 !srv 11.01.00
           do i=1,nz
-            write(78,*) IRNH(i),ICNH(i),A1H(i)                 !srv 11.01.00
+            write(81,*) IRNH(i),ICNH(i),A1H(i)                 !srv 11.01.00
           enddo
         elseif(nwrite.eq.ncall) then
-          write(*,*) 'Closing 78'                              !srv 11.01.00
-          close(78)                                            !srv 11.01.00
+          write(*,*) 'Closing 81'                              !srv 11.01.00
+          close(81)                                            !srv 11.01.00
         endif
       endif
 c-dpc
@@ -294,6 +296,7 @@ c-dpc
 *  ---------------------------------------------------------------------
       cpu_end=x05baf()
       ncall=ncall+1
+      call subend ()
       RETURN
 
       entry restart_ma28_for_7                                      !srv 11.01.00

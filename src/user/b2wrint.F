@@ -8,6 +8,7 @@
       use b2mod_plasma
       use b2mod_tallies
       use b2mod_indirect
+      use b2mod_external
       use b2mod_numerics_namelist
 #ifdef B25_EIRENE
       use eirmod_extrab25
@@ -238,6 +239,8 @@ c#endif
      +  tab, hlp_c, f, hlp_frm, hlp_frf
 c=======================================================================
 
+      if(first_time_step) return
+
 c*** Initialise the arrays
 c
       equg_tmp=0.0_R8
@@ -327,12 +330,19 @@ csw 18nov2013 check alloc
           do is=0,ns-1
             zeff=zeff+rz2(ix,0,is)*na(ix,0,is)
           end do
+          do is=0,ns_ext-1
+            zeff=zeff+za2_ext(ix,0,is)*na_ext(ix,0,is)
+          end do
           zeff=zeff/ne(ix,0)
           hlp_zs=hlp_zs+gs(ix,0,1)*zeff
           hlp_zv=hlp_zv+vol(ix,0)*zeff
           do is=0,ns-1
             hlp_zn1=hlp_zn1+vol(ix,0)*na(ix,0,is)*rz2(ix,0,is)
             hlp_zn2=hlp_zn2+vol(ix,0)*na(ix,0,is)*rza(ix,0,is)
+          end do
+          do is=0,ns_ext-1
+            hlp_zn1=hlp_zn1+vol(ix,0)*na_ext(ix,0,is)*za2_ext(ix,0,is)
+            hlp_zn2=hlp_zn2+vol(ix,0)*na_ext(ix,0,is)*za_ext(ix,0,is)
           end do
         end if
       end do

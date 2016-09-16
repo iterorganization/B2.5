@@ -32,7 +32,7 @@
 *  1. purpose
 *
 *     B2STCX provides linearised expressions for the sources of atom
-*     density and atom momentum, due to charge exchange.
+*     density and atom parallel momentum, due to charge exchange.
 *
 *
 *-----------------------------------------------------------------------
@@ -150,9 +150,9 @@ ctmp.dpc
 	    rcxna(ix,iy,is0)=rcxna(ix,iy,is0)-
      1	     t0*na(ix,iy,is0)*na(ix,iy,is)
             rcxnareg(region(ix,iy,0),is)=
-     1	    rcxnareg(region(ix,iy,0),is)+t0*na(ix,iy,is0)*na(ix,iy,is)
+     1	     rcxnareg(region(ix,iy,0),is)+t0*na(ix,iy,is0)*na(ix,iy,is)
             rcxnareg(region(ix,iy,0),is0)=
-     1	   rcxnareg(region(ix,iy,0),is0)-t0*na(ix,iy,is0)*na(ix,iy,is)
+     1	     rcxnareg(region(ix,iy,0),is0)-t0*na(ix,iy,is0)*na(ix,iy,is)
            endif
           enddo
          enddo
@@ -166,8 +166,8 @@ ctmp.dpc
 *       ..compute rate for is->is-1 and is0->is0+1
            t0 = rcx(ix,iy,is)*vol(ix,iy)
 *       ..compute atom heat source
-            du0 = ua(ix,iy,is)-ua(ix,iy,is-1)
-            du1 = ua(ix,iy,is0)-ua(ix,iy,is0+1)
+           du0 = ua(ix,iy,is)-ua(ix,iy,is-1)
+           du1 = ua(ix,iy,is0)-ua(ix,iy,is0+1)
            t1 = t0*na(ix,iy,is0)*na(ix,iy,is)*(mp/2.0_R8)*
      &      (((am(is)+am(is-1))/2.0_R8)*(du0**2)+
      &       ((am(is0)+am(is0+1))/2.0_R8)*(du1**2))*
@@ -178,7 +178,7 @@ ctmp.dpc
           endif
          enddo
         enddo
-*     ..momentum source
+*     ..parallel momentum source
         do iy = -1, ny
          do ix = -1, nx
           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
@@ -190,7 +190,7 @@ ctmp.dpc
             t1 = ((am(is)+am(is-1))/2.0_R8)*mp*t0
             t2 = ((am(is0)+am(is0+1))/2.0_R8)*mp*t0
             if (styl0.eq.0) then
-*       ..compute momentum source
+*       ..compute parallel momentum source
               smq0(ix,iy,0,is) = smq0(ix,iy,0,is)+
      &         rg0*t1*ua(ix,iy,is)
               smq0(ix,iy,1,is) = smq0(ix,iy,1,is)-
@@ -208,7 +208,7 @@ ctmp.dpc
               smq0(ix,iy,1,is0) = smq0(ix,iy,1,is0)-
      &         (1.0_R8+rg0)*t2
             else if (styl0.eq.1) then
-*       ..compute momentum source
+*       ..compute parallel momentum source
               smq0(ix,iy,2,is) = smq0(ix,iy,2,is)+
      &         rg0*t1*ua(ix,iy,is)/roxa(ix,iy,is)
               smq0(ix,iy,3,is) = smq0(ix,iy,3,is)-
@@ -226,7 +226,7 @@ ctmp.dpc
               smq0(ix,iy,3,is0) = smq0(ix,iy,3,is0)-
      &         (1.0_R8+rg0)*t2/roxa(ix,iy,is0)
             else if (styl0.eq.2) then
-*       ..compute momentum source
+*       ..compute parallel momentum source
               smq0(ix,iy,0,is) = smq0(ix,iy,0,is)+
      &         rg0*t1*ua(ix,iy,is)
               smq0(ix,iy,3,is) = smq0(ix,iy,3,is)-
@@ -244,7 +244,7 @@ ctmp.dpc
               smq0(ix,iy,3,is0) = smq0(ix,iy,3,is0)-
      &         (1.0_R8+rg0)*t2/roxa(ix,iy,is0)
             else if (styl0.eq.3) then
-*       ..compute momentum source
+*       ..compute parallel momentum source
               smq0(ix,iy,2,is) = smq0(ix,iy,2,is)+
      &         rg0*t1*ua(ix,iy,is)/roxa(ix,iy,is)
               smq0(ix,iy,1,is) = smq0(ix,iy,1,is)-

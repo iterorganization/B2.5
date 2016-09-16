@@ -39,7 +39,8 @@ c     ludcmp : to calculate the lu decomposition
 c     lubksb : to calculate the solution of the matrix equation   
 c--------------------------------------------------------------------
       use b2mod_types
-
+      use b2mod_constants
+     . ,only: qe
       implicit none
 
       integer ::
@@ -72,9 +73,9 @@ c--------------------------------------------------------------------
       nlchan = .false.
             
 c     some coefficients that appear in the equations
-      a1 = 4./25.
-      a2 = 16./175.
-      a3 = (8./35.)**2
+      a1 = 4.0_R8/25.0_R8
+      a2 = 16.0_R8/175.0_R8
+      a3 = (8.0_R8/35.0_R8)**2
 
 c     since the thermodynamic forces are proportional to t/ z 
 c     the uaio quantities are multiplied by this number.
@@ -83,7 +84,7 @@ c     the uaio quantities are multiplied by this number.
           do k = 1, 2
             uaio(i,j,k) = temp(i)*uaioo(i,j,k) /(zsp(i,j))
           enddo
-          uaio(i,j,3) = 0.
+          uaio(i,j,3) = 0.0_R8
         enddo
       enddo
 
@@ -115,10 +116,10 @@ c     calculated the friction coefficients
 c     calculate the kab and oa matrices
       do i = 0, nsl-1
         dum1 = 1./(temp(i))
-        oa(1,1,i) = 0.
-        oa(1,2,i) = 0.
-        oa(2,1,i) = 0.
-        oa(2,2,i) = 0.
+        oa(1,1,i) = 0.0_R8
+        oa(1,2,i) = 0.0_R8
+        oa(2,1,i) = 0.0_R8
+        oa(2,2,i) = 0.0_R8
         do j = 0, nsl-1
           dum2 = 1./(temp(j))
           kab(1,1,i,j) = -a1*dum1*sigma(3)*ntau(i,j)*
@@ -145,7 +146,7 @@ c     now calculate the ha coefficients
       do i = 0, nsl-1
         do k = 1, 2
           do l = 1, 3
-            ha(k,l,i) = 0.
+            ha(k,l,i) = 0.0_R8
             do j = 1, 2
               ha(k,l,i) = ha(k,l,i) - oa(k,j,i)*
      +                    la(j+1,l,i)
@@ -157,7 +158,7 @@ c     now calculate the ha coefficients
       do i = 0, nsl-1
         da = ha(1,2,i)*ha(2,3,i)-ha(1,3,i)*ha(2,2,i)
         ta = ha(1,2,i)+ha(2,3,i)
-        lga = lg*mas(i)*1.6e22
+        lga = lg*mas(i)*(qe*1000.0_R8*1.0e19_R8**2)
         do j = 0, ncl(i)-1
           dnom = (xi(i,j)/den(i,j))/ (lga**2 + (xi(i,j)/
      +       (den(i,j)))**2*lga*ta+(xi(i,j)/(den(i,j)))**4*da)
@@ -170,12 +171,12 @@ c     now calculate the ha coefficients
       enddo
  
       do i = 0, nsl-1
-        gk(i) = 0.
+        gk(i) = 0.0_R8
         do k = 1, 2
           do l = 1, 2
-            rmo(k,l,i) = 0.
-            rmoo(k,l,i) = 0.
-            rmooo(k,l,i) = 0.
+            rmo(k,l,i) = 0.0_R8
+            rmoo(k,l,i) = 0.0_R8
+            rmooo(k,l,i) = 0.0_R8
           enddo
         enddo
         do j = 0, ncl(i)-1
@@ -193,8 +194,8 @@ c     now calculate the ha coefficients
       enddo
  
       do i = 0, nsl-1
-        dnom = 1./(rmo(1,1,i)*rmo(2,2,i)-
-     +         rmo(1,2,i)*rmo(2,1,i))
+        dnom = 1.0_R8/(rmo(1,1,i)*rmo(2,2,i)-
+     +                 rmo(1,2,i)*rmo(2,1,i))
         rmoi(1,1,i) =  dnom*rmo(2,2,i)
         rmoi(1,2,i) = -dnom*rmo(1,2,i)
         rmoi(2,1,i) = -dnom*rmo(2,1,i)
@@ -206,9 +207,9 @@ c     now calculate the ha coefficients
 
           do k = 1, 2
             do l = 1, 3
-              dv(k,l,i,j) = 0.
-              ev(k,l,i,j) = 0.
-              fv(k,l,i,j) = 0.
+              dv(k,l,i,j) = 0.0_R8
+              ev(k,l,i,j) = 0.0_R8
+              fv(k,l,i,j) = 0.0_R8
               do m = 1, 2
                 dv(k,l,i,j) = dv(k,l,i,j) + 
      +                        kab(k,m,i,j)*la(m+1,l,j)
@@ -230,8 +231,8 @@ c     build the matrix
         do j = 0, nsl-1
           do k = 1, 2
             do l = 1, 2
-              dum1 = 0.
-              dum2 = 0.
+              dum1 = 0.0_R8
+              dum2 = 0.0_R8
               do n = 1, 2
                 dum1 = dum1 + rmo(k,n,i)*fv(n,l+1,i,j)
      +                 +rmoo(k,n,i)*ev(n,l+1,i,j)
@@ -244,12 +245,12 @@ c     build the matrix
               enddo
               aaa(2*i+k-1,2*j+l-1) = - dum1 - dum2
 
-              dum1 = 0.
+              dum1 = 0.0_R8
               do n = 0, nsl-1
                 do kt = 1, 2
                   do lt = 1, 2 
                     do mt = 1, 2
-                      dum2 = 0.
+                      dum2 = 0.0_R8
                       do nt = 1, 2
                         do ms = 1, 2
                           dum2 = dum2 + rmoo(lt,nt,n)*
@@ -271,7 +272,7 @@ c     build the matrix
       enddo
 
       do i = 0, 2*nsl-1
-        aaa(i,i) = aaa(i,i) + 1.
+        aaa(i,i) = aaa(i,i) + 1.0_R8
       enddo
 
       if (nlchan) then
@@ -294,8 +295,8 @@ c     matrix is to be used.
 
       do i = 0, nsl-1
         do k = 1, 3
-          uo(i,k) = 0.
-          uoo(i,k) = 0.
+          uo(i,k) = 0.0_R8
+          uoo(i,k) = 0.0_R8
           do n = 0, ncl(i)-1
             uo(i,k) = uo(i,k) + xi(i,n)*uaio(i,n,k)
             uoo(i,k)=uoo(i,k)+xi(i,n)**2*uaio(i,n,k)/
@@ -308,7 +309,7 @@ c     calculate the right hand side solutions
       do i = 0, nsl-1
         do j = 0, ncl(i)-1
           do k = 1, 2
-            sor(k,i,j) = 0.
+            sor(k,i,j) = 0.0_R8
             do l = 1, 3
               do mt = 1, 2
                 sor(k,i,j) = sor(k,i,j) - (xi(i,j)/den(i,j))*
@@ -326,8 +327,8 @@ c     calculate the right hand side solutions
 
       do i= 0, nsl-1
         do k = 1, 2
-          soro(k,i) = 0.
-          soroo(k,i) = 0.
+          soro(k,i) = 0.0_R8
+          soroo(k,i) = 0.0_R8
           do j = 0, ncl(i)-1
             soro(k,i) = soro(k,i) + xi(i,j)*sor(k,i,j)
             soroo(k,i) = soroo(k,i) + xi(i,j)**2*sor(k,i,j)/
@@ -403,7 +404,7 @@ c     now calculate the velocities
             enddo
             do kt = 1, 2
               do lt = 1, 2
-                dum1 = 0.
+                dum1 = 0.0_R8
                 if (kt.eq.lt) dum1 = dum1 + xi(i,j)/den(i,j)
                 do mt = 1, 2
                   dum1 = dum1 - rmoi(kt,mt,i)*rmoo(mt,lt,i)
@@ -433,8 +434,8 @@ c     now calculate the velocities
  
 c     calculate the friction 
       do i = 0, nsl-1
-        f1 = 0.
-        f2 = 0.
+        f1 = 0.0_R8
+        f2 = 0.0_R8
         do j = 0, nsl-1
           do k = 1, 3
             f1 = f1 + lab(1,k,i,j)*usolo(j,k)
@@ -442,8 +443,8 @@ c     calculate the friction
           enddo
         enddo
         do j = 0, ncl(i)-1
-          coeff(i,j,1) = 0.
-          coeff(i,j,2) = 0.
+          coeff(i,j,1) = 0.0_R8
+          coeff(i,j,2) = 0.0_R8
           do k = 1, 3
             coeff(i,j,1) = coeff(i,j,1) + xi(i,j)*(la(1,k,i)*
      +                     uai(i,j,k))

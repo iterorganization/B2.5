@@ -57,12 +57,12 @@ c
           enddo
         enddo
       enddo
-      values(9)=work(-1,-1,0,iwrk)
-      values(10)=work(-1,-1,0,iwrk)
+      values(9)=work(-1,ny,0,iwrk)
+      values(10)=work(-1,ny,0,iwrk)
       do is=0,ndim(3,iwrk)-1
         do ix=-1,nx
-          values(9)=min(values(9),work(ix,-1,is,iwrk))
-          values(10)=max(values(10),work(ix,-1,is,iwrk))
+          values(9)=min(values(9),work(ix,ny,is,iwrk))
+          values(10)=max(values(10),work(ix,ny,is,iwrk))
         enddo
       enddo
 

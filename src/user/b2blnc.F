@@ -182,7 +182,9 @@ c
               gpfc(i,j)=0.0_R8
             end do
           end if
-          if(lsns(j).lt.0) lsns(j)=nnlimi-lsns(j)
+        end do
+        do j=1,nstsid
+          if(lsns(j).lt.0) lsns(j)=nlim-lsns(j)
         end do
         first=.false.
       end if

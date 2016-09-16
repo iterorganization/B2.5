@@ -170,9 +170,9 @@ c
  20   continue
       if(iend.gt.0) goto 17
       silent_open=.false.
-      write(*,*) 'Failed opening ', filename(1:lnblnk(filename))
-      write(*,*) 'SOLPSTOP = ', solpstop(1:lnblnk(solpstop))
-      write(*,*) 'area = ', area(1:lnblnk(area))
+      write(*,'(a,a)') 'Failed opening ', filename(1:lnblnk(filename))
+      write(*,'(a,a)') 'SOLPSTOP = ', solpstop(1:lnblnk(solpstop))
+      write(*,'(a,a)') 'area = ', area(1:lnblnk(area))
       filenamecat=''
       return
 c

@@ -230,6 +230,7 @@ cxpb
       enddo
 
 *   ..solve the correction equation
+      write(*,*) 'Calling b2ux7p from b2usp7'
       call b2ux7p (nx, ny, aa7, itcnt, respo, corpo, 'b2usp7')      !sv 11.01.00
 
       if (iout.ne.0) then                                           !sv 08.07.08 {

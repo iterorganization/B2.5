@@ -656,7 +656,7 @@ cxpb  only include ExB terms and not diamagnetic contributions
            write(*,*) 'b2stbc_west:iy,fchi',iy,fchi
            write(*,*) zaf(ismain),
      &      fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)
-           write(*,*) 'Bx,Bz,Ud,-Ua =',
+           write(*,'(a,4g14.7)') 'Bx,Bz,Ud,-Ua =',
      &      wbbr(-1,iy,0),wbbr(-1,iy,2),udf(ismain),-ua(-1,iy,ismain)
          endif
 c         fchi=0.0_R8
@@ -899,8 +899,8 @@ c         fchi=0.0_R8
 *     ..compute csb
         csb = sqrt((zaf(is)*tef+tif)/(am(is)*mp))
 *     .. account for diamagnetic drifts
-        csbm = csb-udf(is)*abs(wbbl(nx,iy,2)/wbbl(nx,iy,0))      !xpb
-        cstm = cst-udf(is)*abs(wbbl(nx,iy,2)/wbbl(nx,iy,0))      !xpb
+        csbm = csb-udf(is)*abs(wbbl(nx,iy,2)/wbbl(nx,iy,0))              !xpb
+        cstm = cst-udf(is)*abs(wbbl(nx,iy,2)/wbbl(nx,iy,0))              !xpb
         if(.not.is_neutral(is)) then                                     !xpb
           csbm = max(0.0_R8,csbm)                                        !xpb
           cstm = max(0.0_R8,cstm)                                        !xpb

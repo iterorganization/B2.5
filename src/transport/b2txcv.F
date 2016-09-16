@@ -28,20 +28,20 @@
       external subini, subend, xertst
       external b2xxgs
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
-      harm(t0,t1) = 2*t0*t1/(t0+t1)
+      harm(t0,t1) = 2.0_R8*t0*t1/(t0+t1)
 *     ------------------------------------------------------------------
 *   ..subprogram start-up calls
       call subini ('b2txcv')
 *   ..test mode
-      call xertst (-1.le.mode.and.mode.le.1,
+      call xertst (-1.le.mode.and.mode.le.2,
      &  'b2txcv--faulty argument mode')
 *   ..compute cvsb(,,0)
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
-         cvsb(ix,iy,0) = 0
+         cvsb(ix,iy,0) = 0.0_R8
         elseif(rightix(ix,iy).eq.nx+1) then
-         cvsb(ix,iy,0) = 0
+         cvsb(ix,iy,0) = 0.0_R8
         else
          cvsb(ix,iy,0) = vol(ix,iy)*vsb(ix,iy,0)/hx(ix,iy)**2
         endif
@@ -56,14 +56,14 @@
        do iy = -1, ny
         do ix = -1, nx
          if(bottomiy(ix,iy).eq.-2) then
-          cvsb(ix,iy,1) = 0
+          cvsb(ix,iy,1) = 0.0_R8
          else 
           t0 = vol(bottomix(ix,iy),bottomiy(ix,iy))*
      &         vsb(bottomix(ix,iy),bottomiy(ix,iy),1)/
      &         hy1(bottomix(ix,iy),bottomiy(ix,iy))**2
           t1 = vol(ix,iy)*vsb(ix,iy,1)/hy1(ix,iy)**2
-          if (t0*t1.le.0) then
-           cvsb(ix,iy,1) = 0
+          if (t0*t1.le.0.0_R8) then
+           cvsb(ix,iy,1) = 0.0_R8
           else
            cvsb(ix,iy,1) = harm(t0,t1)
           endif
@@ -75,28 +75,43 @@
        do iy = -1, ny
         do ix = -1, nx
          if(bottomiy(ix,iy).eq.-2) then
-          cvsb(ix,iy,1) = 0
+          cvsb(ix,iy,1) = 0.0_R8
          else
-          cvsb(ix,iy,1) = 2*sqrt(max(0.0_R8,
+          cvsb(ix,iy,1) = 2.0_R8*sqrt(max(0.0_R8,
      &     (vol(bottomix(ix,iy),bottomiy(ix,iy))*
      &      vsb(bottomix(ix,iy),bottomiy(ix,iy),1)/
      &      hy1(bottomix(ix,iy),bottomiy(ix,iy))*
-     &     (vol(ix,iy)*vsb(ix,iy,1)/hy1(ix,iy))))/
-     &     (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy)))
+     &     (vol(ix,iy)*vsb(ix,iy,1)/hy1(ix,iy)))))/
+     &     (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
          endif
         enddo
        enddo
       else if (mode.eq.1) then
-*    ..use arithmetic averaging
+*    ..use arithmetic averaging (SOLPS5.0 formulation)
        do iy = -1, ny
         do ix = -1, nx
          if(bottomiy(ix,iy).eq.-2) then
-          cvsb(ix,iy,1) = 0
+          cvsb(ix,iy,1) = 0.0_R8
          else
           cvsb(ix,iy,1) =
-     &     2*(vol(bottomix(ix,iy),bottomiy(ix,iy))*
+     &     2.0_R8*(vol(bottomix(ix,iy),bottomiy(ix,iy))*
      &        vsb(bottomix(ix,iy),bottomiy(ix,iy),1)
      &       +vol(ix,iy)*vsb(ix,iy,1))/
+     &     (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))**2
+         endif
+        enddo
+       enddo
+      else if (mode.eq.2) then
+*    ..use arithmetic averaging (SOLPS4.0 formulation)
+       do iy = -1, ny
+        do ix = -1, nx
+         if(bottomiy(ix,iy).eq.-2) then
+          cvsb(ix,iy,1) = 0.0_R8
+         else
+          cvsb(ix,iy,1) =
+     &     2.0_R8*(hy1(bottomix(ix,iy),bottomiy(ix,iy))*
+     &             vsb(bottomix(ix,iy),bottomiy(ix,iy),1)
+     &            +hy1(ix,iy)*vsb(ix,iy,1))/
      &     (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))**2
          endif
         enddo
@@ -109,7 +124,7 @@
          cvsb(ix,iy,1) = (cvsb(ix,iy,1)
      &                   +cvsb(leftix(ix,iy),leftiy(ix,iy),1))/2
         else
-         cvsb(ix,iy,1) = 0
+         cvsb(ix,iy,1) = 0.0_R8
         endif
        enddo
       enddo
@@ -119,4 +134,4 @@
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end
+      end subroutine b2txcv

@@ -5,6 +5,7 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -84,7 +85,7 @@
       do iy = -1, ny
        do ix = -1, nx
         ceqp(ix,iy) = phm0*(cfeqp*lnlam(ix,iy)*ev*sqrt(ev))*vol(ix,iy)*  !srv 01.07.09
-     &    (ne2m(ix,iy)/ni(ix,iy,0))
+     &    (ne2m(ix,iy)/(ni(ix,iy,0)+ni_ext(ix,iy,0)))
        enddo
       enddo
 
@@ -96,5 +97,5 @@
 *-----------------------------------------------------------------------
 *.end b2treq
 
-      end
+      end subroutine b2treq
 

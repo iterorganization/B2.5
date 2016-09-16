@@ -52,6 +52,7 @@ c     ludcmp  : to do the lu decomposition
 c     lubksb  : to solve the matrix equation
 c--------------------------------------------------------------------
       use b2mod_types
+      use b2mod_constants
       implicit none
 
       integer :: nsdecl,nzdecl
@@ -94,7 +95,7 @@ c     calculate the viscosity
         do j = 0, ncl(i)-1
           do k = 1, 3
             do l = 1, 3
-              visc(k,l,i,j) = 0.
+              visc(k,l,i,j) = 0.0_R8
             enddo
           enddo
           nltest = .false.
@@ -114,11 +115,11 @@ c     calculate the a matrices
         do j = 0, ncl(i)-1
           do k = 1, 3
             do l = 1, 3
-              aaa(k,l,i,j) = 0.
+              aaa(k,l,i,j) = 0.0_R8
             enddo
           enddo
           do k = 1, 3
-            aaa(k,k,i,j) = 1.
+            aaa(k,k,i,j) = 1.0_R8
           enddo
           do k = 1, nleg
             do l = 1, nleg
@@ -129,11 +130,11 @@ c         do the lu decomposition
           call ludcmp(aaa(:,:,i,j),2,2,indx,d)
           do k = 1, 3
             do l = 1, 3
-              akp(k,l) = 0.
+              akp(k,l) = 0.0_R8
             enddo
           enddo
           do k = 1, 3
-            akp(k,k) = 1.
+            akp(k,k) = 1.0_R8
           enddo
           do k = 1, 3
             call lubksb(aaa(:,:,i,j),2,2,indx,akp(1,k))
@@ -150,16 +151,16 @@ c         do the lu decomposition
 c     now calculate the matrix for inversion
       do i = 0, 3*nsl-1
         do j = 0, 3*nsl-1
-          ainv(i,j) = 0.
+          ainv(i,j) = 0.0_R8
         enddo
       enddo
       do i = 0, 3*nsl-1
-        ainv(i,i) = 1.
+        ainv(i,i) = 1.0_R8
       enddo
       do i = 0, nsl-1
         do k = 1, 3
           do l = 1, 3
-            akp(k,l) = 0.
+            akp(k,l) = 0.0_R8
           enddo
         enddo
         do k = 1, 3
@@ -191,10 +192,10 @@ c     recalculated
 c     now calculate the right hand side    
       do i = 0, nsl-1
         do k = 1, 3 
-          bt(i*3+k-1) = 0.
+          bt(i*3+k-1) = 0.0_R8
           if (.not.(k.gt.nleg)) then
             do j = 0, ncl(i)-1
-              bt(i*3+k-1) = bt(i*3+k-1)+1.6*xi(i,j)*zsp(i,j)*
+              bt(i*3+k-1) = bt(i*3+k-1)+(ev*1.0e19_R8)*xi(i,j)*zsp(i,j)*
      +                        den(i,j)*aaa(k,1,i,j)*epar
             enddo
             do l = 1, 3
@@ -215,7 +216,7 @@ c     now calculate the right hand side
 c     now calculate the indivudual particle velocities
       do i = 0, nsl-1
         do k = 1, 3 
-          akp(k,1) = 0.
+          akp(k,1) = 0.0_R8
           if (.not.(k.gt.nleg)) then
             do l = 1, 3
               do j = 0, nsl-1
@@ -226,10 +227,10 @@ c     now calculate the indivudual particle velocities
         enddo
         do j = 0, ncl(i)-1
           do k = 1, 3
-            upar(i,j,k) = 0.
+            upar(i,j,k) = 0.0_R8
             if (.not.(k.gt.nleg)) then
               do l = 1, 3
-                akp(l,2) = 0.
+                akp(l,2) = 0.0_R8
                 do mt = 1, 2
                   akp(l,2) = akp(l,2)+visc(l,mt,i,j)*ds(i,j,mt)
                 enddo
@@ -237,7 +238,7 @@ c     now calculate the indivudual particle velocities
      +            xi(i,j)*akp(l,1)-akp(l,2))
               enddo
               upar(i,j,k) = upar(i,j,k) + aaa(k,1,i,j)*
-     +            1.6*zsp(i,j)*den(i,j)*epar
+     +            (ev*1.0e19_R8)*zsp(i,j)*den(i,j)*epar
             endif
           enddo
         enddo

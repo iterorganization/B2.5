@@ -269,7 +269,7 @@ cxpb  Standard case
                     gamrvd(ix,iy)=gamrvd(ix,iy)+am(is)*mp*
      1               0.5_R8*(fna(ix,iy,1,is)+
      2               fna(topix(ix,iy),topiy(ix,iy),1,is))*
-     2               0.5_R8*(uadia(ix,iy,0,is)+
+     1               0.5_R8*(uadia(ix,iy,0,is)+
      2               uadia(rightix(ix,iy),rightiy(ix,iy),0,is))
                   else                                                   !xpb
 cxpb  Island X-point cells

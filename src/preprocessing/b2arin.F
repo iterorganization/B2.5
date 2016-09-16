@@ -154,6 +154,10 @@
        flag = 'strahl'
       else if (streql(flag0,'adas')) then
        flag = 'adas'
+#ifdef ITM
+      else if (streql(flag0,'amns')) then
+       flag = 'amns'
+#endif
       else
        call xerrab ('faulty input flag, flag='//flag0)
       endif

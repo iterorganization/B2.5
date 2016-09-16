@@ -79,7 +79,7 @@ C
       READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
       write(*,'(a,5i4)') 
      . ' Dimensions in fort.44 = ',nnx,nny,natmi,nmoli,nioni
-      write(*,'(a,2i4)') ' Array inner dimensions = ', ndx , ndy
+      write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')

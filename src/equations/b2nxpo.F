@@ -9,6 +9,7 @@
       use b2mod_constants
       use b2mod_rates
       use b2mod_b2cmpb
+      use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -60,7 +61,7 @@
             t1 = max(t1,abs(respo(bc_list_x(iy,ib),bc_list_y(iy,ib))))
           ENDDO
           if(t1.gt.1.0_R8) then
-          DO IY = 1, BC_LIST_SIZE(IB)
+            DO IY = 1, BC_LIST_SIZE(IB)
               write(*,*) ' Old potential, residual (W) : ',
      .	       bc_list_x(iy,ib),bc_list_y(iy,ib),
      .         po(bc_list_x(iy,ib),bc_list_y(iy,ib)),
@@ -74,6 +75,11 @@
      .           fna(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
      .               rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,is)
               enddo
+              do is = 0, ns_ext-1
+                t0 = t0-bcint(za_ext(-1,-1,is),nx,ny,iy,ib)*
+     .           fa_ext(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
+     .                  rightiy(bc_list_x(iy,ib),bc_list_y(iy,ib)),0,is)
+              enddo
               fchi = qe*t0
               zarg = sqrt(2.0_R8*pi)/(1.0_R8-gammae)*(fchi+
      &          fch(rightix(bc_list_x(iy,ib),bc_list_y(iy,ib)),
@@ -83,7 +89,7 @@
      >         po(bc_list_x(iy,ib),bc_list_y(iy,ib)) = potpar(ib,2) - 
      &          (bcint(te,nx,ny,iy,ib)/qe)*log(zarg)
               write(*,*) ' New potential : ', 
-     .         po(bc_list_x(iy,ib),bc_list_y(iy,ib))
+     &         po(bc_list_x(iy,ib),bc_list_y(iy,ib))
             enddo
           endif
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
@@ -104,6 +110,10 @@
                 t0 = t0+bcint(rza(-1,-1,is),nx,ny,iy,ib)*
      &           fna(bc_list_x(iy,ib),bc_list_y(iy,ib),0,is)
               enddo
+              do is = 0, ns_ext-1
+                t0 = t0-bcint(za_ext(-1,-1,is),nx,ny,iy,ib)*
+     .           fa_ext(bc_list_x(iy,ib),bc_list_y(iy,ib),0,is)
+              enddo
               fchi = qe*t0
               zarg = sqrt(2.0_R8*pi)/(1.0_R8-gammae)*
      &          (fchi-fch(bc_list_x(iy,ib),bc_list_y(iy,ib),0))/
@@ -112,7 +122,7 @@
      >         po(bc_list_x(iy,ib),bc_list_y(iy,ib)) = potpar(ib,2) -
      &          (bcint(te,nx,ny,iy,ib)/qe)*log(zarg)
               write(*,*) ' New potential : ', 
-     .         po(bc_list_x(iy,ib),bc_list_y(iy,ib))
+     &         po(bc_list_x(iy,ib),bc_list_y(iy,ib))
             enddo
           endif
         ENDIF
@@ -157,6 +167,13 @@
             t0 = t0-zaf*
      &              fna(rightix(-1,iy),rightiy(-1,iy),0,is)
           enddo
+          do is = 0, ns_ext-1
+            zaf = (za_ext(-1,iy,is)*hx(rightix(-1,iy),rightiy(-1,iy))+
+     &             za_ext(rightix(-1,iy),rightiy(-1,iy),is)*hx(-1,iy))/
+     &            (hx(rightix(-1,iy),rightiy(-1,iy))+hx(-1,iy))
+            t0 = t0-zaf*
+     &              fa_ext(rightix(-1,iy),rightiy(-1,iy),0,is)
+          enddo
           fchi = qe*t0
           zarg = sqrt(2.0_R8*pi)/(1.0_R8-gammae)*
      &     (fchi+fch(rightix(-1,iy),rightiy(-1,iy),0))/(qe*nef*vte)
@@ -200,6 +217,12 @@
      &             rza(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
      &            (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
             t0 = t0+zaf*fna(nx,iy,0,is)
+          enddo
+          do is = 0, ns_ext-1
+            zaf = (za_ext(nx,iy,is)*hx(leftix(nx,iy),leftiy(nx,iy))+
+     &             za_ext(leftix(nx,iy),leftiy(nx,iy),is)*hx(nx,iy))/
+     &            (hx(leftix(nx,iy),leftiy(nx,iy))+hx(nx,iy))
+            t0 = t0+zaf*fa_ext(nx,iy,0,is)
           enddo
           fchi = qe*t0
           zarg = sqrt(2.0_R8*pi)/(1.0_R8-gammae)*

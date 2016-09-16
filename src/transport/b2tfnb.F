@@ -819,6 +819,7 @@ cxpb     3              wbbv(ix,iy,3))                                  !xpb
          con_2dia(ix,iy)      = 0.0_R8
          con_he(ix,iy)        = 0.0_R8
          con_mdf(ix,iy)       = 0.0_R8
+	 fllim0fnb(ix,iy,0)   = 1.0_R8
         else
          term(ix,iy) = xfrhie*wrk2(ix,iy)*0.5_R8*abs(pbs(ix,iy,0))*     !iyv 19.04.07 11.01.13
      &    sqrt((pb(leftix(ix,iy),leftiy(ix,iy))+pb(ix,iy))/
@@ -1161,6 +1162,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          con_2dia(ix,iy)      = 0.0_R8
          con_he(ix,iy)        = 0.0_R8
          con_mdf(ix,iy)       = 0.0_R8
+	 fllim0fnb(ix,iy,1)   = 1.0_R8
         else
          if(drift_style.eq.0)then                                       !srv 21.06.08
           if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then         !srv 20.09.06
@@ -1551,6 +1553,8 @@ cxpb turn off flows between boundary cells
             fnb_32nd(ix,iy,1)=0.0_R8
             fnb_52nd(ix,iy,1)=0.0_R8
             flob(ix,iy,1)=0.0_R8
+            conb(ix,iy,1,:)=0.0_R8
+	    fllim0fnb(ix,iy,1) = 1.0_R8
             vbecrb(ix,iy,1)=0.0_R8
             vbdia(ix,iy,1)=0.0_R8
             wbdia(ix,iy,1)=0.0_R8
@@ -1569,6 +1573,8 @@ cxpb turn off poloidal flows in core boundary
             fnb_32nd(ix,-1,0) = 0.0_R8
             fnb_52nd(ix,-1,0) = 0.0_R8
             flob(ix,-1,0) = 0.0_R8
+            conb(ix,-1,0,:)=0.0_R8
+	    fllim0fnb(ix,-1,0) = 1.0_R8
             vbecrb(ix,-1,0) = 0.0_R8
             vbdia(ix,-1,0) = 0.0_R8
             wbdia(ix,-1,0) = 0.0_R8
@@ -1599,6 +1605,7 @@ cxpb turn off poloidal flows in core boundary
             fnb_mdf(ix,iy,1)     = 0.0_R8
             flob(ix,iy,1)        = 0.0_R8
             conb(ix,iy,1,0:2)    = 0.0_R8
+	    fllim0fnb(ix,iy,0)   = 1.0_R8
           endif
          enddo
         enddo
@@ -1621,6 +1628,7 @@ cxpb turn off poloidal flows in core boundary
           fnb_mdf(:,iy,0)     = 0.0_R8
           flob(:,iy,0)        = 0.0_R8
           conb(:,iy,0,0:2)    = 0.0_R8
+          fllim0fnb(:,iy,0)   = 1.0_R8
          enddo                                                          !srv 20.06.08 }
       endif                                                             !xpb
 
@@ -1643,6 +1651,7 @@ csw 18feb2014 remove fluxes between guard cells
             wbdia(ix,iy,0)=0.0_R8
             ubdia(ix,iy,0)=0.0_R8
             conb(ix,iy,0,:)=0.0_R8
+	    fllim0fnb(ix,iy,0)=1.0_R8
           endif
           if(iffboundy(ix,iy).ne.0) then
             fnb(ix,iy,1)=0.0_R8
@@ -1660,6 +1669,7 @@ csw 18feb2014 remove fluxes between guard cells
             wbdia(ix,iy,1)=0.0_R8
             ubdia(ix,iy,1)=0.0_R8
             conb(ix,iy,1,:)=0.0_R8
+	    fllim0fnb(ix,iy,1)=1.0_R8
           endif
          enddo
         enddo
@@ -1679,6 +1689,8 @@ csw 18feb2014 remove fluxes between guard cells
             fnb_32nd(ix,iy,0)=0.0_R8
             fnb_52nd(ix,iy,0)=0.0_R8
             flob(ix,iy,0)=0.0_R8
+            conb(ix,iy,0,:)=0.0_R8
+	    fllim0fnb(ix,iy,0)=1.0_R8
             fnb(ix,iy,1)=0.0_R8
             fnb_32(ix,iy,1)=0.0_R8
             fnb_52(ix,iy,1)=0.0_R8
@@ -1686,6 +1698,8 @@ csw 18feb2014 remove fluxes between guard cells
             fnb_32nd(ix,iy,1)=0.0_R8
             fnb_52nd(ix,iy,1)=0.0_R8
             flob(ix,iy,1)=0.0_R8
+            conb(ix,iy,1,:)=0.0_R8
+	    fllim0fnb(ix,iy,1) = 1.0_R8
             vbecrb(ix,iy,1)=0.0_R8
             vbdia(ix,iy,1)=0.0_R8
             wbdia(ix,iy,1)=0.0_R8

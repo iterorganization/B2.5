@@ -2,6 +2,7 @@
      &  chvimx)
       use b2mod_types
       use b2mod_indirect
+      use b2mod_external
       implicit none
       integer nx, ny
       real (kind=R8) ::
@@ -42,8 +43,9 @@
          t0 = max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy))
          chvimx(ix,iy) = cflmi*abs(pbsx(ix,iy))*sqrt(t0/mp)*            !srv 11.01.13
      &    (nirm(leftix(ix,iy),leftiy(ix,iy))
-     &     +nirm(ix,iy))/(ni(leftix(ix,iy),leftiy(ix,iy),0)
-     &                                 +ni(ix,iy,0))
+     &     +nirm(ix,iy))/(ni(leftix(ix,iy),leftiy(ix,iy),0)+
+     &                    ni_ext(leftix(ix,iy),leftiy(ix,iy),0)+
+     &                    ni(ix,iy,0)+ni_ext(ix,iy,0))
 
 csw sep2014 TESTING only (SOLPS4 flux discr.)
 c         t0 = ti(ix,iy)
