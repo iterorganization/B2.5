@@ -439,7 +439,7 @@ c*** non-space on both sides of the section borders - the field is split
                         end do !}
                       end if !}
                       if(cline(j)(k:).eq.' ') then !{ shift to the right
-                        cline(j)(n+1:)=cline(j)
+                        cline(j)(n+1:)=Trim(cline(j)(1:l-n))
                         cline(j)(1:n)=cline(j-1)(l-n+1:)
                         cline(j-1)(l-n+1:)=' '
                       end if !}

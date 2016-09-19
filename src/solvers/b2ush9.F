@@ -161,7 +161,7 @@
      &      ti(leftix(ix,iy),leftiy(ix,iy)))+
      &      pccm1(ix,iy)*
      &     (ne(ix,iy)*te(ix,iy)+
-     &      +ni(ix,iy,0)*ti(ix,iy)))/2.0_R8                           !srv 02.01.07 }
+     &       ni(ix,iy,0)*ti(ix,iy)))/2.0_R8                           !srv 02.01.07 }
           flo0(ix,iy,0) = floe(ix,iy,0)+floi(ix,iy,0)
      &     -t0*(ne(ix,iy)+ni(ix,iy,0)-ne(leftix(ix,iy),leftiy(ix,iy)) !srv 02.01.07 {
      &             -ni(leftix(ix,iy),leftiy(ix,iy),0))                !srv 02.01.07 }
