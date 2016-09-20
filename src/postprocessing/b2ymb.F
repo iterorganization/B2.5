@@ -21,7 +21,7 @@
       IMPLICIT NONE
 
       INTEGER :: NN, NLINE, NTILES, II, JJ, KK, INUNIT=8888
-      real :: HEIGTH, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER, W_TH, 
+      real :: HEIGHT, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER, W_TH, 
      . P_LENGTH, BETA
       real :: T_COOLANT, M_FLOW, CP_COOLANT
       real DIMENSIONS(3), target_length
@@ -36,7 +36,7 @@
 !Read input file 'b2ymb.dat' and then write 'mnb_in.dat'
 !##########################################################################
       NAMELIST /GEOMETRY/	                
-     . HEIGTH, T_LENGTH, CU_TH, CUCRZR_TH, 
+     . HEIGHT, T_LENGTH, CU_TH, CUCRZR_TH, 
      . DIAMETER, W_TH, P_LENGTH, BETA
 
       NAMELIST /MESH/                     
@@ -56,7 +56,7 @@
          close (unit=inunit,status='delete')
       endif
       open(unit=inunit,file=outfile0,status='new',action='write')
-      write(inunit,*) HEIGTH, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER,
+      write(inunit,*) HEIGHT, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER,
      . W_TH, P_LENGTH, BETA
       write(inunit,*) T_COOLANT, M_FLOW, CP_COOLANT
       write(inunit,*) NN
