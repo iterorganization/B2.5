@@ -4,6 +4,7 @@
 #ifdef NAGF95
       use f90_unix           ! IGNORE
 #endif
+      implicit none
 #include <graphics_vars.h>
 
 c     the zoom common
@@ -12,13 +13,12 @@ c     the zoom common
       common /zoom_com/ winid,wsnshwin,wsnX11
 
       character*(*) sval
-      character*256 color_file,devenv,devnam
+      character*256 devenv,devnam
       real (kind=R8) :: time,rval
       integer iw, iopt, iopt_fill
-      real red, green, blue
-      logical open_file
       integer lnblnk
-      external lnblnk
+      logical streql
+      external lnblnk, streql
 #ifdef USE_PXFGETENV
       integer lenval, ierror
 #endif
@@ -28,8 +28,6 @@ c     the zoom common
 *     external on AIX or HP-UX it returns some non-printing garbage,
 *     without error message (AIX/XLF Version 2.2, HP-UX Release 9.0))
 *     ------------------------------------------------------------------
-      save color_file
-      data color_file /' '/
 #ifdef PLPLOT
       call color
       if(device.ne.'xwin') call plsfnam('b2plot.ps')
@@ -43,71 +41,73 @@ c      call plinit()
 #else
       call getenv ('B2PLOT_DEV', devenv)
 #ifdef WINDOWS
-	devenv = 'x11 ps'                       !srv 17.12.07
+      devenv = 'x11 ps'                           !srv 17.12.07
 #endif
 #endif
       if(b2plot_debug.ge.8) write(*,*) 'devenv: ',trim(devenv)
       nwork=0
       call gopks(6,0)
       if(index(devenv,'x11').ne.0.or.
-     1 index(devenv,'X11').ne.0) then
+     1   index(devenv,'X11').ne.0) then
+       if(b2plot_debug.ge.12) write(*,*) 'X11'
         nwork=nwork+1
 #ifdef WINDOWS
-        call gopwk(nwork,0,1)  ! X11          !sv 07.05.01
+        call gopwk(nwork,0,1)      ! X11          !srv 07.05.01
 #else
-        call gopwk(nwork,0,8)  ! X11
+        call gopwk(nwork,0,8)      ! X11
 #endif
         wsnX11=nwork
       else
         wsnX11=0
       endif
-      if(b2plot_debug.ge.12) write(*,*) 'X11'
       if(index(devenv,'shwin').ne.0) then
-      nwork=nwork+1
-      call gopwk(nwork,winid,7)  ! shwin
+        if(b2plot_debug.ge.12) write(*,*) 'shwin'
+        nwork=nwork+1
+        call gopwk(nwork,winid,7)  ! shwin
         wsnshwin=nwork
       else
         wsnshwin=0
       endif
       if(index(devenv,'ps').ne.0.or.
-     1 index(devenv,'PS').ne.0) then
-      nwork=nwork+1
-      call ngsetc('ME','b2plot.ps')
-      if(b2plot_debug.ge.13) write(*,*) 'ngsetc'
-      if(xwidth.lt.1) then  !portrait
-        call ngseti('lx',50)
-        call ngseti('ly',50)
-        call ngseti('ux',792)
-        call ngseti('uy',792)
-#ifdef WINDOWS
-        call gopwk(nwork,2,2700) ! PS       !sv 07.05.01
-#else
-        call gopwk(nwork,0,20)  ! PS
-#endif
-      elseif(yheight.lt.1) then  !landscape
-        call ngseti('lx',50)
-        call ngseti('ly',50)
-        call ngseti('ux',792)
-        call ngseti('uy',792)
-#ifdef WINDOWS
-        call gopwk(nwork,2,2701) ! PS       !sv 07.05.01
-#else
-        call gopwk(nwork,0,26)  ! PS
-#endif
-      else
-#ifdef WINDOWS
-        call gopwk(nwork,2,2700) ! PS      !sv 07.05.01
-#else
-        call gopwk(nwork,0,20)  ! PS
-#endif
-      endif
-      endif
-      if(b2plot_debug.ge.12) write(*,*) 'ps'
-      if(index(devenv,'cgm').ne.0.or.
-     1 index(devenv,'CGM').ne.0.or.
-     2 nwork.eq.0) then
+     1   index(devenv,'PS').ne.0) then
+        if(b2plot_debug.ge.12) write(*,*) 'ps'
         nwork=nwork+1
-        call gopwk(nwork,2,1)  ! CGM
+        call ngsetc('ME','b2plot.ps')
+        if(b2plot_debug.ge.13) write(*,*) 'ngsetc'
+        if(xwidth.lt.1) then       ! portrait
+          call ngseti('lx',50)
+          call ngseti('ly',50)
+          call ngseti('ux',792)
+          call ngseti('uy',792)
+#ifdef WINDOWS
+          call gopwk(nwork,2,2700) ! PS       !srv 07.05.01
+#else
+          call gopwk(nwork,0,20)   ! PS
+#endif
+        elseif(yheight.lt.1) then  ! landscape
+          call ngseti('lx',50)
+          call ngseti('ly',50)
+          call ngseti('ux',792)
+          call ngseti('uy',792)
+#ifdef WINDOWS
+          call gopwk(nwork,2,2701) ! PS       !srv 07.05.01
+#else
+          call gopwk(nwork,0,26)   ! PS
+#endif
+        else
+#ifdef WINDOWS
+          call gopwk(nwork,2,2700) ! PS      !srv 07.05.01
+#else
+          call gopwk(nwork,0,20)   ! PS
+#endif
+        endif
+      endif
+      if(index(devenv,'cgm').ne.0.or.
+     1   index(devenv,'CGM').ne.0.or.
+     2   nwork.eq.0) then
+        if(b2plot_debug.ge.12) write(*,*) 'cgm'
+        nwork=nwork+1
+        call gopwk(nwork,2,1)      ! CGM
       endif
       do iw=1,nwork
         call gacwk(iw)
@@ -116,39 +116,7 @@ c      call plinit()
 #else
       call opngks
 #endif
-      if(color_file.ne.' ') then
-      write(*,*) 'Using ',color_file(1:lnblnk(color_file))
-      if(.not.open_file(99,color_file,
-     1 'data.local/palettes|scripts.local/palettes|scripts/palettes'))
-     > then
-        call color
-        goto 50
-      endif
-      ncol=0
-   10 read(99,*,end=40,err=30) red,green,blue
-      do iw=1,nwork
-        call gscr(iw,ncol,red,green,blue)
-      enddo
-      ncol=ncol+1
-      goto 10
-   30 write(*,*) 'Error in reading ',
-     1   color_file(1:lnblnk(color_file)),
-     2   ' on line ',ncol+1
-      CALL COLOR
-      goto 50
-   40 ncol=ncol-2
-      if(ncol.le.0) then
-        write(*,*) 'Too few colors in ',
-     1     color_file(1:lnblnk(color_file))
-        call color
-        goto 50
-      endif
-      else
-C Set up color table
-      call color
-c      call color2(ncol)
-      endif
-   50 continue
+      call new_color_map
 #endif
       initialised_plotting=.true.
       return
@@ -163,12 +131,21 @@ c
       want_aspect=.true.
       lzero=.false.
       label_same_lines=.true.
+      color_map_loaded=.false.
+      color_file=' '
       device='psc'
       return
 
       entry set_color_map(sval)
       color_file=sval
-      write(*,*) 'Setting ',color_file(1:lnblnk(color_file))
+      if (streql(color_file,' ')) then
+        write(*,*) 'Setting default color table'
+      else
+        write(*,*) 'Setting color table ',
+     .                      color_file(1:lnblnk(color_file))
+      endif
+      color_map_loaded=.false.
+      if (nwork.gt.0) call new_color_map
       return
 
       entry set_fill_option(iopt_fill)
@@ -242,3 +219,55 @@ c
       return
 
       end subroutine initialise_plotting
+
+      subroutine new_color_map
+      use b2mod_b2plot_debug
+      implicit none
+#include <graphics_vars.h>
+      real red, green, blue
+      integer iw
+      logical open_file, streql
+      integer lnblnk
+      external lnblnk, open_file, streql
+
+      if(color_map_loaded) return
+      if(.not.streql(color_file,' ')) then
+        write(*,*) 'Using ',color_file(1:lnblnk(color_file))
+        if(.not.open_file(99,color_file,
+     1   'data.local/palettes|scripts.local/palettes|scripts/palettes'))
+     >   then
+          call color
+          goto 50
+        endif
+        ncol=0
+   10   read(99,*,end=40,err=30) red,green,blue
+        do iw=1,nwork
+          call gscr(iw,ncol,red,green,blue)
+          if(b2plot_debug.ge.13.and.iw.eq.1)
+     >     write(*,'(a,i2,a,1p,3(f7.4,1x))')
+     >     ' Color ',ncol,': ',red,green,blue
+        enddo
+        ncol=ncol+1
+        goto 10
+   30   write(*,*) 'Error in reading ',
+     1   color_file(1:lnblnk(color_file)),
+     2   ' on line ',ncol+1
+        call color
+        goto 50
+   40   close(99)
+        ncol=ncol-2
+        if(ncol.le.0) then
+          write(*,*) 'Too few colors in ',
+     1     color_file(1:lnblnk(color_file))
+          call color
+          goto 50
+        endif
+      else
+C Set up color table
+        call color
+c      call color2(ncol)
+      endif
+   50 continue
+      color_map_loaded=.true.
+      return
+      end subroutine new_color_map

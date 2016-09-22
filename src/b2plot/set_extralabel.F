@@ -14,7 +14,8 @@ C ===================================================================
       character*256 tmp,customlabel
       integer elength,count,i,j,ijpos,icpos,jcpos,istart,iend
       integer lnblnk
-      external lnblnk, subini, subend, xertst, xerrab
+      logical streql
+      external lnblnk, subini, subend, xertst, xerrab, streql
       character var*256,envvar*256,systemarg*256
       character*1 backslash
 #ifdef USE_PXFGETENV
@@ -31,7 +32,7 @@ C ===================================================================
       icpos=1
       jcpos=1
       elength=lnblnk(locallabel)
-      if(locallabel.eq.' ') goto 1000
+      if(streql(locallabel,' ')) goto 1000
 #ifndef PLPLOT
       call pcsetc('FC - function code character','@')
 #endif
@@ -218,8 +219,13 @@ C ===================================================================
       do i=jcpos,256
         tmp(i:i)=' '
       enddo
-      if(b2plot_debug.ge.4)
-     1 write (*,*) 'parsed extralabel to:   ',trim(tmp)
+      if(b2plot_debug.ge.4) then
+        if (streql(tmp,' ')) then
+          write (*,*) 'parsed empty extralabel'
+        else
+          write (*,*) 'parsed extralabel to:   ',trim(tmp)
+        end if
+      end if
       customlabel=tmp
       call subend ()
       return

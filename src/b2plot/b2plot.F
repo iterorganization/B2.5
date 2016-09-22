@@ -1255,8 +1255,13 @@ c
         goto 10
       else if(ikind .eq. 3) then
         call spush(sstack,isstack,sval)
-        if(b2plot_debug.ge.6)
-     1   write(*,*) 'Read string: ',sval(1:lnblnk(sval))
+        if(b2plot_debug.ge.6) then
+          if(streql(sval,' ')) then
+            write(*,*) 'Read empty string'
+          else
+            write(*,*) 'Read string: ',sval(1:lnblnk(sval))
+          endif
+        endif
         goto 10
       end if
       call lower_case(cval)                                !srv 14.10.13

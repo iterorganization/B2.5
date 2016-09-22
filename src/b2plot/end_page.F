@@ -24,11 +24,11 @@ c     the zoom common
         ix_page=1
         iy_page=1
 #ifndef PLPLOT
-cxpb          write(*,*)'b2psh: vx   ',cfux(0.0)
-cxpb          write(*,*)'b2psh: vy   ',cfuy(0.0)
-cxpb          write(*,*)'b2psh: vxx  ',cfux(0.9999)
-cxpb          write(*,*)'b2psh: vyy  ',cfuy(0.9999)
-cxpb          write(*,*)'b2psh: read values!'
+cxpb        write(*,*)'end_page: vx   ',cfux(0.0)
+cxpb        write(*,*)'end_page: vy   ',cfuy(0.0)
+cxpb        write(*,*)'end_page: vxx  ',cfux(0.9999)
+cxpb        write(*,*)'end_page: vyy  ',cfuy(0.9999)
+cxpb        write(*,*)'end_page: read values!'
 #ifdef NCAR4
         do wkid=1,nwork
           if (wkid.eq.wsnX11) then

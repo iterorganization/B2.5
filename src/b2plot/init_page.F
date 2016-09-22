@@ -33,7 +33,7 @@ c     the line format common
 
       if(.not.initialised_plotting) call initialise_plotting
 #ifndef PLPLOT
-      if (wsnshwin.ne.0) call ngpict(wsnshwin,1)
+      if(wsnshwin.ne.0) call ngpict(wsnshwin,1)
 #endif
       if(same_page.eq.0) then
         ngraph=0
@@ -55,10 +55,10 @@ c     the line format common
         return
       endif
       if(dirty_graph.or.(new_page.and.dirty_page)) call end_page
-      xlo=min(1e30_R8,max(-1e30_R8,xlod))
-      xhi=min(1e30_R8,max(-1e30_R8,xhid))
-      ylo=min(1e30_R8,max(-1e30_R8,ylod))
-      yhi=min(1e30_R8,max(-1e30_R8,yhid))
+      xlo=min(1.0e30_R8,max(-1.0e30_R8,xlod))
+      xhi=min(1.0e30_R8,max(-1.0e30_R8,xhid))
+      ylo=min(1.0e30_R8,max(-1.0e30_R8,ylod))
+      yhi=min(1.0e30_R8,max(-1.0e30_R8,yhid))
       if(xlo.eq.xhi) then
         xlo=min(xlo*0.9,xlo*1.1)
         xhi=max(xhi*0.9,xhi*1.1)
@@ -84,13 +84,13 @@ c     the line format common
       endif
 #else
       if(aspect.and.want_aspect) then
-          range=max((xhi-xlo)*nx_page/xwidth,(yhi-ylo)*ny_page/yheight)
-          xmid=(xhi+xlo)/2.0
-          xlo=xmid-range/2.0/nx_page*xwidth
-          xhi=xmid+range/2.0/nx_page*xwidth
-          ymid=(yhi+ylo)/2.0
-          ylo=ymid-range/2.0/ny_page*yheight
-          yhi=ymid+range/2.0/ny_page*yheight
+        range=max((xhi-xlo)*nx_page/xwidth,(yhi-ylo)*ny_page/yheight)
+        xmid=(xhi+xlo)/2.0
+        xlo=xmid-range/2.0/nx_page*xwidth
+        xhi=xmid+range/2.0/nx_page*xwidth
+        ymid=(yhi+ylo)/2.0
+        ylo=ymid-range/2.0/ny_page*yheight
+        yhi=ymid+range/2.0/ny_page*yheight
       endif
       xsize=xwidth/real(nx_page)
       ysize=yheight/real(ny_page)
@@ -166,7 +166,7 @@ c     the line format common
         reserve_bottom=txtwdth*5/ysize
         reserve_top=txtwdth*6/ysize
         reserve_left=txtwdth*(nfmty+3)/xsize
-        reserve_right=0.00
+        reserve_right=0.0
         if(target.and.physical) then
           targetbar_right=1.0-reserve_right
           reserve_right=reserve_right+0.08*0.2+0.08*0.8*lbsz
@@ -185,7 +185,7 @@ c     the line format common
           colorbar_left=1.0-reserve_right
           reserve_right=reserve_right+0.02
         endif
-        if(reserve_right.eq.0.00) reserve_right=0.05*lbsz
+        if(reserve_right.eq.0.0) reserve_right=0.05*lbsz
       else
         reserve_bottom=0.0
         reserve_top=0.0
@@ -276,52 +276,52 @@ c     the line format common
         call gsplci(1)
       ENDIF
 
-        if(b2plot_debug.ge.6) write(*,*) 'SET: ',
+      if(b2plot_debug.ge.6) write(*,*) 'SET: ',
      1   reserve_left*XSIZE+XPOS,
      2   (1.0-reserve_right)*XSIZE+XPOS,
      3   reserve_bottom*YSIZE+YPOS,
      4   (1.0-reserve_top)*YSIZE+YPOS
-        CALL SET(reserve_left*XSIZE+XPOS,
+      CALL SET(reserve_left*XSIZE+XPOS,
      1   (1.0-reserve_right)*XSIZE+XPOS,
      1   reserve_bottom*YSIZE+YPOS,
      2   (1.0-reserve_top)*YSIZE+YPOS,
      2   XLO,XHI,YLO,YHI,LINLOG)
-        if(noax.gt.0) then
-          CALL GASETI('LTY',1) ! ====> use PLCHHQ for drawing labels
-          CALL LABMOD(FMTX,FMTY,NFMTX,NFMTY,
-     1     max(nint(12*lbsz/N_PAGE),4),max(nint(12*lbsz/N_PAGE),4),
-     2     nint(10*lbsz/n_page),nint(20*lbsz/n_page),0)
-          if(b2plot_debug.ge.8) then
-            write(*,*) 'nox,noxm,xlo ',nox,noxm,xlo
-            write(*,*) 'noy,noym,ylo ',noy,noym,ylo
-            write(*,*) 'noax ',noax
-          endif
-          CALL GRIDAL(NOX,NOXM,NOY,NOYM,1*noax,1*noax,5,XLO,YLO)
+      if(noax.gt.0) then
+        CALL GASETI('LTY',1) ! ====> use PLCHHQ for drawing labels
+        CALL LABMOD(FMTX,FMTY,NFMTX,NFMTY,
+     1   max(nint(12*lbsz/N_PAGE),4),max(nint(12*lbsz/N_PAGE),4),
+     2   nint(10*lbsz/n_page),nint(20*lbsz/n_page),0)
+        if(b2plot_debug.ge.8) then
+          write(*,*) 'nox,noxm,xlo ',nox,noxm,xlo
+          write(*,*) 'noy,noym,ylo ',noy,noym,ylo
+          write(*,*) 'noax ',noax
         endif
-        if(lzero) then
-          call lastd
-          if (zcol.gt.1) call gsplci(zcol)
-          if (zwidth.ne.1.0) call gslwsc(zwidth)
-          call gsln(3)
-          call dashdc('$$$$''''''''',8,0)
-          if(b2plot_debug.ge.9) write(*,*) 'zwidth = ',zwidth
-          if(xlo.lt.0.0.and.xhi.gt.0.0) then
-            call lined(0.0,ylo,0.0,yhi)
-          endif
-          if(ylo.lt.0.0.and.yhi.gt.0.0) then
-            call lined(xlo,0.0,xhi,0.0)
-          endif
-          if (label_same_lines.and.same_page.ne.0) then
-            call dashdc(linefmt,8,lfsz)
-          else
-            call dashdc('$',1,0)
-          endif
-          call gsln(1)
-          call lastd
-          if (zcol.gt.1) call gsplci(1)
-          if (zwidth.ne.1.0) call gslwsc(1.0)
+        CALL GRIDAL(NOX,NOXM,NOY,NOYM,1*noax,1*noax,5,XLO,YLO)
+      endif
+      if(lzero) then
+        call lastd
+        if (zcol.gt.1) call gsplci(zcol)
+        if (zwidth.ne.1.0) call gslwsc(zwidth)
+        call gsln(3)
+        call dashdc('$$$$''''''''',8,0)
+        if(b2plot_debug.ge.9) write(*,*) 'zwidth = ',zwidth
+        if(xlo.lt.0.0.and.xhi.gt.0.0) then
+          call lined(0.0,ylo,0.0,yhi)
         endif
-        CALL CPSETI('MAP - MAPPING FLAG',3)
+        if(ylo.lt.0.0.and.yhi.gt.0.0) then
+          call lined(xlo,0.0,xhi,0.0)
+        endif
+        if (label_same_lines.and.same_page.ne.0) then
+          call dashdc(linefmt,8,lfsz)
+        else
+          call dashdc('$',1,0)
+        endif
+        call gsln(1)
+        call lastd
+        if (zcol.gt.1) call gsplci(1)
+        if (zwidth.ne.1.0) call gslwsc(1.0)
+      endif
+      CALL CPSETI('MAP - MAPPING FLAG',3)
 #endif
-        return
-        end subroutine init_page
+      return
+      end subroutine init_page

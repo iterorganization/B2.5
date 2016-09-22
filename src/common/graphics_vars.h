@@ -14,10 +14,10 @@
       logical dirty_graph,dirty_page,new_page,vessel,outline,
      . colprt,lalong,labels,contours,grid,wall,intpol,sptrix,
      . contplot,initialised_plotting,logx,logy,logz,target,
-     . want_aspect,lzero,label_same_lines
+     . want_aspect,lzero,label_same_lines,color_map_loaded
 
       character*256 extralabel,globalheader,device,wallbarlabel,
-     . targetbarlabel
+     . targetbarlabel,color_file
 
       common /graphics_vars/
      r xlo,xhi,ylo,yhi,xsize,ysize,xpos,ypos,wwidth,zwidth,
@@ -31,7 +31,8 @@
      l dirty_graph,dirty_page,new_page,labels,contours,grid,wall,
      . intpol,sptrix,vessel,outline,contplot,initialised_plotting,
      . colprt,lalong,logx,logy,logz,want_aspect,lzero,label_same_lines,
-     . target,
-     c extralabel,globalheader,device,wallbarlabel,targetbarlabel
+     . target,color_map_loaded,
+     c extralabel,globalheader,device,wallbarlabel,targetbarlabel,
+     . color_file
 
       save /graphics_vars/
