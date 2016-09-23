@@ -71,7 +71,7 @@
 *   ..common blocks
 
 *   ..local variables
-      integer ninp(0:4), nout(0:2), nx, ny, ns, idum(0:9)
+      integer ninp(0:4), nout(0:2), io, nx, ny, ns, idum(0:9)
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
