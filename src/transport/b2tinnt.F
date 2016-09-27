@@ -72,7 +72,7 @@
         call ipgeti ('b2tinnt_iout', iout)
         call ipgeti ('b2tinnt_style', style)
         call ipgeti ('b2tral_mode', mode)
-        call ipgeti ('b2mndr_use_eirene', use_eirene)
+        call ipgeti ('b2mndr_eirene', use_eirene)
         call ipgeti ('b2news_area_fix', area_fix)
       endif
 *   ..set n2

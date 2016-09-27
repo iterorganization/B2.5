@@ -455,7 +455,7 @@ cxpb  should only include ExB and not diamagnetic contribution
       else
         ud(:,:,:) = vaecrb(:,:,0,:)
       endif
-      if (main_call .and. diagno.ge.1) then                            !xpb
+      if (main_call .and. diagno.ge.1) then                           !xpb
         write(*,'(a,1p,(10000e12.4))') 'dna0',
      1   (dna0(nx/2,ny,is),is=0,ns-1)
         write(*,'(a,1p,(10000e12.4))') 'dpa0',
@@ -468,13 +468,13 @@ cxpb  should only include ExB and not diamagnetic contribution
      1   hci0(nx/2,ny)
         write(*,'(a,1p,(10000e12.4))') 'sig0',
      1   sig0(nx/2,ny)
-      endif                                                            !xpb
+      endif                                                           !xpb
 
       if(ncall.eq.0) write(*,*) 'Doing B2-style bc'
-      once_bccon = .false.                                             !srv 16.02.12 {
+      once_bccon = .false.                                            !srv 16.02.12 {
       once_bcene = .false.
-      once_bceni = .false.                                             !srv 16.02.12 }
-      once_bcpot = .false.                                             !Solovyev 13.05.14 !srv 29.09.15
+      once_bceni = .false.                                            !srv 16.02.12 }
+      once_bcpot = .false.                                            !Solovyev 13.05.14 !srv 29.09.15
 
 * -- LOOP OVER ALL BOUNDARIES
       DO IB=1, NBC
@@ -1831,7 +1831,7 @@ c dpc
 #ifdef ASTRA
             ! IYS 08.04.2014 temporary solution while we do not have impurities in ASTRA
             call xertst(is.eq.ismain,
-     1         'BCCON = 16 is applied for main ion only for ASTRA')        !srv 29.09.15
+     1         'BCCON = 16 is applied for main ion only for ASTRA') !srv 29.09.15
 #endif
             write(*,'(a,a,i3)') 
      .       'given total particle flux with constant',
@@ -1930,11 +1930,11 @@ c dpc
                 END IF
               END DO
               once_bccon(is) = .true.
-            ELSE                                                       !srv 16.02.12 }
+            ELSE                                                      !srv 16.02.12 }
               CALL XERRAB
      1         ('B2STBC -- BCCON=16, NOT AVAILABLE FOR N,W,E')
             ENDIF
-          endif                                                        !srv 16.02.12 }
+          endif                                                       !srv 16.02.12 }
           GOTO 10000
 
 * -- BCCON=17 -- FILLER
@@ -2263,9 +2263,9 @@ cxpb Careful here because of BC number clash
             END DO
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
-          if(is.eq.ismain.and.use_astra.ne.0) then
+            if(is.eq.ismain.and.use_astra.ne.0) then
 #ifdef ASTRA
-            CONPAR(IS,IB,1) = neb_astra                               !srv 28.07.11
+              CONPAR(IS,IB,1) = neb_astra                             !srv 28.07.11
 #else
               call xerrab
      .         ('Compile with -DASTRA option to couple to ASTRA!')
@@ -2276,10 +2276,10 @@ cxpb Careful here because of BC number clash
                 if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
-              endif
-            ENDDO
+                endif
+              ENDDO
             endif
-          write(*,*) ' Summed value is ', SCONPAR(IS)
+            write(*,*) ' Summed value is ', SCONPAR(IS)
           ENDIF
           if (.not.once_bccon(is)) then
             IF(BCCHAR(IB).EQ.'S' .and.
@@ -2292,15 +2292,15 @@ cxpb Careful here because of BC number clash
 !              SNA0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,IS)=
 !     .        -VBIG*SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
 !            end do
-            t0=0.0e0_R8   ! Volume between two surfaces                  !lk 12.12.12 {
-            t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
+              t0=0.0e0_R8   ! Volume between two surfaces             !lk 12.12.12 {
+              t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
               do ix = -1,nx
                 if (mod(region(ix,0,0),4).eq.1) then
-                t0=t0 + vol(ix,0)
-                t1=t1 + (ti(ix,-1)+te(ix,-1))*vol(ix,0)
+                  t0=t0 + vol(ix,0)
+                  t1=t1 + (ti(ix,-1)+te(ix,-1))*vol(ix,0)
                 endif
-            enddo
-            t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
+              enddo
+              t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
               DO IBW=IB,NBC
                 do IX = 1, BC_LIST_SIZE(IBW)
                   if(mod(region(BC_LIST_X(IX,IBW),
@@ -2312,9 +2312,9 @@ cxpb Careful here because of BC number clash
      &               SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                     SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1,IS)=
      &              -VBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                endif
-              enddo                                    !lk 12.12.12 }
-                DO IX = 1, BC_LIST_SIZE(IBW)                             !srv 23.09.08
+                  endif
+                enddo                                                 !lk 12.12.12 }
+                DO IX = 1, BC_LIST_SIZE(IBW)                          !srv 23.09.08
                   SNA0_NO_MDF(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)=
      &             SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)
                 ENDDO
@@ -2327,9 +2327,10 @@ cxpb Careful here because of BC number clash
           endif
           GOTO 10000 !lk and IYS 01.03.2013}
 
-* -- BCCON=22 -- Feedback boundary condition: given total particle flux with constant
-*    average density. The poloidal density variation is added to make the solution
-*    as close as possible to the neoclassical value derived for pure H/D/T plasma.
+* -- BCCON=22 -- Feedback boundary condition: given total particle flux with
+*    constant average density. The poloidal density variation is added to make
+*    the solution as close as possible to the neoclassical value derived for
+*    pure H/D/T plasma.
 *    It is recommended to use this boundary condition
 *    together with corresponding boundary condition on ion temperature
 *    (BCENI=23,24) !srv 16.02.12, IYS 01.03.2013 {
@@ -2343,7 +2344,7 @@ cxpb Careful here because of BC number clash
      &       ' density for main ion is =', ismain
 !           write all boundaries with this type of boundary condition
             DO IBW=IB,NBC
-            if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
                 write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
      .           boundary_location(ibw),' for species ',IS
@@ -2352,10 +2353,10 @@ cxpb Careful here because of BC number clash
      .           'BCCON = 22 only applicable to core boundaries !')
                 call xertst(CONPAR(IS,IBW,1).gt.0.0_R8,
      1          'BCCON = 22, CONPAR(,,1) !> 0')
-            endif
+              endif
               if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.16.or.
-     1            BCCON(IS,IBW).EQ.19.or.BCCON(IS,IBW).EQ.21.or.
-     1            BCCON(IS,IBW).EQ.23)) then
+     1         BCCON(IS,IBW).EQ.19.or.BCCON(IS,IBW).EQ.21.or.
+     1         BCCON(IS,IBW).EQ.23)) then
                 call xerrab
      .           ('BCCON types 16, 19, 21, 22 and 23 cannot be mixed!')
               endif
@@ -2369,7 +2370,7 @@ cxpb Careful here because of BC number clash
      &           'is consistent with '//
      &           'ion energy boundary condition'  !srv 21.09.12
               endif
-           ENDDO
+            ENDDO
             if (use_astra.ne.0) then
 #ifdef ASTRA
               SCONPAR(IS) = fneb_astra
@@ -2383,48 +2384,48 @@ cxpb Careful here because of BC number clash
                 if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
-              endif
-            ENDDO
+                endif
+              ENDDO
             endif
             write(*,*) ' Summed value is ', SCONPAR(IS)
           endif
           if(.not.once_bccon(is)) then
             IF(BCCHAR(IB).EQ.'S') THEN
-            totflux = 0.0_R8
-            t0=0.0e0_R8   ! Volume between two surfaces                 !lk 12.12.12 {
-            t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
+              totflux = 0.0_R8
+              t0=0.0e0_R8   ! Volume between two surfaces            !lk 12.12.12 {
+              t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
               NAS=0.0e0_R8
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
-                if(mdf_fnb.ne.0) then
+                  if(mdf_fnb.ne.0) then
                     DO IX = 1, BC_LIST_SIZE(IBW)
-                    totflux = totflux +
+                      totflux = totflux +
      &         fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                 topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,is)
-                    t0=t0 + vol(BC_LIST_X(IX,IBW),0)
-                    t1=t1 + (ti(BC_LIST_X(IX,IBW),-1)+
+                      t0=t0 + vol(BC_LIST_X(IX,IBW),0)
+                      t1=t1 + (ti(BC_LIST_X(IX,IBW),-1)+
      &                         te(BC_LIST_X(IX,IBW),-1))*
      .                        vol(BC_LIST_X(IX,IBW),0)
                       NAS=NAS+na(BC_LIST_X(IX,IBW),-1,is)*
      .                       vol(BC_LIST_X(IX,IBW),0)
                     END DO
-                else
+                  else
                     DO IX = 1, BC_LIST_SIZE(IBW)
-                    totflux = totflux +
+                      totflux = totflux +
      &         fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &             topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,is)
-                    t0=t0 + vol(BC_LIST_X(IX,IBW),0)
-                    t1=t1 + (ti(BC_LIST_X(IX,IBW),-1)+
+                      t0=t0 + vol(BC_LIST_X(IX,IBW),0)
+                      t1=t1 + (ti(BC_LIST_X(IX,IBW),-1)+
      &                         te(BC_LIST_X(IX,IBW),-1))*
      &                        vol(BC_LIST_X(IX,IBW),0)
                       NAS=NAS+na(BC_LIST_X(IX,IBW),-1,is)*
      &                       vol(BC_LIST_X(IX,IBW),0)
                     ENDDO
-                endif
-              ENDIF
-            ENDDO
-            t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
+                  endif
+                ENDIF
+              ENDDO
+              t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
               NAS=NAS/t0      ! Volume-averaged density
 
               NAS = NAS*
@@ -2435,7 +2436,8 @@ cxpb Careful here because of BC number clash
 !              NAS = NA((BCEND(IB)+BCSTART(IB))/2,BCPOS(IB),is) *
 !     &         (1.0_R8-max(-bc_ref,min(bc_ref,T0)))
               write(*,"(' BCCON=22: NAS=',es14.7,' totflux=',es14.7,
-     *        '  SCONPAR=',es14.7,' IS=',i3)")NAS,totflux,SCONPAR(IS),IS
+     *                       '  SCONPAR=',es14.7,' IS=',i3)")
+     .         NAS,totflux,SCONPAR(IS),IS
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
@@ -2444,23 +2446,24 @@ cxpb Careful here because of BC number clash
      &               VBIG*NAS*t1
      &                   /(ti(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+
      &                 te(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-     &               *SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))          ! lk
+     &               *SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))        ! lk
                     SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1,IS)=
      &              -VBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                   ENDDO
-                  DO IX = 1, BC_LIST_SIZE(IBW)                         !srv 23.09.08 {
-                   SNA0_NO_MDF(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)
-     &              =SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)
-                  ENDDO                                                !srv 23.09.08 }
+                  DO IX = 1, BC_LIST_SIZE(IBW)                       !srv 23.09.08 {
+                    SNA0_NO_MDF(BC_LIST_X(IX,IBW),
+     .                          BC_LIST_Y(IX,IBW),:,IS)
+     &                =SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)
+                  ENDDO                                              !srv 23.09.08 }
                 ENDIF
               ENDDO
               once_bccon(is) = .true.
-            endif                                                      !srv 16.02.12 }
-          ELSE                                                         !srv 16.02.12 }
+            endif                                                    !srv 16.02.12 }
+          ELSE                                                       !srv 16.02.12 }
             CALL XERRAB
      1       ('B2STBC -- BCCON=22 IS AVAILABLE FOR CORE ONLY')
           ENDIF
-          GOTO 10000                                                !IYS 01.03.2013 }
+          GOTO 10000                                                 !iys 01.03.13 }
 
 * -- BCCON=23 -- Feedback boundary condition: given sum of integrated neutrals and
 *    main ion particle fluxes with constant average density.
@@ -2469,149 +2472,153 @@ cxpb Careful here because of BC number clash
 *    It is recommended to use this boundary condition with corresponding
 *    boundary condition on ion temperature (BCENI=23,24) !srv 16.02.12, IYS 04.03.2013 {
 
- 2300    CONTINUE
-         if(ncall.eq.0) then
-           call xertst(is.eq.ismain,
-     1      'BCCON = 23 is applied for main ion only ')
-           write(*,'(a,a,i3)') 
-     .      'given total particle flux with constant',
-     &      ' density for main ion is =', ismain
+ 2300     CONTINUE
+          if(ncall.eq.0) then
+            call xertst(is.eq.ismain,
+     1       'BCCON = 23 is applied for main ion only ')
+            write(*,'(a,a,i3)') 
+     .       'given total particle flux with constant',
+     &       ' density for main ion is =', ismain
 !          write all boundaries with this type of boundary condition
-           DO IBW=IB,NBC
-             if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
-     >        THEN
-               write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
-     .          boundary_location(ibw),' for species ',IS
-               call xertst(
-     .          mod(region(BC_LIST_X(1,IBW),BC_LIST_Y(1,IBW),0),4).eq.1,
-     .          'BCCON = 23 only applicable to core boundaries !')
-               call xertst(CONPAR(IS,IBW,1).gt.0.0_R8,
-     1          'BCCON = 23, CONPAR(,,1) !> 0')
-             endif
-             if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.16.or.
-     1          BCCON(IS,IBW).EQ.19.or.BCCON(IS,IBW).EQ.21.or.
-     1          BCCON(IS,IBW).EQ.22)) then
-               call xerrab
-     .          ('BCCON types 16, 19, 21, 22 and 23 cannot be mixed!')
-             endif
-             if (bceni(ibw).ne.23..and.bceni(ibw).ne.24) then
-               write(0,*)
+            DO IBW=IB,NBC
+              if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+     >         THEN
+                write(*,'(a,a,a,a,i3)') ' on ', BCCHAR(IBW),
+     .           boundary_location(ibw),' for species ',IS
+                call xertst(
+     .           mod(region(BC_LIST_X(1,IBW),
+     .                      BC_LIST_Y(1,IBW),0),4).eq.1,
+     .           'BCCON = 23 only applicable to core boundaries !')
+                call xertst(CONPAR(IS,IBW,1).gt.0.0_R8,
+     1           'BCCON = 23, CONPAR(,,1) !> 0')
+              endif
+              if(BCCHAR(IBW).EQ.'S'.and.(BCCON(IS,IBW).EQ.16.or.
+     1           BCCON(IS,IBW).EQ.19.or.BCCON(IS,IBW).EQ.21.or.
+     1           BCCON(IS,IBW).EQ.22)) then
+                call xerrab
+     .           ('BCCON types 16, 19, 21, 22 and 23 cannot be mixed!')
+              endif
+              if (bceni(ibw).ne.23..and.bceni(ibw).ne.24) then
+                write(0,*)
      &     'Should use BCCON(IS,IB).EQ.23 together with BCENI=23 or 24'
-               write(*,*)
+                write(*,*)
      &     'Should use BCCON(IS,IB).EQ.23 together with BCENI=23 or 24'
-               write(*,'(a)')
-     &          'Please ensure that this boundary condition '//
-     &          'is consistent with '//
-     &          'ion energy boundary condition'  !srv 21.09.12
-             endif
-           ENDDO
-         endif
+                write(*,'(a)')
+     &           'Please ensure that this boundary condition '//
+     &           'is consistent with '//
+     &           'ion energy boundary condition'                      !srv 21.09.12
+              endif
+            ENDDO
+          endif
 
-         if(.not.once_bccon(is)) then
-           if (use_astra.ne.0) then
+          if(.not.once_bccon(is)) then
+            if (use_astra.ne.0) then
 #ifdef ASTRA
-             SCONPAR(IS) = fSeNBI_astra
+              SCONPAR(IS) = fSeNBI_astra
 #else
-             call xerrab
-     .        ('Compile with -DASTRA option to couple to ASTRA!')
+              call xerrab
+     .         ('Compile with -DASTRA option to couple to ASTRA!')
 #endif
-           else
-             SCONPAR(IS) = 0.0_R8
-             DO IBW=IB,NBC
-               if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
-     >          THEN
-                 SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
-               endif
-             ENDDO
-           endif
-           write(*,*) ' Summed value is ', SCONPAR(IS)
-           IF(BCCHAR(IB).EQ.'S') THEN
-             totflux = 0.0_R8
-             t0=0.0e0_R8   ! Volume between two surfaces                  !lk 12.12.12 {
-             t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
-             NAS=0.0e0_R8
-             DO IBW=IB,NBC
-               IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
-     >          THEN
+            else
+              SCONPAR(IS) = 0.0_R8
+              DO IBW=IB,NBC
+                if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+     >           THEN
+                  SCONPAR(IS) = SCONPAR(IS) + CONPAR(IS,IBW,1)
+                endif
+              ENDDO
+            endif
+            write(*,*) ' Summed value is ', SCONPAR(IS)
+            IF(BCCHAR(IB).EQ.'S') THEN
+              totflux = 0.0_R8
+              t0=0.0e0_R8   ! Volume between two surfaces            !lk 12.12.12 {
+              t1=0.0e0_R8   ! Sum of volume-averaged electron and ion temperatures
+              NAS=0.0e0_R8
+              DO IBW=IB,NBC
+                IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+     >           THEN
 #ifdef B25_EIRENE
 cxpb  Add contribution from Eirene core boundary fluxes
-                 isa = b2espcr(ismain0)
-                 if (isa.ne.-1) then
-                   do k = 1, ncns
-                     ix = nlim + lcns(k)
-                     totfluxn = totfluxn -
-     &                          wldna(ix,isa,0) + wldra(ix,isa,0)
-                     do ism = 1, nnmoli
-                       if (mlcmp(isa,ism).gt.0) then
-                         totfluxn = totfluxn -
-     &                              mlcmp(isa,ism) * wldnm(ix,ism,0)
-                       end if
-                     end do
-                   end do
-                 end if
+                  isa = b2espcr(ismain0)
+                  if (isa.ne.-1) then
+                    do k = 1, ncns
+                      ix = nlim + lcns(k)
+                      totfluxn = totfluxn -
+     &                           wldna(ix,isa,0) + wldra(ix,isa,0)
+                      do ism = 1, nnmoli
+                        if (mlcmp(isa,ism).gt.0) then
+                          totfluxn = totfluxn -
+     &                               mlcmp(isa,ism) * wldnm(ix,ism,0)
+                        end if
+                      end do
+                    end do
+                  end if
 #endif
-                 isb = ismain0
-                 DO IX = 1, BC_LIST_SIZE(IBW)
-                  if (is_neutral(isb))
-     >             totfluxn = totfluxn +
+                  isb = ismain0
+                  DO IX = 1, BC_LIST_SIZE(IBW)
+                    if (is_neutral(isb))
+     >                totfluxn = totfluxn +
      &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                  isb = ismain
-                  if(mdf_fnb.ne.0) then
-                    totfluxi = totfluxi +
+                    isb = ismain
+                    if(mdf_fnb.ne.0) then
+                      totfluxi = totfluxi +
      &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                  else
-                    totfluxi = totfluxi +
+                    else
+                      totfluxi = totfluxi +
      &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                  endif
-                  t0=t0+vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &                      topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-                  t1=t1 + (ti(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+
-     .                     te(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))*
-     .              vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &                  topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-                  NAS=NAS+na(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),is)*
-     .              vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &                  topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-                ENDDO
-              ENDIF
-            ENDDO
-            t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
-            NAS=NAS/t0      ! Volume-averaged density
-            NAS = NAS*
+                    endif
+                    t0=t0+vol(topix(BC_LIST_X(IX,IBW),
+     .                              BC_LIST_Y(IX,IBW)),
+     &                        topiy(BC_LIST_X(IX,IBW),
+     .                              BC_LIST_Y(IX,IBW)))
+                    t1=t1 + (ti(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+
+     .                       te(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))*
+     .                vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                    topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+                    NAS= NAS+na(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),is)*
+     .               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+                  ENDDO
+                ENDIF
+              ENDDO
+              t1=t1/t0        ! Sum of volume-averaged electron and ion temperatures
+              NAS=NAS/t0      ! Volume-averaged density
+              NAS = NAS*
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           (abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS))))
-            write(*,"(' BCCON=23: NAS=',es14.7,' totfluxn=',es14.7,
-     &        ' totfluxi=',es14.7,' SCONPAR=',es14.7,
-     &        ' totfluxn+totfluxi=',es14.7)")
-     *      NAS, totfluxn, totfluxi, SCONPAR(IS), totfluxn+totfluxi
-            DO IBW=IB,NBC
-              IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
-     >         THEN
-                DO IX = 1, BC_LIST_SIZE(IBW)
-                  SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0,IS)=
+              write(*,"(' BCCON=23: NAS=',es14.7,' totfluxn=',es14.7,
+     &         ' totfluxi=',es14.7,' SCONPAR=',es14.7,
+     &         ' totfluxn+totfluxi=',es14.7)")
+     *         NAS, totfluxn, totfluxi, SCONPAR(IS), totfluxn+totfluxi
+              DO IBW=IB,NBC
+                IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
+     >           THEN
+                  DO IX = 1, BC_LIST_SIZE(IBW)
+                    SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0,IS)=
      &               VBIG*NAS*t1
      &               /(ti(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+
      &               te(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))*
      &               SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))  ! lk
-                  SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1,IS)=
-     &             -VBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
-                ENDDO
-                DO IX =1, BC_LIST_SIZE(IBW)                          !srv 23.09.08 {
-                  SNA0_NO_MDF(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)=
-     &             SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)
-                ENDDO                                                 !srv 23.09.08 }
+                    SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1,IS)=
+     &              -VBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
+                  ENDDO
+                  DO IX =1, BC_LIST_SIZE(IBW)                         !srv 23.09.08 {
+                    SNA0_NO_MDF(BC_LIST_X(IX,IBW),
+     .                          BC_LIST_Y(IX,IBW),:,IS)=
+     &               SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),:,IS)
+                  ENDDO                                               !srv 23.09.08 }
+                ENDIF
+              ENDDO
+              once_bccon(is) = .true.
+            ELSE                                                      !srv 16.02.12 }
+              CALL XERRAB
+     1         ('B2STBC -- BCCON=23 IS AVAILABLE FOR CORE ONLY')
             ENDIF
-          ENDDO
-            once_bccon(is) = .true.
-          ELSE                                                       !srv 16.02.12 }
-            CALL XERRAB
-     1       ('B2STBC -- BCCON=23 IS AVAILABLE FOR CORE ONLY')
-          ENDIF
-      endif                                                          !srv 16.02.12 }
-        GOTO 10000                            !IYS 04.03.2013 }
+          endif                                                       !srv 16.02.12 }
+          GOTO 10000                                                  !IYS 04.03.13 }
 
 * -- BCCON=24 -- constant density scaled by density on the ring bc_type21_ref away
 
@@ -2619,12 +2626,12 @@ cxpb  Add contribution from Eirene core boundary fluxes
           if(ncall.eq.0) then
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       'constant density (modified by nearby ring) ',
-     1       CONPAR(IS,IB,1),' on ',
-     1       BCCHAR(IB),boundary_location(ib),' for species ',IS
+     1        CONPAR(IS,IB,1),' on ',
+     1        BCCHAR(IB),boundary_location(ib),' for species ',IS
             call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
      1       'BCCON = 24, CONPAR(,,1) !> 0')
             call xertst(CONPAR(is,ib,2).gt.0.0_R8,
-     &           'faulty parameter conpar2')
+     &       'faulty parameter conpar2')
           endif
           IF(BCCHAR(IB).EQ.'S') THEN
             naave = 0.0_R8
