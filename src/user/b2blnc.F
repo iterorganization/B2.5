@@ -114,7 +114,7 @@ c*** lsns: Eirene surfaces related to the recycling sources
 c*** msns: their index
 c*** mlcmp: composition of molecules.
 c***        Molecule of kind j contains mlcmp(i,j) atoms of kind i
-c*** gpfc: composition of gas-puff sources.
+c*** gpfc: composition of gas puff sources.
 c***       gpfc(i,j)=(fraction of nuclei of kind i in stratum number j)
 c*** sclstra: scaling factors for species and strata
 c*** lmolscl: pointer to the species with which these molecules scale

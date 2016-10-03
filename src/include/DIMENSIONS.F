@@ -16,11 +16,11 @@
 #define DEF_NYD 36
 #define DEF_NPHID 1
 #define DEF_NSTRA (5*DEF_NCUT/2+2)*DEF_NATM+1
-#define DEF_NFL 9
-#define DEF_NPLS 12
-#define DEF_NATM 3
-#define DEF_NMOL 1
-#define DEF_NION 1
+#define DEF_NFL 21
+#define DEF_NPLS 15
+#define DEF_NATM 6
+#define DEF_NMOL 3
+#define DEF_NION 3
 #define DEF_NLIM 300
 #define DEF_NSTS 50
 #define DEF_NTOR 60
@@ -52,7 +52,7 @@
 
 #define DEF_NREAC 60
 #define DEF_NREI 70
-#define DEF_NREC 5
+#define DEF_NREC DEF_NATM
 #define DEF_NREL 8
 
 #endif

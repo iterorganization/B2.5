@@ -73,7 +73,7 @@
       integer n2, ix, iy, is, js, ib, ic, ibnd, itrack, k
       integer, save :: jxi, jxa, jsep
       integer, save :: no_b2stbr_phys_call=0
-      integer, save :: out_tfiles = 0                                !srv 07.04.09
+      integer, save :: out_tfiles = 1                                !xpb 28.09.16
       integer, save :: iout = 0,        iout_b2npmo = 0,             !srv 11.09.09 {
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
@@ -178,6 +178,8 @@
       if (ncall.eq.0) then
         call get_jsep(nx,ny,jxi,jxa,jsep)
         call ipgeti ('b2stbr_output', output)
+        call ipgeti ('b2mndr_eirene', use_eirene)
+        if (use_eirene.eq.1) out_tfiles=0
         call ipgeti ('b2stbr_out_tfiles', out_tfiles)                !srv 07.04.09
         call ipgeti ('b2stbr_iout', iout)                            !srv 11.09.09 {
         call ipgeti ('b2npc9_iout', iout_b2npc9)
@@ -188,7 +190,6 @@
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 11.09.09 }
         call ipgeti ('b2stbr_ncall_iout', ncall_iout)                !srv 23.03.12
-        call ipgeti ('b2mndr_eirene', use_eirene)
         call ipgetr ('b2stbr_recycled_neutrals_contr',               !srv 12.04.08 
      &                      recycled_neutrals_contr)
         call xertst (0.0_R8.le.recycled_neutrals_contr, 

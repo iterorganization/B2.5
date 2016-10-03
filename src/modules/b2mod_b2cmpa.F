@@ -102,6 +102,7 @@ c     It is not allowed to bundle neutral and charged states together.
               is=is+1
             end if
           end do
+          close(99)
         else
           do is=0,ns-1
             potimin(is)=0.0_R8
