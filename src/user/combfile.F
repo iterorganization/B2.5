@@ -104,6 +104,8 @@ c*** nummax: maximum width of a numerical field in the file
       character*(mhdr),allocatable :: chdw(:)
       character*(nhdr*48),allocatable :: cline(:)
       real (kind=R8), allocatable :: rowr(:),roww(:)
+      logical streql
+      external streql
 c=======================================================================
 c*** Prepare necessary constants
 
@@ -136,7 +138,7 @@ c*** Check whether the file exists and find its actual name.
 c*** When the routine has to re-arrange the file, it gives the file a
 c*** new name, adding a suffix ".n.NN", where NN is a two-digit integer,
 c*** to the base name (that is, without such suffix). The actual name is
-c*** therefore either the composed name with the highest consequtive NN
+c*** therefore either the composed name with the highest consecutive NN
 c*** starting from 01, or the base name itself if no file "<fn>.n.01"
 c*** is present.
 
@@ -410,7 +412,7 @@ c*** re-write the existing file
 c          print *,trim(frmdat)  !###
           do while (.true.) !{
             read(lrd,frmhdr,end=45) cline
-            if(cline(ncln)(l-nummax:).eq.' ') then !{
+            if(.not.streql(cline(ncln)(l-nummax:l),' ')) then !{
               if(ncln.gt.1) then !{
 
 c*** Check whether any data fields are split between the line parts
@@ -429,19 +431,20 @@ c*** non-space on both sides of the section borders - the field is split
                     kt=k+nummax
                     kb=k+1
                     if(k.gt.0) then !{
-                      if(cline(j)(k:).ne.' ') then !{ non-empty tail
+                      if(.not.streql(cline(j)(k:l),' ')) then !{ non-empty tail
                         cline(j)(k:k)=csep
-                        do while ( k.gt.0 .and. cline(j)(k:).ne.' ') !{
-                          cline(j)(kb:)=cline(j)(kt:)
+                        do while ( k.gt.0 .and.
+     .                            .not.streql(cline(j)(k:l),' ')) !{
+                          cline(j)(kb:kb+l-kt)=cline(j)(kt:l)
                           k=index(cline(j),cbln)
                           kb=k
                           kt=k+nummax
                         end do !}
                       end if !}
-                      if(cline(j)(k:).eq.' ') then !{ shift to the right
-                        cline(j)(n+1:)=Trim(cline(j)(1:l-n))
-                        cline(j)(1:n)=cline(j-1)(l-n+1:)
-                        cline(j-1)(l-n+1:)=' '
+                      if(.not.streql(cline(j)(k:l),' ')) then !{ shift to the right
+                        cline(j)(n+1:l)=cline(j)(1:l-n)
+                        cline(j)(1:n)=cline(j-1)(l-n+1:l)
+                        cline(j-1)(l-n+1:l)=repeat(' ',n)
                       end if !}
                     end if !}
                     if(k.eq.0) then !{ not enough space -> next section
