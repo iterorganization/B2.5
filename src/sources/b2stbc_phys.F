@@ -2975,7 +2975,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 *              and find the average density of the highest ionization stage.
 *              A DENSITY PERTURBATION IS TAKEN FROM THE NEIGHBOURING RADIAL CELL.
 *              IT IS RECOMMENDED TO USE THIS BOUNDARY CONDITION TOGETHER WITH
-*              A CORRESPONDING CONDITION ON THE ION TEMPERATURE (BCENI=25,26)
+*              A CORRESPONDING CONDITION ON THE ION TEMPERATURE (BCENI=26,27)
 
  2700     CONTINUE
           if(ncall.eq.0) then
@@ -2996,9 +2996,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
      1           'BCCON = 27, CONPAR(,,1) < 0')
                 if (bceni(ibw).ne.26.and.bceni(ibw).ne.27) then
                   write(0,*)
-     &    'Should use BCCON(IS,IB).EQ.27 together with BCENI=25 or 26'
+     &    'Should use BCCON(IS,IB).EQ.27 together with BCENI=26 or 27'
                   write(*,*)
-     &    'Should use BCCON(IS,IB).EQ.27 together with BCENI=25 or 26'
+     &    'Should use BCCON(IS,IB).EQ.27 together with BCENI=26 or 27'
                   write(*,'(a)')
      &             'Please ensure that this boundary condition '//
      &             'is consistent with '//
