@@ -104,7 +104,7 @@
 *.declarations
 
 *   ..local variables
-      integer ncall, n2, ix, iy, is, ib, ireg, coreregno, coreregn2,
+      integer ncall, n2, ix, iy, is, js, ib, ireg, coreregno, coreregn2,
      1  bc_type13_ref, bc_type13_ix, bc_type13_iy, bc_type13_i,
      2  bc_type13_ixx,
      1  bc_type16_ref, bc_type16_ix, bc_type16_iy, bc_type16_i,
@@ -160,6 +160,8 @@
      &                        phm2 = 1.0e0_R8,
      &                        corr_flux   = 0.0e0_R8                    !srv 25.07.05
       real (kind=R8), save :: alfTeEh = 0.0_R8
+      real (kind=R8) :: amtol
+      parameter (amtol=1.0e-2_R8)
       character chns*3, chk*1                                           !srv 11.07.05
       logical decay_length_ok, fedback_species
       real (kind=R8) ::
@@ -180,6 +182,7 @@
       intrinsic min, max, abs, sqrt, exp, log, dim, mod
       real (kind=R8) ::
      *  machsfr, expu2, hy1, sy, bcint, syhz                            !srv 24.08.08
+      logical lnext
       external subini, subend, xertst, ipgeti, machsfr, bcint, eseec0
       external ipgetr, b2xvsg, b2xvff, b2xvps
       expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
@@ -190,6 +193,8 @@
       syhz(ix,iy)=gs(topix(ix,iy),topiy(ix,iy),1)*                      !srv 24.08.08
      &            hz(ix,iy)
 !     &            hz(topix(ix,iy),topiy(ix,iy))
+      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
+     &  abs(am(is)-am(js)).lt.amtol
 *   ..initialisation
       data ncall/0/, coreregno/1/, coreregn2/4/, bc_type13_ref/1/,
      1 bc_type16_ref/1/, bc_type20_ref/1/, 
@@ -1958,15 +1963,12 @@ c dpc
           IF(BCCHAR(IB).EQ.'S') THEN
             t0 = 0.0_R8
             US=0.0_R8
+            isb = ismain0
             DO IX = 1, BC_LIST_SIZE(IB)
               US=US+SY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))
-              DO ISB = 0, NS-1
-                if (is_neutral(isb)) then
-                  t0 = t0 +
+              if (is_neutral(isb)) t0 = t0 +
      .             fna(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      .                 topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,isb)
-                endif
-              END DO
             END DO
             CONPAR(IS,IB,1) = (fSeNBI_astra - t0)                     !srv 29.11.11
 
@@ -2018,10 +2020,12 @@ c dpc
 
  1900     CONTINUE
           if(ncall.eq.0) then
-            call xertst(is.eq.ismain,
-     1       'BCCON = 19 is applied for main ion only ')
-            write(*,*) 'given sum of integrated neutrals and main ',
-     &                 'ion particle flux with constant ion density '
+            if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
+     1       'BCCON = 19 can only be applied to ions in their '//
+     2       'highest ionization state')
+            write(*,*) 'given sum of particle flux for '//
+     .                 'isonuclear sequence with constant highest '//
+     .                 'ionisation stage density '
 !           write all boundaries with this type of boundary condition
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
@@ -2077,7 +2081,7 @@ c dpc
               totfluxi = 0.0_R8
 #ifdef B25_EIRENE
 cxpb  Add contribution from Eirene core boundary fluxes
-              isa = b2espcr(ismain0)
+              isa = b2espcr(is)
               if (isa.ne.-1) then
                 do k = 1, ncns
                   ix = nlim + lcns(k)
@@ -2095,22 +2099,24 @@ cxpb  Add contribution from Eirene core boundary fluxes
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
-                  isb = ismain0
                   DO IX = 1, BC_LIST_SIZE(IBW)
-                    if (is_neutral(isb))
-     >               totfluxn = totfluxn + fna(
-     &             topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &             topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                    isb = ismain
-                    if(mdf_fnb.ne.0) then
-                      totfluxi = totfluxi + fna_mdf(
-     &                 topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &                 topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                    else
-                      totfluxi = totfluxi + fna(
-     &                 topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &                 topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                    endif
+                    do isb = 0, ns-1
+                      if (b2espcr(is).eq.b2espcr(isb)) then
+                        if(mdf_fnb.ne.0.and..not.is_neutral(isb)) then
+                          totfluxi = totfluxi + fna_mdf(
+     &                     topix(BC_LIST_X(IX,IBW),
+     &                           BC_LIST_Y(IX,IBW)),
+     &                     topiy(BC_LIST_X(IX,IBW),
+     &                           BC_LIST_Y(IX,IBW)),1,isb)
+                        else
+                          totfluxi = totfluxi + fna(
+     &                     topix(BC_LIST_X(IX,IBW),
+     &                           BC_LIST_Y(IX,IBW)),
+     &                     topiy(BC_LIST_X(IX,IBW),
+     &                           BC_LIST_Y(IX,IBW)),1,isb)
+                        endif
+                      endif
+                    enddo
                   ENDDO
                 ENDIF
               ENDDO
@@ -2443,8 +2449,8 @@ cxpb Careful here because of BC number clash
                     SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0,IS)=
      &               VBIG*NAS*t1
      &                   /(ti(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+
-     &                 te(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-     &               *SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))        ! lk
+     &                     te(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
+     &                    *SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))   ! lk
                     SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1,IS)=
      &              -VBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                   ENDDO
@@ -2469,6 +2475,8 @@ cxpb Careful here because of BC number clash
 *    as close as possible to the neoclassical value derived for pure H/D/T plasma.
 *    It is recommended to use this boundary condition with corresponding
 *    boundary condition on ion temperature (BCENI=23,24) !srv 16.02.12, IYS 04.03.2013 {
+*    Use this boundary condition for pure H/D/T plasma only,
+*    If a minor impurity is present, please use the BCCON=27 instead. ! IYS 21.01.2016
 
  2300     CONTINUE
           if(ncall.eq.0) then
@@ -2486,8 +2494,8 @@ cxpb Careful here because of BC number clash
                 call xertst(
      .         mod(region(BC_LIST_X(1,IBW),BC_LIST_Y(1,IBW),0),4).eq.1,
      .           'BCCON = 23 only applicable to core boundaries !')
-                call xertst(CONPAR(IS,IBW,1).gt.0.0_R8,
-     1           'BCCON = 23, CONPAR(,,1) !> 0')
+                call xertst(CONPAR(IS,IBW,1).ge.0.0_R8,
+     1           'BCCON = 23, CONPAR(,,1) < 0')
                 if (bceni(ibw).ne.23.and.bceni(ibw).ne.24) then
                   write(0,*)
      &     'Should use BCCON(IS,IB).EQ.23 together with BCENI=23 or 24'
@@ -2553,10 +2561,9 @@ cxpb  Add contribution from Eirene core boundary fluxes
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
-                  isb = ismain0
                   DO IX = 1, BC_LIST_SIZE(IBW)
-                    if (is_neutral(isb))
-     >               totfluxn = totfluxn +
+                    isb = ismain0
+                    if (is_neutral(isb)) totfluxn = totfluxn +
      &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
                     isb = ismain
@@ -2599,8 +2606,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
                     SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),0,IS)=
      &               VBIG*NAS*t1
      &               /(ti(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))+
-     &               te(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))*
-     &               SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))           ! lk
+     &                 te(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))*
+     &                 SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))         ! lk
                     SNA0(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),1,IS)=
      &              -VBIG*SY(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                   ENDDO
@@ -2731,7 +2738,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
 * -- BCCON=25  Feedback boundary condition: PRESCRIBE THE AVERAGE VALUE OF THE DENSITY  !lk and IYS 01.03.2013{
 *              AND ADD A DENSITY PERTURBATION FROM NEIGHBOURING RADIAL CELL.
 *              THIS BOUNDARY CONDITION IS SUITABLE FOR ANY SPECIES OF
-*              MULTISPECIES PLASMA (I.E. IN THE CASE WHEN THE CONDITION USED
+*              MULTI-SPECIES PLASMA (I.E. IN THE CASE WHEN THE CONDITION USED
 *              IN BCCON=21 FAILS)
 *              IT IS RECOMMENDED TO USE THIS BOUNDARY CONDITION TOGETHER WITH
 *              CORRESPONDING CONDITION ON ION TEMPERATURE (BCENI=26,27)
@@ -2834,13 +2841,14 @@ cxpb  Add contribution from Eirene core boundary fluxes
           ENDIF
           GOTO 10000 !lk and IYS 01.03.2013}
 
-* -- BCCON=26  Feedback boundary condition: PRESCRIBE THE TOTAL ION FLUX AND FIND THE AVERAGE DENSITY.  !lk and IYS 01.03.2013{
+* -- BCCON=26  Feedback boundary condition: PRESCRIBE THE TOTAL ION FLUX AND
+*              FIND THE AVERAGE DENSITY.  !lk and IYS 01.03.2013{
 *              A DENSITY PERTURBATION IS TAKEN FROM NEIGHBOURING RADIAL CELL.
 *              THIS BOUNDARY CONDITION IS SUITABLE FOR ANY SPECIES OF
-*              MULTISPECIES PLASMA (I.E. IN THE CASE WHEN THE CONDITION USED
+*              MULTI-SPECIES PLASMA (I.E. IN THE CASE WHEN THE CONDITION USED
 *              IN BCCON=22 FAILS)
 *              IT IS RECOMMENDED TO USE THIS BOUNDARY CONDITION TOGETHER WITH
-*              CORRESPONDING CONDITION ON ION TEMPERATURE (BCENI=26,27)
+*              A CORRESPONDING CONDITION ON THE ION TEMPERATURE (BCENI=26,27)
 
  2600     CONTINUE
           if(ncall.eq.0) then
@@ -2962,22 +2970,20 @@ cxpb  Add contribution from Eirene core boundary fluxes
           ENDIF
           GOTO 10000                                                   !IYS 01.03.2013 }
 
-* -- BCCON=27  Feedback boundary condition: prescribe the sum of integrated neutrals and
-*              main ion particle fluxes AND FIND THE AVERAGE DENSITY.  !lk and IYS 01.03.2013{
+* -- BCCON=27  Feedback boundary condition: prescribe the particle flux sum
+*              for all neutrals and ions belonging to a given isonuclear sequence
+*              and find the average density of the highest ionization stage.
 *              A DENSITY PERTURBATION IS TAKEN FROM THE NEIGHBOURING RADIAL CELL.
-*              THIS BOUNDARY CONDITION IS VALID FOR H/D/T IN A
-*              MULTISPECIES PLASMA (I.E. IN THE CASE WHEN THE CONDITION USED
-*              IN BCCON=23 FAILS)
 *              IT IS RECOMMENDED TO USE THIS BOUNDARY CONDITION TOGETHER WITH
-*              CORRESPONDING CONDITION ON ION TEMPERATURE (BCENI=25,26)
+*              A CORRESPONDING CONDITION ON THE ION TEMPERATURE (BCENI=25,26)
 
  2700     CONTINUE
           if(ncall.eq.0) then
-            call xertst(is.eq.ismain,
-     1       'BCCON = 27 is applied for main ion only ')
+            if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
+     1       'BCCON = 27 is applied to highest ionisation stages only')
             write(*,'(a,a,i3)')
      &       'given total particle flux with constant',
-     &       ' density for main ion is =', ismain
+     &       ' density for highest ionisation stage ion is =', is
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >         THEN
@@ -2986,8 +2992,8 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 call xertst(
      .         mod(region(BC_LIST_X(1,IBW),BC_LIST_Y(1,IBW),0),4).eq.1,
      .           'BCCON = 27 only applicable to core boundaries !')
-                call xertst(CONPAR(IS,IBW,1).gt.0.0_R8,
-     1           'BCCON = 27, CONPAR(,,1) !> 0')
+                call xertst(CONPAR(IS,IBW,1).ge.0.0_R8,
+     1           'BCCON = 27, CONPAR(,,1) < 0')
                 if (bceni(ibw).ne.26.and.bceni(ibw).ne.27) then
                   write(0,*)
      &    'Should use BCCON(IS,IB).EQ.27 together with BCENI=25 or 26'
@@ -3034,7 +3040,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
               NAS=0.0e0_R8
 #ifdef B25_EIRENE
 cxpb  Add contribution from Eirene core boundary fluxes
-              isa = b2espcr(ismain0)
+              isa = b2espcr(is)
               if (isa.ne.-1) then
                 do k = 1, ncns
                   ix = nlim + lcns(k)
@@ -3043,7 +3049,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                   do ism = 1, nnmoli
                     if (mlcmp(isa,ism).gt.0) then
                       totfluxn = totfluxn -
-     &                  (mlcmp(isa,ism) * wldnm(ix,isa,0))
+     &                  (mlcmp(isa,ism) * wldnm(ix,ism,0))
                     end if
                   end do
                 end do
@@ -3052,32 +3058,30 @@ cxpb  Add contribution from Eirene core boundary fluxes
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
-                  isb = ismain0
                   DO IX = 1, BC_LIST_SIZE(IBW)
-                    if (is_neutral(isb))
-     >               totfluxn = totfluxn +
-     &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                    isb = ismain
-                    if(mdf_fnb.ne.0) then
-                      totfluxi = totfluxi +
+                    DO isb = 0, ns-1
+                      if (b2espcr(is).eq.b2espcr(isb)) then
+                        if(mdf_fnb.ne.0.and..not.is_neutral(isb)) then
+                          totfluxi = totfluxi +
      &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                    else
-                      totfluxi = totfluxi +
+                        else
+                          totfluxi = totfluxi +
      &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                    endif
+                        endif
+                      endif
+                    end do
                     t0=t0 +
      .               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                     t1=t1 +
      .                na(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &                   ISB)*
+     &                   IS)*
      .               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-                    NAS=NAS+na(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),isb)*
+                    NAS=NAS+na(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW),is)*
      .               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                   ENDDO

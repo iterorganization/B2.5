@@ -72,8 +72,8 @@
 *   ..initialisation
       save ncall, styl0, styl1, 
      1     phm0, phm1, phm2, phm3, limthii, limthee, zlitest
-      data ncall/0/, styl0/0/, styl1/0/, 
-     &  phm0/1.0e0_R8/, phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0_R8/,
+      data ncall/0/, styl0/0/, styl1/0/, phm0/1.0e0_R8/,
+     &  phm1/1.0e0_R8/, phm2/1.0e0_R8/, phm3/1.0e0_R8/,
      &  limthii/0.3e0_R8/, limthee/0.3e0_R8/,
      &  zlitest/0/
 

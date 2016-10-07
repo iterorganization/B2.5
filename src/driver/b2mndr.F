@@ -1722,29 +1722,29 @@ csw 09oct2012 set default potential already at this point (BCs)
 *    ..produce data for movie
         if (mod(itim,mvinc).eq.0.and.itim/mvinc.le.mvnum) then
           call b2mwmv (nout(3), nx, ny, ns, itim, tim, dtim)
-       endif
+        endif
 *    ..extra writes of b2fplasmf.xxxx       
-       if (mod(itim_plas,plasinc).eq.0.and.nwrit_plas.le.plasnum
+        if (mod(itim_plas,plasinc).eq.0.and.nwrit_plas.le.plasnum
      &    .and.plasnum.gt.0.and.plasinc.gt.0) then
           nwrit_plas = nwrit_plas + 1
           write(savefile_p(11:14),'(i4)') edition_p
-           edition_p=edition_p+1
-           do i=11,14
-              if(savefile_p(i:i).eq.' ') savefile_p(i:i)='0'
-           enddo
-           call cfopen (nout(7),savefile_p,'new','formatted')
-           write(*,*) 'Writing extra b2plasmf:',itim,itim_plas,
-     & plasinc,mod(itim_plas,plasinc),tim
-           write(*,*) savefile_p
-           call cfverw(nout(7), newversion)
-           call write_b2mod_geo(nout(7))
-           call write_b2mod_plasma(nout(7))
-           call write_b2mod_residuals(nout(7))
-           call write_b2mod_sources(nout(7))
-           call write_b2mod_transport(nout(7))
-           call write_b2mod_anomalous_transport(nout(7))
-           call write_b2mod_neutr_src_scaling(nout(7),nstrat)
-           close(nout(7))
+          edition_p=edition_p+1
+          do i=11,14
+            if(savefile_p(i:i).eq.' ') savefile_p(i:i)='0'
+          enddo
+          call cfopen (nout(7),savefile_p,'new','formatted')
+          write(*,*) 'Writing extra b2plasmf:',itim,itim_plas,
+     &                plasinc,mod(itim_plas,plasinc),tim
+          write(*,*) savefile_p
+          call cfverw(nout(7), newversion)
+          call write_b2mod_geo(nout(7))
+          call write_b2mod_plasma(nout(7))
+          call write_b2mod_residuals(nout(7))
+          call write_b2mod_sources(nout(7))
+          call write_b2mod_transport(nout(7))
+          call write_b2mod_anomalous_transport(nout(7))
+          call write_b2mod_neutr_src_scaling(nout(7),nstrat)
+          close(nout(7))
         endif
 *    ..increment
         itim = itim+1
