@@ -249,11 +249,11 @@
 *     iteration; hence the different setting of rxf2.
       rxf0 = rxf*xfm0
       rxf1 = rxf*xfm1
-      rxf2 = (rxf*xfm2)**0.2_R8
+      rxf2 =(rxf*xfm2)**0.2_R8
       rxf3 = rxf*xfm3
 
       if (ramp_call .or. ncall.eq.0) then
-         call b2news_facdrift_fac_ExB_inc(nx,ny,ramp_slow)
+        call b2news_facdrift_fac_ExB_inc(nx,ny,ramp_slow)
       endif
 *   ..test facdrift, fac_ExB, fac_vis
       call xertst (0.0_R8.le.minval(facdrift) .and.
@@ -550,8 +550,8 @@ cxpb
      1       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
      1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
-           endif
-         enddo
+          endif
+        enddo
         if(wrong_flow .or. ipass.ne.0) then                              !xpb
            call print_wrong_flows(
      &          'Before potential loop: fna(ions) at plates')

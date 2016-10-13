@@ -10,7 +10,7 @@
       integer nx, ny, ns
 *   ..input/output arguments
       real (kind=R8) ::
-     *   resco(-1:nx,-1:ny,0:ns-1), resmo(-1:nx,-1:ny,0:ns-1),
+     *  resco(-1:nx,-1:ny,0:ns-1), resmo(-1:nx,-1:ny,0:ns-1),
      &  resmt(-1:nx,-1:ny), reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny),
      &  respo(-1:nx,-1:ny)
 

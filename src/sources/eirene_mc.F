@@ -46,7 +46,7 @@ csw 19oct2012, added save attribute!!!
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir
       real (kind=R8) ::
-     * recyc_hlp,vthe,t0,t1,rf0,uatmp,dua,t2,t3,f,
+     * recyc_hlp,vthe,t0,t1,rf0,uatmp,dua,t2,t3,t4,f,
      * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
      * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol
       real (kind=R8), save, allocatable ::
@@ -2227,13 +2227,18 @@ csw 26mar2013 (for TESTING)
 
 
 csw 06mar2012 total correction
-c                    t1=t1-uatmp*t2+kinrgy(ix,iy,is)*t3
-cxpb 13feb2015 correction with second-order effects for large sources
-                    t1=t1-ua(ix,iy,is)*t2+kinrgy(ix,iy,is)*t3-
-     3               (na(ix,iy,is)+t3*dtim*dtco(is,region(ix,iy,0)))/
-     *               (dtim*dtei(region(ix,iy,0)))*
-     *               0.5_R8*mp*am(is)*dua**2
-
+                    t1=t1-uatmp*t2+kinrgy(ix,iy,is)*t3
+cxpb 13feb2015 additional correction with second-order effects for large sources
+cxpb 12oct2015 multiply na term by fractional stratum weight to avoid double-counting
+                    if (smo_tot(ix+1,iy+1,ifl).ne.0.0_R8) then
+                      t4=(na(ix,iy,is)*(t2/smo_tot(ix+1,iy+1,ifl))+
+     .                    t3*dtim*dtco(is,region(ix,iy,0)))/
+     .                      (dtim*dtei(region(ix,iy,0)))*
+     .                    0.5_R8*mp*am(is)*dua**2
+                    else
+                      t4=0.0_R8
+                    endif
+                    t1=t1-t4
                   end if !}
                 end do !} !is
               end if !}
