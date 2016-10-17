@@ -21,8 +21,11 @@
 *$$$  call subini ('b2xpfe')
       n2 = (nx+2)*(ny+2)
       call sfill (n2*2, 0.0_R8, fne, 1)
-      do is = 0, ns-1
+!$OMP PARALLEL DO DEFAULT(none), private(ix, iy, is),
+!$OMP& shared(fne, fna, rza, ns, nx, ny)
+!$OMP& shared(leftix, leftiy, vol, bottomix, bottomiy)
         do iy = -1, ny
+        do is = 0, ns-1
           do ix = -1, nx
             if (leftix(ix,iy).ne.-2) 
      >        fne(ix,iy,0) = fne(ix,iy,0) + fna(ix,iy,0,is)*
@@ -37,6 +40,7 @@
           enddo
         enddo
       enddo
+!$OMP END PARALLEL DO
       do is = 0, ns_ext-1
         do iy = -1, ny
           do ix = -1, nx
