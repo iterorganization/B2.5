@@ -1650,6 +1650,7 @@ c new CDF movie option (1st frame at t=0)
       ne_wanted_next_time=tim
       cpuinit=x05baf()
       elapsedinit=epoch_seconds()
+
     1 continue
       write(*,'(1x,a,i9,1p,g14.7,i9,i3,1x,l1)')
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
@@ -1968,10 +1969,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &   fch, pbshz, fhe_mdf, fhi_mdf, fchvispar,
      &   fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper, gs, bb,
      &   na, ua, kinrgy, rra, rqa,fna, fna_mdf, fna_fcor, uadia, vadia,
-     &    vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi)
+     &   vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi, float(rightix), 
+     &   float(topiy))
         endif
 #endif
-
         goto 1
 *   ..end loop
       endif  !}

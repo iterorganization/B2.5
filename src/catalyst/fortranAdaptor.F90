@@ -5,16 +5,17 @@
 ! Modified on: 23.08.2016
 
 
-subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,bzb,OnedBsq,ne,qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper,gs,bb,na,ua,kinrgy,rra,rqa,fna,fna_mdf,fna_fcor,uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi)
+subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,bzb,OnedBsq,ne,qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper,gs,bb,na,ua,kinrgy,rra,rqa,fna,fna_mdf,fna_fcor,uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi, rightix, topiy)
 !Coprocessor is called each time step in b2mndr to output
 !simulation data to ParaView Catalyst.
 
   implicit none
-  integer :: nx, ny, ns, step, flag, numC
+  integer :: nx, ny, ns, step, flag, numC, ix, iy
   integer, intent(in) :: ncrx
   real(kind=8) :: time
-  real(kind=8), dimension(-1:nx,-1:ny,1) :: vol,hx,hy,qc,te,ti,po,bzb,OnedBsq,ne
-  real(kind=8), dimension(-1:nx,-1:ny,2) :: qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper
+  integer, dimension(-1:nx,-1:ny) :: rightix, topiy
+  real(kind=8), dimension(-1:nx,-1:ny) :: vol,hx,hy,qc,te,ti,po,bzb,OnedBsq,ne
+  real(kind=8), dimension(-1:nx,-1:ny,2) :: qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper!,velocity
   real(kind=8), dimension(-1:nx,-1:ny,3) :: gs
   real(kind=8), dimension(-1:nx,-1:ny,4) :: crx,cry,bb
   real(kind=8), dimension(-1:nx,-1:ny,0:ns-1) :: na,ua,kinrgy,rra,rqa,rsa
@@ -22,6 +23,16 @@ subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,bzb
   real :: start, finish
   
   call cpu_time(start)
+
+  !velocity(10,10,1) = 0
+  !do ix = -1,nx
+  !   do iy = -1,ny
+  !      velocity(ix,iy,1) = 0.5 * (fna(ix,iy,0,0) / gs(ix,iy,1) + fna(rightix(ix,iy)+1,iy,0,0) / gs(rightix(ix,iy)+1,iy,1))
+  !      velocity(ix,iy,2) = 0.5 * (fna(ix,iy,1,0) / gs(ix,iy,2) + fna(ix,topiy(ix,iy)+1,1,0) / gs(ix,topiy(ix,iy)+1,2))
+  !   enddo
+  !enddo
+  !velocity(:,:,1) = velocity(:,:,1) / ne
+  !velocity(:,:,2) = velocity(:,:,2) / ne
 
 ! Query Catalyst to see if there is something to do this time step.
   call requestdatadescription(step,time,flag)
@@ -44,6 +55,7 @@ numC=(nx+2)*(ny+2) !number of cells
      call adddata(bzb,"bzb"//char(0),numC,1)
      call adddata(OnedBsq,"OnedBsq"//char(0),numC,1)
      call adddata(ne,"ne"//char(0),numC,1)
+     !call adddata(velocity,"velocity"//char(0),numC,2)
 ! 2 components in each cell
      call adddata(qz,"qz"//char(0),numC,2)
      call adddata(pbs,"pbs"//char(0),numC,2)
