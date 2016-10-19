@@ -4,10 +4,13 @@
 ! heat transfer model of the reflector plates.
 ! Then, it reads the files 'wlld_[i-o]rp.dat' produced by
 ! b2plot with the "1000 wlld" command and writes the unformatted files 
-! 'W_[i-o]rp.dat', 'X_[i-o]rp.dat' and '[i-o]rp_size.dat' that are needed 
-! by the FreeFem++ heat transfer model of the reflector plates.
-! In 'W_[i-o]rp.dat' is stored the value of the heat flux for each tile of
-! the RP. 
+! 'Wtot_[i-o]rp.dat','Wpls_[i-o]rp.dat', 'X_[i-o]rp.dat' and 
+! '[i-o]rp_size.dat' that are needed  by the FreeFem++ heat transfer model 
+! of the reflector plates.
+! In 'Wtot_[i-o]rp.dat' is stored the value of the total heat flux for each
+! tile of the RP. 
+! In 'Wpls_tg[i-o].dat' is stored the value of the heat flux due only to
+! plasma particles for each tile of the hypervapotron.
 ! In 'X_[i-o]rp.dat' is stored the value of the poloidal coordinate of the
 ! center of each tile along the RP axis (in [m]).
 ! In '[i-o]rp_size.dat' is stored the number of points (i.e. tiles) in which
@@ -19,15 +22,15 @@
 
       IMPLICIT NONE
 
-      INTEGER :: NN, NLINE, NTILES, II, JJ, KK, INUNIT=8888
+      INTEGER :: NN, NLINE, NTILES, NPOINTS, II, JJ, KK, INUNIT=8888
       real :: L1, L2, L3, H1, H2, H3 ,H4, H5, H_HOLE, RH, 
-     . P_LENGTH, BETA
+     . P_LENGTH, ALPHA, BETA, THETA, T_GAP, dummy
       real :: T_COOLANT, M_FLOW, CP_COOLANT
-      real DIMENSIONS(3), target_length
+      real :: DIMENSIONS(4), target_length, LPOINTS(50)=0.0d0
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
-      CHARACTER*(30) :: INFILE0= 'b2yrp.dat', 
+      CHARACTER*(10) :: INFILE0= 'b2yrp.dat', 
      . OUTFILE0 = 'rps_in.dat'
-      CHARACTER*(30) :: skip, OUTFILE(3),INFILE
+      CHARACTER*(20) :: skip, OUTFILE(4),INFILE
       CHARACTER*(1) :: trg(2)
       LOGICAL :: exists
 
@@ -36,17 +39,23 @@
 !##########################################################################
       NAMELIST /GEOMETRY/	                
      . L1, L2, L3, H1, H2, H3 ,H4, 
-     . H5, H_HOLE, RH, P_LENGTH, BETA
+     . H5, H_HOLE, RH, P_LENGTH, ALPHA, BETA,
+     . THETA, T_GAP
 
       NAMELIST /MESH/                     
      . NN
 
-      NAMELIST /COOLANT/                  
+      NAMELIST /COOLANT/                 
      . T_COOLANT, M_FLOW, CP_COOLANT
+      
+      NAMELIST /OUTPUT/
+     . NPOINTS, LPOINTS
+
       open(unit=inunit,file=infile0,status='old',action='read')
       READ(INUNIT,NML=GEOMETRY)	
       READ(INUNIT,NML=MESH)	
       READ(INUNIT,NML=COOLANT)
+      READ(INUNIT,NML=OUTPUT)
       close(INUNIT);
       ! Write output file
       INQUIRE (FILE=outfile0, EXIST=exists)
@@ -56,15 +65,15 @@
       endif
       open(unit=inunit,file=outfile0,status='new',action='write')
       write(inunit,*) L1, L2, L3, H1, H2, H3 ,H4,
-     . H5, H_HOLE, RH, P_LENGTH, BETA
+     . H5, H_HOLE, RH, P_LENGTH, T_GAP, ALPHA, BETA, THETA
       write(inunit,*) T_COOLANT, M_FLOW, CP_COOLANT
-      write(inunit,*) NN
+      write(inunit,*) NN, NPOINTS, LPOINTS(1:NPOINTS)
       close(INUNIT);
 
 ! ##########################################################################
 ! Read input files 'wlld_[i-o]rp.dat' to get heat flux profile on RPs and
-! then write the relative output files 'W_[i-o]rp.dat', 'X_[i-o]rp.dat', and
-! '[i-o]rp_size.dat'.
+! then write the relative output files 'Wtot_[i-o]rp.dat', 'Wpls_[i-o]rp.dat'
+! 'X_[i-o]rp.dat', and '[i-o]rp_size.dat'.
 ! ##########################################################################
       trg(1)='i'
       trg(2)='o'
@@ -80,41 +89,46 @@
          GO TO 5
  15      CLOSE(INUNIT)
          
-         ALLOCATE(MM(NLINE,3))     ! then allocate variable size and read again storing the values. First column will be x coordinate, 
-                                ! second the heat flux and third the number of point
+         ALLOCATE(MM(NLINE,4))     ! then allocate variable size and read again storing the values. First column will be x coordinate, 
+                                ! second the total  heat flux, the third the radiation heat flux and the fourth  the number of points
          MM=0.0d0
-         MM(1,3)=dble(NLINE)
+         MM(1,4)=dble(NLINE)
          open(unit=inunit,file=infile,status='old',action='read')
          READ(INUNIT,*) skip
          READ(INUNIT,*) skip
          DO II=1,NLINE
-            READ(INUNIT,*) MM(II,1:2) !The data in the file are x, Wtot, ...
+             READ(INUNIT,*) MM(II,1:2), dummy, dummy, MM(II,3) !The data in the file are x, Wtot, Wrad, Wpart, Wpls...
          ENDDO
          CLOSE(INUNIT)
          !Interpolate the data on a coordinate vector with spatial x coordinates with a distance equal to the tile poloidal length
          target_length=mm(nline,1)-mm(1,1)
          ntiles=nint(target_length/p_length)
-         allocate(bb(ntiles,3))
+         allocate(bb(ntiles,4))
          bb=0.0d0
          bb(1,1)=mm(1,1)
          bb(1,2)=mm(1,2)
+         bb(1,3)=mm(1,3)
          bb(ntiles,2)=mm(nline,2)
-         bb(1,3)=ntiles
+         bb(ntiles,3)=mm(nline,3)
+         bb(1,4)=ntiles
          do ii=2,ntiles            ! create the new x vector
             bb(ii,1)=bb(ii-1,1)+p_length
          enddo
          
          call interp( mm(1:nline,1), mm(1:nline,2), bb(2:ntiles-1,1),
-     .    bb(2:ntiles-1,2), nline, ntiles-2)
+     .    bb(2:ntiles-1,2), nline, ntiles-2)        
+         call interp( mm(1:nline,1), mm(1:nline,3), bb(2:ntiles-1,1),
+     .    bb(2:ntiles-1,3), nline, ntiles-2)
          
-         dimensions(1:2)=ntiles
-         dimensions(3)=1
+         dimensions(1:3)=ntiles
+         dimensions(4)=1
          
          ! now write the output files, but first check if there are already present. If yes, remove them before writing
          OUTFILE(1)='X_'//trg(KK)//'rp.dat'
-         OUTFILE(2)='W_'//trg(KK)//'rp.dat'
-         OUTFILE(3)=trg(KK)//'rp_size.dat'
-         DO JJ=1,3
+         OUTFILE(2)='Wtot_'//trg(KK)//'rp.dat'
+         OUTFILE(3)='Wpls_'//trg(KK)//'rp.dat'
+         OUTFILE(4)=trg(KK)//'rp_size.dat'
+         DO JJ=1,4
             INQUIRE (FILE=outfile(JJ), EXIST=exists)
             if (exists) then 
                open (unit=inunit,file=outfile(JJ),action='readwrite')

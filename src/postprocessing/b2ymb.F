@@ -4,10 +4,13 @@
 ! transfer model of the monoblock.
 ! Then, it reads the files 'wlld_trg[i-o].dat' produced by
 ! b2plot with the "1000 wlld" command and writes the unformatted files 
-! 'W_tg[i-o].dat', 'X_tg[i-o].dat' and 'tg[i-o]_size.dat' that are needed 
-! by the FreeFem++ heat transfer model of the monoblock.
-! In 'W_tg[i-o].dat' is stored the value of the heat flux for each tile of
-! the monoblock. 
+! 'Wtot_tg[i-o].dat', 'Wrad_tg[i-o].dat', 'X_tg[i-o].dat' and 
+! 'tg[i-o]_size.dat' that are needed by the FreeFem++ heat transfer model
+!  of the monoblock.
+! In 'Wtot_tg[i-o].dat' is stored the value of the total heat flux for 
+! each tile of the monoblock. 
+! In 'Wpls_tg[i-o].dat' is stored the value of the heat flux due only to
+! plasma particles for each tile of the monoblock. 
 ! In 'X_tg[i-o].dat' is stored the value of the poloidal coordinate of the
 ! center of each tile along the monoblock axis (in [m]). The strike point 
 ! is at x=0
@@ -20,15 +23,15 @@
 
       IMPLICIT NONE
 
-      INTEGER :: NN, NLINE, NTILES, II, JJ, KK, INUNIT=8888
+      INTEGER :: NN, NLINE, NTILES, NPOINTS, II, JJ, KK, INUNIT=8888
       real :: HEIGHT, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER, W_TH, 
-     . P_LENGTH, BETA
-      real :: T_COOLANT, M_FLOW, CP_COOLANT
-      real DIMENSIONS(3), target_length
+     . P_LENGTH, ALPHA, BETA, THETA, T_GAP
+      real :: T_COOLANT, M_FLOW, CP_COOLANT, dummy
+      real :: DIMENSIONS(4), target_length, LPOINTS(50)=0.0d0
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
-      CHARACTER*(30) :: INFILE0= 'b2ymb.dat', 
+      CHARACTER*(10) :: INFILE0= 'b2ymb.dat', 
      . OUTFILE0 = 'mnb_in.dat'
-      CHARACTER*(30) :: skip, OUTFILE(3),INFILE
+      CHARACTER*(20) :: skip, OUTFILE(4),INFILE
       CHARACTER*(1) :: trg(2)
       LOGICAL :: exists
 
@@ -37,17 +40,23 @@
 !##########################################################################
       NAMELIST /GEOMETRY/	                
      . HEIGHT, T_LENGTH, CU_TH, CUCRZR_TH, 
-     . DIAMETER, W_TH, P_LENGTH, BETA
+     . DIAMETER, W_TH, P_LENGTH, ALPHA, BETA,
+     . THETA, T_GAP
 
       NAMELIST /MESH/                     
      . NN
 
       NAMELIST /COOLANT/                  
      . T_COOLANT, M_FLOW, CP_COOLANT
+
+      NAMELIST /OUTPUT/
+     . NPOINTS, LPOINTS
+
       open(unit=inunit,file=infile0,status='old',action='read')
       READ(INUNIT,NML=GEOMETRY)	
       READ(INUNIT,NML=MESH)	
       READ(INUNIT,NML=COOLANT)
+      READ(INUNIT,NML=OUTPUT)
       close(INUNIT);
       ! Write output file
       INQUIRE (FILE=outfile0, EXIST=exists)
@@ -57,15 +66,15 @@
       endif
       open(unit=inunit,file=outfile0,status='new',action='write')
       write(inunit,*) HEIGHT, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER,
-     . W_TH, P_LENGTH, BETA
+     . W_TH, P_LENGTH, T_GAP, ALPHA, BETA, THETA
       write(inunit,*) T_COOLANT, M_FLOW, CP_COOLANT
-      write(inunit,*) NN
+      write(inunit,*) NN, NPOINTS, LPOINTS(1:NPOINTS)
       close(INUNIT);
 
 ! ##########################################################################
 ! Read input file 'wlld_trg[i-o].dat' to get heat flux profile on targets and
-! then write the relative output files 'W_tg[i-o].dat', 'X_tg[i-o].dat' and
-! 'tg[i-o]_size.dat'.
+! then write the relative output files 'Wtot_tg[i-o].dat','Wpls_tg[i-o].dat' 
+! 'X_tg[i-o].dat' and 'tg[i-o]_size.dat'.
 ! ##########################################################################
       trg(1)='i'
       trg(2)='o'
@@ -79,43 +88,44 @@
  5       READ(INUNIT,*,END=15) skip !File is of unknown length, so first count the number of lines
             NLINE = NLINE +1
          GO TO 5
- 15      CLOSE(INUNIT)
-         
-         ALLOCATE(MM(NLINE,3))     ! then allocate variable size and read again storing the values. First column will be x coordinate, 
-                                ! second the heat flux and third the number of point
+ 15      CLOSE(INUNIT)       
+         ALLOCATE(MM(NLINE,4))     ! then allocate variable size and read again storing the values. First column will be x coordinate, 
+                                ! second the total  heat flux, third the plasma heat flux and fourth the number of point
          MM=0.0d0
-         MM(1,3)=dble(NLINE)
+         MM(1,4)=dble(NLINE)
          open(unit=inunit,file=infile,status='old',action='read')
          READ(INUNIT,*) skip
          READ(INUNIT,*) skip
          DO II=1,NLINE
-            READ(INUNIT,*) MM(II,1),MM(II,2) !The data in the file are x, Wtot, ...
+            READ(INUNIT,*) MM(II,1:2), dummy, dummy, MM(II,3) !The data in the file are x, Wtot, Wrad, Wpart, Wpls...
          ENDDO
          CLOSE(INUNIT)
          !Interpolate the data on a coordinate vector with spatial x coordinates with a distance equal to the tile poloidal length
          target_length=mm(nline,1)-mm(1,1)
          ntiles=nint(target_length/p_length)
-         allocate(bb(ntiles,3))
+         allocate(bb(ntiles,4))
          bb=0.0d0
          bb(1,1)=mm(1,1)
          bb(1,2)=mm(1,2)
+         bb(1,3)=mm(1,3)
          bb(ntiles,2)=mm(nline,2)
-         bb(1,3)=ntiles
+         bb(ntiles,3)=mm(nline,3)
+         bb(1,4)=ntiles
          do ii=2,ntiles            ! create the new x vector
             bb(ii,1)=bb(ii-1,1)+p_length
          enddo
-         
          call interp( mm(1:nline,1), mm(1:nline,2), bb(2:ntiles-1,1),
      .    bb(2:ntiles-1,2), nline, ntiles-2)
-         
-         dimensions(1:2)=ntiles
-         dimensions(3)=1
-         
+         call interp( mm(1:nline,1), mm(1:nline,3), bb(2:ntiles-1,1),
+     .    bb(2:ntiles-1,3), nline, ntiles-2)        
+         dimensions(1:3)=ntiles
+         dimensions(4)=1
          ! now write the output files, but first check if there are already present. If yes, remove them before writing
          OUTFILE(1)='X_tg'//trg(KK)//'.dat'
-         OUTFILE(2)='W_tg'//trg(KK)//'.dat'
-         OUTFILE(3)='tg'//trg(KK)//'_size.dat'
-         DO JJ=1,3
+         OUTFILE(2)='Wtot_tg'//trg(KK)//'.dat'
+         OUTFILE(3)='Wpls_tg'//trg(KK)//'.dat'
+         OUTFILE(4)='tg'//trg(KK)//'_size.dat'
+         DO JJ=1,4
             INQUIRE (FILE=outfile(JJ), EXIST=exists)
             if (exists) then 
                open (unit=inunit,file=outfile(JJ),action='readwrite')
@@ -130,7 +140,6 @@
          ENDDO
          DEALLOCATE(MM,BB)
       ENDDO
-      
       stop
       end
 
