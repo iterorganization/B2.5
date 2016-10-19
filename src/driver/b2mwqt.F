@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2mwqt (nput, nx, ny, ns, itim, itcnt, vol,
+      subroutine b2mwqt (nput, nx, ny, ns, itim, itcnt, BoRiS, vol,
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch,
      &  aresco, aresmo, aresmt, areshe, areshi, arespo,
      &  acorpa, acorua, acorut, acorte, acorti, acorpo)
@@ -11,7 +11,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nput, nx, ny, ns, itim, itcnt
-      real (kind=R8) ::
+      real (kind=R8) :: BoRiS,
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
      &  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), vol(-1:nx,-1:ny)
@@ -265,7 +265,7 @@
          tv = 0.0_R8
          do iy = iy0(iiy), iy0(iiy+1)-1
           do ix = ix0(iix), ix0(iix+1)-1
-           t0 = t0+1.5_R8*ne(ix,iy)*te(ix,iy)*vol(ix,iy)
+           t0 = t0+(1.5_R8+BoRiS)*ne(ix,iy)*te(ix,iy)*vol(ix,iy)
            tv = tv+vol(ix,iy)
           enddo
          enddo
@@ -279,7 +279,7 @@
          tv = 0.0_R8
          do iy = iy0(iiy), iy0(iiy+1)-1
           do ix = ix0(iix), ix0(iix+1)-1
-           t0 = t0+1.5_R8*ni(ix,iy,0)*ti(ix,iy)*vol(ix,iy)
+           t0 = t0+(1.5_R8+BoRiS)*ni(ix,iy,0)*ti(ix,iy)*vol(ix,iy)
            tv = tv+vol(ix,iy)
           enddo
          enddo

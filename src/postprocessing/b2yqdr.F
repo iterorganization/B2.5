@@ -53,7 +53,7 @@
       integer linlog(0:nfldmx-1), idum(0:9), k, npts, ipts, indx, indy,
      &  k0, k1, style
       real (kind=R8) ::
-     *   z0(0:nfldmx-1), z1(0:nfldmx-1), z(0:nfldmx-1),
+     *  z0(0:nfldmx-1), z1(0:nfldmx-1), z(0:nfldmx-1),
      &  u0(0:nfldmx-1), u1(0:nfldmx-1), zprev(0:nfldmx-1),
      &  cutlo, x0, x1, y0, y1, t0, t1, t2, osc
       character lblmn*120, chtit(0:nfldmx-1)*60,
@@ -63,7 +63,7 @@
       intrinsic min, max, abs, nint, log10
       logical cfendf
       real (kind=R8) ::
-     *   scal10, machsfr
+     *  scal10, machsfr
       external subini, subend, xertst, xerrab, cfruin, cfruch,
      &  cfrure, cfendf, scal10, machsfr, gacwk, gdawk, pagini, pagend,
      &  gpm_d
@@ -96,7 +96,7 @@
       call subini ('b2yqdr')
 *   ..test ninp, nout, nscr
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.
-     &  1.le.nout(0).and.1.le.nout(1).and.1.le.nscr(0),
+     &             1.le.nout(0).and.1.le.nout(1).and.1.le.nscr(0),
      &  'faulty argument ninp, nout, nscr')
 *   ..set cutlo to the machine safe range
       cutlo = machsfr()
@@ -125,7 +125,7 @@
        z0(k) = z(k)
        z1(k) = z(k)
        u0(k) = abs(z(k))
-       u1(k) = 0
+       u1(k) = 0.0_R8
        zprev(k) = z(k)
       enddo
       npts = 1
@@ -151,18 +151,19 @@
      &  'number of data points:', npts,
      &  'label', 'min', 'max', 'osc', 'title'
       do k = 0, nfld-1
-       if (u0(k).eq.0) then
-        osc = 0
+       if (u0(k).eq.0.0_R8) then
+        osc = 0.0_R8
        else
         osc = u1(k)/u0(k)
        endif
        write (nout(0),'(1x,i3,2x,a12,1p,2e12.4,2x,0pf6.1,2x,a60)')
-     &   k, chlab(k), z0(k), z1(k), 1000*osc, chtit(k)
+     &   k, chlab(k), z0(k), z1(k), 1000.*osc, chtit(k)
       enddo
 *   ..test signs
       do k = 0, nfld-1
        if (linlog(k).eq.1) then
-        call xertst (0.le.z0(k), 'faulty data for logarithmic scale')
+        call xertst (0.0_R8.le.z0(k),
+     &   'faulty data for logarithmic scale')
        endif
       enddo
 *   ..allocate workspace wx and wy
@@ -183,11 +184,11 @@
         t0 = scal10(z1(indy)-z0(indy))
         t1 = scal10(max(abs(z0(indy)),abs(z1(indy))))
         if (t1.eq.0) then
-         t2 = 1
+         t2 = 1.0_R8
         else
          t2 = max(t0,1.0e-6_R8*t1)
         endif
-        y0 = nint((z0(indy)+z1(indy))/(2*t2))*t2-t2
+        y0 = nint((z0(indy)+z1(indy))/(2.0_R8*t2))*t2-t2
         y1 = y0+2*t2
        else
         k0 = nint(log10(z0(indy)+cutlo)-0.5_R8)

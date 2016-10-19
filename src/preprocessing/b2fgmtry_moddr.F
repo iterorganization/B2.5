@@ -184,7 +184,8 @@
       call subini ('b2fgmtry_moddr')
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.
-     &  1.le.nout(0).and.1.le.nout(1), 'faulty argument ninp, nout')
+     &             1.le.nout(0).and.1.le.nout(1),
+     &  'faulty argument ninp, nout')
 *   ..set output control
       idout = '....'
 

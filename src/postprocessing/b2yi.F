@@ -73,7 +73,7 @@
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
-      logical file_open
+      logical file_open, ex
 *   ..procedures
       external prgini, prgfin, xerset, xertst, cfopen, gnopen, cfruin,
      &  gopks, gclks, gclwk
@@ -126,10 +126,16 @@
       call gopks (0, 0)
 *   ..open files
       call cfopen (ninp(0),'b2yi.dat','old','formatted')
-      call cfopen (ninp(1),'b2fstate','old','un*formatted')
+      inquire(file='b2fstate',exist=ex)
+      if (ex) then
+        call cfopen (ninp(1),'b2fstate','old','un*formatted')
+      else
+        call cfopen (ninp(1),'b2fstati','old','un*formatted')
+      endif
       call cfopen (ninp(2),'b2frates','old','un*formatted')
       call cfopen (ninp(3),'b2fgmtry','old','un*formatted')
-      call cfopen (ninp(4),'b2mn.dat','old','formatted')
+      inquire(file='b2mn.dat',exist=ex)
+      if (ex) call cfopen (ninp(4),'b2mn.dat','old','formatted')
       call cfopen (nout(0),'b2yi.prt','new','formatted')
       call gnopen (nout(1),'b2yi.plt')
 *   ..mark output unit for error messages

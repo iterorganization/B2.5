@@ -81,9 +81,9 @@
       dist(ix,iy,i,j) = sqrt (
      &  (crx(ix,iy,j)-crx(ix,iy,i))**2+(cry(ix,iy,j)-cry(ix,iy,i))**2)
       disx(ix,iy) = (dist(bottomix(ix,iy),bottomiy(ix,iy),2,3)+
-     1 dist(ix,iy,0,1))/2
+     1 dist(ix,iy,0,1))/2.0_R8
       disy(ix,iy) = (dist(leftix(ix,iy),leftiy(ix,iy),1,3)+
-     1 dist(ix,iy,0,2))/2
+     1 dist(ix,iy,0,2))/2.0_R8
 
 *-----------------------------------------------------------------------
 *.computation
@@ -100,28 +100,28 @@
 * ..compute the coordinates
 *   ..compute x-coordinates
 *     (integrate distance across cell faces at iy=iyr)
-      xf(ixr) = 0
+      xf(ixr) = 0.0_R8
       do ix = ixr-1, -1, -1
-       xc(ix) = xf(ix+1)-disx(ix,iyr)/2
+       xc(ix) = xf(ix+1)-disx(ix,iyr)/2.0_R8
        xf(ix) = xf(ix+1)-disx(ix,iyr)
       enddo
       do ix = ixr+1, nx
-       xc(ix-1) = xf(ix-1)+disx(ix-1,iyr)/2
+       xc(ix-1) = xf(ix-1)+disx(ix-1,iyr)/2.0_R8
        xf(ix) = xf(ix-1)+disx(ix-1,iyr)
       enddo
-      xc(nx) = xf(nx)+disx(nx,iyr)/2
+      xc(nx) = xf(nx)+disx(nx,iyr)/2.0_R8
 *   ..compute y-coordinates
 *     (integrate distance across cell faces at ix=ixr)
-      yf(iyr) = 0
+      yf(iyr) = 0.0_R8
       do iy = iyr-1, -1, -1
-       yc(iy) = yf(iy+1)-disy(ixr,iy)/2
+       yc(iy) = yf(iy+1)-disy(ixr,iy)/2.0_R8
        yf(iy) = yf(iy+1)-disy(ixr,iy)
       enddo
       do iy = iyr+1, ny
-       yc(iy-1) = yf(iy-1)+disy(ixr,iy-1)/2
+       yc(iy-1) = yf(iy-1)+disy(ixr,iy-1)/2.0_R8
        yf(iy) = yf(iy-1)+disy(ixr,iy-1)
       enddo
-      yc(ny) = yf(ny)+disy(ixr,ny)/2
+      yc(ny) = yf(ny)+disy(ixr,ny)/2.0_R8
 
 * ..return
       call subend ()

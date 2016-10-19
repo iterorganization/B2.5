@@ -227,7 +227,7 @@
       call subini ('b2yrdr')
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.
-     &  1.le.ninp(3).and.1.le.nout(0).and.1.le.nout(1), 
+     &             1.le.ninp(3).and.1.le.nout(0).and.1.le.nout(1),
      &  'faulty argument ninp, nout')
 *   ..obtain version numbers
       call cfverr (ninp(1), b2frates_version)

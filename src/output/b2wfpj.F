@@ -278,49 +278,49 @@
 
   103 format (2x,a2,'(',i3,'):',2x,1pe11.2,' at (',i4,',',i4,');',
      &  2x,1pe11.2,' at (',i4,',',i4,').')
-  104 format (4x,a3,' :',2x,1pe11.2,' at (',i4,',',i4,');',
+  104 format (2x,a2,'     :',2x,1pe11.2,' at (',i4,',',i4,');',
      &  2x,1pe11.2,' at (',i4,',',i4,').')
   105 format (/'  Flux of particles fnax(ix,,is),',
      &  ' integrated over y as function of x:'/
-     &  t4, 'ix', (t8,10(6x,'is=',i3:)))
-  106 format (/'  Flux of particles, heat, current, and energy',
+     &  t4, 'ix', (t8,10(5x,'is=',i3:)))
+  106 format (/'  Flux of particles, heat, current',
      &  ' integrated over y as function of x:'/
-     &  t4, 'ix', t15, 'fnex', t26, 'fnix', t37, 'fhex', t48, 'fhix',
-     &  t59, 'fchx', t70, 'feex', t81, 'feix')
+     &  t4, 'ix', t14, 'fnex', t25, 'fnix', t36, 'fhex', t47, 'fhix',
+     &  t58, 'fchx')
   107 format (/'  Flux of particles fnay(,iy,is),',
      &  ' integrated over x as function of y:'/
-     &  t4, 'iy', (t8,10(6x,'is=',i3:)))
-  108 format (/'  Flux of particles, heat, current, and energy',
+     &  t4, 'iy', (t8,10(5x,'is=',i3:)))
+  108 format (/'  Flux of particles, heat, current',
      &  ' integrated over x as function of y:'/
-     &  t4, 'iy', t15, 'fney', t26, 'fniy', t37, 'fhey', t48, 'fhiy',
-     &  t59, 'fchy', t70, 'feey', t81, 'feiy')
+     &  t4, 'iy', t14, 'fney', t25, 'fniy', t36, 'fhey', t47, 'fhiy',
+     &  t58, 'fchy')
   111 format (/'  State of the plasma on the south boundary:'/
      &  '  (second line for te, ti, etc. gives state just',
      &  ' inside the boundary.)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t51, 'na( 0)',
+     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
      &  t63, 'na(..)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t51, 'na( 0)',
+     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
      &  t63, 'na(..)')
   112 format (/'  State of the plasma on the north boundary:'/
      &  '  (second line for te, ti, etc. gives state just',
      &  ' inside the boundary.)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t51, 'na( 0)',
+     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
      &  t63, 'na(..)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t51, 'na( 0)',
+     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
      &  t63, 'na(..)')
   113 format (/'  State of the plasma on the west boundary:'/
      &  '  (second line for te, ti, etc. gives state just',
      &  ' inside the boundary.)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t51, 'na( 0)',
+     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
      &  t63, 'na(..)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t51, 'na( 0)',
+     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
      &  t63, 'na(..)')
   114 format (/'  State of the plasma on the east boundary:'/
      &  '  (second line for te, ti, etc. gives state just',
      &  ' inside the boundary.)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t51, 'na( 0)',
+     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
      &  t63, 'na(..)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t51, 'na( 0)',
+     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
      &  t63, 'na(..)')
 
 *-----------------------------------------------------------------------

@@ -2009,7 +2009,7 @@ c                  t0=smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)
                   t0=smo_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
      *             recyctmp*flux_scale(istrai)*sclstra(j,istrai)/
-     *             dble(ih_end)
+     *             dble(ih_end)*hz(ix,iy)
 
                   VTHE=SQRT(TE(IX,IY)/me)
 c SCALE VTHE TO GET A VELOCITY CLOSER TO THE ION VELOCITIES
@@ -2189,10 +2189,11 @@ c     2               sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
 
                     j=b2espcr(is)
-                    uatmp = (ua(ix,iy,is)*na(ix,iy,is) + 
+                    uatmp = (ua(ix,iy,is)*na(ix,iy,is)*vol(ix,iy)+
      .                       smo_tot(ix+1,iy+1,ifl)*
      .                       dtim*dtmo(is,region(ix,iy,0))/(am(is)*mp))/
-     .                      (na(ix,iy,is)+sni_tot(ix+1,iy+1,ifl)*
+     .                      (na(ix,iy,is)*vol(ix,iy)+
+     .                       sni_tot(ix+1,iy+1,ifl)*
      .                       dtim*dtco(is,region(ix,iy,0)))
                     dua = uatmp - ua(ix,iy,is)
 
@@ -2231,7 +2232,8 @@ csw 06mar2012 total correction
 cxpb 13feb2015 additional correction with second-order effects for large sources
 cxpb 12oct2015 multiply na term by fractional stratum weight to avoid double-counting
                     if (smo_tot(ix+1,iy+1,ifl).ne.0.0_R8) then
-                      t4=(na(ix,iy,is)*(t2/smo_tot(ix+1,iy+1,ifl))+
+                      t4=(na(ix,iy,is)*vol(ix,iy)*
+     .                   (t2/smo_tot(ix+1,iy+1,ifl))+
      .                    t3*dtim*dtco(is,region(ix,iy,0)))/
      .                      (dtim*dtei(region(ix,iy,0)))*
      .                    0.5_R8*mp*am(is)*dua**2

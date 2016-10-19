@@ -82,6 +82,7 @@
      &  rbr(-1:nx,-1:ny,0:ns-1)
       character lblmn*120, lblrc*120, lblgm*120
       character cnamip*80, cvalip*80, line*500
+      logical file_open
 *   ..initialisation
       save ismain
       data ismain/1/
@@ -214,8 +215,8 @@
       call subini ('b2yidr_gnuplot')
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.
-     &  1.le.ninp(3).and.1.le.ninp(4).and.
-     &  1.le.nout(0).and.1.le.nout(1), 
+     &             1.le.ninp(3).and.1.le.ninp(4).and.
+     &             1.le.nout(0).and.1.le.nout(1),
      &  'faulty argument ninp, nout')
 *   ..test dimensions
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -225,20 +226,23 @@
 * ..computation
 *   ..obtain lblmn
       call b2xxid ('b2mn', lblmn(1:60))
-      call b2rflb (ninp(4), lblmn(61:120))
+      inquire(unit=ninp(4),opened=file_open)
+      if (file_open) then
+        call b2rflb (ninp(4), lblmn(61:120))
 *   ..read revised parameters in physics common
 *     (ninp(4) need supply only parameters that are to be changed from
 *     the values read in as default physics common.)
-      call b2rfcp (ninp(4), ns)
+        call b2rfcp (ninp(4), ns)
 *   ..read and echo code internal parameters
-    1 continue
-       read (ninp(4),'(a)',end=2,err=91) line
-       if (.not.is_comment(line)) then
-         read (line,*) cnamip, cvalip
-         call ipsetc (cnamip, cvalip)
-       end if
-       goto 1
-    2 continue
+    1   continue
+         read (ninp(4),'(a)',end=2,err=91) line
+         if (.not.is_comment(line)) then
+           read (line,*) cnamip, cvalip
+           call ipsetc (cnamip, cvalip)
+         end if
+         goto 1
+    2   continue
+      end if
 *   ..read plasma state file
       call cfruch (ninp(1), 120, lblmn, 'label')
 *   ..read header for geometry
@@ -263,6 +267,8 @@
 *   ..test plasma state and fluxes
       call b2xvps (nx, ny, ns, 
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
+*   .. derive data
+      call b2xpni (nx, ny, ns, na, ni)
 *   ..read atomic rate data
       call cfruch (ninp(2), 120, lblrc, 'label')
       call read_b2mod_ppout('rates', ninp(2), lblrc)

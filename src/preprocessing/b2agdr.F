@@ -278,7 +278,8 @@
       call subini ('b2agdr')
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.
-     &  1.le.nout(0).and.1.le.nout(1), 'faulty argument ninp, nout')
+     &             1.le.nout(0).and.1.le.nout(1),
+     &  'faulty argument ninp, nout')
 *   ..test nx, ny
       call xertst (1.le.nx.and.1.le.ny, 'faulty argument nx, ny')
 *   ..test nx1, ny1

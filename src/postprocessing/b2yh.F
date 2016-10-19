@@ -72,6 +72,7 @@
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
       character*120 lblgm
+      logical ex
       logical file_open
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin, cfruch
@@ -116,7 +117,12 @@
       call prgini ('b2yh')
 *   ..open files
       call cfopen (ninp(0),'b2yh.dat','old','formatted')
-      call cfopen (ninp(1),'b2fparam','old','un*formatted')
+      inquire(file='b2fparam',exist=ex)
+      if (ex) then
+        call cfopen (ninp(1),'b2fparam','old','un*formatted')
+      else
+        call cfopen (ninp(1),'b2fpardf','old','un*formatted')
+      endif
       call cfopen (ninp(2),'b2fgmtry','old','un*formatted')
       call cfopen (nout(0),'b2yh.prt','new','formatted')
 *   ..mark output unit for error messages

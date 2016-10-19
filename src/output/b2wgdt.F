@@ -115,7 +115,7 @@
        write (nprt,fmtp) '+cpne', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   delne, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10, t0/10, 10)
+     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plots of (ni) change
       if (strmas(idout,'cpni')) then
@@ -125,7 +125,7 @@
        write (nprt,fmtp) '+cpni', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   delni(-1,-1,0), 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0,
-     1	 24, -t0/10, t0/10, 10)
+     1	 24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plots of (te) change
       if (strmas(idout,'cpte')) then
@@ -134,7 +134,7 @@
        write (nprt,fmtp) '+cpte', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   delte, 0, ev, -1.2_R8*tthi, 1.2_R8*tthi, 
-     &   24, -tthi/10, tthi/10, 10)
+     &   24, -tthi/10.0_R8, tthi/10.0_R8, 10)
       endif
 *   ..make contour plots of (ti) change
       if (strmas(idout,'cpti')) then
@@ -143,7 +143,7 @@
        write (nprt,fmtp) '+cpti', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   delti, 0, ev, -1.2_R8*tthi, 1.2_R8*tthi, 
-     &   24, -tthi/10, tthi/10, 10)
+     &   24, -tthi/10.0_R8, tthi/10.0_R8, 10)
       endif
 *   ..make contour plots of (po) change
       if (strmas(idout,'cppo')) then
@@ -152,7 +152,7 @@
        write (nprt,fmtp) '+cppo', header
        call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &   delpo, 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 
-     &   24, -t0/10, t0/10, 10)
+     &   24, -t0/10.0_R8, t0/10.0_R8, 10)
       endif
 *   ..make contour plots of (na) change
       if (strmas(idout,'cpna')) then
@@ -162,7 +162,7 @@
         write (nprt,fmtp) '+cpna', header
         call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &    delna(-1,-1,is), 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 24,
-     &    -t0/10, t0/10, 10)
+     &    -t0/10.0_R8, t0/10.0_R8, 10)
        enddo
       endif
 *   ..make contour plots of (ua) change
@@ -173,7 +173,7 @@
          write (nprt,fmtp) '+cpua', header
          call b2wgxp (nx, ny, header, xc, xf, yc, yf,
      &     delua(-1,-1,is), 0, 1.0_R8, -1.2_R8*t0, 1.2_R8*t0, 24,
-     &     -t0/10, t0/10, 10)
+     &     -t0/10.0_R8, t0/10.0_R8, 10)
         enddo
        endif
 

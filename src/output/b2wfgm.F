@@ -258,12 +258,13 @@ c---DPC problematic
         qmax = smax(ny+2,qz(ix,-1,0),nx+2)
 *     ..compute 'sx(ix)'
         if (leftix(ix,-1).eq.-2) then
-         rsx = ssum(ny+2,gs(rightix(ix,-1),-1,0),nx+2)
+         rsx = ssum(ny+2,gs(rightix(ix,-1),rightiy(ix,-1),0),nx+2)
         else if (rightix(ix,-1).eq.nx+1) then
          rsx = ssum(ny+2,gs(ix,-1,0),nx+2)
         else
          rsx = (ssum(ny+2,gs(ix,-1,0),nx+2)+
-     &          ssum(ny+2,gs(rightix(ix,-1),-1,0),nx+2))/2.0_R8
+     &          ssum(ny+2,gs(rightix(ix,-1),
+     &                       rightiy(ix,-1),0),nx+2))/2.0_R8
         endif
 *     ..write line
         write (nprt,'(2x,i4,1x,1p,7e11.3)')
@@ -294,12 +295,12 @@ c---DPC problematic
         qmax = smax(nx+2,qz(-1,iy,0),1)
 *     ..compute 'sy(iy)'
         if (bottomiy(-1,iy).eq.-2) then
-         rsy = ssum(nx+2,gs(-1,topiy(-1,iy),1),1)
+         rsy = ssum(nx+2,gs(topix(-1,iy),topiy(-1,iy),1),1)
         else if (topiy(-1,iy).eq.ny+1) then
          rsy = ssum(nx+2,gs(-1,iy,1),1)
         else
          rsy = (ssum(nx+2,gs(-1,iy,1),1)+
-     &          ssum(nx+2,gs(-1,topiy(-1,iy),1),1))/2.0_R8
+     &          ssum(nx+2,gs(topix(-1,iy),topiy(-1,iy),1),1))/2.0_R8
         endif
 *     ..write line
         write (nprt,'(2x,i4,1x,1p,7e11.3)')

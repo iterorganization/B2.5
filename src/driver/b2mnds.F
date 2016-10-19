@@ -140,9 +140,9 @@
       call subini ('b2mnds')
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.
-     &  1.le.ninp(3).and.1.le.ninp(4).and.1.le.ninp(5).and.
-     &  1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2).and.
-     &  1.le.nout(3).and.1.le.nout(4).and.1.le.nout(5),
+     &             1.le.ninp(3).and.1.le.ninp(4).and.1.le.ninp(5).and.
+     &             1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2).and.
+     &             1.le.nout(3).and.1.le.nout(4).and.1.le.nout(5),
      &    'faulty argument ninp, nout')
 *   ..test nx, ny, ns
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')

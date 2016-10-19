@@ -427,7 +427,7 @@ ctmp.dpc
 *      ..maybe write quick trace
            if (domoqt) then
             if (mod(ncall,ntim_step_out) .eq. 0) then                    !srv 31.01.07
-             call b2mwqt (nout(4), nx, ny, ns, itim, itcnt, vol,
+             call b2mwqt (nout(4), nx, ny, ns, itim, itcnt, BoRiS, vol,
      &        na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch,
      &        aresco, aresmo, aresmt, areshe, areshi, arespo,
      &        acorpa, acorua, acorut, acorte, acorti, acorpo)

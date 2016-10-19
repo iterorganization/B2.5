@@ -127,7 +127,7 @@
       n2 = (nx+2)*(ny+2)
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.nout(0).and.
-     &  1.le.nout(1), 'faulty argument ninp, nout')
+     &             1.le.nout(1), 'faulty argument ninp, nout')
 *   ..test dimensions
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')

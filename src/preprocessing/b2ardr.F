@@ -315,7 +315,8 @@
       call subini ('b2ardr')
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.
-     &  1.le.ninp(3).and.1.le.ninp(4).and.1.le.nout(0).and.1.le.nout(1), 
+     &             1.le.ninp(3).and.1.le.ninp(4).and.1.le.nout(0).and.
+     &             1.le.nout(1),
      &  'faulty argument ninp, nout')
 *   ..obtain version numbers
       call cfverr (ninp(3), b2fparam_version)

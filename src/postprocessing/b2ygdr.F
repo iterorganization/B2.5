@@ -237,7 +237,8 @@
       call subini ('b2ygdr')
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.
-     &  1.le.nout(0).and.1.le.nout(1), 'faulty argument ninp, nout')
+     &             1.le.nout(0).and.1.le.nout(1),
+     &  'faulty argument ninp, nout')
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..read output control
@@ -253,9 +254,9 @@
      &  'faulty data for nmbpcc')
       do iplot = 0, nmbpcc-1
        read (ninp(0),*,err=94) cwaxr(iplot), cwayr(iplot)
-       call xertst (0.le.cwaxr(iplot).and.cwaxr(iplot).le.1.and.
-     &   0.le.cwayr(iplot).and.cwayr(iplot).le.1,
-     &   'faulty data for cwaxr, cwayr')
+       call xertst (0.0_R8.le.cwaxr(iplot).and.cwaxr(iplot).le.1.0_R8
+     &         .and.0.0_R8.le.cwayr(iplot).and.cwayr(iplot).le.1.0_R8,
+     &             'faulty data for cwaxr, cwayr')
       enddo
       read (ninp(0),'(a8)',err=95) id
       call xertst (streql(id,'*nmbpdm'),
@@ -265,9 +266,9 @@
      &  'faulty data for nmbpdm')
       do iplot = 0, nmbpdm-1
        read (ninp(0),*,err=96) cwxmin(iplot), cwxmax(iplot),
-     &   cwymin(iplot), cwymax(iplot)
+     &                         cwymin(iplot), cwymax(iplot)
        call xertst (cwxmin(iplot).lt.cwxmax(iplot).and.
-     &   cwymin(iplot).lt.cwymax(iplot),
+     &              cwymin(iplot).lt.cwymax(iplot),
      &   'faulty data for cwxmin, cwxmax, cwymin, cwymax')
       enddo
 *   ..write output control

@@ -157,6 +157,7 @@ c 2002-09-11: logic revised
       integer mw_ix1, mw_ix2, mw_jxa, mw_jsep
       integer mw_jxa1, mw_jsep1
       integer jsep1, jxi1, jxa1, nxtl1, nxtr1, iswitch
+      integer indx, indy, indx1, indy1
       integer coriolis
       integer nncut1, nnreg1(0:2), periodic_bc1
       integer scaling_ix_begin(nscale), scaling_ix_end(nscale)
@@ -466,7 +467,7 @@ c 2002-09-11: logic revised
       logical clash(ns-1), shared(0:ns-1)
       logical track_chem_sput1(ntrack)
 *   ..procedures
-      integer lnblnk, convert_position, len_of_digits
+      integer lnblnk, convert_position, len_of_digits, trace_convert
 #ifdef B25_EIRENE
       integer transform_tally
 #endif
@@ -8445,6 +8446,35 @@ cxpb as they no longer necessarily point to the same species
         deallocate(na_feedback_time1)
       end if
 
+*   ..write new b2yq.dat, if needed
+      inquire(file='../b2yq.dat',exist=todo)
+      if (todo) then
+        open(98,file='../b2yq.dat')
+      else
+        inquire(file='../../baserun/b2yq.dat',exist=todo)
+        if (todo) open(98,file='../../baserun/b2yq.dat')
+      end if
+      if (todo) then
+        new_filename='../b2yq.dat.2'
+        inquire(file=new_filename,exist=found)
+        if (found) write(6,*) trim(new_filename),' already present!'
+        if (.not.found.and..not.same_bundling) then
+          write(*,*) 'Writing b2yq.dat.2'
+          open(99,file=new_filename)
+          write(nout(5),'(a)') trim(new_filename)
+ 982      continue
+          read(98,*,end=983,err=983) indx, indy
+          indx1=trace_convert(indx,ns,ns1,is1)
+          indy1=trace_convert(indy,ns,ns1,is1)
+          if (indx1.ne.0 .and. indy1.ne.0)
+     >     write(99,'(2i6)') indx1, indy1
+          goto 982
+ 983      continue
+          close(99)
+        end if
+        close(98)
+      end if
+
 *   ..we now do b2ah.dat, last because we need to overwrite zn, etc...
       if (.not.same_bundling.or.non_commensurate.eq.1) then
         write(*,*) 'Writing b2ah.dat.2'
@@ -9767,3 +9797,56 @@ C
 
       return
       end function transform_tally
+
+      integer function trace_convert(i,ns,ns1,is1)
+cxpb  This routine converts a tracing data field number (defined in b2mwqt.F)
+      implicit none
+      integer i, ns, ns1
+      integer is1(0:ns-1)
+      integer ind, iss, isp, itl
+
+      if (i.eq.1) then
+        trace_convert = 1
+      else if (i.eq.2) then
+        trace_convert = 2
+      else if (i.gt.2 .and. i.le.2+2*(2*ns+4)) then
+        ind = i-2
+        itl = (ind-1)/(2*ns+4)
+        iss = mod(ind,2*ns+4)
+        if (iss.ge.1 .and. iss.le.ns) then
+          isp = is1(iss-1)+1
+        else if (iss.ge.ns+1 .and. iss.le.2*ns) then
+          isp = is1(iss-1-ns)+ns1+1
+        else if (iss.ge.2*ns+1) then
+          isp = iss-(2*ns)+(2*ns1)
+        else if (iss.eq.0) then
+          isp = 2*ns1+4
+        end if
+        if (isp.ne.0) then
+          trace_convert = 2+itl*(2*ns1+4)+isp
+        else
+          trace_convert = 0
+        end if
+      else if (i.gt.2+2*(2*ns+4) .and.
+     &         i.le.2+2*(2*ns+4)+(36+40+72)*(ns+3)) then
+        ind = i-(2+2*(2*ns+4))
+        itl = (ind-1)/(ns+3)
+        iss = mod(ind,ns+3)
+        if (iss.ge.1 .and. iss.le.ns) then
+          isp = is1(iss-1)+1
+        else if (iss.ge.ns+1) then
+          isp = iss-ns+ns1
+        else if (iss.eq.0) then
+          isp = ns1+3
+        end if
+        if (isp.ne.0) then
+          trace_convert = 2+2*(2*ns1+4)+itl*(ns1+3)+isp
+        else
+          trace_convert = 0
+        end if
+      else
+        trace_convert = 0
+      end if
+
+      return
+      end function trace_convert

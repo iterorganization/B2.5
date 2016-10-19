@@ -1697,6 +1697,10 @@
 *    either correspond to a neutral species or to ismain.
 *    If ismain is also defaulted, then will be 0.
 *
+*    'b2mwqt_style'             '1'                    Output
+*    Specifies the amount of data that is written out to b2ftrace.
+*    See the manual (Section on b2yq) for full details.
+*
 *    'tallies_netcdf'           '0'                    Output
 *    'b2stbr_b2wall_netcdf'     '0'                    Output
 *    If tallies_netcdf.ne.0, the file 'b2tallies.nc' is created, which contains

@@ -12,11 +12,11 @@
       integer nprt, nx, ny, ns
       character idout*(*)
       real (kind=R8) ::
-     *   resco(-1:nx,-1:ny,0:ns-1), resmo(-1:nx,-1:ny,0:ns-1),
+     *  resco(-1:nx,-1:ny,0:ns-1), resmo(-1:nx,-1:ny,0:ns-1),
      &  resmt(-1:nx,-1:ny), reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny),
      &  respo(-1:nx,-1:ny)
       real (kind=R8) ::
-     *   corpa(-1:nx,-1:ny,0:ns-1), corua(-1:nx,-1:ny,0:ns-1),
+     *  corpa(-1:nx,-1:ny,0:ns-1), corua(-1:nx,-1:ny,0:ns-1),
      &  corut(-1:nx,-1:ny), corte(-1:nx,-1:ny), corti(-1:nx,-1:ny),
      &  corpo(-1:nx,-1:ny)
 *   ..output arguments (unspecified on entry)
@@ -81,20 +81,20 @@
 *   ..local variables
       integer n2, ix, iy, is
       real (kind=R8) ::
-     *   tthi, t0
+     *  tthi, t0
       character fmth*(*), fmth2*(*), fmtp*(*), header*60
       parameter (
      &  fmth='(a,t44,''inc=(5*)'',1pe9.2)',
      &  fmth2='(a,t35,''is ='',i3,t44,''inc=(5*)'',1pe9.2)',
      &  fmtp='(2x,a6,4x,a)')
       real (kind=R8) ::
-     *   xf(-1:nx),xc(-1:nx),yf(-1:ny),yc(-1:ny),zero(-1:nx,-1:ny)
+     *  xf(-1:nx),xc(-1:nx),yf(-1:ny),yc(-1:ny),zero(-1:nx,-1:ny)
       real (kind=R8) ::
-     *   wrk0(-1:nx,-1:ny)
+     *  wrk0(-1:nx,-1:ny)
 *   ..procedures
       intrinsic max
       real (kind=R8) ::
-     *   samax, scal10
+     *  samax, scal10
       logical strmas
       external subini, subend, xertst, samax, b2scopy, sfill,
      &  scal10, strmas
@@ -306,7 +306,7 @@
        enddo
       endif
 *   ..make contour plot of (ua) residual, all species
-      if (strmas(idout,'cpua')) then
+      if (strmas(idout,'cput')) then
 *      (ignore boundaries and singular regions)
        call b2scopy (n2, resmt, 1, wrk0, 1)
        call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
@@ -395,7 +395,7 @@
        enddo
       endif
 *   ..make contour plots of (ua) correction, all species
-      if (strmas(idout,'cpua')) then
+      if (strmas(idout,'cput')) then
        t0 = scal10(0.8_R8*samax(n2,corut,1))
        write (header,fmth) 'VELOCITY CORRECTION (m/s), all species',
      &   t0/50.0_R8

@@ -34,7 +34,8 @@
       call subini ('b2xddr')
 *   ..test ninp, nout
       call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.
-     &  1.le.ninp(3).and.1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2),
+     &             1.le.ninp(3).and.1.le.nout(0).and.1.le.nout(1).and.
+     &             1.le.nout(2),
      &  'faulty argument ninp, nout')
 *   ..test dimensions
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
