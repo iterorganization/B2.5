@@ -105,8 +105,8 @@
 *   ..procedures
       intrinsic mod, nint
       real (kind=R8) ::
-     *   ssum, hy1
-      external subini, subend, xertst, sfill, ssum, b2saxpy,
+     *   b2ssum, hy1
+      external subini, subend, xertst, sfill, b2ssum, b2saxpy,
      *   ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
      1   b2stbc_phys, b2stbc_bas, b2stbc_fb
@@ -454,7 +454,7 @@
 * ..compute conditions on the cuts
 *     (no flow)
 *   ..compute suitable large coefficient
-      t0 = 1.0e20_R8*ssum(n2,vol,1)
+      t0 = 1.0e20_R8*b2ssum(n2,vol,1)
 *     (the dimension of t0 is m**3/s)
 *   ..loop over species
       do is = 0, ns-1

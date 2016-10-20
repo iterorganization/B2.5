@@ -387,7 +387,6 @@ ${OBJDIR}/eirmod_parmmod.${MOD}:
 
 ${OBJDIR}/eirmod_precision.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_precision.${MOD} ${OBJDIR}
-
 endif
 
 ${OBJDIR}/eirmod_extrab25.o:

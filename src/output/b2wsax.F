@@ -83,8 +83,8 @@
      *   t0, t1, zff(1:6), zxx(-1:nmax,1:6), zyy(-1:nmax,1:6)
 *   ..procedures
       real (kind=R8) ::
-     *   ssum, pit, hy1, zeff, uax, uay, uaz, crxc, cryc
-      external subini, subend, xertst, ssum
+     *   b2ssum, pit, hy1, zeff, uax, uay, uaz, crxc, cryc
+      external subini, subend, xertst, b2ssum
       external b2xvsg, b2xvgm, b2xvps, b2xgxy
       pit(ix,iy) = bb(ix,iy,0)/bb(ix,iy,3)
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
@@ -132,17 +132,17 @@
 *   ..compute zxx(3:6)
       do ix = -1, nx
 *    ..'vol(ix)'
-       zxx(ix,3) = ssum(ny+2,vol(ix,-1),nx+2)
+       zxx(ix,3) = b2ssum(ny+2,vol(ix,-1),nx+2)
 *    ..'hx(ix)'
-       t0 = 0
+       t0 = 0.0_R8
        do iy = -1, ny
         t0 = t0+vol(ix,iy)/hx(ix,iy)
        enddo
        zxx(ix,4) = zxx(ix,3)/t0
 *    ..'sx(ix)'
-       zxx(ix,5) = ssum(ny+2,gs(ix,-1,0),nx+2)
+       zxx(ix,5) = b2ssum(ny+2,gs(ix,-1,0),nx+2)
 *    ..'pit(ix)'
-       t0 = 0
+       t0 = 0.0_R8
        do iy = -1, ny
         t0 = t0+vol(ix,iy)*pit(ix,iy)
        enddo
@@ -151,18 +151,18 @@
 *   ..compute zyy(3:6)
       do iy = -1, ny
 *    ..'vol(iy)'
-       zyy(iy,3) = ssum(nx+2,vol(-1,iy),1)
+       zyy(iy,3) = b2ssum(nx+2,vol(-1,iy),1)
 *    ..'hy(iy)'
-       t0 = 0
+       t0 = 0.0_R8
        do ix = -1, nx
         t0 = t0+vol(ix,iy)/hy(ix,iy)
        enddo
        zyy(iy,4) = zyy(iy,3)/t0
 *    ..'sy(iy)'
-       zyy(iy,5) = ssum(nx+2,gs(-1,iy,1),1)
+       zyy(iy,5) = b2ssum(nx+2,gs(-1,iy,1),1)
 *    ..'pit(iy)'
-       t0 = 0
-       t1 = 0
+       t0 = 0.0_R8
+       t1 = 0.0_R8
        do ix = -1, nx
         t0 = t0+hx(ix,iy)
         t1 = t1+hx(ix,iy)/pit(ix,iy)
@@ -171,18 +171,18 @@
       enddo
 *   ..compute zff(1:6)
 *   ..total volume
-      zff(1) = ssum(n2,vol,1)
+      zff(1) = b2ssum(n2,vol,1)
 *   ..global hx
-      zff(2) = ssum(nx+2,zxx(-1,4),1)
+      zff(2) = b2ssum(nx+2,zxx(-1,4),1)
 *   ..global hy
-      zff(3) = ssum(ny+2,zyy(-1,4),1)
+      zff(3) = b2ssum(ny+2,zyy(-1,4),1)
 *   ..global sx
       zff(4) = zff(1)/zff(2)
 *   ..global sy
       zff(5) = zff(1)/zff(3)
 *   ..global pit
-      t0 = 0
-      t1 = 0
+      t0 = 0.0_R8
+      t1 = 0.0_R8
       do iy = -1, ny
        t0 = t0+zyy(iy,6)*zyy(iy,3)
        t1 = t1+zyy(iy,3)

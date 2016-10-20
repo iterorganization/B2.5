@@ -359,9 +359,9 @@
 
   101 format (/'  There are ns species, ns =', i3,
      &  '.  The species properties (zamin,zamax,zn,am) are:'/
-     &  ('  species',i3,',  atomic charge range from ',f6.2,
-     &   ' to ',f6.2,',  nuclear charge',f6.2,
-     &   ',  atomic mass',f6.2))
+     &  ('  species ',i3,',  atomic charge range from ',f5.2,
+     &   ' to ',f5.2,',  nuclear charge ',f5.2,
+     &   ',  atomic mass ',f6.2))
   110 format (/1p,
      &  '  parameters for reference anomalous diffusivity:',/
      &  ('  species', i3, ', diffusivity coeffs ..  ', 8e11.3))

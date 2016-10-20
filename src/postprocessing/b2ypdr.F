@@ -18,6 +18,7 @@
       use b2mod_b2cmwg
       use b2mod_ppout
       use b2mod_geo_corner
+      use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
       integer ninp(0:5), nout(0:2), nx, ny, ns
@@ -75,7 +76,7 @@
 
 *   ..common blocks
 *   ..local variables
-      integer is, iftp, iplot, idum(0:9), ismain
+      integer is, iftp, iplot, idum(0:9), ismain, external_species
       real (kind=R8) :: t0, t1,
      *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
      &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
@@ -83,8 +84,8 @@
       character lblgm*120, lblcp*120, lblmn*120, lblrc*120, idout*80,
      &  id*8, cnamip*80, cvalip*80, line*500
 *   ..initialisation
-      save ismain
-      data ismain/1/
+      save ismain, external_species
+      data ismain/1/, external_species/0/
 *   ..procedures
       intrinsic abs
       logical streql, ltst, is_comment
@@ -673,6 +674,13 @@
       call b2sqel (nx, ny, ns, ismain, ev, te, 
      &    rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
+*    ..check for external species
+      call ipgeti ('b2mndr_external_species', external_species)
+      if (external_species.ne.0) then
+        call read_b2mod_external(nx,ny,ns,ismain)
+      else
+        call alloc_b2mod_external_dummy(nx,ny)
+      endif
 *   ..write labels
       write (nout(0),'(/2x,a)') 'labels for this calculation:'
       write (nout(0),'(/4x,a/4x,a)') lblgm(1:60), lblgm(61:120)
@@ -711,6 +719,7 @@
 
 * ..return
       call dealloc_b2mod_b2cmrc
+      call dealloc_b2mod_external
       call subend ()
       return
 

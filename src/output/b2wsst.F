@@ -76,22 +76,22 @@
       integer n2, ix, iy, is
 *   ..procedures
       real (kind=R8) ::
-     *  ssum, rfnax, rfnay, rfhex, rfhey,
+     *  b2ssum, rfnax, rfnay, rfhex, rfhey,
      &  rfhix, rfhiy, rfchx, rfchy, rfnex, rfney, rfnix, rfniy
-      external subini, subend, xertst, ssum
+      external subini, subend, xertst, b2ssum
       external b2xvsg, b2xvff, b2xvgm, b2xvps
-      rfnax(ix,is) = ssum(ny+2,fna(ix,-1,0,is),nx+2)
-      rfnay(iy,is) = ssum(nx+2,fna(-1,iy,1,is),1)
-      rfhex(ix) = ssum(ny+2,fhe(ix,-1,0),nx+2)
-      rfhey(iy) = ssum(nx+2,fhe(-1,iy,1),1)
-      rfhix(ix) = ssum(ny+2,fhi(ix,-1,0),nx+2)
-      rfhiy(iy) = ssum(nx+2,fhi(-1,iy,1),1)
-      rfchx(ix) = ssum(ny+2,fch(ix,-1,0),nx+2)
-      rfchy(iy) = ssum(nx+2,fch(-1,iy,1),1)
-      rfnex(ix) = ssum(ny+2,fne(ix,-1,0),nx+2)
-      rfney(iy) = ssum(nx+2,fne(-1,iy,1),1)
-      rfnix(ix) = ssum(ny+2,fni(ix,-1,0),nx+2)
-      rfniy(iy) = ssum(nx+2,fni(-1,iy,1),1)
+      rfnax(ix,is) = b2ssum(ny+2,fna(ix,-1,0,is),nx+2)
+      rfnay(iy,is) = b2ssum(nx+2,fna(-1,iy,1,is),1)
+      rfhex(ix) = b2ssum(ny+2,fhe(ix,-1,0),nx+2)
+      rfhey(iy) = b2ssum(nx+2,fhe(-1,iy,1),1)
+      rfhix(ix) = b2ssum(ny+2,fhi(ix,-1,0),nx+2)
+      rfhiy(iy) = b2ssum(nx+2,fhi(-1,iy,1),1)
+      rfchx(ix) = b2ssum(ny+2,fch(ix,-1,0),nx+2)
+      rfchy(iy) = b2ssum(nx+2,fch(-1,iy,1),1)
+      rfnex(ix) = b2ssum(ny+2,fne(ix,-1,0),nx+2)
+      rfney(iy) = b2ssum(nx+2,fne(-1,iy,1),1)
+      rfnix(ix) = b2ssum(ny+2,fni(ix,-1,0),nx+2)
+      rfniy(iy) = b2ssum(nx+2,fni(-1,iy,1),1)
 
 *-----------------------------------------------------------------------
 *.computation

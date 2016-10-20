@@ -480,7 +480,7 @@
        read (ninp(1),'(a)',end=2,err=94) line
        if (.not.is_comment(line)) then
          read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
+         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
          call ipsetc (cnamip, cvalip)
        endif
        goto 1
@@ -753,9 +753,9 @@
        write (nout(0),'(2x,a3,i3,a2,2x,1pe11.2)')
      &   'na(',is,'):', naini(is)
       enddo
-      write (nout(0),'(6x,a3,2x,1pe11.2)') 'te:', ttini
-      write (nout(0),'(6x,a3,2x,1pe11.2)') 'ti:', ttini
-      write (nout(0),'(6x,a3,2x,1pe11.2)') 'po:', 3.1_R8*ttini
+      write (nout(0),'(7x,a3,2x,1pe11.2)') 'te:', ttini
+      write (nout(0),'(7x,a3,2x,1pe11.2)') 'ti:', ttini
+      write (nout(0),'(7x,a3,2x,1pe11.2)') 'po:', 3.1_R8*ttini
 *   ..test plasma state
       call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
@@ -800,9 +800,9 @@
      &  '  With boundary cells included the size is (nx+2)*(ny+2).')
   102 format (/'  There are ns species, ns =', i3,
      &  '.  The species properties (zamin,zamax,zn,am) are:'/
-     &  ('  species',i3,',  atomic charge range from',f6.2,
-     &   ' to',f6.2,
-     &   ',  nuclear charge',f6.2,',  atomic mass',f6.2))
+     &  ('  species ',i3,',  atomic charge range from ',f5.2,
+     &   ' to ',f5.2,
+     &   ',  nuclear charge ',f5.2,',  atomic mass ',f6.2))
 
 *-----------------------------------------------------------------------
 *.end b2aidr

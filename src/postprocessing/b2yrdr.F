@@ -275,7 +275,7 @@
       write (nout(0),'(/2x,a)') 'non-default internal parameters:'
     1 continue
        read (ninp(0),*,end=2,err=97) cnamip, cvalip
-       write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
+       write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
        call ipsetc (cnamip, cvalip)
        goto 1
     2 continue

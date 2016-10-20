@@ -129,8 +129,8 @@
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
-     *   smin, ssum
-      external subini, subend, xertst, ipgeti, smin, ssum, cfwure
+     *   smin, b2ssum
+      external subini, subend, xertst, ipgeti, smin, b2ssum, cfwure
 *   ..initialisation
       data ncall/0/, style/1/
 
@@ -308,7 +308,7 @@
           ix = ix0(iix)
           iy = iy0(iiy)
           il = iy0(iiy+1)-iy0(iiy)
-          z(k) = ssum(il,fna(ix,iy,0,is),nx+2)
+          z(k) = b2ssum(il,fna(ix,iy,0,is),nx+2)
           k = k+1
          enddo
         enddo
@@ -317,7 +317,7 @@
           ix = ix0(iix)
           iy = iy0(iiy)
           il = ix0(iix+1)-ix0(iix)
-          z(k) = ssum(il,fna(ix,iy,1,is),1)
+          z(k) = b2ssum(il,fna(ix,iy,1,is),1)
           k = k+1
          enddo
         enddo
@@ -327,7 +327,7 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = iy0(iiy+1)-iy0(iiy)
-         z(k) = ssum(il,fhe(ix,iy,0),nx+2)
+         z(k) = b2ssum(il,fhe(ix,iy,0),nx+2)
          k = k+1
         enddo
        enddo
@@ -336,7 +336,7 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = ix0(iix+1)-ix0(iix)
-         z(k) = ssum(il,fhe(ix,iy,1),1)
+         z(k) = b2ssum(il,fhe(ix,iy,1),1)
          k = k+1
         enddo
        enddo
@@ -345,7 +345,7 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = iy0(iiy+1)-iy0(iiy)
-         z(k) = ssum(il,fhi(ix,iy,0),nx+2)
+         z(k) = b2ssum(il,fhi(ix,iy,0),nx+2)
          k = k+1
         enddo
        enddo
@@ -354,7 +354,7 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = ix0(iix+1)-ix0(iix)
-         z(k) = ssum(il,fhi(ix,iy,1),1)
+         z(k) = b2ssum(il,fhi(ix,iy,1),1)
          k = k+1
         enddo
        enddo
@@ -363,7 +363,7 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = iy0(iiy+1)-iy0(iiy)
-         z(k) = ssum(il,fch(ix,iy,0),nx+2)
+         z(k) = b2ssum(il,fch(ix,iy,0),nx+2)
          k = k+1
         enddo
        enddo
@@ -372,7 +372,7 @@
          ix = ix0(iix)
          iy = iy0(iiy)
          il = ix0(iix+1)-ix0(iix)
-         z(k) = ssum(il,fch(ix,iy,1),1)
+         z(k) = b2ssum(il,fch(ix,iy,1),1)
          k = k+1
         enddo
        enddo

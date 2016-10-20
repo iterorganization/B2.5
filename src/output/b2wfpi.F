@@ -74,8 +74,7 @@
       call b2xpfi (nx, ny, ns, fna, fni)
 *   ..write state
       call b2wfpj (nprt, idout, nx, ny, ns, na, ua, te, ti, po,
-     &  fna, fhe, fhi, fch, ne, ni, pr, ro,
-     &  fne, fni, wrk0)
+     &  fna, fhe, fhi, fch, ne, ni, pr, ro, fne, fni, wrk0)
 
 * ..return
       call subend ()

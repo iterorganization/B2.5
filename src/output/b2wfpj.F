@@ -17,11 +17,11 @@
      &  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1)
       real (kind=R8) ::
-     *   ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), pr(-1:nx,-1:ny),
+     *  ne(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), pr(-1:nx,-1:ny),
      &  ro(-1:nx,-1:ny), fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
 *   ..workspace arguments (unspecified on entry and on exit)
       real (kind=R8) ::
-     *   wrk0(-1:nx,-1:ny)
+     *  wrk0(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -75,23 +75,23 @@
       integer n2, ix, iy, is, ix0, iy0, ix1, iy1
 *   ..procedures
       real (kind=R8) ::
-     *   ssum, rfnax, rfnay, rfnix, rfniy, rfnex, rfney,
+     * b2ssum, rfnax, rfnay, rfnix, rfniy, rfnex, rfney,
      &  rfhex, rfhey, rfhix, rfhiy, rfchx, rfchy
       logical strmas
-      external subini, subend, xertst, ssum, strmas
+      external subini, subend, xertst, strmas, b2ssum
       external b2xvsg, b2xvff, b2xvps, b2xxmm, b2xppb
-      rfnax(ix,is) = ssum(ny+2,fna(ix,-1,0,is),nx+2)
-      rfnay(iy,is) = ssum(nx+2,fna(-1,iy,1,is),1)
-      rfhex(ix) = ssum(ny+2,fhe(ix,-1,0),nx+2)
-      rfhey(iy) = ssum(nx+2,fhe(-1,iy,1),1)
-      rfhix(ix) = ssum(ny+2,fhi(ix,-1,0),nx+2)
-      rfhiy(iy) = ssum(nx+2,fhi(-1,iy,1),1)
-      rfchx(ix) = ssum(ny+2,fch(ix,-1,0),nx+2)
-      rfchy(iy) = ssum(nx+2,fch(-1,iy,1),1)
-      rfnex(ix) = ssum(ny+2,fne(ix,-1,0),nx+2)
-      rfney(iy) = ssum(nx+2,fne(-1,iy,1),1)
-      rfnix(ix) = ssum(ny+2,fni(ix,-1,0),nx+2)
-      rfniy(iy) = ssum(nx+2,fni(-1,iy,1),1)
+      rfnax(ix,is) = b2ssum(ny+2,fna(ix,-1,0,is),nx+2)
+      rfnay(iy,is) = b2ssum(nx+2,fna(-1,iy,1,is),1)
+      rfhex(ix) = b2ssum(ny+2,fhe(ix,-1,0),nx+2)
+      rfhey(iy) = b2ssum(nx+2,fhe(-1,iy,1),1)
+      rfhix(ix) = b2ssum(ny+2,fhi(ix,-1,0),nx+2)
+      rfhiy(iy) = b2ssum(nx+2,fhi(-1,iy,1),1)
+      rfchx(ix) = b2ssum(ny+2,fch(ix,-1,0),nx+2)
+      rfchy(iy) = b2ssum(nx+2,fch(-1,iy,1),1)
+      rfnex(ix) = b2ssum(ny+2,fne(ix,-1,0),nx+2)
+      rfney(iy) = b2ssum(nx+2,fne(-1,iy,1),1)
+      rfnix(ix) = b2ssum(ny+2,fni(ix,-1,0),nx+2)
+      rfniy(iy) = b2ssum(nx+2,fni(-1,iy,1),1)
 
 *-----------------------------------------------------------------------
 *.computation
@@ -213,10 +213,10 @@
        write (nprt,111)
        do ix = -1, nx
         write (nprt,'(2x,i4)') ix
-        write (nprt,'(1p,1x,4e11.3,2x,(t48,6e11.3))')
+        write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    te(ix,-1)/ev, ti(ix,-1)/ev, ne(ix,-1), po(ix,-1),
      &    (na(ix,-1,is),is=0,ns-1)
-        write (nprt,'(1p,1x,4e11.3,2x,(t48,6e11.3))')
+        write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    te(ix,0)/ev, ti(ix,0)/ev, ne(ix,0), po(ix,0),
      &    (na(ix,0,is),is=0,ns-1)
        enddo
@@ -228,10 +228,10 @@
        write (nprt,112)
        do ix = -1, nx
         write (nprt,'(2x,i4)') ix
-        write (nprt,'(1p,1x,4e11.3,2x,(t48,6e11.3))')
+        write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    te(ix,ny)/ev, ti(ix,ny)/ev, ne(ix,ny), po(ix,ny),
      &    (na(ix,ny,is),is=0,ns-1)
-        write (nprt,'(1p,1x,4e11.3,2x,(t48,6e11.3))')
+        write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    te(ix,ny-1)/ev, ti(ix,ny-1)/ev, ne(ix,ny-1), po(ix,ny-1),
      &    (na(ix,ny-1,is),is=0,ns-1)
        enddo
@@ -243,10 +243,10 @@
        write (nprt,113)
        do iy = -1, ny
         write (nprt,'(2x,i4)') iy
-        write (nprt,'(1p,1x,4e11.3,2x,(t48,6e11.3))')
+        write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    te(-1,iy)/ev, ti(-1,iy)/ev, ne(-1,iy), po(-1,iy),
      &    (na(-1,iy,is),is=0,ns-1)
-        write (nprt,'(1p,1x,4e11.3,2x,(t48,6e11.3))')
+        write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    te(0,iy)/ev, ti(0,iy)/ev, ne(0,iy), po(0,iy),
      &    (na(0,iy,is),is=0,ns-1)
        enddo
@@ -258,10 +258,10 @@
        write (nprt,114)
        do iy = -1, ny
         write (nprt,'(2x,i4)') iy
-        write (nprt,'(1p,1x,4e11.3,2x,(t48,6e11.3))')
+        write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    te(nx,iy)/ev, ti(nx,iy)/ev, ne(nx,iy), po(nx,iy),
      &    (na(nx,iy,is),is=0,ns-1)
-        write (nprt,'(1p,1x,4e11.3,2x,(t48,6e11.3))')
+        write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    te(nx-1,iy)/ev, ti(nx-1,iy)/ev, ne(nx-1,iy), po(nx-1,iy),
      &    (na(nx-1,iy,is),is=0,ns-1)
        enddo
@@ -282,14 +282,14 @@
      &  2x,1pe11.2,' at (',i4,',',i4,').')
   105 format (/'  Flux of particles fnax(ix,,is),',
      &  ' integrated over y as function of x:'/
-     &  t4, 'ix', (t8,10(5x,'is=',i3:)))
+     &  t4, 'ix', (t9,10(5x,'is=',i3:)))
   106 format (/'  Flux of particles, heat, current',
      &  ' integrated over y as function of x:'/
      &  t4, 'ix', t14, 'fnex', t25, 'fnix', t36, 'fhex', t47, 'fhix',
      &  t58, 'fchx')
   107 format (/'  Flux of particles fnay(,iy,is),',
      &  ' integrated over x as function of y:'/
-     &  t4, 'iy', (t8,10(5x,'is=',i3:)))
+     &  t4, 'iy', (t9,10(5x,'is=',i3:)))
   108 format (/'  Flux of particles, heat, current',
      &  ' integrated over x as function of y:'/
      &  t4, 'iy', t14, 'fney', t25, 'fniy', t36, 'fhey', t47, 'fhiy',
@@ -297,31 +297,31 @@
   111 format (/'  State of the plasma on the south boundary:'/
      &  '  (second line for te, ti, etc. gives state just',
      &  ' inside the boundary.)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
-     &  t63, 'na(..)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
-     &  t63, 'na(..)')
+     &  t6, 'te', t17, 'ti', t28, 'ne', t39, 'po', t50, 'na( 0)',
+     &  t61, 'na(..)'/
+     &  t6, 'te', t17, 'ti', t28, 'ne', t39, 'po', t50, 'na( 0)',
+     &  t61, 'na(..)')
   112 format (/'  State of the plasma on the north boundary:'/
      &  '  (second line for te, ti, etc. gives state just',
      &  ' inside the boundary.)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
-     &  t63, 'na(..)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
-     &  t63, 'na(..)')
+     &  t6, 'te', t17, 'ti', t28, 'ne', t39, 'po', t50, 'na( 0)',
+     &  t61, 'na(..)'/
+     &  t6, 'te', t17, 'ti', t28, 'ne', t39, 'po', t50, 'na( 0)',
+     &  t61, 'na(..)')
   113 format (/'  State of the plasma on the west boundary:'/
      &  '  (second line for te, ti, etc. gives state just',
      &  ' inside the boundary.)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
-     &  t63, 'na(..)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
-     &  t63, 'na(..)')
+     &  t6, 'te', t17, 'ti', t28, 'ne', t39, 'po', t50, 'na( 0)',
+     &  t61, 'na(..)'/
+     &  t6, 'te', t17, 'ti', t28, 'ne', t39, 'po', t50, 'na( 0)',
+     &  t61, 'na(..)')
   114 format (/'  State of the plasma on the east boundary:'/
      &  '  (second line for te, ti, etc. gives state just',
      &  ' inside the boundary.)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
-     &  t63, 'na(..)'/
-     &  t8, 'te', t19, 'ti', t30, 'ne', t41, 'po', t52, 'na( 0)',
-     &  t63, 'na(..)')
+     &  t6, 'te', t17, 'ti', t28, 'ne', t39, 'po', t50, 'na( 0)',
+     &  t61, 'na(..)'/
+     &  t6, 'te', t17, 'ti', t28, 'ne', t39, 'po', t50, 'na( 0)',
+     &  t61, 'na(..)')
 
 *-----------------------------------------------------------------------
 *.scribbles

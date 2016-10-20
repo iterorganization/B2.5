@@ -17,15 +17,15 @@
      *   t0
       intrinsic log10, abs, nint, sign
 *     ------------------------------------------------------------------
-      if (y.eq.0) then
-       scal10 = 0
+      if (y.eq.0.0_R8) then
+       scal10 = 0.0_R8
       else
        i1 = nint(log10(abs(y))-0.5_R8)
        t0 = abs(y)*10.0_R8**(-i1)
 *      (1.le.t0.le.10, to machine accuracy)
-       if (t0.le.2) then
+       if (t0.le.2.0_R8) then
         i0 = 2
-       else if (t0.le.5) then
+       else if (t0.le.5.0_R8) then
         i0 = 5
        else
         i0 = 10

@@ -168,7 +168,7 @@
        if (ipstat(ip).eq.0) then
         write (*,'(1x,a,1x,a)')
      &    '*** IPMAIN--WARNING: parameter has been set but not read:',
-     &    ipnam(ip)
+     &    trim(ipnam(ip))
        endif
       enddo
       return

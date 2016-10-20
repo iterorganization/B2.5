@@ -91,7 +91,7 @@
        read (ninp(5),'(a80)',end=2,err=91) line
        if (.not.is_comment(line)) then
          read (line,*) cnamip, cvalip
-         write (nout(0),'(4x,a,2x,a)') cnamip, cvalip
+         write (nout(0),'(4x,a,2x,a)') cnamip, trim(cvalip)
          call ipsetc (cnamip, cvalip)
        endif
        goto 1

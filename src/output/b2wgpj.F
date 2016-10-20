@@ -91,9 +91,9 @@
 *   ..procedures
       intrinsic max
       real (kind=R8) ::
-     *   scal10, samax, ssum
+     *   scal10, samax, b2ssum
       logical strmas
-      external subini, subend, xertst, scal10, samax, ssum,
+      external subini, subend, xertst, scal10, samax, b2ssum,
      &  strmas, pagini, pagend, gsln, gpl_d
       external b2xppe, b2xpmc, b2wgxp, b2wgxq
 
@@ -244,8 +244,8 @@
 * ..make one-dimensional plots
 *   ..compute electron and atom flux as function of x
       do ix = 0, nx
-       wxf1(ix) = ssum(ny+2,fne(ix,-1,0),nx+2)
-       wxf2(ix) = ssum(ny+2,fni(ix,-1,0),nx+2)
+       wxf1(ix) = b2ssum(ny+2,fne(ix,-1,0),nx+2)
+       wxf2(ix) = b2ssum(ny+2,fni(ix,-1,0),nx+2)
       enddo
 *   ..compute common scale for particle fluxes
       t0 = max(samax(nx+1,wxf1(0),1),samax(nx+1,wxf2(0),1))
@@ -269,8 +269,8 @@
       endif
 *   ..compute heat fluxes as function of x
       do ix = 0, nx
-       wxf1(ix) = ssum(ny+2,fhe(ix,-1,0),nx+2)
-       wxf2(ix) = ssum(ny+2,fhi(ix,-1,0),nx+2)
+       wxf1(ix) = b2ssum(ny+2,fhe(ix,-1,0),nx+2)
+       wxf2(ix) = b2ssum(ny+2,fhi(ix,-1,0),nx+2)
       enddo
 *   ..compute common scale for two heat fluxes
       t0 = max(samax(nx+1,wxf1(0),1),samax(nx+1,wxf2(0),1))
@@ -320,7 +320,7 @@
       endif
 *   ..compute electric current as function of x
       do ix = 0, nx
-       wxf1(ix) = ssum(ny+2,fch(ix,-1,0),nx+2)
+       wxf1(ix) = b2ssum(ny+2,fch(ix,-1,0),nx+2)
       enddo
 *   ..scale for electric current
       if (samax(nx+1,wxf1(0),1).eq.0.0_R8) then
@@ -342,7 +342,7 @@
       do is = 0, ns-1
        if (strmas(idout,'fnax')) then
         do ix = 0, nx
-         wxf1(ix) = ssum(ny+2,fna(ix,-1,0,is),nx+2)
+         wxf1(ix) = b2ssum(ny+2,fna(ix,-1,0,is),nx+2)
         enddo
         if (samax(nx+1,wxf1(0),1).eq.0.0_R8) then
          sc = 1.0_R8
@@ -360,8 +360,8 @@
       enddo
 *   ..compute electron and atom flux as function of y
       do iy = 0, ny
-       wyf1(iy) = ssum(nx+2,fne(-1,iy,1),1)
-       wyf2(iy) = ssum(nx+2,fni(-1,iy,1),1)
+       wyf1(iy) = b2ssum(nx+2,fne(-1,iy,1),1)
+       wyf2(iy) = b2ssum(nx+2,fni(-1,iy,1),1)
       enddo
 *   ..cmpute commoon scale for particle fluxes
       t0 = max(samax(ny+1,wyf1(0),1),samax(ny+1,wyf2(0),1))
@@ -385,8 +385,8 @@
       endif
 *   ..compute heat fluxes as function of y
       do iy = 0, ny
-       wyf1(iy) = ssum(nx+2,fhe(-1,iy,1),1)
-       wyf2(iy) = ssum(nx+2,fhi(-1,iy,1),1)
+       wyf1(iy) = b2ssum(nx+2,fhe(-1,iy,1),1)
+       wyf2(iy) = b2ssum(nx+2,fhi(-1,iy,1),1)
       enddo
 *   ..compute common scale for two heat fluxes
       t0 = max(samax(ny+1,wyf1(0),1),samax(ny+1,wyf2(0),1))
@@ -410,7 +410,7 @@
       endif
 *   ..compute electric current as function of y
       do iy = 0, ny
-       wyf1(iy) = ssum(nx+2,fch(-1,iy,1),1)
+       wyf1(iy) = b2ssum(nx+2,fch(-1,iy,1),1)
       enddo
 *   ..scale for electric current
       if (samax(ny+1,wyf1(0),1).eq.0.0_R8) then
@@ -432,7 +432,7 @@
       do is = 0, ns-1
        if (strmas(idout,'fnay')) then
         do iy = 0, ny
-         wyf1(iy) = ssum(nx+2,fna(-1,iy,1,is),1)
+         wyf1(iy) = b2ssum(nx+2,fna(-1,iy,1,is),1)
         enddo
         if (samax(ny+1,wyf1(0),1).eq.0.0_R8) then
          sc = 1.0_R8

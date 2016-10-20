@@ -69,8 +69,8 @@ c
       integer ix,iy,is,in
 
       real*8
-     *   ssum,sdot,b2s2sum
-      external ssum,sdot,b2s2sum
+     *   b2ssum,sdot,b2s2sum
+      external b2ssum,sdot,b2s2sum
 
       real*8
      *   pitmin,pitmax
@@ -255,16 +255,16 @@ c y-direction cell face quantities
 *     -- total volume --
          ff(1) = b2s2sum (nx+2, ny+2, vol, 1, nxd+2)
 *     -- global dx --
-c         ff(2) = ssum (nx+2, xx(0,4), 1)
+c         ff(2) = b2ssum (nx+2, xx(0,4), 1)
 *     -- global dy --
-c         ff(3) = ssum (ny+2, yy(0,4), 1)
+c         ff(3) = b2ssum (ny+2, yy(0,4), 1)
 *     -- global sx --
 c         ff(4) = ff(1) * ff(2)
 *     -- global sy --
 c         ff(5) = ff(1) * ff(3)
 *     -- global pit --
 c         ff(6) = sdot (ny+2, yy(0,6), 1, yy(0,3), 1) /
-c     .         ssum (ny+2, yy(0,3), 1)
+c     .         b2ssum (ny+2, yy(0,3), 1)
          do in=2,6
            ff(in) = 1.0
          enddo

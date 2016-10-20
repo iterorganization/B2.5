@@ -102,7 +102,7 @@
        write (nprt,111)
        do ix = -1, nx
         write (nprt,'(2x,i4)') ix
-        write (nprt,'(1p,1x,4e11.3,2x,(t48,6e11.3))')
+        write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    fhe(ix,0,1)/gs(ix,0,1), fhi(ix,0,1)/gs(ix,0,1),
      &    fne(ix,0,1)/gs(ix,0,1), fch(ix,0,1)/gs(ix,0,1),
      &    (fna(ix,0,1,is)/gs(ix,0,1),is=0,ns-1)
@@ -115,7 +115,7 @@
        write (nprt,112)
        do ix = -1, nx
         write (nprt,'(2x,i4)') ix
-        write (nprt,'(1p,1x,4e11.3,2x,(t48,6e11.3))')
+        write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    fhe(ix,ny,1)/gs(ix,ny,1), fhi(ix,ny,1)/gs(ix,ny,1),
      &    fne(ix,ny,1)/gs(ix,ny,1), fch(ix,ny,1)/gs(ix,ny,1),
      &    (fna(ix,ny,1,is)/gs(ix,ny,1),is=0,ns-1)
@@ -128,7 +128,7 @@
        write (nprt,113)
        do iy = -1, ny
         write (nprt,'(2x,i4)') iy
-        write (nprt,'(1p,1x,4e11.3,2x,(t48,6e11.3))')
+        write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    fhe(0,iy,0)/gs(0,iy,0)/qc(0,iy), 
      &    fhi(0,iy,0)/gs(0,iy,0)/qc(0,iy),
      &    fne(0,iy,0)/gs(0,iy,0)/qc(0,iy), 
@@ -143,7 +143,7 @@
        write (nprt,114)
        do iy = -1, ny
         write (nprt,'(2x,i4)') iy
-        write (nprt,'(1p,1x,4e11.3,2x,(t48,6e11.3))')
+        write (nprt,'(1p,1x,4e11.3,2x,(t46,6e11.3))')
      &    fhe(nx,iy,0)/gs(nx,iy,0)/qc(nx,iy), 
      &    fhi(nx,iy,0)/gs(nx,iy,0)/qc(nx,iy),
      &    fne(nx,iy,0)/gs(nx,iy,0)/qc(nx,iy), 
@@ -162,17 +162,17 @@
 *.formats
 
   111 format (/'  Flux densities on the south boundary:'/
-     &  t6, 'fhey/sy', t17, 'fhiy/sy', t28, 'fney/sy',
-     &  t39, 'fchy/sy', t52, 'fnay/sy', t63, 'fnay/sy')
+     &  t5, 'fhey/sy', t16, 'fhiy/sy', t27, 'fney/sy',
+     &  t38,'fchy/sy', t49, 'fnay/sy', t60, 'fnay/sy')
   112 format (/'  Flux densities on the north boundary:'/
-     &  t6, 'fhey/sy', t17, 'fhiy/sy', t28, 'fney/sy',
-     &  t39, 'fchy/sy', t52, 'fnay/sy', t63, 'fnay/sy')
+     &  t5, 'fhey/sy', t16, 'fhiy/sy', t27, 'fney/sy',
+     &  t38,'fchy/sy', t49, 'fnay/sy', t60, 'fnay/sy')
   113 format (/'  Flux densities on the west boundary:'/
-     &  t6, 'fhex/sx', t17, 'fhix/sx', t28, 'fnex/sx',
-     &  t39, 'fchx/sx', t52, 'fnax/sx', t63, 'fnax/sx')
+     &  t5, 'fhex/sx', t16, 'fhix/sx', t27, 'fnex/sx',
+     &  t38,'fchx/sx', t49, 'fnax/sx', t60, 'fnax/sx')
   114 format (/'  Flux densities on the east boundary:'/
-     &  t6, 'fhex/sx', t17, 'fhix/sx', t28, 'fnex/sx',
-     &  t39, 'fchx/sx', t52, 'fnax/sx', t63, 'fnax/sx')
+     &  t5, 'fhex/sx', t16, 'fhix/sx', t27, 'fnex/sx',
+     &  t38,'fchx/sx', t49, 'fnax/sx', t60, 'fnax/sx')
 
 *-----------------------------------------------------------------------
 *.scribbles

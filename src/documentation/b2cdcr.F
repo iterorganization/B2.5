@@ -743,7 +743,7 @@
 *       SMAX (BLAS-like) computes the maximum value in a vector.
 *       SAMAX (BLAS-like) computes the maximum absolute value in
 *       a vector.
-*       SSUM (BLAS-like) sums the elements of a vector.
+*       B2SSUM (BLAS-like) sums the elements of a vector.
 *       B2SASUM (BLAS) sums the absolute values of elements of a vector.
 *       SFILL (BLAS-like) fills a vector with a constant value.
 *       SBIAS (BLAS-like) adds a constant value to a vector.

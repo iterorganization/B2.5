@@ -72,11 +72,11 @@
      &  tmin, tmax, qmin, qmax
 *   ..procedures
       real (kind=R8) ::
-     *   smin, smax, ssum
+     *   smin, smax, b2ssum
       logical strmas
       real (kind=R8) ::
      *   crxc, cryc
-      external subini, subend, xertst, smin, smax, ssum, strmas
+      external subini, subend, xertst, smin, smax, b2ssum, strmas
       external b2xvgm
       intrinsic max
       crxc(ix,iy) = (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+
@@ -249,22 +249,22 @@ c---DPC problematic
         xc0 = xc0+hx(ix,-1)/2.0_R8
         xc1 = xc1+hx(ix,ny)/2.0_R8
 *     ..compute 'vol(ix)'
-        rvx = ssum(ny+2,vol(ix,-1),nx+2)
+        rvx = b2ssum(ny+2,vol(ix,-1),nx+2)
 *     ..compute 'hy(ix)'
-        rhy = ssum(ny+2,hy(ix,-1),nx+2)
+        rhy = b2ssum(ny+2,hy(ix,-1),nx+2)
 *     ..compute 'qmin(ix)'
         qmin = smin(ny+2,qz(ix,-1,0),nx+2)
 *     ..compute 'qmax(ix)'
         qmax = smax(ny+2,qz(ix,-1,0),nx+2)
 *     ..compute 'sx(ix)'
         if (leftix(ix,-1).eq.-2) then
-         rsx = ssum(ny+2,gs(rightix(ix,-1),rightiy(ix,-1),0),nx+2)
+         rsx = b2ssum(ny+2,gs(rightix(ix,-1),rightiy(ix,-1),0),nx+2)
         else if (rightix(ix,-1).eq.nx+1) then
-         rsx = ssum(ny+2,gs(ix,-1,0),nx+2)
+         rsx = b2ssum(ny+2,gs(ix,-1,0),nx+2)
         else
-         rsx = (ssum(ny+2,gs(ix,-1,0),nx+2)+
-     &          ssum(ny+2,gs(rightix(ix,-1),
-     &                       rightiy(ix,-1),0),nx+2))/2.0_R8
+         rsx = (b2ssum(ny+2,gs(ix,-1,0),nx+2)+
+     &          b2ssum(ny+2,gs(rightix(ix,-1),
+     &                         rightiy(ix,-1),0),nx+2))/2.0_R8
         endif
 *     ..write line
         write (nprt,'(2x,i4,1x,1p,7e11.3)')
@@ -286,21 +286,21 @@ c---DPC problematic
         yc0 = yc0+hy(-1,iy)/2.0_R8
         yc1 = yc1+hy(nx,iy)/2.0_R8
 *     ..compute 'vol(iy)'
-        rvy = ssum(nx+2,vol(-1,iy),1)
+        rvy = b2ssum(nx+2,vol(-1,iy),1)
 *     ..compute 'hx(iy)'
-        rhx = ssum(nx+2,hx(-1,iy),1)
+        rhx = b2ssum(nx+2,hx(-1,iy),1)
 *     ..compute 'qmin(iy)'
         qmin = smin(nx+2,qz(-1,iy,0),1)
 *     ..compute 'qmax(iy)'
         qmax = smax(nx+2,qz(-1,iy,0),1)
 *     ..compute 'sy(iy)'
         if (bottomiy(-1,iy).eq.-2) then
-         rsy = ssum(nx+2,gs(topix(-1,iy),topiy(-1,iy),1),1)
+         rsy = b2ssum(nx+2,gs(topix(-1,iy),topiy(-1,iy),1),1)
         else if (topiy(-1,iy).eq.ny+1) then
-         rsy = ssum(nx+2,gs(-1,iy,1),1)
+         rsy = b2ssum(nx+2,gs(-1,iy,1),1)
         else
-         rsy = (ssum(nx+2,gs(-1,iy,1),1)+
-     &          ssum(nx+2,gs(topix(-1,iy),topiy(-1,iy),1),1))/2.0_R8
+         rsy = (b2ssum(nx+2,gs(-1,iy,1),1)+
+     &          b2ssum(nx+2,gs(topix(-1,iy),topiy(-1,iy),1),1))/2.0_R8
         endif
 *     ..write line
         write (nprt,'(2x,i4,1x,1p,7e11.3)')

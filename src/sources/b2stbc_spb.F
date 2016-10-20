@@ -109,14 +109,14 @@
      &                         corr_flux   = 0.0e0_R8                 !sv 25.07.05
       real (kind=R8) , save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
      &                         phm2 = 1.0e0_R8, ubig0 = 0.0e0_R8      !iyv 22.04.08
-      character chns*3, chk*1                                     !sv 11.07.05
+      character chns*3, chk*1                                         !sv 11.07.05
       integer, save :: iout = 0, k                                    !sv 11.07.05
       save ncall, sna0ep, she0ep, shi0ep
 *   ..procedures
       intrinsic min, max, abs, sqrt, exp, log
       real (kind=R8) ::
-     *   machsfr, ssum, expu2, hy1, sdot
-      external subini, subend, xertst, machsfr, sfill, ssum, b2saxpy,
+     *   machsfr, b2ssum, expu2, hy1, sdot
+      external subini, subend, xertst, machsfr, sfill, b2ssum, b2saxpy,
      1 sdot
       external b2xvsg, b2xvff, b2xvps, b2xxgs, b2xppz                  !sv 18.01.02
       expu2(t0) = dim(exp(min(20.0e0_R8,max(t0,cutll))),cutlo)
@@ -1117,7 +1117,7 @@ c         sna0(nx,iy,1,1) = -1.0d160
 * ..compute conditions on the cuts
 *     (no flow)
 *   ..compute suitable large coefficient
-      t0 = 1.0e20_R8*ssum(n2,vol,1)
+      t0 = 1.0e20_R8*b2ssum(n2,vol,1)
 *     (the dimension of t0 is m**3/s)
 *   ..loop over species
       do is = 0, ns-1
