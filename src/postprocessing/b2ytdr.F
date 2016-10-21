@@ -266,7 +266,7 @@ c 2002-09-11: logic revised
       integer IREAD, IEND, IANF, ISTS, IH, I3, L, M, JSS
       integer IATM, IMOL, IION, IPHOT, ICRM, IPLS, IPLSS, ISTRA
       integer MAXRAD, NSIGVI, NSIGSI, NSIGCI, NPPLG, NCRM
-      integer NSIGV1, NSIGS1, NSIGC1
+      integer NSIGV1, NSIGS1, NSIGC1, NLOGIN
       integer NADVI, NCLVI, NALVI, NADSI, NALSI
       integer ISPL, IPROJ, NPLI1, NPLO1, NPLI2, NPLO2
       integer NPLIN2, NPLOT2, NPLDL2
@@ -454,6 +454,7 @@ c 2002-09-11: logic revised
      .                        NLVOL(:), NLCNS(:),
      .                        NLPRCA(:), NLPRCM(:), NLPRCI(:),
      .                        NLPRCPH(:), NLPRCA1(:)
+      logical, allocatable :: LOGRDH(:)
       logical, allocatable :: TRCSRC(:), TRCSR1(:)
       logical, allocatable :: nlpbls(:), nlpbl1(:)
       logical, allocatable :: done(:)
@@ -3223,16 +3224,19 @@ cxpb  Start reading input.dat file
           READ (ZEILE,6666) idum(0:8)  ! IDUM,NOPTM1,NGEOM_USR,NCOUP_INPUT,
                                        ! NSMSTRA,NSTORAM,NGSTAL,NRTAL1,NREAC_ADD
           WRITE(IUNOT,'(A80)') ZEILE
+          READ (IUNIN,'(A80)') ZEILE
+          call fix_logical_input(zeile,16)
           IF (streql(eirene_format,'facelift')) then
-            READ (IUNIN,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+            READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,nltrimesh
           ELSE
-            READ (IUNIN,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
+            READ (ZEILE,6665) ldum(0:15) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,NLIDENT,NLONE,NLMOVIE,NLDFST,
                                          ! NLOLDRAN,NLCASCAD,NLOCTREE,NLWRMSH,NEXVS,
                                          ! NLTRIMESH
           ENDIF
         ELSE
+          call fix_logical_input(zeile,16)
           IF (streql(eirene_format,'facelift')) then
             READ (ZEILE,6665) ldum(0:10) ! NLSCL,NLTEST,NLANA,NLDRFT,NLCRR,
                                          ! NLERG,LIDENT,LHABER,NEXVS,NRESCFLUX,nltrimesh
@@ -3328,7 +3332,9 @@ C  RADIAL MESH
         READ (ZEILE,6665) ldum(0)    ! nlrad
         WRITE(IUNOT,6665) ldum(0)
         IF (ldum(0)) THEN
-          READ (IUNIN,6665) ldum(0:7)  ! NLSLB,NLCRC,NLELL,NLTRI,NLPLG,NLFEM,NLTET,NLGEN
+          read (IUNIN,'(A80)') ZEILE
+          call fix_logical_input(zeile,8)
+          READ (ZEILE,6665) ldum(0:7)  ! NLSLB,NLCRC,NLELL,NLTRI,NLPLG,NLFEM,NLTET,NLGEN
           NLTRI = ldum(3)
           NLTET = ldum(6)
           WRITE(IUNOT,6665) ldum(0:7)
@@ -3412,7 +3418,9 @@ C  POLOIDAL MESH
   220   READ (IUNIN,'(A80)') ZEILE  ! NLPOL
         WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:1) .EQ. '*') GOTO 220
-  222   READ (IUNIN,6665) ldum(0:2) ! NLPLY,NLPLA,NLPLP
+  222   READ (IUNIN,'(A80)') ZEILE
+        call fix_logical_input(zeile,3)
+        READ (ZEILE,6665) ldum(0:2) ! NLPLY,NLPLA,NLPLP
         WRITE(IUNOT,6665) ldum(0:2)
         READ (IUNIN,6666) idum(0:3) ! NP2ND,NPSEP,NPPLA,NPPER
         NP2ND = idum(0)
@@ -3427,7 +3435,9 @@ C  TOROIDAL MESH
   230   READ (IUNIN,'(A80)') ZEILE  ! NLTOR
         WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:1) .EQ. '*') GOTO 230
-        READ (IUNIN,6665) ldum(0:2) ! NLTRZ,NLTRA,NLTRT
+        READ (IUNIN,'(A80)') ZEILE
+        call fix_logical_input(zeile,3)
+        READ (ZEILE,6665) ldum(0:2) ! NLTRZ,NLTRA,NLTRT
         WRITE(IUNOT,6665) ldum(0:2)
         READ (IUNIN,6666) idum(0:3) ! NT3RD,NTSEP,NTTRA,NTPER
         NT3RD = idum(0)
@@ -6043,6 +6053,7 @@ cxpb  to see if some strata need to be removed
   713     READ (IUNIN,'(A80)') ZEILE
           IREAD=1
           IF (ZEILE(1:1) .EQ. '*') GOTO 713
+          call fix_logical_input(zeile,5)
           READ (ZEILE,6665)
      .     NLAVRP(ISTRA),NLAVRT(ISTRA),NLSYMP(ISTRA),NLSYMT(ISTRA),
      .     NLRAY(ISTRA)
@@ -6057,7 +6068,9 @@ cxpb  to see if some strata need to be removed
           ISCLS(ISTRA) = transform_tally(IVLSF(ISTRA).eq.1,ISCLT(ISTRA),
      .      ISCLS(ISTRA),iatm1,ipls1,nphoti,natmi,nmoli,nioni,nplsi,
      .                  natmi1)
-          READ (IUNIN,6665) NLATM(ISTRA),NLMOL(ISTRA),
+          READ (IUNIN,'(A80)') ZEILE
+          call fix_logical_input(zeile,5)
+          READ (ZEILE,6665) NLATM(ISTRA),NLMOL(ISTRA),
      .                      NLION(ISTRA),NLPLS(ISTRA),
      .                      NLPHOT(ISTRA)
           READ (IUNIN,6666) NSPEZ(ISTRA)
@@ -6080,7 +6093,9 @@ cxpb  to see if some strata need to be removed
           ELSE
             savestratum(ISTRA) = .true.
           END IF
-          READ (IUNIN,6665) NLPNT(ISTRA),NLLNE(ISTRA),NLSRF(ISTRA),
+          READ (IUNIN,'(A80)') ZEILE
+          call fix_logical_input(zeile,5)
+          READ (ZEILE,6665) NLPNT(ISTRA),NLLNE(ISTRA),NLSRF(ISTRA),
      .                      NLVOL(ISTRA),NLCNS(ISTRA)
 C  SAME FOR POINT-, LINE-, SURFACE- AND VOLUME SOURCES
           READ (IUNIN,6666) NSRFSI(ISTRA)
@@ -6288,19 +6303,34 @@ C  VELOCITY SPACE DISTRIBUTION
           WRITE(IUNOT,'(A72)') ZEILE
           GOTO 910
         ELSE
-          allocate(NLPRCA(NATM),NLPRCM(NMOL),NLPRCI(NION),
-     .             NLPRCPH(NPHOT))
-          allocate(NLPRCA1(NATM))
-          READ (ZEILE,6665) (NLPRCA(J),J=1,NATM),(NLPRCM(J),J=1,NMOL),
-     .                      (NLPRCI(J),J=1,NION),(NLPRCPH(J),J=1,NPHOT)
-          NLPRCA1(1:NATM) = .false.
+          NLOGIN = MAX(1,NATMI + NMOLI + NIONI + NPHOTI)
+          ALLOCATE (LOGRDH(NLOGIN))
+          LOGRDH = .FALSE.
+          DO J=1, NLOGIN, 60
+            call fix_logical_input(zeile,60)
+            READ (ZEILE,6665) LOGRDH(J:MIN(J+59,NLOGIN))
+            READ (IUNIN,'(A72)') ZEILE
+          END DO
+          allocate(NLPRCA(NATMI),NLPRCM(NMOLI),NLPRCI(NIONI),
+     .             NLPRCPH(NPHOTI))
+          IF (NATMI > 0) NLPRCA(1:NATMI) = LOGRDH(1:NATMI)
+          IF (NMOLI > 0) NLPRCM(1:NMOLI) = LOGRDH(NATMI+1 : NATMI+NMOLI)
+          IF (NIONI > 0) NLPRCI(1:NIONI) =
+     .       LOGRDH(NATMI+NMOLI+1 : NATMI+NMOLI+NIONI)
+          IF (NPHOTI > 0) NLPRCPH(1:NPHOTI) =
+     .       LOGRDH(NATMI+NMOLI+NIONI+1 : NLOGIN)
+          DEALLOCATE (LOGRDH)
+          allocate(NLPRCA1(NATMI1))
+          NLPRCA1(1:NATMI1) = .false.
           DO IATM = 1, NATMI
             IF (IATM1(IATM).NE.0) THEN
               NLPRCA1(IATM1(IATM)) = NLPRCA(IATM)
             ENDIF
           ENDDO
-          WRITE(IUNOT,6665) (NLPRCA1(J),J=1,NATM),(NLPRCM(J),J=1,NMOL),
-     .                      (NLPRCI(J),J=1,NION),(NLPRCPH(J),J=1,NPHOT)
+          WRITE(IUNOT,6665) (NLPRCA1(J),J=1,NATMI1),
+     .                      (NLPRCM(J),J=1,NMOLI),
+     .                      (NLPRCI(J),J=1,NIONI),
+     .                      (NLPRCPH(J),J=1,NPHOTI)
           deallocate(NLPRCA,NLPRCM,NLPRCI,NLPRCPH)
           deallocate(NLPRCA1)
         END IF
@@ -6416,17 +6446,20 @@ cxpb Read first, transform and rewrite
         K = NATM*NSTRA
         allocate(nlpbls(k),nlpbl1(k))
         IF (K.LE.60) THEN
+          call fix_logical_input(zeile,k)
           READ (ZEILE,6665) (nlpbls(i),i=1,k)
         ELSE
           KMOD = K/60
           DO J = 1, KMOD
-            IF (j.eq.1) THEN
-              READ (ZEILE,6665) (nlpbls(i),i=(j-1)*60+1,j*60)
-            ELSE
-              READ (IUNIN,6665) (nlpbls(i),i=(j-1)*60+1,j*60)
+            IF (j.gt.1) THEN
+              READ (IUNIN,'(A72)') ZEILE
             ENDIF
+            call fix_logical_input(zeile,60)
+            READ (ZEILE,6665) (nlpbls(i),i=(j-1)*60+1,j*60)
           END DO
-          READ (IUNIN,6665) (nlpbls(i),i=kmod*60+1,k)
+          READ (IUNIN,'(A72)') ZEILE
+          call fix_logical_input(zeile,k-kmod*60)
+          READ (ZEILE,6665) (nlpbls(i),i=kmod*60+1,k)
         END IF
         ISTRA = 0
         nlpbl1(1:k) = .false.
@@ -6634,7 +6667,11 @@ cxpb Read first, transform and rewrite
         WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:1) .EQ. '*') GOTO 1110
         allocate(TRCSRC(0:NSTRA),TRCSR1(0:NSTRA))
-        READ (IUNIN,6665) (TRCSRC(J),J=0,NSTRA)
+        DO I = 0, NSTRA, 60
+          READ (IUNIN,'(A80)') ZEILE
+          call fix_logical_input(zeile,60)
+          READ (ZEILE,6665) (TRCSRC(J),J=I,MIN(I+59,NSTRA))
+        END DO
         TRCSR1=.false.
         TRCSR1(0)=TRCSRC(0)
         istra = 0
@@ -6675,6 +6712,7 @@ cxpb Read first, transform and rewrite
           WRITE(IUNOT,'(A80)') ZEILE
           GOTO 1131
         ELSE
+          call fix_logical_input(zeile,15)
           READ (ZEILE,6665) ldum(0:14) ! PL1ST,PL2ND,PL3RD,PLADD,PLHST,
                                        ! PLCUT(1),PLCUT(2),PLCUT(3),PLBOX,PLSTOR,
                                        ! PLNUMV,PLNUMS,PLARR,LRPSCUT,PLIDL
@@ -6799,7 +6837,11 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
         IF (ZEILE(1:1) .EQ. '*') GOTO 1151
         READ (ZEILE,6666) NVOLPL
         IF (NVOLPL.LE.0) GOTO 1175
-        READ (IUNIN,6665) (ldum(J),J=0,NSTRA)
+        DO I = 0, NSTRA, 60
+          READ (IUNIN,'(A80)') ZEILE
+          call fix_logical_input(zeile,60)
+          READ (ZEILE,6665) (ldum(J),J=I,MIN(I+59,NSTRA))
+        END DO
         WRITE(IUNOT,6665) (ldum(J),J=0,NSTRA)
         IF (streql(eirene_format,'iter') .or.
      .      streql(eirene_format,'juelich')) then
@@ -6821,13 +6863,17 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
             READ (IUNIN,6666) NTL,NSP
             WRITE(IUNOT,6666) NSP
           ENDIF
-          READ (IUNIN,6665) ldum(0:3) ! PLTL2D(J),PLTL3D(J),PLTLLG(J),PLTLER(J)
+          READ (IUNIN,'(A80)') ZEILE
+          call fix_logical_input(zeile,4)
+          READ (ZEILE,6665) ldum(0:3) ! PLTL2D(J),PLTL3D(J),PLTLLG(J),PLTLER(J)
           WRITE(IUNOT,6665) ldum(0:3)
           READ (IUNIN,'(A72)') ZEILE ! TALZMI(J),TALZMA(J),TALXMI(J),TALXMA(J),
                                      ! TALYMI(J),TALYMA(J)
           WRITE(IUNOT,'(A72)') ZEILE
           IF (ldum(0)) THEN
-            READ (IUNIN,6665) ldum(2:3) ! LHIST2(J),LSMOT2(J)
+            READ (IUNIN,'(A80)') ZEILE
+            call fix_logical_input(zeile,2)
+            READ (ZEILE,6665) ldum(2:3) ! LHIST2(J),LSMOT2(J)
             WRITE(IUNOT,6665) ldum(2:3)
             DO 1160 I=1,NSP
               IF (streql(eirene_format,'iter') .or.
@@ -6856,14 +6902,20 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
      .          streql(eirene_format,'juelich') .or.
      .          streql(eirene_format,'facelift') .or.
      .          streql(eirene_format,'new')) then
-              READ (IUNIN,6665) ldum(2:10) ! LHIST3(J),LCNTR3(J),LSMOT3(J),
-                                           ! LRAPS3(J),LVECT3(J),LRPVC3(J),
-                                           ! LRPS3D,LRPSCN
-              WRITE(IUNOT,6665) ldum(2:10)
-              READ (IUNIN,6665) ldum(2:4) ! LPRAD3(J),LPPOL3(J),LPTOR3(J)
+              READ (IUNIN,'(A80)') ZEILE
+              call fix_logical_input(zeile,8)
+              READ (ZEILE,6665) ldum(2:9) ! LHIST3(J),LCNTR3(J),LSMOT3(J),
+                                          ! LRAPS3(J),LVECT3(J),LRPVC3(J),
+                                          ! LRPS3D,LRPSCN
+              WRITE(IUNOT,6665) ldum(2:9)
+              READ (IUNIN,'(A80)') ZEILE
+              call fix_logical_input(zeile,3)
+              READ (ZEILE,6665) ldum(2:4) ! LPRAD3(J),LPPOL3(J),LPTOR3(J)
               WRITE(IUNOT,6665) ldum(2:4)
             ELSE IF (streql(eirene_format,'old')) then
-              READ (IUNIN,6665) ldum(2:8) ! LHIST3(J),LCTOUR(J),LSMOT3(J),
+              READ (IUNIN,'(A80)') ZEILE
+              call fix_logical_input(zeile,7)
+              READ (ZEILE,6665) ldum(2:8) ! LHIST3(J),LCTOUR(J),LSMOT3(J),
                                           ! LRAPS(J),LPRAD(J),LPPOL(J),LPTOR(J)
               WRITE(IUNOT,6665) ldum(2:5),
      .                          .false.,.false.,.false.,.false.
@@ -6943,7 +6995,9 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
           READ (IUNIN,'(A72)') ZEILE ! ICHORD(I),XCHORD,YCHORD,ZCHORD
           WRITE(IUNOT,'(A72)') ZEILE
  1220   CONTINUE
-        READ (IUNIN,6665) ldum(0:1) ! PLCHOR,PLSPEC
+        READ (IUNIN,'(A80)') ZEILE
+        call fix_logical_input(zeile,2)
+        READ (ZEILE,6665) ldum(0:1) ! PLCHOR,PLSPEC
         WRITE(IUNOT,6665) ldum(0:1)
  1225   CONTINUE
         IF (lntspec.GT.0) THEN
