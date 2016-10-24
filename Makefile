@@ -153,6 +153,12 @@ ifdef SOLPS_DEBUG
 DEFINES += -DDBG
 endif
 
+# Switches to disable individual OpenMP regions
+# uncomment to activate
+
+# DEFINES += -DNO_OPENMP_EUFORIA
+# DEFINES += -DNO_OPENMP_B2XPFE
+
 VHEAD =
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 VHEAD+=${MODLOCAL}:

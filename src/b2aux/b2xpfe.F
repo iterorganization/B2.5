@@ -21,10 +21,12 @@
 *$$$  call subini ('b2xpfe')
       n2 = (nx+2)*(ny+2)
       call sfill (n2*2, 0.0_R8, fne, 1)
+#ifndef NO_OPENMP_B2XPFE
 !$OMP PARALLEL DO DEFAULT(none), private(ix, iy, is),
-!$OMP& shared(fne, fna, rza, ns, nx, ny)
+!$OMP& shared(fne, fna, fa_ext, rza, za_ext, ns, ns_ext, nx, ny)
 !$OMP& shared(leftix, leftiy, vol, bottomix, bottomiy)
-        do iy = -1, ny
+#endif /* NO_OPENMP_B2XPFE */
+      do iy = -1, ny
         do is = 0, ns-1
           do ix = -1, nx
             if (leftix(ix,iy).ne.-2) 
@@ -39,10 +41,7 @@
      .         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
           enddo
         enddo
-      enddo
-!$OMP END PARALLEL DO
-      do is = 0, ns_ext-1
-        do iy = -1, ny
+        do is = 0, ns_ext-1
           do ix = -1, nx
             if (leftix(ix,iy).ne.-2) 
      >        fne(ix,iy,0) = fne(ix,iy,0) + fa_ext(ix,iy,0,is)*
@@ -57,6 +56,9 @@
           enddo
         enddo
       enddo
+#ifndef NO_OPENMP_B2XPFE
+!$OMP END PARALLEL DO
+#endif
       call b2saxpy (n2*2, -1.0_R8/qe, fch, 1, fne, 1)
 *$$$  call subend ()
       return
