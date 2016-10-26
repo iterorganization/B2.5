@@ -276,8 +276,8 @@ csw 30sep2013, added cdpa in call, uadia
      &  facdrift, fac_ExB, rza,
      &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
      &  fch_p, fchvispar, fchinert, fchanml,
-     &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
-     &  uadia,
+     &  fne, cvla, cdna, cdpa, chce, chci,
+     &  vaecrb, wadia, ve, veecrb, wedia,
      &  fna_eir, fne_eir, fhe_eir, fhi_eir)
       endif                                                             !srv 14.07.10 }
 
