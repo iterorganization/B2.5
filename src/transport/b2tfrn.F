@@ -421,7 +421,7 @@ c Drift terms
      1            ((veecrb(ix,iy,0)*xvecrb+wedia(ix,iy,0)*xwdia)*
      2              vol(ix,iy)/hx(ix,iy)+
      3             (veecrb(leftix(ix,iy),leftiy(ix,iy),0)*xvecrb+
-     4              wedia(leftix(ix,iy),leftiy(ix,iy),0,is)*xwdia)*
+     4              wedia(leftix(ix,iy),leftiy(ix,iy),0)*xwdia)*
      5              vol(leftix(ix,iy),leftiy(ix,iy))/
      6              hx(leftix(ix,iy),leftiy(ix,iy)))
                 else
@@ -488,14 +488,13 @@ c Drift terms
                   fle_eir = 0.5_R8*
      1             ((veecrb(ix,iy,1)*xvecrb+wedia(ix,iy,1)*xwdia)*
      2               vol(ix,iy)/hy1(ix,iy)+
-     3              (veecrb(bottomix(ix,iy),bottomiy(ix,iy),1,is)*
-     .               xvecrb+
-     4               wedia(bottomix(ix,iy),bottomiy(ix,iy),1,is)*xwdia)*
+     3              (veecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*xvecrb+
+     4               wedia(bottomix(ix,iy),bottomiy(ix,iy),1)*xwdia)*
      5               vol(bottomix(ix,iy),bottomiy(ix,iy))/
      6               hy1(bottomix(ix,iy),bottomiy(ix,iy)))
                 else
                   fle_eir =
-     1             (veecrb(ix,iy,1,is)*xvecrb+wedia(ix,iy,1,is)*xwdia)*
+     1             (veecrb(ix,iy,1)*xvecrb+wedia(ix,iy,1)*xwdia)*
      2             (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      3             (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
                 end if

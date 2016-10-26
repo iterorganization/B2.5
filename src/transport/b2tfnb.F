@@ -1845,7 +1845,8 @@ csw 18feb2014 remove fluxes between guard cells
             rdiv= div_fnb_mdf/div_fnb
             fnb = rdiv*fnb
           else
-            write(*,"(a,i4)") ' Flux correction is impossible for is =',isb
+            write(*,"(a,i4)")
+     >       ' Flux correction is impossible for is =',isb
           endif
           if(iout.ne.0) then
             write(*,*)
@@ -1861,9 +1862,7 @@ csw 18feb2014 remove fluxes between guard cells
             write(*,fmt=
      $"('isb = ',i4,' fnb_tot = ',es18.11,' fnb_mdf_tot = ',es18.11)")
      $       isb, div_fnb, div_fnb_mdf
-
             write(*,*)
-
 !            write(*,"(' is =',i3,' rdiv =',es15.7,' div_fnb =',es15.7,
 !     &       ' div_fnb_mdf =',es15.7)") isb, rdiv, div_fnb, div_fnb_mdf
           endif

@@ -49,7 +49,7 @@
         ELSEIF(BCCHAR(IB).EQ.'N') THEN
           DO IX=1, BC_LIST_SIZE(IB)
             if(lcore.or.
-     &         region(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0),4).ne.5)
+     &         region(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0).ne.5)
      >       tbfl(ib) = tbfl(ib) +
      &        flux(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)
           end do
