@@ -314,6 +314,8 @@
 *     to the electron-atom collision processes of ionisation,
 *     recombination, and radiation.
 *
+*     B2TBFL computes the total flux through the boundaries
+*
 *     B2TFCH computes the electric current between neighboring cells,
 *     and the coefficients that specify its linearisation.
 *
@@ -328,6 +330,9 @@
 *     B2TFNB computes the particle flux of one atomic species between
 *     neighboring cells, and the coefficients that specify its
 *     linearisation.
+*
+*     B2TFRN computes the particle and energy fluxes between
+*     neighbouring cells which are to be provided to Eirene
 *
 *     B2TLHE applies a flux limit to the electron heat and charge
 *     transport coefficients.

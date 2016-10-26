@@ -410,6 +410,7 @@
 *    'b2tfnb_fnb_nodrift_style' '1'                    Numerics
 *    'b2tfnb_mdf'               '0'                    Numerics
 *    'b2tfnb_no_hybr'           '0'                    Numerics
+*    'b2tfnb_pflux_cor'         '1'                    Numerics
 *    'b2tfnb_PSch'              '1.0'                  Physics
 *    'b2tfnb_xfrhie'            '1.0'                  Numerics
 *    'b2tfnb_xfrhiehz'          '1.0'                  Numerics
@@ -2006,6 +2007,11 @@
 *    'b2tfhi_upwind'            '0.0'                  Numerics
 *    If upwind.ne.0, then the SOLPS4 upwind scheme in b2tfhe_ and
 *    b2tfhi_ to obtain the heat fluxes.
+*
+*    'b2tfnb_pflux_cor'         '1'                    Numerics
+*    If pflux_cor.eq.1 and fna_mdf is used, enforces that the integral
+*    particle flux across the domain boundaries computed from fna is
+*    equal to the same integral computed from the fna_mdf fluxes.
 *
 *    'b2trcl_cvsa_mltpl'        '1.0'                  Numerics          !iys 06.12.13
 *    Artificial coefficient providing faster convergence to the neoclassical 

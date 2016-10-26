@@ -73,6 +73,7 @@
      &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
       integer, save :: mdf_fnb = 0                                       !srv 13.10.06
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
+      integer, save :: pflux_cor = 1                                     !srv 05.03.16
       integer, save :: PSch_style = 1                                    !srv 12.11.08
       character chns*3                                                   !srv 16.09.02
       integer, save :: fnb_nodrift_style = 1                             !srv 20.06.08
@@ -95,7 +96,9 @@
       real (kind=R8) :: 
      &   vbecrb_(-1:nx,-1:ny,0:1), wbdia_(-1:nx,-1:ny,0:1),              !srv 14.07.10 {
      &   wedia_(-1:nx,-1:ny,0:1), wedia(-1:nx,-1:ny,0:1),                !srv 14.07.10 }
-     &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1)               !srv 21.10.10
+     &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1),              !srv 21.10.10
+     &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
+     &   rdiv                                                            !srv 05.03.16
       parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
@@ -165,6 +168,7 @@
         call ipgetr ('b2tqna_cfvma', cfvma)                              !srv 15.12.05
         call ipgeti ('b2tfnb_mdf', mdf_fnb)                              !srv 13.10.06
         call ipgetr ('b2tfnb_PSch', PSch)                                !srv 17.01.07
+        call ipgeti ('b2tfnb_pflux_cor', pflux_cor)                      !srv 05.03.16
         call ipgeti ('b2tfnb_PSch_style', PSch_style)                    !srv 12.11.08
         call ipgeti ('b2tfnb_fnb_nodrift_style', fnb_nodrift_style)      !srv 20.06.08
         call ipgeti ('b2tfnb_drift_style', drift_style)                  !srv 21.06.08
@@ -1829,6 +1833,42 @@ csw 18feb2014 remove fluxes between guard cells
        end do
 
       endif                                                             !srv 14.07.10 }
+
+*   ..flux correction
+*   ..we rescale the fnb fluxes to have the same integral over the boundaries
+*   ..as the fnb_mdf fluxes
+      if(pflux_cor.ne.0 .and. mdf_fnb.ne.0) then                        !srv 05.03.16 {
+        if(.not. is_neutral(isb)) then
+          call b2tbfl(nx, ny,.false.,fnb, tbfl_fnb, div_fnb)
+          call b2tbfl(nx, ny,.false.,fnb_mdf, tbfl_fnb_mdf, div_fnb_mdf)
+          if(div_fnb .ne. 0.0_R8) then
+            rdiv= div_fnb_mdf/div_fnb
+            fnb = rdiv*fnb
+          else
+            write(*,"(a,i4)") ' Flux correction is impossible for is =',isb
+          endif
+          if(iout.ne.0) then
+            write(*,*)
+            write(*,*) 'Before flux correction in b2tfnb, is = ', isb
+            write(*,fmt=
+     $"('isb = ',i4,' fnb_tot = ',es18.11,' fnb_mdf_tot = ',es18.11)")
+     $       isb, div_fnb, div_fnb_mdf
+
+            call b2tbfl(nx, ny,.false., fnb, tbfl_fnb, div_fnb)
+            call b2tbfl(nx, ny,.false., fnb_mdf, tbfl_fnb_mdf,
+     .                                                 div_fnb_mdf)
+            write(*,*) 'After flux correction in b2tfnb, is = ', isb
+            write(*,fmt=
+     $"('isb = ',i4,' fnb_tot = ',es18.11,' fnb_mdf_tot = ',es18.11)")
+     $       isb, div_fnb, div_fnb_mdf
+
+            write(*,*)
+
+!            write(*,"(' is =',i3,' rdiv =',es15.7,' div_fnb =',es15.7,
+!     &       ' div_fnb_mdf =',es15.7)") isb, rdiv, div_fnb, div_fnb_mdf
+          endif
+        endif
+      endif                                                             !srv 05.03.16 }
 
       if(iout.ne.0) then                                                !srv 18.06.08 {
        write (chns,'(i3.3)') isb
