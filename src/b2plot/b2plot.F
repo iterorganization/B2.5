@@ -5884,10 +5884,10 @@ c-dpc still in testing phase
         case('amju','amjuel')    ! accesses Eirene type atomic physics data
           stack_req=(/0,0,4,0,0,0/)
           if(bad_args(stack_req)) return
-          crc=spop(sstack,isstack)
-          reac=spop(sstack,isstack)
-          h123=spop(sstack,isstack)
-          filnam=spop(sstack,isstack)
+          call strcopy(3,256,crc,spop(sstack,isstack))
+          call strcopy(9,256,reac,spop(sstack,isstack))
+          call strcopy(4,256,h123,spop(sstack,isstack))
+          call strcopy(8,256,filnam,spop(sstack,isstack))
           nz=1
           call get_amjuel_data(filnam,h123,reac,crc,
      1     nxd,nyd,nx,ny,ne,te,mach)
@@ -5897,7 +5897,7 @@ c-dpc still in testing phase
         case('adas')     ! accesses ADAS atomic physics data
           stack_req=(/0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
-          reac=spop(sstack,isstack)
+          call strcopy(9,256,reac,spop(sstack,isstack))
           nz=ns
           call get_adas_data(reac,nz,nxd,nyd,nx,ny,ne,te,mach)
           ndim(3,iwrk)=nz
@@ -6031,7 +6031,7 @@ c-dpc still in testing phase
             write(*,*) 'Faulty parameter is = ',is1,' for slbl!'
             return
           endif
-          textwk(is1,iwrk)=spop(sstack,isstack)
+          call strcopy(16,256,textwk(is1,iwrk),spop(sstack,isstack))
         case('wslbl')    ! set wall species label
           stack_req=(/1,0,1,0,1,0/)
           if(bad_args(stack_req)) return
@@ -6040,7 +6040,7 @@ c-dpc still in testing phase
             write(*,*) 'Faulty parameter is = ',is1,' for wslbl!'
             return
           endif
-          textwwk(is1,iwwrk)=spop(sstack,isstack)
+          call strcopy(16,256,textwwk(is1,iwwrk),spop(sstack,isstack))
         case('tranprof') ! output transport profile
           stack_req=(/0,0,0,0,0,0/)
           if(bad_args(stack_req)) return

@@ -76,10 +76,7 @@ c
         if(b2plot_debug.ge.4)
      >   write(*,*) 'xmin,xmax,ymin,ymax ',xmin,xmax,ymin,ymax
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)')
-     1     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
-     2     tmpstring(1:lnblnk(tmpstring)) // ' '//
-     2     dataname(1:lnblnk(dataname))
+          write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
           call get_extralabel(extralabel)
           if(len_trim(extralabel).ne.0) then
             write(nwtf,'(''# '',a)') trim(extralabel)

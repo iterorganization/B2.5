@@ -254,10 +254,7 @@ c      if(nidim .ne. 2) call line(2)
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)')
-     1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
-     2       tmpstring2(1:lnblnk(tmpstring2)) //
-     2       tmpstring1(1:lnblnk(tmpstring1))
+            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
             do iy=iystart,iyend
               write(nwtf,*) wrk(iy),work(ix,iy,is,iwrk)
             enddo
@@ -350,10 +347,7 @@ c      if(nidim .ne. 2) call line(2)
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)')
-     1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
-     2       tmpstring2(1:lnblnk(tmpstring2)) //
-     2       tmpstring1(1:lnblnk(tmpstring1))
+            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
             do iy=iystart,iyend
               write(nwtf,*) wrk(iy),work(ix,iy,is,iwrk)
             enddo

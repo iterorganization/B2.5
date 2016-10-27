@@ -103,10 +103,7 @@ cxpb : new default behaviour : zero of distance set at ixref
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.true.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)')
-     1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
-     2       tmpstring2(1:lnblnk(tmpstring2)) //
-     2       tmpstring1(1:lnblnk(tmpstring1))
+            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
             do ix=ixstart,ixend
               write(nwtf,*) wrk(ix),work(ix,iy,is,iwrk)
             enddo
@@ -193,10 +190,7 @@ cxpb : new default behaviour : zero of distance set at ixref
      1     xmin,xmax,lmin,lmax,
      4     linlog,.false.,.false.,.false.)
           if(writing_to_file) then
-            write(nwtf,'(''# '',a)')
-     1       graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))) //
-     2       tmpstring2(1:lnblnk(tmpstring2)) //
-     2       tmpstring1(1:lnblnk(tmpstring1))
+            write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
             do ix=ixstart,ixend
               write(nwtf,*) wrk(ix),work(ix,iy,is,iwrk)
             enddo

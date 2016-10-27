@@ -6,7 +6,8 @@ c
       use b2mod_b2plot_values
       implicit none
       integer ibnd
-      character*32 tmpstring
+      character*14 ibstring
+      character*256 tmpstring, titlestring
       real (kind=R8) ::
      *   lmin,lmax,x1,x2,y1,y2,dist,xmin,xmax
       integer i,lnblnk
@@ -34,7 +35,7 @@ c      if(nidim .ne. 1) call line(1)
         lmin=min(lmin,target_stack(ibnd,i,itwrk))
         lmax=max(lmax,target_stack(ibnd,i,itwrk))
       enddo
-      write(tmpstring,'('' <ibnd = '',i4,''>'')') ibnd
+      write(ibstring,'('' <ibnd = '',i4,''>'')') ibnd
       if(values(32) .ne. values(33)) then
         lmin=values(32)
         lmax=values(33)
@@ -72,15 +73,15 @@ c      if(nidim .ne. 1) call line(1)
         end if
         if(trglinlog.gt.2.and.xmin.le.0.0_R8) xmin=1.0e-30_R8
         if(trglinlog.gt.2.and.xmax.le.0.0_R8) xmax=1.0_R8
-        call init_page(
+        tmpstring=
      1     target_label(itwrk)(1:lnblnk(target_label(itwrk)))//
-     2     tmpstring(1:lnblnk(tmpstring)),
+     2     ibstring
+        call customise_label(tmpstring,titlestring)
+        call init_page(titlestring,
      1     xmin,xmax,lmin,lmax,
      2     trglinlog,.false.,.false.,.true.)
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)')
-     1     target_label(itwrk)(1:lnblnk(target_label(itwrk)))//
-     2     tmpstring(1:lnblnk(tmpstring))
+          write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
           do i=1,ndepth_nml
             write(nwtf,*) wwrk(i),target_stack(ibnd,i,itwrk)
           enddo
@@ -141,15 +142,11 @@ c      if(nidim .ne. 1) call line(1)
      >   values(26)=1.0e-30_R8
         if(mod(trglinlog,2).eq.0.and.values(27).le.0.0_R8) 
      >   values(27)=1.0_R8
-        call init_page(
-     1     target_label(itwrk)(1:lnblnk(target_label(itwrk)))//
-     2     tmpstring(1:lnblnk(tmpstring)),
+        call init_page(titlestring,
      1     values(26),values(27),lmin,lmax,
      3     trglinlog,.false.,.false.,.false.)
         if(writing_to_file) then
-          write(nwtf,'(''# '',a)')
-     1       target_label(itwrk)(1:lnblnk(target_label(itwrk)))//
-     2       tmpstring(1:lnblnk(tmpstring))
+          write(nwtf,'(''# '',a)') titlestring(1:lnblnk(titlestring))
           do i=1,ndepth_nml
             write(nwtf,*) wwrk(i),target_stack(ibnd,i,itwrk)
           enddo

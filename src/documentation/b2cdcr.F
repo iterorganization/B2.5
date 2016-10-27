@@ -769,6 +769,8 @@
 *     CHCASE converts a character variable to either all uppercase or
 *     all lowercase.
 *
+*     STRCOPY copies the first l0 characters of string str1 into str0.
+*
 *     STREQL checks for equality between two strings, ignoring case
 *     shift and trailing blanks.
 *

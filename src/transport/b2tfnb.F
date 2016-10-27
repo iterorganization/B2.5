@@ -1504,12 +1504,12 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
         call my_out(70,nx,ny,fnbPSch(-1,-1,1),'b2tfnb_fnbPSchy'//chns)
         call my_out(70,nx,ny,wrk3,'b2tfnb_vaecrbnay'//chns)
        endif
-        call my_out(70,nx,ny,wrk4,'b2tfnb_dPat_2diagradnay'//chns)
+       call my_out(70,nx,ny,wrk4,'b2tfnb_dPat_2diagradnay'//chns)
        call my_out(70,nx,ny,wrk5,'b2tfnb_dgradpby'//chns)
-        call my_out(70,nx,ny,wrk7,'b2tfnb_dPat_mdf_gradnay'//chns)
-        call my_out(70,nx,ny,wrk8,'b2tfnb_cvlbnay'//chns)               !iys 17.04.2012
-!        call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diay'//chns)
-!         call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfy'//chns)
+       call my_out(70,nx,ny,wrk7,'b2tfnb_dPat_mdf_gradnay'//chns)
+       call my_out(70,nx,ny,wrk8,'b2tfnb_cvlbnay'//chns)               !iys 17.04.2012
+!       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diay'//chns)
+!       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfy'//chns)
       endif
       if(iout_b2npmo.ne.0) then
        write(chns,'(i3.3)') isb
