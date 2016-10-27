@@ -56,6 +56,7 @@ c
             chord_value=tt0
           endif
         endif
+        call subend ()
         return
       endif
 
@@ -126,7 +127,9 @@ c
      * f,x,y,z,dl,dx,dy,dz
 
       intrinsic sqrt
+      external subini, subend
 
+      call subini('chord_integral')
       chord_integral=0.0
 
       dx=xp2-xp1
@@ -150,6 +153,7 @@ c
 
 !DIAG      call chord_diagnostics      ! diag
 
+      call subend()
       return
       end function chord_integral
 c
@@ -179,7 +183,9 @@ c
       real (kind=R8) ::
      * f,x,y,z,dl,dxp,dyp,dzp
       logical found
+      external subini, subend
 
+      call subini('chord_compile')
       do iy=-1,ny
         do ix=-1,nx
           tt(ix,iy)=1.0_R8
@@ -222,6 +228,7 @@ c
       enddo
       indchd=i
 
+      call subend()
       return
       end subroutine chord_compile
 c
