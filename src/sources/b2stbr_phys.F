@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stbr_phys (nx, ny, ns, nscx, iscx,  
-     &  dtim, BoRiS, vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
+      subroutine b2stbr_phys (nx, ny, ns, nscx, iscx,
+     &  dtim, BoRiS, vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &  thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,
@@ -36,8 +36,9 @@
       logical main_call, new_sputter_namelist
       real (kind=R8) :: dtim, BoRiS,
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     &  hz(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1),
-     &  gs(-1:nx,-1:ny,0:2)
+     &  gs(-1:nx,-1:ny,0:2), bb(-1:nx,-1:ny,0:3)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny),
@@ -888,6 +889,11 @@ c-xpb Whatever is not recycled is counted as deposition
      1           dtim*plate_time_factor(iwall)*
      2           (1.0_R8-recyc(is,istra))*t0
          endif
+cwdk  recycle toroidal componenent of parallel momentum, factor mrecyc
+c     (toroidal piec only, because poloidal piece of parallel velocity flips sign after reflection)
+         smo0(ix,iy,0,is0) = smo0(ix,iy,0,is0) + mrecyc(is,istra)*
+     &        am(is)*mp*ua(ix,iy,is)*bb(ix,iy,2)**2/bb(ix,iy,3)**2*
+     &        recyc(is,istra)*t0*hz(ix,iy)
          shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
      &        erecyc(is,istra)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
@@ -1429,8 +1435,13 @@ c-xpb
             if (is.ne.is0) then
                sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+
      &          recyc(is,istra)*t0
+cwdk  recycling of true parallel momentum
+c     (at core, cell faces will be flux-surface aligned)
+               smo0(ix,iy,0,is0) = smo0(ix,iy,0,is0)+
+     .           mrecyc(is,istra)*am(is)*mp*ua(ix,iy,is)*
+     .           recyc(is,istra)*t0*hz(ix,iy)
                shi0(ix,iy,0) = shi0(ix,iy,0)+erecyc(is,istra)*
-     .          (1.5_R8+BoRiS)*(zaf(is)*tef+tif)*t0
+     .          (1.5_R8+BoRiS)*(zaf(is)*tef+tif)*recyc(is,istra)*t0
      &          *recycled_neutrals_contr  !srv          
             endif
          enddo      ! do is = nsmax, nsmin, -1

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2stbr (nx, ny, ns, nscx, nscxmax, iscx, ismain,
-     &  dtim, BoRiS, vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
+     &  dtim, BoRiS, vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types
@@ -39,6 +39,7 @@
       integer nx, ny, ns, nscx, nscxmax, iscx(0:nscxmax-1), ismain
       real (kind=R8) :: dtim, BoRiS,
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
+     &  hz(-1:nx,-1:ny),
      &  qz(-1:nx,-1:ny,0:1), pbs(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
      *  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
@@ -420,7 +421,7 @@ c   --> better solution wanted here..
        if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
         if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
         call b2stbr_phys (nx, ny, ns, nscx, iscx, dtim, BoRiS,
-     &   vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
+     &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &   sna0, smo0, she0, shi0, sch0, sne0, tchem, tchee, tphys, tphye,
      &   thevp, thvpe, trese, tresn, trfln, trfle, boundary_namelist,

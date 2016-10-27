@@ -57,7 +57,7 @@ cank }
       parameter (nlimpsd=DEF_NLIM+DEF_NSTS)
 #ifdef ALLOCATE_AND_NAMELIST
       real (kind=R8), allocatable, save ::
-     *   RECYC(:,:), ERECYC(:,:), RCION(:,:), recyceir(:),
+     *   RECYC(:,:), ERECYC(:,:), MRECYC(:,:), RCION(:,:), recyceir(:),
      *   USERFLUXPARM(:,:),
      *   volrecstart(:), saved_volrec(:), 
      *   phys_sput(:,:), chem_sput(:,:),
@@ -87,6 +87,7 @@ cank }
 #else
       real (kind=R8), save :: RECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: ERECYC(0:nsdmax-1,NSTRAID)
+      real (kind=R8), save :: MRECYC(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: RCION(0:nsdmax-1,NSTRAID)
       real (kind=R8), save :: recyceir(NSTRAID)
       real (kind=R8), save :: USERFLUXPARM(NSTRAID,2)
@@ -153,8 +154,8 @@ cank }
       private :: neutrals
       namelist /neutrals/ nstrai, rcpos, rcstart, rcend, targsp, chemsp,
      1  rc_list_size, rc_list_x, rc_list_y,
-     4  recyc, erecyc, rcion, recyceir, userfluxparm, crcstra, rf_neut,
-     .  phys_sput, chem_sput,
+     4  recyc, erecyc, mrecyc, rcion, recyceir, userfluxparm, crcstra, 
+     .  rf_neut, phys_sput, chem_sput,
 #ifndef NO_B2_CHEM_SPUT
      .  chemical_sputter_yield, fchar_chemical, igass_chemical,
      .  itsput_chemical, issput_chemical,
@@ -178,7 +179,6 @@ cank }
      .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata
       logical, save :: write_nml_neut = .true.
       
-
 csw 21feb2012
       integer, save ::
      . l_neutrad=0, l_neutflux=-1
@@ -204,6 +204,7 @@ csw 21feb2012
       NATMID=natm_in
       allocate(RECYC(0:nsd-1,NSTRAID))
       allocate(ERECYC(0:nsd-1,NSTRAID))
+      allocate(MRECYC(0:nsd-1,NSTRAID))
       allocate(RCION(0:nsd-1,NSTRAID))
       allocate(recyceir(NSTRAID))
       allocate(USERFLUXPARM(NSTRAID,2))
@@ -268,8 +269,10 @@ csw 21feb2012
       GPDATA=0.0_R8
 cxpb The default recycling model is 100% particle recycling and 
 cxpb 30% energy recycling for all ionised species except carbon.
+cwdk 0% momentum recycling, for backwards compatibility
       RECYC=0.0_R8
       ERECYC=0.0_R8
+      MRECYC=0.0_R8
       do is = 1, nsd-1
         if (.not.is_neutral(is) .and. nint(zn(is)).ne.6) then
           RECYC(is,:)=1.0_R8
@@ -377,6 +380,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       if (.not.allocated(recyc)) return
       deallocate(RECYC)
       deallocate(ERECYC)
+      deallocate(MRECYC)
       deallocate(RCION)
       deallocate(recyceir)
       deallocate(USERFLUXPARM)
@@ -672,6 +676,8 @@ c
           call xertst (0.0_R8.le.recyc(is,istra), 'faulty input recyc')
           call xertst (0.0_R8.le.erecyc(is,istra), 
      .     'faulty input erecyc')
+          call xertst (0.0_R8.le.mrecyc(is,istra), 
+     .     'faulty input mrecyc')
           call xertst (0.0_R8.le.rcion(is,istra), 'faulty input rcion')
           call xertst (0.0_R8.le.phys_sput(is,istra),
      .     'faulty input phys_sput')

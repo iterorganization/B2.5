@@ -203,7 +203,7 @@ c 2002-09-11: logic revised
      9 sputter_tmp(:,:), cftmp(:),
      . bundle_contr(:,:), bundle_frac(:,:), x1data(:,:,:,:),
      1 s1data(:,:,:,:), t1data(:,:,:,:), eta_hce_mult1(:),
-     2 recyc1(:,:), erecyc1(:,:), rcion1(:,:),
+     2 recyc1(:,:), mrecyc1(:,:), erecyc1(:,:), rcion1(:,:),
      3 phys_sput1(:,:), chem_sput1(:,:),
      4 r(:), f(:), dprof(:), felm(:), delm(:),
      5 px(:), pf(:), pelm(:),
@@ -7705,6 +7705,7 @@ cxpb  Convert fort.44 file if needed
          end if
         end do
         allocate(recyc1(0:ns1-1,nstrat1))
+        allocate(mrecyc1(0:ns1-1,nstrat1))
         allocate(erecyc1(0:ns1-1,nstrat1))
         allocate(rcion1(0:ns1-1,nstrat1))
         allocate(phys_sput1(0:ns1-1,nstrat1))
@@ -7858,6 +7859,10 @@ cxpb  Convert fort.44 file if needed
           call convert_bundle_r
      .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
           recyc1(0:ns1-1,ib1)=cftmp(0:ns1-1)
+          cftmp(0:ns-1) = mrecyc(0:ns-1,ib)
+          call convert_bundle_r
+     .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
+          mrecyc1(0:ns1-1,ib1)=cftmp(0:ns1-1)
           cftmp(0:ns-1) = erecyc(0:ns-1,ib)
           call convert_bundle_r
      .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
@@ -7998,6 +8003,8 @@ cxpb as they no longer necessarily point to the same species
         do ib = 1, nstrat1
           write(99, hlp_frm)
      .     'RECYC(0,',ib,')= ',(recyc1(is,ib),is=0,ns1-1)
+          write(99, hlp_frm)
+     .     'MRECYC(0,',ib,')=',(mrecyc1(is,ib),is=0,ns1-1)
           write(99, hlp_frm)
      .     'ERECYC(0,',ib,')=',(erecyc1(is,ib),is=0,ns1-1)
           if (maxval(rcion1(0:ns1-1,ib)).gt.0.0_R8)
@@ -8284,6 +8291,7 @@ cxpb as they no longer necessarily point to the same species
         endif
         deallocate(istra1)
         deallocate(recyc1)
+        deallocate(mrecyc1)
         deallocate(erecyc1)
         deallocate(rcion1)
         deallocate(phys_sput1)

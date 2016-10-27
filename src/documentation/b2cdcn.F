@@ -71,6 +71,10 @@
 *     Applies to B2 neutral fluid species.
 *     Also multiplies Eirene recycling fluxes if 'eirene_use_recyceir' is set 
 *     to 0 (see b2cdci for details).
+*  MRECYC - real*8 array of size (0:NS-1,NSTRAT). Stores the parallel momentum
+*     recycling coefficients of species (is) on stratum (istra). Defaults to 0.0. 
+*     The parallel momentum is carried back by the recycled neutrals.
+*     Applies only to B2 neutral fluid species.
 *  ERECYC - real*8 array of size (0:NS-1,NSTRAT). Stores the energy recycling 
 *     coefficients of species (is) on stratum (istra). Defaults to 0.3 for 
 *     non-carbon species and 0.0 for carbon species. The energy is carried back

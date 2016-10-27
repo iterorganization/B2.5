@@ -358,7 +358,7 @@ csw 30sep2013, added cdpa in call, uadia
 *   ..compute special contributions (boundaries and recycling)
       call b2stbr (nx, ny, ns, nscx, nscxmax, iscx, ismain,
      &  dtim, BoRiS,
-     &  vol, hx, hy, gs, qz, pbs, na, ua, kinrgy, te, ti,
+     &  vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy, te, ti,
      &  po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
 *   ..zero out contributions in dead cells
