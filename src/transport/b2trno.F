@@ -270,7 +270,10 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
             cdpa(:,:,0,is) = cdpa(:,:,0,is) * pol_anom_scale
             cvla(:,:,0,is) = cvla(:,:,0,is) * pol_anom_scale
             cvsa(:,:,0,is) = cvsa(:,:,0,is) * pol_anom_scale
-            cvsahz(:,:,0,is) = cvsahz(:,:,0,is) * pol_anom_scale     !wdk 16.03.14
+            cdnahz(:,:,0,is) = cdnahz(:,:,0,is) * pol_anom_scale     !wdk 16.04.14
+            cdpahz(:,:,0,is) = cdpahz(:,:,0,is) * pol_anom_scale
+            cvlahz(:,:,0,is) = cvlahz(:,:,0,is) * pol_anom_scale
+            cvsahz(:,:,0,is) = cvsahz(:,:,0,is) * pol_anom_scale
             if (flux_limit_style.eq.2) then                          !srv 07.12.15 {
               chcb(:,:,0,is) = chcb(:,:,0,is) * pol_anom_scale
             end if                                                   !srv 07.12.15 }

@@ -140,14 +140,11 @@
 
       do iy = -1, ny
        do ix = -1, nx                                                 !sv 26.11.02
-        ixt = topix(ix,iy)
-        iyt = topiy(ix,iy)
-        ixb = bottomix(ix,iy)
-        iyb = bottomiy(ix,iy)
-        if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1) then        !sv 26.11.02
-         aa7(ix,iy, 3) = 0.0e0_R8                                     !sv 27.01.00
-         aa7(ix,iy,-3) = 0.0e0_R8                                     !sv 27.01.00
-        else
+         ireg = region(ix,iy,0)
+         ixt = topix(ix,iy)
+         iyt = topiy(ix,iy)
+         ixb = bottomix(ix,iy)
+         iyb = bottomiy(ix,iy)
          if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1.or.
      &      iyt.eq.ny+1 .or. iyb.eq.-2 .or. .not.solvereg(ireg)) then !sv 26.11.02
            aa7(ix,iy, 3) = 0.0e0_R8                                   !sv 27.01.00
@@ -213,7 +210,6 @@
            aa7(ix,iy,-2) = aa7(ix,iy,-2) - aa7(ix,iy,-3) - aa7m2      !sv 27.01.00
            aa7(ix,iy,0) = aa7(ix,iy,0)+ aa7p2 + aa7m2                 !sv 27.01.00
          endif                                                        !sv 26.11.02
-        endif
        enddo
       enddo
 

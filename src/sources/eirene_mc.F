@@ -118,13 +118,14 @@ c      data lis_hlp / 110, 111, 112, 49 /
 
       integer output_style, linearisation, ank_mods, save_f31,
      1 repeat_first_call, ionising_core, dpc_fix, eircount,
-     2 no_sseicorr, save_f30
+     2 no_sseicorr, save_f30, stab_corr
       save ncall, output_style, saved_volrec_used,
      * pfrregno1, pfrregno2, solregno, isfeedback,
      * nesepm_sol, nesepm_pfr, ndes, private_flux_puff, nesepm_istra,
      * neutral_sources_rescale, ncallfeedback, ank_mods, save_f31,
      1 repeat_first_call, use_recyceir, ionising_core, dpc_fix,
-     2 volrec_sol, ndes_sol, no_sseicorr, nepedm_sol, save_f30
+     2 volrec_sol, ndes_sol, no_sseicorr, nepedm_sol, save_f30,
+     3 stab_corr
 csw 26mar2013
       integer, save :: iscltst=0
 csw 26feb2014
@@ -166,7 +167,7 @@ csw 26feb2014
      4  private_flux_puff/0.0_R8/, ionising_core/0/, dpc_fix/1/,
      5  ndes/0.0_R8/, ank_mods/0/, save_f31/0/, repeat_first_call/1/,
      6  use_recyceir/1/, volrec_sol/0.0_R8/, ndes_sol/0.0_R8/,
-     7  no_sseicorr/0/, nepedm_sol/0.0_R8/, save_f30/0/
+     7  no_sseicorr/0/, nepedm_sol/0.0_R8/, save_f30/0/, stab_corr/1/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -347,6 +348,7 @@ csw 26feb2013
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
         call ipgeti ('eirene_no_sseicorr', no_sseicorr)
+        call ipgeti ('eirene_stab_corr',stab_corr)
       end if !}
 
       if(ncall.eq.0) then
@@ -2184,10 +2186,10 @@ c     2               sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
 
                     j=b2espcr(is)
-                    uatmp = (ua(ix,iy,is)*na(ix,iy,is)+
+                    uatmp = (ua(ix,iy,is)*na(ix,iy,is)*vol(ix,iy) + 
      .                       smo_tot(ix+1,iy+1,ifl)*
      .                       dtim*dtmo(is,region(ix,iy,0))/(am(is)*mp))/
-     .                      (na(ix,iy,is)+
+     .                      (na(ix,iy,is)*vol(ix,iy) + 
      .                       sni_tot(ix+1,iy+1,ifl)*
      .                       dtim*dtco(is,region(ix,iy,0)))
                     dua = uatmp - ua(ix,iy,is)
@@ -2226,9 +2228,10 @@ csw 06mar2012 total correction
                     t1=t1-uatmp*t2+kinrgy(ix,iy,is)*t3
 cxpb 13feb2015 additional correction with second-order effects for large sources
 cxpb 12oct2015 multiply na term by fractional stratum weight to avoid double-counting
-                    if (smo_tot(ix+1,iy+1,ifl).ne.0.0_R8) then
-                      t4=(na(ix,iy,is)*
-     .                   (t2/smo_tot(ix+1,iy+1,ifl))+
+                    if (smo_tot(ix+1,iy+1,ifl).ne.0.0_R8.and.
+     .                  stab_corr.eq.1) then
+                      t4=(na(ix,iy,is)*vol(ix,iy)*
+     .                    (t2/smo_tot(ix+1,iy+1,ifl))+
      .                    t3*dtim*dtco(is,region(ix,iy,0)))/
      .                      (dtim*dtei(region(ix,iy,0)))*
      .                    0.5_R8*mp*am(is)*dua**2
