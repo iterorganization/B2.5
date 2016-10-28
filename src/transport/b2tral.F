@@ -100,7 +100,6 @@
      *  wrk(-1:nx,-1:ny), wrkmin, fch_anomalous
       character*72 message
       logical solving(4)
-      real (kind=R8), save :: addvis1=0.0_R8                            !srv 31.07.02
       save ncall, pol_anom_scale, pot_eq, no_solve, solving, 
      .  fch_anomalous, no_current
 *   ..procedures
@@ -139,7 +138,6 @@
           solving(is)=solving(is).or.
      &    (no_solve.lt.0.and.mod(abs(no_solve),2**is).ge.2**(is-1))
         enddo
-        call ipgetr ('b2siav_addvis1', addvis1)                   !srv 31.07.02
         call ipgeti ('b2tral_iout', iout)                         !srv 17.06.08
         call ipgeti ('b2npc9_iout', iout_b2npc9)                  !srv 11.09.09 {
         call ipgeti ('b2npco_iout', iout_b2npco)

@@ -219,7 +219,6 @@
 *    'b2npht_style'             '1'                    Numerics
 *    'b2nph9_style'             '1'                    Numerics
 *    'b2npmo_b2sifr_'           '1'                    Physics
-*    'b2npmo_modvis'            '1'                    Physics
 *    'b2npmo_rxg'               '1.0e6'                Numerics
 *    'b2npp7_style'             '1'                    Numerics
 *    'b2nxdv_style'             '1'                    Numerics
@@ -943,10 +942,13 @@
 *
 *   1.3. Physics switches
 *
-*    'b2npmo_modvis'          '1'                      Physics
-*    When set to '1', the new correct form of viscosity is used.
-*    It is important for runs with drifts. It is recommended '1'.
-*    The value '0' corresponds to the old SOLPS5.0 treatment.
+*    'b2siav_addvis'          '0.0'                    Physics
+*    Multiplier to heat flux contribution to divergence of viscosity tensor
+*    in the momentum equation.
+*
+*    'b2siav_addvis1'         '1.0'                    Physics
+*    When not equal to '0.0', adds contribution to divergence of viscosity
+*    tensor coming from x-variations in B.
 *
 *    'b2npmo_b2sifr_'           '1'                    Physics
 *    When set to '1', the new correct form of the friction force is used.

@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2siav (nx, ny, ns, isb, modvis, mb, hx, hy, hz, vol,
+      subroutine b2siav (nx, ny, ns, isb, mb, hx, hy, hz, vol,
      & qz, bb, ub, wbdia, vbecrb, te, ti, nb, po, ni, ne2, lnlam, chci,  !srv 01.07.09
      & cvsb, cvsb_cl, cvsbhz, cvsbhz_cl, smbvh, smbvv, kt_neo,
      & wrk0, wrk1, wrk2) !srv 23.07.99 04.10.99 17.01.01 09.01.01 31.07.02 01.07.05
@@ -12,7 +12,7 @@
       use b2mod_b2cmpa
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, isb, modvis
+      integer nx, ny, ns, isb
       real (kind=R8) ::
      & mb, hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),
      & vol(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
@@ -51,8 +51,7 @@
       real (kind=R8) ::
      *     t0
       real (kind=R8), save ::
-     &     addvis=0.0_R8, addvis1=0.0_R8, cqip1 = 0.5e0_R8          !srv 28.03.06 !srv 19.10.08
-      real (kind=R8), save :: fac_hz = 0.0e0_R8                     !srv 30.01.10
+     &     addvis=0.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8          !srv 28.03.06 !srv 19.10.08
       real (kind=R8) ::
      *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99
      *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                    !srv 23.07.99 19.01.05
@@ -82,7 +81,6 @@
        call ipgeti ('b2siav_iout', iout)                            !lk 23.05.06 05.07.07
        call ipgeti ('b2siav_style_qip', qstyle)                     !lk 23.05.06 05.07.07
        call ipgeti ('b2trcl_lluciani',lluciani)                     !lk 03.12.09
-       call ipgetr ('b2mndr_hz', fac_hz)                            !srv 30.01.10
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -92,7 +90,7 @@
       smbvv = 0.0_R8
 
       if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then       !srv 26.10.08
-        if (addvis.ne.0) then                                       !srv 19.01.05 28.03.06 {
+        if (addvis.ne.0.0_R8) then                                  !srv 19.01.05 28.03.06 {
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
 * ..calculate the parallel heat flux of ions in the center of the cell
 
@@ -292,82 +290,40 @@
           enddo
         endif                                                       !lk 23.05.06 05.07.07
 
-        if (addvis1.ne.0 .and. fac_hz.ne.0.0_R8) then               !srv 19.01.05 30.01.10
+        if (addvis1.ne.0.0_R8) then          !srv 19.01.05 30.01.10
 
           wrk0=0
-          if (modvis.eq.0) then                                     !srv 19.01.05 {
-            do iy=-1,ny
-              do ix=-1,nx
-                if(leftix(ix,iy).ne.-2) then
-                  wrk0(ix,iy)=cvsb_cl(ix,iy,0)*hx(ix,iy)/
-     1              vol(ix,iy)/wbbl(ix,iy,3)/wbbl(ix,iy,0)*
-     2              (sqrt(bb(ix,iy,3))*(ub(ix,iy)+
-     .                    bb(ix,iy,3)/bb(ix,iy,0)*                  !srv 11.01.13
-     &              (wbdia(ix,iy,0)+vbecrb(ix,iy,0)))
-     3              -sqrt(bb(leftix(ix,iy),leftiy(ix,iy),3))*
-     4              (ub(leftix(ix,iy),leftiy(ix,iy))+
-     5               bb(leftix(ix,iy),leftiy(ix,iy),3)/
-     6               bb(leftix(ix,iy),leftiy(ix,iy),0)*             !srv 11.01.13
-     7              (wbdia(leftix(ix,iy),leftiy(ix,iy),0)+
-     8               vbecrb(leftix(ix,iy),leftiy(ix,iy),0))))
-                endif
-              enddo
+          wrk2 = sqrt(bb(:,:,3))     ! wrk2 is used below twice
+          wrk1 = log(hz*wrk2)
+          do iy = 0,ny-1                                            !srv 01.07.05 {
+            do ix = 0,nx
+              if(leftix(ix,iy).eq.-2) then
+                wrk0(ix,iy)=0.0e0_R8
+              else
+                wrk0(ix,iy)=2.0e0_R8*cvsbhz(ix,iy,0)/
+     &            (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*
+     &            (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
+              endif
             enddo
-            do iy=-1,ny
-              do ix=-1,nx
-                if(leftix(ix,iy).ne.-2 .and.
-     &             rightix(ix,iy).ne.nx+1 .and.
-     &             bottomiy(ix,iy).ne.-2 .and.
-     &             topiy(ix,iy).ne.ny+1 .and.
-     &             region(ix,iy,0).ne.0) then
-! 4/3 piece is no longer in cvsb_cl
-                  smbvv(ix,iy,0)=4.0_R8/3.0_R8*(
-     1               vol(ix,iy)*bb(ix,iy,0)*sqrt(bb(ix,iy,3))/hx(ix,iy)*
-     1               (wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy)) -
-     2               (cvsb_cl(rightix(ix,iy),rightiy(ix,iy),0)*
-     4                (ub(rightix(ix,iy),rightiy(ix,iy))-ub(ix,iy))-
-     5                cvsb_cl(ix,iy,0)*
-     6                 (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))))
-                endif
-              enddo
-            enddo
-          endif
+          enddo
 
-          if (modvis.eq.1) then                                     !srv 19.01.05 {
-            wrk2 = sqrt(bb(:,:,3))     ! wrk2 is used below twice
-            wrk1 = log(hz*wrk2)
-            do iy = 0,ny-1                                          !srv 01.07.05 {
-              do ix = 0,nx
-                if(leftix(ix,iy).eq.-2) then
-                  wrk0(ix,iy)=0.0e0_R8
+          do iy= 0,ny-1
+            do ix= 0,nx-1
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
+     >         then
+                t0=(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
+     *             *wrk2(ix,iy)                                     !srv 01.07.05 }
+                if (t0.gt.0.0e0) then
+                  smbvv(ix,iy,0)=t0*ub(ix,iy)
                 else
-                  wrk0(ix,iy)=2.0e0_R8*cvsbhz(ix,iy,0)/
-     &              (wrk2(ix,iy)+wrk2(leftix(ix,iy),leftiy(ix,iy)))*
-     &              (wrk1(ix,iy)-wrk1(leftix(ix,iy),leftiy(ix,iy)))
+                  smbvv(ix,iy,1)=t0
                 endif
-              enddo
+              else
+                smbvv(ix,iy,0) = 0.0e0_R8
+                smbvv(ix,iy,1) = 0.0e0_R8
+              endif
             enddo
-
-            do iy= 0,ny-1
-              do ix= 0,nx-1
-                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
-     >           then
-                  t0=(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))
-     *               *wrk2(ix,iy)                                   !srv 01.07.05 }
-                  if (t0.gt.0.0e0) then
-                    smbvv(ix,iy,0)=t0*ub(ix,iy)
-                  else
-                    smbvv(ix,iy,1)=t0
-                  endif
-                else
-                  smbvv(ix,iy,0) = 0.0e0_R8
-                  smbvv(ix,iy,1) = 0.0e0_R8
-                endif
-              enddo
-            enddo
-
-          endif                                                     !srv 19.01.05 }
-
+          enddo                                                     !srv 19.01.05 }
         endif
       endif                                                         !srv 26.10.08
 

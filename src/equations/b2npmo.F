@@ -80,11 +80,10 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, diagno, ireg, nsmin, nsmax, k
-      integer, save :: modvis = 1                                      !srv 19.01.05
       integer, save :: iout = 0, b2sifr_ver=1                          !srv 04.07.08 26.10.08
       character chns*3, chk*1                                          !srv 04.07.08
       real (kind=R8) ::
-     *  rxg, t0, t1, t2, vis_par, vis_per
+     *  rxg, t0, t1, t2
       real (kind=R8) ::
      *  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),                !srv 11.09.09
      *  smbgp(-1:nx,-1:ny,0:3),
@@ -103,7 +102,7 @@
      1  smqdu(-1:nx,-1:ny), wrk0(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      2  ctcfb(-1:nx,-1:ny), ctcft(-1:nx,-1:ny)                         !srv 06.04.07
       logical new_matrix, solvedum(0:NNREGMAX)
-      save ncall, rxg, vis_par, vis_per, diagno, solvedum, nsmin, nsmax
+      save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
       intrinsic min, max
       real (kind=R8) ::
@@ -115,8 +114,7 @@
      &  b2sifr, b2sigp, b2siav, b2sicf, b2nxcm, b2urmo, b2usmo
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *   ..initialisation
-      data ncall/0/, rxg/1.0e6_R8/, vis_par/0.0_R8/, vis_per/0.0_R8/,
-     &     diagno/0/
+      data ncall/0/, rxg/1.0e6_R8/, diagno/0/
 
 *-----------------------------------------------------------------------
 *.computation
@@ -131,12 +129,8 @@
         call ipgetr ('b2npmo_rxg', rxg)
         call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
         call ipgeti ('b2npmo_diagno', diagno)
-        call ipgetr ('b2tfhe_vis_par', vis_par)
-        call xertst (0.0_R8.le.vis_par, 'faulty input vis_par')
-        call ipgeti ('b2npmo_modvis', modvis)                          !srv 19.01.05
         call ipgeti ('b2npmo_iout', iout)                              !srv 04.07.08
         call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.07.08
-        call ipgetr ('b2tfhe_vis_per', vis_per)
         call ipgeti ('b2news_nsmin', nsmin)
         if(nsmin.gt.ns) then
            nsmin=ns
@@ -235,17 +229,15 @@
        call b2scopy (n2*2, fna_fcor(-1,-1,0,is), 1, flub, 1)
        call b2sscal (n2*2, am(is)*mp, flub, 1)
 !       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,is), flub)
-       if (modvis.eq.1) then                                           !srv 19.01.05 11.09.09 {
 *    ..add convective term due to new form of ion viscosity term only
-        call b2nxfv (nx, ny, is, hz, cvsahz(-1,-1,0,is), flubv)        !srv 01.07.05 11.09.09
-        call b2saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                 !srv 11.09.09
-       endif                                                           !srv 19.01.05 }
+       call b2nxfv (nx, ny, is, hz, cvsahz(-1,-1,0,is), flubv)        !srv 01.07.05 11.09.09
+       call b2saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                 !srv 11.09.09
 *    ..compute flcb, cvcb
        call b2nxfc (nx, ny, is, vol, pbshz, rob, 
      &   ua(-1,-1,is), flub, cvsahz(-1,-1,0,is), flcb, cvcb, wrk0)     !srv 09.01.01
 
 *    ..compute additional viscosity term
-       call b2siav (nx, ny, ns, is, modvis, am(is)*mp, hx, hy, hz, vol, 
+       call b2siav (nx, ny, ns, is, am(is)*mp, hx, hy, hz, vol, 
      &   qz, bb, ua(-1,-1,is), wadia(-1,-1,0,is), vaecrb(-1,-1,0,is),  
      &   te, ti, na(-1,-1,is), po, ni(-1,-1,1), ne2, lnlam, chci,      !srv 01.07.09
      &   cvsa(-1,-1,0,is), cvsa_cl(-1,-1,0,is), cvsahz(-1,-1,0,is), 
