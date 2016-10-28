@@ -92,12 +92,12 @@ cxpb  Standard case
                 veecrb(ix,iy,0) = - 1.0_R8/hy1(ix,iy)*     ! signmf      !xpb !srv 11.01.13
      1            bb(ix,iy,2)/bb(ix,iy,3)**2*                            !xpb
      2           (wpo(topix(ix,iy),topiy(ix,iy))-wpo(ix,iy))*
-     &            fac_ExB(ix,iy)                                    	 !xpb
+     &            poleldr*fac_ExB(ix,iy)                              	 !xpb
                 vedia(ix,iy,0) = + bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)* 	 !xpb
      1            1.0_R8/bb(ix,iy,3)*                              	 !xpb
      2            2.0_R8*te(ix,iy)/bb(ix,iy,3)/qe*                 	 !xpb
      3           (wbbv(topix(ix,iy),topiy(ix,iy),3)-wbbv(ix,iy,3))*
-     &            facdrift(ix,iy)                                   	 !xpb
+     &            poldidr*facdrift(ix,iy)                           	 !xpb
               else                                                	 !xpb
                 veecrb(ix,iy,0) = 0.0_R8                          	 !xpb
                 vedia(ix,iy,0) = 0.0_R8                           	 !xpb
@@ -114,10 +114,10 @@ cxpb  Standard case
                 veecrb(ix,iy,1) = 1.0_R8/hx(ix,iy)*                      !xpb
      1            bb(ix,iy,2)/bb(ix,iy,3)**2*                     	 !xpb
      2           (wpo(rightix(ix,iy),rightiy(ix,iy))-wpo(ix,iy))*
-     &            fac_ExB(ix,iy)                                         !xpb
+     &            radeldr*fac_ExB(ix,iy)                                 !xpb
                 vedia(ix,iy,1) = - te(ix,iy)*bb(ix,iy,2)/(qe*hx(ix,iy))* !xpb
      &           (2.0_R8/bb(ix,iy,3)**3)*                                !xpb
-     &           (wbbr(ix,iy,3)-wbbl(ix,iy,3))*facdrift(ix,iy)           !xpb
+     &           (wbbr(ix,iy,3)-wbbl(ix,iy,3))*raddidr*facdrift(ix,iy)   !xpb
               endif
             enddo
           enddo
@@ -173,7 +173,7 @@ cxpb  Standard case
      2          +bb(leftix(ix,iy),leftiy(ix,iy),2)/
      2           bb(leftix(ix,iy),leftiy(ix,iy),3)**2)*                  !srv 05.02.05
      2          (poc(topix(ix,iy),topiy(ix,iy))-poc(ix,iy))              !srv 13.05.16 }
-               vedia(ix,iy,0) = poldidr*facdrift(ix,iy)* ! signmf*       !srv 07.06.00 17.05.99 25.04.00 05.02.05 11.01.13
+               vedia(ix,iy,0) = -poldidr*facdrift(ix,iy)* ! signmf*      !srv 07.06.00 17.05.99 25.04.00 05.02.05 11.01.13
      &           (te(leftix(ix,iy),leftiy(ix,iy))                        !srv 05.03.99
      &           *bb(leftix(ix,iy),leftiy(ix,iy),2)                      !srv 05.02.05
      &          /(qe*hy1(leftix(ix,iy),leftiy(ix,iy)))                   !srv
@@ -192,7 +192,7 @@ cxpb  Standard case
      2          +bb(bottomix(ix,iy),bottomiy(ix,iy),2)/
      2           bb(bottomix(ix,iy),bottomiy(ix,iy),3)**2)*              !srv 05.02.05
      2	        (poc(rightix(ix,iy),rightiy(ix,iy))-poc(ix,iy))          !srv 13.05.16 }
-               vedia(ix,iy,1) = -raddidr*facdrift(ix,iy)* ! signmf*      !srv 11.01.13 07.06.00 17.05.99 25.04.00
+               vedia(ix,iy,1) =  raddidr*facdrift(ix,iy)* ! signmf*      !srv 11.01.13 07.06.00 17.05.99 25.04.00
      &           (te(bottomix(ix,iy),bottomiy(ix,iy))                    !srv 05.03.99
      &           *bb(bottomix(ix,iy),bottomiy(ix,iy),2)                  !srv
      &          /(qe*hx(bottomix(ix,iy),bottomiy(ix,iy)))                !srv
