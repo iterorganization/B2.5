@@ -39,7 +39,7 @@ c======================================================================
      ,        kkb,kke,kks,n_atg,n_targ,
      ,        ib(ntrgsx),ie(ntrgsx),it(ntrgsx),l_atg(ntrgsx),
      ,        m_hlp(ntrgsx),k1,k2,flagmin,cont,ksel,flagmin1
-      logical im_cnf,checked
+      logical lim_cnf,checked
 c
       real (kind=R8) :: width,dist,distmin,xx1,xx2,yy1,yy2,temp,
      ,                  distmin1
