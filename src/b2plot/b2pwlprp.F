@@ -39,7 +39,7 @@ c======================================================================
      ,        kkb,kke,kks,n_atg,n_targ,
      ,        ib(ntrgsx),ie(ntrgsx),it(ntrgsx),l_atg(ntrgsx),
      ,        m_hlp(ntrgsx),k1,k2,flagmin,cont,ksel,flagmin1
-      logical add_trg,lim_cnf,checked,complete
+      logical im_cnf,checked
 c
       real (kind=R8) :: width,dist,distmin,xx1,xx2,yy1,yy2,temp,
      ,                  distmin1
@@ -169,7 +169,7 @@ c*** Store original plot zones to be used for substituting proper elements insid
       lwldlis_old(1:size(lwldlis_old,1),1:size(lwldlis_old,2))=
      . lwldlis(1:size(lwldlis,1),1:size(lwldlis,2))
       allocate(istarget(nwldprt))
-      istarget=0
+      istarget=.false.
 
 c*** Check the topology of the grid and the list of target edges
 
@@ -576,7 +576,7 @@ c>>>
 c*** Now fill in the necessary arrays
 
           if(kk .gt. 0) then
-            istarget(il)=1
+            istarget(il)=.true.
 
 c!###{
 c           print *,         'Before merging the targets. ',
@@ -728,7 +728,7 @@ c      end do !}
 c!###}
 
 
-ccc*** Order elements of plot original plot zone in CCW direction
+ccc*** Order elements of original plot zone in CCW direction
       do il=2,nwldprt
         if (istarget(il)) then !{ inside target
           allocate(lis_ind(int(nwldlis_old(il))))
@@ -764,7 +764,7 @@ ccc*** Order elements of plot original plot zone in CCW direction
         end if
       end do
 	  
-ccc*** Order elements of plot original plot zone in CCW direction 
+ccc*** Order elements of original plot zone in CCW direction 
       do il=2,nwldprt !{
         if ((lwldlis(1,il)>lppp) .and.
      .     (lwldlis(nwldlis(il),il)<lppp)) then !{ 
@@ -799,7 +799,7 @@ ccc*** Order elements of plot original plot zone in CCW direction
           end do
         else if ((lwldlis(1,il)<lppp) .and. 
      .          (lwldlis(nwldlis(il),il)>lppp)) then !{ 
-          ! Last element of oldriginal plot zone is inside target but not the first
+          ! Last element of original plot zone is inside target but not the first
           k1=lwldlis_old(nwldlis_old(il),il)
           xx1=pp2(1,k1)
           yy1=pp2(2,k1)
@@ -817,18 +817,18 @@ ccc*** Order elements of plot original plot zone in CCW direction
             end if !}  
           end do !}
           cont=nwldlis(il)-nytg+1
-          ! substitute in originl plot zone the new one starting from the first target element up to the one found before
+          ! substitute in original plot zone the new one starting from the first target element up to the one found before
           do i=cont,flagmin
              lwldlis_old(cont,il)=lwldlis(i,il)
             cont=cont+1
           end do
           nwldlis_old(il)=cont-1
           nwldlis(il)=cont-1
-          ! now change also the new plot zon
+          ! now change also the new plot zone
           do i=1,nwldlis(il)
             lwldlis(i,il)=lwldlis_old(i,il)
           end do
-c$$$        TO BE DONE the case when plot zone is included in target
+c$$$        TO BE DONE the case when plot zone is fully included in target
 c$$$        else if ((lwldlis(1,il)>lppp) .and. 
 c$$$     .          (lwldlis(nwldlis(il),il)>lppp)) then !{ last and first element inside target
 c$$$          write(*,*) 'CASO 3'
