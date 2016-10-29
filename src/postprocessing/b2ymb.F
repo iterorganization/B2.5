@@ -27,7 +27,8 @@
       real :: HEIGHT, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER, W_TH, 
      . P_LENGTH, ALPHA, BETA, THETA, T_GAP
       real :: T_COOLANT, M_FLOW, CP_COOLANT, dummy
-      real :: DIMENSIONS(4), target_length, LPOINTS(50)=0.0d0
+      INTEGER :: DIMENSIONS(4)
+      real :: target_length, LPOINTS(50)=0.0d0
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
       CHARACTER*(10) :: INFILE0= 'b2ymb.dat', 
      . OUTFILE0 = 'mnb_in.dat'

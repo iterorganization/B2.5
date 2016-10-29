@@ -51,7 +51,7 @@
 #ifndef NAGF95
       integer iargc
 #endif
-      character savefile*16, arg*256, lblgm*120, lblmn*120, lblcp*120
+      character savefile*256, arg*256, lblgm*120, lblmn*120, lblcp*120
       logical file_open
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin
@@ -88,7 +88,7 @@
       call getarg(1,arg)
 #endif
       savefile=arg
-      call cfopen (ninp(4), savefile, 'old','unformatted')
+      call cfopen (ninp(4), trim(savefile), 'old','unformatted')
       call cfopen (nout(0),'b2co.prt','new','formatted')
       call cfopen (nout(2),'b2fstate','new','un*formatted')
 c      call cfopen (nout(7),'b2fplasma','new','unformatted')
@@ -151,7 +151,7 @@ c      call cfopen (nout(7),'b2fplasma','new','unformatted')
      &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *   ..save final state
       newversion = plasmastate_version
-      write(lblmn,*) 'Recovered from ',savefile
+      write(lblmn,*) 'Recovered from ',trim(savefile)
       idum(0) = nx
       idum(1) = ny
       idum(2) = ns
@@ -178,7 +178,7 @@ c      call write_b2mod_sources(nout(7))
 c      call write_b2mod_transport(nout(7))
 c      call write_b2mod_anomalous_transport(nout(7))
 c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
-      write(nout(0),*) 'Converted ',savefile,' to b2fstate'
+      write(nout(0),*) 'Converted ',trim(savefile),' to b2fstate'
 *   ..close other files
       do io=0,size(ninp)-1
          inquire(unit=ninp(io),opened=file_open)

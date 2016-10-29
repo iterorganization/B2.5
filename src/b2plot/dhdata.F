@@ -269,7 +269,7 @@ C
       INQUIRE(FILE=DSNAME,EXIST=LEXIST)
       IF( .NOT.LEXIST ) THEN
         IFAIL  = 1
-        YEARSV = '   '
+        YEARSV = '  '
         IZ0SV  = 0
         ICLSV  = 0
         GOTO 9999

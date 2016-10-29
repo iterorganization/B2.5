@@ -244,8 +244,6 @@ c***               groups, number of diagnostic surface groups
       integer mrkn_hlp(nrkn_hlp),mrks_hlp(nrkn_hlp)
       integer jxi, jxa, jsep
       logical ex, warn_tmp, first, first_out, double_null
-      integer lenfnm
-      parameter (lenfnm=120)
       character tab, hlp_c, f*(lenfnm)
       character hlp_frm*120, hlp_frf*240, hlp_tpl*2
       data hlp_neu_peak / 5.0_R8 /

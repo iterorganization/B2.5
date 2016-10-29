@@ -170,7 +170,7 @@
      &  wm0, wm1
 *     (Following data are meant to fit some Sonnet equilibrium for
 *     Asdex-Upgrade.  The fit is only approximate.)
-      parameter (ii=(0,1), xmid=1.65_R8, btmid=2.00_R8,
+      parameter (ii=(0.0_R8,1.0_R8), xmid=1.65_R8, btmid=2.00_R8,
      1  cpsi=0.41_R8, xslo=1.53_R8, yslo=-0.83_R8,
      2	xshi=1.65_R8, yshi=1.32_R8,
      3	shift1=(0.14_R8,0.0_R8), shift2=(0.0_R8,0.0_R8),

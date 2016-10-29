@@ -26,7 +26,8 @@
       real :: L1, L2, L3, H1, H2, H3 ,H4, H5, H_HOLE, RH, 
      . P_LENGTH, ALPHA, BETA, THETA, T_GAP, dummy
       real :: T_COOLANT, M_FLOW, CP_COOLANT
-      real :: DIMENSIONS(4), target_length, LPOINTS(50)=0.0d0
+      INTEGER :: DIMENSIONS(4)
+      real :: target_length, LPOINTS(50)=0.0d0
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
       CHARACTER*(10) :: INFILE0= 'b2yrp.dat', 
      . OUTFILE0 = 'rps_in.dat'

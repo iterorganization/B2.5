@@ -180,7 +180,7 @@ c*** Local variables of general use
      *     hlp_s,hlp_v,hlp_zs,hlp_zv,hlp_zn1,hlp_zn2,zeff
       integer i, j, k, ir,is,ix,iy, nv
       logical ex, warn_tmp
-      character tab, hlp_c, f*40, hlp_frm*256, hlp_frf*400
+      character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
 c#ifdef SCL_IMP_RCI
 c     integer iy
 c#endif

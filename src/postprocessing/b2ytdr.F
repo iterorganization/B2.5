@@ -263,7 +263,8 @@ c 2002-09-11: logic revised
       integer IRPTA3, IRPTE3
       integer NPHOTI, NPLSI, NNREAC, IPLTA, ILINE
       integer NATMI1, NREAC1, NSTRA1, NPLSI1, NPLSM
-      integer IREAD, IEND, IANF, ISTS, IH, I3, L, M, JSS
+      integer IREAD, IEND, IANF, ITOK, IER, ISTS, IH, I3, L, M, JSS
+      integer size_mp, size_mt
       integer IATM, IMOL, IION, IPHOT, ICRM, IPLS, IPLSS, ISTRA
       integer MAXRAD, NSIGVI, NSIGSI, NSIGCI, NPPLG, NCRM
       integer NSIGV1, NSIGS1, NSIGC1, NLOGIN
@@ -342,7 +343,7 @@ c 2002-09-11: logic revised
      .                        ISCLS(:), ISCLT(:), ISCL1(:),
      .                        ISCL2(:), ISCL3(:), ISCLB(:),
      .                        ISCLA(:)
-      real (kind=R8) :: rdum(0:17), RMN, RMX, ALLOC, MPTS
+      real (kind=R8) :: rdum(0:17), DPP, RMN, RMX, ALLOC, MPTS
       real (kind=R8) :: zmin1, zmin2, zmax1, zmax2
       real (kind=R8), allocatable :: e_bundle_contr(:,:)
       real (kind=R8), allocatable :: epls_map(:,:)
@@ -423,7 +424,7 @@ c 2002-09-11: logic revised
       character*72 TITLE5, CHRTAL
       character*74 PATH, FILE, RFILNM
       character HANDLE*6
-      character FILNAM*8,H123*4,REAC*9,REAC2*50,CRC*3
+      character FILNAM*8,H123*4,REAC*9,REAC2*50,CRC*3,CHR*12
       character ELNAME*2,REACSTR*11
       character*8 eirene_format
       character*8 varname
@@ -3861,8 +3862,72 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
   411   READ (IUNIN,'(A80)') ZEILE
         IF (ZEILE(1:1).NE.'*') THEN
           IF (INDEX(ZEILE,'PHOTON').EQ.0) THEN
-            READ (ZEILE,66661)
-     .            I,FILNAM,H123,REAC,CRC,idum(0:1),rdum(0),RMN,RMX
+            IF (streql(eirene_format,'old').or.
+     &          streql(eirene_format,'new').or.
+     &          streql(eirene_format,'facelift')) then
+              READ (ZEILE,66661)
+     .            I,FILNAM,H123,REAC,CRC,idum(0:1),DPP,RMN,RMX
+              size_mp = max(2, len_of_digits(idum(0)))
+              size_mt = max(2, len_of_digits(idum(1)))
+            ELSE
+              READ (ZEILE,66661) I,FILNAM,H123
+              IEND=16
+C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
+              REAC2=REPEAT(' ',50)
+              IF (INDEX(FILNAM,'CONST')==0) THEN
+                CALL EIRENE_READ_TOKEN
+     .           (ZEILE(IEND:),' ',REAC2,ITOK,IER,.FALSE.)
+                call xertst (ier.eq.0, 'error reading reac2 flag')
+                IEND = IEND + ITOK
+              ELSE
+                ITOK = INDEX(ZEILE(IEND:),'FT')
+                IF (ITOK /= 0) THEN
+                  REAC2(1:9) = ZEILE(IEND+ITOK:IEND+ITOK+8)
+                  IEND = IEND+ITOK+2
+                END IF
+                CALL EIRENE_READ_TOKEN
+     .           (ZEILE(IEND:),' ',CHR,ITOK,IER,.FALSE.)
+                call xertst (ier.eq.0, 'error reading reac2 flag')
+                IEND = IEND + ITOK
+              END IF
+!  READ CRC
+              CALL EIRENE_READ_TOKEN
+     .         (ZEILE(IEND:),' ',CRC,ITOK,IER,.FALSE.)
+              IEND = IEND + ITOK
+              call xertst (ier.eq.0, 'error reading crc flag')
+!  READ MP
+              CALL EIRENE_READ_TOKEN
+     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.FALSE.)
+              call xertst (ier.eq.0, 'error reading mp flag')
+              IEND = IEND + ITOK
+              READ (CHR,*) idum(0)
+              size_mp = max(2, len_of_digits(idum(0)))
+!  READ MT
+              CALL EIRENE_READ_TOKEN
+     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.FALSE.)
+              call xertst (ier.eq.0, 'error reading mt flag')
+              IEND = IEND + ITOK
+              READ (CHR,*) idum(1)
+              size_mt = max(2, len_of_digits(idum(1)))
+!  READ DPP
+              CALL EIRENE_READ_TOKEN
+     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+              call xertst (ier.eq.0, 'error reading dpp flag')
+              IEND = IEND + ITOK
+              READ (CHR,'(E12.4)') DPP
+!  READ RMN
+              CALL EIRENE_READ_TOKEN
+     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+              call xertst (ier.eq.0, 'error reading rmn flag')
+              IEND = IEND + ITOK
+              READ (CHR,'(E12.4)') RMN
+!  READ RMX
+              CALL EIRENE_READ_TOKEN
+     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+              call xertst (ier.eq.0, 'error reading rmx flag')
+              IEND = IEND + ITOK
+              READ (CHR,'(E12.4)') RMX
+            END IF
 !  CORRECT FOR OLD REACTIONS NO LONGER SUPPORTED
 !  Remove AMJUEL H.6 reactions
 !  Remove AMJUEL H.9 0.2/0.3/0.4 reactions
@@ -3882,6 +3947,7 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
                 IREAC1(I)=NREAC1
               END IF
               ILINE=ILINE+1
+              REAC_LINE(ILINE)=REPEAT(' ',80)
               IF (streql(FILNAM,'AMJUEL')) THEN
                 IF (streql(REAC,'0.2')) REAC='0.2T'
                 IF (streql(REAC,'0.3')) REAC='0.3T'
@@ -3893,8 +3959,31 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
                 IF (streql(REAC,'7.0c') .and. streql(H123,'H.11'))
      .           REAC='7.0a'
               END IF
-              WRITE(REAC_LINE(ILINE),66661) IREAC1(I),
-     .            FILNAM,H123,REAC,CRC,idum(0:1),rdum(0),RMN,RMX
+              WRITE(REAC_LINE(ILINE)(1:16),'(I3,A1,A6,A1,A4,A1)')
+     .         IREAC1(I),' ',FILNAM,' ',H123,' '
+              IEND=16
+              IF (streql(FILNAM,'CONST')) THEN
+                ITOK = INDEX(ZEILE(IEND:),'FT')
+                IF (ITOK /= 0) THEN
+                  REAC2(1:9) = ZEILE(IEND+ITOK:IEND+ITOK+8)
+                  IEND = IEND+ITOK+2
+                  CALL EIRENE_READ_TOKEN
+     .             (ZEILE(IEND:),' ',REAC2,ITOK,IER,.FALSE.)
+                ELSE
+                  IEND = IEND+9
+                END IF
+              ELSE
+                WRITE(REAC_LINE(ILINE)(IEND+1:IEND+10),'(A9)')
+     .           REAC
+                IEND=IEND+9
+              END IF
+              WRITE(REAC_LINE(ILINE)(IEND+1:IEND+4),'(A3,A1)')
+     .         CRC,' '
+              IEND=IEND+4
+              write(hlp_frm,'(a,i1,a,i1,a)')
+     .         '(i',size_mp+1,',i',size_mt+1,',1P,3(1X,E11.4))'
+              WRITE(REAC_LINE(ILINE)(IEND+1:IEND+size_mp+size_mt+2+36),
+     .         hlp_frm) idum(0:1),DPP,RMN,RMX
             END IF
           ELSE
             NREAC1 = NREAC1 + 1
@@ -4435,6 +4524,7 @@ Cxpb then rewrite the entire block
         READ (IUNIN,'(A72)') ZEILE
         IF (ZEILE(1:3).EQ.'***') THEN
           READ (ZEILE,'(A72)') TITLE5
+          NCRM=0
           IREAD=1
           GOTO 500
         ELSE
@@ -5442,13 +5532,24 @@ cxpb We now rewrite the modified block 4
         END DO
         WRITE(IUNOT,6666) NPLSI1
         DO 5114 IB=1,NPLSI1
-          WRITE(IUNOT,66666) IB,TEXTP1(IB),NMASSP1(IB),NCHARP1(IB),
-     .                                     NPRTP1(IB),NCHRGP1(IB),
-     .                                     ISRFP1(IB),ISRTP1(IB),
-     .                                     ISRSP1(IB),NRCP1(IB),
-     .                                     DENSLIM1(IB),0,
-     .                                     NHSTP1(IB),0,
-     .                                     CDENMODEL1(IB),NRE1(IB)
+          IF (IB.LE.99) THEN
+            WRITE(IUNOT,66666) IB,TEXTP1(IB),NMASSP1(IB),NCHARP1(IB),
+     .                                       NPRTP1(IB),NCHRGP1(IB),
+     .                                       ISRFP1(IB),ISRTP1(IB),
+     .                                       ISRSP1(IB),NRCP1(IB),
+     .                                       DENSLIM1(IB),0,
+     .                                       NHSTP1(IB),0,
+     .                                       CDENMODEL1(IB),NRE1(IB)
+          ELSE
+            I = MOD(IB,100)
+            WRITE(IUNOT,66667) I,TEXTP1(IB),NMASSP1(IB),NCHARP1(IB),
+     .                                       NPRTP1(IB),NCHRGP1(IB),
+     .                                       ISRFP1(IB),ISRTP1(IB),
+     .                                       ISRSP1(IB),NRCP1(IB),
+     .                                       DENSLIM1(IB),0,
+     .                                       NHSTP1(IB),0,
+     .                                       CDENMODEL1(IB),NRE1(IB)
+          END IF
           IF(ISP(IB).NE.0) THEN
             DO K=1, NRCP(ISP(IB))
               IF (ISRSP1(IB).LT.3) THEN
@@ -8749,6 +8850,7 @@ cxpb as they no longer necessarily point to the same species
 66664 FORMAT (1P,I6,6X,5E12.4)
 66665 FORMAT (1P,2I6,4E12.4)
 66666 FORMAT (I2,1X,A8,12(I3),1X,A10,1X,I2)
+66667 FORMAT (I2.2,1X,A8,12(I3),1X,A10,1X,I2)
 
 *-----------------------------------------------------------------------
 *.end b2ytdr

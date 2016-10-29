@@ -14,13 +14,16 @@
      *     i,imax,j,k
       real (kind=r8) ::
      *      aamax,dum,sum,vv(0:nmax-1)
+      external subini, subend, xertst
+
+      call subini('ludcmp')
       d=1.
       do i=0,n
         aamax=0.
         do j=0,n
           if (abs(a(i,j)).gt.aamax) aamax=abs(a(i,j))
         enddo
-        if (aamax.eq.0.) pause 'singular matrix in ludcmp'
+        call xertst (aamax.ne.0.0_R8, 'singular matrix in ludcmp')
         vv(i)=1./aamax
       enddo
       do j=0,n
@@ -62,5 +65,6 @@
           enddo
         endif
       enddo
+      call subend ()
       return
       end

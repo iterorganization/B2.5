@@ -83,7 +83,8 @@ c
      *  edena1int(:,:), edenm1int(:,:), edeni1int(:,:),
      *  edena1int_b2(:,:), edenm1int_b2(:,:), edeni1int_b2(:,:)
       real (kind=R8), allocatable :: wd_old(:), wd_new(:)
-      character*8, allocatable :: textan1(:), eirtxt1(:)
+      character*16, allocatable :: textan1(:)
+      character*8, allocatable :: eirtxt1(:)
       character*3 stnum
       logical ex
 

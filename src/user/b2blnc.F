@@ -102,7 +102,7 @@ c*** from 960808 on
      ,     flxrl_tmp(:)
 c----------------------------------------------------------------------
 c
-      character f*16, hlp_c, hlp_h(np_tmp)*8, hlp_frm*80, tab
+      character f*(lenfnm), hlp_c, hlp_h(np_tmp)*8, hlp_frm*80, tab
 c
 c----------------------------------------------------------------------
 c*** Taken from the common blocks:

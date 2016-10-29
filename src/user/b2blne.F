@@ -133,7 +133,7 @@ c-----------------------------------------------------------------------
       real (kind=R8) :: hlp_h, hlp_p, hlp
       logical lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp
       logical ex, warn_tmp
-      character f*16, hlp_c, hlp_frm*80, tab, hlp_frf*160
+      character f*(lenfnm), hlp_c, hlp_frm*80, tab, hlp_frf*160
       real (kind=R8) :: hy1
       intrinsic max
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)

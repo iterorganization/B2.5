@@ -44,7 +44,7 @@ c***        ntrc(ntrc_res)     'tracing/residuals.trc'
 c***        ntrc(ntrc_src)     'tracing/sources.trc'
 c***        ntrc(ntrc_tst)     'tracing/test.trc'
 c
-      character, save :: tab, hlp_c, f*32, hlp_s(3), 
+      character, save :: tab, hlp_c, f*(lenfnm), hlp_s(3),
      ,          hlp_frmr*160, hlp_frms*160, hlp_frmt*160,
      ,          hlp_emsg(5)*30
       character :: hlp_h(-1:nh_tmp)*2, hlp_al(0:ns-1)*2

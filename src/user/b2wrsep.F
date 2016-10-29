@@ -118,7 +118,7 @@ c*** Local variables of general use
       integer i,j,k,l,is,ix,iy,jxi,jxa,jsep,nv
       integer, allocatable :: ii(:)
       logical ex, warn_tmp
-      character tab, hlp_c, f*40, hlp_frm*256, hlp_frf*400
+      character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
       character*2, allocatable :: hlp_a(:)
 c*** Procedures
       real (kind=R8) :: hy1

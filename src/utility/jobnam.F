@@ -18,7 +18,7 @@
 *     automatic.)
       if (jobnm.eq.' ') then
 *      (this is the first call to jobnam)
-       jobnm = daytim()//' '//usrnam()
+       call strcopy(26,34,jobnm,daytim()//' '//usrnam())
 *      (note that usrnam() will be truncated to eight characters.)
       endif
       jobnam = jobnm

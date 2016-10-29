@@ -86,7 +86,7 @@ c
      *     hlp_pi, hlp_po, hlp_fi, hlp_fo, hlp_nu, hlp_mf,
      *     pr(-1:nx, -1:ny)
       logical ex,warn_tmp
-      character hlp_c, tab, f*16, hlp_frm*80, hlp_frf*160
+      character hlp_c, tab, f*(lenfnm), hlp_frm*80, hlp_frf*160
 c----------------------------------------------------------------------
       real (kind=R8) ::
      *     sx, pit      

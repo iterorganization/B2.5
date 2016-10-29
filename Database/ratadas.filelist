@@ -1,5 +1,5 @@
 'SOLPSTOP/modules/adas'
-54
+74
 '12  ' '12  ' '96  ' '12  ' '12  ' '96  ' '96  ' 'h '
 '96  ' '96  ' '89  ' '96  ' '96  ' '96  ' '96  ' 'he'
 '96  ' '96  ' '89  ' '96  ' '96  ' '96  ' '96  ' 'li'
@@ -54,6 +54,26 @@
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'te'
 'none' 'none' 'none' 'none' 'none' 'none' 'none' 'i '
 '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'xe'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'cs'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'ba'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'la'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'ce'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'pr'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'nd'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'pm'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'sm'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'eu'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'gd'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'tb'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'dy'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'ho'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'er'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'tm'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'yb'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'lu'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'hf'
+'none' 'none' 'none' 'none' 'none' 'none' 'none' 'ta'
+'89  ' '89  ' '89  ' '89  ' '89  ' '89  ' '89  ' 'w '
  rec    ion    cex    prb    plt    zcd    ecd    es      [names in ratadas.F]
  acd    scd    ccd    prb    plt    zcd    ecd            [directories in adas]
 
@@ -74,6 +94,7 @@ Change log:
 				Changed He CCD from '96 to '89 (zero in '96)
 	2012.03.20      DPC     '96 data for O seems to be missing CCD --- use '89 data
 	2011.11.18      DPC     '96 data for N seems to be missing CCD --- use '89 data
+	2008.02.04	XPB	Added elements 'Cs' to 'W ' (55 to 74)
 	2003.01.23	XPB	Added elements 'Sb' to 'Xe' (51 to 54)
 	2000.07.10	DPC	Changed h, he, c, n, o from 89 to 96
 				Changed be to 93

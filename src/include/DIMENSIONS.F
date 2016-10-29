@@ -16,8 +16,8 @@
 #define DEF_NYD 36
 #define DEF_NPHID 1
 #define DEF_NSTRA (5*DEF_NCUT/2+2)*DEF_NATM+1
-#define DEF_NFL 21
-#define DEF_NPLS 15
+#define DEF_NFL DEF_NSD
+#define DEF_NPLS (DEF_NSD-DEF_NATM)+(DEF_NATM+DEF_NMOL)*(DEF_NATM+DEF_NMOL)
 #define DEF_NATM 6
 #define DEF_NMOL 3
 #define DEF_NION 3
