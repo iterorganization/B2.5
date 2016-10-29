@@ -1,14 +1,14 @@
 ! ##########################################################################
-! This program first reads the formatted file 'b2yrp.dat' and 
+! This program first reads the formatted file 'b2yrp.dat' and
 ! writes the unformatted file 'rps_in.dat' that is needed by the FreeFem++
 ! heat transfer model of the reflector plates.
 ! Then, it reads the files 'wlld_[i-o]rp.dat' produced by
-! b2plot with the "1000 wlld" command and writes the unformatted files 
-! 'Wtot_[i-o]rp.dat','Wpls_[i-o]rp.dat', 'X_[i-o]rp.dat' and 
-! '[i-o]rp_size.dat' that are needed  by the FreeFem++ heat transfer model 
+! b2plot with the "1000 wlld" command and writes the unformatted files
+! 'Wtot_[i-o]rp.dat','Wpls_[i-o]rp.dat', 'X_[i-o]rp.dat' and
+! '[i-o]rp_size.dat' that are needed  by the FreeFem++ heat transfer model
 ! of the reflector plates.
 ! In 'Wtot_[i-o]rp.dat' is stored the value of the total heat flux for each
-! tile of the RP. 
+! tile of the RP.
 ! In 'Wpls_tg[i-o].dat' is stored the value of the heat flux due only to
 ! plasma particles for each tile of the hypervapotron.
 ! In 'X_[i-o]rp.dat' is stored the value of the poloidal coordinate of the
@@ -23,13 +23,13 @@
       IMPLICIT NONE
 
       INTEGER :: NN, NLINE, NTILES, NPOINTS, II, JJ, KK, INUNIT=8888
-      real :: L1, L2, L3, H1, H2, H3 ,H4, H5, H_HOLE, RH, 
+      real :: L1, L2, L3, H1, H2, H3 ,H4, H5, H_HOLE, RH,
      . P_LENGTH, ALPHA, BETA, THETA, T_GAP, dummy
       real :: T_COOLANT, M_FLOW, CP_COOLANT
       INTEGER :: DIMENSIONS(4), REVERSE(2)
       real :: target_length, LPOINTS(50)=0.0d0
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
-      CHARACTER*(10) :: INFILE0= 'b2yrp.dat', 
+      CHARACTER*(10) :: INFILE0= 'b2yrp.dat',
      . OUTFILE0 = 'rps_in.dat'
       CHARACTER*(20) :: skip, OUTFILE(4),INFILE
       CHARACTER*(1) :: trg(2)
@@ -38,29 +38,29 @@
 !##########################################################################
 ! Read input file 'b2yrp.dat' and then write 'rps_in.dat'
 !##########################################################################
-      NAMELIST /GEOMETRY/	                
-     . L1, L2, L3, H1, H2, H3 ,H4, 
+      NAMELIST /GEOMETRY/
+     . L1, L2, L3, H1, H2, H3 ,H4,
      . H5, H_HOLE, RH, P_LENGTH, ALPHA, BETA,
      . THETA, T_GAP, REVERSE
 
-      NAMELIST /MESH/                     
+      NAMELIST /MESH/
      . NN
 
-      NAMELIST /COOLANT/                 
+      NAMELIST /COOLANT/
      . T_COOLANT, M_FLOW, CP_COOLANT
-      
+
       NAMELIST /OUTPUT/
      . NPOINTS, LPOINTS
 
       open(unit=inunit,file=infile0,status='old',action='read')
-      READ(INUNIT,NML=GEOMETRY)	
-      READ(INUNIT,NML=MESH)	
+      READ(INUNIT,NML=GEOMETRY)
+      READ(INUNIT,NML=MESH)
       READ(INUNIT,NML=COOLANT)
       READ(INUNIT,NML=OUTPUT)
       close(INUNIT);
       ! Write output file
       INQUIRE (FILE=outfile0, EXIST=exists)
-      if (exists) then 
+      if (exists) then
          open (unit=inunit,file=outfile0,action='readwrite')
          close (unit=inunit,status='delete')
       endif
@@ -89,8 +89,8 @@
             NLINE = NLINE +1
          GO TO 5
  15      CLOSE(INUNIT)
-         
-         ALLOCATE(MM(NLINE,4))     ! then allocate variable size and read again storing the values. First column will be x coordinate, 
+
+         ALLOCATE(MM(NLINE,4))     ! then allocate variable size and read again storing the values. First column will be x coordinate,
                                 ! second the total  heat flux, the third the radiation heat flux and the fourth  the number of points
          MM=0.0d0
          MM(1,4)=dble(NLINE)
@@ -115,15 +115,15 @@
          do ii=2,ntiles            ! create the new x vector
             bb(ii,1)=bb(ii-1,1)+p_length
          enddo
-         
+
          call interp( mm(1:nline,1), mm(1:nline,2), bb(2:ntiles-1,1),
-     .    bb(2:ntiles-1,2), nline, ntiles-2)        
+     .    bb(2:ntiles-1,2), nline, ntiles-2)
          call interp( mm(1:nline,1), mm(1:nline,3), bb(2:ntiles-1,1),
      .    bb(2:ntiles-1,3), nline, ntiles-2)
-         
+
          dimensions(1:3)=ntiles
          dimensions(4)=1
-         
+
          if (REVERSE(KK)>0) then
             do ii=1,2
                bb(1:ntiles,5)=bb(1:ntiles,ii+1) !flip the vector in the direction of the fluid flow
@@ -132,7 +132,7 @@
                enddo
             enddo
          endif
-         
+
          ! now write the output files, but first check if there are already present. If yes, remove them before writing
          OUTFILE(1)='X_'//trg(KK)//'rp.dat'
          OUTFILE(2)='Wtot_'//trg(KK)//'rp.dat'
@@ -140,7 +140,7 @@
          OUTFILE(4)=trg(KK)//'rp_size.dat'
          DO JJ=1,4
             INQUIRE (FILE=outfile(JJ), EXIST=exists)
-            if (exists) then 
+            if (exists) then
                open (unit=inunit,file=outfile(JJ),action='readwrite')
                close (unit=inunit,status='delete')
             endif
@@ -153,7 +153,7 @@
          ENDDO
          DEALLOCATE(MM,BB)
       ENDDO
-      
+
       stop
       end
 
@@ -176,20 +176,20 @@
       minXData = xData(1)
       maxXData = xData(nData)
       dataIndex=1
-      
-      
+
+
       do inputIndex = 1, nVal
-          
+
  1       if(xData(dataIndex+1).le.xVal(inputIndex)) then
             dataIndex=dataIndex+1
             goto 1
           endif
-                   
+
          weight = (xVal(inputIndex) - xData(dataIndex))/
      .    (xData(dataIndex+1)-xData(dataIndex))
-         
+
          yVal(inputIndex) = weight*(yData(dataIndex+1)-yData(dataIndex))
      .    +yData(dataIndex)
       enddo
-      
+
       end subroutine
