@@ -57,3 +57,8 @@ LD = ${FC}
 LDOPTS = -openmp
 
 LCPP = ${LD_SONNET}
+
+!!!Local Variables:
+!!! mode: Makefile
+!!! End:
+

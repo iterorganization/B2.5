@@ -32,3 +32,8 @@ LD = f90
 LDOPTS = 
 
 # LDEXTRA  = env.o
+
+!!!Local Variables:
+!!! mode: Makefile
+!!! End:
+

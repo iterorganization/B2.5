@@ -54,3 +54,8 @@ LDOPTS = -g -C
 else
 LDOPTS =
 endif
+
+!!!Local Variables:
+!!! mode: Makefile
+!!! End:
+

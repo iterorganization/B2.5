@@ -54,3 +54,8 @@ LDEXTRA		= -lblas -lsonnet -lstdc++
 INCMOD 		= -I
 MOD 		  = mod
 OBJDEST 	= -o ${OBJDIR}/$*.o
+
+!!!Local Variables:
+!!! mode: Makefile
+!!! End:
+

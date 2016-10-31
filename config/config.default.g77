@@ -36,3 +36,8 @@ LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
 LD = f90
 LDOPTS = 
+
+!!!Local Variables:
+!!! mode: Makefile
+!!! End:
+

@@ -33,3 +33,8 @@ endif
 LD = f90
 LDOPTS = -Wl"-M,s"
 
+
+!!!Local Variables:
+!!! mode: Makefile
+!!! End:
+

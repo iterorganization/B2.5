@@ -53,3 +53,8 @@ LD = f95i -v 9.1
 # LDOPTS = -Bstatic
 
 LCPP = ${LD_SONNET}
+
+!!!Local Variables:
+!!! mode: Makefile
+!!! End:
+

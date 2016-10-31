@@ -78,3 +78,8 @@ LDOPTS   = -i_dynamic
 
 LCPP     = ${LD_SONNET}
 
+
+!!!Local Variables:
+!!! mode: Makefile
+!!! End:
+

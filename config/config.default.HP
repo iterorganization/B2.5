@@ -46,3 +46,8 @@ endif
  endif
  LD = fort77
  LDOPTS = $(nil)
+
+!!!Local Variables:
+!!! mode: Makefile
+!!! End:
+
