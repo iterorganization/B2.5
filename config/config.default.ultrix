@@ -44,7 +44,7 @@ endif
  LD = f77
  LDOPTS = $(nil)
 
-!!!Local Variables:
-!!! mode: Makefile
-!!! End:
+#!!!Local Variables:
+#!!! mode: Makefile
+#!!! End:
 

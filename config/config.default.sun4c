@@ -64,7 +64,7 @@ endif
  LD = f77
  LDOPTS = -fast
 
-!!!Local Variables:
-!!! mode: Makefile
-!!! End:
+#!!!Local Variables:
+#!!! mode: Makefile
+#!!! End:
 

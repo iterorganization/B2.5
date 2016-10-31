@@ -40,7 +40,7 @@ LD = f90
 LDOPTS = -l /usr/local/pat/libpat.a /usr/local/pat/pat.cld
 LDOPTS = 
 
-!!!Local Variables:
-!!! mode: Makefile
-!!! End:
+#!!!Local Variables:
+#!!! mode: Makefile
+#!!! End:
 
