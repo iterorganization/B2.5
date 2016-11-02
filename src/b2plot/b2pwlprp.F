@@ -727,99 +727,92 @@ c     ,                                 (lwldlis(i,il),i=1,nwldlis(il))
 c      end do !}
 c!###}
 
-
-ccc*** Order elements of original plot zone in CCW direction
+ccc*** Order elements of original plot zone in CCW direction	  
       do il=2,nwldprt
-        if (istarget(il)) then !{ inside target
-          allocate(lis_ind(int(nwldlis_old(il))))
-          do i=1,nwldlis_old(il)
-            k1=abs(lwldlis_old(i,il))
-            xx1=pp1(1,k1)
-            yy1=pp1(2,k1)
-            distmin=1.0e5
-            flagmin=1
-            do i1=1,nwldlis(1)
-              k2=abs(lwldlis(i1,1))
-              xx2=pp1(1,k2)
-              yy2=pp1(2,k2)
-              dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
-              if (dist<distmin) then !{
-                distmin=dist
-                flagmin=i1
-              end if !}
-            end do
-            lis_ind(i)=flagmin
-          end do	  
-          !Sort
-          do i1=1,nwldlis_old(il)-1
-            cont=minloc(lis_ind(i1:nwldlis_old(il)),1)
-            temp=lis_ind(cont+i1-1)
-            lis_ind(cont+i1-1)=lis_ind(i1)
-            lis_ind(i1)=temp
-            temp=lwldlis_old(cont+i1-1,il)
-            lwldlis_old(cont+i1-1,il)=lwldlis_old(i1,il)
-            lwldlis_old(i1,il)=temp
-          end do
-          deallocate(lis_ind)
-        end if
-      end do
-	  
-ccc*** Order elements of original plot zone in CCW direction 
-      do il=2,nwldprt !{
-        if ((lwldlis(1,il)>lppp) .and.
-     .     (lwldlis(nwldlis(il),il)<lppp)) then !{ 
-          ! First element of original plot zone is inside target but not the last
-          k1=lwldlis_old(1,il)
+        allocate(lis_ind(int(nwldlis_old(il))))
+        do i=1,nwldlis_old(il)
+          k1=abs(lwldlis_old(i,il))
           xx1=pp1(1,k1)
           yy1=pp1(2,k1)
           distmin=1.0e5
           flagmin=1
-          do i=1,nytg-1 !{
-            ! look for target element which is the nearest to the first
-            k2=lwldlis(i,il)
+          do i1=1,nwldlis(1)
+            k2=abs(lwldlis(i1,1))
             xx2=pp1(1,k2)
             yy2=pp1(2,k2)
             dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
             if (dist<distmin) then !{
               distmin=dist
-              flagmin=i
-            end if !}  
-          end do !}
-          cont=1
-          ! substitute in originl plot zone the new one starting from the target element found
-          do i=flagmin,nwldlis(il)
-            lwldlis_old(cont,il)=lwldlis(i,il)
-            cont=cont+1
+              flagmin=i1
+            end if !}
           end do
-          nwldlis_old(il)=cont-1
-          nwldlis(il)=cont-1
-          ! now change also the new plot zone 
-          do i=1,nwldlis(il)
-            lwldlis(i,il)=lwldlis_old(i,il)
+          lis_ind(i)=flagmin
+        end do	  
+        !Sort
+        do i1=1,nwldlis_old(il)-1
+          cont=minloc(lis_ind(i1:nwldlis_old(il)),1)
+          temp=lis_ind(cont+i1-1)
+          lis_ind(cont+i1-1)=lis_ind(i1)
+          lis_ind(i1)=temp
+          temp=lwldlis_old(cont+i1-1,il)
+          lwldlis_old(cont+i1-1,il)=lwldlis_old(i1,il)
+          lwldlis_old(i1,il)=temp
+        end do
+        deallocate(lis_ind)
+      end do
+	  
+ccc*** Check if a plot zone has starting and ending element which is inside a target     
+      do il=2,nwldprt
+        if (.not. istarget(il)) then 
+          !{ check if first and last element of the list are not in lwldlis(1), if so they are inside targets
+          k1=abs(lwldlis_old(1,il));
+          k2=abs(lwldlis_old(nwldlis_old(il),il))
+          flagmin=0			
+          do i1=1,nwldlis(1)
+            ksel=abs(lwldlis(i1,1))
+            if ((ksel .eq. k1) .or. (ksel .eq. k2)) then
+              flagmin=1
+            end if
           end do
-        else if ((lwldlis(1,il)<lppp) .and. 
-     .          (lwldlis(nwldlis(il),il)>lppp)) then !{ 
-          ! Last element of original plot zone is inside target but not the first
-          k1=lwldlis_old(nwldlis_old(il),il)
-          xx1=pp2(1,k1)
-          yy1=pp2(2,k1)
+          if (flagmin .eq. 0) then
+            istarget(il)=1
+          end if
+        end if
+      end do
+	  	    
+ccc*** Substitute b2 cells only when overlapping original plot zone target elements
+      do il=2,nwldprt !{
+	if (istarget(il)) then !{ inside target
+          k1=lwldlis_old(1,il)
+          k2=lwldlis_old(nwldlis_old(il),il)
           distmin=1.0e5
           flagmin=1
-          do i=1,nytg-1 !{
-            ! Look for the target element which is nearest to the last
-            k2=lwldlis(nwldlis(il)-i+1,il)
-            xx2=pp2(1,k2)
-            yy2=pp2(2,k2)
+          distmin1=1.0e5
+          flagmin1=1
+          do i=1,nwldlis(1)
+            xx1=pp1(1,k1)
+            yy1=pp1(2,k1)
+            ksel=lwldlis(i,1)
+            xx2=pp1(1,ksel)
+            yy2=pp1(2,ksel)
             dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
             if (dist<distmin) then !{
               distmin=dist
-              flagmin=nwldlis(il)-i+1
-            end if !}  
+              flagmin=i
+            end if !}
+            xx1=pp2(1,k2)
+            yy1=pp2(2,k2)
+            xx2=pp2(1,ksel)
+            yy2=pp2(2,ksel)
+            dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
+            if (dist<distmin1) then !{
+              distmin1=dist
+              flagmin1=i
+            end if !}
           end do !}
-          cont=nwldlis(il)-nytg+1
-          ! substitute in original plot zone the new one starting from the first target element up to the one found before
-          do i=cont,flagmin
-             lwldlis_old(cont,il)=lwldlis(i,il)
+          cont=1
+          do i=flagmin,flagmin1
+            lwldlis_old(cont,il)=lwldlis(i,1)
             cont=cont+1
           end do
           nwldlis_old(il)=cont-1
@@ -828,45 +821,7 @@ ccc*** Order elements of original plot zone in CCW direction
           do i=1,nwldlis(il)
             lwldlis(i,il)=lwldlis_old(i,il)
           end do
-c$$$        TO BE DONE the case when plot zone is fully included in target
-c$$$        else if ((lwldlis(1,il)>lppp) .and. 
-c$$$     .          (lwldlis(nwldlis(il),il)>lppp)) then !{ last and first element inside target
-c$$$          write(*,*) 'CASO 3'
-c$$$          k1=lwldlis_old(1,il)
-c$$$          k2=lwldlis_old(nwldlis_old(il),il)
-c$$$          distmin=1.0e5
-c$$$          flagmin=1
-c$$$          distmin1=1.0e5
-c$$$          flagmin1=1
-c$$$          do i=1,nytg-1 !{ scorro gli elementi dal prim all'ultimo del target
-c$$$            xx1=pp1(1,k1)
-c$$$            yy1=pp1(2,k1)
-c$$$            ksel=lwldlis(i,il)
-c$$$            xx2=pp1(1,ksel)
-c$$$            yy2=pp1(2,ksel)
-c$$$            dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
-c$$$            if (dist<distmin) then !{
-c$$$              distmin=dist
-c$$$              flagmin=i
-c$$$            end if !}
-c$$$            xx1=pp2(1,k2)
-c$$$            yy1=pp2(2,k2)
-c$$$            ksel=lwldlis(nwldlis(il)-i+1,il)
-c$$$            xx2=pp2(1,ksel)
-c$$$            yy2=pp2(2,ksel)
-c$$$            dist=sqrt((xx1-xx2)**2+(yy1-yy2)**2)
-c$$$            if (dist<distmin1) then !{
-c$$$              distmin1=dist
-c$$$              flagmin1=nwldlis(il)-i+1
-c$$$            end if !}
-c$$$          end do !}
-c$$$          cont=1
-c$$$          do i=flagmin,flagmin1
-c$$$            lwldlis_old(cont,il)=lwldlis(i,il)
-c$$$            cont=cont+1
-c$$$          end do
-c$$$          nwldlis_old(il)=cont-1
-        end if!}
+        end if !}
       end do !}
 
       deallocate(nwldlis_old,lwldlis_old,istarget) 
