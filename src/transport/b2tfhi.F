@@ -59,6 +59,7 @@
      &        ixl, iyl, ixb, iyb
       integer, save :: iout = 0                                      !srv 16.09.02
       integer, save :: mdf_fhi = 0                                   !srv 04.02.03 13.10.06
+      integer, save :: drift_style = 1
       real (kind=R8), save :: PSch=1.0e0_R8                          !srv 17.01.07
       real (kind=R8), save :: ycur = 1.0_R8                          !srv 07.07.08
       real (kind=R8) ::
@@ -97,6 +98,7 @@
 *   ..get input parameters
       if (ncall.eq.0) then
         call ipgeti ('b2tfhe_conduction_only', conduction_only)
+        call ipgeti ('b2tfnb_drift_style', drift_style)
         call ipgeti ('b2tfhi_no_hybr', no_hybr)
         call ipgeti ('b2tfhi_mdf', mdf_fhi)                          !srv 13.10.06
         call ipgetr ('b2tfhi_PSch', PSch)                            !srv 17.01.07
@@ -330,15 +332,20 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
              prefactor=
      1        (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))     !sv 17.05.99
      &        /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))      !sv 17.05.99
-     &        *(na(leftix(ix,iy),leftiy(ix,iy),is)              !sv 17.05.99
-     &        *bb(leftix(ix,iy),leftiy(ix,iy),2)                !sv 17.05.99
-     &        /bb(leftix(ix,iy),leftiy(ix,iy),3)                !sv 17.05.99
-     &        +na(ix,iy,is)                                     !sv 17.05.99
-     &        *bb(ix,iy,2)/bb(ix,iy,3))/2.0_R8
-             cum_flo_vadia=cum_flo_vadia+
-     1        prefactor*vadia(ix,iy,0,is)
-             cum_flo_vaecrb=cum_flo_vaecrb+
-     1        prefactor*vaecrb(ix,iy,0,is)
+     &        *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8
+             if (drift_style.eq.0) then
+               cum_flo_vadia=cum_flo_vadia + 0.5_R8*prefactor*
+     1           (vadia(ix,iy,0,is) + 
+     2            vadia(leftix(ix,iy),leftiy(ix,iy),0,is))
+               cum_flo_vaecrb=cum_flo_vaecrb + 0.5_R8*prefactor*
+     1           (vaecrb(ix,iy,0,is) + 
+     2            vaecrb(leftix(ix,iy),leftiy(ix,iy),0,is))
+             else
+               cum_flo_vadia=cum_flo_vadia+
+     1           prefactor*vadia(ix,iy,0,is)
+               cum_flo_vaecrb=cum_flo_vaecrb+
+     1           prefactor*vaecrb(ix,iy,0,is)
+             endif
            enddo
          endif
          floi0_mdf = floi0+1.5_R8*cum_flo_vaecrb                !srv 18.08.08
@@ -472,10 +479,19 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &        /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))   !sv 17.05.99
      &        *(na(bottomix(ix,iy),bottomiy(ix,iy),is)             !sv 17.05.99
      &         +na(ix,iy,is))/2.0_R8                               !sv 17.05.99
-             cum_flo_vadia=cum_flo_vadia+
-     1        prefactor*vadia(ix,iy,1,is)
-             cum_flo_vaecrb=cum_flo_vaecrb+
-     1        prefactor*vaecrb(ix,iy,1,is)
+             if (drift_style.eq.0) then
+               cum_flo_vadia=cum_flo_vadia+
+     1          0.5_R8*prefactor*(vadia(ix,iy,1,is) + 
+     2          vadia(bottomix(ix,iy),bottomiy(ix,iy),1,is))
+               cum_flo_vaecrb=cum_flo_vaecrb+
+     1          0.5_R8*prefactor*(vaecrb(ix,iy,1,is) + 
+     2          vaecrb(bottomix(ix,iy),bottomiy(ix,iy),1,is))
+             else
+               cum_flo_vadia=cum_flo_vadia+
+     1          prefactor*vadia(ix,iy,1,is)
+               cum_flo_vaecrb=cum_flo_vaecrb+
+     1          prefactor*vaecrb(ix,iy,1,is)
+             endif
            enddo
          endif
 	 if(mdf_fhi.eq.0) then

@@ -67,6 +67,7 @@
       integer ncall, n2, ix, iy, ib, is, is0, 
      *   no_current, conduction_only, no_hybr, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
+      integer, save :: drift_style = 1
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, t0,
      &   tex, tex0, ehx_po, ehy_po,
@@ -128,6 +129,7 @@
        call ipgeti ('b2tfhe_conduction_only', conduction_only)          !xpb
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                          !xpb
        call ipgeti ('b2tfch_iout', iout)                                !srv 18.06.08
+       call ipgeti ('b2tfnb_drift_style', drift_style)
       endif                                                             !xpb
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -601,7 +603,12 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      1         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))    	 !xpb
      &         /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))     	 !xpb
      &         *(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8
-              flo_vedia=prefactor*vedia(ix,iy,0)
+              if (drift_style.eq.0) then
+                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,0) + 
+     1            vedia(leftix(ix,iy),leftiy(ix,iy),1))
+              else
+                flo_vedia=prefactor*vedia(ix,iy,0)
+              endif
             endif
             floe0=floe0_nd+2.5_R8*flo_vedia
             if (no_hybr.eq.0) then

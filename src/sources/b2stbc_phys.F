@@ -455,10 +455,16 @@
       enddo
 cxpb  Following suggestion from Russians, the drift velocity
 cxpb  should only include ExB and not diamagnetic contribution
+cwdk  With redefinition of drifts as being the poloidal projections,
+cwdk  now need to recompute full diamagnetic component for ud
       if (sheath_drift_fix.eq.0) then
-        ud(:,:,:) = uadia(:,:,0,:)
+        do is = 0,ns-1
+          ud(:,:,is) = uadia(:,:,0,is)*bb(:,:,3)/bb(:,:,2)*signmf
+        enddo
       else
-        ud(:,:,:) = vaecrb(:,:,0,:)
+        do is=0,ns-1
+          ud(:,:,is) = vaecrb(:,:,0,is)*bb(:,:,3)/bb(:,:,2)*signmf
+        enddo
       endif
       if (main_call .and. diagno.ge.1) then                           !xpb
         write(*,'(a,1p,(10000e12.4))') 'dna0',

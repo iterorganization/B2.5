@@ -60,6 +60,7 @@
      *   no_current, conduction_only, no_hybr, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
       integer, save :: mdf_fhe = 0                                      !srv 04.02.03 13.10.06
+      integer, save :: drift_style = 1
       real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
@@ -102,6 +103,7 @@
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2tfhe_conduction_only', conduction_only)           !xpb
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                           !xpb
+       call ipgeti ('b2tfnb_drift_style', drift_style)
        call ipgeti ('b2tfhe_mdf', mdf_fhe)                               !srv 13.10.06
        call ipgetr ('b2tfhe_PSch', PSch)                                 !srv 17.01.07
        call ipgeti ('b2tfhe_iout', iout)                                 !srv 18.06.08
@@ -329,8 +331,15 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &         /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))     	 !xpb
      &         *(ne(leftix(ix,iy),leftiy(ix,iy))                	 !xpb
      &          +ne(ix,iy))/2.0_R8
-              flo_vedia=prefactor*vedia(ix,iy,0)
-              flo_veecrb=prefactor*veecrb(ix,iy,0)
+              if (drift_style.eq.0) then
+                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,0) + 
+     1            vedia(leftix(ix,iy),leftiy(ix,iy),0))
+                flo_veecrb=0.5_R8*prefactor*(veecrb(ix,iy,0) + 
+     1            veecrb(leftix(ix,iy),leftiy(ix,iy),0))
+              else
+                flo_vedia=prefactor*vedia(ix,iy,0)
+                flo_veecrb=prefactor*veecrb(ix,iy,0)
+              endif
             endif
             floe0_mdf=floe0+1.5_R8*flo_veecrb                            !srv 18.08.08
             floe0=floe0+2.5_R8*flo_vedia+1.5_R8*flo_veecrb
@@ -444,8 +453,15 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &         /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy)) 	 !xpb
      &         *(ne(bottomix(ix,iy),bottomiy(ix,iy))            	 !xpb
      &          +ne(ix,iy))/2.0_R8                              	 !xpb
-              flo_vedia=prefactor*vedia(ix,iy,1)
-              flo_veecrb=prefactor*veecrb(ix,iy,1)
+              if (drift_style.eq.0) then
+                flo_vedia=0.5_R8*prefactor*(vedia(ix,iy,1) + 
+     1            vedia(bottomix(ix,iy),bottomiy(ix,iy),1))
+                flo_veecrb=0.5_R8*prefactor*(veecrb(ix,iy,1) + 
+     1            veecrb(bottomix(ix,iy),bottomiy(ix,iy),1))
+              else
+                flo_vedia=prefactor*vedia(ix,iy,1)
+                flo_veecrb=prefactor*veecrb(ix,iy,1)
+              endif
             endif
 	    if(mdf_fhe.eq.0) then                                        !srv 13.10.06 {
               floe(ix,iy,1) = floe0+2.5_R8*flo_vedia+1.5_R8*flo_veecrb
