@@ -715,7 +715,7 @@ endif
 tags:
 	rm -f ${SRCB2}/TAGS ; etags -o ${SRCB2}/TAGS ${TAGSLIST}
 
-listobj:
+listobj: ${OBJDIR}/dependencies
 ifdef USE_EIRENE
 	@rm -f ${OBJDIR}/LISTOBJ; touch ${OBJDIR}/LISTOBJ; l="OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
