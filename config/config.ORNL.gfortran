@@ -30,17 +30,12 @@ FC = gfortran
 endif
 
 ifdef SOLPS_DEBUG
-ifdef USE_MPI
-FCOPTS = -g -fbounds-check -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
-else
-FCOPTS = -g -fbounds-check -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
-endif
-else
-ifdef USE_MPI
-FCOPTS = -O2 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
+#FCOPTS = -g -fbounds-check -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
+FCOPTS = -g -frange-check -fbounds-check -Wcharacter-truncation -fcheck=all -fbacktrace \
+-Waliasing -Wampersand -Wconversion -Wsurprising -Wc-binding-type -Wintrinsics-std -Wintrinsic-shadow -Wline-truncation -Wtarget-lifetime -Winteger-division -Wreal-q-constant #-Wall
+# -Wimplicit-interface -Wunused-parameter -Wunused -Wtabs
 else
 FCOPTS = -O2 -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans #-finit-local-zero
-endif
 endif
 
 DBLFC = ${FC}
