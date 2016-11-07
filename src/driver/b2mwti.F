@@ -109,7 +109,6 @@
       character*5 rw
       external b2crtimecdf, rwcdf, rwcdf_settime, ncclos
 #endif
-      intrinsic max, sqrt
 *   ..initialisation
       save ncall, ntstep, jxi, jxa, jsep, ixtl, ixtr, target_offset,
      * iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt,
@@ -119,11 +118,12 @@
 
       real (kind=R8) ::
      *   hy1
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 
 *-----------------------------------------------------------------------
 *.computation
 
+      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
+      
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2mwti')
