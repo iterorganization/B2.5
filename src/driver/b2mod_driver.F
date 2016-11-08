@@ -82,6 +82,8 @@
       integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
       integer, save :: pot_eq = 1
       integer, save :: guard_flows = 2
+      integer, save :: old_style = 0                                 !pb 29.07.16
+      integer, save :: iaverage = 0, ird_aver = 0
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
@@ -1151,6 +1153,9 @@ csw 09oct2012
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
+       call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
+       call ipgeti ('b2mndt_average', iaverage)                !pb 29.09.16
+       call ipgeti ('b2mndt_read_average', ird_aver)           !pb 29.09.16
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
@@ -1381,6 +1386,11 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      &  b2fstati_version)
+
+*   read averaged profiles
+      if (ird_aver > 0)
+     &  call read_averages(na, te, ti, ua, po, nx, ny, ns)
+
       if(iout.ne.0) then                                             !srv 25.01.16 {
        call my_out(70,nx,ny,ne,'b2mndr_ne')
        do is = 0,ns-1
@@ -2097,6 +2107,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..write summary of final state
       call b2wfpi (nout(0), idout1, nx, ny, ns, ne, na, ua,
      &  te, ti, po, fna, fhe, fhi, fch)
+      if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns,              !pb 29.07.16
+     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *   ..test plasma state
       call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
@@ -2188,6 +2200,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
          call xerrab ('b2mndr not compiled with the B25_EIRENE option')
 #endif
       endif
+
+      if (iaverage > 0) call profile_average (.true.,nx,ny,ns)
+
+      if (ird_aver > 0) call write_averages (nx,ny,ns)
 
 *  .. finalize tracing routines
       call b2trcf(nx,ny,ns,ismain,dtim,BoRiS)

@@ -2241,6 +2241,38 @@
 					If append.eq.1, the *.dat output files are appended upon every write, instead of being rewritten every time.
 				</description>
 			</switch>
+			<switch>
+				<name>b2mndr_old_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If old_style.gt.0, old-fashioned (SOLPS4 style) output is added at the end of the b2mn.prt file.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_average</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_average.gt.0, the averaged solution will be written out in the aver.dat file.
+				</description>
+			</switch>
+			<switch>
+				<name>average_restart</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If average_restart.gt.0, reading of the aver.dat file is skipped.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_read_average</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If ird_aver.gt.0, the averaged solution is read from the aver.dat file and some averaged profiles are written in the prof.out file at the end of the run.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2mndr_*</name>
 				<description>

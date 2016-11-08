@@ -239,6 +239,8 @@
 *     B2NXST accumulates the parallel momentum source linearisation
 *     over the distinct atomic species.
 *
+*     B2PRNTI prints out the residuals in integer format.
+*
 *     B2RFCN reads from a formatted file some parameters in the
 *     numerics common block.
 *
@@ -419,6 +421,9 @@
 *     B2UX5P solves a five-point system of equations. This routine is
 *     an interface to an iterative or a direct solver; the choice
 *     depends upon an internal parameter.
+*
+*     B2WAOS prints out the results of a B2 calculation in old-fashioned
+*     style
 *
 *     B2WDAT is an output routine that writes out B2 arrays into ASCII
 *     data files.

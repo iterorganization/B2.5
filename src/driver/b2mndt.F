@@ -74,6 +74,7 @@
       integer, save :: style = 1, guard_flows = 2                        !srv 18.06.08
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
+      integer, save :: iaverage = 0
       real (kind=R8) ::
      *  rxf, BoRiS
       real (kind=R8) ::
@@ -172,6 +173,7 @@
        elseif(nsmax.lt.0) then
          nsmax=0
        endif
+       call ipgeti ('b2mndt_average', iaverage)
        if (boundary_namelist.ge.1) then
          call initialize_b2mod_boundary(nx,ny,ns,tim)
        else
@@ -533,6 +535,8 @@ ctmp.dpc
        istg(0) = istg(0)+1
        goto 1
       endif
+
+      if (iaverage > 0) call profile_average (.false.,nx,ny,ns)
 
 * ..return
 99999 continue

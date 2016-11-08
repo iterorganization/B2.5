@@ -93,6 +93,7 @@
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
      &                 ncall_iout = -1                               !srv 23.03.12
+      integer, save :: ird_aver=0                                    !pb 30.09.16
 #ifdef B25_EIRENE
       integer ia, im
       character ch3*3
@@ -336,6 +337,7 @@
           endif
         endif
       endif
+      call ipgeti ('b2mndt_read_average', ird_aver)      !pb 29.09.16
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny, ns
@@ -645,6 +647,10 @@ c   --> better solution wanted here..
         smo0 = smo0 + smo0_eir
         she0 = she0 + she0_eir
         shi0 = shi0 + shi0_eir
+
+        if (ird_aver > 0) 
+     &     call source_averages (sna0, smo0, she0, shi0, sch0, sne0,
+     &                           nx, ny, ns)
 #ifdef ASTRA
         if (use_astra.ne.0) then
           do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {
