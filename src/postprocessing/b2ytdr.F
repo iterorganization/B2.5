@@ -7543,6 +7543,7 @@ C  HERE: EIRENE SURFACE TALLIES
 cxpb  Convert fort.44 file if needed
         inquire(file='fort.44',exist=todo)
         if (todo.and.(.not.streql(solps_version,'iter').or.
+     &     .not.same_bundling.or.
      &      non_commensurate.eq.1.or.nx.ne.nx1.or.ny.ne.ny1)) then
           allocate(epls_map(ns1-natmi1,ns-natmi))
           epls_map(1:ns1-natmi1,1:ns-natmi)=
