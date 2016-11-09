@@ -130,7 +130,7 @@
       external b2xvsg, b2xvff, x05baf, smax, smin, get_jsep
       real (kind=R8) ::
      *  x05baf, smax, smin
-      intrinsic abs, mod, max
+      intrinsic abs, mod
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
 *   ..initialisation

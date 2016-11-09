@@ -179,7 +179,7 @@
      2  na_min, na_new, bc_type21_ref, ndes_sol,
      *  isfeedback, nesepm, nesepm_overshoot, fix_fch_in_fhe_sheath
 *   ..procedures
-      intrinsic min, max, abs, sqrt, exp, log, dim, mod
+      intrinsic min, abs, sqrt, exp, log, dim, mod
       real (kind=R8) ::
      *  machsfr, expu2, hy1, sy, bcint, syhz                            !srv 24.08.08
       logical lnext

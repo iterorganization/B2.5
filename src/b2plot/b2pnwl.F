@@ -39,7 +39,6 @@ c*** and for the power flux.
       save width
       character*8 text_an(natm),text_mn(nmol)
       logical streql
-      intrinsic max
       external streql, ipgetr
 c----------------------------------------------------------------------
       print *,'Starting b2pnwl...',nlim,DEF_NLIM

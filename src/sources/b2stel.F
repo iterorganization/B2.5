@@ -77,7 +77,7 @@
      *  rf0, t0, t1
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
 *   ..procedures
-      intrinsic abs, max
+      intrinsic abs
       logical lnext
       real (kind=R8) ::
      *   samax, roxa

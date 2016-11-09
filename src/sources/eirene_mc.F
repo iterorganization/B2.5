@@ -153,7 +153,7 @@ csw 26feb2014
 
 *   ..procedures
       real (kind=R8) :: rratio
-      intrinsic min, max, mod, abs, sqrt, log
+      intrinsic min, mod, abs, sqrt, log
       external subini, subend, xertst, ipgeti, ipgetr, rratio
       logical lnext
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.

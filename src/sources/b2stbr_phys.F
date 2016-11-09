@@ -99,7 +99,7 @@
       integer sput_dst_bulk
       parameter (amtol=1.0e-2_R8)
 *   ..procedures
-      intrinsic abs, max, mod, exp
+      intrinsic abs, mod, exp
       external subini, subend, xertst
       external b2xvsg, b2xvff, smin, smax
       real (kind=R8) :: 

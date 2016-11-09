@@ -97,7 +97,7 @@
      1  nesepm_error_old,
      &  ncall_old, ncall_gap, n_flux_zero, flux_old
 *   ..procedures
-      intrinsic abs, max, mod, nint
+      intrinsic abs, mod, nint
       external subini, subend, xertst, ipgetr, ipgeti
       external b2xvsg
 *   ..initialisation
@@ -1345,7 +1345,7 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
       logical, save :: prev_done(0:DEF_NATM-1), consistent
       save ncall, dtim, dt_prev, na_feedback_prev
 *   ..procedures
-      intrinsic abs, max, mod, nint
+      intrinsic abs, mod, nint
       external subini, subend, xertst, ipgetr, ipgeti
       external b2xvsg
 *   ..initialisation

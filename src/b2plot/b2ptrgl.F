@@ -100,7 +100,7 @@ c
       logical ft44
       logical streql
       external streql
-      intrinsic sqrt, max
+      intrinsic sqrt
 c
 c*** Text variables:
 c***  ftrg    filenames for the profiles along the targets

@@ -484,7 +484,7 @@ c 2002-09-11: logic revised
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm, cfverr
       external E01BEF, E01BFF
-      intrinsic nint, mod, min0, max, index, iabs, sqrt
+      intrinsic nint, mod, min0, index, iabs, sqrt
 *   ..initialisation
       data non_commensurate/0/
       data istyle_cur_contr_on_S_and_N/2/

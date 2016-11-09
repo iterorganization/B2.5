@@ -135,7 +135,6 @@ c-----------------------------------------------------------------------
       logical ex, warn_tmp
       character f*(lenfnm), hlp_c, hlp_frm*80, tab, hlp_frf*160
       real (kind=R8) :: hy1
-      intrinsic max
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 c-----------------------------------------------------------------------
 c*** Local lists:
