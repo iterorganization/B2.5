@@ -87,7 +87,7 @@
 *   ..procedures
       external subini, subend, ipgeti, machsfr
 *   ..procedures                                                   !srv
-      intrinsic max, abs                                           !srv
+      intrinsic abs                                                !srv
       real (kind=R8) ::                                            !srv
      *   hy1, expu2, machsfr                                       !srv
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
