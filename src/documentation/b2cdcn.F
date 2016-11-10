@@ -1036,7 +1036,7 @@
 *   Allows the user to set transport coefficients profiles.
 *   Only used is 'b2tqna_inputfile' is set to 1.
 *   Overwrites b2ah.dat, b2mn.dat and b2.transport.parameters.
-*   See SOLPS manual details.
+*   See SOLPS manual for details.
 *  NDATA - integer array of size (NKIND_DATA,NCOEF,0:NS). Number of points over
 *     which the source profile of (kind_data,kind_coef,is) is defined. Should 
 *     not exceed NY+2. Defaults to 0.
@@ -1185,6 +1185,7 @@
 *    Allows user to choose between different anomalous transport models.
 *    Read if 'b2mod_transport_namelist' is set to 1.
 *    Overwrite data from b2ah.dat and b2mn.dat.
+*    Does not apply to fluid neutral species.
 *  FLAG_DNA - integer. Transport model flag for density-driven diffusion.
 *  FLAG_DPA - integer. Transport model flag for pressure-driven dffusion.
 *  FLAG_VLA - integer. Transport model flag for pinch velocity.
