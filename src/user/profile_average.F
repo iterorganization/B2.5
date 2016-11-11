@@ -196,22 +196,22 @@ ctb..as the mean of the product does not equal the product of the means etc.
  
         e_sna(-1:nx,-1:ny,0:1,0:ns-1)  = 
      .        gold*e_sna(-1:nx,-1:ny,0:1,0:ns-1) + 
-     .        gnew*sna(-1:nx,-1:ny,0:1,0:ns-1) 
+     .        gnew*sna(-1:nx,-1:ny,0:1,0:ns-1)**2
         e_sne(-1:nx,-1:ny,0:1) = 
      .        gold*e_sne(-1:nx,-1:ny,0:1) + 
-     .        gnew*sne(-1:nx,-1:ny,0:1)  
+     .        gnew*sne(-1:nx,-1:ny,0:1)**2
         e_she(-1:nx,-1:ny,0:3) = 
      .        gold*e_she(-1:nx,-1:ny,0:3) + 
-     .        gnew*she(-1:nx,-1:ny,0:3)  
+     .        gnew*she(-1:nx,-1:ny,0:3)**2
         e_shi(-1:nx,-1:ny,0:3) = 
      .        gold*e_shi(-1:nx,-1:ny,0:3) + 
-     .        gnew*shi(-1:nx,-1:ny,0:3)  
+     .        gnew*shi(-1:nx,-1:ny,0:3)**2
         e_sch(-1:nx,-1:ny,0:3) = 
      .        gold*e_sch(-1:nx,-1:ny,0:3) + 
-     .        gnew*sch(-1:nx,-1:ny,0:3) 
+     .        gnew*sch(-1:nx,-1:ny,0:3)**2
         e_smo(-1:nx,-1:ny,0:3,0:ns-1)  = 
      .        gold*e_smo(-1:nx,-1:ny,0:3,0:ns-1) + 
-     .        gnew*smo(-1:nx,-1:ny,0:3,0:ns-1) 
+     .        gnew*smo(-1:nx,-1:ny,0:3,0:ns-1)**2
 
 
 !pb      if (laststep) then
