@@ -1,5 +1,6 @@
       module b2mod_feedback
       use b2mod_types
+      use b2mod_b2cmpa
 
       integer, parameter :: nvac=4, nvacreg=4
 #     include "DIMENSIONS.F"
@@ -112,6 +113,8 @@
       implicit none
       integer nwrite
       character*4 edition
+      integer is
+      character*26 hlp_frm
       character*256 filename
 
       if (edition.eq.'    ') then
@@ -119,7 +122,29 @@
       else
         filename = 'b2.feedback_save.parameters.'//edition
       endif
+cxpb We do the write explicitly to avoid array overflows when the problem
+cxpb size is changed in DIMENSIONS.F
       open(nwrite,file=trim(filename))
+      write(nwrite,'(a9)') '&FEEDBACK'
+      if (saved_cbshe_core.ne.0.0_R8)
+     > write(nwrite,*) 'SAVED_CBSHE_CORE=',saved_cbshe_core,','
+      if (saved_cbshi_core.ne.0.0_R8)
+     > write(nwrite,*) 'SAVED_CBSHI_CORE=',saved_cbshi_core,','
+      if (saved_cbsna_core.ne.0.0_R8)
+     > write(nwrite,*) 'SAVED_CBSNA_CORE=',saved_cbsna_core,','
+      if (saved_cbsch_core.ne.0.0_R8)
+     > write(nwrite,*) 'SAVED_CBSCH_CORE=',saved_cbsch_core,','
+      if (saved_cbsna_pfr1.ne.0.0_R8)
+     > write(nwrite,*) 'SAVED_CBSNA_PFR1=',saved_cbsna_pfr1,','
+      if (saved_cbsna_pfr2.ne.0.0_R8)
+     > write(nwrite,*) 'SAVED_CBSNA_PFR2=',saved_cbsna_pfr2,','
+      if (saved_cbsna_sol.ne.0.0_R8)
+     > write(nwrite,*) 'SAVED_CBSNA_SOL= ',saved_cbsna_sol,','
+      write(hlp_frm,'(a,i2,a)')
+     > '(a,1p,',nspecies,'(1x,1e15.8,'',''))'
+      write(nwrite,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
+     > (saved_na_feedback_actuator(is),is=0,nspecies-1)
+      write(nwrite,'(a1)') '/'
       write(nwrite,feedback)
       close(nwrite)
       write(*,*) 'Saved ',trim(filename)

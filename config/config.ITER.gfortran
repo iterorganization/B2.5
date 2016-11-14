@@ -41,7 +41,7 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD = $(FC)
-LDOPTS = -limf # -Bstatic
+LDOPTS = -limf -lm # -Bstatic
 
 LCPP = ${LD_SONNET}
 
