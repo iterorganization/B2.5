@@ -247,6 +247,7 @@ c***               groups, number of diagnostic surface groups
       character tab, hlp_c, f*(lenfnm)
       character hlp_frm*120, hlp_frf*240, hlp_tpl*2
       data hlp_neu_peak / 5.0_R8 /
+      data itg_tmp / 4*-2 /
       data first,first_out / 2*.true. /, double_null / .false. /
 c-----------------------------------------------------------------------
 c*** Column headers:
@@ -1191,7 +1192,7 @@ c*** evaluate "Degree of detachment" and Isat for each divertor
       call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
 c      print *,'### print_isat=',print_isat    !###
       do k=1,4 !{
-        if(itg_tmp(k).gt.0) then !{
+        if(itg_tmp(k).ne.-2) then !{
 c          print * !###
           d=1.e18_R8
           do iy=isp_tmp(k),ny !{
@@ -1328,7 +1329,7 @@ c        print *,'###b ex,mgl3_tmp,n,ntrc_tmp=',ex,mgl3_tmp,n,ntrc_tmp !###
         if(ex .and. mgl3_tmp.gt.0) then !{
           i=0
           do k=1,4 !{
-            if(itg_tmp(k).gt.0) then !{
+            if(itg_tmp(k).ne.-2) then !{
               n=n+1
               i=i+1
               hlp_hdr(n)=hlp_hg3(k)

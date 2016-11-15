@@ -22,12 +22,12 @@ C
 
       REAL (KIND=R8),INTENT(OUT) :: wtarg_max(NTRGM)
 
-      REAL (KIND=R8),SAVE :: STRG(NYDD,NTRGM), !AREAS OF SURFACE ELEMENTS
+      REAL (KIND=R8),SAVE :: STRG(0:DEF_NYD-1,NTRGM), !AREAS OF SURFACE ELEMENTS
      r             LTRGPOS(NTRGM)    !POLOIDAL INDEX FOR EACH TARGET
       INTEGER,SAVE :: NTRGS,         !NUMBER OF TARGETS
      i                SHIFT(NTRGM)
-      REAL (KIND=R8) :: WTARG(NYDD,NTRGM),wnutrg(NYDD,NTRGM),
-     r                  wnutpr(NYDD,NTRGM)
+      REAL (KIND=R8) :: WTARG(0:ny-1,NTRGM),wnutrg(0:ny-1,NTRGM),
+     r                  wnutpr(0:ny-1,NTRGM)
       INTEGER :: K,J,L,IY,IS
       REAL (KIND=R8) :: HLP
       CHARACTER*32 :: FRM
@@ -77,7 +77,7 @@ C AREAS OF THE SURFACE ELEMENTS
       l=1
       do j=1,ntrgs
         k=ltrgpos(j)
-        call b2neut_eng(wnutrg(1,j),wnutpr(1,j),ny,shift(j))
+        call b2neut_eng(wnutrg(0,j),wnutpr(0,j),ny,shift(j))
         wtarg_max(j)=0.0_R8
         do iy=0,ny-1
          hlp=abs(fhe(k+l,iy,0)+fhi(k+l,iy,0)+fhi_ext(k+l,iy,0))
