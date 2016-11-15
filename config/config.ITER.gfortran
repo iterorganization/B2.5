@@ -34,14 +34,14 @@ OBJDEST = -J${OBJDIR} -o ${OBJDIR}/$*.o
 BLD = ar rucv
 
 GRLIBES = ${LD_NCARG} ${LD_MSCL}
-LDLIBES = ${LD_NAG} ${LD_NETCDF}
+LDLIBES = ${LD_NAG} ${LD_NETCDF} -limf -lm
 
 ifdef USE_EIRENE
 LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD = $(FC)
-LDOPTS = -limf -lm # -Bstatic
+LDOPTS = # -Bstatic
 
 LCPP = ${LD_SONNET}
 

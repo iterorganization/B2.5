@@ -59,13 +59,13 @@ C AREAS OF THE SURFACE ELEMENTS
         do iy=0,ny-1
          strg(iy,j)=gs(k+l,iy,0)
         end do
-        call b2neut_ind(2,k,1,ny,shift(j)) !index range in the eirene's arrays
+        call b2neut_ind(2,k+l,1,ny,shift(j)) !index range in the eirene's arrays
         if(shift(j).lt.0) then
            write(*,*) "error in b2usr_loads: the EIRENE's data on ",
      w                "neutral fluxes is incorrect. ",
      w                "No neutral fluxes will be calculated."
         else
-         call b2neut_surfcheck(strg(1,j),j,ny,shift(j))
+         call b2neut_surfcheck(strg(0,j),j,ny,shift(j))
         end if
         l=1-l
        end do

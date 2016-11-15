@@ -6436,11 +6436,11 @@ C  VELOCITY SPACE DISTRIBUTION
           deallocate(NLPRCA1)
         END IF
         IF (streql(eirene_format,'old')) THEN
-          READ (IUNIN,'(A80)') ZEILE ! NLPRCF
+          READ (ZEILE,6666) idum(0)  ! NLPRCF
           READ (IUNIN,'(A80)') ZEILE ! NLPRCD
           NPRCSF = 0
         ELSE
-          READ (IUNIN,6666) NPRCSF
+          READ (ZEILE,6666) NPRCSF
         ENDIF
         WRITE(IUNOT,6666) NPRCSF
         NPRCSF=MIN0(NLIMPS,NPRCSF)
