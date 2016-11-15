@@ -145,7 +145,6 @@ cxpb size is changed in DIMENSIONS.F
       write(nwrite,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
      > (saved_na_feedback_actuator(is),is=0,nspecies-1)
       write(nwrite,'(a1)') '/'
-      write(nwrite,feedback)
       close(nwrite)
       write(*,*) 'Saved ',trim(filename)
       return

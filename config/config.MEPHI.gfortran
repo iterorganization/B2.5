@@ -20,9 +20,10 @@ SED = sed s:\#PREC\#:d:g
 SED =
 LINK_MOD = 
 
-FC = gfortran
 ifdef USE_MPI
 FC = mpif90
+else
+FC = gfortran
 endif
 
 ifdef SOLPS_DEBUG
