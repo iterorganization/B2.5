@@ -8143,8 +8143,17 @@ cxpb as they no longer necessarily point to the same species
         if (n_spcsrf.gt.0) then
           write(99,'(a,i2,a)') 'N_SPCSRF=',n_spcsrf,','
           ii=minloc(l_spcsrf)
-          write(hlp_frm,'(a,i3,a)') '(a,',ii(1),'(i3,'',''))'
-          write(99,hlp_frm) 'L_SPCSRF=',(l_spcsrf(ib),ib=1,ii(1))
+          if (ii(1).eq.1) then
+            is = 0
+          else if (l_spcsrf(ii(1)).eq.0) then
+            is = ii(1)-1
+          else
+            is = size(l_spcsrf)
+          end if
+          if (is.gt.0) then
+            write(hlp_frm,'(a,i3,a)') '(a,',is,'(i3,'',''))'
+            write(99,hlp_frm) 'L_SPCSRF=',(l_spcsrf(ib),ib=1,is)
+          endif
           line = 'SPS_ID=  '
           len=9
           do ib = 1, n_spcsrf
@@ -9355,7 +9364,11 @@ cxpb basic species 'ic'
 cxpb We first need to find the total number of basic species nz
       unused = .true.
       ii = minloc(is0)
-      nz = ii(1)-1
+      if (is0(ii(1)).ne.-1) then
+        nz = ii(1)-1
+      else
+        nz = size(is0)
+      end if
       do ic = 0, nz-1
         found = .false.
         iss = 0
