@@ -2507,7 +2507,7 @@ c     write(*,*) 'Processing ',data_name,' with ncid ',ncid
         do i=1,nvdims
           call ncdinq(ncid,vdims(i),dimnam,count(i),iret)
 c        write(*,*) 'Dimension ',i,' is ',dimnam(1:lnblnk(dimnam)),
-c    1    ' with length ',count(i)
+c    .    ' with length ',count(i)
           if(dimnam.eq.timsav) then
             start(i)=ntsav
             count(i)=1

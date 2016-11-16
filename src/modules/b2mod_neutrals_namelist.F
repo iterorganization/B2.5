@@ -38,6 +38,7 @@ cank }
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
       use eirdiag   ! IGNORE
+      use ceirsrt   ! IGNORE
 #endif
 #endif
       implicit none
@@ -46,7 +47,9 @@ cank }
 #     include "COUPLE/KOPPLDIM.F"
 #     include "COUPLE/EIRDIAG.F"
 #endif
+#ifndef SOLPS4_3
 #     include "COUPLE/EIRSRT.F"
+#endif
       integer nstraid, nsdmax, natmid, nmolid, nionid, nstsid, nlimpsd
       parameter (NSTRAID=DEF_NSTRA, NSDMAX=DEF_NSD)
       parameter (natmid=DEF_NATM, nmolid=DEF_NMOL, nionid=DEF_NION)
