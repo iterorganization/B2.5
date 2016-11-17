@@ -9,8 +9,8 @@
 # module avail imas
 # module load imas/develop/3/ual/develop
 # module display imas/develop/3/ual/develop
-# imasdb solps-iter
 # python cpo2ids.py
+# python cpo2ids.py --shot=16151 --run=1000 --user=kosl --tokamak=aug --version=4.10a
 # Resulting files are stored under $HOME/public/imasdb/solps-iter/3/0
 # as ids_161511000.*
 # Further documentation and notes:
@@ -21,19 +21,15 @@
 # ls /pfs/home/kosl/itmggd/branches/4.10a/python/itmggd/examples
 # less $UAL/python_pk/python2.6/ual/edge.py
 # /pfs/work/kosl/bin/pycharm.sh &
-
 #NODES: edge::grid::spaces::objects(1) -> ggd(:)/grid/space(:)/objects_per_dimension(1)/object(:)
   #x: edge/grid/spaces/objects(0)/nodes/geo(i,0) 	)
   #y: edge/grid/spaces/objects(0)/nodes/geo(i,1)	)-> ggd(:)/grid/space(:)/objects_per_dimension(0)/object(0)/geometry(:)
   #z: 0.0					 	)
-
-#EDGES: edge::grid::spaces::objects(1) -> ggd(:)/grid/space(:)/objects_per_dimension(0)/object(1)
-#FACES: edge::grid::spaces::objects(2) -> ggd(:)/grid/space(:)/objects_per_dimension(0)/object(2)
-
 import ual 
 import imas
 import numpy
 import sys
+import getopt
 
 '''
 This sample program will open an existing pulse file (shot 16151, run 1000) and will
@@ -62,7 +58,6 @@ def read_ids():
 
     """
     print 'Reading IDS: '
-    # my_ids_obj = ual.ids(8148, 12, 8148, 12)
     my_ids_obj = imas.ids(shot, run, shot, run)
 
 
@@ -81,7 +76,12 @@ def read_ids():
     print 'IDS'
     # print my_ids_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0]
     # print 'CPO'
-    # print edge
+    # print edge.fluid
+
+    # Write output to text:
+    # f = open("cpo2ids_output.txt", "w")
+    # f.write(str(edge.species))
+    # f.close()
 
     my_ids_obj.close()
 
@@ -114,7 +114,7 @@ def write_ids():
 
     num_nodes_all = len(edge.grid.spaces[0].objects[0].geo)
     imas_obj.edge_profiles.time.resize(num_nodes_all * 2)   #(?) Not sure how big should it be
-    print "num_nodes_all: ", num_nodes_all
+    ##print "num_nodes_all: ", num_nodes_all
 
 
     imas_obj.edge_profiles.ggd[0].grid.space[0].coordinates_type.resize(1)
@@ -122,7 +122,7 @@ def write_ids():
     num_subgrids = len(edge.grid.subgrids)
     subgrid_name = numpy.array([])
 
-    print "num_subgrids: ", num_subgrids
+    ##print "num_subgrids: ", num_subgrids
 
     # First we must know how many subgrids of each class we have. We have to know that in order to properly resize our .object structure.
     # Structure can be resized when needed, but then all data already inside gets deleted. Also putSlice() command can be used only once, to use it again then we
@@ -143,9 +143,9 @@ def write_ids():
         else:
             num_obj_class_2 += 1
 
-    print "Number of objects class 0: ", num_obj_class_0
-    print "Number of objects class 1: ", num_obj_class_1
-    print "Number of objects class 2: ", num_obj_class_2
+    ##print "Number of objects class 0: ", num_obj_class_0
+    ##print "Number of objects class 1: ", num_obj_class_1
+    ##print "Number of objects class 2: ", num_obj_class_2
 
     imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[0].object.resize(num_obj_class_0) #nodes
     imas_obj.edge_profiles.ggd[0].grid.space[0].objects_per_dimension[1].object.resize(num_obj_class_1) #edges
@@ -161,6 +161,7 @@ def write_ids():
         subgrid_id = i
         subgrid_name = numpy.append(subgrid_name, edge.grid.subgrids[i].id)
         subgrid_class = edge.grid.subgrids[i].list[0].cls[0]
+        ##print "Subgrid base id: ", i+1
 
         imas_obj.edge_profiles.ggd[0].grid.grid_subset[i].identifier.name = subgrid_name[i]
         imas_obj.edge_profiles.ggd[0].grid.grid_subset[i].identifier.index = subgrid_id + 1
@@ -193,7 +194,7 @@ def write_ids():
             # print "Range not found"
             cpo_array_size = ind_num
 
-        print 'subgrid', '{0:3}'.format(i+1), 'name: ', '{0:18}'.format(subgrid_name[i]), " class: ", '{0:1}'.format(subgrid_class), 'cpo_array_size: ', cpo_array_size
+        ##print 'subgrid', '{0:3}'.format(i+1), 'name: ', '{0:18}'.format(subgrid_name[i]), " class: ", '{0:1}'.format(subgrid_class), 'cpo_array_size: ', cpo_array_size
 
         index_array = numpy.array([], dtype='int')
 
@@ -330,25 +331,27 @@ def write_ids():
     # ----Allocating space and writing to IDS: Electron density--- #
     num_ne_subgrid = len(edge.fluid.ne.value)
     num_ne_subgrid_new = num_ne_subgrid + 4 # +4 because we have to add also values for new subgrids CORE, SOL, inner divertor and outer divertor
-    print "num_ne_subgrid: ", num_ne_subgrid
-    print "num_ne_subgrid_new: ", num_ne_subgrid_new
+    # print "num_ne_subgrid: ", num_ne_subgrid
+    # print "num_ne_subgrid_new: ", num_ne_subgrid_new
     imas_obj.edge_profiles.ggd[0].electrons.density.resize(num_ne_subgrid_new)
+
 
     for j in range(num_ne_subgrid_new):
         if j < num_ne_subgrid:
             imas_obj.edge_profiles.ggd[0].electrons.density[j].grid_subset_index = edge.fluid.ne.value[j].subgrid
             subgrid_base_id = imas_obj.edge_profiles.ggd[0].electrons.density[j].grid_subset_index
             ne_subgrid_scalar_size = len(edge.fluid.ne.value[j].scalar)
-            print "subgrid: ", subgrid_base_id, "ne_subgrid_scalar_size", ne_subgrid_scalar_size
+            # print "subgrid: ", subgrid_base_id, "ne_subgrid_scalar_size", ne_subgrid_scalar_size
             imas_obj.edge_profiles.ggd[0].electrons.density[j].values.resize(ne_subgrid_scalar_size)
             for k in range (ne_subgrid_scalar_size):
                 imas_obj.edge_profiles.ggd[0].electrons.density[j].values[k] = edge.fluid.ne.value[j].scalar[k]
         else: # In CPO we got scalars for subgrids CORE, SOL, inner/outer divertor via indices, stored in edge.grid.subgrids[:].list[0].ind[0...N].
               # In IDS we don't have this option (or it was not found) and one way is to directly store scalars under new electron density subgrids values
             imas_obj.edge_profiles.ggd[0].electrons.density[j].grid_subset_index = j+2 #TRY TO FIX THIS! currently this goes hand in hand, but for the long run it should be done in a better way
+
             subgrid_base_id = imas_obj.edge_profiles.ggd[0].electrons.density[j].grid_subset_index
             ne_subgrid_scalar_size = len(edge.grid.subgrids[j+2-1].list[0].ind)
-            print "subgrid: ", subgrid_base_id, "ne_subgrid_scalar_size", ne_subgrid_scalar_size
+            # print "subgrid: ", subgrid_base_id, "ne_subgrid_scalar_size", ne_subgrid_scalar_size
             imas_obj.edge_profiles.ggd[0].electrons.density[j].values.resize(ne_subgrid_scalar_size)
             for k in range(ne_subgrid_scalar_size):
                 scalar_index = edge.grid.subgrids[j + 2 - 1].list[0].ind[k]-1 #becuase we read indices in Fortran notation, we need indicesin C++ notation
@@ -358,15 +361,15 @@ def write_ids():
     # ----Allocating space and writing to IDS: Electron temperature--- #
     num_te_subgrid = len(edge.fluid.te.value)
     num_te_subgrid_new = num_te_subgrid + 4 # +4 because we have to add also values for new subgrids CORE, SOL, inner divertor and outer divertor
-    print "num_te_subgrid: ", num_te_subgrid
-    print "num_te_subgrid_new: ", num_te_subgrid_new
+    # print "num_te_subgrid: ", num_te_subgrid
+    # print "num_te_subgrid_new: ", num_te_subgrid_new
     imas_obj.edge_profiles.ggd[0].electrons.temperature.resize(num_te_subgrid_new)
     for j in range(num_te_subgrid_new):
         if j < num_te_subgrid:
             imas_obj.edge_profiles.ggd[0].electrons.temperature[j].grid_subset_index = edge.fluid.te.value[j].subgrid
             te_subgrid_scalar_size = len(edge.fluid.te.value[j].scalar)
             subgrid_base_id = imas_obj.edge_profiles.ggd[0].electrons.temperature[j].grid_subset_index
-            print "subgrid: ", subgrid_base_id, "te_subgrid_scalar_size", te_subgrid_scalar_size
+            # print "subgrid: ", subgrid_base_id, "te_subgrid_scalar_size", te_subgrid_scalar_size
             imas_obj.edge_profiles.ggd[0].electrons.temperature[j].values.resize(te_subgrid_scalar_size)
             for k in range(te_subgrid_scalar_size):
                 imas_obj.edge_profiles.ggd[0].electrons.temperature[j].values[k] = edge.fluid.te.value[j].scalar[k]
@@ -375,7 +378,7 @@ def write_ids():
             imas_obj.edge_profiles.ggd[0].electrons.temperature[j].grid_subset_index = j + 2  # TRY TO FIX THIS! currently this goes hand in hand, but for the long run it should be done in a better way
             subgrid_base_id = imas_obj.edge_profiles.ggd[0].electrons.temperature[j].grid_subset_index
             te_subgrid_scalar_size = len(edge.grid.subgrids[j + 2 - 1].list[0].ind)
-            print "subgrid: ", subgrid_base_id, "te_subgrid_scalar_size", te_subgrid_scalar_size
+            # print "subgrid: ", subgrid_base_id, "te_subgrid_scalar_size", te_subgrid_scalar_size
             imas_obj.edge_profiles.ggd[0].electrons.temperature[j].values.resize(te_subgrid_scalar_size)
             for k in range(te_subgrid_scalar_size):
                 scalar_index = edge.grid.subgrids[j + 2 - 1].list[0].ind[k] - 1  # becuase we read indices in Fortran notation, we need indicesin C++ notation
@@ -384,29 +387,33 @@ def write_ids():
 
     # ----Allocating space and writing to IDS: Ion density--- #
     ni_species_num = len(edge.fluid.ni)
-    print "ni_species_num", ni_species_num
+    ##print "ni_species_num", ni_species_num
     imas_obj.edge_profiles.ggd[0].ion.resize(ni_species_num)
     for n in range (ni_species_num):
         num_ni_subgrid = len(edge.fluid.ni[n].value)
         num_ni_subgrid_new = num_ni_subgrid + 4 # +4 because we have to add also values for new subgrids CORE, SOL, inner divertor and outer divertor
-        print "num_ni_subgrid: ", num_ni_subgrid
-        print "num_ni_subgrid_new", num_ni_subgrid_new
+        # print "num_ni_subgrid: ", num_ni_subgrid
+        # print "num_ni_subgrid_new", num_ni_subgrid_new
+
+        # Writing ion charge names
+        imas_obj.edge_profiles.ggd[0].ion[n].label = edge.species[n].label
+
         imas_obj.edge_profiles.ggd[0].ion[n].density.resize(num_ni_subgrid_new)
         for j in range(num_ni_subgrid_new):
             if j < num_ni_subgrid:
                 imas_obj.edge_profiles.ggd[0].ion[n].density[j].grid_subset_index = edge.fluid.ni[n].value[j].subgrid
                 ni_subgrid_scalar_size = len(edge.fluid.ni[n].value[j].scalar)
                 subgrid_base_id = imas_obj.edge_profiles.ggd[0].ion[n].density[j].grid_subset_index
-                print "subgrid: ", subgrid_base_id, "ni_subgrid_scalar_size", ni_subgrid_scalar_size
+                # print "subgrid: ", subgrid_base_id, "ni_subgrid_scalar_size", ni_subgrid_scalar_size
                 imas_obj.edge_profiles.ggd[0].ion[n].density[j].values.resize(ni_subgrid_scalar_size)
                 for k in range(ni_subgrid_scalar_size):
                     imas_obj.edge_profiles.ggd[0].ion[n].density[j].values[k] = edge.fluid.ni[n].value[j].scalar[k]
-            else:
+            else: # In CPO we got scalars for subgrids CORE, SOL, inner/outer divertor via indices, stored in edge.grid.subgrids[:].list[0].ind[0...N]
                 # In IDS we don't have this option (or it was not found) and one way is to directly store scalars under new ion density subgrids values
                 imas_obj.edge_profiles.ggd[0].ion[n].density[j].grid_subset_index = j + 2  # TRY TO FIX THIS! currently this goes hand in hand, but for the long run it should be done in a better way
                 subgrid_base_id = imas_obj.edge_profiles.ggd[0].ion[n].density[j].grid_subset_index
                 ni_subgrid_scalar_size = len(edge.grid.subgrids[j + 2 - 1].list[0].ind)
-                print "subgrid: ", subgrid_base_id, "ni_subgrid_scalar_size", ni_subgrid_scalar_size
+                # print "subgrid: ", subgrid_base_id, "ni_subgrid_scalar_size", ni_subgrid_scalar_size
                 imas_obj.edge_profiles.ggd[0].ion[n].density[j].values.resize(ni_subgrid_scalar_size)
                 for k in range(ni_subgrid_scalar_size):
                     scalar_index = edge.grid.subgrids[j + 2 - 1].list[0].ind[k] - 1  # becuase we read indices in Fortran notation, we need indices in C++ notation
@@ -415,30 +422,30 @@ def write_ids():
 
     # ----Allocating space and writing to IDS: Ion temperature--- #
     ti_species_num = len(edge.fluid.ti)
-    print "ti_species_num", ti_species_num
+    ##print "ti_species_num", ti_species_num
     #imas_obj.edge_profiles.ggd[0].ion.resize(ti_species_num)  #it has the same number of species as ion density
 
     for n in range(ti_species_num):
         num_ti_subgrid = len(edge.fluid.ti[n].value)
         num_ti_subgrid_new = num_ti_subgrid + 4 # +4 because we have to add also values for new subgrids CORE, SOL, inner divertor and outer divertor
-        print "num_ti_subgrid: ", num_ti_subgrid
-        print "num_ti_subgrid_new: ", num_ti_subgrid_new
+        # print "num_ti_subgrid: ", num_ti_subgrid
+        # print "num_ti_subgrid_new: ", num_ti_subgrid_new
         imas_obj.edge_profiles.ggd[0].ion[n].temperature.resize(num_te_subgrid_new)
         for j in range(num_ti_subgrid_new):
             if j < num_ti_subgrid:
                 imas_obj.edge_profiles.ggd[0].ion[n].temperature[j].grid_subset_index = edge.fluid.ti[n].value[j].subgrid
                 ti_subgrid_scalar_size = len(edge.fluid.ti[n].value[j].scalar)
                 subgrid_base_id = imas_obj.edge_profiles.ggd[0].ion[n].temperature[j].grid_subset_index
-                print "subgrid: ", subgrid_base_id, "ti_subgrid_scalar_size", ti_subgrid_scalar_size
+                # print "subgrid: ", subgrid_base_id, "ti_subgrid_scalar_size", ti_subgrid_scalar_size
                 imas_obj.edge_profiles.ggd[0].ion[n].temperature[j].values.resize(ti_subgrid_scalar_size)
                 for k in range(ti_subgrid_scalar_size):
                     imas_obj.edge_profiles.ggd[0].ion[n].temperature[j].values[k] = edge.fluid.ti[n].value[j].scalar[k]
-            else:
+            else: # In CPO we got scalars for subgrids CORE, SOL, inner/outer divertor via indices, stored in edge.grid.subgrids[:].list[0].ind[0...N]
                 # In IDS we don't have this option (or it was not found) and one way is to directly store scalars under new ion temperature subgrids values
                 imas_obj.edge_profiles.ggd[0].ion[n].temperature[j].grid_subset_index = j + 2  # TRY TO FIX THIS! currently this goes hand in hand, but for the long run it should be done in a better way
                 subgrid_base_id = imas_obj.edge_profiles.ggd[0].ion[n].temperature[j].grid_subset_index
                 ti_subgrid_scalar_size = len(edge.grid.subgrids[j + 2 - 1].list[0].ind)
-                print "subgrid: ", subgrid_base_id, "ti_subgrid_scalar_size", ti_subgrid_scalar_size
+                # print "subgrid: ", subgrid_base_id, "ti_subgrid_scalar_size", ti_subgrid_scalar_size
                 imas_obj.edge_profiles.ggd[0].ion[n].temperature[j].values.resize(ti_subgrid_scalar_size)
                 for k in range(ti_subgrid_scalar_size):
                     scalar_index = edge.grid.subgrids[j + 2 - 1].list[0].ind[k] - 1  # becuase we read indices in Fortran notation, we need indices in C++ notation
@@ -462,14 +469,35 @@ def read_edge_cpo():
         cpo.edgeArray.get()
         return cpo.edgeArray.array[0]
 
-def set_database_parameters(shot = 16151, run = 1000, user = "kosl", tokamak = "aug", version = "4.10a"):
-    return shot, run, user, tokamak, version;
-
 if __name__ == '__main__':
 
-    #shot,run,user,tokamak,version=set_database_parameters(10, 1001, "tjohnson", "iter", "4.10a")
-    # shot, run, user, tokamak, version = set_database_parameters()
-    shot,run,user,tokamak,version=set_database_parameters(1,1,tokamak="iter")
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "srutvh", ["shot=", "run=", "user=", "tokamak=", "version=", "help"])
+
+        for opt, arg in opts:
+            #print opt, arg
+            if opt in ("-s", "--shot"):
+                shot = int(arg)
+            elif opt in ("-r", "--run"):
+                run = int(arg)
+            elif opt in ("-u", "--user"):
+                user = arg
+            elif opt in ("-t", "--tokamak"):
+                tokamak = arg
+            elif opt in ("-v", "--version"):
+                version = arg
+
+            if opt in ("-h", "--help"):
+                print "In order to run cpo2ids shot, run, user, tokamak and version variables must be defined. Example (terminal): python cpo2ids.py --shot=16151 --run=1000 --user=kosl --tokamak=aug --version=4.10a"
+                try:
+                    shot, run, user, tokamak, version
+                except:
+                    sys.exit()
+
+    except getopt.GetoptError:
+        print ('Supplied option not recognized!')
+        print ('For help: cpo2ids.py -h / --help')
+        sys.exit(2)
 
     edge = read_edge_cpo()
 
