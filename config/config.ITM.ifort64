@@ -73,6 +73,11 @@ ifdef PERFMON
 LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
+ifdef IMAS_PREFIX
+INCMODS   += -I${IMAS_PREFIX}/include/ifort
+LDLIBES   += ${LD_UAL}
+endif
+
 LD       = ${FC}
 LDOPTS   = -i_dynamic
 

@@ -50,6 +50,11 @@ ifdef USE_EIRENE
 LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
+ifdef IMAS_PREFIX
+INCMODS   = -B${IMAS_PREFIX}/include/gfortran
+LDLIBES  += ${LD_UAL}
+endif
+
 LD = $(FC)
 # LDOPTS = -Bstatic
 
