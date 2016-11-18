@@ -1,5 +1,5 @@
       module b2mod_version
-      character*10 :: newversion ='03.000.005'
+      character*10 :: newversion ='03.000.006'
 
       character*10, save ::
      1 b2fstati_version = '00.000.000',
@@ -267,4 +267,7 @@ c                                 fna_eir, fne_eir, fhe_eir, fhi_eir,
 c                                 fna_32, fna_52, fni_32, fni_52, fne_32, fne_52,
 c                                 fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
 c                                 vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
-c
+c    Version 03.000.006  14.10.16 Added various quantities to allow post-processing balance routines:
+c                                 b2stel_sna_ion, b2stel_sna_rec, b2stel_smq_ion, b2stel_smq_rec, b2stel_she, b2stel_shi_ion, b2stel_shi_rec,
+c                                 b2stcx_sna, b2stcx_smq, b2stcx_shi, b2srsm_sna, b2srsm_smo, b2srsm_she, b2srsm_shi
+c                                 

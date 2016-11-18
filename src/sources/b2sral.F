@@ -15,7 +15,8 @@
      &  rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &  rza, rz2, rpt, rpi,
      &  sna, smo, smq, she, shi, sch, sne,
-     &  wrong_flow, main_call)
+     &  wrong_flow, main_call,
+     &  balanceco, balancemo, balanceht, balancech)                      !djm 17/10/16
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -98,6 +99,7 @@
      &  shi(-1:nx,-1:ny,0:3), sch(-1:nx,-1:ny,0:3), sne(-1:nx,-1:ny,0:1)
       logical wrong_flow                                                 !xpb
       logical main_call                                                  !dpc
+      logical balanceco, balancemo, balanceht, balancech                 !djm 17/10/16
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -301,7 +303,8 @@ csw 30sep2013, added cdpa in call, uadia
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,                             !xpb
-     &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)            !xpb
+     &  sna, smo, she, shi, sch, sne, wrong_flow, main_call,            !xpb
+     &  balanceco, balancemo, balanceht, balancech)                     !djm 17/10/16
        if(wrong_flow) write(*,*)
      &  'b2sral [1]: wrong_flow returned from b2stbc'
       elseif(style.eq.1) then                                           !srv 28.07.08 {
@@ -330,7 +333,8 @@ csw 30sep2013, added cdpa in call, uadia
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,  !srv 21.10.02
      &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,                             !xpb
-     &  sna, smo, she, shi, sch, sne, wrong_flow, main_call)            !xpb
+     &  sna, smo, she, shi, sch, sne, wrong_flow, main_call,            !xpb
+     &  balanceco, balancemo, balanceht, balancech)                     !djm 17/10/16
        if(wrong_flow) write(*,*)
      &  'b2sral [3]: wrong_flow returned from b2stbc'
        call b2xpfe (nx, ny, ns, ns_ext, qe, rza, za_ext,
@@ -360,7 +364,8 @@ csw 30sep2013, added cdpa in call, uadia
      &  dtim, BoRiS,
      &  vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy, te, ti,
      &  po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
-     &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
+     &  sna0, smo0, she0, shi0, sch0, sne0, main_call,
+     &  balanceco, balancemo, balanceht, balancech)                     !djm 17/10/16)
 *   ..zero out contributions in dead cells
       do is = 0, ns-1
         call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
@@ -393,7 +398,8 @@ csw 30sep2013, added cdpa in call, uadia
       call b2stbm (nx, ny, ns, ismain, dtim,
      &  vol, gs, hx, hy, qz, qc, pbs, bb,
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
+     &  sna0, smo0, she0, shi0, sch0, sne0, main_call,
+     &  balanceco, balancemo, balanceht, balancech)                     !djm 17/10/16
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
         call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
@@ -413,7 +419,8 @@ csw 30sep2013, added cdpa in call, uadia
 *   ..compute sources by inputfiles (heating,...)
       if (sources_inputfile.eq.1) then
         call source_input(nx,ny,ns,
-     &   sna0,smo0,she0,shi0,sch0,sne0,vol,ncall)
+     &   sna0,smo0,she0,shi0,sch0,sne0,vol,ncall,
+     &  balanceco, balancemo, balanceht, balancech)                     !djm 17/10/16)
 *   ..zero out contributions in dead cells and core boundary
         do is = 0, ns-1
           call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
@@ -437,7 +444,8 @@ csw 30sep2013, added cdpa in call, uadia
       call b2stel (nx, ny, ns, ismain, BoRiS, bb, vol, hx, hy, hz, na,   !srv 09.01.01
      & ua, wadia, vadia, vaecrb, te, ti, po, ne, ni, facdrift, fac_ExB,  !srv 07.07.09
      & rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, rlsa, rlra, rlqa,
-     & sna0_ion, sna0_rec, smq0_ion, smq0_rec, she0, shi0_ion, shi0_rec) !srv 11.09.09 {
+     & sna0_ion, sna0_rec, smq0_ion, smq0_rec, she0, shi0_ion, shi0_rec, !srv 11.09.09 {
+     & balanceco, balancemo, balanceht, balancech)                       !djm 17/10/16
 *   ..zero out contributions in dead cells and core boundary
       do is = 0, ns-1
         call b2xzdd (nx, ny, 1, sna0_ion(-1,-1,0,is))
@@ -471,7 +479,8 @@ csw 30sep2013, added cdpa in call, uadia
 *    ..compute sources due to charge exchange
 *      (parallel momentum source must be pure friction)
         call b2stcx (nx, ny, ns, iscx(k), ismain, hz, BoRiS, vol, na,    !srv 09.01.01
-     &    ua, wadia, vadia, vaecrb, ti, ni, rcx, sna0, smq0, shi0)       !srv 07.07.09
+     &    ua, wadia, vadia, vaecrb, ti, ni, rcx, sna0, smq0, shi0,       !srv 07.07.09
+     &    balanceco, balancemo, balanceht, balancech)                    !djm 17/10/16
 *   ..zero out contributions in dead cells and core boundary
         do is = 0, ns-1
          call b2xzdd (nx, ny, 1, sna0(-1,-1,0,is))
@@ -529,7 +538,6 @@ csw 17oct2012, erase sna, smo, smq, (she, shi, sch) for fluid neutrals
         endif
        enddo
       endif
-
 * ..return
       if(ncall.eq.0 .or. main_call) ncall = ncall+1
       call subend ()
