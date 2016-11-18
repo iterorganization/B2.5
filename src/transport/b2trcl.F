@@ -78,7 +78,7 @@
 
 *   ..local variables
       integer ncall, n2, k, is, is0, lthf21, lvis21, lluciani, ix, iy
-      integer, save :: conductive_limit = 0                            !srv 16.06.08
+      integer, save :: conductive_limit = 1                            !srv 16.06.08
       integer, save :: iout = 0,                                       !srv 17.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,

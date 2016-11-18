@@ -67,7 +67,8 @@
       integer ncall, n2, ix, iy, ib, is, is0, 
      *   no_current, conduction_only, no_hybr, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
-      integer, save :: drift_style = 1
+      integer, save :: lim_flux = 0, drift_style = 1
+      integer, save :: conductive_limit = 1
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, t0,
      &   tex, tex0, ehx_po, ehy_po,
@@ -107,6 +108,8 @@
       if (ncall.eq.0) then                                      	!xpb
        call ipgetr ('b2tfhe_neutral', fch_ion_neutral)          	!xpb
        call ipgetr ('b2tfhe_anomalous', fch_anomalous)          	!xpb
+       call ipgeti ('b2tfhe_lim_flux', lim_flux)
+       call ipgeti ('b2trcl_conductive_limit', conductive_limit) 
        if (fch_anomalous.eq.1.0_R8)
      >  call ipgetr ('b2tanml_anomalous', fch_anomalous) ! for backward compatibility
        call ipgetr ('b2tfhe_vis_par', vis_par)                  	!xpb
@@ -621,7 +624,8 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
 cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no longer required
             flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
      &        ne(ix,iy))/2.0_R8
-            if (flomx.gt.0.0_R8) then
+            if (flomx.gt.0.0_R8 .and. 
+     &        lim_flux.eq.1 .and. conductive_limit.eq.0) then
               t0 = cone0*abs(tex)/(flomx*max(
      &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
               t0_nd = cone0_nd*abs(tex)/(flomx*max(

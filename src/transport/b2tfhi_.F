@@ -59,9 +59,9 @@ csw 30apr2014 added fna_he, ia
       integer ncall, n2, ix, iy, is, ib, ixl, iyl, ixb, iyb
       integer, save :: iout = 0,                                        !srv 16.09.02
      &                 iout_b2nph9 = 0, iout_b2npht = 0
-      integer, save :: lim_flux = 1, mdf_fhi = 0                        !srv 04.02.03 13.10.06
+      integer, save :: lim_flux = 0, mdf_fhi = 0                        !srv 04.02.03 13.10.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
-      integer, save :: conductive_limit = 0                             !srv 16.06.08 17.01.12
+      integer, save :: conductive_limit = 1                             !srv 16.06.08 17.01.12
       integer, save :: b2tfhi_hybr2=0, b2_upwind=0, flo53=0
       integer, save :: b2kin=0, b2vis=0
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07

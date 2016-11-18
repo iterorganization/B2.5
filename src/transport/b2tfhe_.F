@@ -78,12 +78,12 @@
       integer, save :: iout = 0,                                         !srv 16.09.02
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0
-      integer, save :: lim_flux = 1, mdf_fhe = 0                         !srv 04.02.03 13.10.06
+      integer, save :: lim_flux = 0, mdf_fhe = 0                         !srv 04.02.03 13.10.06
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0              !srv 06.07.06
       integer, save :: pot_eq = 1                                        !srv 26.07.06
       integer, save :: mode_ehx = 0                                      !srv 21.10.09
       integer, save :: qstyle = 0                                        !lk 23.05.06 05.07.07 {
-      integer, save :: conductive_limit = 0                              !srv 16.06.08 17.01.12
+      integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
       integer mintopcut                                                  !lk
       integer, save :: no_current=0                                      !srv 27.02.13
 csw 10oct2012

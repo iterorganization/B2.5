@@ -59,8 +59,9 @@
       integer ncall, n2, ix, iy, ib, is, ixl, iyl, ixb, iyb,
      *   no_current, conduction_only, no_hybr, pot_eq
       integer, save :: iout = 0                                         !srv 18.06.08
-      integer, save :: mdf_fhe = 0                                      !srv 04.02.03 13.10.06
+      integer, save :: lim_flux = 0, mdf_fhe = 0                        !srv 04.02.03 13.10.06
       integer, save :: drift_style = 1
+      integer, save :: conductive_limit = 1
       real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
@@ -102,6 +103,8 @@
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2tfhe_conduction_only', conduction_only)           !xpb
+       call ipgeti ('b2tfhe_lim_flux', lim_flux)
+       call ipgeti ('b2trcl_conductive_limit', conductive_limit) 
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                           !xpb
        call ipgeti ('b2tfnb_drift_style', drift_style)
        call ipgeti ('b2tfhe_mdf', mdf_fhe)                               !srv 13.10.06
@@ -360,7 +363,8 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
 cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no longer required
             flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
      &       ne(ix,iy))/2.0_R8
-            if (flomx.gt.0.0_R8) then
+            if (flomx.gt.0.0_R8 .and. 
+     &        lim_flux.eq.1 .and. conductive_limit.eq.0) then
               t0 = cone0*abs(tex)/(flomx*max(
      &         te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
               t0_mdf = cone0_mdf*abs(tex)/(flomx*max(

@@ -161,7 +161,7 @@
 *    'b2mndt_nstg2'             '1'                    Run
 *    'b2mndt_ntim_step_out'     '1'                    Numerics
 *    'b2mndt_rxf'               '0.5'                  Numerics
-*    'b2mndt_style'             '0'                    Numerics
+*    'b2mndt_style'             '1'                    Numerics
 *    'b2mndt_use_b2srst'        '1'                    Numerics
 *    'b2mwqt_style'             '1'                    Output
 *    'b2mwti_ismain0'           '0'                    Output
@@ -388,7 +388,7 @@
 *    'b2tfhe_conduction_only'   '0'                    Physics
 *    'b2tfhe_fch_pTe'           '1.0'                  Physics 
 *    'b2tfhe_hybr2'             '0'                    Numerics
-*    'b2tfhe_lim_flux'          '1'                    Physics      
+*    'b2tfhe_lim_flux'          '0'                    Physics      
 *    'b2tfhe_mdf'               '0'                    Numerics
 *    'b2tfhe_neutral'	        '0.0'                  Physics
 *    'b2tfhe_no_current'        '0'                    Numerics
@@ -398,7 +398,7 @@
 *    'b2tfhe_vis_per'	        '0.0'                  Physics     !srv 20.11.08
 *    'b2tfhe_vis_q'	        '1.0'                  Physics     !srv 20.11.08
 *    'b2tfhi_hybr2'             '0'                    Numerics
-*    'b2tfhi_lim_flux'          '1'                    Physics      
+*    'b2tfhi_lim_flux'          '0'                    Physics      
 *    'b2tfhi_mdf'               '0'                    Numerics
 *    'b2tfhi_no_hybr'           '0'                    Numerics
 *    'b2tfhi_upwind'            '0'                    Numerics
@@ -445,7 +445,7 @@
 *    'b2tqna_transport_namelist''0'                    Run
 *    'b2tqna_user_transport'    '0'                    Physics
 *    'b2tral_mode'              '1'                    Numerics
-*    'b2trcl_conductive_limit'  '0'                    Numerics
+*    'b2trcl_conductive_limit'  '1'                    Numerics
 *    'b2trcl_core_cond_limit'   '0'                    Numerics
 *    'b2trcl_cthe'              '0.0'                  Physics
 *    'b2trcl_cthi'              '2.65'                 Physics
@@ -1520,13 +1520,13 @@
 *    rate (if ADPAK rates are not used because those are already included).
 *    Assumes all recombination is three-body.
 *
-*    'b2tfhe_lim_flux'          '1'                    Physics      
+*    'b2tfhe_lim_flux'          '0'                    Physics      
 *    If '0', flux limit is not applied directly to the electron heat flux
 *    but is applied through transport coefficients if 
 *    'b2trcl_conductive_limit' is '1'.
 *    It is recommended '0'.
 *
-*    'b2tfhi_lim_flux'          '1'                    Physics      
+*    'b2tfhi_lim_flux'          '0'                    Physics      
 *    If '0', flux limit is not applied directly to the ion heat flux
 *    but is applied through transport coefficients if 
 *    'b2trcl_conductive_limit' is '1'.
@@ -1991,12 +1991,11 @@
 *    If potential_at_guard_cell.eq.0, the value from the neighbouring
 *    real cell is used instead. 
 *
-*    'b2trcl_conductive_limit'  '0'                    Numerics
+*    'b2trcl_conductive_limit'  '1'                    Numerics
 *    When set to '1', flux limit of the parallel electron
 *    and ion heat fluxes is applied to transport coefficients.
 *    It is recommended '1'. If 'b2trcl_conductive_limit' '1' then 
-*    the keys 'b2tfhe_lim_flux' and 'b2tfhi_lim_flux' must be '0',
-*    and also 'b2mndt_style' must be '0'.
+*    the keys 'b2tfhe_lim_flux' and 'b2tfhi_lim_flux' must be '0'.
 *    
 *    'b2trcl_core_cond_limit'   '0'                    Numerics
 *    If core_cond_limit.eq.0, then the heat flux limits due to chvemx
@@ -2216,10 +2215,9 @@
 *    during coupled runs, so this switch is superceded by use_eirene, and also
 *    needed to reproduce SOLPS4 runs.
 *
-*    'b2mndt_style'             '0'                    Numerics
-*    When set to '1', all important variables will be calculated for 
-*    the first step. 
-*    This avoids a jump of residuals when continuing the run.  
+*    'b2mndt_style'             '1'                    Numerics
+*    If 0, b2news is called  (SOLPS5.0/1)
+*    If 1, b2news_ is called (SOLPS5.2)
 *
 *    'b2mndt_ntim_step_out'     '1'                    Numerics
 *    When set to a value of 'K', residuals at each K-th step will be written

@@ -71,7 +71,7 @@
       integer ncall, nstg(0:2), moqtlv, moitlv, itcnt, density_control,  !xpb
      *  ramp_slow, ier0, no_solve, ix, iy, boundary_namelist,
      *  nsmin, nsmax
-      integer, save :: style = 0, guard_flows = 2                        !srv 18.06.08
+      integer, save :: style = 1, guard_flows = 2                        !srv 18.06.08
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
       real (kind=R8) ::

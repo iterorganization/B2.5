@@ -58,8 +58,9 @@
       integer ncall, n2, ix, iy, is, ib, conduction_only, no_hybr, 
      &        ixl, iyl, ixb, iyb
       integer, save :: iout = 0                                      !srv 16.09.02
-      integer, save :: mdf_fhi = 0                                   !srv 04.02.03 13.10.06
+      integer, save :: lim_flux = 0, mdf_fhi = 0                     !srv 04.02.03 13.10.06
       integer, save :: drift_style = 1
+      integer, save :: conductive_limit = 1
       real (kind=R8), save :: PSch=1.0e0_R8                          !srv 17.01.07
       real (kind=R8), save :: ycur = 1.0_R8                          !srv 07.07.08
       real (kind=R8) ::
@@ -104,6 +105,8 @@
         call ipgetr ('b2tfhi_PSch', PSch)                            !srv 17.01.07
         call ipgetr ('b2tfnb_ycur', ycur)                            !srv 17.07.08
         call ipgeti ('b2tfhi_iout', iout)                            !srv 16.09.02
+        call ipgeti ('b2tfhi_lim_flux', lim_flux)
+        call ipgeti ('b2trcl_conductive_limit', conductive_limit) 
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -307,7 +310,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
          else
            if (BoRiS.eq.1.0_R8) then   ! Add the kinetic and viscous terms
              do is = 0, ns-1
-!wdk still need to be carefull with flux limit to cvsa! Now, only ok if conductive_limit.eq.1
+!wdk use of cvsa in coni0 ensures consistency w.r.t. flux limits and discretization
                floi0 = am(is)*mp*fna(ix,iy,0,is)
                coni0 = 4.0e0_R8/3.0e0_R8*cvsa(ix,iy,0,is)
                t1 = dim ( coni0,
@@ -360,7 +363,8 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
            coni0 = chci(ix,iy,0)
            coni0_mdf = chci(ix,iy,0)
          endif
-         if (flomx.gt.0.0_R8) then
+         if (flomx.gt.0.0_R8 .and.
+     &       lim_flux.eq.1 .and. conductive_limit.eq.0) then
            t0 = coni0*abs(dti)/
      &      (flomx*max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
            t0_mdf = coni0_mdf*abs(dti)/                             !srv 18.08.08
