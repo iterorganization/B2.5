@@ -487,7 +487,7 @@ cxpb Data file material properties
       if(file_ok) then
         open(nread,file=trim(filename))
         write(*,*) 'Reading ', trim(filename)
-        read(nread,wall_save)
+        read(nread,wall_save,err=999)
         write(*,*) 'Read ', trim(filename)
         close(nread)
       else
@@ -504,6 +504,7 @@ cxpb Data file material properties
       call xertst(ndepth_nml.le.ndepth .and. ndepth_nml.ge.1,
      . 'Invalid array size NDEPTH_NML!')
       return
+ 999  call xerrab ('Error while reading WALL_SAVE namelist!')
       end subroutine read_b2mod_wall_namelist
 
       subroutine write_b2mod_wall_namelist(nwrite,nx,ny,ns,edition)

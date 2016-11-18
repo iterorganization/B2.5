@@ -128,7 +128,7 @@ c***  Standard setup:
       if(file_ok) then
         open(99,file=filename)
         write(*,*) 'Reading namelist user from ',trim(filename)
-        read(99,user)
+        read(99,user,err=999)
         write(*,*) 'Read namelist user from ',trim(filename)
         user_namelist_used = .true.
       else
@@ -179,6 +179,7 @@ c     . 'faulty input lpfrt_o')
       if (user_namelist_used) write(*,user)
       return
 
+ 999  call xerrab ('Error while reading FEEDBACK namelist!')
       end subroutine read_b2mod_user_namelist
 
       end module b2mod_user_namelist

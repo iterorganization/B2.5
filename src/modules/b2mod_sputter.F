@@ -131,7 +131,7 @@
       if(file_ok) then
         open(nread,file=trim(filename))
         write(6,*) 'Reading ',trim(filename)
-        read(nread,sputter_save)
+        read(nread,sputter_save,err=999)
         write(6,*) 'Read ',trim(filename)
         close(nread)
       else
@@ -140,6 +140,7 @@
       found = maxval(sputter_yield).gt.0.0_R8 .or.
      .        maxval(sputter_yield2).gt.0.0_R8
       return
+ 999  call xerrab ('Error while reading SPUTTER_SAVE namelist!')
       end subroutine read_b2mod_sputter_namelist
 
       subroutine write_b2mod_sputter_namelist(nwrite,nx,ny,ns,edition)

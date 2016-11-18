@@ -193,7 +193,7 @@
       tallies=.true.
       movies=.true.
       overwrite_shotnumber=0
-      read(ninp(0),b2md_namelist)
+      read(ninp(0),b2md_namelist,err=99)
       write(nout(0),b2md_namelist)
 
 #ifdef MDSPLUS
@@ -558,6 +558,7 @@ c-dpc        endif
 *.error conditions
 
    91 call xerrab ('error trying to read internal parameters')
+   99 call xerrab ('error trying to read b2md_namelist')
 
 *-----------------------------------------------------------------------
 *.end b2mddr

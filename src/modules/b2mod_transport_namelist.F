@@ -124,7 +124,7 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
         cflmv=cflim(2)
         open(99,file=filename)
         write(*,*) 'Reading namelist transport from ',trim(filename)
-        read(99,transport)
+        read(99,transport,err=999)
         write(*,*) 'Read namelist transport from ',trim(filename)
         cflim(0)=cflme
         cflim(1)=cflmi
@@ -137,6 +137,7 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       endif
 
       return
+ 999  call xerrab ('Error while reading TRANSPORT namelist!')
       end subroutine read_b2mod_transport_namelist
 
       subroutine write_b2mod_transport_namelist

@@ -448,7 +448,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
         open(99,file=filename)
         call cfverr(99,neutrals_version)
         write(*,*) 'Reading namelist neutrals from ',trim(filename)
-        read(99,neutrals)
+        read(99,neutrals,err=999)
         write(*,*) 'Read namelist neutrals from ',trim(filename)
       else
         call xerrab ('No '//trim(filename))
@@ -1000,7 +1000,9 @@ c.. Test consistency with physical edges within the computational domain
      .     'Mismatch with left internal edge (North) !')
         endif
       enddo
+      return
     
+ 999  call xerrab ('Error while reading NEUTRALS namelist!')
       end subroutine read_neutrals_namelist
 
       subroutine write_b2mod_neutrals_namelist
@@ -1028,7 +1030,7 @@ c.. Test consistency with physical edges within the computational domain
       if(file_ok) then
         open(nread,file=trim(filename))
         write(6,*) 'Reading ',trim(filename)
-        read(nread,neutrals_save)
+        read(nread,neutrals_save,err=999)
         write(6,*) 'Read ',trim(filename)
         close(nread)
       else
@@ -1043,6 +1045,7 @@ c.. Test consistency with physical edges within the computational domain
       enddo
       
       return
+ 999  call xerrab ('Error while reading NEUTRALS_SAVE namelist!')
       end subroutine read_b2mod_neutrals_save
 
       subroutine write_b2mod_neutrals_save(nwrite,edition)

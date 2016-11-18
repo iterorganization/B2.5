@@ -94,7 +94,7 @@
       if(file_ok) then
         open(nread,file=trim(filename))
         write(6,*) 'Reading ',trim(filename)
-        read(nread,feedback)
+        read(nread,feedback,err=999)
         write(6,*) 'Read ',trim(filename)
         close(nread)
       else
@@ -107,6 +107,7 @@
      .            .gt. 0.0_R8
       return
 
+ 999  call xerrab ('Error while reading FEEDBACK namelist!')
       end subroutine read_b2mod_feedback
 
       subroutine write_b2mod_feedback(nwrite,edition)

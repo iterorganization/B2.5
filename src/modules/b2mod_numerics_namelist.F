@@ -148,7 +148,7 @@
       if(file_ok) then
         open(99,file=filename)
         write(*,*) 'Reading namelist numerics from ',trim(filename)
-        read(99,numerics)
+        read(99,numerics,err=999)
         write(*,*) 'Read namelist numerics from ',trim(filename)
         do ix = 0, nnreg(0)
           solveet(ix) = solveee(ix).or.solveei(ix)
@@ -194,6 +194,7 @@ c additional time-modification factor
       enddo
 
       return
+ 999  call xerrab ('Error while reading NUMERICS namelist!')
       end subroutine read_b2mod_numerics_namelist
 
       subroutine write_b2mod_numerics_namelist

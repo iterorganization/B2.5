@@ -376,7 +376,7 @@
         open(92,file=filename)
         write(*,*) 
      .   'Reading sources profile namelist from ', trim(filename)
-        read(92,profile)
+        read(92,profile,err=999)
         write(*,*) 
      .   'Read sources profile namelist from ',trim(filename)
         close(92)
@@ -386,6 +386,7 @@
 !     write(*,profile)
       return
 
+ 999  call xerrab ('Error while reading PROFILE namelist!')
       end subroutine read_source_profile
 
       end subroutine source_input
@@ -776,7 +777,7 @@ c*** Clear data to forget previous profiles
       if (file_ok) then
         open(99,file=filename)
         write(*,*) 'Reading namelist transport from ',trim(filename)
-        read(99,transport)
+        read(99,transport,err=999)
         write(*,*) 'Read namelist transport from ',trim(filename)
         write(*,transport)
         close(99)
@@ -784,6 +785,7 @@ c*** Clear data to forget previous profiles
         call xerrab (' No '//trim(filename))
       endif
       return
+ 999  call xerrab ('Error while reading TRANSPORT namelist!')
       end subroutine read_transport_input
 
       end subroutine transport_input

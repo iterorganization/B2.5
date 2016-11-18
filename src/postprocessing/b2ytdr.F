@@ -2130,7 +2130,7 @@ c 2002-09-11: logic revised
           ad1spec(:,:,:)=-5
         end if
         open(99,file=trim(filename))
-        read(99,transport)
+        read(99,transport,err=999)
         close(99)
         if(same_bundling.and.nx.eq.nx1.and.ny.eq.ny1) then
           if (first_pass) write(nout(5),'(a)') 'b2.transport.inputfile'
@@ -2435,7 +2435,7 @@ cxpb We must ensure we have not already listed this additional species
       do while((sources_inputfile.eq.1.or.todo).and..not.found)
         filename = '../'//sources_filename
         open(92,file=trim(filename))
-        read(92,profile)
+        read(92,profile,err=999)
         close(92)
         write(*,*) 'Writing ',trim(new_filename)
         write(nout(5),'(a)') trim(new_filename)
@@ -3084,7 +3084,7 @@ cxpb This will need to be checked !!!
         rescale_br=1.0_R8
         open(99,file='../b2.atomic_physics_rescale.parameters')
         write(*,*) 'Reading ../b2.atomic_physics_rescale.parameters'
-        read(99,atomic_physics_rescale)
+        read(99,atomic_physics_rescale,err=999)
         write(*,atomic_physics_rescale)
         close(99)
         write(*,*) 'Read ../b2.atomic_physics_rescale.parameters'
@@ -8246,7 +8246,7 @@ cxpb as they no longer necessarily point to the same species
 *  ..read in the namelist data
         if(sputter_namelist_used) then
           open(99,file='../b2.sputter_save.parameters')
-          read(99,sputter_save)
+          read(99,sputter_save,err=999)
           close(99)
 *  ..convert the sputter namelist data
           natmm = max(natm,natm1)
@@ -8843,6 +8843,7 @@ cxpb as they no longer necessarily point to the same species
 
    91 call xerrab
      1 ('error trying to read non-default internal parameters')
+  999 call xerrab ('error while attempting to read namelist')
       return
 
 *-----------------------------------------------------------------------

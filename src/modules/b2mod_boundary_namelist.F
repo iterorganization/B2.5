@@ -409,7 +409,7 @@ cxpb Have to do this here already in case the namelist is not used
         open(99,file=filename)
         call cfverr(99,boundary_version)
         write(*,*) 'Reading namelist boundary from ',trim(filename)
-        read(99,boundary)
+        read(99,boundary,err=999)
         write(*,*) 'Read namelist boundary from ',trim(filename)
       else
         call xerrab ('No '//trim(filename))
@@ -879,6 +879,7 @@ c.. Test consistency with region boundaries
       end do
       return
 
+ 999  call xerrab ('Error while reading BOUNDARY namelist!')
       end subroutine read_b2mod_boundary_namelist
 
       subroutine write_b2mod_boundary_namelist

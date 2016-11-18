@@ -176,7 +176,7 @@ c
 c*** Tracing unit assignment (see b2file, b2blnc, etc.)
 c
 c<<<
-      NTRC(ntrc_tst) = 70
+      NTRC(ntrc_tst) = 80
       fn_ntrc(ntrc_tst) = 'tracing/test.trc'
 c>>>
       NTRC(ntrc_res) = 72

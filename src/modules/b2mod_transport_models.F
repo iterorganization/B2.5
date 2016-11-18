@@ -57,7 +57,7 @@
 	if (edition.eq.'    ') open(nread,file=trim(filename))
 	write(*,*) 'Reading namelist transport_models from ',
      1   trim(filename)
-	read(nread,transport_models)
+	read(nread,transport_models,err=999)
 	write(*,*) 'Read namelist transport_models from ',
      1   trim(filename)
         if (edition.eq.'    ') close(nread)
@@ -68,6 +68,7 @@
       found = maxval(eta_hce_mult).ne.1.0_R8 .or.
      .        minval(eta_hce_mult).ne.1.0_R8
       return
+ 999  call xerrab ('Error while reading TRANSPORT_MODELS namelist!')
       end subroutine read_b2mod_transport_models
 
       subroutine write_b2mod_transport_models(nwrite,edition)

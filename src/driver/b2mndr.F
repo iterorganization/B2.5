@@ -999,7 +999,7 @@ c     &   'faulty internal parameter density_rescale')
           open(99,file='../b2.atomic_physics_rescale.parameters')
           write(*,*)
      &         'Reading ../b2.atomic_physics_rescale.parameters'
-          read(99,atomic_physics_rescale)
+          read(99,atomic_physics_rescale,err=999)
           write(*,atomic_physics_rescale)
           close(99)
           write(*,*) 'Read ../b2.atomic_physics_rescale.parameters'
@@ -2101,6 +2101,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 
 *-----------------------------------------------------------------------
 *.end b2mndr
+
+ 999  call xerrab
+     . ('Error while reading ATOMIC_PHYSICS_RESCALE namelist!')
 
       end subroutine b2mndr
 c
