@@ -306,7 +306,8 @@
      &     cdna, cdpa, cvsa, cvla, chce, chve, chci, chvi, calf,         !xpb
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
-     &     wrong_flow, .false.)
+     &     wrong_flow, .false.,
+     &     .true., .true., .true., .true.)                               !djm 17/10/16
           if(wrong_flow) write(*,*)
      &         'b2news [1]: wrong_flow returned from b2sral'
 *     ..smooth out sources
@@ -317,7 +318,8 @@
           call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !xpb !srv 09.01.01 01.07.08
      &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
-     &     sna, smo, she, shi, sch, sne, .false.)                        !xpb
+     &     sna, smo, she, shi, sch, sne, .false.,                        !xpb
+     &     .true., .true., .true., .true., po)                           !djm 17/10/16
 *     ..stabilise the source coefficients                                !xpb
           call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,  !xpb !srv 01.07.08
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
@@ -347,7 +349,10 @@
      &    fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                      !srv 13.10.06
      1    flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1    fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &    fna_pinch(-1,-1,0,is),fna_pll(-1,-1,0,is),                     !djm 17/10/16
+     &    fna_drift(-1,-1,0,is),fna_nanom(-1,-1,0,is),
+     &    fna_panom(-1,-1,0,is),fna_ch(-1,-1,0,is),.false.)
         enddo
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
@@ -366,18 +371,26 @@
      &    cdna, cdpa, cvsa, cvla, chce, chve, chci, chvi, calf,          !xpb
      &    rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &    rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
-     &    wrong_flow, .false.)
+     &    wrong_flow, .false.,
+     &    .true., .true., .true., .true.)                                !djm 17/10/16
+
         if(wrong_flow) write(*,*)
      &         'b2news [2]: wrong_flow returned from b2sral'
 *     ..smooth out sources
+        sna0 = sna !djm store for calculation of smoothing component
         call b2srsm (nx, ny, ns, dtim,
      &    vol, na, ua, te, ti, ne, ni,
      &    sna, smo, she, shi, sne, .false.)
+        b2srsm_sna(-1:nx,-1:ny,0:ns-1)=                                  !djm 27/10/16
+     &   (sna(-1:nx,-1:ny,0,0:ns-1)-sna0(-1:nx,-1:ny,0,0:ns-1))+
+     &   (sna(-1:nx,-1:ny,1,0:ns-1)-sna0(-1:nx,-1:ny,1,0:ns-1))*
+     &   na(-1:nx,-1:ny,0:ns-1)
 *     ..include contributions due to timestep                            !xpb
         call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,           !xpb !srv 09.01.01 01.07.08
      &    vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &    na, ua, te, ti, ne, ni, kinrgy,                                !srv 16.07.10
-     &    sna, smo, she, shi, sch, sne, .false.)                         !xpb
+     &    sna, smo, she, shi, sch, sne, .false.,                         !xpb
+     &    .true., .true., .true., .true., po)                            !djm 17/10/16
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,    !xpb !srv 01.07.08
      &    ni, sna, smo, she, shi, sch, sne)                              !xpb
@@ -477,7 +490,10 @@ cxpb
      &     fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                     !srv 13.10.06
      1     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1     fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &     fna_pinch(-1,-1,0,is),fna_pll(-1,-1,0,is),                    !djm 17/10/16
+     &     fna_drift(-1,-1,0,is),fna_nanom(-1,-1,0,is),
+     &     fna_panom(-1,-1,0,is),fna_ch(-1,-1,0,is),.true.)
           if (ncall.eq.ncallout) then
             write(*,*) 'ncall,is',ncall,is
             call hbout('../b2ne_npco',nx,ny,ns,te,'te',ti,'ti',
@@ -549,7 +565,10 @@ cxpb
      &       fnaPSch(-1,-1,0,is),fna_mdf(-1,-1,0,is),                    !srv 13.10.06
      1       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &       fna_pinch(-1,-1,0,is),fna_pll(-1,-1,0,is),                  !djm 17/10/16
+     &       fna_drift(-1,-1,0,is),fna_nanom(-1,-1,0,is),
+     &       fna_panom(-1,-1,0,is),fna_ch(-1,-1,0,is),.false.)
           endif
         enddo
         if(wrong_flow .or. ipass.ne.0) then                              !xpb
@@ -645,7 +664,8 @@ cxpb
      &           rlbr, rlza, rlz2, rlpt, rlpi,
      &           rza, rz2, rpt, rpi,
      &           sna0, smo0, smq0, she0, shi0, sch0, sne0,
-     &           wrong_flow, .false.)
+     &           wrong_flow, .false.,
+     &           .false., .false., .true., .true.)                       !djm 17/10/16
                 if(wrong_flow) write(*,*)
      &           'b2news [3]: wrong_flow returned from b2sral'
 *     ..smooth out sources
@@ -656,7 +676,8 @@ cxpb
                 call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,   !xpb !srv 09.01.01 01.07.08
      &           vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &           na, ua, te, ti, ne, ni, kinrgy,                         !srv 16.07.10
-     &           sna0, smo0, she0, shi0, sch0, sne0, .false.)            !xpb
+     &           sna0, smo0, she0, shi0, sch0, sne0, .false.,            !xpb
+     &           .false., .false., .true., .true., po)                   !djm 17/10/16
 *     ..stabilise the source coefficients                                !xpb
                 call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti,    !xpb !srv 01.07.08
      &           po, ne, ni, sna0, smo0, she0, shi0, sch0, sne0)         !xpb
@@ -743,7 +764,10 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      &             fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),             !srv 13.10.06
      1             flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1             fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &             fna_pinch(-1,-1,0,is),fna_pll(-1,-1,0,is),            !djm 17/10/16
+     &             fna_drift(-1,-1,0,is),fna_nanom(-1,-1,0,is),
+     &             fna_panom(-1,-1,0,is),fna_ch(-1,-1,0,is),.false.)
                 enddo
                 if(wrong_flow .or. ipass.ne.0) then                      !xpb
                    call print_wrong_flows(

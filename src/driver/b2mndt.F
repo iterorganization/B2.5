@@ -346,7 +346,8 @@ ctmp.dpc
      &     cdna, cdpa, cvsa, cvla, chce, chve, chci, chvi, calf,         !xpb
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
-     &     wrong_flow, main_call)
+     &     wrong_flow, main_call,
+     &     .false.,.false.,.false.,.false.)                              !djm 17/10/16
           if(wrong_flow) write(*,*)
      &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources
@@ -357,7 +358,8 @@ ctmp.dpc
           call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,         !srv 09.01.01 01.07.08
      &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
-     &     snadt, smodt, shedt, shidt, schdt, snedt, .false.)            !srv 11.09.09
+     &     snadt, smodt, shedt, shidt, schdt, snedt, .false.,            !srv 11.09.09
+     &     .false.,.false.,.false.,.false., po)                          !djm 17/10/16
 *   ..add to previous contributions
           call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
           call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)
@@ -473,7 +475,10 @@ ctmp.dpc
      &          fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),
      &          flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &          fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &          fna_pinch(-1,-1,0,is),fna_pll(-1,-1,0,is),               !djm 17/10/16
+     &          fna_drift(-1,-1,0,is),fna_nanom(-1,-1,0,is),
+     &          fna_panom(-1,-1,0,is),fna_ch(-1,-1,0,is),.false.)
            end do
 *      ..compute electron drift velocities
            call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,

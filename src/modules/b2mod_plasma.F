@@ -43,6 +43,10 @@
       real (kind=R8), allocatable, save ::
      *  facdrift(:,:), fac_ExB(:,:), fac_vis(:,:)
 
+      real (kind=R8), allocatable, save ::                               !djm 17/10/16
+     *  fna_pinch(:,:,:,:), fna_pll(:,:,:,:), fna_drift(:,:,:,:),
+     *  fna_ch(:,:,:,:), fna_nanom(:,:,:,:), fna_panom(:,:,:,:)
+
       contains
 
       subroutine alloc_b2mod_plasma(nxd,nyd,nsd)
@@ -62,6 +66,12 @@
       allocate(fne_52(-1:nxd,-1:nyd,0:1))
       allocate(fna_32nd(-1:nxd,-1:nyd,0:1,0:nsd-1))                !srv 18.06.08
       allocate(fna_52nd(-1:nxd,-1:nyd,0:1,0:nsd-1))                !srv 18.06.08
+      allocate(fna_pinch(-1:nxd,-1:nyd,0:1,0:nsd-1))               !djm 17/10/16
+      allocate(fna_pll(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fna_drift(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fna_ch(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fna_nanom(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(fna_panom(-1:nxd,-1:nyd,0:1,0:nsd-1))
       allocate(fhe(-1:nxd,-1:nyd,0:1))
       allocate(fhe0(-1:nxd,-1:nyd,0:1))
       allocate(fhep(-1:nxd,-1:nyd,0:1))
@@ -182,6 +192,12 @@
       deallocate(fni_52)
       deallocate(fne_32)
       deallocate(fne_52)
+      deallocate(fna_pinch) !djm 17/10/16
+      deallocate(fna_pll)
+      deallocate(fna_drift)
+      deallocate(fna_ch)
+      deallocate(fna_nanom)
+      deallocate(fna_panom)
       deallocate(fhe)
       deallocate(fhe0)
       deallocate(fhep)
@@ -339,6 +355,14 @@
         fne_32 = fne
         fne_52 = 0.0_R8
       endif
+      if(b2fplasma_version.ge.'03.000.006') then !djm 17/10/16
+        call cfrure (nread, size(fna_pinch), fna_pinch, 'fna_pinch')
+        call cfrure (nread, size(fna_pll), fna_pll, 'fna_pll')
+        call cfrure (nread, size(fna_drift),fna_drift , 'fna_drift')
+        call cfrure (nread, size(fna_ch), fna_ch, 'fna_ch')
+        call cfrure (nread, size(fna_nanom), fna_nanom, 'fna_nanom')
+        call cfrure (nread, size(fna_panom), fna_panom, 'fna_panom')
+      endif
       if(b2fplasma_version.ge.'01.001.010') then
         call cfrure (nread, size(wadia), wadia, 'wadia')
         call cfrure (nread, size(vaecrb), vaecrb, 'vaecrb')
@@ -443,6 +467,14 @@
         call cfwure (nwrite, size(fni_52), fni_52, 'fni_52')
         call cfwure (nwrite, size(fne_32), fne_32, 'fne_32')
         call cfwure (nwrite, size(fne_52), fne_52, 'fne_52')
+      endif
+      if(newversion.ge.'03.000.006') then !djm 17/10/16
+        call cfwure (nwrite, size(fna_pinch), fna_pinch, 'fna_pinch')
+        call cfwure (nwrite, size(fna_pll), fna_pll, 'fna_pll')
+        call cfwure (nwrite, size(fna_drift),fna_drift , 'fna_drift')
+        call cfwure (nwrite, size(fna_ch), fna_ch, 'fna_ch')
+        call cfwure (nwrite, size(fna_nanom), fna_nanom, 'fna_nanom')
+        call cfwure (nwrite, size(fna_panom), fna_panom, 'fna_panom')
       endif
       if(newversion.ge.'01.001.010') then
         call cfwure (nwrite, size(wadia), wadia, 'wadia')

@@ -9,7 +9,8 @@
      &  fchvispar, fchinert, fchanml,                                    !srv 20.09.06
      &  fnb, fnb_nodrift, fnb_fcor, fnb_he, fnbPSch, fnb_mdf,            !srv 13.10.06
      &  flob, conb, fnb_32, fnb_52, fnb_32nd,  
-     &  fnb_52nd,kbnrgy, fllim0fnb)
+     &  fnb_52nd,kbnrgy, fllim0fnb,
+     &  fnb_pinch,fnb_pll,fnb_drift,fnb_nanom,fnb_panom,fnb_ch,balance) !djm 17/10/16
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -17,6 +18,7 @@
       use b2mod_geo_corner
       use b2mod_b2cmpa
       use b2mod_b2cmfs
+
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, guard_flows, ismain                           !xpb !srv 08.09.01 !lk 02.06.11
@@ -35,6 +37,7 @@
      &  cddb(-1:nx,-1:ny,0:1),                                           !srv 13.10.06
      &  fchvispar(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),           !srv 20.09.06
      &  fchanml(-1:nx,-1:ny,0:1)
+      logical balance                                                    !djm 17/10/16
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  fnb(-1:nx,-1:ny,0:1), fnb_32(-1:nx,-1:ny,0:1),
@@ -46,7 +49,10 @@
      &  conb(-1:nx,-1:ny,0:1,0:4), ubdia(-1:nx,-1:ny,0:1),               !srv 13.10.06
      &  vbecrb(-1:nx,-1:ny,0:1), vbdia(-1:nx,-1:ny,0:1),                 !xpb
      &  wbdia(-1:nx,-1:ny,0:1), kbnrgy(-1:nx,-1:ny),
-     &  fllim0fnb(-1:nx,-1:ny,0:1)
+     &  fllim0fnb(-1:nx,-1:ny,0:1),
+     &  fnb_pinch(-1:nx,-1:ny,0:1), fnb_pll(-1:nx,-1:ny,0:1),            !djm 17/10/16
+     &  fnb_drift(-1:nx,-1:ny,0:1), fnb_nanom(-1:nx,-1:ny,0:1),
+     &  fnb_panom(-1:nx,-1:ny,0:1), fnb_ch(-1:nx,-1:ny,0:1)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -751,6 +757,14 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          con_he(ix,iy)        = 0.0_R8
          con_mdf(ix,iy)       = 0.0_R8
 	 fllim0fnb(ix,iy,0)   = 1.0_R8
+         if (balance) then                                              !djm 14/10/16
+          fnb_pinch(ix,iy,0)   = 0.0_R8
+          fnb_pll(ix,iy,0)     = 0.0_R8
+          fnb_drift(ix,iy,0)   = 0.0_R8
+          fnb_nanom(ix,iy,0)   = 0.0_R8
+          fnb_panom(ix,iy,0)   = 0.0_R8
+          fnb_ch(ix,iy,0)      = 0.0_R8
+         endif
         else
          term(ix,iy) = xfrhie*wrk2(ix,iy)*0.5_R8*abs(pbs(ix,iy,0))*     !iyv 19.04.07 11.01.13
      &    sqrt((pb(leftix(ix,iy),leftiy(ix,iy))+pb(ix,iy))/
@@ -841,6 +855,30 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      1      flo*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &      con(ix,iy)*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))-
      &      cdpb(ix,iy,0)*(pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))
+           if (balance) then
+cdjm 17/10/16 store components of fnb for balance (assumes drift_style.eq.1 and no_hybr.eq.0)
+             fnb_pinch(ix,iy,0) = cvlb(ix,iy,0)*
+     &        (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+             fnb_pll(ix,iy,0) = (pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy))*
+     &        (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+             if (mdf_fnb) then
+                fnb_drift(ix,iy,0) = vbecrb(ix,iy,0)*
+     &           (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
+     &           (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &           (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+             else
+                fnb_drift(ix,iy,0) = ubdia(ix,iy,0)*
+     &           (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
+     &           (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &           (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
+             endif
+             fnb_nanom(ix,iy,0) = 
+     &        -con(ix,iy)*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))
+             fnb_panom(ix,iy,0) =
+     &        -cdpb(ix,iy,0)*(pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))
+             fnb_ch(ix,iy,0) = 0.0_R8
+           endif
+
            fnb_fcor(ix,iy,0) = flo2dia*(nb(leftix(ix,iy),leftiy(ix,iy)) !srv 01.10.99
      &      +nb(ix,iy))/2.0_R8-
      &      con_2dia(ix,iy)*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))-
@@ -1082,6 +1120,14 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          con_he(ix,iy)        = 0.0_R8
          con_mdf(ix,iy)       = 0.0_R8
 	 fllim0fnb(ix,iy,1)   = 1.0_R8
+         if (balance) then                                              !djm 14/10/16
+          fnb_pinch(ix,iy,1)   = 0.0_R8
+          fnb_pll(ix,iy,1)     = 0.0_R8
+          fnb_drift(ix,iy,1)   = 0.0_R8
+          fnb_nanom(ix,iy,1)   = 0.0_R8
+          fnb_panom(ix,iy,1)   = 0.0_R8
+          fnb_ch(ix,iy,1)      = 0.0_R8
+         endif
         else
          if(drift_style.eq.0)then                                       !srv 21.06.08
           if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then         !srv 20.09.06
@@ -1225,6 +1271,35 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &      con(ix,iy)*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &      cdpb(ix,iy,1)*(pb(ix,iy)
      &                    -pb(bottomix(ix,iy),bottomiy(ix,iy)))
+          if (balance) then
+cdjm 17/10/16 store components of fnb for balance (assumes drift_style.eq.1 and no_hybr.eq.0)
+            fnb_pinch(ix,iy,1) = cvlb(ix,iy,1)*
+     &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+            fnb_pll(ix,iy,1) = 0.0_R8
+            if (mdf_fnb) then
+               fnb_drift(ix,iy,1) = vbecrb(ix,iy,1)*
+     &          (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &          (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+            else
+               fnb_drift(ix,iy,1) = ubdia(ix,iy,1)*
+     &          (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &          (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
+            endif
+            if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+              fnb_ch(ix,iy,1) = (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+ ! fchvisper(ix,iy,1)+
+     &         fchanml(ix,iy,1))*ycur/qe
+            else
+              fnb_ch(ix,iy,1) = 0.0_R8
+            endif
+            fnb_nanom(ix,iy,1) = 
+     &       -con(ix,iy)*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))
+            fnb_panom(ix,iy,1) =
+     &       -cdpb(ix,iy,1)*
+     &       (pb(ix,iy)-pb(bottomix(ix,iy),bottomiy(ix,iy)))
+          endif
+
 *      fnb_he will be used only for heat equations                      !srv 21.01.00 {
           fnb_he(ix,iy,1) = flo_he*(nb(bottomix(ix,iy),bottomiy(ix,iy)) !srv 13.09.02 {
      &          +nb(ix,iy))/2.0_R8-
@@ -1478,6 +1553,14 @@ cxpb turn off flows between boundary cells
             vbdia(ix,iy,1)=0.0_R8
             wbdia(ix,iy,1)=0.0_R8
             ubdia(ix,iy,1)=0.0_R8
+            if (balance) then                                           !djm 14/10/16
+               fnb_pinch(ix,iy,1)=0.0_R8
+               fnb_pll(ix,iy,1)=0.0_R8
+               fnb_drift(ix,iy,1)=0.0_R8
+               fnb_nanom(ix,iy,1)=0.0_R8
+               fnb_panom(ix,iy,1)=0.0_R8
+               fnb_ch(ix,iy,1)=0.0_R8
+            endif
           endif
          enddo
         enddo
@@ -1498,6 +1581,14 @@ cxpb turn off poloidal flows in core boundary
             vbdia(ix,-1,0) = 0.0_R8
             wbdia(ix,-1,0) = 0.0_R8
             ubdia(ix,-1,0) = 0.0_R8
+            if (balance) then                                           !djm 14/10/16
+               fnb_pinch(ix,-1,0)=0.0_R8
+               fnb_pll(ix,-1,0)=0.0_R8
+               fnb_drift(ix,-1,0)=0.0_R8
+               fnb_nanom(ix,-1,0)=0.0_R8
+               fnb_panom(ix,-1,0)=0.0_R8
+               fnb_ch(ix,-1,0)=0.0_R8
+            endif
           endif
         enddo
        elseif(guard_flows.eq.1) then                                    !srv 20.06.08 {
@@ -1525,6 +1616,14 @@ cxpb turn off poloidal flows in core boundary
             flob(ix,iy,1)        = 0.0_R8
             conb(ix,iy,1,0:2)    = 0.0_R8
 	    fllim0fnb(ix,iy,0)   = 1.0_R8
+            if (balance) then                                           !djm 14/10/16
+               fnb_pinch(ix,iy,1)=0.0_R8
+               fnb_pll(ix,iy,1)=0.0_R8
+               fnb_drift(ix,iy,1)=0.0_R8
+               fnb_nanom(ix,iy,1)=0.0_R8
+               fnb_panom(ix,iy,1)=0.0_R8
+               fnb_ch(ix,iy,1)=0.0_R8
+            endif
           endif
          enddo
         enddo
@@ -1548,6 +1647,14 @@ cxpb turn off poloidal flows in core boundary
           flob(:,iy,0)        = 0.0_R8
           conb(:,iy,0,0:2)    = 0.0_R8
           fllim0fnb(:,iy,0)   = 1.0_R8
+          if (balance) then                                             !djm 14/10/16
+             fnb_pinch(:,iy,0)=0.0_R8
+             fnb_pll(:,iy,0)=0.0_R8
+             fnb_drift(:,iy,0)=0.0_R8
+             fnb_nanom(:,iy,0)=0.0_R8
+             fnb_panom(:,iy,0)=0.0_R8
+             fnb_ch(:,iy,0)=0.0_R8
+          endif
          enddo                                                          !srv 20.06.08 }
       endif                                                             !xpb
 
@@ -1571,6 +1678,14 @@ csw 18feb2014 remove fluxes between guard cells
             ubdia(ix,iy,0)=0.0_R8
             conb(ix,iy,0,:)=0.0_R8
 	    fllim0fnb(ix,iy,0)=1.0_R8
+            if (balance) then                                           !djm 14/10/16
+               fnb_pinch(ix,iy,0)=0.0_R8
+               fnb_pll(ix,iy,0)=0.0_R8
+               fnb_drift(ix,iy,0)=0.0_R8
+               fnb_nanom(ix,iy,0)=0.0_R8
+               fnb_panom(ix,iy,0)=0.0_R8
+               fnb_ch(ix,iy,0)=0.0_R8
+            endif
           endif
           if(iffboundy(ix,iy).ne.0) then
             fnb(ix,iy,1)=0.0_R8
@@ -1589,6 +1704,14 @@ csw 18feb2014 remove fluxes between guard cells
             ubdia(ix,iy,1)=0.0_R8
             conb(ix,iy,1,:)=0.0_R8
 	    fllim0fnb(ix,iy,1)=1.0_R8
+            if (balance) then                                           !djm 14/10/16
+               fnb_pinch(ix,iy,1)=0.0_R8
+               fnb_pll(ix,iy,1)=0.0_R8
+               fnb_drift(ix,iy,1)=0.0_R8
+               fnb_nanom(ix,iy,1)=0.0_R8
+               fnb_panom(ix,iy,1)=0.0_R8
+               fnb_ch(ix,iy,1)=0.0_R8
+            endif
           endif
          enddo
         enddo
@@ -1623,6 +1746,14 @@ csw 18feb2014 remove fluxes between guard cells
             vbdia(ix,iy,1)=0.0_R8
             wbdia(ix,iy,1)=0.0_R8
             ubdia(ix,iy,1)=0.0_R8
+            if (balance) then                                           !djm 14/10/16
+               fnb_pinch(ix,iy,0:1)=0.0_R8
+               fnb_pll(ix,iy,0:1)=0.0_R8
+               fnb_drift(ix,iy,0:1)=0.0_R8
+               fnb_nanom(ix,iy,0:1)=0.0_R8
+               fnb_panom(ix,iy,0:1)=0.0_R8
+               fnb_ch(ix,iy,0:1)=0.0_R8
+            endif
           end do
         end do
       end do

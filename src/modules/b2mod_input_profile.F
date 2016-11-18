@@ -80,7 +80,8 @@
       end subroutine dealloc_input_profile
 
       subroutine source_input(nx,ny,ns,
-     &  sna0,smo0,she0,shi0,sch0,sne0,vol,nc)
+     &  sna0,smo0,she0,shi0,sch0,sne0,vol,nc,
+     &  balanceco,balancemo,balanceht,balancech) !djm 17/10/16
 !**************************************************************************
 !*     subroutine for reading in source-profiles of density, parallel     *
 !*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
@@ -110,6 +111,7 @@
       logical, parameter :: debug = .false.
 #endif
       intrinsic int, mod
+      logical balanceco, balancemo, balanceht, balancech !djm 17/10/16
      
 ! initialise sources and data to zero
       if (nc.eq.0) then
@@ -350,12 +352,20 @@
  99   write (*,*) 'Error in reading the dsa file'
  100  continue
 
-      ext_sna(:,:,:)=sna0(:,:,0,:)
-      ext_smo(:,:,:)=smo0(:,:,0,:)
+      if (balanceco) then !djm 17/10/16
+        ext_sna(:,:,:)=sna0(:,:,0,:)
+      endif
+      if (balancemo) then !djm
+        ext_smo(:,:,:)=smo0(:,:,0,:)
+      endif
       ext_sne(:,:)=sne0(:,:,0)
-      ext_she(:,:)=she0(:,:,0)
-      ext_shi(:,:)=shi0(:,:,0)
-      ext_sch(:,:)=sch0(:,:,0)
+      if (balanceht) then !djm
+        ext_she(:,:)=she0(:,:,0)
+        ext_shi(:,:)=shi0(:,:,0)
+      endif
+      if (balancech) then !djm
+        ext_sch(:,:)=sch0(:,:,0)
+      endif
        
       if (new_files) then
         close(93)
