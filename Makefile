@@ -5,6 +5,16 @@ endif
 ifndef COMPILER
   $(error COMPILER not defined)
 endif
+
+# Include global SOLPS compiler settings
+ifndef SOLPS_CPP
+ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER} ] && echo yes || echo no ),yes)
+  include ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
+else
+  $(warning ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER} not found.)
+endif
+endif
+
 ifdef USE_EIRENE
   ifndef SOLPSTOP
     $(error SOLPSTOP not defined, but trying to compile with Eirene)
