@@ -6,7 +6,7 @@
      & wadia, vadia, vaecrb, te, ti, po, ne, ni, facdrift, fac_ExB,      !srv 07.07.09
      & rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi, rlsa, rlra, rlqa, 
      & sna0_ion, sna0_rec, smq0_ion, smq0_rec, she0, shi0_ion, shi0_rec, !srv 11.09.09
-     & balanceco, balancemo, balanceht)                                  !djm Jan2017
+     & balanceco, balancemo, balanceht)                                  !djm 17/10/16
       use b2mod_types
       use b2mod_diag
       use b2mod_tallies
@@ -39,7 +39,7 @@
      &  rpt(-1:nx,-1:ny,0:ns-1), rpi(-1:nx,-1:ny,0:ns-1),
      &  rlsa(-1:nx,-1:ny,0:1,0:ns-1),
      &  rlra(-1:nx,-1:ny,0:1,0:ns-1), rlqa(-1:nx,-1:ny,0:1,0:ns-1)
-      logical balanceco, balancemo, balanceht                        !djm Jan2017
+      logical balanceco, balancemo, balanceht                        !djm 17/10/16
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0_ion(-1:nx,-1:ny,0:1,0:ns-1),                            !srv 11.09.09
@@ -523,8 +523,8 @@ c accounted for)
 	  call my_out(70,nx,ny,rqbrm(-1,-1,is),'b2stel_rqbrm'//chns)
         enddo                                                        !srv 03.02.12 }
       endif                                                          !srv 30.06.08 11.09.09 }
-cdjm Jan2017 store for balance
-      if (balanceco) then !djm Jan2017
+cdjm 14/10/16 store for balance
+      if (balanceco) then !djm 17/10/16
         b2stel_sna_ion(-1:nx,-1:ny,0:ns-1)=
      1   sna0_ion(-1:nx,-1:ny,0,0:ns-1)+
      2   sna0_ion(-1:nx,-1:ny,1,0:ns-1)*na(-1:nx,-1:ny,0:ns-1)
@@ -532,7 +532,7 @@ cdjm Jan2017 store for balance
      1   sna0_rec(-1:nx,-1:ny,0,0:ns-1)+
      2   sna0_rec(-1:nx,-1:ny,1,0:ns-1)*na(-1:nx,-1:ny,0:ns-1)
       endif
-      if (balancemo) then !djm Jan2017
+      if (balancemo) then !djm
         do is=0,ns-1
           b2stel_smq_ion(-1:nx,-1:ny,is)=
      1     smq0_ion(-1:nx,-1:ny,0,is)+
@@ -550,12 +550,23 @@ cdjm Jan2017 store for balance
      5     ua(-1:nx,-1:ny,is)
         enddo      
       endif
-      if (balanceht) then !djm Jan2017
-        b2stel_she0to3(-1:nx,-1:ny,0:3)=she0(-1:nx,-1:ny,0:3)
-        b2stel_shi_ion0to3(-1:nx,-1:ny,0:3)=shi0_ion(-1:nx,-1:ny,0:3)
-        b2stel_shi_rec0to3(-1:nx,-1:ny,0:3)=shi0_rec(-1:nx,-1:ny,0:3)
+      if (balanceht) then !djm
+        b2stel_she(-1:nx,-1:ny)=
+     1   she0(-1:nx,-1:ny,0)+
+     2   she0(-1:nx,-1:ny,1)*te(-1:nx,-1:ny)+
+     3   she0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
+     4   she0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*te(-1:nx,-1:ny)
+        b2stel_shi_ion(-1:nx,-1:ny)=
+     1   shi0_ion(-1:nx,-1:ny,0)+
+     2   shi0_ion(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
+     3   shi0_ion(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
+     4   shi0_ion(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
+        b2stel_shi_rec(-1:nx,-1:ny)=
+     1   shi0_rec(-1:nx,-1:ny,0)+
+     2   shi0_rec(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
+     3   shi0_rec(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
+     4   shi0_rec(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
       endif
-
 * ..return
       ncall = ncall+1
       call subend ()

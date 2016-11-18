@@ -347,7 +347,7 @@ ctmp.dpc
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &     wrong_flow, main_call,
-     &     .false.,.false.,.false.,.false.)                              !djm Jan2017
+     &     .false.,.false.,.false.,.false.)                              !djm 17/10/16
           if(wrong_flow) write(*,*)
      &         'b2mndt: wrong_flow returned from b2sral'
 *     ..smooth out sources
@@ -359,7 +359,7 @@ ctmp.dpc
      &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
      &     snadt, smodt, shedt, shidt, schdt, snedt, .false.,            !srv 11.09.09
-     &     .false.,.false.,.false.,.false., po)                          !djm Jan2017
+     &     .false.,.false.,.false.,.false., po)                          !djm 17/10/16
 *   ..add to previous contributions
           call b2saxpy (n2*2*ns, 1.0_R8, snadt, 1, sna, 1)
           call b2saxpy (n2*4*ns, 1.0_R8, smodt, 1, smo, 1)

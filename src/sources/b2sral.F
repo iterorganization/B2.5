@@ -16,7 +16,7 @@
      &  rza, rz2, rpt, rpi,
      &  sna, smo, smq, she, shi, sch, sne,
      &  wrong_flow, main_call,
-     &  balanceco, balancemo, balanceht, balancech)                      !djm Jan2017
+     &  balanceco, balancemo, balanceht, balancech)                      !djm 17/10/16
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -99,7 +99,7 @@
      &  shi(-1:nx,-1:ny,0:3), sch(-1:nx,-1:ny,0:3), sne(-1:nx,-1:ny,0:1)
       logical wrong_flow                                                 !xpb
       logical main_call                                                  !dpc
-      logical balanceco, balancemo, balanceht, balancech                 !djm Jan2017
+      logical balanceco, balancemo, balanceht, balancech                 !djm 17/10/16
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -304,7 +304,7 @@ csw 30sep2013, added cdpa in call, uadia
      &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,                             !xpb
      &  sna, smo, she, shi, sch, sne, wrong_flow, main_call,            !xpb
-     &  balanceco, balancemo, balanceht, balancech)                     !djm Jan2017
+     &  balanceco, balancemo, balanceht, balancech)                     !djm 17/10/16
        if(wrong_flow) write(*,*)
      &  'b2sral [1]: wrong_flow returned from b2stbc'
       elseif(style.eq.1) then                                           !srv 28.07.08 {
@@ -538,7 +538,6 @@ csw 17oct2012, erase sna, smo, smq, (she, shi, sch) for fluid neutrals
         endif
        enddo
       endif
-
 * ..return
       if(ncall.eq.0 .or. main_call) ncall = ncall+1
       call subend ()

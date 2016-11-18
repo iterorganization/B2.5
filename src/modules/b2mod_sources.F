@@ -38,6 +38,25 @@
      *  b2stbc_she(:,:),
      *  b2stbc_shi(:,:),
      *  b2stbc_sch(:,:),
+     *  b2stel_sna_ion(:,:,:), !djm 14/10/16
+     *  b2stel_sna_rec(:,:,:),
+     *  b2stel_smq_ion(:,:,:),
+     *  b2stel_smq_rec(:,:,:),
+     *  b2stel_she(:,:),
+     *  b2stel_shi_ion(:,:),
+     *  b2stel_shi_rec(:,:),
+     *  b2stcx_sna(:,:,:),
+     *  b2stcx_smq(:,:,:),
+     *  b2stcx_shi(:,:),
+     *  b2srsm_sna(:,:,:),
+     *  b2srsm_smo(:,:,:),
+     *  b2srsm_she(:,:),
+     *  b2srsm_shi(:,:),
+     *  b2srdt_sna(:,:,:),
+     *  b2srdt_smo(:,:,:),
+     *  b2srdt_she(:,:),
+     *  b2srdt_shi(:,:),
+     *  b2srdt_sch(:,:),
      *  b2stbm_sna(:,:,:),
      *  b2stbm_smo(:,:,:),
      *  b2stbm_sne(:,:),
@@ -187,6 +206,25 @@ cdjm Jan2017
       allocate(b2stbc_she(-1:nxd,-1:nyd))
       allocate(b2stbc_shi(-1:nxd,-1:nyd))
       allocate(b2stbc_sch(-1:nxd,-1:nyd))
+      allocate(b2stel_sna_ion(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stel_sna_rec(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stel_smq_ion(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stel_smq_rec(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stel_she(-1:nxd,-1:nyd))
+      allocate(b2stel_shi_ion(-1:nxd,-1:nyd))
+      allocate(b2stel_shi_rec(-1:nxd,-1:nyd))
+      allocate(b2stcx_sna(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stcx_smq(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stcx_shi(-1:nxd,-1:nyd))
+      allocate(b2srsm_sna(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2srsm_smo(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2srsm_she(-1:nxd,-1:nyd))
+      allocate(b2srsm_shi(-1:nxd,-1:nyd))
+      allocate(b2srdt_sna(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2srdt_smo(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2srdt_she(-1:nxd,-1:nyd))
+      allocate(b2srdt_shi(-1:nxd,-1:nyd))
+      allocate(b2srdt_sch(-1:nxd,-1:nyd))     
       allocate(b2stbm_sna(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2stbm_smo(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2stbm_sne(-1:nxd,-1:nyd))
@@ -292,6 +330,25 @@ cdjm Jan2017
       b2stbc_she=0.0_R8
       b2stbc_shi=0.0_R8
       b2stbc_sch=0.0_R8
+      b2stel_sna_ion=0.0_R8
+      b2stel_sna_rec=0.0_R8
+      b2stel_smq_ion=0.0_R8
+      b2stel_smq_rec=0.0_R8
+      b2stel_she=0.0_R8
+      b2stel_shi_ion=0.0_R8
+      b2stel_shi_rec=0.0_R8
+      b2stcx_sna=0.0_R8
+      b2stcx_smq=0.0_R8
+      b2stcx_shi=0.0_R8
+      b2srsm_sna=0.0_R8
+      b2srsm_smo=0.0_R8
+      b2srsm_she=0.0_R8
+      b2srsm_shi=0.0_R8
+      b2srdt_sna=0.0_R8
+      b2srdt_smo=0.0_R8
+      b2srdt_she=0.0_R8
+      b2srdt_shi=0.0_R8
+      b2srdt_sch=0.0_R8
       b2stbm_sna=0.0_R8
       b2stbm_smo=0.0_R8
       b2stbm_sne=0.0_R8
@@ -417,6 +474,25 @@ cdjm Jan2017
       deallocate(b2stbc_she)
       deallocate(b2stbc_shi)
       deallocate(b2stbc_sch)
+      deallocate(b2stel_sna_ion)
+      deallocate(b2stel_sna_rec)
+      deallocate(b2stel_smq_ion)
+      deallocate(b2stel_smq_rec)
+      deallocate(b2stel_she)
+      deallocate(b2stel_shi_ion)
+      deallocate(b2stel_shi_rec)
+      deallocate(b2stcx_sna)
+      deallocate(b2stcx_smq)
+      deallocate(b2stcx_shi)
+      deallocate(b2srsm_sna)
+      deallocate(b2srsm_smo)
+      deallocate(b2srsm_she)
+      deallocate(b2srsm_shi)
+      deallocate(b2srdt_sna)
+      deallocate(b2srdt_smo)
+      deallocate(b2srdt_she)
+      deallocate(b2srdt_shi)
+      deallocate(b2srdt_sch)
       deallocate(b2stbm_sna)
       deallocate(b2stbm_smo)
       deallocate(b2stbm_sne)
@@ -621,7 +697,7 @@ cdjm Jan2017
         call cfrure (nread, size(b2stbc_shi), b2stbc_shi, 'b2stbc_shi')
         call cfrure (nread, size(b2stbc_sch), b2stbc_sch, 'b2stbc_sch')
       endif
-      if(b2fplasma_version.ge.'03.000.006') then !djm Jan2017
+      if(b2fplasma_version.ge.'03.000.006') then !djm 14/10/16
         call cfrure (nread, size(b2stel_sna_ion),
      .                b2stel_sna_ion, 'b2stel_sna_ion')
         call cfrure (nread, size(b2stel_sna_rec),
@@ -643,37 +719,11 @@ cdjm Jan2017
         call cfrure (nread, size(b2srsm_smo), b2srsm_smo, 'b2srsm_smo')
         call cfrure (nread, size(b2srsm_she), b2srsm_she, 'b2srsm_she')
         call cfrure (nread, size(b2srsm_shi), b2srsm_shi, 'b2srsm_shi')
-        call cfrure (nread, size(b2srsm_sch), b2srsm_sch, 'b2srsm_sch')
         call cfrure (nread, size(b2srdt_sna), b2srdt_sna, 'b2srdt_sna')
         call cfrure (nread, size(b2srdt_smo), b2srdt_smo, 'b2srdt_smo')
         call cfrure (nread, size(b2srdt_she), b2srdt_she, 'b2srdt_she')
         call cfrure (nread, size(b2srdt_shi), b2srdt_shi, 'b2srdt_shi')
         call cfrure (nread, size(b2srdt_sch), b2srdt_sch, 'b2srdt_sch')
-        call cfrure (nread, size(b2srst_sna), b2srst_sna, 'b2srst_sna')
-        call cfrure (nread, size(b2srst_smo), b2srst_smo, 'b2srst_smo')
-        call cfrure (nread, size(b2srst_she), b2srst_she, 'b2srst_she')
-        call cfrure (nread, size(b2srst_shi), b2srst_shi, 'b2srst_shi')
-        call cfrure (nread, size(b2srst_sch), b2srst_sch, 'b2srst_sch')
-        call cfrure (nread, size(b2sifr_smoch),
-     &               b2sifr_smoch, 'b2sifr_smoch')
-        call cfrure (nread, size(b2sifr_smotf),
-     &               b2sifr_smotf, 'b2sifr_smotf')
-        call cfrure (nread, size(b2sigp_smogp),
-     &               b2sigp_smogp, 'b2sigp_smogp')
-        call cfrure (nread, size(b2sigp_pstat),
-     &               b2sigp_pstat, 'b2sigp_pstat')
-        call cfrure (nread, size(b2siav_smovh),
-     &               b2siav_smovh, 'b2siav_smovh')
-        call cfrure (nread, size(b2siav_smovv),
-     &               b2siav_smovv, 'b2siav_smovv')
-        call cfrure (nread, size(b2nxdv_smo),
-     &               b2nxdv_smo, 'b2nxdv_smo')
-        call cfrure (nread, size(b2sihs_diae),
-     &               b2sihs_diae, 'b2sihs_diae')
-        call cfrure (nread, size(b2sihs_diaa),
-     &               b2sihs_diaa, 'b2sihs_diaa')
-        call cfrure (nread, size(b2npht_shei),
-     &               b2npht_shei, 'b2npht_shei')
       endif
       if(b2fplasma_version.ge.'01.001.026') call cfrure_opt 
      >  (nread, size(b2stbc_sne), b2stbc_sne, 'b2stbc_sne')
@@ -847,7 +897,7 @@ cdjm Jan2017
         call cfwure (nwrite, size(b2stbc_shi), b2stbc_shi, 'b2stbc_shi')
         call cfwure (nwrite, size(b2stbc_sch), b2stbc_sch, 'b2stbc_sch')
       endif
-      if(newversion.ge.'03.000.006') then !djm Jan2017
+      if(newversion.ge.'03.000.006') then !djm 14/10/16
         call cfwure (nwrite, size(b2stel_sna_ion),
      .                b2stel_sna_ion, 'b2stel_sna_ion')
         call cfwure (nwrite, size(b2stel_sna_rec),
@@ -869,37 +919,11 @@ cdjm Jan2017
         call cfwure (nwrite, size(b2srsm_smo), b2srsm_smo, 'b2srsm_smo')
         call cfwure (nwrite, size(b2srsm_she), b2srsm_she, 'b2srsm_she')
         call cfwure (nwrite, size(b2srsm_shi), b2srsm_shi, 'b2srsm_shi')
-        call cfwure (nwrite, size(b2srsm_sch), b2srsm_sch, 'b2srsm_sch')
         call cfwure (nwrite, size(b2srdt_sna), b2srdt_sna, 'b2srdt_sna')
         call cfwure (nwrite, size(b2srdt_smo), b2srdt_smo, 'b2srdt_smo')
         call cfwure (nwrite, size(b2srdt_she), b2srdt_she, 'b2srdt_she')
         call cfwure (nwrite, size(b2srdt_shi), b2srdt_shi, 'b2srdt_shi')
         call cfwure (nwrite, size(b2srdt_sch), b2srdt_sch, 'b2srdt_sch')
-        call cfwure (nwrite, size(b2srst_sna), b2srst_sna, 'b2srst_sna')
-        call cfwure (nwrite, size(b2srst_smo), b2srst_smo, 'b2srst_smo')
-        call cfwure (nwrite, size(b2srst_she), b2srst_she, 'b2srst_she')
-        call cfwure (nwrite, size(b2srst_shi), b2srst_shi, 'b2srst_shi')
-        call cfwure (nwrite, size(b2srst_sch), b2srst_sch, 'b2srst_sch')
-        call cfwure (nwrite, size(b2sifr_smoch),
-     &               b2sifr_smoch, 'b2sifr_smoch')
-        call cfwure (nwrite, size(b2sifr_smotf),
-     &               b2sifr_smotf, 'b2sifr_smotf')
-        call cfwure (nwrite, size(b2sigp_smogp),
-     &               b2sigp_smogp, 'b2sigp_smogp')
-        call cfwure (nwrite, size(b2sigp_pstat),
-     &               b2sigp_pstat, 'b2sigp_pstat')
-        call cfwure (nwrite, size(b2siav_smovh),
-     &               b2siav_smovh, 'b2siav_smovh')
-        call cfwure (nwrite, size(b2siav_smovv),
-     &               b2siav_smovv, 'b2siav_smovv')
-        call cfwure (nwrite, size(b2nxdv_smo),
-     &               b2nxdv_smo, 'b2nxdv_smo')
-        call cfwure (nwrite, size(b2sihs_diae),
-     &               b2sihs_diae, 'b2sihs_diae')
-        call cfwure (nwrite, size(b2sihs_diaa),
-     &               b2sihs_diaa, 'b2sihs_diaa')
-        call cfwure (nwrite, size(b2npht_shei),
-     &               b2npht_shei, 'b2npht_shei')
       endif
       if(newversion.ge.'01.001.026')
      >  call cfwure (nwrite, size(b2stbc_sne), b2stbc_sne, 'b2stbc_sne')
