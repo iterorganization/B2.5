@@ -73,9 +73,6 @@ else
 	@[ -f $*.${MOD} ] && [ ! -L $*.${MOD} ] && /bin/mv $*.${MOD} ${OBJDIR}/ && /bin/ln -s ${OBJDIR}/$*.${MOD} .
 endif
 
-ifdef PARAVIEW_DIR
-CXXFLAGS = -I${PARAVIEW_DIR}/include/paraview-${PARAVIEW_MAJOR_VERSION}/
-endif
 ifndef CXX
 CXX = g++
 endif
