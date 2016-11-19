@@ -78,6 +78,10 @@ INCMODS   += -I${IMAS_PREFIX}/include/ifort
 LDLIBES   += ${LD_UAL}
 endif
 
+ifdef LD_CATALYST
+CXXFLAGS = $(shell paraview-config --include)
+endif
+
 LD         = ${FC}
 ifdef USE_MPI
 LDOPTS     = -i_dynamic ${LD_MPI}

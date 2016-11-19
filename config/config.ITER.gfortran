@@ -45,6 +45,10 @@ INCMODS   = -B${IMAS_PREFIX}/include/gfortran
 LDLIBES  += ${LD_UAL}
 endif
 
+ifdef LD_CATALYST
+CXXFLAGS = $(shell paraview-config --include)
+endif
+
 LD = $(FC)
 LDOPTS = # -Bstatic
 
