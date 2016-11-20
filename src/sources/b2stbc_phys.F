@@ -9504,10 +9504,10 @@ c end of implementation
 !xpb  following "sv 01.07.99" coding (see B2.5-style implementation)
 !xpb  Special attention is paid to the case where there is a discontinuity in B
 !xpb
-         IF (BCPOT(IB).EQ.1) THEN
-          if (ncall.eq.0) write(*,'(a,i2,a)')
+         IF (BCPOT(IB).NE.0.AND.BCPOT(IB).NE.5.AND.BCPOT(IB).NE.8) THEN
+          if (ncall.eq.0) write(*,'(a,i2,a,i2)')
      &          'Disabled special treatment of fchy_dia on boundary ',
-     &          ib,' because bcpot there is 1'
+     &          ib,' because potential is imposed by BCPOT=',BCPOT(IB)
          ELSE IF(BCCHAR(IB).EQ.'S') THEN
           DO IX = 1, BC_LIST_SIZE(IB)
             if(maxval(facdrift) .ne. 0.0_R8) then
@@ -9565,10 +9565,10 @@ c end of implementation
      .             *facdrift(bc_list_x(ix,ib),bc_list_y(ix,ib))*
      .              b2stbc_fchy_dia
                 else
-      if (ncall.eq.0)
-     > write(*,*) 'b2stbc: special treatment for cell ix,iy = ',
-     . bc_list_x(ix,ib),bc_list_y(ix,ib)
-                 fchy_dia = -bcint(wdia,nx,ny,ix,ib)
+                  if (ncall.eq.0) write(*,*)
+     .             'b2stbc: special treatment for cell ix,iy = ',
+     .              bc_list_x(ix,ib),bc_list_y(ix,ib)
+                  fchy_dia = -bcint(wdia,nx,ny,ix,ib)
      .             *(vol(topix(bc_list_x(ix,ib),bc_list_y(ix,ib)),
      .                   topiy(bc_list_x(ix,ib),bc_list_y(ix,ib)))+
      .               vol(bc_list_x(ix,ib),bc_list_y(ix,ib)))
@@ -9664,10 +9664,11 @@ c end of implementation
 !xpb
         elseif(istyle_cur_contr_on_S_and_N.eq.1) then                   !srv 01.02.09 { 27.03.14
 
-         IF (BCPOT(IB).EQ.1) THEN
-          if (ncall.eq.0) write(*,'(a,i2,a)')
+         IF (BCPOT(IB).NE.0.AND.BCPOT(IB).NE.5.AND.BCPOT(IB).NE.8) THEN
+          if (ncall.eq.0) write(*,'(a,i2,a,i2)')
      &          'Disabled special treatment of fchy_dia on boundary ',
-     &          ib,' because bcpot there is 1'
+     &          ib,' because potential there is imposed by BCPOT=',
+     &          BCPOT(IB)
          ELSE IF(BCCHAR(IB).EQ.'S') THEN
            DO IX = 1, BC_LIST_SIZE(IB)
              if(mod(region(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0),4).eq.1)
@@ -9738,25 +9739,28 @@ c end of implementation
      &             fchinert(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)
            END DO
          ENDIF
-        else                                                         !srv 27.03.14
+        else if (BCPOT(IB).eq.0.or.BCPOT(IB).eq.5.or.BCPOT(IB).eq.8)
+     &   then                                                        !srv 27.03.14
          if(ncall.eq.0) then
            IF (BCCHAR(IB).EQ.'S') THEN
-             IF (mod(region(bc_list_x(1,ib),bc_list_y(1,ib),0),4).eq.1
-     &        .and. BCPOT(IB).ne.12) THEN
-               write(0,'(a/a)') 
-     &        'NO CURRENT CONTRIBUTION IN B.C. at the core boundary ',
-     &        'Use BCPOT=12 to include it.'                          !srv 03.03.15
-             ELSEIF 
-     &        (mod(region(bc_list_x(1,ib),bc_list_y(1,ib),0),4).ne.1
-     &        .and. BCPOT(IB).ne.13) THEN
-               write(0,'(a/a)') 
-     &        'NO CURRENT CONTRIBUTION IN B.C. at the South boundary ',
-     &        'Use BCPOT=13 to include it.'                          !srv 03.03.15
+             IF (mod(region(bc_list_x(1,ib),
+     &                      bc_list_y(1,ib),0),4).eq.1) THEN
+               write(0,'(a/a)')
+     &        'Core boundary potential B.C. does not '//
+     &        'ensure drift current continuity',
+     &        'Use BCPOT=12 to impose it.'                           !srv 03.03.15
+             ELSEIF (mod(region(bc_list_x(1,ib),
+     &                          bc_list_y(1,ib),0),4).ne.1) THEN
+               write(0,'(a/a)')
+     &        'South boundary potential B.C. does not '//
+     &        'ensure drift current continuity',
+     &        'Use BCPOT=13 to impose it.'                           !srv 03.03.15
              ENDIF
-           ELSE IF (BCCHAR(IB).EQ.'N' .and. BCPOT(IB).NE.13) THEN
-             write(0,'(a/a)') 
-     &        'NO CURRENT CONTRIBUTION IN B.C. at the North boundary ',
-     &        'Use BCPOT=13 to include it.'                          !srv 03.03.15
+           ELSE IF (BCCHAR(IB).EQ.'N') THEN
+             write(0,'(a/a)')
+     &        'North boundary potential B.C. does not '//
+     &        'ensure drift current continuity',
+     &        'Use BCPOT=13 to impose it.'                           !srv 03.03.15
            ENDIF
          endif
 	endif                                                        !srv 01.02.09 }
