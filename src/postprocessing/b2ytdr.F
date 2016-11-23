@@ -7452,9 +7452,12 @@ C  HERE: EIRENE SURFACE TALLIES
             IGEOUSR = 1
           ELSE IF (streql(eirene_format,'old') .or.
      .             streql(eirene_format,'new')) THEN ! we read only onetwo, limpos (reverse order !)
-            NADMOD = 0
-            NASMOD = max(npplg/3,1)*4
-            NORMOD = 0
+            READ (ZEILE,6666) NADMOD,NASMOD,NORMOD
+            IF (NASMOD.NE.1) THEN
+              NADMOD = 0
+              NASMOD = max(npplg/3,1)*4
+              NORMOD = 0
+            END IF
             IGEOUSR = -1
             WRITE(IUNOT,6666) NADMOD,NASMOD,NORMOD
           END IF
