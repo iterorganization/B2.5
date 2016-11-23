@@ -3879,6 +3879,11 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
      .           (ZEILE(IEND:),' ',REAC2,ITOK,IER,.FALSE.)
                 call xertst (ier.eq.0, 'error reading reac2 flag')
                 IEND = IEND + ITOK
+!  READ CRC
+                CALL EIRENE_READ_TOKEN
+     .           (ZEILE(IEND:),' ',CRC,ITOK,IER,.FALSE.)
+                IEND = IEND + ITOK
+                call xertst (ier.eq.0, 'error reading crc flag')
               ELSE
                 ITOK = INDEX(ZEILE(IEND:),'FT')
                 IF (ITOK /= 0) THEN
@@ -3889,12 +3894,8 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
      .           (ZEILE(IEND:),' ',CHR,ITOK,IER,.FALSE.)
                 call xertst (ier.eq.0, 'error reading reac2 flag')
                 IEND = IEND + ITOK
+                READ (CHR,'(A3)') CRC
               END IF
-!  READ CRC
-              CALL EIRENE_READ_TOKEN
-     .         (ZEILE(IEND:),' ',CRC,ITOK,IER,.FALSE.)
-              IEND = IEND + ITOK
-              call xertst (ier.eq.0, 'error reading crc flag')
 !  READ MP
               CALL EIRENE_READ_TOKEN
      .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.FALSE.)
@@ -3973,8 +3974,15 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
                   IEND = IEND+9
                 END IF
               ELSE
-                WRITE(REAC_LINE(ILINE)(IEND+1:IEND+10),'(A9)')
-     .           REAC
+                IF (streql(eirene_format,'old').or.
+     &              streql(eirene_format,'new').or.
+     &              streql(eirene_format,'facelift')) then
+                  WRITE(REAC_LINE(ILINE)(IEND+1:IEND+10),'(A9)')
+     .             REAC
+                ELSE
+                  WRITE(REAC_LINE(ILINE)(IEND+1:IEND+10),'(A9)')
+     .             REAC2(1:9)
+                END IF
                 IEND=IEND+9
               END IF
               WRITE(REAC_LINE(ILINE)(IEND+1:IEND+4),'(A3,A1)')
@@ -9060,6 +9068,10 @@ c       = 4 : center
         conformal_convert=-2
         return
       endif
+      if (ix.eq.-2 .or. iy.eq.-2) then
+        conformal_convert=-2
+        return
+      end if
       if (non_commensurate.eq.0) then
        if (xory.eq.1 .and. nncut.ge.2) then ! treatment for DN cases X-direction
                                             ! depends on which side of the cut we are
