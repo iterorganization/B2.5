@@ -153,11 +153,15 @@ ifdef SOLPS_DEBUG
 DEFINES += -DDBG
 endif
 
-# Switches to disable individual OpenMP regions
+# Switches to disable individual OpenMP regions, for debugging
 # uncomment to activate
+#
+# It is not necessary to define all these flags to completely disable the
+# OpenMP parallelization, in order to that, just compile without OpenMP
+# compiler options (ifort -qopenmp or similar)
 
-# DEFINES += -DNO_OPENMP_EUFORIA
 # DEFINES += -DNO_OPENMP_B2XPFE
+# DEFINES += -DNO_OPENMP_B2SIHS
 
 VHEAD =
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)

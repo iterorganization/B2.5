@@ -193,7 +193,7 @@
 !xpb vary with space and species.
       t1 = (4.0_R8*pi*eps0/qe)/qe
       t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
-      ctaup = t0*sqrt(mp)                                       	 !xpb
+      ctaup = t0*sqrt(mp)                                          !xpb
 *   ..compute vti32
       do iy = -1, ny
        do ix = -1, nx
@@ -282,7 +282,7 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &       -(wpoh(rightix(ix,iy),rightiy(ix,iy))-wpoh(ix,iy))*
      &       (1.0_R8/wbbv(topix(ix,iy),topiy(ix,iy),3)**2-
      &        1.0_R8/wbbv(ix,iy,3)**2))
-            t0 = phm5*fac_ExB(ix,iy)*work(ix,iy)                  	 !xpb
+            t0 = phm5*fac_ExB(ix,iy)*work(ix,iy)                     !xpb
             she0(ix,iy,0) = she0(ix,iy,0)+
      &       (max(0.0_R8,t0)+rf0*abs(t0))*ne(ix,iy)*te(ix,iy)
             she0(ix,iy,3) = she0(ix,iy,3)+min(0.0_R8,t0)-rf0*abs(t0)
@@ -397,7 +397,19 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
       if (balance_netcdf.ne.0) then !djm Jan2017
         shitmp=shi0
       endif
-!      do isb = 0, ns-1
+
+#ifndef NO_OPENMP_B2SIHS
+!$OMP  PARALLEL
+!$OMP& DEFAULT(none)
+!$OMP& PRIVATE(ix,iy,coef)
+!$OMP& SHARED(nx,ny,ns,nsmin,nsmax)
+!$OMP& SHARED(leftix,rightix,bottomiy,topiy,region)
+!$OMP$ SHARED(is_neutral,ctaup,phm4,am,ne,ni,na,ti,ua,rz2,BoRiS)
+!$OMP$ SHARED(balance_netcdf)
+!$OMP$ SHARED(vti32,rf4,wadia,vaecrb,lnlam,work)
+! These here are written to, represent the results:
+!$OMP& SHARED(shi0,shitmp,b2fraa,b2sihs_fraa,b2sihs_fraa0to3)
+#endif /* NO_OPENMP_B2SIHS */
       do isb = nsmin, nsmax-1
        do is = isb+1, ns-1
 *     ..consider distinct cases
@@ -405,12 +417,15 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
 *      ..contribution from friction between charged species
          coef = phm4*(1.0_R8/ctaup)*
      &     mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))
+#ifndef NO_OPENMP_B2SIHS
+!$OMP DO SCHEDULE(static)
+#endif
          do iy = -1, ny
           do ix = -1, nx
            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &        bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
      &        region(ix,iy,0).ne.0) then
-            t0 = rz2(ix,iy,isb)*rz2(ix,iy,is)*
+            work(ix,iy) = rz2(ix,iy,isb)*rz2(ix,iy,is)*
      &       (coef*lnlam(ix,iy)/4.0_R8)*(1.0_R8-BoRiS)*       !srv 03.05.10
      &        na(ix,iy,is)*na(ix,iy,isb)*vti32(ix,iy)*
      &       ((ua(ix,iy,is)-ua(ix,iy,isb))**2+
@@ -418,14 +433,38 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &         wadia(ix,iy,0,isb)-vaecrb(ix,iy,0,isb))**2+
      &        (wadia(ix,iy,1,is )+vaecrb(ix,iy,1,is )-
      &         wadia(ix,iy,1,isb)-vaecrb(ix,iy,1,isb))**2)
-            shi0(ix,iy,0) = shi0(ix,iy,0)+(2.5_R8+rf4)*t0
+            shi0(ix,iy,0) = shi0(ix,iy,0)+(2.5_R8+rf4)*work(ix,iy)
             shi0(ix,iy,3) = shi0(ix,iy,3)-
-     &       (1.5_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
-            b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+t0
-            b2sihs_fraa(ix,iy)=b2sihs_fraa(ix,iy)+t0
+     &       (1.5_R8+rf4)*work(ix,iy)/(ni(ix,iy,0)*ti(ix,iy))
+            ! b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+work(ix,iy)  <-  this is now done in the OMP SINGLE block below
+            b2sihs_fraa(ix,iy)=b2sihs_fraa(ix,iy)+work(ix,iy)
            endif
           enddo
          enddo
+#ifndef NO_OPENMP_B2SIHS
+!$OMP END DO
+#endif
+
+
+#ifndef NO_OPENMP_B2SIHS
+         ! Due to the indirect addressing of the array b2fraa,
+         ! there is no immediately obvious parallelization over
+         ! ix, iy possible here, this assignment is done in the
+         ! following OMP SINGLE section
+!$OMP SINGLE
+#endif
+         do iy = -1, ny
+          do ix = -1, nx
+           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
+     &        bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
+     &        region(ix,iy,0).ne.0) then
+            b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+work(ix,iy)
+           endif
+          enddo
+         enddo
+#ifndef NO_OPENMP_B2SIHS
+!$OMP END SINGLE
+#endif
         else
 *      ..contribution from friction involving neutral species
 *        (We ignore such a term, except for charge exchange friction
@@ -437,6 +476,10 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
       if (balance_netcdf.ne.0) then !djm Jan2017
         b2sihs_fraa0to3=shi0-shitmp
       endif
+#ifndef NO_OPENMP_B2SIHS
+!$OMP END PARALLEL
+#endif
+
       b2str=0.0_R8
       b2sihs_str=0.0_R8
       if (style.eq.-1) then
@@ -508,14 +551,15 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &       ti(topix(ix,iy),topiy(ix,iy))-
      &       rza(ix,iy,is)*na(ix,iy,is)*ti(ix,iy))*
      &       vol(ix,iy)/(vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
-	   if(ncall.eq.0.and.t0.eq.0.0_R8.and..not.is_neutral(is)) then
-	    write(*,*) 'str t0=0 ix,iy,is,uasy(ix,iy,is) ',
-     1	     ix,iy,is,uasy(ix,iy,is)
-	    write(*,*) hy1(ix,iy),ua(bottomix(ix,iy),bottomiy(ix,iy),is),
-     1	     hy1(bottomix(ix,iy),bottomiy(ix,iy)),ua(ix,iy,is),
-     2	     pbs(ix,iy,1)
-	    write(*,*) 'T1, T2 ',
-     &	     uasy(ix,iy,is)*
+           if(ncall.eq.0.and.t0.eq.0.0_R8.and..not.is_neutral(is)) then
+            write(*,*) 'str t0=0 ix,iy,is,uasy(ix,iy,is) ',
+     1       ix,iy,is,uasy(ix,iy,is)
+            write(*,*)
+     1       hy1(ix,iy),ua(bottomix(ix,iy),bottomiy(ix,iy),is),
+     1       hy1(bottomix(ix,iy),bottomiy(ix,iy)),ua(ix,iy,is),
+     2       pbs(ix,iy,1)
+            write(*,*) 'T1, T2 ',
+     &       uasy(ix,iy,is)*
      &      (rza(ix,iy,is)*na(ix,iy,is)*ti(ix,iy)-
      &       rza(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &       na(bottomix(ix,iy),bottomiy(ix,iy),is)*
@@ -523,12 +567,12 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &       vol(ix,iy)/
      &      (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy)),
      &       uasy(topix(ix,iy),topiy(ix,iy),is)*
-     &	    (rza(topix(ix,iy),topiy(ix,iy),is)*
+     &      (rza(topix(ix,iy),topiy(ix,iy),is)*
      &       na(topix(ix,iy),topiy(ix,iy),is)*
      &       ti(topix(ix,iy),topiy(ix,iy))-
      &       rza(ix,iy,is)*na(ix,iy,is)*ti(ix,iy))*
      &       vol(ix,iy)/(vol(ix,iy)+vol(topix(ix,iy),topiy(ix,iy)))
-	   endif
+           endif
            she0(ix,iy,0) = she0(ix,iy,0)+max(0.0_R8,-t0)
            she0(ix,iy,3) = she0(ix,iy,3)+
      &      min(0.0_R8,-t0)/(ne(ix,iy)*te(ix,iy))
@@ -545,8 +589,8 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         write(*,*) 'b2str: ',b2str
        endif
       else
-	write(*,*) 'b2sihs: style should be -1, 0 or +1 --- not ',style
-	call xerrab ('b2sihs--faulty style specified')
+        write(*,*) 'b2sihs: style should be -1, 0 or +1 --- not ',style
+        call xerrab ('b2sihs--faulty style specified')
       endif
 * ..drift
 * ..term should not be present: in B2.5 form of final energy equations !xpb
@@ -652,7 +696,7 @@ c
       call xertst (1.le.ns, 'faulty argument ns')
 *   ..test facdrift
       call xertst (0.0_R8.le.minval(facdrift) .and.
-     &	1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
+     &  1.0_R8.ge.maxval(facdrift), 'faulty argument facdrift')
 *   ..get facgt on first call
       if (ncall.eq.0) then
         call ipgetr ('b2sdia_facgt', facgt)
