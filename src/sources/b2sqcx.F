@@ -88,15 +88,32 @@
 *   ..set cutll, cutlo
       cutll = log(machsfr())
       cutlo = max(machsfr(),exp(cutll))
+#ifndef NO_OPENMP_B2SQCX
+!$OMP PARALLEL
+!$OMP& default(none)
+!$OMP& private(is,iy,ix)
+!$OMP& shared(ns, ny, nx, styl0, rcx, phm0, rlcx0, wrk0, t0, cutll)
+!$OMP& shared(cutlo, th0, amh0, ev)
+#endif
+
+#ifndef NO_OPENMP_B2SQCX
+!$OMP DO schedule(static)!$OMP DO schedule(static)
+#endif
 *   ..compute wrk0(,) = log(th0(,)/(amh0*ev))
       do iy = -1, ny
        do ix = -1, nx
         wrk0(ix,iy) = log(th0(ix,iy)/(amh0*ev))
        enddo
       enddo
+#ifndef NO_OPENMP_B2SQCX
+!$OMP END DO
+#endif
 
 * ..main computation
 *   ..compute rate coefficients
+#ifndef NO_OPENMP_B2SQCX
+!$OMP DO schedule(static)
+#endif
       do is = 0, ns-1
       if (styl0.eq.0.or.is.lt.2) then
        do iy = -1, ny
@@ -115,7 +132,10 @@
        enddo
       endif
       enddo
-
+#ifndef NO_OPENMP_B2SQCX
+!$OMP END DO
+!$OMP END PARALLEL
+#endif
 * ..return
       ncall = ncall+1
       call subend ()
