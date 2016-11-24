@@ -181,8 +181,6 @@
      & 'inconsistent ny definition between b2fgmtry and b2yt.dat!')
 *   ..read and check ns from parameters file
       call cfruin (ninp(8), 1, idum, 'ns')
-      call xertst (idum(0).eq.ns, 
-     & 'faulty input ns from parameters file')
 *   ..populate the first elements of b2yt.files
       write(nout(5),'(a)') 'b2fstatt'
       write(nout(5),'(a)') 'b2mn.dat.2'
