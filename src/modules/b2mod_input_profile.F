@@ -785,7 +785,7 @@ c*** Clear data to forget previous profiles
         call xerrab (' No '//trim(filename))
       endif
       return
- 999  call xerrab ('Error while reading TRANSPORT namelist!')
+ 999  call xerrab ('Error while reading TRANSPORT inputfile!')
       end subroutine read_transport_input
 
       end subroutine transport_input
