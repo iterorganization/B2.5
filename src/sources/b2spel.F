@@ -95,6 +95,18 @@
       ite = 0
       ine = 0
 *   ..loop over cells
+#ifndef NO_OPENMP_B2SPEL
+!$OMP PARALLEL DO default(none) shared(nx,ny,ns) private(ix,iy,is)
+!$OMP& FIRSTPRIVATE(ite, ine)
+!$OMP& private(ltst0, rlte, rlne, fxte, fxne, t0, t1, tt)
+!$OMP& shared(rtlt, te, ev, rtnt, rtln, rtnn, rtlsa, rlsa, rtlra, rlra)
+!$OMP& shared(ne, rtlqa, rlqa, rtlrd, rlrd, rtlbr, rlbr, rtlza, rlza)
+!$OMP& shared(rtlz2, rlz2, rtlpt, rlpt, rtlpi, rlpi)
+#endif
+      do is = 0, ns-1
+*     The IS loop is moved outside, so that we can calculate parallel in
+*     IS. This will ensure that the output arrays are distributed along
+*     the slowest varying index is.
       do iy = -1, ny
        do ix = -1, nx
 *     ..set ltst0
@@ -141,7 +153,6 @@
 *     ..compute coefficient for linear interpolation
         fxne = (rlne-rtln(ine))/(rtln(ine+1)-rtln(ine))
 *     ..compute log-log rate coefficients
-        do is = 0, ns-1
 *      ..compute ionisation rate coefficient
          t0 = (1.0_R8-fxne)*rtlsa(ite,ine,is)+
      &        fxne*rtlsa(ite,ine+1,is)
@@ -259,9 +270,12 @@
          endif
          rlpi(ix,iy,0,is) =  
      .    (1.0_R8-fxte)*t0+fxte*t1-rlpi(ix,iy,1,is)*rlte
-        enddo
-       enddo
-      enddo
+        enddo ! ix = -1, nx
+       enddo ! iy = -1, ny
+      enddo ! is = 0, ns - 1
+#ifndef NO_OPENMP_B2SPEL
+!$OMP END PARALLEL DO
+#endif
 
 * ..return
       ncall = ncall+1
