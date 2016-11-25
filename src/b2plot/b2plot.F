@@ -5411,7 +5411,7 @@ c
           endif
           if(.not.open_file(lu,spop(sstack,isstack),
      1           'data.local/commands|scripts/commands')) then
-            write(*,*) 'cmd failed top open file'
+            write(*,*) 'cmd failed to open file'
             lu=save_lu(lu_pos)
             lu_pos=lu_pos-1
           else
@@ -5436,7 +5436,7 @@ c
           lucdf=lu
           if(.not.open_file(lu,spop(sstack,isstack),
      1           'data.local/commands|scripts/commands')) then
-            write(*,*) 'cmd failed top open file'
+            write(*,*) 'cmd failed to open file'
             lu=save_lu(lu_pos)
             lu_pos=lu_pos-1
           else
