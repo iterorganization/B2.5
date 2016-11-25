@@ -471,6 +471,7 @@
 *    'b2ux7p_style'             '3'                    Numerics
 *    'b2ux9p_nltrsol'           '0'                    Output
 *    'b2ux9p_style'             '2'                    Numerics
+*    'b2wdat_iout'              '1'                    Output
 *    'b2xzdd_zero_dead_and_core''1'                    Numerics
 *    'b2yrdr_ns'                ns                     Output
 *    'b2ytdr_ndepth1'           ndepth_nml             Run
@@ -1666,10 +1667,15 @@
 *    Another option for movie output. Give the real-time interval between
 *    movie frames.
 *
-*    'b2mndr_plasmatim'       '0.0'                  Output
+*    'b2mndr_plasmatim'         '0.0'                  Output
 *    Another option for plasma state file output. Give the real-time 
 *    interval between succesive write-ups of plasmastate files, in
 *    addition to the ones written at regular CPU intervals.
+*
+*    'b2wdat_iout'              '0'                    Output
+*    If iout.eq.1, a large set of *.dat output files will be produced
+*    containing the values of a variety of code quantities.
+*    See the "Output description" file for details.
 *
 *    'b2mndr_na_eps'            '1.0e19'               Output
 *    'b2mndr_po_eps'            '1.0e+1'               Output
