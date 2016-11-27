@@ -972,8 +972,16 @@ c 2002-09-11: logic revised
       else
         call de_bundle (ns, zn, am, zamin, zamax,
      *   is0, bundle_contr, zn0, am0, zamin0, zamax0)
+        write(*,*) 'bundle_contr:'
+        write(hlp_frm,'(a,i3,a)') '(3x,',ns,'(1x,i4))'
+        write(*,hlp_frm) (is, is = 0, ns-1)
+        write(hlp_frm,'(a,i3,a)') '(i3,',ns,'f5.2)'
+        do iss = 0, ns1-1
+          write(*,hlp_frm) iss, (bundle_contr(iss,is), is = 0, ns-1)
+        end do
         call re_bundle (ns, is0, bundle_contr, zn0, am0, zamin0, zamax0,
      *   ns1, is1, bundle_frac, zn1, am1, zamin1, zamax1)
+        write(*,*) 'bundle_frac:'
         write(hlp_frm,'(a,i3,a)') '(3x,',ns,'(1x,i4))'
         write(*,hlp_frm) (is, is = 0, ns-1)
         write(hlp_frm,'(a,i3,a)') '(i3,',ns,'f5.2)'
@@ -1032,6 +1040,11 @@ c 2002-09-11: logic revised
       call ipgetr ('b2ytdr_rescale_neutrals', neutral_rescale)
       call xertst (0.0_R8.lt.neutral_rescale,
      & 'faulty input parameter neutral_rescale')
+      if (.not.same_bundling) then
+        write(*,*) 'Original species list:'
+      else
+        write(*,*) 'Species list:'
+      end if
       call alloc_b2mod_elements(ns,zn,am)
       if(neutral_rescale.ne.1.0_R8) then
         write(*,*) 'Rescaling neutrals by ',neutral_rescale
@@ -3159,16 +3172,17 @@ cxpb This will need to be checked !!!
 cxpb Now we have read the atomic species data (in FIND_PARAM) and
 cxpb start by identifying the correspondence with the new run species
         iss = 0
-        DO IATM=1,NATMI
+        is = 0
+        iatm1 = 0
+        do while (is.lt.ns1)
           found = .false.
-          is = 0
-          do while (.not.found .and. is.lt.ns1)
+          iatm = 1
+          do while (.not.found .and. iatm.le.natmi)
             found = nint(am1(is)).eq.NMASSA(IATM) .and.
      .              nint(zn1(is)).eq.NCHARA(IATM) .and.
      .              is_neutral1(is)
             if (found) then
               iss = iss + 1
-              eb2spcr1(iss) = is
               iatm1(iatm) = iss
               in_bundle = .true.
               do while (in_bundle)
@@ -3176,20 +3190,28 @@ cxpb start by identifying the correspondence with the new run species
                 is = is + 1
                 in_bundle = is.lt.ns1
                 if (in_bundle) in_bundle = in_bundle
-     &           .and. nint(zn1(is)).eq.NCHARA(IATM)
-     &           .and. nint(am1(is)).eq.NMASSA(IATM)
+     &            .and. nint(zn1(is)).eq.NCHARA(IATM)
+     &            .and. nint(am1(is)).eq.NMASSA(IATM)
               end do
-            else
-              is = is + 1
-            endif
+            end if
+            iatm = iatm + 1
           enddo
-          if (.not.found) then
-            iatm1(iatm) = 0
-            write(*,*) 'Atom species corresponding to ',
-     .       trim(TEXTA(IATM)),' not found! Removing...'
-          end if
+          if (.not.found) is = is + 1
         END DO
         NATMI1 = iss
+        do iatm = 1, NATMI
+          if (iatm1(iatm) == 0)
+     >     write(*,*) 'Atom species corresponding to ',
+     .     trim(TEXTA(IATM)),' not found! Removing...'
+        end do
+        iss = 1
+        eb2spcr1(iss) = 0
+        do is = 1, ns1-1
+          if (b2espcr1(is).ne.b2espcr1(is-1)) then
+            iss = iss + 1
+            eb2spcr1(iss)=is
+          end if
+        end do
         if (streql(eirene_format,'iter') .and. same_bundling .and.
      .      nx.eq.nx1 .and. ny.eq.ny1 .and. non_commensurate.eq.0)
      .   goto 8688  ! no need to convert input.dat file
@@ -4748,12 +4770,12 @@ cxpb Now we have read the species data and can identify the bundles
         allocate(e_bundle_contr(nplsi1,npls))
         ib = 0
         do IATM = 1, NATMI1
-          if (IATM.eq.NATMI1) then
+          if (iatm.eq.natmi1) then
             iend = ns1
           else
-            iend = eb2spcr1(IATM+1)
+            iend = eb2spcr1(iatm+1)
           endif
-          do iss = eb2spcr1(IATM)+1, iend-1
+          do iss = eb2spcr1(iatm)+1, iend-1
             ib = ib + 1
             NMASSP1(ib) = nint(am1(iss))
             NCHARP1(ib) = nint(zn1(iss))
@@ -4781,6 +4803,7 @@ cxpb Now we have read the species data and can identify the bundles
           else
             js = eb2spcr(iatm+1)-1
           endif
+          iplss = eb2spcr1(iatm1(iatm))-iatm1(iatm)+1
           iss = eb2spcr1(iatm1(iatm))+1
           jss = iss
           if (jss.lt.ns1-1) then
@@ -4823,6 +4846,8 @@ cxpb  first one
      .               (min(zmax1,zmax2)-max(zmin1,zmin2)+1.0_R8)/
      .               (zmax1-zmin1+1.0_R8)
                   endif
+                else
+                  iplss = iplss + 1
                 endif
               else
                 if (NMASSP1(iplss).eq.NMASSP(ipls).and.
@@ -4864,6 +4889,16 @@ cxpb  first one
           e_bundle_end(ib) = ipls
           e_bundle_contr(ib,ipls) = 1.0_R8
         end do
+        if (.not.same_bundling) then
+          write(*,*) 'e_bundle_contr:'
+          write(hlp_frm,'(a,i3,a)') '(3x,',nplsi,'(1x,i4))'
+          write(*,hlp_frm) (is, is = 1, nplsi)
+          write(hlp_frm,'(a,i3,a)') '(i3,',nplsi,'f5.2)'
+          do iss = 1, nplsi1
+            write(*,hlp_frm) iss,
+     .       (e_bundle_contr(iss,is), is = 1, nplsi)
+          end do
+        end if
         NPLSM = max(NPLSI,NPLSI1)
 cxpb Must now convert the bulk ion data according to the new bundling
         allocate(TEXTP1(NPLSI1))
@@ -5326,25 +5361,27 @@ cxpb We now re-compute input data according to the new bundling for block 4
 cxpb We now rewrite the modified block 4
 *4A.   NEUTRAL ATOMS SPECIES CARDS, NATMI1 SPECIES
         WRITE(IUNOT,6666) NATMI1
-        DO 4213 IATM=1,NATMI
-         IF (IATM1(IATM).NE.0) THEN
-          IF (ISRFA(IATM).GT.0 .AND.ISRFA(IATM).LE.NATMI) THEN
+        DO 4213 ISS=1,NATMI1
+         IATM = 1
+         DO WHILE (IATM.LE.NATMI)
+          IF (IATM1(IATM).EQ.ISS) THEN
+           IF (ISRFA(IATM).GT.0 .AND.ISRFA(IATM).LE.NATMI) THEN
             ISRFA(IATM) = IATM1(ISRFA(IATM))
-          ELSE
+           ELSE
             ISRFA(IATM) = 0
-          ENDIF
-          IF (ABS(ISRTA(IATM)).GT.0.AND.ABS(ISRTA(IATM)).LE.NATMI) THEN
+           ENDIF
+           IF (ABS(ISRTA(IATM)).GT.0.AND.ABS(ISRTA(IATM)).LE.NATMI) THEN
             ISRTA(IATM) = SIGN(IATM1(ABS(ISRTA(IATM))),ISRTA(IATM))
-          ELSE
+           ELSE
             ISRTA(IATM) = 0
-          ENDIF
-          WRITE(IUNOT,66666) IATM1(IATM),
+           ENDIF
+           WRITE(IUNOT,66666) IATM1(IATM),
      .                         TEXTA(IATM),NMASSA(IATM),
      .                         NCHARA(IATM),NPRTA(IATM),0,
      .                         ISRFA(IATM),ISRTA(IATM),ISRSA(IATM),
      .                         NRCA(IATM),NFOLA(IATM),NGENA(IATM),
      .                         NHSTA(IATM)
-          DO 4223 K=1,NRCA(IATM)
+           DO 4223 K=1,NRCA(IATM)
             IF (ISRSA(IATM).LT.3) THEN
               WRITE(IUNOT,6666) IREACA(IATM,K),IBULKA(IATM,K),
      .                          ISCD1A(IATM,K),ISCD2A(IATM,K),
@@ -5366,8 +5403,10 @@ cxpb We now rewrite the modified block 4
             WRITE(IUNOT,6664) EELECA(IATM,K),EBULKA(IATM,K),
      .                        ESCD1A(IATM,K),ESCD2A(IATM,K),
      .                        FREACA(IATM,K),FLDLMA(IATM,K)
- 4223     CONTINUE
-         END IF
+ 4223      CONTINUE
+          END IF
+          IATM = IATM + 1
+         END DO
  4213   CONTINUE
 *4B.   NEUTRAL MOLECULE SPECIES CARDS, NMOLI SPECIES
         WRITE(IUNOT,'(A72)') TXTMOL
@@ -7876,6 +7915,10 @@ cxpb as they no longer necessarily point to the same species
         enddo
         write(*,*) 'Writing ',trim(new_filename)
         write(nout(5),'(a)') trim(new_filename)
+        if (.not.same_bundling) then
+          write(hlp_frm,'(a6,i3,a3)') '(1x,a,',ns1,'i4)'
+          write(*,hlp_frm) 'New b2espcr list : ',b2espcr1(0:ns1-1)
+        end if
         open(99,file=new_filename)
         write(99,'(a)') '&NEUTRALS'
         write(99,'(a,i2,a)') 'NSTRAI=', nstrai1,','
@@ -8470,7 +8513,7 @@ cxpb as they no longer necessarily point to the same species
             vacuum_communication_iy(i1,i2) = iy
             vacuum_communication_ix1(i1,i2) = ix1
             vacuum_communication_ix2(i1,i2) = ix2
-            if (iy.ne.-2 .or. ix1.ne.-2 .or. ix2.ne.-2) then
+            if (iy.ne.-2 .and. (ix1.ne.-2 .or. ix2.ne.-2)) then
               write(99,'(a,i1,a,i1,a,i4,a)')
      .         'VACUUM_COMMUNICATION_IY(',i1,',',i2,')=',
      .          vacuum_communication_iy(i1,i2),','
@@ -9380,7 +9423,7 @@ cxpb basic species 'ic'
 cxpb We first need to find the total number of basic species nz
       unused = .true.
       ii = minloc(is0)
-      if (is0(ii(1)).ne.-1) then
+      if (is0(ii(1)).eq.-1) then
         nz = ii(1)-1
       else
         nz = size(is0)

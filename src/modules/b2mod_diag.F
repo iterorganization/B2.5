@@ -158,7 +158,8 @@ c
         endif
         nstages=max(nstages,iss)
       enddo 
-      write(*,'(1x,a,3i3)') 'natm, nsd, nstages ', natm, nsd, nstages
+      write(*,'(1x,a,3(i3,1x))') 'natm, nsd, nstages ',
+     .                            natm, nsd, nstages
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nsd,'i3)'
       write(*,hlp_frm) 'b2espcr : ', b2espcr(0:nsd-1)
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',nsd,'(a2,1x))'

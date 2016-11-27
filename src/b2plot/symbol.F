@@ -19,7 +19,7 @@ c
       sval=' '
       cval=' '
       c=textline(ipos:ipos)
-      if(is_comment(textline)) then
+      if(is_comment(textline).or.c.eq.'!') then
         call readline(textline,iun,ipos)
         goto 1
       endif

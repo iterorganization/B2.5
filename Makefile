@@ -6,13 +6,28 @@ ifndef COMPILER
   $(error COMPILER not defined)
 endif
 
+SRCB2   = ${PWD}
+SRCDIR  = ${SRCB2}/src
+
+MAKES = ${SRCB2}/Makefile
 # Include global SOLPS compiler settings
 ifndef SOLPS_CPP
 ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER} ] && echo yes || echo no ),yes)
   include ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
+  MAKES += ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
+  ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
+    include ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local
+    MAKES += ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local
+  endif
 else
   $(warning ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER} not found.)
 endif
+else
+  MAKES += ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}
+  ifeq ($(shell [ -e ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
+    include ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local
+    MAKES += ${SOLPSTOP}/SETUP/config.${HOST_NAME}.${COMPILER}.local
+  endif
 endif
 
 ifdef USE_EIRENE
@@ -25,9 +40,6 @@ ifdef SOLPS_MPI
     USE_MPI = -DUSE_MPI
   endif
 endif
-
-SRCB2   = ${PWD}
-SRCDIR  = ${SRCB2}/src
 
 # Default prefix for OBJDIR: standalone
 PREF_OBJDIR = standalone
@@ -59,7 +71,7 @@ ifeq ($(shell [ -e ${OBJDIR}/LISTOBJ ] && echo yes || echo no ),yes)
   include ${OBJDIR}/LISTOBJ
 endif
   include ${SRCB2}/config/compile
-  MAKES = ${SRCB2}/Makefile ${SRCB2}/config/compile ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
+  MAKES += ${SRCB2}/config/compile ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}
 ifeq ($(shell [ -e ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local ] && echo yes || echo no ),yes)
   include ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
   MAKES+ = ${SRCB2}/config/config.${HOST_NAME}.${COMPILER}.local
@@ -604,20 +616,20 @@ ${OBJDIR}/eirmod_precision.${MOD}:
 	ln -s ${OBJDIR}/precision.${MOD} ${OBJDIR}/eirmod_precision.${MOD}
 endif
 
-${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
-	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${LDOPTSend}
+${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
 
-${OTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
-	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${LDOPTSend}
+${OTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
 
-${GREXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
-	${LD} ${LDOPTS} -o $@ $^ ${GRLIBES} ${LDLIBES} ${LDOPTSend}
+${GREXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${GRLIBES} ${LDLIBES} ${LDOPTSend}
 
-${XDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${OBJDIR}/libsolps4.a ${MNEXTRA}
-	${LD} ${LDOPTS} -o $@ $^ ${LCPP} ${GRLIBES} ${LDLIBES} ${LDEXTRA} ${LDOPTSend}
+${XDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${OBJDIR}/libsolps4.a ${MNEXTRA} ${MAKES}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${OBJDIR}/libsolps4.a ${MNEXTRA} ${LCPP} ${GRLIBES} ${LDLIBES} ${LDEXTRA} ${LDOPTSend}
 
-${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
-	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${LD_MDSPLUS} ${LDOPTSend}
+${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_MDSPLUS} ${LDOPTSend}
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h
 	@${BLD} $@ ${LIBOBJS}
