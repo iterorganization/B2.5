@@ -27,7 +27,7 @@
       real :: HEIGHT, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER, W_TH, 
      . P_LENGTH, ALPHA, BETA, THETA, T_GAP
       real :: T_COOLANT, M_FLOW, CP_COOLANT, dummy
-      INTEGER :: DIMENSIONS(4)
+      INTEGER :: DIMENSIONS(4), REVERSE(2)
       real :: target_length, LPOINTS(50)=0.0d0
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
       CHARACTER*(10) :: INFILE0= 'b2ymb.dat', 
@@ -42,7 +42,7 @@
       NAMELIST /GEOMETRY/	                
      . HEIGHT, T_LENGTH, CU_TH, CUCRZR_TH, 
      . DIAMETER, W_TH, P_LENGTH, ALPHA, BETA,
-     . THETA, T_GAP
+     . THETA, T_GAP, REVERSE
 
       NAMELIST /MESH/                     
      . NN
@@ -104,7 +104,7 @@
          !Interpolate the data on a coordinate vector with spatial x coordinates with a distance equal to the tile poloidal length
          target_length=mm(nline,1)-mm(1,1)
          ntiles=nint(target_length/p_length)
-         allocate(bb(ntiles,4))
+         allocate(bb(ntiles,5))
          bb=0.0d0
          bb(1,1)=mm(1,1)
          bb(1,2)=mm(1,2)
@@ -121,6 +121,15 @@
      .    bb(2:ntiles-1,3), nline, ntiles-2)        
          dimensions(1:3)=ntiles
          dimensions(4)=1
+         if (REVERSE(KK)>0) then
+            do ii=1,2
+               bb(1:ntiles,5)=bb(1:ntiles,ii+1) !flip the vector in the direction of the fluid flow
+               do jj=1,ntiles
+                  bb(jj,ii+1)=bb(ntiles-jj+1,5)
+               enddo
+            enddo
+         endif
+         
          ! now write the output files, but first check if there are already present. If yes, remove them before writing
          OUTFILE(1)='X_tg'//trg(KK)//'.dat'
          OUTFILE(2)='Wtot_tg'//trg(KK)//'.dat'

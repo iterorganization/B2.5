@@ -231,7 +231,7 @@ c
         k=ltrgpos(j)
         do iy=lytg,ny-1 !{
           wnutrg(iy,j)=0.0_R8
-          wo=fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0)+fhi_ext(k+1-l,iy,0)
+          wo=fhe_eir(k+1-l,iy,0)+fhi_eir(k+1-l,iy,0)+fhi_ext(k+1-l,iy,0)
           do is=0,ns-1 !{
             if (ft44) then
               wo=wo+fna(k+1-l,iy,0,is)*((rpt(k+l,iy,is)*ev)

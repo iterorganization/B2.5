@@ -462,7 +462,8 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
                 end do !}
                 wptpl(iy,j)=wo/s(iy,j)*u
                 if (.not.ft44) wnutrg(iy,j)=wnutrg(iy,j)*u/s(iy,j)
-                whtpl(iy,j)=(fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0))/s(iy,j)*u
+                whtpl(iy,j)=(fhe_eir(k+1-l,iy,0)+fhi_eir(k+1-l,iy,0))
+     .           /s(iy,j)*u
                 wpltrg(iy,j)=wptpl(iy,j)+whtpl(iy,j)
                 netrg(iy,j)=ne(kk,iy)
                 tetrg(iy,j)=te(kk,iy)/ev
