@@ -178,6 +178,7 @@ endif
 # DEFINES += -DNO_OPENMP_B2SQCX
 # DEFINES += -DNO_OPENMP_B2SQEL
 # DEFINES += -DNO_OPENMP_B2SRDT
+# DEFINES += -DNO_OPENMP_B2SRST
 
 VHEAD =
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)

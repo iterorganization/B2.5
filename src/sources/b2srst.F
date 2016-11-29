@@ -106,6 +106,18 @@
 
 *  ..stabilise
 *   ..modify sna
+#ifndef NO_OPENMP_B2SRST
+!$OMP PARALLEL
+!$OMP& default(none)
+!$OMP& private(is, iy, ix, t0)
+!$OMP& shared(nx,ns,ny,guard_flows,is_neutral,use_eirene)
+!$OMP& shared(leftix,rightix,bottomiy,topiy)
+!$OMP& shared(na,rf0,rf1,rf2,rf3,ua,te,ti,po,ne,sne,snest)
+! these are the result arrays:
+!$OMP& shared(sna,smo,she,shi,sch)
+!$OMP& shared(snast,smost,shest,shist,schst)
+!$OMP DO
+#endif
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
@@ -132,7 +144,13 @@
 	enddo                                                        !srv 27.06.08 }
        endif                                                         !srv 01.07.08 }
       enddo
+#ifndef NO_OPENMP_B2SRST
+!$OMP END DO NOWAIT
+#endif
 *   ..modify smo
+#ifndef NO_OPENMP_B2SRST
+!$OMP DO
+#endif
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
@@ -147,7 +165,13 @@
         enddo
        enddo
       enddo
+#ifndef NO_OPENMP_B2SRST
+!$OMP END DO NOWAIT
+#endif
 *   ..modify she, shi, sch
+#ifndef NO_OPENMP_B2SRST
+!$OMP DO
+#endif
       do iy = -1, ny
        do ix = -1, nx
 *     ..modify she(,,0:1)
@@ -183,7 +207,13 @@
      &   min(sne(ix,iy,1)*ne(ix,iy),-rf3*t0,(1.0_R8+rf3)*t0)
        enddo
       enddo
+#ifndef NO_OPENMP_B2SRST
+!$OMP END DO
+#endif
 
+#ifndef NO_OPENMP_B2SRST
+!$OMP WORKSHARE
+#endif
 *   ..calculate the source coefficients of numerical stabilisation.
       snast = sna - snast
       smost = smo - smost
@@ -191,6 +221,10 @@
       shist = shi - shist
       schst = sch - schst
       snest = sne - snest
+#ifndef NO_OPENMP_B2SRST
+!$OMP END WORKSHARE
+!$OMP END PARALLEL
+#endif
 
 cdjm Jan2017 Store for balance
       if (balance_netcdf.ne.0) then
