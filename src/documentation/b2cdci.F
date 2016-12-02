@@ -130,6 +130,7 @@
 *    'b2mndr_min_aresco'        '0.0'                  Numerics
 *    'b2mndr_mvinc'             '1'                    Output
 *    'b2mndr_mvnum'             '0'                    Output
+*    'b2mndr_ntim_save'         '0'                    Output
 *    'b2mndr_plasinc'           '1'                    Output
 *    'b2mndr_plasnum'           '0'                    Output      
 *    'b2mndr_na_eps'            '1.0e19'               Output
@@ -1666,6 +1667,14 @@
 *    'b2mndr_cdfmovietim'       '0.0'                  Output
 *    Another option for movie output. Give the real-time interval between
 *    movie frames.
+*
+*    'b2mndr_ntim_save'         '0'                    Output
+*    Another option for plasma state file output. Give the number of B2.5
+*    full interations between succesive write-ups of plasmastate files, in
+*    addition to the ones written at regular CPU intervals.
+*    Should be used, at the exclusion of other plasmastate write-up
+*    frequency settings, in conjunction with the Leuven Monte-Carlo
+*    averaging scheme.
 *
 *    'b2mndr_plasmatim'         '0.0'                  Output
 *    Another option for plasma state file output. Give the real-time 

@@ -171,7 +171,7 @@
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
-      integer, save :: itim_plas = 0, nwrit_plas = 0
+      integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
      *  neutral_sources_rescale,
@@ -929,6 +929,10 @@
        if (delta_plasma_time.gt.0.0_R8)
      >  write(*,*) 'Saving plasma state files every ',
      1  delta_plasma_time,' simulation seconds'
+       call ipgeti ('b2mndr_ntim_save', ntim_save)
+       if (ntim_save.gt.0)
+     >  write(*,*) 'Saving plasma state files every ',
+     1  ntim_save,' iterations'
        call ipgeti ('b2mndr_b2time', b2time)
        call xertst (0.le.b2time,
      &   'faulty internal parameter b2time')
@@ -1889,7 +1893,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      3      (no_solve.eq.1.and.itim.eq.ntim)
         if(.not.quit.and.
      .   ((cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8).or.
-     .    (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)))
+     .    (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)).or.
+     .    (ntim_save.gt.0.and.ntim.gt.0.and.mod(ntim,ntim_save).eq.0))
      >   then
           write(savefile(13:16),'(i4)') edition
           edition=edition+1
