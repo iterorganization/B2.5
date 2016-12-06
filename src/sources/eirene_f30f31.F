@@ -134,8 +134,6 @@ c
           call mapx(nx,ny,1,vadiac(:,:,0,is),wrk)
           call mapy(nx,ny,1,vadiac(:,:,1,is),wrk)
         enddo
-      else
-        call xerrab ('wrong value of b2tfnb_drift_style')
       endif
 
       if(iout.ne.0) then                                               !srv 18.06.08 {

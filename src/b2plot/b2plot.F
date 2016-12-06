@@ -6821,7 +6821,7 @@ c normalised weights is 1
             end do
           end do
           wall_label(iwwrk)=
-     .      graphlabel(iwwrk)(1:lnblnk(graphlabel(iwwrk)))//' (ABS)'
+     .      wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))//' (ABS)'
           call set_wallbarlabel(wall_label(iwwrk))
         case('ddw')      ! d/dw derivative along wall length
           stack_req=(/0,0,0,0,1,0/)
@@ -7088,7 +7088,7 @@ c normalised weights is 1
           if(bad_args(stack_req)) return   ! 5900
           do is=0,nwdim(2,iwwrk)-1
             do i=1,nwdim(1,iwwrk)
-              if (rstack(irstack).ne.0.0) then
+              if (rstack(irstack).ne.0.0_R8) then
                 wall_stack(i,is,iwwrk)=
      1           wall_stack(i,is,iwwrk)**rstack(irstack)
               else
