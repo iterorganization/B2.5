@@ -7,5 +7,7 @@ c
 c*** Plasma data: ni,te,ti,vv,uu,pr,up,rr,fnix,fniy
 c
       real  (kind=R8) ::
-     * dnib,teb,tib,pob,vvb,uub,prb,upb,rrb,fnixb,fniyb,
-     r feixb,feiyb,feexb,feeyb,volb,bfeldb,uudiab,vvdiab
+     * dnib,teb,tib,pob,vvb,uub,wwb,prb,upb,rrb,fnixb,fniyb,
+     r feixb,feiyb,feexb,feeyb,volb,bfeldb,uudiab,vvdiab,
+     r bpolb,bradb,btorb,
+     r delta_sheathxb,delta_sheathyb
