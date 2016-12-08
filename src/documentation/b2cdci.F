@@ -800,7 +800,8 @@
 *    The code will compute fluxes, sources, transport coefficients, etc... 
 *    'ntim' times but not update the basic plasma quantities.
 *    Additionally, if no_solve is set to a negative value, then only some
-*    equations are solved (simulation time and nstg arrays will behave normally).
+*    equations are solved
+*    (simulation time and nstg arrays will behave normally).
 *    no_solve.eq.-1 will activate the parallel momentum equations only.
 *    no_solve.eq.-2 will activate the density equations only.
 *    no_solve.eq.-4 will activate the potential equation only. (Active only
@@ -809,8 +810,9 @@
 *    no_solve.eq.-8 will activate the heat equations only.
 *    These can be combined. For example, no_solve.eq.-3 will activate the
 *    parallel momentum and particle conservation equations.
-*    If the no_solve switch requires an equation not to be solved, the settings
-*    in the corresponding solvexx arrays from b2.numerics.parameters are moot.
+*    If the no_solve switch requires an equation not to be solved, the
+*    settings in the corresponding solvexx arrays from b2.numerics.parameters
+*    are moot.
 *    The latter are reserved for fine-tuning numerical diagnostics.
 *    
 *    'b2mndr_cpu'               '0.0'                  Run
@@ -900,11 +902,6 @@
 *
 *    'b2stbr_core_sources_rescale'  '1.0'              Run
 *    Multiplier to the totally ionised species sources at the core boundary.
-*
-*    'b2stbr_eir_src_nhist'     '1'                    Numerics
-*    If b2stbr_eir_src_nhist.gt.1, then Eirene sources are accumulated and
-*    a moving average is computed. Note that only one of b2stbr_eir_src_nhist,
-*    eirene_neutr_avg, or eirene_underrelax may be nonzero.
 *
 *    'b2mndt_density_control'   '0'                    Run
 *    Feedback on the total heavy particle density. If density_control.ne.0,
@@ -1373,7 +1370,8 @@
 *    Multiplier of the ehxp term in the thermal force term
 *
 *    'b2sifr_phm2'              '1.0'                  Physics
-*    Multiplier of the electron thermal gradient term in the thermal force term
+*    Multiplier of the electron thermal gradient term in the thermal
+*    force term
 *
 *    'b2sifr_phm3'              '1.0'                  Physics
 *    Multiplier of the ion thermal gradient term in the thermal force term
@@ -1604,20 +1602,23 @@
 *    new type 13 boundary condition.
 *
 *    'eirene_background'        '1'                    Physics
-*    If eirene_background.eq.0, the ion velocities passed to Eirene to be used
-*    for the collisions are based on grad-B and ExB drifts (vadia + vaecrb).
+*    If eirene_background.eq.0, the ion velocities passed to Eirene to be
+*    used for the collisions are based on grad-B and ExB drifts
+*    (vadia + vaecrb).
 *    If eirene_background.eq.1, these velocities contain the full diamagnetic
 *    and ExB drifts (wadia + vaecrb).
-*    Note: recycling fluxes are always computed based on grad-B and ExB drifts only
-*    (and are not affected by this switch), ecause diagmagnetic drift flows largely 
-*    close within the sheath.    
+*    Note: recycling fluxes are always computed based on grad-B and ExB
+*    drifts only (and are not affected by this switch), because diamagnetic
+*    drift flows largely close within the sheath.   
 *
 *    'eirene_sheath_pot'        '1'                    Physics
-*    If eirene_sheath_pot.eq.1, the sheath potential drop as computed by B2.5 (i.e.
-*    including effects of parallel currents, secondary electron emission, etc.) is 
-*    passed to EIRENE to compute ion acceleration in the sheath. 
+*    If eirene_sheath_pot.eq.1, the sheath potential drop as computed by
+*    B2.5 (i.e. including effects of parallel currents, secondary electron
+*    emission, etc.) is passed to EIRENE to compute ion acceleration in the
+*    sheath. 
 *    If eirene_sheath_pot.eq.0, the sheath potential drop is 
-*    recomputed by EIRENE, usually assuming zero current and secondary electron emission.
+*    recomputed by EIRENE, usually assuming zero current and secondary
+*    electron emission.
 *
 *    'b2stel_fix_recomb_energy' '0'                    Physics 
 *    If changed to 1, then the recombination energy (rpi) is added 
@@ -1739,10 +1740,11 @@
 *
 *    'tallies_netcdf'           '0'                    Output
 *    'b2stbr_b2wall_netcdf'     '0'                    Output
-*    If tallies_netcdf.ne.0, the file 'b2tallies.nc' is created, which contains
-*    the regional tallies in CDF format.
-*    If b2wall_netcdf.ne.0, the file 'b2wall.nc' is created, which contains the
-*    wall tallies in CDF format [written every b2wall_netcdf "main calls"].
+*    If tallies_netcdf.ne.0, the file 'b2tallies.nc' is created, which
+*    contains the regional tallies in CDF format.
+*    If b2wall_netcdf.ne.0, the file 'b2wall.nc' is created, which contains
+*    the wall tallies in CDF format
+*    [written every b2wall_netcdf "main calls"].
 *
 *    'ank_tracing'              '0'                    Output
 *    If ank_tracing.ge.1, additional tracing output from Andrei Kukushkin is
@@ -1848,8 +1850,10 @@
 *    This switch is to be provided within b2yt.dat to indicate to the b2yt
 *    converter the format of the original Eirene input.dat file to be
 *    modified. The accepted values are (case-insensitive):
-*    'old' for input files from SOLPS4.0 and SOLPS5.0 runs using "old" Eirene_96
-*    'new' for input files from SOLPS4.0 and SOLPS5.0 runs using "new" Eirene_99
+*    'old' for input files from SOLPS4.0 and SOLPS5.0 runs using "old"
+*    Eirene_96
+*    'new' for input files from SOLPS4.0 and SOLPS5.0 runs using "new"
+*    Eirene_99
 *    'facelift' for input files from SOLPS5.1 runs
 *    'juelich' for input files from Juelich Eirene versions (2008 and younger)
 *    'iter' for input files from SOLPS4.2/4.3 and SOLPS-ITER runs
@@ -1933,6 +1937,12 @@
 *    If dpc_fix.eq.1, then uses the true particle source from the
 *    stratum. If dpc_fix.eq.2, sets this particle source to zero.
 *    The equivalent of the old behaviour is dpc_fix.eq.0 and is wrong!
+*
+*    'b2stbr_eir_src_nhist'     '1'                    Numerics
+*    If b2stbr_eir_src_nhist.gt.1, then Eirene sources are accumulated
+*    and a moving average is computed. Note that only one of
+*    b2stbr_eir_src_nhist, eirene_neutr_avg, or eirene_underrelax
+*    may be nonzero.
 *
 *    'eirene_neutr_avg'         '0'                    Numerics
 *    If eirene_neutr_avg.gt.0, then Eirene sources are accumulated and
@@ -2145,8 +2155,8 @@
 *    This switch replaces 'b2mndr_na0eps' from SOLPS5.x.
 *
 *    'b2mndr_na_new'            '1.0e14'               Numerics
-*    Initial density put in all cells for all new species if not overwritten by
-*    initial state file.
+*    Initial density put in all cells for all new species if not
+*    overwritten by initial state file.
 *    This switch replaces 'b2mndr_na0eps' from SOLPS5.x.
 *
 *    'b2news_guard_flows'       '2'                    Numerics

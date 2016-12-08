@@ -179,6 +179,176 @@ c*** Transfer the data to the plotting routines
 c=======================================================================
       end subroutine clvp
 
+      subroutine eclvp(npplvp,npplvm)
+      use b2mod_types
+      use b2mod_wall
+      use b2mod_b2plot
+#ifdef B25_EIRENE
+      use eirmod_ctrig
+
+c version : 04.02.2002 17:40
+
+c=======================================================================
+c*** This subroutine produces a set of level values, in ascending order,
+c*** for the data array on the top of the Eirene stack.
+c*** The levels are arranged so that the integral of absolute value of 
+c*** the data over the region between each two neighbouring level lines 
+c*** is the same.
+c*** If npplvm < 0, then this integral is equal (approximately) 
+c*** to 1/abs(npplvp) of the integral over the whole wall area.
+c*** If npplvm.ge.0, then the regions of positive and negative data
+c*** values are treated separately, with abs(npplvp) data intervals for
+c*** the positive and npplvm for the negative data range. In this case,
+c*** if npplvp.ge.0 then 0 is added to the level list, otherwise, the 
+c*** biggest negative and smallest positive values fall in one zone.
+
+c*** The data dimensions must be ntrii, and 1, respectively.
+
+      implicit none
+      integer npplvp,npplvm
+      integer i,j,k,l,m,kk,ll,mm,nn,npoplv
+      real (kind=R8) :: tot_hlp,neg_hlp,vol_hlp,d,d_hlp,f,t,v,e_hlp
+c=======================================================================
+c      print *,'=== eclvp: ',npplvp,npplvm !###
+c*** Check the data dimensions and input parameter     
+
+c      print *,'=== eclvp: iwrk=',iwrk     !###
+      npoplv=iabs(npplvp)
+      if(iewrk.lt.1) then !{
+        print *,'eclvp: too few elements on the data stack ,',
+     ,                                            '- no data selected?'
+        return
+      end if !}
+c      print *,'=== eclvp: ntrii,nedim',ntrii,             !###
+c     ,                            (nedim(i,iwwrk),i=1,2)  !###
+      if(nedim(2,iewrk).ne.1) then !{
+        print *,'eclvp: ns must be 1 - is',nedim(2,iewrk)
+        return
+      end if !}
+      if(nedim(1,iewrk).ne.ntrii) then !{
+        print *,'eclvp: the data array not conforming to the triangles'
+        return
+      end if !}
+      
+c*** Sort the data
+
+      ewrk_hlp(1:ntrii) = eirene_stack(1:ntrii,0,iewrk)
+      call sortda(ewrk_hlp,ind_hlp,ntrii)
+
+c*** Calculate the integral over the whole volume
+
+      tot_hlp=0.0_R8
+      neg_hlp=0.0_R8
+      vol_hlp=0.0_R8
+      do i=1,ntrii !{
+        tot_hlp=tot_hlp+abs(eirene_stack(i,0,iewrk)*triangle_vol(i))
+        if(eirene_stack(i,0,iewrk).lt.0.0_R8) neg_hlp=neg_hlp-
+     -      eirene_stack(i,0,iewrk)*triangle_vol(i)
+        vol_hlp=vol_hlp+triangle_vol(i)
+      end do !}
+c      print *,'eclvp: volume, integral, negative part ',     !###
+c     ,                               vol_hlp,tot_hlp,neg_hlp !###
+      if(tot_hlp.le.0.0_R8) then !{
+        print *,'eclvp: no non-zero data found'
+        return
+      end if !}
+
+c*** Calculate the necessary levels and put them on the real stack
+
+      t=0.0_R8
+      v=0.0_R8
+      l=0
+      mm=1
+      nn=npoplv-1
+      if(npplvm.gt.0 .and. neg_hlp.gt.0.0_R8) then !{
+        nn=nn+npplvm-1
+        d=neg_hlp/npplvm
+        f=d
+        do m=mm,ntrii !{
+          if(l.lt.npplvm-1) then !{
+            k=ind_hlp(m)
+            t=t+abs(ewrk_hlp(k)*triangle_vol(k))
+            v=v+triangle_vol(k)
+            if(t.ge.f) then !{
+              l=l+1
+              if(l.eq.npplvm-1) mm=m+1
+              ewrk_hlp(l)=ewrk_hlp(k)
+c              print *,'=== eclvp: l,m,f,v,level = ',                !###
+c     ,                                          l,m,f,v,ewrk_hlp(l) !###
+              print *,'level',l,ewrk_hlp(k),
+     ,                ';  volume & value fractions ',v/vol_hlp,f/neg_hlp
+              f=f+d
+            end if !}
+          end if !}
+        end do !}
+      end if !}
+      if(npplvm.ge.0) then !{
+        i=0
+        do m=mm,ntrii !{
+          if(i.eq.0) then !{
+            k=ind_hlp(m)
+            if(ewrk_hlp(k).gt.0.0_R8) i=m
+          end if !}
+        end do !}
+        mm=i
+        if(npplvp.ge.0) then !{
+          nn=nn+1
+          l=l+1
+          ewrk_hlp(l)=0.0_R8
+        end if !}
+        tot_hlp=tot_hlp-neg_hlp
+      end if !}
+c      print *,'=== mm,nn,l,tot_hlp,E(mm),E(mm-1)',mm,nn,l,tot_hlp, !###
+c     ,              ewrk_hlp(ind_hlp(mm)),ewrk_hlp(ind_hlp(mm-1))  !###
+      if(npoplv.gt.0 .and. tot_hlp.gt.0.) then !{
+        d=tot_hlp/npoplv
+        f=d
+        k=0
+        do m=mm,ntrii !{
+          if(l.lt.nn) then !{
+            kk=k
+            k=ind_hlp(m)
+            t=t+abs(ewrk_hlp(k)*triangle_vol(k))
+            v=v+triangle_vol(k)
+            if(t.ge.f) then !{
+              ll=t/d
+              if(ll-1.gt.l+1) then !{
+                e_hlp=0.0_R8
+                if(kk.gt.0) e_hlp=ewrk_hlp(kk)
+                d_hlp=(ewrk_hlp(k)-e_hlp)/(ll-l)
+                e_hlp=ewrk_hlp(kk)
+c                print *,'l,ll,k,kk,e_hlp,d_hlp,ewrk_hlp(k)',       !###
+c     ,                          l,ll,k,kk,e_hlp,d_hlp,ewrk_hlp(k)  !###
+                do j=l+1,ll-1 !{
+                  l=l+1
+                  e_hlp=e_hlp+d_hlp
+                  ewrk_hlp(l)=e_hlp
+c                  print *,'=== eclvp: l,m,f,v,level = ',             !###
+c     ,                                          l,m,f,vw,ewrk_hlp(l) !###
+                end do !}
+              end if !}
+              if(l.lt.nn) then !{
+                l=l+1
+                ewrk_hlp(l)=ewrk_hlp(k)
+c                print *,'=== eclvp: l,m,f,v,level = ',               !###
+c     ,                                           l,m,f,v,ewrk_hlp(l) !###
+                print *,'level',l,ewrk_hlp(k),
+     ,                ';  volume & value fractions ',v/vol_hlp,f/tot_hlp
+                f=f+d
+              end if !}
+            end if !}
+          end if !}
+        end do !}
+      end if !}
+
+c*** Transfer the data to the plotting routines
+
+      call eclvs(l,ewrk_hlp,l)
+#endif
+      return
+c=======================================================================
+      end subroutine eclvp
+
       subroutine wclvp(npplvp,npplvm)
       use b2mod_types
       use b2mod_wall
@@ -322,7 +492,7 @@ c     ,                          l,ll,k,kk,w_hlp,d_hlp,wwrk_hlp(k)  !###
                   w_hlp=w_hlp+d_hlp
                   wwrk_hlp(l)=w_hlp
 c                  print *,'=== wclvp: l,m,f,v,level = ',             !###
-c     ,                                           l,m,f,vw,wrk_hlp(l) !###
+c     ,                                          l,m,f,vw,wwrk_hlp(l) !###
                 end do !}
               end if !}
               if(l.lt.nn) then !{

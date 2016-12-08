@@ -9,7 +9,7 @@ cxpb  Done to avoid a clash with a reserved file for Windows NCAR
       parameter (nwtf=97)
 #endif
       integer nparameters
-      parameter (nparameters=37)
+      parameter (nparameters=39)
       real (kind=R8) init_value
       parameter (init_value=-66.0_R8)
 
@@ -25,6 +25,6 @@ cxpb  Done to avoid a clash with a reserved file for Windows NCAR
      5 'a0'  , 'b0'  , 'tt0' , 'trgxmin', 'trgxmax', 
      6 'trgymin', 'trgymax', 'trgrmin', 'trgrmax', 'trgzmin', 
      7 'trgzmax', 'trgfmin', 'trgfmax', 'trgomin', 'trgomax',
-     8 'smin', 'smax'/
+     8 'smin', 'smax', 'emin', 'emax'/
 
       end module b2mod_b2plot_values

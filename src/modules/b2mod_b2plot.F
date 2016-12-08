@@ -11,6 +11,8 @@
      *  wrk(:),
      *  arrowx(:,:,:),
      *  arrowy(:,:,:),
+     *  earrowx(:,:),
+     *  earrowy(:,:),
      *  p1(:,:),
      *  p2(:,:),
      *  xx(:,:),
@@ -26,6 +28,7 @@
      *  targetz(:,:),
      *  wwrk(:),
      *  wrk_hlp(:),
+     *  ewrk_hlp(:),
      *  wwrk_hlp(:),
      *  twrk_hlp(:)
 
@@ -37,6 +40,9 @@
      *  ind_hlp(:), indt_hlp(:)
 
       real (kind=R8), allocatable, save ::
+     *  eirene_stack(:,:,:),
+     *  triangle_area(:),
+     *  triangle_vol(:),
      *  wall_stack(:,:,:),
      *  wall_flux(:,:),
      *  wall_area(:),
@@ -58,6 +64,7 @@
      *  textplel2(:,:),
      *  textsp(:),
      *  textwk(:,:),
+     *  textewk(:,:),
      *  textwwk(:,:),
      *  textbl(:),
      *  textni(:),
@@ -78,6 +85,7 @@
      *  textsp(0:DEF_NATM-1),
      *  textwl(0:DEF_NSD-1+DEF_NATM+DEF_NMOL+DEF_NION),
      *  textwk(0:(DEF_NSD+1)*(DEF_NSD+1),wklng),
+     *  textewk(0:max(DEF_NATM,DEF_NMOL,DEF_NION)-1,wklng),
      *  textwwk(0:DEF_NSD-1+DEF_NATM+DEF_NMOL+DEF_NION,wklng),
      *  textbl(0:0),
      *  textni(0:1),
@@ -93,12 +101,13 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
       parameter(npart=100000)
 
       real (kind=R8), save ::
-     * arrowl,arroww,sepwidth,lwidth,wwidth,owidth,vwidth,ewidth,zwidth
+     * arrowl,earrowl,arroww,
+     * sepwidth,lwidth,wwidth,owidth,vwidth,ewidth,zwidth
       integer, save ::
      * nidim,linlog,wlinlog,tlinlog,trglinlog
       integer, save ::
-     *  ndim(3,wklng),nwdim(2,wklng),
-     *  typeofplot,iwrk,iwwrk,itwrk,movie_skip,average
+     *  ndim(3,wklng),nedim(2,wklng),nwdim(2,wklng),
+     *  typeofplot,iwrk,iewrk,iwwrk,itwrk,movie_skip,average
 cank 960511
       integer, save ::
      *  nlimi,nstsi,natmi,nmoli,nioni
@@ -113,7 +122,8 @@ cank
      *  xparallel,expline
 
       character*256, save ::
-     *  graphlabel(wklng), wall_label(wklng), target_label(wklng)
+     *  graphlabel(wklng),
+     *  eirene_label(wklng), wall_label(wklng), target_label(wklng)
       character*256, save ::
      *  solpstop,moviename,expfile,wallfile
       character*80, save ::
@@ -174,6 +184,7 @@ cank
       allocate(textsp(0:natmd-1))
       allocate(textwl(0:nsd-1+natmd+nmold+niond))
       allocate(textwk(0:nsw,wklngd))
+      allocate(textewk(0:max(natmd,nmold,niond)-1,wklngd))
       allocate(textwwk(0:nsd-1+natmd+nmold+niond,wklngd))
       allocate(textbl(0:0))
       allocate(textni(0:1))
@@ -192,6 +203,21 @@ cank
 
       return
       end subroutine alloc_b2mod_b2plot
+
+      subroutine alloc_b2mod_b2plot_eirene(natmd,nmold,niond,
+     .  ntrii,wklngd)
+      implicit none
+      integer natmd,nmold,niond,ntrii,wklngd
+
+      allocate(eirene_stack(1:ntrii,0:max(natmd,nmold,niond)-1,wklngd))
+      allocate(triangle_area(1:ntrii))
+      allocate(triangle_vol(1:ntrii))
+      allocate(earrowx(1:ntrii,0:max(natmd,nmold,niond)-1))
+      allocate(earrowy(1:ntrii,0:max(natmd,nmold,niond)-1))
+      allocate(ewrk_hlp(1:ntrii))
+
+      return
+      end subroutine alloc_b2mod_b2plot_eirene
 
       subroutine alloc_b2mod_b2plot_wall(nsd,natmd,nmold,niond,
      .  nwall,ndepth,wklngd)
@@ -246,6 +272,7 @@ cank
       deallocate(textsp)
       deallocate(textwl)
       deallocate(textwk)
+      deallocate(textewk)
       deallocate(textwwk)
       deallocate(textbl)
       deallocate(textni)
@@ -258,6 +285,19 @@ cank
 
       return
       end subroutine dealloc_b2mod_b2plot
+
+      subroutine dealloc_b2mod_b2plot_eirene
+      implicit none
+
+      deallocate(eirene_stack)
+      deallocate(triangle_area)
+      deallocate(triangle_vol)
+      deallocate(earrowx)
+      deallocate(earrowy)
+      deallocate(ewrk_hlp)
+
+      return
+      end subroutine dealloc_b2mod_b2plot_eirene
 
       subroutine dealloc_b2mod_b2plot_wall
       implicit none

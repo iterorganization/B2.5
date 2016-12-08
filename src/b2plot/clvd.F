@@ -25,6 +25,34 @@ c
       return
       end subroutine clvd
 c
+      subroutine eclvd(clvmin,clvmax,delta)
+      use b2mod_types
+      implicit none
+#include "graphics_vars.h"
+      real (kind=R8) :: clvmin,clvmax,delta
+      integer :: iclv
+      external subini, subend, xertst, xerrab
+
+      call subini ('eclvd')
+      call xertst (delta.ne.0.0_R8, 'division by 0 in eclvd')
+      nofecls=(clvmax-clvmin)/delta
+      if(nofecls.eq.0) then
+        call xerrab
+     .   ('Eirene Contour Level Max == Eirene Contour Level Min')
+      else
+        nofecls=nofecls+1
+        write (*,*) 'User specified',nofecls,
+     .   'Eirene contour levels for range'
+        write (*,*) 'Using customised Eirene contour level range:'
+        do iclv=1,nofecls
+          eclval(iclv)=clvmin+(iclv-1)*delta
+          write (*,*) 'Eirene contour level',iclv,'at',eclval(iclv)
+        enddo
+      endif
+      call subend ()
+      return
+      end subroutine eclvd
+c
       subroutine wclvd(clvmin,clvmax,delta)
       use b2mod_types
       implicit none

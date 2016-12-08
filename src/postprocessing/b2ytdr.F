@@ -463,7 +463,8 @@ c 2002-09-11: logic revised
       logical LRPSCUT
       logical in_bundle, charges_match, skip_reac
 #endif
-      logical todo, wait, same_bundling, first_pass, do_scale
+      logical todo, wait, same_bundling, same_atoms
+      logical first_pass, do_scale
       logical wall_namelist_used
       logical region_flags(NNREGMAX,nkind_coeff), no_pflux
       logical poloidal_scaling(nscale), prdone, axdone, spdone
@@ -483,7 +484,7 @@ c 2002-09-11: logic revised
      &  cfwuch, cfwure, ipgeti, ipgetc, lnblnk, convert_position,
      &  len_of_digits, open_file, get_jsep, conformal_convert,
      &  convert_eirene, b2idez, streql, get_nxt, b2yt_nxt, b2yt_ngread,
-     &  is_comment
+     &  b2yt_ntread, is_comment
       external b2rups, b2rurc, b2wups, b2xtps, b2rflb, b2ytgm, rratio
       external b2ahx0, b2aix0, b2rfcp, b2wfcp, b2xvcp, b2rugm, cfverr
       external E01BEF, E01BFF
@@ -959,7 +960,8 @@ c 2002-09-11: logic revised
         same_bundling = same_bundling .and.
      &   nint(zamin1(is)).eq.nint(zamin(is)) .and.
      &   nint(zamax1(is)).eq.nint(zamax(is)) .and.
-     &   nint(zn1(is)).eq.nint(zn(is))
+     &   nint(zn1(is)).eq.nint(zn(is)) .and.
+     &   nint(am1(is)).eq.nint(am(is))
         is = is + 1
       end do
       if (same_bundling) then
@@ -972,6 +974,7 @@ c 2002-09-11: logic revised
           bundle_frac(is,is) = 1.0_R8
         enddo
         nspecies1 = nspecies
+        same_atoms = .true.
       else
         call de_bundle (ns, zn, am, zamin, zamax,
      *   is0, ic, bundle_contr, zn0, am0, zamin0, zamax0)
@@ -3202,7 +3205,9 @@ cxpb start by identifying the correspondence with the new run species
           if (.not.found) is = is + 1
         END DO
         NATMI1 = iss
+        same_atoms = .true.
         do iatm = 1, NATMI
+          same_atoms = same_atoms .and. iatm1(iatm).eq.iatm
           if (iatm1(iatm) == 0)
      >     write(*,*) 'Atom species corresponding to ',
      .     trim(TEXTA(IATM)),' not found! Removing...'
@@ -7633,6 +7638,12 @@ cxpb  Convert fort.44 file if needed
           write(nout(5),'(a)') 'fort.44.2'
           deallocate(epls_map)
         endif
+cxpb  Convert fort.46 file if needed
+        inquire(file='fort.46',exist=todo)
+        if (todo.and..not.same_atoms) then
+          call b2yt_ntread(natmi1, iatm1)
+          write(nout(5),'(a)') 'fort.46.2'
+        endif
       else
         iatm1(1:natm) = 0
         savestratum(0:nstrai) = .true.
@@ -7666,7 +7677,7 @@ cxpb  Convert fort.44 file if needed
       end do
 #endif
 ! fill up the mapping between sequence numbers
-      if (same_bundling) then
+      if (same_atoms) then
         do is = 1, nspecies
           ispecies1(is) = is
         end do
@@ -8443,7 +8454,7 @@ cxpb as they no longer necessarily point to the same species
       inquire(file=new_filename,exist=found)
       if (found) write(6,*) trim(new_filename),' already present!'
       if((lfeedback.or.b2stbc_feedback.ne.0.or.todo)
-     &   .and. .not.found .and. .not.same_bundling) then
+     &   .and. .not.found .and. .not.same_atoms) then
         call read_b2mod_feedback(99,'    ',feedback_namelist_used)
         if (maxval(saved_na_feedback_actuator).gt.0.0_R8) then
           todo = .false.
@@ -8497,7 +8508,7 @@ cxpb as they no longer necessarily point to the same species
       inquire(file=new_filename,exist=found)
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
-     .   (.not.same_bundling.or.nx.ne.nx1.or.ny.ne.ny1)) then
+     .   (.not.same_atoms.or.nx.ne.nx1.or.ny.ne.ny1)) then
         allocate(na_feedback_target1(0:natm-1))
         allocate(na_feedback_choice1(0:natm-1))
         allocate(na_feedback_option1(0:natm-1))

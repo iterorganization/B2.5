@@ -35,6 +35,39 @@ c
       return
       end
 c
+      subroutine sumt()
+      use b2mod_types
+      use b2mod_b2plot
+      use b2mod_b2plot_values
+      implicit none
+      integer i,is
+      if(nedim(1,iewrk) .lt. 0) then
+        write(*,*) 'To apply this operator, an array ',
+     1   'must be specified'
+        return
+      endif
+c
+c apply operator
+c
+      do is=0,nedim(2,iewrk)-1
+        do i= 2,nedim(1,iewrk)
+          eirene_stack(1,is,iewrk)=
+     .     eirene_stack(1,is,iewrk)+eirene_stack(i,is,iewrk)
+        enddo
+      enddo
+      values(38)=eirene_stack(1,0,iewrk)
+      values(39)=eirene_stack(1,0,iewrk)
+      do is=0,nedim(2,iewrk)-1
+        do i=2,nedim(1,iewrk)
+          eirene_stack(i,is,iewrk)=eirene_stack(1,is,iewrk)
+        enddo
+        values(38)=min(values(38),eirene_stack(1,is,iewrk))
+        values(39)=max(values(39),eirene_stack(1,is,iewrk))
+      enddo
+
+      return
+      end
+c
       subroutine sumw()
       use b2mod_types
       use b2mod_b2plot

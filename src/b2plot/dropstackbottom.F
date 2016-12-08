@@ -32,6 +32,32 @@ cxpb
       return
       end
 
+      subroutine dropeirenestackbottom()
+      use b2mod_types
+      use b2mod_b2plot
+      implicit none
+cxpb
+      integer i, iw, is
+
+      write(*,*) 'Too many data values on Eirene stack'
+cxpb
+      write(*,*) 'Dropping the bottom element!'
+      do i = 2,iewrk
+        nedim(1,i-1) = nedim(1,i)
+        nedim(2,i-1) = nedim(2,i)
+        do is = 0,nedim(2,i)-1
+          do iw = 1,nedim(1,i)
+            eirene_stack(iw,is,i-1) = eirene_stack(iw,is,i) 
+          end do
+          textewk(is,i-1) = textewk(is,i)
+        end do
+        eirene_label(i-1) = eirene_label(i)
+      end do
+      iewrk = iewrk-1
+cxpb
+      return
+      end
+
       subroutine dropwallstackbottom()
       use b2mod_types
       use b2mod_b2plot

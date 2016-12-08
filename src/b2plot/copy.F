@@ -26,6 +26,30 @@ c     1 src(nx+1,ny+1,1)*scale,work(nx+1,ny+1,1,iwrk)
       return
       end subroutine copy
 
+#ifdef B25_EIRENE
+      subroutine eirene_copy(src,scale,nz,texttmp)
+      use b2mod_types
+      use b2mod_b2plot
+      use b2mod_b2plot_values
+      use eirmod_ctrig
+      integer nz
+      real (kind=R8) ::
+     *   src(1:ntrii,0:nz-1),scale
+      character*(*) texttmp(0:nz-1)
+c      write(*,*) 'Copying Eirene array: ntrii, nz = ',ntrii,nz
+      if(iewrk .eq. wklng) call dropeirenestackbottom()
+      iewrk=iewrk+1
+      eirene_stack(1:ntrii,0:nz-1,iewrk)=src(1:ntrii,0:nz-1)*scale
+      values(38)=minval(eirene_stack(1:ntrii,0:nz-1,iewrk))
+      values(39)=maxval(eirene_stack(1:ntrii,0:nz-1,iewrk))
+      textewk(0:nz-1,iewrk)=texttmp(0:nz-1)
+      nedim(1,iewrk)=ntrii
+      nedim(2,iewrk)=nz
+c      write(*,*) src(1,0)*scale,eirene_stack(1,0,iewrk)
+      return
+      end subroutine eirene_copy
+#endif
+
       subroutine wall_copy(src,scale,nz,texttmp)
       use b2mod_types
       use b2mod_wall

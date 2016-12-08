@@ -20,6 +20,27 @@ c
       return
       end subroutine clvs
 c
+      subroutine eclvs(ncls,rstack,irstack)
+      use b2mod_types
+      implicit none
+#include "graphics_vars.h"
+      integer :: ncls, irstack, iclv
+      real (kind=R8) :: rstack(irstack)
+      nofecls=ncls
+      if(nofecls.eq.0) then
+        write (*,*) 'Using standard Eirene contour levels'
+        return
+      else
+        write (*,*) 'User specified',nofecls,'Eirene contour levels'
+        write (*,*) 'Using customised Eirene contour levels:'
+        do iclv=1,nofecls
+          eclval(iclv)=rstack(irstack-nofwcls+iclv)
+          write (*,*) 'Eirene contour level',iclv,'at',eclval(iclv)
+        enddo
+      endif
+      return
+      end subroutine eclvs 
+c
       subroutine wclvs(ncls,rstack,irstack)
       use b2mod_types
       implicit none

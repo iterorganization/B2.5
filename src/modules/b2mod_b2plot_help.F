@@ -3,21 +3,23 @@
       use b2mod_constants
 
       integer nlabels,nfns,nsparameters,nconstants
-      integer nwlabels,nwfns,ntrgfns
-      parameter(nlabels=339,nfns=197,nsparameters=29,
-     *     nconstants=10,nwfns=62,nwlabels=97,ntrgfns=90)
+      integer nwlabels,nelabels,nwfns,ntrgfns
+      parameter(nlabels=339,nfns=204,nsparameters=32,nelabels=17,
+     *     nconstants=10,nefns=46,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
-     * dimensions(nlabels), wdimensions(nwlabels) 
+     * dimensions(nlabels), wdimensions(nwlabels), edimensions(nelabels)
       real (kind=R8), save ::
      * constant_value(nconstants)
 
       character*8, save ::
      *  labels(nlabels), fns(nfns),
+     *  elabels(nelabels), efns(nefns),
      *  wlabels(nwlabels), wfns(nwfns), trgfns(ntrgfns),
      *  sparameters(nsparameters), constant_name(nconstants)
       character*64, save ::
-     *  descriptions(nlabels), wdescriptions(nwlabels)
+     *  descriptions(nlabels), wdescriptions(nwlabels),
+     *  edescriptions(nelabels)
 
       data labels(1:50) /
      1  'pit' , 'bx'  , 'by'  , 'bz'  , 'bb'  ,
@@ -575,17 +577,19 @@
      8 'sdrop','sdup','idrop', 'idup','rdrop',
      9 'rdup', 'logt', 'lint','movie', 'omp' ,
      * 'imp' , 'yref', 'mmid','target','trgoff'/
-      data fns(151:197) /
-     1 'mlt'  , 'mle' , 'meq' , 'mne' , 'mgt' ,
-     2 'mge'  , 'clvp', 'xpol', 'xpar', 'i+'  ,
-     3 'i-'   , 'i*'  , 'i/'  , 'i**' ,'rswap',
-     4 'rover','iswap','iover', 'zcol','sswap',
-     5 'sover', 'itor', 'itom', 'itow', 'itot',
-     6 'rtom' , 'rtow', 'rtot', 'itostr', 'rtostr',
-     7 'owid' , 'vwid', 'ewid', 'iprt', 'rprt',
-     8 'sprt' , 'list', 'acol', 'dcol', 'wcol',
-     9 'tcol' , 'lfsz', 'zwid', 'psxperp', 'expl',
-     * 'exps' , 'mdims'/ 
+      data fns(151:200) /
+     1 'mlt'  , 'mle'  , 'meq'  , 'mne'    , 'mgt'   ,
+     2 'mge'  , 'clvp' , 'xpol' , 'xpar'   , 'i+'    ,
+     3 'i-'   , 'i*'   , 'i/'   , 'i**'    , 'rswap' ,
+     4 'rover', 'iswap', 'iover', 'zcol'   , 'sswap' ,
+     5 'sover', 'itor' , 'itom' , 'itow'   , 'itot'  ,
+     6 'rtom' , 'rtow' , 'rtot' , 'itostr' , 'rtostr',
+     7 'owid' , 'vwid' , 'ewid' , 'iprt'   , 'rprt'  ,
+     8 'sprt' , 'list' , 'acol' , 'dcol'   , 'wcol'  ,
+     9 'tcol' , 'lfsz' , 'zwid' , 'psxperp', 'expl'  ,
+     * 'exps' , 'mdims', 'itoe' , 'rtoe'   , 'stoe'  /
+      data fns(201:204) /
+     1 'trigmesh', 'earox', 'earoy', 'earow'/ 
       data wlabels /
      1 'wallarea', 'ei'      , 'wallflux', 'wallhflx', 'r1'      ,
      2 'r2'      , 'z1'      , 'z2'      , 'walltemp', 'plathick',
@@ -734,18 +738,31 @@
      5 'Coating Kappa_perp A5 polynomial factor (W/m/K^{5})',
      6 'iwne',
      7 'iswne'/
+      data efns /
+     1 'edims', 'sumt' , 'esurf', 'eabs' , 'esumz',
+     2 'em+'  , 'em-'  , 'em*'  , 'em/'  , 'rem+' ,
+     3 'rem-' , 'rem*' , 'rem/' , 'rem**', 'edrop',
+     4 'edup' , 'eswap', 'eover', 'elist', 'esel' ,
+     5 'ezsel', 'emmin', 'emmax', 'remmi', 'remma',
+     6 'emlt' , 'emle' , 'emeq' , 'emne' , 'emgt' ,
+     7 'emge' , 'elog' , 'eln'  , 'esqrt', 'eexp' ,
+     8 'ezrng', 'echs' , 'etos' , 'epos' ,
+     * 'echor', 'echbx', 'echvl', 'echmp', 'ecam' ,
+     * 'eoutp', 'eprt' /
       data wfns /
-     1 'wall' , 'wall_ank', 'logw', 'linw', 'logxw', 'linxw', 'plwl', 
-     2 'sumw' , 'intw','intw*', 'pswa','wclvs','wclvd','wclvn', 'wclvp',
-     3 'wwid' , 'wabs', 'ddw' ,'wsumz', 'pwne', 'wm+' , 'wm-' , 'wm*',
-     4 'wm/'  , 'rwm+', 'rwm-', 'rwm*', 'rwm/',
-     5 'rwm**','wdrop','wdup','wswap','wover',
-     6 'wsel' ,'wzsel','wmmin','wmmax','rwmmi',
-     7 'rwmma','wmlt', 'wmle', 'wmeq', 'wmne',
-     8 'wmgt' , 'wmge', 'wlog', 'wln' ,'wsqrt', 
-     9 'wexp' ,'wzrng', 'wchs', 'wtos', 'wtot', 'wpos', 
-     * 'wsaw' ,'wallf','outpw', 'wprt', 'wtab', 'wlld', 
-     1 'woff' ,'wlist'/
+     1 'wall' , 'wall_ank', 'logw' , 'linw' , 'logxw',
+     2 'linxw', 'plwl'    , 'sumw' , 'intw' , 'intw*',
+     3 'pswa' , 'wclvs'   , 'wclvd', 'wclvn', 'wclvp',
+     4 'wwid' , 'wabs'    , 'ddw'  , 'wsumz', 'pwne' ,
+     5 'wm+'  , 'wm-'     , 'wm*'  , 'wm/'  , 'rwm+' ,
+     6 'rwm-' , 'rwm*'    , 'rwm/' , 'rwm**', 'wdrop',
+     7 'wdup' , 'wswap'   , 'wover', 'wsel' , 'wzsel',
+     8 'wmmin', 'wmmax'   , 'rwmmi', 'rwmma', 'wmlt' ,
+     9 'wmle' , 'wmeq'    , 'wmne' , 'wmgt' , 'wmge' ,
+     * 'wlog' , 'wln'     , 'wsqrt', 'wexp' , 'wzrng',
+     1 'wchs' , 'wtos'    , 'wtot' , 'wpos' , 'wsaw' ,
+     2 'wallf', 'outpw'   , 'wprt' , 'wtab' , 'wlld' , 
+     3 'woff' , 'wlist'/
       data trgfns /
      1 'logtrg'  , 'lintrg'  , 'tclvs'   , 'tclvd'   , 'tclvn'   ,
      2 'trg.w'   , 'trg.z'   , 'sumtrgw' , 'sumtrgz' , 'inttrgw' , 
@@ -765,13 +782,42 @@
      6 'ztrggt'  , 'trgabs'  , 'trgiz'   , 'logxtrg' , 'linxtrg' ,
      7 'trglist' , 'rho'     , 'trgtab'  , 'trgibnd' , 'itrgle'  ,
      8 'itrgge'  , 'ztrgle'  , 'ztrgge'  , 'itrgne'  , 'ztrgne'  /
+      data elabels /
+     1 'pdena'   , 'pdenm'   , 'pdeni'   , 'edena'   , 'edenm'   ,
+     2 'edeni'   , 'vxdena'  , 'vxdenm'  , 'vxdeni'  , 'vydena'  ,
+     3 'vydenm'  , 'vydeni'  , 'vzdena'  , 'vzdenm'  , 'vzdeni'  ,
+     4 'triarea' , 'triavol' /
+      data edimensions /
+     1     2, 2, 2, 2, 2,
+     2     2, 2, 2, 2, 2,
+     3     2, 2, 2, 2, 2,
+     4     1, 1/                 
+      data edescriptions /
+     1 'Atoms particle density (m^{-3})',
+     2 'Molecules particle density (m^{-3})',
+     3 'Test ions particle density (m^{-3})',
+     4 'Atoms energy density (eV.m^{-3})',
+     5 'Molecules energy density (eV.m^{-3})',
+     6 'Test ions energy density (eV.m^{-3})',
+     7 'Atoms X-directed velocity (m.s^{-1})',
+     8 'Molecules X-directed velocity (m.s^{-1})',
+     9 'Test ions X-directed velocity (m.s^{-1})',
+     * 'Atoms Y-directed velocity (m.s^{-1})',
+     1 'Molecules Y-directed velocity (m.s^{-1})',
+     2 'Test ions Y-directed velocity (m.s^{-1})',
+     3 'Atoms Z-directed velocity (m.s^{-1})',
+     4 'Molecules Z-directed velocity (m.s^{-1})',
+     5 'Test ions Z-directed velocity (m.s^{-1})',
+     6 'Triangle area (m^{2})',
+     7 'Triangle volume (m^{3})'/
       data sparameters /
-     1 'extl', 'cltb', 'chor', 'chpl', 'cmd' ,
-     2 'cmdcdf','chbx','chvl', 'flux', 'chmp',
-     3 'cam' , 'movi', 'sonn', 'saw' , 'oson', 'uedgegrd',
-     4 'expf', 'outp', 'pdev', 'mprt', 'mtab', 'amju', 'adas',
-     5 'wallblbl', 'trgblbl', 'glbl' , 'wlbl', 'tlbl',
-     6 'tranprof'/
+     1 'extl'    , 'cltb' , 'chor', 'chpl'    , 'cmd' ,
+     2 'cmdcdf'  , 'chbx' , 'chvl', 'flux'    , 'chmp',
+     3 'cam'     , 'movi' , 'sonn', 'saw'     , 'oson',
+     4 'uedgegrd', 'expf' , 'outp', 'pdev'    , 'mprt',
+     5 'mtab'    , 'amju' , 'adas', 'wallblbl', 'trgblbl',
+     6 'glbl'    , 'wlbl' , 'tlbl', 'wslbl'   , 'tranprof',
+     7 'elbl'    , 'eslbl'/
       data constant_name /
      1 'me'    ,'mp' , 'ev'  , 'qe'   , 'mu0',
      2 'eps0'  ,'pi' , 'c'   , 'avogr', 'kbolt'/

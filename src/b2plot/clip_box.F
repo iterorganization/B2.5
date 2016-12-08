@@ -8,12 +8,12 @@
       integer i,j
 
       j=0
-      do i=1,4
+      do i=1,n
         j=j+1
         xtmp(j)=xbox(i)
         ytmp(j)=ybox(i)
-        xtmp(j+1)=xbox(mod(i,4)+1)
-        ytmp(j+1)=ybox(mod(i,4)+1)
+        xtmp(j+1)=xbox(mod(i,n)+1)
+        ytmp(j+1)=ybox(mod(i,n)+1)
         if(xtmp(j).lt.xlo.and.xtmp(j+1).lt.xlo) then
           xtmp(j)=xlo
           xtmp(j+1)=xlo

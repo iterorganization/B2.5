@@ -19,7 +19,7 @@ c typeofplot=1 physical domain only, =2 computational domain only, =3 both
 
       real (kind=R8) ::
      *   values(nparameters),constant_value(nconstants),
-     *   arrowl,arroww,sepwidth,lwidth,wwidth,owidth,
+     *   arrowl,earrowl,arroww,sepwidth,lwidth,wwidth,owidth,
      *   ewidth,vwidth,zwidth
       integer dimensions(nlabels),nidim,linlog,wlinlog
       integer ndim(3,wklng),typeofplot,iwrk,movie_skip,average
@@ -46,7 +46,7 @@ cank
 
       save
      r values,constant_value,
-     r arroww,arrowl,sepwidth,lwidth,wwidth,owidth,
+     r arroww,arrowl,earrowl,sepwidth,lwidth,wwidth,owidth,
      r ewidth,vwidth,zwidth,
      r dimensions,ndim,typeofplot,nidim,linlog,wlinlog,iwrk,
      i nlimi,nstsi,natmi,nmoli,nioni,movie_skip,average,

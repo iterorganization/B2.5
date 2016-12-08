@@ -48,8 +48,10 @@ c 2002-09-11: logic revised
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_clogau
+      use eirmod_ctrig
       use eirmod_extrab25
       use eirmod_braeir
+      use eirmod_cestim
       use eirmod_eirbra
      & , smo_eir => smo
 #endif
@@ -65,6 +67,8 @@ c
       logical ratio
       common /t_ratio/ ratio
 
+      integer ::
+     *   nntria(0:nx-1,0:ny-1)
       real (kind=R8) ::
      *   pr(-1:nxd,-1:nyd),
      3   energy_balance(-1:nxd,-1:nyd),energy_balance2(-1:nxd,-1:nyd),
@@ -158,7 +162,7 @@ c
       character*256 sstack(1000), spop, stmp, filename, varname
       character*256 stmp1, stmp2
       integer lu, save_lu(10), ipos, save_ipos(10), lu_pos
-      integer is, iss, isp, iseg, is2                            !cjk
+      integer is, iss, isp, iseg, is2, it
       character*512 textline, save_textline(10)
       character*8 cval
       character*1 cc
@@ -189,7 +193,7 @@ c
       real (kind=R8) ::
      *   t1,t2
       integer it1,it2
-      integer stack_req(6)
+      integer stack_req(7)
       character*256 arg
 #ifdef B25_EIRENE
       integer iflag
@@ -960,6 +964,19 @@ c
 #else
       ex = .false.
 #endif
+#ifdef B25_EIRENE
+#ifndef HPUX
+      inquire(file='fort.46',exist=ex)
+#else
+      inquire(file='ftn46',exist=ex)
+#endif
+      if(ex) then
+        call ntread
+        call alloc_b2mod_b2plot_eirene(natmi,nmoli,nioni,ntrii,wklng)
+      end if
+#else
+      ex = .false.
+#endif
       if (.not.ex) then
         natmi=1
         textan(0)=' ZERO'
@@ -1086,6 +1103,8 @@ c
       values(35)=init_value                              !omax target
       values(36)=init_value                              !smin wall
       values(37)=init_value                              !smax wall
+      values(38)=init_value                              !Eirene min
+      values(39)=init_value                              !Eirene max
       expfile=' '
       wallfile=' '
 c
@@ -1097,6 +1116,7 @@ c
       call clvl(.true.)            ! contour level lines plotted
       call labelon(.true.)         ! contour labels drawn
       call gridon(.false.)         ! overlayed mesh off by default
+      call trigon(.false.)         ! overlayed triangular grid off by default
       call vesselon(.false.)       ! same for vessel
       call separatrixon(.false.)   ! same for separatrix
       call set_midplane_mapping(.false.) ! do not map to midplane by default
@@ -1232,13 +1252,14 @@ c
       iistack=0
       isstack=0
       iwrk=0
+      iewrk=0
       iwwrk=0
       itwrk=1
 
    10 continue
       if(b2plot_debug.ge.5)
-     1 write(*,'(a,6i4)') 'STACK i,r,s,m,w,t = ',
-     . iistack,irstack,isstack,iwrk,iwwrk,itwrk
+     1 write(*,'(a,6i4)') 'STACK i,r,s,m,e,w,t = ',
+     . iistack,irstack,isstack,iwrk,iewrk,iwwrk,itwrk
       if(b2plot_debug.ge.12)
      1 write(*,*) 'ISTACK: ',iistack,(istack(i),i=1,iistack)
       if(b2plot_debug.ge.12)
@@ -1268,6 +1289,8 @@ c
       if (.not.cflag) call select_stack_manipulation
       if (.not.cflag) call select_parameters
       if (.not.cflag) call select_command
+      if (.not.cflag) call select_eirene_stack
+      if (.not.cflag) call select_eirene_command
       if (.not.cflag) call select_wall_stack
       if (.not.cflag) call select_wall_command
       if (.not.cflag) call select_target_stack
@@ -1298,6 +1321,7 @@ c
             call dealloc_b2mod_neoclassical
             call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
+            call dealloc_b2mod_b2plot_eirene
             CALL EIRENE_DEALLOC_BRAEIR
             CALL EIRENE_DEALLOC_EIRBRA
             CALL EIRENE_EXTRAB25_CLEANUP
@@ -1362,6 +1386,7 @@ c
           call dealloc_b2mod_neoclassical
           call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
+          call dealloc_b2mod_b2plot_eirene
           CALL EIRENE_DEALLOC_BRAEIR
           CALL EIRENE_DEALLOC_EIRBRA
           CALL EIRENE_EXTRAB25_CLEANUP
@@ -2396,7 +2421,7 @@ c
         case ('nreg')
           description='Region'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2422,7 +2447,7 @@ c
         case ('xreg')
           description='X-directed flux region'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2449,7 +2474,7 @@ c
         case ('yreg')
           description='Y-directed flux region'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2476,7 +2501,7 @@ c
         case ('sna')
           description='Particle source (#.s^{-1})'
           nz=ns
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           isel=ipop(istack,iistack)
           if(isel.lt.0.or.isel.gt.1) then
@@ -2492,7 +2517,7 @@ c
         case ('sne')
           description='Electron particle source (e.s^{-1})'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           isel=ipop(istack,iistack)
           if(isel.lt.0.or.isel.gt.1) then
@@ -2505,7 +2530,7 @@ c
         case ('smo')
           description='Parallel momentum source (N)'
           nz=ns
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           isel=ipop(istack,iistack)
           if(isel.lt.0.or.isel.gt.3) then
@@ -2521,7 +2546,7 @@ c
         case ('smq')
           description='smq (momentum sources from atomic physics) (N)'
           nz=ns
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           isel=ipop(istack,iistack)
           if(isel.lt.0.or.isel.gt.3) then
@@ -2537,7 +2562,7 @@ c
         case ('she')
           description='Electron heat source (W)'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           isel=ipop(istack,iistack)
           if(isel.lt.0.or.isel.gt.3) then
@@ -2550,7 +2575,7 @@ c
         case ('shi')
           description='Ion heat source (W)'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           isel=ipop(istack,iistack)
           if(isel.lt.0.or.isel.gt.3) then
@@ -2563,7 +2588,7 @@ c
         case ('sch')
           description='Charge source (A)'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           isel=ipop(istack,iistack)
           if(isel.lt.0.or.isel.gt.3) then
@@ -2576,7 +2601,7 @@ c
         case ('smaf')
           description='smaf (extended friction term) (N)'
           nz=ns
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           isel=ipop(istack,iistack)
           if(isel.lt.0.or.isel.gt.3) then
@@ -2593,7 +2618,7 @@ c
         case ('smag')
           description='smag (pressure gradient term) (N)'
           nz=ns
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           isel=ipop(istack,iistack)
           if(isel.lt.0.or.isel.gt.3) then
@@ -2610,7 +2635,7 @@ c
         case ('smav')
           description='smav (additional viscosity term) (N)'
           nz=ns
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           isel=ipop(istack,iistack)
           if(isel.lt.0.or.isel.gt.3) then
@@ -2675,7 +2700,7 @@ c
         case ('ixlt')
           description='ixlt'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2691,7 +2716,7 @@ c
         case ('ixle')
           description='ixle'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2707,7 +2732,7 @@ c
         case ('ixeq')
           description='ixeq'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2723,7 +2748,7 @@ c
         case ('ixne')
           description='ixne'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2739,7 +2764,7 @@ c
         case ('ixge')
           description='ixge'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2755,7 +2780,7 @@ c
         case ('ixgt')
           description='ixgt'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2771,7 +2796,7 @@ c
         case ('iylt')
           description='iylt'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2787,7 +2812,7 @@ c
         case ('iyle')
           description='iyle'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2803,7 +2828,7 @@ c
         case ('iyeq')
           description='iyeq'
           nz=1 
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2819,7 +2844,7 @@ c
         case ('iyne')
           description='iyne'
           nz=1 
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2835,7 +2860,7 @@ c
         case ('iyge')
           description='iyge'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2851,7 +2876,7 @@ c
         case ('iygt')
           description='iygt'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ny
             do ix=-1,nx
@@ -2867,7 +2892,7 @@ c
         case ('islt')
           description='islt'
           nz=ns
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ns-1
             do iy=-1,ny
@@ -2885,7 +2910,7 @@ c
         case ('isle')
           description='isle'
           nz=ns
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ns-1
             do iy=-1,ny
@@ -2903,7 +2928,7 @@ c
         case ('iseq')
           description='iseq'
           nz=ns
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ns-1
             do iy=-1,ny
@@ -2921,7 +2946,7 @@ c
         case ('isne')
           description='isne'
           nz=ns
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ns-1
             do iy=-1,ny
@@ -2939,7 +2964,7 @@ c
         case ('isge')
           description='isge'
           nz=ns
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ns-1
             do iy=-1,ny
@@ -2957,7 +2982,7 @@ c
         case ('isgt')
           description='isgt'
           nz=ns
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ns-1
             do iy=-1,ny
@@ -3910,7 +3935,7 @@ c     assumes that bb is OK for 1d cases
         case ('crx')
           description='Corner radial coordinate (m)'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(istack(iistack).ge.0.and.istack(iistack).le.3) then
             call copy(crx(:,:,istack(iistack)),1.0_R8,nz,
@@ -3922,7 +3947,7 @@ c     assumes that bb is OK for 1d cases
         case ('cry')
           description='Corner vertical coordinate (m)'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(istack(iistack).ge.0.and.istack(iistack).le.3) then
             call copy(cry(:,:,istack(iistack)),1.0_R8,nz,
@@ -4013,19 +4038,19 @@ c     assumes that bb is OK for 1d cases
 	    write(*,'(4i5,1x,a)') is,ndim(1:3,is),trim(graphlabel(is))
 	  enddo
         case('sumx')     ! sum over x
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call sumx()
           graphlabel(iwrk)=graphlabel(iwrk)
      1                 (1:lnblnk(graphlabel(iwrk)))//' SUMX '
         case('sumy')     ! sum over y
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call sumy()
           graphlabel(iwrk)=graphlabel(iwrk)
      1                 (1:lnblnk(graphlabel(iwrk)))//' SUMY '
         case('f.x')      ! line plot versus x
-          stack_req=(/1,0,0,1,0,0/)
+          stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           if(-1.le.istack(iistack).and.istack(iistack).le.ny) then
             call fx(istack(iistack))
@@ -4034,7 +4059,7 @@ c     assumes that bb is OK for 1d cases
           endif
           call pop_stack(stack_req)
         case('f.y')      ! line plot versus y
-          stack_req=(/1,0,0,1,0,0/)
+          stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           if(-1.le.istack(iistack).and.istack(iistack).le.nx) then
             call fy(istack(iistack))
@@ -4043,15 +4068,15 @@ c     assumes that bb is OK for 1d cases
           endif
           call pop_stack(stack_req)
         case('intx')     ! integrate over x
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call intx()
         case('inty')     ! integrate over y
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call inty()
         case('f.lx')     ! line plot versus log x
-          stack_req=(/1,0,0,1,0,0/)
+          stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           if(-1.le.istack(iistack).and.istack(iistack).le.ny) then
             call flx(istack(iistack))
@@ -4060,7 +4085,7 @@ c     assumes that bb is OK for 1d cases
           endif
           call pop_stack(stack_req)
         case('f.ly')     ! line plot versus log y
-          stack_req=(/1,0,0,1,0,0/)
+          stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           if(-1.le.istack(iistack).and.istack(iistack).le.nx) then
             call fly(istack(iistack))
@@ -4069,32 +4094,32 @@ c     assumes that bb is OK for 1d cases
           endif
           call pop_stack(stack_req)
         case('cont')     ! plot contours
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call cont
         case('surf')     ! plot patch plot
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call surf(1)
         case('line')     ! 
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call line(istack(iistack))
           call pop_stack(stack_req)
         case('psx')      ! per sx
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call psx
         case('psxperp')  ! per sxperp
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call psxperp
         case('psy')      ! per sy
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call psy
         case('abs')      ! abs()
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4107,7 +4132,7 @@ c     assumes that bb is OK for 1d cases
           graphlabel(iwrk)=
      .      graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//' (ABS)'
         case('ddx')      ! d/dx
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4135,7 +4160,7 @@ c     assumes that bb is OK for 1d cases
           graphlabel(iwrk)=
      .      graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m) (d/dx)'
         case('ddy')      ! d/dy
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4163,7 +4188,7 @@ c     assumes that bb is OK for 1d cases
           graphlabel(iwrk)=
      .      graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))//'/(m) (d/dy)'
         case('sumz')     ! sum over ns
-          stack_req=(/2,0,0,1,0,0/)
+          stack_req=(/2,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           izstrt=istack(iistack-1)
           izend=istack(iistack)
@@ -4210,15 +4235,15 @@ c     assumes that bb is OK for 1d cases
           textwk(0,iwrk)=textbl(0)
           call pop_stack(stack_req)
         case('pvol')     ! per vol
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call pvol
         case('pne')      ! per ne
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           call pne
         case('m+')       ! matrix addition
-          stack_req=(/0,0,0,2,0,0/)
+          stack_req=(/0,0,0,2,0,0,0/)
           if(bad_args(stack_req)) return   ! 2900
           if(ndim(3,iwrk-1) .ne. ndim(3,iwrk) .and.
      1       ndim(3,iwrk-1) .ne. 1 .and. ndim(3,iwrk) .ne. 1) then
@@ -4251,7 +4276,7 @@ c     assumes that bb is OK for 1d cases
           ndim(3,iwrk-1)=max(ndim(3,iwrk-1),ndim(3,iwrk))
           iwrk=iwrk-1
         case('m-')       ! matrix subtraction
-          stack_req=(/0,0,0,2,0,0/)
+          stack_req=(/0,0,0,2,0,0,0/)
           if(bad_args(stack_req)) return   ! 2900
           if(ndim(3,iwrk-1) .ne. ndim(3,iwrk) .and.
      1       ndim(3,iwrk-1) .ne. 1 .and. ndim(3,iwrk) .ne. 1) then
@@ -4284,7 +4309,7 @@ c     assumes that bb is OK for 1d cases
           ndim(3,iwrk-1)=max(ndim(3,iwrk-1),ndim(3,iwrk))
           iwrk=iwrk-1
         case('m*')       ! matrix multiplication
-          stack_req=(/0,0,0,2,0,0/)
+          stack_req=(/0,0,0,2,0,0,0/)
           if(bad_args(stack_req)) return   ! 2900
           if(ndim(3,iwrk-1) .ne. ndim(3,iwrk) .and.
      1       ndim(3,iwrk-1) .ne. 1 .and. ndim(3,iwrk) .ne. 1) then
@@ -4317,7 +4342,7 @@ c     assumes that bb is OK for 1d cases
           ndim(3,iwrk-1)=max(ndim(3,iwrk-1),ndim(3,iwrk))
           iwrk=iwrk-1
         case('m/')       ! matrix division
-          stack_req=(/0,0,0,2,0,0/)
+          stack_req=(/0,0,0,2,0,0,0/)
           if(bad_args(stack_req)) return   ! 2900
           if(ndim(3,iwrk-1) .ne. ndim(3,iwrk) .and.
      1       ndim(3,iwrk-1) .ne. 1 .and. ndim(3,iwrk) .ne. 1) then
@@ -4355,7 +4380,7 @@ c     assumes that bb is OK for 1d cases
           ndim(3,iwrk-1)=max(ndim(3,iwrk-1),ndim(3,iwrk))
           iwrk=iwrk-1
         case('rm+')      ! matrix + real
-          stack_req=(/0,1,0,1,0,0/)
+          stack_req=(/0,1,0,1,0,0,0/)
           if(bad_args(stack_req)) return   ! 2900
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4368,7 +4393,7 @@ c     assumes that bb is OK for 1d cases
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
         case('rm-')      ! matrix - real
-          stack_req=(/0,1,0,1,0,0/)
+          stack_req=(/0,1,0,1,0,0,0/)
           if(bad_args(stack_req)) return   ! 2900
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4381,7 +4406,7 @@ c     assumes that bb is OK for 1d cases
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
         case('rm*')      ! matrix * real
-          stack_req=(/0,1,0,1,0,0/)
+          stack_req=(/0,1,0,1,0,0,0/)
           if(bad_args(stack_req)) return   ! 2900
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4394,7 +4419,7 @@ c     assumes that bb is OK for 1d cases
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
         case('rm/')      ! matrix / real
-          stack_req=(/0,1,0,1,0,0/)
+          stack_req=(/0,1,0,1,0,0,0/)
           if(bad_args(stack_req)) return   ! 2900
           if(rstack(irstack).eq.0.0) then
             write (*,*) 'Divide by zero, You lose'
@@ -4411,7 +4436,7 @@ c     assumes that bb is OK for 1d cases
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
         case('rm**')     ! matrix ** real
-          stack_req=(/0,1,0,1,0,0/)
+          stack_req=(/0,1,0,1,0,0,0/)
           if(bad_args(stack_req)) return   ! 2900
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4428,11 +4453,11 @@ c     assumes that bb is OK for 1d cases
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
         case('drop')     ! drop top of matrix stack
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return   ! 2900
           iwrk=iwrk-1
         case('dup')      ! duplicate top of matrix stack
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return   ! 2900
           if(iwrk .ge. wklng) call dropstackbottom()
           iwrk=iwrk+1
@@ -4450,7 +4475,7 @@ c     assumes that bb is OK for 1d cases
           end do
           graphlabel(iwrk)=graphlabel(iwrk-1)
         case('swap')     ! swap top two elements of matrix stack
-          stack_req=(/0,0,0,2,0,0/)
+          stack_req=(/0,0,0,2,0,0,0/)
           if(bad_args(stack_req)) return   ! 2900
           call iswap(ndim(1,iwrk),ndim(1,iwrk-1))
           call iswap(ndim(2,iwrk),ndim(2,iwrk-1))
@@ -4466,7 +4491,7 @@ c     assumes that bb is OK for 1d cases
           end do
           call strswap(graphlabel(iwrk),graphlabel(iwrk-1))
         case('over')     ! m2 m1 --> m2 m1 m2
-          stack_req=(/0,0,0,2,0,0/)
+          stack_req=(/0,0,0,2,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           if(iwrk .ge. wklng) call dropstackbottom()
           iwrk=iwrk+1
@@ -4484,14 +4509,14 @@ c     assumes that bb is OK for 1d cases
           end do
           graphlabel(iwrk)=graphlabel(iwrk-2)
         case('list')     ! list contents of matrix stack
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           do i = iwrk, 1, -1
             write(*,*) trim(graphlabel(i)), 
      .       (trim(textwk(is,i)),is=0,ndim(3,i)-1)
           end do
         case('xsel')     ! select column
-          stack_req=(/1,0,0,1,0,0/)
+          stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           ix1=istack(iistack)
           if(-1.gt.ix1.or.ix1.gt.ndim(1,iwrk)) then
@@ -4508,7 +4533,7 @@ c     assumes that bb is OK for 1d cases
           end do
           call pop_stack(stack_req)
         case('ysel')     ! select row
-          stack_req=(/1,0,0,1,0,0/)
+          stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           iy1=istack(iistack)
           if(-1.gt.iy1.or.iy1.gt.ndim(2,iwrk)) then
@@ -4525,7 +4550,7 @@ c     assumes that bb is OK for 1d cases
           end do
           call pop_stack(stack_req)
         case('zsel')     ! select species
-          stack_req=(/1,0,0,1,0,0/)
+          stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           is1=istack(iistack)
           if(0.gt.is1.or.is1.ge.ndim(3,iwrk)) then
@@ -4548,7 +4573,7 @@ c     assumes that bb is OK for 1d cases
           ndim(3,iwrk)=1
           call pop_stack(stack_req)
         case('mmin')     ! min(m1,m2)
-          stack_req=(/0,0,0,2,0,0/) 
+          stack_req=(/0,0,0,2,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           if(ndim(3,iwrk-1) .ne. ndim(3,iwrk) .and.
      1       ndim(3,iwrk-1) .ne. 1 .and. ndim(3,iwrk) .ne. 1) then
@@ -4581,7 +4606,7 @@ c     assumes that bb is OK for 1d cases
           ndim(3,iwrk-1)=max(ndim(3,iwrk-1),ndim(3,iwrk))
           iwrk=iwrk-1
         case('mmax')     ! max(m1,m2)
-          stack_req=(/0,0,0,2,0,0/)
+          stack_req=(/0,0,0,2,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           if(ndim(3,iwrk-1) .ne. ndim(3,iwrk) .and.
      1       ndim(3,iwrk-1) .ne. 1 .and. ndim(3,iwrk) .ne. 1) then
@@ -4614,7 +4639,7 @@ c     assumes that bb is OK for 1d cases
           ndim(3,iwrk-1)=max(ndim(3,iwrk-1),ndim(3,iwrk))
           iwrk=iwrk-1
         case('mlt')      ! m<r
-          stack_req=(/0,1,0,1,0,0/)
+          stack_req=(/0,1,0,1,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4631,7 +4656,7 @@ c     assumes that bb is OK for 1d cases
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
         case('mle')      ! m<=r
-          stack_req=(/0,1,0,1,0,0/)
+          stack_req=(/0,1,0,1,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4648,7 +4673,7 @@ c     assumes that bb is OK for 1d cases
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
         case('meq')      ! m=r
-          stack_req=(/0,1,0,1,0,0/)
+          stack_req=(/0,1,0,1,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4665,7 +4690,7 @@ c     assumes that bb is OK for 1d cases
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
         case('mne')      ! m!=r
-          stack_req=(/0,1,0,1,0,0/)
+          stack_req=(/0,1,0,1,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4682,7 +4707,7 @@ c     assumes that bb is OK for 1d cases
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
         case('mgt')      ! m>r
-          stack_req=(/0,1,0,1,0,0/)
+          stack_req=(/0,1,0,1,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4699,7 +4724,7 @@ c     assumes that bb is OK for 1d cases
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
         case('mge')      ! m>=r
-          stack_req=(/0,1,0,1,0,0/)
+          stack_req=(/0,1,0,1,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4716,7 +4741,7 @@ c     assumes that bb is OK for 1d cases
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
         case('rmmi','rmmin')    ! min(r1,m1)
-          stack_req=(/0,1,0,1,0,0/)
+          stack_req=(/0,1,0,1,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4729,7 +4754,7 @@ c     assumes that bb is OK for 1d cases
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
         case('rmma','rmmax')    ! max(r1,m1)
-          stack_req=(/0,1,0,1,0,0/)
+          stack_req=(/0,1,0,1,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4742,7 +4767,7 @@ c     assumes that bb is OK for 1d cases
           dummy=rpop(rstack,irstack)
           graphlabel(iwrk)='Special'
         case('rtom')     ! real --> matrix stack
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(iwrk .eq. wklng) call dropstackbottom()
           iwrk=iwrk+1
@@ -4754,8 +4779,25 @@ c     assumes that bb is OK for 1d cases
           values(10)=rstack(irstack)
           textwk(0,iwrk)=textbl(0)
           write(graphlabel(iwrk),'(1pe15.8)') rpop(rstack,irstack)
+        case('rtoe')     ! real --> Eirene stack
+          stack_req=(/0,1,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+#ifdef B25_EIRENE
+          if(iewrk .eq. wklng) call dropeirenestackbottom()
+          iewrk=iewrk+1
+          nedim(1,iewrk)=ntrii
+          nedim(2,iewrk)=1
+          eirene_stack(1:ntrii,0,iewrk)=rstack(irstack)
+          values(38)=rstack(irstack)
+          values(39)=rstack(irstack)
+          textewk(0,iewrk)=textbl(0)
+          write(eirene_label(iewrk),'(1pe15.8)') rpop(rstack,irstack)
+#else
+          write(*,*) 'Must compile b2plot with Eirene for rtoe function'
+          dummy=rpop(rstack,irstack)
+#endif
         case('log')      ! log10()
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4772,7 +4814,7 @@ c     assumes that bb is OK for 1d cases
           end do
           graphlabel(iwrk)='Special'
         case('ln')       ! ln()
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4789,7 +4831,7 @@ c     assumes that bb is OK for 1d cases
           end do
           graphlabel(iwrk)='Special'
         case('sqrt')     ! sqrt()
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4807,7 +4849,7 @@ c     assumes that bb is OK for 1d cases
           call pop_stack(stack_req)
           graphlabel(iwrk)='Special'
         case('exp')      ! exp()
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4819,8 +4861,13 @@ c     assumes that bb is OK for 1d cases
           end do
           graphlabel(iwrk)='Special'
         case('zrng')     ! select species range
-          stack_req=(/2,0,0,1,0,0/)
+          stack_req=(/2,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
+          if(istack(iistack-1).gt.istack(iistack)) then
+            write(*,*) 'Parameters for zrng must be given in ',
+     &       'ascending order!'
+            return
+          end if
           if(0.gt.istack(iistack-1).or.
      &       istack(iistack-1).gt.ndim(3,iwrk)-1) then
             write(*,*) 'Faulty first parameter is = ',istack(iistack-1),
@@ -4849,7 +4896,7 @@ c     assumes that bb is OK for 1d cases
           ndim(3,iwrk)=istack(iistack)-istack(iistack-1)+1
           call pop_stack(stack_req)
         case('chs')      ! change sign
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -4869,7 +4916,7 @@ c     assumes that bb is OK for 1d cases
      2      graphlabel(iwrk)(i+6:lnblnk(graphlabel(iwrk)))
           endif
         case('bala')     ! balance ???
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           if(.not.(ndim(3,iwrk) .eq. 1 .or. ndim(3,iwrk) .eq. ns)) then
             write(*,*) 'Balancing only works for dimensions 1 or ns'
@@ -4909,19 +4956,46 @@ c     assumes that bb is OK for 1d cases
             enddo
           enddo
         case('traj')     ! trajectories
-          stack_req=(/5,0,0,0,0,0/)
+          stack_req=(/5,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(istack(5).gt.0) then
-            stack_req=(/7+istack(iistack),0,0,0,0,0/)
+            stack_req=(/7+istack(iistack),0,0,0,0,0,0/)
           else
-            stack_req=(/7+istack(iistack),0,0,1,0,0/)
+            stack_req=(/7+istack(iistack),0,0,1,0,0,0/)
           endif
           if(bad_args(stack_req)) return
           call caltraj(istack(iistack-6-istack(iistack)),
      +     7+istack(iistack))
           call pop_stack(stack_req)
+        case('stoe')     ! matrix --> Eirene array
+          stack_req=(/0,0,0,1,0,0,0/)
+          if(bad_args(stack_req)) return
+#ifdef B25_EIRENE
+          if(iewrk .eq. wklng) call dropeirenestackbottom()
+          iewrk=iewrk+1
+          nedim(1,iewrk)=ntrii
+          nedim(2,iewrk)=ndim(3,iwrk)
+          do i = 1, ntrii
+            if (ixtri(i).ne.-1 .and. iytri(i).ne.-1) then
+              eirene_stack(i,0:ndim(3,iwrk)-1,iewrk)=
+     .         work(ixtri(i),iytri(i),0:ndim(3,iwrk)-1,iwrk)
+            else
+              eirene_stack(i,0:ndim(3,iwrk)-1,iewrk)=0.0_R8
+            end if
+          enddo
+          values(38)=
+     .     minval(eirene_stack(1:ntrii,0:nedim(2,iewrk)-1,iewrk))
+          values(39)=
+     .     maxval(eirene_stack(1:ntrii,0:nedim(2,iewrk)-1,iewrk))
+          eirene_label(iewrk)=
+     .     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
+          textewk(0:nedim(2,iewrk),iewrk)=textwk(0:ndim(3,iwrk),iwrk)
+#else
+          write(*,*) 'Must compile with Eirene for stoe function'
+#endif
+          goto 2059
         case('stow')     ! matrix --> wall array
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           if(iwwrk .eq. wklng) call dropwallstackbottom()
           iwwrk=iwwrk+1
@@ -4937,7 +5011,7 @@ c     assumes that bb is OK for 1d cases
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(3,iwrk),iwrk)
           goto 2059
         case('xtow')     ! x dimension of matrix --> wall array
-          stack_req=(/1,0,0,1,0,0/)
+          stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           iy = ipop(istack,iistack)
           if(iwwrk .eq. wklng) call dropwallstackbottom()
@@ -4956,7 +5030,7 @@ c     assumes that bb is OK for 1d cases
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(3,iwrk),iwrk)
           goto 2059
         case('ytow')     ! y dimension of matrix --> wall array
-          stack_req=(/1,0,0,1,0,0/)
+          stack_req=(/1,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           if(iwwrk .eq. wklng) call dropwallstackbottom()
           ix = ipop(istack,iistack)
@@ -4975,7 +5049,7 @@ c     assumes that bb is OK for 1d cases
           textwwk(0:nwdim(2,iwwrk),iwwrk)=textwk(0:ndim(3,iwrk),iwrk)
           goto 2059
         case('rtow')     ! real --> wall stack
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(iwwrk .eq. wklng) call dropwallstackbottom()
           iwwrk=iwwrk+1
@@ -4988,7 +5062,7 @@ c     assumes that bb is OK for 1d cases
           write(wall_label(iwwrk),'(1pe15.8)') rpop(rstack,irstack)
           call set_wallbarlabel(wall_label(iwwrk))
         case('rtot')     ! real --> target stack
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(itwrk .eq. wklng) call droptargetstackbottom()
           itwrk=itwrk+1
@@ -4998,7 +5072,7 @@ c     assumes that bb is OK for 1d cases
           write(target_label(itwrk),'(1pe15.8)') rpop(rstack,irstack)
           call set_targetbarlabel(target_label(itwrk))
         case('eirc')     ! add the Eirene atomic densities to the b2 values
-          stack_req=(/0,0,0,0,0,0/)
+          stack_req=(/0,0,0,0,0,0,0/)
           if(b2plot_debug.ge.12) 
      &     write(*,*) iistack,irstack,isstack,iwrk,iwwrk,stack_req
           if(bad_args(stack_req)) write(*,*) 'Sorry!'
@@ -5041,7 +5115,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           return
         case('nese')     ! set ne from matrix stack
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do iy=-1,ndim(2,iwrk)
             do ix=-1,ndim(1,iwrk)
@@ -5050,7 +5124,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           goto 2059
         case('tese')     ! set te from matrix stack
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           do iy=-1,ndim(2,iwrk)
             do ix=-1,ndim(1,iwrk)
@@ -5059,7 +5133,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           goto 2059        ! drop
         case('dase')     ! set dab2 from matrix stack
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,natmi-1
             do iy=-1,ndim(2,iwrk)
@@ -5071,7 +5145,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           goto 2059
         case('uuse')     ! set uutraj from matrix stack
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do is=0,ns-1
             do iy=-1,ndim(2,iwrk)
@@ -5083,7 +5157,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           goto 2059        ! drop
         case('vvse')     ! set vvtraj from matrix stack
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ns-1
             do iy=-1,ndim(2,iwrk)
@@ -5095,7 +5169,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           goto 2059
         case('arox')     ! set arrow field x-component from matrix
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do is=0,ns-1
             do iy=-1,ndim(2,iwrk)
@@ -5107,7 +5181,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           goto 2059
         case('aroy')     ! set arrow field y-component from matrix
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return ! 2900
           do is=0,ns-1
             do iy=-1,ndim(2,iwrk)
@@ -5119,7 +5193,7 @@ c     assumes that bb is OK for 1d cases
           enddo
           goto 2059
         case('pos')      ! matrix with 1 if element > 0, else 0
-          stack_req=(/0,0,0,1,0,0/)
+          stack_req=(/0,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           do is=0,ndim(3,iwrk)-1
             do iy=-1,ndim(2,iwrk)
@@ -5138,38 +5212,38 @@ c     assumes that bb is OK for 1d cases
         case('trgoff')   ! turns off target elements plot
           call targetoff 
         case('idrop')    ! drop top of integer stack
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           itmp=ipop(istack,iistack)
         case('idup')     ! duplicate top of integer stack
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           itmp=istack(iistack)
           call ipush(istack,iistack,itmp)
         case('iswap')    ! swap top two elements of integer stack
-          stack_req=(/2,0,0,0,0,0/)
+          stack_req=(/2,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call iswap(istack(iistack),istack(iistack-1))
         case('iover')    ! i2 i1 --> i2 i1 i2
-          stack_req=(/2,0,0,0,0,0/)
+          stack_req=(/2,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           itmp=istack(iistack-1)
           call ipush(istack,iistack,itmp)
         case('rdrop')    ! drop top of real stack
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           t1=rpop(rstack,irstack)
         case('rdup')     ! duplicate top of real stack
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           t1=rstack(irstack)
           call rpush(rstack,irstack,t1)
         case('rswap')    ! swap top two elements of real stack
-          stack_req=(/0,2,0,0,0,0/)
+          stack_req=(/0,2,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call rswap(rstack(irstack),rstack(irstack-1))
         case('rover')    ! r2 r1 --> r2 r1 r2
-          stack_req=(/0,2,0,0,0,0/)
+          stack_req=(/0,2,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           t1=rstack(irstack-1)
           call rpush(rstack,irstack,t1)
@@ -5180,7 +5254,7 @@ c
       goto 2900
 
  2059 continue
-      stack_req=(/0,0,0,1,0,0/)
+      stack_req=(/0,0,0,1,0,0,0/)
       if(bad_args(stack_req)) return
       iwrk=iwrk-1
 
@@ -5202,7 +5276,7 @@ c
       subroutine select_parameters
 
       cflag=.true.
-      stack_req=(/0,1,0,0,0,0/)
+      stack_req=(/0,1,0,0,0,0,0/)
       NVALUE: select case(cval)
         case('xmin')     ! Minimum x for plotting in the computational domain
           if(bad_args(stack_req)) return
@@ -5359,8 +5433,16 @@ c
           if(bad_args(stack_req)) return
           values(37)=rpop(rstack,irstack)
           write(*,*) 'Set parameter ',trim(cval),' to ',values(37)
+        case('emin')     ! Minimum function value for Eirene data plots
+          if(bad_args(stack_req)) return
+          values(38)=rpop(rstack,irstack)
+          write(*,*) 'Set parameter ',trim(cval),' to ',values(38)
+        case('emax')     ! Maximum function value for Eirene data plots
+          if(bad_args(stack_req)) return
+          values(39)=rpop(rstack,irstack)
+          write(*,*) 'Set parameter ',trim(cval),' to ',values(39)
 	case('neo_ic')   ! Neoclassical model number
-	  stack_req=(/1,0,0,0,0,0/)
+	  stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
 	  neo_ic=ipop(istack,iistack)
 	  write(*,*) 'Set ',trim(cval),' to ', neo_ic
@@ -5377,7 +5459,7 @@ c
       subroutine select_command
 
       cflag=.true.
-      stack_req=(/0,0,1,0,0,0/)
+      stack_req=(/0,0,1,0,0,0,0/)
       SVALUE: select case(cval)
         case('extl')     ! extra label
           if(bad_args(stack_req)) return
@@ -5492,7 +5574,7 @@ c          write(*,*) 'Read a new geometry'
           stmp=spop(sstack,isstack)
           write(*,*) 'Read a new Sonnet geometry : No longer supported!'
         case('saw')      ! reads external data onto the matrix stack
-          stack_req=(/2,0,1,0,0,0/)
+          stack_req=(/2,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
           arg=spop(sstack,isstack)
           ny=ipop(istack,iistack)-2
@@ -5529,7 +5611,7 @@ c          write(*,*) 'Read a new geometry'
           call copy(mach,1.0_R8,nz,textbl)
           graphlabel(iwrk)=arg
         case('saws')     ! reads external data about plasma species onto the matrix stack
-          stack_req=(/3,0,1,0,0,0/)
+          stack_req=(/3,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
           arg=spop(sstack,isstack)
           nz=ipop(istack,iistack)
@@ -5566,7 +5648,7 @@ c          write(*,*) 'Read a new geometry'
           call copy(mach,1.0_R8,nz,textpl)
           graphlabel(iwrk)=arg
         case('sawx')     ! reads external data about external species onto the matrix stack
-          stack_req=(/3,0,1,0,0,0/)
+          stack_req=(/3,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
           arg=spop(sstack,isstack)
           nz=ipop(istack,iistack)
@@ -5645,7 +5727,7 @@ c          write(*,*) 'Read a new geometry'
           enddo
           close(99)
         case('uedgegrd') ! output geometry in UEDGE format (string + real arg)
-          stack_req=(/0,1,1,0,0,0/)
+          stack_req=(/0,1,1,0,0,0,0/)
           if(bad_args(stack_req)) return
           arg=spop(sstack,isstack)
           t1=rpop(rstack,irstack)
@@ -5788,7 +5870,7 @@ c-dpc still in testing phase
           expfile=spop(sstack,isstack)
           call plot_expfile
         case('outp')     ! prints the value of a specific element
-          stack_req=(/2,0,1,1,0,0/)
+          stack_req=(/2,0,1,1,0,0,0/)
           if(bad_args(stack_req)) return
           stmp=spop(sstack,isstack)
           iy=ipop(istack,iistack)
@@ -5826,7 +5908,7 @@ c-dpc still in testing phase
           if(bad_args(stack_req)) return
           call set_device(spop(sstack,isstack))
         case('mprt')     ! output the top of matrix stack to a file
-          stack_req=(/0,0,1,1,0,0/)
+          stack_req=(/0,0,1,1,0,0,0/)
           if(bad_args(stack_req)) return
           stmp=spop(sstack,isstack)
           open(99,file=stmp)
@@ -5842,7 +5924,7 @@ c-dpc still in testing phase
           enddo
           close(99)
         case('mtab')     ! output a table from the top of matrix stack to a file
-          stack_req=(/4,0,1,1,0,0/)
+          stack_req=(/4,0,1,1,0,0,0/)
           if(bad_args(stack_req)) return
           iy2=ipop(istack,iistack)
           iy1=ipop(istack,iistack)
@@ -5880,7 +5962,7 @@ c-dpc still in testing phase
           enddo
           close(99)
         case('amju','amjuel')    ! accesses Eirene type atomic physics data
-          stack_req=(/0,0,4,0,0,0/)
+          stack_req=(/0,0,4,0,0,0,0/)
           if(bad_args(stack_req)) return
           call strcopy(3,256,crc,spop(sstack,isstack))
           call strcopy(9,256,reac,spop(sstack,isstack))
@@ -5893,7 +5975,7 @@ c-dpc still in testing phase
           call copy(mach,1.0_R8,1,textbl)
           graphlabel(iwrk)=filnam//h123//reac//crc
         case('adas')     ! accesses ADAS atomic physics data
-          stack_req=(/0,0,1,0,0,0/)
+          stack_req=(/0,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
           call strcopy(9,256,reac,spop(sstack,isstack))
           nz=ns
@@ -5902,7 +5984,7 @@ c-dpc still in testing phase
           call copy(mach,1.0_R8,nz,textpl)
           graphlabel(iwrk)='ADAS '//trim(reac)//' rate'
         case('scat')     ! concatenate two strings on top of string stack
-          stack_req=(/0,0,2,0,0,0/)
+          stack_req=(/0,0,2,0,0,0,0/)
           if(bad_args(stack_req)) return
           stmp=spop(sstack,isstack)
           stmp=trim(spop(sstack,isstack)) // stmp
@@ -5913,19 +5995,19 @@ c-dpc still in testing phase
           stmp=sstack(isstack)
           call spush(sstack,isstack,stmp)
         case('sswap')    ! swap top two elements of string stack
-          stack_req=(/0,0,2,0,0,0/)
+          stack_req=(/0,0,2,0,0,0,0/)
           if(bad_args(stack_req)) return
           stmp1=spop(sstack,isstack)
           stmp2=spop(sstack,isstack)
           call spush(sstack,isstack,stmp1)
           call spush(sstack,isstack,stmp2)
         case('sover')    ! str2 str1 --> str2 str1 str2
-          stack_req=(/0,0,2,0,0,0/)
+          stack_req=(/0,0,2,0,0,0,0/)
           if(bad_args(stack_req)) return
           stmp=sstack(isstack-1)
           call spush(sstack,isstack,stmp)
         case('sprt')     ! output the string stack
-          stack_req=(/0,0,1,0,0,0/)
+          stack_req=(/0,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
           do is = isstack, 1, -1
             write(*,'(a)') trim(sstack(is))
@@ -5934,7 +6016,7 @@ c-dpc still in testing phase
             endif
           enddo
         case('omovie')   ! old movie option
-          stack_req=(/2,0,2,0,0,0/)
+          stack_req=(/2,0,2,0,0,0,0/)
           if(bad_args(stack_req)) return
           varname=spop(sstack,isstack)
           filename=spop(sstack,isstack)
@@ -5969,7 +6051,7 @@ c-dpc still in testing phase
           write(*,*) 'Compile b2plot without NO_CDF option for movies!'
 #endif
         case('movie','nmovie')    ! new movie option
-          stack_req=(/2,0,1,0,0,0/)
+          stack_req=(/2,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
           varname=spop(sstack,isstack)
           filename='../b2movies.nc'
@@ -6010,19 +6092,23 @@ c-dpc still in testing phase
           if(bad_args(stack_req)) return
           call set_targetbarlabel(spop(sstack,isstack))
         case('glbl')     ! set graph label
-          stack_req=(/0,0,1,1,0,0/)
+          stack_req=(/0,0,1,1,0,0,0/)
           if(bad_args(stack_req)) return
           call customise_label(spop(sstack,isstack),graphlabel(iwrk))
+        case('elbl')     ! set Eirene graph label
+          stack_req=(/0,0,1,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          call customise_label(spop(sstack,isstack),eirene_label(iewrk))
         case('wlbl')     ! set wall graph label
-          stack_req=(/0,0,1,0,1,0/)
+          stack_req=(/0,0,1,0,0,1,0/)
           if(bad_args(stack_req)) return
           call customise_label(spop(sstack,isstack),wall_label(iwwrk))
         case('tlbl')     ! set target graph label
-          stack_req=(/0,0,1,0,0,1/)
+          stack_req=(/0,0,1,0,0,0,1/)
           if(bad_args(stack_req)) return
           call customise_label(spop(sstack,isstack),target_label(itwrk))
         case('slbl')     ! set species label
-          stack_req=(/1,0,1,1,0,0/)
+          stack_req=(/1,0,1,1,0,0,0/)
           if(bad_args(stack_req)) return
           is1=ipop(istack,iistack)
           if (0.gt.is1.or.is1.ge.ndim(3,iwrk)) then
@@ -6030,8 +6116,17 @@ c-dpc still in testing phase
             return
           endif
           call strcopy(16,256,textwk(is1,iwrk),spop(sstack,isstack))
+        case('eslbl')    ! set Eirene species label
+          stack_req=(/1,0,1,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          is1=ipop(istack,iistack)
+          if (0.gt.is1.or.is1.ge.nedim(2,iwwrk)) then
+            write(*,*) 'Faulty parameter is = ',is1,' for eslbl!'
+            return
+          endif
+          call strcopy(16,256,textewk(is1,iewrk),spop(sstack,isstack))
         case('wslbl')    ! set wall species label
-          stack_req=(/1,0,1,0,1,0/)
+          stack_req=(/1,0,1,0,0,1,0/)
           if(bad_args(stack_req)) return
           is1=ipop(istack,iistack)
           if (0.gt.is1.or.is1.ge.nwdim(2,iwwrk)) then
@@ -6040,7 +6135,7 @@ c-dpc still in testing phase
           endif
           call strcopy(16,256,textwwk(is1,iwwrk),spop(sstack,isstack))
         case('tranprof') ! output transport profile
-          stack_req=(/0,0,0,0,0,0/)
+          stack_req=(/0,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           open(99,file='b2.transport.inputfile')
           write(99,*) '&TRANSPORT'
@@ -6086,6 +6181,894 @@ c-dpc still in testing phase
       return
 
       end subroutine select_command
+
+      subroutine select_eirene_stack
+
+#ifdef B25_EIRENE
+      cflag=.true.
+      EVALUE: select case(cval)
+        case('pdena')
+          description='Atoms particle density (m^{-3})'
+          nz=natmi
+          call eirene_copy(pdena,1.0e-6_R8,nz,textan)
+        case('pdenm')
+          description='Molecules particle density (m^{-3})'
+          nz=nmoli
+          call eirene_copy(pdenm,1.0e-6_R8,nz,textmn)
+        case('pdeni')
+          description='Test ions particle density (m^{-3})'
+          nz=nioni
+          call eirene_copy(pdeni,1.0e-6_R8,nz,textin)
+        case('edena')
+          description='Atoms energy density (eV.m^{-3})'
+          nz=natmi
+          call eirene_copy(edena,1.0e-6_R8,nz,textan)
+        case('edenm')
+          description='Molecules energy density (eV.m^{-3})'
+          nz=nmoli
+          call eirene_copy(edenm,1.0e-6_R8,nz,textmn)
+        case('edeni')
+          description='Test ions energy density (eV.m^{-3})'
+          nz=nioni
+          call eirene_copy(edeni,1.0e-6_R8,nz,textin)
+        case('vxdena')
+          description='Atoms X-directed velocity (m.s^{-1})'
+          nz=natmi
+          call eirene_copy(vxdena,1.0e-2_R8,nz,textan)
+        case('vxdenm')
+          description='Molecules X-directed velocity (m.s^{-1})'
+          nz=nmoli
+          call eirene_copy(vxdenm,1.0e-2_R8,nz,textmn)
+        case('vxdeni')
+          description='Test ions X-directed velocity (m.s^{-1})'
+          nz=nioni
+          call eirene_copy(vxdeni,1.0e-2_R8,nz,textin)
+        case('vydena')
+          description='Atoms Y-directed velocity (m.s^{-1})'
+          nz=natmi
+          call eirene_copy(vydena,1.0e-2_R8,nz,textan)
+        case('vydenm')
+          description='Molecules Y-directed velocity (m.s^{-1})'
+          nz=nmoli
+          call eirene_copy(vydenm,1.0e-2_R8,nz,textmn)
+        case('vydeni')
+          description='Test ions Y-directed velocity (m.s^{-1})'
+          nz=nioni
+          call eirene_copy(vydeni,1.0e-2_R8,nz,textin)
+        case('vzdena')
+          description='Atoms Z-directed velocity (m.s^{-1})'
+          nz=natmi
+          call eirene_copy(vzdena,1.0e-2_R8,nz,textan)
+        case('vzdenm')
+          description='Molecules Z-directed velocity (m.s^{-1})'
+          nz=nmoli
+          call eirene_copy(vzdenm,1.0e-2_R8,nz,textmn)
+        case('vzdeni')
+          description='Test ions Z-directed velocity (m.s^{-1})'
+          nz=nioni
+          call eirene_copy(vzdeni,1.0e-2_R8,nz,textin)
+        case('triarea')
+          description='Triangle area (m^{2})'
+          nz=1
+          call eirene_copy(triangle_area,1.0_R8,nz,textbl)
+        case('triavol')
+          description='Triangle volume (m^{3})'
+          nz=1
+          call eirene_copy(triangle_vol,1.0_R8,nz,textbl)
+        case default EVALUE
+          cflag=.false.
+      END SELECT EVALUE
+
+      if(cflag) then
+        call customise_label(description,eirene_label(iewrk))
+        call set_wallbarlabel(eirene_label(iewrk))
+        if (b2plot_debug.ge.1)
+     .   write(*,*) 'Copied ',trim(cval),' to Eirene stack.'
+      endif
+      return
+#endif
+      end subroutine select_eirene_stack
+
+      subroutine select_eirene_command
+#ifdef B25_EIRENE
+      cflag=.true.
+      EFVALUE: select case (cval)
+        case('edims')    ! print out Eirene stack information
+	  do is=1,iewrk
+	    write(*,'(3i5,1x,a)') is,nedim(1:2,is),trim(eirene_label(is))
+	  enddo
+        case('psta')     ! per triangle area
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          call psta
+        case('pstv')     ! per triangle volume
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          call pstv
+        case('sumt')     ! sum over triangles
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          call sumt()
+          eirene_label(iewrk)=eirene_label(iewrk)
+     1                 (1:lnblnk(eirene_label(iewrk)))//' SUM '
+        case('esurf')    ! plot triangle patch plot
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          call triangle_surf(1)
+        case('eclvs')    ! customise Eirene contour levels
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          stack_req=(/1,istack(iistack),0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          call eclvs(istack(iistack),rstack,irstack)
+          do iclv=1,istack(iistack)
+            dummy=rpop(rstack,irstack)
+          end do
+          call pop_stack(stack_req)
+        case('eclvd')    ! customise Eirene contour level delta
+          stack_req=(/0,3,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          call 
+     .     eclvd(rstack(irstack-2),rstack(irstack-1),rstack(irstack))
+          do iclv=1,3
+            dummy=rpop(rstack,irstack)
+          end do
+        case('eclvn')    ! customise Eirene contour level range and number
+          stack_req=(/1,2,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          call eclvn(rstack(irstack-1),rstack(irstack),istack(iistack))
+          do iclv=1,2
+            dummy=rpop(rstack,irstack)
+          end do
+          call pop_stack(stack_req)
+        case('eclvp')    ! customise Eirene contour level by proportion
+          stack_req=(/2,0,0,0,0,1,0/)
+          if(bad_args(stack_req)) return
+          ix=ipop(istack,iistack)
+          iy=ipop(istack,iistack)
+          call eclvp(ix,iy)
+          write(stmp,'(a,2x,a1,2i4,a2)') 
+     .     eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk))),
+     .     '{',ix,iy,' }'
+          eirene_label(iewrk)=stmp
+        case('eabs')     ! abs() on Eirene stack
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          do is=0,nedim(2,iewrk)-1
+            do i=-1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk)=abs(eirene_stack(i,is,iewrk))
+            end do
+          end do
+          eirene_label(iewrk)=
+     .      eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk)))//' (ABS)'
+        case('esumz')    ! sum over ns for Eirene stack data
+          stack_req=(/2,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          izstrt=istack(iistack-1)
+          izend=istack(iistack)
+          if(izstrt .eq. 0 .and. izend .eq. 0) then
+            izstrt=0
+            izend=nedim(2,iewrk)-1
+          end if
+          if(izend .eq. -1) izend=nedim(2,iewrk)-1
+          if(izstrt .lt. 0 .or. izend .gt. nedim(2,iewrk)-1 .or.
+     1       izstrt .gt. izend) then
+            write(*,*) 'Parameters supplied to esumz were invalid - ',
+     1                 'valid parameters are:'
+            write(*,*) ' 0 <= ',izstrt,' <= ',izend,' <= ',
+     1           nedim(2,iewrk)-1
+            return
+          end if
+          do is=izstrt+1,izend
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,izstrt,iewrk)=
+     1          eirene_stack(i,izstrt,iewrk)
+     2         +eirene_stack(i,is,iewrk)
+            end do
+          end do
+          do i=1,nedim(1,iewrk)
+            eirene_stack(i,0,iewrk)=
+     1       eirene_stack(i,izstrt,iewrk)
+          end do
+          nwdim(2,iewrk)=1
+          if(izstrt .ne. izend) then
+            eirene_label(iewrk)=
+     1       eirene_label(iewrk)(1:lnblnk(eirene_label(iwwrk)))
+     2       //' SUM'//
+     3       textewk(izstrt,iewrk)(1:lnblnk(textewk(izstrt,iewrk)))
+     4       //' to'//
+     5       textewk(izend,iewrk)(1:lnblnk(textewk(izend,iewrk)))
+          else
+            wall_label(iewrk)=
+     1       wall_label(iewrk)(1:lnblnk(wall_label(iewrk))) //
+     2       textewk(izstrt,iewrk)(1:lnblnk(textewk(izstrt,iewrk)))
+          end if
+          textewk(0,iewrk)=textbl(0)
+          call pop_stack(stack_req)
+        case('em+')      ! Eirene stack addition
+          stack_req=(/0,0,0,0,2,0,0/)
+          if(bad_args(stack_req)) return   ! 4900
+          if(nedim(2,iewrk-1) .ne. nedim(2,iewrk) .and.
+     1       nedim(2,iewrk-1) .ne. 1 .and. nedim(2,iewrk) .ne. 1) then
+            write(*,*) 'Mismatch in nedim(2)''s in operands'
+            goto 4900
+          end if
+          do is=0,max(nedim(2,iewrk-1),nedim(2,iewrk))-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk+1)=
+     1         eirene_stack(i,min(is,nedim(2,iewrk-1)-1),iewrk-1)+
+     2         eirene_stack(i,min(is,nedim(2,iewrk)-1),iewrk)
+            end do
+          end do
+          do is=0,max(nedim(2,iewrk-1),nedim(2,iewrk))-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk-1)=
+     1         eirene_stack(i,is,iewrk+1)
+            end do
+            if(nedim(2,iewrk-1) .gt. nedim(2,iewrk)) then
+              textewk(is,iewrk-1)=textewk(is,iewrk-1)
+            else
+              textewk(is,iewrk-1)=textewk(is,iewrk)
+            end if
+          end do
+          eirene_label(iewrk-1)='Special'
+          nedim(2,iewrk-1)=max(nedim(2,iewrk-1),nedim(2,iewrk))
+          iewrk=iewrk-1
+        case('em-')      ! Eirene stack subtraction
+          stack_req=(/0,0,0,0,2,0,0/)
+          if(bad_args(stack_req)) return   ! 4900
+          if(nedim(2,iewrk-1) .ne. nedim(2,iewrk) .and.
+     1       nedim(2,iewrk-1) .ne. 1 .and. nedim(2,iewrk) .ne. 1) then
+            write(*,*) 'Mismatch in nedim(2)''s in operands'
+            goto 4900
+          end if
+          do is=0,max(nedim(2,iewrk-1),nedim(2,iewrk))-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk+1)=
+     1         eirene_stack(i,min(is,nedim(2,iewrk-1)-1),iewrk-1)-
+     2         eirene_stack(i,min(is,nedim(2,iewrk)-1),iewrk)
+            end do
+          end do
+          do is=0,max(nedim(2,iewrk-1),nedim(2,iewrk))-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk-1)=eirene_stack(i,is,iewrk+1)
+            end do
+            if(nedim(2,iewrk-1) .gt. nedim(2,iewrk)) then
+              textewk(is,iewrk-1)=textewk(is,iewrk-1)
+            else
+              textewk(is,iewrk-1)=textewk(is,iewrk)
+            end if
+          end do
+          eirene_label(iewrk-1)='Special'
+          nedim(2,iewrk-1)=max(nedim(2,iewrk-1),nedim(2,iewrk))
+          iewrk=iewrk-1
+        case('em*')      ! Eirene matrix multiplication
+          stack_req=(/0,0,0,0,2,0,0/)
+          if(bad_args(stack_req)) return   ! 4900
+          if(nedim(2,iewrk-1) .ne. nedim(2,iewrk) .and.
+     1       nedim(2,iewrk-1) .ne. 1 .and. nedim(2,iewrk) .ne. 1) then
+            write(*,*) 'Mismatch in nedim(2)''s in operands'
+            return
+          end if
+          do is=0,max(nedim(2,iewrk-1),nedim(2,iewrk))-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk+1)=
+     1         eirene_stack(i,min(is,nedim(2,iewrk-1)-1),iewrk-1)*
+     2         eirene_stack(i,min(is,nedim(2,iewrk)-1),iewrk)
+            end do
+          end do
+          do is=0,max(nedim(2,iewrk-1),nedim(2,iewrk))-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk-1)=eirene_stack(i,is,iewrk+1)
+            end do
+            if(nedim(2,iewrk-1) .gt. nedim(2,iewrk)) then
+              textewk(is,iewrk-1)=textewk(is,iewrk-1)
+            else
+              textewk(is,iewrk-1)=textewk(is,iewrk)
+            end if
+          end do
+          eirene_label(iewrk-1)='Special'
+          nedim(2,iewrk-1)=max(nedim(2,iewrk-1),nedim(2,iewrk))
+          iewrk=iewrk-1
+        case('em/')      ! Eirene matrix division
+          stack_req=(/0,0,0,0,2,0,0/)
+          if(bad_args(stack_req)) return   ! 4900
+          if(nedim(2,iewrk-1) .ne. nedim(2,iewrk) .and.
+     1       nedim(2,iewrk-1) .ne. 1 .and. nedim(2,iewrk) .ne. 1) then
+            write(*,*) 'Mismatch in nedim(2)''s in operands'
+            return
+          end if
+          do is=0,max(nedim(2,iewrk-1),nedim(2,iewrk))-1
+            do i=1,nedim(1,iewrk)
+              if (eirene_stack(i,
+     .             min(is,nedim(2,iewrk)-1),iewrk).ne.0.0_R8) then
+                eirene_stack(i,is,iewrk+1)=
+     1           eirene_stack(i,min(is,nedim(2,iewrk-1)-1),iewrk-1)/
+     2           eirene_stack(i,min(is,nedim(2,iewrk)-1),iewrk)
+              else
+                eirene_stack(i,is,iewrk+1)=0.0_R8
+              end if
+            end do
+          end do
+          do is=0,max(nedim(2,iewrk-1),nedim(2,iewrk))-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk-1)=eirene_stack(i,is,iewrk+1)
+            end do
+            if(nedim(2,iewrk-1) .gt. nedim(2,iewrk)) then
+              textewk(is,iewrk-1)=textewk(is,iewrk-1)
+            else
+              textewk(is,iewrk-1)=textewk(is,iewrk)
+            end if
+          end do
+          eirene_label(iewrk-1)='Special'
+          nedim(2,iewrk-1)=max(nedim(2,iewrk-1),nedim(2,iewrk))
+          iewrk=iewrk-1
+        case('rem+')     ! Eirene stack + real
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return   ! 4900
+          do is=0,nedim(2,iewrk)-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk)=
+     1         eirene_stack(i,is,iewrk)+rstack(irstack)
+            end do
+          end do
+          dummy=rpop(rstack,irstack)
+          eirene_label(iewrk)='Special'
+        case('rem-')     ! Eirene stack - real
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return   ! 4900
+          do is=0,nedim(2,iewrk)-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk)=
+     1         eirene_stack(i,is,iewrk)-rstack(irstack)
+            end do
+          end do
+          dummy=rpop(rstack,irstack)
+          eirene_label(iewrk)='Special'
+        case('rem*')     ! Eirene stack * real
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return   ! 4900
+          do is=0,nedim(2,iewrk)-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk)=
+     1         eirene_stack(i,is,iewrk)*rstack(irstack)
+            end do
+          end do
+          dummy=rpop(rstack,irstack)
+          eirene_label(iewrk)='Special'
+        case('rem/')     ! Eirene stack / real
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return   ! 4900
+          if(rstack(irstack).eq.0.0_R8) then
+            write (*,*) 'Divide by zero, You lose'
+            goto 4900
+          endif
+          do is=0,nedim(2,iewrk)-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk)=
+     1         eirene_stack(i,is,iewrk)/rstack(irstack)
+            end do
+          end do
+          dummy=rpop(rstack,irstack)
+          eirene_label(iewrk)='Special'
+        case('rem**')    ! Eirene stack ** real
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return   ! 5900
+          do is=0,nedim(2,iewrk)-1
+            do i=1,nedim(1,iewrk)
+              if (rstack(irstack).ne.0.0_R8) then
+                eirene_stack(i,is,iewrk)=
+     1           eirene_stack(i,is,iewrk)**rstack(irstack)
+              else
+                eirene_stack(i,is,iewrk)=1.0_R8
+              end if
+            end do
+          end do
+          dummy=rpop(rstack,irstack)
+          eirene_label(iewrk)='Special'
+        case('edrop')    ! drop top of Eirene stack
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return   ! 4900
+          iewrk=iewrk-1
+        case('edup')     ! duplicate top of Eirene stack
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return   ! 4900
+          if(iewrk .ge. wklng) call dropeirenestackbottom()
+          iewrk=iewrk+1
+          nedim(1,iewrk)=nedim(1,iewrk-1)
+          nedim(2,iewrk)=nedim(2,iewrk-1)
+          do is=0,nedim(2,iewrk-1)-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk)=eirene_stack(i,is,iewrk-1)
+            end do
+            textewk(is,iewrk)=textewk(is,iewrk-1)
+          end do
+          eirene_label(iewrk)=eirene_label(iewrk-1)
+        case('eswap')    ! swap top two elements of Eirene stack
+          stack_req=(/0,0,0,0,2,0,0/)
+          if(bad_args(stack_req)) return   ! 4900
+          call iswap(nedim(1,iewrk),nedim(1,iewrk-1))
+          call iswap(nedim(2,iewrk),nedim(2,iewrk-1))
+          do is=0,nedim(2,iewrk-1)-1
+            do i=1,nedim(1,iewrk)
+              call rswap(eirene_stack(i,is,iewrk),
+     1                   eirene_stack(i,is,iewrk-1))
+            end do
+            call strswap(textewk(is,iewrk),textewk(is,iewrk-1))
+          end do
+          call strswap(eirene_label(iewrk),eirene_label(iewrk-1))
+        case('eover')    ! e2 e1 --> e2 e1 e2
+          stack_req=(/0,0,0,0,2,0,0/)
+          if(bad_args(stack_req)) return ! 4900
+          if(iewrk .ge. wklng) call dropeirenestackbottom()
+          iewrk=iewrk+1
+          nedim(1,iewrk)=nedim(1,iewrk-2)
+          nedim(2,iewrk)=nedim(2,iewrk-2)
+          do is=0,nedim(2,iewrk-2)-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk)=eirene_stack(i,is,iewrk-2)
+            end do
+            textewk(is,iewrk)=textewk(is,iewrk-2)
+          end do
+          eirene_label(iewrk)=eirene_label(iewrk-2)
+        case('elist')    ! list contents of Eirene stack
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          do i = iewrk, 1, -1
+            write(*,*) trim(eirene_label(i)), 
+     &       (trim(textewk(is,i)),is=0,nedim(2,i)-1)
+          end do
+        case('esel')     ! select Eirene element
+          stack_req=(/1,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          i1=istack(iistack)
+          if(1.gt.i1.or.i1.gt.nedim(1,iewrk)) then
+            write(*,*) 'Faulty parameter i1 = ',i1,' for esel!'
+            return
+          endif
+          do is=0,nedim(2,iewrk)-1
+            do i=1,nedim(1,iewrk)
+              eirene_stack(i,is,iewrk)=eirene_stack(i1,is,iewrk)
+            end do
+          end do
+          call pop_stack(stack_req)
+        case('ezsel')    ! select species in Eirene stack
+          stack_req=(/1,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          is1=istack(iistack)
+          if(0.gt.is1.or.is1.ge.nwdim(2,iwwrk)) then
+            write(*,*) 'Faulty parameter is = ',is1,' for ezsel!'
+            return
+          endif
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              eirene_stack(i,is,iewrk)=eirene_stack(i,is1,iewrk)
+              earrowx(i,is)=earrowx(i,is1)
+              earrowy(i,is)=earrowy(i,is1)
+            end do
+            textewk(is,iewrk)=textewk(is1,iewrk)
+          end do
+          nedim(2,iewrk)=1
+          call pop_stack(stack_req)
+        case('emmin')    ! min(e1,e2)
+          stack_req=(/0,0,0,0,2,0,0/)
+          if(bad_args(stack_req)) return ! 4900
+          if(nedim(2,iewrk-1) .ne. nedim(2,iewrk) .and.
+     1       nedim(2,iewrk-1) .ne. 1 .and. nedim(2,iewrk) .ne. 1) then
+            write(*,*) 'Mismatch in nedim(2)''s in operands'
+            goto 4900
+          end if
+          do is=0,max(nedim(2,iewrk-1),nedim(2,iewrk))-1
+            do i = 1, nedim(1,iewrk)
+              eirene_stack(i,is,iewrk+1)=
+     1         min(eirene_stack(i,min(is,nedim(2,iewrk-1)-1),iewrk-1),
+     2             eirene_stack(i,min(is,nedim(2,iewrk)-1),iewrk))
+            end do
+          end do
+          do is=0,max(nedim(2,iewrk-1),nedim(2,iewrk))-1
+            do i = 1, nedim(1,iewrk)
+              eirene_stack(i,is,iewrk-1)=eirene_stack(i,is,iewrk+1)
+            end do
+            if(nedim(2,iewrk-1) .gt. nedim(2,iewrk)) then
+              textewk(is,iewrk-1)=textewk(is,iewrk-1)
+            else
+              textewk(is,iewrk-1)=textewk(is,iewrk)
+            end if
+          end do
+          eirene_label(iewrk-1)='Special'
+          nedim(2,iewrk-1)=max(nedim(2,iewrk-1),nedim(2,iewrk))
+          iewrk=iewrk-1
+        case('emmax')    ! max(e1,e2)
+          stack_req=(/0,0,0,0,2,0,0/)
+          if(bad_args(stack_req)) return ! 4900
+          if(nedim(2,iewrk-1) .ne. nedim(2,iewrk) .and.
+     1       nedim(2,iewrk-1) .ne. 1 .and. nedim(2,iewrk) .ne. 1) then
+            write(*,*) 'Mismatch in nedim(2)''s in operands'
+            goto 4900
+          end if
+          do is=0,max(nedim(2,iewrk-1),nedim(2,iewrk))-1
+            do i = 1, nedim(1,iewrk)
+              eirene_stack(i,is,iewrk+1)=
+     1         max(eirene_stack(i,min(is,nedim(2,iewrk-1)-1),iewrk-1),
+     2             eirene_stack(i,min(is,nedim(2,iewrk)-1),iewrk))
+            end do
+          end do
+          do is=0,max(nedim(2,iewrk-1),nedim(2,iewrk))-1
+            do i = 1, nedim(1,iewrk)
+              eirene_stack(i,is,iewrk-1)=eirene_stack(i,is,iewrk+1)
+            end do
+            if(nedim(2,iewrk-1) .gt. nedim(2,iewrk)) then
+              textewk(is,iewrk-1)=textewk(is,iewrk-1)
+            else
+              textewk(is,iewrk-1)=textewk(is,iewrk)
+            end if
+          end do
+          eirene_label(iewrk-1)='Special'
+          nedim(2,iewrk-1)=max(nedim(2,iewrk-1),nedim(2,iewrk))
+          iewrk=iewrk-1
+        case('remmi')    ! min(r1,e1)
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return ! 4900
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              eirene_stack(i,is,iewrk)=
+     1         min(eirene_stack(i,is,iewrk),rstack(irstack)) 
+            end do
+          end do
+          dummy=rpop(rstack,irstack)
+          eirene_label(iewrk)='Special'
+        case('remma')    ! max(r1,e1)
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return ! 4900
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              eirene_stack(i,is,iewrk)=
+     1         max(eirene_stack(i,is,iewrk),rstack(irstack))
+            end do
+          end do
+          dummy=rpop(rstack,irstack)
+          eirene_label(iewrk)='Special'
+        case('emlt')     ! e<r
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return ! 5900
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              if(eirene_stack(i,is,iewrk).lt.
+     1                 rstack(irstack)) then
+                eirene_stack(i,is,iewrk)=1.0_R8
+              else
+                eirene_stack(i,is,iewrk)=0.0_R8
+              endif
+            end do
+          end do
+          dummy=rpop(rstack,irstack)
+          eirene_label(iewrk)='Special'
+        case('emle')     ! e<=r
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return ! 4900
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              if(eirene_stack(i,is,iewrk).le.
+     1                 rstack(irstack)) then
+                eirene_stack(i,is,iewrk)=1.0_R8
+              else
+                eirene_stack(i,is,iewrk)=0.0_R8
+              endif
+            end do
+          end do
+          dummy=rpop(rstack,irstack)
+          eirene_label(iewrk)='Special'
+        case('emeq')     ! e=r
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return ! 4900
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              if(eirene_stack(i,is,iewrk).eq.
+     1                 rstack(irstack)) then
+                eirene_stack(i,is,iewrk)=1.0_R8
+              else
+                eirene_stack(i,is,iewrk)=0.0_R8
+              endif
+            end do
+          end do
+          dummy=rpop(rstack,irstack)
+          eirene_label(iewrk)='Special'
+        case('emne')     ! e!=r
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return ! 4900
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              if(eirene_stack(i,is,iewrk).ne.
+     1                 rstack(irstack)) then
+                eirene_stack(i,is,iewrk)=1.0_R8
+              else
+                eirene_stack(i,is,iewrk)=0.0_R8
+              endif
+            end do
+          end do
+          dummy=rpop(rstack,irstack)
+          eirene_label(iewrk)='Special'
+        case('emgt')     ! e>r
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return ! 5900
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              if(eirene_stack(i,is,iewrk).gt.
+     1                 rstack(irstack)) then
+                eirene_stack(i,is,iewrk)=1.0_R8
+              else
+                eirene_stack(i,is,iewrk)=0.0_R8
+              endif
+            end do
+          end do
+          dummy=rpop(rstack,irstack)
+          eirene_label(iewrk)='Special'
+        case('emge')     ! e=>r
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return ! 4900
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              if(eirene_stack(i,is,iewrk).ge.
+     1                 rstack(irstack)) then
+                eirene_stack(i,is,iewrk)=1.0_R8
+              else
+                eirene_stack(i,is,iewrk)=0.0_R8
+              endif
+            end do
+          end do
+          dummy=rpop(rstack,irstack)
+          eirene_label(iewrk)='Special'
+        case('elog')     ! log10(Eirene)
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              if(eirene_stack(i,is,iewrk).gt.0.0_R8) then
+                eirene_stack(i,is,iewrk)=log10(eirene_stack(i,is,iewrk))
+              else
+                write(*,*) 'Negative argument for ',
+     1            i,is,iewrk,' : Nothing done.'
+              end if
+            end do
+          end do
+          eirene_label(iewrk)='Special'
+        case('eln')      ! ln(Eirene)
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              if(eirene_stack(i,is,iewrk).gt.0.0_R8) then
+                eirene_stack(i,is,iewrk)=log(eirene_stack(i,is,iewrk))
+              else
+                write(*,*) 'Negative argument for ',
+     1           i,is,iewrk,'. Nothing done.'
+              end if
+            end do
+          end do
+          eirene_label(iewrk)='Special'
+        case('esqrt')    ! sqrt(Eirene)
+           stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              if(eirene_stack(i,is,iewrk).ge.0.0_R8) then
+                eirene_stack(i,is,iewrk)=sqrt(eirene_stack(i,is,iewrk))
+              else
+                write(*,*) 'Negative argument for ',
+     1            i,is,iewrk,' : Nothing done.'
+              end if
+            end do
+          end do
+          eirene_label(iewrk)='Special'
+        case('eexp')     ! exp(Eirene)
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              eirene_stack(i,is,iewrk)=exp(eirene_stack(i,is,iewrk))
+            end do
+          end do
+          eirene_label(iewrk)='Special'
+        case('ezrng')    ! select species range in Eirene stack
+          stack_req=(/2,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          if(istack(iistack-1).gt.istack(iistack)) then
+            write(*,*) 'Parameters for ezrng must be given in ',
+     &       'ascending order!'
+            return
+          end if
+          if(0.gt.istack(iistack-1).or.
+     &       istack(iistack-1).ge.nedim(2,iewrk)) then
+            write(*,*) 'Faulty first parameter is = ',istack(iistack-1),
+     &       ' for ezrng!'
+            return
+          endif
+          if(0.gt.istack(iistack).or.
+     &       istack(iistack).ge.nedim(2,iewrk)) then
+            write(*,*) 'Faulty second parameter is = ',istack(iistack),
+     &       ' for ezrng!'
+            return
+          endif
+          do is=istack(iistack-1),istack(iistack)
+            do i = 1, nedim(1,iewrk)
+              eirene_stack(i,is-istack(iistack-1),iewrk)=
+     1         eirene_stack(i,is,iewrk)
+              earrowx(i,is-istack(iistack-1))=earrowx(i,is)
+              earrowy(i,is-istack(iistack-1))=earrowy(i,is)
+            end do
+            textewk(is-istack(iistack-1),iewrk)=textewk(is,iewrk)
+          end do
+          nedim(2,iewrk)=istack(iistack)-istack(iistack-1)+1
+          call pop_stack(stack_req)
+        case('echs')     ! change sign in Eirene stack
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          do is=0,nedim(2,iewrk)-1
+            do i = 1, nedim(1,iewrk)
+              eirene_stack(i,is,iewrk)=-eirene_stack(i,is,iewrk)
+            end do
+          end do
+          eirene_label(iewrk)=
+     1      eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk)))//' (CHS)'
+        case('etos')     ! Eirene array -> m
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          if(iwrk .eq. wklng) call dropstackbottom()
+          iwrk=iwrk+1
+          ndim(1,iwrk)=nx
+          ndim(2,iwrk)=ny
+          ndim(3,iwrk)=nedim(2,iewrk)
+          work(-1:nx,-1:ny,0:ndim(3,iwrk)-1,iwrk)=0.0_R8
+          nntria(0:nx-1,0:ny-1)=0
+          do i=1,ntrii
+            if (ixtri(i).ne.-1 .and. iytri(i).ne.-1) then
+              nntria(ixtri(i),iytri(i))=nntria(ixtri(i),iytri(i))+1
+              work(ixtri(i),iytri(i),0:ndim(3,iwrk)-1,iwrk)=
+     .         work(ixtri(i),iytri(i),0:ndim(3,iwrk)-1,iwrk)+
+     .         eirene_stack(i,0:ndim(3,iwrk)-1,iewrk)
+            end if
+          enddo
+          do iy = 0, ny-1
+            do ix = 0, nx-1
+              if (nntria(ix,iy).gt.0) then
+                work(ix,iy,0:ndim(3,iwrk)-1,iwrk)=
+     1           work(ix,iy,0:ndim(3,iwrk)-1,iwrk)/nntria(ix,iy)
+              end if
+            end do
+          end do
+          call extend(work(-1:nx,-1:ny,0:ndim(3,iwrk)-1,iwrk),
+     1     nx,ny,ndim(3,iwrk),nx,ny,ndim(3,iwrk))
+          values(9)=minval(work(-1:ndim(1,iwrk),-1:ndim(2,iwrk),
+     1         0:ndim(3,iwrk)-1,iwrk))
+          values(10)=maxval(work(-1:ndim(1,iwrk),-1:ndim(2,iwrk),
+     1         0:ndim(3,iwrk)-1,iwrk))          
+          textwk(0:ndim(3,iwrk)-1,iwrk)=textewk(0:ndim(3,iwrk)-1,iewrk)
+          graphlabel(iwrk)=eirene_label(iewrk)
+          goto 4049
+        case('epos')     ! Eirene stack with 1 if element > 0, else 0
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          do is=0,nedim(2,iewrk)-1
+            do i=1,nedim(1,iewrk)
+              if(eirene_stack(i,is,iewrk) .gt. 0.0_R8) then
+                eirene_stack(i,is,iewrk)=1.0_R8
+              else
+                eirene_stack(i,is,iewrk)=0.0_R8
+              endif
+            end do
+          end do
+          eirene_label(iewrk)='Special'
+        case('earox')     ! set arrow field x-component from Eirene data
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return ! 4900
+          do is=0,nedim(2,iewrk)-1
+            do i=1,nedim(1,iewrk)
+              earrowx(i,is)=
+     1         eirene_stack(i,min(is,nedim(2,iewrk)-1),iewrk)
+            enddo
+          enddo
+          goto 4049
+        case('earoy')     ! set arrow field y-component from Eirene data
+          stack_req=(/0,0,0,0,1,0,0/)
+          if(bad_args(stack_req)) return ! 4900
+          do is=0,nedim(2,iewrk)-1
+            do i=1,nedim(1,iwrk)
+              earrowy(i,is)=
+     1         eirene_stack(i,min(is,nedim(2,iewrk)-1),iewrk)
+            enddo
+          enddo
+          goto 4049
+        case('echor')    ! chord file for Eirene stack data
+          stack_req=(/0,0,1,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          call process_eirene_chords(spop(sstack,isstack))
+        case('echbx')    ! boxcar average of chords for Eirene stack data
+          stack_req=(/0,0,1,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          call process_eirene_chords_boxcar(spop(sstack,isstack))
+        case('echvl')    ! Eirene stack values at positions 
+          stack_req=(/0,0,1,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          call process_eirene_chord_slice(spop(sstack,isstack))
+        case('echmp')     ! plots a contour plot of the chord contribution to the Eirene element
+          stack_req=(/0,0,1,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          call map_eirene_chords(spop(sstack,isstack))
+        case('ecam')     ! camera plot of Eirene stack data
+          stack_req=(/0,0,1,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          call process_eirene_camera(spop(sstack,isstack))
+        case('eoutp')    ! prints the value of a specific Eirene element
+          stack_req=(/1,0,1,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          stmp=spop(sstack,isstack)
+          it=ipop(istack,iistack)
+          if(0.gt.it.or.it.gt.nedim(1,iewrk)) then
+            write(*,*) 'Faulty parameter it = ',it,' for eoutp!'
+            return
+          endif
+          do is=0,nedim(2,iewrk)-1
+            if(nedim(2,iewrk) .eq. 1) then
+              write(*,'(a,1x,1p,g15.8)') stmp(1:lnblnk(stmp))//
+     1                 textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk))),
+     1                 eirene_stack(it,is,iewrk)
+              if(writing_to_file) then
+                write(nwtf,'(a,1x,1p,g15.8)') stmp(1:lnblnk(stmp))//
+     1                 textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk))),
+     1                 eirene_stack(it,is,iewrk)
+              endif
+            else
+              write(*,'(a,i3,1p,g15.8)') stmp(1:lnblnk(stmp))//
+     1               textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk))),is,
+     1               eirene_stack(it,is,iewrk)
+              if(writing_to_file) then
+                write(nwtf,'(a,i3,1p,g15.8)') stmp(1:lnblnk(stmp))//
+     1               textewk(is,iewrk)(1:lnblnk(textwk(is,iewrk))),is,
+     1               eirene_stack(it,is,iewrk)
+              endif
+            endif
+          enddo
+         case('eprt')     ! output the top of Eirene stack to a file
+          stack_req=(/0,0,1,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          stmp=spop(sstack,isstack)
+          open(99,file=stmp)
+          do is=0,nedim(2,iwrk)-1
+            write(99,'(''#'',1x,a,1x,a)')
+     1       eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk))),
+     2       textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk)))
+            do it=1,ntrii
+              write(99,*) it,is,eirene_stack(it,is,iewrk)
+            enddo
+          enddo
+          close(99)
+       case default EFVALUE
+          cflag=.false.
+      END SELECT EFVALUE
+c
+      goto 4900
+
+ 4049 continue
+      stack_req=(/0,0,0,0,1,0,0/)
+      if(bad_args(stack_req)) return
+      iewrk=iewrk-1
+
+ 4900 continue
+      if(cflag) then
+        if(b2plot_debug.ge.4)
+     1   write(*,*) 'Applied operator ',trim(cval),
+     2   ' to Eirene stack array'
+        if(iewrk.gt.0) then
+          values(38)=minval(eirene_stack(1:nedim(1,iewrk),
+     1         0:nedim(2,iewrk)-1,iewrk))
+          values(39)=maxval(eirene_stack(1:nedim(1,iewrk),
+     1         0:nedim(2,iewrk)-1,iewrk))
+        endif
+      endif
+#endif
+      return
+
+      end subroutine select_eirene_command
 
       subroutine select_wall_stack
 
@@ -6190,7 +7173,7 @@ c-dpc still in testing phase
         case('nseg')
           description='Wall segment'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(abs(istack(iistack)).gt.nsegments) then
             write(*,*) 'No such wall segment'
@@ -6219,7 +7202,7 @@ c-dpc still in testing phase
         case ('iwlt')
           description='iwlt'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           data(1:istack(iistack)-1) = 1.0_R8
           data(istack(iistack):nbnd) = 0.0_R8
@@ -6228,7 +7211,7 @@ c-dpc still in testing phase
         case ('iwle')
           description='iwle'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           data(1:istack(iistack)) = 1.0_R8
           data(istack(iistack)+1:nbnd) = 0.0_R8
@@ -6237,7 +7220,7 @@ c-dpc still in testing phase
         case ('iweq')
           description='iweq'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           data(1:nbnd) = 0.0_R8
           data(istack(iistack)) = 1.0_R8
@@ -6246,7 +7229,7 @@ c-dpc still in testing phase
         case ('iwne')
           description='iwne'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           data(1:nbnd) = 1.0_R8
           data(istack(iistack)) = 0.0_R8
@@ -6255,7 +7238,7 @@ c-dpc still in testing phase
         case ('iwgt')
           description='iwgt'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           data(1:istack(iistack)) = 0.0_R8
           data(istack(iistack)+1:nbnd) = 1.0_R8
@@ -6264,7 +7247,7 @@ c-dpc still in testing phase
         case ('iwge')
           description='iwge'
           nz=1
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           data(1:istack(iistack)-1) = 0.0_R8
           data(istack(iistack):nbnd) = 1.0_R8
@@ -6273,7 +7256,7 @@ c-dpc still in testing phase
         case ('iswlt')
           description='iswlt'
           nz=nsw
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           wall_tmp(1:nbnd,0:istack(iistack)-1) = 1.0_R8
           wall_tmp(1:nbnd,istack(iistack):nz-1) = 0.0_R8
@@ -6282,7 +7265,7 @@ c-dpc still in testing phase
         case ('iswle')
           description='iswle'
           nz=nsw
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           wall_tmp(1:nbnd,0:istack(iistack)) = 1.0_R8
           wall_tmp(1:nbnd,istack(iistack)+1:nz-1) = 0.0_R8
@@ -6291,7 +7274,7 @@ c-dpc still in testing phase
         case ('isweq')
           description='isweq'
           nz=nsw
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           wall_tmp(1:nbnd,0:nz-1) = 0.0_R8
           wall_tmp(1:nbnd,istack(iistack)) = 1.0_R8
@@ -6300,7 +7283,7 @@ c-dpc still in testing phase
         case ('iswne')
           description='iswne'
           nz=nsw
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           wall_tmp(1:nbnd,0:nz-1) = 1.0_R8
           wall_tmp(1:nbnd,istack(iistack)) = 0.0_R8
@@ -6309,7 +7292,7 @@ c-dpc still in testing phase
         case ('iswgt')
           description='iswgt'
           nz=nsw
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           wall_tmp(1:nbnd,0:istack(iistack)) = 0.0_R8
           wall_tmp(1:nbnd,istack(iistack)+1:nz-1) = 1.0_R8
@@ -6318,7 +7301,7 @@ c-dpc still in testing phase
         case ('iswge')
           description='iswge'
           nz=nsw
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           wall_tmp(1:nbnd,0:istack(iistack)-1) = 0.0_R8
           wall_tmp(1:nbnd,istack(iistack):nz-1) = 1.0_R8
@@ -6724,7 +7707,7 @@ c normalised weights is 1
           plotting_wall=.true.
           call set_wall_on(values(14),values(15),wlinlog)
         case('wall_ank') ! add Kukushkin wall data to contour plot
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           plotting_wall=istack(iistack) .ne. 0
           call wallon(.true.,istack(iistack),values(14),values(15),
@@ -6746,34 +7729,34 @@ c normalised weights is 1
           call walloff
           call plot_wall_elements
         case('sumw')     ! sum over walls
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           call sumw()
           graphlabel(iwwrk)=graphlabel(iwwrk)
      1                 (1:lnblnk(graphlabel(iwwrk)))//' summed '
           call set_wallbarlabel(wall_label(iwwrk))
         case('intw')     ! integrate over walls
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           call intw()
           graphlabel(iwwrk)=graphlabel(iwwrk)
      1                 (1:lnblnk(graphlabel(iwwrk)))//' integrated '
           call set_wallbarlabel(wall_label(iwwrk))
         case('intw*')    ! integrate over walls (no account of segments)
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           call intwstar()
           graphlabel(iwwrk)=graphlabel(iwwrk)
      1                 (1:lnblnk(graphlabel(iwwrk)))//' integrated '
           call set_wallbarlabel(wall_label(iwwrk))
         case('pswa')     ! per wall area
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           call pswa
         case('wclvs')    ! customise wall contour levels
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          stack_req=(/1,istack(iistack),0,0,0,0/)
+          stack_req=(/1,istack(iistack),0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call wclvs(istack(iistack),rstack,irstack)
           do iclv=1,istack(iistack)
@@ -6781,7 +7764,7 @@ c normalised weights is 1
           end do
           call pop_stack(stack_req)
         case('wclvd')    ! customise wall contour level delta
-          stack_req=(/0,3,0,0,0,0/)
+          stack_req=(/0,3,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call 
      .     wclvd(rstack(irstack-2),rstack(irstack-1),rstack(irstack))
@@ -6789,7 +7772,7 @@ c normalised weights is 1
             dummy=rpop(rstack,irstack)
           end do
         case('wclvn')    ! customise wall contour level range and number
-          stack_req=(/1,2,0,0,0,0/)
+          stack_req=(/1,2,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call wclvn(rstack(irstack-1),rstack(irstack),istack(iistack))
           do iclv=1,2
@@ -6797,7 +7780,7 @@ c normalised weights is 1
           end do
           call pop_stack(stack_req)
         case('wclvp')    ! customise wall contour level by proportion
-          stack_req=(/2,0,0,0,1,0/)
+          stack_req=(/2,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           ix=ipop(istack,iistack)
           iy=ipop(istack,iistack)
@@ -6807,13 +7790,13 @@ c normalised weights is 1
           wall_label(iwwrk)=stmp
           call set_wallbarlabel(wall_label(iwwrk))
         case('wwid')     ! wall line width factor
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call walllinewidth(rstack(irstack))
           wwidth = rstack(irstack)
           dummy=rpop(rstack,irstack)
         case('wabs')     ! abs() on wall stack
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           do is=0,nwdim(2,iwwrk)-1
             do i=-1,nwdim(1,iwwrk)
@@ -6824,7 +7807,7 @@ c normalised weights is 1
      .      wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))//' (ABS)'
           call set_wallbarlabel(wall_label(iwwrk))
         case('ddw')      ! d/dw derivative along wall length
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           do is=0,nwdim(2,iwwrk)-1
             do iseg=1,nsegments
@@ -6861,8 +7844,8 @@ c normalised weights is 1
           wall_label(iwwrk)=
      .     wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))//'/(m) (d/dw)'
           call set_wallbarlabel(wall_label(iwwrk))
-        case('wsumz')    ! sum over ns
-          stack_req=(/2,0,0,0,1,0/)
+        case('wsumz')    ! sum over ns for wall stack data
+          stack_req=(/2,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           izstrt=istack(iistack-1)
           izend=istack(iistack)
@@ -6905,12 +7888,12 @@ c normalised weights is 1
           textwwk(0,iwwrk)=textbl(0)
           call pop_stack(stack_req)
           call set_wallbarlabel(wall_label(iwwrk))
-        case('pwne')     ! per ne
-          stack_req=(/0,0,0,0,1,0/)
+        case('pwne')     ! wall data per ne
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           call pwne
         case('wm+')      ! wall stack addition
-          stack_req=(/0,0,0,0,2,0/)
+          stack_req=(/0,0,0,0,0,2,0/)
           if(bad_args(stack_req)) return   ! 5900
           if(nwdim(2,iwwrk-1) .ne. nwdim(2,iwwrk) .and.
      1       nwdim(2,iwwrk-1) .ne. 1 .and. nwdim(2,iwwrk) .ne. 1) then
@@ -6940,7 +7923,7 @@ c normalised weights is 1
           iwwrk=iwwrk-1
           call set_wallbarlabel(wall_label(iwwrk))
         case('wm-')      ! wall stack subtraction
-          stack_req=(/0,0,0,0,2,0/)
+          stack_req=(/0,0,0,0,0,2,0/)
           if(bad_args(stack_req)) return   ! 5900
           if(nwdim(2,iwwrk-1) .ne. nwdim(2,iwwrk) .and.
      1       nwdim(2,iwwrk-1) .ne. 1 .and. nwdim(2,iwwrk) .ne. 1) then
@@ -6969,7 +7952,7 @@ c normalised weights is 1
           iwwrk=iwwrk-1
           call set_wallbarlabel(wall_label(iwwrk))
         case('wm*')      ! wall stack multiplication
-          stack_req=(/0,0,0,0,2,0/)
+          stack_req=(/0,0,0,0,0,2,0/)
           if(bad_args(stack_req)) return   ! 5900
           if(nwdim(2,iwwrk-1) .ne. nwdim(2,iwwrk) .and.
      1       nwdim(2,iwwrk-1) .ne. 1 .and. nwdim(2,iwwrk) .ne. 1) then
@@ -6998,7 +7981,7 @@ c normalised weights is 1
           iwwrk=iwwrk-1
           call set_wallbarlabel(wall_label(iwwrk))
         case('wm/')      ! wall stack division
-          stack_req=(/0,0,0,0,2,0/)
+          stack_req=(/0,0,0,0,0,2,0/)
           if(bad_args(stack_req)) return   ! 5900
           if(nwdim(2,iwwrk-1) .ne. nwdim(2,iwwrk) .and.
      1       nwdim(2,iwwrk-1) .ne. 1 .and. nwdim(2,iwwrk) .ne. 1) then
@@ -7032,7 +8015,7 @@ c normalised weights is 1
           iwwrk=iwwrk-1
           call set_wallbarlabel(wall_label(iwwrk))
         case('rwm+')     ! wall stack + real
-          stack_req=(/0,1,0,0,1,0/)
+          stack_req=(/0,1,0,0,0,1,0/)
           if(bad_args(stack_req)) return   ! 5900
           do is=0,nwdim(2,iwwrk)-1
             do i=1,nwdim(1,iwwrk)
@@ -7044,7 +8027,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('rwm-')     ! wall stack - real
-          stack_req=(/0,1,0,0,1,0/)
+          stack_req=(/0,1,0,0,0,1,0/)
           if(bad_args(stack_req)) return   ! 5900
           do is=0,nwdim(2,iwwrk)-1
             do i=1,nwdim(1,iwwrk)
@@ -7056,7 +8039,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('rwm*')     ! wall stack * real
-          stack_req=(/0,1,0,0,1,0/)
+          stack_req=(/0,1,0,0,0,1,0/)
           if(bad_args(stack_req)) return   ! 5900
           do is=0,nwdim(2,iwwrk)-1
             do i=1,nwdim(1,iwwrk)
@@ -7068,7 +8051,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('rwm/')     ! wall stack / real
-          stack_req=(/0,1,0,0,1,0/)
+          stack_req=(/0,1,0,0,0,1,0/)
           if(bad_args(stack_req)) return   ! 5900
           if(rstack(irstack).eq.0.0_R8) then
             write (*,*) 'Divide by zero, You lose'
@@ -7084,7 +8067,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('rwm**')    ! wall stack ** real
-          stack_req=(/0,1,0,0,1,0/)
+          stack_req=(/0,1,0,0,0,1,0/)
           if(bad_args(stack_req)) return   ! 5900
           do is=0,nwdim(2,iwwrk)-1
             do i=1,nwdim(1,iwwrk)
@@ -7100,11 +8083,11 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wdrop')    ! drop top of wall stack
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return   ! 5900
           iwwrk=iwwrk-1
         case('wdup')     ! duplicate top of wall stack
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return   ! 5900
           if(iwwrk .ge. wklng) call dropwallstackbottom()
           iwwrk=iwwrk+1
@@ -7119,7 +8102,7 @@ c normalised weights is 1
           wall_label(iwwrk)=wall_label(iwwrk-1)
           call set_wallbarlabel(wall_label(iwwrk))
         case('wswap')    ! swap top two elements of wall stack
-          stack_req=(/0,0,0,0,2,0/)
+          stack_req=(/0,0,0,0,0,2,0/)
           if(bad_args(stack_req)) return   ! 5900
           call iswap(nwdim(1,iwwrk),nwdim(1,iwwrk-1))
           call iswap(nwdim(2,iwwrk),nwdim(2,iwwrk-1))
@@ -7133,7 +8116,7 @@ c normalised weights is 1
           call strswap(wall_label(iwwrk),wall_label(iwwrk-1))
           call set_wallbarlabel(wall_label(iwwrk))
         case('wover')    ! w2 w1 --> w2 w1 w2
-          stack_req=(/0,0,0,0,2,0/)
+          stack_req=(/0,0,0,0,0,2,0/)
           if(bad_args(stack_req)) return ! 5900
           if(iwwrk .ge. wklng) call dropwallstackbottom()
           iwwrk=iwwrk+1
@@ -7148,14 +8131,14 @@ c normalised weights is 1
           wall_label(iwwrk)=wall_label(iwwrk-2)
           call set_wallbarlabel(wall_label(iwwrk))
         case('wlist')    ! list contents of wall stack
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           do i = iwwrk, 1, -1
             write(*,*) trim(wall_label(i)), 
      &       (trim(textwwk(is,i)),is=0,nwdim(2,i)-1)
           end do
         case('wsel')     ! select wall element
-          stack_req=(/1,0,0,0,1,0/)
+          stack_req=(/1,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           i1=istack(iistack)
           if(1.gt.i1.or.i1.gt.nwdim(1,iwwrk)) then
@@ -7170,7 +8153,7 @@ c normalised weights is 1
           call pop_stack(stack_req)
           call set_wallbarlabel(wall_label(iwwrk))
         case('wzsel')    ! select species in wall stack
-          stack_req=(/1,0,0,0,1,0/)
+          stack_req=(/1,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           is1=istack(iistack)
           if(0.gt.is1.or.is1.ge.nwdim(2,iwwrk)) then
@@ -7186,7 +8169,7 @@ c normalised weights is 1
           nwdim(2,iwwrk)=1
           call pop_stack(stack_req)
         case('wmmin')    ! min(w1,w2)
-          stack_req=(/0,0,0,0,2,0/) 
+          stack_req=(/0,0,0,0,0,2,0/)
           if(bad_args(stack_req)) return ! 5900
           if(nwdim(2,iwwrk-1) .ne. nwdim(2,iwwrk) .and.
      1       nwdim(2,iwwrk-1) .ne. 1 .and. nwdim(2,iwwrk) .ne. 1) then
@@ -7215,7 +8198,7 @@ c normalised weights is 1
           iwwrk=iwwrk-1
           call set_wallbarlabel(wall_label(iwwrk))
         case('wmmax')    ! max(w1,w2)
-          stack_req=(/0,0,0,0,2,0/)
+          stack_req=(/0,0,0,0,0,2,0/)
           if(bad_args(stack_req)) return ! 5900
           if(nwdim(2,iwwrk-1) .ne. nwdim(2,iwwrk) .and.
      1       nwdim(2,iwwrk-1) .ne. 1 .and. nwdim(2,iwwrk) .ne. 1) then
@@ -7244,7 +8227,7 @@ c normalised weights is 1
           iwwrk=iwwrk-1
           call set_wallbarlabel(wall_label(iwwrk))
         case('rwmmi')    ! min(r1,w1)
-          stack_req=(/0,1,0,0,1,0/)
+          stack_req=(/0,1,0,0,0,1,0/)
           if(bad_args(stack_req)) return ! 5900
           do is=0,nwdim(2,iwwrk)-1
             do i = 1, nwdim(1,iwwrk)
@@ -7256,7 +8239,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('rwmma')    ! max(r1,w1)
-          stack_req=(/0,1,0,0,1,0/)
+          stack_req=(/0,1,0,0,0,1,0/)
           if(bad_args(stack_req)) return ! 5900
           do is=0,nwdim(2,iwwrk)-1
             do i = 1, nwdim(1,iwwrk)
@@ -7268,7 +8251,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wmlt')     ! w<r
-          stack_req=(/0,1,0,0,1,0/)
+          stack_req=(/0,1,0,0,0,1,0/)
           if(bad_args(stack_req)) return ! 5900
           do is=0,nwdim(2,iwwrk)-1
             do i = 1, nwdim(1,iwwrk)
@@ -7284,7 +8267,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wmle')     ! w<=r
-          stack_req=(/0,1,0,0,1,0/)
+          stack_req=(/0,1,0,0,0,1,0/)
           if(bad_args(stack_req)) return ! 5900
           do is=0,nwdim(2,iwwrk)-1
             do i = 1, nwdim(1,iwwrk)
@@ -7300,7 +8283,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wmeq')     ! w=r
-          stack_req=(/0,1,0,0,1,0/)
+          stack_req=(/0,1,0,0,0,1,0/)
           if(bad_args(stack_req)) return ! 5900
           do is=0,nwdim(2,iwwrk)-1
             do i = 1, nwdim(1,iwwrk)
@@ -7316,7 +8299,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wmne')     ! w!=r
-          stack_req=(/0,1,0,0,1,0/)
+          stack_req=(/0,1,0,0,0,1,0/)
           if(bad_args(stack_req)) return ! 5900
           do is=0,nwdim(2,iwwrk)-1
             do i = 1, nwdim(1,iwwrk)
@@ -7332,7 +8315,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wmgt')     ! w>r
-          stack_req=(/0,1,0,0,1,0/)
+          stack_req=(/0,1,0,0,0,1,0/)
           if(bad_args(stack_req)) return ! 5900
           do is=0,nwdim(2,iwwrk)-1
             do i = 1, nwdim(1,iwwrk)
@@ -7348,7 +8331,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wmge')     ! w=>r
-          stack_req=(/0,1,0,0,1,0/)
+          stack_req=(/0,1,0,0,0,1,0/)
           if(bad_args(stack_req)) return ! 5900
           do is=0,nwdim(2,iwwrk)-1
             do i = 1, nwdim(1,iwwrk)
@@ -7364,7 +8347,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wlog')     ! log10(wall)
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           do is=0,nwdim(2,iwwrk)-1
             do i = 1, nwdim(1,iwwrk)
@@ -7379,7 +8362,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wln')      ! ln(wall)
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           do is=0,nwdim(2,iwwrk)-1
             do i = 1, nwdim(1,iwwrk)
@@ -7394,7 +8377,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wsqrt')    ! sqrt(wall)
-           stack_req=(/0,0,0,0,1,0/)
+           stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           do is=0,nwdim(2,iwwrk)-1
             do i = 1, nwdim(1,iwwrk)
@@ -7406,11 +8389,10 @@ c normalised weights is 1
               end if
             end do
           end do
-          call pop_stack(stack_req)
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wexp')     ! exp(wall)
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           do is=0,nwdim(2,iwwrk)-1
             do i = 1, nwdim(1,iwwrk)
@@ -7420,18 +8402,23 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wzrng')    ! select species range in wall stack
-          stack_req=(/2,0,0,0,1,0/)
+          stack_req=(/2,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
+          if(istack(iistack-1).gt.istack(iistack)) then
+            write(*,*) 'Parameters for wzrng must be given in ',
+     &       'ascending order!'
+            return
+          end if
           if(0.gt.istack(iistack-1).or.
      &       istack(iistack-1).ge.nwdim(2,iwwrk)) then
             write(*,*) 'Faulty first parameter is = ',istack(iistack-1),
-     &       ' for zrng!'
+     &       ' for wzrng!'
             return
           endif
           if(0.gt.istack(iistack).or.
      &       istack(iistack).ge.nwdim(2,iwwrk)) then
             write(*,*) 'Faulty second parameter is = ',istack(iistack),
-     &       ' for zrng!'
+     &       ' for wzrng!'
             return
           endif
           do is=istack(iistack-1),istack(iistack)
@@ -7444,7 +8431,7 @@ c normalised weights is 1
           nwdim(2,iwwrk)=istack(iistack)-istack(iistack-1)+1
           call pop_stack(stack_req)
         case('wchs')     ! change sign in wall stack
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           do is=0,nwdim(2,iwwrk)-1
             do i = 1, nwdim(1,iwwrk)
@@ -7455,7 +8442,7 @@ c normalised weights is 1
      1      wall_label(iwwrk)(1:lnblnk(wall_label(iwwrk)))//' (CHS)'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wtos')     ! wall array -> m
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           if(iwrk .eq. wklng) call dropstackbottom()
           iwrk=iwrk+1
@@ -7475,7 +8462,7 @@ c normalised weights is 1
           graphlabel(iwrk)=wall_label(iwwrk)
           goto 5059
         case('wtot')     ! wall array --> target
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           if(itwrk .eq. wklng) call droptargetstackbottom()
           itwrk=itwrk+1
@@ -7491,7 +8478,7 @@ c normalised weights is 1
           call set_targetbarlabel(target_label(itwrk))
           goto 5059
         case('wpos')     ! wall stack with 1 if element > 0, else 0
-          stack_req=(/0,0,0,0,1,0/)
+          stack_req=(/0,0,0,0,0,1,0/)
           if(bad_args(stack_req)) return
           do is=0,nwdim(2,iwwrk)-1
             do i=1,nwdim(1,iwwrk)
@@ -7505,7 +8492,7 @@ c normalised weights is 1
           wall_label(iwwrk)='Special'
           call set_wallbarlabel(wall_label(iwwrk))
         case('wsaw')     ! reads external data onto the wall stack
-          stack_req=(/1,0,1,0,0,0/)
+          stack_req=(/1,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
           arg=spop(sstack,isstack)
           ndata=ipop(istack,iistack)
@@ -7523,12 +8510,12 @@ c normalised weights is 1
           wall_label(iwwrk)=arg
           call set_wallbarlabel(wall_label(iwwrk))
         case('wallf')    ! add experimental wall data to plot
-          stack_req=(/0,0,1,0,0,0/)
+          stack_req=(/0,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
           wallfile=spop(sstack,isstack)
           call plot_wallfile
         case('outpw')    ! prints the value of a specific wall element
-          stack_req=(/1,0,1,0,1,0/)
+          stack_req=(/1,0,1,0,0,1,0/)
           if(bad_args(stack_req)) return
           stmp=spop(sstack,isstack)
           i=ipop(istack,iistack)
@@ -7550,7 +8537,7 @@ c normalised weights is 1
             endif
           enddo
         case('wprt')     ! output the top of wall stack to a file
-          stack_req=(/0,0,1,0,1,0/)
+          stack_req=(/0,0,1,0,0,1,0/)
           if(bad_args(stack_req)) return
           stmp=spop(sstack,isstack)
           open(99,file=stmp)
@@ -7564,7 +8551,7 @@ c normalised weights is 1
           enddo
           close(99)
         case('wtab')     ! output a table from the top of wall stack to a file
-          stack_req=(/2,0,1,0,1,0/)
+          stack_req=(/2,0,1,0,0,1,0/)
           if(bad_args(stack_req)) return
           ix2=ipop(istack,iistack)
           ix1=ipop(istack,iistack)
@@ -7594,7 +8581,7 @@ c normalised weights is 1
           enddo
           close(99)
         case('wlld')     ! ANK wall loading
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call b2pwld(istack(iistack),ismain,ismain0,boundary_namelist,
      .                BoRiS)
@@ -7608,7 +8595,7 @@ c
       goto 5900
 
  5059 continue
-      stack_req=(/0,0,0,0,1,0/)
+      stack_req=(/0,0,0,0,0,1,0/)
       if(bad_args(stack_req)) return
       iwwrk=iwwrk-1
 
@@ -7645,9 +8632,9 @@ c
           if (trglinlog.gt.2) trglinlog=trglinlog-2
           call set_trglinlog(trglinlog)
         case('tclvs')    ! customize target contour levels
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          stack_req=(/1,istack(iistack),0,0,0,0/)
+          stack_req=(/1,istack(iistack),0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call tclvs(istack(iistack),rstack,irstack)
           do iclv=1,istack(iistack)
@@ -7655,7 +8642,7 @@ c
           end do
           call pop_stack(stack_req)
         case('tclvd')    ! customise target contour level delta
-          stack_req=(/0,3,0,0,0,0/)
+          stack_req=(/0,3,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call tclvd
      .     (rstack(irstack-2),rstack(irstack-1),rstack(irstack))
@@ -7663,7 +8650,7 @@ c
             dummy=rpop(rstack,irstack)
           end do
         case('tclvn')    ! customise target contour level range and number
-          stack_req=(/1,2,0,0,0,0/)
+          stack_req=(/1,2,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call tclvn(rstack(irstack-1),rstack(irstack),istack(iistack))
           do iclv=1,2
@@ -7671,7 +8658,7 @@ c
           end do
           call pop_stack(stack_req)
         case('tclvp')    ! customise target contour level by proportion
-          stack_req=(/2,0,0,0,0,1/)
+          stack_req=(/2,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           ix=ipop(istack,iistack)
           iy=ipop(istack,iistack)
@@ -7682,7 +8669,7 @@ c
           target_label(itwrk)=stmp
           call set_targetbarlabel(target_label(itwrk))
         case('trg.w')    ! line plot versus target wall
-          stack_req=(/1,0,0,0,0,1/)
+          stack_req=(/1,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           if(1.le.istack(iistack).and.istack(iistack).le.ndepth_nml) 
      >     then
@@ -7693,7 +8680,7 @@ c
           endif
           call pop_stack(stack_req)
         case('trg.z')    ! line plot versus target depth
-          stack_req=(/1,0,0,0,0,1/)
+          stack_req=(/1,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           if(1.le.istack(iistack).and.istack(iistack).le.nbnd) then
             call trgz(istack(iistack))
@@ -7703,49 +8690,49 @@ c
           endif
           call pop_stack(stack_req)
         case('sumtrgw')  ! sum over targets along walls
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           call sumtrgw()
           target_label(itwrk)=target_label(itwrk)
      1     (1:lnblnk(target_label(itwrk)))//' summed over w'
           call set_targetbarlabel(target_label(itwrk))
         case('sumtrgz')  ! sum over targets along z
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           call sumtrgz()
           target_label(itwrk)=target_label(itwrk)
      1     (1:lnblnk(target_label(itwrk)))//' summed over z'
           call set_targetbarlabel(target_label(itwrk))
         case('inttrgw')  ! integrate over targets along walls
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           call inttrgw()
           target_label(itwrk)=target_label(itwrk)
      1     (1:lnblnk(target_label(itwrk)))//' integrated along w'
           call set_targetbarlabel(target_label(itwrk))
         case('inttrgw*') ! integrate over targets along walls (no account of segments)
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           call inttrgwstar()
           target_label(itwrk)=target_label(itwrk)
      1     (1:lnblnk(target_label(itwrk)))//' integrated along w'
           call set_targetbarlabel(target_label(itwrk))
         case('inttrgz')  ! integrate over targets along z
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           call inttrgz()
           target_label(itwrk)=target_label(itwrk)
      1     (1:lnblnk(target_label(itwrk)))//' integrated along z'
           call set_targetbarlabel(target_label(itwrk))
         case('trgabs')   ! absolute value of target data
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           target_stack(1:nbnd,:,itwrk)=abs(target_stack(1:nbnd,:,itwrk))
           target_label(itwrk)=target_label(itwrk)
      1     (1:lnblnk(target_label(itwrk)))//' (ABS) '
           call set_targetbarlabel(target_label(itwrk))
         case('trgddw')   ! target d/dw derivative along wall length
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           do is=1,ndepth_nml
             do iseg=1,nsegments
@@ -7783,7 +8770,7 @@ c
      +     '(/m) (d/dw)'
           call set_targetbarlabel(target_label(itwrk))
         case('trgddp')   ! target d/dp derivative along perpendicular direction
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           do is=1,ndepth_nml
             do iseg=1,nsegments
@@ -7815,7 +8802,7 @@ c
      +     '(/m) (d/dp)'
           call set_targetbarlabel(target_label(itwrk))
         case('trgddz')   ! target d/dz derivative along target depth
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           do i=1,nbnd
             do is=1,ndepth_nml
@@ -7843,7 +8830,7 @@ c
      +     '(/m) (d/dz)'
           call set_targetbarlabel(target_label(itwrk))
         case('rtrgm+')   ! target stack + real
-          stack_req=(/0,1,0,0,0,1/)
+          stack_req=(/0,1,0,0,0,0,1/)
           if(bad_args(stack_req)) return   ! 6900
           do i=1,ndepth_nml
             do ibnd=1,nbnd
@@ -7855,7 +8842,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('rtrgm-')   ! target stack - real
-          stack_req=(/0,1,0,0,0,1/)
+          stack_req=(/0,1,0,0,0,0,1/)
           if(bad_args(stack_req)) return   ! 6900
           do i=1,ndepth_nml
             do ibnd=1,nbnd
@@ -7867,7 +8854,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('rtrgm*')   ! target stack * real
-          stack_req=(/0,1,0,0,0,1/)
+          stack_req=(/0,1,0,0,0,0,1/)
           if(bad_args(stack_req)) return   ! 6900
           do i=1,ndepth_nml
             do ibnd=1,nbnd
@@ -7879,7 +8866,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('rtrgm/')   ! target stack / real
-          stack_req=(/0,1,0,0,0,1/)
+          stack_req=(/0,1,0,0,0,0,1/)
           if(bad_args(stack_req)) return   ! 6900
           if(rstack(irstack).eq.0.0_R8) then
             write (*,*) 'Divide by zero, You lose'
@@ -7895,7 +8882,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('rtrgm**')  ! target stack ** real
-          stack_req=(/0,1,0,0,0,1/)
+          stack_req=(/0,1,0,0,0,0,1/)
           if(bad_args(stack_req)) return   ! 6900
           do i=1,ndepth_nml
             do ibnd=1,nbnd
@@ -7915,11 +8902,11 @@ c
           target_label(itwrk)='Target temperature (K)'
           call set_targetbarlabel(target_label(itwrk))
         case('trgdrop')  ! drop top of target stack
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           itwrk=itwrk-1
         case('trgwsel')  ! select wall element in target stack
-          stack_req=(/1,0,0,0,0,1/)
+          stack_req=(/1,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           i1=istack(iistack)
           if(1.gt.i1.or.i1.gt.nbnd) then
@@ -7933,7 +8920,7 @@ c
           end do
           call pop_stack(stack_req)
         case('trgzsel')  ! select depth element in target stack
-          stack_req=(/1,0,0,0,0,1/)
+          stack_req=(/1,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           i1=istack(iistack)
           if(1.gt.i1.or.i1.gt.ndepth_nml) then
@@ -7947,7 +8934,7 @@ c
           end do
           call pop_stack(stack_req)
         case('rtrgmmi')  ! min(r1,trg)
-          stack_req=(/0,1,0,0,0,1/)
+          stack_req=(/0,1,0,0,0,0,1/)
           if(bad_args(stack_req)) return ! 6900
           do i=1,ndepth_nml
             do ibnd = 1, nbnd
@@ -7959,7 +8946,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('rtrgmma')  ! max (r1,trg)
-          stack_req=(/0,1,0,0,0,1/)
+          stack_req=(/0,1,0,0,0,0,1/)
           if(bad_args(stack_req)) return ! 6900
           do i=1,ndepth_nml
             do ibnd = 1, nbnd
@@ -7971,7 +8958,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('trglt')    ! trg<r
-          stack_req=(/0,1,0,0,0,1/)
+          stack_req=(/0,1,0,0,0,0,1/)
           if(bad_args(stack_req)) return ! 6900
           do i=1,ndepth_nml
             do ibnd = 1, nbnd
@@ -7987,7 +8974,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('trgle')    ! trg<=r
-          stack_req=(/0,1,0,0,0,1/)
+          stack_req=(/0,1,0,0,0,0,1/)
           if(bad_args(stack_req)) return ! 6900
           do i=1,ndepth_nml
             do ibnd = 1, nbnd
@@ -8003,7 +8990,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('trgeq')    ! trg=r
-          stack_req=(/0,1,0,0,0,1/)
+          stack_req=(/0,1,0,0,0,0,1/)
           if(bad_args(stack_req)) return ! 6900
           do i=1,ndepth_nml
             do ibnd = 1, nbnd
@@ -8019,7 +9006,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('trgne')    ! trg!=r
-          stack_req=(/0,1,0,0,0,1/)
+          stack_req=(/0,1,0,0,0,0,1/)
           if(bad_args(stack_req)) return ! 6900
           do i=1,ndepth_nml
             do ibnd = 1, nbnd
@@ -8035,7 +9022,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('trggt')    ! trg>r
-          stack_req=(/0,1,0,0,0,1/)
+          stack_req=(/0,1,0,0,0,0,1/)
           if(bad_args(stack_req)) return ! 6900
           do i=1,ndepth_nml
             do ibnd = 1, nbnd
@@ -8051,7 +9038,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('trgge')    ! trg>=r
-          stack_req=(/0,1,0,0,0,1/)
+          stack_req=(/0,1,0,0,0,0,1/)
           if(bad_args(stack_req)) return ! 6900
           do i=1,ndepth_nml
             do ibnd = 1, nbnd
@@ -8067,7 +9054,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('trglog')   ! log10(target)
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           do i=1,ndepth_nml
             do ibnd = 1, nbnd
@@ -8083,7 +9070,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('trgln')    ! ln(target)
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           do i=1,ndepth_nml
             do ibnd = 1, nbnd
@@ -8099,7 +9086,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('trgsqrt')  ! sqrt(target)
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           do i=1,ndepth_nml
             do ibnd = 1, nbnd
@@ -8116,7 +9103,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('trgexp')   ! exp(target)
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           do i=1,ndepth_nml
             do ibnd = 1, nbnd
@@ -8127,7 +9114,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('trgchs')   ! change sign in target stack
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           do i=1,ndepth_nml
             do ibnd = 1, nbnd
@@ -8138,7 +9125,7 @@ c
      1      target_label(itwrk)(1:lnblnk(target_label(itwrk)))//' (CHS)'
           call set_targetbarlabel(target_label(itwrk))
         case('trgtow')   ! target array --> wall
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           if(iwwrk .eq. wklng) call dropwallstackbottom()
           iwwrk=iwwrk+1
@@ -8153,7 +9140,7 @@ c
           wall_label(iwwrk)=target_label(itwrk)
           call set_wallbarlabel(target_label(itwrk))
         case('trgpos')   ! target stack with 1 if element > 0, else 0
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           do i=1,ndepth_nml
             do ibnd=1,nbnd
@@ -8167,7 +9154,7 @@ c
           target_label(itwrk)='Special'
           call set_targetbarlabel(target_label(itwrk))
         case('outptrg')  ! prints the value of a specific target element
-          stack_req=(/2,0,1,0,0,1/)
+          stack_req=(/2,0,1,0,0,0,1/)
           if(bad_args(stack_req)) return
           stmp=spop(sstack,isstack)
           i=ipop(istack,iistack)
@@ -8178,7 +9165,7 @@ c
      .       stmp(1:lnblnk(stmp)),target_stack(ibnd,i,itwrk)
           endif
         case('trgprt')   ! output the target stack to a file
-          stack_req=(/0,0,1,0,0,1/)
+          stack_req=(/0,0,1,0,0,0,1/)
           if(bad_args(stack_req)) return
           stmp=spop(sstack,isstack)
           open(99,file=stmp)
@@ -8191,7 +9178,7 @@ c
           enddo
           close(99)
         case('trgtab')   ! output a table from the top of target stack to a file
-          stack_req=(/4,0,1,0,0,1/)
+          stack_req=(/4,0,1,0,0,0,1/)
           if(bad_args(stack_req)) return
           iy2=ipop(istack,iistack)
           iy1=ipop(istack,iistack)
@@ -8225,12 +9212,12 @@ c
           enddo
           close(99)
         case('trgl')     ! ANK target loading
-          stack_req=(/2,0,0,0,0,1/)
+          stack_req=(/2,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           call b2ptrg(istack,iistack)
           call pop_stack(stack_req)
         case('trgsurf')  ! plot target plot
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           call trgsurf(1)
         case('kappa_ab') ! target heat conductivity computed as 1/(AT+B)
@@ -8324,7 +9311,7 @@ c
      .     ('Target element volume (m^{3})',target_label(itwrk))
           call set_targetbarlabel(target_label(itwrk))
         case('trgdup')   ! duplicate top of target stack
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           if(itwrk .ge. wklng) call droptargetstackbottom()
           itwrk=itwrk+1
@@ -8336,7 +9323,7 @@ c
           target_label(itwrk)=target_label(itwrk-1)
           call set_targetbarlabel(target_label(itwrk))
         case('trgswap')  ! swap top two elements of target stack
-          stack_req=(/0,0,0,0,0,2/)
+          stack_req=(/0,0,0,0,0,0,2/)
           if(bad_args(stack_req)) return
           do ibnd=1,nbnd
             do i=1,ndepth_nml
@@ -8347,7 +9334,7 @@ c
           call strswap(target_label(itwrk),target_label(itwrk-1))
           call set_targetbarlabel(target_label(itwrk))
         case('trgover')  ! t2 t1 --> t2 t1 t2
-          stack_req=(/0,0,0,0,0,2/)
+          stack_req=(/0,0,0,0,0,0,2/)
           if(bad_args(stack_req)) return
           if(iwwrk .ge. wklng) call droptargetstackbottom()
           itwrk=itwrk+1
@@ -8359,13 +9346,13 @@ c
           target_label(itwrk)=target_label(itwrk-2)
           call set_targetbarlabel(target_label(itwrk))
         case('trglist')  ! list contents of target stack
-          stack_req=(/0,0,0,0,0,1/)
+          stack_req=(/0,0,0,0,0,0,1/)
           if(bad_args(stack_req)) return
           do i = itwrk, 1, -1
             write(*,'(a)') trim(target_label(i))
           end do
         case('trgmmin')  ! min(t1,t2)
-          stack_req=(/0,0,0,0,0,2/) 
+          stack_req=(/0,0,0,0,0,0,2/)
           if(bad_args(stack_req)) return ! 5900
           do ibnd=1,nbnd
             do i = 1, ndepth_nml
@@ -8383,7 +9370,7 @@ c
           itwrk=itwrk-1
           call set_targetbarlabel(target_label(itwrk))
         case('trgmmax')  ! max(t1,t2)
-          stack_req=(/0,0,0,0,0,2/)
+          stack_req=(/0,0,0,0,0,0,2/)
           if(bad_args(stack_req)) return ! 5900
           do ibnd=1,nbnd
             do i = 1, ndepth_nml
@@ -8461,7 +9448,7 @@ c
           target_label(itwrk)='East boundary'
           call set_targetbarlabel(target_label(itwrk))
         case('trgseg')   ! target segment
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(abs(istack(iistack)).gt.nsegments) then
             write(*,*) 'No such wall segment'
@@ -8507,7 +9494,7 @@ c
           target_label(itwrk)='Target depth index'
           call set_targetbarlabel(target_label(itwrk))
         case ('itrglt')   ! itrglt
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           is = istack(iistack)
           if(is.gt.nbnd .or. is.le.0) then
@@ -8521,7 +9508,7 @@ c
           target_label(itwrk)='itrglt'
           call set_targetbarlabel(target_label(itwrk))
         case ('itrgle')   ! itrgle
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           is = istack(iistack)
           if(is.gt.nbnd .or. is.le.0) then
@@ -8535,7 +9522,7 @@ c
           target_label(itwrk)='itrgle'
           call set_targetbarlabel(target_label(itwrk))
         case ('itrgeq')   ! itrgeq
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           is = istack(iistack)
           if(is.gt.nbnd .or. is.le.0) then
@@ -8549,7 +9536,7 @@ c
           target_label(itwrk)='itrgeq'
           call set_targetbarlabel(target_label(itwrk))
         case ('itrgne')   ! itrgne
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           is = istack(iistack)
           if(is.gt.nbnd .or. is.le.0) then
@@ -8563,7 +9550,7 @@ c
           target_label(itwrk)='itrgeq'
           call set_targetbarlabel(target_label(itwrk))
         case ('itrggt')   ! itrggt
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           is = istack(iistack)
           if(is.gt.nbnd .or. is.le.0) then
@@ -8577,7 +9564,7 @@ c
           target_label(itwrk)='itrggt'
           call set_targetbarlabel(target_label(itwrk))
         case ('itrgge')   ! itrgge
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           is = istack(iistack)
           if(is.gt.nbnd .or. is.le.0) then
@@ -8591,7 +9578,7 @@ c
           target_label(itwrk)='itrgge'
           call set_targetbarlabel(target_label(itwrk))
         case ('ztrglt')   ! ztrglt
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           itmp = istack(iistack)
           if(itmp.gt.ndepth_nml .or. itmp.le.0) then
@@ -8605,7 +9592,7 @@ c
           target_label(itwrk)='ztrglt'
           call set_targetbarlabel(target_label(itwrk))
         case ('ztrgle')   ! ztrgle
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           itmp = istack(iistack)
           if(itmp.gt.ndepth_nml .or. itmp.le.0) then
@@ -8619,7 +9606,7 @@ c
           target_label(itwrk)='ztrgle'
           call set_targetbarlabel(target_label(itwrk))
         case ('ztrgeq')   ! ztrgeq
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           itmp = istack(iistack)
           if(itmp.gt.ndepth_nml .or. itmp.le.0) then
@@ -8633,7 +9620,7 @@ c
           target_label(itwrk)='ztrgeq'
           call set_targetbarlabel(target_label(itwrk))
         case ('ztrgne')   ! ztrgne
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           itmp = istack(iistack)
           if(itmp.gt.ndepth_nml .or. itmp.le.0) then
@@ -8647,7 +9634,7 @@ c
           target_label(itwrk)='ztrgeq'
           call set_targetbarlabel(target_label(itwrk))
         case ('ztrggt')   ! ztrggt
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           itmp = istack(iistack)
           if(itmp.gt.ndepth_nml .or. itmp.le.0) then
@@ -8661,7 +9648,7 @@ c
           target_label(itwrk)='ztrggt'
           call set_targetbarlabel(target_label(itwrk))
         case ('ztrgge')   ! ztrgge
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           itmp = istack(iistack)
           if(itmp.gt.ndepth_nml .or. itmp.le.0) then
@@ -8675,7 +9662,7 @@ c
           target_label(itwrk)='ztrgge'
           call set_targetbarlabel(target_label(itwrk))
         case('trgm+')    ! target stack addition
-          stack_req=(/0,0,0,0,0,2/)
+          stack_req=(/0,0,0,0,0,0,2/)
           if(bad_args(stack_req)) return
           do ibnd=1,nbnd
             do i=1,ndepth_nml
@@ -8694,7 +9681,7 @@ c
           itwrk=itwrk-1
           call set_targetbarlabel(target_label(itwrk))
         case('trgm-')    ! target stack subtraction
-          stack_req=(/0,0,0,0,0,2/)
+          stack_req=(/0,0,0,0,0,0,2/)
           if(bad_args(stack_req)) return   ! 5900
           do ibnd=1,nbnd
             do i=1,ndepth_nml
@@ -8712,7 +9699,7 @@ c
           itwrk=itwrk-1
           call set_targetbarlabel(target_label(itwrk))
         case('trgm*')    ! target stack multiplication
-          stack_req=(/0,0,0,0,0,2/)
+          stack_req=(/0,0,0,0,0,0,2/)
           if(bad_args(stack_req)) return   ! 5900
           do ibnd=1,nbnd
             do i=1,ndepth_nml
@@ -8730,7 +9717,7 @@ c
           itwrk=itwrk-1
           call set_targetbarlabel(target_label(itwrk))
         case('trgm/')    ! target stack division
-          stack_req=(/0,0,0,0,0,2/)
+          stack_req=(/0,0,0,0,0,0,2/)
           if(bad_args(stack_req)) return   ! 5900
           do ibnd=1,nbnd
             do i=1,ndepth_nml
@@ -8888,12 +9875,14 @@ c
           typeofplot=1   ! physical domain only
         case('comp')     ! computational domain only
           typeofplot=2   ! computational domain only
+        case('trigmesh') ! overlay triangular grid
+          call trigmesh
         case('mesh')     ! overlay mesh
           call mesh
         case('expl')     ! toggle value of expline
           expline=.not.expline
         case('page')     ! set number of graphs per page
-          stack_req=(/2,0,0,0,0,0/)
+          stack_req=(/2,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call b2page(istack(iistack-1),istack(iistack))
           call pop_stack(stack_req)
@@ -8906,9 +9895,9 @@ c
         case('linx')     ! linear x plot
           if(linlog.gt.2) linlog=linlog-2
         case('clvs')     ! customise contour levels
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
-          stack_req=(/1,istack(iistack),0,0,0,0/)
+          stack_req=(/1,istack(iistack),0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call clvs(istack(iistack),rstack,irstack)
           do iclv=1,istack(iistack)
@@ -8916,14 +9905,14 @@ c
           end do
           call pop_stack(stack_req)
         case('clvd')     ! customise contour level delta
-          stack_req=(/0,3,0,0,0,0/)
+          stack_req=(/0,3,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call clvd(rstack(irstack-2),rstack(irstack-1),rstack(irstack))
           do iclv=1,3
             dummy=rpop(rstack,irstack)
           end do
         case('clvn')     ! customise contour level range and number
-          stack_req=(/1,2,0,0,0,0/)
+          stack_req=(/1,2,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call clvn(rstack(irstack-1),rstack(irstack),istack(iistack))
           do iclv=1,2
@@ -8931,7 +9920,7 @@ c
           end do
           call pop_stack(stack_req)
         case('clvp')     ! customise contour level by proportion
-          stack_req=(/2,0,0,1,0,0/)
+          stack_req=(/2,0,0,1,0,0,0/)
           if(bad_args(stack_req)) return
           ix=ipop(istack,iistack)
           iy=ipop(istack,iistack)
@@ -8940,12 +9929,12 @@ c
      -     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk))),'{',ix,iy,' }'
           graphlabel(iwrk)=stmp
         case('debu','debug')  ! set debugging level
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           b2plot_debug=ipop(istack,iistack)
           write(*,*) 'Debugging set to ',b2plot_debug
         case('exps')     ! set symbol for experimental data
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           expsymbol=ipop(istack,iistack)
         case('eclv')     ! do not fill contour Levels
@@ -8953,7 +9942,7 @@ c
         case('fclv')     ! do fill contour Levels
           call nofill(.false.)
         case('font')     ! set font
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call font(istack(iistack))
           call pop_stack(stack_req)
@@ -8966,37 +9955,43 @@ c
         case('lbof')     ! labeling on / off
           call labelon(.false.)
         case('lwid')     ! line width factor
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call linewidth(rstack(irstack))
           lwidth=rpop(rstack,irstack)
         case('zwid')     ! axis line width factor
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call axislinewidth(rstack(irstack))
           zwidth=rpop(rstack,irstack)
         case('lfsz')     ! line label font size
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call set_line_font_size(istack(iistack))
           lfsz=istack(iistack)
           call pop_stack(stack_req)
         case('grid')     ! grid on
           call gridon(.true.)
+        case('trig')     ! triangular grid on
+          call trigon(.true.)
         case('clvl')     ! contour level lines off
           call clvl(.false.)
         case('spln')     ! switch on interpolation
           call ipolate(.true.)
         case('arow')     ! change default arrow length
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           arrowl=rpop(rstack,irstack)
+        case('earow')    ! change default arrow length for Eirene stack data
+          stack_req=(/0,1,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+          earrowl=rpop(rstack,irstack)
         case('arww')     ! change default arrow width
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           arroww=rpop(rstack,irstack)
         case('acol')     ! colour index for arrows
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           acol=istack(iistack)
           call pop_stack(stack_req)
@@ -9009,19 +10004,19 @@ c
         case('nocp')     ! do not plot contour plot
           call contourplot(.false.)
         case('sepw')     ! change separatrix line width
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           sepwidth=rpop(rstack,irstack)
         case('ewid')     ! change experimental data line width
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           ewidth=rpop(rstack,irstack)
         case('owid')     ! change outline line width
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           owidth=rpop(rstack,irstack)
         case('vwid')     ! change vessel line width
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           vwidth=rpop(rstack,irstack)
         case('sq')       ! square aspect ratio
@@ -9037,30 +10032,30 @@ c
         case('same')     ! next graph on same axes
           call set_same_page
         case('filo')     ! fill option
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call set_fill_option(istack(iistack))
           call pop_stack(stack_req)
         case('i+')       ! i1 + i2
-          stack_req=(/2,0,0,0,0,0/)
+          stack_req=(/2,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           it2=ipop(istack,iistack)
           it1=ipop(istack,iistack)
           call ipush(istack,iistack,it1+it2)
         case('i-')       ! i1 - i2
-          stack_req=(/2,0,0,0,0,0/)
+          stack_req=(/2,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           it2=ipop(istack,iistack)
           it1=ipop(istack,iistack)
           call ipush(istack,iistack,it1-it2)
         case('i*')       ! i1 * i2
-          stack_req=(/2,0,0,0,0,0/)
+          stack_req=(/2,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           it2=ipop(istack,iistack)
           it1=ipop(istack,iistack)
           call ipush(istack,iistack,it1*it2)
         case('i/')       ! i1 / i2
-          stack_req=(/2,0,0,0,0,0/)
+          stack_req=(/2,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           it2=ipop(istack,iistack)
           it1=ipop(istack,iistack)
@@ -9070,7 +10065,7 @@ c
           endif
           call ipush(istack,iistack,it1/it2)
         case('i**')      ! i1 ** i2
-          stack_req=(/2,0,0,0,0,0/)
+          stack_req=(/2,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           it2=ipop(istack,iistack)
           it1=ipop(istack,iistack)
@@ -9080,19 +10075,19 @@ c
           endif
           call ipush(istack,iistack,it1**it2)
         case('itor')     ! integer --> real stack
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           dummy=real(ipop(istack,iistack))
           call rpush(rstack,irstack,dummy)
         case('itostr')   ! integer --> string stack
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           write(hlp_frm,'(a,i2,a)') 
      .     '(i',len_of_digits(istack(iistack)),')'
           write(stmp,hlp_frm) ipop(istack,iistack)
           call spush(sstack,isstack,stmp)
         case('itom')     ! integer --> matrix stack
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(iwrk .eq. wklng) call dropstackbottom()
           iwrk=iwrk+1
@@ -9106,8 +10101,27 @@ c
           write(hlp_frm,'(a,i2,a)') 
      .     '(i',len_of_digits(istack(iistack)),')'
           write(graphlabel(iwrk),hlp_frm) ipop(istack,iistack)
+        case('itoe')     ! integer --> Eirene stack
+          stack_req=(/1,0,0,0,0,0,0/)
+          if(bad_args(stack_req)) return
+#ifdef B25_EIRENE
+          if(iewrk .eq. wklng) call dropeirenestackbottom()
+          iewrk=iewrk+1
+          nedim(1,iewrk)=ntrii
+          nedim(2,iewrk)=1
+          eirene_stack(1:ntrii,0,iewrk)=real(istack(iistack))
+          values(38)=real(istack(iistack))
+          values(39)=real(istack(iistack))
+          textewk(0,iewrk)=textbl(0)
+          write(hlp_frm,'(a,i2,a)') 
+     .     '(i',len_of_digits(istack(iistack)),')'
+          write(eirene_label(iewrk),hlp_frm) ipop(istack,iistack)
+#else
+          write(*,*) 'Must compile with Eirene for itoe function'
+          call pop_stack(stack_req)
+#endif
         case('itow')     ! integer --> wall stack
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(iwwrk .eq. wklng) call dropwallstackbottom()
           iwwrk=iwwrk+1
@@ -9122,7 +10136,7 @@ c
           write(wall_label(iwwrk),hlp_frm) ipop(istack,iistack)
           call set_wallbarlabel(wall_label(iwwrk))
         case('itot')     ! integer --> target stack
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(itwrk .eq. wklng) call droptargetstackbottom()
           itwrk=itwrk+1
@@ -9134,7 +10148,7 @@ c
           write(target_label(itwrk),hlp_frm) ipop(istack,iistack)
           call set_targetbarlabel(target_label(itwrk))
         case('iprt')     ! output the integer stack
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do is = iistack, 1, -1
             write(*,*) istack(is)
@@ -9143,25 +10157,25 @@ c
             endif
           enddo
         case('r+')       ! r1 + r2
-          stack_req=(/0,2,0,0,0,0/)
+          stack_req=(/0,2,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           t2=rpop(rstack,irstack)
           t1=rpop(rstack,irstack)
           call rpush(rstack,irstack,t1+t2)
         case('r-')       ! r1 - r2
-          stack_req=(/0,2,0,0,0,0/)
+          stack_req=(/0,2,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           t2=rpop(rstack,irstack)
           t1=rpop(rstack,irstack)
           call rpush(rstack,irstack,t1-t2)
         case('r*')       ! r1 * r2
-          stack_req=(/0,2,0,0,0,0/)
+          stack_req=(/0,2,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           t2=rpop(rstack,irstack)
           t1=rpop(rstack,irstack)
           call rpush(rstack,irstack,t1*t2)
         case('r/')       ! r1 / r2
-          stack_req=(/0,2,0,0,0,0/)
+          stack_req=(/0,2,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           t2=rpop(rstack,irstack)
           t1=rpop(rstack,irstack)
@@ -9171,7 +10185,7 @@ c
           endif
           call rpush(rstack,irstack,t1/t2)
         case('r**')      ! r1 ** r2
-          stack_req=(/0,2,0,0,0,0/)
+          stack_req=(/0,2,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           t2=rpop(rstack,irstack)
           t1=rpop(rstack,irstack)
@@ -9181,12 +10195,12 @@ c
           endif
           call rpush(rstack,irstack,t1**t2)
         case('rtostr')   ! real --> string stack
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           write(stmp,'(1pe15.8)') rpop(rstack,irstack)
           call spush(sstack,isstack,stmp)
         case('rprt')     ! output the real stack
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           do is = irstack, 1, -1
             write(*,'(1pe15.8)') rstack(is)
@@ -9197,11 +10211,11 @@ c
         case('new')      ! new page
           call set_new_page
         case('lbsz')     ! label size
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call set_lbsz(rpop(rstack,irstack))
         case('ndec')     ! number of decades
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(istack(iistack).eq.0) then  ! restore default
             call set_ndec(10)
@@ -9236,24 +10250,24 @@ c
      .     ('${HOST} ${PWD} `date` T=${TIME}',stmp)
           call clear_extralabel(stmp)
         case('mvsk')     ! movie skip
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           movie_skip=istack(iistack)
           call pop_stack(stack_req)
         case('ave')      ! number of things to average over
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           average=istack(iistack)
           call pop_stack(stack_req)
         case('t_#p')     ! number of trajectories
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call t_setnplot(istack(iistack))
           call pop_stack(stack_req)
         case('reso')     ! reset output
           call resetoutput
         case('swid')     ! part of tcl/tk interface
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call setwinid(istack(iistack))
           call pop_stack(stack_req)
@@ -9264,67 +10278,67 @@ c
         case('t_r-')     ! ratio false
           ratio=.false.
         case('mcol')     ! colour index of mesh
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           mcol=istack(iistack)
           call pop_stack(stack_req)
         case('scol')     ! colour index of separatrix
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           scol=istack(iistack)
           call pop_stack(stack_req)
         case('vcol')     ! colour index of vessel
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           vcol=istack(iistack)
           call pop_stack(stack_req)
         case('ocol')     ! colour index of grid outline
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           ocol=istack(iistack)
           call pop_stack(stack_req)
         case('zcol')     ! colour index of zero lines
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call set_axes_color(istack(iistack))
           zcol=istack(iistack)
           call pop_stack(stack_req)
         case('hcol')     ! colour index of text header
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call set_header_color(istack(iistack))
           hcol=istack(iistack)
           call pop_stack(stack_req)
         case('gcol')     ! colour index of graph title
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call set_title_color(istack(iistack))
           gcol=istack(iistack)
           call pop_stack(stack_req)
         case('bcol')     ! colour index of bar label title
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call set_barlabel_color(istack(iistack))
           bcol=istack(iistack)
           call pop_stack(stack_req)
         case('xcol')     ! colour index of extralabel
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call set_extralabel_color(istack(iistack))
           xcol=istack(iistack)
           call pop_stack(stack_req)
         case('dcol')     ! colour index for matrix data line plots
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           dcol=istack(iistack)
           call pop_stack(stack_req)
         case('wcol')     ! colour index for wall data line plots
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           wcol=istack(iistack)
           call pop_stack(stack_req)
         case('tcol')     ! colour index for target data line plots
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           tcol=istack(iistack)
           call pop_stack(stack_req)
@@ -9334,23 +10348,23 @@ c
         case('noax')     ! no axes
           call set_noax
         case('part')     ! partition colour map
-          stack_req=(/0,1,0,0,0,0/)
+          stack_req=(/0,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call set_partition_colors(rpop(rstack,irstack))
         case('lbsa')     ! toggle label lines
           call toggle_label_lines
         case('ytra')     ! transform the "y" coordinate for comparison to experiment
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           y_transform_l=istack(iistack)
           call pop_stack(stack_req)
         case('ecol')     ! colour index of experimental data
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           ecol=istack(iistack)
           call pop_stack(stack_req)
         case('nspe','nspec')    ! new spectrometer
-          stack_req=(/3,0,0,0,0,0/)
+          stack_req=(/3,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
 c     Parameters on istack: <species number> <wavelength in A>
 c     <delta wavelength in A> nspe
@@ -9361,7 +10375,7 @@ c     <delta wavelength in A> nspe
         case('spec')     ! old spectrometer
           call spect
         case('coro')     ! print coronal rates
-          stack_req=(/1,1,0,0,0,0/)
+          stack_req=(/1,1,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call callgetsa(ns,rstack(irstack),istack(iistack))
           call pop_stack(stack_req)
@@ -9372,7 +10386,7 @@ c     <delta wavelength in A> nspe
         case('shco')     ! part of tcl/tk
           continue
         case('user')     ! call a user function "b2paux"
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           call b2paux(istack(iistack))
           call pop_stack(stack_req)
@@ -9385,7 +10399,7 @@ c     <delta wavelength in A> nspe
             close(nwtf)
           end if
         case('omp')      ! set jxa (OMP)
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(-1.le.istack(iistack).and.istack(iistack).le.nx) then
             jxa = ipop(istack,iistack)
@@ -9396,7 +10410,7 @@ c     <delta wavelength in A> nspe
             call pop_stack(stack_req)
           endif
         case('imp')      ! set jxi (IMP)
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(-1.le.istack(iistack).and.istack(iistack).le.nx) then
             jxi = ipop(istack,iistack)
@@ -9407,7 +10421,7 @@ c     <delta wavelength in A> nspe
             call pop_stack(stack_req)
           endif
         case('yref')     ! set yref
-          stack_req=(/1,0,0,0,0,0/)
+          stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
           if(-2.le.istack(iistack).and.istack(iistack).le.ny) then
             iyref = ipop(istack,iistack)
@@ -9431,7 +10445,7 @@ c     <delta wavelength in A> nspe
       end subroutine select_flvalue
 
       LOGICAL FUNCTION bad_args(stack_req)
-      integer stack_req(6)
+      integer stack_req(7)
       bad_args=.false.
       if(stack_req(1).gt.iistack) then
         write(*,*) 'Insufficient data on integer stack'
@@ -9449,18 +10463,22 @@ c     <delta wavelength in A> nspe
         write(*,*) 'Insufficient data on matrix stack'
         bad_args= .true.
       endif
-      if(stack_req(5).gt.iwwrk) then
+      if(stack_req(5).gt.iewrk) then
+        write(*,*) 'Insufficient data on Eirene stack'
+        bad_args= .true.
+      endif
+      if(stack_req(6).gt.iwwrk) then
         write(*,*) 'Insufficient data on wall stack'
         bad_args= .true.
       endif
-      if(stack_req(6).gt.itwrk) then
+      if(stack_req(7).gt.itwrk) then
         write(*,*) 'Insufficient data on target stack'
         bad_args= .true.
       endif
       END FUNCTION bad_args
 
       subroutine pop_stack(stack_req)
-      integer stack_req(6),is,itmp
+      integer stack_req(7),is,itmp
       do is=1,stack_req(1)
         itmp=ipop(istack,iistack)
       enddo

@@ -28,6 +28,35 @@ c
       return
       end subroutine clvn
 c
+      subroutine eclvn(clvmin,clvmax,ncls)
+      use b2mod_types
+      implicit none
+#include "graphics_vars.h"
+      real (kind=R8) ::
+     * clvmin,clvmax,delta
+      integer :: iclv, ncls
+      external subini, subend, xerrab
+
+      call subini ('eclvn')
+      nofecls=ncls
+      if(nofecls.eq.0) then
+        call xerrab ('You set number of Eirene contour levels to 0')
+      elseif(nofecls.eq.1) then
+        eclval(1)=(clvmax+clvmin)*0.5_R8
+        write (*,*) 'You specified 1 Eirene contour level at',eclval(1)
+      else
+        delta=(clvmax-clvmin)/(nofecls-1)
+        write (*,*) 'User specified',nofecls,'Eirene contour levels'
+        write (*,*) 'Using customised Eirene contour levels:'
+        do iclv=1,nofecls
+          eclval(iclv)=clvmin+(iclv-1)*delta
+          write (*,*) 'Eirene contour level',iclv,'at',eclval(iclv)
+        enddo
+      endif
+      call subend ()
+      return
+      end subroutine eclvn
+c
       subroutine wclvn(clvmin,clvmax,ncls)
       use b2mod_types
       implicit none

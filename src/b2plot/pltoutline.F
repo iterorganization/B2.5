@@ -149,3 +149,72 @@ c           call lined_d(brx+uu1,bzy+vv1,brx+uu2,bzy+vv2)
       if (b2plot_debug.ge.2) write (*,*) 'finished drawing arrows'
       return
       end subroutine plot_arrows
+c
+      subroutine plot_trig_arrows(is)
+      use b2mod_types
+      use b2mod_b2plot
+      use b2mod_b2plot_debug
+#ifdef B25_EIRENE
+      use eirmod_ctrig
+      implicit none
+      integer is,i
+      real (kind=R8) ::
+     * fmax,fmay,fmmax,dfx,dfy,uuu,vvv,r,sb,cb,rl,rd,brx,bzy,
+     * uu1,vv1,uu2,vv2,centroid(0:1)
+      real (kind=R8) :: triangleCentroid
+      external triangleCentroid
+      intrinsic max, sqrt
+
+      fmax=earrowx(1,is)
+      fmay=earrowy(1,is)
+      fmmax=sqrt(fmax**2+fmay**2)
+      do i=1,ntrii
+        fmax=earrowx(i,is)
+        fmay=earrowy(i,is)
+        fmmax=max(fmmax,sqrt(fmax*fmax+fmay*fmay))
+      enddo
+      if(fmmax.eq.0.0_R8) then
+        write(*,*) 'Cannot plot arrows for a zero field'
+        return
+      endif
+      if (b2plot_debug.ge.2) write (*,*) 'drawing arrows'
+#ifndef PLPLOT
+      call lastd
+      call gslwsc_d(arroww) ! increase arrow line width
+      if (acol .gt. 1) call gsplci(acol) ! change arrow colour
+#endif
+      do i=1,ntrii
+        centroid=triangleCentroid(xtrian(necke(1,i)),ytrian(necke(1,i)),
+     .                            xtrian(necke(2,i)),ytrian(necke(2,i)),
+     .                            xtrian(necke(3,i)),ytrian(necke(3,i)))
+        brx=centroid(0)
+        bzy=centroid(1)
+        dfx=earrowx(i,is)/fmmax
+        dfy=earrowy(i,is)/fmmax
+        uuu=arrowl*dfx
+        vvv=arrowl*dfy
+        r=sqrt(uuu**2+vvv**2)
+        sb=vvv/r
+        cb=uuu/r
+        rl=0.2_R8*r
+        rd=0.1_R8*r
+        uu1=uuu-rl*cb+rd*sb
+        vv1=vvv-rl*sb-rd*cb
+        uu2=uuu-rl*cb-rd*sb
+        vv2=vvv-rl*sb+rd*cb
+        call lined_d(brx,bzy,brx+uuu,bzy+vvv)
+        call lined_d(brx+uuu,bzy+vvv,brx+uu1,bzy+vv1)
+        call lined_d(brx+uuu,bzy+vvv,brx+uu2,bzy+vv2)
+c       call lined_d(brx+uu1,bzy+vv1,brx+uu2,bzy+vv2)
+      enddo
+#ifndef PLPLOT
+      call gslwsc_d(1.0_R8)
+      if (acol .gt. 1) then
+        call lastd
+        call gsplci(1)
+      endif
+#endif
+      if (b2plot_debug.ge.2) write (*,*) 'finished drawing arrows'
+#endif
+      return
+      end subroutine plot_trig_arrows

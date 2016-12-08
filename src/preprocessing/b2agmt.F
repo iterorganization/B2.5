@@ -102,9 +102,9 @@
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
-     *   trim1, norm, dist, sinang, cosang
+     *   trim1, norm, dist, sinang, cosang, quadCentroid
       external subini, subend, xertst, ipgetr, ipgeti
-      external b2xvsg
+      external b2xvsg, quadCentroid
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
       dist(ix,iy,i,j) = norm (
@@ -293,10 +293,14 @@
       call subend ()
       return
 
-      contains
-  		
+*-----------------------------------------------------------------------
+*.end b2agmt
+
+      end subroutine b2agmt
+
 C Area of triangle given by vertex coordinates
       function triangleArea( x0, y0, x1, y1, x2, y2 )
+      use b2mod_types
       implicit none
       real (kind=R8) :: triangleArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2
@@ -309,6 +313,7 @@ C Area of triangle given by vertex coordinates
   
 C Coordinates of centroid of a triangle given by vertex coordinates
       function triangleCentroid( x0, y0, x1, y1, x2, y2 )
+      use b2mod_types
       implicit none
       real (kind=R8) :: triangleCentroid(0:1)
       real (kind=R8) :: x0, y0, x1, y1, x2, y2
@@ -322,8 +327,11 @@ C Coordinates of centroid of a quadrangle given by vertex coordinates
 C Corners are numbered in the B2 convention 2-3
 C                                           0-1
       function quadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
+      use b2mod_types
       implicit none
       real (kind=R8) :: quadCentroid(0:1)
+      real (kind=R8) :: triangleCentroid, triangleArea
+      external triangleCentroid, triangleArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
   
       quadCentroid =
@@ -335,8 +343,3 @@ C                                           0-1
      &   + triangleArea(x0,y0,x2,y2,x3,y3) )
       return
       end function quadCentroid
-
-*-----------------------------------------------------------------------
-*.end b2agmt
-
-      end subroutine b2agmt

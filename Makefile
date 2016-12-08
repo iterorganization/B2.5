@@ -591,6 +591,9 @@ ${OBJDIR}/eirmod_ccona.${MOD}:
 ${OBJDIR}/eirmod_ccoupl.${MOD}:
 	touch ${OBJDIR}/eirmod_ccoupl.${MOD}
 
+${OBJDIR}/eirmod_cestim.${MOD}:
+	touch ${OBJDIR}/eirmod_cestim.${MOD}
+
 ${OBJDIR}/eirmod_clogau.${MOD}:
 	touch ${OBJDIR}/eirmod_clogau.${MOD}
 
