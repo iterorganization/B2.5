@@ -88,6 +88,11 @@ C     READ IN THE NUMBER OF TRIANGLES AND ATTRIBUTES OF THE TRIANGLES
         call xerrab('Mismatch between fort.34 and fort.35 files!')
       END IF
 
+      CALL EIRENE_ALLOC_CTRIG
+      CALL EIRENE_ALLOC_CESTIM(1)
+      CALL EIRENE_ALLOC_CESTIM(2)
+      CALL EIRENE_ASSOCIATE_CESTIM
+
       READ(33,*,IOSTAT=IO) (XTRIAN(I),I=1,NRKNOT)
       READ(33,*,IOSTAT=IO) (YTRIAN(I),I=1,NRKNOT)
       IF(IO.GT.0) THEN
@@ -129,7 +134,7 @@ C
       open(unit=47,file='fort.46.2',status='unknown')
       write(*,*) 'Writing fort.46.2'
 C
-      READ(46,'(i4,2x,i8)',END=99,ERR=99) idummy,jvft46
+      READ(46,*,END=99,ERR=99) idummy,jvft46
       IF (IDUMMY /= NTRII) THEN
         WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH '
         WRITE (*,*) ' IN GRID AND DATA FILES'

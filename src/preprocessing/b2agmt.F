@@ -330,7 +330,8 @@ C                                           0-1
       use b2mod_types
       implicit none
       real (kind=R8) :: quadCentroid(0:1)
-      real (kind=R8) :: triangleCentroid, triangleArea
+      real (kind=R8) :: triangleCentroid
+      real (kind=R8) :: triangleArea
       external triangleCentroid, triangleArea
       real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
   

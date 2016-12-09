@@ -28,13 +28,17 @@ c
       use eirmod_extrab25
       use eirmod_ctrig
       use eirmod_cestim
+      use eirmod_comusr
+     , , only: eirene_alloc_comusr
+      use eirmod_coutau
+     , , only: eirene_alloc_coutau
 #endif
       implicit none
 
 *  -- LOCAL SCALARS --
 #ifdef B25_EIRENE
       INTEGER is, i, j, n, io, idummy, jvft46
-      real (kind=R8) :: width, centroid(0:1)
+      real (kind=R8) :: width
       logical ex
 #endif
 
@@ -42,8 +46,8 @@ c
       external subini, subend
 #ifdef B25_EIRENE
       external ipgetr, xertst
-      real (kind=R8) :: TriangleArea, TriangleCentroid
-      external TriangleArea, TriangleCentroid
+      real (kind=R8) :: triangleArea
+      external triangleArea
 *   ..initialisation
       data width /1.0_R8/
       save width
@@ -97,6 +101,15 @@ C     READ IN THE NUMBER OF TRIANGLES AND ATTRIBUTES OF THE TRIANGLES
         WRITE (*,*) ' PLEASE CHECK THE GEOMETRY '
         call xerrab('Mismatch between fort.34 and fort.35 files!')
       END IF
+
+      CALL EIRENE_ALLOC_CTRIG
+      CALL EIRENE_ALLOC_CESTIM(1)
+      CALL EIRENE_ALLOC_COMUSR(1)
+      CALL EIRENE_ALLOC_COUTAU
+      CALL EIRENE_SETPRM
+      CALL EIRENE_ALLOC_CESTIM(2)
+      CALL EIRENE_ASSOCIATE_CESTIM
+      call alloc_b2mod_b2plot_eirene(natmi,nmoli,nioni,ntrii,wklng)
 
       READ(33,*,IOSTAT=IO) (XTRIAN(I),I=1,NRKNOT)
       READ(33,*,IOSTAT=IO) (YTRIAN(I),I=1,NRKNOT)
@@ -152,26 +165,22 @@ C
       else if (isymm.eq.1 .or. isymm.eq.2) then
 *    ..case of rotational symmetry about crx=0 axis
         do i=1,ntrii
-          centroid=triangleCentroid(
-     .     xtrian(necke(1,i)), ytrian(necke(1,i)),
-     .     xtrian(necke(2,i)), ytrian(necke(2,i)),
-     .     xtrian(necke(3,i)), ytrian(necke(3,i)))
-          triangle_vol(i)=triangle_area(i)*2.0_R8*pi*centroid(0)
+          triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
+     .     (xtrian(necke(1,i))+xtrian(necke(2,i))+xtrian(necke(3,i)))/
+     .      3.0_R8
         end do
       else if (isymm.eq.3 .or. isymm.eq.4) then
 *    ..case of rotational symmetry about cry=0 axis
         do i=1,ntrii
-          centroid=triangleCentroid(
-     .     xtrian(necke(1,i)), ytrian(necke(1,i)),
-     .     xtrian(necke(2,i)), ytrian(necke(2,i)),
-     .     xtrian(necke(3,i)), ytrian(necke(3,i)))
-          triangle_vol(i)=triangle_area(i)*2.0_R8*pi*centroid(1)
+          triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
+     .     (ytrian(necke(1,i))+ytrian(necke(2,i))+ytrian(necke(3,i)))/
+     .      3.0_R8
         end do
       end if
   
       rewind (46)
 C
-      READ(46,'(i4,2x,i8)',END=99,ERR=99) idummy,jvft46
+      READ(46,*,END=99,ERR=99) idummy,jvft46
       IF (IDUMMY /= NTRII) THEN
         WRITE (*,*) ' NUMBER OF TRIANGLES DO NOT MATCH '
         WRITE (*,*) ' IN GRID AND DATA FILES'
@@ -232,8 +241,10 @@ C
       call read_title(46)
       read(46,'(6e15.7)') ((VXDENI(i,j),j=1,ntrii),i=1,nioni)
 
-      earrowx(1:ntrii,0:natmi-1)=vxdena(1:ntrii,1:natmi)
-      earrowy(1:ntrii,0:natmi-1)=vydena(1:ntrii,1:natmi)
+      DO IS = 1, NATMI
+        earrowx(1:ntrii,IS-1) = vxdena(IS,1:ntrii)/100.0_R8
+        earrowy(1:ntrii,IS-1) = vydena(IS,1:ntrii)/100.0_R8
+      END DO
 
 * Y-directed velocities
 C

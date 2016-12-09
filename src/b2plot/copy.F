@@ -28,18 +28,24 @@ c     1 src(nx+1,ny+1,1)*scale,work(nx+1,ny+1,1,iwrk)
 
 #ifdef B25_EIRENE
       subroutine eirene_copy(src,scale,nz,texttmp)
+! careful here: eirene arrays are sized src(nz,ntrii) !
       use b2mod_types
       use b2mod_b2plot
       use b2mod_b2plot_values
       use eirmod_ctrig
       integer nz
       real (kind=R8) ::
-     *   src(1:ntrii,0:nz-1),scale
+     *   src(nz,1:ntrii),scale
       character*(*) texttmp(0:nz-1)
+      integer i,iz
 c      write(*,*) 'Copying Eirene array: ntrii, nz = ',ntrii,nz
       if(iewrk .eq. wklng) call dropeirenestackbottom()
       iewrk=iewrk+1
-      eirene_stack(1:ntrii,0:nz-1,iewrk)=src(1:ntrii,0:nz-1)*scale
+      do iz = 1, nz
+        do i = 1, ntrii
+          eirene_stack(i,iz-1,iewrk)=src(iz,i)*scale
+        end do
+      end do
       values(38)=minval(eirene_stack(1:ntrii,0:nz-1,iewrk))
       values(39)=maxval(eirene_stack(1:ntrii,0:nz-1,iewrk))
       textewk(0:nz-1,iewrk)=texttmp(0:nz-1)

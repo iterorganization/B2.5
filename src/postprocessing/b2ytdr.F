@@ -50,9 +50,14 @@ c 2002-09-11: logic revised
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
+      use eirmod_ctrig
       use eirmod_comusr
-     , ,only: NSPH, NMASSA, NCHARA
+     , ,only: NSPH, NMASSA, NCHARA,
+     ,        eirene_alloc_comusr, eirene_dealloc_comusr
+      use eirmod_coutau
+     , ,only: eirene_alloc_coutau, eirene_dealloc_coutau
       use eirmod_ccoupl
+      use eirmod_cestim
       use eirmod_eirbra
       use eirmod_extrab25
      , ,only: msrfclsx, mgwtiesx, lkindp, lkindm, lkindi, texta,
@@ -777,6 +782,12 @@ c 2002-09-11: logic revised
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
       CALL EIRENE_ALLOC_CCOUPL(1)
+      CALL EIRENE_ALLOC_CTRIG
+      CALL EIRENE_ALLOC_CESTIM(1)
+      CALL EIRENE_ALLOC_COMUSR(1)
+      CALL EIRENE_ALLOC_COUTAU
+      CALL EIRENE_SETPRM
+      CALL EIRENE_ALLOC_CESTIM(2)
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
       CALL EIRENE_extrab25_eirpbls_init(1,natm,nmol,nion,npls,nstra,nfl)
@@ -3411,12 +3422,10 @@ C  RADIAL MESH
             IF (ldum(5)) THEN  ! NLFEM
               READ (IUNIN,6666) idum(0)  ! NRKNOT
               WRITE(IUNOT,6666) idum(0)
-              allocate(XTRIAN(idum(0)),YTRIAN(idum(0)))
               READ (IUNIN,6664) (XTRIAN(I),I=1,idum(0))
               WRITE(IUNOT,6664) (XTRIAN(I),I=1,idum(0))
               READ (IUNIN,6664) (YTRIAN(I),I=1,idum(0))
               WRITE(IUNOT,6664) (YTRIAN(I),I=1,idum(0))
-              deallocate(XTRIAN,YTRIAN)
               DO 213 I=1,NR1ST
                 READ (IUNIN,6666) idum(0:3) ! J,NECKE (1,J),NECKE (2,J),NECKE(3,J)
                 WRITE(IUNOT,6666) idum(0:3) ! J,NECKE (1,J),NECKE (2,J),NECKE(3,J)
@@ -8927,9 +8936,13 @@ cxpb as they no longer necessarily point to the same species
       deallocate(iatm1)
       deallocate(ipls1)
 #ifdef B25_EIRENE
+      CALL EIRENE_DEALLOC_CTRIG
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_DEALLOC_CCOUPL
+      CALL EIRENE_DEALLOC_CESTIM
+      CALL EIRENE_DEALLOC_COUTAU
+      CALL EIRENE_DEALLOC_COMUSR
       CALL EIRENE_EXTRAB25_CLEANUP
 #endif
 

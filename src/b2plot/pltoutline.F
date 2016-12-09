@@ -160,9 +160,7 @@ c
       integer is,i
       real (kind=R8) ::
      * fmax,fmay,fmmax,dfx,dfy,uuu,vvv,r,sb,cb,rl,rd,brx,bzy,
-     * uu1,vv1,uu2,vv2,centroid(0:1)
-      real (kind=R8) :: triangleCentroid
-      external triangleCentroid
+     * uu1,vv1,uu2,vv2
       intrinsic max, sqrt
 
       fmax=earrowx(1,is)
@@ -184,11 +182,10 @@ c
       if (acol .gt. 1) call gsplci(acol) ! change arrow colour
 #endif
       do i=1,ntrii
-        centroid=triangleCentroid(xtrian(necke(1,i)),ytrian(necke(1,i)),
-     .                            xtrian(necke(2,i)),ytrian(necke(2,i)),
-     .                            xtrian(necke(3,i)),ytrian(necke(3,i)))
-        brx=centroid(0)
-        bzy=centroid(1)
+        brx=
+     .   (xtrian(necke(1,i))+xtrian(necke(2,i))+xtrian(necke(3,i)))/3.
+        bzy=
+     .   (ytrian(necke(1,i))+ytrian(necke(2,i))+ytrian(necke(3,i)))/3.
         dfx=earrowx(i,is)/fmmax
         dfy=earrowy(i,is)/fmmax
         uuu=arrowl*dfx

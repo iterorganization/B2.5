@@ -52,6 +52,10 @@ c 2002-09-11: logic revised
       use eirmod_extrab25
       use eirmod_braeir
       use eirmod_cestim
+      use eirmod_coutau
+     , , only: eirene_dealloc_coutau
+      use eirmod_comusr
+     , , only: eirene_dealloc_comusr
       use eirmod_eirbra
      & , smo_eir => smo
 #endif
@@ -972,7 +976,6 @@ c
 #endif
       if(ex) then
         call ntread
-        call alloc_b2mod_b2plot_eirene(natmi,nmoli,nioni,ntrii,wklng)
       end if
 #else
       ex = .false.
@@ -1258,7 +1261,7 @@ c
 
    10 continue
       if(b2plot_debug.ge.5)
-     1 write(*,'(a,6i4)') 'STACK i,r,s,m,e,w,t = ',
+     1 write(*,'(a,7i4)') 'STACK i,r,s,m,e,w,t = ',
      . iistack,irstack,isstack,iwrk,iewrk,iwwrk,itwrk
       if(b2plot_debug.ge.12)
      1 write(*,*) 'ISTACK: ',iistack,(istack(i),i=1,iistack)
@@ -1322,6 +1325,10 @@ c
             call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
             call dealloc_b2mod_b2plot_eirene
+            CALL EIRENE_DEALLOC_CTRIG
+            CALL EIRENE_DEALLOC_CESTIM
+            CALL EIRENE_DEALLOC_COMUSR
+            CALL EIRENE_DEALLOC_COUTAU
             CALL EIRENE_DEALLOC_BRAEIR
             CALL EIRENE_DEALLOC_EIRBRA
             CALL EIRENE_EXTRAB25_CLEANUP
@@ -1387,6 +1394,10 @@ c
           call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
           call dealloc_b2mod_b2plot_eirene
+          CALL EIRENE_DEALLOC_CTRIG
+          CALL EIRENE_DEALLOC_CESTIM
+          CALL EIRENE_DEALLOC_COMUSR
+          CALL EIRENE_DEALLOC_COUTAU
           CALL EIRENE_DEALLOC_BRAEIR
           CALL EIRENE_DEALLOC_EIRBRA
           CALL EIRENE_EXTRAB25_CLEANUP
@@ -4510,7 +4521,10 @@ c     assumes that bb is OK for 1d cases
           graphlabel(iwrk)=graphlabel(iwrk-2)
         case('list')     ! list contents of matrix stack
           stack_req=(/0,0,0,1,0,0,0/)
-          if(bad_args(stack_req)) return
+          if(bad_args(stack_req)) then
+            write(*,*) 'No data on matrix stack'
+            return
+          end if
           do i = iwrk, 1, -1
             write(*,*) trim(graphlabel(i)), 
      .       (trim(textwk(is,i)),is=0,ndim(3,i)-1)
@@ -6120,7 +6134,7 @@ c-dpc still in testing phase
           stack_req=(/1,0,1,0,1,0,0/)
           if(bad_args(stack_req)) return
           is1=ipop(istack,iistack)
-          if (0.gt.is1.or.is1.ge.nedim(2,iwwrk)) then
+          if (0.gt.is1.or.is1.ge.nedim(2,iewrk)) then
             write(*,*) 'Faulty parameter is = ',is1,' for eslbl!'
             return
           endif
@@ -6190,27 +6204,27 @@ c-dpc still in testing phase
         case('pdena')
           description='Atoms particle density (m^{-3})'
           nz=natmi
-          call eirene_copy(pdena,1.0e-6_R8,nz,textan)
+          call eirene_copy(pdena,1.0e6_R8,nz,textan)
         case('pdenm')
           description='Molecules particle density (m^{-3})'
           nz=nmoli
-          call eirene_copy(pdenm,1.0e-6_R8,nz,textmn)
+          call eirene_copy(pdenm,1.0e6_R8,nz,textmn)
         case('pdeni')
           description='Test ions particle density (m^{-3})'
           nz=nioni
-          call eirene_copy(pdeni,1.0e-6_R8,nz,textin)
+          call eirene_copy(pdeni,1.0e6_R8,nz,textin)
         case('edena')
           description='Atoms energy density (eV.m^{-3})'
           nz=natmi
-          call eirene_copy(edena,1.0e-6_R8,nz,textan)
+          call eirene_copy(edena,1.0e6_R8,nz,textan)
         case('edenm')
           description='Molecules energy density (eV.m^{-3})'
           nz=nmoli
-          call eirene_copy(edenm,1.0e-6_R8,nz,textmn)
+          call eirene_copy(edenm,1.0e6_R8,nz,textmn)
         case('edeni')
           description='Test ions energy density (eV.m^{-3})'
           nz=nioni
-          call eirene_copy(edeni,1.0e-6_R8,nz,textin)
+          call eirene_copy(edeni,1.0e6_R8,nz,textin)
         case('vxdena')
           description='Atoms X-directed velocity (m.s^{-1})'
           nz=natmi
@@ -6613,7 +6627,10 @@ c-dpc still in testing phase
           eirene_label(iewrk)=eirene_label(iewrk-2)
         case('elist')    ! list contents of Eirene stack
           stack_req=(/0,0,0,0,1,0,0/)
-          if(bad_args(stack_req)) return
+          if(bad_args(stack_req)) then
+            write(*,*) 'No data on Eirene stack'
+            return
+          end if
           do i = iewrk, 1, -1
             write(*,*) trim(eirene_label(i)), 
      &       (trim(textewk(is,i)),is=0,nedim(2,i)-1)
@@ -8132,7 +8149,10 @@ c normalised weights is 1
           call set_wallbarlabel(wall_label(iwwrk))
         case('wlist')    ! list contents of wall stack
           stack_req=(/0,0,0,0,0,1,0/)
-          if(bad_args(stack_req)) return
+          if(bad_args(stack_req)) then
+            write(*,*) 'No data on wall stack'
+            return
+          end if
           do i = iwwrk, 1, -1
             write(*,*) trim(wall_label(i)), 
      &       (trim(textwwk(is,i)),is=0,nwdim(2,i)-1)
@@ -9347,7 +9367,10 @@ c
           call set_targetbarlabel(target_label(itwrk))
         case('trglist')  ! list contents of target stack
           stack_req=(/0,0,0,0,0,0,1/)
-          if(bad_args(stack_req)) return
+          if(bad_args(stack_req)) then
+            write(*,*) 'No data on target stack'
+            return
+          end if
           do i = itwrk, 1, -1
             write(*,'(a)') trim(target_label(i))
           end do

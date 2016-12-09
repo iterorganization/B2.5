@@ -600,6 +600,9 @@ ${OBJDIR}/eirmod_clogau.${MOD}:
 ${OBJDIR}/eirmod_comusr.${MOD}:
 	touch ${OBJDIR}/eirmod_comusr.${MOD}
 
+${OBJDIR}/eirmod_coutau.${MOD}:
+	touch ${OBJDIR}/eirmod_coutau.${MOD}
+
 ${OBJDIR}/eirmod_ctrig.${MOD}:
 	touch ${OBJDIR}/eirmod_ctrig.${MOD}
 
