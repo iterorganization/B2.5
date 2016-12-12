@@ -72,7 +72,7 @@ c
       common /t_ratio/ ratio
 
       integer ::
-     *   nntria(0:nx-1,0:ny-1)
+     *   nntria(0:nxd-1,0:nyd-1)
       real (kind=R8) ::
      *   pr(-1:nxd,-1:nyd),
      3   energy_balance(-1:nxd,-1:nyd),energy_balance2(-1:nxd,-1:nyd),
@@ -202,6 +202,8 @@ c
 #ifdef B25_EIRENE
       integer iflag
       character*72 zeile
+      integer ix_e2b
+      external ix_e2b
 #endif
 c
       real (kind=R8) ::
@@ -4992,7 +4994,7 @@ c     assumes that bb is OK for 1d cases
           do i = 1, ntrii
             if (ixtri(i).ne.-1 .and. iytri(i).ne.-1) then
               eirene_stack(i,0:ndim(3,iwrk)-1,iewrk)=
-     .         work(ixtri(i),iytri(i),0:ndim(3,iwrk)-1,iwrk)
+     .         work(ix_e2b(ixtri(i)),iytri(i)-1,0:ndim(3,iwrk)-1,iwrk)
             else
               eirene_stack(i,0:ndim(3,iwrk)-1,iewrk)=0.0_R8
             end if
@@ -5003,7 +5005,7 @@ c     assumes that bb is OK for 1d cases
      .     maxval(eirene_stack(1:ntrii,0:nedim(2,iewrk)-1,iewrk))
           eirene_label(iewrk)=
      .     graphlabel(iwrk)(1:lnblnk(graphlabel(iwrk)))
-          textewk(0:nedim(2,iewrk),iewrk)=textwk(0:ndim(3,iwrk),iwrk)
+          textewk(0:nedim(2,iewrk)-1,iewrk)=textwk(0:ndim(3,iwrk),iwrk)
 #else
           write(*,*) 'Must compile with Eirene for stoe function'
 #endif
@@ -6939,9 +6941,10 @@ c-dpc still in testing phase
           nntria(0:nx-1,0:ny-1)=0
           do i=1,ntrii
             if (ixtri(i).ne.-1 .and. iytri(i).ne.-1) then
-              nntria(ixtri(i),iytri(i))=nntria(ixtri(i),iytri(i))+1
-              work(ixtri(i),iytri(i),0:ndim(3,iwrk)-1,iwrk)=
-     .         work(ixtri(i),iytri(i),0:ndim(3,iwrk)-1,iwrk)+
+              nntria(ix_e2b(ixtri(i)),iytri(i)-1)=
+     .         nntria(ix_e2b(ixtri(i)),iytri(i)-1)+1
+              work(ix_e2b(ixtri(i)),iytri(i)-1,0:ndim(3,iwrk)-1,iwrk)=
+     .         work(ix_e2b(ixtri(i)),iytri(i)-1,0:ndim(3,iwrk)-1,iwrk)+
      .         eirene_stack(i,0:ndim(3,iwrk)-1,iewrk)
             end if
           enddo
@@ -6975,6 +6978,17 @@ c-dpc still in testing phase
             end do
           end do
           eirene_label(iewrk)='Special'
+        case('evac')      ! fill vacuum region of Eirene stack with a value
+          stack_req=(/0,1,0,0,1,0,0/)
+          if(bad_args(stack_req)) return ! 4900
+          do is=0,nedim(2,iewrk)-1
+            do i=1,nedim(1,iewrk)
+              if (ixtri(i).eq.-1 .and. iytri(i).eq.-1) then
+                eirene_stack(i,is,iewrk) = rstack(irstack)
+              end if
+            enddo
+          enddo
+          dummy=rpop(rstack,irstack)
         case('earox')     ! set arrow field x-component from Eirene data
           stack_req=(/0,0,0,0,1,0,0/)
           if(bad_args(stack_req)) return ! 4900
@@ -10541,3 +10555,56 @@ c calculate neoclassical diagnostics
       enddo
       end subroutine write_crazy
 
+      function ix_e2b(ixe)
+      use b2mod_b2plot
+      use b2mod_indirect
+      implicit none
+      integer ix_e2b
+      integer ixe
+      integer ic, i
+
+      if (ixe.eq.-1 .or. ixe.eq.0) then
+        ix_e2b = -2
+      else
+        i = 1
+        ix_e2b = 0
+        do while (i.lt.ixe)
+          i = i + 1
+          ix_e2b = ix_e2b + 1
+          do ic = 1, nncut
+            if (ix_e2b.eq.leftcut(ic)) i = i + 1
+            if (ix_e2b.eq.rightcut(ic)) i = i + 1
+          end do
+          if (nncut.eq.2 .and. ix_e2b.eq.nxtr) i = i + 1
+        end do
+      end if
+      return
+      end function ix_e2b
+
+      function ix_b2e(ixb)
+      use b2mod_b2plot
+      use b2mod_indirect
+      implicit none
+      integer ix_b2e
+      integer ixb
+      integer i
+
+      if (ixb.eq.-2) then
+        ix_b2e = -1
+      else if (ixb.gt.nx) then
+        ix_b2e = -1
+      else if (ixb.eq.-1 .or. ixb.eq.nx) then
+        ix_b2e = -1
+      else if (nncut.eq.2 .and.
+     .        (ixb.ge.nxtl .and. ixb.le.nxtr)) then
+        ix_b2e = -1
+      else
+        ix_b2e = ixb + 1
+        do i = 1, nncut
+          if (ixb.ge.leftcut(i)) ix_b2e = ix_b2e + 1
+          if (ixb.ge.rightcut(i)) ix_b2e = ix_b2e + 1
+        end do
+        if (nncut.eq.2 .and. ixb.gt.nxtr) ix_b2e = ix_b2e + 1
+      end if
+      return
+      end function ix_b2e

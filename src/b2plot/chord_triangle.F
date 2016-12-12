@@ -33,9 +33,10 @@ c
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
       
       integer ix, iy
+      integer ix_e2b
       real (kind=R8) :: pit
       intrinsic sqrt,sin,cos,abs,atan2
-      external chord_find, subini, subend, xertst
+      external chord_find, subini, subend, xertst, ix_e2b
 
       pit(ix,iy)=sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3)
 
@@ -67,18 +68,18 @@ c
       if(vector) then
         if (ixtri(it).ne.-1 .and. iytri(it).ne.-1) then
 c in r,z,phi
-          dbr=((crx(ixtri(it),iytri(it),1)+
-     .          crx(ixtri(it),iytri(it),3))-
-     .         (crx(ixtri(it),iytri(it),2)+
-     .          crx(ixtri(it),iytri(it),0)))/2.0_R8
-          dbz=((cry(ixtri(it),iytri(it),1)+
-     .          cry(ixtri(it),iytri(it),3))-
-     .         (cry(ixtri(it),iytri(it),2)+
-     .          cry(ixtri(it),iytri(it),0)))/2.0_R8
+          dbr=((crx(ix_e2b(ixtri(it)),iytri(it)-1,1)+
+     .          crx(ix_e2b(ixtri(it)),iytri(it)-1,3))-
+     .         (crx(ix_e2b(ixtri(it)),iytri(it)-1,2)+
+     .          crx(ix_e2b(ixtri(it)),iytri(it)-1,0)))/2.0_R8
+          dbz=((cry(ix_e2b(ixtri(it)),iytri(it)-1,1)+
+     .          cry(ix_e2b(ixtri(it)),iytri(it)-1,3))-
+     .         (cry(ix_e2b(ixtri(it)),iytri(it)-1,2)+
+     .          cry(ix_e2b(ixtri(it)),iytri(it)-1,0)))/2.0_R8
           dbs=sqrt(dbr**2+dbz**2)
-          dbr=dbr/dbs*pit(ixtri(it),iytri(it))
-          dbz=dbz/dbs*pit(ixtri(it),iytri(it))
-          dbphi=1.0*sqrt(1.0-pit(ixtri(it),iytri(it))**2)
+          dbr=dbr/dbs*pit(ix_e2b(ixtri(it)),iytri(it)-1)
+          dbz=dbz/dbs*pit(ix_e2b(ixtri(it)),iytri(it)-1)
+          dbphi=1.0*sqrt(1.0-pit(ix_e2b(ixtri(it)),iytri(it)-1)**2)
 c in x,y,z
           phi=atan2(y,x)
           dbz=dbz
@@ -97,7 +98,7 @@ c end-assertion
           dy=dy/dl
           dz=dz/dl
           dotprod=dbx*dx+dby*dy+dbz*dz
-c         write(*,*) 'it,ix,iy = ',it,ixtri(it),iytri(it)
+c         write(*,*) 'it,ix,iy = ',it,ix_e2b(ixtri(it)),iytri(it)-1
 c         write(*,*) 'dl = ',dx,dy,dz
 c         write(*,*) 'bl = ',dbr,dbz,dbphi
 c         write(*,*) 'phi = ',phi

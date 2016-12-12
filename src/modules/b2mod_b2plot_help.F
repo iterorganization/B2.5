@@ -5,7 +5,7 @@
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
       parameter(nlabels=339,nfns=204,nsparameters=32,nelabels=17,
-     *     nconstants=10,nefns=46,nwfns=62,nwlabels=97,ntrgfns=90)
+     *     nconstants=10,nefns=47,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
      * dimensions(nlabels), wdimensions(nwlabels), edimensions(nelabels)
@@ -746,8 +746,8 @@
      5 'ezsel', 'emmin', 'emmax', 'remmi', 'remma',
      6 'emlt' , 'emle' , 'emeq' , 'emne' , 'emgt' ,
      7 'emge' , 'elog' , 'eln'  , 'esqrt', 'eexp' ,
-     8 'ezrng', 'echs' , 'etos' , 'epos' ,
-     * 'echor', 'echbx', 'echvl', 'echmp', 'ecam' ,
+     8 'ezrng', 'echs' , 'etos' , 'epos' , 'evac' ,
+     9 'echor', 'echbx', 'echvl', 'echmp', 'ecam' ,
      * 'eoutp', 'eprt' /
       data wfns /
      1 'wall' , 'wall_ank', 'logw' , 'linw' , 'logxw',
