@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=339,nfns=204,nsparameters=32,nelabels=17,
+      parameter(nlabels=339,nfns=204,nsparameters=32,nelabels=20,
      *     nconstants=10,nefns=47,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -786,13 +786,13 @@
      1 'pdena'   , 'pdenm'   , 'pdeni'   , 'edena'   , 'edenm'   ,
      2 'edeni'   , 'vxdena'  , 'vxdenm'  , 'vxdeni'  , 'vydena'  ,
      3 'vydenm'  , 'vydeni'  , 'vzdena'  , 'vzdenm'  , 'vzdeni'  ,
-     4 'triarea' , 'triavol' /
+     4 'triarea' , 'triavol' , 'tr'      , 'tz'      , 'tindex'  /
       data edimensions /
      1     2, 2, 2, 2, 2,
      2     2, 2, 2, 2, 2,
      3     2, 2, 2, 2, 2,
-     4     1, 1/                 
-      data edescriptions /
+     4     1, 1, 1, 1, 1/                 
+      data edescriptions(1:10) /
      1 'Atoms particle density (m^{-3})',
      2 'Molecules particle density (m^{-3})',
      3 'Test ions particle density (m^{-3})',
@@ -802,14 +802,18 @@
      7 'Atoms X-directed velocity (m.s^{-1})',
      8 'Molecules X-directed velocity (m.s^{-1})',
      9 'Test ions X-directed velocity (m.s^{-1})',
-     * 'Atoms Y-directed velocity (m.s^{-1})',
+     * 'Atoms Y-directed velocity (m.s^{-1})'/
+      data edescriptions(11:20) /
      1 'Molecules Y-directed velocity (m.s^{-1})',
      2 'Test ions Y-directed velocity (m.s^{-1})',
      3 'Atoms Z-directed velocity (m.s^{-1})',
      4 'Molecules Z-directed velocity (m.s^{-1})',
      5 'Test ions Z-directed velocity (m.s^{-1})',
      6 'Triangle area (m^{2})',
-     7 'Triangle volume (m^{3})'/
+     7 'Triangle volume (m^{3})',
+     8 'Triangle centroid R coordinate (m)',
+     9 'Triangle centroid Z coordinate (m)',
+     * 'Triangle index'/
       data sparameters /
      1 'extl'    , 'cltb' , 'chor', 'chpl'    , 'cmd' ,
      2 'cmdcdf'  , 'chbx' , 'chvl', 'flux'    , 'chmp',

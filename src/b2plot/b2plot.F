@@ -140,6 +140,7 @@ c
      *   deltapar(-1:nxd,-1:nyd,0:nsd_local),
      *   vtha(-1:nxd,-1:nyd,0:nsd_local)
       real (kind=R8), allocatable :: mach(:,:,:)
+      real (kind=R8), allocatable :: emach(:)
       real (kind=R8) ::
      1   vappr_a, vappr_b, sput_frc, sput_phys, BoRiS,
      2   stick_coef, plate_kb, plate_ka, 
@@ -978,6 +979,7 @@ c
 #endif
       if(ex) then
         call ntread
+        allocate(emach(ntrii))
       end if
 #else
       ex = .false.
@@ -1326,6 +1328,7 @@ c
             call dealloc_b2mod_neoclassical
             call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
+            deallocate(emach)
             call dealloc_b2mod_b2plot_eirene
             CALL EIRENE_DEALLOC_CTRIG
             CALL EIRENE_DEALLOC_CESTIM
@@ -1395,6 +1398,7 @@ c
           call dealloc_b2mod_neoclassical
           call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
+          deallocate(emach)
           call dealloc_b2mod_b2plot_eirene
           CALL EIRENE_DEALLOC_CTRIG
           CALL EIRENE_DEALLOC_CESTIM
@@ -6271,6 +6275,29 @@ c-dpc still in testing phase
           description='Triangle volume (m^{3})'
           nz=1
           call eirene_copy(triangle_vol,1.0_R8,nz,textbl)
+        case('tr')
+          description='Triangle centroid R coordinate (m)'
+          nz=1
+          do i = 1, ntrii
+            emach(i) = (xtrian(necke(1,i))+xtrian(necke(2,i))+
+     .                  xtrian(necke(3,i)))/3.0_R8
+          end do
+          call eirene_copy(emach,1.0_R8,nz,textbl)
+        case('tz')
+          description='Triangle centroid Z coordinate (m)'
+          nz=1
+          do i = 1, ntrii
+            emach(i) = (ytrian(necke(1,i))+ytrian(necke(2,i))+
+     .                  ytrian(necke(3,i)))/3.0_R8
+          end do
+          call eirene_copy(emach,1.0_R8,nz,textbl)
+        case('tindex')
+          description='Triangle index'
+          nz=1
+          do i = 1, ntrii
+            emach(i) = real(i)
+          end do
+          call eirene_copy(emach,1.0_R8,nz,textbl)
         case default EVALUE
           cflag=.false.
       END SELECT EVALUE
