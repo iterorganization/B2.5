@@ -46,8 +46,9 @@ c
       data jvftnew / 20160829 /
 
 *  -- PROCEDURES --
+      character*32 :: get_B25_hash
       logical streql
-      external ipgeti, streql
+      external ipgeti, streql, get_B25_hash
 #endif
       external subini, subend
 
@@ -141,7 +142,7 @@ C
         WRITE (*,*) ' PLEASE CHECK THE GEOMETRY '
         call xerrab('Mismatch between fort.34 and fort.46 files!')
       END IF
-      WRITE(47,'(I6,2X,i8)') ntrii,jvftnew
+      WRITE(47,'(I6,2X,i8,2x,a32)') ntrii,jvftnew,get_B25_hash()
       READ(46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
       WRITE(47,'(I4,2X,I4,2X,i4)')              natm1,nmoli,nioni
       write(*,'(a,5i4)') 

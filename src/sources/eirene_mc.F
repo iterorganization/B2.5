@@ -347,7 +347,7 @@ csw 26feb2013
         call xertst(.not.(ank_mods.ne.0 .and. ionising_core.ne.0),
      1   'contradictory inputs ank_mods and ionising_core!')
         if(eirene_mod.le.0) eirene_mod=1
-        call ipgeti ('eirene_no_sseicorr', no_sseicorr)
+        call ipgeti ('eirene_no_sseicorr',no_sseicorr)
         call ipgeti ('eirene_stab_corr',stab_corr)
       end if !}
 
@@ -2186,13 +2186,20 @@ c     2               sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
 c     *               recyctmp*flux_scale(istrai)
 
                     j=b2espcr(is)
-                    uatmp = (ua(ix,iy,is)*na(ix,iy,is)*vol(ix,iy) + 
-     .                       smo_tot(ix+1,iy+1,ifl)*
-     .                       dtim*dtmo(is,region(ix,iy,0))/(am(is)*mp))/
-     .                      (na(ix,iy,is)*vol(ix,iy) + 
-     .                       sni_tot(ix+1,iy+1,ifl)*
-     .                       dtim*dtco(is,region(ix,iy,0)))
-                    dua = uatmp - ua(ix,iy,is)
+                    if (smo_tot(ix+1,iy+1,ifl).ne.0.0_R8 .and.
+     .                  sni_tot(ix+1,iy+1,ifl).ne.0.0_R8) then
+                      uatmp = (ua(ix,iy,is)*na(ix,iy,is)*vol(ix,iy) +
+     .                         smo_tot(ix+1,iy+1,ifl)*
+     .                         dtim*dtmo(is,region(ix,iy,0))/
+     .                        (am(is)*mp))/
+     .                        (na(ix,iy,is)*vol(ix,iy) +
+     .                         sni_tot(ix+1,iy+1,ifl)*
+     .                         dtim*dtco(is,region(ix,iy,0)))
+                      dua = uatmp - ua(ix,iy,is)
+                    else
+                      uatmp = ua(ix,iy,is)
+                      dua = 0.0_R8
+                    end if
 
 csw 06mar2012 momentum source
 csw 26feb2014 averaging
@@ -2229,6 +2236,7 @@ csw 06mar2012 total correction
 cxpb 13feb2015 additional correction with second-order effects for large sources
 cxpb 12oct2015 multiply na term by fractional stratum weight to avoid double-counting
                     if (smo_tot(ix+1,iy+1,ifl).ne.0.0_R8.and.
+     .                  t3.ne.0.0_R8 .and.
      .                  stab_corr.eq.1) then
                       t4=(na(ix,iy,is)*vol(ix,iy)*
      .                    (t2/smo_tot(ix+1,iy+1,ifl))+

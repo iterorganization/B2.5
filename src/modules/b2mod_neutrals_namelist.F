@@ -265,6 +265,18 @@ csw 21feb2012
       TARGSP(:,1)=sput_dst
       CHEMSP=.false.
       TIME_DEP_PUFF=.false.
+      N_SPCSRF=0
+      L_SPCSRF=0
+      I_SPCSRF=0
+      J_SPCSRF=0
+      SPS_ABSR=-1.0_R8
+      SPS_TRNO=-1.0_R8
+      SPS_TRNI=-1.0_R8
+      SPS_MTRI= 0.0_R8
+      SPS_TMPR= 1.0e15_R8
+      SPS_SPPH=-1.0_R8
+      SPS_SPCH=-1.0_R8
+      SPS_SGRP=-1
       NGPDATA=0
       GPDATA=0.0_R8
 cxpb The default recycling model is 100% particle recycling and 

@@ -218,29 +218,42 @@
 *  L_SPCSRF - integer array of length (NLIM+NSTS). List of surface segments 
 *    (non-default standard surfaces [NDSS] or additional surfaces in Eirene 
 *    notation) included in the groups. Negative numbers correspond to NDSS.
+*    Defaults to 0.
 *  SPS_ID - character*8 array of length (N_SPCSRF). Labels of groups of 
 *    special surfaces.
 *  I_SPCSRF - integer array of length (N_SPCSRF). Index of the first Eirene 
-*    surface belonging to a special surface group in the L_SPCSRF list. 
+*    surface belonging to a special surface group in the L_SPCSRF list.
+*    Defaults to 0.
 *  J_SPCSRF - integer array of length (N_SPCSRF). Index of the last Eirene 
-*    surface belonging to a special surface group in the L_SPCSRF list. 
+*    surface belonging to a special surface group in the L_SPCSRF list.
+*    Defaults to 0.
 *  SPS_ABSR - real*8 array of length (N_SPCSRF). Particle absorption on the 
-*    surface.
+*    surface. If positive, will supercede the setting from the Eirene input
+*    file: RECYCT = 1-SPS_ABSR. Ignored if negative. Defaults to -1.0.
 *  SPS_TRNO - real*8 array of length (N_SPCSRF). Surface transparency in 
-*    positive direction.
+*    positive direction. If positive, will supercede the setting from the
+*    Eirene input file: TRANSP(1,) = SPS_TRNO. Ignored if negative.
+*    Defaults to -1.0.
 *  SPS_TRNI - real*8 array of length (N_SPCSRF). Surface transparency in 
-*    negative direction. If not declared, SPS_TRNO is used.
+*    negative direction. If positive, will supercede the setting from the
+*    Eirene input file: TRANSP(2,) = SPS_TRNI. If negative, the setting
+*    from SPS_TRNO is used. Defaults to -1.0.
 *  SPS_MTRI - real*8 array of length (N_SPCSRF). Surface material in Eirene 
-*    notation (e.g., 1206 for C).
+*    notation (e.g., 1206 for C). If positive, will supercede the setting
+*    from the Eirene input file. Ignored if negative. Defaults to 0.
 *  SPS_MTRL - character*8 array of length (N_SPCSRF). Surface material in 
 *    human notation (e.g., 'C').
 *  SPS_TMPR - real*8 array of length (N_SPCSRF). Surface temperature (in eV).
+*    If set larger to 1.e10, will be ignored. Defaults to 1.e15.
 *  SPS_SPPH - real*8 array of length (N_SPCSRF). Fudge factor for physical 
-*    sputtering.
+*    sputtering. If positive, will supercede the setting from the Eirene
+*    input file. Ignored if negative. Defaults to -1.0.
 *  SPS_SPCH - real*8 array of length (N_SPCSRF). Fudge factor for chemical 
-*    sputtering.
-*  SPS_SGRP - integer array of length (N_SPCSRF). Surface group for chemical 
-*    sputtering.
+*    sputtering. If positive, will supercede the setting from the Eirene
+*    input file. Ignored if negative. Defaults to -1.0.
+*  SPS_SGRP - integer array of length (N_SPCSRF). Sputtered particle species
+*    flag for chemical sputtering. If positive, will supercede the setting
+*    from the Eirene input file. Ignored if negative. Defaults to -1.
 *  WRITE_NML_NEUT - logical. If .true. (default), writes the content of the
 *    namelist to stdout after it has been read.
 *  TIME_DEP_PUFF - logical array of length (NSTRAT). Indicates whether a 
