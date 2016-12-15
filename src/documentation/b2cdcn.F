@@ -240,20 +240,23 @@
 *    from SPS_TRNO is used. Defaults to -1.0.
 *  SPS_MTRI - real*8 array of length (N_SPCSRF). Surface material in Eirene 
 *    notation (e.g., 1206 for C). If positive, will supercede the setting
-*    from the Eirene input file. Ignored if negative. Defaults to 0.
+*    from the Eirene input file: ZNML = SPS_MTRI. Ignored if negative.
+*    Defaults to 0.
 *  SPS_MTRL - character*8 array of length (N_SPCSRF). Surface material in 
 *    human notation (e.g., 'C').
 *  SPS_TMPR - real*8 array of length (N_SPCSRF). Surface temperature (in eV).
-*    If set larger to 1.e10, will be ignored. Defaults to 1.e15.
+*    If set larger to 1.e10, will be ignored. Otherwise, will supercede the
+*    setting from the Eirene input file: EWALL = SPS_TMPR. Defaults to 1.e15.
 *  SPS_SPPH - real*8 array of length (N_SPCSRF). Fudge factor for physical 
 *    sputtering. If positive, will supercede the setting from the Eirene
-*    input file. Ignored if negative. Defaults to -1.0.
+*    input file: RECYCS = SPS_SPPH. Ignored if negative. Defaults to -1.0.
 *  SPS_SPCH - real*8 array of length (N_SPCSRF). Fudge factor for chemical 
 *    sputtering. If positive, will supercede the setting from the Eirene
-*    input file. Ignored if negative. Defaults to -1.0.
+*    input file: RECYCC = SPS_SPCH. Ignored if negative. Defaults to -1.0.
 *  SPS_SGRP - integer array of length (N_SPCSRF). Sputtered particle species
 *    flag for chemical sputtering. If positive, will supercede the setting
-*    from the Eirene input file. Ignored if negative. Defaults to -1.
+*    from the Eirene input file: ISRC = SPS_SGRP. Ignored if negative.
+*    Defaults to -1.
 *  WRITE_NML_NEUT - logical. If .true. (default), writes the content of the
 *    namelist to stdout after it has been read.
 *  TIME_DEP_PUFF - logical array of length (NSTRAT). Indicates whether a 
