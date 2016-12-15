@@ -246,6 +246,7 @@ c 2002-09-11: logic revised
      2  na_feedback_ix11(:), na_feedback_ix21(:),
      3  na_feedback_iy11(:), na_feedback_iy21(:),
      4  na_feedback_ib1(:)
+      integer, allocatable :: sps_sgrp1(:)
       integer bcpos1(nbcd), bcstart1(nbcd), bcend1(nbcd)
       integer bc_list_size1(nbcd)
       integer bc_list_x1(2*(nx1+ny1),nbcd), bc_list_y1(2*(nx1+ny1),nbcd)
@@ -8280,7 +8281,20 @@ cxpb as they no longer necessarily point to the same species
           write(99, hlp_frm) 'SPS_SPPH=',(sps_spph(ib),ib=1,n_spcsrf)
           write(99, hlp_frm) 'SPS_SPCH=',(sps_spch(ib),ib=1,n_spcsrf)
           write(hlp_frm,'(a,i2,a)') '(a,',n_spcsrf,'(i10,'',''))'
-          write(99, hlp_frm) 'SPS_SGRP=',(sps_sgrp(ib),ib=1,n_spcsrf)
+          allocate(sps_sgrp1(1:n_spcsrf))
+          do ib=1,n_spcsrf
+            if (sps_sgrp(ib).le.0) then
+              sps_sgrp1(ib)=sps_sgrp(ib)
+            else if (sps_sgrp(ib).gt.nspecies) then
+              sps_sgrp1(ib)=nspecies1+1
+            else if (ispecies1(sps_sgrp(ib)).ne.0) then
+              sps_sgrp1(ib)=ispecies1(sps_sgrp(ib))
+            else
+              sps_sgrp1(ib)=-1
+            end if
+          end do
+          write(99, hlp_frm) 'SPS_SGRP=',(sps_sgrp1(ib),ib=1,n_spcsrf)
+          deallocate(sps_sgrp1)
           write(hlp_frm,'(a,i2,a)')
      .     '(a,',n_spcsrf,'('''''''',a8,'''''''','',''))'
           write(99, hlp_frm) 'SPS_MTRL=',(sps_mtrl(ib),ib=1,n_spcsrf)
