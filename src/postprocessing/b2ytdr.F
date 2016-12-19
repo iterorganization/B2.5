@@ -140,7 +140,7 @@ c 2002-09-11: logic revised
 *   ..common blocks
 *   ..local variables
       integer, allocatable :: idum(:)
-      integer ii(1), i1, i2, ik, ikind, inc, nnc
+      integer ii(1), i1, i2, ik, ikind, ic, inc, nnc
       integer nbc1, ndat, nds(ns-1)
       integer boundary_namelist, neutrals_namelist, use_eirene
       integer numerics_namelist, sources_inputfile, b2stbc_feedback
@@ -915,7 +915,7 @@ c 2002-09-11: logic revised
       allocate(fna_he1(-1:nx1,-1:ny1,0:1,0:ns1-1))
       allocate(fna_321(-1:nx1,-1:ny1,0:1,0:ns1-1))
       allocate(fna_521(-1:nx1,-1:ny1,0:1,0:ns1-1))
-      allocate(fnaPsCh1(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(fnaPSch1(-1:nx1,-1:ny1,0:1,0:ns1-1))
       allocate(uadia1(-1:nx1,-1:ny1,0:1,0:ns1-1))
       allocate(vadia1(-1:nx1,-1:ny1,0:1,0:ns1-1))
       allocate(wadia1(-1:nx1,-1:ny1,0:1,0:ns1-1))
@@ -971,13 +971,13 @@ c 2002-09-11: logic revised
         nspecies1 = nspecies
       else
         call de_bundle (ns, zn, am, zamin, zamax,
-     *   is0, bundle_contr, zn0, am0, zamin0, zamax0)
+     *   is0, ic, bundle_contr, zn0, am0, zamin0, zamax0)
         write(*,*) 'bundle_contr:'
-        write(hlp_frm,'(a,i3,a)') '(3x,',ns,'(1x,i4))'
-        write(*,hlp_frm) (is, is = 0, ns-1)
-        write(hlp_frm,'(a,i3,a)') '(i3,',ns,'f5.2)'
-        do iss = 0, ns1-1
-          write(*,hlp_frm) iss, (bundle_contr(iss,is), is = 0, ns-1)
+        write(hlp_frm,'(a,i3,a)') '(3x,',ic+1,'(1x,i4))'
+        write(*,hlp_frm) (is, is = 0, ic)
+        write(hlp_frm,'(a,i3,a)') '(i3,',ic+1,'f5.2)'
+        do iss = 0, ns-1
+          write(*,hlp_frm) iss, (bundle_contr(iss,is), is = 0, ic)
         end do
         call re_bundle (ns, is0, bundle_contr, zn0, am0, zamin0, zamax0,
      *   ns1, is1, bundle_frac, zn1, am1, zamin1, zamax1)
@@ -8413,10 +8413,10 @@ cxpb as they no longer necessarily point to the same species
         call read_b2mod_feedback(99,'    ',feedback_namelist_used)
         if (maxval(saved_na_feedback_actuator).gt.0.0_R8) then
           todo = .false.
-          is = 0
-          do while (.not.todo .and. is.lt.nspecies)
+          is = 1
+          do while (.not.todo .and. is.le.nspecies)
             todo = todo .or.
-     &        (saved_na_feedback_actuator(is).gt.0.0_R8 .and.
+     &        (saved_na_feedback_actuator(is-1).gt.0.0_R8 .and.
      &         ispecies1(is).ne.is)
             is = is+1
           end do
@@ -9354,7 +9354,7 @@ c       = 4 : center
       end function conformal_convert
 
       subroutine de_bundle(ns, zn, am, zamin, zamax,
-     *   is0, bundle_contr, zn0, am0, zamin0, zamax0)
+     *   is0, ic, bundle_contr, zn0, am0, zamin0, zamax0)
       use b2mod_types
       implicit none
 *   ..arguments for input bundles (unchanged upon exit)
@@ -9362,13 +9362,13 @@ c       = 4 : center
       real (kind=R8) ::
      *   zn(0:ns-1), am(0:ns-1), zamin(0:ns-1), zamax(0:ns-1)
 *   ..arguments for de-bundled data (unspecified upon entry)
-      integer is0(0:DEF_NSD-1)
+      integer is0(0:DEF_NSD-1), ic
       real (kind=R8) ::
      *   zn0(0:DEF_NSD-1), am0(0:DEF_NSD-1),
      *   zamin0(0:DEF_NSD-1), zamax0(0:DEF_NSD-1),
      *   bundle_contr(0:ns-1,0:DEF_NSD-1)
 *   ..local variables
-      integer i, is, ic
+      integer i, is
 *   ..procedures
       intrinsic nint
       external xertst
