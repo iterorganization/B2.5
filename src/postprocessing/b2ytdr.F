@@ -394,6 +394,7 @@ c 2002-09-11: logic revised
       real (kind=R8), allocatable :: RAYFRAC(:)
       real (kind=R8), allocatable :: SCALV(:)
       real (kind=R8), allocatable :: XTRIAN(:), YTRIAN(:)
+      real (kind=R8), allocatable :: zemin1(:), zemax1(:)
 #endif
       real (kind=R8) ::
      *  neutral_rescale, BoRiS, divheat, rswitch,
@@ -472,6 +473,8 @@ c 2002-09-11: logic revised
       integer lnblnk, convert_position, len_of_digits, trace_convert
 #ifdef B25_EIRENE
       integer transform_tally
+      logical isaletter
+      external isaletter
 #endif
       integer conformal_convert, convert_eirene, b2idez
       real (kind=R8) :: cr, cz, cr1, cz1, rratio
@@ -4768,6 +4771,8 @@ cxpb Now we have read the species data and can identify the bundles
         allocate(e_bundle_start(nplsi1))
         allocate(e_bundle_end(nplsi1))
         allocate(e_bundle_contr(nplsi1,npls))
+        allocate(zemin1(nplsi1))
+        allocate(zemax1(nplsi1))
         ib = 0
         do IATM = 1, NATMI1
           if (iatm.eq.natmi1) then
@@ -4780,6 +4785,8 @@ cxpb Now we have read the species data and can identify the bundles
             NMASSP1(ib) = nint(am1(iss))
             NCHARP1(ib) = nint(zn1(iss))
             NCHRGP1(ib) = nint((zamin1(iss)+zamax1(iss))/2.0_R8)
+            zemin1(ib) = zamin1(iss)
+            zemax1(ib) = zamax1(iss)
           enddo
         end do
         e_bundle_start = 0
@@ -4920,30 +4927,49 @@ cxpb Must now convert the bulk ion data according to the new bundling
           IS = ISP(IB)
           IF (IS.NE.0) THEN
             TEXTP1(IB) = ' '
-            IF (e_bundle_start(IB).eq.e_bundle_end(IB)) then
-              if (.not.done(IS)) then
-                TEXTP1(IB) = TEXTP(e_bundle_start(IB))
-              else
-                len = lnblnk(TEXTP(e_bundle_start(IB)))
-                if (NCHRGP(e_bundle_start(IB)).lt.10) then
-                  write(TEXTP1(IB)(1:len-2),'(A)')
-     .             TEXTP(e_bundle_start(IB))(1:len-2)
-                else
-                  write(TEXTP1(IB)(1:len-3),'(A)')
-     .             TEXTP(e_bundle_start(IB))(1:len-3)
-                endif
-                if (NCHRGP1(IB).lt.10) then
-                  write(TEXTP1(IB)(len-1:len-1),'(i1)') NCHRGP1(IB)
-                else
-                  write(TEXTP1(IB)(len-2:len-1),'(i2)') NCHRGP1(IB)
-                endif
-                write(TEXTP1(IB)(len:len),'(a1)') '+'
-              endif
+            IF (NCHRGP(e_bundle_start(IB)).eq.0) THEN
+              TEXTP1(IB) = TEXTP(e_bundle_start(IB))
             ELSE
-              TEXTP1(IB) =
-     . TEXTP(e_bundle_start(IB))(1:lnblnk(TEXTP(e_bundle_start(IB))))
-     . //'_'//
-     . TEXTP(e_bundle_end(IB))(1:lnblnk(TEXTP(e_bundle_end(IB))))
+              len = 0
+              do while
+     .         (isaletter(TEXTP(e_bundle_start(IB))(len+1:len+1)))
+                len = len + 1
+              end do
+              write(TEXTP1(IB)(1:len),'(A)')
+     .         TEXTP(e_bundle_start(IB))(1:len)
+              IF (zemin1(IB).eq.zemax1(IB)) THEN
+                if (nint(zemin1(IB)).eq.1) then
+                  continue
+                else if (nint(zemin1(IB)).eq.2) then
+                  write(TEXTP1(IB)(len+1:len+1),'(a1)') '+'
+                  len = len + 1
+                else if (nint(zemin1(IB)).lt.10) then
+                  write(TEXTP1(IB)(len+1:len+1),'(i1)') nint(zemin1(IB))
+                  len = len + 1
+                else
+                  write(TEXTP1(IB)(len+1:len+2),'(i2)') nint(zemin1(IB))
+                  len = len + 2
+                endif
+                 write(TEXTP1(IB)(len+1:len+1),'(a1)') '+'
+              ELSE
+                if (nint(zemin1(IB)).lt.10) then
+                  write(TEXTP1(IB)(len+1:len+1),'(i1)') nint(zemin1(IB))
+                  len = len + 1
+                else
+                  write(TEXTP1(IB)(len+1:len+2),'(i2)') nint(zemin1(IB))
+                  len = len + 2
+                endif
+                write(TEXTP1(IB)(len+1:len+1),'(a1)') '-'
+                len = len + 1
+                if (nint(zemax1(IB)).lt.10) then
+                  write(TEXTP1(IB)(len+1:len+1),'(i1)') nint(zemax1(IB))
+                  len = len + 1
+                else
+                  write(TEXTP1(IB)(len+1:len+2),'(i2)') nint(zemax1(IB))
+                  len = len + 2
+                endif
+                write(TEXTP1(IB)(len+1:len+1),'(a1)') '+'
+              END IF
             END IF
             NPRTP1(IB) = 0
             NHSTP1(IB) = -1
