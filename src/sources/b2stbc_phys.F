@@ -8978,9 +8978,8 @@ c              fchi=0.0_R8
             t0 = 0.0e0_R8
             do is = 0, ns-1
               if(istyle_fchi.eq.1 .and. BCCON(IS,IB).eq.14) then        !srv 14.02.05 {
-                t0 = t0-rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
+                t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
      *           CONPAR(IS,IB,1)*cs*s1*
-     .           SIGN(1.0_R8,BB(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      *           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
               else
                 t0 = t0-rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
@@ -9091,9 +9090,8 @@ c              fchi=0.0_R8
             do is = 0, ns-1
               if(istyle_fchi.eq.1 .and. BCCON(IS,IB).eq.14) then        !srv 14.02.05 {
 *    ..set boundary condition in explicit form (the same form as fna)
-                t0 = t0-rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
+                t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
      &           CONPAR(IS,IB,1)*cs*s1*
-     .           SIGN(1.0_R8,BB(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      &           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
               else                                                      !srv 14.02.05 {
                 t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
