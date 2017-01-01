@@ -7014,7 +7014,6 @@ cxpb          endif
      .       RIGHTIY(RIGHTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .               RIGHTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
                 UUOUT=MAX(MOMPAR(IS,IB,1)*CS*
-     .           SIGN(1.0_R8,BB(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      .           abs(wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .               wbbr(bc_list_x(iy,ib),bc_list_y(iy,ib),3)),
      .           -UUTEST)
@@ -7054,7 +7053,6 @@ cxpb          endif
      .            LEFTIY(LEFTIX(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      .                   LEFTIY(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
                 UUOUT=MAX(MOMPAR(IS,IB,1)*CS*
-     .           SIGN(1.0_R8,BB(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*
      .           abs(wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),0)/
      .               wbbl(bc_list_x(iy,ib),bc_list_y(iy,ib),3)),
      .           UUTEST)
