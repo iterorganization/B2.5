@@ -307,7 +307,7 @@
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &     wrong_flow, .false.,
-     &     .true., .true., .true., .true.)                               !djm 17/10/16
+     &     .false., .false., .false., .false.)                               !djm 17/10/16
           if(wrong_flow) write(*,*)
      &         'b2news [1]: wrong_flow returned from b2sral'
 *     ..smooth out sources
@@ -319,7 +319,7 @@
      &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
      &     sna, smo, she, shi, sch, sne, .false.,                        !xpb
-     &     .true., .true., .true., .true., po)                           !djm 17/10/16
+     &     .false., .false., .false., .false., po)                           !djm 17/10/16
 *     ..stabilise the source coefficients                                !xpb
           call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,  !xpb !srv 01.07.08
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
@@ -392,8 +392,13 @@
      &    sna, smo, she, shi, sch, sne, .false.,                         !xpb
      &    .true., .true., .true., .true., po)                            !djm 17/10/16
 *     ..stabilise the source coefficients                                !xpb
+        sna0 = sna !djm store for calculation of stabilisation component
         call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,    !xpb !srv 01.07.08
      &    ni, sna, smo, she, shi, sch, sne)                              !xpb
+        b2srst_sna(-1:nx,-1:ny,0:ns-1)=                                  !djm 27/10/16
+     &   (sna(-1:nx,-1:ny,0,0:ns-1)-sna0(-1:nx,-1:ny,0,0:ns-1))+
+     &   (sna(-1:nx,-1:ny,1,0:ns-1)-sna0(-1:nx,-1:ny,1,0:ns-1))*
+     &   na(-1:nx,-1:ny,0:ns-1)        
 cxpb
 *   ..iterate on parallel momentum balance
         call b2npmo (nx, ny, ns, ncall, solving, rxf1,
