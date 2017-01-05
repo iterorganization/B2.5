@@ -57,6 +57,11 @@
      *  b2srdt_she(:,:),
      *  b2srdt_shi(:,:),
      *  b2srdt_sch(:,:),
+     *  b2srst_sna(:,:,:),
+     *  b2srst_smo(:,:,:),
+     *  b2srst_she(:,:),
+     *  b2srst_shi(:,:),
+     *  b2srst_sch(:,:),
      *  b2stbm_sna(:,:,:),
      *  b2stbm_smo(:,:,:),
      *  b2stbm_sne(:,:),
@@ -157,6 +162,11 @@
       allocate(b2srdt_she(-1:nxd,-1:nyd))
       allocate(b2srdt_shi(-1:nxd,-1:nyd))
       allocate(b2srdt_sch(-1:nxd,-1:nyd))     
+      allocate(b2srst_sna(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2srst_smo(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2srst_she(-1:nxd,-1:nyd))
+      allocate(b2srst_shi(-1:nxd,-1:nyd))
+      allocate(b2srst_sch(-1:nxd,-1:nyd))     
       allocate(b2stbm_sna(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2stbm_smo(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2stbm_sne(-1:nxd,-1:nyd))
@@ -231,6 +241,11 @@
       b2srdt_she=0.0_R8
       b2srdt_shi=0.0_R8
       b2srdt_sch=0.0_R8
+      b2srst_sna=0.0_R8
+      b2srst_smo=0.0_R8
+      b2srst_she=0.0_R8
+      b2srst_shi=0.0_R8
+      b2srst_sch=0.0_R8
       b2stbm_sna=0.0_R8
       b2stbm_smo=0.0_R8
       b2stbm_sne=0.0_R8
@@ -325,6 +340,11 @@
       deallocate(b2srdt_she)
       deallocate(b2srdt_shi)
       deallocate(b2srdt_sch)
+      deallocate(b2srst_sna)
+      deallocate(b2srst_smo)
+      deallocate(b2srst_she)
+      deallocate(b2srst_shi)
+      deallocate(b2srst_sch)
       deallocate(b2stbm_sna)
       deallocate(b2stbm_smo)
       deallocate(b2stbm_sne)
@@ -438,6 +458,11 @@
         call cfrure (nread, size(b2srdt_she), b2srdt_she, 'b2srdt_she')
         call cfrure (nread, size(b2srdt_shi), b2srdt_shi, 'b2srdt_shi')
         call cfrure (nread, size(b2srdt_sch), b2srdt_sch, 'b2srdt_sch')
+        call cfrure (nread, size(b2srst_sna), b2srst_sna, 'b2srst_sna')
+        call cfrure (nread, size(b2srst_smo), b2srst_smo, 'b2srst_smo')
+        call cfrure (nread, size(b2srst_she), b2srst_she, 'b2srst_she')
+        call cfrure (nread, size(b2srst_shi), b2srst_shi, 'b2srst_shi')
+        call cfrure (nread, size(b2srst_sch), b2srst_sch, 'b2srst_sch')
       endif
       if(b2fplasma_version.ge.'01.001.026') call cfrure_opt 
      >  (nread, size(b2stbc_sne), b2stbc_sne, 'b2stbc_sne')
@@ -592,6 +617,11 @@
         call cfwure (nwrite, size(b2srdt_she), b2srdt_she, 'b2srdt_she')
         call cfwure (nwrite, size(b2srdt_shi), b2srdt_shi, 'b2srdt_shi')
         call cfwure (nwrite, size(b2srdt_sch), b2srdt_sch, 'b2srdt_sch')
+        call cfwure (nwrite, size(b2srst_sna), b2srst_sna, 'b2srst_sna')
+        call cfwure (nwrite, size(b2srst_smo), b2srst_smo, 'b2srst_smo')
+        call cfwure (nwrite, size(b2srst_she), b2srst_she, 'b2srst_she')
+        call cfwure (nwrite, size(b2srst_shi), b2srst_shi, 'b2srst_shi')
+        call cfwure (nwrite, size(b2srst_sch), b2srst_sch, 'b2srst_sch')
       endif
       if(newversion.ge.'01.001.026')
      >  call cfwure (nwrite, size(b2stbc_sne), b2stbc_sne, 'b2stbc_sne')

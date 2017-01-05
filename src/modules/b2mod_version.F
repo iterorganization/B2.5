@@ -269,5 +269,8 @@ c                                 fchdia, fchin, fchvispar, fchvisper, fchvisq, 
 c                                 vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
 c    Version 03.000.006  14.10.16 Added various quantities to allow post-processing balance routines:
 c                                 b2stel_sna_ion, b2stel_sna_rec, b2stel_smq_ion, b2stel_smq_rec, b2stel_she, b2stel_shi_ion, b2stel_shi_rec,
-c                                 b2stcx_sna, b2stcx_smq, b2stcx_shi, b2srsm_sna, b2srsm_smo, b2srsm_she, b2srsm_shi
+c                                 b2stcx_sna, b2stcx_smq, b2stcx_shi, b2srsm_sna, b2srsm_smo, b2srsm_she, b2srsm_shi,
+c                                 b2srdt_sna, b2srdt_smo, b2srdt_she, b2srdt_shi, b2srdt_sch,
+c                                 b2srst_sna, b2srst_smo, b2srst_she, b2srst_shi, b2srst_sch
+c                                 
 c                                 
