@@ -307,7 +307,7 @@
      &     rlsa, rlra, rlqa, rlcx, rlrd, rlbr, rlza, rlz2, rlpt, rlpi,
      &     rza, rz2, rpt, rpi, sna, smo, smq, she, shi, sch, sne,
      &     wrong_flow, .false.,
-     &     .true., .true., .true., .true.)                               !djm 17/10/16
+     &     .false., .false., .false., .false.)                               !djm 17/10/16
           if(wrong_flow) write(*,*)
      &         'b2news [1]: wrong_flow returned from b2sral'
 *     ..smooth out sources
@@ -319,7 +319,7 @@
      &     vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &     na, ua, te, ti, ne, ni, kinrgy,                               !srv 16.07.10
      &     sna, smo, she, shi, sch, sne, .false.,                        !xpb
-     &     .true., .true., .true., .true., po)                           !djm 17/10/16
+     &     .false., .false., .false., .false., po)                           !djm 17/10/16
 *     ..stabilise the source coefficients                                !xpb
           call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,  !xpb !srv 01.07.08
      &     ni, sna, smo, she, shi, sch, sne)                             !xpb
@@ -393,36 +393,12 @@
      &    .true., .true., .true., .true., po)                            !djm 17/10/16
 *     ..stabilise the source coefficients                                !xpb
         sna0 = sna !djm store for calculation of stabilisation component
-        smo0 = smo
-        she0 = she
-        shi0 = shi
-        sch0 = sch
         call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,    !xpb !srv 01.07.08
      &    ni, sna, smo, she, shi, sch, sne)                              !xpb
-        b2srst_sna(-1:nx,-1:ny,0:ns-1)=                                  !djm Jan2017
+        b2srst_sna(-1:nx,-1:ny,0:ns-1)=                                  !djm 27/10/16
      &   (sna(-1:nx,-1:ny,0,0:ns-1)-sna0(-1:nx,-1:ny,0,0:ns-1))+
      &   (sna(-1:nx,-1:ny,1,0:ns-1)-sna0(-1:nx,-1:ny,1,0:ns-1))*
-     &   na(-1:nx,-1:ny,0:ns-1)
-        do is=0,ns-1
-          b2srst_smo(-1:nx,-1:ny,is)=
-     &     (smo(-1:nx,-1:ny,0,is)-smo0(-1:nx,-1:ny,0,is))+
-     &     (smo(-1:nx,-1:ny,1,is)-smo0(-1:nx,-1:ny,1,is))*
-     &     ua(-1:nx,-1:ny,is)+
-     &     (smo(-1:nx,-1:ny,2,is)-smo0(-1:nx,-1:ny,2,is))*
-     &     am(is)*mp*na(-1:nx,-1:ny,is)+
-     &     (smo(-1:nx,-1:ny,3,is)-smo0(-1:nx,-1:ny,3,is))*
-     &     am(is)*mp*na(-1:nx,-1:ny,is)*ua(-1:nx,-1:ny,is)
-       enddo
-       b2srst_she0to3(-1:nx,-1:ny,0:3)=she(-1:nx,-1:ny,0:3)-
-     &                                 she0(-1:nx,-1:ny,0:3)
-       b2srst_shi0to3(-1:nx,-1:ny,0:3)=shi(-1:nx,-1:ny,0:3)-
-     &                                 shi0(-1:nx,-1:ny,0:3)
-       b2srst_sch(-1:nx,-1:ny)=
-     &   (sch(-1:nx,-1:ny,0)-sch0(-1:nx,-1:ny,0))+
-     &   (sch(-1:nx,-1:ny,1)-sch0(-1:nx,-1:ny,1))*po(-1:nx,-1:ny)+
-     &   (sch(-1:nx,-1:ny,2)-sch0(-1:nx,-1:ny,2))*ne(-1:nx,-1:ny)+
-     &   (sch(-1:nx,-1:ny,3)-sch0(-1:nx,-1:ny,3))*
-     &   ne(-1:nx,-1:ny)*po(-1:nx,-1:ny)
+     &   na(-1:nx,-1:ny,0:ns-1)        
 cxpb
 *   ..iterate on parallel momentum balance
         call b2npmo (nx, ny, ns, ncall, solving, rxf1,
