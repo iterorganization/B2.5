@@ -234,6 +234,9 @@ cank 960511
         read(44,'(3i6)') nlimi,nstsi,nstrai
         print '(a,5i6)','nlimi,nstsi,nstrai,nlimps,nlmpgs:',
      .                   nlimi,nstsi,nstrai,nlimps,nlmpgs
+        call xertst(nlimi  .le. nlim , 'NGREAD:  NLIMI > NLIM ')
+        call xertst(nstsi  .le. nsts , 'NGREAD:  NSTSI > NSTS ')
+        call xertst(nstrai .le. nstra, 'NGREAD: NSTRAI > NSTRA')
         call rdneutrs(44,wldnek,1)
         call rdneutrs(44,wldnep,1)
         call rdneutrs(44,wldna,natmi)

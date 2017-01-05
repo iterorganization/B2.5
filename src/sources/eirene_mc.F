@@ -1,4 +1,4 @@
-      subroutine eirene_mc(nx, ny, ns, ismain, dtim, BoRiS, 
+      subroutine eirene_mc(nx, ny, ns, ismain, dtim, BoRiS,
      1 sna0, smo0, she0, shi0, main_call)
 
 c  version : 26.07.2002 23:39
@@ -45,11 +45,12 @@ csw 19oct2012, added save attribute!!!
       integer pfrregno1, pfrregno2, solregno, isfeedback, ncallfeedback,
      1 nesepm_istra, use_recyceir
       real (kind=R8) ::
-     * recyc_hlp,vthe,t0,t1,rf0,uatmp,dua,t2,t3,t4,f,
+     * recyc_hlp,vthe,t0,t1,rf0,dua,t2,t3,t4,f,
      * neutral_sources_rescale, ndes, private_flux_puff, nesepm_sol,
      * recyctmp, nesepm_pfr, volrec_sol, ndes_sol, nepedm_sol
       real (kind=R8), save, allocatable ::
      1 SSNI(:,:), SSMO(:,:), SSEE(:), SSEI(:), SSEICORR(:),
+     1 SSEISTAB(:),
      1 tfl(:,:), volsumnold(:)
       real (kind=R8), save, allocatable ::
      * SMO_TOT(:,:,:), SNI_TOT(:,:,:)
@@ -92,7 +93,7 @@ c***
 c*** No scaling for the "time layer"
 c***
 c*** 10.02.2013: If l_neutrad<0, then old (incorrect) treatment of the neutral radiation.
-c*** Otherwise: take the radiation explicitly calculated in EIRENE. 
+c*** Otherwise: take the radiation explicitly calculated in EIRENE.
 
       real (kind=R8) :: s,x1,x2,t00,hlp_st,rec_tol
       real (kind=R8), save, allocatable ::
@@ -112,7 +113,7 @@ cank }
       character*24 hlp_frm, hlp_frm1, hlp_frm2, hlp_frm3, hlp_frm4
 c      integer lns_hlp
 c      parameter (lns_hlp=4)
-c      integer lis_hlp(lns_hlp) 
+c      integer lis_hlp(lns_hlp)
 c      data lis_hlp / 110, 111, 112, 49 /
       logical last, saved_volrec_used, na_feedback_on
 
@@ -134,19 +135,19 @@ csw 26feb2014
       logical, save :: full_history = .false.
       real (kind=R8) :: relax
 
-      real (kind=R8), save, allocatable :: 
+      real (kind=R8), save, allocatable ::
      .   sni_av(:,:,:,:),smo_av(:,:,:,:),sei_av(:,:,:),see_av(:,:,:)
       real (kind=R8), allocatable, save ::                        !IYS 28.03.12 {
      &  sni_h(:,:,:,:,:),
      &  smo_h(:,:,:,:,:),
      &  see_h(:,:,:,:), sei_h(:,:,:,:),
-     &  pfluxa_h(:,:,:,:,:), rfluxa_h(:,:,:,:,:), 
+     &  pfluxa_h(:,:,:,:,:), rfluxa_h(:,:,:,:,:),
      &  pfluxm_h(:,:,:,:,:), rfluxm_h(:,:,:,:,:),
 ! _h is an abbreviation from 'history'
      &  sni_s(:,:,:,:),
      &  smo_s(:,:,:,:),
      &  see_s(:,:,:), sei_s(:,:,:),
-     &  pfluxa_s(:,:,:,:), rfluxa_s(:,:,:,:), 
+     &  pfluxa_s(:,:,:,:), rfluxa_s(:,:,:,:),
      &  pfluxm_s(:,:,:,:), rfluxm_s(:,:,:,:),
 ! _s is an abbreviation from 'sum'
      &  dab2_h(:,:,:,:,:), dab2_s(:,:,:,:)
@@ -193,10 +194,11 @@ c not sure this is the right place
         allocate (ion_name(NATM))
         allocate (tfl(NSTRAT,0:ns-1))
         allocate (SSNI(NSTRAT,0:NS-1))
-        allocate (SSMO(NSTRAT,0:NS-1)) 
+        allocate (SSMO(NSTRAT,0:NS-1))
         allocate (SSEE(NSTRAT))
-        allocate (SSEI(NSTRAT))  
+        allocate (SSEI(NSTRAT))
         allocate (SSEICORR(NSTRAT))
+        allocate (SSEISTAB(NSTRAT))
         allocate (SMO_TOT(0:NDXP,0:NDYP,NFL))
         allocate (SNI_TOT(0:NDXP,0:NDYP,NFL))
         allocate (volsumnold(NSTRAT))
@@ -258,7 +260,7 @@ c not sure this is the right place
      .          species_end(istrai).ge.isfeedback) icount = icount+1
           end do
           call xertst (icount.eq.1 .or. nesepm_istra.gt.0,
-     .     'Multiple definitions of puff strata, use nesepm_istra') 
+     .     'Multiple definitions of puff strata, use nesepm_istra')
         endif
         call ipgetr ('b2stbc_private_flux_puff', private_flux_puff)
         call xertst (0.0_R8.le.private_flux_puff,
@@ -440,7 +442,7 @@ cxpb compute core boundary surface area
         do iy = -1, ny
           do ix = -1, nx
             if (bottomiy(ix,iy).eq.-2 .and. mod(region(ix,iy,0),4).eq.1)
-     >       core_surface = core_surface + 
+     >       core_surface = core_surface +
      .        gs(topix(ix,iy),topiy(ix,iy),1)
           enddo
         enddo
@@ -739,10 +741,10 @@ cxpb  Additional diagnostic for comparison with SOLPS4.0
           end do
         end do
         write(*,*) 'Summed inner target data : '
-        write(*,*) 
+        write(*,*)
      .   'wldnek, wldnep, wldna = ', sum_wld(1,1:2+nspecies)
         write(*,*) 'Summed outer target data : '
-        write(*,*) 
+        write(*,*)
      .   'wldnek, wldnep, wldna = ', sum_wld(2,1:2+nspecies)
       endif
 cxpb
@@ -750,7 +752,7 @@ cxpb
 cxpb  Compute recombination sources rescaling factor if necessary
       do istrai = 1, nstrat !{
         if(volsumnold(istrai).gt.0.0_R8) then !{
-          if(output_style.gt.1.or.main_call) 
+          if(output_style.gt.1.or.main_call)
      .     write(*,'(a,i2,1p,2(1x,1e14.7))')
      .      'stratum, volsumnold, abs(volsumn) ',
      .      istrai, volsumnold(istrai), abs(volsumn(istrai))/qe
@@ -791,7 +793,7 @@ cxpb
      1       'eirene_mc: wrong value found in b2espcr')
         end if !}
 
-        if(dbg_eir_mc.gt.9 .and. 
+        if(dbg_eir_mc.gt.9 .and.
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
           print *
           print *,'%%% Eirene data in B2 %%%',nlimps
@@ -1413,7 +1415,7 @@ c!###}
           end if !}
         end do !}
 
-        if(dbg_eir_mc.gt.0 .and. 
+        if(dbg_eir_mc.gt.0 .and.
      &       main_call .and. mod(ncall,eirene_mod).eq.0) then !{
 c*** Print the particle fluxes for each stratum and species
           print '(a)',
@@ -1624,21 +1626,21 @@ c fixed SMOOTH SOURCES FROM EIRENE , averaging procedure
         see_av = 0.0_R8
         sei_av = 0.0_R8
         dab2_s = 0.0_R8
-        pfluxa_s = 0.0_R8      
-        pfluxm_s = 0.0_R8      
-        rfluxa_s = 0.0_R8      
-        rfluxm_s = 0.0_R8      
+        pfluxa_s = 0.0_R8
+        pfluxm_s = 0.0_R8
+        rfluxa_s = 0.0_R8
+        rfluxm_s = 0.0_R8
         do ih = 1, ih_end
          sni_av = sni_av + sni_h(:,:,:,:,ih)
          smo_av = smo_av + smo_h(:,:,:,:,ih)
          see_av = see_av + see_h(:,:,:,ih)
-         sei_av = sei_av + sei_h(:,:,:,ih) 
+         sei_av = sei_av + sei_h(:,:,:,ih)
          do iatm = 1,nnatmi
-          dab2_s(:,:,iatm,1) = dab2_s(:,:,iatm,1) 
+          dab2_s(:,:,iatm,1) = dab2_s(:,:,iatm,1)
      .                       + dab2_h(:,:,iatm,1,ih)
-          pfluxa_s(:,:,iatm,1) = pfluxa_s(:,:,iatm,1) 
+          pfluxa_s(:,:,iatm,1) = pfluxa_s(:,:,iatm,1)
      .                         + pfluxa_h(:,:,iatm,1,ih)
-          rfluxa_s(:,:,iatm,1) = rfluxa_s(:,:,iatm,1) 
+          rfluxa_s(:,:,iatm,1) = rfluxa_s(:,:,iatm,1)
      .                         + rfluxa_h(:,:,iatm,1,ih)
          enddo
          do imol = 1,nnmoli
@@ -1660,7 +1662,7 @@ cxpb Under-relaxation scheme for smoothing of Eirene sources
         ihist=ihist+1
         if (ihist.eq.nrelax) full_history = .true.
         if (ihist.eq.nrelax+1) ihist = 1
-        write(*,*) 
+        write(*,*)
      .   'eirene_mc: EIRENE source under-relaxation ', nrelax, ihist
         if (full_history) then
          ih_end = nrelax
@@ -1708,7 +1710,7 @@ csw 2012 fixed rescaling procedure
 c  otherwise rescaling procedure does not work with internal iterations nstg2>1
 c  (sclrtio/sclalph will be reinitialised which should not happen at istg2 > 1)
 c  this is part of phase 2 of rescaling process
-c 
+c
       if(main_call.and.mod(ncall,eirene_mod).eq.0.and.ank_mods.ne.0)
      .   then
 
@@ -1823,7 +1825,7 @@ c     .                          .or. crcstra(istrai).eq.'U'
                 s=mlcmp(ls,is)
                 core_flux(ls)=core_flux(ls)+
      .           (wldnm(j,is,0)-wldrm(j,is,0))*s
-                if (dbg_eir_mc.ge.12 .and. main_call) then 
+                if (dbg_eir_mc.ge.12 .and. main_call) then
                   write(*,'(a,5i4)') 'J, ISTRAI, IATM, IMOL, S',
      .             j, istrai, ls, is, mlcmp(ls,is)
                   write(*,'(a,1p,5(1x,1e14.7))')
@@ -1853,6 +1855,7 @@ c   and apply linearisation
       sseireg=0.0_R8
       ssnireg=0.0_R8
       sseicorr=0.0_R8
+      sseistab=0.0_R8
       src_ni(:,3,:)=0.0_R8
       src_mo(:,3,:)=0.0_R8
       src_ne(:,3)=0.0_R8
@@ -2163,7 +2166,7 @@ c*** before correction (r), after correction (c), after iteration (i)
               t1=0.0_R8
 cxpb Correction of Eirene energy sources to B2 heat sources
 cxpb Only necessary for SOLPS5.0 equation formulation
-              if (BoRiS.eq.0.0_R8.and.no_sseicorr.eq.0) then !{ 
+              if (BoRiS.eq.0.0_R8.and.no_sseicorr.eq.0) then !{
                 do is=0,ns-1 !{
                   if(use_recyceir.gt.0) then
                     recyctmp=recyceir(istrai)
@@ -2172,32 +2175,17 @@ cxpb Only necessary for SOLPS5.0 equation formulation
                   endif
                   if(.not.is_neutral(is)) then !{
                     ifl=fluids_list(is)
-cxpb  Moved to cell-center velocities 2002.01.28
-cxpb was                 uatmp=0.5_R8*(ua(ix,iy,is)+
-cxpb was    1             ua(rightix(ix,iy),rightiy(ix,iy),is))
-cxpb  Changed to second-order description to handle very large sources 2007.11.28
-cxpb was                 uatmp=ua(ix,iy,is)
-
-csw 06mar2012 include ank_mods scaling into correction
-c                    t1=t1-uatmp*smo(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-c     *               recyctmp*flux_scale(istrai)+
-c     1               kinrgy(ix,iy,is)*
-c     2               sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
-c     *               recyctmp*flux_scale(istrai)
-
                     j=b2espcr(is)
                     if (smo_tot(ix+1,iy+1,ifl).ne.0.0_R8 .and.
      .                  sni_tot(ix+1,iy+1,ifl).ne.0.0_R8) then
-                      uatmp = (ua(ix,iy,is)*na(ix,iy,is)*vol(ix,iy) +
-     .                         smo_tot(ix+1,iy+1,ifl)*
-     .                         dtim*dtmo(is,region(ix,iy,0))/
-     .                        (am(is)*mp))/
-     .                        (na(ix,iy,is)*vol(ix,iy) +
-     .                         sni_tot(ix+1,iy+1,ifl)*
-     .                         dtim*dtco(is,region(ix,iy,0)))
-                      dua = uatmp - ua(ix,iy,is)
+                      dua = (smo_tot(ix+1,iy+1,ifl)*
+     .                       dtim*dtmo(is,region(ix,iy,0))/(am(is)*mp) -
+     .                       ua(ix,iy,is)*sni_tot(ix+1,iy+1,ifl)*
+     .                       dtim*dtco(is,region(ix,iy,0)) )/
+     .                      (na(ix,iy,is)*vol(ix,iy) +
+     .                       sni_tot(ix+1,iy+1,ifl)*
+     .                       dtim*dtco(is,region(ix,iy,0)))
                     else
-                      uatmp = ua(ix,iy,is)
                       dua = 0.0_R8
                     end if
 
@@ -2211,7 +2199,6 @@ c     *               recyctmp*flux_scale(istrai)
 
                     t2=t2*sclstra(j,istrai)
 
-
 csw 06mar2012 particle source
 csw 26feb2014 averaging
 c                    t3=sni(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
@@ -2219,7 +2206,6 @@ c     *               recyctmp*flux_scale(istrai)
                     t3=sni_av(ix+1,iy+1,ifl,istrai)*tflux(istrai)*
      *               recyctmp*flux_scale(istrai)/
      *               dble(ih_end)
-
 
 csw 26mar2013 (for TESTING)
                     if(iscltst .eq. 0) then
@@ -2230,11 +2216,10 @@ csw 26mar2013 (for TESTING)
      -                 t3=t3*sclstra(j,istrai)
                     endif
 
-
 csw 06mar2012 total correction
-                    t1=t1-uatmp*t2+kinrgy(ix,iy,is)*t3
+                    t1=t1-ua(ix,iy,is)*t2+kinrgy(ix,iy,is)*t3
 cxpb 13feb2015 additional correction with second-order effects for large sources
-cxpb 12oct2015 multiply na term by fractional stratum weight to avoid double-counting
+cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-counting
                     if (smo_tot(ix+1,iy+1,ifl).ne.0.0_R8.and.
      .                  t3.ne.0.0_R8 .and.
      .                  stab_corr.eq.1) then
@@ -2247,6 +2232,7 @@ cxpb 12oct2015 multiply na term by fractional stratum weight to avoid double-cou
                       t4=0.0_R8
                     endif
                     t1=t1-t4
+                    sseistab(istrai)=sseistab(istrai)-t4
                   end if !}
                 end do !} !is
               end if !}
@@ -2291,7 +2277,7 @@ csw 21feb2012 add test l_neutrad (SOLPS4.3)
         end do
         write (hlp_frm,'(a,i2,a)') '(a,1p,',nnmoli,'(1x,e14.7))'
         if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
-     .   'EIRENE_MC. EDISSML : ', 
+     .   'EIRENE_MC. EDISSML : ',
      .   (SUM(edissml(1:nx,1:ny,imol,0)),imol=1,nnmoli)
       else
 
@@ -2338,11 +2324,11 @@ c
         enddo
         write (hlp_frm,'(a,i2,a)') '(a,1p,',nnatmi,'(1x,e14.7))'
         if (dbg_eir_mc.ge.2 .and. main_call) write(*,hlp_frm)
-     .   'EIRENE_MC. ENEUTRAD : ', 
+     .   'EIRENE_MC. ENEUTRAD : ',
      .   (SUM(eneutrad(1:nx,1:ny,iatm,0)),iatm=1,nnatmi)
       endif
       if (dbg_eir_mc.ge.2 .and. main_call) write(*,'(a,1p,2(1x,e14.7))')
-     . 'EIRENE_MC. RADARR, RAD_NEUTR : ', 
+     . 'EIRENE_MC. RADARR, RAD_NEUTR : ',
      .  SUM(radarr(1:nx,1:ny)), rad_neutr
 
       if(.not.filedata(ntrc_int)) then
@@ -2371,8 +2357,8 @@ cxpb  core recycling into ions of the highest ionisation stage
         do iy = -1, ny
           do ix = -1, nx
             do j = 1, nnatmi
-              if (bottomiy(ix,iy).eq.-2 .and. 
-     &            mod(region(ix,iy,0),4).eq.1) then  
+              if (bottomiy(ix,iy).eq.-2 .and.
+     &            mod(region(ix,iy,0),4).eq.1) then
                 t0=core_flux(j)*
      *           (gs(topix(ix,iy),topiy(ix,iy),1)/core_surface)
                 if(linearisation.eq.1) then !{
@@ -2425,18 +2411,19 @@ C           call xerrab ('eirene_mc: bccon <> 13')
             write (*,'(a,i3,1p,2(1x,1e14.7))') 'IS,SSNI,SSMO = ',
      1       is,ssni(istrai,is)*qe,ssmo(istrai,is)
           end do !}
-          write (*,'(a,1p,4(1x,1e14.7))') 'SSEE,SSEI = ',
+          write (*,'(a,1p,5(1x,1e14.7))') 'SSEE,SSEI = ',
      1     ssee(istrai),ssei(istrai)+sseicorr(istrai),
-     2     ssei(istrai),sseicorr(istrai)
+     2     ssei(istrai),sseicorr(istrai),sseistab(istrai)
         end do !}
-        write(*,'(a,1p,6(1x,1e14.7))') 
-     .  'CUM:SSEE,SSEI[123],SSNI,SSMO = ',
+        write(*,'(a,1p,7(1x,1e14.7))')
+     .  'CUM:SSEE,SSEI[1234],SSNI,SSMO = ',
      1   sum(ssee(1:nstrat)),
      2   sum(ssei(1:nstrat))+sum(sseicorr(1:nstrat)),
      3   sum(ssei(1:nstrat)),sum(sseicorr(1:nstrat)),
+     4   sum(sseistab(1:nstrat)),
      2   sum(ssni(1:nstrat,0:ns-1)),sum(ssmo(1:nstrat,0:ns-1))
         if (ionising_core.ne.0) then
-          do j = 1, nnatmi 
+          do j = 1, nnatmi
             write(*,*) 'Recycled',trim(ion_name(j)),
      1       ' ion flux through core boundary', core_flux(j)
           enddo
@@ -2637,7 +2624,7 @@ c          hlp_pr= istrai.eq.7 .and. j.eq.3 !###
             else !}{
               l=0
             end if !}
-            if(sclrtio(j,istrai).gt.0.0_R8 .and. 
+            if(sclrtio(j,istrai).gt.0.0_R8 .and.
      &         sclbase(j,istrai).gt.0.0_R8) then !{
               sclrtio(j,istrai)=sclbase(j,istrai)*
      *         sclstra(l,istrai)/sclrtio(j,istrai)
