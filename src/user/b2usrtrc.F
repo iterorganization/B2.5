@@ -1044,7 +1044,9 @@ c outer target
       else !}{VK
         call b2usr_loads(nx,ny,ns,nxtl,nxtr,BoRiS,wtarg_max)
         hlp_ppwi=wtarg_max(1)
-        hlp_ppwo=wtarg_max(nncut)
+csw 02jan2017 corrected hlp_ppwo
+c       hlp_ppwo=wtarg_max(nncut)
+        hlp_ppwo=wtarg_max(nncut*2)
         if(double_null) then
           hlp_pwou=wtarg_max(2)
           hlp_pwiu=wtarg_max(3)
@@ -1205,12 +1207,16 @@ c          print *, k,hlp_dod(k) !###
 c          print * !###
           if(print_isat) then !{
             mgl3_tmp=mgl3_tmp+1
-            do is=1,ns !{
-              do iy=1,ny !{
-                hlp_isat(mgl3_tmp)=hlp_isat(mgl3_tmp)+
+csw 03jan2017 corrected do loop to avoid exceed of array limits and to
+csw           exclude neutrals from isat calculation
+            do is=0,ns-1 !{
+              if(.not.is_neutral(is)) then !{
+                do iy=1,ny !{
+                  hlp_isat(mgl3_tmp)=hlp_isat(mgl3_tmp)+
      +                      fna(itg_tmp(k)+kgl3_tmp(k),iy,0,is)*
      *                      rza(itg_tmp(k)+kgl3_tmp(k),iy,is)
-              end do !}
+                end do !}
+              end if !}
             end do !}
             hlp_isat(mgl3_tmp)=hlp_isat(mgl3_tmp)*
      *                      qe*(2.0_R8*kgl3_tmp(k)+1)
