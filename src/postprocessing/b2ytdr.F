@@ -399,7 +399,6 @@ c 2002-09-11: logic revised
      .                               SORCTX(:), SORCTY(:), SORCTZ(:)
       real (kind=R8), allocatable :: RAYFRAC(:)
       real (kind=R8), allocatable :: SCALV(:)
-      real (kind=R8), allocatable :: XTRIAN(:), YTRIAN(:)
       real (kind=R8), allocatable :: zemin1(:), zemax1(:)
 #endif
       real (kind=R8) ::
