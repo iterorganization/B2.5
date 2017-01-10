@@ -5680,8 +5680,8 @@ cxpb We now rewrite the modified block 4
             CONTINUE
           END SELECT
  5114   CONTINUE
-        deallocate(NMASSA,NMASSM,NMASSI,NMASSP,NMASSP1)
-        deallocate(NCHARA,NCHARM,NCHARI,NCHARP,NCHARP1)
+        deallocate(NMASSM,NMASSI,NMASSP,NMASSP1)
+        deallocate(NCHARM,NCHARI,NCHARP,NCHARP1)
         deallocate(NPRTA,NPRTM,NPRTI,NPRTP,NPRTP1)
         deallocate(NCHRGI,NCHRGP,NCHRGP1)
         deallocate(ISRFA,ISRFM,ISRFI,ISRFP,ISRFP1)
