@@ -1723,6 +1723,8 @@ c dpc
 
  1400     CONTINUE
           if (ncall.eq.0) then
+            call xertst(CONPAR(IS,IB,1).gt.0.0_R8,
+     1       'BCCON = 14, CONPAR(,,1) <= 0 not allowed!')
             write(*,'(a,1p,g14.7,a,a,a,a,i3)')
      .       ' sound speed flux ',CONPAR(IS,IB,1),' on ',
      1       BCCHAR(IB),boundary_location(ib),' for species ',IS
@@ -1737,7 +1739,7 @@ c dpc
 !                CS=SQRT(BCINT(PR,NX,NY,IY,IB)/BCINT(RO,NX,NY,IY,IB))
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
-     .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)+
+     .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
      .           S1*CONPAR(IS,IB,1)*CS
                 sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)=
      &           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS) +
@@ -1764,7 +1766,7 @@ c dpc
 !                CS=SQRT(BCINT(PR,NX,NY,IY,IB)/BCINT(RO,NX,NY,IY,IB))
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,IS)=0.0_R8
                 SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)=
-     .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)+
+     .           SNA0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1,IS)-
      .           S1*CONPAR(IS,IB,1)*CS
                 sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS)=
      &           sna0_no_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),:,IS) +
