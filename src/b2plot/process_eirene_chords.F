@@ -144,6 +144,7 @@ c
 #endif
 
       character*(*) filename
+#ifdef B25_EIRENE
       character*80 dataname
       character*256 tmpstring,titlestring
 #ifndef DEF_MAXCHORDS
@@ -208,6 +209,7 @@ c
      2   linlog)
         call end_page
       enddo
+#endif
       return
       end subroutine process_eirene_camera
 c
@@ -282,6 +284,7 @@ c
       return
       end subroutine compile_tria_chords
 c
+#ifdef B25_EIRENE
       subroutine calculate_tzvalues(maxchords,maxcompile,
      1 inpts,indchd,indit,indscl,workarr,
      2 zvalues,filename,dataname,
@@ -290,7 +293,6 @@ c
       use b2mod_types
       use b2mod_geo
       use b2mod_b2plot
-#ifdef B25_EIRENE
       use eirmod_ctrig
       implicit none
 
@@ -356,6 +358,6 @@ c
         endif
       endif
       call subend ()
-#endif
       return
       end subroutine calculate_tzvalues
+#endif

@@ -102,9 +102,9 @@
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
-     *   trim1, norm, dist, sinang, cosang, quadCentroid
+     *   trim1, norm, dist, sinang, cosang
       external subini, subend, xertst, ipgetr, ipgeti
-      external b2xvsg, quadCentroid
+      external b2xvsg
       norm(p0x,p0y) = sqrt(p0x**2+p0y**2)
       trim1(p0x) = max(-1.0_R8,min(1.0_R8,p0x))
       dist(ix,iy,i,j) = norm (
@@ -228,10 +228,14 @@
           centroid(1) = 0.25_R8*
      &     (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
          else
-          centroid = quadCentroid(crx(ix,iy,0),cry(ix,iy,0),
-     &                            crx(ix,iy,1),cry(ix,iy,1),
-     &                            crx(ix,iy,2),cry(ix,iy,2),
-     &                            crx(ix,iy,3),cry(ix,iy,3)) 
+          centroid(0) = XquadCentroid(crx(ix,iy,0),cry(ix,iy,0),
+     &                                crx(ix,iy,1),cry(ix,iy,1),
+     &                                crx(ix,iy,2),cry(ix,iy,2),
+     &                                crx(ix,iy,3),cry(ix,iy,3))
+          centroid(1) = YquadCentroid(crx(ix,iy,0),cry(ix,iy,0),
+     &                                crx(ix,iy,1),cry(ix,iy,1),
+     &                                crx(ix,iy,2),cry(ix,iy,2),
+     &                                crx(ix,iy,3),cry(ix,iy,3))
          endif
          vol(ix,iy) = gs(ix,iy,2)*2.0_R8*pi*centroid(0)
         enddo
@@ -263,10 +267,14 @@
           centroid(1) = 0.25_R8*
      &     (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
          else
-          centroid = quadCentroid(crx(ix,iy,0),cry(ix,iy,0),
-     &                            crx(ix,iy,1),cry(ix,iy,1),
-     &                            crx(ix,iy,2),cry(ix,iy,2),
-     &                            crx(ix,iy,3),cry(ix,iy,3)) 
+          centroid(0) = XquadCentroid(crx(ix,iy,0),cry(ix,iy,0),
+     &                                crx(ix,iy,1),cry(ix,iy,1),
+     &                                crx(ix,iy,2),cry(ix,iy,2),
+     &                                crx(ix,iy,3),cry(ix,iy,3))
+          centroid(1) = YquadCentroid(crx(ix,iy,0),cry(ix,iy,0),
+     &                                crx(ix,iy,1),cry(ix,iy,1),
+     &                                crx(ix,iy,2),cry(ix,iy,2),
+     &                                crx(ix,iy,3),cry(ix,iy,3))
          endif
          vol(ix,iy) = gs(ix,iy,2)*2.0_R8*pi*centroid(1)
         enddo
@@ -296,6 +304,68 @@
 *-----------------------------------------------------------------------
 *.end b2agmt
 
+      contains
+
+C Coordinates of centroid of a quadrangle given by vertex coordinates
+C Corners are numbered in the B2 convention 2-3
+C                                           0-1
+      function XquadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
+      use b2mod_types
+      implicit none
+      real (kind=R8) :: XquadCentroid
+      real (kind=R8) :: triangleArea
+      external triangleArea
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
+  
+      XquadCentroid =
+     & ( XtriangleCentroid(x0,y0,x1,y1,x3,y3)
+     & * triangleArea(x0,y0,x1,y1,x3,y3)
+     & + XtriangleCentroid(x0,y0,x2,y2,x3,y3)
+     & * triangleArea(x0,y0,x2,y2,x3,y3) )
+     & / ( triangleArea(x0,y0,x1,y1,x3,y3)
+     &   + triangleArea(x0,y0,x2,y2,x3,y3) )
+      return
+      end function XquadCentroid
+
+      function YquadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
+      use b2mod_types
+      implicit none
+      real (kind=R8) :: YquadCentroid
+      real (kind=R8) :: triangleArea
+      external triangleArea
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
+  
+      YquadCentroid =
+     & ( YtriangleCentroid(x0,y0,x1,y1,x3,y3)
+     & * triangleArea(x0,y0,x1,y1,x3,y3)
+     & + YtriangleCentroid(x0,y0,x2,y2,x3,y3)
+     & * triangleArea(x0,y0,x2,y2,x3,y3) )
+     & / ( triangleArea(x0,y0,x1,y1,x3,y3)
+     &   + triangleArea(x0,y0,x2,y2,x3,y3) )
+      return
+      end function YquadCentroid
+
+C Coordinates of centroid of a triangle given by vertex coordinates
+      function XtriangleCentroid( x0, y0, x1, y1, x2, y2 )
+      use b2mod_types
+      implicit none
+      real (kind=R8) :: XtriangleCentroid
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2
+
+      XtriangleCentroid = ( x0 + x1 + x2 ) / 3.0_R8
+      return
+      end function XtriangleCentroid
+
+      function YtriangleCentroid( x0, y0, x1, y1, x2, y2 )
+      use b2mod_types
+      implicit none
+      real (kind=R8) :: YtriangleCentroid
+      real (kind=R8) :: x0, y0, x1, y1, x2, y2
+
+      YtriangleCentroid = ( y0 + y1 + y2 ) / 3.0_R8
+      return
+      end function YtriangleCentroid
+
       end subroutine b2agmt
 
 C Area of triangle given by vertex coordinates
@@ -310,37 +380,3 @@ C Area of triangle given by vertex coordinates
      & - (y1-y0)*(x2-x0) )
       return
       end function triangleArea
-  
-C Coordinates of centroid of a triangle given by vertex coordinates
-      function triangleCentroid( x0, y0, x1, y1, x2, y2 )
-      use b2mod_types
-      implicit none
-      real (kind=R8) :: triangleCentroid(0:1)
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2
-  
-      triangleCentroid(0) = ( x0 + x1 + x2 ) / 3.0_R8
-      triangleCentroid(1) = ( y0 + y1 + y2 ) / 3.0_R8
-      return
-      end function triangleCentroid
-  
-C Coordinates of centroid of a quadrangle given by vertex coordinates
-C Corners are numbered in the B2 convention 2-3
-C                                           0-1
-      function quadCentroid( x0, y0, x1, y1, x2, y2, x3, y3 )
-      use b2mod_types
-      implicit none
-      real (kind=R8) :: quadCentroid(0:1)
-      real (kind=R8) :: triangleCentroid
-      real (kind=R8) :: triangleArea
-      external triangleCentroid, triangleArea
-      real (kind=R8) :: x0, y0, x1, y1, x2, y2, x3, y3
-  
-      quadCentroid =
-     & ( triangleCentroid(x0,y0,x1,y1,x3,y3)
-     & * triangleArea(x0,y0,x1,y1,x3,y3)
-     & + triangleCentroid(x0,y0,x2,y2,x3,y3)
-     & * triangleArea(x0,y0,x2,y2,x3,y3) )
-     & / ( triangleArea(x0,y0,x1,y1,x3,y3)
-     &   + triangleArea(x0,y0,x2,y2,x3,y3) )
-      return
-      end function quadCentroid
