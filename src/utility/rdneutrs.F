@@ -35,7 +35,9 @@ c
       save end_of_file
 c
       if(end_of_file) return
+#ifdef B25_EIRENE
       call read_title(kard)
+#endif
       do ifl=1,ldmf
         if(nlimi.gt.0) read(kard,910,end=10)
      1   (dummy(is,ifl),is=1,nlimi)
