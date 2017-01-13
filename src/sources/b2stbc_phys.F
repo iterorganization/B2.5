@@ -1273,7 +1273,7 @@ cghgh
           ENDIF
           GOTO 10000
 
-* -- BCCON=10 -- leakage option for density
+* -- BCCON=10 -- leakage option for density, recommended for cases with drifts
 
  1000     CONTINUE
           if(ncall.eq.0) then
@@ -1788,7 +1788,7 @@ c dpc
           ENDIF
           GOTO 10000
 
-* -- BCCON=15 -- prescribe the decay length for density for drifts switched on
+* -- BCCON=15 -- prescribe a radial leakage velocity, as a multiplier to the local thermal velocity
 
  1500     CONTINUE                                                  !srv 25.09.09 16.02.12{
           if(ncall.eq.0) then

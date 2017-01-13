@@ -508,8 +508,9 @@
 *     9 : prescribe the decay length for the density,
 *     CONPAR(,,1) specifies the gradient length in $m$
 *     (should use type 15 instead when drifts are turned on)
-*     10 : leakage option for density, CONPAR(,,1) specifies
-*     the leakage factor, $\alpha$ in $\Gamma_{\mbox{loss}} = \alpha C_s n_a$
+*     10 : leakage option for density, recommended for cases with drifts,
+*     CONPAR(,,1) specifies the leakage factor,
+*     $\alpha$ in $\Gamma_{\mbox{loss}} = \alpha C_s n_a$
 *     11 : particle flux feedback boundary condition,
 *     CONPAR(,,1) not used, derived from CBSNA(0,IS,IREG).
 *     The species used must be declared using the 'b2stbc_isfeedback' switch.
@@ -527,8 +528,8 @@
 *     type13_norm and type13_fac. See code for details.
 *     14 : sound speed velocity flux,
 *     CONPAR(,,1) is a multiplier to the outgoing sound speed $C_s$.
-*     15 : prescribe the decay length for the density with drifts switched on,
-*     CONPAR(,,1) specifies the gradient length in $m$
+*     15 : prescribe a radial leakage velocity,
+*     CONPAR(,,1) specifies the leakage velocity in units of the local thermal velocity.
 *     16 : particle density to achieve specified total flux, used with ASTRA 
 *     coupling. The total desired flux is summed over all BCCON=16 core boundaries.
 *     CONPAR(,,1) specifies the desired particle flux in $s^{-1}$.
