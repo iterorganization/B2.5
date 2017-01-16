@@ -6021,7 +6021,7 @@ cghgh
         ENDIF
         GOTO 30000
 
-* -- BCENE=22 -- THE MODIFIED DECAY LENGTH FOR THE ELECTRON TEMPERATURE   !srv 23.07.10 {
+* -- BCENE=22 -- RADIAL LEAKAGE CONDITION FOR THE ELECTRON TEMPERATURE   !srv 23.07.10 {
 
 22200   CONTINUE
         if(ncall.eq.0) then
@@ -7825,7 +7825,7 @@ cxpb Careful here because of BC number clash
         ENDIF
         GOTO 40000                                                   !srv 01.02.09 }
 
-* -- BCENI=22 -- THE MODIFIED DECAY LENGTH FOR THE ION TEMPERATURE   !srv 23.07.10 {
+* -- BCENI=22 -- RADIAL LEAKAGE CONDITION FOR THE ION TEMPERATURE   !srv 23.07.10 {
 
 32200   CONTINUE
         if(ncall.eq.0) then

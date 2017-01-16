@@ -699,7 +699,9 @@
 *     bc_type21_ref away
 *     ENEPAR(,,1) specifies the desired electron temperature in $eV$.
 *     ENEPAR(,,2) is the strength of the feedback
-*     22 : modified decay length for the electron temperature
+*     22 : radial leakage condition for the electron temperature
+*     ENEPAR(,,1) specifies the leakage velocity in units of the electron
+*     thermal velocity
 *  BCENI - integer array, length NBC, specifying the
 *     type of ion energy or temperature boundary condition for each
 *     segment; makes use of ENIPAR to specify additional
@@ -761,7 +763,9 @@
 *     as per type [16] but with type20_ switches and a different
 *     feedback scheme.      
 *     21 : from b2stbc_spb
-*     22 : modified decay length for the ion temperature
+*     22 : radial leakage condition for the ion temperature
+*     ENIPAR(,1) specifies the leakage velocity in units of the collective
+*     ion thermal velocity
 *     23 : Prescribe the poloidally averaged value of the ion temperature
 *     and introduce a poloidal variation as close as possible to neoclassical 
 *     solution. It is recommended to use this boundary condition together with
