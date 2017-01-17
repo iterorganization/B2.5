@@ -106,7 +106,7 @@
      *  hce(-1:nx,-1:ny,0:1), sig(-1:nx,-1:ny,0:1),
      1  alf(-1:nx,-1:ny,0:1), vsa(-1:nx,-1:ny,0:1,0:ns-1),
      2  hci(-1:nx,-1:ny,0:1), sigin(-1:nx,-1:ny,0:1,0:ns-1,0:nscx-1),
-     3  wrk(-1:nx,-1:ny)                                              !srv 01.07.99 09.01.01
+     3  wrk(-1:nx,-1:ny), wrk1(-1:nx,-1:ny,0:2)                       !srv 01.07.99 09.01.01
 csw 13mar2012
       integer, save :: core_cond_limit=0
 *   ..procedures
@@ -114,7 +114,7 @@ csw 13mar2012
      *  smin, smax, hy1                                               !srv 22.04.16
       external subini, subend, xertst, xerrab, sfill, smin, smax
       external b2tqca, b2tqce, b2tqin, b2txcx, b2txcy, b2tlmv,        !xpb
-     &  ipgeti, ipgetr, b2ttia                                        !lk 19.09.07
+     &  ipgeti, ipgetr, b2ttia, intfaceh, intfacev                    !lk 19.09.07
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                              !srv 22.04.16
 *   ..initialisation
       save ncall, lthf21, lvis21, cthiv, cthev, lluciani, mode
@@ -209,12 +209,17 @@ cwdk  tmp: needed as long as not all contributions are filled later on
       alfx_c(:,:) = alf(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
       sigx_c(:,:) = sig(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !             }               !srv 13.01.17
 *   ..incorporate geometry with hz                                    !srv 09.01.01
-      wrk = hz*vol
+      call intfaceh(nx,ny,leftix,leftiy,vol,hz,wrk)
+      wrk1(:,:,0) = gs(:,:,0)*wrk 
+      call intfacev(nx,ny,bottomix,bottomiy,vol,hz,wrk)
+      wrk1(:,:,1) = gs(:,:,1)*wrk
+      wrk1(:,:,2) = gs(:,:,2)
+      wrk  = hz*vol
       do is = 0, ns-1
-       call b2txcx (nx, ny, mode, wrk, gs, hx, hy, qz, vsa(-1,-1,0,is),   !srv 01.07.05 {
-     &   cvsahz(-1,-1,0,0,is))
-       call b2txcy (nx, ny, mode, wrk, gs, hx, hy, qz, vsa(-1,-1,1,is),
-     &   cvsahz(-1,-1,0,1,is))                                          !srv 01.07.05 }
+       call b2txcx (nx, ny, mode, wrk, wrk1, hx, hy, qz,    !srv 01.07.05 {
+     &   vsa(-1,-1,0,is), cvsahz(-1,-1,0,0,is))
+       call b2txcy (nx, ny, mode, wrk, wrk1, hx, hy, qz,
+     &   vsa(-1,-1,1,is), cvsahz(-1,-1,0,1,is))                                !srv 01.07.05 }
       enddo                                                           !srv 09.01.01
 *   ..incorporate geometry
       call sfill (n2*4*ns*ns, 0.0_R8, csigin(-1,-1,0,0,0,0), 1)

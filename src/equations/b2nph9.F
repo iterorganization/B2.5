@@ -149,10 +149,12 @@
        call b2xvfy (nx, ny, pbs(-1,-1,1), 'pbs')
 *    ..test sign of transport coefficients
        if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then             !srv 06.07.06 {
-        call b2xvsg (n2*4, cone, 1, 'cone', '.ge.')                     !srv 02.01.07
+        call b2xvsg (n2, cone(-1,-1,0,0,0), 1, 'cone', '.ge.')          !srv 02.01.07
+        call b2xvsg (n2, cone(-1,-1,1,1,0), 1, 'cone', '.ge.')
        endif                                                            !srv 06.07.06 }
        if(no_Ptncr_x_hi.eq.0 .and. no_Ptncr_y_hi.eq.0) then             !srv 06.07.06 {
-        call b2xvsg (n2*4, coni, 1, 'coni', '.ge.')                     !srv 02.01.07
+       call b2xvsg (n2, coni(-1,-1,0,0,0), 1, 'coni', '.ge.')
+       call b2xvsg (n2, coni(-1,-1,1,1,0), 1, 'coni', '.ge.')           !srv 02.01.07
        endif                                                            !srv 06.07.06 }
        call b2xvsg (n2, ceqp, 1, 'ceqp', '.ge.')
 *    ..test edge values of transport coefficients

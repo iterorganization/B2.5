@@ -103,6 +103,7 @@
      2  rob(-1:nx,-1:ny), flub(-1:nx,-1:ny,0:1,0:1),
      *  flubv(-1:nx,-1:ny,0:1,0:1),                                    !srv 11.09.09
      3  wrkf(-1:nx,-1:ny,0:1,0:1), aa5(-1:nx,-1:ny,-2:2),
+     &  aa9(-1:nx,-1:ny,-6:6),
      4  smb(-1:nx,-1:ny,0:3), flcb(-1:nx,-1:ny,0:1,0:1),
      5  cvcb(-1:nx,-1:ny,0:1,0:1), ro(-1:nx,-1:ny),
      6  pr(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
@@ -360,16 +361,18 @@ cdjm Jan2017 update momentum source components for balance
        endif
 
 *    ..compute residual
-       call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
-     &   flub, cvsahz(-1,-1,0,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
+       call b2urmo (nx, ny, hx, hy, vol, qz, is, ua(-1,-1,is), rob, smb,
+     &   flub, cvsahz(-1,-1,0,0,is), resmo(-1,-1,is), wrkf)            !srv 04.07.08
        fmo(:,:,:,:,is)=wrkf
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10
 
        if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                     !srv 12.07.02 {
          call my_out(70,nx,ny,resmo(-1,-1,is),'b2npmo_resmo'//chns)
-         call my_out(70,nx,ny,fmo(-1,-1,0,0,is),'b2npmo_fmox'//chns)
-         call my_out(70,nx,ny,fmo(-1,-1,1,1,is),'b2npmo_fmoy'//chns)
+        call my_out(70,nx,ny,fmo(-1,-1,0,0,is),'b2npmo_fmox'//chns)
+        call my_out(70,nx,ny,fmo(-1,-1,0,1,is),'b2npmo_fmoxy'//chns)
+        call my_out(70,nx,ny,fmo(-1,-1,1,0,is),'b2npmo_fmoyx'//chns)
+        call my_out(70,nx,ny,fmo(-1,-1,1,1,is),'b2npmo_fmoy'//chns)
          if(.not. is_neutral(is)) then
             call my_out(70,nx,ny,flubv(-1,-1,0,0),'b2npmo_flubvx'//chns)
             wrks=smbvv(:,:,0)+smbvv(:,:,1)*ua(:,:,is)+
@@ -428,20 +431,37 @@ cdjm Jan2017 update momentum source components for balance
        endif                                                           !srv 12.07.02 }
 
        if (solving) then                                               !srv 06.07.10
+cwdk add 9-point stencil 'master' switch here....
         solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
-c    ..compare 5-pt stencil matrices
-        new_matrix = .false.
-        do ireg = 0, nnreg(0)
-         new_matrix = new_matrix.or.
-     &    solvemo(is,ireg).neqv.last_solve_5(ireg)
-        end do
-        if (new_matrix) call restart_ma28
-*    ..compute correction
-        call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
-     &   vol, hx, hz, bb, rob, pb, ua(-1,-1,is),                       !srv 09.01.01
-     &   smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
-     &   pcca(-1,-1,0,0,is), aa5, wrk1, 'b2usmo_'//chns)
-        last_solve_5(0:nnreg(0)) = solvemo(is,0:nnreg(0))
+        if (.true.) then
+c     ..compare 9-pt stencil matrices
+         new_matrix = .false.
+         do ireg = 0, nnreg(0)
+          new_matrix = new_matrix.or.
+     &     solvemo(is,ireg).neqv.last_solve_9(ireg)
+         end do
+         if (new_matrix) call restart_ma28_for_9
+*     ..compute correction
+         call b2usm9 (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
+     &    vol, hx, hy, hz, qz, bb, rob, pb, ua(-1,-1,is),               !srv 09.01.01
+     &    smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
+     &    pcca(-1,-1,0,0,is), aa9, wrk1, 'b2usmo_'//chns)
+         last_solve_9(0:nnreg(0)) = solvemo(is,0:nnreg(0))
+        else
+c     ..compare 5-pt stencil matrices
+         new_matrix = .false.
+         do ireg = 0, nnreg(0)
+          new_matrix = new_matrix.or.
+     &     solvemo(is,ireg).neqv.last_solve_5(ireg)
+         end do
+         if (new_matrix) call restart_ma28
+*     ..compute correction
+         call b2usmo (nx, ny, is, nnreg(0), solvedum, itcnt, rxg,       !srv 04.07.08
+     &    vol, hx, hz, bb, rob, pb, ua(-1,-1,is),                       !srv 09.01.01
+     &    smb, flcb, cvcb, resmo(-1,-1,is), ctcfb, corua(-1,-1,is),     !srv 06.04.07
+     &    pcca(-1,-1,0,0,is), aa5, wrk1, 'b2usmo_'//chns)
+         last_solve_5(0:nnreg(0)) = solvemo(is,0:nnreg(0))
+        endif
 csw 21feb2014 added this else branch
        else
          pcca(:,:,:,:,is)  = 0.0_R8
@@ -465,8 +485,8 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)                  !srv 03.07.08
         call b2saxpy (n2*4, 1.0_R8, smbcf, 1, smb, 1)                  !srv 09.07.01
         call b2saxpy (n2*4, 1.0_R8, smban, 1, smb, 1)                  !srv 25.09.17
-        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,               !srv 09.01.01
-     &   flub, cvsahz(-1,-1,0,0,is), wrk0, wrkf)
+        call b2urmo (nx, ny, hx, hy, vol, qz, is, ua(-1,-1,is), rob,   !srv 09.01.01
+     &   smb, flub, cvsahz(-1,-1,0,0,is), wrk0, wrkf)
 *    ..accumulate residual
         call b2saxpy (n2, 1.0_R8, wrk0, 1, resmt, 1)
 *    ..accumulate smb
@@ -483,16 +503,32 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.0
       if (solving) then
 *   ..compute simultaneous correction
        call sfill (n2, 0.0_R8, wrk0, 1)
-       new_matrix = .false.
-       do ireg = 0, nnreg(0)
-         new_matrix = new_matrix.or.
-     &    solvemt(ireg).neqv.last_solve_5(ireg)
-       end do
-       if (new_matrix) call restart_ma28
-       call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,         !srv 04.07.08
-     &  vol, hx, hz, bb, ro, pr, wrk0, smt, flct, cvct,                !srv 09.01.01
-     &  resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')          !srv 06.04.07
-       last_solve_5(0:nnreg(0)) = solvemt(0:nnreg(0))
+cwdk add 9-point stencil 'master' switch here....
+       if (.true.) then
+c     ..compare 9-pt stencil matrices
+         new_matrix = .false.
+         do ireg = 0, nnreg(0)
+          new_matrix = new_matrix.or.
+     &     solvemt(ireg).neqv.last_solve_9(ireg)
+         end do
+         if (new_matrix) call restart_ma28_for_9
+*     ..compute correction
+         call b2usm9 (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,
+     &    vol, hx, hy, hz, qz, bb, ro, pr, wrk0, smt, flct, cvct,
+     &    resmt, ctcft, corut, pccm, aa9, wrk1, 'b2usmo_total')
+         last_solve_9(0:nnreg(0)) = solvemt(0:nnreg(0))
+       else
+        new_matrix = .false.
+        do ireg = 0, nnreg(0)
+          new_matrix = new_matrix.or.
+     &     solvemt(ireg).neqv.last_solve_5(ireg)
+        end do
+        if (new_matrix) call restart_ma28
+        call b2usmo (nx, ny, ns, nnreg(0), solvemt, itcnt, rxg,         !srv 04.07.08
+     &   vol, hx, hz, bb, ro, pr, wrk0, smt, flct, cvct,                !srv 09.01.01
+     &   resmt, ctcft, corut, pccm, aa5, wrk1, 'b2usmo_total')          !srv 06.04.07
+        last_solve_5(0:nnreg(0)) = solvemt(0:nnreg(0))
+       endif
       else
        pccm  = 0.0_R8
        resmt = 0.0_R8

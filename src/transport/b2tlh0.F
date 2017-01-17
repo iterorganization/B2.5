@@ -28,7 +28,8 @@
       integer, save :: flux_limit_style = 2                       !srv 13.06.08
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, t3, dti, vthi, maxfluxlimit(0:1),
-     *  flux_limit_min_ti, dtir(-1:nx,-1:ny,0:1)
+     *  flux_limit_min_ti, dtir(-1:nx,-1:ny,0:1), wght(-1:nx,-1:ny),
+     *  tic(-1:nx,-1:ny)
       save ncall, alpha, gamma, flux_limit_min_ti, hcimx_flag
 *   ..initialisation
       data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/,
@@ -72,7 +73,8 @@
       endif
 
 *    ..compute radial differences of partial pressure
-      call diff_r (nx, ny, hx, hy, vol, qz, ti, dtir)
+      wght = 1.0_R8
+      call diff_r (nx, ny, 0, hx, hy, wght, qz, ti, tic, dtir)
 
       if(flux_limit_style.eq.0) then                              !srv 13.06.08
 
@@ -272,13 +274,10 @@
            end if
 *   .. compute neutral heat conductivity flux limit on y-surfaces
            if (bottomiy(ix,iy).ne.-2) then
-cwdk for now, chcb(:,:,1,0) is not in use; test impact of dtir on flux limit by changing chcb(:,:,1,0)
-            chcb(ix,iy,1,0,is) = chcb(ix,iy,1,1,is)
             t0 = (ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
             t1 = (na(ix,iy,is) + na(bottomix(ix,iy),bottomiy(ix,iy),is))
      &           /2.0_R8
-            dti = chcb(ix,iy,1,1,is)*
-     &            abs(ti(bottomix(ix,iy),bottomiy(ix,iy))-ti(ix,iy))
+            dti = chcb(ix,iy,1,1,is)*abs(dtir(ix,iy,1))
             vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))
      &           *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
      &           /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -287,14 +286,6 @@ cwdk for now, chcb(:,:,1,0) is not in use; test impact of dtir on flux limit by 
             chcb(ix,iy,1,1,is) = chcb(ix,iy,1,1,is)*t2
 	    fllim0fhi(ix,iy,1,1,is) = t2
             maxfluxlimit(1)=max(maxfluxlimit(1),t2)
-cwdk for now, chcb(:,:,1,0) is not in use; test impact of dtir on flux limit by changing chcb(:,:,1,0)
-            dti = chcb(ix,iy,1,0,is)*abs(dtir(ix,iy,1))
-            vthi = sqrt(2.0_R8 * t0 / (am(is)*mp))
-     &           *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
-     &           /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-            t2 = 1.0_R8/(1.0_R8 +(dti/(alpha*vthi*t1*t0))**gamma)
-     .                                          **(1.0_R8/gamma)
-            chcb(ix,iy,1,0,is) = chcb(ix,iy,1,0,is)*t2
            end if
           end do
          end do

@@ -74,9 +74,6 @@
        call b2xvff (nx, ny, calf, 'calf')
       endif
 
-* ..initialize parallel current to zero
-      fch_p = 0.0_R8
- 
 * ..compute parallel current
       if(pot_eq.eq.1 .and. no_current.eq.0) then                       !srv 26.07.06 27.02.13
 *   ..compute fch_p
@@ -91,6 +88,8 @@
             endif                                                      !srv 26.11.02
           enddo
         enddo
+        fch_p(:,:,0,1) = 0.0e0_R8
+        fch_p(:,:,1,0) = 0.0e0_R8
         fch_p(:,:,1,1) = 0.0e0_R8
       else                                                             !srv 26.07.06 {
         fch_p = 0.0e0_R8

@@ -41,6 +41,13 @@
 *     cell volumes. Therefore, the expression for the integrated
 *     residual on any cell does not involve any geometric factors.
 *
+*     Since the introduction of the 9-point stencil, the dimensions of 
+*     the flux arrays have increase to ffn(-1:nx,-1:ny,0:1,0:1), where
+*     ffn(-1:nx,-1:ny,0,0) specifies the poloidal flow across an x-face
+*     ffn(-1:nx,-1:ny,0,1) specifies the radial   flow across an x-face
+*     ffn(-1:nx,-1:ny,1,0) specifies the poloidal flow across an y-face
+*     ffn(-1:nx,-1:ny,1,1) specifies the radial   flow across an y-face
+*
 *-----------------------------------------------------------------------
 *.declarations
 
@@ -84,11 +91,13 @@
         if(leftix(ix,iy).eq.-2) then
          resfn(ix,iy) = resfn(ix,iy)
      &                  -ffn(rightix(ix,iy),rightiy(ix,iy),0,0)
+     &                  -ffn(rightix(ix,iy),rightiy(ix,iy),0,1)
         elseif(rightix(ix,iy).eq.nx+1) then
-         resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,0,0)
+         resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,0,0)+ffn(ix,iy,0,1)
         else
-         resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,0,0)
+         resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,0,0)+ffn(ix,iy,0,1)
      &                  -ffn(rightix(ix,iy),rightiy(ix,iy),0,0)
+     &                  -ffn(rightix(ix,iy),rightiy(ix,iy),0,1)
         endif
        enddo
       enddo
@@ -98,18 +107,20 @@
         if (bottomiy(ix,iy).eq.-2) then
 cxpb  cells with no bottom neighbour
          resfn(ix,iy) = resfn(ix,iy)
+     &     -ffn(topix(ix,iy),topiy(ix,iy),1,0)
      &     -ffn(topix(ix,iy),topiy(ix,iy),1,1)
         elseif (topiy(ix,iy).eq.ny+1) then
 cxpb  cells with no top neighbour
-          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1,1)
+          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1,0)+ffn(ix,iy,1,1)
         elseif (topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then
 cxpb  standard case
-          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1,1)
+          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1,0)+ffn(ix,iy,1,1)
+     &                  -ffn(topix(ix,iy),topiy(ix,iy),1,0)
      &                  -ffn(topix(ix,iy),topiy(ix,iy),1,1)
          elseif (topiy(topix(ix,iy),topiy(ix,iy)).eq.iy .and. ny.gt.1) 
      &    then
 cxpb  diverted island X-point case
-          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1,1)
+          resfn(ix,iy) = resfn(ix,iy)+ffn(ix,iy,1,0)+ffn(ix,iy,1,1)
         endif
        enddo
       enddo

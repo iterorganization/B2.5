@@ -543,7 +543,8 @@ csw 16oct2012 init ier0
      &       resco(-1,-1,is), corpa(-1,-1,is), ier0)
             last_solve_5(0:nnreg(0))=solveco(is,0:nnreg(0))
           else                                                           !srv 13.10.06 {
-            if(.not.is_neutral(is)) then
+cwdk tmp: always use 9-point stencil
+            if(.not.is_neutral(is).or. .true.) then
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_9(ireg)
@@ -678,7 +679,9 @@ csw 16oct2012 init ier0
 *    ..perform iteration
           t0=0.0_R8
           if (i.eq.0) then
-           if (vis_per.eq.0.0e0_R8) then                                 !srv 06.07.00
+cwdk tmp: always use 9-point stencil, also for neutrals
+cwdk      need a master-switch to decide to use 9-point st
+           if (vis_per.eq.0.0e0_R8.and. .false.) then                                 !srv 06.07.00
             new_matrix = .false.
             do ireg = 0, nnreg(0)
              new_matrix = new_matrix.or.
@@ -699,7 +702,9 @@ crfs        t0 = t0+b2sasum(nx,respo(0,iy),1)
             t0 = t0+b2sasum(nx+2,respo(-1,iy),1)
            enddo
           else
-           if (vis_per.eq.0.0e0_R8) then                                 !srv 06.07.00
+cwdk tmp: always use 9-point stencil, also for neutrals
+cwdk      need a master-switch to decide to use 9-point st
+           if (vis_per.eq.0.0e0_R8.and..false.) then                                 !srv 06.07.00
             call b2nppo (nx, ny, nnreg(0), solvepo, ncall, rxf2,
      &       ne, te, conc, sch, po, fch, wrk0, wrk1, ier0)
            else
@@ -827,8 +832,8 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2 fhm, fhp, fhj, fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni
-      call b2tfcc (nx, ny, ns, na, te, ti, cdpa, floe, cone,
-     &  floi, coni)
+      call b2tfcc (nx, ny, ns, hx, hy, vol, qz, na, te, ti, cdpa, 
+     &  floe, cone, floi, coni)
       if(ue_style.ne.2) then
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
        do iy=-1,ny
@@ -954,7 +959,9 @@ c   recompute particle fluxes
           if (solving(2).and.all(solveco(is,0:nnreg(0)))) then
             solvedum(0:nnreg(0))=solveco(is,0:nnreg(0))
             solvedm2(0:nnreg(0))=solvemo(is,0:nnreg(0))
-            if(.not.is_neutral(is)) then
+cwdk tmp: always use 9-point stencil, also for neutrals
+cwdk      need a master-switch to decide to use 9-point stencil...
+            if(.not.is_neutral(is).or. .true.) then
               do ireg = 0, nnreg(0)
                 new_matrix = new_matrix.or.
      &           solveco(is,ireg).neqv.last_solve_9(ireg)

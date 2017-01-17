@@ -140,8 +140,10 @@
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
 *    ..test sign of transport coefficients
-       call b2xvsg (n2*4, cone, 1, 'cone', '.ge.')
-       call b2xvsg (n2*4, coni, 1, 'coni', '.ge.')
+       call b2xvsg (n2, cone(-1,-1,0,0,0), 1, 'cone', '.ge.')
+       call b2xvsg (n2, cone(-1,-1,1,1,0), 1, 'cone', '.ge.')
+       call b2xvsg (n2, coni(-1,-1,0,0,0), 1, 'coni', '.ge.')
+       call b2xvsg (n2, coni(-1,-1,1,1,0), 1, 'coni', '.ge.')
        call b2xvsg (n2, ceqp, 1, 'ceqp', '.ge.')
 *    ..test edge values of transport coefficients
        call b2xvff (nx, ny, floe, 'floe')

@@ -44,6 +44,13 @@
 *     cell volumes. Therefore, the expression for the integrated
 *     residual on any cell does not involve any geometric factors.
 *
+*     Since the introduction of the 9-point stencil, the dimensions of 
+*     the flux arrays have increase to fdf(-1:nx,-1:ny,0:1,0:1), where
+*     fdf(-1:nx,-1:ny,0,0) specifies the poloidal flow across an x-face
+*     fdf(-1:nx,-1:ny,0,1) specifies the radial   flow across an x-face
+*     fdf(-1:nx,-1:ny,1,0) specifies the poloidal flow across an y-face
+*     fdf(-1:nx,-1:ny,1,1) specifies the radial   flow across an y-face
+*
 *-----------------------------------------------------------------------
 *.declarations
 
@@ -92,11 +99,13 @@
         if(leftix(ix,iy).eq.-2) then
          resdf(ix,iy) = resdf(ix,iy)
      &    -fdf(rightix(ix,iy),rightiy(ix,iy),0,0)
+     &    -fdf(rightix(ix,iy),rightiy(ix,iy),0,1)
         elseif(rightix(ix,iy).eq.nx+1) then    
-         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,0,0)
+         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,0,0)+fdf(ix,iy,0,1)
         else
-         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,0,0)
+         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,0,0)+fdf(ix,iy,0,1)
      &    -fdf(rightix(ix,iy),rightiy(ix,iy),0,0)
+     &    -fdf(rightix(ix,iy),rightiy(ix,iy),0,1)
         endif
        enddo
       enddo
@@ -106,24 +115,26 @@
         if (bottomiy(ix,iy).eq.-2) then
 cxpb  cells with no bottom neighbour
          resdf(ix,iy) = resdf(ix,iy)
+     &     -fdf(topix(ix,iy),topiy(ix,iy),1,0)
      &     -fdf(topix(ix,iy),topiy(ix,iy),1,1)
         elseif (topiy(ix,iy).eq.ny+1) then
 cxpb  cells with no top neighbour
-          resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,1,1)
+          resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,1,0)+fdf(ix,iy,1,1)
         elseif (topiy(topix(ix,iy),topiy(ix,iy)).ne.iy) then
 cxpb  standard case
-         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,1,1)
+         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,1,0)+fdf(ix,iy,1,1)
+     &      -fdf(topix(ix,iy),topiy(ix,iy),1,0)
      &      -fdf(topix(ix,iy),topiy(ix,iy),1,1)
         elseif (topiy(topix(ix,iy),topiy(ix,iy)).eq.iy .and. ny.gt.1) 
      &   then
 cxpb  diverted island X-point case
-         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,1,1)
+         resdf(ix,iy) = resdf(ix,iy)+fdf(ix,iy,1,0)+fdf(ix,iy,1,1)
         endif
        enddo
       enddo
       do ix = -1, nx
        if (bottomiy(ix,ny).ne.-2)
-     >  resdf(ix,ny) = resdf(ix,ny)+fdf(ix,ny,1,1)
+     >  resdf(ix,ny) = resdf(ix,ny)+fdf(ix,ny,1,0)+fdf(ix,ny,1,1)
       enddo
 
 * ..return

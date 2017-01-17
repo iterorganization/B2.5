@@ -38,7 +38,7 @@
       save ncall, style, ncallout
 *   ..procedures
       external subini, subend, xertst, ipgeti, ipgetr, b2scopy
-      external b2xvff, b2xvsg, hbout
+      external b2xvff, b2xvsg, hbout, intfaceh
 *   ..initialisation
       data ncall/0/, style/1/, ncallout/-1/
 *!!   (style is a numerical switch; needs experiments)
@@ -84,63 +84,67 @@
       endif
 
 * ..compute convection factors
-*   ..initialize to zero
-      flcb = 0.0_R8
-      cvcb = 0.0_R8
-*   ..compute wrk0                                                       !sv 01.07.05 {
-      do iy = -1, ny
-       do ix = -1, nx
-        if(leftix(ix,iy).ne.-2) then
-          wrk0(ix,iy) = 
-     &     (vol(ix,iy)*ub(leftix(ix,iy),leftiy(ix,iy))+
-     &      vol(leftix(ix,iy),leftiy(ix,iy))*ub(ix,iy))/
-     &     (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-        endif
-       enddo
-      enddo                                                               !sv 01.07.05 }
+*   ..compute wrk0
+      call intfaceh(nx,ny,leftix,leftiy,vol,ub,wrk0)
 *   ..compute flcbx, cvcbx
       do iy = -1, ny
        if (style.eq.0) then
         do ix = -1, nx
-         if(leftix(ix,iy).ne.-2) then
+         if(leftix(ix,iy).eq.-2) then
+          flcb(ix,iy,0,0) = 0.0_R8
+          flcb(ix,iy,0,1) = 0.0_R8
+          cvcb(ix,iy,0,0) = 0.0_R8
+          cvcb(ix,iy,0,1) = 0.0_R8
+         else
           flcb(ix,iy,0,0) = flub(ix,iy,0,0)+pbs(ix,iy,0)*(vol(ix,iy)*
      &      rob(leftix(ix,iy),leftiy(ix,iy))*
      &      ub(leftix(ix,iy),leftiy(ix,iy))+
      &      vol(leftix(ix,iy),leftiy(ix,iy))*rob(ix,iy)*ub(ix,iy))/
      &     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+          flcb(ix,iy,0,1) = flub(ix,iy,0,1)
           cvcb(ix,iy,0,0) = cvsb(ix,iy,0,0)
+          cvcb(ix,iy,0,1) = cvsb(ix,iy,0,1)
          endif
         enddo
        elseif(style.eq.1) then
         do ix = -1, nx                                                 !srv 26.11.02
-          if(leftix(ix,iy).ne.-2) then                                           !srv 26.11.02 {
-           flcb(ix,iy,0,0) = flub(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)*
+         if(leftix(ix,iy).eq.-2) then                                           !srv 26.11.02 {
+          flcb(ix,iy,0,0) = 0.0_R8
+          flcb(ix,iy,0,1) = 0.0_R8
+          cvcb(ix,iy,0,0) = 0.0_R8
+          cvcb(ix,iy,0,1) = 0.0_R8
+         else
+          flcb(ix,iy,0,0) = flub(ix,iy,0,0)+pbs(ix,iy,0)*wrk0(ix,iy)*
      &      (rob(ix,iy)+rob(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8      !srv 01.07.05 } 
-           cvcb(ix,iy,0,0) = cvsb(ix,iy,0,0)
-          endif                                                         !srv 26.11.02 }
+          flcb(ix,iy,0,1) = flub(ix,iy,0,1)
+          cvcb(ix,iy,0,0) = cvsb(ix,iy,0,0)
+          cvcb(ix,iy,0,1) = cvsb(ix,iy,0,1)
+         endif                                                         !srv 26.11.02 }
         enddo
        else
         call xerrab ('Only style 0 or 1 in b2nxfc are included')
        endif
       enddo
 *   ..compute flcby, cvcby
+      call b2scopy (n2, flub(-1,-1,1,0), 1, flcb(-1,-1,1,0), 1)
       call b2scopy (n2, flub(-1,-1,1,1), 1, flcb(-1,-1,1,1), 1)
+      call b2scopy (n2, cvsb(-1,-1,1,0), 1, cvcb(-1,-1,1,0), 1)
       call b2scopy (n2, cvsb(-1,-1,1,1), 1, cvcb(-1,-1,1,1), 1)
 
 csw 18feb2014 remove fluxes between guard cells 
         do ix=-1,nx
          do iy=-1,ny
            if(iffboundx(ix,iy).ne.0) then
-             flub(ix,iy,0,0)=0.0_R8
-             cvsb(ix,iy,0,0)=0.0_R8
-             flcb(ix,iy,0,0)=0.0_R8
-             cvcb(ix,iy,0,0)=0.0_R8
+             flub(ix,iy,0,0:1)=0.0_R8
+             cvsb(ix,iy,0,0:1)=0.0_R8
+             flcb(ix,iy,0,0:1)=0.0_R8
+             cvcb(ix,iy,0,0:1)=0.0_R8
            endif
            if(iffboundy(ix,iy).ne.0) then
-             flub(ix,iy,1,1)=0.0_R8
-             cvsb(ix,iy,1,1)=0.0_R8
-             flcb(ix,iy,1,1)=0.0_R8
-             cvcb(ix,iy,1,1)=0.0_R8
+             flub(ix,iy,1,0:1)=0.0_R8
+             cvsb(ix,iy,1,0:1)=0.0_R8
+             flcb(ix,iy,1,0:1)=0.0_R8
+             cvcb(ix,iy,1,0:1)=0.0_R8
            endif
          enddo
         enddo
@@ -149,25 +153,47 @@ csw 18feb2014 remove fluxes between guard cells
       DO IB=1,NNISO
         DO IX=NXISO1(IB), NXISO2(IB)
           DO IY=NYISO1(IB), NYISO2(IB)
-            flcb(ix,iy,0,0)=0.0_R8
-            cvcb(ix,iy,0,0)=0.0_R8
-            flcb(ix,iy,1,1)=0.0_R8
-            cvcb(ix,iy,1,1)=0.0_R8
-            flub(ix,iy,0,0)=0.0_R8
-            cvsb(ix,iy,0,0)=0.0_R8
-            flub(ix,iy,1,1)=0.0_R8
-            cvsb(ix,iy,1,1)=0.0_R8
+            flcb(ix,iy,:,:)=0.0_R8
+            cvcb(ix,iy,:,:)=0.0_R8
+            flub(ix,iy,:,:)=0.0_R8
+            cvsb(ix,iy,:,:)=0.0_R8
           end do
         end do
       end do
 
+*     turn off flows between boundary cells in west and east
+        do iy = -1, ny
+         do ix = -1, nx
+          if(leftix(ix,iy).eq.-2 .or. rightix(ix,iy).eq.nx+1) then
+            flcb(ix,iy,1,0:1) = 0.0_R8
+            cvcb(ix,iy,1,0:1) = 0.0_R8
+            flub(ix,iy,1,0:1) = 0.0_R8
+            cvsb(ix,iy,1,0:1) = 0.0_R8
+          endif
+         enddo
+        enddo
+*     turn off flows between boundary cells in south and in north
+         do iy = -1, ny, ny+1
+            flcb(:,iy,0,0:1) = 0.0_R8
+            cvcb(:,iy,0,0:1) = 0.0_R8
+            flub(:,iy,0,0:1) = 0.0_R8
+            cvsb(:,iy,0,0:1) = 0.0_R8
+         enddo                          
+
+
       if (iout.ne.0) then                                              !sv 17.06.02 {
         write (charns,'(i3.3)') isb    
         call my_out(70,nx,ny,flub(-1,-1,0,0),'b2nxfc_flubx'//charns)
+        call my_out(70,nx,ny,flub(-1,-1,0,1),'b2nxfc_flubxy'//charns)
+        call my_out(70,nx,ny,flub(-1,-1,1,0),'b2nxfc_flubyx'//charns)
         call my_out(70,nx,ny,flub(-1,-1,1,1),'b2nxfc_fluby'//charns)
         call my_out(70,nx,ny,flcb(-1,-1,0,0),'b2nxfc_flcbx'//charns)
+        call my_out(70,nx,ny,flcb(-1,-1,0,1),'b2nxfc_flcbxy'//charns)
+        call my_out(70,nx,ny,flcb(-1,-1,1,0),'b2nxfc_flcbyx'//charns)
         call my_out(70,nx,ny,flcb(-1,-1,1,1),'b2nxfc_flcby'//charns)
         call my_out(70,nx,ny,cvcb(-1,-1,0,0),'b2nxfc_cvcbx'//charns)
+        call my_out(70,nx,ny,cvcb(-1,-1,0,1),'b2nxfc_cvcbxy'//charns)
+        call my_out(70,nx,ny,cvcb(-1,-1,1,0),'b2nxfc_cvcbyx'//charns)
         call my_out(70,nx,ny,cvcb(-1,-1,1,1),'b2nxfc_cvcby'//charns)
         call my_out(70,nx,ny,rob,'b2nxfc_rob'//charns)
       endif                                                            !sv 17.06.02 }

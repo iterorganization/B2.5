@@ -54,7 +54,7 @@
       integer ncall, n2
       integer, save :: iout = 0, iout_b2wdat = 0               !srv 27.12.17
       real (kind=R8) ::
-     *   aa7(-1:nx,-1:ny,-3:3), wrk0(-1:nx,-1:ny)              !srv 11.01.00
+     *   aa11(-1:nx,-1:ny,-6:6), wrk0(-1:nx,-1:ny)              !srv 11.01.00
       save ncall
 *   ..procedures
       external subini, subend, xertst
@@ -86,7 +86,8 @@
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
 *    ..test sign of conc, avisper, bvisper, cvisper                !srv 27.01.00
-       call b2xvsg (n2*4, conc, 1, 'conc', '.ge.')
+       call b2xvsg (n2, conc(-1,-1,0,0), 1, 'conc', '.ge.')
+       call b2xvsg (n2, conc(-1,-1,1,1), 1, 'conc', '.ge.')
        call b2xvsg (n2*2, avisper, 1, 'avisper', '.ge.')           !srv 27.01.00
        call b2xvsg (n2*2, bvisper, 1, 'bvisper', '.ge.')           !srv 27.01.00
        call b2xvsg (n2*2, cvisper, 1, 'cvisper', '.ge.')           !srv 27.01.00
@@ -105,7 +106,7 @@
 *   ..compute correction
       call b2usp7 (nx, ny, nregionv, solvereg, itcnt,             !srv 27.12.17
      &    ne, te, conc, avisper, bvisper, cvisper,
-     &    sch, respo, corpo, aa7)
+     &    sch, respo, corpo, aa11)
 *   ..apply correction
       call b2uppo (nx, ny, rxf, corpo, po)
 

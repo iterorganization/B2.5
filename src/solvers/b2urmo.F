@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2urmo (nx, ny, isb, ub, rob, smb, flub, cvsb,
-     .  resmb, fmb)                                                     !srv 02.06.11
+      subroutine b2urmo (nx, ny, hx, hy, vol, qz,  isb, ub, rob, 
+     .  smb, flub, cvsb, resmb, fmb)                                                     !srv 02.06.11
       use b2mod_types
       use b2mod_indirect
       use b2mod_balance                                                 !djm Jan2017
@@ -12,7 +12,9 @@
       integer nx, ny, isb
       real (kind=R8) ::
      *   ub(-1:nx,-1:ny), rob(-1:nx,-1:ny), smb(-1:nx,-1:ny,0:3),
-     &  flub(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1)
+     &  flub(-1:nx,-1:ny,0:1,0:1), cvsb(-1:nx,-1:ny,0:1,0:1),
+     &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), vol(-1:nx,-1:ny), 
+     &  qz(-1:nx,-1:ny,0:1)
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *   resmb(-1:nx,-1:ny), fmb(-1:nx,-1:ny,0:1,0:1)
@@ -44,7 +46,22 @@
 *     The input arguments smb, flub and cvsb contain appropriate
 *     geometric coefficients so that in the present routine the
 *     expression for the integrated residual on any cell does not
-*     involve any geometric factors.
+*     involve any geometric factors. However, the correct computation
+*     of (radial) differences of ub across the faces requires knowledge
+*     of geometric factors.
+*
+*     Since the introduction of the 9-point stencil, the dimensions of 
+*     the flux arrays have increase to f(-1:nx,-1:ny,0:1,0:1), where
+*     f(-1:nx,-1:ny,0,0) specifies the poloidal flow across an x-face
+*     f(-1:nx,-1:ny,0,1) specifies the radial   flow across an x-face
+*     f(-1:nx,-1:ny,1,0) specifies the poloidal flow across an y-face
+*     f(-1:nx,-1:ny,1,1) specifies the radial   flow across an y-face
+*
+*     Similarly, the conductivity arrays have increased dimensions, so
+*     cvsb(-1:nx,-1:ny,0,0) relates to (d/dx)ub on an x-face
+*     cvsb(-1:nx,-1:ny,0,1) relates to (d/dy)ub on an x-face
+*     cvsb(-1:nx,-1:ny,1,0) relates to (d/dx)ub on an y-face
+*     cvsb(-1:nx,-1:ny,1,1) relates to (d/dy)ub on an y-face
 *
 *-----------------------------------------------------------------------
 *.declarations
@@ -56,14 +73,17 @@
       character chns*3                                                  !srv 02.06.11
       save ncall
       real (kind=R8) ::
-     *   con(-1:nx,-1:ny,0:1,0:1), flv(-1:nx,-1:ny,0:1,0:1), flo, dif   !srv 11.09.09
+     *   con(-1:nx,-1:ny,0:1,0:1), flv(-1:nx,-1:ny,0:1,0:1), flo, dif,  !srv 11.09.09
+     *   flo9, con9, dubr(-1:nx,-1:ny,0:1), t0, t1,
+     *   wght(-1:nx,-1:ny), ubc(-1:nx,-1:ny)
 *   ..procedures
       intrinsic max, abs
       real (kind=R8) ::
-     *   hybr
+     *   hybr, upwind
       external subini, subend, xertst
-      external b2xvsg, b2xvff
+      external b2xvsg, b2xvff, diff_r
       hybr(flo,dif) = max(dif,abs(flo/2),sqrt(dif**2+flo**2/4)) !!!
+      upwind(flo,t0,t1) = max(flo,0.0_R8)*t0+min(flo,0.0_R8)*t1
 *   ..initialisation
       data ncall/0/
 
@@ -91,33 +111,44 @@
        call b2xvsg (n2, smb(-1,-1,1), 1, 'smb1', '.le.')
        call b2xvsg (n2, smb(-1,-1,3), 1, 'smb3', '.le.')
 *    ..test sign of cvsb
-       call b2xvsg (n2*2, cvsb(-1,-1,0,0), 1, 'cvsb', '.ge.')
-       call b2xvsg (n2*2, cvsb(-1,-1,1,1), 1, 'cvsb', '.ge.')
+       call b2xvsg (n2, cvsb(-1,-1,0,0), 1, 'cvsb', '.ge.')
+       call b2xvsg (n2, cvsb(-1,-1,1,1), 1, 'cvsb', '.ge.')
 *    ..test edge values of flub, cvsb
        call b2xvff (nx, ny, flub, 'flub')
        call b2xvff (nx, ny, cvsb, 'cvsb')
       endif
+
+*   ..compute radial differences of ub for 9-point terms
+      wght = 1.0_R8
+      call diff_r(nx, ny, 0, hx, hy, wght, qz, ub, ubc, dubr)
 
 * ..compute flux
 *   ..compute parallel momentum transport fmbx
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).eq.-2) then
-         fmb(ix,iy,0,0) = 0.0_R8
-         con(ix,iy,0,0) = 0.0_R8
-         flv(ix,iy,0,0) = 0.0_R8
+         fmb(ix,iy,0,0:1) = 0.0_R8
+         con(ix,iy,0,0:1) = 0.0_R8
+         flv(ix,iy,0,0:1) = 0.0_R8
         else
-         flo = flub(ix,iy,0,0)
+         flo  = flub(ix,iy,0,0)
          if(no_Ptncr_x_co.eq.0) then                                  !sv 06.07.06 {
           con(ix,iy,0,0) = hybr(flo,cvsb(ix,iy,0,0))
          else
           con(ix,iy,0,0) = cvsb(ix,iy,0,0)
          endif                                                        !sv 06.07.06 }
+cwdk     add computation of 9-point quantities
+         flo9 = flub(ix,iy,0,1)
+         con9 = sign(hybr(flo9,cvsb(ix,iy,0,1)) - 0.5_R8*abs(flo9),
+     &                         cvsb(ix,iy,0,1))
          flv(ix,iy,0,0) = - con(ix,iy,0,0)*
      &         (ub(ix,iy)-ub(leftix(ix,iy),leftiy(ix,iy)))
          fmb(ix,iy,0,0) = flo*(ub(ix,iy)
      &         +ub(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8 
      &         +flv(ix,iy,0,0)
+         fmb(ix,iy,0,1) = upwind(flo9,
+     &          ub(leftix(ix,iy),leftiy(ix,iy)),ub(ix,iy)) -
+     &          con9*dubr(ix,iy,0)
         endif
        enddo
       enddo
@@ -125,20 +156,21 @@
       do iy = -1, ny
        do ix = -1, nx
         if(bottomiy(ix,iy).eq.-2) then
-         fmb(ix,iy,1,1) = 0.0_R8
-         con(ix,iy,1,1) = 0.0_R8
-         flv(ix,iy,1,1) = 0.0_R8
+         fmb(ix,iy,1,0:1) = 0.0_R8
+         con(ix,iy,1,0:1) = 0.0_R8
+         flv(ix,iy,1,0:1) = 0.0_R8
         else
          flo = flub(ix,iy,1,1)
          if(no_Ptncr_y_co.eq.0) then                                  !sv 06.07.06 {
-          con(ix,iy,1,1) = hybr(flo,cvsb(ix,iy,1,1))
+          con(ix,iy,1,1) = hybr(flo,cvsb(ix,iy,1,1))-0.5_R8*abs(flo)
          else
           con(ix,iy,1,1) = cvsb(ix,iy,1,1)
          endif                                                        !sv 06.07.06 }
-         flv(ix,iy,1,1) = - con(ix,iy,1,1)*
-     &            (ub(ix,iy)-ub(bottomix(ix,iy),bottomiy(ix,iy)))
-         fmb(ix,iy,1,1) = flo*(ub(bottomix(ix,iy),bottomiy(ix,iy))
-     &         +ub(ix,iy))/2.0_R8 + flv(ix,iy,1,1)
+         flv(ix,iy,1,1) = - con(ix,iy,1,1)*dubr(ix,iy,1)
+         fmb(ix,iy,1,1) = upwind(flo,
+     &          ub(bottomix(ix,iy),bottomiy(ix,iy)),ub(ix,iy)) + 
+     &          flv(ix,iy,1,1)
+         fmb(ix,iy,1,0) = 0.0_R8
         endif
        enddo
       enddo
@@ -172,11 +204,13 @@
         if(leftix(ix,iy).eq.-2) then
          resmb(ix,iy) = resmb(ix,iy)
      &    -fmb(rightix(ix,iy),rightiy(ix,iy),0,0)
+     &    -fmb(rightix(ix,iy),rightiy(ix,iy),0,1)
         elseif(rightix(ix,iy).eq.nx+1) then
-         resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,0,0)
+         resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,0,0)+fmb(ix,iy,0,1)
         else
          resmb(ix,iy) = resmb(ix,iy)
      &    +fmb(ix,iy,0,0)-fmb(rightix(ix,iy),rightiy(ix,iy),0,0)
+     &    +fmb(ix,iy,0,1)-fmb(rightix(ix,iy),rightiy(ix,iy),0,1)
         endif
        enddo
       enddo
@@ -186,18 +220,20 @@
         if (bottomiy(ix,iy).eq.-2) then
 cxpb  cells with no bottom neighbour
           resmb(ix,iy) = resmb(ix,iy)
+     &     -fmb(topix(ix,iy),topiy(ix,iy),1,0)
      &     -fmb(topix(ix,iy),topiy(ix,iy),1,1)
         elseif (topiy(ix,iy).eq.ny+1) then
 cxpb  cells with no top neighbour
-          resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1,1)
+          resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1,0)+fmb(ix,iy,1,1)
         elseif (topiy(topix(ix,iy),topiy(ix,iy)).ne.iy)  then
 cxpb  standard case
-         resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1,1)
+         resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1,0)+fmb(ix,iy,1,1)
+     &     -fmb(topix(ix,iy),topiy(ix,iy),1,0)
      &     -fmb(topix(ix,iy),topiy(ix,iy),1,1)
         elseif (topiy(topix(ix,iy),topiy(ix,iy)).eq.iy .and. ny.gt.1)
      &   then
 cxpb  diverted island X-point case
-         resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1,1)
+         resmb(ix,iy) = resmb(ix,iy)+fmb(ix,iy,1,0)+fmb(ix,iy,1,1)
         endif
        enddo
       enddo

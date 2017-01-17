@@ -59,7 +59,8 @@
      *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99
      *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                    !srv 23.07.99 19.01.05
      &   tt0(-1:ny), tt1(-1:ny), bbaverage2(-1:ny),                 !lk 23.05.06 05.07.07 {
-     &   conn(-1:ny), tt2(-1:ny), tt3(-1:ny), eps1(-1:ny)
+     &   conn(-1:ny), tt2(-1:ny), tt3(-1:ny), eps1(-1:ny),
+     &   dtir(-1:nx,-1:ny,0:1),wght(-1:nx,-1:ny)
       real (kind=R8) :: qip0a(-1:nx,-1:ny), qip0b(-1:nx,-1:ny)
      &                , tauia1(-1:nx,-1:ny), alpha1(-1:nx,-1:ny)
      &                , nu1(-1:nx,-1:ny), wrks(-1:nx,-1:ny), s2     !lk !iyv 02.12.13
@@ -97,6 +98,12 @@
       if(nint(zn(isb)).eq.1 .and. nint(zamax(isb)).eq.1) then       !srv 26.10.08
         if (addvis.ne.0.0_R8) then                                  !srv 19.01.05 28.03.06 {
           call b2ttia (nx, ny, ns, ti, ne2, lnlam, tauia)           !srv 01.07.09
+*   ..compute radial differences of ti
+cwdk should introduce a separate routine to compute gradients (as needed here)
+c    instead of differences
+          wght = 1.0_R8
+          call diff_r(nx, ny, 0, hx, hy, wght, qz, ti, wrk0, dtir)
+
 * ..calculate the parallel heat flux of ions in the center of the cell
 
           tt0 = 0.0e0_R8                                            !lk 23.05.06 05.07.07
@@ -136,13 +143,15 @@
             do iy = 0,mintopcut-1    ! for inner surfaces
               do ix = 0,nx
                 if(on_closed_surface(ix,iy)) then
+cwdk dtir in cell center now computed as average dtir from N and S faces
+cwdk to consider: separate routine to compute dtir directly in cell centers
                   qip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      &             /bb(ix,iy,0)/bbaverage2(iy))
      &             *(ni(ix,iy)*ti(ix,iy)/qe)*
-     &              (ti(topix(ix,iy),topiy(ix,iy))
-     &              -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &              (hy1(ix,iy)+0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
-     &               0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &              (dtir(topix(ix,iy),topiy(ix,iy),1)/
+     &              (hy1(ix,iy) + hy1(topix(ix,iy),topiy(ix,iy))) + 
+     &              dtir(ix,iy,1)/
+     &              (hy1(ix,iy) + hy1(bottomix(ix,iy),bottomiy(ix,iy))))
                 endif
               enddo
             enddo
@@ -186,6 +195,8 @@
             do iy=-1,ny
               do ix=-1,nx-1
                 if(on_closed_surface(ix,iy)) then
+cwdk dtir in cell center now computed as average dtir from N and S faces
+cwdk to consider: separate routine to compute dtir directly in cell centers
                   if(rightix(ix,iy).ne.nx+1 .and.
      &               topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2)
      >             qip0(ix,iy)=0.5e0_R8*(wrk0(ix,iy)+
@@ -194,11 +205,10 @@
      &               -2.5e0_R8*bb(ix,iy,2)
      &               /bb(ix,iy,0)/bb(ix,iy,3)
      &               *(ni(ix,iy)*ti(ix,iy)/qe)*
-     &                (ti(topix(ix,iy),topiy(ix,iy))
-     &                -ti(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &                (hy1(ix,iy)+
-     &                 0.5e0_R8*hy1(topix(ix,iy),topiy(ix,iy))+
-     &                 0.5e0_R8*hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &              (dtir(topix(ix,iy),topiy(ix,iy),1)/
+     &              (hy1(ix,iy) + hy1(topix(ix,iy),topiy(ix,iy))) + 
+     &              dtir(ix,iy,1)/
+     &              (hy1(ix,iy) + hy1(bottomix(ix,iy),bottomiy(ix,iy))))
                 endif
               enddo
             enddo

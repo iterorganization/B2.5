@@ -14,7 +14,7 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, guard_flows, nregionv, itcnt, isb              !srv 05.07.08
       real (kind=R8) ::
-     *   rxf, vol(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
+     *  rxf, vol(-1:nx,-1:ny), pbs(-1:nx,-1:ny,0:1),
      &  flob(-1:nx,-1:ny,0:1,0:1),
      &  conb(-1:nx,-1:ny,0:1,0:1,0:4), snb(-1:nx,-1:ny,0:1),             !srv 13.10.06
      &  pccb(-1:nx,-1:ny,0:1,0:1), fnb(-1:nx,-1:ny,0:1,0:1)
@@ -115,8 +115,13 @@
       if (ncall.lt.3) then
 *    ..test sign of conb
        if(no_Ptncr_x_co.eq.0 .and. no_Ptncr_y_co.eq.0) then           !sv 06.07.06 {
-        call b2xvsg (n2*4*3, conb, 1, 'conb', '.ge.')                 !sv 18.11.05 13.10.06
-	 endif                                                          !sv 06.07.06 }
+        call b2xvsg (n2, conb(-1,-1,0,0,0), 1, 'conb', '.ge.')
+        call b2xvsg (n2, conb(-1,-1,1,1,0), 1, 'conb', '.ge.')
+        call b2xvsg (n2, conb(-1,-1,0,0,1), 1, 'conb', '.ge.')
+        call b2xvsg (n2, conb(-1,-1,1,1,1), 1, 'conb', '.ge.')
+        call b2xvsg (n2, conb(-1,-1,0,0,2), 1, 'conb', '.ge.')
+        call b2xvsg (n2, conb(-1,-1,1,1,2), 1, 'conb', '.ge.')
+       endif                                                          !sv 06.07.06 }
 *    ..test edge values of flob, conb
        call b2xvff (nx, ny, flob, 'flob')
        call b2xvff (nx, ny, conb(-1,-1,0,0,0), 'conb0')                 !srv 13.10.06 {

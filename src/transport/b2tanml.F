@@ -41,12 +41,13 @@
       integer, save :: no_current = 0                          !srv 27.02.13
       integer, save :: pot_eq
       integer, save :: guard_flows
-      real (kind=R8) :: fch_anomalous, dpor(-1:nx,-1:ny,0:1)
+      real (kind=R8) :: fch_anomalous, dpo(-1:nx,-1:ny,0:1,0:1),
+     *  wght(-1:nx,-1:ny)
       save ncall, fch_anomalous
 *   ..procedures
       intrinsic max, abs
       external subini, subend, xertst
-      external b2xvsg, b2xvff, b2xvfx
+      external b2xvsg, b2xvff, b2xvfx, diff_r
 *   ..initialization
       data ncall/0/, fch_anomalous/1.0e0_R8/, pot_eq/1/, guard_flows/2/
 *-----------------------------------------------------------------------
@@ -74,45 +75,17 @@
       if (ncall.lt.3) then
       endif
 
-      if(no_current.ne.0) then                                !srv 27.02.13
+      if(no_current.ne.0.or.fch_anomalous.eq.0.0e0_R8) then                                !srv 27.02.13
         fchanml = 0.0e0_R8
       else                                                    !srv 27.02.13
-	if(fch_anomalous.ne.0.0e0_R8) then    
 
-*   ..compute radial differences of te and po, for 9-point terms
-          call diff_r(nx, ny, hx, hy, vol, qz, po, dpor)
+*   ..compute differences of po for 9-point terms
+        wght = 1.0_R8
+        call diff(nx, ny, hx, hy, wght, qz, po, dpo)
 
-          do iy = -1, ny
-	    do ix = -1, nx
-	      if(leftix(ix,iy).eq.-2) then
-	        fchanml(ix,iy,0,0)   = 0.0e0_R8
-	      else
-                fchanml(ix,iy,0,0) = - csig_an(ix,iy,0,0)*
-     &           (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))
-                fchanml(ix,iy,0,1) = - csig_an(ix,iy,0,1)*dpor(ix,iy,0)
-              endif
-	    enddo
-	  enddo
+*   ..compute the current
+        fchanml(:,:,:,:) = -csig_an(:,:,:,:)*dpo(:,:,:,:)
 
-          do ix = -1, nx
-	    fchanml(ix,-1,1,1) = 0.0e0_R8
-          enddo
-          do iy = 0, ny
-	    do ix = -1, nx
-	      if(bottomiy(ix,iy).eq.-2)then
-		fchanml(ix,iy,1,0:1) = 0.0e0_R8
-	      else
-		fchanml(ix,iy,1,1) = - csig_an(ix,iy,1,1)*
-     &		 (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))
-cwdk for now, fchanml(ix,iy,1,0) should be zero; use temporarily for corrected
-cwdk fchanml(ix,iy,1,1)
-                fchanml(ix,iy,1,0) = - csig_an(ix,iy,1,1)*dpor(ix,iy,1)
-	      endif
-            enddo
-	  enddo
-        else
-          fchanml = 0.0e0_R8
-        endif
       endif                                                   !srv 27.02.13
 
       if(guard_flows.eq.0) then                                 	 !xpb

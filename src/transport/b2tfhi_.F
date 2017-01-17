@@ -81,7 +81,8 @@ csw 30apr2014 added fna_he, ia
 cpax      
       real (kind=R8) ::
      *   flidia(-1:nx,-1:ny,0:1,0:1), facdriftm,                        !srv 25.01.02
-     *   dtir(-1:nx,-1:ny,0:1)
+     *   dtir(-1:nx,-1:ny,0:1), qzf(-1:nx,-1:ny),
+     *    wght(-1:nx,-1:ny), tic(-1:nx,-1:ny)
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)          !srv 16.09.02
       real (kind=R8) :: upfac, hybfac, scur,scur9 !djm Jan2017
@@ -141,8 +142,8 @@ cpax
 *    ..test sign of ni, ti, chci
        call b2xvsg (n2, ni, 1, 'ni', '.gt.')
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
-       call b2xvsg (n2*2, chci(-1,-1,0,0), 1, 'chci', '.ge.')
-       call b2xvsg (n2*2, chci(-1,-1,1,1), 1, 'chci', '.ge.')
+       call b2xvsg (n2, chci(-1,-1,0,0), 1, 'chci', '.ge.')
+       call b2xvsg (n2, chci(-1,-1,1,1), 1, 'chci', '.ge.')
 *    ..test edge values of chci, chvi
        call b2xvff (nx, ny, chci, 'chci')
        call b2xvff (nx, ny, chvi, 'chvi')
@@ -360,7 +361,13 @@ c  ..set null flux in guard cells  ?
       endif                                                             !srv 16.09.02 }
 
 *   ..compute radial differences of ti for 9-point terms
-      call diff_r(nx, ny, hx, hy, vol, qz, ti, dtir)
+      wght = 1.0_R8
+      call diff_r(nx, ny, 0, hx, hy, wght, qz, ti, tic, dtir)
+
+cwdk needed in 9-point scheme
+*   ..interpolate qz(:,:,0) to x-faces
+      call intfaceh(nx,ny,leftix,leftiy,vol,qz(:,:,0),qzf)
+
 
       fhi_mdf = 0.0_R8                                                  !srv 17.06.09
 * ..compute fluxes and linearization
@@ -883,15 +890,27 @@ cwdk
             endif
           endif
 
+cwdk add linearization coefficients for 9-point fluxes
+c    note: coni9(_mdf) is the "effective diffusion" piece;
+c          part of floi9(_mdf) is transfered to coni, to mimick the 
+c          upwind discretization needed for the "effective convection"
+          t0 = -(hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &          (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &          qzf(ix,iy)
           if(mdf_fhi.eq.0) then                                         !srv 13.10.06 {
-           floi(ix,iy,0,0)   = floi0
-           coni(ix,iy,0,0,0) = coni0                                    !srv 02.01.07
+           floi(ix,iy,0,0)   = floi0 + floi9
+           floi(ix,iy,0,1)   = 0.0_R8
+           coni(ix,iy,0,0,0) = coni0 + coni9*t0 + 0.5_R8*abs(floi9)     !srv 02.01.07
+           coni(ix,iy,0,1,0) = coni9                                    !srv 02.01.07
           else
-           floi(ix,iy,0,0)   = floi0_mdf
-           coni(ix,iy,0,0,0) = coni0_mdf                                !srv 02.01.07
+           floi(ix,iy,0,0)   = floi0_mdf + floi9_mdf
+           floi(ix,iy,0,1)   = 0.0_R8
+           coni(ix,iy,0,0,0) = coni0_mdf + coni9_mdf*t0 
+     &                                   + 0.5_R8*abs(floi9_mdf)
+           coni(ix,iy,0,1,0) = coni9_mdf                                !srv 02.01.07
           endif                                                         !srv 13.10.06 }
          endif                                                          !srv 04.02.03 }
-        endif                                                           !srv 26.11.02
+        endif  
        enddo
       enddo
 
@@ -907,6 +926,11 @@ cwdk
        w1=0.0e0_R8; w2=0.0e0_R8; w3=0.0e0_R8; w4=0.0e0_R8; w5=0.0e0_R8;
        w6=0.0e0_R8;
       endif                                                             !srv 16.09.02 }
+
+
+cwdk needed in 9-point scheme
+*   ..interpolate qz(:,:,0) to y-faces
+      call intfacev(nx,ny,bottomix,bottomiy,vol,qz(:,:,0),qzf)
 
 *   ..compute fhiy, floiy, coniy
       do ix = -1, nx
@@ -1082,26 +1106,16 @@ csw 13mar2013 added check upwind (SOLPS4)
          endif
         else
          fhi(ix,iy,1,1) = floi0*
-     1    (ti(bottomix(ix,iy),bottomiy(ix,iy))
-     &                               +ti(ix,iy))/2.0_R8
-     &    -coni0*(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
-         fhi_mdf(ix,iy,1,1) = floi0_mdf*                                !srv 13.10.06 {
-     1    (ti(bottomix(ix,iy),bottomiy(ix,iy)) + ti(ix,iy))/2.0_R8
-     &    -coni0_mdf*(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
-     &    -fhiPSch(ix,iy,1,1)                                           !srv 13.10.06 }
-cwdk fhi(ix,iy,1,0) should be zero now; use tmp for corrected fhi(ix,iy,1,1)
-         fhi(ix,iy,1,0) = floi0*
      &         (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8 - 
      &         0.5_R8*abs(floi0_mdf)*
      &         (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
      &         -(coni0-0.5_R8*abs(floi0_mdf))*dtir(ix,iy,1)
-         fhi_mdf(ix,iy,1,0) = floi0_mdf*                                   !srv 13.10.06 {
+         fhi_mdf(ix,iy,1,1) = floi0_mdf*                                   !srv 13.10.06 {
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8 - 
      &         0.5_R8*abs(floi0_mdf)*
      &         (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
      &         -(coni0_mdf-0.5_R8*abs(floi0_mdf))*dtir(ix,iy,1)
      &      -fhiPSch(ix,iy,1,1)                                            !srv 13.10.06 }
-cwdk
          if (balance.and.
      &       (balance_netcdf.ne.0).and.
      &       (mdf_fhi.eq.0)) then !djm Jan2017
@@ -1179,13 +1193,24 @@ csw 2014 add viscous term   (ONLY FOR TESTING w/ SOLPS4 discretization)
            enddo
           endif
 
-         if(mdf_fhi.eq.0) then                                          !srv 13.10.06 {
+cwdk for hybrid 9-point scheme, need to have only "effective diffusion" in coni
+c    (for multiplication with full radial difference), and floi will be used in
+c    an upwind scheme
+c    implementation ensures backwards compatibility for perfectly orthogonal grids
+         t0 = -(hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &         (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &         qzf(ix,iy)
+         if(mdf_fhi.eq.0) then                                       !srv 13.10.06 {
           floi(ix,iy,1,1)   = floi0
-          coni(ix,iy,1,1,0) = coni0                                     !srv 02.01.07
+          coni(ix,iy,1,1,0) = coni0
+          coni(ix,iy,1,0,0) = (coni0 - 0.5_R8*abs(floi0))*t0
          else
           floi(ix,iy,1,1)   = floi0_mdf
-          coni(ix,iy,1,1,0) = coni0_mdf                                 !srv 02.01.07
-         endif                                                          !srv 13.10.06 }
+          coni(ix,iy,1,1,0) = coni0_mdf
+          coni(ix,iy,1,0,0) = (coni0_mdf - 0.5_R8*abs(floi0_mdf))*t0 !srv 02.01.07
+         endif                                                       !srv 13.10.06 }
+         floi(ix,iy,1,0)   = 0.0_R8
+
        enddo
       enddo
 

@@ -70,14 +70,14 @@
      &  phm4, phm5, phm6, wrk0(-1:nx,-1:ny),                          !srv 02.06.99
      &  phm7, phm8, wrk1(-1:nx,-1:ny),                                !srv 28.08.02
      &  dpo(-1:nx,-1:ny,0:1), dOnedBsq(-1:nx,-1:ny,0:1)               !srv 03.04.07
-      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                !lk 31.01.08 {
-      real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny) !lk 31.01.08 }
+      real (kind=R8), save :: fch_stochastic = 0.0e0_R8               !lk 31.01.08 {
+      real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)!lk 31.01.08 }
       real (kind=R8) :: 
      *  shidu(-1:nx,-1:ny,0:3), shidd(-1:nx,-1:ny,0:3),               !srv 11.09.09 {
      *  shiva(-1:nx,-1:ny,0:3), shivc(-1:nx,-1:ny,0:3),
      *  shifr(-1:nx,-1:ny,0:3), shedu(-1:nx,-1:ny,0:3),
      *  shedd(-1:nx,-1:ny,0:3), shefr(-1:nx,-1:ny,0:3),
-     *  shest(-1:nx,-1:ny,0:3),                                       !srv 17.12.13
+     *  shest(-1:nx,-1:ny,0:3), duar(-1:nx,-1:ny,0:1),                !srv 17.12.13
      *  wrks(-1:nx,-1:ny), ehx(-1:nx,-1:ny,0:1), ehy(-1:nx,-1:ny,0:1) !srv 13.01.17
       real (kind=R8) ::
      3  zeff(-1:nx,-1:ny), zmff(-1:nx,-1:ny), ce1(-1:nx,-1:ny),       !srv 13.01.17 05.07.17 {
@@ -425,6 +425,9 @@
       b2sihs_visa=0.0_R8
       do is = 0, ns-1
        if(.not.is_neutral(is).or.use_eirene.eq.0) then                !srv 29.08.02
+cwdk compute radial differences of ua at cell faces
+        call diff_r(nx,ny, 0, hx, hy, vol, qz, ua(-1,-1,is), wrk0, duar)
+	wrk0 = 0.0e0_R8
         do iy = -1, ny                                                !srv 28.08.02 21.07.05 16.10.17 {
          do ix = -1, nx
           if(leftix(ix,iy).eq.-2) then
@@ -440,8 +443,7 @@
           if(bottomiy(ix,iy).eq.-2) then
             wrk1(ix,iy) = 0.0e0_R8
           else
-            wrk1(ix,iy) = cvsa(ix,iy,1,1,is)*                         !srv 16.10.17
-     *      (ua(ix,iy,is)-ua(bottomix(ix,iy),bottomiy(ix,iy),is))**2
+            wrk1(ix,iy) = cvsa(ix,iy,1,1,is)*duar(ix,iy,1)**2         !srv 16.10.17
           endif
          enddo
         enddo                                                         !srv 28.08.02 21.07.05 16.10.17 }

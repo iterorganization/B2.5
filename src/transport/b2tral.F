@@ -322,8 +322,12 @@
        enddo
        call my_out(70,nx,ny,chce(-1,-1,0,0),'chcex')
        call my_out(70,nx,ny,chce(-1,-1,1,1),'chcey')
+       call my_out(70,nx,ny,chce(-1,-1,0,1),'chcexy')
+       call my_out(70,nx,ny,chce(-1,-1,1,0),'chceyx')
        call my_out(70,nx,ny,chci(-1,-1,0,0),'chcix')
        call my_out(70,nx,ny,chci(-1,-1,1,1),'chciy')
+       call my_out(70,nx,ny,chci(-1,-1,0,1),'chcixy')
+       call my_out(70,nx,ny,chci(-1,-1,1,0),'chciyx')
        call my_out(70,nx,ny,chve(-1,-1,0,0),'chvex')
        call my_out(70,nx,ny,chve(-1,-1,1,1),'chvey')
        call my_out(70,nx,ny,chvi(-1,-1,0,0),'chvix')

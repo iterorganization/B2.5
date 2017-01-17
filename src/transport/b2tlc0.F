@@ -26,7 +26,8 @@
       integer ix, iy, is, n2, ncall
       real (kind=R8) ::
      *  alpha, gamma, t0, t1, t2, dpb, vbar, maxfluxlimit(0:1),
-     *  pb(-1:nx,-1:ny), dpbr(-1:nx,-1:ny,0:1)
+     *  pb(-1:nx,-1:ny), dpbr(-1:nx,-1:ny,0:1), wght(-1:nx,-1:ny),
+     *  pbc(-1:nx,-1:ny)
       save ncall, alpha, gamma
 *   ..initialization
       data ncall/0/, alpha/0.0_R8/, gamma/2.0_R8/
@@ -56,12 +57,13 @@
       call sfill(2, 1.0_R8, maxfluxlimit, 1)
 *   ..nothing done if alpha.eq.0
       if (alpha.ne.0.0_R8) then
+       wght=1.0_R8
        do is = 0, ns-1
         if (is_neutral(is)) then
 *    ..compute partial pressure
          call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute radial differences of partial pressure
-         call diff_r (nx, ny, hx, hy, vol, qz, pb, dpbr)
+         call diff_r (nx, ny, 0, hx, hy, wght, qz, pb, pbc, dpbr)
          do ix = -1, nx
           do iy = -1, ny
 *   ..compute neutral difusion flux limits on x-surfaces
@@ -100,13 +102,10 @@
          do ix = -1, nx
           do iy = -1, ny
            if (bottomiy(ix,iy).ne.-2) then
-cwdk for now, cdpa(:,:,1,0) is not in use; test impact of dpbr on flux limit by changing cdpa(:,:,1,0)
-            cdpa(ix,iy,1,0,is) = cdpa(ix,iy,1,1,is)
             t0 = (ti(ix,iy)+ti(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
             t1 = (na(ix,iy,is) + 
      &            na(bottomix(ix,iy),bottomiy(ix,iy),is))/2.0_R8
-            dpb = cdpa(ix,iy,1,1,is)*
-     &            abs(pb(bottomix(ix,iy),bottomiy(ix,iy))-pb(ix,iy))
+            dpb = cdpa(ix,iy,1,1,is)*abs(dpbr(ix,iy,1))
             vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
      &           *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
      &           /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -115,15 +114,6 @@ cwdk for now, cdpa(:,:,1,0) is not in use; test impact of dpbr on flux limit by 
             cdpa(ix,iy,1,1,is) = cdpa(ix,iy,1,1,is)*t2
             flc(ix,iy,1,1,is) = t2
             maxfluxlimit(1)=max(maxfluxlimit(1),t2)
-cwdk for now, cdpa(:,:,1,0) is not in use; test impact of dpbr on flux limit by changing cdpa(:,:,1,0)
-            dpb = cdpa(ix,iy,1,0,is)*abs(dpbr(ix,iy,1))
-            vbar = sqrt(8.0_R8 * t0 / (pi * (am(is)*mp)))
-     &           *(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
-     &           /(hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-            t2 = 1.0_R8/(1.0_R8 + (dpb/(alpha*vbar/4.0e0_R8*t1))**gamma)
-     &                                                  **(1.0_R8/gamma)
-            cdpa(ix,iy,1,0,is) = cdpa(ix,iy,1,0,is)*t2
-            flc(ix,iy,1,0,is) = t2
 	   endif
 	  enddo
 	 enddo

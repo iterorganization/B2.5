@@ -121,7 +121,8 @@ csw 10oct2012
       real (kind=R8) ::
      *    wrk0(-1:nx,-1:ny),
      *    dter(-1:nx,-1:ny,0:1), dpor(-1:nx,-1:ny,0:1),
-     *    qzf(-1:nx,-1:ny), dper(-1:nx,-1:nx,0:1)
+     *    qzf(-1:nx,-1:ny), dper(-1:nx,-1:nx,0:1),
+     *    wght(-1:nx,-1:ny)
       real (kind=R8) :: facdriftm
       real (kind=R8), allocatable ::
      *    w1(:,:), w2(:,:), w3(:,:), w4(:,:), w5(:,:), w6(:,:)           !srv 16.09.02
@@ -209,10 +210,10 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
 *    ..test sign of ne, te, csig, chce
        call b2xvsg (n2, ne, 1, 'ne', '.gt.')
        call b2xvsg (n2, te, 1, 'te', '.gt.')
-       call b2xvsg (n2*2, csig(-1,-1,0,0), 1, 'csig', '.ge.')
-       call b2xvsg (n2*2, csig(-1,-1,1,1), 1, 'csig', '.ge.')
-       call b2xvsg (n2*2, chce(-1,-1,0,0), 1, 'chce', '.ge.')
-       call b2xvsg (n2*2, chce(-1,-1,1,1), 1, 'chce', '.ge.')
+       call b2xvsg (n2, csig(-1,-1,0,0), 1, 'csig', '.ge.')
+       call b2xvsg (n2, csig(-1,-1,1,1), 1, 'csig', '.ge.')
+       call b2xvsg (n2, chce(-1,-1,0,0), 1, 'chce', '.ge.')
+       call b2xvsg (n2, chce(-1,-1,1,1), 1, 'chce', '.ge.')
 *    ..test edge values of csig, chce, chve, chvemx, calf, calf_an
        call b2xvff (nx, ny, csig, 'csig')
        call b2xvff (nx, ny, chce, 'chce')
@@ -325,15 +326,15 @@ c Drift terms
       fch_p = fch_p - fch_pi_f                                         !srv 13.01.17 }
 
 *   ..compute radial differences of te and po, for 9-point terms
-      call diff_r(nx, ny, hx, hy, vol, qz, te, dter)
-      call diff_r(nx, ny, hx, hy, vol, qz, po, dpor)
-      wrk0 = ne*te
-      call diff_r(nx, ny, hx, hy, vol, qz, wrk0, dper)
+      wght = 1.0_R8
+      call diff_r(nx, ny, 0, hx, hy, wght, qz, te, wrk0, dter)
+      call diff_r(nx, ny, 0, hx, hy, wght, qz, po, wrk0, dpor)
+      call diff_r(nx, ny, 0, hx, hy, wght, qz, ne*te, wrk0, dper)
 
 
-!*   ..interpolate qz(:,:,0) to x-faces (will be needed for drifts....
-!      call intfaceh(nx,ny,leftix,leftiy,vol,qz(:,:,0),qzf)
-
+*   ..interpolate qz(:,:,0) to x-faces (will be needed for drifts....
+      call intfaceh(nx,ny,leftix,leftiy,vol,qz(:,:,0),qzf)
+ 
 * ..compute fluxes and linearization
 *   ..compute fhex, floex, conex, fchx, concx
       do iy = -1, ny
@@ -802,13 +803,27 @@ cwdk
      &       (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
      &          *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
           endif                                                          !srv 16.09.02 }
+cwdk add linearization coefficients for 9-point fluxes
+c    note: cone9(_mdf) is the "effective diffusion" piece;
+c          part of floe9(_mdf) is transfered to cone, to mimick the 
+c          upwind discretization needed for the "effective convection"
+cwdk (to be checked for new hybrid scheme using mdf...)
+          t0 = -(hy(ix,iy) + hy(leftix(ix,iy),leftiy(ix,iy)))/
+     &          (hx(ix,iy) + hx(leftix(ix,iy),leftiy(ix,iy)))*
+     &          qzf(ix,iy)                                               !srv 13.10.06 }
           if(mdf_fhe.eq.0) then                                          !srv 13.10.06 {
-           floe(ix,iy,0,0) = floe0
-           cone(ix,iy,0,0,0) = cone0                                     !srv 02.01.07
+           floe(ix,iy,0,0) = floe0 + floe9
+           floe(ix,iy,0,1) = 0.0_R8
+           cone(ix,iy,0,0,0) = cone0 + cone9*t0 + 0.5_R8*abs(floe9)      !srv 02.01.07
+           cone(ix,iy,0,1,0) = cone9
           else
-           floe(ix,iy,0,0) = floe0_mdf
-           cone(ix,iy,0,0,0) = cone0_mdf                                 !srv 02.01.07
+           floe(ix,iy,0,0) = floe0_mdf + floe9_mdf
+           floe(ix,iy,0,1) = 0.0_R8
+           cone(ix,iy,0,0,0) = cone0_mdf + cone9_mdf*t0 
+     &                                   + 0.5_R8*abs(floe9_mdf)
+           cone(ix,iy,0,1,0) = cone9_mdf
           endif                                                          !srv 13.10.06 }
+
          endif                                                           !srv 04.02.03 }
 
 cwdk add computation of 9-point flows
@@ -826,6 +841,7 @@ cwdk add computation of 9-point flows
 !     &  /(vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))                  !srv
 !     &  *(hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0_R8             !srv 11.10.02 }
          conc(ix,iy,0,0) = csig(ix,iy,0,0)
+         conc(ix,iy,0,1) = csig(ix,iy,0,1)
          if(fch_ion_neutral.ne.0.0e0_R8 ) then                           !srv
           do is = 0, ns-1                                                !srv 24.06.08 {
 !           if (.not.is_neutral(is)) then
@@ -835,6 +851,7 @@ cwdk add computation of 9-point flows
                conc(ix,iy,0,0) = conc(ix,iy,0,0) + 
      &            csigin(ix,iy,0,0,is,is0) !*facdrift                    !srv 07.02.03
      &          *(wbbl(ix,iy,2)/wbbl(ix,iy,3))**2                        !srv 15.02.11
+              conc(ix,iy,0,1) = conc(ix,iy,0,1)+csigin(ix,iy,0,1,is,is0)
 !     1        *((bb(ix,iy,2)/bb(ix,iy,3))**2+                           !srv 25.02.03 {
 !     2        (bb(leftix(ix,iy),leftiy(ix,iy),2)/
 !     3        bb(leftix(ix,iy),leftiy(ix,iy),3))**2)*0.5e0_R8           !srv 25.02.03 }
@@ -862,6 +879,10 @@ cwdk add computation of 9-point flows
        w6=0.0e0_R8;
 
       endif                                                              !srv 16.09.02 }
+
+cwdk needed in 9-point scheme
+*   ..interpolate qz(:,:,0) to y-faces
+      call intfacev(nx,ny,bottomix,bottomiy,vol,qz(:,:,0),qzf)
 
 *   ..compute fhey, floey, coney, fchy, concy
       fch_p(:,:,0:1,1) = 0.0e0_R8
@@ -967,23 +988,6 @@ csw 13mar2013 added check upwind (SOLPS4 style)
      &      -fhePSch(ix,iy,1,1)                                            !srv 13.10.06 }
      &        +alfTeEh*calf(ix,iy,1,1)*                                    !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy   !iyv 12.05.08 !srv 03.10.08
-cwdk fhe(ix,iy,1,0) should be zero now; use tmp for corrected fhe(ix,iy,1,1)
-         fhe(ix,iy,1,0) = floe0*
-     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8 - 
-     &         0.5_R8*abs(floe0_mdf)*
-     &         (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &         -(cone0-0.5_R8*abs(floe0_mdf))*dter(ix,iy,1)
-     &        +alfTeEh*calf(ix,iy,1,1)*                                    !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
-     &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy     !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
-         fhe_mdf(ix,iy,1,0) = floe0_mdf*                                   !srv 13.10.06 {
-     &        (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8 - 
-     &         0.5_R8*abs(floe0_mdf)*
-     &         (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &         -(cone0_mdf-0.5_R8*abs(floe0_mdf))*dter(ix,iy,1)
-     &      -fhePSch(ix,iy,1,1)                                            !srv 13.10.06 }
-     &        +alfTeEh*calf(ix,iy,1,1)*                                    !iyv 12.05.08 !srv 03.10.08
-     &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy     !iyv 12.05.08 !srv 03.10.08
-
          if (balance.and.
      &       (balance_netcdf.ne.0).and.
      &       (mdf_fhe.eq.0)) then !djm Jan2017
@@ -1036,17 +1040,17 @@ cwdk fhe(ix,iy,1,0) should be zero now; use tmp for corrected fhe(ix,iy,1,1)
            fhe_ecrb(ix,iy,1,1) = 0.0_R8
          endif
         else
-         fhe(ix,iy,1,1) = floe0*
-     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
-     &         -cone0*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &        +alfTeEh*calf(ix,iy,1,1)*                                  !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
-     &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy   !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
-         fhe_mdf(ix,iy,1,1) = floe0_mdf*                                 !srv 13.10.06 {
-     &        (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
-     &      -cone0_mdf*(te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-     &      -fhePSch(ix,iy,1,1)                                          !srv 13.10.06 }
-     &        +alfTeEh*calf(ix,iy,1,1)*                                  !iyv 12.05.08 !srv 03.10.08
-     &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy   !iyv 12.05.08 !srv 03.10.08
+         fhe(ix,iy,1,1) = upwind(floe0,
+     &         te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy)) - 
+     &         (cone0-0.5_R8*abs(floe0))*dter(ix,iy,1) + 
+     &         alfTeEh*calf(ix,iy,1,1)*                                    !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
+     &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehr9   !srv 03.06.03 !iyv 12.05.08 !srv 03.10.08
+         fhe_mdf(ix,iy,1,1) = upwind(floe0_mdf,                                   !srv 13.10.06 {
+     &         te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy)) - 
+     &         (cone0_mdf-0.5_R8*abs(floe0_mdf))*dter(ix,iy,1) - 
+     &         fhePSch(ix,iy,1,1) +                                          !srv 13.10.06 }
+     &         alfTeEh*calf(ix,iy,1,1)*                                    !iyv 12.05.08 !srv 03.10.08
+     &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehr9   !iyv 12.05.08 !srv 03.10.08
          if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
            fhe_32(ix,iy,1,1) = 1.5e0_R8*fne(ix,iy,1,1)*
      &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
@@ -1072,13 +1076,26 @@ cwdk fhe(ix,iy,1,0) should be zero now; use tmp for corrected fhe(ix,iy,1,1)
          endif
         endif
 
+cwdk for hybrid 9-point scheme, need to have only "effective diffusion" in coni
+c    (for multiplication with full radial difference), and floi will be used in
+c    an upwind scheme
+c    implementation ensures backwards compatibility for perfectly orthogonal grids
+         t0 = -(hy(ix,iy) + hy(bottomix(ix,iy),bottomiy(ix,iy)))/
+     &         (hx(ix,iy) + hx(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &         qzf(ix,iy)
         if(mdf_fhe.eq.0) then                                            !srv 13.10.06 {
-         floe(ix,iy,1,1) = floe0
+         floe(ix,iy,1,1)   = floe0
          cone(ix,iy,1,1,0) = cone0                           !srv 02.01.07 !srv 23.06.99
+         cone(ix,iy,1,0,0) = (cone0 - 0.5_R8*abs(floe0))*t0
         else
-         floe(ix,iy,1,1) = floe0_mdf
+         floe(ix,iy,1,1)   = floe0_mdf
          cone(ix,iy,1,1,0) = cone0_mdf                       !srv 02.01.07 !srv 23.06.99
+         cone(ix,iy,1,0,0) = (cone0_mdf - 0.5_R8*abs(floe0_mdf))*t0 !srv 02.01.07
         endif                                                            !srv 13.10.06 }
+        floe(ix,iy,1,0)   = 0.0_R8
+
+cwdk for now, fch(:,:,1,0) should stay zero...
+        fch(ix,iy,1,0) = 0.0_R8
         fch(ix,iy,1,1) =                                                 !srv
      1      +fchin(ix,iy,1,1)                                            !srv
      2      +fchdia(ix,iy,1,1)
@@ -1089,6 +1106,7 @@ cwdk fhe(ix,iy,1,0) should be zero now; use tmp for corrected fhe(ix,iy,1,1)
      7      +fchanml(ix,iy,1,1)                                          !srv 24.03.07
      8      +fchstoch(ix,iy)                                             !lk 31.01.08
         conc(ix,iy,1,1) = csig(ix,iy,1,1)                                !srv
+        conc(ix,iy,1,0) = csig(ix,iy,1,1)*t0
         if(fch_ion_neutral.ne.0.0e0_R8 ) then                            !srv
          do is = 0, ns-1                                                 !srv 24.06.08 {
 !          if (.not.is_neutral(is)) then
@@ -1096,6 +1114,8 @@ cwdk fhe(ix,iy,1,0) should be zero now; use tmp for corrected fhe(ix,iy,1,1)
            do is0 = 0, ns-1
             if (is_neutral(is0).and.nint(zn(is0)).eq.1) then             !srv 20.10.17
             conc(ix,iy,1,1) = conc(ix,iy,1,1) + csigin(ix,iy,1,1,is,is0) !*facdrift !srv 27.03.99 07.02.03 31.01.08
+            conc(ix,iy,1,0) = conc(ix,iy,1,0) + 
+     &         csigin(ix,iy,1,1,is,is0)*t0
             endif                                                        !srv 20.10.17
            enddo
           endif
@@ -1103,6 +1123,7 @@ cwdk fhe(ix,iy,1,0) should be zero now; use tmp for corrected fhe(ix,iy,1,1)
         endif                                                            !srv
         if(fch_stochastic.ne.0.0e0_R8 ) then                             !lk 31.01.08 {
           conc(ix,iy,1,1) = conc(ix,iy,1,1) + csig_stoch(ix,iy)
+          conc(ix,iy,1,0) = conc(ix,iy,1,0) + csig_stoch(ix,iy)*t0
         endif                                                            !lk 31.01.08 }
 
        enddo

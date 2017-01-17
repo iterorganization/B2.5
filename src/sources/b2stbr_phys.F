@@ -359,8 +359,8 @@
      &           topiy(rc_list_x(i,istra),rc_list_y(i,istra)),-1,
      &           topix(rc_list_x(i,istra),rc_list_y(i,istra)),
      &           topiy(rc_list_x(i,istra),rc_list_y(i,istra)),1,
-     &           hy1(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &           hy1(topix(rc_list_x(i,istra),rc_list_y(i,istra)),
+     &           hy(rc_list_x(i,istra),rc_list_y(i,istra)),
+     &           hy(topix(rc_list_x(i,istra),rc_list_y(i,istra)),
      &               topiy(rc_list_x(i,istra),rc_list_y(i,istra))),
      &           Phi_app,
      &           gs(topix(rc_list_x(i,istra),rc_list_y(i,istra)),
@@ -399,8 +399,8 @@
      &           bottomix(rc_list_x(i,istra),rc_list_y(i,istra)),
      &           bottomiy(rc_list_x(i,istra),rc_list_y(i,istra)),+1,
      &           rc_list_x(i,istra),rc_list_y(i,istra),1,
-     &           hy1(rc_list_x(i,istra),rc_list_y(i,istra)),
-     &           hy1(bottomix(rc_list_x(i,istra),rc_list_y(i,istra)),
+     &           hy(rc_list_x(i,istra),rc_list_y(i,istra)),
+     &           hy(bottomix(rc_list_x(i,istra),rc_list_y(i,istra)),
      &               bottomiy(rc_list_x(i,istra),rc_list_y(i,istra))),
      &           Phi_app,
      &           gs(rc_list_x(i,istra),rc_list_y(i,istra),1),
@@ -804,10 +804,13 @@ cdpc-end
      & (rza(ix,iy,0:ns-1)*hhn+rza(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
       rpf(0:ns-1) = 
      & (rpt(ix,iy,0:ns-1)*hhn+rpt(ixn,iyn,0:ns-1)*hh)/(hhn+hh)
-      qin = max(0.0_R8,isign*(fhi(ixf,iyf,idir,idir)+
-     &                        fhi_ext(ixf,iyf,idir,idir)))/area
+      qin = max(0.0_R8,isign*(fhi(ixf,iyf,idir,0)+
+     &                        fhi(ixf,iyf,idir,1)+
+     &                        fhi_ext(ixf,iyf,idir,0)+
+     &                        fhi_ext(ixf,iyf,idir,1)))/area
       do is=0,ns-1
-         qin=qin+max(0.0_R8,isign*fna(ixf,iyf,idir,idir,is))
+         qin=qin+max(0.0_R8,isign*(fna(ixf,iyf,idir,0,is) + 
+     &                             fna(ixf,iyf,idir,1,is)))
      &        *((kinrgy(ix,iy,is)+tif)*(1.0_R8-BoRiS) + rpf(is)*ev)/area
       enddo
       do is=0,ns_ext-1
@@ -815,13 +818,16 @@ cdpc-end
      &    (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/(hhn+hh)
          taf =
      &    (ta_ext(ix,iy,is)*hhn+ta_ext(ixn,iyn,is)*hh)/(hhn+hh)
-         qin=qin+max(0.0_R8,isign*fa_ext(ixf,iyf,idir,idir,is))
+         qin=qin+max(0.0_R8,isign*(fa_ext(ixf,iyf,idir,0,is) + 
+     &                             fa_ext(ixf,iyf,idir,1,is)))
      &        *((0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+taf)*
      &          (1.0_R8-BoRiS)
      &          + ptf*ev)/area
       enddo
-      qel = max(0.0_R8,isign*(fhe(ixf,iyf,idir,idir)+
-     &  fne(ixf,iyf,idir,idir)*tef*(1.0_R8-BoRiS)))/area
+      qel = max(0.0_R8,isign*(fhe(ixf,iyf,idir,0)+
+     &  fhe(ixf,iyf,idir,1)+
+     &  (fne(ixf,iyf,idir,0)+fne(ixf,iyf,idir,1))
+     &  *tef*(1.0_R8-BoRiS)))/area
       if(lcore) then
          surface_temp = 0.0_R8
       else
@@ -875,7 +881,8 @@ cdpc
 cdpc
 *       (species (is) recycles into is0)
 *       (is0 corresponds to CX species is2)
-         t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,idir,is)) *
+         t0 = max(0.0_R8,isign*(fna(ixf,iyf,idir,0,is) + 
+     &                          fna(ixf,iyf,idir,1,is))) *
      1        neutral_sources_rescale ! dpc: eirene coupling 1999.06.28
          Ei=max(0.0_R8,tif/ev+(pof-Phi_app)*zaf(is))
                                  ! xpb: Incident energy (eV)
@@ -1435,7 +1442,8 @@ cxpb
             endif
 cxpb
 *          (species (is) recycles into is0)
-            t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,idir,is)) *
+            t0 = max(0.0_R8,isign*(fna(ixf,iyf,idir,0,is) + 
+     .                             fna(ixf,iyf,idir,1,is))) *
      .           core_sources_rescale ! xpb: 2002.02.01
             if (is.ne.is0) then
                sna0(ix,iy,0,is0) = sna0(ix,iy,0,is0)+
