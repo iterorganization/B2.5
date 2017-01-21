@@ -1,11 +1,14 @@
 ! Fortran part of the adaptor for paraview catalyst
 ! for b2.5 simulation.
 ! Author: Jure Bartol
-! Created on: 22.07.2016
-! Modified on: 23.08.2016
 
 
-subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,bzb,OnedBsq,ne,qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper,gs,bb,na,ua,kinrgy,rra,rqa,fna,fna_mdf,fna_fcor,uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi, rightix, topiy)
+subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,&
+     &                 bzb,OnedBsq,ne,qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,&
+     &                 fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,&
+     &                 fchvisper,gs,bb,na,ua,kinrgy,rra,rqa,fna,fna_mdf,&
+     &                 fna_fcor,uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,&
+     &                 rlpi, rightix, topiy)
 !Coprocessor is called each time step in b2mndr to output
 !simulation data to ParaView Catalyst.
 
@@ -15,11 +18,14 @@ subroutine coprocessor(crx,cry,ncrx,nx,ny,ns,step,time,vol,hx,hy,qc,te,ti,po,bzb
   real(kind=8) :: time
   integer, dimension(-1:nx,-1:ny) :: rightix, topiy
   real(kind=8), dimension(-1:nx,-1:ny) :: vol,hx,hy,qc,te,ti,po,bzb,OnedBsq,ne
-  real(kind=8), dimension(-1:nx,-1:ny,2) :: qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper!,velocity
+  real(kind=8), dimension(-1:nx,-1:ny,2) :: qz,pbs,fhe,fhi,fch,pbshz,fhe_mdf,&
+      & fhi_mdf,fchvispar,fchvisq,fchinert,fchdia,fchin,fch_p,fchvisper &
+      & !,velocity
   real(kind=8), dimension(-1:nx,-1:ny,3) :: gs
   real(kind=8), dimension(-1:nx,-1:ny,4) :: crx,cry,bb
   real(kind=8), dimension(-1:nx,-1:ny,0:ns-1) :: na,ua,kinrgy,rra,rqa,rsa
-  real(kind=8), dimension(-1:nx,-1:ny,0:1,0:ns-1) :: fna,fna_mdf,fna_fcor,uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi
+  real(kind=8), dimension(-1:nx,-1:ny,0:1,0:ns-1) :: fna,fna_mdf,fna_fcor,&
+      & uadia,vadia,vaecrb,rlsa,rlra,rlqa,rlza,rlpt,rlpi
   real :: start, finish
   
   call cpu_time(start)
@@ -84,9 +90,9 @@ numC=(nx+2)*(ny+2) !number of cells
      call adddata(rsa,"rsa"//char(0),numC,ns)
      call adddata(fna(:,:,0,:),"fnax1"//char(0),numC,ns)
      call adddata(fna(:,:,1,:),"fnay1"//char(0),numC,ns)
-    call adddata(fna_mdf(:,:,0,:),"fna_mdfx"//char(0),numC,ns)
-    call adddata(fna_mdf(:,:,1,:),"fna_mdfy"//char(0),numC,ns)
-    call adddata(fna_fcor(:,:,0,:),"fna_fcorx"//char(0),numC,ns)
+     call adddata(fna_mdf(:,:,0,:),"fna_mdfx"//char(0),numC,ns)
+     call adddata(fna_mdf(:,:,1,:),"fna_mdfy"//char(0),numC,ns)
+     call adddata(fna_fcor(:,:,0,:),"fna_fcorx"//char(0),numC,ns)
      call adddata(fna_fcor(:,:,1,:),"fna_fcory"//char(0),numC,ns)
      call adddata(uadia(:,:,0,:),"uadiax"//char(0),numC,ns)
      call adddata(uadia(:,:,1,:),"uadiay"//char(0),numC,ns)
