@@ -923,10 +923,10 @@
 #ifdef CATALYST
        use_catalyst = .false.
        inquire(FILE='../coproc.py',EXIST=use_catalyst)
-       if (use_catalyst == .false.)
+       if (use_catalyst .eqv. .false.)
      >  write(*,*) 'File coproc.py missing ',
      > 'from run directory - Catalyst will not start.'
-       if (use_catalyst .eq. .true.) then
+       if (use_catalyst .eqv. .true.) then
           call coprocessorinitializewithpython('../coproc.py',12)
        endif
 #endif
@@ -1963,7 +1963,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         first_time_step=.false.
 
 #ifdef CATALYST
-        if (use_catalyst .eq. .true.) then
+        if (use_catalyst .eqv. .true.) then
            call coprocessor(crx,cry,4*(nx+2)*(ny+2),nx,ny,ns,itim,tim,
      &   vol, hx, hy, qc, te, ti, po, bzb, OnedBsq,ne,qz, pbs, fhe, fhi,
      &   fch, pbshz, fhe_mdf, fhi_mdf, fchvispar,
@@ -2086,7 +2086,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       endif
 
 #ifdef CATALYST
-      if (use_catalyst .eq. .true.) call coprocessorfinalize()
+      if (use_catalyst .eqv. .true.) call coprocessorfinalize()
 #endif
 
 * finalise eirene_mc
