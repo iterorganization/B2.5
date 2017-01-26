@@ -10,6 +10,8 @@
       use b2mod_constants
       use b2mod_external
       use b2mod_b2cmpa
+      use b2mod_sources                                               !djm Jan2017
+     & , only : b2sifr_smoch, b2sifr_smotf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
@@ -258,6 +260,19 @@ c     1     write(*,*) ix,iy,isb,cthi(ix,iy,isb)
      *                'b2sifr_smoch'//chk//chns)                       !srv 07.02.12
          enddo
       endif                                                            !srv 17.06.02 }
+cdjm Jan2017
+      b2sifr_smoch(-1:nx,-1:ny,isb)=
+     1     smbch(-1:nx,-1:ny,0)+
+     2     smbch(-1:nx,-1:ny,1)*ua(-1:nx,-1:ny,isb)+
+     3     smbch(-1:nx,-1:ny,2)*am(isb)*mp*na(-1:nx,-1:ny,isb)+
+     4     smbch(-1:nx,-1:ny,3)*am(isb)*mp*na(-1:nx,-1:ny,isb)*
+     5     ua(-1:nx,-1:ny,isb)
+      b2sifr_smotf(-1:nx,-1:ny,isb)=
+     1     smbtf(-1:nx,-1:ny,0)+
+     2     smbtf(-1:nx,-1:ny,1)*ua(-1:nx,-1:ny,isb)+
+     3     smbtf(-1:nx,-1:ny,2)*am(isb)*mp*na(-1:nx,-1:ny,isb)+
+     4     smbtf(-1:nx,-1:ny,3)*am(isb)*mp*na(-1:nx,-1:ny,isb)*
+     5     ua(-1:nx,-1:ny,isb)
 * ..return
       ncall = ncall+1
       call subend ()
