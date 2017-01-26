@@ -136,15 +136,6 @@
       endif
 
 * ..particle balance
-      if (isb.eq.1) then
-        open(unit=12, file="snb")
-        write(12,*) snb(-1:nx,-1:ny,0)+
-     &              snb(-1:nx,-1:ny,1)*nb(-1:nx,-1:ny)
-        close(12)
-        open(unit=13, file="fnb")
-        write(13,*) fnb
-        close(13)
-      endif
 *   ..compute residual
       call b2ursc (nx, ny, nb, snb, fnb, rescb)
       if(guard_flows.eq.2 .or.                                          !srv 06.07.08 {

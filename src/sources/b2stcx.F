@@ -3,7 +3,7 @@
 
       subroutine b2stcx (nx, ny, ns, is0, ismain, hz, BoRiS, vol, na,    !srv 09.01.01
      &  ua, wadia, vadia, vaecrb, ti, ni, rcx, sna0, smq0, shi0,         !srv 07.07.09
-     &  balanceco, balancemo, balanceht)                                 !djm 17/10/16
+     &  balanceco, balancemo, balanceht)                                 !djm Jan2017
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -22,7 +22,7 @@
      &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), rcx(-1:nx,-1:ny,0:ns-1),  
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
-      logical balanceco, balancemo, balanceht                            !djm 17/10/16
+      logical balanceco, balancemo, balanceht                            !djm Jan2017
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smq0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -323,13 +323,13 @@ ctmp.dpc
      &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
 	call my_out(70,nx,ny,wrk0,'b2stcx_shi')
       endif
-cdjm 14/10/16 store for balance
-      if (balanceco) then !djm 17/10/16
+cdjm Jan2017 store for balance
+      if (balanceco) then !djm Jan2017
         b2stcx_sna(-1:nx,-1:ny,0:ns-1)=
      1   sna0(-1:nx,-1:ny,0,0:ns-1)+
      2   sna0(-1:nx,-1:ny,1,0:ns-1)*na(-1:nx,-1:ny,0:ns-1)
       endif
-      if (balancemo) then       !djm
+      if (balancemo) then !djm Jan2017
         do is=0,ns-1
           b2stcx_smq(-1:nx,-1:ny,is)=
      1     smq0(-1:nx,-1:ny,0,is)+
@@ -339,12 +339,8 @@ cdjm 14/10/16 store for balance
      5     ua(-1:nx,-1:ny,is)
         enddo
       endif
-      if (balanceht) then !djm
-        b2stcx_shi(-1:nx,-1:ny)=
-     1   shi0(-1:nx,-1:ny,0)+
-     2   shi0(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
-     3   shi0(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
-     4   shi0(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
+      if (balanceht) then !djm Jan2017
+        b2stcx_shi0to3(-1:nx,-1:ny,0:3)=shi0(-1:nx,-1:ny,0:3)
       endif
 
 * ..return

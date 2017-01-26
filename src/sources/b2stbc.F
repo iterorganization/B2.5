@@ -13,7 +13,7 @@
      &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,
      &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call,       !xpb
-     &  balanceco, balancemo, balanceht, balancech)                      !djm 17/10/16
+     &  balanceco, balancemo, balanceht, balancech)                      !djm Jan2017
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
@@ -22,7 +22,8 @@
       use b2mod_constants
       use b2mod_sources
      1 , only : b2stbc_sna,b2stbc_smo,b2stbc_she,b2stbc_shi,b2stbc_sch,
-     2          b2stbc_sne
+     2          b2stbc_sne,
+     3          b2stbc_she0to3, b2stbc_shi0to3                           !djm Jan2017
       use b2mod_feedback
       use b2mod_b2cmpa
       use b2mod_external
@@ -71,7 +72,7 @@
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
       logical wrong_flow                                                 !xpb
-      logical balanceco, balancemo, balanceht, balancech                 !djm 17/10/16
+      logical balanceco, balancemo, balanceht, balancech                 !djm Jan2017
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -647,7 +648,7 @@ c if we want the integral current to be 0
      1     iy,te(nx,iy)/ev,ne(nx,iy),(she0(nx,iy,is),is=0,3)
         enddo
       endif
-      if (balanceco) then !djm 17/10/16
+      if (balanceco) then !djm Jan2017
 c       write(*,*) 'Copying sna0 to b2stbc_sna'
         b2stbc_sna(-1:nx,-1:ny,0:ns-1)=
      1   sna0(-1:nx,-1:ny,0,0:ns-1)+
@@ -677,6 +678,8 @@ c       write(*,*) 'Copying shi0 to b2stbc_shi'
      2   shi0(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
      3   shi0(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
      4   shi0(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
+        b2stbc_she0to3(-1:nx,-1:ny,0:3)=she0(-1:nx,-1:ny,0:3)
+        b2stbc_shi0to3(-1:nx,-1:ny,0:3)=shi0(-1:nx,-1:ny,0:3)
       endif
       if (balancech) then
 c       write(*,*) 'Copying sch0 to b2stbc_sch'
