@@ -43,7 +43,7 @@ c======================================================================
 c
       real (kind=R8) :: width,dist,distmin,xx1,xx2,yy1,yy2,temp,
      ,                  distmin1
-      real, allocatable :: lwldlis_old(:,:), nwldlis_old(:)
+      integer, allocatable :: lwldlis_old(:,:), nwldlis_old(:)
       logical, allocatable :: istarget(:)
       integer, allocatable :: ind(:)
       real, allocatable :: lis_ind(:)
@@ -729,7 +729,7 @@ c!###}
 
 ccc*** Order elements of original plot zone in CCW direction	  
       do il=2,nwldprt
-        allocate(lis_ind(int(nwldlis_old(il))))
+        allocate(lis_ind(nwldlis_old(il)))
         do i=1,nwldlis_old(il)
           k1=abs(lwldlis_old(i,il))
           xx1=pp1(1,k1)
@@ -775,7 +775,7 @@ ccc*** Check if a plot zone has starting and ending element which is inside a ta
             end if
           end do
           if (flagmin .eq. 0) then
-            istarget(il)=1
+            istarget(il)=.true.
           end if
         end if
       end do
