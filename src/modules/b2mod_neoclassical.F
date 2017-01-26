@@ -19,7 +19,7 @@ c     max. number of ionization stages
      *  r2i_(:), rho_(:)
       real (kind=R8), allocatable, save ::
      *  dd(:,:,:), vvn(:,:,:),
-     *  totchi(:,:,:), totkappa(:,:,:)
+     *  chi(:,:,:), vwt(:,:,:)
 
       contains
 
@@ -47,8 +47,8 @@ c     max. number of ionization stages
       allocate(rho_(-1:nyd))
       allocate(dd(0:nsd,0:nzd-1,-1:nyd))
       allocate(vvn(0:nsd,0:nzd-1,-1:nyd))
-      allocate(totchi(0:nsd,0:nzd-1,-1:nyd))
-      allocate(totkappa(0:nsd,0:nzd-1,-1:nyd))
+      allocate(chi(0:nsd,0:nzd-1,-1:nyd))
+      allocate(vwt(0:nsd,0:nzd-1,-1:nyd))
 
       end subroutine alloc_b2mod_neoclassical
 
@@ -74,8 +74,8 @@ c     max. number of ionization stages
       deallocate(rho_)
       deallocate(dd)
       deallocate(vvn)
-      deallocate(totchi)
-      deallocate(totkappa)
+      deallocate(chi)
+      deallocate(vwt)
 
       return
       end subroutine dealloc_b2mod_neoclassical

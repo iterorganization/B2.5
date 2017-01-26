@@ -55,7 +55,7 @@ c 2002-09-11: logic revised
       use eirmod_coutau
      , , only: eirene_dealloc_coutau
       use eirmod_comusr
-     , , only: eirene_dealloc_comusr
+     , , only: eirene_dealloc_comusr, nmassa, nmassm, nmassi
       use eirmod_eirbra
      & , smo_eir => smo
 #endif
@@ -140,7 +140,7 @@ c
      *   deltapar(-1:nxd,-1:nyd,0:nsd_local),
      *   vtha(-1:nxd,-1:nyd,0:nsd_local)
       real (kind=R8), allocatable :: mach(:,:,:)
-      real (kind=R8), allocatable :: emach(:)
+      real (kind=R8), allocatable :: emach(:,:)
       real (kind=R8) ::
      1   vappr_a, vappr_b, sput_frc, sput_phys, BoRiS,
      2   stick_coef, plate_kb, plate_ka, 
@@ -979,7 +979,53 @@ c
 #endif
       if(ex) then
         call ntread
-        allocate(emach(ntrii))
+        allocate(emach(max(natmi,nmoli,nioni),ntrii))
+        DO I = 1, ntrii
+          DO IS = 1, NATMI
+            IF (pdena(IS,I).gt.0.0_R8) then
+              vxa(IS,I) = vxdena(IS,I)/pdena(IS,I)/
+     .                    (nmassa(IS)*mp*1000.0_R8)/100.0_R8
+              vya(IS,I) = vydena(IS,I)/pdena(IS,I)/
+     .                    (nmassa(IS)*mp*1000.0_R8)/100.0_R8
+              vza(IS,I) = vzdena(IS,I)/pdena(IS,I)/
+     .                    (nmassa(IS)*mp*1000.0_R8)/100.0_R8
+            ELSE
+              vxa(IS,I) = 0.0_R8
+              vya(IS,I) = 0.0_R8
+              vza(IS,I) = 0.0_R8
+            ENDIF
+            earrowx(I,IS-1) = vxa(IS,I)
+            earrowy(I,IS-1) = vya(IS,I)
+          END DO
+          DO IS = 1, NMOLI
+            IF (pdenm(IS,I).gt.0.0_R8) then
+              vxm(IS,I) = vxdenm(IS,I)/pdenm(IS,I)/
+     .                    (nmassm(IS)*mp*1000.0_R8)/100.0_R8
+              vym(IS,I) = vydenm(IS,I)/pdenm(IS,I)/
+     .                    (nmassm(IS)*mp*1000.0_R8)/100.0_R8
+              vzm(IS,I) = vzdenm(IS,I)/pdenm(IS,I)/
+     .                    (nmassm(IS)*mp*1000.0_R8)/100.0_R8
+            ELSE
+              vxm(IS,I) = 0.0_R8
+              vym(IS,I) = 0.0_R8
+              vzm(IS,I) = 0.0_R8
+            ENDIF
+          END DO
+          DO IS = 1, NIONI
+            IF (pdeni(IS,I).gt.0.0_R8) then
+              vxi(IS,I) = vxdeni(IS,I)/pdeni(IS,I)/
+     .                    (nmassi(IS)*mp*1000.0_R8)/100.0_R8
+              vyi(IS,I) = vydeni(IS,I)/pdeni(IS,I)/
+     .                    (nmassi(IS)*mp*1000.0_R8)/100.0_R8
+              vzi(IS,I) = vzdeni(IS,I)/pdeni(IS,I)/
+     .                    (nmassi(IS)*mp*1000.0_R8)/100.0_R8
+            ELSE
+              vxi(IS,I) = 0.0_R8
+              vyi(IS,I) = 0.0_R8
+              vzi(IS,I) = 0.0_R8
+            ENDIF
+          END DO
+        END DO
       end if
 #else
       ex = .false.
@@ -1191,12 +1237,12 @@ c
             fmox(ix,iy,is)=fmo(ix,iy,0,is)
             fhmx(ix,iy,is)=fhm(ix,iy,0,is)
             fhpx(ix,iy,is)=fhp(ix,iy,0,is)
-            arrowx(ix,iy,is)=fna(ix,iy,0,is)
+            arrowx(ix,iy,is)=up(ix,iy,is)
             fnay(ix,iy,is)=fna(ix,iy,1,is)
             fmoy(ix,iy,is)=fmo(ix,iy,1,is)
             fhmy(ix,iy,is)=fhm(ix,iy,1,is)
             fhpy(ix,iy,is)=fhp(ix,iy,1,is)
-            arrowy(ix,iy,is)=fna(ix,iy,1,is)
+            arrowy(ix,iy,is)=vv(ix,iy,is)
             uutraj(ix,iy,is)=ua(ix,iy,is)
             vvtraj(ix,iy,is)=vv(ix,iy,is)
             cvsa_cl_x(ix,iy,is)=cvsa_cl(ix,iy,0,is)
@@ -1309,8 +1355,8 @@ c
           if (lu.eq.5) then
             if (writing_to_file) close(nwtf)
             call terminate_plotting
-            write(*,'(a,6i4)') 'STACK i,r,s,m,w,t = ',
-     .       iistack,irstack,isstack,iwrk,iwwrk,itwrk
+            write(*,'(a,7i4)') 'STACK i,r,s,m,e,w,t = ',
+     .       iistack,irstack,isstack,iwrk,iewrk,iwwrk,itwrk
             deallocate(mach)
             call dealloc_b2mod_diag
             call dealloc_b2mod_wall
@@ -1379,8 +1425,8 @@ c
      .           cval.eq.'end') then  ! quit/exit
           if (writing_to_file) close(nwtf)
           call terminate_plotting
-          write(*,'(a,6i4)') 'STACK i,r,s,m,w,t = ',
-     .     iistack,irstack,isstack,iwrk,iwwrk,itwrk
+          write(*,'(a,7i4)') 'STACK i,r,s,m,e,w,t = ',
+     .     iistack,irstack,isstack,iwrk,iewrk,iwwrk,itwrk
           deallocate(mach)
           call dealloc_b2mod_diag
           call dealloc_b2mod_wall
@@ -6231,42 +6277,114 @@ c-dpc still in testing phase
           description='Test ions energy density (eV.m^{-3})'
           nz=nioni
           call eirene_copy(edeni,1.0e6_R8,nz,textin)
-        case('vxdena')
+        case('massa')
+          description='Atom mass (kg)'
+          nz=natmi
+          do is = 1, nz
+            do i = 1, ntrii
+              emach(is,i) = nmassa(is)*mp
+            end do
+          end do
+          call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textan)
+        case('massm')
+          description='Molecule mass (kg)'
+          nz=nmoli
+          do is = 1, nz
+            do i = 1, ntrii
+              emach(is,i) = nmassm(is)*mp
+            end do
+          end do
+          call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textmn)
+        case('massi')
+          description='Molecular ion mass (kg)'
+          nz=nioni
+          do is = 1, nz
+            do i = 1, ntrii
+              emach(is,i) = nmassi(is)*mp
+            end do
+          end do
+          call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textin)
+        case('vxa')
           description='Atoms X-directed velocity (m.s^{-1})'
           nz=natmi
-          call eirene_copy(vxdena,1.0e-2_R8,nz,textan)
-        case('vxdenm')
+          call eirene_copy(vxa,1.0_R8,nz,textan)
+        case('vxm')
           description='Molecules X-directed velocity (m.s^{-1})'
           nz=nmoli
-          call eirene_copy(vxdenm,1.0e-2_R8,nz,textmn)
-        case('vxdeni')
+          call eirene_copy(vxm,1.0_R8,nz,textmn)
+        case('vxi')
           description='Test ions X-directed velocity (m.s^{-1})'
           nz=nioni
-          call eirene_copy(vxdeni,1.0e-2_R8,nz,textin)
-        case('vydena')
+          call eirene_copy(vxi,1.0_R8,nz,textin)
+        case('vya')
           description='Atoms Y-directed velocity (m.s^{-1})'
           nz=natmi
-          call eirene_copy(vydena,1.0e-2_R8,nz,textan)
-        case('vydenm')
+          call eirene_copy(vya,1.0_R8,nz,textan)
+        case('vym')
           description='Molecules Y-directed velocity (m.s^{-1})'
           nz=nmoli
-          call eirene_copy(vydenm,1.0e-2_R8,nz,textmn)
-        case('vydeni')
+          call eirene_copy(vym,1.0_R8,nz,textmn)
+        case('vyi')
           description='Test ions Y-directed velocity (m.s^{-1})'
           nz=nioni
-          call eirene_copy(vydeni,1.0e-2_R8,nz,textin)
-        case('vzdena')
+          call eirene_copy(vyi,1.0_R8,nz,textin)
+        case('vza')
           description='Atoms Z-directed velocity (m.s^{-1})'
           nz=natmi
-          call eirene_copy(vzdena,1.0e-2_R8,nz,textan)
-        case('vzdenm')
+          call eirene_copy(vza,1.0_R8,nz,textan)
+        case('vzm')
           description='Molecules Z-directed velocity (m.s^{-1})'
           nz=nmoli
-          call eirene_copy(vzdenm,1.0e-2_R8,nz,textmn)
-        case('vzdeni')
+          call eirene_copy(vzm,10.0_R8,nz,textmn)
+        case('vzi')
           description='Test ions Z-directed velocity (m.s^{-1})'
           nz=nioni
-          call eirene_copy(vzdeni,1.0e-2_R8,nz,textin)
+          call eirene_copy(vzi,1.0_R8,nz,textin)
+        case('vxdena')
+          description=
+     .     'Atoms X-directed momentum density (kg.m^{-2}.s^{-1})'
+          nz=natmi
+          call eirene_copy(vxdena,10.0_R8,nz,textan)
+        case('vxdenm')
+          description=
+     .     'Molecules X-directed momentum density (kg.m^{-2}.s^{-1})'
+          nz=nmoli
+          call eirene_copy(vxdenm,10.0_R8,nz,textmn)
+        case('vxdeni')
+          description=
+     .     'Test ions X-directed momentum density (kg.m^{-2}.s^{-1})'
+          nz=nioni
+          call eirene_copy(vxdeni,10.0_R8,nz,textin)
+        case('vydena')
+          description=
+     .     'Atoms Y-directed momentum density (kg.m^{-2}.s^{-1})'
+          nz=natmi
+          call eirene_copy(vydena,10.0_R8,nz,textan)
+        case('vydenm')
+          description=
+     .     'Molecules Y-directed momentum density (kg.m^{-2}.s^{-1})'
+          nz=nmoli
+          call eirene_copy(vydenm,10.0_R8,nz,textmn)
+        case('vydeni')
+          description=
+     .     'Test ions Y-directed momentum density (kg.m^{-2}.s^{-1})'
+          nz=nioni
+          call eirene_copy(vydeni,10.0_R8,nz,textin)
+        case('vzdena')
+          description=
+     .     'Atoms Z-directed momentum density (kg.m^{-2}.s^{-1})'
+          nz=natmi
+          call eirene_copy(vzdena,10.0_R8,nz,textan)
+        case('vzdenm')
+          description=
+     .     'Molecules Z-directed momentum density (kg.m^{-2}.s^{-1})'
+          nz=nmoli
+          call eirene_copy(vzdenm,10.0_R8,nz,textmn)
+        case('vzdeni')
+          description=
+     .     'Test ions Z-directed momentum density (kg.m^{-2}.s^{-1})'
+          nz=nioni
+          call eirene_copy(vzdeni,10.0_R8,nz,textin)
         case('triarea')
           description='Triangle area (m^{2})'
           nz=1
@@ -6279,25 +6397,25 @@ c-dpc still in testing phase
           description='Triangle centroid R coordinate (m)'
           nz=1
           do i = 1, ntrii
-            emach(i) = (xtrian(necke(1,i))+xtrian(necke(2,i))+
-     .                  xtrian(necke(3,i)))/3.0_R8
+            emach(1,i) = (xtrian(necke(1,i))+xtrian(necke(2,i))+
+     .                    xtrian(necke(3,i)))/3.0_R8
           end do
-          call eirene_copy(emach,1.0_R8,nz,textbl)
+          call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textbl)
         case('tz')
           description='Triangle centroid Z coordinate (m)'
           nz=1
           do i = 1, ntrii
-            emach(i) = (ytrian(necke(1,i))+ytrian(necke(2,i))+
-     .                  ytrian(necke(3,i)))/3.0_R8
+            emach(1,i) = (ytrian(necke(1,i))+ytrian(necke(2,i))+
+     .                    ytrian(necke(3,i)))/3.0_R8
           end do
-          call eirene_copy(emach,1.0_R8,nz,textbl)
+          call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textbl)
         case('tindex')
           description='Triangle index'
           nz=1
           do i = 1, ntrii
-            emach(i) = real(i)
+            emach(1,i) = real(i)
           end do
-          call eirene_copy(emach,1.0_R8,nz,textbl)
+          call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textbl)
         case default EVALUE
           cflag=.false.
       END SELECT EVALUE
@@ -6337,7 +6455,7 @@ c-dpc still in testing phase
         case('esurf')    ! plot triangle patch plot
           stack_req=(/0,0,0,0,1,0,0/)
           if(bad_args(stack_req)) return
-          call triangle_surf(1)
+          call triangle_surf()
         case('eclvs')    ! customise Eirene contour levels
           stack_req=(/1,0,0,0,0,0,0/)
           if(bad_args(stack_req)) return
@@ -7019,7 +7137,7 @@ c-dpc still in testing phase
         case('earox')     ! set arrow field x-component from Eirene data
           stack_req=(/0,0,0,0,1,0,0/)
           if(bad_args(stack_req)) return ! 4900
-          do is=0,nedim(2,iewrk)-1
+          do is=0,max(natmi,nmoli,nioni)-1
             do i=1,nedim(1,iewrk)
               earrowx(i,is)=
      1         eirene_stack(i,min(is,nedim(2,iewrk)-1),iewrk)
@@ -7029,8 +7147,8 @@ c-dpc still in testing phase
         case('earoy')     ! set arrow field y-component from Eirene data
           stack_req=(/0,0,0,0,1,0,0/)
           if(bad_args(stack_req)) return ! 4900
-          do is=0,nedim(2,iewrk)-1
-            do i=1,nedim(1,iwrk)
+          do is=0,max(natmi,nmoli,nioni)-1
+            do i=1,nedim(1,iewrk)
               earrowy(i,is)=
      1         eirene_stack(i,min(is,nedim(2,iewrk)-1),iewrk)
             enddo

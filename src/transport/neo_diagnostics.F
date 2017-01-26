@@ -74,10 +74,10 @@
      &   denr(0:ns,0:nzdecl-1), tr(0:ns),
      &   vtn(0:ns,0:nzdecl-1,-1:ny),
      &   kappa(0:ns,0:nzdecl-1,-1:ny),
-     &   chi(0:ns,0:nzdecl-1,-1:ny), vw(0:ns,0:nzdecl-1,-1:ny),
+     &   vw(0:ns,0:nzdecl-1,-1:ny),
      &   dfhcb, dfhce, hthet(-1:nx,-1:ny), quant(-1:nx,-1:ny),
      &   cellface(0:ns,0:nzdecl-1,-1:ny,1:5),
-     &   hy1(-1:nx,-1:ny), vwt(0:ns,0:nzdecl-1,-1:ny)
+     &   hy1(-1:nx,-1:ny)
       real (kind=R8) ::
      *   zacomp, amcomp, epsn
 *   ..set the accuracy

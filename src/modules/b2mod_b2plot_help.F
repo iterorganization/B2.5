@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=339,nfns=204,nsparameters=32,nelabels=20,
+      parameter(nlabels=339,nfns=204,nsparameters=32,nelabels=32,
      *     nconstants=10,nefns=47,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -786,12 +786,18 @@
      1 'pdena'   , 'pdenm'   , 'pdeni'   , 'edena'   , 'edenm'   ,
      2 'edeni'   , 'vxdena'  , 'vxdenm'  , 'vxdeni'  , 'vydena'  ,
      3 'vydenm'  , 'vydeni'  , 'vzdena'  , 'vzdenm'  , 'vzdeni'  ,
-     4 'triarea' , 'triavol' , 'tr'      , 'tz'      , 'tindex'  /
+     4 'triarea' , 'triavol' , 'tr'      , 'tz'      , 'tindex'  ,
+     5 'vxa'     , 'vxm'     , 'vxi'     , 'vya'     , 'vym'     ,
+     6 'vyi'     , 'vza'     , 'vzm'     , 'vzi'     , 'massa'   ,
+     7 'massm'   , 'massi'   /
       data edimensions /
      1     2, 2, 2, 2, 2,
      2     2, 2, 2, 2, 2,
      3     2, 2, 2, 2, 2,
-     4     1, 1, 1, 1, 1/                 
+     4     1, 1, 1, 1, 1,
+     5     2, 2, 2, 2, 2,
+     6     2, 2, 2, 2, 2,
+     7     2, 2/                 
       data edescriptions(1:10) /
      1 'Atoms particle density (m^{-3})',
      2 'Molecules particle density (m^{-3})',
@@ -799,21 +805,35 @@
      4 'Atoms energy density (eV.m^{-3})',
      5 'Molecules energy density (eV.m^{-3})',
      6 'Test ions energy density (eV.m^{-3})',
-     7 'Atoms X-directed velocity (m.s^{-1})',
-     8 'Molecules X-directed velocity (m.s^{-1})',
-     9 'Test ions X-directed velocity (m.s^{-1})',
-     * 'Atoms Y-directed velocity (m.s^{-1})'/
+     7 'Atoms X-directed momentum density (kg.m^{-2}.s^{-1})',
+     8 'Molecules X-directed momentum density (kg.m^{-2}.s^{-1})',
+     9 'Test ions X-directed momentum density (kg.m^{-2}.s^{-1})',
+     * 'Atoms Y-directed momentum density (kg.m^{-2}.s^{-1})'/
       data edescriptions(11:20) /
-     1 'Molecules Y-directed velocity (m.s^{-1})',
-     2 'Test ions Y-directed velocity (m.s^{-1})',
-     3 'Atoms Z-directed velocity (m.s^{-1})',
-     4 'Molecules Z-directed velocity (m.s^{-1})',
-     5 'Test ions Z-directed velocity (m.s^{-1})',
+     1 'Molecules Y-directed momentum density (kg.m^{-2}.s^{-1})',
+     2 'Test ions Y-directed momentum density (kg.m^{-2}.s^{-1})',
+     3 'Atoms Z-directed momentum density (kg.m^{-2}.s^{-1})',
+     4 'Molecules Z-directed momentum density (kg.m^{-2}.s^{-1})',
+     5 'Test ions Z-directed momentum density (kg.m^{-2}.s^{-1})',
      6 'Triangle area (m^{2})',
      7 'Triangle volume (m^{3})',
      8 'Triangle centroid R coordinate (m)',
      9 'Triangle centroid Z coordinate (m)',
      * 'Triangle index'/
+      data edescriptions(21:30) /
+     1 'Atoms X-directed velocity (m.s^{-1})',
+     2 'Molecules X-directed velocity (m.s^{-1})',
+     3 'Test ions X-directed velocity (m.s^{-1})',
+     4 'Atoms Y-directed velocity (m.s^{-1})',
+     5 'Molecules Y-directed velocity (m.s^{-1})',
+     6 'Test ions Y-directed velocity (m.s^{-1})',
+     7 'Atoms Z-directed velocity (m.s^{-1})',
+     8 'Molecules Z-directed velocity (m.s^{-1})',
+     9 'Test ions Z-directed velocity (m.s^{-1})',
+     * 'Atom mass (kg)'/
+      data edescriptions(31:32) /
+     1 'Molecule mass (kg)',
+     2 'Molecular ion mass (kg)'/
       data sparameters /
      1 'extl'    , 'cltb' , 'chor', 'chpl'    , 'cmd' ,
      2 'cmdcdf'  , 'chbx' , 'chvl', 'flux'    , 'chmp',

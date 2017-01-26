@@ -2584,11 +2584,10 @@ c*** We only apply this in the outer SOL region
      &   denr(0:nsdecl,0:nzdecl-1), tr(0:nsdecl),
      &   vtn(0:nsdecl,0:nzdecl-1,-1:ny),
      &   kappa(0:nsdecl,0:nzdecl-1,-1:ny),
-     &   chi(0:nsdecl,0:nzdecl-1,-1:ny), vw(0:nsdecl,0:nzdecl-1,-1:ny),
+     &   vw(0:nsdecl,0:nzdecl-1,-1:ny),
      &   dfhcb, dfhce,
      &   hthet(-1:nx,-1:ny), quant(-1:nx,-1:ny),
-     &   cellface(0:nsdecl,0:nzdecl-1,-1:ny,1:5),
-     &   vwt(0:nsdecl,0:nzdecl-1,-1:ny)
+     &   cellface(0:nsdecl,0:nzdecl-1,-1:ny,1:5)
       real (kind=R8) ::
      *   zacomp, amcomp, epsn
 *   ..set the accuracy

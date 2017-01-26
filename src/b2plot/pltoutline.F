@@ -78,15 +78,15 @@ c
      1 uu1,vv1,uu2,vv2,brx,bzy,dfx,dfy,uuu,vvv
       intrinsic max, sqrt
 
-      fmax=arrowx(0,0,is)/gs(0,0,0)/qc(0,0)
-      fmay=arrowy(0,0,is)/gs(0,0,1)
+      fmax=arrowx(0,0,is)
+      fmay=arrowy(0,0,is)
       fmmax=sqrt(fmax**2+fmay**2)
       do iy=-1,ny
         do ix=-1,nx
           if(rightix(ix,iy).ne.nx+1 .and. leftix(ix,iy).ne.-2 .and.
      &       topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2) then
-            fmax=arrowx(ix,iy,is)/gs(ix,iy,0)/qc(ix,iy)
-            fmay=arrowy(ix,iy,is)/gs(ix,iy,1)
+            fmax=arrowx(ix,iy,is)
+            fmay=arrowy(ix,iy,is)
             fmmax=max(fmmax,sqrt(fmax*fmax+fmay*fmay))
           endif
         enddo
@@ -118,8 +118,8 @@ c
             rmagst=sqrt(s**2+t**2)
             rmaguv=sqrt(u**2+v**2)
 
-            dfx=arrowx(ix,iy,is)/gs(ix,iy,0)/qc(ix,iy)/fmmax
-            dfy=arrowy(ix,iy,is)/gs(ix,iy,1)/fmmax
+            dfx=arrowx(ix,iy,is)/fmmax
+            dfy=arrowy(ix,iy,is)/fmmax
 
             uuu=arrowl*(dfx*s/rmagst+dfy*u/rmaguv)
             vvv=arrowl*(dfx*t/rmagst+dfy*v/rmaguv)
@@ -188,8 +188,8 @@ c
      .   (ytrian(necke(1,i))+ytrian(necke(2,i))+ytrian(necke(3,i)))/3.
         dfx=earrowx(i,is)/fmmax
         dfy=earrowy(i,is)/fmmax
-        uuu=arrowl*dfx
-        vvv=arrowl*dfy
+        uuu=earrowl*dfx
+        vvv=earrowl*dfy
         r=sqrt(uuu**2+vvv**2)
         sb=vvv/r
         cb=uuu/r

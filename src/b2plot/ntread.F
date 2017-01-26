@@ -241,11 +241,6 @@ C
       call read_title(46)
       read(46,'(6e15.7)') ((VXDENI(i,j),j=1,ntrii),i=1,nioni)
 
-      DO IS = 1, NATMI
-        earrowx(1:ntrii,IS-1) = vxdena(IS,1:ntrii)/100.0_R8
-        earrowy(1:ntrii,IS-1) = vydena(IS,1:ntrii)/100.0_R8
-      END DO
-
 * Y-directed velocities
 C
       call read_title(46)

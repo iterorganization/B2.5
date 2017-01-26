@@ -9,6 +9,15 @@
       real (kind=R8), allocatable, save ::
      *  work(:,:,:,:),
      *  wrk(:),
+     *  vxa(:,:),
+     *  vya(:,:),
+     *  vza(:,:),
+     *  vxm(:,:),
+     *  vym(:,:),
+     *  vzm(:,:),
+     *  vxi(:,:),
+     *  vyi(:,:),
+     *  vzi(:,:),
      *  arrowx(:,:,:),
      *  arrowy(:,:,:),
      *  earrowx(:,:),
@@ -209,12 +218,21 @@ cank
       implicit none
       integer natmd,nmold,niond,ntrii,wklngd
 
-      allocate(eirene_stack(1:ntrii,0:max(natmd,nmold,niond)-1,wklngd))
-      allocate(triangle_area(1:ntrii))
-      allocate(triangle_vol(1:ntrii))
-      allocate(earrowx(1:ntrii,0:max(natmd,nmold,niond)-1))
-      allocate(earrowy(1:ntrii,0:max(natmd,nmold,niond)-1))
-      allocate(ewrk_hlp(1:ntrii))
+      allocate(eirene_stack(ntrii,0:max(natmd,nmold,niond)-1,wklngd))
+      allocate(triangle_area(ntrii))
+      allocate(triangle_vol(ntrii))
+      allocate(vxa(natmd,ntrii))
+      allocate(vya(natmd,ntrii))
+      allocate(vza(natmd,ntrii))
+      allocate(vxm(nmold,ntrii))
+      allocate(vym(nmold,ntrii))
+      allocate(vzm(nmold,ntrii))
+      allocate(vxi(niond,ntrii))
+      allocate(vyi(niond,ntrii))
+      allocate(vzi(niond,ntrii))
+      allocate(earrowx(ntrii,0:max(natmd,nmold,niond)-1))
+      allocate(earrowy(ntrii,0:max(natmd,nmold,niond)-1))
+      allocate(ewrk_hlp(ntrii))
 
       return
       end subroutine alloc_b2mod_b2plot_eirene
@@ -292,6 +310,15 @@ cank
       deallocate(eirene_stack)
       deallocate(triangle_area)
       deallocate(triangle_vol)
+      deallocate(vxa)
+      deallocate(vya)
+      deallocate(vza)
+      deallocate(vxm)
+      deallocate(vym)
+      deallocate(vzm)
+      deallocate(vxi)
+      deallocate(vyi)
+      deallocate(vzi)
       deallocate(earrowx)
       deallocate(earrowy)
       deallocate(ewrk_hlp)
