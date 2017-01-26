@@ -1,4 +1,4 @@
-         c  version : 19.02.97 20:49
+c  version : 19.02.97 20:49
 c
 C     EIRENE TO BRAAMS COMMON
 c

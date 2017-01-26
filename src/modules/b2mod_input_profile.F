@@ -81,7 +81,7 @@
 
       subroutine source_input(nx,ny,ns,
      &  sna0,smo0,she0,shi0,sch0,sne0,vol,nc,
-     &  balanceco,balancemo,balanceht,balancech) !djm 17/10/16
+     &  balanceco,balancemo,balanceht,balancech) !djm Jan2017
 !**************************************************************************
 !*     subroutine for reading in source-profiles of density, parallel     *
 !*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
