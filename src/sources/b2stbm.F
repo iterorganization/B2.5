@@ -5,7 +5,7 @@
      &  vol, gs, hx, hy, qz, qc, pbs, bb,
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
      &  sna0, smo0, she0, shi0, sch0, sne0, main_call,
-     &  balanceco, balancemo, balanceht, balancech) !djm 17/10/16
+     &  balanceco, balancemo, balanceht, balancech) !djm Jan2017
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -37,7 +37,7 @@
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
-      logical balanceco, balancemo, balanceht, balancech !djm 17/10/16
+      logical balanceco, balancemo, balanceht, balancech !djm Jan2017
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -461,18 +461,18 @@ cxpb
         end do
       end do
 
-      if (balanceco) then !djm 17/10/16
+      if (balanceco) then !djm Jan2017
         b2stbm_sna(:,:,:)=sna0(:,:,0,:)+sna0(:,:,1,:)*na(:,:,:)
       endif
-      if (balancemo) then       !djm
+      if (balancemo) then !djm Jan2017
         b2stbm_smo(:,:,:)=smo0(:,:,0,:)+smo0(:,:,1,:)*ua(:,:,:)
       endif
       b2stbm_sne(:,:)=sne0(:,:,0)+sne0(:,:,1)*ne(:,:)
-      if (balanceht) then !djm
+      if (balanceht) then !djm Jan2017
         b2stbm_she(:,:)=she0(:,:,0)+she0(:,:,1)*te(:,:)
         b2stbm_shi(:,:)=shi0(:,:,0)+shi0(:,:,1)*ti(:,:)
       endif
-      if (balancech) then
+      if (balancech) then !djm Jan2017
         b2stbm_sch(:,:)=sch0(:,:,0)+sch0(:,:,1)*po(:,:)
       endif
 

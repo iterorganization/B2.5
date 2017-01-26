@@ -10,6 +10,8 @@
       use b2mod_indirect
       use b2mod_geo_corner
       use b2mod_b2cmpa
+      use b2mod_sources                                               !djm Jan2017
+     & , only : b2siav_smovh, b2siav_smovv
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
@@ -346,6 +348,9 @@
         call my_out(70,nx,ny,cvsbhz(-1,-1,0),'b2siav_cvsbhzx'//chns)
         call my_out(70,nx,ny,cvsbhz(-1,-1,1),'b2siav_cvsbhzy'//chns)
       endif                                                         !srv 17.06.02 }
+
+      b2siav_smovh(-1:nx,-1:ny,isb)=smbvh(-1:nx,-1:ny,0)             !djm Jan2017
+      b2siav_smovv(-1:nx,-1:ny,isb)=smbvv(-1:nx,-1:ny,0)             !djm Jan2017
 
 * ..return
       ncall = ncall+1

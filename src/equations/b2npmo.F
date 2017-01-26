@@ -13,9 +13,10 @@
       use b2mod_constants
       use b2mod_sources
      1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
-     2          smpr, smpt, smfr, smcf
+     2          smpr, smpt, smfr, smcf,
+     3          b2nxdv_smo                                             !djm Jan2017
       use b2mod_plasma
-     & , only : fmo
+     & , only : fmo, fmo_b2nxfv                                        !djm Jan2017
       use b2mod_numerics_namelist
       use b2mod_b2cmpa
       use b2mod_external
@@ -100,7 +101,8 @@
      8  ehxp(-1:nx,-1:ny), smt(-1:nx,-1:ny,0:3),
      9  flct(-1:nx,-1:ny,0:1), wrk1(-1:nx,-1:ny), wrks(-1:nx,-1:ny),
      1  smqdu(-1:nx,-1:ny), wrk0(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
-     2  ctcfb(-1:nx,-1:ny), ctcft(-1:nx,-1:ny)                         !srv 06.04.07
+     2  ctcfb(-1:nx,-1:ny), ctcft(-1:nx,-1:ny),                        !srv 06.04.07
+     3  smbtmp(-1:nx,-1:ny,0:3)                                        !djm Jan2017
       logical new_matrix, solvedum(0:NNREGMAX)
       save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
@@ -230,8 +232,9 @@
        call b2sscal (n2*2, am(is)*mp, flub, 1)
 !       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,is), flub)
 *    ..add convective term due to new form of ion viscosity term only
-       call b2nxfv (nx, ny, is, hz, cvsahz(-1,-1,0,is), flubv)        !srv 01.07.05 11.09.09
-       call b2saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                 !srv 11.09.09
+       call b2nxfv (nx, ny, is, hz, cvsahz(-1,-1,0,is), flubv)         !srv 01.07.05 11.09.09
+       fmo_b2nxfv(:,:,:,is)=flubv
+       call b2saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                  !srv 11.09.09
 *    ..compute flcb, cvcb
        call b2nxfc (nx, ny, is, vol, pbshz, rob, 
      &   ua(-1,-1,is), flub, cvsahz(-1,-1,0,is), flcb, cvcb, wrk0)     !srv 09.01.01
@@ -259,7 +262,16 @@
        call b2saxpy (n2*4, 1.0_R8, smbvh,  1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08 }
+       smbtmp = smb !djm Jan2017
        call b2nxdv (nx, ny, rob, smq(-1,-1,0,is), smqdu, smb)          !srv ???
+       b2nxdv_smo(-1:nx,-1:ny,is)=                                     !djm Jan2017
+     &     (smb(-1:nx,-1:ny,0)-smbtmp(-1:nx,-1:ny,0))+
+     &     (smb(-1:nx,-1:ny,1)-smbtmp(-1:nx,-1:ny,1))*
+     &     ua(-1:nx,-1:ny,is)+
+     &     (smb(-1:nx,-1:ny,2)-smbtmp(-1:nx,-1:ny,2))*
+     &     am(is)*mp*na(-1:nx,-1:ny,is)+
+     &     (smb(-1:nx,-1:ny,3)-smbtmp(-1:nx,-1:ny,3))*
+     &     am(is)*mp*na(-1:nx,-1:ny,is)*ua(-1:nx,-1:ny,is)
 *    ..save final source for species (is)                              !srv 10.11.02
        smof(:,:,:,is) = smb                                            !srv 10.11.02
 *    ..compute residual

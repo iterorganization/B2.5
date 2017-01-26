@@ -560,6 +560,8 @@ c
       use b2mod_geo_corner
       use b2mod_tallies
       use b2mod_b2cmpa
+      use b2mod_sources                                                  !djm Jan2017
+     & , only : b2sihs_diaa, b2sihs_diae
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -619,6 +621,8 @@ c
         call b2xvsg (n2, ne, 1, 'ne', '.gt.')
       endif
 
+      b2sihs_diaa = 0.0_R8 !djm Jan 2017
+      b2sihs_diae = 0.0_R8
       if(maxval(facdrift).ne.0.0_R8 .and. facgt.ne.0.0_R8) then
         b2wrong2=0.0_R8
         do is=0,ns-1
@@ -675,6 +679,7 @@ c
                   shi(ix,iy,3) = shi(ix,iy,3)+                           !xpb
      &             min(0.0_R8,-t0)/(na(ix,iy,is)*ti(ix,iy))              !xpb
                   b2wrong2(region(ix,iy,0))=b2wrong2(region(ix,iy,0))+t0
+                  b2sihs_diaa(ix,iy) = t0 !djm Jan2017
                 endif
               enddo
             enddo
@@ -726,6 +731,7 @@ c
               she(ix,iy,3) = she(ix,iy,3)+                               !xpb
      &         min(0.0_R8,t0)/(ne(ix,iy)*te(ix,iy))                      !xpb
               b2wrong3(region(ix,iy,0))=b2wrong3(region(ix,iy,0))+t0
+              b2sihs_diae(ix,iy) = t0 !djm Jan2017
             endif
           enddo
         enddo
