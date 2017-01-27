@@ -13,6 +13,9 @@ ifndef LD_NETCDF
 endif
 
 EQUIVS = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetri=dgetri -Dsgetrf=dgetrf -DPERF_TIMER
+ifdef SOLPS_OPENMP
+EQUIVS += -D_OPENMP
+endif
 
 CPP = cpp -C -traditional
 CPPOPTS = -C -P -I${srcdir} ${EQUIVS}
@@ -23,9 +26,9 @@ LINK_MOD =
 FC = ftn
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g -C
+FCOPTS = -g -C -mp=nonuma
 else
-FCOPTS = -O3
+FCOPTS = -O3 -mp=nonuma
 endif
 
 DBLFC=${FC}
@@ -52,10 +55,18 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 LD = $(FC)
+ifdef SOLPS_OPENMP
+ifdef SOLPS_DEBUG
+LDOPTS = -g -C -mp=nonuma
+else
+LDOPTS = -mp=nonuma
+endif
+else
 ifdef SOLPS_DEBUG
 LDOPTS = -g -C
 else
 LDOPTS = 
+endif
 endif
 
 LCPP= ${LD_SONNET}

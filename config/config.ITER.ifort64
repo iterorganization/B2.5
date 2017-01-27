@@ -21,7 +21,7 @@ MPI_CPP   ?= `pkg-config mpich2-ch3 --cflags`
 LD_MPI    ?= `pkg-config mpich2-ch3 --libs`
 else
 ifdef USE_IMPGYRO
-FC 	   = mpif90
+FC 	       = mpif90
 MPI_CPP   ?= `pkg-config mpich2-ch3 --cflags`
 LD_MPI    ?= `pkg-config mpich2-ch3 --libs`
 else
@@ -29,26 +29,30 @@ FC         = ifort
 endif
 endif
 
-
+LDOPTS     = -i_dynamic
+FCOPTS     = -fPIC -assume no2underscore -fp-model precise
 ifdef SOLPS_DEBUG
+FCOPTS     = -g -C -debug all -traceback -check all
+else
+FCOPTS    += -O2 -vec_report0
+endif
 ifdef USE_MPI
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all ${MPI_CPP}
+FCOPTS    += ${MPI_CPP}
+LDOPTS    += ${LD_MPI}
 else
 ifdef USE_IMPGYRO
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore ${MPI_CPP}
-else
-FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all
+FCOPTS    += ${MPI_CPP}
+LDOPTS    += ${LD_MPI}
 endif
 endif
+ifdef USE_OPENMP
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d' ' -f 2)
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -qopenmp
+LDOPTS  += -qopenmp
 else
-ifdef USE_MPI
-FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
-else
-ifdef USE_IMPGYRO
-FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
-else
-FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore
-endif
+FCOPTS  += -openmp
+LDOPTS  += -openmp
 endif
 endif
 
@@ -87,15 +91,6 @@ CXXFLAGS = $(shell paraview-config --include)
 endif
 
 LD         = ${FC}
-ifdef USE_MPI
-LDOPTS     = -i_dynamic ${LD_MPI}
-else
-ifdef USE_IMPGYRO
-LDOPTS     = -i_dynamic ${LD_MPI}
-else
-LDOPTS     = -i_dynamic
-endif
-endif
 
 LCPP       = ${LD_SONNET}
 

@@ -42,6 +42,11 @@ ifdef SOLPS_MPI
     USE_MPI = -DUSE_MPI
   endif
 endif
+ifdef SOLPS_OPENMP
+  ifndef USE_OPENMP
+    USE_OPENMP = -D_OPENMP
+  endif
+endif
 
 # Default prefix for OBJDIR: standalone
 PREF_OBJDIR = standalone
@@ -53,6 +58,9 @@ endif
 ifdef USE_MPI
 EXT_MPI = .mpi
 endif
+ifdef USE_OPENMP
+EXT_OPENMP = .openmp
+endif
 ifdef USE_IMPGYRO
 EXT_IMPGYRO = .ig
 endif
@@ -61,7 +69,7 @@ EXT_DEBUG = .debug
 endif
 
 # Directory where objectcode/binaries will be created
-OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_MPI}${EXT_IMPGYRO}${EXT_DEBUG}
+OBJDIR = ${SRCB2}/builds/${PREF_OBJDIR}.${HOST_NAME}.${COMPILER}${EXT_OPENMP}${EXT_MPI}${EXT_IMPGYRO}${EXT_DEBUG}
 
 # If compiling with Eirene, look in default place for Eirene sources/lib
 ifdef USE_EIRENE
@@ -139,6 +147,9 @@ ifdef USE_MPI
 DEFINES += ${USE_MPI}
 else
 SOLPS4INCLUDE += -I${SOLPSTOP}/modules/solps4-5/src/Eirene_commons
+endif
+ifdef USE_OPENMP
+DEFINES += ${USE_OPENMP}
 endif
 ifdef USE_IMPGYRO
 DEFINES += ${USE_IMPGYRO}

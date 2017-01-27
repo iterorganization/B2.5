@@ -26,18 +26,30 @@ else
 FC       = ifort
 endif
 
-ifdef SOLPS_DEBUG
-ifdef USE_MPI
-FCOPTS   = -g -C -traceback
-else
-FCOPTS   = -g -C -debug all -traceback -check all
+ifdef USE_OPENMP
+DEFINES += -D_OPENMP
 endif
+
+# OpenMP compiler options for intel: -openmp is enough
+# Might also want -parallel to auto-parallelize loops without openmp directives
+LDOPTS   = -i_dynamic
+ifndef SOLPS_DEBUG
+FCOPTS  += -O2 -vec_report0
 else
-ifdef USE_MPI
-FCOPTS   = -O2 -vec_report0
-else
-FCOPTS   = -O2 -vec_report0
+FCOPTS  += -g -C -traceback -debug all -check all
 endif
+ifdef USE_MPI
+FCOPTS  += ${MPI_CPP}
+LDOPTS  += ${LD_MPI}
+endif
+ifdef USE_OPENMP
+COMPILER_MAJOR_VERSION = $(shell ${FC} -V 2>&1 | grep -o "Version [0-9]*" | cut -d' ' -f 2)
+ifeq ($(shell test ${COMPILER_MAJOR_VERSION} -ge 15; echo $$?),0)
+FCOPTS  += -qopenmp
+LDOPTS  += -qopenmp
+else
+FCOPTS  += -openmp
+LDOPTS  += -openmp
 endif
 
 DBLFC    = ${FC}
@@ -57,16 +69,11 @@ ifdef LD_CATALYST
 CXXFLAGS = $(shell paraview-config --include)
 endif
 
-#wd: removed; seems to be unused
-#ifdef B25_EIRENE
-#LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag
-#endif
 ifdef PERFMON
 LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
 LD       = ${FC}
-LDOPTS   = -i_dynamic
 
 LCPP     = ${LD_SONNET}
 
