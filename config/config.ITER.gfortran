@@ -13,8 +13,13 @@ SED = sed s:\#PREC\#:d:g
 SED =
 LINK_MOD =
 
+ifdef USE_MPI
+FC = mpif90
+MPI_CPP ?= `pkg-config mpich2-ch3 --cflags`
+LD_MPI  ?= `pkg-config mpich2-ch3 --libs`
+else
 FC = gfortran
-
+endif
 
 ifdef SOLPS_DEBUG
 FCOPTS = -g -fbounds-check -fno-second-underscore -fbacktrace -fno-unsafe-math-optimizations -frounding-math -fsignaling-nans
@@ -41,8 +46,8 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 ifdef IMAS_PREFIX
-INCMODS   = -I${IMAS_PREFIX}/include/gfortran
-LDLIBES  += ${LD_UAL}
+INCMODS  = -I${IMAS_PREFIX}/include/gfortran
+LDLIBES += ${LD_UAL}
 endif
 
 ifdef LD_CATALYST
