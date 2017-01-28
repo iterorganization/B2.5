@@ -434,7 +434,7 @@
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'ns',nsd,nsid)
       call check_cdf_status(status)
-      status=nf_def_dim(ncid,'speclng',10,specid)
+      status=nf_def_dim(ncid,'speclng',13,specid)
       call check_cdf_status(status)
       status=nf_def_dim(ncid,'time',NF_UNLIMITED,tid)
       call check_cdf_status(status)
