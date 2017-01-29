@@ -178,7 +178,8 @@ contains
     ! There is an additional strip of "fake" cells (even faker than ghost cells)
     ! at the top and right to be able to also write out the ghost cells
     integer, dimension(-1:nx, -1:ny) :: cvi
-    integer, dimension(-1:nx, -1:ny, 0:3) :: fcxi, fcyi, vxi
+    integer, dimension(-1:nx, -1:ny, 0:3) :: fcxi, fcyi
+    integer, dimension(-1:nx+1, -1:ny+1, 0:3) :: vxi
 
     logical :: cvNeeded((nx + 2) * (ny + 2)), vxNeeded((nx + 2) * (ny + 2) * 4)
     logical :: fcXNeeded((nx + 2) * (ny + 2) * 2), fcYNeeded((nx + 2) * (ny + 2) * 2)
@@ -294,7 +295,7 @@ contains
         end do
     end do
 
-    call xertst (count(vxi == GRID_UNDEFINED) == 0, &
+    call xertst (count(vxi(-1:nx,-1:ny,0:3) == GRID_UNDEFINED) == 0, &
      & "b2CreateMap: there are unnumbered vertices" )
 
     ! Mark which cells, vertices and faces are needed in 1d lists
