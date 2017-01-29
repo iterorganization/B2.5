@@ -376,7 +376,11 @@
         open(92,file=filename)
         write(*,*) 
      .   'Reading sources profile namelist from ', trim(filename)
+#ifdef USE_MPI
         read(92,profile,err=999)
+#else
+        read(92,profile)
+#endif
         write(*,*) 
      .   'Read sources profile namelist from ',trim(filename)
         close(92)
@@ -777,7 +781,11 @@ c*** Clear data to forget previous profiles
       if (file_ok) then
         open(99,file=filename)
         write(*,*) 'Reading namelist transport from ',trim(filename)
+#ifdef USE_MPI
         read(99,transport,err=999)
+#else
+        read(99,transport)
+#endif
         write(*,*) 'Read namelist transport from ',trim(filename)
         write(*,transport)
         close(99)

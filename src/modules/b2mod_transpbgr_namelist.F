@@ -21,7 +21,11 @@
       if(file_ok) then
 	open(99,file='../b2.transpbgr.parameters')
 	write(*,*) 'Reading namelist transpbgr'
+#ifdef USE_MPI
 	read(99,transpbgr,err=999)
+#else
+        read(99,transpbgr)
+#endif
 	write(*,*) 'Read namelist transpbgr'
       else
 	write(*,*) 'No ../b2.transpbgr.parameters'

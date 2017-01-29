@@ -194,7 +194,11 @@
       tallies=.true.
       movies=.true.
       overwrite_shotnumber=0
+#ifdef USE_MPI
       read(ninp(0),b2md_namelist,err=99)
+#else
+      read(ninp(0),b2md_namelist)
+#endif
       write(nout(0),b2md_namelist)
 
 #ifdef MDSPLUS

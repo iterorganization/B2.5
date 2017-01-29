@@ -128,7 +128,11 @@ c***  Standard setup:
       if(file_ok) then
         open(99,file=filename)
         write(*,*) 'Reading namelist user from ',trim(filename)
+#ifdef USE_MPI
         read(99,user,err=999)
+#else
+        read(99,user)
+#endif
         write(*,*) 'Read namelist user from ',trim(filename)
         user_namelist_used = .true.
       else

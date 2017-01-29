@@ -57,7 +57,11 @@
 	if (edition.eq.'    ') open(nread,file=trim(filename))
 	write(*,*) 'Reading namelist transport_models from ',
      1   trim(filename)
+#ifdef USE_MPI
 	read(nread,transport_models,err=999)
+#else
+        read(nread,transport_models)
+#endif
 	write(*,*) 'Read namelist transport_models from ',
      1   trim(filename)
         if (edition.eq.'    ') close(nread)

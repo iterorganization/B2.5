@@ -148,7 +148,11 @@
       if(file_ok) then
         open(99,file=filename)
         write(*,*) 'Reading namelist numerics from ',trim(filename)
+#ifdef USE_MPI
         read(99,numerics,err=999)
+#else
+        read(99,numerics)
+#endif
         write(*,*) 'Read namelist numerics from ',trim(filename)
         do ix = 0, nnreg(0)
           solveet(ix) = solveee(ix).or.solveei(ix)

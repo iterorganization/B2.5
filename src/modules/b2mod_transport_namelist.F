@@ -124,7 +124,11 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
         cflmv=cflim(2)
         open(99,file=filename)
         write(*,*) 'Reading namelist transport from ',trim(filename)
+#ifdef USE_MPI
         read(99,transport,err=999)
+#else
+        read(99,transport)
+#endif
         write(*,*) 'Read namelist transport from ',trim(filename)
         cflim(0)=cflme
         cflim(1)=cflmi

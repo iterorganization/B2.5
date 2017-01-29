@@ -1018,7 +1018,11 @@ c     &   'faulty internal parameter density_rescale')
           open(99,file='../b2.atomic_physics_rescale.parameters')
           write(*,*)
      &         'Reading ../b2.atomic_physics_rescale.parameters'
+#ifdef USE_MPI
           read(99,atomic_physics_rescale,err=999)
+#else
+          read(99,atomic_physics_rescale)
+#endif
           write(*,atomic_physics_rescale)
           close(99)
           write(*,*) 'Read ../b2.atomic_physics_rescale.parameters'

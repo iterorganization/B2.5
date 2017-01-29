@@ -464,7 +464,11 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
         open(99,file=filename)
         call cfverr(99,neutrals_version)
         write(*,*) 'Reading namelist neutrals from ',trim(filename)
+#ifdef USE_MPI
         read(99,neutrals,err=999)
+#else
+        read(99,neutrals)
+#endif
         write(*,*) 'Read namelist neutrals from ',trim(filename)
       else
         call xerrab ('No '//trim(filename))
@@ -1048,7 +1052,11 @@ c.. Test consistency with physical edges within the computational domain
       if(file_ok) then
         open(nread,file=trim(filename))
         write(6,*) 'Reading ',trim(filename)
+#ifdef USE_MPI
         read(nread,neutrals_save,err=999)
+#else
+        read(nread,neutrals_save)
+#endif
         write(6,*) 'Read ',trim(filename)
         close(nread)
       else

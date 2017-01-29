@@ -94,7 +94,11 @@
       if(file_ok) then
         open(nread,file=trim(filename))
         write(6,*) 'Reading ',trim(filename)
+#ifdef USE_MPI
         read(nread,feedback,err=999)
+#else
+        read(nread,feedback)
+#endif
         write(6,*) 'Read ',trim(filename)
         close(nread)
       else

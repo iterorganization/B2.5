@@ -487,7 +487,11 @@ cxpb Data file material properties
       if(file_ok) then
         open(nread,file=trim(filename))
         write(*,*) 'Reading ', trim(filename)
+#ifdef USE_MPI
         read(nread,wall_save,err=999)
+#else
+        read(nread,wall_save)
+#endif
         write(*,*) 'Read ', trim(filename)
         close(nread)
       else

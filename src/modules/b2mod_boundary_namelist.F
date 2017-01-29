@@ -409,7 +409,11 @@ cxpb Have to do this here already in case the namelist is not used
         open(99,file=filename)
         call cfverr(99,boundary_version)
         write(*,*) 'Reading namelist boundary from ',trim(filename)
+#ifdef USE_MPI
         read(99,boundary,err=999)
+#else
+        read(99,boundary)
+#endif
         write(*,*) 'Read namelist boundary from ',trim(filename)
       else
         call xerrab ('No '//trim(filename))
