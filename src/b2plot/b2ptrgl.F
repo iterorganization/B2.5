@@ -231,18 +231,22 @@ c
         k=ltrgpos(j)
         do iy=lytg,ny-1 !{
           wnutrg(iy,j)=0.0_R8
-          wo=fhe_eir(k+1-l,iy,0)+fhi_eir(k+1-l,iy,0)+fhi_ext(k+1-l,iy,0)
+          wo=fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0)+fhi_ext(k+1-l,iy,0)
           do is=0,ns-1 !{
             if (ft44) then
               wo=wo+fna(k+1-l,iy,0,is)*((rpt(k+l,iy,is)*ev)
-     .           +(1.0_R8-BoRiS)*kinrgy(k+l,iy,is))
+     .           +(1.0_R8-BoRiS)*kinrgy(k+l,iy,is)
+     .           +ti(k+l,iy))
+c carlis 31jan2017  added ti as suggested by sw in b2blne.F
             else
               if (is_neutral(is)) then
                 wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,is)*
      .            (1.0_R8-BoRiS)*kinrgy(k+l,iy,is)
               else
                 wo=wo+fna(k+1-l,iy,0,is)*((rpt(k+l,iy,is)*ev)
-     .           +(1.0_R8-BoRiS)*kinrgy(k+l,iy,is))
+     .           +(1.0_R8-BoRiS)*kinrgy(k+l,iy,is)
+     .           +ti(k+l,iy))
+c carlis 31jan2017  added ti as suggested by sw in b2blne.F
               endif
             endif
           end do !}
@@ -250,7 +254,9 @@ c
             if (ft44) then
               wo=wo+fa_ext(k+1-l,iy,0,is)*(pt_ext(k+l,iy,is)*ev
      .           +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
-     .             ua_ext(k+l,iy,is)**2)
+     .           ua_ext(k+l,iy,is)**2
+     .           +ta_ext(k+l,iy,is))
+c carlis 31jan2017  added ta as suggested by sw in b2blne.F
             else
               if (is_ext_neutral(is)) then
                 wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,is)*
@@ -259,10 +265,14 @@ c
               else
                 wo=wo+fa_ext(k+1-l,iy,0,is)*(pt_ext(k+l,iy,is)*ev
      .           +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp)*
-     .             ua_ext(k+l,iy,is)**2)
+     .           ua_ext(k+l,iy,is)**2
+     .           +ta_ext(k+l,iy,is))
+c carlis 31jan2017  added ta as suggested by sw in b2blne.F
               endif
             end if
           end do !}
+          wo=wo+fne(k+1-l,iy,0)*te(k+l,iy)
+c carlis 31jan2017  added electron contribution as suggested by sw in b2blne.
 c        wo=-1.0e-6_R8*wo/s(iy,1)
           wo= wo/s(iy,j)
           wpltrg(iy,j)=wo*u
