@@ -7123,7 +7123,7 @@ c-dpc still in testing phase
             end do
           end do
           eirene_label(iewrk)='Special'
-        case('evac')      ! fill vacuum region of Eirene stack with a value
+        case('evac')     ! fill vacuum region of Eirene stack with a value
           stack_req=(/0,1,0,0,1,0,0/)
           if(bad_args(stack_req)) return ! 4900
           do is=0,nedim(2,iewrk)-1
@@ -7134,7 +7134,7 @@ c-dpc still in testing phase
             enddo
           enddo
           dummy=rpop(rstack,irstack)
-        case('earox')     ! set arrow field x-component from Eirene data
+        case('earox')    ! set arrow field x-component from Eirene data
           stack_req=(/0,0,0,0,1,0,0/)
           if(bad_args(stack_req)) return ! 4900
           do is=0,max(natmi,nmoli,nioni)-1
@@ -7144,7 +7144,7 @@ c-dpc still in testing phase
             enddo
           enddo
           goto 4049
-        case('earoy')     ! set arrow field y-component from Eirene data
+        case('earoy')    ! set arrow field y-component from Eirene data
           stack_req=(/0,0,0,0,1,0,0/)
           if(bad_args(stack_req)) return ! 4900
           do is=0,max(natmi,nmoli,nioni)-1
@@ -7166,7 +7166,7 @@ c-dpc still in testing phase
           stack_req=(/0,0,1,0,1,0,0/)
           if(bad_args(stack_req)) return
           call process_eirene_chord_slice(spop(sstack,isstack))
-        case('echmp')     ! plots a contour plot of the chord contribution to the Eirene element
+        case('echmp')    ! plots a contour plot of the chord contribution to the Eirene element
           stack_req=(/0,0,1,0,1,0,0/)
           if(bad_args(stack_req)) return
           call map_eirene_chords(spop(sstack,isstack))

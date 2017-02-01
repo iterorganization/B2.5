@@ -511,8 +511,8 @@ c*** Outer divertor
         if(lpfrs_pmp.eq.2) iy=ny+1
         do k=1,npfi_tmp !{
           do i=ipfc_tmp(k),jpfc_tmp(k) !{
-            hlp_acpfs(i,k)=gs(i,iy-1,1)
-            hlp_w(k)=hlp_w(k)+gs(i,iy-1,1)
+            hlp_acpfs(i,k)=gs(i,iy,1)
+            hlp_w(k)=hlp_w(k)+gs(i,iy,1)
           end do !}
         end do !}
 c!###{
