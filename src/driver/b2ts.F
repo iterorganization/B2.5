@@ -152,7 +152,7 @@ c      call cfopen (ninp(0),'b2ts.dat','old','formatted')
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)
 *   ..read plasma state
-      call cfverr(ninp(4), b2fplasma_version)
+      call cfverr(ninp(4),b2fplasma_version)
       call read_b2mod_geo(nx,ny,ninp(4))
       call read_b2mod_plasma(nx,ny,ns,ninp(4))
       call read_b2mod_residuals(ninp(4))

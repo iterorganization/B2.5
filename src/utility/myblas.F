@@ -275,3 +275,22 @@
       end if
 *     ---------------------------------------------------BJB-83/04/06---
       end function b2s2min
+      function b2sign (a, b)
+      use b2mod_types
+      implicit none
+      real (kind=R8) ::
+     *   b2sign
+      real (kind=R8) ::
+     *   a, b
+*     ------------------------------------------------------------------
+*     MODIFIED SIGN FUNCTION THAT RETURNS ZERO IF B is ZERO.
+*     ------------------------------------------------------------------
+      intrinsic sign
+*     ------------------------------------------------------------------
+      if (b.eq.0.0_R8) then
+        b2sign = 0.0_R8
+      else
+        b2sign = sign(a,b)
+      end if
+*     -------------------------------------------------XPB-2013/09/16---
+      end function b2sign
