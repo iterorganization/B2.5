@@ -26,6 +26,11 @@ BLD = bld rucv
 
 GRLIBES = $(LD_NCARG) $(LD_MSCL)
 LDLIBES = $(LD_NAG)
+
+ifdef LD_CATALYST
+CXXFLAGS = $(shell paraview-config --include)
+endif
+
 ifdef PERFMON
 LDLIBES += -L${SOLPSLIB} -lperf
 endif

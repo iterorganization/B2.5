@@ -53,6 +53,10 @@ BLD      = ar rucv
 GRLIBES  = ${LD_NCARG} ${LD_MSCL}
 LDLIBES  = ${LD_NETCDF} ${LD_NAG} # -lblas
 
+ifdef LD_CATALYST
+CXXFLAGS = $(shell paraview-config --include)
+endif
+
 #wd: removed; seems to be unused
 #ifdef B25_EIRENE
 #LDLIBESEXTRA = ${OBJECTCODE}/libeirene.a ${OBJECTCODE}/grlib.o -lnag

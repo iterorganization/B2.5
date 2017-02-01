@@ -51,6 +51,10 @@ GRLIBES = ${LD_NCARG} ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 # LDLIBES = -lblas ${NAG} -lmass
 
+ifdef LD_CATALYST
+CXXFLAGS = $(shell paraview-config --include)
+endif
+
 LD = xlf90
 LDOPTS = -bloadmap:${OBJDIR}/loadmap -bmap:${OBJDIR}/map -pg
 LDOPTS = -bloadmap:${OBJDIR}/loadmap -bmap:${OBJDIR}/map

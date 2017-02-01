@@ -53,6 +53,10 @@ ifdef PERFMON
 LDLIBES += -L${SOLPSLIB} -lperf
 endif
 
+ifdef LD_CATALYST
+CXXFLAGS = $(shell paraview-config --include)
+endif
+
 LD = /opt/Fujitsu/bin/f90
 LD = f95f
 # LDOPTS = -Bstatic

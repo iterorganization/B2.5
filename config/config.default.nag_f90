@@ -28,6 +28,10 @@ BLD = ar rucv
 GRLIBES = ${LD_NCARG} ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
+ifdef LD_CATALYST
+CXXFLAGS = $(shell paraview-config --include)
+endif
+
 LD = f90
 LDOPTS = 
 

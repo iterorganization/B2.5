@@ -54,6 +54,10 @@ BLD = ar rucv
 GRLIBES = ${LD_NCARG} ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 
+ifdef LD_CATALYST
+CXXFLAGS = $(shell paraview-config --include)
+endif
+
 LD = pgf90
 ifdef SOLPS_DEBUG
 LDOPTS = -g -C -tp px # "-tp px" to fix a compiler bug at JET

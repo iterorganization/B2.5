@@ -39,6 +39,10 @@ GRLIBES = ${LD_NCARG} ${LD_MSCL}
 LDLIBES = ${LD_NAG} ${LD_NETCDF}
 # LDLIBES = -lblas ${LD_NAG} -lmass
 
+ifdef LD_CATALYST
+CXXFLAGS = $(shell paraview-config --include)
+endif
+
 LD = f90
 LDOPTS = 
 
