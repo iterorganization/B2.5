@@ -74,7 +74,7 @@
       end subroutine b2xgbs
 
       subroutine b2xgbs1 (nx1, ny1, 
-     . bottomiy1, wbbl1, wbbv1, gs1, qc1, crx1, cry1, pbs1)
+     . bottomiy1, wbbl1, wbbv1, gs1, qc1, qcb1, crx1, cry1, pbs1)
       use b2mod_types
       implicit none
       integer nx1, ny1
@@ -83,7 +83,7 @@
      *  wbbl1(-1:nx1,-1:ny1,0:3), wbbv1(-1:nx1,-1:ny1,0:3),
      &  gs1(-1:nx1,-1:ny1,0:1), crx1(-1:nx1,-1:ny1,0:3), 
      &  cry1(-1:nx1,-1:ny1,0:3), qc1(-1:nx1,-1:ny1),
-     &  pbs1(-1:nx1,-1:ny1,0:1)
+     &  qcb1(-1:nx1,-1:ny1), pbs1(-1:nx1,-1:ny1,0:1)
 *     ------------------------------------------------------------------
 *     B2XGBS1 computes the product (magnetic field pitch)*(surface area)
 *     at cell faces on the basis mesh. 

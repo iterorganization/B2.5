@@ -2,7 +2,8 @@
 *.specification
 
       subroutine b2agmt (nx, ny, isymm, 
-     & crx, cry, vol, hx, hy, qz, qc, gs, leftix, bottomiy)
+     & crx, cry, vol, hx, hy, qz, qc, qcb, gs,
+     & cell_width, cell_height, leftix, bottomiy)
       use b2mod_types
       use b2mod_constants
       implicit none
@@ -14,7 +15,9 @@
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),
-     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), gs(-1:nx,-1:ny,0:2)
+     &  qz(-1:nx,-1:ny,0:1), qc(-1:nx,-1:ny), qcb(-1:nx,-1:ny),
+     &  gs(-1:nx,-1:ny,0:2),
+     &  cell_width(-1:nx,-1:ny), cell_height(-1:nx,-1:ny)
 
 *-----------------------------------------------------------------------
 *.documentation
@@ -63,6 +66,11 @@
 *     x-diameter and the y-diameter, respectively, of the (ix,iy) cell.
 *     It will hold that 0.lt.hx(,) and 0.lt.hy(,).
 *
+*     cell_width, cell_height - (-1:nx,-1:ny) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), cell_width(ix,iy) and cell_height(ix,iy)
+*     specify the average width and height, respectively, of the (ix,iy) cell.
+*     It will hold that 0.lt.cell_width(,) and 0.lt.cell_height(,).
+*
 *     qz - (-1:nx,-1:ny,0:1) real*8 array, output.
 *     For (ix,iy) in (-1:nx,-1:ny), qz(ix,iy,0) specifies sin(t) and
 *     qz(ix,iy,1) specifies cos(t), where t is the complementary angle
@@ -79,6 +87,14 @@
 *     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
 *     geometry. 
 *     It will hold that 0.lt.qc(,).le.1.
+*
+*     qcb - (-1:nx,-1:ny) real*8 array, output.
+*     For (ix,iy) in (-1:nx,-1:ny), qcb(ix,iy) specifies cos(t), where
+*     t is the complementary angle between the y-direction of the
+*     (ix,iy) cell and its bottom face.
+*     t is in the range (-pi/2 to pi/2) and vanishes for an orthogonal
+*     geometry.
+*     It will hold that 0.lt.qcb(,).le.1.
 *
 *     gs - (-1:nx,-1:ny,0:2) real*8 array, output.
 *     (Let gsx(,)=gs(,,0), gsy(,)=gs(,,1) and gsz(,)=gs(,,2).)
@@ -156,6 +172,8 @@
      &                   (crx(ix,iy,0)+crx(ix,iy,1))/2.0_R8,
      &                   (cry(ix,iy,2)+cry(ix,iy,3))/2.0_R8-
      &                   (cry(ix,iy,0)+cry(ix,iy,1))/2.0_R8) 
+        cell_width(ix,iy) = hx(ix,iy)
+        cell_height(ix,iy) = hy(ix,iy)
         qz(ix,iy,0) = sinang (
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
@@ -170,17 +188,24 @@
      &    (crx(ix,iy,1)+crx(ix,iy,3))-(crx(ix,iy,0)+crx(ix,iy,2)),
      &    (cry(ix,iy,1)+cry(ix,iy,3))-(cry(ix,iy,0)+cry(ix,iy,2)),
      &    crx(ix,iy,2)-crx(ix,iy,0), cry(ix,iy,2)-cry(ix,iy,0))
+        qcb(ix,iy) = 1.0_R8
         if(qz(ix,iy,1).le.0.0_R8) then
-          write(*,'(a,1x,1f9.6,2i4)') 
+          write(*,'(a,1x,1f9.6,2i4)')
      1     'Problem in b2agmt: qz(ix,iy,1) <= 0',qz(ix,iy,1),ix,iy
           write(*,'(a,1p,4g13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
           write(*,'(a,1p,4g13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
         endif
         if(qc(ix,iy).le.0.0_R8) then
-          write(*,'(a,1x,1f9.6,2i4)') 
+          write(*,'(a,1x,1f9.6,2i4)')
      1     'Problem in b2agmt: qc(ix,iy) <= 0',qc(ix,iy),ix,iy
           write(*,'(a,1p,4g13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
           write(*,'(a,1p,4g13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
+        endif
+        if(qcb(ix,iy).le.0.0_R8) then
+          write(*,'(a,1f12.6,2i4)')
+     1     'Problem in b2agmt: qcb(ix,iy) <= 0',qcb(ix,iy),ix,iy
+          write(*,'(a,4f13.6)') 'crx = ',(crx(ix,iy,i),i=0,3)
+          write(*,'(a,4f13.6)') 'cry = ',(cry(ix,iy,i),i=0,3)
         endif
        enddo
       enddo
@@ -190,6 +215,7 @@
 *     this code.)
       call b2xvsg (n2, qz(-1,-1,1), 1, 'qz1', '.gt.')
       call b2xvsg (n2, qc, 1, 'qc', '.gt.')
+      call b2xvsg (n2, qcb, 1, 'qcb', '.gt.')
 *   ..compute vol, gs
       if (isymm.eq.0) then
 *    ..slab geometry
