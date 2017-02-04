@@ -38,8 +38,12 @@
       real (kind=R8), save :: hd_ratio, width
       data hd_linlog/1/, hd_ratio/100.0_R8/, output/0/
       data sput_frac_flag/0/, sput_phys_col/3/,
-     *  sput_phys_model/1/, refl_model/1/, debug_init_wall/0/,
-     *  width/1.0_R8/
+     *  sput_phys_model/1/, refl_model/1/, width/1.0_R8/
+#ifdef DBG
+      data debug_init_wall/1/
+#else
+      data debug_init_wall/0/
+#endif
 
       real (kind=R8) :: mass_density
       logical overlap

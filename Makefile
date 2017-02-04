@@ -147,6 +147,10 @@ endif
 ifdef USE_EIRENE
 DEFINES += ${USE_EIRENE}
 endif
+ifdef SOLPS_DEBUG
+DEFINES += -DDBG
+endif
+
 VHEAD =
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 VHEAD+=${MODLOCAL}:

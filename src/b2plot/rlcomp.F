@@ -38,7 +38,7 @@ c<<<
 c      integer lun_s, lun_t, lun_l
 c      parameter (lun_s=76, lun_t=75, lun_l=74)
 c      real (kind=R8) :: uu_xe, uu_ye
-c      logical uu_dbg
+      logical uu_dbg
 c      character tab, uu_file*48
 c>>>
 c======================================================================
@@ -46,7 +46,11 @@ c
 c<<<
        call subini ('rlcomp')
 c      tab=char(9)
-c      uu_dbg=.false.
+#ifdef DBG
+       uu_dbg=.true.
+#else
+       uu_dbg=.false.
+#endif
 c>>>
 c
 c*** Loop over the sources

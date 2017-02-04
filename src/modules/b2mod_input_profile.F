@@ -104,7 +104,11 @@
       real(kind=R8) :: fx(nxx),x(nxx),xr(-1:nxx),xf(-1:nxx),dx(nxx)
       integer, save :: elm_count
       logical, save :: catch_up, new_files
+#ifdef DBG
+      logical, parameter :: debug = .true.
+#else
       logical, parameter :: debug = .false.
+#endif
       intrinsic int, mod
      
 ! initialise sources and data to zero
@@ -266,35 +270,39 @@
      .             pf(iy)*xf(ix)*vol(ix,nanf-3+iy)
                 endif
               endif
-              if (nc.eq.0 .and. iy.eq.1. .or. debug) then
-                if (kind_source.eq.1) write(*,'(a,i2,1p,2(1x,e14.7))')
-     &           'AXIAL-SOURCES: sna ',spec,xr(ix),xf(ix)
-                if (kind_source.eq.2) write(*,'(a,i2,1p,2(1x,e14.7))')
-     &           'AXIAL-SOURCES: smo ',spec,xr(ix),xf(ix)
-                if (kind_source.eq.3) write(*,'(a,i2,1p,2(1x,e14.7))')
-     &           'AXIAL-SOURCES: she ',xr(ix),xf(ix)
-                if (kind_source.eq.4) write(*,'(a,i2,1p,2(1x,e14.7))')
-     &           'AXIAL-SOURCES: shi ',xr(ix),xf(ix)
-                if (kind_source.eq.5) write(*,'(a,i2,1p,2(1x,e14.7))')
-     &           'AXIAL-SOURCES: sch ',xr(ix),xf(ix)
-                if (kind_source.eq.6) write(*,'(a,i2,1p,2(1x,e14.7))')
-     &           'AXIAL-SOURCES: sne ',xr(ix),xf(ix)
+              if ((nc.eq.0.and.iy.eq.1).or.debug) then
+                if (nxdat.gt.0) then
+                  if (kind_source.eq.1) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &             'AXIAL-SOURCES: sna ',spec,xr(ix),xf(ix)
+                  if (kind_source.eq.2) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &             'AXIAL-SOURCES: smo ',spec,xr(ix),xf(ix)
+                  if (kind_source.eq.3) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &             'AXIAL-SOURCES: she ',xr(ix),xf(ix)
+                  if (kind_source.eq.4) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &             'AXIAL-SOURCES: shi ',xr(ix),xf(ix)
+                  if (kind_source.eq.5) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &             'AXIAL-SOURCES: sch ',xr(ix),xf(ix)
+                  if (kind_source.eq.6) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &             'AXIAL-SOURCES: sne ',xr(ix),xf(ix)
+                endif
               endif
               if (new_files) write (96,*) xr(ix),xf(ix)
             enddo
-            if (nc.eq.0 .or. debug) then
-              if (kind_source.eq.1) write(*,'(a,i2,1p,2(1x,e14.7))')
-     &         'PROFILE-SOURCES: sna ',spec,pr(iy),pf(iy)
-              if (kind_source.eq.2) write(*,'(a,i2,1p,2(1x,e14.7))')
-     &         'PROFILE-SOURCES: smo ',spec,pr(iy),pf(iy)
-              if (kind_source.eq.3) write(*,'(a,i2,1p,2(1x,e14.7))')
-     &         'PROFILE-SOURCES: she ',pr(iy),pf(iy)
-              if (kind_source.eq.4) write(*,'(a,i2,1p,2(1x,e14.7))')
-     &         'PROFILE-SOURCES: shi ',pr(iy),pf(iy)
-              if (kind_source.eq.5) write(*,'(a,i2,1p,2(1x,e14.7))')
-     &         'PROFILE-SOURCES: sch ',pr(iy),pf(iy)
-              if (kind_source.eq.6) write(*,'(a,i2,1p,2(1x,e14.7))')
-     &         'PROFILE-SOURCES: sne ',pr(iy),pf(iy)
+            if (nc.eq.0.or.debug) then
+              if (ndat.gt.0) then
+                if (kind_source.eq.1) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &           'PROFILE-SOURCES: sna ',spec,pr(iy),pf(iy)
+                if (kind_source.eq.2) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &           'PROFILE-SOURCES: smo ',spec,pr(iy),pf(iy)
+                if (kind_source.eq.3) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &           'PROFILE-SOURCES: she ',pr(iy),pf(iy)
+                if (kind_source.eq.4) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &           'PROFILE-SOURCES: shi ',pr(iy),pf(iy)
+                if (kind_source.eq.5) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &           'PROFILE-SOURCES: sch ',pr(iy),pf(iy)
+                if (kind_source.eq.6) write(*,'(a,i2,1p,2(1x,e14.7))')
+     &           'PROFILE-SOURCES: sne ',pr(iy),pf(iy)
+              endif
             endif
             if (new_files) write (94,*) pr(iy),pf(iy)
           enddo

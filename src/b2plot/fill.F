@@ -11,7 +11,11 @@ C =================================================================
       INTEGER IDFILL, IGR1, IGR2, IAR1, IAR2, ISWP
       integer choose_color
 
+#ifdef DBG
+      DEBUG=.TRUE.
+#else
       DEBUG=.FALSE.
+#endif
       IDFILL=-1
       PAINT=.FALSE.
       IGR1=IGRP(1)

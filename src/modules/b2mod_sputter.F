@@ -227,6 +227,8 @@ cxpb  Replaced with explicit writing of non-zero elements only
       if(sputter_initialised) return
       call subini ('read_sputter_data')
       allocate(sputter_index(0:nsd-1))
+      sputter_index=-1
+      sputter_codes='  '
       isp=-1
       do is=0,nsd-1
         do il=0,isp

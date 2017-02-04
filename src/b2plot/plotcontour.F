@@ -58,7 +58,11 @@ cxpb  INTEGER NNCUT_L
       z=0
       
 C ========== GLOBAL OPTIONS ==========================================
+#ifdef DBG
+      DEBUG=.true.
+#else
       DEBUG=.false.
+#endif
       CALL CPSETI('MAP - MAPPING FLAG',4)
       IF(LABELS) THEN
         CALL CPSETI('LLP - LINE LABEL POSITIONING',3)

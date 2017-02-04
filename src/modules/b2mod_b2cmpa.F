@@ -42,7 +42,7 @@ c     It is not allowed to bundle neutral and charged states together.
       external open_file
       intrinsic nint
       lnext(is,iss) = zamax(is).lt.zamin(iss).and.zn(is).eq.zn(iss).and.
-     &  abs(am(is)-am(iss)).lt.amtol
+     &  abs(am(is)-am(iss)).lt.amtol.and.is.ne.iss
 
       if(.not.initialised) then
         if(open_file(99,'ionization_potentials',
@@ -74,7 +74,7 @@ c     It is not allowed to bundle neutral and charged states together.
                 potmax(is)=potmax(is)+pdum(iss)
               enddo
               iss = is + 1
-              do while (lnext(is,iss))
+              do while (lnext(is,min(iss,ns-1)).and.iss.lt.ns)
                 potimin(iss)=0.0_R8
                 potimax(iss)=0.0_R8
                 do js = nint(zamin(iss-1)), nint(zamin(iss))

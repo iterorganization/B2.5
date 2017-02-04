@@ -456,6 +456,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       real (kind=R8) hlp
       logical :: file_ok      
       logical, allocatable :: old_style(:)
+      character*16 hlp_frm
       character*260 filename
 
       filename='../' // neutrals_filename
@@ -848,7 +849,8 @@ c>>>
           endif
         endif
       enddo
-      write(*,*) 'track_species : Bulk ', track_species(1:ntrack)
+      write(hlp_frm,'(a,i2,a)') '(a,',ntrack,'(a2,1x))'
+      write(*,hlp_frm) 'track_species : Bulk ', track_species(1:ntrack)
 c.. Test consistency with region boundaries
       if (.not.dotest) return
       do ic=1, nncut

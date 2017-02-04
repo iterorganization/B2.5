@@ -654,8 +654,8 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
             call b2xppb (nx, ny,
      1             rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..re-compute particle flux
-#ifdef RFS_DEBUG
-            write(*,*) 'is, za (is) ',is, za(is)
+#ifdef DBG
+            write(*,*) 'is, za(is) ',is, (zamin(is)+zamax(is))/2.0_R8
 #endif
             call b2tfnb (nx, ny, is, ismain, 
      &       guard_flows, facdrift, fac_ExB, am(is)*mp, vol,             !srv 07.06.00 09.01.01 08.09.01 19.05.03

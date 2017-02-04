@@ -854,6 +854,8 @@ cxpb  Use explicit writing of non-default elements only
       enddo
       allocate(matsurf_nzconstituents(nwall,nmax))
       allocate(matsurf_nrelconstituents(nwall,nmax))
+      matsurf_nzconstituents=0
+      matsurf_nrelconstituents=0
 
       ifile=0
       do ibnd = 1, nbnd
