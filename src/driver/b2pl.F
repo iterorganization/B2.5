@@ -184,6 +184,7 @@
       call read_b2mod_transport(ninp(4))
       call read_b2mod_anomalous_transport(ninp(4))
       call read_b2mod_neutr_src_scaling(ninp(4),ns,nstrat)
+      call read_b2mod_eirene_sources(nx,ny,ns,nstrat,ninp(4))
       call b2pldr (ninp, nout, nx, ny, ns)
 *   ..close files
       do io=0,size(ninp)-1
@@ -208,6 +209,7 @@
       call dealloc_b2mod_transport
       call dealloc_anomalous_transport
       call dealloc_b2mod_neutr_src_scaling
+      call dealloc_b2mod_eirene_sources
       call prgfin ()
 #ifdef USE_MPI
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)

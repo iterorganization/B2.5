@@ -144,7 +144,7 @@ cdjm Jan2017
 
       subroutine alloc_b2mod_sources(nxd,nyd,nsd)
       implicit none
-      integer nxd,nyd,nsd,nstratd
+      integer nxd,nyd,nsd
 
       allocate(sch(-1:nxd,-1:nyd,0:3))
       allocate(she(-1:nxd,-1:nyd,0:3))
@@ -494,6 +494,60 @@ cdjm Jan2017
       deallocate(b2srst_she0to3)
       deallocate(b2srst_shi0to3)
       deallocate(b2srst_sch)
+      deallocate(b2sihs_diae)
+      deallocate(b2sihs_diaa)
+      deallocate(b2npht_shei)
+
+      return
+      end subroutine dealloc_b2mod_sources
+
+      subroutine alloc_b2mod_eirene_sources(nxd,nyd,nsd,nstrad)
+      implicit none
+      integer nxd,nyd,nsd,nstrad
+
+      allocate(eirene_mc_t0_papl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad)) ! djm Jan2017
+      allocate(eirene_mc_t0_pmpl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_t0_pipl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_t0_pppl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_t0_core(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(eirene_mc_t0_mapl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_t0_mmpl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_t0_mipl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_t0_cppv(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_t0_eael(-1:nxd,-1:nyd,1:nstrad))
+      allocate(eirene_mc_t0_emel(-1:nxd,-1:nyd,1:nstrad))
+      allocate(eirene_mc_t0_eiel(-1:nxd,-1:nyd,1:nstrad))
+      allocate(eirene_mc_t0_epel(-1:nxd,-1:nyd,1:nstrad))
+      allocate(eirene_mc_t0_eapl(-1:nxd,-1:nyd,1:nstrad))
+      allocate(eirene_mc_t0_empl(-1:nxd,-1:nyd,1:nstrad))
+      allocate(eirene_mc_t0_eipl(-1:nxd,-1:nyd,1:nstrad))
+      allocate(eirene_mc_t0_eppl(-1:nxd,-1:nyd,1:nstrad))
+
+      eirene_mc_t0_papl=0.0_R8 !djm Jan2017
+      eirene_mc_t0_pmpl=0.0_R8
+      eirene_mc_t0_pipl=0.0_R8
+      eirene_mc_t0_pppl=0.0_R8
+      eirene_mc_t0_core=0.0_R8
+      eirene_mc_t0_mapl=0.0_R8
+      eirene_mc_t0_mmpl=0.0_R8
+      eirene_mc_t0_mipl=0.0_R8
+      eirene_mc_t0_cppv=0.0_R8
+      eirene_mc_t0_eael=0.0_R8
+      eirene_mc_t0_emel=0.0_R8
+      eirene_mc_t0_eiel=0.0_R8
+      eirene_mc_t0_epel=0.0_R8
+      eirene_mc_t0_eapl=0.0_R8
+      eirene_mc_t0_empl=0.0_R8
+      eirene_mc_t0_eipl=0.0_R8
+      eirene_mc_t0_eppl=0.0_R8
+
+      return
+      end subroutine alloc_b2mod_eirene_sources
+
+      subroutine dealloc_b2mod_eirene_sources
+      implicit none
+
+      if(.not.allocated(eirene_mc_t0_papl)) return
       deallocate(eirene_mc_t0_papl)
       deallocate(eirene_mc_t0_pmpl)
       deallocate(eirene_mc_t0_pipl)
@@ -511,12 +565,9 @@ cdjm Jan2017
       deallocate(eirene_mc_t0_empl)
       deallocate(eirene_mc_t0_eipl)
       deallocate(eirene_mc_t0_eppl)
-      deallocate(b2sihs_diae)
-      deallocate(b2sihs_diaa)
-      deallocate(b2npht_shei)
 
       return
-      end subroutine dealloc_b2mod_sources
+      end subroutine dealloc_b2mod_eirene_sources
 
       subroutine read_b2mod_sources(nread)
       implicit none
@@ -587,63 +638,22 @@ cdjm Jan2017
      .                b2stel_shi_rec, 'b2stel_shi_rec')
         call cfrure (nread, size(b2stcx_sna), b2stcx_sna, 'b2stcx_sna')
         call cfrure (nread, size(b2stcx_smq), b2stcx_smq, 'b2stcx_smq')
-        call cfrure (nread, size(b2stcx_shi),
-     .                b2stcx_shi, 'b2stcx_shi')
+        call cfrure (nread, size(b2stcx_shi), b2stcx_shi, 'b2stcx_shi')
         call cfrure (nread, size(b2srsm_sna), b2srsm_sna, 'b2srsm_sna')
         call cfrure (nread, size(b2srsm_smo), b2srsm_smo, 'b2srsm_smo')
-        call cfrure (nread, size(b2srsm_she), 
-     .                b2srsm_she, 'b2srsm_she')
-        call cfrure (nread, size(b2srsm_shi),
-     .                b2srsm_shi, 'b2srsm_shi')
+        call cfrure (nread, size(b2srsm_she), b2srsm_she, 'b2srsm_she')
+        call cfrure (nread, size(b2srsm_shi), b2srsm_shi, 'b2srsm_shi')
         call cfrure (nread, size(b2srsm_sch), b2srsm_sch, 'b2srsm_sch')
         call cfrure (nread, size(b2srdt_sna), b2srdt_sna, 'b2srdt_sna')
         call cfrure (nread, size(b2srdt_smo), b2srdt_smo, 'b2srdt_smo')
-        call cfrure (nread, size(b2srdt_she),
-     .                b2srdt_she, 'b2srdt_she')
-        call cfrure (nread, size(b2srdt_shi),
-     .                b2srdt_shi, 'b2srdt_shi')
+        call cfrure (nread, size(b2srdt_she), b2srdt_she, 'b2srdt_she')
+        call cfrure (nread, size(b2srdt_shi), b2srdt_shi, 'b2srdt_shi')
         call cfrure (nread, size(b2srdt_sch), b2srdt_sch, 'b2srdt_sch')
         call cfrure (nread, size(b2srst_sna), b2srst_sna, 'b2srst_sna')
         call cfrure (nread, size(b2srst_smo), b2srst_smo, 'b2srst_smo')
-        call cfrure (nread, size(b2srst_she),
-     .                b2srst_she, 'b2srst_she')
-        call cfrure (nread, size(b2srst_shi),
-     .                b2srst_shi, 'b2srst_shi')
+        call cfrure (nread, size(b2srst_she), b2srst_she, 'b2srst_she')
+        call cfrure (nread, size(b2srst_shi), b2srst_shi, 'b2srst_shi')
         call cfrure (nread, size(b2srst_sch), b2srst_sch, 'b2srst_sch')
-        call cfrure (nread, size(eirene_mc_t0_papl),
-     &               eirene_mc_t0_papl, 'eirene_mc_t0_papl')
-        call cfrure (nread, size(eirene_mc_t0_pmpl),
-     &               eirene_mc_t0_pmpl, 'eirene_mc_t0_pmpl')
-        call cfrure (nread, size(eirene_mc_t0_pipl),
-     &               eirene_mc_t0_pipl, 'eirene_mc_t0_pipl')
-        call cfrure (nread, size(eirene_mc_t0_pppl),
-     &               eirene_mc_t0_pppl, 'eirene_mc_t0_pppl')
-        call cfrure (nread, size(eirene_mc_t0_core),
-     &               eirene_mc_t0_core, 'eirene_mc_t0_core')
-        call cfrure (nread, size(eirene_mc_t0_mapl),
-     &               eirene_mc_t0_mapl, 'eirene_mc_t0_mapl')
-        call cfrure (nread, size(eirene_mc_t0_mmpl),
-     &               eirene_mc_t0_mmpl, 'eirene_mc_t0_mmpl')
-        call cfrure (nread, size(eirene_mc_t0_mipl),
-     &               eirene_mc_t0_mipl, 'eirene_mc_t0_mipl')
-        call cfrure (nread, size(eirene_mc_t0_cppv),
-     &               eirene_mc_t0_cppv, 'eirene_mc_t0_cppv')
-        call cfrure (nread, size(eirene_mc_t0_eael),
-     &               eirene_mc_t0_eael, 'eirene_mc_t0_eael')
-        call cfrure (nread, size(eirene_mc_t0_emel),
-     &               eirene_mc_t0_emel, 'eirene_mc_t0_emel')
-        call cfrure (nread, size(eirene_mc_t0_eiel),
-     &               eirene_mc_t0_eiel, 'eirene_mc_t0_eiel')
-        call cfrure (nread, size(eirene_mc_t0_epel),
-     &               eirene_mc_t0_epel, 'eirene_mc_t0_epel')
-        call cfrure (nread, size(eirene_mc_t0_eapl),
-     &               eirene_mc_t0_eapl, 'eirene_mc_t0_eapl')
-        call cfrure (nread, size(eirene_mc_t0_empl),
-     &               eirene_mc_t0_empl, 'eirene_mc_t0_empl')
-        call cfrure (nread, size(eirene_mc_t0_eipl),
-     &               eirene_mc_t0_eipl, 'eirene_mc_t0_eipl')
-        call cfrure (nread, size(eirene_mc_t0_eppl),
-     &               eirene_mc_t0_eppl, 'eirene_mc_t0_eppl')
         call cfrure (nread, size(b2sifr_smoch),
      &               b2sifr_smoch, 'b2sifr_smoch')
         call cfrure (nread, size(b2sifr_smotf),
@@ -728,6 +738,52 @@ cdjm Jan2017
       return
       end subroutine read_b2mod_sources
 
+      subroutine read_b2mod_eirene_sources(nxd,nyd,nsd,nstrad,nread)
+      implicit none
+      integer nxd,nyd,nsd,nstrad,nread
+
+      if(b2fplasma_version.ge.'03.000.006') then
+        if (.not.allocated(eirene_mc_t0_papl))
+     >   call alloc_b2mod_eirene_sources(nxd,nyd,nsd,nstrad)
+        call cfrure_opt (nread, size(eirene_mc_t0_papl),
+     &                   eirene_mc_t0_papl, 'eirene_mc_t0_papl')
+        call cfrure_opt (nread, size(eirene_mc_t0_pmpl),
+     &                   eirene_mc_t0_pmpl, 'eirene_mc_t0_pmpl')
+        call cfrure_opt (nread, size(eirene_mc_t0_pipl),
+     &                   eirene_mc_t0_pipl, 'eirene_mc_t0_pipl')
+        call cfrure_opt (nread, size(eirene_mc_t0_pppl),
+     &                   eirene_mc_t0_pppl, 'eirene_mc_t0_pppl')
+        call cfrure_opt (nread, size(eirene_mc_t0_core),
+     &                   eirene_mc_t0_core, 'eirene_mc_t0_core')
+        call cfrure_opt (nread, size(eirene_mc_t0_mapl),
+     &                   eirene_mc_t0_mapl, 'eirene_mc_t0_mapl')
+        call cfrure_opt (nread, size(eirene_mc_t0_mmpl),
+     &                   eirene_mc_t0_mmpl, 'eirene_mc_t0_mmpl')
+        call cfrure_opt (nread, size(eirene_mc_t0_mipl),
+     &                   eirene_mc_t0_mipl, 'eirene_mc_t0_mipl')
+        call cfrure_opt (nread, size(eirene_mc_t0_cppv),
+     &                   eirene_mc_t0_cppv, 'eirene_mc_t0_cppv')
+        call cfrure_opt (nread, size(eirene_mc_t0_eael),
+     &                   eirene_mc_t0_eael, 'eirene_mc_t0_eael')
+        call cfrure_opt (nread, size(eirene_mc_t0_emel),
+     &                   eirene_mc_t0_emel, 'eirene_mc_t0_emel')
+        call cfrure_opt (nread, size(eirene_mc_t0_eiel),
+     &                   eirene_mc_t0_eiel, 'eirene_mc_t0_eiel')
+        call cfrure_opt (nread, size(eirene_mc_t0_epel),
+     &                   eirene_mc_t0_epel, 'eirene_mc_t0_epel')
+        call cfrure_opt (nread, size(eirene_mc_t0_eapl),
+     &                   eirene_mc_t0_eapl, 'eirene_mc_t0_eapl')
+        call cfrure_opt (nread, size(eirene_mc_t0_empl),
+     &                   eirene_mc_t0_empl, 'eirene_mc_t0_empl')
+        call cfrure_opt (nread, size(eirene_mc_t0_eipl),
+     &                   eirene_mc_t0_eipl, 'eirene_mc_t0_eipl')
+        call cfrure_opt (nread, size(eirene_mc_t0_eppl),
+     &                   eirene_mc_t0_eppl, 'eirene_mc_t0_eppl')
+      end if
+
+      return
+      end subroutine read_b2mod_eirene_sources
+
       subroutine write_b2mod_sources(nwrite)
       implicit none
       integer nwrite
@@ -808,63 +864,22 @@ cdjm Jan2017
      .                b2stel_shi_rec, 'b2stel_shi_rec')
         call cfwure (nwrite, size(b2stcx_sna), b2stcx_sna, 'b2stcx_sna')
         call cfwure (nwrite, size(b2stcx_smq), b2stcx_smq, 'b2stcx_smq')
-        call cfwure (nwrite, size(b2stcx_shi),
-     .                b2stcx_shi, 'b2stcx_shi')
+        call cfwure (nwrite, size(b2stcx_shi), b2stcx_shi, 'b2stcx_shi')
         call cfwure (nwrite, size(b2srsm_sna), b2srsm_sna, 'b2srsm_sna')
         call cfwure (nwrite, size(b2srsm_smo), b2srsm_smo, 'b2srsm_smo')
-        call cfwure (nwrite, size(b2srsm_she),
-     .                b2srsm_she, 'b2srsm_she')
-        call cfwure (nwrite, size(b2srsm_shi),
-     .                b2srsm_shi, 'b2srsm_shi')
+        call cfwure (nwrite, size(b2srsm_she), b2srsm_she, 'b2srsm_she')
+        call cfwure (nwrite, size(b2srsm_shi), b2srsm_shi, 'b2srsm_shi')
         call cfwure (nwrite, size(b2srsm_sch), b2srsm_sch, 'b2srsm_sch')
         call cfwure (nwrite, size(b2srdt_sna), b2srdt_sna, 'b2srdt_sna')
         call cfwure (nwrite, size(b2srdt_smo), b2srdt_smo, 'b2srdt_smo')
-        call cfwure (nwrite, size(b2srdt_she),
-     .                b2srdt_she, 'b2srdt_she')
-        call cfwure (nwrite, size(b2srdt_shi),
-     .                b2srdt_shi, 'b2srdt_shi')
+        call cfwure (nwrite, size(b2srdt_she), b2srdt_she, 'b2srdt_she')
+        call cfwure (nwrite, size(b2srdt_shi), b2srdt_shi, 'b2srdt_shi')
         call cfwure (nwrite, size(b2srdt_sch), b2srdt_sch, 'b2srdt_sch')
         call cfwure (nwrite, size(b2srst_sna), b2srst_sna, 'b2srst_sna')
         call cfwure (nwrite, size(b2srst_smo), b2srst_smo, 'b2srst_smo')
-        call cfwure (nwrite, size(b2srst_she),
-     .                b2srst_she, 'b2srst_she')
-        call cfwure (nwrite, size(b2srst_shi),
-     .                b2srst_shi, 'b2srst_shi')
+        call cfwure (nwrite, size(b2srst_she), b2srst_she, 'b2srst_she')
+        call cfwure (nwrite, size(b2srst_shi), b2srst_shi, 'b2srst_shi')
         call cfwure (nwrite, size(b2srst_sch), b2srst_sch, 'b2srst_sch')
-        call cfwure (nwrite, size(eirene_mc_t0_papl),
-     &               eirene_mc_t0_papl, 'eirene_mc_t0_papl')
-        call cfwure (nwrite, size(eirene_mc_t0_pmpl),
-     &               eirene_mc_t0_pmpl, 'eirene_mc_t0_pmpl')
-        call cfwure (nwrite, size(eirene_mc_t0_pipl),
-     &               eirene_mc_t0_pipl, 'eirene_mc_t0_pipl')
-        call cfwure (nwrite, size(eirene_mc_t0_pppl),
-     &               eirene_mc_t0_pppl, 'eirene_mc_t0_pppl')
-        call cfwure (nwrite, size(eirene_mc_t0_core),
-     &               eirene_mc_t0_core, 'eirene_mc_t0_core')
-        call cfwure (nwrite, size(eirene_mc_t0_mapl),
-     &               eirene_mc_t0_mapl, 'eirene_mc_t0_mapl')
-        call cfwure (nwrite, size(eirene_mc_t0_mmpl),
-     &               eirene_mc_t0_mmpl, 'eirene_mc_t0_mmpl')
-        call cfwure (nwrite, size(eirene_mc_t0_mipl),
-     &               eirene_mc_t0_mipl, 'eirene_mc_t0_mipl')
-        call cfwure (nwrite, size(eirene_mc_t0_cppv),
-     &               eirene_mc_t0_cppv, 'eirene_mc_t0_cppv')
-        call cfwure (nwrite, size(eirene_mc_t0_eael),
-     &               eirene_mc_t0_eael, 'eirene_mc_t0_eael')
-        call cfwure (nwrite, size(eirene_mc_t0_emel),
-     &               eirene_mc_t0_emel, 'eirene_mc_t0_emel')
-        call cfwure (nwrite, size(eirene_mc_t0_eiel),
-     &               eirene_mc_t0_eiel, 'eirene_mc_t0_eiel')
-        call cfwure (nwrite, size(eirene_mc_t0_epel),
-     &               eirene_mc_t0_epel, 'eirene_mc_t0_epel')
-        call cfwure (nwrite, size(eirene_mc_t0_eapl),
-     &               eirene_mc_t0_eapl, 'eirene_mc_t0_eapl')
-        call cfwure (nwrite, size(eirene_mc_t0_empl),
-     &               eirene_mc_t0_empl, 'eirene_mc_t0_empl')
-        call cfwure (nwrite, size(eirene_mc_t0_eipl),
-     &               eirene_mc_t0_eipl, 'eirene_mc_t0_eipl')
-        call cfwure (nwrite, size(eirene_mc_t0_eppl),
-     &               eirene_mc_t0_eppl, 'eirene_mc_t0_eppl')
         call cfwure (nwrite, size(b2sifr_smoch),
      &               b2sifr_smoch, 'b2sifr_smoch')
         call cfwure (nwrite, size(b2sifr_smotf),
@@ -944,5 +959,48 @@ cdjm Jan2017
 
       return
       end subroutine write_b2mod_sources
+
+      subroutine write_b2mod_eirene_sources(nwrite)
+      implicit none
+      integer nwrite
+
+      if (.not.allocated(eirene_mc_t0_papl)) return
+      call cfwure (nwrite, size(eirene_mc_t0_papl),
+     &             eirene_mc_t0_papl, 'eirene_mc_t0_papl')
+      call cfwure (nwrite, size(eirene_mc_t0_pmpl),
+     &             eirene_mc_t0_pmpl, 'eirene_mc_t0_pmpl')
+      call cfwure (nwrite, size(eirene_mc_t0_pipl),
+     &             eirene_mc_t0_pipl, 'eirene_mc_t0_pipl')
+      call cfwure (nwrite, size(eirene_mc_t0_pppl),
+     &             eirene_mc_t0_pppl, 'eirene_mc_t0_pppl')
+      call cfwure (nwrite, size(eirene_mc_t0_core),
+     &             eirene_mc_t0_core, 'eirene_mc_t0_core')
+      call cfwure (nwrite, size(eirene_mc_t0_mapl),
+     &             eirene_mc_t0_mapl, 'eirene_mc_t0_mapl')
+      call cfwure (nwrite, size(eirene_mc_t0_mmpl),
+     &             eirene_mc_t0_mmpl, 'eirene_mc_t0_mmpl')
+      call cfwure (nwrite, size(eirene_mc_t0_mipl),
+     &             eirene_mc_t0_mipl, 'eirene_mc_t0_mipl')
+      call cfwure (nwrite, size(eirene_mc_t0_cppv),
+     &             eirene_mc_t0_cppv, 'eirene_mc_t0_cppv')
+      call cfwure (nwrite, size(eirene_mc_t0_eael),
+     &             eirene_mc_t0_eael, 'eirene_mc_t0_eael')
+      call cfwure (nwrite, size(eirene_mc_t0_emel),
+     &             eirene_mc_t0_emel, 'eirene_mc_t0_emel')
+      call cfwure (nwrite, size(eirene_mc_t0_eiel),
+     &             eirene_mc_t0_eiel, 'eirene_mc_t0_eiel')
+      call cfwure (nwrite, size(eirene_mc_t0_epel),
+     &             eirene_mc_t0_epel, 'eirene_mc_t0_epel')
+      call cfwure (nwrite, size(eirene_mc_t0_eapl),
+     &             eirene_mc_t0_eapl, 'eirene_mc_t0_eapl')
+      call cfwure (nwrite, size(eirene_mc_t0_empl),
+     &             eirene_mc_t0_empl, 'eirene_mc_t0_empl')
+      call cfwure (nwrite, size(eirene_mc_t0_eipl),
+     &             eirene_mc_t0_eipl, 'eirene_mc_t0_eipl')
+      call cfwure (nwrite, size(eirene_mc_t0_eppl),
+     &             eirene_mc_t0_eppl, 'eirene_mc_t0_eppl')
+
+      return
+      end subroutine write_b2mod_eirene_sources
 
       end module b2mod_sources

@@ -1773,6 +1773,7 @@ csw 09oct2012 set default potential already at this point (BCs)
           call write_b2mod_transport(nout(7))
           call write_b2mod_anomalous_transport(nout(7))
           call write_b2mod_neutr_src_scaling(nout(7),nstrat)
+          call write_b2mod_eirene_sources(nout(7))
           close(nout(7))
         endif
 *    ..increment

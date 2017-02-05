@@ -272,6 +272,7 @@ program b2_ual_write
   call dealloc_b2mod_indirect
 !!$  call dealloc_b2mod_regions
   call dealloc_b2mod_sources
+  call dealloc_b2mod_eirene_sources
 
   !     ..end of computation
   call prgend()
@@ -308,6 +309,7 @@ contains
 !!$    call read_b2mod_transport(nx,ny,ns,ninp(4))
     call read_b2mod_anomalous_transport(ninp(4))
     call read_b2mod_neutr_src_scaling(ninp(4),ns,nstrai)
+    call read_b2mod_eirene_sources(nx,ny,ns,nstrai,ninp(4))
     call alloc_b2mod_ppout(nx,ny,ns)
 
 
