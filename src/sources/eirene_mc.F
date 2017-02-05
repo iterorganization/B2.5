@@ -27,7 +27,8 @@ c  version : 26.07.2002 23:39
      &         eirene_mc_t0_mmpl, eirene_mc_t0_mipl, eirene_mc_t0_cppv,
      &         eirene_mc_t0_eael, eirene_mc_t0_emel, eirene_mc_t0_eiel,
      &         eirene_mc_t0_epel, eirene_mc_t0_eapl, eirene_mc_t0_empl,
-     &         eirene_mc_t0_eipl, eirene_mc_t0_eppl
+     &         eirene_mc_t0_eipl, eirene_mc_t0_eppl,
+     &         alloc_b2mod_eirene_sources, dealloc_b2mod_eirene_sources
 #ifdef B25_EIRENE
       use b2mod_work
       use eirmod_braeir
@@ -244,24 +245,7 @@ c not sure this is the right place
         allocate(ispc_ref(NATM))
         allocate(ishigh(NATM))
         allocate(sum_wld(2,2+NATM))
-
-        allocate(eirene_mc_t0_papl(-1:nx,-1:ny,0:ns-1,1:nstrat)) ! djm Jan2017
-        allocate(eirene_mc_t0_pmpl(-1:nx,-1:ny,0:ns-1,1:nstrat))
-        allocate(eirene_mc_t0_pipl(-1:nx,-1:ny,0:ns-1,1:nstrat))
-        allocate(eirene_mc_t0_pppl(-1:nx,-1:ny,0:ns-1,1:nstrat))
-        allocate(eirene_mc_t0_core(-1:nx,-1:ny,0:ns-1))
-        allocate(eirene_mc_t0_mapl(-1:nx,-1:ny,0:ns-1,1:nstrat))
-        allocate(eirene_mc_t0_mmpl(-1:nx,-1:ny,0:ns-1,1:nstrat))
-        allocate(eirene_mc_t0_mipl(-1:nx,-1:ny,0:ns-1,1:nstrat))
-        allocate(eirene_mc_t0_cppv(-1:nx,-1:ny,0:ns-1,1:nstrat))
-        allocate(eirene_mc_t0_eael(-1:nx,-1:ny,1:nstrat))
-        allocate(eirene_mc_t0_emel(-1:nx,-1:ny,1:nstrat))
-        allocate(eirene_mc_t0_eiel(-1:nx,-1:ny,1:nstrat))
-        allocate(eirene_mc_t0_epel(-1:nx,-1:ny,1:nstrat))
-        allocate(eirene_mc_t0_eapl(-1:nx,-1:ny,1:nstrat))
-        allocate(eirene_mc_t0_empl(-1:nx,-1:ny,1:nstrat))
-        allocate(eirene_mc_t0_eipl(-1:nx,-1:ny,1:nstrat))
-        allocate(eirene_mc_t0_eppl(-1:nx,-1:ny,1:nstrat))
+        call alloc_b2mod_eirene_sources(nx,ny,ns,nstrat)
 
         write(*,*) 'Calling test_couple'
         call test_couple(ndx,ndy,nstra,nfl,natm,nmol,nion,nlimps)
