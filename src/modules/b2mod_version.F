@@ -268,6 +268,7 @@ c                                 fna_32, fna_52, fni_32, fni_52, fne_32, fne_52
 c                                 fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
 c                                 vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
 c    Version 03.000.006  14.10.16 Added various quantities to allow post-processing balance routines:
+c                                 In b2fplasma, among sources block:
 c                                 b2stbr_she0to3,b2stbr_shi0to3,
 c                                 b2stbc_she0to3,b2stbc_shi0to3,
 c                                 b2stel_sna_ion,b2stel_sna_rec,b2stel_smq_ion,b2stel_smq_rec,
@@ -277,10 +278,6 @@ c                                 b2stcx_sna,b2stcx_smq,b2stcx_shi,b2stcx_shi0to
 c                                 b2srsm_sna,b2srsm_smo,b2srsm_she,b2srsm_shi,b2srsm_she0to3,b2srsm_shi0to3,b2srsm_sch,
 c                                 b2srdt_sna,b2srdt_smo,b2srdt_she,b2srdt_shi,b2srdt_she0to3,b2srdt_shi0to3,b2srdt_sch,
 c                                 b2srst_sna,b2srst_smo,b2srst_she,b2srst_shi,b2srst_she0to3,b2srst_shi0to3,b2srst_sch,
-c                                 eirene_mc_t0_papl,eirene_mc_t0_pmpl,eirene_mc_t0_pipl,eirene_mc_t0_pppl,eirene_mc_t0_core,
-c                                 eirene_mc_t0_mapl,eirene_mc_t0_mmpl,eirene_mc_t0_mipl,eirene_mc_t0_cppv,
-c                                 eirene_mc_t0_eael,eirene_mc_t0_emel,eirene_mc_t0_eiel,eirene_mc_t0_epel,
-c                                 eirene_mc_t0_eapl,eirene_mc_t0_empl,eirene_mc_t0_eipl,eirene_mc_t0_eppl,
 c                                 b2sihs_diae,b2sihs_diaa,
 c                                 b2sifr_smoch,b2sifr_smotf,
 c                                 b2sigp_smogp,b2sigp_pstat,
@@ -291,4 +288,9 @@ c                                 fna_pinch,fna_pll,fna_drift,fna_ch,fna_nanom,f
 c                                 fmo_flua,fmo_cvsa,fmo_b2nxfv,
 c                                 fhe_32,fhe_52,fhe_thermj,fhe_cond,fhe_dia,fhe_ecrb,fhe_strange,fhe_pschused,
 c                                 fhi_32,fhi_52,fhi_cond,fhi_dia,fhi_ecrb,fhi_strange,fhi_pschused
+c                                 Appended at end of b2plasma file:
+c                                 eirene_mc_t0_papl,eirene_mc_t0_pmpl,eirene_mc_t0_pipl,eirene_mc_t0_pppl,eirene_mc_t0_core,
+c                                 eirene_mc_t0_mapl,eirene_mc_t0_mmpl,eirene_mc_t0_mipl,eirene_mc_t0_cppv,
+c                                 eirene_mc_t0_eael,eirene_mc_t0_emel,eirene_mc_t0_eiel,eirene_mc_t0_epel,
+c                                 eirene_mc_t0_eapl,eirene_mc_t0_empl,eirene_mc_t0_eipl,eirene_mc_t0_eppl
 c                                 
