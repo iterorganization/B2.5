@@ -224,8 +224,8 @@
 *   ..procedures
       logical lnext
       real (kind=R8) ::
-     *  x05baf, epoch_seconds, rratio
-      external x05baf, epoch_seconds, rratio
+     *  epoch_seconds, rratio
+      external epoch_seconds, rratio
       intrinsic mod, abs, sqrt
       external subini, subend, xertst, xerrab, ipgeti, ipgetr,
      &  cfrure, cfwure, b2scopy
@@ -1652,7 +1652,7 @@ c new CDF movie option (1st frame at t=0)
       elapsedval = 0.0_R8
       stack_ptr=0
       ne_wanted_next_time=tim
-      cpuinit=x05baf()
+      call cpu_time(cpuinit)
       elapsedinit=epoch_seconds()
 
     1 continue
@@ -1660,7 +1660,7 @@ c new CDF movie option (1st frame at t=0)
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
      1            itim,dtim,ntim,stack_ptr,quit
 
-      cpustart=x05baf()
+      call cpu_time(cpustart)
       elapsedstart=epoch_seconds()
 *   ..loop test
 *!!   (Note: better loop control yet to be developed)
@@ -1873,7 +1873,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
-        cpuval=x05baf()
+        call cpu_time(cpuval)
         elapsedval=epoch_seconds()
         if (b2mndr_cpu.gt.0.0_R8) then
           write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,

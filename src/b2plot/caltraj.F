@@ -102,9 +102,6 @@ c                                       !number of particles per cell:
 
       integer counter
 
-      real (kind=R8) ::
-     *   x05baf                            !cpu
-      external x05baf
 #ifdef NAG22
       integer IGEN
       integer ISEED(4)
@@ -239,7 +236,7 @@ c     open the Plot-Screen
 c     generate beginning positions
 
       np=abs(iarg(5))
-      cpu_start=x05baf()
+      call cpu_time(cpu_start)
 #ifndef NO_CDF
 #ifdef CDF_MOVIE
       if(moviename .ne. ' ') then
@@ -257,7 +254,7 @@ c     generate beginning positions
 #endif
 #endif
       call allocate_particles(warr,ipx,ipy,ips,p_r,p_z,0,np)
-      cpu_end=x05baf()
+      call cpu_time(cpu_end)
       if (b2plot_debug.ge.8) write(*,'(a,f6.3,a)')
      1 'Initial allocate_particles took ',
      2 cpu_end-cpu_start,
@@ -402,7 +399,7 @@ c                         particles than at beginning, it is destroyed.
      2     argstring(1:lnblnk(argstring)),values(5),values(6),
      +     values(7),values(8),1,.true.,.true.,.true.)
           call gflas3(1)
-          cpu_start=x05baf()
+          call cpu_time(cpu_start)
           do ip=1,np
             call lastd
             call gsplci(ips(ip)+1)
@@ -418,7 +415,7 @@ c                         particles than at beginning, it is destroyed.
               call lined_d(p_r(ip),p_z(ip),p_r(ip),p_z(ip))
             endif
           enddo                 ! ip
-          cpu_end=x05baf()
+          call cpu_time(cpu_end)
           if (b2plot_debug.ge.8) write(*,'(a,f6.3,a)')
      1     'Advancing particles took ',
      2      cpu_end-cpu_start,
@@ -438,9 +435,9 @@ c                         particles than at beginning, it is destroyed.
             endif
 #endif
 #endif
-            cpu_start=x05baf()
+            call cpu_time(cpu_start)
             call allocate_particles(warr,ipx,ipy,ips,p_r,p_z,np,np)
-            cpu_end=x05baf()
+            call cpu_time(cpu_end)
             if (b2plot_debug.ge.8) write(*,'(a,f6.3,a)')
      1       'Subsequent allocate_particles took ',
      2       cpu_end-cpu_start,
