@@ -131,9 +131,8 @@
 *   ..procedures
       logical lnext
       external subini, subend, xertst, xerrab, sfill, ipgetr, ipgeti
-      external b2xvsg, b2xvff, x05baf, smax, smin, get_jsep
-      real (kind=R8) ::
-     *  x05baf, smax, smin
+      external b2xvsg, b2xvff, smax, smin, get_jsep
+      real (kind=R8) :: smax, smin
       intrinsic abs, mod
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
@@ -212,7 +211,7 @@
      *       in_no_of_start_points)
            call xertst (0.lt.in_no_of_start_points,
      *      'faulty input first_flight_no_of_start_points')
-           start_time=x05baf()
+           call cpu_time(start_time)
            call alloc_b2mod_first_flight(
      *          in_no_of_angles,in_size_of_table,
      *          in_no_of_start_points,nx,ny,in_dl)
@@ -232,7 +231,7 @@
      >          call setup_b2mod_first_flight(ib,iy,nx,ny,'S',output)
              enddo
            enddo
-           end_time=x05baf()
+           call cpu_time(end_time)
            write(*,'(a,i8,a,i8,a,g10.3,a,g12.5,a)') 
      *          'Used ',ptr_table,' out of ',size_of_table,
      *          ' (',real(ptr_table)/real(size_of_table)*100,'%)',
@@ -455,7 +454,7 @@ c   --> better solution wanted here..
       endif
 
       if(first_flight.ne.0) then
-        start_time=x05baf()
+        call cpu_time(start_time)
         if (output.ge.1) then
           open(88,file='start')
           open(89,file='end')
@@ -556,7 +555,7 @@ c   --> better solution wanted here..
           close(88)
           close(89)
         endif
-        end_time=x05baf()
+        call cpu_time(end_time)
         if(main_call)
      >   write(*,*) end_time-start_time,' cpu-seconds'
       endif
