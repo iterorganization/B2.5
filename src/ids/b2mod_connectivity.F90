@@ -2552,3 +2552,8 @@ contains
 
 
 end module b2mod_connectivity
+
+
+!!!Local Variables:
+!!! mode: f90
+!!! End:

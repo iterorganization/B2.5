@@ -86,3 +86,8 @@ contains
   end subroutine logmsg
 
 end module logging
+
+
+!!!Local Variables:
+!!! mode: f90
+!!! End:

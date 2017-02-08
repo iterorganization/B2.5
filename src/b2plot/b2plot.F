@@ -5832,7 +5832,9 @@ c-dpc still in testing phase
           write(*,*) 'bpol_c: min & max ',
      1     minval(uedge_c),maxval(uedge_c)
           uedge_v=0.0_R8
-          call my_intcor(nx,ny,vol,uedge_c,corners)
+          call my_intcor(nx,ny,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,uedge_c,corners)
           write(*,*) 'bpol_v: min & max ',
      1     minval(corners),maxval(corners)
           do iy=-1,ny
@@ -5866,7 +5868,9 @@ c-dpc still in testing phase
           write(*,*) 'bphi_c: min & max ',
      1     minval(uedge_c),maxval(uedge_c)
           uedge_v=0.0_R8
-          call my_intcor(nx,ny,vol,uedge_c,corners)
+          call my_intcor(nx,ny,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,uedge_c,corners)
           write(*,*) 'bphi_v: min & max ',
      1     minval(corners),maxval(corners)
           do iy=-1,ny
@@ -5900,7 +5904,9 @@ c-dpc still in testing phase
           write(*,*) 'b_c: min & max ',
      1     minval(uedge_c),maxval(uedge_c)
           uedge_v=0.0_R8
-          call my_intcor(nx,ny,vol,uedge_c,corners)
+          call my_intcor(nx,ny,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,uedge_c,corners)
           write(*,*) 'b_v: min & max ',
      1     minval(corners),maxval(corners)
           do iy=-1,ny

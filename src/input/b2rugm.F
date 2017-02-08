@@ -316,7 +316,9 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)
       call intfacer1(nx,ny,2,rightix,rightiy,vol,bb,wbbr)
       call intfacev1(nx,ny,2,bottomix,bottomiy,vol,bb,wbbv)
-      call my_intcor1(nx,ny,2,vol,bb,wbbc)
+      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)
 *   ..extrapolate magnetic field to edges
       do iy = -1, ny
         do ix = -1, nx

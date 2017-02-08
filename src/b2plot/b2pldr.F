@@ -191,7 +191,9 @@
       enddo
 *  .. interpolate magnetic field to cell corners                         !xpb
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
-      call my_intcor1(nx,ny,2,vol,bb,wbbc)                               !xpb
+      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
+     * leftix,leftiy,rightix,rightiy,
+     * bottomix,bottomiy,topix,topiy,region,bb,wbbc)                     !xpb
 *   ..compute extrapolated wbbc(:,:,3) component
       wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
 *   ..obtain external species data if any

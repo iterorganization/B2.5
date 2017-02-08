@@ -215,7 +215,7 @@ c-xpb
          qc1(ix,iy) = cosang (
      &    (crx1(ix,iy,1)+crx1(ix,iy,3))-(crx1(ix,iy,0)+crx1(ix,iy,2)),
      &    (cry1(ix,iy,1)+cry1(ix,iy,3))-(cry1(ix,iy,0)+cry1(ix,iy,2)),
-     &     crx1(ix,iy,2)-crx1(ix,iy,0), cry1(ix,iy,2)-cry1(ix,iy,0))
+     &     crx1(ix,iy,2)-crx1(ix,iy,0),  cry1(ix,iy,2)-cry1(ix,iy,0))
          if(qc1(ix,iy).le.0.0_R8) then
           write(*,*) 'Problem in b2ytgm: qc1(ix,iy) <= 0',
      1     qc1(ix,iy),ix,iy
@@ -291,7 +291,9 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
       call intfaceh1(nx1,ny1,2,leftix1,leftiy1,vol1,bb1,wbbl1)
       call intfacer1(nx1,ny1,2,rightix1,rightiy1,vol1,bb1,wbbr1)
       call intfacev1(nx1,ny1,2,bottomix1,bottomiy1,vol1,bb1,wbbv1)
-      call my_intcor1(nx1,ny1,2,vol1,bb1,wbbc1)
+      call my_intcor1(nx1,ny1,2,vol1,periodic_bc,nncut,
+     1     leftix1,leftiy1,rightix1,rightiy1,
+     1     bottomix1,bottomiy1,topix1,topiy1,region1,bb1,wbbc1)
 *   ..extrapolate magnetic field to edges
       do iy = -1, ny1
         do ix = -1, nx1
@@ -365,8 +367,8 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
               cflags1(ix,1:ny1-2,CELLFLAG_TYPE) = GRID_GUARD
             end if
             if (leftix1(ix,iy).eq.-2) then
-              cflags1(ix,1:ny1-1,CELLFLAG_TYPE) = GRID_GUARD
-              cflags1(ix+1,1:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+              cflags1(ix,1:ny1-2,CELLFLAG_TYPE) = GRID_GUARD
+              cflags1(ix+1,1:ny1-2,CELLFLAG_TYPE) = GRID_BOUNDARY
             end if
           end do
         end if

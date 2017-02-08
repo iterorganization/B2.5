@@ -1244,10 +1244,14 @@ csw 09oct2012
         enddo                                                            !sv
       enddo                                                              !sv
 *  .. interpolate OnedBsq for corners of cell                            !sv
-      call my_intcor (nx,ny,vol,OnedBsq,OnedBsqc)                        !sv
+      call my_intcor (nx,ny,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,OnedBsq,OnedBsqc)        !sv
 *  .. interpolate magnetic field to cell corners                         !xpb
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
-      call my_intcor1(nx,ny,2,vol,bb,wbbc)                               !xpb
+      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)                 !xpb
 *   ..compute extrapolated wbbc(:,:,3) component
       wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
 *   ..compute hz                                                         !srv 09.01.01  09.06.08 {
