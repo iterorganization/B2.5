@@ -433,7 +433,7 @@ c 2002-09-11: logic revised
       character FILNAM*8,H123*4,REAC*9,REAC2*50,CRC*3,CHR*12
       character ELNAME*2,REACSTR*11
       character*8 eirene_format
-      character*8 varname
+      character*8 varname, spcname
       data eirene_format / 'iter' /
       character*8, allocatable ::
      .  TEXTM(:), TEXTI(:), TEXTP(:), TEXTPH(:)
@@ -6148,8 +6148,24 @@ cxpb We now rewrite the modified block 4
           DO WHILE (ZEILE(1:1).NE.'*'.AND.ZEILE(1:8).NE.'SURFMOD_')
             varname = zeile(1:8)
             call EIRENE_uppercase (varname)
+            spcname = zeile(10:17)
+            call EIRENE_uppercase (spcname)
+            do IATM = 1, NATMI
+              if (streql(spcname,texta(iatm))) then
+                if (iatm1(iatm).eq.0) varname='ZERO'
+              end if
+            end do
             select case (varname)
-            case ('ISRS','ISRC','LCHSPNWL','TRANSP1','TRANSP2','RECYCF',
+            case ('ZERO')
+              IREAD=0
+            case ('ISRS','ISRC')
+              read (zeile(18:),'(I6)') idum(0)
+              IF (idum(0).gt.0 .and. idum(0).le.NATMI)
+     >         idum(0) = iatm1(idum(0))
+              write(zeile(18:23),'(I6)') idum(0)
+              WRITE(IUNOT,'(A80)') ZEILE
+              IREAD=0
+            case ('LCHSPNWL','TRANSP1','TRANSP2','RECYCF',
      .            'RECYCT','RECPRM','EXPPL','EXPEL','EXPIL','RECYCS',
      .            'RECYCC','SPTPRM','ESPUTS','ESPUTC')
               WRITE(IUNOT,'(A80)') ZEILE
