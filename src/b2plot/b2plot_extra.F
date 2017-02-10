@@ -134,7 +134,12 @@ c     filling array and computing rate
      1         DTEVD,ITMAXD,DDENSD,IDMAXD,
      2         logT,logD,ans)
               if(id.lt.10) then
-                mach(ix,iy,is+ic)=10.0_R8**(ans-6.0_R8)
+                if((ic.eq.0.and..not.first_stage) .or.
+     &             (ic.eq.ncnct-1.and..not.last_stage)) then
+                  mach(ix,iy,is+ic)=0.0_R8
+                else
+                  mach(ix,iy,is+ic)=10.0_R8**(ans-6.0_R8)
+                end if
               else
                 mach(ix,iy,is+ic)=ans
               endif

@@ -6046,7 +6046,8 @@ c-dpc still in testing phase
      1     nxd,nyd,nx,ny,ne,te,mach)
           call copy(mach,1.0_R8,1,textbl)
           ndim(3,iwrk)=nz
-          graphlabel(iwrk)=filnam//h123//reac//crc
+          graphlabel(iwrk)=
+     1     trim(filnam)//' '//trim(h123)//' '//trim(reac)//' '//crc
         case('adas')     ! accesses ADAS atomic physics data
           stack_req=(/0,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
