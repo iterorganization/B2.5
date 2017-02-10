@@ -284,7 +284,8 @@ c
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
         N1ST=DEF_NYD+1
-        N2ND=DEF_NXD+1+DEF_NCUT+DEF_ISOEXTRA
+        N2ND=DEF_NXD+MAX(1,DEF_NCUT/2*3)+
+     .       DEF_ISOEXTRA*MAX(0,DEF_NCUT/2-1)
         N3RD=DEF_NPHID
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
@@ -1374,7 +1375,7 @@ c
             call dealloc_b2mod_neoclassical
             call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
-            deallocate(emach)
+            if (allocated(emach)) deallocate(emach)
             call dealloc_b2mod_b2plot_eirene
             CALL EIRENE_DEALLOC_CTRIG
             CALL EIRENE_DEALLOC_CESTIM
@@ -1444,7 +1445,7 @@ c
           call dealloc_b2mod_neoclassical
           call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
-          deallocate(emach)
+          if (allocated(emach)) deallocate(emach)
           call dealloc_b2mod_b2plot_eirene
           CALL EIRENE_DEALLOC_CTRIG
           CALL EIRENE_DEALLOC_CESTIM
@@ -6043,8 +6044,8 @@ c-dpc still in testing phase
           nz=1
           call get_amjuel_data(filnam,h123,reac,crc,
      1     nxd,nyd,nx,ny,ne,te,mach)
-          ndim(3,iwrk)=nz
           call copy(mach,1.0_R8,1,textbl)
+          ndim(3,iwrk)=nz
           graphlabel(iwrk)=filnam//h123//reac//crc
         case('adas')     ! accesses ADAS atomic physics data
           stack_req=(/0,0,1,0,0,0,0/)
@@ -6052,8 +6053,8 @@ c-dpc still in testing phase
           call strcopy(9,256,reac,spop(sstack,isstack))
           nz=ns
           call get_adas_data(reac,nz,nxd,nyd,nx,ny,ne,te,mach)
-          ndim(3,iwrk)=nz
           call copy(mach,1.0_R8,nz,textpl)
+          ndim(3,iwrk)=nz
           graphlabel(iwrk)='ADAS '//trim(reac)//' rate'
         case('scat')     ! concatenate two strings on top of string stack
           stack_req=(/0,0,2,0,0,0,0/)

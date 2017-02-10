@@ -145,9 +145,9 @@ C
       WRITE(47,'(I6,2X,i8,2x,a32)') ntrii,jvftnew,get_B25_hash()
       READ(46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
       WRITE(47,'(I4,2X,I4,2X,i4)')              natm1,nmoli,nioni
-      write(*,'(a,5i4)') 
+      write(*,'(a,4i6)') 
      . ' Dimensions in fort.46 =   ',ntrii,natmi,nmoli,nioni
-      write(*,'(a,5i4)')
+      write(*,'(a,4i6)')
      . ' Dimensions in fort.46.2 = ',ntrii,natm1,nmoli,nioni
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
