@@ -35,10 +35,12 @@
      .                             e_shi(:,:,:),
      .                             e_sch(:,:,:)
 
-      integer :: io, ix, iy, is, istra, iun, k
+      integer :: io, ix, iy, is, istra, iun, k, n2
       real (kind=R8) :: gold, gnew
       integer, save :: ifirst=0, iaver_restart=0
       integer, save :: naver, ntotdt
+
+      n2 = (nx+2)*(ny+2)
 
       if (ifirst == 0) then
          call ipgeti ('average_restart', iaver_restart)
@@ -100,45 +102,25 @@ ctb..as the mean of the product does not equal the product of the means etc.
 
          if (io == 0) then
             if (iaver_restart > 0) then
-               read (iun,*) naver, ntotdt
+               call cfruin (iun, 1, naver, 'naver')
+               call cfruin (iun, 1, ntotdt, 'ntotdt')
                naver = 0
                close (iun)
             else
-               read (iun,*) naver, ntotdt
-               read (iun,*) 
-     .              (((na_mean(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-               read (iun,*) ((te_mean(ix,iy),ix=-1,nx),iy=-1,ny)
-               read (iun,*) ((ti_mean(ix,iy),ix=-1,nx),iy=-1,ny)
-               read (iun,*) ((po_mean(ix,iy),ix=-1,nx),iy=-1,ny)
-               read (iun,*) 
-     .              (((ua_mean(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-               read (iun,*) (((e_na(ix,iy,is),
-     .                            ix=-1,nx),iy=-1,ny),is=0,ns-1)
-               read (iun,*) ((e_te(ix,iy),ix=-1,nx),iy=-1,ny)
-               read (iun,*) ((e_ti(ix,iy),ix=-1,nx),iy=-1,ny)
-               read (iun,*) ((e_po(ix,iy),ix=-1,nx),iy=-1,ny)
-               read (iun,*) (((e_ua(ix,iy,is),
-     .                            ix=-1,nx),iy=-1,ny),is=0,ns-1)
-               read (iun,*) ((((sna_mean(ix,iy,k,is),
-     .                ix=-1,nx),iy=-1,ny),k=0,1),is=0,ns-1)
-               read (iun,*) (((sne_mean(ix,iy,k),
-     .                                 ix=-1,nx),iy=-1,ny),k=0,1)
-               read (iun,*) (((she_mean(ix,iy,k),
-     .                                 ix=-1,nx),iy=-1,ny),k=0,3)
-               read (iun,*) (((shi_mean(ix,iy,k),
-     .                                 ix=-1,nx),iy=-1,ny),k=0,3)
-               read (iun,*) (((sch_mean(ix,iy,k),
-     .                                 ix=-1,nx),iy=-1,ny),k=0,3)
-               read (iun,*) ((((smo_mean(ix,iy,k,is),
-     .                  ix=-1,nx),iy=-1,ny),k=0,3),is=0,ns-1)
-               read (iun,*) ((((e_sna(ix,iy,k,is),
-     .                ix=-1,nx),iy=-1,ny),k=0,1),is=0,ns-1)
-               read (iun,*) (((e_sne(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,1)
-               read (iun,*) (((e_she(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
-               read (iun,*) (((e_shi(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
-               read (iun,*) (((e_sch(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
-               read (iun,*) ((((e_smo(ix,iy,k,is),
-     .                ix=-1,nx),iy=-1,ny),k=0,3),is=0,ns-1)
+               call cfruin (iun, 1, naver, 'naver')
+               call cfruin (iun, 1, ntotdt, 'ntotdt')
+               call cfrure (iun, n2*ns, na_mean, 'na_mean')
+               call cfrure (iun, n2, te_mean, 'te_mean')
+               call cfrure (iun, n2, ti_mean, 'ti_mean')
+               call cfrure (iun, n2, po_mean, 'po_mean')
+               call cfrure (iun, n2*ns, ua_mean, 'ua_mean')
+
+               call cfrure (iun, n2*2*ns, sna_mean, 'sna_mean')
+               call cfrure (iun, n2*2, sne_mean, 'sne_mean')
+               call cfrure (iun, n2*4, she_mean, 'she_mean')
+               call cfrure (iun, n2*4, shi_mean, 'shi_mean')
+               call cfrure (iun, n2*4, sch_mean, 'sch_mean')
+               call cfrure (iun, n2*4*ns, smo_mean, 'smo_mean')
 
                close (iun)
             end if
@@ -216,54 +198,70 @@ ctb..as the mean of the product does not equal the product of the means etc.
 
 !pb      if (laststep) then
       else
+        n2 = (nx+2)*(ny+2)
         iun = 3
         open (newunit=iun,file='aver.dat',access='SEQUENTIAL',
      .          form='FORMATTED',status='REPLACE')
-        write (iun,'(2i9)') naver, ntotdt
-        write (iun,'(6es24.16)') 
-     .        (((na_mean(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-        write (iun,'(6es24.16)') 
-     .        ((te_mean(ix,iy),ix=-1,nx),iy=-1,ny)
-        write (iun,'(6es24.16)') 
-     .        ((ti_mean(ix,iy),ix=-1,nx),iy=-1,ny)
-        write (iun,'(6es24.16)') 
-     .        ((po_mean(ix,iy),ix=-1,nx),iy=-1,ny)
-        write (iun,'(6es24.16)') 
-     .        (((ua_mean(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-        write (iun,'(6es24.16)') 
-     .        (((e_na(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-        write (iun,'(6es24.16)') 
-     .        ((e_te(ix,iy),ix=-1,nx),iy=-1,ny)
-        write (iun,'(6es24.16)') 
-     .        ((e_ti(ix,iy),ix=-1,nx),iy=-1,ny)
-        write (iun,'(6es24.16)') 
-     .        ((e_po(ix,iy),ix=-1,nx),iy=-1,ny)
-        write (iun,'(6es24.16)') 
-     .        (((e_ua(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
-        write (iun,'(6es24.16)') 
-     .    ((((sna_mean(ix,iy,k,is),ix=-1,nx),iy=-1,ny),k=0,1),is=0,ns-1)
-        write (iun,'(6es24.16)') 
-     .        (((sne_mean(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,1)
-        write (iun,'(6es24.16)') 
-     .        (((she_mean(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
-        write (iun,'(6es24.16)') 
-     .        (((shi_mean(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
-        write (iun,'(6es24.16)') 
-     .        (((sch_mean(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
-        write (iun,'(6es24.16)') 
-     .    ((((smo_mean(ix,iy,k,is),ix=-1,nx),iy=-1,ny),k=0,3),is=0,ns-1)
-        write (iun,'(6es24.16)') 
-     .    ((((e_sna(ix,iy,k,is),ix=-1,nx),iy=-1,ny),k=0,1),is=0,ns-1)
-        write (iun,'(6es24.16)') 
-     .        (((e_sne(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,1)
-        write (iun,'(6es24.16)') 
-     .        (((e_she(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
-        write (iun,'(6es24.16)') 
-     .        (((e_shi(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
-        write (iun,'(6es24.16)') 
-     .        (((e_sch(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
-        write (iun,'(6es24.16)') 
-     .    ((((e_smo(ix,iy,k,is),ix=-1,nx),iy=-1,ny),k=0,3),is=0,ns-1)
+
+        call cfwuin (iun, 1, naver, 'naver')
+        call cfwuin (iun, 1, ntotdt, 'ntotdt')
+
+        call cfwure (iun, n2*ns, na_mean, 'na_mean')
+        call cfwure (iun, n2, te_mean, 'te_mean')
+        call cfwure (iun, n2, ti_mean, 'ti_mean')
+        call cfwure (iun, n2, po_mean, 'po_mean')
+        call cfwure (iun, n2*ns, ua_mean, 'ua_mean')
+
+        call cfwure (iun, n2*2*ns, sna_mean, 'sna_mean')
+        call cfwure (iun, n2*2, sne_mean, 'sne_mean')
+        call cfwure (iun, n2*4, she_mean, 'she_mean')
+        call cfwure (iun, n2*4, shi_mean, 'shi_mean')
+        call cfwure (iun, n2*4, sch_mean, 'sch_mean')
+        call cfwure (iun, n2*4*ns, smo_mean, 'smo_mean')
+!        write (iun,'(6es24.16)') 
+!     .        (((na_mean(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
+!        write (iun,'(6es24.16)') 
+!     .        ((te_mean(ix,iy),ix=-1,nx),iy=-1,ny)
+!        write (iun,'(6es24.16)') 
+!     .        ((ti_mean(ix,iy),ix=-1,nx),iy=-1,ny)
+!        write (iun,'(6es24.16)') 
+!     .        ((po_mean(ix,iy),ix=-1,nx),iy=-1,ny)
+!        write (iun,'(6es24.16)') 
+!     .        (((ua_mean(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
+!        write (iun,'(6es24.16)') 
+!     .        (((e_na(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
+!        write (iun,'(6es24.16)') 
+!     .        ((e_te(ix,iy),ix=-1,nx),iy=-1,ny)
+!        write (iun,'(6es24.16)') 
+!     .        ((e_ti(ix,iy),ix=-1,nx),iy=-1,ny)
+!        write (iun,'(6es24.16)') 
+!     .        ((e_po(ix,iy),ix=-1,nx),iy=-1,ny)
+!        write (iun,'(6es24.16)') 
+!     .        (((e_ua(ix,iy,is),ix=-1,nx),iy=-1,ny),is=0,ns-1)
+!        write (iun,'(6es24.16)') 
+!     .    ((((sna_mean(ix,iy,k,is),ix=-1,nx),iy=-1,ny),k=0,1),is=0,ns-1)
+!        write (iun,'(6es24.16)') 
+!     .        (((sne_mean(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,1)
+!        write (iun,'(6es24.16)') 
+!     .        (((she_mean(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
+!        write (iun,'(6es24.16)') 
+!     .        (((shi_mean(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
+!        write (iun,'(6es24.16)') 
+!     .        (((sch_mean(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
+!        write (iun,'(6es24.16)') 
+!     .    ((((smo_mean(ix,iy,k,is),ix=-1,nx),iy=-1,ny),k=0,3),is=0,ns-1)
+!        write (iun,'(6es24.16)') 
+!     .    ((((e_sna(ix,iy,k,is),ix=-1,nx),iy=-1,ny),k=0,1),is=0,ns-1)
+!        write (iun,'(6es24.16)') 
+!     .        (((e_sne(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,1)
+!        write (iun,'(6es24.16)') 
+!     .        (((e_she(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
+!        write (iun,'(6es24.16)') 
+!     .        (((e_shi(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
+!        write (iun,'(6es24.16)') 
+!     .        (((e_sch(ix,iy,k),ix=-1,nx),iy=-1,ny),k=0,3)
+!        write (iun,'(6es24.16)') 
+!     .    ((((e_smo(ix,iy,k,is),ix=-1,nx),iy=-1,ny),k=0,3),is=0,ns-1)
 
         close(iun)
 
