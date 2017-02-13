@@ -783,6 +783,7 @@ CX
      &               )
       use b2mod_types
       IMPLICIT NONE
+
 C-----------------------------------------------------------------------
 C
 C  ******************* FORTRAN77 SUBROUTINE: SPEC **********************
@@ -1029,6 +1030,8 @@ C-----------------------------------------------------------------------
       SAVE        DSNAME      , UIDLST     , GRPLST     , TYPLST   ,
      &            EXTLST      , IZ0LST     , IZLAST     ,
      &            IUNIT
+      SAVE        IZ0,IZ,IZ1,ESYM,NBSEL,ISELA,CWAVEL,CFILE,CTYPE,
+     &            CINDM,ITA,IDA,TETA,TEDA,PEC
 C-----------------------------------------------------------------------
       DATA        DSNAME /' '/   , UIDLST /' '/ , GRPLST /' '/     ,
      &            TYPLST /' '/   ,
