@@ -415,16 +415,11 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
           end do
         end do
       end if
+      cell_width1 = hx1
+      cell_height1(:,:) = hy1(:,:)*qz1(:,:,1)
       if(b2fgmtry_version.ge.'01.001.033') then
         call cfrure_opt (nget, n2, cell_width1, 'cell_width')
         call cfrure_opt (nget, n2, cell_height1, 'cell_height')
-      else
-        if(isClassicalGrid(cflags1)) then
-          cell_width1 = hx1
-          cell_height1(:,:) = hy1(:,:)*qz1(:,:,1)
-        else
-          call xerrab ('Cell widths and heights not set: re-run b2ag!')
-        endif
       endif
 *   ..test sign of bb
       call b2xvsg (n2, bb1(-1,-1,3), 1, 'bb3', '.gt.')

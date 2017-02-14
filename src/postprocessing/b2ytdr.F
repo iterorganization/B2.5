@@ -905,8 +905,9 @@ c 2002-09-11: logic revised
         call cfwuch (nout(6), 120, lblgm, 'label')
         idum(0) = isymm
         call cfwuin (nout(6), 1, idum, 'isymm')
-        call b2wugm (nout(6), nx, ny, crx, cry, fpsi,
-     &   ffbz, bb, vol, hx, hy, qz, qc, gs, pbs)
+        call b2wugm (nout(6), nx, ny, crx, cry, fpsi, ffbz, bb,
+     &   vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+     &   cell_width, cell_height)
         close(nout(6))
       endif
       call get_jsep(nx,ny,jxi,jxa,jsep)
@@ -5706,7 +5707,7 @@ cxpb We now rewrite the modified block 4
         deallocate(NFOLA,NFOLM,NFOLI)
         deallocate(NGENA,NGENM,NGENI)
         deallocate(NHSTA,NHSTM,NHSTI,NHSTP,NHSTP1)
-        deallocate(TEXTA,TEXTM,TEXTI,TEXTP,TEXTP1)
+        deallocate(TEXTM,TEXTI,TEXTP,TEXTP1)
         deallocate(IREACA,IBULKA,ISCD1A,ISCD2A,ISCD3A,ISCD4A,ISCDEA)
         deallocate(EELECA,EBULKA,ESCD1A,ESCD2A,FREACA,FLDLMA)
         deallocate(IREACM,IBULKM,ISCD1M,ISCD2M,ISCD3M,ISCD4M,ISCDEM)
@@ -6465,6 +6466,7 @@ C  VELOCITY SPACE DISTRIBUTION
         deallocate (FLUX)
         deallocate (NLATM,NLMOL,NLION,NLPLS,NLPHOT)
         deallocate (NSPEZ)
+        deallocate (TEXTA)
         deallocate (NLPNT,NLLNE,NLSRF,NLVOL,NLCNS)
         deallocate (NSRFSI)
         deallocate (INDIM,INSOR,INGRDA,INGRDE)
@@ -8298,7 +8300,7 @@ cxpb as they no longer necessarily point to the same species
             line = line(1:len)//''''//sps_id(ib)//''','
             len=len+1+8+2
           end do
-          write(99,'(a)') line
+          write(99,'(a)') trim(line)
           write(hlp_frm,'(a,i2,a)') '(a,',n_spcsrf,'(i10,'',''))'
           write(99, hlp_frm) 'I_SPCSRF=',(i_spcsrf(ib),ib=1,n_spcsrf)
           write(99, hlp_frm) 'J_SPCSRF=',(j_spcsrf(ib),ib=1,n_spcsrf)
