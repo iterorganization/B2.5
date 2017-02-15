@@ -634,14 +634,23 @@ ${OBJDIR}/eirmod_ccoupl.${MOD}:
 ${OBJDIR}/eirmod_cestim.${MOD}:
 	touch ${OBJDIR}/eirmod_cestim.${MOD}
 
+${OBJDIR}/eirmod_cinit.${MOD}:
+	touch ${OBJDIR}/eirmod_cinit.${MOD}
+
 ${OBJDIR}/eirmod_clogau.${MOD}:
 	touch ${OBJDIR}/eirmod_clogau.${MOD}
+
+${OBJDIR}/eirmod_comprt.${MOD}:
+	touch ${OBJDIR}/eirmod_comprt.${MOD}
 
 ${OBJDIR}/eirmod_comusr.${MOD}:
 	touch ${OBJDIR}/eirmod_comusr.${MOD}
 
 ${OBJDIR}/eirmod_coutau.${MOD}:
 	touch ${OBJDIR}/eirmod_coutau.${MOD}
+
+${OBJDIR}/eirmod_ctrcei.${MOD}:
+	touch ${OBJDIR}/eirmod_ctrcei.${MOD}
 
 ${OBJDIR}/eirmod_ctrig.${MOD}:
 	touch ${OBJDIR}/eirmod_ctrig.${MOD}
