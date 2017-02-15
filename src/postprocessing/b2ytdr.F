@@ -50,14 +50,19 @@ c 2002-09-11: logic revised
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
+      use eirmod_cinit
+     , , tio => ti0, til => ti1, tel => te1
       use eirmod_ctrig
       use eirmod_comusr
      , ,only: NSPH, NMASSA, NCHARA,
      ,        eirene_alloc_comusr, eirene_dealloc_comusr
+      use eirmod_comprt
+     , , istr => istra
       use eirmod_coutau
      , ,only: eirene_alloc_coutau, eirene_dealloc_coutau
       use eirmod_ccoupl
       use eirmod_cestim
+      use eirmod_ctrcei
       use eirmod_eirbra
       use eirmod_extrab25
      , ,only: msrfclsx, mgwtiesx, lkindp, lkindm, lkindi, texta,
@@ -260,9 +265,9 @@ c 2002-09-11: logic revised
       integer nyiso3(nnisod), nyiso4(nnisod)
       integer nstrai1, nstrat1
 #ifdef B25_EIRENE
-      integer IUNIN, IUNOT, INDGRD(3), NR1ST, NP2ND, NT3RD
-      integer INDPRO(12), NMODE, NAINI
-      integer NZADD, NVOLPR, NSURPR, NVOLPL, NSP
+      integer IUNOT, NR1ST, NP2ND, NT3RD
+      integer NMODE, NAINI
+      integer NZADD, NVOLPL, NSP
       integer NPLINR,NPLOTR,NPLDLR,NPLINP,NPLOTP,NPLDLP,
      .        NPLINT,NPLOTT,NPLDLT
       integer IDIMP, INUMP, IRPTA1, IRPTE1, IRPTA2, IRPTE2, ILEQUI
@@ -271,7 +276,7 @@ c 2002-09-11: logic revised
       integer NATMI1, NREAC1, NSTRA1, NPLSI1, NPLSM
       integer IREAD, IEND, IANF, ITOK, IER, ISTS, IH, I3, L, M, JSS
       integer size_mp, size_mt
-      integer IATM, IMOL, IION, IPHOT, ICRM, IPLS, IPLSS, ISTRA
+      integer ICRM, IPLSS, ISTRA
       integer MAXRAD, NSIGVI, NSIGSI, NSIGCI, NPPLG, NCRM
       integer NSIGV1, NSIGS1, NSIGC1, NLOGIN
       integer NADVI, NCLVI, NALVI, NADSI, NALSI
@@ -289,7 +294,6 @@ c 2002-09-11: logic revised
       integer, allocatable :: e_bundle_start(:), e_bundle_end(:)
       integer, allocatable :: NPOINT(:,:), ILIIN(:), IHELP(:), IGJUM0(:)
       integer, allocatable :: IREAC1(:)
-      integer, allocatable :: INDSRC(:)
       integer, allocatable :: NPRTA(:),
      &                        ISRFA(:), ISRTA(:), ISRSA(:), NRCA(:),
      &                        IREACA(:,:), IBULKA(:,:),
@@ -371,16 +375,6 @@ c 2002-09-11: logic revised
       real (kind=R8), allocatable ::
      .           TDMBOLTZ1(:), TDMDELTAE1(:), TDM_CORONA1(:)
       real (kind=R8), allocatable ::
-     .  TIO(:),TIl(:),TI2(:),TI3(:),TI4(:),TI5(:)
-      real (kind=R8), allocatable ::
-     .  DI0(:),DI1(:),DI2(:),DI3(:),DI4(:),DI5(:)
-      real (kind=R8), allocatable ::
-     .  VX0(:),VX1(:),VX2(:),VX3(:),VX4(:),VX5(:)
-      real (kind=R8), allocatable ::
-     .  VY0(:),VY1(:),VY2(:),VY3(:),VY4(:),VY5(:)
-      real (kind=R8), allocatable ::
-     .  VZ0(:),VZ1(:),VZ2(:),VZ3(:),VZ4(:),VZ5(:)
-      real (kind=R8), allocatable ::
      .  P0(:),P1(:),P2(:),P3(:),P4(:),P5(:)
       real (kind=R8), allocatable :: DATD(:), DATD1(:)
       real (kind=R8), allocatable :: DPLD(:), DPLD1(:)
@@ -439,7 +433,7 @@ c 2002-09-11: logic revised
      .  TEXTM(:), TEXTI(:), TEXTP(:), TEXTPH(:)
       character*8, allocatable :: TEXTP1(:)
       character*72, allocatable :: TXTSOU(:)
-      character*10, allocatable :: CDENMODEL(:), CDENMODEL1(:)
+      character*10, allocatable :: CDENMODEL1(:)
       character*6, allocatable :: TDMFNAME(:,:), TDMFNAME1(:,:)
       character*4, allocatable :: TDMH2(:,:), TDMH21(:,:)
       character*9, allocatable :: TDMREACTION(:,:), TDMREACTION1(:,:)
@@ -462,7 +456,7 @@ c 2002-09-11: logic revised
      .                        NLPRCA(:), NLPRCM(:), NLPRCI(:),
      .                        NLPRCPH(:), NLPRCA1(:)
       logical, allocatable :: LOGRDH(:)
-      logical, allocatable :: TRCSRC(:), TRCSR1(:)
+      logical, allocatable :: TRCSR1(:)
       logical, allocatable :: nlpbls(:), nlpbl1(:)
       logical, allocatable :: done(:)
       logical LRPSCUT
@@ -773,6 +767,8 @@ c 2002-09-11: logic revised
         N2ND=DEF_NXD+MAX(1,DEF_NCUT/2*3)+
      .       DEF_ISOEXTRA*MAX(0,DEF_NCUT/2-1)
         N3RD=DEF_NPHID
+        NREAC=7
+        IUNOUT=6
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
       endif
@@ -787,6 +783,8 @@ c 2002-09-11: logic revised
       CALL EIRENE_ALLOC_CESTIM(1)
       CALL EIRENE_ALLOC_COMUSR(1)
       CALL EIRENE_ALLOC_COUTAU
+      CALL EIRENE_ALLOC_CTRCEI
+      CALL EIRENE_ALLOC_CINIT
       CALL EIRENE_SETPRM
       CALL EIRENE_ALLOC_CESTIM(2)
       CALL EIRENE_SETCON
@@ -4643,7 +4641,6 @@ Cxpb then rewrite the entire block
         allocate(NRCP(NPLSI))
         allocate(NHSTP(NPLSI))
         allocate(DENSLIM(NPLSI))
-        allocate(CDENMODEL(NPLSI))
         allocate(NRE(NPLSI))
         allocate(TDMBOLTZ(NPLSI))
         allocate(TDMDELTAE(NPLSI))
@@ -5717,7 +5714,7 @@ cxpb We now rewrite the modified block 4
         deallocate(IREACP,IBULKP,ISCD1P,ISCD2P,ISCD3P,ISCD4P,ISCDEP)
         deallocate(EELECP,EBULKP,ESCD1P,ESCD2P,FREACP)
         deallocate(IESTMA,IBGKA,IESTMM,IBGKM,IESTMI,IBGKI)
-        deallocate(DENSLIM,CDENMODEL,NRE,TDMISP)
+        deallocate(DENSLIM,NRE,TDMISP)
         deallocate(DENSLIM1,CDENMODEL1,NRE1,TDMISP1)
         deallocate(TDMBOLTZ,TDMDELTAE,TDM_CORONA)
         deallocate(TDMBOLTZ1,TDMDELTAE1,TDM_CORONA1)
@@ -5754,8 +5751,6 @@ cxpb We now rewrite the modified block 4
         END IF
         IF (IABS(INDPRO(2)).LE.5.AND.NPLSI.GT.0) THEN
           IF (INDPRO(2).LT.0) THEN
-            allocate(TIO(NPLSI),TIl(NPLSI),TI2(NPLSI),
-     .               TI3(NPLSI),TI4(NPLSI),TI5(NPLSI))
             READ (IUNIN,6664) (TIO(I),TIl(I),TI2(I),TI3(I),TI4(I),TI5(I)
      .                        ,I=1,NPLSI)
             IF (IABS(INDPRO(2)).EQ.1 .OR. IABS(INDPRO(2)).EQ.3) THEN
@@ -5802,15 +5797,12 @@ cxpb We now rewrite the modified block 4
               WRITE(IUNOT,6664) P0(IB),P1(IB),P2(IB),
      .                          P3(IB),P4(IB),P5(IB)
             ENDDO
-            deallocate(TIO,TIl,TI2,TI3,TI4,TI5)
           ELSE
             READ (IUNIN,'(A72)') ZEILE ! TI0(1),TI1(1),TI2(1),TI3(1),TI4(1),TI5(1)
             WRITE(IUNOT,'(A72)') ZEILE
           ENDIF
         ENDIF
         IF (INDPRO(3).LE.5) THEN
-          allocate(DI0(NPLSI),DI1(NPLSI),DI2(NPLSI),
-     .             DI3(NPLSI),DI4(NPLSI),DI5(NPLSI))
           READ (IUNIN,6664) (DI0(I),DI1(I),DI2(I),DI3(I),DI4(I),DI5(I),
      .                     I=1,NPLSI)
           IF (IABS(INDPRO(3)).EQ.1 .OR. IABS(INDPRO(3)).EQ.3) THEN
@@ -5857,11 +5849,8 @@ cxpb We now rewrite the modified block 4
             WRITE(IUNOT,6664) P0(IB),P1(IB),P2(IB),
      .                        P3(IB),P4(IB),P5(IB)
           ENDDO
-          deallocate(DI0,DI1,DI2,DI3,DI4,DI5)
         END IF
         IF (IABS(INDPRO(4)).LE.5) THEN
-          allocate(VX0(NPLSI),VX1(NPLSI),VX2(NPLSI),
-     .             VX3(NPLSI),VX4(NPLSI),VX5(NPLSI))
           READ (IUNIN,6664) (VX0(I),VX1(I),VX2(I),VX3(I),VX4(I),VX5(I),
      .                       I=1,NPLSI)
           IF (IABS(INDPRO(4)).EQ.1 .OR. IABS(INDPRO(4)).EQ.3) THEN
@@ -5908,9 +5897,6 @@ cxpb We now rewrite the modified block 4
             WRITE(IUNOT,6664) P0(IB),P1(IB),P2(IB),
      .                        P3(IB),P4(IB),P5(IB)
           ENDDO
-          deallocate(VX0,VX1,VX2,VX3,VX4,VX5)
-          allocate(VY0(NPLSI),VY1(NPLSI),VY2(NPLSI),
-     .             VY3(NPLSI),VY4(NPLSI),VY5(NPLSI))
           READ (IUNIN,6664) (VY0(I),VY1(I),VY2(I),VY3(I),VY4(I),VY5(I),
      .                       I=1,NPLSI)
           IF (IABS(INDPRO(4)).EQ.1 .OR. IABS(INDPRO(4)).EQ.3) THEN
@@ -5957,9 +5943,6 @@ cxpb We now rewrite the modified block 4
             WRITE(IUNOT,6664) P0(IB),P1(IB),P2(IB),
      .                        P3(IB),P4(IB),P5(IB)
           ENDDO
-          deallocate(VY0,VY1,VY2,VY3,VY4,VY5)
-          allocate(VZ0(NPLSI),VZ1(NPLSI),VZ2(NPLSI),
-     .             VZ3(NPLSI),VZ4(NPLSI),VZ5(NPLSI))
           READ (IUNIN,6664) (VZ0(I),VZ1(I),VZ2(I),VZ3(I),VZ4(I),VZ5(I),
      .                       I=1,NPLSI)
           IF (IABS(INDPRO(4)).EQ.1 .OR. IABS(INDPRO(4)).EQ.3) THEN
@@ -6006,7 +5989,6 @@ cxpb We now rewrite the modified block 4
             WRITE(IUNOT,6664) P0(IB),P1(IB),P2(IB),
      .                        P3(IB),P4(IB),P5(IB)
           ENDDO
-          deallocate(VZ0,VZ1,VZ2,VZ3,VZ4,VZ5)
         END IF
         deallocate(P0,P1,P2,P3,P4,P5)
         IF (INDPRO(5).EQ.5) THEN
@@ -6887,7 +6869,7 @@ cxpb Read first, transform and rewrite
  1110   READ (IUNIN,'(A80)') ZEILE
         WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:1) .EQ. '*') GOTO 1110
-        allocate(TRCSRC(0:NSTRA),TRCSR1(0:NSTRA))
+        allocate(TRCSR1(0:NSTRA))
         DO I = 0, NSTRA, 60
           READ (IUNIN,'(A80)') ZEILE
           call fix_logical_input(zeile,60)
@@ -6903,7 +6885,7 @@ cxpb Read first, transform and rewrite
           endif
         enddo
         WRITE(IUNOT,6665) (TRCSR1(J),J=0,NSTRA)
-        deallocate(TRCSRC,TRCSR1)
+        deallocate(TRCSR1)
         READ (IUNIN,6666) NVOLPR, idum(0) ! NSPCPR
         WRITE(IUNOT,6666) NVOLPR, idum(0)
         DO 1120 J=1,NVOLPR
@@ -8986,6 +8968,7 @@ cxpb as they no longer necessarily point to the same species
       deallocate(iatm1)
       deallocate(ipls1)
 #ifdef B25_EIRENE
+      CALL EIRENE_DEALLOC_CINIT
       CALL EIRENE_DEALLOC_CTRIG
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
@@ -8993,6 +8976,7 @@ cxpb as they no longer necessarily point to the same species
       CALL EIRENE_DEALLOC_CESTIM
       CALL EIRENE_DEALLOC_COUTAU
       CALL EIRENE_DEALLOC_COMUSR
+      CALL EIRENE_DEALLOC_CTRCEI
       CALL EIRENE_EXTRAB25_CLEANUP
 #endif
 

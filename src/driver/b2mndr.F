@@ -43,8 +43,13 @@
       use b2mod_external
 #ifdef B25_EIRENE
       use eirmod_parmmod
+      use eirmod_cinit
+     * , only : eirene_init_cinit
       use eirmod_ccoupl
       use eirmod_clogau
+      use eirmod_ctrcei
+      use eirmod_comprt
+     , ,only: iunout
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25
@@ -1173,8 +1178,11 @@ csw 09oct2012
         N2ND=DEF_NXD+MAX(1,DEF_NCUT/2*3)+
      .       DEF_ISOEXTRA*MAX(0,DEF_NCUT/2-1)
         N3RD=DEF_NPHID
+        NREAC=7
+        IUNOUT=6
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_INIT_CINIT
 #else
         call xerrab
      &   ('Compile code with B25_EIRENE option for coupled runs')
@@ -1185,6 +1193,7 @@ csw 09oct2012
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
       CALL EIRENE_ALLOC_CCOUPL(1)
+      CALL EIRENE_ALLOC_CTRCEI
 #endif
 
 *   ..read geometry and metric
@@ -2141,6 +2150,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_DEALLOC_CCOUPL
+      CALL EIRENE_DEALLOC_CTRCEI
 #endif
       call subend ()
       return
