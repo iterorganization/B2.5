@@ -7,7 +7,7 @@ c  version : 08.08.2000 11:35
       implicit none
 #     include <eir_reac.F>
       integer iarg,iostat,nden,iden,iz1
-      integer ir,i_k,i_l,i_m,i_n,i,j
+      integer ir,i_k,i_l,i_m,i_n,i,j,iargc
       real (kind=R8) :: D11(0:8,0:8),density(101),csx(101),FP(6)
       real (kind=R8) :: t1, t2, te, tei, tef, de, dej, def, tfac, dnnn
       real (kind=R8) :: rcmin, rcmax
