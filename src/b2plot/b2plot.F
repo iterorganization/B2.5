@@ -48,7 +48,10 @@ c 2002-09-11: logic revised
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_clogau
+      use eirmod_ctrcei
       use eirmod_ctrig
+      use eirmod_cinit
+     , , only: eirene_init_cinit
       use eirmod_extrab25
       use eirmod_braeir
       use eirmod_cestim
@@ -56,6 +59,8 @@ c 2002-09-11: logic revised
      , , only: eirene_dealloc_coutau
       use eirmod_comusr
      , , only: eirene_dealloc_comusr, nmassa, nmassm, nmassi
+      use eirmod_comprt
+     , , only: iunout
       use eirmod_eirbra
      & , smo_eir => smo
 #endif
@@ -287,8 +292,11 @@ c
         N2ND=DEF_NXD+MAX(1,DEF_NCUT/2*3)+
      .       DEF_ISOEXTRA*MAX(0,DEF_NCUT/2-1)
         N3RD=DEF_NPHID
+        NREAC=7
+        IUNOUT=6
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_INIT_CINIT
       endif
 #endif
       natmi = natm
@@ -298,6 +306,7 @@ c
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
+      CALL EIRENE_ALLOC_CTRCEI
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
 #endif
@@ -1375,12 +1384,15 @@ c
             call dealloc_b2mod_neoclassical
             call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
-            if (allocated(emach)) deallocate(emach)
-            call dealloc_b2mod_b2plot_eirene
+            if (allocated(emach)) then
+              deallocate(emach)
+              call dealloc_b2mod_b2plot_eirene
+            end if
             CALL EIRENE_DEALLOC_CTRIG
             CALL EIRENE_DEALLOC_CESTIM
             CALL EIRENE_DEALLOC_COMUSR
             CALL EIRENE_DEALLOC_COUTAU
+            CALL EIRENE_DEALLOC_CTRCEI
             CALL EIRENE_DEALLOC_BRAEIR
             CALL EIRENE_DEALLOC_EIRBRA
             CALL EIRENE_EXTRAB25_CLEANUP
@@ -1445,12 +1457,15 @@ c
           call dealloc_b2mod_neoclassical
           call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
-          if (allocated(emach)) deallocate(emach)
-          call dealloc_b2mod_b2plot_eirene
+          if (allocated(emach)) then
+            deallocate(emach)
+            call dealloc_b2mod_b2plot_eirene
+          end if
           CALL EIRENE_DEALLOC_CTRIG
           CALL EIRENE_DEALLOC_CESTIM
           CALL EIRENE_DEALLOC_COMUSR
           CALL EIRENE_DEALLOC_COUTAU
+          CALL EIRENE_DEALLOC_CTRCEI
           CALL EIRENE_DEALLOC_BRAEIR
           CALL EIRENE_DEALLOC_EIRBRA
           CALL EIRENE_EXTRAB25_CLEANUP
