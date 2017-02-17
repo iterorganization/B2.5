@@ -10,10 +10,7 @@
       integer :: fac
 
       fac = mod(it,batch_size)
-      if (fac.eq.0) fac = 3
-      write(*,*) fac
-      write(*,*) 'var  ',var
-      write(*,*) 'aver ',aver
+      if (fac.eq.0) fac = batch_size
       if (fac.eq.1) then
         aver = var
       else
@@ -21,7 +18,6 @@
         gold = (fac - 1) * gnew
         aver = gold*aver + gnew*var
       endif
-      write(*,*) 'aver2',aver
 
       return
       end subroutine batch_average

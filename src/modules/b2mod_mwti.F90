@@ -2,7 +2,16 @@ Module b2mod_mwti
   use b2mod_types , only : R8
   Implicit None
   Private
-  Public :: b2mwti, output_ds
+  Public :: b2mwti, output_ds, dealloc_b2mod_mwti
+  real (kind=R8), allocatable, save :: &
+         nesepi_av(:), tesepi_av(:), tisepi_av(:), &
+         nesepm_av(:), tesepm_av(:), tisepm_av(:), &
+         nesepa_av(:), tesepa_av(:), tisepa_av(:), &
+         posepi_av(:), posepm_av(:), posepa_av(:)
+  real (kind=R8), allocatable, save :: &
+         nemxip_av(:), temxip_av(:), timxip_av(:), &
+         nemxap_av(:), temxap_av(:), timxap_av(:), &
+         pomxip_av(:), pomxap_av(:)
 #ifndef NO_CDF
   Public :: rwcdf, rwcdf_settime, rwcdf_setbatch
 #endif
@@ -63,7 +72,7 @@ Contains
     !.declarations
 
     !   ..local variables
-    integer ncall, ntstep, nastep, batchsa(1)
+    integer ncall, ntstep, nastep
     real (kind=R8) :: &
          fnixip(nncutmax), feexip(nncutmax), feixip(nncutmax), &
          fnixap(nncutmax), feexap(nncutmax), feixap(nncutmax), &
@@ -97,6 +106,7 @@ Contains
     integer iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
          nybl, nybr, nytl, nytr, nya, nyi, nc
+
     !   ..procedures
     external subini, subend, xertst, ipgeti, batch_average
     Real(kind=R8) :: fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp
@@ -111,12 +121,10 @@ Contains
          dnsepm(nncutmax), dpsepm(nncutmax), kesepm(nncutmax), &
          kisepm(nncutmax), vxsepm(nncutmax), vysepm(nncutmax), &
          vssepm(nncutmax), tpsepi(nncutmax), tpsepa(nncutmax)
-    real (kind=R8), allocatable, save :: &
-         nesepm_av(:)
     real (kind=R8) :: &
          tmhacore(1), tmhasol(1), tmhadiv(1), slice(-1:ny), tstepn(1)
     real (kind=R8) :: &
-         timesa(1)
+         timesa(1), batchsa(1)
     character*5 rw
 #endif
     !   ..initialisation
@@ -238,7 +246,45 @@ Contains
 !        iret = nf_close(ncav)
 #endif
       allocate (nesepm_av(1:nncutmax))
+      allocate (tesepm_av(1:nncutmax))
+      allocate (tisepm_av(1:nncutmax))
+      allocate (posepm_av(1:nncutmax))
+      allocate (nesepi_av(1:nncutmax))
+      allocate (tesepi_av(1:nncutmax))
+      allocate (tisepi_av(1:nncutmax))
+      allocate (posepi_av(1:nncutmax))
+      allocate (nesepa_av(1:nncutmax))
+      allocate (tesepa_av(1:nncutmax))
+      allocate (tisepa_av(1:nncutmax))
+      allocate (posepa_av(1:nncutmax))
+      allocate (nemxip_av(1:nncutmax))
+      allocate (temxip_av(1:nncutmax))
+      allocate (timxip_av(1:nncutmax))
+      allocate (pomxip_av(1:nncutmax))
+      allocate (nemxap_av(1:nncutmax))
+      allocate (temxap_av(1:nncutmax))
+      allocate (timxap_av(1:nncutmax))
+      allocate (pomxap_av(1:nncutmax))
       nesepm_av = 0.0_R8
+      tesepm_av = 0.0_R8
+      tisepm_av = 0.0_R8
+      posepm_av = 0.0_R8
+      nesepi_av = 0.0_R8
+      tesepi_av = 0.0_R8
+      tisepi_av = 0.0_R8
+      posepi_av = 0.0_R8
+      nesepa_av = 0.0_R8
+      tesepa_av = 0.0_R8
+      tisepa_av = 0.0_R8
+      posepa_av = 0.0_R8
+      nemxip_av = 0.0_R8
+      temxip_av = 0.0_R8
+      timxip_av = 0.0_R8
+      pomxip_av = 0.0_R8
+      nemxap_av = 0.0_R8
+      temxap_av = 0.0_R8
+      timxap_av = 0.0_R8
+      pomxap_av = 0.0_R8
     endif! ncall == 0
     if(ncall.lt.3) then
       call xertst (0.le.itim, 'faulty parameter itim')
@@ -268,7 +314,6 @@ Contains
 #ifndef NO_CDF
       call rwcdf_setbatch ('batch', nastep)
       batchsa(1) = tim
-      write(*,*) 'returned from setbatch; batchsa = ', batchsa(1)
 #endif
     endif
     !
@@ -682,15 +727,28 @@ Contains
 
 !wdk update batch averages
     if (luav) then
-      write(*,*) 'averaging...',itim,ntim_batch
-      write(*,*) 'nesepm   ',nesepm
-      write(*,*) 'nesepm_av',nesepm_av
       if (ntim_batch .gt. 0 ) then
         call batch_average(nncutmax,nesepm,nesepm_av,itim,ntim_batch)
-      else
-        nesepm_av = 0.0_R8
+        call batch_average(nncutmax,tesepm,tesepm_av,itim,ntim_batch)
+        call batch_average(nncutmax,tisepm,tisepm_av,itim,ntim_batch)
+        call batch_average(nncutmax,posepm,posepm_av,itim,ntim_batch)
+        call batch_average(nncutmax,nesepi,nesepi_av,itim,ntim_batch)
+        call batch_average(nncutmax,tesepi,tesepi_av,itim,ntim_batch)
+        call batch_average(nncutmax,tisepi,tisepi_av,itim,ntim_batch)
+        call batch_average(nncutmax,posepi,posepi_av,itim,ntim_batch)
+        call batch_average(nncutmax,nesepa,nesepa_av,itim,ntim_batch)
+        call batch_average(nncutmax,tesepa,tesepa_av,itim,ntim_batch)
+        call batch_average(nncutmax,tisepa,tisepa_av,itim,ntim_batch)
+        call batch_average(nncutmax,posepa,posepa_av,itim,ntim_batch)
+        call batch_average(nncutmax,nemxip,nemxip_av,itim,ntim_batch)
+        call batch_average(nncutmax,temxip,temxip_av,itim,ntim_batch)
+        call batch_average(nncutmax,timxip,timxip_av,itim,ntim_batch)
+        call batch_average(nncutmax,pomxip,pomxip_av,itim,ntim_batch)
+        call batch_average(nncutmax,nemxap,nemxap_av,itim,ntim_batch)
+        call batch_average(nncutmax,temxap,temxap_av,itim,ntim_batch)
+        call batch_average(nncutmax,timxap,timxap_av,itim,ntim_batch)
+        call batch_average(nncutmax,pomxap,pomxap_av,itim,ntim_batch)
       endif
-      write(*,*) 'finished averaging...', nesepm_av
     endif
 !wdk end of batch averaging
     
@@ -1025,6 +1083,25 @@ Contains
       imap(1)=1
       imap(2)=nncutmax
       call rwcdf(rw,ncid,'nesepm_av',imap,nesepm_av,iret)
+      call rwcdf(rw,ncid,'tesepm_av',imap,tesepm_av,iret)
+      call rwcdf(rw,ncid,'tisepm_av',imap,tisepm_av,iret)
+      call rwcdf(rw,ncid,'posepm_av',imap,posepm_av,iret)
+      call rwcdf(rw,ncid,'nesepi_av',imap,nesepi_av,iret)
+      call rwcdf(rw,ncid,'tesepi_av',imap,tesepi_av,iret)
+      call rwcdf(rw,ncid,'tisepi_av',imap,tisepi_av,iret)
+      call rwcdf(rw,ncid,'posepi_av',imap,posepi_av,iret)
+      call rwcdf(rw,ncid,'nesepa_av',imap,nesepa_av,iret)
+      call rwcdf(rw,ncid,'tesepa_av',imap,tesepa_av,iret)
+      call rwcdf(rw,ncid,'tisepa_av',imap,tisepa_av,iret)
+      call rwcdf(rw,ncid,'posepa_av',imap,posepa_av,iret)
+      call rwcdf(rw,ncid,'nemxip_av',imap,nemxip_av,iret)
+      call rwcdf(rw,ncid,'temxip_av',imap,temxip_av,iret)
+      call rwcdf(rw,ncid,'timxip_av',imap,timxip_av,iret)
+      call rwcdf(rw,ncid,'pomxip_av',imap,pomxip_av,iret)
+      call rwcdf(rw,ncid,'nemxap_av',imap,nemxap_av,iret)
+      call rwcdf(rw,ncid,'temxap_av',imap,temxap_av,iret)
+      call rwcdf(rw,ncid,'timxap_av',imap,timxap_av,iret)
+      call rwcdf(rw,ncid,'pomxap_av',imap,pomxap_av,iret)
 
     endif
     !      
@@ -1040,6 +1117,34 @@ Contains
     !.end b2mwti
 
   end subroutine b2mwti
+
+  subroutine dealloc_b2mod_mwti
+
+  if (.not.allocated(nesepi_av)) return
+
+  deallocate(nesepi_av)
+  deallocate(tesepi_av)
+  deallocate(tisepi_av)
+  deallocate(posepi_av)
+  deallocate(nesepm_av)
+  deallocate(tesepm_av)
+  deallocate(tisepm_av)
+  deallocate(posepm_av)
+  deallocate(nesepa_av)
+  deallocate(tesepa_av)
+  deallocate(tisepa_av)
+  deallocate(posepa_av)
+  deallocate(nemxip_av)
+  deallocate(temxip_av)
+  deallocate(timxip_av)
+  deallocate(pomxip_av)
+  deallocate(nemxap_av)
+  deallocate(temxap_av)
+  deallocate(timxap_av)
+  deallocate(pomxap_av)
+
+  return
+  end subroutine dealloc_b2mod_mwti
 
 #ifndef NO_CDF
   subroutine b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, write_2d, iret)
@@ -1088,7 +1193,12 @@ Contains
          vxsepmid, vysepmid, vssepmid, &
          tpmxipid, tpmxapid, tp3drid, tp3dlid, tp3dtlid, tp3dtrid, &
          tpsepiid, tpsepaid, &
-         batchsaid, nesepmid_av
+         nastepid, batchsaid, &
+         nesepmid_av, tesepmid_av, tisepmid_av, posepmid_av, &
+         nesepiid_av, tesepiid_av, tisepiid_av, posepiid_av, &
+         nesepaid_av, tesepaid_av, tisepaid_av, posepaid_av, &
+         nemxipid_av, temxipid_av, timxipid_av, pomxipid_av, &
+         nemxapid_av, temxapid_av, timxapid_av, pomxapid_av
     ! variable shapes
     integer :: dims(2)
     ! Create and enter define mode
@@ -1105,9 +1215,7 @@ Contains
     iret = nf_def_dim(ncid, 'nc', nc, ncdim)
     iret = nf_def_dim(ncid, 'ns', ns, nsdim)
     iret = nf_def_dim(ncid, 'time', ncunlim, timedim)
-    write(*,*) 'before batchdim', nbatch
     iret = nf_def_dim(ncid, 'batch', nbatch, batchdim)
-    write(*,*) 'after batchdim'
     ! define variables
     dims(1) = 0
     iret = nf_def_var(ncid, 'ntstep', NCDOUBLE, 0, dims, ntstepid)
@@ -1361,7 +1469,6 @@ Contains
     endif
 
     !wdk averages
-    write(*,*)  'before defining new quantities'
     dims(1) = 0
     iret  = nf_def_var(ncid, 'nastep', NCDOUBLE, 0, dims, nastepid)
     dims(1) = batchdim
@@ -1369,7 +1476,25 @@ Contains
     dims(1) = ncdim
     dims(2) = batchdim
     iret  = nf_def_var(ncid, 'nesepm_av', NCDOUBLE, 2, dims, nesepmid_av)
-    write(*,*) 'nesepmid_av defined'
+    iret  = nf_def_var(ncid, 'tesepm_av', NCDOUBLE, 2, dims, tesepmid_av)
+    iret  = nf_def_var(ncid, 'tisepm_av', NCDOUBLE, 2, dims, tisepmid_av)
+    iret  = nf_def_var(ncid, 'posepm_av', NCDOUBLE, 2, dims, posepmid_av)
+    iret  = nf_def_var(ncid, 'nesepi_av', NCDOUBLE, 2, dims, nesepiid_av)
+    iret  = nf_def_var(ncid, 'tesepi_av', NCDOUBLE, 2, dims, tesepiid_av)
+    iret  = nf_def_var(ncid, 'tisepi_av', NCDOUBLE, 2, dims, tisepiid_av)
+    iret  = nf_def_var(ncid, 'posepi_av', NCDOUBLE, 2, dims, posepiid_av)
+    iret  = nf_def_var(ncid, 'nesepa_av', NCDOUBLE, 2, dims, nesepaid_av)
+    iret  = nf_def_var(ncid, 'tesepa_av', NCDOUBLE, 2, dims, tesepaid_av)
+    iret  = nf_def_var(ncid, 'tisepa_av', NCDOUBLE, 2, dims, tisepaid_av)
+    iret  = nf_def_var(ncid, 'posepa_av', NCDOUBLE, 2, dims, posepaid_av)
+    iret  = nf_def_var(ncid, 'nemxip_av', NCDOUBLE, 2, dims, nemxipid_av)
+    iret  = nf_def_var(ncid, 'temxip_av', NCDOUBLE, 2, dims, temxipid_av)
+    iret  = nf_def_var(ncid, 'timxip_av', NCDOUBLE, 2, dims, timxipid_av)
+    iret  = nf_def_var(ncid, 'pomxip_av', NCDOUBLE, 2, dims, pomxipid_av)
+    iret  = nf_def_var(ncid, 'nemxap_av', NCDOUBLE, 2, dims, nemxapid_av)
+    iret  = nf_def_var(ncid, 'temxap_av', NCDOUBLE, 2, dims, temxapid_av)
+    iret  = nf_def_var(ncid, 'timxap_av', NCDOUBLE, 2, dims, timxapid_av)
+    iret  = nf_def_var(ncid, 'pomxap_av', NCDOUBLE, 2, dims, pomxapid_av)
 
     ! assign attributes
     iret = nf_put_att_text(ncid, timesaid, 'long_name', 4, 'time')
@@ -1746,6 +1871,48 @@ Contains
       iret = nf_put_att_double(ncid, fc3dtrid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
     endif
 
+    !wdk averaged quantities
+    iret = nf_put_att_text(ncid, nesepmid_av, 'long_name', 52, 'averaged separatrix electron density, outer midplane')
+    iret = nf_put_att_text(ncid, nesepmid_av, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, tesepmid_av, 'long_name', 56, 'averaged separatrix electron temperature, outer midplane')
+    iret = nf_put_att_text(ncid, tesepmid_av, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tisepmid_av, 'long_name', 51, 'averaged separatrix ion temperature, outer midplane')
+    iret = nf_put_att_text(ncid, tisepmid_av, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, posepmid_av, 'long_name', 45, 'averaged separatrix potential, outer midplane')
+    iret = nf_put_att_text(ncid, posepmid_av, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, nesepiid_av, 'long_name', 54, 'averaged separatrix electron density, inboard divertor')
+    iret = nf_put_att_text(ncid, nesepiid_av, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, tesepiid_av, 'long_name', 58, 'averaged separatrix electron temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tesepiid_av, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tisepiid_av, 'long_name', 53, 'averaged separatrix ion temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tisepiid_av, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, posepiid_av, 'long_name', 47, 'averaged separatrix potential, inboard divertor')
+    iret = nf_put_att_text(ncid, posepiid_av, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, nesepaid_av, 'long_name', 55, 'averaged separatrix electron density, outboard divertor')
+    iret = nf_put_att_text(ncid, nesepaid_av, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, tesepaid_av, 'long_name', 59, 'averaged separatrix electron temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tesepaid_av, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tisepaid_av, 'long_name', 54, 'averaged separatrix ion temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tisepaid_av, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, posepaid_av, 'long_name', 52, 'averaged separatrix potential, outboard divertor')
+    iret = nf_put_att_text(ncid, posepaid_av, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, nemxipid_av, 'long_name', 51, 'averaged maximum electron density, inboard divertor')
+    iret = nf_put_att_text(ncid, nemxipid_av, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, temxipid_av, 'long_name', 55, 'averaged maximum electron temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, temxipid_av, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, timxipid_av, 'long_name', 50, 'averaged maximum ion temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, timxipid_av, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, pomxipid_av, 'long_name', 44, 'averaged maximum potential, inboard divertor')
+    iret = nf_put_att_text(ncid, pomxipid_av, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, nemxapid_av, 'long_name', 52, 'averaged maximum electron density, outboard divertor')
+    iret = nf_put_att_text(ncid, nemxapid_av, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, temxapid_av, 'long_name', 56, 'averaged maximum electron temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, temxapid_av, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, timxapid_av, 'long_name', 52, 'averaged maximum ion temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, timxapid_av, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, pomxapid_av, 'long_name', 46, 'averaged maximum potential, outboard divertor')
+    iret = nf_put_att_text(ncid, pomxapid_av, 'units', 2, 'V ')
+
     ! leave define mode
     iret = nf_enddef(ncid)
     iret = nf_close(ncid)
@@ -1762,7 +1929,7 @@ Contains
     integer vartyp,nvdims,start(maxvdims),mycount(maxvdims),dimids(maxvdims)
     character*(*) timnam,batchnam
     character*(maxncnam) timsav,batchsav
-    integer ntsav,ntstep
+    integer ntsav,ntstep,nasav,nastep
     integer :: istride, imax
     logical, parameter :: debug = .false.
     save timsav,ntsav,batchsav,nasav
@@ -1791,7 +1958,7 @@ Contains
         mycount(i)=1
       elseif(dimnam.eq.batchsav) then
         start(i)=nasav
-        count(i)=1
+        mycount(i)=1
       else
         start(i)=1
       endif

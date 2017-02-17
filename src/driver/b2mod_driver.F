@@ -2180,6 +2180,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
      *                BoRiS,.true.,.false.,.false.)
         endif
+        call dealloc_b2mod_mwti
       endif
 *   ..write out last tallies if not yet done
       if(tally.gt.0) then
