@@ -204,7 +204,7 @@
      *  delta_plasma_time, save_plasma_time
       real (kind=R8) ::
      *  te_hot, ne_hot_frac
-      logical quitexist, quit, quitexist_
+      logical quitexist, quit, quitexist_, write_save
       real (kind=R8) ::
      *  stack_dtim(20)
       integer stack_ntim(20)
@@ -1926,11 +1926,13 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &       b2mndr_elapsed.gt.0.0_R8).or.
      2      (etim.gt.stim.and.tim.ge.etim.and.etim.ne.0.0_R8).or.
      3      (no_solve.eq.1.and.itim.eq.ntim)
-        if(.not.quit.and.
-     .   ((cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8).or.
-     .    (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)).or.
-     .    (ntim_save.gt.0.and.ntim.gt.0.and.mod(ntim,ntim_save).eq.0))
-     >   then
+        write_save=cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8
+        write_save=write_save.or.
+     .   (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
+        if(ntim_save.gt.0.and.ntim.gt.0) write_save=write_save.or.
+     .   mod(ntim,ntim_save).eq.0
+        write_save=write_save.and..not.quit
+        if(write_save) then
           write(savefile(13:16),'(i4)') edition
           edition=edition+1
           if(cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8)
