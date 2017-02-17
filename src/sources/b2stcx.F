@@ -106,7 +106,7 @@
        do is = 1, ns-1
         if (.not.lnext(is-1,is)) then
          call xertst (samax(n2,rcx(-1,-1,is),1).eq.0.0_R8,
-     &     'faulty argument rcx: non-zero for unrelated species')
+     &     'faulty argument rcx: nonzero for unrelated species')
         endif
        enddo
       endif
@@ -129,7 +129,7 @@ ctmp.dpc
        if (lnext(is-1,is)) then
 *     ..particle source
         if (is-1.eq.is0) then
-*        (This is a special case: charge-exchange between H0 and H1,
+*        (This is a special case: charge exchange between H0 and H1,
 *        for which there is no particle source.)
         else
          do iy = -1, ny

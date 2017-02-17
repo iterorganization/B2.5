@@ -204,10 +204,10 @@ c     ------------------------------------------------------------------
 
 c   ..locals
       integer ix , iy , is , i , j
-c-dpc+xpb
+cdpc+xpb
       integer imin, imax
       real (kind=R8) rmin, rmax
-c-dpc+xpb-end
+cdpc+xpb-end
 
       logical lok
 
@@ -407,7 +407,7 @@ c   ..x-point
 
 c   ..plasma centre
 
-c-dpc+xpb
+cdpc+xpb
       rmin=1e20_R8
       rmax=-1e20_R8
       imin=-2
@@ -425,7 +425,7 @@ c-dpc+xpb
          endif
       enddo
       if(imin.eq.-2.or.imax.eq.-2) then
-c-dpc+xpb-end
+cdpc+xpb-end
          i    = 0
          r0   = 0.0_R8
          z0   = 0.0_R8
@@ -444,7 +444,7 @@ c-dpc+xpb-end
          z0 = z0 / float(i)
          write(*,*)
      *        'Used initial approach for calculating magnetic axis'
-c-dpc+xpb
+cdpc+xpb
       else
         r0=(rmin+rmax)/2.0_R8
         z0=(cry(imin,-1,1)+cry(imax,-1,1))/2.0_R8

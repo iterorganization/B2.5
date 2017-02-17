@@ -176,9 +176,9 @@
        do is = 0, ns-2
         if (.not.lnext(is,is+1)) then
          call xertst (samax(n2,rsa(-1,-1,is),1).eq.0.0_R8,
-     &     'faulty argument rsa: non-zero for unrelated species')
+     &     'faulty argument rsa: nonzero for unrelated species')
          call xertst (samax(n2,rra(-1,-1,is+1),1).eq.0.0_R8,
-     &     'faulty argument rra: non-zero for unrelated species')
+     &     'faulty argument rra: nonzero for unrelated species')
         endif
        enddo
       endif

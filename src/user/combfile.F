@@ -47,7 +47,7 @@ c***          first=.true. for the first call.
 c***          A dummy with no action is called "xtrn_dum"
 c***  mrks  array of markers to be written in the file
 c***  nmrk  actual number of markers
-c***  cdfl  column names for non-zero defaults
+c***  cdfl  column names for nonzero defaults
 c***  vdfl  corresponding default values
 c***  ndfl  number of these values
 c***        - default values pad the newly introduced columns in the

@@ -846,7 +846,7 @@
 *     to reach superstage k from superstage k-1. rtlpi has dimension eV. 
 *
 *     nscx - integer.
-*     nscx is the number of charge-exchanging neutral hydrogen species
+*     nscx is the number of charge exchanging neutral hydrogen species
 *     that are present in the calculation.  (So, usually nscx.eq.1).
 *     It will hold that 0.le.nscx.lt.10.
 *

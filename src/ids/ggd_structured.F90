@@ -214,7 +214,7 @@ contains
     if (present(computeMeasures)) lcomputeMeasures = computeMeasures
 
     call assert( size( coordtype ) == size( gshape ), &
-         & "gridWriteStructured: size of coordtype and gshape don't match" )
+         & "gridWriteStructured: size of coordtype and gshape do not match" )
     call assert( maxval( shape( x ) ) == maxval( gshape ), &
          & "gridWriteStructured: shape of x seems to be inconsistent with gshape" )
 

@@ -3,7 +3,7 @@ c
 #     include <EIRBRA.H>
       real (kind=R8) ::
      *      sni,smo,see,sei,
-c-dpc     r      dsnidni,dsmodup,dseedte,dseidte,dseedti,dseidti,
+cdpc     r      dsnidni,dsmodup,dseedte,dseidte,dseedti,dseidti,
      r      fluxh,srcstrn,volsumn,volsumm,volsumei,volsumee,
      r      flxspci,srccrfc
 cdjm Jan2017

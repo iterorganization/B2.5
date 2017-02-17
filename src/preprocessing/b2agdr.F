@@ -482,7 +482,7 @@
      >     topiy(ix,nyiso2) = nyiso1
         end do
       endif
-c-dpc-debug
+cdpc-debug
       if(nx1.eq.nx.and.ny1.eq.ny) then
 	write(*,*) 'b2agdr sanity check: vol ',
      1	 maxval(abs(vol1-vol))

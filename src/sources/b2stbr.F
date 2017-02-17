@@ -748,8 +748,8 @@ cwdk remove this if-test, to allow runs without Eirene if code is compiled with 
      1         (deposition(ibnd,itrack)-old_deposition(ibnd,itrack))-
      2         (erosion(ibnd,itrack)-old_erosion(ibnd,itrack))
             else ! case of continuous erosion of deposited species
-c-xpb  This only has meaning if we are following multiple mixed species and
-c-xpb  this is not the first timestep 
+cxpb  This only has meaning if we are following multiple mixed species and
+cxpb  this is not the first timestep
               t0 = 0.0_R8
               equilibrium(itrack) = ntargsp.gt.1 .and. ncall.gt.0 .and.
      &         sput_frac_flag.ne.0
@@ -761,8 +761,8 @@ c-xpb  this is not the first timestep
      2           (particle_inventory(ibnd,itrack) - t0))
                 over_erosion = .true.
               else  ! we are keeping track of the bulk and eroded it all
-c-xpb  sput_frac_flag.eq.0 means we are not following mixed materials
-c-xpb  plate_thickness.eq.0 means we are not doing full inventories 
+cxpb  sput_frac_flag.eq.0 means we are not following mixed materials
+cxpb  plate_thickness.eq.0 means we are not doing full inventories
                 call xertst (sput_frac_flag.eq.0 .or. 
      .                       plate_thickness(ibnd).eq.0.0_R8,
      1           'Eroded the entire bulk contents of the target!')
@@ -1129,7 +1129,7 @@ c        write(*,*) 'Called neutr_scl'
       call ipgetr ('b2stbr_plate_thick', plate_thick)
       call xertst (0.0_R8.le.plate_thick, 'faulty b2stbr_plate_thick')
 
-c-xpb Reading of neutrals namelist moved here as it is needed by init_wall
+cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       new_sputter_namelist=neutrals_namelist.eq.1.or.use_eirene.ne.0
       call read_neutrals_namelist
      1   (nx, ny, ns, new_sputter_namelist)

@@ -889,7 +889,7 @@ cxpb  Use explicit writing of non-default elements only
      .      1:matsurf_nconstituents(old_file))
         endif
       enddo
-c-xpb Normalise surface constituents
+cxpb Normalise surface constituents
       do ibnd = 1, nbnd
         sum = 0.0_R8
         do i = 1, matsurf_nconstituents(ibnd)

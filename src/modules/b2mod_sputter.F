@@ -163,7 +163,7 @@
         endif
         open(nwrite,file=trim(filename))
 cxpb        write(nwrite,sputter_save)
-cxpb  Replaced with explicit writing of non-zero elements only
+cxpb  Replaced with explicit writing of nonzero elements only
         write(nwrite,'(a13)') '&SPUTTER_SAVE'
         write(nwrite,'(a8,i4,a1)') 'NX_SP = ', nx, ','
         write(nwrite,'(a8,i4,a1)') 'NY_SP = ', ny, ','
@@ -1258,7 +1258,7 @@ c  vappres  ->  Vapour Pressure of the target in Pascals.
       qthev = 0.0_R8
       nz = matsurf_nconstituents(ibnd)
 
-c-xpb Contribution from bulk if species is part of bulk 
+cxpb Contribution from bulk if species is part of bulk
       bulk = .false.
       do i = 1, nz
         if (zn(is).eq.matsurf_nzconstituents(ibnd,i)) then
@@ -1285,9 +1285,9 @@ c       write(*,*) 'Thermal evaporation < 0, Surface temp = ',tp
       if (.not.(itrack.gt.0.and.itrack.le.ntrack)) return   ! this is not a tracked species
       if (nz.eq.layer_nconstituents(ibnd)) return           ! we are not doing mixed materials
 
-c-xpb Contribution from re-deposited species
-c-xpb if using the mixed matarials model
-c-xpb Also need to consider alloy contributions
+cxpb Contribution from re-deposited species
+cxpb if using the mixed matarials model
+cxpb Also need to consider alloy contributions
       A = species_vapprs_A(itrack)
       B = species_vapprs_B(itrack)
       alpha = species_stick_coef(itrack)

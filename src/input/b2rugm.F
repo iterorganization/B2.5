@@ -232,7 +232,7 @@
       call cfrure (nget, n2, hy, 'hy')
 *   ..read qz, qc, gs
       call cfrure (nget, n2*2, qz, 'qz')
-c-xpb
+cxpb
       if(b2fgmtry_version.ge.'01.001.022') then
 	call cfrure (nget, n2, qc, 'qc')
       else
@@ -271,7 +271,7 @@ c-xpb
         enddo
        enddo
       endif
-c-xpb-end
+cxpb-end
       call cfrure (nget, n2*3, gs, 'gs')
 *   ..read /b2cmgs/
       call cfruin (nget, 1, idum, 'nlreg')
@@ -282,7 +282,7 @@ c-xpb-end
       call cfruin (nget, nlreg, nlylo, 'nlylo')
       call cfruin (nget, nlreg, nlyhi, 'nlyhi')
       call cfruin (nget, nlreg, nlloc, 'nlloc')
-c-dpc
+cdpc
       call cfruin (nget, 1, idum, 'nncut')
       nncut=idum(0)
       call xertst (0.le.nncut.and.nncut.le.nncutmax,
@@ -302,15 +302,15 @@ c-dpc
       call cfruin (nget, n2*3, region, 'region')
       call cfruin (nget, 3, nnreg, 'nnreg')
       call cfruin (nget, n2*2, resignore, 'resignore')
-c-dpc-end 
-c-xpb
+cdpc-end
+cxpb
       if(b2fgmtry_version.ge.'01.001.000') then
 	call cfruin (nget, 1, idum, 'periodic_bc')
 	periodic_bc=idum(0)
       else
         periodic_bc=0
       endif
-c-xpb-end
+cxpb-end
 *  ..interpolate magnetic field to cell faces
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)

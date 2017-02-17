@@ -166,12 +166,12 @@
       do k = nscx, nscxmax-1
         iscx(k) = -1
       enddo
-*    ..compute log-log charge-exchange rate coefficients
+*    ..compute log-log charge exchange rate coefficients
       do k = 0, nscx-1
         call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne,
      &   rlcx(-1,-1,0,0,k))
       enddo
-*   ..compute charge-exchange rate coefficients
+*   ..compute charge exchange rate coefficients
       do k = 0, nscx-1
         call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
      &   rlcx(-1,-1,0,0,k), rcx)
@@ -272,16 +272,16 @@
         call mds_err_msg(status)
         call mds_err_msg(status2)
 
-c-dpc        status=mdsvalue2(
-c-dpc     *   'CURRENT_SHOT("SOLPS")'//char(0),
-c-dpc     *   descr2(IDTYPE_LONG,0),shotnumber,
-c-dpc     *   0,retlen)
-c-dpc        if(mod(status,2).eq.1) then
-c-dpc          write(*,*) 'current shotnumber: ',shotnumber
-c-dpc        else
-c-dpc          call mds_err_msg(status)
-c-dpc          call xerrab ('Invalid status value')
-c-dpc        endif
+cdpc        status=mdsvalue2(
+cdpc     *   'CURRENT_SHOT("SOLPS")'//char(0),
+cdpc     *   descr2(IDTYPE_LONG,0),shotnumber,
+cdpc     *   0,retlen)
+cdpc        if(mod(status,2).eq.1) then
+cdpc          write(*,*) 'current shotnumber: ',shotnumber
+cdpc        else
+cdpc          call mds_err_msg(status)
+cdpc          call xerrab ('Invalid status value')
+cdpc        endif
 
       else
 

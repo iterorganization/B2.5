@@ -458,11 +458,11 @@ contains
 !!     do k = nscx, nscxmax-1
 !!        iscx(k) = -1
 !!     enddo
-!!     !    ..compute log-log charge-exchange rate coefficients
+!!     !    ..compute log-log charge exchange rate coefficients
 !!     do k = 0, nscx-1
 !!        call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne, rlcx(-1,-1,0,0,k))
 !!     enddo
-!!     !   ..compute charge-exchange rate coefficients
+!!     !   ..compute charge exchange rate coefficients
 !!     do k = 0, nscx-1
 !!        call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti, rlcx(-1,-1,0,0,k), rcx, wrk0)
 !!     enddo

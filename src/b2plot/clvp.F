@@ -76,7 +76,7 @@ c*** Calculate the integral over the whole volume
 c      print *,'clvp: volume, integral, negative part ',     !###
 c     ,                              vol_hlp,tot_hlp,neg_hlp !###
       if(tot_hlp.le.0.0_R8) then !{
-        print *,'clvp: no non-zero data found'
+        print *,'clvp: no nonzero data found'
         return
       end if !}
 
@@ -249,7 +249,7 @@ c*** Calculate the integral over the whole volume
 c      print *,'eclvp: volume, integral, negative part ',     !###
 c     ,                               vol_hlp,tot_hlp,neg_hlp !###
       if(tot_hlp.le.0.0_R8) then !{
-        print *,'eclvp: no non-zero data found'
+        print *,'eclvp: no nonzero data found'
         return
       end if !}
 
@@ -417,7 +417,7 @@ c*** Calculate the integral over the whole volume
 c      print *,'wclvp: volume, integral, negative part ',     !###
 c     ,                               vol_hlp,tot_hlp,neg_hlp !###
       if(tot_hlp.le.0.0_R8) then !{
-        print *,'wclvp: no non-zero data found'
+        print *,'wclvp: no nonzero data found'
         return
       end if !}
 
@@ -586,7 +586,7 @@ c      print *,'tclvp: volume, integral, negative part ',     !###
 c     ,                               vol_hlp,tot_hlp,neg_hlp !###
 
       if(tot_hlp.le.0.0_R8) then !{
-        print *,'tclvp: no non-zero data found'
+        print *,'tclvp: no nonzero data found'
         return
       end if !}
 

@@ -269,7 +269,7 @@ c therefore initialise here
 *    ..compute log-log electron rate coefficients
         call b2spel (nx, ny, ns, ev, te, ne, rlsa, rlra,
      &   rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
-*    ..compute log-log charge-exchange rate coefficients
+*    ..compute log-log charge exchange rate coefficients
         do k = 0, nscx-1
          call b2spcx (nx, ny, ns, ev, am(iscx(k)), ti, ne,
      &     rlcx(-1,-1,0,0,k))

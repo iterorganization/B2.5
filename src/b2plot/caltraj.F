@@ -1300,7 +1300,7 @@ c      IMPLICIT REAL*8 (A-H,O-Z)
       COMMON /RASET2/ FLAG
 *
       LOGICAL FIRST
-c-dpc split logical and data
+cdpc split logical and data
       data first /.TRUE./
       DATA CHECK /'H1RN INITIALISED'/
 *

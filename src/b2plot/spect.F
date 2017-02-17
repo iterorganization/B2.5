@@ -2610,7 +2610,7 @@ C                     2) ONLY IGNORE TRAILING BLANKS FOR SSTRNG
 C                        (KEEP LEADING BLANKS).
 C                     3) MODIFY DO LOOP INDEX RANGE TO ENSURE THAT
 C                        YOU DO NOT GO BEYOND THE END OF CSTRNG.
-C                     4) VERIFY LENGTH OF SSTRNG IS NON-ZERO.
+C                     4) VERIFY LENGTH OF SSTRNG IS NONZERO.
 C
 C-----------------------------------------------------------------------
 C-----------------------------------------------------------------------

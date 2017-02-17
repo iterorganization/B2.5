@@ -846,7 +846,7 @@ c     filling rtqa(electron heat loss), rtrd(line radiation) and rtbr(bremsstrah
                 endif 
 c there should also be an electron heating term corresponding to 
 c ip(ic-1)*rtra(cT,cD,ic) but this could make the cooling rate negative and 
-c so is included explicitly in b2stel if 'b2stel_fix_recomb_energy' is non-zero 
+c so is included explicitly in b2stel if 'b2stel_fix_recomb_energy' is nonzero
               else 
                 rtqa(cT,cD,ic)=0.0_R8 
               endif 

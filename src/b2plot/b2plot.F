@@ -5817,7 +5817,7 @@ c          write(*,*) 'Read a new geometry'
           arg=spop(sstack,isstack)
           t1=rpop(rstack,irstack)
           open(99,file=arg)
-c-dpc still in testing phase
+cdpc still in testing phase
           write(99,'(5i4)') nx,ny,leftcut(1),rightcut(1),topcut(1)
           write(99,'()')         ! rm
           write(99,'(1p,3e23.15)') ((cr(ix,iy),ix=-1,nx),iy=-1,ny),

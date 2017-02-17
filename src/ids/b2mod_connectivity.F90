@@ -1265,7 +1265,7 @@ contains
 !!$        end do
 !!$    end do
 !!$
-!!$    ! Check all valid cells have a non-zero region number
+!!$    ! Check all valid cells have a nonzero region number
 !!$    do ix=-1,nx
 !!$        do iy=-1,ny
 !!$            if(.not.isUnusedCell(cflag(ix,iy,CELLFLAG_TYPE)) .and. &

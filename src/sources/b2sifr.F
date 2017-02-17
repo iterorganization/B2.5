@@ -205,7 +205,7 @@
         enddo
        else
 *     ..contribution from friction involving neutral species
-*       (We ignore such a term, except for charge-exchange friction
+*       (We ignore such a term, except for charge exchange friction
 *       between H0 and H1. That term is calculated via the atomic
 *       physics routines.)
        endif

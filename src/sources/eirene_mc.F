@@ -1445,7 +1445,7 @@ c*** Here only the second pass of correction
                     if(hlp_ni(ls)-hlp_no(ls).ne.0.0_R8)
      -               write(*,'(a,a,a,i3,1x,i3)')
      ,                'eirene_mc: error in scaling - no ',
-     ,                'sources and non-zero wall flux. ',
+     ,                'sources and nonzero wall flux. ',
      ,                'stratum, species = ',istrai,ls
                   end if !}
                 else !}{

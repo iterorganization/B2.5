@@ -276,8 +276,8 @@ c
      1             abs(gti/tif).gt.1e-6_R8) then
 c               write(*,*) 'ix,iy,is,cthe_p,cthi_p',
 c     1           ix,iy,i,cthe(ix,iy,i),cthi(ix,iy,i)
-c-x               cthi(ix,iy,i)=cthi(ix,iy,i)+cthe(ix,iy,i)*gte/gti
-c-x               cthe(ix,iy,i)=0
+c               cthi(ix,iy,i)=cthi(ix,iy,i)+cthe(ix,iy,i)*gte/gti
+c               cthe(ix,iy,i)=0
 c               write(*,*) 'ix,iy,is,cthe_r,cthi_r',
 c     1           ix,iy,i,cthe(ix,iy,i),cthi(ix,iy,i)
                   endif

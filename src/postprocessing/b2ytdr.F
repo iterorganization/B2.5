@@ -357,7 +357,8 @@ c 2002-09-11: logic revised
      .                        ISCL2(:), ISCL3(:), ISCLB(:),
      .                        ISCLA(:)
       integer, allocatable :: NTGPR1(:)
-      real (kind=R8) :: rdum(0:17), DPP, RMN, RMX, ALLOC, MPTS
+      real (kind=R8) :: rdum(0:17), DPP, R1MN, R1MX, R2MN, R2MX
+      real (kind=R8) :: ALLOC, MPTS
       real (kind=R8) :: zmin1, zmin2, zmax1, zmax2
       real (kind=R8), allocatable :: e_bundle_contr(:,:)
       real (kind=R8), allocatable :: epls_map(:,:)
@@ -3927,7 +3928,9 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
      &          streql(eirene_format,'new').or.
      &          streql(eirene_format,'facelift')) then
               READ (ZEILE,66661)
-     .            I,FILNAM,H123,REAC,CRC,idum(0:1),DPP,RMN,RMX
+     .            I,FILNAM,H123,REAC,CRC,idum(0:1),DPP,R1MN,R1MX
+              R2MN = 0.0_R8
+              R2MX = 0.0_R8
               size_mp = max(2, len_of_digits(idum(0)))
               size_mt = max(2, len_of_digits(idum(1)))
               skip_reac = skip_reac.or.
@@ -3985,18 +3988,30 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
               call xertst (ier.eq.0, 'error reading dpp flag')
               IEND = IEND + ITOK
               READ (CHR,'(E12.4)') DPP
-!  READ RMN
+!  READ R1MN
               CALL EIRENE_READ_TOKEN
      .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
-              call xertst (ier.eq.0, 'error reading rmn flag')
+              call xertst (ier.eq.0, 'error reading r1mn flag')
               IEND = IEND + ITOK
-              READ (CHR,'(E12.4)') RMN
-!  READ RMX
+              READ (CHR,'(E12.4)') R1MN
+!  READ R1MX
               CALL EIRENE_READ_TOKEN
      .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
-              call xertst (ier.eq.0, 'error reading rmx flag')
+              call xertst (ier.eq.0, 'error reading r1mx flag')
               IEND = IEND + ITOK
-              READ (CHR,'(E12.4)') RMX
+              READ (CHR,'(E12.4)') R1MX
+!  READ R2MN
+              CALL EIRENE_READ_TOKEN
+     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+              call xertst (ier.eq.0, 'error reading r2mn flag')
+              IEND = IEND + ITOK
+              READ (CHR,'(E12.4)') R2MN
+!  READ R2MX
+              CALL EIRENE_READ_TOKEN
+     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+              call xertst (ier.eq.0, 'error reading r2mx flag')
+              IEND = IEND + ITOK
+              READ (CHR,'(E12.4)') R2MX
             END IF
 !  CORRECT FOR OLD REACTIONS NO LONGER SUPPORTED
 !  Remove AMJUEL H.6 reactions
@@ -4057,9 +4072,9 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
      .         CRC,' '
               IEND=IEND+4
               write(hlp_frm,'(a,i1,a,i1,a)')
-     .         '(i',size_mp+1,',i',size_mt+1,',1P,3(1X,E11.4))'
-              WRITE(REAC_LINE(ILINE)(IEND+1:IEND+size_mp+size_mt+2+36),
-     .         hlp_frm) idum(0:1),DPP,RMN,RMX
+     .         '(i',size_mp+1,',i',size_mt+1,',1P,5(1X,E11.4))'
+              WRITE(REAC_LINE(ILINE)(IEND+1:IEND+size_mp+size_mt+2+60),
+     .         hlp_frm) idum(0:1),DPP,R1MN,R1MX,R2MN,R2MX
             END IF
           ELSE
             NREAC1 = NREAC1 + 1
@@ -4090,7 +4105,8 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             IANF=IEND+VERIFY(ZEILE(IEND+1:),' ')
             IEND=IANF+SCAN(ZEILE(IANF+1:),' ')-1
             CRC(1:IEND-IANF+1)=ZEILE(IANF:IEND)
-            READ (ZEILE(IEND+1:),*) idum(0:1),rdum(0),RMN,RMX
+            READ (ZEILE(IEND+1:),*) idum(0:1),rdum(0),R1MN,R1MX,
+     .                                                R2MN,R2MX
             skip_reac = skip_reac.or.
      .       .not.species_present(idum(0),natm,natmi,iatm1)
             skip_reac = skip_reac.or.
@@ -4108,15 +4124,29 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             end if
           ENDIF
           IF (INDEX(H123,'P.').EQ.0) THEN  !PVK
-            IF (RMN.GT.0.0_R8) THEN
-              READ (IUNIN,66664) idum(0),(rdum(I),I=1,3) ! IFEXMN(IR,J),(FPARM(IR,I,J),I=1,3)
+            IF (R1MN.GT.0.0_R8) THEN
+              READ (IUNIN,66664) idum(0),(rdum(I),I=1,3) ! JFEX1MN,(FP1(I),I=1,3)
               if (.not.skip_reac) then
                 ILINE = ILINE+1
                 WRITE(REAC_LINE(ILINE),66664) idum(0),(rdum(I),I=1,3)
               end if
             ENDIF
-            IF (RMX.GT.0.0_R8) THEN
-              READ (IUNIN,66664) idum(0),(rdum(I),I=4,6) ! IFEXMN(IR,J),(FPARM(IR,I,J),I=4,6)
+            IF (R1MX.GT.0.0_R8) THEN
+              READ (IUNIN,66664) idum(0),(rdum(I),I=4,6) ! JFEX1MX,(FP1(I),I=4,6)
+              if (.not.skip_reac) then
+                ILINE = ILINE+1
+                WRITE(REAC_LINE(ILINE),66664) idum(0),(rdum(I),I=4,6)
+              end if
+            ENDIF
+            IF (R2MN.GT.0.0_R8) THEN
+              READ (IUNIN,66664) idum(0),(rdum(I),I=1,3) ! JFEX2MN,(FP2(I),I=1,3)
+              if (.not.skip_reac) then
+                ILINE = ILINE+1
+                WRITE(REAC_LINE(ILINE),66664) idum(0),(rdum(I),I=1,3)
+              end if
+            ENDIF
+            IF (R2MX.GT.0.0_R8) THEN
+              READ (IUNIN,66664) idum(0),(rdum(I),I=4,6) ! JFEX2MX,(FP2(I),I=4,6)
               if (.not.skip_reac) then
                 ILINE = ILINE+1
                 WRITE(REAC_LINE(ILINE),66664) idum(0),(rdum(I),I=4,6)

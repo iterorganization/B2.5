@@ -183,7 +183,7 @@ contains
         offset = offset + listsize
     end do
 
-    ! didn't find anything
+    ! did not find anything
     index = GRID_UNDEFINED
   end function subGridGetIndexForObject
 

@@ -113,7 +113,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
         enddo
         close(77)
       endif                                                         !srv 18.05.02 }
-c-dpc
+cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
           if(ncall.eq.0) then
@@ -135,7 +135,7 @@ c-dpc
            close(79)
         endif
       endif
-c-dpc
+cdpc
       if(lfirst) then
         write(*,*) 'ilutern_9: nz = ',nz
         call xertst (nz.le.N_NONZEROS, 'Increase N_NONZEROS')
