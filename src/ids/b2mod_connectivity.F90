@@ -2349,7 +2349,7 @@ contains
     logical, save :: first
     data first/.true./
 
-    if (nnreg(0) == 1 .and. periodic_bc == 0) then
+    if (nnreg(0) == 1 .and. periodic_bc.le.0) then
         geometryId = GEOMETRY_LINEAR      
         if (first) then
             call logmsg( LOGDEBUG, "b2mod_connectivity.geometryId(): identified GEOMETRY_LINEAR")

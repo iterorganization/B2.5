@@ -100,7 +100,7 @@
        fun1(nx1, -1) = fun(nx,-1)
        fun1(nx1,ny1) = fun(nx,ny) 
 *    .. region 1 : 
-       if (nncut.eq.0 .and. periodic_bc.eq.0) then ! slab cases
+       if (nncut.eq.0 .and. periodic_bc.le.0) then ! slab cases
         ixa = 0
         ixm = 0
         ixb = nx-1

@@ -9316,7 +9316,7 @@ c       = 4 : center
           conformal_convert=ixiso1
          else if (ix.eq.ixiso+1) then
           conformal_convert=ixiso1+1
-         else if (nncut.eq.0 .and. periodic_bc.eq.0) then  ! 2-D slab case
+         else if (nncut.eq.0 .and. periodic_bc.le.0) then  ! 2-D slab case
           nsize = nx
           nsize1 = nx1
           conformal_convert = convert_position(ix,nsize,nsize1,0,atend)
