@@ -536,7 +536,8 @@ ctmp.dpc
        goto 1
       endif
 
-      if (iaverage > 0) call profile_average (.false.,nx,ny,ns)
+      if (iaverage > 0)      call profile_average (.false.,nx,ny,ns)
+!wd      if (ibatch_av_all > 0)  call batch_av_all
 
 * ..return
 99999 continue

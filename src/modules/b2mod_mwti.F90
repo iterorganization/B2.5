@@ -4,11 +4,13 @@ Module b2mod_mwti
   Private
   Public :: b2mwti, output_ds
 #ifndef NO_CDF
-  Public :: rwcdf, rwcdf_settime
+  Public :: rwcdf, rwcdf_settime, rwcdf_setbatch
 #endif
 Contains
   
-  subroutine b2mwti (itim, tim, nx, ny, ns, ismain, ismain0, BoRiS)
+  subroutine b2mwti (itim, tim, ntim, ntim_batch, &
+                     nx, ny, ns, ismain, ismain0, BoRiS, &
+                     lwti, lwav, luav)
     use b2mod_geo
     use b2mod_plasma
     use b2mod_rates
@@ -31,8 +33,9 @@ Contains
 #endif
     implicit none
     !   ..input arguments (unchanged on exit)
-    integer, Intent(In) :: itim, nx, ny, ns, ismain, ismain0
+    integer, Intent(In) :: itim, ntim, ntim_batch, nx, ny, ns, ismain, ismain0
     real (kind=R8), Intent(In) :: tim, BoRiS
+    logical, Intent(In) :: lwti, lwav, luav
     !   ..output arguments (unspecified on entry)
     !     (none)
     !   ..common blocks
@@ -60,7 +63,7 @@ Contains
     !.declarations
 
     !   ..local variables
-    integer ncall, ntstep
+    integer ncall, ntstep, nastep, batchsa(1)
     real (kind=R8) :: &
          fnixip(nncutmax), feexip(nncutmax), feixip(nncutmax), &
          fnixap(nncutmax), feexap(nncutmax), feixap(nncutmax), &
@@ -89,13 +92,13 @@ Contains
     real (kind=R8) :: &
          tmne(1),tmte(1),tmti(1),tmvol
 
-    integer iy, ix, ic, ixtl, ixtr, jsep
+    integer iy, ix, ic, ixtl, ixtr, jsep, nbatch
     integer jxi, jxa, target_offset, ix_off
     integer iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
          nybl, nybr, nytl, nytr, nya, nyi, nc
     !   ..procedures
-    external subini, subend, xertst, ipgeti
+    external subini, subend, xertst, ipgeti, batch_average
     Real(kind=R8) :: fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp
     Integer, Save :: write_2d = 0
 #ifndef NO_CDF
@@ -108,6 +111,8 @@ Contains
          dnsepm(nncutmax), dpsepm(nncutmax), kesepm(nncutmax), &
          kisepm(nncutmax), vxsepm(nncutmax), vysepm(nncutmax), &
          vssepm(nncutmax), tpsepi(nncutmax), tpsepa(nncutmax)
+    real (kind=R8), allocatable, save :: &
+         nesepm_av(:)
     real (kind=R8) :: &
          tmhacore(1), tmhasol(1), tmhadiv(1), slice(-1:ny), tstepn(1)
     real (kind=R8) :: &
@@ -118,7 +123,7 @@ Contains
     save ncall, ntstep, jxi, jxa, jsep, ixtl, ixtr, target_offset, &
          iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
-         nybl, nybr, nytl, nytr, nya, nyi, nc
+         nybl, nybr, nytl, nytr, nya, nyi, nc, nastep, nbatch
     data ncall/0/,target_offset/1/
 
     !-----------------------------------------------------------------------
@@ -214,15 +219,26 @@ Contains
         close(99)
       endif
 #ifndef NO_CDF
-      call b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, write_2d, iret)
+      nbatch = ntim/ntim_batch
+      write(*,*) 'nbatch = ', nbatch
+      call b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, write_2d, iret)
       rw='write'
       iret = nf_open('b2time.nc',NCWRITE,ncid)
       ntstep=0
+      nastep=0
       imap(1)=1
       tstepn(1) = ntstep
       call rwcdf (rw, ncid, 'ntstep', imap, tstepn, iret)
       iret = nf_close(ncid)
+!cwdk    initialize writing of the .nc-file for monitoring based on
+!c       batch averaging
+!        call b2cravercdf()
+!        iret = nf_open('b2aver.nc',ncwrite,ncav)
+!        call rwcdf (rw, ncav, 'ntstep', imap, tstepn, iret)
+!        iret = nf_close(ncav)
 #endif
+      allocate (nesepm_av(1:nncutmax))
+      nesepm_av = 0.0_R8
     endif! ncall == 0
     if(ncall.lt.3) then
       call xertst (0.le.itim, 'faulty parameter itim')
@@ -231,14 +247,30 @@ Contains
     !
     !   ..compute change in plasma state
     !
-    ntstep = ntstep + 1
+#ifndef NO_CDF
+    if (lwti.or.lwav) then
+      rw = 'write'
+      iret = nf_open('b2time.nc', ncwrite, ncid)
+    endif
+#endif
+    if (lwti) then
+      ntstep = ntstep + 1
     !     write(*,*) 'ntstep = ',ntstep
 #ifndef NO_CDF
-    rw = 'write'
-    iret = nf_open('b2time.nc', NCWRITE, ncid)
-    call rwcdf_settime ('time', ntstep)
-    timesa(1) = tim
+      call rwcdf_settime ('time', ntstep)
+      timesa(1) = tim
 #endif
+    endif
+
+    if (lwav) then
+      nastep = nastep + 1
+    !   write(*,*) 'nastep = ',nastep
+#ifndef NO_CDF
+      call rwcdf_setbatch ('batch', nastep)
+      batchsa(1) = tim
+      write(*,*) 'returned from setbatch; batchsa = ', batchsa(1)
+#endif
+    endif
     !
     !    total flows to the divertor plates
     !
@@ -648,7 +680,23 @@ Contains
     enddo
 #endif
 
+!wdk update batch averages
+    if (luav) then
+      write(*,*) 'averaging...',itim,ntim_batch
+      write(*,*) 'nesepm   ',nesepm
+      write(*,*) 'nesepm_av',nesepm_av
+      if (ntim_batch .gt. 0 ) then
+        call batch_average(nncutmax,nesepm,nesepm_av,itim,ntim_batch)
+      else
+        nesepm_av = 0.0_R8
+      endif
+      write(*,*) 'finished averaging...', nesepm_av
+    endif
+!wdk end of batch averaging
     
+!wdk only write time data if lwti is true
+    if (lwti) then
+
     imap(1)=1
     tstepn(1) = ntstep
     call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
@@ -963,8 +1011,24 @@ Contains
       endif
       call rwcdf(rw,ncid,'tp3dtr',imap,slice,iret)
     endif
+
+    endif
+
+!wdk only write batch data if lwav is true
+    if (lwav) then
+
+      imap(1)=1
+      tstepn(1) = nastep
+      call rwcdf(rw,ncid,'nastep',imap,tstepn,iret)
+      call rwcdf(rw,ncid,'batchsa',imap,batchsa,iret)
+
+      imap(1)=1
+      imap(2)=nncutmax
+      call rwcdf(rw,ncid,'nesepm_av',imap,nesepm_av,iret)
+
+    endif
     !      
-    iret = nf_close(ncid)
+    if (lwti.or.lwav) iret = nf_close(ncid)
 #endif
 
     ! ..return
@@ -978,15 +1042,15 @@ Contains
   end subroutine b2mwti
 
 #ifndef NO_CDF
-  subroutine b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, write_2d, iret)
+  subroutine b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, write_2d, iret)
     use b2mod_constants
 #     include <netcdf.inc>
-    integer nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, iret
+    integer nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, iret
     integer, Intent(In) :: write_2d
     ! netcdf id
     integer  ncid
     ! dimension ids
-    integer  nxdim, nydim, nsdim, timedim, &
+    integer  nxdim, nydim, nsdim, timedim, batchdim, &
          nybldim,nytldim,nytrdim,nybrdim,nyadim,nyidim,ncdim,idirdim
     ! variable ids
     integer  ntstepid, timesaid, fnixipid, feexipid, feixipid, &
@@ -1023,7 +1087,8 @@ Contains
          dnsepmid, dpsepmid, kesepmid, kisepmid, &
          vxsepmid, vysepmid, vssepmid, &
          tpmxipid, tpmxapid, tp3drid, tp3dlid, tp3dtlid, tp3dtrid, &
-         tpsepiid, tpsepaid
+         tpsepiid, tpsepaid, &
+         batchsaid, nesepmid_av
     ! variable shapes
     integer :: dims(2)
     ! Create and enter define mode
@@ -1040,6 +1105,9 @@ Contains
     iret = nf_def_dim(ncid, 'nc', nc, ncdim)
     iret = nf_def_dim(ncid, 'ns', ns, nsdim)
     iret = nf_def_dim(ncid, 'time', ncunlim, timedim)
+    write(*,*) 'before batchdim', nbatch
+    iret = nf_def_dim(ncid, 'batch', nbatch, batchdim)
+    write(*,*) 'after batchdim'
     ! define variables
     dims(1) = 0
     iret = nf_def_var(ncid, 'ntstep', NCDOUBLE, 0, dims, ntstepid)
@@ -1291,6 +1359,18 @@ Contains
       iret = nf_def_var(ncid, 'fo3dtr', NCDOUBLE, 2, dims, fo3dtrid)
       iret = nf_def_var(ncid, 'tp3dtr', NCDOUBLE, 2, dims, tp3dtrid)
     endif
+
+    !wdk averages
+    write(*,*)  'before defining new quantities'
+    dims(1) = 0
+    iret  = nf_def_var(ncid, 'nastep', NCDOUBLE, 0, dims, nastepid)
+    dims(1) = batchdim
+    iret  = nf_def_var(ncid, 'batchsa', NCDOUBLE, 1, dims, batchsaid)
+    dims(1) = ncdim
+    dims(2) = batchdim
+    iret  = nf_def_var(ncid, 'nesepm_av', NCDOUBLE, 2, dims, nesepmid_av)
+    write(*,*) 'nesepmid_av defined'
+
     ! assign attributes
     iret = nf_put_att_text(ncid, timesaid, 'long_name', 4, 'time')
     iret = nf_put_att_text(ncid, timesaid, 'units', 2, 's ')
@@ -1680,12 +1760,12 @@ Contains
     real(kind=R8), Intent(InOut) :: data_set(*)
     character*(maxncnam) dimnam
     integer vartyp,nvdims,start(maxvdims),mycount(maxvdims),dimids(maxvdims)
-    character*(*) timnam
-    character*(maxncnam) timsav
+    character*(*) timnam,batchnam
+    character*(maxncnam) timsav,batchsav
     integer ntsav,ntstep
     integer :: istride, imax
     logical, parameter :: debug = .false.
-    save timsav,ntsav
+    save timsav,ntsav,batchsav,nasav
     data timsav /'!!!! INVALID NAME !!!!'/
     external subini, subend, xerrab
     !
@@ -1709,6 +1789,9 @@ Contains
       if(dimnam.eq.timsav) then
         start(i)=ntsav
         mycount(i)=1
+      elseif(dimnam.eq.batchsav) then
+        start(i)=nasav
+        count(i)=1
       else
         start(i)=1
       endif
@@ -1750,6 +1833,13 @@ Contains
     write(*,*) 'ntstep = ',ntstep
     timsav=timnam
     ntsav=ntstep
+    return
+    !
+    entry rwcdf_setbatch(batchnam,nastep)
+    write(*,*) 'Saving ',trim(batchnam),' as the batch dimension'
+    write(*,*) 'nastep = ',nastep
+    batchsav=batchnam
+    nasav=nastep
     return
   end subroutine rwcdf
 #endif

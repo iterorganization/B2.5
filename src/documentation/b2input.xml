@@ -2218,6 +2218,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mndt_av_ntim_batch</name>
+				<default>500</default>
+				<type>integer</type>
+				<description>
+					If ntim_batch.gt.0, number of iterations used to compute batch averages.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndr_plasmatim</name>
 				<default>0.0</default>
 				<type>real</type>

@@ -104,7 +104,9 @@
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
-      integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0
+      integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
+     *  ntim_batch = 500
+      logical lwti, lwav
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
      *  neutral_sources_rescale,
@@ -961,6 +963,7 @@
      >  write(*,*) 'Saving plasma state files every ',
      1  delta_plasma_time,' simulation seconds'
        call ipgeti ('b2mndr_ntim_save', ntim_save)
+       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
        if (ntim_save.gt.0)
      >  write(*,*) 'Saving plasma state files every ',
      1  ntim_save,' iterations'
@@ -1916,11 +1919,16 @@ c new CDF movie option
 #endif
           save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
         endif
+        lwti = .false.
+        lwav = .false.
         if(b2time.gt.0) then
-          if(mod(itim,b2time).eq.0.or.itim.eq.1) then
-            call b2mwti(itim,tim,nx,ny,ns,ismain,ismain0,BoRiS)
-          endif
+          if(mod(itim,b2time).eq.0.or.itim.eq.1) lwti = .true.
         endif
+        if(ntim_batch.gt.0) then
+          if(mod(itim,ntim_batch).eq.0) lwav = .true.
+        endif
+        call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
+     .              BoRiS,lwti,lwav,.true.)
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
@@ -2169,7 +2177,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..produce 2d profiles if not yet done
       if(b2time.gt.0) then
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
-          call b2mwti(itim,tim,nx,ny,ns,ismain,ismain0,BoRiS)
+          call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
+     *                BoRiS,.true.,.false.,.false.)
         endif
       endif
 *   ..write out last tallies if not yet done
