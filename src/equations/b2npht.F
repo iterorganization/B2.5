@@ -13,23 +13,8 @@
       use b2mod_tallies
       use b2mod_b2cmpa
       use b2mod_boundary_namelist
-cdjm Jan2017
-      use b2mod_sources
-     & , only : b2npht_shei,
-     &          b2stbc_she, b2stbc_she0to3,
-     &          b2stbc_shi, b2stbc_shi0to3,
-     &          b2stbr_she, b2stbr_she0to3,
-     &          b2stbr_shi, b2stbr_shi0to3,
-     &          b2stel_she, b2stel_she0to3,
-     &          b2stel_shi_ion, b2stel_shi_ion0to3,
-     &          b2stel_shi_rec, b2stel_shi_rec0to3,
-     &          b2stcx_shi, b2stcx_shi0to3,
-     &          b2srsm_she, b2srsm_she0to3,
-     &          b2srsm_shi, b2srsm_shi0to3,
-     &          b2srdt_she, b2srdt_she0to3,
-     &          b2srdt_shi, b2srdt_shi0to3,
-     &          b2srst_she, b2srst_she0to3,
-     &          b2srst_shi, b2srst_shi0to3
+      use b2mod_sources !djm Jan2017
+     & , only : b2npht_shei_bal, update_balance_sources_heat
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt
@@ -246,83 +231,14 @@ csw 21feb2014 remove sources in ghostcells (SOLPS4)
       enddo
       call b2saxpy (n2*4, 1.0_R8, she, 1, she0, 1)
       call b2saxpy (n2*4, 1.0_R8, shi, 1, shi0, 1)
+
+cdjm Jan2017 update particle source components for balance
+      call update_balance_sources_heat(nx,ny,ne,ni,te,ti)
+
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
       call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
       call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
-cdjm Jan2017 Recalculate some sources for balance routines
-      b2stbr_she(-1:nx,-1:ny)=
-     1   b2stbr_she0to3(-1:nx,-1:ny,0)+
-     2   b2stbr_she0to3(-1:nx,-1:ny,1)*te(-1:nx,-1:ny)+
-     3   b2stbr_she0to3(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4   b2stbr_she0to3(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*te(-1:nx,-1:ny)
-      b2stbr_shi(-1:nx,-1:ny)=
-     1   b2stbr_shi0to3(-1:nx,-1:ny,0)+
-     2   b2stbr_shi0to3(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
-     3   b2stbr_shi0to3(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
-     4   b2stbr_shi0to3(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
-      b2stbc_she(-1:nx,-1:ny)=
-     1   b2stbc_she0to3(-1:nx,-1:ny,0)+
-     2   b2stbc_she0to3(-1:nx,-1:ny,1)*te(-1:nx,-1:ny)+
-     3   b2stbc_she0to3(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4   b2stbc_she0to3(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*te(-1:nx,-1:ny)
-      b2stbc_shi(-1:nx,-1:ny)=
-     1   b2stbc_shi0to3(-1:nx,-1:ny,0)+
-     2   b2stbc_shi0to3(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
-     3   b2stbc_shi0to3(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
-     4   b2stbc_shi0to3(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
-      b2stel_she(-1:nx,-1:ny)=
-     1   b2stel_she0to3(-1:nx,-1:ny,0)+
-     2   b2stel_she0to3(-1:nx,-1:ny,1)*te(-1:nx,-1:ny)+
-     3   b2stel_she0to3(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4   b2stel_she0to3(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*te(-1:nx,-1:ny)
-      b2stel_shi_ion(-1:nx,-1:ny)=
-     1   b2stel_shi_ion0to3(-1:nx,-1:ny,0)+
-     2   b2stel_shi_ion0to3(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
-     3   b2stel_shi_ion0to3(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
-     4   b2stel_shi_ion0to3(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*
-     5                                     ti(-1:nx,-1:ny)
-      b2stel_shi_rec(-1:nx,-1:ny)=
-     1   b2stel_shi_rec0to3(-1:nx,-1:ny,0)+
-     2   b2stel_shi_rec0to3(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
-     3   b2stel_shi_rec0to3(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
-     4   b2stel_shi_rec0to3(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*
-     5                                     ti(-1:nx,-1:ny)
-      b2stcx_shi(-1:nx,-1:ny)=
-     1   b2stcx_shi0to3(-1:nx,-1:ny,0)+
-     2   b2stcx_shi0to3(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
-     3   b2stcx_shi0to3(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
-     4   b2stcx_shi0to3(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
-      b2srsm_she(-1:nx,-1:ny)=
-     1   b2srsm_she0to3(-1:nx,-1:ny,0)+
-     2   b2srsm_she0to3(-1:nx,-1:ny,1)*te(-1:nx,-1:ny)+
-     3   b2srsm_she0to3(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4   b2srsm_she0to3(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*te(-1:nx,-1:ny)
-      b2srsm_shi(-1:nx,-1:ny)=
-     1   b2srsm_shi0to3(-1:nx,-1:ny,0)+
-     2   b2srsm_shi0to3(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
-     3   b2srsm_shi0to3(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
-     4   b2srsm_shi0to3(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
-      b2srdt_she(-1:nx,-1:ny)=
-     1   b2srdt_she0to3(-1:nx,-1:ny,0)+
-     2   b2srdt_she0to3(-1:nx,-1:ny,1)*te(-1:nx,-1:ny)+
-     3   b2srdt_she0to3(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4   b2srdt_she0to3(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*te(-1:nx,-1:ny)
-      b2srdt_shi(-1:nx,-1:ny)=
-     1   b2srdt_shi0to3(-1:nx,-1:ny,0)+
-     2   b2srdt_shi0to3(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
-     3   b2srdt_shi0to3(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
-     4   b2srdt_shi0to3(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
-      b2srst_she(-1:nx,-1:ny)=
-     1   b2srst_she0to3(-1:nx,-1:ny,0)+
-     2   b2srst_she0to3(-1:nx,-1:ny,1)*te(-1:nx,-1:ny)+
-     3   b2srst_she0to3(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4   b2srst_she0to3(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*te(-1:nx,-1:ny)
-      b2srst_shi(-1:nx,-1:ny)=
-     1   b2srst_shi0to3(-1:nx,-1:ny,0)+
-     2   b2srst_shi0to3(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
-     3   b2srst_shi0to3(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
-     4   b2srst_shi0to3(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
 *   ..compute heat source due to electron-ions collisions            !srv 18.09.09 30.01.10 {
       if(style_shei.eq.0) then
        do iy = -1, ny
@@ -353,7 +269,7 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
         endif
        enddo
       enddo
-      b2npht_shei(-1:nx,-1:ny) = shei(-1:nx,-1:ny)                    !djm Jan2017
+      b2npht_shei_bal(-1:nx,-1:ny) = shei(-1:nx,-1:ny)                    !djm Jan2017
 
 *   ..compute final resht, reshe, reshi
       b2qie=0.0_R8

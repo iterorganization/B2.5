@@ -329,7 +329,8 @@ csw 01oct2012 initialize potential if necessary
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
-     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &   .true.)                                                         !djm Jan2017
         enddo                                                            !srv 01.10.99
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
@@ -452,7 +453,8 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
-     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &   .true.)                                                         !djm Jan2017
 !        call b2tfco (nx, ny, is, na(-1,-1,is), te, ti, pb, 
 !     &      cdpa(-1,-1,0,is), flob, conb)
 *    ..perform iteration
@@ -532,7 +534,8 @@ csw 16oct2012 init ier0
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
-     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &   .false.)                                                        !djm Jan2017
       enddo 
 *      ..compute electron drift velocities
       call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
@@ -599,7 +602,8 @@ csw 16oct2012 init ier0
      &     chve, chci, calf, chvemx, cvsa, cdna, cdpa, cddi,             !srv 05.07.00 11.07.99
      &     fch, fhe, fhe_mdf, fhePSch, conc,  avisper, bvisper, cvisper, !srv 05.07.00 13.10.06
      &     floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,       !srv 30.09.02
-     &     fchvisq, fchinert, fchanml)                                   !srv 07.07.99 11.07.99 22.11.99 24.03.07
+     &     fchvisq, fchinert, fchanml,                                   !srv 07.07.99 11.07.99 22.11.99 24.03.07
+     &     .false.)                                                      !djm Jan2017
           call b2xpen (nx, ny, ns,
      1     fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
      2     fhm, fhp, fhj, fht)
@@ -672,7 +676,8 @@ crfs        t0 = t0+b2sasum(nx,wrk0(0,iy),1)
      &       fna_mdf(-1,-1,0,is),                                        !srv 13.10.06
      &       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
      &       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
-     &       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     &       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &       .false.)                                                    !djm Jan2017
           enddo
 *      ..compute electron drift velocities
           call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
@@ -717,12 +722,14 @@ c      with diamagnetic drift part                                       !srv 13
      &  chve, chci, calf, chvemx, cvsa, cdna, cdpa, cddi,                !srv 05.07.00 11.07.99
      &  fch, fhe, fhe_mdf, fhePSch, conc, avisper, bvisper, cvisper,     !srv 05.07.00 11.07.99 13.10.06
      &  floe, cone, fchdia, fchin, fch_p, fchvispar, fchvisper,          !srv 30.09.02
-     &  fchvisq, fchinert, fchanml)                                      !srv 07.07.99 11.07.99 22.11.99 24.03.07
+     &  fchvisq, fchinert, fchanml,                                      !srv 07.07.99 11.07.99 22.11.99 24.03.07
+     &  .true.)                                                          !djm Jan2017
 csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       call b2tfhi_ (nx, ny, ns, facdrift, vol, hx, hy, qz, bb, ti, ni, 
      1  na, fni, fna_he, ua, chci, cddi, chvi, chvimx, cvsa, vadia,      !srv 17.05.99 27.12.01 25.01.02 13.10.06
      &  fchvispar, fchvisq, fchinert, fchanml,              
-     &  fhi, fhi_mdf, fhiPSch, floi, coni)                               !srv 13.10.06
+     &  fhi, fhi_mdf, fhiPSch, floi, coni,                               !srv 13.10.06
+     &  .true.)                                                          !djm Jan2017
        floi_noc = floi                                                   !srv 24.10.02
        floe_noc = floe                                                   !srv 24.10.02
       call b2xpen (nx, ny, ns,
@@ -840,7 +847,8 @@ c   recompute particle fluxes
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
-     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &   .false.)                                                        !djm Jan2017
 
 *    ..perform iteration
         new_matrix = .false.
@@ -925,7 +933,8 @@ c   (necessary to work out new rescaling factors sclrtio/sclalph in neutr_scl)
      &   fna_he(-1,-1,0,is), fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),   !srv 13.10.06
      &   flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is), 
      &   fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is), 
-     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     &   kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &   .false.)                                                        !djm Jan2017
        enddo                                                             !srv 01.10.99
 *      ..compute electron drift velocities
        call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,

@@ -7,7 +7,7 @@
       use b2mod_indirect
       use b2mod_constants                                         !srv 23.03.10
       use b2mod_sources                                           !djm Jan2017
-     & , only : b2sigp_smogp, b2sigp_pstat
+     & , only : b2sigp_smogp0to3, b2sigp_pstat0to3
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -122,20 +122,26 @@
      &          wrk1(rightix(ix,iy),rightiy(ix,iy))*
      &          wrk2(rightix(ix,iy),rightiy(ix,iy)))/
      &         (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
-              b2sigp_pstat(ix,iy,isb) = hz(ix,iy)*                    !djm Jan2017
-     &         (vol(ix,iy)/hx(ix,iy))*
-     &         bb(ix,iy,0)/bb(ix,iy,3)*
-     &         (wrk3(ix,iy)+wrk4(ix,iy))
               smbgp(ix,iy,1) = 0.0_R8
               smbgp(ix,iy,2) = 0.0_R8
               smbgp(ix,iy,3) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*              !djm Jan2017
+     &         (vol(ix,iy)/hx(ix,iy))*
+     &         bb(ix,iy,0)/bb(ix,iy,3)*
+     &         (wrk3(ix,iy)+wrk4(ix,iy))
+              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
             elseif(rightix(ix,iy).eq.nx+1) then
               smbgp(ix,iy,0) = -hz(ix,iy)*
      &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
      &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
      &         (wrk0(ix,iy)+wrk1(ix,iy)*wrk2(ix,iy))/
      &         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-              b2sigp_pstat(ix,iy,isb) = hz(ix,iy)*                    !djm Jan2017
+              smbgp(ix,iy,1) = 0.0_R8
+              smbgp(ix,iy,2) = 0.0_R8
+              smbgp(ix,iy,3) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*              !djm Jan2017
      &         (vol(ix,iy)/hx(ix,iy))*
      &         bb(ix,iy,0)/bb(ix,iy,3)*
      &         ((wrk3(leftix(ix,iy),leftiy(ix,iy))+
@@ -143,9 +149,9 @@
      &          (wrk3(ix,iy)+
      &           wrk4(ix,iy))*vol(leftix(ix,iy),leftiy(ix,iy)))/
      &         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-              smbgp(ix,iy,1) = 0.0_R8
-              smbgp(ix,iy,2) = 0.0_R8
-              smbgp(ix,iy,3) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
             else
               smbgp(ix,iy,0) = -hz(ix,iy)*(vol(ix,iy)/hx(ix,iy))*     !srv 16.06.09
      &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
@@ -155,7 +161,10 @@
      &          wrk1(rightix(ix,iy),rightiy(ix,iy))*
      &          wrk2(rightix(ix,iy),rightiy(ix,iy)))/
      &         (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy))))
-              b2sigp_pstat(ix,iy,isb) = hz(ix,iy)*                    !djm Jan2017
+              smbgp(ix,iy,1) = 0.0_R8
+              smbgp(ix,iy,2) = 0.0_R8
+              smbgp(ix,iy,3) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*              !djm Jan2017
      &         (vol(ix,iy)/hx(ix,iy))*
      &         bb(ix,iy,0)/bb(ix,iy,3)*
      &         ((wrk3(leftix(ix,iy),leftiy(ix,iy))+
@@ -163,9 +172,9 @@
      &          (wrk3(ix,iy)+
      &           wrk4(ix,iy))*vol(leftix(ix,iy),leftiy(ix,iy)))/
      &         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-              smbgp(ix,iy,1) = 0.0_R8
-              smbgp(ix,iy,2) = 0.0_R8
-              smbgp(ix,iy,3) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
             endif
           enddo
         enddo
@@ -206,7 +215,6 @@
             smbgp(ix,iy,1) = 0.0e0_R8
             smbgp(ix,iy,2) = 0.0e0_R8
             smbgp(ix,iy,3) = 0.0e0_R8
-            b2sigp_pstat(ix,iy,isb) = 0.0e0_R8                        !djm Jan2017
           else                                                        !srv 26.11.02 }
             t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)           !srv 18.10.02 10.06.05
             smbgp(ix,iy,0) =
@@ -216,7 +224,22 @@
             smbgp(ix,iy,1) = 0.0e0_R8
             smbgp(ix,iy,2) = 0.0e0_R8
             smbgp(ix,iy,3) = 0.0e0_R8
-            b2sigp_pstat(ix,iy,isb) =                                   !djm Jan2017
+          endif                                                       !srv 26.11.02
+         enddo
+        enddo
+cdjm compute b2sigp_pstat0to3 on left cell face
+        b2sigp_pstat0to3 = 0.0_R8
+        do iy = -1, ny
+         do ix = -1, nx
+          if(leftix(ix,iy).eq.-2.or.
+     &       bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
+            b2sigp_pstat0to3(ix,iy,0,isb) = 0.0_R8
+            b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+            b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+            b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+          else
+            t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
+            b2sigp_pstat0to3(ix,iy,0,isb) =
      &       t0*((wrk2(leftix(ix,iy),leftiy(ix,iy))+
      &            rzb(leftix(ix,iy),leftiy(ix,iy))*
      &            (nb(leftix(ix,iy),leftiy(ix,iy))/
@@ -225,7 +248,10 @@
      &           (wrk2(ix,iy)+rzb(ix,iy)*(nb(ix,iy)/ne(ix,iy))*
      &            wrk3(ix,iy))*hx(leftix(ix,iy),leftiy(ix,iy)))/
      &          (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/hx(ix,iy)
-          endif                                                       !srv 26.11.02
+            b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+            b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+            b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+          endif
          enddo
         enddo
       else                                                            !srv 23.03.10 {
@@ -282,7 +308,9 @@
 !      enddo
       endif                                                           !srv 17.06.02 }
 
-      b2sigp_smogp(-1:nx,-1:ny,isb)=smbgp(-1:nx,-1:ny,0)               !djm Jan2017
+cdjm Jan2017 Store linearised source for balance
+      b2sigp_smogp0to3(-1:nx,-1:ny,0:3,isb)=smbgp
+
 * ..return
       ncall = ncall+1
       call subend ()

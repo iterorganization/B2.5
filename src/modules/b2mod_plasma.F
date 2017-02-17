@@ -56,7 +56,8 @@
       real (kind=R8), allocatable, save ::
      *  fhi_32(:,:,:), fhi_52(:,:,:), fhi_cond(:,:,:),
      *  fhi_dia(:,:,:), fhi_ecrb(:,:,:), fhi_strange(:,:,:),
-     *  fhi_pschused(:,:,:)
+     *  fhi_pschused(:,:,:), fhi_inert(:,:,:), fhi_vispar(:,:,:),
+     *  fhi_anml(:,:,:), fhi_kevis(:,:,:)
 
       contains
 
@@ -102,6 +103,10 @@
       allocate(fhi_ecrb(-1:nxd,-1:nyd,0:1))
       allocate(fhi_strange(-1:nxd,-1:nyd,0:1))
       allocate(fhi_pschused(-1:nxd,-1:nyd,0:1))
+      allocate(fhi_inert(-1:nxd,-1:nyd,0:1))
+      allocate(fhi_vispar(-1:nxd,-1:nyd,0:1))
+      allocate(fhi_anml(-1:nxd,-1:nyd,0:1))
+      allocate(fhi_kevis(-1:nxd,-1:nyd,0:1))
       allocate(fhe(-1:nxd,-1:nyd,0:1))
       allocate(fhe0(-1:nxd,-1:nyd,0:1))
       allocate(fhep(-1:nxd,-1:nyd,0:1))
@@ -247,6 +252,10 @@
       deallocate(fhi_ecrb)
       deallocate(fhi_strange)
       deallocate(fhi_pschused)
+      deallocate(fhi_inert)
+      deallocate(fhi_vispar)
+      deallocate(fhi_anml)
+      deallocate(fhi_kevis)
       deallocate(fhe)
       deallocate(fhe0)
       deallocate(fhep)
@@ -435,6 +444,14 @@
      &               'fhi_strange')
         call cfrure (nread, size(fhi_pschused), fhi_pschused,
      &               'fhi_pschused')
+        call cfrure (nread, size(fhi_inert), fhi_inert,
+     &               'fhi_inert')
+        call cfrure (nread, size(fhi_vispar), fhi_vispar,
+     &               'fhi_vispar')
+        call cfrure (nread, size(fhi_anml), fhi_anml,
+     &               'fhi_anml')
+        call cfrure (nread, size(fhi_kevis), fhi_kevis,
+     &               'fhi_kevis')
       endif
       if(b2fplasma_version.ge.'01.001.010') then
         call cfrure (nread, size(wadia), wadia, 'wadia')
@@ -572,6 +589,14 @@
      &               'fhi_strange')
         call cfwure (nwrite, size(fhi_pschused), fhi_pschused,
      &               'fhi_pschused')
+        call cfwure (nwrite, size(fhi_inert), fhi_inert,
+     &               'fhi_inert')
+        call cfwure (nwrite, size(fhi_vispar), fhi_vispar,
+     &               'fhi_vispar')
+        call cfwure (nwrite, size(fhi_anml), fhi_anml,
+     &               'fhi_anml')
+        call cfwure (nwrite, size(fhi_kevis), fhi_kevis,
+     &               'fhi_kevis')
       endif
       if(newversion.ge.'01.001.010') then
         call cfwure (nwrite, size(wadia), wadia, 'wadia')
