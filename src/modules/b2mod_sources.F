@@ -65,80 +65,168 @@
      *  ext_she(:,:),
      *  ext_shi(:,:),
      *  ext_sch(:,:)
-cdjm Jan2017
-      real (kind=R8), allocatable, save ::
-     *  b2stbr_she0to3(:,:,:),
-     *  b2stbr_shi0to3(:,:,:),
-     *  b2stbc_she0to3(:,:,:),
-     *  b2stbc_shi0to3(:,:,:),
-     *  b2stel_sna_ion(:,:,:),
-     *  b2stel_sna_rec(:,:,:),
-     *  b2stel_smq_ion(:,:,:),
-     *  b2stel_smq_rec(:,:,:),
-     *  b2stel_she(:,:),
-     *  b2stel_shi_ion(:,:),
-     *  b2stel_shi_rec(:,:),
-     *  b2stel_she0to3(:,:,:),
-     *  b2stel_shi_ion0to3(:,:,:),
-     *  b2stel_shi_rec0to3(:,:,:),
-     *  b2stcx_sna(:,:,:),
-     *  b2stcx_smq(:,:,:),
-     *  b2stcx_shi(:,:),
-     *  b2stcx_shi0to3(:,:,:),
-     *  b2srsm_sna(:,:,:),
-     *  b2srsm_smo(:,:,:),
-     *  b2srsm_she(:,:),
-     *  b2srsm_shi(:,:),
-     *  b2srsm_she0to3(:,:,:),
-     *  b2srsm_shi0to3(:,:,:),
-     *  b2srsm_sch(:,:),
-     *  b2srdt_sna(:,:,:),
-     *  b2srdt_smo(:,:,:),
-     *  b2srdt_she(:,:),
-     *  b2srdt_shi(:,:),
-     *  b2srdt_she0to3(:,:,:),
-     *  b2srdt_shi0to3(:,:,:),
-     *  b2srdt_sch(:,:),
-     *  b2srst_sna(:,:,:),
-     *  b2srst_smo(:,:,:),
-     *  b2srst_she(:,:),
-     *  b2srst_shi(:,:),
-     *  b2srst_she0to3(:,:,:),
-     *  b2srst_shi0to3(:,:,:),
-     *  b2srst_sch(:,:),
-     *  eirene_mc_t0_papl(:,:,:,:),
-     *  eirene_mc_t0_pmpl(:,:,:,:),
-     *  eirene_mc_t0_pipl(:,:,:,:),
-     *  eirene_mc_t0_pppl(:,:,:,:),
-     *  eirene_mc_t0_core(:,:,:),
-     *  eirene_mc_t0_mapl(:,:,:,:),
-     *  eirene_mc_t0_mmpl(:,:,:,:),
-     *  eirene_mc_t0_mipl(:,:,:,:),
-     *  eirene_mc_t0_cppv(:,:,:,:),
-     *  eirene_mc_t0_eael(:,:,:),
-     *  eirene_mc_t0_emel(:,:,:),
-     *  eirene_mc_t0_eiel(:,:,:),
-     *  eirene_mc_t0_epel(:,:,:),
-     *  eirene_mc_t0_eapl(:,:,:),
-     *  eirene_mc_t0_empl(:,:,:),
-     *  eirene_mc_t0_eipl(:,:,:),
-     *  eirene_mc_t0_eppl(:,:,:),
-     *  b2sihs_diae(:,:),
-     *  b2sihs_diaa(:,:),
-     *  b2sifr_smoch(:,:,:),
-     *  b2sifr_smotf(:,:,:),
-     *  b2sigp_smogp(:,:,:),
-     *  b2sigp_pstat(:,:,:),
-     *  b2siav_smovh(:,:,:),
-     *  b2siav_smovv(:,:,:),
-     *  b2nxdv_smo(:,:,:),
-     *  b2npht_shei(:,:)
       real (kind=R8), allocatable, save ::                             !srv 11.09.09 16.07.10
      *  snasm(:,:,:,:), smosm(:,:,:,:), 
      &  shesm(:,:,:), shism(:,:,:),
      *  snadt(:,:,:,:), smodt(:,:,:,:), 
      &  shedt(:,:,:), shidt(:,:,:),
      &  schdt(:,:,:), snedt(:,:,:)
+cdjm Jan2017 Source arrays required for balance. The linearised components are stored
+c            and then the total source is updated just before each residual calculation.
+c            Only this total source is output to b2fplasma.
+cdjm Jan2017 Arrays for particle balance:
+      real (kind=R8), allocatable, save ::
+     *  b2stbr_sna0to1(:,:,:,:),
+     *  b2stbr_sna_bal(:,:,:),
+     *  b2stbc_sna0to1(:,:,:,:),
+     *  b2stbc_sna_bal(:,:,:),
+     *  eirene_mc_papl_sna0to1(:,:,:,:,:),
+     *  eirene_mc_pmpl_sna0to1(:,:,:,:,:),
+     *  eirene_mc_pipl_sna0to1(:,:,:,:,:),
+     *  eirene_mc_pppl_sna0to1(:,:,:,:,:),
+     *  eirene_mc_core_sna0to1(:,:,:,:),
+     *  eirene_mc_papl_sna(:,:,:,:),
+     *  eirene_mc_pmpl_sna(:,:,:,:),
+     *  eirene_mc_pipl_sna(:,:,:,:),
+     *  eirene_mc_pppl_sna(:,:,:,:),
+     *  eirene_mc_core_sna(:,:,:),
+     *  b2stbm_sna0to1(:,:,:,:),
+     *  b2stbm_sna_bal(:,:,:),
+     *  ext_sna0to1(:,:,:,:),
+     *  ext_sna_bal(:,:,:),
+     *  b2stel_sna_ion0to1(:,:,:,:),
+     *  b2stel_sna_ion_bal(:,:,:),
+     *  b2stel_sna_rec0to1(:,:,:,:),
+     *  b2stel_sna_rec_bal(:,:,:),
+     *  b2stcx_sna0to1(:,:,:,:),
+     *  b2stcx_sna_bal(:,:,:),
+     *  b2srsm_sna0to1(:,:,:,:),
+     *  b2srsm_sna_bal(:,:,:),
+     *  b2srdt_sna0to1(:,:,:,:),
+     *  b2srdt_sna_bal(:,:,:),
+     *  b2srst_sna0to1(:,:,:,:),
+     *  b2srst_sna_bal(:,:,:)
+cdjm Jan2017 Arrays for momentum balance:
+      real (kind=R8), allocatable, save ::
+     *  b2stbr_smo0to3(:,:,:,:),
+     *  b2stbr_smo_bal(:,:,:),
+     *  b2stbc_smo0to3(:,:,:,:),
+     *  b2stbc_smo_bal(:,:,:),
+     *  eirene_mc_mapl_smo0to3(:,:,:,:,:),
+     *  eirene_mc_mmpl_smo0to3(:,:,:,:,:),
+     *  eirene_mc_mipl_smo0to3(:,:,:,:,:),
+     *  eirene_mc_cppv_smo0to3(:,:,:,:,:),
+     *  eirene_mc_mapl_smo(:,:,:,:),
+     *  eirene_mc_mmpl_smo(:,:,:,:),
+     *  eirene_mc_mipl_smo(:,:,:,:),
+     *  eirene_mc_cppv_smo(:,:,:,:),
+     *  b2stbm_smo0to3(:,:,:,:),
+     *  b2stbm_smo_bal(:,:,:),
+     *  ext_smo0to3(:,:,:,:),
+     *  ext_smo_bal(:,:,:),
+     *  b2stel_smq_ion0to3(:,:,:,:),
+     *  b2stel_smq_ion_bal(:,:,:),
+     *  b2stel_smq_rec0to3(:,:,:,:),
+     *  b2stel_smq_rec_bal(:,:,:),
+     *  b2stcx_smq0to3(:,:,:,:),
+     *  b2stcx_smq_bal(:,:,:),
+     *  b2srsm_smo0to3(:,:,:,:),
+     *  b2srsm_smo_bal(:,:,:),
+     *  b2srdt_smo0to3(:,:,:,:),
+     *  b2srdt_smo_bal(:,:,:),
+     *  b2srst_smo0to3(:,:,:,:),
+     *  b2srst_smo_bal(:,:,:),
+     *  b2sifr_smoch0to3(:,:,:,:),
+     *  b2sifr_smoch_bal(:,:,:),
+     *  b2sifr_smotf0to3(:,:,:,:),
+     *  b2sifr_smotf_bal(:,:,:),
+     *  b2siav_smovh0to3(:,:,:,:),
+     *  b2siav_smovh_bal(:,:,:),
+     *  b2siav_smovv0to3(:,:,:,:),
+     *  b2siav_smovv_bal(:,:,:),
+     *  b2sicf_smo0to3(:,:,:,:),
+     *  b2sicf_smo_bal(:,:,:),
+     *  b2nxdv_smo0to3(:,:,:,:),
+     *  b2nxdv_smo_bal(:,:,:),
+     *  b2sigp_smogp0to3(:,:,:,:),
+     *  b2sigp_smogp_bal(:,:,:),
+     *  b2sigp_pstat0to3(:,:,:,:),
+     *  b2sigp_pstat_bal(:,:,:)
+cdjm Jan2017 Arrays for electron heat balance:
+      real (kind=R8), allocatable, save ::
+     *  b2stbr_she0to3(:,:,:),
+     *  b2stbr_she_bal(:,:),
+     *  b2stbc_she0to3(:,:,:),
+     *  b2stbc_she_bal(:,:),
+     *  eirene_mc_eael_she0to3(:,:,:,:),
+     *  eirene_mc_emel_she0to3(:,:,:,:),
+     *  eirene_mc_eiel_she0to3(:,:,:,:),
+     *  eirene_mc_epel_she0to3(:,:,:,:),
+     *  eirene_mc_eael_she(:,:,:),
+     *  eirene_mc_emel_she(:,:,:),
+     *  eirene_mc_eiel_she(:,:,:),
+     *  eirene_mc_epel_she(:,:,:),
+     *  b2stbm_she0to3(:,:,:),
+     *  b2stbm_she_bal(:,:),
+     *  ext_she0to3(:,:,:),
+     *  ext_she_bal(:,:),
+     *  b2stel_she0to3(:,:,:),
+     *  b2stel_she_bal(:,:),
+     *  b2srsm_she0to3(:,:,:),
+     *  b2srsm_she_bal(:,:),
+     *  b2srdt_she0to3(:,:,:),
+     *  b2srdt_she_bal(:,:),
+     *  b2srst_she0to3(:,:,:),
+     *  b2srst_she_bal(:,:),
+     *  b2sihs_diae0to3(:,:,:),
+     *  b2sihs_diae_bal(:,:),
+     *  b2sihs_divue0to3(:,:,:),
+     *  b2sihs_divue_bal(:,:),
+     *  b2sihs_exbe0to3(:,:,:),
+     *  b2sihs_exbe_bal(:,:),
+     *  b2sihs_joule0to3(:,:,:),
+     *  b2sihs_joule_bal(:,:),
+     *  b2npht_shei_bal(:,:) !djm equipartition is not linearised
+cdjm Jan2017 Arrays for ion heat balance:
+      real (kind=R8), allocatable, save ::
+     *  b2stbr_shi0to3(:,:,:),
+     *  b2stbr_shi_bal(:,:),
+     *  b2stbc_shi0to3(:,:,:),
+     *  b2stbc_shi_bal(:,:),
+     *  eirene_mc_eapl_shi0to3(:,:,:,:),
+     *  eirene_mc_empl_shi0to3(:,:,:,:),
+     *  eirene_mc_eipl_shi0to3(:,:,:,:),
+     *  eirene_mc_eppl_shi0to3(:,:,:,:),
+     *  eirene_mc_eapl_shi(:,:,:),
+     *  eirene_mc_empl_shi(:,:,:),
+     *  eirene_mc_eipl_shi(:,:,:),
+     *  eirene_mc_eppl_shi(:,:,:),
+     *  b2stbm_shi0to3(:,:,:),
+     *  b2stbm_shi_bal(:,:),
+     *  ext_shi0to3(:,:,:),
+     *  ext_shi_bal(:,:),
+     *  b2stel_shi_ion0to3(:,:,:),
+     *  b2stel_shi_ion_bal(:,:),
+     *  b2stel_shi_rec0to3(:,:,:),
+     *  b2stel_shi_rec_bal(:,:),
+     *  b2stcx_shi0to3(:,:,:),
+     *  b2stcx_shi_bal(:,:),
+     *  b2srsm_shi0to3(:,:,:),
+     *  b2srsm_shi_bal(:,:),
+     *  b2srdt_shi0to3(:,:,:),
+     *  b2srdt_shi_bal(:,:),
+     *  b2srst_shi0to3(:,:,:),
+     *  b2srst_shi_bal(:,:),
+     *  b2sihs_diaa0to3(:,:,:),
+     *  b2sihs_diaa_bal(:,:),
+     *  b2sihs_divua0to3(:,:,:),
+     *  b2sihs_divua_bal(:,:),
+     *  b2sihs_exba0to3(:,:,:),
+     *  b2sihs_exba_bal(:,:),
+     *  b2sihs_visa0to3(:,:,:),
+     *  b2sihs_visa_bal(:,:),
+     *  b2sihs_fraa0to3(:,:,:),
+     *  b2sihs_fraa_bal(:,:)
 
       contains
 
@@ -217,56 +305,6 @@ cdjm Jan2017
       allocate(shism(-1:nxd,-1:nyd,0:3))
       allocate(smosm(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(snasm(-1:nxd,-1:nyd,0:1,0:nsd-1))                 !srv 16.07.10 }
-cdjm Jan2017
-      allocate(b2sifr_smoch(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2sifr_smotf(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2sigp_smogp(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2sigp_pstat(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2siav_smovh(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2siav_smovv(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2nxdv_smo(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2stbr_she0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2stbr_shi0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2stbc_she0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2stbc_shi0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2stel_sna_ion(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2stel_sna_rec(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2stel_smq_ion(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2stel_smq_rec(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2stel_she(-1:nxd,-1:nyd))
-      allocate(b2stel_shi_ion(-1:nxd,-1:nyd))
-      allocate(b2stel_shi_rec(-1:nxd,-1:nyd))
-      allocate(b2stel_she0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2stel_shi_ion0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2stel_shi_rec0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2stcx_sna(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2stcx_smq(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2stcx_shi(-1:nxd,-1:nyd))
-      allocate(b2stcx_shi0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2srsm_sna(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2srsm_smo(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2srsm_she(-1:nxd,-1:nyd))
-      allocate(b2srsm_shi(-1:nxd,-1:nyd))
-      allocate(b2srsm_she0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2srsm_shi0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2srsm_sch(-1:nxd,-1:nyd))
-      allocate(b2srdt_sna(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2srdt_smo(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2srdt_she(-1:nxd,-1:nyd))
-      allocate(b2srdt_shi(-1:nxd,-1:nyd))
-      allocate(b2srdt_she0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2srdt_shi0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2srdt_sch(-1:nxd,-1:nyd))     
-      allocate(b2srst_sna(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2srst_smo(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(b2srst_she(-1:nxd,-1:nyd))
-      allocate(b2srst_shi(-1:nxd,-1:nyd))
-      allocate(b2srst_she0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2srst_shi0to3(-1:nxd,-1:nyd,0:3))
-      allocate(b2srst_sch(-1:nxd,-1:nyd))     
-      allocate(b2sihs_diae(-1:nxd,-1:nyd))
-      allocate(b2sihs_diaa(-1:nxd,-1:nyd))
-      allocate(b2npht_shei(-1:nxd,-1:nyd))
 
       rsana=0.0_R8
       rsahi=0.0_R8
@@ -319,57 +357,234 @@ cdjm Jan2017
       ext_she=0.0_R8
       ext_shi=0.0_R8
       ext_sch=0.0_R8
-cdjm Jan2017
-      b2stbr_she0to3=0.0_R8
-      b2stbr_shi0to3=0.0_R8
-      b2stbc_she0to3=0.0_R8
-      b2stbc_shi0to3=0.0_R8
-      b2stel_sna_ion=0.0_R8
-      b2stel_sna_rec=0.0_R8
-      b2stel_smq_ion=0.0_R8
-      b2stel_smq_rec=0.0_R8
-      b2stel_she=0.0_R8
-      b2stel_shi_ion=0.0_R8
-      b2stel_shi_rec=0.0_R8
-      b2stel_she0to3=0.0_R8
-      b2stel_shi_ion0to3=0.0_R8
-      b2stel_shi_rec0to3=0.0_R8
-      b2stcx_sna=0.0_R8
-      b2stcx_smq=0.0_R8
-      b2stcx_shi=0.0_R8
-      b2stcx_shi0to3=0.0_R8
-      b2srsm_sna=0.0_R8
-      b2srsm_smo=0.0_R8
-      b2srsm_she=0.0_R8
-      b2srsm_shi=0.0_R8
-      b2srsm_she0to3=0.0_R8
-      b2srsm_shi0to3=0.0_R8
-      b2srsm_sch=0.0_R8
-      b2srdt_sna=0.0_R8
-      b2srdt_smo=0.0_R8
-      b2srdt_she=0.0_R8
-      b2srdt_shi=0.0_R8
-      b2srdt_she0to3=0.0_R8
-      b2srdt_shi0to3=0.0_R8
-      b2srdt_sch=0.0_R8
-      b2srst_sna=0.0_R8
-      b2srst_smo=0.0_R8
-      b2srst_she=0.0_R8
-      b2srst_shi=0.0_R8
-      b2srst_she0to3=0.0_R8
-      b2srst_shi0to3=0.0_R8
-      b2srst_sch=0.0_R8
-      b2sihs_diae=0.0_R8
-      b2sihs_diaa=0.0_R8
-      b2sifr_smoch=0.0_R8
-      b2sifr_smotf=0.0_R8
-      b2sigp_smogp=0.0_R8
-      b2sigp_pstat=0.0_R8
-      b2siav_smovh=0.0_R8
-      b2siav_smovv=0.0_R8
-      b2nxdv_smo=0.0_R8
-      b2npht_shei=0.0_R8
 
+cdjm Jan2017 Arrays for particle balance:
+      allocate(b2stbr_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(b2stbr_sna_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stbc_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(b2stbc_sna_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stbm_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(b2stbm_sna_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(ext_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(ext_sna_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stel_sna_ion0to1(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(b2stel_sna_ion_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stel_sna_rec0to1(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(b2stel_sna_rec_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stcx_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(b2stcx_sna_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2srsm_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(b2srsm_sna_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2srdt_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(b2srdt_sna_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2srst_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(b2srst_sna_bal(-1:nxd,-1:nyd,0:nsd-1))
+      b2stbr_sna0to1=0.0_R8
+      b2stbr_sna_bal=0.0_R8
+      b2stbc_sna0to1=0.0_R8
+      b2stbc_sna_bal=0.0_R8
+      b2stbm_sna0to1=0.0_R8
+      b2stbm_sna_bal=0.0_R8
+      ext_sna0to1=0.0_R8
+      ext_sna_bal=0.0_R8
+      b2stel_sna_ion0to1=0.0_R8
+      b2stel_sna_ion_bal=0.0_R8
+      b2stel_sna_rec0to1=0.0_R8
+      b2stel_sna_rec_bal=0.0_R8
+      b2stcx_sna0to1=0.0_R8
+      b2stcx_sna_bal=0.0_R8
+      b2srsm_sna0to1=0.0_R8
+      b2srsm_sna_bal=0.0_R8
+      b2srdt_sna0to1=0.0_R8
+      b2srdt_sna_bal=0.0_R8
+      b2srst_sna0to1=0.0_R8
+      b2srst_sna_bal=0.0_R8
+cdjm Arrays for momentum balance:
+      allocate(b2stbr_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2stbr_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stbc_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2stbc_smo_bal(-1:nxd,-1:nyd,0:nsd-1))      
+      allocate(b2stbm_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2stbm_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(ext_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(ext_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stel_smq_ion0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2stel_smq_ion_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stel_smq_rec0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2stel_smq_rec_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2stcx_smq0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2stcx_smq_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2srsm_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2srsm_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2srdt_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2srdt_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2srst_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2srst_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sifr_smoch0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2sifr_smoch_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sifr_smotf0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2sifr_smotf_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2siav_smovh0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2siav_smovh_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2siav_smovv0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2siav_smovv_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sicf_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2sicf_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2nxdv_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2nxdv_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sigp_smogp0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2sigp_smogp_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sigp_pstat0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
+      allocate(b2sigp_pstat_bal(-1:nxd,-1:nyd,0:nsd-1))
+      b2stbr_smo0to3=0.0_R8
+      b2stbr_smo_bal=0.0_R8
+      b2stbc_smo0to3=0.0_R8
+      b2stbc_smo_bal=0.0_R8
+      b2stbm_smo0to3=0.0_R8
+      b2stbm_smo_bal=0.0_R8
+      ext_smo0to3=0.0_R8
+      ext_smo_bal=0.0_R8
+      b2stel_smq_ion0to3=0.0_R8
+      b2stel_smq_ion_bal=0.0_R8
+      b2stel_smq_rec0to3=0.0_R8
+      b2stel_smq_rec_bal=0.0_R8
+      b2stcx_smq0to3=0.0_R8
+      b2stcx_smq_bal=0.0_R8
+      b2srsm_smo0to3=0.0_R8
+      b2srsm_smo_bal=0.0_R8
+      b2srdt_smo0to3=0.0_R8
+      b2srdt_smo_bal=0.0_R8
+      b2srst_smo0to3=0.0_R8
+      b2srst_smo_bal=0.0_R8
+      b2sifr_smoch0to3=0.0_R8
+      b2sifr_smoch_bal=0.0_R8
+      b2sifr_smotf0to3=0.0_R8
+      b2sifr_smotf_bal=0.0_R8
+      b2siav_smovh0to3=0.0_R8
+      b2siav_smovh_bal=0.0_R8
+      b2siav_smovv0to3=0.0_R8
+      b2siav_smovv_bal=0.0_R8
+      b2sicf_smo0to3=0.0_R8
+      b2sicf_smo_bal=0.0_R8
+      b2nxdv_smo0to3=0.0_R8
+      b2nxdv_smo_bal=0.0_R8
+      b2sigp_smogp0to3=0.0_R8
+      b2sigp_smogp_bal=0.0_R8
+      b2sigp_pstat0to3=0.0_R8
+      b2sigp_pstat_bal=0.0_R8
+cdjm Arrays for electron heat balance:
+      allocate(b2stbr_she0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2stbr_she_bal(-1:nxd,-1:nyd))
+      allocate(b2stbc_she0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2stbc_she_bal(-1:nxd,-1:nyd))
+      allocate(b2stbm_she0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2stbm_she_bal(-1:nxd,-1:nyd))
+      allocate(ext_she0to3(-1:nxd,-1:nyd,0:3))
+      allocate(ext_she_bal(-1:nxd,-1:nyd))
+      allocate(b2stel_she0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2stel_she_bal(-1:nxd,-1:nyd))
+      allocate(b2srsm_she0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2srsm_she_bal(-1:nxd,-1:nyd))
+      allocate(b2srdt_she0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2srdt_she_bal(-1:nxd,-1:nyd))
+      allocate(b2srst_she0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2srst_she_bal(-1:nxd,-1:nyd))
+      allocate(b2sihs_diae0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2sihs_diae_bal(-1:nxd,-1:nyd))
+      allocate(b2sihs_divue0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2sihs_divue_bal(-1:nxd,-1:nyd))
+      allocate(b2sihs_exbe0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2sihs_exbe_bal(-1:nxd,-1:nyd))
+      allocate(b2sihs_joule0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2sihs_joule_bal(-1:nxd,-1:nyd))
+      allocate(b2npht_shei_bal(-1:nxd,-1:nyd))
+      b2stbr_she0to3=0.0_R8
+      b2stbr_she_bal=0.0_R8
+      b2stbc_she0to3=0.0_R8
+      b2stbc_she_bal=0.0_R8
+      b2stbm_she0to3=0.0_R8
+      b2stbm_she_bal=0.0_R8
+      ext_she0to3=0.0_R8
+      ext_she_bal=0.0_R8
+      b2stel_she0to3=0.0_R8
+      b2stel_she_bal=0.0_R8
+      b2srsm_she0to3=0.0_R8
+      b2srsm_she_bal=0.0_R8
+      b2srdt_she0to3=0.0_R8
+      b2srdt_she_bal=0.0_R8
+      b2srst_she0to3=0.0_R8
+      b2srst_she_bal=0.0_R8
+      b2sihs_diae0to3=0.0_R8
+      b2sihs_diae_bal=0.0_R8
+      b2sihs_divue0to3=0.0_R8
+      b2sihs_divue_bal=0.0_R8
+      b2sihs_exbe0to3=0.0_R8
+      b2sihs_exbe_bal=0.0_R8
+      b2sihs_joule0to3=0.0_R8
+      b2sihs_joule_bal=0.0_R8
+      b2npht_shei_bal=0.0_R8
+cdjm Arrays for ion heat balance:
+      allocate(b2stbr_shi0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2stbr_shi_bal(-1:nxd,-1:nyd))
+      allocate(b2stbc_shi0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2stbc_shi_bal(-1:nxd,-1:nyd))
+      allocate(b2stbm_shi0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2stbm_shi_bal(-1:nxd,-1:nyd))
+      allocate(ext_shi0to3(-1:nxd,-1:nyd,0:3))
+      allocate(ext_shi_bal(-1:nxd,-1:nyd))
+      allocate(b2stel_shi_ion0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2stel_shi_ion_bal(-1:nxd,-1:nyd))
+      allocate(b2stel_shi_rec0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2stel_shi_rec_bal(-1:nxd,-1:nyd))
+      allocate(b2stcx_shi0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2stcx_shi_bal(-1:nxd,-1:nyd))
+      allocate(b2srsm_shi0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2srsm_shi_bal(-1:nxd,-1:nyd))
+      allocate(b2srdt_shi0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2srdt_shi_bal(-1:nxd,-1:nyd))
+      allocate(b2srst_shi0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2srst_shi_bal(-1:nxd,-1:nyd))
+      allocate(b2sihs_diaa0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2sihs_diaa_bal(-1:nxd,-1:nyd))
+      allocate(b2sihs_divua0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2sihs_divua_bal(-1:nxd,-1:nyd))
+      allocate(b2sihs_exba0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2sihs_exba_bal(-1:nxd,-1:nyd))
+      allocate(b2sihs_visa0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2sihs_visa_bal(-1:nxd,-1:nyd))
+      allocate(b2sihs_fraa0to3(-1:nxd,-1:nyd,0:3))
+      allocate(b2sihs_fraa_bal(-1:nxd,-1:nyd))
+      b2stbr_shi0to3=0.0_R8
+      b2stbr_shi_bal=0.0_R8
+      b2stbc_shi0to3=0.0_R8
+      b2stbc_shi_bal=0.0_R8
+      b2stbm_shi0to3=0.0_R8
+      b2stbm_shi_bal=0.0_R8
+      ext_shi0to3=0.0_R8
+      ext_shi_bal=0.0_R8
+      b2stel_shi_ion0to3=0.0_R8
+      b2stel_shi_ion_bal=0.0_R8
+      b2stel_shi_rec0to3=0.0_R8
+      b2stel_shi_rec_bal=0.0_R8
+      b2stcx_shi0to3=0.0_R8
+      b2stcx_shi_bal=0.0_R8
+      b2srsm_shi0to3=0.0_R8
+      b2srsm_shi_bal=0.0_R8
+      b2srdt_shi0to3=0.0_R8
+      b2srdt_shi_bal=0.0_R8
+      b2srst_shi0to3=0.0_R8
+      b2srst_shi_bal=0.0_R8
+      b2sihs_diaa0to3=0.0_R8
+      b2sihs_diaa_bal=0.0_R8
+      b2sihs_divua0to3=0.0_R8
+      b2sihs_divua_bal=0.0_R8
+      b2sihs_exba0to3=0.0_R8
+      b2sihs_exba_bal=0.0_R8
+      b2sihs_visa0to3=0.0_R8
+      b2sihs_visa_bal=0.0_R8
+      b2sihs_fraa0to3=0.0_R8
+      b2sihs_fraa_bal=0.0_R8
+      
       return
       end subroutine alloc_b2mod_sources
 
@@ -447,56 +662,122 @@ cdjm Jan2017
       deallocate(shism)
       deallocate(smosm)
       deallocate(snasm)                         !srv 16.07.10 }
-cdjm Jan2017
-      deallocate(b2sifr_smoch)
-      deallocate(b2sifr_smotf)
-      deallocate(b2sigp_smogp)
-      deallocate(b2sigp_pstat)
-      deallocate(b2siav_smovh)
-      deallocate(b2siav_smovv)
-      deallocate(b2nxdv_smo)
+
+cdjm Jan2017 Arrays for particle balance:
+      deallocate(b2stbr_sna0to1)
+      deallocate(b2stbr_sna_bal)
+      deallocate(b2stbc_sna0to1)
+      deallocate(b2stbc_sna_bal)
+      deallocate(b2stbm_sna0to1)
+      deallocate(b2stbm_sna_bal)
+      deallocate(ext_sna0to1)
+      deallocate(ext_sna_bal)
+      deallocate(b2stel_sna_ion0to1)
+      deallocate(b2stel_sna_ion_bal)
+      deallocate(b2stel_sna_rec0to1)
+      deallocate(b2stel_sna_rec_bal)
+      deallocate(b2stcx_sna0to1)
+      deallocate(b2stcx_sna_bal)
+      deallocate(b2srsm_sna0to1)
+      deallocate(b2srsm_sna_bal)
+      deallocate(b2srdt_sna0to1)
+      deallocate(b2srdt_sna_bal)
+      deallocate(b2srst_sna0to1)
+      deallocate(b2srst_sna_bal)
+cdjm Arrays for momentum balance:
+      deallocate(b2stbr_smo0to3)
+      deallocate(b2stbr_smo_bal)
+      deallocate(b2stbc_smo0to3)
+      deallocate(b2stbc_smo_bal)      
+      deallocate(b2stbm_smo0to3)
+      deallocate(b2stbm_smo_bal)
+      deallocate(ext_smo0to3)
+      deallocate(ext_smo_bal)
+      deallocate(b2stel_smq_ion0to3)
+      deallocate(b2stel_smq_ion_bal)
+      deallocate(b2stel_smq_rec0to3)
+      deallocate(b2stel_smq_rec_bal)
+      deallocate(b2stcx_smq0to3)
+      deallocate(b2stcx_smq_bal)
+      deallocate(b2srsm_smo0to3)
+      deallocate(b2srsm_smo_bal)
+      deallocate(b2srdt_smo0to3)
+      deallocate(b2srdt_smo_bal)
+      deallocate(b2srst_smo0to3)
+      deallocate(b2srst_smo_bal)
+      deallocate(b2sifr_smoch0to3)
+      deallocate(b2sifr_smoch_bal)
+      deallocate(b2sifr_smotf0to3)
+      deallocate(b2sifr_smotf_bal)
+      deallocate(b2siav_smovh0to3)
+      deallocate(b2siav_smovh_bal)
+      deallocate(b2siav_smovv0to3)
+      deallocate(b2siav_smovv_bal)
+      deallocate(b2sicf_smo0to3)
+      deallocate(b2sicf_smo_bal)
+      deallocate(b2nxdv_smo0to3)
+      deallocate(b2nxdv_smo_bal)
+      deallocate(b2sigp_smogp0to3)
+      deallocate(b2sigp_smogp_bal)
+      deallocate(b2sigp_pstat0to3)
+      deallocate(b2sigp_pstat_bal)
+cdjm Arrays for electron heat balance:
       deallocate(b2stbr_she0to3)
-      deallocate(b2stbr_shi0to3)
+      deallocate(b2stbr_she_bal)
       deallocate(b2stbc_she0to3)
-      deallocate(b2stbc_shi0to3)
-      deallocate(b2stel_sna_ion)
-      deallocate(b2stel_sna_rec)
-      deallocate(b2stel_smq_ion)
-      deallocate(b2stel_smq_rec)
-      deallocate(b2stel_she)
-      deallocate(b2stel_shi_ion)
-      deallocate(b2stel_shi_rec)
+      deallocate(b2stbc_she_bal)
+      deallocate(b2stbm_she0to3)
+      deallocate(b2stbm_she_bal)
+      deallocate(ext_she0to3)
+      deallocate(ext_she_bal)
       deallocate(b2stel_she0to3)
-      deallocate(b2stel_shi_ion0to3)
-      deallocate(b2stel_shi_rec0to3)
-      deallocate(b2stcx_sna)
-      deallocate(b2stcx_smq)
-      deallocate(b2stcx_shi)
-      deallocate(b2stcx_shi0to3)
-      deallocate(b2srsm_sna)
-      deallocate(b2srsm_smo)
-      deallocate(b2srsm_she)
-      deallocate(b2srsm_shi)
+      deallocate(b2stel_she_bal)
       deallocate(b2srsm_she0to3)
-      deallocate(b2srsm_shi0to3)
-      deallocate(b2srsm_sch)
-      deallocate(b2srdt_sna)
-      deallocate(b2srdt_smo)
-      deallocate(b2srdt_she)
-      deallocate(b2srdt_shi)
+      deallocate(b2srsm_she_bal)
       deallocate(b2srdt_she0to3)
-      deallocate(b2srdt_shi0to3)
-      deallocate(b2srdt_sch)
-      deallocate(b2srst_sna)
-      deallocate(b2srst_smo)
-      deallocate(b2srst_she)
-      deallocate(b2srst_shi)
+      deallocate(b2srdt_she_bal)
       deallocate(b2srst_she0to3)
+      deallocate(b2srst_she_bal)
+      deallocate(b2sihs_diae0to3)
+      deallocate(b2sihs_diae_bal)
+      deallocate(b2sihs_divue0to3)
+      deallocate(b2sihs_divue_bal)
+      deallocate(b2sihs_exbe0to3)
+      deallocate(b2sihs_exbe_bal)
+      deallocate(b2sihs_joule0to3)
+      deallocate(b2sihs_joule_bal)
+      deallocate(b2npht_shei_bal)
+cdjm Arrays for ion heat balance:
+      deallocate(b2stbr_shi0to3)
+      deallocate(b2stbr_shi_bal)
+      deallocate(b2stbc_shi0to3)
+      deallocate(b2stbc_shi_bal)
+      deallocate(b2stbm_shi0to3)
+      deallocate(b2stbm_shi_bal)
+      deallocate(ext_shi0to3)
+      deallocate(ext_shi_bal)
+      deallocate(b2stel_shi_ion0to3)
+      deallocate(b2stel_shi_ion_bal)
+      deallocate(b2stel_shi_rec0to3)
+      deallocate(b2stel_shi_rec_bal)
+      deallocate(b2stcx_shi0to3)
+      deallocate(b2stcx_shi_bal)
+      deallocate(b2srsm_shi0to3)
+      deallocate(b2srsm_shi_bal)
+      deallocate(b2srdt_shi0to3)
+      deallocate(b2srdt_shi_bal)
       deallocate(b2srst_shi0to3)
-      deallocate(b2srst_sch)
-      deallocate(b2sihs_diae)
-      deallocate(b2sihs_diaa)
-      deallocate(b2npht_shei)
+      deallocate(b2srst_shi_bal)
+      deallocate(b2sihs_diaa0to3)
+      deallocate(b2sihs_diaa_bal)
+      deallocate(b2sihs_divua0to3)
+      deallocate(b2sihs_divua_bal)
+      deallocate(b2sihs_exba0to3)
+      deallocate(b2sihs_exba_bal)
+      deallocate(b2sihs_visa0to3)
+      deallocate(b2sihs_visa_bal)
+      deallocate(b2sihs_fraa0to3)
+      deallocate(b2sihs_fraa_bal)
 
       return
       end subroutine dealloc_b2mod_sources
@@ -505,109 +786,87 @@ cdjm Jan2017
       implicit none
       integer nxd,nyd,nsd,nstrad
 
-      allocate(eirene_mc_t0_papl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad)) ! djm Jan2017
-      allocate(eirene_mc_t0_pmpl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_pipl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_pppl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_core(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(eirene_mc_t0_mapl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_mmpl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_mipl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_cppv(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_eael(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_emel(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_eiel(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_epel(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_eapl(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_empl(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_eipl(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_eppl(-1:nxd,-1:nyd,1:nstrad))
-
-      eirene_mc_t0_papl=0.0_R8 !djm Jan2017
-      eirene_mc_t0_pmpl=0.0_R8
-      eirene_mc_t0_pipl=0.0_R8
-      eirene_mc_t0_pppl=0.0_R8
-      eirene_mc_t0_core=0.0_R8
-      eirene_mc_t0_mapl=0.0_R8
-      eirene_mc_t0_mmpl=0.0_R8
-      eirene_mc_t0_mipl=0.0_R8
-      eirene_mc_t0_cppv=0.0_R8
-      eirene_mc_t0_eael=0.0_R8
-      eirene_mc_t0_emel=0.0_R8
-      eirene_mc_t0_eiel=0.0_R8
-      eirene_mc_t0_epel=0.0_R8
-      eirene_mc_t0_eapl=0.0_R8
-      eirene_mc_t0_empl=0.0_R8
-      eirene_mc_t0_eipl=0.0_R8
-      eirene_mc_t0_eppl=0.0_R8
-
-      return
-      end subroutine alloc_b2mod_eirene_sources
-
-      subroutine dealloc_b2mod_eirene_sources
-      implicit none
-
-      if(.not.allocated(eirene_mc_t0_papl)) return
-      deallocate(eirene_mc_t0_papl)
-      deallocate(eirene_mc_t0_pmpl)
-      deallocate(eirene_mc_t0_pipl)
-      deallocate(eirene_mc_t0_pppl)
-      deallocate(eirene_mc_t0_core)
-      deallocate(eirene_mc_t0_mapl)
-      deallocate(eirene_mc_t0_mmpl)
-      deallocate(eirene_mc_t0_mipl)
-      deallocate(eirene_mc_t0_cppv)
-      deallocate(eirene_mc_t0_eael)
-      deallocate(eirene_mc_t0_emel)
-      deallocate(eirene_mc_t0_eiel)
-      deallocate(eirene_mc_t0_epel)
-      deallocate(eirene_mc_t0_eapl)
-      deallocate(eirene_mc_t0_empl)
-      deallocate(eirene_mc_t0_eipl)
-      deallocate(eirene_mc_t0_eppl)
-
-      return
-      end subroutine dealloc_b2mod_eirene_sources
-
-      subroutine alloc_b2mod_eirene_sources(nxd,nyd,nsd,nstrad)
-      implicit none
-      integer nxd,nyd,nsd,nstrad
-
-      allocate(eirene_mc_t0_papl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad)) ! djm Jan2017
-      allocate(eirene_mc_t0_pmpl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_pipl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_pppl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_core(-1:nxd,-1:nyd,0:nsd-1))
-      allocate(eirene_mc_t0_mapl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_mmpl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_mipl(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_cppv(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
-      allocate(eirene_mc_t0_eael(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_emel(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_eiel(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_epel(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_eapl(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_empl(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_eipl(-1:nxd,-1:nyd,1:nstrad))
-      allocate(eirene_mc_t0_eppl(-1:nxd,-1:nyd,1:nstrad))
-
-      eirene_mc_t0_papl=0.0_R8 !djm Jan2017
-      eirene_mc_t0_pmpl=0.0_R8
-      eirene_mc_t0_pipl=0.0_R8
-      eirene_mc_t0_pppl=0.0_R8
-      eirene_mc_t0_core=0.0_R8
-      eirene_mc_t0_mapl=0.0_R8
-      eirene_mc_t0_mmpl=0.0_R8
-      eirene_mc_t0_mipl=0.0_R8
-      eirene_mc_t0_cppv=0.0_R8
-      eirene_mc_t0_eael=0.0_R8
-      eirene_mc_t0_emel=0.0_R8
-      eirene_mc_t0_eiel=0.0_R8
-      eirene_mc_t0_epel=0.0_R8
-      eirene_mc_t0_eapl=0.0_R8
-      eirene_mc_t0_empl=0.0_R8
-      eirene_mc_t0_eipl=0.0_R8
-      eirene_mc_t0_eppl=0.0_R8
+cdjm Jan2017 Eirene arrays for particle balance:
+      allocate(
+     & eirene_mc_papl_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1,1:nstrad))
+      allocate(
+     & eirene_mc_pmpl_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1,1:nstrad))
+      allocate(
+     & eirene_mc_pipl_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1,1:nstrad))
+      allocate(
+     & eirene_mc_pppl_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1,1:nstrad))
+      allocate(
+     & eirene_mc_core_sna0to1(-1:nxd,-1:nyd,0:1,0:nsd-1))
+      allocate(eirene_mc_papl_sna(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_pmpl_sna(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_pipl_sna(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_pppl_sna(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_core_sna(-1:nxd,-1:nyd,0:nsd-1))
+      eirene_mc_papl_sna0to1=0.0_R8
+      eirene_mc_pmpl_sna0to1=0.0_R8
+      eirene_mc_pipl_sna0to1=0.0_R8
+      eirene_mc_pppl_sna0to1=0.0_R8
+      eirene_mc_core_sna0to1=0.0_R8
+      eirene_mc_papl_sna=0.0_R8
+      eirene_mc_pmpl_sna=0.0_R8
+      eirene_mc_pipl_sna=0.0_R8
+      eirene_mc_pppl_sna=0.0_R8
+      eirene_mc_core_sna=0.0_R8
+cdjm Jan2017 Eirene arrays for momentum balance:
+      allocate(
+     & eirene_mc_mapl_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1,1:nstrad))
+      allocate(
+     & eirene_mc_mmpl_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1,1:nstrad))
+      allocate(
+     & eirene_mc_mipl_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1,1:nstrad))
+      allocate(
+     & eirene_mc_cppv_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_mapl_smo(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_mmpl_smo(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_mipl_smo(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      allocate(eirene_mc_cppv_smo(-1:nxd,-1:nyd,0:nsd-1,1:nstrad))
+      eirene_mc_mapl_smo0to3=0.0_R8
+      eirene_mc_mmpl_smo0to3=0.0_R8
+      eirene_mc_mipl_smo0to3=0.0_R8
+      eirene_mc_cppv_smo0to3=0.0_R8
+      eirene_mc_mapl_smo=0.0_R8
+      eirene_mc_mmpl_smo=0.0_R8
+      eirene_mc_mipl_smo=0.0_R8
+      eirene_mc_cppv_smo=0.0_R8
+cdjm Jan2017 Eirene arrays for electron heat balance:
+      allocate(eirene_mc_eael_she0to3(-1:nxd,-1:nyd,0:3,1:nstrad))
+      allocate(eirene_mc_emel_she0to3(-1:nxd,-1:nyd,0:3,1:nstrad))
+      allocate(eirene_mc_eiel_she0to3(-1:nxd,-1:nyd,0:3,1:nstrad))
+      allocate(eirene_mc_epel_she0to3(-1:nxd,-1:nyd,0:3,1:nstrad))
+      allocate(eirene_mc_eael_she(-1:nxd,-1:nyd,1:nstrad))
+      allocate(eirene_mc_emel_she(-1:nxd,-1:nyd,1:nstrad))
+      allocate(eirene_mc_eiel_she(-1:nxd,-1:nyd,1:nstrad))
+      allocate(eirene_mc_epel_she(-1:nxd,-1:nyd,1:nstrad))
+      eirene_mc_eael_she0to3=0.0_R8
+      eirene_mc_emel_she0to3=0.0_R8
+      eirene_mc_eiel_she0to3=0.0_R8
+      eirene_mc_epel_she0to3=0.0_R8
+      eirene_mc_eael_she=0.0_R8
+      eirene_mc_emel_she=0.0_R8
+      eirene_mc_eiel_she=0.0_R8
+      eirene_mc_epel_she=0.0_R8      
+cdjm Jan2017 Eirene arrays for ion heat balance:
+      allocate(eirene_mc_eapl_shi0to3(-1:nxd,-1:nyd,0:3,1:nstrad))
+      allocate(eirene_mc_empl_shi0to3(-1:nxd,-1:nyd,0:3,1:nstrad))
+      allocate(eirene_mc_eipl_shi0to3(-1:nxd,-1:nyd,0:3,1:nstrad))
+      allocate(eirene_mc_eppl_shi0to3(-1:nxd,-1:nyd,0:3,1:nstrad))
+      allocate(eirene_mc_eapl_shi(-1:nxd,-1:nyd,1:nstrad))
+      allocate(eirene_mc_empl_shi(-1:nxd,-1:nyd,1:nstrad))
+      allocate(eirene_mc_eipl_shi(-1:nxd,-1:nyd,1:nstrad))
+      allocate(eirene_mc_eppl_shi(-1:nxd,-1:nyd,1:nstrad))
+      eirene_mc_eapl_shi0to3=0.0_R8
+      eirene_mc_empl_shi0to3=0.0_R8
+      eirene_mc_eipl_shi0to3=0.0_R8
+      eirene_mc_eppl_shi0to3=0.0_R8
+      eirene_mc_eapl_shi=0.0_R8
+      eirene_mc_empl_shi=0.0_R8
+      eirene_mc_eipl_shi=0.0_R8
+      eirene_mc_eppl_shi=0.0_R8
 
       return
       end subroutine alloc_b2mod_eirene_sources
@@ -615,27 +874,441 @@ cdjm Jan2017
       subroutine dealloc_b2mod_eirene_sources
       implicit none
 
-      if(.not.allocated(eirene_mc_t0_papl)) return
-      deallocate(eirene_mc_t0_papl)
-      deallocate(eirene_mc_t0_pmpl)
-      deallocate(eirene_mc_t0_pipl)
-      deallocate(eirene_mc_t0_pppl)
-      deallocate(eirene_mc_t0_core)
-      deallocate(eirene_mc_t0_mapl)
-      deallocate(eirene_mc_t0_mmpl)
-      deallocate(eirene_mc_t0_mipl)
-      deallocate(eirene_mc_t0_cppv)
-      deallocate(eirene_mc_t0_eael)
-      deallocate(eirene_mc_t0_emel)
-      deallocate(eirene_mc_t0_eiel)
-      deallocate(eirene_mc_t0_epel)
-      deallocate(eirene_mc_t0_eapl)
-      deallocate(eirene_mc_t0_empl)
-      deallocate(eirene_mc_t0_eipl)
-      deallocate(eirene_mc_t0_eppl)
+      if(.not.allocated(eirene_mc_papl_sna)) return
+cdjm Jan2017 Eirene arrays for particle balance:
+      deallocate(eirene_mc_papl_sna0to1)
+      deallocate(eirene_mc_pmpl_sna0to1)
+      deallocate(eirene_mc_pipl_sna0to1)
+      deallocate(eirene_mc_pppl_sna0to1)
+      deallocate(eirene_mc_core_sna0to1)
+      deallocate(eirene_mc_papl_sna)
+      deallocate(eirene_mc_pmpl_sna)
+      deallocate(eirene_mc_pipl_sna)
+      deallocate(eirene_mc_pppl_sna)
+      deallocate(eirene_mc_core_sna)
+cdjm Jan2017 Eirene arrays for momentum balance:
+      deallocate(eirene_mc_mapl_smo0to3)
+      deallocate(eirene_mc_mmpl_smo0to3)
+      deallocate(eirene_mc_mipl_smo0to3)
+      deallocate(eirene_mc_cppv_smo0to3)
+      deallocate(eirene_mc_mapl_smo)
+      deallocate(eirene_mc_mmpl_smo)
+      deallocate(eirene_mc_mipl_smo)
+      deallocate(eirene_mc_cppv_smo)
+cdjm Jan2017 Eirene arrays for electron heat balance:
+      deallocate(eirene_mc_eael_she0to3)
+      deallocate(eirene_mc_emel_she0to3)
+      deallocate(eirene_mc_eiel_she0to3)
+      deallocate(eirene_mc_epel_she0to3)
+      deallocate(eirene_mc_eael_she)
+      deallocate(eirene_mc_emel_she)
+      deallocate(eirene_mc_eiel_she)
+      deallocate(eirene_mc_epel_she)
+cdjm Jan2017 Eirene arrays for ion heat balance:      
+      deallocate(eirene_mc_eapl_shi0to3)
+      deallocate(eirene_mc_empl_shi0to3)
+      deallocate(eirene_mc_eipl_shi0to3)
+      deallocate(eirene_mc_eppl_shi0to3)
+      deallocate(eirene_mc_eapl_shi)
+      deallocate(eirene_mc_empl_shi)
+      deallocate(eirene_mc_eipl_shi)
+      deallocate(eirene_mc_eppl_shi)
 
       return
       end subroutine dealloc_b2mod_eirene_sources
+
+      subroutine update_balance_sources_particles(nx,ny,isb,nb) !djm Jan2017
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer nx,ny,isb
+      real (kind=R8):: nb(-1:nx,-1:ny)
+*   ..local variables
+      integer ix,iy,istrai,nstrad
+
+      nstrad = size(eirene_mc_papl_sna,4)
+      
+      do ix=-1,nx
+        do iy=-1,ny
+          b2stbr_sna_bal(ix,iy,isb)=b2stbr_sna0to1(ix,iy,0,isb)+
+     &                     b2stbr_sna0to1(ix,iy,1,isb)*nb(ix,iy)
+          b2stbc_sna_bal(ix,iy,isb)=b2stbc_sna0to1(ix,iy,0,isb)+
+     &                     b2stbc_sna0to1(ix,iy,1,isb)*nb(ix,iy)
+          if (allocated(eirene_mc_papl_sna)) then
+            do istrai=1,nstrad
+              eirene_mc_papl_sna(ix,iy,isb,istrai)=
+     &         eirene_mc_papl_sna0to1(ix,iy,0,isb,istrai)+
+     &         eirene_mc_papl_sna0to1(ix,iy,1,isb,istrai)*nb(ix,iy)
+              eirene_mc_pmpl_sna(ix,iy,isb,istrai)=
+     &         eirene_mc_pmpl_sna0to1(ix,iy,0,isb,istrai)+
+     &         eirene_mc_pmpl_sna0to1(ix,iy,1,isb,istrai)*nb(ix,iy)
+              eirene_mc_pipl_sna(ix,iy,isb,istrai)=
+     &         eirene_mc_pipl_sna0to1(ix,iy,0,isb,istrai)+
+     &         eirene_mc_pipl_sna0to1(ix,iy,1,isb,istrai)*nb(ix,iy)
+              eirene_mc_pppl_sna(ix,iy,isb,istrai)=
+     &         eirene_mc_pppl_sna0to1(ix,iy,0,isb,istrai)+
+     &         eirene_mc_pppl_sna0to1(ix,iy,1,isb,istrai)*nb(ix,iy)
+            enddo
+            eirene_mc_core_sna(ix,iy,isb)=
+     &       eirene_mc_core_sna0to1(ix,iy,0,isb)+
+     &       eirene_mc_core_sna0to1(ix,iy,1,isb)*nb(ix,iy)
+          endif
+          b2stbm_sna_bal(ix,iy,isb)=b2stbm_sna0to1(ix,iy,0,isb)+
+     &                     b2stbm_sna0to1(ix,iy,1,isb)*nb(ix,iy)
+          ext_sna_bal(ix,iy,isb)=ext_sna0to1(ix,iy,0,isb)+
+     &                     ext_sna0to1(ix,iy,1,isb)*nb(ix,iy)
+          b2stel_sna_ion_bal(ix,iy,isb)=b2stel_sna_ion0to1(ix,iy,0,isb)+
+     &                     b2stel_sna_ion0to1(ix,iy,1,isb)*nb(ix,iy)
+          b2stel_sna_rec_bal(ix,iy,isb)=b2stel_sna_rec0to1(ix,iy,0,isb)+
+     &                     b2stel_sna_rec0to1(ix,iy,1,isb)*nb(ix,iy)
+          b2stcx_sna_bal(ix,iy,isb)=b2stcx_sna0to1(ix,iy,0,isb)+
+     &                     b2stcx_sna0to1(ix,iy,1,isb)*nb(ix,iy)
+          b2srsm_sna_bal(ix,iy,isb)=b2srsm_sna0to1(ix,iy,0,isb)+
+     &                     b2srsm_sna0to1(ix,iy,1,isb)*nb(ix,iy)
+          b2srdt_sna_bal(ix,iy,isb)=b2srdt_sna0to1(ix,iy,0,isb)+
+     &                     b2srdt_sna0to1(ix,iy,1,isb)*nb(ix,iy)
+          b2srst_sna_bal(ix,iy,isb)=b2srst_sna0to1(ix,iy,0,isb)+
+     &                     b2srst_sna0to1(ix,iy,1,isb)*nb(ix,iy)
+        enddo
+      enddo
+      return
+      end subroutine update_balance_sources_particles
+
+      subroutine update_balance_sources_momentum(nx,ny,isb,ub,rob) !djm Jan2017
+      use b2mod_constants
+     & , only : mp
+      use b2mod_b2cmpa
+     & , only : am
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer nx,ny,isb
+      real (kind=R8):: ub(-1:nx,-1:ny), rob(-1:nx,-1:ny)
+*   ..local variables
+      integer ix,iy,istrai,nstrad
+
+      nstrad = size(eirene_mc_papl_sna,4)
+
+      do ix=-1,nx
+        do iy=-1,ny
+          b2stbr_smo_bal(ix,iy,isb)=b2stbr_smo0to3(ix,iy,0,isb)+
+     &            b2stbr_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2stbr_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2stbr_smo0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2stbc_smo_bal(ix,iy,isb)=b2stbc_smo0to3(ix,iy,0,isb)+
+     &            b2stbc_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2stbc_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2stbc_smo0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          if (allocated(eirene_mc_mapl_smo)) then
+            do istrai=1,nstrad
+              eirene_mc_mapl_smo(ix,iy,isb,istrai)=
+     &         eirene_mc_mapl_smo0to3(ix,iy,0,isb,istrai)+
+     &         eirene_mc_mapl_smo0to3(ix,iy,1,isb,istrai)*ub(ix,iy)+
+     &         eirene_mc_mapl_smo0to3(ix,iy,2,isb,istrai)*rob(ix,iy)+
+     &         eirene_mc_mapl_smo0to3(ix,iy,3,isb,istrai)*rob(ix,iy)*
+     &                                                    ub(ix,iy)
+              eirene_mc_mmpl_smo(ix,iy,isb,istrai)=
+     &         eirene_mc_mmpl_smo0to3(ix,iy,0,isb,istrai)+
+     &         eirene_mc_mmpl_smo0to3(ix,iy,1,isb,istrai)*ub(ix,iy)+
+     &         eirene_mc_mmpl_smo0to3(ix,iy,2,isb,istrai)*rob(ix,iy)+
+     &         eirene_mc_mmpl_smo0to3(ix,iy,3,isb,istrai)*rob(ix,iy)*
+     &                                                    ub(ix,iy)
+              eirene_mc_mipl_smo(ix,iy,isb,istrai)=
+     &         eirene_mc_mipl_smo0to3(ix,iy,0,isb,istrai)+
+     &         eirene_mc_mipl_smo0to3(ix,iy,1,isb,istrai)*ub(ix,iy)+
+     &         eirene_mc_mipl_smo0to3(ix,iy,2,isb,istrai)*rob(ix,iy)+
+     &         eirene_mc_mipl_smo0to3(ix,iy,3,isb,istrai)*rob(ix,iy)*
+     &                                                    ub(ix,iy)
+              eirene_mc_cppv_smo(ix,iy,isb,istrai)=
+     &         eirene_mc_cppv_smo0to3(ix,iy,0,isb,istrai)+
+     &         eirene_mc_cppv_smo0to3(ix,iy,1,isb,istrai)*ub(ix,iy)+
+     &         eirene_mc_cppv_smo0to3(ix,iy,2,isb,istrai)*rob(ix,iy)+
+     &         eirene_mc_cppv_smo0to3(ix,iy,3,isb,istrai)*rob(ix,iy)*
+     &                                                    ub(ix,iy)
+            enddo
+          endif
+          b2stbm_smo_bal(ix,iy,isb)=b2stbm_smo0to3(ix,iy,0,isb)+
+     &            b2stbm_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2stbm_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2stbm_smo0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          ext_smo_bal(ix,iy,isb)=ext_smo0to3(ix,iy,0,isb)+
+     &            ext_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            ext_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            ext_smo0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2stel_smq_ion_bal(ix,iy,isb)=b2stel_smq_ion0to3(ix,iy,0,isb)+
+     &            b2stel_smq_ion0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2stel_smq_ion0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2stel_smq_ion0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2stel_smq_rec_bal(ix,iy,isb)=b2stel_smq_rec0to3(ix,iy,0,isb)+
+     &            b2stel_smq_rec0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2stel_smq_rec0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2stel_smq_rec0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2stcx_smq_bal(ix,iy,isb)=b2stcx_smq0to3(ix,iy,0,isb)+
+     &            b2stcx_smq0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2stcx_smq0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2stcx_smq0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2srsm_smo_bal(ix,iy,isb)=b2srsm_smo0to3(ix,iy,0,isb)+
+     &            b2srsm_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2srsm_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2srsm_smo0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2srdt_smo_bal(ix,iy,isb)=b2srdt_smo0to3(ix,iy,0,isb)+
+     &            b2srdt_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2srdt_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2srdt_smo0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2srst_smo_bal(ix,iy,isb)=b2srst_smo0to3(ix,iy,0,isb)+
+     &            b2srst_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2srst_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2srst_smo0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2sifr_smoch_bal(ix,iy,isb)=b2sifr_smoch0to3(ix,iy,0,isb)+
+     &            b2sifr_smoch0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2sifr_smoch0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2sifr_smoch0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2sifr_smotf_bal(ix,iy,isb)=b2sifr_smotf0to3(ix,iy,0,isb)+
+     &            b2sifr_smotf0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2sifr_smotf0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2sifr_smotf0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2siav_smovh_bal(ix,iy,isb)=b2siav_smovh0to3(ix,iy,0,isb)+
+     &            b2siav_smovh0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2siav_smovh0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2siav_smovh0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2siav_smovv_bal(ix,iy,isb)=b2siav_smovv0to3(ix,iy,0,isb)+
+     &            b2siav_smovv0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2siav_smovv0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2siav_smovv0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2sicf_smo_bal(ix,iy,isb)=b2sicf_smo0to3(ix,iy,0,isb)+
+     &            b2sicf_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2sicf_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2sicf_smo0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2nxdv_smo_bal(ix,iy,isb)=b2nxdv_smo0to3(ix,iy,0,isb)+
+     &            b2nxdv_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2nxdv_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2nxdv_smo0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2sigp_smogp_bal(ix,iy,isb)=b2sigp_smogp0to3(ix,iy,0,isb)+
+     &            b2sigp_smogp0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2sigp_smogp0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2sigp_smogp0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2sigp_pstat_bal(ix,iy,isb)=b2sigp_pstat0to3(ix,iy,0,isb)+
+     &            b2sigp_pstat0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2sigp_pstat0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2sigp_pstat0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+        enddo
+      enddo
+      return
+      end subroutine update_balance_sources_momentum
+
+      subroutine update_balance_sources_heat(nx,ny,ne,ni,te,ti)
+      implicit none
+*   ..input arguments (unchanged on exit)
+      integer nx,ny,isb
+      real (kind=R8):: ne(-1:nx,-1:ny), ni(-1:nx,-1:ny),
+     &                 te(-1:nx,-1:ny), ti(-1:nx,-1:ny)
+*   ..local variables
+      integer ix,iy,istrai,nstrad
+
+      nstrad = size(eirene_mc_papl_sna,4)
+
+cdjm Update electron heat sources
+      do ix=-1,nx
+        do iy=-1,ny
+          b2stbr_she_bal(ix,iy)=
+     &     b2stbr_she0to3(ix,iy,0)+
+     &     b2stbr_she0to3(ix,iy,1)*te(ix,iy)+
+     &     b2stbr_she0to3(ix,iy,2)*ne(ix,iy)+
+     &     b2stbr_she0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
+          b2stbc_she_bal(ix,iy)=
+     &     b2stbc_she0to3(ix,iy,0)+
+     &     b2stbc_she0to3(ix,iy,1)*te(ix,iy)+
+     &     b2stbc_she0to3(ix,iy,2)*ne(ix,iy)+
+     &     b2stbc_she0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
+          if (allocated(eirene_mc_eael_she)) then
+            do istrai=1,nstrad
+              eirene_mc_eael_she(ix,iy,istrai)=
+     &         eirene_mc_eael_she0to3(ix,iy,0,istrai)+
+     &         eirene_mc_eael_she0to3(ix,iy,1,istrai)*te(ix,iy)+
+     &         eirene_mc_eael_she0to3(ix,iy,2,istrai)*ne(ix,iy)+
+     &         eirene_mc_eael_she0to3(ix,iy,3,istrai)*ne(ix,iy)*
+     &                                                te(ix,iy)
+              eirene_mc_emel_she(ix,iy,istrai)=
+     &         eirene_mc_emel_she0to3(ix,iy,0,istrai)+
+     &         eirene_mc_emel_she0to3(ix,iy,1,istrai)*te(ix,iy)+
+     &         eirene_mc_emel_she0to3(ix,iy,2,istrai)*ne(ix,iy)+
+     &         eirene_mc_emel_she0to3(ix,iy,3,istrai)*ne(ix,iy)*
+     &                                                te(ix,iy)
+              eirene_mc_eiel_she(ix,iy,istrai)=
+     &         eirene_mc_eiel_she0to3(ix,iy,0,istrai)+
+     &         eirene_mc_eiel_she0to3(ix,iy,1,istrai)*te(ix,iy)+
+     &         eirene_mc_eiel_she0to3(ix,iy,2,istrai)*ne(ix,iy)+
+     &         eirene_mc_eiel_she0to3(ix,iy,3,istrai)*ne(ix,iy)*
+     &                                                te(ix,iy)
+              eirene_mc_epel_she(ix,iy,istrai)=
+     &         eirene_mc_epel_she0to3(ix,iy,0,istrai)+
+     &         eirene_mc_epel_she0to3(ix,iy,1,istrai)*te(ix,iy)+
+     &         eirene_mc_epel_she0to3(ix,iy,2,istrai)*ne(ix,iy)+
+     &         eirene_mc_epel_she0to3(ix,iy,3,istrai)*ne(ix,iy)*
+     &                                                te(ix,iy)
+            enddo
+          endif
+          b2stbm_she_bal(ix,iy)=
+     &     b2stbm_she0to3(ix,iy,0)+
+     &     b2stbm_she0to3(ix,iy,1)*te(ix,iy)+
+     &     b2stbm_she0to3(ix,iy,2)*ne(ix,iy)+
+     &     b2stbm_she0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
+          ext_she_bal(ix,iy)=
+     &     ext_she0to3(ix,iy,0)+
+     &     ext_she0to3(ix,iy,1)*te(ix,iy)+
+     &     ext_she0to3(ix,iy,2)*ne(ix,iy)+
+     &     ext_she0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
+          b2stel_she_bal(ix,iy)=
+     &     b2stel_she0to3(ix,iy,0)+
+     &     b2stel_she0to3(ix,iy,1)*te(ix,iy)+
+     &     b2stel_she0to3(ix,iy,2)*ne(ix,iy)+
+     &     b2stel_she0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
+          b2srsm_she_bal(ix,iy)=
+     &     b2srsm_she0to3(ix,iy,0)+
+     &     b2srsm_she0to3(ix,iy,1)*te(ix,iy)+
+     &     b2srsm_she0to3(ix,iy,2)*ne(ix,iy)+
+     &     b2srsm_she0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
+          b2srdt_she_bal(ix,iy)=
+     &     b2srdt_she0to3(ix,iy,0)+
+     &     b2srdt_she0to3(ix,iy,1)*te(ix,iy)+
+     &     b2srdt_she0to3(ix,iy,2)*ne(ix,iy)+
+     &     b2srdt_she0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
+          b2srst_she_bal(ix,iy)=
+     &     b2srst_she0to3(ix,iy,0)+
+     &     b2srst_she0to3(ix,iy,1)*te(ix,iy)+
+     &     b2srst_she0to3(ix,iy,2)*ne(ix,iy)+
+     &     b2srst_she0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
+          b2sihs_diae_bal(ix,iy)=
+     &     b2sihs_diae0to3(ix,iy,0)+
+     &     b2sihs_diae0to3(ix,iy,1)*te(ix,iy)+
+     &     b2sihs_diae0to3(ix,iy,2)*ne(ix,iy)+
+     &     b2sihs_diae0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
+          b2sihs_divue_bal(ix,iy)=
+     &     b2sihs_divue0to3(ix,iy,0)+
+     &     b2sihs_divue0to3(ix,iy,1)*te(ix,iy)+
+     &     b2sihs_divue0to3(ix,iy,2)*ne(ix,iy)+
+     &     b2sihs_divue0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
+          b2sihs_exbe_bal(ix,iy)=
+     &     b2sihs_exbe0to3(ix,iy,0)+
+     &     b2sihs_exbe0to3(ix,iy,1)*te(ix,iy)+
+     &     b2sihs_exbe0to3(ix,iy,2)*ne(ix,iy)+
+     &     b2sihs_exbe0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
+          b2sihs_joule_bal(ix,iy)=
+     &     b2sihs_joule0to3(ix,iy,0)+
+     &     b2sihs_joule0to3(ix,iy,1)*te(ix,iy)+
+     &     b2sihs_joule0to3(ix,iy,2)*ne(ix,iy)+
+     &     b2sihs_joule0to3(ix,iy,3)*ne(ix,iy)*te(ix,iy)
+        enddo
+      enddo
+cdjm Update ion heat sources
+      do ix=-1,nx
+        do iy=-1,ny
+          b2stbr_shi_bal(ix,iy)=
+     &     b2stbr_shi0to3(ix,iy,0)+
+     &     b2stbr_shi0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2stbr_shi0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2stbr_shi0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          b2stbc_shi_bal(ix,iy)=
+     &     b2stbc_shi0to3(ix,iy,0)+
+     &     b2stbc_shi0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2stbc_shi0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2stbc_shi0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          if (allocated(eirene_mc_eapl_shi)) then
+            do istrai=1,nstrad
+              eirene_mc_eapl_shi(ix,iy,istrai)=
+     &         eirene_mc_eapl_shi0to3(ix,iy,0,istrai)+
+     &         eirene_mc_eapl_shi0to3(ix,iy,1,istrai)*ti(ix,iy)+
+     &         eirene_mc_eapl_shi0to3(ix,iy,2,istrai)*ni(ix,iy)+
+     &         eirene_mc_eapl_shi0to3(ix,iy,3,istrai)*ni(ix,iy)*
+     &                                                ti(ix,iy)
+              eirene_mc_empl_shi(ix,iy,istrai)=
+     &         eirene_mc_empl_shi0to3(ix,iy,0,istrai)+
+     &         eirene_mc_empl_shi0to3(ix,iy,1,istrai)*ti(ix,iy)+
+     &         eirene_mc_empl_shi0to3(ix,iy,2,istrai)*ni(ix,iy)+
+     &         eirene_mc_empl_shi0to3(ix,iy,3,istrai)*ni(ix,iy)*
+     &                                                ti(ix,iy)
+              eirene_mc_eipl_shi(ix,iy,istrai)=
+     &         eirene_mc_eipl_shi0to3(ix,iy,0,istrai)+
+     &         eirene_mc_eipl_shi0to3(ix,iy,1,istrai)*ti(ix,iy)+
+     &         eirene_mc_eipl_shi0to3(ix,iy,2,istrai)*ni(ix,iy)+
+     &         eirene_mc_eipl_shi0to3(ix,iy,3,istrai)*ni(ix,iy)*
+     &                                                ti(ix,iy)
+              eirene_mc_eppl_shi(ix,iy,istrai)=
+     &         eirene_mc_eppl_shi0to3(ix,iy,0,istrai)+
+     &         eirene_mc_eppl_shi0to3(ix,iy,1,istrai)*ti(ix,iy)+
+     &         eirene_mc_eppl_shi0to3(ix,iy,2,istrai)*ni(ix,iy)+
+     &         eirene_mc_eppl_shi0to3(ix,iy,3,istrai)*ni(ix,iy)*
+     &                                                ti(ix,iy)
+            enddo
+          endif
+          b2stbm_shi_bal(ix,iy)=
+     &     b2stbm_shi0to3(ix,iy,0)+
+     &     b2stbm_shi0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2stbm_shi0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2stbm_shi0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          ext_shi_bal(ix,iy)=
+     &     ext_shi0to3(ix,iy,0)+
+     &     ext_shi0to3(ix,iy,1)*ti(ix,iy)+
+     &     ext_shi0to3(ix,iy,2)*ni(ix,iy)+
+     &     ext_shi0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          b2stel_shi_ion_bal(ix,iy)=
+     &     b2stel_shi_ion0to3(ix,iy,0)+
+     &     b2stel_shi_ion0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2stel_shi_ion0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2stel_shi_ion0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          b2stel_shi_rec_bal(ix,iy)=
+     &     b2stel_shi_rec0to3(ix,iy,0)+
+     &     b2stel_shi_rec0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2stel_shi_rec0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2stel_shi_rec0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          b2stcx_shi_bal(ix,iy)=
+     &     b2stcx_shi0to3(ix,iy,0)+
+     &     b2stcx_shi0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2stcx_shi0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2stcx_shi0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          b2srsm_shi_bal(ix,iy)=
+     &     b2srsm_shi0to3(ix,iy,0)+
+     &     b2srsm_shi0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2srsm_shi0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2srsm_shi0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          b2srdt_shi_bal(ix,iy)=
+     &     b2srdt_shi0to3(ix,iy,0)+
+     &     b2srdt_shi0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2srdt_shi0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2srdt_shi0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          b2srst_shi_bal(ix,iy)=
+     &     b2srst_shi0to3(ix,iy,0)+
+     &     b2srst_shi0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2srst_shi0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2srst_shi0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          b2sihs_diaa_bal(ix,iy)=
+     &     b2sihs_diaa0to3(ix,iy,0)+
+     &     b2sihs_diaa0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2sihs_diaa0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2sihs_diaa0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          b2sihs_divua_bal(ix,iy)=
+     &     b2sihs_divua0to3(ix,iy,0)+
+     &     b2sihs_divua0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2sihs_divua0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2sihs_divua0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          b2sihs_exba_bal(ix,iy)=
+     &     b2sihs_exba0to3(ix,iy,0)+
+     &     b2sihs_exba0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2sihs_exba0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2sihs_exba0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          b2sihs_visa_bal(ix,iy)=
+     &     b2sihs_visa0to3(ix,iy,0)+
+     &     b2sihs_visa0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2sihs_visa0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2sihs_visa0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+          b2sihs_fraa_bal(ix,iy)=
+     &     b2sihs_fraa0to3(ix,iy,0)+
+     &     b2sihs_fraa0to3(ix,iy,1)*ti(ix,iy)+
+     &     b2sihs_fraa0to3(ix,iy,2)*ni(ix,iy)+
+     &     b2sihs_fraa0to3(ix,iy,3)*ni(ix,iy)*ti(ix,iy)
+        enddo
+      enddo
+      return
+      end subroutine update_balance_sources_heat
+>>>>>>> Takes linearisation of all sources into account for balance routines. Balance arrays still stored in b2fplasma.
 
       subroutine read_b2mod_sources(nread)
       implicit none
@@ -690,58 +1363,122 @@ cdjm Jan2017
         call cfrure (nread, size(b2stbc_sch), b2stbc_sch, 'b2stbc_sch')
       endif
       if(b2fplasma_version.ge.'03.000.006') then !djm Jan2017
-        call cfrure (nread, size(b2stel_sna_ion),
-     .                b2stel_sna_ion, 'b2stel_sna_ion')
-        call cfrure (nread, size(b2stel_sna_rec),
-     .                b2stel_sna_rec, 'b2stel_sna_rec')
-        call cfrure (nread, size(b2stel_smq_ion),
-     .                b2stel_smq_ion, 'b2stel_smq_ion')
-        call cfrure (nread, size(b2stel_smq_rec),
-     .                b2stel_smq_rec, 'b2stel_smq_rec')
-        call cfrure (nread, size(b2stel_she),
-     .                b2stel_she, 'b2stel_she')
-        call cfrure (nread, size(b2stel_shi_ion),
-     .                b2stel_shi_ion, 'b2stel_shi_ion')
-        call cfrure (nread, size(b2stel_shi_rec),
-     .                b2stel_shi_rec, 'b2stel_shi_rec')
-        call cfrure (nread, size(b2stcx_sna), b2stcx_sna, 'b2stcx_sna')
-        call cfrure (nread, size(b2stcx_smq), b2stcx_smq, 'b2stcx_smq')
-        call cfrure (nread, size(b2stcx_shi), b2stcx_shi, 'b2stcx_shi')
-        call cfrure (nread, size(b2srsm_sna), b2srsm_sna, 'b2srsm_sna')
-        call cfrure (nread, size(b2srsm_smo), b2srsm_smo, 'b2srsm_smo')
-        call cfrure (nread, size(b2srsm_she), b2srsm_she, 'b2srsm_she')
-        call cfrure (nread, size(b2srsm_shi), b2srsm_shi, 'b2srsm_shi')
-        call cfrure (nread, size(b2srsm_sch), b2srsm_sch, 'b2srsm_sch')
-        call cfrure (nread, size(b2srdt_sna), b2srdt_sna, 'b2srdt_sna')
-        call cfrure (nread, size(b2srdt_smo), b2srdt_smo, 'b2srdt_smo')
-        call cfrure (nread, size(b2srdt_she), b2srdt_she, 'b2srdt_she')
-        call cfrure (nread, size(b2srdt_shi), b2srdt_shi, 'b2srdt_shi')
-        call cfrure (nread, size(b2srdt_sch), b2srdt_sch, 'b2srdt_sch')
-        call cfrure (nread, size(b2srst_sna), b2srst_sna, 'b2srst_sna')
-        call cfrure (nread, size(b2srst_smo), b2srst_smo, 'b2srst_smo')
-        call cfrure (nread, size(b2srst_she), b2srst_she, 'b2srst_she')
-        call cfrure (nread, size(b2srst_shi), b2srst_shi, 'b2srst_shi')
-        call cfrure (nread, size(b2srst_sch), b2srst_sch, 'b2srst_sch')
-        call cfrure (nread, size(b2sifr_smoch),
-     &               b2sifr_smoch, 'b2sifr_smoch')
-        call cfrure (nread, size(b2sifr_smotf),
-     &               b2sifr_smotf, 'b2sifr_smotf')
-        call cfrure (nread, size(b2sigp_smogp),
-     &               b2sigp_smogp, 'b2sigp_smogp')
-        call cfrure (nread, size(b2sigp_pstat),
-     &               b2sigp_pstat, 'b2sigp_pstat')
-        call cfrure (nread, size(b2siav_smovh),
-     &               b2siav_smovh, 'b2siav_smovh')
-        call cfrure (nread, size(b2siav_smovv),
-     &               b2siav_smovv, 'b2siav_smovv')
-        call cfrure (nread, size(b2nxdv_smo),
-     &               b2nxdv_smo, 'b2nxdv_smo')
-        call cfrure (nread, size(b2sihs_diae),
-     &               b2sihs_diae, 'b2sihs_diae')
-        call cfrure (nread, size(b2sihs_diaa),
-     &               b2sihs_diaa, 'b2sihs_diaa')
-        call cfrure (nread, size(b2npht_shei),
-     &               b2npht_shei, 'b2npht_shei')
+cdjm Arrays for particle balance
+        call cfrure (nread, size(b2stbr_sna_bal),
+     .               b2stbr_sna_bal, 'b2stbr_sna_bal')
+        call cfrure (nread, size(b2stbc_sna_bal),
+     .               b2stbc_sna_bal, 'b2stbc_sna_bal')
+        call cfrure (nread, size(b2stbm_sna_bal),
+     .               b2stbm_sna_bal, 'b2stbm_sna_bal')
+        call cfrure (nread, size(ext_sna_bal),
+     .               ext_sna_bal, 'ext_sna_bal')
+        call cfrure (nread, size(b2stel_sna_ion_bal),
+     .                b2stel_sna_ion_bal, 'b2stel_sna_ion_bal')
+        call cfrure (nread, size(b2stel_sna_rec_bal),
+     .                b2stel_sna_rec_bal, 'b2stel_sna_rec_bal')
+        call cfrure (nread, size(b2stcx_sna_bal),
+     .                b2stcx_sna_bal, 'b2stcx_sna_bal')
+        call cfrure (nread, size(b2srsm_sna_bal),
+     .                b2srsm_sna_bal, 'b2srsm_sna_bal')
+        call cfrure (nread, size(b2srdt_sna_bal),
+     .                b2srdt_sna_bal, 'b2srdt_sna_bal')
+        call cfrure (nread, size(b2srst_sna_bal),
+     .                b2srst_sna_bal, 'b2srst_sna_bal')
+cdjm Arrays for momentum balance
+        call cfrure (nread, size(b2stbr_smo_bal),
+     .                b2stbr_smo_bal, 'b2stbr_smo_bal')
+        call cfrure (nread, size(b2stbc_smo_bal),
+     .                b2stbc_smo_bal, 'b2stbc_smo_bal')
+        call cfrure (nread, size(b2stbm_smo_bal),
+     .                b2stbm_smo_bal, 'b2stbm_smo_bal')
+        call cfrure (nread, size(ext_smo_bal),
+     .                ext_smo_bal, 'ext_smo_bal')
+        call cfrure (nread, size(b2stel_smq_ion_bal),
+     .                b2stel_smq_ion_bal, 'b2stel_smq_ion_bal')
+        call cfrure (nread, size(b2stel_smq_rec_bal),
+     .                b2stel_smq_rec_bal, 'b2stel_smq_rec_bal')
+        call cfrure (nread, size(b2stcx_smq_bal),
+     .                b2stcx_smq_bal, 'b2stcx_smq_bal')
+        call cfrure (nread, size(b2srsm_smo_bal),
+     .                b2srsm_smo_bal, 'b2srsm_smo_bal')
+        call cfrure (nread, size(b2srdt_smo_bal),
+     .                b2srdt_smo_bal, 'b2srdt_smo_bal')
+        call cfrure (nread, size(b2srst_smo_bal),
+     .                b2srst_smo_bal, 'b2srst_smo_bal')
+        call cfrure (nread, size(b2sifr_smoch_bal),
+     .               b2sifr_smoch_bal, 'b2sifr_smoch_bal')
+        call cfrure (nread, size(b2sifr_smotf_bal),
+     .               b2sifr_smotf_bal, 'b2sifr_smotf_bal')
+        call cfrure (nread, size(b2siav_smovh_bal),
+     .               b2siav_smovh_bal, 'b2siav_smovh_bal')
+        call cfrure (nread, size(b2siav_smovv_bal),
+     .               b2siav_smovv_bal, 'b2siav_smovv_bal')
+        call cfrure (nread, size(b2sicf_smo_bal),
+     .               b2sicf_smo_bal, 'b2sicf_smo_bal')
+        call cfrure (nread, size(b2nxdv_smo_bal),
+     .               b2nxdv_smo_bal, 'b2nxdv_smo_bal')
+        call cfrure (nread, size(b2sigp_smogp_bal),
+     .               b2sigp_smogp_bal, 'b2sigp_smogp_bal')
+        call cfrure (nread, size(b2sigp_pstat_bal),
+     .               b2sigp_pstat_bal, 'b2sigp_pstat_bal')
+cdjm Arrays for electron heat balance
+        call cfrure (nread, size(b2stbr_she_bal),
+     .                b2stbr_she_bal, 'b2stbr_she_bal')
+        call cfrure (nread, size(b2stbc_she_bal),
+     .                b2stbc_she_bal, 'b2stbc_she_bal')
+        call cfrure (nread, size(b2stbm_she_bal),
+     .                b2stbm_she_bal, 'b2stbm_she_bal')
+        call cfrure (nread, size(ext_she_bal),
+     .                ext_she_bal, 'ext_she_bal')
+        call cfrure (nread, size(b2stel_she_bal),
+     .                b2stel_she_bal, 'b2stel_she_bal')
+        call cfrure (nread, size(b2srsm_she_bal),
+     .                b2srsm_she_bal, 'b2srsm_she_bal')
+        call cfrure (nread, size(b2srdt_she_bal),
+     .                b2srdt_she_bal, 'b2srdt_she_bal')
+        call cfrure (nread, size(b2srst_she_bal),
+     .                b2srst_she_bal, 'b2srst_she_bal')
+        call cfrure (nread, size(b2sihs_diae_bal),
+     .                b2sihs_diae_bal, 'b2sihs_diae_bal')
+        call cfrure (nread, size(b2sihs_divue_bal),
+     .                b2sihs_divue_bal, 'b2sihs_divue_bal')
+        call cfrure (nread, size(b2sihs_exbe_bal),
+     .                b2sihs_exbe_bal, 'b2sihs_exbe_bal')
+        call cfrure (nread, size(b2sihs_joule_bal),
+     .                b2sihs_joule_bal, 'b2sihs_joule_bal')
+        call cfrure (nread, size(b2npht_shei_bal),
+     .               b2npht_shei_bal, 'b2npht_shei_bal')
+cdjm Arrays for ion heat balance
+        call cfrure (nread, size(b2stbr_shi_bal),
+     .                b2stbr_shi_bal, 'b2stbr_shi_bal')
+        call cfrure (nread, size(b2stbc_shi_bal),
+     .                b2stbc_shi_bal, 'b2stbc_shi_bal')
+        call cfrure (nread, size(b2stbm_shi_bal),
+     .                b2stbm_shi_bal, 'b2stbm_shi_bal')
+        call cfrure (nread, size(ext_shi_bal),
+     .                ext_shi_bal, 'ext_shi_bal')
+        call cfrure (nread, size(b2stel_shi_ion_bal),
+     .                b2stel_shi_ion_bal, 'b2stel_shi_ion_bal')
+        call cfrure (nread, size(b2stel_shi_rec_bal),
+     .                b2stel_shi_rec_bal, 'b2stel_shi_rec_bal')
+        call cfrure (nread, size(b2stcx_shi_bal),
+     .                b2stcx_shi_bal, 'b2stcx_shi_bal')
+        call cfrure (nread, size(b2srsm_shi_bal),
+     .                b2srsm_shi_bal, 'b2srsm_shi_bal')
+        call cfrure (nread, size(b2srdt_shi_bal),
+     .                b2srdt_shi_bal, 'b2srdt_shi_bal')
+        call cfrure (nread, size(b2srst_shi_bal),
+     .                b2srst_shi_bal, 'b2srst_shi_bal')
+        call cfrure (nread, size(b2sihs_diaa_bal),
+     .               b2sihs_diaa_bal, 'b2sihs_diaa_bal')
+        call cfrure (nread, size(b2sihs_divua_bal),
+     .               b2sihs_divua_bal, 'b2sihs_divua_bal')
+        call cfrure (nread, size(b2sihs_exba_bal),
+     .               b2sihs_exba_bal, 'b2sihs_exba_bal')
+        call cfrure (nread, size(b2sihs_visa_bal),
+     .               b2sihs_visa_bal, 'b2sihs_visa_bal')
+        call cfrure (nread, size(b2sihs_fraa_bal),
+     .               b2sihs_fraa_bal, 'b2sihs_fraa_bal')
       endif
       if(b2fplasma_version.ge.'01.001.026') call cfrure_opt 
      >  (nread, size(b2stbc_sne), b2stbc_sne, 'b2stbc_sne')
@@ -811,42 +1548,42 @@ cdjm Jan2017
       integer nxd,nyd,nsd,nstrad,nread
 
       if(b2fplasma_version.ge.'03.000.006') then
-        if (.not.allocated(eirene_mc_t0_papl))
+        if (.not.allocated(eirene_mc_papl_sna))
      >   call alloc_b2mod_eirene_sources(nxd,nyd,nsd,nstrad)
-        call cfrure_opt (nread, size(eirene_mc_t0_papl),
-     &                   eirene_mc_t0_papl, 'eirene_mc_t0_papl')
-        call cfrure_opt (nread, size(eirene_mc_t0_pmpl),
-     &                   eirene_mc_t0_pmpl, 'eirene_mc_t0_pmpl')
-        call cfrure_opt (nread, size(eirene_mc_t0_pipl),
-     &                   eirene_mc_t0_pipl, 'eirene_mc_t0_pipl')
-        call cfrure_opt (nread, size(eirene_mc_t0_pppl),
-     &                   eirene_mc_t0_pppl, 'eirene_mc_t0_pppl')
-        call cfrure_opt (nread, size(eirene_mc_t0_core),
-     &                   eirene_mc_t0_core, 'eirene_mc_t0_core')
-        call cfrure_opt (nread, size(eirene_mc_t0_mapl),
-     &                   eirene_mc_t0_mapl, 'eirene_mc_t0_mapl')
-        call cfrure_opt (nread, size(eirene_mc_t0_mmpl),
-     &                   eirene_mc_t0_mmpl, 'eirene_mc_t0_mmpl')
-        call cfrure_opt (nread, size(eirene_mc_t0_mipl),
-     &                   eirene_mc_t0_mipl, 'eirene_mc_t0_mipl')
-        call cfrure_opt (nread, size(eirene_mc_t0_cppv),
-     &                   eirene_mc_t0_cppv, 'eirene_mc_t0_cppv')
-        call cfrure_opt (nread, size(eirene_mc_t0_eael),
-     &                   eirene_mc_t0_eael, 'eirene_mc_t0_eael')
-        call cfrure_opt (nread, size(eirene_mc_t0_emel),
-     &                   eirene_mc_t0_emel, 'eirene_mc_t0_emel')
-        call cfrure_opt (nread, size(eirene_mc_t0_eiel),
-     &                   eirene_mc_t0_eiel, 'eirene_mc_t0_eiel')
-        call cfrure_opt (nread, size(eirene_mc_t0_epel),
-     &                   eirene_mc_t0_epel, 'eirene_mc_t0_epel')
-        call cfrure_opt (nread, size(eirene_mc_t0_eapl),
-     &                   eirene_mc_t0_eapl, 'eirene_mc_t0_eapl')
-        call cfrure_opt (nread, size(eirene_mc_t0_empl),
-     &                   eirene_mc_t0_empl, 'eirene_mc_t0_empl')
-        call cfrure_opt (nread, size(eirene_mc_t0_eipl),
-     &                   eirene_mc_t0_eipl, 'eirene_mc_t0_eipl')
-        call cfrure_opt (nread, size(eirene_mc_t0_eppl),
-     &                   eirene_mc_t0_eppl, 'eirene_mc_t0_eppl')
+        call cfrure_opt (nread, size(eirene_mc_papl_sna),
+     &                   eirene_mc_papl_sna, 'eirene_mc_papl_sna')
+        call cfrure_opt (nread, size(eirene_mc_pmpl_sna),
+     &                   eirene_mc_pmpl_sna, 'eirene_mc_pmpl_sna')
+        call cfrure_opt (nread, size(eirene_mc_pipl_sna),
+     &                   eirene_mc_pipl_sna, 'eirene_mc_pipl_sna')
+        call cfrure_opt (nread, size(eirene_mc_pppl_sna),
+     &                   eirene_mc_pppl_sna, 'eirene_mc_pppl_sna')
+        call cfrure_opt (nread, size(eirene_mc_core_sna),
+     &                   eirene_mc_core_sna, 'eirene_mc_core_sna')
+        call cfrure_opt (nread, size(eirene_mc_mapl_smo),
+     &                   eirene_mc_mapl_smo, 'eirene_mc_mapl_smo')
+        call cfrure_opt (nread, size(eirene_mc_mmpl_smo),
+     &                   eirene_mc_mmpl_smo, 'eirene_mc_mmpl_smo')
+        call cfrure_opt (nread, size(eirene_mc_mipl_smo),
+     &                   eirene_mc_mipl_smo, 'eirene_mc_mipl_smo')
+        call cfrure_opt (nread, size(eirene_mc_cppv_smo),
+     &                   eirene_mc_cppv_smo, 'eirene_mc_cppv_smo')
+        call cfrure_opt (nread, size(eirene_mc_eael_she),
+     &                   eirene_mc_eael_she, 'eirene_mc_eael_she')
+        call cfrure_opt (nread, size(eirene_mc_emel_she),
+     &                   eirene_mc_emel_she, 'eirene_mc_emel_she')
+        call cfrure_opt (nread, size(eirene_mc_eiel_she),
+     &                   eirene_mc_eiel_she, 'eirene_mc_eiel_she')
+        call cfrure_opt (nread, size(eirene_mc_epel_she),
+     &                   eirene_mc_epel_she, 'eirene_mc_epel_she')
+        call cfrure_opt (nread, size(eirene_mc_eapl_shi),
+     &                   eirene_mc_eapl_shi, 'eirene_mc_eapl_shi')
+        call cfrure_opt (nread, size(eirene_mc_empl_shi),
+     &                   eirene_mc_empl_shi, 'eirene_mc_empl_shi')
+        call cfrure_opt (nread, size(eirene_mc_eipl_shi),
+     &                   eirene_mc_eipl_shi, 'eirene_mc_eipl_shi')
+        call cfrure_opt (nread, size(eirene_mc_eppl_shi),
+     &                   eirene_mc_eppl_shi, 'eirene_mc_eppl_shi')
       end if
 
       return
@@ -916,58 +1653,122 @@ cdjm Jan2017
         call cfwure (nwrite, size(b2stbc_sch), b2stbc_sch, 'b2stbc_sch')
       endif
       if(newversion.ge.'03.000.006') then !djm Jan2017
-        call cfwure (nwrite, size(b2stel_sna_ion),
-     .                b2stel_sna_ion, 'b2stel_sna_ion')
-        call cfwure (nwrite, size(b2stel_sna_rec),
-     .                b2stel_sna_rec, 'b2stel_sna_rec')
-        call cfwure (nwrite, size(b2stel_smq_ion),
-     .                b2stel_smq_ion, 'b2stel_smq_ion')
-        call cfwure (nwrite, size(b2stel_smq_rec),
-     .                b2stel_smq_rec, 'b2stel_smq_rec')
-        call cfwure (nwrite, size(b2stel_she),
-     .                b2stel_she, 'b2stel_she')
-        call cfwure (nwrite, size(b2stel_shi_ion),
-     .                b2stel_shi_ion, 'b2stel_shi_ion')
-        call cfwure (nwrite, size(b2stel_shi_rec),
-     .                b2stel_shi_rec, 'b2stel_shi_rec')
-        call cfwure (nwrite, size(b2stcx_sna), b2stcx_sna, 'b2stcx_sna')
-        call cfwure (nwrite, size(b2stcx_smq), b2stcx_smq, 'b2stcx_smq')
-        call cfwure (nwrite, size(b2stcx_shi), b2stcx_shi, 'b2stcx_shi')
-        call cfwure (nwrite, size(b2srsm_sna), b2srsm_sna, 'b2srsm_sna')
-        call cfwure (nwrite, size(b2srsm_smo), b2srsm_smo, 'b2srsm_smo')
-        call cfwure (nwrite, size(b2srsm_she), b2srsm_she, 'b2srsm_she')
-        call cfwure (nwrite, size(b2srsm_shi), b2srsm_shi, 'b2srsm_shi')
-        call cfwure (nwrite, size(b2srsm_sch), b2srsm_sch, 'b2srsm_sch')
-        call cfwure (nwrite, size(b2srdt_sna), b2srdt_sna, 'b2srdt_sna')
-        call cfwure (nwrite, size(b2srdt_smo), b2srdt_smo, 'b2srdt_smo')
-        call cfwure (nwrite, size(b2srdt_she), b2srdt_she, 'b2srdt_she')
-        call cfwure (nwrite, size(b2srdt_shi), b2srdt_shi, 'b2srdt_shi')
-        call cfwure (nwrite, size(b2srdt_sch), b2srdt_sch, 'b2srdt_sch')
-        call cfwure (nwrite, size(b2srst_sna), b2srst_sna, 'b2srst_sna')
-        call cfwure (nwrite, size(b2srst_smo), b2srst_smo, 'b2srst_smo')
-        call cfwure (nwrite, size(b2srst_she), b2srst_she, 'b2srst_she')
-        call cfwure (nwrite, size(b2srst_shi), b2srst_shi, 'b2srst_shi')
-        call cfwure (nwrite, size(b2srst_sch), b2srst_sch, 'b2srst_sch')
-        call cfwure (nwrite, size(b2sifr_smoch),
-     &               b2sifr_smoch, 'b2sifr_smoch')
-        call cfwure (nwrite, size(b2sifr_smotf),
-     &               b2sifr_smotf, 'b2sifr_smotf')
-        call cfwure (nwrite, size(b2sigp_smogp),
-     &               b2sigp_smogp, 'b2sigp_smogp')
-        call cfwure (nwrite, size(b2sigp_pstat),
-     &               b2sigp_pstat, 'b2sigp_pstat')
-        call cfwure (nwrite, size(b2siav_smovh),
-     &               b2siav_smovh, 'b2siav_smovh')
-        call cfwure (nwrite, size(b2siav_smovv),
-     &               b2siav_smovv, 'b2siav_smovv')
-        call cfwure (nwrite, size(b2nxdv_smo),
-     &               b2nxdv_smo, 'b2nxdv_smo')
-        call cfwure (nwrite, size(b2sihs_diae),
-     &               b2sihs_diae, 'b2sihs_diae')
-        call cfwure (nwrite, size(b2sihs_diaa),
-     &               b2sihs_diaa, 'b2sihs_diaa')
-        call cfwure (nwrite, size(b2npht_shei),
-     &               b2npht_shei, 'b2npht_shei')
+cdjm Arrays for particle balance
+        call cfwure (nwrite, size(b2stbr_sna_bal),
+     .               b2stbr_sna_bal, 'b2stbr_sna_bal')
+        call cfwure (nwrite, size(b2stbc_sna_bal),
+     .               b2stbc_sna_bal, 'b2stbc_sna_bal')
+        call cfwure (nwrite, size(b2stbm_sna_bal),
+     .               b2stbm_sna_bal, 'b2stbm_sna_bal')
+        call cfwure (nwrite, size(ext_sna_bal),
+     .               ext_sna_bal, 'ext_sna_bal')
+        call cfwure (nwrite, size(b2stel_sna_ion_bal),
+     .                b2stel_sna_ion_bal, 'b2stel_sna_ion_bal')
+        call cfwure (nwrite, size(b2stel_sna_rec_bal),
+     .                b2stel_sna_rec_bal, 'b2stel_sna_rec_bal')
+        call cfwure (nwrite, size(b2stcx_sna_bal),
+     .                b2stcx_sna_bal, 'b2stcx_sna_bal')
+        call cfwure (nwrite, size(b2srsm_sna_bal),
+     .                b2srsm_sna_bal, 'b2srsm_sna_bal')
+        call cfwure (nwrite, size(b2srdt_sna_bal),
+     .                b2srdt_sna_bal, 'b2srdt_sna_bal')
+        call cfwure (nwrite, size(b2srst_sna_bal),
+     .                b2srst_sna_bal, 'b2srst_sna_bal')
+cdjm Arrays for momentum balance
+        call cfwure (nwrite, size(b2stbr_smo_bal),
+     .                b2stbr_smo_bal, 'b2stbr_smo_bal')
+        call cfwure (nwrite, size(b2stbc_smo_bal),
+     .                b2stbc_smo_bal, 'b2stbc_smo_bal')
+        call cfwure (nwrite, size(b2stbm_smo_bal),
+     .                b2stbm_smo_bal, 'b2stbm_smo_bal')
+        call cfwure (nwrite, size(ext_smo_bal),
+     .                ext_smo_bal, 'ext_smo_bal')
+        call cfwure (nwrite, size(b2stel_smq_ion_bal),
+     .                b2stel_smq_ion_bal, 'b2stel_smq_ion_bal')
+        call cfwure (nwrite, size(b2stel_smq_rec_bal),
+     .                b2stel_smq_rec_bal, 'b2stel_smq_rec_bal')
+        call cfwure (nwrite, size(b2stcx_smq_bal),
+     .                b2stcx_smq_bal, 'b2stcx_smq_bal')
+        call cfwure (nwrite, size(b2srsm_smo_bal),
+     .                b2srsm_smo_bal, 'b2srsm_smo_bal')
+        call cfwure (nwrite, size(b2srdt_smo_bal),
+     .                b2srdt_smo_bal, 'b2srdt_smo_bal')
+        call cfwure (nwrite, size(b2srst_smo_bal),
+     .                b2srst_smo_bal, 'b2srst_smo_bal')
+        call cfwure (nwrite, size(b2sifr_smoch_bal),
+     .               b2sifr_smoch_bal, 'b2sifr_smoch_bal')
+        call cfwure (nwrite, size(b2sifr_smotf_bal),
+     .               b2sifr_smotf_bal, 'b2sifr_smotf_bal')
+        call cfwure (nwrite, size(b2siav_smovh_bal),
+     .               b2siav_smovh_bal, 'b2siav_smovh_bal')
+        call cfwure (nwrite, size(b2siav_smovv_bal),
+     .               b2siav_smovv_bal, 'b2siav_smovv_bal')
+        call cfwure (nwrite, size(b2sicf_smo_bal),
+     .               b2sicf_smo_bal, 'b2sicf_smo_bal')
+        call cfwure (nwrite, size(b2nxdv_smo_bal),
+     .               b2nxdv_smo_bal, 'b2nxdv_smo_bal')
+        call cfwure (nwrite, size(b2sigp_smogp_bal),
+     .               b2sigp_smogp_bal, 'b2sigp_smogp_bal')
+        call cfwure (nwrite, size(b2sigp_pstat_bal),
+     .               b2sigp_pstat_bal, 'b2sigp_pstat_bal')
+cdjm Arrays for electron heat balance
+        call cfwure (nwrite, size(b2stbr_she_bal),
+     .                b2stbr_she_bal, 'b2stbr_she_bal')
+        call cfwure (nwrite, size(b2stbc_she_bal),
+     .                b2stbc_she_bal, 'b2stbc_she_bal')
+        call cfwure (nwrite, size(b2stbm_she_bal),
+     .                b2stbm_she_bal, 'b2stbm_she_bal')
+        call cfwure (nwrite, size(ext_she_bal),
+     .                ext_she_bal, 'ext_she_bal')
+        call cfwure (nwrite, size(b2stel_she_bal),
+     .                b2stel_she_bal, 'b2stel_she_bal')
+        call cfwure (nwrite, size(b2srsm_she_bal),
+     .                b2srsm_she_bal, 'b2srsm_she_bal')
+        call cfwure (nwrite, size(b2srdt_she_bal),
+     .                b2srdt_she_bal, 'b2srdt_she_bal')
+        call cfwure (nwrite, size(b2srst_she_bal),
+     .                b2srst_she_bal, 'b2srst_she_bal')
+        call cfwure (nwrite, size(b2sihs_diae_bal),
+     .                b2sihs_diae_bal, 'b2sihs_diae_bal')
+        call cfwure (nwrite, size(b2sihs_divue_bal),
+     .                b2sihs_divue_bal, 'b2sihs_divue_bal')
+        call cfwure (nwrite, size(b2sihs_exbe_bal),
+     .                b2sihs_exbe_bal, 'b2sihs_exbe_bal')
+        call cfwure (nwrite, size(b2sihs_joule_bal),
+     .                b2sihs_joule_bal, 'b2sihs_joule_bal')
+        call cfwure (nwrite, size(b2npht_shei_bal),
+     .               b2npht_shei_bal, 'b2npht_shei_bal')
+cdjm Arrays for ion heat balance
+        call cfwure (nwrite, size(b2stbr_shi_bal),
+     .                b2stbr_shi_bal, 'b2stbr_shi_bal')
+        call cfwure (nwrite, size(b2stbc_shi_bal),
+     .                b2stbc_shi_bal, 'b2stbc_shi_bal')
+        call cfwure (nwrite, size(b2stbm_shi_bal),
+     .                b2stbm_shi_bal, 'b2stbm_shi_bal')
+        call cfwure (nwrite, size(ext_shi_bal),
+     .                ext_shi_bal, 'ext_shi_bal')
+        call cfwure (nwrite, size(b2stel_shi_ion_bal),
+     .                b2stel_shi_ion_bal, 'b2stel_shi_ion_bal')
+        call cfwure (nwrite, size(b2stel_shi_rec_bal),
+     .                b2stel_shi_rec_bal, 'b2stel_shi_rec_bal')
+        call cfwure (nwrite, size(b2stcx_shi_bal),
+     .                b2stcx_shi_bal, 'b2stcx_shi_bal')
+        call cfwure (nwrite, size(b2srsm_shi_bal),
+     .                b2srsm_shi_bal, 'b2srsm_shi_bal')
+        call cfwure (nwrite, size(b2srdt_shi_bal),
+     .                b2srdt_shi_bal, 'b2srdt_shi_bal')
+        call cfwure (nwrite, size(b2srst_shi_bal),
+     .                b2srst_shi_bal, 'b2srst_shi_bal')
+        call cfwure (nwrite, size(b2sihs_diaa_bal),
+     .               b2sihs_diaa_bal, 'b2sihs_diaa_bal')
+        call cfwure (nwrite, size(b2sihs_divua_bal),
+     .               b2sihs_divua_bal, 'b2sihs_divua_bal')
+        call cfwure (nwrite, size(b2sihs_exba_bal),
+     .               b2sihs_exba_bal, 'b2sihs_exba_bal')
+        call cfwure (nwrite, size(b2sihs_visa_bal),
+     .               b2sihs_visa_bal, 'b2sihs_visa_bal')
+        call cfwure (nwrite, size(b2sihs_fraa_bal),
+     .               b2sihs_fraa_bal, 'b2sihs_fraa_bal')
       endif
       if(newversion.ge.'01.001.026')
      >  call cfwure (nwrite, size(b2stbc_sne), b2stbc_sne, 'b2stbc_sne')
@@ -1032,41 +1833,41 @@ cdjm Jan2017
       implicit none
       integer nwrite
 
-      if (.not.allocated(eirene_mc_t0_papl)) return
-      call cfwure (nwrite, size(eirene_mc_t0_papl),
-     &             eirene_mc_t0_papl, 'eirene_mc_t0_papl')
-      call cfwure (nwrite, size(eirene_mc_t0_pmpl),
-     &             eirene_mc_t0_pmpl, 'eirene_mc_t0_pmpl')
-      call cfwure (nwrite, size(eirene_mc_t0_pipl),
-     &             eirene_mc_t0_pipl, 'eirene_mc_t0_pipl')
-      call cfwure (nwrite, size(eirene_mc_t0_pppl),
-     &             eirene_mc_t0_pppl, 'eirene_mc_t0_pppl')
-      call cfwure (nwrite, size(eirene_mc_t0_core),
-     &             eirene_mc_t0_core, 'eirene_mc_t0_core')
-      call cfwure (nwrite, size(eirene_mc_t0_mapl),
-     &             eirene_mc_t0_mapl, 'eirene_mc_t0_mapl')
-      call cfwure (nwrite, size(eirene_mc_t0_mmpl),
-     &             eirene_mc_t0_mmpl, 'eirene_mc_t0_mmpl')
-      call cfwure (nwrite, size(eirene_mc_t0_mipl),
-     &             eirene_mc_t0_mipl, 'eirene_mc_t0_mipl')
-      call cfwure (nwrite, size(eirene_mc_t0_cppv),
-     &             eirene_mc_t0_cppv, 'eirene_mc_t0_cppv')
-      call cfwure (nwrite, size(eirene_mc_t0_eael),
-     &             eirene_mc_t0_eael, 'eirene_mc_t0_eael')
-      call cfwure (nwrite, size(eirene_mc_t0_emel),
-     &             eirene_mc_t0_emel, 'eirene_mc_t0_emel')
-      call cfwure (nwrite, size(eirene_mc_t0_eiel),
-     &             eirene_mc_t0_eiel, 'eirene_mc_t0_eiel')
-      call cfwure (nwrite, size(eirene_mc_t0_epel),
-     &             eirene_mc_t0_epel, 'eirene_mc_t0_epel')
-      call cfwure (nwrite, size(eirene_mc_t0_eapl),
-     &             eirene_mc_t0_eapl, 'eirene_mc_t0_eapl')
-      call cfwure (nwrite, size(eirene_mc_t0_empl),
-     &             eirene_mc_t0_empl, 'eirene_mc_t0_empl')
-      call cfwure (nwrite, size(eirene_mc_t0_eipl),
-     &             eirene_mc_t0_eipl, 'eirene_mc_t0_eipl')
-      call cfwure (nwrite, size(eirene_mc_t0_eppl),
-     &             eirene_mc_t0_eppl, 'eirene_mc_t0_eppl')
+      if (.not.allocated(eirene_mc_papl_sna)) return
+      call cfwure (nwrite, size(eirene_mc_papl_sna),
+     &             eirene_mc_papl_sna, 'eirene_mc_papl_sna')
+      call cfwure (nwrite, size(eirene_mc_pmpl_sna),
+     &             eirene_mc_pmpl_sna, 'eirene_mc_pmpl_sna')
+      call cfwure (nwrite, size(eirene_mc_pipl_sna),
+     &             eirene_mc_pipl_sna, 'eirene_mc_pipl_sna')
+      call cfwure (nwrite, size(eirene_mc_pppl_sna),
+     &             eirene_mc_pppl_sna, 'eirene_mc_pppl_sna')
+      call cfwure (nwrite, size(eirene_mc_core_sna),
+     &             eirene_mc_core_sna, 'eirene_mc_core_sna')
+      call cfwure (nwrite, size(eirene_mc_mapl_smo),
+     &             eirene_mc_mapl_smo, 'eirene_mc_mapl_smo')
+      call cfwure (nwrite, size(eirene_mc_mmpl_smo),
+     &             eirene_mc_mmpl_smo, 'eirene_mc_mmpl_smo')
+      call cfwure (nwrite, size(eirene_mc_mipl_smo),
+     &             eirene_mc_mipl_smo, 'eirene_mc_mipl_smo')
+      call cfwure (nwrite, size(eirene_mc_cppv_smo),
+     &             eirene_mc_cppv_smo, 'eirene_mc_cppv_smo')
+      call cfwure (nwrite, size(eirene_mc_eael_she),
+     &             eirene_mc_eael_she, 'eirene_mc_eael_she')
+      call cfwure (nwrite, size(eirene_mc_emel_she),
+     &             eirene_mc_emel_she, 'eirene_mc_emel_she')
+      call cfwure (nwrite, size(eirene_mc_eiel_she),
+     &             eirene_mc_eiel_she, 'eirene_mc_eiel_she')
+      call cfwure (nwrite, size(eirene_mc_epel_she),
+     &             eirene_mc_epel_she, 'eirene_mc_epel_she')
+      call cfwure (nwrite, size(eirene_mc_eapl_shi),
+     &             eirene_mc_eapl_shi, 'eirene_mc_eapl_shi')
+      call cfwure (nwrite, size(eirene_mc_empl_shi),
+     &             eirene_mc_empl_shi, 'eirene_mc_empl_shi')
+      call cfwure (nwrite, size(eirene_mc_eipl_shi),
+     &             eirene_mc_eipl_shi, 'eirene_mc_eipl_shi')
+      call cfwure (nwrite, size(eirene_mc_eppl_shi),
+     &             eirene_mc_eppl_shi, 'eirene_mc_eppl_shi')
 
       return
       end subroutine write_b2mod_eirene_sources

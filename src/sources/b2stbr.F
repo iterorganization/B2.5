@@ -4,8 +4,7 @@
       subroutine b2stbr (nx, ny, ns, nscx, nscxmax, iscx, ismain,
      &  dtim, BoRiS, vol, hx, hy, hz, gs, qz, pbs, na, ua, kinrgy,
      &  te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni, rsa, bb,
-     &  sna0, smo0, she0, shi0, sch0, sne0, main_call,
-     &  balanceco, balancemo, balanceht, balancech) !djm Jan2017
+     &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types
       use b2mod_wall
       use b2mod_diag
@@ -20,7 +19,8 @@
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
      2          b2stbr_sne,
-     3          b2stbr_she0to3, b2stbr_shi0to3 !djm Jan2017
+     3          b2stbr_sna0to1,b2stbr_smo0to3,b2stbr_she0to3, !djm Jan2017
+     4          b2stbr_shi0to3
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
@@ -53,7 +53,6 @@
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1),
      &  rsa(-1:nx,-1:ny,0:ns-1), bb(-1:nx,-1:ny,0:3)
       logical main_call
-      logical balanceco, balancemo, balanceht, balancech !djm Jan2017
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -631,45 +630,41 @@ cwdk remove this if-test, to allow runs without Eirene if code is compiled with 
       endif
 
 * ..sources
-      if (balanceco) then !djm Jan2017
-        b2stbr_sna(-1:nx,-1:ny,0:ns-1)=
-     1   sna0(-1:nx,-1:ny,0,0:ns-1)+
-     2   sna0(-1:nx,-1:ny,1,0:ns-1)*na(-1:nx,-1:ny,0:ns-1)
-      endif
-      if (balancemo) then !djm Jan2017
-        do is=0,ns-1
-          b2stbr_smo(-1:nx,-1:ny,is)=
-     1     smo0(-1:nx,-1:ny,0,is)+
-     2     smo0(-1:nx,-1:ny,1,is)*ua(-1:nx,-1:ny,is)+
-     3     smo0(-1:nx,-1:ny,2,is)*am(is)*mp*na(-1:nx,-1:ny,is)+
-     4     smo0(-1:nx,-1:ny,3,is)*am(is)*mp*na(-1:nx,-1:ny,is)*
-     5     ua(-1:nx,-1:ny,is)
-        enddo
-      endif
-      if (balanceht) then !djm Jan2017
-        b2stbr_she(-1:nx,-1:ny)=
-     1   she0(-1:nx,-1:ny,0)+
-     2   she0(-1:nx,-1:ny,1)*te(-1:nx,-1:ny)+
-     3   she0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4   she0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*te(-1:nx,-1:ny)
-        b2stbr_shi(-1:nx,-1:ny)=
-     1   shi0(-1:nx,-1:ny,0)+
-     2   shi0(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
-     3   shi0(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
-     4   shi0(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
-        b2stbr_she0to3(-1:nx,-1:ny,0:3)=she0(-1:nx,-1:ny,0:3) !djm Jan2017
-        b2stbr_shi0to3(-1:nx,-1:ny,0:3)=shi0(-1:nx,-1:ny,0:3) !djm Jan2017
-      endif
-      if (balancech) then !djm Jan2017
-        b2stbr_sch(-1:nx,-1:ny)=
-     1   sch0(-1:nx,-1:ny,0)+
-     2   sch0(-1:nx,-1:ny,1)*po(-1:nx,-1:ny)+
-     3   sch0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4   sch0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*po(-1:nx,-1:ny)
-      endif
+      b2stbr_sna(-1:nx,-1:ny,0:ns-1)=
+     1 sna0(-1:nx,-1:ny,0,0:ns-1)+
+     2 sna0(-1:nx,-1:ny,1,0:ns-1)*na(-1:nx,-1:ny,0:ns-1)
+      do is=0,ns-1
+        b2stbr_smo(-1:nx,-1:ny,is)=
+     1   smo0(-1:nx,-1:ny,0,is)+
+     2   smo0(-1:nx,-1:ny,1,is)*ua(-1:nx,-1:ny,is)+
+     3   smo0(-1:nx,-1:ny,2,is)*am(is)*mp*na(-1:nx,-1:ny,is)+
+     4   smo0(-1:nx,-1:ny,3,is)*am(is)*mp*na(-1:nx,-1:ny,is)*
+     5   ua(-1:nx,-1:ny,is)
+      enddo
+      b2stbr_she(-1:nx,-1:ny)=
+     1 she0(-1:nx,-1:ny,0)+
+     2 she0(-1:nx,-1:ny,1)*te(-1:nx,-1:ny)+
+     3 she0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
+     4 she0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*te(-1:nx,-1:ny)
+      b2stbr_shi(-1:nx,-1:ny)=
+     1 shi0(-1:nx,-1:ny,0)+
+     2 shi0(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
+     3 shi0(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
+     4 shi0(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
+      b2stbr_sch(-1:nx,-1:ny)=
+     1 sch0(-1:nx,-1:ny,0)+
+     2 sch0(-1:nx,-1:ny,1)*po(-1:nx,-1:ny)+
+     3 sch0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
+     4 sch0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*po(-1:nx,-1:ny)
       b2stbr_sne(-1:nx,-1:ny)=
      1 sne0(-1:nx,-1:ny,0)+
      2 sne0(-1:nx,-1:ny,1)*ne(-1:nx,-1:ny)
+
+cdjm Jan2017 Keep linearised sources for balance
+      b2stbr_sna0to1 = sna0
+      b2stbr_smo0to3 = smo0
+      b2stbr_she0to3 = she0
+      b2stbr_shi0to3 = shi0
 
       if(main_call) then
         do ibnd = 1, nbnd

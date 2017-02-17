@@ -217,6 +217,11 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
           she0(ix,iy,0) = she0(ix,iy,0)+
      &     (max(0.0_R8,t0)+rf0*abs(t0))*ne(ix,iy)*te(ix,iy)
           she0(ix,iy,3) = she0(ix,iy,3)+min(0.0_R8,t0)-rf0*abs(t0)
+          b2sihs_divue0to3(ix,iy,0)=(max(0.0_R8,t0)+rf0*abs(t0))* !djm Jan2017
+     &                              ne(ix,iy)*te(ix,iy)
+          b2sihs_divue0to3(ix,iy,1)=0.0_R8
+          b2sihs_divue0to3(ix,iy,2)=0.0_R8
+          b2sihs_divue0to3(ix,iy,3)=min(0.0_R8,t0)-rf0*abs(t0)
           b2divue(region(ix,iy,0))=b2divue(region(ix,iy,0))+
      1     t0*ne(ix,iy)*te(ix,iy)
           b2sihs_divue(ix,iy)=t0*ne(ix,iy)*te(ix,iy)
@@ -237,6 +242,11 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
               shi0(ix,iy,0) = shi0(ix,iy,0)+
      &         (max(0.0_R8,t0)+rf1*abs(t0))*ni(ix,iy,0)*ti(ix,iy)
               shi0(ix,iy,3) = shi0(ix,iy,3)+min(0.0_R8,t0)-rf1*abs(t0)
+              b2sihs_divua0to3(ix,iy,0)=(max(0.0_R8,t0)+rf1*abs(t0))*
+     &                                  ni(ix,iy,0)*ti(ix,iy)
+              b2sihs_divua0to3(ix,iy,1)=0.0_R8
+              b2sihs_divua0to3(ix,iy,2)=0.0_R8
+              b2sihs_divua0to3(ix,iy,3)=min(0.0_R8,t0)-rf1*abs(t0)
               b2divua(region(ix,iy,0))=b2divua(region(ix,iy,0))
      1         +t0*ni(ix,iy,0)*ti(ix,iy)
               b2sihs_divua(ix,iy)=b2sihs_divua(ix,iy)+
@@ -265,6 +275,11 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
             she0(ix,iy,0) = she0(ix,iy,0)+
      &       (max(0.0_R8,t0)+rf0*abs(t0))*ne(ix,iy)*te(ix,iy)
             she0(ix,iy,3) = she0(ix,iy,3)+min(0.0_R8,t0)-rf0*abs(t0)
+            b2sihs_exbe0to3(ix,iy,0)=(max(0.0_R8,t0)+rf0*abs(t0))* !djm Jan2017
+     &                               ne(ix,iy)*te(ix,iy)
+            b2sihs_exbe0to3(ix,iy,1)=0.0_R8
+            b2sihs_exbe0to3(ix,iy,2)=0.0_R8
+            b2sihs_exbe0to3(ix,iy,3)=min(0.0_R8,t0)-rf0*abs(t0)
             b2exbe(region(ix,iy,0))=b2exbe(region(ix,iy,0))+
      1       t0*ne(ix,iy)*te(ix,iy)
             b2sihs_exbe(ix,iy)=t0*ne(ix,iy)*te(ix,iy)
@@ -286,6 +301,11 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
                 shi0(ix,iy,0) = shi0(ix,iy,0)+
      &           (max(0.0_R8,t0)+rf1*abs(t0))*ni(ix,iy,0)*ti(ix,iy)
                 shi0(ix,iy,3) = shi0(ix,iy,3)+min(0.0_R8,t0)-rf1*abs(t0)
+                b2sihs_exba0to3(ix,iy,0)=(max(0.0_R8,t0)+rf1*abs(t0))*
+     &                                   ni(ix,iy,0)*ti(ix,iy)
+                b2sihs_exba0to3(ix,iy,1)=0.0_R8
+                b2sihs_exba0to3(ix,iy,2)=0.0_R8
+                b2sihs_exba0to3(ix,iy,3)=min(0.0_R8,t0)-rf1*abs(t0)
                 b2exba(region(ix,iy,0))=b2exba(region(ix,iy,0))+
      1           t0*ni(ix,iy,0)*ti(ix,iy)
                 b2sihs_exba(ix,iy)=b2sihs_exba(ix,iy)+
@@ -313,6 +333,10 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &       (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy))))
           shi0(ix,iy,0) = shi0(ix,iy,0)+(1.0_R8+rf2)*t0
           shi0(ix,iy,3) = shi0(ix,iy,3)-rf2*t0/(ni(ix,iy,0)*ti(ix,iy))
+          b2sihs_visa0to3(ix,iy,0)=(1.0_R8+rf2)*t0
+          b2sihs_visa0to3(ix,iy,1)=0.0_R8
+          b2sihs_visa0to3(ix,iy,2)=0.0_R8
+          b2sihs_visa0to3(ix,iy,3)=-rf2*t0/(ni(ix,iy,0)*ti(ix,iy))
           b2visa(region(ix,iy,0))=b2visa(region(ix,iy,0))+t0
           b2sihs_visa(ix,iy)=b2sihs_visa(ix,iy)+t0
 *!!      (viscous heating from d/dy is temporarily ignored)
@@ -344,6 +368,12 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
          she0(ix,iy,0) = she0(ix,iy,0)+max(0.0_R8,t0)+rf3*abs(t0)
          she0(ix,iy,3) = she0(ix,iy,3)+
      &     (min(0.0_R8,t0)-rf3*abs(t0))/(ne(ix,iy)*te(ix,iy))
+         b2sihs_joule0to3(ix,iy,0)=she0(ix,iy,0)+max(0.0_R8,t0)+
+     &                             rf3*abs(t0)
+         b2sihs_joule0to3(ix,iy,1)=0.0_R8
+         b2sihs_joule0to3(ix,iy,2)=0.0_R8
+         b2sihs_joule0to3(ix,iy,3)=(min(0.0_R8,t0)-rf3*abs(t0))/
+     &                             (ne(ix,iy)*te(ix,iy))
          b2joule(region(ix,iy,0))=b2joule(region(ix,iy,0))+t0
          b2sihs_joule(ix,iy)=t0
         endif
@@ -376,6 +406,11 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
             shi0(ix,iy,0) = shi0(ix,iy,0)+(2.5_R8+rf4)*t0
             shi0(ix,iy,3) = shi0(ix,iy,3)-
      &       (1.5_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
+            b2sihs_fraa0to3(ix,iy,0)=(2.5_R8+rf4)*t0
+            b2sihs_fraa0to3(ix,iy,1)=0.0_R8
+            b2sihs_fraa0to3(ix,iy,2)=0.0_R8
+            b2sihs_fraa0to3(ix,iy,3)=-(1.5_R8+rf4)*t0/
+     &                                (ni(ix,iy,0)*ti(ix,iy))
             b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+t0
             b2sihs_fraa(ix,iy)=b2sihs_fraa(ix,iy)+t0
            endif
@@ -561,7 +596,7 @@ c
       use b2mod_tallies
       use b2mod_b2cmpa
       use b2mod_sources                                                  !djm Jan2017
-     & , only : b2sihs_diaa, b2sihs_diae
+     & , only : b2sihs_diaa0to3, b2sihs_diae0to3
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -621,8 +656,6 @@ c
         call b2xvsg (n2, ne, 1, 'ne', '.gt.')
       endif
 
-      b2sihs_diaa = 0.0_R8 !djm Jan 2017
-      b2sihs_diae = 0.0_R8
       if(maxval(facdrift).ne.0.0_R8 .and. facgt.ne.0.0_R8) then
         b2wrong2=0.0_R8
         do is=0,ns-1
@@ -679,7 +712,11 @@ c
                   shi(ix,iy,3) = shi(ix,iy,3)+                           !xpb
      &             min(0.0_R8,-t0)/(na(ix,iy,is)*ti(ix,iy))              !xpb
                   b2wrong2(region(ix,iy,0))=b2wrong2(region(ix,iy,0))+t0
-                  b2sihs_diaa(ix,iy) = t0 !djm Jan2017
+                  b2sihs_diaa0to3(ix,iy,0)=max(0.0_R8,-t0) !djm Jan2017
+                  b2sihs_diaa0to3(ix,iy,1)=0.0_R8
+                  b2sihs_diaa0to3(ix,iy,2)=0.0_R8
+                  b2sihs_diaa0to3(ix,iy,3)=min(0.0_R8,-t0)/
+     &                                     (na(ix,iy,is)*ti(ix,iy))
                 endif
               enddo
             enddo
@@ -731,7 +768,11 @@ c
               she(ix,iy,3) = she(ix,iy,3)+                               !xpb
      &         min(0.0_R8,t0)/(ne(ix,iy)*te(ix,iy))                      !xpb
               b2wrong3(region(ix,iy,0))=b2wrong3(region(ix,iy,0))+t0
-              b2sihs_diae(ix,iy) = t0 !djm Jan2017
+              b2sihs_diae0to3(ix,iy,0)=max(0.0_R8,t0) !djm Jan2017
+              b2sihs_diae0to3(ix,iy,1)=0.0_R8
+              b2sihs_diae0to3(ix,iy,2)=0.0_R8
+              b2sihs_diae0to3(ix,iy,3)=min(0.0_R8,t0)/
+     &                                 (ne(ix,iy)*te(ix,iy))
             endif
           enddo
         enddo

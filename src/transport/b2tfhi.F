@@ -15,7 +15,7 @@
       use b2mod_b2cmpa
       use b2mod_plasma                                               !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
-     &          fhi_strange, fhi_pschused
+     &          fhi_strange, fhi_pschused, fhi_kevis
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows
@@ -40,6 +40,8 @@
      &  fhi_mdf(-1:nx,-1:ny,0:1), fhiPSch(-1:nx,-1:ny,0:1),          !srv 13.10.06
      1  floi(-1:nx,-1:ny,0:1), coni(-1:nx,-1:ny,0:1,0:2),            !srv 02.01.07
      2  fllimi(-1:nx,-1:ny)
+*   ..local variables
+      real (kind=R8) :: upfac, hybfac !djm Jan2017
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -405,52 +407,58 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &                          +ti(ix,iy))/2.0_R8-
      &                  abs(floi0_mdf/2.0_R8)*dti-coni0_mdf*dti0_mdf
      &                       - fhiPSch(ix,iy,0)                      !srv 13.10.06 }
-           if (balance) then                                         !djm Jan2017
-cdjm store components of fhix. Share the hybrid part according to the relative contributions
-             if (mdf_fhi.eq.0) then
-               fhi_32(ix,iy,0) = (1.5_R8+BoRiS)*fni_32(ix,iy,0)*
-     &      (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
-     &      ((1.5_R8+BoRiS)*fni_32(ix,iy,0))/floi0*abs(floi0/2.0_R8)*dti
-               fhi_52(ix,iy,0) = 2.5_R8*fni_52(ix,iy,0)*
-     &      (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-     &     -(2.5_R8*fni_52(ix,iy,0))/floi0*abs(floi0/2.0_R8)*dti
-               fhi_strange(ix,iy,0) =
-     &      chvi(ix,iy,0)*
-     &      (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8*
-     &      (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-     &     -(chvi(ix,iy,0)*
-     &      (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8)/
-     &      floi0*abs(floi0/2.0_R8)*dti
-               fhi_ecrb(ix,iy,0) = 1.5_R8*cum_flo_vaecrb*
-     &      (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-     &     -(1.5_R8*cum_flo_vaecrb)/floi0*abs(floi0/2.0_R8)*dti
-               fhi_dia(ix,iy,0) = 2.5_R8*cum_flo_vadia*
-     &      (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-     &     -(2.5_R8*cum_flo_vadia)/floi0*abs(floi0/2.0_R8)*dti
-               fhi_cond(ix,iy,0) = -coni0*dti0
-               fhi_pschused(ix,iy,0) = 0.0_R8
+           if (balance.and.(mdf_fhi.eq.0)) then !djm Jan2017
+             !djm Jan2017 share the hybrid part according to relative contributions
+             if (floi0.ge.0.0_R8) then
+               hybfac=1.0_R8
              else
-               fhi_32(ix,iy,0) = (1.5_R8+BoRiS)*fni_32(ix,iy,0)*
-     &      (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
-     &      ((1.5_R8+BoRiS)*fni_32(ix,iy,0))/floi0_mdf*
-     &      abs(floi0_mdf/2.0_R8)*dti
-               fhi_52(ix,iy,0) = 2.5_R8*fni_52(ix,iy,0)*
-     &      (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-     &     -(2.5_R8*fni_52(ix,iy,0))/floi0_mdf*abs(floi0_mdf/2.0_R8)*dti
-               fhi_strange(ix,iy,0) =
-     &      chvi(ix,iy,0)*
-     &      (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8*
-     &      (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-     &     -(chvi(ix,iy,0)*
-     &      (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8)/
-     &      floi0_mdf*abs(floi0_mdf/2.0_R8)*dti
-               fhi_ecrb(ix,iy,0) = 1.5_R8*cum_flo_vaecrb*
-     &      (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8
-     &     -(1.5_R8*cum_flo_vaecrb)/floi0_mdf*abs(floi0_mdf/2.0_R8)*dti
-               fhi_dia(ix,iy,0) = 0.0_R8
-               fhi_cond(ix,iy,0) = -coni0_mdf*dti0_mdf
-               fhi_pschused(ix,iy,0) = -fhiPSch(ix,iy,0)
-             endif
+               hybfac=-1.0_R8
+             endif             
+             fhi_32(ix,iy,0) = (1.5_R8+BoRiS)*fni_32(ix,iy,0)*
+     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+     &         hybfac*(1.5_R8+BoRiS)*fni_32(ix,iy,0)/2.0_R8*dti
+             fhi_52(ix,iy,0) = 2.5_R8*fni_52(ix,iy,0)*
+     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+     &         hybfac*2.5_R8*fni_52(ix,iy,0)/2.0_R8*dti
+             fhi_strange(ix,iy,0) = chvi(ix,iy,0)*
+     &         (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8*
+     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+     &         hybfac*chvi(ix,iy,0)*
+     &         (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8/
+     &         2.0_R8*dti
+             fhi_ecrb(ix,iy,0) = 1.5_R8*cum_flo_vaecrb*
+     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+     &         hybfac*(1.5_R8*cum_flo_vaecrb)/2.0_R8*dti
+             fhi_dia(ix,iy,0) = 2.5_R8*cum_flo_vadia*
+     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+     &         hybfac*2.5_R8*cum_flo_vadia/2.0_R8*dti
+             fhi_cond(ix,iy,0) = -coni0*dti0
+             fhi_pschused(ix,iy,0) = 0.0_R8
+           endif
+           if (balance.and.(mdf_fhi.ne.0)) then !djm Jan2017
+             if (floi0_mdf.ge.0.0_R8) then
+               hybfac=1.0_R8
+             else
+               hybfac=-1.0_R8
+             endif             
+             fhi_32(ix,iy,0) = (1.5_R8+BoRiS)*fni_32(ix,iy,0)*
+     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+     &         hybfac*(1.5_R8+BoRiS)*fni_32(ix,iy,0)/2.0_R8*dti
+             fhi_52(ix,iy,0) = 2.5_R8*fni_52(ix,iy,0)*
+     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+     &         hybfac*2.5_R8*fni_52(ix,iy,0)/2.0_R8*dti
+             fhi_strange(ix,iy,0) = chvi(ix,iy,0)*
+     &         (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8*
+     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+     &         hybfac*chvi(ix,iy,0)*
+     &         (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8/
+     &         2.0_R8*dti
+             fhi_ecrb(ix,iy,0) = 1.5_R8*cum_flo_vaecrb*
+     &         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0_R8-
+     &         hybfac*(1.5_R8*cum_flo_vaecrb)/2.0_R8*dti
+             fhi_dia(ix,iy,0) = 0.0_R8
+             fhi_cond(ix,iy,0) = -coni0_mdf*dti0_mdf
+             fhi_pschused(ix,iy,0) = -fhiPSch(ix,iy,0)
            endif
          else
            t1 = dim ( coni0/fllimi(ix,iy),
@@ -465,10 +473,60 @@ cdjm store components of fhix. Share the hybrid part according to the relative c
      .         upwind(floi0_mdf,
      .                 ti(leftix(ix,iy),leftiy(ix,iy)), ti(ix,iy))
      .         - t1 * (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))
+           if (balance.and.mdf_fhi.eq.0) then !djm Jan2017
+             if(floi0.ge.0.0_R8) then
+               upfac=1.0_R8
+             else
+               upfac=0.0_R8
+             endif
+             fhi_32(ix,iy,0) = (1.5_R8+BoRiS)*fni_32(ix,iy,0)*
+     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                          (1.0_R8-upfac)*ti(ix,iy))
+             fhi_52(ix,iy,0) = 2.5_R8*fni_52(ix,iy,0)*
+     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                          (1.0_R8-upfac)*ti(ix,iy))
+             fhi_strange(ix,iy,0) = chvi(ix,iy,0)*
+     &         (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8*
+     &         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &          (1.0_R8-upfac)*ti(ix,iy))
+             fhi_ecrb(ix,iy,0) = 1.5_R8*cum_flo_vaecrb*
+     &                           (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                            (1.0_R8-upfac)*ti(ix,iy))
+             fhi_dia(ix,iy,0) = 2.5_R8*cum_flo_vadia*
+     &                          (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                           (1.0_R8-upfac)*ti(ix,iy))
+             fhi_cond(ix,iy,0) = -coni0*dti0
+             fhi_pschused(ix,iy,0) = 0.0_R8
+           endif
+           if (balance.and.mdf_fhi.ne.0) then !djm Jan2017
+             if(floi0_mdf.ge.0.0_R8) then
+               upfac=1.0_R8
+             else
+               upfac=0.0_R8
+             endif
+             fhi_32(ix,iy,0) = (1.5_R8+BoRiS)*fni_32(ix,iy,0)*
+     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                          (1.0_R8-upfac)*ti(ix,iy))
+             fhi_52(ix,iy,0) = 2.5_R8*fni_52(ix,iy,0)*
+     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                          (1.0_R8-upfac)*ti(ix,iy))
+             fhi_strange(ix,iy,0) = chvi(ix,iy,0)*
+     &         (ni(leftix(ix,iy),leftiy(ix,iy),0)+ni(ix,iy,0))/2.0_R8*
+     &         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &          (1.0_R8-upfac)*ti(ix,iy))
+             fhi_ecrb(ix,iy,0) = 1.5_R8*cum_flo_vaecrb*
+     &                           (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                            (1.0_R8-upfac)*ti(ix,iy))
+             fhi_dia(ix,iy,0) = 0.0_R8
+             fhi_cond(ix,iy,0) = -coni0_mdf*dti0_mdf
+             fhi_pschused(ix,iy,0) = -fhiPSch(ix,iy,0)
+           endif
          endif
+         fhi_kevis(ix,iy,0) = 0.0_R8
          do is = 0, ns-1
            fhi(ix,iy,0) = fhi(ix,iy,0) + w1(ix,iy,is)
            fhi_mdf(ix,iy,0) = fhi_mdf(ix,iy,0) + w1(ix,iy,is)
+           fhi_kevis(ix,iy,0) = fhi_kevis(ix,iy,0)+w1(ix,iy,is)
          end do
          fhit(ix,iy,0) = fhi(ix,iy,0) +
      1    ((1.0_R8-BoRiS)*fni_32(ix,iy,0)+cum_flo_vaecrb)*

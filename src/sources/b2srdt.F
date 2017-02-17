@@ -4,8 +4,7 @@
       subroutine b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,   !srv 09.01.01 01.07.08
      &  vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,
      &  na, ua, te, ti, ne, ni, kinrgy,                              !srv 16.07.10
-     &  snadt, smodt, shedt, shidt, schdt, snedt, lout,              !srv 11.09.09
-     &  balanceco, balancemo, balanceht, balancech, po)              !djm Jan2017
+     &  snadt, smodt, shedt, shidt, schdt, snedt, lout)              !srv 11.09.09
       use b2mod_types 
       use b2mod_indirect 
       use b2mod_numerics_namelist 
@@ -14,8 +13,8 @@
       use b2mod_boundary_namelist
      , , only : iftimbound
       use b2mod_sources                                              !djm Jan2017
-     1 , only : b2srdt_sna,b2srdt_smo,b2srdt_she0to3,b2srdt_shi0to3,
-     2          b2srdt_sch
+     1 , only : b2srdt_sna0to1,b2srdt_smo0to3,b2srdt_she0to3,
+     2          b2srdt_shi0to3
       implicit none
 *   ..input arguments (unchanged on exit)
       logical(1) :: lout                                             !srv 16.07.10
@@ -28,8 +27,6 @@
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),              !srv 16.07.10
      &  te(-1:nx,-1:ny), ti(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      &  ni(-1:nx,-1:ny,0:1), kinrgy(-1:nx,-1:ny,0:ns-1)
-      logical balanceco, balancemo, balanceht, balancech             !djm Jan2017
-      real (kind=R8) :: po(-1:nx,-1:ny)                              !djm Jan2017
 *   ..input/output arguments
       real (kind=R8) ::
      *  snadt(-1:nx,-1:ny,0:1,0:ns-1), smodt(-1:nx,-1:ny,0:3,0:ns-1),
@@ -58,11 +55,11 @@
      *   phm0, phm1, phm3, phm4, phm5, t0, ttim
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
       save ncall, phm0, phm1, phm3, phm4, phm5, use_eirene           !xpb
-      real (kind=R8) ::                                              !djm Jan2017
-     &  sna0dt(-1:nx,-1:ny,0:1,0:ns-1), smo0dt(-1:nx,-1:ny,0:3,0:ns-1),
-     &  sch0dt(-1:nx,-1:ny,0:3)
+      real (kind=R8) :: !djm Jan2017
+     &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1), 
+     &  shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3)
 *   ..procedures
-      external subini, subend, xertst, ipgetr, sfill
+      external subini, subend, xertst, ipgetr
       external b2xvsg
 *   ..initialisation
       data ncall/0/, phm0/1.0_R8/, phm1/1.0_R8/, phm3/1.0_R8/,
@@ -112,11 +109,11 @@
        call b2xvsg (n2*ns, kinrgy0, 1, 'kinrgy0', '.ge.')
       endif
 
-      call sfill (n2*2*ns, 0.0_R8, sna0dt, 1) !djm Jan2017
-      call sfill (n2*4*ns, 0.0_R8, smo0dt, 1)
-      call sfill (n2*4, 0.0_R8, b2srdt_she0to3, 1)
-      call sfill (n2*4, 0.0_R8, b2srdt_shi0to3, 1)
-      call sfill (n2*4, 0.0_R8, sch0dt, 1)
+cdjm Jan2017 Keep sources at the start to calculate total change for balance routines
+      snatmp = snadt
+      smotmp = smodt
+      shetmp = shedt
+      shitmp = shidt
 
 * ..include the contributions from dtim
 *   ..modify snadt
@@ -134,8 +131,6 @@ csw 24feb2014 check for guard cell (SOLPS4)
      &      (phm0/ttim)*vol(ix,iy)*na0(ix,iy,is)
            snadt(ix,iy,1,is) = snadt(ix,iy,1,is)-
      &      (phm0/ttim)*vol(ix,iy)
-           sna0dt(ix,iy,0,is) = (phm0/ttim)*vol(ix,iy)*na0(ix,iy,is) !djm Jan2017
-           sna0dt(ix,iy,1,is) = -(phm0/ttim)*vol(ix,iy)
           enddo
         enddo
       enddo
@@ -155,11 +150,6 @@ csw 24feb2014 check for guard cell (SOLPS4)
 *        smodt(ix,iy,1,is) = (unchanged)
 *        smodt(ix,iy,2,is) = (unchanged)
             smodt(ix,iy,3,is) = smodt(ix,iy,3,is)-t0
-            smo0dt(ix,iy,0,is) = t0*am(is)*mp*ua0(ix,iy,is)* !djm Jan2017
-     &       na0(ix,iy,is)
-            smo0dt(ix,iy,1,is) = 0.0_R8
-            smo0dt(ix,iy,2,is) = 0.0_R8
-            smo0dt(ix,iy,3,is) = -t0
         enddo
        enddo
       enddo
@@ -176,10 +166,6 @@ csw 24feb2014 check for guard cell (SOLPS4)
 *         shedt(ix,iy,1) = (unchanged)
 *         shedt(ix,iy,2) = (unchanged)
           shedt(ix,iy,3) = shedt(ix,iy,3)-1.5_R8*t0
-          b2srdt_she0to3(ix,iy,0) = 1.5_R8*t0*ne0(ix,iy)*te0(ix,iy) !djm Jan2017
-          b2srdt_she0to3(ix,iy,1) = 0.0_R8
-          b2srdt_she0to3(ix,iy,2) = 0.0_R8
-          b2srdt_she0to3(ix,iy,3) = -1.5_R8*t0
        enddo
       enddo
       do iy = -1, ny
@@ -191,7 +177,6 @@ csw 24feb2014 check for guard cell (SOLPS4)
           t0 = (phm3/ttim)*vol(ix,iy)
           shidt(ix,iy,0) = shidt(ix,iy,0)+
      &     1.5_R8*t0*ni0(ix,iy,0)*ti0(ix,iy)
-          b2srdt_shi0to3(ix,iy,0) = 1.5_R8*t0*ni0(ix,iy,0)*ti0(ix,iy) !djm Jan2017
           if (BoRiS.eq.1.0_R8) then
             do is = 0, ns-1
               shidt(ix,iy,0) = shidt(ix,iy,0)+t0*
@@ -199,24 +184,11 @@ csw 24feb2014 check for guard cell (SOLPS4)
               shidt(ix,iy,2) = shidt(ix,iy,2)-t0*
      &         kinrgy0(ix,iy,is)*na0(ix,iy,is)/
      &         ni0(ix,iy,0)
-cdjm Jan2017
-              b2srdt_shi0to3(ix,iy,0) = b2srdt_shi0to3(ix,iy,0)+t0*
-     &         kinrgy0(ix,iy,is)*na0(ix,iy,is)
-              b2srdt_shi0to3(ix,iy,2) = b2srdt_shi0to3(ix,iy,2)-t0*
-     &         kinrgy0(ix,iy,is)*na0(ix,iy,is)/
-     &         ni0(ix,iy,0)
-              b2srdt_shi0to3(ix,iy,0) = b2srdt_shi0to3(ix,iy,0)+t0*
-     &         kinrgy0(ix,iy,is)*na0(ix,iy,is)
-              b2srdt_shi0to3(ix,iy,2) = b2srdt_shi0to3(ix,iy,2)-t0*
-     &         kinrgy0(ix,iy,is)*na0(ix,iy,is)/
-     &         ni0(ix,iy,0)
             enddo
           endif
 *         shidt(ix,iy,1) = (unchanged)
 *         shidt(ix,iy,2) = (otherwise unchanged)
           shidt(ix,iy,3) = shidt(ix,iy,3)-1.5_R8*t0
-          b2srdt_shi0to3(ix,iy,1) = 0.0_R8
-          b2srdt_shi0to3(ix,iy,3) = -1.5_R8*t0
        enddo
       enddo
       do iy = -1, ny
@@ -232,10 +204,6 @@ cxpb  This treatment added as a fix to get the ExB runs going
 *         schdt(ix,iy,1) = (unchanged)
 *         schdt(ix,iy,2) = (unchanged)
           schdt(ix,iy,3) = schdt(ix,iy,3)-t0				 !xpb
-          sch0dt(ix,iy,0) = t0*(ni0(ix,iy,0)-ne0(ix,iy))                 !djm Jan2017
-          sch0dt(ix,iy,1) = 0.0_R8
-          sch0dt(ix,iy,2) = 0.0_R8
-          sch0dt(ix,iy,3) = -t0
        enddo
       enddo
       do iy = -1, ny
@@ -247,6 +215,11 @@ cxpb  This treatment added as a fix to get the ExB runs going
        enddo
       enddo
 
+cdjm Store the total change in linearised sources for balance
+      b2srdt_sna0to1 = snadt-snatmp
+      b2srdt_smo0to3 = smodt-smotmp
+      b2srdt_she0to3 = shedt-shetmp
+      b2srdt_shi0to3 = shidt-shitmp
 
       if (iout_b2npmo.eq.1 .and. lout) then                                     !srv 11.09.09 {
        do is = 0, ns-1 
@@ -296,30 +269,6 @@ cxpb  This treatment added as a fix to get the ExB runs going
         call my_out(70,nx,ny,schdt(-1,-1,k),'b2srdt_schdt'//chk)
        enddo
       endif                                                           !srv 11.09.09 }
-
-      if (balanceco) then !djm Jan2017
-        b2srdt_sna(-1:nx,-1:ny,0:ns-1)=
-     1   sna0dt(-1:nx,-1:ny,0,0:ns-1)+
-     2   sna0dt(-1:nx,-1:ny,1,0:ns-1)*na(-1:nx,-1:ny,0:ns-1)
-      endif
-      if (balancemo) then
-c       write(*,*) 'Copying smo0 to b2stbc_smo'
-        do is=0,ns-1
-          b2srdt_smo(-1:nx,-1:ny,is)=
-     1     smo0dt(-1:nx,-1:ny,0,is)+
-     2     smo0dt(-1:nx,-1:ny,1,is)*ua(-1:nx,-1:ny,is)+
-     3     smo0dt(-1:nx,-1:ny,2,is)*am(is)*mp*na(-1:nx,-1:ny,is)+
-     4     smo0dt(-1:nx,-1:ny,3,is)*am(is)*mp*na(-1:nx,-1:ny,is)*
-     5     ua(-1:nx,-1:ny,is)
-        enddo
-      endif
-      if (balancech) then
-        b2srdt_sch(-1:nx,-1:ny)=
-     1   sch0dt(-1:nx,-1:ny,0)+
-     2   sch0dt(-1:nx,-1:ny,1)*po(-1:nx,-1:ny)+
-     3   sch0dt(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4   sch0dt(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*po(-1:nx,-1:ny)
-      endif
 
 * ..return
       ncall = ncall+1

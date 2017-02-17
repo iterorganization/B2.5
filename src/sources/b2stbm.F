@@ -4,8 +4,7 @@
       subroutine b2stbm (nx, ny, ns, ismain, dtim,
      &  vol, gs, hx, hy, qz, qc, pbs, bb,
      &  na, ua, te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
-     &  sna0, smo0, she0, shi0, sch0, sne0, main_call,
-     &  balanceco, balancemo, balanceht, balancech) !djm Jan2017
+     &  sna0, smo0, she0, shi0, sch0, sne0, main_call)
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -17,7 +16,9 @@
       use b2mod_numerics_namelist
       use b2mod_sources
      1 , only : b2stbm_sna,b2stbm_smo,b2stbm_she,b2stbm_shi,b2stbm_sch,
-     2          b2stbm_sne
+     2          b2stbm_sne,
+     3          b2stbm_sna0to1,b2stbm_smo0to3,b2stbm_she0to3,
+     4          b2stbm_shi0to3
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
@@ -37,7 +38,6 @@
      *  fna(-1:nx,-1:ny,0:1,0:ns-1), fhe(-1:nx,-1:ny,0:1),
      &  fhi(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      &  fne(-1:nx,-1:ny,0:1), fni(-1:nx,-1:ny,0:1)
-      logical balanceco, balancemo, balanceht, balancech !djm Jan2017
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
@@ -461,20 +461,18 @@ cxpb
         end do
       end do
 
-      if (balanceco) then !djm Jan2017
-        b2stbm_sna(:,:,:)=sna0(:,:,0,:)+sna0(:,:,1,:)*na(:,:,:)
-      endif
-      if (balancemo) then !djm Jan2017
-        b2stbm_smo(:,:,:)=smo0(:,:,0,:)+smo0(:,:,1,:)*ua(:,:,:)
-      endif
+      b2stbm_sna(:,:,:)=sna0(:,:,0,:)+sna0(:,:,1,:)*na(:,:,:)
+      b2stbm_smo(:,:,:)=smo0(:,:,0,:)+smo0(:,:,1,:)*ua(:,:,:)
       b2stbm_sne(:,:)=sne0(:,:,0)+sne0(:,:,1)*ne(:,:)
-      if (balanceht) then !djm Jan2017
-        b2stbm_she(:,:)=she0(:,:,0)+she0(:,:,1)*te(:,:)
-        b2stbm_shi(:,:)=shi0(:,:,0)+shi0(:,:,1)*ti(:,:)
-      endif
-      if (balancech) then !djm Jan2017
-        b2stbm_sch(:,:)=sch0(:,:,0)+sch0(:,:,1)*po(:,:)
-      endif
+      b2stbm_she(:,:)=she0(:,:,0)+she0(:,:,1)*te(:,:)
+      b2stbm_shi(:,:)=shi0(:,:,0)+shi0(:,:,1)*ti(:,:)
+      b2stbm_sch(:,:)=sch0(:,:,0)+sch0(:,:,1)*po(:,:)
+
+cdjm Jan2017 Keep linearised sources for balance
+      b2stbm_sna0to1 = sna0
+      b2stbm_smo0to3 = smo0
+      b2stbm_she0to3 = she0
+      b2stbm_shi0to3 = shi0
 
 * ..return
  999  if (main_call.or.ncall.eq.0) ncall = ncall+1

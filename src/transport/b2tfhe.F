@@ -40,6 +40,8 @@
      &  fhe_mdf(-1:nx,-1:ny,0:1), fhePSch(-1:nx,-1:ny,0:1),              !srv 13.10.06
      1  floe(-1:nx,-1:ny,0:1), cone(-1:nx,-1:ny,0:1,0:2),            !srv 02.01.07
      2  fllime(-1:nx,-1:ny)
+*   ..local variables
+      real (kind=R8) :: upfac, hybfac !djm Jan2017
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -408,66 +410,70 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &         alfTeEh*alfe0_mdf*
      &         harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
      &         -fhePSch(ix,iy,0)                                       !srv 13.06.06 }
-              if (balance) then                                        !djm Jan2017
-cdjm store components of fhex. Share the hybrid part according to the relative contributions
-                if (mdf_fhe.eq.0) then
-                  fhe_32(ix,iy,0) = (1.5_R8+BoRiS)*fne_32(ix,iy,0)*
-     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
-     &      ((1.5_R8+BoRiS)*fne_32(ix,iy,0))/floe0*abs(floe0/2.0_R8)*tex
-                  fhe_52(ix,iy,0) = 2.5_R8*fne_52(ix,iy,0)*
-     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-     &     -(2.5_R8*fne_52(ix,iy,0))/floe0*abs(floe0/2.0_R8)*tex
-                  fhe_strange(ix,iy,0) =
-     &      chve(ix,iy,0)*
-     &      (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8*
-     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-     &     -(chve(ix,iy,0)*
-     &      (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8)/floe0*
-     &      abs(floe0/2.0_R8)*tex
-                  fhe_thermj(ix,iy,0) =
-     &      -0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe*
-     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8+
-     &      0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe/floe0*
-     &      abs(floe0/2.0_R8)*tex+
-     &      alfTeEh*alfe0*
-     &      harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-                  fhe_ecrb(ix,iy,0) = 1.5_R8*flo_veecrb*
-     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-     &     -(1.5_R8*flo_veecrb)/floe0*abs(floe0/2.0_R8)*tex
-                  fhe_dia(ix,iy,0) = 2.5_R8*flo_vedia*
-     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-     &     -(2.5_R8*flo_vedia)/floe0*abs(floe0/2.0_R8)*tex
-                  fhe_cond(ix,iy,0) = -cone0*tex0
-                  fhe_pschused(ix,iy,0) = 0.0_R8
+              if (balance.and.(mdf_fhe.eq.0)) then !djm Jan2017
+                !djm Jan2017 share the hybrid part according to relative contributions
+                if (floe0.ge.0.0_R8) then
+                  hybfac=1.0_R8
                 else
-                  fhe_32(ix,iy,0) = (1.5_R8+BoRiS)*fne_32(ix,iy,0)*
-     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
-     &      ((1.5_R8+BoRiS)*fne_32(ix,iy,0))/floe0_mdf*
-     &      abs(floe0_mdf/2.0_R8)*tex
-                  fhe_52(ix,iy,0) = 2.5_R8*fne_52(ix,iy,0)*
-     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-     &     -(2.5_R8*fne_52(ix,iy,0))/floe0_mdf*abs(floe0_mdf/2.0_R8)*tex
-                  fhe_strange(ix,iy,0) =
-     &      chve(ix,iy,0)*
-     &      (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8*
-     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-     &     -(chve(ix,iy,0)*
-     &      (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8)/
-     &      floe0_mdf*abs(floe0_mdf/2.0_R8)*tex
-                  fhe_thermj(ix,iy,0) =
-     &      -0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe*
-     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8+
-     &      0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe/floe0_mdf*
-     &      abs(floe0_mdf/2.0_R8)*tex+
-     &      alfTeEh*alfe0_mdf*
-     &      harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-                  fhe_ecrb(ix,iy,0) = 1.5_R8*flo_veecrb*
-     &      (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
-     &     -(1.5_R8*flo_veecrb)/floe0_mdf*abs(floe0_mdf/2.0_R8)*tex
-                  fhe_dia(ix,iy,0) = 0.0_R8
-                  fhe_cond(ix,iy,0) = -cone0_mdf*tex0_mdf
-                  fhe_pschused(ix,iy,0) = -fhePSch(ix,iy,0)
+                  hybfac=-1.0_R8
                 endif
+                fhe_32(ix,iy,0) = (1.5_R8+BoRiS)*fne_32(ix,iy,0)*
+     &               (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
+     &               hybfac*(1.5_R8+BoRiS)*fne_32(ix,iy,0)/2.0_R8*tex
+                fhe_52(ix,iy,0) = 2.5_R8*fne_52(ix,iy,0)*
+     &               (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
+     &               hybfac*2.5_R8*fne_52(ix,iy,0)/2.0_R8*tex
+                fhe_strange(ix,iy,0) = chve(ix,iy,0)*
+     &            (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8*
+     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
+     &            hybfac*chve(ix,iy,0)*
+     &            (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8/
+     &            2.0_R8*tex
+                fhe_thermj(ix,iy,0) =
+     &            -0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe*
+     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8+
+     &            hybfac*0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe/2.0_R8*tex+
+     &            alfTeEh*alfe0*
+     &            harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
+                fhe_ecrb(ix,iy,0) = 1.5_R8*flo_veecrb*
+     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
+     &            hybfac*1.5_R8*flo_veecrb/2.0_R8*tex
+                fhe_dia(ix,iy,0) = 2.5_R8*flo_vedia*
+     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
+     &            hybfac*2.5_R8*flo_vedia/2.0_R8*tex
+                fhe_cond(ix,iy,0) = -cone0*tex0
+                fhe_pschused(ix,iy,0) = 0.0_R8
+              endif
+              if (balance.and.(mdf_fhe.ne.0)) then !djm Jan2017
+                if (floe0_mdf.ge.0.0_R8) then
+                  hybfac=1.0_R8
+                else
+                  hybfac=-1.0_R8
+                endif
+                fhe_32(ix,iy,0) = (1.5_R8+BoRiS)*fne_32(ix,iy,0)*
+     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
+     &            hybfac*(1.5_R8+BoRiS)*fne_32(ix,iy,0)/2.0_R8*tex
+                fhe_52(ix,iy,0) = 2.5_R8*fne_52(ix,iy,0)*
+     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
+     &            hybfac*2.5_R8*fne_52(ix,iy,0)/2.0_R8*tex
+                fhe_strange(ix,iy,0) = chve(ix,iy,0)*
+     &            (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8*
+     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
+     &            hybfac*chve(ix,iy,0)*
+     &            (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8/
+     &            2.0_R8*tex
+                fhe_thermj(ix,iy,0) =
+     &            -0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe*
+     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8+
+     &            hybfac*0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe/2.0_R8*tex+
+     &            alfTeEh*alfe0_mdf*
+     &            harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
+                fhe_ecrb(ix,iy,0) = 1.5_R8*flo_veecrb*
+     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8-
+     &            hybfac*1.5_R8*flo_veecrb/2.0_R8*tex
+                fhe_dia(ix,iy,0) = 0.0_R8
+                fhe_cond(ix,iy,0) = -cone0_mdf*tex0_mdf
+                fhe_pschused(ix,iy,0) = -fhePSch(ix,iy,0)
               endif
             else
               t1 = dim ( cone0/fllime(ix,iy),
@@ -480,6 +486,38 @@ cdjm store components of fhex. Share the hybrid part according to the relative c
      .         - t1 * (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))) 
      &         +alfTeEh*alfe0*
      &          harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
+              if (balance.and.mdf_fhe.eq.0) then !djm Jan2017
+                if(floe0.ge.0.0_R8) then
+                  upfac=1.0_R8
+                else
+                  upfac=0.0_R8
+                endif
+                fhe_32(ix,iy,0) = (1.5_R8+BoRiS)*fne_32(ix,iy,0)*
+     &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &                            (1.0_R8-upfac)*te(ix,iy))
+                fhe_52(ix,iy,0) = 2.5_R8*fne_52(ix,iy,0)*
+     &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &                            (1.0_R8-upfac)*te(ix,iy))
+                fhe_strange(ix,iy,0) = chve(ix,iy,0)*
+     &            (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8*
+     &            (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &             (1.0_R8-upfac)*te(ix,iy))
+                fhe_thermj(ix,iy,0) =
+     &            -0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe*
+     &            (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &             (1.0_R8-upfac)*te(ix,iy))+
+     &            alfTeEh*alfe0*
+     &            harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
+                fhe_ecrb(ix,iy,0) = 1.5_R8*flo_veecrb*
+     &            (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &             (1.0_R8-upfac)*te(ix,iy))
+                fhe_dia(ix,iy,0) = 2.5_R8*flo_vedia*
+     &            (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &             (1.0_R8-upfac)*te(ix,iy))
+                fhe_cond(ix,iy,0) = -t1*
+     &             (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))) 
+                fhe_pschused(ix,iy,0) = 0.0_R8
+              endif
             endif
             fhet(ix,iy,0) = fhe(ix,iy,0) +
      1       ((1.0_R8-BoRiS)*fne_32(ix,iy,0)+flo_veecrb)*
@@ -608,6 +646,34 @@ cdjm store components of fhex. Share the hybrid part according to the relative c
      .          - t1 * (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &          +alfTeEh*calf(ix,iy,1)*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
+              if (balance) then
+                if(floe0_mdf.ge.0.0_R8) then
+                  upfac=1.0_R8
+                else
+                  upfac=0.0_R8
+                endif
+                fhe_32(ix,iy,1) = (1.5_R8+BoRiS)*fne_32(ix,iy,1)*
+     &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &                            (1.0_R8-upfac)*te(ix,iy))
+                fhe_52(ix,iy,1) = 2.5_R8*fne_52(ix,iy,1)*
+     &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &                            (1.0_R8-upfac)*te(ix,iy))
+                fhe_strange(ix,iy,1) = chve(ix,iy,1)*
+     &           (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))/2.0_R8*
+     &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &                            (1.0_R8-upfac)*te(ix,iy))
+                fhe_dia(ix,iy,1) = 2.5_R8*flo_vedia*
+     &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &                            (1.0_R8-upfac)*te(ix,iy))
+                fhe_pschused(ix,iy,1) = 0.0_R8
+                fhe_ecrb(ix,iy,1) = 1.5_R8*flo_veecrb*
+     &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &                            (1.0_R8-upfac)*te(ix,iy))
+                fhe_cond(ix,iy,1) = -t1*(te(ix,iy)-
+     &                              te(bottomix(ix,iy),bottomiy(ix,iy)))
+                fhe_thermj(ix,iy,1) = alfTeEh*calf(ix,iy,1)*
+     &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
+              endif
             endif
             fhet(ix,iy,1) = fhe(ix,iy,1)+
      1    ((1.0_R8-BoRiS)*fne_32(ix,iy,1)+flo_veecrb)*

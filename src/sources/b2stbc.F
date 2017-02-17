@@ -12,8 +12,7 @@
      &  fchdia, fchin, fch_p, fchvispar, fchvisper, fchvisq, fchinert,   !srv 21.10.02
      &  fchanml,
      2  cdna, chce, chve, chci, chvi, calf,
-     &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call,       !xpb
-     &  balanceco, balancemo, balanceht, balancech)                      !djm Jan2017
+     &  sna0, smo0, she0, shi0, sch0, sne0, wrong_flow, main_call)       !xpb
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
@@ -23,7 +22,8 @@
       use b2mod_sources
      1 , only : b2stbc_sna,b2stbc_smo,b2stbc_she,b2stbc_shi,b2stbc_sch,
      2          b2stbc_sne,
-     3          b2stbc_she0to3, b2stbc_shi0to3                           !djm Jan2017
+     3          b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,           !djm Jan2017
+     4          b2stbc_shi0to3
       use b2mod_feedback
       use b2mod_b2cmpa
       use b2mod_external
@@ -72,7 +72,6 @@
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
       logical wrong_flow                                                 !xpb
-      logical balanceco, balancemo, balanceht, balancech                 !djm Jan2017
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -648,52 +647,49 @@ c if we want the integral current to be 0
      1     iy,te(nx,iy)/ev,ne(nx,iy),(she0(nx,iy,is),is=0,3)
         enddo
       endif
-      if (balanceco) then !djm Jan2017
-c       write(*,*) 'Copying sna0 to b2stbc_sna'
-        b2stbc_sna(-1:nx,-1:ny,0:ns-1)=
-     1   sna0(-1:nx,-1:ny,0,0:ns-1)+
-     2   sna0(-1:nx,-1:ny,1,0:ns-1)*na(-1:nx,-1:ny,0:ns-1)
-      endif
-      if (balancemo) then
-c       write(*,*) 'Copying smo0 to b2stbc_smo'
-        do is=0,ns-1
-          b2stbc_smo(-1:nx,-1:ny,is)=
-     1     smo0(-1:nx,-1:ny,0,is)+
-     2     smo0(-1:nx,-1:ny,1,is)*ua(-1:nx,-1:ny,is)+
-     3     smo0(-1:nx,-1:ny,2,is)*am(is)*mp*na(-1:nx,-1:ny,is)+
-     4     smo0(-1:nx,-1:ny,3,is)*am(is)*mp*na(-1:nx,-1:ny,is)*
-     5     ua(-1:nx,-1:ny,is)
-        enddo
-      endif
-      if (balanceht) then
-c       write(*,*) 'Copying she0 to b2stbc_she'
-        b2stbc_she(-1:nx,-1:ny)=
-     1   she0(-1:nx,-1:ny,0)+
-     2   she0(-1:nx,-1:ny,1)*te(-1:nx,-1:ny)+
-     3   she0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4   she0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*te(-1:nx,-1:ny)
-c       write(*,*) 'Copying shi0 to b2stbc_shi'
-        b2stbc_shi(-1:nx,-1:ny)=
-     1   shi0(-1:nx,-1:ny,0)+
-     2   shi0(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
-     3   shi0(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
-     4   shi0(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
-        b2stbc_she0to3(-1:nx,-1:ny,0:3)=she0(-1:nx,-1:ny,0:3)
-        b2stbc_shi0to3(-1:nx,-1:ny,0:3)=shi0(-1:nx,-1:ny,0:3)
-      endif
-      if (balancech) then
-c       write(*,*) 'Copying sch0 to b2stbc_sch'
-        b2stbc_sch(-1:nx,-1:ny)=
-     1   sch0(-1:nx,-1:ny,0)+
-     2   sch0(-1:nx,-1:ny,1)*po(-1:nx,-1:ny)+
-     3   sch0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
-     4   sch0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*po(-1:nx,-1:ny)
-      endif
+c      write(*,*) 'Copying sna0 to b2stbc_sna'
+      b2stbc_sna(-1:nx,-1:ny,0:ns-1)=
+     1 sna0(-1:nx,-1:ny,0,0:ns-1)+
+     2 sna0(-1:nx,-1:ny,1,0:ns-1)*na(-1:nx,-1:ny,0:ns-1)
+c      write(*,*) 'Copying smo0 to b2stbc_smo'
+      do is=0,ns-1
+        b2stbc_smo(-1:nx,-1:ny,is)=
+     1   smo0(-1:nx,-1:ny,0,is)+
+     2   smo0(-1:nx,-1:ny,1,is)*ua(-1:nx,-1:ny,is)+
+     3   smo0(-1:nx,-1:ny,2,is)*am(is)*mp*na(-1:nx,-1:ny,is)+
+     4   smo0(-1:nx,-1:ny,3,is)*am(is)*mp*na(-1:nx,-1:ny,is)*
+     5   ua(-1:nx,-1:ny,is)
+      enddo
+c      write(*,*) 'Copying she0 to b2stbc_she'
+      b2stbc_she(-1:nx,-1:ny)=
+     1 she0(-1:nx,-1:ny,0)+
+     2 she0(-1:nx,-1:ny,1)*te(-1:nx,-1:ny)+
+     3 she0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
+     4 she0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*te(-1:nx,-1:ny)
+c      write(*,*) 'Copying shi0 to b2stbc_shi'
+      b2stbc_shi(-1:nx,-1:ny)=
+     1 shi0(-1:nx,-1:ny,0)+
+     2 shi0(-1:nx,-1:ny,1)*ti(-1:nx,-1:ny)+
+     3 shi0(-1:nx,-1:ny,2)*ni(-1:nx,-1:ny,0)+
+     4 shi0(-1:nx,-1:ny,3)*ni(-1:nx,-1:ny,0)*ti(-1:nx,-1:ny)
+c      write(*,*) 'Copying sch0 to b2stbc_sch'
+      b2stbc_sch(-1:nx,-1:ny)=
+     1 sch0(-1:nx,-1:ny,0)+
+     2 sch0(-1:nx,-1:ny,1)*po(-1:nx,-1:ny)+
+     3 sch0(-1:nx,-1:ny,2)*ne(-1:nx,-1:ny)+
+     4 sch0(-1:nx,-1:ny,3)*ne(-1:nx,-1:ny)*po(-1:nx,-1:ny)
 c      write(*,*) 'Copying sne0 to b2stbc_sne'
       b2stbc_sne(-1:nx,-1:ny)=
      1 sne0(-1:nx,-1:ny,0)+
      2 sne0(-1:nx,-1:ny,1)*ne(-1:nx,-1:ny)
 c      write(*,*) 'Copied s..0 to b2stbc_s..'
+
+cdjm Jan2017 Keep linearised sources for balance
+      b2stbc_sna0to1 = sna0
+      b2stbc_smo0to3 = smo0
+      b2stbc_she0to3 = she0
+      b2stbc_shi0to3 = shi0
+
       if(ncall.eq.0 .or. main_call) ncall = ncall+1
       call subend ()
       return

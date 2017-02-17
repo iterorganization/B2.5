@@ -11,7 +11,7 @@
       use b2mod_external
       use b2mod_b2cmpa
       use b2mod_sources                                              !djm Jan2017
-     & , only : b2sifr_smoch, b2sifr_smotf
+     & , only : b2sifr_smoch0to3, b2sifr_smotf0to3
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
@@ -311,19 +311,11 @@ c     1      write(*,*) ix,iy,isb,cthi(ix,iy,isb)
 	  call my_out(70,nx,ny,wrk0,'b2sifr_smoch'//chns)
 	enddo
       endif                                                            !srv 17.06.02 }
-cdjm Jan2017
-      b2sifr_smoch(-1:nx,-1:ny,isb)=
-     1     smbch(-1:nx,-1:ny,0)+
-     2     smbch(-1:nx,-1:ny,1)*ua(-1:nx,-1:ny,isb)+
-     3     smbch(-1:nx,-1:ny,2)*am(isb)*mp*na(-1:nx,-1:ny,isb)+
-     4     smbch(-1:nx,-1:ny,3)*am(isb)*mp*na(-1:nx,-1:ny,isb)*
-     5     ua(-1:nx,-1:ny,isb)
-      b2sifr_smotf(-1:nx,-1:ny,isb)=
-     1     smbtf(-1:nx,-1:ny,0)+
-     2     smbtf(-1:nx,-1:ny,1)*ua(-1:nx,-1:ny,isb)+
-     3     smbtf(-1:nx,-1:ny,2)*am(isb)*mp*na(-1:nx,-1:ny,isb)+
-     4     smbtf(-1:nx,-1:ny,3)*am(isb)*mp*na(-1:nx,-1:ny,isb)*
-     5     ua(-1:nx,-1:ny,isb)
+
+cdjm Jan2017 Store the linearised sources for balance
+      b2sifr_smoch0to3(-1:nx,-1:ny,0:3,isb)=smbch
+      b2sifr_smotf0to3(-1:nx,-1:ny,0:3,isb)=smbtf
+
 * ..return
       ncall = ncall+1
       call subend ()

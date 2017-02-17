@@ -4,7 +4,8 @@
       use b2mod_numerics_namelist
       use b2mod_time
       use b2mod_sources 
-     &     , only: ext_sna, ext_smo, ext_she, ext_shi, ext_sch, ext_sne
+     &     , only: ext_sna, ext_smo, ext_she, ext_shi, ext_sch, ext_sne,
+     &             ext_sna0to1, ext_smo0to3, ext_she0to3, ext_shi0to3 !djm Jan2017
       use b2mod_geo_corner
      &     , only: nmdpl
       implicit none
@@ -80,8 +81,7 @@
       end subroutine dealloc_input_profile
 
       subroutine source_input(nx,ny,ns,
-     &  sna0,smo0,she0,shi0,sch0,sne0,vol,nc,
-     &  balanceco,balancemo,balanceht,balancech) !djm Jan2017
+     &  sna0,smo0,she0,shi0,sch0,sne0,vol,nc)
 !**************************************************************************
 !*     subroutine for reading in source-profiles of density, parallel     *
 !*     momentum and/or energy into B2.5 (written by Heimo Buerbaumer 1999)*
@@ -111,7 +111,6 @@
       logical, parameter :: debug = .false.
 #endif
       intrinsic int, mod
-      logical balanceco, balancemo, balanceht, balancech !djm 17/10/16
      
 ! initialise sources and data to zero
       if (nc.eq.0) then
@@ -352,20 +351,18 @@
  99   write (*,*) 'Error in reading the dsa file'
  100  continue
 
-      if (balanceco) then !djm 17/10/16
-        ext_sna(:,:,:)=sna0(:,:,0,:)
-      endif
-      if (balancemo) then !djm
-        ext_smo(:,:,:)=smo0(:,:,0,:)
-      endif
+      ext_sna(:,:,:)=sna0(:,:,0,:)
+      ext_smo(:,:,:)=smo0(:,:,0,:)
       ext_sne(:,:)=sne0(:,:,0)
-      if (balanceht) then !djm
-        ext_she(:,:)=she0(:,:,0)
-        ext_shi(:,:)=shi0(:,:,0)
-      endif
-      if (balancech) then !djm
-        ext_sch(:,:)=sch0(:,:,0)
-      endif
+      ext_she(:,:)=she0(:,:,0)
+      ext_shi(:,:)=shi0(:,:,0)
+      ext_sch(:,:)=sch0(:,:,0)
+
+cdjm Jan2017 Keep linearised sources for balance
+      ext_sna0to1 = sna0
+      ext_smo0to3 = smo0
+      ext_she0to3 = she0
+      ext_shi0to3 = shi0
        
       if (new_files) then
         close(93)

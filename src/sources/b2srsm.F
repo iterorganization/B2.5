@@ -10,6 +10,9 @@
       use b2mod_diag
       use b2mod_time
       use b2mod_b2cmpa
+      use b2mod_sources !djm Jan2017
+     1 , only : b2srsm_sna0to1, b2srsm_smo0to3, b2srsm_she0to3,
+     2          b2srsm_shi0to3
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -49,6 +52,9 @@
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *  timescale, invtimescale, timefactor, hlp
+      real (kind=R8) :: !djm Jan2017
+     &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1), 
+     &  shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3)
 *   ..procedures
       real (kind=R8) :: roxa
       roxa(ix,iy,is) = am(is)*mp*na(ix,iy,is)
@@ -98,6 +104,12 @@
         endif
         if(eirene_mod.le.0) eirene_mod=1
       endif
+
+cdjm Jan2017 Keep sources at the start to calculate total change for balance routines
+      snatmp = snasm
+      smotmp = smosm
+      shetmp = shesm
+      shitmp = shism
 
       if(enable.ne.0) then
 c*** calculate the integral sources for all regions:
@@ -300,6 +312,12 @@ c check electron particle number
           enddo    
         enddo
       endif
+
+cdjm Store the total change in linearised sources for balance
+      b2srsm_sna0to1 = snasm-snatmp
+      b2srsm_smo0to3 = smosm-smotmp
+      b2srsm_she0to3 = shesm-shetmp
+      b2srsm_shi0to3 = shism-shitmp
 
       if (iout_b2npmo.eq.1) then                                     !srv 11.09.09 {
 	 do is = 0, ns-1          
