@@ -237,6 +237,7 @@ Contains
       imap(1)=1
       tstepn(1) = ntstep
       call rwcdf (rw, ncid, 'ntstep', imap, tstepn, iret)
+      call rwcdf (rw, ncid, 'nastep', imap, tstepn, iret)
       iret = nf_close(ncid)
 !cwdk    initialize writing of the .nc-file for monitoring based on
 !c       batch averaging
@@ -1194,11 +1195,11 @@ Contains
          tpmxipid, tpmxapid, tp3drid, tp3dlid, tp3dtlid, tp3dtrid, &
          tpsepiid, tpsepaid, &
          nastepid, batchsaid, &
-         nesepmid_av, tesepmid_av, tisepmid_av, posepmid_av, &
-         nesepiid_av, tesepiid_av, tisepiid_av, posepiid_av, &
-         nesepaid_av, tesepaid_av, tisepaid_av, posepaid_av, &
-         nemxipid_av, temxipid_av, timxipid_av, pomxipid_av, &
-         nemxapid_av, temxapid_av, timxapid_av, pomxapid_av
+         nesepm_avid, tesepm_avid, tisepm_avid, posepm_avid, &
+         nesepi_avid, tesepi_avid, tisepi_avid, posepi_avid, &
+         nesepa_avid, tesepa_avid, tisepa_avid, posepa_avid, &
+         nemxip_avid, temxip_avid, timxip_avid, pomxip_avid, &
+         nemxap_avid, temxap_avid, timxap_avid, pomxap_avid
     ! variable shapes
     integer :: dims(2)
     ! Create and enter define mode
@@ -1475,26 +1476,26 @@ Contains
     iret  = nf_def_var(ncid, 'batchsa', NCDOUBLE, 1, dims, batchsaid)
     dims(1) = ncdim
     dims(2) = batchdim
-    iret  = nf_def_var(ncid, 'nesepm_av', NCDOUBLE, 2, dims, nesepmid_av)
-    iret  = nf_def_var(ncid, 'tesepm_av', NCDOUBLE, 2, dims, tesepmid_av)
-    iret  = nf_def_var(ncid, 'tisepm_av', NCDOUBLE, 2, dims, tisepmid_av)
-    iret  = nf_def_var(ncid, 'posepm_av', NCDOUBLE, 2, dims, posepmid_av)
-    iret  = nf_def_var(ncid, 'nesepi_av', NCDOUBLE, 2, dims, nesepiid_av)
-    iret  = nf_def_var(ncid, 'tesepi_av', NCDOUBLE, 2, dims, tesepiid_av)
-    iret  = nf_def_var(ncid, 'tisepi_av', NCDOUBLE, 2, dims, tisepiid_av)
-    iret  = nf_def_var(ncid, 'posepi_av', NCDOUBLE, 2, dims, posepiid_av)
-    iret  = nf_def_var(ncid, 'nesepa_av', NCDOUBLE, 2, dims, nesepaid_av)
-    iret  = nf_def_var(ncid, 'tesepa_av', NCDOUBLE, 2, dims, tesepaid_av)
-    iret  = nf_def_var(ncid, 'tisepa_av', NCDOUBLE, 2, dims, tisepaid_av)
-    iret  = nf_def_var(ncid, 'posepa_av', NCDOUBLE, 2, dims, posepaid_av)
-    iret  = nf_def_var(ncid, 'nemxip_av', NCDOUBLE, 2, dims, nemxipid_av)
-    iret  = nf_def_var(ncid, 'temxip_av', NCDOUBLE, 2, dims, temxipid_av)
-    iret  = nf_def_var(ncid, 'timxip_av', NCDOUBLE, 2, dims, timxipid_av)
-    iret  = nf_def_var(ncid, 'pomxip_av', NCDOUBLE, 2, dims, pomxipid_av)
-    iret  = nf_def_var(ncid, 'nemxap_av', NCDOUBLE, 2, dims, nemxapid_av)
-    iret  = nf_def_var(ncid, 'temxap_av', NCDOUBLE, 2, dims, temxapid_av)
-    iret  = nf_def_var(ncid, 'timxap_av', NCDOUBLE, 2, dims, timxapid_av)
-    iret  = nf_def_var(ncid, 'pomxap_av', NCDOUBLE, 2, dims, pomxapid_av)
+    iret  = nf_def_var(ncid, 'nesepm_av', NCDOUBLE, 2, dims, nesepm_avid)
+    iret  = nf_def_var(ncid, 'tesepm_av', NCDOUBLE, 2, dims, tesepm_avid)
+    iret  = nf_def_var(ncid, 'tisepm_av', NCDOUBLE, 2, dims, tisepm_avid)
+    iret  = nf_def_var(ncid, 'posepm_av', NCDOUBLE, 2, dims, posepm_avid)
+    iret  = nf_def_var(ncid, 'nesepi_av', NCDOUBLE, 2, dims, nesepi_avid)
+    iret  = nf_def_var(ncid, 'tesepi_av', NCDOUBLE, 2, dims, tesepi_avid)
+    iret  = nf_def_var(ncid, 'tisepi_av', NCDOUBLE, 2, dims, tisepi_avid)
+    iret  = nf_def_var(ncid, 'posepi_av', NCDOUBLE, 2, dims, posepi_avid)
+    iret  = nf_def_var(ncid, 'nesepa_av', NCDOUBLE, 2, dims, nesepa_avid)
+    iret  = nf_def_var(ncid, 'tesepa_av', NCDOUBLE, 2, dims, tesepa_avid)
+    iret  = nf_def_var(ncid, 'tisepa_av', NCDOUBLE, 2, dims, tisepa_avid)
+    iret  = nf_def_var(ncid, 'posepa_av', NCDOUBLE, 2, dims, posepa_avid)
+    iret  = nf_def_var(ncid, 'nemxip_av', NCDOUBLE, 2, dims, nemxip_avid)
+    iret  = nf_def_var(ncid, 'temxip_av', NCDOUBLE, 2, dims, temxip_avid)
+    iret  = nf_def_var(ncid, 'timxip_av', NCDOUBLE, 2, dims, timxip_avid)
+    iret  = nf_def_var(ncid, 'pomxip_av', NCDOUBLE, 2, dims, pomxip_avid)
+    iret  = nf_def_var(ncid, 'nemxap_av', NCDOUBLE, 2, dims, nemxap_avid)
+    iret  = nf_def_var(ncid, 'temxap_av', NCDOUBLE, 2, dims, temxap_avid)
+    iret  = nf_def_var(ncid, 'timxap_av', NCDOUBLE, 2, dims, timxap_avid)
+    iret  = nf_def_var(ncid, 'pomxap_av', NCDOUBLE, 2, dims, pomxap_avid)
 
     ! assign attributes
     iret = nf_put_att_text(ncid, timesaid, 'long_name', 4, 'time')
@@ -1872,46 +1873,46 @@ Contains
     endif
 
     !wdk averaged quantities
-    iret = nf_put_att_text(ncid, nesepmid_av, 'long_name', 52, 'averaged separatrix electron density, outer midplane')
-    iret = nf_put_att_text(ncid, nesepmid_av, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, tesepmid_av, 'long_name', 56, 'averaged separatrix electron temperature, outer midplane')
-    iret = nf_put_att_text(ncid, tesepmid_av, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, tisepmid_av, 'long_name', 51, 'averaged separatrix ion temperature, outer midplane')
-    iret = nf_put_att_text(ncid, tisepmid_av, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, posepmid_av, 'long_name', 45, 'averaged separatrix potential, outer midplane')
-    iret = nf_put_att_text(ncid, posepmid_av, 'units', 2, 'V ')
-    iret = nf_put_att_text(ncid, nesepiid_av, 'long_name', 54, 'averaged separatrix electron density, inboard divertor')
-    iret = nf_put_att_text(ncid, nesepiid_av, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, tesepiid_av, 'long_name', 58, 'averaged separatrix electron temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, tesepiid_av, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, tisepiid_av, 'long_name', 53, 'averaged separatrix ion temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, tisepiid_av, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, posepiid_av, 'long_name', 47, 'averaged separatrix potential, inboard divertor')
-    iret = nf_put_att_text(ncid, posepiid_av, 'units', 2, 'V ')
-    iret = nf_put_att_text(ncid, nesepaid_av, 'long_name', 55, 'averaged separatrix electron density, outboard divertor')
-    iret = nf_put_att_text(ncid, nesepaid_av, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, tesepaid_av, 'long_name', 59, 'averaged separatrix electron temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, tesepaid_av, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, tisepaid_av, 'long_name', 54, 'averaged separatrix ion temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, tisepaid_av, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, posepaid_av, 'long_name', 52, 'averaged separatrix potential, outboard divertor')
-    iret = nf_put_att_text(ncid, posepaid_av, 'units', 2, 'V ')
-    iret = nf_put_att_text(ncid, nemxipid_av, 'long_name', 51, 'averaged maximum electron density, inboard divertor')
-    iret = nf_put_att_text(ncid, nemxipid_av, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, temxipid_av, 'long_name', 55, 'averaged maximum electron temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, temxipid_av, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, timxipid_av, 'long_name', 50, 'averaged maximum ion temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, timxipid_av, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, pomxipid_av, 'long_name', 44, 'averaged maximum potential, inboard divertor')
-    iret = nf_put_att_text(ncid, pomxipid_av, 'units', 2, 'V ')
-    iret = nf_put_att_text(ncid, nemxapid_av, 'long_name', 52, 'averaged maximum electron density, outboard divertor')
-    iret = nf_put_att_text(ncid, nemxapid_av, 'units', 4, 'm^-3')
-    iret = nf_put_att_text(ncid, temxapid_av, 'long_name', 56, 'averaged maximum electron temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, temxapid_av, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, timxapid_av, 'long_name', 52, 'averaged maximum ion temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, timxapid_av, 'units', 2, 'eV')
-    iret = nf_put_att_text(ncid, pomxapid_av, 'long_name', 46, 'averaged maximum potential, outboard divertor')
-    iret = nf_put_att_text(ncid, pomxapid_av, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, nesepm_avid, 'long_name', 52, 'averaged separatrix electron density, outer midplane')
+    iret = nf_put_att_text(ncid, nesepm_avid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, tesepm_avid, 'long_name', 56, 'averaged separatrix electron temperature, outer midplane')
+    iret = nf_put_att_text(ncid, tesepm_avid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tisepm_avid, 'long_name', 51, 'averaged separatrix ion temperature, outer midplane')
+    iret = nf_put_att_text(ncid, tisepm_avid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, posepm_avid, 'long_name', 45, 'averaged separatrix potential, outer midplane')
+    iret = nf_put_att_text(ncid, posepm_avid, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, nesepi_avid, 'long_name', 54, 'averaged separatrix electron density, inboard divertor')
+    iret = nf_put_att_text(ncid, nesepi_avid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, tesepi_avid, 'long_name', 58, 'averaged separatrix electron temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tesepi_avid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tisepi_avid, 'long_name', 53, 'averaged separatrix ion temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tisepi_avid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, posepi_avid, 'long_name', 47, 'averaged separatrix potential, inboard divertor')
+    iret = nf_put_att_text(ncid, posepi_avid, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, nesepa_avid, 'long_name', 55, 'averaged separatrix electron density, outboard divertor')
+    iret = nf_put_att_text(ncid, nesepa_avid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, tesepa_avid, 'long_name', 59, 'averaged separatrix electron temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tesepa_avid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tisepa_avid, 'long_name', 54, 'averaged separatrix ion temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tisepa_avid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, posepa_avid, 'long_name', 52, 'averaged separatrix potential, outboard divertor')
+    iret = nf_put_att_text(ncid, posepa_avid, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, nemxip_avid, 'long_name', 51, 'averaged maximum electron density, inboard divertor')
+    iret = nf_put_att_text(ncid, nemxip_avid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, temxip_avid, 'long_name', 55, 'averaged maximum electron temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, temxip_avid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, timxip_avid, 'long_name', 50, 'averaged maximum ion temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, timxip_avid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, pomxip_avid, 'long_name', 44, 'averaged maximum potential, inboard divertor')
+    iret = nf_put_att_text(ncid, pomxip_avid, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, nemxap_avid, 'long_name', 52, 'averaged maximum electron density, outboard divertor')
+    iret = nf_put_att_text(ncid, nemxap_avid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, temxap_avid, 'long_name', 56, 'averaged maximum electron temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, temxap_avid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, timxap_avid, 'long_name', 52, 'averaged maximum ion temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, timxap_avid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, pomxap_avid, 'long_name', 46, 'averaged maximum potential, outboard divertor')
+    iret = nf_put_att_text(ncid, pomxap_avid, 'units', 2, 'V ')
 
     ! leave define mode
     iret = nf_enddef(ncid)
