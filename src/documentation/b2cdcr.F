@@ -224,7 +224,7 @@
 *     correction equation.
 *
 *     B2NXFM computes the flow terms in the parallel momentum equation
-*     (not used any more).
+*     (not used anymore).
 *
 *     B2NXFX computes an expression that occurs in the electron-atom
 *     thermal force.
@@ -366,7 +366,7 @@
 *     geometric factors such as vol/hx**2 and vol/hy**2.
 *
 *     B2TXCV computes viscous conductances between neighbouring
-*     staggered cells, given the viscosities (not used any more).
+*     staggered cells, given the viscosities (not used anymore).
 *
 *     B2TXCX computes conductances between neighbouring cells in the
 *     x-direction, given the conductivities.
@@ -568,7 +568,7 @@
 *
 *     B2XVFV verifies the zero entries in the edge locations of some
 *     quantity that is defined in the manner of a viscosity on the
-*     cells and corners of the b2 mesh(not used any more).
+*     cells and corners of the b2 mesh (not used anymore).
 *
 *     B2XVFX verifies the zero entries in the edge locations of some
 *     quantity defined on x-faces of the b2 mesh.
