@@ -1354,17 +1354,17 @@
 *    Found in b2.atomic_physics_rescale.parameters.
 *    Read if 'b2mndr_atomic_physics_rescale' is set to 1.
 *    Contains rescaling multipliers for atomic physics rates.
-*  RESCALE_SA - real*8 array of size(0:NS-1). Scaling factors for rtlsa:
+*  RESCALE_SA - real*8 array of size(0:NS-1). Scaling factors for rtsa:
 *    ionisation rates of species (is). Defaults to 1.0.
-*  RESCALE_RA - real*8 array of size(0:NS-1). Scaling factors for rtlra:
+*  RESCALE_RA - real*8 array of size(0:NS-1). Scaling factors for rtra:
 *    recombination rates of species (is). Defaults to 1.0.
-*  RESCALE_QA - real*8 array of size(0:NS-1). Scaling factors for rtlqa:
+*  RESCALE_QA - real*8 array of size(0:NS-1). Scaling factors for rtqa:
 *    electron cooling rates of species (is). Defaults to 1.0.
-*  RESCALE_CX - real*8 array of size(0:NS-1). Scaling factors for rtlcx:
+*  RESCALE_CX - real*8 array of size(0:NS-1). Scaling factors for rtcx:
 *    charge exchange rates of species (is). Defaults to 1.0.
-*  RESCALE_RD - real*8 array of size(0:NS-1). Scaling factors for rtlrd:
+*  RESCALE_RD - real*8 array of size(0:NS-1). Scaling factors for rtrd:
 *    line radiation rates of species (is). Defaults to 1.0.
-*  RESCALE_BR - real*8 array of size(0:NS-1). Scaling factors for rtlbr:
+*  RESCALE_BR - real*8 array of size(0:NS-1). Scaling factors for rtbr:
 *    bremsstrahlung radiation rates of species (is). Defaults to 1.0.
 *
 *-----------------------------------------------------------------------
