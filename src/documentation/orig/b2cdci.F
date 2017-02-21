@@ -2043,8 +2043,8 @@
 *    If hybr2.ne.0, then a mixed scheme is used where only the
 *    conductivity is computed according to the 4.0 scheme.
 *
-*    'b2tfhe_upwind'            '0.0'                  Numerics
-*    'b2tfhi_upwind'            '0.0'                  Numerics
+*    'b2tfhe_upwind'            '0'                    Numerics
+*    'b2tfhi_upwind'            '0'                    Numerics
 *    If upwind.ne.0, then the SOLPS4 upwind scheme in b2tfhe_ and
 *    b2tfhi_ to obtain the heat fluxes.
 *
