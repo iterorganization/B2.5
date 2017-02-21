@@ -166,28 +166,15 @@ for section in category_section[1:]: # TODO remove first category
         note = b2cdci_switches[switch_name][2]
         category = b2cdci_switches[switch_name][3]
 
-        # Special cases
-        if switch_name == 'b2ardr_no_smoothing':
-            category = 'Numerics'
-        elif switch_name == 'b2sifr_phm2':
-            category = 'Unused'
-        else:
-            category = section[0]
+        category = section[0]
 
         if description == group_description:
             switch_group.append((switch_name, default, note))
 
         # Special case
         elif description != group_description:
-            if switch_group and switch_group[-1][0] == 'b2sifr_limthii':
-                switch_group.append((switch_name, default, note))
-                continue
             for switch in switch_group:
-                # Special case
-                if switch[0] == 'b2ardr_no_smoothing':
-                    category = 'Numerics'
-                else:
-                    category = section[0]
+                category = section[0]
 
                 fort += fort_switch(switch[0], switch[1], category, switch[2])
             fort += dedent(group_description) + '*\n'

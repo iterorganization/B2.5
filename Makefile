@@ -267,7 +267,7 @@ LIBOBJS = ${ALLOBJS}
 endif
 
 ${DOCDIR}/b2cdci.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdci.py
-	cd ${DOCDIR}; python b2cdci.py
+	-cd ${DOCDIR}; python b2cdci.py
 
 ifdef USE_EIRENE
 ${OBJDIR}/libgr_dummy.a:
