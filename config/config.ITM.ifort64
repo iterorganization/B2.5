@@ -1,24 +1,24 @@
 # Test whether necessary variables are set
 ifndef NCDIR
-  NCDIR      = /pfs/work/dpc/SOLPS-ITER/NETCDF
+  NCDIR      = /pfs/work/g2dpc/SOLPS-ITER/NETCDF
 endif
 ifndef LD_NETCDF
   LD_NETCDF  = -L${NCDIR}/lib -lnetcdf
 endif
 ifndef MSCL_ROOT
-  MSCL_ROOT  = /pfs/work/dpc/SOLPS-ITER/mscl
+  MSCL_ROOT  = /pfs/work/g2dpc/SOLPS-ITER/mscl
 endif
 ifndef LD_MSCL
   LD_MSCL    = -L${MSCL_ROOT} -lmscl
 endif
 ifndef NCARG_ROOT
-  NCARG_ROOT = /pfs/work/dpc/SOLPS-ITER/NCARG
+  NCARG_ROOT = /pfs/work/g2dpc/SOLPS-ITER/NCARG
 endif
 ifndef LD_NCARG
   LD_NCARG   = -L${NCARG_ROOT}/lib -lncarg -lncarg_gks -lncarg_c -L/usr/X11R6/lib64 -lX11 -lm
 endif
 ifndef NAGDIR
-  NAGDIR     = /pfs/work/dpc/SOLPS-ITER/nag
+  NAGDIR     = /pfs/work/g2dpc/SOLPS-ITER/nag
 endif
 ifndef LD_NAG
   LD_NAG     = -L${NAGDIR} -lnag
@@ -26,7 +26,7 @@ endif
 
 EQUIVS   = -Dsdot=ddot -Dsasum=dasum -Dsaxpy=daxpy -Dsscal=dscal -Dsnrm2=dnrm2 -Dscopy=dcopy -Dsgbtrf=dgbtrf -Dsgbtrs=dgbtrs -Dsgetrf=dgetrf -Dsgetri=dgetri -DGRREAL=4 -DDOFLUSH # -DNO_CDF -DNO_PROCESS
 
-CPP      = /lib/cpp -C -traditional
+CPP      = /lib/cpp -C -traditional -ffreestanding
 CPPOPTS  = -C -P -I${srcdir} ${EQUIVS}
 SED      = sed s:\#PREC\#:d:g
 SED      =
@@ -46,9 +46,9 @@ FCOPTS   = -g -C -debug all -traceback -check all
 endif
 else
 ifdef USE_MPI
-FCOPTS   = -O2 -vec_report0
+FCOPTS   = -O2
 else
-FCOPTS   = -O2 -vec_report0
+FCOPTS   = -O2
 endif
 endif
 
@@ -88,7 +88,7 @@ endif
 
 
 LD       = ${FC}
-LDOPTS   = -i_dynamic
+LDOPTS   = 
 
 LCPP     = ${LD_SONNET}
 
