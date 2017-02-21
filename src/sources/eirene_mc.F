@@ -750,10 +750,7 @@ csw 25jan2011 LTIME=.false. in eirsrt call
 cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
-!      call extend
-!      write(*,*) ndxp,ndyp,natm,nx,ny,nnatmi
-       write(*,*) ndxp,ndyp,nmol,nx,ny,nnmoli
-       write(*,*) ndxp,ndyp,nion,nx,ny,nnioni
+#ifdef B25_EIRENE
        call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi) 
         call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
@@ -778,6 +775,7 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
         call extend(tfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+#endif
 ! IYS 20.01.2017 to extend Eirene quantities to guard cells
 
 
