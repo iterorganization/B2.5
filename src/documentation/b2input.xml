@@ -222,11 +222,7 @@
 				<default>See description (integer)</default>
 				<description>
 					Cell index, on the basis mesh, of the inner midplane. Default value depends on geometry:
-<<<<<<< HEAD
 					Single-null : jxi=leftcut1(1)+(rightcut1(1)-leftcut1(1))/4, i.e. one quarter of the way between the two cuts. Double-null : jxi=(leftcut1(1)+leftcut1(2))/2, i.e. halfway between the two inner cuts.
-=======
-					Single-null : jxi=leftcut1(1)+(rightcut1(1)-leftcut1(1))/4, i.e. one quarter of the way between the two cuts. Double-null : jxi=(rightcut1(1)+rightcut1(2))/2, i.e. halfway between the two inner cuts.
->>>>>>> Generate b2cdci.F from b2input.xml
 					Straight geometry : jxi=nx/4
 				</description>
 			</switch>
@@ -368,11 +364,7 @@
 				<name>b2agfs_.offset</name>
 				<description>
 					xoffset, yoffset - real*8. 
-<<<<<<< HEAD
 					xoffset and yoffset are offsets of the basis mesh in the x- and y-direction respectively. The mesh will be translated by (xoffset,yoffset) if any of the two is nonzero from its position given in the local_sonnet (See 'b2agfs_geometry' above) file. 
-=======
-					xoffset and yoffset are offsets of the basis mesh in the x- and y-direction respectively. The mesh will be translated by (xoffset,yoffset) if any of the two is non-zero from its position given in the local_sonnet (See 'b2agfs_geometry' above) file. 
->>>>>>> Generate b2cdci.F from b2input.xml
 					To be used in b2ag.dat.
 				</description>
 				<switch>
@@ -510,11 +502,7 @@
 			<switchgroup>
 				<name>b2mndr_d*</name>
 				<description>
-<<<<<<< HEAD
 					One of the dynamic timestep control parameters. Only active if both delta_max and delta_min are nonzero. The timestep is increased by a factor dt_change_inc or decreased by a factor dt_change_dec, within the bounds [dt_min, dt_max], according to whether the largest instantaneous change in all equations is smaller than delta_min or larger than delta_max, respectively.
-=======
-					One of the dynamic timestep control parameters. Only active if both delta_max and delta_min are non-zero. The timestep is increased by a factor dt_change_inc or decreased by a factor dt_change_dec, within the bounds [dt_min, dt_max], according to whether the largest instantaneous change in all equations is smaller than delta_min or larger than delta_max, respectively.
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 				<switch>
 					<name>b2mndr_delta_max</name>
@@ -616,24 +604,15 @@
 				<name>b2mndr_elapsed</name>
 				<default>0</default>
 				<description>
-<<<<<<< HEAD
 					Elapsed time limit. If elapsed.eq.0.0, no time limit is enforced.
 					Otherwise, the code stops smoothly after it has been running for at least 'elapsed' wall clock seconds.
-=======
-					Elapsed time limit. Is elapsed.eq.0.0, no time limit is enforced.
-					Otherwise, the code stops smoothly after is has been running for at least 'elapsed' wall clock seconds.
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 			</switch>
 			<switch>
 				<name>b2mndr_savecpu</name>
 				<default>3600.0</default>
 				<description>
-<<<<<<< HEAD
 					CPU time interval after which save files plasmastate.xxxx are written. 
-=======
-					CPU time interval after with save files plasmastate.xxxx are written. 
->>>>>>> Generate b2cdci.F from b2input.xml
 					These can be used, in conjunction with the b2co.exe instruction, to recover a crashed run.
 				</description>
 			</switch>
@@ -753,11 +732,7 @@
 				<name>b2mndr_eirene</name>
 				<default>0</default>
 				<description>
-<<<<<<< HEAD
 					Turns on coupling with the Eirene Monte-Carlo neutral code if nonzero. 
-=======
-					Turns on coupling with the Eirene Monte-Carlo neutral code if non-zero. 
->>>>>>> Generate b2cdci.F from b2input.xml
 					To be used, the code must be compiled with the -DB25_EIRENE option.
 				</description>
 			</switch>
@@ -765,11 +740,7 @@
 				<name>b2mndr_astra</name>
 				<default>0</default>
 				<description>
-<<<<<<< HEAD
 					Turns on coupling with the ASTRA core transport code if nonzero. 
-=======
-					Turns on coupling with the ASTRA core transport code if non-zero. 
->>>>>>> Generate b2cdci.F from b2input.xml
 					To be used, the code must be compiled with the -DASTRA option.
 				</description>
 			</switch>
@@ -928,11 +899,7 @@
 				<name>b2news_ExB</name>
 				<default>0.0</default>
 				<description>
-<<<<<<< HEAD
 					Real parameter which multiplies ExB flows. If b2news_ExB.eq.0 and b2news_facExB_start.eq.0 then ExB flows are switched off. If b2news_ExB is nonzero, then ExB flows are multiplied by that constant throughout the run. 
-=======
-					Real parameter which multiplies ExB flows. If b2news_ExB.eq.0 and b2news_facExB_start.eq.0 then ExB flows are switched off. If b2news_ExB is non-zero, then ExB flows are multiplied by that constant throughout the run. 
->>>>>>> Generate b2cdci.F from b2input.xml
 					See also Run section on switches b2news_facExB_... for more details. A spatial fac_ExB profile is also possible, see Numerics section for details.
 				</description>
 			</switch>
@@ -967,11 +934,7 @@
 					If lluciani.ne.0, then transport coefficients on cells belonging to closed field lines are modified according to the Luciani model. 
 					If lluciani.eq.1, the standard connection length formulation is used. 
 					If lluciani.eq.2, the old SOLPS4.0 formulation is used for backward compatibility. 
-<<<<<<< HEAD
 					If lluciani.eq.3, Spb's new form of Luciani's coefficients.
-=======
-					If lluciani.eq.3, Spb's new form Luciani's coefficient.
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 			</switch>
 			<switch>
@@ -1147,13 +1110,9 @@
 					Sput_frc is superseded by the chem_sput array from b2.neutrals.namelist if the latter is used. 
 					For neutrals species, we add a factor of alpha*na*vbar to the particle flux to the plate (used to compute chemical and RES sputtering), where vbar is the average neutral particle speed. 
 					Sput_phys turns on physical sputtering when sput_phys.gt.0.0 and contains a (real) multiplier for the physical sputtering rate looked up in the TRIM tables. It is superseded by the phys_sput array in b2.neutrals.parameters if the latter is used. 
-<<<<<<< HEAD
 					sput_phys_col indicates which column to use in the TRIM table; the default (3) corresponds to 30 degrees incidence. The columns are for
                       0 15 30 45 55 65 75 80 85
                     degrees. This angle is also used in the empirical formula. Plate_temp is the temperature (in Kelvin) of the COOLED end of the divertor plates. The surface temperature is computed self-consistently (using a 1-D description) according to the incident heat fluxes from the plasma. The plate is assumed to have a thickness of plate_thick, measured in meters. When plate_thick.eq.0 (default), the plate surface temperature is assumed to be the same as plate_temp. Sput_res turns on radiation enhanced sublimation (RES) when .gt.0.0 and is a multiplier to the RES rate. 
-=======
-					sput_phys_col indicates which column to use in the TRIM table; the default (3) corresponds to 30 degrees incidence. The columns are for 0 15 30 45 55 65 75 80 85 degrees. This angle is also used in the empirical formula. Plate_temp is the temperature (in Kelvin) of the COOLED end of the divertor plates. The surface temperature is computed self-consistently (using a 1-D description) according to the incident heat fluxes from the plasma. The plate is assumed to have a thickness of plate_thick, measured in meters. When plate_thick.eq.0 (default), the plate surface temperature is assumed to be the same as plate_temp. Sput_res turns on radiation enhanced sublimation (RES) when .gt.0.0 and is a multiplier to the RES rate. 
->>>>>>> Generate b2cdci.F from b2input.xml
 					The switch sputter_energy_on turns on the energy contribution from the sputtered particles (physical and chemical). If sputter_energy_on.eq.0, the particles are sputtered cold, with no energy contribution to the ion heat equation. 
 					If sputter_energy_on.ne.0 (default), the chemically sputtered particles are re-introduced into the plasma with the thermal energy corresponding to the surface temperature of the material, while physically sputtered particles are re-introduced with the TRIM-calculated energy sputtering yield (if the TRIM model is used). 
 					Therm_evap turns on thermal evaporation when .gt.0.0 and is a multiplier to the thermal evaporation rate. 
@@ -1399,11 +1358,7 @@
 				<name>b2tqna_new_df0</name>
 				<default>0</default>
 				<description>
-<<<<<<< HEAD
 					When new_df0.eq.1, the neutral diffusivity is computed according to the local charge exchange, ionisation and elastic collision rates, instead of the standard form with constant cross-sections.
-=======
-					When new_df0.eq.1, the neutral diffusivity is computed according to the local charge-exchange, ionisation and elastic collision rates, instead of the standard form with constant cross-sections.
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 			</switch>
 			<switchgroup>
@@ -1464,11 +1419,7 @@
 				<name>b2sifr_phm3</name>
 				<default>1.0</default>
 				<description>
-<<<<<<< HEAD
 					Multiplier of the ion thermal gradient term in the thermal force term.
-=======
-					Multiplier of the electron thermal gradient term in the thermal force term.
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 			</switch>
 			<switchgroup>
@@ -1697,11 +1648,7 @@
 			<switchgroup>
 				<name>b2sqcx_phm.</name>
 				<description>
-<<<<<<< HEAD
 					phm0 : Multiplier to the charge exchange rate coefficient. Subservient to styl0: only used if styl0.eq.0 or is.lt.2. If styl0.ne.0, the charge exchange rate coefficients for species of index 2 and above are set to zero.
-=======
-					phm0 : Multiplier to the charge-exchange rate coefficient. Subservient to styl0: only used if styl0.eq.0 or is.lt.2. If styl0.ne.0, the charge-exchange rate coefficients for species of index 2 and above are set to zero.
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 				<switch>
 					<name>b2sqcx_styl0</name>
@@ -1772,11 +1719,7 @@
 				<name>b2tqca_model</name>
 				<default>1</default>
 				<description>
-<<<<<<< HEAD
 					If model.eq.1, use the Balescu formulation from SOLPS5.2 classical parallel ion heat diffusivity. 
-=======
-					If model.eq.1, use the Balescu formulation from SOLPS5.0 classical parallel ion heat diffusivity. 
->>>>>>> Generate b2cdci.F from b2input.xml
 					If model.eq.2, use the older Braginskii SOLPS4.0 model. 
 					Note: old option model.eq.3 removed, replaced with model.eq.1., but numerical treatment w.r.t. factor 4/3 according to old model.eq.3.
 				</description>
@@ -1881,11 +1824,7 @@
 				<name>b2stel_fix_recomb_energy</name>
 				<default>0</default>
 				<description>
-<<<<<<< HEAD
 					If changed to 1, then the recombination energy (rpi) is added to the electron energy for each recombination. This should only be used if the is--&gt;is-1 energy terms have been included in the electron cooling rates (as done by setting the switch 'b2ardr_fix_recomb' in b2ar.dat to a nonzero value and recalculating b2frates).
-=======
-					If changed to 1, then the recombination energy (rpi) is added to the electron energy for each recombination. This should only be used if the is--&gt;is-1 energy terms have been included in the electron cooling rates (as done by setting the switch 'b2ardr_fix_recomb' in b2ar.dat to a non-zero value and recalculating b2frates).
->>>>>>> Generate b2cdci.F from b2input.xml
 					See 'Atomic Physics' section.
 					*** Use with caution! ***
 				</description>
@@ -2157,11 +2096,7 @@
 				<name>eirene_mc_output_style</name>
 				<default>1</default>
 				<description>
-<<<<<<< HEAD
 					If nonzero, prints sources computed by Eirene. If greater than 1, prints them on every use of the recycling sources, not just when they are computed.
-=======
-					If non-zero, prints sources computed by Eirene. If greater than 1, prints them on every use of the recycling sources, not just when they are computed.
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 			</switch>
 			<switch>
@@ -2276,11 +2211,7 @@
 				<description>
 					Minimum residuals for an internal solution loop to stop.
 					Used in conjunction with (not in replacement of) the nstg(0:2) numbers.
-<<<<<<< HEAD
 					All nonzero criteria must be met simultaneously. The continuity equation residual applies to the &quot;ismain&quot; species (See &quot;Run&quot; section).
-=======
-					All non-zero criteria must be met simultaneously. The continuity equation residual applies to the &quot;ismain&quot; species (See &quot;Run&quot; section).
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 				<switch>
 					<name>b2mndt_nstg_areshe</name>
@@ -2450,11 +2381,7 @@
 				<default>1</default>
 				<description>
 					When set to '1', flux limit of the parallel electron and ion heat fluxes is applied to transport coefficients.
-<<<<<<< HEAD
 					It is recommended '1'. If 'b2trcl_conductive_limit' is '0' then the keys 'b2tfhe_lim_flux' and 'b2tfhi_lim_flux' must be '0'.
-=======
-					It is recommended '1'. If 'b2trcl_conductive_limit' '0' then the keys 'b2tfhe_lim_flux' and 'b2tfhi_lim_flux' must be '0'.
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 			</switch>
 			<switch>
@@ -2540,32 +2467,20 @@
 				<note>!iys 06.12.13</note>
 				<description>
 					Artificial coefficient providing faster convergence to the neoclassical electric field but giving a distortion of the flows in the SOL as a side-effect. 
-<<<<<<< HEAD
 					Can be applied &lt;&gt;1 during the convergence and turned off for the final stage of calculations. Use with caution.
-=======
-					Can be applied &lt;1 during the convergence and turned off for the final stage of calculations. Use with caution.
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 			</switch>
 			<switch>
 				<name>b2ux5p_mult_nonzero</name>
 				<default>10</default>
 				<description>
-<<<<<<< HEAD
 					Number of expected nonzero matrix elements per matrix row.
-=======
-					Number of expected non-zero matrix elements per matrix row.
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 			</switch>
 			<switchgroup>
 				<name>b2ux5p_mult_solvdim*</name>
 				<description>
-<<<<<<< HEAD
 					Multipliers to the number of nonzero elements in the solution matrix for workspace arrays in the matrix solver.
-=======
-					Multipliers to the number of non-zero elements in the solution matrix for workspace arrays in the matrix solver.
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 				<switch>
 					<name>b2ux5p_mult_solvdim</name>
@@ -2719,11 +2634,7 @@
 				<description>
 					If guard_flows.eq.0, flows between neighbouring guard cells are blocked.
 					If guard_flows.eq.1, flows between neighbouring guard cells are kept.
-<<<<<<< HEAD
 					If guard_flows.eq.2, particle flows between neighbouring guard cells are blocked for the density equations and the incorrect corner values are replaced by interpolated values. It is recommended 2.
-=======
-					If guard_flows.eq.2, particle flows between neighbouring guard cells are blocked for the density equation and the incorrect corner values are replaced by interpolated values. It is recommended 2.
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 			</switch>
 			<switchgroup>
@@ -2733,11 +2644,7 @@
 					For consistency with the naming convention of related variables:
 					b2news_facExB_tanh_a is an alias for b2news_fac_ExB_tanh_a,
 					b2news_facExB_tanh_b is an alias for b2news_fac_ExB_tanh_b,
-<<<<<<< HEAD
 					b2news_facvis_tanh_a is an alias for b2news_fac_vis_tanh_a, and b2news_facvis_tanh_b is an alias for b2news_fac_vis_tanh_b. Additionally, for all core cell rows where iy.le.iy_nocoreExB, fac_ExB(ix,iy) is set to zero. This means that ExB contributions and flows will be zeroed out in those cells.
-=======
-					b2news_facvis_tanh_a is an alias for 2news_fac_vis_tanh_a, and b2news_facvis_tanh_b is an alias for b2news_fac_vis_tanh_b. Additionally, for all core cell rows where iy.le.iy_nocoreExB, fac_ExB(ix,iy) is set to zero. This means that ExB contributions and flows will be zeroed out in those cells.
->>>>>>> Generate b2cdci.F from b2input.xml
 					For consistency with the boundary condition treatment, the value iy_nocoreExB.eq.-1 is NOT recommended!
 				</description>
 				<switch>
@@ -2800,11 +2707,7 @@
 				<name>b2news_no_b2sral_call</name>
 				<default>1</default>
 				<description>
-<<<<<<< HEAD
 					If no_b2sral_call.eq.0, add an additional call to recompute the sources in b2news_ to reproduce the behaviour from SOLPS4.
-=======
-					If no_b2sral_call.eq.0, add an additional call to recompute the source in b2news_ to reproduce the behaviour from SOLPS4.
->>>>>>> Generate b2cdci.F from b2input.xml
 				</description>
 			</switch>
 			<switch>
