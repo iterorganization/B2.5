@@ -8,6 +8,7 @@ endif
 
 SRCB2   = ${PWD}
 SRCDIR  = ${SRCB2}/src
+DOCDIR  = ${SRCDIR}/documentation
 
 MAKES = ${SRCB2}/Makefile
 # Include global SOLPS compiler settings
@@ -130,7 +131,7 @@ TAGSLIST += ${INCLOCAL}/*.*
 endif
 INCLUDE += -I${SRCDIR}/common -I${SRCDIR}/include
 SOLPS4INCLUDE = -I${SOLPSTOP}/modules/solps4-5/src/B2_include
-TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F ${SRCDIR}/*/*.F90
+TAGSLIST += ${SRCDIR}/include/*.* ${SRCDIR}/common/*.* ${SRCDIR}/common/COUPLE/*.F ${SRCDIR}/*/*.F ${SRCDIR}/*/*.F90 ${DOCDIR}/*.xml
 
 DEFINES = ${B25_DEFINES} ${SOLPS_CPP}
 ifdef USE_MPI
@@ -264,6 +265,9 @@ LIBOBJS = $(filter-out ${MODOBJS},${ALLOBJS})
 else
 LIBOBJS = ${ALLOBJS}
 endif
+
+${DOCDIR}/b2cdci.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdci.py
+	cd ${DOCDIR}; python b2cdci.py
 
 ifdef USE_EIRENE
 ${OBJDIR}/libgr_dummy.a:
@@ -754,13 +758,13 @@ ${OBJDIR}/eirgrid_lib.o: ${OBJDIR}/eirmap.o
 # target 'clean' cleans up the directory.
 clean : 
 	-mkdir ${OBJDIR}/.delete
-	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version_B25.h ${OBJDIR}/LISTOBJ ${OBJDIR}/dependencies ${OBJDIR}/.delete
+	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version_B25.h ${OBJDIR}/LISTOBJ ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${OBJDIR}/.delete
 ifneq (${MOD},o)
 	-mv -i ${OBJDIR}/*.${MOD} ${OBJDIR}/.delete
 endif
 	-rm -rf ${OBJDIR}/.delete &
 
-depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EXELIST:.o=.F} ${EX90LIST:.o=.F90}
+depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EXELIST:.o=.F} ${EX90LIST:.o=.F90} ${DOCDIR}/b2cdci.F
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} $^ | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
         sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' > ${OBJDIR}/dependencies 
@@ -838,7 +842,7 @@ else
 	done; \
 	echo "$$l" | eval sed "$$E" > ${OBJDIR}/LISTOBJ
 endif
-	@l="B2OBJS ="; \
+	@l="B2OBJS = b2cdci.o"; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
 		l="$$l `(cd $$d > /dev/null; echo *.F)`"; \
 	done; \
