@@ -548,7 +548,7 @@
 *    depends on geometry:
 *    Single-null : jxi=leftcut1(1)+(rightcut1(1)-leftcut1(1))/4, i.e.
 *    one quarter of the way between the two cuts.
-*    Double-null : jxi=(rightcut1(1)+rightcut1(2))/2, i.e. halfway between
+*    Double-null : jxi=(leftcut1(1)+leftcut1(2))/2, i.e. halfway between
 *    the two inner cuts.
 *    Straight geometry : jxi=nx/4
 *
