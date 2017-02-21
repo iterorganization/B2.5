@@ -749,6 +749,38 @@ csw 25jan2011 LTIME=.false. in eirsrt call
       end if !}
 cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+! IYS 20.01.2017 to extend Eirene quantities to guard cells
+!      call extend
+!      write(*,*) ndxp,ndyp,natm,nx,ny,nnatmi
+       write(*,*) ndxp,ndyp,nmol,nx,ny,nnmoli
+       write(*,*) ndxp,ndyp,nion,nx,ny,nnioni
+       call extend(dab2(0:ndxp,0:ndyp,1:nnatmi,1),
+     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi) 
+        call extend(tab2(0:ndxp,0:ndyp,1:nnatmi,1),
+     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
+        call extend(dmb2(0:ndxp,0:ndyp,1:nnmoli,1),
+     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+        call extend(tmb2(0:ndxp,0:ndyp,1:nnatmi,1),
+     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+        call extend(dib2(0:ndxp,0:ndyp,1:nnioni,1),
+     &                   ndxp-1,ndyp-1,nion,nx,ny,nnioni)
+        call extend(tib2(0:ndxp,0:ndyp,1:nnioni,1),
+     &                   ndxp-1,ndyp-1,nion,nx,ny,nnioni)
+        call extend(rfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
+        call extend(rfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+        call extend(pfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
+        call extend(pfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+        call extend(tfluxa(0:ndxp,0:ndyp,1:nnatmi,1),
+     &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
+        call extend(tfluxm(0:ndxp,0:ndyp,1:nnmoli,1),
+     &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
+! IYS 20.01.2017 to extend Eirene quantities to guard cells
+
+
 csw 08feb2011 put l_ddt definition here since nnlimi(nlim) is known only after eirene call
       if(ank_mods.ne.0 .or. ionising_core.eq.1) then
 c*** "time layer"

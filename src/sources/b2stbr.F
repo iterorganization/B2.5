@@ -97,7 +97,8 @@
      &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
      &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3),         
-     &  fatm_eir(-1:nx,-1:ny,0:1,0:ns-1), datm_eir(-1:nx,-1:ny,0:ns-1) !srv 29.04.10 }
+     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
+     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol) !IYS 27.01.2017 
       integer ncall, sput_src, first_flight, 
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1  use_eirene, output, coreregno, coreregn2, neutrals_namelist,
@@ -612,16 +613,40 @@ c   --> better solution wanted here..
           call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
         endif
 #endif	                       
-        do ia = 1, natm
-         is = eb2spcr(ia)
+        do ia = 1, nnatmi
+!         is = eb2spcr(ia)  ! IYS 27.01.2017
          do iy = -1,ny
           do ix = -1,nx
-           fatm_eir(ix,iy,0,is) = pfluxa(ix+1,iy+1,ia,1)
-           fatm_eir(ix,iy,1,is) = rfluxa(ix+1,iy+1,ia,1)
-           datm_eir(ix,iy,is)   = dab2(ix+1,iy+1,ia,1)
+! IYS 27.01.2017
+!           fatm_eir(ix,iy,0,is) = pfluxa(ix+1,iy+1,ia,1)
+!           fatm_eir(ix,iy,1,is) = rfluxa(ix+1,iy+1,ia,1)
+! IYS 27.01.2017
+           datm_eir(ix,iy,ia)   = dab2(ix+1,iy+1,ia,1)
           enddo
          enddo
+! IYS 27.01.2017
+! interpolate atom fluxes to cell faces (for output only)
+         call intfaceh(nx,ny,leftix,leftiy,vol,
+     &                 pfluxa(0:nx+1,0:ny+1,ia,1),fatm_eir(:,:,0,ia))
+         call intfacev(nx, ny, bottomix, bottomiy, vol,
+     &                 rfluxa(0:nx+1,0:ny+1,ia,1),fatm_eir(:,:,1,ia))
+! IYS 27.01.2017
         enddo
+! IYS 27.01.2017
+        do im = 1, nmol
+         do iy = -1,ny
+          do ix = -1,nx
+           dmol_eir(ix,iy,im)   = dmb2(ix+1,iy+1,im,1)
+          enddo
+         enddo
+! interpolate molecule fluxes to cell faces (for output only)
+         call intfaceh(nx,ny,leftix,leftiy,vol,
+     &                  pfluxm(0:nx+1,0:ny+1,im,1),fmol_eir(:,:,0,im))
+         call intfacev(nx, ny, bottomix, bottomiy, vol,
+     &                  rfluxm(0:nx+1,0:ny+1,im,1),fmol_eir(:,:,1,im))
+        enddo
+! IYS 27.01.2017
+
 #else
         call xerrab ('b2stbr not compiled with the B25_EIRENE option')
 #endif
@@ -854,8 +879,14 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
         write (chns,'(i3.3)') ia
         call my_out(70,nx,ny,rfluxa(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_rfluxa_eir'//chns)
+        call my_out(70,nx,ny,tfluxa(0:nx+1,0:ny+1,ia,1),      ! IYS 27.01.2017
+     &                'b2stbr_tfluxa_eir'//chns)
+        call my_out(70,nx,ny,fatm_eir(:,:,1,ia),              ! IYS 27.01.2017
+     &              'b2stbr_fatmy_eir'//chns)
         call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_pfluxa_eir'//chns)
+        call my_out(70,nx,ny,fatm_eir(:,:,0,ia),              ! IYS 27.01.2017
+     &              'b2stbr_fatmx_eir'//chns)
         call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_dab2_eir'//chns)
         call my_out(70,nx,ny,tab2(0:nx+1,0:ny+1,ia,1),
@@ -865,8 +896,14 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
         write (chns,'(i3.3)') im
         call my_out(70,nx,ny,rfluxm(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_rfluxm_eir'//chns)
+        call my_out(70,nx,ny,tfluxm(0:nx+1,0:ny+1,im,1),      ! IYS 27.01.2017
+     &              'b2stbr_tfluxm_eir'//chns)
+        call my_out(70,nx,ny,fmol_eir(:,:,1,im),              ! IYS 27.01.2017
+     &              'b2stbr_fmoly_eir'//chns)
         call my_out(70,nx,ny,pfluxm(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_pfluxm_eir'//chns)
+        call my_out(70,nx,ny,fmol_eir(:,:,0,im),              ! IYS 27.01.2017
+     &              'b2stbr_fmolx_eir'//chns)
         call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_dmb2_eir'//chns)
         call my_out(70,nx,ny,tmb2(0:nx+1,0:ny+1,im,1),
