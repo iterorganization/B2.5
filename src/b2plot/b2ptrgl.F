@@ -92,7 +92,7 @@ c
       real (kind=R8) ::
      *   sgro, ba, ers_factor, nsecyr
       parameter (ba=12.0_R8, sgro=2.0_R8)
-      parameter (nsecyr=24.0_R8*3600.0_R8*365.25_R8)
+      parameter (nsecyr=24.0_R8*3600.0_R8*365.25_R8*0.9925_R8)
       parameter (ers_factor=nsecyr*1.0e-3_R8*ba/(avogr*sgro))
       real (kind=R8) ::
      *   ss(ntrgsx),ss_m,ersn_a(ntrgsx),ersn_am,ersn_p(ntrgsx),ersn_pm,

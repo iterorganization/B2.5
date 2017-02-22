@@ -1,31 +1,38 @@
 <?xml version="1.0" ?>
 <b2>
-	<module name="b2ag">
-		<category name="None">
+	<module name="b2ai">
+		<category name="basic parameters">
 			<switch>
 				<name>dimens</name>
 				<default>None</default>
 				<description>
-					specifies the size of the grid first pair is NX &#39; NY of the grid you want to produce second pair is the size of the grid that was originally created each needs to be an integer multiple of the corresponding entry of the first pair. Note that for double-null cases, the interior guard cells corresponding to the top divertor boundaries should not be multiplied.
+					the number of charge states
 				</description>
 			</switch>
 			<switch>
-				<name>param</name>
+				<name>label</name>
+				<default>None</default>
+				<description>a label</description>
+			</switch>
+			<switch>
+				<name>specs</name>
 				<default>None</default>
 				<description>
-					at least 100 additional numbers, of which only the first is relevant for us -1.0 read the mesh data using the "simplified" Carre format -2.0 read the mesh data using the Sonnet format
+					atomic charge, nuclear charge, atomic mass and atomic charge squared for each charge stateminimum atomic charge of the stage, maximum atomic charge of the stage, nuclear charge, and atomic mass; this data should match that given in b2ah.dat
 				</description>
 			</switch>
 			<switch>
-				<name>b2agfs_geometry</name>
+				<name>naini</name>
 				<default>None</default>
 				<description>
-					specifies the mesh file to be read
-					searched for in (in order)
-						1. the b2ag.exe.dir sub-directory of the current run directory
-						2. the current run directory
-						3. $SOLPSTOP/data.local/meshes
-						4. $SOLPSTOP/data/meshes
+					initial densities for each of the charge states, in m^-3
+				</description>
+			</switch>
+			<switch>
+				<name>ttini</name>
+				<default>None</default>
+				<description>
+					initial ion and electron temperature, in eV
 				</description>
 			</switch>
 		</category>
@@ -50,19 +57,14 @@
 				<name>b2cmpa</name>
 				<default>None</default>
 				<description>
-					atomic charge, nuclear charge, atomic mass and atomic charge squared; this data should match that given in b2ai.dat
-					Starting with code version 01.001.024, an alternative means of describing the plasma species and filling out the b2cmpa block is provided, in order to allow for bundling of charge states, when running cases with high-Z species. The relevant description is then
-					minimum atomic charge of the stage, maximum atomic charge of the stage, nuclear charge, and atomic mass; this data should match that given in b2ai.dat
+					specifies a block of basic parameters.
 				</description>
 			</switch>
 			<switch>
 				<name>b2cmpb</name>
 				<default>None</default>
 				<description>
-					cbregs: specifies the number of regions where boundary conditions will be specified
-						the &quot;south&quot; boundary is broken into three pieces with one quarter of the cells in the first region, half of the cells in the second, and the remaining quarter in the third region (inner target private flux, core, outer private flux). This is geometry-dependent information the code will check against the mesh connectivity and return an error if the two do not match
-						the &quot;north&quot;, &quot;west&quot; and &quot;east&quot; are not broken up, and correspond to the SOL boundary, inner target and outer target, respectively. For double-null cases, the north boundary should be split into two sections
-					region: one block for each of the regions containing; the immediately following line being the region identifier
+					specifies a block of boundary conditions
 				</description>
 			</switch>
 			<switch>
@@ -73,10 +75,17 @@
 				</description>
 			</switch>
 			<switch>
+				<name>specs</name>
+				<default />
+				<description>
+					atomic charge, nuclear charge, atomic mass and atomic charge squared; this data should match that given in b2ai.dat Starting with code version 01.001.024, an alternative means of describing the plasma species and filling out the b2cmpa block is provided, in order to allow for bundling of charge states, when running cases with high-Z species. The relevant description is then minimum atomic charge of the stage, maximum atomic charge of the stage, nuclear charge, and atomic mass; this data should match that given in b2ai.dat The code can accept indifferently both types of input and makes the appropriate self-consistency checks. It is not permitted to bundle neutral and ionized species together.
+				</description>
+			</switch>
+			<switch>
 				<name>cbregs</name>
 				<default>None</default>
 				<description>
-					specifies the number of regions where boundary conditions will be specified the &#39;south &#39; boundary is broken into three pieces with one quarter of the cells in the first region, half ofthe cells in the second, and the remaining quarter in the third region (inner target private flux, core, outerprivate flux). This is geometry-dependent information the code will check against the mesh connectivity and return an error if the two do not match the &#39;north&#39;, &#39;west&#39; and &#39;east&#39; are not broken up, and correspond to the SOL boundary, inner target andouter target, respectively. For double-null cases, the north boundary should be split into two sections
+					specifies the number of regions where boundary conditions will be specified the &#39;south&#39; boundary is broken into three pieces with one quarter of the cells in the first region, half ofthe cells in the second, and the remaining quarter in the third region (inner target private flux, core, outerprivate flux). This is geometry-dependent information the code will check against the mesh connectivity and return an error if the two do not match the &#39;north&#39;, &#39;west&#39; and &#39;east&#39; are not broken up, and correspond to the SOL boundary, inner target andouter target, respectively. For double-null cases, the north boundary should be split into two sections
 				</description>
 			</switch>
 			<switch>
@@ -142,99 +151,22 @@
 					[unused] (1 line per species)
 				</description>
 			</switch>
-			<switch>
-				<name>cflim</name>
-				<default>None</default>
-				<description>
-					coefficients for flux limiting
-				</description>
-			</switch>
 		</category>
 	</module>
-	<module name="b2ar">
+	<module name="b2ag">
 		<category name="None">
-			<switch>
-				<name>tlohi</name>
-				<default>None</default>
-				<type>real*2</type>
-				<description>
-					range of temperatures for atomic physics table in eV
-				</description>
-			</switch>
-			<switch>
-				<name>ntlohi</name>
-				<default>None</default>
-				<type>real*2</type>
-				<description>range of densities for atomic physics table in m^-3</description>
-			</switch>
-			<switch>
-				<name>numnuc</name>
-				<default>None</default>
-				<type>integer</type>
-				<description>number of distinct species</description>
-			</switch>
-			<switch>
-				<name>nucspec</name>
-				<default>integer*3</default>
-				<description>
-					nuclear charge, lowest charge state, highest charge state
-				</description>
-			</switch>
-			<switch>
-				<name>flag</name>
-				<default>adas</default>
-				<type>string</type>
-				<description>
-					The allowable choices for the flag switch are:
-						&quot;adpak&quot; A complete atomic physics package with scaling law rates applicable to all charge states, but not always of high accuracy [?]
-						&quot;strahl&quot; A collisional-radiative package developed at IPP-Garching [?], stored in the stra.dat fil
-						&quot;adas&quot; (Atomic Data and Analysis Structure) A complete collisional-radiative atomic physics database, actively being maintained and upgraded [?, ?]. Recommended. Available at http://adas.phys.strath.ac.uk/
-						&quot;amns&quot; (Atomic, Molecular, Nuclear, and Surface data) For ITM-environment runs only, uses access to the ITM AMNS tools and database
-				</description>
-			</switch>
-			<switch>
-				<name>tailep</name>
-				<default>None</default>
-				<type>real</type>
-				<description>
-					smoothing parameter for the temperature dependence of some rate coefficients
-				</description>
-			</switch>
-		</category>
-	</module>
-	<module name="b2ai">
-		<category name="basic parameters">
 			<switch>
 				<name>dimens</name>
 				<default>None</default>
 				<description>
-					the number of charge states
+					specifies the size of the grid first pair is NX &amp; NY of the grid you want to produce second pair is the size of the grid that was originally created each needs to be an integer multiple of the corresponding entry of the first pair. Note that for double-null cases, the interior guard cells corresponding to the top divertor boundaries should not be multiplied.
 				</description>
 			</switch>
 			<switch>
-				<name>label</name>
-				<default>None</default>
-				<description>a label</description>
-			</switch>
-			<switch>
-				<name>specs</name>
+				<name>param</name>
 				<default>None</default>
 				<description>
-					minimum atomic charge of the stage, maximum atomic charge of the stage, nuclear charge, and atomic mass; this data should match that given in b2ah.dat
-				</description>
-			</switch>
-			<switch>
-				<name>naini</name>
-				<default>None</default>
-				<description>
-					initial densities for each of the charge states, in m^-3
-				</description>
-			</switch>
-			<switch>
-				<name>ttini</name>
-				<default>None</default>
-				<description>
-					initial ion and electron temperature, in eV
+					at least 100 additional numbers, of which only the first is relevant for us -1.0 read the mesh data using the "simplified" Carre format -2.0 read the mesh data using the Sonnet format
 				</description>
 			</switch>
 		</category>
@@ -268,7 +200,6 @@
 		<category name="Geometry">
 			<switch>
 				<name>b2agfs_geometry</name>
-				<type>local_sonnet - character string</type>
 				<default>upgrade.geometry</default>
 				<description>
 					local_sonnet - character string.
@@ -278,9 +209,7 @@
 			</switch>
 			<switch>
 				<name>b2mwti_jxa</name>
-				<type>jxa - integer</type>
 				<default>See description (integer)</default>
-				<type>integer</type>
 				<description>
 					jxa - integer. 
 					Cell index, on the basis mesh, of the outer midplane. Default value depends on geometry: 
@@ -294,7 +223,7 @@
 				<type>integer</type>
 				<description>
 					Cell index, on the basis mesh, of the inner midplane. Default value depends on geometry:
-					Single-null : jxi=leftcut1(1)+(rightcut1(1)-leftcut1(1))/4, i.e. one quarter of the way between the two cuts. Double-null : jxi=(rightcut1(1)+rightcut1(2))/2, i.e. halfway between the two inner cuts.
+					Single-null : jxi=leftcut1(1)+(rightcut1(1)-leftcut1(1))/4, i.e. one quarter of the way between the two cuts. Double-null : jxi=(leftcut1(1)+leftcut1(2))/2, i.e. halfway between the two inner cuts.
 					Straight geometry : jxi=nx/4
 				</description>
 			</switch>
@@ -610,7 +539,7 @@
 			<switchgroup>
 				<name>b2mndr_d*</name>
 				<description>
-					One of the dynamic timestep control parameters. Only active if both delta_max and delta_min are non-zero. The timestep is increased by a factor dt_change_inc or decreased by a factor dt_change_dec, within the bounds [dt_min, dt_max], according to whether the largest instantaneous change in all equations is smaller than delta_min or larger than delta_max, respectively.
+					One of the dynamic timestep control parameters. Only active if both delta_max and delta_min are nonzero. The timestep is increased by a factor dt_change_inc or decreased by a factor dt_change_dec, within the bounds [dt_min, dt_max], according to whether the largest instantaneous change in all equations is smaller than delta_min or larger than delta_max, respectively.
 				</description>
 				<switch>
 					<name>b2mndr_delta_max</name>
@@ -735,7 +664,7 @@
 				<default>3600.0</default>
 				<type>real</type>
 				<description>
-					CPU time interval after with save files plasmastate.xxxx are written. 
+					CPU time interval after which save files plasmastate.xxxx are written. 
 					These can be used, in conjunction with the b2co.exe instruction, to recover a crashed run.
 				</description>
 			</switch>
@@ -874,7 +803,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Turns on coupling with the Eirene Monte-Carlo neutral code if non-zero. 
+					Turns on coupling with the Eirene Monte-Carlo neutral code if nonzero. 
 					To be used, the code must be compiled with the -DB25_EIRENE option.
 				</description>
 			</switch>
@@ -883,7 +812,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Turns on coupling with the ASTRA core transport code if non-zero. 
+					Turns on coupling with the ASTRA core transport code if nonzero. 
 					To be used, the code must be compiled with the -DASTRA option.
 				</description>
 			</switch>
@@ -1063,7 +992,7 @@
 				<default>0.0</default>
 				<type>real</type>
 				<description>
-					Real parameter which multiplies ExB flows. If b2news_ExB.eq.0 and b2news_facExB_start.eq.0 then ExB flows are switched off. If b2news_ExB is non-zero, then ExB flows are multiplied by that constant throughout the run. 
+					Real parameter which multiplies ExB flows. If b2news_ExB.eq.0 and b2news_facExB_start.eq.0 then ExB flows are switched off. If b2news_ExB is nonzero, then ExB flows are multiplied by that constant throughout the run. 
 					See also Run section on switches b2news_facExB_... for more details. A spatial fac_ExB profile is also possible, see Numerics section for details.
 				</description>
 			</switch>
@@ -1307,7 +1236,8 @@
 					Sput_frc is superseded by the chem_sput array from b2.neutrals.namelist if the latter is used. 
 					For neutrals species, we add a factor of alpha*na*vbar to the particle flux to the plate (used to compute chemical and RES sputtering), where vbar is the average neutral particle speed. 
 					Sput_phys turns on physical sputtering when sput_phys.gt.0.0 and contains a (real) multiplier for the physical sputtering rate looked up in the TRIM tables. It is superseded by the phys_sput array in b2.neutrals.parameters if the latter is used. 
-					sput_phys_col indicates which column to use in the TRIM table; the default (3) corresponds to 30 degrees incidence. The columns are for 0 15 30 45 55 65 75 80 85 degrees. This angle is also used in the empirical formula. Plate_temp is the temperature (in Kelvin) of the COOLED end of the divertor plates. The surface temperature is computed self-consistently (using a 1-D description) according to the incident heat fluxes from the plasma. The plate is assumed to have a thickness of plate_thick, measured in meters. When plate_thick.eq.0 (default), the plate surface temperature is assumed to be the same as plate_temp. Sput_res turns on radiation enhanced sublimation (RES) when .gt.0.0 and is a multiplier to the RES rate. 
+					sput_phys_col indicates which column to use in the TRIM table; the default (3) corresponds to 30 degrees incidence. 
+					The columns are for 0 15 30 45 55 65 75 80 85 degrees. This angle is also used in the empirical formula. Plate_temp is the temperature (in Kelvin) of the COOLED end of the divertor plates. The surface temperature is computed self-consistently (using a 1-D description) according to the incident heat fluxes from the plasma. The plate is assumed to have a thickness of plate_thick, measured in meters. When plate_thick.eq.0 (default), the plate surface temperature is assumed to be the same as plate_temp. Sput_res turns on radiation enhanced sublimation (RES) when .gt.0.0 and is a multiplier to the RES rate. 
 					The switch sputter_energy_on turns on the energy contribution from the sputtered particles (physical and chemical). If sputter_energy_on.eq.0, the particles are sputtered cold, with no energy contribution to the ion heat equation. 
 					If sputter_energy_on.ne.0 (default), the chemically sputtered particles are re-introduced into the plasma with the thermal energy corresponding to the surface temperature of the material, while physically sputtered particles are re-introduced with the TRIM-calculated energy sputtering yield (if the TRIM model is used). 
 					Therm_evap turns on thermal evaporation when .gt.0.0 and is a multiplier to the thermal evaporation rate. 
@@ -1597,7 +1527,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					When new_df0.eq.1, the neutral diffusivity is computed according to the local charge-exchange, ionisation and elastic collision rates, instead of the standard form with constant cross-sections.
+					When new_df0.eq.1, the neutral diffusivity is computed according to the local charge exchange, ionisation and elastic collision rates, instead of the standard form with constant cross-sections.
 				</description>
 			</switch>
 			<switchgroup>
@@ -1668,7 +1598,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier of the electron thermal gradient term in the thermal force term.
+					Multiplier of the ion thermal gradient term in the thermal force term.
 				</description>
 			</switch>
 			<switchgroup>
@@ -1928,7 +1858,7 @@
 			<switchgroup>
 				<name>b2sqcx_phm.</name>
 				<description>
-					phm0 : Multiplier to the charge-exchange rate coefficient. Subservient to styl0: only used if styl0.eq.0 or is.lt.2. If styl0.ne.0, the charge-exchange rate coefficients for species of index 2 and above are set to zero.
+					phm0 : Multiplier to the charge exchange rate coefficient. Subservient to styl0: only used if styl0.eq.0 or is.lt.2. If styl0.ne.0, the charge exchange rate coefficients for species of index 2 and above are set to zero.
 				</description>
 				<switch>
 					<name>b2sqcx_styl0</name>
@@ -2010,7 +1940,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If model.eq.1, use the Balescu formulation from SOLPS5.0 classical parallel ion heat diffusivity. 
+					If model.eq.1, use the Balescu formulation from SOLPS5.2 classical parallel ion heat diffusivity. 
 					If model.eq.2, use the older Braginskii SOLPS4.0 model. 
 					Note: old option model.eq.3 removed, replaced with model.eq.1., but numerical treatment w.r.t. factor 4/3 according to old model.eq.3.
 				</description>
@@ -2438,7 +2368,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If non-zero, prints sources computed by Eirene. If greater than 1, prints them on every use of the recycling sources, not just when they are computed.
+					If nonzero, prints sources computed by Eirene. If greater than 1, prints them on every use of the recycling sources, not just when they are computed.
 				</description>
 			</switch>
 			<switch>
@@ -2860,7 +2790,7 @@
 				<note>!iys 06.12.13</note>
 				<description>
 					Artificial coefficient providing faster convergence to the neoclassical electric field but giving a distortion of the flows in the SOL as a side-effect. 
-					Can be applied &lt;1 during the convergence and turned off for the final stage of calculations. Use with caution.
+					Can be applied &lt;&gt;1 during the convergence and turned off for the final stage of calculations. Use with caution.
 				</description>
 			</switch>
 			<switch>
@@ -2868,13 +2798,13 @@
 				<default>10</default>
 				<type>integer</type>
 				<description>
-					Number of expected non-zero matrix elements per matrix row.
+					Number of expected nonzero matrix elements per matrix row.
 				</description>
 			</switch>
 			<switchgroup>
 				<name>b2ux5p_mult_solvdim*</name>
 				<description>
-					Multipliers to the number of non-zero elements in the solution matrix for workspace arrays in the matrix solver.
+					Multipliers to the number of nonzero elements in the solution matrix for workspace arrays in the matrix solver.
 				</description>
 				<switch>
 					<name>b2ux5p_mult_solvdim</name>
@@ -3049,7 +2979,7 @@
 				<description>
 					If guard_flows.eq.0, flows between neighbouring guard cells are blocked.
 					If guard_flows.eq.1, flows between neighbouring guard cells are kept.
-					If guard_flows.eq.2, particle flows between neighbouring guard cells are blocked for the density equation and the incorrect corner values are replaced by interpolated values. It is recommended 2.
+					If guard_flows.eq.2, particle flows between neighbouring guard cells are blocked for the density equations and the incorrect corner values are replaced by interpolated values. It is recommended 2.
 				</description>
 			</switch>
 			<switchgroup>
@@ -3059,7 +2989,7 @@
 					For consistency with the naming convention of related variables:
 					b2news_facExB_tanh_a is an alias for b2news_fac_ExB_tanh_a,
 					b2news_facExB_tanh_b is an alias for b2news_fac_ExB_tanh_b,
-					b2news_facvis_tanh_a is an alias for 2news_fac_vis_tanh_a, and b2news_facvis_tanh_b is an alias for b2news_fac_vis_tanh_b. Additionally, for all core cell rows where iy.le.iy_nocoreExB, fac_ExB(ix,iy) is set to zero. This means that ExB contributions and flows will be zeroed out in those cells.
+					b2news_facvis_tanh_a is an alias for b2news_fac_vis_tanh_a, and b2news_facvis_tanh_b is an alias for b2news_fac_vis_tanh_b. Additionally, for all core cell rows where iy.le.iy_nocoreExB, fac_ExB(ix,iy) is set to zero. This means that ExB contributions and flows will be zeroed out in those cells.
 					For consistency with the boundary condition treatment, the value iy_nocoreExB.eq.-1 is NOT recommended!
 				</description>
 				<switch>
@@ -3133,7 +3063,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					If no_b2sral_call.eq.0, add an additional call to recompute the source in b2news_ to reproduce the behaviour from SOLPS4.
+					If no_b2sral_call.eq.0, add an additional call to recompute the sources in b2news_ to reproduce the behaviour from SOLPS4.
 				</description>
 			</switch>
 			<switch>
@@ -4797,7 +4727,7 @@
 				<default></default>
 				<type>integer</type>
 				<description>
-					Indicate the shot number to overwrite (to be used only when updating an already saved run with ’resave_mds’ script). Defaults to the last number found in shotnumber.history, or 0 if the file is not found.
+					Indicate the shot number to overwrite (to be used only when updating an already saved run with &#39;resave_mds&#39; script). Defaults to the last number found in shotnumber.history, or 0 if the file is not found.
 				</description>
 			</switch>
 		<!-- b2.boundary.parameters -->
