@@ -1617,14 +1617,6 @@
 					<type>real</type>
 				</switch>
 			</switchgroup>
-			<switch>
-				<name>b2sifr_phm1</name>
-				<default>1.0</default>
-				<type>real</type>
-				<description>
-					Multiplier of the ehxp term in the thermal force term.
-				</description>
-			</switch>
 			<switchgroup>
 				<name>b2trcl_cth*</name>
 				<description>
@@ -1978,14 +1970,6 @@
 				<description>
 					If pol_anom_scale.ne.1, the poloidal anomalous transport coefficients are scaled by the number. To get the same treatment as setting the old switch (radial_only) to 1, set the new switch to 0.0. 
 					This multiplication is to only take place for charged species.
-				</description>
-			</switch>
-			<switch>
-				<name>b2sifr_phm2</name>
-				<default>1.0</default>
-				<type>real</type>
-				<description>
-					Multiplier of the electron thermal gradient term in the thermal force term
 				</description>
 			</switch>
 			<switch>
