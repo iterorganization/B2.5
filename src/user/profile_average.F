@@ -2,6 +2,7 @@
       subroutine profile_average (laststep,nx,ny,ns)
 
       use b2mod_types
+      use b2mod_version
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_plasma
@@ -35,10 +36,15 @@
      .                             e_shi(:,:,:),
      .                             e_sch(:,:,:)
 
-      integer :: io, ix, iy, is, istra, iun, k, n2
+      integer :: io, ix, iy, is, istra, iun, k, n2, idum(0:2)
       real (kind=R8) :: gold, gnew
       integer, save :: ifirst=0, iaver_restart=0
       integer, save :: naver, ntotdt
+      character lble*120, lbli*120
+      character*10, save ::
+     *   b2faveri_version = '00.000.000'
+      real (kind=R8) ::
+     *   zpdum(0:nsdecl-1,4)
 
       n2 = (nx+2)*(ny+2)
 
@@ -97,10 +103,16 @@ ctb..as the mean of the product does not equal the product of the means etc.
          e_smo = 0.0_R8
          
          iun = 3
-         open (newunit=iun,file='aver.dat',access='SEQUENTIAL',
+         open (unit=iun,file='aver.dat',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=io)
 
          if (io == 0) then
+            call cfverr (iun, b2faveri_version)
+            call cfruin (iun, 3, idum, 'nx,ny,ns')
+            call cfruch (iun, 120, lbli, 'label')
+            call b2ruzd (iun, b2faveri_version, ns, 
+     &          zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
+
             if (iaver_restart > 0) then
                call cfruin (iun, 1, naver, 'naver')
                call cfruin (iun, 1, ntotdt, 'ntotdt')
@@ -200,9 +212,24 @@ ctb..as the mean of the product does not equal the product of the means etc.
       else
         n2 = (nx+2)*(ny+2)
         iun = 3
-        open (newunit=iun,file='aver.dat',access='SEQUENTIAL',
+        open (unit=iun,file='aver.dat',access='SEQUENTIAL',
      .          form='FORMATTED',status='REPLACE')
 
+*   ..get label
+        call b2xxid ('b2mn', lble(1:60))
+        lble(61:120) = 
+     *  '                                                            '
+
+*   ..write header
+        idum(0) = nx
+        idum(1) = ny
+        idum(2) = ns
+        call cfverw (iun, newversion)
+        call cfwuin (iun, 3, idum, 'nx,ny,ns')
+        call cfwuch (iun, 120, lble, 'label')
+        call b2wuzd (iun, newversion, ns, zamin, zamax, zn, am)
+
+*   ..write average state and sources
         call cfwuin (iun, 1, naver, 'naver')
         call cfwuin (iun, 1, ntotdt, 'ntotdt')
 
