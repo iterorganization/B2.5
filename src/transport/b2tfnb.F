@@ -774,8 +774,8 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
      7     hx(leftix(ix,iy),leftiy(ix,iy)))                             !srv 17.07.08 }
-          flo_he = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+              !srv 13.09.02 { 01.07.05 20.01.11
-     &     term(ix,iy) +                                                !iyv 30.05.08 !srv 03.10.08
+          flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0)+                         !srv 13.09.02 { 01.07.05 20.01.11
+     &     pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +                       !iyv 30.05.08 !srv 03.10.08
      1     (vbecrb(ix,iy,0)+vbecrb(leftix(ix,iy),leftiy(ix,iy),0))/
      5     2.0_R8*0.5_R8*(vol(ix,iy)/hx(ix,iy)
      6     +vol(leftix(ix,iy),leftiy(ix,iy))/
@@ -800,8 +800,8 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &      vbecrb(ix,iy,0)*
      &      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      &      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
-          flo_he = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy)+ !srv 13.09.02 { 01.07.05 20.01.11
-     &     term(ix,iy) +                                   !iyv 30.05.08 !srv 03.10.08
+          flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,0)+                         !srv 13.09.02 { 01.07.05 20.01.11
+     &     pbs(ix,iy,0)*wrk0(ix,iy)+term(ix,iy) +                       !iyv 30.05.08 !srv 03.10.08
      4     vbecrb(ix,iy,0)*
      5     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/               
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
@@ -1147,7 +1147,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &        hy1(bottomix(ix,iy),bottomiy(ix,iy)))                     !srv 01.03.00 09.01.01
            endif
           endif
-          flo_he = cvlb(ix,iy,1)+                                       !srv 13.09.02 ( 20.01.11
+          flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1)+                         !srv 13.09.02 ( 20.01.11
      &      0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
      &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
@@ -1200,7 +1200,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))          !srv 01.03.00
            endif
           endif
-          flo_he = cvlb(ix,iy,1)+vbecrb(ix,iy,1)*                       !srv 13.09.02 ( 20.01.11
+          flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1)+vbecrb(ix,iy,1)*         !srv 13.09.02 ( 20.01.11
      5     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
 
@@ -1230,7 +1230,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &          +nb(ix,iy))/2.0_R8-
 csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &    (5.0_R8/3.0_R8)*
-     &    (con_he(ix,iy)*(nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy))) !srv 13.09.02 }
+     &    (con_he(ix,iy)*
+     &    (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))               !srv 13.09.02 }
      &    +cdpb(ix,iy,1)*(pb(ix,iy)
      &                   -pb(bottomix(ix,iy),bottomiy(ix,iy))) )        !srv 21.01.00 }
           if(cfvma .eq. 0.0_R8) then                                    !srv 15.12.05
