@@ -18,9 +18,10 @@
       use b2mod_neutrals_namelist
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
-     2          b2stbr_sne,
-     3          b2stbr_sna0to1,b2stbr_smo0to3,b2stbr_she0to3, !djm Jan2017
-     4          b2stbr_shi0to3
+     2          b2stbr_sne
+      use b2mod_balance !djm Jan2017
+     1 , only : b2stbr_sna0to1,b2stbr_smo0to3,b2stbr_she0to3,
+     2          b2stbr_shi0to3,balance_netcdf
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
@@ -662,10 +663,12 @@ cwdk remove this if-test, to allow runs without Eirene if code is compiled with 
      2 sne0(-1:nx,-1:ny,1)*ne(-1:nx,-1:ny)
 
 cdjm Jan2017 Keep linearised sources for balance
-      b2stbr_sna0to1 = sna0
-      b2stbr_smo0to3 = smo0
-      b2stbr_she0to3 = she0
-      b2stbr_shi0to3 = shi0
+      if (balance_netcdf.ne.0) then
+        b2stbr_sna0to1 = sna0
+        b2stbr_smo0to3 = smo0
+        b2stbr_she0to3 = she0
+        b2stbr_shi0to3 = shi0
+      endif
 
       if(main_call) then
         do ibnd = 1, nbnd

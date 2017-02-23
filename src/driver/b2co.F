@@ -179,7 +179,6 @@ c      call write_b2mod_sources(nout(7))
 c      call write_b2mod_transport(nout(7))
 c      call write_b2mod_anomalous_transport(nout(7))
 c      call write_b2mod_neutr_src_scaling(nout(7),nstra)
-c      call write_b2mod_eirene_sources(nout(7))
       write(nout(0),*) 'Converted ',trim(savefile),' to b2fstate'
 *   ..close other files
       do io=0,size(ninp)-1
@@ -200,7 +199,6 @@ c      call write_b2mod_eirene_sources(nout(7))
       call dealloc_b2mod_residuals
       call dealloc_b2mod_transport
       call dealloc_anomalous_transport
-      call dealloc_b2mod_eirene_sources
       call prgend ()
 #ifdef USE_MPI
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)

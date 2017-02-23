@@ -18,9 +18,9 @@
       use b2mod_geo_corner
       use b2mod_b2cmpa
       use b2mod_b2cmfs
-      use b2mod_plasma                                                   !djm Jan2017
+      use b2mod_balance                                                  !djm Jan2017
      & , only : fna_pinch, fna_pll, fna_drift, fna_nanom, fna_panom,
-     &          fna_ch, fna_pschused
+     &          fna_ch, fna_pschused, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb, guard_flows, ismain                           !xpb !srv 08.09.01 !lk 02.06.11
@@ -756,7 +756,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          con_he(ix,iy)        = 0.0_R8
          con_mdf(ix,iy)       = 0.0_R8
 	 fllim0fnb(ix,iy,0)   = 1.0_R8
-         if (balance) then                                              !djm Jan2017
+         if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
           fna_pinch(ix,iy,0,isb)    = 0.0_R8
           fna_pll(ix,iy,0,isb)      = 0.0_R8
           fna_drift(ix,iy,0,isb)    = 0.0_R8
@@ -864,7 +864,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &      con_mdf(ix,iy)*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))-
      &      cdpb(ix,iy,0)*(pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))-
      &      fnbPSch(ix,iy,0)                                            !srv 13.10.06 }
-           if (balance) then
+           if (balance.and.(balance_netcdf.ne.0)) then
 cdjm Jan2017 store components of fnb for balance
              fna_pinch(ix,iy,0,isb) = cvlb(ix,iy,0)*
      &         (nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8
@@ -980,7 +980,7 @@ csw 14mar2013 missing con_he added --> needed in b2tfhi_ / b2tfhe_ !!!
            fnb(ix,iy,0) = flo * t2-
      &      con(ix,iy)*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))-
      &      cdpb(ix,iy,0)*(pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))
-           if (balance) then !djm Jan2017
+           if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
              fna_pinch(ix,iy,0,isb) = cvlb(ix,iy,0)*t2
              fna_pll(ix,iy,0,isb) = (pbs(ix,iy,0)*wrk0(ix,iy)+
      &                               term(ix,iy))*t2
@@ -1165,7 +1165,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          con_he(ix,iy)        = 0.0_R8
          con_mdf(ix,iy)       = 0.0_R8
 	 fllim0fnb(ix,iy,1)   = 1.0_R8
-         if (balance) then                                              !djm Jan2017
+         if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
           fna_pinch(ix,iy,1,isb)    = 0.0_R8
           fna_pll(ix,iy,1,isb)      = 0.0_R8
           fna_drift(ix,iy,1,isb)    = 0.0_R8
@@ -1353,7 +1353,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &     cdpb(ix,iy,1)*(pb(ix,iy)
      &                   -pb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &                    fnbPSch(ix,iy,1)                              !srv 13.10.06 }
-          if (balance) then
+          if (balance.and.(balance_netcdf.ne.0)) then
 cdjm Jan2017 store components of fnb for balance
             fna_pinch(ix,iy,1,isb) = cvlb(ix,iy,1)*
      &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
@@ -1618,7 +1618,7 @@ cxpb turn off flows between boundary cells
             vbdia(ix,iy,1)=0.0_R8
             wbdia(ix,iy,1)=0.0_R8
             ubdia(ix,iy,1)=0.0_R8
-            if (balance) then                                           !djm Jan2017
+            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
                fna_pinch(ix,iy,1,isb)=0.0_R8
                fna_pll(ix,iy,1,isb)=0.0_R8
                fna_drift(ix,iy,1,isb)=0.0_R8
@@ -1647,7 +1647,7 @@ cxpb turn off poloidal flows in core boundary
             vbdia(ix,-1,0) = 0.0_R8
             wbdia(ix,-1,0) = 0.0_R8
             ubdia(ix,-1,0) = 0.0_R8
-            if (balance) then                                           !djm Jan2017
+            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
                fna_pinch(ix,-1,0,isb)=0.0_R8
                fna_pll(ix,-1,0,isb)=0.0_R8
                fna_drift(ix,-1,0,isb)=0.0_R8
@@ -1683,7 +1683,7 @@ cxpb turn off poloidal flows in core boundary
             flob(ix,iy,1)        = 0.0_R8
             conb(ix,iy,1,0:2)    = 0.0_R8
 	    fllim0fnb(ix,iy,0)   = 1.0_R8
-            if (balance) then                                           !djm Jan2017
+            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
                fna_pinch(ix,iy,1,isb)=0.0_R8
                fna_pll(ix,iy,1,isb)=0.0_R8
                fna_drift(ix,iy,1,isb)=0.0_R8
@@ -1715,7 +1715,7 @@ cxpb turn off poloidal flows in core boundary
           flob(:,iy,0)        = 0.0_R8
           conb(:,iy,0,0:2)    = 0.0_R8
           fllim0fnb(:,iy,0)   = 1.0_R8
-          if (balance) then                                             !djm Jan2017
+          if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
              fna_pinch(:,iy,0,isb)=0.0_R8
              fna_pll(:,iy,0,isb)=0.0_R8
              fna_drift(:,iy,0,isb)=0.0_R8
@@ -1747,7 +1747,7 @@ csw 18feb2014 remove fluxes between guard cells
             ubdia(ix,iy,0)=0.0_R8
             conb(ix,iy,0,:)=0.0_R8
 	    fllim0fnb(ix,iy,0)=1.0_R8
-            if (balance) then                                           !djm Jan2017
+            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
                fna_pinch(ix,iy,0,isb)=0.0_R8
                fna_pll(ix,iy,0,isb)=0.0_R8
                fna_drift(ix,iy,0,isb)=0.0_R8
@@ -1774,7 +1774,7 @@ csw 18feb2014 remove fluxes between guard cells
             ubdia(ix,iy,1)=0.0_R8
             conb(ix,iy,1,:)=0.0_R8
 	    fllim0fnb(ix,iy,1)=1.0_R8
-            if (balance) then                                           !djm Jan2017
+            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
                fna_pinch(ix,iy,1,isb)=0.0_R8
                fna_pll(ix,iy,1,isb)=0.0_R8
                fna_drift(ix,iy,1,isb)=0.0_R8
@@ -1817,7 +1817,7 @@ csw 18feb2014 remove fluxes between guard cells
             vbdia(ix,iy,1)=0.0_R8
             wbdia(ix,iy,1)=0.0_R8
             ubdia(ix,iy,1)=0.0_R8
-            if (balance) then                                           !djm Jan2017
+            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
                fna_pinch(ix,iy,0:1,isb)=0.0_R8
                fna_pll(ix,iy,0:1,isb)=0.0_R8
                fna_drift(ix,iy,0:1,isb)=0.0_R8

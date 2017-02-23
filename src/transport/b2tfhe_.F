@@ -18,9 +18,9 @@
       use b2mod_rates
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_plasma                                                   !djm Jan2017
+      use b2mod_balance                                                  !djm Jan2017
      & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
-     &          fhe_strange, fhe_pschused
+     &          fhe_strange, fhe_pschused, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
@@ -896,7 +896,7 @@ c  ..set null flux in guard cells  ?
          conc(ix,iy,0)    = 0.0e0_R8
          fch(ix,iy,0)     = 0.0e0_R8
          fch_p(ix,iy,0)   = 0.0e0_R8
-         if (balance) then
+         if (balance.and.(balance_netcdf.ne.0)) then
            fhe_32(ix,iy,0) = 0.0_R8                                    !djm Jan2017
            fhe_52(ix,iy,0) = 0.0_R8
            fhe_thermj(ix,iy,0) = 0.0_R8
@@ -984,7 +984,9 @@ csw 27nov2012 add check for upwind (SOLPS4 style)
      &         -cone0*(te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))) 
      &         + alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-             if (balance.and.(mdf_fhe.eq.0)) then !djm Jan2017
+             if (balance.and.
+     &           (balance_netcdf.ne.0).and.
+     &           (mdf_fhe.eq.0)) then !djm Jan2017
                if(floe0.ge.0.0_R8) then
                  upfac=1.0_R8
                else
@@ -1018,7 +1020,9 @@ csw 27nov2012 add check for upwind (SOLPS4 style)
      &         floe0*(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.d0
      &         -cone0*tex0 + alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-             if (balance.and.(mdf_fhe.eq.0)) then !djm Jan2017
+             if (balance.and.
+     &           (balance_netcdf.ne.0).and.
+     &           (mdf_fhe.eq.0)) then !djm Jan2017
                fhe_32(ix,iy,0) = 1.5e0_R8*fne(ix,iy,0)*
      &                  (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.d0
                fhe_52(ix,iy,0) = 0.0_R8
@@ -1083,7 +1087,9 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
      &       upwind(floe0_mdf,te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))
      &       -cone0_mdf*tex0_mdf + alfTeEh*alfe0_mdf*
      &       harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-             if (balance.and.(mdf_fhe.ne.0)) then !djm Jan2017
+             if (balance.and.
+     &           (balance_netcdf.ne.0).and.
+     &           (mdf_fhe.ne.0)) then !djm Jan2017
                if(floe0_mdf.ge.0.0_R8) then
                  upfac=1.0_R8
                else
@@ -1114,7 +1120,9 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
      &       -abs(floe0_mdf/2.0_R8)*tex
      &       -cone0_mdf*tex0_mdf + alfTeEh*alfe0_mdf*
      &       harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
-             if (balance.and.(mdf_fhe.ne.0)) then !djm Jan2017
+             if (balance.and.
+     &           (balance_netcdf.ne.0).and.
+     &           (mdf_fhe.ne.0)) then !djm Jan2017
                !djm Jan2017 share the hybrid part according to relative contributions
                if (floe0_mdf.ge.0.0_R8) then
                  hybfac=1.0_R8
@@ -1209,7 +1217,7 @@ csw 13mar2013 added check upwind (SOLPS4 style)
      &         -cone0_mdf*tex0 + alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
      &        -fhePSch(ix,iy,0)                                          !srv 13.06.06 }
-            if (balance) then !djm Jan2017
+            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
               fhe_32(ix,iy,0) = 1.5e0_R8*fne(ix,iy,0)*
      &                  (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
               fhe_52(ix,iy,0) = 0.0_R8
@@ -1244,7 +1252,9 @@ csw 13mar2013 added check upwind (SOLPS4 style)
      &         -cone0_mdf*tex0 + alfTeEh*
      &         alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
      &        -fhePSch(ix,iy,0)                                          !srv 13.06.06 }
-            if (balance.and.(mdf_fhe.eq.0)) then !djm Jan2017
+            if (balance.and.
+     &          (balance_netcdf.ne.0).and.
+     &          (mdf_fhe.eq.0)) then !djm Jan2017
               if(floe0.ge.0.0_R8) then
                 upfac=1.0_R8
               else
@@ -1272,7 +1282,9 @@ csw 13mar2013 added check upwind (SOLPS4 style)
               fhe_cond(ix,iy,0) = -cone0*tex0
               fhe_pschused(ix,iy,0) = 0.0_R8
             endif
-            if (balance.and.(mdf_fhe.ne.0)) then !djm Jan2017
+            if (balance.and.
+     &          (balance_netcdf.ne.0).and.
+     &          (mdf_fhe.ne.0)) then !djm Jan2017
               if(floe0_mdf.ge.0.0_R8) then
                 upfac=1.0_R8
               else
@@ -1390,7 +1402,7 @@ csw 13mar2013 added check upwind (SOLPS4 style)
        fhe_mdf(ix,-1,1) = 0.0e0_R8                                       !srv 13.10.06
        conc(ix,-1,1)    = 0
        fch(ix,-1,1)     = 0
-       if (balance) then
+       if (balance.and.(balance_netcdf.ne.0)) then
          fhe_32(ix,-1,1) = 0.0_R8                                        !djm Jan2017
          fhe_52(ix,-1,1) = 0.0_R8
          fhe_thermj(ix,-1,1) = 0.0_R8
@@ -1491,7 +1503,9 @@ csw 13mar2013 added check upwind (SOLPS4 style)
      &      -fhePSch(ix,iy,1)                                            !srv 13.10.06 }
      &        +alfTeEh*calf(ix,iy,1)*                                    !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy   !iyv 12.05.08 !srv 03.10.08
-         if (balance.and.(mdf_fhe.eq.0)) then !djm Jan2017
+         if (balance.and.
+     &       (balance_netcdf.ne.0).and.
+     &       (mdf_fhe.eq.0)) then !djm Jan2017
            if(floe0.ge.0.0_R8) then
              upfac=1.0_R8
            else
@@ -1516,7 +1530,9 @@ csw 13mar2013 added check upwind (SOLPS4 style)
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
            fhe_ecrb(ix,iy,1) = 0.0_R8
          endif
-         if (balance.and.(mdf_fhe.ne.0)) then
+         if (balance.and.
+     &       (balance_netcdf.ne.0).and.
+     &       (mdf_fhe.ne.0)) then
            if(floe0_mdf.ge.0.0_R8) then
              upfac=1.0_R8
            else
@@ -1550,7 +1566,7 @@ csw 13mar2013 added check upwind (SOLPS4 style)
      &      -fhePSch(ix,iy,1)                                            !srv 13.10.06 }
      &        +alfTeEh*calf(ix,iy,1)*                                    !iyv 12.05.08 !srv 03.10.08
      &         harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy   !iyv 12.05.08 !srv 03.10.08
-         if (balance) then !djm Jan2017
+         if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
            fhe_32(ix,iy,1) = 1.5e0_R8*fne(ix,iy,1)*
      &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
            fhe_52(ix,iy,1) = 0.0_R8
@@ -1615,7 +1631,7 @@ csw 18feb2014 remove fluxes between guard cells
            fhePSch(ix,iy,0)=0.0_R8
            floe(ix,iy,0)=0.0_R8
            cone(ix,iy,0,:)=0.0_R8
-           if (balance) then !djm Jan2017
+           if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
              fhe_32(ix,iy,0) = 0.0_R8
              fhe_52(ix,iy,0) = 0.0_R8
              fhe_thermj(ix,iy,0) = 0.0_R8
@@ -1632,7 +1648,7 @@ csw 18feb2014 remove fluxes between guard cells
            fhePSch(ix,iy,1)=0.0_R8
            floe(ix,iy,1)=0.0_R8
            cone(ix,iy,1,:)=0.0_R8
-           if (balance) then !djm Jan2017
+           if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
              fhe_32(ix,iy,1) = 0.0_R8
              fhe_52(ix,iy,1) = 0.0_R8
              fhe_thermj(ix,iy,1) = 0.0_R8
@@ -1670,7 +1686,7 @@ csw 18feb2014 remove fluxes between guard cells
             cone(ix,iy,0,:) =0.0e0_R8                     !srv 02.01.07
             fch(ix,iy,0)    =0.0e0_R8
             conc(ix,iy,0)   =0.0e0_R8
-            if (balance) then
+            if (balance.and.(balance_netcdf.ne.0)) then
               fhe_32(ix,iy,0) = 0.0_R8                    !djm Jan2017
               fhe_52(ix,iy,0) = 0.0_R8
               fhe_thermj(ix,iy,0) = 0.0_R8
@@ -1689,7 +1705,7 @@ csw 18feb2014 remove fluxes between guard cells
             cone(ix,iy,1,:)=0.0e0_R8                    !srv 02.01.07
             fch(ix,iy,1)   =0.0e0_R8
             conc(ix,iy,1)  =0.0e0_R8
-            if (balance) then
+            if (balance.and.(balance_netcdf.ne.0)) then
               fhe_32(ix,iy,1) = 0.0_R8                  !djm Jan2017
               fhe_52(ix,iy,1) = 0.0_R8
               fhe_thermj(ix,iy,1) = 0.0_R8

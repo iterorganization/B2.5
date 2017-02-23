@@ -41,6 +41,8 @@
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
       use b2mod_external
+      use b2mod_balance !djm Jan2017
+     & , only : alloc_b2mod_balance, write_balance, balance_netcdf
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_ccoupl
@@ -1711,6 +1713,9 @@ csw 09oct2012 set default potential already at this point (BCs)
           po(:,:)=3.1_R8*te(:,:)/qe
         endif
 
+cdjm Jan2017 allocate balance arrays (only done if balance_netcdf.ne.0)
+        call alloc_b2mod_balance(nx,ny,ns)
+
 *    ..perform one time step
         ok=.false.
         do while(.not.ok)
@@ -1768,7 +1773,6 @@ csw 09oct2012 set default potential already at this point (BCs)
           call write_b2mod_transport(nout(7))
           call write_b2mod_anomalous_transport(nout(7))
           call write_b2mod_neutr_src_scaling(nout(7),nstrat)
-          call write_b2mod_eirene_sources(nout(7))
           close(nout(7))
         endif
 *    ..increment
@@ -2089,6 +2093,14 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call tallies(nx,ny,ns)
         endif
       endif
+*   ..create netcdf file containing everything for balance post-processing routines !djm Jan2017
+#ifndef NO_CDF
+      if(balance_netcdf.ne.0) then
+        call write_balance(nx,ny,ns)
+      endif
+#else
+      write(*,*) 'NO_CDF is set at compilation, cannot write balance.nc'
+#endif
 
 #ifdef CATALYST
       if (use_catalyst .eqv. .true.) call coprocessorfinalize()

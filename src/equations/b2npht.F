@@ -13,8 +13,9 @@
       use b2mod_tallies
       use b2mod_b2cmpa
       use b2mod_boundary_namelist
-      use b2mod_sources !djm Jan2017
-     & , only : b2npht_shei_bal, update_balance_sources_heat
+      use b2mod_balance !djm Jan2017
+     & , only : b2npht_shei_bal, update_balance_sources_heat,
+     &          balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt
@@ -233,7 +234,9 @@ csw 21feb2014 remove sources in ghostcells (SOLPS4)
       call b2saxpy (n2*4, 1.0_R8, shi, 1, shi0, 1)
 
 cdjm Jan2017 update particle source components for balance
-      call update_balance_sources_heat(nx,ny,ne,ni,te,ti)
+      if (balance_netcdf.ne.0) then
+        call update_balance_sources_heat(nx,ny,ne,ni,te,ti)
+      endif
 
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
@@ -269,7 +272,10 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
         endif
        enddo
       enddo
-      b2npht_shei_bal(-1:nx,-1:ny) = shei(-1:nx,-1:ny)                    !djm Jan2017
+
+      if (balance_netcdf.ne.0) then
+        b2npht_shei_bal(-1:nx,-1:ny) = shei(-1:nx,-1:ny) !djm Jan2017
+      endif
 
 *   ..compute final resht, reshe, reshi
       b2qie=0.0_R8

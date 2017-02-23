@@ -12,9 +12,9 @@
       use b2mod_b2cmpa 
       use b2mod_boundary_namelist
      , , only : iftimbound
-      use b2mod_sources                                              !djm Jan2017
+      use b2mod_balance !djm Jan2017
      1 , only : b2srdt_sna0to1,b2srdt_smo0to3,b2srdt_she0to3,
-     2          b2srdt_shi0to3
+     2          b2srdt_shi0to3, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       logical(1) :: lout                                             !srv 16.07.10
@@ -216,10 +216,12 @@ cxpb  This treatment added as a fix to get the ExB runs going
       enddo
 
 cdjm Store the total change in linearised sources for balance
-      b2srdt_sna0to1 = snadt-snatmp
-      b2srdt_smo0to3 = smodt-smotmp
-      b2srdt_she0to3 = shedt-shetmp
-      b2srdt_shi0to3 = shidt-shitmp
+      if (balance_netcdf.ne.0) then
+        b2srdt_sna0to1 = snadt-snatmp
+        b2srdt_smo0to3 = smodt-smotmp
+        b2srdt_she0to3 = shedt-shetmp
+        b2srdt_shi0to3 = shidt-shitmp
+      endif
 
       if (iout_b2npmo.eq.1 .and. lout) then                                     !srv 11.09.09 {
        do is = 0, ns-1 

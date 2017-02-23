@@ -237,7 +237,6 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call write_b2mod_transport(nout(7))
       call write_b2mod_anomalous_transport(nout(7))
       call write_b2mod_neutr_src_scaling(nout(7),nstrai)
-      call write_b2mod_eirene_sources(nout(7))
       close(nout(7))
 *   ..write data for optimization
       call write_results(nx, ny)
@@ -273,7 +272,6 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call dealloc_b2mod_residuals
       call dealloc_b2mod_transport
       call dealloc_anomalous_transport
-      call dealloc_b2mod_eirene_sources
       call prgend ()
 #ifdef USE_MPI
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)

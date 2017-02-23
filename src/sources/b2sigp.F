@@ -6,8 +6,8 @@
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants                                         !srv 23.03.10
-      use b2mod_sources                                           !djm Jan2017
-     & , only : b2sigp_smogp0to3, b2sigp_pstat0to3
+      use b2mod_balance                                           !djm Jan2017
+     & , only : b2sigp_smogp0to3, b2sigp_pstat0to3, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -125,13 +125,15 @@
               smbgp(ix,iy,1) = 0.0_R8
               smbgp(ix,iy,2) = 0.0_R8
               smbgp(ix,iy,3) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*              !djm Jan2017
-     &         (vol(ix,iy)/hx(ix,iy))*
-     &         bb(ix,iy,0)/bb(ix,iy,3)*
-     &         (wrk3(ix,iy)+wrk4(ix,iy))
-              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+              if (balance_netcdf.ne.0) then !djm Jan2017
+                b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
+     &           (vol(ix,iy)/hx(ix,iy))*
+     &           bb(ix,iy,0)/bb(ix,iy,3)*
+     &           (wrk3(ix,iy)+wrk4(ix,iy))
+                b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+                b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+                b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+              endif
             elseif(rightix(ix,iy).eq.nx+1) then
               smbgp(ix,iy,0) = -hz(ix,iy)*
      &         (vol(ix,iy)/hx(ix,iy)/2.0_R8)*                         !srv 16.06.09
@@ -141,17 +143,19 @@
               smbgp(ix,iy,1) = 0.0_R8
               smbgp(ix,iy,2) = 0.0_R8
               smbgp(ix,iy,3) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*              !djm Jan2017
-     &         (vol(ix,iy)/hx(ix,iy))*
-     &         bb(ix,iy,0)/bb(ix,iy,3)*
-     &         ((wrk3(leftix(ix,iy),leftiy(ix,iy))+
-     &           wrk4(leftix(ix,iy),leftiy(ix,iy)))*vol(ix,iy)+
-     &          (wrk3(ix,iy)+
-     &           wrk4(ix,iy))*vol(leftix(ix,iy),leftiy(ix,iy)))/
-     &         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+              if (balance_netcdf.ne.0) then !djm Jan2017
+                b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
+     &           (vol(ix,iy)/hx(ix,iy))*
+     &           bb(ix,iy,0)/bb(ix,iy,3)*
+     &           ((wrk3(leftix(ix,iy),leftiy(ix,iy))+
+     &             wrk4(leftix(ix,iy),leftiy(ix,iy)))*vol(ix,iy)+
+     &            (wrk3(ix,iy)+
+     &             wrk4(ix,iy))*vol(leftix(ix,iy),leftiy(ix,iy)))/
+     &           (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+                b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+                b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+                b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+              endif
             else
               smbgp(ix,iy,0) = -hz(ix,iy)*(vol(ix,iy)/hx(ix,iy))*     !srv 16.06.09
      &         bb(ix,iy,0)/bb(ix,iy,3)*vol(ix,iy)*                    !srv 11.01.13
@@ -164,17 +168,19 @@
               smbgp(ix,iy,1) = 0.0_R8
               smbgp(ix,iy,2) = 0.0_R8
               smbgp(ix,iy,3) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*              !djm Jan2017
-     &         (vol(ix,iy)/hx(ix,iy))*
-     &         bb(ix,iy,0)/bb(ix,iy,3)*
-     &         ((wrk3(leftix(ix,iy),leftiy(ix,iy))+
-     &           wrk4(leftix(ix,iy),leftiy(ix,iy)))*vol(ix,iy)+
-     &          (wrk3(ix,iy)+
-     &           wrk4(ix,iy))*vol(leftix(ix,iy),leftiy(ix,iy)))/
-     &         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
-              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+              if (balance_netcdf.ne.0) then !djm Jan2017
+                b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
+     &           (vol(ix,iy)/hx(ix,iy))*
+     &           bb(ix,iy,0)/bb(ix,iy,3)*
+     &           ((wrk3(leftix(ix,iy),leftiy(ix,iy))+
+     &             wrk4(leftix(ix,iy),leftiy(ix,iy)))*vol(ix,iy)+
+     &            (wrk3(ix,iy)+
+     &             wrk4(ix,iy))*vol(leftix(ix,iy),leftiy(ix,iy)))/
+     &           (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
+                b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+                b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+                b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+              endif
             endif
           enddo
         enddo
@@ -228,32 +234,34 @@
          enddo
         enddo
 cdjm compute b2sigp_pstat0to3 on left cell face
-        b2sigp_pstat0to3 = 0.0_R8
-        do iy = -1, ny
-         do ix = -1, nx
-          if(leftix(ix,iy).eq.-2.or.
-     &       bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
-            b2sigp_pstat0to3(ix,iy,0,isb) = 0.0_R8
-            b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-            b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-            b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
-          else
-            t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
-            b2sigp_pstat0to3(ix,iy,0,isb) =
-     &       t0*((wrk2(leftix(ix,iy),leftiy(ix,iy))+
-     &            rzb(leftix(ix,iy),leftiy(ix,iy))*
-     &            (nb(leftix(ix,iy),leftiy(ix,iy))/
-     &            ne(leftix(ix,iy),leftiy(ix,iy)))*
-     &            wrk3(leftix(ix,iy),leftiy(ix,iy)))*hx(ix,iy)+
-     &           (wrk2(ix,iy)+rzb(ix,iy)*(nb(ix,iy)/ne(ix,iy))*
-     &            wrk3(ix,iy))*hx(leftix(ix,iy),leftiy(ix,iy)))/
-     &          (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/hx(ix,iy)
-            b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-            b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-            b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
-          endif
-         enddo
-        enddo
+        if (balance_netcdf.ne.0) then
+          b2sigp_pstat0to3 = 0.0_R8
+          do iy = -1, ny
+           do ix = -1, nx
+            if(leftix(ix,iy).eq.-2.or.
+     &         bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
+              b2sigp_pstat0to3(ix,iy,0,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+            else
+              t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
+              b2sigp_pstat0to3(ix,iy,0,isb) =
+     &         t0*((wrk2(leftix(ix,iy),leftiy(ix,iy))+
+     &              rzb(leftix(ix,iy),leftiy(ix,iy))*
+     &              (nb(leftix(ix,iy),leftiy(ix,iy))/
+     &              ne(leftix(ix,iy),leftiy(ix,iy)))*
+     &              wrk3(leftix(ix,iy),leftiy(ix,iy)))*hx(ix,iy)+
+     &             (wrk2(ix,iy)+rzb(ix,iy)*(nb(ix,iy)/ne(ix,iy))*
+     &              wrk3(ix,iy))*hx(leftix(ix,iy),leftiy(ix,iy)))/
+     &            (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/hx(ix,iy)
+              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+            endif
+           enddo
+          enddo
+        endif
       else                                                            !srv 23.03.10 {
         call xertst (pot_eq.eq.1,
      &   'This case works when potential equation is solved')
@@ -309,7 +317,9 @@ cdjm compute b2sigp_pstat0to3 on left cell face
       endif                                                           !srv 17.06.02 }
 
 cdjm Jan2017 Store linearised source for balance
-      b2sigp_smogp0to3(-1:nx,-1:ny,0:3,isb)=smbgp
+      if (balance_netcdf.ne.0) then
+        b2sigp_smogp0to3(-1:nx,-1:ny,0:3,isb)=smbgp
+      endif
 
 * ..return
       ncall = ncall+1

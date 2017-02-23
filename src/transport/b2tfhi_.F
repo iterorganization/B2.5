@@ -13,10 +13,10 @@ csw 2013 added fna_he, cvsa, vadia into argument list
       use b2mod_rates
       use b2mod_b2cmfs
       use b2mod_b2cmpa
-      use b2mod_plasma                                               !djm Jan2017
+      use b2mod_balance                                                 !djm Jan2017
      & , only : fhi_32, fhi_52, fhi_cond, fhi_dia, fhi_ecrb,
      &          fhi_strange, fhi_pschused, fhi_inert, fhi_vispar,
-     &          fhi_anml
+     &          fhi_anml, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -360,7 +360,7 @@ c  ..set null flux in guard cells  ?
          coni(ix,iy,0,0)   = 0.0e0_R8                                   !srv 02.01.07
          fhi(ix,iy,0)      = 0.0e0_R8
          fhi_mdf(ix,iy,0)  = 0.0e0_R8                                   !srv 13.10.06
-         if (balance) then
+         if (balance.and.(balance_netcdf.ne.0)) then
            fhi_32(ix,iy,0) = 0.0_R8                               !djm Jan2017
            fhi_52(ix,iy,0) = 0.0_R8
            fhi_cond(ix,iy,0) = 0.0_R8
@@ -421,7 +421,9 @@ csw 27nov2012  added check upwind (SOLPS4 style)
            fhi(ix,iy,0) = upwind(floi0,ti(leftix(ix,iy),leftiy(ix,iy))
      &                                  ,ti(ix,iy))
      &                    -coni0*dti
-           if (balance.and.(mdf_fhi.eq.0)) then !djm Jan2017
+           if (balance.and.
+     &         (balance_netcdf.ne.0).and.
+     &         (mdf_fhi.eq.0)) then !djm Jan2017
              if(floi0.ge.0.0_R8) then
                upfac=1.0_R8
              else
@@ -449,7 +451,9 @@ csw 27nov2012  added check upwind (SOLPS4 style)
            fhi(ix,iy,0) = floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
      &                                  +ti(ix,iy))/2.0
      &                    -coni0*dti0
-           if (balance.and.(mdf_fhi.eq.0)) then !djm Jan2017
+           if (balance.and.
+     &         (balance_netcdf.ne.0).and.
+     &         (mdf_fhi.eq.0)) then !djm Jan2017
              fhi_32(ix,iy,0) = 1.5e0_R8*fni(ix,iy,0)*
      &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0
              fhi_52(ix,iy,0) = 0.0_R8
@@ -542,7 +546,9 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &        sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
      &        min(0.0e0_R8,t1_mdf)**2
              coni(ix,iy,0,0) = coni0_mdf/(1.0_R8+t0_mdf)                !srv 02.01.07
-             if (balance.and.(mdf_fhi.ne.0)) then !djm Jan2017
+             if (balance.and.
+     &           (balance_netcdf.ne.0).and.
+     &           (mdf_fhi.ne.0)) then !djm Jan2017
                if(floi0_mdf.ge.0.0_R8) then
                  upfac=1.0_R8
                else
@@ -572,7 +578,9 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &        sign(flomx,ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))*
      &        min(0.0e0_R8,t1_mdf)**2
              coni(ix,iy,0,0)=abs(floi0_mdf/2)+coni0_mdf/(1.0_R8+t0_mdf) !srv 02.01.07
-             if (balance.and.(mdf_fhi.ne.0)) then !djm Jan2017
+             if (balance.and.
+     &           (balance_netcdf.ne.0).and.
+     &           (mdf_fhi.ne.0)) then !djm Jan2017
                !djm Jan2017 share the hybrid part according to relative contributions
                if (floi0_mdf.ge.0.0_R8) then
                  hybfac=1.0_R8
@@ -645,7 +653,9 @@ csw 27nov2012 added check upwind (SOLPS4 style)
             fhi_mdf(ix,iy,0) = upwind(floi0_mdf,                        !srv 13.10.06 {
      &           ti(leftix(ix,iy),leftiy(ix,iy)) ,ti(ix,iy)) 
      &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)                         !srv 13.10.06 }
-            if (balance.and.(mdf_fhi.eq.0)) then !djm Jan2017
+            if (balance.and.
+     &          (balance_netcdf.ne.0).and.
+     &          (mdf_fhi.eq.0)) then !djm Jan2017
               if(floi0.ge.0.0_R8) then
                 upfac=1.0_R8
               else
@@ -669,7 +679,9 @@ csw 27nov2012 added check upwind (SOLPS4 style)
              fhi_vispar(ix,iy,0) = 0.0_R8
              fhi_anml(ix,iy,0) = 0.0_R8
             endif
-            if (balance.and.(mdf_fhi.ne.0)) then !djm Jan2017
+            if (balance.and.
+     &          (balance_netcdf.ne.0).and.
+     &          (mdf_fhi.ne.0)) then !djm Jan2017
               if(floi0_mdf.ge.0.0_R8) then
                 upfac=1.0_R8
               else
@@ -698,7 +710,9 @@ csw 27nov2012 added check upwind (SOLPS4 style)
             fhi_mdf(ix,iy,0) = floi0_mdf*                               !srv 13.10.06 {
      &           (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0 
      &       -coni0_mdf*dti0 - fhiPSch(ix,iy,0)                         !srv 13.10.06 }
-            if (balance.and.(mdf_fhi.eq.0)) then !djm Jan2017
+            if (balance.and.
+     &          (balance_netcdf.ne.0).and.
+     &          (mdf_fhi.eq.0)) then !djm Jan2017
               fhi_32(ix,iy,0) = 1.5e0_R8*fni(ix,iy,0)*
      &               (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0
               fhi_52(ix,iy,0) = 0.0_R8
@@ -714,7 +728,9 @@ csw 27nov2012 added check upwind (SOLPS4 style)
               fhi_vispar(ix,iy,0) = 0.0_R8
               fhi_anml(ix,iy,0) = 0.0_R8
             endif
-            if (balance.and.(mdf_fhi.ne.0)) then !djm Jan2017
+            if (balance.and.
+     &          (balance_netcdf.ne.0).and.
+     &          (mdf_fhi.ne.0)) then !djm Jan2017
               fhi_32(ix,iy,0) = 1.5e0_R8*fni(ix,iy,0)*
      &               (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0
               fhi_52(ix,iy,0) = 0.0_R8
@@ -760,8 +776,8 @@ csw 27nov2012 added check upwind (SOLPS4 style)
        coni(ix,-1,1,0)  = 0                                             !srv 02.01.07
        fhi(ix,-1,1)     = 0.0e0_R8
        fhi_mdf(ix,-1,1) = 0.0e0_R8                                      !srv 13.10.06
-       if (balance) then
-         fhi_32(ix,-1,1) = 0.0_R8                               !djm Jan2017
+       if (balance.and.(balance_netcdf.ne.0)) then
+         fhi_32(ix,-1,1) = 0.0_R8                                       !djm Jan2017
          fhi_52(ix,-1,1) = 0.0_R8
          fhi_cond(ix,-1,1) = 0.0_R8
          fhi_dia(ix,-1,1) = 0.0_R8
@@ -849,7 +865,9 @@ csw 13mar2013 added check upwind (SOLPS4)
      1    ti(bottomix(ix,iy),bottomiy(ix,iy)) , ti(ix,iy))
      &   -coni0_mdf*(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
      &    -fhiPSch(ix,iy,1)                                             !srv 13.10.06 }
-         if (balance.and.(mdf_fhi.eq.0)) then !djm Jan2017
+         if (balance.and.
+     &       (balance_netcdf.ne.0).and.
+     &       (mdf_fhi.eq.0)) then !djm Jan2017
            if(floi0.ge.0.0_R8) then
              upfac=1.0_R8
            else
@@ -880,7 +898,9 @@ csw 13mar2013 added check upwind (SOLPS4)
            fhi_ecrb(ix,iy,1) = 0.0_R8
            fhi_pschused(ix,iy,1) = 0.0_R8
          endif
-         if (balance.and.(mdf_fhi.ne.0)) then !djm Jan2017
+         if (balance.and.
+     &       (balance_netcdf.ne.0).and.
+     &       (mdf_fhi.ne.0)) then !djm Jan2017
            if(floi0_mdf.ge.0.0_R8) then
              upfac=1.0_R8
            else
@@ -918,7 +938,9 @@ csw 13mar2013 added check upwind (SOLPS4)
      1    (ti(bottomix(ix,iy),bottomiy(ix,iy)) + ti(ix,iy))/2
      &    -coni0_mdf*(ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
      &    -fhiPSch(ix,iy,1)                                             !srv 13.10.06 }
-         if (balance.and.(mdf_fhi.eq.0)) then !djm Jan2017
+         if (balance.and.
+     &       (balance_netcdf.ne.0).and.
+     &       (mdf_fhi.eq.0)) then !djm Jan2017
            fhi_32(ix,iy,1) = 1.5e0_R8*fni(ix,iy,1)*
      &                 (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2
            fhi_strange(ix,iy,1) = chvi(ix,iy,1)*
@@ -938,7 +960,9 @@ csw 13mar2013 added check upwind (SOLPS4)
            fhi_ecrb(ix,iy,1) = 0.0_R8
            fhi_pschused(ix,iy,1) = 0.0_R8
          endif
-         if (balance.and.(mdf_fhi.ne.0)) then !djm Jan2017
+         if (balance.and.
+     &       (balance_netcdf.ne.0).and.
+     &       (mdf_fhi.ne.0)) then !djm Jan2017
            fhi_32(ix,iy,1) = 1.5e0_R8*fni(ix,iy,1)*
      &                 (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2
            fhi_strange(ix,iy,1) = chvi(ix,iy,1)*
@@ -1003,7 +1027,7 @@ csw 18feb2014 remove fluxes between guard cells
              fhiPSch(ix,iy,0)=0.0_R8
              floi(ix,iy,0)=0.0_R8
              coni(ix,iy,0,:)=0.0_R8
-             if (balance) then
+             if (balance.and.(balance_netcdf.ne.0)) then
                fhi_32(ix,iy,0) = 0.0_R8 !djm Jan2017
                fhi_52(ix,iy,0) = 0.0_R8
                fhi_cond(ix,iy,0) = 0.0_R8
@@ -1022,7 +1046,7 @@ csw 18feb2014 remove fluxes between guard cells
              fhiPSch(ix,iy,1)=0.0_R8
              floi(ix,iy,1)=0.0_R8
              coni(ix,iy,1,:)=0.0_R8
-             if (balance) then
+             if (balance.and.(balance_netcdf.ne.0)) then
                fhi_32(ix,iy,1) = 0.0_R8 !djm Jan2017
                fhi_52(ix,iy,1) = 0.0_R8
                fhi_cond(ix,iy,1) = 0.0_R8
@@ -1060,7 +1084,7 @@ csw 18feb2014 remove fluxes between guard cells
          fhi(ix,iy,0)   =0.0e0_R8
          floi(ix,iy,0)  =0.0e0_R8
          coni(ix,iy,0,:)=0.0e0_R8                                       !srv 02.01.07
-         if (balance) then
+         if (balance.and.(balance_netcdf.ne.0)) then
            fhi_32(ix,iy,0) = 0.0_R8 !djm Jan2017
            fhi_52(ix,iy,0) = 0.0_R8
            fhi_cond(ix,iy,0) = 0.0_R8
@@ -1079,7 +1103,7 @@ csw 18feb2014 remove fluxes between guard cells
           fhi(ix,iy,1)   =0.0e0_R8
           floi(ix,iy,1)  =0.0e0_R8
           coni(ix,iy,1,:)=0.0e0_R8                                      !srv 02.01.07
-          if (balance) then
+          if (balance.and.(balance_netcdf.ne.0)) then
             fhi_32(ix,iy,1) = 0.0_R8 !djm Jan2017
             fhi_52(ix,iy,1) = 0.0_R8
             fhi_cond(ix,iy,1) = 0.0_R8
