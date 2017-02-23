@@ -4,8 +4,10 @@
       use b2mod_numerics_namelist
       use b2mod_time
       use b2mod_sources 
-     &     , only: ext_sna, ext_smo, ext_she, ext_shi, ext_sch, ext_sne,
-     &             ext_sna0to1, ext_smo0to3, ext_she0to3, ext_shi0to3 !djm Jan2017
+     &     , only: ext_sna, ext_smo, ext_she, ext_shi, ext_sch, ext_sne
+      use b2mod_balance !djm Jan2017
+     &     , only: ext_sna0to1, ext_smo0to3, ext_she0to3, ext_shi0to3,
+     &             balance_netcdf
       use b2mod_geo_corner
      &     , only: nmdpl
       implicit none
@@ -359,10 +361,12 @@
       ext_sch(:,:)=sch0(:,:,0)
 
 cdjm Jan2017 Keep linearised sources for balance
-      ext_sna0to1 = sna0
-      ext_smo0to3 = smo0
-      ext_she0to3 = she0
-      ext_shi0to3 = shi0
+      if (balance_netcdf.ne.0) then
+        ext_sna0to1 = sna0
+        ext_smo0to3 = smo0
+        ext_she0to3 = she0
+        ext_shi0to3 = shi0
+      endif
        
       if (new_files) then
         close(93)

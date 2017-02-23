@@ -15,6 +15,12 @@
       use b2mod_eirene_globals
       use b2mod_b2cmpa
       use b2mod_b2cmrc
+      use b2mod_balance !djm Jan2017
+     & , only : b2stel_sna_ion0to1, b2stel_sna_rec0to1,
+     &          b2stel_smq_ion0to3, b2stel_smq_rec0to3,
+     &          b2stel_she0to3,
+     &          b2stel_shi_ion0to3, b2stel_shi_rec0to3,
+     &          balance_netcdf
 #ifdef ASTRA
       use b2mod_b2_to_astra
      , , only : svol, se, seh, sih, b2_to_astra_src  !srv 28.07.11 11.06.13
@@ -523,13 +529,15 @@ c accounted for)
       endif                                                          !srv 30.06.08 11.09.09 }
 
 cdjm Jan2017 Keep linearised sources for balance
-      b2stel_sna_ion0to1 = sna0_ion
-      b2stel_sna_rec0to1 = sna0_rec
-      b2stel_smq_ion0to3 = smq0_ion
-      b2stel_smq_rec0to3 = smq0_rec
-      b2stel_she0to3=she0
-      b2stel_shi_ion0to3=shi0_ion
-      b2stel_shi_rec0to3=shi0_rec
+      if (balance_netcdf.ne.0) then
+        b2stel_sna_ion0to1 = sna0_ion
+        b2stel_sna_rec0to1 = sna0_rec
+        b2stel_smq_ion0to3 = smq0_ion
+        b2stel_smq_rec0to3 = smq0_rec
+        b2stel_she0to3=she0
+        b2stel_shi_ion0to3=shi0_ion
+        b2stel_shi_rec0to3=shi0_rec
+      endif
 
 * ..return
       ncall = ncall+1

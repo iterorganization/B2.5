@@ -16,9 +16,10 @@
       use b2mod_numerics_namelist
       use b2mod_sources
      1 , only : b2stbm_sna,b2stbm_smo,b2stbm_she,b2stbm_shi,b2stbm_sch,
-     2          b2stbm_sne,
-     3          b2stbm_sna0to1,b2stbm_smo0to3,b2stbm_she0to3,
-     4          b2stbm_shi0to3
+     2          b2stbm_sne
+      use b2mod_balance !djm Jan2017
+     1 , only : b2stbm_sna0to1,b2stbm_smo0to3,b2stbm_she0to3,
+     2          b2stbm_shi0to3, balance_netcdf
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
@@ -469,10 +470,12 @@ cxpb
       b2stbm_sch(:,:)=sch0(:,:,0)+sch0(:,:,1)*po(:,:)
 
 cdjm Jan2017 Keep linearised sources for balance
-      b2stbm_sna0to1 = sna0
-      b2stbm_smo0to3 = smo0
-      b2stbm_she0to3 = she0
-      b2stbm_shi0to3 = shi0
+      if (balance_netcdf.ne.0) then
+        b2stbm_sna0to1 = sna0
+        b2stbm_smo0to3 = smo0
+        b2stbm_she0to3 = she0
+        b2stbm_shi0to3 = shi0
+      endif
 
 * ..return
  999  if (main_call.or.ncall.eq.0) ncall = ncall+1

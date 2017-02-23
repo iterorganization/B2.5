@@ -235,7 +235,6 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call write_b2mod_transport(nout(7))
       call write_b2mod_anomalous_transport(nout(7))
       call write_b2mod_neutr_src_scaling(nout(7),nstrai)
-      call write_b2mod_eirene_sources(nout(7))
       close(nout(7))
 
 #ifdef JET
@@ -271,7 +270,6 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call dealloc_b2mod_astra_to_b2
       call dealloc_b2mod_b2_to_astra
       call dealloc_anomalous_transport
-      call dealloc_b2mod_eirene_sources
       call prgend ()
 #ifdef USE_MPI
       call mpi_barrier(MPI_COMM_WORLD,ierr_mpi)

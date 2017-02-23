@@ -13,9 +13,12 @@
       use b2mod_constants
       use b2mod_sources
      1 , only : b2npmo_smaf, b2npmo_smag, b2npmo_smav,
-     2          smpr, smpt, smfr, smcf, update_balance_sources_momentum!djm Jan2017
+     2          smpr, smpt, smfr, smcf
+      use b2mod_balance !djm Jan2017
+     1 , only : update_balance_sources_momentum, fmo_b2nxfv,
+     2          balance_netcdf
       use b2mod_plasma
-     & , only : fmo, fmo_b2nxfv                                        !djm Jan2017
+     & , only : fmo
       use b2mod_numerics_namelist
       use b2mod_b2cmpa
       use b2mod_external
@@ -231,7 +234,9 @@
 !       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,is), flub)
 *    ..add convective term due to new form of ion viscosity term only
        call b2nxfv (nx, ny, is, hz, cvsahz(-1,-1,0,is), flubv)        !srv 01.07.05 11.09.09
-       fmo_b2nxfv(:,:,:,is)=flubv                                     !djm Jan2017
+       if (balance_netcdf.ne.0) then
+         fmo_b2nxfv(:,:,:,is)=flubv !djm Jan2017
+       endif
        call b2saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                 !srv 11.09.09
 *    ..compute flcb, cvcb
        call b2nxfc (nx, ny, is, vol, pbshz, rob, 
@@ -265,7 +270,9 @@
        smof(:,:,:,is) = smb                                            !srv 10.11.02
 
 cdjm Jan2017 update momentum source components for balance
-      call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
+      if (balance_netcdf.ne.0) then
+        call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
+      endif
 
 *    ..compute residual
        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,

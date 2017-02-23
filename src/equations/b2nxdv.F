@@ -1,8 +1,8 @@
       subroutine b2nxdv (nx, ny, isb, rob, smqb, smqdu, smb)
       use b2mod_types
       use b2mod_indirect
-      use b2mod_sources !djm Jan2017
-     & , only : b2nxdv_smo0to3
+      use b2mod_balance !djm Jan2017
+     & , only : b2nxdv_smo0to3, balance_netcdf
       implicit none
       integer nx, ny, isb
       real (kind=R8) ::
@@ -51,7 +51,9 @@ cdjm Jan2017 Keep source at the start to calculate total change for balance rout
       endif
 
 cdjm Store the total change in linearised source for balance
-      b2nxdv_smo0to3(-1:nx,-1:ny,0:3,isb) = smb-smbtmp
+      if (balance_netcdf.ne.0) then
+        b2nxdv_smo0to3(-1:nx,-1:ny,0:3,isb) = smb-smbtmp
+      endif
 
       ncall = ncall+1
       call subend ()
