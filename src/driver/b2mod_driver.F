@@ -105,8 +105,9 @@
      *  save_f30, save_f31, external_species, no_current
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
-     *  ntim_batch = 500
+     *  ntim_batch = 500, ibatch_av_all = 0, edition_av = 0
       logical lwti, lwav
+      character(13) :: batch_name
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
      *  neutral_sources_rescale,
@@ -964,6 +965,7 @@
      1  delta_plasma_time,' simulation seconds'
        call ipgeti ('b2mndr_ntim_save', ntim_save)
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
+       call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
        if (ntim_save.gt.0)
      >  write(*,*) 'Saving plasma state files every ',
      1  ntim_save,' iterations'
@@ -1393,6 +1395,8 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
 *   read averaged profiles
       if (ird_aver > 0)
      &  call read_averages(na, te, ti, ua, po, nx, ny, ns)
+
+      if (ibatch_av_all > 0) call batch_av_all_init (nx, ny, ns)
 
       if(iout.ne.0) then                                             !srv 25.01.16 {
        call my_out(70,nx,ny,ne,'b2mndr_ne')
@@ -1929,6 +1933,12 @@ c new CDF movie option
         endif
         call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
      .              BoRiS,lwti,lwav,.true.)
+        if ((ibatch_av_all > 0) .and. lwav) then
+          edition_av = edition_av + 1
+          write (batch_name,'(a9,i4.4)') 'av_batch.',edition_av
+          call batch_av_all_save (batch_name,nx,ny,ns)
+          write(*,*) 'Saved ',batch_name
+        end if
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
@@ -2211,7 +2221,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
       endif
 
-      if (iaverage > 0) call profile_average (.true.,nx,ny,ns)
+      if (iaverage > 0) 
+     .   call profile_average (.true.,itim,ntim_batch,nx,ny,ns)
 
       if (ird_aver > 0) call write_averages (nx,ny,ns)
 

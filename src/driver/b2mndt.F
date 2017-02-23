@@ -25,6 +25,8 @@
 *   ..input arguments (unchanged on exit)
       integer nout(0:5), nx, ny, ns, ismain, ismain0,
      *  nscx, iscx(0:nscxmax-1), itim, ntim
+      integer :: ntim_batch = 500
+      integer :: ibatch_av_all = 0
       real (kind=R8) ::
      *  dtim
 *   ..input/output arguments
@@ -174,6 +176,8 @@
          nsmax=0
        endif
        call ipgeti ('b2mndt_average', iaverage)
+       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
+       call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
        if (boundary_namelist.ge.1) then
          call initialize_b2mod_boundary(nx,ny,ns,tim)
        else
@@ -536,8 +540,11 @@ ctmp.dpc
        goto 1
       endif
 
-      if (iaverage > 0)      call profile_average (.false.,nx,ny,ns)
-!wd      if (ibatch_av_all > 0)  call batch_av_all
+      if (iaverage > 0) then
+!         write (*,*) ' itim vor profile_average ', itim
+         call profile_average (.false.,itim,ntim_batch,nx,ny,ns)
+      end if
+      if (ibatch_av_all > 0) call batch_av_all(itim,ntim_batch,nx,ny,ns)
 
 * ..return
 99999 continue
