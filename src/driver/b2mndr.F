@@ -42,7 +42,8 @@
       use b2mod_boundary_namelist
       use b2mod_external
       use b2mod_balance !djm Jan2017
-     & , only : alloc_b2mod_balance, write_balance, balance_netcdf
+     & , only : write_balance, balance_netcdf
+
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_cinit
@@ -847,6 +848,7 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
+       call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
        call ipgeti ('b2mndr_iout', iout)                             !srv 25.01.16
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
@@ -1726,9 +1728,6 @@ csw 09oct2012 set default potential already at this point (BCs)
         else if (pot_eq.eq.2) then
           po(:,:)=3.1_R8*te(:,:)/qe
         endif
-
-cdjm Jan2017 allocate balance arrays (only done if balance_netcdf.ne.0)
-        call alloc_b2mod_balance(nx,ny,ns)
 
 *    ..perform one time step
         ok=.false.
