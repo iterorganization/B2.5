@@ -45,8 +45,13 @@
      & , only : alloc_b2mod_balance, write_balance, balance_netcdf
 #ifdef B25_EIRENE
       use eirmod_parmmod
+      use eirmod_cinit
+     * , only : eirene_init_cinit
       use eirmod_ccoupl
       use eirmod_clogau
+      use eirmod_ctrcei
+      use eirmod_comprt
+     , ,only: iunout
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25
@@ -201,7 +206,7 @@
      *  delta_plasma_time, save_plasma_time
       real (kind=R8) ::
      *  te_hot, ne_hot_frac
-      logical quitexist, quit, quitexist_
+      logical quitexist, quit, quitexist_, write_save
       real (kind=R8) ::
      *  stack_dtim(20)
       integer stack_ntim(20)
@@ -226,8 +231,8 @@
 *   ..procedures
       logical lnext
       real (kind=R8) ::
-     *  x05baf, epoch_seconds, rratio
-      external x05baf, epoch_seconds, rratio
+     *  epoch_seconds, rratio
+      external epoch_seconds, rratio
       intrinsic mod, abs, sqrt
       external subini, subend, xertst, xerrab, ipgeti, ipgetr,
      &  cfrure, cfwure, b2scopy
@@ -1172,10 +1177,14 @@ csw 09oct2012
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
         N1ST=DEF_NYD+1
-        N2ND=DEF_NXD+1+DEF_NCUT+DEF_ISOEXTRA
+        N2ND=DEF_NXD+MAX(1,DEF_NCUT/2*3)+
+     .       DEF_ISOEXTRA*MAX(0,DEF_NCUT/2-1)
         N3RD=DEF_NPHID
+        NREAC=7
+        IUNOUT=6
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_INIT_CINIT
 #else
         call xerrab
      &   ('Compile code with B25_EIRENE option for coupled runs')
@@ -1186,6 +1195,7 @@ csw 09oct2012
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
       CALL EIRENE_ALLOC_CCOUPL(1)
+      CALL EIRENE_ALLOC_CTRCEI
 #endif
 
 *   ..read geometry and metric
@@ -1246,10 +1256,14 @@ csw 09oct2012
         enddo                                                            !sv
       enddo                                                              !sv
 *  .. interpolate OnedBsq for corners of cell                            !sv
-      call my_intcor (nx,ny,vol,OnedBsq,OnedBsqc)                        !sv
+      call my_intcor (nx,ny,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,OnedBsq,OnedBsqc)        !sv
 *  .. interpolate magnetic field to cell corners                         !xpb
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
-      call my_intcor1(nx,ny,2,vol,bb,wbbc)                               !xpb
+      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)                 !xpb
 *   ..compute extrapolated wbbc(:,:,3) component
       wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
 *   ..compute hz                                                         !srv 09.01.01  09.06.08 {
@@ -1654,7 +1668,7 @@ c new CDF movie option (1st frame at t=0)
       elapsedval = 0.0_R8
       stack_ptr=0
       ne_wanted_next_time=tim
-      cpuinit=x05baf()
+      call cpu_time(cpuinit)
       elapsedinit=epoch_seconds()
 
     1 continue
@@ -1662,7 +1676,7 @@ c new CDF movie option (1st frame at t=0)
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
      1            itim,dtim,ntim,stack_ptr,quit
 
-      cpustart=x05baf()
+      call cpu_time(cpustart)
       elapsedstart=epoch_seconds()
 *   ..loop test
 *!!   (Note: better loop control yet to be developed)
@@ -1878,7 +1892,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
-        cpuval=x05baf()
+        call cpu_time(cpuval)
         elapsedval=epoch_seconds()
         if (b2mndr_cpu.gt.0.0_R8) then
           write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
@@ -1916,11 +1930,13 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &       b2mndr_elapsed.gt.0.0_R8).or.
      2      (etim.gt.stim.and.tim.ge.etim.and.etim.ne.0.0_R8).or.
      3      (no_solve.eq.1.and.itim.eq.ntim)
-        if(.not.quit.and.
-     .   ((cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8).or.
-     .    (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)).or.
-     .    (ntim_save.gt.0.and.ntim.gt.0.and.mod(ntim,ntim_save).eq.0))
-     >   then
+        write_save=cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8
+        write_save=write_save.or.
+     .   (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
+        if(ntim_save.gt.0.and.ntim.gt.0) write_save=write_save.or.
+     .   mod(ntim,ntim_save).eq.0
+        write_save=write_save.and..not.quit
+        if(write_save) then
           write(savefile(13:16),'(i4)') edition
           edition=edition+1
           if(cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8)
@@ -2149,6 +2165,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_DEALLOC_CCOUPL
+      CALL EIRENE_DEALLOC_CTRCEI
 #endif
       call subend ()
       return

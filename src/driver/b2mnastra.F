@@ -134,7 +134,7 @@
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
-      real (kind=R8) :: cpu_s, cpu_f, x05baf
+      real (kind=R8) :: cpu_s, cpu_f
       logical file_open
 *   ..procedures
       external prgini, prgend, xerset, xertst, cfopen, cfruin
@@ -166,7 +166,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       endif
 #endif
       call prgini ('b2mnastra')
-      cpu_s = x05baf()
+      call cpu_time(cpu_s)
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
@@ -254,7 +254,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          if (file_open) close(nout(io))
       enddo
 
-      cpu_f= x05baf()
+      call cpu_time(cpu_f)
       write(*,"(/' b2mnastra takes ',f12.1,' sec'/)") cpu_f - cpu_s
 
 * ..end of computation

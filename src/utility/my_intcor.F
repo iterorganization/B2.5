@@ -1,23 +1,41 @@
-      subroutine my_intcor1(nx,ny,nz,vol,centre,corner)
+      subroutine my_intcor1(nx,ny,nz,vol,periodic_bc,nncut,
+     & leftix,leftiy,rightix,rightiy,
+     & bottomix,bottomiy,topix,topiy,region,centre,corner)
       use b2mod_types
       implicit none
-      integer nx,ny,nz
+      integer nx,ny,nz,periodic_bc,nncut
+      integer ::
+     * leftix(-1:nx,-1:ny),leftiy(-1:nx,-1:ny),
+     * rightix(-1:nx,-1:ny),rightiy(-1:nx,-1:ny),
+     * bottomix(-1:nx,-1:ny),bottomiy(-1:nx,-1:ny),
+     * topix(-1:nx,-1:ny),topiy(-1:nx,-1:ny),
+     * region(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
      * vol(-1:nx,-1:ny),centre(-1:nx,-1:ny,0:nz),
      1 corner(-1:nx+1,-1:ny+1,0:nz)
       integer is
       do is=0,nz
-        call my_intcor(nx,ny,vol,centre(-1,-1,is),corner(-1,-1,is))
+        call my_intcor(nx,ny,vol,periodic_bc,nncut,
+     &   leftix,leftiy,rightix,rightiy,
+     &   bottomix,bottomiy,topix,topiy,region,
+     &   centre(-1,-1,is),corner(-1,-1,is))
       enddo
       return
       end
 c
-      subroutine my_intcor(nx,ny,vol,centre,corner)
+      subroutine my_intcor(nx,ny,vol,periodic_bc,nncut,
+     & leftix,leftiy,rightix,rightiy,
+     & bottomix,bottomiy,topix,topiy,region,centre,corner)
       use b2mod_types
-      use b2mod_indirect
       implicit none
 
-      integer nx,ny
+      integer nx,ny,periodic_bc,nncut
+      integer ::
+     * leftix(-1:nx,-1:ny),leftiy(-1:nx,-1:ny),
+     * rightix(-1:nx,-1:ny),rightiy(-1:nx,-1:ny),
+     * bottomix(-1:nx,-1:ny),bottomiy(-1:nx,-1:ny),
+     * topix(-1:nx,-1:ny),topiy(-1:nx,-1:ny),
+     * region(-1:nx,-1:ny,0:2)
       real (kind=R8) ::
      * vol(-1:nx,-1:ny),centre(-1:nx,-1:ny),corner(-1:nx+1,-1:ny+1)
 

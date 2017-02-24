@@ -48,7 +48,10 @@ c 2002-09-11: logic revised
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_clogau
+      use eirmod_ctrcei
       use eirmod_ctrig
+      use eirmod_cinit
+     , , only: eirene_init_cinit
       use eirmod_extrab25
       use eirmod_braeir
       use eirmod_cestim
@@ -56,6 +59,8 @@ c 2002-09-11: logic revised
      , , only: eirene_dealloc_coutau
       use eirmod_comusr
      , , only: eirene_dealloc_comusr, nmassa, nmassm, nmassi
+      use eirmod_comprt
+     , , only: iunout
       use eirmod_eirbra
      & , smo_eir => smo
 #endif
@@ -284,10 +289,14 @@ c
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
         N1ST=DEF_NYD+1
-        N2ND=DEF_NXD+1+DEF_NCUT+DEF_ISOEXTRA
+        N2ND=DEF_NXD+MAX(1,DEF_NCUT/2*3)+
+     .       DEF_ISOEXTRA*MAX(0,DEF_NCUT/2-1)
         N3RD=DEF_NPHID
+        NREAC=7
+        IUNOUT=6
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_INIT_CINIT
       endif
 #endif
       natmi = natm
@@ -297,6 +306,7 @@ c
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
+      CALL EIRENE_ALLOC_CTRCEI
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
 #endif
@@ -1374,12 +1384,15 @@ c
             call dealloc_b2mod_neoclassical
             call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
-            deallocate(emach)
-            call dealloc_b2mod_b2plot_eirene
+            if (allocated(emach)) then
+              deallocate(emach)
+              call dealloc_b2mod_b2plot_eirene
+            end if
             CALL EIRENE_DEALLOC_CTRIG
             CALL EIRENE_DEALLOC_CESTIM
             CALL EIRENE_DEALLOC_COMUSR
             CALL EIRENE_DEALLOC_COUTAU
+            CALL EIRENE_DEALLOC_CTRCEI
             CALL EIRENE_DEALLOC_BRAEIR
             CALL EIRENE_DEALLOC_EIRBRA
             CALL EIRENE_EXTRAB25_CLEANUP
@@ -1444,12 +1457,15 @@ c
           call dealloc_b2mod_neoclassical
           call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
-          deallocate(emach)
-          call dealloc_b2mod_b2plot_eirene
+          if (allocated(emach)) then
+            deallocate(emach)
+            call dealloc_b2mod_b2plot_eirene
+          end if
           CALL EIRENE_DEALLOC_CTRIG
           CALL EIRENE_DEALLOC_CESTIM
           CALL EIRENE_DEALLOC_COMUSR
           CALL EIRENE_DEALLOC_COUTAU
+          CALL EIRENE_DEALLOC_CTRCEI
           CALL EIRENE_DEALLOC_BRAEIR
           CALL EIRENE_DEALLOC_EIRBRA
           CALL EIRENE_EXTRAB25_CLEANUP
@@ -5832,7 +5848,9 @@ c-dpc still in testing phase
           write(*,*) 'bpol_c: min & max ',
      1     minval(uedge_c),maxval(uedge_c)
           uedge_v=0.0_R8
-          call my_intcor(nx,ny,vol,uedge_c,corners)
+          call my_intcor(nx,ny,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,uedge_c,corners)
           write(*,*) 'bpol_v: min & max ',
      1     minval(corners),maxval(corners)
           do iy=-1,ny
@@ -5866,7 +5884,9 @@ c-dpc still in testing phase
           write(*,*) 'bphi_c: min & max ',
      1     minval(uedge_c),maxval(uedge_c)
           uedge_v=0.0_R8
-          call my_intcor(nx,ny,vol,uedge_c,corners)
+          call my_intcor(nx,ny,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,uedge_c,corners)
           write(*,*) 'bphi_v: min & max ',
      1     minval(corners),maxval(corners)
           do iy=-1,ny
@@ -5900,7 +5920,9 @@ c-dpc still in testing phase
           write(*,*) 'b_c: min & max ',
      1     minval(uedge_c),maxval(uedge_c)
           uedge_v=0.0_R8
-          call my_intcor(nx,ny,vol,uedge_c,corners)
+          call my_intcor(nx,ny,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,uedge_c,corners)
           write(*,*) 'b_v: min & max ',
      1     minval(corners),maxval(corners)
           do iy=-1,ny
@@ -6037,17 +6059,18 @@ c-dpc still in testing phase
           nz=1
           call get_amjuel_data(filnam,h123,reac,crc,
      1     nxd,nyd,nx,ny,ne,te,mach)
-          ndim(3,iwrk)=nz
           call copy(mach,1.0_R8,1,textbl)
-          graphlabel(iwrk)=filnam//h123//reac//crc
+          ndim(3,iwrk)=nz
+          graphlabel(iwrk)=
+     1     trim(filnam)//' '//trim(h123)//' '//trim(reac)//' '//crc
         case('adas')     ! accesses ADAS atomic physics data
           stack_req=(/0,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
           call strcopy(9,256,reac,spop(sstack,isstack))
           nz=ns
           call get_adas_data(reac,nz,nxd,nyd,nx,ny,ne,te,mach)
-          ndim(3,iwrk)=nz
           call copy(mach,1.0_R8,nz,textpl)
+          ndim(3,iwrk)=nz
           graphlabel(iwrk)='ADAS '//trim(reac)//' rate'
         case('scat')     ! concatenate two strings on top of string stack
           stack_req=(/0,0,2,0,0,0,0/)

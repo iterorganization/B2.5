@@ -719,10 +719,10 @@ c-----------------------------------------------------------------------
         hlp_p=0.0_R8
         hlp_s=0.0_R8
         hlp_hep=0.0_R8
-
-c      print *,'%%## j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o',!###
-c     ,              j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o  !###
-
+#ifdef DBG
+        print *,'%%## j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o',!###
+     ,                j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o  !###
+#endif
         hlp_pi=0.0_R8
         hlp_si=0.0_R8
         if(lpfrs_pmp.ne.2) then !{

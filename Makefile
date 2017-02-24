@@ -200,7 +200,7 @@ SRCF = ${OBJS:%.o=%.F}
 PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe b2pl.exe b2ymb.exe b2yrp.exe b2ydm.exe
 PROG_MN = b2mn.exe
 PROG_XD = b2xd.exe
-PROG_OT = b2ag.exe b2ah.exe b2ai.exe b2ar.exe b2co.exe b2uf.exe b2fu.exe b2ts.exe b2yi_gnuplot.exe b2yh.exe b2yt.exe b2yv.exe b2fgmtry_mod.exe b2mnastra.exe
+PROG_OT = b2ag.exe b2ah.exe b2ai.exe b2ar.exe b2co.exe b2uf.exe b2fu.exe b2ts.exe b2yi_gnuplot.exe b2yh.exe b2yt.exe b2yv.exe b2fgmtry_mod.exe b2mnastra.exe calc_atomic_data.exe
 PROG_OP = b2op.exe b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
 PROG_ID = b2_ual_write.exe
@@ -634,14 +634,23 @@ ${OBJDIR}/eirmod_ccoupl.${MOD}:
 ${OBJDIR}/eirmod_cestim.${MOD}:
 	touch ${OBJDIR}/eirmod_cestim.${MOD}
 
+${OBJDIR}/eirmod_cinit.${MOD}:
+	touch ${OBJDIR}/eirmod_cinit.${MOD}
+
 ${OBJDIR}/eirmod_clogau.${MOD}:
 	touch ${OBJDIR}/eirmod_clogau.${MOD}
+
+${OBJDIR}/eirmod_comprt.${MOD}:
+	touch ${OBJDIR}/eirmod_comprt.${MOD}
 
 ${OBJDIR}/eirmod_comusr.${MOD}:
 	touch ${OBJDIR}/eirmod_comusr.${MOD}
 
 ${OBJDIR}/eirmod_coutau.${MOD}:
 	touch ${OBJDIR}/eirmod_coutau.${MOD}
+
+${OBJDIR}/eirmod_ctrcei.${MOD}:
+	touch ${OBJDIR}/eirmod_ctrcei.${MOD}
 
 ${OBJDIR}/eirmod_ctrig.${MOD}:
 	touch ${OBJDIR}/eirmod_ctrig.${MOD}

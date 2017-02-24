@@ -158,3 +158,7 @@ contains
   end function isTriangleCell
 
 end module b2mod_cellhelper
+
+!!!Local Variables:
+!!! mode: f90
+!!! End:

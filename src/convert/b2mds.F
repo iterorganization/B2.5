@@ -33,7 +33,11 @@
 #endif
       use b2mod_version
 #ifdef B25_EIRENE
+      use eirmod_cinit
+     * , only : eirene_init_cinit
       use eirmod_clogau
+      use eirmod_ctrcei
+      use eirmod_comprt
       use eirmod_braeir
       use eirmod_eirbra
      * , only : eirene_alloc_eirbra, eirene_dealloc_eirbra
@@ -159,16 +163,21 @@ c
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
         N1ST=DEF_NYD+1
-        N2ND=DEF_NXD+1+DEF_NCUT+DEF_ISOEXTRA
+        N2ND=DEF_NXD+MAX(1,DEF_NCUT/2*3)+
+     .       DEF_ISOEXTRA*MAX(0,DEF_NCUT/2-1)
         N3RD=DEF_NPHID
+        NREAC=7
+        IUNOUT=6
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_INIT_CINIT
       endif
 #endif
       NFLAI = NFL
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
+      CALL EIRENE_ALLOC_CTRCEI
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
 #endif
@@ -1547,6 +1556,7 @@ c
       call dealloc_b2mod_neutrals
       call dealloc_b2mod_wall_init
 #ifdef B25_EIRENE
+      CALL EIRENE_DEALLOC_CTRCEI
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_EXTRAB25_CLEANUP
