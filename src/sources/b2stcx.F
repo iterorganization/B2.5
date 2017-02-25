@@ -326,7 +326,7 @@ ctmp.dpc
       endif
 
 cdjm Jan2017 Keep linearised sources for balance
-      if (balance_netcdf) then
+      if (balance_netcdf.ne.0) then
         b2stcx_sna0to1 = sna0
         b2stcx_smq0to3 = smq0
         b2stcx_shi0to3 = shi0
