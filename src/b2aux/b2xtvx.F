@@ -11,9 +11,9 @@
       real (kind=R8) ::
      *   t0, t1, t2
       intrinsic min, max, real
-      external b2xvfx
+      external b2xvfx, rratio
       real (kind=R8) ::
-     *   med
+     *   med, rratio
       med(t0,t1,t2) = min(max(t0,t1),max(t1,t2),max(t2,t0))
 *     ------------------------------------------------------------------
 *   ..test edge values of fun
@@ -34,7 +34,7 @@
            wrk(ix,iy1) = (fun(ix,iy-1)+fun(ix,iy))/2
         enddo
        else
-        t0 = real((2*iy+1)*ny1-(2*iy1+1)*ny)/(2*ny1)
+        t0 = rratio((2*iy+1)*ny1-(2*iy1+1)*ny,2*ny1)
         do ix = 0, nx
          t1 = t0*fun(ix,iy-1)+(1-t0)*fun(ix,iy)
          t2 = (1+t0)*fun(ix,iy)-t0*fun(ix,iy+1)
@@ -57,7 +57,7 @@
          fun1(ix1,iy1) = wrk(ix,iy1)
         enddo
        else
-        t0 = real(nx*ix1-ix*nx1)/nx1
+        t0 = rratio(nx*ix1-ix*nx1,nx1)
         do iy1 = -1, ny1
          fun1(ix1,iy1) = (1-t0)*wrk(ix,iy1)+t0*wrk(ix+1,iy1)
         enddo
