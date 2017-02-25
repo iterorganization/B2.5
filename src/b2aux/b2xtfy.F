@@ -43,11 +43,15 @@
         do ix1 = -1, nx1
          if (ix1.eq.-1) then
           ixa = -1
+         else if (ix1.eq.nx1) then
+          ixa = nx
          else
           ixa = 2*nx-1-(4*nx1-1-2*ix1)*nx/(2*nx1)
          endif
          if (ix1.eq.nx1) then
           ixb = nx
+         else if (ix1.eq.-1) then
+          ixb = -1
          else
           ixb = (2*ix1+2*nx1+1)*nx/(2*nx1)-nx
          endif
