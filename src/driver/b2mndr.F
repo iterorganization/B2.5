@@ -2109,13 +2109,14 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         endif
       endif
 *   ..create netcdf file containing everything for balance post-processing routines !djm Jan2017
-#ifndef NO_CDF
       if(balance_netcdf.ne.0) then
+#ifndef NO_CDF
         call write_balance(nx,ny,ns)
-      endif
 #else
-      write(*,*) 'NO_CDF is set at compilation, cannot write balance.nc'
+        write(*,*)
+    >    'NO_CDF is set at compilation, cannot write balance.nc'
 #endif
+      endif
 
 #ifdef CATALYST
       if (use_catalyst .eqv. .true.) call coprocessorfinalize()
