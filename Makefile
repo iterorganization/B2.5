@@ -693,7 +693,7 @@ ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
 	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${LDOPTSend}
 
-${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h
+${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F
 	@${BLD} $@ ${LIBOBJS}
 
 ${SOLPS4OBJS}: ${OBJDIR}/%.o: ${SOLPS4}/%.F
@@ -813,7 +813,7 @@ endif
 tags:
 	rm -f ${SRCB2}/TAGS ; etags -o ${SRCB2}/TAGS ${TAGSLIST}
 
-listobj: ${OBJDIR}/dependencies
+listobj: ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F
 	@echo "ParaView=${PARAVIEW_LIB}"
 ifdef USE_EIRENE
 	@rm -f ${OBJDIR}/LISTOBJ; touch ${OBJDIR}/LISTOBJ; l="OBJS ="; \
@@ -842,7 +842,7 @@ else
 	done; \
 	echo "$$l" | eval sed "$$E" > ${OBJDIR}/LISTOBJ
 endif
-	@l="B2OBJS = b2cdci.o"; \
+	@l="B2OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
 		l="$$l `(cd $$d > /dev/null; echo *.F)`"; \
 	done; \
