@@ -182,16 +182,16 @@ c***  srfs_d    : specific masses of possible wall materials [g/cm**3]
 c***  srfs_a    : atomic weight of possible wall materials
 c***  wllersf   : ratio of erosion to sputtering for different meterials
       integer n_srfs_m
-      parameter (n_srfs_m=7)
+      parameter (n_srfs_m=8)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m),
      .                  wllersf(nsptmx)
       character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
       logical streql
       external streql
-      data srfs_m /'Be','C','CFC','Fe','SS','Mo','W'/
-      data srfs_x /'Be','C','C'  ,'Fe','Fe','Mo','W'/
-      data srfs_a /  9.,12., 12. , 56., 56., 96.,184./
-      data srfs_d /1.8 ,2.0, 2.0 , 7.8, 7.8,10.2,19.3/
+      data srfs_m /'Be','C','CFC','Fe','SS','ss','Mo' ,'W'/
+      data srfs_x /'Be','C','C'  ,'Fe','Fe','Fe','Mo' ,'W'/
+      data srfs_a /  9.,12., 12. , 56., 56., 56., 96. , 184./
+      data srfs_d /1.8 ,2.0, 2.0 , 7.8, 7.8, 7.8, 10.2, 19.3/
       save
 c=======================================================================
 
@@ -732,7 +732,25 @@ c*** Print the column headers
           end do !}
         end do !}
 c        print *,'About to write a header:',k-1,' symbols'   !###
-c        print *,hdr_line(1:k-1)                             !###
+c        print *,hdr_line(1:k-1)  
+                           !###
+        write(lun,740) 'x',tab,'co-ordinate along plot zone [m].'
+        write(lun,740) 'Wtot',tab,'total power flux [W/m^2]'
+        write(lun,740) 'Wrad',tab,'power flux with radiation [W/m^2]'
+        write(lun,740) 'Wpart',tab,'power flux with particles [W/m^2]'
+        write(lun,740) 'Wpls',tab,'power flux with charged particles
+     ,[W/m^2]'
+        write(lun,740) 'Wneut',tab,'power flux with neutral particles 
+     ,[W/m^2]'
+        write(lun,740) 'Wheat',tab,'power flux due to neutral 
+     ,particles in contact with wall [W/m^2]'
+        write(lun,740) 'Wpot',tab,'power flux due to recombination 
+     ,[W/m^2]'
+        write(lun,740) 'ersne_XX',tab,'net erosion of wall material XX 
+     ,[mm/y]'
+        write(lun,740) 'ersne_XX',tab,'gross erosion of wall material 
+     ,XX [mm/y]'
+  740 format('# ',2a,' : ',a)
         write(lun,'(a)') hdr_line(1:k-1)
       end if !}
 
