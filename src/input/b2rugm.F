@@ -381,12 +381,12 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
           iy = ny/2
           do ix = 1, nx-2
             if (rightix(ix,iy).eq.nx+1) then
-              cflags(ix-1,1:ny-2,CELLFLAG_TYPE) = GRID_BOUNDARY
-              cflags(ix,0:ny-1,CELLFLAG_TYPE) = GRID_GUARD
+              cflags(ix-1,0:ny-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+              cflags(ix,-1:ny,CELLFLAG_TYPE) = GRID_GUARD
             end if
             if (leftix(ix,iy).eq.-2) then
-              cflags(ix,0:ny-1,CELLFLAG_TYPE) = GRID_GUARD
-              cflags(ix+1,1:ny-2,CELLFLAG_TYPE) = GRID_BOUNDARY
+              cflags(ix,-1:ny,CELLFLAG_TYPE) = GRID_GUARD
+              cflags(ix+1,0:ny-1,CELLFLAG_TYPE) = GRID_BOUNDARY
             end if
           end do
         end if

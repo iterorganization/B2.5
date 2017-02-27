@@ -254,7 +254,7 @@
 			<switch>
 				<name>b2agsi_isymm</name>
 				<default>1</default>
-				<type>isymm - integer</type>
+				<type>integer</type>
 				<description>
 					isymm - integer. 
 					isymm specifies the type of symmetry of the geometry: isymm.eq.0 implies a slab geometry, 
@@ -272,12 +272,12 @@
 				</description>
 				<switch>
 					<name>b2stbc_coreregno</name>
-					<type>coreregno - integer</type>
+					<type>integer</type>
 					<default>1</default>
 				</switch>
 				<switch>
 					<name>b2stbc_coreregn2</name>
-					<type>coreregn2 - integer</type>
+					<type>integer</type>
 					<default>4</default>
 				</switch>
 			</switchgroup>
@@ -344,7 +344,7 @@
 			<switch>
 				<name>b2agfs_Bt_rescale</name>
 				<default>1.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Bt_rescale - real*8. 
 					The magnetic field will be multiplied by Bt_rescale. All components of the field are scaled together. To be used in b2ag.dat.
@@ -685,22 +685,22 @@
 				<switch>
 					<name>b2news_facdrift_dec</name>
 					<default>0.0</default>
-					<type>re</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2news_facdrift_inc</name>
 					<default>1.0</default>
-					<type>re</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2news_facdrift_start</name>
 					<default>0.0</default>
-					<type>re</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2news_facdrift_target</name>
 					<default>0.0</default>
-					<type>re</type>
+					<type>real</type>
 				</switch>
 			</switchgroup>
 			<switchgroup>
@@ -711,12 +711,12 @@
 				<switch>
 					<name>b2news_facExB_dec</name>
 					<default>0.0</default>
-					<type>re</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2news_facExB_inc</name>
 					<default>1.0</default>
-					<type>re</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2news_facExB_start</name>
@@ -1236,8 +1236,9 @@
 					Sput_frc is superseded by the chem_sput array from b2.neutrals.namelist if the latter is used. 
 					For neutrals species, we add a factor of alpha*na*vbar to the particle flux to the plate (used to compute chemical and RES sputtering), where vbar is the average neutral particle speed. 
 					Sput_phys turns on physical sputtering when sput_phys.gt.0.0 and contains a (real) multiplier for the physical sputtering rate looked up in the TRIM tables. It is superseded by the phys_sput array in b2.neutrals.parameters if the latter is used. 
-					sput_phys_col indicates which column to use in the TRIM table; the default (3) corresponds to 30 degrees incidence. 
-					The columns are for 0 15 30 45 55 65 75 80 85 degrees. This angle is also used in the empirical formula. Plate_temp is the temperature (in Kelvin) of the COOLED end of the divertor plates. The surface temperature is computed self-consistently (using a 1-D description) according to the incident heat fluxes from the plasma. The plate is assumed to have a thickness of plate_thick, measured in meters. When plate_thick.eq.0 (default), the plate surface temperature is assumed to be the same as plate_temp. Sput_res turns on radiation enhanced sublimation (RES) when .gt.0.0 and is a multiplier to the RES rate. 
+					sput_phys_col indicates which column to use in the TRIM table; the default (3) corresponds to 30 degrees incidence. The columns are for
+                      0 15 30 45 55 65 75 80 85
+                    degrees. This angle is also used in the empirical formula. Plate_temp is the temperature (in Kelvin) of the COOLED end of the divertor plates. The surface temperature is computed self-consistently (using a 1-D description) according to the incident heat fluxes from the plasma. The plate is assumed to have a thickness of plate_thick, measured in meters. When plate_thick.eq.0 (default), the plate surface temperature is assumed to be the same as plate_temp. Sput_res turns on radiation enhanced sublimation (RES) when .gt.0.0 and is a multiplier to the RES rate. 
 					The switch sputter_energy_on turns on the energy contribution from the sputtered particles (physical and chemical). If sputter_energy_on.eq.0, the particles are sputtered cold, with no energy contribution to the ion heat equation. 
 					If sputter_energy_on.ne.0 (default), the chemically sputtered particles are re-introduced into the plasma with the thermal energy corresponding to the surface temperature of the material, while physically sputtered particles are re-introduced with the TRIM-calculated energy sputtering yield (if the TRIM model is used). 
 					Therm_evap turns on thermal evaporation when .gt.0.0 and is a multiplier to the thermal evaporation rate. 
@@ -1588,7 +1589,6 @@
 				<name>b2sifr_phm2</name>
 				<default>1.0</default>
 				<type>real</type>
-				<note>!Unused</note>
 				<description>
 					Multiplier of the electron thermal gradient term in the thermal force term
 				</description>
@@ -2149,7 +2149,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Another option for p<type>real</type>lasma state file output. Give the number of B2.5 full interations between succesive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals. Should be used, at the exclusion of other plasmastate write-up frequency settings, in conjunction with the Leuven Monte-Carlo averaging scheme.
+					Another option for plasma state file output. Give the number of B2.5 full interations between succesive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals. Should be used, at the exclusion of other plasmastate write-up frequency settings, in conjunction with the Leuven Monte-Carlo averaging scheme.
 				</description>
 			</switch>
 			<switch>
@@ -2484,7 +2484,7 @@
 				<description>
 					Minimum residuals for an internal solution loop to stop.
 					Used in conjunction with (not in replacement of) the nstg(0:2) numbers.
-					All non-zero criteria must be met simultaneously. The continuity equation residual applies to the &quot;ismain&quot; species (See &quot;Run&quot; section).
+					All nonzero criteria must be met simultaneously. The continuity equation residual applies to the &quot;ismain&quot; species (See &quot;Run&quot; section).
 				</description>
 				<switch>
 					<name>b2mndt_nstg_areshe</name>
@@ -2569,7 +2569,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Print min and max values of te, ti, na &#39; ua
+					Print min and max values of te, ti, na &amp; ua
 				</description>
 			</switch>
 			<switch>
@@ -3433,7 +3433,6 @@
 				<name>b2xzdd_zero_dead_and_core</name>
 				<default>1</default>
 				<type>integer</type>
-				<type>realy</type>
 				<description>
 					If 1 then zero passed sources in dead regions, 
 					If 2 zero passed sources in dead regions and core boundary cells 
@@ -3448,27 +3447,27 @@
 				<switch>
 					<name>b2sihs_rf0</name>
 					<default>1.0</default>
-					<type>realy</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2sihs_rf1</name>
 					<default>1.0</default>
-					<type>realy</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2sihs_rf2</name>
 					<default>1.0</default>
-					<type>realy</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2sihs_rf3</name>
 					<default>1.0</default>
-					<type>realy</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2sihs_rf4</name>
 					<default>1.0</default>
-					<type>realy</type>
+					<type>real</type>
 				</switch>
 			</switchgroup>
 			<switch>
@@ -3759,7 +3758,7 @@
 				<type>integer</type>
 				<description>
 					When changed from 0, and if the ADAS option is in use, then uses the PRB file to add the contribution arising from is--&gt;is-1 processes.
-					This term includes the Bremsstrahlung.
+					This term includes the bremsstrahlung.
 					The default option (&#39;0&#39;) only contains the Bremsstrahlung for the is--&gt;is-1 process.
 					This option should be used with the &#39;b2stel_fix_recomb_energy&#39; option b2mn.dat set to &#39;1&#39;. See &#39;Physics&#39; section.
 					*** Use with caution! ***
