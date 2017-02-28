@@ -1,10 +1,11 @@
 <?xml version="1.0" ?>
 <b2>
-	<module name="b2ai">
-		<category name="basic parameters">
+	<module name="b2ai.dat">
+		<category name="b2ai params">
 			<switch>
 				<name>dimens</name>
 				<default>None</default>
+				<type>None</type>
 				<description>
 					the number of charge states
 				</description>
@@ -12,11 +13,13 @@
 			<switch>
 				<name>label</name>
 				<default>None</default>
+				<type>None</type>
 				<description>a label</description>
 			</switch>
 			<switch>
 				<name>specs</name>
 				<default>None</default>
+				<type>None</type>
 				<description>
 					atomic charge, nuclear charge, atomic mass and atomic charge squared for each charge stateminimum atomic charge of the stage, maximum atomic charge of the stage, nuclear charge, and atomic mass; this data should match that given in b2ah.dat
 				</description>
@@ -24,6 +27,7 @@
 			<switch>
 				<name>naini</name>
 				<default>None</default>
+				<type>None</type>
 				<description>
 					initial densities for each of the charge states, in m^-3
 				</description>
@@ -31,14 +35,15 @@
 			<switch>
 				<name>ttini</name>
 				<default>None</default>
+				<type>None</type>
 				<description>
 					initial ion and electron temperature, in eV
 				</description>
 			</switch>
 		</category>
 	</module>
-	<module name="b2ah">
-		<category name="None">
+	<module name="b2ah.dat">
+		<category name="b2ah params">
 			<switch>
 				<name>dimens</name>
 				<default>None</default>
@@ -153,11 +158,12 @@
 			</switch>
 		</category>
 	</module>
-	<module name="b2ag">
-		<category name="None">
+	<module name="b2ag.dat">
+		<category name="b2ag params">
 			<switch>
 				<name>dimens</name>
 				<default>None</default>
+				<type>None</type>
 				<description>
 					specifies the size of the grid first pair is NX &amp; NY of the grid you want to produce second pair is the size of the grid that was originally created each needs to be an integer multiple of the corresponding entry of the first pair. Note that for double-null cases, the interior guard cells corresponding to the top divertor boundaries should not be multiplied.
 				</description>
@@ -165,13 +171,14 @@
 			<switch>
 				<name>param</name>
 				<default>None</default>
+				<type>None</type>
 				<description>
 					at least 100 additional numbers, of which only the first is relevant for us -1.0 read the mesh data using the "simplified" Carre format -2.0 read the mesh data using the Sonnet format
 				</description>
 			</switch>
 		</category>
 	</module>
-	<module name="b2mn">
+	<module name="b2mn.dat">
 		<routine name="b2cdci">
 			<purpose>
 				B2CDCI provides information about internal parameters of the b2 code. No computation is performed in this routine.
@@ -3796,8 +3803,7 @@
 		</category>
 	</module>
 	<module name="b2.parameters">
-		<category name="None">
-			<!-- b2md.dat -->
+		<category name="b2.neutrals.parameters">
 			<switch>
 				<name>NSTRAI</name>
 				<default>0</default>
@@ -4405,7 +4411,8 @@
 					Mass*100 + nuclear charge of the sputtered particle. Defaults to 0, internally changed to 1206 = carbon.
 				</description>
 			</switch>
-			<!-- b2.wall_save.parameters -->
+		</category>
+		<category name="b2.wall_save.parameters">
 			<switch>
 				<name>NDEPTH_NML</name>
 				<default>1</default>
@@ -4640,8 +4647,9 @@
 				<description>
 					Contains the relative atomic abundances of the various elements present within the surface layer of wall element (iwall). Defaults to 1.0 for the first value, 0.0 otherwise.
 				</description>
-			</switch>
-			<!-- save_mds resave_mds -->
+			</switch>	
+		</category>
+		<category name="b2md.dat">
 			<switch>
 				<name>EXP</name>
 				<default>NOT_SET</default>
@@ -4714,7 +4722,8 @@
 					Indicate the shot number to overwrite (to be used only when updating an already saved run with &#39;resave_mds&#39; script). Defaults to the last number found in shotnumber.history, or 0 if the file is not found.
 				</description>
 			</switch>
-		<!-- b2.boundary.parameters -->
+		</category>
+		<category name="b2.boundary.parameters">
 			<switch>
 				<name>NBC</name>
 				<default>0</default>
@@ -5119,7 +5128,8 @@
 					If .true. (default), writes the content of the namelist to stdout after it has been read.
 				</description>
 			</switch>
-			<!--b2.feedback_save.parameters-->
+		</category>
+		<category name="b2.feedback_save.parameters">
 			<switch>
 				<name>SAVED_CBSHE_CORE</name>
 				<default>0.0</default>
@@ -5176,7 +5186,8 @@
 					Last value used for the radial particle flux feedback in the SOL. Corresponds to &#39;isfeedback&#39; B2 species.
 				</description>
 			</switch>
-			<!-- b2.feedback_control.parameters -->
+		</category>
+		<category name="b2.feedback_control.parameters">
 			<switch>
 				<name>VACUUM_COMMUNICATION</name>
 				<default>0</default>
@@ -5396,7 +5407,8 @@
 					If the density is larger than target*overshoot, the gas puff is turned off.
 				</description>
 			</switch>
-			<!-- b2.sources.profile -->
+		</category>
+		<category name="b2.sources.profile">
 			<switch>
 				<name>NSDATA</name>
 				<default>0</default>
@@ -5475,7 +5487,8 @@
 					Time (in seconds) within an ELM cycle after which a new /PROFILE/ namelist is read.
 				</description>
 			</switch>
-			<!-- b2.transport.inputfile -->
+		</category>
+		<category name="b2.transport.inputfile">
 			<switch>
 				<name>NDATA</name>
 				<default>0</default>
@@ -5635,7 +5648,8 @@
 					Poloidal position at which the ELM profile ends being applied.
 				</description>
 			</switch>
-			<!--b2.neutrals_save.parameters-->
+		</category>
+		<category name="b2.neutrals_save.parameters">
 			<switch>
 				<name>SAVED_VOLREC</name>
 				<default>0.0</default>
@@ -5644,7 +5658,8 @@
 					Contains the last value of the strength of volume recombination sources from stratum (istra).
 				</description>
 			</switch>
-			<!--b2.numerics.parameters-->
+		</category>
+		<category name="b2.numerics.parameters">
 			<switch>
 				<name>DTCO</name>
 				<default>1.0</default>
@@ -5773,7 +5788,8 @@
 					If .true. (default), writes the content of the namelist to stdout after it has been read.
 				</description>
 			</switch>
-			<!--b2.transport_models_save.parameters-->
+		</category>
+		<category name="b2.transport_models_save.parameters">
 			<switch>
 				<name>ETA_HCE_MULT</name>
 				<default>1.0</default>
@@ -5782,7 +5798,8 @@
 					Used by the user specified set_transport_eta transport model. See code for details.
 				</description>
 			</switch>
-			<!--b2.transport.parameters.-->
+		</category>
+		<category name="b2.transport.parameters">
 			<switchgroup>
 				<name>FLAG*</name>
 				<description>
@@ -6014,8 +6031,9 @@
 						Second exponent in a poloidal profile of the "blob" velocity for species (is).
 					</description>
 				</switch>
-			</switchgroup>
-			<!-- b2.user.parameters -->
+			</switchgroup>			
+		</category>
+		<category name="b2.user.parameters">
 			<switch>
 				<name>LHETRGTS</name>
 				<default>-2 for the firt element, -3 for the second element and 0 otherwise</default>
@@ -6208,7 +6226,8 @@
 					Filename where /USER/ namelist is stored.
 				</description>
 			</switch>
-			<!-- b2.sputter_save.parameters -->
+		</category>
+		<category name="b2.sputter_save.parameters">
 			<switch>
 				<name>NX_SP</name>
 				<default>NX</default>
@@ -6249,7 +6268,8 @@
 					Contains the energy physical sputtering yield of species (is) at position (ix,iy) in element (:,:,:,1) and the energy chemical sputtering yield in element(:,:,:,2).
 				</description>
 			</switch>
-			<!-- b2mndr_atomic_physics_rescale -->
+		</category>
+		<category name="b2.atomic_physics_rescale.parameters">
 			<switch>
 				<name>RESCALE_SA</name>
 				<default>1.0</default>
@@ -6298,7 +6318,6 @@
 					Scaling factors for rtlbr: bremsstrahlung radiation rates of species (is).
 				</description>
 			</switch>
-
 		</category>
 	</module>
 </b2>
