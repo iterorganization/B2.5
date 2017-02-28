@@ -37,6 +37,7 @@
 *   ..workspace argument (unspecified on entry and on exit)
       real (kind=R8) ::
      *  vti32(-1:nx,-1:ny)
+      real (kind=R8) :: shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3) !djm Jan2017
 *   ..common block
 *-----------------------------------------------------------------------
 *.documentation
@@ -212,6 +213,9 @@ cxpb    t0 = -phm0*((uesx(rightix(ix,iy),rightiy(ix,iy))-uesx(ix,iy))    !xpb
 cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
       b2divue=0.0_R8
       b2sihs_divue=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shetmp=she0
+      endif
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
@@ -222,22 +226,21 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
           she0(ix,iy,0) = she0(ix,iy,0)+
      &     (max(0.0_R8,t0)+rf0*abs(t0))*ne(ix,iy)*te(ix,iy)
           she0(ix,iy,3) = she0(ix,iy,3)+min(0.0_R8,t0)-rf0*abs(t0)
-          if (balance_netcdf.ne.0) then !djm Jan2017
-            b2sihs_divue0to3(ix,iy,0)=(max(0.0_R8,t0)+rf0*abs(t0))*
-     &                                ne(ix,iy)*te(ix,iy)
-            b2sihs_divue0to3(ix,iy,1)=0.0_R8
-            b2sihs_divue0to3(ix,iy,2)=0.0_R8
-            b2sihs_divue0to3(ix,iy,3)=min(0.0_R8,t0)-rf0*abs(t0)
-          endif
           b2divue(region(ix,iy,0))=b2divue(region(ix,iy,0))+
      1     t0*ne(ix,iy)*te(ix,iy)
           b2sihs_divue(ix,iy)=t0*ne(ix,iy)*te(ix,iy)
         endif
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_divue0to3=she0-shetmp
+      endif
 *   ..contribution from divergence(ua,va)
       b2divua=0.0_R8
       b2sihs_divua=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shitmp=shi0
+      endif
       do is = 0, ns-1
         do iy = -1, ny
           do ix = -1, nx
@@ -249,13 +252,6 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
               shi0(ix,iy,0) = shi0(ix,iy,0)+
      &         (max(0.0_R8,t0)+rf1*abs(t0))*ni(ix,iy,0)*ti(ix,iy)
               shi0(ix,iy,3) = shi0(ix,iy,3)+min(0.0_R8,t0)-rf1*abs(t0)
-              if (balance_netcdf.ne.0) then !djm Jan2017
-                b2sihs_divua0to3(ix,iy,0)=(max(0.0_R8,t0)+rf1*abs(t0))*
-     &                                    ni(ix,iy,0)*ti(ix,iy)
-                b2sihs_divua0to3(ix,iy,1)=0.0_R8
-                b2sihs_divua0to3(ix,iy,2)=0.0_R8
-                b2sihs_divua0to3(ix,iy,3)=min(0.0_R8,t0)-rf1*abs(t0)
-              endif
               b2divua(region(ix,iy,0))=b2divua(region(ix,iy,0))
      1         +t0*ni(ix,iy,0)*ti(ix,iy)
               b2sihs_divua(ix,iy)=b2sihs_divua(ix,iy)+
@@ -264,11 +260,17 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
           enddo
         enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_divua0to3=shi0-shitmp
+      endif
 *   ..contribution from divergence of the electrical drift       !sv 02.06.99
       call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpov)
       call intfaceh(nx,ny,leftix,leftiy,vol,po,wpoh)
       b2exbe=0.0_R8
       b2sihs_exbe=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shetmp=she0
+      endif
       do iy = -1, ny
         do ix = -1, nx
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
@@ -284,22 +286,21 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
             she0(ix,iy,0) = she0(ix,iy,0)+
      &       (max(0.0_R8,t0)+rf0*abs(t0))*ne(ix,iy)*te(ix,iy)
             she0(ix,iy,3) = she0(ix,iy,3)+min(0.0_R8,t0)-rf0*abs(t0)
-            if (balance_netcdf.ne.0) then !djm Jan2017
-              b2sihs_exbe0to3(ix,iy,0)=(max(0.0_R8,t0)+rf0*abs(t0))*
-     &                                 ne(ix,iy)*te(ix,iy)
-              b2sihs_exbe0to3(ix,iy,1)=0.0_R8
-              b2sihs_exbe0to3(ix,iy,2)=0.0_R8
-              b2sihs_exbe0to3(ix,iy,3)=min(0.0_R8,t0)-rf0*abs(t0)
-            endif
             b2exbe(region(ix,iy,0))=b2exbe(region(ix,iy,0))+
      1       t0*ne(ix,iy)*te(ix,iy)
             b2sihs_exbe(ix,iy)=t0*ne(ix,iy)*te(ix,iy)
           endif
         enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_exbe0to3=she0-shetmp
+      endif
 *   ..contribution from divergence of the electrical drift    !sv 02.06.99
       b2exba=0.0_R8
       b2sihs_exba=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shitmp=shi0
+      endif
       do is = 0, ns-1
         if(.not.is_neutral(is)) then
           do iy = -1, ny
@@ -312,13 +313,6 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
                 shi0(ix,iy,0) = shi0(ix,iy,0)+
      &           (max(0.0_R8,t0)+rf1*abs(t0))*ni(ix,iy,0)*ti(ix,iy)
                 shi0(ix,iy,3) = shi0(ix,iy,3)+min(0.0_R8,t0)-rf1*abs(t0)
-                if (balance_netcdf.ne.0) then !djm Jan2017
-                  b2sihs_exba0to3(ix,iy,0)=(max(0.0_R8,t0)+rf1*abs(t0))*
-     &                                     ni(ix,iy,0)*ti(ix,iy)
-                  b2sihs_exba0to3(ix,iy,1)=0.0_R8
-                  b2sihs_exba0to3(ix,iy,2)=0.0_R8
-                  b2sihs_exba0to3(ix,iy,3)=min(0.0_R8,t0)-rf1*abs(t0)
-                endif
                 b2exba(region(ix,iy,0))=b2exba(region(ix,iy,0))+
      1           t0*ni(ix,iy,0)*ti(ix,iy)
                 b2sihs_exba(ix,iy)=b2sihs_exba(ix,iy)+
@@ -328,9 +322,15 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
           enddo
         endif
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_exba0to3=shi0-shitmp
+      endif
 *   ..contribution from viscous heating
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shitmp=shi0
+      endif
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
@@ -346,12 +346,6 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
      &       (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy))))
           shi0(ix,iy,0) = shi0(ix,iy,0)+(1.0_R8+rf2)*t0
           shi0(ix,iy,3) = shi0(ix,iy,3)-rf2*t0/(ni(ix,iy,0)*ti(ix,iy))
-          if (balance_netcdf.ne.0) then !djm Jan2017
-            b2sihs_visa0to3(ix,iy,0)=(1.0_R8+rf2)*t0
-            b2sihs_visa0to3(ix,iy,1)=0.0_R8
-            b2sihs_visa0to3(ix,iy,2)=0.0_R8
-            b2sihs_visa0to3(ix,iy,3)=-rf2*t0/(ni(ix,iy,0)*ti(ix,iy))
-          endif
           b2visa(region(ix,iy,0))=b2visa(region(ix,iy,0))+t0
           b2sihs_visa(ix,iy)=b2sihs_visa(ix,iy)+t0
 *!!      (viscous heating from d/dy is temporarily ignored)
@@ -359,10 +353,16 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         enddo
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_visa0to3=shi0-shitmp
+      endif
 *   ..contribution from electron-atom friction
 *     (a.k.a. Joule heating)
       b2joule=0.0_R8
       b2sihs_joule=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shetmp=she0
+      endif
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
@@ -383,22 +383,20 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
          she0(ix,iy,0) = she0(ix,iy,0)+max(0.0_R8,t0)+rf3*abs(t0)
          she0(ix,iy,3) = she0(ix,iy,3)+
      &     (min(0.0_R8,t0)-rf3*abs(t0))/(ne(ix,iy)*te(ix,iy))
-         if (balance_netcdf.ne.0) then !djm Jan2017
-           b2sihs_joule0to3(ix,iy,0)=she0(ix,iy,0)+max(0.0_R8,t0)+
-     &                               rf3*abs(t0)
-           b2sihs_joule0to3(ix,iy,1)=0.0_R8
-           b2sihs_joule0to3(ix,iy,2)=0.0_R8
-           b2sihs_joule0to3(ix,iy,3)=(min(0.0_R8,t0)-rf3*abs(t0))/
-     &                               (ne(ix,iy)*te(ix,iy))
-         endif
          b2joule(region(ix,iy,0))=b2joule(region(ix,iy,0))+t0
          b2sihs_joule(ix,iy)=t0
         endif
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_joule0to3=she0-shetmp
+      endif
 *   ..contribution from atom-atom friction
       b2fraa=0.0_R8
       b2sihs_fraa=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shitmp=shi0
+      endif
 !      do isb = 0, ns-1
       do isb = nsmin, nsmax-1
        do is = isb+1, ns-1
@@ -423,13 +421,6 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
             shi0(ix,iy,0) = shi0(ix,iy,0)+(2.5_R8+rf4)*t0
             shi0(ix,iy,3) = shi0(ix,iy,3)-
      &       (1.5_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
-            if (balance_netcdf.ne.0) then
-              b2sihs_fraa0to3(ix,iy,0)=(2.5_R8+rf4)*t0
-              b2sihs_fraa0to3(ix,iy,1)=0.0_R8
-              b2sihs_fraa0to3(ix,iy,2)=0.0_R8
-              b2sihs_fraa0to3(ix,iy,3)=-(1.5_R8+rf4)*t0/
-     &                                  (ni(ix,iy,0)*ti(ix,iy))
-            endif
             b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+t0
             b2sihs_fraa(ix,iy)=b2sihs_fraa(ix,iy)+t0
            endif
@@ -443,6 +434,9 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         endif
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_fraa0to3=shi0-shitmp
+      endif
       b2str=0.0_R8
       b2sihs_str=0.0_R8
       if (style.eq.-1) then
@@ -638,6 +632,7 @@ c
       real (kind=R8) ::
      *  t0, facgt
       save ncall, facgt
+      real (kind=R8) :: shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3) !djm Jan2017
 *   ..procedures
       real (kind=R8) ::
      *  hy1
@@ -677,6 +672,9 @@ c
 
       if(maxval(facdrift).ne.0.0_R8 .and. facgt.ne.0.0_R8) then
         b2wrong2=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shitmp=shi
+      endif
         do is=0,ns-1
           if(.not.is_neutral(is)) then
             do iy=-1,ny
@@ -731,19 +729,18 @@ c
                   shi(ix,iy,3) = shi(ix,iy,3)+                           !xpb
      &             min(0.0_R8,-t0)/(na(ix,iy,is)*ti(ix,iy))              !xpb
                   b2wrong2(region(ix,iy,0))=b2wrong2(region(ix,iy,0))+t0
-                  if (balance_netcdf.ne.0) then !djm Jan2017
-                    b2sihs_diaa0to3(ix,iy,0)=max(0.0_R8,-t0)
-                    b2sihs_diaa0to3(ix,iy,1)=0.0_R8
-                    b2sihs_diaa0to3(ix,iy,2)=0.0_R8
-                    b2sihs_diaa0to3(ix,iy,3)=min(0.0_R8,-t0)/
-     &                                       (na(ix,iy,is)*ti(ix,iy))
-                  endif
                 endif
               enddo
             enddo
           endif
         enddo
+        if (balance_netcdf.ne.0) then !djm Jan2017
+          b2sihs_diaa0to3=shi-shitmp
+        endif
         b2wrong3=0.0_R8
+        if (balance_netcdf.ne.0) then !djm Jan2017
+          shetmp=she
+        endif
         do iy=-1,ny
           do ix=-1,nx
             ixl=leftix(ix,iy)
@@ -789,16 +786,12 @@ c
               she(ix,iy,3) = she(ix,iy,3)+                               !xpb
      &         min(0.0_R8,t0)/(ne(ix,iy)*te(ix,iy))                      !xpb
               b2wrong3(region(ix,iy,0))=b2wrong3(region(ix,iy,0))+t0
-              if (balance_netcdf.ne.0) then !djm Jan2017
-                b2sihs_diae0to3(ix,iy,0)=max(0.0_R8,t0)
-                b2sihs_diae0to3(ix,iy,1)=0.0_R8
-                b2sihs_diae0to3(ix,iy,2)=0.0_R8
-                b2sihs_diae0to3(ix,iy,3)=min(0.0_R8,t0)/
-     &                                   (ne(ix,iy)*te(ix,iy))
-              endif
             endif
           enddo
         enddo
+        if (balance_netcdf.ne.0) then !djm Jan2017
+          b2sihs_diae0to3=she-shetmp
+        endif
       endif
 
 * ..return
