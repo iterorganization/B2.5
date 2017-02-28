@@ -433,7 +433,7 @@ cank
      .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL), 
      .                ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL), 
      .                ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
-     .                sarea_res(NCL) ) 
+     .                wldspt_res(NCL), sarea_res(NCL) )
  
             call read_title(44)
             READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
@@ -453,6 +453,10 @@ cank
             READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
             call read_title(44)
             READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL)
+            if (jvft44.gt.20170228) then
+              call read_title(44)
+              READ (44,'(6e15.7)') (wldspt_res(i),i=1,NCL)
+            end if
           ELSE
             call read_title(44)
             READ (44,1028)
@@ -472,6 +476,10 @@ cank
             READ (44,1028)
             call read_title(44)
             READ (44,1028)
+            if (jvft44.gt.20170228) then
+              call read_title(44)
+              READ (44,1028)
+            end if
           END IF
         end if
 

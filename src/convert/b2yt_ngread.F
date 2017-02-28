@@ -873,7 +873,8 @@ cank
      .                         nx1,ny1,natm1,1,1)
           deallocate(eneutrad1)
         end if
-      
+
+!! FIXME: When changing grid size, NCL may vary and thus arrays below need re-mapping
         if(jvft44 .ge. 20080706) then
           call read_title(44)
           READ (44,'(12i6)') (eirdiag_nds_ind(i),i=1,nstsi+1)        
@@ -895,7 +896,7 @@ cank
      .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL), 
      .                ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL), 
      .                ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
-     .                sarea_res(NCL) ) 
+     .                wldspt_res(NCL), sarea_res(NCL) )
  
             call read_title(44)
             READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
@@ -915,6 +916,10 @@ cank
             READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
             call read_title(44)
             READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL)
+            if (jvft44.gt.20170228) then
+              call read_title(44)
+              READ (44,'(6e15.7)') (wldspt_res(i),i=1,NCL)
+            end if
             allocate(wldna1res(natm1,NCL), ewlda1res(natm1,NCL),
      .               ewldea1res(natm1,NCL))
             do is = 1, natmi
@@ -941,10 +946,16 @@ cank
             call write_title(45,'ewldrp_res',ncl)
             WRITE(45,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
             call write_title(45,'ewldmr_res',ncl*nmoli)
-            WRITE(45,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL) 
+            WRITE(45,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL)
+            if (jvft44.ge.20170228) then
+              call write_title(45,'wldspt_res',ncl)
+              WRITE(45,'(6e15.7)') (wldspt_res(i),i=1,NCL)
+            end if
             deallocate(wldna1res, ewlda1res, ewldea1res)
           ELSE
-            DO IS = 1, 9
+            IS = 9
+            if (jvft44.ge.20170228) IS = IS + 1
+            DO I = 1, IS
               call read_title(44)
               READ (44,1028)
               WRITE(45,1028)

@@ -981,6 +981,20 @@ c
 #else
       ex = .false.
 #endif
+      if (.not.ex) then
+        natmi=1
+        textan(0)=' ZERO'
+        nmoli=1
+        textmn(0)=' ZERO'
+        nioni=1
+        textin(0)=' ZERO'
+        nsw=ns
+        call eirene_mc_init
+        call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
+        p1=0.0_R8
+        p2=0.0_R8
+      endif
+
 #ifdef B25_EIRENE
 #ifndef HPUX
       inquire(file='fort.46',exist=ex)
@@ -1040,19 +1054,6 @@ c
 #else
       ex = .false.
 #endif
-      if (.not.ex) then
-        natmi=1
-        textan(0)=' ZERO'
-        nmoli=1
-        textmn(0)=' ZERO'
-        nioni=1
-        textin(0)=' ZERO'
-        nsw=ns
-        call eirene_mc_init
-        call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
-        p1=0.0_R8
-        p2=0.0_R8
-      endif
 c
       nh=0.0_R8
       do is=0,ns-1
