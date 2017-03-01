@@ -678,27 +678,29 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
               ub2dia(ix,iy,0)= ub2dia(ix,iy,0)/
      &                              (1.0_R8 + abs(ub2dia(ix,iy,0))/vbar) 
             endif
-            t0 = max(ti(ix,iy), ti(bottomix(ix,iy),bottomiy(ix,iy)))
-            t1 = (nb(ix,iy) + nb(bottomix(ix,iy),bottomiy(ix,iy)))
-     &          /2.0_R8
-            vbar=
-     .        abs(bb(ix,iy,0) + bb(bottomix(ix,iy),bottomiy(ix,iy),0))  !srv 11.01.13
-     &          /(bb(ix,iy,3) + bb(bottomix(ix,iy),bottomiy(ix,iy),3))
-     &          *sqrt(8.0_R8 * t0 / (pi * am(isb)*mp))
-            t2 = 1.0_R8 + abs(fnbPSch(ix,iy,1))/(
-     &        vbar*t1*(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &         (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
-     &          )
-            fnbPSch(ix,iy,1)= fnbPSch(ix,iy,1)/t2
-            vbdia(ix,iy,1)= vbdia(ix,iy,1)/
-     &                               (1.0_R8 + abs(vbdia(ix,iy,1))/vbar) 
-            wbdia(ix,iy,1)= wbdia(ix,iy,1)/
-     &                               (1.0_R8 + abs(wbdia(ix,iy,1))/vbar) 
-            ubdia(ix,iy,1)= ubdia(ix,iy,1)/
-     &                               (1.0_R8 + abs(ubdia(ix,iy,1))/vbar) 
-            ub2dia(ix,iy,1)= ub2dia(ix,iy,1)/
-     &                              (1.0_R8 + abs(ub2dia(ix,iy,1))/vbar) 
-          enddo
+	    if (bottomiy(ix,iy).ne.-2) then
+	      t0 = max(ti(ix,iy), ti(bottomix(ix,iy),bottomiy(ix,iy)))
+	      t1 = (nb(ix,iy) + nb(bottomix(ix,iy),bottomiy(ix,iy)))
+     &	       /2.0_R8
+	      vbar=
+     .	       abs(bb(ix,iy,0) + bb(bottomix(ix,iy),bottomiy(ix,iy),0))  !srv 11.01.13
+     &	       /(bb(ix,iy,3) + bb(bottomix(ix,iy),bottomiy(ix,iy),3))
+     &	       *sqrt(8.0_R8 * t0 / (pi * am(isb)*mp))
+	      t2 = 1.0_R8 + abs(fnbPSch(ix,iy,1))/(
+     &	       vbar*t1*(vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
+     &	       /(hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &	       )
+	      fnbPSch(ix,iy,1)= fnbPSch(ix,iy,1)/t2
+	      vbdia(ix,iy,1)= vbdia(ix,iy,1)/
+     &	       (1.0_R8 + abs(vbdia(ix,iy,1))/vbar) 
+	      wbdia(ix,iy,1)= wbdia(ix,iy,1)/
+     &	       (1.0_R8 + abs(wbdia(ix,iy,1))/vbar) 
+	      ubdia(ix,iy,1)= ubdia(ix,iy,1)/
+     &	       (1.0_R8 + abs(ubdia(ix,iy,1))/vbar) 
+	      ub2dia(ix,iy,1)= ub2dia(ix,iy,1)/
+     &	       (1.0_R8 + abs(ub2dia(ix,iy,1))/vbar) 
+	    endif
+	  enddo
         enddo
       endif                                                             !lk 02.06.11 }
 

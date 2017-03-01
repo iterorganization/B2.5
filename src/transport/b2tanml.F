@@ -94,8 +94,12 @@
           enddo
           do iy = 0, ny
 	    do ix = -1, nx
-              fchanml(ix,iy,1) = - csig_an(ix,iy,1)*
-     &           (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))
+	      if(bottomiy(ix,iy).eq.-2)then
+		fchanml(ix,iy,1) = 0.0e0_R8
+	      else
+		fchanml(ix,iy,1) = - csig_an(ix,iy,1)*
+     &		 (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))
+	      endif
             enddo
 	  enddo
         else
@@ -123,13 +127,13 @@ cxpb turn off poloidal flows in core boundary
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO
-	DO IX=NXISO1(IB), NXISO2(IB)+1
+	DO IX=NXISO1(IB), NXISO2(IB)
 	  DO IY=NYISO1(IB), NYISO2(IB)
 	    fchanml(ix,iy,0)=0.0e0_R8
 	  end do
 	end do
 	DO IX=NXISO1(IB), NXISO2(IB)
-	  DO IY=NYISO1(IB), NYISO2(IB)+1
+	  DO IY=NYISO1(IB), NYISO2(IB)
 	    fchanml(ix,iy,1)=0.0e0_R8
 	  end do
 	end do
