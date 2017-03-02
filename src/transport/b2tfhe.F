@@ -652,7 +652,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      .          - t1 * (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
      &          +alfTeEh*calf(ix,iy,1)*
      &           harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
-              if (balance.and.balance_netcdf) then
+              if (balance.and.(balance_netcdf.ne.0)) then
                 if(floe0_mdf.ge.0.0_R8) then
                   upfac=1.0_R8
                 else
