@@ -1181,7 +1181,7 @@ c note no emission in guard cells and offset of array by 1
       call rwcdf(rw,ncid,'timesa',imap,timesa,iret)
 
       imap(1)=1
-      imap(2)=nncutmax
+      imap(2)=1
       call rwcdf(rw,ncid,'fnixip',imap,fnixip,iret)
       call rwcdf(rw,ncid,'feexip',imap,feexip,iret)
       call rwcdf(rw,ncid,'feixip',imap,feixip,iret)
@@ -1242,7 +1242,7 @@ c note no emission in guard cells and offset of array by 1
       call rwcdf(rw,ncid,'tmhadiv',imap,tmhadiv,iret)
 
       imap(1)=1
-      imap(2)=nncutmax
+      imap(2)=1
       call rwcdf(rw,ncid,'fnisip',imap,fnisip,iret)
       call rwcdf(rw,ncid,'feesip',imap,feesip,iret)
       call rwcdf(rw,ncid,'feisip',imap,feisip,iret)
@@ -1265,7 +1265,7 @@ c note no emission in guard cells and offset of array by 1
       call rwcdf(rw,ncid,'fchsapp',imap,fchsapp,iret)
 c
       imap(1)=nx+2     ! bl
-      imap(2)=nx+2
+      imap(2)=1
       call rwcdf
      . (rw,ncid,'ne3dl',imap,ne(-1+target_offset,iylstrt),iret)
       call rwcdf
@@ -1281,19 +1281,19 @@ c
       call rwcdf(rw,ncid,'fl3dl',imap,fne(0,iylstrt,0),iret)
       call rwcdf(rw,ncid,'fo3dl',imap,fni(0,iylstrt,0),iret)
       imap(1)=nx+2     ! i
-      imap(2)=nx+2
+      imap(2)=1
       call rwcdf(rw,ncid,'ne3di',imap,ne(jxi,iyistrt),iret)
       call rwcdf(rw,ncid,'te3di',imap,te(jxi,iyistrt),iret)
       call rwcdf(rw,ncid,'ti3di',imap,ti(jxi,iyistrt),iret)
       call rwcdf(rw,ncid,'po3di',imap,po(jxi,iyistrt),iret)
       imap(1)=nx+2     ! a
-      imap(2)=nx+2
+      imap(2)=1
       call rwcdf(rw,ncid,'ne3da',imap,ne(jxa,iyastrt),iret)
       call rwcdf(rw,ncid,'te3da',imap,te(jxa,iyastrt),iret)
       call rwcdf(rw,ncid,'ti3da',imap,ti(jxa,iyastrt),iret)
       call rwcdf(rw,ncid,'po3da',imap,po(jxa,iyastrt),iret)
       imap(1)=nx+2     ! br
-      imap(2)=nx+2
+      imap(2)=1
       call rwcdf
      . (rw,ncid,'ne3dr',imap,ne(nx-target_offset,iyrstrt),iret)
       call rwcdf
@@ -1310,7 +1310,7 @@ c
       call rwcdf(rw,ncid,'fo3dr',imap,fni(nx,iyrstrt,0),iret)
       if (nnreg(0).ge.8) then
         imap(1)=nx+2     ! tr
-        imap(2)=nx+2
+        imap(2)=1
         call rwcdf
      .   (rw,ncid,'ne3dtr',imap,ne(ixtr+target_offset,iytrstrt),iret)
         call rwcdf
@@ -1346,7 +1346,7 @@ c
       endif
 c
       imap(1)=1
-      imap(2)=nx+2
+      imap(2)=1
       slice=0.0_R8
       if (ismain0.ne.ismain)
      > slice(iylstrt:iylend)=na(-1+target_offset,iylstrt:iylend,ismain0)
@@ -1541,13 +1541,13 @@ c
       call rwcdf(rw,ncid,'vs3da',imap,slice,iret)
 c
       imap(1)=1
-      imap(2)=nncutmax
+      imap(2)=1
       call rwcdf(rw,ncid,'tpsepi',imap,tpsepi,iret)
       call rwcdf(rw,ncid,'tpsepa',imap,tpsepa,iret)
       call rwcdf(rw,ncid,'tpmxip',imap,tpmxip,iret)
       call rwcdf(rw,ncid,'tpmxap',imap,tpmxap,iret)
       imap(1)=1
-      imap(2)=nx+2
+      imap(2)=1
       slice=0.0_R8
       if(minval(xymap(-1,0:ny-1)).gt.0) then
          slice(-1)=target_temp(xymap(-1,0),1)
