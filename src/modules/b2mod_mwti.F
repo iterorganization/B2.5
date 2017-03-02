@@ -2459,22 +2459,20 @@ c
       character*(*) timnam
       character*(maxncnam) timsav
       integer ntsav,ntstep
+      integer :: istride, imax
       save timsav,ntsav
       data timsav /'!!!! INVALID NAME !!!!'/
       external subini, subend, xerrab
 c
       call subini ('rwcdf')
-      write(*,*) 'Working on variable:',data_name
       iret = nf_inq_varid(ncid,data_name,varid)
       if(iret.ne.0) call xerrab ('Data name not declared')
       iret = nf_inq_varndims(ncid,varid,nvdims)
       iret = nf_inq_vardimid(ncid,varid,dimids)
-      Write(*,*) 'Variable has nvdims',nvdims
       count(1) = 1 ! for scalars
       start(1) = 1
       do i=1,nvdims
          iret = nf_inq_dim(ncid,dimids(i),dimnam,dimlen)
-         write(*,*) 'dim ',i,trim(dimnam),'len=',dimlen
          count(i) = dimlen
          if(dimnam.eq.timsav) then
             start(i)=ntsav
@@ -2483,30 +2481,29 @@ c
             start(i)=1
          endif
       enddo
-      write(*,*) 'start:',start(1:nvdims)
+      istride = 1
+      imax = 1
+      do i=1,nvdims-1
+         istride = istride*imap(i)
+         imax = imax + imap(i)*count(i)
+      enddo
       iret = nf_inq_vartype(ncid,varid,vartyp)
       if(rw.eq.'read') then
          Select Case (vartyp)
          Case (NCDOUBLE)
-            iret = nf_get_vara_double(ncid,varid,start,count,data_set)            
+            iret = nf_get_vara_double(ncid,varid,start,count,
+     . data_set(1:imax:istride))
          Case Default
             call xerrab ('Unknown data type in rwcdf read')
          End Select
-
-!         call ncvgtg(ncid,varid,start,count,stride,lmap,
-!     .        data_set,iret)
       elseif(rw.eq.'write') then
          Select Case (vartyp)
          Case (NCDOUBLE)
-            write(*,*) 'going to write',data_set(1:count(1))
-            write(*,*) 'count:',count(1:nvdims)
-            iret = nf_put_vara_double(ncid,varid,start,count,data_set)
+            iret = nf_put_vara_double(ncid,varid,start,count,
+     . data_set(1:imax:istride))
          Case Default
             call xerrab ('Unknown data type in rwcdf write')
          End Select
-
-!     call ncvptg(ncid,varid,start,count,stride,lmap,
-!     .        data_set,iret)
       else
          write(*,*) 'Either "read" or "write" must be chosen, not',
      1        rw
