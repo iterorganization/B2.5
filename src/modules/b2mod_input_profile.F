@@ -824,6 +824,7 @@ c*** Clear data to forget previous profiles
 
       use b2mod_indirect
       use b2mod_geo
+      use b2mod_mwti, only: output_ds
       implicit none
       integer:: i,nx,ny,ifa
       integer:: nfitanf,nfitend,ndim,ndat,kind_data
@@ -831,7 +832,7 @@ c*** Clear data to forget previous profiles
       integer jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
       integer ixref, iyref
       external ipgetr, subini, subend
-      external output_ds, get_jsep
+      external get_jsep
       save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
       data ncall/0/
 

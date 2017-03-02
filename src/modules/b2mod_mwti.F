@@ -1,12 +1,7 @@
       Module b2mod_mwti
       Implicit None
       Contains
-*-----------------------------------------------------------------------
-*.specification
 
-#ifdef IBMaix
-@process noextchk
-#endif
       subroutine b2mwti (itim, tim, nx, ny, ns, ismain, ismain0, BoRiS)
       use b2mod_types
       use b2mod_geo
@@ -94,7 +89,8 @@
      *        iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, 
      *        nybl, nybr, nytl, nytr, nya, nyi, nc
 *   ..procedures
-      external subini, subend, xertst, ipgeti, output_ds
+      external subini, subend, xertst, ipgeti
+
 #ifndef NO_CDF
       integer imap(maxvdims), iret, ncid
       real (kind=R8) ::
@@ -110,7 +106,6 @@
       real (kind=R8) ::
      *      timesa(1)
       character*5 rw
-      external b2crtimecdf, rwcdf, rwcdf_settime, ncclos
 #endif
 *   ..initialisation
       save ncall, ntstep, jxi, jxa, jsep, ixtl, ixtr, target_offset,
@@ -119,25 +114,25 @@
      * nybl, nybr, nytl, nytr, nya, nyi, nc
       data ncall/0/,target_offset/1/
 
+      ! Statement functions
       real (kind=R8) ::
-     *   hy1
+     *     hy1
+      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)            
 
 *-----------------------------------------------------------------------
 *.computation
 
-      hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
-      
 * ..preliminaries
 *   ..subprogram start-up calls
       call subini ('b2mwti')
-*   ..test nx, ny
+*     ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
       call xertst (1.le.ns, 'faulty argument ns')
       call xertst (0.le.ismain.and.ismain.lt.ns, 
      . 'invalid main plasma species index ismain')
 *   ..extensive tests on first few calls
       if (ncall.eq.0) then
-*    ..test state
+*   ..test state
         call get_jsep(nx,ny,jxi,jxa,jsep)
         call ipgeti ('b2mwti_target_offset',target_offset)
         call xertst (0.le.target_offset.and.target_offset.le.1,
@@ -228,20 +223,19 @@ c Poloidal contact areas
      $            *qc(rightix(ixtr,iy),rightiy(ixtr,iy))
           enddo
           close(99)
-        endif
+        endif 
 #ifndef NO_CDF
         call b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc,
      1   ns, iret)
         rw='write'
-        ncid=ncopn('b2time.nc',ncwrite,iret)
-c       write(*,*) 'After ncopn: ', ncid, ncwrite, iret
+        iret = nf_open('b2time.nc',NCWRITE,ncid)
         ntstep=0
         imap(1)=1
         tstepn(1) = ntstep
         call rwcdf (rw, ncid, 'ntstep', imap, tstepn, iret)
-        call ncclos (ncid, iret)
+        iret = nf_close(ncid)
 #endif
-      endif
+      endif! ncall == 0
       if(ncall.lt.3) then
         call xertst (0.le.itim, 'faulty parameter itim')
         call xertst (0.0_R8.le.tim, 'faulty parameter tim')
@@ -252,7 +246,7 @@ c
 c     write(*,*) 'ntstep = ',ntstep
 #ifndef NO_CDF
       rw = 'write'
-      ncid = ncopn ('b2time.nc', ncwrite, iret)
+      iret = nf_open('b2time.nc', NCWRITE, ncid)
       call rwcdf_settime ('time', ntstep)
       timesa(1) = tim
 #endif
@@ -1585,7 +1579,7 @@ c
         call rwcdf(rw,ncid,'tp3dtr',imap,slice,iret)
       endif
 c      
-      call ncclos (ncid, iret)
+      iret = nf_close(ncid)
 #endif
 
 * ..return
@@ -1599,9 +1593,6 @@ c
       end subroutine b2mwti
 
 #ifndef NO_CDF
-#ifdef IBMaix
-@process noextchk
-#endif
       subroutine b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, 
      1  nc, ns, iret)
       use b2mod_types
@@ -2448,100 +2439,84 @@ c upper outboard divertor quantities
       endif
 
 * leave define mode
-      call ncendf (ncid, iret)
-      call ncclos (ncid, iret)
+      iret = nf_enddef(ncid)
+      iret = nf_close(ncid)
       return
       end subroutine b2crtimecdf
 
-#ifdef IBMaix
-@process noextchk
-#endif
       subroutine rwcdf(rw,ncid,data_name,imap,data_set,iret)
 c
       use b2mod_types
 #     include <netcdf.inc>
 c
       character*(*) rw,data_name
-      integer ncid,imap(*),iret,i
-      real (kind=R8) ::
-     *   data_set(*), rcode
-      character*(maxncnam) varnam,dimnam
-      integer vartyp,nvdims,vdims(maxvdims),nvatts,
-     1 start(maxvdims),count(maxvdims),lmap(maxvdims),
-     2 noofbytes,stride(maxvdims)
+      integer ncid,imap(*),iret,i,varid,dimlen
+      real(kind=R8), Intent(InOut) :: data_set(*)
+      character*(maxncnam) dimnam
+      integer vartyp,nvdims,start(maxvdims),count(maxvdims),
+     1 dimids(maxvdims)
 c
       character*(*) timnam
       character*(maxncnam) timsav
       integer ntsav,ntstep
       save timsav,ntsav
       data timsav /'!!!! INVALID NAME !!!!'/
-#ifdef NETCDF4_3
-      data stride /maxvdims*2/
-#else
-      data stride /maxvdims*1/
-#endif
-c
-      integer lnblnk
-      external lnblnk, subini, subend, xerrab
-      integer data_id
+      external subini, subend, xerrab
 c
       call subini ('rwcdf')
-c     write(*,*) 'Processing ',data_name,' with ncid ',ncid
-      data_id=ncvid(ncid,data_name,iret)
-      if(iret.ne.0) then
-        write(*,*) data_name,' not declared'
-        call xerrab ('Data name not declared')
-      else
-        call ncvinq(ncid,data_id,varnam,vartyp,nvdims,vdims,
-     1   nvatts,rcode)
-        if(vartyp.eq.ncbyte.or.vartyp.eq.ncchar) then
-          noofbytes=1
-        elseif(vartyp.eq.ncshort) then
-          noofbytes=2
-        elseif(vartyp.eq.nclong.or.vartyp.eq.ncfloat) then
-          noofbytes=4
-        elseif(vartyp.eq.ncdouble) then
-          noofbytes=8
-        else
-          write(*,*) 'Unknown data type ',vartyp,' for ',data_name
-          call xerrab ('Unknown data type')
-        endif
-        do i=1,nvdims
-          call ncdinq(ncid,vdims(i),dimnam,count(i),iret)
-c        write(*,*) 'Dimension ',i,' is ',dimnam(1:lnblnk(dimnam)),
-c    .    ' with length ',count(i)
-          if(dimnam.eq.timsav) then
+      write(*,*) 'Working on variable:',data_name
+      iret = nf_inq_varid(ncid,data_name,varid)
+      if(iret.ne.0) call xerrab ('Data name not declared')
+      iret = nf_inq_varndims(ncid,varid,nvdims)
+      iret = nf_inq_vardimid(ncid,varid,dimids)
+      Write(*,*) 'Variable has nvdims',nvdims
+      count(1) = 1 ! for scalars
+      start(1) = 1
+      do i=1,nvdims
+         iret = nf_inq_dim(ncid,dimids(i),dimnam,dimlen)
+         write(*,*) 'dim ',i,trim(dimnam),'len=',dimlen
+         count(i) = dimlen
+         if(dimnam.eq.timsav) then
             start(i)=ntsav
             count(i)=1
-c           write(*,*) 'TIME dimension'
-          else
+         else
             start(i)=1
-          endif
-          lmap(i)=imap(i)*noofbytes
-        enddo
-        if(rw.eq.'read') then
-          call ncvgtg(ncid,data_id,start,count,stride,lmap,
-     .                     data_set,iret)
-        elseif(rw.eq.'write') then
-c         write(*,*) 'ncid : ', ncid
-c         write(*,*) 'data_id :', data_id
-c         write(*,*) 'start :', start(1:nvdims)
-c         write(*,*) 'count :', count(1:nvdims)
-c         write(*,*) 'stride :', stride(1:nvdims)
-c         write(*,*) 'lmap :', lmap(1:nvdims)
-c         write(*,*) 'data_set :', data_set(1:nvdims)
-          call ncvptg(ncid,data_id,start,count,stride,lmap,
-     .                     data_set,iret)
-        else
-          write(*,*) 'Either "read" or "write" must be chosen, not',
-     1     rw
-        endif
+         endif
+      enddo
+      write(*,*) 'start:',start(1:nvdims)
+      iret = nf_inq_vartype(ncid,varid,vartyp)
+      if(rw.eq.'read') then
+         Select Case (vartyp)
+         Case (NCDOUBLE)
+            iret = nf_get_vara_double(ncid,varid,start,count,data_set)            
+         Case Default
+            call xerrab ('Unknown data type in rwcdf read')
+         End Select
+
+!         call ncvgtg(ncid,varid,start,count,stride,lmap,
+!     .        data_set,iret)
+      elseif(rw.eq.'write') then
+         Select Case (vartyp)
+         Case (NCDOUBLE)
+            write(*,*) 'going to write',data_set(1:count(1))
+            write(*,*) 'count:',count(1:nvdims)
+            iret = nf_put_vara_double(ncid,varid,start,count,data_set)
+         Case Default
+            call xerrab ('Unknown data type in rwcdf write')
+         End Select
+
+!     call ncvptg(ncid,varid,start,count,stride,lmap,
+!     .        data_set,iret)
+      else
+         write(*,*) 'Either "read" or "write" must be chosen, not',
+     1        rw
       endif
+      
       call subend ()
       return
 c
       entry rwcdf_settime(timnam,ntstep)
-      write(*,*) 'Saving ',timnam(1:lnblnk(timnam)),
+      write(*,*) 'Saving ',Trim(timnam),
      1 ' as the time dimension'
       write(*,*) 'ntstep = ',ntstep
       timsav=timnam
