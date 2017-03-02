@@ -1,3 +1,6 @@
+      Module b2mod_mwti
+      Implicit None
+      Contains
 *-----------------------------------------------------------------------
 *.specification
 
@@ -2665,3 +2668,4 @@ c
       call subend ()
       return
       end subroutine output_ds
+      End Module b2mod_mwti

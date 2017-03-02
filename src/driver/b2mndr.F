@@ -41,6 +41,7 @@
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
       use b2mod_external
+      use b2mod_mwti
       use b2mod_balance !djm Jan2017
      & , only : write_balance, balance_netcdf
 
