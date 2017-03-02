@@ -2465,7 +2465,6 @@ c
       integer ncid,imap(*),iret,i
       real (kind=R8) ::
      *   data_set(*), rcode
-      character*(*) datac(*)
       character*(maxncnam) varnam,dimnam
       integer vartyp,nvdims,vdims(maxvdims),nvatts,
      1 start(maxvdims),count(maxvdims),lmap(maxvdims),
@@ -2533,54 +2532,6 @@ c         write(*,*) 'lmap :', lmap(1:nvdims)
 c         write(*,*) 'data_set :', data_set(1:nvdims)
           call ncvptg(ncid,data_id,start,count,stride,lmap,
      .                     data_set,iret)
-        else
-          write(*,*) 'Either "read" or "write" must be chosen, not',
-     1     rw
-        endif
-      endif
-      call subend ()
-      return
-c
-      entry rwcdfc(rw,ncid,data_name,imap,datac,iret)
-c
-      call subini ('rwcdfc')
-c      write(*,*) 'Processing ',data_name,' (char)'
-      data_id=ncvid(ncid,data_name,iret)
-      if(iret.ne.0) then
-        write(*,*) data_name,' not declared'
-        call xerrab ('Data name not declared')
-      else
-        call ncvinq(ncid,data_id,varnam,vartyp,nvdims,vdims,
-     1   nvatts,rcode)
-        if(vartyp.eq.ncbyte.or.vartyp.eq.ncchar) then
-          noofbytes=1
-        elseif(vartyp.eq.ncshort) then
-          noofbytes=2
-        elseif(vartyp.eq.nclong.or.vartyp.eq.ncfloat) then
-          noofbytes=4
-        elseif(vartyp.eq.ncdouble) then
-          noofbytes=8
-        else
-          write(*,*) 'Unknown data type ',vartyp,' for ',data_name
-          call xerrab ('Unknown data type')
-        endif
-        do i=1,nvdims
-          call ncdinq(ncid,vdims(i),dimnam,count(i),iret)
-c         write(*,*) 'Dimension ',i,' is ',dimnam(1:lnblnk(dimnam)),
-c     1    ' with length ',count(i)
-          if(dimnam.eq.timsav) then
-            start(i)=ntsav
-            count(i)=1
-c           write(*,*) 'TIME dimension'
-          else
-            start(i)=1
-          endif
-          lmap(i)=imap(i)*noofbytes
-        enddo
-        if(rw.eq.'read') then
-          call ncvggc(ncid,data_id,start,count,stride,lmap,datac,iret)
-        elseif(rw.eq.'write') then
-          call ncvpgc(ncid,data_id,start,count,stride,lmap,datac,iret)
         else
           write(*,*) 'Either "read" or "write" must be chosen, not',
      1     rw
