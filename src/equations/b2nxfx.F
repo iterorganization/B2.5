@@ -101,17 +101,15 @@
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
 	   if(rightix(ix,iy).eq.nx+1) then
-	     write(*,*) 'We have a problem!'
-	     write(*,*) ix, iy, leftix(ix,iy), rightix(ix,iy)
-	     write(*,*) leftix(:,iy)
-	     write(*,*) rightix(:,iy)
+             ehxp(ix,iy) = 0.0_R8
+           else
+             ehxp(ix,iy) = 
+     &        (vol(ix,iy)/hx(ix,iy))*bb(ix,iy,0)/bb(ix,iy,3)*        !srv 11.01.13
+     &         vol(ix,iy)*
+     &        (wrk0(rightix(ix,iy),rightiy(ix,iy))-qe*ne(ix,iy)*
+     &         wrk1(rightix(ix,iy),rightiy(ix,iy)))/
+     &        (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
 	   endif
-          ehxp(ix,iy) = 
-     &     (vol(ix,iy)/hx(ix,iy))*bb(ix,iy,0)/bb(ix,iy,3)*           !srv 11.01.13
-     &      vol(ix,iy)*
-     &     (wrk0(rightix(ix,iy),rightiy(ix,iy))-qe*ne(ix,iy)*
-     &      wrk1(rightix(ix,iy),rightiy(ix,iy)))/
-     &     (vol(ix,iy)+vol(rightix(ix,iy),rightiy(ix,iy)))
          elseif(rightix(ix,iy).eq.nx+1) then
           ehxp(ix,iy) = 
      &     (vol(ix,iy)/hx(ix,iy))*bb(ix,iy,0)/bb(ix,iy,3)*           !srv 11.01.13
