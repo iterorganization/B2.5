@@ -757,7 +757,7 @@ cxpb !!!!!!!!!!!!!!!!!!!!!!!!!!! EIRENE CALL ENDED !!!!!!!!!!!!!!!!!!!!!!!!!!!!
      &                   ndxp-1,ndyp-1,natm,nx,ny,nnatmi)
         call extend(dmb2(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
-        call extend(tmb2(0:ndxp,0:ndyp,1:nnatmi,1),
+        call extend(tmb2(0:ndxp,0:ndyp,1:nnmoli,1),
      &                   ndxp-1,ndyp-1,nmol,nx,ny,nnmoli)
         call extend(dib2(0:ndxp,0:ndyp,1:nnioni,1),
      &                   ndxp-1,ndyp-1,nion,nx,ny,nnioni)
