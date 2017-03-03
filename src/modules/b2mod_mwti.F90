@@ -24,9 +24,8 @@ Contains
 #endif
     implicit none
     !   ..input arguments (unchanged on exit)
-    integer itim, nx, ny, ns, ismain, ismain0
-    real (kind=R8) :: &
-         tim, BoRiS
+    integer, Intent(In) :: itim, nx, ny, ns, ismain, ismain0
+    real (kind=R8), Intent(In) :: tim, BoRiS
     !   ..output arguments (unspecified on entry)
     !     (none)
     !   ..common blocks
@@ -225,8 +224,7 @@ Contains
         close(99)
       endif
 #ifndef NO_CDF
-      call b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, &
-           ns, iret)
+      call b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, iret)
       rw='write'
       iret = nf_open('b2time.nc',NCWRITE,ncid)
       ntstep=0
@@ -1266,14 +1264,10 @@ Contains
     !
     imap(1)=nx+2     ! bl
     imap(2)=1
-    call rwcdf &
-         (rw,ncid,'ne3dl',imap,ne(-1+target_offset,iylstrt),iret)
-    call rwcdf &
-         (rw,ncid,'te3dl',imap,te(-1+target_offset,iylstrt),iret)
-    call rwcdf &
-         (rw,ncid,'ti3dl',imap,ti(-1+target_offset,iylstrt),iret)
-    call rwcdf &
-         (rw,ncid,'po3dl',imap,po(-1+target_offset,iylstrt),iret)
+    call rwcdf(rw,ncid,'ne3dl',imap,ne(-1+target_offset,iylstrt),iret)
+    call rwcdf(rw,ncid,'te3dl',imap,te(-1+target_offset,iylstrt),iret)
+    call rwcdf(rw,ncid,'ti3dl',imap,ti(-1+target_offset,iylstrt),iret)
+    call rwcdf(rw,ncid,'po3dl',imap,po(-1+target_offset,iylstrt),iret)
     call rwcdf(rw,ncid,'fn3dl',imap,fna(0,iylstrt,0,ismain),iret)
     call rwcdf(rw,ncid,'fe3dl',imap,fhe(0,iylstrt,0),iret)
     call rwcdf(rw,ncid,'fi3dl',imap,fhi(0,iylstrt,0),iret)
@@ -1294,14 +1288,10 @@ Contains
     call rwcdf(rw,ncid,'po3da',imap,po(jxa,iyastrt),iret)
     imap(1)=nx+2     ! br
     imap(2)=1
-    call rwcdf &
-         (rw,ncid,'ne3dr',imap,ne(nx-target_offset,iyrstrt),iret)
-    call rwcdf &
-         (rw,ncid,'te3dr',imap,te(nx-target_offset,iyrstrt),iret)
-    call rwcdf &
-         (rw,ncid,'ti3dr',imap,ti(nx-target_offset,iyrstrt),iret)
-    call rwcdf &
-         (rw,ncid,'po3dr',imap,po(nx-target_offset,iyrstrt),iret)
+    call rwcdf(rw,ncid,'ne3dr',imap,ne(nx-target_offset,iyrstrt),iret)
+    call rwcdf(rw,ncid,'te3dr',imap,te(nx-target_offset,iyrstrt),iret)
+    call rwcdf(rw,ncid,'ti3dr',imap,ti(nx-target_offset,iyrstrt),iret)
+    call rwcdf(rw,ncid,'po3dr',imap,po(nx-target_offset,iyrstrt),iret)
     call rwcdf(rw,ncid,'fn3dr',imap,fna(nx,iyrstrt,0,ismain),iret)
     call rwcdf(rw,ncid,'fe3dr',imap,fhe(nx,iyrstrt,0),iret)
     call rwcdf(rw,ncid,'fi3dr',imap,fhi(nx,iyrstrt,0),iret)
@@ -1311,16 +1301,11 @@ Contains
     if (nnreg(0).ge.8) then
       imap(1)=nx+2     ! tr
       imap(2)=1
-      call rwcdf &
-           (rw,ncid,'ne3dtr',imap,ne(ixtr+target_offset,iytrstrt),iret)
-      call rwcdf &
-           (rw,ncid,'te3dtr',imap,te(ixtr+target_offset,iytrstrt),iret)
-      call rwcdf &
-           (rw,ncid,'ti3dtr',imap,ti(ixtr+target_offset,iytrstrt),iret)
-      call rwcdf &
-           (rw,ncid,'po3dtr',imap,po(ixtr+target_offset,iytrstrt),iret)
-      call rwcdf &
-           (rw,ncid,'fn3dtr',imap,fna(ixtr+1,iytrstrt,0,ismain),iret)
+      call rwcdf(rw,ncid,'ne3dtr',imap,ne(ixtr+target_offset,iytrstrt),iret)
+      call rwcdf(rw,ncid,'te3dtr',imap,te(ixtr+target_offset,iytrstrt),iret)
+      call rwcdf(rw,ncid,'ti3dtr',imap,ti(ixtr+target_offset,iytrstrt),iret)
+      call rwcdf(rw,ncid,'po3dtr',imap,po(ixtr+target_offset,iytrstrt),iret)
+      call rwcdf(rw,ncid,'fn3dtr',imap,fna(ixtr+1,iytrstrt,0,ismain),iret)
       call rwcdf(rw,ncid,'fe3dtr',imap,fhe(ixtr+1,iytrstrt,0),iret)
       call rwcdf(rw,ncid,'fi3dtr',imap,fhi(ixtr+1,iytrstrt,0),iret)
       call rwcdf(rw,ncid,'fc3dtr',imap,fch(ixtr+1,iytrstrt,0),iret)
@@ -1328,16 +1313,11 @@ Contains
       call rwcdf(rw,ncid,'fo3dtr',imap,fni(ixtr+1,iytrstrt,0),iret)
       imap(1)=nx+2     ! tl
       imap(2)=nx+2
-      call rwcdf &
-           (rw,ncid,'ne3dtl',imap,ne(ixtl-target_offset,iytlstrt),iret)
-      call rwcdf &
-           (rw,ncid,'te3dtl',imap,te(ixtl-target_offset,iytlstrt),iret)
-      call rwcdf &
-           (rw,ncid,'ti3dtl',imap,ti(ixtl-target_offset,iytlstrt),iret)
-      call rwcdf &
-           (rw,ncid,'po3dtl',imap,po(ixtl-target_offset,iytlstrt),iret)
-      call rwcdf &
-           (rw,ncid,'fn3dtl',imap,fna(ixtl,iytlstrt,0,ismain),iret)
+      call rwcdf(rw,ncid,'ne3dtl',imap,ne(ixtl-target_offset,iytlstrt),iret)
+      call rwcdf(rw,ncid,'te3dtl',imap,te(ixtl-target_offset,iytlstrt),iret)
+      call rwcdf(rw,ncid,'ti3dtl',imap,ti(ixtl-target_offset,iytlstrt),iret)
+      call rwcdf(rw,ncid,'po3dtl',imap,po(ixtl-target_offset,iytlstrt),iret)
+      call rwcdf(rw,ncid,'fn3dtl',imap,fna(ixtl,iytlstrt,0,ismain),iret)
       call rwcdf(rw,ncid,'fe3dtl',imap,fhe(ixtl,iytlstrt,0),iret)
       call rwcdf(rw,ncid,'fi3dtl',imap,fhi(ixtl,iytlstrt,0),iret)
       call rwcdf(rw,ncid,'fc3dtl',imap,fch(ixtl,iytlstrt,0),iret)
@@ -1348,34 +1328,28 @@ Contains
     imap(1)=1
     imap(2)=1
     slice=0.0_R8
-    if (ismain0.ne.ismain) &
-         slice(iylstrt:iylend)=na(-1+target_offset,iylstrt:iylend,ismain0)
+    if (ismain0.ne.ismain) slice(iylstrt:iylend)=na(-1+target_offset,iylstrt:iylend,ismain0)
     slice(0:ny-1)=slice(0:ny-1)+dab2(1,1:ny,1,1)
     call rwcdf(rw,ncid,'an3dl',imap,slice(iylstrt),iret)
     slice=0.0_R8
-    if (ismain0.ne.ismain) &
-         slice(iyistrt:iyiend)=na(jxi,iyistrt:iyiend,ismain0)
+    if (ismain0.ne.ismain) slice(iyistrt:iyiend)=na(jxi,iyistrt:iyiend,ismain0)
     slice(0:ny-1)=slice(0:ny-1)+dab2(jxi+1,1:ny,1,1)
     call rwcdf(rw,ncid,'an3di',imap,slice(iyistrt),iret)
     slice=0.0_R8
-    if (ismain0.ne.ismain) &
-         slice(iyastrt:iyaend)=na(jxa,iyastrt:iyaend,ismain0)
+    if (ismain0.ne.ismain) slice(iyastrt:iyaend)=na(jxa,iyastrt:iyaend,ismain0)
     slice(0:ny-1)=slice(0:ny-1)+dab2(jxa+1,1:ny,1,1)
     call rwcdf(rw,ncid,'an3da',imap,slice(iyastrt),iret)
     slice=0.0_R8
-    if (ismain0.ne.ismain) &
-         slice(iyrstrt:iyrend)=na(nx-target_offset,iyrstrt:iyrend,ismain0)
+    if (ismain0.ne.ismain) slice(iyrstrt:iyrend)=na(nx-target_offset,iyrstrt:iyrend,ismain0)
     slice(0:ny-1)=slice(0:ny-1)+dab2(nx,1:ny,1,1)
     call rwcdf(rw,ncid,'an3dr',imap,slice(iyrstrt),iret)
     if (nnreg(0).ge.8) then
       slice=0.0_R8
-      if (ismain0.ne.ismain) slice(iytlstrt:iytlend)= &
-           na(ixtl-target_offset,iytlstrt:iytlend,ismain0)
+      if (ismain0.ne.ismain) slice(iytlstrt:iytlend)= na(ixtl-target_offset,iytlstrt:iytlend,ismain0)
       slice(0:ny-1)=slice(0:ny-1)+dab2(ixtl,1:ny,1,1)
       call rwcdf(rw,ncid,'an3dtl',imap,slice(iytlstrt),iret)
       slice=0.0_R8
-      if (ismain0.ne.ismain) slice(iytrstrt:iytrend)= &
-           na(ixtr+target_offset,iytrstrt:iytrend,ismain0)
+      if (ismain0.ne.ismain) slice(iytrstrt:iytrend)= na(ixtr+target_offset,iytrstrt:iytrend,ismain0)
       slice(0:ny-1)=slice(0:ny-1)+dab2(ixtr+1,1:ny,1,1)
       call rwcdf(rw,ncid,'an3dtr',imap,slice(iytrstrt),iret)
     endif
@@ -1533,11 +1507,9 @@ Contains
     call rwcdf(rw,ncid,'vy3di',imap,slice,iret)
     slice(-1:ny)=vla0(jxa,-1:ny,1,ismain)
     call rwcdf(rw,ncid,'vy3da',imap,slice,iret)
-    slice(-1:ny)=vsa0(jxi,-1:ny,ismain)/ &
-         (mp*am(ismain)*na(jxi,-1:ny,ismain))
+    slice(-1:ny)=vsa0(jxi,-1:ny,ismain)/(mp*am(ismain)*na(jxi,-1:ny,ismain))
     call rwcdf(rw,ncid,'vs3di',imap,slice,iret)
-    slice(-1:ny)=vsa0(jxa,-1:ny,ismain)/ &
-         (mp*am(ismain)*na(jxa,-1:ny,ismain))
+    slice(-1:ny)=vsa0(jxa,-1:ny,ismain)/(mp*am(ismain)*na(jxa,-1:ny,ismain))
     call rwcdf(rw,ncid,'vs3da',imap,slice,iret)
     !
     imap(1)=1
@@ -1638,804 +1610,780 @@ Contains
          tpmxipid, tpmxapid, tp3drid, tp3dlid, tp3dtlid, tp3dtrid, &
          tpsepiid, tpsepaid
     ! variable shapes
-    integer dims(2)
+    integer :: dims(2)
     ! attribute vectors
-    real (kind=R8) :: &
-         doubleval(1)
-    ! enter define mode
-    ncid = nccre ('b2time.nc', ncclob, iret)
+    real (kind=R8) :: doubleval(1)
+    ! Create and enter define mode
+    iret = nf_create('b2time.nc', ncclob, ncid)
     ! define dimensions
-    nxdim = ncddef(ncid, 'nx', nx+2, iret)
-    nydim = ncddef(ncid, 'ny', ny+2, iret)
-    nybldim = ncddef (ncid, 'nybl', nybl, iret)
-    if(nytl.gt.0) nytldim = ncddef (ncid, 'nytl', nytl, iret)
-    if(nytr.gt.0) nytrdim = ncddef (ncid, 'nytr', nytr, iret)
-    nybrdim = ncddef (ncid, 'nybr', nybr, iret)
-    nyidim = ncddef (ncid, 'nyi', nyi, iret)
-    nyadim = ncddef (ncid, 'nya', nya, iret)
-    ncdim = ncddef(ncid, 'nc', nc, iret)
-    nsdim = ncddef(ncid, 'ns', ns, iret)
-    timedim = ncddef(ncid, 'time', ncunlim, iret)
+    iret = nf_def_dim(ncid, 'nx', nx+2, nxdim)
+    iret = nf_def_dim(ncid, 'ny', ny+2, nydim)
+    iret = nf_def_dim(ncid, 'nybl', nybl, nybldim)
+    if(nytl.gt.0) iret = nf_def_dim(ncid, 'nytl', nytl, nytldim)
+    if(nytr.gt.0) iret = nf_def_dim(ncid, 'nytr', nytr, nytrdim)
+    iret = nf_def_dim(ncid, 'nybr', nybr, nybrdim)
+    iret = nf_def_dim(ncid, 'nyi', nyi, nyidim)
+    iret = nf_def_dim(ncid, 'nya', nya, nyadim)
+    iret = nf_def_dim(ncid, 'nc', nc, ncdim)
+    iret = nf_def_dim(ncid, 'ns', ns, nsdim)
+    iret = nf_def_dim(ncid, 'time', ncunlim, timedim)
     ! define variables
     dims(1) = 0
-    ntstepid = ncvdef (ncid, 'ntstep', NCDOUBLE, 0, dims, iret)
+    iret = nf_def_var(ncid, 'ntstep', NCDOUBLE, 0, dims, ntstepid)
     dims(1) = timedim
-    timesaid = ncvdef (ncid, 'timesa', NCDOUBLE, 1, dims, iret)
+    iret = nf_def_var(ncid, 'timesa', NCDOUBLE, 1, dims, timesaid)
     dims(1) = ncdim
     dims(2) = timedim
-    fnixipid = ncvdef (ncid, 'fnixip', NCDOUBLE, 2, dims, iret)
-    feexipid = ncvdef (ncid, 'feexip', NCDOUBLE, 2, dims, iret)
-    feixipid = ncvdef (ncid, 'feixip', NCDOUBLE, 2, dims, iret)
-    fetxipid = ncvdef (ncid, 'fetxip', NCDOUBLE, 2, dims, iret)
-    fchxipid = ncvdef (ncid, 'fchxip', NCDOUBLE, 2, dims, iret)
-    fnixapid = ncvdef (ncid, 'fnixap', NCDOUBLE, 2, dims, iret)
-    feexapid = ncvdef (ncid, 'feexap', NCDOUBLE, 2, dims, iret)
-    feixapid = ncvdef (ncid, 'feixap', NCDOUBLE, 2, dims, iret)
-    fetxapid = ncvdef (ncid, 'fetxap', NCDOUBLE, 2, dims, iret)
-    fchxapid = ncvdef (ncid, 'fchxap', NCDOUBLE, 2, dims, iret)
-    nesepiid = ncvdef (ncid, 'nesepi', NCDOUBLE, 2, dims, iret)
-    tesepiid = ncvdef (ncid, 'tesepi', NCDOUBLE, 2, dims, iret)
-    tisepiid = ncvdef (ncid, 'tisepi', NCDOUBLE, 2, dims, iret)
-    tpsepiid = ncvdef (ncid, 'tpsepi', NCDOUBLE, 2, dims, iret)
-    posepiid = ncvdef (ncid, 'posepi', NCDOUBLE, 2, dims, iret)
-    nesepmid = ncvdef (ncid, 'nesepm', NCDOUBLE, 2, dims, iret)
-    tesepmid = ncvdef (ncid, 'tesepm', NCDOUBLE, 2, dims, iret)
-    tisepmid = ncvdef (ncid, 'tisepm', NCDOUBLE, 2, dims, iret)
-    posepmid = ncvdef (ncid, 'posepm', NCDOUBLE, 2, dims, iret)
-    dnsepmid = ncvdef (ncid, 'dnsepm', NCDOUBLE, 2, dims, iret)
-    dpsepmid = ncvdef (ncid, 'dpsepm', NCDOUBLE, 2, dims, iret)
-    kesepmid = ncvdef (ncid, 'kesepm', NCDOUBLE, 2, dims, iret)
-    kisepmid = ncvdef (ncid, 'kisepm', NCDOUBLE, 2, dims, iret)
-    vxsepmid = ncvdef (ncid, 'vxsepm', NCDOUBLE, 2, dims, iret)
-    vysepmid = ncvdef (ncid, 'vysepm', NCDOUBLE, 2, dims, iret)
-    vssepmid = ncvdef (ncid, 'vssepm', NCDOUBLE, 2, dims, iret)
-    nesepaid = ncvdef (ncid, 'nesepa', NCDOUBLE, 2, dims, iret)
-    tesepaid = ncvdef (ncid, 'tesepa', NCDOUBLE, 2, dims, iret)
-    tisepaid = ncvdef (ncid, 'tisepa', NCDOUBLE, 2, dims, iret)
-    tpsepaid = ncvdef (ncid, 'tpsepa', NCDOUBLE, 2, dims, iret)
-    posepaid = ncvdef (ncid, 'posepa', NCDOUBLE, 2, dims, iret)
-    nemxipid = ncvdef (ncid, 'nemxip', NCDOUBLE, 2, dims, iret)
-    temxipid = ncvdef (ncid, 'temxip', NCDOUBLE, 2, dims, iret)
-    timxipid = ncvdef (ncid, 'timxip', NCDOUBLE, 2, dims, iret)
-    tpmxipid = ncvdef (ncid, 'tpmxip', NCDOUBLE, 2, dims, iret)
-    pomxipid = ncvdef (ncid, 'pomxip', NCDOUBLE, 2, dims, iret)
-    nemxapid = ncvdef (ncid, 'nemxap', NCDOUBLE, 2, dims, iret)
-    temxapid = ncvdef (ncid, 'temxap', NCDOUBLE, 2, dims, iret)
-    timxapid = ncvdef (ncid, 'timxap', NCDOUBLE, 2, dims, iret)
-    tpmxapid = ncvdef (ncid, 'tpmxap', NCDOUBLE, 2, dims, iret)
-    pomxapid = ncvdef (ncid, 'pomxap', NCDOUBLE, 2, dims, iret)
-    fniyipid = ncvdef (ncid, 'fniyip', NCDOUBLE, 2, dims, iret)
-    feeyipid = ncvdef (ncid, 'feeyip', NCDOUBLE, 2, dims, iret)
-    feiyipid = ncvdef (ncid, 'feiyip', NCDOUBLE, 2, dims, iret)
-    fetyipid = ncvdef (ncid, 'fetyip', NCDOUBLE, 2, dims, iret)
-    fchyipid = ncvdef (ncid, 'fchyip', NCDOUBLE, 2, dims, iret)
-    fniyapid = ncvdef (ncid, 'fniyap', NCDOUBLE, 2, dims, iret)
-    feeyapid = ncvdef (ncid, 'feeyap', NCDOUBLE, 2, dims, iret)
-    feiyapid = ncvdef (ncid, 'feiyap', NCDOUBLE, 2, dims, iret)
-    fetyapid = ncvdef (ncid, 'fetyap', NCDOUBLE, 2, dims, iret)
-    fchyapid = ncvdef (ncid, 'fchyap', NCDOUBLE, 2, dims, iret)
-    pwmxipid = ncvdef (ncid, 'pwmxip', NCDOUBLE, 2, dims, iret)
-    pwmxapid = ncvdef (ncid, 'pwmxap', NCDOUBLE, 2, dims, iret)
+    iret = nf_def_var(ncid, 'fnixip', NCDOUBLE, 2, dims, fnixipid)
+    iret = nf_def_var(ncid, 'feexip', NCDOUBLE, 2, dims, feexipid)
+    iret = nf_def_var(ncid, 'feixip', NCDOUBLE, 2, dims, feixipid)
+    iret = nf_def_var(ncid, 'fetxip', NCDOUBLE, 2, dims, fetxipid)
+    iret = nf_def_var(ncid, 'fchxip', NCDOUBLE, 2, dims, fchxipid)
+    iret = nf_def_var(ncid, 'fnixap', NCDOUBLE, 2, dims, fnixapid)
+    iret = nf_def_var(ncid, 'feexap', NCDOUBLE, 2, dims, feexapid)
+    iret = nf_def_var(ncid, 'feixap', NCDOUBLE, 2, dims, feixapid)
+    iret = nf_def_var(ncid, 'fetxap', NCDOUBLE, 2, dims, fetxapid)
+    iret = nf_def_var(ncid, 'fchxap', NCDOUBLE, 2, dims, fchxapid)
+    iret = nf_def_var(ncid, 'nesepi', NCDOUBLE, 2, dims, nesepiid)
+    iret = nf_def_var(ncid, 'tesepi', NCDOUBLE, 2, dims, tesepiid)
+    iret = nf_def_var(ncid, 'tisepi', NCDOUBLE, 2, dims, tisepiid)
+    iret = nf_def_var(ncid, 'tpsepi', NCDOUBLE, 2, dims, tpsepiid)
+    iret = nf_def_var(ncid, 'posepi', NCDOUBLE, 2, dims, posepiid)
+    iret = nf_def_var(ncid, 'nesepm', NCDOUBLE, 2, dims, nesepmid)
+    iret = nf_def_var(ncid, 'tesepm', NCDOUBLE, 2, dims, tesepmid)
+    iret = nf_def_var(ncid, 'tisepm', NCDOUBLE, 2, dims, tisepmid)
+    iret = nf_def_var(ncid, 'posepm', NCDOUBLE, 2, dims, posepmid)
+    iret = nf_def_var(ncid, 'dnsepm', NCDOUBLE, 2, dims, dnsepmid)
+    iret = nf_def_var(ncid, 'dpsepm', NCDOUBLE, 2, dims, dpsepmid)
+    iret = nf_def_var(ncid, 'kesepm', NCDOUBLE, 2, dims, kesepmid)
+    iret = nf_def_var(ncid, 'kisepm', NCDOUBLE, 2, dims, kisepmid)
+    iret = nf_def_var(ncid, 'vxsepm', NCDOUBLE, 2, dims, vxsepmid)
+    iret = nf_def_var(ncid, 'vysepm', NCDOUBLE, 2, dims, vysepmid)
+    iret = nf_def_var(ncid, 'vssepm', NCDOUBLE, 2, dims, vssepmid)
+    iret = nf_def_var(ncid, 'nesepa', NCDOUBLE, 2, dims, nesepaid)
+    iret = nf_def_var(ncid, 'tesepa', NCDOUBLE, 2, dims, tesepaid)
+    iret = nf_def_var(ncid, 'tisepa', NCDOUBLE, 2, dims, tisepaid)
+    iret = nf_def_var(ncid, 'tpsepa', NCDOUBLE, 2, dims, tpsepaid)
+    iret = nf_def_var(ncid, 'posepa', NCDOUBLE, 2, dims, posepaid)
+    iret = nf_def_var(ncid, 'nemxip', NCDOUBLE, 2, dims, nemxipid)
+    iret = nf_def_var(ncid, 'temxip', NCDOUBLE, 2, dims, temxipid)
+    iret = nf_def_var(ncid, 'timxip', NCDOUBLE, 2, dims, timxipid)
+    iret = nf_def_var(ncid, 'tpmxip', NCDOUBLE, 2, dims, tpmxipid)
+    iret = nf_def_var(ncid, 'pomxip', NCDOUBLE, 2, dims, pomxipid)
+    iret = nf_def_var(ncid, 'nemxap', NCDOUBLE, 2, dims, nemxapid)
+    iret = nf_def_var(ncid, 'temxap', NCDOUBLE, 2, dims, temxapid)
+    iret = nf_def_var(ncid, 'timxap', NCDOUBLE, 2, dims, timxapid)
+    iret = nf_def_var(ncid, 'tpmxap', NCDOUBLE, 2, dims, tpmxapid)
+    iret = nf_def_var(ncid, 'pomxap', NCDOUBLE, 2, dims, pomxapid)
+    iret = nf_def_var(ncid, 'fniyip', NCDOUBLE, 2, dims, fniyipid)
+    iret = nf_def_var(ncid, 'feeyip', NCDOUBLE, 2, dims, feeyipid)
+    iret = nf_def_var(ncid, 'feiyip', NCDOUBLE, 2, dims, feiyipid)
+    iret = nf_def_var(ncid, 'fetyip', NCDOUBLE, 2, dims, fetyipid)
+    iret = nf_def_var(ncid, 'fchyip', NCDOUBLE, 2, dims, fchyipid)
+    iret = nf_def_var(ncid, 'fniyap', NCDOUBLE, 2, dims, fniyapid)
+    iret = nf_def_var(ncid, 'feeyap', NCDOUBLE, 2, dims, feeyapid)
+    iret = nf_def_var(ncid, 'feiyap', NCDOUBLE, 2, dims, feiyapid)
+    iret = nf_def_var(ncid, 'fetyap', NCDOUBLE, 2, dims, fetyapid)
+    iret = nf_def_var(ncid, 'fchyap', NCDOUBLE, 2, dims, fchyapid)
+    iret = nf_def_var(ncid, 'pwmxip', NCDOUBLE, 2, dims, pwmxipid)
+    iret = nf_def_var(ncid, 'pwmxap', NCDOUBLE, 2, dims, pwmxapid)
     dims(1) = timedim
-    tmneid = ncvdef (ncid, 'tmne', NCDOUBLE, 1, dims, iret)
-    tmteid = ncvdef (ncid, 'tmte', NCDOUBLE, 1, dims, iret)
-    tmtiid = ncvdef (ncid, 'tmti', NCDOUBLE, 1, dims, iret)
-    tmhacoreid = ncvdef (ncid, 'tmhacore', NCDOUBLE, 1, dims, iret)
-    tmhasolid = ncvdef (ncid, 'tmhasol', NCDOUBLE, 1, dims, iret)
-    tmhadivid = ncvdef (ncid, 'tmhadiv', NCDOUBLE, 1, dims, iret)
+    iret = nf_def_var(ncid, 'tmne', NCDOUBLE, 1, dims, tmneid)
+    iret = nf_def_var(ncid, 'tmte', NCDOUBLE, 1, dims, tmteid)
+    iret = nf_def_var(ncid, 'tmti', NCDOUBLE, 1, dims, tmtiid)
+    iret = nf_def_var(ncid, 'tmhacore', NCDOUBLE, 1, dims, tmhacoreid)
+    iret = nf_def_var(ncid, 'tmhasol', NCDOUBLE, 1, dims, tmhasolid)
+    iret = nf_def_var(ncid, 'tmhadiv', NCDOUBLE, 1, dims, tmhadivid)
     dims(1) = ncdim
     dims(2) = timedim
-    fnisipid = ncvdef (ncid, 'fnisip', NCDOUBLE, 2, dims, iret)
-    feesipid = ncvdef (ncid, 'feesip', NCDOUBLE, 2, dims, iret)
-    feisipid = ncvdef (ncid, 'feisip', NCDOUBLE, 2, dims, iret)
-    fetsipid = ncvdef (ncid, 'fetsip', NCDOUBLE, 2, dims, iret)
-    fchsipid = ncvdef (ncid, 'fchsip', NCDOUBLE, 2, dims, iret)
-    fnisapid = ncvdef (ncid, 'fnisap', NCDOUBLE, 2, dims, iret)
-    feesapid = ncvdef (ncid, 'feesap', NCDOUBLE, 2, dims, iret)
-    feisapid = ncvdef (ncid, 'feisap', NCDOUBLE, 2, dims, iret)
-    fetsapid = ncvdef (ncid, 'fetsap', NCDOUBLE, 2, dims, iret)
-    fchsapid = ncvdef (ncid, 'fchsap', NCDOUBLE, 2, dims, iret)
-    fnisippid = ncvdef (ncid, 'fnisipp', NCDOUBLE, 2, dims, iret)
-    feesippid = ncvdef (ncid, 'feesipp', NCDOUBLE, 2, dims, iret)
-    feisippid = ncvdef (ncid, 'feisipp', NCDOUBLE, 2, dims, iret)
-    fetsippid = ncvdef (ncid, 'fetsipp', NCDOUBLE, 2, dims, iret)
-    fchsippid = ncvdef (ncid, 'fchsipp', NCDOUBLE, 2, dims, iret)
-    fnisappid = ncvdef (ncid, 'fnisapp', NCDOUBLE, 2, dims, iret)
-    feesappid = ncvdef (ncid, 'feesapp', NCDOUBLE, 2, dims, iret)
-    feisappid = ncvdef (ncid, 'feisapp', NCDOUBLE, 2, dims, iret)
-    fetsappid = ncvdef (ncid, 'fetsapp', NCDOUBLE, 2, dims, iret)
-    fchsappid = ncvdef (ncid, 'fchsapp', NCDOUBLE, 2, dims, iret)
+    iret = nf_def_var(ncid, 'fnisip', NCDOUBLE, 2, dims, fnisipid)
+    iret = nf_def_var(ncid, 'feesip', NCDOUBLE, 2, dims, feesipid)
+    iret = nf_def_var(ncid, 'feisip', NCDOUBLE, 2, dims, feisipid)
+    iret = nf_def_var(ncid, 'fetsip', NCDOUBLE, 2, dims, fetsipid)
+    iret = nf_def_var(ncid, 'fchsip', NCDOUBLE, 2, dims, fchsipid)
+    iret = nf_def_var(ncid, 'fnisap', NCDOUBLE, 2, dims, fnisapid)
+    iret = nf_def_var(ncid, 'feesap', NCDOUBLE, 2, dims, feesapid)
+    iret = nf_def_var(ncid, 'feisap', NCDOUBLE, 2, dims, feisapid)
+    iret = nf_def_var(ncid, 'fetsap', NCDOUBLE, 2, dims, fetsapid)
+    iret = nf_def_var(ncid, 'fchsap', NCDOUBLE, 2, dims, fchsapid)
+    iret = nf_def_var(ncid, 'fnisipp', NCDOUBLE, 2, dims, fnisippid)
+    iret = nf_def_var(ncid, 'feesipp', NCDOUBLE, 2, dims, feesippid)
+    iret = nf_def_var(ncid, 'feisipp', NCDOUBLE, 2, dims, feisippid)
+    iret = nf_def_var(ncid, 'fetsipp', NCDOUBLE, 2, dims, fetsippid)
+    iret = nf_def_var(ncid, 'fchsipp', NCDOUBLE, 2, dims, fchsippid)
+    iret = nf_def_var(ncid, 'fnisapp', NCDOUBLE, 2, dims, fnisappid)
+    iret = nf_def_var(ncid, 'feesapp', NCDOUBLE, 2, dims, feesappid)
+    iret = nf_def_var(ncid, 'feisapp', NCDOUBLE, 2, dims, feisappid)
+    iret = nf_def_var(ncid, 'fetsapp', NCDOUBLE, 2, dims, fetsappid)
+    iret = nf_def_var(ncid, 'fchsapp', NCDOUBLE, 2, dims, fchsappid)
     dims(2) = timedim
     dims(1) = nybldim
-    fn3dlid = ncvdef (ncid, 'fn3dl', NCDOUBLE, 2, dims, iret)
-    fe3dlid = ncvdef (ncid, 'fe3dl', NCDOUBLE, 2, dims, iret)
-    fi3dlid = ncvdef (ncid, 'fi3dl', NCDOUBLE, 2, dims, iret)
-    ft3dlid = ncvdef (ncid, 'ft3dl', NCDOUBLE, 2, dims, iret)
-    fc3dlid = ncvdef (ncid, 'fc3dl', NCDOUBLE, 2, dims, iret)
-    fl3dlid = ncvdef (ncid, 'fl3dl', NCDOUBLE, 2, dims, iret)
-    fo3dlid = ncvdef (ncid, 'fo3dl', NCDOUBLE, 2, dims, iret)
-    ne3dlid = ncvdef (ncid, 'ne3dl', NCDOUBLE, 2, dims, iret)
-    te3dlid = ncvdef (ncid, 'te3dl', NCDOUBLE, 2, dims, iret)
-    ti3dlid = ncvdef (ncid, 'ti3dl', NCDOUBLE, 2, dims, iret)
-    po3dlid = ncvdef (ncid, 'po3dl', NCDOUBLE, 2, dims, iret)
-    an3dlid = ncvdef (ncid, 'an3dl', NCDOUBLE, 2, dims, iret)
-    mn3dlid = ncvdef (ncid, 'mn3dl', NCDOUBLE, 2, dims, iret)
-    tp3dlid = ncvdef (ncid, 'tp3dl', NCDOUBLE, 2, dims, iret)
+    iret = nf_def_var(ncid, 'fn3dl', NCDOUBLE, 2, dims, fn3dlid)
+    iret = nf_def_var(ncid, 'fe3dl', NCDOUBLE, 2, dims, fe3dlid)
+    iret = nf_def_var(ncid, 'fi3dl', NCDOUBLE, 2, dims, fi3dlid)
+    iret = nf_def_var(ncid, 'ft3dl', NCDOUBLE, 2, dims, ft3dlid)
+    iret = nf_def_var(ncid, 'fc3dl', NCDOUBLE, 2, dims, fc3dlid)
+    iret = nf_def_var(ncid, 'fl3dl', NCDOUBLE, 2, dims, fl3dlid)
+    iret = nf_def_var(ncid, 'fo3dl', NCDOUBLE, 2, dims, fo3dlid)
+    iret = nf_def_var(ncid, 'ne3dl', NCDOUBLE, 2, dims, ne3dlid)
+    iret = nf_def_var(ncid, 'te3dl', NCDOUBLE, 2, dims, te3dlid)
+    iret = nf_def_var(ncid, 'ti3dl', NCDOUBLE, 2, dims, ti3dlid)
+    iret = nf_def_var(ncid, 'po3dl', NCDOUBLE, 2, dims, po3dlid)
+    iret = nf_def_var(ncid, 'an3dl', NCDOUBLE, 2, dims, an3dlid)
+    iret = nf_def_var(ncid, 'mn3dl', NCDOUBLE, 2, dims, mn3dlid)
+    iret = nf_def_var(ncid, 'tp3dl', NCDOUBLE, 2, dims, tp3dlid)
     if(nytl.gt.0) then
       dims(2) = timedim
       dims(1) = nytldim
-      fn3dtlid = ncvdef (ncid, 'fn3dtl', NCDOUBLE, 2, dims, iret)
-      fe3dtlid = ncvdef (ncid, 'fe3dtl', NCDOUBLE, 2, dims, iret)
-      fi3dtlid = ncvdef (ncid, 'fi3dtl', NCDOUBLE, 2, dims, iret)
-      ft3dtlid = ncvdef (ncid, 'ft3dtl', NCDOUBLE, 2, dims, iret)
-      fc3dtlid = ncvdef (ncid, 'fc3dtl', NCDOUBLE, 2, dims, iret)
-      fl3dtlid = ncvdef (ncid, 'fl3dtl', NCDOUBLE, 2, dims, iret)
-      fo3dtlid = ncvdef (ncid, 'fo3dtl', NCDOUBLE, 2, dims, iret)
-      ne3dtlid = ncvdef (ncid, 'ne3dtl', NCDOUBLE, 2, dims, iret)
-      te3dtlid = ncvdef (ncid, 'te3dtl', NCDOUBLE, 2, dims, iret)
-      ti3dtlid = ncvdef (ncid, 'ti3dtl', NCDOUBLE, 2, dims, iret)
-      po3dtlid = ncvdef (ncid, 'po3dtl', NCDOUBLE, 2, dims, iret)
-      an3dtlid = ncvdef (ncid, 'an3dtl', NCDOUBLE, 2, dims, iret)
-      mn3dtlid = ncvdef (ncid, 'mn3dtl', NCDOUBLE, 2, dims, iret)
-      tp3dtlid = ncvdef (ncid, 'tp3dtl', NCDOUBLE, 2, dims, iret)
+      iret = nf_def_var(ncid, 'fn3dtl', NCDOUBLE, 2, dims, fn3dtlid)
+      iret = nf_def_var(ncid, 'fe3dtl', NCDOUBLE, 2, dims, fe3dtlid)
+      iret = nf_def_var(ncid, 'fi3dtl', NCDOUBLE, 2, dims, fi3dtlid)
+      iret = nf_def_var(ncid, 'ft3dtl', NCDOUBLE, 2, dims, ft3dtlid)
+      iret = nf_def_var(ncid, 'fc3dtl', NCDOUBLE, 2, dims, fc3dtlid)
+      iret = nf_def_var(ncid, 'fl3dtl', NCDOUBLE, 2, dims, fl3dtlid)
+      iret = nf_def_var(ncid, 'fo3dtl', NCDOUBLE, 2, dims, fo3dtlid)
+      iret = nf_def_var(ncid, 'ne3dtl', NCDOUBLE, 2, dims, ne3dtlid)
+      iret = nf_def_var(ncid, 'te3dtl', NCDOUBLE, 2, dims, te3dtlid)
+      iret = nf_def_var(ncid, 'ti3dtl', NCDOUBLE, 2, dims, ti3dtlid)
+      iret = nf_def_var(ncid, 'po3dtl', NCDOUBLE, 2, dims, po3dtlid)
+      iret = nf_def_var(ncid, 'an3dtl', NCDOUBLE, 2, dims, an3dtlid)
+      iret = nf_def_var(ncid, 'mn3dtl', NCDOUBLE, 2, dims, mn3dtlid)
+      iret = nf_def_var(ncid, 'tp3dtl', NCDOUBLE, 2, dims, tp3dtlid)
     endif
     dims(2) = timedim
     dims(1) = nyidim
-    ne3diid = ncvdef (ncid, 'ne3di', NCDOUBLE, 2, dims, iret)
-    te3diid = ncvdef (ncid, 'te3di', NCDOUBLE, 2, dims, iret)
-    ti3diid = ncvdef (ncid, 'ti3di', NCDOUBLE, 2, dims, iret)
-    po3diid = ncvdef (ncid, 'po3di', NCDOUBLE, 2, dims, iret)
-    an3diid = ncvdef (ncid, 'an3di', NCDOUBLE, 2, dims, iret)
-    mn3diid = ncvdef (ncid, 'mn3di', NCDOUBLE, 2, dims, iret)
-    dn3diid = ncvdef (ncid, 'dn3di', NCDOUBLE, 2, dims, iret)
-    dp3diid = ncvdef (ncid, 'dp3di', NCDOUBLE, 2, dims, iret)
-    lh3diid = ncvdef (ncid, 'lh3di', NCDOUBLE, 2, dims, iret)
-    ln3diid = ncvdef (ncid, 'ln3di', NCDOUBLE, 2, dims, iret)
-    ke3diid = ncvdef (ncid, 'ke3di', NCDOUBLE, 2, dims, iret)
-    ki3diid = ncvdef (ncid, 'ki3di', NCDOUBLE, 2, dims, iret)
-    vx3diid = ncvdef (ncid, 'vx3di', NCDOUBLE, 2, dims, iret)
-    vy3diid = ncvdef (ncid, 'vy3di', NCDOUBLE, 2, dims, iret)
-    vs3diid = ncvdef (ncid, 'vs3di', NCDOUBLE, 2, dims, iret)
+    iret = nf_def_var(ncid, 'ne3di', NCDOUBLE, 2, dims, ne3diid)
+    iret = nf_def_var(ncid, 'te3di', NCDOUBLE, 2, dims, te3diid)
+    iret = nf_def_var(ncid, 'ti3di', NCDOUBLE, 2, dims, ti3diid)
+    iret = nf_def_var(ncid, 'po3di', NCDOUBLE, 2, dims, po3diid)
+    iret = nf_def_var(ncid, 'an3di', NCDOUBLE, 2, dims, an3diid)
+    iret = nf_def_var(ncid, 'mn3di', NCDOUBLE, 2, dims, mn3diid)
+    iret = nf_def_var(ncid, 'dn3di', NCDOUBLE, 2, dims, dn3diid)
+    iret = nf_def_var(ncid, 'dp3di', NCDOUBLE, 2, dims, dp3diid)
+    iret = nf_def_var(ncid, 'lh3di', NCDOUBLE, 2, dims, lh3diid)
+    iret = nf_def_var(ncid, 'ln3di', NCDOUBLE, 2, dims, ln3diid)
+    iret = nf_def_var(ncid, 'ke3di', NCDOUBLE, 2, dims, ke3diid)
+    iret = nf_def_var(ncid, 'ki3di', NCDOUBLE, 2, dims, ki3diid)
+    iret = nf_def_var(ncid, 'vx3di', NCDOUBLE, 2, dims, vx3diid)
+    iret = nf_def_var(ncid, 'vy3di', NCDOUBLE, 2, dims, vy3diid)
+    iret = nf_def_var(ncid, 'vs3di', NCDOUBLE, 2, dims, vs3diid)
     dims(2) = timedim
     dims(1) = nyadim
-    ne3daid = ncvdef (ncid, 'ne3da', NCDOUBLE, 2, dims, iret)
-    te3daid = ncvdef (ncid, 'te3da', NCDOUBLE, 2, dims, iret)
-    ti3daid = ncvdef (ncid, 'ti3da', NCDOUBLE, 2, dims, iret)
-    po3daid = ncvdef (ncid, 'po3da', NCDOUBLE, 2, dims, iret)
-    an3daid = ncvdef (ncid, 'an3da', NCDOUBLE, 2, dims, iret)
-    mn3daid = ncvdef (ncid, 'mn3da', NCDOUBLE, 2, dims, iret)
-    dn3daid = ncvdef (ncid, 'dn3da', NCDOUBLE, 2, dims, iret)
-    dp3daid = ncvdef (ncid, 'dp3da', NCDOUBLE, 2, dims, iret)
-    lh3daid = ncvdef (ncid, 'lh3da', NCDOUBLE, 2, dims, iret)
-    ln3daid = ncvdef (ncid, 'ln3da', NCDOUBLE, 2, dims, iret)
-    ke3daid = ncvdef (ncid, 'ke3da', NCDOUBLE, 2, dims, iret)
-    ki3daid = ncvdef (ncid, 'ki3da', NCDOUBLE, 2, dims, iret)
-    vx3daid = ncvdef (ncid, 'vx3da', NCDOUBLE, 2, dims, iret)
-    vy3daid = ncvdef (ncid, 'vy3da', NCDOUBLE, 2, dims, iret)
-    vs3daid = ncvdef (ncid, 'vs3da', NCDOUBLE, 2, dims, iret)
+    iret = nf_def_var(ncid, 'ne3da', NCDOUBLE, 2, dims, ne3daid)
+    iret = nf_def_var(ncid, 'te3da', NCDOUBLE, 2, dims, te3daid)
+    iret = nf_def_var(ncid, 'ti3da', NCDOUBLE, 2, dims, ti3daid)
+    iret = nf_def_var(ncid, 'po3da', NCDOUBLE, 2, dims, po3daid)
+    iret = nf_def_var(ncid, 'an3da', NCDOUBLE, 2, dims, an3daid)
+    iret = nf_def_var(ncid, 'mn3da', NCDOUBLE, 2, dims, mn3daid)
+    iret = nf_def_var(ncid, 'dn3da', NCDOUBLE, 2, dims, dn3daid)
+    iret = nf_def_var(ncid, 'dp3da', NCDOUBLE, 2, dims, dp3daid)
+    iret = nf_def_var(ncid, 'lh3da', NCDOUBLE, 2, dims, lh3daid)
+    iret = nf_def_var(ncid, 'ln3da', NCDOUBLE, 2, dims, ln3daid)
+    iret = nf_def_var(ncid, 'ke3da', NCDOUBLE, 2, dims, ke3daid)
+    iret = nf_def_var(ncid, 'ki3da', NCDOUBLE, 2, dims, ki3daid)
+    iret = nf_def_var(ncid, 'vx3da', NCDOUBLE, 2, dims, vx3daid)
+    iret = nf_def_var(ncid, 'vy3da', NCDOUBLE, 2, dims, vy3daid)
+    iret = nf_def_var(ncid, 'vs3da', NCDOUBLE, 2, dims, vs3daid)
     dims(2) = timedim
     dims(1) = nybrdim
-    ne3drid = ncvdef (ncid, 'ne3dr', NCDOUBLE, 2, dims, iret)
-    te3drid = ncvdef (ncid, 'te3dr', NCDOUBLE, 2, dims, iret)
-    ti3drid = ncvdef (ncid, 'ti3dr', NCDOUBLE, 2, dims, iret)
-    po3drid = ncvdef (ncid, 'po3dr', NCDOUBLE, 2, dims, iret)
-    an3drid = ncvdef (ncid, 'an3dr', NCDOUBLE, 2, dims, iret)
-    mn3drid = ncvdef (ncid, 'mn3dr', NCDOUBLE, 2, dims, iret)
-    fn3drid = ncvdef (ncid, 'fn3dr', NCDOUBLE, 2, dims, iret)
-    fe3drid = ncvdef (ncid, 'fe3dr', NCDOUBLE, 2, dims, iret)
-    fi3drid = ncvdef (ncid, 'fi3dr', NCDOUBLE, 2, dims, iret)
-    ft3drid = ncvdef (ncid, 'ft3dr', NCDOUBLE, 2, dims, iret)
-    fc3drid = ncvdef (ncid, 'fc3dr', NCDOUBLE, 2, dims, iret)
-    fl3drid = ncvdef (ncid, 'fl3dr', NCDOUBLE, 2, dims, iret)
-    fo3drid = ncvdef (ncid, 'fo3dr', NCDOUBLE, 2, dims, iret)
-    tp3drid = ncvdef (ncid, 'tp3dr', NCDOUBLE, 2, dims, iret)
+   iret = nf_def_var(ncid, 'ne3dr', NCDOUBLE, 2, dims, ne3drid)
+    iret = nf_def_var(ncid, 'te3dr', NCDOUBLE, 2, dims, te3drid)
+    iret = nf_def_var(ncid, 'ti3dr', NCDOUBLE, 2, dims, ti3drid)
+    iret = nf_def_var(ncid, 'po3dr', NCDOUBLE, 2, dims, po3drid)
+    iret = nf_def_var(ncid, 'an3dr', NCDOUBLE, 2, dims, an3drid)
+    iret = nf_def_var(ncid, 'mn3dr', NCDOUBLE, 2, dims, mn3drid)
+    iret = nf_def_var(ncid, 'fn3dr', NCDOUBLE, 2, dims, fn3drid)
+    iret = nf_def_var(ncid, 'fe3dr', NCDOUBLE, 2, dims, fe3drid)
+    iret = nf_def_var(ncid, 'fi3dr', NCDOUBLE, 2, dims, fi3drid)
+    iret = nf_def_var(ncid, 'ft3dr', NCDOUBLE, 2, dims, ft3drid)
+    iret = nf_def_var(ncid, 'fc3dr', NCDOUBLE, 2, dims, fc3drid)
+    iret = nf_def_var(ncid, 'fl3dr', NCDOUBLE, 2, dims, fl3drid)
+    iret = nf_def_var(ncid, 'fo3dr', NCDOUBLE, 2, dims, fo3drid)
+    iret = nf_def_var(ncid, 'tp3dr', NCDOUBLE, 2, dims, tp3drid)
     if(nytr.gt.0) then
       dims(2) = timedim
       dims(1) = nytrdim
-      ne3dtrid = ncvdef (ncid, 'ne3dtr', NCDOUBLE, 2, dims, iret)
-      te3dtrid = ncvdef (ncid, 'te3dtr', NCDOUBLE, 2, dims, iret)
-      ti3dtrid = ncvdef (ncid, 'ti3dtr', NCDOUBLE, 2, dims, iret)
-      po3dtrid = ncvdef (ncid, 'po3dtr', NCDOUBLE, 2, dims, iret)
-      an3dtrid = ncvdef (ncid, 'an3dtr', NCDOUBLE, 2, dims, iret)
-      mn3dtrid = ncvdef (ncid, 'mn3dtr', NCDOUBLE, 2, dims, iret)
-      fn3dtrid = ncvdef (ncid, 'fn3dtr', NCDOUBLE, 2, dims, iret)
-      fe3dtrid = ncvdef (ncid, 'fe3dtr', NCDOUBLE, 2, dims, iret)
-      fi3dtrid = ncvdef (ncid, 'fi3dtr', NCDOUBLE, 2, dims, iret)
-      ft3dtrid = ncvdef (ncid, 'ft3dtr', NCDOUBLE, 2, dims, iret)
-      fc3dtrid = ncvdef (ncid, 'fc3dtr', NCDOUBLE, 2, dims, iret)
-      fl3dtrid = ncvdef (ncid, 'fl3dtr', NCDOUBLE, 2, dims, iret)
-      fo3dtrid = ncvdef (ncid, 'fo3dtr', NCDOUBLE, 2, dims, iret)
-      tp3dtrid = ncvdef (ncid, 'tp3dtr', NCDOUBLE, 2, dims, iret)
+      iret = nf_def_var(ncid, 'ne3dtr', NCDOUBLE, 2, dims, ne3dtrid)
+      iret = nf_def_var(ncid, 'te3dtr', NCDOUBLE, 2, dims, te3dtrid)
+      iret = nf_def_var(ncid, 'ti3dtr', NCDOUBLE, 2, dims, ti3dtrid)
+      iret = nf_def_var(ncid, 'po3dtr', NCDOUBLE, 2, dims, po3dtrid)
+      iret = nf_def_var(ncid, 'an3dtr', NCDOUBLE, 2, dims, an3dtrid)
+      iret = nf_def_var(ncid, 'mn3dtr', NCDOUBLE, 2, dims, mn3dtrid)
+      iret = nf_def_var(ncid, 'fn3dtr', NCDOUBLE, 2, dims, fn3dtrid)
+      iret = nf_def_var(ncid, 'fe3dtr', NCDOUBLE, 2, dims, fe3dtrid)
+      iret = nf_def_var(ncid, 'fi3dtr', NCDOUBLE, 2, dims, fi3dtrid)
+      iret = nf_def_var(ncid, 'ft3dtr', NCDOUBLE, 2, dims, ft3dtrid)
+      iret = nf_def_var(ncid, 'fc3dtr', NCDOUBLE, 2, dims, fc3dtrid)
+      iret = nf_def_var(ncid, 'fl3dtr', NCDOUBLE, 2, dims, fl3dtrid)
+      iret = nf_def_var(ncid, 'fo3dtr', NCDOUBLE, 2, dims, fo3dtrid)
+      iret = nf_def_var(ncid, 'tp3dtr', NCDOUBLE, 2, dims, tp3dtrid)
     endif
     ! assign attributes
-    call ncaptc(ncid, timesaid, 'long_name', NCCHAR, 4, 'time', iret)
-    call ncaptc(ncid, timesaid, 'units', NCCHAR, 2, 's ', iret)
-    call ncaptc(ncid, fnixipid, 'long_name', NCCHAR, 51, &
-         'integrated poloidal particle flux, inboard divertor', iret)
-    call ncaptc(ncid, fnixipid, 'units', NCCHAR, 4, 's^-1', iret)
-    call ncaptc(ncid, feexipid, 'long_name', NCCHAR, 58, &
-         'integrated poloidal electron energy flux, inboard divertor', &
-         iret)
-    call ncaptc(ncid, feexipid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, feixipid, 'long_name', NCCHAR, 53, &
-         'integrated poloidal ion energy flux, inboard divertor', iret)
-    call ncaptc(ncid, feixipid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fetxipid, 'long_name', NCCHAR, 53, &
-         'integrated poloidal tot energy flux, inboard divertor', iret)
-    call ncaptc(ncid, fetxipid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fchxipid, 'long_name', NCCHAR, 45, &
-         'integrated poloidal current, inboard divertor', iret)
-    call ncaptc(ncid, fchxipid, 'units', NCCHAR, 2, 'A ', iret)
-    call ncaptc(ncid, fnixapid, 'long_name', NCCHAR, 52, &
-         'integrated poloidal particle flux, outboard divertor', iret)
-    call ncaptc(ncid, fnixapid, 'units', NCCHAR, 4, 's^-1', iret)
-    call ncaptc(ncid, feexapid, 'long_name', NCCHAR, 59, &
-         'integrated poloidal electron energy flux, outboard divertor', &
-         iret)
-    call ncaptc(ncid, feexapid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, feixapid, 'long_name', NCCHAR, 54, &
-         'integrated poloidal ion energy flux, outboard divertor', iret)
-    call ncaptc(ncid, feixapid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fetxapid, 'long_name', NCCHAR, 54, &
-         'integrated poloidal tot energy flux, outboard divertor', iret)
-    call ncaptc(ncid, fetxapid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fchxapid, 'long_name', NCCHAR, 46, &
-         'integrated poloidal current, outboard divertor', iret)
-    call ncaptc(ncid, fchxapid, 'units', NCCHAR, 2, 'A ', iret)
-    call ncaptc(ncid, nesepiid, 'long_name', NCCHAR, 45, &
-         'separatrix electron density, inboard divertor', iret)
-    call ncaptc(ncid, nesepiid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, tesepiid, 'long_name', NCCHAR, 49, &
-         'separatrix electron temperature, inboard divertor', iret)
-    call ncaptc(ncid, tesepiid, 'units', NCCHAR, 2, 'eV', iret)
-    call ncaptc(ncid, tisepiid, 'long_name', NCCHAR, 44, &
-         'separatrix ion temperature, inboard divertor', iret)
-    call ncaptc(ncid, tisepiid, 'units', NCCHAR, 2, 'eV', iret)
-    call ncaptc(ncid, tpsepiid, 'long_name', NCCHAR, 46, &
-         'separatrix plate temperature, inboard divertor', iret)
-    call ncaptc(ncid, tpsepiid, 'units', NCCHAR, 2, 'K ', iret)
-    call ncaptc(ncid, posepiid, 'long_name', NCCHAR, 38, &
-         'separatrix potential, inboard divertor', iret)
-    call ncaptc(ncid, posepiid, 'units', NCCHAR, 2, 'V ', iret)
-    call ncaptc(ncid, nesepmid, 'long_name', NCCHAR, 43, &
-         'separatrix electron density, outer midplane', iret)
-    call ncaptc(ncid, nesepmid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, tesepmid, 'long_name', NCCHAR, 47, &
-         'separatrix electron temperature, outer midplane', iret)
-    call ncaptc(ncid, tesepmid, 'units', NCCHAR, 2, 'eV', iret)
-    call ncaptc(ncid, tisepmid, 'long_name', NCCHAR, 42, &
-         'separatrix ion temperature, outer midplane', iret)
-    call ncaptc(ncid, tisepmid, 'units', NCCHAR, 2, 'eV', iret)
-    call ncaptc(ncid, posepmid, 'long_name', NCCHAR, 36, &
-         'separatrix potential, outer midplane', iret)
-    call ncaptc(ncid, posepmid, 'units', NCCHAR, 2, 'V ', iret)
+    iret = nf_put_att_text(ncid, timesaid, 'long_name', NCCHAR, 4, 'time')
+    iret = nf_put_att_text(ncid, timesaid, 'units', NCCHAR, 2, 's ')
+    iret = nf_put_att_text(ncid, fnixipid, 'long_name', NCCHAR, 51, &
+         'integrated poloidal particle flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fnixipid, 'units', NCCHAR, 4, 's^-1')
+    iret = nf_put_att_text(ncid, feexipid, 'long_name', NCCHAR, 58, &
+         'integrated poloidal electron energy flux, inboard divertor')
+    iret = nf_put_att_text(ncid, feexipid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, feixipid, 'long_name', NCCHAR, 53, &
+         'integrated poloidal ion energy flux, inboard divertor')
+    iret = nf_put_att_text(ncid, feixipid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fetxipid, 'long_name', NCCHAR, 53, &
+         'integrated poloidal tot energy flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fetxipid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fchxipid, 'long_name', NCCHAR, 45, &
+         'integrated poloidal current, inboard divertor')
+    iret = nf_put_att_text(ncid, fchxipid, 'units', NCCHAR, 2, 'A ')
+    iret = nf_put_att_text(ncid, fnixapid, 'long_name', NCCHAR, 52, &
+         'integrated poloidal particle flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fnixapid, 'units', NCCHAR, 4, 's^-1')
+    iret = nf_put_att_text(ncid, feexapid, 'long_name', NCCHAR, 59, &
+         'integrated poloidal electron energy flux, outboard divertor')
+    iret = nf_put_att_text(ncid, feexapid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, feixapid, 'long_name', NCCHAR, 54, &
+         'integrated poloidal ion energy flux, outboard divertor')
+    iret = nf_put_att_text(ncid, feixapid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fetxapid, 'long_name', NCCHAR, 54, &
+         'integrated poloidal tot energy flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fetxapid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fchxapid, 'long_name', NCCHAR, 46, &
+         'integrated poloidal current, outboard divertor')
+    iret = nf_put_att_text(ncid, fchxapid, 'units', NCCHAR, 2, 'A ')
+    iret = nf_put_att_text(ncid, nesepiid, 'long_name', NCCHAR, 45, &
+         'separatrix electron density, inboard divertor')
+    iret = nf_put_att_text(ncid, nesepiid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, tesepiid, 'long_name', NCCHAR, 49, &
+         'separatrix electron temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tesepiid, 'units', NCCHAR, 2, 'eV')
+    iret = nf_put_att_text(ncid, tisepiid, 'long_name', NCCHAR, 44, &
+         'separatrix ion temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tisepiid, 'units', NCCHAR, 2, 'eV')
+    iret = nf_put_att_text(ncid, tpsepiid, 'long_name', NCCHAR, 46, &
+         'separatrix plate temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tpsepiid, 'units', NCCHAR, 2, 'K ')
+    iret = nf_put_att_text(ncid, posepiid, 'long_name', NCCHAR, 38, &
+         'separatrix potential, inboard divertor')
+    iret = nf_put_att_text(ncid, posepiid, 'units', NCCHAR, 2, 'V ')
+    iret = nf_put_att_text(ncid, nesepmid, 'long_name', NCCHAR, 43, &
+         'separatrix electron density, outer midplane')
+    iret = nf_put_att_text(ncid, nesepmid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, tesepmid, 'long_name', NCCHAR, 47, &
+         'separatrix electron temperature, outer midplane')
+    iret = nf_put_att_text(ncid, tesepmid, 'units', NCCHAR, 2, 'eV')
+    iret = nf_put_att_text(ncid, tisepmid, 'long_name', NCCHAR, 42, &
+         'separatrix ion temperature, outer midplane')
+    iret = nf_put_att_text(ncid, tisepmid, 'units', NCCHAR, 2, 'eV')
+    iret = nf_put_att_text(ncid, posepmid, 'long_name', NCCHAR, 36, &
+         'separatrix potential, outer midplane')
+    iret = nf_put_att_text(ncid, posepmid, 'units', NCCHAR, 2, 'V ')
 
-    call ncaptc(ncid, dnsepmid, 'long_name', NCCHAR, 37, &
-         'diffusion coefficient, outer midplane', iret)
-    call ncaptc(ncid, dnsepmid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, dpsepmid, 'long_name', NCCHAR, 46, &
-         'pressure diffusion coefficient, outer midplane', iret)
-    call ncaptc(ncid, dpsepmid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, kesepmid, 'long_name', NCCHAR, 44, &
-         'electron thermal diffusivity, outer midplane', iret)
-    call ncaptc(ncid, kesepmid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, kisepmid, 'long_name', NCCHAR, 39, &
-         'ion thermal diffusivity, outer midplane', iret)
-    call ncaptc(ncid, kisepmid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, vxsepmid, 'long_name', NCCHAR, 39, &
-         'poloidal pinch velocity, outer midplane', iret)
-    call ncaptc(ncid, vxsepmid, 'units', NCCHAR, 6, 'm.s^-1', iret)
-    call ncaptc(ncid, vysepmid, 'long_name', NCCHAR, 37, &
-         'radial pinch velocity, outer midplane', iret)
-    call ncaptc(ncid, vysepmid, 'units', NCCHAR, 6, 'm.s^-1', iret)
-    call ncaptc(ncid, vssepmid, 'long_name', NCCHAR, 37, &
-         'viscosity coefficient, outer midplane', iret)
-    call ncaptc(ncid, vssepmid, 'units', NCCHAR, 12, 'm.kg^-1.s^-1', &
-         iret)
+    iret = nf_put_att_text(ncid, dnsepmid, 'long_name', NCCHAR, 37, &
+         'diffusion coefficient, outer midplane')
+    iret = nf_put_att_text(ncid, dnsepmid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, dpsepmid, 'long_name', NCCHAR, 46, &
+         'pressure diffusion coefficient, outer midplane')
+    iret = nf_put_att_text(ncid, dpsepmid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, kesepmid, 'long_name', NCCHAR, 44, &
+         'electron thermal diffusivity, outer midplane')
+    iret = nf_put_att_text(ncid, kesepmid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, kisepmid, 'long_name', NCCHAR, 39, &
+         'ion thermal diffusivity, outer midplane')
+    iret = nf_put_att_text(ncid, kisepmid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, vxsepmid, 'long_name', NCCHAR, 39, &
+         'poloidal pinch velocity, outer midplane')
+    iret = nf_put_att_text(ncid, vxsepmid, 'units', NCCHAR, 6, 'm.s^-1')
+    iret = nf_put_att_text(ncid, vysepmid, 'long_name', NCCHAR, 37, &
+         'radial pinch velocity, outer midplane')
+    iret = nf_put_att_text(ncid, vysepmid, 'units', NCCHAR, 6, 'm.s^-1')
+    iret = nf_put_att_text(ncid, vssepmid, 'long_name', NCCHAR, 37, &
+         'viscosity coefficient, outer midplane')
+    iret = nf_put_att_text(ncid, vssepmid, 'units', NCCHAR, 12, 'm.kg^-1.s^-1')
 
 
-    call ncaptc(ncid, nesepaid, 'long_name', NCCHAR, 46, &
-         'separatrix electron density, outboard divertor', iret)
-    call ncaptc(ncid, nesepaid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, tesepaid, 'long_name', NCCHAR, 50, &
-         'separatrix electron temperature, outboard divertor', iret)
-    call ncaptc(ncid, tesepaid, 'units', NCCHAR, 2, 'eV', iret)
-    call ncaptc(ncid, tisepaid, 'long_name', NCCHAR, 45, &
-         'separatrix ion temperature, outboard divertor', iret)
-    call ncaptc(ncid, tisepaid, 'units', NCCHAR, 2, 'eV', iret)
-    call ncaptc(ncid, tpsepaid, 'long_name', NCCHAR, 47, &
-         'separatrix plate temperature, outboard divertor', iret)
-    call ncaptc(ncid, tpsepaid, 'units', NCCHAR, 2, 'K ', iret)
-    call ncaptc(ncid, posepaid, 'long_name', NCCHAR, 43, &
-         'separatrix potential, outboard divertor', iret)
-    call ncaptc(ncid, posepaid, 'units', NCCHAR, 2, 'V ', iret)
-    call ncaptc(ncid, nemxipid, 'long_name', NCCHAR, 42, &
-         'maximum electron density, inboard divertor', iret)
-    call ncaptc(ncid, nemxipid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, temxipid, 'long_name', NCCHAR, 46, &
-         'maximum electron temperature, inboard divertor', iret)
-    call ncaptc(ncid, temxipid, 'units', NCCHAR, 2, 'eV', iret)
-    call ncaptc(ncid, timxipid, 'long_name', NCCHAR, 41, &
-         'maximum ion temperature, inboard divertor', iret)
-    call ncaptc(ncid, timxipid, 'units', NCCHAR, 2, 'eV', iret)
-    call ncaptc(ncid, tpmxipid, 'long_name', NCCHAR, 43, &
-         'maximum plate temperature, inboard divertor', iret)
-    call ncaptc(ncid, tpmxipid, 'units', NCCHAR, 2, 'K ', iret)
-    call ncaptc(ncid, pomxipid, 'long_name', NCCHAR, 35, &
-         'maximum potential, inboard divertor', iret)
-    call ncaptc(ncid, pomxipid, 'units', NCCHAR, 2, 'V ', iret)
-    call ncaptc(ncid, nemxapid, 'long_name', NCCHAR, 43, &
-         'maximum electron density, outboard divertor', iret)
-    call ncaptc(ncid, nemxapid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, temxapid, 'long_name', NCCHAR, 47, &
-         'maximum electron temperature, outboard divertor', iret)
-    call ncaptc(ncid, temxapid, 'units', NCCHAR, 2, 'eV', iret)
-    call ncaptc(ncid, timxapid, 'long_name', NCCHAR, 43, &
-         'maximum ion temperature, outboard divertor', iret)
-    call ncaptc(ncid, timxapid, 'units', NCCHAR, 2, 'eV', iret)
-    call ncaptc(ncid, tpmxapid, 'long_name', NCCHAR, 45, &
-         'maximum plate temperature, outboard divertor', iret)
-    call ncaptc(ncid, tpmxapid, 'units', NCCHAR, 2, 'K ', iret)
-    call ncaptc(ncid, pomxapid, 'long_name', NCCHAR, 37, &
-         'maximum potential, outboard divertor', iret)
-    call ncaptc(ncid, pomxapid, 'units', NCCHAR, 2, 'V ', iret)
-    call ncaptc(ncid, fniyipid, 'long_name', NCCHAR, 45, &
-         'integrated radial particle flux, main chamber', iret)
-    call ncaptc(ncid, fniyipid, 'units', NCCHAR, 4, 's^-1', iret)
-    call ncaptc(ncid, feeyipid, 'long_name', NCCHAR, 52, &
-         'integrated radial electron energy flux, main chamber', &
-         iret)
-    call ncaptc(ncid, feeyipid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, feiyipid, 'long_name', NCCHAR, 47, &
-         'integrated radial ion energy flux, main chamber', iret)
-    call ncaptc(ncid, feiyipid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fetyipid, 'long_name', NCCHAR, 47, &
-         'integrated radial tot energy flux, main chamber', iret)
-    call ncaptc(ncid, fetyipid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fchyipid, 'long_name', NCCHAR, 39, &
-         'integrated radial current, main chamber', iret)
-    call ncaptc(ncid, fchyipid, 'units', NCCHAR, 2, 'A ', iret)
-    call ncaptc(ncid, fniyapid, 'long_name', NCCHAR, 48, &
-         'integrated radial particle flux, divertor region', iret)
-    call ncaptc(ncid, fniyapid, 'units', NCCHAR, 4, 's^-1', iret)
-    call ncaptc(ncid, feeyapid, 'long_name', NCCHAR, 55, &
-         'integrated radial electron energy flux, divertor region' &
-         ,iret)
-    call ncaptc(ncid, feeyapid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, feiyapid, 'long_name', NCCHAR, 50, &
-         'integrated radial ion energy flux, divertor region', &
-         iret)
-    call ncaptc(ncid, feiyapid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fetyapid, 'long_name', NCCHAR, 50, &
-         'integrated radial tot energy flux, divertor region', &
-         iret)
-    call ncaptc(ncid, fetyapid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fchyapid, 'long_name', NCCHAR, 42, &
-         'integrated radial current, divertor region', &
-         iret)
-    call ncaptc(ncid, fchyapid, 'units', NCCHAR, 2, 'A ', iret)
-    call ncaptc(ncid, pwmxipid, 'long_name', NCCHAR, 42, &
-         'maximum total power flux, inboard divertor', iret)
-    call ncaptc(ncid, pwmxipid, 'units', NCCHAR, 6, 'W.m^-2', iret)
-    call ncaptc(ncid, pwmxapid, 'long_name', NCCHAR, 43, &
-         'maximum total power flux, outboard divertor', iret)
-    call ncaptc(ncid, pwmxapid, 'units', NCCHAR, 6, 'W.m^-2', iret)
-    call ncaptc(ncid, tmneid, 'long_name', NCCHAR, 25, &
-         'total number of particles', iret)
-    call ncaptc(ncid, tmneid, 'units', NCCHAR, 2, '  ', iret)
-    call ncaptc(ncid, tmteid, 'long_name', NCCHAR, 21, &
-         'total electron energy', iret)
-    call ncaptc(ncid, tmteid, 'units', NCCHAR, 2, 'eV', iret)
-    call ncaptc(ncid, tmtiid, 'long_name', NCCHAR, 16, &
-         'total ion energy', iret)
-    call ncaptc(ncid, tmtiid, 'units', NCCHAR, 2, 'eV', iret)
-    call ncaptc(ncid, tmhacoreid, 'long_name', NCCHAR, 24, &
-         'H-alpha emissivity, core', iret)
-    call ncaptc(ncid, tmhacoreid, 'units', NCCHAR, 19, &
-         'photons.m^-2.sr^-1?', iret)
-    call ncaptc(ncid, tmhasolid, 'long_name', NCCHAR, 41, &
-         'H-alpha emissivity, SOL above the x-point', iret)
-    call ncaptc(ncid, tmhasolid, 'units', NCCHAR, 19, &
-         'photons.m^-2.sr^-1?', iret)
-    call ncaptc(ncid, tmhadivid, 'long_name', NCCHAR, 35, &
-         'H-alpha emissivity, divertor region', iret)
-    call ncaptc(ncid, tmhadivid, 'units', NCCHAR, 19, &
-         'photons.m^-2.sr^-1?', iret)
-    call ncaptc(ncid, fnisipid, 'long_name', NCCHAR, 54, &
-         'poloidal particle flux, into inboard separatrix throat', iret)
-    call ncaptc(ncid, fnisipid, 'units', NCCHAR, 4, 's^-1', iret)
-    call ncaptc(ncid, feesipid, 'long_name', NCCHAR, 61, &
-         'poloidal electron energy flux, into inboard separatrix throat' &
-         ,iret)
-    call ncaptc(ncid, feesipid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, feisipid, 'long_name', NCCHAR, 56, &
-         'poloidal ion energy flux, into inboard separatrix throat', &
-         iret)
-    call ncaptc(ncid, feisipid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fetsipid, 'long_name', NCCHAR, 58, &
-         'poloidal total energy flux, into inboard separatrix throat', &
-         iret)
-    call ncaptc(ncid, fetsipid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fchsipid, 'long_name', NCCHAR, 48, &
-         'poloidal current, into inboard separatrix throat', &
-         iret)
-    call ncaptc(ncid, fchsipid, 'units', NCCHAR, 2, 'A ', iret)
-    call ncaptc(ncid, fnisapid, 'long_name', NCCHAR, 55, &
-         'poloidal particle flux, into outboard separatrix throat', &
-         iret)
-    call ncaptc(ncid, fnisapid, 'units', NCCHAR, 4, 's^-1', iret)
-    call ncaptc(ncid, feesapid, 'long_name', NCCHAR, 62, &
-         'poloidal electron energy flux,'// &
-         ' into outboard separatrix throat', iret)
-    call ncaptc(ncid, feesapid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, feisapid, 'long_name', NCCHAR, 57, &
-         'poloidal ion energy flux, into outboard separatrix throat', iret)
-    call ncaptc(ncid, feisapid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fetsapid, 'long_name', NCCHAR, 59, &
-         'poloidal total energy flux, into outboard separatrix throat', &
-         iret)
-    call ncaptc(ncid, fetsapid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fchsapid, 'long_name', NCCHAR, 49, &
-         'poloidal current, into outboard separatrix throat', iret)
-    call ncaptc(ncid, fchsapid, 'units', NCCHAR, 2, 'A ', iret)
-    call ncaptc(ncid, fnisippid, 'long_name', NCCHAR, 40, &
-         'poloidal particle flux, core x-pt region', iret)
-    call ncaptc(ncid, fnisippid, 'units', NCCHAR, 4, 's^-1', iret)
-    call ncaptc(ncid, feesippid, 'long_name', NCCHAR, 52, &
-         'poloidal electron energy flux, core x-pt flux region', &
-         iret)
-    call ncaptc(ncid, feesippid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, feisippid, 'long_name', NCCHAR, 47, &
-         'poloidal ion energy flux, core x-pt flux region', iret)
-    call ncaptc(ncid, feisippid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fetsippid, 'long_name', NCCHAR, 49, &
-         'poloidal total energy flux, core x-pt flux region', &
-         iret)
-    call ncaptc(ncid, fetsippid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fchsippid, 'long_name', NCCHAR, 39, &
-         'poloidal current, core x-pt flux region', iret)
-    call ncaptc(ncid, fchsippid, 'units', NCCHAR, 2, 'A ', iret)
-    call ncaptc(ncid, fnisappid, 'long_name', NCCHAR, 48, &
-         'poloidal particle flux, x-pt private flux region', iret)
-    call ncaptc(ncid, fnisappid, 'units', NCCHAR, 4, 's^-1', iret)
-    call ncaptc(ncid, feesappid, 'long_name', NCCHAR, 55, &
-         'poloidal electron energy flux, x-pt private flux region', &
-         iret)
-    call ncaptc(ncid, feesappid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, feisappid, 'long_name', NCCHAR, 50, &
-         'poloidal ion energy flux, x-pt private flux region', iret)
-    call ncaptc(ncid, feisappid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fetsappid, 'long_name', NCCHAR, 52, &
-         'poloidal total energy flux, x-pt private flux region', &
-         iret)
-    call ncaptc(ncid, fetsappid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fchsappid, 'long_name', NCCHAR, 42, &
-         'poloidal current, x-pt private flux region', iret)
-    call ncaptc(ncid, fchsappid, 'units', NCCHAR, 2, 'A ', iret)
+    iret = nf_put_att_text(ncid, nesepaid, 'long_name', NCCHAR, 46, &
+         'separatrix electron density, outboard divertor')
+    iret = nf_put_att_text(ncid, nesepaid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, tesepaid, 'long_name', NCCHAR, 50, &
+         'separatrix electron temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tesepaid, 'units', NCCHAR, 2, 'eV')
+    iret = nf_put_att_text(ncid, tisepaid, 'long_name', NCCHAR, 45, &
+         'separatrix ion temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tisepaid, 'units', NCCHAR, 2, 'eV')
+    iret = nf_put_att_text(ncid, tpsepaid, 'long_name', NCCHAR, 47, &
+         'separatrix plate temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tpsepaid, 'units', NCCHAR, 2, 'K ')
+    iret = nf_put_att_text(ncid, posepaid, 'long_name', NCCHAR, 43, &
+         'separatrix potential, outboard divertor')
+    iret = nf_put_att_text(ncid, posepaid, 'units', NCCHAR, 2, 'V ')
+    iret = nf_put_att_text(ncid, nemxipid, 'long_name', NCCHAR, 42, &
+         'maximum electron density, inboard divertor')
+    iret = nf_put_att_text(ncid, nemxipid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, temxipid, 'long_name', NCCHAR, 46, &
+         'maximum electron temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, temxipid, 'units', NCCHAR, 2, 'eV')
+    iret = nf_put_att_text(ncid, timxipid, 'long_name', NCCHAR, 41, &
+         'maximum ion temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, timxipid, 'units', NCCHAR, 2, 'eV')
+    iret = nf_put_att_text(ncid, tpmxipid, 'long_name', NCCHAR, 43, &
+         'maximum plate temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tpmxipid, 'units', NCCHAR, 2, 'K ')
+    iret = nf_put_att_text(ncid, pomxipid, 'long_name', NCCHAR, 35, &
+         'maximum potential, inboard divertor')
+    iret = nf_put_att_text(ncid, pomxipid, 'units', NCCHAR, 2, 'V ')
+    iret = nf_put_att_text(ncid, nemxapid, 'long_name', NCCHAR, 43, &
+         'maximum electron density, outboard divertor')
+    iret = nf_put_att_text(ncid, nemxapid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, temxapid, 'long_name', NCCHAR, 47, &
+         'maximum electron temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, temxapid, 'units', NCCHAR, 2, 'eV')
+    iret = nf_put_att_text(ncid, timxapid, 'long_name', NCCHAR, 43, &
+         'maximum ion temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, timxapid, 'units', NCCHAR, 2, 'eV')
+    iret = nf_put_att_text(ncid, tpmxapid, 'long_name', NCCHAR, 45, &
+         'maximum plate temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tpmxapid, 'units', NCCHAR, 2, 'K ')
+    iret = nf_put_att_text(ncid, pomxapid, 'long_name', NCCHAR, 37, &
+         'maximum potential, outboard divertor')
+    iret = nf_put_att_text(ncid, pomxapid, 'units', NCCHAR, 2, 'V ')
+    iret = nf_put_att_text(ncid, fniyipid, 'long_name', NCCHAR, 45, &
+         'integrated radial particle flux, main chamber')
+    iret = nf_put_att_text(ncid, fniyipid, 'units', NCCHAR, 4, 's^-1')
+    iret = nf_put_att_text(ncid, feeyipid, 'long_name', NCCHAR, 52, &
+         'integrated radial electron energy flux, main chamber')
+    iret = nf_put_att_text(ncid, feeyipid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, feiyipid, 'long_name', NCCHAR, 47, &
+         'integrated radial ion energy flux, main chamber')
+    iret = nf_put_att_text(ncid, feiyipid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fetyipid, 'long_name', NCCHAR, 47, &
+         'integrated radial tot energy flux, main chamber')
+    iret = nf_put_att_text(ncid, fetyipid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fchyipid, 'long_name', NCCHAR, 39, &
+         'integrated radial current, main chamber')
+    iret = nf_put_att_text(ncid, fchyipid, 'units', NCCHAR, 2, 'A ')
+    iret = nf_put_att_text(ncid, fniyapid, 'long_name', NCCHAR, 48, &
+         'integrated radial particle flux, divertor region')
+    iret = nf_put_att_text(ncid, fniyapid, 'units', NCCHAR, 4, 's^-1')
+    iret = nf_put_att_text(ncid, feeyapid, 'long_name', NCCHAR, 55, &
+         'integrated radial electron energy flux, divertor region')
+    iret = nf_put_att_text(ncid, feeyapid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, feiyapid, 'long_name', NCCHAR, 50, &
+         'integrated radial ion energy flux, divertor region')
+    iret = nf_put_att_text(ncid, feiyapid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fetyapid, 'long_name', NCCHAR, 50, &
+         'integrated radial tot energy flux, divertor region')
+    iret = nf_put_att_text(ncid, fetyapid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fchyapid, 'long_name', NCCHAR, 42, &
+         'integrated radial current, divertor region')
+    iret = nf_put_att_text(ncid, fchyapid, 'units', NCCHAR, 2, 'A ')
+    iret = nf_put_att_text(ncid, pwmxipid, 'long_name', NCCHAR, 42, &
+         'maximum total power flux, inboard divertor')
+    iret = nf_put_att_text(ncid, pwmxipid, 'units', NCCHAR, 6, 'W.m^-2')
+    iret = nf_put_att_text(ncid, pwmxapid, 'long_name', NCCHAR, 43, &
+         'maximum total power flux, outboard divertor')
+    iret = nf_put_att_text(ncid, pwmxapid, 'units', NCCHAR, 6, 'W.m^-2')
+    iret = nf_put_att_text(ncid, tmneid, 'long_name', NCCHAR, 25, &
+         'total number of particles')
+    iret = nf_put_att_text(ncid, tmneid, 'units', NCCHAR, 2, '  ')
+    iret = nf_put_att_text(ncid, tmteid, 'long_name', NCCHAR, 21, &
+         'total electron energy')
+    iret = nf_put_att_text(ncid, tmteid, 'units', NCCHAR, 2, 'eV')
+    iret = nf_put_att_text(ncid, tmtiid, 'long_name', NCCHAR, 16, &
+         'total ion energy')
+    iret = nf_put_att_text(ncid, tmtiid, 'units', NCCHAR, 2, 'eV')
+    iret = nf_put_att_text(ncid, tmhacoreid, 'long_name', NCCHAR, 24, &
+         'H-alpha emissivity, core')
+    iret = nf_put_att_text(ncid, tmhacoreid, 'units', NCCHAR, 19, &
+         'photons.m^-2.sr^-1?')
+    iret = nf_put_att_text(ncid, tmhasolid, 'long_name', NCCHAR, 41, &
+         'H-alpha emissivity, SOL above the x-point')
+    iret = nf_put_att_text(ncid, tmhasolid, 'units', NCCHAR, 19, &
+         'photons.m^-2.sr^-1?')
+    iret = nf_put_att_text(ncid, tmhadivid, 'long_name', NCCHAR, 35, &
+         'H-alpha emissivity, divertor region')
+    iret = nf_put_att_text(ncid, tmhadivid, 'units', NCCHAR, 19, &
+         'photons.m^-2.sr^-1?')
+    iret = nf_put_att_text(ncid, fnisipid, 'long_name', NCCHAR, 54, &
+         'poloidal particle flux, into inboard separatrix throat')
+    iret = nf_put_att_text(ncid, fnisipid, 'units', NCCHAR, 4, 's^-1')
+    iret = nf_put_att_text(ncid, feesipid, 'long_name', NCCHAR, 61, &
+         'poloidal electron energy flux, into inboard separatrix throat')
+    iret = nf_put_att_text(ncid, feesipid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, feisipid, 'long_name', NCCHAR, 56, &
+         'poloidal ion energy flux, into inboard separatrix throat')
+    iret = nf_put_att_text(ncid, feisipid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fetsipid, 'long_name', NCCHAR, 58, &
+         'poloidal total energy flux, into inboard separatrix throat')
+    iret = nf_put_att_text(ncid, fetsipid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fchsipid, 'long_name', NCCHAR, 48, 'poloidal current, into inboard separatrix throat')
+    iret = nf_put_att_text(ncid, fchsipid, 'units', NCCHAR, 2, 'A ')
+    iret = nf_put_att_text(ncid, fnisapid, 'long_name', NCCHAR, 55, &
+         'poloidal particle flux, into outboard separatrix throat')
+    iret = nf_put_att_text(ncid, fnisapid, 'units', NCCHAR, 4, 's^-1')
+    iret = nf_put_att_text(ncid, feesapid, 'long_name', NCCHAR, 62, &
+         'poloidal electron energy flux, into outboard separatrix throat')
+    iret = nf_put_att_text(ncid, feesapid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, feisapid, 'long_name', NCCHAR, 57, &
+         'poloidal ion energy flux, into outboard separatrix throat')
+    iret = nf_put_att_text(ncid, feisapid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fetsapid, 'long_name', NCCHAR, 59, &
+         'poloidal total energy flux, into outboard separatrix throat')
+    iret = nf_put_att_text(ncid, fetsapid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fchsapid, 'long_name', NCCHAR, 49, &
+         'poloidal current, into outboard separatrix throat')
+    iret = nf_put_att_text(ncid, fchsapid, 'units', NCCHAR, 2, 'A ')
+    iret = nf_put_att_text(ncid, fnisippid, 'long_name', NCCHAR, 40, &
+         'poloidal particle flux, core x-pt region')
+    iret = nf_put_att_text(ncid, fnisippid, 'units', NCCHAR, 4, 's^-1')
+    iret = nf_put_att_text(ncid, feesippid, 'long_name', NCCHAR, 52, &
+         'poloidal electron energy flux, core x-pt flux region')
+    iret = nf_put_att_text(ncid, feesippid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, feisippid, 'long_name', NCCHAR, 47, &
+         'poloidal ion energy flux, core x-pt flux region')
+    iret = nf_put_att_text(ncid, feisippid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fetsippid, 'long_name', NCCHAR, 49, &
+         'poloidal total energy flux, core x-pt flux region')
+    iret = nf_put_att_text(ncid, fetsippid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fchsippid, 'long_name', NCCHAR, 39, &
+         'poloidal current, core x-pt flux region')
+    iret = nf_put_att_text(ncid, fchsippid, 'units', NCCHAR, 2, 'A ')
+    iret = nf_put_att_text(ncid, fnisappid, 'long_name', NCCHAR, 48, &
+         'poloidal particle flux, x-pt private flux region')
+    iret = nf_put_att_text(ncid, fnisappid, 'units', NCCHAR, 4, 's^-1')
+    iret = nf_put_att_text(ncid, feesappid, 'long_name', NCCHAR, 55, &
+         'poloidal electron energy flux, x-pt private flux region')
+    iret = nf_put_att_text(ncid, feesappid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, feisappid, 'long_name', NCCHAR, 50, &
+         'poloidal ion energy flux, x-pt private flux region')
+    iret = nf_put_att_text(ncid, feisappid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fetsappid, 'long_name', NCCHAR, 52, &
+         'poloidal total energy flux, x-pt private flux region')
+    iret = nf_put_att_text(ncid, fetsappid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fchsappid, 'long_name', NCCHAR, 42, &
+         'poloidal current, x-pt private flux region')
+    iret = nf_put_att_text(ncid, fchsappid, 'units', NCCHAR, 2, 'A ')
 
     ! inboard divertor quantities
-    call ncaptc(ncid, ne3dlid, 'long_name', NCCHAR, 34, &
-         'electron density, inboard divertor', iret)
-    call ncaptc(ncid, ne3dlid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, te3dlid, 'long_name', NCCHAR, 38, &
-         'electron temperature, inboard divertor', iret)
-    call ncaptc(ncid, te3dlid, 'units', NCCHAR, 2, 'eV', iret)
+    iret = nf_put_att_text(ncid, ne3dlid, 'long_name', NCCHAR, 34, 'electron density, inboard divertor')
+    iret = nf_put_att_text(ncid, ne3dlid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, te3dlid, 'long_name', NCCHAR, 38, &
+         'electron temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, te3dlid, 'units', NCCHAR, 2, 'eV')
     doubleval(1) = 1.0_R8/ev
-    call ncapt(ncid, te3dlid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, ti3dlid, 'long_name', NCCHAR, 33, &
-         'ion temperature, inboard divertor', iret)
-    call ncaptc(ncid, ti3dlid, 'units', NCCHAR, 2, 'eV', iret)
+    iret = nf_put_att_double(ncid, te3dlid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, ti3dlid, 'long_name', NCCHAR, 33, &
+         'ion temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, ti3dlid, 'units', NCCHAR, 2, 'eV')
     doubleval(1) = 1.0_R8/ev
-    call ncapt(ncid, ti3dlid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, tp3dlid, 'long_name', NCCHAR, 35, &
-         'plate temperature, inboard divertor', iret)
-    call ncaptc(ncid, tp3dlid, 'units', NCCHAR, 2, 'K ', iret)
-    call ncaptc(ncid, po3dlid, 'long_name', NCCHAR, 26, &
-         'potential, inboard divertor', iret)
-    call ncaptc(ncid, po3dlid, 'units', NCCHAR, 2, 'V ', iret)
-    call ncaptc(ncid, an3dlid, 'long_name', NCCHAR, 30, &
-         'atom density, inboard divertor', iret)
-    call ncaptc(ncid, an3dlid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, mn3dlid, 'long_name', NCCHAR, 34, &
-         'molecule density, inboard divertor', iret)
-    call ncaptc(ncid, mn3dlid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, fn3dlid, 'long_name', NCCHAR, 44, &
-         'poloidal main species flux, inboard divertor', iret)
-    call ncaptc(ncid, fn3dlid, 'units', NCCHAR, 4, 's^-1', iret)
+    iret = nf_put_att_double(ncid, ti3dlid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, tp3dlid, 'long_name', NCCHAR, 35, &
+         'plate temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tp3dlid, 'units', NCCHAR, 2, 'K ')
+    iret = nf_put_att_text(ncid, po3dlid, 'long_name', NCCHAR, 26, &
+         'potential, inboard divertor')
+    iret = nf_put_att_text(ncid, po3dlid, 'units', NCCHAR, 2, 'V ')
+    iret = nf_put_att_text(ncid, an3dlid, 'long_name', NCCHAR, 30, &
+         'atom density, inboard divertor')
+    iret = nf_put_att_text(ncid, an3dlid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, mn3dlid, 'long_name', NCCHAR, 34, &
+         'molecule density, inboard divertor')
+    iret = nf_put_att_text(ncid, mn3dlid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, fn3dlid, 'long_name', NCCHAR, 44, &
+         'poloidal main species flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fn3dlid, 'units', NCCHAR, 4, 's^-1')
     doubleval(1) = -1.0_R8
-    call ncapt(ncid, fn3dlid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, fl3dlid, 'long_name', NCCHAR, 40, &
-         'poloidal electron flux, inboard divertor', iret)
-    call ncaptc(ncid, fl3dlid, 'units', NCCHAR, 4, 's^-1', iret)
+    iret = nf_put_att_double(ncid, fn3dlid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, fl3dlid, 'long_name', NCCHAR, 40, &
+         'poloidal electron flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fl3dlid, 'units', NCCHAR, 4, 's^-1')
     doubleval(1) = -1.0_R8
-    call ncapt(ncid, fl3dlid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, fo3dlid, 'long_name', NCCHAR, 35, &
-         'poloidal ion flux, inboard divertor', iret)
-    call ncaptc(ncid, fo3dlid, 'units', NCCHAR, 4, 's^-1', iret)
+    iret = nf_put_att_double(ncid, fl3dlid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, fo3dlid, 'long_name', NCCHAR, 35, &
+         'poloidal ion flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fo3dlid, 'units', NCCHAR, 4, 's^-1')
     doubleval(1) = -1.0_R8
-    call ncapt(ncid, fo3dlid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, fe3dlid, 'long_name', NCCHAR, 47, &
-         'poloidal electron energy flux, inboard divertor', iret)
-    call ncaptc(ncid, fe3dlid, 'units', NCCHAR, 2, 'W ', iret)
+    iret = nf_put_att_double(ncid, fo3dlid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, fe3dlid, 'long_name', NCCHAR, 47, &
+         'poloidal electron energy flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fe3dlid, 'units', NCCHAR, 2, 'W ')
     doubleval(1) = -1.0_R8
-    call ncapt(ncid, fe3dlid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, fi3dlid, 'long_name', NCCHAR, 42, &
-         'poloidal ion energy flux, inboard divertor', iret)
-    call ncaptc(ncid, fi3dlid, 'units', NCCHAR, 2, 'W ', iret)
+    iret = nf_put_att_double(ncid, fe3dlid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, fi3dlid, 'long_name', NCCHAR, 42, &
+         'poloidal ion energy flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fi3dlid, 'units', NCCHAR, 2, 'W ')
     doubleval(1) = -1.0_R8
-    call ncapt(ncid, fi3dlid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, ft3dlid, 'long_name', NCCHAR, 44, &
-         'poloidal total energy flux, inboard divertor', iret)
-    call ncaptc(ncid, ft3dlid, 'units', NCCHAR, 2, 'W ', iret)
+    iret = nf_put_att_double(ncid, fi3dlid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, ft3dlid, 'long_name', NCCHAR, 44, &
+         'poloidal total energy flux, inboard divertor')
+    iret = nf_put_att_text(ncid, ft3dlid, 'units', NCCHAR, 2, 'W ')
     doubleval(1) = -1.0_R8
-    call ncapt(ncid, ft3dlid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, fc3dlid, 'long_name', NCCHAR, 35, &
-         'poloidal current, inboard divertor', iret)
-    call ncaptc(ncid, fc3dlid, 'units', NCCHAR, 2, 'A ', iret)
+    iret = nf_put_att_double(ncid, ft3dlid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, fc3dlid, 'long_name', NCCHAR, 35, &
+         'poloidal current, inboard divertor')
+    iret = nf_put_att_text(ncid, fc3dlid, 'units', NCCHAR, 2, 'A ')
     doubleval(1) = -1.0_R8
-    call ncapt(ncid, fc3dlid, 'scale', NCDOUBLE, 1, doubleval, iret)
+    iret = nf_put_att_double(ncid, fc3dlid, 'scale', NCDOUBLE, 1, doubleval)
     ! inboard midplane quantities
-    call ncaptc(ncid, ne3diid, 'long_name', NCCHAR, 34, &
-         'electron density, inboard midplane', iret)
-    call ncaptc(ncid, ne3diid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, te3diid, 'long_name', NCCHAR, 38, &
-         'electron temperature, inboard midplane', iret)
-    call ncaptc(ncid, te3diid, 'units', NCCHAR, 2, 'eV', iret)
+    iret = nf_put_att_text(ncid, ne3diid, 'long_name', NCCHAR, 34, &
+         'electron density, inboard midplane')
+    iret = nf_put_att_text(ncid, ne3diid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, te3diid, 'long_name', NCCHAR, 38, &
+         'electron temperature, inboard midplane')
+    iret = nf_put_att_text(ncid, te3diid, 'units', NCCHAR, 2, 'eV')
     doubleval(1) = 1.0_R8/ev
-    call ncapt(ncid, te3diid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, ti3diid, 'long_name', NCCHAR, 33, &
-         'ion temperature, inboard midplane', iret)
-    call ncaptc(ncid, ti3diid, 'units', NCCHAR, 2, 'eV', iret)
+    iret = nf_put_att_double(ncid, te3diid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, ti3diid, 'long_name', NCCHAR, 33, &
+         'ion temperature, inboard midplane')
+    iret = nf_put_att_text(ncid, ti3diid, 'units', NCCHAR, 2, 'eV')
     doubleval(1) = 1.0_R8/ev
-    call ncapt(ncid, ti3diid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, po3diid, 'long_name', NCCHAR, 27, &
-         'potential, inboard midplane', iret)
-    call ncaptc(ncid, po3diid, 'units', NCCHAR, 2, 'V ', iret)
-    call ncaptc(ncid, an3diid, 'long_name', NCCHAR, 30, &
-         'atom density, inboard midplane', iret)
-    call ncaptc(ncid, an3diid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, mn3diid, 'long_name', NCCHAR, 34, &
-         'molecule density, inboard midplane', iret)
-    call ncaptc(ncid, mn3diid, 'units', NCCHAR, 4, 'm^-3', iret)
+    iret = nf_put_att_double(ncid, ti3diid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, po3diid, 'long_name', NCCHAR, 27, &
+         'potential, inboard midplane')
+    iret = nf_put_att_text(ncid, po3diid, 'units', NCCHAR, 2, 'V ')
+    iret = nf_put_att_text(ncid, an3diid, 'long_name', NCCHAR, 30, &
+         'atom density, inboard midplane')
+    iret = nf_put_att_text(ncid, an3diid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, mn3diid, 'long_name', NCCHAR, 34, &
+         'molecule density, inboard midplane')
+    iret = nf_put_att_text(ncid, mn3diid, 'units', NCCHAR, 4, 'm^-3')
 
-    call ncaptc(ncid, dn3diid, 'long_name', NCCHAR, 39, &
-         'diffusion coefficient, inboard midplane', iret)
-    call ncaptc(ncid, dn3diid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, dp3diid, 'long_name', NCCHAR, 48, &
-         'pressure diffusion coefficient, inboard midplane', iret)
-    call ncaptc(ncid, dp3diid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, lh3diid, 'long_name', NCCHAR, 50, &
-         'radial neutral heat flux limiter, inboard midplane', iret)
-    call ncaptc(ncid, lh3diid, 'units', NCCHAR, 1, ' ', iret)
-    call ncaptc(ncid, ln3diid, 'long_name', NCCHAR, 50, &
-         'radial neutral part flux limiter, inboard midplane', iret)
-    call ncaptc(ncid, ln3diid, 'units', NCCHAR, 1, ' ', iret)
-    call ncaptc(ncid, ke3diid, 'long_name', NCCHAR, 46, &
-         'electron thermal diffusivity, inboard midplane', iret)
-    call ncaptc(ncid, ke3diid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, ki3diid, 'long_name', NCCHAR, 41, &
-         'ion thermal diffusivity, inboard midplane', iret)
-    call ncaptc(ncid, ki3diid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, vx3diid, 'long_name', NCCHAR, 41, &
-         'poloidal pinch velocity, inboard midplane', iret)
-    call ncaptc(ncid, vx3diid, 'units', NCCHAR, 6, 'm.s^-1', iret)
-    call ncaptc(ncid, vy3diid, 'long_name', NCCHAR, 39, &
-         'radial pinch velocity, inboard midplane', iret)
-    call ncaptc(ncid, vy3diid, 'units', NCCHAR, 6, 'm.s^-1', iret)
-    call ncaptc(ncid, vs3diid, 'long_name', NCCHAR, 39, &
-         'viscosity coefficient, inboard midplane', iret)
-    call ncaptc(ncid, vs3diid, 'units', NCCHAR, 12, 'm.kg^-1.s^-1', &
-         iret)
+    iret = nf_put_att_text(ncid, dn3diid, 'long_name', NCCHAR, 39, &
+         'diffusion coefficient, inboard midplane')
+    iret = nf_put_att_text(ncid, dn3diid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, dp3diid, 'long_name', NCCHAR, 48, &
+         'pressure diffusion coefficient, inboard midplane')
+    iret = nf_put_att_text(ncid, dp3diid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, lh3diid, 'long_name', NCCHAR, 50, &
+         'radial neutral heat flux limiter, inboard midplane')
+    iret = nf_put_att_text(ncid, lh3diid, 'units', NCCHAR, 1, ' ')
+    iret = nf_put_att_text(ncid, ln3diid, 'long_name', NCCHAR, 50, &
+         'radial neutral part flux limiter, inboard midplane')
+    iret = nf_put_att_text(ncid, ln3diid, 'units', NCCHAR, 1, ' ')
+    iret = nf_put_att_text(ncid, ke3diid, 'long_name', NCCHAR, 46, &
+         'electron thermal diffusivity, inboard midplane')
+    iret = nf_put_att_text(ncid, ke3diid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, ki3diid, 'long_name', NCCHAR, 41, &
+         'ion thermal diffusivity, inboard midplane')
+    iret = nf_put_att_text(ncid, ki3diid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, vx3diid, 'long_name', NCCHAR, 41, &
+         'poloidal pinch velocity, inboard midplane')
+    iret = nf_put_att_text(ncid, vx3diid, 'units', NCCHAR, 6, 'm.s^-1')
+    iret = nf_put_att_text(ncid, vy3diid, 'long_name', NCCHAR, 39, &
+         'radial pinch velocity, inboard midplane')
+    iret = nf_put_att_text(ncid, vy3diid, 'units', NCCHAR, 6, 'm.s^-1')
+    iret = nf_put_att_text(ncid, vs3diid, 'long_name', NCCHAR, 39, &
+         'viscosity coefficient, inboard midplane')
+    iret = nf_put_att_text(ncid, vs3diid, 'units', NCCHAR, 12, 'm.kg^-1.s^-1')
 
     ! upper inboard divertor quantities
     if(nytl.gt.0) then
-      call ncaptc(ncid, ne3dtlid, 'long_name', NCCHAR, 40, &
-           'electron density, upper inboard divertor', iret)
-      call ncaptc(ncid, ne3dtlid, 'units', NCCHAR, 4, 'm^-3', iret)
-      call ncaptc(ncid, te3dtlid, 'long_name', NCCHAR, 44, &
-           'electron temperature, upper inboard divertor', iret)
-      call ncaptc(ncid, te3dtlid, 'units', NCCHAR, 2, 'eV', iret)
+      iret = nf_put_att_text(ncid, ne3dtlid, 'long_name', NCCHAR, 40, &
+           'electron density, upper inboard divertor')
+      iret = nf_put_att_text(ncid, ne3dtlid, 'units', NCCHAR, 4, 'm^-3')
+      iret = nf_put_att_text(ncid, te3dtlid, 'long_name', NCCHAR, 44, &
+           'electron temperature, upper inboard divertor')
+      iret = nf_put_att_text(ncid, te3dtlid, 'units', NCCHAR, 2, 'eV')
       doubleval(1) = 1.0_R8/ev
-      call ncapt(ncid, te3dtlid, 'scale', NCDOUBLE, 1, doubleval, iret)
-      call ncaptc(ncid, ti3dtlid, 'long_name', NCCHAR, 39, &
-           'ion temperature, upper inboard divertor', iret)
-      call ncaptc(ncid, ti3dtlid, 'units', NCCHAR, 2, 'eV', iret)
+      iret = nf_put_att_double(ncid, te3dtlid, 'scale', NCDOUBLE, 1, doubleval)
+      iret = nf_put_att_text(ncid, ti3dtlid, 'long_name', NCCHAR, 39, &
+           'ion temperature, upper inboard divertor')
+      iret = nf_put_att_text(ncid, ti3dtlid, 'units', NCCHAR, 2, 'eV')
       doubleval(1) = 1.0_R8/ev
-      call ncapt(ncid, ti3dtlid, 'scale', NCDOUBLE, 1, doubleval, iret)
-      call ncaptc(ncid, tp3dtlid, 'long_name', NCCHAR, 41, &
-           'plate temperature, upper inboard divertor', iret)
-      call ncaptc(ncid, tp3dtlid, 'units', NCCHAR, 2, 'K ', iret)
-      call ncaptc(ncid, po3dtlid, 'long_name', NCCHAR, 32, &
-           'potential, upper inboard divertor', iret)
-      call ncaptc(ncid, po3dtlid, 'units', NCCHAR, 2, 'V ', iret)
-      call ncaptc(ncid, an3dtlid, 'long_name', NCCHAR, 36, &
-           'atom density, upper inboard divertor', iret)
-      call ncaptc(ncid, an3dtlid, 'units', NCCHAR, 4, 'm^-3', iret)
-      call ncaptc(ncid, mn3dtlid, 'long_name', NCCHAR, 40, &
-           'molecule density, upper inboard divertor', iret)
-      call ncaptc(ncid, mn3dtlid, 'units', NCCHAR, 4, 'm^-3', iret)
-      call ncaptc(ncid, fn3dtlid, 'long_name', NCCHAR, 50, &
-           'poloidal main species flux, upper inboard divertor', iret)
-      call ncaptc(ncid, fn3dtlid, 'units', NCCHAR, 4, 's^-1', iret)
-      call ncaptc(ncid, fl3dtlid, 'long_name', NCCHAR, 46, &
-           'poloidal electron flux, inboard divertor', iret)
-      call ncaptc(ncid, fl3dtlid, 'units', NCCHAR, 4, 's^-1', iret)
-      call ncaptc(ncid, fo3dtlid, 'long_name', NCCHAR, 41, &
-           'poloidal ion flux, upper inboard divertor', iret)
-      call ncaptc(ncid, fo3dtlid, 'units', NCCHAR, 4, 's^-1', iret)
-      call ncaptc(ncid, fe3dtlid, 'long_name', NCCHAR, 53, &
-           'poloidal electron energy flux, upper inboard divertor', iret)
-      call ncaptc(ncid, fe3dtlid, 'units', NCCHAR, 2, 'W ', iret)
-      call ncaptc(ncid, fi3dtlid, 'long_name', NCCHAR, 48, &
-           'poloidal ion energy flux, upper inboard divertor', iret)
-      call ncaptc(ncid, fi3dtlid, 'units', NCCHAR, 2, 'W ', iret)
-      call ncaptc(ncid, ft3dtlid, 'long_name', NCCHAR, 50, &
-           'poloidal total energy flux, upper inboard divertor', iret)
-      call ncaptc(ncid, ft3dtlid, 'units', NCCHAR, 2, 'W ', iret)
-      call ncaptc(ncid, fc3dtlid, 'long_name', NCCHAR, 41, &
-           'poloidal current, upper inboard divertor', iret)
-      call ncaptc(ncid, fc3dtlid, 'units', NCCHAR, 2, 'A ', iret)
+      iret = nf_put_att_double(ncid, ti3dtlid, 'scale', NCDOUBLE, 1, doubleval)
+      iret = nf_put_att_text(ncid, tp3dtlid, 'long_name', NCCHAR, 41, &
+           'plate temperature, upper inboard divertor')
+      iret = nf_put_att_text(ncid, tp3dtlid, 'units', NCCHAR, 2, 'K ')
+      iret = nf_put_att_text(ncid, po3dtlid, 'long_name', NCCHAR, 32, &
+           'potential, upper inboard divertor')
+      iret = nf_put_att_text(ncid, po3dtlid, 'units', NCCHAR, 2, 'V ')
+      iret = nf_put_att_text(ncid, an3dtlid, 'long_name', NCCHAR, 36, &
+           'atom density, upper inboard divertor')
+      iret = nf_put_att_text(ncid, an3dtlid, 'units', NCCHAR, 4, 'm^-3')
+      iret = nf_put_att_text(ncid, mn3dtlid, 'long_name', NCCHAR, 40, &
+           'molecule density, upper inboard divertor')
+      iret = nf_put_att_text(ncid, mn3dtlid, 'units', NCCHAR, 4, 'm^-3')
+      iret = nf_put_att_text(ncid, fn3dtlid, 'long_name', NCCHAR, 50, &
+           'poloidal main species flux, upper inboard divertor')
+      iret = nf_put_att_text(ncid, fn3dtlid, 'units', NCCHAR, 4, 's^-1')
+      iret = nf_put_att_text(ncid, fl3dtlid, 'long_name', NCCHAR, 46, &
+           'poloidal electron flux, inboard divertor')
+      iret = nf_put_att_text(ncid, fl3dtlid, 'units', NCCHAR, 4, 's^-1')
+      iret = nf_put_att_text(ncid, fo3dtlid, 'long_name', NCCHAR, 41, &
+           'poloidal ion flux, upper inboard divertor')
+      iret = nf_put_att_text(ncid, fo3dtlid, 'units', NCCHAR, 4, 's^-1')
+      iret = nf_put_att_text(ncid, fe3dtlid, 'long_name', NCCHAR, 53, &
+           'poloidal electron energy flux, upper inboard divertor')
+      iret = nf_put_att_text(ncid, fe3dtlid, 'units', NCCHAR, 2, 'W ')
+      iret = nf_put_att_text(ncid, fi3dtlid, 'long_name', NCCHAR, 48, &
+           'poloidal ion energy flux, upper inboard divertor')
+      iret = nf_put_att_text(ncid, fi3dtlid, 'units', NCCHAR, 2, 'W ')
+      iret = nf_put_att_text(ncid, ft3dtlid, 'long_name', NCCHAR, 50, &
+           'poloidal total energy flux, upper inboard divertor')
+      iret = nf_put_att_text(ncid, ft3dtlid, 'units', NCCHAR, 2, 'W ')
+      iret = nf_put_att_text(ncid, fc3dtlid, 'long_name', NCCHAR, 41, &
+           'poloidal current, upper inboard divertor')
+      iret = nf_put_att_text(ncid, fc3dtlid, 'units', NCCHAR, 2, 'A ')
     endif
     ! outboard midplane quantities
-    call ncaptc(ncid, ne3daid, 'long_name', NCCHAR, 35, &
-         'electron density, outboard midplane', iret)
-    call ncaptc(ncid, ne3daid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, te3daid, 'long_name', NCCHAR, 39, &
-         'electron temperature, outboard midplane', iret)
-    call ncaptc(ncid, te3daid, 'units', NCCHAR, 2, 'eV', iret)
+    iret = nf_put_att_text(ncid, ne3daid, 'long_name', NCCHAR, 35, &
+         'electron density, outboard midplane')
+    iret = nf_put_att_text(ncid, ne3daid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, te3daid, 'long_name', NCCHAR, 39, &
+         'electron temperature, outboard midplane')
+    iret = nf_put_att_text(ncid, te3daid, 'units', NCCHAR, 2, 'eV')
     doubleval(1) = 1.0_R8/ev
-    call ncapt(ncid, te3daid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, ti3daid, 'long_name', NCCHAR, 34, &
-         'ion temperature, outboard midplane', iret)
-    call ncaptc(ncid, ti3daid, 'units', NCCHAR, 2, 'eV', iret)
+    iret = nf_put_att_double(ncid, te3daid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, ti3daid, 'long_name', NCCHAR, 34, &
+         'ion temperature, outboard midplane')
+    iret = nf_put_att_text(ncid, ti3daid, 'units', NCCHAR, 2, 'eV')
     doubleval(1) = 1.0_R8/ev
-    call ncapt(ncid, ti3daid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, po3daid, 'long_name', NCCHAR, 28, &
-         'potential, outboard midplane', iret)
-    call ncaptc(ncid, po3daid, 'units', NCCHAR, 2, 'V ', iret)
-    call ncaptc(ncid, an3daid, 'long_name', NCCHAR, 31, &
-         'atom density, outboard midplane', iret)
-    call ncaptc(ncid, an3daid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, mn3daid, 'long_name', NCCHAR, 35, &
-         'molecule density, outboard midplane', iret)
-    call ncaptc(ncid, mn3daid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, dn3daid, 'long_name', NCCHAR, 40, &
-         'diffusion coefficient, outboard midplane', iret)
-    call ncaptc(ncid, dn3daid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, dp3daid, 'long_name', NCCHAR, 49, &
-         'pressure diffusion coefficient, outboard midplane', iret)
-    call ncaptc(ncid, dp3daid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, lh3daid, 'long_name', NCCHAR, 51, &
-         'radial neutral heat flux limiter, outboard midplane', iret)
-    call ncaptc(ncid, lh3daid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, ln3daid, 'long_name', NCCHAR, 51, &
-         'radial neutral part flux limiter, outboard midplane', iret)
-    call ncaptc(ncid, ln3daid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, ke3daid, 'long_name', NCCHAR, 47, &
-         'electron thermal diffusivity, outboard midplane', iret)
-    call ncaptc(ncid, ke3daid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, ki3daid, 'long_name', NCCHAR, 42, &
-         'ion thermal diffusivity, outboard midplane', iret)
-    call ncaptc(ncid, ki3daid, 'units', NCCHAR, 8, 'm^2.s^-1', iret)
-    call ncaptc(ncid, vx3daid, 'long_name', NCCHAR, 42, &
-         'poloidal pinch velocity, outboard midplane', iret)
-    call ncaptc(ncid, vx3daid, 'units', NCCHAR, 6, 'm.s^-1', iret)
-    call ncaptc(ncid, vy3daid, 'long_name', NCCHAR, 40, &
-         'radial pinch velocity, outboard midplane', iret)
-    call ncaptc(ncid, vy3daid, 'units', NCCHAR, 6, 'm.s^-1', iret)
-    call ncaptc(ncid, vs3daid, 'long_name', NCCHAR, 40, &
-         'viscosity coefficient, outboard midplane', iret)
-    call ncaptc(ncid, vs3daid, 'units', NCCHAR, 12, 'm.kg^-1.s^-1', &
-         iret)
+    iret = nf_put_att_double(ncid, ti3daid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, po3daid, 'long_name', NCCHAR, 28, &
+         'potential, outboard midplane')
+    iret = nf_put_att_text(ncid, po3daid, 'units', NCCHAR, 2, 'V ')
+    iret = nf_put_att_text(ncid, an3daid, 'long_name', NCCHAR, 31, &
+         'atom density, outboard midplane')
+    iret = nf_put_att_text(ncid, an3daid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, mn3daid, 'long_name', NCCHAR, 35, &
+         'molecule density, outboard midplane')
+    iret = nf_put_att_text(ncid, mn3daid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, dn3daid, 'long_name', NCCHAR, 40, &
+         'diffusion coefficient, outboard midplane')
+    iret = nf_put_att_text(ncid, dn3daid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, dp3daid, 'long_name', NCCHAR, 49, &
+         'pressure diffusion coefficient, outboard midplane')
+    iret = nf_put_att_text(ncid, dp3daid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, lh3daid, 'long_name', NCCHAR, 51, &
+         'radial neutral heat flux limiter, outboard midplane')
+    iret = nf_put_att_text(ncid, lh3daid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, ln3daid, 'long_name', NCCHAR, 51, &
+         'radial neutral part flux limiter, outboard midplane')
+    iret = nf_put_att_text(ncid, ln3daid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, ke3daid, 'long_name', NCCHAR, 47, &
+         'electron thermal diffusivity, outboard midplane')
+    iret = nf_put_att_text(ncid, ke3daid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, ki3daid, 'long_name', NCCHAR, 42, &
+         'ion thermal diffusivity, outboard midplane')
+    iret = nf_put_att_text(ncid, ki3daid, 'units', NCCHAR, 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, vx3daid, 'long_name', NCCHAR, 42, &
+         'poloidal pinch velocity, outboard midplane')
+    iret = nf_put_att_text(ncid, vx3daid, 'units', NCCHAR, 6, 'm.s^-1')
+    iret = nf_put_att_text(ncid, vy3daid, 'long_name', NCCHAR, 40, &
+         'radial pinch velocity, outboard midplane')
+    iret = nf_put_att_text(ncid, vy3daid, 'units', NCCHAR, 6, 'm.s^-1')
+    iret = nf_put_att_text(ncid, vs3daid, 'long_name', NCCHAR, 40, &
+         'viscosity coefficient, outboard midplane')
+    iret = nf_put_att_text(ncid, vs3daid, 'units', NCCHAR, 12, 'm.kg^-1.s^-1')
     ! outboard divertor quantities
-    call ncaptc(ncid, ne3drid, 'long_name', NCCHAR, 35, &
-         'electron density, outboard divertor', iret)
-    call ncaptc(ncid, ne3drid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, te3drid, 'long_name', NCCHAR, 39, &
-         'electron temperature, outboard divertor', iret)
-    call ncaptc(ncid, te3drid, 'units', NCCHAR, 2, 'eV', iret)
+    iret = nf_put_att_text(ncid, ne3drid, 'long_name', NCCHAR, 35, &
+         'electron density, outboard divertor')
+    iret = nf_put_att_text(ncid, ne3drid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, te3drid, 'long_name', NCCHAR, 39, &
+         'electron temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, te3drid, 'units', NCCHAR, 2, 'eV')
     doubleval(1) = 1.0_R8/ev
-    call ncapt(ncid, te3drid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, ti3drid, 'long_name', NCCHAR, 34, &
-         'ion temperature, outboard divertor', iret)
-    call ncaptc(ncid, ti3drid, 'units', NCCHAR, 2, 'eV', iret)
+    iret = nf_put_att_double(ncid, te3drid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, ti3drid, 'long_name', NCCHAR, 34, &
+         'ion temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, ti3drid, 'units', NCCHAR, 2, 'eV')
     doubleval(1) = 1.0_R8/ev
-    call ncapt(ncid, ti3drid, 'scale', NCDOUBLE, 1, doubleval, iret)
-    call ncaptc(ncid, tp3drid, 'long_name', NCCHAR, 36, &
-         'plate temperature, outboard divertor', iret)
-    call ncaptc(ncid, tp3drid, 'units', NCCHAR, 2, 'K ', iret)
-    call ncaptc(ncid, po3drid, 'long_name', NCCHAR, 28, &
-         'potential, outboard divertor', iret)
-    call ncaptc(ncid, po3drid, 'units', NCCHAR, 2, 'V ', iret)
-    call ncaptc(ncid, an3drid, 'long_name', NCCHAR, 31, &
-         'atom density, outboard divertor', iret)
-    call ncaptc(ncid, an3drid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, mn3drid, 'long_name', NCCHAR, 35, &
-         'molecule density, outboard divertor', iret)
-    call ncaptc(ncid, mn3drid, 'units', NCCHAR, 4, 'm^-3', iret)
-    call ncaptc(ncid, fn3drid, 'long_name', NCCHAR, 45, &
-         'poloidal main species flux, outboard divertor', iret)
-    call ncaptc(ncid, fn3drid, 'units', NCCHAR, 4, 's^-1', iret)
-    call ncaptc(ncid, fl3drid, 'long_name', NCCHAR, 41, &
-         'poloidal electron flux, outboard divertor', iret)
-    call ncaptc(ncid, fl3drid, 'units', NCCHAR, 4, 's^-1', iret)
-    call ncaptc(ncid, fo3drid, 'long_name', NCCHAR, 36, &
-         'poloidal ion flux, outboard divertor', iret)
-    call ncaptc(ncid, fo3drid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fe3drid, 'long_name', NCCHAR, 48, &
-         'poloidal electron energy flux, outboard divertor', iret)
-    call ncaptc(ncid, fe3drid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fi3drid, 'long_name', NCCHAR, 43, &
-         'poloidal ion energy flux, outboard divertor', iret)
-    call ncaptc(ncid, fi3drid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, ft3drid, 'long_name', NCCHAR, 45, &
-         'poloidal total energy flux, outboard divertor', iret)
-    call ncaptc(ncid, ft3drid, 'units', NCCHAR, 2, 'W ', iret)
-    call ncaptc(ncid, fc3drid, 'long_name', NCCHAR, 36, &
-         'poloidal current, outboard divertor', iret)
-    call ncaptc(ncid, fc3drid, 'units', NCCHAR, 2, 'A ', iret)
+    iret = nf_put_att_double(ncid, ti3drid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, tp3drid, 'long_name', NCCHAR, 36, &
+         'plate temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tp3drid, 'units', NCCHAR, 2, 'K ')
+    iret = nf_put_att_text(ncid, po3drid, 'long_name', NCCHAR, 28, &
+         'potential, outboard divertor')
+    iret = nf_put_att_text(ncid, po3drid, 'units', NCCHAR, 2, 'V ')
+    iret = nf_put_att_text(ncid, an3drid, 'long_name', NCCHAR, 31, &
+         'atom density, outboard divertor')
+    iret = nf_put_att_text(ncid, an3drid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, mn3drid, 'long_name', NCCHAR, 35, &
+         'molecule density, outboard divertor')
+    iret = nf_put_att_text(ncid, mn3drid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, fn3drid, 'long_name', NCCHAR, 45, &
+         'poloidal main species flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fn3drid, 'units', NCCHAR, 4, 's^-1')
+    iret = nf_put_att_text(ncid, fl3drid, 'long_name', NCCHAR, 41, &
+         'poloidal electron flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fl3drid, 'units', NCCHAR, 4, 's^-1')
+    iret = nf_put_att_text(ncid, fo3drid, 'long_name', NCCHAR, 36, &
+         'poloidal ion flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fo3drid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fe3drid, 'long_name', NCCHAR, 48, &
+         'poloidal electron energy flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fe3drid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fi3drid, 'long_name', NCCHAR, 43, &
+         'poloidal ion energy flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fi3drid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, ft3drid, 'long_name', NCCHAR, 45, &
+         'poloidal total energy flux, outboard divertor')
+    iret = nf_put_att_text(ncid, ft3drid, 'units', NCCHAR, 2, 'W ')
+    iret = nf_put_att_text(ncid, fc3drid, 'long_name', NCCHAR, 36, &
+         'poloidal current, outboard divertor')
+    iret = nf_put_att_text(ncid, fc3drid, 'units', NCCHAR, 2, 'A ')
     ! upper outboard divertor quantities
     if(nytr.gt.0) then
-      call ncaptc(ncid, ne3dtrid, 'long_name', NCCHAR, 41, &
-           'electron density, upper outboard divertor', iret)
-      call ncaptc(ncid, ne3dtrid, 'units', NCCHAR, 4, 'm^-3', iret)
-      call ncaptc(ncid, te3dtrid, 'long_name', NCCHAR, 45, &
-           'electron temperature, upper outboard divertor', iret)
-      call ncaptc(ncid, te3dtrid, 'units', NCCHAR, 2, 'eV', iret)
+      iret = nf_put_att_text(ncid, ne3dtrid, 'long_name', NCCHAR, 41, &
+           'electron density, upper outboard divertor')
+      iret = nf_put_att_text(ncid, ne3dtrid, 'units', NCCHAR, 4, 'm^-3')
+      iret = nf_put_att_text(ncid, te3dtrid, 'long_name', NCCHAR, 45, &
+           'electron temperature, upper outboard divertor')
+      iret = nf_put_att_text(ncid, te3dtrid, 'units', NCCHAR, 2, 'eV')
       doubleval(1) = 1.0_R8/ev
-      call ncapt(ncid, te3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
-      call ncaptc(ncid, ti3dtrid, 'long_name', NCCHAR, 40, &
-           'ion temperature, upper outboard divertor', iret)
-      call ncaptc(ncid, ti3dtrid, 'units', NCCHAR, 2, 'eV', iret)
+      iret = nf_put_att_double(ncid, te3dtrid, 'scale', NCDOUBLE, 1, doubleval)
+      iret = nf_put_att_text(ncid, ti3dtrid, 'long_name', NCCHAR, 40, &
+           'ion temperature, upper outboard divertor')
+      iret = nf_put_att_text(ncid, ti3dtrid, 'units', NCCHAR, 2, 'eV')
       doubleval(1) = 1.0_R8/ev
-      call ncapt(ncid, ti3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
-      call ncaptc(ncid, tp3dtrid, 'long_name', NCCHAR, 42, &
-           'plate temperature, upper outboard divertor', iret)
-      call ncaptc(ncid, tp3dtrid, 'units', NCCHAR, 2, 'K ', iret)
-      call ncaptc(ncid, po3dtrid, 'long_name', NCCHAR, 34, &
-           'potential, upper outboard divertor', iret)
-      call ncaptc(ncid, po3dtrid, 'units', NCCHAR, 2, 'V ', iret)
-      call ncaptc(ncid, an3dtrid, 'long_name', NCCHAR, 37, &
-           'atom density, upper outboard divertor', iret)
-      call ncaptc(ncid, an3dtrid, 'units', NCCHAR, 4, 'm^-3', iret)
-      call ncaptc(ncid, mn3dtrid, 'long_name', NCCHAR, 41, &
-           'molecule density, upper outboard divertor', iret)
-      call ncaptc(ncid, mn3dtrid, 'units', NCCHAR, 4, 'm^-3', iret)
-      call ncaptc(ncid, fn3dtrid, 'long_name', NCCHAR, 51, &
-           'poloidal main species flux, upper outboard divertor', iret)
-      call ncaptc(ncid, fn3dtrid, 'units', NCCHAR, 4, 's^-1', iret)
+      iret = nf_put_att_double(ncid, ti3dtrid, 'scale', NCDOUBLE, 1, doubleval)
+      iret = nf_put_att_text(ncid, tp3dtrid, 'long_name', NCCHAR, 42, &
+           'plate temperature, upper outboard divertor')
+      iret = nf_put_att_text(ncid, tp3dtrid, 'units', NCCHAR, 2, 'K ')
+      iret = nf_put_att_text(ncid, po3dtrid, 'long_name', NCCHAR, 34, &
+           'potential, upper outboard divertor')
+      iret = nf_put_att_text(ncid, po3dtrid, 'units', NCCHAR, 2, 'V ')
+      iret = nf_put_att_text(ncid, an3dtrid, 'long_name', NCCHAR, 37, &
+           'atom density, upper outboard divertor')
+      iret = nf_put_att_text(ncid, an3dtrid, 'units', NCCHAR, 4, 'm^-3')
+      iret = nf_put_att_text(ncid, mn3dtrid, 'long_name', NCCHAR, 41, &
+           'molecule density, upper outboard divertor')
+      iret = nf_put_att_text(ncid, mn3dtrid, 'units', NCCHAR, 4, 'm^-3')
+      iret = nf_put_att_text(ncid, fn3dtrid, 'long_name', NCCHAR, 51, &
+           'poloidal main species flux, upper outboard divertor')
+      iret = nf_put_att_text(ncid, fn3dtrid, 'units', NCCHAR, 4, 's^-1')
       doubleval(1) = -1.0_R8
-      call ncapt(ncid, fn3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
-      call ncaptc(ncid, fl3dtrid, 'long_name', NCCHAR, 47, &
-           'poloidal electron flux, upper outboard divertor', iret)
-      call ncaptc(ncid, fl3dtrid, 'units', NCCHAR, 4, 's^-1', iret)
+      iret = nf_put_att_double(ncid, fn3dtrid, 'scale', NCDOUBLE, 1, doubleval)
+      iret = nf_put_att_text(ncid, fl3dtrid, 'long_name', NCCHAR, 47, &
+           'poloidal electron flux, upper outboard divertor')
+      iret = nf_put_att_text(ncid, fl3dtrid, 'units', NCCHAR, 4, 's^-1')
       doubleval(1) = -1.0_R8
-      call ncapt(ncid, fl3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
-      call ncaptc(ncid, fo3dtrid, 'long_name', NCCHAR, 42, &
-           'poloidal ion flux, upper outboard divertor', iret)
-      call ncaptc(ncid, fo3dtrid, 'units', NCCHAR, 2, 'W ', iret)
+      iret = nf_put_att_double(ncid, fl3dtrid, 'scale', NCDOUBLE, 1, doubleval)
+      iret = nf_put_att_text(ncid, fo3dtrid, 'long_name', NCCHAR, 42, &
+           'poloidal ion flux, upper outboard divertor')
+      iret = nf_put_att_text(ncid, fo3dtrid, 'units', NCCHAR, 2, 'W ')
       doubleval(1) = -1.0_R8
-      call ncapt(ncid, fo3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
-      call ncaptc(ncid, fe3dtrid, 'long_name', NCCHAR, 54, &
-           'poloidal electron energy flux, upper outboard divertor', iret)
-      call ncaptc(ncid, fe3dtrid, 'units', NCCHAR, 2, 'W ', iret)
+      iret = nf_put_att_double(ncid, fo3dtrid, 'scale', NCDOUBLE, 1, doubleval)
+      iret = nf_put_att_text(ncid, fe3dtrid, 'long_name', NCCHAR, 54, &
+           'poloidal electron energy flux, upper outboard divertor')
+      iret = nf_put_att_text(ncid, fe3dtrid, 'units', NCCHAR, 2, 'W ')
       doubleval(1) = -1.0_R8
-      call ncapt(ncid, fe3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
-      call ncaptc(ncid, fi3dtrid, 'long_name', NCCHAR, 49, &
-           'poloidal ion energy flux, upper outboard divertor', iret)
-      call ncaptc(ncid, fi3dtrid, 'units', NCCHAR, 2, 'W ', iret)
+      iret = nf_put_att_double(ncid, fe3dtrid, 'scale', NCDOUBLE, 1, doubleval)
+      iret = nf_put_att_text(ncid, fi3dtrid, 'long_name', NCCHAR, 49, &
+           'poloidal ion energy flux, upper outboard divertor')
+      iret = nf_put_att_text(ncid, fi3dtrid, 'units', NCCHAR, 2, 'W ')
       doubleval(1) = -1.0_R8
-      call ncapt(ncid, fi3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
-      call ncaptc(ncid, ft3dtrid, 'long_name', NCCHAR, 51, &
-           'poloidal total energy flux, upper outboard divertor', iret)
-      call ncaptc(ncid, ft3dtrid, 'units', NCCHAR, 2, 'W ', iret)
+      iret = nf_put_att_double(ncid, fi3dtrid, 'scale', NCDOUBLE, 1, doubleval)
+      iret = nf_put_att_text(ncid, ft3dtrid, 'long_name', NCCHAR, 51, &
+           'poloidal total energy flux, upper outboard divertor')
+      iret = nf_put_att_text(ncid, ft3dtrid, 'units', NCCHAR, 2, 'W ')
       doubleval(1) = -1.0_R8
-      call ncapt(ncid, ft3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
-      call ncaptc(ncid, fc3dtrid, 'long_name', NCCHAR, 42, &
-           'poloidal current, upper outboard divertor', iret)
-      call ncaptc(ncid, fc3dtrid, 'units', NCCHAR, 2, 'A ', iret)
+      iret = nf_put_att_double(ncid, ft3dtrid, 'scale', NCDOUBLE, 1, doubleval)
+      iret = nf_put_att_text(ncid, fc3dtrid, 'long_name', NCCHAR, 42, &
+           'poloidal current, upper outboard divertor')
+      iret = nf_put_att_text(ncid, fc3dtrid, 'units', NCCHAR, 2, 'A ')
       doubleval(1) = -1.0_R8
-      call ncapt(ncid, fc3dtrid, 'scale', NCDOUBLE, 1, doubleval, iret)
+      iret = nf_put_att_double(ncid, fc3dtrid, 'scale', NCDOUBLE, 1, doubleval)
     endif
 
     ! leave define mode
