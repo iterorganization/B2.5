@@ -32,7 +32,7 @@
 				<name>ttini</name>
 				<default>None</default>
 				<description>
-					initial ion and electron temperature, in eV
+					initial ion and electron temperatures, in eV
 				</description>
 			</switch>
 		</category>
