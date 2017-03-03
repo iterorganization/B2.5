@@ -1819,571 +1819,378 @@ Contains
       iret = nf_def_var(ncid, 'tp3dtr', NCDOUBLE, 2, dims, tp3dtrid)
     endif
     ! assign attributes
-    iret = nf_put_att_text(ncid, timesaid, 'long_name', NCCHAR, 4, 'time')
-    iret = nf_put_att_text(ncid, timesaid, 'units', NCCHAR, 2, 's ')
-    iret = nf_put_att_text(ncid, fnixipid, 'long_name', NCCHAR, 51, &
-         'integrated poloidal particle flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fnixipid, 'units', NCCHAR, 4, 's^-1')
-    iret = nf_put_att_text(ncid, feexipid, 'long_name', NCCHAR, 58, &
-         'integrated poloidal electron energy flux, inboard divertor')
-    iret = nf_put_att_text(ncid, feexipid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, feixipid, 'long_name', NCCHAR, 53, &
-         'integrated poloidal ion energy flux, inboard divertor')
-    iret = nf_put_att_text(ncid, feixipid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fetxipid, 'long_name', NCCHAR, 53, &
-         'integrated poloidal tot energy flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fetxipid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fchxipid, 'long_name', NCCHAR, 45, &
-         'integrated poloidal current, inboard divertor')
-    iret = nf_put_att_text(ncid, fchxipid, 'units', NCCHAR, 2, 'A ')
-    iret = nf_put_att_text(ncid, fnixapid, 'long_name', NCCHAR, 52, &
-         'integrated poloidal particle flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fnixapid, 'units', NCCHAR, 4, 's^-1')
-    iret = nf_put_att_text(ncid, feexapid, 'long_name', NCCHAR, 59, &
-         'integrated poloidal electron energy flux, outboard divertor')
-    iret = nf_put_att_text(ncid, feexapid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, feixapid, 'long_name', NCCHAR, 54, &
-         'integrated poloidal ion energy flux, outboard divertor')
-    iret = nf_put_att_text(ncid, feixapid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fetxapid, 'long_name', NCCHAR, 54, &
-         'integrated poloidal tot energy flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fetxapid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fchxapid, 'long_name', NCCHAR, 46, &
-         'integrated poloidal current, outboard divertor')
-    iret = nf_put_att_text(ncid, fchxapid, 'units', NCCHAR, 2, 'A ')
-    iret = nf_put_att_text(ncid, nesepiid, 'long_name', NCCHAR, 45, &
-         'separatrix electron density, inboard divertor')
-    iret = nf_put_att_text(ncid, nesepiid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, tesepiid, 'long_name', NCCHAR, 49, &
-         'separatrix electron temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, tesepiid, 'units', NCCHAR, 2, 'eV')
-    iret = nf_put_att_text(ncid, tisepiid, 'long_name', NCCHAR, 44, &
-         'separatrix ion temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, tisepiid, 'units', NCCHAR, 2, 'eV')
-    iret = nf_put_att_text(ncid, tpsepiid, 'long_name', NCCHAR, 46, &
-         'separatrix plate temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, tpsepiid, 'units', NCCHAR, 2, 'K ')
-    iret = nf_put_att_text(ncid, posepiid, 'long_name', NCCHAR, 38, &
-         'separatrix potential, inboard divertor')
-    iret = nf_put_att_text(ncid, posepiid, 'units', NCCHAR, 2, 'V ')
-    iret = nf_put_att_text(ncid, nesepmid, 'long_name', NCCHAR, 43, &
-         'separatrix electron density, outer midplane')
-    iret = nf_put_att_text(ncid, nesepmid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, tesepmid, 'long_name', NCCHAR, 47, &
-         'separatrix electron temperature, outer midplane')
-    iret = nf_put_att_text(ncid, tesepmid, 'units', NCCHAR, 2, 'eV')
-    iret = nf_put_att_text(ncid, tisepmid, 'long_name', NCCHAR, 42, &
-         'separatrix ion temperature, outer midplane')
-    iret = nf_put_att_text(ncid, tisepmid, 'units', NCCHAR, 2, 'eV')
-    iret = nf_put_att_text(ncid, posepmid, 'long_name', NCCHAR, 36, &
-         'separatrix potential, outer midplane')
-    iret = nf_put_att_text(ncid, posepmid, 'units', NCCHAR, 2, 'V ')
+    iret = nf_put_att_text(ncid, timesaid, 'long_name', 4, 'time')
+    iret = nf_put_att_text(ncid, timesaid, 'units', 2, 's ')
+    iret = nf_put_att_text(ncid, fnixipid, 'long_name', 51, 'integrated poloidal particle flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fnixipid, 'units', 4, 's^-1')
+    iret = nf_put_att_text(ncid, feexipid, 'long_name', 58, 'integrated poloidal electron energy flux, inboard divertor')
+    iret = nf_put_att_text(ncid, feexipid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, feixipid, 'long_name', 53, 'integrated poloidal ion energy flux, inboard divertor')
+    iret = nf_put_att_text(ncid, feixipid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fetxipid, 'long_name', 53, 'integrated poloidal tot energy flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fetxipid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fchxipid, 'long_name', 45, 'integrated poloidal current, inboard divertor')
+    iret = nf_put_att_text(ncid, fchxipid, 'units', 2, 'A ')
+    iret = nf_put_att_text(ncid, fnixapid, 'long_name', 52, 'integrated poloidal particle flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fnixapid, 'units', 4, 's^-1')
+    iret = nf_put_att_text(ncid, feexapid, 'long_name', 59, 'integrated poloidal electron energy flux, outboard divertor')
+    iret = nf_put_att_text(ncid, feexapid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, feixapid, 'long_name', 54, 'integrated poloidal ion energy flux, outboard divertor')
+    iret = nf_put_att_text(ncid, feixapid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fetxapid, 'long_name', 54, 'integrated poloidal tot energy flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fetxapid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fchxapid, 'long_name', 46, 'integrated poloidal current, outboard divertor')
+    iret = nf_put_att_text(ncid, fchxapid, 'units', 2, 'A ')
+    iret = nf_put_att_text(ncid, nesepiid, 'long_name', 45, 'separatrix electron density, inboard divertor')
+    iret = nf_put_att_text(ncid, nesepiid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, tesepiid, 'long_name', 49, 'separatrix electron temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tesepiid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tisepiid, 'long_name', 44, 'separatrix ion temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tisepiid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tpsepiid, 'long_name', 46, 'separatrix plate temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tpsepiid, 'units', 2, 'K ')
+    iret = nf_put_att_text(ncid, posepiid, 'long_name', 38, 'separatrix potential, inboard divertor')
+    iret = nf_put_att_text(ncid, posepiid, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, nesepmid, 'long_name', 43, 'separatrix electron density, outer midplane')
+    iret = nf_put_att_text(ncid, nesepmid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, tesepmid, 'long_name', 47, 'separatrix electron temperature, outer midplane')
+    iret = nf_put_att_text(ncid, tesepmid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tisepmid, 'long_name', 42, 'separatrix ion temperature, outer midplane')
+    iret = nf_put_att_text(ncid, tisepmid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, posepmid, 'long_name', 36, 'separatrix potential, outer midplane')
+    iret = nf_put_att_text(ncid, posepmid, 'units', 2, 'V ')
 
-    iret = nf_put_att_text(ncid, dnsepmid, 'long_name', NCCHAR, 37, &
-         'diffusion coefficient, outer midplane')
-    iret = nf_put_att_text(ncid, dnsepmid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, dpsepmid, 'long_name', NCCHAR, 46, &
-         'pressure diffusion coefficient, outer midplane')
-    iret = nf_put_att_text(ncid, dpsepmid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, kesepmid, 'long_name', NCCHAR, 44, &
-         'electron thermal diffusivity, outer midplane')
-    iret = nf_put_att_text(ncid, kesepmid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, kisepmid, 'long_name', NCCHAR, 39, &
-         'ion thermal diffusivity, outer midplane')
-    iret = nf_put_att_text(ncid, kisepmid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, vxsepmid, 'long_name', NCCHAR, 39, &
-         'poloidal pinch velocity, outer midplane')
-    iret = nf_put_att_text(ncid, vxsepmid, 'units', NCCHAR, 6, 'm.s^-1')
-    iret = nf_put_att_text(ncid, vysepmid, 'long_name', NCCHAR, 37, &
-         'radial pinch velocity, outer midplane')
-    iret = nf_put_att_text(ncid, vysepmid, 'units', NCCHAR, 6, 'm.s^-1')
-    iret = nf_put_att_text(ncid, vssepmid, 'long_name', NCCHAR, 37, &
-         'viscosity coefficient, outer midplane')
-    iret = nf_put_att_text(ncid, vssepmid, 'units', NCCHAR, 12, 'm.kg^-1.s^-1')
+    iret = nf_put_att_text(ncid, dnsepmid, 'long_name', 37, 'diffusion coefficient, outer midplane')
+    iret = nf_put_att_text(ncid, dnsepmid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, dpsepmid, 'long_name', 46, 'pressure diffusion coefficient, outer midplane')
+    iret = nf_put_att_text(ncid, dpsepmid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, kesepmid, 'long_name', 44, 'electron thermal diffusivity, outer midplane')
+    iret = nf_put_att_text(ncid, kesepmid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, kisepmid, 'long_name', 39, 'ion thermal diffusivity, outer midplane')
+    iret = nf_put_att_text(ncid, kisepmid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, vxsepmid, 'long_name', 39, 'poloidal pinch velocity, outer midplane')
+    iret = nf_put_att_text(ncid, vxsepmid, 'units', 6, 'm.s^-1')
+    iret = nf_put_att_text(ncid, vysepmid, 'long_name', 37, 'radial pinch velocity, outer midplane')
+    iret = nf_put_att_text(ncid, vysepmid, 'units', 6, 'm.s^-1')
+    iret = nf_put_att_text(ncid, vssepmid, 'long_name', 37, 'viscosity coefficient, outer midplane')
+    iret = nf_put_att_text(ncid, vssepmid, 'units', 12, 'm.kg^-1.s^-1')
 
-
-    iret = nf_put_att_text(ncid, nesepaid, 'long_name', NCCHAR, 46, &
-         'separatrix electron density, outboard divertor')
-    iret = nf_put_att_text(ncid, nesepaid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, tesepaid, 'long_name', NCCHAR, 50, &
-         'separatrix electron temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, tesepaid, 'units', NCCHAR, 2, 'eV')
-    iret = nf_put_att_text(ncid, tisepaid, 'long_name', NCCHAR, 45, &
-         'separatrix ion temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, tisepaid, 'units', NCCHAR, 2, 'eV')
-    iret = nf_put_att_text(ncid, tpsepaid, 'long_name', NCCHAR, 47, &
-         'separatrix plate temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, tpsepaid, 'units', NCCHAR, 2, 'K ')
-    iret = nf_put_att_text(ncid, posepaid, 'long_name', NCCHAR, 43, &
-         'separatrix potential, outboard divertor')
-    iret = nf_put_att_text(ncid, posepaid, 'units', NCCHAR, 2, 'V ')
-    iret = nf_put_att_text(ncid, nemxipid, 'long_name', NCCHAR, 42, &
-         'maximum electron density, inboard divertor')
-    iret = nf_put_att_text(ncid, nemxipid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, temxipid, 'long_name', NCCHAR, 46, &
-         'maximum electron temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, temxipid, 'units', NCCHAR, 2, 'eV')
-    iret = nf_put_att_text(ncid, timxipid, 'long_name', NCCHAR, 41, &
-         'maximum ion temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, timxipid, 'units', NCCHAR, 2, 'eV')
-    iret = nf_put_att_text(ncid, tpmxipid, 'long_name', NCCHAR, 43, &
-         'maximum plate temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, tpmxipid, 'units', NCCHAR, 2, 'K ')
-    iret = nf_put_att_text(ncid, pomxipid, 'long_name', NCCHAR, 35, &
-         'maximum potential, inboard divertor')
-    iret = nf_put_att_text(ncid, pomxipid, 'units', NCCHAR, 2, 'V ')
-    iret = nf_put_att_text(ncid, nemxapid, 'long_name', NCCHAR, 43, &
-         'maximum electron density, outboard divertor')
-    iret = nf_put_att_text(ncid, nemxapid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, temxapid, 'long_name', NCCHAR, 47, &
-         'maximum electron temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, temxapid, 'units', NCCHAR, 2, 'eV')
-    iret = nf_put_att_text(ncid, timxapid, 'long_name', NCCHAR, 43, &
-         'maximum ion temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, timxapid, 'units', NCCHAR, 2, 'eV')
-    iret = nf_put_att_text(ncid, tpmxapid, 'long_name', NCCHAR, 45, &
-         'maximum plate temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, tpmxapid, 'units', NCCHAR, 2, 'K ')
-    iret = nf_put_att_text(ncid, pomxapid, 'long_name', NCCHAR, 37, &
-         'maximum potential, outboard divertor')
-    iret = nf_put_att_text(ncid, pomxapid, 'units', NCCHAR, 2, 'V ')
-    iret = nf_put_att_text(ncid, fniyipid, 'long_name', NCCHAR, 45, &
-         'integrated radial particle flux, main chamber')
-    iret = nf_put_att_text(ncid, fniyipid, 'units', NCCHAR, 4, 's^-1')
-    iret = nf_put_att_text(ncid, feeyipid, 'long_name', NCCHAR, 52, &
-         'integrated radial electron energy flux, main chamber')
-    iret = nf_put_att_text(ncid, feeyipid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, feiyipid, 'long_name', NCCHAR, 47, &
-         'integrated radial ion energy flux, main chamber')
-    iret = nf_put_att_text(ncid, feiyipid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fetyipid, 'long_name', NCCHAR, 47, &
-         'integrated radial tot energy flux, main chamber')
-    iret = nf_put_att_text(ncid, fetyipid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fchyipid, 'long_name', NCCHAR, 39, &
-         'integrated radial current, main chamber')
-    iret = nf_put_att_text(ncid, fchyipid, 'units', NCCHAR, 2, 'A ')
-    iret = nf_put_att_text(ncid, fniyapid, 'long_name', NCCHAR, 48, &
-         'integrated radial particle flux, divertor region')
-    iret = nf_put_att_text(ncid, fniyapid, 'units', NCCHAR, 4, 's^-1')
-    iret = nf_put_att_text(ncid, feeyapid, 'long_name', NCCHAR, 55, &
-         'integrated radial electron energy flux, divertor region')
-    iret = nf_put_att_text(ncid, feeyapid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, feiyapid, 'long_name', NCCHAR, 50, &
-         'integrated radial ion energy flux, divertor region')
-    iret = nf_put_att_text(ncid, feiyapid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fetyapid, 'long_name', NCCHAR, 50, &
-         'integrated radial tot energy flux, divertor region')
-    iret = nf_put_att_text(ncid, fetyapid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fchyapid, 'long_name', NCCHAR, 42, &
-         'integrated radial current, divertor region')
-    iret = nf_put_att_text(ncid, fchyapid, 'units', NCCHAR, 2, 'A ')
-    iret = nf_put_att_text(ncid, pwmxipid, 'long_name', NCCHAR, 42, &
-         'maximum total power flux, inboard divertor')
-    iret = nf_put_att_text(ncid, pwmxipid, 'units', NCCHAR, 6, 'W.m^-2')
-    iret = nf_put_att_text(ncid, pwmxapid, 'long_name', NCCHAR, 43, &
-         'maximum total power flux, outboard divertor')
-    iret = nf_put_att_text(ncid, pwmxapid, 'units', NCCHAR, 6, 'W.m^-2')
-    iret = nf_put_att_text(ncid, tmneid, 'long_name', NCCHAR, 25, &
-         'total number of particles')
-    iret = nf_put_att_text(ncid, tmneid, 'units', NCCHAR, 2, '  ')
-    iret = nf_put_att_text(ncid, tmteid, 'long_name', NCCHAR, 21, &
-         'total electron energy')
-    iret = nf_put_att_text(ncid, tmteid, 'units', NCCHAR, 2, 'eV')
-    iret = nf_put_att_text(ncid, tmtiid, 'long_name', NCCHAR, 16, &
-         'total ion energy')
-    iret = nf_put_att_text(ncid, tmtiid, 'units', NCCHAR, 2, 'eV')
-    iret = nf_put_att_text(ncid, tmhacoreid, 'long_name', NCCHAR, 24, &
-         'H-alpha emissivity, core')
-    iret = nf_put_att_text(ncid, tmhacoreid, 'units', NCCHAR, 19, &
-         'photons.m^-2.sr^-1?')
-    iret = nf_put_att_text(ncid, tmhasolid, 'long_name', NCCHAR, 41, &
-         'H-alpha emissivity, SOL above the x-point')
-    iret = nf_put_att_text(ncid, tmhasolid, 'units', NCCHAR, 19, &
-         'photons.m^-2.sr^-1?')
-    iret = nf_put_att_text(ncid, tmhadivid, 'long_name', NCCHAR, 35, &
-         'H-alpha emissivity, divertor region')
-    iret = nf_put_att_text(ncid, tmhadivid, 'units', NCCHAR, 19, &
-         'photons.m^-2.sr^-1?')
-    iret = nf_put_att_text(ncid, fnisipid, 'long_name', NCCHAR, 54, &
-         'poloidal particle flux, into inboard separatrix throat')
-    iret = nf_put_att_text(ncid, fnisipid, 'units', NCCHAR, 4, 's^-1')
-    iret = nf_put_att_text(ncid, feesipid, 'long_name', NCCHAR, 61, &
-         'poloidal electron energy flux, into inboard separatrix throat')
-    iret = nf_put_att_text(ncid, feesipid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, feisipid, 'long_name', NCCHAR, 56, &
-         'poloidal ion energy flux, into inboard separatrix throat')
-    iret = nf_put_att_text(ncid, feisipid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fetsipid, 'long_name', NCCHAR, 58, &
-         'poloidal total energy flux, into inboard separatrix throat')
-    iret = nf_put_att_text(ncid, fetsipid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fchsipid, 'long_name', NCCHAR, 48, 'poloidal current, into inboard separatrix throat')
-    iret = nf_put_att_text(ncid, fchsipid, 'units', NCCHAR, 2, 'A ')
-    iret = nf_put_att_text(ncid, fnisapid, 'long_name', NCCHAR, 55, &
-         'poloidal particle flux, into outboard separatrix throat')
-    iret = nf_put_att_text(ncid, fnisapid, 'units', NCCHAR, 4, 's^-1')
-    iret = nf_put_att_text(ncid, feesapid, 'long_name', NCCHAR, 62, &
-         'poloidal electron energy flux, into outboard separatrix throat')
-    iret = nf_put_att_text(ncid, feesapid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, feisapid, 'long_name', NCCHAR, 57, &
-         'poloidal ion energy flux, into outboard separatrix throat')
-    iret = nf_put_att_text(ncid, feisapid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fetsapid, 'long_name', NCCHAR, 59, &
-         'poloidal total energy flux, into outboard separatrix throat')
-    iret = nf_put_att_text(ncid, fetsapid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fchsapid, 'long_name', NCCHAR, 49, &
-         'poloidal current, into outboard separatrix throat')
-    iret = nf_put_att_text(ncid, fchsapid, 'units', NCCHAR, 2, 'A ')
-    iret = nf_put_att_text(ncid, fnisippid, 'long_name', NCCHAR, 40, &
-         'poloidal particle flux, core x-pt region')
-    iret = nf_put_att_text(ncid, fnisippid, 'units', NCCHAR, 4, 's^-1')
-    iret = nf_put_att_text(ncid, feesippid, 'long_name', NCCHAR, 52, &
-         'poloidal electron energy flux, core x-pt flux region')
-    iret = nf_put_att_text(ncid, feesippid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, feisippid, 'long_name', NCCHAR, 47, &
-         'poloidal ion energy flux, core x-pt flux region')
-    iret = nf_put_att_text(ncid, feisippid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fetsippid, 'long_name', NCCHAR, 49, &
-         'poloidal total energy flux, core x-pt flux region')
-    iret = nf_put_att_text(ncid, fetsippid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fchsippid, 'long_name', NCCHAR, 39, &
-         'poloidal current, core x-pt flux region')
-    iret = nf_put_att_text(ncid, fchsippid, 'units', NCCHAR, 2, 'A ')
-    iret = nf_put_att_text(ncid, fnisappid, 'long_name', NCCHAR, 48, &
-         'poloidal particle flux, x-pt private flux region')
-    iret = nf_put_att_text(ncid, fnisappid, 'units', NCCHAR, 4, 's^-1')
-    iret = nf_put_att_text(ncid, feesappid, 'long_name', NCCHAR, 55, &
-         'poloidal electron energy flux, x-pt private flux region')
-    iret = nf_put_att_text(ncid, feesappid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, feisappid, 'long_name', NCCHAR, 50, &
-         'poloidal ion energy flux, x-pt private flux region')
-    iret = nf_put_att_text(ncid, feisappid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fetsappid, 'long_name', NCCHAR, 52, &
-         'poloidal total energy flux, x-pt private flux region')
-    iret = nf_put_att_text(ncid, fetsappid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fchsappid, 'long_name', NCCHAR, 42, &
-         'poloidal current, x-pt private flux region')
-    iret = nf_put_att_text(ncid, fchsappid, 'units', NCCHAR, 2, 'A ')
+    iret = nf_put_att_text(ncid, nesepaid, 'long_name', 46, 'separatrix electron density, outboard divertor')
+    iret = nf_put_att_text(ncid, nesepaid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, tesepaid, 'long_name', 50, 'separatrix electron temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tesepaid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tisepaid, 'long_name', 45, 'separatrix ion temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tisepaid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tpsepaid, 'long_name', 47, 'separatrix plate temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tpsepaid, 'units', 2, 'K ')
+    iret = nf_put_att_text(ncid, posepaid, 'long_name', 43, 'separatrix potential, outboard divertor')
+    iret = nf_put_att_text(ncid, posepaid, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, nemxipid, 'long_name', 42, 'maximum electron density, inboard divertor')
+    iret = nf_put_att_text(ncid, nemxipid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, temxipid, 'long_name', 46, 'maximum electron temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, temxipid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, timxipid, 'long_name', 41, 'maximum ion temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, timxipid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tpmxipid, 'long_name', 43, 'maximum plate temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tpmxipid, 'units', 2, 'K ')
+    iret = nf_put_att_text(ncid, pomxipid, 'long_name', 35, 'maximum potential, inboard divertor')
+    iret = nf_put_att_text(ncid, pomxipid, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, nemxapid, 'long_name', 43, 'maximum electron density, outboard divertor')
+    iret = nf_put_att_text(ncid, nemxapid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, temxapid, 'long_name', 47, 'maximum electron temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, temxapid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, timxapid, 'long_name', 43, 'maximum ion temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, timxapid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tpmxapid, 'long_name', 45, 'maximum plate temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tpmxapid, 'units', 2, 'K ')
+    iret = nf_put_att_text(ncid, pomxapid, 'long_name', 37, 'maximum potential, outboard divertor')
+    iret = nf_put_att_text(ncid, pomxapid, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, fniyipid, 'long_name', 45, 'integrated radial particle flux, main chamber')
+    iret = nf_put_att_text(ncid, fniyipid, 'units', 4, 's^-1')
+    iret = nf_put_att_text(ncid, feeyipid, 'long_name', 52, 'integrated radial electron energy flux, main chamber')
+    iret = nf_put_att_text(ncid, feeyipid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, feiyipid, 'long_name', 47, 'integrated radial ion energy flux, main chamber')
+    iret = nf_put_att_text(ncid, feiyipid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fetyipid, 'long_name', 47, 'integrated radial tot energy flux, main chamber')
+    iret = nf_put_att_text(ncid, fetyipid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fchyipid, 'long_name', 39, 'integrated radial current, main chamber')
+    iret = nf_put_att_text(ncid, fchyipid, 'units', 2, 'A ')
+    iret = nf_put_att_text(ncid, fniyapid, 'long_name', 48, 'integrated radial particle flux, divertor region')
+    iret = nf_put_att_text(ncid, fniyapid, 'units', 4, 's^-1')
+    iret = nf_put_att_text(ncid, feeyapid, 'long_name', 55, 'integrated radial electron energy flux, divertor region')
+    iret = nf_put_att_text(ncid, feeyapid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, feiyapid, 'long_name', 50, 'integrated radial ion energy flux, divertor region')
+    iret = nf_put_att_text(ncid, feiyapid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fetyapid, 'long_name', 50, 'integrated radial tot energy flux, divertor region')
+    iret = nf_put_att_text(ncid, fetyapid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fchyapid, 'long_name', 42, 'integrated radial current, divertor region')
+    iret = nf_put_att_text(ncid, fchyapid, 'units', 2, 'A ')
+    iret = nf_put_att_text(ncid, pwmxipid, 'long_name', 42, 'maximum total power flux, inboard divertor')
+    iret = nf_put_att_text(ncid, pwmxipid, 'units', 6, 'W.m^-2')
+    iret = nf_put_att_text(ncid, pwmxapid, 'long_name', 43, 'maximum total power flux, outboard divertor')
+    iret = nf_put_att_text(ncid, pwmxapid, 'units', 6, 'W.m^-2')
+    iret = nf_put_att_text(ncid, tmneid, 'long_name', 25, 'total number of particles')
+    iret = nf_put_att_text(ncid, tmneid, 'units', 2, '  ')
+    iret = nf_put_att_text(ncid, tmteid, 'long_name', 21, 'total electron energy')
+    iret = nf_put_att_text(ncid, tmteid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tmtiid, 'long_name', 16, 'total ion energy')
+    iret = nf_put_att_text(ncid, tmtiid, 'units', 2, 'eV')
+    iret = nf_put_att_text(ncid, tmhacoreid, 'long_name', 24, 'H-alpha emissivity, core')
+    iret = nf_put_att_text(ncid, tmhacoreid, 'units', 19, 'photons.m^-2.sr^-1?')
+    iret = nf_put_att_text(ncid, tmhasolid, 'long_name', 41, 'H-alpha emissivity, SOL above the x-point')
+    iret = nf_put_att_text(ncid, tmhasolid, 'units', 19, 'photons.m^-2.sr^-1?')
+    iret = nf_put_att_text(ncid, tmhadivid, 'long_name', 35, 'H-alpha emissivity, divertor region')
+    iret = nf_put_att_text(ncid, tmhadivid, 'units', 19, 'photons.m^-2.sr^-1?')
+    iret = nf_put_att_text(ncid, fnisipid, 'long_name', 54, 'poloidal particle flux, into inboard separatrix throat')
+    iret = nf_put_att_text(ncid, fnisipid, 'units', 4, 's^-1')
+    iret = nf_put_att_text(ncid, feesipid, 'long_name', 61, 'poloidal electron energy flux, into inboard separatrix throat')
+    iret = nf_put_att_text(ncid, feesipid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, feisipid, 'long_name', 56, 'poloidal ion energy flux, into inboard separatrix throat')
+    iret = nf_put_att_text(ncid, feisipid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fetsipid, 'long_name', 58, 'poloidal total energy flux, into inboard separatrix throat')
+    iret = nf_put_att_text(ncid, fetsipid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fchsipid, 'long_name', 48, 'poloidal current, into inboard separatrix throat')
+    iret = nf_put_att_text(ncid, fchsipid, 'units', 2, 'A ')
+    iret = nf_put_att_text(ncid, fnisapid, 'long_name', 55, 'poloidal particle flux, into outboard separatrix throat')
+    iret = nf_put_att_text(ncid, fnisapid, 'units', 4, 's^-1')
+    iret = nf_put_att_text(ncid, feesapid, 'long_name', 62, 'poloidal electron energy flux, into outboard separaatrix throat')
+    iret = nf_put_att_text(ncid, feesapid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, feisapid, 'long_name', 57, 'poloidal ion energy flux, into outboard separatrix throat')
+    iret = nf_put_att_text(ncid, feisapid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fetsapid, 'long_name', 59, 'poloidal total energy flux, into outboard separatrix throat')
+    iret = nf_put_att_text(ncid, fetsapid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fchsapid, 'long_name', 49, 'poloidal current, into outboard separatrix throat')
+    iret = nf_put_att_text(ncid, fchsapid, 'units', 2, 'A ')
+    iret = nf_put_att_text(ncid, fnisippid, 'long_name', 40, 'poloidal particle flux, core x-pt region')
+    iret = nf_put_att_text(ncid, fnisippid, 'units', 4, 's^-1')
+    iret = nf_put_att_text(ncid, feesippid, 'long_name', 52, 'poloidal electron energy flux, core x-pt flux region')
+    iret = nf_put_att_text(ncid, feesippid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, feisippid, 'long_name', 47, 'poloidal ion energy flux, core x-pt flux region')
+    iret = nf_put_att_text(ncid, feisippid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fetsippid, 'long_name', 49, 'poloidal total energy flux, core x-pt flux region')
+    iret = nf_put_att_text(ncid, fetsippid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fchsippid, 'long_name', 39, 'poloidal current, core x-pt flux region')
+    iret = nf_put_att_text(ncid, fchsippid, 'units', 2, 'A ')
+    iret = nf_put_att_text(ncid, fnisappid, 'long_name', 48, 'poloidal particle flux, x-pt private flux region')
+    iret = nf_put_att_text(ncid, fnisappid, 'units', 4, 's^-1')
+    iret = nf_put_att_text(ncid, feesappid, 'long_name', 55, 'poloidal electron energy flux, x-pt private flux region')
+    iret = nf_put_att_text(ncid, feesappid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, feisappid, 'long_name', 50, 'poloidal ion energy flux, x-pt private flux region')
+    iret = nf_put_att_text(ncid, feisappid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fetsappid, 'long_name', 52, 'poloidal total energy flux, x-pt private flux region')
+    iret = nf_put_att_text(ncid, fetsappid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fchsappid, 'long_name', 42, 'poloidal current, x-pt private flux region')
+    iret = nf_put_att_text(ncid, fchsappid, 'units', 2, 'A ')
 
     ! inboard divertor quantities
-    iret = nf_put_att_text(ncid, ne3dlid, 'long_name', NCCHAR, 34, 'electron density, inboard divertor')
-    iret = nf_put_att_text(ncid, ne3dlid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, te3dlid, 'long_name', NCCHAR, 38, &
-         'electron temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, te3dlid, 'units', NCCHAR, 2, 'eV')
-    doubleval(1) = 1.0_R8/ev
-    iret = nf_put_att_double(ncid, te3dlid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, ti3dlid, 'long_name', NCCHAR, 33, &
-         'ion temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, ti3dlid, 'units', NCCHAR, 2, 'eV')
-    doubleval(1) = 1.0_R8/ev
-    iret = nf_put_att_double(ncid, ti3dlid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, tp3dlid, 'long_name', NCCHAR, 35, &
-         'plate temperature, inboard divertor')
-    iret = nf_put_att_text(ncid, tp3dlid, 'units', NCCHAR, 2, 'K ')
-    iret = nf_put_att_text(ncid, po3dlid, 'long_name', NCCHAR, 26, &
-         'potential, inboard divertor')
-    iret = nf_put_att_text(ncid, po3dlid, 'units', NCCHAR, 2, 'V ')
-    iret = nf_put_att_text(ncid, an3dlid, 'long_name', NCCHAR, 30, &
-         'atom density, inboard divertor')
-    iret = nf_put_att_text(ncid, an3dlid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, mn3dlid, 'long_name', NCCHAR, 34, &
-         'molecule density, inboard divertor')
-    iret = nf_put_att_text(ncid, mn3dlid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, fn3dlid, 'long_name', NCCHAR, 44, &
-         'poloidal main species flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fn3dlid, 'units', NCCHAR, 4, 's^-1')
-    doubleval(1) = -1.0_R8
-    iret = nf_put_att_double(ncid, fn3dlid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, fl3dlid, 'long_name', NCCHAR, 40, &
-         'poloidal electron flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fl3dlid, 'units', NCCHAR, 4, 's^-1')
-    doubleval(1) = -1.0_R8
-    iret = nf_put_att_double(ncid, fl3dlid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, fo3dlid, 'long_name', NCCHAR, 35, &
-         'poloidal ion flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fo3dlid, 'units', NCCHAR, 4, 's^-1')
-    doubleval(1) = -1.0_R8
-    iret = nf_put_att_double(ncid, fo3dlid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, fe3dlid, 'long_name', NCCHAR, 47, &
-         'poloidal electron energy flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fe3dlid, 'units', NCCHAR, 2, 'W ')
-    doubleval(1) = -1.0_R8
-    iret = nf_put_att_double(ncid, fe3dlid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, fi3dlid, 'long_name', NCCHAR, 42, &
-         'poloidal ion energy flux, inboard divertor')
-    iret = nf_put_att_text(ncid, fi3dlid, 'units', NCCHAR, 2, 'W ')
-    doubleval(1) = -1.0_R8
-    iret = nf_put_att_double(ncid, fi3dlid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, ft3dlid, 'long_name', NCCHAR, 44, &
-         'poloidal total energy flux, inboard divertor')
-    iret = nf_put_att_text(ncid, ft3dlid, 'units', NCCHAR, 2, 'W ')
-    doubleval(1) = -1.0_R8
-    iret = nf_put_att_double(ncid, ft3dlid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, fc3dlid, 'long_name', NCCHAR, 35, &
-         'poloidal current, inboard divertor')
-    iret = nf_put_att_text(ncid, fc3dlid, 'units', NCCHAR, 2, 'A ')
-    doubleval(1) = -1.0_R8
-    iret = nf_put_att_double(ncid, fc3dlid, 'scale', NCDOUBLE, 1, doubleval)
+    iret = nf_put_att_text(ncid, ne3dlid, 'long_name', 34, 'electron density, inboard divertor')
+    iret = nf_put_att_text(ncid, ne3dlid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, te3dlid, 'long_name', 38, 'electron temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, te3dlid, 'units', 2, 'eV')
+    iret = nf_put_att_double(ncid, te3dlid, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+    iret = nf_put_att_text(ncid, ti3dlid, 'long_name', 33, 'ion temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, ti3dlid, 'units', 2, 'eV')
+    iret = nf_put_att_double(ncid, ti3dlid, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+    iret = nf_put_att_text(ncid, tp3dlid, 'long_name', 35, 'plate temperature, inboard divertor')
+    iret = nf_put_att_text(ncid, tp3dlid, 'units', 2, 'K ')
+    iret = nf_put_att_text(ncid, po3dlid, 'long_name', 26, 'potential, inboard divertor')
+    iret = nf_put_att_text(ncid, po3dlid, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, an3dlid, 'long_name', 30, 'atom density, inboard divertor')
+    iret = nf_put_att_text(ncid, an3dlid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, mn3dlid, 'long_name', 34, 'molecule density, inboard divertor')
+    iret = nf_put_att_text(ncid, mn3dlid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, fn3dlid, 'long_name', 44, 'poloidal main species flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fn3dlid, 'units', 4, 's^-1')
+    iret = nf_put_att_double(ncid, fn3dlid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
+    iret = nf_put_att_text(ncid, fl3dlid, 'long_name', 40, 'poloidal electron flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fl3dlid, 'units', 4, 's^-1')
+    iret = nf_put_att_double(ncid, fl3dlid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
+    iret = nf_put_att_text(ncid, fo3dlid, 'long_name', 35, 'poloidal ion flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fo3dlid, 'units', 4, 's^-1')
+    iret = nf_put_att_double(ncid, fo3dlid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
+    iret = nf_put_att_text(ncid, fe3dlid, 'long_name', 47, 'poloidal electron energy flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fe3dlid, 'units', 2, 'W ')
+    iret = nf_put_att_double(ncid, fe3dlid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
+    iret = nf_put_att_text(ncid, fi3dlid, 'long_name', 42, 'poloidal ion energy flux, inboard divertor')
+    iret = nf_put_att_text(ncid, fi3dlid, 'units', 2, 'W ')
+    iret = nf_put_att_double(ncid, fi3dlid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
+    iret = nf_put_att_text(ncid, ft3dlid, 'long_name', 44, 'poloidal total energy flux, inboard divertor')
+    iret = nf_put_att_text(ncid, ft3dlid, 'units', 2, 'W ')
+    iret = nf_put_att_double(ncid, ft3dlid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
+    iret = nf_put_att_text(ncid, fc3dlid, 'long_name', 35, 'poloidal current, inboard divertor')
+    iret = nf_put_att_text(ncid, fc3dlid, 'units', 2, 'A ')
+    iret = nf_put_att_double(ncid, fc3dlid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
     ! inboard midplane quantities
-    iret = nf_put_att_text(ncid, ne3diid, 'long_name', NCCHAR, 34, &
-         'electron density, inboard midplane')
-    iret = nf_put_att_text(ncid, ne3diid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, te3diid, 'long_name', NCCHAR, 38, &
-         'electron temperature, inboard midplane')
-    iret = nf_put_att_text(ncid, te3diid, 'units', NCCHAR, 2, 'eV')
-    doubleval(1) = 1.0_R8/ev
-    iret = nf_put_att_double(ncid, te3diid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, ti3diid, 'long_name', NCCHAR, 33, &
-         'ion temperature, inboard midplane')
-    iret = nf_put_att_text(ncid, ti3diid, 'units', NCCHAR, 2, 'eV')
-    doubleval(1) = 1.0_R8/ev
-    iret = nf_put_att_double(ncid, ti3diid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, po3diid, 'long_name', NCCHAR, 27, &
-         'potential, inboard midplane')
-    iret = nf_put_att_text(ncid, po3diid, 'units', NCCHAR, 2, 'V ')
-    iret = nf_put_att_text(ncid, an3diid, 'long_name', NCCHAR, 30, &
-         'atom density, inboard midplane')
-    iret = nf_put_att_text(ncid, an3diid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, mn3diid, 'long_name', NCCHAR, 34, &
-         'molecule density, inboard midplane')
-    iret = nf_put_att_text(ncid, mn3diid, 'units', NCCHAR, 4, 'm^-3')
+    iret = nf_put_att_text(ncid, ne3diid, 'long_name', 34, 'electron density, inboard midplane')
+    iret = nf_put_att_text(ncid, ne3diid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, te3diid, 'long_name', 38, 'electron temperature, inboard midplane')
+    iret = nf_put_att_text(ncid, te3diid, 'units', 2, 'eV')
+    iret = nf_put_att_double(ncid, te3diid, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+    iret = nf_put_att_text(ncid, ti3diid, 'long_name', 33, 'ion temperature, inboard midplane')
+    iret = nf_put_att_text(ncid, ti3diid, 'units', 2, 'eV')
+    iret = nf_put_att_double(ncid, ti3diid, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+    iret = nf_put_att_text(ncid, po3diid, 'long_name', 27, 'potential, inboard midplane')
+    iret = nf_put_att_text(ncid, po3diid, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, an3diid, 'long_name', 30, 'atom density, inboard midplane')
+    iret = nf_put_att_text(ncid, an3diid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, mn3diid, 'long_name', 34, 'molecule density, inboard midplane')
+    iret = nf_put_att_text(ncid, mn3diid, 'units', 4, 'm^-3')
 
-    iret = nf_put_att_text(ncid, dn3diid, 'long_name', NCCHAR, 39, &
-         'diffusion coefficient, inboard midplane')
-    iret = nf_put_att_text(ncid, dn3diid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, dp3diid, 'long_name', NCCHAR, 48, &
-         'pressure diffusion coefficient, inboard midplane')
-    iret = nf_put_att_text(ncid, dp3diid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, lh3diid, 'long_name', NCCHAR, 50, &
-         'radial neutral heat flux limiter, inboard midplane')
-    iret = nf_put_att_text(ncid, lh3diid, 'units', NCCHAR, 1, ' ')
-    iret = nf_put_att_text(ncid, ln3diid, 'long_name', NCCHAR, 50, &
-         'radial neutral part flux limiter, inboard midplane')
-    iret = nf_put_att_text(ncid, ln3diid, 'units', NCCHAR, 1, ' ')
-    iret = nf_put_att_text(ncid, ke3diid, 'long_name', NCCHAR, 46, &
-         'electron thermal diffusivity, inboard midplane')
-    iret = nf_put_att_text(ncid, ke3diid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, ki3diid, 'long_name', NCCHAR, 41, &
-         'ion thermal diffusivity, inboard midplane')
-    iret = nf_put_att_text(ncid, ki3diid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, vx3diid, 'long_name', NCCHAR, 41, &
-         'poloidal pinch velocity, inboard midplane')
-    iret = nf_put_att_text(ncid, vx3diid, 'units', NCCHAR, 6, 'm.s^-1')
-    iret = nf_put_att_text(ncid, vy3diid, 'long_name', NCCHAR, 39, &
-         'radial pinch velocity, inboard midplane')
-    iret = nf_put_att_text(ncid, vy3diid, 'units', NCCHAR, 6, 'm.s^-1')
-    iret = nf_put_att_text(ncid, vs3diid, 'long_name', NCCHAR, 39, &
-         'viscosity coefficient, inboard midplane')
-    iret = nf_put_att_text(ncid, vs3diid, 'units', NCCHAR, 12, 'm.kg^-1.s^-1')
+    iret = nf_put_att_text(ncid, dn3diid, 'long_name', 39, 'diffusion coefficient, inboard midplane')
+    iret = nf_put_att_text(ncid, dn3diid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, dp3diid, 'long_name', 48, 'pressure diffusion coefficient, inboard midplane')
+    iret = nf_put_att_text(ncid, dp3diid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, lh3diid, 'long_name', 50, 'radial neutral heat flux limiter, inboard midplane')
+    iret = nf_put_att_text(ncid, lh3diid, 'units', 1, ' ')
+    iret = nf_put_att_text(ncid, ln3diid, 'long_name', 50, 'radial neutral part flux limiter, inboard midplane')
+    iret = nf_put_att_text(ncid, ln3diid, 'units', 1, ' ')
+    iret = nf_put_att_text(ncid, ke3diid, 'long_name', 46, 'electron thermal diffusivity, inboard midplane')
+    iret = nf_put_att_text(ncid, ke3diid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, ki3diid, 'long_name', 41, 'ion thermal diffusivity, inboard midplane')
+    iret = nf_put_att_text(ncid, ki3diid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, vx3diid, 'long_name', 41, 'poloidal pinch velocity, inboard midplane')
+    iret = nf_put_att_text(ncid, vx3diid, 'units', 6, 'm.s^-1')
+    iret = nf_put_att_text(ncid, vy3diid, 'long_name', 39, 'radial pinch velocity, inboard midplane')
+    iret = nf_put_att_text(ncid, vy3diid, 'units', 6, 'm.s^-1')
+    iret = nf_put_att_text(ncid, vs3diid, 'long_name', 39, 'viscosity coefficient, inboard midplane')
+    iret = nf_put_att_text(ncid, vs3diid, 'units', 12, 'm.kg^-1.s^-1')
 
     ! upper inboard divertor quantities
     if(nytl.gt.0) then
-      iret = nf_put_att_text(ncid, ne3dtlid, 'long_name', NCCHAR, 40, &
-           'electron density, upper inboard divertor')
-      iret = nf_put_att_text(ncid, ne3dtlid, 'units', NCCHAR, 4, 'm^-3')
-      iret = nf_put_att_text(ncid, te3dtlid, 'long_name', NCCHAR, 44, &
-           'electron temperature, upper inboard divertor')
-      iret = nf_put_att_text(ncid, te3dtlid, 'units', NCCHAR, 2, 'eV')
-      doubleval(1) = 1.0_R8/ev
-      iret = nf_put_att_double(ncid, te3dtlid, 'scale', NCDOUBLE, 1, doubleval)
-      iret = nf_put_att_text(ncid, ti3dtlid, 'long_name', NCCHAR, 39, &
-           'ion temperature, upper inboard divertor')
-      iret = nf_put_att_text(ncid, ti3dtlid, 'units', NCCHAR, 2, 'eV')
-      doubleval(1) = 1.0_R8/ev
-      iret = nf_put_att_double(ncid, ti3dtlid, 'scale', NCDOUBLE, 1, doubleval)
-      iret = nf_put_att_text(ncid, tp3dtlid, 'long_name', NCCHAR, 41, &
-           'plate temperature, upper inboard divertor')
-      iret = nf_put_att_text(ncid, tp3dtlid, 'units', NCCHAR, 2, 'K ')
-      iret = nf_put_att_text(ncid, po3dtlid, 'long_name', NCCHAR, 32, &
-           'potential, upper inboard divertor')
-      iret = nf_put_att_text(ncid, po3dtlid, 'units', NCCHAR, 2, 'V ')
-      iret = nf_put_att_text(ncid, an3dtlid, 'long_name', NCCHAR, 36, &
-           'atom density, upper inboard divertor')
-      iret = nf_put_att_text(ncid, an3dtlid, 'units', NCCHAR, 4, 'm^-3')
-      iret = nf_put_att_text(ncid, mn3dtlid, 'long_name', NCCHAR, 40, &
-           'molecule density, upper inboard divertor')
-      iret = nf_put_att_text(ncid, mn3dtlid, 'units', NCCHAR, 4, 'm^-3')
-      iret = nf_put_att_text(ncid, fn3dtlid, 'long_name', NCCHAR, 50, &
-           'poloidal main species flux, upper inboard divertor')
-      iret = nf_put_att_text(ncid, fn3dtlid, 'units', NCCHAR, 4, 's^-1')
-      iret = nf_put_att_text(ncid, fl3dtlid, 'long_name', NCCHAR, 46, &
-           'poloidal electron flux, inboard divertor')
-      iret = nf_put_att_text(ncid, fl3dtlid, 'units', NCCHAR, 4, 's^-1')
-      iret = nf_put_att_text(ncid, fo3dtlid, 'long_name', NCCHAR, 41, &
-           'poloidal ion flux, upper inboard divertor')
-      iret = nf_put_att_text(ncid, fo3dtlid, 'units', NCCHAR, 4, 's^-1')
-      iret = nf_put_att_text(ncid, fe3dtlid, 'long_name', NCCHAR, 53, &
-           'poloidal electron energy flux, upper inboard divertor')
-      iret = nf_put_att_text(ncid, fe3dtlid, 'units', NCCHAR, 2, 'W ')
-      iret = nf_put_att_text(ncid, fi3dtlid, 'long_name', NCCHAR, 48, &
-           'poloidal ion energy flux, upper inboard divertor')
-      iret = nf_put_att_text(ncid, fi3dtlid, 'units', NCCHAR, 2, 'W ')
-      iret = nf_put_att_text(ncid, ft3dtlid, 'long_name', NCCHAR, 50, &
-           'poloidal total energy flux, upper inboard divertor')
-      iret = nf_put_att_text(ncid, ft3dtlid, 'units', NCCHAR, 2, 'W ')
-      iret = nf_put_att_text(ncid, fc3dtlid, 'long_name', NCCHAR, 41, &
-           'poloidal current, upper inboard divertor')
-      iret = nf_put_att_text(ncid, fc3dtlid, 'units', NCCHAR, 2, 'A ')
+      iret = nf_put_att_text(ncid, ne3dtlid, 'long_name', 40, 'electron density, upper inboard divertor')
+      iret = nf_put_att_text(ncid, ne3dtlid, 'units', 4, 'm^-3')
+      iret = nf_put_att_text(ncid, te3dtlid, 'long_name', 44, 'electron temperature, upper inboard divertor')
+      iret = nf_put_att_text(ncid, te3dtlid, 'units', 2, 'eV')
+      iret = nf_put_att_double(ncid, te3dtlid, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+      iret = nf_put_att_text(ncid, ti3dtlid, 'long_name', 39, 'ion temperature, upper inboard divertor')
+      iret = nf_put_att_text(ncid, ti3dtlid, 'units', 2, 'eV')
+      iret = nf_put_att_double(ncid, ti3dtlid, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+      iret = nf_put_att_text(ncid, tp3dtlid, 'long_name', 41, 'plate temperature, upper inboard divertor')
+      iret = nf_put_att_text(ncid, tp3dtlid, 'units', 2, 'K ')
+      iret = nf_put_att_text(ncid, po3dtlid, 'long_name', 32, 'potential, upper inboard divertor')
+      iret = nf_put_att_text(ncid, po3dtlid, 'units', 2, 'V ')
+      iret = nf_put_att_text(ncid, an3dtlid, 'long_name', 36, 'atom density, upper inboard divertor')
+      iret = nf_put_att_text(ncid, an3dtlid, 'units', 4, 'm^-3')
+      iret = nf_put_att_text(ncid, mn3dtlid, 'long_name', 40, 'molecule density, upper inboard divertor')
+      iret = nf_put_att_text(ncid, mn3dtlid, 'units', 4, 'm^-3')
+      iret = nf_put_att_text(ncid, fn3dtlid, 'long_name', 50, 'poloidal main species flux, upper inboard divertor')
+      iret = nf_put_att_text(ncid, fn3dtlid, 'units', 4, 's^-1')
+      iret = nf_put_att_text(ncid, fl3dtlid, 'long_name', 46, 'poloidal electron flux, inboard divertor')
+      iret = nf_put_att_text(ncid, fl3dtlid, 'units', 4, 's^-1')
+      iret = nf_put_att_text(ncid, fo3dtlid, 'long_name', 41, 'poloidal ion flux, upper inboard divertor')
+      iret = nf_put_att_text(ncid, fo3dtlid, 'units', 4, 's^-1')
+      iret = nf_put_att_text(ncid, fe3dtlid, 'long_name', 53, 'poloidal electron energy flux, upper inboard divertor')
+      iret = nf_put_att_text(ncid, fe3dtlid, 'units', 2, 'W ')
+      iret = nf_put_att_text(ncid, fi3dtlid, 'long_name', 48, 'poloidal ion energy flux, upper inboard divertor')
+      iret = nf_put_att_text(ncid, fi3dtlid, 'units', 2, 'W ')
+      iret = nf_put_att_text(ncid, ft3dtlid, 'long_name', 50, 'poloidal total energy flux, upper inboard divertor')
+      iret = nf_put_att_text(ncid, ft3dtlid, 'units', 2, 'W ')
+      iret = nf_put_att_text(ncid, fc3dtlid, 'long_name', 41, 'poloidal current, upper inboard divertor')
+      iret = nf_put_att_text(ncid, fc3dtlid, 'units', 2, 'A ')
     endif
     ! outboard midplane quantities
-    iret = nf_put_att_text(ncid, ne3daid, 'long_name', NCCHAR, 35, &
-         'electron density, outboard midplane')
-    iret = nf_put_att_text(ncid, ne3daid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, te3daid, 'long_name', NCCHAR, 39, &
-         'electron temperature, outboard midplane')
-    iret = nf_put_att_text(ncid, te3daid, 'units', NCCHAR, 2, 'eV')
-    doubleval(1) = 1.0_R8/ev
-    iret = nf_put_att_double(ncid, te3daid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, ti3daid, 'long_name', NCCHAR, 34, &
-         'ion temperature, outboard midplane')
-    iret = nf_put_att_text(ncid, ti3daid, 'units', NCCHAR, 2, 'eV')
-    doubleval(1) = 1.0_R8/ev
-    iret = nf_put_att_double(ncid, ti3daid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, po3daid, 'long_name', NCCHAR, 28, &
-         'potential, outboard midplane')
-    iret = nf_put_att_text(ncid, po3daid, 'units', NCCHAR, 2, 'V ')
-    iret = nf_put_att_text(ncid, an3daid, 'long_name', NCCHAR, 31, &
-         'atom density, outboard midplane')
-    iret = nf_put_att_text(ncid, an3daid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, mn3daid, 'long_name', NCCHAR, 35, &
-         'molecule density, outboard midplane')
-    iret = nf_put_att_text(ncid, mn3daid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, dn3daid, 'long_name', NCCHAR, 40, &
-         'diffusion coefficient, outboard midplane')
-    iret = nf_put_att_text(ncid, dn3daid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, dp3daid, 'long_name', NCCHAR, 49, &
-         'pressure diffusion coefficient, outboard midplane')
-    iret = nf_put_att_text(ncid, dp3daid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, lh3daid, 'long_name', NCCHAR, 51, &
-         'radial neutral heat flux limiter, outboard midplane')
-    iret = nf_put_att_text(ncid, lh3daid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, ln3daid, 'long_name', NCCHAR, 51, &
-         'radial neutral part flux limiter, outboard midplane')
-    iret = nf_put_att_text(ncid, ln3daid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, ke3daid, 'long_name', NCCHAR, 47, &
-         'electron thermal diffusivity, outboard midplane')
-    iret = nf_put_att_text(ncid, ke3daid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, ki3daid, 'long_name', NCCHAR, 42, &
-         'ion thermal diffusivity, outboard midplane')
-    iret = nf_put_att_text(ncid, ki3daid, 'units', NCCHAR, 8, 'm^2.s^-1')
-    iret = nf_put_att_text(ncid, vx3daid, 'long_name', NCCHAR, 42, &
-         'poloidal pinch velocity, outboard midplane')
-    iret = nf_put_att_text(ncid, vx3daid, 'units', NCCHAR, 6, 'm.s^-1')
-    iret = nf_put_att_text(ncid, vy3daid, 'long_name', NCCHAR, 40, &
-         'radial pinch velocity, outboard midplane')
-    iret = nf_put_att_text(ncid, vy3daid, 'units', NCCHAR, 6, 'm.s^-1')
-    iret = nf_put_att_text(ncid, vs3daid, 'long_name', NCCHAR, 40, &
-         'viscosity coefficient, outboard midplane')
-    iret = nf_put_att_text(ncid, vs3daid, 'units', NCCHAR, 12, 'm.kg^-1.s^-1')
+    iret = nf_put_att_text(ncid, ne3daid, 'long_name', 35, 'electron density, outboard midplane')
+    iret = nf_put_att_text(ncid, ne3daid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, te3daid, 'long_name', 39, 'electron temperature, outboard midplane')
+    iret = nf_put_att_text(ncid, te3daid, 'units', 2, 'eV')
+    iret = nf_put_att_double(ncid, te3daid, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+    iret = nf_put_att_text(ncid, ti3daid, 'long_name', 34, 'ion temperature, outboard midplane')
+    iret = nf_put_att_text(ncid, ti3daid, 'units', 2, 'eV')
+    iret = nf_put_att_double(ncid, ti3daid, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+    iret = nf_put_att_text(ncid, po3daid, 'long_name', 28, 'potential, outboard midplane')
+    iret = nf_put_att_text(ncid, po3daid, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, an3daid, 'long_name', 31, 'atom density, outboard midplane')
+    iret = nf_put_att_text(ncid, an3daid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, mn3daid, 'long_name', 35, 'molecule density, outboard midplane')
+    iret = nf_put_att_text(ncid, mn3daid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, dn3daid, 'long_name', 40, 'diffusion coefficient, outboard midplane')
+    iret = nf_put_att_text(ncid, dn3daid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, dp3daid, 'long_name', 49, 'pressure diffusion coefficient, outboard midplane')
+    iret = nf_put_att_text(ncid, dp3daid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, lh3daid, 'long_name', 51, 'radial neutral heat flux limiter, outboard midplane')
+    iret = nf_put_att_text(ncid, lh3daid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, ln3daid, 'long_name', 51, 'radial neutral part flux limiter, outboard midplane')
+    iret = nf_put_att_text(ncid, ln3daid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, ke3daid, 'long_name', 47, 'electron thermal diffusivity, outboard midplane')
+    iret = nf_put_att_text(ncid, ke3daid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, ki3daid, 'long_name', 42, 'ion thermal diffusivity, outboard midplane')
+    iret = nf_put_att_text(ncid, ki3daid, 'units', 8, 'm^2.s^-1')
+    iret = nf_put_att_text(ncid, vx3daid, 'long_name', 42, 'poloidal pinch velocity, outboard midplane')
+    iret = nf_put_att_text(ncid, vx3daid, 'units', 6, 'm.s^-1')
+    iret = nf_put_att_text(ncid, vy3daid, 'long_name', 40, 'radial pinch velocity, outboard midplane')
+    iret = nf_put_att_text(ncid, vy3daid, 'units', 6, 'm.s^-1')
+    iret = nf_put_att_text(ncid, vs3daid, 'long_name', 40, 'viscosity coefficient, outboard midplane')
+    iret = nf_put_att_text(ncid, vs3daid, 'units', 12, 'm.kg^-1.s^-1')
     ! outboard divertor quantities
-    iret = nf_put_att_text(ncid, ne3drid, 'long_name', NCCHAR, 35, &
-         'electron density, outboard divertor')
-    iret = nf_put_att_text(ncid, ne3drid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, te3drid, 'long_name', NCCHAR, 39, &
-         'electron temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, te3drid, 'units', NCCHAR, 2, 'eV')
-    doubleval(1) = 1.0_R8/ev
-    iret = nf_put_att_double(ncid, te3drid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, ti3drid, 'long_name', NCCHAR, 34, &
-         'ion temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, ti3drid, 'units', NCCHAR, 2, 'eV')
-    doubleval(1) = 1.0_R8/ev
-    iret = nf_put_att_double(ncid, ti3drid, 'scale', NCDOUBLE, 1, doubleval)
-    iret = nf_put_att_text(ncid, tp3drid, 'long_name', NCCHAR, 36, &
-         'plate temperature, outboard divertor')
-    iret = nf_put_att_text(ncid, tp3drid, 'units', NCCHAR, 2, 'K ')
-    iret = nf_put_att_text(ncid, po3drid, 'long_name', NCCHAR, 28, &
-         'potential, outboard divertor')
-    iret = nf_put_att_text(ncid, po3drid, 'units', NCCHAR, 2, 'V ')
-    iret = nf_put_att_text(ncid, an3drid, 'long_name', NCCHAR, 31, &
-         'atom density, outboard divertor')
-    iret = nf_put_att_text(ncid, an3drid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, mn3drid, 'long_name', NCCHAR, 35, &
-         'molecule density, outboard divertor')
-    iret = nf_put_att_text(ncid, mn3drid, 'units', NCCHAR, 4, 'm^-3')
-    iret = nf_put_att_text(ncid, fn3drid, 'long_name', NCCHAR, 45, &
-         'poloidal main species flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fn3drid, 'units', NCCHAR, 4, 's^-1')
-    iret = nf_put_att_text(ncid, fl3drid, 'long_name', NCCHAR, 41, &
-         'poloidal electron flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fl3drid, 'units', NCCHAR, 4, 's^-1')
-    iret = nf_put_att_text(ncid, fo3drid, 'long_name', NCCHAR, 36, &
-         'poloidal ion flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fo3drid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fe3drid, 'long_name', NCCHAR, 48, &
-         'poloidal electron energy flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fe3drid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fi3drid, 'long_name', NCCHAR, 43, &
-         'poloidal ion energy flux, outboard divertor')
-    iret = nf_put_att_text(ncid, fi3drid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, ft3drid, 'long_name', NCCHAR, 45, &
-         'poloidal total energy flux, outboard divertor')
-    iret = nf_put_att_text(ncid, ft3drid, 'units', NCCHAR, 2, 'W ')
-    iret = nf_put_att_text(ncid, fc3drid, 'long_name', NCCHAR, 36, &
-         'poloidal current, outboard divertor')
-    iret = nf_put_att_text(ncid, fc3drid, 'units', NCCHAR, 2, 'A ')
+    iret = nf_put_att_text(ncid, ne3drid, 'long_name', 35, 'electron density, outboard divertor')
+    iret = nf_put_att_text(ncid, ne3drid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, te3drid, 'long_name', 39, 'electron temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, te3drid, 'units', 2, 'eV')
+    iret = nf_put_att_double(ncid, te3drid, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+    iret = nf_put_att_text(ncid, ti3drid, 'long_name', 34, 'ion temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, ti3drid, 'units', 2, 'eV')
+    iret = nf_put_att_double(ncid, ti3drid, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+    iret = nf_put_att_text(ncid, tp3drid, 'long_name', 36, 'plate temperature, outboard divertor')
+    iret = nf_put_att_text(ncid, tp3drid, 'units', 2, 'K ')
+    iret = nf_put_att_text(ncid, po3drid, 'long_name', 28, 'potential, outboard divertor')
+    iret = nf_put_att_text(ncid, po3drid, 'units', 2, 'V ')
+    iret = nf_put_att_text(ncid, an3drid, 'long_name', 31, 'atom density, outboard divertor')
+    iret = nf_put_att_text(ncid, an3drid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, mn3drid, 'long_name', 35, 'molecule density, outboard divertor')
+    iret = nf_put_att_text(ncid, mn3drid, 'units', 4, 'm^-3')
+    iret = nf_put_att_text(ncid, fn3drid, 'long_name', 45, 'poloidal main species flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fn3drid, 'units', 4, 's^-1')
+    iret = nf_put_att_text(ncid, fl3drid, 'long_name', 41, 'poloidal electron flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fl3drid, 'units', 4, 's^-1')
+    iret = nf_put_att_text(ncid, fo3drid, 'long_name', 36, 'poloidal ion flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fo3drid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fe3drid, 'long_name', 48, 'poloidal electron energy flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fe3drid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fi3drid, 'long_name', 43, 'poloidal ion energy flux, outboard divertor')
+    iret = nf_put_att_text(ncid, fi3drid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, ft3drid, 'long_name', 45, 'poloidal total energy flux, outboard divertor')
+    iret = nf_put_att_text(ncid, ft3drid, 'units', 2, 'W ')
+    iret = nf_put_att_text(ncid, fc3drid, 'long_name', 36, 'poloidal current, outboard divertor')
+    iret = nf_put_att_text(ncid, fc3drid, 'units', 2, 'A ')
     ! upper outboard divertor quantities
     if(nytr.gt.0) then
-      iret = nf_put_att_text(ncid, ne3dtrid, 'long_name', NCCHAR, 41, &
-           'electron density, upper outboard divertor')
-      iret = nf_put_att_text(ncid, ne3dtrid, 'units', NCCHAR, 4, 'm^-3')
-      iret = nf_put_att_text(ncid, te3dtrid, 'long_name', NCCHAR, 45, &
-           'electron temperature, upper outboard divertor')
-      iret = nf_put_att_text(ncid, te3dtrid, 'units', NCCHAR, 2, 'eV')
-      doubleval(1) = 1.0_R8/ev
-      iret = nf_put_att_double(ncid, te3dtrid, 'scale', NCDOUBLE, 1, doubleval)
-      iret = nf_put_att_text(ncid, ti3dtrid, 'long_name', NCCHAR, 40, &
-           'ion temperature, upper outboard divertor')
-      iret = nf_put_att_text(ncid, ti3dtrid, 'units', NCCHAR, 2, 'eV')
-      doubleval(1) = 1.0_R8/ev
-      iret = nf_put_att_double(ncid, ti3dtrid, 'scale', NCDOUBLE, 1, doubleval)
-      iret = nf_put_att_text(ncid, tp3dtrid, 'long_name', NCCHAR, 42, &
-           'plate temperature, upper outboard divertor')
-      iret = nf_put_att_text(ncid, tp3dtrid, 'units', NCCHAR, 2, 'K ')
-      iret = nf_put_att_text(ncid, po3dtrid, 'long_name', NCCHAR, 34, &
-           'potential, upper outboard divertor')
-      iret = nf_put_att_text(ncid, po3dtrid, 'units', NCCHAR, 2, 'V ')
-      iret = nf_put_att_text(ncid, an3dtrid, 'long_name', NCCHAR, 37, &
-           'atom density, upper outboard divertor')
-      iret = nf_put_att_text(ncid, an3dtrid, 'units', NCCHAR, 4, 'm^-3')
-      iret = nf_put_att_text(ncid, mn3dtrid, 'long_name', NCCHAR, 41, &
-           'molecule density, upper outboard divertor')
-      iret = nf_put_att_text(ncid, mn3dtrid, 'units', NCCHAR, 4, 'm^-3')
-      iret = nf_put_att_text(ncid, fn3dtrid, 'long_name', NCCHAR, 51, &
-           'poloidal main species flux, upper outboard divertor')
-      iret = nf_put_att_text(ncid, fn3dtrid, 'units', NCCHAR, 4, 's^-1')
-      doubleval(1) = -1.0_R8
-      iret = nf_put_att_double(ncid, fn3dtrid, 'scale', NCDOUBLE, 1, doubleval)
-      iret = nf_put_att_text(ncid, fl3dtrid, 'long_name', NCCHAR, 47, &
-           'poloidal electron flux, upper outboard divertor')
-      iret = nf_put_att_text(ncid, fl3dtrid, 'units', NCCHAR, 4, 's^-1')
-      doubleval(1) = -1.0_R8
-      iret = nf_put_att_double(ncid, fl3dtrid, 'scale', NCDOUBLE, 1, doubleval)
-      iret = nf_put_att_text(ncid, fo3dtrid, 'long_name', NCCHAR, 42, &
-           'poloidal ion flux, upper outboard divertor')
-      iret = nf_put_att_text(ncid, fo3dtrid, 'units', NCCHAR, 2, 'W ')
-      doubleval(1) = -1.0_R8
-      iret = nf_put_att_double(ncid, fo3dtrid, 'scale', NCDOUBLE, 1, doubleval)
-      iret = nf_put_att_text(ncid, fe3dtrid, 'long_name', NCCHAR, 54, &
-           'poloidal electron energy flux, upper outboard divertor')
-      iret = nf_put_att_text(ncid, fe3dtrid, 'units', NCCHAR, 2, 'W ')
-      doubleval(1) = -1.0_R8
-      iret = nf_put_att_double(ncid, fe3dtrid, 'scale', NCDOUBLE, 1, doubleval)
-      iret = nf_put_att_text(ncid, fi3dtrid, 'long_name', NCCHAR, 49, &
-           'poloidal ion energy flux, upper outboard divertor')
-      iret = nf_put_att_text(ncid, fi3dtrid, 'units', NCCHAR, 2, 'W ')
-      doubleval(1) = -1.0_R8
-      iret = nf_put_att_double(ncid, fi3dtrid, 'scale', NCDOUBLE, 1, doubleval)
-      iret = nf_put_att_text(ncid, ft3dtrid, 'long_name', NCCHAR, 51, &
-           'poloidal total energy flux, upper outboard divertor')
-      iret = nf_put_att_text(ncid, ft3dtrid, 'units', NCCHAR, 2, 'W ')
-      doubleval(1) = -1.0_R8
-      iret = nf_put_att_double(ncid, ft3dtrid, 'scale', NCDOUBLE, 1, doubleval)
-      iret = nf_put_att_text(ncid, fc3dtrid, 'long_name', NCCHAR, 42, &
-           'poloidal current, upper outboard divertor')
-      iret = nf_put_att_text(ncid, fc3dtrid, 'units', NCCHAR, 2, 'A ')
-      doubleval(1) = -1.0_R8
-      iret = nf_put_att_double(ncid, fc3dtrid, 'scale', NCDOUBLE, 1, doubleval)
+      iret = nf_put_att_text(ncid, ne3dtrid, 'long_name', 41, 'electron density, upper outboard divertor')
+      iret = nf_put_att_text(ncid, ne3dtrid, 'units', 4, 'm^-3')
+      iret = nf_put_att_text(ncid, te3dtrid, 'long_name', 45, 'electron temperature, upper outboard divertor')
+      iret = nf_put_att_text(ncid, te3dtrid, 'units', 2, 'eV')
+      iret = nf_put_att_double(ncid, te3dtrid, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+      iret = nf_put_att_text(ncid, ti3dtrid, 'long_name', 40, 'ion temperature, upper outboard divertor')
+      iret = nf_put_att_text(ncid, ti3dtrid, 'units', 2, 'eV')
+      iret = nf_put_att_double(ncid, ti3dtrid, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+      iret = nf_put_att_text(ncid, tp3dtrid, 'long_name', 42, 'plate temperature, upper outboard divertor')
+      iret = nf_put_att_text(ncid, tp3dtrid, 'units', 2, 'K ')
+      iret = nf_put_att_text(ncid, po3dtrid, 'long_name', 34, 'potential, upper outboard divertor')
+      iret = nf_put_att_text(ncid, po3dtrid, 'units', 2, 'V ')
+      iret = nf_put_att_text(ncid, an3dtrid, 'long_name', 37, 'atom density, upper outboard divertor')
+      iret = nf_put_att_text(ncid, an3dtrid, 'units', 4, 'm^-3')
+      iret = nf_put_att_text(ncid, mn3dtrid, 'long_name', 41, 'molecule density, upper outboard divertor')
+      iret = nf_put_att_text(ncid, mn3dtrid, 'units', 4, 'm^-3')
+      iret = nf_put_att_text(ncid, fn3dtrid, 'long_name', 51, 'poloidal main species flux, upper outboard divertor')
+      iret = nf_put_att_text(ncid, fn3dtrid, 'units', 4, 's^-1')
+      iret = nf_put_att_double(ncid, fn3dtrid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
+      iret = nf_put_att_text(ncid, fl3dtrid, 'long_name', 47, 'poloidal electron flux, upper outboard divertor')
+      iret = nf_put_att_text(ncid, fl3dtrid, 'units', 4, 's^-1')
+      iret = nf_put_att_double(ncid, fl3dtrid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
+      iret = nf_put_att_text(ncid, fo3dtrid, 'long_name', 42, 'poloidal ion flux, upper outboard divertor')
+      iret = nf_put_att_text(ncid, fo3dtrid, 'units', 2, 'W ')
+      iret = nf_put_att_double(ncid, fo3dtrid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
+      iret = nf_put_att_text(ncid, fe3dtrid, 'long_name', 54, 'poloidal electron energy flux, upper outboard divertor')
+      iret = nf_put_att_text(ncid, fe3dtrid, 'units', 2, 'W ')
+      iret = nf_put_att_double(ncid, fe3dtrid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
+      iret = nf_put_att_text(ncid, fi3dtrid, 'long_name', 49, 'poloidal ion energy flux, upper outboard divertor')
+      iret = nf_put_att_text(ncid, fi3dtrid, 'units', 2, 'W ')
+      iret = nf_put_att_double(ncid, fi3dtrid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
+      iret = nf_put_att_text(ncid, ft3dtrid, 'long_name', 51, 'poloidal total energy flux, upper outboard divertor')
+      iret = nf_put_att_text(ncid, ft3dtrid, 'units', 2, 'W ')
+      iret = nf_put_att_double(ncid, ft3dtrid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
+      iret = nf_put_att_text(ncid, fc3dtrid, 'long_name', 42, 'poloidal current, upper outboard divertor')
+      iret = nf_put_att_text(ncid, fc3dtrid, 'units', 2, 'A ')
+      iret = nf_put_att_double(ncid, fc3dtrid, 'scale', NCDOUBLE, 1, (/-1.0_R8/))
     endif
 
     ! leave define mode
