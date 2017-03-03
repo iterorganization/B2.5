@@ -168,6 +168,7 @@ VPATH=${VHEAD}${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/docu
 FPATH:=${VPATH}
 VPATH += :${SRCDIR}/ids
 FFPATH += :${SRCDIR}/ids
+FFPATH += :${SRCDIR}/modules
 
 MODLIST  =
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
@@ -179,7 +180,8 @@ endif
 ifdef UAL_DIR
 MODLIST += ${SRCDIR}/ids/*.F90
 endif
-MODLIST += ${SRCDIR}/modules/*.F 
+MODLIST += ${SRCDIR}/modules/*.F
+
 ifeq ($(shell [ -d ${SOLPS4} ] && echo yes || echo no ),yes)
 S4LIST = ${SOLPS4}/*.F
 endif
