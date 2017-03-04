@@ -7278,9 +7278,9 @@ c-dpc still in testing phase
             write(6,'(1p,a,8(e10.3,a))')
      .       ' [(',x1,',',y1,');(',x2,',',y2,');(',
      .             x3,',',y3,');(',x4,',',y4,')] : '
-            write(hlp_frm,'(a,i2,a)')
-     .       '(1p,',nedim(2,iewrk),'(1x,e10.3))'
-            write(6,hlp_frm) eavg(0:nedim(2,iewrk)-1)
+            do is = 0, nedim(2,iewrk)-1
+              write(6,'(a,1p,1x,e10.3)') textewk(is,iewrk),eavg(is)
+            end do
           else
             write(6,*) 'No triangle centroids found in chosen region!'
           end if
