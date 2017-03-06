@@ -126,10 +126,7 @@
               smbgp(ix,iy,2) = 0.0_R8
               smbgp(ix,iy,3) = 0.0_R8
               if (balance_netcdf.ne.0) then !djm Jan2017
-                b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
-     &           (vol(ix,iy)/hx(ix,iy))*
-     &           bb(ix,iy,0)/bb(ix,iy,3)*
-     &           (wrk3(ix,iy)+wrk4(ix,iy))
+                b2sigp_pstat0to3(ix,iy,0,isb) = 0.0_R8
                 b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
                 b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
                 b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
@@ -181,6 +178,20 @@
                 b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
                 b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
               endif
+            endif
+!     djm Mar2017 NB - THE FOLLOWING DOES NOT GIVE EXACT BALANCE! FOR EXACT PRESSURE BALANCE IN
+!                      THIS REGION, USE B2SIGP_STYLE = 1
+            if((leftix(ix,iy).eq.-1).and.(balance_netcdf.ne.0)) then
+               write(*,*) 
+     &          'warning, tot. press. balance will not be exact at ix=',
+     &          ix,',iy=',iy
+              b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
+     &         (vol(ix,iy)/hx(ix,iy))*
+     &         bb(ix,iy,0)/bb(ix,iy,3)*
+     &         (wrk3(ix,iy)+wrk4(ix,iy))
+              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
             endif
           enddo
         enddo

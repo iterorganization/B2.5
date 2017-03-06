@@ -20,8 +20,13 @@
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
      2          b2stbr_sne
       use b2mod_balance !djm Jan2017
-     1 , only : b2stbr_sna0to1,b2stbr_smo0to3,b2stbr_she0to3,
-     2          b2stbr_shi0to3,balance_netcdf
+     & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
+     &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
+     &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
+     &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
+     &          b2stbr_first_flight_sna0to1,
+     &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
+     &          balance_netcdf
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
@@ -59,6 +64,11 @@
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
+*   ..local variables
+      real (kind=R8) :: snatmp(-1:nx,-1:ny,0:1,0:ns-1), !djm Mar2017
+     &                  smotmp(-1:nx,-1:ny,0:1,0:ns-1),
+     &                  shetmp(-1:nx,-1:ny,0:3),
+     &                  shitmp(-1:nx,-1:ny,0:3)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -423,6 +433,13 @@ c   --> better solution wanted here..
        endif
        if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
         if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
+        if (balance_netcdf.ne.0) then
+          !djm Mar2017 save sources before hand
+          snatmp=sna0
+          smotmp=smo0
+          shetmp=she0
+          shitmp=shi0
+        endif
         call b2stbr_phys (nx, ny, ns, nscx, iscx, dtim, BoRiS,
      &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
@@ -436,8 +453,22 @@ c   --> better solution wanted here..
      1   sput_mixed_alpha, sput_mixed_beta,
      2   new_sputter_namelist, shi0_ff, f_redep,
      3   potential_at_guard_cell, recycled_neutrals_contr)
+        if (balance_netcdf.ne.0) then
+          !djm Mar2017 store source contributions
+          b2stbr_phys_sna0to1=sna0-snatmp
+          b2stbr_phys_smo0to3=smo0-smotmp
+          b2stbr_phys_she0to3=she0-shetmp
+          b2stbr_phys_shi0to3=shi0-shitmp
+        endif
        else
         if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
+        if (balance_netcdf.ne.0) then
+          !djm Mar2017 save sources before hand
+          snatmp=sna0
+          smotmp=smo0
+          shetmp=she0
+          shitmp=shi0
+        endif
         call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
      &   vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
@@ -451,10 +482,23 @@ c   --> better solution wanted here..
      &   reflection_on, sputter_energy_on, main_call,
      &   sput_chem_cutoff_alpha, sput_chem_cutoff_beta, shi0_ff,
      &   f_redep, potential_at_guard_cell, recycled_neutrals_contr)
+        if (balance_netcdf.ne.0) then
+          !djm Mar2017 store source contributions
+          b2stbr_bas_sna0to1=sna0-snatmp
+          b2stbr_bas_smo0to3=smo0-smotmp
+          b2stbr_bas_she0to3=she0-shetmp
+          b2stbr_bas_shi0to3=shi0-shitmp
+        endif
        endif
       endif
 
       if(first_flight.ne.0) then
+        if (balance_netcdf.ne.0) then
+          !djm Mar2017 save sources before hand
+          snatmp=sna0
+          shetmp=she0
+          shitmp=shi0
+        endif
         call cpu_time(start_time)
         if (output.ge.1) then
           open(88,file='start')
@@ -559,6 +603,12 @@ c   --> better solution wanted here..
         call cpu_time(end_time)
         if(main_call)
      >   write(*,*) end_time-start_time,' cpu-seconds'
+        if (balance_netcdf.ne.0) then
+          !djm Mar2017 store source contributions
+          b2stbr_first_flight_sna0to1=sna0-snatmp
+          b2stbr_first_flight_she0to3=she0-shetmp
+          b2stbr_first_flight_shi0to3=shi0-shitmp
+        endif
       endif
 
       if(main_call.and.out_tfiles.ne.0) then                        ! xpb  !srv 07.04.09
@@ -685,14 +735,6 @@ cwdk remove this if-test, to allow runs without Eirene if code is compiled with 
       b2stbr_sne(-1:nx,-1:ny)=
      1 sne0(-1:nx,-1:ny,0)+
      2 sne0(-1:nx,-1:ny,1)*ne(-1:nx,-1:ny)
-
-cdjm Jan2017 Keep linearised sources for balance
-      if (balance_netcdf.ne.0) then
-        b2stbr_sna0to1 = sna0
-        b2stbr_smo0to3 = smo0
-        b2stbr_she0to3 = she0
-        b2stbr_shi0to3 = shi0
-      endif
 
       if(main_call) then
         do ibnd = 1, nbnd

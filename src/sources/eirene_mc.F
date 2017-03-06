@@ -2370,16 +2370,16 @@ cdjm Jan2017 Calculate linearised components of source
                       if (t0.ge.0.0_R8) then
                         eirene_mc_papl_sna0to1(ix,iy,0,is,istrai)=
      &                    eirene_mc_papl_sna0to1(ix,iy,0,is,istrai)+
-     &                    t0_a*(1+rf0)
+     &                    t0_a*(1.0_R8+rf0)
                         eirene_mc_pmpl_sna0to1(ix,iy,0,is,istrai)=
      &                    eirene_mc_pmpl_sna0to1(ix,iy,0,is,istrai)+
-     &                    t0_m*(1+rf0)
+     &                    t0_m*(1.0_R8+rf0)
                         eirene_mc_pipl_sna0to1(ix,iy,0,is,istrai)=
      &                    eirene_mc_pipl_sna0to1(ix,iy,0,is,istrai)+
-     &                    t0_i*(1+rf0)
+     &                    t0_i*(1.0_R8+rf0)
                         eirene_mc_pppl_sna0to1(ix,iy,0,is,istrai)=
      &                    eirene_mc_pppl_sna0to1(ix,iy,0,is,istrai)+
-     &                    t0_p*(1+rf0)
+     &                    t0_p*(1.0_R8+rf0)
                         eirene_mc_papl_sna0to1(ix,iy,1,is,istrai)=
      &                    eirene_mc_papl_sna0to1(ix,iy,1,is,istrai)-
      &                    rf0*t0_a/na(ix,iy,is)
@@ -2392,6 +2392,12 @@ cdjm Jan2017 Calculate linearised components of source
                         eirene_mc_pppl_sna0to1(ix,iy,1,is,istrai)=
      &                    eirene_mc_pppl_sna0to1(ix,iy,1,is,istrai)-
      &                    rf0*t0_p/na(ix,iy,is)
+                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
+                      write(*,*) 'sna0',t0+rf0*abs(t0),
+     &                           (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)
+                      write(*,*) 'sna1',-rf0*abs(t0)/na(ix,iy,is),
+     &                          -(t0_a+t0_m+t0_i+t0_p)*rf0/na(ix,iy,is)
+                    endif
                       else
                         eirene_mc_papl_sna0to1(ix,iy,0,is,istrai)=
      &                    eirene_mc_papl_sna0to1(ix,iy,0,is,istrai)-
@@ -2407,16 +2413,23 @@ cdjm Jan2017 Calculate linearised components of source
      &                    rf0*t0_p
                         eirene_mc_papl_sna0to1(ix,iy,1,is,istrai)=
      &                    eirene_mc_papl_sna0to1(ix,iy,1,is,istrai)+
-     &                    (1+rf0)*t0_a/na(ix,iy,is)
+     &                    (1.0_R8+rf0)*t0_a/na(ix,iy,is)
                         eirene_mc_pmpl_sna0to1(ix,iy,1,is,istrai)=
      &                    eirene_mc_pmpl_sna0to1(ix,iy,1,is,istrai)+
-     &                    (1+rf0)*t0_m/na(ix,iy,is)
+     &                    (1.0_R8+rf0)*t0_m/na(ix,iy,is)
                         eirene_mc_pipl_sna0to1(ix,iy,1,is,istrai)=
      &                    eirene_mc_pipl_sna0to1(ix,iy,1,is,istrai)+
-     &                    (1+rf0)*t0_i/na(ix,iy,is)
+     &                    (1.0_R8+rf0)*t0_i/na(ix,iy,is)
                         eirene_mc_pppl_sna0to1(ix,iy,1,is,istrai)=
      &                    eirene_mc_pppl_sna0to1(ix,iy,1,is,istrai)+
-     &                    (1+rf0)*t0_p/na(ix,iy,is)
+     &                    (1.0_R8+rf0)*t0_p/na(ix,iy,is)
+                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
+                      write(*,*) 'sna0',rf0*abs(t0),
+     &                           -(t0_a+t0_m+t0_i+t0_p)*rf0
+                      write(*,*) 'sna1',t0/na(ix,iy,is)-
+     &                                  rf0*abs(t0)/na(ix,iy,is),
+     &                   (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)/na(ix,iy,is)
+                    endif
                       endif
                     endif
                   elseif(linearisation.eq.0) then !}{
@@ -2517,16 +2530,16 @@ cdjm Jan2017 Calculate linearised components of source
                       if (t0.ge.0.0_R8) then
                         eirene_mc_mapl_smo0to3(ix,iy,0,is,istrai)=
      &                   eirene_mc_mapl_smo0to3(ix,iy,0,is,istrai)+
-     &                   (1+rf0*ua(ix,iy,is)/vthe)*t0_a
+     &                   (1.0_R8+rf0*ua(ix,iy,is)/vthe)*t0_a
                         eirene_mc_mmpl_smo0to3(ix,iy,0,is,istrai)=
      &                   eirene_mc_mmpl_smo0to3(ix,iy,0,is,istrai)+
-     &                   (1+rf0*ua(ix,iy,is)/vthe)*t0_m
+     &                   (1.0_R8+rf0*ua(ix,iy,is)/vthe)*t0_m
                         eirene_mc_mipl_smo0to3(ix,iy,0,is,istrai)=
      &                   eirene_mc_mipl_smo0to3(ix,iy,0,is,istrai)+
-     &                   (1+rf0*ua(ix,iy,is)/vthe)*t0_i
+     &                   (1.0_R8+rf0*ua(ix,iy,is)/vthe)*t0_i
                         eirene_mc_cppv_smo0to3(ix,iy,0,is,istrai)=
      &                   eirene_mc_cppv_smo0to3(ix,iy,0,is,istrai)+
-     &                   (1+rf0*ua(ix,iy,is)/vthe)*t0_p
+     &                   (1.0_R8+rf0*ua(ix,iy,is)/vthe)*t0_p
                         eirene_mc_mapl_smo0to3(ix,iy,1,is,istrai)=
      &                   eirene_mc_mapl_smo0to3(ix,iy,1,is,istrai)-
      &                   rf0*t0_a/vthe
@@ -2539,19 +2552,26 @@ cdjm Jan2017 Calculate linearised components of source
                         eirene_mc_cppv_smo0to3(ix,iy,1,is,istrai)=
      &                   eirene_mc_cppv_smo0to3(ix,iy,1,is,istrai)-
      &                   rf0*t0_p/vthe
+                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
+                      write(*,*) 'smo0',
+     &                           t0+RF0*ABS(t0)*UA(IX,IY,IS)/VTHE,
+     &              (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0*ua(ix,iy,is)/vthe)
+                      write(*,*) 'smo1',-RF0*ABS(t0)/VTHE,
+     &                          -(t0_a+t0_m+t0_i+t0_p)*rf0/vthe
+                    endif
                       else
                         eirene_mc_mapl_smo0to3(ix,iy,0,is,istrai)=
      &                   eirene_mc_mapl_smo0to3(ix,iy,0,is,istrai)+
-     &                   (1-rf0*ua(ix,iy,is)/vthe)*t0_a
+     &                   (1.0_R8-rf0*ua(ix,iy,is)/vthe)*t0_a
                         eirene_mc_mmpl_smo0to3(ix,iy,0,is,istrai)=
      &                   eirene_mc_mmpl_smo0to3(ix,iy,0,is,istrai)+
-     &                   (1-rf0*ua(ix,iy,is)/vthe)*t0_m
+     &                   (1.0_R8-rf0*ua(ix,iy,is)/vthe)*t0_m
                         eirene_mc_mipl_smo0to3(ix,iy,0,is,istrai)=
      &                   eirene_mc_mipl_smo0to3(ix,iy,0,is,istrai)+
-     &                   (1-rf0*ua(ix,iy,is)/vthe)*t0_i
+     &                   (1.0_R8-rf0*ua(ix,iy,is)/vthe)*t0_i
                         eirene_mc_cppv_smo0to3(ix,iy,0,is,istrai)=
      &                   eirene_mc_cppv_smo0to3(ix,iy,0,is,istrai)+
-     &                   (1-rf0*ua(ix,iy,is)/vthe)*t0_p
+     &                   (1.0_R8-rf0*ua(ix,iy,is)/vthe)*t0_p
                         eirene_mc_mapl_smo0to3(ix,iy,1,is,istrai)=
      &                   eirene_mc_mapl_smo0to3(ix,iy,1,is,istrai)+
      &                   rf0*t0_a/vthe
@@ -2564,6 +2584,13 @@ cdjm Jan2017 Calculate linearised components of source
                         eirene_mc_cppv_smo0to3(ix,iy,1,is,istrai)=
      &                   eirene_mc_cppv_smo0to3(ix,iy,1,is,istrai)+
      &                   rf0*t0_p/vthe
+                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
+                      write(*,*) 'smo0',
+     &                           t0+RF0*ABS(t0)*UA(IX,IY,IS)/VTHE,
+     &              (t0_a+t0_m+t0_i+t0_p)*(1.0_R8-rf0*ua(ix,iy,is)/vthe)
+                      write(*,*) 'smo1',-RF0*ABS(t0)/VTHE,
+     &                          (t0_a+t0_m+t0_i+t0_p)*rf0/vthe
+                    endif
                       endif
                     endif
                   elseif (linearisation.eq.0) then !}{
@@ -2647,16 +2674,16 @@ cdjm Jan2017 Calculate linearised components of source
                   if (t0.ge.0.0_R8) then
                     eirene_mc_eael_she0to3(ix,iy,0,istrai)=
      &               eirene_mc_eael_she0to3(ix,iy,0,istrai)+
-     &               (1+rf0)*t0_a
+     &               (1.0_R8+rf0)*t0_a
                     eirene_mc_emel_she0to3(ix,iy,0,istrai)=
      &               eirene_mc_emel_she0to3(ix,iy,0,istrai)+
-     &               (1+rf0)*t0_m
+     &               (1.0_R8+rf0)*t0_m
                     eirene_mc_eiel_she0to3(ix,iy,0,istrai)=
      &               eirene_mc_eiel_she0to3(ix,iy,0,istrai)+
-     &               (1+rf0)*t0_i
+     &               (1.0_R8+rf0)*t0_i
                     eirene_mc_epel_she0to3(ix,iy,0,istrai)=
      &               eirene_mc_epel_she0to3(ix,iy,0,istrai)+
-     &               (1+rf0)*t0_p
+     &               (1.0_R8+rf0)*t0_p
                     eirene_mc_eael_she0to3(ix,iy,1,istrai)=
      &               eirene_mc_eael_she0to3(ix,iy,1,istrai)-
      &               t0_a*rf0/te(ix,iy)
@@ -2669,6 +2696,13 @@ cdjm Jan2017 Calculate linearised components of source
                     eirene_mc_epel_she0to3(ix,iy,1,istrai)=
      &               eirene_mc_epel_she0to3(ix,iy,1,istrai)-
      &               t0_p*rf0/te(ix,iy)
+                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
+                      write(*,*) 'she0',max(0.0_R8,t0)+abs(t0)*rf0,
+     &              (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)
+                      write(*,*) 'she1',
+     &                   (min(0.0_R8,t0)-abs(t0)*rf0)/te(ix,iy),
+     &                         -(t0_a+t0_m+t0_i+t0_p)*rf0/te(ix,iy)
+                    endif
                   else
                     eirene_mc_eael_she0to3(ix,iy,0,istrai)=
      &               eirene_mc_eael_she0to3(ix,iy,0,istrai)-
@@ -2684,16 +2718,23 @@ cdjm Jan2017 Calculate linearised components of source
      &               rf0*t0_p
                     eirene_mc_eael_she0to3(ix,iy,1,istrai)=
      &               eirene_mc_eael_she0to3(ix,iy,1,istrai)+
-     &               (1+rf0)*t0_a/te(ix,iy)
+     &               (1.0_R8+rf0)*t0_a/te(ix,iy)
                     eirene_mc_emel_she0to3(ix,iy,1,istrai)=
      &               eirene_mc_emel_she0to3(ix,iy,1,istrai)+
-     &               (1+rf0)*t0_m/te(ix,iy)
+     &               (1.0_R8+rf0)*t0_m/te(ix,iy)
                     eirene_mc_eiel_she0to3(ix,iy,1,istrai)=
      &               eirene_mc_eiel_she0to3(ix,iy,1,istrai)+
-     &               (1+rf0)*t0_i/te(ix,iy)
+     &               (1.0_R8+rf0)*t0_i/te(ix,iy)
                     eirene_mc_epel_she0to3(ix,iy,1,istrai)=
      &               eirene_mc_epel_she0to3(ix,iy,1,istrai)+
-     &               (1+rf0)*t0_p/te(ix,iy)
+     &               (1.0_R8+rf0)*t0_p/te(ix,iy)
+                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
+                      write(*,*) 'she0',max(0.0_R8,t0)+abs(t0)*rf0,
+     &              -(t0_a+t0_m+t0_i+t0_p)*rf0
+                      write(*,*) 'she1',
+     &                   (min(0.0_R8,t0)-abs(t0)*rf0)/te(ix,iy),
+     &                    (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)/te(ix,iy)
+                    endif
                   endif
                 endif
               elseif (linearisation.eq.0) then !}{
@@ -2761,7 +2802,7 @@ c     1         recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)
                 t0_i=sei_av_eipl(ix+1,iy+1,istrai)*tflux(istrai)*
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
-                t0_m=sei_av_eppl(ix+1,iy+1,istrai)*tflux(istrai)*
+                t0_p=sei_av_eppl(ix+1,iy+1,istrai)*tflux(istrai)*
      1           recyc_hlp*flux_scale(istrai)*sclstra(0,istrai)/
      1           dble(ih_end)
               endif
@@ -2934,22 +2975,22 @@ cxpb 12oct2016 multiply na term by fractional stratum weight to avoid double-cou
      .                      (dtim*dtei(region(ix,iy,0)))*
      .                    0.5_R8*mp*am(is)*dua**2
                       if (balance_netcdf.ne.0) then
-                        t4_apl=(na(ix,iy,is)* !djm Jan2017
+                        t4_apl=(na(ix,iy,is)*vol(ix,iy)* !djm Jan2017
      .                      (t2_apl/smo_tot(ix+1,iy+1,ifl))+
      .                      t3_apl*dtim*dtco(is,region(ix,iy,0)))/
      .                        (dtim*dtei(region(ix,iy,0)))*
      .                      0.5_R8*mp*am(is)*dua**2
-                        t4_mpl=(na(ix,iy,is)*
+                        t4_mpl=(na(ix,iy,is)*vol(ix,iy)*
      .                      (t2_mpl/smo_tot(ix+1,iy+1,ifl))+
      .                      t3_mpl*dtim*dtco(is,region(ix,iy,0)))/
      .                        (dtim*dtei(region(ix,iy,0)))*
      .                      0.5_R8*mp*am(is)*dua**2
-                        t4_ipl=(na(ix,iy,is)*
+                        t4_ipl=(na(ix,iy,is)*vol(ix,iy)*
      .                      (t2_ipl/smo_tot(ix+1,iy+1,ifl))+
      .                      t3_ipl*dtim*dtco(is,region(ix,iy,0)))/
      .                        (dtim*dtei(region(ix,iy,0)))*
      .                      0.5_R8*mp*am(is)*dua**2
-                        t4_ppl=(na(ix,iy,is)*
+                        t4_ppl=(na(ix,iy,is)*vol(ix,iy)*
      .                      (t2_ppl/smo_tot(ix+1,iy+1,ifl))+
      .                      t3_ppl*dtim*dtco(is,region(ix,iy,0)))/
      .                        (dtim*dtei(region(ix,iy,0)))*
@@ -2992,16 +3033,16 @@ cdjm Jan2017 Calculate linearised components of source
                   if (t0.ge.0.0_R8) then
                     eirene_mc_eapl_shi0to3(ix,iy,0,istrai)=
      &               eirene_mc_eapl_shi0to3(ix,iy,0,istrai)+
-     &               (1+rf0)*t0_a
+     &               (1.0_R8+rf0)*t0_a
                     eirene_mc_empl_shi0to3(ix,iy,0,istrai)=
      &               eirene_mc_empl_shi0to3(ix,iy,0,istrai)+
-     &               (1+rf0)*t0_m
+     &               (1.0_R8+rf0)*t0_m
                     eirene_mc_eipl_shi0to3(ix,iy,0,istrai)=
      &               eirene_mc_eipl_shi0to3(ix,iy,0,istrai)+
-     &               (1+rf0)*t0_i
+     &               (1.0_R8+rf0)*t0_i
                     eirene_mc_eppl_shi0to3(ix,iy,0,istrai)=
      &               eirene_mc_eppl_shi0to3(ix,iy,0,istrai)+
-     &               (1+rf0)*t0_p
+     &               (1.0_R8+rf0)*t0_p
                     eirene_mc_eapl_shi0to3(ix,iy,1,istrai)=
      &               eirene_mc_eapl_shi0to3(ix,iy,1,istrai)-
      &               t0_a*rf0/ti(ix,iy)
@@ -3014,6 +3055,13 @@ cdjm Jan2017 Calculate linearised components of source
                     eirene_mc_eppl_shi0to3(ix,iy,1,istrai)=
      &               eirene_mc_eppl_shi0to3(ix,iy,1,istrai)-
      &               t0_p*rf0/ti(ix,iy)
+                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
+                      write(*,*) 'shi0',max(0.0_R8,t0)+abs(t0)*rf0,
+     &              (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)
+                      write(*,*) 'shi1',
+     &                   (min(0.0_R8,t0)-abs(t0)*rf0)/ti(ix,iy),
+     &                         -(t0_a+t0_m+t0_i+t0_p)*rf0/ti(ix,iy)
+                    endif
                   else
                     eirene_mc_eapl_shi0to3(ix,iy,0,istrai)=
      &               eirene_mc_eapl_shi0to3(ix,iy,0,istrai)-
@@ -3029,16 +3077,24 @@ cdjm Jan2017 Calculate linearised components of source
      &               rf0*t0_p
                     eirene_mc_eapl_shi0to3(ix,iy,1,istrai)=
      &               eirene_mc_eapl_shi0to3(ix,iy,1,istrai)+
-     &               (1+rf0)*t0_a/ti(ix,iy)
+     &               (1.0_R8+rf0)*t0_a/ti(ix,iy)
                     eirene_mc_empl_shi0to3(ix,iy,1,istrai)=
      &               eirene_mc_empl_shi0to3(ix,iy,1,istrai)+
-     &               (1+rf0)*t0_m/ti(ix,iy)
+     &               (1.0_R8+rf0)*t0_m/ti(ix,iy)
                     eirene_mc_eipl_shi0to3(ix,iy,1,istrai)=
      &               eirene_mc_eipl_shi0to3(ix,iy,1,istrai)+
-     &               (1+rf0)*t0_i/ti(ix,iy)
+     &               (1.0_R8+rf0)*t0_i/ti(ix,iy)
                     eirene_mc_eppl_shi0to3(ix,iy,1,istrai)=
      &               eirene_mc_eppl_shi0to3(ix,iy,1,istrai)+
-     &               (1+rf0)*t0_p/ti(ix,iy)
+     &               (1.0_R8+rf0)*t0_p/ti(ix,iy)
+                    if ((ix.eq.90).and.(iy.eq.20)) then !DJM DEBUG
+                      write(*,*) 'shi0',max(0.0_R8,t0)+abs(t0)*rf0,
+     &              -(t0_a+t0_m+t0_i+t0_p)*rf0
+                      write(*,*) 'shi1',
+     &                   (min(0.0_R8,t0)-abs(t0)*rf0)/ti(ix,iy),
+     &                    (t0_a+t0_m+t0_i+t0_p)*(1.0_R8+rf0)/ti(ix,iy)
+                    endif
+
                   endif
                 endif
               elseif (linearisation.eq.0) then !}{
