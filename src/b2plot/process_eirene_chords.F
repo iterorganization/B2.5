@@ -137,11 +137,6 @@ c
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       implicit none
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
-#     include <netcdf.inc>
-#endif
-#endif
 
       character*(*) filename
 #ifdef B25_EIRENE
@@ -163,15 +158,6 @@ c
       integer indchd(maxchords+1),indit(maxcompile)
       real(kind=R8) ::
      * indscl(maxcompile)
-#ifndef NO_CDF
-#ifdef CDF_MOVIE
-      character*5 rw
-      integer ncid,imap(maxvdims),iret
-      real (kind=R8) ::
-     *   htime,dumarr(1),tstepn(1)
-      integer itstep,ntstep
-#endif
-#endif
       integer inpts,is,i,lnblnk,nxcam,nycam
       external lnblnk
       real (kind=R8) ::

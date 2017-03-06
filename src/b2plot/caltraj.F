@@ -150,7 +150,7 @@ c     Getting the values for globaltime and deltat
 #ifdef CDF_MOVIE
       else
         rw='read'
-        ncid=ncopn(moviename,ncnowrit,iret)
+        iret = nf_open(moviename,NCNOWRIT,ncid)
         imap(1)=1
         imap(2)=nx+2
         tstepn(1) = ntstep
@@ -544,7 +544,7 @@ c     close Plot-Screen
 
 #ifndef NO_CDF
 #ifdef CDF_MOVIE
-      call ncclos(ncid, iret)
+      iret = nf_close(ncid)
 #endif
 #endif
       return
