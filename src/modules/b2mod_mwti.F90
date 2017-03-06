@@ -258,430 +258,134 @@ Contains
 
     
     
-    fnisip = 0.0_R8
-    feesip = 0.0_R8
-    feisip = 0.0_R8
-    fetsip = 0.0_R8
-    fchsip = 0.0_R8
-    fnisap = 0.0_R8
-    feesap = 0.0_R8
-    feisap = 0.0_R8
-    fetsap = 0.0_R8
-    fchsap = 0.0_R8
-    fnisipp = 0.0_R8
-    feesipp = 0.0_R8
-    feisipp = 0.0_R8
-    fetsipp = 0.0_R8
-    fchsipp = 0.0_R8
-    fnisapp = 0.0_R8
-    feesapp = 0.0_R8
-    feisapp = 0.0_R8
-    fetsapp = 0.0_R8
-    fchsapp = 0.0_R8
-
-
+    fnisip = 0.0_R8; feesip = 0.0_R8; feisip = 0.0_R8; fchsip = 0.0_R8; fetsip = 0.0_R8       
+    fnisap = 0.0_R8; feesap = 0.0_R8; feisap = 0.0_R8; fchsap = 0.0_R8; fetsap = 0.0_R8    
+    fnisipp = 0.0_R8; feesipp = 0.0_R8; feisipp = 0.0_R8; fetsipp = 0.0_R8; fchsipp = 0.0_R8
+    fnisapp = 0.0_R8; feesapp = 0.0_R8; feisapp = 0.0_R8; fetsapp = 0.0_R8; fchsapp = 0.0_R8
     
-    fnixip = 0.0_R8
-    feexip = 0.0_R8
-    feixip = 0.0_R8
-    fchxip = 0.0_R8
-    nemxip = 0.0_R8
-    temxip = 0.0_R8
-    timxip = 0.0_R8
-    pomxip = 0.0_R8
-    fetxip = 0.0_R8
-    pwmxip = 0.0_R8
-    tpmxip = 0.0_R8
-    Call integrate_div_flows(iylstrt,iylend,ny,ns,target_offset,ismain,BoRiS,-1,'L',&
+    fnixip = 0.0_R8; feexip = 0.0_R8; feixip = 0.0_R8; fchxip = 0.0_R8; fetxip = 0.0_R8
+    nemxip = 0.0_R8; temxip = 0.0_R8; timxip = 0.0_R8; pomxip = 0.0_R8; pwmxip = 0.0_R8; tpmxip = 0.0_R8
+    Call integrate_div_flows(iylstrt,iylend,-1,-1,'L', &  ! 1
+         nx,ny,ns,target_offset,ismain,BoRiS, &
          fnixip(1),feexip(1),feixip(1),fchxip(1),fetxip(1), &
          nemxip(1),temxip(1),timxip(1),pomxip(1),pwmxip(1),tpmxip(1))
 
-
-    fnixap = 0.0_R8
-    feexap = 0.0_R8
-    feixap = 0.0_R8
-    fchxap = 0.0_R8
-    nemxap = 0.0_R8
-    temxap = 0.0_R8
-    timxap = 0.0_R8
-    pomxap = 0.0_R8
-    fetxap = 0.0_R8
-    pwmxap = 0.0_R8
-    tpmxap = 0.0_R8
-    Call integrate_div_flows(iyrstrt,iyrend,ny,ns,target_offset,ismain,BoRiS,nx,'R',&
+    fnixap = 0.0_R8; feexap = 0.0_R8; feixap = 0.0_R8; fchxap = 0.0_R8; fetxap = 0.0_R8
+    nemxap = 0.0_R8; temxap = 0.0_R8; timxap = 0.0_R8; pomxap = 0.0_R8; pwmxap = 0.0_R8; tpmxap = 0.0_R8
+    Call integrate_div_flows(iyrstrt,iyrend,nx,nx,'R', &  ! 2
+         nx,ny,ns,target_offset,ismain,BoRiS,&
          fnixap(1), feexap(1), feixap(1), fchxap(1),fetxap(1), &
          nemxap(1), temxap(1), timxap(1), pomxap(1),pwmxap(1),tpmxap(1))
     
     if(nncut.ge.2) then
-      Call integrate_div_flows(iytrstrt,iytrend,ny,ns,target_offset,ismain,BoRiS,ixtr,'L',&
+      Call integrate_div_flows(iytrstrt,iytrend,ixtr,ixtr,'L', & ! 3
+           nx,ny,ns,target_offset,ismain,BoRiS,&
            fnixap(2),feexap(2),feixap(2),fchxap(2),fetxap(2), &
            nemxap(2),temxap(2),timxap(2),pomxap(2),pwmxap(2),tpmxap(2))
       
-      Call integrate_div_flows(iytlstrt,iytlend,ny,ns,target_offset,ismain,BoRiS,ixtl,'R',&
+      Call integrate_div_flows(iytlstrt,iytlend,ixtl,ixtl,'R', & ! 4
+           nx,ny,ns,target_offset,ismain,BoRiS,&
            fnixip(2),feexip(2),feixip(2),fchxip(2),fetxip(2), &
            nemxip(2),temxip(2),timxip(2),pomxip(2),pwmxip(2),tpmxip(2))
     endif
+
+    
     if(nnreg(0).ge.3) then
       do ic = 1, nncut
-          Call integrate_div_flows(-1,jsep,ny,ns,target_offset,ismain,BoRiS,leftcut(ic),'R',&
-               fnisipp(ic),feesipp(ic),feisipp(ic),fchsipp(ic),fetsipp(ic))
-          Call integrate_div_flows(-1,jsep,ny,ns,target_offset,ismain,BoRiS,rightcut(ic),'R',&
-               fnisapp(ic),feesapp(ic),feisapp(ic),fchsapp(ic),fetsapp(ic))
-          Call integrate_div_flows(jsep+1,ny,ny,ns,target_offset,ismain,BoRiS,leftcut(ic),'R',&
-               fnisip(ic),feesip(ic),feisip(ic),fchsip(ic),fetsip(ic))
-          Call integrate_div_flows(jsep+1,ny,ny,ns,target_offset,ismain,BoRiS,rightcut(ic),'R',&
-               fnisap(ic),feesap(ic),feisap(ic),fchsap(ic),fetsap(ic))          
+        Call integrate_div_flows(-1,jsep,leftcut(ic),leftcut(ic),'R', &  ! 5
+             nx,ny,ns,target_offset,ismain,BoRiS, &
+             fnisipp(ic),feesipp(ic),feisipp(ic),fchsipp(ic),fetsipp(ic)) ! 6
+        Call integrate_div_flows(-1,jsep,rightcut(ic),rightcut(ic),'R', &
+             nx,ny,ns,target_offset,ismain,BoRiS, &
+             fnisapp(ic),feesapp(ic),feisapp(ic),fchsapp(ic),fetsapp(ic))
+        Call integrate_div_flows(jsep+1,ny,leftcut(ic),leftcut(ic),'R', & ! 7
+             nx,ny,ns,target_offset,ismain,BoRiS, &
+             fnisip(ic),feesip(ic),feisip(ic),fchsip(ic),fetsip(ic))
+        Call integrate_div_flows(jsep+1,ny,rightcut(ic),rightcut(ic),'R', & ! 8
+             nx,ny,ns,target_offset,ismain,BoRiS, &
+             fnisap(ic),feesap(ic),feisap(ic),fchsap(ic),fetsap(ic))          
       enddo
     endif
 
-    fniyip = 0.0_R8
-    feeyip = 0.0_R8
-    feiyip = 0.0_R8
-    fetyip = 0.0_R8
-    fchyip = 0.0_R8
-    fniyap = 0.0_R8
-    feeyap = 0.0_R8
-    feiyap = 0.0_R8
-    fetyap = 0.0_R8
-    fchyap = 0.0_R8
+    fniyip = 0.0_R8; feeyip = 0.0_R8; feiyip = 0.0_R8; fetyip = 0.0_R8; fchyip = 0.0_R8
+    fniyap = 0.0_R8; feeyap = 0.0_R8; feiyap = 0.0_R8; fetyap = 0.0_R8; fchyap = 0.0_R8
 
     if(nnreg(0).eq.4) then
-      do ix=-1,nx
+      Do ix = -1,nx
         if(region(ix,ny,0).eq.2) then
-          fniyip(1) = fniyip(1) + fna(ix,ny,1,ismain)
-          feeyip(1) = feeyip(1) + fhe(ix,ny,1)
-          feiyip(1) = feiyip(1) + fhi(ix,ny,1)
-          fchyip(1) = fchyip(1) + fch(ix,ny,1)
-          fetyip(1) = fetyip(1) + fhe(ix,ny,1) + fhi(ix,ny,1) + &
-               fhi_ext(ix,ny,1)
-          do is=0,ns-1
-            fetyip(1) = fetyip(1) + fhm(ix,ny,1,is)*(1.0_R8-BoRiS) + &
-                 fhp(ix,ny,1,is)
-          enddo
-          do is=0,ns_ext-1
-            kintmp = 0.5_R8*am_ext(is)*mp* &
-                 (ua_ext(ix,ny,is)**2* &
-                 hy1(bottomix(ix,ny),bottomiy(ix,ny)) &
-                 +ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2* &
-                 hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            rpttmp = &
-                 (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-                 pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            fetyip(1)=fetyip(1) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))* &
-                 fa_ext(ix,ny,1,is)
-          enddo
+          Call integrate_div_flows(ny,ny,ix,ix,'T', &  ! 9
+               nx,ny,ns,target_offset,ismain,BoRiS, &
+               fniyip(1),feeyip(1),feiyip(1),fchyip(1),fetyip(1))
         endif
         if(region(ix,ny,0).eq.3.or.region(ix,ny,0).eq.4) then
-          fniyap(1) = fniyap(1) + fna(ix,ny,1,ismain)
-          feeyap(1) = feeyap(1) + fhe(ix,ny,1)
-          feiyap(1) = feiyap(1) + fhi(ix,ny,1)
-          fchyap(1) = fchyap(1) + fch(ix,ny,1)
-          fetyap(1) = fetyap(1) + fhe(ix,ny,1) + fhi(ix,ny,1) + &
-               fhi_ext(ix,ny,1)
-          do is=0,ns-1
-            fetyap(1) = fetyap(1) + fhm(ix,ny,1,is)*(1.0_R8-BoRiS) + &
-                 fhp(ix,ny,1,is)
-          enddo
-          do is=0,ns_ext-1
-            kintmp = 0.5_R8*am_ext(is)*mp* &
-                 (ua_ext(ix,ny,is)**2* &
-                 hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-                 ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2* &
-                 hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            rpttmp = &
-                 (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-                 pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            fetyap(1)=fetyap(1) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))* &
-                 fa_ext(ix,ny,1,is)
-          enddo
+          Call integrate_div_flows(ny,ny,ix,ix,'T', & ! 10
+               nx,ny,ns,target_offset,ismain,BoRiS, &
+               fniyap(1),feeyap(1),feiyap(1),fchyap(1),fetyap(1))
         endif
         if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
-          fniyap(1) = fniyap(1) - &
-               fna(topix(ix,-1),topiy(ix,-1),1,ismain)
-          feeyap(1) = feeyap(1) - fhe(topix(ix,-1),topiy(ix,-1),1)
-          feiyap(1) = feiyap(1) - fhi(topix(ix,-1),topiy(ix,-1),1)
-          fchyap(1) = fchyap(1) - fch(topix(ix,-1),topiy(ix,-1),1)
-          fetyap(1) = fetyap(1) - &
-               fhe(topix(ix,-1),topiy(ix,-1),1) - &
-               fhi(topix(ix,-1),topiy(ix,-1),1) - &
-               fhi_ext(topix(ix,-1),topiy(ix,-1),1)
-          do is=0,ns-1
-            fetyap(1) = fetyap(1) - &
-                 fhm(topix(ix,-1),topiy(ix,-1),1,is)*(1.0_R8-BoRiS) - &
-                 fhp(topix(ix,-1),topiy(ix,-1),1,is)
-          enddo
-          do is=0,ns_ext-1
-            kintmp = 0.5_R8*am_ext(is)*mp* &
-                 (ua_ext(ix,-1,is)**2*hy1(topix(ix,-1),topiy(ix,-1))+ &
-                 ua_ext(topix(ix,-1),topiy(ix,-1),is)**2*hy1(ix,-1))/ &
-                 (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-            rpttmp = &
-                 (pt_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+ &
-                 pt_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/ &
-                 (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-            fetyap(1)=fetyap(1) - (rpttmp*ev+kintmp*(1.0_R8-BoRiS))* &
-                 fa_ext(topix(ix,-1),topiy(ix,-1),1,is)
-          enddo
+          Call integrate_div_flows(-1,-1,ix,ix,'B', &  ! 11
+               nx,ny,ns,target_offset,ismain,BoRiS, &
+               fniyap(1),feeyap(1),feiyap(1),fchyap(1),fetyap(1))
         endif
-      enddo
+      Enddo
     elseif(nnreg(0).eq.5) then
-      do ix=-1,nx
+      Do ix = -1,nx
         if(region(ix,ny,0).eq.5) then
-          fniyip(1) = fniyip(1) + fna(ix,ny,1,ismain)
-          feeyip(1) = feeyip(1) + fhe(ix,ny,1)
-          feiyip(1) = feiyip(1) + fhi(ix,ny,1)
-          fchyip(1) = fchyip(1) + fch(ix,ny,1)
-          fetyip(1) = fetyip(1) + fhe(ix,ny,1) + fhi(ix,ny,1) + &
-               fhi_ext(ix,ny,1)
-          do is=0,ns-1
-            fetyip(1) = fetyip(1) + &
-                 fhm(ix,ny,1,is)*(1.0_R8-BoRiS) + &
-                 fhp(ix,ny,1,is)
-          enddo
-          do is=0,ns_ext-1
-            kintmp = 0.5_R8*am_ext(is)*mp* &
-                 (ua_ext(ix,ny,is)**2* &
-                 hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-                 ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2* &
-                 hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            rpttmp = &
-                 (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-                 pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            fetyip(1)=fetyip(1) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))* &
-                 fa_ext(ix,ny,1,is)
-          enddo
+          Call integrate_div_flows(ny,ny,ix,ix,'T', & ! 12
+               nx,ny,ns,target_offset,ismain,BoRiS, &
+               fniyip(1),feeyip(1),feiyip(1),fchyip(1),fetyip(1))
         endif
         if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
-          fniyap(1) = fniyap(1) - &
-               fna(topix(ix,-1),topiy(ix,-1),1,ismain)
-          feeyap(1) = feeyap(1) - fhe(topix(ix,-1),topiy(ix,-1),1)
-          feiyap(1) = feiyap(1) - fhi(topix(ix,-1),topiy(ix,-1),1)
-          fchyap(1) = fchyap(1) - fch(topix(ix,-1),topiy(ix,-1),1)
-          fetyap(1) = fetyap(1) - &
-               fhe(topix(ix,-1),topiy(ix,-1),1) - &
-               fhi(topix(ix,-1),topiy(ix,-1),1) - &
-               fhi_ext(topix(ix,-1),topiy(ix,-1),1)
-          do is=0,ns-1
-            fetyap(1) = fetyap(1) - &
-                 fhm(topix(ix,-1),topiy(ix,-1),1,is)*(1.0_R8-BoRiS) - &
-                 fhp(topix(ix,-1),topiy(ix,-1),1,is)
-          enddo
-          do is=0,ns_ext-1
-            kintmp = 0.5_R8*am_ext(is)*mp* &
-                 (ua_ext(ix,-1,is)**2*hy1(topix(ix,-1),topiy(ix,-1))+ &
-                 ua_ext(topix(ix,-1),topiy(ix,-1),is)**2*hy1(ix,-1))/ &
-                 (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-            rpttmp = &
-                 (pt_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+ &
-                 pt_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/ &
-                 (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-            fetyap(1)=fetyap(1) - (rpttmp*ev+kintmp*(1.0_R8-BoRiS))* &
-                 fa_ext(topix(ix,-1),topiy(ix,-1),1,is)
-          enddo
+          Call integrate_div_flows(-1,-1,ix,ix,'B', & ! 13 
+               nx,ny,ns,target_offset,ismain,BoRiS, &
+               fniyap(1),feeyap(1),feiyap(1),fchyap(1),fetyap(1))
         endif
-      enddo
+      Enddo
     elseif (nnreg(0).eq.8) then
-      do ix=-1,nx
+      Do ix = -1,nx
         if(mod(region(ix,ny,0),4).eq.2) then
-          fniyip(region(ix,ny,0)/4+1) = fniyip(region(ix,ny,0)/4+1) + &
-               fna(ix,ny,1,ismain)
-          feeyip(region(ix,ny,0)/4+1) = feeyip(region(ix,ny,0)/4+1) + &
-               fhe(ix,ny,1)
-          feiyip(region(ix,ny,0)/4+1) = feiyip(region(ix,ny,0)/4+1) + &
-               fhi(ix,ny,1)
-          fchyip(region(ix,ny,0)/4+1) = fchyip(region(ix,ny,0)/4+1) + &
-               fch(ix,ny,1)
-          fetyip(region(ix,ny,0)/4+1) = fetyip(region(ix,ny,0)/4+1) + &
-               fhe(ix,ny,1) + fhi(ix,ny,1) + fhi_ext(ix,ny,1)
-          do is=0,ns-1
-            fetyip(region(ix,ny,0)/4+1) = fetyip(region(ix,ny,0)/4+1)+ &
-                 fhm(ix,ny,1,is)*(1.0_R8-BoRiS) + fhp(ix,ny,1,is)
-          enddo
-          do is=0,ns_ext-1
-            kintmp = 0.5_R8*am_ext(is)*mp* &
-                 (ua_ext(ix,ny,is)**2* &
-                 hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-                 ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2* &
-                 hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            rpttmp = &
-                 (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-                 pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            fetyip(region(ix,ny,0)/4+1) = fetyip(region(ix,ny,0)/4+1)+ &
-                 (rpttmp*ev+kintmp*(1.0_R8-BoRiS))*fa_ext(ix,ny,1,is)
-          enddo
+          Call integrate_div_flows(ny,ny,ix,ix,'T', & ! 14
+               nx,ny,ns,target_offset,ismain,BoRiS, &
+               fniyip(region(ix,ny,0)/4+1),feeyip(region(ix,ny,0)/4+1), &
+               feiyip(region(ix,ny,0)/4+1),fchyip(region(ix,ny,0)/4+1),fetyip(region(ix,ny,0)/4+1))
         endif
         if(region(ix,ny,0).eq.3 .or. region(ix,ny,0).eq.8) then
-          fniyap(1) = fniyap(1) + fna(ix,ny,1,ismain)
-          feeyap(1) = feeyap(1) + fhe(ix,ny,1)
-          feiyap(1) = feiyap(1) + fhi(ix,ny,1)
-          fchyap(1) = fchyap(1) + fch(ix,ny,1)
-          fetyap(1) = fetyap(1) + fhe(ix,ny,1) + fhi(ix,ny,1) + &
-               fhi_ext(ix,ny,1)
-          do is=0,ns-1
-            fetyap(1) = fetyap(1) + fhm(ix,ny,1,is)*(1.0_R8-BoRiS) + &
-                 fhp(ix,ny,1,is)
-          enddo
-          do is=0,ns_ext-1
-            kintmp = 0.5_R8*am_ext(is)*mp* &
-                 (ua_ext(ix,ny,is)**2* &
-                 hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-                 ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2* &
-                 hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            rpttmp = &
-                 (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-                 pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            fetyap(1)=fetyap(1) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))* &
-                 fa_ext(ix,ny,1,is)
-          enddo
+          Call integrate_div_flows(ny,ny,ix,ix,'T', & ! 15
+               nx,ny,ns,target_offset,ismain,BoRiS, &
+               fniyap(1),feeyap(1),feiyap(1),fchyap(1),fetyap(1))
         endif
         if(region(ix,-1,0).eq.3 .or. region(ix,-1,0).eq.8) then
-          fniyap(1) = fniyap(1) - &
-               fna(topix(ix,-1),topiy(ix,-1),1,ismain)
-          feeyap(1) = feeyap(1) - fhe(topix(ix,-1),topiy(ix,-1),1)
-          feiyap(1) = feiyap(1) - fhi(topix(ix,-1),topiy(ix,-1),1)
-          fchyap(1) = fchyap(1) - fch(topix(ix,-1),topiy(ix,-1),1)
-          fetyap(1) = fetyap(1) - &
-               fhe(topix(ix,-1),topiy(ix,-1),1) - &
-               fhi(topix(ix,-1),topiy(ix,-1),1) - &
-               fhi_ext(topix(ix,-1),topiy(ix,-1),1)
-          do is=0,ns-1
-            fetyap(1)=fetyap(1) - &
-                 fhm(topix(ix,-1),topiy(ix,-1),1,is)*(1.0_R8-BoRiS) - &
-                 fhp(topix(ix,-1),topiy(ix,-1),1,is)
-          enddo
-          do is=0,ns_ext-1
-            kintmp = 0.5_R8*am_ext(is)*mp* &
-                 (ua_ext(ix,-1,is)**2*hy1(topix(ix,-1),topiy(ix,-1))+ &
-                 ua_ext(topix(ix,-1),topiy(ix,-1),is)**2*hy1(ix,-1))/ &
-                 (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-            rpttmp = &
-                 (pt_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+ &
-                 pt_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/ &
-                 (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-            fetyap(1)=fetyap(1) - (rpttmp*ev+kintmp*(1.0_R8-BoRiS))* &
-                 fa_ext(topix(ix,-1),topiy(ix,-1),1,is)
-          enddo
+          Call integrate_div_flows(-1,-1,ix,ix,'B', & ! 16
+               nx,ny,ns,target_offset,ismain,BoRiS, &
+               fniyap(1),feeyap(1),feiyap(1),fchyap(1),fetyap(1))
         endif
         if(region(ix,ny,0).eq.4 .or. region(ix,ny,0).eq.7) then
-          fniyap(2) = fniyap(2) + fna(ix,ny,1,ismain)
-          feeyap(2) = feeyap(2) + fhe(ix,ny,1)
-          feiyap(2) = feiyap(2) + fhi(ix,ny,1)
-          fchyap(2) = fchyap(2) + fch(ix,ny,1)
-          fetyap(2) = fetyap(2) + fhe(ix,ny,1) + fhi(ix,ny,1) + &
-               fhi_ext(ix,ny,1)
-          do is=0,ns-1
-            fetyap(2)=fetyap(2) + fhm(ix,ny,1,is)*(1.0_R8-BoRiS) &
-                 + fhp(ix,ny,1,is)
-          enddo
-          do is=0,ns_ext-1
-            kintmp = 0.5_R8*am_ext(is)*mp* &
-                 (ua_ext(ix,ny,is)**2* &
-                 hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-                 ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2* &
-                 hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            rpttmp = &
-                 (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-                 pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            fetyap(2)=fetyap(2) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))* &
-                 fa_ext(ix,ny,1,is)
-          enddo
+          Call integrate_div_flows(ny,ny,ix,ix,'T', & ! 17
+               nx,ny,ns,target_offset,ismain,BoRiS, &
+               fniyap(2),feeyap(2),feiyap(2),fchyap(2),fetyap(2))
         endif
         if(region(ix,-1,0).eq.4 .or. region(ix,-1,0).eq.7) then
-          fniyap(2) = fniyap(2) - &
-               fna(topix(ix,-1),topiy(ix,-1),1,ismain)
-          feeyap(2) = feeyap(2) - fhe(topix(ix,-1),topiy(ix,-1),1)
-          feiyap(2) = feiyap(2) - fhi(topix(ix,-1),topiy(ix,-1),1)
-          fchyap(2) = fchyap(2) - fch(topix(ix,-1),topiy(ix,-1),1)
-          fetyap(2) = fetyap(2) - &
-               fhe(topix(ix,-1),topiy(ix,-1),1) - &
-               fhi(topix(ix,-1),topiy(ix,-1),1) - &
-               fhi_ext(topix(ix,-1),topiy(ix,-1),1)
-          do is=0,ns-1
-            fetyap(2) = fetyap(2) - &
-                 fhm(topix(ix,-1),topiy(ix,-1),1,is)*(1.0_R8-BoRiS) - &
-                 fhp(topix(ix,-1),topiy(ix,-1),1,is)
-          enddo
-          do is=0,ns_ext-1
-            kintmp = 0.5_R8*am_ext(is)*mp* &
-                 (ua_ext(ix,-1,is)**2*hy1(topix(ix,-1),topiy(ix,-1))+ &
-                 ua_ext(topix(ix,-1),topiy(ix,-1),is)**2*hy1(ix,-1))/ &
-                 (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-            rpttmp = &
-                 (pt_ext(ix,-1,is)*hy1(topix(ix,-1),topiy(ix,-1))+ &
-                 pt_ext(topix(ix,-1),topiy(ix,-1),is)*hy1(ix,-1))/ &
-                 (hy1(topix(ix,-1),topiy(ix,-1))+hy1(ix,-1))
-            fetyap(2)=fetyap(2) - (rpttmp*ev+kintmp*(1.0_R8-BoRiS))* &
-                 fa_ext(topix(ix,-1),topiy(ix,-1),1,is)
-          enddo
+          Call integrate_div_flows(-1,-1,ix,ix,'B', & !18 
+               nx,ny,ns,target_offset,ismain,BoRiS, &
+               fniyap(2),feeyap(2),feiyap(2),fchyap(2),fetyap(2))
         endif
-      enddo
+      Enddo
     else if (nnreg(0).eq.2) then
-      do ix=-1,nx
+      Do ix = -1,nx
         if(region(ix,ny,0).eq.2) then
-          fniyip(1) = fniyip(1) + fna(ix,ny,1,ismain)
-          feeyip(1) = feeyip(1) + fhe(ix,ny,1)
-          feiyip(1) = feiyip(1) + fhi(ix,ny,1)
-          fchyip(1) = fchyip(1) + fch(ix,ny,1)
-          fetyip(1) = fetyip(1) + fhe(ix,ny,1) + fhi(ix,ny,1) + &
-               fhi_ext(ix,ny,1)
-          do is=0,ns-1
-            fetyip(1) = fetyip(1) + fhm(ix,ny,1,is)*(1.0_R8-BoRiS) &
-                 + fhp(ix,ny,1,is)
-          enddo
-          do is=0,ns_ext-1
-            kintmp = 0.5_R8*am_ext(is)*mp* &
-                 (ua_ext(ix,ny,is)**2* &
-                 hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-                 ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2* &
-                 hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            rpttmp = &
-                 (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-                 pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/ &
-                 (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-            fetyip(1)=fetyip(1) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))* &
-                 fa_ext(ix,ny,1,is)
-          enddo
+          Call integrate_div_flows(ny,ny,-1,nx,'T', & ! 19
+               nx,ny,ns,target_offset,ismain,BoRiS, &
+               fniyip(1),feeyip(1),feiyip(1),fchyip(1),fetyip(1))
         endif
-      enddo
+      Enddo
     else
-      do ix=-1,nx
-        fniyip(1) = fniyip(1) + fna(ix,ny,1,ismain)
-        feeyip(1) = feeyip(1) + fhe(ix,ny,1)
-        feiyip(1) = feiyip(1) + fhi(ix,ny,1)
-        fchyip(1) = fchyip(1) + fch(ix,ny,1)
-        fetyip(1) = fetyip(1) + fhe(ix,ny,1) + fhi(ix,ny,1) + &
-             fhi_ext(ix,ny,1)
-        do is=0,ns-1
-          fetyip(1) = fetyip(1) + fhm(ix,ny,1,is)*(1.0_R8-BoRiS) &
-               + fhp(ix,ny,1,is)
-        enddo
-        do is=0,ns_ext-1
-          kintmp = 0.5_R8*am_ext(is)*mp* &
-               (ua_ext(ix,ny,is)**2*hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-               ua_ext(bottomix(ix,ny),bottomiy(ix,ny),is)**2*hy1(ix,ny))/ &
-               (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-          rpttmp = &
-               (pt_ext(ix,ny,is)*hy1(bottomix(ix,ny),bottomiy(ix,ny))+ &
-               pt_ext(bottomix(ix,ny),bottomiy(ix,ny),is)*hy1(ix,ny))/ &
-               (hy1(bottomix(ix,ny),bottomiy(ix,ny))+hy1(ix,ny))
-          fetyip(1)=fetyip(1) + (rpttmp*ev+kintmp*(1.0_R8-BoRiS))* &
-               fa_ext(ix,ny,1,is)
-        enddo
-      enddo
-    endif
+      Do ix = -1,nx
+        Call integrate_div_flows(ny,ny,-1,nx,'T', & ! 20
+             nx,ny,ns,target_offset,ismain,BoRiS, &
+             fniyip(1),feeyip(1),feiyip(1),fchyip(1),fetyip(1))
+      Enddo
+    endif ! nnreg check
+    
     !
     !    other quantities related to the target plates
     !
@@ -866,18 +570,10 @@ Contains
     endif
 #endif
     !
-    do ic = 1, nc
-      nemxip(ic) = nemxip(ic)
-      temxip(ic) = temxip(ic)/ev
-      timxip(ic) = timxip(ic)/ev
-      pomxip(ic) = pomxip(ic)
-      nemxap(ic) = nemxap(ic)
-      temxap(ic) = temxap(ic)/ev
-      timxap(ic) = timxap(ic)/ev
-      pomxap(ic) = pomxap(ic)
-      pwmxip(ic) = pwmxip(ic)
-      pwmxap(ic) = pwmxap(ic)
-    enddo
+    temxip(1:nc) = temxip(1:nc)/ev
+    timxip(1:nc) = timxip(1:nc)/ev
+    temxap(1:nc) = temxap(1:nc)/ev
+    timxap(1:nc) = timxap(1:nc)/ev
 
     tmne(1)=0.0_R8
     tmte(1)=0.0_R8
@@ -2093,86 +1789,120 @@ Contains
     return
   end subroutine output_ds
 
-  Subroutine integrate_div_flows(iy1,iy2,ny,ns,toff,ismain,BoRiS,ix,SIDE, &
-       fni0,fee0,fei0,fch0,fet,nem,tem,tim,pom,pwm,tpm)
+  Subroutine integrate_div_flows(iystart,iyend,ixstart,ixend,SIDE, &
+       nx,ny,ns,toff,ismain,BoRiS, &
+       fni0,fee0,fei0,fch0,fet, &
+       nem,tem,tim,pom,pwm,tpm)
+    ! Integrate flows along a boundary, either x or y over indices
+    ! i(x,y)start to i(x,y)end and SIDE to choose left, right, top, bottom
+    ! adjacent cell indices as indicated below
+    ! Also optionally calculates the max of some quantities along the boundary
+    ! fluxes are inout so they can be summed over multiple regions
     use b2mod_plasma   , Only : fna, fhe, fhi, fch, ne, te, ti, po, fhm, fhp
-    use b2mod_indirect , Only : rightix, rightiy, bottomiy, topiy, leftix, leftiy
+    use b2mod_indirect , Only : rightix, rightiy, bottomix, bottomiy, topix, topiy, leftix, leftiy
     use b2mod_external , Only : fhi_ext, pt_ext, ua_ext, am_ext, ns_ext, fa_ext
     use b2mod_constants , Only : ev, mp
-    Use b2mod_geo , Only : hx, gs
+    Use b2mod_geo , Only : hx, hy, qz, gs
     use b2mod_wall , Only : xymap, target_temp
     Implicit None
-    Integer, Intent(In) :: iy1, iy2, ismain, toff, ny, ns, ix
+    Integer, Intent(In) :: iystart, iyend, ixstart, ixend
+    Integer, Intent(In) :: ismain, toff, nx, ny, ns
     Real(kind=R8), Intent(In) :: BoRiS
-    Real(kind=R8), Intent(Out) :: fni0,fee0,fei0,fch0,fet
+    Real(kind=R8), Intent(InOut) :: fni0,fee0,fei0,fch0,fet
     Real(kind=R8), Intent(Out), Optional :: nem,tem,tim,pom,pwm,tpm
     Character(Len=1) :: SIDE
     ! Local vars
-    Integer :: iy, ix_adj, iy_adj, ix_off, is, ix_flux, iy_flux
-    Real(kind=R8) :: kintmp, rpttmp, fac
+    Integer :: iy, ix, ix_adj, iy_adj, ix_off, is, ix_flux, iy_flux, idir
+    Real(kind=R8) :: kintmp, rpttmp, fac, fac_flux
+    Real(kind=R8) :: h(-1:nx,-1:ny)
     logical :: calc_max
+    ! computation
     calc_max = .false.
     If (Present(nem)) Then
       calc_max = .true.
-      nem  = 0._R8
-      tem  = 0._R8
-      tim  = 0._R8
-      pom  = 0._R8
-      pwm  = 0._R8
-      tpm  = 0._R8
+      nem  = 0._R8; tem  = 0._R8; tim  = 0._R8; pom  = 0._R8; pwm  = 0._R8; tpm  = 0._R8
+      fac  = 0._R8
+      ix_off = 0
     Endif
-    fet  = 0._R8
-    fni0 = 0._R8
-    fee0 = 0._R8
-    fei0 = 0._R8
-    fch0 = 0._R8
-    Do iy = iy1, iy2
+!    fet  = 0._R8; fni0 = 0._R8; fee0 = 0._R8; fei0 = 0._R8; fch0 = 0._R8
+    fac_flux = 0._R8
+    Do ix = ixstart, ixend
+!    YAPS HAVE OPPOSITE SIGN FOR ADDING FNIYAP ETC!!!!
+    Do iy = iystart, iyend
       Select Case (SIDE)
       Case ('l','L')
-        ! -1
         ix_flux = rightix(ix,iy) ! Index to cell with flux entering target
         iy_flux = rightiy(ix,iy)        
         ix_adj  = rightix(ix,iy) ! Index to cell adjacent
         iy_adj  = rightiy(ix,iy)        
-        ix_off  = ix + toff
-        fac = -1._R8
+        ix_off  = ix + toff      ! Used when calculating max of plasma quantities
+        fac = -1._R8             ! Used to flip flux sign only in power max calculation
+        idir = 0                 ! Index in flux variables (x vs y direction)
+        h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
+        fac_flux = 1._R8         ! Fluxes are summed as flux_sum += flux_fac*flux
       Case ('r','R')
-        ! nx
         ix_flux = ix
         iy_flux = iy
         ix_adj = leftix(ix,iy)
         iy_adj = leftiy(ix,iy)        
         ix_off  = ix - toff
         fac = 1._R8
+        idir = 0
+        h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
+        fac_flux = 1._R8
+      Case ('t','T')
+        ix_flux = ix
+        iy_flux = iy
+        ix_adj = bottomix(ix,iy)
+        iy_adj = bottomiy(ix,iy)
+        idir = 1
+        h(-1:nx,-1:ny) = hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
+        fac_flux = 1._R8
+      Case ('b','B')        
+        ix_flux = topix(ix,iy)
+        iy_flux = topiy(ix,iy)
+        ix_adj = topix(ix,iy)
+        iy_adj = topiy(ix,iy)
+        idir = 1
+        h(-1:nx,-1:ny) = hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
+        fac_flux = -1._R8
       Case Default
         Call xerrab('Unknown SIDE in integrate_div_flows')
       End Select
-      fni0 = fni0 + fna(ix_flux,iy_flux,0,ismain)
-      fee0 = fee0 + fhe(ix_flux,iy_flux,0)
-      fei0 = fei0 + fhi(ix_flux,iy_flux,0)
-      fch0 = fch0 + fch(ix_flux,iy_flux,0)
-      fet = fhe(ix_flux,iy_flux,0) + fhi(ix_flux,iy_flux,0) + fhi_ext(ix_flux,iy_flux,0)
+      fni0 = fni0 + fac_flux*fna(ix_flux,iy_flux,idir,ismain)
+      fee0 = fee0 + fac_flux*fhe(ix_flux,iy_flux,idir)
+      fei0 = fei0 + fac_flux*fhi(ix_flux,iy_flux,idir)
+      fch0 = fch0 + fac_flux*fch(ix_flux,iy_flux,idir)
+      ! To be replaced with call to calc_fht
+      fet = fhe(ix_flux,iy_flux,idir) + fac_flux*fhi(ix_flux,iy_flux,idir) + fac_flux*fhi_ext(ix_flux,iy_flux,idir)
       do is=0,ns-1
-        fet = fet + fhm(ix_flux,iy_flux,0,is)*(1.0_R8-BoRiS) + fhp(ix_flux,iy_flux,0,is)
+        fet = fet + fac_flux*fhm(ix_flux,iy_flux,idir,is)*(1.0_R8-BoRiS) + fac_flux*fhp(ix_flux,iy_flux,idir,is)
       enddo
       do is=0,ns_ext-1
-        kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * hx(ix_adj,iy_adj)+ &
-             ua_ext(ix_adj,iy_adj,is)**2*hx(ix,iy))/(hx(ix_adj,iy_adj)+hx(ix,iy))
-        rpttmp = (pt_ext(ix,iy,is)*hx(ix_adj,iy_adj)+pt_ext(ix_adj,iy_adj,is)*hx(ix,iy))/(hx(ix_adj,iy_adj)+hx(ix,iy))
-        fet = fet + (rpttmp*ev + kintmp*(1.0_R8-BoRiS))*fa_ext(ix_flux,iy_flux,0,is)
+        kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+ &
+             ua_ext(ix_adj,iy_adj,is)**2*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
+        rpttmp = (pt_ext(ix,iy,is)*h(ix_adj,iy_adj)+pt_ext(ix_adj,iy_adj,is)*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
+        fet = fet + fac_flux*(rpttmp*ev + kintmp*(1.0_R8-BoRiS))*fa_ext(ix_flux,iy_flux,idir,is)
       enddo
       if (calc_max) Then
-        pwm = max (pwm, fac*fet/gs(ix_flux,iy_flux,0))
+        Select Case (SIDE)
+        Case ('t','T')
+          Call xerrab('SIDE T untested for max quantities integrate_div_flows')
+        Case ('b','B')
+          Call xerrab('SIDE B untested for max quantities integrate_div_flows')
+        End Select
+
+        pwm = max(pwm, fac*fet/gs(ix_flux,iy_flux,idir))
         if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) Then
-          tpm = max (tpm, target_temp(xymap(ix,iy),1))
+          tpm = max(tpm, target_temp(xymap(ix,iy),1))
         Endif
-        nem = max (nem, ne(ix_off,iy))
-        tem = max (tem, te(ix_off,iy))
-        tim = max (tim, ti(ix_off,iy))
-        pom = max (pom, po(ix_off,iy))
+        nem = max(nem, ne(ix_off,iy))
+        tem = max(tem, te(ix_off,iy))
+        tim = max(tim, ti(ix_off,iy))
+        pom = max(pom, po(ix_off,iy))
       Endif
     Enddo
-    
+  Enddo
     
   End Subroutine integrate_div_flows
 
