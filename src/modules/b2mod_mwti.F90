@@ -85,12 +85,13 @@ Contains
          tmne(1),tmte(1),tmti(1),tmvol,kintmp,rpttmp
 
     integer iy, ix, ic, is, ixtl, ixtr, jsep
-    integer jxi, jxa, target_offset
+    integer jxi, jxa, target_offset, ix_off
     integer iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
          nybl, nybr, nytl, nytr, nya, nyi, nc
     !   ..procedures
     external subini, subend, xertst, ipgeti
+    Real(kind=R8) :: fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp
 
 #ifndef NO_CDF
     integer imap(maxvdims), iret, ncid
@@ -253,58 +254,128 @@ Contains
     !
     !    total flows to the divertor plates
     !
-
-
-
+            
+    fnixip = 0.0_R8; feexip = 0.0_R8; feixip = 0.0_R8; fchxip = 0.0_R8; fetxip = 0.0_R8
+    nemxip = 0.0_R8; temxip = 0.0_R8; timxip = 0.0_R8; pomxip = 0.0_R8; pwmxip = 0.0_R8; tpmxip = 0.0_R8   
+    ix = -1 ! 1
+    ix_off  = ix + target_offset
+    Do iy = iylstrt,iylend
+      Call calc_fet(ix,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+      fnixip(1) = fnixip(1) + fnitmp
+      feexip(1) = feexip(1) + feetmp
+      feixip(1) = feixip(1) + feitmp
+      fchxip(1) = fchxip(1) + fchtmp
+      fetxip(1) = fetxip(1) + fettmp
+      nemxip(1) = max(nemxip(1), ne(ix_off,iy))
+      temxip(1) = max(temxip(1), te(ix_off,iy))
+      timxip(1) = max(timxip(1), ti(ix_off,iy))
+      pomxip(1) = max(pomxip(1), po(ix_off,iy))
+      pwmxip(1) = max(pwmxip(1), pwrtmp)
+      if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) Then
+        tpmxip(1) = max(tpmxip(1), target_temp(xymap(ix,iy),1))
+      Endif      
+    Enddo
     
+    fnixap = 0.0_R8; feexap = 0.0_R8; feixap = 0.0_R8; fchxap = 0.0_R8; fetxap = 0.0_R8
+    nemxap = 0.0_R8; temxap = 0.0_R8; timxap = 0.0_R8; pomxap = 0.0_R8; pwmxap = 0.0_R8; tpmxap = 0.0_R8
+    ix = nx ! 2
+    ix_off  = ix - target_offset
+    Do iy = iyrstrt,iyrend
+      Call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+      fnixap(1) = fnixap(1) + fnitmp
+      feexap(1) = feexap(1) + feetmp
+      feixap(1) = feixap(1) + feitmp
+      fchxap(1) = fchxap(1) + fchtmp
+      fetxap(1) = fetxap(1) + fettmp
+      nemxap(1) = max(nemxap(1), ne(ix_off,iy))
+      temxap(1) = max(temxap(1), te(ix_off,iy))
+      timxap(1) = max(timxap(1), ti(ix_off,iy))
+      pomxap(1) = max(pomxap(1), po(ix_off,iy))
+      pwmxap(1) = max(pwmxap(1), pwrtmp)
+      if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) Then
+        tpmxap(1) = max(tpmxap(1), target_temp(xymap(ix,iy),1))
+      Endif      
+    Enddo
     
+    if(nncut.ge.2) then
+      ix = ixtr ! 3
+      ix_off  = ix + target_offset
+      Do iy = iytrstrt,iytrend
+        Call calc_fet(ix,iy,'L',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+        fnixap(2) = fnixap(2) + fnitmp
+        feexap(2) = feexap(2) + feetmp
+        feixap(2) = feixap(2) + feitmp
+        fchxap(2) = fchxap(2) + fchtmp
+        fetxap(2) = fetxap(2) + fettmp
+        nemxap(2) = max(nemxap(2), ne(ix_off,iy))
+        temxap(2) = max(temxap(2), te(ix_off,iy))
+        timxap(2) = max(timxap(2), ti(ix_off,iy))
+        pomxap(2) = max(pomxap(2), po(ix_off,iy))
+        pwmxap(2) = max(pwmxap(2), pwrtmp)
+        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) Then
+          tpmxap(2) = max(tpmxap(2), target_temp(xymap(ix,iy),1))
+        Endif
+      Enddo
+      
+      ix = ixtl ! 4
+      ix_off  = ix - target_offset
+      Do iy = iytlstrt,iytlend
+        Call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+        fnixip(2) = fnixip(2) + fnitmp
+        feexip(2) = feexip(2) + feetmp
+        feixip(2) = feixip(2) + feitmp
+        fchxip(2) = fchxip(2) + fchtmp
+        fetxip(2) = fetxip(2) + fettmp
+        nemxip(2) = max(nemxip(2), ne(ix_off,iy))
+        temxip(2) = max(temxip(2), te(ix_off,iy))
+        timxip(2) = max(timxip(2), ti(ix_off,iy))
+        pomxip(2) = max(pomxip(2), po(ix_off,iy))
+        pwmxip(2) = max(pwmxip(2), pwrtmp)
+        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) Then
+          tpmxip(2) = max(tpmxip(2), target_temp(xymap(ix,iy),1))
+        Endif
+      Enddo      
+    endif
+
     fnisip = 0.0_R8; feesip = 0.0_R8; feisip = 0.0_R8; fchsip = 0.0_R8; fetsip = 0.0_R8       
     fnisap = 0.0_R8; feesap = 0.0_R8; feisap = 0.0_R8; fchsap = 0.0_R8; fetsap = 0.0_R8    
     fnisipp = 0.0_R8; feesipp = 0.0_R8; feisipp = 0.0_R8; fetsipp = 0.0_R8; fchsipp = 0.0_R8
-    fnisapp = 0.0_R8; feesapp = 0.0_R8; feisapp = 0.0_R8; fetsapp = 0.0_R8; fchsapp = 0.0_R8
-    
-    fnixip = 0.0_R8; feexip = 0.0_R8; feixip = 0.0_R8; fchxip = 0.0_R8; fetxip = 0.0_R8
-    nemxip = 0.0_R8; temxip = 0.0_R8; timxip = 0.0_R8; pomxip = 0.0_R8; pwmxip = 0.0_R8; tpmxip = 0.0_R8
-    Call integrate_div_flows(iylstrt,iylend,-1,-1,'L', &  ! 1
-         nx,ny,ns,target_offset,ismain,BoRiS, &
-         fnixip(1),feexip(1),feixip(1),fchxip(1),fetxip(1), &
-         nemxip(1),temxip(1),timxip(1),pomxip(1),pwmxip(1),tpmxip(1))
-
-    fnixap = 0.0_R8; feexap = 0.0_R8; feixap = 0.0_R8; fchxap = 0.0_R8; fetxap = 0.0_R8
-    nemxap = 0.0_R8; temxap = 0.0_R8; timxap = 0.0_R8; pomxap = 0.0_R8; pwmxap = 0.0_R8; tpmxap = 0.0_R8
-    Call integrate_div_flows(iyrstrt,iyrend,nx,nx,'R', &  ! 2
-         nx,ny,ns,target_offset,ismain,BoRiS,&
-         fnixap(1), feexap(1), feixap(1), fchxap(1),fetxap(1), &
-         nemxap(1), temxap(1), timxap(1), pomxap(1),pwmxap(1),tpmxap(1))
-    
-    if(nncut.ge.2) then
-      Call integrate_div_flows(iytrstrt,iytrend,ixtr,ixtr,'L', & ! 3
-           nx,ny,ns,target_offset,ismain,BoRiS,&
-           fnixap(2),feexap(2),feixap(2),fchxap(2),fetxap(2), &
-           nemxap(2),temxap(2),timxap(2),pomxap(2),pwmxap(2),tpmxap(2))
-      
-      Call integrate_div_flows(iytlstrt,iytlend,ixtl,ixtl,'R', & ! 4
-           nx,ny,ns,target_offset,ismain,BoRiS,&
-           fnixip(2),feexip(2),feixip(2),fchxip(2),fetxip(2), &
-           nemxip(2),temxip(2),timxip(2),pomxip(2),pwmxip(2),tpmxip(2))
-    endif
-
-    
+    fnisapp = 0.0_R8; feesapp = 0.0_R8; feisapp = 0.0_R8; fetsapp = 0.0_R8; fchsapp = 0.0_R8    
     if(nnreg(0).ge.3) then
-      do ic = 1, nncut
-        Call integrate_div_flows(-1,jsep,leftcut(ic),leftcut(ic),'R', &  ! 5
-             nx,ny,ns,target_offset,ismain,BoRiS, &
-             fnisipp(ic),feesipp(ic),feisipp(ic),fchsipp(ic),fetsipp(ic)) ! 6
-        Call integrate_div_flows(-1,jsep,rightcut(ic),rightcut(ic),'R', &
-             nx,ny,ns,target_offset,ismain,BoRiS, &
-             fnisapp(ic),feesapp(ic),feisapp(ic),fchsapp(ic),fetsapp(ic))
-        Call integrate_div_flows(jsep+1,ny,leftcut(ic),leftcut(ic),'R', & ! 7
-             nx,ny,ns,target_offset,ismain,BoRiS, &
-             fnisip(ic),feesip(ic),feisip(ic),fchsip(ic),fetsip(ic))
-        Call integrate_div_flows(jsep+1,ny,rightcut(ic),rightcut(ic),'R', & ! 8
-             nx,ny,ns,target_offset,ismain,BoRiS, &
-             fnisap(ic),feesap(ic),feisap(ic),fchsap(ic),fetsap(ic))          
-      enddo
+      Do ic = 1, nncut
+        Do iy = -1,jsep
+          ix = leftcut(ic) ! 5
+          Call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fnisipp(ic) = fnisipp(ic) + fnitmp
+          feesipp(ic) = feesipp(ic) + feetmp
+          feisipp(ic) = feisipp(ic) + feitmp
+          fchsipp(ic) = fchsipp(ic) + fchtmp
+          fetsipp(ic) = fetsipp(ic) + fettmp
+          ix = rightcut(ic) ! 6
+          Call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fnisapp(ic) = fnisapp(ic) + fnitmp
+          feesapp(ic) = feesapp(ic) + feetmp
+          feisapp(ic) = feisapp(ic) + feitmp
+          fchsapp(ic) = fchsapp(ic) + fchtmp
+          fetsapp(ic) = fetsapp(ic) + fettmp
+        Enddo
+        Do iy = jsep+1,ny
+          ix = leftcut(ic) ! 7
+          Call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fnisip(ic) = fnisip(ic) + fnitmp
+          feesip(ic) = feesip(ic) + feetmp
+          feisip(ic) = feisip(ic) + feitmp
+          fchsip(ic) = fchsip(ic) + fchtmp
+          fetsip(ic) = fetsip(ic) + fettmp
+          ix = rightcut(ic) ! 8
+          Call calc_fet(ix,iy,'R',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fnisap(ic) = fnisap(ic) + fnitmp
+          feesap(ic) = feesap(ic) + feetmp
+          feisap(ic) = feisap(ic) + feitmp
+          fchsap(ic) = fchsap(ic) + fchtmp
+          fetsap(ic) = fetsap(ic) + fettmp
+        Enddo
+      Enddo
     endif
 
     fniyip = 0.0_R8; feeyip = 0.0_R8; feiyip = 0.0_R8; fetyip = 0.0_R8; fchyip = 0.0_R8
@@ -313,76 +384,123 @@ Contains
     if(nnreg(0).eq.4) then
       Do ix = -1,nx
         if(region(ix,ny,0).eq.2) then
-          Call integrate_div_flows(ny,ny,ix,ix,'T', &  ! 9
-               nx,ny,ns,target_offset,ismain,BoRiS, &
-               fniyip(1),feeyip(1),feiyip(1),fchyip(1),fetyip(1))
+          iy = ny ! 9
+          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fniyip(1) = fniyip(1) + fnitmp
+          feeyip(1) = feeyip(1) + feetmp
+          feiyip(1) = feiyip(1) + feitmp
+          fchyip(1) = fchyip(1) + fchtmp
+          fetyip(1) = fetyip(1) + fettmp
         endif
         if(region(ix,ny,0).eq.3.or.region(ix,ny,0).eq.4) then
-          Call integrate_div_flows(ny,ny,ix,ix,'T', & ! 10
-               nx,ny,ns,target_offset,ismain,BoRiS, &
-               fniyap(1),feeyap(1),feiyap(1),fchyap(1),fetyap(1))
+          iy = ny ! 10
+          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fniyap(1) = fniyap(1) + fnitmp
+          feeyap(1) = feeyap(1) + feetmp
+          feiyap(1) = feiyap(1) + feitmp
+          fchyap(1) = fchyap(1) + fchtmp
+          fetyap(1) = fetyap(1) + fettmp
         endif
         if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
-          Call integrate_div_flows(-1,-1,ix,ix,'B', &  ! 11
-               nx,ny,ns,target_offset,ismain,BoRiS, &
-               fniyap(1),feeyap(1),feiyap(1),fchyap(1),fetyap(1))
+          iy = -1 ! 11
+          Call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fniyap(1) = fniyap(1) + fnitmp
+          feeyap(1) = feeyap(1) + feetmp
+          feiyap(1) = feiyap(1) + feitmp
+          fchyap(1) = fchyap(1) + fchtmp
+          fetyap(1) = fetyap(1) + fettmp
         endif
       Enddo
     elseif(nnreg(0).eq.5) then
       Do ix = -1,nx
         if(region(ix,ny,0).eq.5) then
-          Call integrate_div_flows(ny,ny,ix,ix,'T', & ! 12
-               nx,ny,ns,target_offset,ismain,BoRiS, &
-               fniyip(1),feeyip(1),feiyip(1),fchyip(1),fetyip(1))
+          iy = ny ! 12
+          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fniyip(1) = fniyip(1) + fnitmp
+          feeyip(1) = feeyip(1) + feetmp
+          feiyip(1) = feiyip(1) + feitmp
+          fchyip(1) = fchyip(1) + fchtmp
+          fetyip(1) = fetyip(1) + fettmp          
         endif
         if(region(ix,-1,0).eq.3.or.region(ix,-1,0).eq.4) then
-          Call integrate_div_flows(-1,-1,ix,ix,'B', & ! 13 
-               nx,ny,ns,target_offset,ismain,BoRiS, &
-               fniyap(1),feeyap(1),feiyap(1),fchyap(1),fetyap(1))
+          iy = -1 ! 13
+          Call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fniyap(1) = fniyap(1) + fnitmp
+          feeyap(1) = feeyap(1) + feetmp
+          feiyap(1) = feiyap(1) + feitmp
+          fchyap(1) = fchyap(1) + fchtmp
+          fetyap(1) = fetyap(1) + fettmp
         endif
       Enddo
     elseif (nnreg(0).eq.8) then
       Do ix = -1,nx
         if(mod(region(ix,ny,0),4).eq.2) then
-          Call integrate_div_flows(ny,ny,ix,ix,'T', & ! 14
-               nx,ny,ns,target_offset,ismain,BoRiS, &
-               fniyip(region(ix,ny,0)/4+1),feeyip(region(ix,ny,0)/4+1), &
-               feiyip(region(ix,ny,0)/4+1),fchyip(region(ix,ny,0)/4+1),fetyip(region(ix,ny,0)/4+1))
+          iy = ny ! 14
+          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fniyip(region(ix,ny,0)/4+1) = fniyip(region(ix,ny,0)/4+1) + fnitmp
+          feeyip(region(ix,ny,0)/4+1) = feeyip(region(ix,ny,0)/4+1) + feetmp
+          feiyip(region(ix,ny,0)/4+1) = feiyip(region(ix,ny,0)/4+1) + feitmp
+          fchyip(region(ix,ny,0)/4+1) = fchyip(region(ix,ny,0)/4+1) + fchtmp
+          fetyip(region(ix,ny,0)/4+1) = fetyip(region(ix,ny,0)/4+1) + fettmp          
         endif
         if(region(ix,ny,0).eq.3 .or. region(ix,ny,0).eq.8) then
-          Call integrate_div_flows(ny,ny,ix,ix,'T', & ! 15
-               nx,ny,ns,target_offset,ismain,BoRiS, &
-               fniyap(1),feeyap(1),feiyap(1),fchyap(1),fetyap(1))
+          iy = ny ! 15
+          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fniyap(1) = fniyap(1) + fnitmp
+          feeyap(1) = feeyap(1) + feetmp
+          feiyap(1) = feiyap(1) + feitmp
+          fchyap(1) = fchyap(1) + fchtmp
+          fetyap(1) = fetyap(1) + fettmp
         endif
         if(region(ix,-1,0).eq.3 .or. region(ix,-1,0).eq.8) then
-          Call integrate_div_flows(-1,-1,ix,ix,'B', & ! 16
-               nx,ny,ns,target_offset,ismain,BoRiS, &
-               fniyap(1),feeyap(1),feiyap(1),fchyap(1),fetyap(1))
+          iy = -1 ! 16
+          Call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fniyap(1) = fniyap(1) + fnitmp
+          feeyap(1) = feeyap(1) + feetmp
+          feiyap(1) = feiyap(1) + feitmp
+          fchyap(1) = fchyap(1) + fchtmp
+          fetyap(1) = fetyap(1) + fettmp
         endif
         if(region(ix,ny,0).eq.4 .or. region(ix,ny,0).eq.7) then
-          Call integrate_div_flows(ny,ny,ix,ix,'T', & ! 17
-               nx,ny,ns,target_offset,ismain,BoRiS, &
-               fniyap(2),feeyap(2),feiyap(2),fchyap(2),fetyap(2))
+          iy = ny ! 17
+          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fniyap(2) = fniyap(2) + fnitmp
+          feeyap(2) = feeyap(2) + feetmp
+          feiyap(2) = feiyap(2) + feitmp
+          fchyap(2) = fchyap(2) + fchtmp
+          fetyap(2) = fetyap(2) + fettmp
         endif
         if(region(ix,-1,0).eq.4 .or. region(ix,-1,0).eq.7) then
-          Call integrate_div_flows(-1,-1,ix,ix,'B', & !18 
-               nx,ny,ns,target_offset,ismain,BoRiS, &
-               fniyap(2),feeyap(2),feiyap(2),fchyap(2),fetyap(2))
+          iy = -1 ! 18
+          Call calc_fet(ix,iy,'B',-1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fniyap(2) = fniyap(2) + fnitmp
+          feeyap(2) = feeyap(2) + feetmp
+          feiyap(2) = feiyap(2) + feitmp
+          fchyap(2) = fchyap(2) + fchtmp
+          fetyap(2) = fetyap(2) + fettmp
         endif
       Enddo
     else if (nnreg(0).eq.2) then
       Do ix = -1,nx
         if(region(ix,ny,0).eq.2) then
-          Call integrate_div_flows(ny,ny,-1,nx,'T', & ! 19
-               nx,ny,ns,target_offset,ismain,BoRiS, &
-               fniyip(1),feeyip(1),feiyip(1),fchyip(1),fetyip(1))
+          iy = ny ! 19
+          Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+          fniyip(1) = fniyip(1) + fnitmp
+          feeyip(1) = feeyip(1) + feetmp
+          feiyip(1) = feiyip(1) + feitmp
+          fchyip(1) = fchyip(1) + fchtmp
+          fetyip(1) = fetyip(1) + fettmp          
         endif
       Enddo
     else
       Do ix = -1,nx
-        Call integrate_div_flows(ny,ny,-1,nx,'T', & ! 20
-             nx,ny,ns,target_offset,ismain,BoRiS, &
-             fniyip(1),feeyip(1),feiyip(1),fchyip(1),fetyip(1))
+        iy = ny ! 20
+        Call calc_fet(ix,iy,'T',1._R8,nx,ny,ns,ismain,BoRiS,fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+        fniyip(1) = fniyip(1) + fnitmp
+        feeyip(1) = feeyip(1) + feetmp
+        feiyip(1) = feiyip(1) + feitmp
+        fchyip(1) = fchyip(1) + fchtmp
+        fetyip(1) = fetyip(1) + fettmp          
       Enddo
     endif ! nnreg check
     
@@ -1813,7 +1931,7 @@ Contains
     Character(Len=1) :: SIDE
     ! Local vars
     Integer :: iy, ix, ix_adj, iy_adj, ix_off, is, ix_flux, iy_flux, idir
-    Real(kind=R8) :: kintmp, rpttmp, fac, fac_flux
+    Real(kind=R8) :: kintmp, rpttmp, fac, fac_flux, fettmp, fnitmp,feetmp,feitmp,fchtmp,pwrtmp
     Real(kind=R8) :: h(-1:nx,-1:ny)
     logical :: calc_max
     ! computation
@@ -1827,84 +1945,160 @@ Contains
 !    fet  = 0._R8; fni0 = 0._R8; fee0 = 0._R8; fei0 = 0._R8; fch0 = 0._R8
     fac_flux = 0._R8
     Do ix = ixstart, ixend
-!    YAPS HAVE OPPOSITE SIGN FOR ADDING FNIYAP ETC!!!!
-    Do iy = iystart, iyend
-      Select Case (SIDE)
-      Case ('l','L')
-        ix_flux = rightix(ix,iy) ! Index to cell with flux entering target
-        iy_flux = rightiy(ix,iy)        
-        ix_adj  = rightix(ix,iy) ! Index to cell adjacent
-        iy_adj  = rightiy(ix,iy)        
-        ix_off  = ix + toff      ! Used when calculating max of plasma quantities
-        fac = -1._R8             ! Used to flip flux sign only in power max calculation
-        idir = 0                 ! Index in flux variables (x vs y direction)
-        h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
-        fac_flux = 1._R8         ! Fluxes are summed as flux_sum += flux_fac*flux
-      Case ('r','R')
-        ix_flux = ix
-        iy_flux = iy
-        ix_adj = leftix(ix,iy)
-        iy_adj = leftiy(ix,iy)        
-        ix_off  = ix - toff
-        fac = 1._R8
-        idir = 0
-        h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
-        fac_flux = 1._R8
-      Case ('t','T')
-        ix_flux = ix
-        iy_flux = iy
-        ix_adj = bottomix(ix,iy)
-        iy_adj = bottomiy(ix,iy)
-        idir = 1
-        h(-1:nx,-1:ny) = hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
-        fac_flux = 1._R8
-      Case ('b','B')        
-        ix_flux = topix(ix,iy)
-        iy_flux = topiy(ix,iy)
-        ix_adj = topix(ix,iy)
-        iy_adj = topiy(ix,iy)
-        idir = 1
-        h(-1:nx,-1:ny) = hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
-        fac_flux = -1._R8
-      Case Default
-        Call xerrab('Unknown SIDE in integrate_div_flows')
-      End Select
-      fni0 = fni0 + fac_flux*fna(ix_flux,iy_flux,idir,ismain)
-      fee0 = fee0 + fac_flux*fhe(ix_flux,iy_flux,idir)
-      fei0 = fei0 + fac_flux*fhi(ix_flux,iy_flux,idir)
-      fch0 = fch0 + fac_flux*fch(ix_flux,iy_flux,idir)
-      ! To be replaced with call to calc_fht
-      fet = fhe(ix_flux,iy_flux,idir) + fac_flux*fhi(ix_flux,iy_flux,idir) + fac_flux*fhi_ext(ix_flux,iy_flux,idir)
-      do is=0,ns-1
-        fet = fet + fac_flux*fhm(ix_flux,iy_flux,idir,is)*(1.0_R8-BoRiS) + fac_flux*fhp(ix_flux,iy_flux,idir,is)
-      enddo
-      do is=0,ns_ext-1
-        kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+ &
-             ua_ext(ix_adj,iy_adj,is)**2*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
-        rpttmp = (pt_ext(ix,iy,is)*h(ix_adj,iy_adj)+pt_ext(ix_adj,iy_adj,is)*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
-        fet = fet + fac_flux*(rpttmp*ev + kintmp*(1.0_R8-BoRiS))*fa_ext(ix_flux,iy_flux,idir,is)
-      enddo
-      if (calc_max) Then
+      Do iy = iystart, iyend
         Select Case (SIDE)
+        Case ('l','L')
+          ix_flux = rightix(ix,iy) ! Index to cell with flux entering target
+          iy_flux = rightiy(ix,iy)        
+          ix_adj  = rightix(ix,iy) ! Index to cell adjacent
+          iy_adj  = rightiy(ix,iy)        
+          ix_off  = ix + toff      ! Used when calculating max of plasma quantities
+          fac = -1._R8             ! Used to flip flux sign only in power max calculation
+          idir = 0                 ! Index in flux variables (x vs y direction)
+          h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
+          fac_flux = 1._R8         ! Fluxes are summed as flux_sum += flux_fac*flux
+        Case ('r','R')
+          ix_flux = ix
+          iy_flux = iy
+          ix_adj = leftix(ix,iy)
+          iy_adj = leftiy(ix,iy)        
+          ix_off  = ix - toff
+          fac = 1._R8
+          idir = 0
+          h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
+          fac_flux = 1._R8
         Case ('t','T')
-          Call xerrab('SIDE T untested for max quantities integrate_div_flows')
-        Case ('b','B')
-          Call xerrab('SIDE B untested for max quantities integrate_div_flows')
+          ix_flux = ix
+          iy_flux = iy
+          ix_adj = bottomix(ix,iy)
+          iy_adj = bottomiy(ix,iy)
+          idir = 1
+          h(-1:nx,-1:ny) = hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
+          fac_flux = 1._R8
+        Case ('b','B')        
+          ix_flux = topix(ix,iy)
+          iy_flux = topiy(ix,iy)
+          ix_adj = topix(ix,iy)
+          iy_adj = topiy(ix,iy)
+          idir = 1
+          h(-1:nx,-1:ny) = hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
+          fac_flux = -1._R8
+        Case Default
+          Call xerrab('Unknown SIDE in integrate_div_flows')
         End Select
-
-        pwm = max(pwm, fac*fet/gs(ix_flux,iy_flux,idir))
-        if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) Then
-          tpm = max(tpm, target_temp(xymap(ix,iy),1))
+      
+        call calc_fet(ix,iy,SIDE,fac_flux, &
+             nx,ny,ns,ismain,BoRiS, &
+             fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp)
+        
+        fni0 = fni0 + fnitmp
+        fee0 = fee0 + feetmp
+        fei0 = fei0 + feitmp
+        fch0 = fch0 + fchtmp
+        ! To be replaced with call to calc_fet
+        fettmp = fhe(ix_flux,iy_flux,idir) + fac_flux*fhi(ix_flux,iy_flux,idir) + fac_flux*fhi_ext(ix_flux,iy_flux,idir)
+        do is=0,ns-1
+          fettmp = fettmp + fac_flux*fhm(ix_flux,iy_flux,idir,is)*(1.0_R8-BoRiS) + fac_flux*fhp(ix_flux,iy_flux,idir,is)
+        enddo
+        do is=0,ns_ext-1
+          kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+ &
+               ua_ext(ix_adj,iy_adj,is)**2*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
+          rpttmp = (pt_ext(ix,iy,is)*h(ix_adj,iy_adj)+pt_ext(ix_adj,iy_adj,is)*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
+          fettmp = fettmp + fac_flux*(rpttmp*ev + kintmp*(1.0_R8-BoRiS))*fa_ext(ix_flux,iy_flux,idir,is)
+        enddo
+        fet = fet + fettmp
+        if (calc_max) Then
+          Select Case (SIDE)
+          Case ('t','T')
+            Call xerrab('SIDE T untested for max quantities integrate_div_flows')
+          Case ('b','B')
+            Call xerrab('SIDE B untested for max quantities integrate_div_flows')
+          End Select
+          
+          pwm = max(pwm, fac*fettmp/gs(ix_flux,iy_flux,idir))
+          if (bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and. xymap(ix,iy).ne.0) Then
+            tpm = max(tpm, target_temp(xymap(ix,iy),1))
+          Endif
+          nem = max(nem, ne(ix_off,iy))
+          tem = max(tem, te(ix_off,iy))
+          tim = max(tim, ti(ix_off,iy))
+          pom = max(pom, po(ix_off,iy))
         Endif
-        nem = max(nem, ne(ix_off,iy))
-        tem = max(tem, te(ix_off,iy))
-        tim = max(tim, ti(ix_off,iy))
-        pom = max(pom, po(ix_off,iy))
-      Endif
+      Enddo
     Enddo
-  Enddo
     
   End Subroutine integrate_div_flows
 
+
+  Subroutine calc_fet(ix,iy,SIDE,fac_flux, &
+       nx,ny,ns,ismain,BoRiS, &
+       fni0,fee0,fei0,fch0,fet,pwr)
+    use b2mod_plasma   , Only : fna, fhe, fhi, fch, fhm, fhp
+    use b2mod_indirect , Only : rightix, rightiy, bottomix, bottomiy, topix, topiy, leftix, leftiy
+    use b2mod_external , Only : fhi_ext, pt_ext, ua_ext, am_ext, ns_ext, fa_ext
+    use b2mod_constants , Only : ev, mp
+    Use b2mod_geo , Only : hx, hy, qz, gs
+    Implicit None
+    Integer, Intent(In) :: ix, iy
+    Integer, Intent(In) :: ismain, nx, ny, ns
+    Real(kind=R8), Intent(In) :: BoRiS, fac_flux
+    Real(kind=R8), Intent(Out) :: fni0, fee0, fei0, fch0, fet, pwr
+    Character(Len=1) :: SIDE
+    ! Local vars
+    Integer :: ix_adj, iy_adj, is, ix_flux, iy_flux, idir
+    Real(kind=R8) :: kintmp, rpttmp
+    Real(kind=R8) :: h(-1:nx,-1:ny)
+    ! computation
+    fet  = 0._R8; fni0 = 0._R8; fee0 = 0._R8; fei0 = 0._R8; fch0 = 0._R8
+    Select Case (SIDE)
+    Case ('l','L')
+      ix_flux = rightix(ix,iy) ! Index to cell with flux entering cell
+      iy_flux = rightiy(ix,iy)        
+      ix_adj  = rightix(ix,iy) ! Index to cell adjacent
+      iy_adj  = rightiy(ix,iy)        
+      idir = 0                 ! Index in flux variables (x vs y direction)
+      h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
+    Case ('r','R')
+      ix_flux = ix
+      iy_flux = iy
+      ix_adj = leftix(ix,iy)
+      iy_adj = leftiy(ix,iy)        
+      idir = 0
+      h(-1:nx,-1:ny) = hx(-1:nx,-1:ny)
+    Case ('t','T')
+      ix_flux = ix
+      iy_flux = iy
+      ix_adj = bottomix(ix,iy)
+      iy_adj = bottomiy(ix,iy)
+      idir = 1
+      h(-1:nx,-1:ny) = hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
+    Case ('b','B')        
+      ix_flux = topix(ix,iy)
+      iy_flux = topiy(ix,iy)
+      ix_adj = topix(ix,iy)
+      iy_adj = topiy(ix,iy)
+      idir = 1
+      h(-1:nx,-1:ny) = hy(-1:nx,-1:ny)*qz(-1:nx,-1:ny,1)
+    Case Default
+      Call xerrab('Unknown SIDE in calc_fet')
+    End Select
+    fni0 = fac_flux*fna(ix_flux,iy_flux,idir,ismain)
+    fee0 = fac_flux*fhe(ix_flux,iy_flux,idir)
+    fei0 = fac_flux*fhi(ix_flux,iy_flux,idir)
+    fch0 = fac_flux*fch(ix_flux,iy_flux,idir)
+    fet = fee0 + fei0 + fac_flux*fhi_ext(ix_flux,iy_flux,idir)
+    do is=0,ns-1
+      fet = fet + fac_flux*fhm(ix_flux,iy_flux,idir,is)*(1.0_R8-BoRiS) + fac_flux*fhp(ix_flux,iy_flux,idir,is)
+    enddo
+    do is=0,ns_ext-1
+      kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+ &
+           ua_ext(ix_adj,iy_adj,is)**2*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
+      rpttmp = (pt_ext(ix,iy,is)*h(ix_adj,iy_adj)+pt_ext(ix_adj,iy_adj,is)*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
+      fet = fet + fac_flux*(rpttmp*ev + kintmp*(1.0_R8-BoRiS))*fa_ext(ix_flux,iy_flux,idir,is)
+    enddo
+    pwr = Abs(fet)/gs(ix_flux,iy_flux,idir)
+
+  End Subroutine calc_fet
+    
   
 End Module b2mod_mwti
