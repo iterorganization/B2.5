@@ -4850,15 +4850,15 @@
 				<type>integer array, length NS * NBC</type>
 				<description>
 					specifying the type of density boundary condition for each segment and species (fastest varying index is species); makes use of CONPAR to specify additional information, as indicated
-						1 prescribe the value of the density, CONPAR(,,1) specifies the required density in m^-3
-						2 prescribe the gradient of the density, CONPAR(,,1) specifies the required density gradient in m^-4
-						3 sheath conditions, CONPAR(,,1) not used (zero gradient is used)
-						4 prescribe the value of the density, weakly a mixed boundary condition, CONPAR(,,1) specifies the required density in m^-3 and CONPAR(,,2) specifies the &quot;strength&quot; of the boundary condition
-						5 prescribe the particle flux per unit area, CONPAR(,,1) specifies the required particle flux density in m^-2 s^-1
-						6 prescribe the total particle flux for a constant density, CONPAR(,,1) specifies the particle flux in s -1
-						7 prescribe the density as a function of other plasma parameters [not yet available]
-						8 prescribe the total particle flux with constant flux density, CONPAR(,,1) specifies the particle flux in s -1
-						9 prescribe the decay length for the density, CONPAR(,,1) specifies the gradient length in m
+						 1 prescribe the value of the density, CONPAR(,,1) specifies the required density in m^-3
+						 2 prescribe the gradient of the density, CONPAR(,,1) specifies the required density gradient in m^-4
+						 3 sheath conditions, CONPAR(,,1) not used (zero gradient is used)
+						 4 prescribe the value of the density, weakly a mixed boundary condition, CONPAR(,,1) specifies the required density in m^-3 and CONPAR(,,2) specifies the &quot;strength&quot; of the boundary condition
+						 5 prescribe the particle flux per unit area, CONPAR(,,1) specifies the required particle flux density in m^-2 s^-1
+						 6 prescribe the total particle flux for a constant density, CONPAR(,,1) specifies the particle flux in s -1
+						 7 prescribe the density as a function of other plasma parameters [not yet available]
+						 8 prescribe the total particle flux with constant flux density, CONPAR(,,1) specifies the particle flux in s -1
+						 9 prescribe the decay length for the density, CONPAR(,,1) specifies the gradient length in m
 						10 leakage option for density, recommended for cases with drifts, CONPAR(,,1) specifies the leakage factor, &#178; in &#915; loss = &#178;C s,a n a
 						11 particle flux feedback boundary condition, CONPAR(,,1) not used, derived from CBSNA(0,IS,IREG). The species used must be declared using the b2stbc isfeedback switch.
 						12 particle density feedback boundary condition, as above, CONPAR(,,1) not used, derived from CBSNA(0,IS,IREG). The species used must be declared using the b2stbc isfeedback switch.
@@ -4884,15 +4884,15 @@
 				<type>integer array, length NS * NBC</type>
 				<description>
 					specifying the type of parallel momentum or velocity boundary condition for each segment and species (fastest varying index is species); makes use of MOMPAR to specify additional information, as indicated
-						1 prescribe the value of the parallel velocity, MOMPAR(,,1) specifies the parallel velocity in m.s^-1
-						2 prescribe the gradient of the parallel velocity, MOMPAR(,,1) specifies the parallel velocity gradient in s -1
-						3 sheath conditions, mach number as input, if MOMPAR(,,2) &lt; 2 1 , then the velocity is set to exactly MOMPAR(,,1)*C s, collective , otherwise the velocity is set to be at least MOMPAR(,,1) *C s, species
-						4 prescribe the value of the velocity, weakly a mixed boundary condition, MOMPAR(,,1) specifies the parallel velocity in m.s -1 and MOMPAR(,,2) specifies the &quot;strength&quot; of the boundary condition
-						5 prescribe the parallel momentum flux per unit area, MOMPAR(,,1) specifies the parallel momentum flux density in N.m -2
-						6 prescribe the total parallel momentum flux for a constant parallel velocity [not yet available]
-						7 prescribe the parallel momentum as a function of other plasma parameters [not yet available]
-						8 special : limited shear, imposes zero gradient for the Mach number. [[[Eventually intended to have MOMPAR(,,1) specify the gradient of the Mach number in m -1 ]]]
-						9 prescribe the total parallel momentum flux with constant flux density, MOMPAR(,,1) specifies the parallel momentum flux in N
+						 1 prescribe the value of the parallel velocity, MOMPAR(,,1) specifies the parallel velocity in m.s^-1
+						 2 prescribe the gradient of the parallel velocity, MOMPAR(,,1) specifies the parallel velocity gradient in s^-1
+						 3 sheath conditions, mach number as input, if MOMPAR(,,2) &lt; 2 1 , then the velocity is set to exactly MOMPAR(,,1)*Cs, collective , otherwise the velocity is set to be at least MOMPAR(,,1) *C_s, species
+						 4 prescribe the value of the velocity, weakly a mixed boundary condition, MOMPAR(,,1) specifies the parallel velocity in m.s -1 and MOMPAR(,,2) specifies the &quot;strength&quot; of the boundary condition
+						 5 prescribe the parallel momentum flux per unit area, MOMPAR(,,1) specifies the parallel momentum flux density in N.m -2
+						 6 prescribe the total parallel momentum flux for a constant parallel velocity [not yet available]
+						 7 prescribe the parallel momentum as a function of other plasma parameters [not yet available]
+						 8 special : limited shear, imposes zero gradient for the Mach number. [[[Eventually intended to have MOMPAR(,,1) specify the gradient of the Mach number in m -1 ]]]
+						 9 prescribe the total parallel momentum flux with constant flux density, MOMPAR(,,1) specifies the parallel momentum flux in N
 						10 prescribe the decay length for the parallel momentum, MOMPAR(,,1) specifies the decay length in m
 						11 Rozhansky viscosity condition for the parallel momentum, MOMPAR(,,1) is not used
 						12 Condition from b2stbc spb for the parallel momentum
@@ -4908,20 +4908,19 @@
 				<default></default>
 				<type>integer array, length NBC</type>
 				<description>
-					specifying the type of electron energy or temperature boundary condition for each segment; makes use of ENEPAR to specify additional information, as indicated
-						1 prescribe the value of the electron temperature, ENEPAR(,1) specifies the temperature in eV
-						2 prescribe the gradient of the electron temperature, ENEPAR(,1) specifies the temperature gradient in eV.m -1
-						3 sheath conditions, electron energy transmission, ENEPAR(,1) specifies an additional contribution to the energy transmission coefficient in addition to that of the potential difference [the sound speed used depends on settings of MOMPAR(,ISMAIN,2) and the b2stbc sound model switch]
-						4 prescribe the value of the electron temperature, weakly a mixed boundary condition, ENEPAR(,1) specifies the temperature in eV and ENEPAR(,2) specifies the &quot;strength&quot; of the boundary condition
-						5 prescribe the electron energy flux per unit area, ENEPAR(,1) specifies the energy flux density in W.m -2
-						6 prescribe the total electron energy flux for a constant electron temperature, ENEPAR(,1) specifies the energy flux in W (no longer supported, use types [16] or [17] instead)
-						7 prescribe the electron temperature as a function of other plasma parameters [not yet available]
-						8 prescribe the total electron heat flux with constant flux density, ENEPAR(,1) specifies the energy flux in W
-						9 prescribe the decay length for the electron temperature, ENEPAR(,1) specifies the decay length in m (can also use type [19] instead)
+					Specifying the type of electron energy or temperature boundary condition for each segment; makes use of ENEPAR to specify additional information, as indicated
+						 1 prescribe the value of the electron temperature, ENEPAR(,1) specifies the temperature in eV
+						 2 prescribe the gradient of the electron temperature, ENEPAR(,1) specifies the temperature gradient in eV.m -1
+						 3 sheath conditions, electron energy transmission, ENEPAR(,1) specifies an additional contribution to the energy transmission coefficient in addition to that of the potential difference [the sound speed used depends on settings of MOMPAR(,ISMAIN,2) and the b2stbc sound model switch]
+						 4 prescribe the value of the electron temperature, weakly a mixed boundary condition, ENEPAR(,1) specifies the temperature in eV and ENEPAR(,2) specifies the &quot;strength&quot; of the boundary condition
+						 5 prescribe the electron energy flux per unit area, ENEPAR(,1) specifies the energy flux density in W.m -2
+						 6 prescribe the total electron energy flux for a constant electron temperature, ENEPAR(,1) specifies the energy flux in W (no longer supported, use types [16] or [17] instead)
+						 7 prescribe the electron temperature as a function of other plasma parameters [not yet available]
+						 8 prescribe the total electron heat flux with constant flux density, ENEPAR(,1) specifies the energy flux in W
+						 9 prescribe the decay length for the electron temperature, ENEPAR(,1) specifies the decay length in m (can also use type [19] instead)
 						10 feedback option for core, ENEPAR(,1) not used, derived from cbshe(0,coreregno)
 						11 not used
-						12 sheath conditions, electron energy transmission coefficient, ENEPAR(,1) specifies an energy transmission
-						factor, &#948; e in Q e = &#948; e &#915; e T e
+						12 sheath conditions, electron energy transmission coefficient, ENEPAR(,1) specifies an energy transmission factor, &#948; e in Q e = &#948; e &#915; e T e
 						13 prescribe the electron energy flux per unit area proportional to temperature, ENEPAR(,1) specifies the energy flux density per temperature in W.m -2 .J -1 (the temperature here in J)
 						14 leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, &#178; in &#915; loss = &#178;C s, collective n e T e
 						15 not used
@@ -4941,15 +4940,15 @@
 				<type>integer array, length NBC</type>
 				<description>
 					specifying the type of ion energy or temperature boundary condition for each segment; makes use of ENIPAR to specify additional information, as indicated
-						1 prescribe the value of the ion temperature, ENIPAR(,1) specifies the temperature in eV
-						2 prescribe the gradient of the ion temperature, ENIPAR(,1) specifies the temperature gradient in eV.m -1
-						3 sheath conditions, ion energy transmission, ENIPAR(,1) specifies the contribution to the energy transmission coefficient [the sound speed used depends on settings of MOMPAR(,ISMAIN,2) and the b2stbc sound model switch]
-						4 prescribe the value of the ion temperature, weakly a mixed boundary condition, ENIPAR(,1) specifies the temperature in eV and ENIPAR(,2) specifies the &quot;strength&quot; of the boundary condition
-						5 prescribe the ion energy flux per unit area, ENIPAR(,1) specifies the energy flux density in W.m -2
-						6 prescribe the total ion energy flux for a constant ion temperature, ENIPAR(,1) specifies the energy flux in W (no longer supported, use types [16] or [17] instead)
-						7 prescribe the ion temperature as a function of other plasma parameters [not yet available]
-						8 prescribe the total ion heat flux with constant flux density, ENIPAR(,1) specifies the energy flux in W
-						9 prescribe the decay length for the ion temperature, ENIPAR(,1) specifies the decay length in m (can also use type [19] instead)
+						 1 prescribe the value of the ion temperature, ENIPAR(,1) specifies the temperature in eV
+						 2 prescribe the gradient of the ion temperature, ENIPAR(,1) specifies the temperature gradient in eV.m -1
+						 3 sheath conditions, ion energy transmission, ENIPAR(,1) specifies the contribution to the energy transmission coefficient [the sound speed used depends on settings of MOMPAR(,ISMAIN,2) and the b2stbc sound model switch]
+						 4 prescribe the value of the ion temperature, weakly a mixed boundary condition, ENIPAR(,1) specifies the temperature in eV and ENIPAR(,2) specifies the &quot;strength&quot; of the boundary condition
+						 5 prescribe the ion energy flux per unit area, ENIPAR(,1) specifies the energy flux density in W.m -2
+						 6 prescribe the total ion energy flux for a constant ion temperature, ENIPAR(,1) specifies the energy flux in W (no longer supported, use types [16] or [17] instead)
+						 7 prescribe the ion temperature as a function of other plasma parameters [not yet available]
+						 8 prescribe the total ion heat flux with constant flux density, ENIPAR(,1) specifies the energy flux in W
+						 9 prescribe the decay length for the ion temperature, ENIPAR(,1) specifies the decay length in m (can also use type [19] instead)
 						10 feedback option for core, ENIPAR(,1) not used, derived from cbshi(0,ISMAIN,coreregno)
 						11 sheath conditions, ion P energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, &#948; i in Q i = &#948; i T i a n a C s,a
 						12 sheath conditions, ion P energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, &#948; i in Q i = &#948; i T i a &#915; a
@@ -4976,15 +4975,15 @@
 				<type>integer array, length NBC</type>
 				<description>
 					specifying the type of electric potential or current boundary condition for each segment; makes use of POTPAR to specify additional information, as indicated
-						1 prescribe the value of the potential, POTPAR(,1) specifies the potential in V
-						2 prescribe the gradient of the potential, POTPAR(,1) specifies the potential gradient in V.m -1
-						3 sheath conditions, POTPAR(,2) used for biasing [see code for details]
-						4 prescribe the value of the potential weakly a mixed boundary condition, POTPAR(,1) specifies the potential in V and POTPAR(,2) specifies the &quot;strength&quot; of the boundary condition
-						5 prescribe the current flux density per unit area, POTPAR(,1) specifies the electric current flux density in A.m -2
-						6 prescribe the total current flux density for a constant potential [not yet available]
-						7 prescribe the potential as a function of other plasma parameters [not yet available]
-						8 prescribe the total electric current with constant flux density, POTPAR(,1) specifies the electric current in A
-						9 prescribe the decay length for the potential, POTPAR(,1) specifies the decay length in m
+						 1 prescribe the value of the potential, POTPAR(,1) specifies the potential in V
+						 2 prescribe the gradient of the potential, POTPAR(,1) specifies the potential gradient in V.m -1
+						 3 sheath conditions, POTPAR(,2) used for biasing [see code for details]
+						 4 prescribe the value of the potential weakly a mixed boundary condition, POTPAR(,1) specifies the potential in V and POTPAR(,2) specifies the &quot;strength&quot; of the boundary condition
+						 5 prescribe the current flux density per unit area, POTPAR(,1) specifies the electric current flux density in A.m -2
+						 6 prescribe the total current flux density for a constant potential [not yet available]
+						 7 prescribe the potential as a function of other plasma parameters [not yet available]
+						 8 prescribe the total electric current with constant flux density, POTPAR(,1) specifies the electric current in A
+						 9 prescribe the decay length for the potential, POTPAR(,1) specifies the decay length in m
 						10 feedback option for core [not yet tested!!!!!!!!!] (based on using cbsch(0,coreregno))
 						11 sheath conditions, electron energy transmission from b2stbc spb POTPAR(,2) specifies the bias potential in V
 						12 Imposes the currents due to drifts for the South core boundary. Must be used in conjunction with the switch setting istyle cur contr on S and N=2
