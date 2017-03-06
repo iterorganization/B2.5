@@ -84,7 +84,7 @@ Contains
     real (kind=R8) :: &
          tmne(1),tmte(1),tmti(1),tmvol
 
-    integer iy, ix, ic, is, ixtl, ixtr, jsep
+    integer iy, ix, ic, ixtl, ixtr, jsep
     integer jxi, jxa, target_offset, ix_off
     integer iyastrt, iyistrt, iylstrt, iyrstrt, iytlstrt, iytrstrt, &
          iyaend,  iyiend,  iylend,  iyrend,  iytlend,  iytrend, &
@@ -116,11 +116,6 @@ Contains
          nybl, nybr, nytl, nytr, nya, nyi, nc
     data ncall/0/,target_offset/1/
 
-    ! Statement functions
-    real (kind=R8) :: &
-         hy1
-    hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)            
-
     !-----------------------------------------------------------------------
     !.computation
 
@@ -137,32 +132,23 @@ Contains
       !   ..test state
       call get_jsep(nx,ny,jxi,jxa,jsep)
       call ipgeti ('b2mwti_target_offset',target_offset)
-      call xertst (0.le.target_offset.and.target_offset.le.1, &
-           'faulty internal parameter target_offset')
+      call xertst (0.le.target_offset.and.target_offset.le.1,'faulty internal parameter target_offset')
       write(*,*) 'target_offset ', target_offset
-      call output_ds(crx,cry,nx,ny, -1,+target_offset, &
-           jsep,iylstrt,iylend,'../dsl')
-      call output_ds(crx,cry,nx,ny,jxi,0, &
-           jsep,iyistrt,iyiend,'../dsi')
-      call output_ds(crx,cry,nx,ny,jxa,0, &
-           jsep,iyastrt,iyaend,'../dsa')
-      call output_ds(crx,cry,nx,ny, nx,-target_offset, &
-           jsep,iyrstrt,iyrend,'../dsr')
+      call output_ds(crx,cry,nx,ny, -1,+target_offset,jsep,iylstrt,iylend,'../dsl')
+      call output_ds(crx,cry,nx,ny,jxi,0,jsep,iyistrt,iyiend,'../dsi')
+      call output_ds(crx,cry,nx,ny,jxa,0,jsep,iyastrt,iyaend,'../dsa')
+      call output_ds(crx,cry,nx,ny, nx,-target_offset,jsep,iyrstrt,iyrend,'../dsr')
       if (nnreg(0).eq.8) then
         ixtl = 0
-        do while (rightix(ixtl,max(topcut(1),topcut(2))).ne.nx+1 &
-             .and.ixtl.lt.nx)
+        do while (rightix(ixtl,max(topcut(1),topcut(2))).ne.nx+1.and.ixtl.lt.nx)
           ixtl=ixtl+1
         enddo
         ixtr = ixtl
-        do while (leftix(ixtr,max(topcut(1),topcut(2))).ne.-2 .and. &
-             ixtr.lt.nx)
+        do while (leftix(ixtr,max(topcut(1),topcut(2))).ne.-2 .and. ixtr.lt.nx)
           ixtr=ixtr+1
         enddo
-        call output_ds(crx,cry,nx,ny,ixtl,-target_offset, &
-             jsep,iytlstrt,iytlend,'../dstl')
-        call output_ds(crx,cry,nx,ny,ixtr,+target_offset, &
-             jsep,iytrstrt,iytrend,'../dstr')
+        call output_ds(crx,cry,nx,ny,ixtl,-target_offset,jsep,iytlstrt,iytlend,'../dstl')
+        call output_ds(crx,cry,nx,ny,ixtr,+target_offset,jsep,iytrstrt,iytrend,'../dstr')
         nytl = iytlend - iytlstrt + 1
         nytr = iytrend - iytrstrt + 1
       else
@@ -177,14 +163,12 @@ Contains
       ! Target areas
       open(99,file='../dsL')
       do iy=-1,ny
-        if(region(-1,iy,0).ne.0) &
-             write(99,*) gs(rightix(-1,iy),rightiy(-1,iy),0)
+        if(region(-1,iy,0).ne.0) write(99,*) gs(rightix(-1,iy),rightiy(-1,iy),0)
       enddo
       close(99)
       open(99,file='../dsR')
       do iy=-1,ny
-        if(region(nx,iy,0).ne.0) &
-             write(99,*) gs(nx,iy,0)
+        if(region(nx,iy,0).ne.0) write(99,*) gs(nx,iy,0)
       enddo
       close(99)
       if (nnreg(0).eq.8) then
@@ -202,15 +186,12 @@ Contains
       ! Poloidal contact areas
       open(99,file='../dsLP')
       do iy=-1,ny
-        if(region(-1,iy,0).ne.0) &
-             write(99,*) gs(rightix(-1,iy),rightiy(-1,iy),0) &
-             *qc(rightix(-1,iy),rightiy(-1,iy))
+        if(region(-1,iy,0).ne.0) write(99,*) gs(rightix(-1,iy),rightiy(-1,iy),0)*qc(rightix(-1,iy),rightiy(-1,iy))
       enddo
       close(99)
       open(99,file='../dsRP')
       do iy=-1,ny
-        if(region(nx,iy,0).ne.0) &
-             write(99,*) gs(nx,iy,0)*qc(nx,iy)
+        if(region(nx,iy,0).ne.0) write(99,*) gs(nx,iy,0)*qc(nx,iy)
       enddo
       close(99)
       if (nnreg(0).eq.8) then
@@ -221,8 +202,7 @@ Contains
         close(99)
         open(99,file='../dsTRP')
         do iy=iytrstrt,iytrend
-          write(99,*) gs(rightix(ixtr,iy),rightiy(ixtr,iy),0) &
-               *qc(rightix(ixtr,iy),rightiy(ixtr,iy))
+          write(99,*) gs(rightix(ixtr,iy),rightiy(ixtr,iy),0)*qc(rightix(ixtr,iy),rightiy(ixtr,iy))
         enddo
         close(99)
       endif
@@ -241,6 +221,7 @@ Contains
       call xertst (0.le.itim, 'faulty parameter itim')
       call xertst (0.0_R8.le.tim, 'faulty parameter tim')
     endif
+    !
     !   ..compute change in plasma state
     !
     ntstep = ntstep + 1
@@ -509,52 +490,31 @@ Contains
     !
 #ifndef NO_CDF
     if(nnreg(0).ne.2) then
-      nesepi(1) = 0.5_R8 * &
-           (ne(-1+target_offset,jsep)+ &
-           ne(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
-      tesepi(1) = 0.5_R8/ev * &
-           (te(-1+target_offset,jsep)+ &
-           te(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
-      tisepi(1) = 0.5_R8/ev * &
-           (ti(-1+target_offset,jsep)+ &
-           ti(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
-      if(xymap(-1,jsep).gt.0 .and. &
-           xymap(topix(-1,jsep),topiy(-1,jsep)).gt.0) then
-        tpsepi(1) = 0.5_R8 * &
-             (target_temp(xymap(-1,jsep),1)+ &
-             target_temp(xymap(topix(-1,jsep),topiy(-1,jsep)),1))
+      nesepi(1) = 0.5_R8 * (ne(-1+target_offset,jsep)+ne(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
+      tesepi(1) = 0.5_R8/ev * (te(-1+target_offset,jsep) + te(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
+      tisepi(1) = 0.5_R8/ev * (ti(-1+target_offset,jsep) + ti(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
+      if(xymap(-1,jsep).gt.0 .and. xymap(topix(-1,jsep),topiy(-1,jsep)).gt.0) then
+        tpsepi(1) = 0.5_R8 * (target_temp(xymap(-1,jsep),1) + target_temp(xymap(topix(-1,jsep),topiy(-1,jsep)),1))
       else
         tpsepi(1) = 0.0_R8
       endif
-      posepi(1) = 0.5_R8 * &
-           (po(-1+target_offset,jsep)+ &
-           po(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
+      posepi(1) = 0.5_R8 * (po(-1+target_offset,jsep) + po(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep)))
     else
-      nesepi(1) = &
-           ne(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
-      tesepi(1) = 1.0_R8/ev * &
-           te(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
-      tisepi(1) = 1.0_R8/ev * &
-           ti(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
+      nesepi(1) = ne(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
+      tesepi(1) = 1.0_R8/ev * te(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
+      tisepi(1) = 1.0_R8/ev * ti(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
       if(xymap(topix(-1,jsep),topiy(-1,jsep)).gt.0) then
-        tpsepi(1) = &
-             target_temp(xymap(topix(-1,jsep),topiy(-1,jsep)),1)
+        tpsepi(1) = target_temp(xymap(topix(-1,jsep),topiy(-1,jsep)),1)
       else
         tpsepi(1) = 0.0_R8
       endif
-      posepi(1) = &
-           po(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
+      posepi(1) = po(topix(-1+target_offset,jsep),topiy(-1+target_offset,jsep))
     endif
-    nesepm(1) = 0.5_R8 * (ne(jxa,jsep)+ &
-         ne(topix(jxa,jsep),topiy(jxa,jsep)))
-    tesepm(1) = 0.5_R8 * (te(jxa,jsep)+ &
-         te(topix(jxa,jsep),topiy(jxa,jsep)))/ev
-    tisepm(1) = 0.5_R8 * (ti(jxa,jsep)+ &
-         ti(topix(jxa,jsep),topiy(jxa,jsep)))/ev
-    posepm(1) = 0.5_R8 * (po(jxa,jsep)+ &
-         po(topix(jxa,jsep),topiy(jxa,jsep)))
-    dnsepm(1) = 0.5_R8 * (dna0(jxa,jsep,ismain)+ &
-         dna0(topix(jxa,jsep),topiy(jxa,jsep),ismain))
+    nesepm(1) = 0.5_R8 * (ne(jxa,jsep)+ ne(topix(jxa,jsep),topiy(jxa,jsep)))
+    tesepm(1) = 0.5_R8 * (te(jxa,jsep)+ te(topix(jxa,jsep),topiy(jxa,jsep)))/ev
+    tisepm(1) = 0.5_R8 * (ti(jxa,jsep)+ ti(topix(jxa,jsep),topiy(jxa,jsep)))/ev
+    posepm(1) = 0.5_R8 * (po(jxa,jsep)+ po(topix(jxa,jsep),topiy(jxa,jsep)))
+    dnsepm(1) = 0.5_R8 * (dna0(jxa,jsep,ismain)+ dna0(topix(jxa,jsep),topiy(jxa,jsep),ismain))
     dpsepm(1) = 0.5_R8 * ( &
          dpa0(jxa,jsep,ismain0)*( &
          rza(jxa,jsep,ismain0)*te(jxa,jsep)+ti(jxa,jsep))+ &
@@ -562,88 +522,52 @@ Contains
          rza(topix(jxa,jsep),topiy(jxa,jsep),ismain0)* &
          te(topix(jxa,jsep),topiy(jxa,jsep))+ &
          ti(topix(jxa,jsep),topiy(jxa,jsep))))
-    kesepm(1) = 0.5_R8 * (hce0(jxa,jsep)/ne(jxa,jsep)+ &
-         hce0(topix(jxa,jsep),topiy(jxa,jsep))/ &
+    kesepm(1) = 0.5_R8 * (hce0(jxa,jsep)/ne(jxa,jsep)+ hce0(topix(jxa,jsep),topiy(jxa,jsep))/ &
          ne(topix(jxa,jsep),topiy(jxa,jsep)))
-    kisepm(1) = 0.5_R8 * (hci0(jxa,jsep)/ni(jxa,jsep,0)+ &
-         hci0(topix(jxa,jsep),topiy(jxa,jsep))/ &
+    kisepm(1) = 0.5_R8 * (hci0(jxa,jsep)/ni(jxa,jsep,0) + hci0(topix(jxa,jsep),topiy(jxa,jsep))/ &
          ni(topix(jxa,jsep),topiy(jxa,jsep),0))
-    vxsepm(1) = 0.5_R8 * (vla0(jxa,jsep,0,ismain)+ &
-         vla0(topix(jxa,jsep),topiy(jxa,jsep),0,ismain))
-    vysepm(1) = 0.5_R8 * (vla0(jxa,jsep,1,ismain)+ &
-         vla0(topix(jxa,jsep),topiy(jxa,jsep),1,ismain))
+    vxsepm(1) = 0.5_R8 * (vla0(jxa,jsep,0,ismain)+ vla0(topix(jxa,jsep),topiy(jxa,jsep),0,ismain))
+    vysepm(1) = 0.5_R8 * (vla0(jxa,jsep,1,ismain)+ vla0(topix(jxa,jsep),topiy(jxa,jsep),1,ismain))
     vssepm(1) = 0.5_R8 * ( &
          vsa0(jxa,jsep,ismain)/(mp*am(ismain)*na(jxa,jsep,ismain))+ &
          vsa0(topix(jxa,jsep),topiy(jxa,jsep),ismain)/ &
          (mp*am(ismain)*na(topix(jxa,jsep),topiy(jxa,jsep),ismain)))
     if(nnreg(0).ne.2) then
-      nesepa(1) = 0.5_R8 * &
-           (ne(nx-target_offset,jsep)+ &
-           ne(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
-      tesepa(1) = 0.5_R8/ev * &
-           (te(nx-target_offset,jsep)+ &
-           te(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
-      tisepa(1) = 0.5_R8/ev * &
-           (ti(nx-target_offset,jsep)+ &
-           ti(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
-      if(xymap(nx,jsep).gt.0 .and. &
-           xymap(topix(nx,jsep),topiy(nx,jsep)).ge.0) then
-        tpsepa(1) = 0.5_R8 * &
-             (target_temp(xymap(nx,jsep),1)+ &
-             target_temp(xymap(topix(nx,jsep),topiy(nx,jsep)),1))
+      nesepa(1) = 0.5_R8 * (ne(nx-target_offset,jsep)+ ne(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
+      tesepa(1) = 0.5_R8/ev * (te(nx-target_offset,jsep)+ te(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
+      tisepa(1) = 0.5_R8/ev * (ti(nx-target_offset,jsep)+ ti(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
+      if(xymap(nx,jsep).gt.0 .and. xymap(topix(nx,jsep),topiy(nx,jsep)).ge.0) then
+        tpsepa(1) = 0.5_R8 * (target_temp(xymap(nx,jsep),1)+ target_temp(xymap(topix(nx,jsep),topiy(nx,jsep)),1))
       else
         tpsepa(1) = 0.0_R8
       endif
-      posepa(1) = 0.5_R8 * &
-           (po(nx-target_offset,jsep)+ &
-           po(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
+      posepa(1) = 0.5_R8 *(po(nx-target_offset,jsep)+po(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep)))
     else
-      nesepa(1) = &
-           ne(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
-      tesepa(1) = 1.0_R8/ev * &
-           te(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
-      tisepa(1) = 1.0_R8/ev * &
-           ti(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
+      nesepa(1) = ne(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
+      tesepa(1) = 1.0_R8/ev*te(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
+      tisepa(1) = 1.0_R8/ev*ti(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
       if(xymap(topix(nx,jsep),topiy(nx,jsep)).gt.0) then
-        tpsepa(1) = &
-             target_temp(xymap(topix(nx,jsep),topiy(nx,jsep)),1)
+        tpsepa(1) = target_temp(xymap(topix(nx,jsep),topiy(nx,jsep)),1)
       else
         tpsepa(1) = 0.0
       endif
-      posepa(1) = &
-           po(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
+      posepa(1) = po(topix(nx-target_offset,jsep),topiy(nx-target_offset,jsep))
     endif
     if(nncut.eq.2) then
-      nesepa(2) = 0.5_R8 * (ne(ixtr+target_offset,jsep)+ &
-           ne(topix(ixtr+target_offset,jsep), &
-           topiy(ixtr+target_offset,jsep)))
-      tesepa(2) = 0.5_R8 * (te(ixtr+target_offset,jsep)+ &
-           te(topix(ixtr+target_offset,jsep), &
-           topiy(ixtr+target_offset,jsep)))/ev
-      tisepa(2) = 0.5_R8 * (ti(ixtr+target_offset,jsep)+ &
-           ti(topix(ixtr+target_offset,jsep), &
-           topiy(ixtr+target_offset,jsep)))/ev
-      if(xymap(ixtr,jsep).gt.0 .and. &
-           xymap(topix(ixtr,jsep),topiy(ixtr,jsep)).gt.0) then
-        tpsepa(2) = 0.5_R8 * &
-             (target_temp(xymap(ixtr,jsep),1)+ &
-             target_temp(xymap(topix(ixtr,jsep),topiy(ixtr,jsep)),1))
+      nesepa(2) = 0.5_R8 * (ne(ixtr+target_offset,jsep)+ne(topix(ixtr+target_offset,jsep),topiy(ixtr+target_offset,jsep)))
+      tesepa(2) = 0.5_R8 * (te(ixtr+target_offset,jsep)+te(topix(ixtr+target_offset,jsep),topiy(ixtr+target_offset,jsep)))/ev
+      tisepa(2) = 0.5_R8 * (ti(ixtr+target_offset,jsep)+ti(topix(ixtr+target_offset,jsep),topiy(ixtr+target_offset,jsep)))/ev
+      if(xymap(ixtr,jsep).gt.0 .and. xymap(topix(ixtr,jsep),topiy(ixtr,jsep)).gt.0) then
+        tpsepa(2) = 0.5_R8 *(target_temp(xymap(ixtr,jsep),1)+target_temp(xymap(topix(ixtr,jsep),topiy(ixtr,jsep)),1))
       else
         tpsepa(2) = 0.0_R8
       endif
-      posepa(2) = 0.5_R8 * (po(ixtr+target_offset,jsep)+ &
-           po(topix(ixtr+target_offset,jsep), &
-           topiy(ixtr+target_offset,jsep)))
-      nesepm(2) = 0.5_R8 * (ne(jxi,jsep)+ &
-           ne(topix(jxi,jsep),topiy(jxi,jsep)))
-      tesepm(2) = 0.5_R8 * (te(jxi,jsep)+ &
-           te(topix(jxi,jsep),topiy(jxi,jsep)))/ev
-      tisepm(2) = 0.5_R8 * (ti(jxi,jsep)+ &
-           ti(topix(jxi,jsep),topiy(jxi,jsep)))/ev
-      posepm(2) = 0.5_R8 * (po(jxi,jsep)+ &
-           po(topix(jxi,jsep),topiy(jxi,jsep)))
-      dnsepm(2) = 0.5_R8 * (dna0(jxi,jsep,ismain)+ &
-           dna0(topix(jxi,jsep),topiy(jxi,jsep),ismain))
+      posepa(2) = 0.5_R8 * (po(ixtr+target_offset,jsep)+ po(topix(ixtr+target_offset,jsep),topiy(ixtr+target_offset,jsep)))
+      nesepm(2) = 0.5_R8 * (ne(jxi,jsep)+ ne(topix(jxi,jsep),topiy(jxi,jsep)))
+      tesepm(2) = 0.5_R8 * (te(jxi,jsep)+ te(topix(jxi,jsep),topiy(jxi,jsep)))/ev
+      tisepm(2) = 0.5_R8 * (ti(jxi,jsep)+ ti(topix(jxi,jsep),topiy(jxi,jsep)))/ev
+      posepm(2) = 0.5_R8 * (po(jxi,jsep)+ po(topix(jxi,jsep),topiy(jxi,jsep)))
+      dnsepm(2) = 0.5_R8 * (dna0(jxi,jsep,ismain)+ dna0(topix(jxi,jsep),topiy(jxi,jsep),ismain))
       dpsepm(2) = 0.5_R8 * ( &
            dpa0(jxi,jsep,ismain0)*( &
            rza(jxi,jsep,ismain0)*te(jxi,jsep)+ti(jxi,jsep))+ &
@@ -651,40 +575,23 @@ Contains
            rza(topix(jxi,jsep),topiy(jxi,jsep),ismain0)* &
            te(topix(jxi,jsep),topiy(jxi,jsep))+ &
            ti(topix(jxi,jsep),topiy(jxi,jsep))))
-      kesepm(2) = 0.5_R8 * (hce0(jxi,jsep)/ne(jxi,jsep)+ &
-           hce0(topix(jxi,jsep),topiy(jxi,jsep))/ &
-           ne(topix(jxi,jsep),topiy(jxi,jsep)))
-      kisepm(2) = 0.5_R8 * (hci0(jxi,jsep)/ni(jxi,jsep,0)+ &
-           hci0(topix(jxi,jsep),topiy(jxi,jsep))/ &
+      kesepm(2) = 0.5_R8 * (hce0(jxi,jsep)/ne(jxi,jsep)+hce0(topix(jxi,jsep),topiy(jxi,jsep))/ne(topix(jxi,jsep),topiy(jxi,jsep)))
+      kisepm(2) = 0.5_R8 * (hci0(jxi,jsep)/ni(jxi,jsep,0)+ hci0(topix(jxi,jsep),topiy(jxi,jsep))/ &
            ni(topix(jxi,jsep),topiy(jxi,jsep),0))
-      vxsepm(2) = 0.5_R8 * (vla0(jxi,jsep,0,ismain)+ &
-           vla0(topix(jxi,jsep),topiy(jxi,jsep),0,ismain))
-      vysepm(2) = 0.5_R8 * (vla0(jxi,jsep,1,ismain)+ &
-           vla0(topix(jxi,jsep),topiy(jxi,jsep),1,ismain))
+      vxsepm(2) = 0.5_R8 * (vla0(jxi,jsep,0,ismain) + vla0(topix(jxi,jsep),topiy(jxi,jsep),0,ismain))
+      vysepm(2) = 0.5_R8 * (vla0(jxi,jsep,1,ismain) + vla0(topix(jxi,jsep),topiy(jxi,jsep),1,ismain))
       vssepm(2) = 0.5_R8 * ( &
-           vsa0(jxi,jsep,ismain)/(mp*am(ismain)*na(jxi,jsep,ismain))+ &
-           vsa0(topix(jxi,jsep),topiy(jxi,jsep),ismain)/ &
+           vsa0(jxi,jsep,ismain)/(mp*am(ismain)*na(jxi,jsep,ismain)) + vsa0(topix(jxi,jsep),topiy(jxi,jsep),ismain)/ &
            (mp*am(ismain)*na(topix(jxi,jsep),topiy(jxi,jsep),ismain)))
-      nesepi(2) = 0.5_R8 * (ne(ixtl-target_offset,jsep)+ &
-           ne(topix(ixtl-target_offset,jsep), &
-           topiy(ixtl-target_offset,jsep)))
-      tesepi(2) = 0.5_R8 * (te(ixtl-target_offset,jsep)+ &
-           te(topix(ixtl-target_offset,jsep), &
-           topiy(ixtl-target_offset,jsep)))/ev
-      tisepi(2) = 0.5_R8 * (ti(ixtl-target_offset,jsep)+ &
-           ti(topix(ixtl-target_offset,jsep), &
-           topiy(ixtl-target_offset,jsep)))/ev
-      if(xymap(ixtl,jsep).gt.0 .and. &
-           xymap(topix(ixtl,jsep),topiy(ixtl,jsep)).gt.0) then
-        tpsepi(2) = 0.5_R8 * &
-             (target_temp(xymap(ixtl,jsep),1)+ &
-             target_temp(xymap(topix(ixtl,jsep),topiy(ixtl,jsep)),1))
+      nesepi(2) = 0.5_R8 * (ne(ixtl-target_offset,jsep)+ ne(topix(ixtl-target_offset,jsep), topiy(ixtl-target_offset,jsep)))
+      tesepi(2) = 0.5_R8 * (te(ixtl-target_offset,jsep)+ te(topix(ixtl-target_offset,jsep), topiy(ixtl-target_offset,jsep)))/ev
+      tisepi(2) = 0.5_R8 * (ti(ixtl-target_offset,jsep)+ ti(topix(ixtl-target_offset,jsep), topiy(ixtl-target_offset,jsep)))/ev
+      if(xymap(ixtl,jsep).gt.0 .and. xymap(topix(ixtl,jsep),topiy(ixtl,jsep)).gt.0) then
+        tpsepi(2) = 0.5_R8 * (target_temp(xymap(ixtl,jsep),1)+ target_temp(xymap(topix(ixtl,jsep),topiy(ixtl,jsep)),1))
       else
         tpsepi(2) = 0.0_R8
       endif
-      posepi(2) = 0.5_R8 * (po(ixtl-target_offset,jsep)+ &
-           po(topix(ixtl-target_offset,jsep), &
-           topiy(ixtl-target_offset,jsep)))
+      posepi(2) = 0.5_R8 * (po(ixtl-target_offset,jsep) + po(topix(ixtl-target_offset,jsep),topiy(ixtl-target_offset,jsep)))
     endif
 #endif
     !
@@ -719,33 +626,30 @@ Contains
     ! note no emission in guard cells and offset of array by 1
     do iy=-1,ny
       do ix=-1,nx
-        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and. &
-             bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 ) then
+        if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and. bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 ) then
           if(mod(region(ix,iy,0),4).eq.1) then
-            tmhacore(1)=tmhacore(1)+ &
-                 (emiss(ix+1,iy+1,1,1)+emissmol(ix+1,iy+1,1,1))*vol(ix,iy)
-          elseif(mod(region(ix,iy,0),4).eq.3 .or. &
-               (mod(region(ix,iy,0),4).eq.0 .and. &
-               region(ix,iy,0).ne.0)) then
-            tmhadiv(1)=tmhadiv(1)+ &
-                 (emiss(ix+1,iy+1,1,1)+emissmol(ix+1,iy+1,1,1))*vol(ix,iy)
+            tmhacore(1)=tmhacore(1)+(emiss(ix+1,iy+1,1,1)+emissmol(ix+1,iy+1,1,1))*vol(ix,iy)
+          elseif(mod(region(ix,iy,0),4).eq.3 .or.(mod(region(ix,iy,0),4).eq.0 .and. region(ix,iy,0).ne.0)) then
+            tmhadiv(1)=tmhadiv(1) + (emiss(ix+1,iy+1,1,1)+emissmol(ix+1,iy+1,1,1))*vol(ix,iy)
           elseif(mod(region(ix,iy,0),4).eq.2) then
-            tmhasol(1)=tmhasol(1)+ &
-                 (emiss(ix+1,iy+1,1,1)+emissmol(ix+1,iy+1,1,1))*vol(ix,iy)
+            tmhasol(1)=tmhasol(1)+ (emiss(ix+1,iy+1,1,1)+emissmol(ix+1,iy+1,1,1))*vol(ix,iy)
           elseif(region(ix,iy,0).ne.0) then
-            write(*,*) 'b2mwti: unknown region @ ', &
-                 ix,iy,region(ix,iy,0)
+            write(*,*) 'b2mwti: unknown region @ ', ix,iy,region(ix,iy,0)
           endif
         endif
       enddo
     enddo
 #endif
 
+    
     imap(1)=1
     tstepn(1) = ntstep
     call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
     call rwcdf(rw,ncid,'timesa',imap,timesa,iret)
 
+!    imap(1:3) = 1
+!    call rwcdf(rw,ncid,'ne2d'  ,imap,ne    ,iret)
+    
     imap(1)=1
     imap(2)=1
     call rwcdf(rw,ncid,'fnixip',imap,fnixip,iret)
@@ -880,7 +784,7 @@ Contains
       call rwcdf(rw,ncid,'fl3dtr',imap,fne(ixtr+1,iytrstrt,0),iret)
       call rwcdf(rw,ncid,'fo3dtr',imap,fni(ixtr+1,iytrstrt,0),iret)
       imap(1)=nx+2     ! tl
-      imap(2)=nx+2
+      imap(2)=1
       call rwcdf(rw,ncid,'ne3dtl',imap,ne(ixtl-target_offset,iytlstrt),iret)
       call rwcdf(rw,ncid,'te3dtl',imap,te(ixtl-target_offset,iytlstrt),iret)
       call rwcdf(rw,ncid,'ti3dtl',imap,ti(ixtl-target_offset,iytlstrt),iret)
@@ -965,11 +869,9 @@ Contains
     call rwcdf(rw,ncid,'dn3di',imap,slice,iret)
     slice(-1:ny)=dna0(jxa,-1:ny,ismain)
     call rwcdf(rw,ncid,'dn3da',imap,slice,iret)
-    slice(-1:ny)=dpa0(jxi,-1:ny,ismain0)* &
-         (rza(jxi,-1:ny,ismain0)*te(jxi,-1:ny)+ti(jxi,-1:ny))
+    slice(-1:ny)=dpa0(jxi,-1:ny,ismain0)* (rza(jxi,-1:ny,ismain0)*te(jxi,-1:ny)+ti(jxi,-1:ny))
     call rwcdf(rw,ncid,'dp3di',imap,slice,iret)
-    slice(-1:ny)=dpa0(jxa,-1:ny,ismain0)* &
-         (rza(jxa,-1:ny,ismain0)*te(jxa,-1:ny)+ti(jxa,-1:ny))
+    slice(-1:ny)=dpa0(jxa,-1:ny,ismain0)* (rza(jxa,-1:ny,ismain0)*te(jxa,-1:ny)+ti(jxa,-1:ny))
     call rwcdf(rw,ncid,'dp3da',imap,slice,iret)
     slice(-1:ny)=fllim0fhi(jxi,-1:ny,1,ismain0)
     call rwcdf(rw,ncid,'lh3di',imap,slice,iret)
@@ -1080,6 +982,7 @@ Contains
          an3dtrid, mn3dtrid, fn3dtlid, fe3dtlid, fi3dtlid, fn3dtrid, &
          fe3dtrid, fi3dtrid, fetxipid, fetxapid, fetyipid, fetyapid, &
          fetsipid, fetsapid, fetsippid, fetsappid
+!    integer :: ne2did
     integer  fchxipid, fchxapid, posepiid, posepmid, posepaid, &
          pomxipid, pomxapid, fchyipid, fchyapid, &
          fchsipid, fchsapid, fchsippid, fchsappid, po3dlid, &
@@ -1116,6 +1019,9 @@ Contains
     iret = nf_def_var(ncid, 'ntstep', NCDOUBLE, 0, dims, ntstepid)
     dims(1) = timedim
     iret = nf_def_var(ncid, 'timesa', NCDOUBLE, 1, dims, timesaid)
+!    ! Test a 2d vs time variable
+!    iret = nf_def_var(ncid, 'ne2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), ne2did)
+
     dims(1) = ncdim
     dims(2) = timedim
     iret = nf_def_var(ncid, 'fnixip', NCDOUBLE, 2, dims, fnixipid)
@@ -1685,14 +1591,12 @@ Contains
 
   subroutine rwcdf(rw,ncid,data_name,imap,data_set,iret)
 #     include <netcdf.inc>
-    !
+    
     character*(*) rw,data_name
     integer ncid,imap(*),iret,i,varid,dimlen
     real(kind=R8), Intent(InOut) :: data_set(*)
     character*(maxncnam) dimnam
-    integer vartyp,nvdims,start(maxvdims),count(maxvdims), &
-         dimids(maxvdims)
-    !
+    integer vartyp,nvdims,start(maxvdims),count(maxvdims),dimids(maxvdims)
     character*(*) timnam
     character*(maxncnam) timsav
     integer ntsav,ntstep
@@ -1703,7 +1607,10 @@ Contains
     !
     call subini ('rwcdf')
     iret = nf_inq_varid(ncid,data_name,varid)
-    if(iret.ne.0) call xerrab ('Data name not declared')
+    if(iret.ne.0) Then
+      Write(*,*) 'Error: Could not inquire data_name: ',Trim(data_name)
+      call xerrab('Data name not declared')
+    Endif
     iret = nf_inq_varndims(ncid,varid,nvdims)
     iret = nf_inq_vardimid(ncid,varid,dimids)
     count(1) = 1 ! for scalars
@@ -1749,8 +1656,7 @@ Contains
     return
     !
     entry rwcdf_settime(timnam,ntstep)
-    write(*,*) 'Saving ',Trim(timnam), &
-         ' as the time dimension'
+    write(*,*) 'Saving ',Trim(timnam),' as the time dimension'
     write(*,*) 'ntstep = ',ntstep
     timsav=timnam
     ntsav=ntstep
@@ -1774,10 +1680,8 @@ Contains
     real (kind=R8) :: &
          cr,cz
 
-    cr(ix,iy)=0.25_R8* &
-         (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-    cz(ix,iy)=0.25_R8* &
-         (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
+    cr(ix,iy)=0.25_R8*(crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
+    cz(ix,iy)=0.25_R8*(cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
 
     call subini ('output_ds')
     iystart=-1
@@ -1794,23 +1698,16 @@ Contains
       ! special case [DPC]
       iystart=-1
       iyend=ny
-      write(*,*) 'special treatment for iystart, iyend for ', &
-           trim(filename)
+      write(*,*) 'special treatment for iystart, iyend for ',trim(filename)
     endif
     call xertst(iyend.ge.iystart, 'faulty parameter iystart & iyend')
     ds(iystart)= &
-         sqrt((cr(iref+target_offset,iystart)- &
-         0.5_R8*(crx(iref+target_offset,iystart,0)+ &
-         crx(iref+target_offset,iystart,1)))**2+ &
-         (cz(iref+target_offset,iystart)- &
-         0.5_R8*(cry(iref+target_offset,iystart,0)+ &
-         cry(iref+target_offset,iystart,1)))**2)
+         sqrt((cr(iref+target_offset,iystart)-0.5_R8*(crx(iref+target_offset,iystart,0)+crx(iref+target_offset,iystart,1)))**2+ &
+              (cz(iref+target_offset,iystart)-0.5_R8*(cry(iref+target_offset,iystart,0)+cry(iref+target_offset,iystart,1)))**2)
     do iy=iystart+1,iyend
       ds(iy)=ds(iy-1)+ &
-           sqrt((cr(iref+target_offset,iy)- &
-           cr(iref+target_offset,iy-1))**2+ &
-           (cz(iref+target_offset,iy)- &
-           cz(iref+target_offset,iy-1))**2)
+           sqrt((cr(iref+target_offset,iy)-cr(iref+target_offset,iy-1))**2+ &
+                (cz(iref+target_offset,iy)-cz(iref+target_offset,iy-1))**2)
     enddo
     if(iystart.le.jsep.and.iyend.gt.jsep) then
       ds_offset=(ds(jsep)+ds(jsep+1))/2.0_R8
@@ -1894,8 +1791,6 @@ Contains
       fet = fet + fac_flux*(rpttmp*ev + kintmp*(1.0_R8-BoRiS))*fa_ext(ix_flux,iy_flux,idir,is)
     enddo
     If (Present(pwr)) pwr = Abs(fet)/gs(ix_flux,iy_flux,idir)
-
   End Subroutine calc_fet
-    
-  
+      
 End Module b2mod_mwti
