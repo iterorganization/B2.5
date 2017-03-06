@@ -916,7 +916,7 @@ cank
             READ (44,'(6e15.7)') (ewldrp_res(i),i=1,NCL)
             call read_title(44)
             READ (44,'(6e15.7)') ((ewldmr_res(j,i),j=1,nmoli),i=1,NCL)
-            if (jvft44.gt.20170228) then
+            if (jvft44.ge.20170228) then
               call read_title(44)
               READ (44,'(6e15.7)') (wldspt_res(i),i=1,NCL)
             end if
