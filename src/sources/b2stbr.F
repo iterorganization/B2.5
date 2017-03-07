@@ -66,7 +66,7 @@
      &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
 *   ..local variables
       real (kind=R8) :: snatmp(-1:nx,-1:ny,0:1,0:ns-1), !djm Mar2017
-     &                  smotmp(-1:nx,-1:ny,0:1,0:ns-1),
+     &                  smotmp(-1:nx,-1:ny,0:3,0:ns-1),
      &                  shetmp(-1:nx,-1:ny,0:3),
      &                  shitmp(-1:nx,-1:ny,0:3)
 *   ..common blocks
