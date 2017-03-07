@@ -21,8 +21,10 @@ Contains
     use b2mod_wall
     use b2mod_b2cmpa
     use b2mod_external
+#ifndef SOLPS4_3
 #ifdef B25_EIRENE
     use eirmod_extrab25
+#endif
 #endif
     implicit none
     !   ..input arguments (unchanged on exit)
@@ -1794,3 +1796,7 @@ Contains
   End Subroutine calc_fet
       
 End Module b2mod_mwti
+
+!!!Local Variables:
+!!! mode: f90
+!!! End:
