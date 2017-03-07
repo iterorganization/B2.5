@@ -38,7 +38,7 @@ c======================================================================
 c
       integer i,j,jj,k,l,m,n,iss,imol,iy,js,nclm_ld,nclm_er,nx_hlp
       integer i1,i2,i3,ia,ib,ic,is,ix,ik,imin,imax
-      integer ixstart(ntrgsx),ixend(ntrgsx,2)
+      integer ixstart(ntrgsx,2),ixend(ntrgsx,2)
       integer m_hlp(ntrgsx)
       logical match_found
       real (kind=R8) ::
@@ -232,19 +232,23 @@ c
 
       l=1
       u=-1.0_R8
-      ixstart(1)=jxi
-      ixstart(ntrgts)=jxa
+      ixstart(1,1)=jxi
       ixend(1,1)=0
+      ixstart(ntrgts,1)=jxa
       ixend(ntrgts,1)=nx
-      ixend(1,2)=leftcut(1)
-      ixend(ntrgts,2)=rightcut(1)-1
+      ixstart(1,2)=leftcut(1)-1
+      ixend(1,2)=0
+      ixstart(ntrgts,2)=rightcut(1)
+      ixend(ntrgts,2)=nx
       if (ntrgts.gt.2) then
-        ixstart(2)=jxi
-        ixstart(3)=jxa
+        ixstart(2,1)=jxi
         ixend(2,1)=nxtl
+        ixstart(3,1)=jxa
         ixend(3,1)=nxtr
-        ixend(2,2)=leftcut(2)-1
-        ixend(3,2)=rightcut(2)
+        ixstart(2,2)=leftcut(2)
+        ixend(2,2)=nxtl
+        ixstart(2,2)=rightcut(2)-1
+        ixend(3,2)=nxtr
       endif
       do j=1,ntrgts !{
         k=ltrgpos(j)
@@ -334,26 +338,26 @@ c        wo=-1.0e-6_R8*wo/s(iy,1)
             enddo
           endif
 c carlis  21 feb 2017 added calculation of connection length from midplane to targets
-c         and from midplane to x-point  
+c         and from x-point to targets
           do ik=1,2
-            ix=ixstart(j)
-            if (iy.le.jsep) then
-              t1(ik)=0.0_R8
-            else
-              t1(ik)=hx(ix,iy)/2.0_R8/
-     1             (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
-              if (l.eq.1) then
-                do ix=ixend(j,ik),ixstart(j)-1
-                  t1(ik)=t1(ik)+hx(ix,iy)/
-     1                (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
-                end do	  
-              else
-                do ix=ixstart(j)+1,ixend(j,ik)
-                  t1(ik)=t1(ik)+hx(ix,iy)/
-     1                (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
-                end do			  
-              endif
+            ix=ixstart(j,ik)
+            t1(ik)=0.0_R8
+            if (ik.eq.1.and.iy.gt.jsep) then
+c carlis If starting @midplane in SOL then remove half of starting cell
+              t1(ik)=t1(ik)-hx(ix,iy)/2.0_R8/
+     1             (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))            
             end if
+            if (l.eq.1) then
+              do ix=ixend(j,ik),ixstart(j,ik)
+                t1(ik)=t1(ik)+hx(ix,iy)/
+     1                (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
+              end do	  
+            else
+              do ix=ixstart(j,ik),ixend(j,ik)
+                t1(ik)=t1(ik)+hx(ix,iy)/
+     1                (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
+              end do			  
+            endif
           end do
           lcnnt(iy,j)=t1(1)
           lcnnx(iy,j)=t1(2)
@@ -361,6 +365,16 @@ c         and from midplane to x-point
         l=1-l
         u=-u
       end do !}
+      do iy=lytg,jsep !{
+c carlis  If in PFR region then connection length from midplane to target will
+c         be equal to connection length from target to target
+        lcnnt(iy,1)=lcnnx(iy,1)+lcnnx(iy,2)
+        lcnnt(iy,ntrgts)=lcnnx(iy,ntrgts)+lcnnx(iy,ntrgts-1)
+        if (ntrgts.gt.2) then
+          lcnnt(iy,2)=lcnnt(iy,1)
+          lcnnt(iy,3)=lcnnt(iy,ntrgts)
+        end if
+      end do
 
 c
 c*** Re-scale the neutral target loading and calculate the sums
@@ -432,8 +446,8 @@ c        write(lun,740) 'WWtrg',tab,'would-be target power flux
 c     ,without dissipation in divertor [W/m^2]'
         write(lun,740) 'Lcnnt',tab,'connection length from mid-plane 
      ,to target [m]'
-        write(lun,740) 'Lcnnx',tab,'connection length from mid-plane 
-     ,to x-point position [m]'
+        write(lun,740) 'Lcnnx',tab,'connection length from x-point 
+     ,to target [m]'
         if(lrdlsp) then !{
           write(lun,fmt_peak) 'x','ne','Te','Ti','Wtot','Wpart',
      ,            'Wrad','Wpls','Wneut','xMP','Rclfc','Zclfc',
@@ -836,13 +850,10 @@ c           and its atomic mass and density
                 sjs(iy,j,is)=sjs(iy,j,is)/s(iy,j)
                 sjg(iy,j,is)=ers_factor*srfs_a(spt_mat)*sjs(iy,j,is)/
      .                     srfs_a(spt_mat)
-                sja(iy,j,is)=sja(iy,j,is)/s(iy,j)
                 do ia=1,natm
                   sjp(iy,j,ia)=sjp(iy,j,ia)/s(iy,j)
                   sjt(iy,j,ia)=sjt(iy,j,ia)/s(iy,j) 
-                  if(ia.ne.spt_atm) then
-                    sja(iy,j,ia)=sja(iy,j,ia)/s(iy,j)
-                  end if
+                  sja(iy,j,ia)=sja(iy,j,ia)/s(iy,j)
                 end do
               end do
             end do
