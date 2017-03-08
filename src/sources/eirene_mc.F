@@ -472,7 +472,7 @@ c   same Eirene stratum
           call xertst(.not.hlp_bad_isp,
      1     'eirene_mc: error in recyceir specification')
 
-csw 08feb2011 l_ddt definition moved down after eirene call when it's
+csw 08feb2011 l_ddt definition moved down after eirene call when it is
 c             defined
 c c*** "time layer"
 c          l_ddt=0
