@@ -9,6 +9,7 @@ endif
 SRCB2   = ${PWD}
 SRCDIR  = ${SRCB2}/src
 DOCDIR  = ${SRCDIR}/documentation
+PYTHON  = python
 
 MAKES = ${SRCB2}/Makefile
 # Include global SOLPS compiler settings
@@ -269,7 +270,7 @@ LIBOBJS = ${ALLOBJS}
 endif
 
 ${DOCDIR}/b2cdci.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdci.py
-	-cd ${DOCDIR}; python b2cdci.py || echo "! Error building b2cdci.F from b2input.xml" > ${DOCDIR}/b2cdci.F
+	-cd ${DOCDIR}; ${PYTHON} b2cdci.py || echo "! Error building b2cdci.F from b2input.xml" > ${DOCDIR}/b2cdci.F
 
 ifdef USE_EIRENE
 ${OBJDIR}/libgr_dummy.a:
