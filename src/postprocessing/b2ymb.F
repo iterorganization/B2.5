@@ -27,7 +27,7 @@
       real :: HEIGHT, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER, W_TH,
      . P_LENGTH, ALPHA, BETA, THETA, T_GAP
       real :: T_COOLANT, M_FLOW, CP_COOLANT, dummy
-      INTEGER :: DIMENSIONS(4), REVERSE, nskip=18, inout
+      INTEGER :: DIMENSIONS(4), REVERSE, nskip=18, innout, nplots
       real :: target_length, LPOINTS(50)=0.0d0
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
       CHARACTER*(10) :: INFILE0= 'b2ymb.dat',
@@ -54,7 +54,7 @@
      . T_COOLANT, M_FLOW, CP_COOLANT
 
       NAMELIST /OUTPUT/
-     . NPOINTS, LPOINTS
+     . NPOINTS, LPOINTS, NPLOTS
       print*,"############## README ############"
       print*,"Starting b2ymb. Update the input file b2ymb.dat 
      .with the desired inlet temperature and then choose 
@@ -62,11 +62,11 @@
       read (*,*) ss
       if (streql(trim(ss),trg(1))) then
          KK=1
-         inout=1
+         innout=1
          print *,'inner target chosen'
       else
          KK=2
-         inout=0
+         innout=0
          print *,'outer target chosen'
       endif
 
@@ -87,7 +87,7 @@
       write(inunit,*) HEIGHT, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER,
      . W_TH, P_LENGTH, T_GAP, ALPHA, BETA, THETA
       write(inunit,*) T_COOLANT, M_FLOW, CP_COOLANT
-      write(inunit,*) NN, NPOINTS, LPOINTS(1:NPOINTS), inout
+      write(inunit,*) NN, NPOINTS,innout,nplots, LPOINTS(1:NPOINTS)
       close(INUNIT);
 
 ! ##########################################################################

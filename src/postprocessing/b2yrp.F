@@ -26,7 +26,7 @@
       real :: L1, L2, L3, H1, H2, H3 ,H4, H5, H_HOLE, RH,
      . P_LENGTH, ALPHA, BETA, THETA, T_GAP, dummy
       real :: T_COOLANT, M_FLOW, CP_COOLANT
-      INTEGER :: DIMENSIONS(4), REVERSE, nskip=18, inout
+      INTEGER :: DIMENSIONS(4), REVERSE, nskip=18, innout, nplots
       real :: target_length, LPOINTS(50)=0.0d0
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
       CHARACTER*(10) :: INFILE0= 'b2yrp.dat',
@@ -53,7 +53,7 @@
      . T_COOLANT, M_FLOW, CP_COOLANT
 
       NAMELIST /OUTPUT/
-     . NPOINTS, LPOINTS
+     . NPOINTS, LPOINTS, NPLOTS
       
       print*,"############## README ############"
       print*,"Starting b2yrp. Update the input file b2yrp.dat 
@@ -62,11 +62,11 @@
       read (*,*) ss
       if (streql(trim(ss),trg(1))) then
          KK=1
-         inout=1
+         innout=1
          print *,'inner reflector plate chosen'
       else
          KK=2
-         inout=0
+         innout=0
          print *,'outer reflector plate chosen'
       endif
      
@@ -86,7 +86,7 @@
       write(inunit,*) L1, L2, L3, H1, H2, H3 ,H4,
      . H5, H_HOLE, RH, P_LENGTH, T_GAP, ALPHA, BETA, THETA
       write(inunit,*) T_COOLANT, M_FLOW, CP_COOLANT
-      write(inunit,*) NN, NPOINTS, LPOINTS(1:NPOINTS), inout
+      write(inunit,*) NN, NPOINTS,innout,nplots, LPOINTS(1:NPOINTS)
       close(INUNIT);
 
 ! ##########################################################################
