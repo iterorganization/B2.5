@@ -2226,6 +2226,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mndt_av_batch_all</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_av_batch_all.gt.0, produces standard output for batch averages.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndr_plasmatim</name>
 				<default>0.0</default>
 				<type>real</type>

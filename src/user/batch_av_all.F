@@ -83,6 +83,24 @@ ctb..as the mean of the product does not equal the product of the means etc.
       
       return
 
+      entry batch_av_all_fin
+
+      if (.not.allocated(na_mean)) return
+
+      deallocate (na_mean)
+      deallocate (ua_mean)
+      deallocate (te_mean)
+      deallocate (ti_mean)
+      deallocate (po_mean)
+      deallocate (sna_mean)
+      deallocate (sne_mean)
+      deallocate (smo_mean)
+      deallocate (she_mean)
+      deallocate (shi_mean)
+      deallocate (sch_mean)
+
+      return
+
       entry batch_av_all_save (batch_name,nx,ny,ns)
 
       n2 = (nx+2)*(ny+2)

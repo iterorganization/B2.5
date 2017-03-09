@@ -2226,6 +2226,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 
       if (ird_aver > 0) call write_averages (nx,ny,ns)
 
+      if (ibatch_av_all > 0) call batch_av_all_fin
+
 *  .. finalize tracing routines
       call b2trcf(nx,ny,ns,ismain,dtim,BoRiS)
 
