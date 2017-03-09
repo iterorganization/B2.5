@@ -7528,7 +7528,11 @@ C  NUMBER OF TARGETS ON B2 SURFACES: NTARGI
               IF (idum(8).eq.0 .AND. idum(9).eq.0) THEN
                 ILINE = ILINE - 1
               ELSE
-                NTARG1 = NTARG1 + 1
+                IF (NTARG1.EQ.0) THEN ! Trying to avoid an optimization bug
+                 NTARG1 = 1
+                ELSE
+                  NTARG1 = NTARG1 + 1
+                END IF
                 NTGPR1(NTARG1) = NTGPRT(I)
                 IF (NIXY(I,J).EQ.1) THEN  ! target runs radially
                   IF (NINCT(I,J).EQ.1) THEN
