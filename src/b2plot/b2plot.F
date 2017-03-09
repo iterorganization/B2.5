@@ -146,9 +146,11 @@ c
      *   vtha(-1:nxd,-1:nyd,0:nsd_local)
       real (kind=R8), allocatable :: mach(:,:,:)
       real (kind=R8), allocatable :: emach(:,:)
+      real (kind=R8), allocatable :: eavg(:)
       real (kind=R8) ::
      1   vappr_a, vappr_b, sput_frc, sput_phys, BoRiS,
-     2   stick_coef, plate_kb, plate_ka, 
+     2   stick_coef, plate_kb, plate_ka, volsum,
+     *   xc, yc, x1, x2, x3, x4, y1, y2, y3, y4,
      3   q, sput_mixed_alpha, sput_mixed_beta
       real (kind=R8) ::
      *   balance(0:DEF_NATM-1)
@@ -186,7 +188,7 @@ c
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 c
       logical ex, cflag, found
-      logical open_file, streql
+      logical open_file, streql, inside_rectangle
       integer len_of_digits
       real (kind=R8) ::
      *   qevap, qrad, 
@@ -195,7 +197,7 @@ c
      *   layer_Kappa, layer_Cp, layer_emissivity
       external open_file, streql, subini, subend, 
      *   xertst, xerrab, ipgetr, ipgeti, len_of_digits, 
-     *   qevap, qrad, 
+     *   qevap, qrad, inside_rectangle,
      *   Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, Cp,
      *   mass_density,
      *   layer_Kappa, layer_Cp, layer_emissivity
@@ -981,6 +983,20 @@ c
 #else
       ex = .false.
 #endif
+      if (.not.ex) then
+        natmi=1
+        textan(0)=' ZERO'
+        nmoli=1
+        textmn(0)=' ZERO'
+        nioni=1
+        textin(0)=' ZERO'
+        nsw=ns
+        call eirene_mc_init
+        call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
+        p1=0.0_R8
+        p2=0.0_R8
+      endif
+
 #ifdef B25_EIRENE
 #ifndef HPUX
       inquire(file='fort.46',exist=ex)
@@ -1040,19 +1056,6 @@ c
 #else
       ex = .false.
 #endif
-      if (.not.ex) then
-        natmi=1
-        textan(0)=' ZERO'
-        nmoli=1
-        textmn(0)=' ZERO'
-        nioni=1
-        textin(0)=' ZERO'
-        nsw=ns
-        call eirene_mc_init
-        call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
-        p1=0.0_R8
-        p2=0.0_R8
-      endif
 c
       nh=0.0_R8
       do is=0,ns-1
@@ -7227,12 +7230,12 @@ c-dpc still in testing phase
               endif
             endif
           enddo
-         case('eprt')     ! output the top of Eirene stack to a file
+        case('eprt')     ! output the top of Eirene stack to a file
           stack_req=(/0,0,1,0,1,0,0/)
           if(bad_args(stack_req)) return
           stmp=spop(sstack,isstack)
           open(99,file=stmp)
-          do is=0,nedim(2,iwrk)-1
+          do is=0,nedim(2,iewrk)-1
             write(99,'(''#'',1x,a,1x,a)')
      1       eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk))),
      2       textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk)))
@@ -7241,7 +7244,48 @@ c-dpc still in testing phase
             enddo
           enddo
           close(99)
-       case default EFVALUE
+        case('eavg')
+          stack_req=(/0,8,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          volsum=0.0_R8
+          allocate(eavg(0:nedim(2,iewrk)-1))
+          eavg=0.0_R8
+          y4 = rpop(rstack,irstack)
+          x4 = rpop(rstack,irstack)
+          y3 = rpop(rstack,irstack)
+          x3 = rpop(rstack,irstack)
+          y2 = rpop(rstack,irstack)
+          x2 = rpop(rstack,irstack)
+          y1 = rpop(rstack,irstack)
+          x1 = rpop(rstack,irstack)
+          do i=1,ntrii
+            xc=(xtrian(necke(1,i))+xtrian(necke(2,i))+
+     .          xtrian(necke(3,i)))/3.0_R8
+            yc=(ytrian(necke(1,i))+ytrian(necke(2,i))+
+     .          ytrian(necke(3,i)))/3.0_R8
+            if (inside_rectangle(xc,yc,x1,y1,x2,y2,x3,y3,x4,y4)) then
+              volsum=volsum+triangle_vol(i)
+              do is=0,nedim(2,iewrk)-1
+                eavg(is)=eavg(is)+
+     .           eirene_stack(i,is,iewrk)*triangle_vol(i)
+              end do
+            end if
+          end do
+          if (volsum.gt.0.0_R8) then
+            eavg(:)=eavg(:)/volsum
+            write(6,'(3a)')
+     .       'Volume-averaged ',trim(eirene_label(iewrk)),' in region '
+            write(6,'(1p,a,8(e10.3,a))')
+     .       ' [(',x1,',',y1,');(',x2,',',y2,');(',
+     .             x3,',',y3,');(',x4,',',y4,')] : '
+            do is = 0, nedim(2,iewrk)-1
+              write(6,'(a,1p,1x,e10.3)') textewk(is,iewrk),eavg(is)
+            end do
+          else
+            write(6,*) 'No triangle centroids found in chosen region!'
+          end if
+          deallocate(eavg)
+        case default EFVALUE
           cflag=.false.
       END SELECT EFVALUE
 c

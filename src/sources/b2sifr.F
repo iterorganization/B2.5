@@ -10,6 +10,8 @@
       use b2mod_constants
       use b2mod_external
       use b2mod_b2cmpa
+      use b2mod_balance                                              !djm Jan2017
+     & , only : b2sifr_smoch0to3, b2sifr_smotf0to3, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb
@@ -309,6 +311,13 @@ c     1      write(*,*) ix,iy,isb,cthi(ix,iy,isb)
 	  call my_out(70,nx,ny,wrk0,'b2sifr_smoch'//chns)
 	enddo
       endif                                                            !srv 17.06.02 }
+
+cdjm Jan2017 Store the linearised sources for balance
+      if (balance_netcdf.ne.0) then
+        b2sifr_smoch0to3(-1:nx,-1:ny,0:3,isb)=smbch
+        b2sifr_smotf0to3(-1:nx,-1:ny,0:3,isb)=smbtf
+      endif
+
 * ..return
       ncall = ncall+1
       call subend ()

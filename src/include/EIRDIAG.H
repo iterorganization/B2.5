@@ -26,6 +26,7 @@ c  version : 27.07.2000 22:52
      .  ewldem_res(nmol,nsgmx),    !net incident energy flux due of molecules
      .  ewldrp_res(nsgmx),         !kinetic energy of reflected neutrals originated from ions
      .  ewldmr_res(nmol,nsgmx),    !energy due to recombination of atoms into molecules
+     .  wldspt_res(nsgmx),         !flux of sputtered wall material
      .  sarea_res(nsgmx)           !area of the surface elements
 
 CVK NEUTRAL FLUXES, SPATIALLY RESOLVED ON NON-DEFAULT STANDARD SURFACES (NDS)
@@ -71,7 +72,7 @@ c
      4 srcml,edissml,wldnek,wldnep,wldna,ewlda,wldnm,ewldm,wldra,wldrm,
      5 wldpp,wldpa,wldpm,wldpeb,wldspt,
      6 wlarea, wlabsrp,
-     7 wldna_res, wldnm_res, ewlda_res, ewldm_res,
+     7 wldna_res, wldnm_res, ewlda_res, ewldm_res, wldspt_res,
      8 ewldea_res, ewldem_res, ewldrp_res, ewldmr_res, sarea_res,
      i nnlimi,nnstsi,nnatmi,nnmoli,nnioni,nnplsi,isrftype,
      2 lkindp,lkindm,lkindi,

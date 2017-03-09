@@ -347,7 +347,8 @@
      &    fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                      !srv 13.10.06
      1    flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1    fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &    .true.)                                                        !djm Jan2017
         enddo
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
@@ -477,7 +478,8 @@ cxpb
      &     fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                     !srv 13.10.06
      1     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1     fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &     .true.)                                                       !djm Jan2017
           if (ncall.eq.ncallout) then
             write(*,*) 'ncall,is',ncall,is
             call hbout('../b2ne_npco',nx,ny,ns,te,'te',ti,'ti',
@@ -549,7 +551,8 @@ cxpb
      &       fnaPSch(-1,-1,0,is),fna_mdf(-1,-1,0,is),                    !srv 13.10.06
      1       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &       .false.)                                                    !djm Jan2017
           endif
         enddo
         if(wrong_flow .or. ipass.ne.0) then                              !xpb
@@ -617,13 +620,15 @@ cxpb
               call b2tfhe (nx, ny, ns, guard_flows, facdrift,
      1         BoRiS, vol, hx, hy, qz, te, po, ne, vedia, veecrb,        !xpb
      &         fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,    !xpb
-     &         cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime)    !xpb  !srv 13.10.06
+     &         cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,    !xpb  !srv 13.10.06
+     &         .false.)                                                  !djm Jan2017
               call b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,     !xpb
      1         vol, hx, hy, gs, qz, qc, bb, ti, ni, na,
      2         fna, fni_32, fni_52, kinrgy,
      &         chci, cddi, chvi, chvimx, cvsa, vadia, vaecrb,
      &         fchvispar, fchinert, fchanml,                             !lk 30.05.11
-     3         fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi)          !srv 13.10.06
+     3         fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,          !srv 13.10.06
+     &         .false.)                                                  !djm Jan2017
               call b2xpen (nx, ny, ns,
      1         fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
      2         fhm, fhp, fhj, fht)
@@ -743,7 +748,8 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      &             fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),             !srv 13.10.06
      1             flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1             fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &             .false.)                                              !djm Jan2017
                 enddo
                 if(wrong_flow .or. ipass.ne.0) then                      !xpb
                    call print_wrong_flows(
@@ -813,13 +819,15 @@ c     with diamagnetic drift part                                        !xpb
      1   vol, hx, hy, qz, te, po, ne, vedia, veecrb,
      1   fne_32, fne_52, fch_p,
      1   csig, chce, chve, calf, chvemx, cddi, fhe, fhe_mdf, fhePSch,    !srv 13.10.06
-     &   fhet, floe, cone, fllime)                                       !xpb
+     &   fhet, floe, cone, fllime,                                       !xpb
+     &   .true.)                                                         !djm Jan2017
         call b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,           !xpb
      1   vol, hx, hy, gs, qz, qc, bb, ti, ni, na,
      2   fna, fni_32, fni_52, kinrgy,
      &   chci, cddi, chvi, chvimx, cvsa, vadia, vaecrb,
      &   fchvispar, fchinert, fchanml,                                   !lk 30.05.11
-     3   fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi)                !srv 13.10.06
+     3   fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,                !srv 13.10.06
+     &   .true.)                                                         !djm Jan2017
         call b2xpen (nx, ny, ns,
      1   fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
      2   fhm, fhp, fhj, fht)

@@ -37,7 +37,7 @@
 				<default>None</default>
 				<type>None</type>
 				<description>
-					initial ion and electron temperature, in eV
+					initial ion and electron temperatures, in eV
 				</description>
 			</switch>
 		</category>
@@ -83,7 +83,7 @@
 				<name>specs</name>
 				<default />
 				<description>
-					atomic charge, nuclear charge, atomic mass and atomic charge squared; this data should match that given in b2ai.dat Starting with code version 01.001.024, an alternative means of describing the plasma species and filling out the b2cmpa block is provided, in order to allow for bundling of charge states, when running cases with high-Z species. The relevant description is then minimum atomic charge of the stage, maximum atomic charge of the stage, nuclear charge, and atomic mass; this data should match that given in b2ai.dat The code can accept indifferently both types of input and makes the appropriate self-consistency checks. It is not permitted to bundle neutral and ionized species together.
+					atomic charge, nuclear charge, atomic mass and atomic charge squared; this data should match that given in b2ai.dat. Starting with code version 01.001.024, an alternative means of describing the plasma species and filling out the b2cmpa block is provided, in order to allow for bundling of charge states, when running cases with high-Z species. The relevant description is then minimum atomic charge of the stage, maximum atomic charge of the stage, nuclear charge, and atomic mass; this data should match that given in b2ai.dat The code can accept indifferently both types of input and makes the appropriate self-consistency checks. It is not permitted to bundle neutral and ionized species together.
 				</description>
 			</switch>
 			<switch>
@@ -293,7 +293,7 @@
 			<switch>
 				<name>b2agsi_isymm</name>
 				<default>1</default>
-				<type>isymm - integer</type>
+				<type>integer</type>
 				<description>
 					isymm - integer. 
 					isymm specifies the type of symmetry of the geometry: isymm.eq.0 implies a slab geometry, 
@@ -311,12 +311,12 @@
 				</description>
 				<switch>
 					<name>b2stbc_coreregno</name>
-					<type>coreregno - integer</type>
+					<type>integer</type>
 					<default>1</default>
 				</switch>
 				<switch>
 					<name>b2stbc_coreregn2</name>
-					<type>coreregn2 - integer</type>
+					<type>integer</type>
 					<default>4</default>
 				</switch>
 			</switchgroup>
@@ -383,7 +383,7 @@
 			<switch>
 				<name>b2agfs_Bt_rescale</name>
 				<default>1.0</default>
-				<type>real*8</type>
+				<type>real</type>
 				<description>
 					Bt_rescale - real*8. 
 					The magnetic field will be multiplied by Bt_rescale. All components of the field are scaled together. To be used in b2ag.dat.
@@ -752,22 +752,22 @@
 				<switch>
 					<name>b2news_facdrift_dec</name>
 					<default>0.0</default>
-					<type>re</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2news_facdrift_inc</name>
 					<default>1.0</default>
-					<type>re</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2news_facdrift_start</name>
 					<default>0.0</default>
-					<type>re</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2news_facdrift_target</name>
 					<default>0.0</default>
-					<type>re</type>
+					<type>real</type>
 				</switch>
 			</switchgroup>
 			<switchgroup>
@@ -778,12 +778,12 @@
 				<switch>
 					<name>b2news_facExB_dec</name>
 					<default>0.0</default>
-					<type>re</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2news_facExB_inc</name>
 					<default>1.0</default>
-					<type>re</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2news_facExB_start</name>
@@ -1294,7 +1294,7 @@
 					Sput_dst (when .ge.0) is the species index of the destination species produced by physical sputtering, chemical sputtering and/or RES. If either of the latter two processes are included, the production chemical sputtering and RES rate calculations provided in the code assume that sput_dst points to a Carbon species. 
 					Sput_dst2 and sput_dst3 (when .ge.0) represent other species produced by wall interactions for mixed materials scenarios. 
 					Sput_frac_flag is the switch to turn on mixed materials scenarios (when sput_frac_flag.eq.1). 
-					Plate_model.eq.0 means the 0-D time-independent plate heating model while plate_model.eq.1 indicates the 1-D time-dependent plate heating treatment. Plate_model.eq.2 gives acces to a 2-D time-dependent model. Plate_option chooses the initialisation of the plate temperature profile. If plate_option.eq.1, the profile is set to the constant given in plate_temp. If plate_option.eq.2, the profile is computed to be the 0-D equilibrium profile. If plate_option.eq.3, the profile is read from results of the previous run. 
+					Plate_model.eq.0 means the 0-D time-independent plate heating model while plate_model.eq.1 indicates the 1-D time-dependent plate heating treatment. Plate_model.eq.2 gives acces to a 2-D time-dependent model. Plate_option chooses the initialisation of the plate temperature profile. If plate_option.eq.1, the profile is set to the constant given in plate_temp. If plate_option.eq.2, the profile is computed to be the 0-D equilibrium profile. If plate_option.eq.3, the profile is read from results of the previous run.
 					Sput_phys_model is a switch for choosing between the TRIM tables (model 1, default) or an empirical formula (model 0). When TRIM data is not available, the empirical formula is automatically used. Extrapolations of low and high energy ranges beyond the TRIM table data is done using the same physical dependencies as the empirical formula. Sput_chem_model is a switch for the chemical sputtering model used. 
 					If sput_chem_model.eq.0 (default), the empirical formula is used. 
 					If sput_chem_model.eq.1, a constant with a low energy cut-off is used. 
@@ -1303,8 +1303,9 @@
 					Sput_frc is superseded by the chem_sput array from b2.neutrals.namelist if the latter is used. 
 					For neutrals species, we add a factor of alpha*na*vbar to the particle flux to the plate (used to compute chemical and RES sputtering), where vbar is the average neutral particle speed. 
 					Sput_phys turns on physical sputtering when sput_phys.gt.0.0 and contains a (real) multiplier for the physical sputtering rate looked up in the TRIM tables. It is superseded by the phys_sput array in b2.neutrals.parameters if the latter is used. 
-					sput_phys_col indicates which column to use in the TRIM table; the default (3) corresponds to 30 degrees incidence. 
-					The columns are for 0 15 30 45 55 65 75 80 85 degrees. This angle is also used in the empirical formula. Plate_temp is the temperature (in Kelvin) of the COOLED end of the divertor plates. The surface temperature is computed self-consistently (using a 1-D description) according to the incident heat fluxes from the plasma. The plate is assumed to have a thickness of plate_thick, measured in meters. When plate_thick.eq.0 (default), the plate surface temperature is assumed to be the same as plate_temp. Sput_res turns on radiation enhanced sublimation (RES) when .gt.0.0 and is a multiplier to the RES rate. 
+					sput_phys_col indicates which column to use in the TRIM table; the default (3) corresponds to 30 degrees incidence. The columns are for
+                      0 15 30 45 55 65 75 80 85
+                    degrees. This angle is also used in the empirical formula. Plate_temp is the temperature (in Kelvin) of the COOLED end of the divertor plates. The surface temperature is computed self-consistently (using a 1-D description) according to the incident heat fluxes from the plasma. The plate is assumed to have a thickness of plate_thick, measured in meters. When plate_thick.eq.0 (default), the plate surface temperature is assumed to be the same as plate_temp. Sput_res turns on radiation enhanced sublimation (RES) when .gt.0.0 and is a multiplier to the RES rate. 
 					The switch sputter_energy_on turns on the energy contribution from the sputtered particles (physical and chemical). If sputter_energy_on.eq.0, the particles are sputtered cold, with no energy contribution to the ion heat equation. 
 					If sputter_energy_on.ne.0 (default), the chemically sputtered particles are re-introduced into the plasma with the thermal energy corresponding to the surface temperature of the material, while physically sputtered particles are re-introduced with the TRIM-calculated energy sputtering yield (if the TRIM model is used). 
 					Therm_evap turns on thermal evaporation when .gt.0.0 and is a multiplier to the thermal evaporation rate. 
@@ -1655,7 +1656,6 @@
 				<name>b2sifr_phm2</name>
 				<default>1.0</default>
 				<type>real</type>
-				<note>!Unused</note>
 				<description>
 					Multiplier of the electron thermal gradient term in the thermal force term
 				</description>
@@ -2216,7 +2216,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Another option for p<type>real</type>lasma state file output. Give the number of B2.5 full interations between succesive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals. Should be used, at the exclusion of other plasmastate write-up frequency settings, in conjunction with the Leuven Monte-Carlo averaging scheme.
+					Another option for plasma state file output. Give the number of B2.5 full interations between succesive write-ups of plasmastate files, in addition to the ones written at regular CPU intervals. Should be used, at the exclusion of other plasmastate write-up frequency settings, in conjunction with the Leuven Monte-Carlo averaging scheme.
 				</description>
 			</switch>
 			<switch>
@@ -2316,6 +2316,10 @@
 					<default>0</default>
 					<type>integer</type>
 				</switch>
+                <switch>
+                    <name>balance_netcdf</name>
+                    <default>0</default>
+                </switch>
 			</switchgroup>
 			<switch>
 				<name>ank_tracing</name>
@@ -2631,7 +2635,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Print min and max values of te, ti, na ' ua
+					Print min and max values of te, ti, na &amp; ua
 				</description>
 			</switch>
 			<switch>
@@ -3495,7 +3499,6 @@
 				<name>b2xzdd_zero_dead_and_core</name>
 				<default>1</default>
 				<type>integer</type>
-				<type>realy</type>
 				<description>
 					If 1 then zero passed sources in dead regions, 
 					If 2 zero passed sources in dead regions and core boundary cells 
@@ -3510,27 +3513,27 @@
 				<switch>
 					<name>b2sihs_rf0</name>
 					<default>1.0</default>
-					<type>realy</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2sihs_rf1</name>
 					<default>1.0</default>
-					<type>realy</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2sihs_rf2</name>
 					<default>1.0</default>
-					<type>realy</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2sihs_rf3</name>
 					<default>1.0</default>
-					<type>realy</type>
+					<type>real</type>
 				</switch>
 				<switch>
 					<name>b2sihs_rf4</name>
 					<default>1.0</default>
-					<type>realy</type>
+					<type>real</type>
 				</switch>
 			</switchgroup>
 			<switch>
@@ -6231,7 +6234,7 @@
 			<switch>
 				<name>LPFRB_I</name>
 				<default>-2</default>
-				<type>integer.</type>
+				<type>integer</type>
 				<description>
 					B2 x-cell indices corresponding to the bottom of the bypass between the inner and outer divertor (counted from the bottom, if non-positive) (inner side).
 				</description>

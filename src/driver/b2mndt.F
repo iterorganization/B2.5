@@ -473,7 +473,8 @@ ctmp.dpc
      &          fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),
      &          flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      &          fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is))
+     &          kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
+     &          .false.)                                                 !djm Jan2017
            end do
 *      ..compute electron drift velocities
            call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,

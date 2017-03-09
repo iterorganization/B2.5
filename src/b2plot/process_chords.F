@@ -210,7 +210,7 @@ c
 #ifdef CDF_MOVIE
       else
         rw='read'
-        ncid=ncopn(moviename,ncnowrit,iret)
+        iret = nf_open(moviename,NCNOWRIT,ncid) 
         imap(1)=1
         tstepn(1)=ntstep
         call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
@@ -244,7 +244,7 @@ c
      2     linlog)
           call end_page
         enddo
-        call ncclos(ncid, iret)
+        iret = nf_close(ncid)
       endif
 #endif
 #endif

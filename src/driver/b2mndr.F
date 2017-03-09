@@ -41,6 +41,10 @@
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
       use b2mod_external
+      use b2mod_mwti
+      use b2mod_balance !djm Jan2017
+     & , only : write_balance, balance_netcdf
+
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_cinit
@@ -845,6 +849,7 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
+       call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
        call ipgeti ('b2mndr_iout', iout)                             !srv 25.01.16
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
@@ -2103,6 +2108,15 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         if(mod(itim,tally).ne.0.and.itim.gt.1) then
           call tallies(nx,ny,ns)
         endif
+      endif
+*   ..create netcdf file containing everything for balance post-processing routines !djm Jan2017
+      if(balance_netcdf.ne.0) then
+#ifndef NO_CDF
+        call write_balance(nx,ny,ns)
+#else
+        write(*,*)
+    >    'NO_CDF is set at compilation, cannot write balance.nc'
+#endif
       endif
 
 #ifdef CATALYST

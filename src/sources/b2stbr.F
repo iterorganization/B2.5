@@ -19,6 +19,14 @@
       use b2mod_sources
      1 , only : b2stbr_sna,b2stbr_smo,b2stbr_she,b2stbr_shi,b2stbr_sch,
      2          b2stbr_sne
+      use b2mod_balance !djm Jan2017
+     & , only : b2stbr_phys_sna0to1,b2stbr_phys_smo0to3,
+     &          b2stbr_phys_she0to3,b2stbr_phys_shi0to3,
+     &          b2stbr_bas_sna0to1,b2stbr_bas_smo0to3,
+     &          b2stbr_bas_she0to3,b2stbr_bas_shi0to3,
+     &          b2stbr_first_flight_sna0to1,
+     &          b2stbr_first_flight_she0to3,b2stbr_first_flight_shi0to3,
+     &          balance_netcdf
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
@@ -56,6 +64,11 @@
      *  sna0(-1:nx,-1:ny,0:1,0:ns-1), smo0(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      &  sch0(-1:nx,-1:ny,0:3), sne0(-1:nx,-1:ny,0:1)
+*   ..local variables
+      real (kind=R8) :: snatmp(-1:nx,-1:ny,0:1,0:ns-1), !djm Mar2017
+     &                  smotmp(-1:nx,-1:ny,0:3,0:ns-1),
+     &                  shetmp(-1:nx,-1:ny,0:3),
+     &                  shitmp(-1:nx,-1:ny,0:3)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -94,7 +107,8 @@
      &  sna0_eir(-1:nx,-1:ny,0:1,0:ns-1),
      &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3),         
-     &  fatm_eir(-1:nx,-1:ny,0:1,0:ns-1), datm_eir(-1:nx,-1:ny,0:ns-1) !srv 29.04.10 }
+     &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
+     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol) !IYS 27.01.2017 
       integer ncall, sput_src, first_flight, 
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1  use_eirene, output, coreregno, coreregn2, neutrals_namelist,
@@ -419,6 +433,13 @@ c   --> better solution wanted here..
        endif
        if (neutrals_namelist.eq.1 .or. use_eirene.ne.0) then
         if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_phys'
+        if (balance_netcdf.ne.0) then
+          !djm Mar2017 save sources before hand
+          snatmp=sna0
+          smotmp=smo0
+          shetmp=she0
+          shitmp=shi0
+        endif
         call b2stbr_phys (nx, ny, ns, nscx, iscx, dtim, BoRiS,
      &   vol, hx, hy, hz, gs, qz, pbs, bb, na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
@@ -432,8 +453,22 @@ c   --> better solution wanted here..
      1   sput_mixed_alpha, sput_mixed_beta,
      2   new_sputter_namelist, shi0_ff, f_redep,
      3   potential_at_guard_cell, recycled_neutrals_contr)
+        if (balance_netcdf.ne.0) then
+          !djm Mar2017 store source contributions
+          b2stbr_phys_sna0to1=sna0-snatmp
+          b2stbr_phys_smo0to3=smo0-smotmp
+          b2stbr_phys_she0to3=she0-shetmp
+          b2stbr_phys_shi0to3=shi0-shitmp
+        endif
        else
         if(ncall.eq.0) write(*,*) 'b2stbr: using b2stbr_bas'
+        if (balance_netcdf.ne.0) then
+          !djm Mar2017 save sources before hand
+          snatmp=sna0
+          smotmp=smo0
+          shetmp=she0
+          shitmp=shi0
+        endif
         call b2stbr_bas (nx, ny, ns, nscx, iscx, dtim, BoRiS,
      &   vol, hx, hy, gs, qz, pbs, na, ua, kinrgy,
      &   te, ti, po, ne, ni, fna, fhe, fhi, fch, fne, fni,
@@ -447,10 +482,23 @@ c   --> better solution wanted here..
      &   reflection_on, sputter_energy_on, main_call,
      &   sput_chem_cutoff_alpha, sput_chem_cutoff_beta, shi0_ff,
      &   f_redep, potential_at_guard_cell, recycled_neutrals_contr)
+        if (balance_netcdf.ne.0) then
+          !djm Mar2017 store source contributions
+          b2stbr_bas_sna0to1=sna0-snatmp
+          b2stbr_bas_smo0to3=smo0-smotmp
+          b2stbr_bas_she0to3=she0-shetmp
+          b2stbr_bas_shi0to3=shi0-shitmp
+        endif
        endif
       endif
 
       if(first_flight.ne.0) then
+        if (balance_netcdf.ne.0) then
+          !djm Mar2017 save sources before hand
+          snatmp=sna0
+          shetmp=she0
+          shitmp=shi0
+        endif
         call cpu_time(start_time)
         if (output.ge.1) then
           open(88,file='start')
@@ -555,6 +603,12 @@ c   --> better solution wanted here..
         call cpu_time(end_time)
         if(main_call)
      >   write(*,*) end_time-start_time,' cpu-seconds'
+        if (balance_netcdf.ne.0) then
+          !djm Mar2017 store source contributions
+          b2stbr_first_flight_sna0to1=sna0-snatmp
+          b2stbr_first_flight_she0to3=she0-shetmp
+          b2stbr_first_flight_shi0to3=shi0-shitmp
+        endif
       endif
 
       if(main_call.and.out_tfiles.ne.0) then                        ! xpb  !srv 07.04.09
@@ -609,16 +663,40 @@ c   --> better solution wanted here..
           call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
         endif
 #endif	                       
-        do ia = 1, natm
-         is = eb2spcr(ia)
+        do ia = 1, nnatmi
+!         is = eb2spcr(ia)  ! IYS 27.01.2017
          do iy = -1,ny
           do ix = -1,nx
-           fatm_eir(ix,iy,0,is) = pfluxa(ix+1,iy+1,ia,1)
-           fatm_eir(ix,iy,1,is) = rfluxa(ix+1,iy+1,ia,1)
-           datm_eir(ix,iy,is)   = dab2(ix+1,iy+1,ia,1)
+! IYS 27.01.2017
+!           fatm_eir(ix,iy,0,is) = pfluxa(ix+1,iy+1,ia,1)
+!           fatm_eir(ix,iy,1,is) = rfluxa(ix+1,iy+1,ia,1)
+! IYS 27.01.2017
+           datm_eir(ix,iy,ia)   = dab2(ix+1,iy+1,ia,1)
           enddo
          enddo
+! IYS 27.01.2017
+! interpolate atom fluxes to cell faces (for output only)
+         call intfaceh(nx,ny,leftix,leftiy,vol,
+     &                 pfluxa(0:nx+1,0:ny+1,ia,1),fatm_eir(:,:,0,ia))
+         call intfacev(nx, ny, bottomix, bottomiy, vol,
+     &                 rfluxa(0:nx+1,0:ny+1,ia,1),fatm_eir(:,:,1,ia))
+! IYS 27.01.2017
         enddo
+! IYS 27.01.2017
+        do im = 1, nmol
+         do iy = -1,ny
+          do ix = -1,nx
+           dmol_eir(ix,iy,im)   = dmb2(ix+1,iy+1,im,1)
+          enddo
+         enddo
+! interpolate molecule fluxes to cell faces (for output only)
+         call intfaceh(nx,ny,leftix,leftiy,vol,
+     &                  pfluxm(0:nx+1,0:ny+1,im,1),fmol_eir(:,:,0,im))
+         call intfacev(nx, ny, bottomix, bottomiy, vol,
+     &                  rfluxm(0:nx+1,0:ny+1,im,1),fmol_eir(:,:,1,im))
+        enddo
+! IYS 27.01.2017
+
 #else
         call xerrab ('b2stbr not compiled with the B25_EIRENE option')
 #endif
@@ -843,8 +921,14 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
         write (chns,'(i3.3)') ia
         call my_out(70,nx,ny,rfluxa(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_rfluxa_eir'//chns)
+        call my_out(70,nx,ny,tfluxa(0:nx+1,0:ny+1,ia,1),      ! IYS 27.01.2017
+     &                'b2stbr_tfluxa_eir'//chns)
+        call my_out(70,nx,ny,fatm_eir(:,:,1,ia),              ! IYS 27.01.2017
+     &              'b2stbr_fatmy_eir'//chns)
         call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_pfluxa_eir'//chns)
+        call my_out(70,nx,ny,fatm_eir(:,:,0,ia),              ! IYS 27.01.2017
+     &              'b2stbr_fatmx_eir'//chns)
         call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_dab2_eir'//chns)
         call my_out(70,nx,ny,tab2(0:nx+1,0:ny+1,ia,1),
@@ -854,8 +938,14 @@ c-xpb  plate_thickness.eq.0 means we are not doing full inventories
         write (chns,'(i3.3)') im
         call my_out(70,nx,ny,rfluxm(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_rfluxm_eir'//chns)
+        call my_out(70,nx,ny,tfluxm(0:nx+1,0:ny+1,im,1),      ! IYS 27.01.2017
+     &              'b2stbr_tfluxm_eir'//chns)
+        call my_out(70,nx,ny,fmol_eir(:,:,1,im),              ! IYS 27.01.2017
+     &              'b2stbr_fmoly_eir'//chns)
         call my_out(70,nx,ny,pfluxm(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_pfluxm_eir'//chns)
+        call my_out(70,nx,ny,fmol_eir(:,:,0,im),              ! IYS 27.01.2017
+     &              'b2stbr_fmolx_eir'//chns)
         call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,im,1),
      &              'b2stbr_dmb2_eir'//chns)
         call my_out(70,nx,ny,tmb2(0:nx+1,0:ny+1,im,1),

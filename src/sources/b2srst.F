@@ -7,6 +7,9 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_balance !djm Jan2017
+     1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,
+     2          b2srst_shi0to3, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows                                   !srv 01.07.08
@@ -188,6 +191,14 @@
       shist = shi - shist
       schst = sch - schst
       snest = sne - snest
+
+cdjm Jan2017 Store for balance
+      if (balance_netcdf.ne.0) then
+        b2srst_sna0to1 = snast
+        b2srst_smo0to3 = smost
+        b2srst_she0to3 = shest
+        b2srst_shi0to3 = shist
+      endif
 
       if (iout_b2npmo.eq.1) then                           !srv 11.09.09 {
        do is = 0, ns-1

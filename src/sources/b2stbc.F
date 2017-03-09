@@ -22,6 +22,9 @@
       use b2mod_sources
      1 , only : b2stbc_sna,b2stbc_smo,b2stbc_she,b2stbc_shi,b2stbc_sch,
      2          b2stbc_sne
+      use b2mod_balance !djm Jan 2017
+     1 , only : b2stbc_sna0to1,b2stbc_smo0to3,b2stbc_she0to3,
+     2          b2stbc_shi0to3,balance_netcdf
       use b2mod_feedback
       use b2mod_b2cmpa
       use b2mod_external
@@ -681,6 +684,15 @@ c      write(*,*) 'Copying sne0 to b2stbc_sne'
      1 sne0(-1:nx,-1:ny,0)+
      2 sne0(-1:nx,-1:ny,1)*ne(-1:nx,-1:ny)
 c      write(*,*) 'Copied s..0 to b2stbc_s..'
+
+cdjm Jan2017 Keep linearised sources for balance
+      if (balance_netcdf.ne.0) then
+        b2stbc_sna0to1 = sna0
+        b2stbc_smo0to3 = smo0
+        b2stbc_she0to3 = she0
+        b2stbc_shi0to3 = shi0
+      endif
+
       if(ncall.eq.0 .or. main_call) ncall = ncall+1
       call subend ()
       return

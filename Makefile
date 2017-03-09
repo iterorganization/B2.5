@@ -9,6 +9,7 @@ endif
 SRCB2   = ${PWD}
 SRCDIR  = ${SRCB2}/src
 DOCDIR  = ${SRCDIR}/documentation
+PYTHON  = python
 
 MAKES = ${SRCB2}/Makefile
 # Include global SOLPS compiler settings
@@ -168,6 +169,7 @@ VPATH=${VHEAD}${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/docu
 FPATH:=${VPATH}
 VPATH += :${SRCDIR}/ids
 FFPATH += :${SRCDIR}/ids
+FFPATH += :${SRCDIR}/modules
 
 MODLIST  =
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
@@ -179,7 +181,8 @@ endif
 ifdef UAL_DIR
 MODLIST += ${SRCDIR}/ids/*.F90
 endif
-MODLIST += ${SRCDIR}/modules/*.F 
+MODLIST += ${SRCDIR}/modules/*.F
+
 ifeq ($(shell [ -d ${SOLPS4} ] && echo yes || echo no ),yes)
 S4LIST = ${SOLPS4}/*.F
 endif
@@ -267,7 +270,7 @@ LIBOBJS = ${ALLOBJS}
 endif
 
 ${DOCDIR}/b2cdci.F: ${DOCDIR}/b2input.xml ${DOCDIR}/b2cdci.py
-	-cd ${DOCDIR}; python b2cdci.py
+	-cd ${DOCDIR}; ${PYTHON} b2cdci.py || echo "! Error building b2cdci.F from b2input.xml" > ${DOCDIR}/b2cdci.F
 
 ifdef USE_EIRENE
 ${OBJDIR}/libgr_dummy.a:
@@ -693,7 +696,7 @@ ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
 	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${LDOPTSend}
 
-${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h
+${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F
 	@${BLD} $@ ${LIBOBJS}
 
 ${SOLPS4OBJS}: ${OBJDIR}/%.o: ${SOLPS4}/%.F
@@ -813,8 +816,7 @@ endif
 tags:
 	rm -f ${SRCB2}/TAGS ; etags -o ${SRCB2}/TAGS ${TAGSLIST}
 
-listobj: ${OBJDIR}/dependencies
-	@echo "ParaView=${PARAVIEW_LIB}"
+listobj: ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F
 ifdef USE_EIRENE
 	@rm -f ${OBJDIR}/LISTOBJ; touch ${OBJDIR}/LISTOBJ; l="OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
@@ -842,7 +844,7 @@ else
 	done; \
 	echo "$$l" | eval sed "$$E" > ${OBJDIR}/LISTOBJ
 endif
-	@l="B2OBJS = b2cdci.o"; \
+	@l="B2OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
 		l="$$l `(cd $$d > /dev/null; echo *.F)`"; \
 	done; \

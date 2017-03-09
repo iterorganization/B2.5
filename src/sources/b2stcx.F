@@ -12,6 +12,9 @@
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif	                       
+      use b2mod_balance !djm Jan2017
+     & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
+     &          balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, is0, ismain
@@ -320,6 +323,13 @@ ctmp.dpc
         wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
      &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
 	call my_out(70,nx,ny,wrk0,'b2stcx_shi')
+      endif
+
+cdjm Jan2017 Keep linearised sources for balance
+      if (balance_netcdf.ne.0) then
+        b2stcx_sna0to1 = sna0
+        b2stcx_smq0to3 = smq0
+        b2stcx_shi0to3 = shi0
       endif
 
 * ..return

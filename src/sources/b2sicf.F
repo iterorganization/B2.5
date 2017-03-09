@@ -6,6 +6,8 @@
       use b2mod_types
       use b2mod_constants
       use b2mod_indirect
+      use b2mod_balance !djm Jan2017
+     & , only : b2sicf_smo0to3, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb                                             !srv 28.01.02
@@ -150,6 +152,12 @@
           enddo
         enddo
       endif
+
+cdjm Store linearised source for balance
+      if (balance_netcdf.ne.0) then
+        b2sicf_smo0to3(-1:nx,-1:ny,0:3,isb)=smbcf
+      endif
+
       if (iout.ne.0) then                                                !srv 17.06.02 {
         write (chns,'(i3.3)') isb
         do k=0,3

@@ -12,6 +12,11 @@
       use b2mod_tallies
       use b2mod_sources
       use b2mod_b2cmpa
+      use b2mod_balance !djm Jan2017
+     & , only : b2sihs_diae0to3, b2sihs_divue0to3, b2sihs_exbe0to3,
+     &          b2sihs_joule0to3, b2sihs_diaa0to3, b2sihs_divua0to3,
+     &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
+     &          balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns                                                 !xpb
@@ -32,6 +37,7 @@
 *   ..workspace argument (unspecified on entry and on exit)
       real (kind=R8) ::
      *  vti32(-1:nx,-1:ny)
+      real (kind=R8) :: shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3) !djm Jan2017
 *   ..common block
 *-----------------------------------------------------------------------
 *.documentation
@@ -207,6 +213,9 @@ cxpb    t0 = -phm0*((uesx(rightix(ix,iy),rightiy(ix,iy))-uesx(ix,iy))    !xpb
 cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
       b2divue=0.0_R8
       b2sihs_divue=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shetmp=she0
+      endif
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
@@ -223,9 +232,15 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         endif
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_divue0to3=she0-shetmp
+      endif
 *   ..contribution from divergence(ua,va)
       b2divua=0.0_R8
       b2sihs_divua=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shitmp=shi0
+      endif
       do is = 0, ns-1
         do iy = -1, ny
           do ix = -1, nx
@@ -245,11 +260,17 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
           enddo
         enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_divua0to3=shi0-shitmp
+      endif
 *   ..contribution from divergence of the electrical drift       !sv 02.06.99
       call intfacev(nx,ny,bottomix,bottomiy,vol,po,wpov)
       call intfaceh(nx,ny,leftix,leftiy,vol,po,wpoh)
       b2exbe=0.0_R8
       b2sihs_exbe=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shetmp=she0
+      endif
       do iy = -1, ny
         do ix = -1, nx
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
@@ -271,9 +292,15 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
           endif
         enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_exbe0to3=she0-shetmp
+      endif
 *   ..contribution from divergence of the electrical drift    !sv 02.06.99
       b2exba=0.0_R8
       b2sihs_exba=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shitmp=shi0
+      endif
       do is = 0, ns-1
         if(.not.is_neutral(is)) then
           do iy = -1, ny
@@ -295,9 +322,15 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
           enddo
         endif
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_exba0to3=shi0-shitmp
+      endif
 *   ..contribution from viscous heating
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shitmp=shi0
+      endif
       do is = 0, ns-1
        do iy = -1, ny
         do ix = -1, nx
@@ -320,10 +353,16 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         enddo
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_visa0to3=shi0-shitmp
+      endif
 *   ..contribution from electron-atom friction
 *     (a.k.a. Joule heating)
       b2joule=0.0_R8
       b2sihs_joule=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shetmp=she0
+      endif
       do iy = -1, ny
        do ix = -1, nx
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
@@ -349,9 +388,15 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         endif
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_joule0to3=she0-shetmp
+      endif
 *   ..contribution from atom-atom friction
       b2fraa=0.0_R8
       b2sihs_fraa=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shitmp=shi0
+      endif
 !      do isb = 0, ns-1
       do isb = nsmin, nsmax-1
        do is = isb+1, ns-1
@@ -389,6 +434,9 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         endif
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_fraa0to3=shi0-shitmp
+      endif
       b2str=0.0_R8
       b2sihs_str=0.0_R8
       if (style.eq.-1) then
@@ -560,6 +608,8 @@ c
       use b2mod_geo_corner
       use b2mod_tallies
       use b2mod_b2cmpa
+      use b2mod_balance                                                  !djm Jan2017
+     & , only : b2sihs_diaa0to3, b2sihs_diae0to3, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -582,6 +632,7 @@ c
       real (kind=R8) ::
      *  t0, facgt
       save ncall, facgt
+      real (kind=R8) :: shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3) !djm Jan2017
 *   ..procedures
       real (kind=R8) ::
      *  hy1
@@ -621,6 +672,9 @@ c
 
       if(maxval(facdrift).ne.0.0_R8 .and. facgt.ne.0.0_R8) then
         b2wrong2=0.0_R8
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        shitmp=shi
+      endif
         do is=0,ns-1
           if(.not.is_neutral(is)) then
             do iy=-1,ny
@@ -680,7 +734,13 @@ c
             enddo
           endif
         enddo
+        if (balance_netcdf.ne.0) then !djm Jan2017
+          b2sihs_diaa0to3=shi-shitmp
+        endif
         b2wrong3=0.0_R8
+        if (balance_netcdf.ne.0) then !djm Jan2017
+          shetmp=she
+        endif
         do iy=-1,ny
           do ix=-1,nx
             ixl=leftix(ix,iy)
@@ -729,6 +789,9 @@ c
             endif
           enddo
         enddo
+        if (balance_netcdf.ne.0) then !djm Jan2017
+          b2sihs_diae0to3=she-shetmp
+        endif
       endif
 
 * ..return

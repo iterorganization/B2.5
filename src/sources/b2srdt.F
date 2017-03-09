@@ -12,6 +12,9 @@
       use b2mod_b2cmpa 
       use b2mod_boundary_namelist
      , , only : iftimbound
+      use b2mod_balance !djm Jan2017
+     1 , only : b2srdt_sna0to1,b2srdt_smo0to3,b2srdt_she0to3,
+     2          b2srdt_shi0to3, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       logical(1) :: lout                                             !srv 16.07.10
@@ -52,6 +55,9 @@
      *   phm0, phm1, phm3, phm4, phm5, t0, ttim
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
       save ncall, phm0, phm1, phm3, phm4, phm5, use_eirene           !xpb
+      real (kind=R8) :: !djm Jan2017
+     &  snatmp(-1:nx,-1:ny,0:1,0:ns-1), smotmp(-1:nx,-1:ny,0:3,0:ns-1), 
+     &  shetmp(-1:nx,-1:ny,0:3), shitmp(-1:nx,-1:ny,0:3)
 *   ..procedures
       external subini, subend, xertst, ipgetr
       external b2xvsg
@@ -102,6 +108,12 @@
        call b2xvsg (2*n2, ni0, 1, 'ni0', '.gt.')
        call b2xvsg (n2*ns, kinrgy0, 1, 'kinrgy0', '.ge.')
       endif
+
+cdjm Jan2017 Keep sources at the start to calculate total change for balance routines
+      snatmp = snadt
+      smotmp = smodt
+      shetmp = shedt
+      shitmp = shidt
 
 * ..include the contributions from dtim
 *   ..modify snadt
@@ -203,6 +215,13 @@ cxpb  This treatment added as a fix to get the ExB runs going
        enddo
       enddo
 
+cdjm Store the total change in linearised sources for balance
+      if (balance_netcdf.ne.0) then
+        b2srdt_sna0to1 = snadt-snatmp
+        b2srdt_smo0to3 = smodt-smotmp
+        b2srdt_she0to3 = shedt-shetmp
+        b2srdt_shi0to3 = shidt-shitmp
+      endif
 
       if (iout_b2npmo.eq.1 .and. lout) then                                     !srv 11.09.09 {
        do is = 0, ns-1 
