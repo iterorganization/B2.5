@@ -70,6 +70,7 @@
          print *,'outer reflector plate chosen'
       endif
      
+     
       open(unit=inunit,file=infile0,status='old',action='read')
       READ(INUNIT,NML=GEOMETRY)
       READ(INUNIT,NML=MESH)
