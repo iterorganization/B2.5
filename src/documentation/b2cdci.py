@@ -44,7 +44,7 @@ root = tree.getroot()
 b2cdci_switches = {}
 
 # Create a sorted list of switches
-for category in root.find('module[@name="b2mn"]'):
+for category in root.find('module[@name="b2mn.dat"]').findall('category'):
     for switchgroup in category.findall('switchgroup'):
         switch_description = switchgroup.findtext('description')
         for switch in switchgroup.findall('switch'):
@@ -69,7 +69,7 @@ for category in root.find('module[@name="b2mn"]'):
 # Create description of switches for list by category
 switch_list = []
 category_section = []
-for category in root.find('module[@name="b2mn"]'):
+for category in root.find('module[@name="b2mn.dat"]').findall('category'):
     section = category.attrib['name']# Name of category
 
     section_switches = []
@@ -109,7 +109,7 @@ def dedent(description):
     return output[0:]  # remove last newline
 
 
-specification = root.find('module[@name="b2mn"]/routine[@name="b2cdci"]')
+specification = root.find('module[@name="b2mn.dat"]/routine[@name="b2cdci"]')
 
 purpose = specification.findtext('purpose')
 introduction = specification.findtext('introduction')

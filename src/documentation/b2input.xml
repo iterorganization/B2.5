@@ -204,38 +204,34 @@
 				Atomic Physics includes switches used in the atomic physics pre-processing module B2AR.
 			</introduction>
 		</routine>
-		<category name="Naming">
-			<switch>
-				<name>user</name>
+		<coefficients>
+			<!-- These block contains tooltips for cofficient blocks-->
+			<param>
+				<name>label</name>
 				<type>string</type>
 				<description>
-					The name of the user for current simulation settings.
+					Specifies, on the next line, a label for the run.
 				</description>
-			</switch>
-			<switch>
-				<name>shot</name>
-				<default>16151</default>
-				<type>integer</type>
+			</param>
+			<param>
+				<name>b2cmpa</name>
 				<description>
-					The number of the shot.
+					Specifies a block of basic parameters, overriding those specified in the block of the same name in b2ah.dat
 				</description>
-			</switch>
-			<switch>
-				<name>run</name>
-				<default>1000</default>
-				<type>integer</type>
+			</param>
+			<param>
+				<name>b2cmpb</name>
 				<description>
-					The number of the run.
+					Specifies a block of boundary conditions, overriding those specified in the block of the same name in b2ah.dat
 				</description>
-			</switch>
-			<switch>
-				<name>device</name>
-				<type>string</type>
+			</param>
+			<param>
+				<name>b2cmpt</name>
 				<description>
-					The name of the device for the UAL database.
+					specifies a block of transport coefficients, overriding those specified in the block of the same name in b2ah.dat
 				</description>
-			</switch>
-		</category>
+			</param>
+		</coefficients>
 		<category name="Geometry">
 			<switch>
 				<name>b2agfs_geometry</name>
@@ -552,6 +548,7 @@
 		</category>
 		<category name="Run">
 			<switchgroup>
+				<name>b2mndr_id</name>
 				<description>
 					These switches server as identification for the simulation. They can be inherited from SOLPS-GUI:
 					Run number : The number of the run.
@@ -567,6 +564,7 @@
 				<switch>
 					<name>b2mndr_shot_number</name>
 					<type>integer</type>
+					<default>0</default>
 				</switch>
 				<switch>
 					<name>b2mndr_device</name>
@@ -6190,7 +6188,7 @@
 			<switchgroup>
 				<name>*_CNV</name>
 				<description>
-					The following four parameters are only activated if 'b2tqna_user_transport' is set to '6'.
+					The four *_CNV parameters are only activated if 'b2tqna_user_transport' is set to '6'.
 				</description>
 				<switch>
 					<name>VOUT_CNV</name>
