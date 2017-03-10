@@ -13,8 +13,8 @@ def get_default(text):
     base = ' Defaults to '
     end = '.'
     if text:
-        if '.true.' in text or '.false.' in text or 'NX' in text or 'NY' in \
-            text or 'NS' in text:
+        if '.true.' in text or '.false.' in 'nx' == text in 'ny' == text or \
+            text == 'ns' in text:
             return base + text + end
         if text.isalpha() or text == ' ' or text.replace('.', '').isalpha():
             return base + "'" + text + "'" + end
