@@ -2216,6 +2216,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mwti_2dwrite</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					 Controls additional output to b2time.nc.  If eq 1 then a few 2d arrays (ne, Te, Ti) are written with each write to b2time.nc. If eq 2 then fluxes, po, kinetic energy, and fluid particle and energy source terms are also included (e.g., rsana, rsahi, rqrad).
+				</description>
+			</switch>
+			<switch>
 				<name>b2mwti_ismain0</name>
 				<default>0</default>
 				<type>integer</type>
