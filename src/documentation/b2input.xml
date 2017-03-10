@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <b2>
-	<module name="b2ai.dat">
+	<module name="b2ai.dat" type="namelist">
 		<category name="b2ai params">
 			<switch>
 				<name>dimens</name>
@@ -42,7 +42,7 @@
 			</switch>
 		</category>
 	</module>
-	<module name="b2ah.dat">
+	<module name="b2ah.dat" type="namelist">
 		<category name="b2ah params">
 			<switch>
 				<name>dimens</name>
@@ -158,7 +158,7 @@
 			</switch>
 		</category>
 	</module>
-	<module name="b2ag.dat">
+	<module name="b2ag.dat" type="namelist">
 		<category name="b2ag params">
 			<switch>
 				<name>dimens</name>
@@ -3863,7 +3863,7 @@
 			</switchgroup>
 		</category>
 	</module>
-	<module name="b2.parameters">
+	<module name="b2.parameters" type="namelist">
 		<routine name="b2cdcn">
 			<purpose>
 				B2CDCN provides information about namelists of the b2 code.
