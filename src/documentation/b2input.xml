@@ -4007,7 +4007,7 @@
 			</switch>
 			<switch>
 				<name>CRCSTRA</name>
-				<default>' '</default>
+				<default> </default>
 				<type>character*1 array of length (NSTRAT)</type>
 				<description>
 					Contains the type of stratum for Eirene. Possible options include:
@@ -5214,7 +5214,7 @@
 
 			<switch>
 				<name>BOUNDARY_FILENAME</name>
-				<default>'b2.boundary.parameters'</default>
+				<default>b2.boundary.parameters</default>
 				<type>character*256</type>
 				<description>
 					Name of the next file to use for reading a new /BOUNDARY/ namelist.
@@ -5615,7 +5615,7 @@
 			</switch>
 			<switch>
 				<name>SOURCES_FILENAME</name>
-				<default>'b2.sources.profile'</default>
+				<default>b2.sources.profile</default>
 				<type>character*256</type>
 				<description>
 					Name of the next file to use for reading a new /PROFILE/ namelist. Quantities not present in the new file will be inherited from the old one.
@@ -5688,7 +5688,7 @@
 			</switch>
 			<switch>
 				<name>TRANSPORT_FILENAME</name>
-				<default>'b2.transport.inputfile'</default>
+				<default>b2.transport.inputfile</default>
 				<type>character*256</type>
 				<description>
 					Name of the next file to use for reading a new /TRANSPORT/ namelist.
@@ -5932,7 +5932,7 @@
 			</switch>
 			<switch>
 				<name>NUMERICS_FILENAME</name>
-				<default>'b2.numerics.namelist'</default>
+				<default>b2.numerics.namelist</default>
 				<type>character*256</type>
 				<description>
 					Name of the next file to use for reading a new /NUMERICS/ namelist.
@@ -6114,7 +6114,7 @@
 			</switch>
 			<switch>
 				<name>TRANSPORT_FILENAME</name>
-				<default>'b2.transport.parameters'</default>
+				<default>b2.transport.parameters</default>
 				<type>character*256</type>
 				<description>
 					Name of the next file to use for reading a new /TRANSPORT/ namelist.
@@ -6398,7 +6398,7 @@
 			</switch>
 			<switch>
 				<name>USER_FILENAME</name>
-				<default>'b2.user.parameters'</default>
+				<default>b2.user.parameters</default>
 				<type>character*80</type>
 				<description>
 					Filename where /USER/ namelist is stored.
