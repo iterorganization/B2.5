@@ -2326,6 +2326,7 @@
 				<switch>
 					<name>balance_netcdf</name>
 					<default>0</default>
+					<type>integer</type>
 				</switch>
 			</switchgroup>
 			<switch>
