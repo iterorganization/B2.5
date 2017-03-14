@@ -88,13 +88,13 @@ c 2002-09-11: logic revised
 *
 *  1. purpose
 *
-*     B2YTDR is a post-processor for b2. It transfers the plasma state
+*     B2YTDR is a postprocessor for b2. It transfers the plasma state
 *     to a mesh of a different size.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a post-processor for the b2 code. It reads the
+*     This routine is a postprocessor for the b2 code. It reads the
 *     result of a b2 calculation, transfers the plasma state to a mesh
 *     of a different size and/or a different species bundling scheme,
 *     and writes that state to an un*formatted file. This routine does
@@ -7338,7 +7338,7 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
         IF (ZEILE(1:3).EQ.'CH4') GOTO 1227
         IREAD=1
  1230   CONTINUE
-CVK DATA FOR POST-PROCESSING WINDOWS
+CVK DATA FOR POSTPROCESSING WINDOWS
         READ (IUNIN,'(A80)') ZEILE
         WRITE(IUNOT,'(A80)') ZEILE
         IF (ZEILE(1:3).NE.'***') THEN !{

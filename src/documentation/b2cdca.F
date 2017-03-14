@@ -26,11 +26,11 @@
 *     b2ag (prepares a geometry and magnetic field), b2ah (prepares
 *     a table of default physics parameters), b2ai (prepares an
 *     initial plasma state), b2mn (principal calculation), and b2yp
-*     (post-processing).
+*     (postprocessing).
 *     Additional programs may prepare tables of rate coefficients for
 *     atomic processes, tables of plasma-wall interaction processes,
 *     external source terms, and other physics, or may perform further
-*     post-processing.
+*     postprocessing.
 *
 *     ...
 *
@@ -115,7 +115,7 @@
 *
 *   ..Graphics libraries.
 *     As distributed, B2 relies on NCAR and GKS for graphics output.
-*     The graphics post-processing codes for B2 are completely separate
+*     The graphics postprocessing codes for B2 are completely separate
 *     from the main calculation.
 *
 *   ..Concerning 'un*formatted' files.

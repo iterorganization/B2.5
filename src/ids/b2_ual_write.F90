@@ -49,7 +49,7 @@ program b2_ual_write
   !
   !     1. purpose
   !
-  !     b2_ual_write (main program) is a post-processor for b2. It reads the
+  !     b2_ual_write (main program) is a postprocessor for b2. It reads the
   !     plasma state and writes it as a CPO the ITM UAL.
   !
   !
@@ -60,7 +60,7 @@ program b2_ual_write
   !
   !     3. description (see also routine b2cdca)
   !
-  !     The complete program performs post-processing of the
+  !     The complete program performs postprocessing of the
   !     result of a b2 calculation.
   !     This program unit opens and closes the input/output units, and
   !     may perform some other system-dependent operations. 

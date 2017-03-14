@@ -2112,7 +2112,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call tallies(nx,ny,ns)
         endif
       endif
-*   ..create netcdf file containing everything for balance post-processing routines !djm Jan2017
+*   ..create netcdf file containing everything for balance postprocessing routines !djm Jan2017
       if(balance_netcdf.ne.0) then
 #ifndef NO_CDF
         call write_balance(nx,ny,ns)

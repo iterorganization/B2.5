@@ -17,7 +17,7 @@
 *
 *  1. purpose
 *
-*     B2YGDR is a post-processor for b2. It reads and displays the
+*     B2YGDR is a postprocessor for b2. It reads and displays the
 *     geometry and magnetic field.
 *
 *

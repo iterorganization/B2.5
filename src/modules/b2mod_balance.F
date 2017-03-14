@@ -2,7 +2,7 @@
       use b2mod_types
       implicit none
 
-*   ..Flux and source arrays required for balance post-processing routines. For the
+*   ..Flux and source arrays required for balance postprocessing routines. For the
 *     sources, the linearised components are stored and then the total source is updated
 *     just before each residual calculation. Only this total source is output to balance.nc
 *   ..Arrays for particle balance:

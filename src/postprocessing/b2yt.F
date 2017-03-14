@@ -21,7 +21,7 @@
 *
 *  1. purpose
 *
-*     B2YT (main program) is a post-processor for b2. It transfers
+*     B2YT (main program) is a postprocessor for b2. It transfers
 *     the plasma state to a mesh of different size and/or a different
 *     species bundling. It also attempts
 *     to re-write a new set of input files consistent with the new

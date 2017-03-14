@@ -52,11 +52,11 @@
 *     b2ag (prepares a geometry and magnetic field), b2ah (prepares
 *     a table of default physics parameters), b2ai (prepares an
 *     initial plasma state), b2mn (principal calculation), and b2yp
-*     (post-processing).
+*     (postprocessing).
 *     Additional programs may prepare tables of rate coefficients for
 *     atomic processes, tables of plasma-wall interaction processes,
 *     external source terms, and other physics, or may perform further
-*     post-processing.
+*     postprocessing.
 *
 *     The complete program b2mn is designed to solve the equations.
 *     This program unit opens and closes the input/output units, and
@@ -81,7 +81,7 @@
 *     nout(6): un*formatted; save file for restart
 *     nout(7): un*formatted; full plasma description with derived quantities
 *     nout(8): un*formatted; ASTRA coupling data file
-*     nout(9): formatted; post-processor output. [JET]
+*     nout(9): formatted; postprocessor output. [JET]
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
