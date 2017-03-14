@@ -238,7 +238,7 @@ Contains
         close(99)
       endif
 #ifndef NO_CDF
-      nbatch = ntim/ntim_batch
+      nbatch = ntim/ntim_batch + 1
       write(*,*) 'nbatch = ', nbatch
       call b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, nbatch, write_2d, iret)
       rw='write'
