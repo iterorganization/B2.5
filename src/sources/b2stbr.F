@@ -337,7 +337,7 @@
           endif
         endif
       endif
-      call ipgeti ('b2mndt_read_average', ird_aver)      !pb 29.09.16
+      call ipgeti ('b2mndr_av_read', ird_aver)      !pb 29.09.16
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny, ns
@@ -648,9 +648,10 @@ c   --> better solution wanted here..
         she0 = she0 + she0_eir
         shi0 = shi0 + shi0_eir
 
+*   get averaged sources
         if (ird_aver > 0) 
-     &     call source_averages (sna0, smo0, she0, shi0, sch0, sne0,
-     &                           nx, ny, ns)
+     &    call run_av_get_sources(sna0, smo0, she0, shi0, sch0, sne0,
+     &                            nx, ny, ns)
 #ifdef ASTRA
         if (use_astra.ne.0) then
           do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {
