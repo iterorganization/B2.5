@@ -2249,8 +2249,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
       endif
 
-      if (iav_run > 0) call run_av_save ('b2favere',nx,ny,ns,
-     *                                   .true.,.true.)
+      if (iav_run > 0) then
+        call run_av_save ('b2favere',nx,ny,ns,.true.,.true.)
+        call run_av_fin
+      end if
 
       if (ibatch_av_all > 0) call batch_av_all_fin
 
