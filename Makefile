@@ -954,7 +954,7 @@ ${SRCLOCAL}/b2local.F:
 	echo '#include "b2local.h"' >> ${SRCLOCAL}/b2local.F
 	echo "c" >> ${SRCLOCAL}/b2local.F
 	echo "      end" >> ${SRCLOCAL}/b2local.F
-ifdef USE_EIRENE
+ifdef SOLPS_CPP
 	ln -sf ${SRCLOCAL} ../solps4-5/src/local_5
 endif
 
@@ -965,7 +965,7 @@ ${MODLOCAL}/b2mod_local.F:
 	echo "c store local or locally modified modules in this directory" >> ${MODLOCAL}/b2mod_local.F
 	echo "c" >> ${MODLOCAL}/b2mod_local.F
 	echo "      end" >> ${MODLOCAL}/b2mod_local.F 
-ifdef USE_EIRENE
+ifdef SOLPS_CPP
 	ln -sf ${MODLOCAL} ../solps4-5/src/B2.5_modules.local
 endif
 
@@ -974,7 +974,7 @@ ${INCLOCAL}/b2local.h:
 	echo "c" > ${INCLOCAL}/b2local.h
 	echo "c store local or locally modified include files in this directory" >> ${INCLOCAL}/b2local.h
 	echo "c" >> ${INCLOCAL}/b2local.h
-ifdef USE_EIRENE
+ifdef SOLPS_CPP
 	ln -sf ${INCLOCAL} ../solps4-5/src/B2.5_include.local
 endif
 
