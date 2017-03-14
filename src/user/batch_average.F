@@ -54,7 +54,7 @@
       if (ii.eq.0) ii = batch_size
 *  .. average
 
-      gnew = 1.d0 / ii
+      gnew = 1.0_R8 / ii
       gold = (ii - 1) * gnew
       aver = gold*aver + gnew*var*var
 

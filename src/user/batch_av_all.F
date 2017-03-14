@@ -9,7 +9,7 @@
 
       implicit none
 
-      integer, intent(in) :: itim,ntim_batch,nx, ny, ns
+      integer, intent(in) :: itim, ntim_batch, nx, ny, ns
       character(*), intent(in) :: batch_name
  
       real (kind=R8), allocatable, save ::
@@ -112,29 +112,29 @@ ctb..as the mean of the product does not equal the product of the means etc.
 
       end if
 
-      na_mean = 0.d0
-      te_mean = 0.d0
-      ti_mean = 0.d0
-      ua_mean = 0.d0
-      po_mean = 0.d0
-      e_na = 0.d0
-      e_te = 0.d0
-      e_ti = 0.d0
-      e_ua = 0.d0
-      e_po = 0.d0
+      na_mean = 0.0_R8
+      te_mean = 0.0_R8
+      ti_mean = 0.0_R8
+      ua_mean = 0.0_R8
+      po_mean = 0.0_R8
+      e_na = 0.0_R8
+      e_te = 0.0_R8
+      e_ti = 0.0_R8
+      e_ua = 0.0_R8
+      e_po = 0.0_R8
       
-      sna_mean = 0.d0
-      sne_mean = 0.d0
-      she_mean = 0.d0
-      shi_mean = 0.d0
-      sch_mean = 0.d0
-      smo_mean = 0.d0
-      e_sna = 0.d0
-      e_sne = 0.d0
-      e_she = 0.d0
-      e_shi = 0.d0
-      e_sch = 0.d0
-      e_smo = 0.d0
+      sna_mean = 0.0_R8
+      sne_mean = 0.0_R8
+      she_mean = 0.0_R8
+      shi_mean = 0.0_R8
+      sch_mean = 0.0_R8
+      smo_mean = 0.0_R8
+      e_sna = 0.0_R8
+      e_sne = 0.0_R8
+      e_she = 0.0_R8
+      e_shi = 0.0_R8
+      e_sch = 0.0_R8
+      e_smo = 0.0_R8
      
       naver = 0
       
@@ -155,6 +155,17 @@ ctb..as the mean of the product does not equal the product of the means etc.
       deallocate (she_mean)
       deallocate (shi_mean)
       deallocate (sch_mean)
+      deallocate (e_na)
+      deallocate (e_ua)
+      deallocate (e_te)
+      deallocate (e_ti)
+      deallocate (e_po)
+      deallocate (e_sna)
+      deallocate (e_sne)
+      deallocate (e_smo)
+      deallocate (e_she)
+      deallocate (e_shi)
+      deallocate (e_sch)
 
       return
 

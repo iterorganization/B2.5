@@ -2218,11 +2218,35 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mndt_av</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_av.gt.0, turns on computation of running averages.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_av_continue</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_av_continue.gt.0, continuously perform running averages.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndt_av_ntim_batch</name>
 				<default>500</default>
 				<type>integer</type>
 				<description>
 					If ntim_batch.gt.0, number of iterations used to compute batch averages.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_av_ntim_run</name>
+				<default>1000</default>
+				<type>integer</type>
+				<description>
+					If ntim_run.gt.0, number of iterations used for writing running averages.
 				</description>
 			</switch>
 			<switch>
@@ -2266,14 +2290,6 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2mndt_average</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If b2mndt_average.gt.0, the averaged solution will be written out in the aver.dat file.
-				</description>
-			</switch>
-			<switch>
 				<name>average_restart</name>
 				<default>0</default>
 				<type>integer</type>
@@ -2282,7 +2298,7 @@
 				</description>
 			</switch>
 			<switch>
-				<name>b2mndt_read_average</name>
+				<name>b2mndr_av_read</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>

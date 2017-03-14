@@ -83,7 +83,7 @@
       integer, save :: pot_eq = 1
       integer, save :: guard_flows = 2
       integer, save :: old_style = 0                                 !pb 29.07.16
-      integer, save :: iaverage = 0, ird_aver = 0
+      integer, save :: ird_aver = 0
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
@@ -105,9 +105,10 @@
      *  save_f30, save_f31, external_species, no_current
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
       integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
-     *  ntim_batch = 500, ibatch_av_all = 0, edition_av = 0
-      logical lwti, lwav
-      character(13) :: batch_name
+     *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
+     *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
+      logical lwti, lwav, lrav, lrer
+      character(22) :: batch_name, aver_name, run_av_name 
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
      *  neutral_sources_rescale,
@@ -149,6 +150,7 @@
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
       real (kind=R8) :: hzconst                                      !srv 30.01.10
+
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
      1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
@@ -964,7 +966,10 @@
      >  write(*,*) 'Saving plasma state files every ',
      1  delta_plasma_time,' simulation seconds'
        call ipgeti ('b2mndr_ntim_save', ntim_save)
+       call ipgeti ('b2mndt_av', iav_run)
+       call ipgeti ('b2mndt_av_continue', iav_cont)
        call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
+       call ipgeti ('b2mndt_av_ntim_run', ntim_run)
        call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
        if (ntim_save.gt.0)
      >  write(*,*) 'Saving plasma state files every ',
@@ -1159,8 +1164,7 @@ csw 09oct2012
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
        call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
-       call ipgeti ('b2mndt_average', iaverage)                !pb 29.09.16
-       call ipgeti ('b2mndt_read_average', ird_aver)           !pb 29.09.16
+       call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
@@ -1392,11 +1396,17 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      &  b2fstati_version)
 
-*   read averaged profiles
-      if (ird_aver > 0)
-     &  call read_averages(na, te, ti, ua, po, nx, ny, ns)
-
+*   initialize 2d batch averages
       if (ibatch_av_all > 0) call batch_av_all_init (nx, ny, ns)
+
+*   initialize and/or read running averages 
+      if ((iav_run > 0) .or. (ird_aver > 0)) then
+        lrer = (ird_aver == 0)
+        call run_av_init (iav_cont, nx, ny, ns,.true.,lrer) 
+      end if
+*   get averaged plasma profiles 
+      if (ird_aver > 0) 
+     &  call run_av_get_plasma (na, te, ti, ua, po, nx, ny, ns)
 
       if(iout.ne.0) then                                             !srv 25.01.16 {
        call my_out(70,nx,ny,ne,'b2mndr_ne')
@@ -1934,10 +1944,22 @@ c new CDF movie option
         call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
      .              BoRiS,lwti,lwav,.true.)
         if ((ibatch_av_all > 0) .and. lwav) then
-          edition_av = edition_av + 1
-          write (batch_name,'(a9,i4.4)') 'av_batch.',edition_av
+          edition_batch = edition_batch + 1
+          write (batch_name,'(a18,i4.4)') 
+     .           'batch_av/batch_av.',edition_batch
           call batch_av_all_save (batch_name,nx,ny,ns)
           write(*,*) 'Saved ',batch_name
+        end if
+        if ((iav_run > 0) .and. (ntim_run > 0)) then
+          lrav = mod(itim,ntim_run) == 0 
+          write (*,*) ' itim,ntim_batch,lrav ', itim,ntim_run,lrav
+          if (lrav) then
+             edition_run = edition_run + 1
+             write (run_av_name,'(a14,i4.4)') 
+     .              'run_av/run_av.',edition_run
+             call run_av_save (run_av_name,nx,ny,ns,.true.,.false.)
+             write(*,*) 'Saved ',run_av_name
+          end if
         end if
 *    ..tallies
         if(tally.gt.0) then
@@ -2055,6 +2077,12 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
           close(nout(6))
           write(*,*) 'Plasmastate savefile ',savefile,' saved'
+          if (iav_run > 0) then
+            write (aver_name,'(a17,i4.4)') 
+     .              'plasmastate_aver.',edition
+            call run_av_save (aver_name,nx,ny,ns,.true.,.true.)
+            write (*,*) aver_name,' saved '
+          end if
         endif
         first_time_step=.false.
 
@@ -2221,10 +2249,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #endif
       endif
 
-      if (iaverage > 0) 
-     .   call profile_average (.true.,itim,ntim_batch,nx,ny,ns)
-
-      if (ird_aver > 0) call write_averages (nx,ny,ns)
+      if (iav_run > 0) call run_av_save ('b2favere',nx,ny,ns,
+     *                                   .true.,.true.)
 
       if (ibatch_av_all > 0) call batch_av_all_fin
 
