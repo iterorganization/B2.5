@@ -80,6 +80,8 @@ c=======================================================================
 #ifndef B25_EIRENE
       real (kind=R8) :: EionH2
       parameter (EionH2=15.4_R8)
+      character*8 TEXTA(DEF_NATM)
+      save
 #endif
       integer lun,izn,iln,boundary_namelist
       real (kind=R8) :: BoRiS
@@ -263,6 +265,11 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
           write(0,*) '==> No particle fluxes in the output'
           n_sfpr_s=0
         end if !}
+#endif
+#ifndef B25_EIRENE      
+        do ia=1,natm
+          TEXTA(ia)=adjustl(TEXTAN(ia-1))
+        end do
 #endif
         do is=1,n_sfpr_s !{
           sfpr_s(is)=TEXTA(is)

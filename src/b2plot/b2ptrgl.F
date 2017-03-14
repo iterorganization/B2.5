@@ -34,6 +34,7 @@ c======================================================================
 #ifndef B25_EIRENE
       real (kind=R8) :: EionH2
       parameter (EionH2=15.4_R8)
+      character*8 TEXTA(DEF_NATM)
 #endif
 c
       integer i,j,jj,k,l,m,n,iss,imol,iy,js,nclm_ld,nclm_er,nx_hlp
@@ -708,6 +709,11 @@ c*** Calculate the particle fluxes and erosion - if present
 c     carlis eb2atm contains the indexes of the B2 atoms mapped to eirene
 c            so if in Eirene is [D He Be Ne] and in B2 [D Ne He Be] then
 c            eb2atm will be [1 4 2 3]
+#ifndef B25_EIRENE      
+      do ia=1,natm
+        TEXTA(ia)=adjustl(TEXTAN(ia-1))
+      end do
+#endif
       do ia=1,natm !initialize 
         eb2atm(ia)=ia
       end do
@@ -1124,7 +1130,6 @@ c
           write(*,*) '  ==> check specification of ltns in ',
      ,                               'b2.parameters (section NEUTRALS)'
         end if    
-
       return
 c======================================================================
   710 format('(2h# ,',i3,'(1x,a11,1h',a1,'))')
