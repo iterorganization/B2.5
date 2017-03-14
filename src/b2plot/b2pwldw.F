@@ -117,6 +117,8 @@ c***  fiitrg  : impinging ion flux
 c***  eiitrg  : average energy of ions
 c***  faitrg  : impinging atom flux
 c***  eaitrg  : average energy of atoms
+c***  naitrg  : density of neutral atoms
+c***  paitrg  : pressure of neutral atoms
 c***  erntrg  : erosion net
 c***  ergtrg  : erosion gross
 
@@ -133,6 +135,7 @@ c***  ergtrg  : erosion gross
      ,  wrdtrg(0:ny-1,ntrgsx),
      ,  fiitrg(0:ny-1,ntrgsx,DEF_NATM), eiitrg(0:ny-1,ntrgsx,DEF_NATM),
      ,  faitrg(0:ny-1,ntrgsx,DEF_NATM), eaitrg(0:ny-1,ntrgsx,DEF_NATM),
+     ,  naitrg(0:ny-1,ntrgsx,DEF_NATM), paitrg(0:ny-1,ntrgsx,DEF_NATM),
      ,  erntrg(0:ny-1,ntrgsx,nsptmx)  , ergtrg(0:ny-1,ntrgsx,nsptmx)
 
 c*** Output data headers
@@ -153,13 +156,14 @@ c***  sfpr_m    : list of active materials
 
       integer n_hdpr_c,n_hdpr_t,n_hdpr_s,n_hdpr_m,n_sfpr_s,n_sfpr_m,
      ,  m_hdpr,m_hdln,n_line_x
-      parameter (n_hdpr_c=8, n_hdpr_t=4, n_hdpr_s=4, n_hdpr_m=2,
+      parameter (n_hdpr_c=8, n_hdpr_t=4, n_hdpr_s=6, n_hdpr_m=2,
      ,  m_hdpr=5, 
      ,  n_line_x=n_hdpr_c+n_hdpr_t+(n_hdpr_s+n_hdpr_m)*DEF_NATM,
      ,  m_hdln=(n_hdpr_c+n_hdpr_t)*(m_hdpr+1)+
      +         (n_hdpr_s+n_hdpr_m)*DEF_NATM*(m_hdpr+4))
       real (kind=R8) :: w_line(n_line_x)
-      real (kind=R8) :: s_hlp
+      real (kind=R8) :: s_hlp, nsecyr
+      parameter (nsecyr=24.0_R8*3600.0_R8*365.25_R8*0.9925_R8)
       logical :: first,do_trg,match_found
       character*(m_hdpr) tab*1,hdpr_c(n_hdpr_c),hdpr_t(n_hdpr_t),
      ,  hdpr_s(n_hdpr_s),hdpr_m(n_hdpr_m),sfpr_s(DEF_NATM)*2,
@@ -168,7 +172,8 @@ c***  sfpr_m    : list of active materials
       data hdpr_c /'x', 'Wtot','Wrad','Wpart','Wpls',
      2  'Wneu','Wheat','Wpot' /
       data hdpr_t /'ne', 'Te','Ti','xMP'/
-      data hdpr_s /'flxi','Eavi','flxa','Eava'/
+      data hdpr_s /'flxi','Eavi','flxa','Eava',
+     ,             'na','pa'/
       data hdpr_m /'ersne','ersng'/
       data itrg, izns, iznt, n_sfpr_s /4*0/
       data first /.true./
@@ -182,16 +187,16 @@ c***  srfs_d    : specific masses of possible wall materials [g/cm**3]
 c***  srfs_a    : atomic weight of possible wall materials
 c***  wllersf   : ratio of erosion to sputtering for different meterials
       integer n_srfs_m
-      parameter (n_srfs_m=7)
+      parameter (n_srfs_m=8)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m),
      .                  wllersf(nsptmx)
       character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
       logical streql
       external streql
-      data srfs_m /'Be','C','CFC','Fe','SS','Mo','W'/
-      data srfs_x /'Be','C','C'  ,'Fe','Fe','Mo','W'/
-      data srfs_a /  9.,12., 12. , 56., 56., 96.,184./
-      data srfs_d /1.8 ,2.0, 2.0 , 7.8, 7.8,10.2,19.3/
+      data srfs_m /'Be','C','CFC','Fe','SS','ss','Mo' ,'W'/
+      data srfs_x /'Be','C','C'  ,'Fe','Fe','Fe','Mo' ,'W'/
+      data srfs_a /  9.,12., 12. , 56., 56., 56., 96. , 184./
+      data srfs_d /1.8 ,2.0, 2.0 , 7.8, 7.8, 7.8, 10.2, 19.3/
       save
 c=======================================================================
 
@@ -319,7 +324,7 @@ c        if(n_sfpr_m.gt.0) print *,':',(sfpr_m(i),':',i=1,n_sfpr_m)  !###
           else !}{
             m=m+1
             sfpr_m(m)=srfs_x(l)
-            wllersf(m)=3.15e7*1.e-3*srfs_a(l)/(avogr*srfs_d(l))
+            wllersf(m)=nsecyr*1.e-3*srfs_a(l)/(avogr*srfs_d(l))
             l_sptmtr(k)=m
           end if !}
           ergtrg(:,:,k)=0.0_R8
@@ -606,12 +611,17 @@ c                  zz=zz+wwo*u                 !###
                   end if !}
                   if (ft44) then
                     t=tab2(kk+1,iy+1,is,1)/ev
+                    naitrg(iy,j,is)=dab2(kk+1,iy+1,is,1)
+                    paitrg(iy,j,is)=dab2(kk+1,iy+1,is,1)*
+     *                       tab2(kk+1,iy+1,is,1)
                     faitrg(iy,j,is)=s(iy,j)*dab2(kk+1,iy+1,is,1)*
      *               sqrt(max(t/am(eb2spcr(is)),0.))*0.25_R8*1.0e4_R8
                     eaitrg(iy,j,is)=s(iy,j)*dab2(kk+1,iy+1,is,1)*
      *               sqrt(max(t/am(eb2spcr(is)),0.0_R8))*
      *               tab2(kk+1,iy+1,is,1)*0.25_R8*2.0e4_R8
                   else
+                    naitrg(iy,j,is)=na(kk,iy,eb2spcr(is))
+                    paitrg(iy,j,is)=na(kk,iy,eb2spcr(is))*ti(kk,iy)
                     faitrg(iy,j,is)=u*fna(ib,iy,0,eb2spcr(is))
                     eaitrg(iy,j,is)=2.0_R8*ti(kk,iy)
                   end if
@@ -732,7 +742,37 @@ c*** Print the column headers
           end do !}
         end do !}
 c        print *,'About to write a header:',k-1,' symbols'   !###
-c        print *,hdr_line(1:k-1)                             !###
+c        print *,hdr_line(1:k-1)  
+                           !###
+        write(lun,740) 'x',tab,'co-ordinate along plot zone [m].'
+        write(lun,740) 'Wtot',tab,'total power flux [W/m^2]'
+        write(lun,740) 'Wrad',tab,'power flux with radiation [W/m^2]'
+        write(lun,740) 'Wpart',tab,'power flux with particles [W/m^2]'
+        write(lun,740) 'Wpls',tab,'power flux with charged particles
+     ,[W/m^2]'
+        write(lun,740) 'Wneut',tab,'power flux with neutral particles 
+     ,[W/m^2]'
+        write(lun,740) 'Wheat',tab,'power flux due to neutral 
+     ,particles in contact with wall [W/m^2]'
+        write(lun,740) 'Wpot',tab,'power flux due to recombination 
+     ,[W/m^2]' 
+        write(lun,740) 'flxi_XX',tab,'flux of ions of species XX 
+     ,[1/s]'
+        write(lun,740) 'Eavi_XX',tab,'average energy of ions of  
+     ,species XX [eV]'
+        write(lun,740) 'flxa_XX',tab,'flux of atoms of species XX 
+     ,[1/s]'
+        write(lun,740) 'Eava_XX',tab,'average energy of atoms of  
+     ,species XX [eV]'
+        write(lun,740) 'na_XX',tab,'density of neutral atoms of  
+     ,species XX [1/m^3]'
+        write(lun,740) 'pa_XX',tab,'pressure of neutral atoms of  
+     ,species XX [Pa]'
+        write(lun,740) 'ersne_XX',tab,'net erosion of wall material XX 
+     ,[mm/y]'
+        write(lun,740) 'ersne_XX',tab,'gross erosion of wall material 
+     ,XX [mm/y]'
+  740 format('# ',2a,' : ',a)
         write(lun,'(a)') hdr_line(1:k-1)
       end if !}
 
@@ -753,7 +793,9 @@ c*** Print the line
           w_line(k+1)=0
           w_line(k+2)=0
           w_line(k+3)=wldna(m,is,0)/segm_area(ils)
-          w_line(k+4)=ewlda(m,is,0)
+          w_line(k+4)=0.0!ewlda(m,is,0)
+          w_line(k+5)=0.0
+          w_line(k+6)=0.0
           k=k+n_hdpr_s
         end do !}
         do is=1,n_sfpr_m !{
@@ -779,6 +821,8 @@ c*** Print the line
             w_line(k+2)=0
             w_line(k+1)=0
           end if !}
+		  w_line(k+1)=0.0
+		  w_line(k+2)=0.0
           k=k+n_hdpr_m
         end do !}
       else if(do_trg) then !}{
@@ -795,12 +839,14 @@ c        print *,'itrg,iy=',itrg,iy                                !###
           w_line(k+1)=fiitrg(iy,itrg,is)
           w_line(k+2)=eiitrg(iy,itrg,is)
           w_line(k+3)=faitrg(iy,itrg,is)
-          w_line(k+4)=eaitrg(iy,itrg,is)
+          w_line(k+4)=0.0!eaitrg(iy,itrg,is)
+          w_line(k+5)=naitrg(iy,itrg,is)
+          w_line(k+6)=paitrg(iy,itrg,is)
           k=k+n_hdpr_s
         end do !}
         do is=1,n_sfpr_m !{
-          w_line(k+2)=ergtrg(iy,itrg,is)
-          w_line(k+1)=erntrg(iy,itrg,is)
+          w_line(k+2)=0.0 !ergtrg(iy,itrg,is)
+          w_line(k+1)=0.0 !erntrg(iy,itrg,is)
           k=k+n_hdpr_m
         end do !}
         if(trgl) then !{
