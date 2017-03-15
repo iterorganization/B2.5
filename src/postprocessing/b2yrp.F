@@ -39,7 +39,7 @@
       CHARACTER*(1) :: trg(2),ss
       data trg /'i','o'/
       LOGICAL :: exists
-      logical streql
+      logical streql,pippo
       external streql
 
 !##########################################################################
