@@ -463,7 +463,7 @@ c
      .'power flux with charged particles [W/m^2]'
         write(lun,740) 'Wneut',tab,
      .'power flux with neutral particles [W/m^2]'
-        write(lun,740) 'xMP',tab,'radial co-ordinate in mid-plane'
+        write(lun,740) 'xMP',tab,'radial co-ordinate in mid-plane'//
      .' (IMP for inner target(s), OMP for outer(s)) [m]'
         write(lun,740) 'Rclfc',tab,'radial co-ordinate on target [m]'
         write(lun,740) 'Zclfc',tab,'vertical co-ordinate on target [m]'
@@ -990,7 +990,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
      .'gross sputtering of material XX [g/y]'
           write(lun,740) 'XX_ersn',tab,
      .'gross erosion of material XX [mm/y]'
-          write(lun,740) 'xMP',tab,'radial co-ordinate in mid-plane'
+          write(lun,740) 'xMP',tab,'radial co-ordinate in mid-plane'//
      .'(IMP for inner target(s), OMP for outer(s)) [m]'
           if (do_sput(j)) then
             write(lun,fmt_peak) 'x',
