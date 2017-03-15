@@ -26,16 +26,16 @@
       real :: L1, L2, L3, H1, H2, H3 ,H4, H5, H_HOLE, RH,
      . P_LENGTH, ALPHA, BETA, THETA, T_GAP, dummy
       real :: T_COOLANT, M_FLOW, CP_COOLANT
-      INTEGER :: DIMENSIONS(4), REVERSE, nskip=18, innout, nplots
+      INTEGER :: DIMENSIONS(4), REVERSE, nskip, innout, nplots
       real :: target_length, LPOINTS(50)=0.0d0
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
       CHARACTER*(10) :: INFILE0= 'b2yrp.dat',
      . OUTFILE0 = 'rps_in.dat'
-      CHARACTER*(20) :: skip, OUTFILE(4),INFILE
+      CHARACTER*(20) :: OUTFILE(4),INFILE
       CHARACTER*(1) :: trg(2),ss
       data trg /'i','o'/
       LOGICAL :: exists
-      logical streql
+      logical streql,pippo
       external streql
 
 !##########################################################################
@@ -70,7 +70,6 @@
          print *,'outer reflector plate chosen'
       endif
      
-     
       open(unit=inunit,file=infile0,status='old',action='read')
       READ(INUNIT,NML=GEOMETRY)
       READ(INUNIT,NML=MESH)
@@ -98,12 +97,14 @@
 
       INFILE='wlld_'//trg(KK)//'rp.dat'
       open(unit=inunit,file=infile,status='old',action='read')
-      DO II=1,NSKIP
-         READ(INUNIT,*) skip      !First nskip lines are text lines so must be skipped
-      end do
       NLINE=0
- 5    READ(INUNIT,*,END=15) skip !File is of unknown length, so first count the number of lines
-         NLINE = NLINE +1
+      NSKIP=0
+ 5    READ(INUNIT,*,END=15) ss !File is of unknown length, so first count the number of lines
+         if (streql(ss,'#')) then 
+           NSKIP=NSKIP+1 ! header line, skip this one
+         else
+           NLINE = NLINE +1
+         end if
       GO TO 5
  15   CLOSE(INUNIT)
 
@@ -113,7 +114,7 @@
       MM(1,4)=dble(NLINE)
       open(unit=inunit,file=infile,status='old',action='read')
       DO II=1,NSKIP
-         READ(INUNIT,*) skip      !First nskip lines are text lines so must be skipped
+         READ(INUNIT,*) ss      !First nskip lines are text lines so must be skipped
       end do
       DO II=1,NLINE
           READ(INUNIT,*) MM(II,1:2), dummy, dummy, MM(II,3) !The data in the file are x, Wtot, Wrad, Wpart, Wpls...
