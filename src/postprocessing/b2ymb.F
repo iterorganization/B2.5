@@ -27,12 +27,12 @@
       real :: HEIGHT, T_LENGTH, CU_TH, CUCRZR_TH, DIAMETER, W_TH,
      . P_LENGTH, ALPHA, BETA, THETA, T_GAP
       real :: T_COOLANT, M_FLOW, CP_COOLANT, dummy
-      INTEGER :: DIMENSIONS(4), REVERSE, nskip=18, innout, nplots
+      INTEGER :: DIMENSIONS(4), REVERSE, nskip, innout, nplots
       real :: target_length, LPOINTS(50)=0.0d0
       real, ALLOCATABLE :: MM(:,:),BB(:,:)
       CHARACTER*(10) :: INFILE0= 'b2ymb.dat',
      . OUTFILE0 = 'mnb_in.dat'
-      CHARACTER*(20) :: skip, OUTFILE(4),INFILE
+      CHARACTER*(20) :: OUTFILE(4),INFILE
       CHARACTER*(1) :: trg(2), ss
       data trg /'i','o'/
       LOGICAL :: exists
@@ -98,21 +98,23 @@
       
       INFILE='wlld_trg'//trg(KK)//'.dat'
       open(unit=inunit,file=infile,status='old',action='read')
-      DO II=1,NSKIP
-         READ(INUNIT,*) skip      !First nskip lines are text lines so must be skipped
-      end do
       NLINE=0
-5     READ(INUNIT,*,END=15) skip !File is of unknown length, so first count the number of lines
-        NLINE = NLINE +1
-        GO TO 5
-15    CLOSE(INUNIT)
+      NSKIP=0
+ 5    READ(INUNIT,*,END=15) ss !File is of unknown length, so first count the number of lines
+         if (streql(ss,'#')) then 
+           NSKIP=NSKIP+1 ! header line, skip this one
+         else
+           NLINE = NLINE +1
+         end if
+      GO TO 5
+ 15   CLOSE(INUNIT)
       ALLOCATE(MM(NLINE,4))     ! then allocate variable size and read again storing the values. First column will be x coordinate,
                              ! second the total  heat flux, third the plasma heat flux and fourth the number of point
       MM=0.0d0
       MM(1,4)=dble(NLINE)
       open(unit=inunit,file=infile,status='old',action='read')
       do ii=1,nskip
-         READ(INUNIT,*) skip
+         READ(INUNIT,*) ss
       end do
       DO II=1,NLINE
          READ(INUNIT,*) MM(II,1:2), dummy, dummy, MM(II,3) !The data in the file are x, Wtot, Wrad, Wpart, Wpls...
