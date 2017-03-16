@@ -1257,7 +1257,6 @@ cdjm Update ion heat sources
       return
       end subroutine update_balance_sources_heat
 
-#ifndef NO_CDF
       subroutine write_balance(nxd,nyd,nsd)
       use b2mod_geo
      & , only : crx,cry,hx,bb,vol
@@ -1269,9 +1268,10 @@ cdjm Update ion heat sources
       use b2mod_residuals
      & , only : resco, resmo, reshe, reshi
       implicit none
-#include <netcdf.inc>
 *   ..input arguments (unchanged on exit)
       integer nxd,nyd,nsd
+#ifndef NO_CDF
+#include <netcdf.inc>
 *   ..local variables
       integer nstrad
       integer status
@@ -1617,10 +1617,14 @@ cdjm Update ion heat sources
       call check_cdf_status(status)
 
       write(*,*) 'balance.nc written'
+#else
+      write(*,*) 'Compilation with NO_CDF: balance.nc file not written'
+#endif
 
       return
       end subroutine write_balance
 
+#ifndef NO_CDF
       subroutine write_cdf_double(ncid,varname,var,vdims,ndim)
       implicit none
 #include <netcdf.inc>
@@ -1723,7 +1727,6 @@ cdjm Update ion heat sources
 
       return
       end subroutine write_cdf_text
-
-
 #endif
+
       end module b2mod_balance

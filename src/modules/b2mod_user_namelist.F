@@ -24,6 +24,15 @@
       logical scale_He, print_isat
       logical user_namelist_used
 
+      private :: user
+      namelist /user/
+     ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
+     ,  j_h_at,j_he_at,j_ne_at,
+     ,  l_h_mol,fusion_power,Spmp_He_to_D,lpfrs_pmp,
+     ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
+     ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
+     ,  Spmp_nom,scale_He,print_isat,
+     ,  user_filename
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -35,8 +44,9 @@ c***              from the bottom, if non-positive)
 c*** lpfrt_[io]:  B2 x-cell indices corresponding to the top of the
 c***              bypass between the inner and outer divertor (counted
 c***              from the x-point, if non-positive)
-c*** j_he_at   :  Helium index in EIRENE atoms list
 c*** j_h_at    :  Hydrogen index in EIRENE atoms list
+c*** j_he_at   :  Helium index in EIRENE atoms list
+c*** j_ne_at   :  Neon index in EIRENE atoms list
 c*** l_h_mol   :  Hydrogen content in the molecules
 c*** lpfrs_pmp :  Location of the pump.
 c***              0 no pump at all, 1 - lower PFR, 2 - lower outer
@@ -109,13 +119,6 @@ c***  Standard setup:
       implicit none
       integer nx
 
-      namelist /user/ 
-     ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,j_he_at,j_h_at,
-     ,  l_h_mol,fusion_power,Spmp_He_to_D,lpfrs_pmp,
-     ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
-     ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
-     ,  Spmp_nom,scale_He,print_isat,
-     ,  user_filename
       logical :: file_ok
       character*260 filename
       integer i

@@ -28,6 +28,7 @@ c 2002-09-11: logic revised
       use b2mod_feedback
       use b2mod_geo_corner
       use b2mod_input_profile
+      use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_numerics_namelist
@@ -1953,12 +1954,12 @@ c 2002-09-11: logic revised
         write(99,'(1x,a,i2,a)') 'NNISO=',NNISO,','
         if (nniso.gt.0) then
           write(hlp_frm,'(a,i2,a)') '(1x,a,',nniso,'(1x,i2,'',''))'
-          write(99, hlp_frm) 'NXISO1=',nxiso3(1:nniso)
-          write(99, hlp_frm) 'NXISO2=',nxiso4(1:nniso)
-          write(99, hlp_frm) 'NYISO1=',nyiso3(1:nniso)
-          write(99, hlp_frm) 'NYISO2=',nyiso4(1:nniso)
+          write(99, hlp_frm) 'NXISO1=',(nxiso3(is),is=1,nniso)
+          write(99, hlp_frm) 'NXISO2=',(nxiso4(is),is=1,nniso)
+          write(99, hlp_frm) 'NYISO1=',(nyiso3(is),is=1,nniso)
+          write(99, hlp_frm) 'NYISO2=',(nyiso4(is),is=1,nniso)
           write(hlp_frm,'(a,i3,a)') '(1x,a,1p,',ns1,'(1x,g10.3,'',''))'
-          write(99, hlp_frm) 'NIISO=',niiso(0:ns1-1)
+          write(99, hlp_frm) 'NIISO=',(niiso(is),is=0,ns1-1)
           write(99, '(1x,a,1p,g10.3,a,g10.3,a,g10.3)')
      .     'TEISO=',teiso,', TIISO=',tiiso,', PHIISO=',phiiso
         endif
@@ -8649,7 +8650,7 @@ cxpb as they no longer necessarily point to the same species
             write(hlp_frm,'(a,i2,a)')
      >       '(a,1p,',nspecies1,'(1x,1e15.8,'',''))'
             write(99,hlp_frm) 'SAVED_NA_FEEDBACK_ACTUATOR=',
-     >       saved_na_feedback_actuator1(0:nspecies1-1)
+     >       (saved_na_feedback_actuator1(is),is=0,nspecies1-1)
             write(99,'(a1)') '/'
             close(99)
             deallocate(saved_na_feedback_actuator1)
@@ -8663,7 +8664,8 @@ cxpb as they no longer necessarily point to the same species
       inquire(file=new_filename,exist=found)
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
-     .   (.not.same_atoms.or.nx.ne.nx1.or.ny.ne.ny1)) then
+     .   (.not.same_atoms.or.nx.ne.nx1.or.ny.ne.ny1.or.
+     .    non_commensurate.eq.1)) then
         allocate(na_feedback_target1(0:natm-1))
         allocate(na_feedback_choice1(0:natm-1))
         allocate(na_feedback_option1(0:natm-1))
@@ -8863,6 +8865,142 @@ cxpb as they no longer necessarily point to the same species
         deallocate(na_feedback_puff_max1)
         deallocate(na_feedback_overshoot1)
         deallocate(na_feedback_time1)
+      end if
+
+*   ..write new b2.user.parameters, if needed
+      inquire(file='../b2.user.parameters',exist=todo)
+      new_filename='../b2.user.parameters.2'
+      inquire(file=new_filename,exist=found)
+      if (found) write(6,*) trim(new_filename),' already present!'
+      if (todo.and..not.found.and.
+     .   (.not.same_atoms.or.nx.ne.nx1.or.non_commensurate.eq.1)) then
+        call alloc_b2mod_user(nlimi,nmoli)
+        call read_b2mod_user_namelist(nx)
+        write(*,*) 'Writing b2.user.parameters.2'
+        open(99,file=new_filename)
+        write(nout(5),'(a)') trim(new_filename)
+        write(99,'(a5)') '&USER'
+        ix=minloc(lhetrgts(3:nlim),1)
+        if (ix.gt.1) then
+          write(hlp_frm,'(a,i3,a)') '(1x,a,',ix+2,'(1x,i4,'',''))'
+          write(99,hlp_frm) 'LHETRGTS=',(lhetrgts(j),j=1,ix+2)
+        end if
+        write(99,'(1x,a,i2,a)') 'LPFRS_PMP=',LPFRS_PMP,','
+        if (lpfrb_i.ne.0) then
+          if (lpfrb_i.gt.0) then
+            ix = conformal_convert(non_commensurate,1,
+     .       lpfrb_i, 0, nx, ny, nx1, ny1, 1)
+            write(99,'(1x,a,i5,a)') 'LPFRB_I=',ix,','
+          else if (lpfrs_pmp.eq.1) then
+            ix = conformal_convert(non_commensurate,1,
+     .       leftcut(1)-1+lpfrb_i, 0, nx, ny, nx1, ny1, 1)
+            write(99,'(1x,a,i5,a)') 'LPFRB_I=',-(leftcut1(1)-1-ix),','
+          else if (lpfrs_pmp.eq.2) then
+            ix = conformal_convert(non_commensurate,1,
+     .       nxtl+lpfrb_i, 0, nx, ny, nx1, ny1, 1)
+            write(99,'(1x,a,i5,a)') 'LPFRB_I=',-(nxtl1-ix),','
+          end if
+        end if
+        if (lpfrb_o.ne.0) then
+          if (lpfrb_o.gt.0) then
+            ix = conformal_convert(non_commensurate,1,
+     .       lpfrb_o, 0, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRB_O=',ix,','
+          else if (lpfrs_pmp.eq.1) then
+            ix = conformal_convert(non_commensurate,1,
+     .       nx+lpfrb_o, 0, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRB_O=',-(nx1-ix),','
+          else if (lpfrs_pmp.eq.2) then
+            ix = conformal_convert(non_commensurate,1,
+     .       nxtr-lpfrb_o, 0, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRB_O=',-(ix-nxtr1),','
+          end if
+        end if
+        if (lpfrt_i.ne.0) then
+          if (lpfrt_i.gt.0) then
+            ix = conformal_convert(non_commensurate,1,
+     .       lpfrt_i, 0, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRT_I=',ix,','
+          else if (lpfrs_pmp.eq.1) then
+            ix = conformal_convert(non_commensurate,1,
+     .       leftcut(1)-1+lpfrt_i, 0, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRT_I=',-(leftcut1(1)-1-ix),','
+          else if (lpfrs_pmp.eq.2) then
+            ix = conformal_convert(non_commensurate,1,
+     .       leftcut(2)-lpfrt_i, 0, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRT_I=',-(ix-leftcut1(2)),','
+          end if
+        end if
+        if (lpfrt_o.ne.0) then
+          if (lpfrt_o.gt.0) then
+            ix = conformal_convert(non_commensurate,1,
+     .       lpfrt_o, 0, nx, ny, nx1, ny1, 1)
+            write(99,'(1x,a,i5,a)') 'LPFRT_O=',ix,','
+          else if (lpfrs_pmp.eq.1) then
+            ix = conformal_convert(non_commensurate,1,
+     .       rightcut(1)-lpfrt_o, 0, nx, ny, nx1, ny1, 1)
+            write(99,'(1x,a,i5,a)') 'LPFRT_O=',-(ix-rightcut1(1)),','
+          else if (lpfrs_pmp.eq.2) then
+            ix = conformal_convert(non_commensurate,1,
+     .       rightcut(2)-1+lpfrt_o, 0, nx, ny, nx1, ny1, 1)
+            write(99,'(1x,a,i5,a)') 'LPFRT_O=',-(rightcut1(2)-1-ix),','
+          end if
+        end if
+        if (fusion_power.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)') 'FUSION_POWER=',fusion_power,','
+        if (Spmp_He_to_D.ne.1.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_HE_TO_D=',Spmp_He_to_D,','
+        if (Spmp_nom.ne.0.0_R8)
+     >   write(99,'(1x,a,1p,g10.3,a)') 'SPMP_NOM=',Spmp_nom,','
+        if (j_h_at.ne.0) then
+          if (iatm1(j_h_at).ne.0)
+     >     write(99,'(1x,a,i2,a)') 'J_H_AT=',iatm1(j_h_at),','
+        end if
+        if (j_he_at.ne.0) then
+          if (iatm1(j_he_at).ne.0)
+     >     write(99,'(1x,a,i2,a)') 'J_HE_AT=',iatm1(j_he_at),','
+        end if
+        if (j_ne_at.ne.0) then
+          if (iatm1(j_ne_at).ne.0)
+     >     write(99,'(1x,a,i2,a)') 'J_NE_AT=',iatm1(j_ne_at),','
+        end if
+        if (maxval(l_h_mol).gt.0) then
+          write(hlp_frm,'(a,i2,a)') '(a,',nmoli,'(1x,i2,'',''))'
+          write(99,'(1x,a,i2,a)') 'L_H_MOL=',(l_h_mol(j),j=1,nmoli)
+        end if
+        if (npfrgrp.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NPFRGRP=',NPFRGRP,','
+          write(hlp_frm,'(a,i3,a)') '(a,',npfrgrp,'(1x,i3,'',''))'
+          write(99,hlp_frm) 'IPFRGRP=',(ipfrgrp(i),i=1,npfrgrp)
+          write(99,hlp_frm) 'JPFRGRP=',(jpfrgrp(i),i=1,npfrgrp)
+          write(hlp_frm,'(a,i3,a)')
+     .     '(a,',npfrgrp,'(1x,'''''''',a8,'''''',''))'
+          write(99,hlp_frm) 'GPFRGRP=',(gpfrgrp(i),i=1,npfrgrp)
+          write(hlp_frm,'(a,i3,a)')
+     .     '(a,',jpfrgrp(npfrgrp),'(1x,i3,'',''))'
+          write(99,hlp_frm) 'LPFRGRP=',(lpfrgrp(i),i=1,jpfrgrp(npfrgrp))
+        endif
+        if (nntrgrp.gt.0) then
+          write(99,'(1x,a,i3,a)') 'NNTRGRP=',NNTRGRP,','
+          write(hlp_frm,'(a,i3,a)') '(a,',nntrgrp,'(1x,i3,'',''))'
+          write(99,hlp_frm) 'INTRGRP=',(intrgrp(i),i=1,nntrgrp)
+          write(99,hlp_frm) 'JNTRGRP=',(jntrgrp(i),i=1,nntrgrp)
+          write(hlp_frm,'(a,i3,a)')
+     .     '(a,',nntrgrp,'(1x,'''''''',a8,'''''',''))'
+          write(99,hlp_frm) 'GNTRGRP=',(gntrgrp(i),i=1,nntrgrp)
+          write(hlp_frm,'(a,i3,a)')
+     .     '(a,',jntrgrp(nntrgrp),'(1x,i3,'',''))'
+          write(99,hlp_frm) 'LNTRGRP=',(lntrgrp(i),i=1,jntrgrp(nntrgrp))
+        endif
+        if (scale_He) write(99,'(a,l1,a)') 'SCALE_HE=',SCALE_HE,','
+        if (print_isat)
+     >   write(99,'(a,l1,a)') 'PRINT_ISAT=',PRINT_ISAT,','
+        if (.not.streql(user_filename,'b2.user.parameters'))
+     >   write(99,'(a,a,a)')
+     .    'USER_FILENAME=''',trim(user_filename),''','
+        write(99,'(a1)') '/'
+        close(99)
+        call dealloc_b2mod_user
       end if
 
 *   ..write new b2yq.dat, if needed

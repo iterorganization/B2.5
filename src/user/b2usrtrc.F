@@ -455,15 +455,15 @@ c***  (ipfc_tmp, jpfc_tmp, hlp_acpfs)
 
         hlp_acpfs=0
         hlp_w=0
-        if(lpfrs_pmp.ne.2) then !{
+        if(lpfrs_pmp.ne.0) then !{
 
 c*** Inner divertor
 
           m=lpfrb_i
           if(m.le.0) then !{
             if(lpfrs_pmp.eq.1) then !{
-              m=-m
-            else !}{
+              m=leftcut(1)-1+m
+            elseif(lpfrs_pmp.eq.2) then !}{
               m=nxtl+m
             end if !}
           end if !}
@@ -471,41 +471,40 @@ c*** Inner divertor
           if(n.le.0) then !{
             if(lpfrs_pmp.eq.1) then !{
               n=leftcut(1)-1+n
-            else !}{
-              n=rightcut(1)-1+n
+            elseif(lpfrs_pmp.eq.2) then !}{
+              n=leftcut(2)-n
             end if !}
           end if !}
           ipfc_tmp(1)=m
           jpfc_tmp(1)=n
-        else !}{
-          ipfc_tmp(1)=1
-          jpfc_tmp(1)=0
-        end if !}
 
 c*** Outer divertor
 
-        m=lpfrt_o
-        if(m.le.0) then !{
-          if(lpfrs_pmp.eq.1) then !{
-            m=leftcut(2)-1-m
-          else if(lpfrs_pmp.eq.2) then !}{
-            m=nx+m
-          else !}{
-            m=rightcut(2)-1-m
+          m=lpfrt_o
+          if(m.le.0) then !{
+            if(lpfrs_pmp.eq.1) then !{
+              m=rightcut(1)-m
+            elseif(lpfrs_pmp.eq.2) then !}{
+              m=rightcut(2)-1+m
+            end if !}
           end if !}
-        end if !}
-        n=lpfrb_o
-        if(n.le.0) then !{
-          if(lpfrs_pmp.eq.1) then !{
-            n=nx+n
-          else if(lpfrs_pmp.eq.2) then !}{
-            n=nx+n
-          else !}{
-            n=nxtr-n
+          n=lpfrb_o
+          if(n.le.0) then !{
+            if(lpfrs_pmp.eq.1) then !{
+              n=nx+n
+            else if(lpfrs_pmp.eq.2) then !}{
+              n=nxtr-n
+            end if !}
           end if !}
+          ipfc_tmp(2)=m
+          jpfc_tmp(2)=n
+
+        else !}{
+          ipfc_tmp(1)=1
+          jpfc_tmp(1)=0
+          ipfc_tmp(2)=1
+          jpfc_tmp(2)=0
         end if !}
-        ipfc_tmp(2)=m
-        jpfc_tmp(2)=n
 
         iy=0
         if(lpfrs_pmp.eq.2) iy=ny+1
