@@ -331,15 +331,13 @@ c*** Check the input data for consistency and prepare indices
         do j=1,nspecies !{
           if(nfluids(j).eq.1) then !{
             if(j_h_at.le.0 .or. j_h_at.gt.nnatmi) then !{
-c*** Assume the same order of species in B2 and Eirene
-              j_h_at=j
+              j_h_at=b2espcr(eb2spcr(j))
             end if !}
           end if !}
           if(nfluids(j).eq.2) then !{
             j_he_i=eb2spcr(j)
             if(j_he_at.le.0 .or. j_he_at.gt.nnatmi) then !{
-c*** Assume the same order of species in B2 and Eirene
-              j_he_at=j
+              j_he_at=b2espcr(eb2spcr(j))
             end if !}
           end if !}
         end do !}
@@ -464,6 +462,8 @@ c*** Inner divertor
             if(lpfrs_pmp.eq.1) then !{
               m=leftcut(1)-1+m
             elseif(lpfrs_pmp.eq.2) then !}{
+              m=nx-1+m
+            elseif(lpfrs_pmp.eq.3 .or. lpfrs_pmp.eq.4) then !}{
               m=nxtl-1+m
             end if !}
           end if !}
@@ -472,7 +472,11 @@ c*** Inner divertor
             if(lpfrs_pmp.eq.1) then !{
               n=leftcut(1)-1+n
             elseif(lpfrs_pmp.eq.2) then !}{
+              n=nx-1+n
+            elseif(lpfrs_pmp.eq.3) then !}{
               n=leftcut(2)-n
+            elseif(lpfrs_pmp.eq.4) then !}{
+              n=nxtl-1+n
             end if !}
           end if !}
           ipfc_tmp(1)=m
@@ -485,15 +489,21 @@ c*** Outer divertor
             if(lpfrs_pmp.eq.1) then !{
               m=rightcut(1)-m
             elseif(lpfrs_pmp.eq.2) then !}{
+              m=nx-1+m
+            elseif(lpfrs_pmp.eq.3) then !}{
               m=rightcut(2)-1+m
+            elseif(lpfrs_pmp.eq.4) then !}{
+              m=nxtr-1-m
             end if !}
           end if !}
           n=lpfrb_o
           if(n.le.0) then !{
-            if(lpfrs_pmp.eq.1) then !{
+            if(lpfrs_pmp.eq.1 .or. lpfrs_pmp.eq.2) then !{
               n=nx-1+n
-            else if(lpfrs_pmp.eq.2) then !}{
+            else if(lpfrs_pmp.eq.3) then !}{
               n=nxtr+1-n
+            else if(lpfrs_pmp.eq.4) then !}{
+              n=nxtl-1+n
             end if !}
           end if !}
           ipfc_tmp(2)=m
@@ -507,7 +517,7 @@ c*** Outer divertor
         end if !}
 
         iy=0
-        if(lpfrs_pmp.eq.2) iy=ny+1
+        if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.4) iy=ny
         do k=1,npfi_tmp !{
           do i=ipfc_tmp(k),jpfc_tmp(k) !{
             hlp_acpfs(i,k)=gs(i,iy,1)
@@ -532,13 +542,13 @@ c*** Prepare constants for DoD calculation
         isp_tmp(1)=topcut(1)
         isp_tmp(2)=isp_tmp(1)
         itg_tmp(1)=0
-        itg_tmp(2)=nx
+        itg_tmp(2)=nx-1
         imp_tmp(1)=jxa
         imp_tmp(2)=jxa
         if(double_null) then !{
           isp_tmp(3)=topcut(2)
           isp_tmp(4)=isp_tmp(3)
-          itg_tmp(3)=nxtl
+          itg_tmp(3)=nxtl-1
           itg_tmp(4)=nxtr+1
           imp_tmp(1)=jxi
           imp_tmp(3)=jxi
@@ -686,7 +696,7 @@ c      print *,'%% b2usrtrc: j_he_i,iy = ',j_he_i,iy !###
       end if !}
 c=======================================================================
 #ifdef B25_EIRENE
-      if(lpfrs_pmp.gt.0 .and. lpfrs_pmp.le.3) then !{
+      if(lpfrs_pmp.gt.0 .and. lpfrs_pmp.le.4) then !{
 
 c-----------------------------------------------------------------------
 c*** Calculate the pumping-related data.
@@ -695,7 +705,8 @@ c*** First, estimate the neutral pressure in the duct - as the average
 c*** over the plasma cells adjacent to the duct, weighted with the
 c*** surface area. The pump location is specified by parameters
 c***
-c***  lpfrs_pmp:  1 - in PFR, 2 - on the outer wall, 3 - in upper PFR
+c***  lpfrs_pmp:  1 - in PFR, 2 - on the outer wall,
+c***              3 - in upper PFR, 4 - on the inner wall
 c***  lpfrb_[io]: cell indices corresponding to the bottom (PFR) or
 c***              just beginning of the region open to the duct
 c***  lpfrt_[io]: cell indices corresponding to the top (PFR) or just
@@ -704,8 +715,10 @@ c***
 c*** In case of PFR, the bottom cells are counted back from the targets
 c*** and the top cells down from the x-point if the corresponding value
 c*** is negative.
-c*** In case of outer wall, negative values of lpfr[tb]_o mean counting
-c*** back from the last (in terms of B2) target; lpfr[tb]_i is not used
+c*** In case of SOL, negative values of lpfrb_[io] mean counting
+c*** back from the next target.
+c*** In case of DN configuration, negative values of lpfrt_[io] mean
+c*** counting from the top targets.
 c***
 c***  j_he_at  is the helium index in the Eirene atoms list. If 0, then
 c***           the B2 species is taken assuming the same order.
@@ -724,91 +737,104 @@ c-----------------------------------------------------------------------
 #endif
         hlp_pi=0.0_R8
         hlp_si=0.0_R8
-        if(lpfrs_pmp.ne.2) then !{
+        hlp_po=0.0_R8
+        hlp_so=0.0_R8
+        if(lpfrs_pmp.ne.0) then !{
 
 c*** Inner divertor
 
           m=lpfrb_i
           if(m.le.0) then !{
             if(lpfrs_pmp.eq.1) then !{
-              m=-m
-            else !}{
-              m=nxtl+m
+              m=leftcut(1)-1+m
+            elseif(lpfrs_pmp.eq.2) then !}{
+              m=nx-1+m
+            elseif(lpfrs_pmp.eq.3 .or. lpfrs_pmp.eq.4) then !}{
+              m=nxtl-1+m
             end if !}
           end if !}
           n=lpfrt_i
           if(n.le.0) then !{
             if(lpfrs_pmp.eq.1) then !{
               n=leftcut(1)-1+n
-            else !}{
-              n=rightcut(1)-1+n
+            elseif(lpfrs_pmp.eq.2) then !}{
+              n=nx-1+n
+            elseif(lpfrs_pmp.eq.3) then !}{
+              n=leftcut(2)-n
+            elseif(lpfrs_pmp.eq.4) then !}{
+              n=nxtl-1+n
             end if !}
           end if !}
+          iy=0
+          iyp=1
+          if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.2) then
+            iy=ny
+            iyp=ny
+          end if
           do j=m,n !{
-            hlp_si=hlp_si+gs(j,0,1)
+            hlp_si=hlp_si+gs(j,iy,1)
             hlp=0.0_R8
             do k=1,nnatmi !{
-              hlp=hlp+dab2(j+1,1,k,1)*tab2(j+1,1,k,1)
+              hlp=hlp+dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)
               if(k.eq.j_he_at) hlp_hep=hlp_hep+
-     +          dab2(j+1,1,k,1)*tab2(j+1,1,k,1)*gs(j,0,1)
+     +          dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)*gs(j,iy,1)
             end do !}
             do k=1,nnmoli !{
-              hlp=hlp+dmb2(j+1,1,k,1)*tmb2(j+1,1,k,1)
+              hlp=hlp+dmb2(j+1,iyp,k,1)*tmb2(j+1,iyp,k,1)
             end do !}
-            hlp_pi=hlp_pi+hlp*gs(j,0,1)
+            hlp_pi=hlp_pi+hlp*gs(j,iy,1)
           end do !}
 
 c          print '(a,1p,2i4,20e12.3)',' %%## m,n,hlp_si,hlp_hep: ',  !###
 c     ,                                      m,n,hlp_si,hlp_hep      !###
 
-        end if !}
-
 c*** Outer divertor
 
-        hlp_po=0.0_R8
-        hlp_so=0.0_R8
-        m=lpfrt_o
-        if(m.le.0) then !{
-          if(lpfrs_pmp.eq.1) then !{
-            m=rightcut(1)-m
-          else if(lpfrs_pmp.eq.2) then !}{
-            m=nx+m
-          else !}{
-            m=rightcut(1)-m
+          m=lpfrt_o
+          if(m.le.0) then !{
+            if(lpfrs_pmp.eq.1) then !{
+              m=rightcut(1)-m
+            elseif(lpfrs_pmp.eq.2) then !}{
+              m=nx-1+m
+            elseif(lpfrs_pmp.eq.3) then !}{
+              m=rightcut(2)-1+m
+            elseif(lpfrs_pmp.eq.4) then !}{
+              m=nxtr-1-m
+            end if !}
           end if !}
-        end if !}
-        n=lpfrb_o
-        if(n.le.0) then !{
-          if(lpfrs_pmp.eq.1) then !{
-            n=nx+n
-          else if(lpfrs_pmp.eq.2) then !}{
-            n=nx+n
-          else !}{
-            n=nxtr-n
+          n=lpfrb_o
+          if(n.le.0) then !{
+            if(lpfrs_pmp.eq.1 .or. lpfrs_pmp.eq.2) then !{
+              n=nx-1+n
+            else if(lpfrs_pmp.eq.3) then !}{
+              n=nxtr+1-n
+            else if(lpfrs_pmp.eq.4) then !}{
+              n=nxtl-1+n
+            end if !}
           end if !}
-        end if !}
-        iy=0
-        iyp=1
-        if(lpfrs_pmp.eq.2) then !{
-          iy=ny
-          iyp=ny
-        endif !}
-        do j=m,n !{
-          hlp_so=hlp_so+gs(j,iy,1)
-          hlp=0.0_R8
-          do k=1,nnatmi !{
-            hlp=hlp+dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)
-            if(k.eq.j_he_at) hlp_hep=hlp_hep+
+          iy=0
+          iyp=1
+          if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.4) then !{
+            iy=ny
+            iyp=ny
+          endif !}
+          do j=m,n !{
+            hlp_so=hlp_so+gs(j,iy,1)
+            hlp=0.0_R8
+            do k=1,nnatmi !{
+              hlp=hlp+dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)
+              if(k.eq.j_he_at) hlp_hep=hlp_hep+
      +            dab2(j+1,iyp,k,1)*tab2(j+1,iyp,k,1)*gs(j,iy,1)
+            end do !}
+            do k=1,nnmoli !{
+              hlp=hlp+dmb2(j+1,iyp,k,1)*tmb2(j+1,iyp,k,1)
+            end do !}
+            hlp_po=hlp_po+hlp*gs(j,iy,1)
           end do !}
-          do k=1,nnmoli !{
-            hlp=hlp+dmb2(j+1,iyp,k,1)*tmb2(j+1,iyp,k,1)
-          end do !}
-          hlp_po=hlp_po+hlp*gs(j,iy,1)
-        end do !}
 
-        hlp_s=hlp_si+hlp_so
-        hlp_p=hlp_pi+hlp_po
+          hlp_s=hlp_si+hlp_so
+          hlp_p=hlp_pi+hlp_po
+       end if !}
 c<<<
 c      print '(a,1p,2i4,20e12.3)',' %%## m,n,hlp_so,hlp_hep,hlp_p: ',
 c     ,                                  m,n,hlp_so,hlp_hep,hlp_p
@@ -1134,9 +1160,9 @@ c*** evaluate neutral data on PFR interface surfaces
 
       iy=1
       is=0
-      if(lpfrs_pmp.eq.2) then !{
+      if(lpfrs_pmp.eq.2 .or. lpfrs_pmp.eq.4) then !{
         iy=ny
-        is=ny+1
+        is=ny
       end if !}
       n=nnatmi+nnmoli
       do k=1,npfi_tmp !{
@@ -1148,7 +1174,7 @@ c*** e the temperature*density*area, v the flux*area
           e=0.0_R8
           v=0.0_R8
           do i=ipfc_tmp(k),jpfc_tmp(k) !{
-            s=s+gs(topix(i,is),topiy(i,is),1)
+            s=s+gs(i,is,1)
             if(ndtm_tmp(j).gt.0) then !{
               g=dab2(i,iy,ndtm_tmp(j),1)
               t=tab2(i,iy,ndtm_tmp(j),1)/ev
@@ -1156,9 +1182,9 @@ c*** e the temperature*density*area, v the flux*area
               g=dmb2(i,iy,-ndtm_tmp(j),1)
               t=tmb2(i,iy,-ndtm_tmp(j),1)/ev
             end if !}
-            d=d+gs(topix(i,is),topiy(i,is),1)*g
-            e=e+gs(topix(i,is),topiy(i,is),1)*g*t
-            v=v+gs(topix(i,is),topiy(i,is),1)*g*sqrt(max(t,0.0_R8))
+            d=d+gs(i,is,1)*g
+            e=e+gs(i,is,1)*g*t
+            v=v+gs(i,is,1)*g*sqrt(max(t,0.0_R8))
           end do !}
           if(s.gt.0.0_R8 .and. g.gt.0.0_R8) then !{
             e=e/d
@@ -1196,7 +1222,7 @@ c      print *,'### print_isat=',print_isat    !###
         if(itg_tmp(k).ne.-2) then !{
 c          print * !###
           d=1.e18_R8
-          do iy=isp_tmp(k),ny !{
+          do iy=isp_tmp(k),ny-1 !{
             e=2.0_R8*pr(itg_tmp(k),iy)
             if(e.gt.0.0_R8) d=min(d,pr(imp_tmp(k),iy)/e)
 c            print *,'e,d=',e,d  !###
@@ -1210,10 +1236,10 @@ csw 03jan2017 corrected do loop to avoid exceed of array limits and to
 csw           exclude neutrals from isat calculation
             do is=0,ns-1 !{
               if(.not.is_neutral(is)) then !{
-                do iy=1,ny !{
+                do iy=0,ny-1 !{
                   hlp_isat(mgl3_tmp)=hlp_isat(mgl3_tmp)+
-     +                      fna(itg_tmp(k)+kgl3_tmp(k),iy,0,is)*
-     *                      rza(itg_tmp(k)+kgl3_tmp(k),iy,is)
+     +                      fna(itg_tmp(k)+kgl3_tmp(k)+1,iy,0,is)*
+     *                      rza(itg_tmp(k),iy,is)
                 end do !}
               end if !}
             end do !}

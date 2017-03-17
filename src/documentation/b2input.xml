@@ -6246,7 +6246,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (inner divertor, edge closest to target). If non-positive, counted backwards from the X-point location in the lower divertor, and from the inner upper target in the upper divertor.
+					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (inner divertor, edge closest to target). If non-positive, counted backwards from the X-point location in the lower PFR, from the inner upper target in the upper PFR, from the lower outer target in the outer SOL, and from the inner upper target in the inner SOL.
 				</description>
 			</switch>
 			<switch>
@@ -6254,7 +6254,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (outer divertor, edge closest to target). If non-positive, counted backwards from the outer lower target in the lower divertor, and from the upper outer target in the upper divertor.
+					B2 x-cell index corresponding to the first edge of the bypass between the inner and outer divertor (outer divertor, edge closest to target). If non-positive, counted backwards from the outer lower target in the lower PFR, from the lower outer target in the outer SOL, from the upper outer target in the upper PFR, and from the inner upper target in the inner SOL.
 				</description>
 			</switch>
 			<switch>
@@ -6262,7 +6262,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (inner side, edge furthest to target). If non-positive, counted backwards from the X-point location.
+					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (inner side, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
 				</description>
 			</switch>
 			<switch>
@@ -6270,7 +6270,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (outer divertor, edge furthest to target). If non-positive, counted backwards from the X-point location.
+					B2 x-cell index corresponding to the second edge of the bypass between the inner and outer divertor (outer divertor, edge furthest to target). If non-positive, counted backwards from the X-point location in the PFR, from the outer target in the outer SOL for a SN, from the top targets in the SOL for a DN.
 				</description>
 			</switch>
 			<switch>
@@ -6296,7 +6296,7 @@
 			</switch>
 			<switch>
 				<name>L_H_MOL</name>
-				<type>integer</type>
+				<type>integer array of size (NMOL)</type>
 				<description>
 					Species index of the hydrogen molecules in Eirene. The code attempts to find a match by default.
 				</description>
@@ -6322,7 +6322,7 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					Location of the pump. 0 no pump at all (default), 1 - lower PFR, 2 - upper PFR
+					Location of the pump. 0 no pump at all (default), 1 - lower PFR, 2 - outer SOL, 3 - upper PFR, 4 - inner SOL
 				</description>
 			</switch>
 			<switch>
