@@ -5003,7 +5003,7 @@
 						 0 : default, no boundary condition is applied
 						 1 : prescribe the value of the parallel velocity, MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup>
 						 2 : prescribe the gradient of the parallel velocity, MOMPAR(,,1) specifies the parallel velocity gradient in s<sup>-1</sup>
-						 3 : sheath conditions, mach number as input, 
+						 3 : sheath conditions, Mach number as input, 
 							if MOMPAR(,,2) &lt; 0.5 , then the velocity is set to exactly 
 							MOMPAR(,,1) * C<sub>s,collective</sub>, otherwise the velocity is set to be at least MOMPAR(,,1) * C<sub>s,collective</sub>, species
 						 4 : prescribe the value of the velocity, weakly a mixed boundary condition, MOMPAR(,,1) specifies the parallel velocity in m.s<sup>-1</sup> and MOMPAR(,,2) specifies the 'strength' of the boundary condition
