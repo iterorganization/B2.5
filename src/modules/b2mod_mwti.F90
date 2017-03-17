@@ -94,7 +94,7 @@ Contains
     !   ..procedures
     external subini, subend, xertst, ipgeti
     Real(kind=R8) :: fnitmp,feetmp,feitmp,fchtmp,fettmp,pwrtmp
-
+    Integer, Save :: write_2d = 0
 #ifndef NO_CDF
     integer imap(maxvdims), iret, ncid
     real (kind=R8) :: &
@@ -133,6 +133,8 @@ Contains
     if (ncall.eq.0) then
       !   ..test state
       call get_jsep(nx,ny,jxi,jxa,jsep)
+      call ipgeti ('b2mwti_2dwrite',write_2d)
+      call xertst (0.le.write_2d.and.write_2d.le.2,'faulty internal parameter write_2d')
       call ipgeti ('b2mwti_target_offset',target_offset)
       call xertst (0.le.target_offset.and.target_offset.le.1,'faulty internal parameter target_offset')
       write(*,*) 'target_offset ', target_offset
@@ -209,7 +211,7 @@ Contains
         close(99)
       endif
 #ifndef NO_CDF
-      call b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, iret)
+      call b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, write_2d, iret)
       rw='write'
       iret = nf_open('b2time.nc',NCWRITE,ncid)
       ntstep=0
@@ -648,10 +650,26 @@ Contains
     tstepn(1) = ntstep
     call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
     call rwcdf(rw,ncid,'timesa',imap,timesa,iret)
-
-!    imap(1:3) = 1
-!    call rwcdf(rw,ncid,'ne2d'  ,imap,ne    ,iret)
-    
+    If (write_2d .ge. 1) Then 
+      call rwcdf(rw,ncid,'ne2d',(/1,1,1/),ne,iret)
+      call rwcdf(rw,ncid,'te2d',(/1,1,1/),te,iret)
+      call rwcdf(rw,ncid,'ti2d',(/1,1,1/),ti,iret)
+      If (write_2d .ge. 2) Then
+        call rwcdf(rw,ncid,'po2d',(/1,1,1/),po,iret)
+        call rwcdf(rw,ncid,'kin2d',(/1,1,1,1/),kinrgy,iret)
+        call rwcdf(rw,ncid,'rsahi2d',(/1,1,1,1/),rsahi,iret)
+        call rwcdf(rw,ncid,'rsana2d',(/1,1,1,1/),rsana,iret)
+        call rwcdf(rw,ncid,'rrahi2d',(/1,1,1,1/),rrahi,iret)
+        call rwcdf(rw,ncid,'rrana2d',(/1,1,1,1/),rrana,iret)
+        call rwcdf(rw,ncid,'rcxhi2d',(/1,1,1,1/),rcxhi,iret)
+        call rwcdf(rw,ncid,'rcxna2d',(/1,1,1,1/),rcxna,iret)
+        call rwcdf(rw,ncid,'rqrad2d',(/1,1,1,1/),rqrad,iret)
+        call rwcdf(rw,ncid,'fhe2d',(/1,1,1,1/),fhe,iret)
+        call rwcdf(rw,ncid,'fhi2d',(/1,1,1,1/),fhi,iret)
+        call rwcdf(rw,ncid,'fch2d',(/1,1,1,1/),fch,iret)
+        call rwcdf(rw,ncid,'fna2d',(/1,1,1,1,1/),fna,iret)
+      Endif
+    Endif
     imap(1)=1
     imap(2)=1
     call rwcdf(rw,ncid,'fnixip',imap,fnixip,iret)
@@ -957,15 +975,16 @@ Contains
   end subroutine b2mwti
 
 #ifndef NO_CDF
-  subroutine b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, iret)
+  subroutine b2crtimecdf(nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, write_2d, iret)
     use b2mod_constants
 #     include <netcdf.inc>
     integer nx, ny, nybl, nytl, nytr, nybr, nya, nyi, nc, ns, iret
+    integer, Intent(In) :: write_2d
     ! netcdf id
     integer  ncid
     ! dimension ids
     integer  nxdim, nydim, nsdim, timedim, &
-         nybldim,nytldim,nytrdim,nybrdim,nyadim,nyidim,ncdim
+         nybldim,nytldim,nytrdim,nybrdim,nyadim,nyidim,ncdim,idirdim
     ! variable ids
     integer  ntstepid, timesaid, fnixipid, feexipid, feixipid, &
          fnixapid, feexapid, feixapid, nesepiid, tesepiid, tisepiid, &
@@ -984,7 +1003,9 @@ Contains
          an3dtrid, mn3dtrid, fn3dtlid, fe3dtlid, fi3dtlid, fn3dtrid, &
          fe3dtrid, fi3dtrid, fetxipid, fetxapid, fetyipid, fetyapid, &
          fetsipid, fetsapid, fetsippid, fetsappid
-!    integer :: ne2did
+    integer :: ne2did, te2did, ti2did, po2did, kin2did, rsahi2did, &
+         rsana2did, rrahi2did, rrana2did, rcxhi2did, rcxna2did, rqrad2did, &
+         rqahe2did, fch2did, fhe2did, fhi2did, fna2did
     integer  fchxipid, fchxapid, posepiid, posepmid, posepaid, &
          pomxipid, pomxapid, fchyipid, fchyapid, &
          fchsipid, fchsapid, fchsippid, fchsappid, po3dlid, &
@@ -1021,8 +1042,65 @@ Contains
     iret = nf_def_var(ncid, 'ntstep', NCDOUBLE, 0, dims, ntstepid)
     dims(1) = timedim
     iret = nf_def_var(ncid, 'timesa', NCDOUBLE, 1, dims, timesaid)
-!    ! Test a 2d vs time variable
-!    iret = nf_def_var(ncid, 'ne2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), ne2did)
+    If (write_2d .ge. 1) Then      
+      iret = nf_def_var(ncid, 'ne2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), ne2did)
+      iret = nf_put_att_text(ncid, ne2did, 'long_name', 2, 'ne')
+      iret = nf_put_att_text(ncid, ne2did, 'units', 4, 'm^-3')
+      iret = nf_def_var(ncid, 'te2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), te2did)
+      iret = nf_put_att_text(ncid, te2did, 'long_name', 2, 'Te')
+      iret = nf_put_att_text(ncid, te2did, 'units', 2, 'eV')
+      iret = nf_put_att_double(ncid, te2did, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+      iret = nf_def_var(ncid, 'ti2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), ti2did)
+      iret = nf_put_att_text(ncid, ti2did, 'long_name', 2, 'Ti')
+      iret = nf_put_att_text(ncid, ti2did, 'units', 2, 'eV')
+      iret = nf_put_att_double(ncid, ti2did, 'scale', NCDOUBLE, 1, (/1.0_R8/ev/))
+      If (write_2d .ge. 2) Then
+        iret = nf_def_var(ncid, 'po2d'  , NCDOUBLE, 3, (/nxdim,nydim,timedim/), po2did)
+        iret = nf_put_att_text(ncid, po2did, 'long_name', 9, 'potential')
+        iret = nf_put_att_text(ncid, po2did, 'units', 1, 'V')
+        iret = nf_def_var(ncid, 'kin2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), kin2did)
+        iret = nf_put_att_text(ncid, kin2did, 'long_name', 23, 'parallel kinetic energy')
+        iret = nf_put_att_text(ncid, kin2did, 'units', 1, 'J')
+        iret = nf_def_var(ncid, 'rsahi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsahi2did)
+        iret = nf_put_att_text(ncid, rsahi2did, 'long_name', 21, 'iz energy source/sink')
+        iret = nf_put_att_text(ncid, rsahi2did, 'units', 1, 'W')      
+        iret = nf_def_var(ncid, 'rsana2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rsana2did)
+        iret = nf_put_att_text(ncid, rsana2did, 'long_name', 7, 'iz rate')
+        iret = nf_put_att_text(ncid, rsana2did, 'units', 3, '1/s')
+        iret = nf_def_var(ncid, 'rrahi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrahi2did)
+        iret = nf_put_att_text(ncid, rrahi2did, 'long_name', 21, 'rc energy source/sink')
+        iret = nf_put_att_text(ncid, rrahi2did, 'units', 1, 'W')
+        iret = nf_def_var(ncid, 'rrana2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rrana2did)
+        iret = nf_put_att_text(ncid, rrana2did, 'long_name', 7, 'rc rate')
+        iret = nf_put_att_text(ncid, rrana2did, 'units', 3, '1/s')
+        iret = nf_def_var(ncid, 'rcxhi2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxhi2did)
+        iret = nf_put_att_text(ncid, rcxhi2did, 'long_name', 21, 'cx energy source/sink')
+        iret = nf_put_att_text(ncid, rcxhi2did, 'units', 1, 'W')
+        iret = nf_def_var(ncid, 'rcxna2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rcxna2did)
+        iret = nf_put_att_text(ncid, rcxna2did, 'long_name', 7, 'cx rate')
+        iret = nf_put_att_text(ncid, rcxna2did, 'units', 3, '1/s')
+        iret = nf_def_var(ncid, 'rqrad2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqrad2did)
+        iret = nf_put_att_text(ncid, rqrad2did, 'long_name', 19, 'Line radiation rate')
+        iret = nf_put_att_text(ncid, rqrad2did, 'units', 1, 'W')
+        iret = nf_def_var(ncid, 'rqahe2d'  , NCDOUBLE, 4, (/nxdim,nydim,nsdim,timedim/), rqahe2did)
+        iret = nf_put_att_text(ncid, rqahe2did, 'long_name', 21, 'Electron cooling rate')
+        iret = nf_put_att_text(ncid, rqahe2did, 'units', 1, 'W')
+        
+        iret = nf_def_dim(ncid, 'idir', 2, idirdim)  ! Needed for fluxes
+        iret = nf_def_var(ncid, 'fhe2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhe2did)
+        iret = nf_put_att_text(ncid, fhe2did, 'long_name', 18, 'Electron heat flux')
+        iret = nf_put_att_text(ncid, fhe2did, 'units', 1, 'W')
+        iret = nf_def_var(ncid, 'fhi2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fhi2did)
+        iret = nf_put_att_text(ncid, fhi2did, 'long_name', 13, 'Ion heat flux')
+        iret = nf_put_att_text(ncid, fhi2did, 'units', 1, 'W')      
+        iret = nf_def_var(ncid, 'fch2d'  , NCDOUBLE, 4, (/nxdim,nydim,idirdim,timedim/), fch2did)
+        iret = nf_put_att_text(ncid, fch2did, 'long_name', 7, 'Current')
+        iret = nf_put_att_text(ncid, fch2did, 'units', 1, 'A')      
+        iret = nf_def_var(ncid, 'fna2d'  , NCDOUBLE, 5, (/nxdim,nydim,idirdim,nsdim,timedim/), fna2did)
+        iret = nf_put_att_text(ncid, fna2did, 'long_name', 13, 'Particle flux')
+        iret = nf_put_att_text(ncid, fna2did, 'units', 3, '1/s')
+        Endif 
+    Endif
 
     dims(1) = ncdim
     dims(2) = timedim

@@ -34,13 +34,14 @@ c======================================================================
 #ifndef B25_EIRENE
       real (kind=R8) :: EionH2
       parameter (EionH2=15.4_R8)
+      character*8 TEXTA(DEF_NATM)
 #endif
 c
       integer i,j,jj,k,l,m,n,iss,imol,iy,js,nclm_ld,nclm_er,nx_hlp
-      integer i1,i2,i3,ia,ib,ic,is,ix,ik,imin,imax
+      integer i1,i2,i3,ia,ib,ic,is,ix,ik,imin,imax,ind,ims,ias
       integer ixstart(ntrgsx,2),ixend(ntrgsx,2)
       integer m_hlp(ntrgsx)
-      logical match_found
+      logical match_found,do_sput(ntrgsx)
       real (kind=R8) ::
      *  h,t,u,a,b,d,p,wo,wt,mion,mmol,t1(2),
      ,  z_hlp(ntrgsx),xtg_hlp(-1:ny-1,ntrgsx),xmp_hlp(0:ny-1,ntrgsx),
@@ -61,26 +62,51 @@ c*** Arrays for particle fluxes and erosion
 c***  sja  impinging flux of atoms
 c***  sjp  impinging flux of ions
 c***  sjt  total flux of particles to the target
-c***  sjb  "net" sputtering of target material (negative means deposition) [g/y]
-c***  sjs  "gross" sputtering of target material [g/y]
-c***  sjg  "gross" erosion rate [mm/y]
-c***  sjn  "net" erosion rate [mm/y]
+c***  sjm  impinging flux of molecules
+c***  sjs  sputtering of target material [g/y]
+c***  sje  erosion rate [mm/y]
 c***    suffix "_t" denotes totals from distributions,
 c***    and "_w" the totals from Eirene.
 c
+c*** Recap of fluxes from eirene
+c***    wldnek  :   heat transferred with neutrals. Evaluated as EOTAT+EOTML+EOTIO
+c***                   -erfaat-erfmat-erfiat-erfaml-erfmml-erfiml
+c***    wldnep  :   potential energy released by neutrals. Evaluated as diss_pot_H2*prfaml
+c***    wldna   :   flux of atoms impinging onto the surface. Equal to POTAT
+c***    ewlda   :   their average energy. Equal to EOTAT/POTAT*wldna
+c***    wldnm   :   flux of molecules impinging onto the surface. Equal to POTML
+c***    ewldm   :   their average energy. Equal to EOTML/POTML*wldnm
+c***    wldra   :   flux of reflected atoms. Equal to PRFAAT+PRFMAT+PRFIAT
+c***    wldrm   :   flux of reflected molecules. Equal to PRFAML+PRFMML+PRFIML
+c***    wldpp   :   flux of plasma ions impinging onto the surface. Equal to POTPL
+c***    wldpa   :   flux of emitted atoms from BI. Equal to PRFPAT
+c***    wldpm   :   flux of emitted molecules from BI. Equal to PRFPML
+c***    wldpeb  :   power carried away by these atoms and molecules. Equal to ERFPAT+ERFPML+ERFPIO
+c***    wldspt  :   flux of sputtered wall material
+c***    wlarea  :   areas of the surface segments from Eirene
+c***    wlabsrp :   absorption at the surfaces (1-recyct from Eirene)
+c***    ewldea_res  :   emitted energy flux of atoms. Equal to ERFAAT+ERFMAT+ERFIAT+ERFPHAT
+c***    ewldem_res  :   emitted energy flux due of molecules. Equal to ERFAML+ERFMML+
+c***                      ERFIML+ERFPHML
+c***    ewldrp_res  :   kinetic energy of reflected atoms+molecules originated from ions. ERFPAT+ERFPML
+c***    ewldmr_res  :   energy due to recombination of atoms into molecules. ()PRFAML+PRFPML)*H_EDISS
+
       real (kind=R8) ::
-     *  sja(0:ny-1,ntrgsx,natm), sjp(0:ny-1,ntrgsx,natm), 
-     *  sjt(0:ny-1,ntrgsx,natm), spa(0:ny-1,ntrgsx,natm),
-     *  sjb(0:ny-1,ntrgsx,ntargsp), sjg(0:ny-1,ntrgsx,ntargsp),
-     *  sjn(0:ny-1,ntrgsx,ntargsp), sjs(0:ny-1,ntrgsx,ntargsp)
+     *  sja(0:ny-1,ntrgsx,DEF_NATM), sjp(0:ny-1,ntrgsx,DEF_NATM), 
+     *  sjt(0:ny-1,ntrgsx,DEF_NATM), spa(0:ny-1,ntrgsx,DEF_NATM),
+     *  sje(0:ny-1,ntrgsx), sjs(0:ny-1,ntrgsx),
+     *  sjm(0:ny-1,ntrgsx,DEF_NMOL),spm(0:ny-1,ntrgsx,DEF_NMOL)
       real (kind=R8) ::
-     *   sja_t(0:ntrgsx,natm), sjp_t(0:ntrgsx,natm),
-     ,   sja_w(0:ntrgsx,natm), sjp_w(0:ntrgsx,natm), 
-     ,   sjt_w(0:ntrgsx,natm), spt_out(4*natm),
-     ,   sjs_t(ntrgsx,ntargsp), sjs_w(0:ntrgsx,ntargsp),
-     ,   sjb_w(0:ntrgsx,ntargsp),sb_t,ss_t,sn_t,sg_t
-      integer sumlis(natm,2)
-      character*11 spt_str(4,natm)
+     *   sja_t(0:ntrgsx,DEF_NATM), sjp_t(0:ntrgsx,DEF_NATM),
+     ,   sja_w(0:ntrgsx,DEF_NATM), sjp_w(0:ntrgsx,DEF_NATM),
+     ,   sjm_t(0:ntrgsx,DEF_NMOL), sjm_w(0:ntrgsx,DEF_NMOL), 
+     ,   sjt_w(0:ntrgsx,DEF_NATM), fpt_out(4*DEF_NATM),
+     ,   sjs_t(ntrgsx), sjs_w(0:ntrgsx),
+     ,   sb_t,ss_t,sn_t,sg_t, spt_out(2),mol_out(2*DEF_NMOL)
+      integer eb2atm(natm)
+      character*11 spt_str(2,ntrgsx),fpt_str(4,DEF_NATM)
+      character*15 mol_str(2,DEF_NMOL)
+      character*10 ssmol,ssion
       real (kind=R8) ::
      *   ers_factor, nsecyr
       parameter (nsecyr=24.0_R8*3600.0_R8*365.25_R8*0.9925_R8)
@@ -99,13 +125,13 @@ c***  srfs_x    : corresponding species (say, Fe for SS)
 c***  srfs_d    : specific masses of possible target materials [g/cm**3]
 c***  srfs_a    : atomic weight of possible target materials
       integer n_srfs_m,spt_mat,spt_atm
-      parameter (n_srfs_m=8)
+      parameter (n_srfs_m=7)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m)
       character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
-      data srfs_m /'Be','C','CFC','Fe','SS','ss','Mo' ,'W'/
-      data srfs_x /'Be','C','C'  ,'Fe','Fe','Fe','Mo' ,'W'/
-      data srfs_a /  9.,12., 12. , 56., 56., 56., 96. , 184./
-      data srfs_d /1.8 ,2.0, 2.0 , 7.8, 7.8, 7.8, 10.2, 19.3/
+      data srfs_m /'Be','C','CFC','Fe','SS','Mo' ,'W'/
+      data srfs_x /'Be','C','C'  ,'Fe','Fe','Mo' ,'W'/
+      data srfs_a /  9.,12., 12. , 56., 56., 96. , 184./
+      data srfs_d /1.8 ,2.0, 2.0 , 7.8, 7.8, 10.2, 19.3/
 c
 c*** Text variables:
 c***  ftrg    filenames for the profiles along the targets
@@ -229,7 +255,6 @@ c*** Power loading:
 c
 c*** Plasma and neutrals
 c
-
       l=1
       u=-1.0_R8
       ixstart(1,1)=jxi
@@ -252,6 +277,9 @@ c
       endif
       do j=1,ntrgts !{
         k=ltrgpos(j)
+        ISS=ltns(j)
+        IND=eirdiag_nds_ind(ISS)
+        IAS=IND+1
         do iy=lytg,ny-1 !{
           wnutrg(iy,j)=0.0_R8
           wo=fhe(k+1-l,iy,0)+fhi(k+1-l,iy,0)+fhi_ext(k+1-l,iy,0)
@@ -301,30 +329,31 @@ c        wo=-1.0e-6_R8*wo/s(iy,1)
 		  titrg(iy,j)=ti(k+l,iy)/ev
           if (ft44) then
             do is=1,natmi
-              t=tab2(k+l+1,iy+1,is,1)/ev
-              wnutrg(iy,j)=wnutrg(iy,j)+
-     .         s(iy,j)*dab2(k+l+1,iy+1,is,1)*tab2(k+l+1,iy+1,is,1)*
-     *         sqrt(max(t/am(eb2spcr(is)),0.0_R8))*0.25_R8*2.0e4_R8
+c             carlis Using values directly calculated from Eirene
+              wnutrg(iy,j)=wnutrg(iy,j)+(ewlda_res(is,iy+IAS)
+     .                                 -ewldea_res(is,iy+IAS))*
+     .                                  sarea_res(iy+IAS)
             enddo
             do is=1,nmoli
-              mmol=0.0_R8
-              do iss = 1,natmi
-                mmol=mmol+mlcmp(iss,is)*am(eb2spcr(iss))
-              enddo
-              t=tmb2(k+l+1,iy+1,is,1)/ev
-              wnutrg(iy,j)=wnutrg(iy,j)+
-     .         s(iy,j)*dmb2(k+l+1,iy+1,is,1)*tmb2(k+l+1,iy+1,is,1)*
-     *         sqrt(max(t/mmol,0.0_R8))*0.25_R8*2.0e4_R8
+c             carlis Using values directly calculated from Eirene
+              wnutrg(iy,j)=wnutrg(iy,j)+(ewldm_res(is,iy+IAS)
+     .                                 -ewldem_res(is,iy+IAS)
+     .                                 +ewldmr_res(is,iy+IAS))*
+     .                                  sarea_res(iy+IAS)
             enddo
             do is=1,nioni
               mion=0.0_R8
               imol=1
+              ssion=textin(is-1)
+              ssion=trim(adjustl(ssion))
               match_found=.false.
               do while (.not.match_found.and.imol.le.nmoli)
-                if (streql(textin(is-1),textmn(imol-1)//'+')) then
+                ssmol=textmn(imol-1)
+                ssmol=trim(adjustl(ssmol))//'+'
+                if (streql(ssion,ssmol)) then
                   match_found=.true.
-                  do iss = 1,natmi
-                    mion=mion+mlcmp(iss,imol)*am(eb2spcr(iss))
+                  do ims = 1,natmi
+                    mion=mion+mlcmp(ims,imol)*am(eb2spcr(ims))
                   enddo
                 endif
                 imol=imol+1
@@ -430,12 +459,12 @@ c
         write(lun,740) 'Wtot',tab,'total power flux [W/m^2]'
         write(lun,740) 'Wpart',tab,'power flux with particles [W/m^2]'
         write(lun,740) 'Wrad',tab,'power flux with radiation [W/m^2]'
-        write(lun,740) 'Wpls',tab,'power flux with charged particles
-     ,[W/m^2]'
-        write(lun,740) 'Wneut',tab,'power flux with neutral particles 
-     ,[W/m^2]'
-        write(lun,740) 'xMP',tab,'radial co-ordinate in mid-plane, 
-     ,(IMP for inner target(s), OMP for outer(s)) [m]'
+        write(lun,740) 'Wpls',tab,
+     .'power flux with charged particles [W/m^2]'
+        write(lun,740) 'Wneut',tab,
+     .'power flux with neutral particles [W/m^2]'
+        write(lun,740) 'xMP',tab,'radial co-ordinate in mid-plane'//
+     .' (IMP for inner target(s), OMP for outer(s)) [m]'
         write(lun,740) 'Rclfc',tab,'radial co-ordinate on target [m]'
         write(lun,740) 'Zclfc',tab,'vertical co-ordinate on target [m]'
 c        write(lun,740) 'Wpar_xpt',tab,'parallel power flux around 
@@ -444,10 +473,10 @@ c        write(lun,740) 'WWpar',tab,'would-be parallel power flux
 c     ,without dissipation in divertor [W/m^2]'
 c        write(lun,740) 'WWtrg',tab,'would-be target power flux 
 c     ,without dissipation in divertor [W/m^2]'
-        write(lun,740) 'Lcnnt',tab,'connection length from mid-plane 
-     ,to target [m]'
-        write(lun,740) 'Lcnnx',tab,'connection length from x-point 
-     ,to target [m]'
+        write(lun,740) 'Lcnnt',tab,
+     .'connection length from mid-plane to target [m]'
+        write(lun,740) 'Lcnnx',tab,
+     .'connection length from x-point to target [m]'
         if(lrdlsp) then !{
           write(lun,fmt_peak) 'x','ne','Te','Ti','Wtot','Wpart',
      ,            'Wrad','Wpls','Wneut','xMP','Rclfc','Zclfc',
@@ -677,47 +706,60 @@ c*** Total power outside the strike point position and power half-width
       close (lun)
 c----------------------------------------------------------------------
 c*** Calculate the particle fluxes and erosion - if present
-c     carlis 22 feb 2017 calculating startiing/ending indexes of each plasma species      
+c     carlis eb2atm contains the indexes of the B2 atoms mapped to eirene
+c            so if in Eirene is [D He Be Ne] and in B2 [D Ne He Be] then
+c            eb2atm will be [1 4 2 3]
+#ifndef B25_EIRENE      
       do ia=1,natm
-        imin=1000
-        imax=0
-        do is=0,ns-1
-          if (b2espcr(is).eq.ia) then
-            imin=min(imin,is);
-            imax=max(imax,is);
+        TEXTA(ia)=adjustl(TEXTAN(ia-1))
+      end do
+#endif
+      do ia=1,natm !initialize 
+        eb2atm(ia)=ia
+      end do
+      do is=1,natm !species over B2
+        do ia=1,natm !species over Eirene
+          if (streql(TEXTA(ia),atoms_list(is))) then
+           eb2atm(is)=ia
           end if
         end do
-        sumlis(ia,1)=imin
-        sumlis(ia,2)=imax
       end do
-
+      print *, 'eb2spcr',eb2spcr
+      print *, 'b2ptrgl: list of atoms according to B2: ',atoms_list
+      print *, 'list of atoms according to Eirene: ',TEXTA   
+      print *, 'ordering of B2 atoms according to Eirene: ',
+     ,          (atoms_list(eb2atm(i)),i=1,natm)  
 c*** Calculate the particle fluxes
 
 c      print *,'Particle fluxes...' !###
       if(ntns.eq.ntrgts) then !{
         do j=1,ntrgts !{
-          do i=0,ny-1 !{
+          do iy=0,ny-1 !{
             do ia=1,natm
-               sja(i,j,ia)=0.0_R8
-               sjp(i,j,ia)=0.0_R8
-               sjt(i,j,ia)=0.0_R8
+              sja(iy,j,ia)=0.0_R8
+              sjp(iy,j,ia)=0.0_R8
+              sjt(iy,j,ia)=0.0_R8
+            end do
+            do imol=1,nmoli
+              sjm(iy,j,imol)=0.0_R8
             end do
           end do !}
           ersn_a(j)=0.0_R8
           ersn_p(j)=0.0_R8
           ersn_l(j)=0.0_R8   
-          do is=1,ntargsp
-            sjs_w(j,is)=0.0_R8
-            sjb_w(j,is)=0.0_R8
-            sjs_t(j,is)=0.0_R8
-          end do    
+          sjs_w(j)=0.0_R8
+          sjs_t(j)=0.0_R8
           do ia=1,natm
             sja_w(j,ia)=0.0_R8
             sjp_w(j,ia)=0.0_R8
             sjt_w(j,ia)=0.0_R8
             sja_t(j,ia)=0.0_R8
             sjp_t(j,ia)=0.0_R8
-          end do      
+          end do    
+          do imol=1,nmoli
+            sjm_w(j,imol)=0.0_R8
+            sjm_t(j,imol)=0.0_R8
+          end do  
         end do !}
 
 c        do is=0,ns-1
@@ -734,24 +776,39 @@ c        print *,'ismain,ismain0',ismain,ismain0
         do j=1,ntrgts !{
           k=ltrgpos(j)
 c          print *,'j,ltrgpos = ',j,k  !###
+          ISS=ltns(j)
+          IND=eirdiag_nds_ind(ISS)
+          IAS=IND+1
           do iy=lytg,ny-1 !{
-            do ia=1,natm
-              do is=sumlis(ia,1)+1,sumlis(ia,2)
+            do ia=1,natm !loop on atoms according to Eirene
+              i1=eb2spcr(ia)+1
+              i2=eb2spcr(ia)+nfluids(ia)
+              do is=i1,i2
                 sjp(iy,j,ia)=sjp(iy,j,ia)+u*fna(k+1-l,iy,0,is)
               end do
               if (ft44) then
-                t=tab2(k+l+1,iy+1,ia,1)/ev
-                sja(iy,j,ia)=s(iy,2)*dab2(k+l+1,iy+1,ia,1)*
-     *                       sqrt(max(t/am(sumlis(ia,1)),0.0_R8))*
-     *                       0.25_R8*1.0e4_R8
-                spa(iy,j,ia)=dab2(k+l+1,iy+1,ia,1)*
-     *                       tab2(k+l+1,iy+1,ia,1)
+                sja(iy,j,ia)=wldna_res(ia,iy+IAS)*
+     .                       sarea_res(iy+IAS)
+                spa(iy,j,ia)=dab2(k+l+1,iy+1,eb2atm(ia),1)*
+     *                       tab2(k+l+1,iy+1,eb2atm(ia),1)
               else
-                sja(iy,j,ia)=u*fna(k+1-l,iy,0,sumlis(ia,1))
-                spa(iy,j,ia)=na(k+l,iy,sumlis(ia,1))*ti(k+l,iy)
+                sja(iy,j,ia)=u*fna(k+1-l,iy,0,eb2spcr(ia))
+                spa(iy,j,ia)=na(k+l,iy,eb2spcr(ia))*ti(k+l,iy)
               endif
               sjp_t(j,ia)=sjp_t(j,ia)+sjp(iy,j,ia)
               sja_t(j,ia)=sja_t(j,ia)+sja(iy,j,ia)
+            end do
+            do imol=1,nmoli
+              if (ft44) then
+                sjm(iy,j,imol)=wldnm_res(imol,iy+IAS)*
+     .                       sarea_res(iy+IAS)
+                spm(iy,j,imol)=dmb2(k+l+1,iy+1,imol,1)*
+     *                       tmb2(k+l+1,iy+1,imol,1)
+              else
+                sjm(iy,j,imol)=0.0
+                spm(iy,j,imol)=0.0
+              endif
+              sjm_t(j,imol)=sjm_t(j,imol)+sjm(iy,j,imol)
             end do
           end do !}
           l=1-l
@@ -770,10 +827,12 @@ c        print *,'size wldpp(,,)',size(wldpp,1),size(wldpp,2),size(wldpp,3)
         if (ft44) then
           do j=1,ntrgts !{
             js=ltns(j)+nlim
-            do ia=1,natm
+            do ia=1,natm !loop over eirene atoms
               sja_w(j,ia)=wldna(js,ia,0)
-              do is=sumlis(ia,1)+2-ia,sumlis(ia,2)+1-ia
-                sjp_w(j,ia)=sjp_w(j,ia)+wldpp(js,is,0)
+              i1=eb2spcr(ia)+1
+              i2=eb2spcr(ia)+nfluids(ia)
+              do is=i1,i2
+                sjp_w(j,ia)=sjp_w(j,ia)+wldpp(js,ia,0)
               end do
               sjt_w(j,ia)=sja_w(j,ia)+sjp_w(j,ia)
               if(sja_t(j,ia).gt.0.0_R8) then !{
@@ -792,6 +851,17 @@ c        print *,'size wldpp(,,)',size(wldpp,1),size(wldpp,2),size(wldpp,3)
                 sjt(iy,j,ia)=sja(iy,j,ia)+sjp(iy,j,ia)
               end do !}
             end do
+            do imol=1,nmoli
+              sjm_w(j,imol)=wldnm(js,imol,0)
+              if(sjm_t(j,imol).gt.0.0_R8) then !{
+                sjm_t(j,imol)=sjm_w(j,imol)/sjm_t(j,imol)
+              else !}{
+                sjm_t(j,imol)=0.0_R8
+              end if !}
+              do iy=lytg,ny-1 !{
+                sjm(iy,j,imol)=sjm(iy,j,imol)*sjm_t(j,imol)
+              end do !}
+            end do
           end do !}
         end if
 c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jD : ',
@@ -808,127 +878,159 @@ c        write(*,'(1x,a,1p,16e12.3)') 'Scaling factors for jHe+: ',
 c     ,                                           (sjhep_t(i),i=1,ntrgts)
 
 c*** Calculate sputtering
-
+        do_sput=.false.
         if (ntargsp.gt.0.and.ft44) then !sputtering happening
-          do is=1,ntargsp
+          do j=1,ntrgts
 c           Check if sputtering is happening and which material is being sputtered
 c           and its atomic mass and density
-            print *,'sputtered target material = ', track_species(is)
+c carlis It is needed a variable that tells for each target or surface which is the sputtered atom.
+c        Temporary solution for this routine is to use the bulk track_species
             do ia=1,n_srfs_m
-             if (streql(track_species(is),srfs_m(ia))) then
+             if (streql(mtrtrgsg(j),srfs_m(ia))) then
                spt_mat=ia
              end if
             end do
             spt_atm=0
             do ia=1,natm
-              if (streql(track_species(is),atoms_list(ia))) then
+              if (streql(track_species(1),TEXTA(ia))) then
                 spt_atm=ia
               end if
             end do
-            do j=1,ntrgts
-              do iy=lytg,ny-1
-                sjs(iy,j,is)=sjt(iy,j,spt_atm)
-                sjs_t(j,is)=sjs_t(j,is)+sjs(iy,j,is)
-              end do
-              if(ntns.eq.2 .or. ntns.eq.4) then
-                js=ltns(j)+nlim
-                sjs_w(j,is)=wldspt(js,0)
-                sjb_w(j,is)=sjs_w(j,is)-sjt_w(j,spt_atm)
-                if(sjs_t(j,is).gt.0.0_R8) then
-                  sjs_t(j,is)=sjs_w(j,is)/sjs_t(j,is)
-                else
-                  sjs_t(j,is)=0.0_R8
-                end if
-              else
-                sjs_t(j,is)=0.0_R8
-              end if
-              do iy=lytg,ny-1!{
-                sjs(iy,j,is)=sjs_t(j,is)*sjs(iy,j,is)
-                sjb(iy,j,is)=(sjs(iy,j,is)-sjt(iy,j,spt_atm))/s(iy,j)
-                sjn(iy,j,is)=ers_factor*srfs_a(spt_mat)*sjb(iy,j,is)/
-     .                     srfs_a(spt_mat)
-                sjs(iy,j,is)=sjs(iy,j,is)/s(iy,j)
-                sjg(iy,j,is)=ers_factor*srfs_a(spt_mat)*sjs(iy,j,is)/
-     .                     srfs_a(spt_mat)
-                do ia=1,natm
-                  sjp(iy,j,ia)=sjp(iy,j,ia)/s(iy,j)
-                  sjt(iy,j,ia)=sjt(iy,j,ia)/s(iy,j) 
-                  sja(iy,j,ia)=sja(iy,j,ia)/s(iy,j)
-                end do
-              end do
+            ISS=ltns(j)
+            IND=eirdiag_nds_ind(ISS)
+            IAS=IND+1
+            do iy=lytg,ny-1
+              sjs(iy,j)=wldspt_res(iy+IAS)*
+     .                     sarea_res(iy+IAS)
+              sjs_t(j)=sjs_t(j)+sjs(iy,j)
             end do
-            write(*,'(1x,a,1p,16e12.3)') 
-     .    'Scaling factors for '//track_species(is)//' Sp : ',
-     ,    (sjs_t(j,is),j=1,ntrgts)
-          end do
-        end if
+            if(ntns.eq.2 .or. ntns.eq.4) then
+              js=ltns(j)+nlim
+              sjs_w(j)=wldspt(js,0)
+              if(sjs_t(j).gt.0.0_R8) then
+                sjs_t(j)=sjs_w(j)/sjs_t(j)
+              else
+                sjs_t(j)=0.0_R8
+              end if
+            else
+              sjs_t(j)=0.0_R8
+            end if
+            if (sjs_t(j).gt.0.0_R8) then
+              do_sput(j)=.true.
+              do iy=lytg,ny-1!{
+                sjs(iy,j)=sjs_t(j)*sjs(iy,j)
+c carlis For output erosion I assume that the sputterd flux is acting on the target material
+c carlis sje [mm/y] = ers_factor[s/y*mol/g*m2/cm2*mm/cm]*srfs_a[g/mol]*sjs[1/s]/srfs_d[g/cm3]/s[m2]
+                sje(iy,j)=ers_factor*srfs_a(spt_mat)*sjs(iy,j)/
+     .                   srfs_d(spt_mat)/s(iy,j)
+c carlis For output sputtering I assume that the sputterd flux is acting on the sputtered atom
+c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/mol]
+                sjs(iy,j)=sjs(iy,j)*srfs_a(spt_atm)*nsecyr/avogr
+                sjs_w(j)=sjs_w(j)+sjs(iy,j)
+              end do
+              print *,'target material = ', mtrtrgsg(j)
+              print *,'sputtered atom from target = ',
+     ,                track_species(1) 
+              write(*,'(1x,a,1p,16e12.3)') 
+     .         'Scaling factors for '//mtrtrgsg(j)//' Sp : ',
+     ,          (sjs_t(i),i=1,ntrgts)
+            else ! no sputtering
+              print *,
+     ,'b2ptrgl, zero sputtering flux for target j=',j
+              sjs_w(j)=0.0
+            end if
+          end do !loop on targets
+        else
+          print *, 'b2ptrgl, no sputtering calculated:'
+          print *, '         track_species=0 or no ft44 available'
+        end if 
         
-        nclm_er=6+4*natm
+        nclm_er=2+4*natm+2*ntrgts+2*nmol
         l=1
 	do ia=1,natm
-          spt_str(1,ia)=trim(atoms_list(ia))//'_flux_atm'
-          spt_str(2,ia)=trim(atoms_list(ia))//'_flux_ion'
-          spt_str(3,ia)=trim(atoms_list(ia))//'_temp_atm'
-          spt_str(4,ia)=trim(atoms_list(ia))//'_pres_atm'
+          fpt_str(1,ia)=trim(TEXTA(ia))//'_flux_atm'
+          fpt_str(2,ia)=trim(TEXTA(ia))//'_flux_ion'
+          fpt_str(3,ia)=trim(TEXTA(ia))//'_temp_atm'
+          fpt_str(4,ia)=trim(TEXTA(ia))//'_pres_atm'
+        end do
+        do k=1,ntrgts
+          if (do_sput(k)) then
+            spt_str(1,k)=trim(track_species(1))//'_spu'
+            spt_str(2,k)=trim(mtrtrgsg(k))//'_ersn'
+          end if
+        end do
+        do imol=1,nmoli
+          ssmol=textmn(imol-1)
+          ssmol=adjustl(ssmol)
+          mol_str(1,imol)=trim(ssmol)//'_flux_mol'
+          mol_str(2,imol)=trim(ssmol)//'_pres_mol'
         end do
         do j=1,ntrgts !{
           nx_hlp=ltrgpos(j)+l
           jj=j
           if(j.eq.ntrgts) jj=ntrgsx
-           open(lun,file=ftrg(jj,2))
-           write(fmt_peak,710) nclm_er,tab
-           write(lun,740) 'Target erosion - ',trg_label(jj),label
-           write(lun,740) 'x',tab,'co-ordinate along target [m].
-     , <0 in PFR'
-           write(lun,740) 'Sput_net',tab,'net sputtering [g/y] 
-     ,(negative means deposition)'
-           write(lun,740) 'Sput_gross',tab,'gross sputtering [g/y]'
-           write(lun,740) 'Ersn_net',tab,'net erosion [mm/y] 
-     ,(negative means deposition)'
-           write(lun,740) 'Ersn_gross',tab,'gross erosion [mm/y]'
-           write(lun,740) 'XX_flux_atm',tab,'flux of neutral atoms 
-     ,of species XX [1/m^2/s]'
-           write(lun,740) 'XX_flux_ion',tab,'flux of ions of species 
-     ,XX [1/m^2/s]'
-           write(lun,740) 'XX_temp_atm',tab,'temperature of neutral 
-     ,atoms of species XX [eV]'
-           write(lun,740) 'XX_pres_atm',tab,'pressure of neutral 
-     ,atoms of species XX [Pa]'
-           write(lun,740) 'xMP',tab,'radial co-ordinate in mid-plane, 
-     ,(IMP for inner target(s), OMP for outer(s)) [m]'
-           write(lun,fmt_peak) 'x','Sput_net','Sput_gross',
-     ,            'Ersn_net','Ersn_gross',spt_str,'xMP'
-           write(fmt_peak,720) nclm_er,tab
-           if(ntrgts.eq.4) then !{
-             k=j
-           else !}{
-             k=ntrgts
-           end if !}
-           do i=lytg,ny-1 !{
-             do ia=1,natm
-               spt_out(1+4*(ia-1))=sja(i,j,ia)
-               spt_out(2+4*(ia-1))=sjp(i,j,ia)
-               spt_out(3+4*(ia-1))=tab2(nx_hlp+1,i+1,ia,1)/ev
-               spt_out(4+4*(ia-1))=spa(i,j,ia)
-             end do
-             sb_t=0.0_R8
-             ss_t=0.0_R8
-             sn_t=0.0_R8
-             sg_t=0.0_R8
-             if (ntargsp.gt.0.and.ft44) then
-               do is=1,ntargsp
-                 sb_t=sb_t+sjb(i,j,is)
-                 ss_t=ss_t+sjs(i,j,is)
-                 sn_t=sn_t+sjn(i,j,is)
-                 sg_t=sg_t+sjg(i,j,is)
-               end do
-             end if
-             write(lun,fmt_peak) xtrg(i,j),sb_t,ss_t,sn_t,sg_t,
-     ,                           spt_out,xmp_hlp(i,k)
-           end do !}
-           close (lun)
-           l=1-l
-         end do !}
+          open(lun,file=ftrg(jj,2))
+          write(fmt_peak,710) nclm_er,tab
+          write(lun,740) 'Target erosion - ',trg_label(jj),label
+          write(lun,740) 'x',tab,
+     .'co-ordinate along target [m]. <0 in PFR'
+          write(lun,740) 'XX_flux_atm',tab,
+     .'incident flux of neutral atoms of species XX [1/m^2/s]'
+          write(lun,740) 'XX_flux_ion',tab,
+     .'incident flux of ions of species XX [1/m^2/s]'
+          write(lun,740) 'XX_temp_atm',tab,
+     .'temperature of neutral atoms of species XX [eV]'
+          write(lun,740) 'XX_pres_atm',tab,
+     .'pressure of neutral atoms of species XX [Pa]'
+          write(lun,740) 'XX_flux_mol',tab,
+     .'incident flux of molecules XX [1/m^2/s]'
+          write(lun,740) 'XX_pres_mol',tab,
+     .'pressure of molecules XX [Pa]'
+          write(lun,740) 'XX_sput',tab,
+     .'gross sputtering of material XX [g/y]'
+          write(lun,740) 'XX_ersn',tab,
+     .'gross erosion of material XX [mm/y]'
+          write(lun,740) 'xMP',tab,'radial co-ordinate in mid-plane'//
+     .'(IMP for inner target(s), OMP for outer(s)) [m]'
+          if (do_sput(j)) then
+            write(lun,fmt_peak) 'x',
+     ,            fpt_str,mol_str,spt_str(:,j),'xMP'
+            write(fmt_peak,720) nclm_er,tab
+          else 
+            nclm_er=2+4*natm+2*nmol
+            write(lun,fmt_peak) 'x',
+     ,            fpt_str,mol_str,'xMP'
+            write(fmt_peak,720) nclm_er,tab
+          end if
+          if(ntrgts.eq.4) then !{
+            k=j
+          else !}{
+            k=ntrgts
+          end if !}
+          do iy=lytg,ny-1 !{
+            do ia=1,natm
+              fpt_out(1+4*(ia-1))=sja(iy,j,ia)/s(iy,j)
+              fpt_out(2+4*(ia-1))=sjp(iy,j,ia)/s(iy,j)
+              fpt_out(3+4*(ia-1))=tab2(nx_hlp+1,iy+1,eb2atm(ia),1)/ev
+              fpt_out(4+4*(ia-1))=spa(iy,j,ia)
+            end do
+            do imol=1,nmoli
+              mol_out(1+2*(imol-1))=sjm(iy,j,imol)/s(iy,j)
+              mol_out(2+2*(imol-1))=spm(iy,j,imol)
+            end do
+            if (do_sput(j)) then
+              spt_out(1)=sjs(iy,j)
+              spt_out(2)=sje(iy,j)
+              write(lun,fmt_peak) xtrg(iy,j),fpt_out,mol_out,
+     ,                          spt_out,xmp_hlp(iy,k)
+            else 
+              write(lun,fmt_peak) xtrg(iy,j),fpt_out,mol_out,
+     ,                          xmp_hlp(iy,k)
+            end if
+          end do !}
+          close (lun)
+          l=1-l
+        end do !}
 c----------------------------------------------------------------------
 c*** Produce a summary file for target sputtering
 c
@@ -937,15 +1039,18 @@ c
           sja_w(0,ia)=0.0_R8
           sjt_w(0,ia)=0.0_R8
         end do
-        do is=1,ntargsp
-          sjs_w(0,is)=0.0_R8
-          sjb_w(0,is)=0.0_R8
+        do imol=1,nmoli
+          sjm_w(0,imol)=0.0_R8
         end do
+        sjs_w(0)=0.0_R8
         do j=1,ntrgts
           do ia=1,natm
             sjp_w(0,ia)=sjp_w(0,ia)+sjp_w(j,ia)
             sja_w(0,ia)=sja_w(0,ia)+sja_w(j,ia)
             sjt_w(0,ia)=sjt_w(0,ia)+sjt_w(j,ia)
+          end do
+          do imol=1,nmoli
+            sjm_w(0,imol)=sjm_w(0,imol)+sjm_w(j,imol)
           end do
         end do !}
         k=1     
@@ -959,25 +1064,30 @@ c
   730     format('(1p,1x,a12,',i3,'(1h',a1,',e12.4))')
           write(lun,*) 'Particle fluxes [1/s]'
           do ia=1,natm
-            write(lun,fmt_peak) trim(atoms_list(ia))//' ions on',
+            write(lun,fmt_peak) trim(TEXTA(ia))//' ions on',
      ,                          (sjp_w(i,ia),i=1,ntrgts),sjp_w(0,ia)
-            write(lun,fmt_peak) trim(atoms_list(ia))//' atoms on',
+            write(lun,fmt_peak) trim(TEXTA(ia))//' atoms on',
      ,                          (sja_w(i,ia),i=1,ntrgts),sja_w(0,ia)
-            write(lun,fmt_peak) trim(atoms_list(ia))//' total on',
+            write(lun,fmt_peak) trim(TEXTA(ia))//' total on',
      ,                          (sjt_w(i,ia),i=1,ntrgts),sjt_w(0,ia)
           end do
+          write(lun,*)
+          write(lun,*) 'Molecule fluxes [1/s]'
+          do imol=1,nmoli
+            ssmol=textmn(imol-1)
+            ssmol=adjustl(ssmol)
+            write(lun,fmt_peak) trim(ssmol)//' molecules on',
+     ,                          (sjm_w(i,imol),i=1,ntrgts),sjm_w(0,imol)
+          end do
           if (ntargsp.gt.0.and.ft44) then
-            do is=1,ntargsp
-              do j=1,ntrgts
-                sjs_w(0,is)=sjs_w(0,is)+sjs_w(j,is)
-                sjb_w(0,is)=sjb_w(0,is)+sjb_w(j,is)
-              end do
+            do j=1,ntrgts
+              sjs_w(0)=sjs_w(0)+sjs_w(j)
             end do
-            do is=1,ntargsp
-              write(lun,fmt_peak) trim(track_species(is))//' sputtered',
-     ,                          (sjs_w(i,is),i=1,ntrgts),sjs_w(0,is)
-              write(lun,fmt_peak) trim(track_species(is))//' removed',
-     ,                          (sjb_w(i,is),i=1,ntrgts),sjb_w(0,is)
+            do j=1,ntrgts
+              write(lun,*)
+              write(lun,*) 'Total sputtering [g/y]'
+              write(lun,fmt_peak) trim(mtrtrgsg(j)),
+     ,             (sjs_w(i),i=1,ntrgts),sjs_w(0)
             end do
             write(lun,*)
             write(lun,*) 'Erosion [mm/y]'
@@ -985,27 +1095,28 @@ c
             ersn_am=0.0_R8
             ss_m=0.0_R8
             do j=1,ntrgts !{
-              ss(j)=0.0_R8
-              ersn_p(j)=0.0_R8
-              do iy=lytg,ny-1 !{
-                ss(j)=ss(j)+s(iy,j)
-                sn_t=0.0_R8
-                do is=1,ntargsp
-                  sn_t=sn_t+sjn(i,j,is)
-                end do
-                if(sn_t .gt. ersn_p(j)) then !{
-                  ersn_p(j)=sn_t
-                  ersn_l(j)=xtrg(iy,j)
-                end if !}
-              end do !}
-              ersn_a(j)=0.0_R8
-              do is=1,ntargsp
-                ersn_a(j)=ersn_a(j)+sjb_w(j,is)*ers_factor*
-     .           srfs_a(spt_mat)/srfs_d(spt_mat)/ss(j)
-              end do
-              ersn_pm=max(ersn_p(j),ersn_pm)
-              ss_m=ss_m+ss(j)
-              ersn_am=ersn_am+ersn_a(j)*ss(j)
+              if (do_sput(j)) then
+                ss(j)=0.0_R8
+                ersn_p(j)=0.0_R8
+                do iy=lytg,ny-1 !{
+                  sn_t=0.0_R8
+                  ss(j)=ss(j)+s(iy,j)
+                  sn_t=sn_t+sje(i,j)
+                  if(sn_t .gt. ersn_p(j)) then !{
+                    ersn_p(j)=sn_t
+                    ersn_l(j)=xtrg(iy,j)
+                  end if !}
+                end do !}
+                ersn_a(j)=0.0_R8
+                ersn_a(j)=ersn_a(j)+sjs_w(j)/ss(j)
+                ersn_pm=max(ersn_p(j),ersn_pm)
+                ss_m=ss_m+ss(j)
+                ersn_am=ersn_am+ersn_a(j)*ss(j)
+              else
+                ersn_a(j)=0.0_R8     
+                ersn_p(j)=0.0_R8  
+                ersn_l(j)=0.0_R8       
+              end if
             end do !}
             ersn_am=ersn_am/ss_m
             write(lun,fmt_peak) 'average',(ersn_a(i),i=1,ntrgts),ersn_am
@@ -1019,7 +1130,6 @@ c
           write(*,*) '  ==> check specification of ltns in ',
      ,                               'b2.parameters (section NEUTRALS)'
         end if    
-
       return
 c======================================================================
   710 format('(2h# ,',i3,'(1x,a11,1h',a1,'))')

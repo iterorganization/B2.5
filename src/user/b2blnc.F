@@ -183,7 +183,7 @@ c
             end do
           end if
         end do
-        do j=1,nstsid
+        do j=1,nstrat
           if(lsns(j).lt.0) lsns(j)=nlim-lsns(j)
         end do
         first=.false.

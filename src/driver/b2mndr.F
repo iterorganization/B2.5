@@ -43,7 +43,8 @@
       use b2mod_external
       use b2mod_mwti
       use b2mod_balance !djm Jan2017
-     & , only : write_balance, balance_netcdf
+     & , only : write_balance, balance_netcdf, alloc_b2mod_balance,
+     &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources
 
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -850,6 +851,7 @@
 *     the call to b2mnds.)
       if (ncall.eq.0) then
        call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
+       if (balance_netcdf.ne.0) call alloc_b2mod_balance(nx,ny,ns)
        call ipgeti ('b2mndr_iout', iout)                             !srv 25.01.16
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
@@ -2115,7 +2117,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         call write_balance(nx,ny,ns)
 #else
         write(*,*)
-    >    'NO_CDF is set at compilation, cannot write balance.nc'
+     >   'NO_CDF is set at compilation, cannot write balance.nc'
 #endif
       endif
 
@@ -2145,6 +2147,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
       call dealloc_b2mod_tallies
+      call dealloc_b2mod_balance
       call dealloc_input_profile
       call dealloc_b2mod_elements
       call dealloc_b2mod_boundary
@@ -2158,6 +2161,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call dealloc_b2mod_neoclassical
       call dealloc_b2mod_ma28_for_7diag
       call dealloc_b2mod_ma28_for_9diag
+      call dealloc_b2mod_eirene_sources
       call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models
       call dealloc_b2mod_transport_disruption

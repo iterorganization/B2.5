@@ -29,7 +29,6 @@ cank }
       use b2mod_wall
       use b2mod_b2cmfs
       use b2mod_version
-      use b2mod_user_namelist
 #ifdef B25_EIRENE
 #ifndef SOLPS4_3
       use eirmod_extrab25
@@ -451,7 +450,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       integer nx, ny, ns
       logical dotest
       integer is, ic, ix, istra, i, j, k, n, ii(1), itrack
-      logical hydrogen, helium, neon, found, side
+      logical found, side
       intrinsic mod
       real (kind=R8) hlp
       logical :: file_ok      
@@ -536,27 +535,6 @@ c
       end do
 
 *   ..set additional variables
-      hydrogen = .false.
-      is = 0
-      do while (.not.hydrogen .and. is.lt.ns)
-        hydrogen = is_neutral(is) .and. nint(zn(is)).eq.1
-        if (hydrogen) j_h_at = b2espcr(is)
-        is = is + 1
-      end do
-      helium = .false.
-      is = 0
-      do while (.not.helium .and. is.lt.ns)
-        helium = is_neutral(is) .and. nint(zn(is)).eq.2
-        if (helium) j_he_at = b2espcr(is)
-        is = is + 1
-      end do
-      neon = .false.
-      is = 0
-      do while (.not.neon .and. is.lt.ns)
-        neon = is_neutral(is) .and. nint(zn(is)).eq.10
-        if (neon) j_ne_at = b2espcr(is)
-        is = is + 1
-      end do
       do is = 1, nstrat
         if (crcstra(is).ne.'N' .and. crcstra(is).ne.'S' .and.
      &      crcstra(is).ne.'W' .and. crcstra(is).ne.'E') targsp(is,:)=-1
@@ -725,14 +703,6 @@ c
         call xertst(1.le.b2espcr(is).and.b2espcr(is).le.nspecies,
      .   'faulty input b2espcr')
       enddo
-      if (hydrogen) then
-        call xertst(nint(zn(eb2spcr(j_h_at))).eq.1,
-     .   'faulty input j_h_at')
-      end if
-      if (helium) call xertst(nint(zn(eb2spcr(j_he_at))).eq.2,
-     . 'faulty input j_he_at')
-      if (neon) call xertst(nint(zn(eb2spcr(j_ne_at))).eq.10,
-     . 'faulty input j_ne_at')
       do is = 1, nspecies
         call xertst(0.le.eb2spcr(is).and.eb2spcr(is).lt.ns,
      .   'faulty input eb2spcr')
@@ -769,9 +739,6 @@ c
      .     'please specify them using the mlcmp(:,',is,
      .     ') array from b2.neutrals.parameters'
         end if
-        if (hydrogen .and. user_namelist_used) call xertst
-     .   (l_h_mol(is).eq.mlcmp(j_h_at,is), 
-     .    'faulty inputs l_h_mol, mlcmp')
 #endif
       enddo
       do is = 1, nnioni

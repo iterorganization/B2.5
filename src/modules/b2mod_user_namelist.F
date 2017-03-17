@@ -1,5 +1,6 @@
       module b2mod_user_namelist
       use b2mod_types
+      use b2mod_diag
 #     include "DIMENSIONS.F"
       integer npfrgrpd, nntrgrpd
       parameter (npfrgrpd=6, nntrgrpd=16)
@@ -23,6 +24,15 @@
       logical scale_He, print_isat
       logical user_namelist_used
 
+      private :: user
+      namelist /user/
+     ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
+     ,  j_h_at,j_he_at,j_ne_at,
+     ,  l_h_mol,fusion_power,Spmp_He_to_D,lpfrs_pmp,
+     ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
+     ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
+     ,  Spmp_nom,scale_He,print_isat,
+     ,  user_filename
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -34,8 +44,9 @@ c***              from the bottom, if non-positive)
 c*** lpfrt_[io]:  B2 x-cell indices corresponding to the top of the
 c***              bypass between the inner and outer divertor (counted
 c***              from the x-point, if non-positive)
-c*** j_he_at   :  Helium index in EIRENE atoms list
 c*** j_h_at    :  Hydrogen index in EIRENE atoms list
+c*** j_he_at   :  Helium index in EIRENE atoms list
+c*** j_ne_at   :  Neon index in EIRENE atoms list
 c*** l_h_mol   :  Hydrogen content in the molecules
 c*** lpfrs_pmp :  Location of the pump.
 c***              0 no pump at all, 1 - lower PFR, 2 - lower outer
@@ -73,10 +84,10 @@ c***  Standard setup:
       l_h_mol=0
       j_he_at=0
       j_ne_at=0
-      lpfrb_i=-2
-      lpfrb_o=-2
-      lpfrt_i=-2
-      lpfrt_o=-2
+      lpfrb_i=0
+      lpfrb_o=0
+      lpfrt_i=0
+      lpfrt_o=0
       npfrgrp=0
       ipfrgrp=0
       jpfrgrp=0
@@ -108,13 +119,6 @@ c***  Standard setup:
       implicit none
       integer nx
 
-      namelist /user/ 
-     ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,j_he_at,j_h_at,
-     ,  l_h_mol,fusion_power,Spmp_He_to_D,lpfrs_pmp,
-     ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
-     ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
-     ,  Spmp_nom,scale_He,print_isat,
-     ,  user_filename
       logical :: file_ok
       character*260 filename
       integer i
@@ -138,6 +142,7 @@ c***  Standard setup:
       else
         write(*,*) 'No ',trim(filename)
         user_namelist_used = .false.
+        filedata(ntrc_usr) = .false.
       endif
 
 *   ..test input
@@ -147,15 +152,10 @@ c***  Standard setup:
      . 'faulty input Spmp_nom')
       call xertst(0.0_R8.le.Spmp_He_to_D,
      . 'faulty input Spmp_He_to_D')
-!csw 14jan2014 remove the following checks to allow negative values
-c      if (lpfrb_i.ne.-2) call xertst (0.le.lpfrb_i.and.lpfrb_i.lt.nx,
-c     . 'faulty input lpfrb_i')
-c      if (lpfrb_o.ne.-2) call xertst (0.le.lpfrb_o.and.lpfrb_o.lt.nx,
-c     . 'faulty input lpfrb_o')
-c      if (lpfrt_i.ne.-2) call xertst (0.le.lpfrt_i.and.lpfrt_i.lt.nx,
-c     . 'faulty input lpfrt_i')
-c      if (lpfrt_o.ne.-2) call xertst (0.le.lpfrt_o.and.lpfrt_o.lt.nx,
-c     . 'faulty input lpfrt_o')
+      call xertst (abs(lpfrb_i).le.nx, 'faulty input lpfrb_i')
+      call xertst (abs(lpfrb_o).le.nx, 'faulty input lpfrb_o')
+      call xertst (abs(lpfrt_i).le.nx, 'faulty input lpfrt_i')
+      call xertst (abs(lpfrt_o).le.nx, 'faulty input lpfrt_o')
       call xertst (0.le.npfrgrp, 'faulty input npfrgrp')
       do i = 1, npfrgrp
         call xertst(1.le.ipfrgrp(i).and.ipfrgrp(i).le.jpfrgrp(i),

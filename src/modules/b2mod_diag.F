@@ -45,7 +45,7 @@ c*** sclrtio: (S/I from B2) / (S/I from Eirene)
 
 c----------------------------------------------------------------------
       integer lstime, ltime, lmovie, ldiag, ldiag2, ldiag3, ldiag4,
-     1 nldetail, nltrsol, nstages
+     1 nldetail, nstages
       integer, allocatable :: IZ(:,:), nfluids(:)
 c----------------------------------------------------------------------
 c*** Specification of the output files and units
