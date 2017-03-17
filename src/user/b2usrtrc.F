@@ -234,7 +234,7 @@ c-----------------------------------------------------------------------
       integer i, j, k, l, m, n, i0, im, is, ix, iy, js, ls, nv, irt,
      ,     iyp, j_he_i, l_pad_str,n_pad_str
 c*** radial position of the separatrix and poloidal positions of
-c*** targets and mid-plane for DoD calculation for each target
+c*** targets and midplane for DoD calculation for each target
       integer isp_tmp(4),itg_tmp(4),imp_tmp(4)
 c*** File markers: routine version, number of global values, number of
 c***               PFR values, number of species, number of PFR surface
@@ -464,7 +464,7 @@ c*** Inner divertor
             if(lpfrs_pmp.eq.1) then !{
               m=leftcut(1)-1+m
             elseif(lpfrs_pmp.eq.2) then !}{
-              m=nxtl+m
+              m=nxtl-1+m
             end if !}
           end if !}
           n=lpfrt_i
@@ -491,9 +491,9 @@ c*** Outer divertor
           n=lpfrb_o
           if(n.le.0) then !{
             if(lpfrs_pmp.eq.1) then !{
-              n=nx+n
+              n=nx-1+n
             else if(lpfrs_pmp.eq.2) then !}{
-              n=nxtr-n
+              n=nxtr+1-n
             end if !}
           end if !}
           ipfc_tmp(2)=m

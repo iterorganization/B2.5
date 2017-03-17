@@ -866,7 +866,7 @@ c*** The whole wall including the refined targets (shadowing)
       write(lun_w,*) pp2(1,k),tab,pp2(2,k)
 
 c*** The plot zones: one file for each zone. Here we also write the
-c*** co-ordinates of the segment centers and the reference distance
+c*** coordinates of the segment centers and the reference distance
 
       do il=2,nwldprt !{
         l=len_trim(lblwldpt(il))
