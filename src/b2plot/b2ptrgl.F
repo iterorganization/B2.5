@@ -207,7 +207,7 @@ c     ,                                         (xtg_hlp(i,j),i=0,ny-1)
 c      end do !}
 c!###}
 
-c*** Mid-plane co-ordinates
+c*** Midplane coordinates
 
       l=jxi
       m=0
@@ -452,7 +452,7 @@ c
         open(lun,file=ftrg(jj,1))
         write(fmt_peak,710) nclm_ld,tab
         write(lun,740) 'Target loading - ',trg_label(jj),label
-        write(lun,740) 'x',tab,'co-ordinate along target [m]. <0 in PFR'
+        write(lun,740) 'x',tab,'coordinate along target [m]. <0 in PFR'
         write(lun,740) 'ne',tab,'electron density [1/m^3]'
         write(lun,740) 'Te',tab,'electron temperature [eV]'
         write(lun,740) 'Ti',tab,'ion temperature [eV]'
@@ -460,13 +460,13 @@ c
         write(lun,740) 'Wpart',tab,'power flux with particles [W/m^2]'
         write(lun,740) 'Wrad',tab,'power flux with radiation [W/m^2]'
         write(lun,740) 'Wpls',tab,
-     .'power flux with charged particles [W/m^2]'
+     .   'power flux with charged particles [W/m^2]'
         write(lun,740) 'Wneut',tab,
-     .'power flux with neutral particles [W/m^2]'
-        write(lun,740) 'xMP',tab,'radial co-ordinate in mid-plane'//
-     .' (IMP for inner target(s), OMP for outer(s)) [m]'
-        write(lun,740) 'Rclfc',tab,'radial co-ordinate on target [m]'
-        write(lun,740) 'Zclfc',tab,'vertical co-ordinate on target [m]'
+     .   'power flux with neutral particles [W/m^2]'
+        write(lun,740) 'xMP',tab,'radial coordinate in midplane '//
+     .   '(IMP for inner target(s), OMP for outer(s)) [m]'
+        write(lun,740) 'Rclfc',tab,'radial coordinate on target [m]'
+        write(lun,740) 'Zclfc',tab,'vertical coordinate on target [m]'
 c        write(lun,740) 'Wpar_xpt',tab,'parallel power flux around 
 c     ,x-point [W/m^2]'
 c        write(lun,740) 'WWpar',tab,'would-be parallel power flux 
@@ -474,9 +474,9 @@ c     ,without dissipation in divertor [W/m^2]'
 c        write(lun,740) 'WWtrg',tab,'would-be target power flux 
 c     ,without dissipation in divertor [W/m^2]'
         write(lun,740) 'Lcnnt',tab,
-     .'connection length from mid-plane to target [m]'
+     .   'connection length from midplane to target [m]'
         write(lun,740) 'Lcnnx',tab,
-     .'connection length from x-point to target [m]'
+     .   'connection length from x-point to target [m]'
         if(lrdlsp) then !{
           write(lun,fmt_peak) 'x','ne','Te','Ti','Wtot','Wpart',
      ,            'Wrad','Wpls','Wneut','xMP','Rclfc','Zclfc',
@@ -919,11 +919,11 @@ c        Temporary solution for this routine is to use the bulk track_species
               do_sput(j)=.true.
               do iy=lytg,ny-1!{
                 sjs(iy,j)=sjs_t(j)*sjs(iy,j)
-c carlis For output erosion I assume that the sputterd flux is acting on the target material
+c carlis For output erosion I assume that the sputtered flux is acting on the target material
 c carlis sje [mm/y] = ers_factor[s/y*mol/g*m2/cm2*mm/cm]*srfs_a[g/mol]*sjs[1/s]/srfs_d[g/cm3]/s[m2]
                 sje(iy,j)=ers_factor*srfs_a(spt_mat)*sjs(iy,j)/
      .                   srfs_d(spt_mat)/s(iy,j)
-c carlis For output sputtering I assume that the sputterd flux is acting on the sputtered atom
+c carlis For output sputtering I assume that the sputtered flux is acting on the sputtered atom
 c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/mol]
                 sjs(iy,j)=sjs(iy,j)*srfs_a(spt_atm)*nsecyr/avogr
                 sjs_w(j)=sjs_w(j)+sjs(iy,j)
@@ -973,25 +973,25 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           write(fmt_peak,710) nclm_er,tab
           write(lun,740) 'Target erosion - ',trg_label(jj),label
           write(lun,740) 'x',tab,
-     .'co-ordinate along target [m]. <0 in PFR'
+     .     'coordinate along target [m]. <0 in PFR'
           write(lun,740) 'XX_flux_atm',tab,
-     .'incident flux of neutral atoms of species XX [1/m^2/s]'
+     .     'incident flux of neutral atoms of species XX [1/m^2/s]'
           write(lun,740) 'XX_flux_ion',tab,
-     .'incident flux of ions of species XX [1/m^2/s]'
+     .     'incident flux of ions of species XX [1/m^2/s]'
           write(lun,740) 'XX_temp_atm',tab,
-     .'temperature of neutral atoms of species XX [eV]'
+     .     'temperature of neutral atoms of species XX [eV]'
           write(lun,740) 'XX_pres_atm',tab,
-     .'pressure of neutral atoms of species XX [Pa]'
+     .     'pressure of neutral atoms of species XX [Pa]'
           write(lun,740) 'XX_flux_mol',tab,
-     .'incident flux of molecules XX [1/m^2/s]'
+     .     'incident flux of molecules XX [1/m^2/s]'
           write(lun,740) 'XX_pres_mol',tab,
-     .'pressure of molecules XX [Pa]'
+     .     'pressure of molecules XX [Pa]'
           write(lun,740) 'XX_sput',tab,
-     .'gross sputtering of material XX [g/y]'
+     .     'gross sputtering of material XX [g/y]'
           write(lun,740) 'XX_ersn',tab,
-     .'gross erosion of material XX [mm/y]'
-          write(lun,740) 'xMP',tab,'radial co-ordinate in mid-plane'//
-     .'(IMP for inner target(s), OMP for outer(s)) [m]'
+     .     'gross erosion of material XX [mm/y]'
+          write(lun,740) 'xMP',tab,'radial coordinate in midplane '//
+     .     '(IMP for inner target(s), OMP for outer(s)) [m]'
           if (do_sput(j)) then
             write(lun,fmt_peak) 'x',
      ,            fpt_str,mol_str,spt_str(:,j),'xMP'

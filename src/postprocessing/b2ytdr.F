@@ -8897,8 +8897,8 @@ cxpb as they no longer necessarily point to the same species
             write(99,'(1x,a,i5,a)') 'LPFRB_I=',-(leftcut1(1)-1-ix),','
           else if (lpfrs_pmp.eq.2) then
             ix = conformal_convert(non_commensurate,1,
-     .       nxtl+lpfrb_i, 0, nx, ny, nx1, ny1, 1)
-            write(99,'(1x,a,i5,a)') 'LPFRB_I=',-(nxtl1-ix),','
+     .       nxtl-1+lpfrb_i, 0, nx, ny, nx1, ny1, 1)
+            write(99,'(1x,a,i5,a)') 'LPFRB_I=',-(nxtl1-1-ix),','
           end if
         end if
         if (lpfrb_o.ne.0) then
@@ -8908,12 +8908,12 @@ cxpb as they no longer necessarily point to the same species
             write(99,'(1x,a,i5,a)') 'LPFRB_O=',ix,','
           else if (lpfrs_pmp.eq.1) then
             ix = conformal_convert(non_commensurate,1,
-     .       nx+lpfrb_o, 0, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRB_O=',-(nx1-ix),','
+     .       nx-1+lpfrb_o, 0, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRB_O=',-(nx1-1-ix),','
           else if (lpfrs_pmp.eq.2) then
             ix = conformal_convert(non_commensurate,1,
-     .       nxtr-lpfrb_o, 0, nx, ny, nx1, ny1, 3)
-            write(99,'(1x,a,i5,a)') 'LPFRB_O=',-(ix-nxtr1),','
+     .       nxtr+1-lpfrb_o, 0, nx, ny, nx1, ny1, 3)
+            write(99,'(1x,a,i5,a)') 'LPFRB_O=',-(ix-nxtr1-1),','
           end if
         end if
         if (lpfrt_i.ne.0) then

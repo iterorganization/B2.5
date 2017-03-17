@@ -48,9 +48,9 @@ c*** Extra output for targets:
 c***  ne
 c***  Te
 c***  Ti
-c***  Mid-plane co-ordinate
+c***  Midplane coordinate
 c***
-c*** Apart from this, some extra output is written to the common-block 
+c*** Apart from this, some extra output is written to the common block
 c*** for the targets:
 c***  Peak power load - total
 c***  Peak power with radiation
@@ -101,8 +101,8 @@ c***  i_sptmtr: index of sputtered material for the wall segments
      ,  l_srfmtr(0:nsgmx)
 
 c*** Arrays to store the target profiles
-c***  xtrg    : co-ordinate along the target
-c***  xmp_hlp : the same projected to the mid-plane
+c***  xtrg    : coordinate along the target
+c***  xmp_hlp : the same projected to the midplane
 c***  s       : ring area
 c***  netrg   : electron density
 c***  tetrg   : electron tempearture
@@ -467,7 +467,7 @@ c*** Target geometry
 
             if(trgl) then !{
 
-c*** Mid-plane co-ordinates
+c*** Midplane coordinates
 
               l=jxi
               m=0
@@ -837,11 +837,11 @@ c carlis only one material can be sputtered on a single wall
                 end if
                 do iy=lytg,ny-1!{
                   sjs(iy,j)=sjs_t(j)*sjs(iy,j)
-c carlis For output sputtering I assume that the sputterd flux is acting on the sputtered atom
+c carlis For output sputtering I assume that the sputtered flux is acting on the sputtered atom
 c carlis        [g/y]=[1/s]*[s/y]/[1/mol]*[g/mol]
                   spttrg(iy,j)=sjs(iy,j)*nsecyr/avogr*
      .                       srfs_a(spt_atm)
-c carlis For output erosion I assume that the sputterd flux is acting on the target material
+c carlis For output erosion I assume that the sputtered flux is acting on the target material
 c carlis           [mm/y] = [1/s]*[s*mm*m2/y]*
                   erntrg(iy,j)=sjs(iy,j)*wllersf(i_sptmtr(iy+shift))/
      .                       sarea_res(iy+IAS)
@@ -926,46 +926,46 @@ c*** Print the column headers
 c        print *,'About to write a header:',k-1,' symbols'   !###
 c        print *,hdr_line(1:k-1)  
                            !###
-        write(lun,740) 'x',tab,'co-ordinate along plot zone [m].'
+        write(lun,740) 'x',tab,'coordinate along plot zone [m].'
         write(lun,740) 'Wtot',tab,'total power flux [W/m^2]'
         write(lun,740) 'Wrad',tab,'power flux with radiation [W/m^2]'
         write(lun,740) 'Wpart',tab,'power flux with particles [W/m^2]'
         write(lun,740) 'Wpls',tab,
-     .'power flux with charged particles [W/m^2]'
+     .   'power flux with charged particles [W/m^2]'
         write(lun,740) 'Wneut',tab,
-     .'power flux with neutral particles [W/m^2]'
+     .   'power flux with neutral particles [W/m^2]'
         write(lun,740) 'Wheat',tab,
      .'power flux due to neutral particles in contact with wall [W/m^2]'
         write(lun,740) 'Wpot',tab,
-     .'power flux due to recombination [W/m^2]' 
+     .   'power flux due to recombination [W/m^2]'
         write(lun,740) 'flxi_XX',tab,
-     .'flux of ions of species XX [1/s]'
+     .   'flux of ions of species XX [1/s]'
         write(lun,740) 'Eavi_XX',tab,
-     .'average energy of ions of species XX [eV]'
+     .   'average energy of ions of species XX [eV]'
         write(lun,740) 'flxa_XX',tab,
-     .'flux of atoms of species XX [1/s]'
+     .   'flux of atoms of species XX [1/s]'
         write(lun,740) 'Eava_XX',tab,
-     .'average energy of atoms of species XX [eV]'
+     .   'average energy of atoms of species XX [eV]'
         write(lun,740) 'na_XX',tab,
-     .'density of neutral atoms of species XX [1/m^3]'
+     .   'density of neutral atoms of species XX [1/m^3]'
         write(lun,740) 'pa_XX',tab,
-     .'pressure of neutral atoms of species XX [Pa]'
+     .   'pressure of neutral atoms of species XX [Pa]'
         write(lun,740) 'flxm_XX',tab,
-     .'incident flux of molecules XX [1/m^2/s]'
+     .   'incident flux of molecules XX [1/m^2/s]'
         write(lun,740) 'Eavm_XX',tab,
-     .'average energy of molecules XX [eV]'
+     .   'average energy of molecules XX [eV]'
         write(lun,740) 'pm_XX',tab,
-     .'density of molecules XX [1/m^3]'
+     .   'density of molecules XX [1/m^3]'
         write(lun,740) 'pm_XX',tab,
-     .'pressure of molecules XX [Pa]'
+     .   'pressure of molecules XX [Pa]'
         write(lun,740) 'ersne_XX',tab,
-     .'net erosion of wall material XX [mm/y]'
+     .   'net erosion of wall material XX [mm/y]'
         write(lun,740) 'ersng_XX',tab,
-     .'gross erosion of wall material XX [mm/y]'
+     .   'gross erosion of wall material XX [mm/y]'
         write(lun,740) 'sptne_XX',tab,
-     .'net sputtering of wall material XX [g/y]'
+     .   'net sputtering of wall material XX [g/y]'
         write(lun,740) 'sptng_XX',tab,
-     .'gross sputtering of wall material XX [g/y]'
+     .   'gross sputtering of wall material XX [g/y]'
   740 format('# ',2a,' : ',a)
         write(lun,'(a)') hdr_line(1:k-1)
       end if !}
@@ -985,7 +985,7 @@ c*** Print the line
         w_line(1)=wldrfdst(iln,izn)
         do is=1,n_sfpr_s !{
           w_line(k+1)=0.0 !ions flux
-          w_line(k+2)=0.0 !average ions energy
+          w_line(k+2)=0.0 !average ion energy
           w_line(k+3)=wldna(m,is,0)/segm_area(ils)
           w_line(k+4)=ewlda(m,is,0)/eV
           w_line(k+5)=0.0 !atom density
@@ -993,10 +993,10 @@ c*** Print the line
           k=k+n_hdpr_s
         end do !}
         do is=1,nmoli !{
-          w_line(k+1)=wldnm(m,is,0)/segm_area(ils) !molecules flux
-          w_line(k+2)=ewldm(m,is,0)/eV !molecules energy
-          w_line(k+3)=0.0 !molecules density
-          w_line(k+4)=0.0 !molecules pressure
+          w_line(k+1)=wldnm(m,is,0)/segm_area(ils) !molecule flux
+          w_line(k+2)=ewldm(m,is,0)/eV !molecule energy
+          w_line(k+3)=0.0 !molecule density
+          w_line(k+4)=0.0 !molecule pressure
           k=k+n_hdpr_ml
         end do !}
         do is=1,n_sfpr_m !{
@@ -1007,10 +1007,10 @@ c*** Print the line
                 spt_atm=ia
               end if
             end do
-c carlis For output erosion I assume that the sputterd flux is acting on the target material
+c carlis For output erosion I assume that the sputtered flux is acting on the target material
 c carlis        [mm/y] = [1/s]*[s*mm*m2/y]/[m2]
             w_line(k+2)=wldspt(m,0)*wllersf(is)/segm_area(ils) !gross erosion
-c carlis For output sputtering I assume that the sputterd flux is acting on the sputtered atom
+c carlis For output sputtering I assume that the sputtered flux is acting on the sputtered atom
 c carlis        [g/y]=[1/s]*[s/y]/[1/mol]*[g/mol]
             w_line(k+4)=wldspt(m,0)*nsecyr/avogr*
      .                   srfs_a(spt_atm) !gross sputtering
@@ -1060,10 +1060,10 @@ c        print *,'itrg,iy=',itrg,iy                                !###
           k=k+n_hdpr_s
         end do !}
         do is=1,nmoli !{
-          w_line(k+1)=fmitrg(iy,itrg,is) !molecules flux
-          w_line(k+2)=emitrg(iy,itrg,is)/eV !molecules energy
-          w_line(k+3)=nmitrg(iy,itrg,is) !molecules density
-          w_line(k+4)=pmitrg(iy,itrg,is) !molecules pressure
+          w_line(k+1)=fmitrg(iy,itrg,is) !molecule flux
+          w_line(k+2)=emitrg(iy,itrg,is)/eV !molecule energy
+          w_line(k+3)=nmitrg(iy,itrg,is) !molecule density
+          w_line(k+4)=pmitrg(iy,itrg,is) !molecule pressure
           k=k+n_hdpr_ml
         end do !}
         do is=1,n_sfpr_m

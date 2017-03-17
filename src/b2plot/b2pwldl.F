@@ -15,7 +15,7 @@ c*** for each plot zone. NN here marks the plot zone (e.g., 01, 02, ...)
 c*** The geometry of the shadowing structure and of the plot zones is 
 c*** written to the files shadow.dat and wlly_NN.dat, the latter files 
 c*** are produced in the subroutine "b2pwlprp". They contain also the 
-c*** co-ordinates of the segment centers and the corresponding values of
+c*** coordinates of the segment centers and the corresponding values of
 c*** the distance along the wall.
 c=======================================================================
       implicit none
