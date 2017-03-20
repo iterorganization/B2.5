@@ -62,6 +62,9 @@ c     -------------------------------------------------------------------------
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
+#ifndef NO_CDF
+      use b2mod_mwti
+#endif
       implicit none
 
 c     INPUT
