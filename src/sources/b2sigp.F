@@ -182,9 +182,12 @@
 !     djm Mar2017 NB - THE FOLLOWING DOES NOT GIVE EXACT BALANCE! FOR EXACT PRESSURE BALANCE IN
 !                      THIS REGION, USE B2SIGP_STYLE = 1
             if((leftix(ix,iy).eq.-1).and.(balance_netcdf.ne.0)) then
-               write(*,*) 
-     &          'warning, tot. press. balance will not be exact at ix=',
-     &          ix,',iy=',iy
+              if (ncall.lt.3) then
+                write(*,'(a,i4,a,i4)') 
+     &         'warning, tot. press. balance will not be exact at ix=',
+     &           ix,',iy=',iy
+                write(*,*) 'Use b2sigp_style.eq.1'
+              end if
               b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
      &         (vol(ix,iy)/hx(ix,iy))*
      &         bb(ix,iy,0)/bb(ix,iy,3)*
