@@ -319,6 +319,7 @@
      1   'faulty internal parameter redep_alpha')
         call ipgeti ('b2stbr_potential_at_guard_cell', 
      &                potential_at_guard_cell)
+        call ipgeti ('b2mndr_av_read', ird_aver)      !pb 29.09.16
         allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       else
@@ -337,7 +338,6 @@
           endif
         endif
       endif
-      call ipgeti ('b2mndr_av_read', ird_aver)      !pb 29.09.16
 *   ..set n2
       n2 = (nx+2)*(ny+2)
 *   ..test nx, ny, ns
