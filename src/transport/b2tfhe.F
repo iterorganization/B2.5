@@ -369,6 +369,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &                    abs(floe0_mdf/2.0_R8)                          !srv 18.08.08
             else
               cone0 = chce(ix,iy,0)
+              cone0_mdf = chce(ix,iy,0)
             endif
             if (chce(ix,iy,0).eq.0.0_R8) then
                alfe0 = 0.0_R8
