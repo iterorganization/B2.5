@@ -1475,6 +1475,9 @@ c 2002-09-11: logic revised
         case('b2news_coriolis')  ! Now obsolete, needs to be removed from the list
           todo = .false.
           wait = .true.
+        case('eirene_fixmap')    ! No longer needed
+          todo = .false.
+          wait = .true.
         case('b2stbc_istyle_cur_contr_on_S_and_N')
           todo = .false.
           wait = .true.  ! we wait till we have read b2.boundary.parameters
