@@ -182,7 +182,7 @@ ifdef LD_CATALYST
 MODLIST += ${SRCDIR}/catalyst/*.F90
 MODLISTF90 += ${SRCDIR}/catalyst/*.F90
 endif
-ifdef UAL_DIR
+ifdef IMAS_VERSION
 MODLIST += ${SRCDIR}/ids/*.F90
 MODLISTF90 += ${SRCDIR}/ids/*.F90
 endif
@@ -297,13 +297,16 @@ ifneq (${MOD},o)
 ${OBJDIR}/eirmod_extrab25.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_extrab25.${MOD} ${OBJDIR}
 
-${OBJDIR}/eirmod_braeir.${MOD}: 
+${OBJDIR}/eirmod_balanced_strategy.${MOD}:
+	ln -sf ${EIRDIR}/eirmod_balanced_strategy.${MOD} ${OBJDIR}
+
+${OBJDIR}/eirmod_braeir.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_braeir.${MOD} ${OBJDIR}
 
-${OBJDIR}/eirmod_brascl.${MOD}: 
+${OBJDIR}/eirmod_brascl.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_brascl.${MOD} ${OBJDIR}
 
-${OBJDIR}/eirmod_braspoi.${MOD}: 
+${OBJDIR}/eirmod_braspoi.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_braspoi.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cadgeo.${MOD}:
@@ -472,13 +475,16 @@ endif
 ${OBJDIR}/eirmod_extrab25.o:
 	ln -sf ${EIRDIR}/eirmod_extrab25.o ${OBJDIR}
 
-${OBJDIR}/eirmod_braeir.o: 
+${OBJDIR}/eirmod_balanced_strategy.o:
+	ln -sf ${EIRDIR}/eirmod_balanced_strategy.o ${OBJDIR}
+
+${OBJDIR}/eirmod_braeir.o:
 	ln -sf ${EIRDIR}/eirmod_braeir.o ${OBJDIR}
 
-${OBJDIR}/eirmod_brascl.o: 
+${OBJDIR}/eirmod_brascl.o:
 	ln -sf ${EIRDIR}/eirmod_brascl.o ${OBJDIR}
 
-${OBJDIR}/eirmod_braspoi.o: 
+${OBJDIR}/eirmod_braspoi.o:
 	ln -sf ${EIRDIR}/eirmod_braspoi.o ${OBJDIR}
 
 ${OBJDIR}/eirmod_cadgeo.o:
@@ -787,21 +793,21 @@ ifneq (${MOD},o)
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${MODLIST} -o.${MOD} | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
         sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' >> ${OBJDIR}/dependencies 
-	@echo '# 3' >> ${OBJDIR}/dependencies
+	@echo '# 2' >> ${OBJDIR}/dependencies
 endif
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
-	@egrep -aiH '^ {6,}use ' ${SRCLOCAL}/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-	@echo '# 4' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {6,}use ' ${SRCLOCAL}/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 3' >> ${OBJDIR}/dependencies
 endif
-	@egrep -aiH '^ {6,}use ' ${SRCDIR}/*/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-	@echo '# 5a' >> ${OBJDIR}/dependencies
-	@egrep -aiH '^ {0,}use ' ${SRCDIR}/*/*.F90 | grep -v 'IGNORE' | awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-	@echo '# 5b' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {6,}use ' ${SRCDIR}/*/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 4a' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {0,}use ' ${SRCDIR}/*/*.F90 | grep -v 'IGNORE' | awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 4b' >> ${OBJDIR}/dependencies
 ifneq (${MOD},o)
-	@egrep -aiH '^ {6,}use ' ${MODLISTF} | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-	@echo '# 6a' >> ${OBJDIR}/dependencies
-	@egrep -aiH '^ {0,}use ' ${MODLISTF90} | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-	@echo '# 6b' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {6,}use ' ${MODLISTF} | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("\\.f:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 5a' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {0,}use ' ${MODLISTF90} | grep -v 'IGNORE' | awk '{sub("\\.F90:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 5b' >> ${OBJDIR}/dependencies
 endif
 
 tags:
