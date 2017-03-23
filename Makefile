@@ -171,17 +171,23 @@ VPATH += :${SRCDIR}/ids
 FFPATH += :${SRCDIR}/ids
 FFPATH += :${SRCDIR}/modules
 
-MODLIST  =
+MODLIST =
+MODLISTF =
+MODLISTF90 =
 ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
 MODLIST += ${MODLOCAL}/*.F
+MODLISTF += ${MODLOCAL}/*.F
 endif
 ifdef LD_CATALYST
-MODLIST+= ${SRCDIR}/catalyst/*.F90
+MODLIST += ${SRCDIR}/catalyst/*.F90
+MODLISTF90 += ${SRCDIR}/catalyst/*.F90
 endif
 ifdef UAL_DIR
 MODLIST += ${SRCDIR}/ids/*.F90
+MODLISTF90 += ${SRCDIR}/ids/*.F90
 endif
-MODLIST += ${SRCDIR}/modules/*.F
+MODLIST += ${SRCDIR}/*/b2mod_*.F
+MODLISTF += ${SRCDIR}/*/b2mod_*.F
 
 ifeq ($(shell [ -d ${SOLPS4} ] && echo yes || echo no ),yes)
 S4LIST = ${SOLPS4}/*.F
@@ -246,6 +252,8 @@ MAIN: VERSION ${MNEXE}
 ifdef USE_EIRENE
 VPATH=${FPATH}:${SRCDIR}/ids:${SRCEIR}/modules:${SRCEIR}/interfaces/couple_SOLPS-ITER
 MODLIST+=${SRCEIR}/modules/*.f ${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
+MODLISTF+=${SRCEIR}/modules/*.f
+MODLISTF90+=${SRCEIR}/interfaces/couple_SOLPS-ITER/eirmod_*.F90
 MNEXTRA=${EIRDIR}/libeirene.a ${EIRDIR}/libgr_dummy.a ${EIRDIR}/ioflush.o
 else
 # MNEXTRA=${EIRDIR}/eirmod_braeir.o ${EIRDIR}/eirmod_brascl.o ${EIRDIR}/eirmod_braspoi.o ${EIRDIR}/eirmod_cadgeo.o ${EIRDIR}/eirmod_cai.o ${EIRDIR}/eirmod_caprmc.o ${EIRDIR}/eirmod_ccflux.o ${EIRDIR}/eirmod_ccona.o ${EIRDIR}/eirmod_ccoupl.o ${EIRDIR}/eirmod_ccrm.o ${EIRDIR}/eirmod_cestim.o ${EIRDIR}/eirmod_cfplk.o ${EIRDIR}/eirmod_cgeom.o ${EIRDIR}/eirmod_cgrid.o ${EIRDIR}/eirmod_cgrptl.o ${EIRDIR}/eirmod_cinit.o ${EIRDIR}/eirmod_clast.o ${EIRDIR}/eirmod_clgin.o ${EIRDIR}/eirmod_clogau.o ${EIRDIR}/eirmod_comnnl.o ${EIRDIR}/eirmod_comprt.o ${EIRDIR}/eirmod_comsig.o ${EIRDIR}/eirmod_comsou.o ${EIRDIR}/eirmod_comspl.o ${EIRDIR}/eirmod_comusr.o ${EIRDIR}/eirmod_comxs.o ${EIRDIR}/eirmod_coutau.o ${EIRDIR}/eirmod_cpes.o ${EIRDIR}/eirmod_cpl3d.o ${EIRDIR}/eirmod_cplmsk.o ${EIRDIR}/eirmod_cplot.o ${EIRDIR}/eirmod_cpolyg.o ${EIRDIR}/eirmod_crand.o ${EIRDIR}/eirmod_crech.o ${EIRDIR}/eirmod_cref.o ${EIRDIR}/eirmod_crefmod.o ${EIRDIR}/eirmod_csdvi.o ${EIRDIR}/eirmod_csdvi_bgk.o ${EIRDIR}/eirmod_csdvi_cop.o ${EIRDIR}/eirmod_cspei.o ${EIRDIR}/eirmod_cspez.o ${EIRDIR}/eirmod_cstep.o ${EIRDIR}/eirmod_ctetra.o ${EIRDIR}/eirmod_ctext.o ${EIRDIR}/eirmod_ctrcei.o ${EIRDIR}/eirmod_ctrig.o ${EIRDIR}/eirmod_ctsurf.o ${EIRDIR}/eirmod_cupd.o ${EIRDIR}/eirmod_cvarusr.o ${EIRDIR}/eirmod_czt1.o ${EIRDIR}/eirmod_eirbra.o ${EIRDIR}/eirmod_eirdiag.o ${EIRDIR}/eirmod_module_avltree.o ${EIRDIR}/eirmod_octree.o ${EIRDIR}/eirmod_parmmod.o ${EIRDIR}/eirmod_precision.o 
@@ -776,26 +784,10 @@ depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EXELIST:.o=.F} 
         sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' > ${OBJDIR}/dependencies 
 	@echo '# 1' >> ${OBJDIR}/dependencies
 ifneq (${MOD},o)
-ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
-	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${MODLOCAL}/*.F -o.${MOD} | \
+	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${MODLIST} -o.${MOD} | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
         sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' >> ${OBJDIR}/dependencies 
-	@echo '# 2' >> ${OBJDIR}/dependencies
-endif
-	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${SRCDIR}/modules/*.F -o.${MOD} | \
-	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
-        sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' >> ${OBJDIR}/dependencies 
-	@echo '# 3a' >> ${OBJDIR}/dependencies
-	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${SRCDIR}/ids/*.F90 -o.${MOD} | \
-	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
-        sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' >> ${OBJDIR}/dependencies
-	@echo '# 3b' >> ${OBJDIR}/dependencies
-ifdef LD_CATALYST
-	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} ${SRCDIR}/catalyst/*.F90 -o.${MOD} | \
-	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
-        sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' >> ${OBJDIR}/dependencies
-	@echo '# 3c' >> ${OBJDIR}/dependencies
-endif
+	@echo '# 3' >> ${OBJDIR}/dependencies
 endif
 ifeq ($(shell [ -d ${SRCLOCAL} ] && echo yes || echo no ),yes)
 	@egrep -aiH '^ {6,}use ' ${SRCLOCAL}/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
@@ -806,14 +798,10 @@ endif
 	@egrep -aiH '^ {0,}use ' ${SRCDIR}/*/*.F90 | grep -v 'IGNORE' | awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 5b' >> ${OBJDIR}/dependencies
 ifneq (${MOD},o)
-ifeq ($(shell [ -d ${MODLOCAL} ] && echo yes || echo no ),yes)
-	@egrep -aiH '^ {6,}use ' ${MODLOCAL}/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-	@echo '# 6' >> ${OBJDIR}/dependencies
-endif
-	@egrep -aiH '^ {6,}use ' ${SRCDIR}/modules/*.F | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-	@echo '# 7a' >> ${OBJDIR}/dependencies
-	@egrep -aiH '^ {0,}use ' ${SRCDIR}/ids/*.F90 | grep -v 'IGNORE' | awk '{sub("\\.F90:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
-	@echo '# 7b' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {6,}use ' ${MODLISTF} | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 6a' >> ${OBJDIR}/dependencies
+	@egrep -aiH '^ {0,}use ' ${MODLISTF90} | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"$$3".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 6b' >> ${OBJDIR}/dependencies
 endif
 
 tags:
@@ -930,6 +918,8 @@ echo:
 	@echo EIR4MODS=${EIR4MODS}
 	@echo EIR4OBJS=${EIR4OBJS}
 	@echo MODLIST=${MODLIST}
+	@echo MODLISTF=${MODLISTF}
+	@echo MODLISTF90=${MODLISTF90}
 	@echo MODULES=${MODULES}
 	@echo MODOBJS=${MODOBJS}
 	@echo MODMODS=${MODMODS}
