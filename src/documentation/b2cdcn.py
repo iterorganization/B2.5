@@ -4,10 +4,31 @@ Generates b2cdcn.F
 
 from __future__ import print_function
 
-import xml.etree.ElementTree as etree
+from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import tostring
 import textwrap
 from itertools import chain
+import re
+
+import sys
+
+if sys.version_info[0] >= 3:
+    def stringify_children(node):
+        parts = ([node.text] +
+                list(chain(*([tostring(c).split()[0], c.tail] for c in node.getchildren()))) +
+                [node.tail])
+        # filter removes possible Nones in texts and tails
+        text = ''.join([i.decode() if type(i) == bytes else i for i in filter(None, parts)])
+        return replace_tags(text)
+else:
+    def stringify_children(node):
+        parts = ([node.text] +
+                list(chain(*([tostring(c).split()[0], c.tail] for c in node.getchildren()))) +
+                [node.tail])
+        # filter removes possible Nones in texts and tails
+        text = ''.join(filter(None, parts))
+        return replace_tags(text)
+
 
 def get_default(text):
     base = ' Defaults to '
@@ -23,14 +44,48 @@ def get_default(text):
             return base + text + end
     else:
         return ''
+def bracketize_args(string):
+    if len(string.split()) > 1:
+        return True
+    if '-' in string or ',' in string:
+        return True
+    return False
 
+def replace_tags(text):
+    # Replacing st
+    # First find all occurances of <sup>STRING</sup>
+    pattern = "<sup>(.+?)</sup>"
+    sup_strings = re.findall(pattern, text, re.DOTALL)
+    to_replace = []
+    for string in sup_strings:
+        if string in to_replace:
+            continue
+        else:
+            to_replace.append(string)
+        replacement = '^'
+        if bracketize_args(string):
+            replacement += '{' + string + '}'
+        else:
+            replacement += string
 
-def stringify_children(node):
-    parts = ([node.text] +
-            list(chain(*([tostring(c).split()[0], c.tail] for c in node.getchildren()))) +
-            [node.tail])
-    # filter removes possible Nones in texts and tails
-    return ''.join([i.decode() if type(i) == bytes else i for i in filter(None, parts)])
+        text = text.replace('<sup>' + string + '</sup>', replacement)
+    # Second for all occurances of <sub>STRING</sub>
+    pattern = "<sub>(.+?)</sub>"
+    sub_strings = re.findall(pattern, text, re.DOTALL)
+    to_replace =[]
+    for string in sub_strings:
+        if string in to_replace:
+            continue
+        else:
+            to_replace.append(string)
+        replacement = '_'
+        if bracketize_args(string):
+            replacement += '{' + string + '}'
+        else:
+            replacement += string
+        text = text.replace('<sub>' + string + '</sub>', replacement)
+
+    return text
 
 def dedent(description, prefix = '\n*    ', width=75):
     """ Removes first empty fort from description and any leading tabs
@@ -73,7 +128,19 @@ def add_to_fort(text):
     fort += text[:-1]
 
 xml_name = "b2input.xml"
-tree = etree.parse(xml_name)
+dtd_name = "xhtml-symbol.ent"
+xml_entities = '<!ENTITY % symbols SYSTEM "xhtml-symbol.ent" > %symbols;'
+
+f = open(xml_name, 'r')
+xml_text = f.read()
+f.close()
+
+f = open(dtd_name, 'r')
+dtd_text = f.read()
+f.close()
+
+text_to_process = xml_text.replace(xml_entities, dtd_text)
+tree = ET.ElementTree(ET.fromstring(text_to_process))
 root = tree.getroot()
 
 specification = root.find('module[@name="b2.parameters"]/routine[@name="b2cdcn"]')
@@ -160,5 +227,10 @@ for category in categories:
 fort += DELIMITER
 fort += """*.end b2cdcn\n\n      end subroutine b2cdcn\n"""
 
-with open('b2cdcn.F', 'w') as f:
+
+f = open('b2cdcn.F', 'w')
+if sys.version_info[0] >= 3:
     f.write(fort)
+else:
+    f.write(fort.encode('utf-8'))
+f.close()
