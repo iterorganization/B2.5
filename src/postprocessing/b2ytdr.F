@@ -7021,16 +7021,17 @@ cxpb Read first, transform and rewrite
           WRITE(IUNOT,'(A80)') ZEILE
           GOTO 1131
         ELSE
-          call fix_logical_input(zeile,15)
-          READ (ZEILE,6665) ldum(0:14) ! PL1ST,PL2ND,PL3RD,PLADD,PLHST,
+          call fix_logical_input(zeile,16)
+          READ (ZEILE,6665) ldum(0:15) ! PL1ST,PL2ND,PL3RD,PLADD,PLHST,
                                        ! PLCUT(1),PLCUT(2),PLCUT(3),PLBOX,PLSTOR,
-                                       ! PLNUMV,PLNUMS,PLARR,LRPSCUT,PLIDL
+                                       ! PLNUMV,PLNUMS,PLARR,LRPSCUT,PLIDL,
+                                       ! PLVTK
           LRPSCUT = ldum(13)
           IF (streql(eirene_format,'old')) THEN
             ldum(11) = ldum(10)        ! PLNUMB -> PLNUMS
             ldum(10) = .false.         ! no PLNUMV in "old" Eirene
           ENDIF
-          WRITE (IUNOT,6665) ldum(0:14)
+          WRITE (IUNOT,6665) ldum(0:15)
         ENDIF
         READ (IUNIN,6666) NPLINR,NPLOTR,NPLDLR,NPLINP,NPLOTP,NPLDLP,
      .                    NPLINT,NPLOTT,NPLDLT,idum(9) ! nsrfcls
