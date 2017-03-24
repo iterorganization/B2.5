@@ -210,7 +210,6 @@
 *   ..Balance_netcdf decides whether to initialise, track, and write balance arrays.
 *     Default: do not create balance arrays (balance_netcdf.eq.0)
       integer, save :: balance_netcdf
-      data balance_netcdf/0/
 
       contains
 

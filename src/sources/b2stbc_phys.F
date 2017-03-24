@@ -8429,6 +8429,7 @@ cxpb Careful here because of BC number clash
             NIVS = 0.0_R8
 	    t0=0.0e0_R8   ! Volume                                      !lk 12.12.12 {
 	    t1=0.0e0_R8   ! Poloidally volume averaged ions temperature in the cell next to boundary
+            totflux = 0.0_R8   ! IYS 22.03.2017
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)
