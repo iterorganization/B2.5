@@ -182,12 +182,9 @@ ifdef LD_CATALYST
 MODLIST += ${SRCDIR}/catalyst/*.F90
 MODLISTF90 += ${SRCDIR}/catalyst/*.F90
 endif
-ifdef IMAS_VERSION
-MODLIST += ${SRCDIR}/ids/*.F90
-MODLISTF90 += ${SRCDIR}/ids/*.F90
-endif
-MODLIST += ${SRCDIR}/*/b2mod_*.F
+MODLIST += ${SRCDIR}/*/b2mod_*.F ${SRCDIR}/ids/*.F90
 MODLISTF += ${SRCDIR}/*/b2mod_*.F
+MODLISTF90 += ${SRCDIR}/ids/*.F90
 
 ifeq ($(shell [ -d ${SOLPS4} ] && echo yes || echo no ),yes)
 S4LIST = ${SOLPS4}/*.F
