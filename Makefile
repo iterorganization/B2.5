@@ -182,9 +182,9 @@ ifdef LD_CATALYST
 MODLIST += ${SRCDIR}/catalyst/*.F90
 MODLISTF90 += ${SRCDIR}/catalyst/*.F90
 endif
-MODLIST += ${SRCDIR}/*/b2mod_*.F ${SRCDIR}/ids/*.F90
+MODLIST += ${SRCDIR}/*/b2mod_*.F ${SRCDIR}/*/b2mod_*.F90 ${SRCDIR}/ids/*.F90
 MODLISTF += ${SRCDIR}/*/b2mod_*.F
-MODLISTF90 += ${SRCDIR}/ids/*.F90
+MODLISTF90 += ${SRCDIR}/*/b2mod_*.F90 ${SRCDIR}/ids/*.F90
 
 ifeq ($(shell [ -d ${SOLPS4} ] && echo yes || echo no ),yes)
 S4LIST = ${SOLPS4}/*.F
@@ -459,6 +459,9 @@ ${OBJDIR}/eirmod_eirdiag.${MOD}:
 ${OBJDIR}/eirmod_module_avltree.${MOD}: 
 	ln -sf ${EIRDIR}/eirmod_module_avltree.${MOD} ${OBJDIR}
 
+${OBJDIR}/eirmod_mpi.${MOD}: 
+	ln -sf ${EIRDIR}/eirmod_mpi.${MOD} ${OBJDIR}
+
 ${OBJDIR}/eirmod_octree.${MOD}: 
 	ln -sf ${EIRDIR}/eirmod_octree.${MOD} ${OBJDIR}
 
@@ -634,6 +637,9 @@ ${OBJDIR}/eirmod_eirbra.o:
 ${OBJDIR}/eirmod_module_avltree.o: 
 	ln -sf ${EIRDIR}/eirmod_module_avltree.o ${OBJDIR}
 
+${OBJDIR}/eirmod_mpi.o: 
+	ln -sf ${EIRDIR}/eirmod_mpi.o ${OBJDIR}
+
 ${OBJDIR}/eirmod_octree.o: 
 	ln -sf ${EIRDIR}/eirmod_octree.o ${OBJDIR}
 
@@ -669,6 +675,9 @@ ${OBJDIR}/eirmod_comusr.${MOD}:
 
 ${OBJDIR}/eirmod_coutau.${MOD}:
 	touch ${OBJDIR}/eirmod_coutau.${MOD}
+
+${OBJDIR}/eirmod_cpes.${MOD}:
+	touch ${OBJDIR}/eirmod_cpes.${MOD}
 
 ${OBJDIR}/eirmod_ctrcei.${MOD}:
 	touch ${OBJDIR}/eirmod_ctrcei.${MOD}
