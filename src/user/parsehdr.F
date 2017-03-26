@@ -9,7 +9,7 @@ cc      open(1,file='traces')
 c      n=nm
 c      ll=nn
 c      kk=mm
-c      call parsehdr(1,chdr,ll,kk,mr,n,ir)
+c      call parsehdr(1,chdr,ll,mr,n,ir)
 c      print *,'lhdr,khdr,nm,iret=',ll,kk,n,ir
 c      if(nm.gt.0) print *,(mr(i),i=1,n)
 c      if(ir.eq.0 .and. ll.gt.0) print '(1x,a)',(trim(chdr(i)),i=1,ll)
@@ -17,7 +17,7 @@ c      end
 
 
 
-      subroutine parsehdr(lun,chdr,nhdr,mhdr,mrks,nmrk,iret)
+      subroutine parsehdr(lun,chdr,nhdr,mrks,nmrk,iret)
 c
 c  version : 22.11.2006 00:41
 c
@@ -38,7 +38,6 @@ c*** Output:
 c***
 c***  chdr  the column headers
 c***  nhdr  the number of column headers
-c***  mhdr  their maximum width
 c***  mrks  the array of file markers
 c***  nmrk  the actual number of file markers
 c***  iret  the return code: 0 - OK,
@@ -47,8 +46,9 @@ c***    -4 - bad header, -5 - too long header line.
 c***    In case of iret > 0, the rightmost bits (mask) mean:
 c***    1 - too many columns, 2 - too wide headers, 4 - too many markers
 c=======================================================================
+      use b2mod_diag
       implicit none
-      integer lun,nhdr,mhdr,nmrk,iret,mrks(nmrk)
+      integer lun,nhdr,nmrk,iret,mrks(nmrk)
       character*(mhdr) chdr(nhdr)
       character c,tab,line*(nhdr*(mhdr+1)*2),cline*(nhdr*(mhdr+1)*2+10)
       integer i,k,l,m,n
@@ -156,7 +156,7 @@ c        do while (m.lt.nmrk .and. mrks(m+1).ne.-huge(l)) !{}
       if(k.gt.mhdr) iret=iret+2
       if(n.gt.nhdr) iret=iret+1
       nhdr=n
-      mhdr=k
+!xpb      mhdr=k ! This was overwriting a parameter!
       return
 c=======================================================================
  998  iret=-4

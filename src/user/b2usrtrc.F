@@ -126,7 +126,8 @@ c*** Global values
       character hlp_hg2(ngl2_tmp)*8
       integer ngl3_tmp, mgl3_tmp
       parameter (ngl3_tmp=4)
-      integer kgl3_tmp(ngl3_tmp) / -1, 0, 0, -1 /
+      integer kgl3_tmp(ngl3_tmp) 
+      data kgl3_tmp / -1, 0, 0, -1 /
       real (kind=R8) ::
      *     equg3_tmp(ngl3_tmp)
       real (kind=R8) ::
@@ -216,8 +217,7 @@ c***    surface area,cell interface areas
 c-----------------------------------------------------------------------
 c*** Number of positions in the output line and temporary arrays for
 c*** the data and header lines
-      integer ntrc_tmp,mhdr
-      parameter (mhdr=24)
+      integer ntrc_tmp
       real (kind=R8), allocatable :: hlp_out(:)
       character*(mhdr),allocatable :: hlp_hdr(:)
 c-----------------------------------------------------------------------
@@ -1411,7 +1411,7 @@ c*** f     :  the associated file name
         n=nrkn_hlp
         m=0
         xdum(1)=0.0_R8
-        call combfile(lun,f,lenfnm,hlp_hdr,mhdr,ntrc_tmp,label,.false.,
+        call combfile(lun,f,lenfnm,hlp_hdr,ntrc_tmp,label,.false.,
      ,                fix_user,hlp_hdr(l_pad_str),hlp_out(l_pad_str),
      ,                n_pad_str,7,3,tab,mrks_hlp,n,xdum,m,hlp_frm,irt)
 

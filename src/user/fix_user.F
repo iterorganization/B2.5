@@ -1,4 +1,4 @@
-      subroutine fix_user(data,chdr,mhdr,nhdr,mrks,nmrk,first)
+      subroutine fix_user(data,chdr,nhdr,mrks,nmrk,first)
 
 c  version : 04.04.2006 16:59
 
@@ -8,7 +8,6 @@ c*** user.trc file when the b2usrtrc subroutine changes.
 c*** Input
 c***  data  the data row, already amended by combfile
 c***  chdr  the data header, already amended by combfile
-c***  mhdr  the max. width of the header items
 c***  nhdr  the number of positions in the data and header rows
 c***  mrks  the markers as found in the file
 c***  nmrk  the number of markers found in the file
@@ -17,8 +16,9 @@ c-----------------------------------------------------------------------
 
       use b2mod_types
       use b2mod_constants
+      use b2mod_diag
       implicit none
-      integer mhdr,nhdr,nmrk,mrks(nmrk)
+      integer nhdr,nmrk,mrks(nmrk)
       logical first
       real (kind=R8) :: data(nhdr)
       character*(mhdr) chdr(nhdr)

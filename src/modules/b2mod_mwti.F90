@@ -2,7 +2,10 @@ Module b2mod_mwti
   use b2mod_types , only : R8
   Implicit None
   Private
-  Public :: b2mwti, rwcdf, output_ds, rwcdf_settime
+  Public :: b2mwti, output_ds
+#ifndef NO_CDF
+  Public :: rwcdf, rwcdf_settime
+#endif
 Contains
   
   subroutine b2mwti (itim, tim, nx, ny, ns, ismain, ismain0, BoRiS)
