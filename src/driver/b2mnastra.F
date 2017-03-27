@@ -20,6 +20,7 @@
       use b2mod_ppout
       use b2mod_astra_to_b2
       use b2mod_b2_to_astra
+      use b2mod_driver
       implicit none
 #ifdef USE_MPI
       include 'mpif.h'
@@ -137,8 +138,7 @@
       real (kind=R8) :: cpu_s, cpu_f
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
-      external b2mndr
+      external prgini, prgend, xerset, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                               !srv 02.05.07
 #ifdef JET
@@ -223,8 +223,10 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       open(70,file='check_astra_to_b2.prt')
       call write_to_check_astra_to_b2(70)
       close(70)                                                 !srv 28.07.11 }
-
-      call b2mndr (ninp, nout, nx, ny, ns, ns0)
+*   ..call driver routines
+      call b2mndr_0 (ninp, nout, nx, ny, ns, ns0)
+      call b2mndr_1 (nout, nx, ny, ns, 0)
+      call b2mndr_2 (nout, nx, ny, ns)
 *   ..write plasma state
       call cfopen (nout(7),'b2fplasma','replace','unformatted')
       call cfverw(nout(7), newversion)

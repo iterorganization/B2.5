@@ -135,16 +135,6 @@
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
       real (kind=R8) :: hzconst                                      !srv 30.01.10
-*   ..procedures
-      real (kind=R8) ::
-     *  epoch_seconds
-      external epoch_seconds
-      intrinsic mod, abs, sqrt
-      external subini, subend, xertst, xerrab, ipgeti, ipgetr,
-     &  cfrure, cfwure, b2scopy
-      external b2rugm, b2rups, b2wfgm, b2wfpi, b2wups, b2mnds, b2mndt,
-     &  b2mwmv, b2mxnp, b2mxnu,
-     &  my_intcor, b2stbc_fb_final, b2spel, b2sqel, b2xvps, b2xvsg
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
      1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
@@ -1687,6 +1677,9 @@ c new CDF movie option (1st frame at t=0)
       integer nout(0:8), nx, ny, ns, add_ntim
 #endif
       integer is, js
+*   ..procedures
+      real(kind=R8) :: epoch_seconds
+      external epoch_seconds
 
       call subini ('b2mndr_1')
 *   ..no error so far

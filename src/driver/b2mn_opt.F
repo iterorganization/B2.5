@@ -20,6 +20,7 @@
       use b2mod_ppout
       use b2mod_par_opt
       use b2mod_exp_file_names
+      use b2mod_driver
       implicit none
 #ifdef USE_MPI
       include 'mpif.h'
@@ -138,8 +139,7 @@
       logical file_open
       real (kind=R8) :: cpu_s, cpu_f
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
-      external b2mndr
+      external prgini, prgend, xerset, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                                !srv 02.05.07
 #ifdef JET
@@ -226,7 +226,10 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       call alloc_b2mod_work(nx,ny,ns)
       call alloc_b2mod_indirect(nx,ny,nncutmax)                          !xpb
       call alloc_b2mod_ppout(nx,ny,ns)
-      call b2mndr (ninp, nout, nx, ny, ns, ns0)
+*   ..call driver routines
+      call b2mndr_0 (ninp, nout, nx, ny, ns, ns0)
+      call b2mndr_1 (nout, nx, ny, ns, 0)
+      call b2mndr_2 (nout, nx, ny, ns)
 *   ..write plasma state
       call cfopen (nout(7),'b2fplasma','replace','unformatted')  !srv 02.05.09 }
       call cfverw(nout(7), newversion)
