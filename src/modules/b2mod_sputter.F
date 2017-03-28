@@ -123,11 +123,11 @@
       logical file_ok
 
       if (edition.eq.'    ') then
-        filename = '../b2.sputter_save.parameters'
+        filename = 'b2.sputter_save.parameters'
       else
         filename = 'b2.sputter_save.parameters.'//edition
       endif
-      inquire(file=trim(filename),exist=file_ok)
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(nread,file=trim(filename))
         write(6,*) 'Reading ',trim(filename)
@@ -157,7 +157,7 @@
       if(maxval(sputter_yield).gt.0.0_R8.or.
      .   maxval(sputter_yield2).gt.0.0_R8) then
         if (edition.eq.'    ') then
-          filename = '../b2.sputter_save.parameters'
+          filename = 'b2.sputter_save.parameters'
         else
           filename = 'b2.sputter_save.parameters.'//edition
         endif

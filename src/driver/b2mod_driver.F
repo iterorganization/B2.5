@@ -114,8 +114,9 @@
 #endif
 #ifdef B25_EIRENE
       integer iflag
-      logical ex
 #endif
+      logical ex
+      character*256 filename
       character*16 fort31name      ! used to write to 'fort.31.########'
       real (kind=R8) ::
      *  delta_cdfmovie_time, save_cdfmovie_time
@@ -930,12 +931,14 @@
 
 #ifdef CATALYST
        use_catalyst = .false.
-       inquire(FILE='../coproc.py',EXIST=use_catalyst)
+       filename='coproc.py'
+       call find_file(filename,use_catalyst)
        if (use_catalyst .eqv. .false.)
      >  write(*,*) 'File coproc.py missing ',
      > 'from run directory - Catalyst will not start.'
        if (use_catalyst .eqv. .true.) then
-          call coprocessorinitializewithpython('../coproc.py',12)
+          call coprocessorinitializewithpython
+     >     (filename,lnblnk(filename))
        endif
 #endif
 
@@ -1023,9 +1026,10 @@ c     &   'faulty internal parameter density_rescale')
           rescale_cx=1.0_R8
           rescale_rd=1.0_R8
           rescale_br=1.0_R8
-          open(99,file='../b2.atomic_physics_rescale.parameters')
-          write(*,*)
-     &         'Reading ../b2.atomic_physics_rescale.parameters'
+          filename='b2.atomic_physics_rescale.parameters'
+          call find_file(filename,ex)
+          open(99,file=filename)
+          write(*,*) 'Reading ',trim(filename)
 #ifdef USE_MPI
           read(99,atomic_physics_rescale,err=999)
 #else
@@ -1033,7 +1037,7 @@ c     &   'faulty internal parameter density_rescale')
 #endif
           write(*,atomic_physics_rescale)
           close(99)
-          write(*,*) 'Read ../b2.atomic_physics_rescale.parameters'
+          write(*,*) 'Read ',trim(filename)
           call xertst (min(
      1         minval(rescale_sa(0:rtns-1)),
      2         minval(rescale_ra(0:rtns-1)),
@@ -1985,15 +1989,19 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
 *       ..write additional save namelist data
-          inquire(file='../b2.feedback_save.parameters',exist=found)
+          filename='b2.feedback_save.parameters'
+          call find_file(filename,found)
           if (found) call write_b2mod_feedback(99,savefile(13:16))
-          inquire(file='../b2.neutrals_save.parameters',exist=found)
+          filename='b2.neutrals_save.parameters'
+          call find_file(filename,found)
           if (found)
      >     call write_b2mod_neutrals_save(99,savefile(13:16))
-          inquire(file='../b2.sputter_save.parameters',exist=found)
+          filename='b2.sputter_save.parameters'
+          call find_file(filename,found)
           if (found) call write_b2mod_sputter_namelist(99,nx,ny,ns,
      >     savefile(13:16))
-          inquire(file='../b2.wall_save.parameters',exist=found)
+          filename='b2.wall_save.parameters'
+          call find_file(filename,found)
           if (found) call write_b2mod_wall_namelist(99,nx,ny,ns,
      >     savefile(13:16))
           if (ank_tracing.ne.0) call b2filef(ns)
@@ -2065,7 +2073,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 * finalise sputtering
       call write_b2mod_sputter_namelist(99, nx, ny, ns, '    ')
 * finalise time-dependent wall data
-      inquire(file='../b2.wall_save.parameters',exist=found)
+      filename='b2.wall_save.parameters'
+      call find_file(filename,found)
       call wall_final(nx,ny,ns,found)
 
 * ..display and save the result of the calculation

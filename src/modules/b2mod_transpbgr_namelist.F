@@ -10,6 +10,7 @@
       subroutine read_b2mod_transpbgr_namelist
 
       namelist /transpbgr/ fix_dna,fix_hci,fix_hce
+      character*256 filename
       logical :: file_ok
 
 *   ..default: no background transport
@@ -17,9 +18,10 @@
       fix_hci=0._R8
       fix_hce=0._R8
 
-      inquire(file='../b2.transpbgr.parameters',exist=file_ok)
+      filename='b2.transpbgr.parameters'
+      call find_file(filename,file_ok)
       if(file_ok) then
-	open(99,file='../b2.transpbgr.parameters')
+	open(99,file=filename)
 	write(*,*) 'Reading namelist transpbgr'
 #ifdef USE_MPI
 	read(99,transpbgr,err=999)
@@ -28,7 +30,7 @@
 #endif
 	write(*,*) 'Read namelist transpbgr'
       else
-	write(*,*) 'No ../b2.transpbgr.parameters'
+	write(*,*) 'No b2.transpbgr.parameters file found'
       endif
       return
 

@@ -166,10 +166,10 @@
       endif
  
       if (new_files) then
-        open (96,file='../dx2')
-        open (95,file='../dx1')
-        open (94,file='../da1')
-        open (93,file='../da2')
+        open (96,file='dx2')
+        open (95,file='dx1')
+        open (94,file='da1')
+        open (93,file='da2')
       end if
 
       do kind_source=1,nkind_source
@@ -389,8 +389,8 @@ cdjm Jan2017 Keep linearised sources for balance
      . sources_time_mod,sources_time_switch,sources_filename
 
 !  read the profile data
-      filename='../' // trim(sources_filename)
-      inquire(file=filename,exist=file_ok)
+      filename=sources_filename
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(92,file=filename)
         write(*,*) 
@@ -474,7 +474,7 @@ cdjm Jan2017 Keep linearised sources for balance
       if(ncall.eq.0) then
         call xertst(NNREGMAX.ge.nnreg(0),
      1   'Increase NNREGMAX in b2mod_numerics_namelist')
-        filename='../' // transport_filename
+        filename=transport_filename
         new_files = .true.
         call read_transport_input         
 !  read the profile data
@@ -488,7 +488,7 @@ cdjm Jan2017 Keep linearised sources for balance
           if(mod(tim,transport_time_mod).gt.transport_time_switch)
      1     then           
             write(*,*) 'transport_input: catching up ...'
-            filename='../' // transport_filename
+            filename=transport_filename
             call read_transport_input
             catch_up=transport_time_mod.gt.0.0_R8
           else
@@ -503,7 +503,7 @@ cdjm Jan2017 Keep linearised sources for balance
           if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
      1     int(tim/transport_time_mod).gt.elm_count) then
             elm_count=tim/transport_time_mod
-            filename='../' // transport_filename
+            filename=transport_filename
             new_files = .true.
             call read_transport_input
           endif
@@ -511,8 +511,8 @@ cdjm Jan2017 Keep linearised sources for balance
       endif
 
       if (new_files) then
-        open (94,file='../da1')
-        open (93,file='../da2')
+        open (94,file='da1')
+        open (93,file='da2')
       end if
 
       do isc=1,nscale
@@ -796,7 +796,7 @@ c*** Clear data to forget previous profiles
       elm_time_period=0.0_R8
       elm_ix_begin=-2
       elm_ix_end=-2
-      inquire(file=filename,exist=file_ok)
+      call find_file(filename,file_ok)
       if (file_ok) then
         open(99,file=filename)
         write(*,*) 'Reading namelist transport from ',trim(filename)
@@ -832,6 +832,8 @@ c*** Clear data to forget previous profiles
       real(kind=R8) :: pra(1:ny+2),prdsa(1:ny+2),r(nrr),pr(nrr),prtmp
       integer jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
       integer ixref, iyref
+      character*256 filename
+      logical exist
       external ipgetr, subini, subend
       external get_jsep
       save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
@@ -854,11 +856,12 @@ c*** Clear data to forget previous profiles
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
         call output_ds(crx,cry,nx,ny,ixref,0,
-     1   iyref,iyastrt,iyaend,'../dsp')
+     1   iyref,iyastrt,iyaend,'dsp')
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
 
-      open (91,file='../dsp')
+      filename='dsp'
+      call find_file(filename,exist)
       i = 0
       nya = 0
  91   continue

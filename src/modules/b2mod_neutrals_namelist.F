@@ -458,8 +458,8 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       character*16 hlp_frm
       character*260 filename
 
-      filename='../' // neutrals_filename
-      inquire(file=filename,exist=file_ok)
+      filename=neutrals_filename
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
         call cfverr(99,neutrals_version)
@@ -1013,11 +1013,11 @@ c.. Test consistency with physical edges within the computational domain
       saved_volrec(:)=0.0_R8
 
       if (edition.eq.'    ') then
-        filename = '../b2.neutrals_save.parameters'
+        filename = 'b2.neutrals_save.parameters'
       else
         filename = 'b2.neutrals_save.parameters.'//edition
       endif
-      inquire(file=trim(filename),exist=file_ok)
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(nread,file=trim(filename))
         write(6,*) 'Reading ',trim(filename)
@@ -1050,7 +1050,7 @@ c.. Test consistency with physical edges within the computational domain
       character*256 filename
 
       if (edition.eq.'    ') then
-        filename = '../b2.neutrals_save.parameters'
+        filename = 'b2.neutrals_save.parameters'
       else
         filename = 'b2.neutrals_save.parameters.'//edition
       endif

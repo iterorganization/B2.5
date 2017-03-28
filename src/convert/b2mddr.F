@@ -33,6 +33,7 @@
       integer :: status, shotnumber, status2, pos_index,
      1 in_jxi, in_jxa, in_jsep, retlen, svn_revision
       character :: mds_server*(128)
+      character*256 filename
       logical :: file_exists
 #endif
 *   ..local variables
@@ -311,7 +312,9 @@ cdpc        endif
 
       endif
 
-      open(99,file='../shotnumber.history',position='append')
+      filename='shotnumber.history'
+      call find_file(filename,file_exists)
+      open(99,file=filename,position='append')
       write(99,'(i8)') shotnumber
       close(99)
 
@@ -496,13 +499,15 @@ cdpc        endif
       db_version_b2fplasma=b2fplasma_version
 
       if(timedep) then
-        inquire(file='../b2time.nc',exist=file_exists)
+        filename='b2time.nc'
+        call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Calling b2cdf2mds'
           call b2cdf2mds
           write(*,*) 'Returned from b2cdf2mds'
         else
-          write(*,*) 'Skipped calling b2cdf2mds because no ../b2time.nc'
+          write(*,*) 'Skipped calling b2cdf2mds because '//
+     .               'no b2time.nc file found'
         endif
       else
         write(*,*) 'Skipped calling b2cdf2mds because timedep=F'
@@ -515,27 +520,31 @@ cdpc        endif
         write(*,*) 'Skipped calling b2mds because snapshot=F'
       endif
       if(tallies) then
-        inquire(file='../b2tallies.nc',exist=file_exists)
+        filename='b2tallies.nc'
+        call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Calling b2cdftallies2mds'
           call b2cdftallies2mds
           write(*,*) 'Returned from b2cdftallies2mds'
         else
           write(*,*)
-     1     'Skipped calling b2cdftallies2mds because no ../b2tallies.nc'
+     1     'Skipped calling b2cdftallies2mds because '//
+     2     'no b2tallies.nc file found'
         endif
       else
         write(*,*) 'Skipped calling b2cdftallies2mds because tallies=F'
       endif
       if(movies) then
-        inquire(file='../b2movies.nc',exist=file_exists)
+        filename='b2movies.nc'
+        call find_file(filename,file_exists)
         if(file_exists) then
           write(*,*) 'Calling b2cdfmovies2mds'
           call b2cdfmovies2mds
           write(*,*) 'Returned from b2cdfmovies2mds'
         else
           write(*,*)
-     1     'Skipped calling b2cdfmovies2mds because no ../b2movies.nc'
+     1     'Skipped calling b2cdfmovies2mds because '//
+     2     'no b2movies.nc file found'
         endif
       else
         write(*,*) 'Skipped calling b2cdfmovies2mds because movies=F'

@@ -4,10 +4,13 @@ c
 #include "graphics_vars.h"
       logical onflag
       logical exist
+      character*256 filename
+
       if(onflag) then
         vessel=.not.vessel
         write (*,*) 'vessel state changed'
-        inquire(file='../mesh.extra',exist=exist)
+        filename='mesh.extra'
+        call find_file(filename,exist)
         if (.not.exist.and.vessel) then
           write(*,*) 'No mesh.extra file found !'
           vessel=.false.

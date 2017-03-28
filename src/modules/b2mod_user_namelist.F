@@ -127,8 +127,8 @@ c***  Standard setup:
       call subini ('readuser')
 
 *  -- USER --
-      filename='../' // user_filename
-      inquire(file=filename,exist=file_ok)
+      filename=user_filename
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
         write(*,*) 'Reading namelist user from ',trim(filename)

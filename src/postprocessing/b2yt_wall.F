@@ -268,6 +268,7 @@ cxpb lb and ub and lower and upper interval bounds
       implicit none
 
       integer nx1, ny1, ns, ns1, natm, natm1, nmol, nion
+      integer nwrite
       integer itrack1, itrack2, itrack3
       integer iatm1(natm)
       real (kind=R8) :: bundle_frac(0:ns1-1,0:ns-1), zn1(0:ns1-1)
@@ -289,6 +290,7 @@ cxpb lb and ub and lower and upper interval bounds
       save layer_model
       data layer_model/.false./
       character*400 line
+      character*256 filename
       character*17 numstr
       logical found
 
@@ -300,8 +302,8 @@ cxpb lb and ub and lower and upper interval bounds
       call subini('b2yt_wall')
       call alloc_b2mod_wall(ns,natm,nmol,nion)
       
-      inquire(file='../b2.wall_save.parameters',
-     1 exist=wall_namelist_used)
+      filename='b2.wall_save.parameters'
+      call find_file(filename,wall_namelist_used)
       if(wall_namelist_used) then
         call read_b2mod_wall_namelist(99,'    ',wall_namelist_used)
         call xertst(ndepth_nml.le.ndepth .and. ndepth_nml.ge.1,
@@ -689,7 +691,7 @@ cxpb but in computational space
       return
 
 * ..finalise time-dependent wall data
-      entry b2yt_wall_final(nx1,ny1,ns1)
+      entry b2yt_wall_final(nwrite,nx1,ny1,ns1)
       wall_namelist_used = ntargsp.gt.0 .or.
      .  layer_thermal_contact.ne.1.0_R8 .or. 
      .  maxval(target_temp1(1:nbnd1,1)).gt.plate_temp .or.
@@ -699,8 +701,9 @@ cxpb but in computational space
      .  maxval(RES_sputtering1(1:nbnd1,0:ns1-1)).gt.0.0_R8 .or.
      .  maxval(backscattering1(1:nbnd1,0:ns1-1)).gt.0.0_R8
       if (.not.wall_namelist_used) return
-      open(99,file='../b2.wall_save.parameters.2')
-      write(6,*) 'Writing ../b2.wall_save.parameters.2'
+      write(nwrite,'(a)') 'b2.wall_save.parameters.2'
+      open(99,file='b2.wall_save.parameters.2')
+      write(6,*) 'Writing b2.wall_save.parameters.2'
       write(99,'(a10)') '&WALL_SAVE'
       do itrack=1,nalloys
         if(layer_alloys(itrack).ne.' ') write(99,'(a13,i1,a4,a6,a2)')

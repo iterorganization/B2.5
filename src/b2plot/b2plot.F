@@ -5610,7 +5610,9 @@ c
             lu_pos=lu_pos-1
           else
 #ifndef NO_CDF
-            iret=nf_open('../b2movies.nc',NF_NOWRITE,ncidcdf)
+            filename='b2movies.nc'
+            call find_file(filename,ex)
+            iret=nf_open(filename,NF_NOWRITE,ncidcdf)
             call check_cdf_status(iret)
             iret=nf_inq_varid(ncidcdf,'ntstep',varid)
             call check_cdf_status(iret)
@@ -6150,7 +6152,8 @@ cdpc still in testing phase
           stack_req=(/2,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
           varname=spop(sstack,isstack)
-          filename='../b2movies.nc'
+          filename='b2movies.nc'
+          call find_file(filename,ex)
           iend=ipop(istack,iistack)
           istart=ipop(istack,iistack)
           itmp=0

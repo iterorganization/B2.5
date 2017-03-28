@@ -26,6 +26,8 @@
      1 varname, dimname(NF_MAX_VAR_DIMS), attname
       character :: mds_signal_name*(64), units*(24),
      1 tdi*(172)
+      character*256 filename
+      logical exist
 #endif
       external subini, subend, xerrab
 
@@ -37,7 +39,9 @@
 
 #ifndef NO_CDF
 c access the b2tallies.nc file
-      status=nf_open('../b2tallies.nc',NF_NOWRITE,ncid)
+      filename='b2tallies.nc'
+      call find_file(filename,exist)
+      status=nf_open(filename,NF_NOWRITE,ncid)
       call check_cdf_status(status)
 
       status=nf_inq(ncid,ndims,nvars,natts,unlimid)

@@ -478,12 +478,12 @@ cxpb Data file material properties
       external xertst
 
       if (edition.eq.'    ') then
-        filename = '../b2.wall_save.parameters'
+        filename = 'b2.wall_save.parameters'
       else
         filename = 'b2.wall_save.parameters.'//edition
       endif
       track_species_save=track_species
-      inquire(file=trim(filename),exist=file_ok)
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(nread,file=trim(filename))
         write(*,*) 'Reading ', trim(filename)
@@ -523,7 +523,7 @@ cxpb Data file material properties
       external streql
 
       if (edition.eq.'    ') then
-        filename = '../b2.wall_save.parameters'
+        filename = 'b2.wall_save.parameters'
       else
         filename = 'b2.wall_save.parameters.'//edition
       endif

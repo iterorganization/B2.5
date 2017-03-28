@@ -1217,8 +1217,7 @@ cxpb Reading of neutrals namelist moved here as it is needed by init_wall
       ns_tmp = DEF_NSD
 #endif
       filename='b2.sputter_save.parameters'
-      inquire(file='../b2.sputter_save.parameters',
-     1 exist=sputter_namelist_used)
+      call find_file(filename,sputter_namelist_used)
       if (sputter_namelist_used) then
         call read_b2mod_sputter_namelist
      .     (99,'    ',sputter_namelist_used)

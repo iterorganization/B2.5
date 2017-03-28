@@ -116,8 +116,8 @@ c*** pw[12]_cnv:  exponents in a poloidal profile of the "blob" velocity
       logical :: file_ok
       character*260 filename
 
-      filename='../' // transport_filename
-      inquire(file=filename,exist=file_ok)
+      filename=transport_filename
+      call find_file(filename,file_ok)
       if(file_ok) then
         cflme=cflim(0)
         cflmi=cflim(1)

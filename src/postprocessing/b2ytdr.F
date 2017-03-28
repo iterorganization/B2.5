@@ -1198,21 +1198,25 @@ c 2002-09-11: logic revised
 *   ..we do the allocation calls now so that
 *   ..the default setting correspond to the old
 *   ..bundling values
-      inquire(file='../b2.boundary.parameters',exist=todo)
+      filename='b2.boundary.parameters'
+      call find_file(filename,todo)
       if (boundary_namelist.eq.1.or.todo)
      > call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
-      inquire(file='../b2.sputter_save.parameters',
-     1 exist=sputter_namelist_used)
-      inquire(file='../b2.wall_save.parameters',
-     1 exist=wall_namelist_used)
+      filename='b2.sputter_save.parameters'
+      call find_file(filename,sputter_namelist_used)
+      filename='b2.wall_save.parameters'
+      call find_file(filename,wall_namelist_used)
       if (sputter_namelist_used.or.wall_namelist_used)
      > call alloc_b2mod_sputter(nx,ny,ns)
       if (transport_namelist.ge.1) call alloc_transport_namelist(ns)
       if (numerics_namelist.ge.1) call alloc_b2mod_numerics(nx, ny, ns)
-      inquire(file='../b2.neutrals.parameters',exist=todo)
-      inquire(file='../b2.feedback_save.parameters',exist=found)
+      filename='b2.neutrals.parameters'
+      call find_file(filename,todo)
+      filename='b2.feedback_save.parameters'
+      call find_file(filename,found)
       todo = todo .or. found
-      inquire(file='../b2.feedback_control.parameters',exist=found)
+      filename='b2.feedback_control.parameters'
+      call find_file(filename,found)
       todo = todo .or. found
       if (neutrals_namelist.eq.1.or.use_eirene.ne.0.or.todo) then
         call alloc_b2mod_neutrals
@@ -1541,8 +1545,9 @@ c 2002-09-11: logic revised
     6 continue
 
 *  ..rewrite boundary namelist
-      inquire(file='../b2.boundary.parameters',exist=todo)
-      new_filename = '../b2.boundary.parameters.2'
+      filename='b2.boundary.parameters'
+      call find_file(filename,todo)
+      new_filename = 'b2.boundary.parameters.2'
       inquire(file=trim(new_filename),exist=found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((boundary_namelist.eq.1.or.todo).and..not.found)
@@ -1988,10 +1993,10 @@ c 2002-09-11: logic revised
         if (.not.streql(boundary_filename,'b2.boundary.parameters'))
      >   then
           new_filename =
-     .     '../'//boundary_filename(1:lnblnk(boundary_filename))//'.2'
-          filename = '../'//boundary_filename
-          inquire(file=trim(filename),exist=todo)
-          inquire(file=trim(new_filename),exist=found)
+     .     boundary_filename(1:lnblnk(boundary_filename))//'.2'
+          filename = boundary_filename
+          call find_file(filename,todo)
+          call find_file(new_filename,found)
           if (found) write(6,*) trim(new_filename), ' already present!'
         else
           todo = .false.
@@ -2005,9 +2010,10 @@ c 2002-09-11: logic revised
 
 *  ..write new b2.transport.parameters
       first_pass = .true.
-      inquire(file='../b2.transport.parameters',exist=todo)
-      new_filename = '../b2.transport.parameters.2'
-      inquire(file=trim(new_filename),exist=found)
+      filename='b2.transport.parameters'
+      call find_file(filename,todo)
+      new_filename = 'b2.transport.parameters.2'
+      call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((transport_namelist.eq.1.or.todo).and..not.found)
         if (transport_namelist.eq.0) call alloc_transport_namelist(ns)
@@ -2121,10 +2127,10 @@ c 2002-09-11: logic revised
      >  then
           first_pass = .false.
           new_filename =
-     .     '../'//transport_filename(1:lnblnk(transport_filename))//'.2'
-          filename='../'//transport_filename
-          inquire(file=trim(filename),exist=todo)
-          inquire(file=trim(new_filename),exist=found)
+     .     transport_filename(1:lnblnk(transport_filename))//'.2'
+          filename=transport_filename
+          call find_file(filename,todo)
+          call find_file(new_filename,found)
           if (found) write(6,*) trim(new_filename), ' already present!'
         else
           todo = .false.
@@ -2135,10 +2141,10 @@ c 2002-09-11: logic revised
 
 *  ..write new b2.transport.inputfile
       first_pass = .true.
-      filename='../b2.transport.inputfile'
-      inquire(file=trim(filename),exist=todo)
-      new_filename='../b2.transport.inputfile.2'
-      inquire(file=trim(new_filename),exist=found)
+      filename='b2.transport.inputfile'
+      call find_file(filename,todo)
+      new_filename='b2.transport.inputfile.2'
+      call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((transport_inputfile.eq.1.or.todo).and..not.found)
         if (.not.allocated(px)) then
@@ -2380,10 +2386,10 @@ cxpb We must ensure we have not already listed this additional species
      >   then
           first_pass = .false.
           new_filename =
-     .     '../'//transport_filename(1:lnblnk(transport_filename))//'.2'
-          filename='../'//transport_filename
-          inquire(file=trim(filename),exist=todo)
-          inquire(file=trim(new_filename),exist=found)
+     .     transport_filename(1:lnblnk(transport_filename))//'.2'
+          filename=transport_filename
+          call find_file(filename,todo)
+          call find_file(new_filename,found)
           if (found) write(6,*) trim(new_filename), ' already present!'
         else
           todo = .false.
@@ -2399,7 +2405,8 @@ cxpb We must ensure we have not already listed this additional species
       enddo
 
 *  ..write new b2.transport_models_save.parameters
-      inquire(file='../b2.transport_models_save.parameters',exist=todo)
+      filename='b2.transport_models_save.parameters'
+      call find_file(filename,todo)
       if (todo .and. (ny.ne.ny1 .or. non_commensurate.eq.1)) then
         call alloc_b2mod_transport_models(nx,ny,nsm)
         call read_b2mod_transport_models(99,'    ',todo)
@@ -2440,7 +2447,7 @@ cxpb We must ensure we have not already listed this additional species
      .      minval(eta_hce_mult1).ne.1.0_R8) then
           write(*,*) 'Writing b2.transport_models_save.parameters.2'
           write(nout(5),'(a)') 'b2.transport_models_save.parameters.2'
-          open(99,file='../b2.transport_models_save.parameters.2')
+          open(99,file='b2.transport_models_save.parameters.2')
           write(99,'(a9)') '&TRANSPORT_MODELS'
           write(hlp_frm,'(a,i4,a)')
      .     '(1x,a,1p,',ny1+2,'(1x,g10.3,'',''))'
@@ -2472,12 +2479,14 @@ cxpb We must ensure we have not already listed this additional species
       s1data(:,:,:,:)=0.0_R8
       nx1data(:,:,:)=0
       x1data(:,:,:,:)=0.0_R8
-      inquire(file='../b2.sources.profile',exist=todo)
-      new_filename = '../b2.sources.profile.2'
-      inquire(file=trim(new_filename),exist=found)
+      filename='b2.sources.profile'
+      call find_file(filename,todo)
+      new_filename = 'b2.sources.profile.2'
+      call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((sources_inputfile.eq.1.or.todo).and..not.found)
-        filename = '../'//sources_filename
+        filename = sources_filename
+        call find_file(filename,ex)
         open(92,file=trim(filename))
 #ifdef USE_MPI
         read(92,profile,err=999)
@@ -2973,10 +2982,10 @@ cxpb This will need to be checked !!!
         if (.not.streql(sources_filename,'b2.sources.profile'))
      >   then
           new_filename =
-     .     '../'//sources_filename(1:lnblnk(sources_filename))//'.2'
-          filename = '../'//sources_filename
-          inquire(file=trim(filename),exist=todo)
-          inquire(file=trim(new_filename),exist=found)
+     .     sources_filename(1:lnblnk(sources_filename))//'.2'
+          filename = sources_filename
+          call find_file(filename,todo)
+          call find_file(new_filename,found)
           if (found) write(6,*) trim(new_filename), ' already present!'
         else
           todo = .false.
@@ -2992,9 +3001,10 @@ cxpb This will need to be checked !!!
 
 *  ..write new b2.numerics.parameters
       first_pass = .true.
-      inquire(file='../b2.numerics.parameters',exist=todo)
-      new_filename = '../b2.numerics.parameters.2'
-      inquire(file=new_filename,exist=found)
+      filename = 'b2.numerics.parameters'
+      call find_file(filename,todo)
+      new_filename = 'b2.numerics.parameters.2'
+      call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((numerics_namelist.ge.1.or.todo).and..not.found)
         if (numerics_namelist.eq.0) call alloc_b2mod_numerics(nx,ny,ns)
@@ -3109,10 +3119,11 @@ cxpb This will need to be checked !!!
         if (.not.streql(numerics_filename,'b2.numerics.parameters'))
      >   then
           first_pass = .false.
+          filename=numerics_filename
           new_filename =
-     .     '../'//numerics_filename(1:lnblnk(numerics_filename))//'.2'
-          inquire(file=trim(numerics_filename),exist=todo)
-          inquire(file=trim(new_filename),exist=found)
+     .     numerics_filename(1:lnblnk(numerics_filename))//'.2'
+          call find_file(filename,todo)
+          call find_file(new_filename,found)
           if (found) write(6,*) trim(new_filename), ' already present!'
         else
           todo = .false.
@@ -3122,7 +3133,8 @@ cxpb This will need to be checked !!!
       enddo
 
 *  ..write new b2.atomic_physics_rescale.parameters
-      inquire(file='../b2.atomic_physics_rescale.parameters',exist=todo)
+      filename='b2.atomic_physics_rescale.parameters'
+      call find_file(filename,todo)
       if(atomic_physics_rescale_flag.ne.0.or.todo) then
         rescale_sa=1.0_R8
         rescale_ra=1.0_R8
@@ -3130,26 +3142,26 @@ cxpb This will need to be checked !!!
         rescale_cx=1.0_R8
         rescale_rd=1.0_R8
         rescale_br=1.0_R8
-        open(99,file='../b2.atomic_physics_rescale.parameters')
-        write(*,*) 'Reading ../b2.atomic_physics_rescale.parameters'
+        open(99,file=filename)
+        write(*,*) 'Reading '//trim(filename)
 #ifdef USE_MPI
         read(99,atomic_physics_rescale,err=999)
 #else
         read(99,atomic_physics_rescale)
 #endif
-        write(*,atomic_physics_rescale)
         close(99)
-        write(*,*) 'Read ../b2.atomic_physics_rescale.parameters'
+        write(*,*) 'Read '//trim(filename)
         call xertst (min(
      1   minval(rescale_sa(0:ns-1)),minval(rescale_ra(0:ns-1)),
      2   minval(rescale_qa(0:ns-1)),minval(rescale_cx(0:ns-1)),
      3   minval(rescale_rd(0:ns-1)),minval(rescale_br(0:ns-1)))
      4   .gt.0.0_R8,
-     4   'faulty value set in b2.atomic_physics_rescale.parameters')
-        write(*,*) 'Writing b2.atomic_physics_rescale.parameters.2'
-        write(nout(5),'(a)') 'b2.atomic_physics_rescale.parameters.2'
+     4   'faulty value set in '//trim(filename))
+        filename = 'b2.atomic_physics_rescale.parameters.2'
+        write(*,*) 'Writing '//trim(filename)
+        write(nout(5),'(a)') trim(filename)
         write(hlp_frm,'(a,i3,a)') '(1x,a,1p,',ns1,'(1x,g10.3,'',''))'
-        open(99,file='../b2.atomic_physics_rescale.parameters.2')
+        open(99,file=filename)
         write(99,'(a23)') '&ATOMIC_PHYSICS_RESCALE'
         if (maxval(rescale_sa(0:ns-1)).ne.1.0_R8 .or.
      &      minval(rescale_sa(0:ns-1)).ne.1.0_R8) then
@@ -7846,9 +7858,10 @@ cxpb  Convert fort.46 file if needed
 
 *  ..rewrite neutrals namelist
 *  ..recall it was already read earlier
-      inquire(file='../b2.neutrals.parameters',exist=todo)
-      new_filename = '../b2.neutrals.parameters.2'
-      inquire(file=new_filename,exist=found)
+      filename='b2.neutrals.parameters'
+      call find_file(filename,todo)
+      new_filename = 'b2.neutrals.parameters.2'
+      call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((neutrals_namelist.eq.1.or.use_eirene.ne.0.or.todo)
      & .and..not.found)
@@ -8472,13 +8485,14 @@ cxpb as they no longer necessarily point to the same species
         close(99)
         if (.not.streql(neutrals_filename,'b2.neutrals.parameters'))
      >   then
+          filename = neutrals_filename
           new_filename =
-     .     '../'//neutrals_filename(1:lnblnk(neutrals_filename))//'.2'
-          inquire(file=trim(neutrals_filename),exist=todo)
+     .     neutrals_filename(1:lnblnk(neutrals_filename))//'.2'
+          call find_file(filename,todo)
           call read_neutrals_namelist(nx, ny, ns, .false.)
           call xertst (nstrai.le.nstraid,
      >      'Increase DEF_NSTRA in DIMENSIONS.F')
-          inquire(file=trim(new_filename),exist=found)
+          call find_file(new_filename,found)
           if (found) write(6,*) trim(new_filename), ' already present!'
         else
           todo = .false.
@@ -8523,14 +8537,16 @@ cxpb as they no longer necessarily point to the same species
      .     is_neutral1,iatm1,bundle_frac,zn1,l_chem_sput,
      .     itrack1,itrack2,itrack3)
 *  ..write new wall namelist
-          call b2yt_wall_final(nx1,ny1,ns1)
+          call b2yt_wall_final(nout(5),nx1,ny1,ns1)
         else
 *  ..in the absence of a namelist, put in defaults
           call get_wall_data(nx,ny,ns,BoRiS,wall_namelist_used)
         endif ! wall_namelist_used
 *  ..read in the namelist data
         if(sputter_namelist_used) then
-          open(99,file='../b2.sputter_save.parameters')
+          filename='b2.sputter_save.parameters'
+          call find_file(filename,ex)
+          open(99,file=filename)
 #ifdef USE_MPI
           read(99,sputter_save,err=999)
 #else
@@ -8603,9 +8619,10 @@ cxpb as they no longer necessarily point to the same species
 *  ..write new sputtering namelist
           if(maxval(sputter_yield_yt).gt.0.0_R8.or.
      .       maxval(sputter_yield2_yt).gt.0.0_R8) then
-            open(99,file='../b2.sputter_save.parameters.2')
-            write(nout(5),'(a)') 'b2.sputter_save.parameters.2'
-            write(6,*) 'Writing ../b2.sputter_save.parameters.2'
+            filename='b2.sputter_save.parameters.2'
+            open(99,file=filename)
+            write(nout(5),'(a)') trim(filename)
+            write(6,*) 'Writing '//trim(filename)
             write(99,'(a13)') '&SPUTTER_SAVE'
             write(99,'(a8,i4,a1)') 'NX_SP = ', nx1, ','
             write(99,'(a8,i4,a1)') 'NY_SP = ', ny1, ','
@@ -8639,9 +8656,10 @@ cxpb as they no longer necessarily point to the same species
 
 *  ..write new b2.feedback_save.parameters if needed
 *   ..we can only do this after the species mapping has been done
-      inquire(file='../b2.feedback_save.parameters',exist=todo)
-      new_filename = '../b2.feedback_save.parameters.2'
-      inquire(file=new_filename,exist=found)
+      filename='b2.feedback_save.parameters'
+      call find_file(filename,todo)
+      new_filename = 'b2.feedback_save.parameters.2'
+      call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename),' already present!'
       if((lfeedback.or.b2stbc_feedback.ne.0.or.todo)
      &   .and. .not.found .and. .not.same_atoms) then
@@ -8693,9 +8711,10 @@ cxpb as they no longer necessarily point to the same species
       end if
 
 *   ..write new b2.feedback_control.parameters if needed
-      inquire(file='../b2.feedback_control.parameters',exist=todo)
-      new_filename='../b2.feedback_control.parameters.2'
-      inquire(file=new_filename,exist=found)
+      filename='b2.feedback_control.parameters'
+      call find_file(filename,todo)
+      new_filename='b2.feedback_control.parameters.2'
+      call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
      .   (.not.same_atoms.or.nx.ne.nx1.or.ny.ne.ny1.or.
@@ -8902,9 +8921,10 @@ cxpb as they no longer necessarily point to the same species
       end if
 
 *   ..write new b2.user.parameters, if needed
-      inquire(file='../b2.user.parameters',exist=todo)
-      new_filename='../b2.user.parameters.2'
-      inquire(file=new_filename,exist=found)
+      filename='b2.user.parameters'
+      call find_file(filename,todo)
+      new_filename='b2.user.parameters.2'
+      call find_file(new_filename,found)
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
      .   (.not.same_atoms.or.nx.ne.nx1.or.non_commensurate.eq.1)) then
@@ -9070,19 +9090,15 @@ cxpb as they no longer necessarily point to the same species
       end if
 
 *   ..write new b2yq.dat, if needed
-      inquire(file='../b2yq.dat',exist=todo)
+      filename='b2yq.dat'
+      call find_file(filename,todo)
       if (todo) then
-        open(98,file='../b2yq.dat')
-      else
-        inquire(file='../../baserun/b2yq.dat',exist=todo)
-        if (todo) open(98,file='../../baserun/b2yq.dat')
-      end if
-      if (todo) then
-        new_filename='../b2yq.dat.2'
-        inquire(file=new_filename,exist=found)
+        open(98,file=filename)
+        new_filename='b2yq.dat.2'
+        call find_file(new_filename,found)
         if (found) write(6,*) trim(new_filename),' already present!'
         if (.not.found.and..not.same_bundling) then
-          write(*,*) 'Writing b2yq.dat.2'
+          write(*,*) 'Writing '//trim(new_filename)
           open(99,file=new_filename)
           write(nout(5),'(a)') trim(new_filename)
  982      continue
@@ -9239,7 +9255,7 @@ cxpb as they no longer necessarily point to the same species
         enddo
         write(hlp_frm,'(a1,i3,a7)') '(',ns1,'(a,1x))'
         write(nout(5),'(a)') 'SOLPS_FLUIDS.2'
-        open(unit=99,file='../SOLPS_FLUIDS.2')
+        open(unit=99,file='SOLPS_FLUIDS.2')
         write(99,hlp_frm) (trim(species_name(is)),is=0,ns1-1)
         close(99)
         deallocate(species_name)

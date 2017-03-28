@@ -287,7 +287,7 @@
      5   fllim0fhi, fllimvisc, csig_cl, calf_cl)
         if (ncall.eq.ncallout) then
           write(*,*) 'ncall,ipass',ncall,ipass
-          call hbout('../b2ne_npmo',nx,ny,ns,te,'te',ti,'ti',
+          call hbout('b2ne_npmo',nx,ny,ns,te,'te',ti,'ti',
      &     na,'na',ua,'ua',resmo,'resmo',corua,'corua')
         endif
 *   ..re-compute source terms if necessary                               !xpb
@@ -458,7 +458,7 @@ cxpb
           enddo
           if (ncall.eq.ncallout) then
             write(*,*) 'ncall,is',ncall,is
-            call hbout('../b2ne_xppb',nx,ny,ns,te,'te',ti,'ti',
+            call hbout('b2ne_xppb',nx,ny,ns,te,'te',ti,'ti',
      &       na,'na',ua,'ua',resmo,'resmo',corua,'corua')
           endif
 *    ..compute partial pressure
@@ -482,7 +482,7 @@ cxpb
      &     .true.)                                                       !djm Jan2017
           if (ncall.eq.ncallout) then
             write(*,*) 'ncall,is',ncall,is
-            call hbout('../b2ne_npco',nx,ny,ns,te,'te',ti,'ti',
+            call hbout('b2ne_npco',nx,ny,ns,te,'te',ti,'ti',
      &       na,'na',ua,'ua',na,'na',ua,'ua')
           endif
           if (solving(2)) then
@@ -724,7 +724,7 @@ c       call my_out(70,nx,ny,wrk0,'respo'//charnc(1:len_of_digits(i)))
 c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                 if (ncall.eq.ncallout) then
                   write(*,*) 'ncall,i',ncall,i
-                  call hbout('../b2ne+nppo',nx,ny,ns,te,'te',ti,'ti',
+                  call hbout('b2ne+nppo',nx,ny,ns,te,'te',ti,'ti',
      &             na,'na',ua,'ua',resmo,'resmo',corua,'corua')
                 endif
 !                do is = 0, ns-1

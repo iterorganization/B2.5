@@ -141,10 +141,10 @@ Contains
       call ipgeti ('b2mwti_target_offset',target_offset)
       call xertst (0.le.target_offset.and.target_offset.le.1,'faulty internal parameter target_offset')
       write(*,*) 'target_offset ', target_offset
-      call output_ds(crx,cry,nx,ny, -1,+target_offset,jsep,iylstrt,iylend,'../dsl')
-      call output_ds(crx,cry,nx,ny,jxi,0,jsep,iyistrt,iyiend,'../dsi')
-      call output_ds(crx,cry,nx,ny,jxa,0,jsep,iyastrt,iyaend,'../dsa')
-      call output_ds(crx,cry,nx,ny, nx,-target_offset,jsep,iyrstrt,iyrend,'../dsr')
+      call output_ds(crx,cry,nx,ny, -1,+target_offset,jsep,iylstrt,iylend,'dsl')
+      call output_ds(crx,cry,nx,ny,jxi,0,jsep,iyistrt,iyiend,'dsi')
+      call output_ds(crx,cry,nx,ny,jxa,0,jsep,iyastrt,iyaend,'dsa')
+      call output_ds(crx,cry,nx,ny, nx,-target_offset,jsep,iyrstrt,iyrend,'dsr')
       if (nnreg(0).eq.8) then
         ixtl = 0
         do while (rightix(ixtl,max(topcut(1),topcut(2))).ne.nx+1.and.ixtl.lt.nx)
@@ -154,8 +154,8 @@ Contains
         do while (leftix(ixtr,max(topcut(1),topcut(2))).ne.-2 .and. ixtr.lt.nx)
           ixtr=ixtr+1
         enddo
-        call output_ds(crx,cry,nx,ny,ixtl,-target_offset,jsep,iytlstrt,iytlend,'../dstl')
-        call output_ds(crx,cry,nx,ny,ixtr,+target_offset,jsep,iytrstrt,iytrend,'../dstr')
+        call output_ds(crx,cry,nx,ny,ixtl,-target_offset,jsep,iytlstrt,iytlend,'dstl')
+        call output_ds(crx,cry,nx,ny,ixtr,+target_offset,jsep,iytrstrt,iytrend,'dstr')
         nytl = iytlend - iytlstrt + 1
         nytr = iytrend - iytrstrt + 1
       else
@@ -168,46 +168,46 @@ Contains
       nyi  = iyiend  - iyistrt  + 1
       nc = max(nncut,1)
       ! Target areas
-      open(99,file='../dsL')
+      open(99,file='dsL')
       do iy=-1,ny
         if(region(-1,iy,0).ne.0) write(99,*) gs(rightix(-1,iy),rightiy(-1,iy),0)
       enddo
       close(99)
-      open(99,file='../dsR')
+      open(99,file='dsR')
       do iy=-1,ny
         if(region(nx,iy,0).ne.0) write(99,*) gs(nx,iy,0)
       enddo
       close(99)
       if (nnreg(0).eq.8) then
-        open(99,file='../dsTL')
+        open(99,file='dsTL')
         do iy=iytlstrt,iytlend
           write(99,*) gs(ixtl,iy,0)
         enddo
         close(99)
-        open(99,file='../dsTR')
+        open(99,file='dsTR')
         do iy=iytrstrt,iytrend
           write(99,*) gs(rightix(ixtr,iy),rightiy(ixtr,iy),0)
         enddo
         close(99)
       endif
       ! Poloidal contact areas
-      open(99,file='../dsLP')
+      open(99,file='dsLP')
       do iy=-1,ny
         if(region(-1,iy,0).ne.0) write(99,*) gs(rightix(-1,iy),rightiy(-1,iy),0)*qc(rightix(-1,iy),rightiy(-1,iy))
       enddo
       close(99)
-      open(99,file='../dsRP')
+      open(99,file='dsRP')
       do iy=-1,ny
         if(region(nx,iy,0).ne.0) write(99,*) gs(nx,iy,0)*qc(nx,iy)
       enddo
       close(99)
       if (nnreg(0).eq.8) then
-        open(99,file='../dsTLP')
+        open(99,file='dsTLP')
         do iy=iytlstrt,iytlend
           write(99,*) gs(ixtl,iy,0)*qc(ixtl,iy)
         enddo
         close(99)
-        open(99,file='../dsTRP')
+        open(99,file='dsTRP')
         do iy=iytrstrt,iytrend
           write(99,*) gs(rightix(ixtr,iy),rightiy(ixtr,iy),0)*qc(rightix(ixtr,iy),rightiy(ixtr,iy))
         enddo
