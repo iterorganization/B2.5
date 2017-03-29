@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=339,nfns=204,nsparameters=32,nelabels=32,
+      parameter(nlabels=340,nfns=204,nsparameters=32,nelabels=32,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -87,7 +87,7 @@
      8  'ne_ext'  , 'bmna'    , 'bmne'    , 'bmmo'    , 'bmhe'    ,
      9  'bmhi'    , 'bmch'    , 'fax_ext' , 'fay_ext' , 'lnlam'   ,
      *  'zn_ext'  , 'rc'      , 'srcml'   , 'edissml' , 'neutrad' /
-      data labels(301:339) /
+      data labels(301:340) /
      1  'fnaxnodr', 'fnaynodr', 'ne2'     , 'smth'    , 'ixle'    ,
      2  'ixge'    , 'iyle'    , 'iyge'    , 'isle'    , 'isge'    ,
      3  'smcf'    , 'fnaxmdf' , 'fnaymdf' , 'fhexmdf' , 'fheymdf' ,
@@ -95,7 +95,7 @@
      5  'fhiyps'  , 'fnaxps'  , 'fnayps'  , 'fnaxfcor', 'fnayfcor',
      6  'fnaxhe'  , 'fnayhe'  , 'fchxvisq', 'fchyvisq', 'fchxinrt',
      7  'fchyinrt', 'vedia.x' , 'vedia.y' , 'veexb.x' , 'veexb.y' ,
-     8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      /
+     8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -459,7 +459,7 @@
      8    'Poloidal current due to heat flux viscosity tensor (A)',
      9    'Radial current due to heat flux viscosity tensor (A)',
      *    'Poloidal current due to inertia and gyroviscosity (A)'/
-      data descriptions(331:339) /
+      data descriptions(331:340) /
      1    'Radial current due to inertia and gyroviscosity (A)',
      2    'pol comp of div part of el diamag vel [vedia.x] (m.s^{-1})',
      3    'rad comp of div part of el diamag vel [vedia.y] (m.s^{-1})',
@@ -468,7 +468,8 @@
      6    'ixne',
      7    'iyne',
      8    'isne',
-     9     'Total density (m^{-3})'/
+     9    'Total density (m^{-3})',
+     *    'sz (m^{2})'/
       data dimensions(1:50) /
      1    2,      2,      2,      2,      2,
      2    3,      3,      3,      3,      3,
@@ -535,7 +536,7 @@
      8    2,      3,      2,      3,      2,
      9    2,      2,      3,      3,      2,
      *    3,      2,      3,      3,      3/  
-      data dimensions(301:339) /
+      data dimensions(301:340) /
      1    3,      3,      2,      3,      2,
      2    2,      2,      2,      3,      3,
      3    3,      3,      3,      2,      2,
@@ -543,7 +544,7 @@
      5    2,      3,      3,      3,      3,
      6    3,      3,      2,      2,      2,
      7    2,      2,      2,      2,      2,
-     8    2,      2,      3,      3/
+     8    2,      2,      3,      3,      2/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',
