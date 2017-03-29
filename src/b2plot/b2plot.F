@@ -1817,6 +1817,10 @@ c
           description='sy (m^{2})'
           nz=1
           call copy(gs(:,:,1),1.0_R8,nz,textbl)
+        case('sz')
+          description='sz (m^{2})'
+          nz=1
+          call copy(gs(:,:,2),1.0_R8,nz,textbl)
         case('vol')
           description='vol (m^{3})'
           nz=1
