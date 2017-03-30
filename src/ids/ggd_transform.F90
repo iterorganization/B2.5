@@ -15,9 +15,9 @@ module ggd_transform
 
   implicit none
 
-contains
-
 #ifdef ITM
+
+contains
 
   !> Transform a grid with possibly multiple spaces into an equivalent grid
   !> with only one space

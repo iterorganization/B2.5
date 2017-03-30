@@ -41,9 +41,9 @@ module b2mod_ual_io
 
   logical, parameter, private :: INCLUDE_GHOST_CELLS = .false.
 
-contains
-
 #ifdef IMAS
+
+contains
 
   subroutine write_ids(edge_ids,sources_ids,transport_ids)
 #     include <git_version_B25.h>
@@ -66,6 +66,8 @@ contains
 
 #else
 # ifdef ITM
+
+contains
 
   subroutine write_cpo(edgecpo)
     type (type_edge) :: edgecpo

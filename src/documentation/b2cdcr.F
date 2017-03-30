@@ -31,8 +31,12 @@
 *     B2E* - Reserved for EIRENE interface.
 *     B2F*-B2L* - Not used.
 *     B2M* - Core routines for main program: driver and timestepping.
-*       B2MN - Main program.
-*       B2MNDR - Main driver routine.
+*       B2MN_INIT - Main program initialisation.
+*       B2MN_STEP - Main program call.
+*       B2MN_FIN - Main program finalization.
+*       B2MNDR_0 - Main driver routine initialisation.
+*       B2MNDR_1 - Main driver routine.
+*       B2MNDR_2 - Main driver routine finalisation.
 *       B2MNDS - Initialisation.
 *       B2MNDT - Time-stepping.
 *       B2MW* - Monitoring of the calculation.
@@ -161,7 +165,7 @@
 *     B2MN is the main program for the b2 code. The code solves a
 *     system of fluid equations that models a multi-species plasma
 *     in a two-dimensional geometry. This program calls the driver
-*     routine b2mndr for the actual computation.
+*     routines b2mndr_[0-2] for the actual computation.
 *
 *     B2MNDR is the main driver routine for the b2 code.
 *

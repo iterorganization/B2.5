@@ -21,9 +21,9 @@ module ggd_subgrid
 
   implicit none
 
-contains
-
 #ifdef ITM
+
+contains
 
   !> Create a subgrid for a given number of object lists
   subroutine createSubGrid( sg, nobjlist, id )

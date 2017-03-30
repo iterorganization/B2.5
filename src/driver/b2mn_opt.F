@@ -34,7 +34,7 @@
 *     B2MN_OPT is the main program for the b2 code. The code solves a
 *     system of fluid equations that models a multi-species plasma
 *     in a two-dimensional geometry. This program calls the driver
-*     routine b2mndr for the actual computation.
+*     routines b2mndr_[0-2] for the actual computation.
 *
 *
 *  2. specification
@@ -62,7 +62,7 @@
 *     The complete program b2mn is designed to solve the equations.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
-*     routine b2mndr to control the actual computation.
+*     routines b2mndr_[0-2] to control the actual computation.
 *
 *     The input units are:
 *     ninp(0): formatted; provides physics and numerics parameters.

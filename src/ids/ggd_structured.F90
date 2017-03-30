@@ -48,8 +48,6 @@ module ggd_structured
 
 #endif
 
-contains
-
   !> Write a n-dimensional structured grid 
   !> into a grid descriptor, as well as the default subgrids for objects of all dimensions.
   !>
@@ -80,6 +78,8 @@ contains
   !> of a simple 1d structured grid with standard connectivity
 
 #ifdef IMAS
+
+contains
 
   subroutine gridSetupStruct1dSpace( space, coordtype, nodes, periodic )
     type(ids_generic_grid_dynamic_space), intent(inout) :: space !> The space descriptor to fill
@@ -190,6 +190,8 @@ contains
 
 #else
 #ifdef ITM
+
+contains
 
   !> @see gridSetupStructuredSep
   subroutine gridSetupStructured( grid, coordtype, gshape, x, id, createSubgrids, periodicSpaces, uid, computeMeasures )
