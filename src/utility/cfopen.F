@@ -13,7 +13,7 @@
 *     ------------------------------------------------------------------
       logical ltst
       integer ios
-      character fform0*(*), fname*16, fstat*7, fform*12    !srv 19.04.09
+      character fform0*(*), fname*256, fstat*7, fform*12    !srv 19.04.09
       parameter (fform0='formatted')
       intrinsic len
       logical streql
