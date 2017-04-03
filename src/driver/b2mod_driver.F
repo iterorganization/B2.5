@@ -87,6 +87,9 @@
      &  density_rescale, BoRiS, ne_wanted,
      &  ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, factor,
      &  ixfb, iyfb, ax, ay
+      real (kind=R8), allocatable ::
+     *  rsa(:,:,:), rra(:,:,:), rqa(:,:,:), rrd(:,:,:), rbr(:,:,:),
+     *  rza0(:,:,:), rz20(:,:,:), rpt0(:,:,:), rpi0(:,:,:)
       save ne_wanted, ne_wanted_time, ne_wanted_next_time,
      &  ne_wanted_mod_time, ixfb, iyfb
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
@@ -105,6 +108,8 @@
      3  dt_min, dt_max, max_delta
 #ifdef CATALYST
       logical use_catalyst
+      integer lnblnk
+      external lnblnk
 #endif
 #ifdef JET
       real (kind=R8) ::
@@ -202,11 +207,6 @@
 *     (none)
 *   ..local variables
       real (kind=R8) ::
-     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
-     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-     &  rbr(-1:nx,-1:ny,0:ns-1),
-     *  rza0(-1:nx,-1:ny,0:ns-1), rz20(-1:nx,-1:ny,0:ns-1),
-     *  rpt0(-1:nx,-1:ny,0:ns-1), rpi0(-1:nx,-1:ny,0:ns-1),
      1  rescale_sa(0:nsdecl-1), rescale_ra(0:nsdecl-1),
      2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
      3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
@@ -997,6 +997,12 @@ c     &   'faulty internal parameter density_rescale')
        call ipgetr ('b2mndr_dt_max',dt_max)
        call xertst (0.0_R8.le.dt_max,'faulty internal parameter dt_max')
 * modify rate coefficients for coronal model
+       allocate(
+     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
+     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
+     &  rbr(-1:nx,-1:ny,0:ns-1),
+     *  rza0(-1:nx,-1:ny,0:ns-1), rz20(-1:nx,-1:ny,0:ns-1),
+     *  rpt0(-1:nx,-1:ny,0:ns-1), rpi0(-1:nx,-1:ny,0:ns-1))
        call ipgeti ('b2mndr_coronal_model', coronal)
        if(coronal.ne.0) then
           write(*,*)
@@ -2020,7 +2026,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &   vol, hx, hy, qc, te, ti, po, bzb, OnedBsq,ne,qz, pbs, fhe, fhi,
      &   fch, pbshz, fhe_mdf, fhi_mdf, fchvispar,
      &   fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper, gs, bb,
-     &   na, ua, kinrgy, rra, rqa,fna, fna_mdf, fna_fcor, uadia, vadia,
+     &   na, ua, kinrgy, rra, rqa, fna, fna_mdf, fna_fcor, uadia, vadia,
      &   vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi, float(rightix), 
      &   float(topiy))
         endif
@@ -2178,6 +2184,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 
 * ..return
       ncall = ncall+1
+      deallocate(rsa, rra, rqa, rrd, rbr, rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag
       call dealloc_b2mod_ma28
       call dealloc_b2mod_wall
