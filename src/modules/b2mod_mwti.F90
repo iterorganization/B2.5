@@ -1679,11 +1679,12 @@ Contains
     integer ncid,imap(*),iret,i,varid,dimlen
     real(kind=R8), Intent(InOut) :: data_set(*)
     character*(maxncnam) dimnam
-    integer vartyp,nvdims,start(maxvdims),count(maxvdims),dimids(maxvdims)
+    integer vartyp,nvdims,start(maxvdims),mycount(maxvdims),dimids(maxvdims)
     character*(*) timnam
     character*(maxncnam) timsav
     integer ntsav,ntstep
     integer :: istride, imax
+    logical, parameter :: debug = .false.
     save timsav,ntsav
     data timsav /'!!!! INVALID NAME !!!!'/
     external subini, subend, xerrab
@@ -1694,40 +1695,46 @@ Contains
       Write(*,*) 'Error: Could not inquire data_name: ',Trim(data_name)
       call xerrab('Data name not declared')
     Endif
+    If (debug) Write(*,*) "Subroutine rwcdf in mode: ", rw
+    If (debug) Write(*,*) "Working on variable: ", data_name
     iret = nf_inq_varndims(ncid,varid,nvdims)
+    If (debug) Write(*,*) "Variable has nvdims=", nvdims
+    If (debug) Write(*,*) "Input imap(:)=", imap(1:nvdims)
     iret = nf_inq_vardimid(ncid,varid,dimids)
-    count(1) = 1 ! for scalars
+    mycount(1) = 1 ! for scalars
     start(1) = 1
     do i=1,nvdims
       iret = nf_inq_dim(ncid,dimids(i),dimnam,dimlen)
-      count(i) = dimlen
+      mycount(i) = dimlen
       if(dimnam.eq.timsav) then
         start(i)=ntsav
-        count(i)=1
+        mycount(i)=1
       else
         start(i)=1
       endif
     enddo
+    If (debug) Write(*,*) "start(:)=", start(1:nvdims)
+    If (debug) Write(*,*) "mycount(:)=", mycount(1:nvdims)
     istride = 1
     imax = 1
     do i=1,nvdims-1
       istride = istride*imap(i)
-      imax = imax + imap(i)*count(i)
+      imax = imax*imap(i)*mycount(i)
     enddo
+    If (debug) Write(*,*) "istride=", istride
+    If (debug) Write(*,*) "imax=", imax
     iret = nf_inq_vartype(ncid,varid,vartyp)
     if(rw.eq.'read') then
       Select Case (vartyp)
       Case (NCDOUBLE)
-        iret = nf_get_vara_double(ncid,varid,start,count, &
-             data_set(1:imax:istride))
+        iret = nf_get_vara_double(ncid,varid,start,mycount,data_set(1:imax:istride))
       Case Default
         call xerrab ('Unknown data type in rwcdf read')
       End Select
     elseif(rw.eq.'write') then
       Select Case (vartyp)
       Case (NCDOUBLE)
-        iret = nf_put_vara_double(ncid,varid,start,count, &
-             data_set(1:imax:istride))
+        iret = nf_put_vara_double(ncid,varid,start,mycount,data_set(1:imax:istride))
       Case Default
         call xerrab ('Unknown data type in rwcdf write')
       End Select
