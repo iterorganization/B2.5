@@ -108,7 +108,8 @@
      &  smo0_eir(-1:nx,-1:ny,0:3,0:ns-1),
      &  she0_eir(-1:nx,-1:ny,0:3), shi0_eir(-1:nx,-1:ny,0:3),         
      &  fatm_eir(-1:nx,-1:ny,0:1,nnatmi), datm_eir(-1:nx,-1:ny,nnatmi), !srv 29.04.10 }
-     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol) !IYS 27.01.2017 
+     &  fmol_eir(-1:nx,-1:ny,0:1,nmol), dmol_eir(-1:nx,-1:ny,nmol), !IYS 27.01.2017
+     &  flxtmp(0:nx+1,0:ny+1)
       integer ncall, sput_src, first_flight, 
      *  in_no_of_angles, in_size_of_table, in_no_of_start_points,
      1  use_eirene, output, coreregno, coreregn2, neutrals_namelist,
@@ -676,10 +677,12 @@ c   --> better solution wanted here..
          enddo
 ! IYS 27.01.2017
 ! interpolate atom fluxes to cell faces (for output only)
+         flxtmp(0:nx+1,0:ny+1) = pfluxa(0:nx+1,0:ny+1,ia,1)
          call intfaceh(nx,ny,leftix,leftiy,vol,
-     &                 pfluxa(0:nx+1,0:ny+1,ia,1),fatm_eir(:,:,0,ia))
-         call intfacev(nx, ny, bottomix, bottomiy, vol,
-     &                 rfluxa(0:nx+1,0:ny+1,ia,1),fatm_eir(:,:,1,ia))
+     &                 flxtmp,fatm_eir(:,:,0,ia))
+         flxtmp(0:nx+1,0:ny+1) = rfluxa(0:nx+1,0:ny+1,ia,1)
+         call intfacev(nx,ny,bottomix,bottomiy,vol,
+     &                 flxtmp,fatm_eir(:,:,1,ia))
 ! IYS 27.01.2017
         enddo
 ! IYS 27.01.2017
@@ -690,10 +693,12 @@ c   --> better solution wanted here..
           enddo
          enddo
 ! interpolate molecule fluxes to cell faces (for output only)
+         flxtmp(0:nx+1,0:ny+1) = pfluxm(0:nx+1,0:ny+1,im,1)
          call intfaceh(nx,ny,leftix,leftiy,vol,
-     &                  pfluxm(0:nx+1,0:ny+1,im,1),fmol_eir(:,:,0,im))
-         call intfacev(nx, ny, bottomix, bottomiy, vol,
-     &                  rfluxm(0:nx+1,0:ny+1,im,1),fmol_eir(:,:,1,im))
+     &                 flxtmp,fmol_eir(:,:,0,im))
+         flxtmp(0:nx+1,0:ny+1) = rfluxm(0:nx+1,0:ny+1,im,1)
+         call intfacev(nx,ny,bottomix,bottomiy,vol,
+     &                 flxtmp,fmol_eir(:,:,1,im))
         enddo
 ! IYS 27.01.2017
 
