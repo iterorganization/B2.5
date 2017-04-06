@@ -48,11 +48,11 @@ c
 #ifndef SOLPS4_3
       use eirmod_parmmod
       use eirmod_braeir
+      use eirmod_extrab25
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
 #endif
-      use eirmod_extrab25
 #endif
       implicit none
 #ifndef B25_EIRENE
@@ -692,11 +692,11 @@ c
 #ifndef SOLPS4_3
       use eirmod_parmmod
       use eirmod_braeir
+      use eirmod_extrab25
 #else
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
 #endif
-      use eirmod_extrab25
 #endif
       implicit none
 #ifndef B25_EIRENE
