@@ -27,9 +27,9 @@ LINK_MOD =
 FC = g95
 
 ifdef SOLPS_DEBUG
-FCOPTS = -g -C -fbounds-check -ftrace=full
+FCOPTS = -g -C -fbounds-check -ftrace=full -fPIC -fno-second-underscore
 else
-FCOPTS = -O
+FCOPTS = -O -fPIC -fno-second-underscore
 endif
 
 DBLFC = ${FC}
@@ -55,7 +55,7 @@ LDLIBESEXTRA = ${OBJDIR}/libeirene.a ${OBJDIR}/grlib.o
 endif
 
 ifdef IMAS_PREFIX
-INCMODS   = -I${IMAS_PREFIX}/include/gfortran
+INCMODS   = `pkg-config --cflags imas-g95`
 LDLIBES  += ${LD_UAL}
 endif
 
