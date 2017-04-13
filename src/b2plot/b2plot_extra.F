@@ -339,6 +339,10 @@ C
         LCONST=.FALSE.
         call xertst(open_file(29,'HYDHEL',
      1   'data.local|modules/Eirene/Database'), 'No HYDHEL found')
+      ELSEIF (INDEX(FILNAM,'AMMONX').NE.0) THEN
+        LCONST=.FALSE.
+        call xertst(open_file(29,'AMMONX',
+     1   'data.local|modules/Eirene/Database'), 'No AMMONX found')
       ELSE
         LCONST=.TRUE.
         READ (REAC(1:9),'(E9.2)') CONST
