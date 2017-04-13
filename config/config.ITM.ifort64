@@ -40,15 +40,15 @@ endif
 
 ifdef SOLPS_DEBUG
 ifdef USE_MPI
-FCOPTS   = -g -C -traceback
+FCOPTS   = -g -C -traceback -fPIC -assume no2underscore
 else
-FCOPTS   = -g -C -debug all -traceback -check all
+FCOPTS   = -g -C -debug all -traceback -check all -fPIC -assume no2underscore
 endif
 else
 ifdef USE_MPI
-FCOPTS   = -O2
+FCOPTS   = -O2 -fPIC -assume no2underscore -xavx -fp-model precise
 else
-FCOPTS   = -O2
+FCOPTS   = -O2 -fPIC -assume no2underscore -xavx -fp-model precise
 endif
 endif
 
