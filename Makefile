@@ -795,13 +795,13 @@ ${OBJDIR}/eirgrid_lib.o: ${OBJDIR}/eirmap.o
 # target 'clean' cleans up the directory.
 clean : 
 	-mkdir ${OBJDIR}/.delete
-	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version_B25.h ${OBJDIR}/LISTOBJ ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F ${OBJDIR}/.delete
+	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version_B25.h ${OBJDIR}/LISTOBJ ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F ${OBJDIR}/.delete >& /dev/null
 ifneq (${MOD},o)
-	-mv -i ${OBJDIR}/*.${MOD} ${OBJDIR}/.delete
+	-mv -i ${OBJDIR}/*.${MOD} ${OBJDIR}/.delete >& /dev/null
 endif
 	-rm -rf ${OBJDIR}/.delete &
 
-depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EXELIST:.o=.F} ${EX90LIST:.o=.F90} ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
+depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EXELIST:.o=.F} ${EX90LIST:.o=.F90}
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} $^ | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
         sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' > ${OBJDIR}/dependencies 

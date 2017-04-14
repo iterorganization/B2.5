@@ -32,22 +32,22 @@ endif
 
 ifdef SOLPS_DEBUG
 ifdef USE_MPI
-FCOPTS     = -g -C -traceback ${MPI_CPP}
+FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
-FCOPTS     = -g -C -traceback ${MPI_CPP}
+FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore ${MPI_CPP}
 else
-FCOPTS     = -g -C -debug all -traceback -check all
+FCOPTS     = -g -C -debug all -traceback -fPIC -assume no2underscore -check all
 endif
 endif
 else
 ifdef USE_MPI
-FCOPTS     = -O2 -vec_report0 ${MPI_CPP}
+FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
 else
 ifdef USE_IMPGYRO
-FCOPTS     = -O2 -vec_report0 ${MPI_CPP}
+FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore ${MPI_CPP}
 else
-FCOPTS     = -O2 -vec_report0
+FCOPTS     = -O2 -vec_report0 -fPIC -fp-model precise -assume no2underscore
 endif
 endif
 endif
