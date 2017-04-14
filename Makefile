@@ -820,12 +820,14 @@ endif
 	@echo '# 4a' >> ${OBJDIR}/dependencies
 	@egrep -aiH '^ {0,}use ' ${SRCDIR}/*/*.F90 | grep -v 'IGNORE' | awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 4b' >> ${OBJDIR}/dependencies
+ifneq (${COMPILER},g95)
 ifneq (${MOD},o)
 	@egrep -aiH '^ {6,}use ' ${MODLISTF} | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("\\.f:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 5a' >> ${OBJDIR}/dependencies
 ifdef MODLISTF90
 	@egrep -aiH '^ {0,}use ' ${MODLISTF90} | grep -v 'IGNORE' | awk '{sub("\\.F90:",".${MOD}:",$$1);sub("\\.f90:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 5b' >> ${OBJDIR}/dependencies
+endif
 endif
 endif
 
