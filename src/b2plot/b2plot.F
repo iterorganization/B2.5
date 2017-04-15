@@ -160,18 +160,16 @@ c
      *   boundary_namelist, neutrals_namelist, 
      *   sput_frac_flag, use_eirene
 
-      real (kind=R8) ::
-     *   rstack(1000),rpop
 #ifndef NO_CDF
       real (kind=R8) ::
      *   movietime(1)
       integer :: iret, frameindex(1), ncidcdf, varid
 #endif
       integer ntstepcdf, istepcdf, lucdf
-      integer istack(1000), ipop, itmp, istart, iend, itrack,
+      integer itmp, istart, iend, itrack,
      * sput_src, refl_model, sput_phys_model,
      * sput_chem_model, sput_phys_col, drift_style
-      character*256 sstack(1000), spop, stmp, filename, varname
+      character*256 stmp, filename, varname
       character*256 stmp1, stmp2
       integer lu, save_lu(10), ipos, save_ipos(10), lu_pos
       integer is, iss, isp, iseg, is2, it
@@ -201,11 +199,9 @@ c
      *   Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, Cp,
      *   mass_density,
      *   layer_Kappa, layer_Cp, layer_emissivity
-      external ipop, rpop, spop
       real (kind=R8) ::
      *   t1,t2
       integer it1,it2
-      integer stack_req(7)
       character*256 arg
 #ifdef B25_EIRENE
       integer iflag
@@ -218,8 +214,8 @@ c
      * b0r0,dummy,rval,sumjxa,sumjxi,suml(2),sumr(2),time 
       real (kind=R8) ::
      1 lambda, lnlam, hh, hhn, phi_app 
-      integer i,j,icell,iclv,iistack,il,imi,irstack,
-     1 is1,iso,isstack,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
+      integer i,j,icell,iclv,il,imi,
+     1 is1,iso,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
      2 ikind,lnblnk,nz,ixx,iyy,ixl,ixr,iyb,iyt,isel,
      3 i1,ibnd,in,ibc,ixn,iyn,ixf,iyf,idir,isign
       external lnblnk
@@ -10699,46 +10695,6 @@ c     <delta wavelength in A> nspe
       return
 
       end subroutine select_flvalue
-
-      LOGICAL FUNCTION bad_args(stack_req)
-      integer stack_req(7)
-      bad_args=.false.
-      if(stack_req(1).gt.iistack) then
-        write(*,*) 'Insufficient data on integer stack'
-        bad_args= .true.
-      endif
-      if(stack_req(2).gt.irstack) then
-        write(*,*) 'Insufficient data on real stack'
-        bad_args= .true.
-      endif
-      if(stack_req(3).gt.isstack) then
-        write(*,*) 'Insufficient data on string stack'
-        bad_args= .true.
-      endif
-      if(stack_req(4).gt.iwrk) then
-        write(*,*) 'Insufficient data on matrix stack'
-        bad_args= .true.
-      endif
-      if(stack_req(5).gt.iewrk) then
-        write(*,*) 'Insufficient data on Eirene stack'
-        bad_args= .true.
-      endif
-      if(stack_req(6).gt.iwwrk) then
-        write(*,*) 'Insufficient data on wall stack'
-        bad_args= .true.
-      endif
-      if(stack_req(7).gt.itwrk) then
-        write(*,*) 'Insufficient data on target stack'
-        bad_args= .true.
-      endif
-      END FUNCTION bad_args
-
-      subroutine pop_stack(stack_req)
-      integer stack_req(7),is,itmp
-      do is=1,stack_req(1)
-        itmp=ipop(istack,iistack)
-      enddo
-      end subroutine pop_stack
 
       subroutine initialize_neoclassical(neo_ic)
       integer neo_ic
