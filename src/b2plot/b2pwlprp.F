@@ -83,7 +83,7 @@ c       write(lun_w,*)
 c      end do !}
 c      close(lun_w)
 c>>>
-      lim_cnf=nncut.eq.1 .and. nnreg(0).eq.2
+      lim_cnf=nncut.eq.0 .and. nnreg(0).eq.2
       nytg=ny
       lytg=0
       if(lim_cnf) then !{

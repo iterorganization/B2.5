@@ -119,7 +119,7 @@ c
       close(lun)
       open(lun,file='fpro.dat')
       j=jsep+1
-      write(lun,*) j,0.0_R8,qpr_tmp(j)
+      write(lun,*) j,0.0_R8,a+b
       do j=jsep+2,ny-1
         x=(cr(jmp,j)-rmp)/(cr(jmp,ny-1)-rmp)
         qpr_tmp(j)=rd_out(x)

@@ -45,7 +45,7 @@ c
         hlp_tot=hlp_tot+wldna(k,j_h_at,0)
         do j=1,nmoli
           if(mlcmp(j_h_at,j).gt.0) then
-            hlp_tot=hlp_tot+wldnm(k,l,0)*mlcmp(j_h_at,j)
+            hlp_tot=hlp_tot+wldnm(k,j,0)*mlcmp(j_h_at,j)
           end if
         end do
       end do

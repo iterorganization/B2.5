@@ -38,44 +38,51 @@ c-----------------------------------------------------------------------
 c-----------------------------------------------------------------------
 c*** The plasma data at the cell centers
 c
-      allocate(mz_hlp(0:ns-1),hlp_al(0:ns-1))
-      allocate(n_hlp(0:ns-1),v_hlp(0:ns-1))
+      allocate(mz_hlp(nspecies+ns),hlp_al(nspecies+ns))
+      allocate(n_hlp(nspecies),v_hlp(nspecies))
       do is=0,ns-1 !{
-        mz_hlp(is)=nint((zamin(is)+zamax(is))/2.0_R8)
-        hlp_al(is)=is_codes(is)
+        mz_hlp(nspecies+1+is)=nint((zamin(is)+zamax(is))/2.0_R8)
+        hlp_al(nspecies+1+is)=is_codes(is)
+        hlp_al(b2espcr(is))=hlp_al(nspecies+1+is)
+        mz_hlp(b2espcr(is))=99
       end do !}
 
       open(lun,file='krieger.dat')
-      write (lun,*) '#ix, iy   : poloidal and radial indices in the ',
-     ,                                                          'grid;'
-      write (lun,*) '#R , Z    : R and Z coordinates of the cell ',
-     ,                                                   'centres [m];'
-      write (lun,*) '#pit      : pitch angle;'
-      write (lun,*) '#ne       : electron density [m^-3];'
-      write (lun,*) '#Te, Ti   : electron and ion temperatures [eV];'
-      write (lun,*) '#n...     : densities of the ion species [m^-3];'
-      write (lun,*) '#vp...    : parallel velocities of the ion ',
-     ,                            'species [m/s]' 
-      write (lun,*) '#n...00 and vp...00 stand for the ',
+      write (lun,'(2a)')
+     ,  '# ix, iy   : poloidal and radial indices in the grid;'
+      write (lun,'(2a)')
+     ,  '# R , Z    : R and Z coordinates of the cell centres [m];'
+      write (lun,'(2a)')
+     ,  '# pit      : pitch angle;'
+      write (lun,'(2a)')
+     ,  '# ne       : electron density [m^-3];'
+      write (lun,'(2a)')
+     ,  '# Te, Ti   : electron and ion temperatures [eV];'
+      write (lun,'(2a)')
+     ,  '# n...     : densities of the ion species [m^-3];'
+      write (lun,'(2a)')
+     ,  '# vp...    : parallel velocities of the ion species [m/s]' 
+      write (lun,'(2a)')
+     ,  '# n...99 and vp...99 stand for the ',
      ,  'total density and average velocity of the ion species'
       write (lun,*)
-      write(hlp_frmr,710) ns
+      write(hlp_frmr,710) nspecies+ns
   710 format('(9h#  ix  iy,7x,1hR,11x,1hZ,10x,3hpit,9x,',
      ,  '2hne,11x,2hTe,10x,2hTi,4x,',
      ,  i3,'(4x,1hn,a2,i2.2,6x,2hvp,a2,i2.2,3x)/)')
-      write (lun,hlp_frmr) ((hlp_al(i),mz_hlp(i),j=1,2),i=1,ns)
+      write (lun,hlp_frmr) ((hlp_al(i),mz_hlp(i),j=1,2),i=1,nspecies+ns)
 
-      do iy=-1,ny !{
+      do iy=0,ny-1 !{
         write (lun,*)
-        do ix=-1,nx !{
+        do ix=0,nx-1 !{
           k=0
           do j=1,nspecies !{
             n_hlp(j)=0.0_R8
             v_hlp(j)=0.0_R8
             do l=1,nfluids(j)+1 !{
-              k=k+1
               n_hlp(j)=n_hlp(j)+na(ix,iy,k)
               v_hlp(j)=v_hlp(j)+na(ix,iy,k)*ua(ix,iy,k)
+              k=k+1
             end do !}
             v_hlp(j)=v_hlp(j)/n_hlp(j)
           end do !}

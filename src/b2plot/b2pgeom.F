@@ -35,7 +35,7 @@ c=======================================================================
 
       tab=char(9)
 
-      if(nncut.eq.2) then !{                        === single null ===
+      if(nncut.eq.1) then !{                        === single null ===
 
         k=jsep
 
@@ -106,14 +106,14 @@ c=======================================================================
      ,                                                            j=0,k)
 
         close (lun)
-      else if(nncut.eq.4) then !}{ === double null ===
+      else if(nncut.eq.2) then !}{ === double null ===
         
         write(0,*) 'b2pgeom: double null configuration yet to be ',
      ,                                                    'implemented'
         return
 
       else !}{
-        write(0,*) 'b2pgeom: wrong value of nncut (must be 2 or 4) ',
+        write(0,*) 'b2pgeom: wrong value of nncut (must be 1 or 2) ',
      ,             nncut
         return
       end if !}

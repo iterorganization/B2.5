@@ -8929,7 +8929,7 @@ cxpb as they no longer necessarily point to the same species
       if (todo.and..not.found.and.
      .   (.not.same_atoms.or.nx.ne.nx1.or.non_commensurate.eq.1)) then
         call alloc_b2mod_user(nlimi,nmoli)
-        call read_b2mod_user_namelist(nx)
+        call read_b2mod_user_namelist(nx,ns)
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)

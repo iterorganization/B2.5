@@ -154,7 +154,7 @@ c
       integer indsrf(stacklen)
       integer i, j, is, ix, iy, k, n, nindsrf
       logical found
-      character tab, frm*128
+      character tab, frm*128, filename*256, extralabel*256
 c=======================================================================
 c
       tab=char(9)
@@ -180,14 +180,15 @@ c-----------------------------------------------------------------------
         end do
         n=nspecies+2*(natmi+nmoli)+1
         open(lun,file='particle.flx')
-        write(lun,*) '#Total fluxes of neutrals and plasma onto, ',
+        write(lun,'(2a)')
+     ,    '#Total fluxes of neutrals and plasma onto, ',
      ,    'and of neutrals and sputtered material from the targets'
-        write(lun,*) '#',label
+        write(lun,'(2a)') '#',label
         write(frm,720) n,tab
   720   format('(2h# ,',i3,'(1h',a1,',a8))')
-        write(lun, frm) (textsp(i),i=1,nspecies),
-     ,                  (textan(i),i=1,natmi),(textmn(i),i=1,nmoli),
-     ,                  (textan(i),i=1,natmi),(textmn(i),i=1,nmoli),
+        write(lun, frm) (textsp(i),i=0,nspecies-1),
+     ,                  (textan(i),i=0,natmi-1),(textmn(i),i=0,nmoli-1),
+     ,                  (textan(i),i=0,natmi-1),(textmn(i),i=0,nmoli-1),
      ,                  'sput.'
         write(frm,730) n,tab
   730   format('((1p,1x,a5,',i3,'(1h',a1,',e11.4)))')
@@ -208,7 +209,7 @@ c-----------------------------------------------------------------------
         do i=1,nmoli
           hlp_ml(i)=wldrm(nlim+ltns(2),i,0)+wldpm(nlim+ltns(2),i,0)
         end do
-        write(lun, frm) 'outer',(hlp_pi(i),i=1,nspecies),
+        write(lun, frm) 'outer',(hlp_po(i),i=1,nspecies),
      ,    (wldna(nlim+ltns(2),i,0),i=1,natmi),
      ,    (wldnm(nlim+ltns(2),i,0),i=1,nmoli),
      ,    (hlp_at(i),i=1,natmi),(hlp_ml(i),i=1,nmoli),
@@ -384,7 +385,7 @@ c
             end if
           end do
           hlp_n = hlp_a + hlp_m + hlp_p
-          write(lun,'(a,1p,4e12.4)') textan(i),hlp_n,hlp_p,hlp_a,hlp_m
+          write(lun,'(a,1p,4e12.4)') textan(i-1),hlp_n,hlp_p,hlp_a,hlp_m
         end do
         close(lun)
 c-----------------------------------------------------------------------
@@ -404,31 +405,37 @@ c-----------------------------------------------------------------------
         call b2pgeier(lun)
 c-----------------------------------------------------------------------
       else if(ig.eq.-15) then
-        if(iistack.le.2) then !{
-          write(*,*) 'b2paux: option',ig,' requires surface ',
-     ,                                                  'specification'
-          write(*,*) 'usage: ind1 ind2 ... indn nind',ig,' user'
-          write(*,*) 'where ind1,ind2,...,indn are the surface indices',
-     ,      ' (like in EIRENE), and indn is the number of them'
+        stack_req=(/2,0,0,0,0,0,0/)
+        if(bad_args(stack_req)) then !{
+          write(*,'(1x,a,i4,a)')
+     ,      'b2paux: option',ig,' requires surface specification'
+          write(*,'(1x,a,i4,a)')
+     ,      'usage: ind1 ind2 ... indn nind',ig,' user'
+          write(*,'(1x,2a)')
+     ,      'where ind1,ind2,...,indn are the surface indices',
+     ,      ' (like in EIRENE), and nind is the number of them'
           write(*,*)
+          stack_req=(/1,0,0,0,0,0,0/)
           return
         end if !}
         k=ipop(istack,iistack)
         nindsrf=ipop(istack,iistack)
-        if(iistack.lt.nindsrf) then !{
+        stack_req=(/nindsrf,0,0,0,0,0,0/)
+        if(bad_args(stack_req)) then !{
           write(*,*) 'b2paux: insufficient integer data on the stack'
           write(*,*) 'usage: ind1 ind2 ... indn nind',ig,' user'
           write(*,*) 'where ind1,ind2,...,indn are the surface indices',
-     ,      ' (like in EIRENE), and indn is the number of them'
+     ,      ' (like in EIRENE), and nind is the number of them'
           call ipush(istack,iistack,nindsrf)
           call ipush(istack,iistack,k)
+          stack_req=(/2,0,0,0,0,0,0/)
           return
         end if !}
         do i=1,nindsrf !{
           indsrf(i)=ipop(istack,iistack)
         end do !}
         call ipush(istack,iistack,k)
-c        call b2pntrdt(lun,indsrf,nindsrf)
+        call b2pntrdt(lun,indsrf,nindsrf)
 c-----------------------------------------------------------------------
       else if(ig.eq.-16) then
         call b2krieger(lun)
@@ -439,8 +446,21 @@ c-----------------------------------------------------------------------
       else if(ig.eq.-18) then
         stack_req=(/0,0,1,1,0,0,0/)
         if (bad_args(stack_req)) return
-        print *,'*** b2paux: DIVIMP output option ***'
-        print *,'*** not yet available ***'
+        filename=spop(sstack,isstack)
+        filename='../'//trim(filename)
+        call get_extralabel(extralabel)
+        open(unit=lun,file=filename)
+        write(lun,'(2a)') '# ', trim(extralabel)
+        write(lun,'(2a)') '# ', trim(graphlabel(iwrk))
+        write(lun,'(3x,2hix,3x,2hiy,6x,1hx,11x,1hy,11x,3hz01)')
+        do iy = 0, ny-1
+          do ix = 0, nx-1
+            write(lun,'(2i5,1p,3e12.4)')
+     .       ix, iy, cr(ix,iy), cz(ix,iy), work(ix,iy,0,iwrk)
+          end do
+        end do
+        close(lun)
+        stack_req=(/1,0,0,0,0,0,0/)
 c-----------------------------------------------------------------------
       else if(ig.eq.-19) then
         call b2pbrooks(lun)

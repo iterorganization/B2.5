@@ -53,7 +53,7 @@ c     ,         ntrgts,lytg,nytg,lrdlsp                      !###
 c        print *,trim(fmt_peak)  !###
         write(lun,740) 'Ion fluxes on the target - ',trg_label(jj),label
         write(lun,fmt_peak) 'cell',
-     ,      ((trim(adjustl(textan(is))),i,i=1,nfluids(is)+1),is=1,natmi)
+     ,    ((trim(adjustl(textan(is-1))),i,i=0,nfluids(is)),is=1,natmi)
         write(fmt_peak,720) ns,tab
 c        print *,trim(fmt_peak)  !###
         if(ntrgts.eq.4) then !{

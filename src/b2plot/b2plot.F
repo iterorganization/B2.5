@@ -33,6 +33,7 @@ c 2002-09-11: logic revised
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       use b2mod_b2plot_wall_loading
+      use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_anomalous_transport
@@ -157,7 +158,7 @@ c
       real (kind=R8) ::
      *   mass,vel,vth,press
       integer ispecies(0:nsd_local-1), ismain, ismain0,  
-     *   boundary_namelist, neutrals_namelist, 
+     *   boundary_namelist, neutrals_namelist,
      *   sput_frac_flag, use_eirene
 
 #ifndef NO_CDF
@@ -754,6 +755,8 @@ c
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst(nstrat.le.nstraid, 
      . 'Increase DEF_NSTRA in DIMENSIONS.F')
+      call alloc_b2mod_user(nlim,nmol)
+      call read_b2mod_user_namelist(nx,ns)
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)

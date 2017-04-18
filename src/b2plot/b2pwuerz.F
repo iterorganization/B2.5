@@ -45,16 +45,20 @@ c
       end do
 c
       open(lun,file='wuerz-d.dat')
-      write (lun,*) '#ix, iy   : poloidal and radial indices in the ',
-     ,                                                          'grid;'
-      write (lun,*) '#R , Z    : R and Z coordinates of the cell ',
-     ,                                                   'centres [m];'
-      write (lun,*) '#pit      : pitch angle;'
-      write (lun,*) '#ne       : electron density [m^-3];'
-      write (lun,*) '#Te, Ti   : electron and ion temperatures [eV];'
-      write (lun,*) '#n...     : densities of the ion species [m^-3];'
-      write (lun,*) '#vp...    : parallel velocities of the ion ',
-     ,  'species [m/s]' 
+      write (lun,'(a)')
+     ,  '# ix, iy   : poloidal and radial indices in the grid;'
+      write (lun,'(a)')
+     ,  '# R , Z    : R and Z coordinates of the cell centres [m];'
+      write (lun,'(a)')
+     ,  '# pit      : pitch angle;'
+      write (lun,'(a)')
+     ,  '# ne       : electron density [m^-3];'
+      write (lun,'(a)')
+     ,  '# Te, Ti   : electron and ion temperatures [eV];'
+      write (lun,'(a)')
+     ,  '# n...     : densities of the ion species [m^-3];'
+      write (lun,'(a)')
+     ,  '# vp...    : parallel velocities of the ion species [m/s]' 
       write (lun,*)
       write(hlp_frmr,710) ns
   710 format('(9h#  ix  iy,7x,1hR,11x,1hZ,10x,3hpit,9x,',
@@ -66,11 +70,11 @@ c
         i=0
         write (lun,*)
         do ix=nx-1,rightcut(1),-1
-          i=i+1
           write (lun,700) i,iy,cr(ix,iy),cz(ix,iy),pit(ix,iy),
      ,                    ne(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,
      ,                    (na(ix,iy,k),ua(ix,iy,k),k=0,ns-1)
   700     format(1x,1p,2i4,48e12.4)
+          i=i+1
         end do
       end do
       close (lun)
@@ -78,9 +82,12 @@ c-----------------------------------------------------------------------
 c*** The grid geometry
 
       open(lun,file='wuerz-g.dat')
-      write (lun,*) '#Coordinates of the grid cell corners'
-      write (lun,*) '#ix,iy : poloidal and radial indices in the grid;'
-      write (lun,*) '#R , Z : R and Z coordinates of the cell ',
+      write (lun,'(2a)')
+     ,  '# Coordinates of the grid cell corners'
+      write (lun,'(2a)')
+     ,  '# ix,iy : poloidal and radial indices in the grid;'
+      write (lun,'(2a)')
+     ,  '# R , Z : R and Z coordinates of the cell ',
      ,  'corners along corresponding poloidal surfaces'
       write (lun,'(a,6x,a1,11x,a1)') '#  ix  iy','R','Z'
 

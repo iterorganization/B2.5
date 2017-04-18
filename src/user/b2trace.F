@@ -21,7 +21,6 @@ c----------------------------------------------------------------------
       integer, save :: use_recyceir
       real (kind=R8) :: recyctmp
       logical, save :: tracing_initialised
-      logical, save :: hydrogen, helium, neon
       data tracing_initialised /.false./
       data use_recyceir /1/
 c----------------------------------------------------------------------
@@ -128,46 +127,7 @@ c*** Initialisation call
       if (tracing_initialised) return
       call alloc_b2mod_user(nlim,nmol)
       call ipgeti ('eirene_use_recyceir', use_recyceir)
-c*** Set additional variables (moved here to avoid circular dependencies)
-      hydrogen = .false.
-      is = 0
-      do while (.not.hydrogen .and. is.lt.ns)
-        hydrogen = is_neutral(is) .and. nint(zn(is)).eq.1
-        if (hydrogen) j_h_at = b2espcr(is)
-        is = is + 1
-      end do
-      helium = .false.
-      is = 0
-      do while (.not.helium .and. is.lt.ns)
-        helium = is_neutral(is) .and. nint(zn(is)).eq.2
-        if (helium) j_he_at = b2espcr(is)
-        is = is + 1
-      end do
-      neon = .false.
-      is = 0
-      do while (.not.neon .and. is.lt.ns)
-        neon = is_neutral(is) .and. nint(zn(is)).eq.10
-        if (neon) j_ne_at = b2espcr(is)
-        is = is + 1
-      end do
-      call read_b2mod_user_namelist(nx)
-c*** test user namelist input
-      if (hydrogen) then
-        call xertst(nint(zn(eb2spcr(j_h_at))).eq.1,
-     .   'faulty input j_h_at')
-#ifdef B25_EIRENE
-        if (user_namelist_used) then
-          do is = 1, nnmoli
-            call xertst(l_h_mol(is).eq.mlcmp(j_h_at,is),
-     .       'faulty inputs l_h_mol, mlcmp')
-          end do
-        end if
-#endif
-      end if
-      if (helium) call xertst(nint(zn(eb2spcr(j_he_at))).eq.2,
-     . 'faulty input j_he_at')
-      if (neon) call xertst(nint(zn(eb2spcr(j_ne_at))).eq.10,
-     . 'faulty input j_ne_at')
+      call read_b2mod_user_namelist(nx,ns)
 c*** Initialise tracing routines
       if(filedata(ntrc_bln)) call b2blnci(nx,ny,ns,dtim)
       if(filedata(ntrc_ble)) call b2blnei(nx,ny,ns,BoRiS)

@@ -21,6 +21,9 @@ c
 c*** Local variables
 c
       integer ix,iy,i,j,k1,k0
+      character*16 stmp
+      logical streql
+      external streql
 c----------------------------------------------------------------------
 c*** Find helium
 c
@@ -29,15 +32,17 @@ c
       do j=1,nspecies
         i=nfluids(j)
         if(i.eq.2) then
-          k1=k1+2
+          k1=k1+1
           go to 10
         end if
         k1=k1+i+1
       end do
  10   continue
       do j=1,natmi
-        print *,j,' :',textan(j)
-        if(textan(j).eq.' He') k0=j
+        print *,j,' :',textan(j-1)
+        stmp=textan(j-1)
+        call lower_case(stmp)
+        if(streql(stmp,' he')) k0=j
       end do
       print *,'Helium (ion, atom): ',k1,k0
       if(k1.eq.0 .or. k0.eq.0) then
@@ -47,14 +52,15 @@ c
 c
       open(lun,file='zaveraev.dat')
       write (lun,710)
-  710 format(9h   ix  iy,5x,5hR (m),7x,5hZ (m),4x,10hnH (m**-3),
-     ,       6x,2hne,8x,7hTe (eV),5x,7hTi (eV),6x,4hnHe+,9x,3hnHe/)
+  710 format(9h   ix  iy,5x,5hR (m),7x,5hZ (m),5x,10hnH (m**-3),
+     ,       5x,2hne,8x,7hTe (eV),5x,7hTi (eV),
+     ,       6x,5hnHe++,7x,4hnHe+,8x,3hnHe/)
 c
       do ix=0,nx-1
         do iy=0,ny-1
           write (lun,700) ix,iy,cr(ix,iy),cz(ix,iy),
      ,         dab2(ix+1,iy+1,1,1),ne(ix,iy),te(ix,iy)/ev,ti(ix,iy)/ev,
-     ,         na(ix,iy,k1),dab2(ix+1,iy+1,k0,1)
+     ,         na(ix,iy,k1+1),na(ix,iy,k1),dab2(ix+1,iy+1,k0,1)
   700     format(1x,1p,2i4,48e12.3)
         end do
       end do

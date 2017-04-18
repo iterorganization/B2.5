@@ -114,18 +114,41 @@ c***  Standard setup:
       return
       end subroutine dealloc_b2mod_user
 
-      subroutine read_b2mod_user_namelist(nx)
+      subroutine read_b2mod_user_namelist(nx,ns)
       use b2mod_b2cmpa
       implicit none
-      integer nx
+      integer nx, ns
 
       logical :: file_ok
       character*260 filename
-      integer i
+      integer i, is
+      logical, save :: hydrogen, helium, neon
       external subini, subend
 
       call subini ('readuser')
 
+c*** Set default values according to current species list
+      hydrogen = .false.
+      is = 0
+      do while (.not.hydrogen .and. is.lt.ns)
+        hydrogen = is_neutral(is) .and. nint(zn(is)).eq.1
+        if (hydrogen) j_h_at = b2espcr(is)
+        is = is + 1
+      end do
+      helium = .false.
+      is = 0
+      do while (.not.helium .and. is.lt.ns)
+        helium = is_neutral(is) .and. nint(zn(is)).eq.2
+        if (helium) j_he_at = b2espcr(is)
+        is = is + 1
+      end do
+      neon = .false.
+      is = 0
+      do while (.not.neon .and. is.lt.ns)
+        neon = is_neutral(is) .and. nint(zn(is)).eq.10
+        if (neon) j_ne_at = b2espcr(is)
+        is = is + 1
+      end do
 *  -- USER --
       filename=user_filename
       call find_file(filename,file_ok)
@@ -145,7 +168,7 @@ c***  Standard setup:
         filedata(ntrc_usr) = .false.
       endif
 
-*   ..test input
+*   ..test user namelist input
       call xertst(0.0_R8.le.fusion_power,
      . 'faulty input fusion_power')
       call xertst(0.0_R8.le.Spmp_nom,
@@ -175,6 +198,22 @@ c***  Standard setup:
         call xertst(jntrgrp(i-1).lt.intrgrp(i),
      .   'faulty inputs intrgrp, jntrgrp')
       end do
+      if (hydrogen) then
+        call xertst(nint(zn(eb2spcr(j_h_at))).eq.1,
+     .   'faulty input j_h_at')
+#ifdef B25_EIRENE
+        if (user_namelist_used) then
+          do is = 1, nnmoli
+            call xertst(l_h_mol(is).eq.mlcmp(j_h_at,is),
+     .       'faulty inputs l_h_mol, mlcmp')
+          end do
+        end if
+#endif
+      end if
+      if (helium) call xertst(nint(zn(eb2spcr(j_he_at))).eq.2,
+     . 'faulty input j_he_at')
+      if (neon) call xertst(nint(zn(eb2spcr(j_ne_at))).eq.10,
+     . 'faulty input j_ne_at')
 
       call subend ()
 

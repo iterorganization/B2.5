@@ -59,7 +59,7 @@ c=======================================================================
         hlp_al(is)=is_codes(is)
       end do
 
-      if(nncut.eq.2) then !{                        === single null ===
+      if(nncut.eq.1) then !{                        === single null ===
 
         ns_hlp=5
 
@@ -123,7 +123,7 @@ c=======================================================================
           k=k-1
         end do !}
 
-      else if(nncut.eq.4) then !}{ === double null ===
+      else if(nncut.eq.2) then !}{ === double null ===
         
         ns_hlp=10
 
@@ -248,7 +248,7 @@ c=======================================================================
         end do !}
 
       else !}{
-        write(0,*) 'b2pedges: wrong value of nncut (must be 2 or 4):',
+        write(0,*) 'b2pedges: wrong value of nncut (must be 1 or 2):',
      ,                nncut
         return
       end if !}
@@ -279,40 +279,46 @@ c*** Write the header
 
       open(lun,file='gridedge.dat')
 
-      write (lun,*) '# Ion fluxes across the outer grid edge.',
+      write (lun,'(2a)') '# Ion fluxes across the outer grid edge.',
      ,                                         '   Version : 05.05.2004'
-      write (lun,*) '# ',label
+      write (lun,'(2a)') '# ',label
       write (lun,*)
-      write (lun,*) '# nx,ny,ns = ',nx,ny,ns
-      if(nspecies.gt.0) write (lun,*) '# nspecies,nfluids = ',
+      write (lun,'(a,3i5)') '# nx,ny,ns = ',nx,ny,ns
+      write (hlp_frmr,'(a,i2,a)') '(a,i3,',nspecies,'i3)'
+      if(nspecies.gt.0) write (lun,hlp_frmr) '# nspecies,nfluids = ',
      ,                                nspecies,(nfluids(i),i=1,nspecies)
-      write (lun,*) '# nncut,leftcut,rightcut = ',
+      write (hlp_frmr,'(a,i2,a)') '(a,i2,',2*nncut,'i4)'
+      write (lun,hlp_frmr) '# nncut,leftcut,rightcut = ',
      ,                 nncut,(leftcut(i),i=1,nncut),
      ,                       (rightcut(i),i=1,nncut)
 
       write (lun,*)
-      write (lun,*) '# il     : cell index in the list;'
-      write (lun,*) '# ldir   : direction of the fluxes in the order ',
-     ,                                                         'S W N E'
-      write (lun,*) '# ix, iy : x and y indices in the grid;'
-      write (lun,*) '# R , Z  : R and Z coordinates of the ',
+      write (lun,'(2a)') '# il     : cell index in the list;'
+      write (lun,'(2a)')
+     ,  '# ldir   : direction of the fluxes in the order S W N E'
+      write (lun,'(2a)')
+     ,  '# ix, iy : x and y indices in the grid;'
+      write (lun,'(2a)')
+     ,  '# R , Z  : R and Z coordinates of the ',
      ,                                  'centres of the cell faces [m];'
-      write (lun,*) '# x      : reference distance along the grid ',
-     ,                                                       'edge [m];'
-      write (lun,*) '# area   : area of the corresponding cell face ',
-     ,                                                         '[m**2];'
-      write (lun,*) '# Te, Ti : electron and ion temperatures [eV];'
-      write (lun,*) '# flx... : fluxes of the ion species [1/m**2/s];'
+      write (lun,'(2a)')
+     ,  '# x      : reference distance along the grid edge [m];'
+      write (lun,'(2a)')
+     ,  '# area   : area of the corresponding cell face [m**2];'
+      write (lun,'(2a)')
+     ,  '# Te, Ti : electron and ion temperatures [eV];'
+      write (lun,'(2a)')
+     ,  '# flx... : fluxes of the ion species [1/m**2/s];'
       write (lun,*)
 
       write(hlp_frmr,710) ns
-      print *,hlp_frmr               !###
+c      print *,hlp_frmr               !###
   710 format('(15h#  il   ix   iy,7x,1hR,13x,1hZ,13x,1hx,11x,4harea,',
      ,        '11x,2hTi,10x,2hTe,5x,',i3,'(6h  flx_,i2.2,a2,2x))')
       write (lun,hlp_frmr) (mz_hlp(i),hlp_al(i),i=0,ns-1)
 
       write(hlp_frmr,720) ns+2
-      print *,hlp_frmr               !###
+c      print *,hlp_frmr               !###
   720 format('(1p,3i5,4e14.6,',i3,'e12.4)')
       k=0
       zz=0.0_R8
@@ -354,7 +360,7 @@ c*** Write the header
 
           write(lun,hlp_frmr) k,ix(l,m),iy(l,m),re,ze,z,hlp_area,
      ,               ti(ix(l,m),iy(l,m))/ev,te(ix(l,m),iy(l,m))/ev,
-     ,                                               (hlp_flx(j),j=1,ns)
+     ,                                            (hlp_flx(j),j=0,ns-1)
         end do !}
       end do !}
 

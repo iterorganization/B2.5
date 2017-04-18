@@ -64,7 +64,7 @@ c        if(hlp_al(j)(2:2).eq.' ') hlp_al(j)(2:2)='_'
 
       do iy=0,ny-1 !{
         write (lun,*)
-        do ix=1,nx !{
+        do ix=0,nx-1 !{
           hlp_brm=0.0_R8
           hlp_rad=0.0_R8
           do is=0,ns-1
