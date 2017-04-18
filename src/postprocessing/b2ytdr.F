@@ -3370,6 +3370,9 @@ c   cfile card found. Is this one of the permitted external files?
               else if (streql(handle,'METHAN')) then
                 WRITE(IUNOT,'(A47)')
      .           'CFILE METHAN Database/AMdata/methane.tex       '
+              else if (streql(handle,'AMMONX')) then
+                WRITE(IUNOT,'(A47)')
+     .           'CFILE AMMONX Database/AMdata/ammoniaex.tex     '
               else if (streql(handle,'gr_ext')) then
                 WRITE(IUNOT,'(A47)')
      .           'CFILE gr_ext Database/graphite_ext.dat         '
