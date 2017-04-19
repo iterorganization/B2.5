@@ -118,14 +118,14 @@ module check_module_local
   end do
   if (n_error > 0) then
     write (*,*) 'There were ', n_error, 'errors in array ', trim(name)
-    write (*,'(a13,a10, E13.5,a8,i)') 'Max error in ', trim(name), error_max, ' at idx ' , max_err_idx
+    write (*,'(a13,a10, E14.5E3,a8,i)') 'Max error in ', trim(name), error_max, ' at idx ' , max_err_idx
     write (*,*) 'values', orig(max_err_idx), val(max_err_idx)
-    write (*,'(a22,a10, E13.5)') 'Max absolute error in ', trim(name), error_max_abs
-    write (*,'(a28,a10,E13.5)') 'Average relative error in    ',trim(name), avg_rel_error / n_error
-    write (*,'(a28,a10,E13.5)') 'Average absolute diff in     ',trim(name), avg_abs_diff / n_error
+    write (*,'(a22,a10, E14.5E3)') 'Max absolute error in ', trim(name), error_max_abs
+    write (*,'(a28,a10,E14.5E3)') 'Average relative error in    ',trim(name), avg_rel_error / n_error
+    write (*,'(a28,a10,E14.5E3)') 'Average absolute diff in     ',trim(name), avg_abs_diff / n_error
     avg_abs_val = avg_abs_val / ub
-    write (*,'(a29,a10,E13.5)') 'Average array value (abs) in ',trim(name), avg_abs_val 
-    write (*,'(a29,a10,E13.5)') 'Max error / avg array value  ',trim(name), error_max_abs / avg_abs_val 
+    write (*,'(a29,a10,E14.5E3)') 'Average array value (abs) in ',trim(name), avg_abs_val 
+    write (*,'(a29,a10,E14.5E3)') 'Max error / avg array value  ',trim(name), error_max_abs / avg_abs_val 
     write (*,'(a30,F5.1,a1)')   'Number of errors / array size ', n_error * 100.0 / ub, '%'
     write (*,*) ' '
   end if
