@@ -134,6 +134,7 @@ c      parameter (lns_hlp=4)
 c      integer lis_hlp(lns_hlp)
 c      data lis_hlp / 110, 111, 112, 49 /
       logical last, saved_volrec_used, na_feedback_on
+      integer :: igpuff(NSTRAT)
 
       integer output_style, linearisation, ank_mods, save_f31,
      1 repeat_first_call, ionising_core, dpc_fix, eircount,
@@ -1047,6 +1048,33 @@ c*** Print the particle fluxes for each stratum and species
      ,     '=========================================%%%'
         end if !}
       endif
+
+c carlis adding gas puff output for particle balance routine
+      do istrai=1,nstrat
+        igpuff(istrai)=0
+        if (crcstra(istrai).eq.'C') then
+          igpuff(istrai)=1
+        end if
+      end do
+      print *,'Number of gas puff sources: ',sum(igpuff)
+      if (sum(igpuff).gt.0) then
+        do istrai=1,nstrat
+          do ls=1,nnatmi
+            if (igpuff(istrai).gt.0.0_R8 .and.
+     .          gpfc(ls,istrai).gt.0.0_R8) then
+              if(use_recyceir.gt.0) then
+                recyctmp=recyceir(istrai)
+              else
+                kks=ispc_ref(ls)
+                recyctmp=recyc(kks,istrai)
+              endif
+              hlp_g(ls)=tflux(istrai)*
+     *           gpfc(ls,istrai)*recyctmp
+              print *,'Gas puff strength, atom: ',hlp_g(ls),ls
+            end if
+          end do
+        end do
+      end if
 
 c*** Re-normalisation of the sources and fluxes in order to enforce
 c*** the particle balance for recycling and recombining species
