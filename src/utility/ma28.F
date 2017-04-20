@@ -10,9 +10,9 @@ c this subroutine performs the LU factorisation of a.
 c
 c the parameters are as follows.....
 c n     order of matrix  not altered by subroutine.
-c nz    number of non-zeros in input matrix  not altered by subroutine.
-c a is a  real*8 array  length licn.  holds non-zeros of matrix on entry
-c     and non-zeros of factors on exit.  reordered by mc20a/ad and
+c nz    number of nonzeros in input matrix  not altered by subroutine.
+c a is a  real*8 array  length licn.  holds nonzeros of matrix on entry
+c     and nonzeros of factors on exit.  reordered by mc20a/ad and
 c     mc23a/ad and altered by ma30a/ad.
 c licn  integer  length of arrays a and icn.  not altered by subroutine.
 c irn   integer array of length lirn.  holds row indices on input.
@@ -176,7 +176,7 @@ c
 c sort matrix into row order.
       call mc20ad(n, nz, a, icn, iw, irn, 0)
 c part of ikeep is used here as a work-array.  ikeep(i,2) is
-c     the last row to have a non-zero in column i.  ikeep(i,3)
+c     the last row to have a nonzero in column i.  ikeep(i,3)
 c     is the off-set of column i from the start of the row.
       do 60 i=1,n
         ikeep(i,2) = 0
@@ -189,7 +189,7 @@ c move is equal to the number of duplicate elements found.
       move = 0
 c the loop also calculates the largest element in the matrix, themax.
       themax = zero
-c j1 is position in arrays of first non-zero in row.
+c j1 is position in arrays of first nonzero in row.
       j1 = iw(1,1)
       do 130 i=1,n
         iend = nz + 1
@@ -223,7 +223,7 @@ c duplicate element.
         j1 = iend
   130 continue
 c
-c knum is actual number of non-zeros in matrix with any multiple
+c knum is actual number of nonzeros in matrix with any multiple
 c     entries counted only once.
       knum = nz - move
       if (.not.lblock) go to 140
@@ -320,15 +320,15 @@ c this subroutine factorises a matrix of a similar sparsity
 c     pattern to that previously factorised by ma28a/ad.
 c the parameters are as follows ...
 c n      integer  order of matrix  not altered by subroutine.
-c nz     integer  number of non-zeros in input matrix  not altered
+c nz     integer  number of nonzeros in input matrix  not altered
 c     by subroutine.
-c a      real/real*8 array  length licn.  holds non-zeros of
-c     matrix on entry and non-zeros of factors on exit.  reordered by
+c a      real/real*8 array  length licn.  holds nonzeros of
+c     matrix on entry and nonzeros of factors on exit.  reordered by
 c     ma28d/dd and altered by subroutine ma30b/bd.
 c licn   integer  length of arrays a and icn.  not altered by
 c     subroutine.
 c ivect,jvect  integer arrays of length nz.  hold row and column
-c     indices of non-zeros respectively.  not altered by subroutine.
+c     indices of nonzeros respectively.  not altered by subroutine.
 c icn    integer array of length licn.  same array as output from
 c     ma28a/ad.  unchanged by ma28b/bd.
 c ikeep  integer array of length 5*n.  same array as output from
@@ -516,7 +516,7 @@ c transfer common block information.
 c this subroutine need never be called by the user directly.
 c     it sorts the matrix as given by the user into the structure of the
 c     decomposed form and checks for the presence of duplicate entries or
-c     non-zeros lying outside the sparsity pattern of the decomposition
+c     nonzeros lying outside the sparsity pattern of the decomposition
 c     it also calculates the largest element in the input matrix.
       integer n, licn, nz, iflag
       real (kind=R8) ::
@@ -554,7 +554,7 @@ c   off-diagonal blocks are set in iw(i,2) and iw(i,1) resp.
         if (blockl) iw(i,1) = iw(i-1,1) + lenoff(i-1)
         iw(i,2) = iw(i-1,2) + lenr(i-1)
    10 continue
-c place each non-zero in turn into its correct location
+c place each nonzero in turn into its correct location
 c    in the a/icn array.
       idisp2 = idisp(2)
       do 170 i=1,nz
@@ -639,7 +639,7 @@ c also calculate maximum element of a.
       return
 99999 format (' element ', i6, ' with value ', 1pd22.14, ' has indices',
      * i8, ' ,', i8/36x, 'indices out of range')
-99998 format (36x, 'non-zero', i7, ' ,', i6, ' in zero off-diagonal b',
+99998 format (36x, ' nonzero', i7, ' ,', i6, ' in zero off-diagonal b',
      * 'lock')
 99997 format (36x, ' element', i6, ' ,', i6, ' was not in l/u pattern')
       end subroutine ma28dd
@@ -695,8 +695,8 @@ c     largest component of the estimated error relative to the largest
 c     component in the solution is less than prec.  it is not altered by
 c     ma28i/id.
 c iflag is a diagnostic flag which will be set to zero on successful
-c     exit from ma28i/id, otherwise it will have a non-zero value. the
-c     non-zero value iflag can have on exit from ma28i/id are ...
+c     exit from ma28i/id, otherwise it will have a nonzero value. the
+c     nonzero value iflag can have on exit from ma28i/id are ...
 c     -16    indicating that more than maxit iteartions are required.
 c     -17    indicating that convergence was too slow.
 c
@@ -856,7 +856,7 @@ c     general sparse n by n system of linear equations (i.e. solve
 c     ax=b). structually singular matrices are permitted including
 c     those with row or columns consisting entirely of zeros (i.e.
 c     including rectangular matrices).  it is assumed that the
-c     non-zeros of the matrix a do not differ widely in size.  if
+c     nonzeros of the matrix a do not differ widely in size.  if
 c     necessary a prior call of the scaling subroutine mc19a/ad may be
 c     made.
 c a discussion of the design of these subroutines is given by duff and
@@ -871,11 +871,11 @@ c
 c ma30a/ad performs the lu decomposition of the diagonal blocks of the
 c     permutation paq of a sparse matrix a, where input permutations
 c     p1 and q1 are used to define the diagonal blocks.  there may be
-c     non-zeros in the off-diagonal blocks but they are unaffected by
+c     nonzeros in the off-diagonal blocks but they are unaffected by
 c     ma30a/ad. p and p1 differ only within blocks as do q and q1. the
 c     permutations p1 and q1 may be found by calling mc23a/ad or the
 c     matrix may be treated as a single block by using p1=q1=i. the
-c     matrix non-zeros should be held compactly by rows, although it
+c     matrix nonzeros should be held compactly by rows, although it
 c     should be noted that the user can supply the matrix by columns
 c     to get the lu decomposition of a transpose.
 c
@@ -887,9 +887,9 @@ c n  is an integer variable which must be set by the user to the order
 c     of the matrix.  it is not altered by ma30a/ad.
 c icn is an integer array of length licn. positions idisp(2) to
 c     licn must be set by the user to contain the column indices of
-c     the non-zeros in the diagonal blocks of p1*a*q1. those belonging
+c     the nonzeros in the diagonal blocks of p1*a*q1. those belonging
 c     to a single row must be contiguous but the ordering of column
-c     indices with each row is unimportant. the non-zeros of row i
+c     indices with each row is unimportant. the nonzeros of row i
 c     precede those of row i+1,i=1,...,n-1 and no wasted space is
 c     allowed between the rows.  on output the column indices of the
 c     lu decomposition of paq are held in positions idisp(1) to
@@ -901,30 +901,30 @@ c     required nor altered. if mc23a/ad been called, these will hold
 c     information about the off-diagonal blocks.
 c a is a real/real*8 array of length licn whose entries
 c     idisp(2) to licn must be set by the user to the  values of the
-c     non-zero entries of the matrix in the order indicated by  icn.
+c     nonzero entries of the matrix in the order indicated by  icn.
 c     on output a will hold the lu factors of the matrix where again
 c     the position in the matrix is determined by the corresponding
 c     values in icn. a(1) to a(idisp(1)-1) are neither required nor
 c     altered.
 c licn  is an integer variable which must be set by the user to the
 c     length of arrays icn and a. it must be big enough for a and icn
-c     to hold all the non-zeros of l and u and leave some "elbow
+c     to hold all the nonzeros of l and u and leave some "elbow
 c     room".  it is possible to calculate a minimum value for licn by
 c     a preliminary run of ma30a/ad. the adequacy of the elbow room
 c     can be judged by the size of the common block variable icncp. it
 c     is not altered by ma30a/ad.
 c lenr  is an integer array of length n.  on input, lenr(i) should
-c     equal the number of non-zeros in row i, i=1,...,n of the
+c     equal the number of nonzeros in row i, i=1,...,n of the
 c     diagonal blocks of p1*a*q1. on output, lenr(i) will equal the
-c     total number of non-zeros in row i of l and row i of u.
+c     total number of nonzeros in row i of l and row i of u.
 c lenrl  is an integer array of length n. on output from ma30a/ad,
-c     lenrl(i) will hold the number of non-zeros in row i of l.
+c     lenrl(i) will hold the number of nonzeros in row i of l.
 c idisp  is an integer array of length 2. the user should set idisp(1)
 c     to be the first available position in a/icn for the lu
 c     decomposition while idisp(2) is set to the position in a/icn of
-c     the first non-zero in the diagonal blocks of p1*a*q1. on output,
+c     the first nonzero in the diagonal blocks of p1*a*q1. on output,
 c     idisp(1) will be unaltered while idisp(2) will be set to the
-c     position in a/icn of the last non-zero of the lu decomposition.
+c     position in a/icn of the last nonzero of the lu decomposition.
 c ip  is an integer array of length n which holds a permutation of
 c     the integers 1 to n.  on input to ma30a/ad, the absolute value of
 c     ip(i) must be set to the row of a which is row i of p1*a*q1. a
@@ -942,7 +942,7 @@ c     negated.
 c irn  is an integer array of length lirn used as workspace by
 c     ma30a/ad.
 c lirn  is an integer variable. it should be greater than the
-c     largest number of non-zeros in a diagonal block of p1*a*q1 but
+c     largest number of nonzeros in a diagonal block of p1*a*q1 but
 c     need not be as large as licn. it is the length of array irn and
 c     should be large enough to hold the active part of any block,
 c     plus some "elbow room", the  a posteriori  adequacy of which can
@@ -967,9 +967,9 @@ c     setting lbig to .true.
 c iflag  is an integer variable. it will have a non-negative value if
 c     ma30a/ad is successful. negative values indicate error
 c     conditions while positive values indicate that the matrix has
-c     been successfully decomposed but is singular. for each non-zero
+c     been successfully decomposed but is singular. for each nonzero
 c     value, an appropriate message is output on unit lp.  possible
-c     non-zero values for iflag are ...
+c     nonzero values for iflag are ...
 c
 c -1  the matrix is structually singular with rank given by irank in
 c     common block ma30f/fd.
@@ -1064,7 +1064,7 @@ c     using it.
       ibeg = idisp(1)
 c iactiv is the position of the first entry in the active part of a/icn.
       iactiv = idisp(2)
-c nzrow is current number of non-zeros in active and unprocessed part
+c nzrow is current number of nonzeros in active and unprocessed part
 c     of row file icn.
       nzrow = licn - iactiv + 1
       minicn = nzrow + minicn
@@ -1186,8 +1186,8 @@ c dispc is the lowest indexed active location in the column file.
         nzmin = 1
 c
 c initialise array ifirst.  ifirst(i) = +/- k indicates that row/col
-c     k has i non-zeros.  if ifirst(i) = 0, there is no row or column
-c     with i non zeros.
+c     k has i nonzeros.  if ifirst(i) = 0, there is no row or column
+c     with i nonzeros.
         do 160 i=1,n
           ifirst(i) = 0
   160   continue
@@ -1256,7 +1256,7 @@ c a pass with l equal to 2 is only performed in the case of singularity.
               ijfir = -ijfir
               go to 290
   240         ll = 2
-c scan rows with nz non-zeros.
+c scan rows with nz nonzeros.
               do 270 idummy=1,n
                 if (jcost.le.(nz-1)**2) go to 420
                 if (isrch.gt.msrch) go to 420
@@ -1293,7 +1293,7 @@ c best pivot so far is found.
   260           continue
   270         continue
 c
-c columns with nz non-zeros now examined.
+c columns with nz nonzeros now examined.
   280         ijfir = ifirst(nz)
               ijfir = -lastr(ijfir)
   290         if (jcost.le.nz*(nz-1)) go to 420
@@ -1310,7 +1310,7 @@ c scan column j.
                   kcost = (nz-1)*(lenr(i)-lenrl(i)-1)
                   if (kcost.ge.jcost) go to 310
 c pivot has best markowitz count so far ... now check its
-c     suitability on numeric grounds by examining the other non-zeros
+c     suitability on numeric grounds by examining the other nonzeros
 c     in its row.
                   j1 = iptr(i) + lenrl(i)
                   j2 = iptr(i) + lenr(i) - 1
@@ -1524,9 +1524,9 @@ c i2 is last position in new column.
   560     continue
           nzcol = nzcol - lenpiv - 1
 c
-c go down the pivot column and for each row with a non-zero add
+c go down the pivot column and for each row with a nonzero add
 c     the appropriate multiple of the pivot row to it.
-c we loop on the number of non-zeros in the pivot column since
+c we loop on the number of nonzeros in the pivot column since
 c     ma30d/dd may change its actual position.
 c
           nzpc = lenc(jpiv)
@@ -1534,9 +1534,9 @@ c
           do 840 iii=1,nzpc
             ii = ipc(jpiv) + iii - 1
             i = irn(ii)
-c search row i for non-zero to be eliminated, calculate multiplier,
+c search row i for nonzero to be eliminated, calculate multiplier,
 c     and place it in position lenrl+1 in its row.
-c  idrop is the number of non-zero entries dropped from row    i
+c  idrop is the number of nonzero entries dropped from row    i
 c        because these fall beneath tolerance level.
 c
             idrop = 0
@@ -1562,7 +1562,7 @@ c now perform necessary operations on rest of non-pivot row i.
             iop = 0
 c jump if all the pivot row causes fill-in.
             if (rowi.gt.iend) go to 650
-c perform operations on current non-zeros in row i.
+c perform operations on current nonzeros in row i.
 c innermost loop.
             lenpp = iend-rowi+1
             if (lenpp.lt.4) lnpiv(1) = lnpiv(1) + 1
@@ -1589,13 +1589,13 @@ c innermost loop.
               if (abs(a(jj)).lt.tol) idrop = idrop + 1
   590       continue
 c
-c  jump if no non-zeros in non-pivot row have been removed
+c  jump if no nonzeros in non-pivot row have been removed
 c       because these are beneath the drop-tolerance  tol.
 c
             if (idrop.eq.0) go to 650
 c
 c  run through non-pivot row compressing row so that only
-c      non-zeros greater than   tol   are stored.  all non-zeros
+c      nonzeros greater than   tol   are stored.  all nonzeros
 c      less than   tol   are also removed from the column structure.
 c
             jnew = rowi
@@ -1606,7 +1606,7 @@ c
               jnew = jnew + 1
               go to 630
 c
-c  remove non-zero entry from column structure.
+c  remove nonzero entry from column structure.
 c
   600         j = icn(jj)
               i1 = ipc(j)
@@ -1638,7 +1638,7 @@ c jump if column already in update chain.
               icn(jj) = 0
   640       continue
 c the value of idrop might be different from that calculated earlier
-c     because, we may now have dropped some non-zeros which were not
+c     because, we may now have dropped some nonzeros which were not
 c     modified by the pivot row.
             idrop = iend + 1 - jnew
             iend = jnew - 1
@@ -2107,7 +2107,7 @@ c end of current block ... reset zero pivots and ising.
   130   continue
         ising = 0
         go to 160
-c matrix had non-zero pivot in ma30a/ad at this stage.
+c matrix had nonzero pivot in ma30a/ad at this stage.
   140   if (pivpos.gt.ifin) go to 170
         if (a(pivpos).eq.zero) go to 170
         if (.not.stab) go to 160
@@ -2145,7 +2145,7 @@ c     altered by the subroutine.
 c icn is an integer array of length licn. entries idisp(1) to
 c     idisp(2) should be unchanged since the last call to ma30a/ad. if
 c     the matrix has more than one diagonal block, then column indices
-c     corresponding to non-zeros in sub-diagonal blocks of paq must
+c     corresponding to nonzeros in subdiagonal blocks of paq must
 c     appear in positions 1 to idisp(1)-1. for the same row those
 c     entries must be contiguous, with those in row i preceding those
 c     in row i+1 (i=1,...,n-1) and no wasted space between rows.
@@ -2154,7 +2154,7 @@ c     by ma30c/cd.
 c a  is a real/real*8 array of length licn.  entries
 c     idisp(1) to idisp(2) should be unchanged since the last call to
 c     ma30a/ad or ma30b/bd.  if the matrix has more than one diagonal
-c     block, then the values of the non-zeros in sub-diagonal blocks
+c     block, then the values of the nonzeros in subdiagonal blocks
 c     must be in positions 1 to idisp(1)-1 in the order given by icn.
 c     it is not altered by ma30c/cd.
 c licn  is an integer variable set to the size of arrays icn and a.
@@ -2164,8 +2164,8 @@ c     unchanged since the last call to ma30a/ad. they are not altered
 c     by ma30c/cd.
 c lenoff  is an integer array of length n. if the matrix paq (or
 c     p1*a*q1) has more than one diagonal block, then lenoff(i),
-c     i=1,...,n should be set to the number of non-zeros in row i of
-c     the matrix paq which are in sub-diagonal blocks.  if there is
+c     i=1,...,n should be set to the number of nonzeros in row i of
+c     the matrix paq which are in subdiagonal blocks.  if there is
 c     only one diagonal block then lenoff(1) may be set to -1, in
 c     which case the other entries of lenoff are never accessed. it is
 c     not altered by ma30c/cd.
@@ -2223,12 +2223,12 @@ c preorder vector ... w(i) = x(ip(i))
         i = iabs(i)
         w(ii) = x(i)
    10 continue
-c lt holds the position of the first non-zero in the current row of the
+c lt holds the position of the first nonzero in the current row of the
 c     off-diagonal blocks.
       lt = 1
 c ifirst holds the index of the first row in the current block.
       ifirst = 1
-c iblock holds the position of the first non-zero in the current row
+c iblock holds the position of the first nonzero in the current row
 c     of the lu decomposition of the diagonal blocks.
       iblock = idisp(1)
 c if i is not the last row of a block, then a pass through this loop
@@ -2293,7 +2293,7 @@ c j1 is beginning of row ii.
 c jpiv is the position of the pivot in row ii.
           jpiv = j1 + lenrl(ii)
           jpivp1 = jpiv + 1
-c jump if row  ii of u has no non-zeros.
+c jump if row  ii of u has no nonzeros.
           if (j2.lt.jpivp1) go to 90
           wii = w(ii)
           do 80 jj=jpivp1,j2
@@ -2332,7 +2332,7 @@ c     the last one ]
       iblock = idisp(2) + 1
 c ilast is the last row in the current block.
       ilast = n
-c iblend points to the position after the last non-zero in the
+c iblend points to the position after the last nonzero in the
 c     current block.
       iblend = iblock
 c each pass through this loop operates with one diagonal block and
@@ -2363,7 +2363,7 @@ c     operations can be avoided.
 c jump if row i singular.
           if (iq(i).lt.0) go to 220
 c j2 first points to the pivot in row i and then is made to point to the
-c     first non-zero in the u transpose part of the row.
+c     first nonzero in the u transpose part of the row.
           j2 = j1 + lenrl(i)
           wi = w(i)/a(j2)
           if (lenr(i)-lenrl(i).eq.1) go to 190
@@ -2446,7 +2446,7 @@ c
 c
       if (reals) icncp = icncp + 1
       if (.not.reals) irncp = irncp + 1
-c set the first non-zero entry in each row to the negative of the
+c set the first nonzero entry in each row to the negative of the
 c     row/col number and hold this row/col index in the row/col
 c     pointer.  this is so that the beginning of each row/col can
 c     be recognised in the subsequent scan.
@@ -2467,7 +2467,7 @@ c     reset first entry of each row/col and pointer array iptr.
         kn = kn - 1
         if (reals) a(kn) = a(jpos)
         if (icn(jpos).ge.0) go to 20
-c first non-zero of row/col has been located
+c first nonzero of row/col has been located
         j = -icn(jpos)
         icn(jpos) = iptr(j)
         iptr(j) = kn
@@ -2745,14 +2745,14 @@ c######alias mc21a
       integer ip(n)
 c   pr(i) is the previous row to i in the depth first search.
 c it is used as a work array in the sorting algorithm.
-c   elements (iperm(i),i) i=1, ... n  are non-zero at the end of the
+c   elements (iperm(i),i) i=1, ... n  are nonzero at the end of the
 c algorithm unless n assignments have not been made.  in which case
 c (iperm(i),i) will be zero for n-numnz entries.
 c   cv(i) is the most recent row extension at which column i
 c was visited.
-c   arp(i) is one less than the number of non-zeros in row i
+c   arp(i) is one less than the number of nonzeros in row i
 c which have not been scanned when looking for a cheap assignment.
-c   out(i) is one less than the number of non-zeros in row i
+c   out(i) is one less than the number of nonzeros in row i
 c which have not been scanned during one pass through the main loop.
       integer icn(licn),lenr(n),iperm(n),pr(n),cv(n),
      1arp(n),out(n)
@@ -2976,7 +2976,7 @@ c
 c iw1(.,2) and lenr are permutations of iw1(.,1) and lenr/lenoff
 c     suitable for entry
 c     to mc13d since matrix with these row pointer and length arrays
-c     has maximum number of non-zeros on the diagonal.
+c     has maximum number of nonzeros on the diagonal.
       do 30 ii=1,n
       i=ip(ii)
       iw1(ii,2)=iw1(i,1)
@@ -3202,7 +3202,7 @@ c     stream number or suppress the output by setting them to zero.
 c     while lp directs the output of error diagnostics from the
 c     principal subroutines and internally called subroutines, mp
 c     controls only the output of a message which warns the user that he
-c     has input two or more non-zeros a(i), . . ,a(k) with the same row
+c     has input two or more nonzeros a(i), . . ,a(k) with the same row
 c     and column indices.  the action taken in this case is to proceed
 c     using a numerical value of a(i)+...+a(k). in the absence of other
 c     errors, iflag will equal -14 on exit.
@@ -3266,7 +3266,7 @@ c     idisp(1) to idisp(2) of a/icn. this array must be preserved
 c     between a call to ma28a/ad and subsequent calls to ma28b/bd,
 c     ma28c/cd or ma28i/id.
 c tol is a real*8 variable.  if it is set to a positive value, then any
-c     non-zero whose modulus is less than tol will be dropped from the
+c     nonzero whose modulus is less than tol will be dropped from the
 c     factorisation.  the factorisation will then require less storage
 c     but will be inaccurate.  after a run of ma28a/ad with tol positive
 c     it is not possible to use ma28b/bd and the user is recommended to
@@ -3399,7 +3399,7 @@ c     because of the need for "elbow room".  if the user is very
 c     unsure how large to make licn, the variable minicn can be used
 c     to provide that information. a preliminary run should be
 c     performed with abort3 left set to .false. and licn about 3/2
-c     times as big as the number of non-zeros in the original matrix.
+c     times as big as the number of nonzeros in the original matrix.
 c     unless the initial problem is very sparse (when the run will be
 c     successful) or fills in extremely badly (giving an error return
 c     with iflag equal to -4), an error return with iflag equal to -5
@@ -3442,7 +3442,7 @@ c     entry in the factorisation process. this common block was added
 c     to the ma30 package in february, 1983.
 c     common /ma30id/ tol, big, ndrop, nsrch, lbig
 c tol is a real/real*8 variable.  if it is set to a positive
-c     value, then ma30a/ad will drop from the factors any non-zero
+c     value, then ma30a/ad will drop from the factors any nonzero
 c     whose modulus is less than tol.  the factorisation will then
 c     require less storage but will be inaccurate.  after a run of
 c     ma30a/ad where entries have been dropped, ma30b/bd  should not

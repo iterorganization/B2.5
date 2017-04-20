@@ -19,9 +19,9 @@ module ggd
 
   implicit none      
 
-contains
-
 #ifdef ITM
+
+contains
 
   !> Check a grid description for possible errors
 

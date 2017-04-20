@@ -76,10 +76,8 @@
       integer mult_nonzero, mult_solvdim, mult_solvdim1
 *   ..procedures
       intrinsic min
-      real (kind=R8) ::
-     *   x05baf
       external subini, subend, xertst, ipgeti, ipgetr, lwget, lwiget,
-     &  slv5pt, iluter, x05baf, xerrab
+     &  slv5pt, iluter, xerrab
 *   ..initialization
       save ncall, style, acpar, cpu
       data ncall/0/, style/2/, acpar/8.0e0_R8/, cpu/0/
@@ -149,7 +147,7 @@
       endif
 
 *   ..solve the correction equation
-      cpu_start=x05baf()
+      call cpu_time(cpu_start)
       if (style.eq.0) then
 *    ..use iluter
        iters = min(itmax,4)
@@ -171,7 +169,7 @@
        if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for storage_9 ',
      &               c_end-c_start
 *    ..use ma28
-       cpu_start=x05baf()
+       call cpu_time(cpu_start)
 !       call ilutern_9(NX+2, NY+2, NX+2,
 !     & aa9(-1,-1,-3,0), aa9(-1,-1,-1,0), aa9(-1,-1,0,0), aa9(-1,-1,1,0), 
 !     & aa9(-1,-1, 3,0), 
@@ -180,7 +178,7 @@
 !     & resfun, corfun, name)                        !sv 18.05.02
        call ILUTERN_9(NX+2, NY+2, NX+2, NZ, resfun, corfun, name)     !sv 13.10.06
       endif
-      cpu_end=x05baf()
+      call cpu_time(cpu_end)
       if(cpu.gt.0) write(*,'(a,f6.3)') 'cpu for '//trim(name),
      &             cpu_end-cpu_start
 

@@ -3980,8 +3980,8 @@ cxpb  and max(,,) statement for stability
           ENDIF
           GOTO 20000
 
-* -- BCMOM=15 -- PRESCRIBE THE VALUE OF THE PARALLEL VELOCITY AS A FUNCTION OF !srv 02.04.09 {
-*                POLOIDAL COORDINATE
+* -- BCMOM=15 -- PRESCRIBE THE VALUE OF THE PARALLEL VELOCITY, SCALED WITH
+*                B_average/B_local
 
 11500     CONTINUE
           if(ncall.eq.0) then
@@ -6022,6 +6022,9 @@ cghgh
         GOTO 30000
 
 * -- BCENE=22 -- RADIAL LEAKAGE CONDITION FOR THE ELECTRON TEMPERATURE   !srv 23.07.10 {
+*                SPECIFIES A TEMPERATURE GRADIENT SUCH THAT THE DIFFUSIVE
+*                FLUX IS SET TO BE EQUIVALENT TO A LEAKAGE VELOCITY, IN
+*                UNITS OF THE ELECTRON THERMAL VELOCITY
 
 22200   CONTINUE
         if(ncall.eq.0) then
@@ -7826,6 +7829,9 @@ cxpb Careful here because of BC number clash
         GOTO 40000                                                   !srv 01.02.09 }
 
 * -- BCENI=22 -- RADIAL LEAKAGE CONDITION FOR THE ION TEMPERATURE   !srv 23.07.10 {
+*                SPECIFIES A TEMPERATURE GRADIENT SUCH THAT THE DIFFUSIVE
+*                FLUX IS SET TO BE EQUIVALENT TO A LEAKAGE VELOCITY, IN
+*                UNITS OF THE COLLECTIVE ION THERMAL VELOCITY
 
 32200   CONTINUE
         if(ncall.eq.0) then
@@ -8423,6 +8429,7 @@ cxpb Careful here because of BC number clash
             NIVS = 0.0_R8
 	    t0=0.0e0_R8   ! Volume                                      !lk 12.12.12 {
 	    t1=0.0e0_R8   ! Poloidally volume averaged ions temperature in the cell next to boundary
+            totflux = 0.0_R8   ! IYS 22.03.2017
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
                 DO IX = 1, BC_LIST_SIZE(IBW)

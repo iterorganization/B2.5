@@ -175,7 +175,7 @@ c             (maybe necessary in case of multi-fluid?)
        close(77)
       endif                                                          !srv 18.03.10 }
 
-c-dpc
+cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
           if(ncall.eq.0) then
@@ -203,7 +203,7 @@ c-dpc
           close(69)
         endif
       endif
-c-dpc
+cdpc
       if(nltrsol.eq.0) then
       elseif(nltrsol.eq.1) then
         WRITE(6,*) 'ILUTERN'

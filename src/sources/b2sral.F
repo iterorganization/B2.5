@@ -465,7 +465,7 @@ csw 30sep2013, added cdpa in call, uadia
       rcxhi=0.0_R8
       rcxmo=0.0_R8
       do k = 0, nscx-1
-*    ..compute charge-exchange rate coefficients
+*    ..compute charge exchange rate coefficients
         call b2sqcx (nx, ny, ns, ev, am(iscx(k)), ti,
      &   rlcx(-1,-1,0,0,k), rcx)
 *    ..compute sources due to charge exchange

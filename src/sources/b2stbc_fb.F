@@ -1382,6 +1382,8 @@ c nepedm_sol*nesepm_overshoot then we force the gas puff to 0
      &      na_feedback_actuator(ispecies) .eq. 2 .or.
      &     (na_feedback_actuator(ispecies) .eq. 1 .and.
      &      bccon(is0,na_feedback_ib(ispecies)) .eq. 11) .or.
+     &     (na_feedback_actuator(ispecies) .eq. 1 .and.
+     &      bccon(is0,na_feedback_ib(ispecies)) .eq. 13) .or.
      &     (na_feedback_actuator(ispecies) .eq. 3 .and.
      &      maxval(bccon(is_start:is_end,
      .                   na_feedback_ib(ispecies))).eq.11 .and.

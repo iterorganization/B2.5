@@ -501,7 +501,7 @@ c lcore           is this a core element
          if (zn(is0).ne.zn(is).or.amtol.lt.abs(am(is0)-am(is))) then
             is0 = is
          endif
-c-dpc
+cdpc
          if(is_neutral(is)) is1=is
          if(zn(is1).ne.zn(is).or.amtol.lt.abs(am(is1)-am(is))) then
             write(*,*) 'b2stbr problem: is, is0, is1 ',is,is0,is1
@@ -521,7 +521,7 @@ c-dpc
            end if
            k = k + 1
         enddo
-c-dpc 
+cdpc
 *       (species (is) recycles into is0)
 *       (is0 corresponds to CX species is2)
          t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is)) *
@@ -794,7 +794,7 @@ c back scattering
      &           amtol.lt.abs(am(is0)-am(is))) then
                is0 = is
             endif
-c-xpb
+cxpb
             if(zamax(is).eq.zn(is)) is1=is
             if(zn(is1).ne.zn(is).or.amtol.lt.abs(am(is1)-am(is))) then
                write(*,*) 'b2stbr problem: is, is0, is1 ',is,is0,is1
@@ -804,7 +804,7 @@ c-xpb
      1              write(*,*) 'b2stbr: setting is0 to is1 ',is0,is1
                is0=is1
             endif
-c-xpb 
+cxpb
 *          (species (is) recycles into is0)
             t0 = max(0.0_R8,isign*fna(ixf,iyf,idir,is)) *
      .           core_sources_rescale ! xpb: 2002.02.01

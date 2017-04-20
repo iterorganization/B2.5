@@ -33,3 +33,7 @@ module carre_constants
   integer, parameter, public :: BOUNDARY_NOSTRUCTURE = -1
 
 end module carre_constants
+
+!!!Local Variables:
+!!! mode: f90
+!!! End:

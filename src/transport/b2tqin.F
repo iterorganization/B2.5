@@ -102,8 +102,8 @@
 * ..compute classical sigin
 *   ..compute sigin.
       call sfill (n2*2*ns*nscx, 0.0_R8, sigin, 1)
-*   ..we use the charge-exchange rate as computed from b2frates
-*   ..this is only non-zero for hydrogen neutral on hydrogen ion CX
+*   ..we use the charge exchange rate as computed from b2frates
+*   ..this is only nonzero for hydrogen neutral on hydrogen ion CX
       do k = 0, nscx-1
         is0 = iscx(k)
         do is = 0, ns-1

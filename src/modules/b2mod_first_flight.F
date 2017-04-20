@@ -212,7 +212,7 @@ cxpb   b. electron-impact ionization
 cxpb   c. electron-impact excitation (we use the S/XB factor to convert 
 cxpb      electron heat loss rate into number of collision events)
 cxpb   d. elastic collisions with neutrals
-cxpb  We ditribute the sources into
+cxpb  We distribute the sources into
 cxpb   work(:,:,0:1) => sna(:,:,0,is0:is0+1)
 cxpb   wrk2(:,:) => shi(:,:,0)
 cxpb   wrk3(:,:) => she(:,:,0)

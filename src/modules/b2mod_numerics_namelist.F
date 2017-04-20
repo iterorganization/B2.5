@@ -143,8 +143,8 @@
       real (kind=R8) :: ttf
       character*260 filename
 
-      filename='../' // numerics_filename
-      inquire(file=filename,exist=file_ok)
+      filename=numerics_filename
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
         write(*,*) 'Reading namelist numerics from ',trim(filename)

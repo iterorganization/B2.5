@@ -148,13 +148,13 @@ c Drift terms
 
 *  INTERIOR BOUNDARY AT DEAD REGIONS
       DO IB=1,NNISO
-	DO IX=NXISO1(IB), NXISO2(IB)+1
+	DO IX=NXISO1(IB), NXISO2(IB)
 	  DO IY=NYISO1(IB), NYISO2(IB)
 	    fchvispar(ix,iy,0)=0.0e0_R8
 	  end do
 	end do
 	DO IX=NXISO1(IB), NXISO2(IB)
-	  DO IY=NYISO1(IB), NYISO2(IB)+1
+	  DO IY=NYISO1(IB), NYISO2(IB)
 	    fchvispar(ix,iy,1)=0.0e0_R8
 	  end do
 	end do

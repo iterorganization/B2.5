@@ -1048,7 +1048,7 @@ c     calculate coordinates of cell centre
 	   enddo 	  		  	  
 ! qi inner
          wrk0(3,iy)=2.5e0_R8*
-     &               hy1(-1,iy)/hy(-1,iy)*bb(-1,iy,0)/bb(-1,iy,3)*
+     &               hy1(-1,iy)/hy(-1,iy)*abs(bb(-1,iy,0)/bb(-1,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(-1,iy)*wrk0(1,iy)*sqrt(wrk1(-1,iy)/wrk1(1,iy))
 !  IYS added the heat flux carried by recycling neutrals
      &        - b2stbr_shi(-1,iy)/hy(-1,iy)/hz(-1,iy)                ! IYS 21.11.2012
@@ -1058,7 +1058,7 @@ c     calculate coordinates of cell centre
 
 ! qi outer
 	   wrk0(4,iy)=2.5e0_R8*
-     &               hy1(nx,iy)/hy(nx,iy)*bb(nx,iy,0)/bb(nx,iy,3)*
+     &               hy1(nx,iy)/hy(nx,iy)*abs(bb(nx,iy,0)/bb(nx,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(nx,iy)*wrk0(2,iy)*sqrt(wrk1(0,iy)/wrk1(2,iy))
 !  IYS added the heat flux carried by recycling neutrals
      &        - b2stbr_shi(nx,iy)/hy(nx,iy)/hz(nx,iy)  ! IYS 21.11.2012
@@ -1089,7 +1089,7 @@ c     calculate coordinates of cell centre
 	   enddo 	  		  	  
 ! qi inner upper
          wrk0(11,iy)=2.5e0_R8*
-     &               hy1(ix1,iy)/hy(ix1,iy)*bb(ix1,iy,0)/bb(ix1,iy,3)*
+     &           hy1(ix1,iy)/hy(ix1,iy)*abs(bb(ix1,iy,0)/bb(ix1,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(ix1,iy)*wrk0(9,iy)*sqrt(wrk1(3,iy)/wrk1(5,iy))
 !  IYS added the heat flux carried by recycling neutrals
      &        - b2stbr_shi(ix1,iy)/hy(ix1,iy)/hz(ix1,iy)  ! IYS 21.11.2012
@@ -1099,7 +1099,7 @@ c     calculate coordinates of cell centre
 
 ! qi outer upper
 	   wrk0(12,iy)=2.5e0_R8*
-     &               hy1(ix2,iy)/hy(ix2,iy)*bb(ix2,iy,0)/bb(ix2,iy,3)*
+     &           hy1(ix2,iy)/hy(ix2,iy)*abs(bb(ix2,iy,0)/bb(ix2,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(ix2,iy)*wrk0(10,iy)*sqrt(wrk1(4,iy)/wrk1(6,iy))
 !  IYS added the heat flux carried by recycling neutrals
      &        - b2stbr_shi(ix2,iy)/hy(ix2,iy)/hz(ix2,iy)  ! IYS 21.11.2012
@@ -1329,7 +1329,7 @@ c     calculate coordinates of cell centre
      &     0.5_R8*( crx(ixx+ishift,iy,0) + crx(ixx+ishift,iy,2) ),
      &     te(ixx+ishift,iy)/ev, ti(ixx+ishift,iy)/ev,ne(ixx+ishift,iy),
      &     qe * hy1(ixx+ishift,iy)/hy(ixx+ishift,iy) *
-     &     bb(ixx+ishift,iy,0)/bb(ixx+ishift,iy,3) *
+     &     abs(bb(ixx+ishift,iy,0))/bb(ixx+ishift,iy,3) *
      &     na(ixx+ishift,iy,ismain) *
      &     sqrt((te(ixx+ishift,iy)+ti(ixx+ishift,iy))/(am(ismain)*mp)),
      &     wrk0(-1,iy)/1.0e6_R8,wrk0(3,iy)/1.0e6_R8,wrk0(5,iy)/1.0e6_R8        
@@ -1348,7 +1348,7 @@ c     calculate coordinates of cell centre
      &     0.5_R8*( crx(ixx-ishift,iy,0) + crx(ixx-ishift,iy,2) ),
      &     te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev,ne(ixx-ishift,iy),
      &     qe * hy1(ixx-ishift,iy)/hy(ixx-ishift,iy) *
-     &     bb(ixx+ishift,iy,0)/bb(ixx-ishift,iy,3) *
+     &     abs(bb(ixx+ishift,iy,0))/bb(ixx-ishift,iy,3) *
      &     na(ixx-ishift,iy,ismain) *
      &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(am(ismain)*mp)),
      &     wrk0(0,iy)/1.0e6_R8, wrk0(4,iy)/1.0e6_R8, wrk0(6,iy)/1.0e6_R8
@@ -1370,7 +1370,7 @@ c     calculate coordinates of cell centre
      &     te(ixx+ishift,iy)/ev, ti(ixx+ishift,iy)/ev,ne(ixx+ishift,iy),
 
      &     qe * hy1(ixx+ishift,iy)/hy(ixx+ishift,iy) *
-     &     bb(ixx+ishift,iy,0)/bb(ixx+ishift,iy,3) *
+     &     abs(bb(ixx+ishift,iy,0))/bb(ixx+ishift,iy,3) *
      &     na(ixx+ishift,iy,ismain) *
      &     sqrt((te(ixx+ishift,iy)+ti(ixx+ishift,iy))/(am(ismain)*mp)),
      &   wrk0(7,iy)/1.0e6_R8, wrk0(11,iy)/1.0e6_R8, wrk0(13,iy)/1.0e6_R8        
@@ -1389,7 +1389,7 @@ c     calculate coordinates of cell centre
      &     0.5_R8*( crx(ixx-ishift,iy,0) + crx(ixx-ishift,iy,2) ),
      &     te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev,ne(ixx-ishift,iy),
      &     qe * hy1(ixx-ishift,iy)/hy(ixx-ishift,iy) *
-     &     bb(ixx+ishift,iy,0)/bb(ixx-ishift,iy,3) *
+     &     abs(bb(ixx+ishift,iy,0))/bb(ixx-ishift,iy,3) *
      &     na(ixx-ishift,iy,ismain) *
      &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(am(ismain)*mp)),
      &   wrk0(8,iy)/1.0e6_R8, wrk0(12,iy)/1.0e6_R8, wrk0(14,iy)/1.0e6_R8

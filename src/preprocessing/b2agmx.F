@@ -327,28 +327,28 @@
           t0 = 0.0_R8
           t1 = 0.0_R8
           t2 = 0.0_R8
-c-dpc
+cdpc
           t3 = 0.0_R8
           t4 = 0.0_R8
           t5 = 0.0_R8
-c-dpc-end
+cdpc-end
           do jy1 = 0, ky1-1
             do jx1 = 0, kx1-1
               t0 = t0+vol1(ix1+jx1,iy1+jy1)
               t1 = t1+gs1(ix1+jx1,iy1+jy1,2)
               t2 = t2+gs1(ix1+jx1,iy1+jy1,2)*qz1(ix1+jx1,iy1+jy1,0)
-c-dpc
+cdpc
               t3 = t3+bb1(ix1+jx1,iy1+jy1,0)*vol1(ix1+jx1,iy1+jy1)
               t4 = t4+bb1(ix1+jx1,iy1+jy1,1)*vol1(ix1+jx1,iy1+jy1)
               t5 = t5+bb1(ix1+jx1,iy1+jy1,2)*vol1(ix1+jx1,iy1+jy1)
-c-dpc-end
+cdpc-end
             enddo
           enddo
           vol(ix,iy) = t0
           gs(ix,iy,2) = t1
           qz(ix,iy,0) = t2/t1
           qz(ix,iy,1) = sqrt(1.0_R8-qz(ix,iy,0)**2)
-c-dpc
+cdpc
           bb(ix,iy,0)=t3/t0
           bb(ix,iy,1)=t4/t0
           bb(ix,iy,2)=t5/t0
@@ -649,7 +649,7 @@ cxpb Moving on to connectivity arrays
           else
             bottomiy(ix,iy)=-2
           endif
-c-dpc-end
+cdpc-end
 *     ..project hx to cell (ix,iy)
           t0 = 0.0_R8
           do jy1 = 0, ky1-1

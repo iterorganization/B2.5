@@ -5,6 +5,9 @@
       use b2mod_time
       use b2mod_sources 
      &     , only: ext_sna, ext_smo, ext_she, ext_shi, ext_sch, ext_sne
+      use b2mod_balance !djm Jan2017
+     &     , only: ext_sna0to1, ext_smo0to3, ext_she0to3, ext_shi0to3,
+     &             balance_netcdf
       use b2mod_geo_corner
      &     , only: nmdpl
       implicit none
@@ -163,10 +166,10 @@
       endif
  
       if (new_files) then
-        open (96,file='../dx2')
-        open (95,file='../dx1')
-        open (94,file='../da1')
-        open (93,file='../da2')
+        open (96,file='dx2')
+        open (95,file='dx1')
+        open (94,file='da1')
+        open (93,file='da2')
       end if
 
       do kind_source=1,nkind_source
@@ -356,6 +359,14 @@
       ext_she(:,:)=she0(:,:,0)
       ext_shi(:,:)=shi0(:,:,0)
       ext_sch(:,:)=sch0(:,:,0)
+
+cdjm Jan2017 Keep linearised sources for balance
+      if (balance_netcdf.ne.0) then
+        ext_sna0to1 = sna0
+        ext_smo0to3 = smo0
+        ext_she0to3 = she0
+        ext_shi0to3 = shi0
+      endif
        
       if (new_files) then
         close(93)
@@ -378,8 +389,8 @@
      . sources_time_mod,sources_time_switch,sources_filename
 
 !  read the profile data
-      filename='../' // trim(sources_filename)
-      inquire(file=filename,exist=file_ok)
+      filename=sources_filename
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(92,file=filename)
         write(*,*) 
@@ -463,7 +474,7 @@
       if(ncall.eq.0) then
         call xertst(NNREGMAX.ge.nnreg(0),
      1   'Increase NNREGMAX in b2mod_numerics_namelist')
-        filename='../' // transport_filename
+        filename=transport_filename
         new_files = .true.
         call read_transport_input         
 !  read the profile data
@@ -477,7 +488,7 @@
           if(mod(tim,transport_time_mod).gt.transport_time_switch)
      1     then           
             write(*,*) 'transport_input: catching up ...'
-            filename='../' // transport_filename
+            filename=transport_filename
             call read_transport_input
             catch_up=transport_time_mod.gt.0.0_R8
           else
@@ -492,7 +503,7 @@
           if(mod(tim,transport_time_mod).gt.transport_time_switch.or.
      1     int(tim/transport_time_mod).gt.elm_count) then
             elm_count=tim/transport_time_mod
-            filename='../' // transport_filename
+            filename=transport_filename
             new_files = .true.
             call read_transport_input
           endif
@@ -500,8 +511,8 @@
       endif
 
       if (new_files) then
-        open (94,file='../da1')
-        open (93,file='../da2')
+        open (94,file='da1')
+        open (93,file='da2')
       end if
 
       do isc=1,nscale
@@ -785,7 +796,7 @@ c*** Clear data to forget previous profiles
       elm_time_period=0.0_R8
       elm_ix_begin=-2
       elm_ix_end=-2
-      inquire(file=filename,exist=file_ok)
+      call find_file(filename,file_ok)
       if (file_ok) then
         open(99,file=filename)
         write(*,*) 'Reading namelist transport from ',trim(filename)
@@ -813,14 +824,18 @@ c*** Clear data to forget previous profiles
 
       use b2mod_indirect
       use b2mod_geo
+      use b2mod_mwti
+     & , only: output_ds
       implicit none
       integer:: i,nx,ny,ifa
       integer:: nfitanf,nfitend,ndim,ndat,kind_data
       real(kind=R8) :: pra(1:ny+2),prdsa(1:ny+2),r(nrr),pr(nrr),prtmp
       integer jxi, jxa, jsep, iyastrt, iyaend, ncall, nya
       integer ixref, iyref
+      character*256 filename
+      logical exist
       external ipgetr, subini, subend
-      external output_ds, get_jsep
+      external get_jsep
       save jxi, jxa, jsep, ixref, iyref, iyastrt, iyaend, ncall
       data ncall/0/
 
@@ -841,11 +856,12 @@ c*** Clear data to forget previous profiles
         call xertst (-1.le.iyref.and.iyref.le.ny,
      1   'faulty argument set_transport_iyref')
         call output_ds(crx,cry,nx,ny,ixref,0,
-     1   iyref,iyastrt,iyaend,'../dsp')
+     1   iyref,iyastrt,iyaend,'dsp')
         call ipgeti ('b2trno_csig_an_style', csig_an_style)
       endif
 
-      open (91,file='../dsp')
+      filename='dsp'
+      call find_file(filename,exist)
       i = 0
       nya = 0
  91   continue

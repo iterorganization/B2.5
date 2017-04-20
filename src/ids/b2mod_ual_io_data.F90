@@ -120,7 +120,7 @@ contains
 
         if (present(b2CellData)) then
             ! Cell data case
-            ! check that it's a cell
+            ! check that it is a cell
             call assert( all( curObj%cls == CLASS_CELL(1:SPACE_COUNT) ) )
             ! get the subobject index for the face in the 2d poloidal plane space
             icv = curObj%ind(SPACE_POLOIDALPLANE)
@@ -128,7 +128,7 @@ contains
             cpodata(iobj) = b2CellData( gmap%mapCvix(icv), gmap%mapCviy(icv) )
         else if (present(b2FaceData)) then
             ! Face data case
-            ! check that it's a face
+            ! check that it is a face
             call assert( all( curObj%cls == CLASS_POLOIDALRADIAL_FACE(1:SPACE_COUNT) ) )
             ! get the subobject index for the face in the 2d poloidal plane space
             ifc = curObj%ind(SPACE_POLOIDALPLANE)
@@ -136,7 +136,7 @@ contains
             cpodata(iobj) = b2FaceData( gmap%mapFcix(ifc), gmap%mapFciy(ifc), gmap%mapFcIFace(ifc) )
         else if (present(b2VertexData)) then
             ! Vertex/Node data case
-            ! check that it's a vertex
+            ! check that it is a vertex
             call assert( all( curObj%cls == CLASS_NODE(1:SPACE_COUNT) ) )
             ! get the subobject index for the face in the 2d poloidal plane space
             ivx = curObj%ind(SPACE_POLOIDALPLANE)

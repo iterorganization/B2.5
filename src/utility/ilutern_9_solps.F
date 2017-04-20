@@ -16,8 +16,7 @@ C
 
 *  -- LOCAL SCALARS --
       INTEGER N, I, J, K
-      real (kind=R8) ::
-     *   x05baf,cpu_start,cpu_end
+      real (kind=R8) :: cpu_start, cpu_end
       integer iflag
 
       real (kind=R8) ::
@@ -42,7 +41,7 @@ c
       INTRINSIC MOD
       real (kind=R8) ::
      *   b2sasum
-      EXTERNAL XERRAB, b2sasum, x05baf
+      EXTERNAL XERRAB, b2sasum
 
       logical lfirst
       integer ncall, nwrite
@@ -65,7 +64,7 @@ c
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
-      cpu_start=x05baf()
+      call cpu_time(cpu_start)
       iflag=0
       if(ncall.lt.1000) then
 *  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
@@ -114,7 +113,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
         enddo
         close(77)
       endif                                                         !srv 18.05.02 }
-c-dpc
+cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
           if(ncall.eq.0) then
@@ -136,7 +135,7 @@ c-dpc
            close(79)
         endif
       endif
-c-dpc
+cdpc
       if(lfirst) then
         write(*,*) 'ilutern_9: nz = ',nz
         call xertst (nz.le.N_NONZEROS, 'Increase N_NONZEROS')
@@ -223,7 +222,7 @@ c-dpc
       enddo
 
 *  ---------------------------------------------------------------------
-      cpu_end=x05baf()
+      call cpu_time(cpu_end)
       ncall=ncall+1
       RETURN
 

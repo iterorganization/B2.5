@@ -45,7 +45,7 @@ c*** sclrtio: (S/I from B2) / (S/I from Eirene)
 
 c----------------------------------------------------------------------
       integer lstime, ltime, lmovie, ldiag, ldiag2, ldiag3, ldiag4,
-     1 nldetail, nltrsol, nstages
+     1 nldetail, nstages
       integer, allocatable :: IZ(:,:), nfluids(:)
 c----------------------------------------------------------------------
 c*** Specification of the output files and units
@@ -77,8 +77,8 @@ c***                    tracing
      ,           ntrc_blm=9, ntrc_sep=10)
       integer ntrc(len_ntrc), lv_trc(len_ntrc)
       logical filedata(len_ntrc), print_first_step
-      integer lenfnm
-      parameter (lenfnm=120)
+      integer lenfnm, mhdr
+      parameter (lenfnm=120, mhdr=24)
       character fn_ntrc(len_ntrc)*(lenfnm)
       character*2, allocatable :: atoms_list(:)
       integer, allocatable :: ions_list(:), fluids_list(:)

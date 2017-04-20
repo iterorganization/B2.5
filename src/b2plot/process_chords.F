@@ -130,6 +130,9 @@ c
       use b2mod_b2plot
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
+#ifndef NO_CDF
+      use b2mod_mwti
+#endif
       implicit none
 #ifndef NO_CDF
 #ifdef CDF_MOVIE
@@ -210,7 +213,7 @@ c
 #ifdef CDF_MOVIE
       else
         rw='read'
-        ncid=ncopn(moviename,ncnowrit,iret)
+        iret = nf_open(moviename,NCNOWRIT,ncid) 
         imap(1)=1
         tstepn(1)=ntstep
         call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
@@ -244,7 +247,7 @@ c
      2     linlog)
           call end_page
         enddo
-        call ncclos(ncid, iret)
+        iret = nf_close(ncid)
       endif
 #endif
 #endif

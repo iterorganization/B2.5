@@ -45,3 +45,7 @@ contains
   end function real2str
 
 end module helper
+
+!!!Local Variables:
+!!! mode: f90
+!!! End:

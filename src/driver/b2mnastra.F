@@ -20,6 +20,7 @@
       use b2mod_ppout
       use b2mod_astra_to_b2
       use b2mod_b2_to_astra
+      use b2mod_driver
       implicit none
 #ifdef USE_MPI
       include 'mpif.h'
@@ -33,7 +34,7 @@
 *     B2MNASTRA is the main program for the b2 code. The code solves a
 *     system of fluid equations that models a multi-species plasma
 *     in a two-dimensional geometry. This program calls the driver
-*     routine b2mndr for the actual computation.
+*     routines b2mndr_[0-2] for the actual computation.
 *
 *
 *  2. specification
@@ -52,16 +53,16 @@
 *     b2ag (prepares a geometry and magnetic field), b2ah (prepares
 *     a table of default physics parameters), b2ai (prepares an
 *     initial plasma state), b2mn (principal calculation), and b2yp
-*     (post-processing).
+*     (postprocessing).
 *     Additional programs may prepare tables of rate coefficients for
 *     atomic processes, tables of plasma-wall interaction processes,
 *     external source terms, and other physics, or may perform further
-*     post-processing.
+*     postprocessing.
 *
 *     The complete program b2mn is designed to solve the equations.
 *     This program unit opens and closes the input/output units, and
 *     may perform some other system-dependent operations. It calls
-*     routine b2mndr to control the actual computation.
+*     routines b2mndr_[0-2] to control the actual computation.
 *
 *     The input units are:
 *     ninp(0): formatted; provides physics and numerics parameters.
@@ -81,7 +82,7 @@
 *     nout(6): un*formatted; save file for restart
 *     nout(7): un*formatted; full plasma description with derived quantities
 *     nout(8): un*formatted; ASTRA coupling data file
-*     nout(9): formatted; post-processor output. [JET]
+*     nout(9): formatted; postprocessor output. [JET]
 *
 *     (See routine b2cdca for the meaning of 'un*formatted'.)
 *
@@ -134,11 +135,10 @@
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
-      real (kind=R8) :: cpu_s, cpu_f, x05baf
+      real (kind=R8) :: cpu_s, cpu_f
       logical file_open
 *   ..procedures
-      external prgini, prgend, xerset, xertst, cfopen, cfruin
-      external b2mndr
+      external prgini, prgend, xerset, cfopen, cfruin
 *   ..initialise input/output unit numbers
       data ninp/50,51,52,53,54,55,56/                               !srv 02.05.07
 #ifdef JET
@@ -166,7 +166,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       endif
 #endif
       call prgini ('b2mnastra')
-      cpu_s = x05baf()
+      call cpu_time(cpu_s)
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
       call cfopen (ninp(1),'b2fgmtry','old','un*formatted')
@@ -223,8 +223,10 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       open(70,file='check_astra_to_b2.prt')
       call write_to_check_astra_to_b2(70)
       close(70)                                                 !srv 28.07.11 }
-
-      call b2mndr (ninp, nout, nx, ny, ns, ns0)
+*   ..call driver routines
+      call b2mndr_0 (ninp, nout, nx, ny, ns, ns0)
+      call b2mndr_1 (nout, nx, ny, ns, 0)
+      call b2mndr_2 (nout, nx, ny, ns)
 *   ..write plasma state
       call cfopen (nout(7),'b2fplasma','replace','unformatted')
       call cfverw(nout(7), newversion)
@@ -254,7 +256,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
          if (file_open) close(nout(io))
       enddo
 
-      cpu_f= x05baf()
+      call cpu_time(cpu_f)
       write(*,"(/' b2mnastra takes ',f12.1,' sec'/)") cpu_f - cpu_s
 
 * ..end of computation

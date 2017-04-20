@@ -16,8 +16,7 @@ C
 
 *  -- LOCAL SCALARS --
       INTEGER N, I, J, K
-      real (kind=R8) ::
-     *   x05baf,cpu_start,cpu_end
+      real (kind=R8) :: cpu_start,cpu_end
       integer iflag
 
 c
@@ -26,7 +25,7 @@ c
       INTRINSIC MOD
       real (kind=R8) ::
      *   b2sasum
-      EXTERNAL XERRAB, b2sasum, x05baf
+      EXTERNAL XERRAB, b2sasum
 
       logical lfirst
       integer ncall, nwrite_fmt, nwrite_bnr                           !sv 29.05.02
@@ -49,7 +48,7 @@ c
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
-      cpu_start=x05baf()
+      call cpu_time(cpu_start)
       iflag = 0                                                    !sv 16.04.02
       if(ncall.lt.10) then
 *  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
@@ -65,7 +64,7 @@ c     write(*,*) 'ncall,nwrite',ncall,nwrite
         S1(I+(J-1)*N1)=0.0e0_R8
        enddo
       enddo
-c-dpc
+cdpc
       if(nwrite_fmt.gt.0) then
         if(nwrite_fmt.gt.ncall) then
           if(ncall.eq.0) then
@@ -217,7 +216,7 @@ C
   50  CONTINUE
 
 *  ---------------------------------------------------------------------
-      cpu_end=x05baf()
+      call cpu_time(cpu_end)
       ncall=ncall+1
       RETURN
 

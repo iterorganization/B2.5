@@ -14,9 +14,10 @@ module ggd_access
 
   ! TODO: getSpaceNodeCount to replace size( node_value )
 
+#ifdef ITM
+
 contains
 
-#ifdef ITM
   !> Return the UID number of this grid
   pure integer function gridUid( grid )
     type(type_complexgrid), intent(in) :: grid

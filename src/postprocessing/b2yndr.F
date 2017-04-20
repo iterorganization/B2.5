@@ -27,13 +27,13 @@
 *
 *  1. purpose
 *
-*     B2YNDR is a post-processor for b2. It displays the progress of
+*     B2YNDR is a postprocessor for b2. It displays the progress of
 *     the inner iterations.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a post-processor for the b2 code. It displays the
+*     This routine is a postprocessor for the b2 code. It displays the
 *     evolution of the corrections and residuals. This routine does not
 *     require any metric information.
 *

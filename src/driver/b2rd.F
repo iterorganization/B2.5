@@ -22,7 +22,7 @@
 *
 *  1. purpose
 *
-*     B2RD (main program) is a post-processor for b2. It imports an
+*     B2RD (main program) is a postprocessor for b2. It imports an
 *     archived plasma state from the MDSPlus tree and outputs the
 *     equivalent b2fstate and b2 geometry files.
 *
@@ -849,7 +849,7 @@
      &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
      &  cell_width, cell_height)
 
-      open(91,file='../core_boundary.txt')
+      open(91,file='core_boundary.txt')
       iy=-1
       do ix=-1,nx
          if(mod(region(ix,iy,0),4).eq.1) then
@@ -857,7 +857,7 @@
          endif
       enddo
       close(91)
-      open(91,file='../separatrix_boundary.txt')
+      open(91,file='separatrix_boundary.txt')
       iy=minval(topcut(1:nncut))-1
       write(*,*) 'sep = ',iy
       do ix=-1,nx

@@ -14,6 +14,11 @@
       use b2mod_constants
       use b2mod_b2cmfs
       use b2mod_b2cmpa
+      use b2mod_balance !djm Jan2017
+     & , only : b2sihs_diae0to3, b2sihs_divue0to3, b2sihs_exbe0to3,
+     &          b2sihs_joule0to3, b2sihs_diaa0to3, b2sihs_divua0to3,
+     &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
+     &          balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -266,6 +271,9 @@
 	endif                                                         !srv 26.11.02
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_divue0to3 = shedu
+      endif
       call b2saxpy (n2*4, 1.0e0_R8, shedu, 1, she0, 1)                !srv 11.09.09
 *   ..contribution from divergence ua
       b2divua=0.0_R8
@@ -316,6 +324,9 @@
         enddo
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_divua0to3 = shidu
+      endif
       call b2saxpy (n2*4, 1.0e0_R8, shidu, 1, shi0, 1)                !srv 11.09.09
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
       dpo = 0.0e0_R8;   dOnedBsq = 0.0e0_R8                           !srv 03.04.07 {
@@ -375,6 +386,9 @@
 	endif                                                         !srv 26.11.02
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_exbe0to3 = shedd
+      endif
       call b2saxpy (n2*4, 1.0e0_R8, shedd, 1, she0, 1)                !srv 11.09.09
 
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99                                               !srv 02.06.99
@@ -401,6 +415,9 @@
        enddo
        endif
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_exba0to3 = shidd
+      endif
       call b2saxpy (n2*4, 1.0e0_R8, shidd, 1, shi0, 1)                 !srv 11.09.09
 *   ..contribution from viscous heating
       b2visa=0.0_R8
@@ -453,6 +470,9 @@
         enddo
        endif                                                           !srv 29.08.02
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_visa0to3 = shivc+shiva
+      endif
       call b2saxpy (n2*4, 1.0e0_R8, shivc, 1, shi0, 1)                 !srv 11.09.09
       call b2saxpy (n2*4, 1.0e0_R8, shiva, 1, shi0, 1)                 !srv 11.09.09
 *   ..contribution from electron-atom friction
@@ -484,6 +504,9 @@
 	endif                                                          !srv 26.11.02
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_joule0to3 = shefr
+      endif
       call b2saxpy (n2*4, 1.0e0_R8, shefr, 1, she0, 1)                 !srv 11.09.09
 *   ..contribution from atom-atom friction
       b2fraa=0.0_R8
@@ -510,12 +533,15 @@
          enddo
         else
 *      ..contribution from friction involving neutral species
-*        (We ignore such a term, except for charge-exchange friction
+*        (We ignore such a term, except for charge exchange friction
 *        between H0 and H1.d0 That term is calculated via the atomic
 *        physics routines.)
         endif
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        b2sihs_fraa0to3 = shifr
+      endif
       call b2saxpy (n2*4, 1.0e0_R8, shifr, 1, shi0, 1)                 !srv 11.09.09
       b2str=0.0_R8
       b2sihs_str=0.0_R8

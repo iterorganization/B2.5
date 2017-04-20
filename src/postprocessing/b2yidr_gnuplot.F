@@ -30,14 +30,14 @@
 *
 *  1. purpose
 *
-*     B2YIDR is a post-processor for b2. It reads and displays the
+*     B2YIDR is a postprocessor for b2. It reads and displays the
 *     plasma state. This routine does not make use of any metric
 *     information.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a post-processor for the b2 code. It reads the
+*     This routine is a postprocessor for the b2 code. It reads the
 *     result of a b2 calculation, and produces printed and graphical
 *     summaries. This routine does not require any metric information.
 *

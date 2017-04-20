@@ -19,13 +19,13 @@
 *
 *  1. purpose
 *
-*     B2YHDR is a post-processor for b2. It reads and displays the table
+*     B2YHDR is a postprocessor for b2. It reads and displays the table
 *     of physics parameters.
 *
 *
 *  3. description (see also routine b2cdca)
 *
-*     This routine is a post-processor for the b2 code. It reads the
+*     This routine is a postprocessor for the b2 code. It reads the
 *     file containing the physics parameters and produces printed
 *     output.
 *

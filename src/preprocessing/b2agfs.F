@@ -77,7 +77,7 @@
 *     xoffset, yoffset - real*8, read from file.
 *     xoffset and yoffset are offsets of the mesh in the x- and y-direction
 *     respectively. The mesh will be translated by (xoffset,yoffset) if any
-*     of the two is non-zero.
+*     of the two is nonzero.
 *
 *     Bt_adjust - integer, read from file.
 *     If the mesh is offset and Bt_adjust.eq.1, then the magnetic field is

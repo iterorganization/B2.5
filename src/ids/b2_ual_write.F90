@@ -2,8 +2,6 @@
 !!.specification
 
 program b2_ual_write
-
-
     use b2mod_types , B2R8 => R8
     use b2mod_version
     use b2mod_geo
@@ -269,26 +267,6 @@ contains
         write (0,*) "Finished reading input IDS"
 
     end subroutine read_ids
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 end program b2_ual_write
 

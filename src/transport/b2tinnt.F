@@ -169,8 +169,14 @@
 	enddo
 *       ..get fluxes in the cell centre
         fnac(:,:,:,ismain0) = fnan(:,:,:,ismain0)
-        call mapx(nx,ny,1,fnac(-1,-1,0,ismain0),work(-1,-1,0,ismain0))
-        call mapy(nx,ny,1,fnac(-1,-1,1,ismain0),work(-1,-1,1,ismain0))
+
+!!! These mapping routines seems to be not necessary here, since [rp]flux[am]
+!!! comes already in cell centers                         ! IYS 27.01.2017
+!        call mapx(nx,ny,1,fnac(-1,-1,0,ismain0),work(-1,-1,0,ismain0))
+!        call mapy(nx,ny,1,fnac(-1,-1,1,ismain0),work(-1,-1,1,ismain0))
+!!! These mapping routines seems to be not necessary here, since [rp]flux[am]
+!!! comes already in cell centers                         ! IYS 27.01.2017
+
 !*      ..get velocities in the cell centre
 !        vntrc(:,:,0) = fnac(:,:,1,ismain0)/dab2(0:nx+1,0:ny+1,iamain,1)
 !*      ..interpolate velocities in the cell face

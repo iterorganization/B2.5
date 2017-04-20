@@ -75,8 +75,7 @@
 #endif
       logical(4) ::  b2fstate_exist
       integer npoint
-      real (kind=R8) :: cpu_s, cpu_f, x05baf,                           !srv 26.04.09
-     & dif, fcain, fab, shift(1:2)
+      real (kind=R8) :: cpu_s, cpu_f, dif, fcain, fab, shift(1:2)
       character*12 hlp_frm
 *   ..procedures
       external subini, subend
@@ -126,7 +125,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       write(70) par_opt_phys
       close(70)
 
-      cpu_s = x05baf()
+      call cpu_time(cpu_s)
 
 #ifdef WINDOWS
       iresult = RUNQQ ('B2mnOpt','')
@@ -143,7 +142,7 @@ crfs !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
        call system('cp b2fstate b2fstati')
       endif
 #endif
-      cpu_f= x05baf()
+      call cpu_time(cpu_f)
       write(71,"(' b2obfn takes ',es10.2,' sec')") cpu_f-cpu_s
 * read the results of modelling
       call read_results

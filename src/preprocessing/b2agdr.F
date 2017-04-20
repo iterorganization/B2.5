@@ -482,7 +482,7 @@
      >     topiy(ix,nyiso2) = nyiso1
         end do
       endif
-c-dpc-debug
+cdpc-debug
       if(nx1.eq.nx.and.ny1.eq.ny) then
 	write(*,*) 'b2agdr sanity check: vol ',
      1	 maxval(abs(vol1-vol))
@@ -641,8 +641,8 @@ c-dpc-debug
       idum(0) = isymm
       call cfwuin (nout(1), 1, idum, 'isymm')
 *   ..save geometry
-      call b2wugm (nout(1), nx, ny, crx, cry, fpsi,
-     &  ffbz, bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
+      call b2wugm (nout(1), nx, ny, crx, cry, fpsi, ffbz, bb,
+     &  vol, hx, hy, qz, qc, qcb, gs, pbs, wbbc,
      &  cell_width, cell_height)
 *   ..save parameters
       call cfwure (nout(1), 100, parg, 'parg')

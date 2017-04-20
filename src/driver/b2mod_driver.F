@@ -1,7 +1,4 @@
-*-----------------------------------------------------------------------
-*.specification
-
-      subroutine b2mndr (ninp, nout, nx, ny, ns, ns0)
+      module b2mod_driver
       use b2mod_types
       use b2mod_version
       use b2mod_geo
@@ -41,10 +38,20 @@
       use b2mod_b2cmrc
       use b2mod_boundary_namelist
       use b2mod_external
+      use b2mod_mwti
+      use b2mod_balance !djm Jan2017
+     & , only : write_balance, balance_netcdf, alloc_b2mod_balance,
+     &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources
+
 #ifdef B25_EIRENE
       use eirmod_parmmod
+      use eirmod_cinit
+     * , only : eirene_init_cinit
       use eirmod_ccoupl
       use eirmod_clogau
+      use eirmod_ctrcei
+      use eirmod_comprt
+     , ,only: iunout
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25
@@ -60,6 +67,136 @@
       use b2mod_impgyro !yamoto
 #endif
       implicit none
+*   ..common blocks
+#     include "DIMENSIONS.F"
+*   ..local variables
+      integer ncall, ntim, mvinc, mvnum, ix, iy, jsep, jxi, jxa,
+     &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
+     &  nxtl, nxtr
+      integer nscx, iscx(0:nscxmax-1), k
+      save nscx, iscx, isfb,
+     &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
+      integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
+      integer, save :: pot_eq = 1
+      integer, save :: guard_flows = 2
+      real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
+      real (kind=R8) ::
+     *  na_min, na_new, dtim, stim, etim,
+     &  b2mndr_cpu, cpuval, cpustart, cpuinit,
+     &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
+     &  density_rescale, BoRiS, ne_wanted,
+     &  ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, factor,
+     &  ixfb, iyfb, ax, ay
+      real (kind=R8), allocatable ::
+     *  rsa(:,:,:), rra(:,:,:), rqa(:,:,:), rrd(:,:,:), rbr(:,:,:),
+     *  rza0(:,:,:), rz20(:,:,:), rpt0(:,:,:), rpi0(:,:,:)
+      save ne_wanted, ne_wanted_time, ne_wanted_next_time,
+     &  ne_wanted_mod_time, ixfb, iyfb
+      character idout0*32, idout1*32, savefile*16, savefilestatus*3
+      character, save :: savefile_p*14 = 'b2fplasmf.xxxx'
+      character chns*3                                               !srv 25.01.16
+      integer n2, itim, ierr, edition, i, b2time, coronal, use_eirene,
+     *  tally, ismain, ismain0, natmi, no_solve, use_astra,
+     *  save_f30, save_f31, external_species, no_current
+      integer, save :: edition_p=0, plasinc = 1, plasnum = 0
+      integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0
+      real (kind=R8) ::
+     *  cputarget, cpuincrement, neutral_rescale,
+     *  neutral_sources_rescale,
+     1  na_eps, te_eps, ti_eps, po_eps, ua_eps, sput_frc, sput_phys,
+     2  delta_min, dt_change_inc, delta_max, dt_change_dec,
+     3  dt_min, dt_max, max_delta
+#ifdef CATALYST
+      logical use_catalyst
+      integer lnblnk
+      external lnblnk
+#endif
+#ifdef JET
+      real (kind=R8) ::
+     *  delta_tran_time, save_tran_time
+      integer tran_num
+      character*6 tran_file_name
+#endif
+#ifdef B25_EIRENE
+      integer iflag
+#endif
+      logical ex
+      character*256 filename
+      character*16 fort31name      ! used to write to 'fort.31.########'
+      real (kind=R8) ::
+     *  delta_cdfmovie_time, save_cdfmovie_time
+      real (kind=R8) ::
+     *  delta_plasma_time, save_plasma_time
+      real (kind=R8) ::
+     *  te_hot, ne_hot_frac
+      logical quitexist, quit, quitexist_, write_save
+      real (kind=R8) ::
+     *  stack_dtim(20)
+      integer stack_ntim(20)
+      integer stack_ptr
+      logical ok, found
+      real (kind=R8) ::
+     *  min_areshe, min_areshi, min_aresco
+      logical quit_residual, test_residual
+      real (kind=R8) :: amtol
+      parameter (amtol=1.0e-2_R8)
+      real (kind=R8) :: hzconst                                      !srv 30.01.10
+*   ..initialisation
+      save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
+     1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
+     2  ismain, ismain0, savefilestatus, b2time, coronal, use_eirene,
+     3  natmi, neutral_rescale, neutral_sources_rescale, tally,
+     4  use_astra, BoRiS, density_rescale,
+     .  na_eps, te_eps, ti_eps, po_eps, ua_eps,
+     5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
+     6  dt_change_dec, no_solve, dt_min, dt_max, no_current,
+     7  save_f30, save_f31, te_hot, ne_hot_frac, external_species,
+     8  b2mndr_elapsed
+#ifdef JET
+      save delta_tran_time, save_tran_time, tran_num
+#endif
+      save delta_cdfmovie_time, save_cdfmovie_time
+      save delta_plasma_time, save_plasma_time
+      save min_areshe, min_areshi, min_aresco
+      data ncall/0/, ntim/1/, mvinc/1/, mvnum/0/, dtim/1.0_R8/,
+     1     stim/0.0_R8/, etim/0.0_R8/, ismain/1/, ismain0/0/,
+     2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/, use_astra/0/
+      data idout0/'pgnl;pgmm;pzmm'/, idout1/'pzmm'/
+      data na_new/1.0e14_R8/, na_min/1.0e4_R8/, b2mndr_cpu/0.0_R8/,
+     &     b2mndr_elapsed/0.0_R8/
+      data savefile/'plasmastate.xxxx'/,
+     1     cpuincrement/3600.0_R8/, savefilestatus/'new'/, b2time/1/,
+     2     coronal/0/, use_eirene/0/, neutral_rescale/1.0_R8/,
+     *     neutral_sources_rescale/1.0_R8/, tally/1/,
+     1     density_rescale/1.0_R8/, sput_frc/0.0_R8/, sput_phys/0.0_R8/,
+     *     no_solve/0/, no_current/0/,
+     2     na_eps/1.0e19_R8/,
+     3     te_eps/1.0e+1_R8/,
+     4     ti_eps/1.0e+1_R8/,
+     5     po_eps/1.0e+1_R8/,
+     6     ua_eps/1.0e+4_R8/,
+     7     delta_min/0.0_R8/,
+     8     dt_change_inc/1.0_R8/,
+     9     delta_max/0.0_R8/,
+     1     dt_change_dec/1.0_R8/,
+     2     dt_min/1.0e-30_R8/,
+     3     dt_max/1.0e+01_R8/,
+     4     BoRiS/0.0_R8/,
+     5     save_f30/0/, save_f31/0/, external_species/0/
+#ifdef JET
+      data delta_tran_time/0.0_R8/, save_tran_time/0.0_R8/,
+     1     tran_num/0/
+#endif
+      data delta_cdfmovie_time/0.0_R8/, save_cdfmovie_time/0.0_R8/
+      data delta_plasma_time/0.0_R8/, save_plasma_time/0.0_R8/
+      data min_areshe/0.0_R8/, min_areshi/0.0_R8/, min_aresco/0.0_R8/
+      data ne_wanted/0.0_R8/, ne_wanted_time/0.0_R8/,
+     &     ne_wanted_mod_time/0.0_R8/
+
+      contains
+
+      subroutine b2mndr_0 (ninp, nout, nx, ny, ns, ns0)
+      implicit none
 *   ..input arguments (unchanged on exit)
 #ifdef JET
       integer ninp(0:5), nout(0:9), nx, ny, ns, ns0
@@ -68,8 +205,23 @@
 #endif
 *   ..output arguments (unspecified on entry)
 *     (none)
-*   ..common blocks
-#     include "DIMENSIONS.F"
+*   ..local variables
+      real (kind=R8) ::
+     1  rescale_sa(0:nsdecl-1), rescale_ra(0:nsdecl-1),
+     2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
+     3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
+      integer atomic_physics_rescale_flag
+      data atomic_physics_rescale_flag/0/
+      namelist /atomic_physics_rescale/
+     & rescale_sa, rescale_ra, rescale_qa, rescale_cx,
+     & rescale_rd, rescale_br
+      integer is, js, idum(0:9)
+*   ..procedures
+      logical lnext
+      real (kind=R8) :: rratio
+      external rratio
+      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
+     &  abs(am(is)-am(js)).lt.amtol
 *-----------------------------------------------------------------------
 *.documentation
 *
@@ -142,153 +294,7 @@
 *-----------------------------------------------------------------------
 *.declarations
 
-*   ..common blocks
-*   ..local variables
 
-      integer ncall, ntim, mvinc, mvnum, ix, iy, is, js, jsep, jxi, jxa,
-     &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
-     &  nxtl, nxtr
-      integer nscx, iscx(0:nscxmax-1), k, idum(0:9)
-      save nscx, iscx, isfb,
-     &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
-      integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
-      integer, save :: pot_eq = 1
-      integer, save :: guard_flows = 2
-      real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
-      real (kind=R8) ::
-     *  na_min, na_new, dtim, stim, etim,
-     &  b2mndr_cpu, cpuval, cpustart, cpuinit,
-     &  b2mndr_elapsed, elapsedval, elapsedstart, elapsedinit,
-     &  density_rescale, BoRiS, ne_wanted,
-     &  ne_wanted_time, ne_wanted_next_time, ne_wanted_mod_time, factor,
-     &  ixfb, iyfb, ax, ay
-      save ne_wanted, ne_wanted_time, ne_wanted_next_time,
-     &  ne_wanted_mod_time, ixfb, iyfb
-      character idout0*32, idout1*32, savefile*16, savefilestatus*3
-      character, save :: savefile_p*14 = 'b2fplasmf.xxxx'
-      character chns*3                                               !srv 25.01.16
-      integer n2, itim, ierr, edition, i, b2time, coronal, use_eirene,
-     *  tally, ismain, ismain0, natmi, no_solve, use_astra,
-     *  save_f30, save_f31, external_species, no_current
-      integer, save :: edition_p=0, plasinc = 1, plasnum = 0
-      integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0
-      real (kind=R8) ::
-     *  cputarget, cpuincrement, neutral_rescale,
-     *  neutral_sources_rescale,
-     1  na_eps, te_eps, ti_eps, po_eps, ua_eps, sput_frc, sput_phys,
-     2  delta_min, dt_change_inc, delta_max, dt_change_dec,
-     3  dt_min, dt_max, max_delta
-#ifdef CATALYST
-      logical use_catalyst
-#endif
-#ifdef JET
-      real (kind=R8) ::
-     *  delta_tran_time, save_tran_time
-      integer tran_num
-      character*6 tran_file_name
-#endif
-#ifdef B25_EIRENE
-      integer iflag
-      logical ex
-#endif
-
-      character*16 fort31name      ! used to write to 'fort.31.########'
-      real (kind=R8) ::
-     *  delta_cdfmovie_time, save_cdfmovie_time
-      real (kind=R8) ::
-     *  delta_plasma_time, save_plasma_time
-      real (kind=R8) ::
-     *  te_hot, ne_hot_frac
-      logical quitexist, quit, quitexist_
-      real (kind=R8) ::
-     *  stack_dtim(20)
-      integer stack_ntim(20)
-      integer stack_ptr
-      logical ok, found
-      real (kind=R8) ::
-     *  min_areshe, min_areshi, min_aresco
-      logical quit_residual, test_residual
-      real (kind=R8) :: amtol
-      parameter (amtol=1.0e-2_R8)
-      real (kind=R8) ::
-     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
-     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
-     &  rbr(-1:nx,-1:ny,0:ns-1),
-     *  rza0(-1:nx,-1:ny,0:ns-1), rz20(-1:nx,-1:ny,0:ns-1),
-     *  rpt0(-1:nx,-1:ny,0:ns-1), rpi0(-1:nx,-1:ny,0:ns-1),
-     1  rescale_sa(0:nsdecl-1), rescale_ra(0:nsdecl-1),
-     2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
-     3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
-      integer atomic_physics_rescale_flag
-      real (kind=R8) :: hzconst                                      !srv 30.01.10
-*   ..procedures
-      logical lnext
-      real (kind=R8) ::
-     *  x05baf, epoch_seconds, rratio
-      external x05baf, epoch_seconds, rratio
-      intrinsic mod, abs, sqrt
-      external subini, subend, xertst, xerrab, ipgeti, ipgetr,
-     &  cfrure, cfwure, b2scopy
-      external b2rugm, b2rups, b2wfgm, b2wfpi, b2wups, b2mnds, b2mndt,
-     &  b2mwmv, b2mxnp, b2mxnu,
-     &  my_intcor, b2stbc_fb_final, b2spel, b2sqel, b2xvps, b2xvsg
-      lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
-     &  abs(am(is)-am(js)).lt.amtol
-*   ..initialisation
-      save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
-     1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
-     2  ismain, ismain0, savefilestatus, b2time, coronal, use_eirene,
-     3  natmi, neutral_rescale, neutral_sources_rescale, tally,
-     4  use_astra, BoRiS, density_rescale,
-     .  na_eps, te_eps, ti_eps, po_eps, ua_eps,
-     5  sput_frc, sput_phys, delta_min, dt_change_inc, delta_max,
-     6  dt_change_dec, no_solve, dt_min, dt_max, no_current,
-     7  save_f30, save_f31, te_hot, ne_hot_frac, external_species,
-     8  b2mndr_elapsed
-#ifdef JET
-      save delta_tran_time, save_tran_time, tran_num
-#endif
-      save delta_cdfmovie_time, save_cdfmovie_time
-      save delta_plasma_time, save_plasma_time
-      save min_areshe, min_areshi, min_aresco
-      namelist /atomic_physics_rescale/
-     & rescale_sa, rescale_ra, rescale_qa, rescale_cx,
-     & rescale_rd, rescale_br
-      data ncall/0/, ntim/1/, mvinc/1/, mvnum/0/, dtim/1.0_R8/,
-     1     stim/0.0_R8/, etim/0.0_R8/, ismain/1/, ismain0/0/,
-     2     te_hot/0.0_R8/, ne_hot_frac/0.0_R8/, use_astra/0/
-      data idout0/'pgnl;pgmm;pzmm'/, idout1/'pzmm'/
-      data na_new/1.0e14_R8/, na_min/1.0e4_R8/, b2mndr_cpu/0.0_R8/,
-     &     b2mndr_elapsed/0.0_R8/
-      data atomic_physics_rescale_flag/0/
-      data savefile/'plasmastate.xxxx'/,
-     1     cpuincrement/3600.0_R8/, savefilestatus/'new'/, b2time/1/,
-     2     coronal/0/, use_eirene/0/, neutral_rescale/1.0_R8/,
-     *     neutral_sources_rescale/1.0_R8/, tally/1/,
-     1     density_rescale/1.0_R8/, sput_frc/0.0_R8/, sput_phys/0.0_R8/,
-     *     no_solve/0/, no_current/0/,
-     2     na_eps/1.0e19_R8/,
-     3     te_eps/1.0e+1_R8/,
-     4     ti_eps/1.0e+1_R8/,
-     5     po_eps/1.0e+1_R8/,
-     6     ua_eps/1.0e+4_R8/,
-     7     delta_min/0.0_R8/,
-     8     dt_change_inc/1.0_R8/,
-     9     delta_max/0.0_R8/,
-     1     dt_change_dec/1.0_R8/,
-     2     dt_min/1.0e-30_R8/,
-     3     dt_max/1.0e+01_R8/,
-     4     BoRiS/0.0_R8/,
-     5     save_f30/0/, save_f31/0/, external_species/0/
-#ifdef JET
-      data delta_tran_time/0.0_R8/, save_tran_time/0.0_R8/,
-     1     tran_num/0/
-#endif
-      data delta_cdfmovie_time/0.0_R8/, save_cdfmovie_time/0.0_R8/
-      data delta_plasma_time/0.0_R8/, save_plasma_time/0.0_R8/
-      data min_areshe/0.0_R8/, min_areshi/0.0_R8/, min_aresco/0.0_R8/
-      data ne_wanted/0.0_R8/, ne_wanted_time/0.0_R8/,
-     &     ne_wanted_mod_time/0.0_R8/
 *-----------------------------------------------------------------------
 *.documentation-internal
 *
@@ -831,7 +837,7 @@
 
 * ..preliminaries
 *   ..subprogram start-up calls
-      call subini ('b2mndr')
+      call subini ('b2mndr_0')
 *   ..test input data
 *     (done in b2mnds)
 *   ..initialise files and common
@@ -840,6 +846,9 @@
 *     (Note that the internal parameters are only defined following
 *     the call to b2mnds.)
       if (ncall.eq.0) then
+       balance_netcdf = 0 ! Default: do not create balance arrays
+       call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
+       if (balance_netcdf.ne.0) call alloc_b2mod_balance(nx,ny,ns)
        call ipgeti ('b2mndr_iout', iout)                             !srv 25.01.16
        call ipgeti ('b2mndr_ntim', ntim)
        call ipgetr ('b2mndr_dtim', dtim)
@@ -922,12 +931,14 @@
 
 #ifdef CATALYST
        use_catalyst = .false.
-       inquire(FILE='../coproc.py',EXIST=use_catalyst)
+       filename='coproc.py'
+       call find_file(filename,use_catalyst)
        if (use_catalyst .eqv. .false.)
      >  write(*,*) 'File coproc.py missing ',
      > 'from run directory - Catalyst will not start.'
        if (use_catalyst .eqv. .true.) then
-          call coprocessorinitializewithpython('../coproc.py',12)
+          call coprocessorinitializewithpython
+     >     (filename,lnblnk(filename))
        endif
 #endif
 
@@ -986,6 +997,12 @@ c     &   'faulty internal parameter density_rescale')
        call ipgetr ('b2mndr_dt_max',dt_max)
        call xertst (0.0_R8.le.dt_max,'faulty internal parameter dt_max')
 * modify rate coefficients for coronal model
+       allocate(
+     *  rsa(-1:nx,-1:ny,0:ns-1), rra(-1:nx,-1:ny,0:ns-1),
+     &  rqa(-1:nx,-1:ny,0:ns-1), rrd(-1:nx,-1:ny,0:ns-1),
+     &  rbr(-1:nx,-1:ny,0:ns-1),
+     *  rza0(-1:nx,-1:ny,0:ns-1), rz20(-1:nx,-1:ny,0:ns-1),
+     *  rpt0(-1:nx,-1:ny,0:ns-1), rpi0(-1:nx,-1:ny,0:ns-1))
        call ipgeti ('b2mndr_coronal_model', coronal)
        if(coronal.ne.0) then
           write(*,*)
@@ -1015,9 +1032,10 @@ c     &   'faulty internal parameter density_rescale')
           rescale_cx=1.0_R8
           rescale_rd=1.0_R8
           rescale_br=1.0_R8
-          open(99,file='../b2.atomic_physics_rescale.parameters')
-          write(*,*)
-     &         'Reading ../b2.atomic_physics_rescale.parameters'
+          filename='b2.atomic_physics_rescale.parameters'
+          call find_file(filename,ex)
+          open(99,file=filename)
+          write(*,*) 'Reading ',trim(filename)
 #ifdef USE_MPI
           read(99,atomic_physics_rescale,err=999)
 #else
@@ -1025,7 +1043,7 @@ c     &   'faulty internal parameter density_rescale')
 #endif
           write(*,atomic_physics_rescale)
           close(99)
-          write(*,*) 'Read ../b2.atomic_physics_rescale.parameters'
+          write(*,*) 'Read ',trim(filename)
           call xertst (min(
      1         minval(rescale_sa(0:rtns-1)),
      2         minval(rescale_ra(0:rtns-1)),
@@ -1066,7 +1084,7 @@ c     &   'faulty internal parameter density_rescale')
        call ipgetr ('b2mndr_rescale_neutrals',neutral_rescale)
        call ipgetr ('b2mndr_rescale_neutrals_sources',
      *       neutral_sources_rescale)
-c-dpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
+cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        if(use_eirene.eq.0) neutral_sources_rescale=1.0_R8
        if(use_eirene.ne.0) then
          if (neutral_sources_rescale.ne.1.0_R8) then
@@ -1170,10 +1188,14 @@ csw 09oct2012
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
         N1ST=DEF_NYD+1
-        N2ND=DEF_NXD+1+DEF_NCUT+DEF_ISOEXTRA
+        N2ND=DEF_NXD+MAX(1,DEF_NCUT/2*3)+
+     .       DEF_ISOEXTRA*MAX(0,DEF_NCUT/2-1)
         N3RD=DEF_NPHID
+        NREAC=7
+        IUNOUT=6
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_INIT_CINIT
 #else
         call xerrab
      &   ('Compile code with B25_EIRENE option for coupled runs')
@@ -1184,6 +1206,7 @@ csw 09oct2012
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
       CALL EIRENE_ALLOC_CCOUPL(1)
+      CALL EIRENE_ALLOC_CTRCEI
 #endif
 
 *   ..read geometry and metric
@@ -1244,10 +1267,14 @@ csw 09oct2012
         enddo                                                            !sv
       enddo                                                              !sv
 *  .. interpolate OnedBsq for corners of cell                            !sv
-      call my_intcor (nx,ny,vol,OnedBsq,OnedBsqc)                        !sv
+      call my_intcor (nx,ny,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,OnedBsq,OnedBsqc)        !sv
 *  .. interpolate magnetic field to cell corners                         !xpb
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
-      call my_intcor1(nx,ny,2,vol,bb,wbbc)                               !xpb
+      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)                 !xpb
 *   ..compute extrapolated wbbc(:,:,3) component
       wbbc(:,:,3)=sqrt(wbbc(:,:,0)**2+wbbc(:,:,1)**2+wbbc(:,:,2)**2)
 *   ..compute hz                                                         !srv 09.01.01  09.06.08 {
@@ -1641,18 +1668,39 @@ c new CDF movie option (1st frame at t=0)
         endif
         save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
       endif
+      cpuval = 0.0_R8
+      elapsedval = 0.0_R8
+      stack_ptr = 0
+      first_time_step=.true.
+
+      call subend()
+      return
+ 999  call xerrab
+     . ('Error while reading ATOMIC_PHYSICS_RESCALE namelist!')
+      end subroutine b2mndr_0
+
+      subroutine b2mndr_1 (nout, nx, ny, ns, add_ntim)
+      implicit none
+#ifdef JET
+      integer nout(0:9), nx, ny, ns, add_ntim
+#else
+      integer nout(0:8), nx, ny, ns, add_ntim
+#endif
+      integer is, js
+*   ..procedures
+      real(kind=R8) :: epoch_seconds
+      external epoch_seconds
+
+      call subini ('b2mndr_1')
 *   ..no error so far
       ierr = 0
-      first_time_step=.true.
       quit=.false.
       quitexist=.false.
       quitexist_=.false.                                            !srv 13.04.11
-      quit_residual=.false.                                              !jwk
-      cpuval = 0.0_R8
-      elapsedval = 0.0_R8
-      stack_ptr=0
+      quit_residual=.false.                                         !jwk
+      ntim = ntim + add_ntim
       ne_wanted_next_time=tim
-      cpuinit=x05baf()
+      call cpu_time(cpuinit)
       elapsedinit=epoch_seconds()
 
     1 continue
@@ -1660,7 +1708,7 @@ c new CDF movie option (1st frame at t=0)
      . 'b2mndr_00:itim,dtim,ntim,stack_ptr',
      1            itim,dtim,ntim,stack_ptr,quit
 
-      cpustart=x05baf()
+      call cpu_time(cpustart)
       elapsedstart=epoch_seconds()
 *   ..loop test
 *!!   (Note: better loop control yet to be developed)
@@ -1873,7 +1921,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *    ..loop
         inquire(file='_quit',exist=quitexist_)                           !srv 18.05.09 13.04.11
         inquire(file='.quit',exist=quitexist)
-        cpuval=x05baf()
+        call cpu_time(cpuval)
         elapsedval=epoch_seconds()
         if (b2mndr_cpu.gt.0.0_R8) then
           write(*,'(3(a,es11.3))') 'b2-step-cpu =',cpuval-cpustart,
@@ -1911,11 +1959,13 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &       b2mndr_elapsed.gt.0.0_R8).or.
      2      (etim.gt.stim.and.tim.ge.etim.and.etim.ne.0.0_R8).or.
      3      (no_solve.eq.1.and.itim.eq.ntim)
-        if(.not.quit.and.
-     .   ((cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8).or.
-     .    (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)).or.
-     .    (ntim_save.gt.0.and.ntim.gt.0.and.mod(ntim,ntim_save).eq.0))
-     >   then
+        write_save=cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8
+        write_save=write_save.or.
+     .   (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
+        if(ntim_save.gt.0.and.ntim.gt.0) write_save=write_save.or.
+     .   mod(ntim,ntim_save).eq.0
+        write_save=write_save.and..not.quit
+        if(write_save) then
           write(savefile(13:16),'(i4)') edition
           edition=edition+1
           if(cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8)
@@ -1945,15 +1995,19 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc)
 *       ..write additional save namelist data
-          inquire(file='../b2.feedback_save.parameters',exist=found)
+          filename='b2.feedback_save.parameters'
+          call find_file(filename,found)
           if (found) call write_b2mod_feedback(99,savefile(13:16))
-          inquire(file='../b2.neutrals_save.parameters',exist=found)
+          filename='b2.neutrals_save.parameters'
+          call find_file(filename,found)
           if (found)
      >     call write_b2mod_neutrals_save(99,savefile(13:16))
-          inquire(file='../b2.sputter_save.parameters',exist=found)
+          filename='b2.sputter_save.parameters'
+          call find_file(filename,found)
           if (found) call write_b2mod_sputter_namelist(99,nx,ny,ns,
      >     savefile(13:16))
-          inquire(file='../b2.wall_save.parameters',exist=found)
+          filename='b2.wall_save.parameters'
+          call find_file(filename,found)
           if (found) call write_b2mod_wall_namelist(99,nx,ny,ns,
      >     savefile(13:16))
           if (ank_tracing.ne.0) call b2filef(ns)
@@ -1972,7 +2026,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
      &   vol, hx, hy, qc, te, ti, po, bzb, OnedBsq,ne,qz, pbs, fhe, fhi,
      &   fch, pbshz, fhe_mdf, fhi_mdf, fchvispar,
      &   fchvisq, fchinert,  fchdia, fchin, fch_p, fchvisper, gs, bb,
-     &   na, ua, kinrgy, rra, rqa,fna, fna_mdf, fna_fcor, uadia, vadia,
+     &   na, ua, kinrgy, rra, rqa, fna, fna_mdf, fna_fcor, uadia, vadia,
      &   vaecrb, rlsa, rlra, rlqa, rlza, rlpt, rlpi, float(rightix), 
      &   float(topiy))
         endif
@@ -1981,6 +2035,19 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..end loop
       endif  !}
 
+      call subend ()
+      return
+      end subroutine b2mndr_1
+
+      subroutine b2mndr_2(nout, nx, ny, ns)
+      implicit none
+#ifdef JET
+      integer nout(0:9), nx, ny, ns
+#else
+      integer nout(0:8), nx, ny, ns
+#endif
+
+      call subini ('b2mndr_2')
       if(quitexist)
      1 write(*,*) 'stopping because .quit seen'
       if(quitexist_) write(*,*) 'stopping because _quit seen'         !srv 13.04.11
@@ -2012,7 +2079,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 * finalise sputtering
       call write_b2mod_sputter_namelist(99, nx, ny, ns, '    ')
 * finalise time-dependent wall data
-      inquire(file='../b2.wall_save.parameters',exist=found)
+      filename='b2.wall_save.parameters'
+      call find_file(filename,found)
       call wall_final(nx,ny,ns,found)
 
 * ..display and save the result of the calculation
@@ -2088,6 +2156,15 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call tallies(nx,ny,ns)
         endif
       endif
+*   ..create netcdf file containing everything for balance postprocessing routines !djm Jan2017
+      if(balance_netcdf.ne.0) then
+#ifndef NO_CDF
+        call write_balance(nx,ny,ns)
+#else
+        write(*,*)
+     >   'NO_CDF is set at compilation, cannot write balance.nc'
+#endif
+      endif
 
 #ifdef CATALYST
       if (use_catalyst .eqv. .true.) call coprocessorfinalize()
@@ -2107,6 +2184,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 
 * ..return
       ncall = ncall+1
+      deallocate(rsa, rra, rqa, rrd, rbr, rza0, rz20, rpt0, rpi0)
       call dealloc_b2mod_diag
       call dealloc_b2mod_ma28
       call dealloc_b2mod_wall
@@ -2115,6 +2193,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call dealloc_sputter_data
       call dealloc_b2mod_sputter
       call dealloc_b2mod_tallies
+      call dealloc_b2mod_balance
       call dealloc_input_profile
       call dealloc_b2mod_elements
       call dealloc_b2mod_boundary
@@ -2128,6 +2207,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       call dealloc_b2mod_neoclassical
       call dealloc_b2mod_ma28_for_7diag
       call dealloc_b2mod_ma28_for_9diag
+      call dealloc_b2mod_eirene_sources
       call dealloc_b2mod_external_dummy
       call dealloc_b2mod_transport_models
       call dealloc_b2mod_transport_disruption
@@ -2136,17 +2216,13 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_DEALLOC_CCOUPL
+      CALL EIRENE_DEALLOC_CTRCEI
 #endif
       call subend ()
       return
-
+      end subroutine b2mndr_2
 *-----------------------------------------------------------------------
 *.end b2mndr
-
- 999  call xerrab
-     . ('Error while reading ATOMIC_PHYSICS_RESCALE namelist!')
-
-      end subroutine b2mndr
 c
       subroutine dpc_mod_rates(te_hot, ne_hot_frac)
       use b2mod_types
@@ -2166,72 +2242,73 @@ c
       ite = 0
       rlte = max(rtlt(0),min(rtlt(rtnt),log(te_hot)))
 
-    1   if (ite.lt.rtnt-1) then
-         if (rtlt(ite+1).le.rlte) then
+    1 if (ite.lt.rtnt-1) then
+        if (rtlt(ite+1).le.rlte) then
           ite = ite+1
           goto 1
-         endif
         endif
-    2   if (0.lt.ite) then
-         if (rlte.lt.rtlt(ite)) then
+      endif
+    2 if (0.lt.ite) then
+        if (rlte.lt.rtlt(ite)) then
           ite = ite-1
           goto 2
-         endif
         endif
+      endif
 *     ..compute coefficient for linear interpolation
-        ixte = ite
-        fxte = (rlte-rtlt(ite))/(rtlt(ite+1)-rtlt(ite))
-        write(*,*) ixte
-
-        write(*,*) rtn(rtnn/2)
-        write(*,*) rtt(:)
-        write(*,*) exp(rtlsa(:,rtnn/2,0))
-        do ise= 0, rtns-1
-          do ine= 0, rtnn
-            rate_sa = exp((1.0_R8-fxte)*rtlsa(ixte,ine,ise) +
-     1       fxte*rtlsa(ixte+1,ine,ise)) * ne_hot_frac
-            rate_ra = exp((1.0_R8-fxte)*rtlra(ixte,ine,ise) +
-     1       fxte*rtlra(ixte+1,ine,ise)) * ne_hot_frac
-            rate_qa = exp((1.0_R8-fxte)*rtlqa(ixte,ine,ise) +
-     1       fxte*rtlqa(ixte+1,ine,ise)) * ne_hot_frac
-            rate_rd = exp((1.0_R8-fxte)*rtlrd(ixte,ine,ise) +
-     1       fxte*rtlrd(ixte+1,ine,ise)) * ne_hot_frac
-            rate_br = exp((1.0_R8-fxte)*rtlbr(ixte,ine,ise) +
-     1       fxte*rtlbr(ixte+1,ine,ise)) * ne_hot_frac
-!!          rate_cx = exp((1.0_R8-fxte)*rtlcx(ixte,ine,ise) +
-!!   1       fxte*rtlcx(ixte+1,ine,ise)) * ne_hot_frac
-            rate_za = ((1.0_R8-fxte)*rtlza(ixte,ine,ise) +
-     1       fxte*rtlza(ixte+1,ine,ise)) * ne_hot_frac
-            rate_z2 = ((1.0_R8-fxte)*rtlz2(ixte,ine,ise) +
-     1       fxte*rtlz2(ixte+1,ine,ise)) * ne_hot_frac
-            rate_pt = ((1.0_R8-fxte)*rtlpt(ixte,ine,ise) +
-     1       fxte*rtlpt(ixte+1,ine,ise)) * ne_hot_frac
-            rate_pi = ((1.0_R8-fxte)*rtlpi(ixte,ine,ise) +
-     1       fxte*rtlpi(ixte+1,ine,ise)) * ne_hot_frac
-            do ite= 0, rtnt
-              rtlsa(ite,ine,ise) =
-     1         log(exp(rtlsa(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_sa)
-              rtlra(ite,ine,ise) =
-     1         log(exp(rtlra(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_ra)
-              rtlqa(ite,ine,ise) =
-     1         log(exp(rtlqa(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_qa)
-              rtlrd(ite,ine,ise) =
-     1         log(exp(rtlrd(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_rd)
-              rtlbr(ite,ine,ise) =
-     1         log(exp(rtlbr(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_br)
-!!            rtlcx(ite,ine,ise) =
-!!   1         log(exp(rtlcx(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_cx)
-              rtlza(ite,ine,ise) =
-     1         rtlza(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_za
-              rtlz2(ite,ine,ise) =
-     1         rtlz2(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_z2
-              rtlpt(ite,ine,ise) =
-     1         rtlpt(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_pt
-              rtlpi(ite,ine,ise) =
-     1         rtlpi(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_pi
-            enddo
+      ixte = ite
+      fxte = (rlte-rtlt(ite))/(rtlt(ite+1)-rtlt(ite))
+      write(*,*) ixte
+      write(*,*) rtn(rtnn/2)
+      write(*,*) rtt(:)
+      write(*,*) exp(rtlsa(:,rtnn/2,0))
+      do ise= 0, rtns-1
+        do ine= 0, rtnn
+          rate_sa = exp((1.0_R8-fxte)*rtlsa(ixte,ine,ise) +
+     1     fxte*rtlsa(ixte+1,ine,ise)) * ne_hot_frac
+          rate_ra = exp((1.0_R8-fxte)*rtlra(ixte,ine,ise) +
+     1     fxte*rtlra(ixte+1,ine,ise)) * ne_hot_frac
+          rate_qa = exp((1.0_R8-fxte)*rtlqa(ixte,ine,ise) +
+     1     fxte*rtlqa(ixte+1,ine,ise)) * ne_hot_frac
+          rate_rd = exp((1.0_R8-fxte)*rtlrd(ixte,ine,ise) +
+     1     fxte*rtlrd(ixte+1,ine,ise)) * ne_hot_frac
+          rate_br = exp((1.0_R8-fxte)*rtlbr(ixte,ine,ise) +
+     1     fxte*rtlbr(ixte+1,ine,ise)) * ne_hot_frac
+!!        rate_cx = exp((1.0_R8-fxte)*rtlcx(ixte,ine,ise) +
+!!   1     fxte*rtlcx(ixte+1,ine,ise)) * ne_hot_frac
+          rate_za = ((1.0_R8-fxte)*rtlza(ixte,ine,ise) +
+     1     fxte*rtlza(ixte+1,ine,ise)) * ne_hot_frac
+          rate_z2 = ((1.0_R8-fxte)*rtlz2(ixte,ine,ise) +
+     1     fxte*rtlz2(ixte+1,ine,ise)) * ne_hot_frac
+          rate_pt = ((1.0_R8-fxte)*rtlpt(ixte,ine,ise) +
+     1     fxte*rtlpt(ixte+1,ine,ise)) * ne_hot_frac
+          rate_pi = ((1.0_R8-fxte)*rtlpi(ixte,ine,ise) +
+     1     fxte*rtlpi(ixte+1,ine,ise)) * ne_hot_frac
+          do ite= 0, rtnt
+            rtlsa(ite,ine,ise) =
+     1       log(exp(rtlsa(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_sa)
+            rtlra(ite,ine,ise) =
+     1       log(exp(rtlra(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_ra)
+            rtlqa(ite,ine,ise) =
+     1       log(exp(rtlqa(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_qa)
+            rtlrd(ite,ine,ise) =
+     1       log(exp(rtlrd(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_rd)
+            rtlbr(ite,ine,ise) =
+     1       log(exp(rtlbr(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_br)
+!!          rtlcx(ite,ine,ise) =
+!!   1       log(exp(rtlcx(ite,ine,ise))*(1.0_R8-ne_hot_frac)+rate_cx)
+            rtlza(ite,ine,ise) =
+     1       rtlza(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_za
+            rtlz2(ite,ine,ise) =
+     1       rtlz2(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_z2
+            rtlpt(ite,ine,ise) =
+     1       rtlpt(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_pt
+            rtlpi(ite,ine,ise) =
+     1       rtlpi(ite,ine,ise)*(1.0_R8-ne_hot_frac)+rate_pi
           enddo
         enddo
-        write(*,*) exp(rtlsa(:,rtnn/2,0))
-        return
-        end subroutine dpc_mod_rates
+      enddo
+      write(*,*) exp(rtlsa(:,rtnn/2,0))
+      return
+      end subroutine dpc_mod_rates
+
+      end module b2mod_driver

@@ -1,5 +1,6 @@
       module b2mod_user_namelist
       use b2mod_types
+      use b2mod_diag
 #     include "DIMENSIONS.F"
       integer npfrgrpd, nntrgrpd
       parameter (npfrgrpd=6, nntrgrpd=16)
@@ -23,6 +24,15 @@
       logical scale_He, print_isat
       logical user_namelist_used
 
+      private :: user
+      namelist /user/
+     ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,
+     ,  j_h_at,j_he_at,j_ne_at,
+     ,  l_h_mol,fusion_power,Spmp_He_to_D,lpfrs_pmp,
+     ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
+     ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
+     ,  Spmp_nom,scale_He,print_isat,
+     ,  user_filename
 c----------------------------------------------------------------------
 c*** fusion_power : fusion power (including neutrons) [MW]
 c*** Spmp_He_to_D : ratio of He to DT pumping speeds (typically, 0.8)
@@ -34,8 +44,9 @@ c***              from the bottom, if non-positive)
 c*** lpfrt_[io]:  B2 x-cell indices corresponding to the top of the
 c***              bypass between the inner and outer divertor (counted
 c***              from the x-point, if non-positive)
-c*** j_he_at   :  Helium index in EIRENE atoms list
 c*** j_h_at    :  Hydrogen index in EIRENE atoms list
+c*** j_he_at   :  Helium index in EIRENE atoms list
+c*** j_ne_at   :  Neon index in EIRENE atoms list
 c*** l_h_mol   :  Hydrogen content in the molecules
 c*** lpfrs_pmp :  Location of the pump.
 c***              0 no pump at all, 1 - lower PFR, 2 - lower outer
@@ -73,10 +84,10 @@ c***  Standard setup:
       l_h_mol=0
       j_he_at=0
       j_ne_at=0
-      lpfrb_i=-2
-      lpfrb_o=-2
-      lpfrt_i=-2
-      lpfrt_o=-2
+      lpfrb_i=0
+      lpfrb_o=0
+      lpfrt_i=0
+      lpfrt_o=0
       npfrgrp=0
       ipfrgrp=0
       jpfrgrp=0
@@ -103,28 +114,44 @@ c***  Standard setup:
       return
       end subroutine dealloc_b2mod_user
 
-      subroutine read_b2mod_user_namelist(nx)
+      subroutine read_b2mod_user_namelist(nx,ns)
       use b2mod_b2cmpa
       implicit none
-      integer nx
+      integer nx, ns
 
-      namelist /user/ 
-     ,  lhetrgts,lpfrb_i,lpfrb_o,lpfrt_i,lpfrt_o,j_he_at,j_h_at,
-     ,  l_h_mol,fusion_power,Spmp_He_to_D,lpfrs_pmp,
-     ,  npfrgrp,lpfrgrp,ipfrgrp,jpfrgrp,gpfrgrp,
-     ,  nntrgrp,lntrgrp,intrgrp,jntrgrp,gntrgrp,
-     ,  Spmp_nom,scale_He,print_isat,
-     ,  user_filename
       logical :: file_ok
       character*260 filename
-      integer i
+      integer i, is
+      logical, save :: hydrogen, helium, neon
       external subini, subend
 
       call subini ('readuser')
 
+c*** Set default values according to current species list
+      hydrogen = .false.
+      is = 0
+      do while (.not.hydrogen .and. is.lt.ns)
+        hydrogen = is_neutral(is) .and. nint(zn(is)).eq.1
+        if (hydrogen) j_h_at = b2espcr(is)
+        is = is + 1
+      end do
+      helium = .false.
+      is = 0
+      do while (.not.helium .and. is.lt.ns)
+        helium = is_neutral(is) .and. nint(zn(is)).eq.2
+        if (helium) j_he_at = b2espcr(is)
+        is = is + 1
+      end do
+      neon = .false.
+      is = 0
+      do while (.not.neon .and. is.lt.ns)
+        neon = is_neutral(is) .and. nint(zn(is)).eq.10
+        if (neon) j_ne_at = b2espcr(is)
+        is = is + 1
+      end do
 *  -- USER --
-      filename='../' // user_filename
-      inquire(file=filename,exist=file_ok)
+      filename=user_filename
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
         write(*,*) 'Reading namelist user from ',trim(filename)
@@ -138,24 +165,20 @@ c***  Standard setup:
       else
         write(*,*) 'No ',trim(filename)
         user_namelist_used = .false.
+        filedata(ntrc_usr) = .false.
       endif
 
-*   ..test input
+*   ..test user namelist input
       call xertst(0.0_R8.le.fusion_power,
      . 'faulty input fusion_power')
       call xertst(0.0_R8.le.Spmp_nom,
      . 'faulty input Spmp_nom')
       call xertst(0.0_R8.le.Spmp_He_to_D,
      . 'faulty input Spmp_He_to_D')
-!csw 14jan2014 remove the following checks to allow negative values
-c      if (lpfrb_i.ne.-2) call xertst (0.le.lpfrb_i.and.lpfrb_i.lt.nx,
-c     . 'faulty input lpfrb_i')
-c      if (lpfrb_o.ne.-2) call xertst (0.le.lpfrb_o.and.lpfrb_o.lt.nx,
-c     . 'faulty input lpfrb_o')
-c      if (lpfrt_i.ne.-2) call xertst (0.le.lpfrt_i.and.lpfrt_i.lt.nx,
-c     . 'faulty input lpfrt_i')
-c      if (lpfrt_o.ne.-2) call xertst (0.le.lpfrt_o.and.lpfrt_o.lt.nx,
-c     . 'faulty input lpfrt_o')
+      call xertst (abs(lpfrb_i).le.nx, 'faulty input lpfrb_i')
+      call xertst (abs(lpfrb_o).le.nx, 'faulty input lpfrb_o')
+      call xertst (abs(lpfrt_i).le.nx, 'faulty input lpfrt_i')
+      call xertst (abs(lpfrt_o).le.nx, 'faulty input lpfrt_o')
       call xertst (0.le.npfrgrp, 'faulty input npfrgrp')
       do i = 1, npfrgrp
         call xertst(1.le.ipfrgrp(i).and.ipfrgrp(i).le.jpfrgrp(i),
@@ -175,6 +198,22 @@ c     . 'faulty input lpfrt_o')
         call xertst(jntrgrp(i-1).lt.intrgrp(i),
      .   'faulty inputs intrgrp, jntrgrp')
       end do
+      if (hydrogen) then
+        call xertst(nint(zn(eb2spcr(j_h_at))).eq.1,
+     .   'faulty input j_h_at')
+#ifdef B25_EIRENE
+        if (user_namelist_used) then
+          do is = 1, nnmoli
+            call xertst(l_h_mol(is).eq.mlcmp(j_h_at,is),
+     .       'faulty inputs l_h_mol, mlcmp')
+          end do
+        end if
+#endif
+      end if
+      if (helium) call xertst(nint(zn(eb2spcr(j_he_at))).eq.2,
+     . 'faulty input j_he_at')
+      if (neon) call xertst(nint(zn(eb2spcr(j_ne_at))).eq.10,
+     . 'faulty input j_ne_at')
 
       call subend ()
 

@@ -41,7 +41,7 @@
       lcstck(0,nchs) = lcr0
       lcstck(1,nchs) = lci0
       nchs = nchs+1
-c-dpc      write(*,*) 'subini: ',srname,nchs
+cdpc      write(*,*) 'subini: ',srname,nchs
       return
 *     ------------------------------------------------------------------
       entry subend ()
@@ -50,7 +50,7 @@ c-dpc      write(*,*) 'subini: ',srname,nchs
 *   ..pop data from the stack
 *     (lcr0 and lci0 are the base addresses at invocation of the present
 *     subprogram)
-c-dpc      write(*,*) 'subend: ',chstck(nchs)
+cdpc      write(*,*) 'subend: ',chstck(nchs)
       nchs = nchs-1
       lcr0 = lcstck(0,nchs)
       lci0 = lcstck(1,nchs)

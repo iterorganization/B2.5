@@ -64,7 +64,7 @@ contains
   !> Set the default assertion stop behaviour. 
 
   !> @param doStop .true. means immediate
-  !> stop on fail, .false. means don't stop on fail (for use with 
+  !> stop on fail, .false. means do not stop on fail (for use with
   !> delayed stopping, @see assertStopOnFailed). The default value is .true.,
   !> it is set if doStop is omitted.
   subroutine assertSetStopMode( doStop )

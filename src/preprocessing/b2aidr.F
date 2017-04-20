@@ -95,6 +95,7 @@
      *  amtol, naini(0:ns-1), ttini, na_min
       parameter (amtol=1.0e-2_R8)
       logical oldversion, ex
+      character*256 filename
 *   ..procedures
       logical streql, is_comment
       logical ltst                                                  !srv 22.12.09
@@ -511,17 +512,14 @@
 *  .. copy the data of first n=min(ns0,ns1) species
 *     from the plasma state file b2fstate for ns0 species
 *     into the initial plasma state file b2fstati for ns1 species
-       write(*,*) ' Opening b2fstate'
+       filename='b2fstate'
+       call find_file(filename,ex)
        inquire(file='b2fstate',exist=ex)
        if (ex) then
-         call cfopen (ninp(3),'b2fstate','old','un*formatted')
+         write(*,*) ' Opening '//trim(filename)
+         call cfopen (ninp(3),filename,'old','un*formatted')
        else
-         inquire(file='../b2fstate',exist=ex)
-         if (ex) then
-           call cfopen (ninp(3),'../b2fstate','old','un*formatted')
-         else
-           call xerrab ('Could not find old b2fstate file')
-         end if
+         call xerrab ('Could not find old b2fstate file')
        end if
 *   ..obtain version number
        call cfverr (ninp(3), b2fstate_version)

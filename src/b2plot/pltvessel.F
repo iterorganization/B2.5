@@ -8,6 +8,7 @@ c
       real (kind=R8) ::
      * x1,y1,x2,y2,r1o,z1o,r2o,z2o,r1,z1,r2,z2,dist
       integer icnt
+      character*256 filename
 
       dist(x1,y1,x2,y2)=sqrt((x1-x2)**2+(y1-y2)**2)
 
@@ -18,9 +19,10 @@ c
 #endif
       icnt=0
       if(mod(typeofplot,2) .eq. 1) then ! mesh physical domain
-        inquire(file='../mesh.extra',exist=exist)
+        filename='mesh.extra'
+        call find_file(filename,exist)
         if(exist) then
-          open(99,file='../mesh.extra')
+          open(99,file=trim(filename))
           read(99,*,end=30) r1o,z1o,r2o,z2o
    10     continue
           read(99,*,end=20) r1,z1,r2,z2

@@ -86,11 +86,11 @@
       logical file_ok
 
       if (edition.eq.'    ') then
-        filename = '../b2.feedback_save.parameters'
+        filename = 'b2.feedback_save.parameters'
       else
         filename = 'b2.feedback_save.parameters.'//edition
       endif
-      inquire(file=trim(filename),exist=file_ok)
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(nread,file=trim(filename))
         write(6,*) 'Reading ',trim(filename)
@@ -123,7 +123,7 @@
       character*256 filename
 
       if (edition.eq.'    ') then
-        filename = '../b2.feedback_save.parameters'
+        filename = 'b2.feedback_save.parameters'
       else
         filename = 'b2.feedback_save.parameters.'//edition
       endif
@@ -159,7 +159,9 @@ cxpb size is changed in DIMENSIONS.F
       subroutine read_b2mod_feedback_control(nread)
       implicit none
       integer nread
+      character*256 filename
       logical file_ok
+
       vacuum_communication = 0
       vacuum_communication_nreg = 0
       vacuum_communication_method = 0
@@ -168,9 +170,10 @@ cxpb size is changed in DIMENSIONS.F
       vacuum_communication_ix2 = -2
       vacuum_communication_alpha = 0.0
       vacuum_communication_beta = 1.0
-      inquire(file='../b2.feedback_control.parameters',exist=file_ok)
+      filename='b2.feedback_control.parameters'
+      call find_file(filename,file_ok)
       if(file_ok) then
-        open(nread,file='../b2.feedback_control.parameters')
+        open(nread,file=filename)
         read(nread,feedback_control)
         close(nread)
       endif
@@ -179,7 +182,7 @@ cxpb size is changed in DIMENSIONS.F
       subroutine write_b2mod_feedback_control(nwrite)
       implicit none
       integer nwrite
-      open(nwrite,file='../b2.feedback_control.parameters')
+      open(nwrite,file='b2.feedback_control.parameters')
       write(nwrite,feedback_control)
       close(nwrite)
       end subroutine write_b2mod_feedback_control

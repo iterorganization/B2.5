@@ -12,6 +12,9 @@
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_balance !djm Jan2017
+     & , only : b2npht_shei_bal, update_balance_sources_heat,
+     &          balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, nregionv, itcnt
@@ -194,6 +197,12 @@
       endif
       call b2saxpy (n2*4, 1.0e0_R8, she, 1, she0, 1)
       call b2saxpy (n2*4, 1.0e0_R8, shi, 1, shi0, 1)
+
+cdjm Jan2017 update particle source components for balance
+      if (balance_netcdf.ne.0) then
+        call update_balance_sources_heat(nx,ny,ne,ni,te,ti)
+      endif
+
 *   ..compute provisional reshe, reshi
 *     (first ignore equipartition)
 *   ..save final electron heat source ignoring equipartition            !srv 10.11.02 {
@@ -222,6 +231,11 @@
         enddo
        enddo
       endif                                                             !srv 18.09.09 30.01.10 }
+
+      if (balance_netcdf.ne.0) then
+        b2npht_shei_bal(-1:nx,-1:ny) = shei(-1:nx,-1:ny)                      !djm Jan2017
+      endif
+
 *   ..compute final resht, reshe, reshi
       do iy = -1, ny
        do ix = -1, nx

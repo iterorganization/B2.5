@@ -232,7 +232,7 @@
       call cfrure (nget, n2, hy, 'hy')
 *   ..read qz, qc, gs
       call cfrure (nget, n2*2, qz, 'qz')
-c-xpb
+cxpb
       if(b2fgmtry_version.ge.'01.001.022') then
 	call cfrure (nget, n2, qc, 'qc')
       else
@@ -271,7 +271,7 @@ c-xpb
         enddo
        enddo
       endif
-c-xpb-end
+cxpb-end
       call cfrure (nget, n2*3, gs, 'gs')
 *   ..read /b2cmgs/
       call cfruin (nget, 1, idum, 'nlreg')
@@ -282,7 +282,7 @@ c-xpb-end
       call cfruin (nget, nlreg, nlylo, 'nlylo')
       call cfruin (nget, nlreg, nlyhi, 'nlyhi')
       call cfruin (nget, nlreg, nlloc, 'nlloc')
-c-dpc
+cdpc
       call cfruin (nget, 1, idum, 'nncut')
       nncut=idum(0)
       call xertst (0.le.nncut.and.nncut.le.nncutmax,
@@ -302,21 +302,23 @@ c-dpc
       call cfruin (nget, n2*3, region, 'region')
       call cfruin (nget, 3, nnreg, 'nnreg')
       call cfruin (nget, n2*2, resignore, 'resignore')
-c-dpc-end 
-c-xpb
+cdpc-end
+cxpb
       if(b2fgmtry_version.ge.'01.001.000') then
 	call cfruin (nget, 1, idum, 'periodic_bc')
 	periodic_bc=idum(0)
       else
         periodic_bc=0
       endif
-c-xpb-end
+cxpb-end
 *  ..interpolate magnetic field to cell faces
 c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       call intfaceh1(nx,ny,2,leftix,leftiy,vol,bb,wbbl)
       call intfacer1(nx,ny,2,rightix,rightiy,vol,bb,wbbr)
       call intfacev1(nx,ny,2,bottomix,bottomiy,vol,bb,wbbv)
-      call my_intcor1(nx,ny,2,vol,bb,wbbc)
+      call my_intcor1(nx,ny,2,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,bb,wbbc)
 *   ..extrapolate magnetic field to edges
       do iy = -1, ny
         do ix = -1, nx
@@ -379,12 +381,12 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
           iy = ny/2
           do ix = 1, nx-2
             if (rightix(ix,iy).eq.nx+1) then
-              cflags(ix-1,1:ny-2,CELLFLAG_TYPE) = GRID_BOUNDARY
-              cflags(ix,1:ny-2,CELLFLAG_TYPE) = GRID_GUARD
+              cflags(ix-1,0:ny-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+              cflags(ix,-1:ny,CELLFLAG_TYPE) = GRID_GUARD
             end if
             if (leftix(ix,iy).eq.-2) then
-              cflags(ix,1:ny-1,CELLFLAG_TYPE) = GRID_GUARD
-              cflags(ix+1,1:ny-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+              cflags(ix,-1:ny,CELLFLAG_TYPE) = GRID_GUARD
+              cflags(ix+1,0:ny-1,CELLFLAG_TYPE) = GRID_BOUNDARY
             end if
           end do
         end if

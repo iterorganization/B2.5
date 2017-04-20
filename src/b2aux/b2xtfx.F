@@ -38,11 +38,15 @@
        do iy1 = -1, ny1
         if (iy1.eq.-1) then
          iya = -1
+        else if (iy1.eq.ny1) then
+         iya = ny
         else
          iya = 2*ny-1-(4*ny1-1-2*iy1)*ny/(2*ny1)
         endif
         if (iy1.eq.ny1) then
          iyb = ny
+        else if (iy1.eq.-1) then
+         iyb = -1
         else
          iyb = (2*iy1+2*ny1+1)*ny/(2*ny1)-ny
         endif

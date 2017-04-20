@@ -5,6 +5,8 @@
      .  resmb, fmb)                                                     !srv 02.06.11
       use b2mod_types
       use b2mod_indirect
+      use b2mod_balance                                                 !djm Jan2017
+     & , only : fmo_flua, fmo_cvsa, balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, isb
@@ -138,6 +140,10 @@
         endif
        enddo
       enddo
+      if (balance_netcdf.ne.0) then !djm Jan2017
+        fmo_cvsa(:,:,:,isb)=flv(-1:nx,-1:ny,0:1)
+        fmo_flua(:,:,:,isb)=fmb(-1:nx,-1:ny,0:1)-flv(-1:nx,-1:ny,0:1)
+      endif
       if(iout_b2npmo.eq.1) then
        write (chns,'(i3.3)') isb
        call my_out(70,nx,ny,flv(-1,-1,0),'b2urmo_etaPat_graduax'//chns)

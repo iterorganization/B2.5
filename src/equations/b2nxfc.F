@@ -75,7 +75,7 @@
        call b2xvff (nx, ny, flub, 'flub')
        if (ncall.eq.ncallout) then
         write(*,*) 'ncall',ncall
-        call hbout('../b2nxfc_xvsg',nx,ny,2,rob,'rob',ub,'ub',cvsb,
+        call hbout('b2nxfc_xvsg',nx,ny,2,rob,'rob',ub,'ub',cvsb,
      &  'cvsb',cvsb,'ua',cvsb,'na',cvsb,'ua')
        endif
 *    ..test sign of rob

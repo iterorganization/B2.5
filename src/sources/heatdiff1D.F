@@ -570,8 +570,8 @@ c Units are in "W/m/K"
       else if (target_depth(ibnd,i).ge.layer_depth(ibnd)) then
         Kappa_perp = coating_value
       else
-c-xpb  The layer is expected to be amorphous and therefore not to support
-c-xpb  the distinction between perp and parallel directions
+cxpb  The layer is expected to be amorphous and therefore not to support
+cxpb  the distinction between perp and parallel directions
         Kappa_perp = layer_Kappa(ibnd,T)*
      .   (layer_depth(ibnd)-target_depth(ibnd,i))/
      .   (target_depth(ibnd,i+1)-target_depth(ibnd,i))
@@ -644,8 +644,8 @@ c  expression resulting from the first derivative of Kappa_perp above.
       else if (target_depth(ibnd,i).ge.layer_depth(ibnd)) then
         dKappa_perpbydT = coating_value
       else
-c-xpb  The layer is expected to be amorphous and therefore not to support
-c-xpb  the distinction between perp and parallel directions
+cxpb  The layer is expected to be amorphous and therefore not to support
+cxpb  the distinction between perp and parallel directions
         dKappa_perpbydT = dlayer_Kappabydt(ibnd,T)*
      .   (layer_depth(ibnd)-target_depth(ibnd,i))/
      .   (target_depth(ibnd,i+1)-target_depth(ibnd,i))

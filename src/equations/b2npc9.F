@@ -8,6 +8,8 @@
       use b2mod_types
       use b2mod_b2cmpa
       use b2mod_indirect
+      use b2mod_balance
+     & ,only : update_balance_sources_particles, balance_netcdf      !djm Jan2017
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, guard_flows, nregionv, itcnt, isb              !srv 05.07.08
@@ -127,6 +129,11 @@
        call b2xvsg (n2, nb, 1, 'nb', '.gt.')
 *    ..test edge values of fnb
        call b2xvff (nx, ny, fnb, 'fnb')
+      endif
+
+cdjm Jan2017 update particle source components for balance
+      if (balance_netcdf.ne.0) then
+        call update_balance_sources_particles(nx,ny,isb,nb)
       endif
 
 * ..particle balance

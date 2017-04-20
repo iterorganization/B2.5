@@ -33,6 +33,7 @@ c 2002-09-11: logic revised
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       use b2mod_b2plot_wall_loading
+      use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_anomalous_transport
@@ -48,7 +49,10 @@ c 2002-09-11: logic revised
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_clogau
+      use eirmod_ctrcei
       use eirmod_ctrig
+      use eirmod_cinit
+     , , only: eirene_init_cinit
       use eirmod_extrab25
       use eirmod_braeir
       use eirmod_cestim
@@ -56,6 +60,8 @@ c 2002-09-11: logic revised
      , , only: eirene_dealloc_coutau
       use eirmod_comusr
      , , only: eirene_dealloc_comusr, nmassa, nmassm, nmassi
+      use eirmod_comprt
+     , , only: iunout
       use eirmod_eirbra
      & , smo_eir => smo
 #endif
@@ -141,30 +147,30 @@ c
      *   vtha(-1:nxd,-1:nyd,0:nsd_local)
       real (kind=R8), allocatable :: mach(:,:,:)
       real (kind=R8), allocatable :: emach(:,:)
+      real (kind=R8), allocatable :: eavg(:)
       real (kind=R8) ::
      1   vappr_a, vappr_b, sput_frc, sput_phys, BoRiS,
-     2   stick_coef, plate_kb, plate_ka, 
+     2   stick_coef, plate_kb, plate_ka, volsum,
+     *   xc, yc, x1, x2, x3, x4, y1, y2, y3, y4,
      3   q, sput_mixed_alpha, sput_mixed_beta
       real (kind=R8) ::
      *   balance(0:DEF_NATM-1)
       real (kind=R8) ::
      *   mass,vel,vth,press
       integer ispecies(0:nsd_local-1), ismain, ismain0,  
-     *   boundary_namelist, neutrals_namelist, 
+     *   boundary_namelist, neutrals_namelist,
      *   sput_frac_flag, use_eirene
 
-      real (kind=R8) ::
-     *   rstack(1000),rpop
 #ifndef NO_CDF
       real (kind=R8) ::
      *   movietime(1)
       integer :: iret, frameindex(1), ncidcdf, varid
 #endif
       integer ntstepcdf, istepcdf, lucdf
-      integer istack(1000), ipop, itmp, istart, iend, itrack,
+      integer itmp, istart, iend, itrack,
      * sput_src, refl_model, sput_phys_model,
      * sput_chem_model, sput_phys_col, drift_style
-      character*256 sstack(1000), spop, stmp, filename, varname
+      character*256 stmp, filename, varname
       character*256 stmp1, stmp2
       integer lu, save_lu(10), ipos, save_ipos(10), lu_pos
       integer is, iss, isp, iseg, is2, it
@@ -181,7 +187,7 @@ c
       common /chord_shift/ rshift, zshift, r0, z0, a0, b0, tt0
 c
       logical ex, cflag, found
-      logical open_file, streql
+      logical open_file, streql, inside_rectangle
       integer len_of_digits
       real (kind=R8) ::
      *   qevap, qrad, 
@@ -190,15 +196,13 @@ c
      *   layer_Kappa, layer_Cp, layer_emissivity
       external open_file, streql, subini, subend, 
      *   xertst, xerrab, ipgetr, ipgeti, len_of_digits, 
-     *   qevap, qrad, 
+     *   qevap, qrad, inside_rectangle,
      *   Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, Cp,
      *   mass_density,
      *   layer_Kappa, layer_Cp, layer_emissivity
-      external ipop, rpop, spop
       real (kind=R8) ::
      *   t1,t2
       integer it1,it2
-      integer stack_req(7)
       character*256 arg
 #ifdef B25_EIRENE
       integer iflag
@@ -211,8 +215,8 @@ c
      * b0r0,dummy,rval,sumjxa,sumjxi,suml(2),sumr(2),time 
       real (kind=R8) ::
      1 lambda, lnlam, hh, hhn, phi_app 
-      integer i,j,icell,iclv,iistack,il,imi,irstack,
-     1 is1,iso,isstack,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
+      integer i,j,icell,iclv,il,imi,
+     1 is1,iso,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
      2 ikind,lnblnk,nz,ixx,iyy,ixl,ixr,iyb,iyt,isel,
      3 i1,ibnd,in,ibc,ixn,iyn,ixf,iyf,idir,isign
       external lnblnk
@@ -284,10 +288,14 @@ c
         nstra=DEF_NSTRA
         nsrfs=DEF_NSRFS
         N1ST=DEF_NYD+1
-        N2ND=DEF_NXD+1+DEF_NCUT+DEF_ISOEXTRA
+        N2ND=DEF_NXD+MAX(1,DEF_NCUT/2*3)+
+     .       DEF_ISOEXTRA*MAX(0,DEF_NCUT/2-1)
         N3RD=DEF_NPHID
+        NREAC=7
+        IUNOUT=6
         CALL EIRENE_SET_PARMMOD(1)
         CALL EIRENE_ALLOC_CLOGAU
+        CALL EIRENE_INIT_CINIT
       endif
 #endif
       natmi = natm
@@ -297,6 +305,7 @@ c
 #ifdef B25_EIRENE
       CALL EIRENE_ALLOC_BRAEIR(NDX,NDY,NFL,ifoff)
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
+      CALL EIRENE_ALLOC_CTRCEI
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
 #endif
@@ -746,6 +755,8 @@ c
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst(nstrat.le.nstraid, 
      . 'Increase DEF_NSTRA in DIMENSIONS.F')
+      call alloc_b2mod_user(nlim,nmol)
+      call read_b2mod_user_namelist(nx,ns)
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)
@@ -971,6 +982,20 @@ c
 #else
       ex = .false.
 #endif
+      if (.not.ex) then
+        natmi=1
+        textan(0)=' ZERO'
+        nmoli=1
+        textmn(0)=' ZERO'
+        nioni=1
+        textin(0)=' ZERO'
+        nsw=ns
+        call eirene_mc_init
+        call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
+        p1=0.0_R8
+        p2=0.0_R8
+      endif
+
 #ifdef B25_EIRENE
 #ifndef HPUX
       inquire(file='fort.46',exist=ex)
@@ -1030,19 +1055,6 @@ c
 #else
       ex = .false.
 #endif
-      if (.not.ex) then
-        natmi=1
-        textan(0)=' ZERO'
-        nmoli=1
-        textmn(0)=' ZERO'
-        nioni=1
-        textin(0)=' ZERO'
-        nsw=ns
-        call eirene_mc_init
-        call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
-        p1=0.0_R8
-        p2=0.0_R8
-      endif
 c
       nh=0.0_R8
       do is=0,ns-1
@@ -1374,12 +1386,15 @@ c
             call dealloc_b2mod_neoclassical
             call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
-            deallocate(emach)
-            call dealloc_b2mod_b2plot_eirene
+            if (allocated(emach)) then
+              deallocate(emach)
+              call dealloc_b2mod_b2plot_eirene
+            end if
             CALL EIRENE_DEALLOC_CTRIG
             CALL EIRENE_DEALLOC_CESTIM
             CALL EIRENE_DEALLOC_COMUSR
             CALL EIRENE_DEALLOC_COUTAU
+            CALL EIRENE_DEALLOC_CTRCEI
             CALL EIRENE_DEALLOC_BRAEIR
             CALL EIRENE_DEALLOC_EIRBRA
             CALL EIRENE_EXTRAB25_CLEANUP
@@ -1444,12 +1459,15 @@ c
           call dealloc_b2mod_neoclassical
           call dealloc_b2plot_wall_loading
 #ifdef B25_EIRENE
-          deallocate(emach)
-          call dealloc_b2mod_b2plot_eirene
+          if (allocated(emach)) then
+            deallocate(emach)
+            call dealloc_b2mod_b2plot_eirene
+          end if
           CALL EIRENE_DEALLOC_CTRIG
           CALL EIRENE_DEALLOC_CESTIM
           CALL EIRENE_DEALLOC_COMUSR
           CALL EIRENE_DEALLOC_COUTAU
+          CALL EIRENE_DEALLOC_CTRCEI
           CALL EIRENE_DEALLOC_BRAEIR
           CALL EIRENE_DEALLOC_EIRBRA
           CALL EIRENE_EXTRAB25_CLEANUP
@@ -1798,6 +1816,10 @@ c
           description='sy (m^{2})'
           nz=1
           call copy(gs(:,:,1),1.0_R8,nz,textbl)
+        case('sz')
+          description='sz (m^{2})'
+          nz=1
+          call copy(gs(:,:,2),1.0_R8,nz,textbl)
         case('vol')
           description='vol (m^{3})'
           nz=1
@@ -5587,7 +5609,9 @@ c
             lu_pos=lu_pos-1
           else
 #ifndef NO_CDF
-            iret=nf_open('../b2movies.nc',NF_NOWRITE,ncidcdf)
+            filename='b2movies.nc'
+            call find_file(filename,ex)
+            iret=nf_open(filename,NF_NOWRITE,ncidcdf)
             call check_cdf_status(iret)
             iret=nf_inq_varid(ncidcdf,'ntstep',varid)
             call check_cdf_status(iret)
@@ -5798,7 +5822,7 @@ c          write(*,*) 'Read a new geometry'
           arg=spop(sstack,isstack)
           t1=rpop(rstack,irstack)
           open(99,file=arg)
-c-dpc still in testing phase
+cdpc still in testing phase
           write(99,'(5i4)') nx,ny,leftcut(1),rightcut(1),topcut(1)
           write(99,'()')         ! rm
           write(99,'(1p,3e23.15)') ((cr(ix,iy),ix=-1,nx),iy=-1,ny),
@@ -5832,7 +5856,9 @@ c-dpc still in testing phase
           write(*,*) 'bpol_c: min & max ',
      1     minval(uedge_c),maxval(uedge_c)
           uedge_v=0.0_R8
-          call my_intcor(nx,ny,vol,uedge_c,corners)
+          call my_intcor(nx,ny,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,uedge_c,corners)
           write(*,*) 'bpol_v: min & max ',
      1     minval(corners),maxval(corners)
           do iy=-1,ny
@@ -5866,7 +5892,9 @@ c-dpc still in testing phase
           write(*,*) 'bphi_c: min & max ',
      1     minval(uedge_c),maxval(uedge_c)
           uedge_v=0.0_R8
-          call my_intcor(nx,ny,vol,uedge_c,corners)
+          call my_intcor(nx,ny,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,uedge_c,corners)
           write(*,*) 'bphi_v: min & max ',
      1     minval(corners),maxval(corners)
           do iy=-1,ny
@@ -5900,7 +5928,9 @@ c-dpc still in testing phase
           write(*,*) 'b_c: min & max ',
      1     minval(uedge_c),maxval(uedge_c)
           uedge_v=0.0_R8
-          call my_intcor(nx,ny,vol,uedge_c,corners)
+          call my_intcor(nx,ny,vol,periodic_bc,nncut,
+     1     leftix,leftiy,rightix,rightiy,
+     1     bottomix,bottomiy,topix,topiy,region,uedge_c,corners)
           write(*,*) 'b_v: min & max ',
      1     minval(corners),maxval(corners)
           do iy=-1,ny
@@ -6037,17 +6067,18 @@ c-dpc still in testing phase
           nz=1
           call get_amjuel_data(filnam,h123,reac,crc,
      1     nxd,nyd,nx,ny,ne,te,mach)
-          ndim(3,iwrk)=nz
           call copy(mach,1.0_R8,1,textbl)
-          graphlabel(iwrk)=filnam//h123//reac//crc
+          ndim(3,iwrk)=nz
+          graphlabel(iwrk)=
+     1     trim(filnam)//' '//trim(h123)//' '//trim(reac)//' '//crc
         case('adas')     ! accesses ADAS atomic physics data
           stack_req=(/0,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
           call strcopy(9,256,reac,spop(sstack,isstack))
           nz=ns
           call get_adas_data(reac,nz,nxd,nyd,nx,ny,ne,te,mach)
-          ndim(3,iwrk)=nz
           call copy(mach,1.0_R8,nz,textpl)
+          ndim(3,iwrk)=nz
           graphlabel(iwrk)='ADAS '//trim(reac)//' rate'
         case('scat')     ! concatenate two strings on top of string stack
           stack_req=(/0,0,2,0,0,0,0/)
@@ -6120,7 +6151,8 @@ c-dpc still in testing phase
           stack_req=(/2,0,1,0,0,0,0/)
           if(bad_args(stack_req)) return
           varname=spop(sstack,isstack)
-          filename='../b2movies.nc'
+          filename='b2movies.nc'
+          call find_file(filename,ex)
           iend=ipop(istack,iistack)
           istart=ipop(istack,iistack)
           itmp=0
@@ -7204,12 +7236,12 @@ c-dpc still in testing phase
               endif
             endif
           enddo
-         case('eprt')     ! output the top of Eirene stack to a file
+        case('eprt')     ! output the top of Eirene stack to a file
           stack_req=(/0,0,1,0,1,0,0/)
           if(bad_args(stack_req)) return
           stmp=spop(sstack,isstack)
           open(99,file=stmp)
-          do is=0,nedim(2,iwrk)-1
+          do is=0,nedim(2,iewrk)-1
             write(99,'(''#'',1x,a,1x,a)')
      1       eirene_label(iewrk)(1:lnblnk(eirene_label(iewrk))),
      2       textewk(is,iewrk)(1:lnblnk(textewk(is,iewrk)))
@@ -7218,7 +7250,48 @@ c-dpc still in testing phase
             enddo
           enddo
           close(99)
-       case default EFVALUE
+        case('eavg')
+          stack_req=(/0,8,0,0,1,0,0/)
+          if(bad_args(stack_req)) return
+          volsum=0.0_R8
+          allocate(eavg(0:nedim(2,iewrk)-1))
+          eavg=0.0_R8
+          y4 = rpop(rstack,irstack)
+          x4 = rpop(rstack,irstack)
+          y3 = rpop(rstack,irstack)
+          x3 = rpop(rstack,irstack)
+          y2 = rpop(rstack,irstack)
+          x2 = rpop(rstack,irstack)
+          y1 = rpop(rstack,irstack)
+          x1 = rpop(rstack,irstack)
+          do i=1,ntrii
+            xc=(xtrian(necke(1,i))+xtrian(necke(2,i))+
+     .          xtrian(necke(3,i)))/3.0_R8
+            yc=(ytrian(necke(1,i))+ytrian(necke(2,i))+
+     .          ytrian(necke(3,i)))/3.0_R8
+            if (inside_rectangle(xc,yc,x1,y1,x2,y2,x3,y3,x4,y4)) then
+              volsum=volsum+triangle_vol(i)
+              do is=0,nedim(2,iewrk)-1
+                eavg(is)=eavg(is)+
+     .           eirene_stack(i,is,iewrk)*triangle_vol(i)
+              end do
+            end if
+          end do
+          if (volsum.gt.0.0_R8) then
+            eavg(:)=eavg(:)/volsum
+            write(6,'(3a)')
+     .       'Volume-averaged ',trim(eirene_label(iewrk)),' in region '
+            write(6,'(1p,a,8(e10.3,a))')
+     .       ' [(',x1,',',y1,');(',x2,',',y2,');(',
+     .             x3,',',y3,');(',x4,',',y4,')] : '
+            do is = 0, nedim(2,iewrk)-1
+              write(6,'(a,1p,1x,e10.3)') textewk(is,iewrk),eavg(is)
+            end do
+          else
+            write(6,*) 'No triangle centroids found in chosen region!'
+          end if
+          deallocate(eavg)
+        case default EFVALUE
           cflag=.false.
       END SELECT EFVALUE
 c
@@ -10625,46 +10698,6 @@ c     <delta wavelength in A> nspe
       return
 
       end subroutine select_flvalue
-
-      LOGICAL FUNCTION bad_args(stack_req)
-      integer stack_req(7)
-      bad_args=.false.
-      if(stack_req(1).gt.iistack) then
-        write(*,*) 'Insufficient data on integer stack'
-        bad_args= .true.
-      endif
-      if(stack_req(2).gt.irstack) then
-        write(*,*) 'Insufficient data on real stack'
-        bad_args= .true.
-      endif
-      if(stack_req(3).gt.isstack) then
-        write(*,*) 'Insufficient data on string stack'
-        bad_args= .true.
-      endif
-      if(stack_req(4).gt.iwrk) then
-        write(*,*) 'Insufficient data on matrix stack'
-        bad_args= .true.
-      endif
-      if(stack_req(5).gt.iewrk) then
-        write(*,*) 'Insufficient data on Eirene stack'
-        bad_args= .true.
-      endif
-      if(stack_req(6).gt.iwwrk) then
-        write(*,*) 'Insufficient data on wall stack'
-        bad_args= .true.
-      endif
-      if(stack_req(7).gt.itwrk) then
-        write(*,*) 'Insufficient data on target stack'
-        bad_args= .true.
-      endif
-      END FUNCTION bad_args
-
-      subroutine pop_stack(stack_req)
-      integer stack_req(7),is,itmp
-      do is=1,stack_req(1)
-        itmp=ipop(istack,iistack)
-      enddo
-      end subroutine pop_stack
 
       subroutine initialize_neoclassical(neo_ic)
       integer neo_ic

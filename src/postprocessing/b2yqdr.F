@@ -15,7 +15,7 @@
 *
 *  1. purpose
 *
-*     B2YQDR is a post-processor for b2. It provides a quick display of
+*     B2YQDR is a postprocessor for b2. It provides a quick display of
 *     the evolution data.
 *
 *

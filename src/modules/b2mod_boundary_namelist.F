@@ -403,8 +403,9 @@ cxpb Have to do this here already in case the namelist is not used
       logical :: file_ok, todo, assigned
       logical, allocatable :: old_style(:), done(:)
       character*260 filename
-      filename='../' // boundary_filename
-      inquire(file=filename,exist=file_ok)
+
+      filename=boundary_filename
+      call find_file(filename,file_ok)
       if(file_ok) then
         open(99,file=filename)
         call cfverr(99,boundary_version)
@@ -681,6 +682,12 @@ c.. Make a list of core boundaries
             region(ix,iy,0) = 0
             resignore(ix,iy,1)=0
             resignore(ix,iy,2)=0
+          enddo
+        enddo
+      enddo
+      do ib = 1, nniso
+        do ix = nxiso1(ib), nxiso2(ib)
+          do iy = nyiso1(ib), nyiso2(ib)
             do ixx = -1, nx
               do iyy = -1, ny
                 if(region(ixx, iyy, 0) .ne. 0) then

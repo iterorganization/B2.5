@@ -13,7 +13,7 @@
 *
 *  1. purpose
 *
-*     B2YQ (main program) is a post-processor for b2. It provides a
+*     B2YQ (main program) is a postprocessor for b2. It provides a
 *     quick display of the evolution data. This program calls the driver
 *     routine b2yqdr for the actual computation.
 *

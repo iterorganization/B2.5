@@ -172,18 +172,6 @@
       return
 *     ------------------------------------------------------------------
       end function x05abf
-      function x05baf()
-      use b2mod_types
-      implicit none
-      real (kind=R8) ::
-     * x05baf
-*     --------------------------------------------------------------------
-*     A FORTRAN intrinsic substitute for the NAG routine of the same name.
-*     --------------------------------------------------------------------
-      call cpu_time (x05baf)
-      return
-*     ------------------------------------------------------------------
-      end function x05baf
 #else
       subroutine REAL_NAG_ROUTINES_USED
       use b2mod_types

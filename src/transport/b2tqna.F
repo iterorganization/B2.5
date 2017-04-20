@@ -514,7 +514,7 @@ c ank added blobby transport
         write(*,*) 'user_transport = ',user_transport,' not coded'
         call xerrab ('user_transport value not coded')
       endif
-ccc-dpc
+cdpc
       if(ballooning.ne.0.0_R8) then
         do iy=-1,ny
           do ix=-1,nx
@@ -594,7 +594,7 @@ ccc-dpc
           enddo
         enddo
       endif
-ccc-dpc
+cdpc
 * ..return
       ncall = ncall+1
       call subend ()
@@ -702,8 +702,8 @@ ccc-dpc
       do iy=-1,ny
         do ix=-1,nx
           hce0(ix,iy)=d_new*ne(ix,iy)
-c-dpc     hci0(ix,iy)=d_new  ! cxpb *ni(ix,iy,0) ?
-c-xpb     hcib(ix,iy,is)=d_new*na(in,is)
+cdpc     hci0(ix,iy)=d_new  ! cxpb *ni(ix,iy,0) ?
+cxpb     hcib(ix,iy,is)=d_new*na(in,is)
         enddo
       enddo
       do is=0,ns-1

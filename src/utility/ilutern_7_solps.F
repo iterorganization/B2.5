@@ -24,8 +24,7 @@ C
 
 *  -- LOCAL SCALARS --
       INTEGER N, I, J, K, IK, NZ
-      real (kind=R8) ::
-     *   x05baf,cpu_start,cpu_end
+      real (kind=R8) :: cpu_start, cpu_end
       integer iflag
 
       real (kind=R8) ::
@@ -50,7 +49,7 @@ c
 *  -- PROCEDURES --
       real (kind=R8) ::
      *   b2sasum
-      EXTERNAL XERRAB, b2sasum, x05baf
+      EXTERNAL XERRAB, b2sasum
 
       logical lfirst
       integer ncall, nwrite
@@ -75,7 +74,7 @@ c
       endif
 c     write(*,*) 'ncall,nwrite',ncall,nwrite
 
-      cpu_start=x05baf()
+      call cpu_time(cpu_start)
       if(ncall.lt.1000) then
 *  -- CHECK N1, N2, N1D, ITERS, ACPAR, ITPAR --
          IF (N1 .LT. 2 .OR. N2 .LT. 2 .OR. N1D .LT. N1) THEN
@@ -184,7 +183,7 @@ c       IF (A1HN.EQ.0.0e0_R8) THEN
         enddo
         close(82)
       endif                                                    !srv 18.05.02 }
-c-dpc
+cdpc
       if(nwrite.gt.0) then
         if(nwrite.gt.ncall) then
           if(ncall.eq.0) then
@@ -205,7 +204,7 @@ c-dpc
           close(81)                                            !srv 11.01.00
         endif
       endif
-c-dpc
+cdpc
       if(nltrsol.eq.0) then
       elseif(nltrsol.eq.1) then
          WRITE(6,*) 'ILUTERN'
@@ -294,7 +293,7 @@ c-dpc
       ENDDO
 
 *  ---------------------------------------------------------------------
-      cpu_end=x05baf()
+      call cpu_time(cpu_end)
       ncall=ncall+1
       call subend ()
       RETURN

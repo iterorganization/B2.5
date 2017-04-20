@@ -206,7 +206,7 @@
       call cfrure (nget, n2, hy1, 'hy')
 *   ..read qz, qc, gs
       call cfrure (nget, n2*2, qz1, 'qz')
-c-xpb
+cxpb
       if(b2fgmtry_version.ge.'01.001.022') then
         call cfrure (nget, n2, qc1, 'qc')
       else
@@ -215,7 +215,7 @@ c-xpb
          qc1(ix,iy) = cosang (
      &    (crx1(ix,iy,1)+crx1(ix,iy,3))-(crx1(ix,iy,0)+crx1(ix,iy,2)),
      &    (cry1(ix,iy,1)+cry1(ix,iy,3))-(cry1(ix,iy,0)+cry1(ix,iy,2)),
-     &     crx1(ix,iy,2)-crx1(ix,iy,0), cry1(ix,iy,2)-cry1(ix,iy,0))
+     &     crx1(ix,iy,2)-crx1(ix,iy,0),  cry1(ix,iy,2)-cry1(ix,iy,0))
          if(qc1(ix,iy).le.0.0_R8) then
           write(*,*) 'Problem in b2ytgm: qc1(ix,iy) <= 0',
      1     qc1(ix,iy),ix,iy
@@ -245,7 +245,7 @@ c-xpb
         enddo
        enddo
       endif
-c-xpb-end
+cxpb-end
       call cfrure (nget, n2*3, gs1, 'gs')
 *   ..read /b2cmgs/
       call cfruin (nget, 1, idum, 'nlreg')
@@ -256,7 +256,7 @@ c-xpb-end
       call cfruin (nget, nlreg, nlylo, 'nlylo')
       call cfruin (nget, nlreg, nlyhi, 'nlyhi')
       call cfruin (nget, nlreg, nlloc, 'nlloc')
-c-dpc
+cdpc
       call cfruin (nget, 1, idum, 'nncut')
       nncut = idum(0)
       call xertst (0.le.nncut,'faulty input nncut')
@@ -277,21 +277,23 @@ c-dpc
       call cfruin (nget, n2*3, region1, 'region')
       call cfruin (nget, 3, nnreg, 'nnreg')
       call cfruin (nget, n2*2, resignore1, 'resignore')
-c-dpc-end 
-c-xpb
+cdpc-end
+cxpb
       if(b2fgmtry_version.ge.'01.001.000') then
         call cfruin (nget, 1, idum, 'periodic_bc')
         periodic_bc=idum(0)
       else
         periodic_bc=0
       endif
-c-xpb-end
+cxpb-end
 *  ..interpolate magnetic field to cell faces
 c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!!
       call intfaceh1(nx1,ny1,2,leftix1,leftiy1,vol1,bb1,wbbl1)
       call intfacer1(nx1,ny1,2,rightix1,rightiy1,vol1,bb1,wbbr1)
       call intfacev1(nx1,ny1,2,bottomix1,bottomiy1,vol1,bb1,wbbv1)
-      call my_intcor1(nx1,ny1,2,vol1,bb1,wbbc1)
+      call my_intcor1(nx1,ny1,2,vol1,periodic_bc,nncut,
+     1     leftix1,leftiy1,rightix1,rightiy1,
+     1     bottomix1,bottomiy1,topix1,topiy1,region1,bb1,wbbc1)
 *   ..extrapolate magnetic field to edges
       do iy = -1, ny1
         do ix = -1, nx1
@@ -362,11 +364,11 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
           do ix = 1, nx1-2
             if (rightix1(ix,iy).eq.nx1+1) then
               cflags1(ix-1,1:ny1-2,CELLFLAG_TYPE) = GRID_BOUNDARY
-              cflags1(ix,1:ny1-2,CELLFLAG_TYPE) = GRID_GUARD
+              cflags1(ix,0:ny1-1,CELLFLAG_TYPE) = GRID_GUARD
             end if
             if (leftix1(ix,iy).eq.-2) then
-              cflags1(ix,1:ny1-1,CELLFLAG_TYPE) = GRID_GUARD
-              cflags1(ix+1,1:ny1-1,CELLFLAG_TYPE) = GRID_BOUNDARY
+              cflags1(ix,0:ny1-1,CELLFLAG_TYPE) = GRID_GUARD
+              cflags1(ix+1,1:ny1-2,CELLFLAG_TYPE) = GRID_BOUNDARY
             end if
           end do
         end if
@@ -413,16 +415,11 @@ c!!!This interpolation scheme does not guarantee that bb1(3)=sqrt(bb1(0:2)**2)!!
           end do
         end do
       end if
+      cell_width1 = hx1
+      cell_height1(:,:) = hy1(:,:)*qz1(:,:,1)
       if(b2fgmtry_version.ge.'01.001.033') then
         call cfrure_opt (nget, n2, cell_width1, 'cell_width')
         call cfrure_opt (nget, n2, cell_height1, 'cell_height')
-      else
-        if(isClassicalGrid(cflags1)) then
-          cell_width1 = hx1
-          cell_height1(:,:) = hy1(:,:)*qz1(:,:,1)
-        else
-          call xerrab ('Cell widths and heights not set: re-run b2ag!')
-        endif
       endif
 *   ..test sign of bb
       call b2xvsg (n2, bb1(-1,-1,3), 1, 'bb3', '.gt.')

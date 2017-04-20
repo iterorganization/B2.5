@@ -1,4 +1,4 @@
-      subroutine combfile(lun,fn,lnfn,chdr,mhdr,nhdr,label,keep,xtrn,
+      subroutine combfile(lun,fn,lnfn,chdr,nhdr,titel,keep,xtrn,
      ,      cdfl,vdfl,ndfl,lwfs,lwfr,csep,mrks,nmrk,vtrl,ntrl,frmd,iret)
 c
 c  version : 20.02.2010 20:04
@@ -10,7 +10,7 @@ c*** If OK, then leaves the file open on the unit lun, positioned for
 c*** append. If it does not exist, then opens a new file and writes the
 c*** header there. If it does not conform, then tries to re-arrange the
 c*** columns of the existing file, re-writes the file under a new name,
-c*** padding the mising columns, and leaves it open on the unit lun,
+c*** padding the missing columns, and leaves it open on the unit lun,
 c*** ready for append.
 c*** This subroutine returns the actual file name, the number and values
 c*** of the markers found in the source file, and the number and
@@ -35,19 +35,18 @@ c***  lun   unit number to connect the file
 c***  fn    file name (may be modified on output)
 c***  lnfn  its length as declared in the calling routine
 c***  chdr  array of column headers in actual format
-c***  mhdr  maximum width of a column header
 c***  nhdr  actual number of columns
-c***  label a text label to appear in the output file
+c***  titel a text label to appear in the output file
 c***  keep  if true, then keep the obsolete columns as the trailing ones
 c***  xtrn  external subroutine to be called to transform some old data
-c***            call xtrn(data,chdr,mhdr,nhdr,mrks,nmrk,first)
+c***            call xtrn(data,chdr,nhdr,mrks,nmrk,first)
 c***          where data and chdr are for the re-arranged data row and
 c***          column header, mrks are the markers found in the file,
 c***          first=.true. for the first call.
 c***          A dummy with no action is called "xtrn_dum"
 c***  mrks  array of markers to be written in the file
 c***  nmrk  actual number of markers
-c***  cdfl  column names for non-zero defaults
+c***  cdfl  column names for nonzero defaults
 c***  vdfl  corresponding default values
 c***  ndfl  number of these values
 c***        - default values pad the newly introduced columns in the
@@ -77,12 +76,14 @@ c***                 8  other changes in the markers
 c***                16  new file opened
 c=======================================================================
       use b2mod_types
+      use b2mod_diag
+     , ,only: mhdr
       implicit none
-      integer lun,lnfn,nhdr,mhdr,ndfl,nmrk,ntrl,iret,lwfs,lwfr,
+      integer lun,lnfn,nhdr,ndfl,nmrk,ntrl,iret,lwfs,lwfr,
      ,  mrks(nmrk)
       logical keep
       real (kind=R8) :: vdfl(ndfl),vtrl(ntrl)
-      character*(mhdr) chdr(nhdr),cdfl(ndfl),fn*(*),label*(*),csep*1,
+      character*(mhdr) chdr(nhdr),cdfl(ndfl),fn*(*),titel*(*),csep*1,
      ,  frmd*(*)
       external xtrn
 
@@ -93,7 +94,8 @@ c*** nummax: maximum width of a numerical field in the file
       parameter (lsuf=2,nummax=24)
       logical ex,op,first
       character fbn*(lnfn),frmi22*8,chdf(2*nhdr)*(mhdr)
-      character cbln*(nummax) / ' ' /
+      character cbln*(nummax)
+      data cbln / ' ' /
       character c,tab,f*(lnfn+3+lsuf),cc*20,frmhdr*12,frmdat*48
       integer i,j,k,l,m,n,ir,iv,kb,kt,lrd,nhd,nmr,ktrl,ltrl,
      ,        lnrw,lvrw,ncln,nrec,ivmax,mrkr(nmrk)
@@ -189,7 +191,7 @@ c          write(0,*) 'opened: ',trim(fn) !###
           nhd=2*nhdr
           nmr=nmrk
           mrkr=mrks
-          call parsehdr(lun,chdf,nhd,m,mrkr,nmr,ir)
+          call parsehdr(lun,chdf,nhd,mrkr,nmr,ir)
 c          write(0,*) 'after parsehdr. nhd,m,nmr,ir= ',nhd,m,nmr,ir !###
 c          write(0,*) 'mrkr: ',mrkr !###
 c          write(0,*) 'mrks: ',mrks !###
@@ -395,7 +397,7 @@ c          write(0,*) 'chdw',lnrw,' :',('  ',trim(chdw(i)),i=1,lvrw)!###
           if(nmrk.gt.0) then !{
             write(frmhdr,'(6h(2h# ,,i2,4hi12))') nmrk
             write(lun,frmhdr) mrks
-            write(lun,'(2a)') '##  ',label
+            write(lun,'(2a)') '##  ',titel
           end if !}
           write(frmhdr,'(5h(1h#,,i4,2ha))') 2*lnrw
           write(lun,frmhdr) (trim(chdw(i)),tab,i=1,lnrw)
@@ -471,7 +473,7 @@ c*** non-space on both sides of the section borders - the field is split
               do i=1,ltrl !{
                 roww(i+nhdr)=rowr(int_hlp(i))
               end do !}
-              call xtrn(roww,chdw,mhdr,lvrw,mrkr,nmr,first)
+              call xtrn(roww,chdw,lvrw,mrkr,nmr,first)
               first=.false.
               write(lun,frmdat) (roww(i),i=1,lnrw)
               nrec=nrec+1
@@ -515,7 +517,7 @@ c*** Write the header
         if(nmrk.gt.0) then !{
           write(frmhdr,'(6h(2h# ,,i2,4hi12))') nmrk
           write(lun,frmhdr) mrks
-          write(lun,'(2a)') '##  ',label
+          write(lun,'(2a)') '##  ',titel
         end if !}
         write(frmhdr,'(5h(1h#,,i4,2ha))') 2*nhdr
         write(lun,frmhdr) (trim(chdr(i)),tab,i=1,nhdr)
@@ -537,11 +539,12 @@ c=======================================================================
 
 c*** Dummy data transformation routine
 
-      subroutine xtrn_dum(data,chdr,mhdr,nhdr,mrks,nmrk,first)
+      subroutine xtrn_dum(data,chdr,nhdr,mrks,nmrk,first)
       use b2mod_types
+      use b2mod_diag
       implicit none
       real (kind=R8) :: data(nhdr)
-      integer :: nmrk, nhdr, mhdr
+      integer :: nmrk, nhdr
       integer :: mrks(nmrk)
       character*(mhdr) chdr(nhdr)
       logical first

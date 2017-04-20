@@ -127,7 +127,8 @@ c*** Initialisation call
       if (tracing_initialised) return
       call alloc_b2mod_user(nlim,nmol)
       call ipgeti ('eirene_use_recyceir', use_recyceir)
-      call read_b2mod_user_namelist(nx)
+      call read_b2mod_user_namelist(nx,ns)
+c*** Initialise tracing routines
       if(filedata(ntrc_bln)) call b2blnci(nx,ny,ns,dtim)
       if(filedata(ntrc_ble)) call b2blnei(nx,ny,ns,BoRiS)
       if(filedata(ntrc_blm)) call b2blnmi(nx,ny,ns)

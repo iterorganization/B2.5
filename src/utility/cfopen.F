@@ -13,7 +13,7 @@
 *     ------------------------------------------------------------------
       logical ltst
       integer ios
-      character fform0*(*), fname*16, fstat*7, fform*12    !srv 19.04.09
+      character fform0*(*), fname*256, fstat*7, fform*12    !srv 19.04.09
       parameter (fform0='formatted')
       intrinsic len
       logical streql
@@ -57,12 +57,13 @@
        call xerrab ('cfopen--faulty argument chform: '//fform)
       endif
 *   ..test file existence
-      inquire (file=fname,exist=ltst)
       if (streql(fstat,'old')) then
+       call find_file(fname,ltst)
        call xertst (ltst, 'cfopen--supposed old file does not '//
      &   'exist: file='//fname)
       elseif (streql(fstat,'replace')) then                  !srv 19.04.09
       else
+       inquire (file=fname,exist=ltst)
        call xertst (.not.ltst, 'cfopen--supposed new file already '//
      &   'exists: file='//fname)
       endif
