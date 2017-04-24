@@ -449,7 +449,7 @@
      &       'b2stbc: wrong_flow returned from b2stbc_bas'
       endif
       if(lfeedback.or.b2stbc_feedback.ne.0)
-     1 call b2stbc_fb(nx, ny, ns, ismain, BoRiS,
+     1 call b2stbc_fb_post(nx, ny, ns, ismain, BoRiS,
      1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
      &	sna0, smo0, she0, shi0, sch0, sne0, 
      &  main_call, diagno)
