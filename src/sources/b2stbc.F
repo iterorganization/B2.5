@@ -112,7 +112,7 @@
       external subini, subend, xertst, sfill, b2ssum, b2saxpy,
      *   ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
-     1   b2stbc_phys, b2stbc_bas, b2stbc_fb
+     1   b2stbc_phys, b2stbc_bas, b2stbc_fb_pre, b2stbc_fb_post
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,
