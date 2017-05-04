@@ -1,6 +1,6 @@
 module ggd_structured
 
-  !> Service routines for accssing structured grids and associated data
+  !> Service routines for accessing structured grids and associated data
 
   use b2mod_types
   use ggd_assert
@@ -10,7 +10,7 @@ module ggd_structured
   use ggd_object
   use ggd_access
   use ggd_subgrid
-  use ggd_data
+!  use ggd_data
   use ggd_transform
 
   implicit none
