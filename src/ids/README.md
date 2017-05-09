@@ -21,3 +21,18 @@ In terminal navigate to directory containing the b2fgmtry and b2fstate
 files and run the command
 
     $ $HOME/solps-iter/modules/B2.5/builds/standalone.ITER.ifort64/b2_ual_write.exe
+
+CPO2IDS code
+------------
+
+Using this code is possible on  EUROFusion Gateway where CPO and IDS support is
+available.
+
+Set the environment: 
+    $ module load imas/3.7.4/ual/3.4.0
+    $ imasdb solps-iter
+
+See Python code for usage or run:
+
+    $ python cpo2ids.py --help
+
