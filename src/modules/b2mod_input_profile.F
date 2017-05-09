@@ -350,7 +350,7 @@
       goto 100
  98   write (*,*) 'Error in computing axial profile'
       goto 100
- 99   write (*,*) 'Error in reading the dsa file'
+ 99   write (*,*) 'Error in reading the dsp file'
  100  continue
 
       ext_sna(:,:,:)=sna0(:,:,0,:)
@@ -761,7 +761,7 @@ cdjm Jan2017 Keep linearised sources for balance
        
        
       goto 100
- 99   write (*,*) 'Error in reading the dsa file'
+ 99   write (*,*) 'Error in reading the dsp file'
  100  continue
        
       if (new_files) then
@@ -862,6 +862,13 @@ c*** Clear data to forget previous profiles
 
       filename='dsp'
       call find_file(filename,exist)
+      if (exist) then
+        open(unit=91,file=filename)
+      else
+        ifa=1
+        call subend()
+        return
+      end if
       i = 0
       nya = 0
  91   continue
@@ -897,11 +904,11 @@ c*** Clear data to forget previous profiles
       do i=1,ndim
         pr(i)=pra(nfitanf-1+i)
       enddo
-      close (91)
       goto 108
  97   ifa=1
          
  108  continue
+      close (91)
       ncall=ncall+1
       call subend ()
       return

@@ -153,7 +153,6 @@ c     filling array and computing rate
       return
       end subroutine get_adas_data
 
-!#ifdef USE_EIRENE_NOT_YET_READY
       subroutine get_amjuel_data(filnam,h123,reac,crc,
      1 nxd,nyd,nx,ny,ne,te,mach)
       use b2mod_types
@@ -500,7 +499,6 @@ C
       WRITE (6,*) ' CHECK "REACTION CARDS" FOR REACTION NO. ',IR
       CALL XERRAB ('Invalid constant in reaction card')
       END SUBROUTINE SLREAC_b2plot
-!#endif
 
       subroutine old_chang_hinton(nx,ny,ns,ismain,jsep,jxa,lambda,
      1 safetyfactor,cr,cz,crx,bb,ne,te,ti,na,transport)
