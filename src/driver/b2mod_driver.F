@@ -1963,7 +1963,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         write_save=write_save.or.
      .   (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
         if(ntim_save.gt.0.and.ntim.gt.0) write_save=write_save.or.
-     .   mod(ntim,ntim_save).eq.0
+     .   mod(itim,ntim_save).eq.0
         write_save=write_save.and..not.quit
         if(write_save) then
           write(savefile(13:16),'(i4)') edition
