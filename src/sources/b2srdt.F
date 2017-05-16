@@ -15,6 +15,9 @@
       use b2mod_balance !djm Jan2017
      1 , only : b2srdt_sna0to1,b2srdt_smo0to3,b2srdt_she0to3,
      2          b2srdt_shi0to3, balance_netcdf
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       logical(1) :: lout                                             !srv 16.07.10
@@ -115,6 +118,9 @@ cdjm Jan2017 Keep sources at the start to calculate total change for balance rou
       shetmp = shedt
       shitmp = shidt
 
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 #ifndef NO_OPENMP_B2SRDT
 !$OMP PARALLEL
 !$OMP& default(none)
@@ -263,6 +269,9 @@ cxpb  This treatment added as a fix to get the ExB runs going
 !$OMP END DO
 
 !$OMP END PARALLEL
+#endif
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
 #endif
 
 cdjm Store the total change in linearised sources for balance

@@ -86,6 +86,10 @@ LDOPTS   = -i_dynamic
 
 LCPP     = ${LD_SONNET}
 
+# ftimings is a simple little MPCDF library for hierarchical time measurement
+LDLIBES += $(shell pkg-config ftimings-1-intel-16.0 --libs) -Wl,-rpath=$(FTIMINGS_HOME)/lib
+FCOPTS  += $(shell pkg-config ftimings-1-intel-16.0 --variable=fcflags)
+B25_DEFINES += -DWITH_FTIMINGS
 
 #!!!Local Variables:
 #!!! mode: Makefile

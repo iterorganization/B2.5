@@ -5,6 +5,9 @@
      &  rlsa, rlra, rlqa, rlrd, rlbr, rlza, rlz2, rlpt, rlpi)
       use b2mod_types
       use b2mod_b2cmrc
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -94,6 +97,9 @@
 *   ..initialise indices for interpolation
       ite = 0
       ine = 0
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 *   ..loop over cells
 #ifndef NO_OPENMP_B2SPEL
 !$OMP PARALLEL DO default(none) shared(nx,ny,ns) private(ix,iy,is)
@@ -275,6 +281,9 @@
       enddo ! is = 0, ns - 1
 #ifndef NO_OPENMP_B2SPEL
 !$OMP END PARALLEL DO
+#endif
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
 #endif
 
 * ..return

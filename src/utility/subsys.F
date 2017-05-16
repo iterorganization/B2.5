@@ -1,5 +1,8 @@
       subroutine subsys (lbot, srname, srnam1)
       use b2mod_types
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
       logical lbot
       character srname*(*), srnam1*8
@@ -31,6 +34,9 @@
 #ifdef PERFMON
       call perfon (srname)
 #endif
+#ifdef WITH_FTIMINGS
+      call timer%start(srname)
+#endif
 *   ..test nchs
       call xertst (nchs.ne.nchmx, 'subini--error, nchs.eq.nchmx')
 *   ..get base addresses for free workspace
@@ -45,6 +51,9 @@ cdpc      write(*,*) 'subini: ',srname,nchs
       return
 *     ------------------------------------------------------------------
       entry subend ()
+#ifdef WITH_FTIMINGS
+      call timer%stop()
+#endif
 *   ..test nchs
       call xertst (nchs.gt.0, 'subend--error, nchs.le.0')
 *   ..pop data from the stack

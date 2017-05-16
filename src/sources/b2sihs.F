@@ -17,6 +17,9 @@
      &          b2sihs_joule0to3, b2sihs_diaa0to3, b2sihs_divua0to3,
      &          b2sihs_exba0to3, b2sihs_visa0to3, b2sihs_fraa0to3,
      &          balance_netcdf
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns                                                 !xpb
@@ -398,6 +401,9 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
         shitmp=shi0
       endif
 
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 #ifndef NO_OPENMP_B2SIHS
 !$OMP  PARALLEL
 !$OMP& DEFAULT(none)
@@ -478,6 +484,9 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
       endif
 #ifndef NO_OPENMP_B2SIHS
 !$OMP END PARALLEL
+#endif
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
 #endif
 
       b2str=0.0_R8

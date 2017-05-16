@@ -6,6 +6,9 @@
      &  rsa, rra, rqa, rrd, rbr, rza, rz2, rpt, rpi)
       use b2mod_types
       use b2mod_b2cmpa
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain
@@ -105,6 +108,9 @@
           write(*,*)
      1     'Artificial radiation model active, art_rad = ',art_rad
       endif
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 #ifndef NO_OPENMP_B2SQEL
 !$OMP PARALLEL DEFAULT(none)
 !$OMP& private(ix, iy, is),
@@ -190,6 +196,9 @@
       endif
 #ifndef NO_OPENMP_B2SQEL
 !$OMP END PARALLEL
+#endif
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
 #endif
 
 * ..return

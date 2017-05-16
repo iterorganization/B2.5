@@ -22,6 +22,9 @@
       use b2mod_b2_to_astra
       use b2mod_astra_to_b2
       use b2mod_external
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 #     include <git_version_B25.h>
 #ifdef USE_MPI
@@ -201,6 +204,10 @@ csw
 #endif
 #endif
 
+#ifdef WITH_FTIMINGS
+      call timer%enable()
+#endif
+
       call prgini ('b2mn')
 *   ..open files
       call cfopen (ninp(0),'b2mn.dat','old','formatted')
@@ -318,6 +325,22 @@ csw
       call dealloc_anomalous_transport
       call dealloc_b2mod_neutr_src_scaling
       call prgend ()
+
+#ifdef WITH_FTIMINGS
+      write(*,'(a)') "####"
+      write(*,'(a)') "# Full Timings"
+      call timer%print("b2mn")
+      write(*,'(a)') "#"
+      write(*,'(a)') "####"
+      write(*,*)
+
+      write(*,'(a)') "####"
+      write(*,'(a)') "# Sorted timings, not listing entries < 0.5s"
+      call timer%sort()
+      call timer%print("b2mn", threshold=0.5_r8)
+      write(*,'(a)') "#"
+      write(*,'(a)') "####"
+#endif
 
 #ifdef USE_MPI
 #ifdef B25_EIRENE

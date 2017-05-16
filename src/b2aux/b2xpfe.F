@@ -3,6 +3,9 @@
       use b2mod_types
       use b2mod_geo
       use b2mod_indirect
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
       integer nx, ny, ns, ns_ext
       real (kind=R8) ::
@@ -18,9 +21,12 @@
       integer n2, ix, iy, is
       external sfill, b2saxpy
 *     ------------------------------------------------------------------
-*$$$  call subini ('b2xpfe')
+      call subini ('b2xpfe')
       n2 = (nx+2)*(ny+2)
       call sfill (n2*2, 0.0_R8, fne, 1)
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 #ifndef NO_OPENMP_B2XPFE
 !$OMP PARALLEL DO DEFAULT(none), private(ix, iy, is),
 !$OMP& shared(fne, fna, fa_ext, rza, za_ext, ns, ns_ext, nx, ny)
@@ -59,8 +65,11 @@
 #ifndef NO_OPENMP_B2XPFE
 !$OMP END PARALLEL DO
 #endif
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
+#endif
       call b2saxpy (n2*2, -1.0_R8/qe, fch, 1, fne, 1)
-*$$$  call subend ()
+      call subend ()
       return
 *     ------------------------------------------------------------------
       end subroutine b2xpfe

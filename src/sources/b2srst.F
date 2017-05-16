@@ -10,6 +10,9 @@
       use b2mod_balance !djm Jan2017
      1 , only : b2srst_sna0to1, b2srst_smo0to3, b2srst_she0to3,
      2          b2srst_shi0to3, balance_netcdf
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows                                   !srv 01.07.08
@@ -106,6 +109,9 @@
 
 *  ..stabilise
 *   ..modify sna
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 #ifndef NO_OPENMP_B2SRST
 !$OMP PARALLEL
 !$OMP& default(none)
@@ -224,6 +230,9 @@
 #ifndef NO_OPENMP_B2SRST
 !$OMP END WORKSHARE
 !$OMP END PARALLEL
+#endif
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
 #endif
 
 cdjm Jan2017 Store for balance

@@ -5,6 +5,9 @@
      *   rlcx0)
       use b2mod_types
       use b2mod_b2cmrc
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -91,6 +94,9 @@
 *   ..initialise indices for interpolation
       it0 = 0
       in0 = 0
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 *   ..loop over cells
 #ifndef NO_OPENMP_B2SPCX
 !$OMP PARALLEL DO
@@ -160,6 +166,9 @@
       enddo
 #ifndef NO_OPENMP_B2SPCX
 !$OMP END PARALLEL DO
+#endif
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
 #endif
 
 * ..return

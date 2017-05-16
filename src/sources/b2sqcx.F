@@ -3,6 +3,9 @@
 
       subroutine b2sqcx (nx, ny, ns, ev, amh0, th0, rlcx0, rcx)
       use b2mod_types
+#ifdef WITH_FTIMINGS
+      use timings
+#endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns
@@ -88,6 +91,9 @@
 *   ..set cutll, cutlo
       cutll = log(machsfr())
       cutlo = max(machsfr(),exp(cutll))
+#ifdef WITH_FTIMINGS
+      call timer%start("parallel")
+#endif
 #ifndef NO_OPENMP_B2SQCX
 !$OMP PARALLEL
 !$OMP& default(none)
@@ -135,6 +141,9 @@
 #ifndef NO_OPENMP_B2SQCX
 !$OMP END DO
 !$OMP END PARALLEL
+#endif
+#ifdef WITH_FTIMINGS
+      call timer%stop("parallel")
 #endif
 * ..return
       ncall = ncall+1
