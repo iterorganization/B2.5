@@ -4464,7 +4464,7 @@
 					For (i,ik,istra) in (1:NGPDATA(istra),1:2,1:NSTRAT),
 					GPDATA(i,1,istra) contains the time point (i) for stratum (istra) (in s).
 					GPDATA(i,2,istra) contains the gas puff strength of stratum (istra) at time point (i) (in particles/s).
-					The gas puff strength before the first time point is given by USERFLUXPARM(1,istra).
+					The gas puff strength before the first time point is given by USERFLUXPARM(istra,1).
 					The gas puff strength after the last time point is given by the GPDATA value of the last time point.
 					Otherwise, the gas puff strength is linearly interpolated from the given data.
 				</description>
