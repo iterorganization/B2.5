@@ -1141,8 +1141,7 @@ cank
      ,                                                       i=1,ncl)
               deallocate (wlpump1res)
             end if
-            deallocate(wldna1res, ewlda1res, ewldea1res, wldspta1res,
-     ,                 wlpump1res)
+            deallocate(wldna1res, ewlda1res, ewldea1res, wldspta1res)
           ELSE
             IS = 9
             if (jvft44.ge.20170228) IS = IS + 1
