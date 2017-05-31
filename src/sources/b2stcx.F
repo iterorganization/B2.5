@@ -47,7 +47,7 @@
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
-      character chns*3, chk*1                                     !srv 11.09.09
+      character chns*3, chcx*3, chk*1                                   !srv 11.09.09
       real (kind=R8) ::
      *  rg0, t0, t1, t2, du0, du1
       real (kind=R8) :: wrk0(-1:nx,-1:ny)
@@ -291,14 +291,16 @@ ctmp.dpc
 #endif	                       
 
       if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
+        write (chcx,'(i3.3)') is0
         do is = 0, ns-1
 	  write (chns,'(i3.3)') is
 !	  do k=0,1
 !	   write (chk,'(i1)') k
-!	   call my_out(70,nx,ny,sna0(-1,-1,k,is),'b2stcx_sna'//chk//chns)
+!	   call my_out(70,nx,ny,sna0(-1,-1,k,is),
+!     &     'b2stcx_sna'//chk//'_'//chcx//'_'//chns)
 !	  enddo
           wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
-	  call my_out(70,nx,ny,wrk0,'b2stcx_sna'//chns)
+	  call my_out(70,nx,ny,wrk0,'b2stcx_sna_'//chcx//'_'//chns)
 	enddo
       endif
       if (iout.eq.1 .or. iout_b2npmo.eq.1) then
@@ -306,23 +308,24 @@ ctmp.dpc
 	  write (chns,'(i3.3)') is
 !	  do k=0,1
 !	   write (chk,'(i1)') k
-!	   call my_out(70,nx,ny,smq0(-1,-1,k,is),'b2stcx_smq'//chk//chns)
+!	   call my_out(70,nx,ny,smq0(-1,-1,k,is),
+!     &     'b2stcx_smq'//chk//'_'//chcx//'_'//chns)
 !	  enddo
           wrk0=smq(:,:,0,is)+
      &         smq(:,:,1,is)*ua(:,:,is)+
      &         smq(:,:,2,is)*na(:,:,is)*mp*am(is)+
      &         smq(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-	  call my_out(70,nx,ny,wrk0,'b2stcx_smq'//chns)
+	  call my_out(70,nx,ny,wrk0,'b2stcx_smq_'//chcx//'_'//chns)
         enddo
       endif
       if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
 !	 do k=0,1
 !	  write (chk,'(i1)') k
-!	  call my_out(70,nx,ny,shi0(-1,-1,k),'b2stcx_shi'//chk)
+!	  call my_out(70,nx,ny,shi0(-1,-1,k),'b2stcx_shi'//chk//'_'//chcx)
 !	 enddo
         wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
      &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
-	call my_out(70,nx,ny,wrk0,'b2stcx_shi')
+	call my_out(70,nx,ny,wrk0,'b2stcx_shi_'//chcx)
       endif
 
 cdjm Jan2017 Keep linearised sources for balance

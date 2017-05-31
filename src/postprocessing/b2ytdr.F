@@ -70,12 +70,11 @@ c 2002-09-11: logic revised
      ,        eirene_extrab25_eirpbls_init, eirene_extrab25_wneuinit,
      ,        eirene_extrab25_cleanup
       use eirmod_clogau
+#else
+      use b2mod_braeir
 #endif
       implicit none
 #     include "DIMENSIONS.F"
-#ifndef B25_EIRENE
-#     include <COUPLE/BRAEIR.F>
-#endif
 
 *   ..input arguments (unchanged on exit)
       integer ninp(0:8), nout(0:6), nx1, ny1
@@ -797,6 +796,7 @@ c 2002-09-11: logic revised
       CALL EIRENE_EXTRAB25_WNEUINIT
       CALL EIRENE_extrab25_eirpbls_init(1,natm,nmol,nion,npls,nstra,nfl)
 #else
+      call alloc_b2mod_braeir(nx,ny,ns)
       ex = .false.
 #endif
 
@@ -9313,6 +9313,8 @@ cxpb as they no longer necessarily point to the same species
       CALL EIRENE_DEALLOC_COMUSR
       CALL EIRENE_DEALLOC_CTRCEI
       CALL EIRENE_EXTRAB25_CLEANUP
+#else
+      call dealloc_b2mod_braeir
 #endif
 
 * ..return

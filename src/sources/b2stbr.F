@@ -707,7 +707,7 @@ c   --> better solution wanted here..
 #endif
       else
 cwdk remove this if-test, to allow runs without Eirene if code is compiled with Eirene
-        call eirene_mc_init             ! EIRDIAG = 0   !srv 03.04.13
+        call eirene_mc_init(nx,ny)             ! EIRDIAG = 0   !srv 03.04.13
       endif
 
 * ..sources

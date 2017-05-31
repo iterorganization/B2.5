@@ -2233,6 +2233,14 @@
 					If iout.eq.1, a large set of *.dat output files will be produced containing the values of a variety of code quantities. See the "Output description" file for details.
 				</description>
 			</switch>
+			<switch>
+				<name>b2wdat_append</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If append.eq.1, the *.dat output files are appended upon every write, instead of being rewritten every time.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2mndr_*</name>
 				<description>

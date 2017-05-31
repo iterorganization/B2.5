@@ -38,12 +38,11 @@ c  version : 26.07.2002 23:39
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25
+#else
+      use b2mod_braeir
+      use b2mod_eirbra
 #endif
       implicit none
-#ifndef B25_EIRENE
-#     include <COUPLE/BRAEIR.F>
-#     include <COUPLE/EIRBRA.F>
-#endif
       integer nx,ny,ns,ismain
       real (kind=R8) ::
      * dtim, BoRiS,
@@ -350,7 +349,7 @@ c not sure this is the right place
         call ipgeti ('eirene_savef31', save_f31)
         call ipgeti ('eirene_use_recyceir', use_recyceir)
 csw 28jan2011, call to eirene_mc_init not used anymore, use new modules
-c        call eirene_mc_init
+c        call eirene_mc_init(nx,ny)
         call eirene_extrab25_alloc_mods
 !pb 13dec2013 eirpbls removed - not needed
 !pb        call eirene_extrab25_eirpbls_init(1,
@@ -3366,6 +3365,9 @@ C           call xerrab ('eirene_mc: bccon <> 13')
       call write_f31(nx, ny)
 csw 26jan2011
       call eirene_extrab25_cleanup
+#ifndef B25_EIRENE
+      call dealloc_b2mod_eirdiag
+#endif
 csw 26feb2014
       if(allocated(sni_av)) then
        deallocate(sni_av)
@@ -3635,6 +3637,8 @@ c!###}
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
+#else
+      use b2mod_braeir
 #endif
       implicit none
       integer nhistd
@@ -3761,6 +3765,8 @@ c!###}
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
+#else
+      use b2mod_braeir
 #endif
       implicit none
 #ifndef B25_EIRENE

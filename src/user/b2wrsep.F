@@ -18,6 +18,8 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
+#else
+      use b2mod_eirbra
 #endif
 c
 c  version : 10.12.2000 23:36
@@ -27,11 +29,6 @@ c*** Puts some separatrix data on the output file "tracing/sepdata.trc"
 c***  - primarily, to provide boundary conditions for core models
 c----------------------------------------------------------------------
       implicit none
-
-#     include <DIMENSIONS.F>
-#ifndef B25_EIRENE
-#     include <COUPLE/EIRBRA.F>
-#endif
 
       integer nx, ny, ns
       real (kind=R8) :: BoRiS

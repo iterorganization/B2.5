@@ -57,6 +57,9 @@
       use eirmod_extrab25
       use b2mod_b2plot
      , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+#else
+      use b2mod_braeir
+      use b2mod_eirbra
 #endif
       use b2mod_b2_to_astra
      , ,only: write_b2_to_astra
@@ -1207,6 +1210,9 @@ csw 09oct2012
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
       CALL EIRENE_ALLOC_CCOUPL(1)
       CALL EIRENE_ALLOC_CTRCEI
+#else
+      call alloc_b2mod_braeir(nx,ny,ns)
+      call alloc_b2mod_eirbra(nx,ny,ns,natm,npls,nstra)
 #endif
 
 *   ..read geometry and metric
@@ -2217,6 +2223,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_DEALLOC_CCOUPL
       CALL EIRENE_DEALLOC_CTRCEI
+#else
+      call dealloc_b2mod_braeir
+      call dealloc_b2mod_eirbra
 #endif
       call subend ()
       return

@@ -104,7 +104,7 @@
      &      (rz2(ix,iy,is)*ne2(ix,iy))
          enddo
         enddo
-	 else
+       else
         tauia(:,:,is) = 0.0e0_R8
        endif
       enddo
