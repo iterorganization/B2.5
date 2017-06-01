@@ -829,6 +829,9 @@ ifdef MODLISTF90
 	@echo '# 5b' >> ${OBJDIR}/dependencies
 endif
 endif
+else
+	@egrep -aiH '^ {6,}use ' `cat ${SRCDIR}/modules/.new_modules | sed -e 's:^:${SRCDIR}/modules/:'`  | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("\\.f:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
+	@echo '# 5c' >> ${OBJDIR}/dependencies
 endif
 
 tags:
@@ -929,7 +932,6 @@ endif
 endif
 	@if [ -f b2stbc.o ] ; then /bin/mv b2stbc.o ${OBJDIR}/ ; fi
 endif
-
 
 echo:
 	@echo LD_CATALYST=${LD_CATALYST}
