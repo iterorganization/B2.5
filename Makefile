@@ -820,8 +820,8 @@ endif
 	@echo '# 4a' >> ${OBJDIR}/dependencies
 	@egrep -aiH '^ {0,}use ' ${SRCDIR}/*/*.F90 | grep -v 'IGNORE' | awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 4b' >> ${OBJDIR}/dependencies
-ifneq (${COMPILER},g95)
 ifneq (${MOD},o)
+ifneq (${COMPILER},g95)
 	@egrep -aiH '^ {6,}use ' ${MODLISTF} | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("\\.f:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 5a' >> ${OBJDIR}/dependencies
 ifdef MODLISTF90
@@ -829,9 +829,6 @@ ifdef MODLISTF90
 	@echo '# 5b' >> ${OBJDIR}/dependencies
 endif
 endif
-else
-	@egrep -aiH '^ {6,}use ' `cat ${SRCDIR}/modules/.new_modules | sed -e 's:^:${SRCDIR}/modules/:'`  | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("\\.f:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
-	@echo '# 5c' >> ${OBJDIR}/dependencies
 endif
 
 tags:
@@ -900,6 +897,9 @@ endif
 	${MAKE} local
 	${MAKE} listobj
 	${MAKE} depend
+ifeq (${COMPILER},g95)
+	${MAKE} `cat ${SRCDIR}/modules/.new_modules | sed -e 's:\.F:.o:' -e 's:[^ ]*/:${OBJDIR}/:' | awk.transpose`
+endif
 
 include ${OBJDIR}/dependencies
 

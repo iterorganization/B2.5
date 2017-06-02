@@ -1,3 +1,5 @@
-b2mod_eirbra.F
-b2mod_eirdiag.F
-b2mod_braeir.F
+modules/b2mod_eirbra.F
+modules/b2mod_braeir.F
+modules/b2mod_eirdiag.F
+driver/b2mod_driver.F
+driver/b2mod_main.F

@@ -7324,9 +7324,9 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
         WRITE(IUNOT,6665) ldum(0:1)
  1225   CONTINUE
         IF (lntspec.GT.0) THEN
-          READ (IUNIN,'(2e12.0,4i6)') rdum(0:1), idum(0:3) ! emnspc,emxspc,
-                                                           ! npspcen,iatspec,npspctt,npspcfi
-          WRITE(IUNOT,'(2e12.0,4i6)') rdum(0:1), idum(0:3)
+          READ (IUNIN,66662) rdum(0:1), idum(0:3) ! emnspc,emxspc,
+                                                  ! npspcen,iatspec,npspctt,npspcfi
+          WRITE(IUNOT,66662) rdum(0:1), idum(0:3)
         END IF
         DO I=1,LNTSPUT !{
           READ (IUNIN,'(A80)') ZEILE  ! listmtmp(i),txtmtmp(i),
