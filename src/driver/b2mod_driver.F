@@ -2016,6 +2016,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           call find_file(filename,found)
           if (found) call write_b2mod_wall_namelist(99,nx,ny,ns,
      >     savefile(13:16))
+          filename='b2.transport_models_save.parameters'
+          call find_file(filename,found)
+          if (found) call write_b2mod_transport_models(99,
+     >     savefile(13:16))
           if (ank_tracing.ne.0) call b2filef(ns)
 
 #ifdef B25_EIRENE
