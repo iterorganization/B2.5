@@ -2290,19 +2290,11 @@
 				</description>
 			</switch>
 			<switch>
-				<name>average_restart</name>
-				<default>0</default>
-				<type>integer</type>
-				<description>
-					If average_restart.gt.0, reading of the aver.dat file is skipped.
-				</description>
-			</switch>
-			<switch>
 				<name>b2mndr_av_read</name>
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If ird_aver.gt.0, the averaged solution is read from the aver.dat file and some averaged profiles are written in the prof.out file at the end of the run.
+					If ird_aver.gt.0, the averaged solution is read from the b2faveri file and written in the b2favere file at the end of the run.
 				</description>
 			</switch>
 			<switchgroup>

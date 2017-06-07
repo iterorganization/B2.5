@@ -249,6 +249,8 @@ Contains
       tstepn(1) = ntstep
       call rwcdf (rw, ncid, 'ntstep', imap, tstepn, iret)
       call rwcdf (rw, ncid, 'nastep', imap, tstepn, iret)
+      tstepn(1) = ntim_batch
+      call rwcdf (rw, ncid, 'ntim_batch', imap, tstepn, iret)
       iret = nf_close(ncid)
 !cwdk    initialize writing of the .nc-file for monitoring based on
 !c       batch averaging

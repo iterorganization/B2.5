@@ -2018,7 +2018,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         write_save=cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8
         write_save=write_save.or.
      .   (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
-        if(ntim_save.gt.0.and.ntim.gt.0) write_save=write_save.or.
+        if(ntim_save.gt.0.and.itim.gt.0) write_save=write_save.or.
      .   mod(itim,ntim_save).eq.0
         write_save=write_save.and..not.quit
         if(write_save) then
@@ -2078,8 +2078,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           close(nout(6))
           write(*,*) 'Plasmastate savefile ',savefile,' saved'
           if (iav_run > 0) then
-            write (aver_name,'(a17,i4.4)') 
-     .              'plasmastate_aver.',edition
+            write (aver_name,'(a17,a4)')
+     .              'plasmastate_aver.',savefile(13:16)
             call run_av_save (aver_name,nx,ny,ns,.true.,.true.)
             write (*,*) aver_name,' saved '
           end if
