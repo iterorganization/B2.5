@@ -5746,6 +5746,14 @@
 				</description>
 			</switch>
 			<switch>
+				<name>NO_DIV</name>
+				<default>.false.</default>
+				<type>logical</type>
+				<description>
+					If .true., transport coefficients profiles are not implemented in the divertor regions.
+				</description>
+			</switch>
+			<switch>
 				<name>POLOIDAL_SCALING</name>
 				<default>.false.</default>
 				<type>logical array of size (10)</type>
