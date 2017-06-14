@@ -118,7 +118,7 @@ module check_module_local
   end do
   if (n_error > 0) then
     write (*,*) 'There were ', n_error, 'errors in array ', trim(name)
-    write (*,'(a13,a10, E14.5E3,a8,i)') 'Max error in ', trim(name), error_max, ' at idx ' , max_err_idx
+    write (*,'(a13,a10, E14.5E3,a8,i8)') 'Max error in ', trim(name), error_max, ' at idx ' , max_err_idx
     write (*,*) 'values', orig(max_err_idx), val(max_err_idx)
     write (*,'(a22,a10, E14.5E3)') 'Max absolute error in ', trim(name), error_max_abs
     write (*,'(a28,a10,E14.5E3)') 'Average relative error in    ',trim(name), avg_rel_error / n_error
@@ -189,7 +189,7 @@ module b2_file_io
 !     of the output buffers (refun, infun or chfun)
 !     The variable name (id1) and type (idtyp) is also returned,
 !     together with the size of the array that is read (n1)
-    use b2mod_types_local
+    use b2mod_types_local   !IGNORE
     implicit none
       integer, intent(in) :: nget  !< file descriptor
       integer, intent(out) :: n1 !< array size
@@ -244,9 +244,9 @@ end module
 
 
 program test_b2output
-  use check_module_local
-  use b2mod_types_local
-  use b2_file_io
+  use check_module_local   !IGNORE
+  use b2mod_types_local    !IGNORE
+  use b2_file_io           !IGNORE
   implicit none
 
   character(len=200) :: input1, input2
@@ -380,3 +380,7 @@ program test_b2output
    write(*,*) label, ' ', version_in
  end function
 end program
+
+!!!Local Variables:
+!!! mode: f90
+!!! End:

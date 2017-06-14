@@ -240,7 +240,7 @@ csw 24feb2014 check for guard cell (SOLPS4)
 cxpb  SCH should normally remain unchanged (phm4.eq.0.0)
 cxpb  This treatment added as a fix to get the ExB runs going
           t0 = (phm4/dtim)*vol(ix,iy)*qe*time_factor(ix,iy)              !xpb
-          schdt(ix,iy,0) = schdt(ix,iy,0)+t0*(ni0(ix,iy,0)-ne0(ix,iy)    !xpb
+          schdt(ix,iy,0) = schdt(ix,iy,0)+t0*(ni0(ix,iy,0)-ne0(ix,iy))   !xpb
 *         schdt(ix,iy,1) = (unchanged)
 *         schdt(ix,iy,2) = (unchanged)
           schdt(ix,iy,3) = schdt(ix,iy,3)-t0                             !xpb

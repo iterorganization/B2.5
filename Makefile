@@ -193,7 +193,7 @@ empty :=
 #VPATH=$(subst $(space),$(empty),${VHEAD}${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentation:${SRCDIR}/driver:${SRCDIR}/equations:${SRCDIR}/input:${SRCDIR}/output:${SRCDIR}/postprocessing:${SRCDIR}/preprocessing:${SRCDIR}/solvers:${SRCDIR}/sources:${SRCDIR}/transport:${SRCDIR}/utility:${SRCDIR}/b2plot:${SRCDIR}/user)
 VPATH=${VHEAD}${SRCDIR}/modules:${SRCDIR}/b2aux:${SRCDIR}/convert:${SRCDIR}/documentation:${SRCDIR}/driver:${SRCDIR}/equations:${SRCDIR}/input:${SRCDIR}/output:${SRCDIR}/postprocessing:${SRCDIR}/preprocessing:${SRCDIR}/solvers:${SRCDIR}/sources:${SRCDIR}/transport:${SRCDIR}/utility:${SRCDIR}/b2plot:${SRCDIR}/user
 FPATH:=${VPATH}
-VPATH += :${SRCDIR}/ids
+VPATH += :${SRCDIR}/ids:${SRCDIR}/test
 FFPATH += :${SRCDIR}/ids
 FFPATH += :${SRCDIR}/modules
 
@@ -233,27 +233,29 @@ PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe b2pl.ex
 PROG_MN = b2mn.exe
 PROG_XD = b2xd.exe
 PROG_OT = b2ag.exe b2ah.exe b2ai.exe b2ar.exe b2co.exe b2uf.exe b2fu.exe b2ts.exe b2yi_gnuplot.exe b2yh.exe b2yt.exe b2yv.exe b2fgmtry_mod.exe b2mnastra.exe calc_atomic_data.exe
+PROG_90 = check_b2_output.exe
 PROG_OP = b2op.exe b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
 PROG_ID = b2_ual_write.exe
 
-EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_ID}}
+EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OT} ${PROG_90} ${PROG_MD} ${PROG_OP} ${PROG_ID}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} ${PROG_OP}}
-EX90LIST = ${patsubst %.exe, %.o, ${PROG_ID}}
+EX90LIST = ${patsubst %.exe, %.o, ${PROG_90} ${PROG_ID}}
 
 GREXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_GR}}
 XDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_XD}}
 MNEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MN}}
 OTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OT}}
+O9EXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_90}}
 OPEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OP}}
 MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
 IDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_ID}}
 
 .PHONY: DEFAULT NOPLOT ALL VERSION clean depend listobj tags echo local force
 
-DEFAULT: VERSION ${MNEXE} ${OTEXE} ${GREXE}
-ALL: VERSION ${MNEXE} ${OTEXE} ${GREXE} ${XDEXE}
-NOPLOT: VERSION ${MNEXE} ${OTEXE}
+DEFAULT: VERSION ${MNEXE} ${OTEXE} ${O9EXE} ${GREXE}
+ALL: VERSION ${MNEXE} ${OTEXE} ${O9EXE} ${GREXE} ${XDEXE}
+NOPLOT: VERSION ${MNEXE} ${OTEXE} ${O9EXE}
 ifdef MDSPLUS_DIR
 DEFAULT: ${MDEXE}
 ALL: ${MDEXE}
@@ -744,6 +746,9 @@ ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 ${OTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
 
+${O9EXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${MAKES}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o
+
 ${GREXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${GRLIBES} ${LDLIBES} ${LDOPTSend}
 
@@ -753,8 +758,8 @@ ${XDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${OBJDIR}/libsolps4.a
 ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_MDSPLUS} ${LDOPTSend}
 
-${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
-	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${LDOPTSend}
+${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
 
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 	@${BLD} $@ ${LIBOBJS}
@@ -987,6 +992,7 @@ echo:
 	@echo MNEXE=${MNEXE}
 	@echo XDEXE=${XDEXE}
 	@echo OTEXE=${OTEXE}
+	@echo O9EXE=${O9EXE}
 	@echo IDEXE=${IDEXE}
 
 local: ${SRCLOCAL}/b2local.F ${MODLOCAL}/b2mod_local.F ${INCLOCAL}/b2local.h
