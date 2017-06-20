@@ -1334,7 +1334,7 @@ Contains
          vxsepmid, vysepmid, vssepmid, &
          tpmxipid, tpmxapid, tp3drid, tp3dlid, tp3dtlid, tp3dtrid, &
          tpsepiid, tpsepaid, &
-         nastepid, batchsaid, &
+         nastepid, ntimbatchid, batchsaid, &
          nesepm_avid, tesepm_avid, tisepm_avid, posepm_avid, &
          nesepi_avid, tesepi_avid, tisepi_avid, posepi_avid, &
          nesepa_avid, tesepa_avid, tisepa_avid, posepa_avid, &
@@ -1617,6 +1617,7 @@ Contains
     !wdk averages
     dims(1) = 0
     iret  = nf_def_var(ncid, 'nastep', NCDOUBLE, 0, dims, nastepid)
+    iret  = nf_def_var(ncid, 'ntim_batch', NCDOUBLE, 0, dims, ntimbatchid)
     dims(1) = batchdim
     iret  = nf_def_var(ncid, 'batchsa', NCDOUBLE, 1, dims, batchsaid)
     dims(1) = ncdim

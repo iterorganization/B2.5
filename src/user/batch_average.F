@@ -50,12 +50,13 @@
       integer :: n, it, batch_size, ii
 
 *  .. find index ii of var in the current batch
-      ii = mod(ii,batch_size)
+      ii = mod(it,batch_size)
       if (ii.eq.0) ii = batch_size
-*  .. average
 
+*  .. average
       gnew = 1.0_R8 / ii
       gold = (ii - 1) * gnew
       aver = gold*aver + gnew*var*var
 
+      return
       end subroutine batch_average_sq
