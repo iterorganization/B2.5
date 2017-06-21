@@ -7,6 +7,9 @@
       use b2mod_b2cmpa
       use b2mod_plasma
       use b2mod_sources
+#ifdef B25_EIRENE
+      use eirmod_infcop
+#endif
 
       implicit none
 
@@ -163,7 +166,12 @@ ctb..as the mean of the product does not equal the product of the means etc.
          naver = 0
          ntotdt = 0
 
-         open (newunit=iun,file='b2faveri',access='SEQUENTIAL',
+#ifdef B25_EIRENE
+         iun = newunit()
+#else
+         iun = 99
+#endif
+         open (unit=iun,file='b2faveri',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=iex)
 
          io = iex
@@ -211,14 +219,14 @@ ctb..as the mean of the product does not equal the product of the means etc.
               call cfrure (iun, n2*4*ns, e_smo, 'e_smo')
             end if
 
-            close (iun)
-
          else
 
             write (*,*) ' NO FILE b2faveri FOUND '
             write (*,*) ' AVERAGING STARTS FROM ZERO '
 
-        end if
+         end if
+
+         close (iun)
 
       end if
 
@@ -265,7 +273,12 @@ ctb..as the mean of the product does not equal the product of the means etc.
 
 *  write 2d averaged plasma profiles
 
-      open (newunit=iun,file=savefile,access='SEQUENTIAL',
+#ifdef B25_EIRENE
+      iun = newunit()
+#else
+      iun = 99
+#endif
+      open (unit=iun,file=savefile,access='SEQUENTIAL',
      .          form='FORMATTED',status='REPLACE')
 
 !     write (*,*) ' iun ',iun

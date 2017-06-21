@@ -6,6 +6,9 @@
       use b2mod_b2cmpa
       use b2mod_plasma
       use b2mod_sources
+#ifdef B25_EIRENE
+      use eirmod_infcop
+#endif
 
       implicit none
 
@@ -172,7 +175,12 @@ ctb..as the mean of the product does not equal the product of the means etc.
       entry batch_av_all_save (batch_name,nx,ny,ns)
 
       n2 = (nx+2)*(ny+2)
-      open (newunit=iun,file=batch_name,access='SEQUENTIAL',
+#ifdef B25_EIRENE
+      iun = newunit()
+#else
+      iun = 99
+#endif
+      open (unit=iun,file=batch_name,access='SEQUENTIAL',
      .          form='FORMATTED',status='REPLACE')
 
 *   ..get label

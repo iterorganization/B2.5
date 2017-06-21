@@ -1404,8 +1404,9 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
         lrer = (ird_aver == 0)
         call run_av_init (iav_cont, nx, ny, ns,.true.,lrer) 
       end if
-*   get averaged plasma profiles 
-      if (ird_aver > 0) 
+
+*   get averaged plasma profiles
+      if (ird_aver > 0)
      &  call run_av_get_plasma (na, te, ti, ua, po, nx, ny, ns)
 
       if(iout.ne.0) then                                             !srv 25.01.16 {
