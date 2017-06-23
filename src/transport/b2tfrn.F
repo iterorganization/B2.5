@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfrn (nx, ny, ns, guard_flows,                        !srv 14.07.10 {
-     &  facdrift, fac_ExB, rza,
+     &  facdrift, fac_ExB, rza, rz2,                                     !srv 13.01.17
      &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,   
      &  fch_p, fchvispar, fchinert, fchanml,                             !srv 20.09.06
      &  fne, cvla, cdna, cdpa, chce, chci,
@@ -17,7 +17,8 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows
-      real (kind=R8) :: rza(-1:nx,-1:ny,0:ns-1),
+      real (kind=R8) ::
+     &  rza(-1:nx,-1:ny,0:ns-1), rz2(-1:nx,-1:ny,0:ns-1),                !srv 13.01.17
      &  pbs(-1:nx,-1:ny,0:1), po(-1:nx,-1:ny), fch_p(-1:nx,-1:ny,0:1),
      &  fchvispar(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),           !srv 20.09.06
      &  fchanml(-1:nx,-1:ny,0:1),
@@ -64,6 +65,7 @@
       integer, save :: drift_style = 1
       integer, save :: iout = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
+      integer, save :: style = 2                                         !srv 13.01.17
       real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
       character chns*3                                                   !srv 16.09.02
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
@@ -76,7 +78,8 @@
      &   wedia_(-1:nx,-1:ny,0:1), nel(-1:nx,-1:ny), pb(-1:nx,-1:ny)      !srv 14.07.10 }
       parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
-     *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny) 
+     *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
+     *   zeff(-1:nx,-1:ny)                                               !srv 13.01.17
       real (kind=R8) :: t0,t1,t2,cvmgp
       save ncall
 *   ..procedures
@@ -116,9 +119,10 @@
         call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)                 !srv 06.07.06
         call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)                 !srv 06.07.06
         call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                 !srv 06.07.06
-        call ipgetr ('b2tfnb_ycur', ycur)                               !srv 17.07.08
+        call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
         call ipgeti ('b2tfnb_drift_style', drift_style)
+        call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -403,6 +407,10 @@ c Drift terms
           endif
         enddo
       enddo
+
+      if(style.eq.2) then
+        call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
+      endif
 
 * ..compute fluxes
       do is = 0,ns-1

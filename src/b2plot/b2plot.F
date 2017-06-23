@@ -94,7 +94,7 @@ c
       real (kind=R8), allocatable ::
      *   wall_tmp(:,:), trg_tmp(:,:)
       real (kind=R8) ::
-     *   fetx(-1:nxd,-1:nyd), fety(-1:nxd,-1:nyd), zeff(-1:nxd,-1:nyd),
+     *   fetx(-1:nxd,-1:nyd), fety(-1:nxd,-1:nyd),
      *   fhtx(-1:nxd,-1:nyd), fhty(-1:nxd,-1:nyd)
       real (kind=R8) ::
      *   fnax(-1:nxd,-1:nyd,0:nsd_local-1), 
@@ -1118,6 +1118,7 @@ c
       end do
       
       call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
+      call b2xzef(nx,ny,ns,rz2,na,ne,zeff)
       cr=0.25_R8*sum(crx,3)
       cz=0.25_R8*sum(cry,3)
       targetr=0.5_R8*sum(targetcr,3)
@@ -1636,19 +1637,6 @@ c
         case('zeff')
           description='Z_{eff}'
           nz=1
-          do ix=-1,nx
-            do iy=-1,ny
-              zeff(ix,iy)=0.0_R8
-              do is=0,ns-1
-                zeff(ix,iy)=zeff(ix,iy)+rz2(ix,iy,is)*na(ix,iy,is)
-              end do
-              do is=0,ns_ext-1
-                zeff(ix,iy)=zeff(ix,iy)+
-     .           za2_ext(ix,iy,is)*na_ext(ix,iy,is)
-              end do
-              zeff(ix,iy)=zeff(ix,iy)/ne(ix,iy)
-            end do
-          end do
           call copy(zeff,1.0_R8,nz,textbl)
         case('up')
           description='Poloidal velocity (up) (m.s^{-1})'

@@ -111,7 +111,7 @@ c*** Local variables of general use
       integer lun, ltrc
       parameter (ltrc=ntrc_sep)
       real (kind=R8) ::
-     *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff
+     *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff(-1:nx,-1:ny)
       integer i,j,k,l,is,ix,iy,jxi,jxa,jsep,nv
       integer, allocatable :: ii(:)
       logical ex, warn_tmp
@@ -161,21 +161,16 @@ c
 c
 c*** Compute the data
 c
+      call b2xzef(nx,ny,ns,rz2,na,ne,zeff)
       iy=jsep+1
       do ix=0,nx-1 !{
         if(mod(region(ix,jsep,0),4).eq.1) then !{
 c          v=vol(ix,iy)
           v=gs(ix,iy,1)
           hlp_i=0.0_R8
-          zeff=0.0_R8
           do is=0,ns-1 !{
             if (.not.is_neutral(is)) hlp_i=hlp_i+na(ix,iy,is)
-            zeff=zeff+rz2(ix,iy,is)*na(ix,iy,is)            
           end do !}
-          do is=0,ns_ext-1 !{
-            zeff=zeff+za2_ext(ix,iy,is)*na_ext(ix,iy,is)
-          end do !}
-          zeff=zeff/ne(ix,iy)
           hlp_v=hlp_v+v
           hlp_n=hlp_n+hlp_i*v
           hlp_nesp=hlp_nesp+v*ne(ix,iy)
@@ -186,7 +181,7 @@ c          v=vol(ix,iy)
             hlp_tisp=hlp_tisp+v*na_ext(ix,iy,is)*ta_ext(ix,iy,is)
           end do
           hlp_tisp=hlp_tisp+v*hlp_i*ti(ix,iy)
-          hlp_zesp=hlp_zesp+v*ne(ix,iy)*zeff
+          hlp_zesp=hlp_zesp+v*ne(ix,iy)*zeff(ix,iy)
           hlp_qesp=hlp_qesp+fhe(ix,iy,1)
           hlp_qisp=hlp_qisp+fhi(ix,iy,1)
           do is=0,ns-1

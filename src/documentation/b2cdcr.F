@@ -535,6 +535,11 @@
 *     B2XPFI computes the total atom particle flux, fni:
 *       fni(,,) = (sum is :: fna(,,,is)) .
 *
+*     B2XPIC computes the poloidal projection of the ion parallel
+*     current on cell centers.
+*
+*     B2XPIF computes the ion parallel current on cell faces.
+*
 *     B2XPMC computes the mach number of the parallel flow.
 *
 *     B2XPNE computes the electron density, ne:
@@ -593,6 +598,9 @@
 *
 *     B2XXMM computes the locations of the minimum and maximum entries
 *     of a quantity defined on the b2 mesh.
+*
+*     B2XZEF computes zeff:
+*       zeff(,) = (sum is :: rz2(,,is)*na(,,is))/ne .
 *
 *     B2YG (main program) is a postprocessor for b2. It reads and
 *     displays the geometry and magnetic field. This program calls the

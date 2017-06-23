@@ -37,7 +37,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, k
-      integer, save :: style = 1
+      integer, save :: style = 2
       integer, save :: iout = 0, iout_b2npmo = 0
       integer, save :: pot_eq = 1, no_current = 0  !srv 17.06.02 11.09.09 23.03.10
 !      character chns*3, chk*1                                        !srv 17.06.02
@@ -321,6 +321,31 @@ cdjm compute b2sigp_pstat0to3 on left cell face
           endif
          enddo
         enddo                                                         !srv 23.03.10 }
+cdjm compute b2sigp_pstat0to3 on left cell face
+        if (balance_netcdf.ne.0) then
+          b2sigp_pstat0to3 = 0.0_R8
+          do iy = -1, ny
+           do ix = -1, nx
+            if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
+     &         bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
+              b2sigp_pstat0to3(ix,iy,0,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+            else
+              t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
+              b2sigp_pstat0to3(ix,iy,0,isb) =
+     &         -t0*
+     &         (wrk0(ix,iy)+wrk0(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
+     &         -t0*qe*rzb(ix,iy)*nb(ix,iy)*
+     &         (wrk1(ix,iy)+wrk1(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
+              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
+              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
+            endif
+           enddo
+          enddo
+        endif
       endif                                                           !srv 02.07.08 }
       if (iout.ne.0 .or. iout_b2npmo.eq.1) then                       !srv 17.06.02 {
 !      write (chns,'(i3.3)') isb

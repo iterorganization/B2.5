@@ -103,7 +103,8 @@
      8  ehxp(-1:nx,-1:ny), smt(-1:nx,-1:ny,0:3),
      9  flct(-1:nx,-1:ny,0:1), wrk1(-1:nx,-1:ny), wrks(-1:nx,-1:ny),
      1  smqdu(-1:nx,-1:ny), wrk0(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
-     2  ctcfb(-1:nx,-1:ny), ctcft(-1:nx,-1:ny)                         !srv 06.04.07
+     2  ctcfb(-1:nx,-1:ny), ctcft(-1:nx,-1:ny),                        !srv 06.04.07
+     3  zeff(-1:nx,-1:ny)                                              !srv 13.01.17
       logical new_matrix, solvedum(0:NNREGMAX)
       save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
@@ -190,8 +191,9 @@
       call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
       call b2xpro (nx, ny, ns, mp, am, na, ro)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
+      call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                       !srv 13.01.17
 *   ..compute ehxp
-      call b2nxfx (nx, ny, qe, vol, hx, bb, ne, te, po, 
+      call b2nxfx (nx, ny, qe, vol, hx, bb, ne, te, po,
      &  ehxp, wrk0, wrk1)
 *   ..compute smqdu
       call b2nxdu (nx, ny, ns, na, ua, smq, smqdu, wrk0, wrk1)
@@ -285,8 +287,17 @@ cdjm Jan2017 update momentum source components for balance
         call my_out(70,nx,ny,resmo(-1,-1,is),'b2npmo_resmo'//chns)
         call my_out(70,nx,ny,fmo(-1,-1,0,is),'b2npmo_fmox'//chns)
         call my_out(70,nx,ny,fmo(-1,-1,1,is),'b2npmo_fmoy'//chns)
-        if(.not. is_neutral(is))
-     &   call my_out(70,nx,ny,flubv(-1,-1,0),'b2npmo_flubvx'//chns)
+        if(.not. is_neutral(is)) then
+          call my_out(70,nx,ny,flubv(-1,-1,0),'b2npmo_flubvx'//chns)
+          wrks=smbvv(:,:,0)+smbvv(:,:,1)*ua(:,:,is)+
+     &       smbvv(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbvv(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+          call my_out(70,nx,ny,wrks,'b2npmo_smovv'//chns)
+          wrks=smbvh(:,:,0)+smbvh(:,:,1)*ua(:,:,is)+
+     &       smbvh(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbvh(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+          call my_out(70,nx,ny,wrks,'b2npmo_smovh'//chns)
+        end if
 !	   call my_out(70,nx,ny,flubv(-1,-1,1),'b2npmo_flubvy'//chns)
 !	   do k=0,3
 !	    write (chk,'(i1)') k
@@ -312,14 +323,6 @@ cdjm Jan2017 update momentum source components for balance
      &       smbgp(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smbgp(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
         call my_out(70,nx,ny,wrks,'b2npmo_smogp'//chns)
-        wrks=smbvv(:,:,0)+smbvv(:,:,1)*ua(:,:,is)+
-     &       smbvv(:,:,2)*na(:,:,is)*mp*am(is)+
-     &       smbvv(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-        call my_out(70,nx,ny,wrks,'b2npmo_smovv'//chns)
-        wrks=smbvh(:,:,0)+smbvh(:,:,1)*ua(:,:,is)+
-     &       smbvh(:,:,2)*na(:,:,is)*mp*am(is)+
-     &       smbvh(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-        call my_out(70,nx,ny,wrks,'b2npmo_smovh'//chns)
         wrks=smbcf(:,:,0)+smbcf(:,:,1)*ua(:,:,is)+
      &       smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)

@@ -21,6 +21,8 @@
       use b2mod_balance                                                  !djm Jan2017
      & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
      &          fhe_strange, fhe_pschused, balance_netcdf
+      use b2mod_plasma
+     & , only : fch_pi_f, fch_pi_c                                       !srv 13.01.17
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain, ismain0
@@ -90,6 +92,7 @@
       integer, save :: pot_eq = 1                                        !srv 26.07.06
       integer, save :: qstyle = 0                                        !lk 23.05.06 05.07.07 {
       integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
+      integer, save :: style = 2                                         !srv 13.01.17
       integer mintopcut                                                  !lk
       integer, save :: no_current=0                                      !srv 27.02.13
 csw 10oct2012
@@ -120,7 +123,7 @@ csw 10oct2012
      *   ,fch_inert                                                      !srv 07.07.99
      *   ,va(-1:nx,-1:ny,0:1)                                            !srv 22.11.99
      *   ,dva(-1:nx,-1:ny), fledia(-1:nx,-1:ny,0:1),                     !srv 22.11.99 25.01.02
-     &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny)                           !srv 13.01.17
+     &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny), zeff(-1:nx,-1:ny)        !srv 13.01.17
 !      real (kind=R8) ::                                                 !srv
 !     *   pra(-1:nx,-1:ny), prac(-1:nx,-1:ny), nac(-1:nx,-1:ny)          !srv 30.01.00
 !      real (kind=R8) ::
@@ -206,6 +209,7 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        call ipgeti ('b2tfhe_upwind', b2_upwind)
        call ipgeti ('b2tfhe_hybr2', b2tfhe_hybr2)
        call ipgeti ('b2tfhe_flo53', flo53)
+       call ipgeti ('b2sigp_style', style)                               !srv 13.01.17
        endif                                                             !srv
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -884,8 +888,16 @@ c  ..set null flux in guard cells  ?
       fhe_mdf = 0.0e0_R8                                               !srv 13.10.06
  
 * ..compute parallel current
-      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                        !srv 13.01.17 {
+      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                       !srv 13.01.17 {
       call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
+      if(style.eq.2) then
+        call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
+        call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
+        call b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)
+      else
+        fch_pi_f = 0.0_R8
+      endif
+      fch_p = fch_p - fch_pi_f                                         !srv 13.01.17 }
 
 * ..compute fluxes and linearization
 *   ..compute fhex, floex, conex, fchx, concx
@@ -898,7 +910,6 @@ c  ..set null flux in guard cells  ?
          fhe_mdf(ix,iy,0) = 0.0e0_R8                                   !srv 13.10.06 
          conc(ix,iy,0)    = 0.0e0_R8
          fch(ix,iy,0)     = 0.0e0_R8
-         fch_p(ix,iy,0)   = 0.0e0_R8
          if (balance.and.(balance_netcdf.ne.0)) then
            fhe_32(ix,iy,0) = 0.0_R8                                    !djm Jan2017
            fhe_52(ix,iy,0) = 0.0_R8
@@ -1752,6 +1763,19 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fch_p(-1,-1,1),'fch_py')
        call my_out(70,nx,ny,csig_an(-1,-1,0),'csig_anx')
        call my_out(70,nx,ny,csig_an(-1,-1,1),'csig_any')
+       call my_out(70,nx,ny,chve(-1,-1,0),'chvex')
+       call my_out(70,nx,ny,chve(-1,-1,1),'chvey')
+       call my_out(70,nx,ny,csig(-1,-1,0),'csigx')
+       call my_out(70,nx,ny,csig(-1,-1,1),'csigy')
+       call my_out(70,nx,ny,calf(-1,-1,0),'calfx')
+       call my_out(70,nx,ny,calf(-1,-1,1),'calfy')
+       call my_out(70,nx,ny,chci(-1,-1,0),'chcix')
+       call my_out(70,nx,ny,chci(-1,-1,1),'chciy')
+       call my_out(70,nx,ny,chce(-1,-1,0),'chcex')
+       call my_out(70,nx,ny,chce(-1,-1,1),'chcey')
+       call my_out(70,nx,ny,te,'te')
+       call my_out(70,nx,ny,ne,'ne')
+       call my_out(70,nx,ny,po,'po')
        do is = 0, ns-1
         write (charns,'(i3.3)') is 
         call my_out(70,nx,ny,na(-1,-1,is),'na'//charns)
@@ -1769,8 +1793,8 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fhe_mdf(-1,-1,1),'fhe_mdfy')
        call my_out(70,nx,ny,fhePSch(-1,-1,0),'fhePSchx')
        call my_out(70,nx,ny,fhePSch(-1,-1,1),'fhePSchy')
-	   call my_out(70,nx,ny,ehx_,'b2tfhe_ehx_')                      !srv 13.01.17
-	   call my_out(70,nx,ny,ehy_,'b2tfhe_ehy_')                      !srv 13.01.17
+       call my_out(70,nx,ny,ehx_,'b2tfhe_ehx_')                      !srv 13.01.17
+       call my_out(70,nx,ny,ehy_,'b2tfhe_ehy_')                      !srv 13.01.17
       endif                                                          !srv 18.06.08 }
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                !srv 11.09.09 {

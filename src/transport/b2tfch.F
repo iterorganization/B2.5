@@ -16,6 +16,8 @@
       use b2mod_constants
       use b2mod_anomalous_transport                             	 !xpb
       use b2mod_geo_corner                                      	 !xpb
+      use b2mod_plasma
+     , , only: fch_pi_f, fch_pi_c
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       implicit none
@@ -69,6 +71,7 @@
       integer, save :: iout = 0                                         !srv 18.06.08
       integer, save :: lim_flux = 0, drift_style = 1
       integer, save :: conductive_limit = 1
+      integer, save :: style = 2                                        !srv 13.01.17
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, t0,
      &   tex, tex0, ehx_po, ehy_po,
@@ -78,7 +81,7 @@
      * dvpar(-1:nx,-1:ny), vis_per,                                     !xpb
      * va(-1:nx,-1:ny), dva(-1:nx,-1:ny),
      * fnadspl(-1:nx,-1:ny,0:1,0:ns-1),
-     * ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny)
+     * ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny), zeff (-1:nx,-1:ny)         !srv 13.01.17
       character*1 charnc
 #ifdef CLASSICAL_CURRENT
       real (kind=R8) ::
@@ -134,6 +137,7 @@
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                          !xpb
        call ipgeti ('b2tfch_iout', iout)                                !srv 18.06.08
        call ipgeti ('b2tfnb_drift_style', drift_style)
+       call ipgeti ('b2sigp_style', style)
       endif                                                             !xpb
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -566,12 +570,20 @@ c       call xerrab (' ')
       endif
         
 *   ..compute parallel current
-      call b2xehx (nx, ny, hx, te, po, ne, ehx_)
+      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                         !srv 13.01.17 {
       if (no_current.ne.1) then
         call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
+        if (style.eq.2) then
+          call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
+          call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
+          call b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)
+        else
+          fch_pi_f = 0.0_R8
+        end if
+        fch_p = fch_p - fch_pi_f
       else
         fch_p = 0.0_R8
-      endif
+      endif                                                              !srv 13.01.17 }
 
 * ..compute fluxes and linearisation
 *  ..do not forget equivalent code in B2TFHE !!!!!!!!!!!!!!!!!!!!!
@@ -593,7 +605,7 @@ c       call xerrab (' ')
               ehx = 0.0_R8
               ehx_po = 0.0_R8
             else
-              ehx = ehx_(ix,iy)
+              ehx = ehx_(ix,iy)                                          !srv 13.01.17
               ehx_po = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))   	 !xpb
             endif
             tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
@@ -640,8 +652,8 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             endif
             tex0 = tex/(1.0_R8+t0)
             tex0_nd = tex/(1.0_R8+t0_nd)
-            fch(ix,iy,0) = fch_p(ix,iy,0) 	                         !xpb
-     &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0) 	 !xpb
+            fch(ix,iy,0) = fch_p(ix,iy,0) 	                         !srv 13.01.17
+     &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0)          !xpb
      &       +fchvisper(ix,iy,0)
             fch_32(ix,iy,0) = csig_cl(ix,iy,0)*ehx
      1       +fchin(ix,iy,0)+fchvispar(ix,iy,0)
@@ -663,7 +675,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
         enddo
       enddo
 *   ..compute fchy, concy
-      call b2xehy (nx, ny, hy, qz, te, po, ne, ehy_)
+      call b2xehy (nx, ny, hy, qz, te, po, ne, ehy_)                     !srv 13.01.17
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then
@@ -676,7 +688,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               ehy = 0.0_R8
               ehy_po = 0.0_R8
             else
-              ehy = ehy_(ix,iy)
+              ehy = ehy_(ix,iy)                                          !srv 13.01.17
               ehy_po = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))  !xpb
             endif
             fch(ix,iy,1)= csig_cl(ix,iy,1)*ehy+csig_an(ix,iy,1)*ehy_po

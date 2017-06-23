@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfhe (nx, ny, ns, guard_flows, facdrift,
-     1  BoRiS, vol, hx, hy, qz, te, po, ne, vedia, veecrb,
+     1  BoRiS, vol, hx, hy, qz, te, po, ne, na, vedia, veecrb,
      2  fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,           !xpb
      &  cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,           !srv 13.10.06
      &  balance)                                                         !djm Jan2017
@@ -10,8 +10,9 @@
       use b2mod_boundary_namelist
       use b2mod_indirect
       use b2mod_constants
-      use b2mod_anomalous_transport                             	 !xpb
-      use b2mod_geo_corner                                      	 !xpb
+      use b2mod_anomalous_transport                                      !xpb
+      use b2mod_geo_corner                                               !xpb
+      use b2mod_rates                                                    !srv 13.01.17
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       use b2mod_balance                                                  !djm Jan2017
@@ -24,7 +25,7 @@
      * te(-1:nx,-1:ny), po(-1:nx,-1:ny), ne(-1:nx,-1:ny),
      & vol(-1:nx,-1:ny), facdrift(-1:nx,-1:ny),
      & fne_32(-1:nx,-1:ny,0:1), fne_52(-1:nx,-1:ny,0:1),
-     & fch_p(-1:nx,-1:ny,0:1),
+     & fch_p(-1:nx,-1:ny,0:1), na(-1:nx,-1:ny,0:ns-1),                   !srv 13.01.17
      1 csig(-1:nx,-1:ny,0:1), 
      & chce(-1:nx,-1:ny,0:1), chve(-1:nx,-1:ny,0:1),
      & calf(-1:nx,-1:ny,0:1), chvemx(-1:nx,-1:ny),
@@ -69,6 +70,7 @@
       integer, save :: lim_flux = 0, mdf_fhe = 0                        !srv 04.02.03 13.10.06
       integer, save :: drift_style = 1
       integer, save :: conductive_limit = 1
+      integer, save :: style = 2                                          !srv 13.01.17
       real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
@@ -78,7 +80,8 @@
      &   floe0_mdf, cone0_mdf, alfe0_mdf, t0_mdf, tex0_mdf              !srv 22.11.99 13.10.06
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8) ::
-     &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny)
+     &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny),
+     &    zeff(-1:nx,-1:ny)                                             !srv 13.01.17
       parameter (cutlo = 1.0e-60_R8)
 #ifdef CLASSICAL_CURRENT
       real (kind=R8) ::
@@ -124,6 +127,7 @@
        if(fch_pTe .eq. 1.0_R8) alfTeEh = 0.0_R8                          !srv 16.04.10
        call xertst (.not.(0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe),
      &        ' Do not set 0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe')
+       call ipgeti ('b2sigp_style', style)                               !srv 13.01.17
       endif                                                              !xpb
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -298,7 +302,10 @@ c  ...set null flux in guard cells  ?
 
       fhe_mdf = 0.0e0_R8                                               !srv 13.10.06
 
-      call b2xehx (nx, ny, hx, te, po, ne, ehx_)
+      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                       !srv 13.01.17 {
+      if(style.eq.2) then
+        call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
+      end if                                                           !srv 13.01.17
 
 * ..compute fluxes and linearisation
 *  ..do not forget equivalent code in B2TFCH !!!!!!!!!!!!!!!!!!!!!

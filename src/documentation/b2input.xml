@@ -3518,11 +3518,12 @@
 			</switchgroup>
 			<switch>
 				<name>b2sigp_style</name>
-				<default>1</default>
+				<default>2</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPb's form of the pressure gradient term on the right hand of the momentum balance equation is used. 
-					It is recommended '1'.
+					When set to '1', SPb's form of the pressure gradient term on the right hand of the momentum balance equation is used.
+					When set to '2', the parallel current term contains a correction due to impurities, when Z_eff is not equal to the average plasma ion charge.
+					The default value of '2' is recommended for cases with one main hydrogenic species and any amount of impurities. It is not guaranteed to yield correct results for hydrogen isotopic mixtures or non-hydrogenic plasmas.
 				</description>
 			</switch>
 			<switch>

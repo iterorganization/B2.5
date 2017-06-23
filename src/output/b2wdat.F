@@ -272,15 +272,7 @@
        enddo
        call my_out(70,nx,ny,kt_neo,'kt_neo')
        call my_out(70,nx,ny,wrk2,'Ey_neo')                        !iyv 15.10.09 }
-       wrk0=0.0e0_R8                                              !iyv 12.12.13 {
-       do is = 0, ns-1
-	 do iy=-1,ny
-	   do ix=-1,nx
-             wrk0(ix,iy)=wrk0(ix,iy)+rz2(ix,iy,is)*na(ix,iy,is)
-	   enddo
-         enddo
-       enddo
-       wrk0(:,:)=wrk0(:,:)/ne(:,:)
+       call b2xzef(nx,ny,ns,rz2,na,ne,wrk0)
        call my_out(70,nx,ny,wrk0,'Zeff')                          !iyv 12.12.13 }
        do is = 0,ns-1
         write (chns,'(i3.3)') is

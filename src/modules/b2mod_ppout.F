@@ -29,7 +29,7 @@ C 2002.11.01
      *  xnorm(:,:,:),
      *  crxe(:,:,:), crye(:,:,:),
      *  cxpp(:,:),   cypp(:,:),
-     *  psi(:,:),
+     *  psi(:,:),    zeff(:,:),
      *  rho(:,:),    hrho(:,:),
      *  theta(:,:),  htheta(:,:),
      *  bfi(:,:),    sh(:,:),
@@ -107,6 +107,7 @@ c   ..allocate
       allocate(sh(-1:nxd,-1:nyd))
 
       allocate(dm(-1:nxd,-1:nyd))
+      allocate(zeff(-1:nxd,-1:nyd))
 
       allocate(rsepx(1:nxd+3))
       allocate(zsepx(1:nxd+3))
@@ -158,6 +159,7 @@ c   ..deallocate
       deallocate(sh)
 
       deallocate(dm)
+      deallocate(zeff)
 
       deallocate(rsepx)
       deallocate(zsepx)
@@ -291,6 +293,7 @@ c   ..mach number of each species
 
       call b2xppr( nxpp, nypp, nspp, ne, na, te, ti, pr )
       call b2xpro( nxpp, nypp, nspp, mp, am, na, ro )
+      call b2xzef( nx, ny, ns, rz2, na, ne, zeff)
 
       do is = 0, nspp - 1
          call b2xpmc( nxpp, nypp
@@ -1455,7 +1458,7 @@ c   ..plasma state
      *                     , te     , 1.0_R8/ev , 1 , 0 )
       call ppwure_conv_grid( nwrite
      *                     , 'ZEFF' , 'Z EFFECTIVE' , ' '
-     *                     , ne2/ne , 1.0_R8    , 1 , 0 )
+     *                     , zeff   , 1.0_R8    , 1 , 0 )
 
       if( ism.ge.0 ) then
           call ppwure_conv_grid( nwrite

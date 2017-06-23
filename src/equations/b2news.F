@@ -618,7 +618,7 @@ cxpb
      1         fch_32, fch_52, avisper, bvisper, cvisper, fchvisper,
      2         csig_cl, calf_cl)
               call b2tfhe (nx, ny, ns, guard_flows, facdrift,
-     1         BoRiS, vol, hx, hy, qz, te, po, ne, vedia, veecrb,        !xpb
+     1         BoRiS, vol, hx, hy, qz, te, po, ne, na, vedia, veecrb,    !xpb
      &         fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,    !xpb
      &         cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,    !xpb  !srv 13.10.06
      &         .false.)                                                  !djm Jan2017
@@ -816,7 +816,7 @@ c     with diamagnetic drift part                                        !xpb
      &   fchdia, fch_p, fchvispar, fchvisq, fchin, fch_32, fch_52,       !srv 25.11.08
      1   avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
         call b2tfhe (nx, ny, ns, guard_flows, facdrift, BoRiS,           !xpb
-     1   vol, hx, hy, qz, te, po, ne, vedia, veecrb,
+     1   vol, hx, hy, qz, te, po, ne, na, vedia, veecrb,
      1   fne_32, fne_52, fch_p,
      1   csig, chce, chve, calf, chvemx, cddi, fhe, fhe_mdf, fhePSch,    !srv 13.10.06
      &   fhet, floe, cone, fllime,                                       !xpb

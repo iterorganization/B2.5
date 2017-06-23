@@ -273,7 +273,7 @@
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
 csw 30sep2013, added cdpa in call, uadia
        call b2tfrn (nx, ny, ns, guard_flows,
-     &  facdrift, fac_ExB, rza,
+     &  facdrift, fac_ExB, rza, rz2,
      &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,
      &  fch_p, fchvispar, fchinert, fchanml,
      &  fne, cvla, cdna, cdpa, chce, chci,
