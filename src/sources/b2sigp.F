@@ -335,10 +335,12 @@ cdjm compute b2sigp_pstat0to3 on left cell face
             else
               t0=hz(ix,iy)*vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)
               b2sigp_pstat0to3(ix,iy,0,isb) =
-     &         -t0*
-     &         (wrk0(ix,iy)+wrk0(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
-     &         -t0*qe*rzb(ix,iy)*nb(ix,iy)*
-     &         (wrk1(ix,iy)+wrk1(rightix(ix,iy),rightiy(ix,iy)))*0.5_R8
+     &         -t0*wrk0(ix,iy)
+     &         -t0*qe*wrk1(ix,iy)*
+     &         (rzb(ix,iy)*nb(ix,iy)*hx(leftix(ix,iy),leftiy(ix,iy))+
+     &          rzb(leftix(ix,iy),leftiy(ix,iy))*
+     &          nb(leftix(ix,iy),leftiy(ix,iy))*hx(ix,iy))/
+     &         (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))
               b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
               b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
               b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
