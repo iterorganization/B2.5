@@ -34,13 +34,14 @@
       real (kind=R8) precision, fluxav
       parameter (precision=1e-8)
 *   ..input arguments (unchanged on exit)
+      integer nx, ny, iy                                                !srv 27.02.17
       real (kind=R8) ::
      *   quant(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), vol(-1:nx,-1:ny),
      *   hx(-1:nx,-1:ny)
 *   ..local variables
       real (kind=R8) :: 
      *   qsum, qterm, wsum, bface, hxface, hxpface, hxnface
-      integer nx, ny, iy, ix
+      integer ix                                                        !srv 27.02.17
 *   ..procedures
       external xertst
 

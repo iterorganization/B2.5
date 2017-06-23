@@ -77,7 +77,8 @@
      * fch_ion_neutral, fch_anomalous, vis_par,                         !xpb
      * dvpar(-1:nx,-1:ny), vis_per,                                     !xpb
      * va(-1:nx,-1:ny), dva(-1:nx,-1:ny),
-     * fnadspl(-1:nx,-1:ny,0:1,0:ns-1)
+     * fnadspl(-1:nx,-1:ny,0:1,0:ns-1),
+     * ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny)
       character*1 charnc
 #ifdef CLASSICAL_CURRENT
       real (kind=R8) ::
@@ -564,6 +565,14 @@ c       call xerrab (' ')
         enddo
       endif
         
+*   ..compute parallel current
+      call b2xehx (nx, ny, hx, te, po, ne, ehx_)
+      if (no_current.ne.1) then
+        call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
+      else
+        fch_p = 0.0_R8
+      endif
+
 * ..compute fluxes and linearisation
 *  ..do not forget equivalent code in B2TFHE !!!!!!!!!!!!!!!!!!!!!
 *   ..compute fchx, concx
@@ -572,7 +581,6 @@ c       call xerrab (' ')
           if(leftix(ix,iy).eq.-2) then
             conc(ix,iy,0) = 0.0_R8
             fch(ix,iy,0) = 0.0_R8
-            fch_p(ix,iy,0) = 0.0_R8                                  !srv 10.06.08
             fch_32(ix,iy,0) = 0.0_R8
             fch_52(ix,iy,0) = 0.0_R8
           else
@@ -585,11 +593,7 @@ c       call xerrab (' ')
               ehx = 0.0_R8
               ehx_po = 0.0_R8
             else
-              ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+     	 !xpb
-     &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+      	 !xpb
-     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5_R8*    	 !xpb
-     &         (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy))))  	 !xpb
-     &         )/qe                                             	 !xpb
+              ehx = ehx_(ix,iy)
               ehx_po = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))   	 !xpb
             endif
             tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
@@ -636,8 +640,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             endif
             tex0 = tex/(1.0_R8+t0)
             tex0_nd = tex/(1.0_R8+t0_nd)
-            fch(ix,iy,0) = csig_cl(ix,iy,0)*ehx+csig_an(ix,iy,0)*ehx_po
-     &       -calf(ix,iy,0)*tex0 	                                 !xpb
+            fch(ix,iy,0) = fch_p(ix,iy,0) 	                         !xpb
      &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0) 	 !xpb
      &       +fchvisper(ix,iy,0)
             fch_32(ix,iy,0) = csig_cl(ix,iy,0)*ehx
@@ -645,10 +648,6 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &       +fchvisper(ix,iy,0)
             fch_52(ix,iy,0) = csig_an(ix,iy,0)*ehx_po
      &                       -calf(ix,iy,0)*tex0_nd
-            if (no_current.ne.1) then
-              fch_p(ix,iy,0) = csig_cl(ix,iy,0)*ehx
-     &                        -calf(ix,iy,0)*tex0                        !srv 10.06.08
-            endif
             conc(ix,iy,0) = csig(ix,iy,0)
             if(fch_ion_neutral.ne.0.0_R8) then                  	 !xpb
               do is = 0, ns-1
@@ -664,12 +663,12 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
         enddo
       enddo
 *   ..compute fchy, concy
+      call b2xehy (nx, ny, hy, qz, te, po, ne, ehy_)
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then
             conc(ix,iy,1) = 0.0_R8
             fch(ix,iy,1) = 0.0_R8
-            fch_p(ix,iy,1) = 0.0_R8                                  !srv 10.06.08
             fch_32(ix,iy,1) = 0.0_R8
             fch_52(ix,iy,1) = 0.0_R8
           else
@@ -677,11 +676,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               ehy = 0.0_R8
               ehy_po = 0.0_R8
             else
-              ehy = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))+
-     &         (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy))+
-     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))*0.5_R8*
-     &         (log(ne(ix,iy))-log(ne(bottomix(ix,iy),bottomiy(ix,iy))))
-     &         )/qe    
+              ehy = ehy_(ix,iy)
               ehy_po = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))  !xpb
             endif
             fch(ix,iy,1)= csig_cl(ix,iy,1)*ehy+csig_an(ix,iy,1)*ehy_po
@@ -689,7 +684,6 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))             !xpb
      .       +fchdia(ix,iy,1)+fchin(ix,iy,1)+fchvispar(ix,iy,1)          !xpb
      &       +fchvisper(ix,iy,1)
-            fch_p(ix,iy,1)= 0.0_R8                                       !srv 10.06.08
             fch_32(ix,iy,1)= csig_cl(ix,iy,1)*ehy
      .       +fchin(ix,iy,1)+fchvispar(ix,iy,1)                          !xpb
      &       +fchvisper(ix,iy,1)

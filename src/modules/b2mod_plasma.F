@@ -251,7 +251,7 @@
       deallocate(fna_fcor)                          !srv 01.10.99
       deallocate(fnaPSch)                           !srv 13.10.06
       deallocate(fna_mdf)                           !srv 13.10.06
-      deallocate(uahel  )                           !srv 23.12.03
+      deallocate(uahel)                           !srv 23.12.03
       deallocate(fna_eir)                           !srv 14.07.10 {
       deallocate(fne_eir)
       deallocate(fhe_eir)

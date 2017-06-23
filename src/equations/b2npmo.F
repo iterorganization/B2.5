@@ -3,7 +3,7 @@
 
       subroutine b2npmo (nx, ny, ns, itcnt, solving, rxf, 
      &  qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,
-     &  na, te, ti, po, fna_fcor,                                      !srv 09.01.01 01.07.09
+     &  na, te, ti, po, fna_fcor,                                       !srv 09.01.01 01.07.09
      &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,
      &  smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,
      &  resmo, resmt, corua, corut, pcca, pccm, ierr)
@@ -132,8 +132,8 @@
         call ipgetr ('b2npmo_rxg', rxg)
         call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
         call ipgeti ('b2npmo_diagno', diagno)
-        call ipgeti ('b2npmo_iout', iout)                              !srv 04.07.08
-        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.07.08
+        call ipgeti ('b2npmo_iout', iout)                               !srv 04.07.08
+        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                      !srv 04.07.08
         call ipgeti ('b2news_nsmin', nsmin)
         if(nsmin.gt.ns) then
            nsmin=ns
@@ -203,7 +203,7 @@
       call sfill (n2*2, 0.0_R8, flct, 1)
       call sfill (n2*2, 0.0_R8, cvct, 1)
       call sfill (n2, 0.0_R8, resmt, 1)
-      call sfill (n2, 0.0e0_R8, ctcft, 1)                              !srv 06.04.07
+      call sfill (n2, 0.0e0_R8, ctcft, 1)                               !srv 06.04.07
 
 * ..main computation
 *   ..compute individual species corrections
@@ -278,6 +278,7 @@ cdjm Jan2017 update momentum source components for balance
        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
      &   flub, cvsahz(-1,-1,0,is), resmo(-1,-1,is), wrkf)              !srv 04.07.08
        fmo(:,:,:,is)=wrkf
+
        write (chns,'(i3.3)') is                                        !srv 18.03.10
        if (iout.ne.0) then                                             !srv 12.07.02 {
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua_input'//chns)

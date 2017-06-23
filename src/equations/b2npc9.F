@@ -203,7 +203,8 @@ cdjm Jan2017 update particle source components for balance
 	call my_out(70,nx,ny,wrk0,'b2npc9_sna'//chns)
 	call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc9_fnax'//chns)
 	call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc9_fnay'//chns)
-      endif                                                           !srv 12.07.02 }
+      endif                                                          
+
 *   ..set error parameter
 *     (at present all errors cause an abort through xerrab)
       ierr = 0

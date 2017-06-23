@@ -77,6 +77,8 @@
      1   flo_vedia, flo_veecrb, prefactor,
      &   floe0_mdf, cone0_mdf, alfe0_mdf, t0_mdf, tex0_mdf              !srv 22.11.99 13.10.06
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
+      real (kind=R8) ::
+     &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny)
       parameter (cutlo = 1.0e-60_R8)
 #ifdef CLASSICAL_CURRENT
       real (kind=R8) ::
@@ -146,10 +148,10 @@
        call b2xvff (nx, ny, calf_an, 'calf_an')
       endif
 
-      fhePSch = 0.0e0_R8                                                 !sv 13.10.06
-      cone    = 0.0e0_R8                                                 !sv 02.01.07
+      fhePSch = 0.0e0_R8                                                 !srv 13.10.06
+      cone    = 0.0e0_R8                                                 !srv 02.01.07
       if(maxval(facdrift).ne.0.0e0_R8) then
-*   ..compute P.Sch heat x-flux                                          !sv 13.10.06 {
+*   ..compute P.Sch heat x-flux                                          !srv 13.10.06 {
        do is = 0,ns 
 	if (nint(zn(is)).eq.1.and.nint(zamax(is)).eq.1) then
 !        iy = -1
@@ -192,9 +194,9 @@
      &       (ne(ix,iy)*te(ix,iy)**2-ne(bottomix(ix,iy),bottomiy(ix,iy))
      &                          *te(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                                  )
-            cone(ix,iy,0,1) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*  ! 0.25*2  !sv 02.01.07
+            cone(ix,iy,0,1) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*  ! 0.25*2  !srv 02.01.07
      *                                               ne(ix,iy)*te(ix,iy)
-            cone(ix,iy,0,2) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*            ! 0.25*2  !sv 02.01.07
+            cone(ix,iy,0,2) = -0.5e0_R8*PSch*cddi(ix,iy,1,is)*            ! 0.25*2  !srv 02.01.07
      &                         ne(bottomix(ix,iy),bottomiy(ix,iy))*
      &                         te(bottomix(ix,iy),bottomiy(ix,iy))
 	   endif
@@ -269,11 +271,11 @@
      &                         -ne(bottomix(ix,iy),bottomiy(ix,iy))*
      &                          te(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                                  )
-            cone(ix,iy,1,1) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*   ! 0.25*2 !sv 02.01.07 {
+            cone(ix,iy,1,1) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*   ! 0.25*2 !srv 02.01.07 {
      &                                              ne(ix,iy)*te(ix,iy)
             cone(ix,iy,1,2) = -0.5e0_R8*PSch*cddi(ix,iy,0,is)*             ! 0.25*2
      &                           ne(leftix(ix,iy),leftiy(ix,iy))*
-     &                           te(leftix(ix,iy),leftiy(ix,iy))      !sv 02.01.07 }
+     &                           te(leftix(ix,iy),leftiy(ix,iy))      !srv 02.01.07 }
 	    endif
 	   enddo
           enddo
@@ -294,7 +296,9 @@ c  ...set null flux in guard cells  ?
 !       fhePSch( :,ny,0)=0.0e0_R8
       endif
 
-      fhe_mdf = 0.0e0_R8                                              !sv 13.10.06
+      fhe_mdf = 0.0e0_R8                                               !srv 13.10.06
+
+      call b2xehx (nx, ny, hx, te, po, ne, ehx_)
 
 * ..compute fluxes and linearisation
 *  ..do not forget equivalent code in B2TFCH !!!!!!!!!!!!!!!!!!!!!
@@ -327,11 +331,7 @@ c  ...set null flux in guard cells  ?
             if (no_current.eq.1) then
               ehx = 0.0_R8
             else
-              ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+ 	 !xpb
-     &         (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+      	 !xpb
-     &         (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5_R8* 	 !xpb
-     &         (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy)))) 	 !xpb 
-     &         )/qe                                             	 !xpb 
+              ehx = ehx_(ix,iy)                                         !srv 13.01.17
             endif
             tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
 cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
@@ -546,6 +546,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
         enddo
       enddo
 *   ..compute fhey, floey, coney
+      call b2xehy (nx, ny, hy, qz, te, po, ne, ehy_)                     !srv 13.01.17
       do iy = -1, ny
         do ix = -1, nx
           if (bottomiy(ix,iy).eq.-2) then
@@ -568,11 +569,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             if (no_current.eq.1) then
               ehy = 0.0_R8
             else
-              ehy = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))+
-     &         (ne(ix,iy)*te(ix,iy)-ne(bottomix(ix,iy),bottomiy(ix,iy))*
-     &         te(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &         (2.0_R8/qe)/
-     &         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))
+              ehy = ehy_(ix,iy)                                      !srv 13.01.17
             endif
             if (conduction_only.eq.1) then
               floe0 = 0.0_R8

@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tqce (nx, ny, lnlam, bb, te, ti, ne, ne2, hce, sig,
-     &                   alf)  !srv 01.07.09
+     &                   alf)                                            !srv 01.07.09
       use b2mod_types
       use b2mod_constants
       use b2mod_b2cmpa
@@ -65,7 +65,7 @@
      &                 iout_b2nph9 = 0, iout_b2npht = 0, fke_Zhdanov = 1
       integer, save :: style_guard_cells = 0                            !srv 19.04.13
       character(23) hlp_frm                                             !srv 11.03.13
-	real (kind=R8), save :: fch_pTe = 1.0_R8                        !srv 30.12.09
+      real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
      *  ctaue, ce, t0, t1, z, tau(-1:nx,-1:ny), tnp                     !srv 11.09.09
 !xpb      parameter (lnlam=12.0_R8)
@@ -81,7 +81,7 @@
       fke(z) =  2.16_R8*z/(1.0_R8+0.27_R8*z)
       fse(z) =  4.95_R8*z/(1.0_R8+1.54_R8*z)
       fal(z) = -1.25_R8*z/(1.0_R8+0.41_R8*z)
-      fke_Zh(z) = (3.9_R8+2.3_R8/z)/(0.31_R8+1.2_R8/z+0.41_R8/z**2)   !srv 02.12.10
+      fke_Zh(z) = (3.9_R8+2.3_R8/z)/(0.31_R8+1.2_R8/z+0.41_R8/z**2)     !srv 02.12.10
       real (kind=R8) c11e, c13e, c15e
       parameter (c11e = 1.0000_R8, c13e = 0.9487_R8, c15e =-0.8964_R8)
       real (kind=R8) c31e
@@ -141,15 +141,15 @@
 *   ..read input data
       if (ncall.eq.0) then
         call ipgeti ('b2tqce_model', model)
-        call ipgeti ('b2tqce_iout', iout)                                 !srv 16.06.08                       
+        call ipgeti ('b2tqce_iout', iout)                               !srv 16.06.08                       
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
-        call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                           !srv 30.12.09
-        call ipgeti ('b2tqce_fke_Zhdanov', fke_Zhdanov)                   !srv 02.12.10
+        call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                         !srv 30.12.09
+        call ipgeti ('b2tqce_fke_Zhdanov', fke_Zhdanov)                 !srv 02.12.10
         call ipgeti ('b2tlnl_ee', icase)
         call xertst (0.eq.icase .or. 2.eq.icase, 
      &               'faulty input b2tlnl_ee')
-        call ipgeti ('b2tqce_style_guard_cells', style_guard_cells)       !srv 19.04.13
+        call ipgeti ('b2tqce_style_guard_cells', style_guard_cells)     !srv 19.04.13
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -189,7 +189,7 @@
          tnp = tau(ix,iy)*ne(ix,iy)*pitx(ix,iy)**2
          z = ne2(ix,iy)/ne(ix,iy)
          if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit
-	    if(fch_pTe .eq. 1.0_R8.and.fke_Zhdanov.eq.1) then            !srv 02.12.10
+	    if(fch_pTe .eq. 1.0_R8.and.fke_Zhdanov.eq.1) then             !srv 02.12.10
            hce(ix,iy,0) =     (te(ix,iy)/me)*fke_zh(z)*tnp
 	    else
            hce(ix,iy,0) = 2.5_R8*(te(ix,iy)/me)*fke(z)*tnp
@@ -219,9 +219,9 @@
          tnp = tau(ix,iy)*ne(ix,iy)*pitx(ix,iy)**2
          z = ne2(ix,iy)/ne(ix,iy)
          if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit
-	  if(fch_pTe .eq. 1.0_R8.and.fke_Zhdanov.eq.1) then            !srv 02.12.10
+          if(fch_pTe .eq. 1.0_R8.and.fke_Zhdanov.eq.1) then            !srv 02.12.10
            hce(ix,iy,0) =     (te(ix,iy)/me)*fke_zh(z)*tnp
-	  else
+          else
            hce(ix,iy,0) = 2.5_R8*(te(ix,iy)/me)*fke(z)*tnp
           endif
           if ((iy .ne. -1 .and. iy .ne. ny) 

@@ -315,10 +315,13 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
       if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0) then                !srv 19.05.10 {
        do is = 0, ns-1
 	write (chns,'(i3.3)') is
-        call my_out(70,nx,ny,cdna(-1,-1,0,is),'b2trno_cdnax'//chns)
-        call my_out(70,nx,ny,cdna(-1,-1,1,is),'b2trno_cdnay'//chns)
-        call my_out(70,nx,ny,cdpa(-1,-1,0,is),'b2trno_cdpax'//chns)
-        call my_out(70,nx,ny,cdpa(-1,-1,1,is),'b2trno_cdpay'//chns)
+        if (is_neutral(is) ) then
+          call my_out(70,nx,ny,cdpa(-1,-1,0,is),'b2trno_cdpax'//chns)
+          call my_out(70,nx,ny,cdpa(-1,-1,1,is),'b2trno_cdpay'//chns)
+        else
+          call my_out(70,nx,ny,cdna(-1,-1,0,is),'b2trno_cdnax'//chns)
+          call my_out(70,nx,ny,cdna(-1,-1,1,is),'b2trno_cdnay'//chns)
+        endif
 !        call my_out(70,nx,ny,cvla(-1,-1,0,is),'b2trno_cvlax'//chns)
 !        call my_out(70,nx,ny,cvla(-1,-1,1,is),'b2trno_cvlay'//chns)
        enddo

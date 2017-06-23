@@ -55,11 +55,12 @@
 *   ..local variables
       integer ncall, style, n2, ix, iy, is, isb, nsmin, nsmax
       integer, save :: icase = 0
-      integer, save :: istyle_Joule_heating = 1                       !srv 17.01.14
+      integer, save :: istyle_Joule_heating = 1                         !srv 17.01.14
       real (kind=R8) ::
      *  rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2, phm3,
      &  phm4, phm5, phm6, phm7, work(-1:nx,-1:ny), 
-     &  wpov(-1:nx,-1:ny), wpoh(-1:nx,-1:ny)
+     &  wpov(-1:nx,-1:ny), wpoh(-1:nx,-1:ny),
+     *  ehx(-1:nx,-1:ny), ehy(-1:nx,-1:ny)                              !srv 13.01.17
       save ncall, style, rf0, rf1, rf2, rf3, rf4, 
      &  phm0, phm1, phm2, phm3, phm4, phm5, phm6, phm7, nsmin, nsmax
       real (kind=R8) ::
@@ -67,7 +68,7 @@
 *   ..procedures
       intrinsic min, max, sqrt, log, mod
       real (kind=R8) ::
-     *  uasx, uesx, uasy, ehx, ehy, hy1
+     *  uasx, uesx, uasy, hy1                                           !srv 13.01.17
       external subini, subend, xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvsg, intfacev, intfaceh
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
@@ -80,16 +81,6 @@
       uasy(ix,iy,is)=(hy1(ix,iy)*ua(bottomix(ix,iy),bottomiy(ix,iy),is)+
      1  hy1(bottomix(ix,iy),bottomiy(ix,iy))*ua(ix,iy,is))/
      2 (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))*pbs(ix,iy,1)
-      ehx(ix,iy) = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
-     &  (ne(ix,iy)*te(ix,iy)-
-     &   ne(leftix(ix,iy),leftiy(ix,iy))*
-     &   te(leftix(ix,iy),leftiy(ix,iy)))*(2.0_R8/qe)/
-     &  (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))
-      ehy(ix,iy) = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))+
-     &  (ne(ix,iy)*te(ix,iy)-
-     &   ne(bottomix(ix,iy),bottomiy(ix,iy))*
-     &   te(bottomix(ix,iy),bottomiy(ix,iy)))*(2.0_R8/qe)/
-     &  (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))
 *   ..initialisation
       data ncall/0/, style/0/
       data rf0/1.0_R8/, rf1/1.0_R8/, rf2/1.0_R8/,
@@ -358,6 +349,9 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
       endif
 *   ..contribution from electron-atom friction
 *     (a.k.a. Joule heating)
+      call b2xehx (nx, ny, hx, te, po, ne, ehx)                         !srv 13.01.17
+      if (istyle_Joule_heating.eq.0) 
+     &   call b2xehy (nx, ny, hy, qz, te, po, ne, ehy)                  !srv 13.01.17
       b2joule=0.0_R8
       b2sihs_joule=0.0_R8
       if (balance_netcdf.ne.0) then !djm Jan2017

@@ -1102,13 +1102,14 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        if(.not. is_neutral(isb)) then
         call my_out(70,nx,ny,wrk3,'b2tfnb_vaecrbnax'//chns)
         call my_out(70,nx,ny,fnbPSch(-1,-1,0),'b2tfnb_fnbPSchx'//chns)
+        call my_out(70,nx,ny,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
+        call my_out(70,nx,ny,wrk4,'b2tfnb_dPat_2diagradnax'//chns)
+       else
+        call my_out(70,nx,ny,wrk5,'b2tfnb_dgradpbx'//chns)
        endif
        call my_out(70,nx,ny,wrk1,'b2tfnb_bxuanax'//chns)
        call my_out(70,nx,ny,wrk2,'b2tfnb_dpccornax'//chns)
-       call my_out(70,nx,ny,wrk4,'b2tfnb_dPat_2diagradnax'//chns)
-       call my_out(70,nx,ny,wrk5,'b2tfnb_dgradpbx'//chns)
        call my_out(70,nx,ny,wrk6,'b2tfnb_dpccorhznax'//chns)            !srv 05.11.09
-       call my_out(70,nx,ny,wrk7,'b2tfnb_dPat_mdf_gradnax'//chns)
        call my_out(70,nx,ny,wrk8,'b2tfnb_cvlbnax'//chns)                !iys 17.04.2012
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diax'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfx'//chns)
@@ -1561,10 +1562,11 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        if(.not. is_neutral(isb)) then
         call my_out(70,nx,ny,fnbPSch(-1,-1,1),'b2tfnb_fnbPSchy'//chns)
         call my_out(70,nx,ny,wrk3,'b2tfnb_vaecrbnay'//chns)
+        call my_out(70,nx,ny,wrk7,'b2tfnb_dPat_mdf_gradnay'//chns)
+        call my_out(70,nx,ny,wrk4,'b2tfnb_dPat_2diagradnay'//chns)
+       else
+        call my_out(70,nx,ny,wrk5,'b2tfnb_dgradpby'//chns)
        endif
-       call my_out(70,nx,ny,wrk4,'b2tfnb_dPat_2diagradnay'//chns)
-       call my_out(70,nx,ny,wrk5,'b2tfnb_dgradpby'//chns)
-       call my_out(70,nx,ny,wrk7,'b2tfnb_dPat_mdf_gradnay'//chns)
        call my_out(70,nx,ny,wrk8,'b2tfnb_cvlbnay'//chns)               !iys 17.04.2012
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diay'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfy'//chns)
@@ -2045,9 +2047,9 @@ cwdk need full diamagnetic component for energy
        call my_out(70,nx,ny,cddb(-1,-1,1),'b2tfnb_cddby'//chns)
        call my_out(70,nx,ny,term,'b2tfnb_term'//chns)
        call my_out(70,nx,ny,termhz,'b2tfnb_termhz'//chns)
-       call my_out(70,nx,ny,pbs(-1,-1,0),'b2tfnb_pbsx'//chns)
-       call my_out(70,nx,ny,pbshz(-1,-1,0),'b2tfnb_pbshzx'//chns)
-       call my_out(70,nx,ny,pbshz(-1,-1,1),'b2tfnb_pbshzy'//chns)
+       call my_out(70,nx,ny,pbs(-1,-1,0),'b2tfnb_pbsx')
+       call my_out(70,nx,ny,pbshz(-1,-1,0),'b2tfnb_pbshzx')
+       call my_out(70,nx,ny,pbshz(-1,-1,1),'b2tfnb_pbshzy')
        call my_out(70,nx,ny,ub2dia(-1,-1,0),'b2tfnb_ub2diax'//chns)
        call my_out(70,nx,ny,ub2dia(-1,-1,1),'b2tfnb_ub2diay'//chns)
        call my_out(70,nx,ny,conb(-1,-1,0,0),'b2tfnb_conbx0'//chns)
@@ -2068,22 +2070,22 @@ cwdk need full diamagnetic component for energy
        call my_out(70,nx,ny,dkmprti(-1,-1,1),'b2tfnb_dkmprtiy'//chns)
        call my_out(70,nx,ny,ub,'b2tfnb_ua'//chns)
        call my_out(70,nx,ny,nb,'b2tfnb_na'//chns)
-       call my_out(70,nx,ny,te,'b2tfnb_te'//chns)
-       call my_out(70,nx,ny,ti,'b2tfnb_ti'//chns)
-       call my_out(70,nx,ny,po,'b2tfnb_po'//chns)
-       call my_out(70,nx,ny,zb,'b2tfnb_zb'//chns)
+       call my_out(70,nx,ny,te,'b2tfnb_te')
+       call my_out(70,nx,ny,ti,'b2tfnb_ti')
+       call my_out(70,nx,ny,po,'b2tfnb_po')
+!      call my_out(70,nx,ny,zb,'b2tfnb_zb')
        call my_out(70,nx,ny,facdrift,'b2tfnb_facdrift'//chns)
        call my_out(70,nx,ny,fac_ExB,'b2tfnb_fac_ExB'//chns)
        call my_out(70,nx,ny,fchvispar(-1,-1,0),
-     &             'b2tfnb_fchvisparx'//chns)
+     &             'b2tfnb_fchvisparx')
        call my_out(70,nx,ny,fchvispar(-1,-1,1),
-     &             'b2tfnb_fchvispary'//chns)
+     &             'b2tfnb_fchvispary')
        call my_out(70,nx,ny,fchinert(-1,-1,0),
-     &             'b2tfnb_fchinertx'//chns)
+     &             'b2tfnb_fchinertx')
        call my_out(70,nx,ny,fchinert(-1,-1,1),
-     &             'b2tfnb_fchinerty'//chns)
-       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfnb_fchanmlx'//chns)
-       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfnb_fchanmly'//chns)
+     &             'b2tfnb_fchinerty')
+       call my_out(70,nx,ny,fchanml(-1,-1,0),'b2tfnb_fchanmlx')
+       call my_out(70,nx,ny,fchanml(-1,-1,1),'b2tfnb_fchanmly')
       endif                                                             !srv 18.06.08 }
 
 * ..return

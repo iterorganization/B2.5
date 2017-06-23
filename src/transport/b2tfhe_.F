@@ -88,7 +88,6 @@
       integer, save :: lim_flux = 0, mdf_fhe = 0                         !srv 04.02.03 13.10.06
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0              !srv 06.07.06
       integer, save :: pot_eq = 1                                        !srv 26.07.06
-      integer, save :: mode_ehx = 0                                      !srv 21.10.09
       integer, save :: qstyle = 0                                        !lk 23.05.06 05.07.07 {
       integer, save :: conductive_limit = 1                              !srv 16.06.08 17.01.12
       integer mintopcut                                                  !lk
@@ -120,7 +119,8 @@ csw 10oct2012
      *   ,tauia(-1:nx,-1:ny,0:ns-1)                                      !srv 28.03.99 11.07.99
      *   ,fch_inert                                                      !srv 07.07.99
      *   ,va(-1:nx,-1:ny,0:1)                                            !srv 22.11.99
-     *   ,dva(-1:nx,-1:ny), fledia(-1:nx,-1:ny,0:1)                      !srv 22.11.99 25.01.02
+     *   ,dva(-1:nx,-1:ny), fledia(-1:nx,-1:ny,0:1),                     !srv 22.11.99 25.01.02
+     &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny)                           !srv 13.01.17
 !      real (kind=R8) ::                                                 !srv
 !     *   pra(-1:nx,-1:ny), prac(-1:nx,-1:ny), nac(-1:nx,-1:ny)          !srv 30.01.00
 !      real (kind=R8) ::
@@ -199,7 +199,6 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        call ipgeti ('b2npht_iout', iout_b2npht)
        call ipgeti ('b2npp7_iout', iout_b2npp7)
        call ipgeti ('b2nppo_iout', iout_b2nppo)
-       call ipgeti ('b2tfhe_mode_ehx',mode_ehx)                          !srv 21.10.09
        call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 16.06.08 17.01.12
        call ipgeti ('b2tfhe_no_current',no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
@@ -884,6 +883,10 @@ c  ..set null flux in guard cells  ?
 
       fhe_mdf = 0.0e0_R8                                               !srv 13.10.06
  
+* ..compute parallel current
+      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                        !srv 13.01.17 {
+      call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
+
 * ..compute fluxes and linearization
 *   ..compute fhex, floex, conex, fchx, concx
       do iy = -1, ny
@@ -907,22 +910,8 @@ c  ..set null flux in guard cells  ?
            fhe_pschused(ix,iy,0) = 0.0_R8
          endif
         else                                                           !srv 26.11.02 }
-         if(mode_ehx.eq.0) then
-          ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
-     &      (ne(ix,iy)*te(ix,iy)                                       !srv .98
-     &      -ne(leftix(ix,iy),leftiy(ix,iy))*                          !srv
-     &      te(leftix(ix,iy),leftiy(ix,iy)))*                          !srv
-     &      (2/qe)/(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))         !srv
-         else
-          ehx = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
-     &    (                                                            !srv .98
-     &     te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+                  !srv
-     &     (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5e0_R8*       !srv
-     &     (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy))))       !srv
-     &    )/qe                                                         !srv .98
-         endif
+	   ehx = ehx_(ix,iy)                                             !srv 13.01.17
          tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-         fch_p(ix,iy,0) = csig_cl(ix,iy,0)*ehx-calf(ix,iy,0)*tex       !srv 30.12.09 }
          if(pot_eq.ne.1 .and. no_current.ne.0) then                    !srv 27.02.13
           fch_p = 0.0e0_R8
           ehx = 0.0_R8                                                 !srv 27.02.13
@@ -1171,7 +1160,6 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
      &       w4(ix,iy)=-0.71e0_R8*fch_p(ix,iy,0)/qe*
      *        (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
           endif                                                          !srv 16.09.02 }
-          fch_p(ix,iy,0) = csig_cl(ix,iy,0)*ehx-calf(ix,iy,0)*tex0       !srv 30.12.09 }
           if(pot_eq.ne.1 .and. no_current.ne.0) then                     !srv 27.02.13
             fch_p = 0.0e0_R8
             ehx = 0.0_R8                                                 !srv 27.02.13
@@ -1398,6 +1386,7 @@ csw 13mar2013 added check upwind (SOLPS4 style)
       endif                                                              !srv 16.09.02 }
 
 *   ..compute fhey, floey, coney, fchy, concy
+      call b2xehy (nx, ny, hy, qz, te, po, ne, ehy_)                     !srv 13.01.17
       fch_p(:,:,1) = 0.0e0_R8
       do ix = -1, nx
        floe(ix,-1,1)    = 0
@@ -1420,10 +1409,7 @@ csw 13mar2013 added check upwind (SOLPS4 style)
       do iy = 0, ny
        do ix = -1, nx
         if(pot_eq.eq.1 .and. no_current.eq.0) then                       !srv 27.02.13
-         ehy = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))+
-     &    (ne(ix,iy)*te(ix,iy)-ne(bottomix(ix,iy),bottomiy(ix,iy))*
-     &    te(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &    (2/qe)/(ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))
+         ehy = ehy_(ix,iy)                                               !srv 13.01.17    
         else
          ehy=0.0_R8
         endif                                                            !srv 27.02.13
@@ -1783,6 +1769,8 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fhe_mdf(-1,-1,1),'fhe_mdfy')
        call my_out(70,nx,ny,fhePSch(-1,-1,0),'fhePSchx')
        call my_out(70,nx,ny,fhePSch(-1,-1,1),'fhePSchy')
+	   call my_out(70,nx,ny,ehx_,'b2tfhe_ehx_')                      !srv 13.01.17
+	   call my_out(70,nx,ny,ehy_,'b2tfhe_ehy_')                      !srv 13.01.17
       endif                                                          !srv 18.06.08 }
 
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                !srv 11.09.09 {

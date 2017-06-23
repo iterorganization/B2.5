@@ -43,7 +43,7 @@
 
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is, js, k
-      integer, save :: iout = 0,                                        !srv 30.06.08 11.09.09
+      integer, save :: iout = 0,                                       !srv 30.06.08 11.09.09
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
@@ -311,10 +311,10 @@ ctmp.dpc
 !	   call my_out(70,nx,ny,smq0(-1,-1,k,is),
 !     &     'b2stcx_smq'//chk//'_'//chcx//'_'//chns)
 !	  enddo
-          wrk0=smq(:,:,0,is)+
-     &         smq(:,:,1,is)*ua(:,:,is)+
-     &         smq(:,:,2,is)*na(:,:,is)*mp*am(is)+
-     &         smq(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+          wrk0=smq0(:,:,0,is)+                                          !srv 28.02.17
+     &         smq0(:,:,1,is)*ua(:,:,is)+
+     &         smq0(:,:,2,is)*na(:,:,is)*mp*am(is)+
+     &         smq0(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
 	  call my_out(70,nx,ny,wrk0,'b2stcx_smq_'//chcx//'_'//chns)
         enddo
       endif

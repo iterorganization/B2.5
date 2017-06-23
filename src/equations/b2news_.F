@@ -592,7 +592,7 @@ csw 16oct2012 init ier0
         t0=1.0e40_R8
         do while(i.le.potit.and.t0.gt.potok.and.solving(3))
 *    ..compute current
-!          call b2tcpa (nx, ny, te, po, ne, csig_cl, calf_cl, fch_p)  !!!???
+!          call b2tcpa (nx, ny, te, po, ne, csig_cl, calf_cl, ehx, fch_p)  !!!???
           call b2xpfe (nx, ny, ns, ns_ext, qe, 
      &     rza, za_ext, fna_he, fa_ext, fch_p, fne)                      !srv 21.01.00 11.10.02
           call b2tfhe_ (nx, ny, ns, ismain, ismain0, facdrift,

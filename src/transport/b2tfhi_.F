@@ -1072,6 +1072,8 @@ csw 18feb2014 remove fluxes between guard cells
 !       call my_out(70,nx,ny,w5,'qiy5')
        call my_out(70,nx,ny,w6,'b2tfhi__chciy_Pat')                     !srv 16.09.02 }
        call my_out(70,nx,ny,fhiPSch(-1,-1,1),'b2tfhi__fhiPSchy')
+       call my_out(70,nx,ny,fhi(-1,-1,0),'fhix')
+       call my_out(70,nx,ny,fhi(-1,-1,1),'fhiy')
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
        deallocate( w1, w2, w3, w4, w5, w6 )

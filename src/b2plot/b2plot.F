@@ -1910,41 +1910,12 @@ c
         case('ehx')
           description='ehx'
           nz=1
-          do iy=-1,ny
-            do ix=-1,nx
-              if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *         bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-                mach(ix,iy,0)=
-     &           -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
-     &            (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))+
-     &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))*0.5_R8*
-     &            (log(ne(ix,iy))-log(ne(leftix(ix,iy),leftiy(ix,iy))))
-     &            )/qe
-              else
-                mach(ix,iy,0)=0.0_R8
-              endif
-            enddo
-          enddo
+          call b2xehx (nx, ny, hx, te, po, ne, mach(-1,-1,0))           !srv 13.01.17
           call copy(mach,1.0_R8,nz,textbl)
         case('ehy')
           description='ehy'
           nz=1
-          do iy=-1,ny
-            do ix=-1,nx
-              if(leftix(ix,iy).ge.-1.and.rightix(ix,iy).le.nx.and.
-     *         bottomiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-                mach(ix,iy,0)=
-     &           -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))+
-     &            (ne(ix,iy)*te(ix,iy)-
-     &             ne(bottomix(ix,iy),bottomiy(ix,iy))*
-     &             te(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &            (2.0_R8/qe)/
-     &            (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))
-              else
-                mach(ix,iy,0)=0.0_R8
-              endif
-            enddo
-          enddo
+          call b2xehy (nx, ny, hy, qz, te, po, ne, mach(-1,-1,0))       !srv 13.01.17
           call copy(mach,1.0_R8,nz,textbl)
         case('dab2')
           description='Atomic density (m^{-3})'

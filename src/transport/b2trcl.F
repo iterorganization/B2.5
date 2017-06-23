@@ -231,10 +231,8 @@ csw 13mar2012
       if(iout_b2npmo.ne.0) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
-        call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2trcl_cvsahzx'//chns)
-!        call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2trcl_cvsahzy'//chns)
-!        call my_out(70,nx,ny,cthe(-1,-1,is),'b2trcl_cthe'//chns)
-!        call my_out(70,nx,ny,cthi(-1,-1,is),'b2trcl_cthi'//chns)
+        if (.not. is_neutral(is)) 
+     &  call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2trcl_cvsahzx'//chns)
        enddo
       endif
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then

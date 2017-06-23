@@ -67,12 +67,11 @@
      &  phm7, phm8, wrk1(-1:nx,-1:ny),                                !srv 28.08.02
      &  dpo(-1:nx,-1:ny,0:1), dOnedBsq(-1:nx,-1:ny,0:1)               !srv 03.04.07
       real (kind=R8) :: 
-     *  nel(-1:nx,-1:ny), uesx(-1:nx,-1:ny),
      *  shidu(-1:nx,-1:ny,0:3), shidd(-1:nx,-1:ny,0:3),               !srv 11.09.09 {
      *  shiva(-1:nx,-1:ny,0:3), shivc(-1:nx,-1:ny,0:3),
      *  shifr(-1:nx,-1:ny,0:3), shedu(-1:nx,-1:ny,0:3),
      *  shedd(-1:nx,-1:ny,0:3), shefr(-1:nx,-1:ny,0:3),
-     *  wrks(-1:nx,-1:ny)
+     *  wrks(-1:nx,-1:ny), ehx(-1:nx,-1:ny), ehy(-1:nx,-1:ny)         !srv 13.01.17
       character chk*1                                                 !srv 11.09.09 }
       save ncall, style, rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2,
      &  phm3, phm4, phm5, phm6, phm7, phm8                            !srv 02.06.99 27.12.01 28.08.02
@@ -81,44 +80,10 @@
 *   ..procedures
       intrinsic min, max, sqrt
       real (kind=R8) ::
-     *    ehx, ehy, hy1 !,uesx, uesy,  uasx, uasy                     !srv 28.06.03 07.05.08
+     *    hy1
       external subini, subend, xertst, ipgeti, ipgetr, sfill
       external b2xvff, b2xvfx, b2xvfv, b2xvsg
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)                              !srv 07.05.08
-!      uasx(ix,iy,is) = fna(ix,iy,0,is)*                              !srv 09.06.99
-!     &  (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))/
-!     &  (vol(ix,iy)*na(leftix(ix,iy),leftiy(ix,iy),is)
-!     &   +vol(leftix(ix,iy),leftiy(ix,iy))*na(ix,iy,is))
-!      uasy(ix,iy,is) = fna(ix,iy,1,is)*
-!     &  (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))/
-!     &  (vol(ix,iy)*na(bottomix(ix,iy),bottomiy(ix,iy),is)
-!     &   +vol(bottomix(ix,iy),bottomiy(ix,iy))*na(ix,iy,is))
-!      uesx(ix,iy) = fne(ix,iy,0)*
-!     &  (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))/
-!     &  (vol(ix,iy)*ne(leftix(ix,iy),leftiy(ix,iy))
-!     &   +vol(leftix(ix,iy),leftiy(ix,iy))*ne(ix,iy))
-!      uesy(ix,iy) = fne(ix,iy,1)*
-!     &  (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))/
-!     &  (vol(ix,iy)*ne(bottomix(ix,iy),bottomiy(ix,iy))
-!     &   +vol(bottomix(ix,iy),bottomiy(ix,iy))*ne(ix,iy))             !srv 09.06.99
-!      uasx(ix,iy,is) = fna(ix,iy,0,is)*                               !srv 09.06.99 28.06.03 {
-!     &  2.0e0_R8/(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))    !srv 09.06.99
-!      uasy(ix,iy,is) = fna(ix,iy,1,is)*                               !srv 09.06.99
-!     &  2.0e0_R8/(na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is)) !srv 09.06.99 28.06.03 }
-!      uesx(ix,iy) = fne(ix,iy,0)*                                     !srv 09.06.99 22.09.09 {
-!     &  2.0e0_R8/(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))          !srv 09.06.99
-!      uesy(ix,iy) = fne(ix,iy,1)*                                     !srv 09.06.99
-!     &  2.0e0_R8/(ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))      !srv 09.06.99 22.09.09 }
-      ehx(ix,iy) = -(po(ix,iy)-po(leftix(ix,iy),leftiy(ix,iy)))+
-     &  (ne(ix,iy)*te(ix,iy)
-     &   -ne(leftix(ix,iy),leftiy(ix,iy))*
-     &    te(leftix(ix,iy),leftiy(ix,iy)))*(2/qe)/
-     &  (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))
-      ehy(ix,iy) = -(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))+
-     &  (ne(ix,iy)*te(ix,iy)
-     &   -ne(bottomix(ix,iy),bottomiy(ix,iy))*
-     &    te(bottomix(ix,iy),bottomiy(ix,iy)))*(2/qe)/
-     &  (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))
 *   ..initialization
       data ncall/0/, style/0/
       data rf0/1.0e0_R8/, rf1/1.0e0_R8/, rf2/1.0e0_R8/, rf3/1.0e0_R8/,
@@ -233,16 +198,6 @@
       call sfill (n2*4, 0.0e0_R8, shivc, 1)                         !srv 11.09.09 }
 *   ..compute the Coulomb logarithm
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
-!      call intfaceh(nx, ny, leftix, leftiy, vol, ne, nel)             !srv 22.09.09 {
-!      do iy = -1, ny
-!        do ix = -1, nx
-!	   if(leftix(ix,iy).eq.-2) then
-!	    uesx(ix,iy) = 0.0e0_R8
-!	   else
-!          uesx(ix,iy)=fne(ix,iy,0)/nel(ix,iy)
-!         endif
-!        enddo
-!	enddo                                                         !srv 22.09.09 }
 *   ..contribution from divergence ue
       do iy = 0, ny-1                                                 !srv 05.03.11 {
        do ix = 0, nx
@@ -383,7 +338,7 @@
          b2exbe(region(ix,iy,0))=b2exbe(region(ix,iy,0))+
      1       t0*ne(ix,iy)*te(ix,iy)
          b2sihs_exbe(ix,iy)=t0*ne(ix,iy)*te(ix,iy)
-	endif                                                         !srv 26.11.02
+        endif                                                         !srv 26.11.02
        enddo
       enddo
       if (balance_netcdf.ne.0) then !djm Jan2017
@@ -410,7 +365,7 @@
      1          t0*ni(ix,iy,0)*ti(ix,iy)
           b2sihs_exba(ix,iy)=b2sihs_exba(ix,iy)+
      1          t0*ni(ix,iy,0)*ti(ix,iy)
-	 endif                                                         !srv 26.11.02
+         endif                                                         !srv 26.11.02
         enddo
        enddo
        endif
@@ -465,7 +420,7 @@
      &                        rf2*t1/(ni(ix,iy,0)*ti(ix,iy))
            b2visa(region(ix,iy,0))=b2visa(region(ix,iy,0))+t0+t1
            b2sihs_visa(ix,iy)=b2sihs_visa(ix,iy)+t0+t1
-	  endif                                                        !srv 26.11.02
+          endif                                                        !srv 26.11.02
          enddo
         enddo
        endif                                                           !srv 29.08.02
@@ -477,6 +432,9 @@
       call b2saxpy (n2*4, 1.0e0_R8, shiva, 1, shi0, 1)                 !srv 11.09.09
 *   ..contribution from electron-atom friction
 *     (a.k.a. Joule heating)
+      call b2xehx (nx, ny, hx, te, po, ne, ehx)                         !srv 13.01.17
+      if (istyle_Joule_heating.eq.0) 
+     &   call b2xehy (nx, ny, hy, qz, te, po, ne, ehy)                  !srv 13.01.17
       b2joule=0.0_R8
       b2sihs_joule=0.0_R8
       do iy = 0, ny-1
@@ -501,7 +459,7 @@
      &    (min(0.0e0_R8,t0)-rf3*abs(t0))/(ne(ix,iy)*te(ix,iy))
          b2joule(region(ix,iy,0))=b2joule(region(ix,iy,0))+t0
          b2sihs_joule(ix,iy)=t0
-	endif                                                          !srv 26.11.02
+        endif                                                          !srv 26.11.02
        enddo
       enddo
       if (balance_netcdf.ne.0) then !djm Jan2017
