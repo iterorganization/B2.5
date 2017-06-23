@@ -899,11 +899,11 @@ c     (toroidal piec only, because poloidal piece of parallel velocity flips sig
      &        am(is)*mp*ua(ix,iy,is)*bb(ix,iy,2)**2/bb(ix,iy,3)**2*
      &        recyc(is,istra)*t0*hz(ix,iy)
          shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
-     &        erecyc(is,istra)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
          if (is2.ne.-1) shi0_ff(ix,iy,is2) = shi0_ff(ix,iy,is2)+
      &        recycled_neutrals_contr*max(
-     &        erecyc(is,istra)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
          ! xpb: recycled neutrals come back with at least thermal energy
          if(.not.lcore) then    ! xpb: no sputtering in core!
