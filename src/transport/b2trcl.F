@@ -15,6 +15,8 @@
       use b2mod_b2cmpt
       use b2mod_geo_corner
      &                    , only : nmdpl
+      use b2mod_transport
+     &                    , only : alfx_c, sigx_c                   !srv 08.10.14
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif
@@ -185,6 +187,8 @@ csw 13mar2012
       call b2tqin (nx, ny, ns, nscx, iscx, bb, ti, na, sigin)         !xpb
       call sfill (n2*ns, cthev, cthe,1)
       call sfill (n2*ns, cthiv, cthi,1)
+      alfx_c(:,:) = alf(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
+      sigx_c(:,:) = sig(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !             }               !srv 13.01.17
 *   ..incorporate geometry with hz                                    !srv 09.01.01
       wrk = hz*vol
       do is = 0, ns-1
@@ -279,6 +283,8 @@ csw 13mar2012
                 csig(ix,iy,0)=csig(ix,iy,0)*f_luc_te
                 calf(ix,iy,0)=calf(ix,iy,0)*f_luc_te
                 chci(ix,iy,0)=chci(ix,iy,0)*f_luc_ti
+                sigx_c(ix,iy)=sigx_c(ix,iy)*f_luc_te
+                alfx_c(ix,iy)=alfx_c(ix,iy)*f_luc_te
               endif
             enddo
           endif
@@ -396,6 +402,10 @@ csw 13mar2012
      &      *0.58e0_R8*sqrt(eps1(iy)**3)
            chci(ix,iy,0)=chci(ix,iy,0)/k2(ix,iy)
      &      *1.6e0_R8*sqrt(eps1(iy)**3)                                   !lk 20.11.07
+           sigx_c(ix,iy)=sigx_c(ix,iy)/k1(ix,iy)
+     &      *0.58e0_R8*sqrt(eps1(iy)**3)
+           alfx_c(ix,iy)=alfx_c(ix,iy)/k1(ix,iy)
+     &      *0.58e0_R8*sqrt(eps1(iy)**3)
           endif                                                           !lk 12.05.11}
          enddo
         enddo
@@ -488,6 +498,7 @@ c            if(mod(region(ix,iy,0),4).ne.1) then                         !lk 06
      &       te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
             chce(ix,iy,0)=chce(ix,iy,0)/(1.0e0_R8+t0)
             calf(ix,iy,0)=calf(ix,iy,0)/(1.0e0_R8+t0)
+            alfx_c(ix,iy)=alfx_c(ix,iy)/(1.0e0_R8+t0)
            endif
           endif
          enddo

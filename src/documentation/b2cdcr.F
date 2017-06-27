@@ -566,6 +566,8 @@
 *     B2XPRO computes the mass density, ro:
 *       ro(,) = (sum is :: am(is)*mp*na(,,is)) .
 *
+*     B2XPVE computes the parallel electron velocity on cell centers.
+*
 *     B2XPXC interpolates a function from x-faces to cell centers.
 *
 *     B2XVCP tests the validity of parameters in the physics common

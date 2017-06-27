@@ -34,6 +34,8 @@
      *  fllim0fna(:,:,:,:),
      *  fllim0fhi(:,:,:,:),
      *  fllimvisc(:,:,:),
+     *  alfx_c(:,:),
+     *  sigx_c(:,:),                           !iyv 19.11.13 08.10.14 !srv 13.01.17
      *  kt_neo(:,:)                                                   !iys 02.12.13 08.10.14
 
       contains
@@ -78,6 +80,8 @@
       fllim0fhi=0.0_R8
       allocate(fllimvisc(-1:nxd,-1:nyd,0:nsd-1))
       fllimvisc=0.0_R8
+      allocate(sigx_c(-1:nxd,-1:nyd))                                 !iys 19.11.13
+      allocate(alfx_c(-1:nxd,-1:nyd))                                 !iys 19.11.13 08.10.14 ! srv 13.01.17
       allocate(kt_neo(-1:nxd,-1:nyd))                                 !iys 02.12.13 08.10.14
       kt_neo = 0.0_R8
 
@@ -119,6 +123,8 @@
       deallocate(fllim0fna)
       deallocate(fllim0fhi)
       deallocate(fllimvisc)
+      deallocate(sigx_c)                                   !iys 19.11.13
+      deallocate(alfx_c)                                   !iys 19.11.13 08.10.14 !srv 13.01.17
       deallocate(kt_neo)
 
       return

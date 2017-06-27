@@ -67,6 +67,7 @@
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,       !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
+      integer, save :: ue_style = 2                                      !srv 17.11.16
       real (kind=R8) ::
      *   potok
       integer ncall, n2, is, ier0, i, ix, iy, ireg
@@ -231,6 +232,7 @@ csw 26feb2014 some extra variables
           nsmax=0
        endif
        write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
+       call ipgeti ('b2sigp_style', ue_style)
       endif                                                           !srv 02.07.08 
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -745,33 +747,31 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 *      without diamagnetic drift part                                    !srv 31.05.99
       call b2xpfe (nx, ny, ns, ns_ext, qe, 
      & rza, za_ext, fna_nodrift, fa_ext, fch_p, fne_)                    !srv 31.05.99 11.10.02 30.06.03
+      if(ue_style.eq.1) then
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
-      do iy=-1,ny
-        do ix=-1,nx
-          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
-     &       bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &       region(ix,iy,0).ne.0) then
-            ue(ix,iy)=-(
-     1       fch_p(ix,iy,0)/pbs(ix,iy,0)+
-     1       fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
-     2         pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
-          elseif(leftix(ix,iy).eq.-2 .and.
-     &           bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &           region(ix,iy,0).ne.0) then
-            ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
-     2                 pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
-          elseif(rightix(ix,iy).eq.nx+1 .and.
-     &           bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1 .and.
-     &           region(ix,iy,0).ne.0) then
-            ue(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe
-          endif
-        enddo
-      enddo
-      do is=0,ns-1
+       do iy=-1,ny
+         do ix=-1,nx
+           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+             ue(ix,iy)=-(fch_p(ix,iy,0)/pbs(ix,iy,0)+
+     &        fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+     &          pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
+           elseif(leftix(ix,iy).eq.-2) then
+             ue(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+     &         pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
+           elseif(rightix(ix,iy).eq.nx+1) then
+             ue(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe
+           endif
+	 enddo
+       enddo
+       do is=0,ns-1
         ue(:,:)=ue(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
-      enddo
-      ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
-      ue(:,:)=ue(:,:)/ne(:,:)                                            !srv 05.03.11 }
+       enddo
+       ue(:,:)=ue(:,:)+ue_ext(:,:)*ne_ext(:,:)
+       ue(:,:)=ue(:,:)/ne(:,:)                                           !srv 05.03.11 }
+      else
+       call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,        !srv 17.11.16 {
+     &               ne, te, na, ua, ue_ext, ne_ext, ue)
+      endif
 
 *   ..iterate on heat balance
       if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                           !srv 13.10.06

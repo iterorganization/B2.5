@@ -17,7 +17,7 @@
       use b2mod_anomalous_transport                             	 !xpb
       use b2mod_geo_corner                                      	 !xpb
       use b2mod_plasma
-     , , only: fch_pi_f, fch_pi_c
+     , , only: fch_pi_f, fch_pi_c                                    !srv 13.01.17
       use b2mod_b2cmfs
       use b2mod_b2cmpa
       implicit none
@@ -137,7 +137,7 @@
        call ipgeti ('b2tfhe_no_hybr', no_hybr)                          !xpb
        call ipgeti ('b2tfch_iout', iout)                                !srv 18.06.08
        call ipgeti ('b2tfnb_drift_style', drift_style)
-       call ipgeti ('b2sigp_style', style)
+       call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
       endif                                                             !xpb
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -568,9 +568,9 @@ c       call xerrab (' ')
           endif
         enddo
       endif
-        
+
 *   ..compute parallel current
-      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                         !srv 13.01.17 {
+      call b2xehx (nx, ny, hx, te, po, ne, ehx_)                        !srv 13.01.17 {
       if (no_current.ne.1) then
         call b2tcpa (nx, ny, te, po, ne, csig, calf, ehx_, fch_p)
         if (style.eq.2) then
@@ -583,7 +583,7 @@ c       call xerrab (' ')
         fch_p = fch_p - fch_pi_f
       else
         fch_p = 0.0_R8
-      endif                                                              !srv 13.01.17 }
+      endif                                                             !srv 13.01.17 }
 
 * ..compute fluxes and linearisation
 *  ..do not forget equivalent code in B2TFHE !!!!!!!!!!!!!!!!!!!!!
@@ -652,7 +652,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             endif
             tex0 = tex/(1.0_R8+t0)
             tex0_nd = tex/(1.0_R8+t0_nd)
-            fch(ix,iy,0) = fch_p(ix,iy,0) 	                         !srv 13.01.17
+            fch(ix,iy,0) = fch_p(ix,iy,0)                                !srv 13.01.17
      &       +fchdia(ix,iy,0)+fchin(ix,iy,0)+fchvispar(ix,iy,0)          !xpb
      &       +fchvisper(ix,iy,0)
             fch_32(ix,iy,0) = csig_cl(ix,iy,0)*ehx
@@ -661,7 +661,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
             fch_52(ix,iy,0) = csig_an(ix,iy,0)*ehx_po
      &                       -calf(ix,iy,0)*tex0_nd
             conc(ix,iy,0) = csig(ix,iy,0)
-            if(fch_ion_neutral.ne.0.0_R8) then                  	 !xpb
+            if(fch_ion_neutral.ne.0.0_R8) then                  	     !xpb
               do is = 0, ns-1
                 if (.not.is_neutral(is)) then
                   do is0 = 0, ns-1
@@ -670,7 +670,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
                   enddo
                 endif
               enddo
-            endif                                               	 !xpb
+            endif                                               	     !xpb
           endif
         enddo
       enddo

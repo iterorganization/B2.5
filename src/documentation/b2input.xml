@@ -1655,7 +1655,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier of the electron thermal gradient term in the thermal force term
+					Multiplier of the electron thermal gradient term in the thermal force term and parallel current
 				</description>
 			</switch>
 			<switch>
@@ -3744,6 +3744,14 @@
 				<type>integer</type>
 				<description>
 					If no_current.eq.1, all currents are set to zero. The setting no_current.eq.1 must be used if the potential equation is not explicitly solved for, i.e. for b2news_poteq.ne.1.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfhe_prl_cur</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the parallel current.
 				</description>
 			</switch>
 			<switch>

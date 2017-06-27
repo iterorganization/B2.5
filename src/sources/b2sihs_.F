@@ -403,10 +403,6 @@
         do iy = 0, ny-1
          do ix = 0, nx-1
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then    !srv 26.11.02
-!           t0 = phm2*cvsa(ix,iy,0,is)*4.0e0_R8/3.0e0_R8*              !srv 21.08.02 multiplied by 4/3 for all
-!     &        (ua(rightix(ix,iy),rightiy(ix,iy),is)-ua(ix,iy,is))**2
-!     &    	 +phm8*vsa0(ix,iy,is)*vol(ix,iy)*                      !srv 28.08.02 {      
-!     &    ((wrk1(topix(ix,iy),topiy(ix,iy))-wrk1(ix,iy))/hy(ix,iy))**2  !srv 28.08.02 }
             t0 = phm2*(wrk0(ix,iy)+wrk0(rightix(ix,iy),rightiy(ix,iy))) !srv 21.07.05 }
      &           *0.5e0_R8
             t1 = phm8*vsa0(ix,iy,is)*vol(ix,iy)*

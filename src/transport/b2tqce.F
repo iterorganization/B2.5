@@ -7,6 +7,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_indirect
+      use b2mod_transport_fun                                            !srv 13.01.17
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny
@@ -60,10 +61,11 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, model
-	integer, save :: icase = 0                                      !srv 20.09.11
-	integer, save :: iout = 0,                                      !srv 16.06.08
+      integer, save :: icase = 0                                        !srv 20.09.11
+      integer, save :: iout = 0,                                        !srv 16.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0, fke_Zhdanov = 1
       integer, save :: style_guard_cells = 0                            !srv 19.04.13
+      integer, save :: style = 2                                        !srv 13.01.17
       character(23) hlp_frm                                             !srv 11.03.13
       real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
@@ -150,6 +152,7 @@
         call xertst (0.eq.icase .or. 2.eq.icase, 
      &               'faulty input b2tlnl_ee')
         call ipgeti ('b2tqce_style_guard_cells', style_guard_cells)     !srv 19.04.13
+        call ipgeti ('b2sigp_style', style)                             !srv 13.01.17
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -189,17 +192,22 @@
          tnp = tau(ix,iy)*ne(ix,iy)*pitx(ix,iy)**2
          z = ne2(ix,iy)/ne(ix,iy)
          if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit
-	    if(fch_pTe .eq. 1.0_R8.and.fke_Zhdanov.eq.1) then             !srv 02.12.10
-           hce(ix,iy,0) =     (te(ix,iy)/me)*fke_zh(z)*tnp
-	    else
+          if(fch_pTe .eq. 1.0_R8.and.fke_Zhdanov.eq.1) then                !srv 02.12.10
+           hce(ix,iy,0) = (te(ix,iy)/me)*fke_zh(z)*tnp
+	  else
            hce(ix,iy,0) = 2.5_R8*(te(ix,iy)/me)*fke(z)*tnp
-	    endif
+	  endif
+          if(style.eq.2) then                                              !srv 13.01.17 {
+           sig(ix,iy,0) = (qe**2/me)*tnp/fse_ce1(z)
+           alf(ix,iy,0) = (qe/me)*z*fal_cen(z)*tnp
+          else
            sig(ix,iy,0) = (qe**2/me)*fse(z)*tnp
            alf(ix,iy,0) = sqrt(2.5_R8)*(qe/me)*fal(z)*tnp
+          endif                                                            !srv 13.01.17 }
          else if (model.eq.2) then ! old SOLPS4.0 Braginskii model for hce
-           hce(ix,iy,0) = ce*(te(ix,iy)/me)*tnp
-           sig(ix,iy,0) = (qe**2/me)*fse(z)*tnp
-           alf(ix,iy,0) = sqrt(2.5_R8)*(qe/me)*fal(z)*tnp
+          hce(ix,iy,0) = ce*(te(ix,iy)/me)*tnp
+          sig(ix,iy,0) = (qe**2/me)*fse(z)*tnp
+          alf(ix,iy,0) = sqrt(2.5_R8)*(qe/me)*fal(z)*tnp
          else if (model.eq.3) then  ! Balescu exact 21-moment expressions
           hce(ix,iy,0) = 2.5_R8*(te(ix,iy)/me)*(d15e(z)/f135e(z))*tnp
           sig(ix,iy,0) = (qe**2/me)*(d35e(z)/f135e(z))*tnp
@@ -220,14 +228,19 @@
          z = ne2(ix,iy)/ne(ix,iy)
          if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit
           if(fch_pTe .eq. 1.0_R8.and.fke_Zhdanov.eq.1) then            !srv 02.12.10
-           hce(ix,iy,0) =     (te(ix,iy)/me)*fke_zh(z)*tnp
+           hce(ix,iy,0) = (te(ix,iy)/me)*fke_zh(z)*tnp
           else
            hce(ix,iy,0) = 2.5_R8*(te(ix,iy)/me)*fke(z)*tnp
           endif
           if ((iy .ne. -1 .and. iy .ne. ny) 
      &                .or. mod(region(ix,iy,0),4).eq.1) then   ! IYS and lk 21.11.2012
-           sig(ix,iy,0) = (qe**2/me)*fse(z)*tnp
-           alf(ix,iy,0) = sqrt(2.5_R8)*(qe/me)*fal(z)*tnp
+           if(style.eq.2) then                                           !srv 13.01.17 {
+            sig(ix,iy,0) = (qe**2/me)*tnp/fse_ce1(z)
+            alf(ix,iy,0) = (qe/me)*z*fal_cen(z)*tnp
+           else
+            sig(ix,iy,0) = (qe**2/me)*fse(z)*tnp
+            alf(ix,iy,0) = sqrt(2.5_R8)*(qe/me)*fal(z)*tnp
+           endif                                                         !srv 13.01.17 }
           endif
          else if (model.eq.2) then ! old SOLPS4.0 Braginskii model for hce
           hce(ix,iy,0) = ce*(te(ix,iy)/me)*tnp
@@ -246,9 +259,9 @@
          endif
         enddo
        enddo
-	else
-        CALL XERRAB ('B2TQCE - incorrect value of style_guard_cells')
-	endif
+      else
+       CALL XERRAB ('B2TQCE - incorrect value of style_guard_cells')
+      endif
 *   ..compute hcey, sigy, alfy
 *!!   (classical perpendicular transport is set to 0)
       call sfill (n2, 0.0_R8, hce(-1,-1,1), 1)
@@ -268,8 +281,8 @@
         write(hlp_frm,"(a10,i4,a9)") '(1x,3x,1x,',nx+2,'(es14.6))'  !srv 11.03.13
         do iy = -1, ny
           z = ne2(ix,iy)/ne(ix,iy)
-	    write(70,hlp_frm) (fke(z), ix = -1, nx)                    !srv 11.03.13
-	    write(71,hlp_frm) (fke_Zh(z), ix = -1, nx)                 !srv 11.03.13
+          write(70,hlp_frm) (fke(z), ix = -1, nx)                    !srv 11.03.13
+          write(71,hlp_frm) (fke_Zh(z), ix = -1, nx)                 !srv 11.03.13
         enddo
 	close(71)
 	close(70) 

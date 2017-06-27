@@ -37,10 +37,10 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, k
-      integer, save :: style = 2
+      integer, save :: style = 2                                     !srv 13.01.17
       integer, save :: iout = 0, iout_b2npmo = 0
       integer, save :: pot_eq = 1, no_current = 0  !srv 17.06.02 11.09.09 23.03.10
-!      character chns*3, chk*1                                        !srv 17.06.02
+!      character chns*3, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
      *   t0
       save ncall
@@ -89,7 +89,7 @@
           if(leftix(ix,iy).eq.-2) then
            wrk0(ix,iy) = 0.0_R8
            wrk1(ix,iy) = 0.0_R8
-           wrk2(ix,iy) = 0.0_R8
+           wrk2(ix,iy) = rzb(ix,iy)*nb(ix,iy)/ne(ix,iy)
           else
            wrk0(ix,iy) = nb(ix,iy)*ti(ix,iy)-
      &      nb(leftix(ix,iy),leftiy(ix,iy))*
@@ -103,9 +103,9 @@
      &                   nb(leftix(ix,iy),leftiy(ix,iy))/
      &                   ne(leftix(ix,iy),leftiy(ix,iy)))*vol(ix,iy))/
      &                 (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))
-           wrk3(ix,iy) = nb(ix,iy)*ti(ix,iy)                          !djm Jan2017
-           wrk4(ix,iy) = ne(ix,iy)*te(ix,iy)*wrk2(ix,iy)
           endif
+          wrk3(ix,iy) = nb(ix,iy)*ti(ix,iy)                          !djm Jan2017
+          wrk4(ix,iy) = ne(ix,iy)*te(ix,iy)*wrk2(ix,iy)
          enddo
         enddo
         call b2xxgs (nx, ny, 0.0_R8, wrk0, 1)
@@ -126,7 +126,18 @@
               smbgp(ix,iy,2) = 0.0_R8
               smbgp(ix,iy,3) = 0.0_R8
               if (balance_netcdf.ne.0) then !djm Jan2017
-                b2sigp_pstat0to3(ix,iy,0,isb) = 0.0_R8
+!     djm Mar2017 NB - THE FOLLOWING DOES NOT GIVE EXACT BALANCE! FOR EXACT PRESSURE BALANCE IN
+!                      THIS REGION, USE B2SIGP_STYLE = 1
+                if (ncall.lt.3) then
+                 write(*,'(a,i4,a,i4)')
+     &       'warning, tot. press. balance will not be exact at ix=',
+     &            ix,',iy=',iy
+                 write(*,*) 'Use b2sigp_style.eq.1 or 2'
+                end if
+                b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
+     &           (vol(ix,iy)/hx(ix,iy))*
+     &           bb(ix,iy,0)/bb(ix,iy,3)*
+     &           (wrk3(ix,iy)+wrk4(ix,iy))
                 b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
                 b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
                 b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
@@ -178,23 +189,6 @@
                 b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
                 b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
               endif
-            endif
-!     djm Mar2017 NB - THE FOLLOWING DOES NOT GIVE EXACT BALANCE! FOR EXACT PRESSURE BALANCE IN
-!                      THIS REGION, USE B2SIGP_STYLE = 1
-            if((leftix(ix,iy).eq.-1).and.(balance_netcdf.ne.0)) then
-              if (ncall.lt.3) then
-                write(*,'(a,i4,a,i4)') 
-     &         'warning, tot. press. balance will not be exact at ix=',
-     &           ix,',iy=',iy
-                write(*,*) 'Use b2sigp_style.eq.1'
-              end if
-              b2sigp_pstat0to3(ix,iy,0,isb) = hz(ix,iy)*
-     &         (vol(ix,iy)/hx(ix,iy))*
-     &         bb(ix,iy,0)/bb(ix,iy,3)*
-     &         (wrk3(ix,iy)+wrk4(ix,iy))
-              b2sigp_pstat0to3(ix,iy,1,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,2,isb) = 0.0_R8
-              b2sigp_pstat0to3(ix,iy,3,isb) = 0.0_R8
             endif
           enddo
         enddo
