@@ -18,6 +18,7 @@
       use b2mod_balance                                                  !djm Jan2017
      & , only : fhe_32, fhe_52, fhe_thermj, fhe_cond, fhe_dia, fhe_ecrb,
      &          fhe_strange, fhe_pschused, balance_netcdf
+      use b2mod_transport_fun                                            !srv 13.01.17
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows                                    !xpb
@@ -70,7 +71,7 @@
       integer, save :: lim_flux = 0, mdf_fhe = 0                        !srv 04.02.03 13.10.06
       integer, save :: drift_style = 1
       integer, save :: conductive_limit = 1
-      integer, save :: style = 2                                          !srv 13.01.17
+      integer, save :: style = 2                                        !srv 13.01.17
       real (kind=R8), save :: alfTeEh = 0.0_R8                          !srv 28.04.08 30.05.08
       real (kind=R8), save :: fch_pTe = 1.0_R8                          !srv 30.12.09
       real (kind=R8) ::
@@ -81,7 +82,7 @@
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8) ::
      &    ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny),
-     &    zeff(-1:nx,-1:ny)                                             !srv 13.01.17
+     &    zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny)                          !srv 13.01.17
       parameter (cutlo = 1.0e-60_R8)
 #ifdef CLASSICAL_CURRENT
       real (kind=R8) ::
@@ -305,7 +306,14 @@ c  ...set null flux in guard cells  ?
       call b2xehx (nx, ny, hx, te, po, ne, ehx_)                       !srv 13.01.17 {
       if(style.eq.2) then
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
-      end if                                                           !srv 13.01.17
+        do iy = -1, ny
+          do ix = -1, nx
+            c071(ix,iy) = fce2n(zeff(ix,iy))
+          enddo
+        enddo
+      else
+        c071 = 0.71e0_R8
+      endif                                                             !srv 13.01.17
 
 * ..compute fluxes and linearisation
 *  ..do not forget equivalent code in B2TFCH !!!!!!!!!!!!!!!!!!!!!
@@ -352,7 +360,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      1         2.5_R8*fne_52(ix,iy,0)+
      &         chve(ix,iy,0)*
      1           (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8
-     &         -0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe                      !srv 30.12.09
+     &           -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe                  !srv 30.12.09 13.01.17
               prefactor=
      1         (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))    	 !xpb
      &         /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))     	 !xpb
@@ -440,9 +448,10 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &            (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8/
      &            2.0_R8*tex
                 fhe_thermj(ix,iy,0) =
-     &            -0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe*
+     &            -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe*               !srv 13.01.17
      &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8+
-     &            hybfac*0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe/2.0_R8*tex+
+     &            hybfac*c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe/2.0_R8*  !srv 13.01.17
+     &            tex+
      &            alfTeEh*alfe0*
      &            harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
                 fhe_ecrb(ix,iy,0) = 1.5_R8*flo_veecrb*
@@ -475,9 +484,10 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &            (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8/
      &            2.0_R8*tex
                 fhe_thermj(ix,iy,0) =
-     &            -0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe*
+     &            -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe*               !srv 13.01.17
      &            (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8+
-     &            hybfac*0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe/2.0_R8*tex+
+     &            hybfac*c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe/2.0_R8*  !srv 13.01.17
+     &            tex+
      &            alfTeEh*alfe0_mdf*
      &            harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
                 fhe_ecrb(ix,iy,0) = 1.5_R8*flo_veecrb*
@@ -517,7 +527,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      &            (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
      &             (1.0_R8-upfac)*te(ix,iy))
                 fhe_thermj(ix,iy,0) =
-     &            -0.71e0_R8*fch_p(ix,iy,0)/qe*fch_pTe*
+     &            -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe*               !srv 13.01.17
      &            (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
      &             (1.0_R8-upfac)*te(ix,iy))+
      &            alfTeEh*alfe0*

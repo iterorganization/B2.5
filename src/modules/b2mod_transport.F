@@ -34,8 +34,17 @@
      *  fllim0fna(:,:,:,:),
      *  fllim0fhi(:,:,:,:),
      *  fllimvisc(:,:,:),
+     *  fllim_ki(:,:),                                                !srv 13.01.17 {
+     *  fllim_ke(:,:),
+     *  fllim_al(:,:),
+     *  fllim_al_c(:,:),
+     *  f_luc_ke(:,:),
+     *  f_luc_ki(:,:),
+     *  f_luc_et(:,:),
+     *  f_luc_sg(:,:),
+     *  f_luc_al(:,:),
      *  alfx_c(:,:),
-     *  sigx_c(:,:),                           !iyv 19.11.13 08.10.14 !srv 13.01.17
+     *  sigx_c(:,:),                           !iyv 19.11.13 08.10.14 !srv 13.01.17 }
      *  kt_neo(:,:)                                                   !iys 02.12.13 08.10.14
 
       contains
@@ -80,8 +89,17 @@
       fllim0fhi=0.0_R8
       allocate(fllimvisc(-1:nxd,-1:nyd,0:nsd-1))
       fllimvisc=0.0_R8
+      allocate(fllim_ki(-1:nxd,-1:nyd))                                 !srv 13.01.17 {
+      allocate(fllim_ke(-1:nxd,-1:nyd))
+      allocate(fllim_al(-1:nxd,-1:nyd))
+      allocate(fllim_al_c(-1:nxd,-1:nyd))
+      allocate(f_luc_ke(-1:nxd,-1:nyd))
+      allocate(f_luc_ki(-1:nxd,-1:nyd))
+      allocate(f_luc_et(-1:nxd,-1:nyd))
+      allocate(f_luc_sg(-1:nxd,-1:nyd))
+      allocate(f_luc_al(-1:nxd,-1:nyd))
       allocate(sigx_c(-1:nxd,-1:nyd))                                 !iys 19.11.13
-      allocate(alfx_c(-1:nxd,-1:nyd))                                 !iys 19.11.13 08.10.14 ! srv 13.01.17
+      allocate(alfx_c(-1:nxd,-1:nyd))                                 !iys 19.11.13 08.10.14 ! srv 13.01.17 }
       allocate(kt_neo(-1:nxd,-1:nyd))                                 !iys 02.12.13 08.10.14
       kt_neo = 0.0_R8
 
@@ -123,8 +141,17 @@
       deallocate(fllim0fna)
       deallocate(fllim0fhi)
       deallocate(fllimvisc)
+      deallocate(fllim_ki)                                 !srv 13.01.17 {
+      deallocate(fllim_ke)
+      deallocate(fllim_al)
+      deallocate(fllim_al_c)
+      deallocate(f_luc_ke)
+      deallocate(f_luc_ki)
+      deallocate(f_luc_et)
+      deallocate(f_luc_sg)
+      deallocate(f_luc_al)
       deallocate(sigx_c)                                   !iys 19.11.13
-      deallocate(alfx_c)                                   !iys 19.11.13 08.10.14 !srv 13.01.17
+      deallocate(alfx_c)                                   !iys 19.11.13 08.10.14 !srv 13.01.17 }
       deallocate(kt_neo)
 
       return

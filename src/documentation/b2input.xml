@@ -6188,7 +6188,7 @@
 				</description>
 			</switch>
 			<switchgroup>
-				<name>CFLM*</name>
+				<name>CFL*</name>
 				<description>
 					For all flux limit multipliers, setting them to zero turns off the corresponding flux limiter.
 				</description>
@@ -6214,6 +6214,14 @@
 					<type>real*8</type>
 					<description>
 						Multiplier to the viscous heat flux limit.
+					</description>
+				</switch>
+				<switch>
+					<name>CFLAL</name>
+					<default>Default inherited from b2mn.dat</default>
+					<type>real*8</type>
+					<description>
+						Multiplier to the thermo-electric coefficient flux limit.
 					</description>
 				</switch>
 				</switchgroup>

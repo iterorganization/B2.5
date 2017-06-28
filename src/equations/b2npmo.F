@@ -306,7 +306,7 @@ cdjm Jan2017 update momentum source components for balance
         wrks=smb(:,:,0)+smb(:,:,1)*ua(:,:,is)+
      &       smb(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smb(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-        call my_out(70,nx,ny,wrks,'b2npmo_smb'//chns)
+        call my_out(70,nx,ny,wrks,'b2npmo_smo'//chns)
         wrks=smo(:,:,0,is)+smo(:,:,1,is)*ua(:,:,is)+
      &       smo(:,:,2,is)*na(:,:,is)*mp*am(is)+
      &       smo(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)

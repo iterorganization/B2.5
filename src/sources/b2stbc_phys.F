@@ -2033,7 +2033,7 @@ c dpc
           if(ncall.eq.0) then
             if (is.lt.ns-1) call xertst(.not.lnext(is,is+1),
      1       'BCCON = 19 can only be applied to ions in their '//
-     2       'highest ionization state')
+     2       'highest ionization stage')
             write(*,*) 'given sum of particle flux for '//
      .                 'isonuclear sequence with constant highest '//
      .                 'ionisation stage density '
@@ -2111,25 +2111,35 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
+! totfluxn here means the sum of fluxes over all ions (including fluid
+! neutrals) of this isotope except for the highest ionization stage.
+! For coupled runs, both fna and fna_mdf are rescaled for neutrals
+! Note that for neutrals fna = fna_mdf
                     do isb = 0, ns-1
-                      if (b2espcr(is).eq.b2espcr(isb)) then
-                        if (is_neutral(isb)) then
-                          totfluxn = totfluxn +
-     &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                        else
+                      if(b2espcr(is).eq.b2espcr(isb).and.is.ne.isb) then
+                        if(.not.is_neutral(isb).or.use_eirene.eq.0) then
                           if(mdf_fnb.ne.0) then
-                            totfluxi = totfluxi +
+                            totfluxn = totfluxn +
      &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
                           else
-                            totfluxi = totfluxi +
+                            totfluxn = totfluxn +
      &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
                           endif
                         endif
                       endif
                     enddo
+! totfluxi here means the flux of the ion in the highest ionization stage.
+                    if(mdf_fnb.ne.0) then
+                      totfluxi = totfluxi +
+     &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,is)
+                    else
+                      totfluxi = totfluxi +
+     &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,is)
+                    endif
                   ENDDO
                 ENDIF
               ENDDO
@@ -3072,25 +3082,35 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   DO IX = 1, BC_LIST_SIZE(IBW)
-                    DO isb = 0, ns-1
-                      if (b2espcr(is).eq.b2espcr(isb)) then
-                        if (is_neutral(isb)) then
-                          totfluxn = totfluxn +
-     &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                        else
+! totfluxn here means the sum of fluxes over all ions (including fluid
+! neutrals) of this isotope except for the highest ionization stage.
+! For coupled runs, both fna and fna_mdf are rescaled for neutrals
+! Note that for neutrals fna = fna_mdf
+                    do isb = 0, ns-1
+                      if(b2espcr(is).eq.b2espcr(isb).and.is.ne.isb) then
+                        if(.not.is_neutral(isb).or.use_eirene.eq.0) then
                           if(mdf_fnb.ne.0) then
-                            totfluxi = totfluxi +
+                            totfluxn = totfluxn +
      &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
                           else
-                            totfluxi = totfluxi +
+                            totfluxn = totfluxn +
      &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
                           endif
                         endif
                       endif
-                    end do
+                    enddo
+! totfluxi here means the flux of the ion in the highest ionization stage.
+                    if(mdf_fnb.ne.0) then
+                      totfluxi = totfluxi +
+     &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,is)
+                    else
+                      totfluxi = totfluxi +
+     &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,is)
+                    endif
                     t0=t0 +
      .               vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &                   topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
@@ -9951,8 +9971,9 @@ c end of implementation
         write (chk,'(i1)') k
         call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbc_phys_sch'//chk)
        enddo
-!       call my_out(70,nx,ny,sch0(:,:,0)+sch0(:,:,1)*po+
-!     &   sch0(:,:,2)*ne+sch0(:,:,3)*po*ne(:,:),'b2stbc_phys_sch')
+!       wrk0=sch0(:,:,0)+sch0(:,:,1)*po+
+!     &      sch0(:,:,2)*ne + sch0(:,:,3)*po*ne
+!       call my_out(70,nx,ny,wrk0,'b2stbc_phys_sch')
       endif                                                           !srv 11.09.09 }
 
 * ..return

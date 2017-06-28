@@ -6,7 +6,7 @@
      1  hz, qz, qc, pbs, fch_p, na, ua, te, ti, po, ne, ni, ne2, lnlam,  !srv 09.01.01 01.07.09
      2  chvemx, chvimx, cvsahz,                                          !srv 09.01.01 03.06.03
      3  cvsa, chce, chve, chci, chvi, csig, calf, csigin,                !xpb
-     4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                 !srv 09.01.01
+     4  cthe, cthi, cvsa_cl, cvsahz_cl, fllimvisc,                       !srv 09.01.01
      5  csig_cl, calf_cl)                                                !xpb
       use b2mod_types
       use b2mod_indirect
@@ -16,7 +16,10 @@
       use b2mod_geo_corner
      &                    , only : nmdpl
       use b2mod_transport
-     &                    , only : alfx_c, sigx_c                   !srv 08.10.14
+     &                    , only :
+     &                     f_luc_ke, f_luc_ki, f_luc_et, f_luc_sg,
+     &                     f_luc_al, fllim_ki, fllim_ke, fllim_al,       !srv 13.01.17
+     &                     fllim_al_c, alfx_c, sigx_c                    !srv 08.10.14
 #ifdef ASTRA
       use b2mod_b2_to_astra
 #endif
@@ -81,6 +84,7 @@
 *   ..local variables
       integer ncall, n2, k, is, is0, lthf21, lvis21, lluciani, ix, iy
       integer, save :: conductive_limit = 1                            !srv 16.06.08
+      integer, save :: style = 2                                       !srv 13.01.17
       integer, save :: iout = 0,                                       !srv 17.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
@@ -89,7 +93,7 @@
       integer mintopcut                                               !lk 19.09.07  
       integer mode
       real (kind=R8) ::
-     *  cflmv, cthiv, cthev, vis_par, f_luc_te, f_luc_ti
+     *  cflmv, cthiv, cthev, vis_par, jemax                           !srv 13.01.17
       real (kind=R8) ::                                               !srv 03.06.03
      *   t0, dte, dti, flomx
       real (kind=R8) :: tauia(-1:nx,-1:ny,0:ns-1), nu2(-1:nx,-1:ny),  !lk 19.09.07
@@ -158,6 +162,7 @@ csw 13mar2012
 csw 13mar2012
         call ipgeti ('b2trcl_core_cond_limit', core_cond_limit)
         call ipgeti ('b2trcl_integral_modeling', integral_modeling)  !srv 01.11.11
+        call ipgeti ('b2sigp_style', style)                          !srv 13.01.17
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -187,6 +192,10 @@ csw 13mar2012
       call b2tqin (nx, ny, ns, nscx, iscx, bb, ti, na, sigin)         !xpb
       call sfill (n2*ns, cthev, cthe,1)
       call sfill (n2*ns, cthiv, cthi,1)
+      call sfill (n2, 1.0_R8, fllim_ki, 1)                            !srv 13.01.17 {
+      call sfill (n2, 1.0_R8, fllim_ke, 1)
+      call sfill (n2, 1.0_R8, fllim_al, 1)
+      call sfill (n2, 1.0_R8, fllim_al_c, 1)
       alfx_c(:,:) = alf(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !iys 19.11.13 !srv 08.10.14 { !srv 13.01.17
       sigx_c(:,:) = sig(:,:,0)  !/abs((bb(:,:,0))/bb(:,:,3))          !             }               !srv 13.01.17
 *   ..incorporate geometry with hz                                    !srv 09.01.01
@@ -260,31 +269,40 @@ csw 13mar2012
      1 bb, vol, hx, pbs, ne, na, te, ti, ua, cvsa)
 #endif
 *   ..luciani
+      f_luc_ke = 1.0_R8                                                 !srv 13.01.17 {
+      f_luc_ki = 1.0_R8
+      f_luc_et = 1.0_R8
+      f_luc_sg = 1.0_R8
+      f_luc_al = 1.0_R8                                                 !srv 13.01.17 }
       if(lluciani.eq.1) then   ! connection length formulation
         do iy=-1,ny
           if(conn(iy).gt.0.0_R8) then
             do ix=0,nx
               if(mod(region(ix,iy,0),4).eq.1) then
-                f_luc_te=1.0_R8/
+                f_luc_ke(ix,iy)=1.0_R8/
      1           (1.0_R8+7.5e16_R8/conn(iy)/2.0_R8*
      2           ((te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
      3           (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-                f_luc_ti=1.0_R8/
-     1             (1.0_R8+7.5e16_R8/conn(iy)/2.0_R8*
-     2             ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     3             (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
+                f_luc_ki(ix,iy)=1.0_R8/
+     1           (1.0_R8+7.5e16_R8/conn(iy)/2.0_R8*
+     2           ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
+     3           (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
+                f_luc_sg(ix,iy)=f_luc_ke(ix,iy)
+                f_luc_al(ix,iy)=f_luc_ke(ix,iy)
+                f_luc_et(ix,iy)=f_luc_ki(ix,iy)
                 do is=0,ns-1
                   if(.not.is_neutral(is)) then
-                    cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_ti
-                    cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)*f_luc_ti        !srv 02.07.08
+                    cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_et(ix,iy)
+                    cvsahz(ix,iy,0,is)=
+     .               cvsahz(ix,iy,0,is)*f_luc_et(ix,iy)                 !srv 02.07.08
                   endif
                 enddo
-                chce(ix,iy,0)=chce(ix,iy,0)*f_luc_te
-                csig(ix,iy,0)=csig(ix,iy,0)*f_luc_te
-                calf(ix,iy,0)=calf(ix,iy,0)*f_luc_te
-                chci(ix,iy,0)=chci(ix,iy,0)*f_luc_ti
-                sigx_c(ix,iy)=sigx_c(ix,iy)*f_luc_te
-                alfx_c(ix,iy)=alfx_c(ix,iy)*f_luc_te
+                chce(ix,iy,0)=chce(ix,iy,0)*f_luc_ke(ix,iy)
+                csig(ix,iy,0)=csig(ix,iy,0)*f_luc_sg(ix,iy)
+                calf(ix,iy,0)=calf(ix,iy,0)*f_luc_al(ix,iy)
+                chci(ix,iy,0)=chci(ix,iy,0)*f_luc_ki(ix,iy)
+                sigx_c(ix,iy)=sigx_c(ix,iy)*f_luc_sg(ix,iy)
+                alfx_c(ix,iy)=alfx_c(ix,iy)*f_luc_al(ix,iy)
               endif
             enddo
           endif
@@ -293,24 +311,27 @@ csw 13mar2012
         do iy=-1,ny
           do ix=0,nx
             if (mod(region(ix,iy,0),4).eq.1) then
-              f_luc_te=1.0_R8/
+              f_luc_ke(ix,iy)=1.0_R8/
      1             (1.0_R8+0.3e16_R8/2.0_R8*
      2           ((te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
      3           (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-              f_luc_ti=1.0_R8/
+              f_luc_ki(ix,iy)=1.0_R8/
      1             (1.0_R8+0.3e16_R8/2.0_R8*
      2           ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
      3           (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
+              f_luc_sg(ix,iy)=f_luc_ke(ix,iy)
+              f_luc_al(ix,iy)=f_luc_ke(ix,iy)
+              f_luc_et(ix,iy)=f_luc_ki(ix,iy)
               do is=0,ns-1
                 if(.not.is_neutral(is)) then
-                  cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_ti
-                  cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)*f_luc_ti
+                  cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_et(ix,iy)
+                  cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)*f_luc_et(ix,iy)
                 endif
               enddo
-              chce(ix,iy,0)=chce(ix,iy,0)*f_luc_te
-              csig(ix,iy,0)=csig(ix,iy,0)*f_luc_te
-              calf(ix,iy,0)=calf(ix,iy,0)*f_luc_te
-              chci(ix,iy,0)=chci(ix,iy,0)*f_luc_ti
+              chce(ix,iy,0)=chce(ix,iy,0)*f_luc_ke(ix,iy)
+              csig(ix,iy,0)=csig(ix,iy,0)*f_luc_sg(ix,iy)
+              calf(ix,iy,0)=calf(ix,iy,0)*f_luc_al(ix,iy)
+              chci(ix,iy,0)=chci(ix,iy,0)*f_luc_ki(ix,iy)
             endif
           enddo
         enddo
@@ -374,38 +395,31 @@ csw 13mar2012
         do iy = -1,mintopcut-1                                            !srv 22.04.16
          do ix = 0,nx
           if(mod(region(ix,iy,0),4).eq.1) then                            !srv 26.11.02
+           f_luc_ke(ix,iy)=1.0_R8/k1(ix,iy)*0.58e0_R8*sqrt(eps1(iy)**3)
+           f_luc_ki(ix,iy)=1.0_R8/k2(ix,iy)*1.60e0_R8*sqrt(eps1(iy)**3)
+           f_luc_et(ix,iy)=cvsa_mltpl/
+     1        (1.0e0_R8+15.12e16_R8/conn(iy)/2.0e0_R8*
+     2        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
+     3        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
+     4        /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
+     5        /conn(iy)/2.0e0_R8*
+     6        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
+     7        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
+           f_luc_sg(ix,iy)=f_luc_ke(ix,iy)
+           f_luc_al(ix,iy)=f_luc_ke(ix,iy)
            do is=0,ns-1
             if(.not.is_neutral(is)) then                                  !srv 10.07.02
-             cvsa(ix,iy,0,is)=cvsa_mltpl*cvsa(ix,iy,0,is)/                !iyv 06.12.13 
-     1        (1.0e0_R8+15.12e16_R8/conn(iy)/2.0e0_R8*
-     2        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     3        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-     4        /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
-     5        /conn(iy)/2.0e0_R8*
-     6        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     7        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-             cvsahz(ix,iy,0,is)=cvsa_mltpl*cvsahz(ix,iy,0,is)/            !srv 09.01.01
-     1        (1.0e0_R8+15.12e16_R8/conn(iy)/2.0e0_R8*
-     2        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     3        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
-     4        /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
-     5        /conn(iy)/2.0e0_R8*
-     6        ((ti(ix,iy)+ti(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
-     7        (ne2(ix,iy)+ne2(leftix(ix,iy),leftiy(ix,iy))))
+             cvsa(ix,iy,0,is)=cvsa(ix,iy,0,is)*f_luc_et(ix,iy)
+             cvsahz(ix,iy,0,is)=cvsahz(ix,iy,0,is)*f_luc_et(ix,iy)
             endif                                                         !srv 10.07.02
            enddo
-           chce(ix,iy,0)=chce(ix,iy,0)/k1(ix,iy)
-     &      *0.58e0_R8*sqrt(eps1(iy)**3)
-           csig(ix,iy,0)=csig(ix,iy,0)/k1(ix,iy)
-     &      *0.58e0_R8*sqrt(eps1(iy)**3)
-           calf(ix,iy,0)=calf(ix,iy,0)/k1(ix,iy)
-     &      *0.58e0_R8*sqrt(eps1(iy)**3)
-           chci(ix,iy,0)=chci(ix,iy,0)/k2(ix,iy)
-     &      *1.6e0_R8*sqrt(eps1(iy)**3)                                   !lk 20.11.07
-           sigx_c(ix,iy)=sigx_c(ix,iy)/k1(ix,iy)
-     &      *0.58e0_R8*sqrt(eps1(iy)**3)
-           alfx_c(ix,iy)=alfx_c(ix,iy)/k1(ix,iy)
-     &      *0.58e0_R8*sqrt(eps1(iy)**3)
+! May need to use flux limiting factors calculated on cell faces
+           chce(ix,iy,0)=chce(ix,iy,0)*f_luc_ke(ix,iy)
+           csig(ix,iy,0)=csig(ix,iy,0)*f_luc_sg(ix,iy)
+           calf(ix,iy,0)=calf(ix,iy,0)*f_luc_al(ix,iy)
+           chci(ix,iy,0)=chci(ix,iy,0)*f_luc_ki(ix,iy)                    !lk 20.11.07
+           sigx_c(ix,iy)=sigx_c(ix,iy)*f_luc_sg(ix,iy)
+           alfx_c(ix,iy)=alfx_c(ix,iy)*f_luc_al(ix,iy)
           endif                                                           !lk 12.05.11}
          enddo
         enddo
@@ -482,6 +496,9 @@ csw 13mar2012
 !        call my_out(70,nx,ny,csig(-1,-1,1),'b2trcl_luciani_csigy')
       endif
 
+*   .. save chce(:,:,0) after applying Luciani
+      wrk = chce(:,:,0)                                                   !srv 13.01.17
+
       if(conductive_limit.ne.0) then                                      !srv 16.06.08 {
 *   .. apply the conductive limit of parallel electron heat flux          !srv 03.06.03 {
        if(cflim(0).ne.0.0e0_R8) then
@@ -493,12 +510,11 @@ c            if(mod(region(ix,iy,0),4).ne.1) then                         !lk 06
            if(core_cond_limit.ne.0.or.mod(region(ix,iy,0),4).ne.1) then
             dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
             flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
-     &       ne(ix,iy))/2
+     &       ne(ix,iy))/2.0_R8
             t0 = chce(ix,iy,0)*abs(dte)/(flomx*max(
      &       te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
-            chce(ix,iy,0)=chce(ix,iy,0)/(1.0e0_R8+t0)
-            calf(ix,iy,0)=calf(ix,iy,0)/(1.0e0_R8+t0)
-            alfx_c(ix,iy)=alfx_c(ix,iy)/(1.0e0_R8+t0)
+            fllim_ke(ix,iy)=1.0_R8/(1.0e0_R8+t0)
+            chce(ix,iy,0)=chce(ix,iy,0)*fllim_ke(ix,iy)
            endif
           endif
          enddo
@@ -514,16 +530,86 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                           !lk 06
            if(core_cond_limit.ne.0.or.mod(region(ix,iy,0),4).ne.1) then
             dti = ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
             flomx = chvimx(ix,iy)*(ni(leftix(ix,iy),leftiy(ix,iy),0)
-     &                          +ni(ix,iy,0))/2
+     &                          +ni(ix,iy,0))/2.0_R8
             t0 = chci(ix,iy,0)*abs(dti)/
      &        (flomx*max(ti(leftix(ix,iy),leftiy(ix,iy)),ti(ix,iy)))
-            chci(ix,iy,0)=chci(ix,iy,0)/(1.0e0_R8+t0)
+            fllim_ki(ix,iy) = 1.0_R8/(1.0e0_R8+t0)
+            chci(ix,iy,0)=chci(ix,iy,0)*fllim_ki(ix,iy)
            endif
           endif
          enddo
         enddo
        endif
       endif                                                               !srv 16.06.08 }
+*   ..apply flux limit to calf                                            !srv 13.01.17 {
+      if(style.ne.2) then
+       if(cflim(0).ne.0.0e0_R8) then
+        do iy = -1, ny
+         do ix = -1, nx
+           if(leftix(ix,iy).ne.-2) then
+	     if(mod(region(ix,iy,0),4).ne.1) then
+	       dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
+	       flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
+     & 	                              ne(ix,iy))/2.0_R8
+	       t0 = wrk(ix,iy)*abs(dte)/(flomx*max(
+     & 	            te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
+               fllim_al(ix,iy)=1.0_R8/(1.0e0_R8+t0)
+	       calf(ix,iy,0)=calf(ix,iy,0)*fllim_al(ix,iy)                !srv 13.01.17
+               alfx_c(ix,iy)=alfx_c(ix,iy)*fllim_al(ix,iy)                !iyv 19.11.13 !srv 08.10.14
+	     endif
+	   endif
+         enddo
+        enddo
+       endif
+      else
+       if(cflim(3).ne.0.0e0_R8) then
+*   ..apply flux limit to calf at cell faces
+        do iy = -1, ny
+         do ix = -1, nx
+           if(mod(region(ix,iy,0),4).ne.1) then
+             if(leftix(ix,iy).ne.-2) then
+               dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
+               jemax = cflim(3)*sqrt(
+     &          (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8/me)*
+     &           qe*(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8*
+     &           abs(pbs(ix,iy,0))
+               t0 = abs(calf(ix,iy,0)*dte)/jemax
+               fllim_al(ix,iy)=1.0_R8/(1.0e0_R8+t0)
+               calf(ix,iy,0)=calf(ix,iy,0)*fllim_al(ix,iy)                !srv 13.01.17
+             endif
+           endif
+         enddo
+        enddo
+*   ..apply flux limit to alfx_c at cell centers
+        do iy = -1, ny
+         do ix = -1, nx
+           if(mod(region(ix,iy,0),4).ne.1) then
+             if(leftix(ix,iy).eq.-2) then
+               dte =
+     &          (te(rightix(ix,iy),rightiy(ix,iy))-te(ix,iy))/
+     &          (hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy))/2.0_R8
+             elseif(rightix(ix,iy).eq.nx+1) then
+               dte =
+     &          (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
+     &          (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
+             else
+               dte =
+     &          ((te(rightix(ix,iy),rightiy(ix,iy))-te(ix,iy))/
+     &           (hx(rightix(ix,iy),rightiy(ix,iy))+hx(ix,iy))/2.0_R8+
+     &           (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
+     &           (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8)/
+     &          2.0_R8
+             endif
+             jemax = cflim(3)*sqrt(te(ix,iy)/me)*
+     &               qe*ne(ix,iy)*abs(bb(ix,iy,0)/bb(ix,iy,3))
+             t0 = abs(alfx_c(ix,iy))*abs(dte)/jemax
+             fllim_al_c(ix,iy)=1.0_R8/(1.0e0_R8+t0)
+             alfx_c(ix,iy)=alfx_c(ix,iy)*fllim_al_c(ix,iy)                !iyv 19.11.13 !srv 08.10.14
+           endif
+         enddo
+        enddo
+       endif
+      endif
 *   ..apply flux limit to cvsa
       cflmv = cflim(2)
       do is = 0, ns-1

@@ -747,7 +747,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 *      without diamagnetic drift part                                    !srv 31.05.99
       call b2xpfe (nx, ny, ns, ns_ext, qe, 
      & rza, za_ext, fna_nodrift, fa_ext, fch_p, fne_)                    !srv 31.05.99 11.10.02 30.06.03
-      if(ue_style.eq.1) then
+      if(ue_style.ne.2) then
 *   ..compute ue, electron parallel velocity                             !srv 05.03.11 {
        do iy=-1,ny
          do ix=-1,nx

@@ -956,7 +956,7 @@ c
       endif
 #endif
 *   ..compute special factor for dna0, vsa0, hci0, hce0               !srv 13.11.02
-      call defdc(nx, ny, itype, ns, fdnc, fvsc, ftec, ftic)           !srv 13.11.02 17.04.06 01.03.07
+      call defdc(nx, ny, itype, ns, fdnc, fvlc, fvsc, ftec, ftic)     !srv 13.11.02 17.04.06 01.03.07 09.03.17
       if(iout.ne.0 .and. ncall.eq.0) then                             !srv 09.10.01
        do is = 0,ns-1
         write (chns,'(i3.3)') is                                      !srv 09.10.01
@@ -1044,10 +1044,11 @@ c
          endif
        end function barier2
 
-       subroutine defdc(nx, ny, itype, ns, fdnc, fvsc, ftec, ftic)    !srv 13.11.02 01.03.07
+       subroutine defdc(nx, ny, itype, ns, fdnc, fvlc, fvsc, ftec, ftic) !srv 13.11.02 01.03.07 09.03.17
         implicit none
         integer :: nx, ny, itype, ns
         real(kind=R8) :: fdnc(-1:nx,-1:ny,0:ns-1)                    !srv 17.04.06 {
+        real(kind=R8) :: fvlc(-1:nx,-1:ny,0:1,0:ns-1)                !srv 09.03.17
         real(kind=R8) :: fvsc(-1:nx,-1:ny,0:ns-1)
         real(kind=R8) :: ftec(-1:nx,-1:ny), ftic(-1:nx,-1:ny,0:ns-1) !srv 17.04.06 }
 

@@ -841,7 +841,7 @@ c     with diamagnetic drift part                                        !xpb
      1   she, shi, facdrift)                                             !xpb
 *   ..compute ue, electron parallel velocity
         ue=0.0_R8
-        if(ue_style.eq.1) then                                           !srv 13.01.17
+        if(ue_style.ne.2) then                                           !srv 13.01.17
          do iy=-1,ny
            do ix=-1,nx
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then

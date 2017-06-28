@@ -14,6 +14,7 @@
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmfs
+      use b2mod_transport_fun                                            !srv 13.01.17
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, guard_flows
@@ -79,7 +80,7 @@
       parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
-     *   zeff(-1:nx,-1:ny)                                               !srv 13.01.17
+     *   zeff(-1:nx,-1:ny), c071(-1:nx,-1:ny)                            !srv 13.01.17
       real (kind=R8) :: t0,t1,t2,cvmgp
       save ncall
 *   ..procedures
@@ -410,6 +411,13 @@ c Drift terms
 
       if(style.eq.2) then
         call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
+        do iy = -1, ny
+          do ix = -1, nx
+            c071(ix,iy) = fce2n(zeff(ix,iy))
+          enddo
+        enddo
+      else
+        c071 = 0.71e0_R8                                                 !srv 13.01.17
       endif
 
 * ..compute fluxes
@@ -448,7 +456,7 @@ c Drift terms
      &            /2.0_R8-
      &            cone_eir*(ne(ix,iy)-ne(leftix(ix,iy),leftiy(ix,iy))) 
                 floe_eir = 2.5_R8*fne_eir(ix,iy,0)
-     &           -0.71_R8*fch_p(ix,iy,0)/qe*fch_pTe                      !srv 30.12.09
+     &           -c071(ix,iy)*fch_p(ix,iy,0)/qe*fch_pTe                  !srv 30.12.09 13.01.17
                 if(no_Ptncr_x_he.eq.0) then                              !srv 06.07.06 {
                   chce_eir = hybr(floe_eir,chce(ix,iy,0))
                 else

@@ -2083,6 +2083,8 @@ c 2002-09-11: logic revised
      .     'CFLMI=',cflmi,','
           if(cflmv.ge.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .     'CFLMV=',cflmv,','
+          if(cflal.ge.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .     'CFLAL=',cflal,','
           if(transport_time_mod.gt.0.0_R8) then
             write(99,'(1x,a,a,a)')
      .       'TRANSPORT_FILENAME=''',trim(transport_filename),''','

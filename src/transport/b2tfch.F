@@ -81,7 +81,7 @@
      * dvpar(-1:nx,-1:ny), vis_per,                                     !xpb
      * va(-1:nx,-1:ny), dva(-1:nx,-1:ny),
      * fnadspl(-1:nx,-1:ny,0:1,0:ns-1),
-     * ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny), zeff (-1:nx,-1:ny)         !srv 13.01.17
+     * ehx_(-1:nx,-1:ny), ehy_(-1:nx,-1:ny), zeff(-1:nx,-1:ny)          !srv 13.01.17
       character*1 charnc
 #ifdef CLASSICAL_CURRENT
       real (kind=R8) ::

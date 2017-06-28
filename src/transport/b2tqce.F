@@ -194,9 +194,9 @@
          if (model.eq.1) then  ! SOLPS5.0 model : Balescu fit
           if(fch_pTe .eq. 1.0_R8.and.fke_Zhdanov.eq.1) then                !srv 02.12.10
            hce(ix,iy,0) = (te(ix,iy)/me)*fke_zh(z)*tnp
-	  else
+          else
            hce(ix,iy,0) = 2.5_R8*(te(ix,iy)/me)*fke(z)*tnp
-	  endif
+          endif
           if(style.eq.2) then                                              !srv 13.01.17 {
            sig(ix,iy,0) = (qe**2/me)*tnp/fse_ce1(z)
            alf(ix,iy,0) = (qe/me)*z*fal_cen(z)*tnp
@@ -260,7 +260,7 @@
         enddo
        enddo
       else
-       CALL XERRAB ('B2TQCE - incorrect value of style_guard_cells')
+       call xerrab ('B2TQCE - incorrect value of style_guard_cells')
       endif
 *   ..compute hcey, sigy, alfy
 *!!   (classical perpendicular transport is set to 0)
@@ -284,8 +284,8 @@
           write(70,hlp_frm) (fke(z), ix = -1, nx)                    !srv 11.03.13
           write(71,hlp_frm) (fke_Zh(z), ix = -1, nx)                 !srv 11.03.13
         enddo
-	close(71)
-	close(70) 
+        close(71)
+        close(70)
       endif                                                          !srv 16.06.08 }
       if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
         call my_out(70,nx,ny,tau,'b2tqce_taue')

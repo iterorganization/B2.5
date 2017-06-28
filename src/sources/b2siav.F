@@ -336,8 +336,8 @@
         write (chns,'(i3.3)') isb
         do k=0,3
           write (chk,'(i1)') k
-          call my_out(70,nx,ny,smbvv(-1,-1,k),'b2siav_smbvv'//chk//chns)
-          call my_out(70,nx,ny,smbvh(-1,-1,k),'b2siav_smbvh'//chk//chns)
+          call my_out(70,nx,ny,smbvv(-1,-1,k),'b2siav_smovv'//chk//chns)
+          call my_out(70,nx,ny,smbvh(-1,-1,k),'b2siav_smovh'//chk//chns)
         enddo
         wrks=smbvv(:,:,0)+smbvv(:,:,1)*ub(:,:)+
      &       smbvv(:,:,2)*nb(:,:)*mb+smbvv(:,:,3)*ub(:,:)*nb(:,:)*mb
