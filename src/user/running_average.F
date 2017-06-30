@@ -8,7 +8,7 @@
       use b2mod_plasma
       use b2mod_sources
 #ifdef B25_EIRENE
-      use eirmod_infcop
+      use eirmod_infcop ! IGNORE
 #endif
 
       implicit none

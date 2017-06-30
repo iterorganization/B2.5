@@ -843,7 +843,7 @@ endif
 tags:
 	rm -f ${SRCB2}/TAGS ; etags -o ${SRCB2}/TAGS ${TAGSLIST}
 
-listobj: ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
+${OBJDIR}/LISTOBJ: ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 ifdef USE_EIRENE
 	@rm -f ${OBJDIR}/LISTOBJ; touch ${OBJDIR}/LISTOBJ; l="OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
@@ -853,7 +853,7 @@ ifdef USE_EIRENE
 		l="$$l `(cd $$d > /dev/null; echo *.F90)`"; \
 	done; \
 	l="$$l `(cd ${SRCEIR}/modules > /dev/null; echo *.f)`"; \
-	l="$$l `(cd ${SRCEIR}/interfaces/couple_SOLPS-ITER > /dev/null; echo *.F90)`"; \
+	l="$$l `(cd ${SRCEIR}/interfaces/couple_SOLPS-ITER > /dev/null; echo eirmod_*.F90 eirmod_*.f)`"; \
 	E="-e 's/\.F90/\.o/g' -e 's/\.F/\.o/g' -e 's/\.f/\.o/g'" ; for f in ${EXCLUDELIST}; do \
 		E="$$E -e 's/ $$f//'"; \
 	done; \
@@ -888,7 +888,7 @@ endif
 	done; \
 	echo "$$l" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
 
-${OBJDIR}/LISTOBJ: listobj
+listobj: ${OBJDIR}/LISTOBJ
 
 VERSION: ${SRCDIR}/include/git_version_B25.h
 
