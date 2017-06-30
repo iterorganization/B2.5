@@ -362,6 +362,12 @@ c!!!This interpolation scheme does not guarantee that bb(3)=sqrt(bb(0:2)**2)!!!
       else
         call b2xgbs (nx, ny, wbbl, wbbv, gs, qc, crx, cry, pbs)      
       endif
+      if(b2fgmtry_version.ge.'03.000.006') then
+        call cfruin (nget, 1, idum, 'redef_pbs')
+        redef_pbs=idum(0)
+      else
+        redef_pbs=0
+      endif
 *   ..read extended grid cell flags
       cflags = 0
       if(b2fgmtry_version.ge.'01.001.028') then

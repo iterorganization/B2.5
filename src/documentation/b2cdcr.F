@@ -101,6 +101,9 @@
 *
 *     B2AGBB computes the magnetic field from the flux functions.
 *
+*     B2AGBS computes a correction to the pbsx array to ensure the
+*     constancy of magnetic flux along flux tubes.
+*
 *     B2AGCF computes the locations of the cell vertices, and computes
 *     the flux functions at those locations.
 *

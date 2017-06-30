@@ -375,13 +375,13 @@ cdjm compute b2sigp_pstat0to3 on left cell face
 !        write (chk,'(i1)') k
 !        call my_out(70,nx,ny,smbgp(-1,-1,k),'b2sigp_smogp'//chk//chns)
 !      enddo
-	if(style.eq.0 .or. style.eq.1 ) then
+       if(style.eq.0 .or. style.eq.1 ) then
           call my_out(70,nx,ny,wrk5,'b2sigp_smogpi'//chns)
           call my_out(70,nx,ny,wrk6,'b2sigp_smogpe'//chns)
-	elseif(style.eq.2) then
+       elseif(style.eq.2) then
           call my_out(70,nx,ny,wrk5,'b2sigp_smogpi'//chns)
           call my_out(70,nx,ny,wrk6,'b2sigp_smogpo'//chns)
-	endif
+       endif
       endif                                                           !srv 17.06.02 }
 
 cdjm Jan2017 Store linearised source for balance

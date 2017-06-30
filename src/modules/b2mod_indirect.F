@@ -24,7 +24,7 @@
      *  topcut(:),
      *  bottomcut(:)
       integer, save ::
-     *  nncut, nnreg(0:2), periodic_bc, nncutmax
+     *  nncut, nnreg(0:2), periodic_bc, nncutmax, redef_pbs
       integer, allocatable, save ::
      *  cflags(:,:,:)
 
@@ -54,11 +54,12 @@
       allocate(topcut(1:nncutmax))
       allocate(bottomcut(1:nncutmax))
       allocate(cflags(-1:nxd,-1:nyd,GRID_N_CELLFLAGS))
-      bottomcut=nyd+1
-      topcut   =-2
-      rightcut =-2
-      leftcut  =nxd+1
-      cflags = 0
+      bottomcut = nyd+1
+      topcut    = -2
+      rightcut  = -2
+      leftcut   = nxd+1
+      redef_pbs = 0
+      cflags    = 0
       b2mod_indirect_allocated = .true.
 
       return

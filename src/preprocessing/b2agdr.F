@@ -317,6 +317,8 @@
        goto 1
     2 continue
       write (nout(0),'(2x,a)') '(end of list of internal parameters)'
+      redef_pbs = 1 ! In version 3.0.6, we apply the pbsx correction by default
+      call ipgeti ('b2agdr_redef_pbs', redef_pbs)
 *   ..use parg, obtain isymm and lblgm
       call b2xxid ('b2ag', lblgm(1:60))
       call b2agsi (nx, ny, parg, isymm, lblgm(61:120), istyle)
@@ -409,6 +411,12 @@
      1 leftix1,leftiy1,rightix1,rightiy1,
      2 topix1,topiy1,bottomix1,bottomiy1,
      3 leftcut1,rightcut1,bottomcut1,topcut1,cflags1)
+*   ..correct pbsx on the proper mesh
+      if(redef_pbs.ne.0) then
+        call b2agbs (nx, ny, nncutmax, leftix, rightix, region,
+     1   bb, wbbl, gs, qz, qc, hx, hy, vol, pbs,
+     2   cell_width, cell_height)
+      end if
 *   ..establish an isolated region if needed
       call ipgeti('b2agdr_nxiso1', nxiso1)
       call ipgeti('b2agdr_nxiso2', nxiso2)

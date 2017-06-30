@@ -479,14 +479,16 @@
       call my_out(70,nx,ny,chci(-1,-1,0),'chcix')                 !srv
       call my_out(70,nx,ny,chci(-1,-1,1),'chciy')                 !srv
 
+      call my_out(70,nx,ny,lengthx,'lengthx')                     !srv
+      call my_out(70,ny,nx,transpose(lengthx),'lengthxTrans')     !srv 13.02.17
       call my_out(70,nx,ny,lengthy,'lengthy')                     !srv
-	wrk0=0.0d0                                                !srv 18.03.09 26.04.09 {
-	do ix=-1,nx
-	 wrk0(ix,-1)=hy1(ix,-1)
-	 do iy=0,ny
-	  wrk0(ix,iy)=wrk0(ix,iy-1)+hy1(ix,iy)
-	 enddo
-	enddo
+      wrk0=0.0d0                                                  !srv 18.03.09 26.04.09 {
+      do ix=-1,nx
+        wrk0(ix,-1)=hy1(ix,-1)
+        do iy=0,ny
+          wrk0(ix,iy)=wrk0(ix,iy-1)+hy1(ix,iy)
+        enddo
+      enddo
       call my_out(70,nx,ny,wrk0,'lengthy1')                       !srv
 
       call my_out(70,nx,ny,len_surf,'len_surf')

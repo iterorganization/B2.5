@@ -81,6 +81,7 @@
       save nscx, iscx, isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
+      integer, save :: b2mndr_redef_pbs = 0
       integer, save :: pot_eq = 1
       integer, save :: guard_flows = 2
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
@@ -1224,6 +1225,20 @@ csw 09oct2012
       call b2rugm (ninp(1), nx, ny, crx, cry, fpsi, ffbz,
      &  bb, vol, hx, hy, qz, qc, qcb, gs, pbs, wbbl, wbbr, wbbv, wbbc,
      &  cell_width, cell_height, gmap)
+      call ipgeti ('b2mndr_redef_pbs', b2mndr_redef_pbs)
+      if (b2mndr_redef_pbs.ne.0) then
+        if (redef_pbs.eq.1) then
+          write(6,*)
+     &     'Magnetic flux correction of pbsx already done in b2ag.'
+        else
+          write(6,*)
+     &     'Magnetic flux correction must now be done in b2ag.'
+          write(6,*)
+     &     'Please set b2agdr_redef_pbs to 1 in b2ag.dat ',
+     &     'and re-run b2ag.'
+          call xerrab ('Obsolete switch b2mndr_redef_pbs!')
+        endif
+      endif
 ! can only be calculated after the indirect arrays have been read
       ix1=int(ixfb)
       call xertst(0.le.ix1.and.ix1.lt.nx, 'faulty ixfb (1)')
@@ -1341,6 +1356,24 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
         enddo
       endif
       write(*,"(' Number of midplane cell =',i4)") nmdpl             !srv 22.05.09 }
+*   ..compute length along x-direction                               !srv 13.02.17 {
+      lengthx(:,:) = 0.0e0_R8
+      lengthx(-1,:) = hx(-1,:)*0.5e0_R8
+      do iy = -1, ny
+       do ix = 0, nx
+        if(mod(region(ix,iy,0),4).eq.1) then
+         lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
+     *      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+        else
+         if(leftix(ix,iy).ne.-2) then
+          lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
+     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
+         else
+          lengthx(ix,iy) = hx(ix,iy)*0.5_R8
+         endif
+        endif
+       enddo
+      enddo                                                          !srv 13.02.17 }
 *   ..compute length along y-direction                               !srv 24.04.02 {
       lengthy(:,-1) = hy(:,-1)*0.5e0_R8
       do iy = 0, ny

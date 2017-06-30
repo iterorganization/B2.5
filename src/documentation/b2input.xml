@@ -273,6 +273,22 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2agdr_redef_pbs</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When b2agdr_redef_pbs.eq.1, geometrical quantities are adjusted so as to ensure that the poloidal flux between two flux surfaces remains constant.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_redef_pbs</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Obsolete. Should use b2agdr_redef_pbs instead.
+				</description>
+			</switch>
+			<switch>
 				<name>b2agfs_periodic_bc</name>
 				<default>0</default>
 				<type>integer</type>

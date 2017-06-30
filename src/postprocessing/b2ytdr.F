@@ -2077,14 +2077,18 @@ c 2002-09-11: logic revised
      .     'FLAG_SIG=',flag_sig,',',' PARM_SIG=',parm_sig,','
           if(flag_alf.ne.0) write(99,'(1x,a,i2,a,a,1p,1g10.3,a)')
      .     'FLAG_ALF=',flag_alf,',',' PARM_ALF=',parm_alf,','
-          if(cflme.ge.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+          if(cflme.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .     'CFLME=',cflme,','
-          if(cflmi.ge.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+          if(cflmi.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .     'CFLMI=',cflmi,','
-          if(cflmv.ge.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+          if(cflmv.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .     'CFLMV=',cflmv,','
-          if(cflal.ge.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
-     .     'CFLAL=',cflal,','
+          if(b2fstate_version.ge.'03.000.006') then
+            if(cflal.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .       'CFLAL=',cflal,','
+          else
+            write(99,'(1x,a,1p,1g10.3,a)') 'CFLAL=',0.5_R8,','
+          endif
           if(transport_time_mod.gt.0.0_R8) then
             write(99,'(1x,a,a,a)')
      .       'TRANSPORT_FILENAME=''',trim(transport_filename),''','
@@ -9134,7 +9138,8 @@ cxpb as they no longer necessarily point to the same species
       end if
 
 *   ..we now do b2ah.dat, last because we need to overwrite zn, etc...
-      if (.not.same_bundling.or.non_commensurate.eq.1) then
+      if (.not.same_bundling.or.non_commensurate.eq.1.or.
+     .    b2fstate_version.lt.'03.000.006') then
         write(*,*) 'Writing b2ah.dat.2'
         call cfopen (nout(3),'b2ah.dat.2','new','formatted')
         write(nout(5),'(a)') 'b2ah.dat.2'
@@ -9216,6 +9221,10 @@ cxpb as they no longer necessarily point to the same species
      .     (ns1,ns,nsm,is_neutral1,bundle_frac,cftmp)
           cfhci(i,0:ns1-1) = cftmp(0:ns1-1)
         enddo
+        if(b2fstate_version.lt.'03.000.006') then
+! Adding new flux limit coefficients
+          cflim(3) = 0.5_R8
+        end if
         call b2wfcp (nout(3), 0, ns1)
         close(nout(3))
       endif
