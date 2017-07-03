@@ -77,7 +77,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is
       integer hcimx_flag, mode
-	integer, save :: iout = 0,                                 !srv 17.06.08
+	integer, save :: iout = 0, iout_b2wdat = 0,                    !srv 17.06.08
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
@@ -127,6 +127,7 @@
         call ipgeti ('b2npht_iout', iout_b2npht)
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 19.05.10 }
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
       end if
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -312,7 +313,8 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
       call b2xvsg (n2*2, chce, 1, 'chce', '.ge.')
       call b2xvsg (n2*2, chci, 1, 'chci', '.ge.')
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0) then                !srv 19.05.10 {
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
+     &                  .or. iout_b2wdat.eq.4) then                  !srv 19.05.10 {
        do is = 0, ns-1
 	write (chns,'(i3.3)') is
         if (is_neutral(is) ) then
@@ -326,7 +328,7 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
 !        call my_out(70,nx,ny,cvla(-1,-1,1,is),'b2trno_cvlay'//chns)
        enddo
       endif
-      if(iout_b2npmo.ne.0) then
+      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
        do is = 0, ns-1
 	write (chns,'(i3.3)') is
         call my_out(70,nx,ny,cvsa(-1,-1,0,is),'b2trno_cvsax'//chns)
@@ -335,17 +337,15 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
         call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2trno_cvsahzy'//chns)
        enddo
       endif
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                  .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,chce(-1,-1,0),'b2trno_chcex')
         call my_out(70,nx,ny,chce(-1,-1,1),'b2trno_chcey')
         call my_out(70,nx,ny,chci(-1,-1,0),'b2trno_chcix')
         call my_out(70,nx,ny,chci(-1,-1,1),'b2trno_chciy')
-!        call my_out(70,nx,ny,chve(-1,-1,0),'b2trno_chvex')
-!        call my_out(70,nx,ny,chve(-1,-1,1),'b2trno_chvey')
-!        call my_out(70,nx,ny,chvi(-1,-1,0),'b2trno_chvix')
-!        call my_out(70,nx,ny,chvi(-1,-1,1),'b2trno_chviy')
       endif
-      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0) then
+      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0
+     &                  .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,csig(-1,-1,0),'b2trno_csigx')
         call my_out(70,nx,ny,csig(-1,-1,1),'b2trno_csigy')
       endif                                                          !srv 19.05.10 }

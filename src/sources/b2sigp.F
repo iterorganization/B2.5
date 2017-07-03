@@ -39,7 +39,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, k
       integer, save :: style = 2                                     !srv 13.01.17
-      integer, save :: iout = 0, iout_b2npmo = 0
+      integer, save :: iout = 0, iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: pot_eq = 1, no_current = 0  !srv 17.06.02 11.09.09 23.03.10
       character chns*3 !, chk*1                                       !srv 17.06.02
       real (kind=R8) ::
@@ -61,6 +61,7 @@
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
        call ipgeti ('b2sigp_iout', iout)                             !srv 17.06.02
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                      !iys 17.04.17
        call ipgeti ('b2sigp_style', style)                           !srv 02.07.08
        call ipgeti ('b2npmo_iout', iout_b2npmo)                      !srv 11.09.09
        call ipgeti ('b2news_poteq', pot_eq)                          !srv 23.03.10
@@ -369,7 +370,7 @@ cdjm compute b2sigp_pstat0to3 on left cell face
           enddo
         endif
       endif                                                           !srv 02.07.08 }
-      if (iout.ne.0 .or. iout_b2npmo.eq.1) then                       !srv 17.06.02 {
+      if (iout.ne.0 .or. iout_b2wdat.eq.4) then                       !srv 17.06.02 {
        write (chns,'(i3.3)') isb
 !      do k=0,3
 !        write (chk,'(i1)') k

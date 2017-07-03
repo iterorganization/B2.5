@@ -55,7 +55,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, use_eirene
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0          !srv 06.07.06
-      integer, save :: iout = 0                                      !srv 04.07.08    
+      integer, save :: iout = 0, iout_b2wdat = 0                     !srv 04.07.08
       character chns*3                                               !srv 04.07.08
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
@@ -101,6 +101,7 @@
        call xertst (0.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
        call ipgeti ('b2npc9_iout', iout)                              !srv 13.07.05
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2tfnb_no_Ptncr_x', no_Ptncr_x_co)               !srv 06.07.06
        call ipgeti ('b2tfnb_no_Ptncr_y', no_Ptncr_y_co)               !srv 06.07.06
       endif
@@ -162,47 +163,55 @@ cdjm Jan2017 update particle source components for balance
 *   ..replace the incorrect corner values by the interpolated values  !srv 30.04.08 {
         iy=-1                                                         !srv 27.06.08 {
         do ix = -1, nx
-	  if(leftix(ix,iy).eq.-2 ) 
+          if(leftix(ix,iy).eq.-2 )
      &     nb(ix,iy) = exp(
      .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
      .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
      &      log(nb(topix(rightix(ix,iy),rightiy(ix,iy)),
      &             topiy(rightix(ix,iy),rightiy(ix,iy)))))
-	  if(rightix(ix,iy).eq.nx+1 )
+          if(rightix(ix,iy).eq.nx+1 )
      &     nb(ix,iy) = exp(
      .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
      .      log(nb(topix(ix,iy),topiy(ix,iy))) - 
      &      log(nb(topix(leftix(ix,iy),leftiy(ix,iy)),
      &             topiy(leftix(ix,iy),leftiy(ix,iy)))))
-	enddo
+        enddo
         iy=ny
         do ix = -1, nx
-	  if(leftix(ix,iy).eq.-2 ) 
+          if(leftix(ix,iy).eq.-2 )
      &     nb(ix,iy) = exp(
      .      log(nb(rightix(ix,iy),rightiy(ix,iy))) + 
      .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
      &      log(nb(bottomix(rightix(ix,iy),rightiy(ix,iy)),
      &             bottomiy(rightix(ix,iy),rightiy(ix,iy)))))
-	  if(rightix(ix,iy).eq.nx+1 )
+          if(rightix(ix,iy).eq.nx+1 )
      &     nb(ix,iy) = exp(
      .      log(nb(leftix(ix,iy),leftiy(ix,iy))) + 
      .      log(nb(bottomix(ix,iy),bottomiy(ix,iy))) - 
      &      log(nb(bottomix(leftix(ix,iy),leftiy(ix,iy)),
      &             bottomiy(leftix(ix,iy),leftiy(ix,iy)))))
-	enddo                                                         !srv 27.06.08 }
+        enddo                                                         !srv 27.06.08 }
       endif                                                           !srv 06.07.08 }
       if (iout.ne.0) then                                             !srv 12.07.02 {
         write (chns,'(i3.3)') isb
-	call my_out(70,nx,ny,pb,'b2npc9_pa'//chns)
-	call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
-	call my_out(70,nx,ny,ub,'b2npc9_ua'//chns)
-	call my_out(70,nx,ny,rescb,'b2npc9_resco'//chns)
-	call my_out(70,nx,ny,snb(-1,-1,0),'b2npc9_sna0'//chns)
-	call my_out(70,nx,ny,snb(-1,-1,1),'b2npc9_sna1'//chns)
+        call my_out(70,nx,ny,pb,'b2npc9_pa'//chns)
+        call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
+        call my_out(70,nx,ny,ub,'b2npc9_ua'//chns)
+        call my_out(70,nx,ny,rescb,'b2npc9_resco'//chns)
+        call my_out(70,nx,ny,snb(-1,-1,0),'b2npc9_sna0'//chns)
+        call my_out(70,nx,ny,snb(-1,-1,1),'b2npc9_sna1'//chns)
         wrk0=snb(:,:,0)+nb*snb(:,:,1)
-	call my_out(70,nx,ny,wrk0,'b2npc9_sna'//chns)
-	call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc9_fnax'//chns)
-	call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc9_fnay'//chns)
+        call my_out(70,nx,ny,wrk0,'b2npc9_sna'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc9_fnax'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc9_fnay'//chns)
+      elseif (iout_b2wdat.eq.4) then                                  !iys 17.04.17
+        write (chns,'(i3.3)') isb
+        call my_out(70,nx,ny,nb,'b2npc9_na'//chns)
+        call my_out(70,nx,ny,rescb,'b2npc9_resco'//chns)
+        wrk0=snb(:,:,0)+nb*snb(:,:,1)
+        call my_out(70,nx,ny,wrk0,'b2npc9_sna'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,0),'b2npc9_fnax'//chns)
+        call my_out(70,nx,ny,fnb(-1,-1,1),'b2npc9_fnay'//chns)
       endif                                                          
 
 *   ..set error parameter

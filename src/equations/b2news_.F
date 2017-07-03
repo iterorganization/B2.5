@@ -64,9 +64,11 @@
       integer, save :: guard_flows = 2   
       integer, save :: no_solve = 0                                      !srv 02.07.08
 !      integer, save :: re_compute_pb = 1                                !srv 15.02.10
-      integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,       !srv 11.09.09 {
+      integer, save :: iout = 0,
+     &                 iout_b2npc9 = 0, iout_b2npco = 0,                 !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
+     &                 iout_b2npmo = 0, iout_b2npp7 = 0,
+     &                 iout_b2nppo = 0, iout_b2wdat = 0
       integer, save :: ue_style = 2                                      !srv 17.11.16
       real (kind=R8) ::
      *   potok
@@ -181,6 +183,7 @@
        call ipgeti ('b2nppo_iout', iout_b2nppo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                          !srv 16.07.10 }
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                          !iys 17.04.17
 !       call ipgeti ('b2news_re_compute_pb', re_compute_pb)              !srv 15.02.10
        call ipgeti ('b2news_guard_flows', guard_flows)                   !xpb
        call ipgeti ('b2news_area_fix', area_fix)                         !srv 09.03.09
@@ -546,7 +549,7 @@ csw 16oct2012 init ier0
       if(iout.ne.0 .or. iout_b2npco.ne.0 .or. iout_b2npc9.ne.0           !srv 16.07.10
      &             .or. iout_b2npmo.ne.0 .or. iout_b2npht.ne.0 
      &             .or. iout_b2nph9.ne.0 .or. iout_b2nppo.ne.0
-     &             .or. iout_b2npp7.ne.0 ) 
+     &             .or. iout_b2npp7.ne.0 .or. iout_b2wdat.eq.4)
 *    .. calculate contributions due to timestep for diagnostic 
      &  call b2srdt (nx, ny, ns, guard_flows, dtim, BoRiS, hz,
      &       vol, na0, ua0, te0, ti0, ne0, ni0, kinrgy0,

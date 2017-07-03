@@ -121,7 +121,8 @@
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0, iout = 0, !srv 13.10.06
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
+     &                 iout_b2npp7 = 0, iout_b2nppo = 0,
+     &                 iout_b2npmo = 0, iout_b2wdat = 0
       integer, save :: istyle_cur_contr_on_S_and_N = 2                  !srv 01.02.09 03.03.15
       integer, save :: bcene_16_style =0, bceni_16_style = 0            !srv 16.02.12
       integer, save :: bcene_15_style =0                                !srv 19.04.13
@@ -275,6 +276,7 @@
         call ipgetr ('b2tfhe_alfTeEh', alfTeEh)                      !srv 28.04.08
         call ipgeti ('b2stbc_istyle_cur_contr_on_S_and_N',
      &                       istyle_cur_contr_on_S_and_N)            !srv 01.02.09
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
         call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npmo_iout', iout_b2npmo)
@@ -9899,7 +9901,7 @@ c end of implementation
      &        'Use BCPOT=13 to impose it.'                           !srv 03.03.15
            ENDIF
          endif
-	endif                                                        !srv 01.02.09 }
+	endif                                                            !srv 01.02.09 }
       enddo
 
 * ---------------------------------------------------------------------
@@ -9926,14 +9928,9 @@ c end of implementation
         end do
       end do
 
-      if (iout.eq.1 .or. iout_b2npmo.eq.1) then                       !srv 11.09.09 {
+      if (iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then               !srv 11.09.09 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
-!        do k=0,3
-!         write (chk,'(i1)') k
-!         call my_out(70,nx,ny,smo0(-1,-1,k,is),
-!     &               'b2stbc_phys_smo'//chk//chns)
-!        enddo
         wrk0=smo0(:,:,0,is)+
      &       smo0(:,:,1,is)*ua(:,:,is)+
      &       smo0(:,:,2,is)*na(:,:,is)*mp*am(is)+
@@ -9941,7 +9938,8 @@ c end of implementation
         call my_out(70,nx,ny,wrk0,'b2stbc_phys_smo'//chns)
        enddo
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
+     &        .or. iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
 !        do k=0,1
@@ -9953,12 +9951,8 @@ c end of implementation
         call my_out(70,nx,ny,wrk0,'b2stbc_phys_sna'//chns)
        enddo
       endif
-      if (iout.eq.1 .or. (iout_b2npht.eq.1 .or. iout_b2nph9.eq.1)) then
-!       do k=0,3
-!        write (chk,'(i1)') k
-!        call my_out(70,nx,ny,she0(-1,-1,k),'b2stbc_phys_she'//chk)
-!        call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbc_phys_shi'//chk)
-!       enddo
+      if ((iout_b2npht.eq.1 .or. iout_b2nph9.eq.1)
+     &        .or. iout_b2wdat.eq.4 ) then
        wrk0=she0(:,:,0)+she0(:,:,1)*te+
      &      she0(:,:,2)*ne + she0(:,:,3)*te*ne
        call my_out(70,nx,ny,wrk0,'b2stbc_phys_she')
@@ -9966,14 +9960,29 @@ c end of implementation
      &      shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
        call my_out(70,nx,ny,wrk0,'b2stbc_phys_shi')
       endif
-      if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)) then
-       do k=0,3
-        write (chk,'(i1)') k
-        call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbc_phys_sch'//chk)
+      if ((iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)
+     &        .or. iout_b2wdat.eq.4 ) then
+       wrk0=sch0(:,:,0)+sch0(:,:,1)*po+
+     &      sch0(:,:,2)*ne+sch0(:,:,3)*po*ne(:,:)
+       call my_out(70,nx,ny,wrk0,'b2stbc_phys_sch')
+      endif
+      if (iout.eq.1) then
+       do is = 0, ns-1
+        write (chns,'(i3.3)') is
+        do k=0,3
+          write (chk,'(i1)') k
+          call my_out(70,nx,ny,smo0(-1,-1,k,is),
+     &               'b2stbc_phys_smo'//chk//chns)
+          call my_out(70,nx,ny,sch0(-1,-1,k),'b2stbc_phys_sch'//chk)
+          call my_out(70,nx,ny,she0(-1,-1,k),'b2stbc_phys_she'//chk)
+          call my_out(70,nx,ny,shi0(-1,-1,k),'b2stbc_phys_shi'//chk)
+        enddo
        enddo
-!       wrk0=sch0(:,:,0)+sch0(:,:,1)*po+
-!     &      sch0(:,:,2)*ne + sch0(:,:,3)*po*ne
-!       call my_out(70,nx,ny,wrk0,'b2stbc_phys_sch')
+       do k=0,1
+         write (chk,'(i1)') k
+         call my_out(70,nx,ny,sna0(-1,-1,k,is),
+     &               'b2stbc_phys_sna'//chk//chns)
+       enddo
       endif                                                           !srv 11.09.09 }
 
 * ..return

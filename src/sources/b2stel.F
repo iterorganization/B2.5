@@ -70,7 +70,7 @@
 *   ..local variables
       integer ncall, styl0, n2, ix, iy, is, js, fix_recomb_energy, k
       integer, save :: nimp_tmp, jimp_tmp(DEF_NATM)
-      integer, save :: iout = 0,
+      integer, save :: iout = 0, iout_b2wdat = 0,
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npmo =0
@@ -147,6 +147,7 @@
        call ipgeti ('b2npmo_iout', iout_b2npmo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                  !srv 11.09.09 }
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                  !iys 17.04.17
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -465,7 +466,8 @@ c accounted for)
       call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)              !srv 11.06.13
 #endif	                       
 
-      if (iout.eq.1 .or. iout_b2npmo.eq.1) then                       !srv 30.06.08 11.09.09 {
+      if (iout.eq.1 .or. iout_b2npmo.eq.1 .or.
+     &    iout_b2wdat .eq. 4) then                                    !srv 30.06.08 11.09.09 {
         do is = 0, ns-1
 	  write (chns,'(i3.3)') is
 !	  do k=0,3
@@ -487,7 +489,8 @@ c accounted for)
 	  call my_out(70,nx,ny,wrk0,'b2stel_smq_rec'//chns)
 	enddo
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
+     &                 .or. iout_b2wdat .eq. 4) then
         do is = 0, ns-1
 	  write (chns,'(i3.3)') is
 !	  do k=0,1
@@ -504,7 +507,8 @@ c accounted for)
 
 	enddo
       endif
-      if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)) then
+      if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)
+     &                 .or. iout_b2wdat .eq. 4) then
 !	 do k=0,3
 !	  write (chk,'(i1)') k
 !	  call my_out(70,nx,ny,shi0_ion(-1,-1,k),'b2stel_shi_ion'//chk)

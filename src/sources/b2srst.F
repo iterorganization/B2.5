@@ -38,7 +38,8 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, k, use_eirene
       integer, save :: iout = 0, !iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
-     &                 iout_b2nph9 = 0, iout_b2npht = 0
+     &                 iout_b2nph9 = 0, iout_b2npht = 0,
+     &                 iout_b2wdat = 0
 !     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
       real (kind=R8) ::
      *  snast(-1:nx,-1:ny,0:1,0:ns-1), smost(-1:nx,-1:ny,0:3,0:ns-1), 
@@ -76,13 +77,14 @@
      &              'faulty internal parameter rf0/1/2/3')
        call ipgeti ('b2mndr_eirene', use_eirene)
        call ipgeti ('b2srst_iout', iout)                            !srv 30.06.08
-!       call ipgeti ('b2npc9_iout', iout_b2npc9)                     !srv 11.09.09 {
+!       call ipgeti ('b2npc9_iout', iout_b2npc9)                    !srv 11.09.09 {
 !       call ipgeti ('b2npco_iout', iout_b2npco)
 !       call ipgeti ('b2npmo_iout', iout_b2npmo)
 !       call ipgeti ('b2npp7_iout', iout_b2npp7)
 !       call ipgeti ('b2nppo_iout', iout_b2nppo)
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)                     !srv 11.09.09 }
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
       endif
 *   ..test nx, ny, ns
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
@@ -218,7 +220,8 @@ cdjm Jan2017 Store for balance
 !	  call my_out(70,nx,ny,wrk0,'b2srst_snast'//chns)
 !       enddo
 !      endif
-      if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) then
+      if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1 .or. iout_b2wdat.eq.4)
+     &          then
         wrk0=shest(:,:,0)+shest(:,:,1)*te+  !srv 07.10.09
      &       shest(:,:,2)*ne + shest(:,:,3)*te*ne
 	call my_out(70,nx,ny,wrk0,'b2srst_shest')

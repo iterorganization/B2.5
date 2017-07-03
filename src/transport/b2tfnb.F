@@ -74,7 +74,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, ib, area_fix, no_hybr,
      &        ixl, iyl, ixb, iyb                                         !srv 13.10.06
-      integer, save :: iout = 0,                                         !srv 16.09.02
+      integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 16.09.02
      &                 iout_b2npc9 = 0, iout_b2npco = 0, iout_b2npmo =0
       integer, save :: mdf_fnb = 0                                       !srv 13.10.06
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
@@ -177,6 +177,7 @@
         call ipgeti ('b2tfnb_fnb_nodrift_style', fnb_nodrift_style)      !srv 20.06.08
         call ipgeti ('b2tfnb_drift_style', drift_style)                  !srv 21.06.08
         call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
         call ipgeti ('b2npc9_iout', iout_b2npc9)                         !srv 11.09.09
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npmo_iout', iout_b2npmo)
@@ -1066,7 +1067,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        enddo
       enddo
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0) then                   !srv 11.09.09 {
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
+     &   .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then                   !srv 11.09.09 {
        do iy = -1, ny
         do ix = -1, nx
          if(leftix(ix,iy).eq.-2) then
@@ -1109,12 +1111,13 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
        endif
        call my_out(70,nx,ny,wrk1,'b2tfnb_bxuanax'//chns)
        call my_out(70,nx,ny,wrk2,'b2tfnb_dpccornax'//chns)
-       call my_out(70,nx,ny,wrk6,'b2tfnb_dpccorhznax'//chns)            !srv 05.11.09
-       call my_out(70,nx,ny,wrk8,'b2tfnb_cvlbnax'//chns)                !iys 17.04.2012
+       if (iout_b2wdat .ne. 4) 
+     &           call my_out(70,nx,ny,wrk6,'b2tfnb_dpccorhznax'//chns)            !srv 05.11.09
+       if (iout.eq.1) call my_out(70,nx,ny,wrk8,'b2tfnb_cvlbnax'//chns)                !iys 17.04.2012
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diax'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfx'//chns)
       endif
-      if(iout_b2npmo.ne.0) then
+      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 .or. iout.eq.1) then
        write(chns,'(i3.3)') isb
        do iy = -1, ny
         do ix = -1, nx
@@ -1143,7 +1146,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           endif
          enddo
         enddo
-        if(.not. is_neutral(isb)) 
+        if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
      &   call my_out(70,nx,ny,wrk6,'b2tfnb_vadianahzx'//chns)
         call my_out(70,nx,ny,fnb_fcor(-1,-1,0),'b2tfnb_fnb_fcorx'//chns)
       endif                                                             !srv 11.09.09 }
@@ -1533,7 +1536,8 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      1   ' mb = ',mb/mp,' are ',maxfluxlimit
       endif
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0) then                   !srv 11.09.09 {
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
+     &       .or. iout .eq. 1 .or. iout_b2wdat.eq.4) then               !srv 11.09.09 {
        do iy = -1, ny
         do ix = -1, nx
          if(bottomiy(ix,iy).eq.-2) then
@@ -1571,7 +1575,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
 !       call my_out(70,nx,ny,con_2dia,'b2tfnb_dPat_2diay'//chns)
 !       call my_out(70,nx,ny,con_mdf,'b2tfnb_dPat_mdfy'//chns)
       endif
-      if(iout_b2npmo.ne.0) then
+      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 .or. iout.eq.1) then
        write(chns,'(i3.3)') isb
        do iy = -1, ny
         do ix = -1, nx
@@ -1600,7 +1604,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
          endif
         enddo
        enddo
-       if(.not. is_neutral(isb)) 
+       if(.not. is_neutral(isb) .and. iout_b2wdat.ne.4)
      &  call my_out(70,nx,ny,wrk6,'b2tfnb_vadianahzy'//chns)
        call my_out(70,nx,ny,fnb_fcor(-1,-1,1),'b2tfnb_fnb_fcory'//chns)
       endif                                                             !srv 11.09.09 }
@@ -1991,6 +1995,28 @@ cwdk need full diamagnetic component for energy
           endif
         endif
       endif                                                             !srv 05.03.16 }
+
+      if (iout_b2wdat .eq. 4) then
+       call my_out(70,nx,ny,fnb(-1,-1,0),'b2tfnb_fnbx'//chns)
+       call my_out(70,nx,ny,fnb(-1,-1,1),'b2tfnb_fnby'//chns)
+       call my_out(70,nx,ny,fnb_fcor(-1,-1,0),'b2tfnb_fnb_fcorx'//chns)
+       call my_out(70,nx,ny,fnb_fcor(-1,-1,1),'b2tfnb_fnb_fcory'//chns)
+       call my_out(70,nx,ny,fnb_he(-1,-1,0),'b2tfnb_fnb_hex'//chns)
+       call my_out(70,nx,ny,fnb_he(-1,-1,1),'b2tfnb_fnb_hey'//chns)
+       call my_out(70,nx,ny,fnbPSch(-1,-1,0),'b2tfnb_fnbPSchx'//chns)
+       call my_out(70,nx,ny,fnbPSch(-1,-1,1),'b2tfnb_fnbPSchy'//chns)
+       if (isb .eq. ismain) then
+          call my_out(70,nx,ny,vbecrb(-1,-1,0),'b2tfnb_vbecrbx'//chns)
+          call my_out(70,nx,ny,vbecrb(-1,-1,1),'b2tfnb_vbecrby'//chns)
+       endif
+!       call my_out(70,nx,ny,ubdia(-1,-1,0),'b2tfnb_ubdiax'//chns)
+!       call my_out(70,nx,ny,ubdia(-1,-1,1),'b2tfnb_ubdiay'//chns)
+       call my_out(70,nx,ny,vbdia(-1,-1,0),'b2tfnb_vbdiax'//chns)
+       call my_out(70,nx,ny,vbdia(-1,-1,1),'b2tfnb_vbdiay'//chns)
+       call my_out(70,nx,ny,wbdia(-1,-1,0),'b2tfnb_wbdiax'//chns)
+       call my_out(70,nx,ny,wbdia(-1,-1,1),'b2tfnb_wbdiay'//chns)
+       call my_out(70,nx,ny,kbnrgy,'b2tfnb_kbnrgy'//chns)
+      endif
 
       if(iout.ne.0) then                                                !srv 18.06.08 {
        write (chns,'(i3.3)') isb

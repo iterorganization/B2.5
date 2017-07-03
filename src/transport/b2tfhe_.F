@@ -85,7 +85,7 @@
       
 *   ..local variables
       integer ncall, n2, ix, iy, ib, is, ixl, iyl, ixb, iyb, is0
-      integer, save :: iout = 0,                                         !srv 16.09.02
+      integer, save :: iout = 0, iout_b2wdat = 0,                        !srv 16.09.02
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0
       integer, save :: lim_flux = 0, mdf_fhe = 0                         !srv 04.02.03 13.10.06
@@ -204,6 +204,7 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        call ipgeti ('b2npht_iout', iout_b2npht)
        call ipgeti ('b2npp7_iout', iout_b2npp7)
        call ipgeti ('b2nppo_iout', iout_b2nppo)
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                          !iys 17.04.17
        call ipgeti ('b2trcl_conductive_limit', conductive_limit)         !srv 16.06.08 17.01.12
        call ipgeti ('b2tfhe_no_current',no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
@@ -728,7 +729,8 @@ c Drift terms
        enddo
       endif                                                                  !srv 18.01.07
 
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                        !srv 16.09.02 {
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                         .or. iout_b2wdat.eq.4) then                   !srv 16.09.02 {
        allocate(
      *    w1(-1:nx,-1:ny), w2(-1:nx,-1:ny), w3(-1:nx,-1:ny),
      *    w4(-1:nx,-1:ny), w5(-1:nx,-1:ny), w6(-1:nx,-1:ny)
@@ -1166,26 +1168,30 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
             cone(ix,iy,0,0) = cone0_mdf/(1.0_R8+t0_mdf) !srv 02.01.07
           endif                                                          !srv 17.06.09 }
  
-          if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                !srv 16.09.02 {
+          if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                            .or. iout_b2wdat.eq.4) then            !srv 16.09.02 {
             w1(ix,iy)=1.5e0_R8*fne(ix,iy,0)
-     &           *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
+     &           *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w2(ix,iy)=(chve(ix,iy,0)+2.5e0_R8*fledia(ix,iy,0))*          !srv 13.09.02 11.01.13 *signmf
      &       (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
-     &          *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
+     &          *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w3(ix,iy)=-abs(floe0/2)*tex-cone0*tex0
             if(alfTeEh.eq.1.0_R8)
      &       w4(ix,iy)=
      *        alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
             if(fch_pTe.eq.1.0_R8)
      &       w4(ix,iy)=-c071(ix,iy)*fch_p(ix,iy,0)/qe*                   !srv 13.01.17
-     *        (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
+     *        (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
+            w5(ix,iy) = 2.5e0_R8*fledia(ix,iy,0)*                        !srv 13.09.02 11.01.13 *signmf
+     &       (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8*       !srv 13.09.02
+     &       (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
           endif                                                          !srv 16.09.02 }
           if(pot_eq.ne.1 .and. no_current.ne.0) then                     !srv 27.02.13
             fch_p = 0.0e0_R8
             ehx = 0.0_R8                                                 !srv 27.02.13
           endif                                                          !srv 30.12.09 }
 
-        else !lim_flux                                                  !srv 04.02.03 {
+        else !lim_flux                                                   !srv 04.02.03 {
 !           if(mdf_fhe.eq.0) then                                        !srv 13.10.06 {
           if(no_Ptncr_x_he.eq.0) then                                    !srv 06.07.06 {
             cone0     = hybr(floe0,chce(ix,iy,0))
@@ -1324,32 +1330,36 @@ csw 13mar2013 added check upwind (SOLPS4 style)
           endif
 
 
-          if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                !srv 16.09.02 {
+          if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                             .or. iout_b2wdat.eq.4) then           !srv 16.09.02 {
            if(mdf_fhe.eq.0) then                                         !srv 13.10.06 {
             w1(ix,iy)=1.5e0_R8*fne(ix,iy,0)
-     &           *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
+     &           *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w2(ix,iy)=(chve(ix,iy,0)+2.5e0_R8*fledia(ix,iy,0))*          !srv 13.09.02 11.01.13 *signmf
      &      (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8         !srv 13.09.02
-     &          *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
+     &          *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w3(ix,iy)= -cone0*tex0
             if(alfTeEh.eq.1.0_R8)
      &       w4(ix,iy)=
      *        alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
             if(fch_pTe.eq.1.0_R8)
      &       w4(ix,iy)=-c071(ix,iy)*fch_p(ix,iy,0)/qe*                   !srv 13.01.17
-     *        (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
+     *        (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w6(ix,iy) = cone0
            else
             w1(ix,iy)=1.5e0_R8*fne(ix,iy,0)
-     &           *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
+     &           *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w2(ix,iy)= chve(ix,iy,0)*                                    !srv 13.09.02
      &       (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
-     &       *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2
+     &       *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
             w3(ix,iy)= -cone0_mdf*tex0
             w4(ix,iy)=
      *       alfe0*harm(te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy))*ehx
             w6(ix,iy) = cone0_mdf
            endif
+           w5(ix,iy) = 2.5e0_R8*fledia(ix,iy,0)*                         !srv 13.09.02 11.01.13 *signmf
+     &       (ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
+     &          *(te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8
           endif                                                          !srv 16.09.02 }
           if(mdf_fhe.eq.0) then                                          !srv 13.10.06 {
            floe(ix,iy,0) = floe0
@@ -1391,13 +1401,15 @@ csw 13mar2013 added check upwind (SOLPS4 style)
        enddo
       enddo
 
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                    !srv 16.09.02 {
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                      .or. iout_b2wdat.eq.4) then                  !srv 16.09.02 {
        call my_out(70,nx,ny,w1,'b2tfhe__qe_32x')
 !       call my_out(70,nx,ny,w2,'b2tfhe__qe_strx')
        call my_out(70,nx,ny,w3,'b2tfhe__qe_ke_gTx')
        call my_out(70,nx,ny,w4,'b2tfhe__qe_alphaTehx')
 !       w5=w1+w2+w3+w4
 !       call my_out(70,nx,ny,w5,'qex5')
+       call my_out(70,nx,ny,w5,'b2tfhe__qediax')
        call my_out(70,nx,ny,w6,'b2tfhe__chcex_Pat')
 
        w1=0.0e0_R8; w2=0.0e0_R8; w3=0.0e0_R8; w4=0.0e0_R8; w5=0.0e0_R8;
@@ -1476,13 +1488,14 @@ csw 30apr2014 flo53 ONLY FOR TESTING (SOLPS4)
      .   max(cutlo,te(ix,iy)+te(bottomix(ix,iy), bottomiy(ix,iy))))
         endif
 
-        if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                  !srv 16.09.02 {
+        if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                        .or. iout_b2wdat.eq.4) then                !srv 16.09.02 {
          if(mdf_fhe.eq.0) then                                           !srv 13.10.06 {
           w1(ix,iy)=1.5e0_R8*fne(ix,iy,1)*
-     1      (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+     1      (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
           w2(ix,iy)=2.5e0_R8*fledia(ix,iy,1)*
      &      (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8
-     1     *(te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+     1     *(te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
           w3(ix,iy)=-cone0*
      1      (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
           w4(ix,iy)=calf(ix,iy,1)*
@@ -1490,7 +1503,7 @@ csw 30apr2014 flo53 ONLY FOR TESTING (SOLPS4)
           w6(ix,iy) = cone0
          else
           w1(ix,iy)=1.5e0_R8*fne(ix,iy,1)*
-     1      (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
+     1      (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
           w2(ix,iy)=0.0e0_R8
           w3(ix,iy)=-cone0_mdf*
      1      (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -1498,6 +1511,9 @@ csw 30apr2014 flo53 ONLY FOR TESTING (SOLPS4)
      &       harm(te(bottomix(ix,iy),bottomiy(ix,iy)),te(ix,iy))*ehy
           w6(ix,iy) = cone0_mdf
          endif
+         w5(ix,iy)=2.5e0_R8*fledia(ix,iy,1)*
+     &      (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8
+     1     *(te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2.0_R8
         endif                                                            !srv 16.09.02 }
 
 csw 13mar2013 added check upwind (SOLPS4 style)
@@ -1675,17 +1691,20 @@ csw 18feb2014 remove fluxes between guard cells
        enddo
       enddo
 
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then   !srv 16.09.02 {
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                                .or. iout_b2wdat.eq.4) then   !srv 16.09.02 {
        call my_out(70,nx,ny,w1,'b2tfhe__qe_32y')        !srv 16.09.02 {
 !       call my_out(70,nx,ny,w2,'b2tfhe__qe_stry')
        call my_out(70,nx,ny,w3,'b2tfhe__qe_ke_gTy')
        call my_out(70,nx,ny,w4,'b2tfhe__qe_alphaTehy')
 !       w5=w1+w2+w3+w4
 !       call my_out(70,nx,ny,w5,'qey5')
+       call my_out(70,nx,ny,w5,'b2tfhe__qediay')
        call my_out(70,nx,ny,w6,'b2tfhe__chcey_Pat')
       endif                                             !srv 16.09.02 }
 
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then   !srv 16.09.02 {
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                                .or. iout_b2wdat.eq.4) then   !srv 16.09.02 {
        deallocate( w1, w2, w3, w4, w5, w6 )
       endif                                             !srv 16.09.02 }
 
@@ -1806,7 +1825,8 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,ehy_,'b2tfhe_ehy_')                      !srv 13.01.17
       endif                                                          !srv 18.06.08 }
 
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                !srv 11.09.09 {
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                          .or. iout_b2wdat.eq.4) then          !srv 11.09.09 {
        call my_out(70,nx,ny,fhe(-1,-1,0),'b2tfhe_fhe_no_mdfx')
        call my_out(70,nx,ny,fhe(-1,-1,1),'b2tfhe_fhe_no_mdfy')
 !       call my_out(70,nx,ny,fhe_mdf(-1,-1,0),'b2tfhe_fhe_mdfx')
@@ -1815,7 +1835,8 @@ csw 18feb2014 remove fluxes between guard cells
        call my_out(70,nx,ny,fhePSch(-1,-1,1),'b2tfhe_fhePSchy')
       endif
 
-      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0) then
+      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0 
+     &                          .or. iout_b2wdat.eq.4) then
 !       call my_out(70,nx,ny,fch(-1,-1,0),'b2tfhe_fchx')
 !       call my_out(70,nx,ny,fch(-1,-1,1),'b2tfhe_fchy')
        call my_out(70,nx,ny,fchin(-1,-1,0),'b2tfhe_fchinx')

@@ -65,7 +65,7 @@ csw 30apr2014 added fna_he, ia
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, ib, ixl, iyl, ixb, iyb
-      integer, save :: iout = 0,                                        !srv 16.09.02
+      integer, save :: iout = 0, iout_b2wdat = 0,                       !srv 16.09.02
      &                 iout_b2nph9 = 0, iout_b2npht = 0
       integer, save :: lim_flux = 0, mdf_fhi = 0                        !srv 04.02.03 13.10.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
@@ -112,6 +112,7 @@ cpax
        call ipgeti ('b2tfhi_mdf', mdf_fhi)                              !srv 13.10.06
        call ipgetr ('b2tfhi_PSch', PSch)                                !srv 17.01.07
        call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)
        call ipgeti ('b2trcl_conductive_limit', conductive_limit)        !srv 16.06.08 17.01.12
@@ -341,7 +342,8 @@ c  ..set null flux in guard cells  ?
        enddo                                                            !srv 25.01.02 }
       endif                                                             !srv 18.01.07
 
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                   !srv 16.09.02 {
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &   .or. iout_b2wdat.eq.4) then                                    !srv 16.09.02 {
        allocate(
      *    w1(-1:nx,-1:ny), w2(-1:nx,-1:ny), w3(-1:nx,-1:ny)
      *   ,w4(-1:nx,-1:ny), w5(-1:nx,-1:ny), w6(-1:nx,-1:ny)
@@ -630,7 +632,8 @@ csw 13mar2013 SOLPS4 style (overwrite coni0/coni0_mdf)
 
           dti0 = dti
 
-          if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then               !srv 16.09.02 {
+          if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                    .or. iout_b2wdat.eq.4) then                   !srv 16.09.02 {
            if(mdf_fhi.eq.0) then                                        !srv 13.10.06 {
             w1(ix,iy)=floi0*(ti(leftix(ix,iy),leftiy(ix,iy))
      &                        +ti(ix,iy))/2
@@ -642,6 +645,8 @@ csw 13mar2013 SOLPS4 style (overwrite coni0/coni0_mdf)
             w2(ix,iy)= -coni0_mdf*dti0
             w6(ix,iy)=  coni0_mdf
            endif
+           w5(ix,iy) = flidia(ix,iy,0)*
+     &              (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))/2.0
           endif                          
 
 
@@ -759,11 +764,13 @@ csw 27nov2012 added check upwind (SOLPS4 style)
        enddo
       enddo
 
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                   !srv 16.09.02 {
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &   .or. iout_b2wdat.eq.4) then                   !srv 16.09.02 {
        call my_out(70,nx,ny,w1,'b2tfhi__qi_32x')
        call my_out(70,nx,ny,w2,'b2tfhi__qi_ki_gTx')
 !       w3=w1+w2
 !       call my_out(70,nx,ny,w3,'qix3')
+       call my_out(70,nx,ny,w5,'b2tfhi__qidiax')
        call my_out(70,nx,ny,w6,'b2tfhi__chcix_Pat')
        call my_out(70,nx,ny,fhiPSch(-1,-1,0),'b2tfhi__fhiPSchx')
        w1=0.0e0_R8; w2=0.0e0_R8; w3=0.0e0_R8; w4=0.0e0_R8; w5=0.0e0_R8;
@@ -835,7 +842,8 @@ csw 30apr2014 only for TESTING
         endif
 
 
-        if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                 !srv 16.09.02 {
+        if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &          .or. iout_b2wdat.eq.4) then                 !srv 16.09.02 {
          if(mdf_fhi.eq.0) then                                          !srv 13.10.06 {
           w1(ix,iy)=1.5e0_R8*fni(ix,iy,1)*
      1   (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2
@@ -854,6 +862,9 @@ csw 30apr2014 only for TESTING
           w4(ix,iy)=0.0e0_R8
           w6(ix,iy)=  coni0_mdf
          endif
+         w5(ix,iy) = flidia(ix,iy,1)*
+     &                 (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2
+
         endif                                                           !srv 16.09.02 }
 
 csw 13mar2013 added check upwind (SOLPS4)
@@ -1063,19 +1074,22 @@ csw 18feb2014 remove fluxes between guard cells
         enddo
 
 
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then                   !srv 16.09.02 {
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &           .or. iout_b2wdat.eq.4) then                   !srv 16.09.02 {
        call my_out(70,nx,ny,w1,'b2tfhi__qi_32y')
 !       call my_out(70,nx,ny,w2,'qiy2')
        call my_out(70,nx,ny,w3,'b2tfhi__qi_ki_gTy')
 !       call my_out(70,nx,ny,w4,'qiy4')
 !       w5=w1+w2+w3+w4
 !       call my_out(70,nx,ny,w5,'qiy5')
+       call my_out(70,nx,ny,w5,'b2tfhi__qidiay')
        call my_out(70,nx,ny,w6,'b2tfhi__chciy_Pat')                     !srv 16.09.02 }
        call my_out(70,nx,ny,fhiPSch(-1,-1,1),'b2tfhi__fhiPSchy')
        call my_out(70,nx,ny,fhi(-1,-1,0),'fhix')
        call my_out(70,nx,ny,fhi(-1,-1,1),'fhiy')
       endif
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &           .or. iout_b2wdat.eq.4) then
        deallocate( w1, w2, w3, w4, w5, w6 )
       endif
 

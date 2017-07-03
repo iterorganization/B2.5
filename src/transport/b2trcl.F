@@ -85,7 +85,7 @@
       integer ncall, n2, k, is, is0, lthf21, lvis21, lluciani, ix, iy
       integer, save :: conductive_limit = 1                            !srv 16.06.08
       integer, save :: style = 2                                       !srv 13.01.17
-      integer, save :: iout = 0,                                       !srv 17.06.08
+      integer, save :: iout = 0, iout_b2wdat = 0,                      !srv 17.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0,
      &                 integral_modeling = 1
@@ -154,6 +154,7 @@ csw 13mar2012
         call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                !iyv 06.12.13
         call ipgeti ('b2trcl_conductive_limit', conductive_limit)    !srv 16.06.08
         call ipgeti ('b2trcl_iout', iout)                            !srv 17.06.08
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
@@ -241,14 +242,15 @@ csw 13mar2012
       call b2txcy (nx, ny, -1, vol, gs, hy, qz, alf(-1,-1,1), 
      & calf(-1,-1,1))
 
-      if(iout_b2npmo.ne.0) then
+      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         if (.not. is_neutral(is)) 
      &  call my_out(70,nx,ny,cvsahz(-1,-1,0,is),'b2trcl_cvsahzx'//chns)
        enddo
       endif
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                   .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,chce(-1,-1,0),'b2trcl_chcex')
 !        call my_out(70,nx,ny,chce(-1,-1,1),'b2trcl_chcey')
         call my_out(70,nx,ny,calf(-1,-1,0),'b2trcl_calfx')
@@ -256,7 +258,8 @@ csw 13mar2012
         call my_out(70,nx,ny,chci(-1,-1,0),'b2trcl_chcix')
 !        call my_out(70,nx,ny,chci(-1,-1,1),'b2trcl_chciy')
       endif
-      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0) then
+      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0
+     &                   .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,csig(-1,-1,0),'b2trcl_csigx')
 !        call my_out(70,nx,ny,csig(-1,-1,1),'b2trcl_csigy')
       endif
@@ -473,7 +476,7 @@ csw 13mar2012
       call sfill (n2*2, 0.0_R8, chve, 1)
       call sfill (n2*2, 0.0_R8, chvi, 1)
 
-      if(iout_b2npmo.ne.0) then
+      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is 
         if(.not. is_neutral(is)) 
@@ -483,7 +486,8 @@ csw 13mar2012
 !     &              //chns)
        enddo
       endif
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                  .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,chce(-1,-1,0),'b2trcl_luciani_chcex')
 !        call my_out(70,nx,ny,chce(-1,-1,1),'b2trcl_luciani_chcey')
         call my_out(70,nx,ny,calf(-1,-1,0),'b2trcl_luciani_calfx')
@@ -491,7 +495,8 @@ csw 13mar2012
         call my_out(70,nx,ny,chci(-1,-1,0),'b2trcl_luciani_chcix')
 !        call my_out(70,nx,ny,chci(-1,-1,1),'b2trcl_luciani_chciy')
       endif
-      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0) then
+      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0
+     &                  .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,csig(-1,-1,0),'b2trcl_luciani_csigx')
 !        call my_out(70,nx,ny,csig(-1,-1,1),'b2trcl_luciani_csigy')
       endif
@@ -547,17 +552,17 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                           !lk 06
         do iy = -1, ny
          do ix = -1, nx
            if(leftix(ix,iy).ne.-2) then
-	     if(mod(region(ix,iy,0),4).ne.1) then
-	       dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-	       flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
+             if(mod(region(ix,iy,0),4).ne.1) then
+	           dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
+	           flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
      & 	                              ne(ix,iy))/2.0_R8
-	       t0 = wrk(ix,iy)*abs(dte)/(flomx*max(
+	           t0 = wrk(ix,iy)*abs(dte)/(flomx*max(
      & 	            te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
                fllim_al(ix,iy)=1.0_R8/(1.0e0_R8+t0)
-	       calf(ix,iy,0)=calf(ix,iy,0)*fllim_al(ix,iy)                !srv 13.01.17
+               calf(ix,iy,0)=calf(ix,iy,0)*fllim_al(ix,iy)                !srv 13.01.17
                alfx_c(ix,iy)=alfx_c(ix,iy)*fllim_al(ix,iy)                !iyv 19.11.13 !srv 08.10.14
-	     endif
-	   endif
+             endif
+           endif
          enddo
         enddo
        endif
@@ -623,7 +628,7 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                           !lk 06
       cvsa_cl=cvsa
       cvsahz_cl=cvsahz                                                    !srv 09.01.01
 
-      if(iout_b2npmo.ne.0) then
+      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
        do is = 0, ns-1
        write (chns,'(i3.3)') is 
         call my_out(70,nx,ny,cvsahz(-1,-1,0,is),
@@ -632,7 +637,8 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                           !lk 06
 !     &              'b2trcl_luciani_fllim_cvsahzy'//chns)
        enddo
       endif
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &       .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,chce(-1,-1,0),'b2trcl_luciani_fllim_chcex')
 !        call my_out(70,nx,ny,chce(-1,-1,1),'b2trcl_luciani_fllim_chcey')
         call my_out(70,nx,ny,calf(-1,-1,0),'b2trcl_luciani_fllim_calfx')

@@ -62,7 +62,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, model
       integer, save :: icase = 0                                        !srv 20.09.11
-      integer, save :: iout = 0,                                        !srv 16.06.08
+      integer, save :: iout = 0, iout_b2wdat = 0,                       !srv 16.06.08
      &                 iout_b2nph9 = 0, iout_b2npht = 0, fke_Zhdanov = 1
       integer, save :: style_guard_cells = 0                            !srv 19.04.13
       integer, save :: style = 2                                        !srv 13.01.17
@@ -144,6 +144,7 @@
       if (ncall.eq.0) then
         call ipgeti ('b2tqce_model', model)
         call ipgeti ('b2tqce_iout', iout)                               !srv 16.06.08                       
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                        !iys 17.04.17
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)
         call ipgetr ('b2tfhe_fch_pTe', fch_pTe)                         !srv 30.12.09
@@ -287,7 +288,8 @@
         close(71)
         close(70)
       endif                                                          !srv 16.06.08 }
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                  .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,tau,'b2tqce_taue')
       endif
 

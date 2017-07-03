@@ -58,7 +58,8 @@
       
 *   ..local variables
       integer ncall, style, n2, ix, iy, is, isb, k
-      integer, save :: iout = 0, iout_b2nph9 = 0, iout_b2npht = 0     !srv 11.09.09
+      integer, save :: iout = 0, iout_b2nph9 = 0, iout_b2npht = 0,    !srv 11.09.09
+     &                 iout_b2wdat = 0
       integer, save :: icase = 0
       integer, save :: istyle_Joule_heating = 1                       !srv 17.01.14
       real (kind=R8) ::
@@ -130,6 +131,7 @@
        call ipgeti ('b2sihs_iout', iout)                           !srv 10.09.03
        call ipgeti ('b2nph9_iout', iout_b2nph9)                    !srv 11.09.09
        call ipgeti ('b2npht_iout', iout_b2npht)                    !srv 11.09.09
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                    !iys 17.04.17
        call ipgeti ('b2tlnl_ii', icase)
        call xertst (0.eq.icase .or. 1.eq.icase, 
      &               'faulty input b2tlnl_ii')
@@ -598,7 +600,8 @@
 !	  call my_out(70,nx,ny,shi0(-1,-1,k),'b2sihs__shi'//chk)
 	 enddo
 	endif
-      if(iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) then
+      if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1 .or. iout_b2wdat.eq.4)
+     &                                            then
          wrks=she0(:,:,0)+she0(:,:,1)*te+
      &        she0(:,:,2)*ne + she0(:,:,3)*te*ne
 	 call my_out(70,nx,ny,wrks,'b2sihs__she')

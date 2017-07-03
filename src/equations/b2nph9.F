@@ -83,7 +83,7 @@
      1 wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                  !srv 02.01.07
      2 she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
      3 wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny)                            !srv 18.09.09
-      integer, save :: iout = 0                                        !srv 17.07.05
+      integer, save :: iout = 0, iout_b2wdat = 0                       !srv 17.07.05
       integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
       integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
       integer, save :: style = 1                                       !srv 09.07.08
@@ -134,6 +134,7 @@
        call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)               !srv 06.07.06
        call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06
        call ipgeti ('b2nph9_iout', iout)                              !srv 02.01.07
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2nph9_style', style)                            !srv 09.07.08
        call ipgeti ('b2nph9_style_shei', style_shei)                  !srv 18.09.09
       endif
@@ -245,7 +246,7 @@ cdjm Jan2017 update particle source components for balance
        enddo
       enddo                                                             !srv 18.09.09 30.01.09 }
 
-      if(iout .eq. 1) then                                              !srv 17.07.05 01.11.10 {
+      if(iout .eq. 1 .or. iout_b2wdat .eq. 4) then                      !srv 17.07.05 01.11.10 {
         call my_out(70,nx,ny,shei,'b2nph9_shei')
 !        do is = 0,ns-1
 !         write (chns,'(i3.3)') is
@@ -301,6 +302,9 @@ cdjm Jan2017 update particle source components for balance
         call my_out(70,nx,ny,te,'b2nph9_te')
         call my_out(70,nx,ny,ti,'b2nph9_ti')
         call my_out(70,nx,ny,po,'b2nph9_po')
+      elseif (iout_b2wdat.eq.4) then
+        call my_out(70,nx,ny,te,'b2nph9_te')
+        call my_out(70,nx,ny,ti,'b2nph9_ti')
       end if
 
 * ..return

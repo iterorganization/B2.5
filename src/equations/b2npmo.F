@@ -83,7 +83,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, diagno, ireg, nsmin, nsmax, k
-      integer, save :: iout = 0, b2sifr_ver=1                          !srv 04.07.08 26.10.08
+      integer, save :: iout = 0, b2sifr_ver=1, iout_b2wdat = 0         !srv 04.07.08 26.10.08
       character chns*3, chk*1                                          !srv 04.07.08
       real (kind=R8) ::
      *  rxg, t0, t1, t2
@@ -134,6 +134,7 @@
         call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
         call ipgeti ('b2npmo_diagno', diagno)
         call ipgeti ('b2npmo_iout', iout)                               !srv 04.07.08
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                        !iys 17.04.17
         call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                      !srv 04.07.08
         call ipgeti ('b2news_nsmin', nsmin)
         if(nsmin.gt.ns) then
@@ -297,12 +298,7 @@ cdjm Jan2017 update momentum source components for balance
      &       smbvh(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smbvh(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
           call my_out(70,nx,ny,wrks,'b2npmo_smovh'//chns)
-        end if
-!	   call my_out(70,nx,ny,flubv(-1,-1,1),'b2npmo_flubvy'//chns)
-!	   do k=0,3
-!	    write (chk,'(i1)') k
-!	    call my_out(70,nx,ny,smb(-1,-1,k),'b2npmo_smo'//chk//chns)
-!	   enddo
+        endif
         wrks=smb(:,:,0)+smb(:,:,1)*ua(:,:,is)+
      &       smb(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smb(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
@@ -323,6 +319,28 @@ cdjm Jan2017 update momentum source components for balance
      &       smbgp(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smbgp(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
         call my_out(70,nx,ny,wrks,'b2npmo_smogp'//chns)
+        wrks=smbcf(:,:,0)+smbcf(:,:,1)*ua(:,:,is)+
+     &       smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+        call my_out(70,nx,ny,wrks,'b2npmo_smocf'//chns)
+       elseif (iout_b2wdat .eq. 4) then
+        call my_out(70,nx,ny,resmo(-1,-1,is),'b2npmo_resmo'//chns)
+        call my_out(70,nx,ny,fmo(-1,-1,0,is),'b2npmo_fmox'//chns)
+        call my_out(70,nx,ny,fmo(-1,-1,1,is),'b2npmo_fmoy'//chns)
+        if (.not.is_neutral(is)) then
+          call my_out(70,nx,ny,flubv(-1,-1,0),'b2npmo_flubvx'//chns)
+          wrks=smbvv(:,:,0)+smbvv(:,:,1)*ua(:,:,is)+
+     &       smbvv(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbvv(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+          call my_out(70,nx,ny,wrks,'b2npmo_smovv'//chns)
+          wrks=smbvh(:,:,0)+smbvh(:,:,1)*ua(:,:,is)+
+     &       smbvh(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbvh(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+          call my_out(70,nx,ny,wrks,'b2npmo_smovh'//chns)
+        endif
+        wrks=smb(:,:,0)+smb(:,:,1)*ua(:,:,is)+
+     &       smb(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smb(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
         wrks=smbcf(:,:,0)+smbcf(:,:,1)*ua(:,:,is)+
      &       smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
@@ -413,14 +431,10 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                        !srv 06.
       enddo
 *   ..correct pcca
       call b2nxcm (nx, ny, ns, pccm, pcca)
-      if (iout.ne.0) then                                              !srv 12.07.02 {
+      if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                      !srv 12.07.02 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is                                       !srv 18.05.02
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua'//chns)
-!	   call my_out(70,nx,ny,pcca(-1,-1,0,is),'b2npmo_pccax'//chns)
-!	   call my_out(70,nx,ny,pcca(-1,-1,1,is),'b2npmo_pccay'//chns)
-!	   call my_out(70,nx,ny,fna_fcor(-1,-1,0,is),'b2npmo_fna_fcorx'//chns)
-!	   call my_out(70,nx,ny,fna_fcor(-1,-1,1,is),'b2npmo_fna_fcory'//chns)
        enddo
        call my_out(70,nx,ny,pccm(-1,-1,0),'b2npmo_pccmx')              !srv 11.01.13
        call my_out(70,nx,ny,pccm(-1,-1,1),'b2npmo_pccmy')              !srv 11.01.13

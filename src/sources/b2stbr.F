@@ -92,7 +92,7 @@
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
-     &                 ncall_iout = -1                               !srv 23.03.12
+     &                 ncall_iout = -1, iout_b2wdat = 0              !srv 23.03.12
 #ifdef B25_EIRENE
       integer ia, im
       character ch3*3
@@ -197,6 +197,7 @@
         if (use_eirene.eq.1) out_tfiles=0
         call ipgeti ('b2stbr_out_tfiles', out_tfiles)                !srv 07.04.09
         call ipgeti ('b2stbr_iout', iout)                            !srv 11.09.09 {
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
         call ipgeti ('b2npc9_iout', iout_b2npc9)
         call ipgeti ('b2npco_iout', iout_b2npco)
         call ipgeti ('b2npmo_iout', iout_b2npmo)
@@ -872,11 +873,11 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 #endif
       endif
 
-      if (iout.eq.1 .or. iout_b2npmo.eq.1) then                       !srv 11.09.09 {
+      if (iout.eq.1 .or. iout_b2npmo.eq.1 .or. iout_b2wdat.eq.4) then   !srv 11.09.09 {
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         if (use_eirene.ne.0) then
-         if(.not.is_neutral(is)) then
+         if(.not.is_neutral(is) .and. iout_b2wdat.ne.4) then
           do k=0,1 ! 3                                                  !srv 29.04.10 {
            write (chk,'(i1)') k
            call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
@@ -899,17 +900,20 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
 !	   call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
        enddo                                                          !srv 29.04.10 }
       endif
-      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)) then
+      if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
+     &         .or. iout_b2wdat.eq.4 ) then
        do is = 0, ns-1
         write (chns,'(i3.3)') is
 !	  call my_out(70,nx,ny,na(-1,-1,is),'b2stbr_na'//chns)
         if(use_eirene.ne.0) then
          if(.not.is_neutral(is)) then
-          do k=0,1                                                      !srv 29.04.10
-           write (chk,'(i1)') k
-           call my_out(70,nx,ny,sna0_eir(-1,-1,k,is),
+          if (iout_b2wdat.ne.4) then
+           do k=0,1                                                      !srv 29.04.10
+            write (chk,'(i1)') k
+            call my_out(70,nx,ny,sna0_eir(-1,-1,k,is),
      *               'b2stbr_sna_eir'//chk//chns)
-          enddo
+           enddo
+          endif
           wrk0=sna0_eir(:,:,0,is)+sna0_eir(:,:,1,is)*na(:,:,is)
           call my_out(70,nx,ny,wrk0,'b2stbr_sna_eir'//chns)
          endif
@@ -958,13 +962,16 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
        enddo
 #endif
       endif
-      if (iout.eq.1 .or. (iout_b2npht.eq.1 .or. iout_b2nph9.eq.1)) then
+      if (iout.eq.1 .or. (iout_b2npht.eq.1 .or. iout_b2nph9.eq.1)
+     &         .or. iout_b2wdat.eq.4 ) then
        if (use_eirene.ne.0) then
-        do k=0,1  ! 3
-         write (chk,'(i1)') k
-         call my_out(70,nx,ny,she0_eir(-1,-1,k),'b2stbr_she_eir'//chk)
-         call my_out(70,nx,ny,shi0_eir(-1,-1,k),'b2stbr_shi_eir'//chk)
-        enddo
+        if (iout_b2wdat.ne.4) then
+         do k=0,1  ! 3
+          write (chk,'(i1)') k
+          call my_out(70,nx,ny,she0_eir(-1,-1,k),'b2stbr_she_eir'//chk)
+          call my_out(70,nx,ny,shi0_eir(-1,-1,k),'b2stbr_shi_eir'//chk)
+         enddo
+        endif
         wrk0=she0_eir(:,:,0)+she0_eir(:,:,1)*ti+
      &       she0_eir(:,:,2)*ne+she0_eir(:,:,3)*ti*ne
         call my_out(70,nx,ny,wrk0,'b2stbr_she_eir')
@@ -980,7 +987,8 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
        call my_out(70,nx,ny,b2stbr_she,'b2stbr_she')
        call my_out(70,nx,ny,b2stbr_shi,'b2stbr_shi')               !srv 29.04.10
       endif
-      if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)) then
+      if (iout.eq.1 .or. (iout_b2npp7.eq.1 .or. iout_b2nppo.eq.1)
+     &         .or. iout_b2wdat.eq.4 ) then
        if (use_eirene.eq.0) then
 !	 do k=0,3
 !	  write (chk,'(i1)') k

@@ -76,7 +76,7 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is
-      integer, save :: iout = 0                                        !srv 17.07.05
+      integer, save :: iout = 0, iout_b2wdat = 0                       !srv 17.07.05
       integer, save :: style = 1                                       !srv 09.07.08
       integer, save :: style_shei = 0                                  !srv 18.09.09 30.01.10
       character chns*3                                                 !srv 17.07.05
@@ -128,6 +128,7 @@
        call xertst (0.0_R8.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.0_R8.le.pcm1, 'faulty internal parameter pcm1')
        call ipgeti ('b2npht_iout', iout)                              !srv 02.01.07
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
        call ipgeti ('b2npht_style', style)                            !srv 09.07.08
        call ipgeti ('b2npht_style_shei', style_shei)                  !srv 18.09.09 15.02.10
       endif
@@ -287,7 +288,7 @@ csw 21feb2014 remove source in ghostcells (SOLPS4)
         reshi(ix,iy) = reshi(ix,iy) + shei(ix,iy)
        enddo
       enddo                                                           !srv 18.09.09 30.01.10 }
-      if(iout .eq. 1) then                                            !srv 17.07.05 {
+      if(iout .eq. 1 .or. iout_b2wdat.eq.4) then                      !srv 17.07.05 {
        call my_out(70,nx,ny,shei,'b2npht_shei')
        call my_out(70,nx,ny,te,'b2npht_te')
        call my_out(70,nx,ny,ti,'b2npht_ti')

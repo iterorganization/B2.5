@@ -103,7 +103,7 @@
       integer ncall, n2, ix, iy, is, ic, k, new_df0, ixref, diagno,
      1  transport_namelist, user_transport, transport_inputfile,
      2  jsep, jxi, jxa
-      integer, save :: model_sig = 0, iout = 0                    !srv 02.12.04
+      integer, save :: model_sig = 0, iout = 0, iout_b2wdat = 0   !srv 02.12.04
       character chns*3                                            !srv 10.11.09
       real (kind=R8) ::
      *  ballooning, bb_ref, ballooning_rescale, pfr_rescale,
@@ -198,6 +198,7 @@
         call ipgetr ('b2tqna_cfvma', cfvma)                       !srv 15.12.05
         call ipgeti ('b2tqna_model_sig', model_sig)               !srv 02.12.04
         call ipgeti ('b2tqna_iout', iout)                         !srv 10.11.09
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                  !iys 17.04.17
       else
         if(transport_namelist.eq.1.and.
      1   transport_time_mod.gt.0.0_R8) then
@@ -596,6 +597,23 @@ cdpc
           enddo
         enddo
       endif
+      if(iout_b2wdat.eq.4) then                                            !srv 10.11.09 {
+        do is = 0,ns-1
+          write (chns,'(i3.3)') is
+          call my_out(70,nx,ny,dna0(-1,-1,is),'b2tqna_dna0'//chns)
+          call my_out(70,nx,ny,dpa0(-1,-1,is),'b2tqna_dpa0'//chns)
+          wrk0 = vsa0(:,:,is)/(mp*am(is)*na(:,:,is))
+          call my_out(70,nx,ny,wrk0,'b2tqna_vsa0'//chns)
+!          call my_out(70,nx,ny,vla0(-1,-1,0,is),'b2tqna_vla0x'//chns)
+          call my_out(70,nx,ny,vla0(-1,-1,1,is),'b2tqna_vla0y'//chns)
+          wrk0 = hcib(:,:,is)/na(:,:,is)
+          call my_out(70,nx,ny,wrk0,'b2tqna_hcib'//chns)
+        enddo
+!        call my_out(70,nx,ny,hci0,'b2tqna_in_hci0')
+        call my_out(70,nx,ny,hce0/ne,'b2tqna_hce0')
+        call my_out(70,nx,ny,sig0,'b2tqna_sig0')
+        call my_out(70,nx,ny,alf0,'b2tqna_alf0')
+      endif                                                           !srv 10.11.09 }
 cdpc
 * ..return
       ncall = ncall+1
