@@ -56,7 +56,7 @@ c
 *  -- LOCAL SCALARS --
       integer is, nplsi
 #ifdef B25_EIRENE
-      INTEGER NNX, NNY, IX, IY, jvft44, istra
+      INTEGER NNX, NNY, IX, IY, jvft44, istra, istra1
       integer i, j, k, ncl, jvftnew, nstra1, n2
       real (kind=R8) :: wrk0(-1:nx,-1:ny1), field(0:nx+1,0:ny+1)
       real (kind=R8), allocatable :: dab1(:,:,:), tab1(:,:,:)
@@ -73,10 +73,14 @@ c
       real (kind=R8), allocatable :: wldpa1(:,:,:)
       real (kind=R8), allocatable :: wldpp1(:,:,:)
       real (kind=R8), allocatable :: wlabsrp1(:,:)
+      real (kind=R8), allocatable :: wlpump1(:,:)
       real (kind=R8), allocatable :: eneutrad1(:,:,:)
       real (kind=R8), allocatable :: wldna1res(:,:)
       real (kind=R8), allocatable :: ewlda1res(:,:)
       real (kind=R8), allocatable :: ewldea1res(:,:)
+      real (kind=R8), allocatable :: wldspta1res(:,:)
+      real (kind=R8), allocatable :: wldspta1(:,:,:)
+      real (kind=R8), allocatable :: wlpump1res(:,:)
       real (kind=R8), allocatable ::
      *  pdena1int(:,:), pdenm1int(:,:), pdeni1int(:,:),
      *  pdena1int_b2(:,:), pdenm1int_b2(:,:), pdeni1int_b2(:,:),
@@ -622,8 +626,10 @@ cank-960727
             call rdneutrs(44,wldra(:,:,istra),natmi)
             call rdneutrs(44,wldrm(:,:,istra),nmoli)
           end do
+          istra1=0
           do istra=1,nstrai
             if (.not.savestratum(istra)) cycle
+            istra1=istra1+1
             do is = 1, natmi
               if (iatm1(is).ne.0) then
                 wldna1(:,iatm1(is),istra) = wldna(:,is,istra)
@@ -631,7 +637,7 @@ cank-960727
                 wldra1(:,iatm1(is),istra) = wldra(:,is,istra)
               end if
             end do
-            write (stnum,'(i3)') istra
+            write (stnum,'(i3)') istra1
             call write_title(45,'wldnek('//stnum//')',nlimps)
             call wrneutrs(45,wldnek(1,istra),1)
             call write_title(45,'wldnep('//stnum//')',nlimps)
@@ -660,8 +666,13 @@ cank-960727
         call rdneutrs(44,wldpm,nmoli)
         call rdneutrs(44,wldpeb,1)
         call rdneutrs(44,wldspt,1)
+        if (jvft44 .ge. 20170328) then
+          call rdneutrs(44,wldspta,natmi)
+          call rdneutrs(44,wldsptm,nmoli)
+        end if
         allocate(wldpp1(nlimps,npls1,0:nstrai+1))
         allocate(wldpa1(nlimps,natm1,0:nstrai+1))
+        allocate(wldspta1(nlimps,natm1,0:nstrai+1))
         allocate(wd_old(nplsi))
         allocate(wd_new(npls1))
         do i = 1, nlimps
@@ -673,6 +684,9 @@ cank-960727
         do is = 1, natmi
           if (iatm1(is).ne.0) wldpa1(:,iatm1(is),0) = wldpa(:,is,0)
         end do
+        do is = 1, natmi
+          if (iatm1(is).ne.0) wldspta1(:,iatm1(is),0) = wldspta(:,is,0)
+        end do
         call write_title(45,'wldpp(0)',nlimps*npls1)
         call wrneutrs(45,wldpp1,npls1)
         call write_title(45,'wldpa(0)',nlimps*natm1)
@@ -683,6 +697,10 @@ cank-960727
         call wrneutrs(45,wldpeb,1)
         call write_title(45,'wldspt(0)',nlimps)
         call wrneutrs(45,wldspt,1)
+        call write_title(45,'wldpspta(0)',nlimps*natm1)
+        call wrneutrs(45,wldspta1,natm1)
+        call write_title(45,'wldsptm(0)',nlimps*nmoli)
+        call wrneutrs(45,wldsptm,nmoli)
         if(nstrai .gt. 1) then
           do istra=1,nstrai
             call rdneutrs(44,wldpp(:,:,istra),nplsi)
@@ -690,9 +708,15 @@ cank-960727
             call rdneutrs(44,wldpm(:,:,istra),nmoli)
             call rdneutrs(44,wldpeb(1,istra),1)
             call rdneutrs(44,wldspt(1,istra),1)
+            if (jvft44 .ge. 20170328) then
+              call rdneutrs(44,wldspta(:,:,istra),natmi)
+              call rdneutrs(44,wldsptm(:,:,istra),nmoli)
+            end if
           end do
+          istra1=0
           do istra=1,nstrai
             if (.not.savestratum(istra)) cycle
+            istra1=istra1+1
             do i = 1, nlimps
               wd_old(1:nplsi)=wldpp(i,1:nplsi,istra)
               call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
@@ -700,10 +724,12 @@ cank-960727
               wldpp1(i,1:npls1,istra)=wd_new(1:npls1)
             end do
             do is = 1, natmi
-              if (iatm1(is).ne.0)
-     >         wldpa1(:,iatm1(is),istra) = wldpa(:,is,istra)
+              if (iatm1(is).ne.0) then
+                wldpa1(:,iatm1(is),istra) = wldpa(:,is,istra)
+                wldspta1(:,iatm1(is),istra) = wldspta(:,is,istra)
+              end if
             end do
-            write (stnum,'(i3)') istra
+            write (stnum,'(i3)') istra1
             call write_title(45,'wldpp('//stnum//')',nlimps*npls1)
             call wrneutrs(45,wldpp1(1,1,istra),npls1)
             call write_title(45,'wldpa('//stnum//')',nlimps*natm1)
@@ -714,11 +740,17 @@ cank-960727
             call wrneutrs(45,wldpeb(1,istra),1)
             call write_title(45,'wldspt('//stnum//')',nlimps)
             call wrneutrs(45,wldspt(1,istra),1)
+            if (jvft44 .ge. 20170328) then
+              call write_title(45,'wldspta('//stnum//')',nlimps*natm1)
+              call wrneutrs(45,wldspta1(1,1,istra),natm1)
+              call write_title(45,'wldsptm('//stnum//')',nlimps*nmoli)
+              call wrneutrs(45,wldsptm(1,1,istra),nmoli)
+            end if
           end do
         end if
         deallocate(wldpp1)
         deallocate(wldpa1)
-        deallocate(wd_old,wd_new)
+        deallocate(wldspta1)
       end if
 cank
       if(jvftnew.le.961228) goto 99
@@ -767,8 +799,6 @@ cank
 
           allocate (eirtxt1(natm1+nmoli+nioni+npls1))
           allocate (wlabsrp1(natm1+nmoli+nioni+npls1,nlimi+nstsi))
-          allocate (wd_old(nplsi))
-          allocate (wd_new(npls1))
           do k = 1, natmi
             if (iatm1(k).ne.0) then
               eirtxt1(iatm1(k)) = eirtxt(k)
@@ -787,8 +817,6 @@ cank
             if (ipls1(k).ne.0) then
               eirtxt1(natm1+nmoli+nioni+ipls1(k)) =
      .         eirtxt(natmi+nmoli+nioni+k)
-              do i = 1, nlimi+nstsi
-              end do
             end if
           end do
           do i = 1, nlimi
@@ -835,9 +863,90 @@ cank
      ,                                                       i=1,nlimi)
           write(45,'(1p,6e13.5)') ((wlabsrp1(j+k,nlim+i),j=1,npls1),
      ,                          i=1,nstsi)
-          deallocate (eirtxt1)
           deallocate (wlabsrp1)
-          deallocate (wd_old, wd_new)
+        end if
+
+        if(jvft44 .ge. 20170328) then
+          k=0
+          call read_title(44)
+          read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,natmi),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,natmi),
+     ,                                                       i=1,nstsi)
+          k=k+natmi
+          call read_title(44)
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nmoli),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nmoli),
+     ,                                                       i=1,nstsi)
+          k=k+nmoli
+          call read_title(44)
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nioni),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nioni),
+     ,                                                       i=1,nstsi)
+          k=k+nioni
+          call read_title(44)
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
+     ,                          i=1,nstsi)
+
+          allocate (wlpump1(natm1+nmoli+nioni+npls1,nlimi+nstsi))
+          do k = 1, natmi
+            if (iatm1(k).ne.0) wlpump1(iatm1(k),:) = wlpump(k,:)
+          end do
+          do k = 1, nmoli
+            wlpump1(natm1+k,:) = wlpump(natmi+k,:)
+          end do
+          do k = 1, nioni
+            wlpump1(natm1+nmoli+k,:) = wlpump(natmi+nmoli+k,:)
+          end do
+          do i = 1, nlimi
+            wd_old(1:nplsi)=wlpump(natmi+nmoli+nioni+1:
+     .                              natmi+nmoli+nioni+nplsi,i)
+            call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+     .           wd_old,wd_new,2)
+           wlpump1(natm1+nmoli+nioni+1:natm1+nmoli+nioni+npls1,i)=
+     .      wd_new(1:npls1)
+          end do
+          do i = 1, nstsi
+            wd_old(1:nplsi)=wlpump(natmi+nmoli+nioni+1:
+     .                              natmi+nmoli+nioni+nplsi,nlim+i)
+            call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+     .           wd_old,wd_new,2)
+           wlpump1(natm1+nmoli+nioni+1:natm1+nmoli+nioni+npls1,nlim+i)=
+     .      wd_new(1:npls1)
+          end do
+          k=0
+          call write_title(45,'wlpump(A)',(nnlimi+nnstsi)*natm1)
+          write(45,'(6a13)') (eirtxt1(j+k),j=1,natm1)
+          write(45,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,natm1),
+     ,                                                       i=1,nlimi)
+          write(45,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,natm1),
+     ,                                                       i=1,nstsi)
+          k=k+natm1
+          call write_title(45,'wlpump(M)',(nnlimi+nnstsi)*nmoli)
+          write(45,'(6a13)') (eirtxt1(j+k),j=1,nmoli)
+          write(45,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,nmoli),
+     ,                                                       i=1,nlimi)
+          write(45,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,nmoli),
+     ,                                                       i=1,nstsi)
+          k=k+nmoli
+          call write_title(45,'wlpump(I)',(nnlimi+nnstsi)*nioni)
+          write(45,'(6a13)') (eirtxt1(j+k),j=1,nioni)
+          write(45,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,nioni),
+     ,                                                       i=1,nlimi)
+          write(45,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,nioni),
+     ,                                                       i=1,nstsi)
+          k=k+nioni
+          call write_title(45,'wlpump(P)',(nnlimi+nnstsi)*npls1)
+          write(45,'(6a13)') (eirtxt1(j+k),j=1,npls1)
+          write(45,'(1p,6e13.5)') ((wlpump1(j+k,i),j=1,npls1),
+     ,                                                       i=1,nlimi)
+          write(45,'(1p,6e13.5)') ((wlpump1(j+k,nlim+i),j=1,npls1),
+     ,                          i=1,nstsi)
+          deallocate (wlpump1)
         end if
 
         if (jvft44 .ge. 20071209) then
@@ -896,7 +1005,9 @@ cank
      .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL), 
      .                ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL), 
      .                ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
-     .                wldspt_res(NCL), sarea_res(NCL) )
+     .                wldspt_res(NCL), sarea_res(NCL),
+     .                wldspta_res(natmi,NCL), wldsptm_res(nmoli,NCL),
+     .                wlpump_res(nspz,NCL) )
  
             call read_title(44)
             READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
@@ -920,13 +1031,42 @@ cank
               call read_title(44)
               READ (44,'(6e15.7)') (wldspt_res(i),i=1,NCL)
             end if
+            if (jvft44.ge.20170328) then
+              call read_title(44)
+              READ (44,'(6e15.7)')
+     .              ((wldspta_res(j,i),j=1,natmi),i=1,NCL)
+              call read_title(44)
+              READ (44,'(6e15.7)')
+     .              ((wldsptm_res(j,i),j=1,nmoli),i=1,NCL)
+              k=0
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,natmi),
+     ,                                i=1,NCL)
+              k=k+natmi
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nmoli),
+     ,                                i=1,NCL)
+              k=k+nmoli
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nioni),
+     ,                                i=1,NCL)
+              k=k+nioni
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi),
+     ,                                i=1,NCL)
+            end if
             allocate(wldna1res(natm1,NCL), ewlda1res(natm1,NCL),
-     .               ewldea1res(natm1,NCL))
+     .               ewldea1res(natm1,NCL), wldspta1res(natm1,NCL))
             do is = 1, natmi
               if (iatm1(is).ne.0) then
                 wldna1res(iatm1(is),1:NCL) = wldna_res(is,1:NCL)
                 ewlda1res(iatm1(is),1:NCL) = ewlda_res(is,1:NCL)
                 ewldea1res(iatm1(is),1:NCL) = ewldea_res(is,1:NCL)
+                wldspta1res(iatm1(is),1:NCL) = wldspta_res(is,1:NCL)
               end if
             end do
             call write_title(45,'sarea_res',ncl)
@@ -951,16 +1091,95 @@ cank
               call write_title(45,'wldspt_res',ncl)
               WRITE(45,'(6e15.7)') (wldspt_res(i),i=1,NCL)
             end if
-            deallocate(wldna1res, ewlda1res, ewldea1res)
+            if (jvft44.ge.20170328) then
+              call write_title(45,'wldspta_res',ncl*natm1)
+              WRITE(45,'(6e15.7)')
+     .              ((wldspta1res(j,i),j=1,natm1),i=1,NCL)
+              call write_title(45,'wldsptm_res',ncl*nmoli)
+              WRITE(45,'(6e15.7)')
+     .              ((wldsptm_res(j,i),j=1,nmoli),i=1,NCL)
+              allocate (wlpump1res(NCL,natm1+nmoli+nioni+npls1))
+              do k = 1, natmi
+                if (iatm1(k).ne.0)
+     >           wlpump1res(iatm1(k),:) = wlpump_res(k,:)
+              end do
+              do k = 1, nmoli
+                wlpump1res(natm1+k,:) = wlpump_res(natmi+k,:)
+              end do
+              do k = 1, nioni
+                wlpump1res(natm1+nmoli+k,:) =
+     .                     wlpump_res(natmi+nmoli+k,:)
+              end do
+              do i = 1, NCL
+                wd_old(1:nplsi)=wlpump_res(natmi+nmoli+nioni+1:
+     .                              natmi+nmoli+nioni+nplsi,i)
+                call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
+     .           wd_old,wd_new,2)
+                wlpump1res(natm1+nmoli+nioni+1:
+     .                      natm1+nmoli+nioni+npls1,i)=
+     .           wd_new(1:npls1)
+              end do
+              k=0
+              call write_title(45,'wlpump_res(A)',ncl*natm1)
+              write(45,'(6a13)') (eirtxt1(j+k),j=1,natm1)
+              write(45,'(1p,6e13.5)') ((wlpump1res(j+k,i),j=1,natm1),
+     ,                                                       i=1,ncl)
+              k=k+natm1
+              call write_title(45,'wlpump_res(M)',ncl*nmoli)
+              write(45,'(6a13)') (eirtxt1(j+k),j=1,nmoli)
+              write(45,'(1p,6e13.5)') ((wlpump1res(j+k,i),j=1,nmoli),
+     ,                                                       i=1,ncl)
+              k=k+nmoli
+              call write_title(45,'wlpump_res(I)',ncl*nioni)
+              write(45,'(6a13)') (eirtxt1(j+k),j=1,nioni)
+              write(45,'(1p,6e13.5)') ((wlpump1res(j+k,i),j=1,nioni),
+     ,                                                       i=1,ncl)
+              k=k+nioni
+              call write_title(45,'wlpump_res(P)',ncl*npls1)
+              write(45,'(6a13)') (eirtxt1(j+k),j=1,npls1)
+              write(45,'(1p,6e13.5)') ((wlpump1res(j+k,i),j=1,npls1),
+     ,                                                       i=1,ncl)
+              deallocate (wlpump1res)
+            end if
+            deallocate(wldna1res, ewlda1res, ewldea1res, wldspta1res)
           ELSE
             IS = 9
             if (jvft44.ge.20170228) IS = IS + 1
+            if (jvft44.ge.20170328) IS = IS + 2
             DO I = 1, IS
               call read_title(44)
               READ (44,1028)
               WRITE(45,1028)
             END DO
+            if (jvft44.ge.20170328) THEN
+              k=0
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
+              write(45,'(6a13)') (eirtxt1(j+k),j=1,natm1)
+              READ (44,1028)
+              WRITE(45,1028)
+              k=k+natmi
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
+              write(45,'(6a13)') (eirtxt1(j+k),j=1,nmoli)
+              READ (44,1028)
+              WRITE(45,1028)
+              k=k+nmoli
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
+              write(45,'(6a13)') (eirtxt1(j+k),j=1,nioni)
+              READ (44,1028)
+              WRITE(45,1028)
+              k=k+nioni
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
+              write(45,'(6a13)') (eirtxt1(j+k),j=1,npls1)
+              READ (44,1028)
+              WRITE(45,1028)
+            END IF
           END IF
+          deallocate (eirtxt1)
+          deallocate (wd_old, wd_new)
         end if
 
         if(streql(solps_version,'4.3')) goto 99

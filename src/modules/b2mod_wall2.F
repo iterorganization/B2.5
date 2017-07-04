@@ -4,7 +4,6 @@
      . , only : ndepth, ntrack, nwall_segments
       use b2mod_layer
      . , only : nwall
-#     include "DIMENSIONS.F"
       
       integer, save :: nwall1, nbnd1
       real (kind=R8), save, allocatable :: contr_area(:,:)

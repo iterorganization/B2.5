@@ -2233,6 +2233,14 @@
 					If iout.eq.1, a large set of *.dat output files will be produced containing the values of a variety of code quantities. See the "Output description" file for details.
 				</description>
 			</switch>
+			<switch>
+				<name>b2wdat_append</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If append.eq.1, the *.dat output files are appended upon every write, instead of being rewritten every time.
+				</description>
+			</switch>
 			<switchgroup>
 				<name>b2mndr_*</name>
 				<description>
@@ -4464,7 +4472,7 @@
 					For (i,ik,istra) in (1:NGPDATA(istra),1:2,1:NSTRAT),
 					GPDATA(i,1,istra) contains the time point (i) for stratum (istra) (in s).
 					GPDATA(i,2,istra) contains the gas puff strength of stratum (istra) at time point (i) (in particles/s).
-					The gas puff strength before the first time point is given by USERFLUXPARM(1,istra).
+					The gas puff strength before the first time point is given by USERFLUXPARM(istra,1).
 					The gas puff strength after the last time point is given by the GPDATA value of the last time point.
 					Otherwise, the gas puff strength is linearly interpolated from the given data.
 				</description>
@@ -5042,7 +5050,7 @@
 						 12 : sheath conditions, electron energy transmission coefficient, ENEPAR(,1) specifies an energy transmission factor, delta<sub>e</sub> in Q<sub>e</sub> = delta<sub>e</sub> Gamma<sub>e</sub> T<sub>e</sub>
 						 13 : prescribe the electron energy flux per unit area proportional to temperature, ENEPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J)
 						 14 : leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, alpha in Gamma<sub>loss</sub> = alpha C<sub>s</sub>, collective n<sub>e</sub> T<sub>e</sub>
-						 15 : not used
+						 15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.6.4 of manual for details)
 						 16 : Feedback boundary condition with constant temperature, ENEPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Also see type [17] below. Available if bcene_16_style=0 (default). If bcene_16_style=1, integrated electron heat flux with constant electron temperature, summed over all core boundaries with BCENE=16.
 						 17 : Feedback boundary condition with constant shared temperature for both electrons and ions, with ENEPAR(,1) + ENIPAR(,1) giving the total power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Replaces [16] for high densities and large values of 'b2stbc_type16_ref'.
 						 18 : Fractional drop condition. Not yet working.
@@ -5075,7 +5083,7 @@
 						12 : sheath conditions, ion energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, delta<sub>i</sub> in Q<sub>i</sub> = delta<sub>i</sub> T<sub>i</sub> sum<sub>a</sub> Gamma<sub>a</sub>
 						13 : prescribe the ion energy flux per unit area proportional to temperature, ENIPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J)
 						14 : leakage option for ion energy, ENIPAR(,1) specifies the leakage factor, alpha in Gamma<sub>loss</sub> = alpha C<sub>s</sub>T<sub>i</sub>
-						15 : from b2stbc_spb
+						15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.6.5 of manual for details)
 						16 : Feedback boundary condition with constant temperature, ENIPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Also see type [17] below. Available if bceni_16_style=0 (default). If bceni_16_style=1, integrated ion heat flux with constant ion temperature, summed over all core boundaries with BCENI=16.
 							ENIPAR(,1) specifies the power flux in W
 						17 : Feedback boundary condition with constant shared temperature for both electrons and ions, see BCENE=17 above for description.
@@ -5735,6 +5743,14 @@
 				<type>logical</type>
 				<description>
 					If .true., transport coefficients profiles are not implemented in the private flux regions.
+				</description>
+			</switch>
+			<switch>
+				<name>NO_DIV</name>
+				<default>.false.</default>
+				<type>logical</type>
+				<description>
+					If .true., transport coefficients profiles are not implemented in the divertor regions.
 				</description>
 			</switch>
 			<switch>

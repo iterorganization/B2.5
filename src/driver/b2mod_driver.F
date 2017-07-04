@@ -57,6 +57,9 @@
       use eirmod_extrab25
       use b2mod_b2plot
      , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+#else
+      use b2mod_braeir
+      use b2mod_eirbra
 #endif
       use b2mod_b2_to_astra
      , ,only: write_b2_to_astra
@@ -1207,6 +1210,9 @@ csw 09oct2012
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
       CALL EIRENE_ALLOC_CCOUPL(1)
       CALL EIRENE_ALLOC_CTRCEI
+#else
+      call alloc_b2mod_braeir(nx,ny,ns)
+      call alloc_b2mod_eirbra(nx,ny,ns,natm,npls,nstra)
 #endif
 
 *   ..read geometry and metric
@@ -1963,7 +1969,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         write_save=write_save.or.
      .   (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
         if(ntim_save.gt.0.and.ntim.gt.0) write_save=write_save.or.
-     .   mod(ntim,ntim_save).eq.0
+     .   mod(itim,ntim_save).eq.0
         write_save=write_save.and..not.quit
         if(write_save) then
           write(savefile(13:16),'(i4)') edition
@@ -2009,6 +2015,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           filename='b2.wall_save.parameters'
           call find_file(filename,found)
           if (found) call write_b2mod_wall_namelist(99,nx,ny,ns,
+     >     savefile(13:16))
+          filename='b2.transport_models_save.parameters'
+          call find_file(filename,found)
+          if (found) call write_b2mod_transport_models(99,
      >     savefile(13:16))
           if (ank_tracing.ne.0) call b2filef(ns)
 
@@ -2217,6 +2227,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_DEALLOC_CCOUPL
       CALL EIRENE_DEALLOC_CTRCEI
+#else
+      call dealloc_b2mod_braeir
+      call dealloc_b2mod_eirbra
 #endif
       call subend ()
       return

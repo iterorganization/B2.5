@@ -131,6 +131,7 @@ csw 04dec2014 changed * --> fmt(ifmt)
    89 write(6,'(a)')
      &    'In cfruin_opt: expected '//trim(id0)//', found end of file'
       write(6,*) 'Reading skipped!'
+      backspace(nget)
       return
 *     ------------------------------------------------------------------
    91 call xerrab ('cfruin_opt--error return from inquire statement')

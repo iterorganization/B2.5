@@ -423,8 +423,8 @@
       b2visa=0.0_R8
       b2sihs_visa=0.0_R8
       do is = 0, ns-1
-	 if(.not.is_neutral(is)) then                                  !srv 29.08.02
-	  wrk0 = 0.0e0_R8                                              !srv 28.08.02 21.07.05 {
+       if(.not.is_neutral(is)) then                                  !srv 29.08.02
+        wrk0 = 0.0e0_R8                                              !srv 28.08.02 21.07.05 {
         do iy = 0, ny-1
          do ix = 0, nx
 	    if(leftix(ix,iy).eq.-2) then
@@ -435,7 +435,7 @@
 	    endif
          enddo
         enddo
-	  wrk1 = 0.0e0_R8
+        wrk1 = 0.0e0_R8
         do iy = 0, ny
          do ix = 0, nx-1
           if(leftix(ix,iy).ne.-2) then

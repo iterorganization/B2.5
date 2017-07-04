@@ -112,7 +112,7 @@
       external subini, subend, xertst, sfill, b2ssum, b2saxpy,
      *   ipgetr, ipgeti
       external b2xvsg, b2xvff, b2xvps, b2xxgs,
-     1   b2stbc_phys, b2stbc_bas, b2stbc_fb
+     1   b2stbc_phys, b2stbc_bas, b2stbc_fb_pre, b2stbc_fb_post
       hy1(ix,iy)=hy(ix,iy)*qz(ix,iy,1)
 *   ..initialisation
       data ncall/0/, sna0ep/1.0e-36_R8/, she0ep/1.0e-36_R8/,
@@ -449,7 +449,7 @@
      &       'b2stbc: wrong_flow returned from b2stbc_bas'
       endif
       if(lfeedback.or.b2stbc_feedback.ne.0)
-     1 call b2stbc_fb(nx, ny, ns, ismain, BoRiS,
+     1 call b2stbc_fb_post(nx, ny, ns, ismain, BoRiS,
      1  vol, gs, na, ne, ni, te, ti, fna, fhe, fhi, fch, kinrgy,
      &	sna0, smo0, she0, shi0, sch0, sne0, 
      &  main_call, diagno)

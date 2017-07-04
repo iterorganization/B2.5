@@ -33,6 +33,7 @@ c 2002-09-11: logic revised
       use b2mod_b2plot_debug
       use b2mod_b2plot_values
       use b2mod_b2plot_wall_loading
+      use b2mod_user_namelist
       use b2mod_boundary_namelist
       use b2mod_neutrals_namelist
       use b2mod_anomalous_transport
@@ -63,12 +64,13 @@ c 2002-09-11: logic revised
      , , only: iunout
       use eirmod_eirbra
      & , smo_eir => smo
+#else
+      use b2mod_braeir
+      use b2mod_eirbra
+     & , smo_eir => smo
 #endif
       implicit none
 #     include <DIMENSIONS.F>
-#ifndef B25_EIRENE
-#     include <COUPLE/BRAEIR.F>
-#endif
       integer nxd,nyd,nsd_local
 c
 c  version : 27.07.96 20:37
@@ -157,21 +159,19 @@ c
       real (kind=R8) ::
      *   mass,vel,vth,press
       integer ispecies(0:nsd_local-1), ismain, ismain0,  
-     *   boundary_namelist, neutrals_namelist, 
+     *   boundary_namelist, neutrals_namelist,
      *   sput_frac_flag, use_eirene
 
-      real (kind=R8) ::
-     *   rstack(1000),rpop
 #ifndef NO_CDF
       real (kind=R8) ::
      *   movietime(1)
       integer :: iret, frameindex(1), ncidcdf, varid
 #endif
       integer ntstepcdf, istepcdf, lucdf
-      integer istack(1000), ipop, itmp, istart, iend, itrack,
+      integer itmp, istart, iend, itrack,
      * sput_src, refl_model, sput_phys_model,
      * sput_chem_model, sput_phys_col, drift_style
-      character*256 sstack(1000), spop, stmp, filename, varname
+      character*256 stmp, filename, varname
       character*256 stmp1, stmp2
       integer lu, save_lu(10), ipos, save_ipos(10), lu_pos
       integer is, iss, isp, iseg, is2, it
@@ -201,11 +201,9 @@ c
      *   Kappa, dKappabydT, Kappa_perp, dKappa_perpbydT, Cp,
      *   mass_density,
      *   layer_Kappa, layer_Cp, layer_emissivity
-      external ipop, rpop, spop
       real (kind=R8) ::
      *   t1,t2
       integer it1,it2
-      integer stack_req(7)
       character*256 arg
 #ifdef B25_EIRENE
       integer iflag
@@ -218,8 +216,8 @@ c
      * b0r0,dummy,rval,sumjxa,sumjxi,suml(2),sumr(2),time 
       real (kind=R8) ::
      1 lambda, lnlam, hh, hhn, phi_app 
-      integer i,j,icell,iclv,iistack,il,imi,irstack,
-     1 is1,iso,isstack,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
+      integer i,j,icell,iclv,il,imi,
+     1 is1,iso,ival,ix,ix1,ix2,iy,iy1,iy2,izend,izstrt,
      2 ikind,lnblnk,nz,ixx,iyy,ixl,ixr,iyb,iyt,isel,
      3 i1,ibnd,in,ibc,ixn,iyn,ixf,iyf,idir,isign
       external lnblnk
@@ -311,6 +309,9 @@ c
       CALL EIRENE_ALLOC_CTRCEI
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
+#else
+      call alloc_b2mod_braeir(nxd,nyd,nsd_local)
+      call alloc_b2mod_eirbra(nxd,nyd,nsd_local,natm,npls,nstra)
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
@@ -758,6 +759,8 @@ c
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst(nstrat.le.nstraid, 
      . 'Increase DEF_NSTRA in DIMENSIONS.F')
+      call alloc_b2mod_user(nlim,nmol)
+      call read_b2mod_user_namelist(nx,ns)
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
       call alloc_b2mod_sputter(nx,ny,ns)
@@ -991,7 +994,7 @@ c
         nioni=1
         textin(0)=' ZERO'
         nsw=ns
-        call eirene_mc_init
+        call eirene_mc_init(nx,ny)
         call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
         p1=0.0_R8
         p2=0.0_R8
@@ -1399,6 +1402,10 @@ c
             CALL EIRENE_DEALLOC_BRAEIR
             CALL EIRENE_DEALLOC_EIRBRA
             CALL EIRENE_EXTRAB25_CLEANUP
+#else
+            call dealloc_b2mod_braeir
+            call dealloc_b2mod_eirbra
+            call dealloc_b2mod_eirdiag
 #endif
             call subend ()
             return
@@ -1472,6 +1479,10 @@ c
           CALL EIRENE_DEALLOC_BRAEIR
           CALL EIRENE_DEALLOC_EIRBRA
           CALL EIRENE_EXTRAB25_CLEANUP
+#else
+          call dealloc_b2mod_braeir
+          call dealloc_b2mod_eirbra
+          call dealloc_b2mod_eirdiag
 #endif
           call subend ()
           return
@@ -5579,7 +5590,7 @@ c
             lu=lu+1
           endif
           if(.not.open_file(lu,spop(sstack,isstack),
-     1           'data.local/commands|scripts/commands')) then
+     1           'scripts.local/commands|scripts/commands')) then
             write(*,*) 'cmd failed to open file'
             lu=save_lu(lu_pos)
             lu_pos=lu_pos-1
@@ -5604,7 +5615,7 @@ c
           endif
           lucdf=lu
           if(.not.open_file(lu,spop(sstack,isstack),
-     1           'data.local/commands|scripts/commands')) then
+     1           'scripts.local/commands|scripts/commands')) then
             write(*,*) 'cmd failed to open file'
             lu=save_lu(lu_pos)
             lu_pos=lu_pos-1
@@ -10699,46 +10710,6 @@ c     <delta wavelength in A> nspe
       return
 
       end subroutine select_flvalue
-
-      LOGICAL FUNCTION bad_args(stack_req)
-      integer stack_req(7)
-      bad_args=.false.
-      if(stack_req(1).gt.iistack) then
-        write(*,*) 'Insufficient data on integer stack'
-        bad_args= .true.
-      endif
-      if(stack_req(2).gt.irstack) then
-        write(*,*) 'Insufficient data on real stack'
-        bad_args= .true.
-      endif
-      if(stack_req(3).gt.isstack) then
-        write(*,*) 'Insufficient data on string stack'
-        bad_args= .true.
-      endif
-      if(stack_req(4).gt.iwrk) then
-        write(*,*) 'Insufficient data on matrix stack'
-        bad_args= .true.
-      endif
-      if(stack_req(5).gt.iewrk) then
-        write(*,*) 'Insufficient data on Eirene stack'
-        bad_args= .true.
-      endif
-      if(stack_req(6).gt.iwwrk) then
-        write(*,*) 'Insufficient data on wall stack'
-        bad_args= .true.
-      endif
-      if(stack_req(7).gt.itwrk) then
-        write(*,*) 'Insufficient data on target stack'
-        bad_args= .true.
-      endif
-      END FUNCTION bad_args
-
-      subroutine pop_stack(stack_req)
-      integer stack_req(7),is,itmp
-      do is=1,stack_req(1)
-        itmp=ipop(istack,iistack)
-      enddo
-      end subroutine pop_stack
 
       subroutine initialize_neoclassical(neo_ic)
       integer neo_ic

@@ -302,12 +302,13 @@ c
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
+#else
+      use b2mod_eirdiag
 #endif
       implicit none
 #include <DIMENSIONS.F>
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#     include "COUPLE/EIRDIAG.F"
 #endif
 c
 c*** Local variables

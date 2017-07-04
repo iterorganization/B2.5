@@ -83,6 +83,8 @@ c***    wldpa   :   flux of emitted atoms from BI. Equal to PRFPAT
 c***    wldpm   :   flux of emitted molecules from BI. Equal to PRFPML
 c***    wldpeb  :   power carried away by these atoms and molecules. Equal to ERFPAT+ERFPML+ERFPIO
 c***    wldspt  :   flux of sputtered wall material
+c***    wldspta :   sputtered flux by emitted atom
+c***    wldsptm :   sputtered flux by emitted molecule
 c***    wlarea  :   areas of the surface segments from Eirene
 c***    wlabsrp :   absorption at the surfaces (1-recyct from Eirene)
 c***    ewldea_res  :   emitted energy flux of atoms. Equal to ERFAAT+ERFMAT+ERFIAT+ERFPHAT
@@ -101,7 +103,7 @@ c***    ewldmr_res  :   energy due to recombination of atoms into molecules. ()P
      ,   sja_w(0:ntrgsx,DEF_NATM), sjp_w(0:ntrgsx,DEF_NATM),
      ,   sjm_t(0:ntrgsx,DEF_NMOL), sjm_w(0:ntrgsx,DEF_NMOL), 
      ,   sjt_w(0:ntrgsx,DEF_NATM), fpt_out(4*DEF_NATM),
-     ,   sjs_t(ntrgsx), sjs_w(0:ntrgsx),
+     ,   sjs_t(ntrgsx), sjs_w(0:ntrgsx),sptmass,
      ,   sb_t,ss_t,sn_t,sg_t, spt_out(2),mol_out(2*DEF_NMOL)
       integer eb2atm(natm)
       character*11 spt_str(2,ntrgsx),fpt_str(4,DEF_NATM)
@@ -124,7 +126,7 @@ c***  srfs_m    : list of possible target materials
 c***  srfs_x    : corresponding species (say, Fe for SS)
 c***  srfs_d    : specific masses of possible target materials [g/cm**3]
 c***  srfs_a    : atomic weight of possible target materials
-      integer n_srfs_m,spt_mat,spt_atm
+      integer n_srfs_m,spt_mat(ntrgsx),sptlis(ntrgsx)
       parameter (n_srfs_m=7)
       real (kind=R8) :: srfs_d(n_srfs_m),srfs_a(n_srfs_m)
       character srfs_m(n_srfs_m)*4,srfs_x(n_srfs_m)*2
@@ -887,26 +889,40 @@ c carlis It is needed a variable that tells for each target or surface which is 
 c        Temporary solution for this routine is to use the bulk track_species
             do ia=1,n_srfs_m
              if (streql(mtrtrgsg(j),srfs_m(ia))) then
-               spt_mat=ia
+               spt_mat(j)=ia
              end if
-            end do
-            spt_atm=0
-            do ia=1,natm
-              if (streql(track_species(1),TEXTA(ia))) then
-                spt_atm=ia
-              end if
             end do
             ISS=ltns(j)
             IND=eirdiag_nds_ind(ISS)
             IAS=IND+1
+            sptlis(j)=0
             do iy=lytg,ny-1
-              sjs(iy,j)=wldspt_res(iy+IAS)*
-     .                     sarea_res(iy+IAS)
-              sjs_t(j)=sjs_t(j)+sjs(iy,j)
+              do ia=1,natm
+                if (wldspta_res(ia,iy+IAS).gt.0.0_R8) then
+                  sptlis(j)=ia
+                  sjs(iy,j)=wldspta_res(ia,iy+IAS)*
+     .                    sarea_res(iy+IAS)
+                  sjs_t(j)=sjs_t(j)+sjs(iy,j)
+                end if
+              end do
+              do imol=1,nmol
+                if (wldsptm_res(imol,iy+IAS).gt.0.0_R8) then
+                  sptlis(j)=imol+natm
+                  sjs(iy,j)=wldsptm_res(imol,iy+IAS)*
+     .                    sarea_res(iy+IAS)
+                  sjs_t(j)=sjs_t(j)+sjs(iy,j)
+                end if
+              end do
             end do
-            if(ntns.eq.2 .or. ntns.eq.4) then
+
+            if(ntns.eq.2 .or. ntns.eq.4 .and.
+     .         sptlis(j).ne.0) then
               js=ltns(j)+nlim
-              sjs_w(j)=wldspt(js,0)
+              if (sptlis(j).le.natm) then
+                sjs_w(j)=wldspta(js,sptlis(j),0)
+              else
+                sjs_w(j)=wldsptm(js,sptlis(j)-natm,0)
+              end if
               if(sjs_t(j).gt.0.0_R8) then
                 sjs_t(j)=sjs_w(j)/sjs_t(j)
               else
@@ -915,22 +931,40 @@ c        Temporary solution for this routine is to use the bulk track_species
             else
               sjs_t(j)=0.0_R8
             end if
+
             if (sjs_t(j).gt.0.0_R8) then
               do_sput(j)=.true.
               do iy=lytg,ny-1!{
                 sjs(iy,j)=sjs_t(j)*sjs(iy,j)
-c carlis For output erosion I assume that the sputtered flux is acting on the target material
+c carlis The erosion of the wall is evaluated using the wall material and not the emitted atom/molecule
 c carlis sje [mm/y] = ers_factor[s/y*mol/g*m2/cm2*mm/cm]*srfs_a[g/mol]*sjs[1/s]/srfs_d[g/cm3]/s[m2]
-                sje(iy,j)=ers_factor*srfs_a(spt_mat)*sjs(iy,j)/
-     .                   srfs_d(spt_mat)/s(iy,j)
-c carlis For output sputtering I assume that the sputtered flux is acting on the sputtered atom
+                sje(iy,j)=ers_factor*srfs_a(spt_mat(j))*sjs(iy,j)/
+     .                   srfs_d(spt_mat(j))/s(iy,j)
+                if (sptlis(j).le.natm) then
+                  sptmass=am(eb2spcr(sptlis(j)))
+                else
+                  imol = sptlis(j)-natm
+                  sptmass=0.0_R8
+                  do ia = 1, natm
+                    if (mlcmp(ia,imol).gt.0) then
+                      sptmass=sptmass+mlcmp(ia,imol)*am(eb2spcr(ia))
+                    end if
+                  end do
+                end if
+c carlis The emitted amount in g/y is evaluated using the sputtered atom or molecule
 c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/mol]
-                sjs(iy,j)=sjs(iy,j)*srfs_a(spt_atm)*nsecyr/avogr
+                sjs(iy,j)=sjs(iy,j)*sptmass*nsecyr/avogr
                 sjs_w(j)=sjs_w(j)+sjs(iy,j)
               end do
+              if (sptlis(j).le.natm) then
+                ssmol=texta(sptlis(j))
+              else
+                ssmol=textmn(sptlis(j)-natm-1)
+                ssmol=adjustl(ssmol)
+              end if
               print *,'target material = ', mtrtrgsg(j)
               print *,'sputtered atom from target = ',
-     ,                track_species(1) 
+     ,                ssmol
               write(*,'(1x,a,1p,16e12.3)') 
      .         'Scaling factors for '//mtrtrgsg(j)//' Sp : ',
      ,          (sjs_t(i),i=1,ntrgts)
@@ -955,7 +989,13 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
         end do
         do k=1,ntrgts
           if (do_sput(k)) then
-            spt_str(1,k)=trim(track_species(1))//'_spu'
+            if (sptlis(j).le.natm) then
+              spt_str(1,k)=trim(TEXTA(sptlis(j)))//'_sput'
+            else
+              ssmol=textmn(sptlis(j)-natm-1)
+              ssmol=adjustl(ssmol)
+              spt_str(1,k)=trim(ssmol)//'_sput'
+            end if
             spt_str(2,k)=trim(mtrtrgsg(k))//'_ersn'
           end if
         end do

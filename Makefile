@@ -795,13 +795,13 @@ ${OBJDIR}/eirgrid_lib.o: ${OBJDIR}/eirmap.o
 # target 'clean' cleans up the directory.
 clean : 
 	-mkdir ${OBJDIR}/.delete
-	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version_B25.h ${OBJDIR}/LISTOBJ ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F ${OBJDIR}/.delete
+	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version_B25.h ${OBJDIR}/LISTOBJ ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F ${OBJDIR}/.delete >& /dev/null
 ifneq (${MOD},o)
-	-mv -i ${OBJDIR}/*.${MOD} ${OBJDIR}/.delete
+	-mv -i ${OBJDIR}/*.${MOD} ${OBJDIR}/.delete >& /dev/null
 endif
 	-rm -rf ${OBJDIR}/.delete &
 
-depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EXELIST:.o=.F} ${EX90LIST:.o=.F90} ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
+depend: ${OBJDIR}/LISTOBJ ${B2OBJS:.o=.F} ${B2F90OBJS:.o=.F90} ${EXELIST:.o=.F} ${EX90LIST:.o=.F90}
 	@`which makedepend` -p'$${OBJDIR}/' ${DEFINES} -f- ${INCLUDE} $^ | \
 	sed 's,^$${OBJDIR}/[^ ][^ ]*/,\$${OBJDIR}/,' | \
         sed 's,: ${SOLPSTOP},: $${SOLPSTOP},' > ${OBJDIR}/dependencies 
@@ -821,11 +821,13 @@ endif
 	@egrep -aiH '^ {0,}use ' ${SRCDIR}/*/*.F90 | grep -v 'IGNORE' | awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 4b' >> ${OBJDIR}/dependencies
 ifneq (${MOD},o)
+ifneq (${COMPILER},g95)
 	@egrep -aiH '^ {6,}use ' ${MODLISTF} | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("\\.f:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 5a' >> ${OBJDIR}/dependencies
 ifdef MODLISTF90
 	@egrep -aiH '^ {0,}use ' ${MODLISTF90} | grep -v 'IGNORE' | awk '{sub("\\.F90:",".${MOD}:",$$1);sub("\\.f90:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 5b' >> ${OBJDIR}/dependencies
+endif
 endif
 endif
 
@@ -895,6 +897,9 @@ endif
 	${MAKE} local
 	${MAKE} listobj
 	${MAKE} depend
+ifeq (${COMPILER},g95)
+	${MAKE} `cat ${SRCDIR}/modules/.new_modules | sed -e 's:\.F:.o:' -e 's:[^ ]*/:${OBJDIR}/:' | awk.transpose`
+endif
 
 include ${OBJDIR}/dependencies
 
@@ -927,7 +932,6 @@ endif
 endif
 	@if [ -f b2stbc.o ] ; then /bin/mv b2stbc.o ${OBJDIR}/ ; fi
 endif
-
 
 echo:
 	@echo LD_CATALYST=${LD_CATALYST}

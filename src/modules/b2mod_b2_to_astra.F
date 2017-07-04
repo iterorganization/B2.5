@@ -18,11 +18,12 @@ csw 09jan2014 extra module to define some arrays
       use eirdiag ! IGNORE
      , ,only: nnatmi, nnmoli, dab2, dmb2, tab2, tmb2, rfluxa, rfluxm
 #endif
+#else
+      use b2mod_eirdiag
 #endif
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#     include "COUPLE/EIRDIAG.F"
 #endif
 
 csw 09jan2014 declare fun to be private

@@ -42,6 +42,10 @@
       use eirmod_eirbra
      * , only : eirene_alloc_eirbra, eirene_dealloc_eirbra
       use eirmod_extrab25
+#else
+      use b2mod_braeir
+      use b2mod_eirbra
+     & , smo_eir => smo
 #endif
       use b2mod_b2cmpa
       use b2mod_b2cmfs
@@ -180,6 +184,9 @@ c
       CALL EIRENE_ALLOC_CTRCEI
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
+#else
+      call alloc_b2mod_braeir(nxd,nyd,nsd_local)
+      call alloc_b2mod_eirbra(nxd,nyd,nsd_local,natm,npls,nstra)
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
@@ -619,7 +626,7 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         textmn(0)=' ZERO'
         nioni=0
         textin(0)=' ZERO'
-        call eirene_mc_init
+        call eirene_mc_init(nx,ny)
       endif
       nsw=ns+natmi+nmoli+nioni
 
@@ -1560,6 +1567,10 @@ c
       CALL EIRENE_DEALLOC_BRAEIR
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_EXTRAB25_CLEANUP
+#else
+      call dealloc_b2mod_braeir
+      call dealloc_b2mod_eirbra
+      call dealloc_b2mod_eirdiag
 #endif
       call subend()
       return

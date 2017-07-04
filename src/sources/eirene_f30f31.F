@@ -53,11 +53,12 @@ c
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
 #endif
+#else
+      use b2mod_braeir
 #endif
       implicit none
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
-#     include <COUPLE/BRAEIR.F>
 #endif
       integer nx,ny,ns
       real (kind=R8) :: BoRiS
@@ -697,11 +698,12 @@ c
       use parmmod   ! IGNORE
       use braeir    ! IGNORE
 #endif
+#else
+      use b2mod_braeir
 #endif
       implicit none
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
-#     include <COUPLE/BRAEIR.F>
 #endif
       integer nx,ny
       integer nxx,nyy

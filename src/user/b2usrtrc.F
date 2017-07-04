@@ -15,6 +15,8 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
+#else
+      use b2mod_eirbra
 #endif
 
 c  version : 03.04.2001 15:55
@@ -25,9 +27,6 @@ c*** "tracing/user.trc"
 c-----------------------------------------------------------------------
       implicit none
 #     include <DIMENSIONS.F>
-#ifndef B25_EIRENE
-#     include <COUPLE/EIRBRA.F>
-#endif
 
       integer nx, ny, ns, nxtl, nxtr
       real (kind=R8) :: BoRiS

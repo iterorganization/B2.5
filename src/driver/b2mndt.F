@@ -382,6 +382,7 @@ ctmp.dpc
             call b2news_(nx, ny, ns, nscx, iscx, ismain, ismain0,
      &       dtim, rxf, ier0)                                            !srv 16.07.10 23.11.10
            endif                                                         !srv 01.07.08 )
+           flush(6)
            if(ier0.eq.10) then
              ierr=ier0
              goto 99999

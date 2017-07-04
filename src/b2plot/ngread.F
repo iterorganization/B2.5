@@ -362,6 +362,10 @@ cank-960727
         call rdneutrs(44,wldpm,nmoli)
         call rdneutrs(44,wldpeb,1)
         call rdneutrs(44,wldspt,1)
+        if (jvft44 .ge. 20170328) then
+          call rdneutrs(44,wldspta,natmi)
+          call rdneutrs(44,wldsptm,nmoli)
+        end if
         if(nstrai .gt. 1) then
           do istra=1,nstrai
             call rdneutrs(44,wldpp(:,:,istra),nplsi)
@@ -369,6 +373,10 @@ cank-960727
             call rdneutrs(44,wldpm(:,:,istra),nmoli)
             call rdneutrs(44,wldpeb(1,istra),1)
             call rdneutrs(44,wldspt(1,istra),1)
+            if (jvft44 .ge. 20170328) then
+              call rdneutrs(44,wldspta(:,:,istra),natmi)
+              call rdneutrs(44,wldsptm(:,:,istra),nmoli)
+            end if
           end do
         end if
       end if
@@ -411,6 +419,33 @@ cank
      ,                          i=1,nstsi)
         end if
 
+        if(jvft44 .ge. 20170328) then
+          k=0
+          call read_title(44)
+          read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,natmi),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,natmi),
+     ,                                                       i=1,nstsi)
+          k=k+natmi
+          call read_title(44)
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nmoli),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nmoli),
+     ,                                                       i=1,nstsi)
+          k=k+nmoli
+          call read_title(44)
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nioni),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nioni),
+     ,                                                       i=1,nstsi)
+          k=k+nioni
+          call read_title(44)
+          read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
+          read (44,'(6e13.5)') ((wlpump(j+k,i),j=1,nplsi),i=1,nlimi)
+          read (44,'(6e13.5)') ((wlpump(j+k,nlim+i),j=1,nplsi),
+     ,                          i=1,nstsi)
+        end if
+
         if(jvft44 .ge. 20071209) then
           do is = 1, natmi
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,is,0))
@@ -433,7 +468,9 @@ cank
      .                ewlda_res(natmi,NCL), ewldm_res(nmoli,NCL), 
      .                ewldea_res(natmi,NCL), ewldem_res(nmoli,NCL), 
      .                ewldrp_res(NCL), ewldmr_res(nmoli,NCL),
-     .                wldspt_res(NCL), sarea_res(NCL) )
+     .                wldspt_res(NCL), sarea_res(NCL),
+     .                wldspta_res(natmi,NCL), wldsptm_res(nmoli,NCL),
+     .                wlpump_res(nspz,NCL) )
  
             call read_title(44)
             READ (44,'(6e15.7)') (sarea_res(i),i=1,NCL)
@@ -457,6 +494,34 @@ cank
               call read_title(44)
               READ (44,'(6e15.7)') (wldspt_res(i),i=1,NCL)
             end if
+            if (jvft44.ge.20170328) then
+              call read_title(44)
+              READ (44,'(6e15.7)')
+     .              ((wldspta_res(j,i),j=1,natmi),i=1,NCL)
+              call read_title(44)
+              READ (44,'(6e15.7)')
+     .              ((wldsptm_res(j,i),j=1,nmoli),i=1,NCL)
+              k=0
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,natmi)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,natmi),
+     ,                                i=1,NCL)
+              k=k+natmi
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nmoli)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nmoli),
+     ,                                i=1,NCL)
+              k=k+nmoli
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nioni)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nioni),
+     ,                                i=1,NCL)
+              k=k+nioni
+              call read_title(44)
+              read (44,'(6a13)') (eirtxt(j+k),j=1,nplsi)
+              read (44,'(6e13.5)') ((wlpump_res(j+k,i),j=1,nplsi),
+     ,                                i=1,NCL)
+            end if
           ELSE
             call read_title(44)
             READ (44,1028)
@@ -477,6 +542,20 @@ cank
             call read_title(44)
             READ (44,1028)
             if (jvft44.ge.20170228) then
+              call read_title(44)
+              READ (44,1028)
+            end if
+            if (jvft44.ge.20170328) then
+              call read_title(44)
+              READ (44,1028)
+              call read_title(44)
+              READ (44,1028)
+              call read_title(44)
+              READ (44,1028)
+              call read_title(44)
+              READ (44,1028)
+              call read_title(44)
+              READ (44,1028)
               call read_title(44)
               READ (44,1028)
             end if

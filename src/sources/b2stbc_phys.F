@@ -2113,18 +2113,20 @@ cxpb  Add contribution from Eirene core boundary fluxes
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     do isb = 0, ns-1
                       if (b2espcr(is).eq.b2espcr(isb)) then
-                        if(mdf_fnb.ne.0.and..not.is_neutral(isb)) then
-                          totfluxi = totfluxi + fna_mdf(
-     &                     topix(BC_LIST_X(IX,IBW),
-     &                           BC_LIST_Y(IX,IBW)),
-     &                     topiy(BC_LIST_X(IX,IBW),
-     &                           BC_LIST_Y(IX,IBW)),1,isb)
+                        if (is_neutral(isb)) then
+                          totfluxn = totfluxn +
+     &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
                         else
-                          totfluxi = totfluxi + fna(
-     &                     topix(BC_LIST_X(IX,IBW),
-     &                           BC_LIST_Y(IX,IBW)),
-     &                     topiy(BC_LIST_X(IX,IBW),
-     &                           BC_LIST_Y(IX,IBW)),1,isb)
+                          if(mdf_fnb.ne.0) then
+                            totfluxi = totfluxi +
+     &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
+                          else
+                            totfluxi = totfluxi +
+     &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
+                          endif
                         endif
                       endif
                     enddo
@@ -3072,14 +3074,20 @@ cxpb  Add contribution from Eirene core boundary fluxes
                   DO IX = 1, BC_LIST_SIZE(IBW)
                     DO isb = 0, ns-1
                       if (b2espcr(is).eq.b2espcr(isb)) then
-                        if(mdf_fnb.ne.0.and..not.is_neutral(isb)) then
-                          totfluxi = totfluxi +
-     &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
-     &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
-                        else
-                          totfluxi = totfluxi +
+                        if (is_neutral(isb)) then
+                          totfluxn = totfluxn +
      &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
+                        else
+                          if(mdf_fnb.ne.0) then
+                            totfluxi = totfluxi +
+     &       fna_mdf(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
+                          else
+                            totfluxi = totfluxi +
+     &           fna(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
+     &               topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),1,isb)
+                          endif
                         endif
                       endif
                     end do
@@ -3099,7 +3107,7 @@ cxpb  Add contribution from Eirene core boundary fluxes
                 ENDIF
               ENDDO
               t1=t1/t0        !
-              NAS=NAS/t0      ! Volume-averaged density
+              NAS = NAS/t0    ! Volume-averaged density
               NAS = NAS*
      &         (1.0_R8-bc_ref*(totfluxn+totfluxi-SCONPAR(IS))/
      &           (abs(totfluxn)+abs(totfluxi)+abs(SCONPAR(IS))))

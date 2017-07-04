@@ -38,12 +38,11 @@ c  version : 26.07.2002 23:39
       use eirmod_braeir
       use eirmod_eirbra
       use eirmod_extrab25
+#else
+      use b2mod_braeir
+      use b2mod_eirbra
 #endif
       implicit none
-#ifndef B25_EIRENE
-#     include <COUPLE/BRAEIR.F>
-#     include <COUPLE/EIRBRA.F>
-#endif
       integer nx,ny,ns,ismain
       real (kind=R8) ::
      * dtim, BoRiS,
@@ -134,6 +133,7 @@ c      parameter (lns_hlp=4)
 c      integer lis_hlp(lns_hlp)
 c      data lis_hlp / 110, 111, 112, 49 /
       logical last, saved_volrec_used, na_feedback_on
+      integer :: igpuff(NSTRAT)
 
       integer output_style, linearisation, ank_mods, save_f31,
      1 repeat_first_call, ionising_core, dpc_fix, eircount,
@@ -349,7 +349,7 @@ c not sure this is the right place
         call ipgeti ('eirene_savef31', save_f31)
         call ipgeti ('eirene_use_recyceir', use_recyceir)
 csw 28jan2011, call to eirene_mc_init not used anymore, use new modules
-c        call eirene_mc_init
+c        call eirene_mc_init(nx,ny)
         call eirene_extrab25_alloc_mods
 !pb 13dec2013 eirpbls removed - not needed
 !pb        call eirene_extrab25_eirpbls_init(1,
@@ -1047,6 +1047,33 @@ c*** Print the particle fluxes for each stratum and species
      ,     '=========================================%%%'
         end if !}
       endif
+
+c carlis adding gas puff output for particle balance routine
+      do istrai=1,nstrat
+        igpuff(istrai)=0
+        if (crcstra(istrai).eq.'C') then
+          igpuff(istrai)=1
+        end if
+      end do
+      print *,'Number of gas puff sources: ',sum(igpuff)
+      if (sum(igpuff).gt.0) then
+        do istrai=1,nstrat
+          do ls=1,nnatmi
+            if (igpuff(istrai).gt.0.0_R8 .and.
+     .          gpfc(ls,istrai).gt.0.0_R8) then
+              if(use_recyceir.gt.0) then
+                recyctmp=recyceir(istrai)
+              else
+                kks=ispc_ref(ls)
+                recyctmp=recyc(kks,istrai)
+              endif
+              hlp_g(ls)=tflux(istrai)*
+     *           gpfc(ls,istrai)*recyctmp
+              print *,'Gas puff strength, atom: ',hlp_g(ls),ls
+            end if
+          end do
+        end do
+      end if
 
 c*** Re-normalisation of the sources and fluxes in order to enforce
 c*** the particle balance for recycling and recombining species
@@ -3338,6 +3365,9 @@ C           call xerrab ('eirene_mc: bccon <> 13')
       call write_f31(nx, ny)
 csw 26jan2011
       call eirene_extrab25_cleanup
+#ifndef B25_EIRENE
+      call dealloc_b2mod_eirdiag
+#endif
 csw 26feb2014
       if(allocated(sni_av)) then
        deallocate(sni_av)
@@ -3607,6 +3637,8 @@ c!###}
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
+#else
+      use b2mod_braeir
 #endif
       implicit none
       integer nhistd
@@ -3733,6 +3765,8 @@ c!###}
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_braeir
+#else
+      use b2mod_braeir
 #endif
       implicit none
 #ifndef B25_EIRENE

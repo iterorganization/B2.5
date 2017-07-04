@@ -200,6 +200,7 @@ c             pgf90 compiler , see below
    89 write(6,'(a)') 
      &    'In cfrure_opt: expected '//trim(id0)//', found end of file'
       write(6,*) 'Reading skipped!'
+      backspace(nget)
       return 
 *     ------------------------------------------------------------------
    91 call xerrab ('cfrure_opt--error return from inquire statement')
