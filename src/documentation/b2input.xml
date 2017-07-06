@@ -6314,7 +6314,7 @@
 				<name>L_H_MOL</name>
 				<type>integer array of size (NMOL)</type>
 				<description>
-					Species index of the hydrogen molecules in Eirene. The code attempts to find a match by default.
+					Number of hydrogen nuclei for molecules in Eirene. The code attempts to find a match by default.
 				</description>
 			</switch>
 			<switch>
