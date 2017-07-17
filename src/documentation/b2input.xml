@@ -2857,11 +2857,19 @@
 			<switch>
 				<name>b2trcl_cvsa_mltpl</name>
 				<default>1.0</default>
-				<type>integer</type>
+				<type>real</type>
 				<note>!iys 06.12.13</note>
 				<description>
 					Artificial coefficient providing faster convergence to the neoclassical electric field but giving a distortion of the flows in the SOL as a side-effect. 
 					Can be applied &lt;&gt;1 during the convergence and turned off for the final stage of calculations. Use with caution.
+				</description>
+			</switch>
+			<switch>
+				<name>b2upco_c_corr_core_dn</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Smoothing parameter for the pressure correction on closed field lines.
 				</description>
 			</switch>
 			<switch>
