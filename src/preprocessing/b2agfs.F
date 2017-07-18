@@ -1030,8 +1030,8 @@ c
         meshpath = trim(meshpath)
      .   //'|modules/Carre/meshes/'//trim(device)
         if(open_file(lun,local_sonnet,meshpath)) then
-	  write(*,*)
-     1	   "Reading the geometry file assuming the 'new' format"
+          write(*,*)
+     1     "Reading the geometry file assuming the 'new' format"
           read(lun,*) nnx,nny
           if(nnx.ne.nx.or.nny.ne.ny) then
             write(*,*) 'b2gxdr_dummy: nx,ny code and data disagree',
