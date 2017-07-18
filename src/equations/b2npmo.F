@@ -85,6 +85,7 @@
       integer ncall, n2, ix, iy, is, diagno, ireg, nsmin, nsmax, k
       integer, save :: iout = 0, b2sifr_ver=1, iout_b2wdat = 0         !srv 04.07.08 26.10.08
       character chns*3, chk*1                                          !srv 04.07.08
+      integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
       real (kind=R8) ::
      *  rxg, t0, t1, t2
       real (kind=R8) ::
@@ -100,7 +101,7 @@
      5  cvcb(-1:nx,-1:ny,0:1), ro(-1:nx,-1:ny),
      6  pr(-1:nx,-1:ny), ne2(-1:nx,-1:ny),
      7  ni(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
-     8  ehxp(-1:nx,-1:ny), smt(-1:nx,-1:ny,0:3),
+     8  ehxp(-1:nx,-1:ny), smt(-1:nx,-1:ny,0:3), cst,                  !srv 17.01.14
      9  flct(-1:nx,-1:ny,0:1), wrk1(-1:nx,-1:ny), wrks(-1:nx,-1:ny),
      1  smqdu(-1:nx,-1:ny), wrk0(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      2  ctcfb(-1:nx,-1:ny), ctcft(-1:nx,-1:ny),                        !srv 06.04.07
@@ -134,6 +135,7 @@
         call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
         call ipgeti ('b2npmo_diagno', diagno)
         call ipgeti ('b2npmo_iout', iout)                               !srv 04.07.08
+        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)     !iyv 17.01.14
         call ipgeti ('b2wdat_iout', iout_b2wdat)                        !iys 17.04.17
         call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                      !srv 04.07.08
         call ipgeti ('b2news_nsmin', nsmin)
@@ -273,9 +275,9 @@
        smof(:,:,:,is) = smb                                            !srv 10.11.02
 
 cdjm Jan2017 update momentum source components for balance
-      if (balance_netcdf.ne.0) then
-        call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
-      endif
+       if (balance_netcdf.ne.0) then
+         call update_balance_sources_momentum(nx,ny,is,ua(-1,-1,is),rob)
+       endif
 
 *    ..compute residual
        call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,
@@ -429,6 +431,23 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                        !srv 06.
         enddo
        enddo
       enddo
+
+      if( ion_vlct_restrict .ne. 0 ) then                              !iyv 19.07.12 { !srv 17.01.14
+        do iy = -1,ny
+          do ix = -1,nx
+            do is = 0, ns-1
+              if (.not.is_neutral(is)) then
+                cst=sqrt(pr(ix,iy)/ro(ix,iy))                          !iyv 03.02.14
+!                cst=sqrt( (ti(ix,iy)+te(ix,iy)*rza(ix,iy,is))/
+!     *                                              ( am(is)*mp ))
+                if( abs(ua(ix,iy,is)) .gt. 3.0_R8*cst )
+     *	          ua(ix,iy,is)= sign(3.0_R8*cst,ua(ix,iy,is))          !iyv 03.02.14
+              endif
+            enddo
+          enddo
+        enddo
+      endif
+
 *   ..correct pcca
       call b2nxcm (nx, ny, ns, pccm, pcca)
       if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                      !srv 12.07.02 {

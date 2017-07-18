@@ -2744,9 +2744,17 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2npmo_ion_vlct_restrict</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+                   If ion_vlct_restrict.ne.0, the parallel speed of ions is limited to be no more than 3 times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than twice the local ion sound speed.
+				</description>
+			</switch>
+			<switch>
 				<name>b2tfhe_vis_per</name>
 				<default>0.0</default>
-				<type>integer</type>
+				<type>real</type>
 				<note>!srv 20.11.08</note>
 				<description>
 					If '1.0', the electric potential equation is solved by the subroutine b2npp7 using a 7-point stencil.

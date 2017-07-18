@@ -2,7 +2,7 @@
 *.specification
 
       subroutine b2tfnb (nx, ny, isb, ismain,                            !srv 08.09.01 !lk 02.06.11
-     &  guard_flows, facdrift, fac_ExB, mb, vol, zb,                     !xpb
+     &  guard_flows, facdrift, fac_ExB, mb, vol, cssb, zb,               !xpb !iyv 06.02.14
      &  pbs, pbshz, nb, pb, ub, ubdia, vbecrb, vbdia, wbdia, ne,         !xpb !srv 09.01.01
      &  te, ti, bb, hx, hy, hz, qz, gs, qc, po, cvlb, cdnb, cdpb, cddb,  !srv 09.01.01 13.10.06
      &  cvlbhz, cvmbhz, cdnbhz, cdpbhz,                                  !srv 09.01.01
@@ -36,7 +36,7 @@
      3  vol(-1:nx,-1:ny), te(-1:nx,-1:ny), ti(-1:nx,-1:ny), mb,
      &  cvlbhz(-1:nx,-1:ny,0:1), cvmbhz(-1:nx,-1:ny,0:1),                !srv 09.01.01
      &  cdnbhz(-1:nx,-1:ny,0:1), cdpbhz(-1:nx,-1:ny,0:1),                !srv 09.01.01
-     &  cddb(-1:nx,-1:ny,0:1),                                           !srv 13.10.06
+     &  cddb(-1:nx,-1:ny,0:1), cssb(-1:nx,-1:ny,0:1),                    !srv 13.10.06 !iyv 06.02.14
      &  fchvispar(-1:nx,-1:ny,0:1), fchinert(-1:nx,-1:ny,0:1),           !srv 20.09.06
      &  fchanml(-1:nx,-1:ny,0:1)
       logical balance                                                    !djm Jan2017
@@ -80,6 +80,7 @@
       integer, save :: no_Ptncr_x_co = 0, no_Ptncr_y_co = 0              !srv 06.07.06
       integer, save :: pflux_cor = 1                                     !srv 05.03.16
       integer, save :: PSch_style = 1                                    !srv 12.11.08
+      integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       character chns*3                                                   !srv 16.09.02
       integer, save :: fnb_nodrift_style = 1                             !srv 20.06.08
       integer, save :: drift_style = 1                                   !srv 21.06.08
@@ -183,6 +184,7 @@
         call ipgeti ('b2npmo_iout', iout_b2npmo)
         call ipgetr ('b2tfrn_xvecrb', xvecrb)                            !srv 27.01.12
         call ipgetr ('b2tfrn_xwdia', xwdia)                              !srv 27.01.12
+        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -434,6 +436,10 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 !     7         (poc(topix(ix,iy),topiy(ix,iy))-poc(ix,iy))/
 !     8         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))*
 !     9         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))               !lk 12.12.07)
+           if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
+            if( abs(vbecrb(ix,iy,0)) .gt. 2.0_R8*cssb(ix,iy,0) )
+     *	     vbecrb(ix,iy,0)=sign(2.0_R8*cssb(ix,iy,0),vbecrb(ix,iy,0))
+           endif                                                         !iyv 06.02.14  }
            vbdia(ix,iy,0) =    poldidr*facdrift(ix,iy)* ! signmf*        !srv 07.06.00 17.05.99 25.04.00 05.02.05 11.01.13
      &          (ti(leftix(ix,iy),leftiy(ix,iy))                         !srv 05.03.99
      &           *bb(leftix(ix,iy),leftiy(ix,iy),2)                      !srv 05.02.05
@@ -472,6 +478,10 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 !     7        (poc(rightix(ix,iy),rightiy(ix,iy))-poc(ix,iy))/           !lk 12.12.07)
 !     8          (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
 !     9          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+           if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
+            if( abs(vbecrb(ix,iy,1)) .gt. 2.0_R8*cssb(ix,iy,1) )
+     *	     vbecrb(ix,iy,1)=sign(2.0_R8*cssb(ix,iy,1),vbecrb(ix,iy,1))
+           endif                                                         !iyv 06.02.14  }
            vbdia(ix,iy,1) =  -raddidr*facdrift(ix,iy)* ! signmf*         !srv 11.01.13 07.06.00 17.05.99 25.04.00
      &           (ti(bottomix(ix,iy),bottomiy(ix,iy))                    !srv 05.03.99
      &           *bb(bottomix(ix,iy),bottomiy(ix,iy),2)                  !srv

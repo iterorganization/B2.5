@@ -64,6 +64,7 @@
       integer, save :: style = 3                                         !srv 29.05.02
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0             !srv 13.10.06
       integer, save :: use_b2npc9 = 1, use_b2nph9 = 1                    !srv 06.11.08 11.08.08
+      integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: ue_style = 2                                      !srv 17.11.16 13.01.17
       real (kind=R8) ::
      *  potok, mach10, BoRiS, vis_per, na_min, na_new
@@ -79,7 +80,8 @@
      4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
      5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
      6  ue(-1:nx,-1:ny),
-     7  lnlam(-1:nx,-1:ny), zero(-1:nx,-1:ny)
+     7  lnlam(-1:nx,-1:ny), zero(-1:nx,-1:ny),
+     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)          !iyv 06.02.14
       character charnc*6, hlp_frm*4
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical new_matrix
@@ -156,6 +158,7 @@
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
+       call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)     !iyv 06.02.14
        call ipgeti ('b2news_no_solve', no_solve)
        call xertst (-15.le.no_solve.and.no_solve.le.1,
      &   'faulty input no_solve')
@@ -330,13 +333,22 @@
         call b2tiner (nx, ny, ns, vol,
      &                       gs, hx, hy, bb, na, ua, facdrift, fchinert)
 
+        if(ion_vlct_restrict .ne. 0 ) then                               !iyv 06.02.14
+          call b2xpro (nx, ny, ns, mp, am, na, ro)
+          call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
+          wrk0(:,:)=sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+          call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
+          call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,cssb(-1,-1,1))
+        else
+          cssb = 0.0_R8
+        endif                                                            !iyv 06.02.14
 !        do is = 0, ns-1
         do is = nsmin, nsmax-1
 *    ..compute partial pressure
          call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute particle flux
          call b2tfnb (nx, ny, is, ismain,                                !srv 08.09.01
-     1    guard_flows, facdrift, fac_ExB, am(is)*mp, vol,
+     1    guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,          !iyv 06.02.14
      1    rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
      1    uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),      !xpb
      &    wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,     !srv 09.01.01
@@ -349,8 +361,7 @@
      &    fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                      !srv 13.10.06
      1    flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1    fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
-     &    .true.)                                                        !djm Jan2017
+     2    kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.true.)                !djm Jan2017
         enddo
 *      ..compute electron drift velocities
         call b2tfed (nx, ny, facdrift, fac_ExB, vol, hx, hy, qz, bb,
@@ -467,7 +478,7 @@ cxpb
           call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute particle flux
           call b2tfnb (nx, ny, is, ismain,                               !srv 08.09.01
-     1     guard_flows, facdrift, fac_ExB, am(is)*mp, vol,               !xpb
+     1     guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,         !xpb !iyv 06.02.14
      1     rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
      1     uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),     !xpb
      &     wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,    !srv 09.01.01
@@ -480,8 +491,7 @@ cxpb
      &     fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),                     !srv 13.10.06
      1     flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1     fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
-     &     .true.)                                                       !djm Jan2017
+     1     kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.true.)               !djm Jan2017
           if (ncall.eq.ncallout) then
             write(*,*) 'ncall,is',ncall,is
             call hbout('b2ne_npco   ',nx,ny,ns,te,'te',ti,'ti',
@@ -540,7 +550,7 @@ cxpb
 !     &                   rza(-1,-1,is), na(-1,-1,is), te, ti, pb) !srv 01.10.99  srv 12.11.08
 *    ..re-compute particle flux
             call b2tfnb (nx, ny, is, ismain,                             !srv 08.09.01
-     1       guard_flows, facdrift, fac_ExB, am(is)*mp, vol,             !xpb
+     1       guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,       !xpb !iyv 06.02.14
      1       rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb, ua(-1,-1,is),
      1       uadia(-1,-1,0,is), vaecrb(-1,-1,0,is), vadia(-1,-1,0,is),   !xpb
      &       wadia(-1,-1,0,is), ne, te, ti, bb, hx, hy, hz, qz, gs, qc,  !srv 09.01.01
@@ -553,8 +563,7 @@ cxpb
      &       fnaPSch(-1,-1,0,is),fna_mdf(-1,-1,0,is),                    !srv 13.10.06
      1       flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1       fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
-     &       .false.)                                                    !djm Jan2017
+     1       kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.false.)            !djm Jan2017
           endif
         enddo
         if(wrong_flow .or. ipass.ne.0) then                              !xpb
@@ -729,6 +738,18 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
                   call hbout('b2ne+nppo   ',nx,ny,ns,te,'te',ti,'ti',
      &             na,'na',ua,'ua',resmo,'resmo',corua,'corua')
                 endif
+                if(ion_vlct_restrict .ne. 0 ) then                       !iyv 06.02.14
+                  call b2xpro (nx, ny, ns, mp, am, na, ro)
+                  call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
+                  wrk0(:,:)=
+     &                 sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+                  call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,
+     &                        cssb(-1,-1,0))
+                  call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,
+     &                        cssb(-1,-1,1))
+                else
+                  cssb = 0.0_R8
+                endif                                                    !iyv 06.02.14
 !                do is = 0, ns-1
                 do is = nsmin, nsmax-1
 *    ..compute partial pressure
@@ -736,7 +757,7 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      1             rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..re-compute particle flux
                   call b2tfnb (nx, ny, is, ismain,                       !srv 08.09.01
-     1             guard_flows, facdrift, fac_ExB, am(is)*mp, vol,
+     1             guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb, !iyv 06.02.14
      1             rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), pb,
      1             ua(-1,-1,is), uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),  !xpb
      &             vadia(-1,-1,0,is), wadia(-1,-1,0,is),
@@ -750,8 +771,7 @@ c       call my_out(70,nx,ny,wrk1,'corpo'//charnc(1:len_of_digits(i)))
      &             fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),             !srv 13.10.06
      1             flob, conb, fna_32(-1,-1,0,is), fna_52(-1,-1,0,is),
      1             fna_32nd(-1,-1,0,is), fna_52nd(-1,-1,0,is),
-     &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),
-     &             .false.)                                              !djm Jan2017
+     &             kinrgy(-1,-1,is), fllim0fna(-1,-1,0,is),.false.)      !djm Jan2017
                 enddo
                 if(wrong_flow .or. ipass.ne.0) then                      !xpb
                    call print_wrong_flows(
