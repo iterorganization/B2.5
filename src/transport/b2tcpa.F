@@ -85,12 +85,12 @@
               tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
               fch_p(ix,iy,0) = (csig(ix,iy,0)*ehx(ix,iy)-
      &                 phm2*calf(ix,iy,0)*tex)*prl_cur                 !srv 03.02.03 08.10.14 
-	    endif                                                      !srv 26.11.02
-	  enddo
+            endif                                                      !srv 26.11.02
+          enddo
         enddo
         fch_p(:,:,1) = 0.0e0_R8
       else                                                             !srv 26.07.06 {
-	fch_p = 0.0e0_R8
+        fch_p = 0.0e0_R8
       endif                                                            !srv 26.07.06 }
 
 * ..return

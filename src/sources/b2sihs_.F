@@ -202,15 +202,15 @@
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
 *   ..contribution from divergence ue
       do iy = 0, ny-1                                                 !srv 05.03.11 {
-       do ix = 0, nx
-	  if(leftix(ix,iy).eq.-2) then
-	    wrk0(ix,iy) = 0.0e0_R8
-	  else
-          wrk0(ix,iy)=(hx(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
-     1                 hx(leftix(ix,iy),leftiy(ix,iy))*ue(ix,iy))/
+        do ix = 0, nx
+          if(leftix(ix,iy).eq.-2) then
+            wrk0(ix,iy) = 0.0e0_R8
+          else
+            wrk0(ix,iy)=(hx(ix,iy)*ue(leftix(ix,iy),leftiy(ix,iy))+
+     1                   hx(leftix(ix,iy),leftiy(ix,iy))*ue(ix,iy))/
      2       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
-	  endif
-       enddo
+          endif
+        enddo
       enddo                                                           !srv 05.03.11 }
       b2divue=0.0_R8
       b2sihs_divue=0.0_R8
@@ -225,7 +225,7 @@
          b2divue(region(ix,iy,0))=b2divue(region(ix,iy,0))+
      1     t0*ne(ix,iy)*te(ix,iy)
          b2sihs_divue(ix,iy)=t0*ne(ix,iy)*te(ix,iy)
-	endif                                                         !srv 26.11.02
+        endif                                                         !srv 26.11.02
        enddo
       enddo
       if (balance_netcdf.ne.0) then !djm Jan2017
@@ -238,29 +238,29 @@
       do is = 0, ns-1
        do iy = 0, ny-1                                                !srv 21.07.05 {
         do ix = 0, nx
-	  if(leftix(ix,iy).eq.-2) then
-	    wrk0(ix,iy) = 0.0e0_R8
-	   else
-          wrk0(ix,iy)=(hx(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
+          if(leftix(ix,iy).eq.-2) then
+            wrk0(ix,iy) = 0.0e0_R8
+          else
+            wrk0(ix,iy)=(hx(ix,iy)*ua(leftix(ix,iy),leftiy(ix,iy),is)+
      1                 hx(leftix(ix,iy),leftiy(ix,iy))*ua(ix,iy,is))/
      2       (hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))*pbs(ix,iy,0)
-	   endif                                                      !srv 21.07.05 }
-!	   if(leftix(ix,iy).eq.-2) then
-!	    wrk0(ix,iy) = 0.0e0_R8
-!	   else
-!	    wrk0(ix,iy) = (vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)*ua(ix,iy,is)-
+          endif                                                       !srv 21.07.05 }
+!         if(leftix(ix,iy).eq.-2) then
+!           wrk0(ix,iy) = 0.0e0_R8
+!         else
+!           wrk0(ix,iy) = (vol(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)*ua(ix,iy,is)-
 !     &                   vol(leftix(ix,iy),leftiy(ix,iy))*
 !     &                    bb(leftix(ix,iy),leftiy(ix,iy),0)/
 !     &                    bb(leftix(ix,iy),leftiy(ix,iy),3)*
 !     &                    ua(leftix(ix,iy),leftiy(ix,iy),is))/
 !     &             (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-!	   endif
+!         endif
         enddo
        enddo
        do iy = 0, ny-1
         do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then    !srv 26.11.02
-	  t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*                      !srv 21.07.05 {
+          t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*                      !srv 21.07.05 {
      &            ( wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))  !srv 21.07.05 }
 !          t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*(                    !srv 31.05.99
 !     &        pbs(rightix(ix,iy),rightiy(ix,iy),0)*                  !srv 28.06.03 { 
@@ -277,7 +277,7 @@
      1         +t0*ni(ix,iy,0)*ti(ix,iy)
           b2sihs_divua(ix,iy)=b2sihs_divua(ix,iy)+
      1         t0*ni(ix,iy,0)*ti(ix,iy)
-	 endif                                                        !srv 26.11.02
+         endif                                                        !srv 26.11.02
         enddo
        enddo
       enddo
@@ -288,29 +288,29 @@
 *   ..contribution from divergence of the electrical drift            !srv 02.06.99
       dpo = 0.0e0_R8;   dOnedBsq = 0.0e0_R8                           !srv 03.04.07 {
       do iy = 0, ny-1
-	 do ix = 0, nx
-	  if(leftix(ix,iy).ne.-2) then
-	   dpo(ix,iy,0) = (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))/
+        do ix = 0, nx
+          if(leftix(ix,iy).ne.-2) then
+            dpo(ix,iy,0) = (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))/
      &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-	   dOnedBsq(ix,iy,0) =
+            dOnedBsq(ix,iy,0) =
      &       (OnedBsq(ix,iy) - OnedBsq(leftix(ix,iy),leftiy(ix,iy)))/
      &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
-	  endif
-	 enddo
-	enddo
+          endif
+        enddo
+      enddo
 
       do iy = 0, ny
-	 do ix = -1, nx
+       do ix = -1, nx
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-	   dpo(ix,iy,1) = 
+          dpo(ix,iy,1) =
      &     (po(ix,iy) - po(bottomix(ix,iy),bottomiy(ix,iy)))/
      &       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0e0_R8
-	   dOnedBsq(ix,iy,1) =
+          dOnedBsq(ix,iy,1) =
      &    (OnedBsq(ix,iy) - OnedBsq(bottomix(ix,iy),bottomiy(ix,iy)))/
      &       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*2.0e0_R8
-	  endif
-	 enddo
-	enddo
+        endif
+       enddo
+      enddo
 
       b2exbe=0.0_R8
       b2sihs_exbe=0.0_R8
@@ -356,7 +356,7 @@
        do iy = 0, ny-1
         do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
-          t0=phm6*fac_ExB(ix,iy)*(na(ix,iy,is)/ni(ix,iy,0))*wrk0(ix,iy)     !srv 07.06.00 02.06.99	  
+          t0=phm6*fac_ExB(ix,iy)*(na(ix,iy,is)/ni(ix,iy,0))*wrk0(ix,iy)     !srv 07.06.00 02.06.99
           shidd(ix,iy,0) = shidd(ix,iy,0)+
      &      (max(0.0e0_R8,t0)+rf1*abs(t0))*ni(ix,iy,0)*ti(ix,iy)
 !          shi0(ix,iy,0) = shi0(ix,iy,0)+
@@ -384,22 +384,22 @@
         wrk0 = 0.0e0_R8                                              !srv 28.08.02 21.07.05 {
         do iy = 0, ny-1
          do ix = 0, nx
-	    if(leftix(ix,iy).eq.-2) then
-	     wrk0(ix,iy)=0.0e0_R8
-	    else
-	     wrk0(ix,iy)=4.0e0_R8/3.0e0_R8*cvsa(ix,iy,0,is)*
+          if(leftix(ix,iy).eq.-2) then
+           wrk0(ix,iy)=0.0e0_R8
+          else
+           wrk0(ix,iy)=4.0e0_R8/3.0e0_R8*cvsa(ix,iy,0,is)*
      &        (ua(ix,iy,is)-ua(leftix(ix,iy),leftiy(ix,iy),is))**2
-	    endif
+          endif
          enddo
         enddo
         wrk1 = 0.0e0_R8
         do iy = 0, ny
          do ix = 0, nx-1
           if(leftix(ix,iy).ne.-2) then
-	     wrk1(ix,iy)=4.0e0_R8*  
-     *     (ua(ix,iy,is)-ua(bottomix(ix,iy),bottomiy(ix,iy),is))**2/
-     &     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))**2
-	    endif
+           wrk1(ix,iy)=4.0e0_R8*
+     *      (ua(ix,iy,is)-ua(bottomix(ix,iy),bottomiy(ix,iy),is))**2/
+     &      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))**2
+	  endif
          enddo
         enddo                                                          !srv 28.08.02 21.07.05 }
         do iy = 0, ny-1
@@ -484,7 +484,7 @@
      &       (1.5e0_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
             b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+t0
             b2sihs_fraa(ix,iy)=b2sihs_fraa(ix,iy)+t0
-	   endif                                                       !srv 26.11.02
+           endif                                                       !srv 26.11.02
           enddo
          enddo
         else
@@ -525,7 +525,7 @@
 !     &      min(0.0e0_R8,-t0)/(ni(ix,iy,0)*ti(ix,iy))
 !           b2str(region(ix,iy,0))=b2str(region(ix,iy,0))+t0
 !           b2sihs_str(ix,iy)=b2sihs_str(ix,iy)+t0
-!	   endif                                                       !srv 26.11.02
+!          endif                                                       !srv 26.11.02
 !         enddo
 !        enddo
 !       enddo
@@ -556,84 +556,84 @@
 !     &      min(0.0e0_R8,t0)/(ni(ix,iy,0)*ti(ix,iy))
 !           b2str(region(ix,iy,0))=b2str(region(ix,iy,0))+t0
 !           b2sihs_str(ix,iy)=b2sihs_str(ix,iy)+t0
-!	   endif                                                       !srv 26.11.02
+!          endif                                                       !srv 26.11.02
 !         enddo
 !        enddo
 !       enddo
 !      endif                                                           !srv 28.06.03 }
 !* ..drift                                                             !srv 11.07.99
       b2wrong1=0.0_R8
-!      do is = 0, ns-1                                                 
-!        do iy = 0, ny-1         ! was ny DPC 970415
+!     do is = 0, ns-1
+!       do iy = 0, ny-1         ! was ny DPC 970415
 !         do ix = 0, nx-1        ! was nx DPC 970415
-!	   t0=phm3*0.25e0_R8*bb(ix,iy,3)*(
-!     1	    (fchdia(rightix(ix,iy),rightiy(ix,iy),0)+fchdia(ix,iy,0))*
-!     1	    (uadia(topix(ix,iy),topiy(ix,iy),1,is)+uadia(ix,iy,1,is))-
-!     1	    (fchdia(topix(ix,iy),topiy(ix,iy),1)+fchdia(ix,iy,1))*
-!     1	    (uadia(rightix(ix,iy),rightiy(ix,iy),0,is)+
-!     2	    uadia(ix,iy,0,is)))
-!!	   t0 = 0.0e0_R8                                               !srv 31.05.99
-!	   she0(ix,iy,0) = she0(ix,iy,0)+max(0.0e0_R8,t0)
-!	   she0(ix,iy,3) = she0(ix,iy,3)+
-!     &	    min(0.0e0_R8,t0)/(ne(ix,iy)*te(ix,iy))
-!	   shi0(ix,iy,0) = shi0(ix,iy,0)+max(0.0e0_R8,-t0)
-!	   shi0(ix,iy,3) = shi0(ix,iy,3)+
-!     &	    min(0.0e0_R8,-t0)/(ni(ix,iy,0)*ti(ix,iy))
+!          t0=phm3*0.25e0_R8*bb(ix,iy,3)*(
+!     1     (fchdia(rightix(ix,iy),rightiy(ix,iy),0)+fchdia(ix,iy,0))*
+!     1     (uadia(topix(ix,iy),topiy(ix,iy),1,is)+uadia(ix,iy,1,is))-
+!     1     (fchdia(topix(ix,iy),topiy(ix,iy),1)+fchdia(ix,iy,1))*
+!     1     (uadia(rightix(ix,iy),rightiy(ix,iy),0,is)+
+!     2      uadia(ix,iy,0,is)))
+!!         t0 = 0.0e0_R8                                               !srv 31.05.99
+!          she0(ix,iy,0) = she0(ix,iy,0)+max(0.0e0_R8,t0)
+!          she0(ix,iy,3) = she0(ix,iy,3)+
+!     &     min(0.0e0_R8,t0)/(ne(ix,iy)*te(ix,iy))
+!          shi0(ix,iy,0) = shi0(ix,iy,0)+max(0.0e0_R8,-t0)
+!          shi0(ix,iy,3) = shi0(ix,iy,3)+
+!     &     min(0.0e0_R8,-t0)/(ni(ix,iy,0)*ti(ix,iy))
 !          b2wrong1(region(ix,iy,0))=b2wrong1(region(ix,iy,0))+t0
-!	 enddo
+!         enddo
 !       enddo
-!      enddo                                                          !srv 11.07.99
+!     enddo                                                            !srv 11.07.99
 * ..return
       if(iout.eq.1) then
-	 do k=0,3
-	  write (chk,'(i1)') k
-	  call my_out(70,nx,ny,shedu(-1,-1,k),'b2sihs__shedu'//chk)
-	  call my_out(70,nx,ny,shedd(-1,-1,k),'b2sihs__shedd'//chk)
-	  call my_out(70,nx,ny,shefr(-1,-1,k),'b2sihs__shefr'//chk)
-!	  call my_out(70,nx,ny,she0(-1,-1,k),'b2sihs__she'//chk)
+        do k=0,3
+          write (chk,'(i1)') k
+          call my_out(70,nx,ny,shedu(-1,-1,k),'b2sihs__shedu'//chk)
+          call my_out(70,nx,ny,shedd(-1,-1,k),'b2sihs__shedd'//chk)
+          call my_out(70,nx,ny,shefr(-1,-1,k),'b2sihs__shefr'//chk)
+!         call my_out(70,nx,ny,she0(-1,-1,k),'b2sihs__she'//chk)
 
-	  call my_out(70,nx,ny,shidu(-1,-1,k),'b2sihs__shidu'//chk)
-	  call my_out(70,nx,ny,shidd(-1,-1,k),'b2sihs__shidd'//chk)
-	  call my_out(70,nx,ny,shifr(-1,-1,k),'b2sihs__shifr'//chk)
-	  call my_out(70,nx,ny,shiva(-1,-1,k),'b2sihs__shiva'//chk)
-	  call my_out(70,nx,ny,shivc(-1,-1,k),'b2sihs__shivc'//chk)
-!	  call my_out(70,nx,ny,shi0(-1,-1,k),'b2sihs__shi'//chk)
-	 enddo
-	endif
+          call my_out(70,nx,ny,shidu(-1,-1,k),'b2sihs__shidu'//chk)
+          call my_out(70,nx,ny,shidd(-1,-1,k),'b2sihs__shidd'//chk)
+          call my_out(70,nx,ny,shifr(-1,-1,k),'b2sihs__shifr'//chk)
+          call my_out(70,nx,ny,shiva(-1,-1,k),'b2sihs__shiva'//chk)
+          call my_out(70,nx,ny,shivc(-1,-1,k),'b2sihs__shivc'//chk)
+!         call my_out(70,nx,ny,shi0(-1,-1,k),'b2sihs__shi'//chk)
+        enddo
+      endif
       if (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1 .or. iout_b2wdat.eq.4)
      &                                            then
-         wrks=she0(:,:,0)+she0(:,:,1)*te+
-     &        she0(:,:,2)*ne + she0(:,:,3)*te*ne
-	 call my_out(70,nx,ny,wrks,'b2sihs__she')
-         wrks=shedu(:,:,0)+shedu(:,:,1)*te+
-     &        shedu(:,:,2)*ne + shedu(:,:,3)*te*ne
-	 call my_out(70,nx,ny,wrks,'b2sihs__shedu')
-         wrks=shedd(:,:,0)+shedd(:,:,1)*te+
-     &        shedd(:,:,2)*ne + shedd(:,:,3)*te*ne
-	 call my_out(70,nx,ny,wrks,'b2sihs__shedd')
-         wrks=shefr(:,:,0)+shefr(:,:,1)*te+
-     &   shefr(:,:,2)*ne + shefr(:,:,3)*te*ne
-	 call my_out(70,nx,ny,wrks,'b2sihs__shefr')
+        wrks=she0(:,:,0)+she0(:,:,1)*te+
+     &       she0(:,:,2)*ne + she0(:,:,3)*te*ne
+        call my_out(70,nx,ny,wrks,'b2sihs__she')
+        wrks=shedu(:,:,0)+shedu(:,:,1)*te+
+     &       shedu(:,:,2)*ne + shedu(:,:,3)*te*ne
+        call my_out(70,nx,ny,wrks,'b2sihs__shedu')
+        wrks=shedd(:,:,0)+shedd(:,:,1)*te+
+     &       shedd(:,:,2)*ne + shedd(:,:,3)*te*ne
+        call my_out(70,nx,ny,wrks,'b2sihs__shedd')
+        wrks=shefr(:,:,0)+shefr(:,:,1)*te+
+     &  shefr(:,:,2)*ne + shefr(:,:,3)*te*ne
+        call my_out(70,nx,ny,wrks,'b2sihs__shefr')
 
-         wrks=shi0(:,:,0)+shi0(:,:,1)*ti+
-     &        shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
-	 call my_out(70,nx,ny,wrks,'b2sihs__shi')
-         wrks=shidu(:,:,0)+shidu(:,:,1)*ti+
-     &        shidu(:,:,2)*ni(:,:,0)+shidu(:,:,3)*ti*ni(:,:,0)
-	 call my_out(70,nx,ny,wrks,'b2sihs__shidu')
-         wrks=shidd(:,:,0)+shidd(:,:,1)*ti+
-     &        shidd(:,:,2)*ni(:,:,0)+shidd(:,:,3)*ti*ni(:,:,0)
-	 call my_out(70,nx,ny,wrks,'b2sihs__shidd')
-         wrks=shifr(:,:,0)+shifr(:,:,1)*ti+
-     &        shifr(:,:,2)*ni(:,:,0)+shifr(:,:,3)*ti*ni(:,:,0)
-	 call my_out(70,nx,ny,wrks,'b2sihs__shifr')
-         wrks=shiva(:,:,0)+shiva(:,:,1)*ti+
-     &        shiva(:,:,2)*ni(:,:,0)+shiva(:,:,3)*ti*ni(:,:,0)
-	 call my_out(70,nx,ny,wrks,'b2sihs__shiva')
-         wrks=shivc(:,:,0)+shivc(:,:,1)*ti+
-     &        shivc(:,:,2)*ni(:,:,0)+shivc(:,:,3)*ti*ni(:,:,0)
-	 call my_out(70,nx,ny,wrks,'b2sihs__shivc')
-	endif
+        wrks=shi0(:,:,0)+shi0(:,:,1)*ti+
+     &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
+        call my_out(70,nx,ny,wrks,'b2sihs__shi')
+        wrks=shidu(:,:,0)+shidu(:,:,1)*ti+
+     &       shidu(:,:,2)*ni(:,:,0)+shidu(:,:,3)*ti*ni(:,:,0)
+        call my_out(70,nx,ny,wrks,'b2sihs__shidu')
+        wrks=shidd(:,:,0)+shidd(:,:,1)*ti+
+     &       shidd(:,:,2)*ni(:,:,0)+shidd(:,:,3)*ti*ni(:,:,0)
+        call my_out(70,nx,ny,wrks,'b2sihs__shidd')
+        wrks=shifr(:,:,0)+shifr(:,:,1)*ti+
+     &       shifr(:,:,2)*ni(:,:,0)+shifr(:,:,3)*ti*ni(:,:,0)
+        call my_out(70,nx,ny,wrks,'b2sihs__shifr')
+        wrks=shiva(:,:,0)+shiva(:,:,1)*ti+
+     &       shiva(:,:,2)*ni(:,:,0)+shiva(:,:,3)*ti*ni(:,:,0)
+        call my_out(70,nx,ny,wrks,'b2sihs__shiva')
+        wrks=shivc(:,:,0)+shivc(:,:,1)*ti+
+     &       shivc(:,:,2)*ni(:,:,0)+shivc(:,:,3)*ti*ni(:,:,0)
+        call my_out(70,nx,ny,wrks,'b2sihs__shivc')
+      endif
       ncall = ncall+1
       call subend ()
       return

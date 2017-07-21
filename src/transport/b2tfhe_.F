@@ -931,7 +931,7 @@ c  ..set null flux in guard cells  ?
            fhe_pschused(ix,iy,0) = 0.0_R8
          endif
         else                                                           !srv 26.11.02 }
-	   ehx = ehx_(ix,iy)                                             !srv 13.01.17
+         ehx = ehx_(ix,iy)                                             !srv 13.01.17
          tex = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
          if(pot_eq.ne.1 .and. no_current.ne.0) then                    !srv 27.02.13
           fch_p = 0.0e0_R8

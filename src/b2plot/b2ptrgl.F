@@ -328,7 +328,7 @@ c        wo=-1.0e-6_R8*wo/s(iy,1)
           if(.not.ft44) wnutrg(iy,j)=wnutrg(iy,j)*u/s(iy,j)
           netrg(iy,j)=ne(k+l,iy)
           tetrg(iy,j)=te(k+l,iy)/ev
-		  titrg(iy,j)=ti(k+l,iy)/ev
+          titrg(iy,j)=ti(k+l,iy)/ev
           if (ft44) then
             do is=1,natmi
 c             carlis Using values directly calculated from Eirene
@@ -382,12 +382,12 @@ c carlis If starting @midplane in SOL then remove half of starting cell
               do ix=ixend(j,ik),ixstart(j,ik)
                 t1(ik)=t1(ik)+hx(ix,iy)/
      1                (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
-              end do	  
+              end do
             else
               do ix=ixstart(j,ik),ixend(j,ik)
                 t1(ik)=t1(ik)+hx(ix,iy)/
      1                (sqrt(bb(ix,iy,0)**2+bb(ix,iy,1)**2)/bb(ix,iy,3))
-              end do			  
+              end do
             endif
           end do
           lcnnt(iy,j)=t1(1)
@@ -988,7 +988,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           nclm_er=2+4*natmi+2*nmoli
         endif
         l=1
-	do ia=1,natmi
+        do ia=1,natmi
           fpt_str(1,ia)=trim(TEXTA(ia))//'_flux_atm'
           fpt_str(2,ia)=trim(TEXTA(ia))//'_flux_ion'
           fpt_str(3,ia)=trim(TEXTA(ia))//'_temp_atm'

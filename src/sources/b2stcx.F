@@ -1,8 +1,8 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2stcx (nx, ny, ns, is0, ismain, hz, BoRiS, vol, na,    !srv 09.01.01
-     &  ua, wadia, vadia, vaecrb, ti, ni, rcx, sna0, smq0, shi0)         !srv 07.07.09
+      subroutine b2stcx (nx, ny, ns, is0, ismain, hz, BoRiS, vol, na,   !srv 09.01.01
+     &  ua, wadia, vadia, vaecrb, ti, ni, rcx, sna0, smq0, shi0)        !srv 07.07.09
       use b2mod_types
       use b2mod_indirect
       use b2mod_constants
@@ -11,7 +11,7 @@
       use b2mod_b2cmpa
 #ifdef ASTRA
       use b2mod_b2_to_astra
-#endif	                       
+#endif
       use b2mod_balance !djm Jan2017
      & , only : b2stcx_sna0to1, b2stcx_smq0to3, b2stcx_shi0to3,
      &          balance_netcdf
@@ -19,9 +19,9 @@
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, is0, ismain
       real (kind=R8) ::
-     *  hz(-1:nx,-1:ny), BoRiS, vol(-1:nx,-1:ny),                        !srv 09.01.01
-     &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1), 
-     &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), rcx(-1:nx,-1:ny,0:ns-1),  
+     *  hz(-1:nx,-1:ny), BoRiS, vol(-1:nx,-1:ny),                       !srv 09.01.01
+     &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
+     &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), rcx(-1:nx,-1:ny,0:ns-1),
      &  wadia(-1:nx,-1:ny,0:1,0:ns-1), vadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  vaecrb(-1:nx,-1:ny,0:1,0:ns-1)
 *   ..output arguments (unspecified on entry)
@@ -115,8 +115,8 @@
 ctmp.dpc
 c       write(*,*) 'DPC: b2stcx: is0 ',is0
 c       do is = 1, ns-1
-c	 write(*,*) 'is,lnext,samax(rcx) ',
-c     1	  is,lnext(is-1,is),samax(n2,rcx(-1,-1,is),1)
+c        write(*,*) 'is,lnext,samax(rcx) ',
+c     1   is,lnext(is-1,is),samax(n2,rcx(-1,-1,is),1)
 c       enddo
 ctmp.dpc
 
@@ -149,14 +149,14 @@ ctmp.dpc
      &       t0*na(ix,iy,is0)
             sna0(ix,iy,1,is0) = sna0(ix,iy,1,is0)-
      &       t0*na(ix,iy,is)
-	    rcxna(ix,iy,is)=rcxna(ix,iy,is)+
-     1	     t0*na(ix,iy,is0)*na(ix,iy,is)
-	    rcxna(ix,iy,is0)=rcxna(ix,iy,is0)-
-     1	     t0*na(ix,iy,is0)*na(ix,iy,is)
+            rcxna(ix,iy,is)=rcxna(ix,iy,is)+
+     1       t0*na(ix,iy,is0)*na(ix,iy,is)
+            rcxna(ix,iy,is0)=rcxna(ix,iy,is0)-
+     1       t0*na(ix,iy,is0)*na(ix,iy,is)
             rcxnareg(region(ix,iy,0),is)=
-     1	     rcxnareg(region(ix,iy,0),is)+t0*na(ix,iy,is0)*na(ix,iy,is)
+     1       rcxnareg(region(ix,iy,0),is)+t0*na(ix,iy,is0)*na(ix,iy,is)
             rcxnareg(region(ix,iy,0),is0)=
-     1	     rcxnareg(region(ix,iy,0),is0)-t0*na(ix,iy,is0)*na(ix,iy,is)
+     1       rcxnareg(region(ix,iy,0),is0)-t0*na(ix,iy,is0)*na(ix,iy,is)
            endif
           enddo
          enddo
@@ -266,12 +266,12 @@ ctmp.dpc
               smq0(ix,iy,1,is0) = smq0(ix,iy,1,is0)-
      &         (1.0_R8+rg0)*t2
             endif
-	    rcxmo(ix,iy,is)=rcxmo(ix,iy,is)+t1*ua(ix,iy,is)
-	    rcxmo(ix,iy,is0)=rcxmo(ix,iy,is0)-t2*ua(ix,iy,is)
+            rcxmo(ix,iy,is)=rcxmo(ix,iy,is)+t1*ua(ix,iy,is)
+            rcxmo(ix,iy,is0)=rcxmo(ix,iy,is0)-t2*ua(ix,iy,is)
             rcxmoreg(region(ix,iy,0),is)=
-     1	     rcxmoreg(region(ix,iy,0),is)+t1*ua(ix,iy,is)
+     1       rcxmoreg(region(ix,iy,0),is)+t1*ua(ix,iy,is)
             rcxmoreg(region(ix,iy,0),is0)=
-     1	     rcxmoreg(region(ix,iy,0),is0)-t2*ua(ix,iy,is0)
+     1       rcxmoreg(region(ix,iy,0),is0)-t2*ua(ix,iy,is0)
           endif
          enddo
         enddo
@@ -280,27 +280,27 @@ ctmp.dpc
 
 #ifdef ASTRA
       do is = 0, ns-1                     !srv 28.07.11 {
-	if(is.eq.ismain) then
+        if(is.eq.ismain) then
           wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
           call b2_to_astra_src(nx, ny, vol, wrk0, svol, se)
-	endif
+        endif
       enddo
       wrk0=shi0(:,:,0)+
      &     shi0(:,:,1)*ti+shi0(:,:,2)*ni(:,:,0)+
      &     shi0(:,:,3)*ni(:,:,0)*ti
-      call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)                 !srv 11.06.13
-#endif	                       
+      call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)                !srv 11.06.13
+#endif
 
       if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
      &              .or. iout_b2wdat.eq.4) then
         write (chcx,'(i3.3)') is0
         do is = 0, ns-1
           write (chns,'(i3.3)') is
-!	  do k=0,1
-!	   write (chk,'(i1)') k
-!	   call my_out(70,nx,ny,sna0(-1,-1,k,is),
+!         do k=0,1
+!          write (chk,'(i1)') k
+!          call my_out(70,nx,ny,sna0(-1,-1,k,is),
 !     &     'b2stcx_sna'//chk//'_'//chcx//'_'//chns)
-!	  enddo
+!         enddo
           wrk0=sna0(:,:,0,is)+sna0(:,:,1,is)*na(:,:,is)
           call my_out(70,nx,ny,wrk0,'b2stcx_sna_'//chcx//'_'//chns)
         enddo
@@ -308,11 +308,11 @@ ctmp.dpc
       if (iout.eq.1 .or. iout_b2npmo.eq.1 .or. iout_b2wdat .eq.4) then
         do is = 0, ns-1
           write (chns,'(i3.3)') is
-!	  do k=0,1
-!	   write (chk,'(i1)') k
-!	   call my_out(70,nx,ny,smq0(-1,-1,k,is),
+!         do k=0,1
+!          write (chk,'(i1)') k
+!          call my_out(70,nx,ny,smq0(-1,-1,k,is),
 !     &     'b2stcx_smq'//chk//'_'//chcx//'_'//chns)
-!	  enddo
+!         enddo
           wrk0=smq0(:,:,0,is)+                                          !srv 28.02.17
      &         smq0(:,:,1,is)*ua(:,:,is)+
      &         smq0(:,:,2,is)*na(:,:,is)*mp*am(is)+
@@ -322,10 +322,10 @@ ctmp.dpc
       endif
       if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)
      & .or. iout_b2wdat .eq.4) then
-!	 do k=0,1
-!	  write (chk,'(i1)') k
-!	  call my_out(70,nx,ny,shi0(-1,-1,k),'b2stcx_shi'//chk//'_'//chcx)
-!	 enddo
+!        do k=0,1
+!         write (chk,'(i1)') k
+!         call my_out(70,nx,ny,shi0(-1,-1,k),'b2stcx_shi'//chk//'_'//chcx)
+!        enddo
         wrk0=shi0(:,:,0)+shi0(:,:,1)*ti+
      &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2stcx_shi_'//chcx)

@@ -1,28 +1,28 @@
       subroutine b2wdat (nx, ny, ns, ismain, ismain0, BoRiS)     !srv 05.10.01
-      use b2mod_types 
-      use b2mod_constants 
-      use b2mod_geo 
-      use b2mod_geo_corner 
-      use b2mod_plasma 
-      use b2mod_rates 
-      use b2mod_residuals 
-      use b2mod_sources 
-      use b2mod_anomalous_transport 
-      use b2mod_transport 
-      use b2mod_work 
-      use b2mod_indirect 
+      use b2mod_types
+      use b2mod_constants
+      use b2mod_geo
+      use b2mod_geo_corner
+      use b2mod_plasma
+      use b2mod_rates
+      use b2mod_residuals
+      use b2mod_sources
+      use b2mod_anomalous_transport
+      use b2mod_transport
+      use b2mod_work
+      use b2mod_indirect
       use b2mod_external
-      use b2mod_neutrals_namelist 
-      use b2mod_boundary_namelist 
-      use b2mod_elements 
+      use b2mod_neutrals_namelist
+      use b2mod_boundary_namelist
+      use b2mod_elements
 !      use b2mod_sign_of_magnetic_field
-      use b2mod_b2cmgs 
-      use b2mod_b2cmpa 
-      use b2mod_b2cmpb 
-      use b2mod_b2cmpt 
-      use b2mod_b2cmrc 
+      use b2mod_b2cmgs
+      use b2mod_b2cmpa
+      use b2mod_b2cmpb
+      use b2mod_b2cmpt
+      use b2mod_b2cmrc
 #ifdef B25_EIRENE
-      use eirmod_extrab25 
+      use eirmod_extrab25
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
@@ -48,6 +48,7 @@
       integer n2, jsep, jxi, jxa, ndat, k, mintopcut, ixx,         !srv 12.07.10
      *        nxtl, nxtr, ix1, ix2                                 !iyv 04.02.11
       integer use_astra
+      integer boundary_namelist
       integer, save :: ishift=0                                    !srv 05.11.09
       real (kind=R8) ::                                            !srv
      *  Total_current(-1:ny), B0out, Total_flux(-1:ny),            !srv 31.08.00 19.02.02
@@ -59,23 +60,23 @@
      *  Total_energy_flux_i_mdf(-1:ny),
      *  Total_energy_flux_e_mdf(-1:ny),
 !     *  kintmp,
-     *  sfuadia(-1:ny,0:ns-1), sfvadia(-1:ny,0:ns-1), 
+     *  sfuadia(-1:ny,0:ns-1), sfvadia(-1:ny,0:ns-1),
      *  sfvaecrb(-1:ny,0:ns-1), sfna(-1:ny,0:ns-1),
      &  sfna_mdf(-1:ny,0:ns-1), sfn(-1:ny), sfn_mdf(-1:ny),
      &  boundary_flux(1:nbc,0:ns-1), sum_sdiv, sum_ssna,
      &  sdiv(0:ns-1), ssna(0:ns-1),                                !srv 12.04.12
-     &  cutll, cutlo, t0,
+     &  cutll, cutlo, t0, phi_app,
      &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cst(-1:nx,-1:ny)         !srv 30.01.15
       real (kind=R8) ::  bsp(-1:ny), csp(-1:ny), dsp(-1:ny), dy,
      &     cr(4*(ny+1)+1), dseval, wdim(8*ns)                      !srv 03.04.13
       real (kind=R8) ::
      *     hlp, hlp_s, s
-      real (kind=R8)  ::                                           !iyv 15.10.09 
+      real (kind=R8)  ::                                           !iyv 15.10.09
      *   qe_out_sum, qi_out_sum, q_out_sum,                        !iyv 04.02.11
-     *   qe_inn_sum, qi_inn_sum, q_inn_sum, 
-     *   qe_oup_sum, qi_oup_sum, q_oup_sum, 
-     *   qe_iup_sum, qi_iup_sum, q_iup_sum, 
-     *   uvbtot, voltot                                            !iyv 29.11.13 
+     *   qe_inn_sum, qi_inn_sum, q_inn_sum,
+     *   qe_oup_sum, qi_oup_sum, q_oup_sum,
+     *   qe_iup_sum, qi_iup_sum, q_iup_sum,
+     *   uvbtot, voltot                                            !iyv 29.11.13
       character chns*3                                             !srv 27.04.01
       character(23) hlp_frm                                        !srv 03.04.13
       character*26 boundary_location(nbcd)
@@ -93,8 +94,8 @@
       hy1(ix,iy) = hy(ix,iy)*qz(ix,iy,1)
       expu2(t0) = dim(exp(min(20.0_R8,max(t0,cutll))),cutlo)
 *   ..initialisation
-      save ncall, iout, use_astra
-      data ncall/0/, iout/0/, use_astra/0/
+      save ncall, iout, use_astra, boundary_namelist
+      data ncall/0/, iout/0/, use_astra/0/, boundary_namelist/0/
 
 *-----------------------------------------------------------------------
 *.documentation-internal
@@ -112,6 +113,7 @@
        call ipgeti('b2wdat_iout', iout)                           !srv 05.10.01
        call ipgeti('b2wdat_ishift', ishift)                       !srv 05.10.01
        call ipgeti('b2mndr_astra', use_astra)
+       call ipgeti('b2stbc_boundary_namelist',boundary_namelist)
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -179,7 +181,7 @@
      *                      'fna_nodrifty'//chns)
         call my_out(70,nx,ny,sna(-1,-1,0,is),'sna0'//chns)        !srv 25.02.16
         call my_out(70,nx,ny,sna(-1,-1,1,is),'sna1'//chns)        !srv 25.02.16
-               
+
         call my_out(70,nx,ny,cdna(-1,-1,0,is),'cdnax'//chns)      !srv
         call my_out(70,nx,ny,cdna(-1,-1,1,is),'cdnay'//chns)      !srv
         call my_out(70,nx,ny,cdpa(-1,-1,0,is),'cdpax'//chns)      !srv
@@ -256,10 +258,10 @@
           Total_flux(iy) = 0.0d0
           Total_absflux(iy) = 0.0d0
           do ix=-1,nx
-	    if(mod(region(ix,iy,0),4).eq.1) then                  ! for CORE
+            if(mod(region(ix,iy,0),4).eq.1) then                  ! for CORE
               Total_flux(iy) = Total_flux(iy) + fmo(ix,iy,1,is)
               Total_absflux(iy)=Total_absflux(iy)+abs(fmo(ix,iy,1,is))
-	    endif
+            endif
           enddo
           write (70,'(1x,i4,2(2x,es14.7))') iy, Total_flux(iy),
      &           Total_absflux(iy)
@@ -395,10 +397,10 @@
         Total_current(iy) = 0.0_R8
         Total_abscurrent(iy) = 0.0_R8
         do ix = -1, nx
-	  if(mod(region(ix,iy,0),4).eq.1) then                     ! for CORE
+          if(mod(region(ix,iy,0),4).eq.1) then                     ! for CORE
             Total_current(iy) = Total_current(iy) + fch(ix,iy,1)
             Total_abscurrent(iy)=Total_current(iy)+abs(fch(ix,iy,1))
-	  endif
+          endif
         enddo
         write (70,'(1x,i4,2(2x,es14.7))') iy, Total_current(iy),
      &                                        Total_abscurrent(iy)
@@ -412,15 +414,15 @@
       open(70,file='b2mn_chk.prt')
       call b2wfcp (70, 0, ns)
       close(70)                                                    !srv 19.12.07 }
-*   ..write "experimental" data                 
+*   ..write "experimental" data
       ndat = 1
       cr(ndat) = crdy_c_cell(nmdpl,-1)
       do iy = -1, ny-1
-	dy = (crdy_c_cell(nmdpl,iy+1)-crdy_c_cell(nmdpl,iy))/4.0_R8
-	do k=1,4
-	  cr(ndat+1)=cr(ndat)+dy
+        dy = (crdy_c_cell(nmdpl,iy+1)-crdy_c_cell(nmdpl,iy))/4.0_R8
+        do k=1,4
+          cr(ndat+1)=cr(ndat)+dy
           ndat = ndat+1
-	enddo
+        enddo
       enddo
 
       call dspline(ny+2,crdy_c_cell(nmdpl,:),ne(nmdpl,:),bsp,csp,dsp)
@@ -466,9 +468,9 @@
       iy = 0
       power=0.0_R8
       do ix = -1, nx
-	if(mod(region(ix,iy,0),4).eq.1) then                     ! for CORE
-	  power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
-	endif
+        if(mod(region(ix,iy,0),4).eq.1) then                     ! for CORE
+          power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
+        endif
       enddo
       open(70,file='exppw.dat')
       write(70,"(es14.6)") power
@@ -476,10 +478,10 @@
 *   ..calculate integrated particle fluxes for checking
       open(70,file='Total_particle_fluxes_in_Core.dat')
       do is = 0,ns-1
-	write (70,"(a,1x,a2,i1)") 'Total_particle_flux ',
+        write (70,"(a,1x,a2,i1)") 'Total_particle_flux ',
      &     adjustr(is_codes(is)),nint(zamin(is))
-	write(70,"(' iy ','   sfuadia  ','   sfvadia  ','   sfvaecrb ',
-     &  '    sfna   ','    sfna_mdf ')")
+        write(70,"(' iy ','   sfuadia  ','   sfvadia  ','   sfvaecrb ',
+     &     '    sfna   ','    sfna_mdf ')")
         do iy = ny,-1, -1
           sfuadia(iy,is)  =0.0_R8
           sfvadia(iy,is)  =0.0_R8
@@ -487,26 +489,30 @@
           sfna(iy,is)     =0.0_R8
           sfna_mdf(iy,is) =0.0_R8
           do ix = -1, nx
-	   if(mod(region(ix,iy,0),4).eq.1.and.bottomiy(ix,iy).ne.-2) then  ! for CORE  !srv 01.02.12
-	    sfuadia(iy,is) = sfuadia(iy,is) + uadia(ix,iy,1,is)*
-     5     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/     
-     6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &     (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/2.0_R8
-	    sfvadia(iy,is) = sfvadia(iy,is) + vadia(ix,iy,1,is)*
-     5     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/     
-     6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &     (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/2.0_R8
-	    sfvaecrb(iy,is) = sfvaecrb(iy,is) + vaecrb(ix,iy,1,is)*
-     5     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/     
-     6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
-     &     (na(bottomix(ix,iy),bottomiy(ix,iy),is)+na(ix,iy,is))/2.0_R8
-	    sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,is)
-	    sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,is)
-	   endif
-	  enddo
-	  write(70,"(i4,5es15.7)") iy, sfuadia(iy,is), sfvadia(iy,is),
+            if(mod(region(ix,iy,0),4).eq.1.and.
+     &        bottomiy(ix,iy).ne.-2) then  ! for CORE              !srv 01.02.12
+              sfuadia(iy,is) = sfuadia(iy,is) + uadia(ix,iy,1,is)*
+     5         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+     6         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &         (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     &          na(ix,iy,is))/2.0_R8
+              sfvadia(iy,is) = sfvadia(iy,is) + vadia(ix,iy,1,is)*
+     5         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+     6         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &         (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     &          na(ix,iy,is))/2.0_R8
+              sfvaecrb(iy,is) = sfvaecrb(iy,is) + vaecrb(ix,iy,1,is)*
+     5         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+     6         (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &         (na(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     &          na(ix,iy,is))/2.0_R8
+              sfna(iy,is) = sfna(iy,is) + fna(ix,iy,1,is)
+              sfna_mdf(iy,is) = sfna_mdf(iy,is) + fna_mdf(ix,iy,1,is)
+            endif
+          enddo
+          write(70,"(i4,5es15.7)") iy, sfuadia(iy,is), sfvadia(iy,is),
      &     sfvaecrb(iy,is), sfna(iy,is), sfna_mdf(iy,is)
-	 enddo
+        enddo
       enddo
 
       write (70,"(a)") 'Total particle flux over all particles '      !srv 12.04.12 {
@@ -530,17 +536,17 @@
           do ix=-1,nx
             wrk0(ix,iy)=0.5_R8*pi*
      &        (crx(ix,iy,0)+crx(ix,iy,1)+crx(ix,iy,2)+crx(ix,iy,3))
-	  enddo
+          enddo
         enddo
         call my_out(70,nx,ny,wrk0,'2piR')                            !srv 15.09.14
         wrk1=wrk0-hz
         call my_out(70,nx,ny,wrk1,'2piRmhz')                         !srv 15.09.14
       else if (isymm.eq.3 .or. isymm.eq.4) then
         do iy=-1,ny
-	  do ix=-1,nx
+          do ix=-1,nx
             wrk0(ix,iy)=0.5_R8*pi*
      &        (cry(ix,iy,0)+cry(ix,iy,1)+cry(ix,iy,2)+cry(ix,iy,3))
-	  enddo
+          enddo
         enddo
         call my_out(70,nx,ny,wrk0,'2piZ')                            !srv 15.09.14
         wrk1=wrk0-hz
@@ -562,62 +568,64 @@
       if(iout.eq.1 .or. iout_iout_ASTRA.eq.1
      &                .or. iout.eq.3 .or. iout.eq.4) then                       !srv 19.04.13
 !______________________________________________________________________________ !iyv 15.10.09 {
-! target energy fluxes                                  
+! target energy fluxes
         wrk0=0.0e0_R8
-	wrk1=0.0e0_R8
+        wrk1=0.0e0_R8
 
         if(nncut.eq.2)  then           !iyv 04.02.11
-	  call get_nxt(nx, nxtl, nxtr) ! position of additional targets in DN configuration
+          call get_nxt(nx, nxtl, nxtr) ! position of additional targets in DN configuration
           ix1=nxtl    !inner upper
           ix2=nxtr+1  !outer upper
         endif
 
-	do iy=-1,ny
-        do is = 0, ns-1          
-          if(.not.is_neutral(is)) then          !iyv 07.02.11
+        do iy=-1,ny
+          do is = 0, ns-1
+            if(.not.is_neutral(is)) then          !iyv 07.02.11
 ! pr_inner
-          wrk1(-1,iy)=wrk1(-1,iy)+na(-1,iy,is)*(rza(-1,iy,is)*te(-1,iy)+
-     &                                                 ti(-1,iy))
+              wrk1(-1,iy)=wrk1(-1,iy)+na(-1,iy,is)*
+     &         (rza(-1,iy,is)*te(-1,iy)+ti(-1,iy))
 ! pr_outer
-          wrk1(0,iy)=wrk1(0,iy)+na(nx,iy,is)*(rza(nx,iy,is)*te(nx,iy)+
-     &                                                 ti(nx,iy))
+              wrk1(0,iy)=wrk1(0,iy)+na(nx,iy,is)*
+     &         (rza(nx,iy,is)*te(nx,iy)+ti(nx,iy))
 ! ro_inner
-          wrk1(1,iy) = wrk1(1,iy)+am(is)*mp*na(-1,iy,is)
+              wrk1(1,iy) = wrk1(1,iy)+am(is)*mp*na(-1,iy,is)
 ! ro_outer
-          wrk1(2,iy) = wrk1(2,iy)+am(is)*mp*na(nx,iy,is)
+              wrk1(2,iy) = wrk1(2,iy)+am(is)*mp*na(nx,iy,is)
 
-          if(nncut.eq.2) then !{    !iyv 04.02.11
+              if(nncut.eq.2) then !{    !iyv 04.02.11
 ! pr_inner_upper
-            wrk1(3,iy)=wrk1(3,iy)+na(ix1,iy,is)*(rza(ix1,iy,is)*
-     &                                        te(ix1,iy)+ti(ix1,iy))
+                wrk1(3,iy)=wrk1(3,iy)+na(ix1,iy,is)*
+     &           (rza(ix1,iy,is)*te(ix1,iy)+ti(ix1,iy))
 ! pr_outer_upper
-            wrk1(4,iy)=wrk1(4,iy)+na(ix2,iy,is)*(rza(ix2,iy,is)*
-     &                                        te(ix2,iy)+ti(ix2,iy))
+                wrk1(4,iy)=wrk1(4,iy)+na(ix2,iy,is)*
+     &           (rza(ix2,iy,is)*te(ix2,iy)+ti(ix2,iy))
 ! ro_inner_upper
-            wrk1(5,iy) = wrk1(5,iy)+am(is)*mp*na(ix1,iy,is)
+                wrk1(5,iy) = wrk1(5,iy)+am(is)*mp*na(ix1,iy,is)
 ! ro_outer_upper
-            wrk1(6,iy) = wrk1(6,iy)+am(is)*mp*na(ix2,iy,is)
-          endif
-         endif
-        enddo
+                wrk1(6,iy) = wrk1(6,iy)+am(is)*mp*na(ix2,iy,is)
+              endif
+            endif
+          enddo
 
 ! qe inner
-        wrk0(-1,iy)=hy1(-1,iy)/hy(-1,iy)*abs(bb(-1,iy,0)/bb(-1,iy,3))*    !srv 19.04. 13
-     &   ( te(-1,iy)*(2.0e0_R8)+qe*po(-1,iy)*(1.0_R8-gammae) )*
-     &   ( ne(-1,iy)*sqrt(1.0_R8/(2.0_R8*pi))*sqrt(te(-1,iy)/me)* 
-     &    expu2(max(-50.0_R8, -qe*(po(-1,iy)-0.0_R8)/te(-1,iy))) )   !instead of 0.0_R8 should be potpar(ib,2)
+          phi_app = get_phi_applied(boundary_namelist,-1,iy)
+          wrk0(-1,iy)=hy1(-1,iy)/hy(-1,iy)*abs(bb(-1,iy,0)/bb(-1,iy,3))*    !srv 19.04. 13
+     &     ( te(-1,iy)*(2.0e0_R8)+qe*po(-1,iy)*(1.0_R8-gammae) )*
+     &     ( ne(-1,iy)*sqrt(1.0_R8/(2.0_R8*pi))*sqrt(te(-1,iy)/me)*
+     &     expu2(max(-50.0_R8, -qe*(po(-1,iy)-phi_app)/te(-1,iy))) )
 ! qe outer
-         wrk0(0,iy)=hy1(nx,iy)/hy(nx,iy)*abs(bb(nx,iy,0)/bb(nx,iy,3))*    !srv 19.04. 13
+          phi_app = get_phi_applied(boundary_namelist,nx,iy)
+          wrk0(0,iy)=hy1(nx,iy)/hy(nx,iy)*abs(bb(nx,iy,0)/bb(nx,iy,3))*    !srv 19.04. 13
      &     ( te(nx,iy)*(2.0e0_R8)+qe*po(nx,iy)*(1.0_R8-gammae) )*
-     &     ( ne(nx,iy)*sqrt(1.0_R8/(2.0_R8*pi))*sqrt(te(nx,iy)/me)* 
-     &    expu2(max(-50.0_R8, -qe*(po(nx,iy)-0.0_R8)/te(nx,iy))) )   !instead of 0.0_R8 should be potpar(ib,2)
+     &     ( ne(nx,iy)*sqrt(1.0_R8/(2.0_R8*pi))*sqrt(te(nx,iy)/me)*
+     &     expu2(max(-50.0_R8, -qe*(po(nx,iy)-phi_app)/te(nx,iy))) )
 
-         do is = 0, ns-1
-           if(.not.is_neutral(is)) then
+          do is = 0, ns-1
+            if(.not.is_neutral(is)) then
               wrk0(1,iy)=wrk0(1,iy)+na(-1,iy,is)
               wrk0(2,iy)=wrk0(2,iy)+na(nx,iy,is)
            endif
-	 enddo
+         enddo
 ! qi inner
          wrk0(3,iy)=2.5e0_R8*
      &               hy1(-1,iy)/hy(-1,iy)*abs(bb(-1,iy,0)/bb(-1,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
@@ -629,7 +637,7 @@
 !  are multiplied by a very small factor (like 1.0e-10) in the coupling mode
 
 ! qi outer
-	 wrk0(4,iy)=2.5e0_R8*
+         wrk0(4,iy)=2.5e0_R8*
      &               hy1(nx,iy)/hy(nx,iy)*abs(bb(nx,iy,0)/bb(nx,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(nx,iy)*wrk0(2,iy)*sqrt(wrk1(0,iy)/wrk1(2,iy))
 !  IYS added the heat flux carried by recycling neutrals
@@ -637,28 +645,30 @@
 !  IYS believes that even if the coupling to EIRENE is active, the EIRENE
 !  does not disturb the guard cells and all the fluid sources related to neutrals
 !  are multiplied by a very small factor (like 1.0e-10) in the coupling mode
- 
+
          if(nncut.eq.2) then !{      !iyv 04.02.11
 
 ! qe inner upper
+           phi_app = get_phi_applied(boundary_namelist,ix1,iy)
            wrk0(7,iy)=hy1(ix1,iy)/hy(ix1,iy)*                             !srv 19.04. 13
      &        abs(bb(ix1,iy,0)/bb(ix1,iy,3))*
      &      ( te(ix1,iy)*(2.0e0_R8)+qe*po(ix1,iy)*(1.0_R8-gammae) )*
      &      ( ne(ix1,iy)*sqrt(1.0_R8/(2.0_R8*pi))*sqrt(te(ix1,iy)/me)*
-     &       expu2(max(-50.0_R8, -qe*(po(ix1,iy)-0.0_R8)/te(ix1,iy))) )   !instead of 0.0_R8 should be potpar(ib,2)
+     &       expu2(max(-50.0_R8, -qe*(po(ix1,iy)-phi_app)/te(ix1,iy))) )
 ! qe outer upper
+           phi_app = get_phi_applied(boundary_namelist,ix2,iy)
            wrk0(8,iy)=hy1(ix2,iy)/hy(ix2,iy)*                             !srv 19.04. 13
      &        abs(bb(ix2,iy,0)/bb(ix2,iy,3))*
      &      ( te(ix2,iy)*(2.0e0_R8)+qe*po(ix2,iy)*(1.0_R8-gammae) )*
      &      ( ne(ix2,iy)*sqrt(1.0_R8/(2.0_R8*pi))*sqrt(te(ix2,iy)/me)*
-     &       expu2(max(-50.0_R8, -qe*(po(ix2,iy)-0.0_R8)/te(ix2,iy))) )   !instead of 0.0_R8 should be potpar(ib,2)
+     &       expu2(max(-50.0_R8, -qe*(po(ix2,iy)-phi_app)/te(ix2,iy))) )
 
            do is = 0, ns-1
              if(.not.is_neutral(is)) then
                wrk0(9,iy) =wrk0(9,iy) +na(ix1,iy,is)
                wrk0(10,iy)=wrk0(10,iy)+na(ix2,iy,is)
              endif
-	   enddo 	  		  	  
+           enddo
 ! qi inner upper
            wrk0(11,iy)=2.5e0_R8*
      &           hy1(ix1,iy)/hy(ix1,iy)*abs(bb(ix1,iy,0)/bb(ix1,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
@@ -670,7 +680,7 @@
 !  are multiplied by a very small factor (like 1.0e-10) in the coupling mode
 
 ! qi outer upper
-	   wrk0(12,iy)=2.5e0_R8*
+           wrk0(12,iy)=2.5e0_R8*
      &           hy1(ix2,iy)/hy(ix2,iy)*abs(bb(ix2,iy,0)/bb(ix2,iy,3))*  ! IYS 22.03.2017 changed bb(:,:,0) to abs(bb(:,:,0))
      &               ti(ix2,iy)*wrk0(10,iy)*sqrt(wrk1(4,iy)/wrk1(6,iy))
 !  IYS added the heat flux carried by recycling neutrals
@@ -678,8 +688,8 @@
 !  IYS believes that even if the coupling to EIRENE is active, the EIRENE
 !  does not disturb the guard cells and all the fluid sources related to neutrals
 !  are multiplied by a very small factor (like 1.0e-10) in the coupling mode
-       
-	 endif
+
+         endif
        enddo
 
 ! next part is copied from b2usrtrc
@@ -697,7 +707,7 @@
      .     (hx(-1,iy)+hx(0,iy))))
         end do !}
         hlp=hlp/s
-        wrk0(5,iy) = hlp + wrk0(-1,iy)+wrk0(3,iy) 
+        wrk0(5,iy) = hlp + wrk0(-1,iy)+wrk0(3,iy)
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
@@ -719,7 +729,7 @@
      .     (hx(nx-1,iy)+hx(nx,iy))))
         end do !}
         hlp=hlp/s
-        wrk0(6,iy) = hlp + wrk0(0,iy)+wrk0(4,iy) 
+        wrk0(6,iy) = hlp + wrk0(0,iy)+wrk0(4,iy)
         hlp_s=hlp_s+s
       end do !}
 #ifdef B25_EIRENE
@@ -749,7 +759,7 @@
      .       (hx(ix2-1,iy)+hx(ix2,iy))))
           end do !}
           hlp=hlp/s
-          wrk0(14,iy) = hlp + wrk0(8,iy)+wrk0(12,iy) 
+          wrk0(14,iy) = hlp + wrk0(8,iy)+wrk0(12,iy)
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
@@ -774,7 +784,7 @@
      .       (hx(ix1-1,iy)+hx(ix1,iy))))
           end do !}
           hlp=hlp/s
-          wrk0(13,iy) = hlp + wrk0(7,iy)+wrk0(11,iy) 
+          wrk0(13,iy) = hlp + wrk0(7,iy)+wrk0(11,iy)
           hlp_s=hlp_s+s
         end do !}
 #ifdef B25_EIRENE
@@ -784,10 +794,10 @@
      &                                 hlp_neu_peak/hlp_s
         enddo
 #endif
-      end if !} 
+      end if !}
 
 
-!________________________________________________________________ 
+!________________________________________________________________
 
       qe_out_sum = 0.0d0
       qe_inn_sum = 0.0d0
@@ -805,7 +815,7 @@
         q_inn_sum  = q_inn_sum  + wrk0(5,iy) *hy(-1,iy)*hz(-1,iy)
       enddo
 
-      open (70,file='q_plates.dat') 
+      open (70,file='q_plates.dat')
 
 
       if(nncut.eq.2) then !{
@@ -834,7 +844,6 @@
      &              'qei_olo','qei_oup',
      &              'qe_ilo', 'qe_iup', 'qi_ilo',  'qi_iup',
      &              'qei_ilo','qei_iup'
-     &                                                             
         do iy = ny, -1, -1
           write(70,"(5x,i2,16(1x,es10.3))") iy,
      &             wrk0(6,iy), wrk0(14,iy), wrk0(5,iy), wrk0(13,iy),
@@ -842,17 +851,16 @@
      &             wrk0(0,iy)+wrk0(4,iy),  wrk0(8,iy)+wrk0(12,iy),
      &             wrk0(-1,iy), wrk0(7,iy), wrk0(3,iy), wrk0(11,iy),
      &             wrk0(-1,iy)+wrk0(3,iy),  wrk0(7,iy)+wrk0(11,iy)
-                 
         enddo
-	write(70,41) qe_oup_sum, qi_oup_sum, qe_out_sum, qi_out_sum,
-     &               qe_iup_sum, qi_iup_sum, qe_inn_sum, qi_inn_sum, 
+        write(70,41) qe_oup_sum, qi_oup_sum, qe_out_sum, qi_out_sum,
+     &               qe_iup_sum, qi_iup_sum, qe_inn_sum, qi_inn_sum,
      &               q_oup_sum, q_out_sum, q_iup_sum, q_inn_sum
-                  
+
    41   format(/'Energy e-flux to outer upper plate     =',es11.3/
      &          'Energy i-flux to outer upper plate     =',es11.3/
      &          'Energy e-flux to outer lower plate     =',es11.3/
      &          'Energy i-flux to outer lower plate     =',es11.3//
-   
+
      &          'Energy e-flux to inner low plate       =',es11.3/
      &          'Energy i-flux to inner low plate       =',es11.3/
      &          'Energy e-flux to inner upper plate     =',es11.3/
@@ -868,11 +876,11 @@
         write (70,"(5x,'iy',5x,'qe_out',5x,'qi_out',4x,'qei_out',
      &                    4x,'q_outtg',
      &                    5x,'qe_inn',5x,'qi_inn',4x,'qei_inn',
-     &                    4x,'q_inntg')") 
+     &                    4x,'q_inntg')")
         do iy = ny, -1, -1
           write(70,"(5x,i2,8(1x,es10.3))") iy,
-     &             wrk0(0,iy), wrk0(4,iy), wrk0(0,iy) + wrk0(4,iy), 
-     &             wrk0(6,iy), wrk0(-1,iy),wrk0(3,iy), 
+     &             wrk0(0,iy), wrk0(4,iy), wrk0(0,iy) + wrk0(4,iy),
+     &             wrk0(6,iy), wrk0(-1,iy),wrk0(3,iy),
      &             wrk0(-1,iy)+ wrk0(3,iy),wrk0(5,iy)
         enddo
         write(70,51) qe_out_sum, qi_out_sum, q_out_sum,
@@ -885,7 +893,7 @@
      &          'Energy i-flux to inner plate      =',es11.3//
      &          'Total Energy flux to inner plate  =',es11.3/)
       endif
-      close(70)                                                    
+      close(70)
 
       ishift = 0
 
@@ -895,7 +903,7 @@
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
      &       'qtot(MW/m^2)'
       do iy = 0,ny
-        ixx=-1 !max(-1,ix-1) 
+        ixx=-1 !max(-1,ix-1)
         write(70,"(1x,9es14.6)")                               !srv 03.04.13
      &     crdy_c_cell(ixx+ishift,iy),
      &     0.5_R8*( crx(ixx+ishift,iy,0) + crx(ixx+ishift,iy,2) ),
@@ -904,7 +912,7 @@
      &     abs(bb(ixx+ishift,iy,0))/bb(ixx+ishift,iy,3) *
      &     na(ixx+ishift,iy,ismain) *
      &     sqrt((te(ixx+ishift,iy)+ti(ixx+ishift,iy))/(am(ismain)*mp)),
-     &     wrk0(-1,iy)/1.0e6_R8,wrk0(3,iy)/1.0e6_R8,wrk0(5,iy)/1.0e6_R8        
+     &     wrk0(-1,iy)/1.0e6_R8,wrk0(3,iy)/1.0e6_R8,wrk0(5,iy)/1.0e6_R8
       enddo
       close(70)
 
@@ -914,9 +922,9 @@
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
      &       'qtot(MW/m^2)'
       do iy = 0,ny
-        ixx=nx !min(nx,ix+1) 
+        ixx=nx !min(nx,ix+1)
         write(70,"(1x,9es14.6)")                               !srv 03.04.13
-     &     crdy_c_cell(ixx-ishift,iy), 
+     &     crdy_c_cell(ixx-ishift,iy),
      &     0.5_R8*( crx(ixx-ishift,iy,0) + crx(ixx-ishift,iy,2) ),
      &     te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev,ne(ixx-ishift,iy),
      &     qe * hy1(ixx-ishift,iy)/hy(ixx-ishift,iy) *
@@ -927,10 +935,10 @@
       enddo
       close(70)                                       !srv 19.09.11 }
 
-      if(nncut.eq.2) then 
+      if(nncut.eq.2) then
 
         open(70,file='table_upper_inner.dat')
-        write(70,"(1x,9a14)") 
+        write(70,"(1x,9a14)")
      &       'l(m)', 'Rc(m)', 'Te(eV)', 'Ti(eV)',
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
      &       'qtot(MW/m^2)'
@@ -946,19 +954,19 @@
      &     na(ixx+ishift,iy,ismain) *
      &     sqrt((te(ixx+ishift,iy)+ti(ixx+ishift,iy))/(am(ismain)*mp)),
      &     wrk0(7,iy)/1.0e6_R8, wrk0(11,iy)/1.0e6_R8,
-     &     wrk0(13,iy)/1.0e6_R8        
-	enddo
+     &     wrk0(13,iy)/1.0e6_R8
+        enddo
         close(70)
 
         open(70,file='table_upper_outer.dat')
-	write(70,"(1x,9a14)")
+        write(70,"(1x,9a14)")
      &       'l(m)', 'Rc(m)', 'Te(eV)', 'Ti(eV)',
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
      &       'qtot(MW/m^2)'
-	do iy = 0,ny
-	  ixx=ix2
-	  write(70,"( 1x,9es14.6)")                               !srv 03.04.13
-     &     crdy_c_cell(ixx-ishift,iy), 
+        do iy = 0,ny
+          ixx=ix2
+          write(70,"( 1x,9es14.6)")                               !srv 03.04.13
+     &     crdy_c_cell(ixx-ishift,iy),
      &     0.5_R8*( crx(ixx-ishift,iy,0) + crx(ixx-ishift,iy,2) ),
      &     te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev,ne(ixx-ishift,iy),
      &     qe * hy1(ixx-ishift,iy)/hy(ixx-ishift,iy) *
@@ -967,8 +975,8 @@
      &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(am(ismain)*mp)),
      &     wrk0(8,iy)/1.0e6_R8, wrk0(12,iy)/1.0e6_R8,
      &     wrk0(14,iy)/1.0e6_R8
-	enddo
-	close(70)                                         !srv 19.09.11 }
+        enddo
+        close(70)                                         !srv 19.09.11 }
        endif
       endif      !  iout.eq.1 or. iout_iout_ASTRA.eq.1    !srv 19.04.13
 !______________________________________________________________________________ !iyv 15.10.09 }
@@ -978,64 +986,64 @@
         open(70,file='inner.dat')
         do iy = -1,ny                                     !srv 03.04.13 {
           iw = 0
-	  do ix = -1,nx
-	    if(leftix(ix,iy).eq.-2) then
-	      ixx=max(-1,ix-1)
+          do ix = -1,nx
+            if(leftix(ix,iy).eq.-2) then
+              ixx=max(-1,ix-1)
               wdim(iw+1 )= crdy_c_cell(ixx+ishift,iy)
               wdim(iw+2)= ne(ixx+ishift,iy)
               wdim(iw+3)= te(ixx+ishift,iy)/ev
               wdim(iw+4)= ti(ixx+ishift,iy)/ev
               iw = iw + 4
-!	     write(70,"(\1x,12es14.6)")
+!             write(70,"(\1x,12es14.6)")
 !     &     crdy_c_cell(ixx+ishift,iy),
 !!     &     (crdy_c_cell(ixx+ishift,iy)+cry(ixx+ishift,mintopcut,0))*1e3,
 !     &     ne(ixx+ishift,iy),te(ixx+ishift,iy)/ev, ti(ixx+ishift,iy)/ev
 !!     &    ,ne(ixx+ishift,iy),te(ixx+ishift,iy), ti(ixx+ishift,iy),
 !!     &    ,qe*ne(ixx+ishift,iy)*bb(ixx+ishift,iy,0)/bb(ixx+ishift,iy,3)*
-!!     &     sqrt((te(ixx+ishift,iy)+ti(ixx+ishift,iy))/(mp)) 
-	    endif
-	  enddo
-	  write(70,"(2(1x,4es14.6))") (wdim(ix),ix=1,iw)
-	enddo                                             !srv 03.04.13 }
-	close(70)
+!!     &     sqrt((te(ixx+ishift,iy)+ti(ixx+ishift,iy))/(mp))
+            endif
+          enddo
+          write(70,"(2(1x,4es14.6))") (wdim(ix),ix=1,iw)
+        enddo                                             !srv 03.04.13 }
+        close(70)
 
         open(70,file='midpln.dat')
-	ix=nmdpl
-	do iy=-1,ny
-	  write(70,"(1x,5es14.6)") crdy_c_cell(ix,iy),
+        ix=nmdpl
+        do iy=-1,ny
+          write(70,"(1x,5es14.6)") crdy_c_cell(ix,iy),
 !     &    crx(ix,iy,0)*1e3,
      &     ne(ix,iy), te(ix,iy)/ev, ti(ix,iy)/ev
-	enddo
-	close(70)
+        enddo
+        close(70)
 
         open(70,file='outer.dat')
         do iy = -1,ny                                     !srv 03.04.13 {
          iw = 0
-	 do ix = -1,nx
-	   if(rightix(ix,iy).eq.nx+1) then
-	     ixx=min(nx,ix+1) 
+         do ix = -1,nx
+           if(rightix(ix,iy).eq.nx+1) then
+             ixx=min(nx,ix+1)
              wdim(iw+1 )= crdy_c_cell(ixx-ishift,iy)
              wdim(iw+2)= ne(ixx-ishift,iy)
              wdim(iw+3)= te(ixx-ishift,iy)/ev
              wdim(iw+4)= ti(ixx-ishift,iy)/ev
              iw = iw + 4
-!	     write(70,"(\1x,12es14.6)") 
-!     &     crdy_c_cell(ixx-ishift,iy), 
+!            write(70,"(\1x,12es14.6)")
+!     &     crdy_c_cell(ixx-ishift,iy),
 !!     &     (crdy_c_cell(ixx-ishift,iy)+crx(ixx-ishift,mintopcut,0))*1e3,
-!     &     ne(ixx-ishift,iy),te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev 
-!!     &    ,ne(ixx-ishift,iy),te(ixx-ishift,iy), ti(ixx-ishift,iy) 
+!     &     ne(ixx-ishift,iy),te(ixx-ishift,iy)/ev, ti(ixx-ishift,iy)/ev
+!!     &    ,ne(ixx-ishift,iy),te(ixx-ishift,iy), ti(ixx-ishift,iy)
 !!     &    ,qe*ne(ixx-ishift,iy)*bb(ixx-ishift,iy,0)/bb(ixx-ishift,iy,3)*
-!!     &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(mp)) 
-	   endif
-	 enddo
-	 write(70,"(2(1x,4es14.6))") (wdim(ix),ix=1,iw)
+!!     &     sqrt((te(ixx-ishift,iy)+ti(ixx-ishift,iy))/(mp))
+           endif
+         enddo
+         write(70,"(2(1x,4es14.6))") (wdim(ix),ix=1,iw)
        enddo                                              !srv 03.04.13 }
        close(70)
 
        open(70,file='midplnUi.dat')
        ix=nmdpl
        do iy=-1,ny
-	 write(70,"(1x,2es14.6)") crdy_c_cell(ix,iy), ua(ix,iy,1)
+         write(70,"(1x,2es14.6)") crdy_c_cell(ix,iy), ua(ix,iy,1)
        enddo
        close(70)
 
@@ -1052,9 +1060,9 @@
        iy = 0
        power=0.0_R8
        do ix = -1, nx
-	 if(mod(region(ix,iy,0),4).eq.1) then                ! for CORE
-	   power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
-	 endif
+         if(mod(region(ix,iy,0),4).eq.1) then                ! for CORE
+           power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
+         endif
        enddo
        open(70,file='power.dat')
        write(70,"('Power =',es14.6)") power
@@ -1069,7 +1077,7 @@
      &             12es14.6)") crx(ix-ishift,mintopcut,0)
        do ix = -1,nx
          if(leftix(ix,mintopcut).eq.-2 .and. ix.gt.-1) then
-	   write(70,"(1x,' Separatrix Locationon on Outer Upper =',
+           write(70,"(1x,' Separatrix Locationon on Outer Upper =',
      &             12es14.6)") crx(ix+ishift,mintopcut,0)
          endif
          if(rightix(ix,mintopcut).eq.nx+1 .and. ix.lt.nx) then
@@ -1086,28 +1094,28 @@
        open(70,file='inner_na_ua.dat')                         !srv 03.04.13 {
        write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
        do iy = -1,ny
-         iw = 0      
+         iw = 0
          do ix = -1,nx
           if(leftix(ix,iy).eq.-2) then
-            ixx=max(-1,ix-1) 
+            ixx=max(-1,ix-1)
             iw = iw +1
             wdim(iw )= crdy_c_cell(ixx+ishift,iy)
             do is=0,ns-1
               iw = iw + 1
               wdim(iw)= na(ixx+ishift,iy,is)
-	    enddo
+            enddo
             do is=0,ns-1
               iw = iw + 1
               wdim(iw)= ua(ixx+ishift,iy,is)
             enddo
-!	     write(70,"(\1x,12es14.6)")
+!           write(70,"(\1x,12es14.6)")
 !     &     crdy_c_cell(ixx+ishift,iy),
-!     &     (na(ixx+ishift,iy,is),is=0,ns-1), 
+!     &     (na(ixx+ishift,iy,is),is=0,ns-1),
 !     &     (ua(ixx+ishift,iy,is),is=0,ns-1)
-	  endif
+          endif
         enddo
-	write(70,hlp_frm) (wdim(ix),ix=1,iw)
-!	   write(70,"(<2*ns+1>es14.6)")
+        write(70,hlp_frm) (wdim(ix),ix=1,iw)
+!       write(70,"(<2*ns+1>es14.6)")
       enddo
       close(70)
 
@@ -1117,25 +1125,25 @@
         iw = 0
         do ix = -1,nx
           if(rightix(ix,iy).eq.nx+1) then
-	    ixx=min(nx,ix+1)
+            ixx=min(nx,ix+1)
             iw = iw +1
             wdim(iw )= crdy_c_cell(ixx-ishift,iy)
             do is=0,ns-1
               iw = iw + 1
               wdim(iw)= na(ixx-ishift,iy,is)
-	    enddo
+            enddo
             do is=0,ns-1
               iw = iw + 1
               wdim(iw)= ua(ixx-ishift,iy,is)
             enddo
-!	     write(70,"(\1x,12es14.6)") 
-!     &     crdy_c_cell(ixx-ishift,iy), 
+!           write(70,"(\1x,12es14.6)")
+!     &     crdy_c_cell(ixx-ishift,iy),
 !     &     (na(ixx-ishift,iy,is),is=0,ns-1),
-!     &     (ua(ixx-ishift,iy,is),is=0,ns-1) 
-	  endif
+!     &     (ua(ixx-ishift,iy,is),is=0,ns-1)
+          endif
         enddo
-	write(70,hlp_frm) (wdim(ix),ix=1,iw)
-!	   write(70,"(<2*ns+1>es14.6)")
+        write(70,hlp_frm) (wdim(ix),ix=1,iw)
+!       write(70,"(<2*ns+1>es14.6)")
       enddo
       close(70)                                                !srv 03.04.13 }
 
@@ -1151,8 +1159,8 @@
           iw = iw + 1
           wdim(iw)= ua(ix,iy,is)
         enddo
-	write(70,hlp_frm) (wdim(is),is=1,iw)
-!	    write(70,"(<2*ns+1>es14.6)")
+        write(70,hlp_frm) (wdim(is),is=1,iw)
+!       write(70,"(<2*ns+1>es14.6)")
       enddo
       close(70)
 
@@ -1168,8 +1176,8 @@
           iw = iw + 1
           wdim(iw)= na(ix,iy,is)
         enddo
-	write(70,hlp_frm) (wdim(is),is=1,iw)
-!	    write(70,"(<2*ns+1>es14.6)")
+        write(70,hlp_frm) (wdim(is),is=1,iw)
+!       write(70,"(<2*ns+1>es14.6)")
       enddo
       close(70)                                                !srv 13.02.17 }
 
@@ -1193,7 +1201,7 @@
         write(70,"(a/6i5)") 'nnatmi nnmoli ', nnatmi, nnmoli
         close(70)
         do is = 1,nnatmi                                            !srv 04.06.09 16.02.12{
-	 write (chns,'(i3.3)') is
+         write (chns,'(i3.3)') is
          call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,is,1),'dab2'//chns)
          call my_out(70,nx,ny,tab2(0:nx+1,0:ny+1,is,1),'tab2'//chns)
          call my_out(70,nx,ny,rfluxa(0:nx+1,0:ny+1,is,1),'rfluxa'//chns)
@@ -1204,7 +1212,7 @@
      .                       'pefluxa'//chns)
         enddo
         do is = 1,nnmoli                                            !srv 16.02.12
-	 write (chns,'(i3.3)') is
+         write (chns,'(i3.3)') is
          call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,is,1),'dmb2'//chns) !srv 29.04.10
          call my_out(70,nx,ny,tmb2(0:nx+1,0:ny+1,is,1),'tmb2'//chns) !srv 29.04.10
          call my_out(70,nx,ny,rfluxm(0:nx+1,0:ny+1,is,1),'rfluxm'//chns)
@@ -1230,16 +1238,16 @@
 
        wrk0=0.0e0_R8
        do iy=0,ny
-	 do ix=-1,nx
-	   wrk0(ix,iy)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))/
+         do ix=-1,nx
+           wrk0(ix,iy)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))/
      *                 (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy))) !srv 08.05.07
      *                 *2.0e0_R8
-	 enddo
+         enddo
        enddo
        call my_out(70,nx,ny,wrk0,'Eyf')                              !srv 15.06.04 }
        wrk0=0.0e0_R8                                                 !iyv 15.10.09 {
        do iy=0,ny
-	 do ix=-1,nx
+         do ix=-1,nx
            if(topiy(ix,iy).ne.ny+1) then
              wrk0(ix,iy)=-(po(topix(ix,iy),topiy(ix,iy))-
      *                  po(bottomix(ix,iy),bottomiy(ix,iy)))/
@@ -1247,7 +1255,7 @@
      *                (hy1(bottomix(ix,iy),bottomiy(ix,iy))) +
      *                 hy1(topix(ix,iy),topiy(ix,iy)))
            else
-	     wrk0(ix,iy)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))/
+             wrk0(ix,iy)=-(po(ix,iy)-po(bottomix(ix,iy),bottomiy(ix,iy)))/
      *                (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy))) !
      *                *2.0e0_R8
            endif
@@ -1258,14 +1266,14 @@
 *     calculate shear
        wrk1=0.0e0_R8
        do iy=-1,ny
-	 do ix=-1,nx
+         do ix=-1,nx
            wrk1(ix,iy)= wrk0(ix,iy)/(hz(ix,iy)*bb(ix,iy,0))
          enddo
        enddo
 
        wrk0=0.0e0_R8
        do iy=-1,ny
-	 do ix=-1,nx
+         do ix=-1,nx
            if(bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1)
      *       wrk0(ix,iy)=abs(hz(ix,iy)*bb(ix,iy,0)/bb(ix,iy,3)*
      *              (wrk1(topix(ix,iy),topiy(ix,iy))-
@@ -1273,7 +1281,7 @@
      *                (hy1(ix,iy)+0.5e0_R8*
      *                (hy1(bottomix(ix,iy),bottomiy(ix,iy))) +
      *                 hy1(topix(ix,iy),topiy(ix,iy))))
-	 enddo
+         enddo
        enddo
        call my_out(70,nx,ny,wrk0,'Wsh')                              !iyv 15.10.09 }
 
@@ -1283,11 +1291,11 @@
        wrk1=0.0e0_R8
        wrk2=0.0e0_R8
        do iy = 0,mintopcut-1
-	 do ix=0,nx
-	   if(mod(region(ix,iy,0),4).eq.1) then
+         do ix=0,nx
+           if(mod(region(ix,iy,0),4).eq.1) then
              uvbtot=uvbtot+
      &              ua(ix,iy,ismain)*vol(ix,iy)*bb(ix,iy,3)
-	     voltot=voltot+vol(ix,iy)
+             voltot=voltot+vol(ix,iy)
              wrk0(ix,iy)=
      &           (ne(ix,iy)-ne(bottomix(ix,iy),bottomiy(ix,iy)))/
      &           (hy(ix,iy)+hy(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -1298,8 +1306,8 @@
          enddo
        enddo
        do iy = 0,mintopcut-1
-	 do ix=0,nx
-	   if(mod(region(ix,iy,0),4).eq.1) then
+         do ix=0,nx
+           if(mod(region(ix,iy,0),4).eq.1) then
              wrk2(ix,iy) = -uvbtot/voltot*bb(ix,iy,0)/bb(ix,iy,3)+
      &           (ti(ix,iy)/ne(ix,iy)*
      &           (wrk0(ix,iy)+wrk0(topix(ix,iy),topiy(ix,iy)))+
@@ -1352,7 +1360,7 @@
         Total_energy_flux_i(iy) = 0.0_R8
         Total_energy_flux_i_mdf(iy) = 0.0_R8
         do ix = -1, nx
-	  if(mod(region(ix,iy,0),4).eq.1) then                     ! for CORE
+          if(mod(region(ix,iy,0),4).eq.1) then                     ! for CORE
             Total_energy_flux_i(iy) =
      &       Total_energy_flux_i(iy) + fhi(ix,iy,1)
             Total_energy_flux_i_mdf(iy) =
@@ -1365,7 +1373,7 @@
 !              Total_energy_flux_i(iy) =
 !     &         Total_energy_flux_i(iy) + kintmp*(1.0_R8-BoRiS)
 !            enddo
-	  endif
+          endif
         enddo
         write (70,'(1x,i4,2es18.7)')
      &          iy, Total_energy_flux_i(iy), Total_energy_flux_i_mdf(iy)
@@ -1379,12 +1387,12 @@
         Total_energy_flux_e(iy) = 0.0_R8
         Total_energy_flux_e_mdf(iy) = 0.0_R8
         do ix = -1, nx
-	  if(mod(region(ix,iy,0),4).eq.1) then                     ! for CORE
+          if(mod(region(ix,iy,0),4).eq.1) then                     ! for CORE
             Total_energy_flux_e(iy) =
      &       Total_energy_flux_e(iy) + fhe(ix,iy,1)
             Total_energy_flux_e_mdf(iy) =
      &       Total_energy_flux_e_mdf(iy) + fhe_mdf(ix,iy,1)
-	  endif
+          endif
         enddo
         write (70,'(1x,i4,2es18.7)')
      &          iy, Total_energy_flux_e(iy), Total_energy_flux_e_mdf(iy)
@@ -1429,40 +1437,40 @@
        sum_ssna= 0.0_R8
 
        do is=0, ns-1
-	write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
+        write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
      &               adjustr(is_codes(is)),nint(zamin(is))
 
-	sdiv(is) = 0.0_R8
-	ssna(is) = 0.0_R8
+        sdiv(is) = 0.0_R8
+        ssna(is) = 0.0_R8
 
         do ib=1, nbc
-	 boundary_flux(ib,is)=0.0e0_R8
+         boundary_flux(ib,is)=0.0e0_R8
          IF(BCCHAR(IB).EQ.'S') THEN
            DO IX = 1, BC_LIST_SIZE(IB)
              boundary_flux(ib,is) = boundary_flux(ib,is) +
      &        fna(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &            TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
            end do
-	   sdiv(is) = sdiv(is) - boundary_flux(ib,is)
+           sdiv(is) = sdiv(is) - boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'N') THEN
            DO IX = 1, BC_LIST_SIZE(IB)
             boundary_flux(ib,is) = boundary_flux(ib,is) +
      &        fna(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
            end do
-	   sdiv(is) = sdiv(is) + boundary_flux(ib,is)
+           sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'W') THEN
            DO IY = 1, BC_LIST_SIZE(IB)
             boundary_flux(ib,is) = boundary_flux(ib,is) +
      &        fna(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &            rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)
            end do
-	   sdiv(is) = sdiv(is) - boundary_flux(ib,is)
+           sdiv(is) = sdiv(is) - boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'E') THEN
            DO IY = 1, BC_LIST_SIZE(IB)
              boundary_flux(ib,is) = boundary_flux(ib,is) +
      &        fna(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
            end do
-	   sdiv(is) = sdiv(is) + boundary_flux(ib,is)
+           sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).NE.'X' .AND. BCCHAR(IB).NE.'Y') THEN
            CALL XERRAB
      1         ('B2WDAT: INVALID OPTION')
@@ -1479,23 +1487,23 @@
      &         ' flux =',boundary_flux(ib,is)
         enddo
 
-	do iy = -1,ny
-	  do ix = -1,nx
+        do iy = -1,ny
+          do ix = -1,nx
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &        bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
               ssna(is)=ssna(is)+sna(ix,iy,0,is)+
      &                        sna(ix,iy,1,is)*na(ix,iy,is)
-	    endif
-	  enddo
-	enddo
+            endif
+          enddo
+        enddo
 
-	sum_ssna = sum_ssna + ssna(is)
+        sum_ssna = sum_ssna + ssna(is)
 
-	sum_sdiv = sum_sdiv +sdiv(is)
-	write (70,"(a,9x,a2,i1,3(4x,a,es15.7))")'Balance for equation ',
+        sum_sdiv = sum_sdiv +sdiv(is)
+        write (70,"(a,9x,a2,i1,3(4x,a,es15.7))")'Balance for equation ',
      &     adjustr(is_codes(is)),nint(zamin(is)),
-     &  ' Sdiv =',sdiv(is), ' Ssna =', ssna(is),
-     &  '     Ssna-Sdiv =', ssna(is) - sdiv(is)
+     &     ' Sdiv =',sdiv(is), ' Ssna =', ssna(is),
+     &     '     Ssna-Sdiv =', ssna(is) - sdiv(is)
        enddo
 
        write(70,"(a/33x,4(a,es15.7))") 'Balance over all equations:',
@@ -1511,37 +1519,37 @@
          write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
      &               adjustr(is_codes(is)),nint(zamin(is))
 
-	 sdiv(is) = 0.0_R8
-	 ssna(is) = 0.0_R8
+         sdiv(is) = 0.0_R8
+         ssna(is) = 0.0_R8
 
          do ib=1, nbc
-	  boundary_flux(ib,is)=0.0e0_R8
+          boundary_flux(ib,is)=0.0e0_R8
           IF(BCCHAR(IB).EQ.'S') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
               boundary_flux(ib,is) = boundary_flux(ib,is) +
      &         fna_mdf(TOPIX(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                 TOPIY(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1,is)
             end do
-	    sdiv(is) = sdiv(is) - boundary_flux(ib,is)
+            sdiv(is) = sdiv(is) - boundary_flux(ib,is)
           ELSEIF(BCCHAR(IB).EQ.'N') THEN
             DO IX = 1, BC_LIST_SIZE(IB)
               boundary_flux(ib,is) = boundary_flux(ib,is) +
      &        fna_mdf(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1,is)
             end do
-	    sdiv(is) = sdiv(is) + boundary_flux(ib,is)
+            sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'W') THEN
            DO IY = 1, BC_LIST_SIZE(IB)
             boundary_flux(ib,is) = boundary_flux(ib,is) +
      &        fna_mdf(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &                rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0,is)
            end do
-	   sdiv(is) = sdiv(is) - boundary_flux(ib,is)
+           sdiv(is) = sdiv(is) - boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).EQ.'E') THEN
            DO IY = 1, BC_LIST_SIZE(IB)
              boundary_flux(ib,is) = boundary_flux(ib,is) +
      &        fna_mdf(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0,is)
            end do
-	   sdiv(is) = sdiv(is) + boundary_flux(ib,is)
+           sdiv(is) = sdiv(is) + boundary_flux(ib,is)
          ELSEIF(BCCHAR(IB).NE.'X' .AND. BCCHAR(IB).NE.'Y') THEN
            CALL XERRAB
      1         ('B2WDAT: INVALID OPTION')
@@ -1551,23 +1559,23 @@
      &         ' flux =',boundary_flux(ib,is)
         enddo
 
-	do iy = -1,ny
-	  do ix = -1,nx
+        do iy = -1,ny
+          do ix = -1,nx
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &        bottomiy(ix,iy).ne.-2 .and. topiy(ix,iy).ne.ny+1) then
               ssna(is)=ssna(is)+sna(ix,iy,0,is)+
      &                        sna(ix,iy,1,is)*na(ix,iy,is)
-	    endif
-	  enddo
-	enddo
+            endif
+          enddo
+        enddo
 
-	sum_ssna = sum_ssna + ssna(is)
+        sum_ssna = sum_ssna + ssna(is)
 
-	sum_sdiv = sum_sdiv +sdiv(is)
-	write (70,"(a,9x,a2,i1,3(4x,a,es15.7))")'Balance for equation ',
+        sum_sdiv = sum_sdiv +sdiv(is)
+        write (70,"(a,9x,a2,i1,3(4x,a,es15.7))")'Balance for equation ',
      &     adjustr(is_codes(is)),nint(zamin(is)),
-     &  ' Sdiv =',sdiv(is), ' Ssna =', ssna(is),
-     &  '     Ssna-Sdiv =', ssna(is) - sdiv(is)
+     &     ' Sdiv =',sdiv(is), ' Ssna =', ssna(is),
+     &     '     Ssna-Sdiv =', ssna(is) - sdiv(is)
        enddo
 
        write(70,"(a/33x,4(a,es15.7))") 'Balance over all equations:',

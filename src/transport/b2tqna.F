@@ -459,12 +459,12 @@ cxpb Corrected for dimensionality
           write (chns,'(i3.3)') is
           call my_out(70,nx,ny,dna0(-1,-1,is),'b2tqna_in_dna0'//chns)
           call my_out(70,nx,ny,dpa0(-1,-1,is),'b2tqna_in_dpa0'//chns)
-          call my_out(70,nx,ny,vsa0(:,:,is)/(mp*am(is)*na(:,:,is)),
-     &                  'b2tqna_in_vsa0'//chns)
+          wrk0=vsa0(:,:,is)/(mp*am(is)*na(:,:,is))
+          call my_out(70,nx,ny,wrk0,'b2tqna_in_vsa0'//chns)
           call my_out(70,nx,ny,vla0(-1,-1,0,is),'b2tqna_in_vla0x'//chns)
           call my_out(70,nx,ny,vla0(-1,-1,1,is),'b2tqna_in_vla0y'//chns)
-          call my_out(70,nx,ny,hcib(:,:,is)/na(:,:,is),
-     &                  'b2tqna_in_hcib'//chns)
+          wrk0=hcib(:,:,is)/na(:,:,is)
+          call my_out(70,nx,ny,wrk0,'b2tqna_in_hcib'//chns)
         enddo
 !       call my_out(70,nx,ny,hci0,'b2tqna_in_hci0')
         call my_out(70,nx,ny,hce0/ne,'b2tqna_in_hce0')

@@ -2822,22 +2822,22 @@ cxpb  Add contribution from Eirene core boundary fluxes
 #endif
               endif
               t0=0.0e0_R8   ! Volume between two surfaces              !lk 12.12.12 {
-	      t1=0.0e0_R8   ! Sum of volume averaged density
+              t1=0.0e0_R8   ! Sum of volume averaged density
               DO IBW=IB,NBC
                 if(BCCHAR(IBW).EQ.'S'.and.BCCON(IS,IBW).EQ.BCCON(IS,IB))
      >           THEN
                   do IX = 1, BC_LIST_SIZE(IBW)
-	            t0=t0 +
+                    t0=t0 +
      .                vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      .                    topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
-	            t1=t1 +
+                    t1=t1 +
      .                 na(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      .                    topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),is)
      .               *vol(topix(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)),
      .                    topiy(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW)))
                   enddo
                 endif
-	      enddo
+              enddo
               t1=t1/t0
               DO IBW=IB,NBC
                 do IX = 1, BC_LIST_SIZE(IBW)
@@ -8457,8 +8457,8 @@ cxpb Careful here because of BC number clash
             write(*,*) ' Summed value is ', SENIPAR
             TIS = 0.0_R8 ! Poloidally density-averaged ion temperature in the boundary cell
             NIVS = 0.0_R8
-	    t0=0.0e0_R8   ! Volume                                      !lk 12.12.12 {
-	    t1=0.0e0_R8   ! Poloidally volume averaged ions temperature in the cell next to boundary
+            t0=0.0e0_R8   ! Volume                                      !lk 12.12.12 {
+            t1=0.0e0_R8   ! Poloidally volume averaged ions temperature in the cell next to boundary
             totflux = 0.0_R8   ! IYS 22.03.2017
             DO IBW=IB,NBC
               if(BCCHAR(IBW).EQ.'S'.and.BCENI(IBW).EQ.BCENI(IB))THEN
@@ -9433,13 +9433,13 @@ c************************************************************* } Solovyev 01.05.
           VS  = 0.0_R8
           DO IBW=IB,NBC
             if(BCCHAR(IBW).EQ.'S'.and.BCPOT(IBW).EQ.BCPOT(IB))THEN
-              DO IX=1, BC_LIST_SIZE(IBW)	       
+              DO IX=1, BC_LIST_SIZE(IBW)
                 POS = POS + PO(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))*
      *                     VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                 VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
               ENDDO
-	    endif
-	  ENDDO
+            endif
+          ENDDO
           POS=POS/VS                                                    !srv 29.09.15 }
           po_prev = POS
           write (*,*) 'POS at 0 = ', POS
@@ -9467,14 +9467,14 @@ c The implementation is based on one step of Newton's method
                 VS  = 0.0_R8
                 DO IBW=IB,NBC
                   if(BCCHAR(IBW).EQ.'S'.and.BCENE(IBW).EQ.BCENE(IB))THEN
-                    DO IX=1, BC_LIST_SIZE(IBW)	       
+                    DO IX=1, BC_LIST_SIZE(IBW)
                       po_curr=po_curr+
      &                   PO(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
      &                 *VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                       VS = VS + VOL(BC_LIST_X(IX,IBW),BC_LIST_Y(IX,IBW))
                     ENDDO
-	          endif
-	        ENDDO
+                  endif
+                ENDDO
                 po_curr=po_curr/VS                                      !srv 29.09.15 }
               endif                                                     !Solovyev 23.05.14
               if (mod(ncall,bcpot_16_step).eq.0) then                   !Solovyev 23.05.14
@@ -9901,7 +9901,7 @@ c end of implementation
      &        'Use BCPOT=13 to impose it.'                           !srv 03.03.15
            ENDIF
          endif
-	endif                                                            !srv 01.02.09 }
+        endif                                                        !srv 01.02.09 }
       enddo
 
 * ---------------------------------------------------------------------
