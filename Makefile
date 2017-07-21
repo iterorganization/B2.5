@@ -392,7 +392,7 @@ ${OBJDIR}/eirmod_cpl3d.${MOD}:
 ${OBJDIR}/eirmod_cplmsk.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_cplmsk.${MOD} ${OBJDIR}
 
-${OBJDIR}/eirmod_cpl3ot.${MOD}:
+${OBJDIR}/eirmod_cplot.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_cplot.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cpolyg.${MOD}:
