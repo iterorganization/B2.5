@@ -290,7 +290,8 @@
       do iy = 0, ny-1
         do ix = 0, nx
           if(leftix(ix,iy).ne.-2) then
-            dpo(ix,iy,0) = (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))/
+            dpo(ix,iy,0) =
+     &         (po(ix,iy) - po(leftix(ix,iy),leftiy(ix,iy)))/
      &         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
             dOnedBsq(ix,iy,0) =
      &       (OnedBsq(ix,iy) - OnedBsq(leftix(ix,iy),leftiy(ix,iy)))/
