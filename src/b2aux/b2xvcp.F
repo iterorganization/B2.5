@@ -183,7 +183,7 @@
        call xertst (cfalf(i)**2.le.cfhce(i)*cfsig(i),
      &   'faulty argument, cfhce*cfsig.lt.cfalf**2')
       enddo
-      call b2xvsg (4, cflim(0), 1, 'cflim', '.ge.')
+      call b2xvsg (5, cflim(0), 1, 'cflim', '.ge.')
 
 * ..return
       call subend ()

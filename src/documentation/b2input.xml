@@ -1018,7 +1018,8 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '1', the new correct form of the friction force is used. 
+                    If b2sigp_style is set to '2', this switch has no effect.
+					When set to '1', the new correct form of the friction force is used, applicable for non-hydrogenic plasmas or hydrogenic mixtures. 
 					The value '0' corresponds to the old SOLPS5.0 treatment.
 				</description>
 			</switch>
@@ -1655,7 +1656,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier of the friction term between charged species.
+					Multiplier of the friction term between charged species (only ions in case b2sigp_style.eq.2).
 				</description>
 			</switch>
 			<switch>
@@ -1663,7 +1664,8 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier of the ehxp term in the thermal force term.
+					If b2sigp_style.eq.2, multiplier to the friction force term between electrons and ions.
+					Otherwise, multiplier of the ehxp term in the older expression for the thermal force.
 				</description>
 			</switch>
 			<switch>
@@ -6246,6 +6248,14 @@
 					<type>real*8</type>
 					<description>
 						Multiplier to the thermo-electric coefficient flux limit.
+					</description>
+				</switch>
+				<switch>
+					<name>CFLAB</name>
+					<default>Default inherited from b2mn.dat</default>
+					<type>real*8</type>
+					<description>
+						Multiplier to the friction force flux limit.
 					</description>
 				</switch>
 				</switchgroup>

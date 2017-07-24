@@ -397,7 +397,7 @@
      &    ni, sna, smo, she, shi, sch, sne)                              !xpb
 cxpb
 *   ..iterate on parallel momentum balance
-        call b2npmo (nx, ny, ns, ncall, solving(1), rxf1,
+        call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1,        !srv 13.01.17
      &    qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                    !srv 01.07.09
      &    na, te, ti, po, fna_fcor,
      &    cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                      !srv 02.07.08

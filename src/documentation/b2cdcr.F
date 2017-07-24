@@ -268,6 +268,9 @@
 *     B2SIFR computes a linearised representation of the friction
 *     force between one species and all others.
 *
+*     B2SIFRTF computes a linearised representation of the thermal
+*     and friction forces.
+*
 *     B2SIGP computes the pressure gradient term on the right hand
 *     of the parallel momentum balance equation for one species.
 *
@@ -606,6 +609,10 @@
 *
 *     B2XZEF computes zeff:
 *       zeff(,) = (sum is :: rz2(,,is)*na(,,is))/ne .
+*
+*     B2XZMF computes zmff:
+*       zmff(,) = (sum over is /= ismain :: rz2(,,is)*na(,,is))/
+*                  na(,,ismain)*rz2(,,ismain)
 *
 *     B2YG (main program) is a postprocessor for b2. It reads and
 *     displays the geometry and magnetic field. This program calls the

@@ -2086,8 +2086,11 @@ c 2002-09-11: logic revised
           if(b2fstate_version.ge.'03.000.006') then
             if(cflal.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
      .       'CFLAL=',cflal,','
+            if(cflab.ne.0.0_R8) write(99,'(1x,a,1p,1g10.3,a)')
+     .       'CFLAB=',cflab,','
           else
             write(99,'(1x,a,1p,1g10.3,a)') 'CFLAL=',0.5_R8,','
+            write(99,'(1x,a,1p,1g10.3,a)') 'CFLAB=',0.5_R8,','
           endif
           if(transport_time_mod.gt.0.0_R8) then
             write(99,'(1x,a,a,a)')
@@ -9224,6 +9227,7 @@ cxpb as they no longer necessarily point to the same species
         if(b2fstate_version.lt.'03.000.006') then
 ! Adding new flux limit coefficients
           cflim(3) = 0.5_R8
+          cflim(4) = 0.5_R8
         end if
         call b2wfcp (nout(3), 0, ns1)
         close(nout(3))

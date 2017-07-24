@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npmo (nx, ny, ns, itcnt, solving, rxf, 
+      subroutine b2npmo (nx, ny, ns, ismain, itcnt, solving, rxf,       !srv 13.01.17
      &  qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,
      &  na, te, ti, po, fna_fcor,                                       !srv 09.01.01 01.07.09
      &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,
@@ -20,11 +20,12 @@
       use b2mod_plasma
      & , only : fmo
       use b2mod_numerics_namelist
+      use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
       use b2mod_external
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, itcnt
+      integer nx, ny, ns, ismain, itcnt                                !srv 13.01.17
       real (kind=R8) ::
      *  rxf, 
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),             !srv 09.01.01
@@ -83,11 +84,13 @@
 
 *   ..local variables
       integer ncall, n2, ix, iy, is, diagno, ireg, nsmin, nsmax, k
-      integer, save :: iout = 0, b2sifr_ver=1, iout_b2wdat = 0         !srv 04.07.08 26.10.08
-      character chns*3, chk*1                                          !srv 04.07.08
+      integer, save :: iout = 0, b2sifr_ver = 1, iout_b2wdat = 0       !srv 04.07.08 26.10.08
+      integer, save :: icase = 0                                       !srv 13.01.17
       integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
+      integer, save :: style = 2                                       !srv 08.10.14 13.01.17
+      character chns*3, chk*1                                          !srv 04.07.08
       real (kind=R8) ::
-     *  rxg, t0, t1, t2
+     *  rxg, t0, t1, t2, czetap, czetae                                !srv 13.01.17
       real (kind=R8) ::
      *  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),                !srv 11.09.09
      *  smbgp(-1:nx,-1:ny,0:3),
@@ -105,7 +108,11 @@
      9  flct(-1:nx,-1:ny,0:1), wrk1(-1:nx,-1:ny), wrks(-1:nx,-1:ny),
      1  smqdu(-1:nx,-1:ny), wrk0(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
      2  ctcfb(-1:nx,-1:ny), ctcft(-1:nx,-1:ny),                        !srv 06.04.07
-     3  zeff(-1:nx,-1:ny)                                              !srv 13.01.17
+     3  zeff(-1:nx,-1:ny), zmff(-1:nx,-1:ny),                          !srv 13.01.17 {
+     4  ce1(-1:nx,-1:ny), ce2(-1:nx,-1:ny),
+     5  cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny),
+     6  zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),
+     7  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny)                             !srv 13.01.17 }
       logical new_matrix, solvedum(0:NNREGMAX)
       save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
@@ -151,6 +158,13 @@
            nsmax=0
         endif
         write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
+        call ipgeti ('b2sigp_style', style)                             !srv 08.10.14
+        if (nint(zn(ismain)).ne.1 .and. style.ne.2) then
+         write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
+     .    'for non-hydrogenic plasmas!'
+        endif
+        call ipgeti ('b2tlnl_ii', icase)                                !srv 13.01.17
+        call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii') 
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -194,10 +208,44 @@
       call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
       call b2xpro (nx, ny, ns, mp, am, na, ro)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-      call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                       !srv 13.01.17
+      call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                       !srv 13.01.17 {
+      call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
+      do iy = -1, ny
+        do ix = -1, nx
+	  ce1(ix,iy)=fce1(zeff(ix,iy))
+	  ce2(ix,iy)=fce2(zeff(ix,iy))
+          cimp1(ix,iy)=fce1(zmff(ix,iy))
+          cimp2(ix,iy)=fce2(zmff(ix,iy))
+        enddo
+      enddo
+*   ..compute the Coulomb logarithm
+      call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)
+*   ..compute zetap and zetae
+      t1 = (4.0_R8*pi*eps0/qe)/qe
+      t0 = (3.0_R8/(4.0_R8*sqrt(2.0_R8*pi)))*t1*(t1*ev*sqrt(ev))
+      czetap = t0*sqrt(mp)
+      czetae = t0*sqrt(me)
+      zetap = czetap*(ti/ev)*sqrt(ti/ev)/lnlam
+      zetae = czetae*(te/ev)*sqrt(te/ev)/lnlam
+*   ..compute gti,gte
+      do iy = -1, ny
+       do ix = -1, nx
+        if(leftix(ix,iy).eq.-2) then
+         gti(ix,iy) = 0.0_R8
+         gte(ix,iy) = 0.0_R8
+        else
+         gti(ix,iy) = (ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy)))/
+     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
+         gte(ix,iy) = (te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy)))/
+     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))*2.0e0_R8
+        endif
+       enddo
+      enddo
 *   ..compute ehxp
-      call b2nxfx (nx, ny, qe, vol, hx, bb, ne, te, po,
-     &  ehxp, wrk0, wrk1)
+      if(style.ne.2) then 
+        call b2nxfx (nx, ny, qe, vol, hx, bb, ne, te, po,
+     &   ehxp, wrk0, wrk1)
+      endif                                                             !srv 13.01.17 }
 *   ..compute smqdu
       call b2nxdu (nx, ny, ns, na, ua, smq, smqdu, wrk0, wrk1)
       if (iout.ne.0) then
@@ -219,17 +267,25 @@
        call b2sscal (n2, am(is)*mp, rob, 1)
        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute extended friction term
-       if(b2sifr_ver.eq.0) then                                        !srv 26.10.08 {
-        call b2sifr (nx, ny, ns, is, vol, hx, hz, bb, na, ua, te, ti,  !srv 09.01.01
-     &   ni, ne, ne2, ehxp, lnlam, cthe, cthi, smbch, smbtf,           !srv 11.09.09
-     &   smpr(-1,-1,is), smpt(-1,-1,is), smfr(-1,-1,is), 
-     &   wrk0, wrk1, wrk2)                                             !srv 02.07.08 01.07.09
+       if(style.eq.2) then                                             !srv 13.01.17
+         call b2sifrtf (nx, ny, ns, is, ismain, hx, hz, vol, bb,
+     &    na, ua, te, ti, ni, ne, ne2, zetap, zetae, gti, gte,
+     &    ce1, ce2, cimp1, cimp2, zeff, smbch, smbtf)
        else
-        call b2sifr_ (nx, ny, ns, is, hx, hz, vol, bb, na, ua, te, ti, !srv 09.01.01 18.10.02
-     &   ni, ne, ne2, ehxp, lnlam, cthe, cthi, smbch, smbtf,           !srv 11.09.09
-     &   smpr(-1,-1,is), smpt(-1,-1,is), smfr(-1,-1,is), 
-     &   wrk0, wrk1, wrk2)                                             !srv 01.07.09
-       endif                                                           !srv 26.10.08 }
+        if(b2sifr_ver.eq.0) then                                       !srv 26.10.08 {
+         call b2sifr (nx, ny, ns, is, vol, hx, hz, bb,                 !srv 09.01.01
+     &    na, ua, te, ti, ni, ne, ne2, ehxp, lnlam, cthe, cthi,         !srv 11.09.09
+     &    smbch, smbtf,
+     &    smpr(-1,-1,is), smpt(-1,-1,is), smfr(-1,-1,is), 
+     &    wrk0, wrk1, wrk2)                                            !srv 02.07.08 01.07.09
+        else
+         call b2sifr_ (nx, ny, ns, is, hx, hz, vol, bb,                !srv 09.01.01 18.10.02
+     &    na, ua, te, ti,ni, ne, ne2, ehxp, lnlam, cthe, cthi,
+     &    smbch, smbtf,                                                !srv 11.09.09
+     &    smpr(-1,-1,is), smpt(-1,-1,is), smfr(-1,-1,is), 
+     &    wrk0, wrk1, wrk2)                                            !srv 01.07.09
+        endif                                                          !srv 26.10.08 }
+       endif
 *    ..compute pressure gradient term
        call b2sigp (nx, ny, is, rza(-1,-1,is), vol, hx, hz, bb,  
      &   na(-1,-1,is), ti, ne, te, po, smbgp, wrk0, wrk1, wrk2)        !srv 02.07.08
@@ -343,11 +399,13 @@ cdjm Jan2017 update momentum source components for balance
         wrks=smb(:,:,0)+smb(:,:,1)*ua(:,:,is)+
      &       smb(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smb(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+        call my_out(70,nx,ny,wrks,'b2npmo_smb'//chns)                  !srv 28.02.17
         wrks=smbcf(:,:,0)+smbcf(:,:,1)*ua(:,:,is)+
      &       smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
         call my_out(70,nx,ny,wrks,'b2npmo_smocf'//chns)
        endif                                                           !srv 12.07.02 }
+
        if (solving) then                                               !srv 06.07.10
         solvedum(0:nnreg(0))=solvemo(is,0:nnreg(0))
 c    ..compare 5-pt stencil matrices
@@ -370,11 +428,17 @@ csw 21feb2014 added this else branch
          corua(:,:,is) = 0.0_R8
        endif
 *    ..compute contribution to total residual
-*      (now the friction cancels out)
 
 csw 21feb2014 and do this only for the solved species, i.e. added next branch
        if (solving) then
         call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
+        if(style.eq.2) then                                             !srv 13.01.17 {
+*       (in this case thermal force and the friction are taken into account)
+         call b2saxpy (n2*4, 1.0_R8, smbtf, 1, smb, 1)                  !srv 08.10.14
+         call b2saxpy (n2*4, 1.0_R8, smbch, 1, smb, 1)
+        else
+*       (now the friction cancels out)
+        endif                                                           !srv 13.01.17 }
         call b2saxpy (n2*4, 1.0_R8, smbgp, 1, smb, 1)
         call b2saxpy (n2*4, 1.0_R8, smbvh, 1, smb, 1)
         call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)                  !srv 03.07.08

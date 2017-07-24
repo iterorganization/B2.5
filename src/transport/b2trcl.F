@@ -574,11 +574,11 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                           !lk 06
            if(mod(region(ix,iy,0),4).ne.1) then
              if(leftix(ix,iy).ne.-2) then
                dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-               jemax = cflim(3)*sqrt(
+               jemax = sqrt(
      &          (te(leftix(ix,iy),leftiy(ix,iy))+te(ix,iy))/2.0_R8/me)*
      &           qe*(ne(leftix(ix,iy),leftiy(ix,iy))+ne(ix,iy))/2.0_R8*
      &           abs(pbs(ix,iy,0))
-               t0 = abs(calf(ix,iy,0)*dte)/jemax
+               t0 = abs(calf(ix,iy,0)*dte)/(cflim(3)*jemax)
                fllim_al(ix,iy)=1.0_R8/(1.0e0_R8+t0)
                calf(ix,iy,0)=calf(ix,iy,0)*fllim_al(ix,iy)                !srv 13.01.17
              endif
@@ -605,9 +605,9 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                           !lk 06
      &           (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8)/
      &          2.0_R8
              endif
-             jemax = cflim(3)*sqrt(te(ix,iy)/me)*
+             jemax = sqrt(te(ix,iy)/me)*
      &               qe*ne(ix,iy)*abs(bb(ix,iy,0)/bb(ix,iy,3))
-             t0 = abs(alfx_c(ix,iy))*abs(dte)/jemax
+             t0 = abs(alfx_c(ix,iy))*abs(dte)/(cflim(3)*jemax)
              fllim_al_c(ix,iy)=1.0_R8/(1.0e0_R8+t0)
              alfx_c(ix,iy)=alfx_c(ix,iy)*fllim_al_c(ix,iy)                !iyv 19.11.13 !srv 08.10.14
            endif
