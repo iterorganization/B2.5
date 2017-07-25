@@ -300,7 +300,7 @@ cxpb overwrite the defaults with the namelist data
       enepar=0.0_R8
       enipar=0.0_R8
       potpar=0.0_R8
-      gammai=5.0_R8/3.0_R8
+      gammai=1.0_R8
       gammae=0.5_R8
       lbndusr=.false.
 !DPC-2003-10-23 set as a ipget parameter      lfeedback=.false.

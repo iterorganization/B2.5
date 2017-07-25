@@ -5193,10 +5193,10 @@
 
 			<switch>
 				<name>GAMMAI</name>
-				<default>5/3</default>
+				<default>1.0</default>
 				<type>real*8</type>
 				<description>
-					Ratio of specific heats (adiabatic coefficient).
+					Adiabatic coefficient multiplying the ion temperature when computing the plasma sound speed.
 				</description>
 			</switch>
 			<switch>
