@@ -2319,7 +2319,8 @@
 				<description>
 					If tallies_netcdf.ne.0, the file 'b2tallies.nc' is created, which contains the regional tallies in CDF format.
 					If b2wall_netcdf.ne.0, the file 'b2wall.nc' is created, which contains the wall tallies in CDF format [written every b2wall_netcdf 'main calls'].
-					If balance_netcdf.ne.0, the file 'balance.nc' is created, which contains the 2-point model analysis balance tallies in CDF format.
+					If balance_netcdf.ne.0, the file 'balance.nc' is created, which contains all of the arrays required by the balance post-processing routines, in CDF format.
+                                        If balance_average.ne.0, the balance arrays are averaged over all b2mndr_ntim timesteps.
 				</description>
 				<switch>
 					<name>tallies_netcdf</name>
@@ -2333,6 +2334,11 @@
 				</switch>
 				<switch>
 					<name>balance_netcdf</name>
+					<default>0</default>
+					<type>integer</type>
+				</switch>
+				<switch>
+					<name>balance_average</name>
 					<default>0</default>
 					<type>integer</type>
 				</switch>

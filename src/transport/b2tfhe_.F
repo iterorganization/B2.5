@@ -1516,16 +1516,16 @@ csw 13mar2013 added check upwind (SOLPS4 style)
              upfac=0.0_R8
            endif
            fhe_32(ix,iy,1) = 1.5e0_R8*fne(ix,iy,1)*
-     &                       (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &                       (upfac*te(bottomix(ix,iy),bottomiy(ix,iy))+
      &                        (1.0_R8-upfac)*te(ix,iy))
            fhe_52(ix,iy,1) = 0.0_R8
            fhe_strange(ix,iy,1) = chve(ix,iy,1)*
      &         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &         (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &         (upfac*te(bottomix(ix,iy),bottomiy(ix,iy))+
      &          (1.0_R8-upfac)*te(ix,iy))
            fhe_dia(ix,iy,1) = 2.5e0_R8*fledia(ix,iy,1)*
      &         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &         (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &         (upfac*te(bottomix(ix,iy),bottomiy(ix,iy))+
      &          (1.0_R8-upfac)*te(ix,iy))
            fhe_cond(ix,iy,1) = -cone0*
      &                 (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -1543,12 +1543,12 @@ csw 13mar2013 added check upwind (SOLPS4 style)
              upfac=0.0_R8
            endif
            fhe_32(ix,iy,1) = 1.5e0_R8*fne(ix,iy,1)*
-     &                       (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &                       (upfac*te(bottomix(ix,iy),bottomiy(ix,iy))+
      &                        (1.0_R8-upfac)*te(ix,iy))
            fhe_52(ix,iy,1) = 0.0_R8
            fhe_strange(ix,iy,1) = chve(ix,iy,1)*
      &         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
-     &         (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
+     &         (upfac*te(bottomix(ix,iy),bottomiy(ix,iy))+
      &          (1.0_R8-upfac)*te(ix,iy))
            fhe_dia(ix,iy,1) = 0.0_R8
            fhe_cond(ix,iy,1) = -cone0_mdf*
@@ -1577,13 +1577,16 @@ csw 13mar2013 added check upwind (SOLPS4 style)
            fhe_strange(ix,iy,1) = chve(ix,iy,1)*
      &         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
      &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2
-           fhe_dia(ix,iy,1) = 0.0_R8
            if (mdf_fhe.eq.0) then
              fhe_cond(ix,iy,1) = -cone0*
      &                (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
-           else
+             fhe_dia(ix,iy,1) = 2.5e0_R8*fledia(ix,iy,1)*
+     &         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8*
+     &         (te(bottomix(ix,iy),bottomiy(ix,iy))+te(ix,iy))/2 
+          else
              fhe_cond(ix,iy,1) = -cone0_mdf*
      &                (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))
+             fhe_dia(ix,iy,1) = 0.0_R8
            endif
            fhe_pschused(ix,iy,1) = -fhePSch(ix,iy,1)
            fhe_thermj(ix,iy,1) = alfTeEh*calf(ix,iy,1)*
