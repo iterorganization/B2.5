@@ -1053,6 +1053,8 @@ cdjm Jan2017 Flux arrays:
       use eirmod_extrab25
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
+#else
+      use b2mod_eirdiag
 #endif
       implicit none
       integer nxd,nyd,nsd,nstrad
@@ -1718,12 +1720,17 @@ cdjm Update ion heat sources
       use eirmod_extrab25
      & , only : dab2,dmb2,tab2,tmb2,rfluxa,rfluxm,refluxa,refluxm,
      &          pfluxa,pfluxm,pefluxa,pefluxm
+#else
+      use b2mod_eirdiag
 #endif
       implicit none
 *   ..input arguments (unchanged on exit)
       integer itim,ntim
 *   ..local variables
       real (kind=R8) :: avmlt, curmlt
+*   ..procedures
+      real (kind=R8) :: rratio
+      external rratio
 
       if (itim.eq.0) then
 *     ..Arrays for particle balance:
@@ -1877,7 +1884,7 @@ cdjm Update ion heat sources
 
       if (balance_average.ne.0) then
         avmlt = 1.0_R8
-        curmlt = 1/real(ntim)
+        curmlt = rratio(1,ntim)
       else
         avmlt = 0.0_R8
         curmlt = 1.0_R8
