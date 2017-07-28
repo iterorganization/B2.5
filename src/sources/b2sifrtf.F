@@ -1,33 +1,42 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sifrtf (nx, ny, ns, isb, ismain, hx, hz, vol, bb,    !srv 09.01.01 18.10.02 13.01.17
-     &   na, ua, te, ti, ni, ne, ne2, zetap, zetae, gti, gte,           !srv 01.07.09 11.09.09
-     &   ce1, ce2, cimp1, cimp2, zeff, smbch, smbtf)                    !srv 01.07.05 
+      subroutine b2sifrtf (nx, ny, ns, isb, ismain, hx, bb, na,         !srv 09.01.01 18.10.02 13.01.17 05.07.17
+     &   ua, ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2, !srv 01.07.09 11.09.09 05.07.17
+     &   cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,        !srv 05.07.17
+     &   smbch, smbtf)
       use b2mod_types
       use b2mod_rates
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
       use b2mod_b2cmpt
-      use b2mod_plasma ,  only :  po  
-      use b2mod_transport , only : f_luc_sg, alfx_c, sigx_c             !srv 08.10.14
+      use b2mod_plasma
+     , , only :  po
+      use b2mod_transport
+     , , only : f_luc_sg, alfx_c, sigx_c                                !srv 08.10.14
       use b2mod_external
+      use b2mod_geo
+     , , only : hz, vol                                                 !srv 05.07.17
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, isb, ismain
       real (kind=R8) ::
-     *  hx(-1:nx,-1:ny), hz(-1:nx,-1:ny), vol(-1:nx,-1:ny),
+     *  hx(-1:nx,-1:ny), ! hz(-1:nx,-1:ny), vol(-1:nx,-1:ny),           !srv 05.07.17
      &  bb(-1:nx,-1:ny,0:3),
      &  na(-1:nx,-1:ny,0:ns-1), ua(-1:nx,-1:ny,0:ns-1),
+     &  ue(-1:nx,-1:ny),
      &  ti(-1:nx,-1:ny), ni(-1:nx,-1:ny,0:1), ne(-1:nx,-1:ny),
-     &  ne2(-1:nx,-1:ny),gti(-1:nx,-1:ny), gte(-1:nx,-1:ny),
+     &  ne2(-1:nx,-1:ny), gti(-1:nx,-1:ny), gte(-1:nx,-1:ny),
      &  te(-1:nx,-1:ny), zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),        !srv 13.01.17
      &  ce1(-1:nx,-1:ny), ce2(-1:nx,-1:ny),                             !srv 13.01.17
      &  cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny), zeff(-1:nx,-1:ny)       !srv 13.01.17
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
-     *  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3)                  !srv 11.09.09
+     *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
+     *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)              !srv 13.01.17 05.07.17
+      real (kind=R8) ::
+     *  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -62,11 +71,13 @@
      1  delti, delte
       real (kind=R8) ::
      &  KabVp(-1:nx,-1:ny), Kabtf(-1:nx,-1:ny), Kbatf(-1:nx,-1:ny),     !srv 13.01.17 {
-     &  ka(-1:nx,-1:ny), kb(-1:nx,-1:ny), ue(-1:nx,-1:ny),
+     &  ka(-1:nx,-1:ny), kb(-1:nx,-1:ny),
      &  wrk(-1:nx,-1:ny)
+! Local arrays smb*al have been introduced specially.
+! The usage of smb*a instaed of smb*al should be checked.
       real (kind=R8) ::
-     *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
-     *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)              !srv 13.01.17 }
+     *  smbfrial(-1:nx,-1:ny,0:3), smbfreal(-1:nx,-1:ny,0:3),
+     *  smbtfial(-1:nx,-1:ny,0:3), smbtfeal(-1:nx,-1:ny,0:3)              !srv 13.01.17 }
 *   ..procedures
       intrinsic sqrt
       real (kind=R8) ::
@@ -120,10 +131,10 @@
 *   ..initialize to 0
       call sfill (n2*4, 0.0e0_R8, smbch, 1)                             !srv 11.09.09
       call sfill (n2*4, 0.0e0_R8, smbtf, 1)                             !srv 11.09.09
-      call sfill (n2*4, 0.0e0_R8, smbfria, 1)                           !srv 13.01.17 {
-      call sfill (n2*4, 0.0e0_R8, smbfrea, 1)
-      call sfill (n2*4, 0.0e0_R8, smbtfia, 1)
-      call sfill (n2*4, 0.0e0_R8, smbtfea, 1)                           !srv 13.01.17 }
+      call sfill (n2*4, 0.0e0_R8, smbfrial, 1)                          !srv 13.01.17 { !srv 05.07.17
+      call sfill (n2*4, 0.0e0_R8, smbfreal, 1)
+      call sfill (n2*4, 0.0e0_R8, smbtfial, 1)
+      call sfill (n2*4, 0.0e0_R8, smbtfeal, 1)                          !srv 13.01.17 }
 * ..compute friction
 *   ..loop over all other species
       do is = 0, ns-1
@@ -137,17 +148,18 @@
            coef = phm0*rz2(ix,iy,isb)*rz2(ix,iy,is)*
      &           mp*sqrt(am(isb)*am(is)/(am(isb)+am(is)))/
      &           zetap(ix,iy)*KabVp(ix,iy)
-           t0 = vol(ix,iy)*hz(ix,iy)*na(ix,iy,isb)*na(ix,iy,is)
+           t0 = na(ix,iy,isb)*na(ix,iy,is)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
            if (styl0.eq.0) then
-             smbfria(ix,iy,0) = smbfria(ix,iy,0)+coef*t0*ua(ix,iy,is)
-             smbfria(ix,iy,1) = smbfria(ix,iy,1)-coef*t0
+             smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+coef*t0*ua(ix,iy,is)
+             smbfrial(ix,iy,1) = smbfrial(ix,iy,1)-coef*t0
            else if (styl0.eq.1) then
-             smbfria(ix,iy,0) = smbfria(ix,iy,0)+coef*t0*ua(ix,iy,is)
-             smbfria(ix,iy,3) = smbfria(ix,iy,3)-coef*t0/roxa(ix,iy,isb)
+             smbfrial(ix,iy,0) = smbfrial(ix,iy,0)+coef*t0*ua(ix,iy,is)
+             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)-
+     &                           coef*t0/roxa(ix,iy,isb)
            else if (styl0.eq.2) then
-             smbfria(ix,iy,2) = smbfria(ix,iy,2)+coef*t0*ua(ix,iy,is)/
+             smbfrial(ix,iy,2) = smbfrial(ix,iy,2)+coef*t0*ua(ix,iy,is)/
      &                       roxa(ix,iy,isb)
-             smbfria(ix,iy,3) = smbfria(ix,iy,3)-coef*t0/
+             smbfrial(ix,iy,3) = smbfrial(ix,iy,3)-coef*t0/
      &                       roxa(ix,iy,isb)
            endif
           endif
@@ -155,9 +167,10 @@
         enddo
        endif
       enddo
-*   ..compute ue, electron parallel velocity
-      call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,  
-     &             ne, te, na, ua, ue_ext, ne_ext, ue)
+
+!*   ..compute ue, electron parallel velocity
+!      call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,       !srv 05.07.17
+!     &             ne, te, na, ua, ue_ext, ne_ext, ue)
 *     ..contribution from friction between between electron and ions
       if(.not.is_neutral(isb)) then
        do iy = 0, ny-1
@@ -165,15 +178,15 @@
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
           coef = phm1*(bb(ix,iy,0)/bb(ix,iy,3))**2*rz2(ix,iy,isb)*qe**2
      &           /(sigx_c(ix,iy)*zeff(ix,iy))
-          t0 = vol(ix,iy)*hz(ix,iy)*na(ix,iy,isb)*ne(ix,iy)
-          smbfrea(ix,iy,0) = smbfrea(ix,iy,0)+coef*t0*ue(ix,iy)
-          smbfrea(ix,iy,1) = smbfrea(ix,iy,1)-coef*t0
+          t0 = na(ix,iy,isb)*ne(ix,iy)   !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
+          smbfreal(ix,iy,0) = smbfreal(ix,iy,0)+coef*t0*ue(ix,iy)
+          smbfreal(ix,iy,1) = smbfreal(ix,iy,1)-coef*t0
          endif
         enddo
        enddo
       endif
 
-      smbch = smbfrea + smbfria
+      smbch = smbfreal + smbfrial
 
 * ..compute thermal force
 
@@ -185,8 +198,8 @@
           coef = -phm2*alfx_c(ix,iy)*ce1(ix,iy)*rz2(ix,iy,isb)*(me/qe)/
      &           zetae(ix,iy)/(bb(ix,iy,0)/bb(ix,iy,3))/f_luc_sg(ix,iy)   !srv f_luc_sg should be taken in cell center ?
           delte=(gte(ix,iy)+gte(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
-          t0 = vol(ix,iy)*hz(ix,iy)*na(ix,iy,isb)*delte
-          smbtfea(ix,iy,0) = smbtfea(ix,iy,0)+coef*t0
+          t0 = na(ix,iy,isb)*delte    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
+          smbtfeal(ix,iy,0) = smbtfeal(ix,iy,0)+coef*t0
          endif
         enddo
        enddo
@@ -227,37 +240,43 @@ c   .. apply flux limit
             fllim_al_ab = 1.0_R8
            endif
 
-           t0 = vol(ix,iy)*hz(ix,iy)*na(ix,iy,isb)*na(ix,iy,is)/
+           t0 = na(ix,iy,isb)*na(ix,iy,is)/    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17
      &                             ((na(ix,iy,isb)+na(ix,iy,is)))*delti
-           smbtfia(ix,iy,0) = smbtfia(ix,iy,0) + fllim_al_ab*coef*t0
+           smbtfial(ix,iy,0) = smbtfial(ix,iy,0) + fllim_al_ab*coef*t0
           endif
          enddo
         enddo
        endif
       enddo
 
-      smbtf = smbtfea + smbtfia
+      smbtf = smbtfeal + smbtfial
 
-      if (iout.ne.0. or. iout_b2wdat.eq.4) then
-        write (chns,'(i3.3)') isb
+      smbfria = smbfrial
+      smbfrea = smbfreal
+      smbtfia = smbtfial
+      smbtfea = smbtfeal
 
-        wrk = smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,isb)+
+      if (iout.ne.0) then !  . or. iout_b2wdat.eq.4) then              !srv 05.07.17
+	write (chns,'(i3.3)') isb
+
+       wrk = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,isb)+        !srv 05.07.17 {
      &        smbfria(:,:,2)*na(:,:,isb)*mp*am(isb)+
-     &        smbfria(:,:,3)*ua(:,:,isb)*na(:,:,isb)*mp*am(isb)
-        call my_out(70,nx,ny,wrk,'b2sifrtf_smofria'//chns)
+     &        smbfria(:,:,3)*ua(:,:,isb)*na(:,:,isb)*mp*am(isb))
+	 call my_out(70,nx,ny,wrk,'b2sifrtf_smofria'//chns)
 
-        wrk = smbfrea(:,:,0)+smbfrea(:,:,1)*ua(:,:,isb)
-        call my_out(70,nx,ny,wrk,'b2sifrtf_smofrea'//chns)
+       wrk = vol*hz*(smbfreal(:,:,0)+smbfreal(:,:,1)*ua(:,:,isb))
+	 call my_out(70,nx,ny,wrk,'b2sifrtf_smofrea'//chns)
+       wrk = vol*hz*smbtfial(:,:,0)
+	 call my_out(70,nx,ny,wrk,'b2sifrtf_smotfia'//chns)
+       wrk = vol*hz*smbtfeal(:,:,0)
+	 call my_out(70,nx,ny,wrk,'b2sifrtf_smotfea'//chns)              !srv 05.07.17 }
+       call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
+	endif
 
-        call my_out(70,nx,ny,smbtfia(-1,-1,0),'b2sifrtf_smotfia'//chns)
-        call my_out(70,nx,ny,smbtfea(-1,-1,0),'b2sifrtf_smotfea'//chns)
-        call my_out(70,nx,ny,ue(:,:),'b2sifrtf_ue')
-      endif
-
-      if (iout.ne.0) then
-        do is = 0,ns-1
-          write (chis,'(i3.3)') is    
-          call my_out(70,nx,ny,fkabvp(isb, is),
+      if (iout.gt.1) then                                              !srv 05.07.17
+	 do is = 0,ns-1
+	  write (chis,'(i3.3)') is
+	  call my_out(70,nx,ny,fkabvp(isb, is),
      &              'b2sifrtf_kabvp_'//chns//'_'//chis)
           call my_out(70,nx,ny,fkabtf(isb, is),
      &              'b2sifrtf_kabtf_'//chns//'_'//chis)

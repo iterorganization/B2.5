@@ -1,9 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2npmo (nx, ny, ns, ismain, itcnt, solving, rxf,       !srv 13.01.17
+      subroutine b2npmo (nx, ny, ns, ismain, itcnt, solving, rxf,      !srv 13.01.17
      &  qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,
-     &  na, te, ti, po, fna_fcor,                                       !srv 09.01.01 01.07.09
+     &  na, te, ti, po, ue, fna_fcor,                                  !srv 09.01.01 01.07.09 05.07.17
      &  cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,
      &  smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,
      &  resmo, resmt, corua, corut, pcca, pccm, ierr)
@@ -31,7 +31,7 @@
      &  hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), hz(-1:nx,-1:ny),             !srv 09.01.01
      &  qz(-1:nx,-1:ny,0:1),
      &  vol(-1:nx,-1:ny), bb(-1:nx,-1:ny,0:3), pbs(-1:nx,-1:ny,0:1),
-     &  pbshz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny),                    !srv 01.07.09
+     &  pbshz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny),   !srv 01.07.09 05.07.17
      &  na(-1:nx,-1:ny,0:ns-1), te(-1:nx,-1:ny), ti(-1:nx,-1:ny),
      &  po(-1:nx,-1:ny), fna_fcor(-1:nx,-1:ny,0:1,0:ns-1),
      &  cvsahz(-1:nx,-1:ny,0:1,0:ns-1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
@@ -113,6 +113,9 @@
      5  cimp1(-1:nx,-1:ny), cimp2(-1:nx,-1:ny),
      6  zetap(-1:nx,-1:ny), zetae(-1:nx,-1:ny),
      7  gti(-1:nx,-1:ny), gte(-1:nx,-1:ny)                             !srv 13.01.17 }
+      real (kind=R8) ::
+     *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
+     *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)             !srv 13.01.17 05.07.17
       logical new_matrix, solvedum(0:NNREGMAX)
       save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
@@ -141,10 +144,10 @@
         call ipgetr ('b2npmo_rxg', rxg)
         call xertst (0.0_R8.lt.rxg, 'faulty internal parameter rxg')
         call ipgeti ('b2npmo_diagno', diagno)
-        call ipgeti ('b2npmo_iout', iout)                               !srv 04.07.08
-        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)     !iyv 17.01.14
-        call ipgeti ('b2wdat_iout', iout_b2wdat)                        !iys 17.04.17
-        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                      !srv 04.07.08
+        call ipgeti ('b2npmo_iout', iout)                              !srv 04.07.08
+        call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 17.01.14
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
+        call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.07.08
         call ipgeti ('b2news_nsmin', nsmin)
         if(nsmin.gt.ns) then
            nsmin=ns
@@ -158,12 +161,12 @@
            nsmax=0
         endif
         write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
-        call ipgeti ('b2sigp_style', style)                             !srv 08.10.14
+        call ipgeti ('b2sigp_style', style)                            !srv 08.10.14
         if (nint(zn(ismain)).ne.1 .and. style.ne.2) then
          write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
      .    'for non-hydrogenic plasmas!'
         endif
-        call ipgeti ('b2tlnl_ii', icase)                                !srv 13.01.17
+        call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
         call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii') 
       endif
 *   ..set n2
@@ -208,7 +211,7 @@
       call b2xpne (nx, ny, ns, rz2, na, ne2_ext, ne2)
       call b2xpro (nx, ny, ns, mp, am, na, ro)
       call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
-      call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                       !srv 13.01.17 {
+      call b2xzef (nx, ny, ns, rz2, na, ne, zeff)                      !srv 13.01.17 {
       call b2xzmf (nx, ny, ns, ismain, rz2, na, zmff)
       do iy = -1, ny
         do ix = -1, nx
@@ -217,7 +220,7 @@
           cimp1(ix,iy)=fce1(zmff(ix,iy))
           cimp2(ix,iy)=fce2(zmff(ix,iy))
         enddo
-      enddo
+      enddo                                                            !srv 13.01.17 }
 *   ..compute the Coulomb logarithm
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)
 *   ..compute zetap and zetae
@@ -245,7 +248,7 @@
       if(style.ne.2) then 
         call b2nxfx (nx, ny, qe, vol, hx, bb, ne, te, po,
      &   ehxp, wrk0, wrk1)
-      endif                                                             !srv 13.01.17 }
+      endif                                                            !srv 13.01.17 }
 *   ..compute smqdu
       call b2nxdu (nx, ny, ns, na, ua, smq, smqdu, wrk0, wrk1)
       if (iout.ne.0) then
@@ -256,7 +259,7 @@
       call sfill (n2*2, 0.0_R8, flct, 1)
       call sfill (n2*2, 0.0_R8, cvct, 1)
       call sfill (n2, 0.0_R8, resmt, 1)
-      call sfill (n2, 0.0e0_R8, ctcft, 1)                               !srv 06.04.07
+      call sfill (n2, 0.0e0_R8, ctcft, 1)                              !srv 06.04.07
 
 * ..main computation
 *   ..compute individual species corrections
@@ -268,13 +271,20 @@
        call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is), te, ti, pb)
 *    ..compute extended friction term
        if(style.eq.2) then                                             !srv 13.01.17
-         call b2sifrtf (nx, ny, ns, is, ismain, hx, hz, vol, bb,
-     &    na, ua, te, ti, ni, ne, ne2, zetap, zetae, gti, gte,
-     &    ce1, ce2, cimp1, cimp2, zeff, smbch, smbtf)
+         call b2sifrtf (nx, ny, ns, is, ismain, hx, bb, na, ua,        !srv 05.07.17
+     &    ue, te, ti, ni, ne, ne2, zetap, zetae, gti, gte, ce1, ce2,   !srv 05.07.17
+     &    cimp1, cimp2, zeff, smbfrea, smbfria, smbtfea, smbtfia,      !srv 05.07.17
+     &    smbch, smbtf)  ! smbch and smbtf will be multiplied by vol*hz below !srv 05.07.17
+         do iy =-1,ny
+           do ix =-1,nx
+             smbch(ix,iy,0:3) = vol(ix,iy)*hz(ix,iy)*smbch(ix,iy,0:3)
+             smbtf(ix,iy,0:3) = vol(ix,iy)*hz(ix,iy)*smbtf(ix,iy,0:3)
+           enddo
+         enddo
        else
         if(b2sifr_ver.eq.0) then                                       !srv 26.10.08 {
          call b2sifr (nx, ny, ns, is, vol, hx, hz, bb,                 !srv 09.01.01
-     &    na, ua, te, ti, ni, ne, ne2, ehxp, lnlam, cthe, cthi,         !srv 11.09.09
+     &    na, ua, te, ti, ni, ne, ne2, ehxp, lnlam, cthe, cthi,        !srv 11.09.09
      &    smbch, smbtf,
      &    smpr(-1,-1,is), smpt(-1,-1,is), smfr(-1,-1,is), 
      &    wrk0, wrk1, wrk2)                                            !srv 02.07.08 01.07.09
@@ -294,11 +304,11 @@
        call b2sscal (n2*2, am(is)*mp, flub, 1)
 !       call b2nxfm (nx, ny, am(is)*mp, fna_fcor(-1,-1,0,is), flub)
 *    ..add convective term due to new form of ion viscosity term only
-       call b2nxfv (nx, ny, is, hz, cvsahz(-1,-1,0,is), flubv)        !srv 01.07.05 11.09.09
+       call b2nxfv (nx, ny, is, hz, cvsahz(-1,-1,0,is), flubv)         !srv 01.07.05 11.09.09
        if (balance_netcdf.ne.0) then
          fmo_b2nxfv(:,:,:,is)=flubv !djm Jan2017
        endif
-       call b2saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                 !srv 11.09.09
+       call b2saxpy (n2*2, 1.0_R8, flubv, 1, flub, 1)                  !srv 11.09.09
 *    ..compute flcb, cvcb
        call b2nxfc (nx, ny, is, vol, pbshz, rob, 
      &   ua(-1,-1,is), flub, cvsahz(-1,-1,0,is), flcb, cvcb, wrk0)     !srv 09.01.01
@@ -360,11 +370,11 @@ cdjm Jan2017 update momentum source components for balance
         wrks=smb(:,:,0)+smb(:,:,1)*ua(:,:,is)+
      &       smb(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smb(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-        call my_out(70,nx,ny,wrks,'b2npmo_smb'//chns)                !srv 28.02.17
+        call my_out(70,nx,ny,wrks,'b2npmo_smb'//chns)                  !srv 28.02.17
         wrks=smo(:,:,0,is)+smo(:,:,1,is)*ua(:,:,is)+
      &       smo(:,:,2,is)*na(:,:,is)*mp*am(is)+
      &       smo(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-        call my_out(70,nx,ny,wrks,'b2npmo_smo'//chns)                !srv 28.02.17
+        call my_out(70,nx,ny,wrks,'b2npmo_smo'//chns)                  !srv 28.02.17
         wrks=smbch(:,:,0)+smbch(:,:,1)*ua(:,:,is)+
      &       smbch(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smbch(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
@@ -377,6 +387,8 @@ cdjm Jan2017 update momentum source components for balance
      &       smbgp(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smbgp(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
         call my_out(70,nx,ny,wrks,'b2npmo_smogp'//chns)
+       endif                                                           !srv 05.07.17
+       if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                     !srv 05.07.17
         wrks=smbcf(:,:,0)+smbcf(:,:,1)*ua(:,:,is)+
      &       smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
@@ -404,6 +416,20 @@ cdjm Jan2017 update momentum source components for balance
      &       smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
         call my_out(70,nx,ny,wrks,'b2npmo_smocf'//chns)
+
+        wrks = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,is)+       !srv 05.07.17 {
+     &        smbfria(:,:,2)*na(:,:,is)*mp*am(is)+
+     &        smbfria(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is))
+        call my_out(70,nx,ny,wrks,'b2npmo_smofria'//chns)
+
+        wrks = vol*hz*(smbfrea(:,:,0)+smbfrea(:,:,1)*ua(:,:,is))
+        call my_out(70,nx,ny,wrks,'b2npmo_smofrea'//chns)
+        wrks = vol*hz*smbtfia(:,:,0)
+        call my_out(70,nx,ny,wrks,'b2npmo_smotfia'//chns)
+        wrks = vol*hz*smbtfea(:,:,0)
+        call my_out(70,nx,ny,wrks,'b2npmo_smotfea'//chns)
+        call my_out(70,nx,ny,ue,'b2npmo_ue')                           !srv 05.07.17 }
+
        endif                                                           !srv 12.07.02 }
 
        if (solving) then                                               !srv 06.07.10
@@ -432,13 +458,13 @@ csw 21feb2014 added this else branch
 csw 21feb2014 and do this only for the solved species, i.e. added next branch
        if (solving) then
         call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
-        if(style.eq.2) then                                             !srv 13.01.17 {
+        if(style.eq.2) then                                            !srv 13.01.17 {
 *       (in this case thermal force and the friction are taken into account)
-         call b2saxpy (n2*4, 1.0_R8, smbtf, 1, smb, 1)                  !srv 08.10.14
+         call b2saxpy (n2*4, 1.0_R8, smbtf, 1, smb, 1)                 !srv 08.10.14
          call b2saxpy (n2*4, 1.0_R8, smbch, 1, smb, 1)
         else
 *       (now the friction cancels out)
-        endif                                                           !srv 13.01.17 }
+        endif                                                          !srv 13.01.17 }
         call b2saxpy (n2*4, 1.0_R8, smbgp, 1, smb, 1)
         call b2saxpy (n2*4, 1.0_R8, smbvh, 1, smb, 1)
         call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)                  !srv 03.07.08
@@ -457,7 +483,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
       enddo
 
 csw 21feb2014, execute simultaneous corrections always
-c      if (solving.and.solvemt(0:nnreg(0))) then                        !srv 06.07.10
+c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.07.10
       if (solving) then
 *   ..compute simultaneous correction
        call sfill (n2, 0.0_R8, wrk0, 1)

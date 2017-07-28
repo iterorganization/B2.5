@@ -255,6 +255,7 @@ csw 13mar2012
 !        call my_out(70,nx,ny,chce(-1,-1,1),'b2trcl_chcey')
         call my_out(70,nx,ny,calf(-1,-1,0),'b2trcl_calfx')
 !        call my_out(70,nx,ny,calf(-1,-1,1),'b2trcl_calfy')
+        call my_out(70,nx,ny,alfx_c,'b2trcl_alfx_c')                    !srv 05.07.17
         call my_out(70,nx,ny,chci(-1,-1,0),'b2trcl_chcix')
 !        call my_out(70,nx,ny,chci(-1,-1,1),'b2trcl_chciy')
       endif
@@ -262,6 +263,7 @@ csw 13mar2012
      &                   .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,csig(-1,-1,0),'b2trcl_csigx')
 !        call my_out(70,nx,ny,csig(-1,-1,1),'b2trcl_csigy')
+        call my_out(70,nx,ny,sigx_c,'b2trcl_sigx_c')                    !srv 05.07.17
       endif
 
 *   ..call 21 moment routines
@@ -491,6 +493,7 @@ csw 13mar2012
         call my_out(70,nx,ny,chce(-1,-1,0),'b2trcl_luciani_chcex')
 !        call my_out(70,nx,ny,chce(-1,-1,1),'b2trcl_luciani_chcey')
         call my_out(70,nx,ny,calf(-1,-1,0),'b2trcl_luciani_calfx')
+        call my_out(70,nx,ny,alfx_c,'b2trcl_luciani_alfx_c')              !srv 05.07.17
 !        call my_out(70,nx,ny,calf(-1,-1,1),'b2trcl_luciani_calfy')
         call my_out(70,nx,ny,chci(-1,-1,0),'b2trcl_luciani_chcix')
 !        call my_out(70,nx,ny,chci(-1,-1,1),'b2trcl_luciani_chciy')
@@ -499,6 +502,7 @@ csw 13mar2012
      &                  .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,csig(-1,-1,0),'b2trcl_luciani_csigx')
 !        call my_out(70,nx,ny,csig(-1,-1,1),'b2trcl_luciani_csigy')
+        call my_out(70,nx,ny,sigx_c,'b2trcl_luciani_sigx_c')              !srv 05.07.17
       endif
 
 *   .. save chce(:,:,0) after applying Luciani
@@ -643,6 +647,7 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                           !lk 06
 !        call my_out(70,nx,ny,chce(-1,-1,1),'b2trcl_luciani_fllim_chcey')
         call my_out(70,nx,ny,calf(-1,-1,0),'b2trcl_luciani_fllim_calfx')
 !        call my_out(70,nx,ny,calf(-1,-1,1),'b2trcl_luciani_fllim_calfy')
+        call my_out(70,nx,ny,alfx_c,'b2trcl_luciani_fllim_alfx_c')         !srv 05.07.17
         call my_out(70,nx,ny,chci(-1,-1,0),'b2trcl_luciani_fllim_chcix')
 !        call my_out(70,nx,ny,chci(-1,-1,1),'b2trcl_luciani_fllim_chciy')
       endif
@@ -682,6 +687,8 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                           !lk 06
        call my_out(70,nx,ny,csig(-1,-1,1),'cl_csigy')
        call my_out(70,nx,ny,calf(-1,-1,0),'cl_calfx')
        call my_out(70,nx,ny,calf(-1,-1,1),'cl_calfy')
+       call my_out(70,nx,ny,sigx_c,'cl_sigx_c')                      !srv 05.07.17
+       call my_out(70,nx,ny,alfx_c,'cl_alfx_c')                      !srv 05.07.17
       endif                                                          !srv 17.06.08 }
 
 * ..return

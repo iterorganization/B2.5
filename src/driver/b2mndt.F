@@ -530,7 +530,7 @@ ctmp.dpc
            call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp) !srv 01.07.09 20.09.11
 *      ..compute energy sources
            solving = .false.
-           call b2npht (nx, ny, ns, nnreg(0), ncall, solving,
+           call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,  !srv 05.07.17
      &      solveee, solveei, solvepo, solvemo,
      &      rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09

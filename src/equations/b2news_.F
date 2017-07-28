@@ -89,8 +89,8 @@
 !     3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
 !     5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
-     3  ue(-1:nx,-1:ny), lnlam(-1:nx,-1:ny),
-     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)           !iyv 06.02.14
+     3  ue(-1:nx,-1:ny), lnlam(-1:nx,-1:ny), zeff(-1:nx,-1:ny),          !srv 05.07.17
+     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)          !iyv 06.02.14
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical inverted_ua, new_matrix
       save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok                   !srv 09.07.99
@@ -421,12 +421,45 @@ c   extra call at this place within internal iteration)
      &    ni, sna, smo, she, shi, sch, sne)                              !xpb
       endif
 
+*   ..compute ue, electron parallel velocity
+      call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,         !srv 05.07.17
+     &             ne, te, na, ua, ue_ext, ne_ext, ue)
+      do iy=-1,ny
+        do ix=-1,nx
+          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+            wrk0(ix,iy)=-(fch_p(ix,iy,0)/pbs(ix,iy,0)+
+     &        fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+     &          pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
+          elseif(leftix(ix,iy).eq.-2) then
+            wrk0(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+     &         pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
+          elseif(rightix(ix,iy).eq.nx+1) then
+            wrk0(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe
+          endif
+!          wrk0(ix,iy)=wrk0(ix,iy)*prl_cur                               !srv 03.04.15
+        enddo
+      enddo
+      do is=0,ns-1
+        wrk0(:,:)=wrk0(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
+      enddo
+      wrk0(:,:)=wrk0(:,:)+ue_ext(:,:)*ne_ext(:,:)
+      wrk0(:,:)=wrk0(:,:)/ne(:,:)                                        !srv 05.03.11
+      if(iout_b2wdat.eq.4) then                                          !srv 05.07.17
+       call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
+       call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
+       call b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)
+       call my_out(70,nx,ny,fch_pi_c,'b2news__fch_pi_c')
+       call my_out(70,nx,ny,fch_pi_f,'b2news__fch_pi_f')
+       call my_out(70,nx,ny,ue,'b2news__ve')
+       call my_out(70,nx,ny,wrk0,'b2news__ue')
+      endif                                                              !srv 05.07.17
+      if (ue_style.eq.0) ue=wrk0
 
 csw 11oct2012 added check on coriolis force (taken from b2news())
       ier0=0
       call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1,          !srv 13.01.17
      &   qz, vol, hx, hy, hz, bb, pbs, pbshz, lnlam,                     !srv 23.07.99 09.01.01 01.07.09
-     &   na, te, ti, po, fna_fcor, 
+     &   na, te, ti, po, ue, fna_fcor,                                   !srv 05.07.17
      &   cvsahz, cvsa, cvsa_cl, cvsahz_cl, kt_neo,                       !srv 19.07.02
      &   smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb,            !srv 23.07.99 01.10.99 04.10.99 09.01.01
      &   resmo, resmt, corua, corut, pcca, pccm, ier0)                   !srv 23.07.99 10.11.02 23.12.03
@@ -800,7 +833,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
 
 *   ..iterate on heat balance
       if(mdf_fhe.eq.0 .and. mdf_fhi.eq.0) then                           !srv 13.10.06
-       call b2npht (nx, ny, ns, nnreg(0), ncall, solving,
+       call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,        !srv 05.07.17
      &  solveee, solveei, solvepo, solvemo,
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                       !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,        !srv 07.06.00 01.07.09
@@ -810,7 +843,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
       endif                                                              !srv 13.10.06 }
       if(mdf_fhe.ne.0 .and. mdf_fhi.ne.0) then                           !srv 13.10.06
        if(all(solveee(0:nnreg(0))).and.all(solveei(0:nnreg(0))))         !srv 26.09.12
-     &  call b2nph9 (nx, ny, ns, nnreg(0), ncall, solving,
+     &  call b2nph9 (nx, ny, ns, nnreg(0), ncall, ismain, solving,       !srv 05.07.17
      &   solveee, solveei, solvepo, solvemo,
      &   rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                      !srv 07.06.00 02.06.99
      &   pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,       !srv 07.06.00 01.07.09
@@ -819,7 +852,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &   reshe, reshi, wrk0, corte, corti, ier0)                         !srv 31.05.99 10.11.02
       endif                                                              !srv 13.10.06 }
       if(mdf_fhe.eq.0 .and. mdf_fhi.ne.0) then                           !srv 13.10.06
-       call b2npht (nx, ny, ns, nnreg(0), ncall, solving,
+       call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,        !srv 05.07.17
      &  solveee, solveei, solvepo, solvemo,
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                       !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,        !srv 07.06.00 01.07.09
@@ -828,7 +861,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  reshe, reshi, wrk0, corte, corti, ier0)                          !srv 31.05.99 10.11.02
       endif                                                              !srv 13.10.06 }
       if(mdf_fhe.ne.0 .and. mdf_fhi.eq.0) then                           !srv 13.10.06
-       call b2npht (nx, ny, ns, nnreg(0), ncall, solving,
+       call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,        !srv 05.07.17
      &  solveee, solveei, solvepo, solvemo,
      &  rxf3, BoRiS, fac_ExB, hx, hy, qz, vol, bb,                       !srv 07.06.00 02.06.99
      &  pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,        !srv 07.06.00 01.07.09
