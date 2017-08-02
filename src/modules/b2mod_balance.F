@@ -1868,18 +1868,20 @@ cdjm Update ion heat sources
         rpt_av=0.0_R8
         kinrgy_av=0.0_R8
         fne_av=0.0_R8
-        dab2_av=0.0_R8
-        dmb2_av=0.0_R8
-        tab2_av=0.0_R8
-        tmb2_av=0.0_R8
-        rfluxa_av=0.0_R8
-        rfluxm_av=0.0_R8
-        refluxa_av=0.0_R8
-        refluxm_av=0.0_R8
-        pfluxa_av=0.0_R8
-        pfluxm_av=0.0_R8
-        pefluxa_av=0.0_R8
-        pefluxm_av=0.0_R8
+        if (allocated(dab2_av)) then
+          dab2_av=0.0_R8
+          dmb2_av=0.0_R8
+          tab2_av=0.0_R8
+          tmb2_av=0.0_R8
+          rfluxa_av=0.0_R8
+          rfluxm_av=0.0_R8
+          refluxa_av=0.0_R8
+          refluxm_av=0.0_R8
+          pfluxa_av=0.0_R8
+          pfluxm_av=0.0_R8
+          pefluxa_av=0.0_R8
+          pefluxm_av=0.0_R8
+        endif
       endif
 
       if (balance_average.ne.0) then
@@ -2141,18 +2143,20 @@ cdjm Update ion heat sources
       rpt_av=avmlt*rpt_av+curmlt*rpt
       kinrgy_av=avmlt*kinrgy_av+curmlt*kinrgy
       fne_av=avmlt*fne_av+curmlt*fne
-      dab2_av=avmlt*dab2_av+curmlt*dab2
-      dmb2_av=avmlt*dmb2_av+curmlt*dmb2
-      tab2_av=avmlt*tab2_av+curmlt*tab2
-      tmb2_av=avmlt*tmb2_av+curmlt*tmb2
-      rfluxa_av=avmlt*rfluxa_av+curmlt*rfluxa
-      rfluxm_av=avmlt*rfluxm_av+curmlt*rfluxm
-      refluxa_av=avmlt*refluxa_av+curmlt*refluxa
-      refluxm_av=avmlt*refluxm_av+curmlt*refluxm
-      pfluxa_av=avmlt*pfluxa_av+curmlt*pfluxa
-      pfluxm_av=avmlt*pfluxm_av+curmlt*pfluxm
-      pefluxa_av=avmlt*pefluxa_av+curmlt*pefluxa
-      pefluxm_av=avmlt*pefluxm_av+curmlt*pefluxm
+      if (allocated(dab2_av)) then
+        dab2_av=avmlt*dab2_av+curmlt*dab2
+        dmb2_av=avmlt*dmb2_av+curmlt*dmb2
+        tab2_av=avmlt*tab2_av+curmlt*tab2
+        tmb2_av=avmlt*tmb2_av+curmlt*tmb2
+        rfluxa_av=avmlt*rfluxa_av+curmlt*rfluxa
+        rfluxm_av=avmlt*rfluxm_av+curmlt*rfluxm
+        refluxa_av=avmlt*refluxa_av+curmlt*refluxa
+        refluxm_av=avmlt*refluxm_av+curmlt*refluxm
+        pfluxa_av=avmlt*pfluxa_av+curmlt*pfluxa
+        pfluxm_av=avmlt*pfluxm_av+curmlt*pfluxm
+        pefluxa_av=avmlt*pefluxa_av+curmlt*pefluxa
+        pefluxm_av=avmlt*pefluxm_av+curmlt*pefluxm
+      endif
 
       end subroutine update_average_balance
 
@@ -2547,22 +2551,24 @@ cdjm Update ion heat sources
       call write_cdf_double(ncid,'kinrgy',kinrgy_av,vdims,3)
       vdims(3)=n2id
       call write_cdf_double(ncid,'fne',fne_av,vdims,3)
-      vdims(1)=eirnxid
-      vdims(2)=eirnyid
-      vdims(3)=eirnatmid
-      call write_cdf_double(ncid,'dab2',dab2_av,vdims,3)
-      call write_cdf_double(ncid,'tab2',tab2_av,vdims,3)
-      call write_cdf_double(ncid,'rfluxa',rfluxa_av,vdims,3)
-      call write_cdf_double(ncid,'refluxa',refluxa_av,vdims,3)
-      call write_cdf_double(ncid,'pfluxa',pfluxa_av,vdims,3)
-      call write_cdf_double(ncid,'pefluxa',pefluxa_av,vdims,3)
-      vdims(3)=eirnmolid
-      call write_cdf_double(ncid,'dmb2',dmb2_av,vdims,3)
-      call write_cdf_double(ncid,'tmb2',tmb2_av,vdims,3)
-      call write_cdf_double(ncid,'rfluxm',rfluxm_av,vdims,3)
-      call write_cdf_double(ncid,'refluxm',refluxm_av,vdims,3)
-      call write_cdf_double(ncid,'pfluxm',pfluxm_av,vdims,3)
-      call write_cdf_double(ncid,'pefluxm',pefluxm_av,vdims,3)
+      if (allocated(dab2_av)) then
+        vdims(1)=eirnxid
+        vdims(2)=eirnyid
+        vdims(3)=eirnatmid
+        call write_cdf_double(ncid,'dab2',dab2_av,vdims,3)
+        call write_cdf_double(ncid,'tab2',tab2_av,vdims,3)
+        call write_cdf_double(ncid,'rfluxa',rfluxa_av,vdims,3)
+        call write_cdf_double(ncid,'refluxa',refluxa_av,vdims,3)
+        call write_cdf_double(ncid,'pfluxa',pfluxa_av,vdims,3)
+        call write_cdf_double(ncid,'pefluxa',pefluxa_av,vdims,3)
+        vdims(3)=eirnmolid
+        call write_cdf_double(ncid,'dmb2',dmb2_av,vdims,3)
+        call write_cdf_double(ncid,'tmb2',tmb2_av,vdims,3)
+        call write_cdf_double(ncid,'rfluxm',rfluxm_av,vdims,3)
+        call write_cdf_double(ncid,'refluxm',refluxm_av,vdims,3)
+        call write_cdf_double(ncid,'pfluxm',pfluxm_av,vdims,3)
+        call write_cdf_double(ncid,'pefluxm',pefluxm_av,vdims,3)
+      endif
 
       status=nf_close(ncid)
       call check_cdf_status(status)
