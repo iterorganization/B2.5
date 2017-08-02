@@ -1972,7 +1972,7 @@ c new CDF movie option
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
-            call tallies(nx,ny,ns)
+            call tallies(nx,ny,ns,BoRiS)
           endif
         endif
         if (first_time_step) call b2trci(nx,ny,ns,ismain,dtim,BoRiS)
@@ -2231,7 +2231,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..write out last tallies if not yet done
       if(tally.gt.0) then
         if(mod(itim,tally).ne.0.and.itim.gt.1) then
-          call tallies(nx,ny,ns)
+          call tallies(nx,ny,ns,BoRiS)
         endif
       endif
 *   ..create netcdf file containing everything for balance postprocessing routines !djm Jan2017

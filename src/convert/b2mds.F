@@ -294,7 +294,7 @@ c
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
       call b2xpen (nx, ny, ns,
-     1 fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
+     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2 fhm, fhp, fhj, fht)
       if(allocated(fhi_ext)) fht=fht+fhi_ext
       do is=0,ns_ext-1
@@ -302,18 +302,22 @@ c calculate additional fluxes (fhj, fhm, fhp, fht)
           do ix=-1,nx
             if(leftix(ix,iy).ge.-1) then
               fht(ix,iy,0)=fht(ix,iy,0)+0.5_R8*fa_ext(ix,iy,0,is)*
-     .         0.5_R8*am_ext(is)*mp*
-     .         (ua_ext(leftix(ix,iy),leftiy(ix,iy),is)**2+
-     .          ua_ext(ix,iy,is)**2)
+     .          (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
+     .          (ua_ext(leftix(ix,iy),leftiy(ix,iy),is)**2+
+     .           ua_ext(ix,iy,is)**2)+
+     .          (ta_ext(leftix(ix,iy),leftiy(ix,iy),is)+
+     .           ta_ext(ix,iy,is)))
               fht(ix,iy,0)=fht(ix,iy,0)+0.5_R8*fa_ext(ix,iy,0,is)*
      .         (pt_ext(leftix(ix,iy),leftiy(ix,iy),is)+
      .          pt_ext(ix,iy,is))*ev
             endif
             if(bottomiy(ix,iy).ge.-1) then
               fht(ix,iy,1)=fht(ix,iy,1)+0.5_R8*fa_ext(ix,iy,1,is)*
-     .         0.5_R8*am_ext(is)*mp*
+     .         (1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
      .         (ua_ext(bottomix(ix,iy),bottomiy(ix,iy),is)**2+
-     .          ua_ext(ix,iy,is)**2)
+     .          ua_ext(ix,iy,is)**2)+
+     .         (ta_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     .          ta_ext(ix,iy,is)))
               fht(ix,iy,1)=fht(ix,iy,1)+0.5_R8*fa_ext(ix,iy,1,is)*
      .         (pt_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
      .          pt_ext(ix,iy,is))*ev
@@ -809,8 +813,9 @@ c     fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
 c     fni_32, fni_52, fne_32, fne_52,
 c     fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
 c     vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc
+c 23: fht definition changed to 5/2 formulation
 
-      dbversion=22
+      dbversion=23
       call mds_put_int('\TOP.IDENT:VERSION',dbversion)
 
       textpl_cat=textpl(0)

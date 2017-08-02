@@ -522,7 +522,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
       call b2xpen (nx, ny, ns,
-     1 fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
+     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2 fhm, fhp, fhj, fht)
 c calculate divergences of the various fluxes
       do is=0,ns-1
@@ -849,8 +849,8 @@ cxpb  Western boundary
      &          (hhn+hh)
           wall_heatflux(ibnd)=wall_heatflux(ibnd)+
      &     max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))/gs(ixf,iyf,idir)*
-     &          (0.5_R8*mp*am_ext(is)*ua_ext(ix,iy,is)**2*
-     &                    (1.0_R8-BoRiS) + pxf*ev)
+     &         ((0.5_R8*mp*am_ext(is)*ua_ext(ix,iy,is)**2+
+     &           ta_ext(ix,iy,is))*(1.0_R8-BoRiS) + pxf*ev)
         enddo
       enddo
       ndata = nbnd
@@ -1733,7 +1733,8 @@ c
 	  do is=0,ns_ext-1
 	    fhtx(:,:)=fhtx(:,:)+fa_ext(:,:,0,is)*
      .	     (pt_ext(:,:,is)*ev+
-     .	     0.5_R8*am_ext(is)*mp*ua_ext(:,:,is)**2*(1.0_R8-BoRiS))
+     .	     (0.5_R8*am_ext(is)*mp*ua_ext(:,:,is)**2+ta_ext(:,:,is))*
+     .       (1.0_R8-BoRiS))
 	  enddo
           call copy(fhtx,1.0_R8,nz,textbl)
         case('fhty')
@@ -1743,7 +1744,8 @@ c
           do is=0,ns_ext-1
             fhty(:,:)=fhty(:,:)+fa_ext(:,:,1,is)*
      .       (pt_ext(:,:,is)*ev+
-     .        0.5_R8*am_ext(is)*mp*ua_ext(:,:,is)**2*(1.0_R8-BoRiS))
+     .       (0.5_R8*am_ext(is)*mp*ua_ext(:,:,is)**2+ta_ext(:,:,is))*
+     .       (1.0_R8-BoRiS))
           enddo
           call copy(fhty,1.0_R8,nz,textbl)
         case('fle')
