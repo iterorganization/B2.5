@@ -605,7 +605,7 @@ csw 16oct2012 init ier0
      &     fchvisq, fchinert, fchanml,                                   !srv 07.07.99 11.07.99 22.11.99 24.03.07
      &     .false.)                                                      !djm Jan2017
           call b2xpen (nx, ny, ns,
-     1     fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
+     1     fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2     fhm, fhp, fhj, fht)
 *    ..perform iteration
           t0=0.0_R8
@@ -733,7 +733,7 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
        floi_noc = floi                                                   !srv 24.10.02
        floe_noc = floe                                                   !srv 24.10.02
       call b2xpen (nx, ny, ns,
-     1 fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
+     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2 fhm, fhp, fhj, fht)
 *   ..add contribution from cdpa to floe, cone, floi, coni
       call b2tfcc (nx, ny, ns, na, te, ti, cdpa, floe, cone,

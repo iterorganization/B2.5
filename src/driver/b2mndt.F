@@ -482,7 +482,7 @@ ctmp.dpc
      &      te, po, vedia, veecrb)
 *      ..compute other fluxes
            call b2xpen (nx, ny, ns,
-     1      fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
+     1      fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2      fhm, fhp, fhj, fht)
 *      ..compute ue, electron parallel velocity
            ue=0.0_R8

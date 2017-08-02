@@ -1,5 +1,5 @@
       subroutine b2xpen (nx, ny, ns,
-     1 fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
+     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2 fhm, fhp, fhj, fht)
       use b2mod_types
       use b2mod_indirect
@@ -8,10 +8,11 @@
       integer nx, ny, ns
 ! inputs
       real (kind=R8) ::
-     *  fna(-1:nx,-1:ny,0:1,0:ns-1), fch(-1:nx,-1:ny,0:1),
+     *  fna(-1:nx,-1:ny,0:1,0:ns-1),
+     *  fne(-1:nx,-1:ny,0:1), fch(-1:nx,-1:ny,0:1),
      1	fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1),
      2	kinrgy(-1:nx,-1:ny,0:ns-1), rpt(-1:nx,-1:ny,0:ns-1),
-     3	po(-1:nx,-1:ny), BoRiS
+     3	te(-1:nx,-1:ny), ti(-1:nx,-1:ny), po(-1:nx,-1:ny), BoRiS
 ! outputs
       real (kind=R8) ::
      &  fhm(-1:nx,-1:ny,0:1,0:ns-1), fhp(-1:nx,-1:ny,0:1,0:ns-1),
@@ -23,11 +24,14 @@
 *     be added explicitly in the calling routine when needed.
 *     ------------------------------------------------------------------
       integer ix, iy, is
+      real (kind=R8) ::
+     &  fnt(-1:nx,-1:ny,0:1)
 *     ------------------------------------------------------------------
 *$$$  call subini ('b2xpen')
       fhm = 0.0_R8
       fhp = 0.0_R8
       fhj = 0.0_R8
+      fnt = 0.0_R8
       fht = 0.0_R8
 c calculate additional fluxes (fhj, fhm, fhp)
       do iy=-1,ny
@@ -35,14 +39,14 @@ c calculate additional fluxes (fhj, fhm, fhp)
           if(leftix(ix,iy).ge.-1) then
             fhj(ix,iy,0)=-fch(ix,iy,0)*
      1       (po(ix,iy)+po(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
-          else
-            fhj(ix,iy,0)=0.0_R8
+            fnt(ix,iy,0)=fne(ix,iy,0)*
+     1       (te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy)))/2.0_R8
           endif
           if(bottomiy(ix,iy).ge.-1) then
             fhj(ix,iy,1)=-fch(ix,iy,1)*
      1       (po(ix,iy)+po(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
-          else
-            fhj(ix,iy,1)=0.0_R8
+            fnt(ix,iy,1)=fne(ix,iy,1)*
+     1       (te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
           endif
         enddo
       enddo
@@ -54,9 +58,8 @@ c calculate additional fluxes (fhj, fhm, fhp)
      2         (kinrgy(leftix(ix,iy),leftiy(ix,iy),is)+kinrgy(ix,iy,is))
               fhp(ix,iy,0,is)=0.5_R8*fna(ix,iy,0,is)*
      2         (rpt(leftix(ix,iy),leftiy(ix,iy),is)+rpt(ix,iy,is))*ev
-            else
-              fhm(ix,iy,0,is)=0.0_R8
-              fhp(ix,iy,0,is)=0.0_R8
+              fnt(ix,iy,0)=fnt(ix,iy,0)+0.5_R8*fna(ix,iy,0,is)*
+     2         (ti(leftix(ix,iy),leftiy(ix,iy))+ti(ix,iy))
             endif
             if(bottomiy(ix,iy).ge.-1) then
               fhm(ix,iy,1,is)=0.5_R8*fna(ix,iy,1,is)*
@@ -65,15 +68,16 @@ c calculate additional fluxes (fhj, fhm, fhp)
               fhp(ix,iy,1,is)=0.5_R8*fna(ix,iy,1,is)*
      2         (rpt(bottomix(ix,iy),bottomiy(ix,iy),is)+
      1          rpt(ix,iy,is))*ev
-            else
-              fhm(ix,iy,1,is)=0.0_R8
-              fhp(ix,iy,1,is)=0.0_R8
+              fnt(ix,iy,1)=fnt(ix,iy,1)+0.5_R8*fna(ix,iy,1,is)*
+     2         (ti(bottomix(ix,iy),bottomiy(ix,iy))+
+     1          ti(ix,iy))
             endif
           enddo
         enddo
       enddo
 c calculate total fluxes (fht)
-      fht(:,:,:)=fhe(:,:,:)+fhi(:,:,:)+fhj(:,:,:)
+      fht(:,:,:)=fhe(:,:,:)+fhi(:,:,:)+fhj(:,:,:)+
+     .           fnt(:,:,:)*(1.0_R8-BoRiS)
       do is=0,ns-1
 	fht(:,:,:)=fht(:,:,:)+fhp(:,:,:,is)+fhm(:,:,:,is)*(1.0_R8-BoRiS)
       enddo
