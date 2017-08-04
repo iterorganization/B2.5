@@ -1816,9 +1816,9 @@ Contains
 
 
   Subroutine calc_fet(ix,iy,SIDE,fac_flux,nx,ny,ns,ismain,BoRiS,fet,fni0,fee0,fei0,fch0,pwr)
-    use b2mod_plasma   , Only : fna, fhe, fhi, fch, fhm, fhp
+    use b2mod_plasma   , Only : ti, te, fna, fne, fhe, fhi, fch, fhm, fhp
     use b2mod_indirect , Only : rightix, rightiy, bottomix, bottomiy, topix, topiy, leftix, leftiy
-    use b2mod_external , Only : fhi_ext, pt_ext, ua_ext, am_ext, ns_ext, fa_ext
+    use b2mod_external , Only : fhi_ext, pt_ext, ta_ext, ua_ext, am_ext, ns_ext, fa_ext
     use b2mod_constants , Only : ev, mp
     Use b2mod_geo , Only : hx, hy, qz, gs
     Implicit None
@@ -1830,7 +1830,7 @@ Contains
     Character(Len=1) :: SIDE
     ! Local vars
     Integer :: ix_adj, iy_adj, is, ix_flux, iy_flux, idir
-    Real(kind=R8) :: kintmp, rpttmp
+    Real(kind=R8) :: kintmp, rpttmp, tif, tef, taf
     Real(kind=R8) :: h(-1:nx,-1:ny)
     ! computation
 
@@ -1871,14 +1871,18 @@ Contains
     If (Present(fei0)) fei0 = fac_flux*fhi(ix_flux,iy_flux,idir)
     If (Present(fch0)) fch0 = fac_flux*fch(ix_flux,iy_flux,idir)
     fet = fac_flux*(fhe(ix_flux,iy_flux,idir) + fhi(ix_flux,iy_flux,idir) + fhi_ext(ix_flux,iy_flux,idir))
+    tef = (te(ix_adj,iy_adj)*h(ix,iy)+te(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
+    tif = (ti(ix_adj,iy_adj)*h(ix,iy)+ti(ix,iy)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
+    fet = fet + fac_flux*fne(ix_flux,iy_flux,idir)*tef*(1.0_R8-BoRiS)
     do is=0,ns-1
-      fet = fet + fac_flux*fhm(ix_flux,iy_flux,idir,is)*(1.0_R8-BoRiS) + fac_flux*fhp(ix_flux,iy_flux,idir,is)
+      fet = fet + fac_flux*(fhm(ix_flux,iy_flux,idir,is)+tif)*(1.0_R8-BoRiS) + fac_flux*fhp(ix_flux,iy_flux,idir,is)
     enddo
     do is=0,ns_ext-1
       kintmp = 0.5_R8*am_ext(is)*mp*(ua_ext(ix,iy,is)**2 * h(ix_adj,iy_adj)+ &
            ua_ext(ix_adj,iy_adj,is)**2*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
       rpttmp = (pt_ext(ix,iy,is)*h(ix_adj,iy_adj)+pt_ext(ix_adj,iy_adj,is)*h(ix,iy))/(h(ix_adj,iy_adj)+h(ix,iy))
-      fet = fet + fac_flux*(rpttmp*ev + kintmp*(1.0_R8-BoRiS))*fa_ext(ix_flux,iy_flux,idir,is)
+      taf = (ta_ext(ix_adj,iy_adj,is)*h(ix,iy)+ta_ext(ix,iy,is)*h(ix_adj,iy_adj))/(h(ix,iy)+h(ix_adj,iy_adj))
+      fet = fet + fac_flux*(rpttmp*ev + (kintmp+taf)*(1.0_R8-BoRiS))*fa_ext(ix_flux,iy_flux,idir,is)
     enddo
     If (Present(pwr)) pwr = Abs(fet)/gs(ix_flux,iy_flux,idir)
   End Subroutine calc_fet
