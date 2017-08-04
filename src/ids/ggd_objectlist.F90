@@ -8,12 +8,11 @@ module ggd_objectlist
 #else
 #ifdef ITM
   use euitm_schemas ! IGNORE
-#endif
-#endif
-
   use ggd_common
   use ggd_access
   use ggd_object
+#endif
+#endif
 
   implicit none
 
