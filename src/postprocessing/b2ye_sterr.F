@@ -1,29 +1,31 @@
-      
-      subroutine b2ye_sterr (meanbatch, nn, ntotdt, ntim_batch, 
+
+      subroutine b2ye_sterr (meanbatch, nn, ntotdt, ntim_batch,
      .                      eps_s, tmax, T1, T2, meansample)
+
+      use b2mod_types
 
 *-----------------------------------------------------------------------
 *.documentation
 *
 *  1. purpose
 *
-*     B2YE_STERR computes the statistical error of the input array of 
+*     B2YE_STERR computes the statistical error of the input array of
 *     batch means
 *
 *  2. input/output variables
 *
-*     meanbatch(:): input variable, 1-D array with batch means 
+*     meanbatch(:): input variable, 1-D array with batch means
 *     NN: number of batches
 *     nototdt: total number of iterations for averaging
-*     ntim_batch: number of iterations per batch 
-*     eps_s: output variable, statistical error 
-*     eps_s1: output variable, statistical error 
-*     eps_s2: output variable, statistical error 
+*     ntim_batch: number of iterations per batch
+*     eps_s: output variable, statistical error
+*     eps_s1: output variable, statistical error
+*     eps_s2: output variable, statistical error
 *     T: local variable, scalar, correlation time
 *
-*  3. description 
+*  3. description
 *
-*     For a detailed description of the equations see K. Ghoos et al., 
+*     For a detailed description of the equations see K. Ghoos et al.,
 *     Numerical error estimation in Random Noise coupled plasma edge 
 *     simulations in nuclear fusion reactors, M&C2017
 *
@@ -31,21 +33,21 @@
 *     ..compute T based on batch means
 *     ..compute T based on autocorrelation
 *     ..compute statistical error based on maximum value for T
-*      
+*
 *-----------------------------------------------------------------------
 *.declarations
-  
-      implicit none
-      
-      real*8, intent(in) :: meanbatch(NN)
-      real*8, intent(out) :: eps_s, meansample, tmax, T1, T2 
-      integer, intent(in) :: nn, ntotdt, ntim_batch
 
-      real*8, allocatable, save :: meangroup(:),
+      implicit none
+
+      integer, intent(in) :: nn, ntotdt, ntim_batch
+      real (kind=R8), intent(in) :: meanbatch(NN)
+      real (kind=R8), intent(out) :: eps_s, meansample, tmax, T1, T2
+
+      real (kind=R8), allocatable, save :: meangroup(:),
      .                             meangroup2(:), meanbatch2(:),
-     .                             rho(:), tau(:), logrho(:), 
+     .                             rho(:), tau(:), logrho(:),
      .                             rhonew(:), taunew(:)
-      real*8 :: STAT, meantot, varbatch, eps_s1, eps_s2,
+      real (kind=R8) :: STAT, meantot, varbatch, eps_s1, eps_s2,
      .          meansamplebis, varbatchbis, vargroup, fit(20)
       integer :: I, M, IFAIL, ncutoff, nfit, ncutoffnew
       logical :: check
@@ -58,17 +60,17 @@
         allocate (rho(nn))
         allocate (logrho(nn))
         allocate (tau(nn))
-        meangroup = 0.d0
-        meangroup2 = 0.d0
-        meanbatch2 = 0.d0
-        rho = 0.d0
-	logrho = 0.d0
-        tau = 0.d0
+        meangroup = 0.0_R8
+        meangroup2 = 0.0_R8
+        meanbatch2 = 0.0_R8
+        rho = 0.0_R8
+	logrho = 0.0_R8
+        tau = 0.0_R8
       end if
 
 
 *** Compute T based on batch means ensembles
-*     compute mean and variance of samples and meanbatches 
+*     compute mean and variance of samples and meanbatches
 *            (meansample = mean of meanbatch !)
       meansample = sum(meanbatch)/NN
       meanbatch2 = meanbatch**2
@@ -85,28 +87,28 @@
 
 *** Compute correlation time for batches
 
-      T1 = vargroup*M/varbatch;
+      T1 = vargroup*M/varbatch
 
 *** Compute T based on autocorrelation
       ncutoff = 30
       ifail = 0
       check = .true.
-      CALL G13ABF(meanbatch,NN,NN-ncutoff, meansamplebis, varbatchbis, 
+      CALL G13ABF(meanbatch, NN, NN-ncutoff, meansamplebis, varbatchbis,
      .            rho, STAT, IFAIL )
-*     --- for fit only take samples before the first one that is 
+*     --- for fit only take samples before the first one that is
 *         within the 1 sigma band ---
       DO I=1,NN-ncutoff
-        IF(abs(rho(I)).LT.(1./SQRT(real(NN))).and.check) THEN 
+        IF(abs(rho(I)).LT.(1.0_R8/SQRT(real(NN))).and.check) THEN
           nfit=I
           check=.false.
         ENDIF
         logrho(I)=log(rho(I))
         tau(I)=real(I)
       ENDDO
-      
+
       IF (nfit.gt.2) then
-        CALL G02CAF(nfit,tau,logrho,fit, IFAIL)
-        ncutoffnew = (log(0.001)-fit(7))/fit(6)
+        CALL G02CAF(nfit,tau,logrho,fit,ifail)
+        ncutoffnew = (log(0.001_R8)-fit(7))/fit(6)
         allocate (rhonew(ncutoffnew))
         allocate (taunew(ncutoffnew))
         taunew = (/ ( i, i=1, ncutoffnew ) /)
@@ -115,19 +117,19 @@
         deallocate (rhonew)
         deallocate (taunew)
       ELSE
-        T2=0
+        T2=0.0_R8
       ENDIF
 
 
 *** Compute statistical error
 
-       tmax = max(T1,T2)
-       eps_s = sqrt(varbatch*tmax/(Ntotdt/ntim_batch))
-       eps_s1 = sqrt(varbatch*T1/(Ntotdt/ntim_batch))
-       eps_s2 = sqrt(varbatch*T2/(Ntotdt/ntim_batch))
+      tmax = max(T1,T2)
+      eps_s = sqrt(varbatch*tmax/(Ntotdt/ntim_batch))
+      eps_s1 = sqrt(varbatch*T1/(Ntotdt/ntim_batch))
+      eps_s2 = sqrt(varbatch*T2/(Ntotdt/ntim_batch))
 
 
-
+      return
       end subroutine b2ye_sterr
 
 

@@ -1,7 +1,7 @@
 
 *     B2YE is a post-processor for b2. It calculates statistical errors
 *     based on averaged quantities collected during the averaging phase
-*     of a b2 calculation
+*     of a b2 calculation.
 
       program b2ye
 
@@ -9,24 +9,31 @@
       use b2mod_version
       use b2mod_constants
       use b2mod_b2cmpa
+#ifndef NO_CDF
+      use b2mod_mwti
+#endif
+#ifdef B25_EIRENE
+      use eirmod_infcop
+#endif
 
       implicit none
 
+#ifndef NO_CDF
 #     include <netcdf.inc>
 
       integer :: nastep, ntim_batch, ntotdt, naver
       integer :: nncutmax = 10
       integer :: imap(maxvdims), iret, ncid, iout
-      real (kind=R8), allocatable, save:: 
+      real (kind=R8), allocatable, save ::
      *      batchsa(:)
-      real (kind=R8), allocatable, save:: 
+      real (kind=R8), allocatable, save ::
      *      nemxip_av(:,:),  temxip_av(:,:),  timxip_av(:,:),
      *      nemxap_av(:,:),  temxap_av(:,:),  timxap_av(:,:),
      *      pomxip_av(:,:),  pomxap_av(:,:),
      *      nemxip_std(:,:), temxip_std(:,:), timxip_std(:,:),
      *      nemxap_std(:,:), temxap_std(:,:), timxap_std(:,:),
      *      pomxip_std(:,:), pomxap_std(:,:)
-      real (kind=R8), allocatable, save :: 
+      real (kind=R8), allocatable, save ::
      *      nesepi_av(:,:),  tesepi_av(:,:),  tisepi_av(:,:),
      *      nesepm_av(:,:),  tesepm_av(:,:),  tisepm_av(:,:),
      *      nesepa_av(:,:),  tesepa_av(:,:),  tisepa_av(:,:),
@@ -35,7 +42,7 @@
      *      nesepm_std(:,:), tesepm_std(:,:), tisepm_std(:,:),
      *      nesepa_std(:,:), tesepa_std(:,:), tisepa_std(:,:),
      *      posepi_std(:,:), posepm_std(:,:), posepa_std(:,:)
-      real (kind=R8) :: tstepn(1),eps_s, tmax, meansample, t1, t2
+      real (kind=R8) :: tstepn(1), eps_s, tmax, meansample, t1, t2
       logical b2ye_tprf
       character(5) :: rw
       integer :: io, iex, iun, idum(3), ns
@@ -48,7 +55,12 @@
       naver = 0
       ntotdt = 0
 
-      open (newunit=iun,file='b2favere',access='SEQUENTIAL',
+#ifdef B25_EIRENE
+      iun = newunit()
+#else
+      iun= 99
+#endif
+      open (unit=iun,file='b2favere',access='SEQUENTIAL',
      .        form='FORMATTED',status='OLD',iostat=iex)
 
       io = iex
@@ -62,15 +74,14 @@
    	call cfruch (iun, 120, lbli, 'label')
         call b2ruzd (iun, b2faveri_version, ns, 
      &          zpdum(0,1), zpdum(0,2), zpdum(0,3), zpdum(0,4), .false.)
-
         call cfruin (iun, 1, naver, 'naver')
         call cfruin (iun, 1, ntotdt, 'ntotdt')  
 	write (*,*) ' naver ', naver, ' ntotdt ', ntotdt
       else
         write (*,*) ' file b2favere not found '
 	write (*,*) ' results are questionable! '
-
       end if
+      close (iun)
  
 *  prepare reading from NETCDF file b2time.nc
       rw='read'
@@ -349,6 +360,32 @@
       close (iout)
 
       call ncclos (ncid, iret)
+
+      deallocate (batchsa)
+      deallocate (nemxip_av)
+      deallocate (temxip_av)
+      deallocate (timxip_av)
+      deallocate (pomxip_av)
+      deallocate (nemxap_av)
+      deallocate (temxap_av)
+      deallocate (timxap_av)
+      deallocate (pomxap_av)
+
+      deallocate (nesepi_av)
+      deallocate (tesepi_av)
+      deallocate (tisepi_av)
+      deallocate (posepi_av)
+      deallocate (nesepm_av)
+      deallocate (tesepm_av)
+      deallocate (tisepm_av)
+      deallocate (posepm_av)
+      deallocate (nesepa_av)
+      deallocate (tesepa_av)
+      deallocate (tisepa_av)
+      deallocate (posepa_av)
+#else
+      write(*,*) 'b2ye failed because compiled with NO_CDF option'
+#endif
 
       stop
       end program b2ye

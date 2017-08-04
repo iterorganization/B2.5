@@ -599,6 +599,10 @@
 *     B2XXMM computes the locations of the minimum and maximum entries
 *     of a quantity defined on the b2 mesh.
 *
+*     B2YE (main program) is a postprocessor for b2. It calculates
+*     statistical errors based on averaged quantities collected during
+*     the averaging phase of a b2 calculation.
+*
 *     B2YG (main program) is a postprocessor for b2. It reads and
 *     displays the geometry and magnetic field. This program calls the
 *     driver routine b2ygdr for the actual computation.

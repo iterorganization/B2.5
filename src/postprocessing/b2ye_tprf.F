@@ -1,18 +1,19 @@
 
       function b2ye_tprf (val,nn) result(log)
 
+      use b2mod_types
       implicit none
 
       integer, intent(in) :: nn
-      real*8, intent(in) :: val(nn)
+      real (kind=R8), intent(in) :: val(nn)
       logical :: log
 
-      real*8 :: vmin, vmax
+      real (kind=R8) :: vmin, vmax
 
       vmin = minval(val(1:nn))
       vmax = maxval(val(1:nn))
 
-      log = abs(vmax - vmin)/abs(max(vmin,vmax)+1.d-30) > 1.d-5
+      log = abs(vmax - vmin)/abs(max(vmin,vmax)+1.0e-30_R8) > 1.0e-5_R8
 
       return
       end function b2ye_tprf
