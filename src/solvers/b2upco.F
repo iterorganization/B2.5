@@ -84,29 +84,37 @@
         pb_(ix,iy) = t0*pb(ix,iy)                        !lk 30.06.2017
        enddo
       enddo
+      if(c_corr_core_dn.eq.1.0_R8) then                  !srv 25.07.17 {
+        nb = nb_
+        pb = pb_
+      else                                               !srv 25.07.17 }
 *   ..smooth the correction for inner flux surfaces      !lk 30.06.2017{
-      tt0 = 0.0e0_R8
-      tt1 = 0.0e0_R8
-      tt2 = 0.0e0_R8
-      do iy = -1,ny
-        do ix=0,nx
-          if(mod(region(ix,iy,0),4).eq.1) then
-            tt0(iy) = tt0(iy) + vol(ix,iy)
-            tt1(iy) = tt1(iy) + vol(ix,iy)*(nb_(ix,iy)-nb(ix,iy))
-            tt2(iy) = tt2(iy) + vol(ix,iy)*(pb_(ix,iy)-pb(ix,iy))
-          endif
+        tt0 = 0.0e0_R8
+        tt1 = 0.0e0_R8
+        tt2 = 0.0e0_R8
+        do iy = -1,ny
+          do ix = -1,nx
+            if(mod(region(ix,iy,0),4).eq.1) then
+              tt0(iy) = tt0(iy) + vol(ix,iy)
+              tt1(iy) = tt1(iy) + vol(ix,iy)*(nb_(ix,iy)-nb(ix,iy))
+              tt2(iy) = tt2(iy) + vol(ix,iy)*(pb_(ix,iy)-pb(ix,iy))
+            endif
+          enddo
         enddo
-      enddo
-      do iy = -1,ny
-       do ix=0,nx
-         if(mod(region(ix,iy,0),4).eq.1) then
-           nb(ix,iy) = nb(ix,iy)+tt1(iy)/tt0(iy) +
-     *      c_corr_core_dn*(nb_(ix,iy)-nb(ix,iy)-tt1(iy)/tt0(iy))
-           pb(ix,iy) = pb(ix,iy)+tt2(iy)/tt0(iy) +
-     *      c_corr_core_dn*(pb_(ix,iy)-pb(ix,iy)-tt2(iy)/tt0(iy))
-         endif
-       enddo
-      enddo                                              !lk 30.06.2017}
+        do iy = -1,ny
+          do ix = -1,nx
+            if(mod(region(ix,iy,0),4).eq.1) then
+              nb(ix,iy) = nb(ix,iy)+tt1(iy)/tt0(iy) +
+     *         c_corr_core_dn*(nb_(ix,iy)-nb(ix,iy)-tt1(iy)/tt0(iy))
+              pb(ix,iy) = pb(ix,iy)+tt2(iy)/tt0(iy) +
+     *         c_corr_core_dn*(pb_(ix,iy)-pb(ix,iy)-tt2(iy)/tt0(iy))
+            else                                          !srv 25.07.17 {
+	      nb(ix,iy) = nb_(ix,iy)
+	      pb(ix,iy) = pb_(ix,iy)                      !srv 25.07.17 }
+            endif
+          enddo
+        enddo                                             !lk 30.06.2017}
+      endif                                               !srv 25.07.17
 *   ..compute new ub
       if (ua_solve) then
        do iy = -1, ny
