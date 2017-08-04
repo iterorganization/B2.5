@@ -6,12 +6,18 @@ module ggd_structured
   use ggd_assert
   use combinations
 
+#ifdef IMAS
+  use ids_schemas ! IGNORE
+#else
+#ifdef ITM
   use ggd_common
   use ggd_object
   use ggd_access
   use ggd_subgrid
-!  use ggd_data
+  use ggd_data
   use ggd_transform
+#endif
+#endif
 
   implicit none
 
@@ -61,7 +67,7 @@ module ggd_structured
   !>                  has shape(i) grid points.
   !> @param x         Dimension( maxval( gshape(n) ), n ). 
   !>                  Grid node coordinates in the individual dimensions. 
-  !>                  The node positions in  space i are given by 
+  !>                  The node positions in space i are given by
   !>                  x( 1 : gshape( i ), id ).
   !> @param createSubgrids Optional flag controlling whether default subgrids
   !>                  are created. Default is .true.

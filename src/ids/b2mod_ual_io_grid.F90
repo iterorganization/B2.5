@@ -20,6 +20,7 @@ module b2mod_ual_io_grid
   use itm_constants , pi => itm_pi ! IGNORE
 # endif
 #endif
+  use ggd_common
   use helper
   use logging , only: logmsg, LOGDEBUG
   use ggd_assert
