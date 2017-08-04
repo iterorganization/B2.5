@@ -93,7 +93,7 @@
       do i = 1, n
         result(3) = result(3) + (x(i)-result(1))**2
         result(4) = result(4) + (y(i)-result(2))**2
-      return
+      end do
       result(19) = result(4)
       do i = 1, n
         result(5) = result(5) + (x(i)-result(1))*(y(i)-result(2))
