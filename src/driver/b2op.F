@@ -47,6 +47,7 @@
 *   ..common blocks
 
 *   ..local variables
+      character*12 hlp_frm
 #ifdef USE_MPI
       integer rank_mpi,size_mpi,ierr_mpi
 #endif
@@ -409,7 +410,7 @@
        number_exp = number_exp + 1
 *   ..write experimental data for control
        open(70,file='exp_'//trim(fnm_power)//'.prt')
-        write(70,"(1x,2(es14.6))") power_exp
+       write(70,"(1x,2(es14.6))") power_exp
        close(70)
       endif
 
@@ -418,13 +419,13 @@
 
 !      call ipgetc ('b2op', opt_method)
       open(70,file='b2op.dat')
-       read(70,'(i3)') npar_opt
-       allocate(par_opt0(1:npar_opt), par_opt(1:npar_opt),
-     &          par_opt_phys(1:npar_opt))
-       read(70,'(a)') opt_method
-       read(70,'(i3)') istyle
-       read(70,*) tol
-       read(70, *) (par_opt0(i1),i1=1,npar_opt)
+      read(70,'(i3)') npar_opt
+      allocate(par_opt0(1:npar_opt), par_opt(1:npar_opt),
+     &         par_opt_phys(1:npar_opt))
+      read(70,'(a)') opt_method
+      read(70,'(i3)') istyle
+      read(70,*) tol
+      read(70, *) (par_opt0(i1),i1=1,npar_opt)
       close(70)
 
       write(71,"(' number_exp point =', i6)") number_exp
@@ -438,25 +439,25 @@
       select case (opt_method)
 
       case('UNCMND')
-       write(71,"(' UNCMND')")
-       lw=npar_opt*(npar_opt+10)
-       allocate(w(lw))
-       CALL UNCMND (npar_opt,par_opt0,b2obfn,par_opt,func,INFO,W,LW)
-       deallocate(w)
-       if(info.eq.0) write(71,"(a)") 'INFO = 0: Optimal solution found'            
-       if(info.eq.1) write(71,"(2a)") 'INFO = 1: Terminated with ',
+      write(71,"(' UNCMND')")
+      lw=npar_opt*(npar_opt+10)
+      allocate(w(lw))
+      CALL UNCMND (npar_opt,par_opt0,b2obfn,par_opt,func,INFO,W,LW)
+      deallocate(w)
+      if(info.eq.0) write(71,"(a)") 'INFO = 0: Optimal solution found'            
+      if(info.eq.1) write(71,"(2a)") 'INFO = 1: Terminated with ',
      &           'gradient small, X is probably optimal'           
-       if(info.eq.2) write(71,"(2a)") 'INFO = 2: Terminated with ',
+      if(info.eq.2) write(71,"(2a)") 'INFO = 2: Terminated with ',
      &            'stepsize small, X is probably optimal'          
-       if(info.eq.3)write(71,"(2a)") 'INFO = 3: Lower point cannot be',
+      if(info.eq.3)write(71,"(2a)") 'INFO = 3: Lower point cannot be',
      &            ' found, X is probably optimal'            
-       if(info.eq.4)write(71,"(2a)") 'INFO = 4: Iteration limit (150) ',
+      if(info.eq.4)write(71,"(2a)") 'INFO = 4: Iteration limit (150) ',
      &            'exceeded'            
-       if(info.eq.5) write(71,"(2a)") 'INFO = 5: Too many large steps,',
+      if(info.eq.5) write(71,"(2a)") 'INFO = 5: Too many large steps,',
      &             'function may be unbounded'            
-       if(info.eq.-1)write(71,"(a)") 'INFO =-1: Insufficient workspace'
+      if(info.eq.-1)write(71,"(a)") 'INFO =-1: Insufficient workspace'
 
-       call b2obfn(npar_opt, par_opt, func)
+      call b2obfn(npar_opt, par_opt, func)
 
       case('dgz1m')
        write(71,"(' dgz1m')")
@@ -569,8 +570,9 @@
        call hess_grad(b2obfn, npar_opt, par_opt0, hess, npar_opt, grad)
 
        write(71,"('    Hesse')")
+       write(hlp_frm,'(a,i3,a)') '(',npar_opt,'es12.4)'
        do i =1,npar_opt
-        write(71,"(<npar_opt>es12.4)") (hess(i,j),j=1,npar_opt)
+        write(71,hlp_frm) (hess(i,j),j=1,npar_opt)
        enddo
        write(71,"('    gradient')")
        do i =1,npar_opt
@@ -587,17 +589,18 @@
        enddo
 
        write(71,"('    eigenvectors ')")
+       write(hlp_frm,'(a,i3,a)') '(',npar_opt,'es16.8)'
        do i =1,npar_opt
-        write(71,"(<npar_opt>es16.8)") (eigvec(i,j),j=1,npar_opt)
+        write(71,hlp_frm) (eigvec(i,j),j=1,npar_opt)
        enddo
        open(70,file='Hesse',form='unformatted')
-        write(70) hess
+       write(70) hess
        close(70)
        open(70,file='Hesse_evec',form='unformatted')
-        write(70) eigvec
+       write(70) eigvec
        close(70)
        open(70,file='Hesse_eval',form='unformatted')
-        write(70) eigval
+       write(70) eigval
        close(70)
        if(minval(abs(eigval)).ne.0.0_R8) then
         write(71,"(a,es12.4)")  ' cond(Hess) =',
@@ -612,7 +615,7 @@
         enddo
 
         do i = 1, npar_opt
-          wrk2(i) = 0.0
+         wrk2(i) = 0.0
          do j = 1, npar_opt
           wrk2(i) = wrk2(i) + eigvec(i,j)*wrk1(j)
          enddo
