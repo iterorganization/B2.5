@@ -723,7 +723,7 @@ c***  j_he_at  is the helium index in the Eirene atoms list. If 0, then
 c***           the B2 species is taken assuming the same order.
 c***  j_h_at   is the same for the hydrogen species, and
 c***  l_h_mol  gives the number of hydrogen nuclei in each molecule
-c***  lhetrgts is the list on Eirene surfaces used to estimate the
+c***  lhetrgts is the list of Eirene surfaces used to estimate the
 c***           He enrichment from the single-sided fluxes in Eirene.
 c-----------------------------------------------------------------------
 
