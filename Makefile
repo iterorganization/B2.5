@@ -107,9 +107,7 @@ endif
 ifdef LD_CATALYST
 SRCCAT = ${SRCDIR}/catalyst
 INCLUDE += $(shell paraview-config --include)
-LDLIBES += ${LD_CATALYST}
 endif
-
 
 # Local includes
 BASEDIR = ${OBJDIR}
@@ -204,9 +202,9 @@ ALLOBJS = ${OBJS:%.o=${OBJDIR}/%.o}
 endif
 
 PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe b2pl.exe b2ymb.exe b2yrp.exe b2ydm.exe
-PROG_MN = b2mn.exe
+PROG_MN = b2mn.exe b2mnastra.exe
 PROG_XD = b2xd.exe
-PROG_OT = b2ag.exe b2ah.exe b2ai.exe b2ar.exe b2co.exe b2uf.exe b2fu.exe b2ts.exe b2ye.exe b2yi_gnuplot.exe b2yh.exe b2yt.exe b2yv.exe b2fgmtry_mod.exe b2mnastra.exe calc_atomic_data.exe
+PROG_OT = b2ag.exe b2ah.exe b2ai.exe b2ar.exe b2co.exe b2uf.exe b2fu.exe b2ts.exe b2ye.exe b2yi_gnuplot.exe b2yh.exe b2yt.exe b2yv.exe b2fgmtry_mod.exe calc_atomic_data.exe
 PROG_OP = b2op.exe b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
 PROG_ID = b2_ual_write.exe
@@ -722,7 +720,11 @@ ${OBJDIR}/eirmod_precision.${MOD}:
 endif
 
 ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
+ifdef LD_CATALYST
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+else
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
+endif
 
 ${OTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
