@@ -125,7 +125,7 @@ c======================================================================
       entry b2trci(nx,ny,ns,ismain,dtim,BoRiS)
 c*** Initialisation call
       if (tracing_initialised) return
-      call alloc_b2mod_user(nlim,nmol)
+      call alloc_b2mod_user(nlim,nmol,ntns)
       call ipgeti ('eirene_use_recyceir', use_recyceir)
       call read_b2mod_user_namelist(nx,ns)
 c*** Initialise tracing routines

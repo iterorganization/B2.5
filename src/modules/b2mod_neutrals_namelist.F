@@ -546,8 +546,6 @@ c
      1 maxval(track_index).le.ntrack, 'faulty input track_index')
       call xertst (0.le.nstrai, 'faulty input nstrai')
       call xertst (0.le.nstrat, 'faulty input nstrat')
-      call xertst (0.le.ncns, 'faulty input ncns')
-      call xertst (0.le.ntns, 'faulty input ntns')
       call xertst (0.0_R8.lt.rf_neut(1).and.0.0_R8.lt.rf_neut(2).and.
      .             0.0_R8.lt.rf_neut(3).and.0.0_R8.lt.rf_neut(4), 
      .  'faulty input rf_neut')

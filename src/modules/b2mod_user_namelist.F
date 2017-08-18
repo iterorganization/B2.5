@@ -64,9 +64,9 @@ c----------------------------------------------------------------------
 
       contains
 
-      subroutine alloc_b2mod_user(nlim,nmol)
+      subroutine alloc_b2mod_user(nlim,nmol,ntns)
       implicit none
-      integer nlim, nmol
+      integer nlim, nmol, ntns
 
 #ifdef ALLOCATE_AND_NAMELIST
       nhetrgtx=nlim
@@ -95,8 +95,9 @@ c***  Standard setup:
       intrgrp=0
       jntrgrp=0
       lhetrgts(1:nhetrgtx)=0
-      lhetrgts(1)=-2
-      lhetrgts(2)=-3
+      do i = 1, nsts
+        lhetrgts(i)=-ltns(i)
+      end do
       gpfrgrp=' '
       gntrgrp=' '
       scale_He=.false.
@@ -107,6 +108,7 @@ c***  Standard setup:
       end subroutine alloc_b2mod_user
 
       subroutine dealloc_b2mod_user
+      implicit none
 #ifdef ALLOCATE_AND_NAMELIST
       deallocate(lhetrgts,lpfrgrp,lntrgrp)
       deallocate(l_h_mol)

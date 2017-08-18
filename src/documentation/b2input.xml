@@ -6259,7 +6259,7 @@
 			</introduction>
 			<switch>
 				<name>LHETRGTS</name>
-				<default>-2 for the first element, -3 for the second element and 0 otherwise</default>
+				<default>Eirene recycling target surfaces defined in the LTNS array</default>
 				<type>integer array of size (NLIM)</type>
 				<description>
 					List of surface indices (EIRENE notation) which are used for calculation of helium enrichment.

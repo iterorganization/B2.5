@@ -759,7 +759,7 @@ c
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst(nstrat.le.nstraid, 
      . 'Increase DEF_NSTRA in DIMENSIONS.F')
-      call alloc_b2mod_user(nlim,nmol)
+      call alloc_b2mod_user(nlim,nmol,ntns)
       call read_b2mod_user_namelist(nx,ns)
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'

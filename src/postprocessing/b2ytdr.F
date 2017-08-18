@@ -467,7 +467,7 @@ c 2002-09-11: logic revised
       logical LRPSCUT
       logical in_bundle, charges_match, skip_reac
 #endif
-      logical todo, wait, same_bundling, same_atoms
+      logical todo, wait, same_bundling, same_atoms, non_default
       logical first_pass, do_scale
       logical wall_namelist_used
       logical region_flags(NNREGMAX,nkind_coeff), no_pflux
@@ -8932,16 +8932,20 @@ cxpb as they no longer necessarily point to the same species
       if (found) write(6,*) trim(new_filename),' already present!'
       if (todo.and..not.found.and.
      .   (.not.same_atoms.or.nx.ne.nx1.or.non_commensurate.eq.1)) then
-        call alloc_b2mod_user(nlimi,nmoli)
+        call alloc_b2mod_user(nlimi,nmoli,ntns)
         call read_b2mod_user_namelist(nx,ns)
         write(*,*) 'Writing b2.user.parameters.2'
         open(99,file=new_filename)
         write(nout(5),'(a)') trim(new_filename)
         write(99,'(a5)') '&USER'
-        ix=minloc(lhetrgts(3:nlim),1)
-        if (ix.gt.1) then
-          write(hlp_frm,'(a,i3,a)') '(1x,a,',ix+2,'(1x,i4,'',''))'
-          write(99,hlp_frm) 'LHETRGTS=',(lhetrgts(j),j=1,ix+2)
+        non_default=.false.
+        do j = 1, ntns
+          non_default=non_default.or.lhetrgts(j).ne.-ltns(j)
+        end do
+        ix=minloc(lhetrgts(ntns+1:nlim),1)
+        if (ix.gt.1.or.non_default) then
+          write(hlp_frm,'(a,i3,a)') '(1x,a,',ix+ntns,'(1x,i4,'',''))'
+          write(99,hlp_frm) 'LHETRGTS=',(lhetrgts(j),j=1,ix+ntns)
         end if
         write(99,'(1x,a,i2,a)') 'LPFRS_PMP=',LPFRS_PMP,','
         if (lpfrb_i.ne.0) then
