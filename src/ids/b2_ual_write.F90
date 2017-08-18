@@ -89,10 +89,15 @@ program b2_ual_write
     ! use b2mod_b2cmpt
     ! use b2mod_b2cmwg
 
-    use ids_schemas     !> These are the Fortran type definitions for the 
+    use ids_schemas     ! IGNORE
+                        !> These are the Fortran type definitions for the 
                         !> Physics Data Model
-    use ids_routines    !> These are the Access Layer routines + management of 
+    use ids_routines    ! IGNORE
+                        !> These are the Access Layer routines + management of 
                         !> IDS structures 
+    ! use ids_grid_subgrid ! IGNORE
+    ! use ids_grid_object ! IGNORE
+    !!
 
     implicit none
 
@@ -104,10 +109,11 @@ program b2_ual_write
 
     !>..local variables
     integer ninp(0:6), nout(0:2), nx, ny, ns, idum(0:9), io
-    integer                     ::  idx
-    integer                     ::  ix, ixx
-    integer                     ::  shot, run
-    ! integer                     ::  test_int1, test_int2, test_int3, test_int4
+    real (kind=B2R8), allocatable   ::  ne1(:), te1(:), ti1(:)
+    integer     ::  cf_size1(22)
+    integer     ::  idx
+    integer     ::  ix, ixx
+    integer     ::  shot, run
     character(len=24)           ::  treename, username, machine, version
     !> character(len=255)          ::  imas_connect_url
     type(ids_edge_profiles)     ::  edge_profiles
@@ -145,19 +151,22 @@ program b2_ual_write
     !>--------------------------------------------------------------------------
     !>.computation
 
+    !> Read main data
     call read_b2fgmtry_b2fstate()
 
-    call read_additional(ninp, nout, nx, ny, ns, ne, te, ti)
+    !> Read additional data
+    call read_additional(ninp, nout, nx, ny, ns, ne1, te1, ti1)
 
     treename    = "ids"
-    shot        = 8148
-    run         = 1
+    shot        = 16151
+    run         = 1001
     username    = "penkod"
     machine     = "solps-iter"
     version     = "3"
 
+    !> Write the data to edge_profiles IDS
     call write_ids_edge_profiles(treename, shot, run, idx, username, &
-                                        & machine, version, ne, te, ti)
+                                        & machine, version, ne1, te1, ti1)
 
     ! call read_ids(treename, shot, run, idx, username, &
     !                                     & machine, version)
@@ -253,50 +262,111 @@ contains
         character   :: exp*128, comment*128
         integer     :: shot, overwrite_shotnumber
         logical     :: timedep, snapshot, tallies, movies
-        real (kind=B2R8)    ::  zamin(2), zamax(2), zn(2), am(2)
-        real (kind=B2R8)    :: na(7448), ua(7448), uadia(14896), &
-            & po(3724), fna(14896), fhe(7448), fhi(7448), & 
-            & fch(7448), fch_32(7448), fch_52(7448), kinrgy(7448), time, & 
-            & fch_p(3724)
-        real (kind=B2R8), intent(out)    :: ne(3724), te(3724), ti(3724)
+        real (kind=B2R8), allocatable   ::  zamin(:), zamax(:), zn(:), am(:),   &
+            &   na(:), ua(:), uadia(:), po(:), fna(:), fhe(:), fhi(:), fch(:),  &
+            &   fch_32(:), fch_52(:), kinrgy(:), fch_p(:)
+        real (kind=B2R8), intent(inout), allocatable    :: ne(:), te(:), ti(:)
+        real (kind=B2R8)    ::  time
+        integer             ::  cf_sizes(22)
+
         namelist /b2md_namelist/ exp, shot, time, comment, timedep, snapshot, & 
             & tallies, movies, overwrite_shotnumber
 
         !>   ..subprogram start-up calls
         call subini ('b2mddr')
         !>   ..test ninp, nout
+
         call xertst (1.le.ninp(0).and.1.le.ninp(1).and.1.le.ninp(2).and.&
              & 1.le.ninp(3).and.1.le.ninp(5).and.1.le.ninp(6).and.&
              & 1.le.nout(0).and.1.le.nout(1).and.1.le.nout(2),&
              & 'faulty argument ninp, nout')
         !>   ..test dimensions
+
         call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
         call xertst (1.le.ns, 'faulty argument ns')
+
         call xertst (ns.le.nsdecl, 'faulty parameter nsdecl')
 
+        !> Get array sizes from the b2fstate. We open the file again as a new 
+        !> unit to not disrupt the old unit.
+        !> A routine should exist to do all that work but so far with no success
+        !> of finding/properly use it. 
+        cf_sizes = read_additional_sizes(22)
+
+        ! allocate(lblgm(cf_sizes(2)))
+        allocate(zamin(cf_sizes(3)))
+        allocate(zamax(cf_sizes(4)))
+        allocate(zn(cf_sizes(5)))
+        allocate(am(cf_sizes(6)))
+        allocate(na(cf_sizes(7)))
+        allocate(ne(cf_sizes(8)))
+        allocate(ua(cf_sizes(9)))
+        allocate(uadia(cf_sizes(10)))
+        allocate(te(cf_sizes(11)))
+        allocate(ti(cf_sizes(12)))
+        allocate(po(cf_sizes(13)))
+        allocate(fna(cf_sizes(14)))
+        allocate(fhe(cf_sizes(15)))
+        allocate(fhi(cf_sizes(16))) 
+        allocate(fch(cf_sizes(17)))
+        allocate(fch_32(cf_sizes(18)))
+        allocate(fch_52(cf_sizes(19)))
+        !! The program gives an error saying the kinrgy is already allcoated. 
+        !! Where, when?
+        ! allocate(kinrgy(cf_sizes(20))) 
+        ! allocate(fch_p(cf_sizes(22)))
+
+        ! call cfruch(ninp(3), cf_sizes(2), lblgm, 'label')
         call cfruch(ninp(3), 120, lblgm, 'label')
-        call cfrure(ninp(3), 2, zamin, 'zamin')
-        call cfrure(ninp(3), 2, zamax, 'zamax')
-        call cfrure(ninp(3), 2, zn, 'zn')
-        call cfrure(ninp(3), 2, am, 'am')
-        call cfrure(ninp(3), 7448, na, 'na')
-        call cfrure(ninp(3), 3724, ne, 'ne')
-        call cfrure(ninp(3), 7448, ua,'ua')
-        call cfrure(ninp(3), 14896, uadia,'uadia')
-        call cfrure(ninp(3), 3724, te, 'te')
-        call cfrure(ninp(3), 3724, ti, 'ti')
-        call cfrure(ninp(3), 3724, po, 'po')
-        call cfrure(ninp(3), 14896, fna, 'fna')
-        call cfrure(ninp(3), 7448, fhe, 'fhe')
-        call cfrure(ninp(3), 7448, fhi, 'fhi')
-        call cfrure(ninp(3), 7448, fch,'fch')
-        call cfrure(ninp(3), 7448, fch_32, 'fch_32')
-        call cfrure(ninp(3), 7448, fch_52, 'fch_52')
-        call cfrure(ninp(3), 7448, kinrgy, 'kinrgy')
-        call cfrure(ninp(3), 1, time, 'time')
-        call cfrure(ninp(3), 3724, fch_p, 'fch_p')
+        call cfrure(ninp(3), cf_sizes(3), zamin, 'zamin')
+        call cfrure(ninp(3), cf_sizes(4), zamax, 'zamax')
+        call cfrure(ninp(3), cf_sizes(5), zn, 'zn')
+        call cfrure(ninp(3), cf_sizes(6), am, 'am')
+        call cfrure(ninp(3), cf_sizes(7), na, 'na')
+        call cfrure(ninp(3), cf_sizes(8), ne, 'ne')
+        call cfrure(ninp(3), cf_sizes(9), ua,'ua')
+        call cfrure(ninp(3), cf_sizes(10), uadia,'uadia')
+        call cfrure(ninp(3), cf_sizes(11), te, 'te')
+        call cfrure(ninp(3), cf_sizes(12), ti, 'ti')
+        call cfrure(ninp(3), cf_sizes(13), po, 'po')
+        call cfrure(ninp(3), cf_sizes(14), fna, 'fna')
+        call cfrure(ninp(3), cf_sizes(15), fhe, 'fhe')
+        call cfrure(ninp(3), cf_sizes(16), fhi, 'fhi')
+        call cfrure(ninp(3), cf_sizes(17), fch,'fch')
+        call cfrure(ninp(3), cf_sizes(18), fch_32, 'fch_32')
+        call cfrure(ninp(3), cf_sizes(19), fch_52, 'fch_52')
+        ! call cfrure(ninp(3), cf_sizes(20), kinrgy, 'kinrgy')
+        ! call cfrure(ninp(3), 1, time, 'time')
+        ! call cfrure(ninp(3), cf_sizes(22), fch_p, 'fch_p')
 
     end subroutine read_additional
+
+    !> Get array sizes from the b2fstate.
+    function read_additional_sizes(array_size)
+        integer, intent(in)     ::  array_size
+        character(len=256)      ::  rdline, rdstring
+        integer                 ::  cfcount, stat
+        integer    ::  cf_sizes(array_size)
+        integer, dimension(:), allocatable     ::  read_additional_sizes
+
+        allocate(read_additional_sizes(array_size))
+
+        cfcount = 0
+        open(1,file='b2fstate', status="old")
+        do  
+            read(1,'(A)', iostat=io) rdline
+            if (io/=0) exit
+            if (rdline(1:3).eq."*cf") then
+                cfcount = cfcount + 1
+                rdstring = adjustl(rdline(20:28))
+                read(rdstring,*, iostat=stat)  cf_sizes(cfcount)
+            end if
+        end do
+        close(1)
+        read_additional_sizes = cf_sizes
+
+    end function read_additional_sizes
+
 
     subroutine write_ids_edge_profiles(treename, shot, run, idx, username, &
                                         & machine, version, ne, te, ti)
@@ -322,7 +392,7 @@ contains
         type(ids_edge_profiles_time_slice), pointer      ::  ggd
         type(ids_generic_grid_dynamic), pointer          ::  grid
         type(ids_generic_grid_dynamic_space), pointer    ::  space
-        real (kind=B2R8)    :: ne(3724), te(3724), ti(3724)
+        real (kind=B2R8), intent(in)    :: ne(:), te(:), ti(:)
 
         !>.. Create IDS 
         write(0,*) "IDS parameters"

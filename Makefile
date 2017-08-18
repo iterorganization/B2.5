@@ -11,6 +11,9 @@ SRCDIR  = ${SRCB2}/src
 DOCDIR  = ${SRCDIR}/documentation
 PYTHON  = python
 
+GSLDIR = ${HOME}/ggd
+GSLLIBIDR = ${GSLDIR}/f90/imas.ifort64
+
 MAKES = ${SRCB2}/Makefile
 # Include global SOLPS compiler settings
 ifndef SOLPS_CPP
@@ -108,8 +111,10 @@ ifdef LD_CATALYST
 SRCCAT = ${SRCDIR}/catalyst
 INCLUDE += $(shell paraview-config --include)
 LDLIBES += ${LD_CATALYST}
-endif
 
+# LDLIBES += -I${GSLDIR}/f90/imas.ifort64
+# LDLIBES += ${GSLDIR}/f90/imas.ifort64/libggd.a
+endif
 
 # Local includes
 BASEDIR = ${OBJDIR}
@@ -730,7 +735,12 @@ ${MDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
 	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${LDOPTSend}
 
+# ${IDEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA}
+# 	echo "RUN idexe"
+# 	${LD} ${LDOPTS} -o $@ $^ ${LDLIBES} ${LDOPTSend} -I${HOME}/ggd/f90/imas.ifort64 ${HOME}/ggd/f90/imas.ifort64/libggd.a
+
 ${OBJDIR}/libb2.a: ${LIBOBJS} ${SRCDIR}/include/git_version_B25.h ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
+	echo "RUN objdir/libb2.a"
 	@${BLD} $@ ${LIBOBJS}
 
 ${SOLPS4OBJS}: ${OBJDIR}/%.o: ${SOLPS4}/%.F
@@ -884,8 +894,10 @@ ${OBJDIR}/LISTOBJ: listobj
 VERSION: ${SRCDIR}/include/git_version_B25.h
 
 ${SRCDIR}/include/git_version_B25.h: force
+	echo "RUN include/git_version_B25.h"
 	@echo "      character*32 :: git_version_B25 = '`git describe --dirty --always`'" > ${SRCDIR}/include/git_version_new.h
 	@if cmp -s ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version_B25.h; then rm ${SRCDIR}/include/git_version_new.h; else mv ${SRCDIR}/include/git_version_new.h ${SRCDIR}/include/git_version_B25.h; fi
+	echo "RUN2 include/git_version_B25.h"
 
 ${OBJDIR}/dependencies: ${SRCDIR}/modules/.new_modules
 ifeq ($(shell [ -d ${OBJDIR} ] && echo yes || echo no ),no)
