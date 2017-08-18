@@ -110,7 +110,8 @@ endif
 ifdef LD_CATALYST
 SRCCAT = ${SRCDIR}/catalyst
 INCLUDE += $(shell paraview-config --include)
-LDLIBES += ${LD_CATALYST}
+
+#LDLIBES += ${LD_CATALYST}
 
 # LDLIBES += -I${GSLDIR}/f90/imas.ifort64
 # LDLIBES += ${GSLDIR}/f90/imas.ifort64/libggd.a
@@ -209,9 +210,9 @@ ALLOBJS = ${OBJS:%.o=${OBJDIR}/%.o}
 endif
 
 PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe b2pl.exe b2ymb.exe b2yrp.exe b2ydm.exe
-PROG_MN = b2mn.exe
+PROG_MN = b2mn.exe b2mnastra.exe
 PROG_XD = b2xd.exe
-PROG_OT = b2ag.exe b2ah.exe b2ai.exe b2ar.exe b2co.exe b2uf.exe b2fu.exe b2ts.exe b2yi_gnuplot.exe b2yh.exe b2yt.exe b2yv.exe b2fgmtry_mod.exe b2mnastra.exe calc_atomic_data.exe
+PROG_OT = b2ag.exe b2ah.exe b2ai.exe b2ar.exe b2co.exe b2uf.exe b2fu.exe b2ts.exe b2yi_gnuplot.exe b2yh.exe b2yt.exe b2yv.exe b2fgmtry_mod.exe calc_atomic_data.exe
 PROG_OP = b2op.exe b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
 PROG_ID = b2_ual_write.exe
@@ -397,7 +398,7 @@ ${OBJDIR}/eirmod_cpl3d.${MOD}:
 ${OBJDIR}/eirmod_cplmsk.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_cplmsk.${MOD} ${OBJDIR}
 
-${OBJDIR}/eirmod_cpl3ot.${MOD}:
+${OBJDIR}/eirmod_cplot.${MOD}:
 	ln -sf ${EIRDIR}/eirmod_cplot.${MOD} ${OBJDIR}
 
 ${OBJDIR}/eirmod_cpolyg.${MOD}:
@@ -718,7 +719,11 @@ ${OBJDIR}/eirmod_precision.${MOD}:
 endif
 
 ${MNEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
+ifdef LD_CATALYST
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
+else
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
+endif
 
 ${OTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LDOPTSend}
@@ -830,8 +835,8 @@ endif
 	@echo '# 4a' >> ${OBJDIR}/dependencies
 	@egrep -aiH '^ {0,}use ' ${SRCDIR}/*/*.F90 | grep -v 'IGNORE' | awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 4b' >> ${OBJDIR}/dependencies
-ifneq (${COMPILER},g95)
 ifneq (${MOD},o)
+ifneq (${COMPILER},g95)
 	@egrep -aiH '^ {6,}use ' ${MODLISTF} | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("\\.f:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 5a' >> ${OBJDIR}/dependencies
 ifdef MODLISTF90
@@ -909,6 +914,9 @@ endif
 	${MAKE} local
 	${MAKE} listobj
 	${MAKE} depend
+ifeq (${COMPILER},g95)
+	${MAKE} `cat ${SRCDIR}/modules/.new_modules | sed -e 's:\.F:.o:' -e 's:[^ ]*/:${OBJDIR}/:' | awk.transpose`
+endif
 
 include ${OBJDIR}/dependencies
 
@@ -941,7 +949,6 @@ endif
 endif
 	@if [ -f b2stbc.o ] ; then /bin/mv b2stbc.o ${OBJDIR}/ ; fi
 endif
-
 
 echo:
 	@echo LD_CATALYST=${LD_CATALYST}

@@ -1,14 +1,16 @@
-      subroutine eirene_mc_init
+      subroutine eirene_mc_init(nx,ny)
       use b2mod_types
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
+#else
+      use b2mod_eirbra
+      use b2mod_eirdiag
 #endif
       implicit none
+      integer nx, ny
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
-#     include <COUPLE/EIRDIAG.F>
-#     include <COUPLE/EIRBRA.F>
 #endif
 cwdk
 c#ifndef B25_EIRENE                                                   !srv (mail 15.01.08)
@@ -20,8 +22,8 @@ c#endif
 
 cwdk  copy-paste from eirene_extrab25_eirdiag_alloc (Eirene_dummy)
 c     avoids double module definition in case code is compiled with Eirene 
-#ifdef B25_EIRENE  
       if(.not.allocated(dab2)) then
+#ifdef B25_EIRENE
         allocate(dab2(0:nxdd,0:nydd,natm,1))
         allocate(dmb2(0:nxdd,0:nydd,nmol,1))
         allocate(dib2(0:nxdd,0:nydd,nion,1))
@@ -55,6 +57,9 @@ c     avoids double module definition in case code is compiled with Eirene
         allocate(wldspt(nlimps,0:nstra+1))
         allocate(eneutrad(0:nxdd,0:nydd,natm,0:nstra+1))
         allocate(isrftype(nlimps))
+#else
+        call alloc_b2mod_eirdiag(nx,ny,
+     .   natm,nmol,nion,npls,nlimps,nstra,nsts,nsgmx)
 #endif
 !       write(*,*) ' Allocated arrays in eirene_extrab25_eirdiag_alloc ',  &
 !        ' with nxdd,nydd,natm,nmol,nion,nlimps,nstra,npls',             &
@@ -92,16 +97,14 @@ c     avoids double module definition in case code is compiled with Eirene
         wldpeb=0.0_R8
         wldspt=0.0_R8
         isrftype=0
-#ifdef B25_EIRENE
       endif
-#endif
 
 cwdk  copy-paste from eirene_extrab25_eirpbls_alloc (Eirene_dummy, only case im=1)
 c     avoids double module definition in case code is compiled with Eirene  
 c     Note: all arrays allocated in eirene_extrab25_eirpbls_init (Eirene) are allocated here,
 c     so the standard cleanup routine can still be used (checks on allocation of lkindp)
-#ifdef B25_EIRENE
       if(.not.allocated(lkindm)) then 
+#ifdef B25_EIRENE
         allocate(lkindm(nmol))
         allocate(lkindp(npls))
         allocate(lkindi(nion))
@@ -113,9 +116,7 @@ c     so the standard cleanup routine can still be used (checks on allocation of
         lkindi=0
         srccrfc=0.
         srcstrn=0.
-#ifdef B25_EIRENE
       endif 
-#endif
 
       return
       end

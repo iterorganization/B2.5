@@ -672,7 +672,6 @@ cank-960727
         end if
         allocate(wldpp1(nlimps,npls1,0:nstrai+1))
         allocate(wldpa1(nlimps,natm1,0:nstrai+1))
-        allocate(wldspta1(nlimps,natm1,0:nstrai+1))
         allocate(wd_old(nplsi))
         allocate(wd_new(npls1))
         do i = 1, nlimps
@@ -684,9 +683,6 @@ cank-960727
         do is = 1, natmi
           if (iatm1(is).ne.0) wldpa1(:,iatm1(is),0) = wldpa(:,is,0)
         end do
-        do is = 1, natmi
-          if (iatm1(is).ne.0) wldspta1(:,iatm1(is),0) = wldspta(:,is,0)
-        end do
         call write_title(45,'wldpp(0)',nlimps*npls1)
         call wrneutrs(45,wldpp1,npls1)
         call write_title(45,'wldpa(0)',nlimps*natm1)
@@ -697,10 +693,17 @@ cank-960727
         call wrneutrs(45,wldpeb,1)
         call write_title(45,'wldspt(0)',nlimps)
         call wrneutrs(45,wldspt,1)
-        call write_title(45,'wldpspta(0)',nlimps*natm1)
-        call wrneutrs(45,wldspta1,natm1)
-        call write_title(45,'wldsptm(0)',nlimps*nmoli)
-        call wrneutrs(45,wldsptm,nmoli)
+        if (jvftnew .ge. 20170328) then
+          allocate(wldspta1(nlimps,natm1,0:nstrai+1))
+          do is = 1, natmi
+            if (iatm1(is).ne.0)
+     >       wldspta1(:,iatm1(is),0) = wldspta(:,is,0)
+          end do
+          call write_title(45,'wldspta(0)',nlimps*natm1)
+          call wrneutrs(45,wldspta1,natm1)
+          call write_title(45,'wldsptm(0)',nlimps*nmoli)
+          call wrneutrs(45,wldsptm,nmoli)
+        end if
         if(nstrai .gt. 1) then
           do istra=1,nstrai
             call rdneutrs(44,wldpp(:,:,istra),nplsi)
@@ -726,7 +729,9 @@ cank-960727
             do is = 1, natmi
               if (iatm1(is).ne.0) then
                 wldpa1(:,iatm1(is),istra) = wldpa(:,is,istra)
-                wldspta1(:,iatm1(is),istra) = wldspta(:,is,istra)
+                if (jvftnew .ge. 20170328) then
+                  wldspta1(:,iatm1(is),istra) = wldspta(:,is,istra)
+                end if
               end if
             end do
             write (stnum,'(i3)') istra1
@@ -740,7 +745,7 @@ cank-960727
             call wrneutrs(45,wldpeb(1,istra),1)
             call write_title(45,'wldspt('//stnum//')',nlimps)
             call wrneutrs(45,wldspt(1,istra),1)
-            if (jvft44 .ge. 20170328) then
+            if (jvftnew .ge. 20170328) then
               call write_title(45,'wldspta('//stnum//')',nlimps*natm1)
               call wrneutrs(45,wldspta1(1,1,istra),natm1)
               call write_title(45,'wldsptm('//stnum//')',nlimps*nmoli)
@@ -750,7 +755,7 @@ cank-960727
         end if
         deallocate(wldpp1)
         deallocate(wldpa1)
-        deallocate(wldspta1)
+        if (jvftnew .ge. 20170328) deallocate(wldspta1)
       end if
 cank
       if(jvftnew.le.961228) goto 99
@@ -1141,8 +1146,8 @@ cank
      ,                                                       i=1,ncl)
               deallocate (wlpump1res)
             end if
-            deallocate(wldna1res, ewlda1res, ewldea1res, wldspta1res,
-     ,                 wlpump1res)
+            deallocate(wldna1res, ewlda1res, ewldea1res)
+            if (jvftnew .ge. 20170328) deallocate(wldspta1res)
           ELSE
             IS = 9
             if (jvft44.ge.20170228) IS = IS + 1

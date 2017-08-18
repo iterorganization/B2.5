@@ -874,24 +874,24 @@ csw 13mar2013 added check upwind (SOLPS4)
              upfac=0.0_R8
            endif
            fhi_32(ix,iy,1) = 1.5e0_R8*fni(ix,iy,1)*
-     &                       (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
      &                        (1.0_R8-upfac)*ti(ix,iy))
            fhi_strange(ix,iy,1) = chvi(ix,iy,1)*
      &           (ni(bottomix(ix,iy),bottomiy(ix,iy),0)+ni(ix,iy,0))/2*
-     &           (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &           (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
      &            (1.0_R8-upfac)*ti(ix,iy))
            fhi_dia(ix,iy,1) = flidia(ix,iy,1)*
-     &                        (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
-     &                         (1.0_R8-upfac)*ti(ix,iy))
+     &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                        (1.0_R8-upfac)*ti(ix,iy))
            fhi_inert(ix,iy,1) = 1.5e0_R8/qe*fchinert(ix,iy,1)*ycur*
-     &                          (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
-     &                           (1.0_R8-upfac)*ti(ix,iy))
+     &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                        (1.0_R8-upfac)*ti(ix,iy))
            fhi_vispar(ix,iy,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1)*ycur*
-     &                           (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
-     &                            (1.0_R8-upfac)*ti(ix,iy))
+     &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                        (1.0_R8-upfac)*ti(ix,iy))
            fhi_anml(ix,iy,1) = 1.5e0_R8/qe*fchanml(ix,iy,1)*ycur*
-     &                          (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
-     &                           (1.0_R8-upfac)*ti(ix,iy))
+     &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                        (1.0_R8-upfac)*ti(ix,iy))
            fhi_52(ix,iy,1) = 0.0_R8
            fhi_cond(ix,iy,1) = -coni0*
      &                   (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
@@ -907,21 +907,21 @@ csw 13mar2013 added check upwind (SOLPS4)
              upfac=0.0_R8
            endif
            fhi_32(ix,iy,1) = 1.5e0_R8*fni(ix,iy,1)*
-     &                       (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
      &                        (1.0_R8-upfac)*ti(ix,iy))
            fhi_strange(ix,iy,1) = chvi(ix,iy,1)*
      &            (ni(bottomix(ix,iy),bottomiy(ix,iy),0)+ni(ix,iy,0))/2*
-     &            (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
+     &            (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
      &             (1.0_R8-upfac)*ti(ix,iy))
            fhi_inert(ix,iy,1) = 1.5e0_R8/qe*fchinert(ix,iy,1)*ycur*
-     &                          (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
-     &                           (1.0_R8-upfac)*ti(ix,iy))
+     &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                        (1.0_R8-upfac)*ti(ix,iy))
            fhi_vispar(ix,iy,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1)*ycur*
-     &                           (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
-     &                            (1.0_R8-upfac)*ti(ix,iy))
+     &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                        (1.0_R8-upfac)*ti(ix,iy))
            fhi_anml(ix,iy,1) = 1.5e0_R8/qe*fchanml(ix,iy,1)*ycur*
-     &                         (upfac*ti(leftix(ix,iy),leftiy(ix,iy))+
-     &                          (1.0_R8-upfac)*ti(ix,iy))
+     &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                        (1.0_R8-upfac)*ti(ix,iy))
            fhi_dia(ix,iy,1) = 0.0_R8
            fhi_52(ix,iy,1) = 0.0_R8
            fhi_cond(ix,iy,1) = -coni0_mdf*

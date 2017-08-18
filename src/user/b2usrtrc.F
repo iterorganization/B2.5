@@ -15,6 +15,8 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
+#else
+      use b2mod_eirbra
 #endif
 
 c  version : 03.04.2001 15:55
@@ -25,9 +27,6 @@ c*** "tracing/user.trc"
 c-----------------------------------------------------------------------
       implicit none
 #     include <DIMENSIONS.F>
-#ifndef B25_EIRENE
-#     include <COUPLE/EIRBRA.F>
-#endif
 
       integer nx, ny, ns, nxtl, nxtr
       real (kind=R8) :: BoRiS
@@ -732,7 +731,8 @@ c-----------------------------------------------------------------------
         hlp_s=0.0_R8
         hlp_hep=0.0_R8
 #ifdef DBG
-        print *,'%%## j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o',!###
+        print '(a,6i4)',
+     ,          '%%## j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o',!###
      ,                j_he_at,nnatmi,lpfrb_i,lpfrt_i,lpfrb_o,lpfrt_o  !###
 #endif
         hlp_pi=0.0_R8

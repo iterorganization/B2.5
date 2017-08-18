@@ -303,7 +303,7 @@ C
       integer IR,I0,ISW,J,IND,I,K,IH,ireac
       CHARACTER ZEILE*80
       CHARACTER FILNAM*8,H123*4,REAC*9,CRC*3
-      CHARACTER*2 CHR
+      CHARACTER*4 CHR
       CHARACTER*3 CHRL,CHRR
       LOGICAL LCONST,LGEMIN,LGEMAX
       logical open_file
@@ -315,7 +315,7 @@ C
       LGEMAX=.FALSE.
       ISWR(IR)=0
       CONST=0.
-      CHR='l0'
+      CHR=' l0 '
       I0=0
 C
       IF (INDEX(CRC,'EI').NE.0) ISWR(IR)=1
@@ -353,13 +353,13 @@ C
       IF (IREAC.LT.0) IREAC=LEN(REAC)
 C
       IF (ISW.EQ.1) THEN
-        CHR='a0'
+        CHR=' a0 '
         CHRL='al0'
         CHRR='ar0'
         I0=0
         MODCLF(IR)=MODCLF(IR)+1
       ELSEIF (ISW.EQ.2) THEN
-        CHR='b0'
+        CHR=' b0 '
         CHRL='bl0'
         CHRR='br0'
         I0=1
@@ -369,7 +369,7 @@ C
       ELSEIF (ISW.EQ.4) THEN
         MODCLF(IR)=MODCLF(IR)+30
       ELSEIF (ISW.EQ.5) THEN
-        CHR='e0'
+        CHR=' e0 '
         CHRL='el0'
         CHRR='er0'
         I0=1
@@ -379,7 +379,7 @@ C
       ELSEIF (ISW.EQ.7) THEN
         MODCLF(IR)=MODCLF(IR)+300
       ELSEIF (ISW.EQ.8) THEN
-        CHR='h0'
+        CHR=' h0 '
         CHRL='hl0'
         CHRR='hr0'
         I0=1
@@ -389,7 +389,7 @@ C
       ELSEIF (ISW.EQ.10) THEN
         MODCLF(IR)=MODCLF(IR)+3000
       ELSEIF (ISW.EQ.11) THEN
-        CHR='k0'
+        CHR=' k0 '
         CHRL='kl0'
         CHRR='kr0'
         I0=1
@@ -404,7 +404,8 @@ C
         IF (INDEX(ZEILE,H123).EQ.0) GOTO 1
 C
 2       READ (29,'(A80)',END=990) ZEILE
-        IF (INDEX(ZEILE,'H.').NE.0) GOTO 990
+        IF (INDEX(ZEILE,'H.').NE.0 .and.
+     .      INDEX(ZEILE,'section').NE.0) GOTO 990
         IF (INDEX(ZEILE,'Reaction ').EQ.0.or.
      .      INDEX(ZEILE,REAC(1:ireac)).EQ.0) GOTO 2
       ENDIF
@@ -418,7 +419,7 @@ C  SINGLE PARAM. FIT, ISW=1,2,5,8,11
           DO 9 J=0,2
             IND=0
             DO 4 I=1,3
-              IND=IND+INDEX(ZEILE((IND+1):80),CHR(1:1))
+              IND=IND+INDEX(ZEILE((IND+1):80),CHR(2:2))
               READ (ZEILE((IND+2):80),'(E20.12)') CREAC(J*3+I,I0,IR)
 4           CONTINUE
             READ (29,'(A80)',END=990) ZEILE
@@ -426,7 +427,7 @@ C  SINGLE PARAM. FIT, ISW=1,2,5,8,11
           IF (INDEX(ZEILE,CHRL).NE.0) THEN
             IND=0
             DO 5 I=1,3
-              IND=IND+INDEX(ZEILE((IND+1):80),CHR(1:1))
+              IND=IND+INDEX(ZEILE((IND+1):80),CHR(2:2))
               READ (ZEILE((IND+3):80),'(E20.12)') fparm(IR,i)
 5           CONTINUE
             LGEMIN=.true.
@@ -435,7 +436,7 @@ C  SINGLE PARAM. FIT, ISW=1,2,5,8,11
           IF (INDEX(ZEILE,CHRR).NE.0) THEN
             IND=0
             DO 7 I=4,6
-              IND=IND+INDEX(ZEILE((IND+1):80),CHR(1:1))
+              IND=IND+INDEX(ZEILE((IND+1):80),CHR(2:2))
               READ (ZEILE((IND+3):80),'(E20.12)') fparm(IR,i)
 7           CONTINUE
             LGEMAX=.true.

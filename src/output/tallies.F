@@ -1,4 +1,4 @@
-      subroutine tallies(nx,ny,ns)
+      subroutine tallies(nx,ny,ns,BoRiS)
       use b2mod_types
       use b2mod_geo
       use b2mod_plasma
@@ -17,6 +17,7 @@
       use b2mod_external
       implicit none
       integer nx,ny,ns
+      real (kind=R8) :: BoRiS
       real (kind=R8), save :: potave(0:nsdecl-1)
 #ifndef NO_CDF
 #     include <netcdf.inc>
@@ -207,17 +208,21 @@
           do is=0,ns_ext-1
             if (leftix(ix,iy).ne.-2) then
               fhtxreg(region(ix,iy,1))=fhtxreg(region(ix,iy,1))+	 !cjk
-     1         0.5_R8*mp*am_ext(is)*
+     1         (1.0-BoRiS)*(0.5_R8*mp*am_ext(is)*
      .         0.5_R8*(ua_ext(leftix(ix,iy),leftiy(ix,iy),is)**2+
-     2                 ua_ext(ix,iy,is)**2)*fa_ext(ix,iy,0,is)+
+     2                 ua_ext(ix,iy,is)**2)+
+     3         0.5_R8*(ta_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     4                 ta_ext(ix,iy,is)))*fa_ext(ix,iy,0,is)+
      1         0.5_R8*(pt_ext(leftix(ix,iy),leftiy(ix,iy),is)+
      2                 pt_ext(ix,iy,is))*fa_ext(ix,iy,0,is)*ev
             endif
             if (bottomiy(ix,iy).ne.-2) then
               fhtyreg(region(ix,iy,2))=fhtyreg(region(ix,iy,2))+	 !cjk
-     1         0.5_R8*mp*am_ext(is)*
+     1         (1.0-BoRiS)*(0.5_R8*mp*am_ext(is)*
      .         0.5_R8*(ua_ext(bottomix(ix,iy),bottomiy(ix,iy),is)**2+
-     2                 ua_ext(ix,iy,is)**2)*fa_ext(ix,iy,1,is)+
+     2                 ua_ext(ix,iy,is)**2)+
+     3         0.5_R8*(ta_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
+     4                 ta_ext(ix,iy,is)))*fa_ext(ix,iy,1,is)+
      1         0.5_R8*(pt_ext(bottomix(ix,iy),bottomiy(ix,iy),is)+
      2                 pt_ext(ix,iy,is))*fa_ext(ix,iy,1,is)*ev
             endif

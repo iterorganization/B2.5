@@ -454,11 +454,12 @@ cdjm Jan2017 Keep linearised sources for balance
       integer, save :: scaling_ix_begin(nscale), scaling_ix_end(nscale)
       integer, save :: elm_ix_begin, elm_ix_end
       logical, save :: region_flags(NNREGMAX,nkind_coeff), no_pflux,
-     1 poloidal_scaling(nscale), elm_time, elm_region, elm_data
+     1 poloidal_scaling(nscale), elm_time, elm_region, elm_data,
+     2 no_div
       character*260 filename
       character*26 hlp_frm
       integer, save :: elm_count
-      logical catch_up, lpflux
+      logical catch_up, lpflux, ldiv
       logical, save :: new_files
       intrinsic sqrt
       namelist /transport/ ndata, tdata, addspec,
@@ -466,7 +467,7 @@ cdjm Jan2017 Keep linearised sources for balance
      2   scaling_ix_begin, scaling_ix_end, scaling_strength,
      3   region_flags, no_pflux, poloidal_scaling, scaling_width,
      4   elm_time_begin, elm_time_end, elm_time_period,
-     5   elm_ix_begin, elm_ix_end
+     5   elm_ix_begin, elm_ix_end, no_div
 
       data transport_filename/'b2.transport.inputfile'/,
      1 transport_time_mod/0.0_R8/,transport_time_switch/0.0_R8/
@@ -607,6 +608,7 @@ cdjm Jan2017 Keep linearised sources for balance
      3               iiy.lt.topcut(1)).or.(nnreg(0).eq.8.and.
      4               ix.ge.leftcut(2).and.ix.lt.rightcut(2).and.
      5               iiy.lt.topcut(2)))
+                  ldiv=mod(iir-1,4)+1.ge.3
                   poloidal_scale_factor = 1.0_R8
                   do isc=1,nscale
                     if (poloidal_scaling(isc) .and.
@@ -624,7 +626,8 @@ cdjm Jan2017 Keep linearised sources for balance
 
                   if(.not.
      1             (.not.region_flags(iir,kind_coeff).or.
-     1             (lpflux.and.no_pflux))) then
+     1             (lpflux.and.no_pflux).or.
+     1             (ldiv.and.no_div))) then
 
                     if (elm_region) then
                       prof(1:ndim)=pelm(1:ndim)
@@ -786,6 +789,7 @@ c*** Clear data to forget previous profiles
       addspec(:,:,:)=-5
       region_flags=.true.
       no_pflux=.false.
+      no_div=.false.
       poloidal_scaling=.false.
       scaling_strength=0.0_R8
       scaling_width=0.0_R8

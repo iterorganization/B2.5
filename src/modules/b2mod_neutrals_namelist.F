@@ -39,12 +39,13 @@ cank }
       use eirdiag   ! IGNORE
       use ceirsrt   ! IGNORE
 #endif
+#else
+      use b2mod_eirdiag
 #endif
       implicit none
 #     include "DIMENSIONS.F"
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#     include "COUPLE/EIRDIAG.F"
 #endif
 #ifndef SOLPS4_3
 #     include "COUPLE/EIRSRT.F"

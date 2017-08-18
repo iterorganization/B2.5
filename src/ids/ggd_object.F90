@@ -7,11 +7,10 @@ module ggd_object
 #else
 #ifdef ITM
   use euitm_schemas ! IGNORE
-#endif
-#endif
-
   use ggd_common
   use ggd_access
+#endif
+#endif
 
   implicit none
 

@@ -18,11 +18,12 @@ c
       use b2mod_types
 #ifdef B25_EIRENE
       use eirmod_extrab25
+#else
+      use b2mod_eirdiag
 #endif
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#     include "COUPLE/EIRDIAG.F"
 #endif
       integer,intent(in) :: typ,ind,istart,iend
       integer,intent(out) :: shift
@@ -56,11 +57,12 @@ c
       use b2mod_types
 #ifdef B25_EIRENE
       use eirmod_extrab25
+#else
+      use b2mod_eirdiag
 #endif
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#     include "COUPLE/EIRDIAG.F"
 #endif
       integer,intent(in) :: t,n,shift
       real (kind=R8),intent(in) :: s(n)
@@ -112,11 +114,12 @@ c  shift : data offset in the eirene arrays
       use b2mod_types
 #ifdef B25_EIRENE
       use eirmod_extrab25
+#else
+      use b2mod_eirdiag
 #endif
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#     include "COUPLE/EIRDIAG.F"
 #endif
       integer,intent(in) :: n,shift
       real (kind=R8),intent(out) :: wneut(n),wnpr(n)
@@ -152,11 +155,12 @@ c
       use b2mod_types
 #ifdef B25_EIRENE
       use eirmod_extrab25
+#else
+      use b2mod_eirdiag
 #endif
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#     include "COUPLE/EIRDIAG.F"
 #endif
       integer,intent(in) :: n,ia,shift
       real (kind=R8),intent(out) :: sfa(n)
@@ -194,11 +198,12 @@ c
       use b2mod_constants
 #ifdef B25_EIRENE
       use eirmod_extrab25
+#else
+      use b2mod_eirdiag
 #endif
       implicit none
 #ifndef B25_EIRENE
 #     include "COUPLE/KOPPLDIM.F"
-#     include "COUPLE/EIRDIAG.F"
 #endif
       integer,intent(in) :: n,ia,shift
       real (kind=R8),intent(out) :: eav(n)

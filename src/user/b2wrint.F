@@ -13,6 +13,8 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_eirbra
+#else
+      use b2mod_eirbra
 #endif
 c
 c  version : 15.03.2002 16:33
@@ -24,9 +26,6 @@ c-----------------------------------------------------------------------
       implicit none
 c
 #     include <DIMENSIONS.F>
-#ifndef B25_EIRENE
-#     include <COUPLE/EIRBRA.F>
-#endif
 c-----------------------------------------------------------------------
 c*** lv    :  version number to appear in the file
 c

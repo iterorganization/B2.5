@@ -241,7 +241,7 @@
           do iy=0,ny-1
             do ix=0,nx-1
               qip1(ix,iy)=cqip1*
-     &        ni(ix,iy)*ti(ix,iy)*sqrt(te(ix,iy)+ti(ix,iy))
+     &         ni(ix,iy)*ti(ix,iy)*sqrt(te(ix,iy)+ti(ix,iy))
      &                                /sqrt(am(isb)*mp)
             enddo
           enddo

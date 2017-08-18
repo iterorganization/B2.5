@@ -1,21 +1,20 @@
 module ggd
 
   use ggd_assert
+  use ggd_common
 #ifdef IMAS
   use ids_schemas ! IGNORE
 #else
 #ifdef ITM
   use euitm_schemas ! IGNORE
-#endif
-#endif
-  use string
-
-  use ggd_common 
   use ggd_access
   use ggd_structured
   use ggd_object
   use ggd_objectlist
   use ggd_subgrid
+#endif
+#endif
+  use string
 
   implicit none      
 

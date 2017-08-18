@@ -9,15 +9,13 @@ module ggd_subgrid
 #else
 #ifdef ITM
   use euitm_schemas ! IGNORE
-#endif
-#endif
-
   use combinations
-
   use ggd_common
   use ggd_access
   use ggd_object
   use ggd_objectlist
+#endif
+#endif
 
   implicit none
 

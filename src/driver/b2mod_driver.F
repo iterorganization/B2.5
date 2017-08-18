@@ -41,7 +41,8 @@
       use b2mod_mwti
       use b2mod_balance !djm Jan2017
      & , only : write_balance, balance_netcdf, alloc_b2mod_balance,
-     &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources
+     &          dealloc_b2mod_balance, dealloc_b2mod_eirene_sources,
+     &          balance_average, update_average_balance
 
 #ifdef B25_EIRENE
       use eirmod_parmmod
@@ -57,6 +58,9 @@
       use eirmod_extrab25
       use b2mod_b2plot
      , ,only: wklng, alloc_b2mod_b2plot, dealloc_b2mod_b2plot
+#else
+      use b2mod_braeir
+      use b2mod_eirbra
 #endif
       use b2mod_b2_to_astra
      , ,only: write_b2_to_astra
@@ -847,7 +851,9 @@
 *     the call to b2mnds.)
       if (ncall.eq.0) then
        balance_netcdf = 0 ! Default: do not create balance arrays
+       balance_average = 0 ! Default: do not perform averages of balance arrays
        call ipgeti ('balance_netcdf',balance_netcdf) !djm Jan2017
+       call ipgeti ('balance_average',balance_average)
        if (balance_netcdf.ne.0) call alloc_b2mod_balance(nx,ny,ns)
        call ipgeti ('b2mndr_iout', iout)                             !srv 25.01.16
        call ipgeti ('b2mndr_ntim', ntim)
@@ -1207,6 +1213,9 @@ csw 09oct2012
       CALL EIRENE_ALLOC_EIRBRA(NDX,NDY,NFL,NSTRA,ifoff)
       CALL EIRENE_ALLOC_CCOUPL(1)
       CALL EIRENE_ALLOC_CTRCEI
+#else
+      call alloc_b2mod_braeir(nx,ny,ns)
+      call alloc_b2mod_eirbra(nx,ny,ns,natm,npls,nstra)
 #endif
 
 *   ..read geometry and metric
@@ -1818,6 +1827,10 @@ csw 09oct2012 set default potential already at this point (BCs)
           call write_b2mod_neutr_src_scaling(nout(7),nstrat)
           close(nout(7))
         endif
+!djm Jun2017
+        if((balance_netcdf.ne.0)) then
+          call update_average_balance(itim,ntim)
+        endif
 *    ..increment
         itim = itim+1
         itim_plas = itim_plas + 1
@@ -1908,7 +1921,7 @@ c new CDF movie option
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
-            call tallies(nx,ny,ns)
+            call tallies(nx,ny,ns,BoRiS)
           endif
         endif
         if (first_time_step) call b2trci(nx,ny,ns,ismain,dtim,BoRiS)
@@ -1963,7 +1976,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         write_save=write_save.or.
      .   (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
         if(ntim_save.gt.0.and.ntim.gt.0) write_save=write_save.or.
-     .   mod(ntim,ntim_save).eq.0
+     .   mod(itim,ntim_save).eq.0
         write_save=write_save.and..not.quit
         if(write_save) then
           write(savefile(13:16),'(i4)') edition
@@ -2009,6 +2022,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           filename='b2.wall_save.parameters'
           call find_file(filename,found)
           if (found) call write_b2mod_wall_namelist(99,nx,ny,ns,
+     >     savefile(13:16))
+          filename='b2.transport_models_save.parameters'
+          call find_file(filename,found)
+          if (found) call write_b2mod_transport_models(99,
      >     savefile(13:16))
           if (ank_tracing.ne.0) call b2filef(ns)
 
@@ -2153,7 +2170,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..write out last tallies if not yet done
       if(tally.gt.0) then
         if(mod(itim,tally).ne.0.and.itim.gt.1) then
-          call tallies(nx,ny,ns)
+          call tallies(nx,ny,ns,BoRiS)
         endif
       endif
 *   ..create netcdf file containing everything for balance postprocessing routines !djm Jan2017
@@ -2217,6 +2234,9 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
       CALL EIRENE_DEALLOC_EIRBRA
       CALL EIRENE_DEALLOC_CCOUPL
       CALL EIRENE_DEALLOC_CTRCEI
+#else
+      call dealloc_b2mod_braeir
+      call dealloc_b2mod_eirbra
 #endif
       call subend ()
       return

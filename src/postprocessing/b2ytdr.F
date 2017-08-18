@@ -70,12 +70,11 @@ c 2002-09-11: logic revised
      ,        eirene_extrab25_eirpbls_init, eirene_extrab25_wneuinit,
      ,        eirene_extrab25_cleanup
       use eirmod_clogau
+#else
+      use b2mod_braeir
 #endif
       implicit none
 #     include "DIMENSIONS.F"
-#ifndef B25_EIRENE
-#     include <COUPLE/BRAEIR.F>
-#endif
 
 *   ..input arguments (unchanged on exit)
       integer ninp(0:8), nout(0:6), nx1, ny1
@@ -423,7 +422,8 @@ c 2002-09-11: logic revised
       character*500 line
 #ifdef B25_EIRENE
       character*80 ZEILE, ZEILEN(100)
-      character*80, allocatable :: REAC_LINE(:)
+      character*96, allocatable :: REAC_LINE(:)
+      character*98 REACZEILE
       character*24 TXTSPC, TXTUNT, TEXTLA
       character*72 TXTMOL, TXTION, TXTPLS, TXTPHOT, TXTCRM
       character*72 TITLE5, CHRTAL
@@ -796,6 +796,7 @@ c 2002-09-11: logic revised
       CALL EIRENE_EXTRAB25_WNEUINIT
       CALL EIRENE_extrab25_eirpbls_init(1,natm,nmol,nion,npls,nstra,nfl)
 #else
+      call alloc_b2mod_braeir(nx,ny,ns)
       ex = .false.
 #endif
 
@@ -3292,6 +3293,12 @@ cxpb  Start reading input.dat file
                                          ! NTIME0,NTIME,NFULLRUN
           END IF
           NMODE = idum(1)
+          inquire(file='fort.11',exist=ex)
+          if (ex) idum(3) = (idum(3)/10)*10 + 6
+          inquire(file='fort.13',exist=ex)
+          if (ex) idum(3) = (idum(3)/1000)*1000 + 400 + mod(idum(3),100)
+          inquire(file='fort.15',exist=ex)
+          if (ex) idum(3) = 30000 + mod(idum(3),10000)
           WRITE(IUNOT,6666) idum(0:8)
         ENDIF
         READ (IUNIN,'(A80)') ZEILE
@@ -3932,14 +3939,14 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
         IREAC1 = -1
         NREAC1 = 0
         ILINE = 0
-  411   READ (IUNIN,'(A80)') ZEILE
-        IF (ZEILE(1:1).NE.'*') THEN
+  411   READ (IUNIN,'(A96)') REACZEILE
+        IF (REACZEILE(1:1).NE.'*') THEN
           skip_reac = .false.
-          IF (INDEX(ZEILE,'PHOTON').EQ.0) THEN
+          IF (INDEX(REACZEILE,'PHOTON').EQ.0) THEN
             IF (streql(eirene_format,'old').or.
      &          streql(eirene_format,'new').or.
      &          streql(eirene_format,'facelift')) then
-              READ (ZEILE,66661)
+              READ (REACZEILE,66661)
      .            I,FILNAM,H123,REAC,CRC,idum(0:1),DPP,R1MN,R1MX
               R2MN = 0.0_R8
               R2MX = 0.0_R8
@@ -3950,35 +3957,35 @@ C  READ DATA FOR SPECIES SPECIFICATION AND ATOMIC PHYSICS MODULE
               skip_reac = skip_reac.or.
      .         .not.species_present(idum(1),natm,natmi,iatm1)
             ELSE
-              READ (ZEILE,66661) I,FILNAM,H123
+              READ (REACZEILE,66661) I,FILNAM,H123
               IEND=16
 C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
               REAC2=REPEAT(' ',50)
               IF (INDEX(FILNAM,'CONST')==0) THEN
                 CALL EIRENE_READ_TOKEN
-     .           (ZEILE(IEND:),' ',REAC2,ITOK,IER,.FALSE.)
+     .           (REACZEILE(IEND:),' ',REAC2,ITOK,IER,.FALSE.)
                 call xertst (ier.eq.0, 'error reading reac2 flag')
                 IEND = IEND + ITOK
 !  READ CRC
                 CALL EIRENE_READ_TOKEN
-     .           (ZEILE(IEND:),' ',CRC,ITOK,IER,.FALSE.)
+     .           (REACZEILE(IEND:),' ',CRC,ITOK,IER,.FALSE.)
                 IEND = IEND + ITOK
                 call xertst (ier.eq.0, 'error reading crc flag')
               ELSE
                 ITOK = INDEX(ZEILE(IEND:),'FT')
                 IF (ITOK /= 0) THEN
-                  REAC2(1:9) = ZEILE(IEND+ITOK:IEND+ITOK+8)
+                  REAC2(1:9) = REACZEILE(IEND+ITOK:IEND+ITOK+8)
                   IEND = IEND+ITOK+2
                 END IF
                 CALL EIRENE_READ_TOKEN
-     .           (ZEILE(IEND:),' ',CHR,ITOK,IER,.FALSE.)
+     .           (REACZEILE(IEND:),' ',CHR,ITOK,IER,.FALSE.)
                 call xertst (ier.eq.0, 'error reading reac2 flag')
                 IEND = IEND + ITOK
                 READ (CHR,'(A3)') CRC
               END IF
 !  READ MP
               CALL EIRENE_READ_TOKEN
-     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.FALSE.)
+     .         (REACZEILE(IEND:),' ',CHR,ITOK,IER,.FALSE.)
               call xertst (ier.eq.0, 'error reading mp flag')
               IEND = IEND + ITOK
               READ (CHR,*) idum(0)
@@ -3987,7 +3994,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
      .         .not.species_present(idum(0),natm,natmi,iatm1)
 !  READ MT
               CALL EIRENE_READ_TOKEN
-     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.FALSE.)
+     .         (REACZEILE(IEND:),' ',CHR,ITOK,IER,.FALSE.)
               call xertst (ier.eq.0, 'error reading mt flag')
               IEND = IEND + ITOK
               READ (CHR,*) idum(1)
@@ -3996,31 +4003,31 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
      .         .not.species_present(idum(1),natm,natmi,iatm1)
 !  READ DPP
               CALL EIRENE_READ_TOKEN
-     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+     .         (REACZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
               call xertst (ier.eq.0, 'error reading dpp flag')
               IEND = IEND + ITOK
               READ (CHR,'(E12.4)') DPP
 !  READ R1MN
               CALL EIRENE_READ_TOKEN
-     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+     .         (REACZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
               call xertst (ier.eq.0, 'error reading r1mn flag')
               IEND = IEND + ITOK
               READ (CHR,'(E12.4)') R1MN
 !  READ R1MX
               CALL EIRENE_READ_TOKEN
-     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+     .         (REACZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
               call xertst (ier.eq.0, 'error reading r1mx flag')
               IEND = IEND + ITOK
               READ (CHR,'(E12.4)') R1MX
 !  READ R2MN
               CALL EIRENE_READ_TOKEN
-     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+     .         (REACZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
               call xertst (ier.eq.0, 'error reading r2mn flag')
               IEND = IEND + ITOK
               READ (CHR,'(E12.4)') R2MN
 !  READ R2MX
               CALL EIRENE_READ_TOKEN
-     .         (ZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
+     .         (REACZEILE(IEND:),' ',CHR,ITOK,IER,.TRUE.)
               call xertst (ier.eq.0, 'error reading r2mx flag')
               IEND = IEND + ITOK
               READ (CHR,'(E12.4)') R2MX
@@ -4043,7 +4050,7 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
                 IREAC1(I)=NREAC1
               END IF
               ILINE=ILINE+1
-              REAC_LINE(ILINE)=REPEAT(' ',80)
+              REAC_LINE(ILINE)=REPEAT(' ',96)
               IF (streql(FILNAM,'AMJUEL')) THEN
                 IF (streql(REAC,'0.2')) REAC='0.2T'
                 IF (streql(REAC,'0.3')) REAC='0.3T'
@@ -4059,12 +4066,12 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
      .         IREAC1(I),' ',FILNAM,' ',H123,' '
               IEND=16
               IF (streql(FILNAM,'CONST')) THEN
-                ITOK = INDEX(ZEILE(IEND:),'FT')
+                ITOK = INDEX(REACZEILE(IEND:),'FT')
                 IF (ITOK /= 0) THEN
-                  REAC2(1:9) = ZEILE(IEND+ITOK:IEND+ITOK+8)
+                  REAC2(1:9) = REACZEILE(IEND+ITOK:IEND+ITOK+8)
                   IEND = IEND+ITOK+2
                   CALL EIRENE_READ_TOKEN
-     .             (ZEILE(IEND:),' ',REAC2,ITOK,IER,.FALSE.)
+     .             (REACZEILE(IEND:),' ',REAC2,ITOK,IER,.FALSE.)
                 ELSE
                   IEND = IEND+9
                 END IF
@@ -4090,23 +4097,23 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             END IF
           ELSE
             NREAC1 = NREAC1 + 1
-            ZEILE=ADJUSTL(ZEILE)
-            I1=SCAN(ZEILE,' ')
-            READ (ZEILE(1:I1-1),*) I
+            REACZEILE=ADJUSTL(REACZEILE)
+            I1=SCAN(REACZEILE,' ')
+            READ (REACZEILE(1:I1-1),*) I
 !  READ FILNAM
-            IANF=I1+VERIFY(ZEILE(I1+1:),' ')
-            IEND=IANF+SCAN(ZEILE(IANF+1:),' ')-1
-            FILNAM(1:IEND-IANF+1)=ZEILE(IANF:IEND)
+            IANF=I1+VERIFY(REACZEILE(I1+1:),' ')
+            IEND=IANF+SCAN(REACZEILE(IANF+1:),' ')-1
+            FILNAM(1:IEND-IANF+1)=REACZEILE(IANF:IEND)
 !  READ H123
-            IANF=IEND+VERIFY(ZEILE(IEND+1:),' ')
-            IEND=IANF+SCAN(ZEILE(IANF+1:),' ')-1
+            IANF=IEND+VERIFY(REACZEILE(IEND+1:),' ')
+            IEND=IANF+SCAN(REACZEILE(IANF+1:),' ')-1
             H123='    '
-            H123(1:IEND-IANF+1)=ZEILE(IANF:IEND)
+            H123(1:IEND-IANF+1)=REACZEILE(IANF:IEND)
 !  READ REAC2
-            IANF=IEND+VERIFY(ZEILE(IEND+1:),' ')
-            IEND=IANF+SCAN(ZEILE(IANF+1:),' ')-1
+            IANF=IEND+VERIFY(REACZEILE(IEND+1:),' ')
+            IEND=IANF+SCAN(REACZEILE(IANF+1:),' ')-1
             REAC2=REPEAT(' ',50)
-            REAC2(1:IEND-IANF+1)=ZEILE(IANF:IEND)
+            REAC2(1:IEND-IANF+1)=REACZEILE(IANF:IEND)
             REACSTR=REPEAT(' ',11)
             IANF=VERIFY(REAC2,' ')
             IANF=MAX(1,IANF) !VK
@@ -4114,21 +4121,21 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
             IF (I.LT.0) I=lnblnk(REAC2(IANF:))
             REACSTR(2:I+1)=REAC2(IANF:I+IANF-1)
 !  READ CRC
-            IANF=IEND+VERIFY(ZEILE(IEND+1:),' ')
-            IEND=IANF+SCAN(ZEILE(IANF+1:),' ')-1
-            CRC(1:IEND-IANF+1)=ZEILE(IANF:IEND)
-            READ (ZEILE(IEND+1:),*) idum(0:1),rdum(0),R1MN,R1MX,
-     .                                                R2MN,R2MX
+            IANF=IEND+VERIFY(REACZEILE(IEND+1:),' ')
+            IEND=IANF+SCAN(REACZEILE(IANF+1:),' ')-1
+            CRC(1:IEND-IANF+1)=REACZEILE(IANF:IEND)
+            READ (REACZEILE(IEND+1:),*) idum(0:1),rdum(0),R1MN,R1MX,
+     .                                                    R2MN,R2MX
             skip_reac = skip_reac.or.
      .       .not.species_present(idum(0),natm,natmi,iatm1)
             skip_reac = skip_reac.or.
      .       .not.species_present(idum(1),natm,natmi,iatm1)
             if (.not. skip_reac) then
               ILINE = ILINE+1
-              WRITE(REAC_LINE(ILINE),'(A80)') ZEILE
+              WRITE(REAC_LINE(ILINE),'(A96)') REACZEILE
             end if
           ENDIF
-          IF (INDEX(ZEILE,'ADAS') .NE. 0) THEN
+          IF (INDEX(REACZEILE,'ADAS') .NE. 0) THEN
             READ (IUNIN,'(4X,A2,1X,I3)') ELNAME,idum(0)
             if (.not.skip_reac) then
               ILINE = ILINE+1
@@ -4165,8 +4172,8 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
               end if
             ENDIF
           ENDIF
-          IF (INDEX(ZEILE,'CONST') .NE. 0) THEN
-            I=INDEX(ZEILE(16:),'FT')
+          IF (INDEX(REACZEILE,'CONST') .NE. 0) THEN
+            I=INDEX(REACZEILE(16:),'FT')
             IF (I /= 0) THEN
               READ (REACSTR(I+2:),*) idum(0) ! IFTFLG(IR,IFLG)
             END IF
@@ -4189,16 +4196,16 @@ C  READ OPTIONAL INPUT FLAG "REAC2", UP TO 50 CHARACTERS ALLOWED.
           GOTO 411
         ELSE
           IF (ILINE.EQ.0) THEN ! Block 4 header lines
-            WRITE(IUNOT,'(A80)') ZEILE
+            WRITE(IUNOT,'(A96)') REACZEILE
           ELSE ! Block 4a header lines
             ILINE = ILINE+1
-            WRITE(REAC_LINE(ILINE),'(A80)') ZEILE
+            WRITE(REAC_LINE(ILINE),'(A96)') REACZEILE
           ENDIF
         ENDIF
 ! We now write the new list of reactions
         WRITE(IUNOT,6666) NREAC1
         DO I = 1, ILINE
-          WRITE(IUNOT,'(A80)') REAC_LINE(I)
+          WRITE(IUNOT,'(A96)') REAC_LINE(I)
         END DO
         deallocate(reac_line)
 *4A.   NEUTRAL ATOMS SPECIES CARDS, NATMI SPECIES
@@ -7323,9 +7330,9 @@ C  DATA FOR PLOTS OF VOLUME TALLIES
         WRITE(IUNOT,6665) ldum(0:1)
  1225   CONTINUE
         IF (lntspec.GT.0) THEN
-          READ (IUNIN,'(2e12.0,4i6)') rdum(0:1), idum(0:3) ! emnspc,emxspc,
-                                                           ! npspcen,iatspec,npspctt,npspcfi
-          WRITE(IUNOT,'(2e12.0,4i6)') rdum(0:1), idum(0:3)
+          READ (IUNIN,66662) rdum(0:1), idum(0:3) ! emnspc,emxspc,
+                                                  ! npspcen,iatspec,npspctt,npspcfi
+          WRITE(IUNOT,66662) rdum(0:1), idum(0:3)
         END IF
         DO I=1,LNTSPUT !{
           READ (IUNIN,'(A80)') ZEILE  ! listmtmp(i),txtmtmp(i),
@@ -9312,6 +9319,8 @@ cxpb as they no longer necessarily point to the same species
       CALL EIRENE_DEALLOC_COMUSR
       CALL EIRENE_DEALLOC_CTRCEI
       CALL EIRENE_EXTRAB25_CLEANUP
+#else
+      call dealloc_b2mod_braeir
 #endif
 
 * ..return

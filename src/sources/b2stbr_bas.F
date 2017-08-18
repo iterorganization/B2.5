@@ -438,7 +438,7 @@ c lcore           is this a core element
       logical lcore, found
 
       integer is0, is1, is2, is, js, k, iwall, itrack
-      real (kind=R8) :: tef, tif, zaf(0:ns-1), rpf(0:ns-1), ptf
+      real (kind=R8) :: tef, tif, taf, zaf(0:ns-1), rpf(0:ns-1), ptf
       logical lnext
       lnext(is,js) = zamax(is).lt.zamin(js).and.zn(is).eq.zn(js).and.
      &  abs(am(is)-am(js)).lt.amtol
@@ -461,16 +461,21 @@ c lcore           is this a core element
      &                        fhi_ext(ixf,iyf,idir)))/area
       do is=0,ns-1
          qin=qin+max(0.0_R8,isign*fna(ixf,iyf,idir,is))
-     &        *(kinrgy(ix,iy,is)*(1.0_R8-BoRiS) + rpf(is)*ev)/area
+     &        *((kinrgy(ix,iy,is)+tif)*(1.0_R8-BoRiS)
+     &        +rpf(is)*ev)/area
       enddo
       do is=0,ns_ext-1
-         ptf = 
+         ptf =
      &    (pt_ext(ix,iy,is)*hhn+pt_ext(ixn,iyn,is)*hh)/(hhn+hh)
+         taf =
+     &    (ta_ext(ix,iy,is)*hhn+ta_ext(ixn,iyn,is)*hh)/(hhn+hh)
          qin=qin+max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))
-     &        *(0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2*(1.0_R8-BoRiS)
+     &        *((0.5_R8*am_ext(is)*mp*ua_ext(ix,iy,is)**2+
+     &           taf)*(1.0_R8-BoRiS)
      &          + ptf*ev)/area
       enddo
-      qel = max(0.0_R8,isign*fhe(ixf,iyf,idir))/area
+      qel = max(0.0_R8,isign*(fhe(ixf,iyf,idir)+
+     &       fne(ixf,iyf,idir)*tef*(1.0_R8-BoRiS)))/area
       if(lcore) then
          surface_temp = 0.0_R8
       else

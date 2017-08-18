@@ -11,11 +11,12 @@
 #ifdef B25_EIRENE
       use eirmod_parmmod
       use eirmod_extrab25
+#else
+      use b2mod_eirdiag
 #endif
       implicit none
 #ifndef B25_EIRENE
 #     include <COUPLE/KOPPLDIM.F>
-#     include <COUPLE/EIRDIAG.F>
 #endif
       integer nx, ny, ns
 #ifndef NO_CDF

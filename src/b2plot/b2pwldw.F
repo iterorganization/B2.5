@@ -81,7 +81,6 @@ c=======================================================================
       real (kind=R8) :: EionH2
       parameter (EionH2=15.4_R8)
       character*8 TEXTA(DEF_NATM)
-      save
 #endif
       integer lun,izn,iln,boundary_namelist
       real (kind=R8) :: BoRiS

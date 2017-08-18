@@ -64,12 +64,13 @@ c 2002-09-11: logic revised
      , , only: iunout
       use eirmod_eirbra
      & , smo_eir => smo
+#else
+      use b2mod_braeir
+      use b2mod_eirbra
+     & , smo_eir => smo
 #endif
       implicit none
 #     include <DIMENSIONS.F>
-#ifndef B25_EIRENE
-#     include <COUPLE/BRAEIR.F>
-#endif
       integer nxd,nyd,nsd_local
 c
 c  version : 27.07.96 20:37
@@ -308,6 +309,9 @@ c
       CALL EIRENE_ALLOC_CTRCEI
       CALL EIRENE_SETCON
       CALL EIRENE_EXTRAB25_WNEUINIT
+#else
+      call alloc_b2mod_braeir(nxd,nyd,nsd_local)
+      call alloc_b2mod_eirbra(nxd,nyd,nsd_local,natm,npls,nstra)
 #endif
       call alloc_b2mod_b2plot(nxd,nyd,nsd_local,ns_ext,wklng,
      1 natm,nmol,nion,nlimps)
@@ -518,7 +522,7 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       call alloc_b2mod_elements(ns, zn, am)
 c calculate additional fluxes (fhj, fhm, fhp, fht)
       call b2xpen (nx, ny, ns,
-     1 fna, fch, fhe, fhi, kinrgy, rpt, po, BoRiS,
+     1 fna, fne, fch, fhe, fhi, kinrgy, rpt, te, ti, po, BoRiS,
      2 fhm, fhp, fhj, fht)
 c calculate divergences of the various fluxes
       do is=0,ns-1
@@ -845,8 +849,8 @@ cxpb  Western boundary
      &          (hhn+hh)
           wall_heatflux(ibnd)=wall_heatflux(ibnd)+
      &     max(0.0_R8,isign*fa_ext(ixf,iyf,idir,is))/gs(ixf,iyf,idir)*
-     &          (0.5_R8*mp*am_ext(is)*ua_ext(ix,iy,is)**2*
-     &                    (1.0_R8-BoRiS) + pxf*ev)
+     &         ((0.5_R8*mp*am_ext(is)*ua_ext(ix,iy,is)**2+
+     &           ta_ext(ix,iy,is))*(1.0_R8-BoRiS) + pxf*ev)
         enddo
       enddo
       ndata = nbnd
@@ -990,7 +994,7 @@ c
         nioni=1
         textin(0)=' ZERO'
         nsw=ns
-        call eirene_mc_init
+        call eirene_mc_init(nx,ny)
         call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
         p1=0.0_R8
         p2=0.0_R8
@@ -1398,6 +1402,10 @@ c
             CALL EIRENE_DEALLOC_BRAEIR
             CALL EIRENE_DEALLOC_EIRBRA
             CALL EIRENE_EXTRAB25_CLEANUP
+#else
+            call dealloc_b2mod_braeir
+            call dealloc_b2mod_eirbra
+            call dealloc_b2mod_eirdiag
 #endif
             call subend ()
             return
@@ -1471,6 +1479,10 @@ c
           CALL EIRENE_DEALLOC_BRAEIR
           CALL EIRENE_DEALLOC_EIRBRA
           CALL EIRENE_EXTRAB25_CLEANUP
+#else
+          call dealloc_b2mod_braeir
+          call dealloc_b2mod_eirbra
+          call dealloc_b2mod_eirdiag
 #endif
           call subend ()
           return
@@ -1721,7 +1733,8 @@ c
 	  do is=0,ns_ext-1
 	    fhtx(:,:)=fhtx(:,:)+fa_ext(:,:,0,is)*
      .	     (pt_ext(:,:,is)*ev+
-     .	     0.5_R8*am_ext(is)*mp*ua_ext(:,:,is)**2*(1.0_R8-BoRiS))
+     .	     (0.5_R8*am_ext(is)*mp*ua_ext(:,:,is)**2+ta_ext(:,:,is))*
+     .       (1.0_R8-BoRiS))
 	  enddo
           call copy(fhtx,1.0_R8,nz,textbl)
         case('fhty')
@@ -1731,7 +1744,8 @@ c
           do is=0,ns_ext-1
             fhty(:,:)=fhty(:,:)+fa_ext(:,:,1,is)*
      .       (pt_ext(:,:,is)*ev+
-     .        0.5_R8*am_ext(is)*mp*ua_ext(:,:,is)**2*(1.0_R8-BoRiS))
+     .       (0.5_R8*am_ext(is)*mp*ua_ext(:,:,is)**2+ta_ext(:,:,is))*
+     .       (1.0_R8-BoRiS))
           enddo
           call copy(fhty,1.0_R8,nz,textbl)
         case('fle')

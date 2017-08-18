@@ -660,22 +660,22 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
                   upfac=0.0_R8
                 endif
                 fhe_32(ix,iy,1) = (1.5_R8+BoRiS)*fne_32(ix,iy,1)*
-     &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &                            (1.0_R8-upfac)*te(ix,iy))
+     &                       (upfac*te(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                        (1.0_R8-upfac)*te(ix,iy))
                 fhe_52(ix,iy,1) = 2.5_R8*fne_52(ix,iy,1)*
-     &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &                            (1.0_R8-upfac)*te(ix,iy))
+     &                       (upfac*te(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                        (1.0_R8-upfac)*te(ix,iy))
                 fhe_strange(ix,iy,1) = chve(ix,iy,1)*
      &           (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))/2.0_R8*
-     &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &                            (1.0_R8-upfac)*te(ix,iy))
+     &                       (upfac*te(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                        (1.0_R8-upfac)*te(ix,iy))
                 fhe_dia(ix,iy,1) = 2.5_R8*flo_vedia*
-     &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &                            (1.0_R8-upfac)*te(ix,iy))
+     &                       (upfac*te(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                        (1.0_R8-upfac)*te(ix,iy))
                 fhe_pschused(ix,iy,1) = 0.0_R8
                 fhe_ecrb(ix,iy,1) = 1.5_R8*flo_veecrb*
-     &                           (upfac*te(leftix(ix,iy),leftiy(ix,iy))+
-     &                            (1.0_R8-upfac)*te(ix,iy))
+     &                       (upfac*te(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                        (1.0_R8-upfac)*te(ix,iy))
                 fhe_cond(ix,iy,1) = -t1*(te(ix,iy)-
      &                              te(bottomix(ix,iy),bottomiy(ix,iy)))
                 fhe_thermj(ix,iy,1) = alfTeEh*calf(ix,iy,1)*
