@@ -74,10 +74,10 @@
 *   ..common blocks
 #     include "DIMENSIONS.F"
 *   ..local variables
-      integer ncall, ntim, mvinc, mvnum, ix, iy, jsep, jxi, jxa,
+      integer ncall, ntim, mvinc, mvnum, jsep, jxi, jxa,
      &  isfb, ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5,
      &  nxtl, nxtr
-      integer nscx, iscx(0:nscxmax-1), k
+      integer nscx, iscx(0:nscxmax-1)
       save nscx, iscx, isfb,
      &     ix1, ix2, ix3, ix4, ix5, iy1, iy2, iy3, iy4, iy5
       integer, save :: inverse_ua = 0, iout = 0                      !srv 11.01.13 25.01.16
@@ -100,7 +100,7 @@
       character idout0*32, idout1*32, savefile*16, savefilestatus*3
       character, save :: savefile_p*14 = 'b2fplasmf.xxxx'
       character chns*3                                               !srv 25.01.16
-      integer n2, itim, ierr, edition, i, b2time, coronal, use_eirene,
+      integer n2, itim, ierr, edition, b2time, coronal, use_eirene,
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
@@ -122,12 +122,6 @@
       integer tran_num
       character*6 tran_file_name
 #endif
-#ifdef B25_EIRENE
-      integer iflag
-#endif
-      logical ex
-      character*256 filename
-      character*16 fort31name      ! used to write to 'fort.31.########'
       real (kind=R8) ::
      *  delta_cdfmovie_time, save_cdfmovie_time
       real (kind=R8) ::
@@ -139,7 +133,6 @@
      *  stack_dtim(20)
       integer stack_ntim(20)
       integer stack_ptr
-      logical ok, found
       real (kind=R8) ::
      *  min_areshe, min_areshi, min_aresco
       logical quit_residual, test_residual
@@ -216,11 +209,17 @@
      2  rescale_qa(0:nsdecl-1), rescale_cx(0:nsdecl-1),
      3  rescale_rd(0:nsdecl-1), rescale_br(0:nsdecl-1)
       integer atomic_physics_rescale_flag
+      integer ix, iy, is, js, k, idum(0:9)
+#ifdef B25_EIRENE
+      integer iflag
+#endif
+      character*256 filename
+      logical ex, found
+*   ..initialisation
       data atomic_physics_rescale_flag/0/
       namelist /atomic_physics_rescale/
      & rescale_sa, rescale_ra, rescale_qa, rescale_cx,
      & rescale_rd, rescale_br
-      integer is, js, idum(0:9)
 *   ..procedures
       logical lnext
       real (kind=R8) :: rratio
@@ -1732,7 +1731,9 @@ c new CDF movie option (1st frame at t=0)
 #else
       integer nout(0:8), nx, ny, ns, add_ntim
 #endif
-      integer is, js
+      integer i, is, js
+      character*256 filename, fort31name
+      logical ok, found
 *   ..procedures
       real(kind=R8) :: epoch_seconds
       external epoch_seconds
@@ -2100,6 +2101,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #else
       integer nout(0:8), nx, ny, ns
 #endif
+      character*256 filename
+      logical found
 
       call subini ('b2mndr_2')
       if(quitexist)
