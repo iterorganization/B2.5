@@ -94,6 +94,8 @@ c       fl(ix,iy)=1.0d0
            cvsbx(ix,iy) = cvsbx(ix,iy)/tfl
            cvsbxhz(ix,iy) = cvsbxhz(ix,iy)/tfl
            fl(ix,iy) = tfl
+          else
+           fl(ix,iy) = 1.0_R8
           endif                                                      !srv 12.04.08
          else
           fl(ix,iy) = 1.0_R8
