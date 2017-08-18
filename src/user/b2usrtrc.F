@@ -1151,7 +1151,7 @@ c            e0=0.03_R8 ! room temperature in eV ==> 0.025
             x=hlp_ksdts(k,j)
             hlp_fldts(k,j)=x*g
             hlp_stdts(k,j)=622._R8*x*s/sqrt(a)
-            hlp_sedts(k,j)=hlp_fldts(k,j)/max(hlp_dndts(k,j),1.)
+            hlp_sedts(k,j)=hlp_fldts(k,j)/max(hlp_dndts(k,j),1.0_R8)
           end if !}
         end do !}
       end do !}
