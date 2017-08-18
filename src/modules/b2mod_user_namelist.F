@@ -95,9 +95,7 @@ c***  Standard setup:
       intrgrp=0
       jntrgrp=0
       lhetrgts(1:nhetrgtx)=0
-      do i = 1, nsts
-        lhetrgts(i)=-ltns(i)
-      end do
+      lhetrgts(1:nsts)=-ltns(1:nsts)
       gpfrgrp=' '
       gntrgrp=' '
       scale_He=.false.
