@@ -409,10 +409,10 @@ cxpb  quantities before their mapping to cell centers
       if(nflai.gt.NFL) then
         write(*,*) 'copy_background not called because nflai.gt.NFL',
      1   nflai,NFL
-      elseif(nx.ge.NDXP.or.ny.ge.NDYP) then
+      elseif(nx.gt.NXDD.or.ny.gt.NYDD) then
         write(*,*)
-     1   'copy_background not called because NX>=NDXP or NY>=NDYP',
-     1   nx,ndxp,ny,ndyp
+     1   'copy_background not called because NX>NXDD or NY>NYDD',
+     1   nx,nxdd,ny,nydd
       else
         call copy_background(nx, ny, ns, BoRiS)
       endif
