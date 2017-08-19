@@ -163,6 +163,7 @@ c
      *   sput_frac_flag, use_eirene
 
 #ifndef NO_CDF
+#     include <netcdf.inc>
       real (kind=R8) ::
      *   movietime(1)
       integer :: iret, frameindex(1), ncidcdf, varid
