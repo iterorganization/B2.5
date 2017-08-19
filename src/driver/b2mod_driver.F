@@ -1723,7 +1723,11 @@ c new CDF movie option (1st frame at t=0)
 #else
       integer nout(0:8), nx, ny, ns, add_ntim
 #endif
+#ifdef WINDOWS
+      logical(4) :: lresult
+#endif
       integer is, js
+      character*256 systemarg
 *   ..procedures
       real(kind=R8) :: epoch_seconds
       external epoch_seconds
@@ -2081,7 +2085,19 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           if (ank_tracing.ne.0) call b2filef(ns)
 
 #ifdef B25_EIRENE
-          if (use_eirene.ne.0) call write_f44(savefile(13:16))
+          if (use_eirene.ne.0) then
+            call write_f44(savefile(13:16))
+            inquire(file='fort.13',exist=found)
+            if (found) then
+              systemarg='cp fort.13 fort.13.'//savefile(13:16)
+              call system(systemarg)
+            endif
+            inquire(file='fort.15',exist=found)
+            if (found) then
+              systemarg='cp fort.15 fort.15.'//savefile(13:16)
+              call system(systemarg)
+            endif
+          endif
 #endif
           close(nout(6))
           write(*,*) 'Plasmastate savefile ',savefile,' saved'
