@@ -203,20 +203,17 @@ endif
 
 PROG_GE = b2pl.exe
 PROG_GR = b2yg.exe b2yi.exe b2ym.exe b2yn.exe b2yp.exe b2yq.exe b2yr.exe b2ymb.exe b2yrp.exe b2ydm.exe
-ifdef PAR_OPT
-PROG_MN = b2mn.exe b2mn_opt.exe b2mnastra.exe
-else
 PROG_MN = b2mn.exe b2mnastra.exe
-endif
 PROG_XD = b2xd.exe
 PROG_OE = b2ag.exe b2co.exe b2fu.exe b2ts.exe b2uf.exe b2yt.exe calc_atomic_data.exe
 PROG_OT = b2ah.exe b2ai.exe b2ar.exe b2yi_gnuplot.exe b2yh.exe b2yv.exe b2fgmtry_mod.exe
 PROG_OP = b2op.exe
+PROG_OQ = b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
 PROG_ID = b2_ual_write.exe
 
-EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_ID}}
-EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP}}
+EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ} ${PROG_ID}}
+EXELIST = ${patsubst %.exe, %.o, ${PROG_GE} ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OE} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_OQ}}
 EX90LIST = ${patsubst %.exe, %.o, ${PROG_ID}}
 
 GEEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_GE}}
@@ -226,6 +223,7 @@ MNEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MN}}
 OEEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OE}}
 OTEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OT}}
 OPEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OP}}
+OQEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_OQ}}
 MDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_MD}}
 IDEXE = ${patsubst %.exe, ${OBJDIR}/%.exe, ${PROG_ID}}
 
@@ -240,9 +238,9 @@ ALL: ${MDEXE}
 NOPLOT: ${MDEXE}
 endif
 ifdef PAR_OPT
-DEFAULT: ${OPEXE}
-ALL: ${OPEXE}
-NOPLOT: ${OPEXE}
+DEFAULT: ${OPEXE} ${OQEXE}
+ALL: ${OPEXE} ${OQEXE}
+NOPLOT: ${OPEXE} ${OQEXE}
 endif
 ifdef IMAS_VERSION
 DEFAULT: ${IDEXE}
@@ -726,6 +724,9 @@ ${OEEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
 
 ${OPEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
+
+${OQEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MNEXTRA} ${MAKES}
+	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${MNEXTRA} ${LDLIBES} ${LD_CATALYST} ${LDOPTSend}
 
 ${OTEXE}: ${OBJDIR}/%.exe: ${OBJDIR}/%.o ${OBJDIR}/libb2.a ${MAKES}
 	${LD} ${LDOPTS} -o $@ ${OBJDIR}/$*.o ${OBJDIR}/libb2.a ${LDLIBES} ${LDOPTSend}
