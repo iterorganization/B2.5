@@ -210,7 +210,7 @@
         call cfrure (nread, size(f_luc_al), f_luc_al, 'f_luc_al')
         call cfrure (nread, size(fllim_ke), fllim_ke, 'fllim_ke')
         call cfrure (nread, size(fllim_ki), fllim_ki, 'fllim_ki')
-        call cfrure (nread, size(fllim_al), fllim_ki, 'fllim_al')
+        call cfrure (nread, size(fllim_al), fllim_al, 'fllim_al')
         call cfrure (nread, size(fllim_al_c), fllim_al_c, 'fllim_al_c')
       else
         f_luc_ke=0.0_R8
