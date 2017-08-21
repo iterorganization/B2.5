@@ -1018,7 +1018,7 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-                    If b2sigp_style is set to '2', this switch has no effect.
+					If b2sigp_style is set to '2', this switch has no effect.
 					When set to '1', the new correct form of the friction force is used, applicable for non-hydrogenic plasmas or hydrogenic mixtures. 
 					The value '0' corresponds to the old SOLPS5.0 treatment.
 				</description>
@@ -3549,7 +3549,7 @@
 				<description>
 					When set to '1', SPb's form of the pressure gradient term on the right hand of the momentum balance equation is used.
 					When set to '2', the parallel current term contains a correction due to impurities, when Z_eff is not equal to the average plasma ion charge.
-					The default value of '2' is recommended for cases with one main hydrogenic species and any amount of impurities. It is not guaranteed to yield correct results for hydrogen isotopic mixtures or non-hydrogenic plasmas.
+					The default value of '2' is recommended for cases with one main hydrogenic species (or at least where the main species is the lightest one) and any amount of impurities. It is not guaranteed to yield correct results for hydrogen isotopic mixtures or non-hydrogenic plasmas.
 				</description>
 			</switch>
 			<switch>

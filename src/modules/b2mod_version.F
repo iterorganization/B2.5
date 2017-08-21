@@ -271,4 +271,5 @@ c    Version 03.000.006  29.06.19 New default model b2sigp_style.eq.2
 c                                 Added redef_pbs switch to b2fgmtry file
 c                                 Added cflim(3:4) flux limit factors for
 c                                 thermo-electric coefficient and friction terms
+c                                 Added flux limit coefficients to b2mod_transport
 c

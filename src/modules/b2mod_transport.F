@@ -202,6 +202,27 @@
       else
         fllimvisc=0.0_R8
       endif
+      if(b2fplasma_version.ge.'03.000.006') then
+        call cfrure (nread, size(f_luc_ke), f_luc_ke, 'f_luc_ke')
+        call cfrure (nread, size(f_luc_ki), f_luc_ki, 'f_luc_ki')
+        call cfrure (nread, size(f_luc_et), f_luc_et, 'f_luc_et')
+        call cfrure (nread, size(f_luc_sg), f_luc_sg, 'f_luc_sg')
+        call cfrure (nread, size(f_luc_al), f_luc_al, 'f_luc_al')
+        call cfrure (nread, size(fllim_ke), fllim_ke, 'fllim_ke')
+        call cfrure (nread, size(fllim_ki), fllim_ki, 'fllim_ki')
+        call cfrure (nread, size(fllim_al), fllim_ki, 'fllim_al')
+        call cfrure (nread, size(fllim_al_c), fllim_al_c, 'fllim_al_c')
+      else
+        f_luc_ke=0.0_R8
+        f_luc_ki=0.0_R8
+        f_luc_et=0.0_R8
+        f_luc_sg=0.0_R8
+        f_luc_al=0.0_R8
+        fllim_ke=0.0_R8
+        fllim_ki=0.0_R8
+        fllim_al=0.0_R8
+        fllim_al_c=0.0_R8
+      endif
 
       return
       end subroutine read_b2mod_transport
@@ -239,6 +260,17 @@
       endif
       if(newversion.ge.'01.001.020') then
         call cfwure (nwrite, size(fllimvisc), fllimvisc, 'fllimvisc')
+      endif
+      if(newversion.ge.'03.000.006') then
+        call cfwure (nwrite, size(f_luc_ke), f_luc_ke, 'f_luc_ke')
+        call cfwure (nwrite, size(f_luc_ki), f_luc_ki, 'f_luc_ki')
+        call cfwure (nwrite, size(f_luc_et), f_luc_et, 'f_luc_et')
+        call cfwure (nwrite, size(f_luc_sg), f_luc_sg, 'f_luc_sg')
+        call cfwure (nwrite, size(f_luc_al), f_luc_al, 'f_luc_al')
+        call cfwure (nwrite, size(fllim_ke), fllim_ke, 'fllim_ke')
+        call cfwure (nwrite, size(fllim_ki), fllim_ki, 'fllim_ki')
+        call cfwure (nwrite, size(fllim_al), fllim_al, 'fllim_al')
+        call cfwure (nwrite, size(fllim_al_c), fllim_al_c, 'fllim_al_c')
       endif
 
       return

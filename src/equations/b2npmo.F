@@ -116,7 +116,7 @@
       real (kind=R8) ::
      *  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
      *  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)             !srv 13.01.17 05.07.17
-      logical new_matrix, solvedum(0:NNREGMAX)
+      logical new_matrix, solvedum(0:NNREGMAX), main_lightest
       save ncall, rxg, diagno, solvedum, nsmin, nsmax
 *   ..procedures
       intrinsic min, max
@@ -162,9 +162,14 @@
         endif
         write(*,*) 'nsmin, nsmax = ', nsmin, nsmax
         call ipgeti ('b2sigp_style', style)                            !srv 08.10.14
-        if (nint(zn(ismain)).ne.1 .and. style.ne.2) then
+        main_lightest = .true.
+        do is = 0, ns-1
+          main_lightest = main_lightest .and.
+     .     nint(am(is)).ge.nint(am(ismain))
+        end do
+        if (.not.main_lightest .and. style.eq.2) then
          write(0,'(2a)') 'Warning: b2sigp_style.eq.2 not appropriate ',
-     .    'for non-hydrogenic plasmas!'
+     .    'for plasmas where the main species is not the lightest one!'
         endif
         call ipgeti ('b2tlnl_ii', icase)                               !srv 13.01.17
         call xertst (0.eq.icase.or.1.eq.icase,'faulty input b2tlnl_ii') 

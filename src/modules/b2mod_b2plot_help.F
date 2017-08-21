@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=340,nfns=204,nsparameters=32,nelabels=32,
+      parameter(nlabels=349,nfns=204,nsparameters=32,nelabels=32,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -87,7 +87,7 @@
      8  'ne_ext'  , 'bmna'    , 'bmne'    , 'bmmo'    , 'bmhe'    ,
      9  'bmhi'    , 'bmch'    , 'fax_ext' , 'fay_ext' , 'lnlam'   ,
      *  'zn_ext'  , 'rc'      , 'srcml'   , 'edissml' , 'neutrad' /
-      data labels(301:340) /
+      data labels(301:349) /
      1  'fnaxnodr', 'fnaynodr', 'ne2'     , 'smth'    , 'ixle'    ,
      2  'ixge'    , 'iyle'    , 'iyge'    , 'isle'    , 'isge'    ,
      3  'smcf'    , 'fnaxmdf' , 'fnaymdf' , 'fhexmdf' , 'fheymdf' ,
@@ -95,7 +95,9 @@
      5  'fhiyps'  , 'fnaxps'  , 'fnayps'  , 'fnaxfcor', 'fnayfcor',
      6  'fnaxhe'  , 'fnayhe'  , 'fchxvisq', 'fchyvisq', 'fchxinrt',
      7  'fchyinrt', 'vedia.x' , 'vedia.y' , 'veexb.x' , 'veexb.y' ,
-     8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      /
+     8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      ,
+     9  'fluce'   , 'fluci'   , 'flucv'   , 'flucs'   , 'fluca'   ,
+     *  'flke'    , 'flki'    , 'flal'    , 'flalc'   /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -346,14 +348,14 @@
      5    'External charge source (A)',
      6    'Radiation rate (W)',
      7    'Mach number (SOLPS4.0)',
-     8    'Electron heat flux limit factor',
-     9    'Ion heat flux limit factor',
-     *    'fllim0fna_x'/
+     8    'Electron heat flow flux limit factor',
+     9    'Ion heat flux flow limit factor',
+     *    'Poloidal neutral particle flux limit factor'/
       data descriptions(231:240) /
-     1    'fllim0fna_y',
-     2    'fllim0fhi_x',
-     3    'fllim0fhi_y',
-     4    'fllimvisc',
+     1    'Radial neutral particle flux limit factor',
+     2    'Poloidal neutral ion energy flux limit factor',
+     3    'Radial neutral ion energy flux limit factor',
+     4    'Viscosity flux limit factor',
      5    'Particle source (#.s^{-1})',
      6    'Electron heat source (W)',
      7    'Ion heat source (W)',
@@ -470,6 +472,16 @@
      8    'isne',
      9    'Total density (m^{-3})',
      *    'sz (m^{2})'/
+      data descriptions(341:349) /
+     1    'Electron heat diffusivity Luciani flux limit factor',
+     2    'Ion heat diffusivity Luciani flux limit factor',
+     3    'Viscosity Luciani flux limit factor',
+     4    'Electric conductivity Luciani flux limit factor',
+     5    'Thermo-electric Luciani flux limit factor',
+     6    'Electron heat diffusivity classical flux limit factor',
+     7    'Ion heat diffusivity classical flux limit factor',
+     8    'Thermo-electric classical flux limit factor',
+     9    'Thermo-electric coefficient limit factor'/
       data dimensions(1:50) /
      1    2,      2,      2,      2,      2,
      2    3,      3,      3,      3,      3,
@@ -536,7 +548,7 @@
      8    2,      3,      2,      3,      2,
      9    2,      2,      3,      3,      2,
      *    3,      2,      3,      3,      3/  
-      data dimensions(301:340) /
+      data dimensions(301:349) /
      1    3,      3,      2,      3,      2,
      2    2,      2,      2,      3,      3,
      3    3,      3,      3,      2,      2,
@@ -544,7 +556,9 @@
      5    2,      3,      3,      3,      3,
      6    3,      3,      2,      2,      2,
      7    2,      2,      2,      2,      2,
-     8    2,      2,      3,      3,      2/
+     8    2,      2,      3,      3,      2,
+     9    2,      2,      2,      2,      2,
+     *    2,      2,      2,      2/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',

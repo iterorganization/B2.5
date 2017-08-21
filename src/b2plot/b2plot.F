@@ -968,6 +968,14 @@ c
         call mapx(nx,ny,1,vedia(:,:,0),work)
         call mapx(nx,ny,1,vedia(:,:,1),work)
       end if
+      call mapx(nx,ny,1,f_luc_ke,work)
+      call mapx(nx,ny,1,f_luc_ki,work)
+      call mapx(nx,ny,1,f_luc_et,work)
+      call mapx(nx,ny,1,f_luc_sg,work)
+      call mapx(nx,ny,1,f_luc_al,work)
+      call mapx(nx,ny,1,fllim_ke,work)
+      call mapx(nx,ny,1,fllim_ki,work)
+      call mapx(nx,ny,1,fllim_al,work)
 c
       inquire(file='B2SDIAG',exist=ex)
 #ifdef B25_EIRENE
@@ -1737,33 +1745,72 @@ c
           enddo
           call copy(fhty,1.0_R8,nz,textbl)
         case('fle')
-          description='Electron heat flux limit factor'
+          description='Electron heat flow flux limit factor'
           nz=1
           call copy(fllime,1.0_R8,nz,textbl)
         case('fli')
-          description='Ion heat flux limit factor'
+          description='Ion heat flow flux limit factor'
           nz=1
           call copy(fllimi,1.0_R8,nz,textbl)
         case('nflfnax')
-          description='fllim0fna_x'
+          description='Poloidal neutral particle flux limit factor'
           nz=ns
           call copy(fllim0fna_x,1.0_R8,nz,textpl)
         case('nflfnay')
-          description='fllim0fna_y'
+          description='Radial neutral particle flux limit factor'
           nz=ns
           call copy(fllim0fna_y,1.0_R8,nz,textpl)
         case('nflfhix')
-          description='fllim0fhi_x'
+          description='Poloidal neutral ion energy flux limit factor'
           nz=ns
           call copy(fllim0fhi_x,1.0_R8,nz,textpl)
         case('nflfhiy')
-          description='fllim0fhi_y'
+          description='Radial neutral ion energy flux limit factor'
           nz=ns
           call copy(fllim0fhi_y,1.0_R8,nz,textpl)
         case('flvisc')
-          description='fllimvisc'
+          description='Viscosity flux limit factor'
           nz=ns
           call copy(fllimvisc,1.0_R8,nz,textpl)
+        case('fluce')
+          description=
+     .     'Electron heat diffusivity Luciani flux limit factor'
+          nz=1
+          call copy(f_luc_ke,1.0_R8,nz,textbl)
+        case('fluci')
+          description='Ion heat diffusivity Luciani flux limit factor'
+          nz=1
+          call copy(f_luc_ki,1.0_R8,nz,textbl)
+        case('flucv')
+          description='Viscosity Luciani flux limit factor'
+          nz=1
+          call copy(f_luc_et,1.0_R8,nz,textbl)
+        case('flucs')
+          description='Electric conductivity Luciani flux limit factor'
+          nz=1
+          call copy(f_luc_sg,1.0_R8,nz,textbl)
+        case('fluca')
+          description='Thermo-electric Luciani flux limit factor'
+          nz=1
+          call copy(f_luc_al,1.0_R8,nz,textbl)
+        case('flke')
+          description=
+     .     'Electron heat diffusivity classical flux limit factor'
+          nz=1
+          call copy(fllim_ke,1.0_R8,nz,textbl)
+        case('flki')
+          description=
+     .     'Ion heat diffusivity classical flux limit factor'
+          nz=1
+          call copy(fllim_ki,1.0_R8,nz,textbl)
+        case('flal')
+          description='Thermo-electric classical flux limit factor'
+          nz=1
+          call copy(fllim_al,1.0_R8,nz,textbl)
+        case('flalc')
+          description='Thermo-electric coefficient limit factor'
+          nz=1
+          call copy(fllim_al_c,1.0_R8,nz,textbl)
         case('cvsx')
           description='cvsa_cl_x'
           nz=ns
