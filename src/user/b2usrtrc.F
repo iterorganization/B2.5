@@ -352,15 +352,13 @@ c*** Check whether the specified surfaces are real
 c*** Calculate the basic quantities for each surface/species
 
         ndts_tmp=nnatmi+nnmoli
-        j=0
         do i=1,ndts_tmp !{
           if(i.le.nnatmi) then !{
             ndtm_tmp(i)=i
-            hlp_awdts(i)=am(j+1)
-            j=j+nfluids(i)
+            hlp_awdts(i)=am(eb2spcr(i))
           else !}{
             ndtm_tmp(i)=nnatmi-i
-            hlp_awdts(i)=0.
+            hlp_awdts(i)=0.0_R8
             do j=1,nnatmi !{
               hlp_awdts(i)=hlp_awdts(i)+
      +                                mlcmp(j,-ndtm_tmp(i))*hlp_awdts(j)

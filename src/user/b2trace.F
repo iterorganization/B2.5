@@ -58,7 +58,7 @@ csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
               wldnep(ix,0)=wldnep(ix,0)+
      +         wldnep(ix,istra)*recyctmp
               do is=1,nnatmi
-                iy=b2espcr(is)
+                iy=eb2spcr(is)
                 if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
                 wldna(ix,is,0)=wldna(ix,is,0)+
      +           wldna(ix,is,istra)*recyctmp

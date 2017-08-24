@@ -768,8 +768,10 @@ c        do is=0,ns-1
 c          print *,'is,am(is)',is,am(is)
 c        end do
 c        js=ltns(1)+nlim
-c        do is=0,ns+1
+c        do is=1,natmi
 c          print *,'is,wldna(js,is,0)',is,wldna(js,is,0)
+c        end do
+c        do is=1,ns-nspecies
 c          print *,'is,wldpp(js,is,0)',is,wldpp(js,is,0)
 c        end do
 c        print *,'ismain,ismain0',ismain,ismain0
@@ -829,13 +831,14 @@ c        print *,'size wldpp(,,)',size(wldpp,1),size(wldpp,2),size(wldpp,3)
         if (ft44) then
           do j=1,ntrgts !{
             js=ltns(j)+nlim
+            i1=1
             do ia=1,natmi !loop over eirene atoms
               sja_w(j,ia)=wldna(js,ia,0)
-              i1=eb2spcr(ia)+1
-              i2=eb2spcr(ia)+nfluids(ia)
+              i2=i1+nfluids(ia)-1
               do is=i1,i2
                 sjp_w(j,ia)=sjp_w(j,ia)+wldpp(js,ia,0)
               end do
+              i1=i2+1
               sjt_w(j,ia)=sja_w(j,ia)+sjp_w(j,ia)
               if(sja_t(j,ia).gt.0.0_R8) then !{
                 sja_t(j,ia)=sja_w(j,ia)/sja_t(j,ia)
