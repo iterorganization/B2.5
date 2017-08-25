@@ -70,7 +70,7 @@ csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
               end do
               do is=1,nnmoli
                 if (lmolscl(is).gt.0 .and. lmolscl(is).le.nnatmi) then
-                  iy=eb2spcr(lmolscl(is))+1
+                  iy=eb2spcr(lmolscl(is))
                   if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
                   wldnm(ix,is,0)=wldnm(ix,is,0)+
      +             wldnm(ix,is,istra)*recyctmp

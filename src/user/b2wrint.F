@@ -298,9 +298,9 @@ csw 20sep2013 added
         eisum(ir)=eisum(ir)+1.5*ti(ix,iy)*ne(ix,iy)*vol(ix,iy)
         nesum(ir)=nesum(ir)+ne(ix,iy)*vol(ix,iy)
         volsum(ir)=volsum(ir)+vol(ix,iy)
-        do is=1,nspecies
-          nisum(is,ir)=nisum(is,ir)+
-     +                 na(ix,iy,is)*vol(ix,iy)     !wdk na(ix,iy,is) instead of ni(ix,iy,is)
+        do is=0,ns-1
+          nisum(b2espcr(is),ir)=nisum(b2espcr(is),ir)+
+     .                          na(ix,iy,is)*vol(ix,iy)
         end do
        enddo
       enddo

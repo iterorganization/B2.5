@@ -263,7 +263,7 @@ csw 09jan2014 add extra allocates
 
 #ifdef B25_EIRENE
          if (is_neutral(is)) isa = b2espcr(is)
-         if (is_neutral(is) .and. isa.ne.-1) then
+         if (is_neutral(is) .and. isa.ne.0) then
           do iy = 0,mintopcut   ! for closed surfaces and through separatrix
            do ix=-1,nxd                                                  
             if(mod(region(ix,iy,0),4).eq.1 .or. 
