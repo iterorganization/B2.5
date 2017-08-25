@@ -320,7 +320,7 @@ cank-960727
               end do
               do is=1,nmoli
                 if (lmolscl(is).gt.0 .and. lmolscl(is).le.natmi) then
-                  iy=eb2spcr(lmolscl(is))+1
+                  iy=eb2spcr(lmolscl(is))
                   if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
                   wldnm(ix,is,0)=wldnm(ix,is,0)+
      +             wldnm(ix,is,istra)*recyctmp
