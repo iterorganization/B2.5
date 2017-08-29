@@ -134,7 +134,7 @@ c                                 corrected the diagnostic output of fhe and fhi
 c    Version 01.001.054  12.04.10 corrected the calculation of thermal force in b2sifr_.F
 c    Version 01.001.055  19.04.10 added the calculation of anomalous velocity for H-regime in b2tqna.F
 c                                 added additional diagnostic into b2stbr.F for B2-Eirene case
-c                                 corrected output of dab2, dmb2 and tab2,tmb2 in b2wdat.F
+c                                 corrected output of dab2,dmb2 and tab2,tmb2 in b2wdat.F
 c    Version 01.001.056  06.07.10 modified the condition of solving of equations for Ua in b2npmo.F
 c                        12.07.10 corrected the calculation of transport parameters for H-regime
 c                                 for UDND and LDND cases in b2tqna.F

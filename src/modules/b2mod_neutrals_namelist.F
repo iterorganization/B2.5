@@ -4,13 +4,16 @@ c  version : 27.07.2002 00:00
 
 cank-20020724 {
 c* Parameters controlling the source scaling procedure are added:
-c*  b2espcr(i)    : Eirene atomic species corresponding to B2 species i
-c*  eb2spcr(i)    : B2 atomic species corresponding to Eirene atomic species i
+c*  b2eatcr(i)    : Eirene atomic species corresponding to B2 species i
+c*  b2espcr(i)    : Nuclear sequence index corresponding to B2 species i
+c*  eb2atcr(i)    : B2 atomic species corresponding to Eirene atomic species i
+c*  eb2spcr(i)    : First B2 species corresponding to sequence i
 c*  lstrascl(i,j) : scale atomic species j in stratum i with this atomic
 c*                  species (0 means no scaling). Species 0 is reserved
-c*                  for electron energy (TBD). 
-c*  gpfc(i,j)     : fraction of nuclei of kind i (Eirene atoms) in one
+c*                  for electron energy (TBD).
+c*  gpfc(i,j)     : fraction of atoms of kind i (Eirene numbering) in one
 c*                  particle puffed in stratum number j
+c*  latmscl(i)    : B2 sequence number with which atoms of kind i scale
 c*  lmolscl(i)    : atomic species with which molecules of kind i scale
 c*  lionscl(i)    : atomic species with which test ions of kind i scale
 c*  mlcmp(i,j)    : number of atoms i in a molecule j
@@ -59,25 +62,26 @@ cank }
       real (kind=R8), allocatable, save ::
      *   RECYC(:,:), ERECYC(:,:), MRECYC(:,:), RCION(:,:), recyceir(:),
      *   USERFLUXPARM(:,:),
-     *   volrecstart(:), saved_volrec(:), 
+     *   volrecstart(:), saved_volrec(:),
      *   phys_sput(:,:), chem_sput(:,:),
      1   gpfc(:,:), gpdata(:,:,:)
 #ifndef NO_B2_CHEM_SPUT
 #ifndef SOLPS4_3
-      real (kind=R8), allocatable, save :: 
+      real (kind=R8), allocatable, save ::
      *   chemical_sputter_yield(:)
 #endif
 #endif
       integer, allocatable, save ::
-     *   RCPOS(:), 
-     *   RCSTART(:), 
+     *   RCPOS(:),
+     *   RCSTART(:),
      *   RCEND(:),
      *   RC_LIST_SIZE(:),
      *   RC_LIST_X(:,:),
      *   RC_LIST_Y(:,:),
      *   TARGSP(:,:),
      *   species_start(:), species_end(:),
-     *   b2espcr(:), eb2spcr(:), lstrascl(:,:), lmolscl(:), lionscl(:),
+     *   b2eatcr(:), b2espcr(:), eb2atcr(:), eb2spcr(:),
+     *   lstrascl(:,:), latmscl(:), lmolscl(:), lionscl(:),
      1   mlcmp(:,:), lcns(:), ltns(:), msns(:,:), ksns(:), lsns(:),
      2   ngpdata(:)
       logical, allocatable, save ::
@@ -98,7 +102,7 @@ cank }
       real (kind=R8), save :: gpdata(100,2,NSTRAID)
 #ifndef NO_B2_CHEM_SPUT
 #ifndef SOLPS4_3
-      real (kind=R8), save :: 
+      real (kind=R8), save ::
      ,  chemical_sputter_yield(0:DEF_NLIM+DEF_NSTS)
 #endif
 #endif
@@ -113,18 +117,20 @@ cank }
       logical, save :: TIME_DEP_PUFF(NSTRAID)
       integer, save :: ngpdata(NSTRAID)
       integer, save :: species_start(NSTRAID), species_end(NSTRAID)
+      integer, save :: b2eatcr(0:nsdmax-1)
       integer, save :: b2espcr(0:nsdmax-1)
+      integer, save :: eb2atcr(1:natmid)
       integer, save :: eb2spcr(1:natmid)
       integer, save :: lstrascl(NSTRAID,0:natmid)
       character*1, save :: CRCSTRA(NSTRAID)
-      integer, save :: lmolscl(nmolid), mlcmp(natmid,nmolid),
-     ,  lionscl(nionid),
-     ,  lcns(nstsid), ltns(nstsid), lsns(nstraid), ksns(NSTRAID), 
+      integer, save :: mlcmp(natmid,nmolid),
+     ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
+     ,  lcns(nstsid), ltns(nstsid), lsns(nstraid), ksns(NSTRAID),
      ,  msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
 #endif
 
-      integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns, 
+      integer, save :: NSTRAI, nstrat, eirene_mod, ncns, ntns,
      .     dbg_eir_mc, debug_flags(100), neutrals_count
       real (kind=R8), save :: RF_NEUT(4)
       real (kind=R8), save :: eirene_step_cpu, eirene_step_dt,
@@ -150,11 +156,11 @@ cank }
      1 chemical_erosion_be_fac
 
       namelist /neutrals_save/ saved_volrec
-      
+
       private :: neutrals
       namelist /neutrals/ nstrai, rcpos, rcstart, rcend, targsp, chemsp,
      1  rc_list_size, rc_list_x, rc_list_y,
-     4  recyc, erecyc, mrecyc, rcion, recyceir, userfluxparm, crcstra, 
+     4  recyc, erecyc, mrecyc, rcion, recyceir, userfluxparm, crcstra,
      .  rf_neut, phys_sput, chem_sput,
 #ifndef NO_B2_CHEM_SPUT
      .  chemical_sputter_yield, fchar_chemical, igass_chemical,
@@ -165,7 +171,8 @@ cank }
      .  species_start, species_end,
      5  neutrals_filename, neutrals_time_mod, neutrals_time_switch,
      ,  lstrascl, l_neutrad, l_neutflux,
-     ,  b2espcr, eb2spcr, lmolscl, mlcmp, lionscl,
+     ,  b2eatcr, b2espcr, eb2spcr, eb2atcr,
+     ,  latmscl, lmolscl, mlcmp, lionscl,
      ,  lcns, ltns, lsns, ksns, gpfc, dbg_eir_mc, debug_flags,
      ,  neut_scl_lim, track_index, track_chem_sput,
      *  chemical_erosion_redep_fac,
@@ -173,12 +180,12 @@ cank }
      *  chemical_erosion_be_fac_a,
      *  chemical_erosion_be_fac_b,
      *  chemical_erosion_be_fac_c,
-     6  n_spcsrf, l_spcsrf, sps_id, i_spcsrf, j_spcsrf, 
-     7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr, 
+     6  n_spcsrf, l_spcsrf, sps_id, i_spcsrf, j_spcsrf,
+     7  sps_absr, sps_trno, sps_trni, sps_mtri, sps_tmpr,
      8  sps_spph, sps_spch, sps_sgrp, sps_mtrl,
      .  msns, write_nml_neut, time_dep_puff, ngpdata, gpdata
       logical, save :: write_nml_neut = .true.
-      
+
 csw 21feb2012
       integer, save ::
      . l_neutrad=0, l_neutflux=-1
@@ -191,7 +198,7 @@ csw 21feb2012
      & ,only : is_codes
       use b2mod_b2cmpa
       implicit none
-      integer, intent(in) :: nxd, nyd, nsd, 
+      integer, intent(in) :: nxd, nyd, nsd,
      &  natm_in, nmol_in, nion_in, nstra_in, nsts_in, sput_dst
       integer is, isstart, isend
       integer is0, ispecies
@@ -225,9 +232,12 @@ csw 21feb2012
       allocate(CRCSTRA(NSTRAID))
       allocate(species_start(NSTRAID))
       allocate(species_end(NSTRAID))
+      allocate(b2eatcr(0:nsd-1))
       allocate(b2espcr(0:nsd-1))
-      allocate(eb2spcr(1:natm_in))
+      allocate(eb2atcr(natm_in))
+      allocate(eb2spcr(nspecies))
       allocate(lstrascl(nstra_in,0:natm_in))
+      allocate(latmscl(natm_in))
       allocate(lmolscl(nmol_in))
       allocate(lionscl(nion_in))
       allocate(gpfc(natm_in,nstra_in))
@@ -279,7 +289,7 @@ csw 21feb2012
       SPS_SGRP=-1
       NGPDATA=0
       GPDATA=0.0_R8
-cxpb The default recycling model is 100% particle recycling and 
+cxpb The default recycling model is 100% particle recycling and
 cxpb 30% energy recycling for all ionised species except carbon.
 cwdk 0% momentum recycling, for backwards compatibility
       RECYC=0.0_R8
@@ -317,8 +327,11 @@ cwdk 0% momentum recycling, for backwards compatibility
       neutrals_time_switch=0.0_R8
 
       lstrascl=0
+      b2eatcr=0
       b2espcr=0
+      eb2atcr=-1
       eb2spcr=-1
+      latmscl=0
       lmolscl=0
       lionscl=0
       mlcmp=0
@@ -363,12 +376,16 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
         enddo
         isstart = is0
         isend = is - 1
+        b2eatcr(isstart:isend)=ispecies
         b2espcr(isstart:isend)=ispecies
+        eb2atcr(ispecies)=isstart
         eb2spcr(ispecies)=isstart
-        is0 = is 
-      enddo        
+        latmscl(ispecies)=ispecies
+        is0 = is
+      enddo
       write(hlp_frm,'(a6,i3,a3)') '(1x,a,',nsd,'i4)'
       write(*,hlp_frm) 'b2espcr : ',b2espcr(0:nsd-1)
+      write(*,hlp_frm) 'b2eatcr : ',b2eatcr(0:nsd-1)
 
       return
       end subroutine alloc_b2mod_neutrals
@@ -413,9 +430,12 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       deallocate(CRCSTRA)
       deallocate(species_start)
       deallocate(species_end)
+      deallocate(b2eatcr)
       deallocate(b2espcr)
+      deallocate(eb2atcr)
       deallocate(eb2spcr)
       deallocate(lstrascl)
+      deallocate(latmscl)
       deallocate(lmolscl)
       deallocate(lionscl)
       deallocate(gpfc)
@@ -454,7 +474,7 @@ c the following gives a transition from 1 to 0.1 in the range 0.1 to 0.3
       logical found, side
       intrinsic mod
       real (kind=R8) hlp
-      logical :: file_ok      
+      logical :: file_ok
       logical, allocatable :: old_style(:)
       character*16 hlp_frm
       character*260 filename
@@ -529,9 +549,9 @@ c
      5 chemical_erosion_be_fac_c
 c
       do istra = 1, nstrat
-        do is = 1, nspecies
+        do is = 1, nnatmi
           if (lstrascl(istra,is).lt.0) lstrascl(istra,is)=is
-          if (lstrascl(istra,is).gt.nspecies) lstrascl(istra,is)=is
+          if (lstrascl(istra,is).gt.nnatmi) lstrascl(istra,is)=is
         end do
       end do
 
@@ -547,22 +567,22 @@ c
       call xertst (0.le.nstrai, 'faulty input nstrai')
       call xertst (0.le.nstrat, 'faulty input nstrat')
       call xertst (0.0_R8.lt.rf_neut(1).and.0.0_R8.lt.rf_neut(2).and.
-     .             0.0_R8.lt.rf_neut(3).and.0.0_R8.lt.rf_neut(4), 
+     .             0.0_R8.lt.rf_neut(3).and.0.0_R8.lt.rf_neut(4),
      .  'faulty input rf_neut')
 #ifndef NO_B2_CHEM_SPUT
       call xertst (0.le.issput_chemical,
      .  'faulty input issput_chemical')
 #endif
-      call xertst (0.0_R8.le.eirene_step_cpu, 
+      call xertst (0.0_R8.le.eirene_step_cpu,
      . 'faulty input eirene_step_cpu')
-      call xertst (0.0_R8.lt.eirene_step_dt, 
+      call xertst (0.0_R8.lt.eirene_step_dt,
      . 'faulty input eirene_step_dt')
       call xertst (1.0_R8.lt.neut_scl_lim, 'faulty input neut_scl_lim')
       call xertst (0.0_R8.le.volrecinc, 'faulty input volrecinc')
       call xertst (0.0_R8.lt.volrecwt, 'faulty input volrecwt')
-      call xertst (0.0_R8.le.neutrals_time_mod, 
+      call xertst (0.0_R8.le.neutrals_time_mod,
      . 'faulty input neutrals_time_mod')
-      call xertst (0.0_R8.le.neutrals_time_switch, 
+      call xertst (0.0_R8.le.neutrals_time_switch,
      . 'faulty input neutrals_time_switch')
       do istra = 1, nstrat
         if (crcstra(istra).eq.'N') then
@@ -642,7 +662,7 @@ c
             end do
           end if
         endif
-        if (old_style(istra)) 
+        if (old_style(istra))
      .   call xertst (rcstart(istra).le.rcend(istra),
      .   'faulty inputs rcstart > rcend')
         call xertst (maxval(targsp(istra,:)).lt.ns,
@@ -658,7 +678,7 @@ c
         call xertst (0.0_R8.le.chemical_erosion_be_fac_c
      &          .and.1.0_R8.ge.chemical_erosion_be_fac_c,
      .   'faulty input chemical_erosion_be_fac_c')
-        call xertst (0.0_R8.le.volrecstart(istra), 
+        call xertst (0.0_R8.le.volrecstart(istra),
      .   'faulty input volrecstart')
         call xertst (0.le.species_start(istra).and.
      &   species_start(istra).lt.ns, 'faulty input species_start')
@@ -668,9 +688,9 @@ c
      .   'faulty inputs species_start > species_end')
         do is = 0, ns-1
           call xertst (0.0_R8.le.recyc(is,istra), 'faulty input recyc')
-          call xertst (0.0_R8.le.erecyc(is,istra), 
+          call xertst (0.0_R8.le.erecyc(is,istra),
      .     'faulty input erecyc')
-          call xertst (0.0_R8.le.mrecyc(is,istra), 
+          call xertst (0.0_R8.le.mrecyc(is,istra),
      .     'faulty input mrecyc')
           call xertst (0.0_R8.le.rcion(is,istra), 'faulty input rcion')
           call xertst (0.0_R8.le.phys_sput(is,istra),
@@ -679,10 +699,10 @@ c
      .     'faulty input chem_sput')
         enddo
         call xertst (0.0_R8.le.recyceir(istra), 'faulty input recyceir')
-        do is = 1, nspecies
+        do is = 1, nnatmi
           call xertst(0.0_R8.le.gpfc(is,istra), 'faulty input gpfc')
           call xertst(0.le.lstrascl(istra,is) .and.
-     .                lstrascl(istra,is).le.nspecies, 
+     .                lstrascl(istra,is).le.nnatmi,
      .                'faulty input lstrascl')
         enddo
         if (time_dep_puff(istra)) then
@@ -701,17 +721,38 @@ c
       do is = 0, ns-1
         call xertst(1.le.b2espcr(is).and.b2espcr(is).le.nspecies,
      .   'faulty input b2espcr')
+        call xertst(1.le.b2eatcr(is).and.b2eatcr(is).le.nnatmi,
+     .   'faulty input b2eatcr')
+      enddo
+      do is = 1, nnatmi
+        call xertst(0.le.eb2atcr(is).and.eb2atcr(is).lt.ns,
+     .   'faulty input eb2atcr')
+        call xertst(0.le.latmscl(is), 'faulty input latmscl')
+#ifdef B25_EIRENE
+        if (latmscl(is).eq.0) then
+          write(6,'(a,i3,a)') 'Atom ',is,
+     .     ' in Eirene does not scale with any B2.5 sequence'
+          write(6,'(a)')
+     .     'Please provide a scaling using the latmscl array '//
+     .     'in b2.neutral.parameters'
+          write(0,'(a,i3,a)') 'Atom ',is,
+     .     ' in Eirene does not scale with any B2.5 sequence'
+          write(0,'(a)')
+     .     'Please provide a scaling using the latmscl array '//
+     .     'in b2.neutral.parameters'
+        end if
+#endif
       enddo
       do is = 1, nspecies
         call xertst(0.le.eb2spcr(is).and.eb2spcr(is).lt.ns,
      .   'faulty input eb2spcr')
       enddo
       do is = 1, nnmoli
-        do i = 1, nspecies
+        do i = 1, nnatmi
           call xertst(0.le.mlcmp(i,is), 'faulty input mlcmp')
         enddo
-#ifdef B25_EIRENE
         call xertst(0.le.lmolscl(is), 'faulty input lmolscl')
+#ifdef B25_EIRENE
         if (lmolscl(is).eq.0) then
           write(6,'(a,i3,a)') 'Molecule ',is,
      .     ' does not scale with any atom species'
@@ -724,7 +765,7 @@ c
      .     'Please provide a scaling using the lmolscl array '//
      .     'in b2.neutral.parameters'
         end if
-        if (maxval(mlcmp(1:nspecies,is)).eq.0) then
+        if (maxval(mlcmp(1:nnatmi,is)).eq.0) then
           write(6,'(a,i3,a)')
      .     'Composition of molecule ',is,' is not given'
           write(6,'(a,i3,a)')
@@ -754,7 +795,7 @@ c
         call xertst (lsns(is).ge.-nsts, 'faulty input lsns')
         call xertst (0.le.ksns(is), 'faulty input ksns')
       enddo
-      
+
       ii=minloc(lcns)
       if(lcns(ii(1)).gt.0) then !{
         ncns=nstsid
@@ -794,16 +835,16 @@ c>>>
 
       do j=1,nstrai !{
         hlp=0.0_R8
-        do i=1,nspecies !{
+        do i=1,nnatmi !{
           hlp=hlp+gpfc(i,j)
         end do !}
         if(hlp.gt.0.0_R8) then !{
-          do i=1,nspecies !{
+          do i=1,nnatmi !{
             gpfc(i,j)=gpfc(i,j)/hlp
           end do !}
         end if !}
       end do !}
-      
+
       if(neut_scl_lim.lt.1.0e-6_R8) neut_scl_lim=2.0_R8  ! to avoid log(=<0)
 
       track_species='  '
@@ -845,8 +886,8 @@ c.. Test consistency with region boundaries
               ix = ix + 1
             end do
           end if
-        end do              
-        call xertst (found, 
+        end do
+        call xertst (found,
      .   'Mismatch with neutrals boundaries (South) !')
         found = mod(region(leftcut(ic),-1,0),4).eq.1
         istra = 0
@@ -855,7 +896,7 @@ c.. Test consistency with region boundaries
           found = rcstart(istra).eq.leftcut(ic) .and.
      &            crcstra(istra).eq.'S' .and. old_style(istra)
         end do
-        call xertst (found, 
+        call xertst (found,
      .   'Mismatch with neutrals boundaries (South) !')
         found = mod(region(rightcut(ic)-1,-1,0),4).eq.1
         istra = 0
@@ -883,7 +924,7 @@ c.. Test consistency with region boundaries
             end do
           end if
         end do
-        call xertst (found, 
+        call xertst (found,
      .   'Mismatch with neutrals boundaries (South) !')
         found = mod(region(rightcut(ic),-1,0),4).eq.1
         istra = 0
@@ -892,7 +933,7 @@ c.. Test consistency with region boundaries
           found = rcstart(istra).eq.rightcut(ic) .and.
      &            crcstra(istra).eq.'S' .and. old_style(istra)
         end do
-        call xertst (found, 
+        call xertst (found,
      .   'Mismatch with neutrals boundaries (South) !')
       end do
 c.. Test consistency with physical edges within the computational domain
@@ -902,7 +943,7 @@ c.. Test consistency with physical edges within the computational domain
           istra = 0
           do while (istra.lt.nstrai .and. .not.found)
             istra = istra + 1
-            found = crcstra(istra).eq.'S' .and. rcend(istra).eq.ix-1 
+            found = crcstra(istra).eq.'S' .and. rcend(istra).eq.ix-1
      .       .and. old_style(istra)
           end do
           istra = 0
@@ -910,14 +951,14 @@ c.. Test consistency with physical edges within the computational domain
             istra = istra + 1
             if (.not.old_style(istra) .and. crcstra(istra).eq.'S') then
               ic = 1
-              do while (.not.found .and. ic.le.rc_list_size(istra)) 
+              do while (.not.found .and. ic.le.rc_list_size(istra))
                 found = rc_list_x(ic,istra).eq.ix-1 .and.
      .                  rc_list_y(ic,istra).eq.-1
                 ic = ic + 1
               end do
             end if
           end do
-          call xertst (found, 
+          call xertst (found,
      .     'Mismatch with right internal edge (South) !')
         endif
         if (rightix(ix,ny).eq.nx+1 .and. region(ix,ny,0).ne.0) then
@@ -925,7 +966,7 @@ c.. Test consistency with physical edges within the computational domain
           istra = 0
           do while (istra.lt.nstrai .and. .not.found)
             istra = istra + 1
-            found = crcstra(istra).eq.'N' .and. rcend(istra).eq.ix-1 
+            found = crcstra(istra).eq.'N' .and. rcend(istra).eq.ix-1
      .       .and. old_style(istra)
           end do
           istra = 0
@@ -933,14 +974,14 @@ c.. Test consistency with physical edges within the computational domain
             istra = istra + 1
             if (.not.old_style(istra) .and. crcstra(istra).eq.'N') then
               ic = 1
-              do while (.not.found .and. ic.le.rc_list_size(istra)) 
+              do while (.not.found .and. ic.le.rc_list_size(istra))
                 found = rc_list_x(ic,istra).eq.ix-1 .and.
      .                  rc_list_y(ic,istra).eq.ny
                 ic = ic + 1
               end do
             end if
           end do
-          call xertst (found, 
+          call xertst (found,
      .     'Mismatch with right internal edge (North) !')
         endif
         if (leftix(ix,-1).eq.-2 .and. region(ix,-1,0).ne.0) then
@@ -948,7 +989,7 @@ c.. Test consistency with physical edges within the computational domain
           istra = 0
           do while (istra.lt.nstrai .and. .not.found)
             istra = istra + 1
-            found = crcstra(istra).eq.'S' .and. rcstart(istra).eq.ix+1  
+            found = crcstra(istra).eq.'S' .and. rcstart(istra).eq.ix+1
      .       .and. old_style(istra)
           end do
           istra = 0
@@ -956,14 +997,14 @@ c.. Test consistency with physical edges within the computational domain
             istra = istra + 1
             if (.not.old_style(istra) .and. crcstra(istra).eq.'S') then
               ic = 1
-              do while (.not.found .and. ic.le.rc_list_size(istra)) 
+              do while (.not.found .and. ic.le.rc_list_size(istra))
                 found = rc_list_x(ic,istra).eq.ix+1 .and.
      .                  rc_list_y(ic,istra).eq.-1
                 ic = ic + 1
               end do
             end if
           end do
-          call xertst (found, 
+          call xertst (found,
      .     'Mismatch with left internal edge (South) !')
         endif
         if (leftix(ix,ny).eq.-2 .and. region(ix,ny,0).ne.0) then
@@ -971,7 +1012,7 @@ c.. Test consistency with physical edges within the computational domain
           istra = 0
           do while (istra.lt.nstrai .and. .not.found)
             istra = istra + 1
-            found = crcstra(istra).eq.'N' .and. rcstart(istra).eq.ix+1  
+            found = crcstra(istra).eq.'N' .and. rcstart(istra).eq.ix+1
      .       .and. old_style(istra)
           end do
           istra = 0
@@ -979,19 +1020,19 @@ c.. Test consistency with physical edges within the computational domain
             istra = istra + 1
             if (.not.old_style(istra) .and. crcstra(istra).eq.'N') then
               ic = 1
-              do while (.not.found .and. ic.le.rc_list_size(istra)) 
+              do while (.not.found .and. ic.le.rc_list_size(istra))
                 found = rc_list_x(ic,istra).eq.ix+1 .and.
      .                  rc_list_y(ic,istra).eq.ny
                 ic = ic + 1
               end do
             end if
           end do
-          call xertst (found, 
+          call xertst (found,
      .     'Mismatch with left internal edge (North) !')
         endif
       enddo
       return
-    
+
  999  call xerrab ('Error while reading NEUTRALS namelist!')
       end subroutine read_neutrals_namelist
 
@@ -1034,10 +1075,10 @@ c.. Test consistency with physical edges within the computational domain
 
 *   ..test input
       do istra = 1, nstrat
-        call xertst (0.0_R8.le.saved_volrec(istra), 
+        call xertst (0.0_R8.le.saved_volrec(istra),
      .   'faulty input saved_volrec')
       enddo
-      
+
       return
  999  call xerrab ('Error while reading NEUTRALS_SAVE namelist!')
       end subroutine read_b2mod_neutrals_save

@@ -105,8 +105,8 @@ c***    ewldmr_res  :   energy due to recombination of atoms into molecules. ()P
      ,   sjt_w(0:ntrgsx,DEF_NATM), fpt_out(4*DEF_NATM),
      ,   sjs_t(ntrgsx), sjs_w(0:ntrgsx),sptmass,
      ,   sb_t,ss_t,sn_t,sg_t, spt_out(2),mol_out(2*DEF_NMOL)
-      integer eb2atm(natm)
-      character*11 spt_str(2,ntrgsx),fpt_str(4,DEF_NATM)
+      integer eb2atm(nspecies)
+      character*11 spt_str(2,ntrgsx),fpt_str(4*DEF_NATM)
       character*15 mol_str(2,DEF_NMOL)
       character*10 ssmol,ssion
       real (kind=R8) ::
@@ -355,7 +355,7 @@ c             carlis Using values directly calculated from Eirene
                 if (streql(ssion,ssmol)) then
                   match_found=.true.
                   do ims = 1,natmi
-                    mion=mion+mlcmp(ims,imol)*am(eb2spcr(ims))
+                    mion=mion+mlcmp(ims,imol)*am(eb2atcr(ims))
                   enddo
                 endif
                 imol=imol+1
@@ -708,7 +708,7 @@ c*** Total power outside the strike point position and power half-width
       close (lun)
 c----------------------------------------------------------------------
 c*** Calculate the particle fluxes and erosion - if present
-c     carlis eb2atm contains the indexes of the B2 atoms mapped to eirene
+c     carlis eb2atm contains the indexes of the B2 atoms mapped to Eirene
 c            so if in Eirene is [D He Be Ne] and in B2 [D Ne He Be] then
 c            eb2atm will be [1 4 2 3]
 #ifndef B25_EIRENE      
@@ -716,31 +716,33 @@ c            eb2atm will be [1 4 2 3]
         TEXTA(ia)=adjustl(TEXTAN(ia-1))
       end do
 #endif
-      do ia=1,natm !initialize 
+      do ia=1,nspecies !initialize
         eb2atm(ia)=ia
       end do
-      do is=1,natm !species over B2
+      do is=1,nspecies !species over B2
         do ia=1,natm !species over Eirene
-          if (streql(TEXTA(ia),atoms_list(is))) then
+          if (streql(TEXTA(ia),species_list(is))) then
            eb2atm(is)=ia
           end if
         end do
       end do
       print *, 'eb2spcr',eb2spcr
-      print *, 'b2ptrgl: list of atoms according to B2: ',atoms_list
+      print *, 'b2ptrgl: list of species according to B2: ',species_list
       print *, 'list of atoms according to Eirene: ',TEXTA   
       print *, 'ordering of B2 atoms according to Eirene: ',
-     ,          (atoms_list(eb2atm(i)),i=1,natm)  
+     ,          (atoms_list(eb2atm(i)),i=1,nspecies)
 c*** Calculate the particle fluxes
 
 c      print *,'Particle fluxes...' !###
       if(ntns.eq.ntrgts) then !{
         do j=1,ntrgts !{
           do iy=0,ny-1 !{
-            do ia=1,natm
+            do ia=1,natmi
               sja(iy,j,ia)=0.0_R8
-              sjp(iy,j,ia)=0.0_R8
-              sjt(iy,j,ia)=0.0_R8
+            end do
+            do is=1,nspecies
+              sjp(iy,j,is)=0.0_R8
+              sjt(iy,j,is)=0.0_R8
             end do
             do imol=1,nmoli
               sjm(iy,j,imol)=0.0_R8
@@ -751,12 +753,14 @@ c      print *,'Particle fluxes...' !###
           ersn_l(j)=0.0_R8   
           sjs_w(j)=0.0_R8
           sjs_t(j)=0.0_R8
-          do ia=1,natm
+          do ia=1,natmi
             sja_w(j,ia)=0.0_R8
-            sjp_w(j,ia)=0.0_R8
-            sjt_w(j,ia)=0.0_R8
             sja_t(j,ia)=0.0_R8
-            sjp_t(j,ia)=0.0_R8
+          end do
+          do is=1,nspecies
+            sjp_w(j,is)=0.0_R8
+            sjt_w(j,is)=0.0_R8
+            sjp_t(j,is)=0.0_R8
           end do    
           do imol=1,nmoli
             sjm_w(j,imol)=0.0_R8
@@ -768,8 +772,10 @@ c        do is=0,ns-1
 c          print *,'is,am(is)',is,am(is)
 c        end do
 c        js=ltns(1)+nlim
-c        do is=0,ns+1
+c        do is=1,natmi
 c          print *,'is,wldna(js,is,0)',is,wldna(js,is,0)
+c        end do
+c        do is=1,ns-nspecies
 c          print *,'is,wldpp(js,is,0)',is,wldpp(js,is,0)
 c        end do
 c        print *,'ismain,ismain0',ismain,ismain0
@@ -782,22 +788,28 @@ c          print *,'j,ltrgpos = ',j,k  !###
           IND=eirdiag_nds_ind(ISS)
           IAS=IND+1
           do iy=lytg,ny-1 !{
-            do ia=1,natm !loop on atoms according to Eirene
+            do ia=1,nspecies !loop on species according to B2.5
               i1=eb2spcr(ia)+1
               i2=eb2spcr(ia)+nfluids(ia)
               do is=i1,i2
                 sjp(iy,j,ia)=sjp(iy,j,ia)+u*fna(k+1-l,iy,0,is)
               end do
-              if (ft44) then
-                sja(iy,j,ia)=wldna_res(ia,iy+IAS)*
-     .                       sarea_res(iy+IAS)
-                spa(iy,j,ia)=dab2(k+l+1,iy+1,eb2atm(ia),1)*
-     *                       tab2(k+l+1,iy+1,eb2atm(ia),1)
-              else
-                sja(iy,j,ia)=u*fna(k+1-l,iy,0,eb2spcr(ia))
-                spa(iy,j,ia)=na(k+l,iy,eb2spcr(ia))*ti(k+l,iy)
-              endif
-              sjp_t(j,ia)=sjp_t(j,ia)+sjp(iy,j,ia)
+            end do
+            if (ft44) then
+              do ia=1,natmi !loop on atoms according to Eirene
+                sja(iy,j,ia)=wldna_res(ia,iy+IAS)*sarea_res(iy+IAS)
+                spa(iy,j,ia)=dab2(k+l+1,iy+1,ia,1)*tab2(k+l+1,iy+1,ia,1)
+              end do
+            else
+              do is=1,nspecies !loop on species according to B2.5
+                sja(iy,j,is)=u*fna(k+1-l,iy,0,eb2spcr(is))
+                spa(iy,j,is)=na(k+l,iy,eb2spcr(is))*ti(k+l,iy)
+              end do
+            endif
+            do is=1,nspecies
+              sjp_t(j,is)=sjp_t(j,is)+sjp(iy,j,is)
+            end do
+            do ia=1,natmi
               sja_t(j,ia)=sja_t(j,ia)+sja(iy,j,ia)
             end do
             do imol=1,nmoli
@@ -829,28 +841,33 @@ c        print *,'size wldpp(,,)',size(wldpp,1),size(wldpp,2),size(wldpp,3)
         if (ft44) then
           do j=1,ntrgts !{
             js=ltns(j)+nlim
-            do ia=1,natm !loop over eirene atoms
-              sja_w(j,ia)=wldna(js,ia,0)
-              i1=eb2spcr(ia)+1
-              i2=eb2spcr(ia)+nfluids(ia)
-              do is=i1,i2
-                sjp_w(j,ia)=sjp_w(j,ia)+wldpp(js,ia,0)
-              end do
-              sjt_w(j,ia)=sja_w(j,ia)+sjp_w(j,ia)
+            do ia=1,natmi !loop over Eirene atoms
+              sja_w(j,ia)=sja_w(j,ia)+wldna(js,ia,0)
+            end do
+            do is=1,ns-nspecies !loop over Eirene background ions
+              sjp_w(j,lkindp(is))=sjp_w(j,lkindp(is))+wldpp(js,is,0)
+            end do
+            do ia=1,natmi !loop over Eirene atoms
               if(sja_t(j,ia).gt.0.0_R8) then !{
                 sja_t(j,ia)=sja_w(j,ia)/sja_t(j,ia)
               else !}{
                 sja_t(j,ia)=0.0_R8
               end if !}
-              if(sjp_t(j,ia).gt.0.0_R8) then !{
-                sjp_t(j,ia)=sjp_w(j,ia)/sjp_t(j,ia)
-              else !}{
-                sjp_t(j,ia)=0.0_R8
-              end if !}
               do iy=lytg,ny-1 !{
                 sja(iy,j,ia)=sja(iy,j,ia)*sja_t(j,ia)
-                sjp(iy,j,ia)=sjp(iy,j,ia)*sjp_t(j,ia)
-                sjt(iy,j,ia)=sja(iy,j,ia)+sjp(iy,j,ia)
+                sjt(iy,j,latmscl(ia))=sjt(iy,j,latmscl(ia))+sjp(iy,j,ia)
+              end do !}
+            end do
+            do is=1,nspecies !loop over B2.5 species
+              sjt_w(j,is)=sja_w(j,is)+sjp_w(j,is)
+              if(sjp_t(j,is).gt.0.0_R8) then !{
+                sjp_t(j,is)=sjp_w(j,is)/sjp_t(j,is)
+              else !}{
+                sjp_t(j,is)=0.0_R8
+              end if !}
+              do iy=lytg,ny-1 !{
+                sjp(iy,j,is)=sjp(iy,j,is)*sjp_t(j,is)
+                sjt(iy,j,is)=sjt(iy,j,is)+sjp(iy,j,is)
               end do !}
             end do
             do imol=1,nmoli
@@ -897,7 +914,7 @@ c        Temporary solution for this routine is to use the bulk track_species
             IAS=IND+1
             sptlis(j)=0
             do iy=lytg,ny-1
-              do ia=1,natm
+              do ia=1,natmi
                 if (wldspta_res(ia,iy+IAS).gt.0.0_R8) then
                   sptlis(j)=ia
                   sjs(iy,j)=wldspta_res(ia,iy+IAS)*
@@ -905,7 +922,7 @@ c        Temporary solution for this routine is to use the bulk track_species
                   sjs_t(j)=sjs_t(j)+sjs(iy,j)
                 end if
               end do
-              do imol=1,nmol
+              do imol=1,nmoli
                 if (wldsptm_res(imol,iy+IAS).gt.0.0_R8) then
                   sptlis(j)=imol+natm
                   sjs(iy,j)=wldsptm_res(imol,iy+IAS)*
@@ -941,13 +958,13 @@ c carlis sje [mm/y] = ers_factor[s/y*mol/g*m2/cm2*mm/cm]*srfs_a[g/mol]*sjs[1/s]/
                 sje(iy,j)=ers_factor*srfs_a(spt_mat(j))*sjs(iy,j)/
      .                   srfs_d(spt_mat(j))/s(iy,j)
                 if (sptlis(j).le.natm) then
-                  sptmass=am(eb2spcr(sptlis(j)))
+                  sptmass=am(eb2atcr(sptlis(j)))
                 else
                   imol = sptlis(j)-natm
                   sptmass=0.0_R8
-                  do ia = 1, natm
+                  do ia = 1, natmi
                     if (mlcmp(ia,imol).gt.0) then
-                      sptmass=sptmass+mlcmp(ia,imol)*am(eb2spcr(ia))
+                      sptmass=sptmass+mlcmp(ia,imol)*am(eb2atcr(ia))
                     end if
                   end do
                 end if
@@ -956,7 +973,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
                 sjs(iy,j)=sjs(iy,j)*sptmass*nsecyr/avogr
                 sjs_w(j)=sjs_w(j)+sjs(iy,j)
               end do
-              if (sptlis(j).le.natm) then
+              if (sptlis(j).le.natmi) then
                 ssmol=texta(sptlis(j))
               else
                 ssmol=textmn(sptlis(j)-natm-1)
@@ -971,7 +988,7 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
             else ! no sputtering
               print *,
      ,'b2ptrgl, zero sputtering flux for target j=',j
-              sjs_w(j)=0.0
+              sjs_w(j)=0.0_R8
             end if
           end do !loop on targets
         else
@@ -979,17 +996,19 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
           print *, '         track_species=0 or no ft44 available'
         end if 
         
-        nclm_er=2+4*natm+2*ntrgts+2*nmol
+        nclm_er=2+3*natmi+nspecies+2*ntrgts+2*nmoli
         l=1
-	do ia=1,natm
-          fpt_str(1,ia)=trim(TEXTA(ia))//'_flux_atm'
-          fpt_str(2,ia)=trim(TEXTA(ia))//'_flux_ion'
-          fpt_str(3,ia)=trim(TEXTA(ia))//'_temp_atm'
-          fpt_str(4,ia)=trim(TEXTA(ia))//'_pres_atm'
+	do ia=1,natmi
+          fpt_str(1+3*(ia-1))=trim(TEXTA(ia))//'_flux_atm'
+          fpt_str(2+3*(ia-1))=trim(TEXTA(ia))//'_temp_atm'
+          fpt_str(3+3*(ia-1))=trim(TEXTA(ia))//'_pres_atm'
+        end do
+        do is=1,nspecies
+          fpt_str(is+3*natmi)=trim(TEXTAN(is-1))//'_flux_ion'
         end do
         do k=1,ntrgts
           if (do_sput(k)) then
-            if (sptlis(j).le.natm) then
+            if (sptlis(j).le.natmi) then
               spt_str(1,k)=trim(TEXTA(sptlis(j)))//'_sput'
             else
               ssmol=textmn(sptlis(j)-natm-1)
@@ -1034,12 +1053,13 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
      .     '(IMP for inner target(s), OMP for outer(s)) [m]'
           if (do_sput(j)) then
             write(lun,fmt_peak) 'x',
-     ,            fpt_str,mol_str,spt_str(:,j),'xMP'
+     ,           (fpt_str(ia),ia=1,3*natmi+nspecies),mol_str,
+     ,            spt_str(:,j),'xMP'
             write(fmt_peak,720) nclm_er,tab
           else 
-            nclm_er=2+4*natm+2*nmol
+            nclm_er=2+3*natmi+nspecies+2*nmoli
             write(lun,fmt_peak) 'x',
-     ,            fpt_str,mol_str,'xMP'
+     ,           (fpt_str(ia),ia=1,3*natmi+nspecies),mol_str,'xMP'
             write(fmt_peak,720) nclm_er,tab
           end if
           if(ntrgts.eq.4) then !{
@@ -1048,11 +1068,13 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
             k=ntrgts
           end if !}
           do iy=lytg,ny-1 !{
-            do ia=1,natm
-              fpt_out(1+4*(ia-1))=sja(iy,j,ia)/s(iy,j)
-              fpt_out(2+4*(ia-1))=sjp(iy,j,ia)/s(iy,j)
-              fpt_out(3+4*(ia-1))=tab2(nx_hlp+1,iy+1,eb2atm(ia),1)/ev
-              fpt_out(4+4*(ia-1))=spa(iy,j,ia)
+            do ia=1,natmi
+              fpt_out(1+3*(ia-1))=sja(iy,j,ia)/s(iy,j)
+              fpt_out(2+3*(ia-1))=tab2(nx_hlp+1,iy+1,ia,1)/ev
+              fpt_out(3+3*(ia-1))=spa(iy,j,ia)
+            end do
+            do is=1,nspecies
+              fpt_out(is+3*natmi)=sjp(iy,j,is)/s(iy,j)
             end do
             do imol=1,nmoli
               mol_out(1+2*(imol-1))=sjm(iy,j,imol)/s(iy,j)
@@ -1061,11 +1083,13 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
             if (do_sput(j)) then
               spt_out(1)=sjs(iy,j)
               spt_out(2)=sje(iy,j)
-              write(lun,fmt_peak) xtrg(iy,j),fpt_out,mol_out,
-     ,                          spt_out,xmp_hlp(iy,k)
+              write(lun,fmt_peak) xtrg(iy,j),
+     ,          (fpt_out(ia),ia=1,3*natmi+nspecies),mol_out,
+     ,           spt_out,xmp_hlp(iy,k)
             else 
-              write(lun,fmt_peak) xtrg(iy,j),fpt_out,mol_out,
-     ,                          xmp_hlp(iy,k)
+              write(lun,fmt_peak) xtrg(iy,j),
+     ,          (fpt_out(ia),ia=1,3*natmi+nspecies),mol_out,
+     ,           xmp_hlp(iy,k)
             end if
           end do !}
           close (lun)
@@ -1074,20 +1098,24 @@ c carlis sjs (only in output) [g/y]=sjs[1/s]*srfs_a[g/mol]*nsecyr[s/y]/avogr[1/m
 c----------------------------------------------------------------------
 c*** Produce a summary file for target sputtering
 c
-        do ia=1,natm
-          sjp_w(0,ia)=0.0_R8
+        do ia=1,natmi
           sja_w(0,ia)=0.0_R8
-          sjt_w(0,ia)=0.0_R8
+        end do
+        do is=1,nspecies
+          sjp_w(0,is)=0.0_R8
+          sjt_w(0,is)=0.0_R8
         end do
         do imol=1,nmoli
           sjm_w(0,imol)=0.0_R8
         end do
         sjs_w(0)=0.0_R8
         do j=1,ntrgts
-          do ia=1,natm
-            sjp_w(0,ia)=sjp_w(0,ia)+sjp_w(j,ia)
+          do ia=1,natmi
             sja_w(0,ia)=sja_w(0,ia)+sja_w(j,ia)
-            sjt_w(0,ia)=sjt_w(0,ia)+sjt_w(j,ia)
+          end do
+          do is=1,nspecies
+            sjp_w(0,is)=sjp_w(0,is)+sjp_w(j,is)
+            sjt_w(0,is)=sjt_w(0,is)+sjt_w(j,is)
           end do
           do imol=1,nmoli
             sjm_w(0,imol)=sjm_w(0,imol)+sjm_w(j,imol)
@@ -1103,13 +1131,17 @@ c
           write(fmt_peak,730) ntrgts+1,tab
   730     format('(1p,1x,a12,',i3,'(1h',a1,',e12.4))')
           write(lun,*) 'Particle fluxes [1/s]'
-          do ia=1,natm
-            write(lun,fmt_peak) trim(TEXTA(ia))//' ions on',
-     ,                          (sjp_w(i,ia),i=1,ntrgts),sjp_w(0,ia)
+          do is=1,nspecies
+            write(lun,fmt_peak) trim(TEXTAN(is))//' ions on',
+     ,                          (sjp_w(i,is),i=1,ntrgts),sjp_w(0,is)
+          end do
+          do ia=1,natmi
             write(lun,fmt_peak) trim(TEXTA(ia))//' atoms on',
      ,                          (sja_w(i,ia),i=1,ntrgts),sja_w(0,ia)
-            write(lun,fmt_peak) trim(TEXTA(ia))//' total on',
-     ,                          (sjt_w(i,ia),i=1,ntrgts),sjt_w(0,ia)
+          end do
+          do is=1,nspecies
+            write(lun,fmt_peak) trim(TEXTAN(is))//' total on',
+     ,                          (sjt_w(i,is),i=1,ntrgts),sjt_w(0,is)
           end do
           write(lun,*)
           write(lun,*) 'Molecule fluxes [1/s]'

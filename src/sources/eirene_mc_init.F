@@ -114,8 +114,8 @@ c     so the standard cleanup routine can still be used (checks on allocation of
         lkindm=0
         lkindp=0
         lkindi=0
-        srccrfc=0.
-        srcstrn=0.
+        srccrfc=0.0_R8
+        srcstrn=0.0_R8
       endif 
 
       return

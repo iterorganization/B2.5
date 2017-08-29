@@ -132,21 +132,21 @@ c*** Set default values according to current species list
       is = 0
       do while (.not.hydrogen .and. is.lt.ns)
         hydrogen = is_neutral(is) .and. nint(zn(is)).eq.1
-        if (hydrogen) j_h_at = b2espcr(is)
+        if (hydrogen) j_h_at = b2eatcr(is)
         is = is + 1
       end do
       helium = .false.
       is = 0
       do while (.not.helium .and. is.lt.ns)
         helium = is_neutral(is) .and. nint(zn(is)).eq.2
-        if (helium) j_he_at = b2espcr(is)
+        if (helium) j_he_at = b2eatcr(is)
         is = is + 1
       end do
       neon = .false.
       is = 0
       do while (.not.neon .and. is.lt.ns)
         neon = is_neutral(is) .and. nint(zn(is)).eq.10
-        if (neon) j_ne_at = b2espcr(is)
+        if (neon) j_ne_at = b2eatcr(is)
         is = is + 1
       end do
 *  -- USER --
@@ -199,7 +199,7 @@ c*** Set default values according to current species list
      .   'faulty inputs intrgrp, jntrgrp')
       end do
       if (hydrogen) then
-        call xertst(nint(zn(eb2spcr(j_h_at))).eq.1,
+        call xertst(nint(zn(eb2atcr(j_h_at))).eq.1,
      .   'faulty input j_h_at')
 #ifdef B25_EIRENE
         if (user_namelist_used) then
@@ -210,9 +210,9 @@ c*** Set default values according to current species list
         end if
 #endif
       end if
-      if (helium) call xertst(nint(zn(eb2spcr(j_he_at))).eq.2,
+      if (helium) call xertst(nint(zn(eb2atcr(j_he_at))).eq.2,
      . 'faulty input j_he_at')
-      if (neon) call xertst(nint(zn(eb2spcr(j_ne_at))).eq.10,
+      if (neon) call xertst(nint(zn(eb2atcr(j_ne_at))).eq.10,
      . 'faulty input j_ne_at')
 
       call subend ()

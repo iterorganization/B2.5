@@ -2147,12 +2147,23 @@ c
           end do
           call copy(mach,1.0_R8,nz,textpl)
         case ('b2espcr')
-          description='Eirene species index'
+          description='Nuclear sequence index'
           nz=ns
           do is=0,ns-1
             do iy=-1,ny
               do ix=-1,nx
                 mach(ix,iy,is)=real(b2espcr(is))
+              end do
+            end do
+          end do
+          call copy(mach,1.0_R8,nz,textpl)
+        case ('b2eatcr')
+          description='Eirene atomic species index'
+          nz=ns
+          do is=0,ns-1
+            do iy=-1,ny
+              do ix=-1,nx
+                mach(ix,iy,is)=real(b2eatcr(is))
               end do
             end do
           end do

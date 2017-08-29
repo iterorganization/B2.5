@@ -246,7 +246,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, ispecies, is0, is_start, is_end,
 #ifdef B25_EIRENE
-     &        i, k, l,
+     &        i, j, k, l,
 #endif
      &        ib, iss, ixl1, ixr1, ixl2, ixr2, istrai, icount
       integer, save :: ncall_old, ncall_gap, n_flux_zero
@@ -854,12 +854,15 @@
 #ifdef B25_EIRENE
                   do k=1,ncns !{
                     l=nlim+lcns(k)
-                    na_feedback_current=na_feedback_current
-     .                         +wldna(l,ispecies+1,0)
-     .                         -wldra(l,ispecies+1,0)
-                    do i=1,nnmoli !{
-                      na_feedback_current=na_feedback_current
-     .                         +wldnm(l,i,0)*mlcmp(ispecies+1,i)
+                    do j=1,nnatmi !{
+                      if (latmscl(j).eq.ispecies+1) then !{
+                        na_feedback_current=na_feedback_current
+     .                         +wldna(l,j,0)-wldra(l,j,0)-wldpa(l,j,0)
+                        do i=1,nnmoli !{
+                          na_feedback_current=na_feedback_current
+     .             +mlcmp(j,i)*(wldnm(l,i,0)-wldrm(l,i,0)-wldpm(l,i,0))
+                        end do !}
+                      end if !}
                     end do !}
                   end do !}
 #endif

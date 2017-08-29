@@ -4178,7 +4178,7 @@
 				</description>
 			</switch>
 			<switch>
-				<name>B2ESPCR</name>
+				<name>B2EATCR</name>
 				<default>ordering of the B2 isonuclear sequences</default>
 				<type>integer array of size (0:NS-1)</type>
 				<description>
@@ -4186,11 +4186,35 @@
 				</description>
 			</switch>
 			<switch>
-				<name>EB2SPCR</name>
+				<name>B2ESPCR</name>
+				<default>ordering of the B2 isonuclear sequences</default>
+				<type>integer array of size (0:NS-1)</type>
+				<description>
+					Contains the isonuclear sequence index of the B2 species (is).
+				</description>
+			</switch>
+			<switch>
+				<name>EB2ATCR</name>
 				<default>first B2 species of each isonuclear sequence</default>
 				<type>integer array of size (NATM)</type>
 				<description>
 					Contains the index of the B2 neutral fluid species corresponding to the Eirene atomic species (iatm).
+				</description>
+			</switch>
+			<switch>
+				<name>EB2SPCR</name>
+				<default>first B2 species of each isonuclear sequence</default>
+				<type>integer array of size (NSPECIES)</type>
+				<description>
+					Contains the index of the first B2 fluid for each species.
+				</description>
+			</switch>
+			<switch>
+				<name>LATMSCL</name>
+				<default>assuming one-to-one match between Eirene and B2.5 atomic species</default>
+				<type>integer array of size (NATM)</type>
+				<description>
+					Contains the index of the B2.5 isonuclear sequence with which the Eirene atomic species (IATM) should be scaled.
 				</description>
 			</switch>
 			<switch>

@@ -176,7 +176,7 @@ c
       end do
 
       do i=1,nsgmx !{
-        do j=1,natm !{
+        do j=1,nspecies !{
           wldrdlsp(i,j)=0.0_R8
         end do !}
       end do !}
@@ -185,8 +185,8 @@ c
 
 c*** Calculate the radiation load split by impurity species from B2
 
-        do iatm=1,nspecies !{
-          write(*,*) '  Radiation split: ',atoms_list(iatm)
+        do j=1,nspecies !{
+          write(*,*) '  Radiation split: ',species_list(j)
           do i=1,nplgs !{
             radld(i)=0.0_R8
           end do !}
@@ -194,8 +194,12 @@ c*** Calculate the radiation load split by impurity species from B2
           do ix=0,nx-1 !{
             do iy=0,ny-1 !{
               k=k+1
-              ssrcm(k)=-eneutrad(ix+1,iy+1,iatm,0)
-              do is=eb2spcr(iatm),eb2spcr(iatm)+nfluids(iatm)
+              ssrcm(k)=0.0_R8
+              do iatm=1,natmi !{
+                if (latmscl(iatm).eq.j)
+     >            ssrcm(k)=ssrcm(k)-eneutrad(ix+1,iy+1,iatm,0)
+              end do !}
+              do is=eb2spcr(j),eb2spcr(j)+nfluids(j)
                 ssrcm(k)=ssrcm(k)+rqrad(ix,iy,is)+rqbrm(ix,iy,is)
               end do
               xysrc(1,k)=cr(ix,iy)
@@ -215,7 +219,7 @@ c*** Calculate the radiation load split by impurity species from B2
             l=lwldrad(i)
             if(l.gt.0) then !{
               k=k+1
-              wldrdlsp(l,iatm)=radld(k)/segm_area(l)
+              wldrdlsp(l,j)=radld(k)/segm_area(l)
             end if !}
           end do !}
         end do !}

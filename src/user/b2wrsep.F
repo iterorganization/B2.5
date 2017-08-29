@@ -112,7 +112,7 @@ c*** Local variables of general use
       parameter (ltrc=ntrc_sep)
       real (kind=R8) ::
      *     v,hlp_i,hlp_n,hlp_p,hlp_v,zeff
-      integer i,j,k,l,is,ix,iy,jxi,jxa,jsep,nv
+      integer i,j,k,l,ia,is,ix,iy,jxi,jxa,jsep,nv
       integer, allocatable :: ii(:)
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
@@ -125,7 +125,7 @@ c*** Column headers:
       data hlp_hg /
      1          'ne_sep','Te_sep','Ti_sep'  ,'Zef_sep'  ,'Qt_sep',
      2          'Qe_sep','Qi_sep','Qrad_SOL', 'Spmp_nom'/
-      data hlp_hs / 
+      data hlp_hs /
      1  'ni_sep_','Zi_sep_','Ze_sep_','Gi_sep_','na_sep_',
      2  'Ta_sep_','Ga_sep_','Gp_sep_','pr_sep_','nr_sep_' /
       data hlp_hi / 'nii_sep_','Gii_sep_' /
@@ -170,7 +170,7 @@ c          v=vol(ix,iy)
           zeff=0.0_R8
           do is=0,ns-1 !{
             if (.not.is_neutral(is)) hlp_i=hlp_i+na(ix,iy,is)
-            zeff=zeff+rz2(ix,iy,is)*na(ix,iy,is)            
+            zeff=zeff+rz2(ix,iy,is)*na(ix,iy,is)
           end do !}
           do is=0,ns_ext-1 !{
             zeff=zeff+za2_ext(ix,iy,is)*na_ext(ix,iy,is)
@@ -190,7 +190,7 @@ c          v=vol(ix,iy)
           hlp_qesp=hlp_qesp+fhe(ix,iy,1)
           hlp_qisp=hlp_qisp+fhi(ix,iy,1)
           do is=0,ns-1
-            kintmp = 
+            kintmp =
      .       (kinrgy(ix,iy,is)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      .        kinrgy(bottomix(ix,iy),bottomiy(ix,iy),is)*hy1(ix,iy))/
      .       (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -216,9 +216,13 @@ c          v=vol(ix,iy)
      2               sna(ix,i,1,ions_list(is))*na(ix,i,ions_list(is))
               end do !}
             end do !}
-            nasp_tmp(j)=nasp_tmp(j)+v*dab2(ix+1,iy+1,j,1)
-            tasp_tmp(j)=tasp_tmp(j)+v*dab2(ix+1,iy+1,j,1)*
-     .                                tab2(ix+1,iy+1,j,1)
+            do k=1,nnatmi !{
+              if (latmscl(k).eq.j) then !{
+                nasp_tmp(j)=nasp_tmp(j)+v*dab2(ix+1,iy+1,k,1)
+                tasp_tmp(j)=tasp_tmp(j)+v*dab2(ix+1,iy+1,k,1)
+     .                                   *tab2(ix+1,iy+1,k,1)
+              end if !}
+            end do !}
           end do !}
         end if !}
       end do !}
@@ -290,30 +294,37 @@ c          v=vol(ix,iy)
       end if !}
       hlp_qtsp=hlp_qisp+hlp_qesp
       hlp_spmn=Spmp_nom
-      
+
       do is=1,nstrat !{
         if(crcstra(is).eq.'C') then !{
           v=0.0_R8
-          do i=1,nspecies !{
+          do i=1,nnatmi !{
             v=v+gpfc(i,is)
           end do !}
           do i=1,nspecies !{
-            if(v.gt.0.0_R8) 
-     -          gpuf_tmp(i)=gpuf_tmp(i)+userfluxparm(is,1)*gpfc(i,is)/v
+            do j=1,nnatmi !{
+              if(latmscl(j).eq.i.and.v.gt.0.0_R8)
+     -          gpuf_tmp(i)=gpuf_tmp(i)+userfluxparm(is,1)*gpfc(j,is)/v
+            end do !}
           end do !}
         end if !}
       end do !}
 
-c      print *,'@@gasp= ',(gasp_tmp(i),i=1,nspecies)               !###
+c      print *,'@@gasp= ',(gasp_tmp(i),i=1,nspecies)              !###
       do k=1,ncns !{
         l=nnlimi+lcns(k)
         do is=1,nspecies !{
-c          print *,'@@gasp: k,l,is,wldna=',k,l,is,wldna(l,is,0)    !### 
-          gasp_tmp(is)=gasp_tmp(is)+wldna(l,is,0)
-          do i=1,nnmoli !{
-c            if(mlcmp(is,i).gt.0) print *,'@@i,wldnm,mlcmp=',      !###
-c     ,                                i,wldnm(l,i,0),mlcmp(is,i)  !###
-            gasp_tmp(is)=gasp_tmp(is)+wldnm(l,i,0)*mlcmp(is,i)
+          do ia=1,nnatmi !{
+            if (latmscl(ia).eq.is) then !{
+c             print *,'@@gasp: k,l,is,ia,wldna=',                 !###
+c     ,                        k,l,is,ia,wldna(l,ia,0)            !###
+              gasp_tmp(is)=gasp_tmp(is)+wldna(l,ia,0)
+              do i=1,nnmoli !{
+c               if(mlcmp(ia,i).gt.0) print *,'@@i,wldnm,mlcmp=',  !###
+c     ,                                i,wldnm(l,i,0),mlcmp(ia,i) !###
+                gasp_tmp(is)=gasp_tmp(is)+wldnm(l,i,0)*mlcmp(ia,i)
+              end do !}
+            end if !}
           end do !}
         end do !}
       end do !}
@@ -327,7 +338,7 @@ c     ,                                i,wldnm(l,i,0),mlcmp(is,i)  !###
           nrsr_tmp(k)=0.0_R8
         end do !}
       end if !}
-      
+
       if(ank_tracing.eq.0) return
       if(filedata(ltrc)) then !{
 
@@ -480,13 +491,13 @@ c>>>
           do j=1,nfluids(i) !{
             k=k+1
             ii(k)=j
-            hlp_a(k)=atoms_list(i)
+            hlp_a(k)=species_list(i)
             if(hlp_a(k)(2:2).eq.' ') hlp_a(k)(2:2)='_'
           end do !}
         end do !}
         write(lun,hlp_frm) (hlp_hg(i),i=1,ng_tmp),
-     ,              ((hlp_hs(j),atoms_list(i),i=1,nsp_tmp),j=1,ns_tmp),
-     ,              ((hlp_hi(k),hlp_a(i),ii(i),i=1,nii_tmp),k=1,ni_tmp)
+     ,   ((hlp_hs(j),species_list(i),i=1,nsp_tmp),j=1,ns_tmp),
+     ,   ((hlp_hi(k),hlp_a(i),ii(i),i=1,nii_tmp),k=1,ni_tmp)
 
       end if
       write(hlp_frm,'(10h(1p,e16.7,,i3,12h(1h'//tab//',e12.4)))')

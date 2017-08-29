@@ -230,7 +230,7 @@ c-----------------------------------------------------------------------
       real (kind=R8) ::
      *     a, d, e, g, s, t, v, x, e0
       real (kind=R8) :: pr(-1:nx,-1:ny), xdum(1)
-      integer i, j, k, l, m, n, i0, im, is, ix, iy, js, ls, nv, irt,
+      integer i, j, k, l, m, n, ia, i0, im, is, ix, iy, js, ls, nv, irt,
      ,     iyp, j_he_i, l_pad_str,n_pad_str
 c*** radial position of the separatrix and poloidal positions of
 c*** targets and midplane for DoD calculation for each target
@@ -330,13 +330,13 @@ c*** Check the input data for consistency and prepare indices
         do j=1,nspecies !{
           if(nfluids(j).eq.1) then !{
             if(j_h_at.le.0 .or. j_h_at.gt.nnatmi) then !{
-              j_h_at=b2espcr(eb2spcr(j))
+              j_h_at=b2eatcr(eb2spcr(j))
             end if !}
           end if !}
           if(nfluids(j).eq.2) then !{
             j_he_i=eb2spcr(j)
             if(j_he_at.le.0 .or. j_he_at.gt.nnatmi) then !{
-              j_he_at=b2espcr(eb2spcr(j))
+              j_he_at=b2eatcr(eb2spcr(j))
             end if !}
           end if !}
         end do !}
@@ -352,15 +352,13 @@ c*** Check whether the specified surfaces are real
 c*** Calculate the basic quantities for each surface/species
 
         ndts_tmp=nnatmi+nnmoli
-        j=0
         do i=1,ndts_tmp !{
           if(i.le.nnatmi) then !{
             ndtm_tmp(i)=i
-            hlp_awdts(i)=am(j+1)
-            j=j+nfluids(i)
+            hlp_awdts(i)=am(eb2atcr(i))
           else !}{
             ndtm_tmp(i)=nnatmi-i
-            hlp_awdts(i)=0.
+            hlp_awdts(i)=0.0_R8
             do j=1,nnatmi !{
               hlp_awdts(i)=hlp_awdts(i)+
      +                                mlcmp(j,-ndtm_tmp(i))*hlp_awdts(j)
@@ -620,9 +618,9 @@ c*** Re-scale the neutral fluxes
         end do !}
         do j=1,nnmoli !{
           l=lmolscl(j)
-          wldnm(i,j,0)=0.
-          wldrm(i,j,0)=0.
-          wldpm(i,j,0)=0.
+          wldnm(i,j,0)=0.0_R8
+          wldrm(i,j,0)=0.0_R8
+          wldpm(i,j,0)=0.0_R8
           do k=1,nstrai !{
             if(l.gt.0 .and. l.le.nnatmi) then !{
               wldnm(i,j,0)=wldnm(i,j,0)+wldnm(i,j,k)*sclstra(l,k)
@@ -662,7 +660,7 @@ c      print *,'%% b2usrtrc: j_he_i,iy = ',j_he_i,iy !###
             hlp_si=hlp_si+gs(ix,0,1)
             hlp_pi=hlp_pi+gs(ix,0,1)*ne(ix,0)
             hlp=0.0_R8
-            do j=1,2 !{
+            do j=0,2 !{
               hlp=hlp+na(ix,0,j_he_i+j)
               hlp_ne_he_c=hlp_ne_he_c+na(ix,0,j_he_i+j)*j*gs(ix,0,1)
             end do !}
@@ -671,7 +669,7 @@ c      print *,'%% b2usrtrc: j_he_i,iy = ',j_he_i,iy !###
             hlp_so=hlp_so+gs(ix,iy,1)
             hlp_po=hlp_po+gs(ix,iy,1)*ne(ix,iy)
             hlp=0.0_R8
-            do j=1,2 !{
+            do j=0,2 !{
               hlp=hlp+na(ix,iy,j_he_i+j)
               hlp_ne_he_s=hlp_ne_he_s+na(ix,iy,j_he_i+j)*j*gs(ix,iy,1)
             end do !}
@@ -856,10 +854,10 @@ c*** Neutral flux across the side walls
 
             hlpnw=0.0_R8
             do js=1,nnlimi !{
-              hlpnw=hlpnw+wldna(js,ls,0)-wldra(js,ls,0)
+              hlpnw=hlpnw+wldna(js,ls,0)-wldra(js,ls,0)-wldpa(js,ls,0)
               do j=1,nnmoli !{
                 if(mlcmp(ls,j).gt.0) hlpnw=hlpnw+
-     +                        mlcmp(ls,j)*(wldnm(js,j,0)-wldrm(js,j,0))
+     +           mlcmp(ls,j)*(wldnm(js,j,0)-wldrm(js,j,0)-wldpm(js,j,0))
               end do !}
             end do !}
           end if !}
@@ -878,7 +876,7 @@ c*** Neutral flux across the side walls
 c*** Calculate the helium-related data
 
 c       print *,'%%## j_he_at,nhetrgtx,fusion_power =',  !###
-c     ,                            j_he_at,nhetrgtx,fusion_power  !###
+c     ,               j_he_at,nhetrgtx,fusion_power      !###
         if(fusion_power.gt.0.0_R8) then !{
 
 c*** Re-scale the helium density upstream to meet both throughput and
@@ -1084,8 +1082,8 @@ c*** Calculate the neutral flows in PFR
       do k=1,npfrgrp !{
         do j=1,nspecies !{
           hlp=1.0_R8/2.7e20_R8
-          if(atoms_list(j).eq.'H' .or. atoms_list(j).eq.'D' .or.
-     ,                                atoms_list(j).eq.'T') hlp=0.5*hlp
+          if(species_list(j).eq.'H' .or. species_list(j).eq.'D' .or.
+     ,       species_list(j).eq.'T') hlp=0.5_R8*hlp
           do i=ipfrgrp(k),jpfrgrp(k) !{
             m=lpfrgrp(i)
             if(m.lt.0) m=nnlimi-m
@@ -1097,10 +1095,14 @@ c*** Calculate the neutral flows in PFR
               hlp_pfrf(k,j,1)=0.0_R8
               go to 30
             end if !}
-            hlp_pfrf(k,j,1)=hlp_pfrf(k,j,1)+wldna(m,j,0)
-            do im=1,nnmoli !{
-              hlp_pfrf(k,j,1)=hlp_pfrf(k,j,1)+
-     +                                      wldnm(m,im,0)*mlcmp(j,im)
+            do ia=1,nnatmi !{
+              if (latmscl(ia).eq.j) then !{
+                hlp_pfrf(k,j,1)=hlp_pfrf(k,j,1)+wldna(m,ia,0)
+                do im=1,nnmoli !{
+                  hlp_pfrf(k,j,1)=hlp_pfrf(k,j,1)+
+     +                                      wldnm(m,im,0)*mlcmp(ia,im)
+                end do !}
+              end if !}
             end do !}
           end do !}
           hlp_pfrf(k,j,1)=hlp_pfrf(k,j,1)*hlp
@@ -1213,8 +1215,8 @@ c!###}
 c-----------------------------------------------------------------------
 c*** evaluate "Degree of detachment" and Isat for each divertor
 
-      hlp_dod=0
-      hlp_isat=0
+      hlp_dod=0.0_R8
+      hlp_isat=0.0_R8
       mgl3_tmp=0
       call b2xppr(nx,ny,ns,ne,na,te,ti,pr)
 c      print *,'### print_isat=',print_isat    !###
@@ -1310,7 +1312,7 @@ c*** Prepare the headers, markers, and padding data for the output file
               ex = ex .and. n.lt.ntrc_tmp
               n=n+1
               if(ex) hlp_hdr(n)=adjustl(trim(hlp_hp(k))//'_'//
-     /                                 trim(hlp_hb)//'_'//atoms_list(j))
+     /                             trim(hlp_hb)//'_'//species_list(j))
             end do !}
           end do !}
         end do !}
@@ -1542,7 +1544,7 @@ c*** New file
           if(i.gt.0) hlp_hb=gpfrgrp(i)
           do j=1,nspecies !{
             do k=1,npff_tmp !{
-              hlp_ha(i,j,k)=hlp_hp(k)//'_'//hlp_hb//'_'//atoms_list(j)
+              hlp_ha(i,j,k)=hlp_hp(k)//'_'//hlp_hb//'_'//species_list(j)
               call lefta(hlp_ha(i,j,k),lnh_tmp,l)
             end do !}
           end do !}

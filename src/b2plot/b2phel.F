@@ -47,6 +47,9 @@ c
           if(mlcmp(j_h_at,j).gt.0) then
             hlp_tot=hlp_tot+wldnm(k,j,0)*mlcmp(j_h_at,j)
           end if
+          if(mlcmp(j_he_at,j).gt.0) then
+            hlp_he=hlp_he+wldnm(k,j,0)*mlcmp(j_he_at,j)
+          end if
         end do
       end do
       hlp_tot=hlp_tot+hlp_he

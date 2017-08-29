@@ -929,11 +929,11 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
         call my_out(70,nx,ny,tfluxa(0:nx+1,0:ny+1,ia,1),      ! IYS 27.01.2017
      &                'b2stbr_tfluxa_eir'//chns)
         call my_out(70,nx,ny,fatm_eir(:,:,1,ia),              ! IYS 27.01.2017
-     &              'b2stbr_fatmy_eir'//chns)
+     &                'b2stbr_fatmy_eir'//chns)
         call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_pfluxa_eir'//chns)
         call my_out(70,nx,ny,fatm_eir(:,:,0,ia),              ! IYS 27.01.2017
-     &              'b2stbr_fatmx_eir'//chns)
+     &                'b2stbr_fatmx_eir'//chns)
         call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,ia,1),
      &                'b2stbr_dab2_eir'//chns)
         call my_out(70,nx,ny,tab2(0:nx+1,0:ny+1,ia,1),

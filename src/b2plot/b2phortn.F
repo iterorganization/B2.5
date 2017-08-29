@@ -15,6 +15,7 @@ c----------------------------------------------------------------------
       use b2mod_b2plot
       use b2mod_plasma
       use b2mod_constants
+      use b2mod_user_namelist
       use b2mod_neutrals_namelist
       implicit none
       integer lun
@@ -53,7 +54,8 @@ c
         do iy=0,ny-1
           write (lun,700) ix,iy,cr(ix,iy),cz(ix,iy),ne(ix,iy),
      ,                    te(ix,iy)/ev,ti(ix,iy)/ev,
-     ,                    dab2(ix+1,iy+1,1,1),tab2(ix+1,iy+1,1,1)/eV,
+     ,                    dab2(ix+1,iy+1,j_h_at,1),
+     ,                    tab2(ix+1,iy+1,j_h_at,1)/eV,
      ,                    dmb2(ix+1,iy+1,1,1)
   700     format(1x,1p,2i4,48e12.3)
         end do

@@ -100,34 +100,34 @@
      .   'ismain0 not a neutral species!')
         call xertst(nint(zn(ismain)).eq.1 .and. nint(zn(ismain0)).eq.1,
      .   'ion-neutral current computation only supported for H/D/T !') 
-        iamain = b2espcr(ismain)     ! iamain should correspond to atom of deuterium
+        iamain = b2eatcr(ismain)     ! iamain should correspond to atom of deuterium
 !*   ..get density in the guard cells (boundaries)
 !      do ix = -1, nx
-!	 do iy = -1, ny
-!	  if(leftix(ix,iy).eq.-2) then
-!	   dab2_(ix,iy)=dab2(rightix(ix,iy)+1,rightiy(ix,iy)+1,iamain,1)
+!       do iy = -1, ny
+!        if(leftix(ix,iy).eq.-2) then
+!         dab2_(ix,iy)=dab2(rightix(ix,iy)+1,rightiy(ix,iy)+1,iamain,1)
 !        elseif(rightix(ix,iy).eq.nx+1) then
-!	   dab2_(ix,iy)=dab2(leftix(ix,iy)+1,leftiy(ix,iy)+1,iamain,1)
-!	  else
-!	   dab2_(ix,iy)=dab2(ix+1,iy+1,iamain,1)
-!	  endif
+!         dab2_(ix,iy)=dab2(leftix(ix,iy)+1,leftiy(ix,iy)+1,iamain,1)
+!        else
+!         dab2_(ix,iy)=dab2(ix+1,iy+1,iamain,1)
+!        endif
 !        if(topiy(ix,iy).eq.ny+1) then
 !         dab2_(ix,iy)=dab2(bottomix(ix,iy)+1,bottomiy(ix,iy)+1,iamain,1)
 !        elseif(bottomiy(ix,iy).eq.-2) then
 !         dab2_(ix,iy)=dab2(topix(ix,iy)+1,topiy(ix,iy)+1,iamain,1)
 !        endif
-!	 enddo
-!	enddo
+!       enddo
+!      enddo
 !*   ..get density in the corner cells
 !      do iy = -1,ny,ny+1
-!	 do ix =-1,nx
-!	  if(leftix(ix,iy).eq.-2) then
-!	   dab2_(ix,iy)=dab2_(rightix(ix,iy),rightiy(ix,iy))
+!       do ix =-1,nx
+!        if(leftix(ix,iy).eq.-2) then
+!         dab2_(ix,iy)=dab2_(rightix(ix,iy),rightiy(ix,iy))
 !        elseif(rightix(ix,iy).eq.nx+1) then
-!	   dab2_(ix,iy)=dab2_(leftix(ix,iy),leftiy(ix,iy))
-!	  endif
-!	 enddo
-!	enddo
+!         dab2_(ix,iy)=dab2_(leftix(ix,iy),leftiy(ix,iy))
+!        endif
+!       enddo
+!      enddo
         sigi(:,:) = am(ismain)*mp*na(:,:,ismain)*sec/
      .                              (2.0_R8*bb(:,:,3)**2)
 !      sigia(:,:) = sigi(:,:)*dab2_(:,:)
@@ -416,23 +416,23 @@
 #ifdef B25_EIRENE
       if(iout.ne.0) then
        do ia = 1,natm
-	  write (chns,'(i3.3)') ia
+        write (chns,'(i3.3)') ia
         call my_out(70,nx,ny,rfluxa(0:nx+1,0:ny+1,ia,1),
      &                'b2tinnt_rfluxa_eir'//chns)
         call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,ia,1),
      &                'b2tinnt_pfluxa_eir'//chns)
         call my_out(70,nx,ny,dab2(0:nx+1,0:ny+1,ia,1),
      &                'b2tinnt_dab2_eir'//chns)
-	 enddo
+       enddo
        do im = 1,nmol
-	  write (chns,'(i3.3)') im
+        write (chns,'(i3.3)') im
         call my_out(70,nx,ny,rfluxm(0:nx+1,0:ny+1,im,1),
      &              'b2tinnt_rfluxm_eir'//chns)
         call my_out(70,nx,ny,pfluxa(0:nx+1,0:ny+1,im,1),
      &              'b2tinnt_pfluxm_eir'//chns)
         call my_out(70,nx,ny,dmb2(0:nx+1,0:ny+1,im,1),
      &              'b2tinnt_dmb2_eir'//chns)
-	 enddo
+       enddo
 !       call my_out(70,nx,ny,dab2_,'b2tinnt_dab2_01')
        call my_out(70,nx,ny,sigia,'b2tinnt_sigia')
        call my_out(70,nx,ny,csigia(-1,-1,0),'b2tinnt_csigiax')

@@ -59,8 +59,10 @@
 *.declarations
 
 *   ..local variables
-      integer n2, is, is0, ix, iy, ixr, iyr, ireg
+      integer n2, ia, is, is0, ix, iy, ixr, iyr, ireg
       real (kind=R8) :: t0, vthe, ua_tmp, dua
+      real (kind=R8) :: n0_tmp, nr_tmp, nt_tmp, p0_tmp, pr_tmp, r0_tmp,
+     *                  pe_tmp, re_tmp
       real (kind=R8) ::
      *  na_tot(-1:nx,-1:ny), na0(-1:nx,-1:ny,0:ns-1),
      *  ua0(-1:nx,-1:ny,0:ns-1), fna0(-1:nx,-1:ny,0:1,0:ns-1),
@@ -170,41 +172,48 @@ cxpb Must convert fluxes to flux densities
               if (topiy(ix,iy).eq.ny+1) cycle
               ixr = rightix(ix,iy)
               iyr = rightiy(ix,iy)
-              if (leftix(ix,iy).ne.-2 .and. 
-     .            dab2(ix+1,iy+1,is0,1).gt.0.0_R8 .and.
-     .            rightix(ix,iy).ne.nx+1 .and.
-     .            dab2(ixr+1,iyr+1,is0,1).gt.0.0_R8) then
-                ua_tmp = 
-     .           (pfluxa(ix+1,iy+1,is0,1)/dab2(ix+1,iy+1,is0,1)+
-     .            pfluxa(ixr+1,iyr+1,is0,1)/dab2(ixr+1,iyr+1,is0,1))
-     .           /2.0_R8
-              elseif (leftix(ix,iy).ne.-2 .and. 
-     .                dab2(ix+1,iy+1,is0,1).gt.0.0_R8) then
-                ua_tmp = pfluxa(ix+1,iy+1,is0,1)/
-     .           dab2(ix+1,iy+1,is0,1)
+              n0_tmp = 0.0_R8
+              nr_tmp = 0.0_R8
+              nt_tmp = 0.0_R8
+              p0_tmp = 0.0_R8
+              pe_tmp = 0.0_R8
+              pr_tmp = 0.0_R8
+              r0_tmp = 0.0_R8
+              re_tmp = 0.0_R8
+              do ia = 1, nnatmi
+                if (latmscl(ia).eq.is0) then
+                  n0_tmp = n0_tmp + dab2(ix+1,iy+1,ia,1)
+                  nr_tmp = nr_tmp + dab2(ixr+1,iyr+1,ia,1)
+                  nt_tmp = nt_tmp + dab2(ix+1,iy+1,ia,1)*
+     .                              tab2(ix+1,iy+1,ia,1)
+                  p0_tmp = p0_tmp + pfluxa(ix+1,iy+1,ia,1)
+                  pe_tmp = pe_tmp + pefluxa(ix+1,iy+1,ia,1)
+                  pr_tmp = pr_tmp + pfluxa(ixr+1,iyr+1,ia,1)
+                  r0_tmp = r0_tmp + rfluxa(ix+1,iy+1,ia,1)
+                  re_tmp = re_tmp + refluxa(ix+1,iy+1,ia,1)
+                end if
+              end do
+              if (leftix(ix,iy).ne.-2 .and. n0_tmp.gt.0.0_R8 .and.
+     .            rightix(ix,iy).ne.nx+1 .and. nr_tmp.gt.0.0_R8) then
+                ua_tmp = (p0_tmp/n0_tmp+pr_tmp/nr_tmp)/2.0_R8
+              elseif (leftix(ix,iy).ne.-2 .and. n0_tmp.gt.0.0_R8) then
+                ua_tmp = p0_tmp/n0_tmp
               elseif (rightix(ix,iy).ne.nx+1 .and.
-     .                dab2(ixr+1,iyr+1,is0,1).gt.0.0_R8) then
-                ua_tmp = pfluxa(ixr+1,iyr+1,is0,1)/
-     .           dab2(ixr+1,iyr+1,is0,1)   
+     .                                          nr_tmp.gt.0.0_R8) then
+                ua_tmp = pr_tmp/nr_tmp
               else
                 ua_tmp = 0.0_R8
               endif  
-              na_tot(ix,iy) = na_tot(ix,iy) + dab2(ix+1,iy+1,is0,1)
-              na0(ix,iy,is) = na(ix,iy,is) + dab2(ix+1,iy+1,is0,1)
-              ti0(ix,iy) = ti0(ix,iy) + 
-     .         dab2(ix+1,iy+1,is0,1)*tab2(ix+1,iy+1,is0,1)
+              na_tot(ix,iy) = na_tot(ix,iy) + n0_tmp
+              na0(ix,iy,is) = na(ix,iy,is) + n0_tmp
+              ti0(ix,iy) = ti0(ix,iy) + nt_tmp
               ua0(ix,iy,is) = (ua(ix,iy,is)*na(ix,iy,is)*
-     .         sign(1.0_R8,bb(ix,iy,0)) + 
-     .         ua_tmp*dab2(ix+1,iy+1,is0,1))/
-     .         na0(ix,iy,is)
+     .         sign(1.0_R8,bb(ix,iy,0)) + ua_tmp*n0_tmp)/na0(ix,iy,is)
               fna0(ix,iy,0,is) = 
-     .         fna(ix,iy,0,is)/gs(ix,iy,0)/qc(ix,iy) + 
-     .         pfluxa(ix+1,iy+1,is0,1)
-              fna0(ix,iy,1,is) = fna(ix,iy,1,is)/gs(ix,iy,1) + 
-     .         rfluxa(ix+1,iy+1,is0,1)
-              fhi0(ix,iy,0) = fhi0(ix,iy,0) + 
-     .         pefluxa(ix+1,iy+1,is0,1)
-              fhi0(ix,iy,1) = fhi0(ix,iy,1) + refluxa(ix+1,iy+1,is0,1)
+     .         fna(ix,iy,0,is)/gs(ix,iy,0)/qc(ix,iy) + p0_tmp
+              fna0(ix,iy,1,is) = fna(ix,iy,1,is)/gs(ix,iy,1) + r0_tmp
+              fhi0(ix,iy,0) = fhi0(ix,iy,0) + pe_tmp
+              fhi0(ix,iy,1) = fhi0(ix,iy,1) + re_tmp
             end do
           end do
         else
