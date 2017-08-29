@@ -4261,12 +4261,15 @@ Cxpb then rewrite the entire block
      .                          ISCD1A(IATM,K),ISCD2A(IATM,K),
      .                          ISCDEA(IATM,K),IESTMA(IATM,K),
      .                          IBGKA(IATM,K)
+              ISCD3A(IATM,K) = 0
+              ISCD4A(IATM,K) = 0
             ELSE IF (ISRSA(IATM).EQ.3) THEN
               READ (IUNIN,6666) IREACA(IATM,K),IBULKA(IATM,K),
      .                          ISCD1A(IATM,K),ISCD2A(IATM,K),
      .                          ISCD3A(IATM,K),
      .                          ISCDEA(IATM,K),IESTMA(IATM,K),
      .                          IBGKA(IATM,K)
+              ISCD4A(IATM,K) = 0
             ELSE IF (ISRSA(IATM).EQ.4) THEN
               READ (IUNIN,6666) IREACA(IATM,K),IBULKA(IATM,K),
      .                          ISCD1A(IATM,K),ISCD2A(IATM,K),
@@ -4388,12 +4391,15 @@ Cxpb then rewrite the entire block
      .                          ISCD1M(IMOL,K),ISCD2M(IMOL,K),
      .                          ISCDEM(IMOL,K),IESTMM(IMOL,K),
      .                          IBGKM(IMOL,K)
+              ISCD3M(IMOL,K) = 0
+              ISCD4M(IMOL,K) = 0
             ELSE IF (ISRSM(IMOL).EQ.3) THEN
               READ (IUNIN,6666) IREACM(IMOL,K),IBULKM(IMOL,K),
      .                          ISCD1M(IMOL,K),ISCD2M(IMOL,K),
      .                          ISCD3M(IMOL,K),
      .                          ISCDEM(IMOL,K),IESTMM(IMOL,K),
      .                          IBGKM(IMOL,K)
+              ISCD4M(IMOL,K) = 0
             ELSE IF (ISRSM(IMOL).EQ.4) THEN
               READ (IUNIN,6666) IREACM(IMOL,K),IBULKM(IMOL,K),
      .                          ISCD1M(IMOL,K),ISCD2M(IMOL,K),
@@ -4612,12 +4618,15 @@ Cxpb then rewrite the entire block
      .                          ISCD1PH(IPHOT,K),ISCD2PH(IPHOT,K),
      .                          ISCDEPH(IPHOT,K),IESTMPH(IPHOT,K),
      .                          IBGKPH(IPHOT,K)
+              ISCD3PH(IPHOT,K) = 0
+              ISCD4PH(IPHOT,K) = 0
             ELSE IF (ISRSPH(IPHOT).EQ.3) THEN
               READ (IUNIN,6666) IREACPH(IPHOT,K),IBULKPH(IPHOT,K),
      .                          ISCD1PH(IPHOT,K),ISCD2PH(IPHOT,K),
      .                          ISCD3PH(IPHOT,K),
      .                          ISCDEPH(IPHOT,K),IESTMPH(IPHOT,K),
      .                          IBGKPH(IPHOT,K)
+              ISCD4PH(IPHOT,K) = 0
             ELSE IF (ISRSPH(IPHOT).EQ.4) THEN
               READ (IUNIN,6666) IREACPH(IPHOT,K),IBULKPH(IPHOT,K),
      .                          ISCD1PH(IPHOT,K),ISCD2PH(IPHOT,K),
@@ -4785,10 +4794,13 @@ Cxpb then rewrite the entire block
               READ (IUNIN,6666) IREACP(IPLS,K),IBULKP(IPLS,K),
      .                          ISCD1P(IPLS,K),ISCD2P(IPLS,K),
      .                          ISCDEP(IPLS,K)
+              ISCD3P(IPLS,K) = 0
+              ISCD4P(IPLS,K) = 0
             ELSE IF (ISRSP(IPLS).EQ.3) THEN
               READ (IUNIN,6666) IREACP(IPLS,K),IBULKP(IPLS,K),
      .                          ISCD1P(IPLS,K),ISCD2P(IPLS,K),
      .                          ISCD3P(IPLS,K),ISCDEP(IPLS,K)
+              ISCD4P(IPLS,K) = 0
             ELSE IF (ISRSP(IPLS).EQ.4) THEN
               READ (IUNIN,6666) IREACP(IPLS,K),IBULKP(IPLS,K),
      .                          ISCD1P(IPLS,K),ISCD2P(IPLS,K),
@@ -5092,15 +5104,14 @@ cxpb Must now convert the bulk ion data according to the new bundling
             ELSE
               ISRFP1(IB) = 0
             ENDIF
-            IF (ABS(ISRTP(e_bundle_end(IB))).GT.0.AND.
-     .          ABS(ISRTP(e_bundle_end(IB))).LE.NATMI) THEN
-              ISRTP1(IB) =
-     .         SIGN(IATM1(ABS(ISRTP(e_bundle_end(IB)))),
-     .                        ISRTP(e_bundle_end(IB)))
-            ELSE
-              ISRTP1(IB) = 0
+            IF (ISRTP(e_bundle_end(IB)).GT.0.AND.
+     .          ISRTP(e_bundle_end(IB)).LE.NATMI) THEN
+              ISRTP1(IB) = IATM1(ISRTP(e_bundle_end(IB)))
+            ELSE IF (ISRTP(e_bundle_end(IB)).GT.NATMI) THEN
+              ISRTP1(IB) = NATMI1 + 1
             ENDIF
-            ISRSP1(IB) = ISRSP(e_bundle_end(IB))
+            ISRSP1(IB) =
+     .       maxval(ISRSP(e_bundle_start(IB):e_bundle_end(IB)))
             DENSLIM1(IB) = DENSLIM(e_bundle_end(IB))
             CDENMODEL1(IB) = CDENMODEL(e_bundle_end(IB))
             DO IPLS = e_bundle_start(IB), e_bundle_end(IB)
@@ -5500,10 +5511,10 @@ cxpb We now rewrite the modified block 4
            ELSE
             ISRFA(IATM) = 0
            ENDIF
-           IF (ABS(ISRTA(IATM)).GT.0.AND.ABS(ISRTA(IATM)).LE.NATMI) THEN
-            ISRTA(IATM) = SIGN(IATM1(ABS(ISRTA(IATM))),ISRTA(IATM))
-           ELSE
-            ISRTA(IATM) = 0
+           IF (ISRTA(IATM).GT.0.AND.ISRTA(IATM).LE.NATMI) THEN
+            ISRTA(IATM) = IATM1(ISRTA(IATM))
+           ELSE IF (ISRTA(IATM).GT.NATMI) THEN
+            ISRTA(IATM) = NATMI1 + 1
            ENDIF
            WRITE(IUNOT,66666) IATM1(IATM),
      .                         TEXTA(IATM),NMASSA(IATM),
@@ -5546,15 +5557,6 @@ cxpb We now rewrite the modified block 4
             ISRFM(IMOL) = IATM1(ISRFM(IMOL))
           ELSE
             ISRFM(IMOL) = 0
-          ENDIF
-          IF (ABS(ISRTM(IMOL)).GT.0.AND.ABS(ISRTM(IMOL)).LE.NATMI) THEN
-            ISRTM(IMOL) = SIGN(IATM1(ABS(ISRTM(IMOL))),ISRTM(IMOL))
-          ELSE IF (ABS(ISRTM(IMOL)).GT.NATMI.AND.
-     .             ABS(ISRTM(IMOL)).LE.NATMI+NMOLI) THEN
-            ISRTM(IMOL) =
-     .       SIGN(ABS(ISRTM(IMOL))+NATMI1-NATMI,ISRTM(IMOL))
-          ELSE
-            ISRTM(IMOL) = 0
           ENDIF
           IF (LKINDM(IMOL).GT.0 .AND. LKINDM(IMOL).LE.NATMI) THEN
             LKINDM(IMOL) = IATM1(LKINDM(IMOL))
@@ -5599,10 +5601,10 @@ cxpb We now rewrite the modified block 4
           ELSE
             ISRFI(IION) = 0
           ENDIF
-          IF (ABS(ISRTI(IION)).GT.0.AND.ABS(ISRTI(IION)).LE.NATMI) THEN
-            ISRTI(IION) = SIGN(IATM1(ABS(ISRTI(IION))),ISRTI(IION))
-          ELSE
-            ISRTI(IION) = 0
+          IF (ISRTI(IION).GT.0.AND.ISRTI(IION).LE.NATMI) THEN
+            ISRTI(IION) = IATM1(ISRTI(IION))
+          ELSE IF (ISRTI(IION).GT.NATMI) THEN
+            ISRTI(IION) = NATMI1 + 1
           ENDIF
           IF (LKINDI(IION).GT.0 .AND. LKINDI(IION).LE.NATMI) THEN
             LKINDI(IION) = IATM1(LKINDI(IION))
@@ -5650,12 +5652,10 @@ cxpb We now rewrite the modified block 4
             ELSE
               ISRFPH(IPHOT) = 0
             ENDIF
-            IF (ABS(ISRTPH(IPHOT)).GT.0.AND.
-     &          ABS(ISRTPH(IPHOT)).LE.NATMI) THEN
-              ISRTPH(IPHOT) =
-     .         SIGN(IATM1(ABS(ISRTPH(IPHOT))),ISRTPH(IPHOT))
-            ELSE
-              ISRTPH(IPHOT) = 0
+            IF (ISRTPH(IPHOT).GT.0.AND.ISRTPH(IPHOT).LE.NATMI) THEN
+              ISRTPH(IPHOT) = IATM1(ISRTPH(IPHOT))
+            ELSE IF (ISRTPH(IPHOT).GT.NATMI) THEN
+              ISRTPH(IPHOT) = NATMI1 + 1
             ENDIF
             WRITE(IUNOT,66666) IPHOT,TEXTPH(IPHOT),0,0,0,0,
      .                         ISRFPH(IPHOT),ISRTPH(IPHOT),
@@ -5798,10 +5798,10 @@ cxpb We now rewrite the modified block 4
         deallocate(TDMFNAME,TDMH2,TDMREACTION,TDMCR)
         deallocate(TDMFNAME1,TDMH21,TDMREACTION1,TDMCR1)
         if (NPHOTI.GT.0) then
-          deallocate(ISRFPH,ISRFP,ISRFP1)
-          deallocate(ISRTPH,ISRTP,ISRTP1)
-          deallocate(ISRSPH,ISRSP,ISRSP1)
-          deallocate(NRCPH,NRCP,NRCP1)
+          deallocate(ISRFPH)
+          deallocate(ISRTPH)
+          deallocate(ISRSPH)
+          deallocate(NRCPH)
           deallocate(NFOLPH)
           deallocate(NGENPH)
           deallocate(TEXTPH)
@@ -6234,10 +6234,20 @@ cxpb We now rewrite the modified block 4
             select case (varname)
             case ('ZERO')
               IREAD=0
-            case ('ISRS','ISRC')
+            case ('ISRS')
               read (zeile(18:),'(I6)') idum(0)
               IF (idum(0).gt.0 .and. idum(0).le.NATMI)
      >         idum(0) = iatm1(idum(0))
+              write(zeile(18:23),'(I6)') idum(0)
+              WRITE(IUNOT,'(A80)') ZEILE
+              IREAD=0
+            case ('ISRC')
+              read (zeile(18:),'(I6)') idum(0)
+              IF (idum(0).gt.0 .and. idum(0).le.NATMI) THEN
+                idum(0) = iatm1(idum(0))
+              ELSE IF (idum(0).gt.NATMI) THEN
+                idum(0) = idum(0) - NATMI + NATMI1
+              END IF
               write(zeile(18:23),'(I6)') idum(0)
               WRITE(IUNOT,'(A80)') ZEILE
               IREAD=0
@@ -8681,7 +8691,7 @@ cxpb as they no longer necessarily point to the same species
             is = is+1
           end do
           if (todo) then
-            allocate(saved_na_feedback_actuator1(0:natm-1))
+            allocate(saved_na_feedback_actuator1(0:nspecies1-1))
             saved_na_feedback_actuator1 = 0.0_R8
             do is = 1, nspecies
               if (ispecies1(is).ne.-1)
@@ -8726,22 +8736,22 @@ cxpb as they no longer necessarily point to the same species
       if (todo.and..not.found.and.
      .   (.not.same_atoms.or.nx.ne.nx1.or.ny.ne.ny1.or.
      .    non_commensurate.eq.1)) then
-        allocate(na_feedback_target1(0:natm-1))
-        allocate(na_feedback_choice1(0:natm-1))
-        allocate(na_feedback_option1(0:natm-1))
-        allocate(na_feedback_actuator1(0:natm-1))
-        allocate(na_feedback_ix11(0:natm-1))
-        allocate(na_feedback_ix21(0:natm-1))
-        allocate(na_feedback_iy11(0:natm-1))
-        allocate(na_feedback_iy21(0:natm-1))
-        allocate(na_feedback_ib1(0:natm-1))
-        allocate(na_feedback_alpha1(0:natm-1))
-        allocate(na_feedback_beta1(0:natm-1))
-        allocate(na_feedback_const1(0:natm-1))
-        allocate(na_feedback_time1(0:natm-1))
-        allocate(na_feedback_puff_min1(0:natm-1))
-        allocate(na_feedback_puff_max1(0:natm-1))
-        allocate(na_feedback_overshoot1(0:natm-1))
+        allocate(na_feedback_target1(0:nspecies1-1))
+        allocate(na_feedback_choice1(0:nspecies1-1))
+        allocate(na_feedback_option1(0:nspecies1-1))
+        allocate(na_feedback_actuator1(0:nspecies1-1))
+        allocate(na_feedback_ix11(0:nspecies1-1))
+        allocate(na_feedback_ix21(0:nspecies1-1))
+        allocate(na_feedback_iy11(0:nspecies1-1))
+        allocate(na_feedback_iy21(0:nspecies1-1))
+        allocate(na_feedback_ib1(0:nspecies1-1))
+        allocate(na_feedback_alpha1(0:nspecies1-1))
+        allocate(na_feedback_beta1(0:nspecies1-1))
+        allocate(na_feedback_const1(0:nspecies1-1))
+        allocate(na_feedback_time1(0:nspecies1-1))
+        allocate(na_feedback_puff_min1(0:nspecies1-1))
+        allocate(na_feedback_puff_max1(0:nspecies1-1))
+        allocate(na_feedback_overshoot1(0:nspecies1-1))
         call read_b2mod_feedback_control(99)
         write(*,*) 'Writing b2.feedback_control.parameters.2'
         open(99,file=new_filename)

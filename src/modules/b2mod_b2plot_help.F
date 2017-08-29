@@ -172,14 +172,14 @@
      7    'Electron cooling rate (W) [rqahe]',
      8    'Ionisation ion energy losses (W) [rsahi]',
      9    'Ionisation particle losses (s^{-1}) [rsana]',
-     *    'Ionisation parallel momentum losses (m.s^{-2}) [rsamo]'/
+     *    'Ionisation parallel momentum losses (N) [rsamo]'/
       data descriptions(71:80) /
      1    'Recombination particle losses (s^{-1}) [rrana]',
      2    'Recombination ion energy losses (W) [rrahi]',
-     3    'Recombination parallel momentum losses (m.s^{-2}) [rramo]',
+     3    'Recombination parallel momentum losses (N) [rramo]',
      4    'Particle neutral losses (s^{-1}) [rcxna]',
      5    'Ion energy neutral losses (W) [rcxhi]',
-     6    'Ion parallel momentum neutral losses (m.s^{-2}) [rcxmo]',
+     6    'Ion parallel momentum neutral losses (N) [rcxmo]',
      7    'Bremsstrahlung losses (W)',
      8    'Total poloidal internal energy flux (W)',
      9    'Total radial internal energy flux (W)',

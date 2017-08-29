@@ -2005,7 +2005,7 @@ c
           call copy(rsana,1.0_R8,nz,textpl)
         case ('rsam')
           description=
-     1     'Ionisation parallel momentum losses (m.s^{-2}) [rsamo]'
+     1     'Ionisation parallel momentum losses (N}) [rsamo]'
           nz=ns
           call copy(rsamo,1.0_R8,nz,textpl)
         case ('rran')
@@ -2018,7 +2018,7 @@ c
           call copy(rrahi,1.0_R8,nz,textpl)
         case ('rram')
           description=
-     1     'Recombination parallel momentum losses (m.s^{-2}) [rramo]'
+     1     'Recombination parallel momentum losses (N) [rramo]'
           nz=ns
           call copy(rramo,1.0_R8,nz,textpl)
         case ('rcxn')
@@ -2031,7 +2031,7 @@ c
           call copy(rcxhi,1.0_R8,nz,textpl)
         case ('rcxm')
           description=
-     1     'Ion parallel momentum neutral losses (m.s^{-2}) [rcxmo]'
+     1     'Ion parallel momentum neutral losses (N) [rcxmo]'
           nz=ns
           call copy(rcxmo,1.0_R8,nz,textpl)
         case ('fetx')

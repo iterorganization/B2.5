@@ -263,24 +263,24 @@ csw 09jan2014 add extra allocates
 
 #ifdef B25_EIRENE
          if (is_neutral(is)) isa = b2espcr(is)
-         if (is_neutral(is) .and. isa.ne.0) then
+         if (is_neutral(is) .and. isa.gt.0) then
           do iy = 0,mintopcut   ! for closed surfaces and through separatrix
            do ix=-1,nxd                                                  
             if(mod(region(ix,iy,0),4).eq.1 .or. 
      &         mod(region(ix,iy,0),4).eq.2) then
-             sfna(iy,is) = sfna(iy,is) + 
+             sfna(iy,is) = sfna(iy,is) +
      &                     rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
-             sfna_mdf(iy,is) = sfna_mdf(iy,is) + 
+             sfna_mdf(iy,is) = sfna_mdf(iy,is) +
      &                     rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
+             do ism = 1,nnmoli
+              if (mlcmp(isa,ism).gt.0) then
+               sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
+     &                       rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
+               sfna_mdf(iy,is) = sfna_mdf(iy,is) + mlcmp(isa,ism)*
+     &                       rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
+              endif
+             enddo
             endif
-            do ism = 1,nnmoli
-             if (mlcmp(isa,ism).gt.0) then
-              sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
-     &                      rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
-              sfna_mdf(iy,is) = sfna_mdf(iy,is) + mlcmp(isa,ism)*
-     &                      rfluxm(ix+1,iy+1,ism,1)*sy(ix,iy)
-             endif
-            enddo
            enddo
           enddo
 
@@ -294,12 +294,10 @@ csw 09jan2014 add extra allocates
      &          region(ix,iy,0).eq.7 .or. region(ix,iy,0).eq.6))) then
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) 
      >        then
-              do isa = 1,nnatmi
                sfna(iy,is) = sfna(iy,is) + 
      &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
                sfna_mdf(iy,is) = sfna_mdf(iy,is) + 
      &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
-              enddo
               do ism = 1,nnmoli
                if (mlcmp(isa,ism).gt.0) then
                 sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
@@ -319,10 +317,8 @@ csw 09jan2014 add extra allocates
      &        (nncut.eq.2 .and. (region(ix,iy,0).eq.7 .or.  
      &         region(ix,iy,0).eq.6 .or. region(ix,iy,0).eq.8))) then
              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nxd+1) then
-              do isa = 1,nnatmi
-               sfna(iy,is) = sfna(iy,is) + 
-     &                       rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
-              enddo
+              sfna(iy,is) = sfna(iy,is) + 
+     &                      rfluxa(ix+1,iy+1,isa,1)*sy(ix,iy)
               do ism = 1,nnmoli
                if (mlcmp(isa,ism).gt.0) then
                 sfna(iy,is) = sfna(iy,is) + mlcmp(isa,ism)*
@@ -552,11 +548,11 @@ csw 09jan2014 add extra allocates
           enddo
           call my_out(70,nxd,nyd,wrk0,
      .     'write_b2_to_astra_rfluxasy'//chns)
-!         call my_out(70,nxd,nyd,refluxa(0:nxd+1,0:nyd+1,is,1),
+!         call my_out(70,nxd,nyd,refluxa(0:nxd+1,0:nyd+1,isa,1),
 !     &   'write_b2_to_astra_refluxa'//chns)
-!         call my_out(70,nxd,nyd,pfluxa(0:nxd+1,0:nyd+1,is,1),
+!         call my_out(70,nxd,nyd,pfluxa(0:nxd+1,0:nyd+1,isa,1),
 !     &   'write_b2_to_astra_pfluxa'//chns)
-!         call my_out(70,nxd,nyd,pefluxa(0:nxd+1,0:nyd+1,is,1),
+!         call my_out(70,nxd,nyd,pefluxa(0:nxd+1,0:nyd+1,isa,1),
 !     &   'write_b2_to_astra_pefluxa'//chns)
          enddo
          do ism = 1,nnmoli
@@ -585,15 +581,15 @@ csw 09jan2014 add extra allocates
            enddo
           enddo
          call my_out(70,nxd,nyd,wrk0,'write_b2_to_astra_rfluxmsy'//chns)
-!         call my_out(70,nxd,nyd,refluxm(0:nxd+1,0:nyd+1,is,1),
+!         call my_out(70,nxd,nyd,refluxm(0:nxd+1,0:nyd+1,ism,1),
 !     &   'write_b2_to_astra_refluxm'//chns)
-!         call my_out(70,nxd,nyd,pfluxm(0:nxd+1,0:nyd+1,is,1),
+!         call my_out(70,nxd,nyd,pfluxm(0:nxd+1,0:nyd+1,ism,1),
 !     &   'write_b2_to_astra_pfluxm'//chns)
-!         call my_out(70,nxd,nyd,pefluxm(0:nxd+1,0:nyd+1,is,1),
+!         call my_out(70,nxd,nyd,pefluxm(0:nxd+1,0:nyd+1,ism,1),
 !     &   'write_b2_to_astra_pefluxm'//chns)
         enddo
         open(70,file='write_b2_to_astra_intrl.dat')
-         write(70,*)' Index of neutral in write_b2_to_astra_intrl',intrl  
+         write(70,*)' Index of neutral in write_b2_to_astra_intrl',intrl
         close(70)
        endif                                                       !srv 14.03.12 }
 #endif         

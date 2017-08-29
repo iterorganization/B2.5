@@ -126,7 +126,7 @@ c
       allocate(wldnm(nlimps,nmold,0:nstrad))
       allocate(ewldm(nlimps,nmold,0:nstrad))
       allocate(wldra(nlimps,natmd,0:nstrad))
-      allocate(wldrm(nlimps,natmd,0:nstrad))
+      allocate(wldrm(nlimps,nmold,0:nstrad))
       allocate(wldpp(nlimps,nplsd,0:nstrad))
       allocate(wldpa(nlimps,natmd,0:nstrad))
       allocate(wldpm(nlimps,nmold,0:nstrad))
