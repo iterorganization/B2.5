@@ -93,6 +93,7 @@
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0,
      &                 ncall_iout = -1, iout_b2wdat = 0              !srv 23.03.12
+      integer, save :: ird_aver=0                                    !pb 30.09.16
 #ifdef B25_EIRENE
       integer ia, im
       character ch3*3
@@ -319,6 +320,7 @@
      1   'faulty internal parameter redep_alpha')
         call ipgeti ('b2stbr_potential_at_guard_cell',
      &                potential_at_guard_cell)
+        call ipgeti ('b2mndr_av_read', ird_aver)      !pb 29.09.16
         allocate(
      *   old_erosion(nwall,ntrack), old_deposition(nwall,ntrack))
       else
@@ -646,6 +648,11 @@ c   --> better solution wanted here..
         smo0 = smo0 + smo0_eir
         she0 = she0 + she0_eir
         shi0 = shi0 + shi0_eir
+
+*   get averaged sources
+        if (ird_aver > 0) 
+     &    call run_av_get_sources(sna0, smo0, she0, shi0, sch0, sne0,
+     &                            nx, ny, ns)
 #ifdef ASTRA
         if (use_astra.ne.0) then
           do is = 0, ns-1                                                 !srv 28.07.11 20.02.12 {

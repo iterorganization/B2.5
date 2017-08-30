@@ -348,7 +348,9 @@ csw 13mar2012
         tt1 = 0.0e0_R8
         eps1 = 1.0e0_R8
 
-        mintopcut = ny
+!wdk init mintopcut to -2 to skip loops in case nncut = 0
+!pbwdk        mintopcut = ny
+        mintopcut = -2
         if (nncut > 0) mintopcut = minval(topcut(1:nncut))
 
         do iy = -1,mintopcut-1    ! for inner surfaces                    !srv 22.04.16

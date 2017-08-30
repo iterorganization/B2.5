@@ -84,6 +84,8 @@
       integer, save :: b2mndr_redef_pbs = 0
       integer, save :: pot_eq = 1
       integer, save :: guard_flows = 2
+      integer, save :: old_style = 0                                 !pb 29.07.16
+      integer, save :: ird_aver = 0
       real (kind=R8), save :: fac_hz = 0.0e0_R8                      !srv 09.01.01 09.06.08
       real (kind=R8) ::
      *  na_min, na_new, dtim, stim, etim,
@@ -104,7 +106,11 @@
      *  tally, ismain, ismain0, natmi, no_solve, use_astra,
      *  save_f30, save_f31, external_species, no_current
       integer, save :: edition_p=0, plasinc = 1, plasnum = 0
-      integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0
+      integer, save :: itim_plas = 0, nwrit_plas = 0, ntim_save = 0,
+     *  ntim_batch = 500, ibatch_av_all = 0, edition_run = 0,
+     *  edition_batch = 0, iav_run = 0, iav_cont = 1, ntim_run = 1000
+      logical lwti, lwav, lrav, lrer
+      character(22) :: batch_name, aver_name, run_av_name 
       real (kind=R8) ::
      *  cputarget, cpuincrement, neutral_rescale,
      *  neutral_sources_rescale,
@@ -139,6 +145,7 @@
       real (kind=R8) :: amtol
       parameter (amtol=1.0e-2_R8)
       real (kind=R8) :: hzconst                                      !srv 30.01.10
+
 *   ..initialisation
       save ncall, ntim, mvinc, mvnum, dtim, stim, etim, idout0, idout1,
      1  na_min, na_new, b2mndr_cpu, edition, cputarget, cpuincrement,
@@ -966,6 +973,11 @@
      >  write(*,*) 'Saving plasma state files every ',
      1  delta_plasma_time,' simulation seconds'
        call ipgeti ('b2mndr_ntim_save', ntim_save)
+       call ipgeti ('b2mndt_av', iav_run)
+       call ipgeti ('b2mndt_av_continue', iav_cont)
+       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
+       call ipgeti ('b2mndt_av_ntim_run', ntim_run)
+       call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
        if (ntim_save.gt.0)
      >  write(*,*) 'Saving plasma state files every ',
      1  ntim_save,' iterations'
@@ -1158,6 +1170,8 @@ csw 09oct2012
        call ipgeti ('b2tfhe_no_current', no_current)
        call xertst (pot_eq.eq.1.or.no_current.eq.1,
      &  'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
+       call ipgeti ('b2mndr_old_style', old_style)             !pb 29.07.16
+       call ipgeti ('b2mndr_av_read', ird_aver)                !pb 29.09.16
 * ..return
       else
        call xerrab ('error, b2mndr has been called more than once')
@@ -1420,6 +1434,20 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
      &  fchdia, fchin, fchvispar, fchvisper, fchvisq, fchinert,
      &  vaecrb, vadia, wadia, veecrb, vedia, floe_noc, floi_noc,
      &  b2fstati_version)
+
+*   initialize 2d batch averages
+      if (ibatch_av_all > 0) call batch_av_all_init (nx, ny, ns)
+
+*   initialize and/or read running averages 
+      if ((iav_run > 0) .or. (ird_aver > 0)) then
+        lrer = (ird_aver == 0)
+        call run_av_init (iav_cont, nx, ny, ns,.true.,lrer) 
+      end if
+
+*   get averaged plasma profiles
+      if (ird_aver > 0)
+     &  call run_av_get_plasma (na, te, ti, ua, po, nx, ny, ns)
+
       if(iout.ne.0) then                                             !srv 25.01.16 {
        call my_out(70,nx,ny,ne,'b2mndr_ne')
        do is = 0,ns-1
@@ -1731,8 +1759,12 @@ c new CDF movie option (1st frame at t=0)
 #else
       integer nout(0:8), nx, ny, ns, add_ntim
 #endif
+#ifdef WINDOWS
+      logical(4) :: lresult
+#endif
       integer i, is, js
       character*256 filename, fort31name
+      character*256 systemarg
       logical ok, found
 *   ..procedures
       real(kind=R8) :: epoch_seconds
@@ -1951,11 +1983,34 @@ c new CDF movie option
 #endif
           save_cdfmovie_time=save_cdfmovie_time+delta_cdfmovie_time
         endif
+        lwti = .false.
+        lwav = .false.
         if(b2time.gt.0) then
-          if(mod(itim,b2time).eq.0.or.itim.eq.1) then
-            call b2mwti(itim,tim,nx,ny,ns,ismain,ismain0,BoRiS)
-          endif
+          if(mod(itim,b2time).eq.0.or.itim.eq.1) lwti = .true.
         endif
+        if(ntim_batch.gt.0) then
+          if(mod(itim,ntim_batch).eq.0) lwav = .true.
+        endif
+        call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
+     .              BoRiS,lwti,lwav,.true.)
+        if ((ibatch_av_all > 0) .and. lwav) then
+          edition_batch = edition_batch + 1
+          write (batch_name,'(a18,i4.4)') 
+     .           'batch_av/batch_av.',edition_batch
+          call batch_av_all_save (batch_name,nx,ny,ns)
+          write(*,*) 'Saved ',batch_name
+        end if
+        if ((iav_run > 0) .and. (ntim_run > 0)) then
+          lrav = mod(itim,ntim_run) == 0 
+          write (*,*) ' itim,ntim_batch,lrav ', itim,ntim_run,lrav
+          if (lrav) then
+             edition_run = edition_run + 1
+             write (run_av_name,'(a14,i4.4)') 
+     .              'run_av/run_av.',edition_run
+             call run_av_save (run_av_name,nx,ny,ns,.true.,.false.)
+             write(*,*) 'Saved ',run_av_name
+          end if
+        end if
 *    ..tallies
         if(tally.gt.0) then
           if(mod(itim,tally).eq.0.or.itim.eq.1) then
@@ -2013,7 +2068,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
         write_save=cpuval.gt.cputarget.and.cpuincrement.gt.0.0_R8
         write_save=write_save.or.
      .   (tim.ge.save_plasma_time.and.delta_plasma_time.gt.0.0_R8)
-        if(ntim_save.gt.0.and.ntim.gt.0) write_save=write_save.or.
+        if(ntim_save.gt.0.and.itim.gt.0) write_save=write_save.or.
      .   mod(itim,ntim_save).eq.0
         write_save=write_save.and..not.quit
         if(write_save) then
@@ -2068,10 +2123,28 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
           if (ank_tracing.ne.0) call b2filef(ns)
 
 #ifdef B25_EIRENE
-          if (use_eirene.ne.0) call write_f44(savefile(13:16))
+          if (use_eirene.ne.0) then
+            call write_f44(savefile(13:16))
+            inquire(file='fort.13',exist=found)
+            if (found) then
+              systemarg='cp fort.13 fort.13.'//savefile(13:16)
+              call system(systemarg)
+            endif
+            inquire(file='fort.15',exist=found)
+            if (found) then
+              systemarg='cp fort.15 fort.15.'//savefile(13:16)
+              call system(systemarg)
+            endif
+          endif
 #endif
           close(nout(6))
           write(*,*) 'Plasmastate savefile ',savefile,' saved'
+          if (iav_run > 0) then
+            write (aver_name,'(a17,a4)')
+     .              'plasmastate_aver.',savefile(13:16)
+            call run_av_save (aver_name,nx,ny,ns,.true.,.true.)
+            write (*,*) aver_name,' saved '
+          end if
         endif
         first_time_step=.false.
 
@@ -2144,6 +2217,8 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..write summary of final state
       call b2wfpi (nout(0), idout1, nx, ny, ns, ne, na, ua,
      &  te, ti, po, fna, fhe, fhi, fch)
+      if (old_style.gt.0) call b2waos (nout(0), nx, ny, ns,              !pb 29.07.16
+     &  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
 *   ..test plasma state
       call b2xvps (nx, ny, ns,
      .  ne, na, ua, te, ti, po, fna, fhe, fhi, fch)
@@ -2204,8 +2279,10 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 *   ..produce 2d profiles if not yet done
       if(b2time.gt.0) then
         if((mod(itim,b2time).ne.0.and.itim.gt.1).or.itim.eq.0) then
-          call b2mwti(itim,tim,nx,ny,ns,ismain,ismain0,BoRiS)
+          call b2mwti(itim,tim,ntim,ntim_batch,nx,ny,ns,ismain,ismain0,
+     *                BoRiS,.true.,.false.,.false.)
         endif
+        call dealloc_b2mod_mwti
       endif
 *   ..write out last tallies if not yet done
       if(tally.gt.0) then
@@ -2235,6 +2312,13 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
          call xerrab ('b2mndr not compiled with the B25_EIRENE option')
 #endif
       endif
+
+      if (iav_run > 0) then
+        call run_av_save ('b2favere',nx,ny,ns,.true.,.true.)
+        call run_av_fin
+      end if
+
+      if (ibatch_av_all > 0) call batch_av_all_fin
 
 *  .. finalize tracing routines
       call b2trcf(nx,ny,ns,ismain,dtim,BoRiS)

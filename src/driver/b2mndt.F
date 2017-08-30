@@ -25,6 +25,9 @@
 *   ..input arguments (unchanged on exit)
       integer nout(0:5), nx, ny, ns, ismain, ismain0,
      *  nscx, iscx(0:nscxmax-1), itim, ntim
+      integer :: ntim_batch = 500
+      integer :: iav_run = 0
+      integer :: ibatch_av_all = 0
       real (kind=R8) ::
      *  dtim
 *   ..input/output arguments
@@ -175,6 +178,9 @@
        elseif(nsmax.lt.0) then
          nsmax=0
        endif
+       call ipgeti ('b2mndt_av', iav_run)
+       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
+       call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
        if (boundary_namelist.ge.1) then
          call initialize_b2mod_boundary(nx,ny,ns,tim)
        else
@@ -546,6 +552,9 @@ ctmp.dpc
        istg(0) = istg(0)+1
        goto 1
       endif
+
+      if (iav_run > 0) call running_average (nx,ny,ns)
+      if (ibatch_av_all > 0) call batch_av_all(itim,ntim_batch,nx,ny,ns)
 
 * ..return
 99999 continue

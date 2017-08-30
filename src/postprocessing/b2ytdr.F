@@ -174,6 +174,7 @@ c 2002-09-11: logic revised
       integer elm_ix_begin, elm_ix_end
       integer ndim, ndm2, nfitanf, nfitend, ifail
       integer invert_bpol, invert_btor
+      integer naver, ntotdt
       character lblmn*120, lblgm*120, lblrc*120, lblcp*120, lblps*120,
      .          ligne*120
       character id0*8
@@ -201,6 +202,26 @@ c 2002-09-11: logic revised
      6 fchvisq1(-1:nx1,-1:ny1,0:1), fchinert1(-1:nx1,-1:ny1,0:1),
      7 floe_noc1(-1:nx1,-1:ny1,0:1), floi_noc1(-1:nx1,-1:ny1,0:1),
      8 veecrb1(-1:nx1,-1:ny1,0:1), vedia1(-1:nx1,-1:ny1,0:1)
+      real (kind=R8), allocatable ::
+     . na_mean(:,:,:), te_mean(:,:), ti_mean(:,:),
+     . ua_mean(:,:,:), po_mean(:,:),
+     . e_na(:,:,:), e_te(:,:), e_ti(:,:),
+     . e_ua(:,:,:), e_po(:,:),
+     . sna_mean(:,:,:,:), sne_mean(:,:,:),
+     . smo_mean(:,:,:,:), she_mean(:,:,:),
+     . shi_mean(:,:,:), sch_mean(:,:,:),
+     . e_sna(:,:,:,:), e_sne(:,:,:), e_smo(:,:,:,:),
+     . e_she(:,:,:), e_shi(:,:,:), e_sch(:,:,:)
+      real (kind=R8), allocatable ::
+     . na1_mean(:,:,:), te1_mean(:,:), ti1_mean(:,:),
+     . ua1_mean(:,:,:), po1_mean(:,:),
+     . e_na1(:,:,:), e_te1(:,:), e_ti1(:,:),
+     . e_ua1(:,:,:), e_po1(:,:),
+     . sna1_mean(:,:,:,:), sne1_mean(:,:,:),
+     . smo1_mean(:,:,:,:), she1_mean(:,:,:),
+     . shi1_mean(:,:,:), sch1_mean(:,:,:),
+     . e_sna1(:,:,:,:), e_sne1(:,:,:), e_smo1(:,:,:,:),
+     . e_she1(:,:,:), e_shi1(:,:,:), e_sch1(:,:,:)
       real (kind=R8), allocatable ::
      1 zamin1(:), zamax1(:), zn1(:), am1(:),
      2 uadia1(:,:,:,:), fna1(:,:,:,:), ua1(:,:,:), na1(:,:,:),
@@ -468,6 +489,7 @@ c 2002-09-11: logic revised
       logical in_bundle, charges_match, skip_reac
 #endif
       logical todo, wait, same_bundling, same_atoms
+      logical averaging
       logical first_pass, do_scale
       logical wall_namelist_used
       logical region_flags(NNREGMAX,nkind_coeff), no_pflux
@@ -943,6 +965,50 @@ c 2002-09-11: logic revised
       allocate(vadia1(-1:nx1,-1:ny1,0:1,0:ns1-1))
       allocate(wadia1(-1:nx1,-1:ny1,0:1,0:ns1-1))
       allocate(vaecrb1(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(na_mean(-1:nx,-1:ny,0:ns-1))
+      allocate(ua_mean(-1:nx,-1:ny,0:ns-1))
+      allocate(te_mean(-1:nx,-1:ny))
+      allocate(ti_mean(-1:nx,-1:ny))
+      allocate(po_mean(-1:nx,-1:ny))
+      allocate(e_na(-1:nx,-1:ny,0:ns-1))
+      allocate(e_ua(-1:nx,-1:ny,0:ns-1))
+      allocate(e_te(-1:nx,-1:ny))
+      allocate(e_ti(-1:nx,-1:ny))
+      allocate(e_po(-1:nx,-1:ny))
+      allocate(sna_mean(-1:nx,-1:ny,0:1,0:ns-1))
+      allocate(sne_mean(-1:nx,-1:ny,0:1))
+      allocate(smo_mean(-1:nx,-1:ny,0:3,0:ns-1))
+      allocate(she_mean(-1:nx,-1:ny,0:3))
+      allocate(shi_mean(-1:nx,-1:ny,0:3))
+      allocate(sch_mean(-1:nx,-1:ny,0:3))
+      allocate(e_sna(-1:nx,-1:ny,0:1,0:ns-1))
+      allocate(e_sne(-1:nx,-1:ny,0:1))
+      allocate(e_smo(-1:nx,-1:ny,0:3,0:ns-1))
+      allocate(e_she(-1:nx,-1:ny,0:3))
+      allocate(e_shi(-1:nx,-1:ny,0:3))
+      allocate(e_sch(-1:nx,-1:ny,0:3))
+      allocate(na1_mean(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(ua1_mean(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(te1_mean(-1:nx1,-1:ny1))
+      allocate(ti1_mean(-1:nx1,-1:ny1))
+      allocate(po1_mean(-1:nx1,-1:ny1))
+      allocate(e_na1(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(e_ua1(-1:nx1,-1:ny1,0:ns1-1))
+      allocate(e_te1(-1:nx1,-1:ny1))
+      allocate(e_ti1(-1:nx1,-1:ny1))
+      allocate(e_po1(-1:nx1,-1:ny1))
+      allocate(sna1_mean(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(sne1_mean(-1:nx1,-1:ny1,0:1))
+      allocate(smo1_mean(-1:nx1,-1:ny1,0:3,0:ns1-1))
+      allocate(she1_mean(-1:nx1,-1:ny1,0:3))
+      allocate(shi1_mean(-1:nx1,-1:ny1,0:3))
+      allocate(sch1_mean(-1:nx1,-1:ny1,0:3))
+      allocate(e_sna1(-1:nx1,-1:ny1,0:1,0:ns1-1))
+      allocate(e_sne1(-1:nx1,-1:ny1,0:1))
+      allocate(e_smo1(-1:nx1,-1:ny1,0:3,0:ns1-1))
+      allocate(e_she1(-1:nx1,-1:ny1,0:3))
+      allocate(e_shi1(-1:nx1,-1:ny1,0:3))
+      allocate(e_sch1(-1:nx1,-1:ny1,0:3))
       allocate(sputter_yield_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(sputter_yield2_yt(-1:nx1,-1:ny1,0:ns1-1,1:2))
       allocate(bundle_frac(0:ns1-1,0:ns-1))
@@ -1042,8 +1108,8 @@ c 2002-09-11: logic revised
      &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
      &    leftcut, leftcut1, rightcut, rightcut1,
      &    bottomcut, bottomcut1, topcut, topcut1,
-     &    hx, hy, qc, hx1, hy1, qc1,
-     &    bundle_frac, bottomiy1, ne, na, ua, uadia, te, ti,
+     &    hx, hy, qc, hx1, hy1, qc1, bundle_frac, bottomiy1, 
+     &    ne, na, ua, uadia, te, ti,
      &    po, fna, fhe, fhi, fch, fch_32, fch_52, fch_p, kinrgy,
      &    fna_mdf, fhe_mdf, fhi_mdf, fna_fcor, fna_nodrift, fna_he,
      &    fnaPSch, fhePSch, fhiPSch, fna_eir, fne_eir, fhe_eir, fhi_eir,
@@ -1060,6 +1126,28 @@ c 2002-09-11: logic revised
      &    fchdia1, fchin1, fchvispar1, fchvisper1, fchvisq1, fchinert1,
      &    vaecrb1, vadia1, wadia1, veecrb1, vedia1,
      &    floe_noc1, floi_noc1)
+*   ..compute new averaged state
+      filename='b2favere'
+      call find_file(filename,averaging)
+      if (averaging) then
+        call b2yt_average (filename, 
+     &    nx, ny, ns, nx1, ny1, ns1, nncutmax, non_commensurate,
+     &    nnreg, nncut, periodic_bc, jsep, jsep1, region, region1,
+     &    leftcut, leftcut1, rightcut, rightcut1,
+     &    bottomcut, bottomcut1, topcut, topcut1,
+     &    hx, hy, qc, hx1, hy1, qc1, bundle_frac, bottomiy1,
+     &    naver, ntotdt,
+     &    na_mean, te_mean, ti_mean, ua_mean, po_mean,
+     &    e_na, e_te, e_ti, e_ua, e_po,
+     &    sna_mean, sne_mean, smo_mean,
+     &    she_mean, shi_mean, sch_mean,
+     &    e_sna, e_sne, e_smo, e_she, e_shi, e_sch,
+     &    na1_mean, te1_mean, ti1_mean, ua1_mean, po1_mean,
+     &    e_na1, e_te1, e_ti1, e_ua1, e_po1,
+     &    sna1_mean, sne1_mean, smo1_mean,
+     &    she1_mean, shi1_mean, sch1_mean,
+     &    e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
+      end if
 *   ..rescale transformed state (if necessary)
       neutral_rescale=1.0_R8
       call ipgetr ('b2ytdr_rescale_neutrals', neutral_rescale)
@@ -1076,6 +1164,10 @@ c 2002-09-11: logic revised
         do is=0,ns1-1
           if(is_neutral1(is)) then
             na1(:,:,is)=na1(:,:,is)*neutral_rescale
+            na1_mean(:,:,is)=na1_mean(:,:,is)*neutral_rescale
+            e_na1(:,:,is)=e_na1(:,:,is)*neutral_rescale**2
+            sna1_mean(:,:,:,is)=sna1_mean(:,:,:,is)*neutral_rescale
+            e_sna1(:,:,:,is)=e_sna1(:,:,:,is)*neutral_rescale**2
             fna1(:,:,:,is)=fna1(:,:,:,is)*neutral_rescale
             fna_mdf1(:,:,:,is)=fna_mdf1(:,:,:,is)*neutral_rescale
             fna_fcor1(:,:,:,is)=fna_fcor1(:,:,:,is)*neutral_rescale
@@ -1113,6 +1205,17 @@ c 2002-09-11: logic revised
      &  fna_321, fna_521, fni_321, fni_521, fne_321, fne_521,
      &  fchdia1, fchin1, fchvispar1, fchvisper1, fchvisq1, fchinert1,
      &  vaecrb1, vadia1, wadia1, veecrb1, vedia1, floe_noc1, floi_noc1)
+*   ..save transformed averaged state
+      if (averaging) then
+        write(nout(5),'(a)') 'b2favere'
+        call b2yt_write_average (99, nx1, ny1, ns1,
+     &    naver, ntotdt, lblmn, zamin1, zamax1, zn1, am1,
+     &    na1_mean, te1_mean, ti1_mean, ua1_mean, po1_mean,
+     &    e_na1, e_te1, e_ti1, e_ua1, e_po1,
+     &    sna1_mean, sne1_mean, smo1_mean,
+     &    she1_mean, shi1_mean, sch1_mean,
+     &    e_sna1, e_sne1, e_smo1, e_she1, e_shi1, e_sch1)
+      end if
 
 * ..check for need to transform other input files:
 * ..b2mn.dat, b2.*.parameters, input.dat, b2ah.dat, b2ai.dat
@@ -9333,6 +9436,50 @@ cxpb as they no longer necessarily point to the same species
       deallocate(istmp)
       deallocate(iatm1)
       deallocate(ipls1)
+      deallocate(na_mean)
+      deallocate(ua_mean)
+      deallocate(te_mean)
+      deallocate(ti_mean)
+      deallocate(po_mean)
+      deallocate(e_na)
+      deallocate(e_ua)
+      deallocate(e_te)
+      deallocate(e_ti)
+      deallocate(e_po)
+      deallocate(sna_mean)
+      deallocate(sne_mean)
+      deallocate(smo_mean)
+      deallocate(she_mean)
+      deallocate(shi_mean)
+      deallocate(sch_mean)
+      deallocate(e_sna)
+      deallocate(e_sne)
+      deallocate(e_smo)
+      deallocate(e_she)
+      deallocate(e_shi)
+      deallocate(e_sch)
+      deallocate(na1_mean)
+      deallocate(ua1_mean)
+      deallocate(te1_mean)
+      deallocate(ti1_mean)
+      deallocate(po1_mean)
+      deallocate(e_na1)
+      deallocate(e_ua1)
+      deallocate(e_te1)
+      deallocate(e_ti1)
+      deallocate(e_po1)
+      deallocate(sna1_mean)
+      deallocate(sne1_mean)
+      deallocate(smo1_mean)
+      deallocate(she1_mean)
+      deallocate(shi1_mean)
+      deallocate(sch1_mean)
+      deallocate(e_sna1)
+      deallocate(e_sne1)
+      deallocate(e_smo1)
+      deallocate(e_she1)
+      deallocate(e_shi1)
+      deallocate(e_sch1)
 #ifdef B25_EIRENE
       CALL EIRENE_DEALLOC_CINIT
       CALL EIRENE_DEALLOC_CTRIG

@@ -450,7 +450,8 @@ c Drift terms
            eps1 = 0.0e0_R8
 
            bbaverage2 = 0.0e0_R8
-           mintopcut = ny
+!pbwdk           mintopcut = ny
+           mintopcut = -2
            if (nncut > 0) mintopcut = minval(topcut(1:nncut))
         
            do iy = 0,mintopcut    ! for inner surfaces and first open surface

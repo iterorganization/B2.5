@@ -66,7 +66,103 @@
       call subend ()
       return
 *     ------------------------------------------------------------------
-      end subroutine e01bff  
+      end subroutine e01bff
+      subroutine g02caf (n, x, y, result, ifail)
+      use b2mod_types
+      implicit none
+      integer n, ifail
+      real (kind=R8) ::
+     *   x(n), y(n), result(20)
+      integer i
+*     ------------------------------------------------------------------
+*     A crude substitute for the NAG routine of the same name, for the
+*     case of an eight-byte real*8 environment.
+*     ------------------------------------------------------------------
+      ifail = 0
+      result = 0.0_R8
+      if (n.le.2) then
+        ifail = 1
+        return
+      end if
+      do i = 1, n
+        result(1) = result(1) + x(1)
+        result(2) = result(2) + y(1)
+      end do
+      result(1) = result(1)/real(n)
+      result(2) = result(2)/real(n)
+      do i = 1, n
+        result(3) = result(3) + (x(i)-result(1))**2
+        result(4) = result(4) + (y(i)-result(2))**2
+      end do
+      result(19) = result(4)
+      do i = 1, n
+        result(5) = result(5) + (x(i)-result(1))*(y(i)-result(2))
+        result(6) = result(6) + (x(i)-result(1))*(y(i)-result(2))
+      end do
+      result(5) = result(5) / sqrt ( result(3)*result(4) )
+      result(6) = result(6) / result(3)
+      result(7) = result(2) - result(6)*result(1)
+      do i = 1, n
+        result(16) = result(16) + (y(i)-result(7)-result(6)*x(i))**2
+      end do
+      result(17) = n - 2
+      result(18) = result(16) / result(17)
+      result(20) = n - 1
+      result(8) = sqrt ( result(18) / result(3) )
+      result(9) = sqrt ( result(18) *
+     .                 ( 1.0_R8/real(n) + result(1)**2/result(3) ) )
+      result(10) = result(6) / result(8)
+      result(11) = result(7) / result(9)
+      result(12) = result(19) - result(16)
+      result(13) = 1
+      result(14) = result(12) / result(13)
+      result(15) = result(14) / result(18)
+      result(3) = sqrt ( result(3) / real(n-1) )
+      result(4) = sqrt ( result(4) / real(n-1) )
+      return
+*     ------------------------------------------------------------------
+      end subroutine g02caf
+      subroutine g13abf (x, nx, nk, xm, xv, r, stat, ifail)
+      use b2mod_types
+      implicit none
+      integer nx, nk, ifail
+      real (kind=R8) ::
+     *   x(nx), xm, xv, r(nk), stat
+      integer i, k
+*     ------------------------------------------------------------------
+*     A crude substitute for the NAG routine of the same name, for the
+*     case of an eight-byte real*8 environment.
+*     ------------------------------------------------------------------
+      ifail = 0
+      xm = 0.0_R8
+      xv = 0.0_R8
+      stat = 0.0_R8
+      r(1:nk) = 0.0_R8
+      if (nx.le.nk .or. nx.le.1 .or. nk.le.0) then
+        ifail = 1
+        return
+      end if
+      do i = 1, nx
+        xm = xm + x(i)
+      end do
+      xm = xm / real(nx)
+      do i = 1, nx
+        xv = xv + (x(i)-xm)**2
+      end do
+      do k = 1, nk
+        do i = 1, nx - nk
+          r(k) = r(k) + (x(i)-xm)*(x(i+k)-xm)
+        end do
+        r(k) = r(k) / xv
+      end do
+      xv = xv / real(nx-1)
+      do k = 1, nk
+        stat = stat + r(k)**2
+      end do
+      stat = nx*stat
+      return
+*     ------------------------------------------------------------------
+      end subroutine g13abf
       function x02ajf ()
       use b2mod_types
       implicit none
@@ -151,7 +247,7 @@
 *     --------------------------------------------------------------------
 *     A FORTRAN intrinsic substitute for the NAG routine of the same name.
 *     x05abf should return the date and time in the format
-*     'Day ddth Mmm 200x hh:mm:ss.000'
+*     'Day ddth Mmm yyyy hh:mm:ss.000'
 *     --------------------------------------------------------------------
       integer values(8)
       character*8 date

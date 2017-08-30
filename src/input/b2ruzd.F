@@ -27,7 +27,7 @@
 *   ..main computation
       call subini ('b2ruzd')
 *   ..test input
-      call xertst (1.le.nget, 'faulty input nget')
+!pb      call xertst (1.le.nget, 'faulty input nget')
       call xertst (1.le.ns, 'faulty input ns')
 
       if (version.lt.'01.001.024') then

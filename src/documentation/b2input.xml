@@ -2236,6 +2236,46 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mndt_av</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_av.gt.0, turns on computation of running averages.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_av_continue</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_av_continue.gt.0, continuously perform running averages.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_av_ntim_batch</name>
+				<default>500</default>
+				<type>integer</type>
+				<description>
+					If ntim_batch.gt.0, number of iterations used to compute batch averages.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_av_ntim_run</name>
+				<default>1000</default>
+				<type>integer</type>
+				<description>
+					If ntim_run.gt.0, number of iterations used for writing running averages.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_av_batch_all</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_av_batch_all.gt.0, produces standard output for batch averages.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndr_plasmatim</name>
 				<default>0.0</default>
 				<type>real</type>
@@ -2257,6 +2297,22 @@
 				<type>integer</type>
 				<description>
 					If append.eq.1, the *.dat output files are appended upon every write, instead of being rewritten every time.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_old_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If old_style.gt.0, old-fashioned (SOLPS4 style) output is added at the end of the b2mn.prt file.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_av_read</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If ird_aver.gt.0, the averaged solution is read from the b2faveri file and written in the b2favere file at the end of the run.
 				</description>
 			</switch>
 			<switchgroup>
