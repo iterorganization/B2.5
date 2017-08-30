@@ -7,6 +7,8 @@
  
       integer :: n, it, batch_size, ii
       real (kind=R8) :: var(1:n), aver(1:n), gnew, gold
+      real (kind=R8) :: rratio
+      external rratio
 *-----------------------------------------------------------------------
 *
 *     Routine updates the batch average "aver" of data "var" in a series
@@ -32,7 +34,7 @@
       if (ii.eq.0) ii = batch_size
 
 *  .. average
-      gnew = 1.0_R8 / ii
+      gnew = rratio(1,ii)
       gold = (ii - 1) * gnew
       aver = gold * aver + gnew * var
 
@@ -48,13 +50,15 @@
  
       real (kind=R8) :: var(1:n), aver(1:n), gnew, gold
       integer :: n, it, batch_size, ii
+      real (kind=R8) :: rratio
+      external rratio
 
 *  .. find index ii of var in the current batch
       ii = mod(it,batch_size)
       if (ii.eq.0) ii = batch_size
 
 *  .. average
-      gnew = 1.0_R8 / ii
+      gnew = rratio(1,ii)
       gold = (ii - 1) * gnew
       aver = gold*aver + gnew*var*var
 
