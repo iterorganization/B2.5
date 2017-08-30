@@ -2094,20 +2094,22 @@ c dpc
               totfluxi = 0.0_R8
 #ifdef B25_EIRENE
 cxpb  Add contribution from Eirene core boundary fluxes
-              isa = b2espcr(is)
-              if (isa.ne.-1) then
-                do k = 1, ncns
-                  ix = nlim + lcns(k)
-                  totfluxn = totfluxn -
-     &                           wldna(ix,isa,0) + wldra(ix,isa,0)
-                  do ism = 1, nnmoli
-                    if (mlcmp(isa,ism).gt.0) then
-                      totfluxn = totfluxn -
-     &                               mlcmp(isa,ism) * wldnm(ix,ism,0)
-                    end if
+              do isa = 1, nnatmi
+                if (latmscl(isa).eq.b2espcr(is)) then
+                  do k = 1, ncns
+                    ix = nlim + lcns(k)
+                    totfluxn = totfluxn -
+     &               wldna(ix,isa,0) + wldra(ix,isa,0) + wldpa(ix,isa,0)
+                    do ism = 1, nnmoli
+                      if (mlcmp(isa,ism).gt.0) then
+                        totfluxn = totfluxn - mlcmp(isa,ism) *
+     &                   (wldnm(ix,ism,0) - wldrm(ix,ism,0)
+     &                                    - wldpm(ix,ism,0))
+                      end if
+                    end do
                   end do
-                end do
-              end if
+                end if
+              end do
 #endif
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
@@ -2568,20 +2570,22 @@ cxpb Careful here because of BC number clash
               NAS=0.0e0_R8
 #ifdef B25_EIRENE
 cxpb  Add contribution from Eirene core boundary fluxes
-              isa = b2espcr(ismain0)
-              if (isa.ne.-1) then
-                do k = 1, ncns
-                  ix = nlim + lcns(k)
-                  totfluxn = totfluxn -
-     &                           wldna(ix,isa,0) + wldra(ix,isa,0)
-                  do ism = 1, nnmoli
-                    if (mlcmp(isa,ism).gt.0) then
-                      totfluxn = totfluxn -
-     &                               mlcmp(isa,ism) * wldnm(ix,ism,0)
-                    end if
+              do isa = 1, nnatmi
+                if (latmscl(isa).eq.b2espcr(ismain0)) then
+                  do k = 1, ncns
+                    ix = nlim + lcns(k)
+                    totfluxn = totfluxn -
+     &               wldna(ix,isa,0) + wldra(ix,isa,0) + wldpa(ix,isa,0)
+                    do ism = 1, nnmoli
+                      if (mlcmp(isa,ism).gt.0) then
+                        totfluxn = totfluxn - mlcmp(isa,ism) *
+     &                   (wldnm(ix,ism,0) - wldrm(ix,ism,0)
+     &                                    - wldpm(ix,ism,0))
+                      end if
+                    end do
                   end do
-                end do
-              end if
+                end if
+              end do
 #endif
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))
@@ -3065,20 +3069,23 @@ cxpb  Add contribution from Eirene core boundary fluxes
               NAS=0.0e0_R8
 #ifdef B25_EIRENE
 cxpb  Add contribution from Eirene core boundary fluxes
-              isa = b2espcr(is)
-              if (isa.ne.-1) then
-                do k = 1, ncns
-                  ix = nlim + lcns(k)
-                  totfluxn = totfluxn -
-     &                 (wldna(ix,isa,0) - wldra(ix,isa,0))
-                  do ism = 1, nnmoli
-                    if (mlcmp(isa,ism).gt.0) then
-                      totfluxn = totfluxn -
-     &                  (mlcmp(isa,ism) * wldnm(ix,ism,0))
-                    end if
+              do isa = 1, nnatmi
+                if (latmscl(isa).eq.b2espcr(is)) then
+                  do k = 1, ncns
+                    ix = nlim + lcns(k)
+                    totfluxn = totfluxn -
+     &                 (wldna(ix,isa,0) - wldra(ix,isa,0)
+     &                                  - wldpa(ix,isa,0))
+                    do ism = 1, nnmoli
+                      if (mlcmp(isa,ism).gt.0) then
+                        totfluxn = totfluxn - mlcmp(isa,ism) *
+     &                   (wldnm(ix,ism,0) - wldrm(ix,ism,0)
+     &                                    - wldpm(ix,ism,0))
+                      end if
+                    end do
                   end do
-                end do
-              end if
+                end if
+              end do
 #endif
               DO IBW=IB,NBC
                 IF(BCCHAR(IBW).EQ.'S'.AND.BCCON(IS,IBW).EQ.BCCON(IS,IB))

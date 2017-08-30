@@ -759,7 +759,7 @@ c
      > call read_neutrals_namelist(nx, ny, ns, .false.)
       call xertst(nstrat.le.nstraid, 
      . 'Increase DEF_NSTRA in DIMENSIONS.F')
-      call alloc_b2mod_user(nlim,nmol)
+      call alloc_b2mod_user(nlim,nmol,ntns)
       call read_b2mod_user_namelist(nx,ns)
 cxpb  Bring in wall data and compute oft-needed wall quantities
       write(*,*) 'Calling alloc_b2mod_sputter'
@@ -2155,12 +2155,23 @@ c
           end do
           call copy(mach,1.0_R8,nz,textpl)
         case ('b2espcr')
-          description='Eirene species index'
+          description='Nuclear sequence index'
           nz=ns
           do is=0,ns-1
             do iy=-1,ny
               do ix=-1,nx
                 mach(ix,iy,is)=real(b2espcr(is))
+              end do
+            end do
+          end do
+          call copy(mach,1.0_R8,nz,textpl)
+        case ('b2eatcr')
+          description='Eirene atomic species index'
+          nz=ns
+          do is=0,ns-1
+            do iy=-1,ny
+              do ix=-1,nx
+                mach(ix,iy,is)=real(b2eatcr(is))
               end do
             end do
           end do

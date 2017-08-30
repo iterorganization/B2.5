@@ -349,7 +349,7 @@ csw 18nov2013 check alloc
       if(hlp_s.gt.0.0_R8) hlp_zefs=hlp_zs/hlp_s
       if(hlp_zn2.gt.0.0_R8) hlp_zefn=hlp_zn1/hlp_zn2
 
-      do i=0,nspecies
+      do i=0,nnatmi
         do j=1,nstrai
           sclf_tmp(i,j)=sclstra(i,j)
           rtio_tmp(i,j)=sclrtio(i,j)-1.0_R8
@@ -361,7 +361,7 @@ c        do ix=0,nx-1 !{
 c          do iy=0,ny-1 !{
 c            rrci_tmp(i)=rrci_tmp(i)+sclirci(ix,iy,i)*snicrcis(ix,iy,i)
 c            do is=nsph(i),nsph(i)-1+nfluids(i) !{
-c              rrci_tmp(i)=rrci_tmp(i)+snivrci(ix,iy,is)*ni(ix,iy,is)
+c              rrci_tmp(i)=rrci_tmp(i)+snivrci(ix,iy,is)*na(ix,iy,is)
 c            end do !}
 c          end do !}
 c        end do !}
@@ -549,16 +549,16 @@ c>>>
 
         if (nfl_tmp.gt.0)
      >   write(lun,hlp_frm) (hlp_hg(i),i=1,ng_tmp),
-     ,              ((hlp_hr(j),i,i=1,nrg_tmp),j=1,nr_tmp),
-     ,              ((hlp_hs(j),atoms_list(i),i=1,nsp_tmp),j=1,ns_tmp),
-     ,             (((hlp_ha(k),j,atoms_list(i),j=1,nrg_tmp),
+     ,          ((hlp_hr(j),i,i=1,nrg_tmp),j=1,nr_tmp),
+     ,          ((hlp_hs(j),species_list(i),i=1,nsp_tmp),j=1,ns_tmp),
+     ,         (((hlp_ha(k),j,species_list(i),j=1,nrg_tmp),
      ,                                        i=1,nsp_tmp),k=1,na_tmp),
-     ,              ((hlp_hf(j),i,i=1,nfl_tmp),j=1,nf_tmp),
-     ,             (((hlp_hb(k),j,atoms_list(i),j=1,nfl_tmp),
+     ,          ((hlp_hf(j),i,i=1,nfl_tmp),j=1,nf_tmp),
+     ,         (((hlp_hb(k),j,species_list(i),j=1,nfl_tmp),
      ,                                        i=1,nsp_tmp),k=1,nb_tmp),
-     ,              ((hlp_hb(k),j,j=1,nfl_tmp),k=1,nb_tmp)
+     ,          ((hlp_hb(k),j,j=1,nfl_tmp),k=1,nb_tmp)
 c#ifdef SCL_IMP_RCI
-c     ,            ,((hlp_hs1(j),atoms_list(i),i=1,nsp_tmp),j=1,ns1_tmp)
+c     ,        ,((hlp_hs1(j),species_list(i),i=1,nsp_tmp),j=1,ns1_tmp)
 c#endif
 
       end if

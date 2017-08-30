@@ -564,8 +564,8 @@ C
         write(45,'(3i6)') nlimi,nstsi,nstra1
         nnlimi=nlimi
         nnstsi=nstsi
-        print '(a,4i6)','nlimi,nstsi,nstrai,nstra1:',
-     *                   nlimi,nstsi,nstrai,nstra1
+        print '(1x,a,4i6)','nlimi,nstsi,nstrai,nstra1:',
+     *                      nlimi,nstsi,nstrai,nstra1
         call rdneutrs(44,wldnek,1)
         call rdneutrs(44,wldnep,1)
         call rdneutrs(44,wldna,natmi)
@@ -909,7 +909,7 @@ cank
           end do
           do i = 1, nlimi
             wd_old(1:nplsi)=wlpump(natmi+nmoli+nioni+1:
-     .                              natmi+nmoli+nioni+nplsi,i)
+     .                             natmi+nmoli+nioni+nplsi,i)
             call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
      .           wd_old,wd_new,2)
            wlpump1(natm1+nmoli+nioni+1:natm1+nmoli+nioni+npls1,i)=
@@ -917,7 +917,7 @@ cank
           end do
           do i = 1, nstsi
             wd_old(1:nplsi)=wlpump(natmi+nmoli+nioni+1:
-     .                              natmi+nmoli+nioni+nplsi,nlim+i)
+     .                             natmi+nmoli+nioni+nplsi,nlim+i)
             call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
      .           wd_old,wd_new,2)
            wlpump1(natm1+nmoli+nioni+1:natm1+nmoli+nioni+npls1,nlim+i)=
@@ -1117,11 +1117,11 @@ cank
               end do
               do i = 1, NCL
                 wd_old(1:nplsi)=wlpump_res(natmi+nmoli+nioni+1:
-     .                              natmi+nmoli+nioni+nplsi,i)
+     .                                     natmi+nmoli+nioni+nplsi,i)
                 call e_bundle_transmit_r(nplsi,npls1,e_bundle_contr,
      .           wd_old,wd_new,2)
                 wlpump1res(natm1+nmoli+nioni+1:
-     .                      natm1+nmoli+nioni+npls1,i)=
+     .                     natm1+nmoli+nioni+npls1,i)=
      .           wd_new(1:npls1)
               end do
               k=0

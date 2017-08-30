@@ -458,21 +458,21 @@ csw 18nov2013 check for nnatmi (known after 1st EIRENE call)
       if(nnatmi > 0) then
 
 c*** flux across the core boundary
-      do is=1,ncns !{
+       do is=1,ncns !{
         js=lcns(is)+nnlimi
         pwcrn_tmp=pwcrn_tmp+wldnek(js,0)+wldnep(js,0)
-      end do !}
+       end do !}
 c*** flux across the targets
-      do is=1,ntns !{
+       do is=1,ntns !{
         js=ltns(is)+nnlimi
         pwtgn_tmp=pwtgn_tmp+wldnek(js,0)+wldnep(js,0)
-      end do !}
+       end do !}
 c*** flux across the side walls
-      do js=1,nnlimi !{
+       do js=1,nnlimi !{
         pwwln_tmp=pwwln_tmp+wldnek(js,0)+wldnep(js,0)
-      end do !}
+       end do !}
 c*** flux across the specified zones
-      do j=1,ntrgf_tmp !{
+       do j=1,ntrgf_tmp !{
         do l=1,ntgs(j) !{
           js=ltgs(l,j)
           if(js.lt.0) js=nnlimi-js
@@ -486,7 +486,7 @@ c*** flux across the specified zones
             end do !}
           end if !}
         end do !}
-      end do !}
+       end do !}
       endif !nnatmi
 #endif
 c
@@ -563,9 +563,9 @@ c*** Only called with filedata(ntrc_ble)=.true.
 c-----------------------------------------------------------------------
 c
       allocate(ltgs(nlim,ntrgs_tmp))
-      allocate(limp_tmp(natm))
-      allocate(radim_tmp(natm))
-      allocate(hlp_spc(natm))
+      allocate(limp_tmp(nspecies))
+      allocate(radim_tmp(nspecies))
+      allocate(hlp_spc(nspecies))
 c
       tab=char(9)
       nimp_tmp=0
@@ -573,7 +573,7 @@ c
         if(nfluids(is).gt.1) then !{
           nimp_tmp=nimp_tmp+1
           limp_tmp(nimp_tmp)=is
-          hlp_spc(nimp_tmp)=atoms_list(is)
+          hlp_spc(nimp_tmp)=species_list(is)
         end if !}
       end do !}
       if(nimp_tmp.le.0) hlp_spc(1)='-'

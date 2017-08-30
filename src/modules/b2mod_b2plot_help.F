@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=349,nfns=204,nsparameters=32,nelabels=32,
+      parameter(nlabels=350,nfns=204,nsparameters=32,nelabels=32,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -87,7 +87,7 @@
      8  'ne_ext'  , 'bmna'    , 'bmne'    , 'bmmo'    , 'bmhe'    ,
      9  'bmhi'    , 'bmch'    , 'fax_ext' , 'fay_ext' , 'lnlam'   ,
      *  'zn_ext'  , 'rc'      , 'srcml'   , 'edissml' , 'neutrad' /
-      data labels(301:349) /
+      data labels(301:350) /
      1  'fnaxnodr', 'fnaynodr', 'ne2'     , 'smth'    , 'ixle'    ,
      2  'ixge'    , 'iyle'    , 'iyge'    , 'isle'    , 'isge'    ,
      3  'smcf'    , 'fnaxmdf' , 'fnaymdf' , 'fhexmdf' , 'fheymdf' ,
@@ -97,7 +97,7 @@
      7  'fchyinrt', 'vedia.x' , 'vedia.y' , 'veexb.x' , 'veexb.y' ,
      8  'ixne'    , 'iyne'    , 'isne'    , 'ni'      , 'sz'      ,
      9  'fluce'   , 'fluci'   , 'flucv'   , 'flucs'   , 'fluca'   ,
-     *  'flke'    , 'flki'    , 'flal'    , 'flalc'   /
+     *  'flke'    , 'flki'    , 'flal'    , 'flalc'   , 'b2eatcr' /
       data descriptions(1:10) /
      1    'Pitch',
      2    'b_{x} (T) (poloidal)',
@@ -372,7 +372,7 @@
      7    'Squared ion charge (e^{2})',
      8    'X-directed flux region',
      9    'Y-directed flux region',
-     *    'Eirene species index'/
+     *    'Nuclear sequence index'/
       data descriptions(251:260) /
      1    'qc',
      2    'Boundary condition number',
@@ -472,7 +472,7 @@
      8    'isne',
      9    'Total density (m^{-3})',
      *    'sz (m^{2})'/
-      data descriptions(341:349) /
+      data descriptions(341:350) /
      1    'Electron heat diffusivity Luciani flux limit factor',
      2    'Ion heat diffusivity Luciani flux limit factor',
      3    'Viscosity Luciani flux limit factor',
@@ -481,7 +481,8 @@
      6    'Electron heat diffusivity classical flux limit factor',
      7    'Ion heat diffusivity classical flux limit factor',
      8    'Thermo-electric classical flux limit factor',
-     9    'Thermo-electric coefficient limit factor'/
+     9    'Thermo-electric coefficient limit factor',
+     *    'Eirene atomic species index'/
       data dimensions(1:50) /
      1    2,      2,      2,      2,      2,
      2    3,      3,      3,      3,      3,
@@ -548,7 +549,7 @@
      8    2,      3,      2,      3,      2,
      9    2,      2,      3,      3,      2,
      *    3,      2,      3,      3,      3/  
-      data dimensions(301:349) /
+      data dimensions(301:350) /
      1    3,      3,      2,      3,      2,
      2    2,      2,      2,      3,      3,
      3    3,      3,      3,      2,      2,
@@ -558,7 +559,7 @@
      7    2,      2,      2,      2,      2,
      8    2,      2,      3,      3,      2,
      9    2,      2,      2,      2,      2,
-     *    2,      2,      2,      2/
+     *    2,      2,      2,      2,      3/
       data fns(1:50) /
      1 'sumx', 'sumy', 'f.x' , 'f.y' , 'intx',
      2 'inty', 'f.lx', 'f.ly', 'cont', 'surf',

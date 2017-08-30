@@ -30,82 +30,79 @@ c
 #ifdef B25_EIRENE
       write(*,'(a,6i5)') 'nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi=',
      1 nspecies,nnatmi,nnstsi,nnlimi,nnmoli,nnplsi
-      if(nspecies.eq.nnatmi) then
 csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
-        do ix=1,nnstsi+nnlimi
-          wldnek(ix,0)=0.0_R8
-          wldnep(ix,0)=0.0_R8
-          do is=1,nnatmi
-            wldna(ix,is,0)=0.0_R8
-            wldra(ix,is,0)=0.0_R8
-            ewlda(ix,is,0)=0.0_R8
-          end do
-          do is=1,nnmoli
-            wldnm(ix,is,0)=0.0_R8
-            wldrm(ix,is,0)=0.0_R8
-            ewldm(ix,is,0)=0.0_R8
-          end do
-          if((ix.le.nnlimi).or.
-     +       (ix.gt.nnlimi.and.ix.le.nnlimi+nnstsi)) then
-            do istra=1,nstrai
-              if(use_recyceir.gt.0) then
-                recyctmp=recyceir(istra)
-              else
-                recyctmp=recyc(ismain,istra)
-              endif
-              wldnek(ix,0)=wldnek(ix,0)+
-     +         wldnek(ix,istra)*recyctmp
-              wldnep(ix,0)=wldnep(ix,0)+
-     +         wldnep(ix,istra)*recyctmp
-              do is=1,nnatmi
-                iy=eb2spcr(is)
-                if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
-                wldna(ix,is,0)=wldna(ix,is,0)+
-     +           wldna(ix,is,istra)*recyctmp
-                wldra(ix,is,0)=wldra(ix,is,0)+
-     +           wldra(ix,is,istra)*recyctmp
-                ewlda(ix,is,0)=ewlda(ix,is,0)+
-     +           ewlda(ix,is,istra)*recyctmp
-                iy=iy+nfluids(is)
-              end do
-              do is=1,nnmoli
-                if (lmolscl(is).gt.0 .and. lmolscl(is).le.nnatmi) then
-                  iy=eb2spcr(lmolscl(is))
-                  if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
-                  wldnm(ix,is,0)=wldnm(ix,is,0)+
-     +             wldnm(ix,is,istra)*recyctmp
-                  wldrm(ix,is,0)=wldrm(ix,is,0)+
-     +             wldrm(ix,is,istra)*recyctmp
-                  ewldm(ix,is,0)=ewldm(ix,is,0)+
-     +             ewldm(ix,is,istra)*recyctmp
-                else if (use_recyceir.gt.0) then !here we are rescaling by stratum, not by species
-                  wldnm(ix,is,0)=wldnm(ix,is,0)+
-     +             wldnm(ix,is,istra)*recyctmp
-                  wldrm(ix,is,0)=wldrm(ix,is,0)+
-     +             wldrm(ix,is,istra)*recyctmp
-                  ewldm(ix,is,0)=ewldm(ix,is,0)+
-     +             ewldm(ix,is,istra)*recyctmp
-                else 
-                  if (ix.eq.1 .and. istra.eq.1) then
-                    write(*,*) 'Faulty or missing LMOLSCL assignment:'
-                    write(*,*) 'LMOLSCL(',is,')=',lmolscl(is)
-                    write(*,*) 'Should be valued between 1 and NATM'
-                    write(*,*) 'Modify in b2.neutrals.parameters'
-                    write(*,*) 'See manual or b2cdcn.f file for usage'
-                    write(*,*) 'Scaling of molecular tallies skipped'
-                  endif
-                  wldnm(ix,is,0)=wldnm(ix,is,0)+wldnm(ix,is,istra)
-                  wldrm(ix,is,0)=wldrm(ix,is,0)+wldrm(ix,is,istra)
-                  ewldm(ix,is,0)=ewldm(ix,is,0)+ewldm(ix,is,istra)
-                endif
-              end do
-            end do
-          endif
+      do ix=1,nnstsi+nnlimi
+        wldnek(ix,0)=0.0_R8
+        wldnep(ix,0)=0.0_R8
+        do is=1,nnatmi
+          wldna(ix,is,0)=0.0_R8
+          wldra(ix,is,0)=0.0_R8
+          ewlda(ix,is,0)=0.0_R8
         end do
-      else
-        write (*,"(a,5i4)")
-     &  'b2trace: no source rescaling: natmi,nspecies=', nnatmi,nspecies  !srv 18.05.09
-      end if
+        do is=1,nnmoli
+          wldnm(ix,is,0)=0.0_R8
+          wldrm(ix,is,0)=0.0_R8
+          ewldm(ix,is,0)=0.0_R8
+        end do
+        if((ix.le.nnlimi).or.
+     +     (ix.gt.nnlimi.and.ix.le.nnlimi+nnstsi)) then
+          do istra=1,nstrai
+            if(use_recyceir.gt.0) then
+              recyctmp=recyceir(istra)
+            else
+              recyctmp=recyc(ismain,istra)
+            endif
+            wldnek(ix,0)=wldnek(ix,0)+
+     +       wldnek(ix,istra)*recyctmp
+            wldnep(ix,0)=wldnep(ix,0)+
+     +       wldnep(ix,istra)*recyctmp
+            do is=1,nnatmi
+              iy=eb2atcr(is)
+              if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
+              wldna(ix,is,0)=wldna(ix,is,0)+
+     +         wldna(ix,is,istra)*recyctmp
+              wldra(ix,is,0)=wldra(ix,is,0)+
+     +         wldra(ix,is,istra)*recyctmp
+              ewlda(ix,is,0)=ewlda(ix,is,0)+
+     +         ewlda(ix,is,istra)*recyctmp
+            end do
+            do is=1,nnmoli
+              if (lmolscl(is).gt.0 .and. lmolscl(is).le.nnatmi) then
+                iy=eb2atcr(lmolscl(is))
+                if(use_recyceir.eq.0) recyctmp=recyc(iy,istra)
+                wldnm(ix,is,0)=wldnm(ix,is,0)+
+     +           wldnm(ix,is,istra)*recyctmp
+                wldrm(ix,is,0)=wldrm(ix,is,0)+
+     +           wldrm(ix,is,istra)*recyctmp
+                ewldm(ix,is,0)=ewldm(ix,is,0)+
+     +           ewldm(ix,is,istra)*recyctmp
+              else if (use_recyceir.gt.0) then !here we are rescaling by stratum, not by species
+                wldnm(ix,is,0)=wldnm(ix,is,0)+
+     +           wldnm(ix,is,istra)*recyctmp
+                wldrm(ix,is,0)=wldrm(ix,is,0)+
+     +           wldrm(ix,is,istra)*recyctmp
+                ewldm(ix,is,0)=ewldm(ix,is,0)+
+     +           ewldm(ix,is,istra)*recyctmp
+              else
+                if (ix.eq.1 .and. istra.eq.1) then
+                  write(*,*) 'Faulty or missing LMOLSCL assignment:'
+                  write(*,*) 'LMOLSCL(',is,')=',lmolscl(is)
+                  write(*,*) 'Should be valued between 1 and NATM'
+                  write(*,*) 'Modify in b2.neutrals.parameters'
+                  write(*,*) 'See manual or b2cdcn.f file for usage'
+                  write(*,*) 'Scaling of molecular tallies skipped'
+                endif
+                wldnm(ix,is,0)=wldnm(ix,is,0)+wldnm(ix,is,istra)
+                wldrm(ix,is,0)=wldrm(ix,is,0)+wldrm(ix,is,istra)
+                ewldm(ix,is,0)=ewldm(ix,is,0)+ewldm(ix,is,istra)
+              endif
+            end do
+          end do
+        endif
+      end do
+      if (nnatmi.ne.nspecies) write (*,"(a,2i4)")
+     &  'b2trace: partial source rescaling: natmi,nspecies=',
+     &                                     nnatmi,nspecies  !srv 18.05.09
 #endif
 c*** Particle balance
       if(filedata(ntrc_bln)) call b2blnc(nx,ny,ns,dtim)
@@ -125,7 +122,7 @@ c======================================================================
       entry b2trci(nx,ny,ns,ismain,dtim,BoRiS)
 c*** Initialisation call
       if (tracing_initialised) return
-      call alloc_b2mod_user(nlim,nmol)
+      call alloc_b2mod_user(nlim,nmol,ntns)
       call ipgeti ('eirene_use_recyceir', use_recyceir)
       call read_b2mod_user_namelist(nx,ns)
 c*** Initialise tracing routines
