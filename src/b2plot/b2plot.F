@@ -4630,8 +4630,9 @@ c     assumes that bb is OK for 1d cases
             write(*,*) 'No data on matrix stack'
             return
           end if
+          write(hlp_frm,'(a,i3,a)') '(',ndim(3,i)+1,'a)'
           do i = iwrk, 1, -1
-            write(*,*) trim(graphlabel(i)), 
+            write(*,hpl_frm) trim(graphlabel(i)), 
      .       (trim(textwk(is,i)),is=0,ndim(3,i)-1)
           end do
         case('xsel')     ! select column
