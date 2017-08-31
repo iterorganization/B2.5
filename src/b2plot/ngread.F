@@ -96,10 +96,12 @@ c
 C
       do 11 IS = 1, NATMI
         READ(44,'(A8)',END=99,ERR=99) TEXTAN(IS-1)
-        atoms_list(is)=textan(is-1)(1:2)
-        write(hlp_frm,'(a6,i3,a8)') '(1x,a,',natmi,'(a2,1x))'
-        write(*,hlp_frm) 'atoms_list (fort.44) : ', atoms_list(1:natmi)
+        charns=textan(is-1)(1:3)
+        call strip_spaces(charns)
+        atoms_list(is)=charns(1:2)
    11 CONTINUE
+      write(hlp_frm,'(a6,i3,a8)') '(1x,a,',natmi,'(a2,1x))'
+      write(*,hlp_frm) 'atoms_list (fort.44) : ', atoms_list(1:natmi)
 C
 * neutral molecules
 C

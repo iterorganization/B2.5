@@ -113,6 +113,7 @@ C =====================================================================
         CALL SHRINK_LABEL(LBLS(I))
       ENDDO
       i=ncont+2
+      LBLS(I:100)=' '
       if(fill_option.eq.0) then
         LFIN(I)=(I-1)*NCOL/(ncont+3)+2
       else

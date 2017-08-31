@@ -43,7 +43,7 @@
           if (region(ix,iy,0).eq.0) cycle
           if (iseg(ix,iy).ne.0) cycle
           ntubes(iy) = ntubes(iy) + 1
-          call xertst (ntubes(iy).gt.nncutmax,
+          call xertst (ntubes(iy).le.nncutmax,
      .     'Too many flux tube segments. Increase nncutmax!')
           iseg(ix,iy) = ntubes(iy)
           isnum(iseg(ix,iy),iy) = 1

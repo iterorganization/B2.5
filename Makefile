@@ -859,7 +859,7 @@ endif
 tags:
 	rm -f ${SRCB2}/TAGS ; etags -o ${SRCB2}/TAGS ${TAGSLIST}
 
-${OBJDIR}/LISTOBJ: ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
+listobj: ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F
 ifdef USE_EIRENE
 	@rm -f ${OBJDIR}/LISTOBJ; touch ${OBJDIR}/LISTOBJ; l="OBJS ="; \
 	for d in `echo "${FPATH}" | tr : \ `; do \
@@ -904,7 +904,7 @@ endif
 	done; \
 	echo "$$l" | eval sed "$$E" >> ${OBJDIR}/LISTOBJ
 
-listobj: ${OBJDIR}/LISTOBJ
+${OBJDIR}/LISTOBJ: listobj
 
 VERSION: ${SRCDIR}/include/git_version_B25.h
 

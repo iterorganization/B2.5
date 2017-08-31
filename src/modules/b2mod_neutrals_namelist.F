@@ -721,8 +721,13 @@ c
       do is = 0, ns-1
         call xertst(1.le.b2espcr(is).and.b2espcr(is).le.nspecies,
      .   'faulty input b2espcr')
-        call xertst(1.le.b2eatcr(is).and.b2eatcr(is).le.nnatmi,
-     .   'faulty input b2eatcr')
+        if(nnatmi.eq.0) then
+          call xertst(1.le.b2eatcr(is).and.b2eatcr(is).le.nspecies,
+     .     'faulty input b2eatcr')
+        else
+          call xertst(1.le.b2eatcr(is).and.b2eatcr(is).le.nnatmi,
+     .     'faulty input b2eatcr')
+        endif
       enddo
       do is = 1, nnatmi
         call xertst(0.le.eb2atcr(is).and.eb2atcr(is).lt.ns,

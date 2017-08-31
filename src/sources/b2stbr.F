@@ -884,12 +884,12 @@ cxpb  plate_thickness.eq.0 means we are not doing full inventories
        do is = 0, ns-1
         write (chns,'(i3.3)') is
         if (use_eirene.ne.0) then
-         if(.not.is_neutral(is) .and. iout_b2wdat.ne.4) then
-          do k=0,1 ! 3                                                  !srv 29.04.10 {
-           write (chk,'(i1)') k
-           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
-     *              'b2stbr_smo_eir'//chk//chns)
-          enddo
+         if(.not.is_neutral(is) .and. iout_b2wdat.eq.4) then
+!          do k=0,1 ! 3                                                  !srv 29.04.10 {
+!           write (chk,'(i1)') k
+!           call my_out(70,nx,ny,smo0_eir(-1,-1,k,is),
+!     *              'b2stbr_smo_eir'//chk//chns)
+!          enddo
           wrk0=smo0_eir(:,:,0,is)+
      &         smo0_eir(:,:,1,is)*ua(:,:,is)+
      &         smo0_eir(:,:,2,is)*na(:,:,is)*mp*am(is)+
