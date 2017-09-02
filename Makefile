@@ -820,7 +820,7 @@ ${OBJDIR}/eirgrid_lib.o: ${OBJDIR}/eirmap.o
 # target 'clean' cleans up the directory.
 clean :
 	-mkdir ${OBJDIR}/.delete
-	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version_B25.h ${OBJDIR}/LISTOBJ ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F ${OBJDIR}/.delete >& /dev/null
+	-mv -i ${OBJDIR}/*.o ${OBJDIR}/*.f ${OBJDIR}/*.f90 ${OBJDIR}/*.a ${OBJDIR}/*.exe ${SRCDIR}/include/git_version_B25.h ${OBJDIR}/LISTOBJ ${OBJDIR}/dependencies ${DOCDIR}/b2cdci.F ${DOCDIR}/b2cdcn.F ${OBJDIR}/.delete >& /dev/null
 ifneq (${MOD},o)
 	-mv -i ${OBJDIR}/*.${MOD} ${OBJDIR}/.delete >& /dev/null
 endif
@@ -846,13 +846,11 @@ endif
 	@egrep -aiH '^ {0,}use ' ${SRCDIR}/*/*.F90 | grep -v 'IGNORE' | awk '{sub("\\.F90:",".o:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 4b' >> ${OBJDIR}/dependencies
 ifneq (${MOD},o)
-ifneq (${COMPILER},g95)
 	@egrep -aiH '^ {6,}use ' ${MODLISTF} | grep -v 'IGNORE' | awk '{sub("\\.F:",".${MOD}:",$$1);sub("\\.f:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 5a' >> ${OBJDIR}/dependencies
 ifdef MODLISTF90
 	@egrep -aiH '^ {0,}use ' ${MODLISTF90} | grep -v 'IGNORE' | awk '{sub("\\.F90:",".${MOD}:",$$1);sub("\\.f90:",".${MOD}:",$$1);sub("^.*/","$${OBJDIR}/",$$1); print $$1,"$${OBJDIR}/"tolower($$3)".${MOD}"}' >> ${OBJDIR}/dependencies
 	@echo '# 5b' >> ${OBJDIR}/dependencies
-endif
 endif
 endif
 
@@ -922,9 +920,6 @@ endif
 	${MAKE} local
 	${MAKE} listobj
 	${MAKE} depend
-ifeq (${COMPILER},g95)
-	${MAKE} `cat ${SRCDIR}/modules/.new_modules | sed -e 's:\.F:.o:' -e 's:[^ ]*/:${OBJDIR}/:' | awk.transpose`
-endif
 
 include ${OBJDIR}/dependencies
 
