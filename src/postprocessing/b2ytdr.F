@@ -4435,7 +4435,12 @@ Cxpb then rewrite the entire block
                 EELECA(IATM,J) = EELECA(IATM,K)
               END IF
               EBULKA(IATM,J) = EBULKA(IATM,K)
-              ESCD1A(IATM,J) = ESCD1A(IATM,K)
+              IF (B2IDEZ(ISCDEA(IATM,J),3,5).eq.3) THEN
+                IR = nint(ESCD1A(IATM,K))
+                ESCD1A(IATM,J) = dble(IREAC1(IR))
+              ELSE
+                ESCD1A(IATM,J) = ESCD1A(IATM,K)
+              ENDIF
               ESCD2A(IATM,J) = ESCD2A(IATM,K)
               FREACA(IATM,J) = FREACA(IATM,K)
               FLDLMA(IATM,J) = FLDLMA(IATM,K)
@@ -4565,7 +4570,12 @@ Cxpb then rewrite the entire block
                 EELECM(IMOL,J) = EELECM(IMOL,K)
               END IF
               EBULKM(IMOL,J) = EBULKM(IMOL,K)
-              ESCD1M(IMOL,J) = ESCD1M(IMOL,K)
+              IF (B2IDEZ(ISCDEM(IMOL,J),3,5).eq.3) THEN
+                IR = nint(ESCD1M(IMOL,K))
+                ESCD1M(IMOL,J) = dble(IREAC1(IR))
+              ELSE
+                ESCD1M(IMOL,J) = ESCD1M(IMOL,K)
+              END IF
               ESCD2M(IMOL,J) = ESCD2M(IMOL,K)
               FREACM(IMOL,J) = FREACM(IMOL,K)
             END IF
@@ -4693,7 +4703,12 @@ Cxpb then rewrite the entire block
                 EELECI(IION,J) = EELECI(IION,K)
               END IF
               EBULKI(IION,J) = EBULKI(IION,K)
-              ESCD1I(IION,J) = ESCD1I(IION,K)
+              IF (B2IDEZ(ISCDEI(IION,J),3,5).eq.3) THEN
+                IR = nint(ESCD1I(IION,K))
+                ESCD1I(IION,J) = dble(IREAC1(IR))
+              ELSE 
+                ESCD1I(IION,J) = ESCD1I(IION,K)
+              END IF
               ESCD2I(IION,J) = ESCD2I(IION,K)
               FREACI(IION,J) = FREACI(IION,K)
             END IF
@@ -4811,7 +4826,12 @@ Cxpb then rewrite the entire block
                 EELECPH(IPHOT,J) = EELECPH(IPHOT,K)
               END IF
               EBULKPH(IPHOT,J) = EBULKPH(IPHOT,K)
-              ESCD1PH(IPHOT,J) = ESCD1PH(IPHOT,K)
+              IF (B2IDEZ(ISCDEPH(IPHOT,J),3,5).eq.3) THEN
+                IR = nint(ESCD1PH(IPHOT,K))
+                ESCD1PH(IPHOT,J) = dble(IREAC1(IR))
+              ELSE
+                ESCD1PH(IPHOT,J) = ESCD1PH(IPHOT,K)
+              END IF
               ESCD2PH(IPHOT,J) = ESCD2PH(IPHOT,K)
               FREACPH(IPHOT,J) = FREACPH(IPHOT,K)
               FLDLMPH(IPHOT,J) = FLDLMPH(IPHOT,K)
@@ -4982,7 +5002,12 @@ Cxpb then rewrite the entire block
                 EELECP(IPLS,J) = EELECP(IPLS,K)
               END IF
               EBULKP(IPLS,J) = EBULKP(IPLS,K)
-              ESCD1P(IPLS,J) = ESCD1P(IPLS,K)
+              IF (B2IDEZ(ISCDEP(IPLS,J),3,5).eq.3) THEN
+                IR = nint(ESCD1P(IPLS,K))
+                ESCD1P(IPLS,J) = dble(IREAC1(IR))
+              ELSE
+                ESCD1P(IPLS,J) = ESCD1P(IPLS,K)
+              END IF
               ESCD2P(IPLS,J) = ESCD2P(IPLS,K)
               FREACP(IPLS,J) = FREACP(IPLS,K)
             END IF
