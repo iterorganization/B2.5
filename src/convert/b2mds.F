@@ -586,8 +586,8 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       if (boundary_namelist.eq.1)
      > call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
-      call xertst (nbc.le.nbcd, 'increase size in b2mds for nbcd')
-      call xertst (nniso.le.nnisod, 'increase size in b2mds for nnisod')
+      call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
+      call xertst (nniso.le.nnisod, 'increase DEF_NISO in DIMENSIONS.F')
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call ipgeti ('b2mndr_eirene', use_eirene)
       call alloc_b2mod_neutrals

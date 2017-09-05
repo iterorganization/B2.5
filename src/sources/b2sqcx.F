@@ -98,22 +98,22 @@
 * ..main computation
 *   ..compute rate coefficients
       do is = 0, ns-1
-      if (styl0.eq.0.or.is.lt.2) then
-       do iy = -1, ny
-        do ix = -1, nx
+       if (styl0.eq.0.or.is.lt.2) then
+        do iy = -1, ny
+         do ix = -1, nx
 *      ..compute charge exchange rate coefficient
-         rcx(ix,iy,is) = phm0*
+          rcx(ix,iy,is) = phm0*
      &     expu(rlcx0(ix,iy,0,is)+rlcx0(ix,iy,1,is)*wrk0(ix,iy))
+         enddo
         enddo
-       enddo
-      else
-       do iy = -1, ny
-        do ix = -1, nx
+       else
+        do iy = -1, ny
+         do ix = -1, nx
 *      ..compute charge exchange rate coefficient
-         rcx(ix,iy,is) = 0.0_R8
+          rcx(ix,iy,is) = 0.0_R8
+         enddo
         enddo
-       enddo
-      endif
+       endif
       enddo
 
 * ..return

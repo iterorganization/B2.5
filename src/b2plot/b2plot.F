@@ -751,8 +751,10 @@ c
       call alloc_b2mod_boundary(nx, ny, ns, nbcd, nnisod)
       if (boundary_namelist.eq.1)
      > call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
-      call xertst(nbc.le.nbcd, 'increase size in b2plot for nbcd')
-      call xertst(nniso.le.nnisod, 'increase size in b2plot for nnisod')
+      call xertst(nbc.le.nbcd,
+     . 'increase size of DEF_NBC in DIMENSIONS.F')
+      call xertst(nniso.le.nnisod,
+     . 'increase size in DEF_NISO in DIMENSIONS.F')
       call alloc_b2mod_neutrals
      . (nx, ny, ns, natm, nmol, nion, nstraid, nsts, sput_dst)
       if (neutrals_namelist.eq.1 .or. use_eirene.ne.0)

@@ -1660,9 +1660,9 @@ c 2002-09-11: logic revised
       if (found) write(6,*) trim(new_filename), ' already present!'
       do while((boundary_namelist.eq.1.or.todo).and..not.found)
         call read_b2mod_boundary_namelist(nx, ny, ns, .false.)
-        call xertst (nbc.le.nbcd, 'increase size in b2ytdr for nbcd')
+        call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
         call xertst (nniso.le.nnisod,
-     .   'increase size in b2ytdr for nnisod')
+     .   'increase DEF_NISO in DIMENSIONS.F')
         nbc1 = nbc
         do ib = 1, nbc
           call convert_bundle_i
@@ -1757,7 +1757,7 @@ c 2002-09-11: logic revised
             if (ib2.gt.ib1 .and. bcpos1(ib).ne.-2) then  ! must duplicate the X b.c.
               nbc1 = nbc1 + ib2-ib1
               call xertst (nbc1.le.nbcd,
-     .         'increase size in b2ytdr for nbcd')
+     .         'increase DEF_NBC in DIMENSIONS.F')
               do is = nbc1-(ib2-ib1), nbc1
                 bcchar(is) = bcchar(ib)
                 bcpos1(is) = bcpos(ib)+is
@@ -1882,7 +1882,7 @@ c 2002-09-11: logic revised
             if (ib2.gt.ib1) then  ! must duplicate the Y b.c.
               nbc1 = nbc1 + ib2-ib1
               call xertst (nbc1.le.nbcd,
-     .         'increase size in b2ytdr for nbcd')
+     .         'increase DEF_NBC in DIMENSIONS.F')
               do is = nbc1-(ib2-ib1), nbc1
                 bcchar(is) = bcchar(ib)
                 bcpos1(is) = bcpos(ib)+is

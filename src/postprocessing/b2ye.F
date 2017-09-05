@@ -18,11 +18,12 @@
 
       implicit none
 
+#include "DIMENSIONS.F"
 #ifndef NO_CDF
 #     include <netcdf.inc>
 
       integer :: nastep, ntim_batch, ntotdt, naver
-      integer :: nncutmax = 10
+      integer, parameter :: nncutmax = DEF_NCUT
       integer :: imap(maxvdims), iret, ncid, iout
       real (kind=R8), allocatable, save ::
      *      batchsa(:)

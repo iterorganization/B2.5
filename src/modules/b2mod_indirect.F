@@ -5,6 +5,7 @@
       use b2mod_cellhelper
       use b2mod_connectivity
       implicit none
+#include "DIMENSIONS.F"
 
       integer, parameter :: NNREGMAX=8
 
@@ -48,7 +49,7 @@
       allocate(region(-1:nxd,-1:nyd,0:2))
       nnreg=0
       allocate(resignore(-1:nxd,-1:nyd,2))
-      nncutmax=10
+      nncutmax=DEF_NCUT
       allocate(leftcut(1:nncutmax))
       allocate(rightcut(1:nncutmax))
       allocate(topcut(1:nncutmax))

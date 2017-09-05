@@ -80,9 +80,9 @@
       allocate(last_solve_9(0:nnreg(0)))
 #else
       call xertst (nsd.le.nsdmax,
-     1 'increase NSDMAX in b2mod_numerics_namelist')
+     1 'increase DEF_NSD in DIMENSIONS.F')
       call xertst (nnreg(0).le.nnregmax,
-     1 'increase NNREGMAX in b2mod_numerics_namelist')
+     1 'increase NNREGMAX in b2mod_indirect')
 #endif
       dtco=1.0_R8
       dtmo=1.0_R8
