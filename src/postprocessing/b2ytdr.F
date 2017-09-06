@@ -7179,10 +7179,12 @@ cxpb Read first, transform and rewrite
                 EXIT
               ENDIF
             END DO
-            READ (ZEILE,6666) idum(0:6) ! ISPSRF, IPTYP, IPSP, ISPTYP, NSPS,
+            READ (ZEILE,6666) idum(0:6) ! ISPSRF, IPTYP, IPSPZ, ISPTYP, NSPS,
                                         ! ISRFCLL, IDIREC
-            IF (idum(1).EQ.1) idum(1) = iatm1(idum(1))
-            IF (idum(1).EQ.4) idum(2) = ipls1(idum(2))
+            IF (idum(2).NE.0) THEN
+              IF (idum(1).EQ.1) idum(2) = iatm1(idum(2))
+              IF (idum(1).EQ.4) idum(2) = ipls1(idum(2))
+            ENDIF
             WRITE(IUNOT,6666) idum(0:7)
             READ (IUNIN,'(A80)') ZEILE ! SPCMN, SPCMX, SPC_SHIFT,
                                        ! SPCPLT_X,SPCPLT_Y,SPCPLT_SAME
