@@ -197,8 +197,10 @@ ctb..as the mean of the product does not equal the product of the means etc.
       call cfwuch (iun, 120, lble, 'label')
       call b2wuzd (iun, newversion, ns, zamin, zamax, zn, am)
 
-      call cfwuin (iun, 1, naver, 'naver')
-!      call cfwuin (iun, 1, ntotdt, 'ntotdt')
+      idum(0) = naver
+      call cfwuin (iun, 1, idum, 'naver')
+      idum(0) = ntotdt
+!     call cfwuin (iun, 1, idum, 'ntotdt')
       
       call cfwure (iun, n2*ns, na_mean, 'na_mean')
       call cfwure (iun, n2, te_mean, 'te_mean')

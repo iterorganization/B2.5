@@ -25,9 +25,9 @@
 *   ..input arguments (unchanged on exit)
       integer nout(0:5), nx, ny, ns, ismain, ismain0,
      *  nscx, iscx(0:nscxmax-1), itim, ntim
-      integer :: ntim_batch = 500
-      integer :: iav_run = 0
-      integer :: ibatch_av_all = 0
+      integer, save :: ntim_batch = 500
+      integer, save :: iav_run = 0
+      integer, save :: ibatch_av_all = 0
       real (kind=R8) ::
      *  dtim
 *   ..input/output arguments

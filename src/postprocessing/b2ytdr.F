@@ -302,7 +302,8 @@ c 2002-09-11: logic revised
       integer ICRM, IPLSS, ISTRA
       integer MAXRAD, NSIGVI, NSIGSI, NSIGCI, NPPLG, NCRM
       integer NSIGV1, NSIGS1, NSIGC1, NLOGIN
-      integer NADVI, NADV1, NCLVI, NALVI, NADSI, NALSI
+      integer NADVI, NADV1, NCLVI, NCLV1, NALVI, NALV1, NADSI, NADS1
+      integer NALSI, NALS1, NADSPC1
       integer ISPL, IPROJ, NPLI1, NPLO1, NPLI2, NPLO2
       integer NPLIN2, NPLOT2, NPLDL2
       integer NCHORI, LNTSPEC, LNTSPUT, NLSTADDS, NGWTIES, NSNVI, NPWIN
@@ -7005,6 +7006,8 @@ cxpb Read first, transform and rewrite
         ILINE = 1
         NADV1 = 0
         DO 1020 J=1,NADVI
+          call xertst(ILINE+3.le.100,
+     .       'increase size of ZEILEN in b2ytdr!')
  1021     READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
           IF (ZEILEN(ILINE+1)(1:1) .EQ. '*') THEN
             ILINE = ILINE+1
@@ -7031,40 +7034,52 @@ cxpb Read first, transform and rewrite
             NADV1 = NADV1+1
           END IF
  1020   CONTINUE
-        WRITE(IUNOT,6666) NADV1,NCLVI,NALVI,NADSI,NALSI,NADSPC
-        DO J=1,ILINE
-          WRITE(IUNOT,'(A80)') ZEILEN(J)
-        END DO
 *** 10B. DATA FOR COLLISION ESTIMATORS
-        READ (IUNIN,'(A80)') ZEILE
-        WRITE(IUNOT,'(A80)') ZEILE
+        READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
+        ILINE = ILINE+1
+        NCLV1 = 0
         DO 1030 J=1,NCLVI
- 1031     READ (IUNIN,'(A80)') ZEILE
-          IF (ZEILE(1:1) .EQ. '*') THEN
-            WRITE(IUNOT,'(A80)') ZEILE
+          call xertst(ILINE+3.le.100,
+     .       'increase size of ZEILEN in b2ytdr!')
+ 1031     READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
+          IF (ZEILEN(ILINE+1)(1:1) .EQ. '*') THEN
+            ILINE = ILINE+1
             GOTO 1031
           ELSE
-            READ (ZEILE,6666) idum(0:3) ! ICLVE(J),ICLVS(J),ICLVT(J),ICLRC(J)
+            READ (ZEILEN(ILINE+1),6666) idum(0:3) ! ICLVE(J),ICLVS(J),ICLVT(J),ICLRC(J)
             idum(1) = transform_tally(.true.,idum(2),idum(1),
      .                                iatm1,ipls1,nphoti,natmi,nmoli,
      .                                nioni,nplsi,natmi1)
-            WRITE(IUNOT,6666) idum(0:3)
+            WRITE(ZEILEN(ILINE+1),6666) idum(0:3)
           ENDIF
-          READ (IUNIN,'(A72)') ZEILE ! TXTTLC(J)
-          WRITE(IUNOT,'(A72)') ZEILE
+          READ (IUNIN,'(A72)') ZEILEN(ILINE+2) ! TXTTLC(J)
           READ (IUNIN,'(2A24)') TXTSPC,TXTUNT
-          WRITE(IUNOT,'(2A24)') TXTSPC,TXTUNT
+          IF (INDEX(TXTSPC,'ATOMS').GT.0) THEN
+            READ (TXTSPC,'(A2)') ELNAME
+            IF (element_present(natm,natmi,iatm1,elname)) THEN
+              WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT
+              ILINE = ILINE+3
+              NCLV1 = NCLV1+1
+            END IF
+          ELSE
+            WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT
+            ILINE = ILINE+3
+            NCLV1 = NCLV1+1
+          END IF
  1030   CONTINUE
 *** 10C. DATA FOR ALGEBRAIC EXPRESSIONS
-        READ (IUNIN,'(A80)') ZEILE
-        WRITE(IUNOT,'(A80)') ZEILE
+        READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
+        ILINE = ILINE+1
+        NALV1 = 0
         DO 1040 M=1,NALVI
- 1041     READ (IUNIN,'(A80)') ZEILE
-          IF (ZEILE(1:1) .EQ. '*') THEN
-            WRITE(IUNOT,'(A80)') ZEILE
+          call xertst(ILINE+3.le.100,
+     .       'increase size of ZEILEN in b2ytdr!')
+ 1041     READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
+          IF (ZEILEN(ILINE+1)(1:1) .EQ. '*') THEN
+            ILINE = ILINE+1
             GOTO 1041
           ELSE
-            READ (ZEILE,'(A72)') CHRTAL
+            READ (ZEILEN(ILINE+1),'(A72)') CHRTAL
             L = lnblnk(CHRTAL)
             J = INDEX(CHRTAL,',')
             DO WHILE (J.GT.0)
@@ -7083,9 +7098,10 @@ cxpb Read first, transform and rewrite
                   WRITE(CHRTAL(I+1:J-1),'(i2)') idum(1)
                 ELSE
                   WRITE(hlp_frm,'(a2,i2,a1)') '(a',L-J+1,')'
-                  READ(CHRTAL(J:L),hlp_frm) ZEILE(1:L-J+1)
+                  READ(CHRTAL(J:L),hlp_frm) ZEILEN(ILINE+1)(1:L-J+1)
                   WRITE(CHRTAL(I+1:I+2),'(i2)') idum(1)
-                  WRITE(CHRTAL(I+3:I+3+L-J),hlp_frm) ZEILE(1:L-J+1)
+                  WRITE(CHRTAL(I+3:I+3+L-J),hlp_frm)
+     .             ZEILEN(ILINE+1)(1:L-J+1)
                   L = I+3+L-J
                   K = INDEX(CHRTAL(I+3:L),'>') + I+3
                 ENDIF
@@ -7093,43 +7109,69 @@ cxpb Read first, transform and rewrite
               J = INDEX(CHRTAL(K+1:L),',')
               IF (J.NE.0) J = J+K
             END DO
-            WRITE(IUNOT,'(A72)') CHRTAL
+            WRITE(ZEILEN(ILINE+1),'(A72)') CHRTAL
           ENDIF
-          READ (IUNIN,'(A72)') ZEILE ! TXTTLR(J)
-          WRITE(IUNOT,'(A72)') ZEILE
+          READ (IUNIN,'(A72)') ZEILEN(ILINE+2) ! TXTTLR(J)
           READ (IUNIN,'(2A24)') TXTSPC,TXTUNT
-          WRITE(IUNOT,'(2A24)') TXTSPC,TXTUNT
+          IF (INDEX(TXTSPC,'ATOMS').GT.0) THEN
+            READ (TXTSPC,'(A2)') ELNAME
+            IF (element_present(natm,natmi,iatm1,elname)) THEN
+              WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT
+              ILINE = ILINE+3
+              NALV1 = NALV1+1
+            END IF
+          ELSE
+            WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT
+            ILINE = ILINE+3
+            NALV1 = NALV1+1
+          END IF
  1040   CONTINUE
 *** 10D. DATA FOR ADDITIONAL SURFACE TALLIES
-        READ (IUNIN,'(A80)') ZEILE
-        WRITE(IUNOT,'(A80)') ZEILE
+        READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
+        ILINE = ILINE+1
+        NADS1 = 0
         DO 1050 M=1,NADSI
- 1051     READ (IUNIN,'(A80)') ZEILE
-          IF (ZEILE(1:1) .EQ. '*') THEN
-            WRITE(IUNOT,'(A80)') ZEILE
+          call xertst(ILINE+3.le.100,
+     .       'increase size of ZEILEN in b2ytdr!')
+ 1051     READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
+          IF (ZEILEN(ILINE+1)(1:1) .EQ. '*') THEN
+            ILINE = ILINE + 1
             GOTO 1051
           ELSE
-            READ (ZEILE,6666) idum(0:3) ! IADSE(J),IADSS(J),IADST(J),IADSC(J)
+            READ (ZEILEN(ILINE+1),6666) idum(0:3) ! IADSE(J),IADSS(J),IADST(J),IADSC(J)
             idum(1) = transform_tally(.false.,idum(2),idum(1),
      .                                iatm1,ipls1,nphoti,natmi,nmoli,
      .                                nioni,nplsi,natmi1)
-            WRITE(IUNOT,6666) idum(0:3)
+            WRITE(ZEILEN(ILINE+1),6666) idum(0:3)
           ENDIF
-          READ (IUNIN,'(A72)') ZEILE ! TXTTLW(J)
-          WRITE(IUNOT,'(A72)') ZEILE
+          READ (IUNIN,'(A72)') ZEILEN(ILINE+2) ! TXTTLW(J)
           READ (IUNIN,'(2A24)') TXTSPC,TXTUNT
-          WRITE(IUNOT,'(2A24)') TXTSPC,TXTUNT
+          IF (INDEX(TXTSPC,'ATOMS').GT.0) THEN
+            READ (TXTSPC,'(A2)') ELNAME
+            IF (element_present(natm,natmi,iatm1,elname)) THEN
+              WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT
+              ILINE = ILINE+3
+              NADS1 = NADS1+1
+            END IF
+          ELSE
+            WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT
+            ILINE = ILINE+3
+            NADS1 = NADS1+1
+          END IF
  1050   CONTINUE
 *** 10E. DATA FOR ALGEBRAIC SURFACE TALLIES
-        READ (IUNIN,'(A80)') ZEILE
-        WRITE(IUNOT,'(A80)') ZEILE
+        READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
+        ILINE = ILINE+1
+        NALS1 = 0
         DO 1060 M=1,NALSI
- 1061     READ (IUNIN,'(A80)') ZEILE
-          IF (ZEILE(1:1) .EQ. '*') THEN
-            WRITE(IUNOT,'(A80)') ZEILE
+          call xertst(ILINE+3.le.100,
+     .       'increase size of ZEILEN in b2ytdr!')
+ 1061     READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
+          IF (ZEILEN(ILINE+1)(1:1) .EQ. '*') THEN
+            ILINE = ILINE + 1
             GOTO 1061
           ELSE
-            READ (ZEILE,'(A72)') CHRTAL
+            READ (ZEILEN(ILINE+1),'(A72)') CHRTAL
             L = lnblnk(CHRTAL)
             J = INDEX(CHRTAL,',')
             DO WHILE (J.GT.0)
@@ -7148,9 +7190,10 @@ cxpb Read first, transform and rewrite
                   WRITE(CHRTAL(I+1:J-1),'(i2)') idum(1)
                 ELSE
                   WRITE(hlp_frm,'(a2,i2,a1)') '(a',L-J+1,')'
-                  READ(CHRTAL(J:L),hlp_frm) ZEILE(1:L-J+1)
+                  READ(CHRTAL(J:L),hlp_frm) ZEILEN(ILINE+1)(1:L-J+1)
                   WRITE(CHRTAL(I+1:I+2),'(i2)') idum(1)
-                  WRITE(CHRTAL(I+3:I+3+L-J),hlp_frm) ZEILE(1:L-J+1)
+                  WRITE(CHRTAL(I+3:I+3+L-J),hlp_frm)
+     .             ZEILEN(ILINE+1)(1:L-J+1)
                   L = I+3+L-J
                   K = INDEX(CHRTAL(I+3:L),'>') + I+3
                 ENDIF
@@ -7158,45 +7201,79 @@ cxpb Read first, transform and rewrite
               J = INDEX(CHRTAL(K+1:L),',')
               IF (J.NE.0) J = J+K
             END DO
-            WRITE(IUNOT,'(A72)') CHRTAL
+            WRITE(ZEILEN(ILINE+1),'(A72)') CHRTAL
           ENDIF
-          READ (IUNIN,'(A72)') ZEILE ! TXTTLW(J)
-          WRITE(IUNOT,'(A72)') ZEILE
+          READ (IUNIN,'(A72)') ZEILEN(ILINE+2) ! TXTTLW(J)
           READ (IUNIN,'(2A24)') TXTSPC,TXTUNT
-          WRITE(IUNOT,'(2A24)') TXTSPC,TXTUNT
+          IF (INDEX(TXTSPC,'ATOMS').GT.0) THEN
+            READ (TXTSPC,'(A2)') ELNAME
+            IF (element_present(natm,natmi,iatm1,elname)) THEN
+              WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT
+              ILINE = ILINE+3
+              NALS1 = NALS1+1
+            END IF
+          ELSE
+            WRITE(ZEILEN(ILINE+3),'(2A24)') TXTSPC,TXTUNT
+            ILINE = ILINE+3
+            NALS1 = NALS1+1
+          END IF
  1060   CONTINUE
 *** 10F. DATA FOR SPECTRUM CALCULATION
-        READ (IUNIN,'(A80)') ZEILE
-        WRITE(IUNOT,'(A80)') ZEILE
+        READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
+        ILINE = ILINE + 1
         IREAD = 1
-        IF (ZEILE(1:3).EQ.'** ' .AND. ZEILE(1:4).NE.'*** ') THEN
+        NADSPC1 = 0
+        IF (ZEILEN(ILINE+1)(1:3).EQ.'** ' .AND.
+     &      ZEILEN(ILINE+1)(1:4).NE.'*** ') THEN
           DO M=1,NADSPC
+            call xertst(ILINE+3.le.100,
+     .       'increase size of ZEILEN in b2ytdr!')
             DO
-              READ (IUNIN,'(A80)') ZEILE
+              READ (IUNIN,'(A80)') ZEILEN(ILINE+1)
               IF (ZEILE(1:1).EQ.'*') THEN
-                WRITE(IUNOT,'(A80)') ZEILE
+                ILINE = ILINE + 1
               ELSE
                 EXIT
               ENDIF
             END DO
-            READ (ZEILE,6666) idum(0:6) ! ISPSRF, IPTYP, IPSPZ, ISPTYP, NSPS,
-                                        ! ISRFCLL, IDIREC
-            IF (idum(2).NE.0) THEN
-              IF (idum(1).EQ.1) idum(2) = iatm1(idum(2))
-              IF (idum(1).EQ.4) idum(2) = ipls1(idum(2))
+            READ (ZEILEN(ILINE+1),6666) idum(0:6) ! ISPSRF, IPTYP, IPSPZ, ISPTYP, NSPS,
+                                                  ! ISRFCLL, IDIREC
+            IF (idum(2).GT.0) THEN
+              IF (idum(1).EQ.1) THEN
+                IF (iatm1(idum(2)).GT.0) THEN
+                  idum(2) = iatm1(idum(2))
+                ELSE
+                  idum(2) = -1
+                END IF
+              END IF
+              IF (idum(1).EQ.4) THEN
+                IF (ipls1(idum(2)).GT.0) THEN
+                  idum(2) = ipls1(idum(2))
+                ELSE
+                  idum(2) = -1
+                END IF
+              END IF
             ENDIF
-            WRITE(IUNOT,6666) idum(0:7)
-            READ (IUNIN,'(A80)') ZEILE ! SPCMN, SPCMX, SPC_SHIFT,
-                                       ! SPCPLT_X,SPCPLT_Y,SPCPLT_SAME
-            WRITE(IUNOT,'(A80)') ZEILE
-            IF (idum(6).NE.0) THEN
-              READ (IUNIN,'(A80)') ZEILE ! SPCVX, SPCVY, SPCVZ
-              WRITE(IUNOT,'(A80)') ZEILE
+            IF (idum(2).GE.0) THEN
+              NADSPC1 = NADSPC1 + 1
+              WRITE(ZEILEN(ILINE+1),6666) idum(0:7)
+              READ (IUNIN,'(A80)') ZEILEN(ILINE+2) ! SPCMN, SPCMX, SPC_SHIFT,
+                                                   ! SPCPLT_X,SPCPLT_Y,SPCPLT_SAME
+              IF (idum(6).NE.0) THEN
+                READ (IUNIN,'(A80)') ZEILEN(ILINE+3) ! SPCVX, SPCVY, SPCVZ
+                ILINE = ILINE + 3
+              ELSE
+                ILINE = ILINE + 2
+              END IF
             END IF
           END DO
           IREAD = 0
         END IF
         deallocate (TEXTA)
+        WRITE(IUNOT,6666) NADV1,NCLV1,NALV1,NADS1,NALS1,NADSPC1
+        DO J=1,ILINE
+          WRITE(IUNOT,'(A80)') ZEILEN(J)
+        END DO
 *** 11. DATA FOR NUMERICAL AND GRAPHICAL OUTPUT
         IF (IREAD.EQ.0) THEN
           READ (IUNIN,'(A80)') ZEILE

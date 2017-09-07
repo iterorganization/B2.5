@@ -988,8 +988,8 @@
      &                    'b2stbc_fb_pre_option: using ',
      &                    'SOLPS4 linear increase for sequence ',
      &                    ispecies+1
-                     if(na_feedback_alpha(ispecies).lt.0.0_R8) then
-                       na_feedback_alpha(ispecies) = 0.0_R8
+                     if(na_feedback_const(ispecies).lt.0.0_R8) then
+                       na_feedback_const(ispecies) = 0.0_R8
                        is_start=-1
                        is_end=-1
                        do is=0, ns-1
@@ -1004,8 +1004,8 @@
      &                          rightix(ix,iy).ne.nx+1 .and.
      &                          bottomiy(ix,iy).ne.-2 .and.
      &                          topiy(ix,iy).ne.ny+1) then
-                                na_feedback_alpha(ispecies) =
-     &                             na_feedback_alpha(ispecies) +
+                                na_feedback_const(ispecies) =
+     &                             na_feedback_const(ispecies) +
      &                             na(ix,iy,is) * vol(ix, iy)
                                endif
                              enddo
@@ -1024,10 +1024,10 @@
      .               (tim-na_feedback_time(ispecies))
                   na_feedback_rescale =
      .               na_feedback_alpha(ispecies) *
-     .              (na_feedback_target(ispecies) -
+     .             ((na_feedback_target(ispecies) -
      .               na_feedback_current)/dtim +
      .              (na_feedback_prev(ispecies) -
-     .               na_feedback_current)/dt_prev
+     .               na_feedback_current)/dt_prev)
                   if (.not.prev_done(ispecies)) then
                     na_feedback_prev(ispecies) = na_feedback_current
                     prev_done(ispecies) = .true.
@@ -1041,8 +1041,8 @@
      &                    'b2stbc_fb_pre_option: using ',
      &                    'SOLPS4 exponential decay for sequence ',
      &                    ispecies+1
-                     if(na_feedback_alpha(ispecies).lt.0.0_R8) then
-                       na_feedback_alpha(ispecies) = 0.0_R8
+                     if(na_feedback_const(ispecies).lt.0.0_R8) then
+                       na_feedback_const(ispecies) = 0.0_R8
                        is_start=-1
                        is_end=-1
                        do is=0, ns-1
@@ -1055,8 +1055,8 @@
      &                          rightix(ix,iy).ne.nx+1 .and.
      &                          bottomiy(ix,iy).ne.-2 .and.
      &                          topiy(ix,iy).ne.ny+1) then
-                                na_feedback_alpha(ispecies) =
-     &                             na_feedback_alpha(ispecies) +
+                                na_feedback_const(ispecies) =
+     &                             na_feedback_const(ispecies) +
      &                             na(ix,iy,is) * vol(ix, iy)
                                endif
                              enddo
@@ -1070,15 +1070,15 @@
                   endif
 
                   na_feedback_target(ispecies) =
-     .               na_feedback_alpha(ispecies) *
+     .               na_feedback_const(ispecies) *
      .               exp(na_feedback_beta(ispecies)*
      .                   (tim-na_feedback_time(ispecies)))
                   na_feedback_rescale =
-     .               na_feedback_const(ispecies) *
-     .              (na_feedback_target(ispecies) -
+     .               na_feedback_alpha(ispecies) *
+     .             ((na_feedback_target(ispecies) -
      .               na_feedback_current)/dtim +
      .              (na_feedback_prev(ispecies) -
-     .               na_feedback_current)/dt_prev
+     .               na_feedback_current)/dt_prev)
                   if (.not.prev_done(ispecies)) then
                     na_feedback_prev(ispecies) = na_feedback_current
                     prev_done(ispecies) = .true.
@@ -1130,7 +1130,7 @@
                     saved_na_feedback_actuator(ispecies) =
      &                 na_feedback_rescale
                   end if
-                  if(na_feedback_puff_min(ispecies) .gt. 0.0_R8)
+                  if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
      &                 saved_na_feedback_actuator(ispecies) =
      &                 max(na_feedback_puff_min(ispecies),
      &                 saved_na_feedback_actuator(ispecies))
@@ -1185,7 +1185,7 @@
      &                 saved_na_feedback_actuator(ispecies) +
      &                 na_feedback_rescale
 
-                  if(na_feedback_puff_min(ispecies) .gt. 0.0_R8)
+                  if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
      &                 saved_na_feedback_actuator(ispecies) =
      &                 max(na_feedback_puff_min(ispecies),
      &                 saved_na_feedback_actuator(ispecies))
