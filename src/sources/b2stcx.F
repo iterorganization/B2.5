@@ -291,9 +291,9 @@ ctmp.dpc
       call b2_to_astra_src(nx, ny, vol, wrk0, svol, sih)                !srv 11.06.13
 #endif
 
+      write (chcx,'(i3.3)') is0
       if (iout.eq.1 .or. (iout_b2npc9.eq.1 .or. iout_b2npco.eq.1)
      &              .or. iout_b2wdat.eq.4) then
-        write (chcx,'(i3.3)') is0
         do is = 0, ns-1
           write (chns,'(i3.3)') is
 !         do k=0,1
