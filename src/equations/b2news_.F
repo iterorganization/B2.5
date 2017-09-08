@@ -421,30 +421,33 @@ c   extra call at this place within internal iteration)
      &    ni, sna, smo, she, shi, sch, sne)                              !xpb
       endif
 
+      if (ue_style.eq.2 .or. iout.ne.0)
 *   ..compute ue, electron parallel velocity
-      call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,         !srv 05.07.17
-     &             ne, te, na, ua, ue_ext, ne_ext, ue)
-      do iy=-1,ny
-        do ix=-1,nx
-          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
-            wrk0(ix,iy)=-(fch_p(ix,iy,0)/pbs(ix,iy,0)+
-     &        fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+     > call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,        !srv 05.07.17
+     &              ne, te, na, ua, ue_ext, ne_ext, ue)
+      if (ue_style.ne.2 .or. iout.ne.0) then
+        do iy=-1,ny
+          do ix=-1,nx
+            if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+              wrk0(ix,iy)=-(fch_p(ix,iy,0)/pbs(ix,iy,0)+
+     &          fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
      &          pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
-          elseif(leftix(ix,iy).eq.-2) then
-            wrk0(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+            elseif(leftix(ix,iy).eq.-2) then
+              wrk0(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
      &         pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
-          elseif(rightix(ix,iy).eq.nx+1) then
-            wrk0(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe
-          endif
-!          wrk0(ix,iy)=wrk0(ix,iy)*prl_cur                               !srv 03.04.15
+            elseif(rightix(ix,iy).eq.nx+1) then
+              wrk0(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe
+            endif
+!           wrk0(ix,iy)=wrk0(ix,iy)*prl_cur                              !srv 03.04.15
+          enddo
         enddo
-      enddo
-      do is=0,ns-1
-        wrk0(:,:)=wrk0(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
-      enddo
-      wrk0(:,:)=wrk0(:,:)+ue_ext(:,:)*ne_ext(:,:)
-      wrk0(:,:)=wrk0(:,:)/ne(:,:)                                        !srv 05.03.11
-      if(iout_b2wdat.eq.4) then                                          !srv 05.07.17
+        do is=0,ns-1
+          wrk0(:,:)=wrk0(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
+        enddo
+        wrk0(:,:)=wrk0(:,:)+ue_ext(:,:)*ne_ext(:,:)
+        wrk0(:,:)=wrk0(:,:)/ne(:,:)                                      !srv 05.03.11
+      endif
+      if(iout.ne.0) then                                                 !srv 05.07.17
        call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
        call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
        call b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)
@@ -453,7 +456,7 @@ c   extra call at this place within internal iteration)
        call my_out(70,nx,ny,ue,'b2news__ve')
        call my_out(70,nx,ny,wrk0,'b2news__ue')
       endif                                                              !srv 05.07.17
-      if (ue_style.eq.0) ue=wrk0
+      if (ue_style.ne.2) ue=wrk0
 
 csw 11oct2012 added check on coriolis force (taken from b2news())
       ier0=0

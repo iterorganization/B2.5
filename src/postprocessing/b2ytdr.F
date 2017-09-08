@@ -5308,6 +5308,8 @@ cxpb Must now convert the bulk ion data according to the new bundling
               ISRTP1(IB) = IATM1(ISRTP(e_bundle_end(IB)))
             ELSE IF (ISRTP(e_bundle_end(IB)).GT.NATMI) THEN
               ISRTP1(IB) = NATMI1 + 1
+            ELSE
+              ISRTP1(IB) = ISRTP(e_bundle_end(IB))
             ENDIF
             ID1P1(IB) =
      .       maxval(ID1P(e_bundle_start(IB):e_bundle_end(IB)))
