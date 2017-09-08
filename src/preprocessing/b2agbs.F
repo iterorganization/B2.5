@@ -37,6 +37,8 @@
 *   ..identify flux tubes
       iseg = 0
       isnum = 0
+      ixleft = -2
+      ixright = -2
       do iy = -1, ny
         ntubes(iy) = 0
         do ix = -1, nx
@@ -61,8 +63,7 @@
             else
               iseg(ixl,iy) = iseg(ix,iy)
               isnum(iseg(ix,iy),iy) = isnum(iseg(ix,iy),iy) + 1
-              if (ixl.lt.ix) ixleft(iseg(ix,iy),iy) = ixl
-              if (ixl.gt.ix) ixright(iseg(ix,iy),iy) = ixl
+              if (leftix(ixl,iy).eq.-2) ixleft(iseg(ix,iy),iy) = ixl
             end if
             goto 20
           end if
@@ -76,8 +77,7 @@
             else
               iseg(ixr,iy) = iseg(ix,iy)
               isnum(iseg(ix,iy),iy) = isnum(iseg(ix,iy),iy) + 1
-              if (ixr.lt.ix) ixleft(iseg(ix,iy),iy) = ixr
-              if (ixr.gt.ix) ixright(iseg(ix,iy),iy) = ixr
+              if (rightix(ixr,iy).eq.nx+1) ixright(iseg(ix,iy),iy) = ixr
             end if
             goto 30
           end if
@@ -116,10 +116,10 @@
           if (ixref(iseg(ix,iy),iy).eq.-2) cycle
           if (leftix(ix,iy).ne.-2) then ! do not adjust pbs if leftix=-2
                                         ! since there is no western face
-            pbs(ix,iy,0) = gs(ixref(iseg(ix,iy),iy),iy,0)*
-     .                   wbbl(ixref(iseg(ix,iy),iy),iy,0)/
-     .                   wbbl(ixref(iseg(ix,iy),iy),iy,3)*
-     .                     qc(ixref(iseg(ix,iy),iy),iy)
+            pbs(ix,iy,0) =
+     .         gs(ixref(iseg(ix,iy),iy),iy,0)*
+     .       wbbl(ixref(iseg(ix,iy),iy),iy,3)/wbbl(ix,iy,3)*
+     .         qc(ixref(iseg(ix,iy),iy),iy)
           end if
           hy(ix,iy) = hz(ixref(iseg(ix,iy),iy),iy)*
      .                hy(ixref(iseg(ix,iy),iy),iy)*
