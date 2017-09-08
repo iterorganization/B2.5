@@ -356,26 +356,46 @@ cdjm Jan2017 update momentum source components for balance
        fmo(:,:,:,is)=wrkf
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10
-       if (iout.ne.0) then                                             !srv 12.07.02 {
-        call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua_input'//chns)
-        call my_out(70,nx,ny,resmo(-1,-1,is),'b2npmo_resmo'//chns)
-        call my_out(70,nx,ny,fmo(-1,-1,0,is),'b2npmo_fmox'//chns)
-        call my_out(70,nx,ny,fmo(-1,-1,1,is),'b2npmo_fmoy'//chns)
-        if(.not. is_neutral(is)) then
-          call my_out(70,nx,ny,flubv(-1,-1,0),'b2npmo_flubvx'//chns)
-          wrks=smbvv(:,:,0)+smbvv(:,:,1)*ua(:,:,is)+
-     &       smbvv(:,:,2)*na(:,:,is)*mp*am(is)+
-     &       smbvv(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-          call my_out(70,nx,ny,wrks,'b2npmo_smovv'//chns)
-          wrks=smbvh(:,:,0)+smbvh(:,:,1)*ua(:,:,is)+
-     &       smbvh(:,:,2)*na(:,:,is)*mp*am(is)+
-     &       smbvh(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-          call my_out(70,nx,ny,wrks,'b2npmo_smovh'//chns)
-        endif
-        wrks=smb(:,:,0)+smb(:,:,1)*ua(:,:,is)+
+
+       if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                                             !srv 12.07.02 {
+         call my_out(70,nx,ny,resmo(-1,-1,is),'b2npmo_resmo'//chns)
+         call my_out(70,nx,ny,fmo(-1,-1,0,is),'b2npmo_fmox'//chns)
+         call my_out(70,nx,ny,fmo(-1,-1,1,is),'b2npmo_fmoy'//chns)
+         if(.not. is_neutral(is)) then
+            call my_out(70,nx,ny,flubv(-1,-1,0),'b2npmo_flubvx'//chns)
+            wrks=smbvv(:,:,0)+smbvv(:,:,1)*ua(:,:,is)+
+     &         smbvv(:,:,2)*na(:,:,is)*mp*am(is)+
+     &         smbvv(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+            call my_out(70,nx,ny,wrks,'b2npmo_smovv'//chns)
+            wrks=smbvh(:,:,0)+smbvh(:,:,1)*ua(:,:,is)+
+     &         smbvh(:,:,2)*na(:,:,is)*mp*am(is)+
+     &         smbvh(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+            call my_out(70,nx,ny,wrks,'b2npmo_smovh'//chns)
+         endif
+         wrks=smb(:,:,0)+smb(:,:,1)*ua(:,:,is)+
      &       smb(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smb(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-        call my_out(70,nx,ny,wrks,'b2npmo_smb'//chns)                  !srv 28.02.17
+         call my_out(70,nx,ny,wrks,'b2npmo_smb'//chns)                  !srv 28.02.17
+         wrks=smbcf(:,:,0)+smbcf(:,:,1)*ua(:,:,is)+
+     &       smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+         call my_out(70,nx,ny,wrks,'b2npmo_smocf'//chns)
+         wrks = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,is)+          !srv 05.07.17 {
+     &        smbfria(:,:,2)*na(:,:,is)*mp*am(is)+
+     &        smbfria(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is))
+	 call my_out(70,nx,ny,wrks,'b2npmo_smofria'//chns)
+
+         wrks = vol*hz*(smbfrea(:,:,0)+smbfrea(:,:,1)*ua(:,:,is))
+	 call my_out(70,nx,ny,wrks,'b2npmo_smofrea'//chns)
+         wrks = vol*hz*smbtfia(:,:,0)
+	 call my_out(70,nx,ny,wrks,'b2npmo_smotfia'//chns)
+         wrks = vol*hz*smbtfea(:,:,0)
+	 call my_out(70,nx,ny,wrks,'b2npmo_smotfea'//chns)
+         call my_out(70,nx,ny,ue,'b2npmo_ue')                                !srv 05.07.17 }
+       endif                                                           !srv 05.07.17
+
+       if (iout .ne. 0) then
+        call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua_input'//chns)
         wrks=smo(:,:,0,is)+smo(:,:,1,is)*ua(:,:,is)+
      &       smo(:,:,2,is)*na(:,:,is)*mp*am(is)+
      &       smo(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
@@ -392,49 +412,6 @@ cdjm Jan2017 update momentum source components for balance
      &       smbgp(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smbgp(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
         call my_out(70,nx,ny,wrks,'b2npmo_smogp'//chns)
-       endif                                                           !srv 05.07.17
-       if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                     !srv 05.07.17
-        wrks=smbcf(:,:,0)+smbcf(:,:,1)*ua(:,:,is)+
-     &       smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
-     &       smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-        call my_out(70,nx,ny,wrks,'b2npmo_smocf'//chns)
-       elseif (iout_b2wdat .eq. 4) then
-        call my_out(70,nx,ny,resmo(-1,-1,is),'b2npmo_resmo'//chns)
-        call my_out(70,nx,ny,fmo(-1,-1,0,is),'b2npmo_fmox'//chns)
-        call my_out(70,nx,ny,fmo(-1,-1,1,is),'b2npmo_fmoy'//chns)
-        if (.not.is_neutral(is)) then
-          call my_out(70,nx,ny,flubv(-1,-1,0),'b2npmo_flubvx'//chns)
-          wrks=smbvv(:,:,0)+smbvv(:,:,1)*ua(:,:,is)+
-     &       smbvv(:,:,2)*na(:,:,is)*mp*am(is)+
-     &       smbvv(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-          call my_out(70,nx,ny,wrks,'b2npmo_smovv'//chns)
-          wrks=smbvh(:,:,0)+smbvh(:,:,1)*ua(:,:,is)+
-     &       smbvh(:,:,2)*na(:,:,is)*mp*am(is)+
-     &       smbvh(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-          call my_out(70,nx,ny,wrks,'b2npmo_smovh'//chns)
-        endif
-        wrks=smb(:,:,0)+smb(:,:,1)*ua(:,:,is)+
-     &       smb(:,:,2)*na(:,:,is)*mp*am(is)+
-     &       smb(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-        call my_out(70,nx,ny,wrks,'b2npmo_smb'//chns)                  !srv 28.02.17
-        wrks=smbcf(:,:,0)+smbcf(:,:,1)*ua(:,:,is)+
-     &       smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
-     &       smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-        call my_out(70,nx,ny,wrks,'b2npmo_smocf'//chns)
-
-        wrks = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,is)+       !srv 05.07.17 {
-     &        smbfria(:,:,2)*na(:,:,is)*mp*am(is)+
-     &        smbfria(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is))
-        call my_out(70,nx,ny,wrks,'b2npmo_smofria'//chns)
-
-        wrks = vol*hz*(smbfrea(:,:,0)+smbfrea(:,:,1)*ua(:,:,is))
-        call my_out(70,nx,ny,wrks,'b2npmo_smofrea'//chns)
-        wrks = vol*hz*smbtfia(:,:,0)
-        call my_out(70,nx,ny,wrks,'b2npmo_smotfia'//chns)
-        wrks = vol*hz*smbtfea(:,:,0)
-        call my_out(70,nx,ny,wrks,'b2npmo_smotfea'//chns)
-        call my_out(70,nx,ny,ue,'b2npmo_ue')                           !srv 05.07.17 }
-
        endif                                                           !srv 12.07.02 }
 
        if (solving) then                                               !srv 06.07.10
@@ -550,6 +527,8 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.0
         write (chns,'(i3.3)') is                                       !srv 18.05.02
         call my_out(70,nx,ny,ua(-1,-1,is),'b2npmo_ua'//chns)
        enddo
+      endif                                                            !srv 12.07.02 }
+      if (iout.ne.0) then
        call my_out(70,nx,ny,pccm(-1,-1,0),'b2npmo_pccmx')              !srv 11.01.13
        call my_out(70,nx,ny,pccm(-1,-1,1),'b2npmo_pccmy')              !srv 11.01.13
       endif                                                            !srv 12.07.02 }

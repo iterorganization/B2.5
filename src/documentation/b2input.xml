@@ -2288,7 +2288,10 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If iout.eq.1, a large set of *.dat output files will be produced containing the values of a variety of code quantities. See the "Output description" file for details.
+					If iout.eq.1, a large set of *.dat output files will be produced containing the values of a variety of code quantities.
+					If iout.eq.4, a more select set of output files will be produced, which usually suffices for everyday analysis.
+					For more detailed debugging analysis, one should instead use "procedure_name"_iout.eq.1.
+					The files and their content are fully described in the Output_description.pdf file in the SOLPSTOP/doc directory.
 				</description>
 			</switch>
 			<switch>

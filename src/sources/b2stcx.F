@@ -317,7 +317,8 @@ ctmp.dpc
      &         smq0(:,:,1,is)*ua(:,:,is)+
      &         smq0(:,:,2,is)*na(:,:,is)*mp*am(is)+
      &         smq0(:,:,3,is)*ua(:,:,is)*na(:,:,is)*mp*am(is)
-          call my_out(70,nx,ny,wrk0,'b2stcx_smq_'//chcx//'_'//chns)
+	  call my_out(70,nx,ny,wrk0,'b2stcx_smq'//chns)
+!          call my_out(70,nx,ny,wrk0,'b2stcx_smq_'//chcx//'_'//chns)
         enddo
       endif
       if (iout.eq.1 .or. (iout_b2nph9.eq.1 .or. iout_b2npht.eq.1)
@@ -330,6 +331,17 @@ ctmp.dpc
      &       shi0(:,:,2)*ni(:,:,0)+shi0(:,:,3)*ti*ni(:,:,0)
         call my_out(70,nx,ny,wrk0,'b2stcx_shi_'//chcx)
       endif
+      if (iout.gt.0) then
+        do is = 0, ns-1
+          write (chns,'(i3.3)') is
+          do k=0,1
+            write (chk,'(i1)') k
+            call my_out(70,nx,ny,smq0(-1,-1,k,is),
+     &        'b2stcx_smq'//chk//'_'//chcx//'_'//chns)
+           enddo
+        enddo
+      endif
+
 
 cdjm Jan2017 Keep linearised sources for balance
       if (balance_netcdf.ne.0) then
