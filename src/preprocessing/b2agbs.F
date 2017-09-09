@@ -118,7 +118,7 @@
                                         ! since there is no western face
             pbs(ix,iy,0) =
      .         gs(ixref(iseg(ix,iy),iy),iy,0)*
-     .       wbbl(ixref(iseg(ix,iy),iy),iy,3)/wbbl(ix,iy,3)*
+     .       wbbl(ixref(iseg(ix,iy),iy),iy,0)/wbbl(ix,iy,3)*
      .         qc(ixref(iseg(ix,iy),iy),iy)
           end if
           hy(ix,iy) = hz(ixref(iseg(ix,iy),iy),iy)*
