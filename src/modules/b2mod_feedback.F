@@ -174,9 +174,19 @@ cxpb size is changed in DIMENSIONS.F
       call find_file(filename,file_ok)
       if(file_ok) then
         open(nread,file=filename)
+#ifdef USE_MPI
+        read(nread,feedback_control,err=999)
+#else
         read(nread,feedback_control)
+#endif
+        write(6,*) 'Read ',trim(filename)
         close(nread)
+      else
+        write(6,*) 'No ',trim(filename)
       endif
+      return
+
+ 999  call xerrab ('Error while reading FEEDBACK_CONTROL namelist!')
       end subroutine read_b2mod_feedback_control
 
       subroutine write_b2mod_feedback_control(nwrite)

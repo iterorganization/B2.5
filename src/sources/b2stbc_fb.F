@@ -91,7 +91,6 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
       endif
 
-
 ! process feedbacks in b2.feedback_control.parameters
       if(vacuum_communication.gt.0) then
 ! this allows for a communication of particle fluxes across vacuum regions

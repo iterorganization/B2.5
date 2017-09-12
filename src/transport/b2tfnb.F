@@ -437,8 +437,16 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 !     8         (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))*
 !     9         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))               !lk 12.12.07)
            if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
-            if( abs(vbecrb(ix,iy,0)) .gt. 2.0_R8*cssb(ix,iy,0) )
-     *	     vbecrb(ix,iy,0)=sign(2.0_R8*cssb(ix,iy,0),vbecrb(ix,iy,0))
+             if( abs(vbecrb(ix,iy,0)) .gt. 2.0_R8*cssb(ix,iy,0) ) then
+               write(6,'(a,a,i3,a,i4,a,i4,a)')
+     .          'Poloidal ExB velocity restriction applied ',
+     .          'to species ',isb,' in cell (',ix,',',iy,'):'
+               write(6,'(a,1p,1e12.5,a,1e12.5)')
+     .          'Mach 2: ',2.0_R8*cssb(ix,iy,0),
+     .          ' Vx_ExB:',vbecrb(ix,iy,0)
+               vbecrb(ix,iy,0)=
+     .          sign(2.0_R8*cssb(ix,iy,0),vbecrb(ix,iy,0))
+             endif
            endif                                                         !iyv 06.02.14  }
            vbdia(ix,iy,0) =    poldidr*facdrift(ix,iy)* ! signmf*        !srv 07.06.00 17.05.99 25.04.00 05.02.05 11.01.13
      &          (ti(leftix(ix,iy),leftiy(ix,iy))                         !srv 05.03.99
@@ -479,8 +487,16 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 !     8          (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
 !     9          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
            if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
-            if( abs(vbecrb(ix,iy,1)) .gt. 2.0_R8*cssb(ix,iy,1) )
-     *	     vbecrb(ix,iy,1)=sign(2.0_R8*cssb(ix,iy,1),vbecrb(ix,iy,1))
+             if( abs(vbecrb(ix,iy,1)) .gt. 2.0_R8*cssb(ix,iy,1) ) then
+               write(6,'(a,a,i3,a,i4,a,i4,a)')
+     .          'Radial ExB velocity restriction applied ',
+     .          'to species ',isb,' in cell (',ix,',',iy,'):'
+               write(6,'(a,1p,1e12.5,a,1e12.5)')
+     .          'Mach 2: ',2.0_R8*cssb(ix,iy,1),
+     .          ' Vy_ExB:',vbecrb(ix,iy,1)
+               vbecrb(ix,iy,1)=
+     .          sign(2.0_R8*cssb(ix,iy,1),vbecrb(ix,iy,1))
+             endif
            endif                                                         !iyv 06.02.14  }
            vbdia(ix,iy,1) =  -raddidr*facdrift(ix,iy)* ! signmf*         !srv 11.01.13 07.06.00 17.05.99 25.04.00
      &           (ti(bottomix(ix,iy),bottomiy(ix,iy))                    !srv 05.03.99

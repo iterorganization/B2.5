@@ -5476,6 +5476,7 @@
 				<namelist>FEEDBACK_CONTROL</namelist>
 				<description>
 					Allows for more complex feedback schemes.
+					This namelist is read if 'b2stbc_feedback' is set to '1' in the b2mn.dat file or if LFEEDBACK=.true. in b2.boundary.parameters (and that latter file is also read).
 				</description>
 			</introduction>
 			<switch>

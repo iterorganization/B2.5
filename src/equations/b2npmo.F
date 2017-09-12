@@ -512,8 +512,14 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.0
                 cst=sqrt(pr(ix,iy)/ro(ix,iy))                          !iyv 03.02.14
 !                cst=sqrt( (ti(ix,iy)+te(ix,iy)*rza(ix,iy,is))/
 !     *                                              ( am(is)*mp ))
-                if( abs(ua(ix,iy,is)) .gt. 3.0_R8*cst )
-     *	          ua(ix,iy,is)= sign(3.0_R8*cst,ua(ix,iy,is))          !iyv 03.02.14
+                if( abs(ua(ix,iy,is)) .gt. 3.0_R8*cst ) then
+                  write(6,'(a,a,i3,a,i4,a,i4,a)')
+     .             'Parallel velocity restriction applied ',
+     .             'to species ',is,' in cell (',ix,',',iy,'):'
+                  write(6,'(a,1p,1e12.5,a,1e12.5)')
+     .             'Mach 3: ',3.0_R8*cst,' Ua:',ua(ix,iy,is)
+                  ua(ix,iy,is)= sign(3.0_R8*cst,ua(ix,iy,is))          !iyv 03.02.14
+                endif
               endif
             enddo
           enddo
