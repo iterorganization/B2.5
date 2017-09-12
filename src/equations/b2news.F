@@ -69,7 +69,7 @@
       real (kind=R8) ::
      *  potok, mach10, BoRiS, vis_per, na_min, na_new
       integer ncall, n2, is, ier0, i, ix, iy, ncallout, ixmax, iymax,    !xpb
-     1  guard_flows, ramp_slow, no_solve, ireg
+     1  guard_flows, ramp_slow, no_solve, ireg, iout
       real (kind=R8) ::
      *  xfm0, xfm1, xfm2, xfm3, rxf0, rxf1, rxf2, rxf3, t0, tmax
       real (kind=R8) ::                                                  !xpb
@@ -79,13 +79,13 @@
      3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
      4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
      5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
-     6  ue(-1:nx,-1:ny),
+     6  ue(-1:nx,-1:ny), zeff(-1:nx,-1:ny),
      7  lnlam(-1:nx,-1:ny), zero(-1:nx,-1:ny),
      &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)          !iyv 06.02.14
       character charnc*6, hlp_frm*4
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical new_matrix
-      save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok, pot_eq,
+      save ncall, iout, xfm0, xfm1, xfm2, xfm3, potit, potok, pot_eq,
      1  recalculate_contributions, ramp_slow, guard_flows,
      3  potitmin, BoRiS, vis_per, no_solve, solving, na_min, na_new,
      *  nsmin, nsmax, no_current
@@ -104,7 +104,7 @@
 *   ..initialisation
       data ncall/0/, xfm0/1.0_R8/, xfm1/1.0_R8/, xfm2/1.0_R8/,
      1  xfm3/1.0_R8/, potit/50/, potok/1.0e-2_R8/, pot_eq/1/,
-     2  ncallout/-1/, guard_flows/2/, no_solve/0/,
+     2  ncallout/-1/, guard_flows/2/, no_solve/0/, iout/0/,
      5  recalculate_contributions/1/, ramp_slow/0/, no_current/0/,       !dpc
      6  potitmin/0/, BoRiS/0.0_R8/, vis_per/0.0_R8/, na_min/1.0e4_R8/,
      7  na_new/1.0e14_R8/
@@ -119,6 +119,7 @@
       if (ncall.eq.0) then
        nsmin=0
        nsmax=ns
+       call ipgeti ('b2news_iout', iout)
        call ipgetr ('b2news_xfm0', xfm0)
        call ipgetr ('b2news_xfm1', xfm1)
        call ipgetr ('b2news_xfm2', xfm2)
@@ -395,6 +396,44 @@
 *     ..stabilise the source coefficients                                !xpb
         call b2srst (nx, ny, ns, guard_flows, na, ua, te, ti, po, ne,    !xpb !srv 01.07.08
      &    ni, sna, smo, she, shi, sch, sne)                              !xpb
+
+        if (ue_style.eq.2 .or. iout.ne.0)
+*   ..compute ue, electron parallel velocity
+     >   call b2xpve (nx, ny, ns, qe, rza, rz2, alfx_c, sigx_c, po,      !srv 05.07.17
+     &              ne, te, na, ua, ue_ext, ne_ext, ue)
+        if (ue_style.ne.2 .or. iout.ne.0) then
+          do iy=-1,ny
+            do ix=-1,nx
+              if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+                wrk0(ix,iy)=-(fch_p(ix,iy,0)/pbs(ix,iy,0)+
+     &           fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+     &           pbs(rightix(ix,iy),rightiy(ix,iy),0))/qe/2.0_R8
+              elseif(leftix(ix,iy).eq.-2) then
+                wrk0(ix,iy)=-fch_p(rightix(ix,iy),rightiy(ix,iy),0)/
+     &           pbs(rightix(ix,iy),rightiy(ix,iy),0)/qe
+              elseif(rightix(ix,iy).eq.nx+1) then
+                wrk0(ix,iy)=-fch_p(ix,iy,0)/pbs(ix,iy,0)/qe
+              endif
+!             wrk0(ix,iy)=wrk0(ix,iy)*prl_cur                            !srv 03.04.15
+            enddo
+          enddo
+          do is=0,ns-1
+            wrk0(:,:)=wrk0(:,:)+rza(:,:,is)*ua(:,:,is)*na(:,:,is)
+          enddo
+          wrk0(:,:)=wrk0(:,:)+ue_ext(:,:)*ne_ext(:,:)
+          wrk0(:,:)=wrk0(:,:)/ne(:,:)                                    !srv 05.03.11
+        endif
+        if(iout.ne.0) then                                               !srv 05.07.17
+          call b2xzef (nx, ny, ns, rz2, na, ne, zeff)
+          call b2xpic (nx, ny, ns, qe, rza, bb, na, ua, zeff, fch_pi_c)
+          call b2xpif (nx, ny, hx, hy, vol, fch_pi_c, fch_pi_f)
+          call my_out(70,nx,ny,fch_pi_c,'b2news_fch_pi_c')
+          call my_out(70,nx,ny,fch_pi_f,'b2news_fch_pi_f')
+          call my_out(70,nx,ny,ue,'b2news_ve')
+          call my_out(70,nx,ny,wrk0,'b2news_ue')
+        endif                                                            !srv 05.07.17
+        if (ue_style.ne.2) ue=wrk0
+
 cxpb
 *   ..iterate on parallel momentum balance
         call b2npmo (nx, ny, ns, ismain, ncall, solving(1), rxf1,        !srv 13.01.17
