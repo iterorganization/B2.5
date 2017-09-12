@@ -468,9 +468,6 @@ csw 11oct2012 added check on coriolis force (taken from b2news())
      &   resmo, resmt, corua, corut, pcca, pccm, ier0)                   !srv 23.07.99 10.11.02 23.12.03
 
       call xertst (ier0.eq.0, 'error return from b2npmo') 
-#ifdef BLOCK
-!       call xertst (ncall.eq.0, 'BLOCK called')
-#endif
 *   ..set nep
 *     (= ne before continuity update)
       call b2scopy (n2, ne, 1, nep, 1)
@@ -872,9 +869,6 @@ csw 30apr2014 added fna_he, 17sep2014 added ua,cvsa
      &  na, ua, ue, te, ti, po, ne, ni, fhe_mdf, fhi,                    !srv 31.05.99
      &  reshe, reshi, wrk0, corte, corti, ier0)                          !srv 31.05.99 10.11.02
       endif                                                              !srv 13.10.06 }
-#ifdef BLOCK
-!      call xerrab ('BLOCK called')
-#endif
 
 csw 16aug2011 init potential 
       if(pot_eq.eq.0) po=0.0_R8                                          !srv 13.07.05

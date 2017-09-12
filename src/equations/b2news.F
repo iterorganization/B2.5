@@ -404,9 +404,6 @@ cxpb
      &    smo, smq, cthe, cthi, chci, ua, smof, wadia, vaecrb, resmo,
      &    resmt, corua, corut, pcca, pccm, ier0)
         call xertst (ier0.eq.0, 'error return from b2npmo')
-!#ifdef BLOCK
-!        call xertst (ncall.eq.0, 'BLOCK called')
-!#endif
 *   ..set nep
 *     (= ne before continuity update)
         call b2scopy (n2, ne, 1, nep, 1)
