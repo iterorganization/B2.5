@@ -255,7 +255,8 @@
      &                 isfeedback, nesepm_istra
       real (kind=R8) :: amtol,
      &  na_feedback_current, na_feedback_rescale, vol_feedback, dtim,
-     &  na_feedback_prev(0:DEF_NATM-1), dt_prev, sum_e, sum_s,
+     &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
+     &  dt_prev, sum_e, sum_s,
      &  total_flux, flux_old, target_flux,
      &  fnaycore, fnaycore_alpha, fnaycurr,
      1  fheycore, fheycore_alpha, fheycurr,
@@ -278,10 +279,10 @@
       integer, save :: b2sral_style = 2
       integer, save :: boundary_namelist = 0
       character*72 message
-      logical, save :: prev_done(0:DEF_NATM-1), consistent
+      logical, save :: consistent
       logical consistent_core, consistent_sol, consistent_pfr1,
      .        consistent_pfr2, zeroslope
-      save ncall, dtim, dt_prev, na_feedback_prev,
+      save ncall, dtim, dt_prev, na_feedback_prev, na_feedback_save,
      1  fnaycore, fnaycore_alpha, fheycore, fheycore_alpha,
      2  fhiycore, fhiycore_alpha, fchycore, fchycore_alpha,
      3  nesepm, nesepm_sol, nepedm_sol, nesepm_pfr,
@@ -303,8 +304,8 @@
 *   ..initialisation
       parameter (amtol = 1.0e-2_R8)
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
-     &  n_flux_zero/0/, dtim/1.0/,
-     &  na_feedback_prev/DEF_NATM*0.0_R8/, prev_done/DEF_NATM*.false./,
+     &  n_flux_zero/0/, dtim/1.0/, na_feedback_save/DEF_NATM*0.0_R8/,
+     &  na_feedback_prev/DEF_NATM*0.0_R8/,
      1  fnaycore/-1.0e30_R8/, fnaycore_alpha/1.0e-1_R8/,
      1  fheycore/0.0_R8/, fheycore_alpha/1.0e-1_R8/,
      2  fhiycore/0.0_R8/, fhiycore_alpha/1.0e-1_R8/,
@@ -681,7 +682,9 @@
      &         na_feedback_option(ispecies) .gt. 0 .and.
      &         na_feedback_actuator(ispecies) .gt.0) then
 
-               if (main_call) prev_done(ispecies) = .false.
+               if (main_call) then
+                 na_feedback_prev(ispecies) = na_feedback_save(ispecies)
+               end if
 ! phase 1:
                select case(na_feedback_choice(ispecies))
 
@@ -731,7 +734,7 @@
      &                    ispecies+1
                   endif
 
-                  na_feedback_current = 0.0
+                  na_feedback_current = 0.0_R8
                   vol_feedback = 0.0_R8
                   is_start=-1
                   is_end=-1
@@ -1014,7 +1017,6 @@
                        enddo
                      endif
                      na_feedback_prev(ispecies) = na_feedback_current
-                     prev_done(ispecies) = .true.
                   endif
 
                   na_feedback_target(ispecies) =
@@ -1027,10 +1029,7 @@
      .               na_feedback_current)/dtim +
      .              (na_feedback_prev(ispecies) -
      .               na_feedback_current)/dt_prev)
-                  if (.not.prev_done(ispecies)) then
-                    na_feedback_prev(ispecies) = na_feedback_current
-                    prev_done(ispecies) = .true.
-                  end if
+                  na_feedback_save(ispecies) = na_feedback_current
 
                case (5) ! rescale done according to SOLPS4 formula:
                         ! Nt = A*exp((time-T)*B)
@@ -1065,7 +1064,6 @@
                        enddo
                      endif
                      na_feedback_prev(ispecies) = na_feedback_current
-                     prev_done(ispecies) = .true.
                   endif
 
                   na_feedback_target(ispecies) =
@@ -1078,10 +1076,7 @@
      .               na_feedback_current)/dtim +
      .              (na_feedback_prev(ispecies) -
      .               na_feedback_current)/dt_prev)
-                  if (.not.prev_done(ispecies)) then
-                    na_feedback_prev(ispecies) = na_feedback_current
-                    prev_done(ispecies) = .true.
-                  end if
+                  na_feedback_save(ispecies) = na_feedback_current
 
                case (6) ! rescale slowed by na_feedback_alpha (SOLPS4 style)
 
@@ -1094,11 +1089,13 @@
 
                end select
 
-               write(*,'(a,1x,1p,i3,3g15.6)') 
+               write(*,'(a,1x,1p,i3,6g15.6)')
      &              'na_feedback_rescale ', ispecies+1, 
      &              na_feedback_current,
      &              na_feedback_target(ispecies),
-     &              na_feedback_rescale
+     &              na_feedback_rescale,
+     &              na_feedback_prev(ispecies),
+     &              dtim, dt_prev
 
 ! phase 3:
 
