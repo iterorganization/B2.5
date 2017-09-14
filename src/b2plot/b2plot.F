@@ -979,24 +979,16 @@ c
       call mapx(nx,ny,1,fllim_ki,work)
       call mapx(nx,ny,1,fllim_al,work)
 c
-      inquire(file='B2SDIAG',exist=ex)
 #ifdef B25_EIRENE
 #ifndef HPUX
       inquire(file='fort.44',exist=ex)
 #else
       inquire(file='ftn44',exist=ex)
 #endif
-      if(ex) then
-        call ngread(ismain,iflag)
-        textwl(ns:ns+natmi-1)=textan(0:natmi-1)
-        textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
-        textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
-        nsw=ns+natmi+nmoli+nioni
-      endif
 #else
       ex = .false.
 #endif
-      if (.not.ex) then
+      if (.not.ex.or.use_eirene.eq.0) then
         natmi=1
         textan(0)=' ZERO'
         nmoli=1
@@ -1008,6 +1000,12 @@ c
         call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstraid,natm)
         p1=0.0_R8
         p2=0.0_R8
+      else
+        call ngread(ismain,iflag)
+        textwl(ns:ns+natmi-1)=textan(0:natmi-1)
+        textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
+        textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
+        nsw=ns+natmi+nmoli+nioni
       endif
 
 #ifdef B25_EIRENE
@@ -1016,7 +1014,7 @@ c
 #else
       inquire(file='ftn46',exist=ex)
 #endif
-      if(ex) then
+      if(ex.and.use_eirene.ne.0) then
         call ntread
         allocate(emach(max(natmi,nmoli,nioni),ntrii))
         DO I = 1, ntrii

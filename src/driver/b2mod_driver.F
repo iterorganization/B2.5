@@ -1726,7 +1726,7 @@ cxpb for neutral fluxes used in b2stbc_phys
       if (ex) then
         call alloc_b2mod_b2plot(nx,ny,ns,ns_ext,wklng,
      .                          natm,nmol,nion,nlimps)
-        call ngread(ismain,iflag)
+        if (use_eirene.ne.0) call ngread(ismain,iflag)
       endif
 #endif
 c new CDF movie option (1st frame at t=0)

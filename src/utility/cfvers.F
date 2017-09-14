@@ -16,12 +16,12 @@
       endif
       if(label.eq.'VERSION') then
 	newversion=version_in
-        write(*,*) 'VERSION set to: ',newversion
+        write(*,'(a,a)') 'VERSION set to: ',newversion
         return
       endif
    10 continue
       rewind(nget)
-      write(*,*) 'VERSION defaulted to : ',newversion
+      write(*,'(a,a)') 'VERSION defaulted to : ',newversion
       return
 
       entry cfverw(nput, newversion)

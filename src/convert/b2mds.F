@@ -614,16 +614,10 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 #else
       inquire(file='ftn44',exist=ex)
 #endif
-      if(ex) then
-        call ngread(ismain,iflag)
-        textwl(ns:ns+natmi-1)=textan(0:natmi-1)
-        textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
-        textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
-      endif
 #else
       ex = .false.
 #endif
-      if (.not.ex) then
+      if (.not.ex.or.use_eirene.eq.0) then
         natmi=0
         textan(0)=' ZERO'
         nmoli=0
@@ -631,6 +625,11 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         nioni=0
         textin(0)=' ZERO'
         call eirene_mc_init(nx,ny)
+      else
+        call ngread(ismain,iflag)
+        textwl(ns:ns+natmi-1)=textan(0:natmi-1)
+        textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
+        textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
       endif
       nsw=ns+natmi+nmoli+nioni
 
