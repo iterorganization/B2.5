@@ -205,8 +205,8 @@ c
      *   t1,t2
       integer it1,it2
       character*256 arg
-#ifdef B25_EIRENE
       integer iflag
+#ifdef B25_EIRENE
       character*72 zeile
       integer ix_e2b
       external ix_e2b

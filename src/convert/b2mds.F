@@ -59,8 +59,8 @@
       real (kind=R8) :: BoRiS
       character*12 :: textdrift(0:1)
       character*24 hlp_frm
-#ifdef B25_EIRENE
       integer iflag
+#ifdef B25_EIRENE
       character*72 zeile
 #endif
 c
