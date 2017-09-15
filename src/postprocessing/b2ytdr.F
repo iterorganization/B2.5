@@ -6680,9 +6680,10 @@ cxpb  to see if some strata need to be removed
      .                       ISCLS(ISTRA),ISCLT(ISTRA),ISCL1(ISTRA),
      .                       ISCL2(ISTRA),ISCL3(ISTRA),ISCLB(ISTRA),
      .                       ISCLA(ISTRA)
-          ISCLS(ISTRA) = transform_tally(IVLSF(ISTRA).eq.1,ISCLT(ISTRA),
-     .      ISCLS(ISTRA),iatm1,ipls1,nphoti,natmi,nmoli,nioni,nplsi,
-     .                  natmi1)
+          ISCLS(ISTRA) = transform_tally(IVLSF(ISTRA).eq.1,
+     .      ISCLT(ISTRA),ISCLS(ISTRA),
+     .      iatm1,imol1,ipls1,nphoti,natmi,nmoli,nioni,nplsi,
+     .      natmi1,nmol1)
           READ (IUNIN,'(A80)') ZEILE
           call fix_logical_input(zeile,5)
           READ (ZEILE,6665) NLATM(ISTRA),NLMOL(ISTRA),
