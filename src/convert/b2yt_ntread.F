@@ -16,7 +16,7 @@ C
 *=======================================================================
 *//DECLARATIONS//
 
-      subroutine b2yt_ntread(natm1, iatm1)
+      subroutine b2yt_ntread(natm1, iatm1, nmol1, imol1)
 c
 c  version : 06.11.97 22:11
 c
@@ -34,15 +34,15 @@ c
       implicit none
 
 *  -- INPUT ARGUMENTS --
-      integer natm1
-      integer iatm1(natm)
+      integer natm1, nmol1
+      integer iatm1(natm), imol1(nmol)
 
 *  -- LOCAL SCALARS --
 #ifdef B25_EIRENE
       integer jvft46
       integer is, i, j, n, jvftnew, nstra1, io, idummy
       real (kind=R8), allocatable :: field1(:,:)
-      character*16, allocatable :: textan1(:)
+      character*16, allocatable :: textan1(:), textmn1(:)
       data jvftnew / 20160829 /
 
 *  -- PROCEDURES --
@@ -144,15 +144,15 @@ C
       END IF
       WRITE(47,'(I6,2X,i8,2x,a32)') ntrii,jvftnew,get_B25_hash()
       READ(46,'(i4,2x,i4,2x,i4)',END=99,ERR=99) natmi,nmoli,nioni
-      WRITE(47,'(I4,2X,I4,2X,i4)')              natm1,nmoli,nioni
+      WRITE(47,'(I4,2X,I4,2X,i4)')              natm1,nmol1,nioni
       write(*,'(a,4i6)') 
      . ' Dimensions in fort.46 =   ',ntrii,natmi,nmoli,nioni
       write(*,'(a,4i6)')
-     . ' Dimensions in fort.46.2 = ',ntrii,natm1,nmoli,nioni
+     . ' Dimensions in fort.46.2 = ',ntrii,natm1,nmol1,nioni
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
       call xertst(nioni .le. nion, 'NGREAD: NIONI > NION')
-      allocate(field1(ntrii,natm1))
+      allocate(field1(ntrii,max(natm1,nmol1)))
 
 c
 * labels
@@ -174,8 +174,15 @@ C
 C
       do 12 IS = 1, NMOLI
         READ (46,'(A8)',END=99,ERR=99) TEXTMN(IS-1)
-        WRITE(47,'(A8)')               TEXTMN(IS-1)
    12 CONTINUE
+      allocate(textmn1(0:nmol1-1))
+      do is = 1, nmoli
+        if (imol1(is).ne.0) TEXTMN1(imol1(is)-1) = TEXTMN(is-1)
+      end do
+      do is = 1, nmol1
+        WRITE(47,'(A8)') TEXTMN1(IS-1)
+      end do
+      deallocate(textmn1)
 C
 * test ions
 C
@@ -200,8 +207,13 @@ C
       end do
       call write_title(47,'pdena',ntrii*natm1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
-      call write_title(47,'pdenm',ntrii*nmoli)
-      write(47,'(6e15.7)') ((PDENM(i,j),j=1,ntrii),i=1,nmoli)
+      do is = 1, nmoli
+        if (imol1(is).ne.0) then
+          field1(1:ntrii,imol1(is)) = pdenm(1:ntrii,is)
+        end if
+      end do
+      call write_title(47,'pdenm',ntrii*nmol1)
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
       call write_title(47,'pdeni',ntrii*nioni)
       write(47,'(6e15.7)') ((PDENI(i,j),j=1,ntrii),i=1,nioni)
 
@@ -220,8 +232,13 @@ C
       end do
       call write_title(47,'edena',ntrii*natm1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
-      call write_title(47,'edenm',ntrii*nmoli)
-      write(47,'(6e15.7)') ((EDENM(i,j),j=1,ntrii),i=1,nmoli)
+      do is = 1, nmoli
+        if (imol1(is).ne.0) then
+          field1(1:ntrii,imol1(is)) = edenm(1:ntrii,is)
+        end if
+      end do
+      call write_title(47,'edenm',ntrii*nmol1)
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
       call write_title(47,'edeni',ntrii*nioni)
       write(47,'(6e15.7)') ((EDENI(i,j),j=1,ntrii),i=1,nioni)
 
@@ -240,8 +257,13 @@ C
       end do
       call write_title(47,'vxdena',ntrii*natm1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
-      call write_title(47,'vxdenm',ntrii*nmoli)
-      write(47,'(6e15.7)') ((VXDENM(i,j),j=1,ntrii),i=1,nmoli)
+      do is = 1, nmoli
+        if (imol1(is).ne.0) then
+          field1(1:ntrii,imol1(is)) = vxdenm(1:ntrii,is)
+        end if
+      end do
+      call write_title(47,'vxdenm',ntrii*nmol1)
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
       call write_title(47,'vxdeni',ntrii*nioni)
       write(47,'(6e15.7)') ((VXDENI(i,j),j=1,ntrii),i=1,nioni)
 
@@ -260,8 +282,13 @@ C
       end do
       call write_title(47,'vydena',ntrii*natm1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
-      call write_title(47,'vydenm',ntrii*nmoli)
-      write(47,'(6e15.7)') ((VYDENM(i,j),j=1,ntrii),i=1,nmoli)
+      do is = 1, nmoli
+        if (imol1(is).ne.0) then
+          field1(1:ntrii,imol1(is)) = vydenm(1:ntrii,is)
+        end if
+      end do
+      call write_title(47,'vydenm',ntrii*nmol1)
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
       call write_title(47,'vydeni',ntrii*nioni)
       write(47,'(6e15.7)') ((VYDENI(i,j),j=1,ntrii),i=1,nioni)
 
@@ -280,8 +307,13 @@ C
       end do
       call write_title(47,'vzdena',ntrii*natm1)
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,natm1)
-      call write_title(47,'vzdenm',ntrii*nmoli)
-      write(47,'(6e15.7)') ((VZDENM(i,j),j=1,ntrii),i=1,nmoli)
+      do is = 1, nmoli
+        if (imol1(is).ne.0) then
+          field1(1:ntrii,imol1(is)) = vzdenm(1:ntrii,is)
+        end if
+      end do
+      call write_title(47,'vzdenm',ntrii*nmol1)
+      write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
       call write_title(47,'vzdeni',ntrii*nioni)
       write(47,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,nioni)
 
