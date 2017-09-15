@@ -202,7 +202,7 @@ c***  sfpr_m    : list of active materials
       integer n_hdpr_c,n_hdpr_t,n_hdpr_s,n_hdpr_a,n_hdpr_sp,n_sfpr_s,
      ,  m_hdpr,m_hdln,n_hdpr_ml,n_hdpr_er,n_srfs_m
       parameter
-     , (n_hdpr_c=8, n_hdpr_t=4, n_hdpr_s=2, n_hdpr_a=4, n_hdpr_sp=2,
+     , (n_hdpr_c=10, n_hdpr_t=4, n_hdpr_s=2, n_hdpr_a=4, n_hdpr_sp=2,
      ,  n_hdpr_er=2, m_hdpr=5,n_hdpr_ml=4,n_srfs_m=8,
      ,  m_hdln=(n_hdpr_c+n_hdpr_t)*(m_hdpr+1)+
      +         (n_hdpr_s+n_hdpr_a+n_hdpr_sp)*(DEF_NATM+DEF_NMOL)*
@@ -220,7 +220,7 @@ c***  sfpr_m    : list of active materials
      ,  sfpr_sp(DEF_NATM+DEF_NMOL)*3
       character*10 ssmol,ssion
       data hdpr_c /'x', 'Wtot','Wrad','Wpart','Wpls',
-     2  'Wneu','Wheat','Wpot' /
+     2  'Wneu','Wheat','Wpot', 'Whtpl', 'Wptpl' /
       data hdpr_t /'ne', 'Te','Ti','xMP'/
       data hdpr_s /'flxi','Eavi'/
       data hdpr_a /'flxa','Eava','na','pa'/
@@ -639,28 +639,26 @@ c            print *,'Starting target power. ntrgts=',ntrgts   !###
      .                      fhi_ext(k+1-l,iy,0)
                 do is=0,ns-1 !{
                   if (.not.is_neutral(is).or.ft44) then
-                    wo=wo+fna(k+1-l,iy,0,is)*(rpt(kk,iy,is)*ev
-     *               +(1.0_R8-BoRiS)*kinrgy(kk,iy,is))
+                    wo=wo+fna(k+1-l,iy,0,is)*rpt(kk,iy,is)*ev
                   else
                     wnutrg(iy,j)=wnutrg(iy,j)+fna(k+1-l,iy,0,is)
      *               *(1.0_R8-BoRiS)*kinrgy(kk,iy,is)
                   end if
                   whtpl(iy,j)=whtpl(iy,j)+fna(k+1-l,iy,0,is)
-     *             *(1.0_R8-BoRiS)*ti(kk,iy)
+     *             *(1.0_R8-BoRiS)*(ti(kk,iy)+kinrgy(kk,iy,is))
 c carlis 31jan2017  added ti as suggested by sw in b2blne.
                 end do !}
                 do is=0,ns_ext-1 !{
                   if (.not.is_ext_neutral(is).or.ft44) then
-                    wo=wo+fa_ext(k+1-l,iy,0,is)*(pt_ext(kk,iy,is)*ev
-     .               +(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
-     .                 ua_ext(kk,iy,is)**2))
+                    wo=wo+fa_ext(k+1-l,iy,0,is)*pt_ext(kk,iy,is)*ev
                   else
                     wnutrg(iy,j)=wnutrg(iy,j)+fa_ext(k+1-l,iy,0,is)
      .               *(1.0_R8-BoRiS)*(0.5_R8*am_ext(is)*mp*
      .                 ua_ext(kk,iy,is)**2)
                   end if
                   whtpl(iy,j)=whtpl(iy,j)+fa_ext(k+1-l,iy,0,is)
-     .             *(1.0_R8-BoRiS)*ta_ext(kk,iy,is)
+     .             *(1.0_R8-BoRiS)*(ta_ext(kk,iy,is)+0.5_R8*
+     .             am_ext(is)*mp*ua_ext(kk,iy,is)**2)
 c carlis 31jan2017  added ta as suggested by sw in b2blne.
                 end do !}
                 whtpl(iy,j)=whtpl(iy,j)+fne(k+1-l,iy,0)
@@ -1143,9 +1141,13 @@ c        print *,hdr_line(1:k-1)
         write(lun,740) 'Wneut',tab,
      .   'power flux with neutral particles [W/m^2]'
         write(lun,740) 'Wheat',tab,
-     .'power flux due to neutral particles in contact with wall [W/m^2]'
+     .   'power flux due to particles impinging on wall [W/m^2]'
         write(lun,740) 'Wpot',tab,
      .   'power flux due to recombination [W/m^2]'
+        write(lun,740) 'Whtpl',tab,
+     .   'power flux due to plasma particles impinging on wall [W/m^2]'
+        write(lun,740) 'Wptpl',tab,
+     .   'power flux due to plasma recombination [W/m^2]'
         write(lun,740) 'flxi_XX',tab,
      .   'flux of ions of species XX [1/s]'
         write(lun,740) 'Eavi_XX',tab,
@@ -1182,6 +1184,8 @@ c*** Print the line
       m=lelmind(ils)
       k=n_hdpr_c
       if(itg.eq.0) then !{ WALL not target
+        w_line(10)=0.0 !recombination due to plasma
+        w_line(9)=0.0 !heat due to plasma
         w_line(8)=wldnep(m,0)/segm_area(ils)
         w_line(7)=wldnek(m,0)/segm_area(ils)
         w_line(6)=w_line(7)+w_line(8)
@@ -1300,7 +1304,9 @@ c carlis sputtering not happening on this wall but possibly on other walls of th
           end do
         end if
       else if(do_trg) then !}{
-c        print *,'itrg,iy=',itrg,iy                                !###
+c        print *,'itrg,iy=',itrg,iy     
+        w_line(10)=wptpl(iy,itrg) !recombination due to plasma
+        w_line(9)=whtpl(iy,itrg) !heat due to plasma                           !###
         w_line(8)=wptnu(iy,itrg)+wptpl(iy,itrg)
         w_line(7)=whtnu(iy,itrg)+whtpl(iy,itrg)
         w_line(6)=wnutrg(iy,itrg)
