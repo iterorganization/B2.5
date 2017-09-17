@@ -252,7 +252,7 @@ c 2002-09-11: logic revised
      7 na_feedback_time1(:), gpdata1(:,:,:)
       real (kind=R8) :: ds_offset, l_total, l_ref, na0eps
       integer ns1, nsm, nxm, nym, natmm, nmolm, nwallm
-      integer i, j, k, ix, iy, is, ib, ireg, len, nsns
+      integer i, j, k, kk, ix, iy, is, ib, ireg, len, nsns
       integer ib1, ib2, ifl, js, ks, itrack
       integer natm1, nmol1, nspecies1, iss
       integer itrack1, itrack2, itrack3
@@ -8485,7 +8485,7 @@ cxpb  Convert fort.46 file if needed
         allocate(lstrascl1(nstrat1,natm))
         allocate(lmolscl1(nmol1))
         allocate(ngpdata1(nstrat1))
-        allocate(lsns1(nstrat1))
+        allocate(lsns1(DEF_NSRFS*nstrat1))
         allocate(ksns1(nstrat1))
         allocate(gpdata1(100,2,nstrat1))
         do ib = 1, nstrat
@@ -9003,6 +9003,8 @@ cxpb as they no longer necessarily point to the same species
           write(hlp_frm,'(a,i2,a)') '(a,',ntns,'(1x,i3,'',''))'
           write(99,hlp_frm) 'LTNS=',(ltns(ib),ib=1,ntns)
         endif
+        k = 0
+        kk = 0
         ib1 = 0
         nsns = 0
         do ib = 1, nstrai
@@ -9011,11 +9013,13 @@ cxpb as they no longer necessarily point to the same species
             nsns = nsns + 1
             if (savestratum(ib)) then
               ib1 = ib1 + 1
-              lsns1(ib1) = lsns(nsns)
               ksns1(ib1) = ksns(nsns)
+              do j = k+1, k+ksns(nsns)
+                kk = kk + 1
+                lsns1(kk) = lsns(j)
+              end do
             end if
-          end if
-          if (crcstra(ib).eq.'S') then
+          else if (crcstra(ib).eq.'S') then
             if (rcpos1(ib).ne.-2) then
               if(mod(region1(rcstart1(ib),rcpos1(ib),0),4).ne.1) then
                 nsns = nsns + 1
@@ -9031,17 +9035,22 @@ cxpb as they no longer necessarily point to the same species
             end if
             if (savestratum(ib)) then
               ib1 = ib1 + 1
-              lsns1(ib1) = lsns(nsns)
               ksns1(ib1) = ksns(nsns)
+              do j = k+1, k+ksns(nsns)
+                kk = kk + 1
+                lsns1(kk) = lsns(j)
+              end do
             end if
           end if
+          k = k + ksns(nsns)
         end do
         nsns = ib1
         if (nsns.gt.0) then
+          write(hlp_frm,'(a,i3,a)') '(a,',kk,'(1x,i3,'',''))'
+          if(maxval(lsns(1:k)).gt.0.or.minval(lsns(1:k)).lt.0)
+     >     write(99,hlp_frm) 'LSNS=',(lsns1(j),j=1,kk)
           write(hlp_frm,'(a,i2,a)') '(a,',nsns,'(1x,i3,'',''))'
-          if(maxval(lsns(1:nsns)).gt.0.or.minval(lsns(1:nsns)).lt.0)
-     >     write(99,hlp_frm) 'LSNS=',(lsns1(ib),ib=1,nsns)
-          if(maxval(ksns(1:nsns)).gt.0.or.minval(ksns(1:nsns)).lt.0)
+          if(maxval(ksns(1:nsns)).gt.0)
      >     write(99,hlp_frm) 'KSNS=',(ksns1(ib),ib=1,nsns)
         endif
         write(99,'(a,1pg10.3,a)') 'NEUT_SCL_LIM=',neut_scl_lim,','

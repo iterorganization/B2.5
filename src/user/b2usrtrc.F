@@ -530,7 +530,7 @@ c          print *,'npfs,lpfs=',npfs_tmp(k),
 c     ,                                  (lpfs_tmp(i,k),i=1,npfs_tmp(k))
 c          print *,'ipfc,jpfc=',ipfc_tmp(k),jpfc_tmp(k)
 c        end do !}
-c        print *,'nlim,lsns: ',nlim,lsns
+c        print *,'nlim,lsns: ',nlim,lsns(1:sum(ksns(1:nstrai)))
 c        print *
 c!###}
 c-----------------------------------------------------------------------

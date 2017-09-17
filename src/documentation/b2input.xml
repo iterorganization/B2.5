@@ -4360,7 +4360,7 @@
 			<switch>
 				<name>LSNS</name>
 				<default>0</default>
-				<type>integer array of size (NSTRAT)</type>
+				<type>integer array of size (NSTRAT*NSRFS)</type>
 				<description>
 					Contains the indices of Eirene surfaces related to the recycling sources.
 				</description>
@@ -4370,7 +4370,7 @@
 				<default>0</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Contains the number of parts for each Eirene recycling stratum.
+					Contains the number of Eirene surfaces for each Eirene recycling stratum.
 				</description>
 			</switch>
 			<switch>

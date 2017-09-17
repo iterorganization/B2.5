@@ -125,8 +125,8 @@ cank }
       character*1, save :: CRCSTRA(NSTRAID)
       integer, save :: mlcmp(natmid,nmolid),
      ,  latmscl(natmid), lmolscl(nmolid), lionscl(nionid),
-     ,  lcns(nstsid), ltns(nstsid), lsns(nstraid), ksns(NSTRAID),
-     ,  msns(2,NSTRAID)
+     ,  lcns(nstsid), ltns(nstsid),
+     ,  lsns(nstraid*DEF_NSRFS), ksns(NSTRAID), msns(2,NSTRAID)
       real (kind=R8), save :: gpfc(natmid,nstraid)
 #endif
 
@@ -244,7 +244,7 @@ csw 21feb2012
       allocate(mlcmp(natm_in,nmol_in))
       allocate(lcns(nsts_in))
       allocate(ltns(nsts_in))
-      allocate(lsns(nstra_in))
+      allocate(lsns(nstra_in*DEF_NSRFS))
       allocate(ksns(nstra_in))
       allocate(msns(2,nstra_in))
 #ifndef NO_B2_CHEM_SPUT
@@ -796,12 +796,13 @@ c
      &   'faulty input ltns')
       enddo
       do is = 1, nstrai
+        call xertst (0.le.ksns(is), 'faulty input ksns')
+      enddo
+      do is = 1, sum(ksns(1:nstrai))
         call xertst (lsns(is).le.nlim+nsts, 'faulty input lsns')
         call xertst (lsns(is).ge.-nsts, 'faulty input lsns')
-        call xertst (0.le.ksns(is), 'faulty input ksns')
-        if (ksns(is).gt.0)
-     >   call xertst(lsns(is).ne.0, 'inconsistent input ksns, lsns')
-      enddo
+        call xertst (lsns(is).ne.0, 'faulty input lsns')
+      end do
 
       ii=minloc(lcns)
       if(lcns(ii(1)).gt.0) then !{

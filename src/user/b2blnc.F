@@ -13,6 +13,7 @@
 #ifdef B25_EIRENE
       use eirmod_extrab25
 #endif
+#include "DIMENSIONS.F"
 c
 c  version : 19.07.2001 18:46
 c
@@ -110,8 +111,10 @@ c***
 c*** lcbs: boundary segments representing the core boundary in B2
 c*** lcns: 'non-default surfaces' for the core boundary (Eirene)
 c*** ltns: 'non-default surfaces' for the targets (Eirene)
-c*** lsns: Eirene surfaces related to the recycling sources
-c*** msns: their index
+c*** lsns: list of Eirene surfaces comprising the recycling sources
+c*** msns: msns(1,k): index of first surface in lsns list for Eirene
+c***                  recycling source k
+c***       msns(2,k): number of surfaces for Eirene recycling source k
 c*** mlcmp: composition of molecules.
 c***        Molecule of kind j contains mlcmp(i,j) atoms of kind i
 c*** gpfc: composition of gas puff sources.
@@ -183,7 +186,7 @@ c
             end do
           end if
         end do
-        do j=1,nstrat
+        do j=1,DEF_NSRFS*nstrat
           if(lsns(j).lt.0) lsns(j)=nlim-lsns(j)
         end do
         first=.false.
