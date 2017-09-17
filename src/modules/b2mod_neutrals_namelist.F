@@ -799,6 +799,8 @@ c
         call xertst (lsns(is).le.nlim+nsts, 'faulty input lsns')
         call xertst (lsns(is).ge.-nsts, 'faulty input lsns')
         call xertst (0.le.ksns(is), 'faulty input ksns')
+        if (ksns(is).gt.0)
+     >   call xertst(lsns(is).ne.0, 'inconsistent input ksns, lsns')
       enddo
 
       ii=minloc(lcns)
