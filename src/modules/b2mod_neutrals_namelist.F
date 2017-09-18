@@ -797,6 +797,7 @@ c
       enddo
       do is = 1, nstrai
         call xertst (0.le.ksns(is), 'faulty input ksns')
+        call xertst (ksns(is).le.DEF_NSRFS, 'faulty input ksns')
       enddo
       do is = 1, sum(ksns(1:nstrai))
         call xertst (lsns(is).le.nlim+nsts, 'faulty input lsns')
