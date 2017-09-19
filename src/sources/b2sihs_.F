@@ -72,11 +72,14 @@
      &  phm4, phm5, phm6, wrk0(-1:nx,-1:ny),                          !srv 02.06.99
      &  phm7, phm8, wrk1(-1:nx,-1:ny),                                !srv 28.08.02
      &  dpo(-1:nx,-1:ny,0:1), dOnedBsq(-1:nx,-1:ny,0:1)               !srv 03.04.07
+      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                !lk 31.01.08 {
+      real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny) !lk 31.01.08 }
       real (kind=R8) :: 
      *  shidu(-1:nx,-1:ny,0:3), shidd(-1:nx,-1:ny,0:3),               !srv 11.09.09 {
      *  shiva(-1:nx,-1:ny,0:3), shivc(-1:nx,-1:ny,0:3),
      *  shifr(-1:nx,-1:ny,0:3), shedu(-1:nx,-1:ny,0:3),
      *  shedd(-1:nx,-1:ny,0:3), shefr(-1:nx,-1:ny,0:3),
+     *  shest(-1:nx,-1:ny,0:3),                                       !srv 17.12.13
      *  wrks(-1:nx,-1:ny), ehx(-1:nx,-1:ny), ehy(-1:nx,-1:ny)         !srv 13.01.17
       real (kind=R8) ::
      3  zeff(-1:nx,-1:ny), zmff(-1:nx,-1:ny), ce1(-1:nx,-1:ny),       !srv 13.01.17 05.07.17 {
@@ -148,6 +151,7 @@
        call ipgeti ('b2tlnl_ii', icase)
        call xertst (0.eq.icase .or. 1.eq.icase, 
      &               'faulty input b2tlnl_ii')
+       call ipgetr ('b2tfhe_stochastic', fch_stochastic)           !lk 31.01.08
        call ipgeti ('b2sihs_istyle_Joule_heating', 
      &                      istyle_Joule_heating)                  !srv 17.01.14
        call ipgeti ('b2sigp_style', b2sigp_style)                  !srv 05.07.17
@@ -212,8 +216,32 @@
       call sfill (n2*4, 0.0e0_R8, shifr, 1)
       call sfill (n2*4, 0.0e0_R8, shiva, 1)
       call sfill (n2*4, 0.0e0_R8, shivc, 1)                         !srv 11.09.09 }
+      call sfill (n2*4, 0.0e0_R8, shest, 1)                         !srv 17.12.13
 *   ..compute the Coulomb logarithm
-      call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
+      call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)                !srv 01.07.09  20.09.11
+*   ..contribution from stochastic electron flow
+      if(fch_stochastic.ne.0.0e0_R8) then                           !lk 31.01.08 { !srv 17.12.13
+       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,    !srv 07.07.14
+     &      fchstoch)
+       do iy = 0, ny-1
+        do ix = 0, nx-1
+         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+          shest(ix,iy,0) = shest(ix,iy,0)-
+     &    (ne(topix(ix,iy),topiy(ix,iy))*te(topix(ix,iy),topiy(ix,iy))
+     &    -ne(bottomix(ix,iy),bottomiy(ix,iy))
+     &    *te(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    /hy(ix,iy)/qe/ne(ix,iy)*vol(ix,iy)
+     &    *(fchstoch(ix,iy)*(hy(ix,iy)
+     &    +hy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    /(vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    +fchstoch(topix(ix,iy),topiy(ix,iy))*(hy(ix,iy)
+     &    +hy(topix(ix,iy),topiy(ix,iy)))
+     &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8
+         endif
+        enddo
+       enddo
+      endif                                                         !lk 31.01.08 }
+      call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)                   !srv 17.12.13
 *   ..contribution from divergence ue
       do iy = 0, ny-1                                                 !srv 05.03.11 {
         do ix = 0, nx
@@ -729,6 +757,9 @@
         wrks=she0(:,:,0)+she0(:,:,1)*te+
      &       she0(:,:,2)*ne + she0(:,:,3)*te*ne
         call my_out(70,nx,ny,wrks,'b2sihs__she')
+        wrks=shest(:,:,0)+shest(:,:,1)*te+
+     &       shest(:,:,2)*ne + shest(:,:,3)*te*ne
+        call my_out(70,nx,ny,shest,'b2sihs__shest')        !srv 17.12.13
         wrks=shedu(:,:,0)+shedu(:,:,1)*te+
      &       shedu(:,:,2)*ne + shedu(:,:,3)*te*ne
         call my_out(70,nx,ny,wrks,'b2sihs__shedu')

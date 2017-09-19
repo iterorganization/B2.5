@@ -61,6 +61,8 @@
       integer, save :: icase = 0
       integer, save :: istyle_Joule_heating = 1                         !srv 17.01.14
       integer, save :: b2sigp_style = 2                                 !srv 05.07.17
+      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                 !lk 31.01.08 {
+      real (kind=R8) :: csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)  !lk 31.01.08 }
       character chns*3                                                  !srv 05.07.17
       real (kind=R8) ::
      *  rf0, rf1, rf2, rf3, rf4, phm0, phm1, phm2, phm3,
@@ -75,7 +77,8 @@
      &  shefr(-1:nx,-1:ny,0:3), shifr(-1:nx,-1:ny,0:3),                 !srv 05.07.17
      &  smbch(-1:nx,-1:ny), smbtf(-1:nx,-1:ny),
      &  smbfria(-1:nx,-1:ny,0:3), smbfrea(-1:nx,-1:ny,0:3),
-     &  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3)              !srv 13.01.17 05.07.17 }
+     &  smbtfia(-1:nx,-1:ny,0:3), smbtfea(-1:nx,-1:ny,0:3),             !srv 13.01.17 05.07.17 }
+     &  shest(-1:nx,-1:ny,0:3)                                          !srv 17.12.13
       save ncall, style, rf0, rf1, rf2, rf3, rf4, 
      &  phm0, phm1, phm2, phm3, phm4, phm5, phm6, phm7, nsmin, nsmax
       real (kind=R8) ::
@@ -145,6 +148,7 @@
        call ipgeti ('b2tlnl_ii', icase)
        call xertst (0.eq.icase .or. 1.eq.icase, 
      &               'faulty input b2tlnl_ii')
+       call ipgetr ('b2tfhe_stochastic', fch_stochastic)           !lk 31.01.08
        call ipgeti ('b2sihs_istyle_Joule_heating', istyle_Joule_heating)  !srv 17.01.14
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
@@ -212,8 +216,32 @@
 *   ..initialise sources to zero
       call sfill (n2*4, 0.0_R8, she0, 1)
       call sfill (n2*4, 0.0_R8, shi0, 1)
+      call sfill (n2*4, 0.0e0_R8, shest, 1)                        !srv 17.12.13
 *   ..compute the Coulomb logarithm
       call b2tlnl (nx, ny, icase, te, ti, ne, lnlam)               !srv 01.07.09  20.09.11
+*   ..contribution from stochastic electron flow
+      if(fch_stochastic.ne.0.0e0_R8) then                          !lk 31.01.08 { !srv 17.12.13
+       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,    !srv 07.07.14
+     &      fchstoch)
+       do iy = 0, ny-1
+        do ix = 0, nx-1
+         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
+          shest(ix,iy,0) = shest(ix,iy,0)-
+     &    (ne(topix(ix,iy),topiy(ix,iy))*te(topix(ix,iy),topiy(ix,iy))
+     &    -ne(bottomix(ix,iy),bottomiy(ix,iy))
+     &    *te(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    /hy(ix,iy)/qe/ne(ix,iy)*vol(ix,iy)
+     &    *(fchstoch(ix,iy)*(hy(ix,iy)
+     &    +hy(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    /(vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))
+     &    +fchstoch(topix(ix,iy),topiy(ix,iy))*(hy(ix,iy)
+     &    +hy(topix(ix,iy),topiy(ix,iy)))
+     &    /(vol(ix,iy) + vol(topix(ix,iy),topiy(ix,iy))))/4.0e0_R8
+          endif
+        enddo
+       enddo
+      endif                                                               !lk 31.01.08 }
+      call b2saxpy (n2*4, 1.0e0_R8, shest, 1, she0, 1)                   !srv 17.12.13
 *   ..contribution from divergence(ue,ve)
 !xpb !!! The radial derivative terms uesy are non-conservative !!!
 cxpb    t0 = -phm0*((uesx(rightix(ix,iy),rightiy(ix,iy))-uesx(ix,iy))    !xpb

@@ -5,7 +5,7 @@
      1  BoRiS, vol, hx, hy, qz, te, po, ne, na, vedia, veecrb,           !srv 13.01.17
      2  fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,           !xpb
      &  cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,           !srv 13.10.06
-     &  balance)                                                         !djm Jan2017
+     &  fchstoch, balance)                                               !djm Jan2017 !srv 17.12.13
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -34,6 +34,7 @@
      1 hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1),
      * vedia(-1:nx,-1:ny,0:1), veecrb(-1:nx,-1:ny,0:1),
      2 BoRiS
+      real (kind=R8) :: fchstoch(-1:nx,-1:ny)                            !lk 31.01.08
       logical balance                                                    !djm Jan2017
 *   ..output arguments (unspecified on entry)
       real (kind=R8) ::
@@ -594,7 +595,8 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
               flo_veecrb=0.0_R8
             else
               floe0 = (1.5_R8+BoRiS)*fne_32(ix,iy,1)+ 
-     1         2.5_R8*fne_52(ix,iy,1)+ 
+     1         2.5_R8*fne_52(ix,iy,1)-
+     &	       5.0e0_R8/2.0e0_R8*fchstoch(ix,iy)/qe+                 !lk 21.02.08 !srv 17.12.13
      &         chve(ix,iy,1)*
      1         (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))/2.0_R8
               prefactor=

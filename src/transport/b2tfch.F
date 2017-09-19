@@ -6,7 +6,7 @@
      1  vol, gs, hx, hy, qz, bb, te, po, ne,                    	 !xpb
      1  ti, na, fna, uadia, vedia, wadia, vaecrb, veecrb, ua,
      2  fne_32, fne_52, csig, csigin, chce, chve,               	 !xpb
-     &  calf, chvemx, cvsa, fch, conc, fchdia,
+     &  calf, chvemx, cvsa, fch, conc, fchstoch, fchdia,                 !srv 17.12.13
      &  fch_p, fchvispar, fchvisq, fchin, fch_32, fch_52,                !srv 25.11.08
      1  avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
       use b2mod_types
@@ -51,7 +51,8 @@
      4  fch_32(-1:nx,-1:ny,0:1), fch_52(-1:nx,-1:ny,0:1),
      5  avisper(-1:nx,-1:ny,0:1), bvisper(-1:nx,-1:ny,0:1),
      6  cvisper(-1:nx,-1:ny,0:1), fchvisper(-1:nx,-1:ny,0:1),
-     7  fchvisq(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1)                 !srv 25.11.08
+     7  fchvisq(-1:nx,-1:ny,0:1), fchin(-1:nx,-1:ny,0:1),                !srv 25.11.08
+     &  fchstoch(-1:nx,-1:ny)
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -72,6 +73,8 @@
       integer, save :: lim_flux = 0, drift_style = 1
       integer, save :: conductive_limit = 1
       integer, save :: style = 2                                        !srv 13.01.17
+      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 {
+      real (kind=R8) :: csig_stoch(-1:nx,-1:ny)                          !lk 31.01.08 }
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, t0,
      &   tex, tex0, ehx_po, ehy_po,
@@ -112,6 +115,7 @@
       if (ncall.eq.0) then                                      	!xpb
        call ipgetr ('b2tfhe_neutral', fch_ion_neutral)          	!xpb
        call ipgetr ('b2tfhe_anomalous', fch_anomalous)          	!xpb
+       call ipgetr ('b2tfhe_stochastic', fch_stochastic)                !lk 31.01.08
        call ipgeti ('b2tfhe_lim_flux', lim_flux)
        call ipgeti ('b2trcl_conductive_limit', conductive_limit) 
        if (fch_anomalous.eq.1.0_R8)
@@ -173,6 +177,13 @@
        call b2xvff (nx, ny, chve, 'chve')
        call b2xvfx (nx, ny, chvemx, 'chvemx')
       endif
+
+      if(fch_stochastic.ne.0.0e0_R8 ) then                               !lk 31.01.08 {
+        call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,   !srv 07.07.14
+     &      fchstoch)
+      else
+        fchstoch = 0.0e0_R8
+      endif                                                            !lk 31.01.08 }
 
 c Drift terms
       fchdia=0.0_R8
@@ -696,6 +707,7 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
      .       (te(ix,iy)-te(bottomix(ix,iy),bottomiy(ix,iy)))             !xpb
      .       +fchdia(ix,iy,1)+fchin(ix,iy,1)+fchvispar(ix,iy,1)          !xpb
      &       +fchvisper(ix,iy,1)
+     8       +fchstoch(ix,iy)                                            !lk 31.01.08
             fch_32(ix,iy,1)= csig_cl(ix,iy,1)*ehy
      .       +fchin(ix,iy,1)+fchvispar(ix,iy,1)                          !xpb
      &       +fchvisper(ix,iy,1)
@@ -712,6 +724,9 @@ cwdk 10.03.16 unified treatment of chvemx in b2tlhe.F. Test for b2tqce_model no 
                 endif
               enddo
             endif
+            if(fch_stochastic.ne.0.0e0_R8 ) then                         !lk 31.01.08 {
+              conc(ix,iy,1) = conc(ix,iy,1) + csig_stoch(ix,iy)
+            endif                                                        !lk 31.01.08 }
           endif                                                 	 !xpb
         enddo
       enddo
@@ -819,6 +834,7 @@ cxpb turn off current terms if requested
        call my_out(70,nx,ny,bvisper(-1,-1,1),'b2tfch_bvispery')
        call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch_cvisperx')
        call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch_cvispery')
+       call my_out(70,nx,ny,fchstoch,'fchstoch')                     !lk 31.01.08
       endif                                                          !srv 18.06.08 }
 
 * ..return

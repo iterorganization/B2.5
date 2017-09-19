@@ -64,12 +64,13 @@
       integer, save :: style = 3                                         !srv 29.05.02
       integer, save :: mdf_fnb = 0, mdf_fhe = 0, mdf_fhi = 0             !srv 13.10.06
       integer, save :: use_b2npc9 = 1, use_b2nph9 = 1                    !srv 06.11.08 11.08.08
+      integer, save :: iout = 0
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       integer, save :: ue_style = 2                                      !srv 17.11.16 13.01.17
       real (kind=R8) ::
      *  potok, mach10, BoRiS, vis_per, na_min, na_new
       integer ncall, n2, is, ier0, i, ix, iy, ncallout, ixmax, iymax,    !xpb
-     1  guard_flows, ramp_slow, no_solve, ireg, iout
+     1  guard_flows, ramp_slow, no_solve, ireg
       real (kind=R8) ::
      *  xfm0, xfm1, xfm2, xfm3, rxf0, rxf1, rxf2, rxf3, t0, tmax
       real (kind=R8) ::                                                  !xpb
@@ -79,13 +80,14 @@
      3  smo0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
      4  smq0(-1:nx,-1:ny,0:3,0:ns-1),                                    !xpb
      5  sch0(-1:nx,-1:ny,0:3),                                           !xpb
-     6  ue(-1:nx,-1:ny), zeff(-1:nx,-1:ny),
+     6  ue(-1:nx,-1:ny), zeff(-1:nx,-1:ny),                              !srv 05.07.17
      7  lnlam(-1:nx,-1:ny), zero(-1:nx,-1:ny),
-     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)          !iyv 06.02.14
+     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1),         !iyv 06.02.14
+     &  fchstoch(-1:nx,-1:ny)                                            !srv 17.12.13
       character charnc*6, hlp_frm*4
       logical solving(4), solvedum(0:NNREGMAX), solvedm2(0:NNREGMAX)
       logical new_matrix
-      save ncall, iout, xfm0, xfm1, xfm2, xfm3, potit, potok, pot_eq,
+      save ncall, xfm0, xfm1, xfm2, xfm3, potit, potok, pot_eq,
      1  recalculate_contributions, ramp_slow, guard_flows,
      3  potitmin, BoRiS, vis_per, no_solve, solving, na_min, na_new,
      *  nsmin, nsmax, no_current
@@ -104,7 +106,7 @@
 *   ..initialisation
       data ncall/0/, xfm0/1.0_R8/, xfm1/1.0_R8/, xfm2/1.0_R8/,
      1  xfm3/1.0_R8/, potit/50/, potok/1.0e-2_R8/, pot_eq/1/,
-     2  ncallout/-1/, guard_flows/2/, no_solve/0/, iout/0/,
+     2  ncallout/-1/, guard_flows/2/, no_solve/0/,
      5  recalculate_contributions/1/, ramp_slow/0/, no_current/0/,       !dpc
      6  potitmin/0/, BoRiS/0.0_R8/, vis_per/0.0_R8/, na_min/1.0e4_R8/,
      7  na_new/1.0e14_R8/
@@ -119,7 +121,6 @@
       if (ncall.eq.0) then
        nsmin=0
        nsmax=ns
-       call ipgeti ('b2news_iout', iout)
        call ipgetr ('b2news_xfm0', xfm0)
        call ipgetr ('b2news_xfm1', xfm1)
        call ipgetr ('b2news_xfm2', xfm2)
@@ -192,6 +193,7 @@
      &      .or.(use_b2npc9.eq.1.and. mdf_fnb.ne.0)).and.
      &           vis_per.ne.0.0_R8 .and. style.eq.2),
      &      'Cannot use ma28 for both the 7- and 9-point stencils')
+       call ipgeti ('b2news_iout', iout)
        call ipgeti ('b2news_nsmin', nsmin)
        if(nsmin.gt.ns) then
          nsmin=ns
@@ -659,16 +661,16 @@ cxpb
      1         guard_flows, facdrift, fac_vis, BoRiS,                    !xpb
      1         vol, gs, hx, hy, qz, bb, te, po, ne,                      !xpb
      1         ti, na, fna, uadia, vedia, wadia, vaecrb,                 !xpb
-     &         veecrb, ua, fne_32, fne_52,
-     &         csig, csigin, chce, chve, calf, chvemx, cvsa,
-     &         fch, conc, fchdia, fch_p, fchvispar, fchvisq, fchin,      !srv 25.11.08
+     &         veecrb, ua, fne_32, fne_52, csig, csigin, chce,
+     &         chve, calf, chvemx, cvsa, fch, conc, fchstoch,            !srv 17.12.13
+     &         fchdia, fch_p, fchvispar, fchvisq, fchin,                 !srv 25.11.08
      1         fch_32, fch_52, avisper, bvisper, cvisper, fchvisper,
      2         csig_cl, calf_cl)
               call b2tfhe (nx, ny, ns, guard_flows, facdrift,
      1         BoRiS, vol, hx, hy, qz, te, po, ne, na, vedia, veecrb,    !xpb  !srv 13.01.17
      &         fne_32, fne_52, fch_p, csig, chce, chve, calf, chvemx,    !xpb
      &         cddi, fhe, fhe_mdf, fhePSch, fhet, floe, cone, fllime,    !xpb  !srv 13.10.06
-     &         .false.)                                                  !djm Jan2017
+     &         fchstoch, .false.)                                        !djm Jan2017 !srv 17.12.13
               call b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,     !xpb
      1         vol, hx, hy, gs, qz, qc, bb, ti, ni, na,
      2         fna, fni_32, fni_52, kinrgy,
@@ -870,14 +872,14 @@ c     with diamagnetic drift part                                        !xpb
      1   vol, gs, hx, hy, qz, bb, te, po, ne,                            !xpb
      1   ti, na, fna, uadia, vedia, wadia, vaecrb, veecrb,               !xpb
      &   ua, fne_32, fne_52, csig, csigin, chce,                         !xpb
-     &   chve, calf, chvemx, cvsa, fch, conc,
+     &   chve, calf, chvemx, cvsa, fch, conc, fchstoch,                  !srv 17.12.13
      &   fchdia, fch_p, fchvispar, fchvisq, fchin, fch_32, fch_52,       !srv 25.11.08
      1   avisper, bvisper, cvisper, fchvisper, csig_cl, calf_cl)
         call b2tfhe (nx, ny, ns, guard_flows, facdrift, BoRiS,           !xpb
      1   vol, hx, hy, qz, te, po, ne, na, vedia, veecrb,                 !srv 13.01.17
      1   fne_32, fne_52, fch_p,
      1   csig, chce, chve, calf, chvemx, cddi, fhe, fhe_mdf, fhePSch,    !srv 13.10.06
-     &   fhet, floe, cone, fllime,                                       !xpb
+     &   fhet, floe, cone, fllime, fchstoch,                             !xpb !srv 17.12.13
      &   .true.)                                                         !djm Jan2017
         call b2tfhi (nx, ny, ns, guard_flows, facdrift, BoRiS,           !xpb
      1   vol, hx, hy, gs, qz, qc, bb, ti, ni, na,

@@ -683,7 +683,7 @@ c Drift terms
       call b2tanml (nx, ny, ns, vol, hx, hy, csig_an, po, fchanml)
 
       if(fch_stochastic.ne.0.0e0_R8 ) then                                   !lk 31.01.08 {
-       call b2tstch (nx, ny, vol, hy, bb, po, te, ne, csig_stoch, 
+       call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,        !srv 07.07.14
      &      fchstoch)
       else
        fchstoch = 0.0e0_R8
@@ -1447,13 +1447,15 @@ csw 13mar2013 added check upwind (SOLPS4 style)
          ehy=0.0_R8
         endif                                                            !srv 27.02.13
 
-        floe0 = 1.5e0_R8*fne(ix,iy,1)+                                   !srv 11.05.99
+        floe0 = 1.5e0_R8*(fne(ix,iy,1)-                                  !srv 11.05.99
+     &	   5.0e0_R8/3.0e0_R8*fchstoch(ix,iy)/qe)+                        !lk 21.02.08 17.12.13
 !* in the next line there is the coeffisient +4 because                  !srv 13.08.02
 !* we need this term with +5/2=-3/2+4                                    !srv 13.08.02 19.08.02
 !     &   +4.0e0_R8*fledia(ix,iy,1)*vdia_par*signmf                      !srv 13.09.02
      &   (chve(ix,iy,1)+2.5e0_R8*fledia(ix,iy,1))*                       !srv 13.09.02 14.05.03 18.01.07 11.01.13 *signmf
      &   (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
-        floe0_mdf = 1.5e0_R8*fne(ix,iy,1)+                               !srv 11.05.99
+        floe0_mdf = 1.5e0_R8*(fne(ix,iy,1)-                              !srv 11.05.99
+     &	  5.0e0_R8/3.0e0_R8*fchstoch(ix,iy)/qe)+                         !lk 21.02.08 17.12.13
      &   chve(ix,iy,1)*                                                  !srv 13.09.02 14.05.03
      &   (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
 !        if(mdf_fhe.eq.0) then                                           !srv 13.10.06 {
@@ -1617,7 +1619,6 @@ csw 13mar2013 added check upwind (SOLPS4 style)
            fhe_ecrb(ix,iy,1) = 0.0_R8
          endif
         endif
-
 
         if(mdf_fhe.eq.0) then                                            !srv 13.10.06 {
          floe(ix,iy,1) = floe0

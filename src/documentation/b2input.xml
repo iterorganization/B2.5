@@ -1106,6 +1106,23 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tfhe_stochastic</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Real parameter which turns on stochastic current.
+					If b2tfhe_stochastic is 0 then stochastic current is switched off otherwise stochastic current is switched on.
+				</description>
+			</switch>
+			<switch>
+				<name>b2trno_con_e_stochastic</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the stochastic conductivity.
+				</description>
+			</switch>
+			<switch>
 				<name>b2trcl_lluciani</name>
 				<default>3</default>
 				<type>integer</type>

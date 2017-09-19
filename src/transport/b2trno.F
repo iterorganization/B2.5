@@ -77,18 +77,21 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is
       integer hcimx_flag, mode
-	integer, save :: iout = 0, iout_b2wdat = 0,                    !srv 17.06.08
+      integer, save :: iout = 0, iout_b2wdat = 0,                     !srv 17.06.08
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
-      character(3) chns                                            !srv 17.06.08
-      integer, save :: flux_limit_to_dpa = 1, csig_an_style = 1    !srv 15.06.08
-      integer, save :: flux_limit_style = 2                        !srv 07.12.15
+      character(3) chns                                               !srv 17.06.08
+      integer, save :: flux_limit_to_dpa = 1, csig_an_style = 1       !srv 15.06.08
+      integer, save :: flux_limit_style = 2                           !srv 07.12.15
+      real (kind=R8), save :: fch_stochastic = 0.0_R8, alpha = 1.0e0_R8  !srv 17.12.13
+      real (kind=R8) ::
+     &  csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny)                !lk 31.01.08
       real (kind=R8) ::
      *  wrk(-1:nx,-1:ny), hcimx(-1:nx,-1:ny,0:1,0:ns-1),
      1  hvi0(-1:nx,-1:ny,0:1), hve0(-1:nx,-1:ny,0:1),
-     2  hzvol(-1:nx,-1:ny), flc(-1:nx,-1:ny,0:1,0:ns-1),           !srv 09.07.03 30.11.15
-     3  flchz(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 09.07.03 30.11.15
+     2  hzvol(-1:nx,-1:ny), flc(-1:nx,-1:ny,0:1,0:ns-1),              !srv 09.07.03 30.11.15
+     3  flchz(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 09.07.03 30.11.15
      1	pol_anom_scale
       save ncall, pol_anom_scale, hcimx_flag, mode
 *   ..procedures
@@ -127,6 +130,8 @@
         call ipgeti ('b2npht_iout', iout_b2npht)
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 19.05.10 }
+        call ipgetr ('b2tfhe_stochastic', fch_stochastic)            !lk 31.01.08
+        call ipgetr ('b2trno_con_e_stochastic', alpha)               !lk 31.01.08
         call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
       end if
 *   ..extensive tests on first few calls
@@ -263,6 +268,21 @@ csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
 *   ..set strange velocities chve, chvi
 c      call sfill (n2*2, 0.0_R8, chve, 1)
 c      call sfill (n2*2, 0.0_R8, chvi, 1)
+*   ..add stochastic part of the electron heat conductivity
+      if(fch_stochastic.ne.0.0e0_R8)then                              !lk 31.01.08 { !srv 17.12.13
+        call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,    !srv 07.07.14
+     &      fchstoch)
+	if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+        call my_out(70,nx,ny,chce(-1,-1,1),'b2trno_chcey_no_stoch')
+      endif
+      do iy = 0, ny
+        do ix = 0, nx
+          chce(ix,iy,1)=chce(ix,iy,1)
+     &	   +alpha*0.8e0_R8*csig_stoch(ix,iy)/qe/qe
+     &      *(te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))
+	  enddo
+	enddo
+      endif                                                           !lk 31.01.08 } !srv 17.12.13
 *   ..scale parallel coefficients if desired
       if (pol_anom_scale.ne.1.0_R8) then
         do is = 0, ns-1
