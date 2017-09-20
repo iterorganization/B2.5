@@ -1,8 +1,9 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2sihs_ (nx, ny, ns, ismain, fac_ExB, hx, hy, qz, vol,  !srv 07.06.00 02.06.99 07.05.08 05.07.17
-     1  bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni, fne, fch,        !srv 28.06.03 01.07.09 05.03.11
+      subroutine b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,
+     &  hx, hy, qz, vol, bb, pbs, lnlam,                                 !srv 07.06.00 02.06.99 07.05.08 05.07.17
+     1  na, ua, ue, te, ti, po, ne, ni, fne, fch,                        !srv 28.06.03 01.07.09 05.03.11
      &  cvsa, fchdia, uadia, vadia, vaecrb, she0, shi0, vti32)           !srv 28.06.03 07.07.09
       use b2mod_types
       use b2mod_rates
@@ -26,7 +27,7 @@
       implicit none
 *   ..input arguments (unchanged on exit)
       integer nx, ny, ns, ismain                                      !srv 05.07.17
-      real (kind=R8) ::
+      real (kind=R8) :: BoRiS,
      *  fac_ExB(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny),       !srv 07.06.00 02.06.99
      *  vol(-1:nx,-1:ny), na(-1:nx,-1:ny,0:ns-1),
      &  ua(-1:nx,-1:ny,0:ns-1), ue(-1:nx,-1:ny),                      !srv 05.03.11
@@ -259,7 +260,8 @@
       do iy = 0, ny-1
        do ix = 0, nx-1
         if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then     !srv 26.11.02
-         t0 = -phm0*(wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy)) !srv 31.05.99 27.06.03 05.03.11
+         t0 = -phm0*(1.0_R8-BoRiS)*
+     &   (wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))            !srv 31.05.99 27.06.03 05.03.11
 !     &              +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))  !srv 31.05.99 27.06.03
          shedu(ix,iy,0) = shedu(ix,iy,0)+
      &    (max(0.0e0_R8,t0)+rf0*abs(t0))*ne(ix,iy)*te(ix,iy)
@@ -302,9 +304,9 @@
        do iy = 0, ny-1
         do ix = 0, nx-1
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then    !srv 26.11.02
-          t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*                      !srv 21.07.05 {
+          t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*(1.0_R8-BoRiS)*       !srv 21.07.05 {
      &            ( wrk0(rightix(ix,iy),rightiy(ix,iy))-wrk0(ix,iy))  !srv 21.07.05 }
-!          t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*(                    !srv 31.05.99
+!          t0 = -phm1*(na(ix,iy,is)/ni(ix,iy,0))*(1.0_R8-BoRiS)*(     !srv 31.05.99
 !     &        pbs(rightix(ix,iy),rightiy(ix,iy),0)*                  !srv 28.06.03 { 
 !     &        ua(rightix(ix,iy),rightiy(ix,iy),is)-
 !     &        pbs(ix,iy,0)*ua(ix,iy,is)
@@ -560,15 +562,15 @@
      &        (min(0.0e0_R8,t0)-rf3*abs(t0))/(ne(ix,iy)*te(ix,iy))
              b2joule(region(ix,iy,0))=b2joule(region(ix,iy,0))+t0
              b2sihs_joule(ix,iy)=t0
-             t0 = - phm4*vol(ix,iy)*shifr(ix,iy,0)
+             t0 = - phm4*(1.0_R8-BoRiS)*vol(ix,iy)*shifr(ix,iy,0)
 !            shifr(ix,iy,0) = t0
 !             shifr(ix,iy,0) = (2.5e0_R8+rf4)*t0
 !             shifr(ix,iy,3) = -(1.5e0_R8+rf4)*t0/(ni(ix,iy,0)*ti(ix,iy))
              shifr(ix,iy,0) = max(0.0e0_R8,t0)+rf4*abs(t0)
              shifr(ix,iy,3) =
      &        (min(0.0e0_R8,t0)-rf4*abs(t0))/(ni(ix,iy,0)*ti(ix,iy))
-             b2joule(region(ix,iy,0))=b2joule(region(ix,iy,0))+t0
-             b2sihs_joule(ix,iy)=t0
+             b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+t0
+             b2sihs_fraa(ix,iy)=t0
            endif
          enddo
        enddo
@@ -627,7 +629,8 @@
           do iy = 0, ny-1
            do ix = 0, nx-1
             if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then !srv 26.11.02
-             t0 = (coef*lnlam(ix,iy)*rz2(ix,iy,isb)*rz2(ix,iy,is)/4)* !srv 11.01.12
+             t0 = rz2(ix,iy,isb)*rz2(ix,iy,is)*
+     &          (coef*lnlam(ix,iy)/4.0_R8)*(1.0_R8-BoRiS)*            !srv 11.01.12
      &           na(ix,iy,is)*na(ix,iy,isb)*vti32(ix,iy)*
      &           ((ua(ix,iy,is)-ua(ix,iy,isb))**2)                    !srv 22.07.05
              shifr(ix,iy,0) = shifr(ix,iy,0)+(2.5e0_R8+rf4)*t0

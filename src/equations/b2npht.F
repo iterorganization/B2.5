@@ -199,8 +199,9 @@
      &  bb, pbs, lnlam, na, ua, ue, te, ti, po, ne, ni, fch,              !srv 01.07.09
      &  cvsa, fchdia, uadia, wadia, vaecrb, she0, shi0, wrk0)             !xpb
       else
-       call b2sihs_ (nx, ny, ns, ismain, fac_ExB, hx, hy, qz, vol, bb,    !srv 07.06.00 02.06.99 28.06.03 05.07.17
-     *  pbs, lnlam, na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa,       !srv 28.06.03 01.07.09 05.03.11
+       call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                  !srv 07.06.00 02.06.99 28.06.03 05.07.17
+     *  hx, hy, qz, vol, bb, pbs, lnlam,
+     *  na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa,                   !srv 28.06.03 01.07.09 05.03.11
      *  fchdia, uadia, vadia, vaecrb, she0, shi0, wrk0)                   !srv 07.06.00 02.06.99 07.07.09
       endif
 csw 21feb2014 remove sources in ghostcells (SOLPS4)

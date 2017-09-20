@@ -1872,7 +1872,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier of the contribution to electron heat sources from divergence(ue,ve).
+					Multiplier of the contribution to electron heat sources from divergence(ue,ve). This term is superseded by the BoRiS switch if invoked.
 				</description>
 			</switch>
 			<switch>
