@@ -1888,7 +1888,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier of the contribution to ion heat sources from viscous heating. This term is superseded by the BoRiS switch if invoked.
+					Multiplier of the contribution to ion heat sources from viscous heating due to poloidal velocity differences. This term is superseded by the BoRiS switch if invoked.
 				</description>
 			</switch>
 			<switch>
@@ -1929,6 +1929,14 @@
 				<type>real</type>
 				<description>
 					Multiplier of the contribution to heat sources from friction due to diamagnetic velocities. Normally already included in 'phm3' term above.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_phm8</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier of the contribution to heat sources from viscous heating due to radial velocity differences. This term is only included when using b2nph9_style.eq.1 or b2npht_style.eq.1 (defaults). This term is superseded by the BoRiS switch if invoked.
 				</description>
 			</switch>
 			<switch>
