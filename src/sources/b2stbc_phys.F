@@ -167,6 +167,7 @@
       parameter (amtol=1.0e-2_R8)
       character chns*3, chk*1                                           !srv 11.07.05
       logical decay_length_ok, fedback_species
+      logical, save :: BCCON14_W(NBCD), BCCON14_E(NBCD)                 !srv 20.09.17
       real (kind=R8) ::
      *  ro(-1:nx,-1:ny), cs, csb, uuout, upout, zbar, zarg, uutest,     !srv 01.02.09
      *  fchy_dia, fchy_inertia, seec                                    !srv 07.04.00
@@ -5309,9 +5310,40 @@ cghgh
         ENDIF
         GOTO 30000
 
-* -- BCENE=15 -- FROM B2STBC_SPB                                     !srv 01.02.09 {
+* -- BCENE=15 -- FROM B2STBC_SPB                                        !srv 01.02.09 {
 
 21500   CONTINUE
+        if(ncall.eq.0) then                                             !srv 20.09.17 {
+          IF(BCCHAR(IB).EQ.'W') THEN
+            BCCON14_W(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
+            DO IS = 0, NS-1
+              IF(.NOT.IS_NEUTRAL(IS)) THEN
+                IF(BCCON(IS,IB).NE.14) THEN
+                  BCCON14_W(IB) = .FALSE.
+                ENDIF
+              ENDIF
+            ENDDO
+            if(BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
+     &      'BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
+            if(.not.BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
+     &      'HAS NOT BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
+          ENDIF
+          IF(BCCHAR(IB).EQ.'E') THEN
+            BCCON14_E(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
+            DO IS = 0, NS-1
+              IF(.NOT.IS_NEUTRAL(IS)) THEN
+                IF(BCCON(IS,IB).NE.14) THEN
+                  BCCON14_E(IB) = .FALSE.
+                ENDIF
+              ENDIF
+            ENDDO
+            if(BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
+     &       'BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
+            if(.not.BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
+     &       'HAS NOT BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
+          ENDIF
+        endif                                                           !srv 20.09.17 }
+
         if(bcene_15_style.eq.0) then
           if(ncall.eq.0) then   !srv added accumulation in order to account twice b.c. for corner cells
             write(*,'(a,1p,g14.7,a,a,a)')
@@ -5319,64 +5351,84 @@ cghgh
      1       ' on ',BCCHAR(IB),boundary_location(ib)
           endif
           IF(BCCHAR(IB).EQ.'W') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-!            CS=SQRT(bcint(PR,nx,ny,IX,IB)/bcint(RO,nx,ny,IX,IB))
-              CS=SQRT(PR(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     &                RO(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
+            DO IY = 1, BC_LIST_SIZE(IB)                                 !srv 20.09.17 {
+!            CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
+              CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &                RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+              if(bccon14_w(ib)) then                                    !srv 20.09.17 {
+*    .. apply bcene=15 according to the form of bccon=14
+                t0 = 0.0_R8
+                do is = 0, ns-1
+                  t0 = t0 + rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
+     *            CONPAR(IS,IB,1)*
+     *            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+                enddo
+              else
+               t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+              endif                                                     !srv 20.09.17
               t0 = max(0.0e0_R8,                                        !srv 05.05.09
-     &         (abs(pbs(rightix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                  rightiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),0))*
-     &                       ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*cs + !srv 25.12.06 11.01.13
-     &         fch_p(rightix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &               rightiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),0)/qe)) !srv 25.12.06 11.03.09 }
+     &          (abs(pbs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &           rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))*t0*cs + !srv 25.12.06 11.01.13 20.09.17
+     &           fch_p(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &              rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)/qe))  !srv 25.12.06 11.03.09 }
               if(pot_eq.eq.1) then                                      !srv 27.02.13 {
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-             !srv 11.03.09 {
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-             !srv 11.03.09 {
      &                (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0            !srv 19.04.13
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
-     &           qe*po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*t0            !srv 07.11.12
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
+     &           qe*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0            !srv 07.11.12
               else                            !srv 27.02.13
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-             !srv 11.03.09 {
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-             !srv 11.03.09 {
      &                ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+3.1_R8)*t0   !srv 19.04.13
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)
               endif                                                     !srv 27.02.13 }
               if(mdf_fhe.ne.0) then                                     !srv 01.06.06 {
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
-     &           fhePSch(rightix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                   rightiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),0)
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
+     &           fhePSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &                   rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)
             endif                                                       !srv 01.06.06 }
             END DO
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-!              CS=SQRT(bcint(PR,nx,ny,IX,IB)/bcint(RO,nx,ny,IX,IB))
-              CS=SQRT(PR(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     &                RO(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-              t0 = max(0.0e0_R8,                                        !srv 05.05.09
-     &         (abs(pbs(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0))*
-     &               ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*cs -         !srv 25.12.06 11.01.13
-     &            fch_p(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)/qe))       !srv 25.12.06 11.03.09 }
-              if(pot_eq.eq.1) then                                      !srv 27.02.13 {
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-             !srv 11.03.09 {
-     &                (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0            !srv 19.04.13
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
-     &           qe*po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*t0            !srv 07.11.12
+            DO IY = 1, BC_LIST_SIZE(IB)                                 !srv 20.09.17
+!              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
+              CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &                RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+              if(bccon14_e(ib)) then                                    !srv 20.09.17 {
+*    .. apply bcene=15 according to the form of bccon=14
+                t0 = 0.0_R8
+                do is = 0, ns-1
+                  t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
+     &            CONPAR(IS,IB,1)*
+     &            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+                enddo
               else
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-             !srv 11.03.09 {
+                t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+              endif                                                     !srv 20.09.17 }
+              t0 = max(0.0e0_R8,                                        !srv 05.05.09
+     &          (abs(pbs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))*t0*cs -  !srv 25.12.06 11.01.13 20.09.17
+     &            fch_p(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)/qe))       !srv 25.12.06 11.03.09 }
+              if(pot_eq.eq.1) then                                      !srv 27.02.13 {
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-             !srv 11.03.09 {
+     &                (1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)*t0            !srv 19.04.13
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
+     &           qe*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0            !srv 07.11.12
+              else
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-             !srv 11.03.09 {
      &               ((1.0e0_R8+GAMMAE)/(1.0e0_R8-GAMMAE)+3.1_R8)*t0    !srv 19.04.13
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)
               endif                                                     !srv 27.02.13 }
               if(mdf_fhe.ne.0) then                                     !srv 01.06.06 {
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
-     &           fhePSch(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) +
+     &           fhePSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)
             endif                                                       !srv 01.06.06 }
             end do
           ELSE
@@ -5391,74 +5443,94 @@ cghgh
      1       ' on ',BCCHAR(IB),boundary_location(ib)
           endif
           IF(BCCHAR(IB).EQ.'W') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-!              CS=SQRT(bcint(PR,nx,ny,IX,IB)/bcint(RO,nx,ny,IX,IB))
-              s1=abs(pbs(rightix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                   rightiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),0)) !srv 18.04.13 {
-              vte=sqrt(te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/me)
-              t0 =s1*ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     &          sqrt(1.0_R8/(2.0_R8*pi))*vte*
+            DO IY = 1, BC_LIST_SIZE(IB)                                 !srv 20.09.17
+!              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
+              s1=abs(pbs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &                   rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)) !srv 18.04.13 {
+              vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
+              if(bccon14_w(ib)) then                                    !srv 20.09.17 {
+*    .. apply bcene=15 according to the form of bccon=14
+                t0 = 0.0_R8
+                do is = 0, ns-1
+                  t0 = t0 + rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
+     *            CONPAR(IS,IB,1)*
+     *            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+                enddo
+              else
+                t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+              endif                                                     !srv 20.09.17
+              t0 =s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*                   !srv 20.09.17
      &          expu2(max(-50.0_R8,
-     &         -qe*(po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))-potpar(ib,2))/
-     &              te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))
+     &         -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
+     &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
               if(pot_eq.eq.1) then                                      !srv 27.02.13 {
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
      &            (1.0e0_R8+GAMMAE)*t0
-                 she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &            she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
+                 she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     &            she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
      &            (1.0e0_R8-GAMMAE)*
-     &            qe*po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*t0
-              else                        !srv 27.02.13
-                cs=sqrt(pr(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     &                  ro(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-
+     &            qe*po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0
+              else                                                      !srv 27.02.13
+                cs=sqrt(pr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &                  ro(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
      &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*3.1_R8)*
-     &           ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*cs
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)              !srv 18.04.13 }
+     &           ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*cs
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)              !srv 18.04.13 }
               endif                                                     !srv 27.02.13 }
               if(mdf_fhe.ne.0) then                                     !srv 01.06.06 {
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
-     &           fhePSch(rightix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
-     &                   rightiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),0)
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
+     &           fhePSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
+     &                   rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)
             endif                                                       !srv 01.06.06 }
             END DO
           ELSEIF(BCCHAR(IB).EQ.'E') THEN
-            DO IX = 1, BC_LIST_SIZE(IB)
-!              CS=SQRT(bcint(PR,nx,ny,IX,IB)/bcint(RO,nx,ny,IX,IB))
-              s1=abs(pbs(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0))          !srv 18.04.13 {
-              vte=sqrt(te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/me)
-              t0 =s1*ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*
-     &          sqrt(1.0_R8/(2.0_R8*pi))*vte*
+            DO IY = 1, BC_LIST_SIZE(IB)                                 !srv 20.09.17
+!              CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
+              s1=abs(pbs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))          !srv 18.04.13 {
+              vte=sqrt(te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/me)
+              if(bccon14_e(ib)) then                                    !srv 20.09.17 {
+*    .. apply bcene=15 according to the form of bccon=14
+                t0 = 0.0_R8
+                do is = 0, ns-1
+                  t0 = t0+rza(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)*
+     &            CONPAR(IS,IB,1)*
+     &            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+                enddo
+              else
+                t0 = ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))
+              endif                                                     !srv 20.09.17 }
+              t0 =s1*t0*sqrt(1.0_R8/(2.0_R8*pi))*vte*                   !srv 20.09.17
      &          expu2(max(-50.0_R8,
-     &         -qe*(po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))-potpar(ib,2))/
-     &              te(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))))
+     &         -qe*(po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))-potpar(ib,2))/
+     &              te(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))))
               if(pot_eq.eq.1) then                                      !srv 27.02.13 {
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
      &               (1.0e0_R8+GAMMAE)*t0
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) -
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
      &           (1.0e0_R8-GAMMAE)*qe*
-     &           po(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*t0
+     &           po(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*t0
               else                               !srv 27.02.13
-                cs=sqrt(pr(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))/
-     &                  ro(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)))
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)-
+                cs=sqrt(pr(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
+     &                  ro(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1)-
      &               s1*((1.0e0_R8+GAMMAE)+(1.0e0_R8-GAMMAE)*3.1_R8)*
-     &           ne(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB))*cs
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)            !srv 18.04.13 }
-              endif                                                   !srv 27.02.13 }
-              if(mdf_fhe.ne.0) then                                   !srv 01.06.06 {
-                she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) =
-     &           she0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0) +
-     &           fhePSch(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),0)
-            endif                                                     !srv 01.06.06 }
+     &           ne(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))*cs
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)              !srv 18.04.13 }
+              endif                                                     !srv 27.02.13 }
+              if(mdf_fhe.ne.0) then                                     !srv 01.06.06 {
+                she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
+     &           she0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) +
+     &           fhePSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)           !srv 20.09.17 }
+            endif                                                       !srv 01.06.06 }
             end do
           ELSE
             CALL XERRAB 
@@ -5468,7 +5540,7 @@ cghgh
           CALL XERRAB
      .     ('B2STBC -- BCENE=15, incorrect bcene_15_style value')
         endif
-        GOTO 30000                                                   !srv 01.02.09 }
+        GOTO 30000                                                      !srv 01.02.09 }
 
 * -- BCENE=16 -- Feedback boundary condition with constant temperature
 
@@ -7310,10 +7382,39 @@ cxpb          endif
 
 31500   CONTINUE
         if(ncall.eq.0) then
+          IF(BCCHAR(IB).EQ.'W') THEN
+            BCCON14_W(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
+            DO IS = 0, NS-1
+              IF(.NOT.IS_NEUTRAL(IS)) THEN
+                IF(BCCON(IS,IB).NE.14) THEN
+                  BCCON14_W(IB) = .FALSE.
+                ENDIF
+              ENDIF
+            ENDDO
+            if(BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
+     &      'BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
+            if(.not.BCCON14_W(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
+     &      'HAS NOT BEEN IMPOSED AT WEST BOUNDARY', IB,' FOR ALL IONS'
+          ENDIF
+          IF(BCCHAR(IB).EQ.'E') THEN
+            BCCON14_E(IB) = .TRUE.  ! IF BCCON=14 HAS BEEN IMPOSED AT WEST BOUNDARY IB FOR ALL IONS
+            DO IS = 0, NS-1
+              IF(.NOT.IS_NEUTRAL(IS)) THEN
+                IF(BCCON(IS,IB).NE.14) THEN
+                  BCCON14_E(IB) = .FALSE.
+                ENDIF
+              ENDIF
+            ENDDO
+            if(BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 HAS ',
+     &       'BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
+            if(.not.BCCON14_E(IB)) write(*,"(a,a,i3,a)") 'BCCON=14 ',
+     &       'HAS NOT BEEN IMPOSED AT EAST BOUNDARY', IB,' FOR ALL IONS'
+          ENDIF
+          call xertst(ENIPAR(IB,1).gt.0.0_R8,
+     1       'BCENI = 15, ENIPAR(I,,1) <= 0 not allowed!')              !srv 20.09.17
           write(*,'(a,1p,g14.7,a,g14.7,a,a,a)')
      &     'from b2stbc_spb for ion temperature with ENIPAR(IB,1) =',
-     &     ENIPAR(IB,1),' and ENIPAR(IB,2) =', ENIPAR(IB,2),' on ',
-     &     BCCHAR(IB),boundary_location(ib)
+     &     ENIPAR(IB,1),' on ', BCCHAR(IB),boundary_location(ib)        !srv 20.09.17
         endif
         IF(BCCHAR(IB).EQ.'W') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
@@ -7321,22 +7422,31 @@ cxpb          endif
 !            CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
             CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      &              RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-            t0 = 0.0_R8
-            do is = 0, ns-1
-              if(.not.is_neutral(is)) t0 = t0 +
-     &         na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)                  !srv 11.03.09
-            enddo
+            if(bccon14_w(ib)) then                                      !srv 20.09.17 {
+*    .. apply bceni=15 according to the form of bccon=14
+              t0 = 0.0_R8
+              do is = 0, ns-1
+                if(.not.is_neutral(is)) t0 = t0 + CONPAR(IS,IB,1)*      !srv 20.09.17
+     &           na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+              enddo
+            else                                                        !srv 20.09.17 }
+              t0 = 0.0_R8
+              do is = 0, ns-1
+                if(.not.is_neutral(is)) t0 = t0 +
+     &            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)              !srv 11.03.09
+              enddo
+            endif                                                       !srv 20.09.17
             SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
-     &       SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) +                 !srv 11.03.09
+     &       SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) -                !srv 11.03.09 20.09.17
      &       ENIPAR(IB,1)*t0*cs*
      &       abs(pbs(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
-     &               rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)) !srv 26.11.02 28.01.03
-            if(mdf_fhi.ne.0) then                                        !srv 13.10.06 {
+     &               rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0))     !srv 26.11.02 28.01.03
+            if(mdf_fhi.ne.0) then                                       !srv 13.10.06 {
               shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      &         shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) -
      &         fhiPSch(rightix(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),
      &                 rightiy(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)),0)
-            endif                                                        !srv 13.10.06 }
+            endif                                                       !srv 13.10.06 }
           ENDDO
         ELSEIF(BCCHAR(IB).EQ.'E') THEN
           DO IY = 1, BC_LIST_SIZE(IB)
@@ -7344,16 +7454,25 @@ cxpb          endif
 !            CS=SQRT(bcint(PR,nx,ny,IY,IB)/bcint(RO,nx,ny,IY,IB))
             CS=SQRT(PR(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB))/
      .              RO(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB)))
-            t0 = 0.0_R8
-            do is = 0, ns-1
-              if(.not.is_neutral(is)) t0 = t0 +
-     .         na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)                  !srv 11.03.09
-            enddo
+            if(bccon14_e(ib)) then                                      !srv 20.09.17 {
+*    .. apply bceni=15 according to the form of bccon=14
+              t0 = 0.0_R8
+              do is = 0, ns-1
+                if(.not.is_neutral(is)) t0 = t0 +CONPAR(IS,IB,1)*       !srv 20.09.17
+     .            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)
+              enddo
+            else                                                        !srv 20.09.17 }
+              t0 = 0.0_R8
+              do is = 0, ns-1
+                if(.not.is_neutral(is)) t0 = t0 +
+     .            na(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),is)              !srv 11.03.09
+              enddo
+            endif                                                       !srv 20.09.17
             SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) =
-     .       SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) +                 !srv 11.03.09
+     .       SHI0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),1) -                !srv 11.03.09 20.09.17
      &       ENIPAR(IB,1)*t0*cs*
-     &       abs(pbs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))               !srv 26.11.02 28.01.03
-            if(mdf_fhi.ne.0) then                                        !srv 13.10.06 {
+     &       abs(pbs(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0))              !srv 26.11.02 28.01.03
+            if(mdf_fhi.ne.0) then                                       !srv 13.10.06 {
               shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) =
      .         shi0(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0) +
      &         fhiPSch(BC_LIST_X(IY,IB),BC_LIST_Y(IY,IB),0)
