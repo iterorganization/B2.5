@@ -834,7 +834,7 @@ cxpb turn off current terms if requested
        call my_out(70,nx,ny,bvisper(-1,-1,1),'b2tfch_bvispery')
        call my_out(70,nx,ny,cvisper(-1,-1,0),'b2tfch_cvisperx')
        call my_out(70,nx,ny,cvisper(-1,-1,1),'b2tfch_cvispery')
-       call my_out(70,nx,ny,fchstoch,'fchstoch')                     !lk 31.01.08
+       call my_out(70,nx,ny,fchstoch,'fchstochy')                    !lk 31.01.08
       endif                                                          !srv 18.06.08 }
 
 * ..return

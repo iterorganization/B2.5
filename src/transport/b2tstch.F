@@ -110,8 +110,8 @@
         enddo
       enddo
 
-!      call my_out(70,nx,ny,csig_stoch,'b2tstch_csig_stoch')
-!      call my_out(70,nx,ny,fchstoch,'b2tstch_fchstoch')
+!      call my_out(70,nx,ny,csig_stoch,'b2tstch_csigy_stoch')
+!      call my_out(70,nx,ny,fchstoch,'b2tstch_fchstochy')
 
 * ..return
       ncall = ncall+1
