@@ -53,7 +53,8 @@
       real (kind=R8) ::
      *     t0
       real (kind=R8), save ::
-     &     addvis=0.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8          !srv 28.03.06 !srv 19.10.08
+     &     addvis=0.0_R8, addvis1=1.0_R8, cqip1 = 0.5e0_R8,         !srv 28.03.06 !srv 19.10.08
+     &     cvsa_mltpl = 1.0e0_R8                                    !iyv 06.12.13
       real (kind=R8) ::
      *   tauia(-1:nx,-1:ny,0:ns-1), qip0(-1:nx,-1:ny),              !srv 23.07.99
      *   qip1(-1:nx,-1:ny), qipgen(-1:nx,-1:ny),                    !srv 23.07.99 19.01.05
@@ -82,7 +83,8 @@
        call ipgetr ('b2siav_cqip1', cqip1)                          !srv 28.03.06
        call ipgeti ('b2siav_iout', iout)                            !lk 23.05.06 05.07.07
        call ipgeti ('b2siav_style_qip', qstyle)                     !lk 23.05.06 05.07.07
-       call ipgeti ('b2trcl_lluciani',lluciani)                     !lk 03.12.09
+       call ipgeti ('b2trcl_lluciani', lluciani)                    !lk 03.12.09
+       call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)	            !iyv 06.12.13
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -210,7 +212,7 @@
             do ix=0,nx
               if(mod(region(ix,iy,0),4).eq.1) then
                 if (lluciani.eq.3) then
-                  tauia1(ix,iy) = tauia(ix,iy,isb)/                 !lk 20.11.07 {
+                  tauia1(ix,iy) = cvsa_mltpl*tauia(ix,iy,isb)/      !lk 20.11.07 { iyv 06.12.13
      &             (1.0e0_R8+15.12e16_R8/conn(iy)*
      &             (ti(ix,iy)/ev)**2/ne2(ix,iy))
      &             /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8

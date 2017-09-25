@@ -112,7 +112,8 @@ csw 10oct2012
      &                  , nu1(-1:nx,-1:ny)                               !lk 23.05.06 05.07.07 }
       real (kind=R8) :: csig_stoch(-1:nx,-1:ny),                         !lk 31.01.08 {
      &                  fchstoch(-1:nx,-1:ny)       
-      real (kind=R8), save :: fch_stochastic = 0.0e0_R8                  !lk 31.01.08 }
+      real (kind=R8), save :: fch_stochastic = 0.0e0_R8,                 !lk 31.01.08 }
+     &      cvsa_mltpl = 1.0e0_R8                                        !iyv 06.12.13
       real (kind=R8), save :: PSch=1.0e0_R8                              !srv 17.01.07
       real (kind=R8) ::
      *   ehx, ehy, flo, dif, floe0, flomx, cone0, alfe0, t0, t1,
@@ -200,6 +201,7 @@ csw 2013 uwpind scheme (for modified hybrid, SOLPS4 style)
        if(fch_pTe .eq. 1.0_R8) alfTeEh = 0.0_R8                          !srv 16.04.10
        call xertst (.not.(0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe),
      &        ' Do not set 0.0_R8.ne.alfTeEh.and.0.0_R8.ne.fch_pTe')
+       call ipgetr ('b2trcl_cvsa_mltpl', cvsa_mltpl)                     !iyv 06.12.13
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)
        call ipgeti ('b2npp7_iout', iout_b2npp7)
@@ -564,9 +566,9 @@ c Drift terms
            enddo
 
            do iy = 0,mintopcut     
-            do ix = 0,nx                                                  
+            do ix = 0,nx
              if(mod(region(bottomix(ix,iy),
-     .                     bottomiy(ix,iy),0),4).eq.1) then                         
+     .                     bottomiy(ix,iy),0),4).eq.1) then
               qipgen(ix,iy)=(wrk0(ix,iy)
      &         +wrk0(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
              endif                                                      
@@ -581,7 +583,7 @@ c Drift terms
             do ix=0,nx
              if(mod(region(bottomix(ix,iy),
      .                     bottomiy(ix,iy),0),4).eq.1) then
-              tauia1(ix,iy) = tauia(ix,iy,is)/                               !lk 20.11.07 {
+	       tauia1(ix,iy) = cvsa_mltpl*tauia(ix,iy,is)/                   !lk 20.11.07 { !iyv 06.12.13
      &         (1.0e0_R8+15.12e16_R8/conn(iy)*
      &         (ti(ix,iy)/ev)**2/ne2(ix,iy))
      &         /(1.0e0_R8+15.12e16_R8*eps1(iy)**1.5e0_R8
