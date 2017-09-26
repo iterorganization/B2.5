@@ -267,6 +267,12 @@
 *     B2RUSR reads a table of source term data from an un*formatted
 *     file.
 *
+*     B2SIAN computes contribution to the parallel momentum source due
+*     to the anomalous current
+*
+*     B2SIAV computes a linearised representation of the additional
+*     viscosity.
+*
 *     B2SIFR computes a linearised representation of the friction
 *     force between one species and all others.
 *

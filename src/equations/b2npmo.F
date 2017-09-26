@@ -18,7 +18,7 @@
      1 , only : update_balance_sources_momentum, fmo_b2nxfv,
      2          balance_netcdf
       use b2mod_plasma
-     & , only : fmo
+     & , only : fmo, fchanml                                           !srv 25.09.17
       use b2mod_numerics_namelist
       use b2mod_transport_fun                                          !srv 13.01.17
       use b2mod_b2cmpa
@@ -95,7 +95,7 @@
      *  smbch(-1:nx,-1:ny,0:3), smbtf(-1:nx,-1:ny,0:3),                !srv 11.09.09
      *  smbgp(-1:nx,-1:ny,0:3),
      *  smbvh(-1:nx,-1:ny,0:3), smbvv(-1:nx,-1:ny,0:3),                !srv 23.07.99 04.10.99
-     *  smbcf(-1:nx,-1:ny,0:3),                                        !srv 09.07.01
+     *  smbcf(-1:nx,-1:ny,0:3), smban(-1:nx,-1:ny,0:3),                !srv 09.07.01 25.09.17
      1  pb(-1:nx,-1:ny), cvct(-1:nx,-1:ny,0:1),
      2  rob(-1:nx,-1:ny), flub(-1:nx,-1:ny,0:1),
      *  flubv(-1:nx,-1:ny,0:1),                                        !srv 11.09.09
@@ -329,6 +329,9 @@
        call b2sicf (nx, ny, is, am(is)*mp, bb, vol, hx, hz, 
      *     na(-1,-1,is), ua(-1,-1,is), smbcf, smcf(-1,-1,is), ctcfb, 
      *     wrk0)                                                       !srv 09.07.01 31.07.02 22.07.05} 06.04.07
+*    ..compute correcting source due to artificial anomalous electric conductivity
+       call b2sian (nx, ny, is, bb, vol, hx, hy, hz, qz, fchanml,      !srv 25.09.17
+     &           smban)
 *    ..compute total parallel momentum source
        call b2scopy (n2*4, smo(-1,-1,0,is), 1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smq(-1,-1,0,is), 1, smb, 1)
@@ -341,6 +344,7 @@
        call b2saxpy (n2*4, 1.0_R8, smbvh,  1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)
        call b2saxpy (n2*4, 1.0_R8, smbcf,  1, smb, 1)                  !srv 03.07.08 }
+       call b2saxpy (n2*4, 1.0_R8, smban,  1, smb, 1)                  !srv 25.09.17
        call b2nxdv (nx, ny, is, rob, smq(-1,-1,0,is), smqdu, smb)      !srv ???
 *    ..save final source for species (is)                              !srv 10.11.02
        smof(:,:,:,is) = smb                                            !srv 10.11.02
@@ -357,7 +361,7 @@ cdjm Jan2017 update momentum source components for balance
 
        write (chns,'(i3.3)') is                                        !srv 18.03.10
 
-       if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                                             !srv 12.07.02 {
+       if (iout.ne.0 .or. iout_b2wdat .eq. 4) then                     !srv 12.07.02 {
          call my_out(70,nx,ny,resmo(-1,-1,is),'b2npmo_resmo'//chns)
          call my_out(70,nx,ny,fmo(-1,-1,0,is),'b2npmo_fmox'//chns)
          call my_out(70,nx,ny,fmo(-1,-1,1,is),'b2npmo_fmoy'//chns)
@@ -380,7 +384,7 @@ cdjm Jan2017 update momentum source components for balance
      &       smbcf(:,:,2)*na(:,:,is)*mp*am(is)+
      &       smbcf(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
          call my_out(70,nx,ny,wrks,'b2npmo_smocf'//chns)
-         wrks = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,is)+          !srv 05.07.17 {
+         wrks = vol*hz*(smbfria(:,:,0)+smbfria(:,:,1)*ua(:,:,is)+      !srv 05.07.17 {
      &        smbfria(:,:,2)*na(:,:,is)*mp*am(is)+
      &        smbfria(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is))
 	 call my_out(70,nx,ny,wrks,'b2npmo_smofria'//chns)
@@ -391,7 +395,11 @@ cdjm Jan2017 update momentum source components for balance
 	 call my_out(70,nx,ny,wrks,'b2npmo_smotfia'//chns)
          wrks = vol*hz*smbtfea(:,:,0)
 	 call my_out(70,nx,ny,wrks,'b2npmo_smotfea'//chns)
-         call my_out(70,nx,ny,ue,'b2npmo_ue')                                !srv 05.07.17 }
+         call my_out(70,nx,ny,ue,'b2npmo_ue')                          !srv 05.07.17 }
+         wrks=smban(:,:,0)+smban(:,:,1)*ua(:,:,is)+
+     &       smban(:,:,2)*na(:,:,is)*mp*am(is)+
+     &       smban(:,:,3)*ua(:,:,is)*na(:,:,is)*mp*am(is)
+         call my_out(70,nx,ny,wrks,'b2npmo_smoan'//chns)               !srv 25.09.17
        endif                                                           !srv 05.07.17
 
        if (iout .ne. 0) then
@@ -451,6 +459,7 @@ csw 21feb2014 and do this only for the solved species, i.e. added next branch
         call b2saxpy (n2*4, 1.0_R8, smbvh, 1, smb, 1)
         call b2saxpy (n2*4, 1.0_R8, smbvv, 1, smb, 1)                  !srv 03.07.08
         call b2saxpy (n2*4, 1.0_R8, smbcf, 1, smb, 1)                  !srv 09.07.01
+        call b2saxpy (n2*4, 1.0_R8, smban, 1, smb, 1)                  !srv 25.09.17
         call b2urmo (nx, ny, is, ua(-1,-1,is), rob, smb,               !srv 09.01.01
      &   flub, cvsahz(-1,-1,0,is), wrk0, wrkf)
 *    ..accumulate residual

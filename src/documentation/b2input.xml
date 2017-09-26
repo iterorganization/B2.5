@@ -1033,6 +1033,15 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2sian_phm0</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the parallel momentum source term associated with the anomalous current. It is recommended '1.0'.
+					The value '0.0' corresponds to the old SOLPS5.0 treatment.
+				</description>
+			</switch>
+			<switch>
 				<name>b2sicf_phm0</name>
 				<default>1.0</default>
 				<type>real</type>

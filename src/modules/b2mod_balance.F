@@ -122,6 +122,8 @@
      *  b2siav_smovv_bal(:,:,:),
      *  b2sicf_smo0to3(:,:,:,:),
      *  b2sicf_smo_bal(:,:,:),
+     *  b2sian_smo0to3(:,:,:,:),               !srv 25.09.17
+     *  b2sian_smo_bal(:,:,:),                 !srv 25.09.17
      *  b2nxdv_smo0to3(:,:,:,:),
      *  b2nxdv_smo_bal(:,:,:),
      *  b2sigp_smogp0to3(:,:,:,:),
@@ -152,6 +154,7 @@
      *  b2siav_smovh_bal_av(:,:,:),
      *  b2siav_smovv_bal_av(:,:,:),
      *  b2sicf_smo_bal_av(:,:,:),
+     *  b2sian_smo_bal_av(:,:,:),              !srv 25.07.17
      *  b2nxdv_smo_bal_av(:,:,:),
      *  b2sigp_smogp_bal_av(:,:,:),
      *  b2sigp_pstat_bal_av(:,:,:),
@@ -478,6 +481,8 @@
       allocate(b2siav_smovv_bal(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sicf_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(b2sicf_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sian_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))              !srv 25.09.17
+      allocate(b2sian_smo_bal(-1:nxd,-1:nyd,0:nsd-1))                  !srv 25.09.17
       allocate(b2nxdv_smo0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
       allocate(b2nxdv_smo_bal(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sigp_smogp0to3(-1:nxd,-1:nyd,0:3,0:nsd-1))
@@ -516,6 +521,8 @@
       b2siav_smovv_bal=0.0_R8
       b2sicf_smo0to3=0.0_R8
       b2sicf_smo_bal=0.0_R8
+      b2sian_smo0to3=0.0_R8                    !srv 25.09.17
+      b2sian_smo_bal=0.0_R8                    !srv 25.09.17
       b2nxdv_smo0to3=0.0_R8
       b2nxdv_smo_bal=0.0_R8
       b2sigp_smogp0to3=0.0_R8
@@ -542,6 +549,7 @@
       allocate(b2siav_smovh_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2siav_smovv_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sicf_smo_bal_av(-1:nxd,-1:nyd,0:nsd-1))
+      allocate(b2sian_smo_bal_av(-1:nxd,-1:nyd,0:nsd-1))          !srv 25.09.17
       allocate(b2nxdv_smo_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sigp_smogp_bal_av(-1:nxd,-1:nyd,0:nsd-1))
       allocate(b2sigp_pstat_bal_av(-1:nxd,-1:nyd,0:nsd-1))
@@ -864,6 +872,8 @@ cdjm Jan2017 Flux arrays:
       deallocate(b2siav_smovv_bal)
       deallocate(b2sicf_smo0to3)
       deallocate(b2sicf_smo_bal)
+      deallocate(b2sian_smo0to3)              !srv 25.09.17
+      deallocate(b2sian_smo_bal)              !srv 25.09.17
       deallocate(b2nxdv_smo0to3)
       deallocate(b2nxdv_smo_bal)
       deallocate(b2sigp_smogp0to3)
@@ -890,6 +900,7 @@ cdjm Jan2017 Flux arrays:
       deallocate(b2siav_smovh_bal_av)
       deallocate(b2siav_smovv_bal_av)
       deallocate(b2sicf_smo_bal_av)
+      deallocate(b2sian_smo_bal_av)              !srv 25.09.17
       deallocate(b2nxdv_smo_bal_av)
       deallocate(b2sigp_smogp_bal_av)
       deallocate(b2sigp_pstat_bal_av)
@@ -1455,6 +1466,10 @@ cdjm Jen2017 Time-averaged arrays for fluxes and densities:
      &            b2sicf_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
      &            b2sicf_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
      &            b2sicf_smo0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)
+          b2sian_smo_bal(ix,iy,isb)=b2sian_smo0to3(ix,iy,0,isb)+
+     &            b2sian_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
+     &            b2sian_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
+     &            b2sian_smo0to3(ix,iy,3,isb)*rob(ix,iy)*ub(ix,iy)      !srv 25.09.17
           b2nxdv_smo_bal(ix,iy,isb)=b2nxdv_smo0to3(ix,iy,0,isb)+
      &            b2nxdv_smo0to3(ix,iy,1,isb)*ub(ix,iy)+
      &            b2nxdv_smo0to3(ix,iy,2,isb)*rob(ix,iy)+
@@ -1787,6 +1802,7 @@ cdjm Update ion heat sources
         b2siav_smovh_bal_av=0.0_R8
         b2siav_smovv_bal_av=0.0_R8
         b2sicf_smo_bal_av=0.0_R8
+        b2sian_smo_bal_av=0.0_R8           !srv 25.09.17
         b2nxdv_smo_bal_av=0.0_R8
         b2sigp_smogp_bal_av=0.0_R8
         b2sigp_pstat_bal_av=0.0_R8
@@ -1995,6 +2011,8 @@ cdjm Update ion heat sources
      &                      curmlt*b2siav_smovv_bal
       b2sicf_smo_bal_av = avmlt*b2sicf_smo_bal_av +
      &                    curmlt*b2sicf_smo_bal
+      b2sian_smo_bal_av = avmlt*b2sian_smo_bal_av +
+     &                    curmlt*b2sian_smo_bal           !srv 25.09.17
       b2nxdv_smo_bal_av = avmlt*b2nxdv_smo_bal_av +
      &                    curmlt*b2nxdv_smo_bal
       b2sigp_smogp_bal_av = avmlt*b2sigp_smogp_bal_av +
@@ -2375,6 +2393,8 @@ cdjm Update ion heat sources
      &                   b2siav_smovv_bal_av,vdims,3)
       call write_cdf_double(ncid,'b2sicf_smo_bal',
      &                   b2sicf_smo_bal_av,vdims,3)
+      call write_cdf_double(ncid,'b2sian_smo_bal',
+     &                   b2sian_smo_bal_av,vdims,3)            !srv 25.09.17
       call write_cdf_double(ncid,'b2nxdv_smo_bal',
      &                   b2nxdv_smo_bal_av,vdims,3)
       call write_cdf_double(ncid,'b2sigp_smogp_bal',
