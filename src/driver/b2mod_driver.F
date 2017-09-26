@@ -1376,7 +1376,7 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
       lengthx(-1,:) = hx(-1,:)*0.5e0_R8
       do iy = -1, ny
        do ix = 0, nx
-        if(mod(region(ix,iy,0),4).eq.1) then
+        if(mod(region(ix,iy,0),4).eq.1.and.nncut.ge.1) then
          lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
      *      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
         else
