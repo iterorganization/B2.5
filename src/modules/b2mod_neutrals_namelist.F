@@ -870,7 +870,7 @@ c>>>
 c.. Test consistency with region boundaries
       if (.not.dotest) return
       do ic=1, nncut
-        found = mod(region(leftcut(ic)-1,-1,0),4).eq.1
+        found = on_closed_surface(leftcut(ic)-1,-1)
         istra = 0
         do while (istra.lt.nstrai .and. .not.found)
           istra = istra + 1
@@ -898,7 +898,7 @@ c.. Test consistency with region boundaries
         end do
         call xertst (found,
      .   'Mismatch with neutrals boundaries (South) !')
-        found = mod(region(leftcut(ic),-1,0),4).eq.1
+        found = on_closed_surface(leftcut(ic),-1)
         istra = 0
         do while (istra.lt.nstrai .and. .not.found)
           istra = istra + 1
@@ -907,7 +907,7 @@ c.. Test consistency with region boundaries
         end do
         call xertst (found,
      .   'Mismatch with neutrals boundaries (South) !')
-        found = mod(region(rightcut(ic)-1,-1,0),4).eq.1
+        found = on_closed_surface(rightcut(ic)-1,-1)
         istra = 0
         do while (istra.lt.nstrai .and. .not.found)
           istra = istra + 1
@@ -935,7 +935,7 @@ c.. Test consistency with region boundaries
         end do
         call xertst (found,
      .   'Mismatch with neutrals boundaries (South) !')
-        found = mod(region(rightcut(ic),-1,0),4).eq.1
+        found = on_closed_surface(rightcut(ic),-1)
         istra = 0
         do while (istra.lt.nstrai .and. .not.found)
           istra = istra + 1

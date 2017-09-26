@@ -110,7 +110,7 @@
           if (nncut > 0) mintopcut = minval(topcut(1:nncut))
           do iy = 0,mintopcut-1    ! for inner surfaces
             do ix=0,nx
-              if(mod(region(ix,iy,0),4).eq.1) then
+              if(on_closed_surface(ix,iy)) then
                 tt0(iy) = tt0(iy) +bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
                 tt1(iy) = tt1(iy) +vol(ix,iy)
                 conn(iy) = conn(iy) +
@@ -134,7 +134,7 @@
 
             do iy = 0,mintopcut-1    ! for inner surfaces
               do ix = 0,nx
-                if(mod(region(ix,iy,0),4).eq.1) then
+                if(on_closed_surface(ix,iy)) then
                   qip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      &             /bb(ix,iy,0)/bbaverage2(iy))
      &             *(ni(ix,iy)*ti(ix,iy)/qe)*
@@ -148,7 +148,7 @@
 
             do iy = 0,mintopcut-1
               do ix = -1,nx
-                if(mod(region(ix,iy,0),4).eq.1) then
+                if(on_closed_surface(ix,iy)) then
                   if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
      >             qip0b(ix,iy) = 0.25e0_R8*(qip0a(ix,iy)*2.0e0_R8
      &              +qip0a(leftix(ix,iy),leftiy(ix,iy))
@@ -159,7 +159,7 @@
 
             do iy = 0,mintopcut-1
               do ix = -1,nx
-                if(mod(region(ix,iy,0),4).eq.1) then
+                if(on_closed_surface(ix,iy)) then
                   if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1)
      >             qip0(ix,iy) = 0.25e0_R8*(qip0b(ix,iy)*2.0e0_R8
      &              +qip0b(leftix(ix,iy),leftiy(ix,iy))
@@ -184,7 +184,7 @@
 
             do iy=-1,ny
               do ix=-1,nx-1
-                if(mod(region(ix,iy,0),4).eq.1) then
+                if(on_closed_surface(ix,iy)) then
                   if(rightix(ix,iy).ne.nx+1 .and.
      &               topiy(ix,iy).ne.ny+1 .and. bottomiy(ix,iy).ne.-2)
      >             qip0(ix,iy)=0.5e0_R8*(wrk0(ix,iy)+
@@ -210,7 +210,7 @@
           kt_neo = 0.0e0_R8                                         !iyv 02.12.13
           do iy = 0,mintopcut-1
             do ix=0,nx
-              if(mod(region(ix,iy,0),4).eq.1) then
+              if(on_closed_surface(ix,iy)) then
                 if (lluciani.eq.3) then
                   tauia1(ix,iy) = cvsa_mltpl*tauia(ix,iy,isb)/      !lk 20.11.07 { iyv 06.12.13
      &             (1.0e0_R8+15.12e16_R8/conn(iy)*
@@ -263,7 +263,7 @@
           wrk1=0.0e0_R8
           do iy=0,ny-1
             do ix=-1,nx
-              if(mod(region(ix,iy,0),4).eq.1) then
+              if(on_closed_surface(ix,iy)) then
                 if(leftix(ix,iy).ne.-2) then
                   wrk1(ix,iy) = 2.0e0_R8*(qipgen(ix,iy) -
      &             qipgen(leftix(ix,iy),leftiy(ix,iy)))*

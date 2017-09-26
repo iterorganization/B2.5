@@ -248,7 +248,7 @@
           endif
           iend = min(nx, nint(cbrbrk(ireg)*nx))-1
           Phi_app = get_phi_applied(boundary_namelist,ix,ny)
-          lcore=region(ix,ny,0).eq.5 .and. periodic_bc.eq.1
+          lcore=on_closed_surface(ix,ny)
           if(plate_model.eq.2 .and. .not.lcore .and. main_call
      &     .and. ix.eq.ibegin) then
             isize = iend - ibegin + 1

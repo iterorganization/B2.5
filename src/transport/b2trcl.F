@@ -283,7 +283,7 @@ csw 13mar2012
         do iy=-1,ny
           if(conn(iy).gt.0.0_R8) then
             do ix=0,nx
-              if(mod(region(ix,iy,0),4).eq.1) then
+              if(on_closed_surface(ix,iy)) then
                 f_luc_ke(ix,iy)=1.0_R8/
      1           (1.0_R8+7.5e16_R8/conn(iy)/2.0_R8*
      2           ((te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
@@ -315,7 +315,7 @@ csw 13mar2012
       else if (lluciani.eq.2) then  ! SOLPS4.0 formulation
         do iy=-1,ny
           do ix=0,nx
-            if (mod(region(ix,iy,0),4).eq.1) then
+            if (on_closed_surface(ix,iy)) then
               f_luc_ke(ix,iy)=1.0_R8/
      1             (1.0_R8+0.3e16_R8/2.0_R8*
      2           ((te(ix,iy)+te(leftix(ix,iy),leftiy(ix,iy)))/ev)**2/
@@ -355,7 +355,7 @@ csw 13mar2012
 
         do iy = -1,mintopcut-1    ! for inner surfaces                    !srv 22.04.16
          do ix = -1,nx
-          if(mod(region(ix,iy,0),4).eq.1) then
+          if(on_closed_surface(ix,iy)) then
            tt0(iy) = tt0(iy) + hx(ix,iy)
            tt1(iy) = tt1(iy) + vol(ix,iy)/hy1(ix,iy)                      !srv 22.04.16
           endif
@@ -375,7 +375,7 @@ csw 13mar2012
      
         do iy = -1,mintopcut-1                                            !srv 22.04.16
          do ix = -1,nx
-          if(mod(region(ix,iy,0),4).eq.1) then
+          if(on_closed_surface(ix,iy)) then
            tau(ix,iy) = t2/lnlam(ix,iy)*te(ix,iy)/ev
      &      *sqrt(te(ix,iy)/ev)/ne2(ix,iy)
            nu1(ix,iy) = conn(iy)/(tau(ix,iy)
@@ -401,7 +401,7 @@ csw 13mar2012
         enddo                                                             !lk 19.09.07 }
         do iy = -1,mintopcut-1                                            !srv 22.04.16
          do ix = 0,nx
-          if(mod(region(ix,iy,0),4).eq.1) then                            !srv 26.11.02
+          if(on_closed_surface(ix,iy)) then                               !srv 26.11.02
            f_luc_ke(ix,iy)=1.0_R8/k1(ix,iy)*0.58e0_R8*sqrt(eps1(iy)**3)
            f_luc_ki(ix,iy)=1.0_R8/k2(ix,iy)*1.60e0_R8*sqrt(eps1(iy)**3)
            f_luc_et(ix,iy)=cvsa_mltpl/
@@ -441,7 +441,7 @@ csw 13mar2012
         inv_hi_astra(iy) =  -(Ti_astra(iy)-Ti_astra(iy-1))*1.0e3_R8/
      &   (qi_neo_astra(iy)*1.0e6_R8)/(Rmajc_astra(iy)-Rmajc_astra(iy-1))  
         do ix=0,nx                                                  
-         if(mod(region(ix,iy,0),4).eq.1) then
+         if(on_closed_surface(ix,iy)) then
           tt0(iy) = tt0(iy) +bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
           tt1(iy) = tt1(iy) +vol(ix,iy)
          endif
@@ -449,13 +449,13 @@ csw 13mar2012
         bbaverage2(iy) = tt0(iy)/tt1(iy)
         tt0(iy) = 0.0e0_R8
         do ix=0,nx                                                  
-         if(mod(region(ix,iy,0),4).eq.1) then
+         if(on_closed_surface(ix,iy)) then
           tt0(iy) = tt0(iy) +vol(ix,iy)/bb(ix,iy,3)/bb(ix,iy,3)*
      &     (1.0_R8-bb(ix,iy,3)*bb(ix,iy,3)/bbaverage2(iy))**2 
          endif
         enddo
         do ix=0,nx                                                  
-         if(mod(region(ix,iy,0),4).eq.1) then
+         if(on_closed_surface(ix,iy)) then
           chci_koeff(ix, iy) = 25.0_R8/4.0_R8*hy1(nmdpl,iy)/qe*tt0(iy)*   !srv 22.04.16
      &     0.5_R8*((bb(ix,iy,2)/bb(ix,iy,3)/hy1(ix,iy)/hx(ix,iy))**2      !srv 22.04.16
      &     *vol(ix,iy)+(bb(leftix(ix,iy),iy,2)/bb(leftix(ix,iy),iy,3)
@@ -467,7 +467,7 @@ csw 13mar2012
 !       do iy = 0, iy_Ratb    ! for the region of overlap with ASTRA
        do iy =0,mintopcut-1    
         do ix=0,nx                                                  
-         if(mod(region(ix,iy,0),4).eq.1) then
+         if(on_closed_surface(ix,iy)) then
           chci(ix,iy,0) = chci_koeff(ix, iy)* 
      &     0.5_R8*((ti(ix,iy)*na(ix,iy,ismain))**2
      &     +(ti(leftix(ix,iy),iy)*na(leftix(ix,iy),iy,ismain))**2)
@@ -517,8 +517,9 @@ csw 13mar2012
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
-c            if(mod(region(ix,iy,0),4).ne.1) then                         !lk 06.05.07
-           if(core_cond_limit.ne.0.or.mod(region(ix,iy,0),4).ne.1) then
+c            if(.not.on_closed_surface(ix,iy)) then                         !lk 06.05.07
+           if(core_cond_limit.ne.0.or.
+     &        .not.on_closed_surface(ix,iy)) then
             dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
             flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
      &       ne(ix,iy))/2.0_R8
@@ -537,8 +538,9 @@ c            if(mod(region(ix,iy,0),4).ne.1) then                         !lk 06
          do ix = -1, nx
           if(leftix(ix,iy).ne.-2) then
 csw 19oct2011, also in core for SOLPS4.3 comparison!!!
-c          if(mod(region(ix,iy,0),4).ne.1) then                           !lk 06.05.07
-           if(core_cond_limit.ne.0.or.mod(region(ix,iy,0),4).ne.1) then
+c          if(.not.on_closed_surface(ix,iy)) then                           !lk 06.05.07
+           if(core_cond_limit.ne.0.or.
+     &        .not.on_closed_surface(ix,iy)) then
             dti = ti(ix,iy)-ti(leftix(ix,iy),leftiy(ix,iy))
             flomx = chvimx(ix,iy)*(ni(leftix(ix,iy),leftiy(ix,iy),0)
      &                          +ni(ix,iy,0))/2.0_R8
@@ -558,11 +560,11 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                           !lk 06
         do iy = -1, ny
          do ix = -1, nx
            if(leftix(ix,iy).ne.-2) then
-             if(mod(region(ix,iy,0),4).ne.1) then
-	           dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
-	           flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
+             if(.not.on_closed_surface(ix,iy)) then
+               dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
+               flomx = chvemx(ix,iy)*(ne(leftix(ix,iy),leftiy(ix,iy))+
      & 	                              ne(ix,iy))/2.0_R8
-	           t0 = wrk(ix,iy)*abs(dte)/(flomx*max(
+               t0 = wrk(ix,iy)*abs(dte)/(flomx*max(
      & 	            te(leftix(ix,iy),leftiy(ix,iy)),te(ix,iy)))
                fllim_al(ix,iy)=1.0_R8/(1.0e0_R8+t0)
                calf(ix,iy,0)=calf(ix,iy,0)*fllim_al(ix,iy)                !srv 13.01.17
@@ -577,7 +579,7 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                           !lk 06
 *   ..apply flux limit to calf at cell faces
         do iy = -1, ny
          do ix = -1, nx
-           if(mod(region(ix,iy,0),4).ne.1) then
+           if(.not.on_closed_surface(ix,iy)) then
              if(leftix(ix,iy).ne.-2) then
                dte = te(ix,iy)-te(leftix(ix,iy),leftiy(ix,iy))
                jemax = sqrt(
@@ -594,7 +596,7 @@ c          if(mod(region(ix,iy,0),4).ne.1) then                           !lk 06
 *   ..apply flux limit to alfx_c at cell centers
         do iy = -1, ny
          do ix = -1, nx
-           if(mod(region(ix,iy,0),4).ne.1) then
+           if(.not.on_closed_surface(ix,iy)) then
              if(leftix(ix,iy).eq.-2) then
                dte =
      &          (te(rightix(ix,iy),rightiy(ix,iy))-te(ix,iy))/

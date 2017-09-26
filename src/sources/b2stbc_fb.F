@@ -486,7 +486,7 @@
          call ipgeti ('b2stbc_iyped', iyped)
          call xertst (iyped.gt.-2 .and. iyped.le.ny,
      .    'faulty input iyped')
-         call xertst (mod(region(jxa,iyped,0),4).eq.1,
+         call xertst (on_closed_surface(jxa,iyped),
      .    'location of top of pedestal outside core region!')
        endif
        call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
@@ -599,7 +599,7 @@
      .        bccon(isfeedback,ib).eq.12
            end if
          else if (bcchar(ib).eq.'S') then
-           if (mod(region(bc_list_x(1,ib),bc_list_y(1,ib),0),4).eq.1)
+           if (on_closed_surface(bc_list_x(1,ib),bc_list_y(1,ib)))
      >      then
              if (fnaycore.ne.-1.0e30_R8 .or. nesepm.gt.0.0_R8) then
                consistent_core = consistent_core .or.
@@ -879,7 +879,7 @@
      .                      na_feedback_iy2(ispecies)
                       do ix = na_feedback_ix1(ispecies),
      .                        na_feedback_ix2(ispecies)
-                        if (mod(region(ix,iy,0),4).eq.1) then
+                        if (on_closed_surface(ix,iy)) then
                           sum_s = sum_s + na(ix,iy,is) * vol(ix,iy)
                           charge_frac(iss) = charge_frac(iss) +
      .                     na(ix,iy,is) * vol(ix,iy)
@@ -909,8 +909,8 @@
      &                          na_feedback_iy2(ispecies)
                            do ix = na_feedback_ix1(ispecies),
      &                             na_feedback_ix2(ispecies)
-                             if(mod(region(bottomix(ix,iy),
-     .                                     bottomiy(ix,iy),0),4).eq.1)
+                             if(on_closed_surface(bottomix(ix,iy),
+     .                                            bottomiy(ix,iy)))
      >                        then
                                 na_feedback_current =
      &                             na_feedback_current +
@@ -1229,7 +1229,7 @@
       if(fnaycore.ne.-1.0e30_R8) then
         fnaycurr=0.0_R8
         do ix=-1,nx
-          if(mod(region(ix,-1,0),4).eq.1) then
+          if(on_closed_surface(ix,-1)) then
             fnaycurr=fnaycurr+
      1       fna(topix(ix,-1),topiy(ix,-1),1,isfeedback)
           endif
@@ -1271,7 +1271,7 @@
 #endif
         fheycurr=0.0_R8
         do ix=-1,nx
-          if(mod(region(ix,-1,0),4).eq.1) then
+          if(on_closed_surface(ix,-1)) then
 #ifdef COMPLICATED
             teave1=teave1+te(ix,-1)*ne(ix,-1)*vol(ix,-1)
             neave1=neave1+ne(ix,-1)*vol(ix,-1)
@@ -1335,7 +1335,7 @@
 #endif
         fhiycurr=0.0_R8
         do ix=-1,nx
-          if(mod(region(ix,-1,0),4).eq.1) then
+          if(on_closed_surface(ix,-1)) then
 #ifdef COMPLICATED
             tiave1=tiave1+ti(ix,-1)*ni(ix,-1,0)*vol(ix,-1)
             niave1=niave1+ni(ix,-1,0)*vol(ix,-1)
@@ -1406,7 +1406,7 @@ cxpb current feedback not yet tested!
       if(fchycore.ne.-1.0e30_R8) then
         fchycurr=0.0_R8
         do ix=-1,nx
-          if(mod(region(ix,-1,0),4).eq.1)
+          if(on_closed_surface(ix,-1))
      >     fchycurr=fchycurr+fch(topix(ix,-1),topiy(ix,-1),1)
         enddo
         if(ncall.eq.0) then

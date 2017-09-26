@@ -656,7 +656,7 @@ c*** ... and separatrix
 c      print *,'%% b2usrtrc: j_he_i,iy = ',j_he_i,iy !###
 
         do ix=0,nx-1 !{
-          if (mod(region(ix,iy-1,0),4).eq.1) then  !{
+          if (on_closed_surface(ix,iy-1)) then  !{
             hlp_si=hlp_si+gs(ix,0,1)
             hlp_pi=hlp_pi+gs(ix,0,1)*ne(ix,0)
             hlp=0.0_R8

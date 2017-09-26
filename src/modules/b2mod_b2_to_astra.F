@@ -217,6 +217,7 @@ csw 09jan2014 add extra allocates
          do iy = 0,mintopcut   ! for closed surfaces and through separatrix
           sfna(iy,is)     = 0.0_R8
           sfna_mdf(iy,is) = 0.0_R8
+          if(nnreg(0).eq.1.and.periodic_bc.eq.0) cycle
           if(.not.is_neutral(is)) then
            do ix=-1,nxd                                                  
             if(mod(region(ix,iy,0),4).eq.1 .or. 
@@ -265,6 +266,7 @@ csw 09jan2014 add extra allocates
          if (is_neutral(is)) isa = b2eatcr(is)
          if (is_neutral(is) .and. isa.gt.0) then
           do iy = 0,mintopcut   ! for closed surfaces and through separatrix
+           if (nnreg(0).eq.1 .and. periodic_bc.eq.0) cycle
            do ix=-1,nxd                                                  
             if(mod(region(ix,iy,0),4).eq.1 .or. 
      &         mod(region(ix,iy,0),4).eq.2) then
@@ -337,6 +339,7 @@ csw 09jan2014 add extra allocates
           sfne(iy) = 0.0_R8
           sfhe_mdf(iy) = 0.0_R8
           sfhi_mdf(iy) = 0.0_R8
+          if (nnreg(0).eq.1.and.periodic_bc.eq.0) cycle
           do ix=-1,nxd                                                  
             if(mod(region(ix,iy,0),4).eq.1 .or. 
      &         mod(region(ix,iy,0),4).eq.2) then
@@ -631,7 +634,7 @@ csw 09jan2014 add 'fun' function
          do iy = 0, mintopcut-1    ! closed surfaces
           svol(iy) = 0.0_R8
           do ix = -1, nxd
-           if(mod(region(ix,iy,0),4).eq.1) then
+           if(on_closed_surface(ix,iy)) then
             svol(iy) = svol(iy) + vol(ix,iy)
            endif
           enddo
@@ -648,7 +651,7 @@ csw 09jan2014 add 'fun' function
 
        do iy = 0, mintopcut-1
          do ix = -1, nxd
-          if(mod(region(ix,iy,0),4).eq.1) then   ! closed surfaces
+          if(on_closed_surface(ix,iy)) then   ! closed surfaces
 !          src(iy) = src(iy) + vol(ix,iy)*source(ix,iy)
            src(iy) = src(iy) + source(ix,iy)   ! source has been multiplied by vol
           endif

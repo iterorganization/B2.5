@@ -327,8 +327,8 @@
           do i = 1, rc_list_size(istra)          
             Phi_app = get_phi_applied(boundary_namelist,
      .       rc_list_x(i,istra),rc_list_y(i,istra)) 
-            lcore = isymm.ne.0 .and.
-     .       mod(region(rc_list_x(i,istra),rc_list_y(i,istra),0),4).eq.1 ! xpb: no sputtering in core!
+            lcore = on_closed_surface(rc_list_x(i,istra),
+     .                                rc_list_y(i,istra)) ! xpb: no sputtering in core!
 *   ..compute 2-D target temperature evolution
             if(plate_model.eq.2 .and. .not.lcore .and. main_call 
      &       .and. i.eq.1) then
@@ -374,8 +374,8 @@
           do i = 1, rc_list_size(istra)
             Phi_app = get_phi_applied(boundary_namelist,
      .       rc_list_x(i,istra),rc_list_y(i,istra)) 
-            lcore=region(rc_list_x(i,istra),rc_list_y(i,istra),0).eq.5 
-     &       .and.periodic_bc.eq.1
+            lcore=on_closed_surface(rc_list_x(i,istra),
+     .                              rc_list_y(i,istra))
 *   ..compute 2-D target temperature evolution
             if(plate_model.eq.2 .and. .not.lcore .and. main_call 
      &       .and. i.eq.1) then

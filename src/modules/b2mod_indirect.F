@@ -28,6 +28,8 @@
      *  nncut, nnreg(0:2), periodic_bc, nncutmax, redef_pbs
       integer, allocatable, save ::
      *  cflags(:,:,:)
+      logical, allocatable, save ::
+     *  on_closed_surface(:,:)
 
       logical, save :: b2mod_indirect_allocated = .false.
 
@@ -47,6 +49,7 @@
       allocate(bottomix(-1:nxd,-1:nyd))
       allocate(bottomiy(-1:nxd,-1:nyd))
       allocate(region(-1:nxd,-1:nyd,0:2))
+      allocate(on_closed_surface(-1:nxd,-1:nyd))
       nnreg=0
       allocate(resignore(-1:nxd,-1:nyd,2))
       nncutmax=DEF_NCUT
@@ -79,6 +82,7 @@
         deallocate(bottomix)
         deallocate(bottomiy)
         deallocate(region)
+        deallocate(on_closed_surface)
         deallocate(resignore)
         deallocate(leftcut)
         deallocate(rightcut)

@@ -416,7 +416,7 @@ cdpc+xpb
       imin=-2
       imax=-2
       do ix=-1,nxpp
-         if(mod(region(ix,-1,0),4).eq.1) then
+         if(on_closed_surface(ix,-1)) then
             if(crx(ix,-1,2).lt.rmin) then
                rmin=crx(ix,-1,2)
                imin=ix
@@ -443,10 +443,15 @@ cdpc+xpb-end
                z0 = z0 + cry(ix,iy,0)
             endif
          enddo
-         r0 = r0 / float(i)
-         z0 = z0 / float(i)
-         write(*,*)
+         if (i.gt.0) then
+           r0 = r0 / float(i)
+           z0 = z0 / float(i)
+           write(*,*)
      *        'Used initial approach for calculating magnetic axis'
+         else
+           r0 = crx(-1,-1,0)
+           z0 = cry(-1,-1,0)
+         endif
 cdpc+xpb
       else
         r0=(rmin+rmax)/2.0_R8

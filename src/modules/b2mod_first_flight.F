@@ -190,8 +190,7 @@
 *   ..set cutll, cutlo
       cutll = log(machsfr())
       cutlo = max(machsfr(),exp(cutll))
-      if((region(ix0,iy0,0).eq.1 .and. nnreg(0).ge.2) .or.
-     &   (region(ix0,iy0,0).eq.5 .and. nnreg(0).eq.8)) return   ! ignore core
+      if (on_closed_surface(ix0,iy0)) return   ! ignore core
       if (abs(src).lt.cutlo) return  ! jump over zero sources
       dist_start=src/no_of_slices
       eion=sri/src
@@ -280,8 +279,7 @@ cxpb  neutrals to be eion=shi/sna.
             if(iyend.gt.jsep) then
                mainpuff=mainpuff+dist_end
             else
-               if((region(ixend,iyend,0).eq.1 .and. nnreg(0).ge.2) .or.
-     &            (region(ixend,iyend,0).eq.5 .and. nnreg(0).eq.8)) then
+               if(on_closed_surface(ixend,iyend)) then
                   corepuff=corepuff+dist_end
                else if (nnreg(0).ge.4) then
                   pfrpuff=pfrpuff+dist_end

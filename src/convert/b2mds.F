@@ -1532,8 +1532,8 @@ c
         do ix=-1,nx
           if(topix(ix,iy).ge.-1.and.topix(ix,iy).le.nx.and.
      1     topiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-            if(mod(region(ix,iy,0),4).eq.1.and.
-     1       mod(region(topix(ix,iy),topiy(ix,iy),0),4).eq.2) then
+            if(on_closed_surface(ix,iy).and.
+     1         .not.on_closed_surface(topix(ix,iy),topiy(ix,iy))) then
               fhesep=fhesep+fhe(topix(ix,iy),topiy(ix,iy),1)
               fhisep=fhisep+fhi(topix(ix,iy),topiy(ix,iy),1)
               fnesep=fnesep+fne(topix(ix,iy),topiy(ix,iy),1)

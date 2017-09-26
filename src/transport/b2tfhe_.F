@@ -458,8 +458,7 @@ c Drift terms
         
            do iy = 0,mintopcut    ! for inner surfaces and first open surface
             do ix=0,nx                                                  
-             if(mod(region(bottomix(ix,iy),
-     .                     bottomiy(ix,iy),0),4).eq.1) then 
+             if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
               tt0(iy) = tt0(iy) +bb(ix,iy,3)*bb(ix,iy,3)*vol(ix,iy)
               tt1(iy) = tt1(iy) +vol(ix,iy)
               conn(iy) = conn(iy)+hx(ix,iy)*abs(bb(ix,iy,3)/bb(ix,iy,0)) !srv 11.01.13
@@ -478,8 +477,8 @@ c Drift terms
 
             do iy = 0,mintopcut-1    ! for inner surfaces
              do ix = 0,nx                                                  
-              if(mod(region(bottomix(ix,iy),
-     .                      bottomiy(ix,iy),0),4).eq.1) then 
+              if(on_closed_surface(bottomix(ix,iy),
+     .                             bottomiy(ix,iy))) then
                qip0a(ix,iy) = (-2.5e0_R8)*(bb(ix,iy,3)*bb(ix,iy,2)
      &          /bb(ix,iy,0)/bbaverage2(iy))
      &          *(ni(ix,iy)*ti(ix,iy)/qe)*
@@ -493,8 +492,8 @@ c Drift terms
 
             do iy = 0,mintopcut-1
              do ix = 0,nx                                                  
-              if(mod(region(bottomix(ix,iy),
-     .                      bottomiy(ix,iy),0),4).eq.1) then
+              if(on_closed_surface(bottomix(ix,iy),
+     .                             bottomiy(ix,iy))) then
                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
                  qip0b(ix,iy) = 0.25e0_R8*(qip0a(ix,iy)*2.0e0_R8
      &            +qip0a(leftix(ix,iy),leftiy(ix,iy))
@@ -506,8 +505,8 @@ c Drift terms
 
             do iy = 0,mintopcut-1
              do ix = 0,nx
-              if(mod(region(bottomix(ix,iy),
-     .                      bottomiy(ix,iy),0),4).eq.1) then
+              if(on_closed_surface(bottomix(ix,iy),
+     .                             bottomiy(ix,iy))) then
                if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then
                  qip0(ix,iy) = 0.25e0_R8*(qip0b(ix,iy)*2.0e0_R8
      &            +qip0b(leftix(ix,iy),leftiy(ix,iy))
@@ -533,8 +532,8 @@ c Drift terms
          
             do iy=0,ny-1
              do ix=-1,nx-1
-              if(mod(region(bottomix(ix,iy),
-     .                     bottomiy(ix,iy),0),4).eq.1) then
+              if(on_closed_surface(bottomix(ix,iy),
+     .                             bottomiy(ix,iy))) then
                qip0(ix,iy)=0.5e0_R8*(qip0a(ix,iy)+
      &          qip0a(rightix(ix,iy),rightiy(ix,iy)))
      &          *hx(ix,iy)*bb(ix,iy,3)/bb(ix,iy,0)/vol(ix,iy)
@@ -567,8 +566,8 @@ c Drift terms
 
            do iy = 0,mintopcut     
             do ix = 0,nx
-             if(mod(region(bottomix(ix,iy),
-     .                     bottomiy(ix,iy),0),4).eq.1) then
+             if(on_closed_surface(bottomix(ix,iy),
+     .                            bottomiy(ix,iy))) then
               qipgen(ix,iy)=(wrk0(ix,iy)
      &         +wrk0(leftix(ix,iy),leftiy(ix,iy)))*0.5e0_R8
              endif                                                      
@@ -581,8 +580,8 @@ c Drift terms
 
            do iy = 0,mintopcut
             do ix=0,nx
-             if(mod(region(bottomix(ix,iy),
-     .                     bottomiy(ix,iy),0),4).eq.1) then
+             if(on_closed_surface(bottomix(ix,iy),
+     .                            bottomiy(ix,iy))) then
 	       tauia1(ix,iy) = cvsa_mltpl*tauia(ix,iy,is)/                   !lk 20.11.07 { !iyv 06.12.13
      &         (1.0e0_R8+15.12e16_R8/conn(iy)*
      &         (ti(ix,iy)/ev)**2/ne2(ix,iy))
@@ -605,8 +604,8 @@ c Drift terms
 
            do iy = 0,mintopcut-1                                             !lk 23.05.06 05.07.07 {
             do ix = 0,nx
-             if(mod(region(bottomix(ix,iy),
-     .                     bottomiy(ix,iy),0),4).eq.1) then
+             if(on_closed_surface(bottomix(ix,iy),
+     .                            bottomiy(ix,iy))) then
               fchvisq(ix,iy,0)=-0.24e0_R8*vis_q*(                ! signmf*   !srv 11.01.13
      &         vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)
      &         *tauia1(ix,iy)
@@ -633,8 +632,8 @@ c Drift terms
 *                                  connected with the heat flux 
            do iy = 0,mintopcut                                               !lk 23.05.06 05.07.07 {
             do ix = 0,nx
-             if(mod(region(bottomix(ix,iy),
-     .                     bottomiy(ix,iy),0),4).eq.1) then
+             if(on_closed_surface(bottomix(ix,iy),
+     .                            bottomiy(ix,iy))) then
               if(rightix(ix,iy).ne.nx+1) then
                fchvisq(ix,iy,1)=0.24e0_R8*vis_q*(             ! signmf*       !srv 11.01.13
      &          vol(ix,iy)/hx(ix,iy)**2/hy1(ix,iy)

@@ -96,7 +96,7 @@
 
       do iy = bottomdelta1, topcut(1)
         do ix = -1, nx
-         if(mod(region(ix,bottomiy(ix,iy),0),4).eq.1) then        
+         if(on_closed_surface(bottomix(ix,iy),bottomiy(ix,iy))) then
           csig_stoch(ix,iy) = sig_stoch*
      &    qe*(ne(ix,iy) + ne(bottomix(ix,iy),bottomiy(ix,iy)))/2.0e0_R8*  !lk 24.03.08 17.12.13
      &    (vol(ix,iy) + vol(bottomix(ix,iy),bottomiy(ix,iy)))*2.0e0_R8

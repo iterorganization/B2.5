@@ -488,7 +488,7 @@ cxpb compute core boundary surface area
         core_surface = 0.0_R8
         do iy = -1, ny
           do ix = -1, nx
-            if (bottomiy(ix,iy).eq.-2 .and. mod(region(ix,iy,0),4).eq.1)
+            if (bottomiy(ix,iy).eq.-2 .and. on_closed_surface(ix,iy))
      >       core_surface = core_surface +
      .        gs(topix(ix,iy),topiy(ix,iy),1)
           enddo
@@ -3256,7 +3256,7 @@ cxpb  core recycling into ions of the highest ionisation stage
           do ix = -1, nx
             do j = 1, nnatmi
               if (bottomiy(ix,iy).eq.-2 .and.
-     &            mod(region(ix,iy,0),4).eq.1) then
+     &            on_closed_surface(ix,iy)) then
                 t0=core_flux(j)*
      *           (gs(topix(ix,iy),topiy(ix,iy),1)/core_surface)
                 if(linearisation.eq.1) then !{

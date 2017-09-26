@@ -379,8 +379,8 @@ c   extra call at this place within internal iteration)
           do iy = -1,ny
             if(topiy(-1,iy).eq.ny+1) cycle
             if(bottomiy(-1,iy).eq.-2) cycle
-            if(mod(region(-1,iy,0),4).eq.3 .or. 
-     &        (nnreg(0).eq.1.and.nx.gt.1)) then
+            if(region(-1,iy,0).eq.0) cycle
+            if(.not.on_closed_surface(-1,iy)) then
               write(*,*) iy,'west =',
      >           fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)
               inverted_ua = inverted_ua .and. 
@@ -391,8 +391,8 @@ c   extra call at this place within internal iteration)
           do iy = -1,ny
             if(topiy(nx,iy).eq.ny+1) cycle
             if(bottomiy(nx,iy).eq.-2) cycle
-            if((mod(region(nx,iy,0),4).eq.0 .and. region(nx,iy,0).ne.0)
-     .       .or. (nnreg(0).eq.1.and.nx.gt.1)) then
+            if(region(nx,iy,0).eq.0) cycle
+            if(.not.on_closed_surface(nx,iy)) then
               write(*,*) iy,'east =',fna(nx,iy,0,ismain)
               inverted_ua = inverted_ua .and. 
      .         ua(nx,iy,ismain)*pbs(nx,iy,0).lt.0.0_R8

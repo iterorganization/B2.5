@@ -461,8 +461,8 @@ c.. Make a list of core boundaries
         do ib=1,nbc
           if(bcchar(ib).eq.'S') then
             if(old_style(ib)) then
-              if(mod(region(bcstart(ib),bcpos(ib),0),4).eq.1 .and.
-     .           mod(region(bcend(ib),bcpos(ib),0),4).eq.1) then
+              if(on_closed_surface(bcstart(ib),bcpos(ib)) .and.
+     .           on_closed_surface(bcend(ib),bcpos(ib))) then
                 if (.not.todo) then
                   ncbs=ncbs+1
                   lcbs(ncbs)=ib
@@ -492,7 +492,7 @@ c.. Make a list of core boundaries
               found = .true.
               do ix = 1, bc_list_size(ib)
                 found = found .and.
-     .           mod(region(bc_list_x(ix,ib),bc_list_y(ix,ib),0),4).eq.1
+     .           on_closed_surface(bc_list_x(ix,ib),bc_list_y(ix,ib))
               end do
               if (found) then
                 if (.not.todo) then

@@ -231,71 +231,71 @@
 * ..compute conditions at south boundary
 *   ..initialize ireg
        ireg = cbirso
-	 call b2xppz (nx, ny, ns, ne, na, te, ti, pz)               !sv 18.01.02
+	 call b2xppz (nx, ny, ns, ne, na, te, ti, pz)             !sv 18.01.02
 *   ..find the average pressure for inner flux surface            !sv 24.03.99
-       if (istyle_average_pr .eq.0) then                            !sv 08.08.02
-        iy = -1                                                     !sv 24.03.99
-	  pzsum =0.0e0_R8                                                !sv 24.03.99 18.01.02
-	  volsum=0.0e0_R8                                                !sv 24.03.99
-	  do ix = -1,nx                                               !sv 26.11.02
-         if (mod(region(ix,iy,0),4).eq.1) then                      !sv 26.11.02
-	    pzsum=pzsum + pz(ix,iy)*vol(ix,iy)                        !sv 24.03.99 18.01.02
-	    volsum=volsum + vol(ix,iy)                                !sv 24.03.99
-         endif                                                      !sv 26.11.02
-	  enddo                                                       !sv 24.03.99
-        pzaverage=pzsum/volsum                                      !sv 24.03.99 18.01.02
-       else                                                         !sv 08.08.02
-        iy = 0                                                      !sv 24.03.99  07.06.02 {
-	  pzsum =0.0e0_R8                                             !sv 24.03.99 18.01.02
-	  volsum=0.0e0_R8                                             !sv 24.03.99
-	  num_inner=0                                                 !sv 26.11.02
-	  do ix = -1,nx                                               !sv 26.11.02
-         if (mod(region(ix,iy,0),4).eq.1) then                      !sv 26.11.02
+       if (istyle_average_pr .eq.0) then                          !sv 08.08.02
+        iy = -1                                                   !sv 24.03.99
+	  pzsum =0.0e0_R8                                         !sv 24.03.99 18.01.02
+	  volsum=0.0e0_R8                                         !sv 24.03.99
+	  do ix = -1,nx                                           !sv 26.11.02
+         if (on_closed_surface(ix,iy)) then                       !sv 26.11.02
+	    pzsum=pzsum + pz(ix,iy)*vol(ix,iy)                    !sv 24.03.99 18.01.02
+	    volsum=volsum + vol(ix,iy)                            !sv 24.03.99
+         endif                                                    !sv 26.11.02
+	  enddo                                                   !sv 24.03.99
+        pzaverage=pzsum/volsum                                    !sv 24.03.99 18.01.02
+       else                                                       !sv 08.08.02
+        iy = 0                                                    !sv 24.03.99  07.06.02 {
+	  pzsum =0.0e0_R8                                         !sv 24.03.99 18.01.02
+	  volsum=0.0e0_R8                                         !sv 24.03.99
+	  num_inner=0                                             !sv 26.11.02
+	  do ix = -1,nx                                           !sv 26.11.02
+         if (on_closed_surface(ix,iy)) then                       !sv 26.11.02
 	    pzsum=pzsum
-     *    + (pz(ix,iy)+pz(bottomix(ix,iy),bottomiy(ix,iy)))         !sv 24.03.99 18.01.02
+     *    + (pz(ix,iy)+pz(bottomix(ix,iy),bottomiy(ix,iy)))       !sv 24.03.99 18.01.02
 	    volsum=volsum + vol(ix,iy)                                !sv 24.03.99
           num_inner=num_inner+1                                     !sv 26.11.02
          endif                                                      !sv 26.11.02
-	  enddo                                                       !sv 24.03.99
-	  pzaverage=pzsum*0.5e0_R8/num_inner                         !sv 24.03.99 18.01.02 07.06.02 } 26.11.02
+	  enddo                                                     !sv 24.03.99
+	  pzaverage=pzsum*0.5e0_R8/num_inner                        !sv 24.03.99 18.01.02 07.06.02 } 26.11.02
        endif                                                        !sv 08.08.02
-*   ..find the average ne, te, ti, bb for inner flux surface      !sv 15.12.00 18.10.04
-       bbsum = 0.0e0_R8                                            !sv 18.10.04
-	 nesum = 0.0e0_R8                                            !sv 15.12.00 25.01.02
-	 tesum = 0.0e0_R8                                            !sv 15.12.00
-	 tisum = 0.0e0_R8                                            !sv 15.12.00
-       bzhzsum  = 0.0e0_R8                                         !lk 20.11.07
-       bbaverage  = 0.0e0_R8                                       !lk 20.11.07 
-	 do ix = -1,nx                                               !sv 26.11.02
-        if (mod(region(ix,iy,0),4).eq.1) then                      !sv 26.11.02
-	   bbsum=bbsum + bb(ix,iy,3)*vol(ix,iy)                      !sv 18.10.04
-	   nesum=nesum + ne(ix,iy)*vol(ix,iy)                        !sv 15.12.00 25.01.02
-	   tisum=tisum + ti(ix,iy)*vol(ix,iy)                        !sv 15.12.00
-	   tesum=tesum + te(ix,iy)*vol(ix,iy)                        !sv 15.12.00
-         bzhzsum = bzhzsum+bb(ix,iy,2)*vol(ix,iy)**2/gs(ix,iy,2)   !lk 20.11.07 
-        endif                                                      !sv 26.11.02
-	 enddo                                                       !sv 15.12.00
-	 bbaverage=bbsum/volsum                                      !sv 18.10.04
-	 neaverage=nesum/volsum                                      !sv 15.12.00 25.01.02
-	 tiaverage=tisum/volsum                                      !sv 15.12.00
-	 teaverage=tesum/volsum                                      !sv 15.12.00
-	 bzhzaverage=bzhzsum/volsum                                  !lk 20.11.07
+*   ..find the average ne, te, ti, bb for inner flux surface        !sv 15.12.00 18.10.04
+       bbsum = 0.0e0_R8                                             !sv 18.10.04
+	 nesum = 0.0e0_R8                                           !sv 15.12.00 25.01.02
+	 tesum = 0.0e0_R8                                           !sv 15.12.00
+	 tisum = 0.0e0_R8                                           !sv 15.12.00
+       bzhzsum  = 0.0e0_R8                                          !lk 20.11.07
+       bbaverage  = 0.0e0_R8                                        !lk 20.11.07
+	 do ix = -1,nx                                              !sv 26.11.02
+        if (on_closed_surface(ix,iy)) then                          !sv 26.11.02
+	   bbsum=bbsum + bb(ix,iy,3)*vol(ix,iy)                     !sv 18.10.04
+	   nesum=nesum + ne(ix,iy)*vol(ix,iy)                       !sv 15.12.00 25.01.02
+	   tisum=tisum + ti(ix,iy)*vol(ix,iy)                       !sv 15.12.00
+	   tesum=tesum + te(ix,iy)*vol(ix,iy)                       !sv 15.12.00
+         bzhzsum = bzhzsum+bb(ix,iy,2)*vol(ix,iy)**2/gs(ix,iy,2)    !lk 20.11.07
+        endif                                                       !sv 26.11.02
+	 enddo                                                      !sv 15.12.00
+	 bbaverage=bbsum/volsum                                     !sv 18.10.04
+	 neaverage=nesum/volsum                                     !sv 15.12.00 25.01.02
+	 tiaverage=tisum/volsum                                     !sv 15.12.00
+	 teaverage=tesum/volsum                                     !sv 15.12.00
+	 bzhzaverage=bzhzsum/volsum                                 !lk 20.11.07
 *   ..find the average ua**2, na for inner flux surface           !sv 22.01.02 {
        do is = 0, ns-1
-	  uasum  = 0.0e0_R8                                           !sv 15.02.02
-	  ua2sum = 0.0e0_R8                                           !sv 07.04.00 15.02.02
+	  uasum  = 0.0e0_R8                                         !sv 15.02.02
+	  ua2sum = 0.0e0_R8                                         !sv 07.04.00 15.02.02
 	  nasum  = 0.0e0_R8
-	  do ix = -1,nx                                               !sv 26.11.02
-         if (mod(region(ix,iy,0),4).eq.1) then                      !sv 26.11.02
-	    ua2sum = ua2sum + ua(ix,iy,is)**2*vol(ix,iy)              !sv 07.04.00 15.02.02
-	    uasum  = uasum  + ua(ix,iy,is)*vol(ix,iy)                 !sv 15.02.02
+	  do ix = -1,nx                                             !sv 26.11.02
+         if (on_closed_surface(ix,iy)) then                         !sv 26.11.02
+	    ua2sum = ua2sum + ua(ix,iy,is)**2*vol(ix,iy)            !sv 07.04.00 15.02.02
+	    uasum  = uasum  + ua(ix,iy,is)*vol(ix,iy)               !sv 15.02.02
 	    nasum  = nasum  + na(ix,iy,is)*vol(ix,iy)
          endif                                                      !sv 26.11.02
 	  enddo
-	  ua2average(is) = ua2sum/volsum                              !sv 07.04.00 15.02.02
-	  uaaverage(is) = uasum/volsum                                !sv 07.04.00 15.02.02 16.04.02
+	  ua2average(is) = ua2sum/volsum                            !sv 07.04.00 15.02.02
+	  uaaverage(is) = uasum/volsum                              !sv 07.04.00 15.02.02 16.04.02
 	  naaverage(is) = nasum/volsum
-	 enddo                                                        !sv 22.01.02 }
+	 enddo                                                      !sv 22.01.02 }
 *   ..loop over boundary cells
        do ix = -1, nx
 *    ..update ireg
@@ -332,7 +332,7 @@
 	  fchy_inertia = 0.0e0_R8                                        !sv 07.04.00
        fchy_biasing_cur = 0.0e0_R8                                       !sv 31.08.00
        if(facdriftm.ne.0.0e0_R8) then                                    !sv 09.07.99
-         if (mod(region(ix,-1,0),4).ne.1) then                           !sv 26.11.02
+         if (.not.on_closed_surface(ix,-1)) then                         !sv 26.11.02
 *           for PR
 	   if(fchy_dia_at_PR .ne. 0.0e0_R8) then                         !sv 09.07.99
              iy = 0                                                      !sv 21.10.02
@@ -384,7 +384,7 @@
          sna0(ix,-1,0,is) = sna0(ix,-1,0,is)+
      &    cbsna(0,is,ireg)*s0
 	   if(mdf_fnb.ne.0 .and. .not.is_neutral(is)) then             !sv 09.11.06 {
-	    if(mod(region(ix,-1,0),4).ne.1)      ! for PR region only
+	    if(.not.on_closed_surface(ix,-1))      ! for PR region only
      &     sna0(ix,-1,0,is) = sna0(ix,-1,0,is) - fnaPSch(ix,0,1,is)
 	   endif                                                      !sv 09.11.06 }
 	   if(is.eq.1) then                                              !sv 08.02.02
@@ -417,7 +417,7 @@
 	   endif
 	 endif                                                        !sv 02.03.05 }
 *     ..compute momentum source
-         if (mod(region(ix,-1,0),4).eq.1) then ! only core reqion and drifts !sv 27.07.05
+         if (on_closed_surface(ix,iy)) then ! only core region and drifts !sv 27.07.05
            if (.not.is_neutral(is)) then                              !sv 15.02.02 {
 	     select case (iform_corr_dia)                             !sv 25.07.05
 	      case (0)
@@ -502,7 +502,7 @@
      &                  + fchy_biasing_cur                            !sv 31.08.00
      &                  + cbsch(0,ireg)*s0                            !sv 11.03.01
 !       if (ix.lt.leftcut(1) .or. ix.ge.rightcut(1)) then             !sv 21.10.02
-        if (mod(region(ix,-1,0),4).ne.1) then                         !sv 26.11.02
+        if (.not.on_closed_surface(ix,-1)) then                       !sv 26.11.02
 	     ! for PR
 	   if(fchy_in_at_PR .ne. 0.0e0_R8) then                       !sv 21.10.02
 	     sch0(ix,-1,0) = sch0(ix,-1,0) +fchin(ix,0,1)

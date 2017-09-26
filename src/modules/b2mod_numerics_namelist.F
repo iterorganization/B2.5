@@ -189,7 +189,7 @@ c additional time-modification factor
       do iy=-1,ny
         if(iy.gt.0) ttf=min(ttf*core_dt_factor,1.0_R8)
         do ix=-1,nx
-          if(mod(region(ix,iy,0),4).eq.1) then
+          if(on_closed_surface(ix,iy)) then
             time_factor(ix,iy)=ttf
           else
             time_factor(ix,iy)=1.0_R8

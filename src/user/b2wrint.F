@@ -322,7 +322,7 @@ csw 18nov2013 check alloc
       hlp_zn1=0.0_R8
       hlp_zn2=0.0_R8
       do ix=0, nx-1
-        if(mod(region(ix,0,0),4).eq.1) then
+        if(on_closed_surface(ix,0)) then
           hlp_s=hlp_s+gs(ix,0,1)
           hlp_v=hlp_v+vol(ix,0)
           zeff=0.0_R8

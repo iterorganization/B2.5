@@ -484,8 +484,8 @@ cxpb     &         +(uesy(topix(ix,iy),topiy(ix,iy))-uesy(ix,iy)))       !xpb
              shifr(ix,iy,0) = max(0.0e0_R8,t0)+rf4*abs(t0)
              shifr(ix,iy,3) =
      &        (min(0.0e0_R8,t0)-rf4*abs(t0))/(ni(ix,iy,0)*ti(ix,iy))
-             b2joule(region(ix,iy,0))=b2joule(region(ix,iy,0))+t0
-             b2sihs_joule(ix,iy)=t0
+             b2fraa(region(ix,iy,0))=b2fraa(region(ix,iy,0))+t0
+             b2sihs_fraa(ix,iy)=t0
            endif
          enddo
        enddo

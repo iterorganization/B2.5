@@ -258,7 +258,7 @@
           Total_flux(iy) = 0.0d0
           Total_absflux(iy) = 0.0d0
           do ix=-1,nx
-            if(mod(region(ix,iy,0),4).eq.1) then                  ! for CORE
+            if(on_closed_surface(ix,iy)) then                  ! for CORE
               Total_flux(iy) = Total_flux(iy) + fmo(ix,iy,1,is)
               Total_absflux(iy)=Total_absflux(iy)+abs(fmo(ix,iy,1,is))
             endif
@@ -397,7 +397,7 @@
         Total_current(iy) = 0.0_R8
         Total_abscurrent(iy) = 0.0_R8
         do ix = -1, nx
-          if(mod(region(ix,iy,0),4).eq.1) then                     ! for CORE
+          if(on_closed_surface(ix,iy)) then                     ! for CORE
             Total_current(iy) = Total_current(iy) + fch(ix,iy,1)
             Total_abscurrent(iy)=Total_current(iy)+abs(fch(ix,iy,1))
           endif
@@ -468,7 +468,7 @@
       iy = 0
       power=0.0_R8
       do ix = -1, nx
-        if(mod(region(ix,iy,0),4).eq.1) then                     ! for CORE
+        if(on_closed_surface(ix,iy)) then                     ! for CORE
           power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
         endif
       enddo
@@ -489,7 +489,7 @@
           sfna(iy,is)     =0.0_R8
           sfna_mdf(iy,is) =0.0_R8
           do ix = -1, nx
-            if(mod(region(ix,iy,0),4).eq.1.and.
+            if(on_closed_surface(ix,iy).and.
      &        bottomiy(ix,iy).ne.-2) then  ! for CORE              !srv 01.02.12
               sfuadia(iy,is) = sfuadia(iy,is) + uadia(ix,iy,1,is)*
      5         (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
@@ -1060,7 +1060,7 @@
        iy = 0
        power=0.0_R8
        do ix = -1, nx
-         if(mod(region(ix,iy,0),4).eq.1) then                ! for CORE
+         if(on_closed_surface(ix,iy)) then                ! for CORE
            power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
          endif
        enddo
@@ -1295,7 +1295,7 @@
        wrk2=0.0e0_R8
        do iy = 0,mintopcut-1
          do ix=0,nx
-           if(mod(region(ix,iy,0),4).eq.1) then
+           if(on_closed_surface(ix,iy)) then
              uvbtot=uvbtot+
      &              ua(ix,iy,ismain)*vol(ix,iy)*bb(ix,iy,3)
              voltot=voltot+vol(ix,iy)
@@ -1310,7 +1310,7 @@
        enddo
        do iy = 0,mintopcut-1
          do ix=0,nx
-           if(mod(region(ix,iy,0),4).eq.1) then
+           if(on_closed_surface(ix,iy)) then
              wrk2(ix,iy) = -uvbtot/voltot*bb(ix,iy,0)/bb(ix,iy,3)+
      &           (ti(ix,iy)/ne(ix,iy)*
      &           (wrk0(ix,iy)+wrk0(topix(ix,iy),topiy(ix,iy)))+
@@ -1363,7 +1363,7 @@
         Total_energy_flux_i(iy) = 0.0_R8
         Total_energy_flux_i_mdf(iy) = 0.0_R8
         do ix = -1, nx
-          if(mod(region(ix,iy,0),4).eq.1) then                     ! for CORE
+          if(on_closed_surface(ix,iy)) then                     ! for CORE
             Total_energy_flux_i(iy) =
      &       Total_energy_flux_i(iy) + fhi(ix,iy,1)
             Total_energy_flux_i_mdf(iy) =
@@ -1390,7 +1390,7 @@
         Total_energy_flux_e(iy) = 0.0_R8
         Total_energy_flux_e_mdf(iy) = 0.0_R8
         do ix = -1, nx
-          if(mod(region(ix,iy,0),4).eq.1) then                     ! for CORE
+          if(on_closed_surface(ix,iy)) then                     ! for CORE
             Total_energy_flux_e(iy) =
      &       Total_energy_flux_e(iy) + fhe(ix,iy,1)
             Total_energy_flux_e_mdf(iy) =

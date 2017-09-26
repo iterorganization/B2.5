@@ -1210,8 +1210,7 @@ c
       subroutine init_region(nx,ny,nncut,nncutmax,
      1 leftcut,rightcut,topcut,bottomcut,
      1 leftix,rightix,rightiy,topix,topiy,bottomiy,
-     2 region,nnreg,resignore,
-     3 crx,cry,periodic_bc)
+     2 region,nnreg,resignore,crx,cry,periodic_bc)
       use b2mod_types
       implicit none
       integer nx,ny,nncut,nncutmax

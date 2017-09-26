@@ -989,7 +989,8 @@ c        write(*,*) 'Called b2stbr_neutr_scl'
       do iy = -1,ny
         if(topiy(-1,iy).eq.ny+1) cycle
         if(bottomiy(-1,iy).eq.-2) cycle
-        if(mod(region(-1,iy,0),4).eq.3)
+        if(region(-1,iy,0).eq.0) cycle
+        if(.not.on_closed_surface(-1,iy))
      >        write(*,*) iy,'west =',
      >        fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)
         inverted_ua = inverted_ua .and.
@@ -998,25 +999,12 @@ c        write(*,*) 'Called b2stbr_neutr_scl'
       do iy = -1,ny
         if(topiy(nx,iy).eq.ny+1) cycle
         if(bottomiy(nx,iy).eq.-2) cycle
-        if(mod(region(nx,iy,0),4).eq.0 .and. region(nx,iy,0).ne.0)
+        if(region(nx,iy,0).eq.0) cycle
+        if(.not.on_closed_surface(nx,iy))
      >        write(*,*) iy,'east =',fna(nx,iy,0,ismain)
         inverted_ua = inverted_ua .and.
      .   ua(nx,iy,ismain)*pbs(nx,iy,0).lt.0.0_R8
       enddo
-      if(nnreg(0).eq.1.and.ny.le.1.and.nx.gt.1) then
-! 1d linear device
-        do iy = -1,ny
-          if(topiy(-1,iy).eq.ny+1) cycle
-          if(bottomiy(-1,iy).eq.-2) cycle
-          write(*,*) iy,'west =',
-     >           fna(rightix(-1,iy),rightiy(-1,iy),0,ismain)
-        enddo
-        do iy = -1,ny
-          if(topiy(nx,iy).eq.ny+1) cycle
-          if(bottomiy(nx,iy).eq.-2) cycle
-          write(*,*) iy,'east =',fna(nx,iy,0,ismain)
-        enddo
-      endif
       if (inverted_ua) then
         write(*,*) 'All target velocities have the wrong sign'
         write(*,*) 'Please consider using the b2mndr_inverse_ua switch'
@@ -1155,11 +1143,11 @@ c old style
        call xertst (-2.le.iy_nocoreExB .and. ny.ge.iy_nocoreExB,         !xpb
      &   'faulty parameter iy_nocoreExB')                                !xpb
        do iy=-1, iy_nocoreExB
-          do ix=-1,nx
-             if(mod(region(ix,iy,0),4).eq.1) then
-                fac_ExB_profile(ix,iy)=0.0_R8
-             endif
-          enddo
+         do ix=-1,nx
+           if(on_closed_surface(ix,iy)) then
+             fac_ExB_profile(ix,iy)=0.0_R8
+           endif
+         enddo
        enddo
        call ipgetr ('b2news_facvis_start', facvis_start)
        call ipgetr ('b2news_facvis_target', facvis_target)
@@ -1227,7 +1215,7 @@ c old style
        if(facdrift_tanh_b.ne.0.0_R8) then
           do iy=-1, ny
              do ix=-1, nx
-                if(mod(region(ix,iy,0),4).eq.1) then
+                if(on_closed_surface(ix,iy)) then
                    facdrift_profile(ix,iy)=facdrift_profile(ix,iy)*
      &                  0.5_R8*(1.0_R8+
      &                    tanh((ds(iy)-facdrift_tanh_a)/
@@ -1245,7 +1233,7 @@ c old style
        if(facExB_tanh_b.ne.0.0_R8) then
           do iy=-1, ny
              do ix=-1, nx
-                if(mod(region(ix,iy,0),4).eq.1) then
+                if(on_closed_surface(ix,iy)) then
                    fac_ExB_profile(ix,iy)=fac_ExB_profile(ix,iy)*
      &                  0.5_R8*(1.0_R8+
      &                    tanh((ds(iy)-facExB_tanh_a)/
@@ -1263,7 +1251,7 @@ c old style
        if(facvis_tanh_b.ne.0.0_R8) then
           do iy=-1, ny
              do ix=-1, nx
-                if(mod(region(ix,iy,0),4).eq.1) then
+                if(on_closed_surface(ix,iy)) then
                    fac_vis_profile(ix,iy)=fac_vis_profile(ix,iy)*
      &                  0.5_R8*(1.0_R8+
      &                    tanh((ds(iy)-facvis_tanh_a)/

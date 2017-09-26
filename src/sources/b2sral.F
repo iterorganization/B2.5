@@ -344,7 +344,7 @@ csw 30sep2013, added cdpa in call, uadia
         shiNB_astra=0.0_R8
         do iy = -1,ny
           do ix = -1,nx
-            if(mod(region(ix,iy,0),4).eq.1) then                        !srv 23.10.12
+            if(on_closed_surface(ix,iy)) then                           !srv 23.10.12
               sheNb_astra(ix,iy,0)=vol(ix,iy)*PeNB_astra(iy)*1.0e6_R8
               shiNb_astra(ix,iy,0)=vol(ix,iy)*PiNB_astra(iy)*1.0e6_R8
             endif

@@ -1135,7 +1135,7 @@ c
       r0=0.0_R8
       z0=0.0_R8
       do ix = -1, nx
-        if (mod(region(ix,-1,0),4).eq.1) then
+        if (on_closed_surface(ix,-1)) then
           icell=icell+1
           r0=r0+cr(ix,-1)
           z0=z0+cz(ix,-1)
@@ -1288,7 +1288,7 @@ c
         icell=0
         q=0.0_R8
         do ix=-1,nx
-          if(mod(region(ix,iy,0),4).eq.1) then
+          if(on_closed_surface(ix,iy)) then
             q=q+abs(bb(ix,iy,3)/bb(ix,iy,0))/cr(ix,iy)*hx(ix,iy)
             t1=t1+hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))
             t2=t2+hx(ix,iy)
@@ -1308,7 +1308,9 @@ c
         endif
       enddo
       do iy=-1,ny
-        if (iy.eq.-1) then
+        if (safetyfactor(iy).eq.0.0_R8 .or. iy.gt.jsep) then
+          shear(iy) = 0.0_R8
+        else if (iy.eq.-1) then
           shear(iy)=(safetyfactor(iy+1)-safetyfactor(iy))/
      &     (rave(iy+1)-rave(iy))
         elseif (iy.lt.jsep) then
@@ -1317,8 +1319,6 @@ c
         elseif (iy.eq.jsep) then
           shear(iy)=(safetyfactor(iy)-safetyfactor(iy-1))/
      &     (rave(iy)-rave(iy-1))
-        else
-          shear(iy)=0.0_R8
         endif
       enddo
 c
@@ -3145,8 +3145,8 @@ c
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              if(mod(region(ix,iy,0),4) .ne. 1) then
-                mach(ix,iy,0)=0
+              if(.not.on_closed_surface(ix,iy)) then
+                mach(ix,iy,0)=0.0_R8
               else
                 mach(ix,iy,0)=safetyfactor(iy)
               end if
@@ -3158,8 +3158,8 @@ c
           nz=1
           do iy=-1,ny
             do ix=-1,nx
-              if(mod(region(ix,iy,0),4) .ne. 1) then
-                mach(ix,iy,0)=0
+              if(.not.on_closed_surface(ix,iy)) then
+                mach(ix,iy,0)=0.0_R8
               else
                 mach(ix,iy,0)=shear(iy)
               end if
@@ -3174,7 +3174,7 @@ c
 c     assumes that bb is OK for 1d cases
           do iy=-1,ny
             do ix=-1,nx
-              if(mod(region(ix,iy,0),4) .ne. 1) then
+              if(.not.on_closed_surface(ix,iy)) then
                 mach(ix,iy,0)=0.0_R8
               else
                 if (bottomiy(ix,iy).ne.-2) then

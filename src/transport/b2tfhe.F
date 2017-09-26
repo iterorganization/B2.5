@@ -734,7 +734,7 @@ cxpb turn off flows between boundary cells
 
 cxpb turn off poloidal flows in core boundary
         do ix = -1, nx
-          if(mod(region(ix,-1,0),4).eq.1) then
+          if(on_closed_surface(ix,-1)) then
             fhe(ix,-1,0) = 0.0_R8
             fhe_mdf(ix,-1,0) = 0.0_R8
             if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017

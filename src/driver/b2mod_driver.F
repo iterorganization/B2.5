@@ -1294,10 +1294,10 @@ csw 09oct2012
       do iy=-1,ny
          conn(iy)=0.0_R8
          do ix=-1,nx
-            ! do not count guard cells in linear cases
+            ! do not count guard cells in annular cases
             if(nnreg(0).eq.1 .and. (ix.eq.-1 .or. ix.eq.nx)) cycle
-            if(mod(region(ix,iy,0),4).eq.1) conn(iy)=conn(iy)+
-     1           hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))
+            if(on_closed_surface(ix,iy))
+     >       conn(iy)=conn(iy)+hx(ix,iy)*bb(ix,iy,3)/abs(bb(ix,iy,0))
          enddo
          write(*,*) iy,conn(iy)
       enddo
@@ -1376,9 +1376,13 @@ c      call b2xgbs (nx, ny, bb, wrk0, hx, hy, qz, pbshz)
       lengthx(-1,:) = hx(-1,:)*0.5e0_R8
       do iy = -1, ny
        do ix = 0, nx
-        if(mod(region(ix,iy,0),4).eq.1.and.nncut.ge.1) then
-         lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
+        if(on_closed_surface(ix,iy)) then
+         if(rightix(ix,iy).ne.nx+1) then
+          lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +
      *      (hx(ix,iy)+hx(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
+         else
+          lengthx(ix,iy) = hx(ix,iy)*0.5_R8
+         endif
         else
          if(leftix(ix,iy).ne.-2) then
           lengthx(ix,iy) = lengthx(leftix(ix,iy),iy) +

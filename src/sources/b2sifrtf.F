@@ -229,15 +229,13 @@ c      .. but we did not do it in order to have the same formulae as manual
            delti=
      &       (gti(ix,iy)+gti(rightix(ix,iy),rightiy(ix,iy)))*0.5e0_R8
 c   .. apply flux limit
-           if(cflim(4).ne.0.0_R8) then
-            if(mod(region(ix,iy,0),4).ne.1) then
+           if(cflim(4).ne.0.0_R8.and..not.on_closed_surface(ix,iy)) then
              jabmax = qe*KabVp(ix,iy)*sqrt(ti(ix,iy)/mp)*
      &        (na(ix,iy,isb)+na(ix,iy,is))
              t0 = abs(calfab*delti)/(cflim(4)*jabmax)
-             fllim_al_ab =1.0_R8/(1.0e0_R8+t0)
-            endif
+             fllim_al_ab = 1.0_R8/(1.0e0_R8+t0)
            else
-            fllim_al_ab = 1.0_R8
+             fllim_al_ab = 1.0_R8
            endif
 
            t0 = na(ix,iy,isb)*na(ix,iy,is)/    !   *vol(ix,iy)*hz(ix,iy) ! it will be multiplied in b2npmo !srv 05.07.17

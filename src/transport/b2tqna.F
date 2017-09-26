@@ -1086,10 +1086,10 @@ c
         select case (itype)
          case(9)                                                !srv 22.05.09 {
           mintopcut=minval(topcut(1:nncut))
-*   ..modification of case (5). It is used barer function
+*   ..modification of case (5). It is used barrier function
           do iy = -1, ny                  ! for SOL and PR region
            do ix = -1, nx
-            if(mod(region(ix,iy,0),4).ne.1) then
+            if(.not.on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
                fdnc(ix,iy,is) =    alfa3
@@ -1129,7 +1129,7 @@ c
           step = maxval(hy(nmdpl,-1:mintopcut-1))
           do iy = -1, mintopcut-1   ! for inner surfaces
            do ix=-1,nx
-            if(mod(region(ix,iy,0),4).eq.1) then
+            if(on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
                fdnc(ix,iy,is)= barier1(crdy_c_cell(nmdpl,iy),
@@ -1262,7 +1262,7 @@ c
             mintopcut=min(topcut(1)-1,topcut(2)-1)
             do iy = 0,mintopcut    ! for inner surfaces
              do ix=0,nx
-              if(mod(region(ix,iy,0),4).eq.1) then
+              if(on_closed_surface(ix,iy)) then
                t0 = t0 +bb(ix,iy,3)*vol(ix,iy)/hy1(ix,iy)
                t1 = t1 +vol(ix,iy)/hy1(ix,iy)
               endif
@@ -1271,7 +1271,7 @@ c
             bbaverage=t0/t1
             do iy = -1, ny                   ! for all surfaces
              do ix = -1, nx
-              if(mod(region(ix,iy,0),4).eq.1 .and. iy.le.mintopcut) then
+              if(on_closed_surface(ix,iy) .and. iy.le.mintopcut) then
                fdnc(ix,iy,is)=1.0e0_R8
               else
                fdnc(ix,iy,is)=1.0e0_R8+cdf*(bbaverage/bb(ix,iy,3))**alf
@@ -1291,7 +1291,7 @@ c
              do iy = 0, topcut(1)-1   ! for inner surfaces
 !           do ix = leftcut(1), rightcut(1)-1
               do ix=0,nx
-               if(mod(region(ix,iy,0),4).eq.1) then
+               if(on_closed_surface(ix,iy)) then
                 t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
                 t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
                endif
@@ -1362,7 +1362,7 @@ c
 
           do iy = -1, ny                  ! for SOL and PR region  !srv 13.03.07
            do ix = -1, nx
-            if(mod(region(ix,iy,0),4).ne.1) then
+            if(.not.on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
                fdnc(ix,iy,is)  =    alfa3
@@ -1394,7 +1394,7 @@ c
 
           do iy = bottomdelta1, mintopcut-1   ! for inner surfaces
            do ix=-1,nx                                          !srv 10.03.06
-            if(mod(region(ix,iy,0),4).eq.1) then
+            if(on_closed_surface(ix,iy)) then
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
                fdnc(ix,iy,is) = alfa1
@@ -1411,7 +1411,7 @@ c
           do iy = -1, ny                  ! correction for   !IYS 29.11.12
            do ix = -1, nx
             if(mod(region(ix,iy,0),4).ne.1 .and.    ! NOT Core
-     &                mod(region(ix,iy,0),4).ne.2) then   ! NOT SOL
+     &         mod(region(ix,iy,0),4).ne.2) then    ! NOT SOL
              do is = 0, ns-1
               if(.not.is_neutral(is)) then
                fdnc(ix,iy,is)   =    alfa4
@@ -1431,7 +1431,7 @@ c
            t1 = 0.0e0_R8
            do iy = 0, mintopcut-1   ! for inner surfaces
             do ix=0,nx
-             if(mod(region(ix,iy,0),4).eq.1) then
+             if(on_closed_surface(ix,iy)) then
               t0 = t0 +bb(ix,iy,3)**(-alf)*vol(ix,iy)/hy1(ix,iy)**2
               t1 = t1 +vol(ix,iy)/hy1(ix,iy)**2
              endif
@@ -1461,7 +1461,7 @@ c
 
            do iy = -1, bottomdelta1-1                 ! for inner surfaces
             do ix = -1,nx
-             if(mod(region(ix,iy,0),4).eq.1) then
+             if(on_closed_surface(ix,iy)) then
               do is = 0, ns-1
                if(.not.is_neutral(is)) then
                 fdnc(ix,iy,is)  = fdnc(ix,iy,is)*
@@ -1783,7 +1783,8 @@ c
 
       do iy=-1,ny
         do ix=-1,nx
-          if(mod(region(ix,iy,0),4).le.2) then
+          if(on_closed_surface(ix,iy) .or.
+     .       mod(region(ix,iy,0),4).eq.2) then
             hce0(ix,iy)=hce0(ix,iy)*eta_hce_mult(iy)
           endif
         enddo
@@ -1889,7 +1890,7 @@ cxpb
       R = 0.0_R8
       ir = 0
       do ix = -1, nx
-        if (mod(region(ix,0,0),4).eq.1) then
+        if (on_closed_surface(ix,0)) then
           ir = ir + 1
           perimeter = perimeter + hx(ix,0)
           R = R + 0.5_R8*(crx(ix,0,0)+crx(ix,0,1))*hx(ix,0)
@@ -2888,7 +2889,7 @@ c      enddo
           thet=0._R8
           ilp(iy)=0._R8
           do ix=ixref,-1,-1
-           if (mod(region(ix,iy,0),4).eq.1) then
+           if (on_closed_surface(ix,iy)) then
              theta(ix,iy)=thet
              hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
      &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
@@ -2918,7 +2919,7 @@ c      enddo
            endif
           enddo
           do ix=nx,ixref+1,-1
-           if (mod(region(ix,iy,0),4).eq.1) then
+           if (on_closed_surface(ix,iy)) then
              theta(ix,iy)=thet
              hxface=(vol(ix,iy)*hx(bottomix(ix,iy),bottomiy(ix,iy))+
      &             vol(bottomix(ix,iy),bottomiy(ix,iy))*hx(ix,iy))/
@@ -2950,7 +2951,7 @@ c      enddo
           theta(ixref,iy)=thet
           ilpb=thet
           do ix=-1,nx
-           if (mod(region(ix,iy,0),4).eq.1) then
+           if (on_closed_surface(ix,iy)) then
             theta(ix,iy)=2._R8*pi*theta(ix,iy)/ilpb
            endif
           enddo
@@ -2964,7 +2965,7 @@ c      enddo
 *   ..calculate neoclassical transport only for closed flux surfaces
          closedf=.false.
          do ix=-1,nx
-          if (mod(region(ix,iy,0),4).eq.1) then
+          if (on_closed_surface(ix,iy)) then
             closedf=.true.
           endif
          enddo
@@ -2990,7 +2991,7 @@ c      enddo
 
            bmax=0._R8
            do ix=-1,nx
-             if (mod(region(ix,iy,0),4).eq.1) then
+             if (on_closed_surface(ix,iy)) then
                if (bb(ix,iy,3).gt.bmax) then
                  bmax=bb(ix,iy,3)
                endif
@@ -3062,7 +3063,7 @@ c      enddo
 *   ..calculate neoclassical transport only for closed flux surfaces
         closedf=.false.
         do ix=-1,nx
-         if (mod(region(ix,iy,0),4).eq.1) then
+         if (on_closed_surface(ix,iy)) then
            closedf=.true.
          endif
         enddo
@@ -3223,7 +3224,7 @@ c      close(14)
        enddo
 
        do iy=0,ny
-         if (mod(region(ixref,iy,0),4).eq.1) then
+         if (on_closed_surface(ixref,iy)) then
            if (iy.eq.ny) then
              prefactor=-hy1(ixref,iy)/(2.0_R8*
      &                  hy1(bottomix(ixref,iy),bottomiy(ixref,iy)))
@@ -3231,7 +3232,7 @@ c      close(14)
      &                  hy1(bottomix(ixref,iy),bottomiy(ixref,iy)))
              ishift=bottomiy(ixref,iy)
             else
-             if (mod(region(topix(ixref,iy),topiy(ixref,iy),0),4).eq.1)
+             if (on_closed_surface(topix(ixref,iy),topiy(ixref,iy)))
      >        then
                prefactor=0.5_R8
                postfactor=0.5_R8
@@ -3275,7 +3276,7 @@ c      close(14)
      &       topiy(topix(ixref,-1),topiy(ixref,-1))))
        do ispecies=0, nsl-1
          do istate=0, ncl(ispecies)-1
-           if (mod(region(ixref,-1,0),4).eq.1) then
+           if (on_closed_surface(ixref,-1)) then
              dd(ispecies,istate,-1)=dd(ispecies,istate,
      &          topiy(ixref,-1))+prefactor*(dd(ispecies,istate,
      &          topiy(ixref,-1))-dd(ispecies,istate,
@@ -3387,7 +3388,7 @@ c      close(14)
 
       do ix=-1,nx
        do iy=-1,ny
-        if (mod(region(ix,iy,0),4).eq.1) then
+        if (on_closed_surface(ix,iy)) then
          do ispecies=0,nsl-2
           do istate=0,ncl(ispecies)-1
            is=isort(ispecies,istate)
@@ -3413,7 +3414,7 @@ c      close(14)
      &      vwt(nsl-1,0,iy)*(hy1(ix,iy)/hy1(ixref,iy))
 
 *   ..set constant anomalous transport in the SOL and divertor regions
-        elseif (mod(region(ix,iy,0),4).gt.1) then
+        elseif (.not.on_closed_surface(ix,iy)) then
          do ispecies=0,nsl-2
           do istate=0,ncl(ispecies)-1
            is=isort(ispecies,istate)

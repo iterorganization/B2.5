@@ -27,8 +27,8 @@
 	     do id = 0, nd 
 	       src(ix,iy,id) = 0.0_R8
 	     enddo
-	   elseif(iy.eq.-1 .and. mod(region(ix,iy,0),4).eq.1.and.
-     1	    zero_dead_and_core.ge.2) then
+	   elseif(iy.eq.-1 .and. on_closed_surface(ix,iy) .and.
+     1	          zero_dead_and_core.ge.2) then
 	     do id = 0, nd
 	       src(ix,iy,id) = 0.0_R8
 	     enddo

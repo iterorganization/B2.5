@@ -540,6 +540,8 @@
 *     B2WURC writes a table of atomic rate coefficients to an
 *     un*formatted file.
 *
+*     B2XBZB calculates Bz/B**2 - Bz/<B**2>.
+*
 *     B2XGBS computes the product (magnetic field pitch)*(surface area)
 *     at cell faces.
 *

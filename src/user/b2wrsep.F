@@ -164,7 +164,7 @@ c
       call b2xzef(nx,ny,ns,rz2,na,ne,zeff)
       iy=jsep+1
       do ix=0,nx-1 !{
-        if(mod(region(ix,jsep,0),4).eq.1) then !{
+        if(on_closed_surface(ix,jsep)) then !{
 c          v=vol(ix,iy)
           v=gs(ix,iy,1)
           hlp_i=0.0_R8
