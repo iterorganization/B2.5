@@ -247,6 +247,8 @@
      *  fhi_pschused(:,:,:),
      *  fhi_inert(:,:,:),
      *  fhi_vispar(:,:,:),
+     *  fhi_visper(:,:,:),
+     *  fhi_visq(:,:,:),
      *  fhi_anml(:,:,:),
      *  fhi_kevis(:,:,:),
 *     Source
@@ -302,6 +304,8 @@
      *  fhi_pschused_av(:,:,:),
      *  fhi_inert_av(:,:,:),
      *  fhi_vispar_av(:,:,:),
+     *  fhi_visper_av(:,:,:),
+     *  fhi_visq_av(:,:,:),
      *  fhi_anml_av(:,:,:),
      *  fhi_kevis_av(:,:,:),
      *  b2stbr_phys_shi_bal_av(:,:),
@@ -659,6 +663,8 @@
       allocate(fhi_pschused(-1:nxd,-1:nyd,0:1))
       allocate(fhi_inert(-1:nxd,-1:nyd,0:1))
       allocate(fhi_vispar(-1:nxd,-1:nyd,0:1))
+      allocate(fhi_visper(-1:nxd,-1:nyd,0:1))
+      allocate(fhi_visq(-1:nxd,-1:nyd,0:1))
       allocate(fhi_anml(-1:nxd,-1:nyd,0:1))
       allocate(fhi_kevis(-1:nxd,-1:nyd,0:1))
 *     Sources
@@ -740,6 +746,8 @@
       allocate(fhi_pschused_av(-1:nxd,-1:nyd,0:1))
       allocate(fhi_inert_av(-1:nxd,-1:nyd,0:1))
       allocate(fhi_vispar_av(-1:nxd,-1:nyd,0:1))
+      allocate(fhi_visper_av(-1:nxd,-1:nyd,0:1))
+      allocate(fhi_visq_av(-1:nxd,-1:nyd,0:1))
       allocate(fhi_anml_av(-1:nxd,-1:nyd,0:1))
       allocate(fhi_kevis_av(-1:nxd,-1:nyd,0:1))
       allocate(b2stbr_phys_shi_bal_av(-1:nxd,-1:nyd))
@@ -981,6 +989,8 @@ cdjm Jan2017 Flux arrays:
       deallocate(fhi_pschused)
       deallocate(fhi_inert)
       deallocate(fhi_vispar)
+      deallocate(fhi_visper)
+      deallocate(fhi_visq)
       deallocate(fhi_anml)
       deallocate(fhi_kevis)
 *     Sources
@@ -1028,6 +1038,8 @@ cdjm Jan2017 Flux arrays:
       deallocate(fhi_pschused_av)
       deallocate(fhi_inert_av)
       deallocate(fhi_vispar_av)
+      deallocate(fhi_visper_av)
+      deallocate(fhi_visq_av)
       deallocate(fhi_anml_av)
       deallocate(fhi_kevis_av)
       deallocate(b2stbr_phys_shi_bal_av)
@@ -1848,6 +1860,8 @@ cdjm Update ion heat sources
         fhi_pschused_av=0.0_R8
         fhi_inert_av=0.0_R8
         fhi_vispar_av=0.0_R8
+        fhi_visper_av=0.0_R8
+        fhi_visq_av=0.0_R8
         fhi_anml_av=0.0_R8
         fhi_kevis_av=0.0_R8
         b2stbr_phys_shi_bal_av=0.0_R8
@@ -2100,6 +2114,10 @@ cdjm Update ion heat sources
      &               curmlt*fhi_inert
       fhi_vispar_av = avmlt*fhi_vispar_av +
      &                curmlt*fhi_vispar
+      fhi_visper_av = avmlt*fhi_visper_av +
+     &                curmlt*fhi_visper
+      fhi_visq_av = avmlt*fhi_visq_av +
+     &                curmlt*fhi_visq
       fhi_anml_av = avmlt*fhi_anml_av +
      &              curmlt*fhi_anml
       fhi_kevis_av = avmlt*fhi_kevis_av +
@@ -2476,6 +2494,10 @@ cdjm Update ion heat sources
      &                   fhi_inert_av,vdims,3)
       call write_cdf_double(ncid,'fhi_vispar',
      &                   fhi_vispar_av,vdims,3)
+      call write_cdf_double(ncid,'fhi_visper',
+     &                   fhi_visper_av,vdims,3)
+      call write_cdf_double(ncid,'fhi_visq',
+     &                   fhi_visq_av,vdims,3)
       call write_cdf_double(ncid,'fhi_anml',
      &                   fhi_anml_av,vdims,3)
       call write_cdf_double(ncid,'fhi_kevis',

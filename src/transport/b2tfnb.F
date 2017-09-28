@@ -88,6 +88,7 @@
       integer, save :: drift_style = 1                                   !srv 21.06.08
       real (kind=R8), save :: cfvma = 0.0_R8                             !srv 15.12.05
       real (kind=R8), save :: alpha_ = 0.0_R8                            !srv 09.07.03
+      real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
       real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
       real (kind=R8), save ::  
@@ -180,6 +181,7 @@
         call ipgeti ('b2tfnb_PSch_style', PSch_style)                    !srv 12.11.08
         call ipgeti ('b2tfnb_fnb_nodrift_style', fnb_nodrift_style)      !srv 20.06.08
         call ipgeti ('b2tfnb_drift_style', drift_style)                  !srv 21.06.08
+        call ipgetr ('b2tfnb_xcur', xcur)                                !xpb 27.09.17
         call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
         call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
         call ipgeti ('b2npc9_iout', iout_b2npc9)                         !srv 11.09.09
@@ -894,16 +896,16 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
            flo = flo +
      &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
-     &       +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*ycur/
-     &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2)
+     &       +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/
+     &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)
           flo_mdf = flo_mdf +
      &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
-     &       +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*ycur/
-     &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2)
+     &       +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/
+     &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)
           flo2dia = flo2dia +
      &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
-     &       +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*ycur/
-     &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2)
+     &       +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/
+     &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)
          end if
          if (no_hybr.eq.0) then
            if(no_Ptncr_x_co.eq.0) then                                  !srv 13.10.06 {
@@ -1077,7 +1079,13 @@ csw 14mar2013 missing con_he added --> needed in b2tfhi_ / b2tfhe_ !!!
              fna_pschused(ix,iy,0,isb) = 0.0_R8
              fna_panom(ix,iy,0,isb) = -cdpb(ix,iy,0)*
      &        (pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))
-             fna_ch(ix,iy,0,isb) = 0.0_R8
+             if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
+               fna_ch(ix,iy,0,isb) =
+     &          (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
+     &          +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/qe
+             else
+               fna_ch(ix,iy,0,isb) = 0.0_R8
+             endif
            endif           
            fnb_nodrift(ix,iy,0) = flo_nodrift * t3-
      &      con_nodrift*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))-
@@ -1466,7 +1474,8 @@ cdjm Jan2017 store components of fnb for balance
             endif
             if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
               fna_ch(ix,iy,1,isb) = (fchvispar(ix,iy,1)+
-     &                       fchinert(ix,iy,1)+fchanml(ix,iy,1))*ycur/qe
+     &          fchinert(ix,iy,1)+fchanml(ix,iy,1)+
+     &          fchvisper(ix,iy,1)+fchvisq(ix,iy,1))*ycur/qe
             else
               fna_ch(ix,iy,1,isb) = 0.0_R8
             endif

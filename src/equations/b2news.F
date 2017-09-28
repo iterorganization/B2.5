@@ -677,7 +677,7 @@ cxpb
      1         vol, hx, hy, gs, qz, qc, bb, ti, ni, na,
      2         fna, fni_32, fni_52, kinrgy,
      &         chci, cddi, chvi, chvimx, cvsa, vadia, vaecrb,
-     &         fchvispar, fchinert, fchanml,                             !lk 30.05.11
+     &         fchvispar, fchvisper, fchvisq, fchinert, fchanml,         !lk 30.05.11
      3         fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,          !srv 13.10.06
      &         .false.)                                                  !djm Jan2017
               call b2xpen (nx, ny, ns,
@@ -888,7 +888,7 @@ c     with diamagnetic drift part                                        !xpb
      1   vol, hx, hy, gs, qz, qc, bb, ti, ni, na,
      2   fna, fni_32, fni_52, kinrgy,
      &   chci, cddi, chvi, chvimx, cvsa, vadia, vaecrb,
-     &   fchvispar, fchinert, fchanml,                                   !lk 30.05.11
+     &   fchvispar, fchvisper, fchvisq, fchinert, fchanml,               !lk 30.05.11
      3   fhi, fhi_mdf, fhiPSch, fhit, floi, coni, fllimi,                !srv 13.10.06
      &   .true.)                                                         !djm Jan2017
         call b2xpen (nx, ny, ns,

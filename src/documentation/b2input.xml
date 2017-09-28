@@ -1528,11 +1528,19 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tfnb_xcur</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Xcur is a multiplier to the parallel viscosity, perpendicular viscosity, heat viscosity, ion inertial and anomalous current contributions to the ion poloidal flows (particle and energy).
+				</description>
+			</switch>
+			<switch>
 				<name>b2tfnb_ycur</name>
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Ycur is a multiplier to the parallel viscosity, perpendicular viscosity, heat viscosity, ion inertial and anomalous currents to the ion radial flows (particle and energy).
+					Ycur is a multiplier to the parallel viscosity, perpendicular viscosity, heat viscosity, ion inertial and anomalous current contributions to the ion radial flows (particle and energy).
 				</description>
 			</switch>
 			<switch>

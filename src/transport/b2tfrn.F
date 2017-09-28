@@ -6,8 +6,7 @@
      &  vol, hx, hy, hz, qz, gs, qc, bb, pbs, ua, na, ne, te, ti, po,   
      &  fch_p, fchvispar, fchvisper, fchinert, fchanml, fchvisq,         !srv 20.09.06
      &  fne, cvla, cdna, cdpa, chce, chci, vaecrb, wadia, ve, wedia,
-     &  uadia,
-     &  fna_eir, fne_eir, fhe_eir, fhi_eir)
+     &  uadia, fna_eir, fne_eir, fhe_eir, fhi_eir)
       use b2mod_types
       use b2mod_boundary_namelist
       use b2mod_indirect
@@ -30,7 +29,7 @@
      &  cdpa(-1:nx,-1:ny,0:1,0:ns-1),
      &  chce(-1:nx,-1:ny,0:1), chci(-1:nx,-1:ny,0:1),
      &  ne(-1:nx,-1:ny), vaecrb(-1:nx,-1:ny,0:1,0:ns-1),
-     &  wadia(-1:nx,-1:ny,0:1,0:ns-1),
+     &  wadia(-1:nx,-1:ny,0:1,0:ns-1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      &  veecrb(-1:nx,-1:ny,0:1),
      &  vol(-1:nx,-1:ny), hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
      2  hz(-1:nx,-1:ny), qz(-1:nx,-1:ny,0:1), gs(-1:nx,-1:ny,0:2), 
@@ -72,7 +71,8 @@
       character chns*3                                                   !srv 16.09.02
       real (kind=R8), save :: fch_pTe = 1.0_R8                           !srv 30.12.09
       real (kind=R8), save :: xfrhie = 1.0_R8                            !srv 05.11.09 30.01.10
-      real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
+      real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
+      real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
       real (kind=R8) ::
      *   dif, flo, cutlo, fle_eir, cone_eir, floe_eir, chce_eir,         !srv 14.07.10
      &   floi_eir, chci_eir, flo_eir, con_eir, term(-1:nx,-1:ny)
@@ -121,6 +121,7 @@
         call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)                 !srv 06.07.06
         call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)                 !srv 06.07.06
         call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                 !srv 06.07.06
+        call ipgetr ('b2tfnb_xcur', xcur)                                !xpb 27.09.17
         call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
         call ipgeti ('b2tfnb_drift_style', drift_style)
@@ -208,10 +209,10 @@ csw 30sep2013, added check for no_hybr
      4      (vaecrb(ix,iy,0,is)*xvecrb+wadia(ix,iy,0,is)*xwdia)*
      5      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/               !srv 01.03.00
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
-           if (nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then
-             flo_eir = flo_eir +
+            if (nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1)
+     >       flo_eir = flo_eir +
      &        (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
-     &         +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*ycur/
+     &         +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/
      &        (qe*(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2)
            end if
            t0 = (na(ix,iy,is) 
