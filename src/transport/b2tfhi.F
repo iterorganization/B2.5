@@ -696,7 +696,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
            floi0 = (1.5_R8+BoRiS)*fni_32(ix,iy,1)+
      1      2.5_R8*fni_52(ix,iy,1)+
      2      chvi(ix,iy,1)*(ni(bottomix(ix,iy),bottomiy(ix,iy),0)
-     &                    +ni(ix,iy,0))/2.0_R8+cur
+     &                    +ni(ix,iy,0))/2.0_R8+scur
            cum_flo_vadia=0.0_R8
            cum_flo_vaecrb=0.0_R8
            do is=0,ns-1
