@@ -43,7 +43,7 @@
      1  floi(-1:nx,-1:ny,0:1), coni(-1:nx,-1:ny,0:1,0:2),            !srv 02.01.07
      2  fllimi(-1:nx,-1:ny)
 *   ..local variables
-      real (kind=R8) :: upfac, hybfac !djm Jan2017
+      real (kind=R8) :: upfac, hybfac, scur !djm Jan2017
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -350,13 +350,14 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      .           - t1*(w0(ix,iy,is)-w0(leftix(ix,iy),leftiy(ix,iy),is))
              enddo
            endif
-           floi0 = (1.5_R8+BoRiS)*fni_32(ix,iy,0)+
-     1      2.5_R8*fni_52(ix,iy,0)+
-     &      chvi(ix,iy,0)*(ni(leftix(ix,iy),leftiy(ix,iy),0)+
-     1                     ni(ix,iy,0))/2.0_R8+
+           scur =
      &      1.5e0_R8/qe*(fchinert(ix,iy,0)+fchvispar(ix,iy,0)
      &                  +fchanml(ix,iy,0)+fchvisper(ix,iy,0)
      &                  +fchvisq(ix,iy,0))*xcur
+           floi0 = (1.5_R8+BoRiS)*fni_32(ix,iy,0)+
+     1      2.5_R8*fni_52(ix,iy,0)+
+     &      chvi(ix,iy,0)*(ni(leftix(ix,iy),leftiy(ix,iy),0)+
+     1                     ni(ix,iy,0))/2.0_R8+scur
            cum_flo_vadia=0.0_R8
            cum_flo_vaecrb=0.0_R8
            do is=0,ns-1
@@ -688,13 +689,14 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      .                   w0(bottomix(ix,iy),bottomiy(ix,iy),is))
              enddo
            endif
-           floi0 = (1.5_R8+BoRiS)*fni_32(ix,iy,1)+
-     1      2.5_R8*fni_52(ix,iy,1)+
-     2      chvi(ix,iy,1)*(ni(bottomix(ix,iy),bottomiy(ix,iy),0)
-     &                    +ni(ix,iy,0))/2.0_R8+
+           scur =
      &      1.5e0_R8/qe*(fchinert(ix,iy,1)+fchvispar(ix,iy,1)
      &                  +fchanml(ix,iy,1)+fchvisper(ix,iy,1)
      &                  +fchvisq(ix,iy,1))*ycur
+           floi0 = (1.5_R8+BoRiS)*fni_32(ix,iy,1)+
+     1      2.5_R8*fni_52(ix,iy,1)+
+     2      chvi(ix,iy,1)*(ni(bottomix(ix,iy),bottomiy(ix,iy),0)
+     &                    +ni(ix,iy,0))/2.0_R8+cur
            cum_flo_vadia=0.0_R8
            cum_flo_vaecrb=0.0_R8
            do is=0,ns-1

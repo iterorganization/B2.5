@@ -117,6 +117,7 @@
      1  na_eps, te_eps, ti_eps, po_eps, ua_eps, sput_frc, sput_phys,
      2  delta_min, dt_change_inc, delta_max, dt_change_dec,
      3  dt_min, dt_max, max_delta
+      real (kind=R8), save :: xcur = 0.0_R8, ycur = 1.0_R8
 #ifdef CATALYST
       logical use_catalyst
       integer lnblnk
@@ -1150,6 +1151,16 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        do k = nscx, nscxmax-1
         iscx(k) = -1
        enddo
+       call ipgetr ('b2tfnb_ycur', ycur)
+       call ipgetr ('b2tfnb_xcur', xcur)
+       k = 0
+       do is = 0, ns-1
+         if (nint(zn(is)).eq.1.and.
+     .       nint(zamin(is)).eq.1.or.nint(zamax(is)).eq.1) k = k + 1
+       end do
+       call xertst (k.eq.1.or.(xcur.eq.0.0_R8 .and. ycur.eq.0.0_R8),
+     .  'Currents assignment to ions only supported for single '//
+     .  'hydrogenic species!')
 *
        ixfb=rratio(5*nx,8)
        iyfb=rratio(ny,2)

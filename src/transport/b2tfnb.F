@@ -98,7 +98,7 @@
       real (kind=R8) ::
      *   con(-1:nx,-1:ny), dif, flo, con_nodrift, flo_nodrift, xfrhie, 
      *   cutlo, alpha, gamma, vbar, t0, t1, t2, t3, maxfluxlimit(0:1),
-     *   flux_limit_min_ti,
+     *   flux_limit_min_ti, scur,
      *   flo2dia, con_2dia(-1:nx,-1:ny), flo_mdf, con_mdf(-1:nx,-1:ny),  !srv 01.10.99 21.01.00 22.05.03 04.02.05 13.10.06
      *   term(-1:nx,-1:ny), flo_he, con_he(-1:nx,-1:ny),                 !srv 25.04.00 13.09.02 11.09.09
      &   termhz(-1:nx,-1:ny)                                             !srv 05.11.09
@@ -106,7 +106,7 @@
      &   vbecrb_(-1:nx,-1:ny,0:1), wbdia_(-1:nx,-1:ny,0:1),
      &   kmprti(-1:nx,-1:ny,0:1), dkmprti(-1:nx,-1:ny,0:1),              !srv 21.10.10
      &   tbfl_fnb(1:nbc), div_fnb, tbfl_fnb_mdf(1:nbc), div_fnb_mdf,     !srv 05.03.16
-     &   rdiv                                                            !srv 05.03.16
+     &   rdiv, scur                                                      !srv 05.03.16
       parameter (cutlo=1.0e-60_R8)
       real (kind=R8) ::
      *   wrk0(-1:nx,-1:ny), wrk1(-1:nx,-1:ny), wrk2(-1:nx,-1:ny),
@@ -894,19 +894,16 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      &                  term(ix,iy)                                     !srv 20.06.08 20.10.09
          endif                                                          !srv 21.06.08 }
          if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
-           flo = flo +
+           scur =
      &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
      &       +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/
      &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)
-          flo_mdf = flo_mdf +
-     &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
-     &       +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/
-     &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)
-          flo2dia = flo2dia +
-     &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
-     &       +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/
-     &      (qe*(nb(leftix(ix,iy),leftiy(ix,iy))+nb(ix,iy))/2.0_R8)
+         else
+           scur = 0.0_R8
          end if
+         flo = flo + scur
+         flo_mdf = flo_mdf + scur
+         flo2dia = flo2dia + scur
          if (no_hybr.eq.0) then
            if(no_Ptncr_x_co.eq.0) then                                  !srv 13.10.06 {
             con_mdf(ix,iy)  = hybr(flo_mdf,cdnb(ix,iy,0))               !srv 13.10.06 }
@@ -1079,13 +1076,7 @@ csw 14mar2013 missing con_he added --> needed in b2tfhi_ / b2tfhe_ !!!
              fna_pschused(ix,iy,0,isb) = 0.0_R8
              fna_panom(ix,iy,0,isb) = -cdpb(ix,iy,0)*
      &        (pb(ix,iy)-pb(leftix(ix,iy),leftiy(ix,iy)))
-             if (nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
-               fna_ch(ix,iy,0,isb) =
-     &          (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
-     &          +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/qe
-             else
-               fna_ch(ix,iy,0,isb) = 0.0_R8
-             endif
+             fna_ch(ix,iy,0,isb) = scur
            endif           
            fnb_nodrift(ix,iy,0) = flo_nodrift * t3-
      &      con_nodrift*(nb(ix,iy)-nb(leftix(ix,iy),leftiy(ix,iy)))-
@@ -1263,25 +1254,28 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           fna_pschused(ix,iy,1,isb) = 0.0_R8
          endif
         else
+         if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then         !srv 20.09.06
+           scur =
+     &      (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)    !srv 17.07.08 {
+     &       +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
+     &      (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8) !srv 17.07.08 }
+         else
+           scur = 0.0_R8
+         endif
          if(drift_style.eq.0)then                                       !srv 21.06.08
-          if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then         !srv 20.09.06
-           flo = cvlb(ix,iy,1)+
+          flo = cvlb(ix,iy,1)+
      &      0.5_R8*(ubdia(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
      &      +ubdia(bottomix(ix,iy),bottomiy(ix,iy),1)*
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
-     &        (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)  !srv 17.07.08 {
-     &         +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
-     &        (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)    !srv 17.07.08 }
-           flo_mdf = cvlb(ix,iy,1)+
+     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &      +scur
+          flo_mdf = cvlb(ix,iy,1)+
      &      0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
      &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
-     &        (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)
-     &         +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
-     &        (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)    !srv 20.09.06
-           if(cfvma .eq. 0.0_R8) then                                   !srv 15.12.05
+     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &      +scur
+          if(cfvma .eq. 0.0_R8) then                                   !srv 15.12.05
             flo2dia = cvlbhz(ix,iy,1)+
      &       (ub2dia(ix,iy,1)+ub2dia(bottomix(ix,iy),bottomiy(ix,iy),1))
      &       /2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hy1(ix,iy)+           !srv 01.10.99 09.01.01
@@ -1289,43 +1283,14 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      5                        *vol(bottomix(ix,iy),bottomiy(ix,iy))/
      &        hy1(bottomix(ix,iy),bottomiy(ix,iy)))+                    !srv 01.03.00 09.01.01
      &        (hz(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8*   !srv 18.09.08
-     &        (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)
-     &         +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
-     &        (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)    !srv 20.09.06
-           else
-            flo2dia = cvmbhz(ix,iy,1)+
-     &       (ub2dia(ix,iy,1)+ub2dia(bottomix(ix,iy),bottomiy(ix,iy),1))
-     &       /2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hy1(ix,iy)+           !srv 01.10.99 09.01.01
-     &        hz(bottomix(ix,iy),bottomiy(ix,iy))
-     5                        *vol(bottomix(ix,iy),bottomiy(ix,iy))/
-     &        hy1(bottomix(ix,iy),bottomiy(ix,iy)))                     !srv 01.03.00 09.01.01
-           endif
+     &         scur
           else
-           flo = cvlb(ix,iy,1)+
-     &      0.5_R8*(ubdia(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
-     &      +ubdia(bottomix(ix,iy),bottomiy(ix,iy),1)*
-     &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-           flo_mdf = cvlb(ix,iy,1)+
-     &      0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
-     &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
-     &       vol(bottomix(ix,iy),bottomiy(ix,iy))
-     &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-           if(cfvma .eq. 0.0_R8) then                                   !srv 15.12.05
-            flo2dia = cvlbhz(ix,iy,1)+
-     &       (ub2dia(ix,iy,1)+ub2dia(bottomix(ix,iy),bottomiy(ix,iy),1))
-     &       /2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hy1(ix,iy)+           !srv 01.10.99 09.01.01
-     &       hz(bottomix(ix,iy),bottomiy(ix,iy))
-     5       *vol(bottomix(ix,iy),bottomiy(ix,iy))/
-     &       hy1(bottomix(ix,iy),bottomiy(ix,iy)))                      !srv 01.03.00 09.01.01
-           else
             flo2dia = cvmbhz(ix,iy,1)+
      &       (ub2dia(ix,iy,1)+ub2dia(bottomix(ix,iy),bottomiy(ix,iy),1))
      &       /2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hy1(ix,iy)+           !srv 01.10.99 09.01.01
      &        hz(bottomix(ix,iy),bottomiy(ix,iy))
      5                        *vol(bottomix(ix,iy),bottomiy(ix,iy))/
      &        hy1(bottomix(ix,iy),bottomiy(ix,iy)))                     !srv 01.03.00 09.01.01
-           endif
           endif
           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1)+                         !srv 13.09.02 ( 20.01.11
      &      0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
@@ -1333,54 +1298,28 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
      &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
          else                                                           !srv 21.06.08 {
-          if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then         !srv 20.09.06
            flo = cvlb(ix,iy,1)+ubdia(ix,iy,1)*
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/          !srv 01.03.00
-     6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+          !srv 01.03.00
-     &      (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)
-     &       +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
-     &      (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)      !srv 20.09.06
+     6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))           !srv 01.03.00
+     &      +scur
            flo_mdf = cvlb(ix,iy,1)+vbecrb(ix,iy,1)*                     !srv 01.06.06 {
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
-     6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
-     &      (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)
-     &       +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
-     &      (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)      !srv 20.09.06
+     6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
+     &      +scur
            if(cfvma .eq. 0.0_R8) then                                   !srv 15.12.05
             flo2dia = cvlbhz(ix,iy,1)+ub2dia(ix,iy,1)*                  !srv 01.10.99 09.01.01
      5       (hz(ix,iy)*vol(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy))
      5       *vol(bottomix(ix,iy),bottomiy(ix,iy)))/                    !srv 01.03.00 09.01.01
      6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+         !srv 01.03.00
      &       (hz(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8*    !srv 18.09.08
-     &       (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)
-     &        +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
-     &       (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2)     !srv 20.09.06
+     &        scur
            else
             flo2dia = cvmbhz(ix,iy,1)+ub2dia(ix,iy,1)*                  !srv 01.10.99 09.01.01
      5       (hz(ix,iy)*vol(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy))
      5       *vol(bottomix(ix,iy),bottomiy(ix,iy)))/                    !srv 01.03.00 09.01.01
      6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))          !srv 01.03.00
            endif
-          else
-           flo = cvlb(ix,iy,1)+ubdia(ix,iy,1)*
-     5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/          !srv 01.03.00
-     6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))           !srv 01.03.00
-           flo_mdf = cvlb(ix,iy,1)+vbecrb(ix,iy,1)*                     !srv 01.06.06 {
-     5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
-     6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-           if(cfvma .eq. 0.0_R8) then                                   !srv 15.12.05
-            flo2dia = cvlbhz(ix,iy,1)+ub2dia(ix,iy,1)*                  !srv 01.10.99 09.01.01
-     5       (hz(ix,iy)*vol(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy))
-     5       *vol(bottomix(ix,iy),bottomiy(ix,iy)))/                    !srv 01.03.00 09.01.01
-     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))          !srv 01.03.00
-           else
-            flo2dia = cvmbhz(ix,iy,1)+ub2dia(ix,iy,1)*                  !srv 01.10.99 09.01.01
-     5       (hz(ix,iy)*vol(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy))
-     5       *vol(bottomix(ix,iy),bottomiy(ix,iy)))/                    !srv 01.03.00 09.01.01
-     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))          !srv 01.03.00
-           endif
-          endif
-          flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1)+vbecrb(ix,iy,1)*         !srv 13.09.02 ( 20.01.11
+           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1)+vbecrb(ix,iy,1)*         !srv 13.09.02 ( 20.01.11
      5     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
 
@@ -1416,14 +1355,14 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &                   -pb(bottomix(ix,iy),bottomiy(ix,iy))) )        !srv 21.01.00 }
           if(cfvma .eq. 0.0_R8) then                                    !srv 15.12.05
             fnb_fcor(ix,iy,1) = flo2dia*                                !srv 01.10.99
-     &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2-
+     &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &       con_2dia(ix,iy)*(nb(ix,iy)-
      &                        nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &       cdpbhz(ix,iy,1)*(pb(ix,iy)                                 !srv 09.01.01
      &                     -pb(bottomix(ix,iy),bottomiy(ix,iy)))        !srv 01.10.99
           else                                                          !srv 15.12.05
             fnb_fcor(ix,iy,1) = flo2dia*                                !srv 01.10.99
-     &            (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2
+     &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
           endif
           if(fnb_nodrift_style.eq.0) then                               !srv 20.06.08
            fnb_nodrift(ix,iy,1) = flo_nodrift*
@@ -1473,9 +1412,7 @@ cdjm Jan2017 store components of fnb for balance
               endif
             endif
             if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then
-              fna_ch(ix,iy,1,isb) = (fchvispar(ix,iy,1)+
-     &          fchinert(ix,iy,1)+fchanml(ix,iy,1)+
-     &          fchvisper(ix,iy,1)+fchvisq(ix,iy,1))*ycur/qe
+              fna_ch(ix,iy,1,isb) = scur
             else
               fna_ch(ix,iy,1,isb) = 0.0_R8
             endif

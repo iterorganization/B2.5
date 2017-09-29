@@ -74,7 +74,7 @@
       real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
       real (kind=R8) ::
-     *   dif, flo, cutlo, fle_eir, cone_eir, floe_eir, chce_eir,         !srv 14.07.10
+     *   dif, flo, cutlo, fle_eir, cone_eir, floe_eir, chce_eir, scur,   !srv 14.07.10
      &   floi_eir, chci_eir, flo_eir, con_eir, term(-1:nx,-1:ny)
       real (kind=R8) :: 
      &   wedia_(-1:nx,-1:ny,0:1), nel(-1:nx,-1:ny), pb(-1:nx,-1:ny)      !srv 14.07.10 }
@@ -186,6 +186,14 @@
          else
 
 csw 30sep2013, added check for no_hybr
+          if (nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then
+           scur =
+     &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
+     &      +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/qe/
+     &     ((na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8)
+          else
+            scur = 0.0_R8
+          end if
           if(no_hybr .ne. 0) then
            term(ix,iy) = xfrhie*wrk2(ix,iy)*0.5_R8*abs(pbs(ix,iy,0))*
      &     sqrt((pb(leftix(ix,iy),leftiy(ix,iy))+pb(ix,iy))/
@@ -209,12 +217,8 @@ csw 30sep2013, added check for no_hybr
      4      (vaecrb(ix,iy,0,is)*xvecrb+wadia(ix,iy,0,is)*xwdia)*
      5      (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/               !srv 01.03.00
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
-            if (nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1)
-     >       flo_eir = flo_eir +
-     &        (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
-     &         +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/
-     &        (qe*(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2)
            end if
+           flo_eir = flo_eir + scur
            t0 = (na(ix,iy,is) 
      .        + na(leftix(ix,iy),leftiy(ix,iy),is)) / 2.0_R8
            t1 = (2.0_R8 * na(ix,iy,is) 
@@ -248,6 +252,7 @@ csw 30sep2013, added check for no_hybr
      5       (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/
      6       (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 14.07.10 }
            endif
+           flo_eir = flo_eir + scur
            if(no_Ptncr_x_co.eq.0) then                                   !srv 13.10.06 {
             con_eir = hybr(flo_eir,cdna(ix,iy,0,is))
            else
@@ -285,12 +290,17 @@ csw 30sep2013, added check for no_hybr
      2       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      3       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
            end if
-           if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1)         !srv 20.09.06
-     >      flo_eir = flo_eir +
-     &        (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+ ! fchvisper(ix,iy,1)+
-     &        fchanml(ix,iy,1))/
+           if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
+            scur =
+     &        (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+
+     &         fchvisper(ix,iy,1)+fchvisq(ix,iy,1)+
+     &         fchanml(ix,iy,1))/
      &        (qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &        na(ix,iy,is))/2.0_R8)
+           else
+            scur = 0.0_R8
+           endif
+           flo_eir = flo_eir + scur
            t0 = (na(ix,iy,is) +na(bottomix(ix,iy),bottomiy(ix,iy),is))/
      1      2.0_R8
            t1 = 
@@ -323,15 +333,15 @@ csw 30sep2013, added check for no_hybr
      3       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
            end if
            if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
-             flo_eir = cvla(ix,iy,1,is)+
-     &        (wadia(ix,iy,1,is)*xwdia+vaecrb(ix,iy,1,is)*xvecrb)*       !srv 14.07.10
-     &        (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
-     &        (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+
+             scur =
      &        (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)
      &         +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
      &        (qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
-     &        na(ix,iy,is))/2.0_R8)
+     &             na(ix,iy,is))/2.0_R8)
+           else
+             scur = 0.0_R8
            endif
+           flo_eir = flo_eir + scur
            if(no_Ptncr_y_co.eq.0) then                                   !srv 06.07.06 {
              con_eir = hybr(flo_eir,cdna(ix,iy,1,is))
            else
