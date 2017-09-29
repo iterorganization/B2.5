@@ -203,10 +203,16 @@ c*** Set default values according to current species list
      .   'faulty input j_h_at')
 #ifdef B25_EIRENE
         if (user_namelist_used) then
-          do is = 1, nnmoli
-            call xertst(l_h_mol(is).eq.mlcmp(j_h_at,is),
-     .       'faulty inputs l_h_mol, mlcmp')
-          end do
+          if (maxval(l_h_mol).gt.0) then
+            do is = 1, nnmoli
+              call xertst(l_h_mol(is).eq.mlcmp(j_h_at,is),
+     .         'faulty inputs l_h_mol, mlcmp')
+            end do
+          else
+            do is = 1, nnmoli
+              l_h_mol(is) = mlcmp(j_h_at,is)
+            end do
+          end if
         end if
 #endif
       end if
