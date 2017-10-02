@@ -9410,7 +9410,7 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
           if(istyle_cur_contr_on_S_and_N.eq.0 .or.
      &       istyle_cur_contr_on_S_and_N.eq.1) then
             write(*,*) ' BCPOT=12 cannot be used when ',
-     &                 'istyle_cur_contr_on_S_and_N  = 0 or 1'
+     &                 'istyle_cur_contr_on_S_and_N = 0 or 1'
             call xerrab
      .       ('faulty parameter istyle_cur_contr_on_S_and_N !')
           else
@@ -9474,12 +9474,12 @@ c code here is a part of code from 50000 for istyle_cur_contr_on_S_and_N.eq.1
           if(istyle_cur_contr_on_S_and_N.eq.0 .or.
      &       istyle_cur_contr_on_S_and_N.eq.1) then
             write(*,*) ' BCPOT=13 cannot be used when ',
-     &                 'istyle_cur_contr_on_S_and_N  = 0 or 1'
+     &                 'istyle_cur_contr_on_S_and_N = 0 or 1'
             call xerrab
      .       ('faulty parameter istyle_cur_contr_on_S_and_N !')
           else
-            call xertst(on_closed_surface(bc_list_x(1,ib),
-     .                                    bc_list_y(1,ib)),
+            call xertst(.not.on_closed_surface(bc_list_x(1,ib),
+     .                                         bc_list_y(1,ib)),
      .       'BCPOT=13 not intended for core boundaries!')
           endif
         endif
