@@ -4,7 +4,7 @@
 
       integer nlabels,nfns,nsparameters,nconstants
       integer nwlabels,nelabels,nwfns,ntrgfns
-      parameter(nlabels=350,nfns=204,nsparameters=32,nelabels=32,
+      parameter(nlabels=350,nfns=204,nsparameters=32,nelabels=36,
      *     nconstants=10,nefns=48,nwfns=62,nwlabels=97,ntrgfns=90)
 
       integer, save ::
@@ -805,7 +805,8 @@
      4 'triarea' , 'triavol' , 'tr'      , 'tz'      , 'tindex'  ,
      5 'vxa'     , 'vxm'     , 'vxi'     , 'vya'     , 'vym'     ,
      6 'vyi'     , 'vza'     , 'vzm'     , 'vzi'     , 'massa'   ,
-     7 'massm'   , 'massi'   /
+     7 'massm'   , 'massi'   , 'pux'     , 'puy'     , 'pvx'     ,
+     8 'pvy'     /
       data edimensions /
      1     2, 2, 2, 2, 2,
      2     2, 2, 2, 2, 2,
@@ -813,7 +814,8 @@
      4     1, 1, 1, 1, 1,
      5     2, 2, 2, 2, 2,
      6     2, 2, 2, 2, 2,
-     7     2, 2/                 
+     7     2, 2, 1, 1, 1,
+     8     1/
       data edescriptions(1:10) /
      1 'Atoms particle density (m^{-3})',
      2 'Molecules particle density (m^{-3})',
@@ -847,9 +849,13 @@
      8 'Molecules Z-directed velocity (m.s^{-1})',
      9 'Test ions Z-directed velocity (m.s^{-1})',
      * 'Atom mass (kg)'/
-      data edescriptions(31:32) /
+      data edescriptions(31:36) /
      1 'Molecule mass (kg)',
-     2 'Molecular ion mass (kg)'/
+     2 'Molecular ion mass (kg)',
+     3 'PUX',
+     4 'PUY',
+     5 'PVX',
+     6 'PVY'/
       data sparameters /
      1 'extl'    , 'cltb' , 'chor', 'chpl'    , 'cmd' ,
      2 'cmdcdf'  , 'chbx' , 'chvl', 'flux'    , 'chmp',

@@ -26,6 +26,7 @@ c
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2cmpa
+      use b2mod_b2cmfs
 #ifdef B25_EIRENE
       use eirmod_extrab25
       use eirmod_ctrig
@@ -41,14 +42,19 @@ c
 #ifdef B25_EIRENE
       integer jvft46
       integer is, i, j, n, jvftnew, nstra1, io, idummy
+      real (kind=R8) :: width
       real (kind=R8), allocatable :: field1(:,:)
       character*16, allocatable :: textan1(:), textmn1(:)
-      data jvftnew / 20160829 /
+      data jvftnew / 20170930 /
+
+*   ..initialisation
+      data width /1.0_R8/
+      save width
 
 *  -- PROCEDURES --
       character*32 :: get_B25_hash
       logical streql
-      external ipgeti, streql, get_B25_hash
+      external ipgeti, ipgetr, xertst, streql, get_B25_hash
 #endif
       external subini, subend
 
@@ -63,6 +69,12 @@ C
 *  READ EIRENE SPECIES DENSITIES AND TEMPERATURES
 * ----------------------------------------------------------------------
 *
+*   ..read input data
+      call ipgetr ('b2agmt_1d_width', width)
+      call xertst (0.0_R8.lt.width, 'faulty input width')
+*   ..test isymm
+      call xertst (0.le.isymm.and.isymm.le.4,
+     &  'faulty argument isymm')
 
       OPEN (UNIT=33,ACCESS='SEQUENTIAL',FORM='FORMATTED',ERR=1983)
       OPEN (UNIT=34,ACCESS='SEQUENTIAL',FORM='FORMATTED',ERR=1984)
@@ -316,6 +328,67 @@ C
       write(47,'(6e15.7)') ((FIELD1(i,j),j=1,ntrii),i=1,nmol1)
       call write_title(47,'vzdeni',ntrii*nioni)
       write(47,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,nioni)
+
+* Triangle volumes
+C
+      if(jvft46.lt.20170930) then
+        do i=1,ntrii
+          triangle_area(i)=triangleArea(
+     .     xtrian(necke(1,i)), ytrian(necke(1,i)),
+     .     xtrian(necke(2,i)), ytrian(necke(2,i)),
+     .     xtrian(necke(3,i)), ytrian(necke(3,i)))
+        end do
+        if (isymm.eq.0) then ! slab geometry
+          do i=1,ntrii
+            triangle_vol(i)=triangle_area(i)*width
+          end do
+        else if (isymm.eq.1 .or. isymm.eq.2) then
+*    ..case of rotational symmetry about crx=0 axis
+          do i=1,ntrii
+            triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
+     .       (xtrian(necke(1,i))+xtrian(necke(2,i))+xtrian(necke(3,i)))/
+     .        3.0_R8
+          end do
+        else if (isymm.eq.3 .or. isymm.eq.4) then
+*    ..case of rotational symmetry about cry=0 axis
+          do i=1,ntrii
+            triangle_vol(i)=triangle_area(i)*2.0_R8*pi*
+     .       (ytrian(necke(1,i))+ytrian(necke(2,i))+ytrian(necke(3,i)))/
+     .        3.0_R8
+          end do
+        end if
+      else
+        call read_title(46)
+        read(46,'(6e15.7)') (TRIANGLE_VOL(j),j=1,ntrii)
+      end if
+      call write_title(47,'volumes',ntrii)
+      write(47,'(6e15.7)') (TRIANGLE_VOL(j),j=1,ntrii)
+
+* Direction normals
+C
+      if(jvft46.ge.20170930) then
+        call read_title(46)
+        read(46,'(6e15.7)') (PUX(j),j=1,ntrii)
+        call read_title(46)
+        read(46,'(6e15.7)') (PUY(j),j=1,ntrii)
+        call read_title(46)
+        read(46,'(6e15.7)') (PVX(j),j=1,ntrii)
+        call read_title(46)
+        read(46,'(6e15.7)') (PVY(j),j=1,ntrii)
+      else
+        pux = 0.0_R8
+        puy = 0.0_R8
+        pvx = 0.0_R8
+        pvy = 0.0_R8
+      end if
+      call write_title(47,'pux',ntrii)
+      write(47,'(6e15.7)') (PUX(j),j=1,ntrii)
+      call write_title(47,'puy',ntrii)
+      write(47,'(6e15.7)') (PUY(j),j=1,ntrii)
+      call write_title(47,'pvx',ntrii)
+      write(47,'(6e15.7)') (PVX(j),j=1,ntrii)
+      call write_title(47,'pvy',ntrii)
+      write(47,'(6e15.7)') (PVY(j),j=1,ntrii)
 
       deallocate(field1)
 #endif

@@ -90,7 +90,7 @@
 
       imap(1)=1
       call rwcdf (rw, ncid, 'nastep', imap, tstepn, iret)
-      nastep = tstepn(1)
+      nastep = nint(tstepn(1))
 
       ntim_batch = naver / nastep
 

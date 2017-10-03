@@ -156,8 +156,8 @@ c     Getting the values for globaltime and deltat
         iret = nf_open(moviename,NCNOWRIT,ncid)
         imap(1)=1
         imap(2)=nx+2
-        tstepn(1) = ntstep
         call rwcdf (rw, ncid, 'ntstep', imap, tstepn, iret)
+        ntstep = nint(tstepn(1))
         nplot=ntstep+1
         itstep=0
         dumarr(1)=starttime

@@ -9,7 +9,7 @@
       logical :: want_transpose
       real (kind=R8) :: ds(2048), da(2048,7:10)
       integer :: status, len_da(7:10)
-      integer :: i,il
+      integer :: i, il
       logical :: exists
 #ifndef NO_CDF
       integer :: idim, ivar, i1, i2, iatt,

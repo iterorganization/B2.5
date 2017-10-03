@@ -259,6 +259,21 @@ C
       call read_title(46)
       read(46,'(6e15.7)') ((VZDENI(i,j),j=1,ntrii),i=1,nioni)
 
+* Volumes
+C
+      if (jvft46.ge.20170930) then
+        call read_title(46)
+        read(46,'(6e15.7)') (triangle_vol(j),j=1,ntrii)
+        triangle_vol = triangle_vol/1.0e6_R8   ! convert to m^3
+        call read_title(46)
+        read(46,'(6e15.7)') (pux(j),j=1,ntrii)
+        call read_title(46)
+        read(46,'(6e15.7)') (puy(j),j=1,ntrii)
+        call read_title(46)
+        read(46,'(6e15.7)') (pvx(j),j=1,ntrii)
+        call read_title(46)
+        read(46,'(6e15.7)') (pvy(j),j=1,ntrii)
+      end if
 #endif
 
 *  ---------------------------------------------------------------------

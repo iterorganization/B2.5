@@ -6473,6 +6473,22 @@ cdpc still in testing phase
      .                    ytrian(necke(3,i)))/3.0_R8
           end do
           call eirene_copy(emach(1:nz,1:ntrii),1.0_R8,nz,textbl)
+        case('pux')
+          description='PUX'
+          nz=1
+          call eirene_copy(pux,1.0_R8,nz,textbl)
+        case('puy')
+          description='PUY'
+          nz=1
+          call eirene_copy(puy,1.0_R8,nz,textbl)
+        case('pvx')
+          description='PVX'
+          nz=1
+          call eirene_copy(pvx,1.0_R8,nz,textbl)
+        case('pvy')
+          description='PVY'
+          nz=1
+          call eirene_copy(pvy,1.0_R8,nz,textbl)
         case('tindex')
           description='Triangle index'
           nz=1
