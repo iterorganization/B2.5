@@ -78,8 +78,13 @@ C
 C
       READ(44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
       READ(44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
+#ifndef HPUX
       write(*,'(a,5i4)')
      . ' Dimensions in fort.44 = ',nnx,nny,natmi,nmoli,nioni
+#else
+      write(*,'(a,5i4)')
+     . ' Dimensions in ftn44 = ',nnx,nny,natmi,nmoli,nioni
+#endif
       write(*,'(a,2i5)') ' Array inner dimensions = ', ndx , ndy
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
@@ -89,7 +94,11 @@ C
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
       allocate(ft44data(0:nx+1,0:ny+1))
       inquire(file='input.dat',exist=ex)
+#ifndef HPUX
       if (.not.ex) inquire(file='fort.33',exist=nlwrmsh)
+#else
+      if (.not.ex) inquire(file='ftn33',exist=nlwrmsh)
+#endif
 c
 * labels
 * neutral atoms
@@ -101,7 +110,11 @@ C
         atoms_list(is)=charns(1:2)
    11 CONTINUE
       write(hlp_frm,'(a6,i3,a8)') '(1x,a,',natmi,'(a2,1x))'
+#ifndef HPUX
       write(*,hlp_frm) 'atoms_list (fort.44) : ', atoms_list(1:natmi)
+#else
+      write(*,hlp_frm) 'atoms_list (ftn44) : ', atoms_list(1:natmi)
+#endif
 C
 * neutral molecules
 C

@@ -268,7 +268,11 @@ c-----------------------------------------------------------------------
       if(first) then !{
 c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
         tab=char(9)
+#ifndef HPUX
         inquire(file='fort.44',exist=ft44)
+#else
+        inquire(file='ftn44',exist=ft44)
+#endif
         do_trg=.true.
         write(frmt_hlp,'(7h(1p,1x,,i5,11h(e12.5,a1)))') n_line_x
         

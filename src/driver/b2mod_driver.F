@@ -1952,7 +1952,11 @@ csw 09oct2012 set default potential already at this point (BCs)
         end do
 *    ..produce time dependent file
         if (save_f31.lt.0) then
+#ifndef HPUX
           write(fort31name,'(a,i8.8)') 'fort.31.', itim
+#else
+          write(fort31name,'(a,i8.8)') 'ftn31.', itim
+#endif
           write(*,*) 'Saving ', fort31name, ' at time ', tim
           open(31,file=fort31name)
           call copy_background(nx, ny, ns, BoRiS)
@@ -2129,6 +2133,7 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
 #ifdef B25_EIRENE
           if (use_eirene.ne.0) then
             call write_f44(savefile(13:16))
+#ifndef HPUX
             inquire(file='fort.13',exist=found)
             if (found) then
               systemarg='cp fort.13 fort.13.'//savefile(13:16)
@@ -2139,6 +2144,18 @@ c-rfs     1  fhe(nx/2,2,0)/gs(nx/2,2,0)/qc(nx/2,2)
               systemarg='cp fort.15 fort.15.'//savefile(13:16)
               call system(systemarg)
             endif
+#else
+            inquire(file='ftn13',exist=found)
+            if (found) then
+              systemarg='cp ftn13 ftn13.'//savefile(13:16)
+              call system(systemarg)
+            endif
+            inquire(file='ftn15',exist=found)
+            if (found) then
+              systemarg='cp ftn15 ftn15.'//savefile(13:16)
+              call system(systemarg)
+            endif
+#endif
           endif
 #endif
           close(nout(6))

@@ -757,6 +757,7 @@ c 2002-09-11: logic revised
       endif
       call ipgetc ('solps_version', solps_version)
       write(*,*) 'Incoming SOLPS version entered : ', solps_version
+#ifndef HPUX
       if (streql(solps_version,'iter')) then
         write(*,*)
      .   'Assuming standard SOLPS-ITER fort.44 format (default)'
@@ -768,6 +769,19 @@ c 2002-09-11: logic revised
         write(*,*) 'Assuming SOLPS5.1 fort.44 format'
       else if (streql(solps_version,'5.2')) then
         write(*,*) 'Assuming SOLPS5.2 fort.44 format'
+#else
+      if (streql(solps_version,'iter')) then
+        write(*,*)
+     .   'Assuming standard SOLPS-ITER ftn44 format (default)'
+      else if (streql(solps_version,'4.3')) then
+        write(*,*) 'Assuming SOLPS4.3 ftn44 format'
+      else if (streql(solps_version,'5.0')) then
+        write(*,*) 'Assuming SOLPS5.0 ftn44 format'
+      else if (streql(solps_version,'5.1')) then
+        write(*,*) 'Assuming SOLPS5.1 ftn44 format'
+      else if (streql(solps_version,'5.2')) then
+        write(*,*) 'Assuming SOLPS5.2 ftn44 format'
+#endif
       else
         write(*,*) 'Accepted values are (case-insensitive): '
         write(*,*) '"ITER", "4.3", "5.0", "5.1", "5.2"'
@@ -3457,11 +3471,19 @@ cxpb  Start reading input.dat file
                                          ! NTIME0,NTIME,NFULLRUN
           END IF
           NMODE = idum(1)
+#ifndef HPUX
           inquire(file='fort.11',exist=ex)
           if (ex) idum(3) = (idum(3)/10)*10 + 6
           inquire(file='fort.13',exist=ex)
           if (ex) idum(3) = (idum(3)/1000)*1000 + 400 + mod(idum(3),100)
           inquire(file='fort.15',exist=ex)
+#else
+          inquire(file='ftn11',exist=ex)
+          if (ex) idum(3) = (idum(3)/10)*10 + 6
+          inquire(file='ftn13',exist=ex)
+          if (ex) idum(3) = (idum(3)/1000)*1000 + 400 + mod(idum(3),100)
+          inquire(file='ftn15',exist=ex)
+#endif
           if (ex) idum(3) = 30000 + mod(idum(3),10000)
           WRITE(IUNOT,6666) idum(0:8)
         ENDIF
@@ -3507,7 +3529,11 @@ cxpb  Start reading input.dat file
      .          streql(eirene_format,'new')) then
           ldum(10) = .true.
         END IF
+#ifndef HPUX
         inquire(file='fort.33',exist=NLWRMSH)
+#else
+        inquire(file='ftn33',exist=NLWRMSH)
+#endif
         ldum(13)=NLWRMSH
         WRITE(IUNOT,6665) ldum(0:15)
         READ (IUNIN,'(A80)') ZEILE
@@ -4975,6 +5001,7 @@ Cxpb then rewrite the entire block
             READ (IUNIN,6664) rdum(0:4)
 512       CONTINUE
           IF (CDENMODEL(IPLS).EQ.'FORT.13   ' .OR.
+     &        CDENMODEL(IPLS).EQ.'FTN13     ' .OR.
      &        CDENMODEL(IPLS).EQ.'BOLTZMANN ' .OR.
      &        CDENMODEL(IPLS).EQ.'CORONA    ') THEN
             READ (IUNIN,'(A80)') ZEILE
@@ -4991,6 +5018,7 @@ Cxpb then rewrite the entire block
             backspace(IUNIN)
  5121     CONTINUE
           IF (CDENMODEL(IPLS).EQ.'FORT.13   ' .OR.
+     &        CDENMODEL(IPLS).EQ.'FTN13     ' .OR.
      &        CDENMODEL(IPLS).EQ.'BOLTZMANN ' .OR.
      &        CDENMODEL(IPLS).EQ.'CORONA    ') THEN
             backspace(IUNIN)
@@ -5066,7 +5094,7 @@ Cxpb then rewrite the entire block
           END DO
           NRCP(IPLS) = J
           SELECT CASE (CDENMODEL(IPLS))
-          CASE ('FORT.13   ')
+          CASE ('FORT.13   ','FTN13     ')
             READ (IUNIN,6666) TDMISP(1,IPLS)
           CASE ('BOLTZMANN ')
             READ (IUNIN,'(I6,6X,2E12.4)') TDMISP(1,IPLS),
@@ -5391,7 +5419,7 @@ cxpb Must now convert the bulk ion data according to the new bundling
           IS = ISP(IB)
           IF (IS.NE.0) THEN
             SELECT CASE (CDENMODEL1(IB))
-            CASE ('FORT.13   ')
+            CASE ('FORT.13   ','FTN13     ')
               TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
             CASE ('BOLTZMANN ')
               TDMISP1(1,IB) = ipls1(TDMISP(1,e_bundle_end(IB)))
@@ -6033,7 +6061,7 @@ cxpb We now rewrite the modified block 4
             END DO
           END IF
           SELECT CASE (CDENMODEL1(IB))
-          CASE ('FORT.13   ')
+          CASE ('FORT.13   ','FTN13     ')
             WRITE(IUNOT,6666) TDMISP1(1,IB)
           CASE ('BOLTZMANN ')
             WRITE(IUNOT,'(I6,6X,2E12.4)') TDMISP1(1,IB),
@@ -8332,7 +8360,11 @@ C  HERE: EIRENE SURFACE TALLIES
  8688   continue
         close(IUNIN)
 cxpb  Convert fort.44 file if needed
+#ifndef HPUX
         inquire(file='fort.44',exist=todo)
+#else
+        inquire(file='ftn44',exist=todo)
+#endif
         if (todo.and.(.not.streql(solps_version,'iter').or.
      &     .not.same_bundling.or.
      &      non_commensurate.eq.1.or.nx.ne.nx1.or.ny.ne.ny1)) then
@@ -8346,14 +8378,26 @@ cxpb  Convert fort.44 file if needed
      &     jsep1, region1, leftcut1, rightcut1, bottomcut1, topcut1,
      &     bottomiy1,
      &     hx, hy, qc, hx1, hy1, qc1)
+#ifndef HPUX
           write(nout(5),'(a)') 'fort.44.2'
+#else
+          write(nout(5),'(a)') 'ftn44.2'
+#endif
           deallocate(epls_map)
         endif
 cxpb  Convert fort.46 file if needed
+#ifndef HPUX
         inquire(file='fort.46',exist=todo)
+#else
+        inquire(file='ftn46',exist=todo)
+#endif
         if (todo.and..not.same_atoms) then
           call b2yt_ntread(natmi1, iatm1, nmol1, imol1)
+#ifndef HPUX
           write(nout(5),'(a)') 'fort.46.2'
+#else
+          write(nout(5),'(a)') 'ftn46.2'
+#endif
         endif
       else
         allocate(eb2atcr1(natm1))

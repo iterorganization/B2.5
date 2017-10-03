@@ -168,7 +168,11 @@ c
 c      print *,'Starting b2ptrgl...'
 c      print *,'ers_factor= ',ers_factor
       tab=char(9)
+#ifndef HPUX
       inquire(file='fort.44',exist=ft44)
+#else
+      inquire(file='ftn44',exist=ft44)
+#endif
 
 c----------------------------------------------------------------------
 c*** Power loading:

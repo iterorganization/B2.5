@@ -120,8 +120,13 @@ C
 *
 
       rewind (44)
+#ifndef HPUX
       open(unit=45,file='fort.44.2',status='unknown')
       write(*,*) 'Writing fort.44.2'
+#else
+      open(unit=45,file='ftn44.2',status='unknown')
+      write(*,*) 'Writing ftn44.2'
+#endif
 C
       READ (44,'(I4,2X,I4,2x,i8)',END=99,ERR=99) nnx,nny,jvft44
       if((streql(solps_version,'5.0').or.streql(solps_version,'5.2'))
@@ -137,10 +142,17 @@ C
       WRITE(45,'(I4,2X,I4,2x,i8,2x,a32)') nx1,ny1,jvftnew,get_B25_hash()
       READ (44,'(I4,2X,I4,2X,I4)',END=99,ERR=99) NATMI,NMOLI,NIONI
       WRITE(45,'(I4,2X,I4,2X,i4)')               natm1,NMOL1,NIONI
-      write(*,'(a,5i4)') 
+#ifndef HPUX
+      write(*,'(a,5i4)')
      . ' Dimensions in fort.44 =   ',nnx,nny,natmi,nmoli,nioni
       write(*,'(a,5i4)')
      . ' Dimensions in fort.44.2 = ',nx1,ny1,natm1,nmol1,nioni
+#else
+      write(*,'(a,5i4)')
+     . ' Dimensions in ftn44 =   ',nnx,nny,natmi,nmoli,nioni
+      write(*,'(a,5i4)')
+     . ' Dimensions in ftn44.2 = ',nx1,ny1,natm1,nmol1,nioni
+#endif
       write(*,'(a,2i4)') ' Array inner dimensions = ', ndx , ndy
       call xertst(natmi .le. natm, 'NGREAD: NATMI > NATM')
       call xertst(nmoli .le. nmol, 'NGREAD: NMOLI > NMOL')
@@ -150,7 +162,11 @@ C
       call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstra,natmi)
       n2 = nx1*ny1
       inquire(file='input.dat',exist=ex)
+#ifndef HPUX
       if (.not.ex) inquire(file='fort.33',exist=nlwrmsh)
+#else
+      if (.not.ex) inquire(file='ftn33',exist=nlwrmsh)
+#endif
 c
 * labels
 * neutral atoms
@@ -586,8 +602,13 @@ C
      & then
         if (jvft44 .ge. 20130210) then
           call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,1,0))
+#ifndef HPUX
           write(6,*) 'In this fort.44 version,',
      .               ' the eneutrad data is summed over species!'
+#else
+          write(6,*) 'In this ftn44 version,',
+     .               ' the eneutrad data is summed over species!'
+#endif
           do is = 2, natmi
             eneutrad(:,:,is,0) = 0.0_R8
           end do
@@ -1040,8 +1061,13 @@ cank
      &        streql(solps_version,'5.1').or.
      &        streql(eirene_format,'facelift')) then
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,1,0))
+#ifndef HPUX
             write(6,*) 'In this fort.44 version,',
      .                 ' the eneutrad data is summed over species!'
+#else
+            write(6,*) 'In this ftn44 version,',
+     .                 ' the eneutrad data is summed over species!'
+#endif
             do is = 2, natmi
               eneutrad(:,:,is,0) = 0.0_R8
             end do
@@ -1392,8 +1418,13 @@ cank
         if(streql(solps_version,'5.1')) then
           if (jvft44.ge.20130210) then
             call gfsub2(44,ndx,ndy,nnx,nny,eneutrad(:,:,1,0))
+#ifndef HPUX
             write(6,*) 'In this fort.44 version,',
      .                 ' the eneutrad data is summed over species!'
+#else
+            write(6,*) 'In this ftn44 version,',
+     .                 ' the eneutrad data is summed over species!'
+#endif
             do is = 2, natmi
               eneutrad(:,:,is,0) = 0.0_R8
             end do
