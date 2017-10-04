@@ -80,6 +80,8 @@
       character chns*3                                             !srv 27.04.01
       character(23) hlp_frm                                        !srv 03.04.13
       character*26 boundary_location(nbcd)
+      character(7), save :: folder                        !srv 26.09.17
+      logical ex                                          !srv 26.09.17
 #ifdef B25_EIRENE
       integer js
       real (kind=R8), save :: hlp_neu_peak
@@ -114,6 +116,16 @@
        call ipgeti('b2wdat_ishift', ishift)                       !srv 05.10.01
        call ipgeti('b2mndr_astra', use_astra)
        call ipgeti('b2stbc_boundary_namelist',boundary_namelist)
+*    ..try to create a file in optional output folder
+       open(70,file='output/__1__.dat',err=10)
+*    ..folder exists: future output will be done in folder
+       folder='output/'
+       write(70,*) 'Test file to check on output folder'
+       close(70)
+       go to 20
+*    ..folder does not exist: future output will be done in current folder
+ 10    folder=''
+ 20    continue
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -252,7 +264,7 @@
         call my_out(70,nx,ny,fmo(-1,-1,0,is),'fmox'//chns)        !srv 24.02.10
         call my_out(70,nx,ny,fmo(-1,-1,1,is),'fmoy'//chns)
 
-        open(70,file='Total_flux_pm'//chns//'.dat')               !srv 19.02.02 {
+        open(70,file=trim(folder)//'Total_flux_pm'//chns//'.dat') !srv 19.02.02 { 26.09.17
         write (70,*) '  N      Total_flux    Total_|flux| '
         do iy = mintopcut,0,-1
           Total_flux(iy) = 0.0d0
@@ -391,7 +403,7 @@
       wrk0=sna(:,:,0,ismain)+sna(:,:,1,ismain)*na(:,:,ismain)
       call my_out(70,nx,ny,wrk0(-1,-1),'sour_ni')                  !srv
 
-      open(70,file='Total_current'//'.dat')                        !srv 31.08.00 23.07.10 {
+      open(70,file=trim(folder)//'Total_current'//'.dat')          !srv 31.08.00 23.07.10 { 26.09.17
       write (70,*) '  N      Total_current  Total_|current| '
       do iy = mintopcut,0,-1
         Total_current(iy) = 0.0_R8
@@ -411,7 +423,7 @@
       close (70)
 
 *   ..write physics parameters after changing                      !srv 19.12.07 {
-      open(70,file='b2mn_chk.prt')
+      open(70,file=trim(folder)//'b2mn_chk.prt')                   !srv 26.09.17
       call b2wfcp (70, 0, ns)
       close(70)                                                    !srv 19.12.07 }
 *   ..write "experimental" data
@@ -426,7 +438,7 @@
       enddo
 
       call dspline(ny+2,crdy_c_cell(nmdpl,:),ne(nmdpl,:),bsp,csp,dsp)
-      open(70,file='splne.dat')
+      open(70,file=trim(folder)//'splne.dat')                      !srv 26.09.17
       do iy=1,ndat
         write(70,"(1x,2(es14.6))") cr(iy),
      &  dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),ne(nmdpl,:),bsp,csp,dsp)
@@ -434,7 +446,7 @@
       close(70)
 
       call dspline(ny+2,crdy_c_cell(nmdpl,:),te(nmdpl,:),bsp,csp,dsp)
-      open(70,file='splte.dat')
+      open(70,file=trim(folder)//'splte.dat')                     !srv 26.09.17
       do iy=1,ndat
         write(70,"(1x,2(es14.6))") cr(iy),
      &  dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),te(nmdpl,:),bsp,csp,dsp)
@@ -442,24 +454,24 @@
       close(70)
 
       call dspline(ny+2,crdy_c_cell(nmdpl,:),ti(nmdpl,:),bsp,csp,dsp)
-      open(70,file='splti.dat')
+      open(70,file=trim(folder)//'splti.dat')                    !srv 26.09.17
       do iy=1,ndat
         write(70,"(1x,2(es14.6))") cr(iy),
      &  dseval(ny+2,cr(iy),crdy_c_cell(nmdpl,:),ti(nmdpl,:),bsp,csp,dsp)
       enddo
       close(70)
 
-      open(70,file='expne.dat')
+      open(70,file=trim(folder)//'expne.dat')                    !srv 26.09.17
       do iy=-1,ny
         write(70,"(1x,2(es14.6))") crdy_c_cell(nmdpl,iy), ne(nmdpl,iy)
       enddo
       close(70)
-      open(70,file='expte.dat')
+      open(70,file=trim(folder)//'expte.dat')                    !srv 26.09.17
       do iy=-1,ny
         write(70,"(1x,2(es14.6))") crdy_c_cell(nmdpl,iy), te(nmdpl,iy)
       enddo
       close(70)
-      open(70,file='expti.dat')
+      open(70,file=trim(folder)//'expti.dat')                   !srv 26.09.17
       do iy=-1,ny
         write(70,"(1x,2(es14.6))") crdy_c_cell(nmdpl,iy), ti(nmdpl,iy)
       enddo
@@ -472,11 +484,11 @@
           power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
         endif
       enddo
-      open(70,file='exppw.dat')
+      open(70,file=trim(folder)//'exppw.dat')                   !srv 26.09.17
       write(70,"(es14.6)") power
       close(70)
 *   ..calculate integrated particle fluxes for checking
-      open(70,file='Total_particle_fluxes_in_Core.dat')
+      open(70,file=trim(folder)//'Total_particle_fluxes_in_Core.dat') !srv 26.09.17
       do is = 0,ns-1
         write (70,"(a,1x,a2,i1)") 'Total_particle_flux ',
      &     adjustr(is_codes(is)),nint(zamin(is))
@@ -815,7 +827,7 @@
         q_inn_sum  = q_inn_sum  + wrk0(5,iy) *hy(-1,iy)*hz(-1,iy)
       enddo
 
-      open (70,file='q_plates.dat')
+      open (70,file=trim(folder)//'q_plates.dat')                  !srv 26.09.17
 
 
       if(nncut.eq.2) then !{
@@ -897,7 +909,7 @@
 
       ishift = 0
 
-      open(70,file='table_low_inner.dat')
+      open(70,file=trim(folder)//'table_low_inner.dat')        !srv 26.09.17
       write(70,"(1x,9a14)")
      &       'l(m)', 'Rc(m)', 'Te(eV)', 'Ti(eV)',
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
@@ -916,7 +928,7 @@
       enddo
       close(70)
 
-      open(70,file='table_low_outer.dat')
+      open(70,file=trim(folder)//'table_low_outer.dat')        !srv 26.09.17
       write(70,"(1x,9a14)")
      &       'l(m)', 'Rc(m)', 'Te(eV)', 'Ti(eV)',
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
@@ -937,7 +949,7 @@
 
       if(nncut.eq.2) then
 
-        open(70,file='table_upper_inner.dat')
+        open(70,file=trim(folder)//'table_upper_inner.dat')      !srv 26.09.17
         write(70,"(1x,9a14)")
      &       'l(m)', 'Rc(m)', 'Te(eV)', 'Ti(eV)',
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
@@ -958,7 +970,7 @@
         enddo
         close(70)
 
-        open(70,file='table_upper_outer.dat')
+        open(70,file=trim(folder)//'table_upper_outer.dat')       !srv 26.09.17
         write(70,"(1x,9a14)")
      &       'l(m)', 'Rc(m)', 'Te(eV)', 'Ti(eV)',
      &       'ne(1/m^3)', 'jsat(A/m^2)', 'qe(MW/m^2)','qi(MW/m^2)',
@@ -983,7 +995,7 @@
 
       if(iout.eq.2) then                                  !srv 06.05.09 {
 *   ..write crdy_c_cell, crdy_c_cell_abs [mm], ne, te, ti, js at inner
-        open(70,file='inner.dat')
+        open(70,file=trim(folder)//'inner.dat')           !srv 26.09.17
         do iy = -1,ny                                     !srv 03.04.13 {
           iw = 0
           do ix = -1,nx
@@ -1007,7 +1019,7 @@
         enddo                                             !srv 03.04.13 }
         close(70)
 
-        open(70,file='midpln.dat')
+        open(70,file=trim(folder)//'midpln.dat')          !srv 26.09.17
         ix=nmdpl
         do iy=-1,ny
           write(70,"(1x,5es14.6)") crdy_c_cell(ix,iy),
@@ -1016,7 +1028,7 @@
         enddo
         close(70)
 
-        open(70,file='outer.dat')
+        open(70,file=trim(folder)//'outer.dat')           !srv 26.09.17
         do iy = -1,ny                                     !srv 03.04.13 {
          iw = 0
          do ix = -1,nx
@@ -1040,14 +1052,14 @@
        enddo                                              !srv 03.04.13 }
        close(70)
 
-       open(70,file='midplnUi.dat')
+       open(70,file=trim(folder)//'midplnUi.dat')         !srv 26.09.17
        ix=nmdpl
        do iy=-1,ny
          write(70,"(1x,2es14.6)") crdy_c_cell(ix,iy), ua(ix,iy,1)
        enddo
        close(70)
 
-       open(70,file='midplnEy.dat')
+       open(70,file=trim(folder)//'midplnEy.dat')         !srv 26.09.17
        ix=nmdpl
        do iy=0,ny
          write(70,"(1x,2es14.6)")
@@ -1064,11 +1076,11 @@
            power = power + (fhe(ix,iy,1)+fhi(ix,iy,1))
          endif
        enddo
-       open(70,file='power.dat')
+       open(70,file=trim(folder)//'power.dat')                    !srv 26.09.17
        write(70,"('Power =',es14.6)") power
        close(70)
 
-       open(70,file='separatrix_location_on_plate.dat')
+       open(70,file=trim(folder)//'separatrix_location_on_plate.dat')   !srv 26.09.17
        ix = -1
        write(70,"(1x,' Separatrix Locationon on Inner Lower =',
      &             12es14.6)") cry(ix+ishift,mintopcut,0)
@@ -1091,7 +1103,7 @@
        close(70)
 
 *   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at inner
-       open(70,file='inner_na_ua.dat')                         !srv 03.04.13 {
+       open(70,file=trim(folder)//'inner_na_ua.dat')              !srv 03.04.13 { 26.09.17
        write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
        do iy = -1,ny
          iw = 0
@@ -1120,7 +1132,7 @@
       close(70)
 
 *   ..write crdy_c_cell, crdy_c_cell_abs [m], na, ua at outer
-      open(70,file='outer_na_ua.dat')
+      open(70,file=trim(folder)//'outer_na_ua.dat')       !srv 26.09.17
       do iy = -1,ny
         iw = 0
         do ix = -1,nx
@@ -1150,7 +1162,7 @@
 *   ..write poloidal coordinates, Up upper separatrix
       iy = mintopcut+4                                         !srv 13.02.17 {
       write (chns,'(i2.2)') iy
-      open(70,file='poloidal_ua_at_'//chns//'.dat')
+      open(70,file=trim(folder)//'poloidal_ua_at_'//chns//'.dat') !srv 26.09.17
       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
       do ix = -1,nx
         iw = 1
@@ -1167,7 +1179,7 @@
 *   ..write poloidal coordinates, na upper separatrix
       iy = mintopcut+4
       write (chns,'(i2.2)') iy
-      open(70,file='poloidal_na_at_'//chns//'.dat')
+      open(70,file=trim(folder)//'poloidal_na_at_'//chns//'.dat') !srv 26.09.17
       write(hlp_frm,"(a6,i4,a8)") '(2(1x,',2*ns+1,'es14.6))'
       do ix = -1,nx
         iw = 1
@@ -1194,7 +1206,7 @@
 
 #ifdef B25_EIRENE
        if (iout.ne.4) then
-        open(70,file='eirdiag.dat')
+        open(70,file=trim(folder)//'eirdiag.dat')              !srv 26.09.17
         write(70,"(a/6i5)") 'nlimps natm nmol npls nstra nstsid',
      &                       nlimps, natm, nmol, npls, nstra, nstsid
         write(70,"(a/6i5)") 'natmid nmolid ', natmid, nmolid
@@ -1356,7 +1368,7 @@
        call my_out(70,nx,ny,crdy_surf,'crdy_surf')
        call my_out(70,nx,ny,crdy_c_cell,'crdy_c_cell')             !srv 18.03.09 26.04.09}
 
-       open(70,file='Total_energy_flux_i'//'.dat')
+       open(70,file=trim(folder)//'Total_energy_flux_i'//'.dat')   !srv 26.09.17
        write (70,*) ' N  Total_energy_flux_i Total_energy_flux_i_mdf '
 
        do iy = mintopcut,0,-1
@@ -1383,7 +1395,7 @@
        enddo
        close (70)
 
-       open(70,file='Total_energy_flux_e'//'.dat')
+       open(70,file=trim(folder)//'Total_energy_flux_e'//'.dat')  !srv 26.09.17
        write (70,*) '  N  Total_energy_flux_e Total_energy_flux_e_mdf'
 
        do iy = mintopcut,0,-1
@@ -1402,7 +1414,7 @@
        enddo
        close (70)
 
-       open(70,file='Total_energy_flux.dat')
+       open(70,file=trim(folder)//'Total_energy_flux.dat')        !srv 26.09.17
        write (70,*) '  N  Total_energy_flux  Total_energy_flux_mdf'
 
        do iy = mintopcut,0,-1
@@ -1415,7 +1427,7 @@
        enddo
        close (70)                                                   !srv 31.08.00 23.07.10 }
 
-       open(70,file='info.dat')                                     !srv
+       open(70,file=trim(folder)//'info.dat')                       !srv 26.09.17
        write(70,"(' Number of outer midplane cell =',i4)") nmdpl    !srv 24.03.06 }
        write (70,*) ' nncut    =', nncut, ' nnreg =',nnreg          !srv
        write (70,*) ' leftcut  =',(leftcut(ix),ix=1,nncut)          !srv
@@ -1434,7 +1446,7 @@
      &   'of the dead region NYISO2', (NYISO2(IS),IS=1,NNISO)
        close (70)                                                   !srv
 
-       open(70,file='Total_boundary_particle_fluxes.dat')
+       open(70,file=trim(folder)//'Total_boundary_particle_fluxes.dat')   !srv 26.09.17
 
        sum_sdiv = 0.0_R8
        sum_ssna= 0.0_R8
@@ -1514,9 +1526,10 @@
      &      ' sum_Ssna-sum_Sdiv =', sum_ssna - sum_sdiv
        close(70)
 
-       open(70,file='Total_boundary_particle_fluxes_modified.dat')
+       open(70,file=trim(folder)//
+     &         'Total_boundary_particle_fluxes_modified.dat')  !srv 26.09.17
        sum_sdiv = 0.0_R8
-       sum_ssna= 0.0_R8
+       sum_ssna = 0.0_R8
 
        do is=0, ns-1
          write (70,"(a,1x,a2,i1)") 'Total_boundary_particle_flux ',
@@ -1602,29 +1615,29 @@
        call my_out(70,nx,ny,hz,'hz')
        call my_out(70,nx,ny,qc,'qc')
        do iy=-1,ny
-        do ix=-1,nx
-          wrk0(ix,iy)=hy1(ix,iy)
-        enddo
+         do ix=-1,nx
+           wrk0(ix,iy)=hy1(ix,iy)
+         enddo
        enddo
-       call my_out(70,nx,ny,wrk0,'hy1')                             !srv 07.11.12
+       call my_out(70,nx,ny,wrk0,'hy1')                                !srv 07.11.12
        call my_out(70,nx,ny,vol,'vol')
        call my_out(70,nx,ny,pbs(-1,-1,0),'pbsx')
 
 c     calculate coordinates of cell centre
-       wrk0=0.25*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))         !srv 18.12.14 {
+       wrk0=0.25_R8*(crx(:,:,0)+crx(:,:,1)+crx(:,:,2)+crx(:,:,3))      !srv 18.12.14 {
        call my_out(70,nx,ny,wrk0,'crc_')
-       open(70,file='crc.dat')   ! R-coordinate of the (ix,iy) cell centre
+       open(70,file=trim(folder)//'crc.dat')   ! R-coordinate of the (ix,iy) cell centre !srv 26.09.17
        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'                !srv 07.08.15
        do iy = -1, ny
-        write(70,hlp_frm) (wrk0(ix,iy),ix = -1, nx)                   !srv 07.08.15
+         write(70,hlp_frm) (wrk0(ix,iy),ix = -1, nx)                   !srv 07.08.15
        enddo
        close(70)
-       wrk1=0.25*(cry(:,:,0)+cry(:,:,1)+cry(:,:,2)+cry(:,:,3))
+       wrk1=0.25_R8*(cry(:,:,0)+cry(:,:,1)+cry(:,:,2)+cry(:,:,3))
        call my_out(70,nx,ny,wrk1,'czc_')
-       open(70,file='czc.dat')   ! Z-coordinate of the (ix,iy) cell centre
+       open(70,file=trim(folder)//'czc.dat')   ! Z-coordinate of the (ix,iy) cell centre !srv 26.09.17
        write(hlp_frm,"(a1,i4,a9)") '(',nx+2,'es24.16))'               !srv 07.08.15
        do iy = -1, ny
-        write(70,hlp_frm) (wrk1(ix,iy),ix = -1, nx)               !srv 07.08.15
+         write(70,hlp_frm) (wrk1(ix,iy),ix = -1, nx)                   !srv 07.08.15
        enddo
        close(70)
 
