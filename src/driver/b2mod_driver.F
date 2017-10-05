@@ -1156,7 +1156,7 @@ cdpc-2002.03.31       if(use_eirene.eq.0) neutral_rescale=1.0_R8
        k = 0
        do is = 0, ns-1
          if (nint(zn(is)).eq.1.and.
-     .       nint(zamin(is)).eq.1.or.nint(zamax(is)).eq.1) k = k + 1
+     .      (nint(zamin(is)).eq.1.and.nint(zamax(is)).eq.1)) k = k + 1
        end do
        call xertst (k.eq.1.or.(xcur.eq.0.0_R8 .and. ycur.eq.0.0_R8),
      .  'Currents assignment to ions only supported for single '//
