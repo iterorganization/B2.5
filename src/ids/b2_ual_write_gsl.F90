@@ -2,15 +2,13 @@
 !>     !> .......... Variables description, 
 !>                   additional (helpful) information etc.
 !>     !  .......... Commented part of code
-
-
-!>------------------------------------------------------------------------------
+!> -----------------------------------------------------------------------------
 !> DOCUMENTATION:
 !> 1. purpose
 !>
-!>      b2_ual_write.f90 script is used to generate b2_ual_write.exe (main
-!>      program), which is a post-processor for b2. It reads the plasma 
-!>      state writes it to IDS database
+!>      b2_ual_write_gsl.f90 script is used to generate b2_ual_write_gsl.exe 
+!>      (main program), which is a post-processor for b2. It reads the plasma 
+!>      state and writes it to IDS database using GSL (Grid Service Library).
 !>
 !>
 !> 2. specification
@@ -51,7 +49,7 @@
 !>      routine xerrab. This causes an error message to be printed,
 !>      after which the program halts.
 !>
-!>------------------------------------------------------------------------------
+!> -----------------------------------------------------------------------------
 
 
 !>.specification
@@ -95,9 +93,15 @@ program b2_ual_write
     use ids_routines    ! IGNORE
                         !> These are the Access Layer routines + management of 
                         !> IDS structures 
-    ! use ids_grid_subgrid ! IGNORE
-    ! use ids_grid_object ! IGNORE
-    !!
+    use ids_assert, IDS_R8 => R8, IDS_R4 => R4  ! IGNORE
+    use ids_grid_common, IDS_COORDTYPE_R => COORDTYPE_R,    &
+        &   IDS_COORDTYPE_Z => COORDTYPE_R ! IGNORE
+    use ids_string              ! IGNORE
+    use ids_grid_subgrid        ! IGNORE
+    use ids_grid_objectlist     ! IGNORE
+    use ids_grid_examples       ! IGNORE
+    use ids_grid_unstructured   ! IGNORE
+    use ids_grid_structured     ! IGNORE
 
     implicit none
 
@@ -114,7 +118,7 @@ program b2_ual_write
     integer     ::  idx
     integer     ::  ix, ixx
     integer     ::  shot, run
-    character(len=24)           ::  treename, username, machine, version
+    character(len=24)           ::  treename, username, device, version
     !> character(len=255)          ::  imas_connect_url
     type(ids_edge_profiles)     ::  edge_profiles
     !>  ..procedures
@@ -161,15 +165,15 @@ program b2_ual_write
     shot        = 16151
     run         = 1001
     username    = "penkod"
-    machine     = "solps-iter"
+    device     = "solps-iter"
     version     = "3"
 
-    !> Write the data to edge_profiles IDS
+    !> Set the data to edge_profiles IDS
     call write_ids_edge_profiles(treename, shot, run, idx, username, &
-                                        & machine, version, ne1, te1, ti1)
+                                        & device, version, ne1, te1, ti1)
 
     ! call read_ids(treename, shot, run, idx, username, &
-    !                                     & machine, version)
+    !                                     & device, version)
 
 contains 
 
@@ -311,8 +315,8 @@ contains
         allocate(fch(cf_sizes(17)))
         allocate(fch_32(cf_sizes(18)))
         allocate(fch_52(cf_sizes(19)))
-        !! The program gives an error saying the kinrgy is already allcoated. 
-        !! Where, when?
+        !> The program gives an error saying the kinrgy and fch_p are 
+        !> already allocated. Where, when?
         ! allocate(kinrgy(cf_sizes(20))) 
         ! allocate(fch_p(cf_sizes(22)))
 
@@ -369,11 +373,12 @@ contains
 
 
     subroutine write_ids_edge_profiles(treename, shot, run, idx, username, &
-                                        & machine, version, ne, te, ti)
+                                        & device, version, ne, te, ti)
         integer ::  shot, run, idx
         integer ::  num_nodes_all, num_nodes, num_gridSubsets
         integer ::  gridSubset_index
         integer ::  numCellsX, numCellsY, num_cells, cellId
+        integer ::  numEdgesX, numEdgesY, num_edges, edgeId, count, count2
         integer ::  num_ne_gridSubset, num_ne_values
         integer ::  num_te_gridSubset, num_te_values
         integer ::  num_ti_gridSubset, num_ti_values, num_ti_species, ion_specie
@@ -381,279 +386,217 @@ contains
         integer ::  num_obj_2D, obj_2D_id
         integer ::  gridSubset_dim_index
         integer ::  i, j, k, icount, n
-        character(len=24)           ::  treename, username, machine, version
+        integer ::  homogeneous_time
+        integer ::  coordtype(2)
+        integer, allocatable        ::  edgesNodesList(:,:), cellsNodesList(:,:)
+        integer, allocatable        ::  edgeIndicesRepeat(:)
+        character(len=24)           ::  treename, username, device, version
         character(len=255)          ::  imas_connect_url
         character(len=255)          ::  grid_description
         character(len=132)          ::  gridSubset_name
+        real (kind=B2R8), intent(in)    :: ne(:), te(:), ti(:)
+        !> TODO: get time out from b2fstate
+        ! real(B2R8)    ::  time
+        real(IDS_R8)    ::  time
+        real(IDS_R8), allocatable   ::  nodesGeoList(:,:)
+        real(IDS_R8)    ::  scalarCells(2)    
         type(ids_edge_profiles)     ::  edge_profiles
         type (ids_edge_sources)     ::  edge_sources
         type (ids_edge_transport)   ::  edge_transport
-        real(B2R8)                  ::  time
         type(ids_edge_profiles_time_slice), pointer      ::  ggd
         type(ids_generic_grid_dynamic), pointer          ::  grid
         type(ids_generic_grid_dynamic_space), pointer    ::  space
-        real (kind=B2R8), intent(in)    :: ne(:), te(:), ti(:)
+        type(ids_generic_grid_scalar), pointer    :: idsField     
 
-        !>.. Create IDS 
+        !> ===  SET UP IDS ===
         write(0,*) "IDS parameters"
         write(0,*) "shot: ", shot
         write(0,*) "run:", run
         write(0,*) "username: ", username
-        write(0,*) "machine: ", machine
+        write(0,*) "device: ", device
         write(0,*) "version: ", version
 
         !> We already went through the check if size(crx)==size(cry)
         !> so we can safely assume that num_nodes == size(crx)
         num_nodes_all   = size(crx) !> Number of all available coordinates
-        num_gridSubsets = 2         !> Number of grid subsets to write 
-                                    !> (Cells and Nodes)
 
-        write(0,*) "Creating IDS"
-        
-        !> Open and modify existing shot/run
-        ! call imas_open_env('treename', shot, run, idx, username, machine, version)
-        !> Create and modify new shot/run
-        !> call imas_create(treename, shot, run, 0, 0, idx)
-        call imas_create_env(treename, shot, run, 0, 0, idx, username, & 
-            machine, version)
-        call ids_get(idx, 'edge_profiles', edge_profiles)
-        !> Prepeare database 
-        !> In order to write to IDS database there are next steps that are 
-        !> absolutely neccessary to do, otherwise writing to IDS database 
-        !> will surely fail
-        !> 1. Allocate profiles_1d
-        allocate(edge_profiles%profiles_1d(1))
-        !> 2. Put homogeneous_time
-        edge_profiles%ids_properties%homogeneous_time = 1
-        !> 3. Allocate edge_profiles.time and put desired value 
-        allocate(edge_profiles%time(1))
-        edge_profiles%time(1) = 1
-        ! edge_profiles%time(1) = time
+        write(0,*) "Setting data for edge_profiles IDS"
+
+        !> Preparing database for writing
+        !> Through practice it was disclosed that there are some mandatory 
+        !> steps to be done in order to assure for data to be successfully 
+        !> written to IDS. Without going through those steps errors and failed 
+        !> process of writing to IDS are to be expected.
+        !> This can be done using exampleSetIDSFundamentals routine
+        homogeneous_time = 1
+        time = 0.0_IDS_R8
+        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time) 
         
         !> Allocate ggd slice
         allocate(edge_profiles%ggd(1))
-        !> Set pointers 
+        !> Set pointers to top IDS nodes/structures
         ggd => edge_profiles%ggd(1)
         grid => ggd%grid
-        
-        !> Allocate space 
-        allocate(grid%space(1))
-        !> Allocate objects_per_dimension substructure
-        allocate(grid%space(1)%objects_per_dimension(3))
-        !> Allocate coordinates_type
-        allocate(grid%space(1)%coordinates_type(2))
-        !> Put coordinates
-        grid%space(1)%coordinates_type(1) = 1 !> X
-        grid%space(1)%coordinates_type(2) = 2 !> Y
-        !> Put IDS grid description 
-        grid_description = "This IDS was written by b2_ual_write"
+
+        !> Set IDS grid description 
+        grid_description = "This IDS was written by b2_ual_write_gsl"
         grid%identifier%description = grid_description
-        !> Allocate grid subsets
-        allocate(grid%grid_subset(num_gridSubsets))
 
-        !> -- PUT DATA FOR GRID SUBSET "Nodes" --
-        !> (grid subset index: 2, objects forming the grid subset: nodes, 0D) 
+        !> Set IDS comment under ids_properties substructure
+        allocate( edge_profiles%ids_properties%comment(1) )
+        edge_profiles%ids_properties%comment(1) = &
+            &   "This IDS was created by b2_ual_write_gsl using Grid Service    &
+            &   Library (GSL)."
+        !> Set IDS code name
+        allocate( edge_profiles%code%name(1) )
+        edge_profiles%code%name(1) = "b2_ual_write_gsl"
 
+        !> === SET UP GRID===
+
+        !> The 2D structured grid is in our case composed out of one 2D 
+        !> structured space
+        !> Set definition of the coordinate system of the space
+        coordtype(:) = (/ IDS_COORDTYPE_R, IDS_COORDTYPE_Z /) 
+
+        !> --- Set up grid space objects for Class 1 objects - points ---
+
+        !> We are in 2D dimension space and the nodes are defined by coordinates 
+        !> in a way
+        !> n1=[r1, z1], n2=[r2,z2], ..., nn=[rn, zn].
+
+        !> Set geometry (R,Z) coordinate of each node object
         num_nodes = num_nodes_all
-        num_obj_0D = num_nodes
-        gridSubset_index = 2    !> Grid subset index of grid subset Nodes 
-                                !> (Indexing of grid subsets follows the IDS 
-                                !> examples :
-                                !> shot: 1, run:1, # device: iter; and 
-                                !> shot: 16151, run: 1000; device: aug
-        gridSubset_name = "Nodes"
-        gridSubset_dim_index = 1    !> Grid subset Nodes consists of 
-                                    !> points -> 0D objects -> dimension index = 1 
-                                    !> (edges -> 1D objects -> dimension index = 2
-                                    !> cells  -> 2D objects -> dimension index = 3)
+        allocate(nodesGeoList( num_nodes_all, 2))
 
-        !> Write all available 0D objects (all of them form the grid subset 
-        !> Nodes)
-        allocate(grid%space(1)%objects_per_dimension(gridSubset_dim_index)% &
-            &   object(num_obj_0D))
-
-        do i = 1, num_obj_0D
-            allocate(grid%space(1)%objects_per_dimension(gridSubset_dim_index)% &
-                & object(i)%nodes(1))
-            grid%space(1)%objects_per_dimension(gridSubset_dim_index)% &
-                & object(i)%nodes(1) = i
-            allocate(grid%space(1)%objects_per_dimension(gridSubset_dim_index)% &
-                & object(i)%geometry(2))
-        enddo
-
-        !> To get crx in 1D in correct order
+        !> To get nodes coordinates to 2D array in correct order
         icount = 0
         do k = 0, 3
             do j = -1, ny
                 do i = -1, nx
-                    ! write(*,*) i,j,k,crx(i,j,k)
                     icount = icount + 1
-                    ! write(*,*) icount ,crx(i,j,k)
-                    grid%space(1)%objects_per_dimension(gridSubset_dim_index)% &
-                        & object(icount)%geometry(1) = crx(i,j,k)
-                    grid%space(1)%objects_per_dimension(gridSubset_dim_index)% &
-                        & object(icount)%geometry(2) = cry(i,j,k)
+                    nodesGeoList(icount, 1) = crx(i,j,k)
+                    nodesGeoList(icount, 2) = cry(i,j,k)
                 enddo
             enddo
         enddo
 
-        !> Set some data for grid subset 1 (if we try to write to 
-        !> grid subset of higher grid subset base index while the lower ones 
-        !> have not been filled yet it writes to the next empty grid subset, 
-        !> not the higher one we want!)
-        allocate(grid%grid_subset(1)%identifier%name(1))
-        grid%grid_subset(1)%identifier%name = "UNSPECIFIED"
+        !> --- (TODO) Set up connectivity array of grid space objects for   ---
+        !> --- Class 2 objects - edges                                      ---
+        !> TODO! Currently only placeholder edges are given 
 
-        allocate(grid%grid_subset(gridSubset_index)%identifier%name(1))
-        grid%grid_subset(gridSubset_index)%identifier%name = gridSubset_name
-        grid%grid_subset(gridSubset_index)%identifier%index = gridSubset_index 
+        !> Set (placeholder) list of indices for nodes defining each edge object
+        allocate(edgesNodesList(1,2))
+        edgesNodesList(1,1) = 0  
+        edgesNodesList(1,2) = 0 
 
-        allocate(grid%grid_subset(gridSubset_index)%element(num_obj_0D))
-        do i = 1, num_obj_0D
-            allocate(grid%grid_subset(gridSubset_index)%element(i)%object(1))
-            grid%grid_subset(gridSubset_index)%element(i)%object(1)%space = 1
-            grid%grid_subset(gridSubset_index)%element(i)%object(1)%dimension = & 
-                & gridSubset_dim_index
-            grid%grid_subset(gridSubset_index)%element(i)%object(1)%index = & 
-                & i
-        enddo
+        !> --- Set up connectivity array of grid space objects for      ---
+        !> --- Class 3 objects - 2D cells                               ---
 
-        !> -- PUT DATA FOR GRID SUBSET "Cells" 
-        !> (grid subset index: 1, objects forming the grid subset: cells, 2D)
-
+        !> Set list of indices for nodes defining each cell object
+        !>
+        !> We are are in 2D dimension and each cell is defined by 4 nodes
+        !> Note: cell nodes must be ordered cyclically (here anti-clockwise)
         numCellsX = nx + 2
         numCellsY = ny + 2
         num_cells = numCellsX * numCellsY
-        num_obj_2D = num_cells
-        gridSubset_index = 1
-        gridSubset_name = "Cells"
-        gridSubset_dim_index = 3
+        allocate(cellsNodesList( num_cells, 4))
 
-        !> Placeholder for objects_per_dimension(2)
-        allocate(grid%space(1)%objects_per_dimension(2)%object(1))
-        allocate(grid%space(1)%objects_per_dimension(2)% &
-            & object(1)%nodes(1))
-        grid%space(1)%objects_per_dimension(2)% &
-            & object(1)%nodes(1) = 0
-
-        !> Write all available 2D objects (all of them form the grid subset 
-        !> Cells)
-        allocate(grid%space(1)%objects_per_dimension(gridSubset_dim_index)% &
-            &   object(num_obj_2D))
-
-        do i = 1, num_obj_2D
-            allocate(grid%space(1)%objects_per_dimension(gridSubset_dim_index)% &
-                & object(i)%nodes(4)) !> Each cell is formed by 4 nodes
-        enddo
         cellId = 1
         do j = 1,numCellsY
             do i = 1, numCellsX
-                grid%space(1)%objects_per_dimension(gridSubset_dim_index)% &
-                    & object(cellId)%nodes(1) = cellId+0*numCellsX*numCellsY
-                grid%space(1)%objects_per_dimension(gridSubset_dim_index)% &
-                    & object(cellId)%nodes(2) = cellId+1*numCellsX*numCellsY
-                grid%space(1)%objects_per_dimension(gridSubset_dim_index)% &
-                    & object(cellId)%nodes(3) = cellId+3*numCellsX*numCellsY
-                grid%space(1)%objects_per_dimension(gridSubset_dim_index)% &
-                    & object(cellId)%nodes(4) = cellId+2*numCellsX*numCellsY
+                cellsNodesList(cellId, 1) = cellId+0*numCellsX*numCellsY
+                cellsNodesList(cellId, 2) = cellId+1*numCellsX*numCellsY
+                cellsNodesList(cellId, 3) = cellId+3*numCellsX*numCellsY
+                cellsNodesList(cellId, 4) = cellId+2*numCellsX*numCellsY
                 cellId = cellId + 1
             enddo
         enddo
 
-        allocate(grid%grid_subset(gridSubset_index)%identifier%name(1))
-        grid%grid_subset(gridSubset_index)%identifier%name = gridSubset_name
-        grid%grid_subset(gridSubset_index)%identifier%index = gridSubset_index 
+        !> --- Set the grid space objects and grid subsets ---
+        !> For that we use GSL routine gridSetup2dSpace
+        call gridSetup2dSpace(  grid, coordtype,                &
+                            &   geo_0dObj   = nodesGeoList,     &
+                            &   conn_1dObj  = edgesNodesList,   &
+                            &   conn_2dObj  = cellsNodesList,   &
+                            &   createGridSubsets = .true. )
+        !> --- (Optional) Set grid subsets custom description   ---
+        grid%grid_subset(1)%identifier%description = "All nodes in the domain."
+        grid%grid_subset(3)%identifier%description = "All cells in the domain."
 
-        allocate(grid%grid_subset(gridSubset_index)%element(num_obj_2D))
-        do i = 1, num_obj_2D
-            allocate(grid%grid_subset(gridSubset_index)%element(i)%object(1))
-            grid%grid_subset(gridSubset_index)%element(i)%object(1)%space = 1
-            grid%grid_subset(gridSubset_index)%element(i)%object(1)%dimension = & 
-                & gridSubset_dim_index
-            grid%grid_subset(gridSubset_index)%element(i)%object(1)%index = i
-        enddo
+        !> (optional) Change name of the second grid subset
+        grid%grid_subset(2)%identifier%name = "Edges - empty."
 
-        !> WRITE VALUES (ne, te, ti) for "Cells" grid subset
-        !> Write ne (electron density)
-        num_ne_gridSubset = 1
-        num_ne_values = size(ne)
-        allocate(ggd%electrons%density(num_ne_gridSubset))
-        ggd%electrons%density(num_ne_gridSubset)%grid_subset_index = & 
-            & gridSubset_index
-        allocate(ggd%electrons%density(num_ne_gridSubset)%values(num_ne_values))
-        do n = 1, num_ne_values
-            ggd%electrons%density(num_ne_gridSubset)%values(n) = ne(n)
-        enddo
+        !> === SET VALUES (ne, te, ti) for "Cells" grid subset ===
+        !> For that we use GSL routine gridStructWriteData1d
+        gridSubset_index = 3
 
-        !> Write te (electron temperature)
-        num_te_gridSubset = 1
-        num_te_values = size(te)
-        allocate(ggd%electrons%temperature(num_te_gridSubset))
-        ggd%electrons%temperature(num_te_gridSubset)%grid_subset_index = & 
-            & gridSubset_index
-        allocate(ggd%electrons%temperature(num_te_gridSubset)%values(num_te_values))
-        do n = 1, num_te_values
-            !> convert to eV (1 J = 6.242e18 eV)
-            ggd%electrons%temperature(num_te_gridSubset)%values(n) =    &
-                &   te(n)*6.242e18
-        enddo
+        !> --- Set ne (electron density) ---
+        allocate(ggd%electrons%density(1))                                                                
+        idsField => ggd%electrons%density(1)                                                                
+        call gridStructWriteData1d( grid, idsField, gridSubset_index, ne)  
 
-        !> Write ti (ion temperature)
-        num_ti_gridSubset   = 1
-        num_ti_values       = size(ti)
-        num_ti_species      = 1     !> Number of ion species, as in
-                                    !> number of different ion charges.
-        ion_specie = 1
-        !> Ion specie is linked with the ion density of each ion charge,
-        !> as ion temperature is taken as the same for all ion charges.
-        allocate(ggd%ion(num_ti_species))
-        allocate(ggd%ion(ion_specie)%temperature(num_ti_gridSubset))
-        ggd%ion(ion_specie)%temperature(num_ti_gridSubset)%grid_subset_index = & 
-            & gridSubset_index
-        allocate(ggd%ion(ion_specie)%temperature(num_ti_gridSubset)% & 
-            & values(num_ti_values))
-        do n = 1, num_ti_values
-            !> convert to eV (1 J = 6.242e18 eV)
-            ggd%ion(ion_specie)%temperature(num_ti_gridSubset)%values(n) = & 
-                & ti(n) * (6.242e18)
-        enddo
+        !> --- Set te (electron temperature) ---
+        allocate(ggd%electrons%temperature(1))                                                                
+        idsField => ggd%electrons%temperature(1)
+        !> convert to eV (1 J = 6.242e18 eV)                                 
+        call gridStructWriteData1d( grid, idsField, gridSubset_index,   &
+            &   te*6.242e18) 
 
-        !> Write the data to IDS
+        !> --- Set ti (ion temperature) ---
+        allocate(ggd%ion(1))
+        allocate(ggd%ion(1)%temperature(1))                                                                
+        idsField => ggd%ion(1)%temperature(1)
+        !> convert to eV (1 J = 6.242e18 eV)                                 
+        call gridStructWriteData1d( grid, idsField, gridSubset_index,   &
+            &   ti*6.242e18) 
+
+        !> Set data to edge_profiles IDS
+        write(0,*) "Writing to edge_profiles IDS"
+
+        !> Create and modify new shot/run
+        call imas_create_env(treename, shot, run, 0, 0, idx, username, & 
+            device, version)
+
+        !> Or open and modify existing shot/run (might work much faster than
+        !> imas_create_env)
+        ! call imas_open_env('treename', shot, run, idx, username, device, version)
+
+        !> Put data to IDS
         call ids_put_slice(idx,"edge_profiles",edge_profiles)
         call ids_put(idx,"edge_profiles",edge_profiles)
         
         !> Close IDS
-        ! call ids_deallocate(edge_profiles)
+        call ids_deallocate(edge_profiles)
         call imas_close(idx)
 
         write(0,*) "IDS write finished"
 
     end subroutine write_ids_edge_profiles
 
-    !> subroutine for reading IDS
+    !> subroutine for reading edge_profiles IDS
     subroutine read_ids(treename, shot, run, idx, username, &
-                                        & machine, version)
+                                        & device, version)
         !> Example for reading IDS database in Fortran90
         integer                 ::  shot, run, idx
         integer                 ::  gridSubset_index
-        character(len=24)       ::  treename, username, machine, version
+        character(len=24)       ::  treename, username, device, version
         type(ids_edge_profiles) ::  edge_profiles
         character(len=255)      ::  imas_connect_url
         
-        gridSubset_index = 2
+        gridSubset_index = 3
 
         !> Open input datafile from local database
         write (0,*) "Started reading input IDS", idx, shot, run
 
-        call imas_open_env('treename', shot, run, idx, username, machine, version)
+        call imas_open_env('treename', shot, run, idx, username, device, version)
         call ids_get(idx, 'edge_profiles', edge_profiles)
 
         write(0,*) 'homogeneous_time = ', & 
             & edge_profiles%ids_properties%homogeneous_time
-        write(0,*) "Grid subset 2 name = ", & 
+        write(0,*) "Grid subset 3 name = ", & 
             & edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)% & 
             & identifier%name
-        write(0,*) "Grid subset 2 index = ", & 
+        write(0,*) "Grid subset 3 index = ", & 
             & edge_profiles%ggd(1)%grid%grid_subset(gridSubset_index)% & 
             & identifier%index
         ! write(0,*) "Time = ", edge_profiles%time(1)

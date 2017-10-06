@@ -1,11 +1,15 @@
 Interface Data Structure for B2.5
 =================================
 
-B2_ual_write code
+B2_ual_write and B2_ual_write_gsl code
 -----------------
 
-Compile and set the environment:
+IMPORTANT: 
+In order for b2_ual_write_gsl code to compile it requires beforehand locally  
+compiled GSL library for Fortran90 in ${HOME}/ggd directory (ITER project 
+repository [GGD](git.iter.org/projects/IMEX/repos/ggd), branch feature/IDS)!
 
+Compile and set the environment:
    $ cd $HOME/solps-iter
    $ tcsh
    $ source setup.csh
@@ -21,6 +25,7 @@ In terminal navigate to directory containing the b2fgmtry and b2fstate
 files and run the command
 
     $ $HOME/solps-iter/modules/B2.5/builds/standalone.ITER.ifort64/b2_ual_write.exe
+
 
 CPO2IDS code
 ------------
