@@ -7,7 +7,7 @@ B2_ual_write and B2_ual_write_gsl code
 IMPORTANT: 
 In order for b2_ual_write_gsl code to compile it requires beforehand locally  
 compiled GSL library for Fortran90 in ${HOME}/ggd directory (ITER project 
-repository [GGD](git.iter.org/projects/IMEX/repos/ggd), branch feature/IDS)!
+repository [GGD](https://git.iter.org/projects/IMEX/repos/ggd), branch feature/IDS)!
 
 Compile and set the environment:
    $ cd $HOME/solps-iter
