@@ -287,7 +287,7 @@ c        print *,'Starting b2pwldw first time',lun,trgl,izn,iln  !###
           sfpr_s(is)=adjustl(TEXTAN(is-1))
         end do !}
         do ia=1,natmi
-          sfpr_a(ia)=adjustl(TEXTA(ia-1))
+          sfpr_a(ia)=adjustl(TEXTA(ia))
         end do
 c        print *,'First call. format:',frmt_hlp,':'                  !###
 c        print *,'n_sfpr_s=',n_sfpr_s                                !###
@@ -456,7 +456,7 @@ c carlis evaluate number of sputtered atoms and molecules
         if(n_sfpr_sp.gt.0) then !{
           write(*,*) 'Sputtered species : ',(sfpr_sp(i),i=1,n_sfpr_sp)
         end if !}
-        n_line_x=n_hdpr_c+n_hdpr_t+(n_hdpr_s)*DEF_NATM+
+        n_line_x=n_hdpr_c+(n_hdpr_s)*n_sfpr_s+DEF_NATM*n_hdpr_a+
      ,           n_hdpr_ml*DEF_NMOL+n_hdpr_sp*n_sfpr_sp+
      ,           n_hdpr_er*n_sfpr_er
         write(frmt_hlp,'(7h(1p,1x,,i5,11h(e12.5,a1)))') n_line_x
@@ -1394,7 +1394,6 @@ c carlis sputtering not happening on this target but possibly on other walls of 
         end do !}
       end if !}
 c      print *,'About to write a line:',k,' values'   !###
-
       if(k.gt.0) write(lun,frmt_hlp) (w_line(i),tab,i=1,k)
       deallocate(w_line)
 c      print *,'TEXTMN*',adjustl(TEXTMN),'*'
