@@ -81,6 +81,7 @@
       integer, save :: pflux_cor = 1                                     !srv 05.03.16
       integer, save :: PSch_style = 1                                    !srv 12.11.08
       integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
+      integer, save :: vlct_diagno = 1
       character chns*3                                                   !srv 16.09.02
       integer, save :: fnb_nodrift_style = 1                             !srv 20.06.08
       integer, save :: drift_style = 1                                   !srv 21.06.08
@@ -115,6 +116,7 @@
      *   nbti(-1:nx,-1:ny), nbtic(-1:nx,-1:ny),                          !srv 08.10.04
      *   nbzb(-1:nx,-1:ny), nbzbc(-1:nx,-1:ny)                           !srv 13.05.16
       real (kind=R8) :: weight(-1:nx,-1:ny)                              !lk
+      integer :: xcount, ycount
       save ncall, alpha, gamma, flux_limit_min_ti, area_fix, no_hybr
 *   ..procedures
       real (kind=R8) ::
@@ -185,6 +187,7 @@
         call ipgetr ('b2tfrn_xvecrb', xvecrb)                            !srv 27.01.12
         call ipgetr ('b2tfrn_xwdia', xwdia)                              !srv 27.01.12
         call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)      !iyv 06.02.14
+        call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
       endif
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -417,6 +420,7 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
         call intcor(nx,ny,weight,nbti,nbtic)                             !lk 12.12.07
         nbzb = nb*zb                                                     !srv 13.05.16
         call intcor(nx,ny,weight,nbzb,nbzbc)                             !srv 13.05.16
+        xcount = 0
         do iy = 0, ny-1
          do ix = 0, nx
           if(leftix(ix,iy).ne.-2) then                                   !srv 26.11.02
@@ -438,12 +442,15 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 !     9         (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))               !lk 12.12.07)
            if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
              if( abs(vbecrb(ix,iy,0)) .gt. 2.0_R8*cssb(ix,iy,0) ) then
-               write(6,'(a,a,i3,a,i4,a,i4,a)')
-     .          'Poloidal ExB velocity restriction applied ',
-     .          'to species ',isb,' in cell (',ix,',',iy,'):'
-               write(6,'(a,1p,1e12.5,a,1e12.5)')
-     .          'Mach 2: ',2.0_R8*cssb(ix,iy,0),
-     .          ' Vx_ExB:',vbecrb(ix,iy,0)
+               xcount = xcount+1
+               if (vlct_diagno.ge.2) then
+                 write(6,'(a,a,i3,a,i4,a,i4,a)')
+     .            'Poloidal ExB velocity restriction applied ',
+     .            'to species ',isb,' in cell (',ix,',',iy,'):'
+                 write(6,'(a,1p,1e12.5,a,1e12.5)')
+     .            'Mach 2: ',2.0_R8*cssb(ix,iy,0),
+     .            ' Vx_ExB:',vbecrb(ix,iy,0)
+               end if
                vbecrb(ix,iy,0)=
      .          sign(2.0_R8*cssb(ix,iy,0),vbecrb(ix,iy,0))
              endif
@@ -466,7 +473,15 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
           endif                                                          !srv 26.11.02
          enddo
         enddo
+        if (vlct_diagno.ge.1) then
+          if (xcount.gt.0) then
+            write(6,*) 'In b2tfnb:',
+     .       ' Poloidal ExB velocity limit of Mach 2 was applied ',
+     .         xcount,' times for species ',isb
+          end if
+        end if
 
+        ycount = 0
         do iy = 0, ny
          do ix = 0, nx-1
           if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1) then      !srv 26.11.02
@@ -488,12 +503,15 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
 !     9          (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
            if(ion_vlct_restrict.eq.2) then                               !iyv 06.02.14 {
              if( abs(vbecrb(ix,iy,1)) .gt. 2.0_R8*cssb(ix,iy,1) ) then
-               write(6,'(a,a,i3,a,i4,a,i4,a)')
-     .          'Radial ExB velocity restriction applied ',
-     .          'to species ',isb,' in cell (',ix,',',iy,'):'
-               write(6,'(a,1p,1e12.5,a,1e12.5)')
-     .          'Mach 2: ',2.0_R8*cssb(ix,iy,1),
-     .          ' Vy_ExB:',vbecrb(ix,iy,1)
+               ycount = ycount + 1
+               if (vlct_diagno.ge.2) then
+                 write(6,'(a,a,i3,a,i4,a,i4,a)')
+     .            'Radial ExB velocity restriction applied ',
+     .            'to species ',isb,' in cell (',ix,',',iy,'):'
+                 write(6,'(a,1p,1e12.5,a,1e12.5)')
+     .            'Mach 2: ',2.0_R8*cssb(ix,iy,1),
+     .            ' Vy_ExB:',vbecrb(ix,iy,1)
+               end if
                vbecrb(ix,iy,1)=
      .          sign(2.0_R8*cssb(ix,iy,1),vbecrb(ix,iy,1))
              endif
@@ -518,6 +536,13 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          enddo
         enddo
 
+        if (vlct_diagno.ge.1) then
+          if (ycount.gt.0) then
+            write(6,*) 'In b2tfnb:',
+     .       ' Radial ExB velocity limit of Mach 2 was applied ',
+     .         ycount,' times for species ',isb
+          end if
+        end if
        endif                                                             !srv 21.06.08 {
 
 *   ..compute P.Sch x-flux                                               !srv 13.10.06 {

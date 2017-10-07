@@ -87,6 +87,8 @@
       integer, save :: iout = 0, b2sifr_ver = 1, iout_b2wdat = 0       !srv 04.07.08 26.10.08
       integer, save :: icase = 0                                       !srv 13.01.17
       integer, save :: ion_vlct_restrict = 0                           !srv 17.01.14
+      integer, save :: vlct_diagno = 1
+      integer :: vcount(0:ns-1)
       integer, save :: style = 2                                       !srv 08.10.14 13.01.17
       character chns*3, chk*1                                          !srv 04.07.08
       real (kind=R8) ::
@@ -146,6 +148,7 @@
         call ipgeti ('b2npmo_diagno', diagno)
         call ipgeti ('b2npmo_iout', iout)                              !srv 04.07.08
         call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 17.01.14
+        call ipgeti ('b2npmo_vlct_diagno', vlct_diagno)
         call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
         call ipgeti ('b2npmo_b2sifr_', b2sifr_ver)                     !srv 04.07.08
         call ipgeti ('b2news_nsmin', nsmin)
@@ -513,6 +516,7 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.0
        enddo
       enddo
 
+      vcount = 0
       if( ion_vlct_restrict .ne. 0 ) then                              !iyv 19.07.12 { !srv 17.01.14
         do iy = -1,ny
           do ix = -1,nx
@@ -522,17 +526,30 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.0
 !                cst=sqrt( (ti(ix,iy)+te(ix,iy)*rza(ix,iy,is))/
 !     *                                              ( am(is)*mp ))
                 if( abs(ua(ix,iy,is)) .gt. 3.0_R8*cst ) then
-                  write(6,'(a,a,i3,a,i4,a,i4,a)')
-     .             'Parallel velocity restriction applied ',
-     .             'to species ',is,' in cell (',ix,',',iy,'):'
-                  write(6,'(a,1p,1e12.5,a,1e12.5)')
-     .             'Mach 3: ',3.0_R8*cst,' Ua:',ua(ix,iy,is)
+                  vcount(is) = vcount(is) + 1
+                  if (vlct_diagno.ge.2) then
+                    write(6,'(a,a,i3,a,i4,a,i4,a)')
+     .               'Parallel velocity restriction applied ',
+     .               'to species ',is,' in cell (',ix,',',iy,'):'
+                    write(6,'(a,1p,1e12.5,a,1e12.5)')
+     .               'Mach 3: ',3.0_R8*cst,' Ua:',ua(ix,iy,is)
+                  end if
                   ua(ix,iy,is)= sign(3.0_R8*cst,ua(ix,iy,is))          !iyv 03.02.14
                 endif
               endif
             enddo
           enddo
         enddo
+        if (vlct_diagno.ge.1) then
+          do is = 0, ns-1
+            if (vcount(is).ge.0) then
+              write(6,'(a,a,i5,a,i3)')
+     .         'In b2npmo, parallel velocity restriction ',
+     .         'to Mach 3 was applied ',vcount(is),
+     .         ' times for species ',is
+            end if
+          end do
+        endif
       endif
 
 *   ..correct pcca
