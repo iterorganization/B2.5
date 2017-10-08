@@ -73,6 +73,7 @@
       real (kind=R8), save :: PSch=1.0e0_R8                          !srv 17.01.07
       real (kind=R8), save :: xcur = 0.0_R8                          !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                          !srv 07.07.08
+      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 0.0_R8       !srv 02.10.17
       real (kind=R8) ::
      *  flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0,
      1  cum_flo_vadia, cum_flo_vaecrb, prefactor, cutlo,
@@ -115,6 +116,8 @@
         call ipgetr ('b2tfhi_PSch', PSch)                            !srv 17.01.07
         call ipgetr ('b2tfnb_xcur', xcur)                            !xpb 27.09.17
         call ipgetr ('b2tfnb_ycur', ycur)                            !srv 17.07.08
+        call ipgetr ('b2tfnb_vis_per', vis_per)                      !srv 02.10.17
+        call ipgetr ('b2tfnb_vis_q', vis_q)                          !srv 02.10.17
         call ipgeti ('b2tfhi_iout', iout)                            !srv 16.09.02
         call ipgeti ('b2tfhi_lim_flux', lim_flux)
         call ipgeti ('b2trcl_conductive_limit', conductive_limit) 
@@ -134,10 +137,10 @@
        call b2xvff (nx, ny, chvi, 'chvi')
       endif
 
-      fhiPSch = 0.0e0_R8                                              !sv 13.10.06
-      coni    = 0.0e0_R8                                              !sv 02.01.07
+      fhiPSch = 0.0e0_R8                                              !srv 13.10.06
+      coni    = 0.0e0_R8                                              !srv 02.01.07
       if(maxval(facdrift).ne.0.0e0_R8) then
-*   ..compute P.Sch heat x-flux                                 !sv 13.10.06 {
+*   ..compute P.Sch heat x-flux                                       !srv 13.10.06 {
 !      iy = -1
 !       do ix = -1, nx
 !	  if(leftix(ix,iy).eq.-2) then
@@ -186,9 +189,9 @@
      &             -na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &              ti(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                               )
-           coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*       ! 0.25*2  !sv 02.01.07
+           coni(ix,iy,0,1) = coni(ix,iy,0,1) + 0.5e0_R8*PSch*       ! 0.25*2  !srv 02.01.07
      *               cddi(ix,iy,1,is)*na(ix,iy,is)*ti(ix,iy)
-           coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*       ! 0.25*2  !sv 02.01.07
+           coni(ix,iy,0,2) = coni(ix,iy,0,2) + 0.5e0_R8*PSch*       ! 0.25*2  !srv 02.01.07
      &     cddi(ix,iy,1,is)*na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &                      ti(bottomix(ix,iy),bottomiy(ix,iy))
 	    endif
@@ -267,11 +270,11 @@
      &             -na(bottomix(ix,iy),bottomiy(ix,iy),is)*
      &              ti(bottomix(ix,iy),bottomiy(ix,iy))**2)
      &                               )
-          coni(ix,iy,1,1) = coni(ix,iy,1,1)+0.5e0_R8*PSch*          ! 0.25*2 !sv 02.01.07 {
+          coni(ix,iy,1,1) = coni(ix,iy,1,1)+0.5e0_R8*PSch*          ! 0.25*2 !srv 02.01.07 {
      &                      cddi(ix,iy,0,is)*na(ix,iy,is)*ti(ix,iy)
           coni(ix,iy,1,2) = coni(ix,iy,1,2)+0.5e0_R8*PSch*          ! 0.25*2
      &       cddi(ix,iy,0,is)*na(leftix(ix,iy),leftiy(ix,iy),is)*
-     &                        ti(leftix(ix,iy),leftiy(ix,iy))       !sv 02.01.07 }
+     &                        ti(leftix(ix,iy),leftiy(ix,iy))       !srv 02.01.07 }
 	   endif
 	  enddo
 	 enddo
@@ -280,7 +283,7 @@
 	do iy = -1, ny
        do ix = 0, nx
         fhiPSch(ix,iy,:) = 2.5e0_R8*fhiPSch(ix,iy,:)*facdrift(ix,iy)
-        coni(ix,iy,:,1:2) = coni(ix,iy,:,1:2)*facdrift(ix,iy)          !sv 02.01.07
+        coni(ix,iy,:,1:2) = coni(ix,iy,:,1:2)*facdrift(ix,iy)          !srv 02.01.07
 	 enddo
 	enddo
 
@@ -362,8 +365,8 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
            cum_flo_vaecrb=0.0_R8
            do is=0,ns-1
              prefactor=
-     1        (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))     !sv 17.05.99
-     &        /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))      !sv 17.05.99
+     1        (vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))     !srv 17.05.99
+     &        /(hx(leftix(ix,iy),leftiy(ix,iy))+hx(ix,iy))      !srv 17.05.99
      &        *(na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8
              if (drift_style.eq.0) then
                cum_flo_vadia=cum_flo_vadia + 0.5_R8*prefactor*
@@ -691,8 +694,8 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
            endif
            scur =
      &      1.5e0_R8/qe*(fchinert(ix,iy,1)+fchvispar(ix,iy,1)
-     &                  +fchanml(ix,iy,1)+fchvisper(ix,iy,1)
-     &                  +fchvisq(ix,iy,1))*ycur
+     &                  +fchanml(ix,iy,1)+vis_per*fchvisper(ix,iy,1)      !srv 02.10.17
+     &                  +vis_q*fchvisq(ix,iy,1))*ycur                     !srv 02.10.17
            floi0 = (1.5_R8+BoRiS)*fni_32(ix,iy,1)+
      1      2.5_R8*fni_52(ix,iy,1)+
      2      chvi(ix,iy,1)*(ni(bottomix(ix,iy),bottomiy(ix,iy),0)
@@ -701,10 +704,10 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
            cum_flo_vaecrb=0.0_R8
            do is=0,ns-1
              prefactor=
-     &        (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))    !sv 17.05.99
-     &        /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))   !sv 17.05.99
-     &        *(na(bottomix(ix,iy),bottomiy(ix,iy),is)             !sv 17.05.99
-     &         +na(ix,iy,is))/2.0_R8                               !sv 17.05.99
+     &         (vol(bottomix(ix,iy),bottomiy(ix,iy))+vol(ix,iy))   !srv 17.05.99
+     &        /(hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))   !srv 17.05.99
+     &        *(na(bottomix(ix,iy),bottomiy(ix,iy),is)             !srv 17.05.99
+     &         +na(ix,iy,is))/2.0_R8                               !srv 17.05.99
              if (drift_style.eq.0) then
                cum_flo_vadia=cum_flo_vadia+
      1          0.5_R8*prefactor*(vadia(ix,iy,1,is) + 
@@ -738,7 +741,7 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &                                +ti(ix,iy))/2.0_R8-
      &       coni(ix,iy,1,0)*                                     !srv 02.01.07
      1      (ti(ix,iy)-ti(bottomix(ix,iy),bottomiy(ix,iy)))
-     &      -fhiPSch(ix,iy,1)                                     !sv 13.10.06 }
+     &      -fhiPSch(ix,iy,1)                                     !srv 13.10.06 }
            if (balance.and.(balance_netcdf.ne.0)) then !djm Jan2017
              fhi_32(ix,iy,1) = (1.5_R8+BoRiS)*fni_32(ix,iy,1)*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
@@ -763,9 +766,11 @@ cxpb Changed the solution to (3/2+BoRiS) for benchmarking !!!!!!!!!!!!!!!!!!!
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_vispar(ix,iy,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1)*ycur*
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-             fhi_visper(ix,iy,1) = 1.5e0_R8/qe*fchvisper(ix,iy,1)*ycur*
+             fhi_visper(ix,iy,1) =
+     &         1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1)*ycur*         !srv 02.10.17
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-             fhi_visq(ix,iy,1) = 1.5e0_R8/qe*fchvisq(ix,iy,1)*ycur*
+             fhi_visq(ix,iy,1) =
+     &         1.5e0_R8/qe*vis_q*fchvisq(ix,iy,1)*ycur*             !srv 02.10.17
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
              fhi_anml(ix,iy,1) = 1.5e0_R8/qe*fchanml(ix,iy,1)*ycur*
      &        (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8

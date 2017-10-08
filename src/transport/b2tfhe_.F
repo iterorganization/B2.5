@@ -1194,11 +1194,9 @@ csw 27nov2012 added check for upwind (SOLPS4 style)
           endif                                                          !srv 30.12.09 }
 
         else !lim_flux                                                   !srv 04.02.03 {
-!           if(mdf_fhe.eq.0) then                                        !srv 13.10.06 {
           if(no_Ptncr_x_he.eq.0) then                                    !srv 06.07.06 {
-            cone0     = hybr(floe0,chce(ix,iy,0))
             cone0_mdf = hybr(floe0_mdf,chce(ix,iy,0))
-
+            cone0     = cone0_mdf
 csw 13mar2013 overwrite cone0/cone0_mdf (SOLPS4 style)
             if(b2tfhe_hybr2 .ne. 0) then
               cone0=dim(chce(ix,iy,0), abs(floe0)*
@@ -1459,18 +1457,9 @@ csw 13mar2013 added check upwind (SOLPS4 style)
      &	  5.0e0_R8/3.0e0_R8*fchstoch(ix,iy)/qe)+                         !lk 21.02.08 17.12.13
      &   chve(ix,iy,1)*                                                  !srv 13.09.02 14.05.03
      &   (ne(bottomix(ix,iy),bottomiy(ix,iy))+ne(ix,iy))*0.5e0_R8        !srv 13.09.02
-!        if(mdf_fhe.eq.0) then                                           !srv 13.10.06 {
         if(no_Ptncr_y_he.eq.0) then                                      !srv 06.07.06 {
-         if(mdf_fhe.eq.0) then                                           !srv 13.10.06 {
-          cone0     = hybr(floe0,chce(ix,iy,1))
-         else
-          if(facdriftm.eq.0.0e0_R8) then
-           cone0    = hybr(floe0,chce(ix,iy,1))
-          else
-           cone0    = chce(ix,iy,1)
-          endif
-         endif
-         cone0_mdf = hybr(floe0_mdf,chce(ix,iy,1))
+          cone0_mdf = hybr(floe0_mdf,chce(ix,iy,1))
+          cone0     = cone0_mdf
         else
           cone0     = chce(ix,iy,1)
           cone0_mdf = chce(ix,iy,1)

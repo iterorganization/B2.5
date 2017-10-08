@@ -71,6 +71,7 @@ csw 30apr2014 added fna_he, ia
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
+      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 0.0_R8          !srv 02.10.17
       real (kind=R8) ::
      *   flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0, vdia_par,    !srv 17.05.99
      &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf, dti0_mdf                 !srv 13.10.06 17.06.09
@@ -113,6 +114,8 @@ cpax
        call ipgetr ('b2tfhi_PSch', PSch)                                !srv 17.01.07
        call ipgetr ('b2tfnb_xcur', xcur)                                !xpb 27.09.17
        call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
+       call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
+       call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
        call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
        call ipgeti ('b2nph9_iout', iout_b2nph9)
        call ipgeti ('b2npht_iout', iout_b2npht)
@@ -669,8 +672,8 @@ csw 27nov2012 added check upwind (SOLPS4 style)
          else  !lim_flux  check                                         !srv 04.02.03 {
 
           if(no_Ptncr_x_hi.eq.0) then                                   !srv 06.07.06 {
-           coni0     = hybr(floi0,chci(ix,iy,0))
            coni0_mdf = hybr(floi0_mdf,chci(ix,iy,0))
+           coni0     = coni0_mdf
           else
            coni0     = chci(ix,iy,0)
            coni0_mdf = chci(ix,iy,0)
@@ -895,8 +898,8 @@ csw 27nov2012 added check upwind (SOLPS4 style)
       do iy = 0, ny
        do ix = -1, nx
         scur = 1.5e0_R8/qe*(fchinert(ix,iy,1)+fchvispar(ix,iy,1)        !lk 30.05.11
-     &                     +fchanml(ix,iy,1)+fchvisper(ix,iy,1)
-     &                     +fchvisq(ix,iy,1))*ycur                      !lk 30.05.11
+     &                     +fchanml(ix,iy,1)+vis_per*fchvisper(ix,iy,1) !srv 02.10.17
+     &                     +vis_q*fchvisq(ix,iy,1))*ycur                !lk 30.05.11 !srv 02.10.17
         floi0 = 1.5e0_R8*fni(ix,iy,1)+                                  !srv 11.05.99
      &    chvi(ix,iy,1)*(ni(bottomix(ix,iy),bottomiy(ix,iy),0)
      &                   +ni(ix,iy,0))/2.0_R8
@@ -907,16 +910,8 @@ csw 27nov2012 added check upwind (SOLPS4 style)
      &                   +ni(ix,iy,0))/2.0_R8
      &   +scur                                                          !lk 30.05.11
         if(no_Ptncr_y_hi.eq.0) then                                     !srv 06.07.06 {
-         if(mdf_fhi.eq.0) then                                          !srv 13.10.06 {
-          coni0    = hybr(floi0,chci(ix,iy,1))
-         else                                                           !srv 13.10.06 {
-          if(facdriftm.eq.0.0e0_R8) then
-           coni0   = hybr(floi0,chci(ix,iy,1))
-          else
-           coni0   = chci(ix,iy,1)
-          endif
-         endif                                                          !srv 13.10.06 }
          coni0_mdf = hybr(floi0_mdf,chci(ix,iy,1))
+         coni0     = coni0_mdf
         else
          coni0     = chci(ix,iy,1)
          coni0_mdf = chci(ix,iy,1)
@@ -997,10 +992,11 @@ csw 13mar2013 added check upwind (SOLPS4)
            fhi_vispar(ix,iy,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1)*ycur*
      &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
      &                        (1.0_R8-upfac)*ti(ix,iy))
-           fhi_visper(ix,iy,1) = 1.5e0_R8/qe*fchvisper(ix,iy,1)*ycur*
-     &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
-     &                        (1.0_R8-upfac)*ti(ix,iy))
-           fhi_visq(ix,iy,1) = 1.5e0_R8/qe*fchvisq(ix,iy,1)*ycur*
+           fhi_visper(ix,iy,1) =
+     &                      1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1)*ycur*   !srv 02.10.17
+     &                      (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                      (1.0_R8-upfac)*ti(ix,iy))
+           fhi_visq(ix,iy,1) = 1.5e0_R8/qe*vis_q*fchvisq(ix,iy,1)*ycur*   !srv 02.10.17
      &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
      &                        (1.0_R8-upfac)*ti(ix,iy))
            fhi_anml(ix,iy,1) = 1.5e0_R8/qe*fchanml(ix,iy,1)*ycur*
@@ -1033,10 +1029,11 @@ csw 13mar2013 added check upwind (SOLPS4)
            fhi_vispar(ix,iy,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1)*ycur*
      &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
      &                        (1.0_R8-upfac)*ti(ix,iy))
-           fhi_visper(ix,iy,1) = 1.5e0_R8/qe*fchvisper(ix,iy,1)*ycur*
-     &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
-     &                        (1.0_R8-upfac)*ti(ix,iy))
-           fhi_visq(ix,iy,1) = 1.5e0_R8/qe*fchvisq(ix,iy,1)*ycur*
+           fhi_visper(ix,iy,1) =
+     &                      1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1)*ycur* !srv 02.10.17
+     &                      (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
+     &                      (1.0_R8-upfac)*ti(ix,iy))
+           fhi_visq(ix,iy,1) = 1.5e0_R8/qe*vis_q*fchvisq(ix,iy,1)*ycur*  !srv 02.10.17
      &                       (upfac*ti(bottomix(ix,iy),bottomiy(ix,iy))+
      &                        (1.0_R8-upfac)*ti(ix,iy))
            fhi_anml(ix,iy,1) = 1.5e0_R8/qe*fchanml(ix,iy,1)*ycur*
@@ -1072,9 +1069,10 @@ csw 13mar2013 added check upwind (SOLPS4)
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_vispar(ix,iy,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1)*ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-           fhi_visper(ix,iy,1) = 1.5e0_R8/qe*fchvisper(ix,iy,1)*ycur*
+           fhi_visper(ix,iy,1) =
+     &      1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1)*ycur*                 !srv 02.10.17
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-           fhi_visq(ix,iy,1) = 1.5e0_R8/qe*fchvisq(ix,iy,1)*ycur*
+           fhi_visq(ix,iy,1) = 1.5e0_R8/qe*vis_q*fchvisq(ix,iy,1)*ycur*  !srv 02.10.17
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_anml(ix,iy,1) = 1.5e0_R8/qe*fchanml(ix,iy,1)*ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
@@ -1097,9 +1095,10 @@ csw 13mar2013 added check upwind (SOLPS4)
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_vispar(ix,iy,1) = 1.5e0_R8/qe*fchvispar(ix,iy,1)*ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-           fhi_visper(ix,iy,1) = 1.5e0_R8/qe*fchvisper(ix,iy,1)*ycur*
+           fhi_visper(ix,iy,1) =
+     &      1.5e0_R8/qe*vis_per*fchvisper(ix,iy,1)*ycur*                  !srv 02.10.17
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
-           fhi_visq(ix,iy,1) = 1.5e0_R8/qe*fchvisq(ix,iy,1)*ycur*
+           fhi_visq(ix,iy,1) = 1.5e0_R8/qe*vis_q*fchvisq(ix,iy,1)*ycur*   !srv 02.10.17
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8
            fhi_anml(ix,iy,1) = 1.5e0_R8/qe*fchanml(ix,iy,1)*ycur*
      &      (ti(bottomix(ix,iy),bottomiy(ix,iy))+ti(ix,iy))/2.0_R8

@@ -159,6 +159,7 @@
      *  NUEOUT, UBIG, VBIG, PBIG, UP00, EPSLON, NE00, S2, US, FS, VS,
      *  NAS, TES, TIS, NIVS, FFAC, DFS, POS                             !srv 29.09.15
       real (kind=R8), save :: ycur = 1.0e0_R8
+      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 0.0_R8           !srv 02.10.17
       real (kind=R8), save :: phm0 = 1.0e0_R8, phm1 = 1.0e0_R8,
      &                        phm2 = 1.0e0_R8,
      &                        corr_flux   = 0.0e0_R8                    !srv 25.07.05
@@ -297,6 +298,8 @@
      &   'If b2news_poteq.ne.1, then b2tfhe_no_current must be 1!')
         call ipgeti ('b2stbc_bcpot_16_step', bcpot_16_step)          !Solovyev 23.05.14 !srv 29.09.15
         call ipgetr ('b2tfhi_ycur', ycur)
+        call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
+        call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
         call ipgeti ('eirene_sheath_pot',eirene_sheath_pot)
       endif
 *   ..set n2
@@ -6943,8 +6946,10 @@ cghgh
      &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)+
      &          fchanml(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)+
+     &          vis_per*                                          !srv 02.10.17
      &          fchvisper(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                    topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1)+
+     &          vis_q*                                            !srv 02.10.17
      &          fchvisq(topix(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),
      &                  topiy(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB)),1))*
      &          ycur
@@ -6979,8 +6984,8 @@ cghgh
      &         (fchinert(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+
      &          fchvispar(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+
      &          fchanml(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+
-     &          fchvisper(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+
-     &          fchvisq(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1))*ycur
+     &          vis_per*fchvisper(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1)+   !srv 02.10.17
+     &          vis_q*fchvisq(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1))*ycur  !srv 02.10.17
               do is=0,ns-1
                 shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) =
      .           shi0(BC_LIST_X(IX,IB),BC_LIST_Y(IX,IB),1) -

@@ -86,10 +86,10 @@
       character chns*3                                                   !srv 16.09.02
       integer, save :: fnb_nodrift_style = 1                             !srv 20.06.08
       integer, save :: drift_style = 1                                   !srv 21.06.08
-      real (kind=R8), save :: cfvma = 0.0_R8                             !srv 15.12.05
       real (kind=R8), save :: alpha_ = 0.0_R8                            !srv 09.07.03
       real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
+      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8           !srv 02.10.17
       real (kind=R8), save :: xvecrb = 1.0_R8, xwdia = 1.0_R8            !srv 27.01.12
       real (kind=R8), save ::  
      &   poleldr = 1.0_R8, radeldr = 1.0_R8,                             !srv 25.04.00
@@ -174,7 +174,6 @@
         call xertst (.not.(0.0_R8.ne.alpha .and. 0.0_R8.ne.alpha_),      !srv 14.10.09
      &   'b2tfnb_alpha and b2tlc0_alpha cannot be both different '//
      &   'from zero ')                                                   !srv 09.07.03 }
-        call ipgetr ('b2tqna_cfvma', cfvma)                              !srv 15.12.05
         call ipgeti ('b2tfnb_mdf', mdf_fnb)                              !srv 13.10.06
         call ipgetr ('b2tfnb_PSch', PSch)                                !srv 17.01.07
         call ipgeti ('b2tfnb_pflux_cor', pflux_cor)                      !srv 05.03.16
@@ -183,6 +182,8 @@
         call ipgeti ('b2tfnb_drift_style', drift_style)                  !srv 21.06.08
         call ipgetr ('b2tfnb_xcur', xcur)                                !xpb 27.09.17
         call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
+        call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
+        call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
         call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
         call ipgeti ('b2npc9_iout', iout_b2npc9)                         !srv 11.09.09
         call ipgeti ('b2npco_iout', iout_b2npco)
@@ -884,12 +885,11 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
      4     vbecrb(ix,iy,0)*
      5     (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))/               
      6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))
-          flo2dia = cvlbhz(ix,iy,0)+pbshz(ix,iy,0)*wrk0(ix,iy)+         !srv 01.10.99 01.07.05
-     &      termhz(ix,iy) +                                             !srv 20.10.09 05.11.09
-     4      ub2dia(ix,iy,0)*
-     5      (hz(ix,iy)*vol(ix,iy)+hz(leftix(ix,iy),leftiy(ix,iy))
-     5                          *vol(leftix(ix,iy),leftiy(ix,iy)))/     !srv 01.03.00 09.01.01
-     6      (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                 !srv 01.03.00
+          flo2dia = cvlbhz(ix,iy,0)+pbshz(ix,iy,0)*wrk0(ix,iy)+
+     &      termhz(ix,iy) + ub2dia(ix,iy,0)*
+     &     (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
+     &      hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
+     &     (hx(ix,iy)+hx(leftix(ix,iy),leftiy(ix,iy)))                  !srv it is correct. Keep in mind hz*vol/hx and interpolation of hz
           flo_nodrift = cvlb(ix,iy,0)+pbs(ix,iy,0)*wrk0(ix,iy) +
      &                  term(ix,iy)                                     !srv 20.06.08 20.10.09
          endif                                                          !srv 21.06.08 }
@@ -903,20 +903,26 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          end if
          flo = flo + scur
          flo_mdf = flo_mdf + scur
-         flo2dia = flo2dia + scur
+         flo2dia = flo2dia + scur*
+     &    (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
+     &     hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
+     &    (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
          if (no_hybr.eq.0) then
            if(no_Ptncr_x_co.eq.0) then                                  !srv 13.10.06 {
-            con_mdf(ix,iy)  = hybr(flo_mdf,cdnb(ix,iy,0))               !srv 13.10.06 }
-            con_he(ix,iy)   = hybr(flo_he,cdnb(ix,iy,0))  !iyv 30.05.08 !srv 03.10.08
-            con(ix,iy)      = hybr(flo,cdnb(ix,iy,0))
-            con_nodrift     = hybr(flo_nodrift,cdnb(ix,iy,0))
-            con_2dia(ix,iy) = hybr(flo2dia,cdnbhz(ix,iy,0))             !srv 09.01.01
+             con_mdf(ix,iy)  = hybr(flo_mdf,cdnb(ix,iy,0))
+             con(ix,iy)      = con_mdf(ix,iy)
+             con_he(ix,iy)   = con_mdf(ix,iy)
+             con_nodrift     = hybr(flo_nodrift,cdnb(ix,iy,0))          !did not change
+             con_2dia(ix,iy) = con_mdf(ix,iy)*
+     &        (hz(ix,iy)*vol(leftix(ix,iy),leftiy(ix,iy))+
+     &         hz(leftix(ix,iy),leftiy(ix,iy))*vol(ix,iy))/
+     &        (vol(ix,iy)+vol(leftix(ix,iy),leftiy(ix,iy)))
            else
-            con_mdf(ix,iy)  = cdnb(ix,iy,0)
-            con_he(ix,iy)   = cdnb(ix,iy,0)               !iyv 30.05.08 !srv 03.10.08
-            con(ix,iy)      = cdnb(ix,iy,0)
-            con_nodrift     = cdnb(ix,iy,0)
-            con_2dia(ix,iy) = cdnbhz(ix,iy,0)                           !srv 09.01.01
+             con_mdf(ix,iy)  = cdnb(ix,iy,0)
+             con_he(ix,iy)   = cdnb(ix,iy,0)              !iyv 30.05.08 !srv 03.10.08
+             con(ix,iy)      = cdnb(ix,iy,0)
+             con_nodrift     = cdnb(ix,iy,0)
+             con_2dia(ix,iy) = cdnbhz(ix,iy,0)                          !srv 09.01.01
            endif                                                        !srv 13.10.06 }
            if(fnb_nodrift_style.eq.0) then                              !srv 20.06.08
             fnb_nodrift(ix,iy,0) = flo_nodrift*
@@ -1254,10 +1260,11 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
           fna_pschused(ix,iy,1,isb) = 0.0_R8
          endif
         else
-         if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then         !srv 20.09.06
+         if(nint(zn(isb)).eq.1.and.nint(zamax(isb)).eq.1) then          !srv 20.09.06
            scur =
-     &      (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)    !srv 17.07.08 {
-     &       +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
+     &      (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+
+     &       vis_per*fchvisper(ix,iy,1)                                 !srv 17.07.08 {  02.10.17
+     &       +fchanml(ix,iy,1)+vis_q*fchvisq(ix,iy,1))*ycur/            !srv 17.07.08 {  02.10.17
      &      (qe*(nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8) !srv 17.07.08 }
          else
            scur = 0.0_R8
@@ -1275,8 +1282,7 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &       vol(bottomix(ix,iy),bottomiy(ix,iy))
      &       /hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      &      +scur
-          if(cfvma .eq. 0.0_R8) then                                   !srv 15.12.05
-            flo2dia = cvlbhz(ix,iy,1)+
+          flo2dia = cvlbhz(ix,iy,1)+
      &       (ub2dia(ix,iy,1)+ub2dia(bottomix(ix,iy),bottomiy(ix,iy),1))
      &       /2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hy1(ix,iy)+           !srv 01.10.99 09.01.01
      &        hz(bottomix(ix,iy),bottomiy(ix,iy))
@@ -1284,14 +1290,6 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &        hy1(bottomix(ix,iy),bottomiy(ix,iy)))+                    !srv 01.03.00 09.01.01
      &        (hz(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8*   !srv 18.09.08
      &         scur
-          else
-            flo2dia = cvmbhz(ix,iy,1)+
-     &       (ub2dia(ix,iy,1)+ub2dia(bottomix(ix,iy),bottomiy(ix,iy),1))
-     &       /2.0_R8*0.5_R8*(hz(ix,iy)*vol(ix,iy)/hy1(ix,iy)+           !srv 01.10.99 09.01.01
-     &        hz(bottomix(ix,iy),bottomiy(ix,iy))
-     5                        *vol(bottomix(ix,iy),bottomiy(ix,iy))/
-     &        hy1(bottomix(ix,iy),bottomiy(ix,iy)))                     !srv 01.03.00 09.01.01
-          endif
           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1)+                         !srv 13.09.02 ( 20.01.11
      &      0.5_R8*(vbecrb(ix,iy,1)*vol(ix,iy)/hy1(ix,iy)
      &      +vbecrb(bottomix(ix,iy),bottomiy(ix,iy),1)*
@@ -1306,32 +1304,29 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
      6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
      &      +scur
-           if(cfvma .eq. 0.0_R8) then                                   !srv 15.12.05
-            flo2dia = cvlbhz(ix,iy,1)+ub2dia(ix,iy,1)*                  !srv 01.10.99 09.01.01
-     5       (hz(ix,iy)*vol(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy))
-     5       *vol(bottomix(ix,iy),bottomiy(ix,iy)))/                    !srv 01.03.00 09.01.01
-     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+         !srv 01.03.00
-     &       (hz(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8*    !srv 18.09.08
-     &        scur
-           else
-            flo2dia = cvmbhz(ix,iy,1)+ub2dia(ix,iy,1)*                  !srv 01.10.99 09.01.01
-     5       (hz(ix,iy)*vol(ix,iy)+hz(bottomix(ix,iy),bottomiy(ix,iy))
-     5       *vol(bottomix(ix,iy),bottomiy(ix,iy)))/                    !srv 01.03.00 09.01.01
-     6       (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))          !srv 01.03.00
-           endif
-           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1)+vbecrb(ix,iy,1)*         !srv 13.09.02 ( 20.01.11
-     5     (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
-     6     (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
-
+           flo2dia = cvlbhz(ix,iy,1)+ub2dia(ix,iy,1)*
+     5      (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
+     &       hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
+     6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))+          !srv it is correct. Keep in mind hz*vol/hy and interpolation of hz
+     &      (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
+     &       hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
+     &      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))*
+     &       scur
+           flo_he = 5.0_R8/3.0_R8*cvlb(ix,iy,1)+vbecrb(ix,iy,1)*        !srv 13.09.02 ( 20.01.11
+     5      (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))/
+     6      (hy1(ix,iy)+hy1(bottomix(ix,iy),bottomiy(ix,iy)))
          endif                                                          !srv 21.06.08 }
          flo_nodrift = cvlb(ix,iy,1)
          if (no_hybr.eq.0) then
           if(no_Ptncr_y_co.eq.0) then                                   !srv 06.07.06 {
-           con_he(ix,iy)   = hybr(flo_he,cdnb(ix,iy,1))   !iyv 30.05.08 !srv 03.10.08
-           con_2dia(ix,iy) = hybr(flo2dia,cdnbhz(ix,iy,1))              !srv 01.10.99 09.01.01
-           con_mdf(ix,iy)  = hybr(flo_mdf,cdnb(ix,iy,1))                !srv 13.10.06
-           con(ix,iy)      = hybr(flo,cdnb(ix,iy,1))
-           con_nodrift     = hybr(flo_nodrift,cdnb(ix,iy,1))
+            con_mdf(ix,iy)  = hybr(flo_mdf,cdnb(ix,iy,1))
+            con(ix,iy)      = con_mdf(ix,iy)
+            con_he(ix,iy)   = con_mdf(ix,iy)
+            con_2dia(ix,iy) = con_mdf(ix,iy)*
+     &       (hz(ix,iy)*vol(bottomix(ix,iy),bottomiy(ix,iy))+
+     &        hz(bottomix(ix,iy),bottomiy(ix,iy))*vol(ix,iy))/
+     &       (vol(ix,iy)+vol(bottomix(ix,iy),bottomiy(ix,iy)))
+            con_nodrift     = hybr(flo_nodrift,cdnb(ix,iy,1))           ! did not change
           else
            con_he(ix,iy)   = cdnb(ix,iy,1)                !iyv 30.05.08 !srv 03.10.08
            con_2dia(ix,iy) = cdnbhz(ix,iy,1)                            !srv 01.10.99 09.01.01
@@ -1353,17 +1348,12 @@ csw 30sep2014 (is this 5/3 factor correct here? I think not...)
      &    (nb(ix,iy)-nb(bottomix(ix,iy),bottomiy(ix,iy)))               !srv 13.09.02 }
      &    +cdpb(ix,iy,1)*(pb(ix,iy)
      &                   -pb(bottomix(ix,iy),bottomiy(ix,iy))) )        !srv 21.01.00 }
-          if(cfvma .eq. 0.0_R8) then                                    !srv 15.12.05
-            fnb_fcor(ix,iy,1) = flo2dia*                                !srv 01.10.99
+          fnb_fcor(ix,iy,1) = flo2dia*                                  !srv 01.10.99
      &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-
      &       con_2dia(ix,iy)*(nb(ix,iy)-
      &                        nb(bottomix(ix,iy),bottomiy(ix,iy)))-
      &       cdpbhz(ix,iy,1)*(pb(ix,iy)                                 !srv 09.01.01
      &                     -pb(bottomix(ix,iy),bottomiy(ix,iy)))        !srv 01.10.99
-          else                                                          !srv 15.12.05
-            fnb_fcor(ix,iy,1) = flo2dia*                                !srv 01.10.99
-     &       (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8
-          endif
           if(fnb_nodrift_style.eq.0) then                               !srv 20.06.08
            fnb_nodrift(ix,iy,1) = flo_nodrift*
      1      (nb(bottomix(ix,iy),bottomiy(ix,iy))+nb(ix,iy))/2.0_R8-

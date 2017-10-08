@@ -73,6 +73,7 @@
       real (kind=R8), save :: xfrhie = 1.0_R8                            !srv 05.11.09 30.01.10
       real (kind=R8), save :: xcur = 0.0_R8                              !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                              !srv 07.07.08
+      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 0.0_R8           !srv 02.10.17
       real (kind=R8) ::
      *   dif, flo, cutlo, fle_eir, cone_eir, floe_eir, chce_eir, scur,   !srv 14.07.10
      &   floi_eir, chci_eir, flo_eir, con_eir, term(-1:nx,-1:ny)
@@ -123,6 +124,8 @@
         call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                 !srv 06.07.06
         call ipgetr ('b2tfnb_xcur', xcur)                                !xpb 27.09.17
         call ipgetr ('b2tfnb_ycur', ycur)                                !srv 17.07.08
+        call ipgetr ('b2tfnb_vis_per', vis_per)                          !srv 02.10.17
+        call ipgetr ('b2tfnb_vis_q', vis_q)                              !srv 02.10.17
         call ipgeti ('b2tfnb_no_hybr', no_hybr)
         call ipgeti ('b2tfnb_drift_style', drift_style)
         call ipgeti ('b2sigp_style', style)                              !srv 13.01.17
@@ -188,8 +191,9 @@
 csw 30sep2013, added check for no_hybr
           if (nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then
            scur =
-     &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+fchvisper(ix,iy,0)
-     &      +fchanml(ix,iy,0)+fchvisq(ix,iy,0))*xcur/qe/
+     &      (fchinert(ix,iy,0)+fchvispar(ix,iy,0)+
+     &       vis_per*fchvisper(ix,iy,0)                                  !srv 02.10.17
+     &      +fchanml(ix,iy,0)+vis_q*fchvisq(ix,iy,0))*xcur/qe/           !srv 02.10.17
      &     ((na(leftix(ix,iy),leftiy(ix,iy),is)+na(ix,iy,is))/2.0_R8)
           else
             scur = 0.0_R8
@@ -293,7 +297,7 @@ csw 30sep2013, added check for no_hybr
            if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
             scur =
      &        (fchvispar(ix,iy,1)+fchinert(ix,iy,1)+
-     &         fchvisper(ix,iy,1)+fchvisq(ix,iy,1)+
+     &         vis_per*fchvisper(ix,iy,1)+vis_q*fchvisq(ix,iy,1)+        !srv 02.10.17
      &         fchanml(ix,iy,1))/
      &        (qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &        na(ix,iy,is))/2.0_R8)
@@ -334,8 +338,9 @@ csw 30sep2013, added check for no_hybr
            end if
            if(nint(rza(ix,iy,is)).eq.1.and.nint(zamax(is)).eq.1) then    !srv 20.09.06
              scur =
-     &        (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+fchvisper(ix,iy,1)
-     &         +fchanml(ix,iy,1)+fchvisq(ix,iy,1))*ycur/
+     &        (fchinert(ix,iy,1)+fchvispar(ix,iy,1)+
+     &         vis_per*fchvisper(ix,iy,1)                               !srv 02.10.17
+     &         +fchanml(ix,iy,1)+vis_q*fchvisq(ix,iy,1))*ycur/          !srv 02.10.17
      &        (qe*(na(bottomix(ix,iy),bottomiy(ix,iy),is)+
      &             na(ix,iy,is))/2.0_R8)
            else
