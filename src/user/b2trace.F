@@ -104,6 +104,7 @@ csw 2012 nlmpgs --> nnstsi+nnlimi (known after 1st EIRENE call)
      &  'b2trace: partial source rescaling: natmi,nspecies=',
      &                                     nnatmi,nspecies  !srv 18.05.09
 #endif
+      if(ank_tracing.eq.0) return
 c*** Particle balance
       if(filedata(ntrc_bln)) call b2blnc(nx,ny,ns,dtim)
 c*** Power balance

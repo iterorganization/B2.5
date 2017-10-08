@@ -542,11 +542,16 @@ c      if (solving.and.solvemt(0:nnreg(0))) then                       !srv 06.0
         enddo
         if (vlct_diagno.ge.1) then
           do is = 0, ns-1
-            if (vcount(is).ge.0) then
+            if (vcount(is).gt.1) then
               write(6,'(a,a,i5,a,i3)')
      .         'In b2npmo, parallel velocity restriction ',
      .         'to Mach 3 was applied ',vcount(is),
      .         ' times for species ',is
+            else if (vcount(is).eq.1) then
+              write(6,'(a,a,i5,a,i3)')
+     .         'In b2npmo, parallel velocity restriction ',
+     .         'to Mach 3 was applied ',vcount(is),
+     .         ' time for species ',is
             end if
           end do
         endif

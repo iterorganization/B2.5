@@ -474,10 +474,14 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
          enddo
         enddo
         if (vlct_diagno.ge.1) then
-          if (xcount.gt.0) then
-            write(6,*) 'In b2tfnb:',
+          if (xcount.gt.1) then
+            write(6,'(a,a,i6,a,i3)') 'In b2tfnb:',
      .       ' Poloidal ExB velocity limit of Mach 2 was applied ',
      .         xcount,' times for species ',isb
+          else if (xcount.eq.1) then
+            write(6,'(a,a,i6,a,i3)') 'In b2tfnb:',
+     .       ' Poloidal ExB velocity limit of Mach 2 was applied ',
+     .         xcount,' time for species ',isb
           end if
         end if
 
@@ -537,10 +541,14 @@ cxpb     3              wbbv(ix,iy,3))                                   !xpb
         enddo
 
         if (vlct_diagno.ge.1) then
-          if (ycount.gt.0) then
-            write(6,*) 'In b2tfnb:',
+          if (ycount.gt.1) then
+            write(6,'(a,a,i6,a,i3)') 'In b2tfnb:',
      .       ' Radial ExB velocity limit of Mach 2 was applied ',
      .         ycount,' times for species ',isb
+          else if (ycount.eq.1) then
+            write(6,'(a,a,i6,a,i3)') 'In b2tfnb:',
+     .       ' Radial ExB velocity limit of Mach 2 was applied ',
+     .         ycount,' time for species ',isb
           end if
         end if
        endif                                                             !srv 21.06.08 {

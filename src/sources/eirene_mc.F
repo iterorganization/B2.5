@@ -3179,9 +3179,9 @@ csw 21feb2012 add test l_neutrad (SOLPS4.3)
 csw 21feb2012, calculate neutral radiation directly from EIRENE (SOLPS4.3)
 c*** calculate radiation losses directly (at the moment only atoms + edissml)
 c
-        rad_neutr=0.
-        rdneureg=0.
-        recycereg=0.
+        rad_neutr=0.0_R8
+        rdneureg=0.0_R8
+        recycereg=0.0_R8
         do iy=-1,ny
           do ix=-1,nx
             if (leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.

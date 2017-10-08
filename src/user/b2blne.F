@@ -128,7 +128,7 @@ c-----------------------------------------------------------------------
 
       integer lun, ltrc
       parameter (ltrc=ntrc_ble)
-      integer i, j, k, l, m, n, ic, is, ix, iy, 
+      integer i, j, k, l, m, n, ic, is, ix, iy,
      .        ixr, iyr, ixf, iyf, js, nv
       real (kind=R8) :: hlp_h, hlp_p, hlp
       logical lcross_hlp, lminus_hlp, lbound_hlp, lcore_hlp

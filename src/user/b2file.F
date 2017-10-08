@@ -23,7 +23,7 @@ c***    tracing/sources.trc     to  ntrc(ntrc_src)
 c----------------------------------------------------------------------
       implicit none
 c
-      integer ns,nnreg(0:2), it
+      integer ns, nnreg(0:2), it
 c
       integer, save ::  i, j, k, l, m, n, lf_tmp, nis_tmp
       integer :: mh_tmp(0:ns-1), nh_tmp, nf_tmp, lvr, lvs, lvt
