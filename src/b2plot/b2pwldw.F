@@ -203,10 +203,11 @@ c***  sfpr_m    : list of active materials
      ,  m_hdpr,m_hdln,n_hdpr_ml,n_hdpr_er,n_srfs_m
       parameter
      , (n_hdpr_c=10, n_hdpr_t=4, n_hdpr_s=2, n_hdpr_a=4, n_hdpr_sp=2,
-     ,  n_hdpr_er=2, m_hdpr=5,n_hdpr_ml=4,n_srfs_m=8,
+     ,  n_hdpr_er=2, m_hdpr=5, n_hdpr_ml=4, n_srfs_m=8,
      ,  m_hdln=(n_hdpr_c+n_hdpr_t)*(m_hdpr+1)+
-     +         (n_hdpr_s+n_hdpr_a+n_hdpr_sp)*(DEF_NATM+DEF_NMOL)*
-     *         (m_hdpr+4)+n_hdpr_er*n_srfs_m*(m_hdpr+4))
+     +         (n_hdpr_s+n_hdpr_a+n_hdpr_sp)*DEF_NATM*(m_hdpr+4)+
+     +          n_hdpr_ml*DEF_NMOL*(m_hdpr+4)+
+     *          n_hdpr_er*n_srfs_m*(m_hdpr+4))
       integer n_line_x, n_sfpr_sp, n_sfpr_er,do_spt_wll(nlimps)
       real (kind=R8), allocatable :: w_line(:)
       real (kind=R8) :: s_hlp, nsecyr
@@ -456,8 +457,9 @@ c carlis evaluate number of sputtered atoms and molecules
         if(n_sfpr_sp.gt.0) then !{
           write(*,*) 'Sputtered species : ',(sfpr_sp(i),i=1,n_sfpr_sp)
         end if !}
-        n_line_x=n_hdpr_c+(n_hdpr_s)*n_sfpr_s+DEF_NATM*n_hdpr_a+
-     ,           n_hdpr_ml*DEF_NMOL+n_hdpr_sp*n_sfpr_sp+
+        n_line_x=n_hdpr_c+n_hdpr_t+
+     ,           n_hdpr_s*n_sfpr_s+natmi*n_hdpr_a+
+     ,           n_hdpr_ml*nmoli+n_hdpr_sp*n_sfpr_sp+
      ,           n_hdpr_er*n_sfpr_er
         write(frmt_hlp,'(7h(1p,1x,,i5,11h(e12.5,a1)))') n_line_x
 c carlis calculation of total pumped fluxes
