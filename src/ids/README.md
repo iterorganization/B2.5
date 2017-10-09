@@ -26,11 +26,15 @@ files and run the command
 
     $ $HOME/solps-iter/modules/B2.5/builds/standalone.ITER.ifort64/b2_ual_write.exe
 
+or
+
+	$ $HOME/solps-iter/modules/B2.5/builds/standalone.ITER.ifort64/b2_ual_write_gsl.exe
+
 
 CPO2IDS code
 ------------
 
-Using this code is possible on  EUROFusion Gateway where CPO and IDS support is
+Using this code is possible on  EUROFusion Gateway where both CPO and IDS support is
 available.
 
 Set the environment: 

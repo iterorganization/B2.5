@@ -1,41 +1,50 @@
 module b2mod_ual_io
 
-  ! B2 modules
+    !> B2 modules
 
-  use b2mod_types
-  !use b2mod_version
-  use b2mod_b2cmpa
-  use b2mod_geo
-  use b2mod_plasma
-  use b2mod_constants
-  !use b2mod_rates
-  !use b2mod_residuals
-  use b2mod_sources
-  use b2mod_transport
-  use b2mod_anomalous_transport
-  !use b2mod_work
-  !use b2mod_ppout
-  use b2mod_indirect
-  !use b2mod_neutrals_namelist
-  !use b2mod_neutr_src_scaling
+    use b2mod_types
+    !use b2mod_version
+    use b2mod_b2cmpa
+    use b2mod_geo
+    use b2mod_plasma
+    use b2mod_constants
+    !use b2mod_rates
+    !use b2mod_residuals
+    use b2mod_sources
+    use b2mod_transport
+    use b2mod_anomalous_transport
+    !use b2mod_work
+    !use b2mod_ppout
+    use b2mod_indirect
+    !use b2mod_neutrals_namelist
+    !use b2mod_neutr_src_scaling
 
-  ! B2/CPO Mapping
-  use b2mod_ual_io_data
-  use b2mod_ual_io_grid
+    !> B2/CPO Mapping
+    use b2mod_ual_io_data
+    use b2mod_ual_io_grid
 
-  use logging
+    use logging
 
-  ! UAL Access
+    !> UAL Access
 #ifdef IMAS
-  use ids_schemas  ! IGNORE
-  use ids_routines ! IGNORE
+    use ids_schemas  ! IGNORE
+    use ids_routines ! IGNORE
+    use ids_assert, IDS_R8 => R8, IDS_R4 => R4  ! IGNORE
+    use ids_grid_common, IDS_COORDTYPE_R => COORDTYPE_R,    &   ! IGNORE
+        &   IDS_COORDTYPE_Z => COORDTYPE_R ! IGNORE
+    use ids_string              ! IGNORE
+    use ids_grid_subgrid        ! IGNORE
+    use ids_grid_objectlist     ! IGNORE
+    use ids_grid_examples       ! IGNORE
+    use ids_grid_unstructured   ! IGNORE
+    use ids_grid_structured     ! IGNORE
 #else
 #ifdef ITM
-  use euITM_schemas  ! IGNORE
-  use euITM_routines ! IGNORE
+    use euITM_schemas  ! IGNORE
+    use euITM_routines ! IGNORE
 #endif
 #endif
-  use ggd , GGD_UNDEFINED => GRID_UNDEFINED
+  ! use ggd , GGD_UNDEFINED => GRID_UNDEFINED
 
   implicit none
 
@@ -45,24 +54,87 @@ module b2mod_ual_io
 
 contains
 
-  subroutine write_ids(edge_ids,sources_ids,transport_ids)
-#     include <git_version_B25.h>
-   type (ids_edge_profiles) :: edge_ids
-   type (ids_edge_sources) :: sources_ids
-   type (ids_edge_transport) :: transport_ids
+    subroutine write_ids(edge_profiles,edge_sources,edge_transport)
+#       include <git_version_B25.h>
+        type (ids_edge_profiles)    :: edge_profiles
+        type (ids_edge_sources)     :: edge_sources
+        type (ids_edge_transport)   :: edge_transport
 
-    ! allocate and init the IDS
-    allocate(edge_ids%code%name(1))
+        !! Internal
+        ! type(B2ITMGridMap) :: gmap  !! Where is this type defined?
+        type(ids_generic_grid_dynamic_grid_subset) ::  gs_cell, gs_face,   &
+            &   gs_bnd_core
+        integer :: is, ns, nx, ny, i
+        logical, parameter :: B2_WRITE_DATA = .true.
+        real(IDS_R8), dimension(-1:ubound(crx,1),-1:ubound(crx,2),3,3) :: e
+        integer :: iGsCore, iGsInnerMidplane, iGsOuterMidplane
+
+        real(IDS_R8) :: tmpFace(-1:ubound(na, 1), -1:ubound(na, 2), 0:1)
+        real(IDS_R8) :: tmpVx(-1:ubound(na, 1), -1:ubound(na, 2))
+        integer ::  homogeneous_time
+        real(IDS_R8)    ::  time
+
+
+        !> ===  SET UP IDS ===
+        write(0,*) "Setting data for edge_profiles IDS"
+
+        !> Preparing database for writing
+        !> Through practice it was disclosed that there are some mandatory 
+        !> steps to be done in order to assure for data to be successfully 
+        !> written to IDS. Without going through those steps errors and failed 
+        !> process of writing to IDS are to be expected.
+        !> This can be done using exampleSetIDSFundamentals routine
+        homogeneous_time = 1
+        time = 0.0_IDS_R8
+        call exampleSetIDSFundamentals( edge_profiles, homogeneous_time, time) 
+
+        !> Allocate ggd slice
+        allocate(edge_profiles%ggd(1))
+
+        !> allocate and init the IDS
+        allocate(edge_profiles%code%name(1))
 # ifdef B25_EIRENE
-    edge_ids%code%name = "SOLPS-ITER"
+        edge_profiles%code%name = "SOLPS-ITER"
 # else
-    edge_ids%code%name = "B2.5"
+        edge_profiles%code%name = "B2.5"
 # endif
-    allocate(edge_ids%code%version(1))
-    edge_ids%code%version = git_version_B25
-   
-   return
-  end subroutine write_ids
+        allocate(edge_profiles%code%version(1))
+        edge_profiles%code%version = git_version_B25
+
+        ns = size(na, 3) 
+        nx = ubound(na, 1)
+        ny = ubound(na, 2)
+
+        write(*,*) "nx: ", nx
+        write(*,*) "ny: ", ny
+
+        !> List of species
+        write(*,*) "ns: ", ns
+        allocate(edge_profiles%ggd(1)%ion(ns))
+        do is = 0, ns-1
+            write(*,*) "is: ", is
+            write(*,*) "amn: ", am(is)
+            write(*,*) "zn: ", zn(is)
+            write(*,*) "zmin: ", zamin(is)
+            write(*,*) "zmax: ", zamax(is)
+
+            allocate(edge_profiles%ggd(1)%ion(is+1)%state(1))
+            allocate(edge_profiles%ggd(1)%ion(is+1)%element(1))
+
+            call species(is, edge_profiles%ggd(1)%ion(is+1)%state(1)%label,     &
+                &   .false.)
+            edge_profiles%ggd(1)%ion(is+1)%element(1)%a = am(is)
+            edge_profiles%ggd(1)%ion(is+1)%element(1)%z_n = zn(is)
+            edge_profiles%ggd(1)%ion(is+1)%state(1)%z_min = zamin(is)
+            edge_profiles%ggd(1)%ion(is+1)%state(1)%z_max = zamax(is)
+ 
+        enddo
+
+
+
+
+        return
+    end subroutine write_ids
 
 #else
 # ifdef ITM
