@@ -215,7 +215,7 @@ PROG_XD = b2xd.exe
 PROG_OT = b2ag.exe b2ah.exe b2ai.exe b2ar.exe b2co.exe b2uf.exe b2fu.exe b2ts.exe b2yi_gnuplot.exe b2yh.exe b2yt.exe b2yv.exe b2fgmtry_mod.exe calc_atomic_data.exe
 PROG_OP = b2op.exe b2mn_opt.exe
 PROG_MD = b2md.exe b2rd.exe
-PROG_ID = b2_ual_write.exe b2_ual_write_gsl.exe
+PROG_ID = b2_ual_write.exe b2_ual_write_gsl.exe b2_ual_write_b2mod.exe
 
 EXCLUDELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} ${PROG_OP} ${PROG_ID}}
 EXELIST = ${patsubst %.exe, %.o, ${PROG_GR} ${PROG_MN} ${PROG_XD} ${PROG_OT} ${PROG_MD} ${PROG_OP}}
