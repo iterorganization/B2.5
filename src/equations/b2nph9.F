@@ -1,12 +1,12 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2nph9 (nx, ny, ns, nregionv, itcnt, ismain, solving, !srv 05.07.17
+      subroutine b2nph9 (nx, ny, ns, nregionv, itcnt, ismain, solving,  !srv 05.07.17
      &  solvereg, solvireg, solvpreg, solvmreg,
      &  rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb, pbs, lnlam,
-     &  floe, cone, floi, coni, ceqp, pccm, she, shi, fne, fch, cvsa,  !srv 28.06.03
-     1  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,               !srv 07.07.09
-     &  te, ti, po, ne, ni, fhe, fhi, shef, shif, reshe, reshi, resht, !srv 10.11.02
+     &  floe, cone, floi, coni, ceqp, pccm, she, shi, fne, fch, cvsa,   !srv 28.06.03
+     1  fchdia, uadia, wadia, vadia, vaecrb, na, ua, ue,                !srv 07.07.09
+     &  te, ti, po, ne, ni, fhe, fhi, shef, shif, reshe, reshi, resht,  !srv 10.11.02
      &  corte, corti, ierr)
       use b2mod_types
       use b2mod_indirect
@@ -17,14 +17,14 @@
      &          balance_netcdf
       implicit none
 *   ..input arguments (unchanged on exit)
-      integer nx, ny, ns, nregionv, itcnt, ismain                      !srv 05.07.17
+      integer nx, ny, ns, nregionv, itcnt, ismain                       !srv 05.07.17
       real (kind=R8) ::
-     *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),            !srv 07.06.00 02.06.99
+     *  rxf, BoRiS, fac_ExB(-1:nx,-1:ny), vol(-1:nx,-1:ny),             !srv 07.06.00 02.06.99
      *  pbs(-1:nx,-1:ny,0:1),hx(-1:nx,-1:ny), hy(-1:nx,-1:ny), 
-     &  qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)                        !srv 07.05.08 01.07.09
+     &  qz(-1:nx,-1:ny,0:1), lnlam(-1:nx,-1:ny)                         !srv 07.05.08 01.07.09
       real (kind=R8) ::
      *  floe(-1:nx,-1:ny,0:1), floi(-1:nx,-1:ny,0:1),
-     &  cone(-1:nx,-1:ny,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:2),          !srv 02.01.07
+     &  cone(-1:nx,-1:ny,0:1,0:2), coni(-1:nx,-1:ny,0:1,0:2),           !srv 02.01.07
      &  ceqp(-1:nx,-1:ny), pccm(-1:nx,-1:ny,0:1),
      &  she(-1:nx,-1:ny,0:3), shi(-1:nx,-1:ny,0:3),
      &  fhe(-1:nx,-1:ny,0:1), fhi(-1:nx,-1:ny,0:1),
@@ -34,7 +34,7 @@
      &  fch(-1:nx,-1:ny,0:1), cvsa(-1:nx,-1:ny,0:1,0:ns-1),
      1  fchdia(-1:nx,-1:ny,0:1), uadia(-1:nx,-1:ny,0:1,0:ns-1),
      2  bb(-1:nx,-1:ny,0:3), wadia(-1:nx,-1:ny,0:1,0:ns-1), 
-     3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)  !srv 07.07.09
+     3  vadia(-1:nx,-1:ny,0:1,0:ns-1), vaecrb(-1:nx,-1:ny,0:1,0:ns-1)   !srv 07.07.09
       logical solving(4),
      *  solvereg(0:nregionv), solvireg(0:nregionv),
      *  solvpreg(0:nregionv), solvmreg(0:ns-1,0:nregionv)
@@ -47,7 +47,7 @@
       real (kind=R8) ::
      *   reshe(-1:nx,-1:ny), reshi(-1:nx,-1:ny), resht(-1:nx,-1:ny),
      &  corte(-1:nx,-1:ny), corti(-1:nx,-1:ny),
-     &  shef(-1:nx,-1:ny,0:3), shif(-1:nx,-1:ny,0:3)                   !srv 10.11.02
+     &  shef(-1:nx,-1:ny,0:3), shif(-1:nx,-1:ny,0:3)                    !srv 10.11.02
 *   ..common blocks
 *-----------------------------------------------------------------------
 *.documentation
@@ -79,21 +79,20 @@
       real (kind=R8) ::
      *   rxg, pcm0, pcm1
       real (kind=R8) ::
-     * aa9(-1:nx,-1:ny,-6:6), wrkf(-1:nx,-1:ny,0:1),                   !srv 02.01.07
-     1 wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                  !srv 02.01.07
+     * aa9(-1:nx,-1:ny,-6:6), wrkf(-1:nx,-1:ny,0:1),                    !srv 02.01.07
+     1 wrkc(-1:nx,-1:ny,0:1,0:2), cortt(-1:nx,-1:ny),                   !srv 02.01.07
      2 she0(-1:nx,-1:ny,0:3), shi0(-1:nx,-1:ny,0:3),
-     3 wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny)                            !srv 18.09.09
-      integer, save :: iout = 0, iout_b2wdat = 0                       !srv 17.07.05
-      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0            !srv 06.07.06
-      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0            !srv 06.07.06
-      integer, save :: style = 1                                       !srv 09.07.08
-      integer, save :: style_shei = 0                                  !srv 18.09.09 30.01.10
-      character chns*3                                                 !srv 17.07.05
+     3 wrk0(-1:nx,-1:ny), shei(-1:nx,-1:ny)                             !srv 18.09.09
+      integer, save :: iout = 0, iout_b2wdat = 0                        !srv 17.07.05
+      integer, save :: no_Ptncr_x_he = 0, no_Ptncr_y_he = 0             !srv 06.07.06
+      integer, save :: no_Ptncr_x_hi = 0, no_Ptncr_y_hi = 0             !srv 06.07.06
+      integer, save :: style = 1                                        !srv 09.07.08
+      character chns*3                                                  !srv 17.07.05
       save ncall, rxg, pcm0, pcm1
 *   ..procedures
       intrinsic sqrt
       external subini, subend, xertst, ipgetr, lwget, b2saxpy
-      external b2xvsg, b2xvff, b2xvfx, b2sihs, b2ursd, b2ush9, b2upht  !srv 02.01.07
+      external b2xvsg, b2xvff, b2xvfx, b2sihs, b2ursd, b2ush9, b2upht   !srv 02.01.07
 *   ..initialization
       data ncall/0/, rxg/1.0e0_R8/, pcm0/1.0e0_R8/, pcm1/1.0e0_R8/
 
@@ -123,20 +122,19 @@
       call subini ('b2nph9')
 *   ..set internal parameters on first call
       if (ncall.eq.0) then
-       call ipgetr ('b2nph9_rxg', rxg)                                !srv 02.01.07 {
+       call ipgetr ('b2nph9_rxg', rxg)                                  !srv 02.01.07 {
        call ipgetr ('b2nph9_pcm0', pcm0)
-       call ipgetr ('b2nph9_pcm1', pcm1)                              !srv 02.01.07 }
+       call ipgetr ('b2nph9_pcm1', pcm1)                                !srv 02.01.07 }
        call xertst (0.lt.rxg, 'faulty internal parameter rxg')
        call xertst (0.le.pcm0, 'faulty internal parameter pcm0')
        call xertst (0.le.pcm1, 'faulty internal parameter pcm1')
-       call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)               !srv 06.07.06
-       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)               !srv 06.07.06
-       call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)               !srv 06.07.06
-       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)               !srv 06.07.06
-       call ipgeti ('b2nph9_iout', iout)                              !srv 02.01.07
-       call ipgeti ('b2wdat_iout', iout_b2wdat)                       !iys 17.04.17
-       call ipgeti ('b2nph9_style', style)                            !srv 09.07.08
-       call ipgeti ('b2nph9_style_shei', style_shei)                  !srv 18.09.09
+       call ipgeti ('b2tfhe_no_Ptncr_x', no_Ptncr_x_he)                 !srv 06.07.06
+       call ipgeti ('b2tfhi_no_Ptncr_x', no_Ptncr_x_hi)                 !srv 06.07.06
+       call ipgeti ('b2tfhe_no_Ptncr_y', no_Ptncr_y_he)                 !srv 06.07.06
+       call ipgeti ('b2tfhi_no_Ptncr_y', no_Ptncr_y_hi)                 !srv 06.07.06
+       call ipgeti ('b2nph9_iout', iout)                                !srv 02.01.07
+       call ipgeti ('b2wdat_iout', iout_b2wdat)                         !iys 17.04.17
+       call ipgeti ('b2nph9_style', style)                              !srv 09.07.08
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -149,24 +147,24 @@
 *    ..test edge values of pbs
        call b2xvff (nx, ny, pbs, 'pbs')
 *    ..test sign of transport coefficients
-       if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then         !srv 06.07.06 {
-        call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')                 !srv 02.01.07
-       endif                                                        !srv 06.07.06 }
-       if(no_Ptncr_x_hi.eq.0 .and. no_Ptncr_y_hi.eq.0) then         !srv 06.07.06 {
-        call b2xvsg (n2*2, coni, 1, 'coni', '.ge.')                 !srv 02.01.07
-       endif                                                        !srv 06.07.06 }
+       if(no_Ptncr_x_he.eq.0 .and. no_Ptncr_y_he.eq.0) then             !srv 06.07.06 {
+        call b2xvsg (n2*2, cone, 1, 'cone', '.ge.')                     !srv 02.01.07
+       endif                                                            !srv 06.07.06 }
+       if(no_Ptncr_x_hi.eq.0 .and. no_Ptncr_y_hi.eq.0) then             !srv 06.07.06 {
+        call b2xvsg (n2*2, coni, 1, 'coni', '.ge.')                     !srv 02.01.07
+       endif                                                            !srv 06.07.06 }
        call b2xvsg (n2, ceqp, 1, 'ceqp', '.ge.')
 *    ..test edge values of transport coefficients
        call b2xvff (nx, ny, floe, 'floe')
        call b2xvff (nx, ny, floi, 'floi')
-       call b2xvff (nx, ny, cone(-1,-1,0,0), 'cone0')               !srv 02.01.07 {
+       call b2xvff (nx, ny, cone(-1,-1,0,0), 'cone0')                   !srv 02.01.07 {
        call b2xvff (nx, ny, cone(-1,-1,0,1), 'cone1')
        call b2xvff (nx, ny, cone(-1,-1,0,2), 'cone2')
        call b2xvff (nx, ny, coni(-1,-1,0,0), 'coni0')
        call b2xvff (nx, ny, coni(-1,-1,0,1), 'coni1')
-       call b2xvff (nx, ny, coni(-1,-1,0,2), 'coni2')               !srv 02.01.07 }
-!       call b2xvfx (nx, ny, pccm(-1,-1,0), 'pccm0')                !srv 15.04.05 {
-!       call b2xvfx (nx, ny, pccm(-1,-1,1), 'pccm1')                !srv 15.04.05 }
+       call b2xvff (nx, ny, coni(-1,-1,0,2), 'coni2')                   !srv 02.01.07 }
+!       call b2xvfx (nx, ny, pccm(-1,-1,0), 'pccm0')                    !srv 15.04.05 {
+!       call b2xvfx (nx, ny, pccm(-1,-1,1), 'pccm1')                    !srv 15.04.05 }
 *    ..test sign of she, shi
        call b2xvsg (n2, she(-1,-1,0), 1, 'she0', '.ge.')
        call b2xvsg (n2, she(-1,-1,1), 1, 'she1', '.le.')
@@ -187,15 +185,16 @@
 * ..main computation
 *   ..compute final heat sources
       if(style.eq.0) then
-       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB, hx, hy, qz, vol,  !xpb !srv 05.07.17
-     &  bb, pbs, lnlam, na, ua, ue,                                       !srv 01.07.09
-     &  te, ti, po, ne, ni, fch, cvsa, fchdia, uadia, wadia, vaecrb,      !xpb
-     &  she0, shi0, wrk0)                                                 !xpb
+       call b2sihs (nx, ny, ns, BoRiS, ismain, fac_ExB,
+     &  hx, hy, qz, vol, bb, pbs,                                       !xpb !srv 05.07.17
+     &  lnlam, na, ua, ue, te, ti, po, ne, ni,                          !srv 01.07.09
+     &  fch, cvsa, fchdia, uadia, wadia, vaecrb,                        !xpb
+     &  she0, shi0, wrk0)                                               !xpb
       else
-       call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                  !srv 07.06.00 02.06.99 28.06.03 05.07.17
+       call b2sihs_ (nx, ny, ns, BoRiS, ismain, fac_ExB,                !srv 07.06.00 02.06.99 28.06.03 05.07.17
      *  hx, hy, qz, vol, bb, pbs,
-     *  lnlam, na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa,            !srv 28.06.03 01.07.09 05.03.11
-     *  fchdia, uadia, vadia, vaecrb, she0, shi0, wrk0)                   !srv 07.06.00 02.06.99 07.07.09
+     *  lnlam, na, ua, ue, te, ti, po, ne, ni, fne, fch, cvsa,          !srv 28.06.03 01.07.09 05.03.11
+     *  fchdia, uadia, vadia, vaecrb, she0, shi0, wrk0)                 !srv 07.06.00 02.06.99 07.07.09
       endif
       call b2saxpy (n2*4, 1.0e0_R8, she, 1, she0, 1)
       call b2saxpy (n2*4, 1.0e0_R8, shi, 1, shi0, 1)
@@ -213,29 +212,20 @@ cdjm Jan2017 update particle source components for balance
       shif = shi0                                                       !srv 10.11.02 }
       call b2ursd (nx, ny, ne, te, she0, fhe, reshe)
       call b2ursd (nx, ny, ni, ti, shi0, fhi, reshi)
-      if(style_shei.eq.0) then                                          !srv 18.09.09 30.01.10 {
-       do iy = -1, ny
-        do ix = -1, nx
-           shei(ix,iy) = ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
+      do iy = -1, ny
+       do ix = -1, nx
+        if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
+     &     bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
+         shei(ix,iy) = 0.0_R8
+        else
+         shei(ix,iy) = ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
      &                (te(ix,iy)*sqrt(te(ix,iy)))*(te(ix,iy)-ti(ix,iy))
-        enddo
+        endif
        enddo
-      else
-       do iy = -1, ny
-        do ix = -1, nx
-         if(leftix(ix,iy).eq.-2.or.rightix(ix,iy).eq.nx+1 .or.
-     &      bottomiy(ix,iy).eq.-2.or.topiy(ix,iy).eq.ny+1) then
-          shei(ix,iy) = 0.0_R8
-         else
-          shei(ix,iy) = ceqp(ix,iy)*ne(ix,iy)*ni(ix,iy,0)/
-     &                 (te(ix,iy)*sqrt(te(ix,iy)))*(te(ix,iy)-ti(ix,iy))
-         endif
-        enddo
-       enddo
-      endif                                                             !srv 18.09.09 30.01.10 }
+      enddo
 
       if (balance_netcdf.ne.0) then
-        b2npht_shei_bal(-1:nx,-1:ny) = shei(-1:nx,-1:ny)                      !djm Jan2017
+        b2npht_shei_bal(-1:nx,-1:ny) = shei(-1:nx,-1:ny)                !djm Jan2017
       endif
 
 *   ..compute final resht, reshe, reshi
@@ -314,6 +304,6 @@ cdjm Jan2017 update particle source components for balance
       return
 
 *-----------------------------------------------------------------------
-*.end b2nph9                                                           !srv 02.01.07 }
+*.end b2nph9                                                            !srv 02.01.07 }
 
       end
