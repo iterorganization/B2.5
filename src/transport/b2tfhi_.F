@@ -71,7 +71,7 @@ csw 30apr2014 added fna_he, ia
       real (kind=R8), save :: PSch=1.0e0_R8                             !srv 17.01.07
       real (kind=R8), save :: xcur = 0.0_R8                             !xpb 27.09.17
       real (kind=R8), save :: ycur = 1.0_R8                             !srv 07.07.08
-      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 0.0_R8          !srv 02.10.17
+      real (kind=R8), save :: vis_per = 0.0_R8, vis_q = 1.0_R8          !srv 02.10.17
       real (kind=R8) ::
      *   flo, dif, floi0, flomx, coni0, t0, t1, dti, dti0, vdia_par,    !srv 17.05.99
      &   floi0_mdf, coni0_mdf, t0_mdf, t1_mdf, dti0_mdf                 !srv 13.10.06 17.06.09
