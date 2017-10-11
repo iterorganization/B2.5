@@ -105,19 +105,9 @@ contains
         nx = ubound(na, 1)
         ny = ubound(na, 2)
 
-        ! write(*,*) "* nx: ", nx
-        ! write(*,*) "* ny: ", ny
-
         !> List of species
-        ! write(*,*) "* ns: ", ns
         allocate(edge_profiles%ggd(1)%ion(ns))
         do is = 0, ns-1
-            ! write(*,*) "* is: ", is
-            ! write(*,*) "* amn: ", am(is)
-            ! write(*,*) "* zn: ", zn(is)
-            ! write(*,*) "* zmin: ", zamin(is)
-            ! write(*,*) "* zmax: ", zamax(is)
-
             allocate(edge_profiles%ggd(1)%ion(is+1)%state(1))
             allocate(edge_profiles%ggd(1)%ion(is+1)%element(1))
 
@@ -137,45 +127,31 @@ contains
             &   topix,topiy,bottomix,bottomiy, INCLUDE_GHOST_CELLS, gmap )
         mapInitialized = .true.
 
-        ! write(*,*) "* nx: ", nx
-        ! write(*,*) "* ny: ", ny
-        ! write(*,*) "* crx: ", crx
-        ! write(*,*) "* cry: ", cry
-        ! write(*,*) "* cflags: ", cflags
-        ! write(*,*) "* leftix: ", leftix
-        ! write(*,*) "* leftiy: ", leftiy
-        ! write(*,*) "* rightix: ", rightix
-        ! write(*,*) "* rightiy: ", rightiy
-        ! write(*,*) "* topix: ", topix
-        ! write(*,*) "* topiy: ", topiy
-        ! write(*,*) "* bottomix: ", bottomix
-        ! write(*,*) "* bottomiy: ", bottomiy
-        ! write(*,*) "* INCLUDE_GHOST_CELLS: ", INCLUDE_GHOST_CELLS
-
-        !> Write grid & subgrids
+        !> Write grid & grid subsets/subgrids
         call b2IMASFillGridDescription( gmap, edge_profiles%ggd(1)%grid, &
             & nx,ny,crx(-1:nx,-1:ny,:),cry(-1:nx,-1:ny,:), &
             & leftix,leftiy,rightix,rightiy, &
             & topix,topiy,bottomix,bottomiy, &
             & nnreg, topcut, region, cflags, INCLUDE_GHOST_CELLS, vol, gs, qc )
 
-        !!$ TEST grid subset nodes
-        ! allocate(edge_profiles%ggd(1)%grid%grid_subset(1))
-        ! allocate(edge_profiles%ggd(1)%grid%grid_subset(1)%element(3588))
-        ! allocate(edge_profiles%ggd(1)%grid%grid_subset(1)%identifier%name(1))
-        ! edge_profiles%ggd(1)%grid%grid_subset(1)%identifier%name(1) = "B2.5 NODES TEST"
-        ! edge_profiles%ggd(1)%grid%grid_subset(1)%identifier%index = 1
-        ! edge_profiles%ggd(1)%grid%grid_subset(1)%dimension = 1
-        ! do i = 1, 3588
-        !     allocate(edge_profiles%ggd(1)%grid%grid_subset(1)%element(i)%object(1))
-        !     edge_profiles%ggd(1)%grid%grid_subset(1)%element(i)%object(1)%dimension = 1
-        !     edge_profiles%ggd(1)%grid%grid_subset(1)%element(i)%object(1)%space = 1
-        !     edge_profiles%ggd(1)%grid%grid_subset(1)%element(i)%object(1)%index = i
-        ! enddo
-
-
-
-
+#if 1
+        !> Temporary: Simple creation of the Nodes grid subset to check if the 
+        !> new features work correctly
+        write(0,*) "Writing test grid subset containing all nodes in the domain"
+        write(0,*) "num_obj_0D: ", gmap%nvx
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(1))
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(1)%element(gmap%nvx))
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(1)%identifier%name(1))
+        edge_profiles%ggd(1)%grid%grid_subset(1)%identifier%name(1) = "B2.5 NODES TEST"
+        edge_profiles%ggd(1)%grid%grid_subset(1)%identifier%index = 1
+        edge_profiles%ggd(1)%grid%grid_subset(1)%dimension = 1
+        do i = 1, 3588
+            allocate(edge_profiles%ggd(1)%grid%grid_subset(1)%element(i)%object(1))
+            edge_profiles%ggd(1)%grid%grid_subset(1)%element(i)%object(1)%dimension = 1
+            edge_profiles%ggd(1)%grid%grid_subset(1)%element(i)%object(1)%space = 1
+            edge_profiles%ggd(1)%grid%grid_subset(1)%element(i)%object(1)%index = i
+        enddo
+#endif
 
         return
     end subroutine write_ids

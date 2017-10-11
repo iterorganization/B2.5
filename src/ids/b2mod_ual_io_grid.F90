@@ -158,6 +158,7 @@ contains
       
         ! ggd_grid%space(SPACE_POLOIDALPLANE)%geometry_type%name = 'Poloidal' 
 
+        !> Set the space coordinates, also defining the dimension of the space
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%coordinates_type(NDIM) )
         ggd_grid%space( SPACE_POLOIDALPLANE )%coordinates_type(1) = COORDTYPE_R
         ggd_grid%space( SPACE_POLOIDALPLANE )%coordinates_type(2) = COORDTYPE_Z
@@ -168,31 +169,32 @@ contains
 
         !> Allocate the number of objects of each type
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(1)%object( (nx+1)*(ny+1)) )       !> nodes
+            &   objects_per_dimension(1)%object( (nx+1)*(ny+1)) )   !> nodes
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(2)%object( nx*(ny+1)+(nx+1)*ny) ) !> edges
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(3)%object( nx*ny ) )              !> cells
       
-        ! write(*,*) "* gmap%nvx: ", gmap%nvx
         !> Fill in node information
-        allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-            &   objects_per_dimension(1)%object( gmap%nvx ) )
+        !> Set number of nodes (0D objects)
+        ! allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
+            ! &   objects_per_dimension(1)%object( gmap%nvx ) )
         do ivx = 1, gmap % nvx
+            !> Allocate goometry leaf for each node
             allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-                &   objects_per_dimension(1)%object( ivx )%geometry(2))
-            allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
-                &   objects_per_dimension(1)%object( ivx )%nodes(1))
-            ! write(*,*) "** ivx: ", ivx
-            ! write(*,*) "** gmap%mapVxix( ivx ): ", gmap%mapVxix( ivx )
-            ! write(*,*) "** gmap%mapVxiy( ivx ): ", gmap%mapVxiy( ivx )
-            ! write(*,*) "** gmap%mapVxIVx( ivx ): ", gmap%mapVxIVx( ivx )
-            ! write(*,*) "** crx( ... ) : ",  &
-                ! &   crx( gmap%mapVxix( ivx ), gmap%mapVxiy( ivx ), gmap%mapVxIVx( ivx ))
-            ! write(*,*) "** cry( ... ) : ",  &
-                ! &   cry( gmap%mapVxix( ivx ), gmap%mapVxiy( ivx ), gmap%mapVxIVx( ivx ))
-            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%     &
-                &   object( ivx )%nodes(1) = ivx             
+                &   objects_per_dimension(1)%object( ivx )%geometry(2)) 
+#if 0       
+            !> Set geometry (R and Z coordinates) of each node
+            !> The way of writing nodes data identically to the to IDS converted 
+            !> CPO 16151/1000 case, available on (written in 11th October 2017) 
+            !> ITER HPC custer in directory
+            !> /home/ITER/penkod/public/imasdb/solps-iter/3/0
+            !> or 
+            !> /home/ITER/kosl/public/imasdb/solps-iter/3/0
+            !> while on GateWay Marconi
+            !> /marconi_work/eufus_gw/work/g2penkod/imasdb/solps-iter/3/0
+            !> or 
+            !> /marconi_work/eufus_gw/work/g2kosl/imasdb/solps-iter/3/0
             ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%     &
                 &   object( ivx )%geometry(1) = crx(    gmap%mapVxix( ivx ),    &
                                                     &   gmap%mapVxiy( ivx ),    &
@@ -200,59 +202,62 @@ contains
             ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%     &
                 &   object( ivx )%geometry(2) = cry(    gmap%mapVxix( ivx ),    &
                                                     &   gmap%mapVxiy( ivx ),    &
-                                                    &   gmap%mapVxIVx( ivx ))       
+                                                    &   gmap%mapVxIVx( ivx ))
+#endif
+
+            !> Set additional node index (REQUIRED!)
+            allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
+                &   objects_per_dimension(1)%object( ivx )%nodes(1))
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(1)%     &
+                &   object( ivx )%nodes(1) = ivx  
         end do
 
-# if 0
-
+        !> Set geometry (R and Z coordinates) of each node
         ivx = 0
         do iy = 0, ny-1
             do ix = 0, nx-1
-                write(*,*) "* ivx: ", ivx
                 ivx = ivx + 1 !> Lower left corners
-                write(*,*) "* crx(ix, iy, 0): ", crx(ix, iy, 0)
-                write(*,*) "* cry(ix, iy, 0): ", cry(ix, iy, 0)
                 ggd_grid%space(SPACE_POLOIDALPLANE)%    &
                     &   objects_per_dimension(1)%object(ivx)%geometry(1) =  &
                     &   crx(ix,iy,0)
                 ggd_grid%space(SPACE_POLOIDALPLANE)%    &
                     &   objects_per_dimension(1)%object(ivx)%geometry(2) =  &
                     &   cry(ix,iy,0)
+                if(ivx .eq. ((nx+1)*(ny+1) - 1) ) return
                 if (ix.eq.nx-1) then
                     ivx = ivx + 1  !> Lower right corners
-                    write(*,*) "* crx(ix, iy, 1): ", crx(ix, iy, 1)
-                    write(*,*) "* cry(ix, iy, 1): ", cry(ix, iy, 1)
                     ggd_grid%space(SPACE_POLOIDALPLANE)%    &
                         &   objects_per_dimension(1)%object(ivx)%geometry(1) =  &
                         &   crx(ix,iy,1)
                     ggd_grid%space(SPACE_POLOIDALPLANE)%    &
                         &   objects_per_dimension(1)%object(ivx)%geometry(2) =  &
                         &   cry(ix,iy,1)
+                    if(ivx .eq. ((nx+1)*(ny+1) - 1) ) return
                 end if
                 if (iy.eq.ny-1) then
                     ivx = ivx + 1  !> Upper left corners
-                    write(*,*) "* crx(ix, iy, 2): ", crx(ix, iy, 2)
-                    write(*,*) "* cry(ix, iy, 2): ", cry(ix, iy, 2)
                     ggd_grid%space(SPACE_POLOIDALPLANE)%    &
                         &   objects_per_dimension(1)%object(ivx)%geometry(1) =  &
                         &   crx(ix,iy,2)
                     ggd_grid%space(SPACE_POLOIDALPLANE)%    &
                         &   objects_per_dimension(1)%object(ivx)%geometry(2) =  &
                         &   cry(ix,iy,2)
+                    if(ivx .eq. ((nx+1)*(ny+1) - 1) ) return
                     if (ix.eq.nx-1) then
                         ivx = ivx + 1  !> Upper right corners
-                        write(*,*) "* crx(ix, iy, 3): ", crx(ix, iy, 3)
-                        write(*,*) "* cry(ix, iy, 3): ", cry(ix, iy, 3)
                         ggd_grid%space(SPACE_POLOIDALPLANE)%    &
                             &   objects_per_dimension(1)%object(ivx)%   &
                             &   geometry(1) = crx(ix,iy,3)
                         ggd_grid%space(SPACE_POLOIDALPLANE)%    &
                             &   objects_per_dimension(1)%object(ivx)%   &
                             &   geometry(2) = cry(ix,iy,3)
+                        if(ivx .eq. ((nx+1)*(ny+1) - 1) ) return
                     end if
                 end if
             end do
         end do
+
+# if 0
 
 
 
