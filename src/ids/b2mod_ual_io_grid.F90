@@ -290,7 +290,6 @@ contains
         enddo
 
 # if 0
-
         !> 1d object measure: face area
 
         !> x-aligned faces    
