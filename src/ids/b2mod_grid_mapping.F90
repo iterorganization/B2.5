@@ -1,147 +1,153 @@
 module b2mod_grid_mapping
 
-  !> This module provides:
-  !>
-  !> 1. A mechanism to map from the B2 data structure to the IDS and CPO data 
-  !> structures, consisting of a routine to set up the map (b2CreateMap), a 
-  !> data structure to hold the map information (B2GridMap) and some service 
-  !> routines to handle this data structure.
-  !>
-  !> 2. Two routines (b2IMASFillGridDescription and b2ITMFillGridDescription) 
-  !> to write the B2 grid into an IMAS or ITM grid description data structure 
-  !> (which usually is part of an IDS or a CPO). It also  sets up the default 
-  !> grid subsets for the B2 grid.
-  !> 
-  !> 3. Routines to transform variables stored in the B2 data structure into
-  !> the form expected IDS or CPO data structure.
+    !> This module provides:
+    !>
+    !> 1. A mechanism to map from the B2 data structure to the IDS and CPO data 
+    !> structures, consisting of a routine to set up the map (b2CreateMap), a 
+    !> data structure to hold the map information (B2GridMap) and some service 
+    !> routines to handle this data structure.
+    !>
+    !> 2. Two routines (b2IMASFillGridDescription and b2ITMFillGridDescription) 
+    !> to write the B2 grid into an IMAS or ITM grid description data structure 
+    !> (which usually is part of an IDS or a CPO). It also  sets up the default 
+    !> grid subsets for the B2 grid.
+    !> 
+    !> 3. Routines to transform variables stored in the B2 data structure into
+    !> the form expected IDS or CPO data structure.
 
-  use b2mod_types , B2_R8 => R8, B2_R4 => R4
-  use helper
-  use logging , only: logmsg, LOGDEBUG
-  use b2mod_connectivity , REMOVED_B2_R8 => R8
-  use carre_constants
-  use b2mod_cellhelper
 
-  implicit none
 
-  !> Distance between two points at which the points are declared to be equal
-  real(R8), private, parameter :: geom_match_dist = 1.0e-6_R8
+    use b2mod_types , B2_R8 => R8, B2_R4 => R4
+    use helper
+    use logging , only: logmsg, LOGDEBUG
+    use b2mod_connectivity , REMOVED_B2_R8 => R8
+    use carre_constants
+    use b2mod_cellhelper
 
-  !> Alignment index (for example in B2 flux arrays)
-  integer, parameter :: ALIGNX = 1
-  integer, parameter :: ALIGNY = 0
+    implicit none
 
-  !> Maximum number of special vertices expected in the grid
-  integer, parameter :: MAX_SPECIAL_VERTICES = 10
+    !> Distance between two points at which the points are declared to be equal
+    real(R8), private, parameter :: geom_match_dist = 1.0e-6_R8
 
-  !> Data structure holding an intermediate grid description to be 
-  !> transferred into a CPO
-  type B2GridMap
-      integer :: ncv, nfcx, nfcy, nvx
-      integer :: b2nx, b2ny
+    !> Alignment index (for example in B2 flux arrays)
+    integer, parameter :: ALIGNX = 1
+    integer, parameter :: ALIGNY = 0
 
-      !> Mapping arrays: 
-      !> 1d CPO lists -> 2d B2 data structure ( i -> (ix, iy) )
-      ! b2cv( mapCvix(i), mapCviy(i) ) = cpocv(i)
-      ! b2fc( mapFcix(i), mapFciy(i), mapFciFace(i) ) = cpofc(i)  
-      !> for "normal" faces, mapFcIFace will be LEFT or BOTTOM
+    !> Maximum number of special vertices expected in the grid
+    integer, parameter :: MAX_SPECIAL_VERTICES = 10
 
-      ! b2vx( mapVxix(i), mapVxiy(i), mapVxIVx(i) ) = cpovx(i)
-      !> for "normal" vertices, mapVxIVx(i) will be 1 (lower left vertex)
+    !> Data structure holding an intermediate grid description to be 
+    !> transferred into a CPO
+    type B2GridMap
+        !> Description of some variables:
+        !>    nfcx - Number of x-aligned faces/edges (1D objects)
+        !>    nfcy - Number of y-aligned faces/edges (1D objects)
+        !>    nvx  - Number of all vertices/nodes (0D objects)
+        integer :: ncv, nfcx, nfcy, nvx
+        integer :: b2nx, b2ny
 
-      integer, dimension(:), allocatable :: mapCvix, mapCviy 
-      integer, dimension(:), allocatable :: mapFcix, mapFciy, mapFcIFace
-      integer, dimension(:), allocatable :: mapVxix, mapVxiy, mapVxIVx
+        !> Mapping arrays: 
+        !> 1d CPO lists -> 2d B2 data structure ( i -> (ix, iy) )
+        ! b2cv( mapCvix(i), mapCviy(i) ) = cpocv(i)
+        ! b2fc( mapFcix(i), mapFciy(i), mapFciFace(i) ) = cpofc(i)  
+        !> for "normal" faces, mapFcIFace will be LEFT or BOTTOM
 
-      !> 2d B2 data structure -> 1d CPO lists ( (ix, iy) -> i )
-      ! cpocv( mapCvI(ix, iy) ) = b2cv(ix, iy)
-      ! cpofc( mapFcI(ix, iy, iFace) ) = b2fc(ix, iy, iFace) 
-      ! cpovx( mapVxI(ix, iy, iVertex) ) = b2vx(ix, iy, iVertex)
+        ! b2vx( mapVxix(i), mapVxiy(i), mapVxIVx(i) ) = cpovx(i)
+        !> for "normal" vertices, mapVxIVx(i) will be 1 (lower left vertex)
 
-      integer, dimension(:,:), allocatable :: mapCvI
-      integer, dimension(:,:,:), allocatable :: mapFcI, mapVxI
+        integer, dimension(:), allocatable :: mapCvix, mapCviy 
+        integer, dimension(:), allocatable :: mapFcix, mapFciy, mapFcIFace
+        integer, dimension(:), allocatable :: mapVxix, mapVxiy, mapVxIVx
 
-      !> Special vertices (x-points)
-      !> number of special vertices
-      integer :: nsv
-      !> svix, sviy : positions of special vertices in B2 data structure
-      !> (lower left corner of svix, sviy cell)
-      !> svi: indices of special vertices in the CPO data structure
-      integer, dimension(:), allocatable :: svix, sviy, svi
+        !> 2d B2 data structure -> 1d CPO lists ( (ix, iy) -> i )
+        ! cpocv( mapCvI(ix, iy) ) = b2cv(ix, iy)
+        ! cpofc( mapFcI(ix, iy, iFace) ) = b2fc(ix, iy, iFace) 
+        ! cpovx( mapVxI(ix, iy, iVertex) ) = b2vx(ix, iy, iVertex)
 
-      !> Correspondence between vertices and cells
-      integer, dimension(:,:), allocatable :: mapCvixVx 
-      integer, dimension(:,:), allocatable :: mapCviyVx 
-  end type B2GridMap
+        integer, dimension(:,:), allocatable :: mapCvI
+        integer, dimension(:,:,:), allocatable :: mapFcI, mapVxI
 
-  logical, save :: mapInitialized = .false.
-  logical, save :: map1Initialized = .false.
+        !> Special vertices (x-points)
+        !> number of special vertices
+        integer :: nsv
+        !> svix, sviy : positions of special vertices in B2 data structure
+        !> (lower left corner of svix, sviy cell)
+        !> svi: indices of special vertices in the CPO data structure
+        integer, dimension(:), allocatable :: svix, sviy, svi
 
-  private :: R8
+        !> Correspondence between vertices and cells
+        integer, dimension(:,:), allocatable :: mapCvixVx 
+        integer, dimension(:,:), allocatable :: mapCviyVx 
+    end type B2GridMap
+
+    logical, save :: mapInitialized = .false.
+    logical, save :: map1Initialized = .false.
+
+    private :: R8
 
 contains
 
-  !> service routines for B2GridData
+    !> service routines for B2GridData
 
-  subroutine allocateB2GridMap( gd, nx, ny, ncv, nfcx, nfcy, nvx )
-    type(B2GridMap), intent(inout) :: gd
-    integer, intent(in) ::  nx, ny, ncv, nfcx, nfcy, nvx
+    subroutine allocateB2GridMap( gd, nx, ny, ncv, nfcx, nfcy, nvx )
+        type(B2GridMap), intent(inout) :: gd
+        integer, intent(in) ::  nx, ny, ncv, nfcx, nfcy, nvx
 
-    gd%ncv = ncv
-    gd%nfcx = nfcx
-    gd%nfcy = nfcy
-    gd%nvx = nvx
+        gd%ncv = ncv
+        gd%nfcx = nfcx  !> Number of x-aligned faces/edges (1D objects)
+        gd%nfcy = nfcy  !> Number of y-aligned faces/edges (1D objects)
+        gd%nvx = nvx    !> Number of all vertices/nodes (0D objects)
 
-    gd%b2nx = nx
-    gd%b2ny = ny
+        gd%b2nx = nx
+        gd%b2ny = ny
 
-    allocate( gd%mapCvI(-1:nx+1, -1:ny+1) )
-    gd%mapCvI = GRID_UNDEFINED
-    allocate( gd%mapFcI(-1:nx+1, -1:ny+1, 0:3) )
-    gd%mapFcI = GRID_UNDEFINED
-    allocate( gd%mapVxI(-1:nx+1, -1:ny+1, 0:3) )
-    gd%mapVxI = GRID_UNDEFINED
+        allocate( gd%mapCvI(-1:nx+1, -1:ny+1) )
+        gd%mapCvI = GRID_UNDEFINED
+        allocate( gd%mapFcI(-1:nx+1, -1:ny+1, 0:3) )
+        gd%mapFcI = GRID_UNDEFINED
+        allocate( gd%mapVxI(-1:nx+1, -1:ny+1, 0:3) )
+        gd%mapVxI = GRID_UNDEFINED
 
-    allocate( gd%mapCvix(ncv), gd%mapCviy(ncv) )
-    gd%mapCvix = GRID_UNDEFINED
-    gd%mapCviy = GRID_UNDEFINED
-    allocate( gd%mapFcix(nfcx+nfcy), gd%mapFciy(nfcx+nfcy), gd%mapFcIFace(nfcx+nfcy) )
-    gd%mapFcix = GRID_UNDEFINED
-    gd%mapFciy = GRID_UNDEFINED
-    gd%mapFcIFace = GRID_UNDEFINED
-    allocate( gd%mapVxix(nvx), gd%mapVxiy(nvx), gd%mapVxIVx(nvx) )
-    gd%mapVxix = GRID_UNDEFINED
-    gd%mapVxiy = GRID_UNDEFINED
-    gd%mapVxIVx = GRID_UNDEFINED
+        allocate( gd%mapCvix(ncv), gd%mapCviy(ncv) )
+        gd%mapCvix = GRID_UNDEFINED
+        gd%mapCviy = GRID_UNDEFINED
+        allocate( gd%mapFcix(nfcx+nfcy), gd%mapFciy(nfcx+nfcy), gd%mapFcIFace(nfcx+nfcy) )
+        gd%mapFcix = GRID_UNDEFINED
+        gd%mapFciy = GRID_UNDEFINED
+        gd%mapFcIFace = GRID_UNDEFINED
+        allocate( gd%mapVxix(nvx), gd%mapVxiy(nvx), gd%mapVxIVx(nvx) )
+        gd%mapVxix = GRID_UNDEFINED
+        gd%mapVxiy = GRID_UNDEFINED
+        gd%mapVxIVx = GRID_UNDEFINED
 
-    gd%nsv = 0
-    allocate( gd%svix(MAX_SPECIAL_VERTICES), gd%sviy(MAX_SPECIAL_VERTICES), gd%svi(MAX_SPECIAL_VERTICES) )
-    gd%svix = GRID_UNDEFINED
-    gd%sviy = GRID_UNDEFINED
-    gd%svi = GRID_UNDEFINED
+        gd%nsv = 0
+        allocate( gd%svix(MAX_SPECIAL_VERTICES), gd%sviy(MAX_SPECIAL_VERTICES), gd%svi(MAX_SPECIAL_VERTICES) )
+        gd%svix = GRID_UNDEFINED
+        gd%sviy = GRID_UNDEFINED
+        gd%svi = GRID_UNDEFINED
 
-    allocate( gd%mapCvixVx(nvx, 8), gd%mapCviyVx(nvx, 8))
-    gd%mapCvixVx = B2_GRID_UNDEFINED
-    gd%mapCviyVx = B2_GRID_UNDEFINED
+        allocate( gd%mapCvixVx(nvx, 8), gd%mapCviyVx(nvx, 8))
+        gd%mapCvixVx = B2_GRID_UNDEFINED
+        gd%mapCviyVx = B2_GRID_UNDEFINED
 
-  end subroutine allocateB2GridMap
+    end subroutine allocateB2GridMap
 
-  subroutine deallocateB2GridMap( gd )
-    type(B2GridMap), intent(inout) :: gd
+    subroutine deallocateB2GridMap( gd )
+        type(B2GridMap), intent(inout) :: gd
 
-    deallocate( gd%mapCvI )
-    deallocate( gd%mapFcI )
-    deallocate( gd%mapVxI )
+        deallocate( gd%mapCvI )
+        deallocate( gd%mapFcI )
+        deallocate( gd%mapVxI )
 
-    deallocate( gd%mapCvix, gd%mapCviy )
-    deallocate( gd%mapFcix, gd%mapFciy, gd%mapFcIFace )
-    deallocate( gd%mapVxix, gd%mapVxiy )
+        deallocate( gd%mapCvix, gd%mapCviy )
+        deallocate( gd%mapFcix, gd%mapFciy, gd%mapFcIFace )
+        deallocate( gd%mapVxix, gd%mapVxiy )
 
-    deallocate( gd%svix, gd%sviy, gd%svi )
+        deallocate( gd%svix, gd%sviy, gd%svi )
 
-    deallocate( gd%mapCvixVx, gd%mapCviyVx )
+        deallocate( gd%mapCvixVx, gd%mapCviyVx )
 
-  end subroutine deallocateB2GridMap
+    end subroutine deallocateB2GridMap
 
 
 

@@ -96,7 +96,8 @@ program b2_ual_write
                         !> IDS structures 
     use ids_assert, IDS_R8 => R8, IDS_R4 => R4  ! IGNORE
     use ids_grid_common, IDS_COORDTYPE_R => COORDTYPE_R,    &   ! IGNORE
-        &   IDS_COORDTYPE_Z => COORDTYPE_R ! IGNORE
+        &   IDS_COORDTYPE_Z => COORDTYPE_R,                 &   ! IGNORE
+        &   GRID_UNDEFINED  => B2_GRID_UNDEFINED                   ! IGNORE
     use ids_string              ! IGNORE
     use ids_grid_subgrid        ! IGNORE
     use ids_grid_objectlist     ! IGNORE

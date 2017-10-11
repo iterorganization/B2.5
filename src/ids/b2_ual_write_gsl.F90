@@ -94,8 +94,8 @@ program b2_ual_write
                         !> These are the Access Layer routines + management of 
                         !> IDS structures 
     use ids_assert, IDS_R8 => R8, IDS_R4 => R4  ! IGNORE
-    use ids_grid_common, IDS_COORDTYPE_R => COORDTYPE_R,    &
-        &   IDS_COORDTYPE_Z => COORDTYPE_R ! IGNORE
+    use ids_grid_common, IDS_COORDTYPE_R => COORDTYPE_R,    &   ! IGNORE
+        &   IDS_COORDTYPE_Z => COORDTYPE_R                      ! IGNORE
     use ids_string              ! IGNORE
     use ids_grid_subgrid        ! IGNORE
     use ids_grid_objectlist     ! IGNORE
