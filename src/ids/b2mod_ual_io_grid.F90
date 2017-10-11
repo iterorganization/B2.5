@@ -15,6 +15,7 @@ module b2mod_ual_io_grid
     use ids_schemas  ! IGNORE
     use ids_routines ! IGNORE
     use ids_grid_common ! IGNORE
+    use ids_string   ! IGNORE
 #else
 # ifdef ITM
     use itm_types , ITM_R8 => R8, ITM_R4 => R4 ! IGNORE
@@ -274,23 +275,30 @@ contains
         !> faces: along flux surface, for y-aligned faces: orthogonal to flux 
         !> surface)
         do ifc = 1, nfc
-            !> Allocate and set all boundary & connectivity information to undefined
-            allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                &   object( ifc )%boundary(2) )
+            !> Allocate and set all boundary & connectivity information to 
+            !> undefined
+            allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
+                &   objects_per_dimension(2)%object( ifc )%boundary(2) )
             do i = 1, 2
                 !> Boundary to undefined
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( ifc )%boundary(i)%index = B2_GRID_UNDEFINED
                 !> Neighbour to undefined
-                allocate(ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( ifc )%boundary(i)%neighbours(1))
+                allocate(ggd_grid%space( SPACE_POLOIDALPLANE )% &
+                    &   objects_per_dimension(2)%object( ifc )%boundary(i)% &
+                    &   neighbours(1))
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
-                    &   object( ifc )%boundary(i)%neighbours(1) = B2_GRID_UNDEFINED
+                    &   object( ifc )%boundary(i)%neighbours(1) =   &
+                    &   B2_GRID_UNDEFINED
             enddo
         enddo
 
-# if 0
+! # if 0
+        !> TODO: 
         !> 1d object measure: face area
+
+        
+
 
         !> x-aligned faces    
         do ifc = 1, gmap%nfcx    
@@ -303,33 +311,29 @@ contains
             select case ( gmap%mapFcIFace( ifc ) )
             case( BOTTOM )
                 !> start index: 1=start node
-                ggd_grid%space( SPACE_POLOIDALPLANE )%objects(2)%   &
-                    &   boundary( ifc, 1 ) = gmap%mapVxI( ix, iy, VX_LOWERLEFT )
-                if (gmap % mapVxI( ix, iy, VX_LOWERLEFT ) == GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM face at " &
-                        &   //int2str(ix)//","//int2str(iy)//" has no start node")
+                ! ggd_grid%space( SPACE_POLOIDALPLANE )%objects(2)%   &
+                    ! &   boundary( ifc, 1 ) = gmap%mapVxI( ix, iy, VX_LOWERLEFT )
+                if (gmap % mapVxI( ix, iy, VX_LOWERLEFT ) == B2_GRID_UNDEFINED) then
+                    call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM face at "//idsInt2str(ix)//","//idsInt2str(iy)//" has no start node")
                 end if
                 !> end vertex: 2=end node
-                ggd_grid%space( SPACE_POLOIDALPLANE )%objects(2)%   &
-                    &   boundary( ifc, 2 ) = gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
-                if (gmap%mapVxI( ix, iy, VX_LOWERRIGHT ) == GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM face at " &
-                        &   //int2str(ix)//","//int2str(iy)//" has no end node")
+                ! ggd_grid%space( SPACE_POLOIDALPLANE )%objects(2)%   &
+                    ! &   boundary( ifc, 2 ) = gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
+                if (gmap%mapVxI( ix, iy, VX_LOWERRIGHT ) == B2_GRID_UNDEFINED) then
+                    call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM face at "//idsInt2str(ix)//","//idsInt2str(iy)//" has no end node")
                 end if
             case( TOP )
                 !> start index: 1=start node
-                ggd_grid%space( SPACE_POLOIDALPLANE )%objects(2)%   &
-                    &   boundary( ifc, 1 ) = gmap%mapVxI( ix, iy, VX_UPPERLEFT )
-                if (gmap%mapVxI( ix, iy, VX_UPPERLEFT ) == GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: TOP face at "    &
-                        &   //int2str(ix)//","//int2str(iy)//" has no start node")
+                ! ggd_grid%space( SPACE_POLOIDALPLANE )%objects(2)%   &
+                    ! &   boundary( ifc, 1 ) = gmap%mapVxI( ix, iy, VX_UPPERLEFT )
+                if (gmap%mapVxI( ix, iy, VX_UPPERLEFT ) == B2_GRID_UNDEFINED) then
+                    call logmsg(LOGWARNING, "b2IMASFillGD: TOP face at "//idsInt2str(ix)//","//idsInt2str(iy)//" has no start node")
                 end if
                 !> end vertex: 2=end node
-                ggd_grid%space( SPACE_POLOIDALPLANE )%objects(2)%   &
-                    &   boundary( ifc, 2 ) = gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
-                if (gmap%mapVxI( ix, iy, VX_UPPERRIGHT ) == GRID_UNDEFINED) then
-                    call logmsg(LOGWARNING, "b2IMASFillGD: TOP face at "    &
-                        &   //int2str(ix)//","//int2str(iy)//" has no end node")
+                ! ggd_grid%space( SPACE_POLOIDALPLANE )%objects(2)%   &
+                    ! &   boundary( ifc, 2 ) = gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
+                if (gmap%mapVxI( ix, iy, VX_UPPERRIGHT ) == B2_GRID_UNDEFINED) then
+                    call logmsg(LOGWARNING, "b2IMASFillGD: TOP face at "//idsInt2str(ix)//","//idsInt2str(iy)//" has no end node")
                 end if
             end select
 
@@ -338,20 +342,21 @@ contains
           nix = leftix( ix, iy )
           niy = leftiy( ix, iy )
           if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-             ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 1, 1 ) = &
-                  & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
+             ! ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 1, 1 ) = &
+                  ! & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
           end if
           ! Right neighbour: face continuing to the right of this face 
           nix = rightix( ix, iy )
           niy = rightiy( ix, iy )
           if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-             ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 2, 1 ) = &
-                  & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
+             ! ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 2, 1 ) = &
+                  ! & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
           end if
 
           ! measure: area
-          if (present(gs)) ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % measure( ifc, 1 ) = gs(ix, iy, ALIGNX)
+          ! if (present(gs)) ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % measure( ifc, 1 ) = gs(ix, iy, ALIGNX)
       end do
+#if 0
 
       ! y-aligned faces    
       do ifc = gmap % nfcx + 1, gmap % nfcx + gmap % nfcy    
