@@ -64,7 +64,7 @@ contains
         type(B2GridMap) :: gmap  !! Where is this type defined?
         type(ids_generic_grid_dynamic_grid_subset) ::  gs_cell, gs_face,   &
             &   gs_bnd_core
-        integer :: is, ns, nx, ny, i
+        integer :: is, ns, nx, ny, i, j
         logical, parameter :: B2_WRITE_DATA = .true.
         real(IDS_R8), dimension(-1:ubound(crx,1),-1:ubound(crx,2),3,3) :: e
         integer :: iGsCore, iGsInnerMidplane, iGsOuterMidplane
@@ -137,19 +137,34 @@ contains
 #if 1
         !> Temporary: Simple creation of the Nodes grid subset to check if the 
         !> new features work correctly
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(2))
         write(0,*) "Writing test grid subset containing all nodes in the domain"
         write(0,*) "num_obj_0D: ", gmap%nvx
-        allocate(edge_profiles%ggd(1)%grid%grid_subset(1))
         allocate(edge_profiles%ggd(1)%grid%grid_subset(1)%element(gmap%nvx))
         allocate(edge_profiles%ggd(1)%grid%grid_subset(1)%identifier%name(1))
         edge_profiles%ggd(1)%grid%grid_subset(1)%identifier%name(1) = "B2.5 NODES TEST"
         edge_profiles%ggd(1)%grid%grid_subset(1)%identifier%index = 1
         edge_profiles%ggd(1)%grid%grid_subset(1)%dimension = 1
-        do i = 1, 3588
+        do i = 1, gmap%nvx
             allocate(edge_profiles%ggd(1)%grid%grid_subset(1)%element(i)%object(1))
             edge_profiles%ggd(1)%grid%grid_subset(1)%element(i)%object(1)%dimension = 1
             edge_profiles%ggd(1)%grid%grid_subset(1)%element(i)%object(1)%space = 1
             edge_profiles%ggd(1)%grid%grid_subset(1)%element(i)%object(1)%index = i
+        enddo
+        !> Temporary: Simple creation of the Faces/Edges grid subset to check if 
+        !> the new features work correctly
+        write(0,*) "Writing test grid subset containing all faces/edges in the domain"
+        write(0,*) "num_obj_1D: ", gmap%nfcx+gmap%nfcy
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(2)%element(gmap%nfcx+gmap%nfcy))
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(2)%identifier%name(1))
+        edge_profiles%ggd(1)%grid%grid_subset(2)%identifier%name(1) = "B2.5 EDGES TEST"
+        edge_profiles%ggd(1)%grid%grid_subset(2)%identifier%index = 2
+        edge_profiles%ggd(1)%grid%grid_subset(2)%dimension = 2
+        do i = 1, gmap%nfcx+gmap%nfcy
+            allocate(edge_profiles%ggd(1)%grid%grid_subset(2)%element(i)%object(1))
+            edge_profiles%ggd(1)%grid%grid_subset(2)%element(i)%object(1)%dimension = 2
+            edge_profiles%ggd(1)%grid%grid_subset(2)%element(i)%object(1)%space = 1
+            edge_profiles%ggd(1)%grid%grid_subset(2)%element(i)%object(1)%index = i
         enddo
 #endif
 

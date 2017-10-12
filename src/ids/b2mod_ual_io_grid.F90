@@ -189,7 +189,7 @@ contains
             !> Allocate goometry leaf for each node
             allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
                 &   objects_per_dimension(1)%object( ivx )%geometry(2)) 
-#if 0       
+#if 1       
             !> Set geometry (R and Z coordinates) of each node
             !> The way of writing nodes data identically to the to IDS converted 
             !> CPO 16151/1000 case, available on (written in 11th October 2017) 
@@ -218,7 +218,11 @@ contains
                 &   object( ivx )%nodes(1) = ivx  
         end do
 
+#if 0
         !> Set geometry (R and Z coordinates) of each node
+        !> (original b2mod. This node writing order does not work well with the
+        !> code used to write 1D objects data (faces/edges). Thats why it is 
+        !> currently not used (#if 0) and the the method above is used instead)
         ivx = 0
         do iy = 0, ny-1
             do ix = 0, nx-1
@@ -262,11 +266,15 @@ contains
                 end if
             end do
         end do
+#endif 
 
 
         !> Fill in object definitions (i.e. what objects compose an object)
         !> 1D objects: faces/edges
         nfc = gmap%nfcx + gmap%nfcy !> Number of all faces/edges
+        write(0,*) "num_obj_1D: ", nfc
+        write(0,*) "num_obj_1D x-aligned: ", gmap%nfcx
+        write(0,*) "num_obj_1D y-aligned: ", gmap%nfcy
         !> Allocate 1D objects 
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(2)%object( gmap%nfcx + gmap%nfcy) )
@@ -279,22 +287,33 @@ contains
             !> undefined
             allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
                 &   objects_per_dimension(2)%object( ifc )%boundary(2) )
+            !> Allocate list of 0D objects forming the 1D object 
+            !> Two 0D objects (vertices/nodes) form one 1D object (face/edge)
+            allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
+                &   objects_per_dimension(2)%object( ifc )%nodes(2) )
             do i = 1, 2
                 !> Boundary to undefined
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( ifc )%boundary(i)%index = B2_GRID_UNDEFINED
-                !> Neighbour to undefined
+                !> Neighbours to undefined
                 allocate(ggd_grid%space( SPACE_POLOIDALPLANE )% &
                     &   objects_per_dimension(2)%object( ifc )%boundary(i)% &
                     &   neighbours(1))
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( ifc )%boundary(i)%neighbours(1) =   &
                     &   B2_GRID_UNDEFINED
+                !> Nodes to undefined
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%nodes(i) = B2_GRID_UNDEFINED
             end do
         end do
 
         !> x-aligned faces    
-        do ifc = 1, gmap%nfcx    
+        do ifc = 1, gmap%nfcx   
+            ! !> Allocate list of 0D objects forming the 1D object 
+            ! !> Two 0D objects (vertices/nodes) form one 1D object (face/edge)
+            ! allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
+            !     &   objects_per_dimension(1)%object( ifc )%nodes(2))
             !> get position of this face in the b2 grid
             ix = gmap%mapFcix( ifc )
             iy = gmap%mapFciy( ifc )
@@ -307,7 +326,10 @@ contains
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( ifc )%boundary(1)%index =     &
                     &   gmap%mapVxI( ix, iy, VX_LOWERLEFT )
-                if (gmap % mapVxI( ix, iy, VX_LOWERLEFT ) == B2_GRID_UNDEFINED) then
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%nodes(1) = gmap%mapVxI( ix, iy, VX_LOWERLEFT )
+                if (gmap%mapVxI( ix, iy, VX_LOWERLEFT ) ==  &
+                    &   B2_GRID_UNDEFINED) then
                     call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM face at " &
                         &   //idsInt2str(ix)//","//idsInt2str(iy)//         &
                         &   " has no start node")
@@ -316,7 +338,10 @@ contains
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( ifc )%boundary(2)%index =     &
                     &   gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
-                if (gmap%mapVxI( ix, iy, VX_LOWERRIGHT ) == B2_GRID_UNDEFINED) then
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%nodes(2) = gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
+                if (gmap%mapVxI( ix, iy, VX_LOWERRIGHT ) == &
+                    &   B2_GRID_UNDEFINED) then
                     call logmsg(LOGWARNING, "b2IMASFillGD: BOTTOM face at " &
                         &   //idsInt2str(ix)//","//idsInt2str(iy)//         &
                         &   " has no end node")
@@ -326,7 +351,10 @@ contains
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( ifc )%boundary(1)%index =     &
                     &   gmap%mapVxI( ix, iy, VX_UPPERLEFT )
-                if (gmap%mapVxI( ix, iy, VX_UPPERLEFT ) == B2_GRID_UNDEFINED) then
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%nodes(1) = gmap%mapVxI( ix, iy, VX_UPPERLEFT )
+                if (gmap%mapVxI( ix, iy, VX_UPPERLEFT ) ==  &
+                    &   B2_GRID_UNDEFINED) then
                     call logmsg(LOGWARNING, "b2IMASFillGD: TOP face at "    &
                         &   //idsInt2str(ix)//","//idsInt2str(iy)//         &
                         &   " has no start node")
@@ -335,7 +363,10 @@ contains
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( ifc )%boundary(2)%index =     &
                     &   gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
-                if (gmap%mapVxI( ix, iy, VX_UPPERRIGHT ) == B2_GRID_UNDEFINED) then
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%nodes(2) = gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
+                if (gmap%mapVxI( ix, iy, VX_UPPERRIGHT ) == &
+                    &   B2_GRID_UNDEFINED) then
                     call logmsg(LOGWARNING, "b2IMASFillGD: TOP face at "    &
                         &   //idsInt2str(ix)//","//idsInt2str(iy)//         &
                         &   " has no end node")
@@ -366,65 +397,112 @@ contains
                     &   object( ifc )%measure = &
                     &   gs(ix, iy, ALIGNX)
             end if
-      end do
+        end do
+! #if 0
+
+        !> y-aligned faces    
+        do ifc = gmap%nfcx + 1, gmap % nfcx + gmap % nfcy   
+            ! !> Allocate list of 0D objects forming the 1D object 
+            ! !> Two 0D objects (vertices/nodes) form one 1D object (face/edge)
+            ! allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
+            !     &   objects_per_dimension(1)%object( ifc )%nodes(2)) 
+            !> get position of this face in the b2 grid
+            ix = gmap % mapFcix( ifc )
+            iy = gmap % mapFciy( ifc )
+!!$            if (gmap%mapCvI(ix, iy) == B2_GRID_UNDEFINED) then 
+!!$                call logmsg(LOGWARNING, "b2IMASFillGD: writing out faces 
+!!$                for unused cell "//idsint2str(ix)//","//idsint2str(iy))
+!!$            end if
+
+            select case ( gmap % mapFcIFace( ifc ) )
+            case( LEFT )
+                !> start index: 1=start node
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%boundary(1)%index =                       &
+                    &   gmap%mapVxI( ix, iy, VX_LOWERLEFT )
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%nodes(1) = gmap%mapVxI( ix, iy, VX_LOWERLEFT )
+                ! ggd_grid%space(SPACE_POLOIDALPLANE)%objects(2)%boundary( ifc, 1 ) = gmap%mapVxI( ix, iy, VX_LOWERLEFT )
+                if (gmap%mapVxI( ix, iy, VX_LOWERLEFT ) ==  &
+                    &   B2_GRID_UNDEFINED) then
+                    call logmsg(LOGWARNING, "b2IMASFillGD: LEFT face at "   &
+                        &   //idsint2str(ix)//","//idsint2str(iy)//         &
+                        &   " has no start node")
+                end if
+                !> end vertex: 2=end node
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%boundary(2)%index =                       &
+                    &   gmap%mapVxI( ix, iy, VX_UPPERLEFT )
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%nodes(2) = gmap%mapVxI( ix, iy, VX_UPPERLEFT )
+                ! ggd_grid%space(SPACE_POLOIDALPLANE)%objects(2)%boundary( ifc, 2 ) = gmap%mapVxI( ix, iy, VX_UPPERLEFT )
+                if (gmap%mapVxI( ix, iy, VX_UPPERLEFT ) ==  &
+                    &   B2_GRID_UNDEFINED) then
+                    call logmsg(LOGWARNING, "b2IMASFillGD: LEFT face at "   &
+                        &   //idsint2str(ix)//","//idsint2str(iy)//         &
+                        &   " has no end node")
+                end if
+
+            case( RIGHT )
+                !> start index: 1=start node
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%boundary(1)%index =                       &
+                    &   gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%nodes(1) = gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
+                ! ggd_grid%space(SPACE_POLOIDALPLANE)%objects(2)%boundary( ifc, 1 ) = gmap%mapVxI( ix, iy, VX_LOWERRIGHT )
+                if (gmap%mapVxI( ix, iy, VX_LOWERRIGHT ) == &
+                    &   B2_GRID_UNDEFINED) then
+                    call logmsg(LOGWARNING, "b2IMASFillGD: RIGHT face at "  &
+                        &   //idsint2str(ix)//","//idsint2str(iy)//         &
+                        &   " has no start node")
+                end if
+                !> end vertex: 2=end node
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%boundary(2)%index =                       &
+                    &   gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%nodes(2) = gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
+                ! ggd_grid%space(SPACE_POLOIDALPLANE)%objects(2)%boundary( ifc, 2 ) = gmap%mapVxI( ix, iy, VX_UPPERRIGHT )
+                if (gmap%mapVxI( ix, iy, VX_UPPERRIGHT ) == &
+                    &    B2_GRID_UNDEFINED) then
+                    call logmsg(LOGWARNING, "b2IMASFillGD: RIGHT face at "  &
+                        &   //idsint2str(ix)//","//idsint2str(iy)//         &
+                        &   " has no end node")
+                end if
+            end select
+
+            !> Neighbour faces of this face
+            !> Bottom neighbour: face continuing to the bottom of this face
+            nix = bottomix( ix, iy )
+            niy = bottomiy( ix, iy )
+            if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%boundary(1)%neighbours(1) =    &
+                    &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( ifc ) )
+             ! ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 1, 1 ) = &
+                  ! & gmap%mapFcI( nix, niy, gmap%mapFcIFace( ifc ) )
+            end if
+            !> Top neighbour: face continuing to the top of this face 
+            nix = topix( ix, iy )
+            niy = topiy( ix, iy )
+            if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%boundary(1)%neighbours(1) =    &
+                    &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( ifc ) )
+             ! ggd_grid%space(SPACE_POLOIDALPLANE)%objects(2)%neighbour( ifc, 2, 1 ) = &
+                  ! & gmap%mapFcI( nix, niy, gmap%mapFcIFace( ifc ) )
+            end if
+            !> 1d object measure: face area
+            if (present(gs)) then
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
+                    &   object( ifc )%measure = &
+                    &   gs(ix, iy, ALIGNY)*qc(ix, iy) 
+            end if
+            !> measure: area
+            ! if (present(gs)) ggd_grid%space(SPACE_POLOIDALPLANE)%objects(2)%measure( ifc, 1 ) = gs(ix, iy, ALIGNY)*qc(ix, iy) 
+        end do
 #if 0
-
-      ! y-aligned faces    
-      do ifc = gmap % nfcx + 1, gmap % nfcx + gmap % nfcy    
-          ! get position of this face in the b2 grid
-          ix = gmap % mapFcix( ifc )
-          iy = gmap % mapFciy( ifc )
-!!$          if (gmap%mapCvI(ix, iy) == GRID_UNDEFINED) then 
-!!$                  call logmsg(LOGWARNING, "b2IMASFillGD: writing out faces for unused cell "//int2str(ix)//","//int2str(iy))
-!!$          end if
-
-          select case ( gmap % mapFcIFace( ifc ) )
-          case( LEFT )
-              ! start index: 1=start node
-              ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 1 ) = gmap % mapVxI( ix, iy, VX_LOWERLEFT )
-              if (gmap % mapVxI( ix, iy, VX_LOWERLEFT ) == GRID_UNDEFINED) then
-                  call logmsg(LOGWARNING, "b2IMASFillGD: LEFT face at "//int2str(ix)//","//int2str(iy)//" has no start node")
-              end if
-          ! end vertex: 2=end node
-              ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 2 ) = gmap % mapVxI( ix, iy, VX_UPPERLEFT )
-              if (gmap % mapVxI( ix, iy, VX_UPPERLEFT ) == GRID_UNDEFINED) then
-                  call logmsg(LOGWARNING, "b2IMASFillGD: LEFT face at "//int2str(ix)//","//int2str(iy)//" has no end node")
-          end if
-              !if (ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 1 )
-
-
-          case( RIGHT )
-              ! start index: 1=start node
-              ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 1 ) = gmap % mapVxI( ix, iy, VX_LOWERRIGHT )
-              if (gmap % mapVxI( ix, iy, VX_LOWERRIGHT ) == GRID_UNDEFINED) then
-                  call logmsg(LOGWARNING, "b2IMASFillGD: RIGHT face at "//int2str(ix)//","//int2str(iy)//" has no start node")
-          end if
-              ! end vertex: 2=end node
-              ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % boundary( ifc, 2 ) = gmap % mapVxI( ix, iy, VX_UPPERRIGHT )
-              if (gmap % mapVxI( ix, iy, VX_UPPERRIGHT ) == GRID_UNDEFINED) then
-                  call logmsg(LOGWARNING, "b2IMASFillGD: RIGHT face at "//int2str(ix)//","//int2str(iy)//" has no end node")
-              end if
-          end select
-
-
-          ! Neighbour faces of this face
-          ! Bottom neighbour: face continuing to the bottom of this face
-          nix = bottomix( ix, iy )
-          niy = bottomiy( ix, iy )
-          if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-             ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 1, 1 ) = &
-                  & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
-          end if
-          ! Top neighbour: face continuing to the top of this face 
-          nix = topix( ix, iy )
-          niy = topiy( ix, iy )
-          if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-             ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % neighbour( ifc, 2, 1 ) = &
-                  & gmap % mapFcI( nix, niy, gmap % mapFcIFace( ifc ) )
-          end if
-          ! measure: area
-          if (present(gs)) ggd_grid%space(SPACE_POLOIDALPLANE) % objects(2) % measure( ifc, 1 ) = gs(ix, iy, ALIGNY)*qc(ix, iy)
-      end do
 
       ! 2d objects: cells
       ! ...have four boundaries
