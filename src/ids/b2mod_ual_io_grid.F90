@@ -553,10 +553,10 @@ contains
             ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
                 &   object( icv )%boundary(4)%index = gmap%mapFcI( ix, iy, TOP )
             !> 2d object measure: cell area
-            ! if (present(vol)) then 
-            !     ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
-            !         &   object( icv )%measure = vol(ix, iy, ?)
-            ! end if 
+            if (present(vol)) then 
+                ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+                    &   object( icv )%measure = vol(ix, iy, 1)
+            end if 
         end do
 #if 0
 
