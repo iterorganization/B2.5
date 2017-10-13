@@ -491,8 +491,8 @@ contains
         allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)% &
             &   object( gmap%ncv ) )
         
-
         !> Each 2D object has four boundaries
+        !> Each boundary has one neighbour
         do icv = 1, gmap%ncv
             !> Allocate and set all boundary & connectivity information to 
             !> undefined
@@ -552,33 +552,25 @@ contains
             !> top face (x-aligned)
             ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
                 &   object( icv )%boundary(4)%index = gmap%mapFcI( ix, iy, TOP )
+            do dir = LEFT, TOP
+                call getNeighbour(nx, ny, leftix, leftiy, rightix, rightiy,     &
+                    &   topix, topiy, bottomix, bottomiy, ix, iy, dir, nix, niy)             
+                if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells,    &
+                    &   nix, niy ) ) then
+                    ggd_grid%space(SPACE_POLOIDALPLANE)%            &
+                        &   objects_per_dimension(3)%object (icv )% &
+                        &   boundary( dir + 1 )%neighbours(1) =     &
+                        &   gmap%mapCvI( nix, niy )
+                end if
+            end do
             !> 2d object measure: cell area
             if (present(vol)) then 
                 ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
                     &   object( icv )%measure = vol(ix, iy, 1)
             end if 
         end do
+
 #if 0
-
-      ! Fill in connectivity information
-      ! ...have one neighbour per boundary
-      allocate( ggd_grid%space(SPACE_POLOIDALPLANE) % objects(3) % neighbour( gmap%ncv, 4, 1) )
-      ! first set all to undefined
-      ggd_grid%space(SPACE_POLOIDALPLANE) % objects(3) % neighbour = GRID_UNDEFINED
-
-      do icv = 1, gmap % ncv
-          ix = gmap % mapCvix( icv )
-          iy = gmap % mapCviy( icv )
-
-          do dir = LEFT, TOP
-             call getNeighbour(nx, ny, leftix, leftiy, rightix, rightiy, topix, topiy, bottomix, bottomiy, &
-                  & ix, iy, dir, nix, niy)             
-             if ( .not. isUnneededCell( nx, ny, cflag, includeGhostCells, nix, niy ) ) then
-                ggd_grid%space(SPACE_POLOIDALPLANE) % objects(3) % neighbour(icv, dir+1, 1) = gmap % mapCvI( nix, niy )
-             end if
-          end do
-
-      end do
 
       ! Fill in x-point indices
       allocate( ggd_grid%space(SPACE_POLOIDALPLANE) % xpoints( gmap % nsv ) )
