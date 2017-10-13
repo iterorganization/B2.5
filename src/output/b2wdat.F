@@ -1082,23 +1082,23 @@
 
        open(70,file=trim(folder)//'separatrix_location_on_plate.dat')   !srv 26.09.17
        ix = -1
-       write(70,"(1x,' Separatrix Locationon on Inner Lower =',
+       write(70,"(1x,' Separatrix Location on Inner Lower =',
      &             12es14.6)") cry(ix+ishift,mintopcut,0)
        ix = nx
-       write(70,"(1x,' Separatrix Locationon on Outer Lower =',
+       write(70,"(1x,' Separatrix Location on Outer Lower =',
      &             12es14.6)") crx(ix-ishift,mintopcut,0)
        do ix = -1,nx
          if(leftix(ix,mintopcut).eq.-2 .and. ix.gt.-1) then
-           write(70,"(1x,' Separatrix Locationon on Outer Upper =',
+           write(70,"(1x,' Separatrix Location on Outer Upper =',
      &             12es14.6)") crx(ix+ishift,mintopcut,0)
          endif
          if(rightix(ix,mintopcut).eq.nx+1 .and. ix.lt.nx) then
-           write(70,"(1x,' Separatrix Locationon on Inner Upper =',
+           write(70,"(1x,' Separatrix Location on Inner Upper =',
      &             12es14.6)") cry(ix-ishift,mintopcut,0)
          endif
        enddo
        ix = nmdpl
-       write(70,"(1x,' Separatrix Locationon on Outer Mdpln =',
+       write(70,"(1x,' Separatrix Location on Outer Mdpln =',
      &             12es14.6)") crx(ix-ishift,mintopcut,0)
        close(70)
 

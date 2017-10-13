@@ -9,6 +9,7 @@
       use b2mod_tallies
       use b2mod_indirect
       use b2mod_external
+      use b2mod_constants
       use b2mod_numerics_namelist
 #ifdef B25_EIRENE
       use eirmod_extrab25
@@ -79,6 +80,7 @@ c***...........................................................(strata)
 c***     Stratum_  fluxt_tmp  primary sources of neutrals
 c***
 c***...............................................(species and strata)
+c***     SSNIstr_             neutral-related source of ions
 c***     sclfact_  sclf_tmp   scaling factors for neutral fluxes
 c***     sclrtio_  rtio_tmp   figure of merit for scaling (should be 0)
 c***
@@ -105,13 +107,14 @@ c*** Global values
 c
 c*** Values by regions
       integer nrgn_tmp, nrg_tmp, nr_tmp
-      parameter (nrgn_tmp=10)
+      parameter (nrgn_tmp=11) ! Number of quantities computed in each region
       real (kind=R8) ::
      * radim_tmp(NNREGMAX), radnu_tmp(NNREGMAX),
      1 radtt_tmp(NNREGMAX), ssee_tmp(NNREGMAX),
      2 ssei_tmp(NNREGMAX),  brms_tmp(NNREGMAX),
      3 eesum(NNREGMAX),     eisum(NNREGMAX),
-     4 nesum(NNREGMAX),     volsum(NNREGMAX)
+     4 kisum(NNREGMAX),
+     5 nesum(NNREGMAX),     volsum(NNREGMAX)
 
       real (kind=R8) ::
      *     equr_tmp(NNREGMAX,nrgn_tmp)
@@ -120,17 +123,19 @@ c*** Values by regions
      , (equr_tmp(1,3), radnu_tmp), (equr_tmp(1,4), radtt_tmp),
      , (equr_tmp(1,5), ssee_tmp),  (equr_tmp(1,6), ssei_tmp),
      , (equr_tmp(1,7), eesum),     (equr_tmp(1,8), eisum),
-     , (equr_tmp(1,9), nesum),     (equr_tmp(1,10), volsum)
+     , (equr_tmp(1,9), kisum),
+     , (equr_tmp(1,10), nesum),    (equr_tmp(1,11), volsum)
       character*2 hlp_hr(nrgn_tmp)*8
 c
 c*** Values by species
       integer nspc_tmp, nsp_tmp, ns_tmp
-      parameter (nspc_tmp=1)
+!      parameter (nspc_tmp=1)
+      parameter (nspc_tmp=2) ! IYS 29.09.2017 to add total number of neutrals in whole domain
       real (kind=R8) ::
      *     equs_tmp(DEF_NATM,nspc_tmp)
       real (kind=R8) ::
-     *     ssni_tmp(DEF_NATM)
-      equivalence (equs_tmp(1,1), ssni_tmp)
+     *     ssni_tmp(DEF_NATM), Natm_tmp(DEF_NATM)
+      equivalence (equs_tmp(1,1), ssni_tmp), (equs_tmp(1,2), Natm_tmp)
       character*2 hlp_hs(nspc_tmp)*8
 
 c*** added 20010716
@@ -147,13 +152,18 @@ c#endif
 c
 c*** Values by species and regions
       integer nsar_tmp, na_tmp
-      parameter (nsar_tmp=2)
+!      parameter (nsar_tmp=2)
+      parameter (nsar_tmp=3) ! IYS to add one more record to count the total
+                             ! number of ions (charged) and total number of
+                             ! neutrals
       real (kind=R8) ::
      *     equa_tmp(DEF_NATM,NNREGMAX,nsar_tmp)
       real (kind=R8) ::
+     *     nasum(DEF_NATM,NNREGMAX),  ! IYS 29.09.2017 added total number of neutrals
      *     ssna_tmp(DEF_NATM,NNREGMAX),nisum(DEF_NATM,NNREGMAX)
       equivalence 
-     -  (equa_tmp(1,1,1), ssna_tmp), (equa_tmp(1,1,2), nisum)
+     -  (equa_tmp(1,1,1), ssna_tmp), (equa_tmp(1,1,2), nisum),
+     &  (equa_tmp(1,1,3), nasum) ! IYS 29.09.2017
       character*2 hlp_ha(nsar_tmp)*8
 c
 c*** Values by strata
@@ -166,15 +176,20 @@ c*** Values by strata
 c
 c*** Values by species and strata
       integer nssb_tmp, nb_tmp
-      parameter (nssb_tmp=2)
+c      parameter (nssb_tmp=2)
+      parameter (nssb_tmp=4)  ! IYS 29.09.2017
       real (kind=R8) ::
      *     equb_tmp(0:DEF_NATM,DEF_NSTRA,nssb_tmp)
       real (kind=R8) ::
      *     sclf_tmp(0:DEF_NATM,DEF_NSTRA), 
-     *     rtio_tmp(0:DEF_NATM,DEF_NSTRA)
+     *     rtio_tmp(0:DEF_NATM,DEF_NSTRA),
+     *     Na_stra_tmp(0:DEF_NATM,DEF_NSTRA),
+     *     ssna_stra_tmp(0:DEF_NATM,DEF_NSTRA)
       equivalence (equb_tmp(0,1,1), sclf_tmp)
       equivalence (equb_tmp(0,1,2), rtio_tmp)
-      character*2 hlp_hb(nssb_tmp)*8
+      equivalence (equb_tmp(0,1,3), Na_stra_tmp)    ! IYS 29.09.2017
+      equivalence (equb_tmp(0,1,4), ssna_stra_tmp)  ! IYS 29.09.2017
+      character hlp_hb(nssb_tmp)*8
 c-----------------------------------------------------------------------
 c*** Local variables of general use
       integer lun, ltrc
@@ -184,6 +199,7 @@ c*** Local variables of general use
       integer i, j, k, ir,is,ix,iy, nv
       logical ex, warn_tmp
       character tab, hlp_c, f*(lenfnm), hlp_frm*256, hlp_frf*400
+      integer iatm,imol ! IYS 29.09.2017
 c#ifdef SCL_IMP_RCI
 c     integer iy
 c#endif
@@ -195,14 +211,15 @@ c*** Column headers:
      2          'neu_rad ','tot_rad '/
       data hlp_hr / ! These are headers for 10 quantities computed in each region
      1          'Brmsreg_','imp_rad_','neu_rad_','tot_rad_','SSEEreg_',
-     2          'SSEIreg_','th_enre_','th_enri_','N_e_reg_','vol_reg_'/
-      data hlp_hs / 'SSNItot_' /
+     2          'SSEIreg_','th_enre_','th_enri_',
+     3          'K_en_ri_','N_e_reg_','vol_reg_'/
+      data hlp_hs / 'SSNItot_', 'N_a_tot_' /
 c#ifdef SCL_IMP_RCI
 c      data hlp_hs1 / 'res_rci_' /
 c#endif
-      data hlp_ha / 'SSNIreg_', 'N_i_reg_' /
+      data hlp_ha / 'SSNIreg_', 'N_i_reg_', 'N_a_reg_' /
       data hlp_hf / 'Stratum_' /
-      data hlp_hb / 'sclfact_','sclrtio_' /
+      data hlp_hb / 'sclfact_', 'sclrtio_', 'Na_stra_', 'sna_str_' /
 c-----------------------------------------------------------------------
 c
       save
@@ -222,6 +239,9 @@ c     + ns1_tmp, equs1_tmp, rrci_tmp, hlp_hs1,
 c#endif
      +  equs_tmp,
      +  ssni_tmp,
+     +  Natm_tmp,
+     +  Na_stra_tmp,
+     +  ssna_stra_tmp,
      +  hlp_hs,
      +  na_tmp,
      +  equa_tmp,
@@ -287,11 +307,23 @@ csw 18nov2013 check alloc
         hlp_ssee     = hlp_ssee     + sseereg(k)
         hlp_ssei     = hlp_ssei     + sseireg(k)
       end do
-      do is=1,nspecies
+      do is = 1,nspecies
         do k = 1, nnreg(0)
           ssni_tmp(is)   = ssni_tmp(is)   + ssnireg(is,k)
           ssna_tmp(is,k) = ssna_tmp(is,k) + ssnireg(is,k)
         end do
+      end do
+      do iatm = 1, nnatmi
+#ifdef B25_EIRENE
+        is = latmscl(iatm)
+        if (is.eq.0) cycle
+        Natm_tmp(is) = Natm_tmp(is) + pdena_int(iatm,0)
+        do imol = 1, nnmoli
+          if (mlcmp(iatm,imol).gt.0)
+     &      Natm_tmp(is)   = Natm_tmp(is) +
+     &        mlcmp(is,imol) * pdenm_int(imol,0)
+        enddo
+#endif
       end do
 
 csw 20sep2013 added
@@ -305,8 +337,31 @@ csw 20sep2013 added
           do is=0,ns-1
             nisum(b2espcr(is),ir) = nisum(b2espcr(is),ir) +
      .                          na(ix,iy,is)*vol(ix,iy)
-        end do
-       enddo
+            kisum(ir) = kisum(ir) +
+     &       0.5*mp*am(is)*na(ix,iy,is)*(ua(ix,iy,is)**2)*vol(ix,iy)
+            if (is_neutral(is)) then
+              nasum(b2espcr(is),ir) = nasum(b2espcr(is),ir) +
+     .                                na(ix,iy,is)*vol(ix,iy)
+! For fluid neutrals Natm_tmp is just the number of atoms integrated over
+! the whole B2.5 domain
+              Natm_tmp(b2espcr(is)) = Natm_tmp(b2espcr(is)) +
+     .                                na(ix,iy,is)*vol(ix,iy)
+            endif
+          end do
+#ifdef B25_EIRENE
+          do iatm = 1, nnatmi
+            is = latmscl(iatm)
+            if (is.eq.0) cycle
+            nasum(is,ir) = nasum(is,ir) +
+     .                     dab2(ix+1,iy+1,iatm,1)*vol(ix,iy)
+            do imol = 1, nnmoli
+              if (mlcmp(iatm,imol).gt.0)
+     >          nasum(is,ir) = nasum(is,ir) +
+     .           mlcmp(iatm,imol)*dmb2(ix+1,iy+1,imol,1)*vol(ix,iy)
+            end do
+          end do
+#endif
+        enddo
       enddo
 
       do j=1,nstrai
@@ -357,6 +412,17 @@ csw 18nov2013 check alloc
         do j=1,nstrai
           sclf_tmp(i,j) = sclstra(i,j)
           rtio_tmp(i,j) = sclrtio(i,j)-1.0_R8
+#ifdef B25_EIRENE
+          if (i.gt.0) then
+            Na_stra_tmp(i,j) = pdena_int(i,j)
+            ssna_stra_tmp(i,j) = ssnistra(i,j)
+            do imol = 1, nnmoli
+              if (mlcmp(i,imol).gt.0)
+     >         Na_stra_tmp(i,j) = Na_stra_tmp(i,j) +
+     .         mlcmp(i,imol)*pdenm_int(imol,j)
+            end do
+          end if
+#endif
         end do
       end do
 c#ifdef SCL_IMP_RCI
@@ -549,7 +615,8 @@ c     ,                     ns1_tmp,
 c#endif
      ,                      label
 
-        hlp_frf='(9h(5h#time,,i3,9h(1h'//tab//',a8),,'     //
+c Create a format string for the column headers
+        hlp_frf='(18h(1h#,7x,4htime,4x,,i3,9h(1h'//tab//',a8),,'//
      /          'i3,14h(1h'//tab//',a8,i2.2),,'            //
      /          'i3,12h(1h'//tab//',a8,a2),,'              //
      /          'i3,17h(1h'//tab//',a8,i2.2,a2),,'         //

@@ -2234,6 +2234,7 @@ c   and apply linearisation
       sseereg=0.0_R8
       sseireg=0.0_R8
       ssnireg=0.0_R8
+      ssnistra=0.0_R8
       sseicorr=0.0_R8
       sseistab=0.0_R8
       src_ni(:,3,:)=0.0_R8
@@ -2507,6 +2508,8 @@ csw 21feb2012, add l_neutrad (SOLPS4.3)
                   endif
                   ssnireg(b2espcr(is),region(ix,iy,0))=
      .             ssnireg(b2espcr(is),region(ix,iy,0))+t0
+                  ssnistra(b2espcr(is),istrai)=
+     .             ssnistra(b2espcr(is),istrai)+t0
 * parallel momentum
                   rf0=RF_NEUT(2)
 csw 26feb2014 averaging

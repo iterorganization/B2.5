@@ -18,7 +18,8 @@ c
       real (kind=R8), allocatable :: rdneureg(:),
      2  b2radirreg(:), b2radlrreg(:),
      3  recycereg(:), recycireg(:),
-     4  sseereg(:), sseireg(:), ssnireg(:,:)
+     4  sseereg(:), sseireg(:), ssnireg(:,:),
+     5  ssnistra(:,:)   ! IYS 29.09.2017
       REAL (kind=R8), allocatable :: 
      .      FEEXGT(:,:), FEEYGT(:,:),
      .      FEIXGT(:,:), FEIYGT(:,:)
@@ -117,6 +118,7 @@ c
      3  recycereg(nregionv), recycireg(nregionv),
      4  sseereg(nregionv), sseireg(nregionv),
      5  ssnireg(nspecies,nregionv))
+      allocate(ssnistra(nspecies,nstra))      ! IYS 29.09.2017
       allocate( 
      .      FEEXGT(-1:NXD,-1:NYD), FEEYGT(-1:NXD,-1:NYD),
      .      FEIXGT(-1:NXD,-1:NYD), FEIYGT(-1:NXD,-1:NYD))
@@ -232,6 +234,7 @@ c>>>
       sseereg=0.0_R8
       sseireg=0.0_R8
       ssnireg=0.0_R8
+      ssnistra=0.0_R8
       rescoreg=0.0_R8
       resmoreg=0.0_R8
       reshereg=0.0_R8
@@ -249,7 +252,8 @@ c>>>
       deallocate(rdneureg,
      2  b2radirreg, b2radlrreg,
      3  recycereg, recycireg,
-     4  sseereg, sseireg, ssnireg)
+     4  sseereg, sseireg, ssnireg,
+     5  ssnistra)
       deallocate(FEEXGT, FEEYGT, FEIXGT, FEIYGT)
       deallocate(RADARR)
       deallocate(species_list)
