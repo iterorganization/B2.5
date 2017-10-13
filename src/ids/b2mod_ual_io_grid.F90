@@ -155,7 +155,7 @@ contains
         !> nfc - Number of all faces/edges (x + y aligned)
 
         !> internal
-        integer ::  ivx, ifc, icv, ix, iy, nix, niy, i, dir, nfc
+        integer ::  ivx, ifc, icv, ix, iy, nix, niy, i, j, dir, nfc
 
         allocate( ggd_grid%space(SPACE_COUNT) )
 
@@ -278,7 +278,7 @@ contains
         !> Allocate 1D objects 
         allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
             &   objects_per_dimension(2)%object( gmap%nfcx + gmap%nfcy) )
-        !> Each 1D objects have two boundaries and two neighbours, in positive 
+        !> Each 1D object has two boundaries and two neighbours, in positive 
         !> and negative coordinate direction, one on each side (for x-aligned 
         !> faces: along flux surface, for y-aligned faces: orthogonal to flux 
         !> surface)
@@ -476,50 +476,89 @@ contains
                     &   object( ifc )%boundary(1)%neighbours(1) =    &
                     &   gmap%mapFcI( nix, niy, gmap%mapFcIFace( ifc ) )
             end if
-            !> 1d object measure: face area
+            !> 1d object measure: edge length
             if (present(gs)) then
                 ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(2)% &
                     &   object( ifc )%measure = &
                     &   gs(ix, iy, ALIGNY)*qc(ix, iy) 
             end if
         end do
-#if 0
 
-        !> 2d objects: cells
-        write(0,*) "num_obj_2D: ", ncv
-        !> ...have four boundaries
+        !> Fill in object definitions (i.e. what objects compose an object)
+        !> 2D objects: Cells
+        write(0,*) "num_obj_2D: ", gmap%ncv
+        !> Allocate 2D objects
         allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)% &
-            &   object( ncv ) )
+            &   object( gmap%ncv ) )
+        
 
-        ! allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%objects(3)%boundary( gmap%ncv, 4) )
-        !> 2d object measure: cell volume
-        if (present(vol)) allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%objects(3)%measure( gmap%ncv, 1 ) )      
-        !> Also store additional geometry information: position in computational space
-        !> FIXME: this should go into alternate geometry, which is not available yet for grid objects
-        allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%objects(3)%geo(gmap%ncv, 2, 1, 1) )
-
-        !> first set all boundary information to undefined
-        ggd_grid%space(SPACE_POLOIDALPLANE)%objects(3)%boundary = GRID_UNDEFINED
+        !> Each 2D object has four boundaries
+        do icv = 1, gmap%ncv
+            !> Allocate and set all boundary & connectivity information to 
+            !> undefined
+            allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%  &
+                &   objects_per_dimension(3)%object( icv )%boundary(4) )
+            !> Allocate list of 0D objects forming the 2D object 
+            !> Four 0D objects (vertices/nodes) form one 2D object (2D cell)
+            allocate( ggd_grid%space( SPACE_POLOIDALPLANE )%    &
+                &   objects_per_dimension(3)%object( icv )%nodes(4) )
+            !> Also store additional geometry information: position in 
+            !> computational space
+            !> FIXME:   this should go into alternate geometry, which is not 
+            !>          available yet for grid objects
+            allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%  &
+                &   objects_per_dimension(3)%object( icv )%geometry(2) )
+            do i = 1, 4
+                !> Boundary to undefined
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+                    &   object( icv )%boundary(i)%index = B2_GRID_UNDEFINED
+                !> Neighbours to undefined
+                allocate(ggd_grid%space( SPACE_POLOIDALPLANE )% &
+                    &   objects_per_dimension(3)%object( icv )%boundary(i)% &
+                    &   neighbours(1))
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+                    &   object( icv )%boundary(i)%neighbours(1) =   &
+                    &   B2_GRID_UNDEFINED
+                !> Nodes to undefined
+                ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+                    &   object( icv )%nodes(i) = B2_GRID_UNDEFINED
+                !> Geometry to undefined
+                if (i < 3) then
+                    ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+                        &   object( icv )%geometry(i) = B2_GRID_UNDEFINED
+                end if
+            end do
+        end do
 
         do icv = 1, gmap%ncv
-            allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%object(icv)%boundary(4)
-
+            !> Set position in computational space
             ix = gmap%mapCvix( icv )
             iy = gmap%mapCviy( icv )
+            ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+                &   object( icv )%geometry(1) = ix
+            ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+                &   object( icv )%geometry(2) = iy
 
-            !> Set position in computational space
-            ggd_grid%space(SPACE_POLOIDALPLANE)%objects(3)%geo(icv, 1, 1, 1) = ix
-            ggd_grid%space(SPACE_POLOIDALPLANE)%objects(3)%geo(icv, 2, 1, 1) = iy
-            !> put faces composing the quadliateral in the list: left face (y-aligned)
-            ggd_grid%space(SPACE_POLOIDALPLANE)%objects(3)%boundary( icv, 1 ) = gmap%mapFcI( ix, iy, LEFT )
+            !> Set faces composing the quadliateral in the list: 
+            !> left face (y-aligned)
+            ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+                &   object( icv )%boundary(1)%index = gmap%mapFcI( ix, iy, LEFT )
             !> bottom face (x-aligned
-            ggd_grid%space(SPACE_POLOIDALPLANE)%objects(3)%boundary( icv, 2 ) = gmap%mapFcI( ix, iy, BOTTOM )
+            ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+                &   object( icv )%boundary(2)%index = gmap%mapFcI( ix, iy, BOTTOM )
             !> right face (y-aligned)
-            ggd_grid%space(SPACE_POLOIDALPLANE)%objects(3)%boundary( icv, 3 ) = gmap%mapFcI( ix, iy, RIGHT )
+            ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+                &   object( icv )%boundary(3)%index = gmap%mapFcI( ix, iy, RIGHT )
             !> top face (x-aligned)
-            ggd_grid%space(SPACE_POLOIDALPLANE)%objects(3)%boundary( icv, 4 ) = gmap%mapFcI( ix, iy, TOP )
+            ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+                &   object( icv )%boundary(4)%index = gmap%mapFcI( ix, iy, TOP )
+            !> 2d object measure: cell area
+            ! if (present(vol)) then 
+            !     ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)%   &
+            !         &   object( icv )%measure = vol(ix, iy, ?)
+            ! end if 
         end do
-! #if 0
+#if 0
 
       ! Fill in connectivity information
       ! ...have one neighbour per boundary
