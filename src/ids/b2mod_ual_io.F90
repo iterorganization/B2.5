@@ -137,7 +137,7 @@ contains
 #if 1
         !> Temporary: Simple creation of the Nodes grid subset to check if the 
         !> new features work correctly
-        allocate(edge_profiles%ggd(1)%grid%grid_subset(2))
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(4))
         write(0,*) "Writing test grid subset containing all nodes in the domain"
         write(0,*) "num_obj_0D: ", gmap%nvx
         allocate(edge_profiles%ggd(1)%grid%grid_subset(1)%element(gmap%nvx))
@@ -165,6 +165,38 @@ contains
             edge_profiles%ggd(1)%grid%grid_subset(2)%element(i)%object(1)%dimension = 2
             edge_profiles%ggd(1)%grid%grid_subset(2)%element(i)%object(1)%space = 1
             edge_profiles%ggd(1)%grid%grid_subset(2)%element(i)%object(1)%index = i
+        enddo
+        !> Temporary: Simple creation of the x-aligned faces/edges grid subset to check if 
+        !> the new features work correctly
+        write(0,*) "Writing test grid subset containing x-aligned faces/edges"
+        write(0,*) "num_obj_1D x-aligned: ", gmap%nfcx
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(3)%element(gmap%nfcx))
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(3)%identifier%name(1))
+        edge_profiles%ggd(1)%grid%grid_subset(3)%identifier%name(1) = "B2.5 X-ALIGNED EDGES TEST"
+        edge_profiles%ggd(1)%grid%grid_subset(3)%identifier%index = 2
+        edge_profiles%ggd(1)%grid%grid_subset(3)%dimension = 2
+        do i = 1, gmap%nfcx
+            allocate(edge_profiles%ggd(1)%grid%grid_subset(3)%element(i)%object(1))
+            edge_profiles%ggd(1)%grid%grid_subset(3)%element(i)%object(1)%dimension = 2
+            edge_profiles%ggd(1)%grid%grid_subset(3)%element(i)%object(1)%space = 1
+            edge_profiles%ggd(1)%grid%grid_subset(3)%element(i)%object(1)%index = i
+        enddo
+        !> Temporary: Simple creation of the y-aligned faces/edges grid subset to check if 
+        !> the new features work correctly
+        write(0,*) "Writing test grid subset containing y-aligned faces/edges"
+        write(0,*) "num_obj_1D y-aligned: ", gmap%nfcy
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(4)%element(gmap%nfcy))
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(4)%identifier%name(1))
+        edge_profiles%ggd(1)%grid%grid_subset(4)%identifier%name(1) = "B2.5 Y-ALIGNED EDGES TEST"
+        edge_profiles%ggd(1)%grid%grid_subset(4)%identifier%index = 2
+        edge_profiles%ggd(1)%grid%grid_subset(4)%dimension = 2
+        j = gmap%nfcx + 1
+        do i = 1, gmap%nfcy
+            allocate(edge_profiles%ggd(1)%grid%grid_subset(4)%element(i)%object(1))
+            edge_profiles%ggd(1)%grid%grid_subset(4)%element(i)%object(1)%dimension = 2
+            edge_profiles%ggd(1)%grid%grid_subset(4)%element(i)%object(1)%space = 1
+            edge_profiles%ggd(1)%grid%grid_subset(4)%element(i)%object(1)%index = j
+            j = j + 1
         enddo
 #endif
 
