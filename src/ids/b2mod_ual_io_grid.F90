@@ -156,6 +156,7 @@ contains
 
         !> internal
         integer ::  ivx, ifc, icv, ix, iy, nix, niy, i, j, dir, nfc
+        real(16), parameter :: PI_16 = 4 * atan (1.0_16)
 
         allocate( ggd_grid%space(SPACE_COUNT) )
 
@@ -574,27 +575,27 @@ contains
         call setCellsConnectivityArrayNodes(ggd_grid)
 
 #if 0
-
-      ! Fill in x-point indices
-      allocate( ggd_grid%space(SPACE_POLOIDALPLANE) % xpoints( gmap % nsv ) )
-      ggd_grid%space(SPACE_POLOIDALPLANE) % xpoints = gmap % svi(1:gmap % nsv)
-
-      ! If requested, add a second space for the toroidal angle
-      if (SPACE_COUNT == SPACE_TOROIDALANGLE) then
-          
-          if ( TOROIDAL_PERIODIC ) then
-          call gridSetupStruct1dSpace( ggd%spaces(SPACE_TOROIDALANGLE), &
-              & COORDTYPE_PHI, &
-                  & (/  ( ( 2*pi / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL - 1 ) /), &
-                  & periodic = .true. )
-          else
-              call gridSetupStruct1dSpace( ggd%spaces(SPACE_TOROIDALANGLE), &
-                  & COORDTYPE_PHI, &
-                  & (/  ( ( 2*pi / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL ) /) )
-          end if
-
-      end if
+        !! TODO
+        !> Fill in x-point indices
+        !> In edge_profiles no node for data on x-points was found. There is 
+        !> hovewer one in equilibrium%boundary%x_point
+        allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%xpoints( gmap%nsv ) )
+        ggd_grid%space(SPACE_POLOIDALPLANE)%xpoints = gmap%svi(1:gmap%nsv)
 #endif
+
+        !> If requested, add a second space for the toroidal angle
+        if (SPACE_COUNT == SPACE_TOROIDALANGLE) then
+            if ( TOROIDAL_PERIODIC ) then
+            call gridSetupStruct1dSpace( ggd_grid%space(SPACE_TOROIDALANGLE), &
+                & COORDTYPE_PHI, &
+                    & (/  ( ( 2*PI_16 / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL - 1 ) /), &
+                    & .true. ) !> periodic = .true.
+            else
+                call gridSetupStruct1dSpace( ggd_grid%space(SPACE_TOROIDALANGLE), &
+                    & COORDTYPE_PHI, &
+                    & (/  ( ( 2*PI_16 / NNODES_TOROIDAL ) * i, i = 0, NNODES_TOROIDAL ) /) )
+            end if
+        end if
 
     end subroutine fillInGridDescription
 
@@ -638,13 +639,11 @@ contains
             free_edge(2) = gmap%mapFcI( ix, iy, RIGHT )
             free_edge(3) = gmap%mapFcI( ix, iy, TOP )
 
-
             node_idx(1) = ggd_grid%space( SPACE_POLOIDALPLANE )%   &
                 &   objects_per_dimension(2)%object( edge_idx )%boundary(1)%index
             last_idx = 2
             node_idx(last_idx) = ggd_grid%space( SPACE_POLOIDALPLANE )%   &
                 &   objects_per_dimension(2)%object( edge_idx )%boundary(2)%index
-
 
             do loop_count = 1, 4
                 if (last_idx < 4) then
