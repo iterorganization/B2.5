@@ -570,6 +570,9 @@ contains
             end if 
         end do
 
+        !> Set nodes list, composing the 2D objects - Cells, using a subroutine
+        call setCellsConnectivityArrayNodes(ggd_grid)
+
 #if 0
 
       ! Fill in x-point indices
@@ -594,6 +597,97 @@ contains
 #endif
 
     end subroutine fillInGridDescription
+
+    subroutine setCellsConnectivityArrayNodes(ggd_grid)
+        type(ids_generic_grid_dynamic), intent(inout) :: ggd_grid
+        !> internal
+        integer, allocatable    ::  objects2Darray(:,:)
+        integer ::  num_nodes_2D, num_boundary_2D, node1, node2
+        integer, allocatable ::  node_idx(:)
+        integer, allocatable    ::  free_edge(:)
+        integer ::  edge_idx, last_idx
+        integer ::  icv, ix, iy, m, loop_count
+
+
+        !> Get the list of 0D objects forming the 2D objects and wirte it to IDS
+        allocate( objects2Darray( gmap%ncv, 4 ) )
+        ! objects2Darray = numpy.array([], dtype='int')
+
+        ! ids_dim_2D.object.resize(ncv)
+
+        ! Already done
+        allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)% &
+                &   object( gmap%ncv ) )
+
+
+        !> Get 2D objects geometry (nodes) data from CPO, sort them into more 
+        !> orderly form  and put them into the IDS
+        num_nodes_2D    = 4
+        num_boundary_2D = 4
+        allocate( node_idx(4) )
+        allocate( free_edge(3) )
+
+        do icv = 1, gmap%ncv
+            ix = gmap%mapCvix( icv )
+            iy = gmap%mapCviy( icv )
+            allocate( ggd_grid%space(SPACE_POLOIDALPLANE)%objects_per_dimension(3)% &
+                &   object(icv)%nodes(num_nodes_2D) )
+            
+            edge_idx = gmap%mapFcI( ix, iy, LEFT )
+            free_edge(1) = gmap%mapFcI( ix, iy, BOTTOM )
+            free_edge(2) = gmap%mapFcI( ix, iy, RIGHT )
+            free_edge(3) = gmap%mapFcI( ix, iy, TOP )
+
+
+            node_idx(1) = ggd_grid%space( SPACE_POLOIDALPLANE )%   &
+                &   objects_per_dimension(2)%object( edge_idx )%boundary(1)%index
+            last_idx = 2
+            node_idx(last_idx) = ggd_grid%space( SPACE_POLOIDALPLANE )%   &
+                &   objects_per_dimension(2)%object( edge_idx )%boundary(2)%index
+
+
+            do loop_count = 1, 4
+                if (last_idx < 4) then
+                    do m = 1, 3
+                        edge_idx = free_edge(m)
+                        if (edge_idx < 1) then
+                            continue
+                        end if
+                        node1 = ggd_grid%space( SPACE_POLOIDALPLANE )%   &
+                            &   objects_per_dimension(2)%object( edge_idx )% &
+                            &   boundary(1)%index
+                        node2 = ggd_grid%space( SPACE_POLOIDALPLANE )%   &
+                            &   objects_per_dimension(2)%object( edge_idx )% &
+                            &   boundary(2)%index
+
+                        if (node_idx(last_idx) == node1) then
+                            free_edge(m) = -1
+                            last_idx = last_idx + 1
+                            node_idx(last_idx)= node2
+                            exit
+                        end if
+                        if (node_idx(last_idx) == node2) then
+                            free_edge(m) = -1
+                            last_idx = last_idx + 1
+                            node_idx(last_idx) = node1
+                            exit
+                        end if
+                    end do
+                end if
+            end do
+
+            !> Set nodes list, composing the 2D objects - Cells
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+                &   object( icv )%nodes(1) = node_idx(1)
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+                &   object( icv )%nodes(2) = node_idx(4)
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+                &   object( icv )%nodes(3) = node_idx(3)
+            ggd_grid%space( SPACE_POLOIDALPLANE )%objects_per_dimension(3)% &
+                &   object( icv )%nodes(4) = node_idx(2)
+        end do
+
+    end subroutine setCellsConnectivityArrayNodes
 
 #if 0
     ! Part 2: define subgrids

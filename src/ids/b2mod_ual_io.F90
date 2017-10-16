@@ -137,12 +137,12 @@ contains
 #if 1
         !> Temporary: Simple creation of the Nodes grid subset to check if the 
         !> new features work correctly
-        allocate(edge_profiles%ggd(1)%grid%grid_subset(4))
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(5))
         write(0,*) "Writing test grid subset containing all nodes in the domain"
         write(0,*) "num_obj_0D: ", gmap%nvx
         allocate(edge_profiles%ggd(1)%grid%grid_subset(1)%element(gmap%nvx))
         allocate(edge_profiles%ggd(1)%grid%grid_subset(1)%identifier%name(1))
-        edge_profiles%ggd(1)%grid%grid_subset(1)%identifier%name(1) = "B2.5 NODES TEST"
+        edge_profiles%ggd(1)%grid%grid_subset(1)%identifier%name(1) = "B2.5 Nodes (test)"
         edge_profiles%ggd(1)%grid%grid_subset(1)%identifier%index = 1
         edge_profiles%ggd(1)%grid%grid_subset(1)%dimension = 1
         do i = 1, gmap%nvx
@@ -157,7 +157,7 @@ contains
         write(0,*) "num_obj_1D: ", gmap%nfcx+gmap%nfcy
         allocate(edge_profiles%ggd(1)%grid%grid_subset(2)%element(gmap%nfcx+gmap%nfcy))
         allocate(edge_profiles%ggd(1)%grid%grid_subset(2)%identifier%name(1))
-        edge_profiles%ggd(1)%grid%grid_subset(2)%identifier%name(1) = "B2.5 EDGES TEST"
+        edge_profiles%ggd(1)%grid%grid_subset(2)%identifier%name(1) = "B2.5 Edges (test)"
         edge_profiles%ggd(1)%grid%grid_subset(2)%identifier%index = 2
         edge_profiles%ggd(1)%grid%grid_subset(2)%dimension = 2
         do i = 1, gmap%nfcx+gmap%nfcy
@@ -172,8 +172,8 @@ contains
         write(0,*) "num_obj_1D x-aligned: ", gmap%nfcx
         allocate(edge_profiles%ggd(1)%grid%grid_subset(3)%element(gmap%nfcx))
         allocate(edge_profiles%ggd(1)%grid%grid_subset(3)%identifier%name(1))
-        edge_profiles%ggd(1)%grid%grid_subset(3)%identifier%name(1) = "B2.5 X-ALIGNED EDGES TEST"
-        edge_profiles%ggd(1)%grid%grid_subset(3)%identifier%index = 2
+        edge_profiles%ggd(1)%grid%grid_subset(3)%identifier%name(1) = "B2.5 x-aligned edges (test)"
+        edge_profiles%ggd(1)%grid%grid_subset(3)%identifier%index = 3
         edge_profiles%ggd(1)%grid%grid_subset(3)%dimension = 2
         do i = 1, gmap%nfcx
             allocate(edge_profiles%ggd(1)%grid%grid_subset(3)%element(i)%object(1))
@@ -187,8 +187,8 @@ contains
         write(0,*) "num_obj_1D y-aligned: ", gmap%nfcy
         allocate(edge_profiles%ggd(1)%grid%grid_subset(4)%element(gmap%nfcy))
         allocate(edge_profiles%ggd(1)%grid%grid_subset(4)%identifier%name(1))
-        edge_profiles%ggd(1)%grid%grid_subset(4)%identifier%name(1) = "B2.5 Y-ALIGNED EDGES TEST"
-        edge_profiles%ggd(1)%grid%grid_subset(4)%identifier%index = 2
+        edge_profiles%ggd(1)%grid%grid_subset(4)%identifier%name(1) = "B2.5 y-aligned edges (test)"
+        edge_profiles%ggd(1)%grid%grid_subset(4)%identifier%index = 4
         edge_profiles%ggd(1)%grid%grid_subset(4)%dimension = 2
         j = gmap%nfcx + 1
         do i = 1, gmap%nfcy
@@ -197,6 +197,21 @@ contains
             edge_profiles%ggd(1)%grid%grid_subset(4)%element(i)%object(1)%space = 1
             edge_profiles%ggd(1)%grid%grid_subset(4)%element(i)%object(1)%index = j
             j = j + 1
+        enddo
+        !> Temporary: Simple creation of the Cells grid subset to check if 
+        !> the new features work correctly
+        write(0,*) "Writing test grid subset containing all 2D cells in the domain"
+        write(0,*) "num_obj_2D: ", gmap%ncv
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(5)%element(gmap%ncv))
+        allocate(edge_profiles%ggd(1)%grid%grid_subset(5)%identifier%name(1))
+        edge_profiles%ggd(1)%grid%grid_subset(5)%identifier%name(1) = "B2.5 Cells (test)"
+        edge_profiles%ggd(1)%grid%grid_subset(5)%identifier%index = 5
+        edge_profiles%ggd(1)%grid%grid_subset(5)%dimension = 3
+        do i = 1, gmap%ncv
+            allocate(edge_profiles%ggd(1)%grid%grid_subset(5)%element(i)%object(1))
+            edge_profiles%ggd(1)%grid%grid_subset(5)%element(i)%object(1)%dimension = 3
+            edge_profiles%ggd(1)%grid%grid_subset(5)%element(i)%object(1)%space = 1
+            edge_profiles%ggd(1)%grid%grid_subset(5)%element(i)%object(1)%index = i
         enddo
 #endif
 
