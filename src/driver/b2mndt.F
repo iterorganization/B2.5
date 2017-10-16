@@ -25,6 +25,9 @@
 *   ..input arguments (unchanged on exit)
       integer nout(0:5), nx, ny, ns, ismain, ismain0,
      *  nscx, iscx(0:nscxmax-1), itim, ntim
+      integer, save :: ntim_batch = 500
+      integer, save :: iav_run = 0
+      integer, save :: ibatch_av_all = 0
       real (kind=R8) ::
      *  dtim
 *   ..input/output arguments
@@ -74,6 +77,7 @@
       integer, save :: style = 1, guard_flows = 2                        !srv 18.06.08
       integer, save :: ntim_step_out = 1                                 !srv 31.10.07
       integer, save :: use_b2srst = 1                                    !srv 13.07.12
+      integer, save :: ion_vlct_restrict = 0                             !iyv 06.02.14
       real (kind=R8) ::
      *  rxf, BoRiS
       real (kind=R8) ::
@@ -89,7 +93,8 @@
       real (kind=R8) ::
      *  acorpa(0:ns-1), acorua(0:ns-1), acorut,
      &  acorte, acorti, acorpo, nasum, na0sum, 
-     &  lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny)             !srv 11.10.02
+     &  lnlam(-1:nx,-1:ny), ue(-1:nx,-1:ny),                            !srv 11.10.02
+     &  pr(-1:nx,-1:ny), ro(-1:nx,-1:ny), cssb(-1:nx,-1:ny,0:1)         !iyv 06.02.14
 *   ..procedures
       real (kind=R8) ::
      *  smin, smax, b2sasum, samax
@@ -154,6 +159,7 @@
      &      'faulty internal parameter nstg_aresco')
        test_residual=nstg_areshe.gt.0.0_R8.or.nstg_areshi.gt.0.0_R8.or.
      &               nstg_aresco.gt.0.0_R8
+       call ipgeti ('b2npmo_ion_vlct_restrict', ion_vlct_restrict)    !iyv 06.02.14
        call alloc_b2mod_diag(nx,ny,ns,nnreg(0),nstrat,natm)
        call ipgeti ('b2mndt_ntim_step_out', ntim_step_out)            !srv 31.01.07 {
        call xertst (1.le.ntim_step_out,
@@ -172,6 +178,9 @@
        elseif(nsmax.lt.0) then
          nsmax=0
        endif
+       call ipgeti ('b2mndt_av', iav_run)
+       call ipgeti ('b2mndt_av_ntim_batch', ntim_batch)
+       call ipgeti ('b2mndt_av_batch_all', ibatch_av_all)
        if (boundary_namelist.ge.1) then
          call initialize_b2mod_boundary(nx,ny,ns,tim)
        else
@@ -454,21 +463,32 @@ ctmp.dpc
            istg(2) = istg(2)+1
            goto 3
          else if (ntim.eq.0) then ! compute derived quantities
+           if(ion_vlct_restrict .ne. 0 ) then                            !iyv 06.02.14
+             call b2xpro (nx, ny, ns, mp, am, na, ro)
+             call b2xppr (nx, ny, ns, ne, na, te, ti, pr)
+             wrk0(:,:)=sqrt(pr(:,:)/ro(:,:))*abs(bb(:,:,0)/bb(:,:,3))
+             call intfaceh(nx,ny,leftix,leftiy,vol,wrk0,cssb(-1,-1,0))
+             call intfacev(nx,ny,bottomix,bottomiy,vol,wrk0,
+     &                     cssb(-1,-1,1))
+           else
+              cssb = 0.0_R8
+           endif                                                         !iyv 06.02.14
            do is=0,ns-1
 *      ..compute partial pressure
              call b2xppb (nx, ny, rza(-1,-1,is), na(-1,-1,is),
      &                    te, ti, pb)                                    !srv 01.10.99
 *      ..compute particle fluxes
              call b2tfnb (nx, ny, is, ismain,
-     &          guard_flows, facdrift, fac_ExB,  !srv 07.06.00 09.01.01 08.09.01 19.05.03 04.02.05
-     &          am(is)*mp, vol, rza(-1,-1,is), pbs, pbshz, na(-1,-1,is), !srv 09.01.01 20.09.06
+     &          guard_flows, facdrift, fac_ExB, am(is)*mp, vol, cssb,    !srv 07.06.00 09.01.01 08.09.01 19.05.03 04.02.05
+     &          rza(-1,-1,is), pbs, pbshz, na(-1,-1,is),                 !srv 09.01.01 20.09.06
      &          pb, ua(-1,-1,is), uadia(-1,-1,0,is), vaecrb(-1,-1,0,is),
      &          vadia(-1,-1,0,is), wadia(-1,-1,0,is), ne, te, ti, bb,
      &          hx, hy, hz, qz, gs, qc, po,                              !srv 19.05.03 08.10.04 04.02.05
      &          cvla(-1,-1,0,is), cdna(-1,-1,0,is), cdpa(-1,-1,0,is),
      &          cddi(-1,-1,0,is), cvlahz(-1,-1,0,is),
      &          cvmahz(-1,-1,0,is), cdnahz(-1,-1,0,is),                  !srv 09.01.01 15.12.05 13.10.06
-     &          cdpahz(-1,-1,0,is), fchvispar, fchinert, fchanml,        !srv 20.09.06
+     &          cdpahz(-1,-1,0,is),
+     &          fchvispar, fchvisper, fchinert, fchanml, fchvisq,        !srv 20.09.06
      &          fna(-1,-1,0,is), fna_nodrift(-1,-1,0,is),
      &          fna_fcor(-1,-1,0,is), fna_he(-1,-1,0,is),
      &          fnaPSch(-1,-1,0,is), fna_mdf(-1,-1,0,is),
@@ -517,7 +537,7 @@ ctmp.dpc
            call b2treq (nx, ny, vol, te, ti, ne, ni, wrk0, lnlam, ceqp) !srv 01.07.09 20.09.11
 *      ..compute energy sources
            solving = .false.
-           call b2npht (nx, ny, ns, nnreg(0), ncall, solving,
+           call b2npht (nx, ny, ns, nnreg(0), ncall, ismain, solving,  !srv 05.07.17
      &      solveee, solveei, solvepo, solvemo,
      &      rxf, BoRiS, fac_ExB, hx, hy, qz, vol, bb,
      &      pbs, lnlam, floe, cone, floi, coni, ceqp, pccm, she, shi,  !srv 01.07.09
@@ -533,6 +553,9 @@ ctmp.dpc
        istg(0) = istg(0)+1
        goto 1
       endif
+
+      if (iav_run > 0) call running_average (nx,ny,ns)
+      if (ibatch_av_all > 0) call batch_av_all(itim,ntim_batch,nx,ny,ns)
 
 * ..return
 99999 continue

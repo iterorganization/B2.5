@@ -24,5 +24,6 @@
       call clsgks
 #endif
 #endif
+      initialised_plotting=.false.
       return
       end subroutine terminate_plotting

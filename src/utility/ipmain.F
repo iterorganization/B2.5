@@ -31,7 +31,7 @@
       integer iptinc, iptbmx, ipgtmx, ipcnt, ip, i, k
       real (kind=R8) ::
      *   xdmx
-      parameter (iptinc=233, iptbmx=377, ipgtmx=20, xdmx=0.8_R8)
+      parameter (iptinc=233, iptbmx=377, ipgtmx=40, xdmx=0.8_R8)
       character ipnam(0:iptbmx-1)*80, ipval(0:iptbmx-1)*80, cnam0*80
       integer ipstat(0:iptbmx-1)
       save ipcnt, ipnam, ipval, ipstat

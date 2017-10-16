@@ -3,7 +3,7 @@
       implicit none
       integer n, incx
       real (kind=R8) ::
-     *   sa, sx(0:*)
+     *   sa, sx(0:(n-1)*incx)
 *     ------------------------------------------------------------------
 *     SBIAS (BLAS-like routine) adds a constant value to a vector.
 *     sbias(n,sa,sx,incx) replaces the s.p. real*8 vector x by sa+x.

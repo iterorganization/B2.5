@@ -140,7 +140,7 @@ C =====================================================================
       ENDDO
       I=NCONT+2
       LFIN(I)=choose_color(i-1,0)
-      LBLS(I)=' '
+      LBLS(I:100)=' '
 #ifndef PLPLOT
       CALL GSLWSC(1.0)
       call gsfais(1)
@@ -330,6 +330,7 @@ c
         WRITE (LBLS(I), FMTZ) CLV
         CALL SHRINK_LABEL(LBLS(I))
       ENDDO
+      LBLS(NCNT+2:100)=' '
       write(*,*) 'zmin,zmax = ',zmin,zmax
 
       px=dpx

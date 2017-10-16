@@ -49,7 +49,7 @@
       qsum=0
       wsum=0
       do ix=-1,nx
-       if (mod(region(ix,iy,0),4).eq.1) then
+       if (on_closed_surface(ix,iy)) then
         if(iy.eq.ny) then
 *   ..extrapolation on boundary
           qterm=quant(ix,ny)-vol(ix,ny)*(-quant(ix,ny)+

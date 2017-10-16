@@ -35,7 +35,7 @@
 
       contains
 
-      subroutine impgyro_init (nxd ,nyd ,nsd ,ismain)
+      subroutine impgyro_init (nxd, nyd, nsd, ismain)
 
       use b2mod_types
       use b2mod_geo
@@ -49,7 +49,7 @@
       real(kind=R8), allocatable::pdum (:), pot(:)
       logical open_file
       integer lnblnk
-      external xertst, xerrab , open_file, lnblnk
+      external xertst, xerrab, open_file, lnblnk
       logical brestarted
       integer fd
  

@@ -141,6 +141,7 @@ c=======================================================================
       use b2mod_indirect
       use b2mod_constants
       use b2mod_b2plot_ank
+      use b2mod_user_namelist
       use b2mod_neutrals_namelist
       implicit none
 c
@@ -263,11 +264,14 @@ c*** print deuterium fluxes across the surfaces
             j=i-nlimi+nlim
             if(i.eq.nlimi+1) write(6,*) '  non-default:'
           end if !}
-          hlp_s=wldna(j,1,0)-wldra(j,1,0)+2*(wldnm(j,1,0)-wldrm(j,1,0))
-c          if(abs(hlp_s).gt.0.001*abs(wldna(j,1,0)+wldra(j,1,0)+
-c     ,                           2*(wldnm(j,1,0)+wldrm(j,1,0)))) then !{
-          write(6,'(2x,i4,2x,1p,5e14.6)') j,wldna(j,1,0),wldra(j,1,0),
-     ,                                   wldnm(j,1,0),wldrm(j,1,0),hlp_s
+          hlp_s=wldna(j,j_h_at,0)-wldra(j,j_h_at,0)-wldpa(j,j_h_at,0)+
+     ,       2*(wldnm(j,1,0)-wldrm(j,1,0)-wldpm(j,1,0))
+c          if(abs(hlp_s).gt.0.001*
+c     ,       abs(wldna(j,j_h_at,0)+wldra(j,j_h_at,0)+wldpa(j,j_h_at,0)+
+c     ,        2*(wldnm(j,1,0)+wldrm(j,1,0)+wldpm(j,1,0)))) then !{
+          write(6,'(2x,i4,2x,1p,5e14.6)')
+     ,     j,wldna(j,j_h_at,0),wldra(j,j_h_at,0)+wldpa(j,j_h_at,0),
+     ,       wldnm(j,1,0),wldrm(j,1,0)+wldpm(j,1,0),hlp_s
 c          end if !}
         end do !}
         print *
@@ -306,7 +310,7 @@ c-----------------------------------------------------------------------
         end do
         do i=-1,nx
           do j=-1,ny ! Only hydrogen atoms appear in momentum balance
-              mach(i,j,2)=tab2(i+1,j+1,1,1)*dab2(i+1,j+1,1,1)
+            mach(i,j,2)=tab2(i+1,j+1,j_h_at,1)*dab2(i+1,j+1,j_h_at,1)
           end do
         end do
         open(lun,file='prn.dat')
@@ -369,23 +373,32 @@ c
 c*** Add the neutrals and molecules
 c***  (for now, the test ions are neglected)
 c
-          do ix=0,nx-1
-            do iy=0,ny-1
-              hlp_a = hlp_a + vol(ix,iy)*dab2(ix+1,iy+1,i,1)
-            end do
-          end do
-          do j=1,nmoli
-            if (mlcmp(i,j).gt.0) then
+          do j=1,natmi
+            if (latmscl(j).eq.i) then
               do ix=0,nx-1
                 do iy=0,ny-1
-                  hlp_m =
-     .             hlp_m + vol(ix,iy)*mlcmp(i,j)*dmb2(ix+1,iy+1,j,1)
+                  hlp_a = hlp_a + vol(ix,iy)*dab2(ix+1,iy+1,j,1)
                 end do
               end do
             end if
           end do
+          do j=1,nmoli
+            do k=1,natmi
+              if (latmscl(k).eq.i) then
+                if (mlcmp(k,j).gt.0) then
+                  do ix=0,nx-1
+                    do iy=0,ny-1
+                      hlp_m =
+     .                 hlp_m + vol(ix,iy)*mlcmp(k,j)*dmb2(ix+1,iy+1,j,1)
+                    end do
+                  end do
+                end if
+              end if
+            end do
+          end do
           hlp_n = hlp_a + hlp_m + hlp_p
-          write(lun,'(a,1p,4e12.4)') textan(i-1),hlp_n,hlp_p,hlp_a,hlp_m
+          write(lun,'(a,1p,4e12.4)')
+     .     species_list(i),hlp_n,hlp_p,hlp_a,hlp_m
         end do
         close(lun)
 c-----------------------------------------------------------------------

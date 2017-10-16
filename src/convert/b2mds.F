@@ -59,8 +59,8 @@
       real (kind=R8) :: BoRiS
       character*12 :: textdrift(0:1)
       character*24 hlp_frm
-#ifdef B25_EIRENE
       integer iflag
+#ifdef B25_EIRENE
       character*72 zeile
 #endif
 c
@@ -269,10 +269,10 @@ cxpb  quantities before their mapping to cell centers
       if(nfla.gt.NFL) then
         write(*,*) 'copy_background not called because nfla.gt.NFL',
      1   nfla,NFL
-      elseif(nx.ge.NDXP.or.ny.ge.NDYP) then
+      elseif(nx.gt.NXDD.or.ny.gt.NYDD) then
         write(*,*)
-     1   'copy_background not called because NX>=NDXP or NY>=NDYP',
-     1   nx,ndxp,ny,ndyp
+     1   'copy_background not called because NX>NXDD or NY>NYDD',
+     1   nx,nxdd,ny,nydd
       else
         call copy_background(nx,ny,ns,BoRiS)
       endif
@@ -586,8 +586,8 @@ c 0 15 30 45 55 65 75 80 85 degree impact
       call ipgeti ('b2stbc_boundary_namelist', boundary_namelist)
       if (boundary_namelist.eq.1)
      > call read_b2mod_boundary_namelist(nx, ny, ns, .true.)
-      call xertst (nbc.le.nbcd, 'increase size in b2mds for nbcd')
-      call xertst (nniso.le.nnisod, 'increase size in b2mds for nnisod')
+      call xertst (nbc.le.nbcd, 'increase DEF_NBC in DIMENSIONS.F')
+      call xertst (nniso.le.nnisod, 'increase DEF_NISO in DIMENSIONS.F')
       call ipgeti ('b2stbr_neutrals_namelist', neutrals_namelist)
       call ipgeti ('b2mndr_eirene', use_eirene)
       call alloc_b2mod_neutrals
@@ -614,16 +614,10 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
 #else
       inquire(file='ftn44',exist=ex)
 #endif
-      if(ex) then
-        call ngread(ismain,iflag)
-        textwl(ns:ns+natmi-1)=textan(0:natmi-1)
-        textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
-        textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
-      endif
 #else
       ex = .false.
 #endif
-      if (.not.ex) then
+      if (.not.ex.or.use_eirene.eq.0) then
         natmi=0
         textan(0)=' ZERO'
         nmoli=0
@@ -631,6 +625,11 @@ cxpb  Bring in wall data and compute oft-needed wall quantities
         nioni=0
         textin(0)=' ZERO'
         call eirene_mc_init(nx,ny)
+      else
+        call ngread(ismain,iflag)
+        textwl(ns:ns+natmi-1)=textan(0:natmi-1)
+        textwl(ns+natmi:ns+natmi+nmoli-1)=textmn(0:nmoli-1)
+        textwl(ns+natmi+nmoli:ns+natmi+nmoli+nioni-1)=textin(0:nioni-1)
       endif
       nsw=ns+natmi+nmoli+nioni
 
@@ -1533,8 +1532,8 @@ c
         do ix=-1,nx
           if(topix(ix,iy).ge.-1.and.topix(ix,iy).le.nx.and.
      1     topiy(ix,iy).ge.-1.and.topiy(ix,iy).le.ny) then
-            if(mod(region(ix,iy,0),4).eq.1.and.
-     1       mod(region(topix(ix,iy),topiy(ix,iy),0),4).eq.2) then
+            if(on_closed_surface(ix,iy).and.
+     1         .not.on_closed_surface(topix(ix,iy),topiy(ix,iy))) then
               fhesep=fhesep+fhe(topix(ix,iy),topiy(ix,iy),1)
               fhisep=fhisep+fhi(topix(ix,iy),topiy(ix,iy),1)
               fnesep=fnesep+fne(topix(ix,iy),topiy(ix,iy),1)

@@ -220,7 +220,8 @@ csw
       call xerset (0)
 *   ..obtain version numbers						 !xpb
       call cfverw (nout(0), newversion)
-      write(6,*) 'Running with VERSION ',newversion,' ', git_version_B25
+      write(6,'(4a)')
+     &  'Running with VERSION ',newversion,' ', git_version_B25
       call cfverr (ninp(1), b2fgmtry_version)				 !xpb
       call cfverr (ninp(2), b2fparam_version)				 !xpb
       call cfverr (ninp(3), b2fstati_version)				 !xpb

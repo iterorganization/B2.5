@@ -101,6 +101,9 @@
 *
 *     B2AGBB computes the magnetic field from the flux functions.
 *
+*     B2AGBS computes a correction to the pbsx array to ensure the
+*     constancy of magnetic flux along flux tubes.
+*
 *     B2AGCF computes the locations of the cell vertices, and computes
 *     the flux functions at those locations.
 *
@@ -239,6 +242,8 @@
 *     B2NXST accumulates the parallel momentum source linearisation
 *     over the distinct atomic species.
 *
+*     B2PRNTI prints out the residuals in integer format.
+*
 *     B2RFCN reads from a formatted file some parameters in the
 *     numerics common block.
 *
@@ -262,8 +267,17 @@
 *     B2RUSR reads a table of source term data from an un*formatted
 *     file.
 *
+*     B2SIAN computes contribution to the parallel momentum source due
+*     to the anomalous current
+*
+*     B2SIAV computes a linearised representation of the additional
+*     viscosity.
+*
 *     B2SIFR computes a linearised representation of the friction
 *     force between one species and all others.
+*
+*     B2SIFRTF computes a linearised representation of the thermal
+*     and friction forces.
 *
 *     B2SIGP computes the pressure gradient term on the right hand
 *     of the parallel momentum balance equation for one species.
@@ -420,6 +434,9 @@
 *     an interface to an iterative or a direct solver; the choice
 *     depends upon an internal parameter.
 *
+*     B2WAOS prints out the results of a B2 calculation in old-fashioned
+*     style
+*
 *     B2WDAT is an output routine that writes out B2 arrays into ASCII
 *     data files.
 *
@@ -523,6 +540,8 @@
 *     B2WURC writes a table of atomic rate coefficients to an
 *     un*formatted file.
 *
+*     B2XBZB calculates Bz/B**2 - Bz/<B**2>.
+*
 *     B2XGBS computes the product (magnetic field pitch)*(surface area)
 *     at cell faces.
 *
@@ -534,6 +553,11 @@
 *
 *     B2XPFI computes the total atom particle flux, fni:
 *       fni(,,) = (sum is :: fna(,,,is)) .
+*
+*     B2XPIC computes the poloidal projection of the ion parallel
+*     current on cell centers.
+*
+*     B2XPIF computes the ion parallel current on cell faces.
 *
 *     B2XPMC computes the mach number of the parallel flow.
 *
@@ -560,6 +584,8 @@
 *
 *     B2XPRO computes the mass density, ro:
 *       ro(,) = (sum is :: am(is)*mp*na(,,is)) .
+*
+*     B2XPVE computes the parallel electron velocity on cell centers.
 *
 *     B2XPXC interpolates a function from x-faces to cell centers.
 *
@@ -593,6 +619,17 @@
 *
 *     B2XXMM computes the locations of the minimum and maximum entries
 *     of a quantity defined on the b2 mesh.
+*
+*     B2XZEF computes zeff:
+*       zeff(,) = (sum is :: rz2(,,is)*na(,,is))/ne .
+*
+*     B2XZMF computes zmff:
+*       zmff(,) = (sum over is /= ismain :: rz2(,,is)*na(,,is))/
+*                  na(,,ismain)*rz2(,,ismain)
+*
+*     B2YE (main program) is a postprocessor for b2. It calculates
+*     statistical errors based on averaged quantities collected during
+*     the averaging phase of a b2 calculation.
 *
 *     B2YG (main program) is a postprocessor for b2. It reads and
 *     displays the geometry and magnetic field. This program calls the

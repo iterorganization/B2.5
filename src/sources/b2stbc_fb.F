@@ -91,7 +91,6 @@
        call b2xvsg (n2, ti, 1, 'ti', '.gt.')
       endif
 
-
 ! process feedbacks in b2.feedback_control.parameters
       if(vacuum_communication.gt.0) then
 ! this allows for a communication of particle fluxes across vacuum regions
@@ -246,7 +245,7 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is, ispecies, is0, is_start, is_end,
 #ifdef B25_EIRENE
-     &        i, k, l,
+     &        i, j, k, l,
 #endif
      &        ib, iss, ixl1, ixr1, ixl2, ixr2, istrai, icount
       integer, save :: ncall_old, ncall_gap, n_flux_zero
@@ -256,7 +255,8 @@
      &                 isfeedback, nesepm_istra
       real (kind=R8) :: amtol,
      &  na_feedback_current, na_feedback_rescale, vol_feedback, dtim,
-     &  na_feedback_prev(0:DEF_NATM-1), dt_prev, sum_e, sum_s,
+     &  na_feedback_prev(0:DEF_NATM-1), na_feedback_save(0:DEF_NATM-1),
+     &  dt_prev, sum_e, sum_s,
      &  total_flux, flux_old, target_flux,
      &  fnaycore, fnaycore_alpha, fnaycurr,
      1  fheycore, fheycore_alpha, fheycurr,
@@ -279,10 +279,10 @@
       integer, save :: b2sral_style = 2
       integer, save :: boundary_namelist = 0
       character*72 message
-      logical, save :: prev_done(0:DEF_NATM-1), consistent
+      logical, save :: consistent
       logical consistent_core, consistent_sol, consistent_pfr1,
      .        consistent_pfr2, zeroslope
-      save ncall, dtim, dt_prev, na_feedback_prev,
+      save ncall, dtim, dt_prev, na_feedback_prev, na_feedback_save,
      1  fnaycore, fnaycore_alpha, fheycore, fheycore_alpha,
      2  fhiycore, fhiycore_alpha, fchycore, fchycore_alpha,
      3  nesepm, nesepm_sol, nepedm_sol, nesepm_pfr,
@@ -304,8 +304,8 @@
 *   ..initialisation
       parameter (amtol = 1.0e-2_R8)
       data ncall/0/, ncall_old/0/, ncall_gap/5/, ncallfeedback/0/,
-     &  n_flux_zero/0/, dtim/1.0/,
-     &  na_feedback_prev/DEF_NATM*0.0_R8/, prev_done/DEF_NATM*.false./,
+     &  n_flux_zero/0/, dtim/1.0/, na_feedback_save/DEF_NATM*0.0_R8/,
+     &  na_feedback_prev/DEF_NATM*0.0_R8/,
      1  fnaycore/-1.0e30_R8/, fnaycore_alpha/1.0e-1_R8/,
      1  fheycore/0.0_R8/, fheycore_alpha/1.0e-1_R8/,
      2  fhiycore/0.0_R8/, fhiycore_alpha/1.0e-1_R8/,
@@ -486,7 +486,7 @@
          call ipgeti ('b2stbc_iyped', iyped)
          call xertst (iyped.gt.-2 .and. iyped.le.ny,
      .    'faulty input iyped')
-         call xertst (mod(region(jxa,iyped,0),4).eq.1,
+         call xertst (on_closed_surface(jxa,iyped),
      .    'location of top of pedestal outside core region!')
        endif
        call ipgeti ('b2stbc_ncallfeedback', ncallfeedback)
@@ -599,7 +599,7 @@
      .        bccon(isfeedback,ib).eq.12
            end if
          else if (bcchar(ib).eq.'S') then
-           if (mod(region(bc_list_x(1,ib),bc_list_y(1,ib),0),4).eq.1)
+           if (on_closed_surface(bc_list_x(1,ib),bc_list_y(1,ib)))
      >      then
              if (fnaycore.ne.-1.0e30_R8 .or. nesepm.gt.0.0_R8) then
                consistent_core = consistent_core .or.
@@ -682,7 +682,9 @@
      &         na_feedback_option(ispecies) .gt. 0 .and.
      &         na_feedback_actuator(ispecies) .gt.0) then
 
-               if (main_call) prev_done(ispecies) = .false.
+               if (main_call) then
+                 na_feedback_prev(ispecies) = na_feedback_save(ispecies)
+               end if
 ! phase 1:
                select case(na_feedback_choice(ispecies))
 
@@ -732,7 +734,7 @@
      &                    ispecies+1
                   endif
 
-                  na_feedback_current = 0.0
+                  na_feedback_current = 0.0_R8
                   vol_feedback = 0.0_R8
                   is_start=-1
                   is_end=-1
@@ -854,12 +856,15 @@
 #ifdef B25_EIRENE
                   do k=1,ncns !{
                     l=nlim+lcns(k)
-                    na_feedback_current=na_feedback_current
-     .                         +wldna(l,ispecies+1,0)
-     .                         -wldra(l,ispecies+1,0)
-                    do i=1,nnmoli !{
-                      na_feedback_current=na_feedback_current
-     .                         +wldnm(l,i,0)*mlcmp(ispecies+1,i)
+                    do j=1,nnatmi !{
+                      if (latmscl(j).eq.ispecies+1) then !{
+                        na_feedback_current=na_feedback_current
+     .                         +wldna(l,j,0)-wldra(l,j,0)-wldpa(l,j,0)
+                        do i=1,nnmoli !{
+                          na_feedback_current=na_feedback_current
+     .             +mlcmp(j,i)*(wldnm(l,i,0)-wldrm(l,i,0)-wldpm(l,i,0))
+                        end do !}
+                      end if !}
                     end do !}
                   end do !}
 #endif
@@ -874,7 +879,7 @@
      .                      na_feedback_iy2(ispecies)
                       do ix = na_feedback_ix1(ispecies),
      .                        na_feedback_ix2(ispecies)
-                        if (mod(region(ix,iy,0),4).eq.1) then
+                        if (on_closed_surface(ix,iy)) then
                           sum_s = sum_s + na(ix,iy,is) * vol(ix,iy)
                           charge_frac(iss) = charge_frac(iss) +
      .                     na(ix,iy,is) * vol(ix,iy)
@@ -904,8 +909,8 @@
      &                          na_feedback_iy2(ispecies)
                            do ix = na_feedback_ix1(ispecies),
      &                             na_feedback_ix2(ispecies)
-                             if(mod(region(bottomix(ix,iy),
-     .                                     bottomiy(ix,iy),0),4).eq.1)
+                             if(on_closed_surface(bottomix(ix,iy),
+     .                                            bottomiy(ix,iy)))
      >                        then
                                 na_feedback_current =
      &                             na_feedback_current +
@@ -985,8 +990,8 @@
      &                    'b2stbc_fb_pre_option: using ',
      &                    'SOLPS4 linear increase for sequence ',
      &                    ispecies+1
-                     if(na_feedback_alpha(ispecies).lt.0.0_R8) then
-                       na_feedback_alpha(ispecies) = 0.0_R8
+                     if(na_feedback_const(ispecies).lt.0.0_R8) then
+                       na_feedback_const(ispecies) = 0.0_R8
                        is_start=-1
                        is_end=-1
                        do is=0, ns-1
@@ -1001,8 +1006,8 @@
      &                          rightix(ix,iy).ne.nx+1 .and.
      &                          bottomiy(ix,iy).ne.-2 .and.
      &                          topiy(ix,iy).ne.ny+1) then
-                                na_feedback_alpha(ispecies) =
-     &                             na_feedback_alpha(ispecies) +
+                                na_feedback_const(ispecies) =
+     &                             na_feedback_const(ispecies) +
      &                             na(ix,iy,is) * vol(ix, iy)
                                endif
                              enddo
@@ -1012,7 +1017,6 @@
                        enddo
                      endif
                      na_feedback_prev(ispecies) = na_feedback_current
-                     prev_done(ispecies) = .true.
                   endif
 
                   na_feedback_target(ispecies) =
@@ -1021,14 +1025,11 @@
      .               (tim-na_feedback_time(ispecies))
                   na_feedback_rescale =
      .               na_feedback_alpha(ispecies) *
-     .              (na_feedback_target(ispecies) -
+     .             ((na_feedback_target(ispecies) -
      .               na_feedback_current)/dtim +
      .              (na_feedback_prev(ispecies) -
-     .               na_feedback_current)/dt_prev
-                  if (.not.prev_done(ispecies)) then
-                    na_feedback_prev(ispecies) = na_feedback_current
-                    prev_done(ispecies) = .true.
-                  end if
+     .               na_feedback_current)/dt_prev)
+                  na_feedback_save(ispecies) = na_feedback_current
 
                case (5) ! rescale done according to SOLPS4 formula:
                         ! Nt = A*exp((time-T)*B)
@@ -1038,8 +1039,8 @@
      &                    'b2stbc_fb_pre_option: using ',
      &                    'SOLPS4 exponential decay for sequence ',
      &                    ispecies+1
-                     if(na_feedback_alpha(ispecies).lt.0.0_R8) then
-                       na_feedback_alpha(ispecies) = 0.0_R8
+                     if(na_feedback_const(ispecies).lt.0.0_R8) then
+                       na_feedback_const(ispecies) = 0.0_R8
                        is_start=-1
                        is_end=-1
                        do is=0, ns-1
@@ -1052,8 +1053,8 @@
      &                          rightix(ix,iy).ne.nx+1 .and.
      &                          bottomiy(ix,iy).ne.-2 .and.
      &                          topiy(ix,iy).ne.ny+1) then
-                                na_feedback_alpha(ispecies) =
-     &                             na_feedback_alpha(ispecies) +
+                                na_feedback_const(ispecies) =
+     &                             na_feedback_const(ispecies) +
      &                             na(ix,iy,is) * vol(ix, iy)
                                endif
                              enddo
@@ -1063,23 +1064,19 @@
                        enddo
                      endif
                      na_feedback_prev(ispecies) = na_feedback_current
-                     prev_done(ispecies) = .true.
                   endif
 
                   na_feedback_target(ispecies) =
-     .               na_feedback_alpha(ispecies) *
+     .               na_feedback_const(ispecies) *
      .               exp(na_feedback_beta(ispecies)*
      .                   (tim-na_feedback_time(ispecies)))
                   na_feedback_rescale =
-     .               na_feedback_const(ispecies) *
-     .              (na_feedback_target(ispecies) -
+     .               na_feedback_alpha(ispecies) *
+     .             ((na_feedback_target(ispecies) -
      .               na_feedback_current)/dtim +
      .              (na_feedback_prev(ispecies) -
-     .               na_feedback_current)/dt_prev
-                  if (.not.prev_done(ispecies)) then
-                    na_feedback_prev(ispecies) = na_feedback_current
-                    prev_done(ispecies) = .true.
-                  end if
+     .               na_feedback_current)/dt_prev)
+                  na_feedback_save(ispecies) = na_feedback_current
 
                case (6) ! rescale slowed by na_feedback_alpha (SOLPS4 style)
 
@@ -1092,11 +1089,13 @@
 
                end select
 
-               write(*,'(a,1x,1p,i3,3g15.6)') 
+               write(*,'(a,1x,1p,i3,6g15.6)')
      &              'na_feedback_rescale ', ispecies+1, 
      &              na_feedback_current,
      &              na_feedback_target(ispecies),
-     &              na_feedback_rescale
+     &              na_feedback_rescale,
+     &              na_feedback_prev(ispecies),
+     &              dtim, dt_prev
 
 ! phase 3:
 
@@ -1127,7 +1126,7 @@
                     saved_na_feedback_actuator(ispecies) =
      &                 na_feedback_rescale
                   end if
-                  if(na_feedback_puff_min(ispecies) .gt. 0.0_R8)
+                  if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
      &                 saved_na_feedback_actuator(ispecies) =
      &                 max(na_feedback_puff_min(ispecies),
      &                 saved_na_feedback_actuator(ispecies))
@@ -1182,7 +1181,7 @@
      &                 saved_na_feedback_actuator(ispecies) +
      &                 na_feedback_rescale
 
-                  if(na_feedback_puff_min(ispecies) .gt. 0.0_R8)
+                  if(na_feedback_puff_min(ispecies) .ge. 0.0_R8)
      &                 saved_na_feedback_actuator(ispecies) =
      &                 max(na_feedback_puff_min(ispecies),
      &                 saved_na_feedback_actuator(ispecies))
@@ -1230,7 +1229,7 @@
       if(fnaycore.ne.-1.0e30_R8) then
         fnaycurr=0.0_R8
         do ix=-1,nx
-          if(mod(region(ix,-1,0),4).eq.1) then
+          if(on_closed_surface(ix,-1)) then
             fnaycurr=fnaycurr+
      1       fna(topix(ix,-1),topiy(ix,-1),1,isfeedback)
           endif
@@ -1272,7 +1271,7 @@
 #endif
         fheycurr=0.0_R8
         do ix=-1,nx
-          if(mod(region(ix,-1,0),4).eq.1) then
+          if(on_closed_surface(ix,-1)) then
 #ifdef COMPLICATED
             teave1=teave1+te(ix,-1)*ne(ix,-1)*vol(ix,-1)
             neave1=neave1+ne(ix,-1)*vol(ix,-1)
@@ -1336,7 +1335,7 @@
 #endif
         fhiycurr=0.0_R8
         do ix=-1,nx
-          if(mod(region(ix,-1,0),4).eq.1) then
+          if(on_closed_surface(ix,-1)) then
 #ifdef COMPLICATED
             tiave1=tiave1+ti(ix,-1)*ni(ix,-1,0)*vol(ix,-1)
             niave1=niave1+ni(ix,-1,0)*vol(ix,-1)
@@ -1407,7 +1406,7 @@ cxpb current feedback not yet tested!
       if(fchycore.ne.-1.0e30_R8) then
         fchycurr=0.0_R8
         do ix=-1,nx
-          if(mod(region(ix,-1,0),4).eq.1)
+          if(on_closed_surface(ix,-1))
      >     fchycurr=fchycurr+fch(topix(ix,-1),topiy(ix,-1),1)
         enddo
         if(ncall.eq.0) then

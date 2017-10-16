@@ -242,7 +242,7 @@
       gssum(1)=0.0_R8                                                    !xpb
       volsum(1)=0.0_R8
       do ix = -1, nx                                                     !xpb
-        if(mod(region(ix,iy,0),4).eq.1) then                             !xpb
+        if(on_closed_surface(ix,iy)) then                                !xpb
           tef = (te(ix,iy)*hy1(topix(ix,iy),topiy(ix,iy))+
      &           te(topix(ix,iy),topiy(ix,iy))*hy1(ix,iy))/
      &          (hy1(topix(ix,iy),topiy(ix,iy))+hy1(ix,iy))
@@ -319,7 +319,7 @@
       qeaverage(2)=0.0_R8                                                !xpb
       qiaverage(2)=0.0_R8                                                !xpb
       do ix = -1, nx                                                     !xpb
-        if(region(ix,iy,0).eq.5) then                                    !xpb
+        if(on_closed_surface(ix,iy)) then                                !xpb
           tef = (te(ix,iy)*hy1(bottomix(ix,iy),bottomiy(ix,iy))+
      &           te(bottomix(ix,iy),bottomiy(ix,iy))*hy1(ix,iy))/
      &          (hy1(bottomix(ix,iy),bottomiy(ix,iy))+hy1(ix,iy))
@@ -476,7 +476,7 @@ c from diamagnetic drifts
       if(maxval(facdrift).ne.0.0_R8) then
         do ix=-1,nx
           iy=0                                        ! south side
-          if(mod(region(ix,-1,0),4).ne.1 .and.
+          if(.not.on_closed_surface(ix,iy) .and.
      &       b2stbc_fchy_dia_coreonly.eq.0) then  ! code for private flux 
             do is=0,ns-1
               if(.not.is_neutral(is)) then
@@ -509,7 +509,7 @@ c from diamagnetic drifts
                 testqi = testqi + t0
               endif
             enddo
-          elseif(mod(region(ix,-1,0),4).eq.1 .and. nnreg(0).gt.1) then
+          elseif(on_closed_surface(ix,iy)) then
             if (diagno.ge.2) write(*,*) 'Before she0,shi0 =',
      &            ix,she0(ix,-1,0),shi0(ix,-1,0)
             she0(ix,-1,0)=she0(ix,-1,0)+qeaverage(1)*facdrift(ix,iy)*
@@ -534,8 +534,7 @@ c from diamagnetic drifts
      8        OnedBsqc(ix,iy))*b2stbc_fchy_dia
           endif
           iy = ny
-          if(region(ix,iy,0).eq.5 .and. periodic_bc.eq.1 .and.
-     &       b2stbc_fchy_dia_coreonly.eq.0) then  ! code for island center
+          if(on_closed_surface(ix,iy)) then  ! code for island center
             she0(ix,iy,0)=she0(ix,iy,0)-qeaverage(2)*facdrift(ix,iy)*
      7       (OnedBsqc(rightix(ix,iy),rightiy(ix,iy))-
      8        OnedBsqc(ix,iy))*b2stbc_fchy_dia

@@ -273,6 +273,22 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2agdr_redef_pbs</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					When b2agdr_redef_pbs.eq.1, geometrical quantities are adjusted so as to ensure that the poloidal flux between two flux surfaces remains constant.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_redef_pbs</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					Obsolete. Should use b2agdr_redef_pbs instead.
+				</description>
+			</switch>
+			<switch>
 				<name>b2agfs_periodic_bc</name>
 				<default>0</default>
 				<type>integer</type>
@@ -1002,7 +1018,8 @@
 				<default>1</default>
 				<type>integer</type>
 				<description>
-					When set to '1', the new correct form of the friction force is used. 
+					If b2sigp_style is set to '2', this switch has no effect.
+					When set to '1', the new correct form of the friction force is used, applicable for non-hydrogenic plasmas or hydrogenic mixtures. 
 					The value '0' corresponds to the old SOLPS5.0 treatment.
 				</description>
 			</switch>
@@ -1013,6 +1030,15 @@
 				<description>
 					When set to '1', there is no radial contribution in Joule heating because there are no physical reasons to take it into account. 
 					The value '0' corresponds to the old SOLPS5.0 treatment.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sian_phm0</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the parallel momentum source term associated with the anomalous current. It is recommended '1.0'.
+					The value '0.0' corresponds to the old SOLPS5.0 treatment.
 				</description>
 			</switch>
 			<switch>
@@ -1086,6 +1112,23 @@
 				<note>!srv 20.11.08</note>
 				<description>
 					Real parameter which multiplies current driven by heat viscosity effects.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfhe_stochastic</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Real parameter which turns on stochastic current.
+					If b2tfhe_stochastic is 0 then stochastic current is switched off otherwise stochastic current is switched on.
+				</description>
+			</switch>
+			<switch>
+				<name>b2trno_con_e_stochastic</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the stochastic conductivity.
 				</description>
 			</switch>
 			<switch>
@@ -1485,11 +1528,35 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2tfnb_xcur</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					Xcur is a multiplier to the parallel viscosity, perpendicular viscosity, heat viscosity, ion inertial and anomalous current contributions to the ion poloidal flows (particle and energy).
+				</description>
+			</switch>
+			<switch>
 				<name>b2tfnb_ycur</name>
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Ycur is a multiplier to the parallel viscosity, ion inertial and anomalous currents to the ion radial flows (particle and energy).
+					Ycur is a multiplier to the parallel viscosity, perpendicular viscosity, heat viscosity, ion inertial and anomalous current contributions to the ion radial flows (particle and energy).
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfnb_vis_per</name>
+				<default>0.0</default>
+				<type>real</type>
+				<description>
+					vis_per is a multiplier to the perpendicular viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfnb_vis_q</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					vis_q is a multiplier to the heat viscosity current contributions to the ion poloidal flows (particle and energy). Subservient to b2tfnb_xcur and b2tfnb_ycur.
 				</description>
 			</switch>
 			<switch>
@@ -1639,7 +1706,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier of the friction term between charged species.
+					Multiplier of the friction term between charged species (only ions in case b2sigp_style.eq.2).
 				</description>
 			</switch>
 			<switch>
@@ -1647,7 +1714,8 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier of the ehxp term in the thermal force term.
+					If b2sigp_style.eq.2, multiplier to the friction force term between electrons and ions.
+					Otherwise, multiplier of the ehxp term in the older expression for the thermal force.
 				</description>
 			</switch>
 			<switch>
@@ -1655,7 +1723,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier of the electron thermal gradient term in the thermal force term
+					Multiplier of the electron thermal gradient term in the thermal force term and parallel current
 				</description>
 			</switch>
 			<switch>
@@ -1837,7 +1905,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier of the contribution to electron heat sources from divergence(ue,ve).
+					Multiplier of the contribution to electron heat sources from divergence(ue,ve). This term is superseded by the BoRiS switch if invoked.
 				</description>
 			</switch>
 			<switch>
@@ -1853,7 +1921,7 @@
 				<default>1.0</default>
 				<type>real</type>
 				<description>
-					Multiplier of the contribution to ion heat sources from viscous heating. This term is superseded by the BoRiS switch if invoked.
+					Multiplier of the contribution to ion heat sources from viscous heating due to poloidal velocity differences. This term is superseded by the BoRiS switch if invoked.
 				</description>
 			</switch>
 			<switch>
@@ -1894,6 +1962,14 @@
 				<type>real</type>
 				<description>
 					Multiplier of the contribution to heat sources from friction due to diamagnetic velocities. Normally already included in 'phm3' term above.
+				</description>
+			</switch>
+			<switch>
+				<name>b2sihs_phm8</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier of the contribution to heat sources from viscous heating due to radial velocity differences. This term is only included when using b2nph9_style.eq.1 or b2npht_style.eq.1 (defaults). This term is superseded by the BoRiS switch if invoked.
 				</description>
 			</switch>
 			<switch>
@@ -2218,6 +2294,46 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2mndt_av</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_av.gt.0, turns on computation of running averages.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_av_continue</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_av_continue.gt.0, continuously perform running averages.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_av_ntim_batch</name>
+				<default>500</default>
+				<type>integer</type>
+				<description>
+					If ntim_batch.gt.0, number of iterations used to compute batch averages.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_av_ntim_run</name>
+				<default>1000</default>
+				<type>integer</type>
+				<description>
+					If ntim_run.gt.0, number of iterations used for writing running averages.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndt_av_batch_all</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If b2mndt_av_batch_all.gt.0, produces standard output for batch averages.
+				</description>
+			</switch>
+			<switch>
 				<name>b2mndr_plasmatim</name>
 				<default>0.0</default>
 				<type>real</type>
@@ -2230,7 +2346,10 @@
 				<default>0</default>
 				<type>integer</type>
 				<description>
-					If iout.eq.1, a large set of *.dat output files will be produced containing the values of a variety of code quantities. See the "Output description" file for details.
+					If iout.eq.1, a large set of *.dat output files will be produced containing the values of a variety of code quantities.
+					If iout.eq.4, a more select set of output files will be produced, which usually suffices for everyday analysis.
+					For more detailed debugging analysis, one should instead use "procedure_name"_iout.eq.1.
+					The files and their content are fully described in the Output_description.pdf file in the SOLPSTOP/doc directory.
 				</description>
 			</switch>
 			<switch>
@@ -2239,6 +2358,22 @@
 				<type>integer</type>
 				<description>
 					If append.eq.1, the *.dat output files are appended upon every write, instead of being rewritten every time.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_old_style</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If old_style.gt.0, old-fashioned (SOLPS4 style) output is added at the end of the b2mn.prt file.
+				</description>
+			</switch>
+			<switch>
+				<name>b2mndr_av_read</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+					If ird_aver.gt.0, the averaged solution is read from the b2faveri file and written in the b2favere file at the end of the run.
 				</description>
 			</switch>
 			<switchgroup>
@@ -2368,6 +2503,17 @@
 				<type>integer</type>
 				<description>
 					Output flag for the first_flight model. If output.ge.1, the files start, end, and fort.88 are created, which contain information about the chords used in the model.
+				</description>
+			</switch>
+			<switch>
+				<name>b2npmo_vlct_diagno</name>
+				<default>1</default>
+				<type>integer</type>
+				<description>
+                   Output flag to control diagnostics related to use of ion_vlct_restrict switch.
+				   If vlct_diagno.eq.0, the velocity restrictions are applied silently.
+				   If vlct_diagno.eq.1 (default), the user only gets a count of how many times the velocity restriction has been applied for each species, if any.
+				   If vlct_diagno.eq.2, the user gets the full details of where and how large the applied velocity restriction was, if any.
 				</description>
 			</switch>
 			<switchgroup>
@@ -2728,9 +2874,17 @@
 				</description>
 			</switch>
 			<switch>
+				<name>b2npmo_ion_vlct_restrict</name>
+				<default>0</default>
+				<type>integer</type>
+				<description>
+                   If ion_vlct_restrict.ne.0, the parallel speed of ions is limited to be no more than 3 times the global plasma sound speed. In addition, if ion_vlct_restrict.eq.2, the ExB ion speeds are limited to be no more than twice the local ion sound speed.
+				</description>
+			</switch>
+			<switch>
 				<name>b2tfhe_vis_per</name>
 				<default>0.0</default>
-				<type>integer</type>
+				<type>real</type>
 				<note>!srv 20.11.08</note>
 				<description>
 					If '1.0', the electric potential equation is solved by the subroutine b2npp7 using a 7-point stencil.
@@ -3518,11 +3672,12 @@
 			</switchgroup>
 			<switch>
 				<name>b2sigp_style</name>
-				<default>1</default>
+				<default>2</default>
 				<type>integer</type>
 				<description>
-					When set to '1', SPb's form of the pressure gradient term on the right hand of the momentum balance equation is used. 
-					It is recommended '1'.
+					When set to '1', SPb's form of the pressure gradient term on the right hand of the momentum balance equation is used.
+					When set to '2', the parallel current term contains a correction due to impurities, when Z_eff is not equal to the average plasma ion charge. Only usable if the potential equation is solved simultaneously (b2news_poteq.eq.1).
+					The default value of '2' is recommended for cases with one main hydrogenic species (or at least where the main species is the lightest one) and any amount of impurities. It is not guaranteed to yield correct results for hydrogen isotopic mixtures or non-hydrogenic plasmas.
 				</description>
 			</switch>
 			<switch>
@@ -3743,6 +3898,14 @@
 				<type>integer</type>
 				<description>
 					If no_current.eq.1, all currents are set to zero. The setting no_current.eq.1 must be used if the potential equation is not explicitly solved for, i.e. for b2news_poteq.ne.1.
+				</description>
+			</switch>
+			<switch>
+				<name>b2tfhe_prl_cur</name>
+				<default>1.0</default>
+				<type>real</type>
+				<description>
+					Multiplier to the parallel current.
 				</description>
 			</switch>
 			<switch>
@@ -4184,7 +4347,7 @@
 				</description>
 			</switch>
 			<switch>
-				<name>B2ESPCR</name>
+				<name>B2EATCR</name>
 				<default>ordering of the B2 isonuclear sequences</default>
 				<type>integer array of size (0:NS-1)</type>
 				<description>
@@ -4192,11 +4355,35 @@
 				</description>
 			</switch>
 			<switch>
-				<name>EB2SPCR</name>
+				<name>B2ESPCR</name>
+				<default>ordering of the B2 isonuclear sequences</default>
+				<type>integer array of size (0:NS-1)</type>
+				<description>
+					Contains the isonuclear sequence index of the B2 species (is).
+				</description>
+			</switch>
+			<switch>
+				<name>EB2ATCR</name>
 				<default>first B2 species of each isonuclear sequence</default>
 				<type>integer array of size (NATM)</type>
 				<description>
 					Contains the index of the B2 neutral fluid species corresponding to the Eirene atomic species (iatm).
+				</description>
+			</switch>
+			<switch>
+				<name>EB2SPCR</name>
+				<default>first B2 species of each isonuclear sequence</default>
+				<type>integer array of size (NSPECIES)</type>
+				<description>
+					Contains the index of the first B2 fluid for each species.
+				</description>
+			</switch>
+			<switch>
+				<name>LATMSCL</name>
+				<default>assuming one-to-one match between Eirene and B2.5 atomic species</default>
+				<type>integer array of size (NATM)</type>
+				<description>
+					Contains the index of the B2.5 isonuclear sequence with which the Eirene atomic species (IATM) should be scaled.
 				</description>
 			</switch>
 			<switch>
@@ -4242,7 +4429,7 @@
 			<switch>
 				<name>LSNS</name>
 				<default>0</default>
-				<type>integer array of size (NSTRAT)</type>
+				<type>integer array of size (NSTRAT*NSRFS)</type>
 				<description>
 					Contains the indices of Eirene surfaces related to the recycling sources.
 				</description>
@@ -4252,7 +4439,7 @@
 				<default>0</default>
 				<type>integer array of size (NSTRAT)</type>
 				<description>
-					Contains the number of parts for each Eirene recycling stratum.
+					Contains the number of Eirene surfaces for each Eirene recycling stratum.
 				</description>
 			</switch>
 			<switch>
@@ -5064,7 +5251,7 @@
 						 12 : sheath conditions, electron energy transmission coefficient, ENEPAR(,1) specifies an energy transmission factor, delta<sub>e</sub> in Q<sub>e</sub> = delta<sub>e</sub> Gamma<sub>e</sub> T<sub>e</sub>
 						 13 : prescribe the electron energy flux per unit area proportional to temperature, ENEPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J)
 						 14 : leakage option for electron energy, ENEPAR(,1) specifies the leakage factor, alpha in Gamma<sub>loss</sub> = alpha C<sub>s</sub>, collective n<sub>e</sub> T<sub>e</sub>
-						 15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.6.4 of manual for details)
+						 15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.6.4 of manual for details). Linked to using BCCON=14 for all ion species.
 						 16 : Feedback boundary condition with constant temperature, ENEPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Also see type [17] below. Available if bcene_16_style=0 (default). If bcene_16_style=1, integrated electron heat flux with constant electron temperature, summed over all core boundaries with BCENE=16.
 						 17 : Feedback boundary condition with constant shared temperature for both electrons and ions, with ENEPAR(,1) + ENIPAR(,1) giving the total power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENEPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Replaces [16] for high densities and large values of 'b2stbc_type16_ref'.
 						 18 : Fractional drop condition. Not yet working.
@@ -5097,7 +5284,7 @@
 						12 : sheath conditions, ion energy transmission coefficient, ENIPAR(,1) specifies an energy transmission factor, delta<sub>i</sub> in Q<sub>i</sub> = delta<sub>i</sub> T<sub>i</sub> sum<sub>a</sub> Gamma<sub>a</sub>
 						13 : prescribe the ion energy flux per unit area proportional to temperature, ENIPAR(,1) specifies the energy flux density per temperature in W.m<sup>-2</sup>.J<sup>-1</sup> (the temperature here in J)
 						14 : leakage option for ion energy, ENIPAR(,1) specifies the leakage factor, alpha in Gamma<sub>loss</sub> = alpha C<sub>s</sub>T<sub>i</sub>
-						15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.6.5 of manual for details)
+						15 : sheath boundary condition, from b2stbc_spb, recommended when using drifts (see Section C.6.5 of manual for details). Linked to using BCCON=14 for all ion species.
 						16 : Feedback boundary condition with constant temperature, ENIPAR(,1) specifies the power flux in W across the flux surface with index 'b2stbc_type16_ref' (default=-1), ENIPAR(,2) should be something like 0.1 and specifies the strength of the feedback. Also see type [17] below. Available if bceni_16_style=0 (default). If bceni_16_style=1, integrated ion heat flux with constant ion temperature, summed over all core boundaries with BCENI=16.
 							ENIPAR(,1) specifies the power flux in W
 						17 : Feedback boundary condition with constant shared temperature for both electrons and ions, see BCENE=17 above for description.
@@ -5358,6 +5545,7 @@
 				<namelist>FEEDBACK_CONTROL</namelist>
 				<description>
 					Allows for more complex feedback schemes.
+					This namelist is read if 'b2stbc_feedback' is set to '1' in the b2mn.dat file or if LFEEDBACK=.true. in b2.boundary.parameters (and that latter file is also read).
 				</description>
 			</introduction>
 			<switch>
@@ -6179,7 +6367,7 @@
 				</description>
 			</switch>
 			<switchgroup>
-				<name>CFLM*</name>
+				<name>CFL*</name>
 				<description>
 					For all flux limit multipliers, setting them to zero turns off the corresponding flux limiter.
 				</description>
@@ -6205,6 +6393,22 @@
 					<type>real*8</type>
 					<description>
 						Multiplier to the viscous heat flux limit.
+					</description>
+				</switch>
+				<switch>
+					<name>CFLAL</name>
+					<default>Default inherited from b2mn.dat</default>
+					<type>real*8</type>
+					<description>
+						Multiplier to the thermo-electric coefficient flux limit.
+					</description>
+				</switch>
+				<switch>
+					<name>CFLAB</name>
+					<default>Default inherited from b2mn.dat</default>
+					<type>real*8</type>
+					<description>
+						Multiplier to the friction force flux limit.
 					</description>
 				</switch>
 				</switchgroup>
@@ -6265,7 +6469,7 @@
 			</introduction>
 			<switch>
 				<name>LHETRGTS</name>
-				<default>-2 for the first element, -3 for the second element and 0 otherwise</default>
+				<default>Eirene recycling target surfaces defined in the LTNS array</default>
 				<type>integer array of size (NLIM)</type>
 				<description>
 					List of surface indices (EIRENE notation) which are used for calculation of helium enrichment.

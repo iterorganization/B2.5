@@ -77,18 +77,23 @@
 *   ..local variables
       integer ncall, n2, ix, iy, is
       integer hcimx_flag, mode
-	integer, save :: iout = 0,                                 !srv 17.06.08
+      integer, save :: iout = 0, iout_b2wdat = 0,                     !srv 17.06.08
      &                 iout_b2npc9 = 0, iout_b2npco = 0,
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
      &                 iout_b2npp7 = 0, iout_b2nppo = 0, iout_b2npmo =0
-      character(3) chns                                            !srv 17.06.08
-      integer, save :: flux_limit_to_dpa = 1, csig_an_style = 1    !srv 15.06.08
-      integer, save :: flux_limit_style = 2                        !srv 07.12.15
+      character(3) chns                                               !srv 17.06.08
+      integer, save :: flux_limit_to_dpa = 1, csig_an_style = 1       !srv 15.06.08
+      integer, save :: flux_limit_style = 2                           !srv 07.12.15
+      real (kind=R8), save :: fch_stochastic = 0.0_R8,
+     &                        alpha_stoch = 1.0e0_R8                  !srv 17.12.13
+      real (kind=R8) ::
+     &  csig_stoch(-1:nx,-1:ny), fchstoch(-1:nx,-1:ny),               !lk 31.01.08
+     &  chce_stoch(-1:nx,-1:ny)                                       !srv 20.09.17
       real (kind=R8) ::
      *  wrk(-1:nx,-1:ny), hcimx(-1:nx,-1:ny,0:1,0:ns-1),
      1  hvi0(-1:nx,-1:ny,0:1), hve0(-1:nx,-1:ny,0:1),
-     2  hzvol(-1:nx,-1:ny), flc(-1:nx,-1:ny,0:1,0:ns-1),           !srv 09.07.03 30.11.15
-     3  flchz(-1:nx,-1:ny,0:1,0:ns-1),                             !srv 09.07.03 30.11.15
+     2  hzvol(-1:nx,-1:ny), flc(-1:nx,-1:ny,0:1,0:ns-1),              !srv 09.07.03 30.11.15
+     3  flchz(-1:nx,-1:ny,0:1,0:ns-1),                                !srv 09.07.03 30.11.15
      1	pol_anom_scale
       save ncall, pol_anom_scale, hcimx_flag, mode
 *   ..procedures
@@ -127,6 +132,9 @@
         call ipgeti ('b2npht_iout', iout_b2npht)
         call ipgeti ('b2npp7_iout', iout_b2npp7)
         call ipgeti ('b2nppo_iout', iout_b2nppo)                     !srv 19.05.10 }
+        call ipgetr ('b2tfhe_stochastic', fch_stochastic)            !lk 31.01.08
+        call ipgetr ('b2trno_con_e_stochastic', alpha_stoch)         !lk 31.01.08
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
       end if
 *   ..extensive tests on first few calls
       if (ncall.lt.3) then
@@ -262,6 +270,21 @@ csw 14apr2014 check for hcimx_flag (TESTING only), can be removed?
 *   ..set strange velocities chve, chvi
 c      call sfill (n2*2, 0.0_R8, chve, 1)
 c      call sfill (n2*2, 0.0_R8, chvi, 1)
+*   ..add stochastic part of the electron heat conductivity
+      chce_stoch = 0.0_R8                                                 !srv 20.09.17
+      if(fch_stochastic.ne.0.0e0_R8)then                                  !lk 31.01.08 { !srv 17.12.13
+        call b2tstch (nx, ny, vol, hy, qz, bb, po, te, ne, csig_stoch,    !srv 07.07.14
+     &      fchstoch)
+        do iy = -1, ny                                                    !srv 20.09.17
+          do ix = -1, nx
+           if(bottomiy(ix,iy).ne.-2) then
+            chce_stoch(ix,iy)=alpha_stoch*1.6e0_R8*csig_stoch(ix,iy)/
+     &      qe/qe*(te(ix,iy)+te(bottomix(ix,iy),bottomiy(ix,iy)))/2.0_R8
+           endif                                                          !srv 20.09.17
+	    enddo
+        enddo
+        call b2saxpy (n2, 1.0_R8, chce_stoch, 1, chce(-1,-1,1), 1)        !srv 20.09.17 }
+      endif                                                               !lk 31.01.08 } !srv 17.12.13
 *   ..scale parallel coefficients if desired
       if (pol_anom_scale.ne.1.0_R8) then
         do is = 0, ns-1
@@ -270,19 +293,19 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
             cdpa(:,:,0,is) = cdpa(:,:,0,is) * pol_anom_scale
             cvla(:,:,0,is) = cvla(:,:,0,is) * pol_anom_scale
             cvsa(:,:,0,is) = cvsa(:,:,0,is) * pol_anom_scale
-            cdnahz(:,:,0,is) = cdnahz(:,:,0,is) * pol_anom_scale     !wdk 16.04.14
+            cdnahz(:,:,0,is) = cdnahz(:,:,0,is) * pol_anom_scale          !wdk 16.04.14
             cdpahz(:,:,0,is) = cdpahz(:,:,0,is) * pol_anom_scale
             cvlahz(:,:,0,is) = cvlahz(:,:,0,is) * pol_anom_scale
             cvsahz(:,:,0,is) = cvsahz(:,:,0,is) * pol_anom_scale
-            if (flux_limit_style.eq.2) then                          !srv 07.12.15 {
+            if (flux_limit_style.eq.2) then                               !srv 07.12.15 {
               chcb(:,:,0,is) = chcb(:,:,0,is) * pol_anom_scale
-            end if                                                   !srv 07.12.15 }
+            end if                                                        !srv 07.12.15 }
           end if
         end do
         chce(:,:,0) = chce(:,:,0) * pol_anom_scale
-        if (flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then   !srv 07.12.15
+        if (flux_limit_style.eq.0 .or. flux_limit_style.eq.1) then        !srv 07.12.15
           chci(:,:,0) = chci(:,:,0) * pol_anom_scale
-	endif                                                        !srv 07.12.15
+	endif                                                             !srv 07.12.15
         calf(:,:,0) = calf(:,:,0) * pol_anom_scale
         csig(:,:,0) = csig(:,:,0) * pol_anom_scale
       end if
@@ -290,40 +313,44 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
       csig_an = csig
       calf_an = calf
 
-      if(flux_limit_to_dpa .ne. 0) then                              !srv 15.06.08 {
+      if(flux_limit_to_dpa .ne. 0) then                                   !srv 15.06.08 {
 *   .. apply flux limit to neutrals contribution to cdpa
-        call b2tlc0 (nx, ny, ns, hx, hy, vol, qz, na, te, ti, cdpa, flc) !srv 09.07.03 30.11.15
-        call b2tlc0 (nx, ny, ns, hx, hy, hzvol, qz, na, te, ti, cdpahz,  !srv 30.11.15
+        call b2tlc0 (nx, ny, ns, hx, hy, vol, qz, na, te, ti, cdpa, flc)  !srv 09.07.03 30.11.15
+        call b2tlc0 (nx, ny, ns, hx, hy, hzvol, qz, na, te, ti, cdpahz,   !srv 30.11.15
      &               flchz) 
-      endif                                                          !srv 15.06.08 }
+      endif                                                               !srv 15.06.08 }
 
-      if (flux_limit_style.eq.2) then                                !srv 07.12.15 {
+      if (flux_limit_style.eq.2) then                                     !srv 07.12.15 {
 *   ..apply flux limit to neutrals contribution to chcb
-       call b2tlh0 (nx, ny, ns, hx, hy, vol, qz, na, ti, hcib, chcb, !srv 07.12.15 {
+       call b2tlh0 (nx, ny, ns, hx, hy, vol, qz, na, ti, hcib, chcb,      !srv 07.12.15 {
      &              hcimx, fllim0fhi)
      	chci = 0.0_R8
         do is = 0, ns-1
           chci(:,:,0) = chci(:,:,0) + chcb(:,:,0,is)
           chci(:,:,1) = chci(:,:,1) + chcb(:,:,1,is)
         enddo 
-      endif                                                          !srv 07,12.15 }
+      endif                                                               !srv 07.12.15 }
 
 *    ..test sign of chce, chci
       call b2xvsg (n2*2, chce, 1, 'chce', '.ge.')
       call b2xvsg (n2*2, chci, 1, 'chci', '.ge.')
 
-      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0) then                !srv 19.05.10 {
+      if(iout_b2npc9.ne.0 .or. iout_b2npco.ne.0
+     &                  .or. iout_b2wdat.eq.4) then                  !srv 19.05.10 {
        do is = 0, ns-1
 	write (chns,'(i3.3)') is
-        call my_out(70,nx,ny,cdna(-1,-1,0,is),'b2trno_cdnax'//chns)
-        call my_out(70,nx,ny,cdna(-1,-1,1,is),'b2trno_cdnay'//chns)
-        call my_out(70,nx,ny,cdpa(-1,-1,0,is),'b2trno_cdpax'//chns)
-        call my_out(70,nx,ny,cdpa(-1,-1,1,is),'b2trno_cdpay'//chns)
+        if (is_neutral(is) ) then
+          call my_out(70,nx,ny,cdpa(-1,-1,0,is),'b2trno_cdpax'//chns)
+          call my_out(70,nx,ny,cdpa(-1,-1,1,is),'b2trno_cdpay'//chns)
+        else
+          call my_out(70,nx,ny,cdna(-1,-1,0,is),'b2trno_cdnax'//chns)
+          call my_out(70,nx,ny,cdna(-1,-1,1,is),'b2trno_cdnay'//chns)
+        endif
 !        call my_out(70,nx,ny,cvla(-1,-1,0,is),'b2trno_cvlax'//chns)
 !        call my_out(70,nx,ny,cvla(-1,-1,1,is),'b2trno_cvlay'//chns)
        enddo
       endif
-      if(iout_b2npmo.ne.0) then
+      if(iout_b2npmo.ne.0 .or. iout_b2wdat.eq.4) then
        do is = 0, ns-1
 	write (chns,'(i3.3)') is
         call my_out(70,nx,ny,cvsa(-1,-1,0,is),'b2trno_cvsax'//chns)
@@ -332,19 +359,19 @@ c      call sfill (n2*2, 0.0_R8, chvi, 1)
         call my_out(70,nx,ny,cvsahz(-1,-1,1,is),'b2trno_cvsahzy'//chns)
        enddo
       endif
-      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0) then
+      if(iout_b2nph9.ne.0 .or. iout_b2npht.ne.0
+     &                  .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,chce(-1,-1,0),'b2trno_chcex')
         call my_out(70,nx,ny,chce(-1,-1,1),'b2trno_chcey')
         call my_out(70,nx,ny,chci(-1,-1,0),'b2trno_chcix')
         call my_out(70,nx,ny,chci(-1,-1,1),'b2trno_chciy')
-!        call my_out(70,nx,ny,chve(-1,-1,0),'b2trno_chvex')
-!        call my_out(70,nx,ny,chve(-1,-1,1),'b2trno_chvey')
-!        call my_out(70,nx,ny,chvi(-1,-1,0),'b2trno_chvix')
-!        call my_out(70,nx,ny,chvi(-1,-1,1),'b2trno_chviy')
+        call my_out(70,nx,ny,chce_stoch,'b2trno_chcey_stoch')
       endif
-      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0) then
+      if(iout_b2npp7.ne.0 .or. iout_b2nppo.ne.0
+     &                  .or. iout_b2wdat.eq.4) then
         call my_out(70,nx,ny,csig(-1,-1,0),'b2trno_csigx')
         call my_out(70,nx,ny,csig(-1,-1,1),'b2trno_csigy')
+        call my_out(70,nx,ny,csig_stoch,'b2trno_csigy_stoch')
       endif                                                          !srv 19.05.10 }
       if(iout.ne.0) then                                             !srv 17.06.08 {
        do is = 0, ns-1

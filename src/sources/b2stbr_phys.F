@@ -327,8 +327,8 @@
           do i = 1, rc_list_size(istra)          
             Phi_app = get_phi_applied(boundary_namelist,
      .       rc_list_x(i,istra),rc_list_y(i,istra)) 
-            lcore = isymm.ne.0 .and.
-     .       mod(region(rc_list_x(i,istra),rc_list_y(i,istra),0),4).eq.1 ! xpb: no sputtering in core!
+            lcore = on_closed_surface(rc_list_x(i,istra),
+     .                                rc_list_y(i,istra)) ! xpb: no sputtering in core!
 *   ..compute 2-D target temperature evolution
             if(plate_model.eq.2 .and. .not.lcore .and. main_call 
      &       .and. i.eq.1) then
@@ -374,8 +374,8 @@
           do i = 1, rc_list_size(istra)
             Phi_app = get_phi_applied(boundary_namelist,
      .       rc_list_x(i,istra),rc_list_y(i,istra)) 
-            lcore=region(rc_list_x(i,istra),rc_list_y(i,istra),0).eq.5 
-     &       .and.periodic_bc.eq.1
+            lcore=on_closed_surface(rc_list_x(i,istra),
+     .                              rc_list_y(i,istra))
 *   ..compute 2-D target temperature evolution
             if(plate_model.eq.2 .and. .not.lcore .and. main_call 
      &       .and. i.eq.1) then
@@ -899,11 +899,11 @@ c     (toroidal piec only, because poloidal piece of parallel velocity flips sig
      &        am(is)*mp*ua(ix,iy,is)*bb(ix,iy,2)**2/bb(ix,iy,3)**2*
      &        recyc(is,istra)*t0*hz(ix,iy)
          shi0(ix,iy,0) = shi0(ix,iy,0)+recycled_neutrals_contr*max(
-     &        erecyc(is,istra)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
          if (is2.ne.-1) shi0_ff(ix,iy,is2) = shi0_ff(ix,iy,is2)+
      &        recycled_neutrals_contr*max(
-     &        erecyc(is,istra)*(1.5_R8+BoRiS)*(zaf(is)*tef+tif),
+     &        erecyc(is,istra)*(1.5_R8+BoRiS)*Ei*ev,
      &        (1.5_R8+BoRiS)*surface_temp*KBolt)*recyc(is,istra)*t0
          ! xpb: recycled neutrals come back with at least thermal energy
          if(.not.lcore) then    ! xpb: no sputtering in core!

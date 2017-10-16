@@ -1,7 +1,7 @@
 *-----------------------------------------------------------------------
 *.specification
 
-      subroutine b2upco (nx, ny, nregionv, ua_solve, solvereg, 
+      subroutine b2upco (nx, ny, nregionv, ua_solve, solvereg,
      &  rxf, pcm0, vol, corpb, pccb0, pb, nb, ub)
       use b2mod_indirect
       use b2mod_types
@@ -56,7 +56,7 @@
 *   ..test nx, ny
       call xertst (0.le.nx.and.0.le.ny, 'faulty argument nx, ny')
 *   ..test rxf, pcm0
-      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8, 
+      call xertst (0.0_R8.le.rxf.and.rxf.le.1.0_R8,
      .  'faulty argument rxf')
       call xertst (0.0_R8.le.pcm0, 'faulty argument pcm0')
 
@@ -94,7 +94,7 @@
         tt2 = 0.0e0_R8
         do iy = -1,ny
           do ix = -1,nx
-            if(mod(region(ix,iy,0),4).eq.1) then
+            if(on_closed_surface(ix,iy)) then
               tt0(iy) = tt0(iy) + vol(ix,iy)
               tt1(iy) = tt1(iy) + vol(ix,iy)*(nb_(ix,iy)-nb(ix,iy))
               tt2(iy) = tt2(iy) + vol(ix,iy)*(pb_(ix,iy)-pb(ix,iy))
@@ -103,14 +103,14 @@
         enddo
         do iy = -1,ny
           do ix = -1,nx
-            if(mod(region(ix,iy,0),4).eq.1) then
+            if(on_closed_surface(ix,iy)) then
               nb(ix,iy) = nb(ix,iy)+tt1(iy)/tt0(iy) +
      *         c_corr_core_dn*(nb_(ix,iy)-nb(ix,iy)-tt1(iy)/tt0(iy))
               pb(ix,iy) = pb(ix,iy)+tt2(iy)/tt0(iy) +
      *         c_corr_core_dn*(pb_(ix,iy)-pb(ix,iy)-tt2(iy)/tt0(iy))
             else                                          !srv 25.07.17 {
-	      nb(ix,iy) = nb_(ix,iy)
-	      pb(ix,iy) = pb_(ix,iy)                      !srv 25.07.17 }
+              nb(ix,iy) = nb_(ix,iy)
+              pb(ix,iy) = pb_(ix,iy)                      !srv 25.07.17 }
             endif
           enddo
         enddo                                             !lk 30.06.2017}
@@ -124,7 +124,7 @@
          if(leftix(ix,iy).ne.-2 .and. rightix(ix,iy).ne.nx+1 .and.
      &      solvereg(ireg))
      &    ub(ix,iy) = ub(ix,iy)-pcm0*rxf*pccb0(ix,iy)*vol(ix,iy)*
-     &    (wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+ 
+     &    (wrk0(ix,iy)/(vol(leftix(ix,iy),leftiy(ix,iy))+vol(ix,iy))+
      &     wrk0(rightix(ix,iy),rightiy(ix,iy))/(vol(ix,iy)+
      &      vol(rightix(ix,iy),rightiy(ix,iy))))
         enddo

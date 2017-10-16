@@ -22,7 +22,7 @@
      *  ti(:,:),  ti0(:,:),  tip(:,:),
      *  ua(:,:,:),  ua0(:,:,:),  uap(:,:,:),
      *  uadia(:,:,:,:),  fchdia(:,:,:),
-     *  fch_p(:,:,:), uahel(:,:,:),                                      !srv 23.12.03 10.06.08 {
+     *  fch_p(:,:,:), fch_pi_c(:,:,:), fch_pi_f(:,:,:),                  !srv 10.06.08 { 13.01.17
      *  fhm(:,:,:,:), fhp(:,:,:,:), fhj(:,:,:), fht(:,:,:),
      *  fhe_mdf(:,:,:), fhePSch(:,:,:), fhi_mdf(:,:,:), fhiPSch(:,:,:),  !srv 13.10.06
      *  fna_mdf(:,:,:,:), fnaPSch(:,:,:,:), 
@@ -126,7 +126,8 @@
       allocate(ua0(-1:nxd,-1:nyd,0:nsd-1))
       allocate(uap(-1:nxd,-1:nyd,0:nsd-1))
       allocate(uadia(-1:nxd,-1:nyd,0:1,0:nsd-1))
-      allocate(uahel(-1:nxd,-1:nyd,0:nsd-1))                         !srv 23.12.03
+      allocate(fch_pi_c(-1:nxd,-1:nyd,0:1))                          !srv 13.01.17
+      allocate(fch_pi_f(-1:nxd,-1:nyd,0:1))                          !srv 13.01.17
       allocate(fchdia(-1:nxd,-1:nyd,0:1))
       fchdia=0.0_R8
       allocate(fch_p(-1:nxd,-1:nyd,0:1))                             !xpb srv 10.06.08
@@ -251,7 +252,8 @@
       deallocate(fna_fcor)                          !srv 01.10.99
       deallocate(fnaPSch)                           !srv 13.10.06
       deallocate(fna_mdf)                           !srv 13.10.06
-      deallocate(uahel  )                           !srv 23.12.03
+      deallocate(fch_pi_c)                          !srv 13.01.17
+      deallocate(fch_pi_f)                          !srv 13.01.17
       deallocate(fna_eir)                           !srv 14.07.10 {
       deallocate(fne_eir)
       deallocate(fhe_eir)

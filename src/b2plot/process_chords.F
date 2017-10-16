@@ -215,7 +215,6 @@ c
         rw='read'
         iret = nf_open(moviename,NCNOWRIT,ncid) 
         imap(1)=1
-        tstepn(1)=ntstep
         call rwcdf(rw,ncid,'ntstep',imap,tstepn,iret)
         ntstep=nint(tstepn(1))
         do itstep=1,ntstep,movie_skip

@@ -49,7 +49,8 @@
       integer ncall, n2, ix, iy, is, k, use_eirene
       integer, save :: iout = 0, iout_b2npc9 = 0, iout_b2npco = 0,   !srv 11.09.09 {
      &                 iout_b2nph9 = 0, iout_b2npht = 0,
-     &                 iout_b2npmo =0, iout_b2npp7 = 0, iout_b2nppo = 0
+     &                 iout_b2npmo = 0, iout_b2npp7 = 0,
+     &                 iout_b2nppo = 0, iout_b2wdat = 0
       character chns*3, chk*1                                        !srv 11.09.09 }
       real (kind=R8) ::
      *   phm0, phm1, phm3, phm4, phm5, t0, ttim
@@ -90,6 +91,7 @@
         call ipgeti ('b2nppo_iout', iout_b2nppo)
         call ipgeti ('b2nph9_iout', iout_b2nph9)
         call ipgeti ('b2npht_iout', iout_b2npht)                     !srv 11.09.09 }
+        call ipgeti ('b2wdat_iout', iout_b2wdat)                     !iys 17.04.17
       endif
 *   ..set n2
       n2 = (nx+2)*(ny+2)
@@ -223,7 +225,7 @@ cdjm Store the total change in linearised sources for balance
         b2srdt_shi0to3 = shidt-shitmp
       endif
 
-      if (iout_b2npmo.eq.1 .and. lout) then                                     !srv 11.09.09 {
+      if ((iout_b2npmo.eq.1 .or. iout_b2wdat .eq. 4) .and. lout) then                                     !srv 11.09.09 {
        do is = 0, ns-1 
          write (chns,'(i3.3)') is
          wrk0=smodt(:,:,0,is)+
@@ -233,14 +235,16 @@ cdjm Store the total change in linearised sources for balance
          call my_out(70,nx,ny,wrk0,'b2srdt_smodt'//chns)
        enddo
       endif
-      if ((iout_b2npc9.eq.1 .or. iout_b2npco.eq.1) .and. lout) then
+      if ((iout_b2npc9.eq.1 .or. iout_b2npco.eq.1 .or. iout_b2wdat.eq.4)
+     &             .and. lout) then
         do is = 0, ns-1
           write (chns,'(i3.3)') is
           wrk0=snadt(:,:,0,is)+snadt(:,:,1,is)*na(:,:,is)
           call my_out(70,nx,ny,wrk0,'b2srdt_snadt'//chns)
         enddo
       endif
-      if ((iout_b2nph9.eq.1 .or. iout_b2npht.eq.1) .and. lout) then
+      if ((iout_b2nph9.eq.1 .or. iout_b2npht.eq.1 .or. iout_b2wdat.eq.4)
+     &             .and. lout) then
         wrk0=shedt(:,:,0)+shedt(:,:,1)*te+
      &       shedt(:,:,2)*ne + shedt(:,:,3)*te*ne
         call my_out(70,nx,ny,wrk0,'b2srdt_shedt')
